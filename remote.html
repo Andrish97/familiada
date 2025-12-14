@@ -1,1 +1,70 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Familiada — Pilot</title>
+
+  <link rel="stylesheet" href="css/base.css"/>
+  <link rel="stylesheet" href="css/remote.css"/>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <script type="module" src="js/pages/remote.js" defer></script>
+</head>
+<body class="remote-body">
+  <div class="remote-shell">
+
+    <header class="bar">
+      <div class="title">
+        <div class="logo">PILOT</div>
+        <div class="name" id="gameName">—</div>
+      </div>
+      <div class="status" id="status">Łączenie…</div>
+    </header>
+
+    <main class="grid">
+
+      <section class="panel">
+        <div class="h">Runda</div>
+        <div class="big" id="roundPoints">0</div>
+        <div class="row">
+          <button class="btn" id="pMinus">-10</button>
+          <button class="btn main" id="pPlus">+10</button>
+          <button class="btn" id="pReset">Reset</button>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="h">Błędy</div>
+        <div class="strikes" id="strikes">0</div>
+        <div class="row">
+          <button class="btn" id="sMinus">-</button>
+          <button class="btn danger" id="sPlus">+</button>
+          <button class="btn" id="sReset">Reset</button>
+        </div>
+      </section>
+
+      <section class="panel wide">
+        <div class="h">Odpowiedzi</div>
+        <div class="row">
+          <button class="btn main" id="revealNext">Odkryj następną</button>
+          <button class="btn" id="hideAll">Ukryj wszystkie</button>
+        </div>
+        <div class="answers" id="answers"></div>
+      </section>
+
+      <section class="panel wide">
+        <div class="h">Full screen</div>
+        <div class="row">
+          <button class="btn" id="fs">Pełny ekran</button>
+        </div>
+        <div class="note">
+          Ten pilot działa po linku z tajnym kluczem. Nie wymaga logowania.
+        </div>
+      </section>
+
+    </main>
+  </div>
+</body>
+</html>
 
