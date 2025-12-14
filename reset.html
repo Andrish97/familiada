@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Familiada — reset hasła</title>
+
+  <link rel="icon" type="image/png" href="favicon.png">
+  <link rel="stylesheet" href="css/base.css?v=4"/>
+  <link rel="stylesheet" href="css/auth-landing.css?v=4"/>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <script type="module" src="js/pages/reset.js?v=4" defer></script>
+</head>
+
+<body class="landing-body">
+  <div class="landing-shell">
+    <div class="landing-card">
+      <div class="brand">FAMILIADA</div>
+      <div class="sub">Ustaw nowe hasło</div>
+
+      <div class="status" id="status">Sprawdzam link…</div>
+      <div class="err" id="err"></div>
+
+      <div class="form" id="form" style="display:none">
+        <input id="p1" type="password" placeholder="Nowe hasło" autocomplete="new-password"/>
+        <input id="p2" type="password" placeholder="Powtórz nowe hasło" autocomplete="new-password"/>
+
+        <button class="btn main" id="save" type="button">Zapisz hasło</button>
+      </div>
+
+      <div class="actions">
+        <a class="btn" id="back" href="index.html" style="display:none">Wróć do logowania</a>
+      </div>
+
+      <div class="hint">
+        Po zapisaniu hasła wrócisz do logowania.
+      </div>
+    </div>
+  </div>
+</body>
+</html>
