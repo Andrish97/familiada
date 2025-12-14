@@ -1,16 +1,23 @@
+// js/core/auth.js
 import { sb } from "./supabase.js";
 
 function niceAuthError(e) {
   const msg = e?.message || String(e);
-  if (msg.toLowerCase().includes("email not confirmed")) return "Potwierdź e-mail (link w skrzynce).";
-  if (msg.toLowerCase().includes("invalid login credentials")) return "Zły e-mail lub hasło.";
+  const low = msg.toLowerCase();
+
+  if (low.includes("email not confirmed")) return "Potwierdź e-mail (link w skrzynce).";
+  if (low.includes("invalid login credentials")) return "Zły e-mail lub hasło.";
   return msg;
 }
 
 export async function getUser() {
-  const { data, error } = await sb().auth.getUser();
-  if (error) return null;
-  return data.user || null;
+  try {
+    const { data, error } = await sb().auth.getUser();
+    if (error) return null;
+    return data.user || null;
+  } catch {
+    return null;
+  }
 }
 
 export async function requireAuth(redirect = "index.html") {
@@ -22,11 +29,15 @@ export async function requireAuth(redirect = "index.html") {
 export async function signIn(email, password) {
   const { data, error } = await sb().auth.signInWithPassword({ email, password });
   if (error) throw new Error(niceAuthError(error));
+
   const user = data.user;
-  if (!user?.email_confirmed_at) {
+  if (!user) throw new Error("Nie udało się zalogować.");
+
+  if (!user.email_confirmed_at) {
     await sb().auth.signOut();
     throw new Error("Najpierw potwierdź e-mail.");
   }
+
   return user;
 }
 
@@ -47,4 +58,3 @@ export async function resetPassword(email, redirectTo) {
   const { error } = await sb().auth.resetPasswordForEmail(email, { redirectTo });
   if (error) throw new Error(niceAuthError(error));
 }
-
