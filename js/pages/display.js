@@ -1,3 +1,4 @@
+// js/pages/display.js
 import { startSnapshotPoll } from "../core/realtime.js";
 
 const $ = (s) => document.querySelector(s);
@@ -19,6 +20,13 @@ function qsParam(name) {
 const gameId = qsParam("id");
 const key = qsParam("key");
 
+function pad3(n) {
+  const v = Math.max(0, Number(n || 0));
+  const s = String(v);
+  if (s.length >= 3) return s.slice(-3);
+  return s.padStart(3, "0");
+}
+
 function applyStrikes(n) {
   const xs = strikesX?.querySelectorAll(".x") || [];
   xs.forEach((el, i) => el.classList.toggle("on", i < (n || 0)));
@@ -27,11 +35,13 @@ function applyStrikes(n) {
 function makeAnswerTile(idx, text, points, revealed) {
   const el = document.createElement("div");
   el.className = "answer" + (revealed ? " reveal" : " hidden");
+
   el.innerHTML = `
-    <div class="idx">${idx}</div>
-    <div class="txt">${text ?? ""}</div>
-    <div class="pts">${points ?? ""}</div>
+    <div class="idx seg">${idx}</div>
+    <div class="txt dot">${text ?? ""}</div>
+    <div class="pts seg">${points ?? ""}</div>
   `;
+
   if (revealed) setTimeout(() => el.classList.remove("reveal"), 240);
   return el;
 }
@@ -42,7 +52,8 @@ function render(snapshot) {
   const answers = snapshot?.answers || [];
 
   questionText.textContent = q?.text ? q.text : "Wybierz pytanie…";
-  roundPoints.textContent = String(live.round_points ?? 0);
+
+  roundPoints.textContent = pad3(live.round_points ?? 0);
   applyStrikes(live.strikes ?? 0);
 
   const revealedIds = new Set((live.revealed_answer_ids || []).map(String));
@@ -53,8 +64,13 @@ function render(snapshot) {
   for (let i = 0; i < maxTiles; i++) {
     const a = answers[i];
     const revealed = a ? revealedIds.has(String(a.id)) : false;
+
+    // Punkty: fixed_points albo pusto
     const pts = a ? (a.fixed_points ?? "") : "";
-    answersGrid.appendChild(makeAnswerTile(i + 1, a?.text ?? "", pts, revealed));
+
+    answersGrid.appendChild(
+      makeAnswerTile(i + 1, a?.text ?? "", pts, revealed)
+    );
   }
 }
 
