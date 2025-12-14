@@ -5,12 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Familiada — Display</title>
 
-  <link rel="stylesheet" href="css/base.css" />
-  <link rel="stylesheet" href="css/display.css" />
+  <link rel="icon" type="image/png" href="favicon.png">
+  <link rel="stylesheet" href="css/base.css?v=5" />
+  <link rel="stylesheet" href="css/display.css?v=5" />
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js" defer></script>
-  <script type="module" src="js/pages/display.js" defer></script>
+
+  <!-- Renderer LED -->
+  <script type="module" src="js/pages/display.js?v=5" defer></script>
 </head>
 
 <body class="display-body">
@@ -18,44 +20,18 @@
 
     <header class="topbar">
       <div class="logo">FAMILIADA</div>
-
-      <div class="top-actions">
+      <div class="actions">
         <button class="btn" id="btnFullscreen" type="button">Pełny ekran</button>
       </div>
     </header>
 
     <main class="stage">
-      <section class="board">
-        <div class="board-header">
-          <div class="question" id="questionText">Ładuję pytanie…</div>
-          <div class="round">
-            <div class="points" id="roundPoints">0</div>
-            <div class="points-label">PUNKTY</div>
-          </div>
-        </div>
-
-        <div class="answers" id="answersGrid">
-          <!-- Wypełniane przez JS -->
-        </div>
-      </section>
-
-      <aside class="side">
-        <div class="strikes">
-          <div class="strikes-label">BŁĘDY</div>
-          <div class="strikes-x" id="strikesX">
-            <span class="x">X</span><span class="x">X</span><span class="x">X</span>
-          </div>
-        </div>
-
-        <div class="status" id="statusLine">Łączenie…</div>
-
-        <div class="hint">
-          Ten ekran jest do rzutnika. Sterowanie odbywa się z edytora/pilota.
-        </div>
-      </aside>
+      <div class="frame">
+        <canvas id="board" width="1920" height="1080"></canvas>
+      </div>
+      <div class="status" id="statusLine">Łączenie…</div>
     </main>
 
   </div>
 </body>
 </html>
-
