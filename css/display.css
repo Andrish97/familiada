@@ -1,91 +1,126 @@
-:root{
-  --bg: #050914;
-  --panel1:#0b2b87;
-  --panel2:#06205f;
-  --gold:#e7c24b;
+// js/core/ledfont.js
+// Prosty font LED 5x7 + polskie znaki (stała szerokość znaków)
 
-  --led: #ffd94a;
-  --led-dim: rgba(255,217,74,.14);
+const GLYPHS = {
+  " ": [
+    "00000",
+    "00000",
+    "00000",
+    "00000",
+    "00000",
+    "00000",
+    "00000",
+  ],
 
-  --shadow: rgba(0,0,0,.55);
+  "0": ["01110","10001","10011","10101","11001","10001","01110"],
+  "1": ["00100","01100","00100","00100","00100","00100","01110"],
+  "2": ["01110","10001","00001","00010","00100","01000","11111"],
+  "3": ["11110","00001","00001","01110","00001","00001","11110"],
+  "4": ["00010","00110","01010","10010","11111","00010","00010"],
+  "5": ["11111","10000","10000","11110","00001","00001","11110"],
+  "6": ["00110","01000","10000","11110","10001","10001","01110"],
+  "7": ["11111","00001","00010","00100","01000","01000","01000"],
+  "8": ["01110","10001","10001","01110","10001","10001","01110"],
+  "9": ["01110","10001","10001","01111","00001","00010","01100"],
+
+  "A": ["01110","10001","10001","11111","10001","10001","10001"],
+  "B": ["11110","10001","10001","11110","10001","10001","11110"],
+  "C": ["01110","10001","10000","10000","10000","10001","01110"],
+  "D": ["11100","10010","10001","10001","10001","10010","11100"],
+  "E": ["11111","10000","10000","11110","10000","10000","11111"],
+  "F": ["11111","10000","10000","11110","10000","10000","10000"],
+  "G": ["01110","10001","10000","10111","10001","10001","01110"],
+  "H": ["10001","10001","10001","11111","10001","10001","10001"],
+  "I": ["01110","00100","00100","00100","00100","00100","01110"],
+  "J": ["00111","00010","00010","00010","10010","10010","01100"],
+  "K": ["10001","10010","10100","11000","10100","10010","10001"],
+  "L": ["10000","10000","10000","10000","10000","10000","11111"],
+  "M": ["10001","11011","10101","10101","10001","10001","10001"],
+  "N": ["10001","11001","10101","10011","10001","10001","10001"],
+  "O": ["01110","10001","10001","10001","10001","10001","01110"],
+  "P": ["11110","10001","10001","11110","10000","10000","10000"],
+  "Q": ["01110","10001","10001","10001","10101","10010","01101"],
+  "R": ["11110","10001","10001","11110","10100","10010","10001"],
+  "S": ["01111","10000","10000","01110","00001","00001","11110"],
+  "T": ["11111","00100","00100","00100","00100","00100","00100"],
+  "U": ["10001","10001","10001","10001","10001","10001","01110"],
+  "V": ["10001","10001","10001","10001","01010","01010","00100"],
+  "W": ["10001","10001","10001","10101","10101","11011","10001"],
+  "X": ["10001","01010","00100","00100","00100","01010","10001"],
+  "Y": ["10001","01010","00100","00100","00100","00100","00100"],
+  "Z": ["11111","00001","00010","00100","01000","10000","11111"],
+
+  "-": ["00000","00000","00000","11111","00000","00000","00000"],
+  ".": ["00000","00000","00000","00000","00000","00100","00100"],
+  ":": ["00000","00100","00100","00000","00100","00100","00000"],
+  "!": ["00100","00100","00100","00100","00100","00000","00100"],
+  "?": ["01110","10001","00001","00010","00100","00000","00100"],
+  "/": ["00001","00010","00100","01000","10000","00000","00000"],
+  "+": ["00000","00100","00100","11111","00100","00100","00000"],
+  "×": ["00000","10001","01010","00100","01010","10001","00000"],
+  "X": ["10001","01010","00100","00100","00100","01010","10001"],
+};
+
+// Polskie znaki robimy jako: baza + diakrytyk pikselami.
+// W 5×7 mamy mało miejsca, więc robię “teleturniejowy kompromis”:
+// akcent/kropka w górnym rzędzie, ogonek w dolnym.
+const POLISH = {
+  "Ą": { base: "A", tail: true },
+  "Ć": { base: "C", acute: true },
+  "Ę": { base: "E", tail: true },
+  "Ł": { base: "L", slash: true },
+  "Ń": { base: "N", acute: true },
+  "Ó": { base: "O", acute: true },
+  "Ś": { base: "S", acute: true },
+  "Ż": { base: "Z", dot: true },
+  "Ź": { base: "Z", acute: true },
+};
+
+function cloneGlyph(g) {
+  return g.map((row) => row.split("").map((c) => c === "1"));
 }
 
-.display-body{
-  margin:0;
-  min-height:100vh;
-  background:
-    radial-gradient(circle at 20% 20%, rgba(255,217,74,.10), transparent 55%),
-    radial-gradient(circle at 80% 80%, rgba(90,160,255,.10), transparent 55%),
-    var(--bg);
-  color:#fff;
-  font-family: system-ui, -apple-system, Segoe UI, sans-serif;
+function boolToRows(b) {
+  return b.map((row) => row.map((v) => (v ? "1" : "0")).join(""));
 }
 
-.display-shell{
-  min-height:100vh;
-  padding: 14px;
-  display:flex;
-  flex-direction: column;
-  gap: 12px;
+function applyAcute(b) {
+  // mały akcent: jeden piksel nad prawą stroną
+  b[0][3] = true;
+}
+function applyDot(b) {
+  // kropka: piksel na środku góry
+  b[0][2] = true;
+}
+function applyTail(b) {
+  // ogonek: piksel pod lewym dołem
+  b[6][1] = true;
+}
+function applySlashL(b) {
+  // ukośnik przez L: 2 piksele w środku
+  b[3][2] = true;
+  b[4][3] = true;
 }
 
-.topbar{
-  display:flex;
-  justify-content: space-between;
-  align-items:center;
-  gap: 12px;
-}
+export function getGlyph(chRaw) {
+  if (!chRaw) return GLYPHS[" "];
+  const ch = String(chRaw).toUpperCase();
 
-.logo{
-  font-weight: 1000;
-  letter-spacing: .18em;
-  text-transform: uppercase;
-  color: var(--led);
-  text-shadow: 0 0 14px rgba(255,217,74,.18);
-}
+  if (GLYPHS[ch]) return GLYPHS[ch];
 
-.actions{ display:flex; gap:10px; }
+  if (POLISH[ch]) {
+    const { base, acute, dot, tail, slash } = POLISH[ch];
+    const baseGlyph = GLYPHS[base] || GLYPHS[" "];
+    const b = cloneGlyph(baseGlyph);
 
-.btn{
-  padding: 10px 12px;
-  border-radius: 12px;
-  border: 2px solid rgba(255,217,74,.25);
-  background: rgba(255,255,255,.06);
-  color: #fff;
-  cursor:pointer;
-}
-.btn:hover{ filter:brightness(1.08); }
-.btn:active{ transform: translateY(1px); }
+    if (acute) applyAcute(b);
+    if (dot) applyDot(b);
+    if (tail) applyTail(b);
+    if (slash) applySlashL(b);
 
-.stage{
-  flex: 1;
-  display:flex;
-  flex-direction: column;
-  gap: 10px;
-}
+    return boolToRows(b);
+  }
 
-.frame{
-  flex:1;
-  border-radius: 22px;
-  border: 6px solid var(--gold);
-  background: linear-gradient(180deg, var(--panel1), var(--panel2));
-  box-shadow: 0 18px 50px var(--shadow);
-  overflow:hidden;
-  position:relative;
-}
-
-#board{
-  width: 100%;
-  height: 100%;
-  display:block;
-}
-
-.status{
-  padding: 10px 12px;
-  border-radius: 14px;
-  border: 1px solid rgba(255,217,74,.18);
-  background: rgba(0,0,0,.18);
-  color: rgba(255,255,255,.92);
-  font-size: 12px;
-  letter-spacing:.06em;
+  // fallback: nieznany znak -> spacja
+  return GLYPHS[" "];
 }
