@@ -1,3 +1,4 @@
+// js/pages/index.js
 import { getUser, signIn, signUp, resetPassword } from "../core/auth.js";
 
 const $ = (s) => document.querySelector(s);
@@ -12,8 +13,8 @@ const btnForgot = $("#btnForgot");
 
 let mode = "login"; // login | register
 
-function setErr(m=""){ err.textContent = m; }
-function setStatus(m=""){ status.textContent = m; }
+function setErr(m = "") { err.textContent = m; }
+function setStatus(m = "") { status.textContent = m; }
 
 function applyMode() {
   if (mode === "login") {
@@ -50,11 +51,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     const pwd = pass.value;
 
     if (!mail || !pwd) return setErr("Podaj e-mail i hasło.");
+
     try {
       if (mode === "register") {
         if (pass2.value !== pwd) return setErr("Hasła nie są takie same.");
         setStatus("Rejestruję…");
-        const redirectTo = new URL("confirm.html", location.href).toString(); // dodamy później
+        const redirectTo = new URL("confirm.html", location.href).toString();
         await signUp(mail, pwd, redirectTo);
         setStatus("Sprawdź e-mail (link aktywacyjny).");
       } else {
@@ -63,8 +65,9 @@ document.addEventListener("DOMContentLoaded", async () => {
         location.href = "builder.html";
       }
     } catch (e) {
+      console.error(e);
       setStatus("Błąd.");
-      setErr(e.message || String(e));
+      setErr(e?.message || String(e));
     }
   });
 
@@ -72,15 +75,16 @@ document.addEventListener("DOMContentLoaded", async () => {
     setErr("");
     const mail = email.value.trim();
     if (!mail) return setErr("Podaj e-mail do resetu.");
+
     try {
       setStatus("Wysyłam link resetu…");
-      const redirectTo = new URL("reset.html", location.href).toString(); // dodamy później
+      const redirectTo = new URL("reset.html", location.href).toString();
       await resetPassword(mail, redirectTo);
       setStatus("Wysłano link resetu hasła.");
     } catch (e) {
+      console.error(e);
       setStatus("Błąd.");
-      setErr(e.message || String(e));
+      setErr(e?.message || String(e));
     }
   });
 });
-
