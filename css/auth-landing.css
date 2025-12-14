@@ -1,0 +1,121 @@
+:root{
+  --bg: #050914;
+  --card: rgba(255,255,255,.06);
+  --stroke: rgba(255,255,255,.14);
+  --led: #ffeaa6;
+  --txt: #ffffff;
+  --muted: rgba(255,255,255,.75);
+  --danger: #ff7a7a;
+}
+
+.landing-body{
+  margin:0;
+  min-height:100vh;
+  display:grid;
+  place-items:center;
+  background:
+    radial-gradient(circle at 20% 20%, rgba(255,234,166,.10), transparent 55%),
+    radial-gradient(circle at 80% 80%, rgba(90,160,255,.10), transparent 55%),
+    var(--bg);
+  color: var(--txt);
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+.landing-shell{ width:min(560px,92vw); padding:18px; }
+
+.landing-card{
+  background: var(--card);
+  border: 1px solid var(--stroke);
+  border-radius: 22px;
+  box-shadow: 0 18px 50px rgba(0,0,0,.45);
+  padding: 18px;
+}
+
+.brand{
+  font-weight: 1000;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--led);
+  font-size: 18px;
+}
+
+.sub{
+  margin-top: 6px;
+  opacity: .85;
+  font-weight: 900;
+}
+
+.status{
+  margin-top: 14px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(255,234,166,.20);
+  background: rgba(0,0,0,.18);
+  color: var(--txt);
+}
+
+.err{
+  margin-top: 10px;
+  color: var(--danger);
+  font-size: 13px;
+  min-height: 18px;
+}
+
+.form{
+  margin-top: 12px;
+  display:grid;
+  gap: 10px;
+}
+
+.form input{
+  width:100%;
+  box-sizing:border-box;
+  padding: 12px 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,.18);
+  background: rgba(0,0,0,.22);
+  color: var(--txt);
+  outline:none;
+  font-weight: 800;
+}
+.form input:focus{
+  border-color: rgba(255,234,166,.35);
+  box-shadow: 0 0 0 2px rgba(255,234,166,.12);
+}
+
+.actions{
+  margin-top: 14px;
+  display:flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.btn{
+  padding: 12px 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,.18);
+  background: rgba(255,255,255,.06);
+  color: var(--txt);
+  cursor:pointer;
+  font-weight: 1000;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  text-decoration:none;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+}
+.btn:hover{ filter: brightness(1.08); }
+.btn:active{ transform: translateY(1px); }
+
+.btn.main{
+  border-color: rgba(255,234,166,.35);
+  background: rgba(255,234,166,.18);
+}
+
+.hint{
+  margin-top: 12px;
+  opacity: .75;
+  font-size: 12px;
+  line-height: 1.35;
+}
