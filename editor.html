@@ -1,1 +1,127 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Familiada — edytor</title>
+
+  <link rel="stylesheet" href="css/base.css"/>
+  <link rel="stylesheet" href="css/editor.css"/>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js" defer></script>
+  <script type="module" src="js/pages/editor.js" defer></script>
+</head>
+<body class="editor-body">
+
+  <header class="topbar">
+    <button class="btn" id="back">← Moje gry</button>
+
+    <div class="title">
+      <input id="gameName" class="name" value="Ładuję…" />
+      <div class="sub" id="sub">—</div>
+    </div>
+
+    <div class="actions">
+      <button class="btn" id="export">Zapisz plik konfiguracji</button>
+      <button class="btn danger" id="logout">Wyloguj</button>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="card">
+      <div class="card-h">
+        <div class="h">Pytania</div>
+        <button class="btn main" id="addQ">+ Dodaj pytanie</button>
+      </div>
+
+      <div class="qgrid" id="qgrid"></div>
+    </section>
+
+    <section class="card">
+      <div class="card-h">
+        <div class="h">Sterowanie na żywo</div>
+        <div class="mini" id="liveInfo">—</div>
+      </div>
+
+      <div class="live">
+        <div class="row">
+          <label class="lab">Aktywne pytanie</label>
+          <select id="activeQ"></select>
+          <button class="btn" id="setActive">Ustaw</button>
+        </div>
+
+        <div class="row split">
+          <div class="box">
+            <div class="lab2">Punkty rundy</div>
+            <div class="big" id="roundPoints">0</div>
+            <div class="row">
+              <button class="btn" id="pMinus">-10</button>
+              <button class="btn main" id="pPlus">+10</button>
+              <button class="btn" id="pReset">Reset</button>
+            </div>
+          </div>
+
+          <div class="box">
+            <div class="lab2">Błędy</div>
+            <div class="big red" id="strikes">0</div>
+            <div class="row">
+              <button class="btn" id="sMinus">-</button>
+              <button class="btn danger" id="sPlus">+</button>
+              <button class="btn" id="sReset">Reset</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="row">
+          <button class="btn main" id="revealNext">Odkryj następną</button>
+          <button class="btn" id="hideAll">Ukryj wszystkie</button>
+        </div>
+
+        <div class="answers" id="answers"></div>
+      </div>
+    </section>
+
+    <section class="card wide">
+      <div class="card-h">
+        <div class="h">Linki + QR</div>
+        <div class="mini">Publiczne linki działają bez logowania (tajne klucze).</div>
+      </div>
+
+      <div class="share-grid">
+        <div class="share-item">
+          <div class="lab2">Rzutnik</div>
+          <div class="share-row">
+            <input id="linkDisplay" readonly />
+            <button class="btn" id="copyDisplay">Kopiuj</button>
+            <button class="btn" id="qrDisplay">QR</button>
+            <a class="btn" id="openDisplay" target="_blank" rel="noopener">Otwórz</a>
+          </div>
+        </div>
+
+        <div class="share-item">
+          <div class="lab2">Pilot</div>
+          <div class="share-row">
+            <input id="linkRemote" readonly />
+            <button class="btn" id="copyRemote">Kopiuj</button>
+            <button class="btn" id="qrRemote">QR</button>
+            <a class="btn" id="openRemote" target="_blank" rel="noopener">Otwórz</a>
+          </div>
+        </div>
+
+        <div class="share-item">
+          <div class="lab2">Sondaż</div>
+          <div class="share-row">
+            <input id="linkPoll" readonly />
+            <button class="btn" id="copyPoll">Kopiuj</button>
+            <button class="btn" id="qrPoll">QR</button>
+            <a class="btn" id="openPoll" target="_blank" rel="noopener">Otwórz</a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+</body>
+</html>
 
