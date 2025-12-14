@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Familiada — potwierdzenie konta</title>
+
+  <link rel="icon" type="image/png" href="favicon.png">
+  <link rel="stylesheet" href="css/base.css?v=4"/>
+  <link rel="stylesheet" href="css/auth-landing.css?v=4"/>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <script type="module" src="js/pages/confirm.js?v=4" defer></script>
+</head>
+
+<body class="landing-body">
+  <div class="landing-shell">
+    <div class="landing-card">
+      <div class="brand">FAMILIADA</div>
+      <div class="sub">Potwierdzenie konta</div>
+
+      <div class="status" id="status">Sprawdzam link…</div>
+      <div class="err" id="err"></div>
+
+      <div class="actions">
+        <a class="btn main" id="go" href="builder.html" style="display:none">Przejdź do panelu</a>
+        <a class="btn" id="back" href="index.html" style="display:none">Wróć do logowania</a>
+      </div>
+
+      <div class="hint">
+        Jeśli link wygasł, spróbuj zalogować się ponownie albo poproś o reset hasła.
+      </div>
+    </div>
+  </div>
+</body>
+</html>
