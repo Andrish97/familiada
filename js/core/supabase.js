@@ -2,8 +2,8 @@
 // js/core/supabase.js
 // Wspólna inicjalizacja Supabase dla całego projektu
 
-export const SUPABASE_URL = "WSTAW_TUTAJ_SUPABASE_URL";
-export const SUPABASE_ANON_KEY = "WSTAW_TUTAJ_SUPABASE_ANON_KEY";
+export const SUPABASE_URL = "https://mohjsqjxgnzodmzltcri.supabase.co";
+export const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1vaGpzcWp4Z256b2Rtemx0Y3JpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU3MzcxMTMsImV4cCI6MjA4MTMxMzExM30.YP3SQT80KtPaRkUXt45eix-qZfFU5DdC5SjoprqFq2U";
 
 export function getSupabase() {
   if (!window.supabase?.createClient) {
