@@ -1,3 +1,4 @@
+// js/pages/builder.js
 import { sb } from "../core/supabase.js";
 import { requireAuth, signOut } from "../core/auth.js";
 import { guardDesktopOnly } from "../core/device-guard.js";
@@ -8,6 +9,8 @@ const who = document.getElementById("who");
 const btnLogout = document.getElementById("btnLogout");
 
 guardDesktopOnly({ message: "Panel tworzenia Familiad jest dostępny tylko na komputerze." });
+
+let currentUser = null;
 
 function cardGame(g) {
   const el = document.createElement("div");
@@ -32,7 +35,14 @@ function cardGame(g) {
       cancelText: "Anuluj",
     });
     if (!ok) return;
-    await sb().from("games").delete().eq("id", g.id);
+
+    const { error } = await sb().from("games").delete().eq("id", g.id);
+    if (error) {
+      console.error("[builder] delete error:", error);
+      alert("Nie udało się usunąć. Sprawdź konsolę.");
+      return;
+    }
+
     await refresh();
   });
 
@@ -45,24 +55,53 @@ function cardPlus() {
   el.innerHTML = `<div><div class="big">+</div><div class="small">Nowa / Import</div></div>`;
 
   el.addEventListener("click", async () => {
-    // “grubo”: wybór modalem
     const ok = await confirmModal({
       title: "Nowa Familiada",
-      text: "Utworzyć nową? (Import z pliku dodamy jako osobną opcję w następnym kroku).",
+      text: "Utworzyć nową Familiadę?",
       okText: "Utwórz",
       cancelText: "Anuluj",
     });
     if (!ok) return;
 
+    if (!currentUser?.id) {
+      alert("Brak sesji użytkownika. Zaloguj się ponownie.");
+      location.href = "index.html";
+      return;
+    }
+
+    // Insert: z triggerem owner_id może być pominięte,
+    // ale jawnie podajemy owner_id, żeby RLS nie miało wątpliwości.
     const { data: game, error } = await sb()
       .from("games")
-      .insert({ name: "Nowa Familiada" })
+      .insert({
+        name: "Nowa Familiada",
+        owner_id: currentUser.id,
+      })
       .select("*")
       .single();
-    if (error) throw error;
 
-    // Upewnij live_state
-    await sb().from("live_state").insert({ game_id: game.id }).select().maybeSingle();
+    if (error) {
+      console.error("[builder] create game error:", error);
+      alert(
+        "Nie udało się utworzyć gry.\n\n" +
+        "Najczęściej: RLS/owner_id albo brak sesji.\n" +
+        "Sprawdź konsolę (F12) i polityki w Supabase."
+      );
+      return;
+    }
+
+    // Upewnij się, że live_state istnieje
+    const { error: lsErr } = await sb()
+      .from("live_state")
+      .insert({ game_id: game.id })
+      .select()
+      .maybeSingle();
+
+    // Ignorujemy konflikt/brak uprawnień jeśli RLS już to kontroluje inaczej,
+    // ale w Twoim schemacie owner powinien móc.
+    if (lsErr) {
+      console.warn("[builder] live_state insert warn:", lsErr);
+    }
 
     location.href = `editor.html?id=${encodeURIComponent(game.id)}`;
   });
@@ -71,8 +110,16 @@ function cardPlus() {
 }
 
 async function refresh() {
-  const { data, error } = await sb().from("games").select("id,name,created_at").order("created_at", { ascending: false });
-  if (error) throw error;
+  const { data, error } = await sb()
+    .from("games")
+    .select("id,name,created_at")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("[builder] list games error:", error);
+    alert("Nie udało się wczytać listy gier. Sprawdź konsolę.");
+    return;
+  }
 
   grid.innerHTML = "";
   (data || []).forEach((g) => grid.appendChild(cardGame(g)));
@@ -80,8 +127,8 @@ async function refresh() {
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
-  const u = await requireAuth("index.html");
-  who.textContent = u.email || "—";
+  currentUser = await requireAuth("index.html");
+  who.textContent = currentUser?.email || "—";
 
   btnLogout.addEventListener("click", async () => {
     await signOut();
