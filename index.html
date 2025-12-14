@@ -1,1 +1,40 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Familiada — logowanie</title>
+  <link rel="stylesheet" href="css/base.css"/>
+  <link rel="stylesheet" href="css/login.css"/>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <script type="module" src="js/pages/index.js" defer></script>
+</head>
+<body class="login-body">
+  <div class="login-shell">
+    <div class="login-card">
+      <div class="brand">FAMILIADA</div>
+      <div class="sub">Panel tworzenia i prowadzenia gry</div>
+
+      <div class="status" id="status">Sprawdzam sesję…</div>
+
+      <div class="form">
+        <input id="email" type="email" placeholder="Email" autocomplete="email"/>
+        <input id="pass" type="password" placeholder="Hasło" autocomplete="current-password"/>
+        <input id="pass2" type="password" placeholder="Powtórz hasło" autocomplete="new-password" style="display:none"/>
+
+        <div class="row">
+          <button class="btn main" id="btnPrimary" type="button">Zaloguj</button>
+          <button class="btn" id="btnToggle" type="button">Załóż konto</button>
+        </div>
+
+        <div class="meta">
+          <button class="link" id="btnForgot" type="button">Przypomnij hasło</button>
+          <span class="err" id="err"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
 
