@@ -1,1 +1,136 @@
+<!DOCTYPE html>
+<html lang="pl">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Familiada – Sterowanie</title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" href="favicon.ico" />
+
+    <!-- Twoje style (jeśli masz) -->
+    <link rel="stylesheet" href="css/theme.css" />
+    <link rel="stylesheet" href="css/control.css" />
+
+    <!-- Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+
+    <!-- QR (prosta biblioteka) -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js" defer></script>
+
+    <!-- Twoje auth (zakładam, że wystawia window.supabaseClient i/lub ArcadeAuth) -->
+    <script src="js/core/auth.js" defer></script>
+
+    <!-- Logika sterowania -->
+    <script src="js/pages/control.js" defer></script>
+  </head>
+
+  <body class="arcade-body">
+    <div class="shell">
+      <div class="card">
+        <header class="ctl-header">
+          <div>
+            <div class="ctl-title">STEROWANIE</div>
+            <div class="ctl-subtitle">Ustawienia wstępne + start gry</div>
+          </div>
+
+          <div class="ctl-right">
+            <button class="arcade-btn ctl-open-display" type="button">
+              Ekran rzutnika
+            </button>
+          </div>
+        </header>
+
+        <div class="ctl-statusline">
+          <span class="ctl-game-name">Gra: —</span>
+          <span class="ctl-sep">•</span>
+          <span class="ctl-login">Status: —</span>
+          <span class="ctl-sep">•</span>
+          <span class="ctl-live">Live: —</span>
+        </div>
+
+        <div class="ctl-grid">
+          <!-- HOST -->
+          <section class="ctl-box">
+            <div class="ctl-box-title">
+              Tablet prowadzącego (HOST)
+              <span class="ctl-pill ctl-host-pill">—</span>
+            </div>
+
+            <div class="ctl-row">
+              <input class="arcade-input ctl-host-link" readonly />
+              <button class="arcade-btn ctl-copy-host" type="button">Kopiuj</button>
+            </div>
+
+            <div class="ctl-qr-row">
+              <div class="ctl-qr" id="qr-host"></div>
+              <div class="ctl-qr-help">
+                Ten link musi być otwarty na tablecie prowadzącego przed startem sterowania.
+              </div>
+            </div>
+          </section>
+
+          <!-- BUZZER -->
+          <section class="ctl-box">
+            <div class="ctl-box-title">
+              Przycisk (BUZZER)
+              <span class="ctl-pill ctl-buzzer-pill">—</span>
+            </div>
+
+            <div class="ctl-row">
+              <input class="arcade-input ctl-buzzer-link" readonly />
+              <button class="arcade-btn ctl-copy-buzzer" type="button">Kopiuj</button>
+            </div>
+
+            <div class="ctl-qr-row">
+              <div class="ctl-qr" id="qr-buzzer"></div>
+              <div class="ctl-qr-help">
+                Ten link musi być otwarty na telefonie/tablecie graczy przed startem sterowania.
+              </div>
+            </div>
+          </section>
+
+          <!-- QR na rzutniku -->
+          <section class="ctl-box ctl-box-wide">
+            <div class="ctl-box-title">
+              QR na rzutniku / monitorze
+              <span class="ctl-pill ctl-display-pill">—</span>
+            </div>
+
+            <div class="ctl-actions">
+              <button class="arcade-btn ctl-show-setup" type="button">
+                Pokaż QR na rzutniku
+              </button>
+              <button class="arcade-btn logout ctl-hide-setup" type="button">
+                Ukryj QR (wróć do planszy)
+              </button>
+            </div>
+
+            <div class="ctl-small">
+              To działa tylko jeśli okno rzutnika jest już otwarte na tym samym komputerze.
+            </div>
+          </section>
+        </div>
+
+        <hr class="ctl-hr" />
+
+        <section class="ctl-start">
+          <div class="ctl-start-left">
+            <div class="ctl-box-title">Start gry</div>
+            <div class="ctl-small">
+              Start jest zablokowany, dopóki HOST i BUZZER nie zostaną odpalone.
+            </div>
+          </div>
+
+          <div class="ctl-start-right">
+            <button class="arcade-btn ctl-start-game" type="button" disabled>
+              Start gry
+            </button>
+          </div>
+        </section>
+
+        <div class="ctl-error"></div>
+      </div>
+    </div>
+  </body>
+</html>
 
