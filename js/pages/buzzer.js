@@ -1,91 +1,123 @@
-import { sb } from "../core/supabase.js";
-import { startSnapshotPoll } from "../core/realtime.js";
+// js/pages/buzzer.js
+// Przycisk A/B: wywołuje RPC buzzer_press(gameId, key, team)
+// + heartbeat buzzer_hello (KROK 1.1)
+// Uwaga: w tej wersji uproszczonej buzzer odblokuje się po odświeżeniu strony
+// (pełne odblokowanie zrobimy w kolejnym kroku przez RPC snapshot dla buzzera).
 
-const $ = (s) => document.querySelector(s);
+(function () {
+  const qs = new URLSearchParams(location.search);
+  const gameId = qs.get("game");
+  const key = qs.get("key");
 
-const status = $("#status");
-const hint = $("#hint");
-const bigBtn = $("#bigBtn");
+  const $ = (s) => document.querySelector(s);
 
-function qsParam(name) {
-  const u = new URL(location.href);
-  return u.searchParams.get(name);
-}
+  const ui = {
+    status: null,
+    btnA: null,
+    btnB: null,
+    live: null,
+    err: null,
+  };
 
-const gameId = qsParam("id");
-const key = qsParam("key");
+  let sb = null;
+  let locked = false;
 
-let team = null;
-let live = null;
-
-function setStatus(m){ status.textContent = m; }
-
-function setTeam(t){
-  team = t;
-  document.querySelectorAll("[data-team]").forEach(b => b.classList.toggle("on", b.dataset.team === t));
-  bigBtn.disabled = !team;
-}
-
-document.addEventListener("DOMContentLoaded", () => {
-  if (!gameId || !key) {
-    setStatus("Brak parametrów: buzzer.html?id=...&key=...");
-    return;
+  function setError(msg) {
+    if (ui.err) ui.err.textContent = msg || "";
   }
 
-  document.querySelectorAll("[data-team]").forEach(btn => {
-    btn.addEventListener("click", () => setTeam(btn.dataset.team));
-  });
+  function setStatus(msg) {
+    if (ui.status) ui.status.textContent = msg || "";
+  }
 
-  // podgląd stanu buzzera
-  startSnapshotPoll({
-    gameId,
-    key: key,     // tu klucz BUZZERA, snapshot i tak jest publiczny przez display/remote,
-    kind: "display", // użyjemy display-snapshot do samego “live”; key tu nie pasuje
-    intervalMs: 350,
-    onData(data){
-      live = data?.live || {};
-      if (live?.buzzer_locked) {
-        bigBtn.disabled = true;
-        hint.textContent = `Zablokowane. Wygrał: ${live.buzzer_winner || "?"}`;
-      } else {
-        bigBtn.disabled = !team;
-        hint.textContent = team ? `Gotowe: Zespół ${team}.` : "Wybierz zespół, potem kliknij.";
-      }
-      setStatus("Na żywo ✔");
-    },
-    onError(e){
-      console.error(e);
-      setStatus("Błąd: " + (e?.message || String(e)));
+  function setLocked(on, winner) {
+    locked = !!on;
+    ui.btnA.disabled = locked;
+    ui.btnB.disabled = locked;
+
+    if (locked) {
+      setStatus(winner ? `Zablokowane – pierwszy: ${winner}` : "Zablokowane");
+    } else {
+      setStatus("Gotowe – naciśnij A lub B");
     }
-  });
+  }
 
-  // naciśnięcie buzzera
-  bigBtn.addEventListener("click", async () => {
-    if (!team) return;
+  async function callRpc(name, params) {
+    const { data, error } = await sb.rpc(name, params);
+    if (error) throw error;
+    return data;
+  }
+
+  async function hello() {
     try {
-      const { data, error } = await sb().rpc("buzzer_press", {
+      await callRpc("buzzer_hello", { p_game_id: gameId, p_key: key });
+    } catch (e) {
+      // tu też tylko informacyjnie
+      console.warn("[buzzer] buzzer_hello not available:", e?.message || e);
+    }
+  }
+
+  async function press(team) {
+    if (locked) return;
+    try {
+      setError("");
+      setStatus("Wysyłam…");
+
+      const res = await callRpc("buzzer_press", {
         p_game_id: gameId,
         p_key: key,
-        p_team: team
+        p_team: team,
       });
-      if (error) throw error;
 
-      if (data?.accepted) {
-        hint.textContent = "✔ ZŁAPANE!";
+      // res: {accepted, winner, locked}
+      if (res?.accepted) {
+        setLocked(true, res?.winner || team);
       } else {
-        hint.textContent = `Za późno. Wygrał: ${data?.winner || "?"}`;
+        // ktoś był pierwszy
+        setLocked(true, res?.winner || "?");
       }
     } catch (e) {
       console.error(e);
-      hint.textContent = "Błąd wysyłania.";
+      setError(e?.message || "Błąd buzzera.");
+      setStatus("Błąd");
     }
-  });
+  }
 
-  // Fullscreen na tap
-  document.body.addEventListener("dblclick", async () => {
-    try {
-      if (!document.fullscreenElement) await document.documentElement.requestFullscreen();
-      else await document.exitFullscreen();
-    } catch {}
+  async function main() {
+    ui.status = $(".bz-status");
+    ui.btnA = $(".bz-a");
+    ui.btnB = $(".bz-b");
+    ui.live = $(".bz-live");
+    ui.err = $(".bz-error");
+
+    if (!gameId || !key) {
+      setError("Brak parametrów URL (game/key).");
+      setStatus("Błąd");
+      return;
+    }
+
+    if (!window.supabaseClient) {
+      setError("Brak window.supabaseClient (sprawdź auth.js).");
+      setStatus("Błąd");
+      return;
+    }
+    sb = window.supabaseClient;
+
+    ui.btnA.addEventListener("click", () => press("A"));
+    ui.btnB.addEventListener("click", () => press("B"));
+
+    setLocked(false);
+    await hello();
+    setInterval(hello, 15000);
+
+    ui.live.textContent = "Połączono";
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    main().catch((e) => {
+      console.error(e);
+      const err = document.querySelector(".bz-error");
+      if (err) err.textContent = e?.message || "Błąd krytyczny.";
+    });
   });
-});
+})();
