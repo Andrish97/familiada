@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Familiada — sondaże</title>
+  <title>Familiada — sondaż</title>
 
   <link rel="icon" href="favicon.ico"/>
 
@@ -25,12 +25,43 @@
   </header>
 
   <main class="wrap">
-    <div class="title">Sondaże</div>
-    <div class="hint">
-      Tu uruchamiasz sondaż dla całej Familiady, podglądasz głosy i kończysz sondaż (zamraża wyniki do 100).
+    <div class="rowTop">
+      <div>
+        <div class="title">Sondaż</div>
+        <div class="hint">
+          Uruchom sondaż, zbieraj głosy, podejrzyj wyniki, a na końcu zamknij — wtedy punkty zostaną znormalizowane do 100 i gra będzie gotowa do zagrania.
+        </div>
+      </div>
+
+      <div class="statusBox">
+        <div class="chip" id="chipKind">—</div>
+        <div class="chip" id="chipStatus">—</div>
+      </div>
     </div>
 
-    <div class="grid" id="grid"></div>
+    <div class="card" id="cardMain" style="display:none;">
+      <div class="name" id="gName">—</div>
+      <div class="meta" id="gMeta">—</div>
+
+      <div class="row">
+        <input class="inp" id="pollLink" readonly />
+        <button class="btn" id="btnCopy" type="button">Kopiuj link</button>
+        <button class="btn gold" id="btnOpen" type="button">Otwórz link</button>
+      </div>
+
+      <div class="row">
+        <button class="btn gold" id="btnStart" type="button">Uruchom sondaż</button>
+        <button class="btn danger" id="btnClose" type="button">Zakończ sondaż</button>
+        <button class="btn" id="btnPreview" type="button">Podgląd głosów</button>
+      </div>
+
+      <pre class="votes" id="votes" style="display:none;"></pre>
+    </div>
+
+    <div class="card" id="cardEmpty">
+      <div class="name">Brak gry</div>
+      <div class="meta">Otwórz stronę z parametrem <b>polls.html?id=...</b> (builder zrobi to automatycznie).</div>
+    </div>
 
     <div class="foot">
       <div class="msg" id="msg"></div>
@@ -38,4 +69,3 @@
   </main>
 </body>
 </html>
-
