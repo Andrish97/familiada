@@ -1,70 +1,49 @@
 <!DOCTYPE html>
 <html lang="pl">
-<head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Familiada — Pilot</title>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Familiada – Prowadzący</title>
 
-  <link rel="stylesheet" href="css/base.css"/>
-  <link rel="stylesheet" href="css/remote.css"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" href="favicon.ico" />
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-  <script type="module" src="js/pages/remote.js" defer></script>
-</head>
-<body class="remote-body">
-  <div class="remote-shell">
+    <link rel="stylesheet" href="css/theme.css" />
+    <link rel="stylesheet" href="css/host.css" />
 
-    <header class="bar">
-      <div class="title">
-        <div class="logo">PILOT</div>
-        <div class="name" id="gameName">—</div>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+
+    <!-- auth.js musi wystawić window.supabaseClient -->
+    <script src="js/core/auth.js" defer></script>
+
+    <script src="js/pages/host.js" defer></script>
+  </head>
+
+  <body class="arcade-body">
+    <button class="host-toggle" type="button">UKRYJ</button>
+
+    <div class="host-wrap">
+      <div class="host-top">
+        <div class="host-title">PROWADZĄCY</div>
+        <div class="host-timer">
+          <span class="host-timer-label">Czas:</span>
+          <span class="host-timer-val">—</span>
+        </div>
       </div>
-      <div class="status" id="status">Łączenie…</div>
-    </header>
 
-    <main class="grid">
+      <div class="host-card">
+        <div class="host-game">Gra: —</div>
+        <div class="host-phase">Stan: —</div>
 
-      <section class="panel">
-        <div class="h">Runda</div>
-        <div class="big" id="roundPoints">0</div>
-        <div class="row">
-          <button class="btn" id="pMinus">-10</button>
-          <button class="btn main" id="pPlus">+10</button>
-          <button class="btn" id="pReset">Reset</button>
+        <div class="host-question-title">Pytanie</div>
+        <div class="host-question">Czekam na start…</div>
+
+        <div class="host-foot">
+          <span class="host-live">—</span>
+          <span class="host-error"></span>
         </div>
-      </section>
+      </div>
+    </div>
 
-      <section class="panel">
-        <div class="h">Błędy</div>
-        <div class="strikes" id="strikes">0</div>
-        <div class="row">
-          <button class="btn" id="sMinus">-</button>
-          <button class="btn danger" id="sPlus">+</button>
-          <button class="btn" id="sReset">Reset</button>
-        </div>
-      </section>
-
-      <section class="panel wide">
-        <div class="h">Odpowiedzi</div>
-        <div class="row">
-          <button class="btn main" id="revealNext">Odkryj następną</button>
-          <button class="btn" id="hideAll">Ukryj wszystkie</button>
-        </div>
-        <div class="answers" id="answers"></div>
-      </section>
-
-      <section class="panel wide">
-        <div class="h">Full screen</div>
-        <div class="row">
-          <button class="btn" id="fs">Pełny ekran</button>
-        </div>
-        <div class="note">
-          Ten pilot działa po linku z tajnym kluczem. Nie wymaga logowania.
-        </div>
-      </section>
-
-    </main>
-  </div>
-</body>
+    <div class="host-hidden" style="display:none;"></div>
+  </body>
 </html>
-
