@@ -1,24 +1,33 @@
 // js/core/sfx.js
 // Dźwięki lecą na komputerze operatora (control).
-// Wrzuć pliki mp3 do: assets/sfx/
+// Pliki są w /audio w root repo.
 
-const PATH = "assets/sfx/";
+const PATH = "audio/";
 
 const files = {
-  round_start: "round_start.mp3",
-  round_end: "round_end.mp3",
-  buzzer: "buzzer.mp3",
-  correct: "correct.mp3",
-  wrong: "wrong.mp3",
-  reveal: "reveal.mp3",
-  time_up: "time_up.mp3",
-  final: "final.mp3",
-  repeat: "repeat.mp3",
+  // intro / przejścia
+  show_intro: "show_intro.mp3",
+  round_transition: "round_transition.mp3",
+  final_theme: "final_theme.mp3",
+
+  // buzzer
+  buzzer_press: "buzzer_press.mp3",
+
+  // odpowiedzi
+  answer_correct: "answer_correct.mp3",
+  answer_wrong: "answer_wrong.mp3",
+  answer_repeat: "answer_repeat.mp3",
+
+  // czas
+  time_over: "time_over.mp3",
+
+  // UI “tick” (dzwonki przy zmianach na ekranie)
+  ui_tick: "ui_tick.mp3",
 };
 
 const cache = new Map();
 
-function audio(name) {
+function getAudio(name) {
   const fn = files[name];
   if (!fn) return null;
 
@@ -30,9 +39,9 @@ function audio(name) {
   return cache.get(name);
 }
 
-// próbuje zagrać bez wywalania błędów (autoplay policy itp.)
+// bezpieczne odtwarzanie (autoplay policy itd.)
 export function playSfx(name) {
-  const a = audio(name);
+  const a = getAudio(name);
   if (!a) return;
   try {
     a.currentTime = 0;
