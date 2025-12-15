@@ -1,390 +1,315 @@
-// js/pages/control.js (module)
-// Setup + rundy (AUTO kolejne pytanie) + walidacja min. 3 pytania rund
-
 import { sb } from "../core/supabase.js";
-import { requireAuth } from "../core/auth.js";
+import { requireAuth, signOut } from "../core/auth.js";
+import { guardDesktopOnly } from "../core/device-guard.js";
+import { confirmModal } from "../core/modal.js";
+import { playSfx } from "../core/sfx.js";
+
+guardDesktopOnly({ message: "Sterowanie Familiady jest dostępne tylko na komputerze." });
 
 const qs = new URLSearchParams(location.search);
-const gameId = qs.get("game");
+const gameId = qs.get("id");
 
-let client = null;
+const who = document.getElementById("who");
+const btnLogout = document.getElementById("btnLogout");
+const btnBack = document.getElementById("btnBack");
+const gameLabel = document.getElementById("gameLabel");
+
+const tabs = Array.from(document.querySelectorAll(".tab"));
+const panels = Array.from(document.querySelectorAll(".panel"));
+
+const msgDevices = document.getElementById("msgDevices");
+const msgGame = document.getElementById("msgGame");
+
+const pillHost = document.getElementById("pillHost");
+const pillBuzzer = document.getElementById("pillBuzzer");
+const pillDisplay = document.getElementById("pillDisplay");
+
+const hostLink = document.getElementById("hostLink");
+const buzzerLink = document.getElementById("buzzerLink");
+const displayLink = document.getElementById("displayLink");
+
+const btnCopyHost = document.getElementById("btnCopyHost");
+const btnCopyBuzzer = document.getElementById("btnCopyBuzzer");
+const btnCopyDisplay = document.getElementById("btnCopyDisplay");
+
+const btnOpenHost = document.getElementById("btnOpenHost");
+const btnOpenBuzzer = document.getElementById("btnOpenBuzzer");
+const btnOpenDisplay = document.getElementById("btnOpenDisplay");
+
+const btnStartGame = document.getElementById("btnStartGame");
+const btnStartRound = document.getElementById("btnStartRound");
+const btnResetBuzzer = document.getElementById("btnResetBuzzer");
+
+const stRound = document.getElementById("stRound");
+const stMult = document.getElementById("stMult");
+const stStep = document.getElementById("stStep");
+
+const stBuzz = document.getElementById("stBuzz");
+const stTeam = document.getElementById("stTeam");
+const stStrikes = document.getElementById("stStrikes");
+const stSum = document.getElementById("stSum");
+
+const btnPlay = document.getElementById("btnPlay");
+const btnPass = document.getElementById("btnPass");
+const btnX = document.getElementById("btnX");
+
+const answersBox = document.getElementById("answers");
+const btnRevealNext = document.getElementById("btnRevealNext");
+const btnEndRound = document.getElementById("btnEndRound");
+
 let displayWin = null;
-
-let gameRow = null;
+let game = null;
 let questions = [];
 let answersForActive = [];
 let revealQueue = [];
-let links = { hostUrl: "", buzzerUrl: "" };
 
-const el = (s) => document.querySelector(s);
-
-const ui = {
-  gameName: el(".ctl-game-name"),
-  login: el(".ctl-login"),
-  live: el(".ctl-live"),
-  err: el(".ctl-error"),
-
-  hostPill: el(".ctl-host-pill"),
-  buzzerPill: el(".ctl-buzzer-pill"),
-  displayPill: el(".ctl-display-pill"),
-
-  hostLink: el(".ctl-host-link"),
-  buzzerLink: el(".ctl-buzzer-link"),
-
-  btnOpenDisplay: el(".ctl-open-display"),
-  btnCopyHost: el(".ctl-copy-host"),
-  btnCopyBuzzer: el(".ctl-copy-buzzer"),
-  btnShowSetup: el(".ctl-show-setup"),
-  btnHideSetup: el(".ctl-hide-setup"),
-
-  btnStartGame: el(".ctl-start-game"),
-  btnStartRound: el(".ctl-start-round"),
-  btnResetBuzzer: el(".ctl-reset-buzzer"),
-
-  roundNo: el(".ctl-round-no"),
-  mult: el(".ctl-mult"),
-  step: el(".ctl-step"),
-
-  selQ: el(".ctl-question-select"),
-  btnReloadQ: el(".ctl-load-questions"),
-
-  teamA: el(".ctl-team-a"),
-  teamB: el(".ctl-team-b"),
-  btnSaveTeams: el(".ctl-save-teams"),
-
-  buzzWinner: el(".ctl-buzz-winner"),
-  playingTeam: el(".ctl-playing-team"),
-  strikes: el(".ctl-strikes"),
-  roundSum: el(".ctl-round-sum"),
-
-  btnPlay: el(".ctl-play"),
-  btnPass: el(".ctl-pass"),
-
-  answersBox: el(".ctl-answers"),
-
-  btnRevealNext: el(".ctl-reveal-next"),
-  btnEndRound: el(".ctl-end-round"),
-};
-
-function setError(msg) {
-  ui.err.textContent = msg || "";
+function setMsg(where, t){
+  where.textContent = t || "";
+  if(t) setTimeout(()=>where.textContent="", 1400);
 }
 
-function pillSet(pillEl, ok, text) {
-  pillEl.classList.remove("ok", "bad");
-  pillEl.classList.add(ok ? "ok" : "bad");
-  pillEl.textContent = text;
+function setPill(pill, ok, text){
+  pill.classList.remove("ok","bad");
+  pill.classList.add(ok ? "ok" : "bad");
+  pill.textContent = text;
 }
 
-function buildLink(file, params) {
-  const base = new URL(file, location.href);
-  Object.entries(params).forEach(([k, v]) => base.searchParams.set(k, String(v)));
-  return base.toString();
+function buildLink(file, params){
+  const u = new URL(file, location.href);
+  Object.entries(params).forEach(([k,v])=>u.searchParams.set(k, String(v)));
+  return u.toString();
 }
 
-async function copyToClipboard(text) {
-  try {
-    await navigator.clipboard.writeText(text);
-    return true;
-  } catch {
-    return false;
-  }
+async function copyText(text){
+  try{ await navigator.clipboard.writeText(text); return true; }catch{ return false; }
 }
 
-function renderQR(holderId, text) {
-  const holder = document.getElementById(holderId);
-  holder.innerHTML = "";
-  new QRCode(holder, { text, width: 132, height: 132, correctLevel: QRCode.CorrectLevel.M });
-}
+function otherTeam(t){ return t === "A" ? "B" : "A"; }
 
-function postToDisplay(msg) {
-  if (!displayWin || displayWin.closed) {
-    pillSet(ui.displayPill, false, "Rzutnik nieotwarty");
-    return false;
-  }
-  displayWin.postMessage(msg, location.origin);
-  pillSet(ui.displayPill, true, "Rzutnik otwarty");
-  return true;
-}
-
-function otherTeam(t) {
-  return t === "A" ? "B" : "A";
-}
-
-function multiplierForRound(roundNo) {
-  if (roundNo === 1) return 1;
-  if (roundNo === 2) return 2;
+function multiplierForRound(n){
+  if(n === 1) return 1;
+  if(n === 2) return 2;
   return 3;
 }
 
-function parseJsonbArray(v) {
-  try {
-    if (Array.isArray(v)) return v;
+function parseArr(v){
+  try{
+    if(Array.isArray(v)) return v;
     return JSON.parse(v || "[]");
-  } catch {
-    return [];
-  }
+  }catch{ return []; }
 }
 
-async function ensureLiveState() {
-  const { data, error } = await client
-    .from("live_state")
-    .select("game_id")
-    .eq("game_id", gameId)
-    .maybeSingle();
-
-  if (!error && data?.game_id) return;
-
-  const ins = await client.from("live_state").insert({ game_id: gameId });
-  if (ins.error) throw ins.error;
+async function ensureLive(){
+  const { data } = await sb().from("live_state").select("game_id").eq("game_id", gameId).maybeSingle();
+  if(data?.game_id) return;
+  await sb().from("live_state").insert({ game_id: gameId });
 }
 
-async function loadGame() {
-  const { data, error } = await client
+async function loadGame(){
+  const { data, error } = await sb()
     .from("games")
-    .select("id,name,share_key_display,share_key_remote,share_key_buzzer")
+    .select("id,name,kind,status,share_key_display,share_key_remote,share_key_buzzer")
     .eq("id", gameId)
     .single();
-  if (error) throw error;
+  if(error) throw error;
   return data;
 }
 
-async function loadQuestions() {
-  const { data, error } = await client
+async function loadQuestions(){
+  const { data, error } = await sb()
     .from("questions")
     .select("id,ord,text,mode")
     .eq("game_id", gameId)
-    .order("ord", { ascending: true });
-  if (error) throw error;
+    .order("ord",{ascending:true});
+  if(error) throw error;
   return data || [];
 }
 
-async function loadAnswersByQuestion(qid) {
-  const { data, error } = await client
+async function loadAnswers(qid){
+  const { data, error } = await sb()
     .from("answers")
     .select("id,ord,text,fixed_points")
     .eq("question_id", qid)
-    .order("ord", { ascending: true });
-  if (error) throw error;
+    .order("ord",{ascending:true});
+  if(error) throw error;
   return data || [];
 }
 
-async function readLive() {
-  const { data, error } = await client
-    .from("live_state")
-    .select("*")
-    .eq("game_id", gameId)
-    .single();
-  if (error) throw error;
+async function readLive(){
+  const { data, error } = await sb().from("live_state").select("*").eq("game_id", gameId).single();
+  if(error) throw error;
   return data;
 }
 
-async function updateLive(patch) {
-  const { error } = await client.from("live_state").update(patch).eq("game_id", gameId);
-  if (error) throw error;
+async function updateLive(patch){
+  const { error } = await sb().from("live_state").update(patch).eq("game_id", gameId);
+  if(error) throw error;
 }
 
-function renderQuestionSelect() {
-  ui.selQ.innerHTML = "";
-  const opt0 = document.createElement("option");
-  opt0.value = "";
-  opt0.textContent = "AUTO (kolejne niewykorzystane)";
-  ui.selQ.appendChild(opt0);
-
-  questions.forEach((q) => {
-    const opt = document.createElement("option");
-    opt.value = q.id;
-    opt.textContent = `${q.ord}. ${q.text}`;
-    ui.selQ.appendChild(opt);
-  });
+function tabSwitch(name){
+  tabs.forEach(t=>t.classList.toggle("active", t.dataset.tab === name));
+  panels.forEach(p=>p.style.display = p.dataset.panel === name ? "" : "none");
 }
 
-async function validateBeforeStart() {
-  // wymagania: min 3 pytania rund + każde z nich ma min 1 odpowiedź
+tabs.forEach(t=>t.addEventListener("click", ()=>tabSwitch(t.dataset.tab)));
+
+function pingOk(seenAtIso){
+  if(!seenAtIso) return false;
+  const seen = new Date(seenAtIso).getTime();
+  const now = Date.now();
+  return (now - seen) <= 15000; // 15s “żyje”
+}
+
+async function validateGameReady(){
+  // fixed: dokładnie 5 pytań i każda suma <= 100
+  // poll: tylko status 'ready'
   const qs = await loadQuestions();
   questions = qs;
-  renderQuestionSelect();
 
-  if (qs.length < 3) {
-    return { ok: false, reason: "Za mało pytań: minimum 3 pytania rund (×1, ×2, ×3)." };
+  if(game.kind === "poll"){
+    if(game.status !== "ready"){
+      return { ok:false, reason:"Familiada sondażowa nie jest gotowa. Zamknij sondaż w zakładce Sondaże." };
+    }
+    return { ok:true, reason:"" };
   }
 
-  // sprawdzamy pierwsze 3 pytania wg ord (rundy)
-  const firstThree = qs.slice(0, 3);
-  for (const q of firstThree) {
-    const ans = await loadAnswersByQuestion(q.id);
-    if (!ans.length) {
-      return { ok: false, reason: `Pytanie #${q.ord} nie ma żadnych odpowiedzi.` };
+  if(qs.length !== 5){
+    return { ok:false, reason:`Familiada lokalna musi mieć dokładnie 5 pytań. Masz: ${qs.length}.` };
+  }
+
+  for(const q of qs){
+    const ans = await loadAnswers(q.id);
+    if(!ans.length) return { ok:false, reason:`Pytanie #${q.ord} nie ma odpowiedzi.` };
+    const sum = ans.reduce((s,a)=>s + (Number(a.fixed_points)||0), 0);
+    if(sum > 100){
+      return { ok:false, reason:`Pytanie #${q.ord}: suma punktów = ${sum} (max 100).` };
     }
   }
-
-  return { ok: true, reason: "" };
+  return { ok:true, reason:"" };
 }
 
-function pickNextQuestionId(ls) {
-  const used = parseJsonbArray(ls?.used_question_ids);
-  const allIds = questions.map((q) => q.id);
-
-  // pierwsze niewykorzystane
-  for (const id of allIds) {
-    if (!used.includes(id)) return id;
+function pickNextQuestionId(ls){
+  const used = parseArr(ls.used_question_ids);
+  for(const q of questions){
+    if(!used.includes(q.id)) return q.id;
   }
   return null;
 }
 
-function parseRevealed(ls) {
-  return parseJsonbArray(ls?.revealed_answer_ids);
-}
+function renderAnswers(ls){
+  answersBox.innerHTML = "";
+  const revealed = parseArr(ls.revealed_answer_ids);
+  const step = ls.step || "idle";
+  const canClick = ["licytacja","play","steal"].includes(step);
 
-function setRevealedPatch(ids) {
-  return { revealed_answer_ids: ids };
-}
+  for(const a of answersForActive){
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "aBtn";
+    const rev = revealed.includes(a.id);
+    if(rev) b.classList.add("revealed");
+    b.disabled = !canClick || rev;
 
-function renderAnswerButtons(ls) {
-  const revealed = parseRevealed(ls);
-  ui.answersBox.innerHTML = "";
-
-  const step = ls?.step || "idle";
-  const canClick = step === "licytacja" || step === "play" || step === "steal";
-
-  answersForActive.forEach((a) => {
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.className = "ctl-answer-btn";
-
-    const isRev = revealed.includes(a.id);
-    if (isRev) btn.classList.add("revealed");
-    btn.disabled = !canClick || isRev;
-
-    btn.innerHTML = `
-      <div class="ctl-answer-top">
-        <span>#${a.ord}</span>
-        <span>${typeof a.fixed_points === "number" ? a.fixed_points : 0} pkt</span>
-      </div>
-      <div class="ctl-answer-text">${a.text}</div>
+    b.innerHTML = `
+      <div class="aTop"><span>#${a.ord}</span><span>${Number(a.fixed_points)||0} pkt</span></div>
+      <div class="aText">${a.text}</div>
     `;
 
-    btn.addEventListener("click", async () => {
-      if (!canClick || isRev) return;
-      await confirmCorrectAnswer(ls, a);
+    b.addEventListener("click", async ()=>{
+      if(!canClick || rev) return;
+      await confirmCorrect(ls, a);
     });
 
-    ui.answersBox.appendChild(btn);
-  });
-
-  const xBtn = document.createElement("button");
-  xBtn.type = "button";
-  xBtn.className = "ctl-answer-btn bad";
-  xBtn.innerHTML = `
-    <div class="ctl-answer-top"><span>X</span><span>—</span></div>
-    <div class="ctl-answer-text">BŁĄD / CZAS</div>
-  `;
-  xBtn.disabled = !canClick;
-
-  xBtn.addEventListener("click", async () => {
-    if (!canClick) return;
-
-    // specjal: nietrafiona kradzież — X w steal = przyznaj grającej
-    const fresh = await readLive();
-    if (fresh.step === "steal") {
-      const awardTo = fresh.playing_team || otherTeam(fresh.buzzer_winner || "A");
-      await awardAndPrepareReveal(fresh, awardTo);
-      return;
-    }
-
-    await confirmStrike(ls);
-  });
-
-  ui.answersBox.appendChild(xBtn);
+    answersBox.appendChild(b);
+  }
 }
 
-async function confirmCorrectAnswer(ls, ans) {
-  const revealed = parseRevealed(ls);
-  const mult = typeof ls?.multiplier === "number" ? ls.multiplier : 1;
+async function confirmCorrect(ls, ans){
+  playSfx("correct");
 
-  const pts = (typeof ans.fixed_points === "number" ? ans.fixed_points : 0) * mult;
-  const newSum = (typeof ls.round_sum === "number" ? ls.round_sum : 0) + pts;
+  const revealed = parseArr(ls.revealed_answer_ids);
+  const mult = Number(ls.multiplier)||1;
+  const pts = (Number(ans.fixed_points)||0) * mult;
+  const newSum = (Number(ls.round_sum)||0) + pts;
 
   revealed.push(ans.id);
 
   await updateLive({
+    revealed_answer_ids: revealed,
     round_sum: newSum,
     round_points: newSum,
-    ...setRevealedPatch(revealed),
   });
 
-  const all = answersForActive.map((a) => a.id);
-  const allRevealed = all.every((id) => revealed.includes(id));
-  if (allRevealed) {
-    const awardTo =
-      ls.step === "steal"
-        ? (ls.steal_team || otherTeam(ls.playing_team || ls.buzzer_winner || "A"))
-        : (ls.playing_team || ls.buzzer_winner || "A");
+  playSfx("reveal");
 
-    await awardAndPrepareReveal(ls, awardTo);
-  } else {
-    // jeśli to była poprawna odpowiedź w steal, to też od razu przyznajemy całą rundę kradnącej
-    if (ls.step === "steal" && !ls.round_awarded_to) {
-      const awardTo = ls.steal_team || otherTeam(ls.playing_team || ls.buzzer_winner || "A");
-      await awardAndPrepareReveal(ls, awardTo);
-    }
+  const all = answersForActive.map(a=>a.id);
+  const allRevealed = all.every(id=>revealed.includes(id));
+  if(allRevealed){
+    const awardTo = ls.step === "steal"
+      ? (ls.steal_team || otherTeam(ls.playing_team || ls.buzzer_winner || "A"))
+      : (ls.playing_team || ls.buzzer_winner || "A");
+
+    await awardRound(ls, awardTo);
   }
 }
 
-async function confirmStrike(ls) {
-  const strikes = (typeof ls.strikes === "number" ? ls.strikes : 0) + 1;
+async function confirmStrike(ls){
+  playSfx("wrong");
 
-  if (strikes >= 3) {
+  const strikes = (Number(ls.strikes)||0) + 1;
+  if(strikes >= 3){
     const stealTeam = otherTeam(ls.playing_team || ls.buzzer_winner || "A");
-    await updateLive({
-      strikes,
-      step: "steal",
-      steal_team: stealTeam,
-    });
+    await updateLive({ strikes, step:"steal", steal_team: stealTeam });
     return;
   }
-
   await updateLive({ strikes });
 }
 
-async function awardAndPrepareReveal(ls, teamToAward) {
-  const sum = typeof ls.round_sum === "number" ? ls.round_sum : 0;
+async function awardRound(ls, teamToAward){
+  const sum = Number(ls.round_sum)||0;
 
-  let patch = {
+  const patch = {
     step: "reveal_end",
     round_awarded_to: teamToAward,
   };
 
-  if (teamToAward === "A") patch.team_a_score = (ls.team_a_score || 0) + sum;
-  if (teamToAward === "B") patch.team_b_score = (ls.team_b_score || 0) + sum;
+  if(teamToAward === "A") patch.team_a_score = (Number(ls.team_a_score)||0) + sum;
+  if(teamToAward === "B") patch.team_b_score = (Number(ls.team_b_score)||0) + sum;
 
   await updateLive(patch);
 
-  const revealed = parseRevealed(ls);
-  const remaining = answersForActive
-    .map((a) => a.id)
-    .filter((id) => !revealed.includes(id));
-
+  const revealed = parseArr(ls.revealed_answer_ids);
+  const remaining = answersForActive.map(a=>a.id).filter(id=>!revealed.includes(id));
   revealQueue = remaining.slice();
+
+  playSfx("round_end"); // końcówka rundy
 }
 
-async function revealNext(ls) {
-  if (!revealQueue.length) return;
+async function revealNext(){
+  const ls = await readLive();
+  if(!revealQueue.length) return;
 
   const nextId = revealQueue.shift();
-  const revealed = parseRevealed(ls);
+  const revealed = parseArr(ls.revealed_answer_ids);
+  if(!revealed.includes(nextId)) revealed.push(nextId);
 
-  if (!revealed.includes(nextId)) revealed.push(nextId);
-  await updateLive({ ...setRevealedPatch(revealed) });
+  await updateLive({ revealed_answer_ids: revealed });
+  playSfx("reveal");
 }
 
-async function endRoundReset(ls) {
-  const nextRound = (typeof ls.round_no === "number" ? ls.round_no : 1) + 1;
+async function endRound(){
+  const ls = await readLive();
+  if(revealQueue.length){
+    setMsg(msgGame, "Najpierw odkryj pozostałe odpowiedzi.");
+    return;
+  }
+
+  const nextRound = (Number(ls.round_no)||1) + 1;
   const nextMult = multiplierForRound(nextRound);
 
   await updateLive({
-    phase: "idle",
-    step: "idle",
+    phase:"idle",
+    step:"idle",
     round_no: nextRound,
     multiplier: nextMult,
 
@@ -393,428 +318,338 @@ async function endRoundReset(ls) {
     round_sum: 0,
     round_points: 0,
     revealed_answer_ids: [],
-    buzzer_locked: false,
-    buzzer_winner: null,
-    buzzer_at: null,
 
-    playing_team: null,
-    steal_team: null,
-    round_awarded_to: null,
+    buzzer_locked:false,
+    buzzer_winner:null,
+    buzzer_at:null,
 
-    timer_kind: "none",
-    timer_seconds_left: 0,
-    timer_running: false,
-    timer_updated_at: null,
+    playing_team:null,
+    steal_team:null,
+    round_awarded_to:null,
   });
 
+  answersForActive = [];
   revealQueue = [];
+  setMsg(msgGame, "Runda zakończona.");
 }
 
-async function resetBuzzerOnly() {
+async function startGame(){
+  const chk = await validateGameReady();
+  if(!chk.ok){
+    setMsg(msgGame, chk.reason);
+    return;
+  }
+
+  const ls = await readLive();
+  if(!pingOk(ls.host_seen_at) || !pingOk(ls.buzzer_seen_at)){
+    setMsg(msgGame, "HOST/BUZZER nie działają (brak ping).");
+    return;
+  }
+
   await updateLive({
-    buzzer_locked: false,
-    buzzer_winner: null,
-    buzzer_at: null,
+    phase:"idle",
+    step:"idle",
+    round_no:1,
+    multiplier:1,
+
+    team_a_score:0,
+    team_b_score:0,
+    strikes:0,
+    round_sum:0,
+    round_points:0,
+
+    active_question_id:null,
+    revealed_answer_ids:[],
+    buzzer_locked:false,
+    buzzer_winner:null,
+    buzzer_at:null,
+
+    playing_team:null,
+    steal_team:null,
+    round_awarded_to:null,
+
+    used_question_ids: [],
   });
+
+  playSfx("round_start");
+  setMsg(msgGame, "Start gry OK.");
 }
 
-function refreshUI(ls, setupOk) {
-  ui.live.textContent = ls?.updated_at
-    ? `Live: ${new Date(ls.updated_at).toLocaleTimeString()}`
-    : "Live: —";
+async function startRound(){
+  const chk = await validateGameReady();
+  if(!chk.ok){
+    setMsg(msgGame, chk.reason);
+    return;
+  }
 
-  const hostOk = !!ls?.host_ready;
-  const buzOk = !!ls?.buzzer_ready;
+  const ls = await readLive();
+  if(ls.step !== "idle"){
+    setMsg(msgGame, "Runda już trwa / jest w trakcie kończenia.");
+    return;
+  }
 
-  pillSet(ui.hostPill, hostOk, hostOk ? "HOST: OK" : "HOST: BRAK");
-  pillSet(ui.buzzerPill, buzOk, buzOk ? "BUZZER: OK" : "BUZZER: BRAK");
+  if(!pingOk(ls.host_seen_at) || !pingOk(ls.buzzer_seen_at)){
+    setMsg(msgGame, "HOST/BUZZER nie działają (brak ping).");
+    return;
+  }
 
-  ui.btnStartGame.disabled = !(hostOk && buzOk && setupOk.ok);
-  ui.btnStartRound.disabled = !(hostOk && buzOk && setupOk.ok && ls?.step === "idle");
+  const qid = pickNextQuestionId(ls);
+  if(!qid){
+    setMsg(msgGame, "Brak kolejnych pytań.");
+    return;
+  }
 
-  ui.btnResetBuzzer.disabled = !ls?.active_question_id;
+  answersForActive = await loadAnswers(qid);
+  if(!answersForActive.length){
+    setMsg(msgGame, "Pytanie nie ma odpowiedzi.");
+    return;
+  }
 
-  ui.roundNo.textContent = String(ls?.round_no ?? "—");
-  ui.mult.textContent = String(ls?.multiplier ?? "—");
-  ui.step.textContent = String(ls?.step ?? "—");
+  const used = parseArr(ls.used_question_ids);
+  if(!used.includes(qid)) used.push(qid);
 
-  ui.buzzWinner.textContent = ls?.buzzer_winner || "—";
-  ui.playingTeam.textContent = ls?.playing_team || "—";
-  ui.strikes.textContent = String(ls?.strikes ?? 0);
-  ui.roundSum.textContent = String(ls?.round_sum ?? 0);
+  const roundNo = Number(ls.round_no)||1;
+  const mult = multiplierForRound(roundNo);
 
-  const canDecision = ls?.step === "decision";
-  ui.btnPlay.disabled = !canDecision;
-  ui.btnPass.disabled = !canDecision;
+  await updateLive({
+    phase:"round",
+    step:"await_buzz",
+    active_question_id: qid,
+    strikes:0,
+    round_sum:0,
+    round_points:0,
+    revealed_answer_ids:[],
 
-  const inReveal = ls?.step === "reveal_end";
-  ui.btnRevealNext.disabled = !(inReveal && revealQueue.length > 0);
-  ui.btnEndRound.disabled = !inReveal;
+    multiplier: mult,
+    used_question_ids: used,
 
-  renderAnswerButtons(ls);
+    buzzer_locked:false,
+    buzzer_winner:null,
+    buzzer_at:null,
+
+    playing_team:null,
+    steal_team:null,
+    round_awarded_to:null,
+  });
+
+  playSfx("round_start");
+  setMsg(msgGame, `Start rundy #${roundNo}.`);
 }
 
-function subscribeLive(onChange) {
-  const channel = client
+async function resetBuzzer(){
+  await updateLive({ buzzer_locked:false, buzzer_winner:null, buzzer_at:null });
+  setMsg(msgGame, "Buzzer zresetowany.");
+}
+
+async function choosePlay(){
+  const ls = await readLive();
+  if(ls.step !== "decision") return;
+  await updateLive({ step:"play", playing_team: (ls.buzzer_winner || "A") });
+}
+
+async function choosePass(){
+  const ls = await readLive();
+  if(ls.step !== "decision") return;
+  await updateLive({ step:"play", playing_team: otherTeam(ls.buzzer_winner || "A") });
+}
+
+async function pressX(){
+  const ls = await readLive();
+  if(["licytacja","play","steal"].includes(ls.step)){
+    if(ls.step === "steal"){
+      // nieudana kradzież = rundę bierze grająca drużyna
+      const awardTo = ls.playing_team || otherTeam(ls.buzzer_winner || "A");
+      await awardRound(ls, awardTo);
+      return;
+    }
+    await confirmStrike(ls);
+  }
+}
+
+function syncUi(ls){
+  // devices status
+  const hostOk = pingOk(ls.host_seen_at);
+  const buzOk = pingOk(ls.buzzer_seen_at);
+
+  setPill(pillHost, hostOk, hostOk ? "HOST: OK" : "HOST: BRAK");
+  setPill(pillBuzzer, buzOk, buzOk ? "BUZZER: OK" : "BUZZER: BRAK");
+
+  const dispOk = !!displayWin && !displayWin.closed;
+  setPill(pillDisplay, dispOk, dispOk ? "DISPLAY: OTWARTY" : "DISPLAY: BRAK");
+
+  // game controls
+  stRound.textContent = String(ls.round_no ?? "—");
+  stMult.textContent = String(ls.multiplier ?? "—");
+  stStep.textContent = String(ls.step ?? "—");
+
+  stBuzz.textContent = ls.buzzer_winner || "—";
+  stTeam.textContent = ls.playing_team || "—";
+  stStrikes.textContent = String(ls.strikes ?? 0);
+  stSum.textContent = String(ls.round_sum ?? 0);
+
+  btnPlay.disabled = ls.step !== "decision";
+  btnPass.disabled = ls.step !== "decision";
+
+  btnRevealNext.disabled = !(ls.step === "reveal_end" && revealQueue.length > 0);
+  btnEndRound.disabled = !(ls.step === "reveal_end");
+
+  // odpowiedzi
+  renderAnswers(ls);
+
+  // X dostępne, gdy runda działa
+  btnX.disabled = !["licytacja","play","steal"].includes(ls.step);
+  btnResetBuzzer.disabled = !ls.active_question_id;
+  btnStartRound.disabled = !(ls.step === "idle");
+}
+
+function subLive(onChange){
+  const ch = sb()
     .channel(`live_state:${gameId}`)
-    .on(
-      "postgres_changes",
-      { event: "*", schema: "public", table: "live_state", filter: `game_id=eq.${gameId}` },
-      (payload) => onChange(payload.new)
+    .on("postgres_changes",
+      { event:"*", schema:"public", table:"live_state", filter:`game_id=eq.${gameId}` },
+      (payload)=>onChange(payload.new)
     )
     .subscribe();
 
-  return () => client.removeChannel(channel);
+  return ()=> sb().removeChannel(ch);
 }
 
-async function startGame() {
-  const check = await validateBeforeStart();
-  if (!check.ok) {
-    setError(check.reason);
+function openPopup(url, name){
+  const w = window.open(url, name, "noopener,noreferrer");
+  return w;
+}
+
+async function main(){
+  if(!gameId){
+    alert("Brak parametru id w URL (control.html?id=...).");
+    location.href = "builder.html";
     return;
   }
 
-  const ls = await readLive();
-  if (!ls.host_ready || !ls.buzzer_ready) {
-    setError("Nie można wystartować: HOST i BUZZER muszą być odpalone.");
-    return;
+  const u = await requireAuth("index.html");
+  who.textContent = u?.email || "—";
+
+  btnLogout.addEventListener("click", async ()=>{
+    await signOut();
+    location.href = "index.html";
+  });
+
+  btnBack.addEventListener("click", ()=> location.href = `editor.html?id=${encodeURIComponent(gameId)}`);
+
+  await ensureLive();
+
+  game = await loadGame();
+  gameLabel.textContent = `Gra: ${game.name} • typ: ${game.kind} • status: ${game.status}`;
+
+  questions = await loadQuestions();
+
+  const hostUrl = buildLink("host.html", { id: game.id, key: game.share_key_remote });
+  const buzUrl  = buildLink("buzzer.html", { id: game.id, key: game.share_key_buzzer });
+  const dispUrl = buildLink("display.html", { id: game.id, key: game.share_key_display });
+
+  hostLink.value = hostUrl;
+  buzzerLink.value = buzUrl;
+  displayLink.value = dispUrl;
+
+  btnCopyHost.addEventListener("click", async ()=>{
+    setMsg(msgDevices, (await copyText(hostUrl)) ? "Skopiowano link HOST." : "Nie udało się skopiować.");
+  });
+  btnCopyBuzzer.addEventListener("click", async ()=>{
+    setMsg(msgDevices, (await copyText(buzUrl)) ? "Skopiowano link BUZZER." : "Nie udało się skopiować.");
+  });
+  btnCopyDisplay.addEventListener("click", async ()=>{
+    setMsg(msgDevices, (await copyText(dispUrl)) ? "Skopiowano link DISPLAY." : "Nie udało się skopiować.");
+  });
+
+  btnOpenHost.addEventListener("click", ()=>openPopup(hostUrl, "fam_host"));
+  btnOpenBuzzer.addEventListener("click", ()=>openPopup(buzUrl, "fam_buzzer"));
+  btnOpenDisplay.addEventListener("click", ()=>{
+    displayWin = openPopup(dispUrl, "fam_display");
+    setMsg(msgDevices, "Otworzono display.");
+  });
+
+  btnStartGame.addEventListener("click", startGame);
+  btnStartRound.addEventListener("click", startRound);
+  btnResetBuzzer.addEventListener("click", resetBuzzer);
+
+  btnPlay.addEventListener("click", choosePlay);
+  btnPass.addEventListener("click", choosePass);
+  btnX.addEventListener("click", pressX);
+
+  btnRevealNext.addEventListener("click", revealNext);
+  btnEndRound.addEventListener("click", endRound);
+
+  let ls = await readLive();
+
+  // jeśli runda trwa i ma pytanie -> wczytaj odpowiedzi
+  if(ls.active_question_id){
+    answersForActive = await loadAnswers(ls.active_question_id);
+    const revealed = parseArr(ls.revealed_answer_ids);
+    revealQueue = answersForActive.map(a=>a.id).filter(id=>!revealed.includes(id));
   }
 
-  await updateLive({
-    phase: "idle",
-    step: "idle",
-    round_no: 1,
-    multiplier: 1,
+  // reakcje na zmiany: dźwięk buzzera, przejścia etapów
+  let lastBuzzerLock = !!ls.buzzer_locked;
+  let lastStep = ls.step;
 
-    team_a_score: 0,
-    team_b_score: 0,
-    round_sum: 0,
-    round_points: 0,
-    strikes: 0,
+  syncUi(ls);
 
-    active_question_id: null,
-    revealed_answer_ids: [],
-    buzzer_locked: false,
-    buzzer_winner: null,
-    buzzer_at: null,
+  subLive(async (n)=>{
+    try{
+      ls = n;
 
-    playing_team: null,
-    steal_team: null,
-    round_awarded_to: null,
-
-    used_question_ids: [], // NOWE: reset użytych
-  });
-
-  setError("Start OK.");
-  setTimeout(() => setError(""), 800);
-}
-
-async function startRound() {
-  setError("");
-
-  const check = await validateBeforeStart();
-  if (!check.ok) {
-    setError(check.reason);
-    return;
-  }
-
-  const ls = await readLive();
-  if (ls.step !== "idle") {
-    setError("Nie można: runda już trwa albo jest w trakcie kończenia.");
-    return;
-  }
-
-  // jeśli operator wybrał ręcznie pytanie, używamy tego.
-  // jeśli zostawił AUTO, bierzemy pierwsze niewykorzystane
-  let qid = ui.selQ.value || "";
-  if (!qid) {
-    qid = pickNextQuestionId(ls);
-  }
-  if (!qid) {
-    setError("Brak kolejnych pytań (wszystkie już wykorzystane).");
-    return;
-  }
-
-  const used = parseJsonbArray(ls.used_question_ids);
-  if (!used.includes(qid)) used.push(qid);
-
-  const roundNo = typeof ls.round_no === "number" ? ls.round_no : 1;
-  const mult = multiplierForRound(roundNo);
-
-  answersForActive = await loadAnswersByQuestion(qid);
-  if (!answersForActive.length) {
-    setError("Wybrane pytanie nie ma odpowiedzi.");
-    return;
-  }
-
-  revealQueue = [];
-
-  await updateLive({
-    phase: "round",
-    step: "await_buzz",
-    active_question_id: qid,
-    strikes: 0,
-    round_sum: 0,
-    round_points: 0,
-    revealed_answer_ids: [],
-    multiplier: mult,
-
-    buzzer_locked: false,
-    buzzer_winner: null,
-    buzzer_at: null,
-
-    playing_team: null,
-    steal_team: null,
-    round_awarded_to: null,
-
-    used_question_ids: used,
-  });
-}
-
-async function onBuzzerLocked(ls) {
-  if (ls.step !== "await_buzz") return;
-  if (!ls.buzzer_locked || !ls.buzzer_winner) return;
-  await updateLive({ step: "licytacja" });
-}
-
-async function afterLicytacjaToDecision(ls) {
-  await updateLive({ step: "decision" });
-}
-
-async function choosePlay(ls) {
-  const winner = ls.buzzer_winner || "A";
-  await updateLive({ step: "play", playing_team: winner, steal_team: null });
-}
-
-async function choosePass(ls) {
-  const winner = ls.buzzer_winner || "A";
-  await updateLive({ step: "play", playing_team: otherTeam(winner), steal_team: null });
-}
-
-async function ensureAnswersLoaded(ls) {
-  const qid = ls.active_question_id;
-  if (!qid) {
-    answersForActive = [];
-    return;
-  }
-  if (!answersForActive.length) {
-    answersForActive = await loadAnswersByQuestion(qid);
-  }
-}
-
-async function saveTeamNames() {
-  const a = (ui.teamA.value || "").trim();
-  const b = (ui.teamB.value || "").trim();
-  if (!a || !b) {
-    setError("Podaj obie nazwy drużyn.");
-    return;
-  }
-  await updateLive({ team_a_name: a, team_b_name: b });
-}
-
-async function main() {
-  if (!gameId) {
-    setError("Brak parametru ?game=... w URL.");
-    return;
-  }
-
-  await requireAuth("index.html");
-  ui.login.textContent = "Zalogowany";
-
-  client = sb();
-  await ensureLiveState();
-
-  gameRow = await loadGame();
-  ui.gameName.textContent = `Gra: ${gameRow.name}`;
-
-  links.hostUrl = buildLink("host.html", { game: gameRow.id, kind: "remote", key: gameRow.share_key_remote });
-  links.buzzerUrl = buildLink("buzzer.html", { game: gameRow.id, kind: "buzzer", key: gameRow.share_key_buzzer });
-  const displayUrl = buildLink("display.html", { game: gameRow.id, kind: "display", key: gameRow.share_key_display });
-
-  ui.hostLink.value = links.hostUrl;
-  ui.buzzerLink.value = links.buzzerUrl;
-  renderQR("qr-host", links.hostUrl);
-  renderQR("qr-buzzer", links.buzzerUrl);
-
-  ui.btnCopyHost.addEventListener("click", async () => {
-    const ok = await copyToClipboard(links.hostUrl);
-    setError(ok ? "Skopiowano link HOST." : "Nie udało się skopiować linku HOST.");
-    setTimeout(() => setError(""), 1200);
-  });
-
-  ui.btnCopyBuzzer.addEventListener("click", async () => {
-    const ok = await copyToClipboard(links.buzzerUrl);
-    setError(ok ? "Skopiowano link BUZZER." : "Nie udało się skopiować linku BUZZER.");
-    setTimeout(() => setError(""), 1200);
-  });
-
-  ui.btnOpenDisplay.addEventListener("click", () => {
-    displayWin = window.open(displayUrl, "familiada_display", "noopener,noreferrer");
-    pillSet(ui.displayPill, true, "Rzutnik otwarty");
-    setTimeout(() => postToDisplay({ type: "SETUP_LINKS", payload: links }), 300);
-  });
-
-  ui.btnShowSetup.addEventListener("click", () => {
-    if (!postToDisplay({ type: "SHOW_SETUP_QR" })) setError("Najpierw otwórz ekran rzutnika.");
-  });
-
-  ui.btnHideSetup.addEventListener("click", () => {
-    if (!postToDisplay({ type: "HIDE_SETUP_QR" })) setError("Najpierw otwórz ekran rzutnika.");
-  });
-
-  // pytania
-  async function reloadQuestions() {
-    questions = await loadQuestions();
-    renderQuestionSelect();
-  }
-  ui.btnReloadQ.addEventListener("click", reloadQuestions);
-  await reloadQuestions();
-
-  ui.btnSaveTeams.addEventListener("click", async () => {
-    try {
-      setError("");
-      await saveTeamNames();
-    } catch (e) {
-      console.error(e);
-      setError(e?.message || "Błąd zapisu nazw.");
-    }
-  });
-
-  ui.btnStartGame.addEventListener("click", async () => {
-    try {
-      setError("");
-      await startGame();
-    } catch (e) {
-      console.error(e);
-      setError(e?.message || "Błąd startu gry.");
-    }
-  });
-
-  ui.btnStartRound.addEventListener("click", async () => {
-    try {
-      setError("");
-      await startRound();
-    } catch (e) {
-      console.error(e);
-      setError(e?.message || "Błąd startu rundy.");
-    }
-  });
-
-  ui.btnResetBuzzer.addEventListener("click", async () => {
-    try {
-      setError("");
-      await resetBuzzerOnly();
-    } catch (e) {
-      console.error(e);
-      setError(e?.message || "Błąd resetu buzzera.");
-    }
-  });
-
-  ui.btnPlay.addEventListener("click", async () => {
-    try {
-      const ls = await readLive();
-      await choosePlay(ls);
-    } catch (e) {
-      console.error(e);
-      setError(e?.message || "Błąd decyzji GRAJ.");
-    }
-  });
-
-  ui.btnPass.addEventListener("click", async () => {
-    try {
-      const ls = await readLive();
-      await choosePass(ls);
-    } catch (e) {
-      console.error(e);
-      setError(e?.message || "Błąd decyzji PAS.");
-    }
-  });
-
-  ui.btnRevealNext.addEventListener("click", async () => {
-    try {
-      const ls = await readLive();
-      await revealNext(ls);
-    } catch (e) {
-      console.error(e);
-      setError(e?.message || "Błąd odkrywania.");
-    }
-  });
-
-  ui.btnEndRound.addEventListener("click", async () => {
-    try {
-      const ls = await readLive();
-      if (revealQueue.length) {
-        setError("Najpierw odkryj wszystkie pozostałe odpowiedzi.");
-        return;
+      // buzzer pierwszy raz zablokowany
+      if(!lastBuzzerLock && ls.buzzer_locked){
+        playSfx("buzzer");
       }
-      await endRoundReset(ls);
-    } catch (e) {
-      console.error(e);
-      setError(e?.message || "Błąd końca rundy.");
-    }
-  });
+      lastBuzzerLock = !!ls.buzzer_locked;
 
-  // stan + walidacja
-  let setupOk = await validateBeforeStart();
-  if (!setupOk.ok) setError(setupOk.reason);
+      // etap
+      if(ls.step !== lastStep){
+        lastStep = ls.step;
 
-  const initial = await readLive();
-  ui.teamA.value = initial.team_a_name || "";
-  ui.teamB.value = initial.team_b_name || "";
+        // auto: po licytacji -> decision (jak tylko jest 1 akcja)
+        if(ls.step === "await_buzz" && ls.buzzer_locked && ls.buzzer_winner){
+          await updateLive({ step:"licytacja" });
+        }
 
-  await ensureAnswersLoaded(initial);
-
-  if (initial.step === "reveal_end") {
-    const revealed = parseRevealed(initial);
-    const remaining = answersForActive.map((a) => a.id).filter((id) => !revealed.includes(id));
-    revealQueue = remaining.slice();
-  }
-
-  refreshUI(initial, setupOk);
-
-  subscribeLive(async (ls) => {
-    try {
-      // odśwież setup warunków przy większych zmianach (tanie: i tak małe dane)
-      setupOk = await validateBeforeStart();
-
-      if (ls?.step === "await_buzz" && ls?.buzzer_locked && ls?.buzzer_winner) {
-        await onBuzzerLocked(ls);
-        const ls2 = await readLive();
-        await ensureAnswersLoaded(ls2);
-        refreshUI(ls2, setupOk);
-        return;
-      }
-
-      if (ls?.step === "licytacja") {
-        const revealed = parseRevealed(ls);
-        const hasAny = revealed.length > 0 || (ls.strikes || 0) > 0;
-        if (hasAny) {
-          await afterLicytacjaToDecision(ls);
-          const ls2 = await readLive();
-          await ensureAnswersLoaded(ls2);
-          refreshUI(ls2, setupOk);
-          return;
+        // jeżeli w licytacji coś już odsłonięte albo X -> przejdź do decision
+        if(ls.step === "licytacja"){
+          const any = parseArr(ls.revealed_answer_ids).length > 0 || (Number(ls.strikes)||0) > 0;
+          if(any) await updateLive({ step:"decision" });
         }
       }
 
-      await ensureAnswersLoaded(ls);
-
-      if (ls?.step === "reveal_end") {
-        const revealed = parseRevealed(ls);
-        const remaining = answersForActive.map((a) => a.id).filter((id) => !revealed.includes(id));
-        revealQueue = remaining.slice();
+      // answers load
+      if(ls.active_question_id){
+        answersForActive = await loadAnswers(ls.active_question_id);
+        const revealed = parseArr(ls.revealed_answer_ids);
+        if(ls.step === "reveal_end"){
+          revealQueue = answersForActive.map(a=>a.id).filter(id=>!revealed.includes(id));
+        }
+      } else {
+        answersForActive = [];
+        revealQueue = [];
       }
 
-      refreshUI(ls, setupOk);
-    } catch (e) {
-      console.error("[control] refresh error:", e);
+      syncUi(ls);
+    } catch (e){
+      console.error("[control] live err:", e);
     }
   });
+
+  // mały tip: pierwsze kliknięcie w UI “odblokowuje” autoplay policy
+  document.addEventListener("click", ()=>{
+    playSfx("reveal");
+  }, { once:true });
+
+  // start na zakładce Urządzenia
+  tabSwitch("devices");
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-  main().catch((e) => {
+document.addEventListener("DOMContentLoaded", ()=>{
+  main().catch(e=>{
     console.error(e);
-    setError(e?.message || "Błąd krytyczny.");
+    alert("Błąd sterowania. Sprawdź konsolę (F12).");
   });
 });
