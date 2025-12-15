@@ -20,7 +20,6 @@
 
     <div class="right">
       <button class="btn" id="btnBack" type="button">← Moje gry</button>
-      <button class="btn gold" id="btnControl" type="button">Sterowanie</button>
       <span class="who" id="who">—</span>
       <button class="btn" id="btnLogout" type="button">Wyloguj</button>
     </div>
@@ -35,6 +34,15 @@
         <button id="btnSaveName" class="btn" type="button">Zapisz nazwę</button>
         <button id="btnExport" class="btn" type="button">Zapisz plik</button>
       </div>
+    </div>
+
+    <!-- “zostało” tylko dla lokalnych -->
+    <div class="remainRow" id="remainRow" style="display:none;">
+      <div class="remainBox">
+        <span>ZOSTAŁO</span>
+        <b id="remainVal">100</b>
+      </div>
+      <div class="remainHint" id="remainHint">Suma punktów odpowiedzi w pytaniu nie może przekroczyć 100.</div>
     </div>
 
     <div class="layout">
@@ -52,7 +60,6 @@
         </div>
 
         <div id="editor" class="editor">
-          <!-- info o typie gry -->
           <div class="badgeRow">
             <div class="badge" id="gameKindBadge">—</div>
             <div class="lock" id="lockBadge" style="display:none;">SONDAŻ OTWARTY — EDYCJA ZABLOKOWANA</div>
@@ -63,17 +70,7 @@
             <textarea id="qText" class="ta" spellcheck="false"></textarea>
           </div>
 
-          <div class="actions">
-            <div class="lbl">Akcje</div>
-            <button class="btn danger" id="btnDelQ" type="button">Usuń pytanie</button>
-          </div>
-
-          <div class="panelHead" style="margin-top:10px;">
-            <div class="panelTitle">Odpowiedzi</div>
-            <button class="btn" id="btnAddA" type="button">+ Dodaj</button>
-          </div>
-
-          <!-- nagłówki kolumn, żeby było czytelnie -->
+          <!-- nagłówki -->
           <div class="ahead" id="aHead">
             <div>ODPOWIEDŹ</div>
             <div class="ptsCol">PKT</div>
@@ -83,11 +80,11 @@
           <div id="aList" class="alist"></div>
 
           <div class="hint" id="hintFixed">
-            Ograniczenie: odpowiedź max 17 znaków (w edytorze). Wartości: suma ≤ 100 na pytanie (dla gier lokalnych).
+            Odpowiedź max 17 znaków. Lokalna: punkty 0–100, suma ≤ 100 (liczone na bieżąco).
           </div>
 
           <div class="hint" id="hintPoll" style="display:none;">
-            Ograniczenie: odpowiedź max 17 znaków (w edytorze). Punkty w sondażu policzą się po zamknięciu sondażu.
+            Odpowiedź max 17 znaków. Punkty policzą się po zamknięciu sondażu.
           </div>
         </div>
       </section>
