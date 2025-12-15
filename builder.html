@@ -1,20 +1,19 @@
-
-
 <!DOCTYPE html>
 <html lang="pl">
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>Familiada — moje gry</title>
-  
-  <link rel="icon" href="favicon.ico" />
-    
+
+  <link rel="icon" href="favicon.ico"/>
+
   <link rel="stylesheet" href="css/base.css"/>
   <link rel="stylesheet" href="css/builder.css"/>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
   <script type="module" src="js/pages/builder.js" defer></script>
 </head>
+
 <body class="builder-body">
   <header class="topbar">
     <div class="brand">FAMILIADA</div>
@@ -25,8 +24,45 @@
   </header>
 
   <main class="wrap">
-    <div class="title">Twoje Familiady</div>
+    <div class="bar">
+      <div class="title">Twoje Familiady</div>
+
+      <div class="actions">
+        <button class="btn" id="btnEdit" type="button" disabled>Edytuj</button>
+        <button class="btn gold" id="btnPlay" type="button" disabled>Graj</button>
+        <button class="btn gold" id="btnPoll" type="button" disabled>Sondaż</button>
+      </div>
+    </div>
+
+    <div class="hint" id="hint">Kliknij kafelek, żeby go zaznaczyć.</div>
     <div class="grid" id="grid"></div>
   </main>
+
+  <!-- Modal: wybór typu gry -->
+  <div class="overlay" id="typeOverlay" style="display:none;">
+    <div class="modal">
+      <div class="mTitle">Nowa Familiada</div>
+      <div class="mSub">Wybierz typ:</div>
+
+      <div class="mGrid">
+        <button class="mCard" id="btnCreateFixed" type="button">
+          <div class="mBig">LOKALNA</div>
+          <div class="mSmall">Wpisujesz wartości odpowiedzi</div>
+          <div class="mTiny">Wymagane: 5 pytań, suma ≤ 100</div>
+        </button>
+
+        <button class="mCard" id="btnCreatePoll" type="button">
+          <div class="mBig">SONDAŻOWA</div>
+          <div class="mSmall">Zbierasz głosy, potem zamykasz</div>
+          <div class="mTiny">Po zamknięciu normalizuje do 100</div>
+        </button>
+      </div>
+
+      <div class="mFoot">
+        <button class="btn" id="btnCancelType" type="button">Anuluj</button>
+      </div>
+    </div>
+  </div>
 </body>
 </html>
+
