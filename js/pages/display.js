@@ -1,337 +1,208 @@
 // js/pages/display.js
-import { startSnapshotPoll } from "../core/realtime.js";
-import { fitCanvasToElement, drawLEDText } from "../core/ledrender.js";
+// Uproszczony rzutnik: pobiera snapshot przez RPC get_public_snapshot(kind='display')
+// + pokazuje overlay QR, sterowany z control.html przez postMessage.
 
-const $ = (s) => document.querySelector(s);
+(function () {
+  const qs = new URLSearchParams(location.search);
+  const gameId = qs.get("game");
+  const kind = qs.get("kind"); // "display"
+  const key = qs.get("key");
 
-const canvas = $("#board");
-const statusLine = $("#statusLine");
-const btnFullscreen = $("#btnFullscreen");
+  const $ = (s) => document.querySelector(s);
 
-function setStatus(m){ statusLine.textContent = m; }
+  const ui = {
+    teamAName: null,
+    teamAScore: null,
+    teamBName: null,
+    teamBScore: null,
+    question: null,
+    sum: null,
+    x1: null,
+    x2: null,
+    x3: null,
+    rows: null,
 
-function qsParam(name) {
-  return new URL(location.href).searchParams.get(name);
-}
-
-const gameId = qsParam("id");
-const key = qsParam("key");
-
-function clear(ctx, w, h) {
-  ctx.clearRect(0, 0, w, h);
-}
-
-function drawFrame(ctx, x, y, w, h, stroke, lw) {
-  ctx.strokeStyle = stroke;
-  ctx.lineWidth = lw;
-  ctx.strokeRect(x, y, w, h);
-}
-
-function drawBoard(snapshot) {
-  const { w, h } = fitCanvasToElement(canvas);
-  const ctx = canvas.getContext("2d");
-  clear(ctx, w, h);
-
-  // lekkie przyciemnienie, żeby LED świeciły
-  ctx.fillStyle = "rgba(0,0,0,.10)";
-  ctx.fillRect(0, 0, w, h);
-
-  const live = snapshot?.live || {};
-  const q = snapshot?.question || null;
-  const answers = snapshot?.answers || [];
-
-  const revealed = new Set((live.revealed_answer_ids || []).map(String));
-  const strikes = Math.max(0, Math.min(3, Number(live.strikes || 0)));
-  const points = Math.max(0, Number(live.round_points || 0));
-
-  // ===========================
-  // JEDNA GLOBALNA SIATKA LED
-  // ===========================
-  const pad = Math.floor(w * 0.035);
-  const innerW = w - pad * 2;
-  const innerH = h - pad * 2;
-
-  // Wysokość znaku = 7 komórek LED (5x7 font), więc cellH musi być taki sam wszędzie.
-  // Dobieramy cell (kwadrat) tak, aby tablica była gęsta, ale czytelna.
-  // Uwaga: to jest "rozmiar diody", więc im większy ekran, tym większy cell.
-  const cell = Math.max(6, Math.floor(Math.min(innerW / 190, innerH / 110)));
-  const cellW = cell;
-  const cellH = cell;
-
-  // wymiary siatki w komórkach
-  const gridCols = Math.floor(innerW / cellW);
-  const gridRows = Math.floor(innerH / cellH);
-
-  // Offset siatki (centrowanie)
-  const gridX = pad + Math.floor((innerW - gridCols * cellW) / 2);
-  const gridY = pad + Math.floor((innerH - gridRows * cellH) / 2);
-
-  // Parametry LED (wspólne)
-  const LED = {
-    fg: "#FFD94A",
-    dim: "rgba(255,217,74,.10)",
-    gap: 0.20,
-    round: 0.42,
-  };
-  const LED_RED = {
-    fg: "#FF6B6B",
-    dim: "rgba(255,90,90,.07)",
-    gap: 0.22,
-    round: 0.40,
+    setupOverlay: null,
+    setupHostLink: null,
+    setupBuzzerLink: null,
   };
 
-  // Ramka główna
-  drawFrame(
-    ctx,
-    gridX,
-    gridY,
-    gridCols * cellW,
-    gridRows * cellH,
-    "rgba(231,194,75,.55)",
-    Math.max(2, Math.floor(w * 0.003))
-  );
+  let sb = null;
+  let pollTimer = null;
 
-  // ===========================
-  // LAYOUT W KOMÓRKACH SIATKI
-  // (wszystkie napisy: 7 rzędów LED)
-  // ===========================
-  // Top: pytanie (7 rzędów) + punkty (7 rzędów)
-  const topTextRows = 7;        // stałe
-  const topPadRows = 2;         // margines
-  const topBlockRows = topTextRows + topPadRows; // 9
+  let setupLinks = { hostUrl: "", buzzerUrl: "" };
 
-  // Odpowiedzi: 4 rzędy kafli, każdy kafel ma 7 rzędów + margines
-  const tileTextRows = 7;
-  const tilePadRows = 2;
-  const tileRows = tileTextRows + tilePadRows;   // 9
-  const tilesBlockRows = tileRows * 4 + 3;       // + przerwy między kaflami
-
-  // Lewa część: 2 kolumny kafli (1..8)
-  // Prawa: kolumna na PUNKTY + BLEDY
-  const rightCols = Math.max(34, Math.floor(gridCols * 0.22)); // stały “panel”
-  const leftCols = gridCols - rightCols - 2; // -2 na szczeliny
-
-  // Upewnij się, że siatka ma sens
-  if (gridCols < 140 || gridRows < 80) {
-    // nadal rysujemy, tylko informujemy (na małych ekranach)
-    // (ten komunikat tylko w konsoli)
-    console.warn("[display] mała siatka:", { gridCols, gridRows, cell });
+  async function callRpc(name, params) {
+    const { data, error } = await sb.rpc(name, params);
+    if (error) throw error;
+    return data;
   }
 
-  // Pozycje w komórkach
-  const gapC = 2; // odstęp kolumn
-  const gapR = 1; // odstęp wierszy
+  function safeInt(v, def = 0) {
+    const n = Number(v);
+    return Number.isFinite(n) ? n : def;
+  }
 
-  const leftXc = 0;
-  const rightXc = leftCols + gapC;
+  function applySnapshot(snap) {
+    const g = snap?.game;
+    const ls = snap?.live;
+    const q = snap?.question;
+    const answers = Array.isArray(snap?.answers) ? snap.answers : [];
 
-  const topYc = 0;
-  const tilesYc = topBlockRows + gapR;
+    ui.question.textContent = q?.text || "—";
 
-  // ===========================
-  // PYTANIE (LEWA GÓRA)
-  // ===========================
-  const questionText = q?.text ? q.text : "WYBIERZ PYTANIE";
-  // Ile kolumn na pytanie? (leftCols)
-  drawLEDText(
-    ctx,
-    questionText,
-    gridX + (leftXc + 1) * cellW,
-    gridY + (topYc + 1) * cellH,
-    leftCols - 2,
-    7,
-    cellW,
-    cellH,
-    { ...LED, drawDim: true }
-  );
+    // team names/scores bierzemy z live_state (rozszerzone kolumny)
+    ui.teamAName.textContent = ls?.team_a_name || "DRUŻYNA A";
+    ui.teamBName.textContent = ls?.team_b_name || "DRUŻYNA B";
+    ui.teamAScore.textContent = String(safeInt(ls?.team_a_score, 0));
+    ui.teamBScore.textContent = String(safeInt(ls?.team_b_score, 0));
 
-  // ===========================
-  // PUNKTY (PRAWA GÓRA)
-  // ===========================
-  // Label
-  drawLEDText(
-    ctx,
-    "PUNKTY",
-    gridX + (rightXc + 2) * cellW,
-    gridY + (topYc + 1) * cellH,
-    rightCols - 4,
-    7,
-    cellW,
-    cellH * 0.55,
-    { ...LED, drawDim: false, gap: 0.30, round: 0.55 }
-  );
+    // suma rundy: round_sum lub round_points
+    const sum = (ls && typeof ls.round_sum === "number") ? ls.round_sum : safeInt(ls?.round_points, 0);
+    ui.sum.textContent = String(sum);
 
-  // value (3 znaki) — TA SAMA WYSOKOŚĆ ZNAKU co reszta
-  const scoreStr = String(points).padStart(3, "0").slice(-3);
-  drawLEDText(
-    ctx,
-    scoreStr,
-    gridX + (rightXc + 2) * cellW,
-    gridY + (topYc + 1 + 3) * cellH,
-    rightCols - 4,
-    7,
-    cellW,
-    cellH,
-    { ...LED, drawDim: true }
-  );
+    // strikes
+    const strikes = safeInt(ls?.strikes, 0);
+    ui.x1.classList.toggle("on", strikes >= 1);
+    ui.x2.classList.toggle("on", strikes >= 2);
+    ui.x3.classList.toggle("on", strikes >= 3);
 
-  // ===========================
-  // ODP: 8 kafli (2 kolumny × 4 rzędy)
-  // ===========================
-  const tileGapC = 2;
-  const tileGapR = 1;
+    // revealed ids
+    let revealed = [];
+    try {
+      revealed = Array.isArray(ls?.revealed_answer_ids)
+        ? ls.revealed_answer_ids
+        : JSON.parse(ls?.revealed_answer_ids || "[]");
+    } catch {
+      revealed = [];
+    }
 
-  const colW = Math.floor((leftCols - tileGapC) / 2);
-  const tileCols = colW;
+    // map answers by ord (1..8)
+    // answers z RPC już mają ord i fixed_points
+    const byOrd = new Map();
+    answers.forEach((a) => byOrd.set(Number(a.ord), a));
 
-  for (let i = 0; i < 8; i++) {
-    const col = i % 2;
-    const row = Math.floor(i / 2);
+    ui.rows.forEach((row) => {
+      const i = Number(row.getAttribute("data-i"));
+      const textEl = row.querySelector(".disp-text");
+      const ptsEl = row.querySelector(".disp-pts");
 
-    const tileXc = leftXc + col * (tileCols + tileGapC);
-    const tileYc = tilesYc + row * (tileRows + tileGapR);
+      const a = byOrd.get(i);
+      const id = a?.id;
 
-    // Ramka kafla
-    drawFrame(
-      ctx,
-      gridX + tileXc * cellW,
-      gridY + tileYc * cellH,
-      tileCols * cellW,
-      tileRows * cellH,
-      "rgba(231,194,75,.40)",
-      Math.max(1, Math.floor(w * 0.0018))
-    );
+      const isRevealed = id && revealed.includes(id);
+      row.classList.toggle("revealed", !!isRevealed);
 
-    // Numer (1-8)
-    drawLEDText(
-      ctx,
-      String(i + 1),
-      gridX + (tileXc + 1) * cellW,
-      gridY + (tileYc + 1) * cellH,
-      10,
-      7,
-      cellW,
-      cellH,
-      { ...LED, drawDim: true }
-    );
+      if (isRevealed) {
+        textEl.textContent = a?.text || "—";
+        // punkty w rundzie: fixed_points (na razie)
+        ptsEl.textContent =
+          typeof a?.fixed_points === "number" ? String(a.fixed_points) : "0";
+      } else {
+        textEl.textContent = "••••••••••••";
+        ptsEl.textContent = "—";
+      }
+    });
+  }
 
-    const a = answers[i];
-    const isRevealed = a ? revealed.has(String(a.id)) : false;
-
-    const txt = a?.text ? a.text : "";
-    const pts = a ? (a.fixed_points ?? "") : "";
-
-    // Tekst zaczyna się po numerze
-    const textStart = tileXc + 8;
-    const textWidth = tileCols - 8 - 14; // zostaw miejsce na punkty
-    const ptsStart = tileXc + tileCols - 12;
-
-    if (isRevealed) {
-      drawLEDText(
-        ctx,
-        txt,
-        gridX + textStart * cellW,
-        gridY + (tileYc + 1) * cellH,
-        textWidth,
-        7,
-        cellW,
-        cellH,
-        { ...LED, drawDim: true }
-      );
-
-      // Punkty (max 3 znaki) — ta sama wysokość
-      const ptsStr = String(pts ?? "").slice(0, 3);
-      drawLEDText(
-        ctx,
-        ptsStr,
-        gridX + ptsStart * cellW,
-        gridY + (tileYc + 1) * cellH,
-        12,
-        7,
-        cellW,
-        cellH,
-        { ...LED, drawDim: true, gap: 0.18, round: 0.38 }
-      );
-    } else {
-      // Zakryte: tylko dim w obszarze tekstu i punktów
-      drawLEDText(
-        ctx,
-        "",
-        gridX + textStart * cellW,
-        gridY + (tileYc + 1) * cellH,
-        textWidth + 12,
-        7,
-        cellW,
-        cellH,
-        { ...LED, drawDim: true }
-      );
+  async function poll() {
+    try {
+      const snap = await callRpc("get_public_snapshot", {
+        p_game_id: gameId,
+        p_kind: kind || "display",
+        p_key: key,
+      });
+      applySnapshot(snap);
+    } catch (e) {
+      console.error(e);
+      ui.question.textContent = "Błąd połączenia z grą.";
     }
   }
 
-  // ===========================
-  // BŁĘDY (PRAWA DOLNA)
-  // ===========================
-  // Umieszczamy na dole prawego panelu
-  const bottomYc = gridRows - 1 - 7 - 2 - 7; // 2 linie odstępu
+  function renderSetupQR() {
+    // qrcodejs
+    const hostBox = document.getElementById("qr-setup-host");
+    const buzBox = document.getElementById("qr-setup-buzzer");
+    if (!hostBox || !buzBox) return;
 
-  drawLEDText(
-    ctx,
-    "BLEDY",
-    gridX + (rightXc + 2) * cellW,
-    gridY + (bottomYc) * cellH,
-    rightCols - 4,
-    7,
-    cellW,
-    cellH * 0.55,
-    { ...LED, drawDim: false, gap: 0.30, round: 0.55 }
-  );
+    hostBox.innerHTML = "";
+    buzBox.innerHTML = "";
 
-  // Trzy X-y w stałej szerokości
-  const x1 = strikes >= 1 ? "X" : " ";
-  const x2 = strikes >= 2 ? "X" : " ";
-  const x3 = strikes >= 3 ? "X" : " ";
-  const xStr = `${x1} ${x2} ${x3}`;
+    if (setupLinks.hostUrl) {
+      new QRCode(hostBox, { text: setupLinks.hostUrl, width: 172, height: 172, correctLevel: QRCode.CorrectLevel.M });
+      ui.setupHostLink.textContent = setupLinks.hostUrl;
+    } else {
+      ui.setupHostLink.textContent = "—";
+    }
 
-  drawLEDText(
-    ctx,
-    xStr,
-    gridX + (rightXc + 2) * cellW,
-    gridY + (bottomYc + 3) * cellH,
-    rightCols - 4,
-    7,
-    cellW,
-    cellH,
-    { ...(strikes ? LED_RED : { ...LED_RED, fg: "rgba(255,90,90,.25)" }), drawDim: true }
-  );
-}
-
-btnFullscreen?.addEventListener("click", async () => {
-  try {
-    if (!document.fullscreenElement) await document.documentElement.requestFullscreen();
-    else await document.exitFullscreen();
-  } catch {}
-});
-
-document.addEventListener("DOMContentLoaded", () => {
-  if (!gameId || !key) {
-    setStatus("Brak parametrów. Otwórz: display.html?id=...&key=...");
-    return;
+    if (setupLinks.buzzerUrl) {
+      new QRCode(buzBox, { text: setupLinks.buzzerUrl, width: 172, height: 172, correctLevel: QRCode.CorrectLevel.M });
+      ui.setupBuzzerLink.textContent = setupLinks.buzzerUrl;
+    } else {
+      ui.setupBuzzerLink.textContent = "—";
+    }
   }
 
-  setStatus("Łączenie…");
+  function showSetup(on) {
+    ui.setupOverlay.style.display = on ? "flex" : "none";
+    if (on) renderSetupQR();
+  }
 
-  startSnapshotPoll({
-    gameId,
-    key,
-    kind: "display",
-    intervalMs: 250,
-    onData(data) {
-      drawBoard(data);
-      setStatus("Na żywo ✔");
-    },
-    onError(e) {
+  async function main() {
+    ui.teamAName = $(".disp-a .disp-team-name");
+    ui.teamAScore = $(".disp-a .disp-team-score");
+    ui.teamBName = $(".disp-b .disp-team-name");
+    ui.teamBScore = $(".disp-b .disp-team-score");
+    ui.question = $(".disp-question");
+    ui.sum = $(".disp-sum-val");
+    ui.x1 = $(".disp-x1");
+    ui.x2 = $(".disp-x2");
+    ui.x3 = $(".disp-x3");
+    ui.rows = Array.from(document.querySelectorAll(".disp-row"));
+
+    ui.setupOverlay = $(".disp-setup");
+    ui.setupHostLink = $(".disp-setup-host-link");
+    ui.setupBuzzerLink = $(".disp-setup-buzzer-link");
+
+    if (!gameId || !key) {
+      ui.question.textContent = "Brak parametrów URL (game/key).";
+      return;
+    }
+
+    if (!window.supabaseClient) {
+      ui.question.textContent = "Brak window.supabaseClient (sprawdź auth.js).";
+      return;
+    }
+    sb = window.supabaseClient;
+
+    // listen to control messages
+    window.addEventListener("message", (ev) => {
+      if (ev.origin !== location.origin) return;
+      const msg = ev.data;
+      if (!msg || typeof msg !== "object") return;
+
+      if (msg.type === "SETUP_LINKS") {
+        setupLinks = msg.payload || setupLinks;
+        if (ui.setupOverlay.style.display !== "none") renderSetupQR();
+      }
+      if (msg.type === "SHOW_SETUP_QR") showSetup(true);
+      if (msg.type === "HIDE_SETUP_QR") showSetup(false);
+    });
+
+    // start polling
+    await poll();
+    pollTimer = setInterval(poll, 500);
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    main().catch((e) => {
       console.error(e);
-      setStatus("Błąd: " + (e?.message || String(e)));
-    },
+      const q = document.querySelector(".disp-question");
+      if (q) q.textContent = e?.message || "Błąd krytyczny.";
+    });
   });
-});
+
+  window.addEventListener("beforeunload", () => {
+    if (pollTimer) clearInterval(pollTimer);
+  });
+})();
