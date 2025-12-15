@@ -160,34 +160,33 @@ function pingOk(seenAtIso) {
   return (now - seen) <= 15000;
 }
 
-async function validateGameReady() {
+async function validateGameReady(){
   const qs = await loadQuestions();
   questions = qs;
 
-  if (game.kind === "poll") {
-    if (game.status !== "ready") {
-      return { ok: false, reason: "Familiada sondażowa nie jest gotowa (musi być READY po zamknięciu sondażu)." };
-    }
-    if (qs.length < 5) {
-      return { ok: false, reason: `Za mało pytań do gry: ${qs.length}. Min 5.` };
-    }
-    return { ok: true, reason: "" };
+  if(!qs || qs.length < 10){
+    return { ok:false, reason:`Gra musi mieć min. 10 pytań. Masz: ${qs?.length||0}.` };
   }
 
-  if (qs.length !== 5) {
-    return { ok: false, reason: `Familiada lokalna musi mieć dokładnie 5 pytań. Masz: ${qs.length}.` };
-  }
-
-  for (const q of qs) {
+  for(const q of qs){
     const ans = await loadAnswers(q.id);
-    if (!ans.length) return { ok: false, reason: `Pytanie #${q.ord} nie ma odpowiedzi.` };
-    if (ans.length > 5) return { ok: false, reason: `Pytanie #${q.ord} ma >5 odpowiedzi.` };
+    if(!ans || ans.length !== 5){
+      return { ok:false, reason:`Pytanie #${q.ord} musi mieć dokładnie 5 odpowiedzi.` };
+    }
 
-    const sum = ans.reduce((s, a) => s + (Number(a.fixed_points) || 0), 0);
-    if (sum > 100) return { ok: false, reason: `Pytanie #${q.ord}: suma punktów = ${sum} (max 100).` };
+    if(game.kind === "fixed"){
+      const sum = ans.reduce((s,a)=>s + (Number(a.fixed_points)||0), 0);
+      if(sum > 100){
+        return { ok:false, reason:`Pytanie #${q.ord}: suma punktów = ${sum} (max 100).` };
+      }
+    }
   }
 
-  return { ok: true, reason: "" };
+  if(game.kind === "poll" && game.status !== "ready"){
+    return { ok:false, reason:"Sondażowa nie jest gotowa: najpierw zamknij sondaż (status READY)." };
+  }
+
+  return { ok:true, reason:"" };
 }
 
 function pickNextQuestionId(ls) {
@@ -533,7 +532,7 @@ async function main() {
     location.href = "index.html";
   });
 
-  btnBack.addEventListener("click", () => location.href = `editor.html?id=${encodeURIComponent(gameId)}`);
+  btnBack.addEventListener("click", ()=> location.href = "builder.html");
 
   await ensureLive();
 
