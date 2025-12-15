@@ -1,7 +1,7 @@
+// js/pages/control.js
 import { sb } from "../core/supabase.js";
 import { requireAuth, signOut } from "../core/auth.js";
 import { guardDesktopOnly } from "../core/device-guard.js";
-import { confirmModal } from "../core/modal.js";
 import { playSfx } from "../core/sfx.js";
 
 guardDesktopOnly({ message: "Sterowanie Familiady jest dostępne tylko na komputerze." });
@@ -63,160 +63,162 @@ let questions = [];
 let answersForActive = [];
 let revealQueue = [];
 
-function setMsg(where, t){
+function setMsg(where, t) {
   where.textContent = t || "";
-  if(t) setTimeout(()=>where.textContent="", 1400);
+  if (t) setTimeout(() => (where.textContent = ""), 1400);
 }
 
-function setPill(pill, ok, text){
-  pill.classList.remove("ok","bad");
+function setPill(pill, ok, text) {
+  pill.classList.remove("ok", "bad");
   pill.classList.add(ok ? "ok" : "bad");
   pill.textContent = text;
 }
 
-function buildLink(file, params){
+function buildLink(file, params) {
   const u = new URL(file, location.href);
-  Object.entries(params).forEach(([k,v])=>u.searchParams.set(k, String(v)));
+  Object.entries(params).forEach(([k, v]) => u.searchParams.set(k, String(v)));
   return u.toString();
 }
 
-async function copyText(text){
-  try{ await navigator.clipboard.writeText(text); return true; }catch{ return false; }
+async function copyText(text) {
+  try { await navigator.clipboard.writeText(text); return true; } catch { return false; }
 }
 
-function otherTeam(t){ return t === "A" ? "B" : "A"; }
+function otherTeam(t) { return t === "A" ? "B" : "A"; }
 
-function multiplierForRound(n){
-  if(n === 1) return 1;
-  if(n === 2) return 2;
+function multiplierForRound(n) {
+  if (n === 1) return 1;
+  if (n === 2) return 2;
   return 3;
 }
 
-function parseArr(v){
-  try{
-    if(Array.isArray(v)) return v;
+function parseArr(v) {
+  try {
+    if (Array.isArray(v)) return v;
     return JSON.parse(v || "[]");
-  }catch{ return []; }
+  } catch { return []; }
 }
 
-async function ensureLive(){
+async function ensureLive() {
   const { data } = await sb().from("live_state").select("game_id").eq("game_id", gameId).maybeSingle();
-  if(data?.game_id) return;
+  if (data?.game_id) return;
   await sb().from("live_state").insert({ game_id: gameId });
 }
 
-async function loadGame(){
+async function loadGame() {
   const { data, error } = await sb()
     .from("games")
-    .select("id,name,kind,status,share_key_display,share_key_remote,share_key_buzzer")
+    .select("id,name,kind,status,share_key_display,share_key_remote,share_key_buzzer,share_key_host")
     .eq("id", gameId)
     .single();
-  if(error) throw error;
+  if (error) throw error;
   return data;
 }
 
-async function loadQuestions(){
+async function loadQuestions() {
   const { data, error } = await sb()
     .from("questions")
-    .select("id,ord,text,mode")
+    .select("id,ord,text")
     .eq("game_id", gameId)
-    .order("ord",{ascending:true});
-  if(error) throw error;
+    .order("ord", { ascending: true });
+  if (error) throw error;
   return data || [];
 }
 
-async function loadAnswers(qid){
+async function loadAnswers(qid) {
   const { data, error } = await sb()
     .from("answers")
     .select("id,ord,text,fixed_points")
     .eq("question_id", qid)
-    .order("ord",{ascending:true});
-  if(error) throw error;
+    .order("ord", { ascending: true });
+  if (error) throw error;
   return data || [];
 }
 
-async function readLive(){
+async function readLive() {
   const { data, error } = await sb().from("live_state").select("*").eq("game_id", gameId).single();
-  if(error) throw error;
+  if (error) throw error;
   return data;
 }
 
-async function updateLive(patch){
+async function updateLive(patch) {
   const { error } = await sb().from("live_state").update(patch).eq("game_id", gameId);
-  if(error) throw error;
+  if (error) throw error;
 }
 
-function tabSwitch(name){
-  tabs.forEach(t=>t.classList.toggle("active", t.dataset.tab === name));
-  panels.forEach(p=>p.style.display = p.dataset.panel === name ? "" : "none");
+function tabSwitch(name) {
+  tabs.forEach(t => t.classList.toggle("active", t.dataset.tab === name));
+  panels.forEach(p => p.style.display = p.dataset.panel === name ? "" : "none");
 }
 
-tabs.forEach(t=>t.addEventListener("click", ()=>tabSwitch(t.dataset.tab)));
+tabs.forEach(t => t.addEventListener("click", () => tabSwitch(t.dataset.tab)));
 
-function pingOk(seenAtIso){
-  if(!seenAtIso) return false;
+function pingOk(seenAtIso) {
+  if (!seenAtIso) return false;
   const seen = new Date(seenAtIso).getTime();
   const now = Date.now();
-  return (now - seen) <= 15000; // 15s “żyje”
+  return (now - seen) <= 15000;
 }
 
-async function validateGameReady(){
-  // fixed: dokładnie 5 pytań i każda suma <= 100
-  // poll: tylko status 'ready'
+async function validateGameReady() {
   const qs = await loadQuestions();
   questions = qs;
 
-  if(game.kind === "poll"){
-    if(game.status !== "ready"){
-      return { ok:false, reason:"Familiada sondażowa nie jest gotowa. Zamknij sondaż w zakładce Sondaże." };
+  if (game.kind === "poll") {
+    if (game.status !== "ready") {
+      return { ok: false, reason: "Familiada sondażowa nie jest gotowa (musi być READY po zamknięciu sondażu)." };
     }
-    return { ok:true, reason:"" };
+    if (qs.length < 5) {
+      return { ok: false, reason: `Za mało pytań do gry: ${qs.length}. Min 5.` };
+    }
+    return { ok: true, reason: "" };
   }
 
-  if(qs.length !== 5){
-    return { ok:false, reason:`Familiada lokalna musi mieć dokładnie 5 pytań. Masz: ${qs.length}.` };
+  if (qs.length !== 5) {
+    return { ok: false, reason: `Familiada lokalna musi mieć dokładnie 5 pytań. Masz: ${qs.length}.` };
   }
 
-  for(const q of qs){
+  for (const q of qs) {
     const ans = await loadAnswers(q.id);
-    if(!ans.length) return { ok:false, reason:`Pytanie #${q.ord} nie ma odpowiedzi.` };
-    const sum = ans.reduce((s,a)=>s + (Number(a.fixed_points)||0), 0);
-    if(sum > 100){
-      return { ok:false, reason:`Pytanie #${q.ord}: suma punktów = ${sum} (max 100).` };
-    }
+    if (!ans.length) return { ok: false, reason: `Pytanie #${q.ord} nie ma odpowiedzi.` };
+    if (ans.length > 5) return { ok: false, reason: `Pytanie #${q.ord} ma >5 odpowiedzi.` };
+
+    const sum = ans.reduce((s, a) => s + (Number(a.fixed_points) || 0), 0);
+    if (sum > 100) return { ok: false, reason: `Pytanie #${q.ord}: suma punktów = ${sum} (max 100).` };
   }
-  return { ok:true, reason:"" };
+
+  return { ok: true, reason: "" };
 }
 
-function pickNextQuestionId(ls){
+function pickNextQuestionId(ls) {
   const used = parseArr(ls.used_question_ids);
-  for(const q of questions){
-    if(!used.includes(q.id)) return q.id;
+  for (const q of questions) {
+    if (!used.includes(q.id)) return q.id;
   }
   return null;
 }
 
-function renderAnswers(ls){
+function renderAnswers(ls) {
   answersBox.innerHTML = "";
   const revealed = parseArr(ls.revealed_answer_ids);
   const step = ls.step || "idle";
-  const canClick = ["licytacja","play","steal"].includes(step);
+  const canClick = ["licytacja", "play", "steal"].includes(step);
 
-  for(const a of answersForActive){
+  for (const a of answersForActive) {
     const b = document.createElement("button");
     b.type = "button";
     b.className = "aBtn";
     const rev = revealed.includes(a.id);
-    if(rev) b.classList.add("revealed");
+    if (rev) b.classList.add("revealed");
     b.disabled = !canClick || rev;
 
     b.innerHTML = `
-      <div class="aTop"><span>#${a.ord}</span><span>${Number(a.fixed_points)||0} pkt</span></div>
+      <div class="aTop"><span>#${a.ord}</span><span>${Number(a.fixed_points) || 0} pkt</span></div>
       <div class="aText">${a.text}</div>
     `;
 
-    b.addEventListener("click", async ()=>{
-      if(!canClick || rev) return;
+    b.addEventListener("click", async () => {
+      if (!canClick || rev) return;
       await confirmCorrect(ls, a);
     });
 
@@ -224,13 +226,13 @@ function renderAnswers(ls){
   }
 }
 
-async function confirmCorrect(ls, ans){
-  playSfx("correct");
+async function confirmCorrect(ls, ans) {
+  playSfx("answer_correct");
 
   const revealed = parseArr(ls.revealed_answer_ids);
-  const mult = Number(ls.multiplier)||1;
-  const pts = (Number(ans.fixed_points)||0) * mult;
-  const newSum = (Number(ls.round_sum)||0) + pts;
+  const mult = Number(ls.multiplier) || 1;
+  const pts = (Number(ans.fixed_points) || 0) * mult;
+  const newSum = (Number(ls.round_sum) || 0) + pts;
 
   revealed.push(ans.id);
 
@@ -240,11 +242,11 @@ async function confirmCorrect(ls, ans){
     round_points: newSum,
   });
 
-  playSfx("reveal");
+  playSfx("ui_tick");
 
-  const all = answersForActive.map(a=>a.id);
-  const allRevealed = all.every(id=>revealed.includes(id));
-  if(allRevealed){
+  const all = answersForActive.map(a => a.id);
+  const allRevealed = all.every(id => revealed.includes(id));
+  if (allRevealed) {
     const awardTo = ls.step === "steal"
       ? (ls.steal_team || otherTeam(ls.playing_team || ls.buzzer_winner || "A"))
       : (ls.playing_team || ls.buzzer_winner || "A");
@@ -253,63 +255,63 @@ async function confirmCorrect(ls, ans){
   }
 }
 
-async function confirmStrike(ls){
-  playSfx("wrong");
+async function confirmStrike(ls) {
+  playSfx("answer_wrong");
 
-  const strikes = (Number(ls.strikes)||0) + 1;
-  if(strikes >= 3){
+  const strikes = (Number(ls.strikes) || 0) + 1;
+  if (strikes >= 3) {
     const stealTeam = otherTeam(ls.playing_team || ls.buzzer_winner || "A");
-    await updateLive({ strikes, step:"steal", steal_team: stealTeam });
+    await updateLive({ strikes, step: "steal", steal_team: stealTeam });
     return;
   }
   await updateLive({ strikes });
 }
 
-async function awardRound(ls, teamToAward){
-  const sum = Number(ls.round_sum)||0;
+async function awardRound(ls, teamToAward) {
+  const sum = Number(ls.round_sum) || 0;
 
   const patch = {
     step: "reveal_end",
     round_awarded_to: teamToAward,
   };
 
-  if(teamToAward === "A") patch.team_a_score = (Number(ls.team_a_score)||0) + sum;
-  if(teamToAward === "B") patch.team_b_score = (Number(ls.team_b_score)||0) + sum;
+  if (teamToAward === "A") patch.team_a_score = (Number(ls.team_a_score) || 0) + sum;
+  if (teamToAward === "B") patch.team_b_score = (Number(ls.team_b_score) || 0) + sum;
 
   await updateLive(patch);
 
   const revealed = parseArr(ls.revealed_answer_ids);
-  const remaining = answersForActive.map(a=>a.id).filter(id=>!revealed.includes(id));
+  const remaining = answersForActive.map(a => a.id).filter(id => !revealed.includes(id));
   revealQueue = remaining.slice();
 
-  playSfx("round_end"); // końcówka rundy
+  playSfx("round_transition");
 }
 
-async function revealNext(){
+async function revealNext() {
   const ls = await readLive();
-  if(!revealQueue.length) return;
+  if (!revealQueue.length) return;
 
   const nextId = revealQueue.shift();
   const revealed = parseArr(ls.revealed_answer_ids);
-  if(!revealed.includes(nextId)) revealed.push(nextId);
+  if (!revealed.includes(nextId)) revealed.push(nextId);
 
   await updateLive({ revealed_answer_ids: revealed });
-  playSfx("reveal");
+  playSfx("ui_tick");
 }
 
-async function endRound(){
+async function endRound() {
   const ls = await readLive();
-  if(revealQueue.length){
+  if (revealQueue.length) {
     setMsg(msgGame, "Najpierw odkryj pozostałe odpowiedzi.");
     return;
   }
 
-  const nextRound = (Number(ls.round_no)||1) + 1;
+  const nextRound = (Number(ls.round_no) || 1) + 1;
   const nextMult = multiplierForRound(nextRound);
 
   await updateLive({
-    phase:"idle",
-    step:"idle",
+    phase: "idle",
+    step: "idle",
     round_no: nextRound,
     multiplier: nextMult,
 
@@ -319,13 +321,13 @@ async function endRound(){
     round_points: 0,
     revealed_answer_ids: [],
 
-    buzzer_locked:false,
-    buzzer_winner:null,
-    buzzer_at:null,
+    buzzer_locked: false,
+    buzzer_winner: null,
+    buzzer_at: null,
 
-    playing_team:null,
-    steal_team:null,
-    round_awarded_to:null,
+    playing_team: null,
+    steal_team: null,
+    round_awarded_to: null,
   });
 
   answersForActive = [];
@@ -333,131 +335,133 @@ async function endRound(){
   setMsg(msgGame, "Runda zakończona.");
 }
 
-async function startGame(){
+async function startGame() {
   const chk = await validateGameReady();
-  if(!chk.ok){
+  if (!chk.ok) {
     setMsg(msgGame, chk.reason);
     return;
   }
 
   const ls = await readLive();
-  if(!pingOk(ls.host_seen_at) || !pingOk(ls.buzzer_seen_at)){
+  if (!pingOk(ls.seen_host_at) || !pingOk(ls.seen_buzzer_at)) {
     setMsg(msgGame, "HOST/BUZZER nie działają (brak ping).");
     return;
   }
 
   await updateLive({
-    phase:"idle",
-    step:"idle",
-    round_no:1,
-    multiplier:1,
+    phase: "idle",
+    step: "idle",
+    round_no: 1,
+    multiplier: 1,
 
-    team_a_score:0,
-    team_b_score:0,
-    strikes:0,
-    round_sum:0,
-    round_points:0,
+    team_a_score: 0,
+    team_b_score: 0,
 
-    active_question_id:null,
-    revealed_answer_ids:[],
-    buzzer_locked:false,
-    buzzer_winner:null,
-    buzzer_at:null,
+    strikes: 0,
+    round_sum: 0,
+    round_points: 0,
 
-    playing_team:null,
-    steal_team:null,
-    round_awarded_to:null,
+    active_question_id: null,
+    revealed_answer_ids: [],
+
+    buzzer_locked: false,
+    buzzer_winner: null,
+    buzzer_at: null,
+
+    playing_team: null,
+    steal_team: null,
+    round_awarded_to: null,
 
     used_question_ids: [],
   });
 
-  playSfx("round_start");
+  playSfx("show_intro");
   setMsg(msgGame, "Start gry OK.");
 }
 
-async function startRound(){
+async function startRound() {
   const chk = await validateGameReady();
-  if(!chk.ok){
+  if (!chk.ok) {
     setMsg(msgGame, chk.reason);
     return;
   }
 
   const ls = await readLive();
-  if(ls.step !== "idle"){
+  if (ls.step !== "idle") {
     setMsg(msgGame, "Runda już trwa / jest w trakcie kończenia.");
     return;
   }
 
-  if(!pingOk(ls.host_seen_at) || !pingOk(ls.buzzer_seen_at)){
+  if (!pingOk(ls.seen_host_at) || !pingOk(ls.seen_buzzer_at)) {
     setMsg(msgGame, "HOST/BUZZER nie działają (brak ping).");
     return;
   }
 
   const qid = pickNextQuestionId(ls);
-  if(!qid){
+  if (!qid) {
     setMsg(msgGame, "Brak kolejnych pytań.");
     return;
   }
 
   answersForActive = await loadAnswers(qid);
-  if(!answersForActive.length){
+  if (!answersForActive.length) {
     setMsg(msgGame, "Pytanie nie ma odpowiedzi.");
     return;
   }
 
   const used = parseArr(ls.used_question_ids);
-  if(!used.includes(qid)) used.push(qid);
+  if (!used.includes(qid)) used.push(qid);
 
-  const roundNo = Number(ls.round_no)||1;
+  const roundNo = Number(ls.round_no) || 1;
   const mult = multiplierForRound(roundNo);
 
   await updateLive({
-    phase:"round",
-    step:"await_buzz",
+    phase: "round",
+    step: "await_buzz",
     active_question_id: qid,
-    strikes:0,
-    round_sum:0,
-    round_points:0,
-    revealed_answer_ids:[],
+
+    strikes: 0,
+    round_sum: 0,
+    round_points: 0,
+    revealed_answer_ids: [],
 
     multiplier: mult,
     used_question_ids: used,
 
-    buzzer_locked:false,
-    buzzer_winner:null,
-    buzzer_at:null,
+    buzzer_locked: false,
+    buzzer_winner: null,
+    buzzer_at: null,
 
-    playing_team:null,
-    steal_team:null,
-    round_awarded_to:null,
+    playing_team: null,
+    steal_team: null,
+    round_awarded_to: null,
   });
 
-  playSfx("round_start");
+  playSfx("round_transition");
   setMsg(msgGame, `Start rundy #${roundNo}.`);
 }
 
-async function resetBuzzer(){
-  await updateLive({ buzzer_locked:false, buzzer_winner:null, buzzer_at:null });
+async function resetBuzzer() {
+  await updateLive({ buzzer_locked: false, buzzer_winner: null, buzzer_at: null });
   setMsg(msgGame, "Buzzer zresetowany.");
 }
 
-async function choosePlay(){
+async function choosePlay() {
   const ls = await readLive();
-  if(ls.step !== "decision") return;
-  await updateLive({ step:"play", playing_team: (ls.buzzer_winner || "A") });
+  if (ls.step !== "decision") return;
+  await updateLive({ step: "play", playing_team: (ls.buzzer_winner || "A") });
 }
 
-async function choosePass(){
+async function choosePass() {
   const ls = await readLive();
-  if(ls.step !== "decision") return;
-  await updateLive({ step:"play", playing_team: otherTeam(ls.buzzer_winner || "A") });
+  if (ls.step !== "decision") return;
+  await updateLive({ step: "play", playing_team: otherTeam(ls.buzzer_winner || "A") });
 }
 
-async function pressX(){
+async function pressX() {
   const ls = await readLive();
-  if(["licytacja","play","steal"].includes(ls.step)){
-    if(ls.step === "steal"){
-      // nieudana kradzież = rundę bierze grająca drużyna
+  if (["licytacja", "play", "steal"].includes(ls.step)) {
+    if (ls.step === "steal") {
       const awardTo = ls.playing_team || otherTeam(ls.buzzer_winner || "A");
       await awardRound(ls, awardTo);
       return;
@@ -466,10 +470,9 @@ async function pressX(){
   }
 }
 
-function syncUi(ls){
-  // devices status
-  const hostOk = pingOk(ls.host_seen_at);
-  const buzOk = pingOk(ls.buzzer_seen_at);
+function syncUi(ls) {
+  const hostOk = pingOk(ls.seen_host_at);
+  const buzOk = pingOk(ls.seen_buzzer_at);
 
   setPill(pillHost, hostOk, hostOk ? "HOST: OK" : "HOST: BRAK");
   setPill(pillBuzzer, buzOk, buzOk ? "BUZZER: OK" : "BUZZER: BRAK");
@@ -477,7 +480,6 @@ function syncUi(ls){
   const dispOk = !!displayWin && !displayWin.closed;
   setPill(pillDisplay, dispOk, dispOk ? "DISPLAY: OTWARTY" : "DISPLAY: BRAK");
 
-  // game controls
   stRound.textContent = String(ls.round_no ?? "—");
   stMult.textContent = String(ls.multiplier ?? "—");
   stStep.textContent = String(ls.step ?? "—");
@@ -493,34 +495,31 @@ function syncUi(ls){
   btnRevealNext.disabled = !(ls.step === "reveal_end" && revealQueue.length > 0);
   btnEndRound.disabled = !(ls.step === "reveal_end");
 
-  // odpowiedzi
   renderAnswers(ls);
 
-  // X dostępne, gdy runda działa
-  btnX.disabled = !["licytacja","play","steal"].includes(ls.step);
+  btnX.disabled = !["licytacja", "play", "steal"].includes(ls.step);
   btnResetBuzzer.disabled = !ls.active_question_id;
   btnStartRound.disabled = !(ls.step === "idle");
 }
 
-function subLive(onChange){
+function subLive(onChange) {
   const ch = sb()
     .channel(`live_state:${gameId}`)
     .on("postgres_changes",
-      { event:"*", schema:"public", table:"live_state", filter:`game_id=eq.${gameId}` },
-      (payload)=>onChange(payload.new)
+      { event: "*", schema: "public", table: "live_state", filter: `game_id=eq.${gameId}` },
+      (payload) => onChange(payload.new)
     )
     .subscribe();
 
-  return ()=> sb().removeChannel(ch);
+  return () => sb().removeChannel(ch);
 }
 
-function openPopup(url, name){
-  const w = window.open(url, name, "noopener,noreferrer");
-  return w;
+function openPopup(url, name) {
+  return window.open(url, name, "noopener,noreferrer");
 }
 
-async function main(){
-  if(!gameId){
+async function main() {
+  if (!gameId) {
     alert("Brak parametru id w URL (control.html?id=...).");
     location.href = "builder.html";
     return;
@@ -529,12 +528,12 @@ async function main(){
   const u = await requireAuth("index.html");
   who.textContent = u?.email || "—";
 
-  btnLogout.addEventListener("click", async ()=>{
+  btnLogout.addEventListener("click", async () => {
     await signOut();
     location.href = "index.html";
   });
 
-  btnBack.addEventListener("click", ()=> location.href = `editor.html?id=${encodeURIComponent(gameId)}`);
+  btnBack.addEventListener("click", () => location.href = `editor.html?id=${encodeURIComponent(gameId)}`);
 
   await ensureLive();
 
@@ -543,27 +542,21 @@ async function main(){
 
   questions = await loadQuestions();
 
-  const hostUrl = buildLink("host.html", { id: game.id, key: game.share_key_remote });
-  const buzUrl  = buildLink("buzzer.html", { id: game.id, key: game.share_key_buzzer });
+  const hostUrl = buildLink("host.html", { id: game.id, key: game.share_key_host });
+  const buzUrl = buildLink("buzzer.html", { id: game.id, key: game.share_key_buzzer });
   const dispUrl = buildLink("display.html", { id: game.id, key: game.share_key_display });
 
   hostLink.value = hostUrl;
   buzzerLink.value = buzUrl;
   displayLink.value = dispUrl;
 
-  btnCopyHost.addEventListener("click", async ()=>{
-    setMsg(msgDevices, (await copyText(hostUrl)) ? "Skopiowano link HOST." : "Nie udało się skopiować.");
-  });
-  btnCopyBuzzer.addEventListener("click", async ()=>{
-    setMsg(msgDevices, (await copyText(buzUrl)) ? "Skopiowano link BUZZER." : "Nie udało się skopiować.");
-  });
-  btnCopyDisplay.addEventListener("click", async ()=>{
-    setMsg(msgDevices, (await copyText(dispUrl)) ? "Skopiowano link DISPLAY." : "Nie udało się skopiować.");
-  });
+  btnCopyHost.addEventListener("click", async () => setMsg(msgDevices, (await copyText(hostUrl)) ? "Skopiowano link HOST." : "Nie udało się skopiować."));
+  btnCopyBuzzer.addEventListener("click", async () => setMsg(msgDevices, (await copyText(buzUrl)) ? "Skopiowano link BUZZER." : "Nie udało się skopiować."));
+  btnCopyDisplay.addEventListener("click", async () => setMsg(msgDevices, (await copyText(dispUrl)) ? "Skopiowano link DISPLAY." : "Nie udało się skopiować."));
 
-  btnOpenHost.addEventListener("click", ()=>openPopup(hostUrl, "fam_host"));
-  btnOpenBuzzer.addEventListener("click", ()=>openPopup(buzUrl, "fam_buzzer"));
-  btnOpenDisplay.addEventListener("click", ()=>{
+  btnOpenHost.addEventListener("click", () => openPopup(hostUrl, "fam_host"));
+  btnOpenBuzzer.addEventListener("click", () => openPopup(buzUrl, "fam_buzzer"));
+  btnOpenDisplay.addEventListener("click", () => {
     displayWin = openPopup(dispUrl, "fam_display");
     setMsg(msgDevices, "Otworzono display.");
   });
@@ -581,51 +574,42 @@ async function main(){
 
   let ls = await readLive();
 
-  // jeśli runda trwa i ma pytanie -> wczytaj odpowiedzi
-  if(ls.active_question_id){
+  if (ls.active_question_id) {
     answersForActive = await loadAnswers(ls.active_question_id);
     const revealed = parseArr(ls.revealed_answer_ids);
-    revealQueue = answersForActive.map(a=>a.id).filter(id=>!revealed.includes(id));
+    revealQueue = answersForActive.map(a => a.id).filter(id => !revealed.includes(id));
   }
 
-  // reakcje na zmiany: dźwięk buzzera, przejścia etapów
   let lastBuzzerLock = !!ls.buzzer_locked;
   let lastStep = ls.step;
 
   syncUi(ls);
 
-  subLive(async (n)=>{
-    try{
+  subLive(async (n) => {
+    try {
       ls = n;
 
-      // buzzer pierwszy raz zablokowany
-      if(!lastBuzzerLock && ls.buzzer_locked){
-        playSfx("buzzer");
-      }
+      if (!lastBuzzerLock && ls.buzzer_locked) playSfx("buzzer_press");
       lastBuzzerLock = !!ls.buzzer_locked;
 
-      // etap
-      if(ls.step !== lastStep){
+      if (ls.step !== lastStep) {
         lastStep = ls.step;
 
-        // auto: po licytacji -> decision (jak tylko jest 1 akcja)
-        if(ls.step === "await_buzz" && ls.buzzer_locked && ls.buzzer_winner){
-          await updateLive({ step:"licytacja" });
+        if (ls.step === "await_buzz" && ls.buzzer_locked && ls.buzzer_winner) {
+          await updateLive({ step: "licytacja" });
         }
 
-        // jeżeli w licytacji coś już odsłonięte albo X -> przejdź do decision
-        if(ls.step === "licytacja"){
-          const any = parseArr(ls.revealed_answer_ids).length > 0 || (Number(ls.strikes)||0) > 0;
-          if(any) await updateLive({ step:"decision" });
+        if (ls.step === "licytacja") {
+          const any = parseArr(ls.revealed_answer_ids).length > 0 || (Number(ls.strikes) || 0) > 0;
+          if (any) await updateLive({ step: "decision" });
         }
       }
 
-      // answers load
-      if(ls.active_question_id){
+      if (ls.active_question_id) {
         answersForActive = await loadAnswers(ls.active_question_id);
         const revealed = parseArr(ls.revealed_answer_ids);
-        if(ls.step === "reveal_end"){
-          revealQueue = answersForActive.map(a=>a.id).filter(id=>!revealed.includes(id));
+        if (ls.step === "reveal_end") {
+          revealQueue = answersForActive.map(a => a.id).filter(id => !revealed.includes(id));
         }
       } else {
         answersForActive = [];
@@ -633,22 +617,18 @@ async function main(){
       }
 
       syncUi(ls);
-    } catch (e){
+    } catch (e) {
       console.error("[control] live err:", e);
     }
   });
 
-  // mały tip: pierwsze kliknięcie w UI “odblokowuje” autoplay policy
-  document.addEventListener("click", ()=>{
-    playSfx("reveal");
-  }, { once:true });
+  document.addEventListener("click", () => playSfx("ui_tick"), { once: true });
 
-  // start na zakładce Urządzenia
   tabSwitch("devices");
 }
 
-document.addEventListener("DOMContentLoaded", ()=>{
-  main().catch(e=>{
+document.addEventListener("DOMContentLoaded", () => {
+  main().catch(e => {
     console.error(e);
     alert("Błąd sterowania. Sprawdź konsolę (F12).");
   });
