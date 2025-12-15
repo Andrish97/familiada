@@ -1,31 +1,36 @@
 <!DOCTYPE html>
 <html lang="pl">
-<head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Familiada — Przycisk</title>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Familiada – Przycisk</title>
 
-  <link rel="stylesheet" href="css/base.css"/>
-  <link rel="stylesheet" href="css/buzzer.css"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" href="favicon.ico" />
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-  <script type="module" src="js/pages/buzzer.js" defer></script>
-</head>
-<body class="buzz-body">
-  <div class="wrap">
-    <div class="top">
-      <div class="t">PRZYCISK</div>
-      <div class="s" id="status">Łączenie…</div>
+    <link rel="stylesheet" href="css/theme.css" />
+    <link rel="stylesheet" href="css/buzzer.css" />
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+    <script src="js/core/auth.js" defer></script>
+    <script src="js/pages/buzzer.js" defer></script>
+  </head>
+
+  <body class="arcade-body">
+    <div class="bz-shell">
+      <div class="bz-top">
+        <div class="bz-title">PRZYCISK</div>
+        <div class="bz-status">Ładuję…</div>
+      </div>
+
+      <div class="bz-buttons">
+        <button class="bz-btn bz-a" type="button">A</button>
+        <button class="bz-btn bz-b" type="button">B</button>
+      </div>
+
+      <div class="bz-foot">
+        <span class="bz-live">—</span>
+        <span class="bz-error"></span>
+      </div>
     </div>
-
-    <div class="team">
-      <button class="chip" data-team="A">Zespół A</button>
-      <button class="chip" data-team="B">Zespół B</button>
-    </div>
-
-    <button class="big" id="bigBtn" disabled>WYBIJ</button>
-
-    <div class="hint" id="hint">Wybierz zespół, potem kliknij. Kto pierwszy — ten bierze.</div>
-  </div>
-</body>
+  </body>
 </html>
