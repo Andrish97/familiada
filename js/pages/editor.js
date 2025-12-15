@@ -246,12 +246,17 @@ function renderAnswers() {
   answers.forEach((a) => {
     const row = document.createElement("div");
     row.className = "arow";
-
-    row.innerHTML = `
-      <input class="aText" />
-      <input class="aPts" type="number" min="0" max="100" inputmode="numeric" />
-      <button class="aDel" type="button" title="Usuń" ${locked ? "disabled" : ""}>✕</button>
-    `;
+    
+    row.innerHTML = isFixed()
+      ? `
+        <input class="aText" />
+        <input class="aPts" type="number" min="0" max="100" inputmode="numeric" />
+        <button class="aDel" type="button">✕</button>
+      `
+      : `
+        <input class="aText" />
+        <button class="aDel" type="button">✕</button>
+      `;
 
     const aText = row.querySelector(".aText");
     const aPts = row.querySelector(".aPts");
