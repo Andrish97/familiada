@@ -277,11 +277,12 @@ function renderAnswers(){
     }
 
     const aText = row.querySelector(".aText");
+    const aPts  = row.querySelector(".aPts");
     const aDel  = row.querySelector(".aDel");
-    const aPts  = row.querySelector(".aPts"); // może być null (dla poll) — i to OK
+    
+    if(aText) aText.value = a.text || "";
+    if(aPts)  aPts.value  = typeof a.fixed_points === "number" ? a.fixed_points : 0;
 
-    aText.value = a.text || "";
-    aText.disabled = locked;
 
     aText.addEventListener("input", ()=>{
       const t = aText.value || "";
@@ -330,8 +331,8 @@ function renderAnswers(){
         }
       };
 
-      aPts.addEventListener("input", ()=>{ applyLive(false); });
-      aPts.addEventListener("change", ()=>{ applyLive(true); });
+      if(aPts) aPts.addEventListener("input", ()=>{ applyLive(false); });
+      if(aPts) aPts.addEventListener("change", ()=>{ applyLive(true); });
     }
 
     // X = “wyczyść” (bo zawsze 5 odpowiedzi)
