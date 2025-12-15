@@ -1,40 +1,54 @@
 <!DOCTYPE html>
 <html lang="pl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Edytor 5×7 — tryby + zapisy</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Edytor 30×10 matryc 5×7 — sparse export</title>
 <style>
-  :root{ --px: 30px; --gap: 4px; --off:#ccc; --on:#111; --bg:#f5f5f5; }
-  body{ font-family: system-ui, sans-serif; background:var(--bg); padding:16px; margin:0; }
+  :root{
+    --px: 12px;
+    --inGap: 2px;
+    --matGap: var(--px);
+    --off: #cfcfcf;
+    --on: #111;
+    --bg: #f5f5f5;
+  }
+  body{margin:0;padding:16px;font-family:system-ui,sans-serif;background:var(--bg);}
   .toolbar{
     display:flex; flex-wrap:wrap; gap:10px; align-items:center;
     background:#fff; padding:10px; border-radius:12px; box-shadow:0 1px 8px rgba(0,0,0,.08);
-    position: sticky; top: 0; z-index: 2;
+    position: sticky; top:0; z-index:5;
   }
   .group{display:flex; gap:8px; align-items:center; padding-right:10px; border-right:1px solid #e8e8e8;}
   .group:last-child{border-right:none; padding-right:0;}
-  button{ border:1px solid #ccc; background:#fff; padding:6px 10px; border-radius:10px; cursor:pointer; font:inherit; }
-  button.active{ border-color:#111; box-shadow: inset 0 0 0 1px #111; }
-  label{ display:flex; gap:8px; align-items:center; }
-  .hint{ opacity:.7; font-size:13px; }
+  button{border:1px solid #ccc;background:#fff;padding:6px 10px;border-radius:10px;cursor:pointer;font:inherit;}
+  button.active{border-color:#111; box-shadow: inset 0 0 0 1px #111;}
+  label{display:flex; gap:8px; align-items:center;}
+  .hint{opacity:.7; font-size:13px;}
+  .stage{margin-top:12px;background:#fff;padding:12px;border-radius:12px;box-shadow:0 1px 10px rgba(0,0,0,.08);overflow:auto;}
 
-  .stage{ margin-top:12px; background:#fff; padding:12px; border-radius:12px; box-shadow:0 1px 10px rgba(0,0,0,.08); }
-  #matrix{
+  #panel{
     display:grid;
-    grid-template-columns: repeat(5, var(--px));
-    grid-template-rows: repeat(7, var(--px));
-    gap: var(--gap);
-    width: max-content;
+    grid-template-columns: repeat(30, max-content);
+    grid-template-rows: repeat(10, max-content);
+    gap: var(--matGap);
+    width:max-content;
     user-select:none;
     touch-action:none;
   }
-  .dot{ width:var(--px); height:var(--px); border-radius:50%; background:var(--off); cursor:crosshair; }
-  .dot.on{ background:var(--on); }
-
-  table{ border-collapse: collapse; margin-top: 14px; width: 100%; background:#fff; }
-  th,td{ border:1px solid #bbb; padding:6px; text-align:center; font-size:14px; }
-  textarea{ width:100%; height:120px; margin-top:10px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  .mat{
+    display:grid;
+    grid-template-columns: repeat(5, var(--px));
+    grid-template-rows: repeat(7, var(--px));
+    gap: var(--inGap);
+    padding:2px;
+    border-radius:10px;
+    background:#fafafa;
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,.06);
+  }
+  .px{width:var(--px);height:var(--px);border-radius:3px;background:var(--off);cursor:crosshair;}
+  .px.on{background:var(--on);}
+  textarea{width:100%;height:160px;margin-top:12px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;}
 </style>
 </head>
 <body>
@@ -60,94 +74,83 @@
   <div class="group">
     <label>
       Szerokość pędzla:
-      <input id="brushSize" type="range" min="1" max="7" value="1" />
+      <input id="brushSize" type="range" min="1" max="15" value="1"/>
       <span id="brushLabel">1</span>
     </label>
   </div>
 
   <div class="group">
-    <label>Symbol: <input id="symbolInput" maxlength="8"></label>
-    <button id="saveBtn">Zapisz</button>
     <button id="clearBtn">Wyczyść</button>
-    <button id="exportBtn">Eksport</button>
+    <button id="invertBtn">Odwróć</button>
+    <button id="exportBtn">Eksport (tylko niepuste)</button>
   </div>
 </div>
 
 <div class="stage">
-  <div id="matrix"></div>
-
-  <h3>Zapisane symbole</h3>
-  <table>
-    <thead>
-      <tr><th>Symbol</th><th>Dane (bin)</th></tr>
-    </thead>
-    <tbody id="symbolsTable"></tbody>
-  </table>
-
-  <h3>Eksport (C / Arduino)</h3>
-  <textarea id="exportOut" readonly></textarea>
+  <div id="panel"></div>
+  <textarea id="exportOut" readonly placeholder="Eksport pojawi się tutaj…"></textarea>
 </div>
 
 <script>
 (() => {
-  const W=5, H=7;
-  const matrixEl = document.getElementById('matrix');
+  const MAT_W=5, MAT_H=7;
+  const MATS_X=30, MATS_Y=10;
+  const W=MAT_W*MATS_X; //150
+  const H=MAT_H*MATS_Y; //70
 
-  const modePencil = document.getElementById('modePencil');
-  const modeFill   = document.getElementById('modeFill');
-  const modeToggle = document.getElementById('modeToggle');
+  const panel=document.getElementById('panel');
+  const exportOut=document.getElementById('exportOut');
 
-  const pencilAction = document.getElementById('pencilAction');
-  const brushSize = document.getElementById('brushSize');
-  const brushLabel = document.getElementById('brushLabel');
+  const modePencil=document.getElementById('modePencil');
+  const modeFill=document.getElementById('modeFill');
+  const modeToggle=document.getElementById('modeToggle');
+  const pencilAction=document.getElementById('pencilAction');
+  const brushSize=document.getElementById('brushSize');
+  const brushLabel=document.getElementById('brushLabel');
+  const clearBtn=document.getElementById('clearBtn');
+  const invertBtn=document.getElementById('invertBtn');
+  const exportBtn=document.getElementById('exportBtn');
 
-  const symbolInput = document.getElementById('symbolInput');
-  const saveBtn = document.getElementById('saveBtn');
-  const clearBtn = document.getElementById('clearBtn');
-  const exportBtn = document.getElementById('exportBtn');
-  const exportOut = document.getElementById('exportOut');
-  const symbolsTable = document.getElementById('symbolsTable');
+  let mode='pencil';
+  let isDown=false;
+  let lastKey=null;
 
-  let mode = 'pencil'; // pencil|fill|toggle
-  let isDown = false;
-  let lastKey = null;
-
-  const state = new Uint8Array(W*H);
-  const dots = new Array(W*H);
-
-  const idxOf = (x,y)=> y*W+x;
-  const inBounds=(x,y)=> x>=0&&x<W&&y>=0&&y<H;
-
-  brushSize.addEventListener('input', ()=> brushLabel.textContent = brushSize.value);
+  brushSize.addEventListener('input',()=>brushLabel.textContent=brushSize.value);
 
   function setMode(m){
     mode=m;
-    modePencil.classList.toggle('active', m==='pencil');
-    modeFill.classList.toggle('active',   m==='fill');
-    modeToggle.classList.toggle('active', m==='toggle');
+    modePencil.classList.toggle('active',m==='pencil');
+    modeFill.classList.toggle('active',m==='fill');
+    modeToggle.classList.toggle('active',m==='toggle');
   }
   modePencil.onclick=()=>setMode('pencil');
   modeFill.onclick=()=>setMode('fill');
   modeToggle.onclick=()=>setMode('toggle');
+
+  const state=new Uint8Array(W*H);
+  const pxEls=new Array(W*H);
+
+  const idxOf=(x,y)=>y*W+x;
+  const inBounds=(x,y)=>x>=0&&x<W&&y>=0&&y<H;
 
   function setPixel(x,y,val){
     if(!inBounds(x,y)) return;
     const i=idxOf(x,y);
     if(state[i]===val) return;
     state[i]=val;
-    dots[i].classList.toggle('on', !!val);
+    pxEls[i].classList.toggle('on',!!val);
   }
   function togglePixel(x,y){
     if(!inBounds(x,y)) return;
     const i=idxOf(x,y);
-    state[i]= state[i]?0:1;
-    dots[i].classList.toggle('on', !!state[i]);
+    state[i]=state[i]?0:1;
+    pxEls[i].classList.toggle('on',!!state[i]);
   }
 
   function paintBrush(cx,cy){
-    const size = parseInt(brushSize.value,10);
-    const r = Math.floor(size/2);
-    const val = (pencilAction.value==='paint')?1:0;
+    const size=parseInt(brushSize.value,10);
+    const r=Math.floor(size/2);
+    const val=(pencilAction.value==='paint')?1:0;
     for(let y=cy-r;y<=cy+r;y++){
       for(let x=cx-r;x<=cx+r;x++){
         setPixel(x,y,val);
@@ -157,11 +160,11 @@
 
   function floodFill(sx,sy,newVal){
     if(!inBounds(sx,sy)) return;
-    const target = state[idxOf(sx,sy)];
+    const target=state[idxOf(sx,sy)];
     if(target===newVal) return;
 
-    const qx = new Int16Array(W*H);
-    const qy = new Int16Array(W*H);
+    const qx=new Int16Array(W*H);
+    const qy=new Int16Array(W*H);
     let h=0,t=0;
     qx[t]=sx; qy[t]=sy; t++;
 
@@ -172,7 +175,7 @@
       if(state[i]!==target) continue;
 
       state[i]=newVal;
-      dots[i].classList.toggle('on', !!newVal);
+      pxEls[i].classList.toggle('on',!!newVal);
 
       qx[t]=x+1; qy[t]=y; t++;
       qx[t]=x-1; qy[t]=y; t++;
@@ -181,96 +184,116 @@
     }
   }
 
-  function handleDot(el){
-    if(!el || !el.classList || !el.classList.contains('dot')) return;
+  function handlePixelEl(el){
+    if(!el || !el.classList || !el.classList.contains('px')) return;
     const x=parseInt(el.dataset.x,10);
     const y=parseInt(el.dataset.y,10);
 
-    const key = `${x},${y},${mode},${pencilAction.value},${brushSize.value}`;
+    const key=`${x},${y},${mode},${pencilAction.value},${brushSize.value}`;
     if(isDown && key===lastKey) return;
     lastKey=key;
 
     if(mode==='toggle') togglePixel(x,y);
     else if(mode==='pencil') paintBrush(x,y);
     else if(mode==='fill'){
-      const cur = state[idxOf(x,y)];
-      floodFill(x,y, cur?0:1);
+      const cur=state[idxOf(x,y)];
+      floodFill(x,y,cur?0:1);
     }
+    exportOut.value='';
   }
 
-  // build dots
+  // build DOM
   const frag=document.createDocumentFragment();
-  for(let y=0;y<H;y++){
-    for(let x=0;x<W;x++){
-      const i=idxOf(x,y);
-      const d=document.createElement('div');
-      d.className='dot';
-      d.dataset.x=x; d.dataset.y=y;
-      dots[i]=d;
-      frag.appendChild(d);
+  for(let my=0;my<MATS_Y;my++){
+    for(let mx=0;mx<MATS_X;mx++){
+      const mat=document.createElement('div');
+      mat.className='mat';
+      for(let ry=0;ry<MAT_H;ry++){
+        for(let rx=0;rx<MAT_W;rx++){
+          const x=mx*MAT_W+rx;
+          const y=my*MAT_H+ry;
+          const i=idxOf(x,y);
+          const px=document.createElement('div');
+          px.className='px';
+          px.dataset.x=x; px.dataset.y=y;
+          pxEls[i]=px;
+          mat.appendChild(px);
+        }
+      }
+      frag.appendChild(mat);
     }
   }
-  matrixEl.appendChild(frag);
+  panel.appendChild(frag);
 
   // pointer events
-  matrixEl.addEventListener('pointerdown',(e)=>{
+  panel.addEventListener('pointerdown',(e)=>{
     isDown=true;
-    matrixEl.setPointerCapture(e.pointerId);
+    panel.setPointerCapture(e.pointerId);
     lastKey=null;
-    handleDot(e.target);
+    handlePixelEl(e.target);
   });
-  matrixEl.addEventListener('pointermove',(e)=>{
+  panel.addEventListener('pointermove',(e)=>{
     if(!isDown) return;
-    if(mode!=='pencil') return; // drag tylko pędzel/gumka
+    if(mode!=='pencil') return;
     const el=document.elementFromPoint(e.clientX,e.clientY);
-    handleDot(el);
+    handlePixelEl(el);
   });
-  matrixEl.addEventListener('pointerup',()=>{isDown=false; lastKey=null;});
-  matrixEl.addEventListener('pointercancel',()=>{isDown=false; lastKey=null;});
+  panel.addEventListener('pointerup',()=>{isDown=false; lastKey=null;});
+  panel.addEventListener('pointercancel',()=>{isDown=false; lastKey=null;});
 
-  function getRows5bit(){
-    const rows=[];
-    for(let y=0;y<7;y++){
-      let bits=0;
-      for(let x=0;x<5;x++){
-        if(state[idxOf(x,y)]) bits |= (1 << (4-x));
-      }
-      rows.push(bits);
-    }
-    return rows;
-  }
-
-  const symbols = [];
-
-  saveBtn.onclick = () => {
-    const sym = symbolInput.value.trim();
-    if(!sym) return;
-    const rows = getRows5bit();
-    symbols.push({ sym, rows });
-
-    const tr=document.createElement('tr');
-    tr.innerHTML = `
-      <td>${sym}</td>
-      <td>${rows.map(b=>'0b'+b.toString(2).padStart(5,'0')).join(', ')}</td>
-    `;
-    symbolsTable.appendChild(tr);
-    exportOut.value='';
-  };
-
-  clearBtn.onclick = () => {
+  clearBtn.onclick=()=>{
     state.fill(0);
-    dots.forEach(d=>d.classList.remove('on'));
+    for(const el of pxEls) el.classList.remove('on');
+    exportOut.value='';
+  };
+  invertBtn.onclick=()=>{
+    for(let i=0;i<state.length;i++){
+      state[i]=state[i]?0:1;
+      pxEls[i].classList.toggle('on',!!state[i]);
+    }
     exportOut.value='';
   };
 
-  exportBtn.onclick = () => {
-    let out = "const uint8_t font5x7[][7] = {\n";
-    for(const s of symbols){
-      out += "  { " + s.rows.map(b=>'0b'+b.toString(2).padStart(5,'0')).join(', ')
-          + " }, // " + s.sym + "\n";
+  // >>> SPARSE EXPORT: tylko niepuste sektory 5×7
+  exportBtn.onclick=()=>{
+    const records=[]; // {mx,my,rows[7]}
+    for(let mx=0;mx<MATS_X;mx++){
+      for(let my=0;my<MATS_Y;my++){
+        const baseX=mx*MAT_W;
+        const baseY=my*MAT_H;
+
+        const rows=new Array(MAT_H);
+        let any=false;
+
+        for(let ry=0;ry<MAT_H;ry++){
+          let bits=0;
+          for(let rx=0;rx<MAT_W;rx++){
+            const x=baseX+rx;
+            const y=baseY+ry;
+            if(state[idxOf(x,y)]) bits |= (1 << (MAT_W-1-rx));
+          }
+          rows[ry]=bits;
+          if(bits!==0) any=true;
+        }
+
+        if(any) records.push({mx,my,rows});
+      }
     }
-    out += "};\n";
-    exportOut.value = out;
+
+    let out='';
+    out += `// Sparse export: tylko niepuste sektory 5×7\n`;
+    out += `// Każdy rekord: (x,y) sektora + 7 wierszy po 5 bitów\n\n`;
+    out += `#include <stdint.h>\n\n`;
+    out += `typedef struct { uint8_t x; uint8_t y; uint8_t rows[7]; } Sector5x7;\n\n`;
+    out += `const Sector5x7 sectors[] = {\n`;
+    for(const r of records){
+      out += `  { ${r.mx}, ${r.my}, { ${r.rows.map(b=>'0b'+b.toString(2).padStart(5,'0')).join(', ')} } },\n`;
+    }
+    out += `};\n`;
+    out += `const uint16_t sectorCount = ${records.length};\n`;
+
+    exportOut.value=out;
+    exportOut.scrollTop=0;
   };
 })();
 </script>
