@@ -1,92 +1,95 @@
 import { sb } from "../core/supabase.js";
 
 const qs = new URLSearchParams(location.search);
-const gameId = qs.get("game");
+const gameId = qs.get("id");
 const key = qs.get("key");
 
-const $ = (s) => document.querySelector(s);
+const dot = document.getElementById("dot");
+const txt = document.getElementById("txt");
+const btnFS = document.getElementById("btnFS");
 
-const ui = {
-  status: $(".bz-status"),
-  btnA: $(".bz-a"),
-  btnB: $(".bz-b"),
-  live: $(".bz-live"),
-  err: $(".bz-error"),
-};
+const btnA = document.getElementById("btnA");
+const btnB = document.getElementById("btnB");
 
-let client = null;
 let locked = false;
 
-function setError(msg) {
-  ui.err.textContent = msg || "";
-}
-function setStatus(msg) {
-  ui.status.textContent = msg || "";
-}
-function setLocked(on, winner) {
-  locked = !!on;
-  ui.btnA.disabled = locked;
-  ui.btnB.disabled = locked;
-  setStatus(locked ? `Zablokowane – pierwszy: ${winner || "?"}` : "Gotowe – naciśnij A lub B");
+function setStatus(ok, t){
+  dot.style.background = ok ? "#22e06f" : "#ff6b6b";
+  txt.textContent = t;
 }
 
-async function rpc(name, params) {
-  const { data, error } = await client.rpc(name, params);
-  if (error) throw error;
-  return data;
-}
-
-async function hello() {
-  try {
-    await rpc("buzzer_hello", { p_game_id: gameId, p_key: key });
-  } catch (e) {
-    console.warn("[buzzer] buzzer_hello error:", e?.message || e);
+async function ping(){
+  try{
+    await sb().rpc("public_ping", { p_game_id: gameId, p_kind: "buzzer", p_key: key });
+    setStatus(true, locked ? "Zablokowane" : "Gotowe");
+  }catch{
+    setStatus(false, "Brak połączenia");
   }
 }
 
-async function press(team) {
-  if (locked) return;
-  try {
-    setError("");
-    setStatus("Wysyłam…");
+async function press(team){
+  if(locked) return;
 
-    const res = await rpc("buzzer_press", {
-      p_game_id: gameId,
-      p_key: key,
-      p_team: team,
-    });
+  try{
+    const res = await sb().rpc("buzzer_press", { p_game_id: gameId, p_key: key, p_team: team });
+    const accepted = !!res.data?.accepted;
+    const winner = res.data?.winner;
 
-    if (res?.accepted) setLocked(true, res?.winner || team);
-    else setLocked(true, res?.winner || "?");
-  } catch (e) {
-    console.error(e);
-    setError(e?.message || "Błąd buzzera.");
-    setStatus("Błąd");
+    locked = !!res.data?.locked;
+
+    // ten, który wygrał, “gaśnie”
+    btnA.classList.toggle("winner", winner === "A");
+    btnB.classList.toggle("winner", winner === "B");
+
+    // blokada inputu po pierwszym zwycięzcy
+    btnA.disabled = locked;
+    btnB.disabled = locked;
+
+    if(accepted){
+      setStatus(true, "Zgłoszono!");
+    }else{
+      setStatus(true, "Za późno");
+    }
+  }catch{
+    setStatus(false, "Błąd");
   }
 }
 
-async function main() {
-  if (!gameId || !key) {
-    setError("Brak parametrów URL (game/key).");
-    setStatus("Błąd");
+btnA.addEventListener("click", ()=>press("A"));
+btnB.addEventListener("click", ()=>press("B"));
+
+btnFS.addEventListener("click", async ()=>{
+  try{
+    if(!document.fullscreenElement){
+      await document.documentElement.requestFullscreen();
+    } else {
+      await document.exitFullscreen();
+    }
+  }catch{}
+});
+
+// alert przy odświeżeniu (nie psuje UX, ale ostrzega)
+window.addEventListener("beforeunload", (e)=>{
+  e.preventDefault();
+  e.returnValue = "";
+});
+
+// start
+document.addEventListener("DOMContentLoaded", ()=>{
+  if(!gameId || !key){
+    setStatus(false, "Zły link");
+    btnA.disabled = true;
+    btnB.disabled = true;
     return;
   }
 
-  client = sb();
+  // ping co 5s
+  ping();
+  setInterval(ping, 5000);
 
-  ui.btnA.addEventListener("click", () => press("A"));
-  ui.btnB.addEventListener("click", () => press("B"));
-
-  setLocked(false);
-  await hello();
-  setInterval(hello, 15000);
-
-  ui.live.textContent = "Połączono";
-}
-
-document.addEventListener("DOMContentLoaded", () => {
-  main().catch((e) => {
-    console.error(e);
-    setError(e?.message || "Błąd krytyczny.");
-  });
+  // reset wyglądu
+  btnA.disabled = false;
+  btnB.disabled = false;
+  btnA.classList.remove("winner");
+  btnB.classList.remove("winner");
 });
