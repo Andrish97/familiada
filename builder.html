@@ -48,20 +48,20 @@
 <!-- ===== Import JSON ===== -->
 <div class="overlay" id="importOverlay" style="display:none;">
   <div class="modal">
-    <div class="mTitle">Import Familiady</div>
-    <div class="mSub">Wklej JSON lub wybierz plik</div>
+    <div class="mTitle">Import</div>
+    <div class="mSub">Wklej JSON albo wybierz plik.</div>
 
-    <textarea id="importTa" class="ta" style="min-height:180px"></textarea>
-
-    <div class="actions" style="margin-top:10px;">
-      <input type="file" id="importFile" accept=".json" />
+    <div class="fileRow">
+      <input class="fileInput" id="importFile" type="file" accept="application/json" />
       <button class="btn" id="btnImportFile" type="button">Wczytaj plik</button>
       <button class="btn gold" id="btnImportJson" type="button">Importuj</button>
-      <button class="btn" id="btnCancelImport" type="button">Anuluj</button>
+      <button class="btn" id="btnCancelImport" type="button">Zamknij</button>
     </div>
 
-    <div class="msg" id="importMsg"></div>
+    <textarea class="importTa" id="importTa"></textarea>
+    <div class="importMsg" id="importMsg"></div>
   </div>
+</div>
 </div>
 </body>
 </html>
