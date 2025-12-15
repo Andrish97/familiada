@@ -88,7 +88,6 @@ async function readFileAsText(file){
 }
 
 function guessKindFromQuestions(qs){
-  // jeśli jakiekolwiek pytanie ma mode='poll' -> traktujemy jako sondażowa
   return (qs || []).some(q => q.mode === "poll") ? "poll" : "fixed";
 }
 
@@ -148,21 +147,28 @@ async function ensureLive(gameId){
 
 async function createGame(kind){
   // kind: "fixed" | "poll"
+
   const { data: game, error } = await sb()
     .from("games")
     .insert({
       name: kind === "poll" ? "Nowa Familiada (Sondaż)" : "Nowa Familiada",
       owner_id: currentUser.id,
+
+      // KLUCZ: zapis typu gry do games
+      kind: kind,
+
+      // status bazowy
+      status: "draft",
     })
     .select("*")
     .single();
 
-  if (error) throw error;
+  if(error) throw error;
 
   await ensureLive(game.id);
 
-  // 10 pytań x 5 odpowiedzi (zawsze, bez klikania)
-  for (let i = 1; i <= QN; i++){
+  // 10 pytań x 5 odpowiedzi
+  for(let i=1;i<=QN;i++){
     const { data: q, error: qErr } = await sb()
       .from("questions")
       .insert({
@@ -174,21 +180,21 @@ async function createGame(kind){
       .select("*")
       .single();
 
-    if (qErr) throw qErr;
+    if(qErr) throw qErr;
 
-    // fixed_points zawsze int4 (0)
-    const rows = [];
-    for (let j = 1; j <= AN; j++){
-      rows.push({
-        question_id: q.id,
-        ord: j,
-        text: `ODP ${j}`,
-        fixed_points: 0,
-      });
+    // fixed_points zawsze liczba (0) – unikamy 400 jeśli kolumna NOT NULL
+    for(let j=1;j<=AN;j++){
+      const { error: aErr } = await sb()
+        .from("answers")
+        .insert({
+          question_id: q.id,
+          ord: j,
+          text: `ODP ${j}`,
+          fixed_points: 0,
+        });
+
+      if(aErr) throw aErr;
     }
-
-    const { error: aErr } = await sb().from("answers").insert(rows);
-    if (aErr) throw aErr;
   }
 
   return game;
@@ -284,15 +290,24 @@ async function doImportPayload(rawObj){
 
   const { data: game, error } = await sb()
     .from("games")
-    .insert({ name: payload.game.name, owner_id: currentUser.id })
+    .insert({
+      name: payload.game.name,
+      owner_id: currentUser.id,
+
+      // KLUCZ: zapis typu gry do games
+      kind: payload.game.kind,
+
+      // startowo draft
+      status: "draft",
+    })
     .select("*")
     .single();
 
-  if (error) throw error;
+  if(error) throw error;
 
   await ensureLive(game.id);
 
-  for (const q of payload.questions){
+  for(const q of payload.questions){
     const { data: qRow, error: qErr } = await sb()
       .from("questions")
       .insert({
@@ -304,17 +319,21 @@ async function doImportPayload(rawObj){
       .select("*")
       .single();
 
-    if (qErr) throw qErr;
+    if(qErr) throw qErr;
 
-    const rows = q.answers.map(a => ({
-      question_id: qRow.id,
-      ord: safeInt(a.ord, 1),
-      text: String(a.text || "ODP").slice(0, 17),
-      fixed_points: payload.game.kind === "fixed" ? clampInt(a.fixed_points, 0, 999) : 0,
-    }));
+    for(const a of q.answers){
+      // fixed_points zawsze liczba (0 też OK)
+      const { error: aErr } = await sb()
+        .from("answers")
+        .insert({
+          question_id: qRow.id,
+          ord: a.ord,
+          text: a.text,
+          fixed_points: Number(a.fixed_points) || 0,
+        });
 
-    const { error: aErr } = await sb().from("answers").insert(rows);
-    if (aErr) throw aErr;
+      if(aErr) throw aErr;
+    }
   }
 
   return game;
