@@ -43,9 +43,19 @@
 
 .card.selected{
   border-color: rgba(255,234,166,.45);
-  box-shadow:
-    0 24px 60px rgba(0,0,0,.45),
-    0 0 0 2px rgba(255,234,166,.18);
+  background: rgba(255,234,166,.10);
+}
+.actionsBar{
+  margin-top: 14px;
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  align-items:center;
+}
+.actionsHint{
+  opacity:.8;
+  font-size:12px;
+  margin-left: 6px;
 }
 
 .card .name{ font-weight:1000; font-size:16px; letter-spacing:.04em; }
