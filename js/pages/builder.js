@@ -387,7 +387,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   currentUser = await requireAuth("index.html");
   who.textContent = currentUser?.email || "—";
 
-  btnLogout.addEventListener("click", async () => {
+  if (btnLogout) btnLogout.addEventListener("click", async () => {
     await signOut();
     location.href = "index.html";
   });
@@ -395,7 +395,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (btnNew) btnNew.addEventListener("click", openTypeModal);
   if (btnCancelType) btnCancelType.addEventListener("click", closeTypeModal);
 
-  btnCreateFixed.addEventListener("click", async () => {
+  if (btnCreateFixed) btnCreateFixed."click", async () => {
     closeTypeModal();
     try {
       await createGame("fixed");
@@ -406,7 +406,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   });
 
-  btnCreatePoll.addEventListener("click", async () => {
+  if (btnCreatePoll) btnCreatePoll.addEventListener("click", async () => {
     closeTypeModal();
     try {
       await createGame("poll");
@@ -417,17 +417,17 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   });
 
-  btnEdit.addEventListener("click", () => {
+  if (btnEdit) btnEdit.addEventListener("click", () => {
     if (!selectedId) return;
     location.href = `editor.html?id=${encodeURIComponent(selectedId)}`;
   });
 
-  btnPlay.addEventListener("click", () => {
+  if (btnPlay) btnPlay.addEventListener("click", () => {
     if (!selectedId) return;
     location.href = `control.html?id=${encodeURIComponent(selectedId)}`;
   });
 
-  btnPoll.addEventListener("click", async () => {
+  if (btnPlay) btnPoll.addEventListener("click", async () => {
     if (!selectedId) return;
 
     // twarda walidacja: tylko sondażowa
@@ -447,7 +447,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
   if (btnExport) {
-    btnExport.addEventListener("click", async () => {
+    i(btnExport) btnExport.addEventListener("click", async () => {
       try {
         await doExportSelected();
       } catch (e) {
@@ -461,7 +461,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (btnCancelImport) btnCancelImport.addEventListener("click", closeImportModal);
 
   if (btnImportFile) {
-    btnImportFile.addEventListener("click", async () => {
+    if (btnImportFile) btnImportFile.addEventListener("click", async () => {
       try {
         const f = importFile?.files?.[0];
         if (!f) {
@@ -479,7 +479,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   if (btnImportJson) {
-    btnImportJson.addEventListener("click", async () => {
+    if (btnImportJson) btnImportJson.addEventListener("click", async () => {
       try {
         const txt = importTa?.value || "";
         if (!txt.trim()) {
