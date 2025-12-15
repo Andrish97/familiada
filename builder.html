@@ -64,31 +64,5 @@
   </div>
 </div>
 
-
-<!-- Modal: import JSON -->
-<div class="overlay" id="importOverlay" style="display:none;">
-  <div class="modal">
-    <div class="mTitle">Import Familiady</div>
-    <div class="mSub">Wybierz plik <b>.json</b> (lokalna lub sondażowa).</div>
-
-    <div class="mGrid" style="grid-template-columns: 1fr;">
-
-      <label class="btn gold fileBtn">
-        Wybierz plik
-        <input id="importFile" type="file" accept="application/json,.json" hidden />
-      </label>
-
-      <div class="importInfo" id="importInfo">Nie wybrano pliku.</div>
-
-      <div class="rowBtns">
-        <button class="btn gold" id="btnDoImport" type="button" disabled>Importuj</button>
-        <button class="btn" id="btnCloseImport" type="button">Zamknij</button>
-      </div>
-
-      <div class="importErr" id="importErr" style="display:none;"></div>
-    </div>
-  </div>
-</div>
-
 </body>
 </html>
