@@ -1,0 +1,41 @@
+
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Familiada — sondaże</title>
+
+  <link rel="icon" href="favicon.ico"/>
+
+  <link rel="stylesheet" href="css/base.css"/>
+  <link rel="stylesheet" href="css/polls.css"/>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <script type="module" src="js/pages/polls.js" defer></script>
+</head>
+
+<body class="polls-body">
+  <header class="topbar">
+    <div class="brand">FAMILIADA</div>
+    <div class="right">
+      <button class="btn" id="btnBack" type="button">← Moje gry</button>
+      <span class="who" id="who">—</span>
+      <button class="btn" id="btnLogout" type="button">Wyloguj</button>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div class="title">Sondaże</div>
+    <div class="hint">
+      Tu uruchamiasz sondaż dla całej Familiady, podglądasz głosy i kończysz sondaż (zamraża wyniki do 100).
+    </div>
+
+    <div class="grid" id="grid"></div>
+
+    <div class="foot">
+      <div class="msg" id="msg"></div>
+    </div>
+  </main>
+</body>
+</html>
