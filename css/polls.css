@@ -35,6 +35,7 @@
   width:min(520px,100%);
   font-weight:800;
 }
+
 .btn.gold{
   border-color: rgba(255,234,166,.35);
   background: rgba(255,234,166,.10);
@@ -58,4 +59,3 @@ pre{
 
 .foot{ margin-top:12px; min-height:20px; }
 .msg{ color:#ffeaa6; font-weight:900; opacity:.9; }
-
