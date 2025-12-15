@@ -3,6 +3,7 @@ import { sb } from "../core/supabase.js";
 import { requireAuth, signOut } from "../core/auth.js";
 import { guardDesktopOnly } from "../core/device-guard.js";
 import { confirmModal } from "../core/modal.js";
+import { validatePollReadyToOpen } from "../core/game-validate.js";
 
 guardDesktopOnly({ message: "Sondaże są dostępne tylko na komputerze." });
 
