@@ -1,76 +1,90 @@
 // js/pages/index.js
-// Logika strony logowania -> zawsze do games.html
+import { getUser, signIn, signUp, resetPassword } from "../core/auth.js";
+
+const $ = (s) => document.querySelector(s);
+const email = $("#email");
+const pass = $("#pass");
+const pass2 = $("#pass2");
+const status = $("#status");
+const err = $("#err");
+const btnPrimary = $("#btnPrimary");
+const btnToggle = $("#btnToggle");
+const btnForgot = $("#btnForgot");
+
+let mode = "login"; // login | register
+
+function setErr(m = "") { err.textContent = m; }
+function setStatus(m = "") { status.textContent = m; }
+
+function applyMode() {
+  if (mode === "login") {
+    pass2.style.display = "none";
+    btnPrimary.textContent = "Zaloguj";
+    btnToggle.textContent = "Załóż konto";
+  } else {
+    pass2.style.display = "block";
+    btnPrimary.textContent = "Zarejestruj";
+    btnToggle.textContent = "Mam konto";
+  }
+  setErr("");
+}
 
 document.addEventListener("DOMContentLoaded", async () => {
-  // jeśli zalogowany -> games.html
-  try {
-    const user = await window.ArcadeAuth?.getUser?.();
-    if (user) {
-      window.location.replace("games.html");
-      return;
-    }
-  } catch (e) {
-    console.error("[index] getUser error:", e);
-  }
+  applyMode();
+  setStatus("Sprawdzam sesję…");
 
-  const email = document.querySelector(".auth-email");
-  const pass = document.querySelector(".auth-pass");
-  const pass2 = document.querySelector(".auth-pass2");
-  const status = document.querySelector(".auth-status");
-  const error = document.querySelector(".auth-error");
-  const btnLogin = document.querySelector(".auth-login");
-  const btnRegister = document.querySelector(".auth-register");
-  const btnGuest = document.querySelector(".auth-guest");
-  const btnLogout = document.querySelector(".auth-logout");
-  const btnForgot = document.querySelector(".auth-forgot");
-
-  if (!window.ArcadeAuthUI?.initLoginPanel) {
-    console.error("[index] Brak ArcadeAuthUI.initLoginPanel – sprawdź js/core/auth.js");
-    if (status) status.textContent = "Błąd: system logowania jest niedostępny.";
+  const u = await getUser();
+  if (u) {
+    location.href = "game.tml";
     return;
   }
+  setStatus("Niezalogowany.");
 
-  ArcadeAuthUI.initLoginPanel({
-    email,
-    pass,
-    pass2,
-    status,
-    error,
-    btnLogin,
-    btnRegister,
-    btnGuest,
-    btnLogout,
-    btnForgot,
-
-    onLoginSuccess() {
-      window.location.replace("games.html");
-    },
-
-    onRegisterSuccess() {
-      if (status) {
-        status.textContent =
-          "Sprawdź skrzynkę e-mail – wysłaliśmy link aktywacyjny do potwierdzenia konta.";
-      }
-    },
-
-    onLogout() {
-      window.location.reload();
-    },
-
-    onGuest() {
-      // brak trybu gościa u Ciebie – ale jakbyś zostawił przycisk, to też kieruj na games
-      window.location.replace("games.html");
-    },
+  btnToggle.addEventListener("click", () => {
+    mode = mode === "login" ? "register" : "login";
+    applyMode();
   });
-});
 
-// bfcache: jeśli wróci z pamięci i user jest zalogowany -> games.html
-window.addEventListener("pageshow", async (event) => {
-  if (!event.persisted) return;
-  try {
-    const user = await window.ArcadeAuth?.getUser?.();
-    if (user) window.location.replace("games.html");
-  } catch (e) {
-    console.error("[index] pageshow getUser error:", e);
-  }
+  btnPrimary.addEventListener("click", async () => {
+    setErr("");
+    const mail = email.value.trim();
+    const pwd = pass.value;
+
+    if (!mail || !pwd) return setErr("Podaj e-mail i hasło.");
+
+    try {
+      if (mode === "register") {
+        if (pass2.value !== pwd) return setErr("Hasła nie są takie same.");
+        setStatus("Rejestruję…");
+        const redirectTo = new URL("confirm.html", location.href).toString();
+        await signUp(mail, pwd, redirectTo);
+        setStatus("Sprawdź e-mail (link aktywacyjny).");
+      } else {
+        setStatus("Loguję…");
+        await signIn(mail, pwd);
+        location.href = "game.html";
+      }
+    } catch (e) {
+      console.error(e);
+      setStatus("Błąd.");
+      setErr(e?.message || String(e));
+    }
+  });
+
+  btnForgot.addEventListener("click", async () => {
+    setErr("");
+    const mail = email.value.trim();
+    if (!mail) return setErr("Podaj e-mail do resetu.");
+
+    try {
+      setStatus("Wysyłam link resetu…");
+      const redirectTo = new URL("reset.html", location.href).toString();
+      await resetPassword(mail, redirectTo);
+      setStatus("Wysłano link resetu hasła.");
+    } catch (e) {
+      console.error(e);
+      setStatus("Błąd.");
+      setErr(e?.message || String(e));
+    }
+  });
 });
