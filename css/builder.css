@@ -1,69 +1,66 @@
-/* css/buzzer.css */
-
-.bz-shell {
-  min-height: 100vh;
-  padding: 18px 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
+.builder-body{
+  margin:0; min-height:100vh;
+  font-family:system-ui,-apple-system,Segoe UI,sans-serif;
+  background:#050914; color:#fff;
 }
-
-.bz-top {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 10px;
+.topbar{
+  position:sticky; top:0; z-index:10;
+  display:flex; justify-content:space-between; align-items:center;
+  padding:12px 16px;
+  background:rgba(0,0,0,.35);
+  border-bottom:1px solid rgba(255,255,255,.12);
+  backdrop-filter: blur(10px);
 }
+.brand{ font-weight:1000; letter-spacing:.18em; text-transform:uppercase; color:#ffeaa6; }
+.right{ display:flex; gap:10px; align-items:center; }
+.who{ opacity:.8; font-size:13px; }
 
-.bz-title {
-  font-weight: 900;
-  letter-spacing: .08em;
-  text-transform: uppercase;
-  font-size: 14px;
+.btn{
+  padding:10px 12px; border-radius:14px;
+  border:1px solid rgba(255,255,255,.18);
+  background:rgba(255,255,255,.06);
+  color:#fff; cursor:pointer; font-weight:900;
 }
+.btn:hover{ filter:brightness(1.08); }
+.btn:active{ transform:translateY(1px); }
 
-.bz-status {
-  color: var(--muted);
-  font-size: 12px;
+.wrap{ width:min(1100px,94vw); margin:0 auto; padding:18px; }
+.title{ font-weight:1000; font-size:18px; margin:10px 0 14px; letter-spacing:.06em; }
+
+.grid{
+  display:grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap:14px;
 }
+@media (max-width: 1100px){ .grid{ grid-template-columns: repeat(2,1fr);} }
 
-.bz-buttons {
-  flex: 1 1 auto;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 14px;
+.card{
+  position:relative;
+  border-radius:20px;
+  border:1px solid rgba(255,255,255,.14);
+  background:rgba(255,255,255,.06);
+  padding:14px;
+  box-shadow:0 24px 60px rgba(0,0,0,.45);
+  cursor:pointer;
+  min-height:110px;
 }
+.card:hover{ filter:brightness(1.06); }
+.card .name{ font-weight:1000; font-size:16px; letter-spacing:.04em; }
+.card .meta{ opacity:.75; font-size:12px; margin-top:6px; }
 
-.bz-btn {
-  border: 1px solid rgba(148,163,184,.35);
-  border-radius: 18px;
-  background: rgba(2,6,23,.45);
-  color: var(--text);
-  font-weight: 1000;
-  font-size: 64px;
-  letter-spacing: .08em;
-  cursor: pointer;
-  user-select: none;
-  touch-action: manipulation;
+.x{
+  position:absolute; top:10px; right:10px;
+  width:34px; height:34px; border-radius:12px;
+  border:1px solid rgba(255,120,120,.35);
+  background:rgba(255,120,120,.12);
+  color:#fff; font-weight:1000;
+  display:grid; place-items:center;
+  cursor:pointer;
 }
-
-.bz-btn:active {
-  transform: translateY(2px);
-  opacity: 0.92;
+.plus{
+  display:grid; place-items:center;
+  font-weight:1000; letter-spacing:.12em; text-transform:uppercase;
+  color:#ffeaa6;
 }
-
-.bz-btn[disabled] {
-  opacity: 0.45;
-  cursor: not-allowed;
-}
-
-.bz-foot {
-  display: flex;
-  justify-content: space-between;
-  gap: 10px;
-  flex-wrap: wrap;
-  color: var(--muted);
-  font-size: 12px;
-}
-
-.bz-error { color: #fca5a5; }
+.plus .big{ font-size:46px; line-height:1; }
+.plus .small{ opacity:.85; font-size:12px; margin-top:6px; }
