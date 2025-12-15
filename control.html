@@ -17,8 +17,10 @@
 <body class="control-body">
   <header class="topbar">
     <div class="brand">FAMILIADA</div>
+
     <div class="right">
-      <button class="btn" id="btnBack" type="button">← Edytor</button>
+      <button class="btn" id="btnBack" type="button">← Moje gry</button>
+      <button class="btn" id="btnEditor" type="button">Edytor</button>
       <span class="who" id="who">—</span>
       <button class="btn" id="btnLogout" type="button">Wyloguj</button>
     </div>
@@ -26,124 +28,93 @@
 
   <main class="wrap">
     <div class="row">
-      <div>
-        <div class="title">Sterowanie</div>
-        <div class="sub" id="gameLabel">—</div>
-      </div>
+      <div class="title" id="gameTitle">Sterowanie</div>
 
       <div class="tabs">
-        <button class="tab active" data-tab="devices" type="button">Urządzenia</button>
-        <button class="tab" data-tab="game" type="button">Gra</button>
+        <button class="tab active" id="tabDevices" type="button">Urządzenia</button>
+        <button class="tab" id="tabGame" type="button">Gra</button>
       </div>
     </div>
 
-    <!-- DEVICES -->
-    <section class="panel" data-panel="devices">
-      <div class="grid2">
+    <!-- ===== Urządzenia ===== -->
+    <section class="panel" id="panelDevices">
+      <div class="hint">
+        Otwórz ekrany na docelowych urządzeniach. Status “online” pojawi się, gdy urządzenie wysyła heartbeat (ping co kilka sekund).
+      </div>
+
+      <div class="cards">
         <div class="card">
-          <div class="cardTitle">Status</div>
-          <div class="pills">
-            <span class="pill" id="pillHost">HOST: —</span>
-            <span class="pill" id="pillBuzzer">BUZZER: —</span>
-            <span class="pill" id="pillDisplay">DISPLAY: —</span>
+          <div class="head">
+            <div class="name">Display Screen (rzutnik)</div>
+            <div class="badge" id="stDisplay">—</div>
           </div>
-          <div class="small" id="deviceHint">
-            Host i buzzer muszą być odpalone (ping). Display otwierasz na tym samym komputerze.
+          <div class="meta">To ma być odpalone na rzutniku / drugim ekranie.</div>
+          <div class="rowBtns">
+            <input class="inp" id="linkDisplay" readonly />
+            <button class="btn" id="copyDisplay" type="button">Kopiuj</button>
+            <button class="btn gold" id="openDisplay" type="button">Otwórz</button>
           </div>
         </div>
 
         <div class="card">
-          <div class="cardTitle">Linki</div>
-
-          <div class="field">
-            <div class="lbl">Pulpit prowadzącego (HOST)</div>
-            <div class="row2">
-              <input class="inp" id="hostLink" readonly />
-              <button class="btn" id="btnCopyHost" type="button">Kopiuj</button>
-              <button class="btn gold" id="btnOpenHost" type="button">Otwórz</button>
-            </div>
+          <div class="head">
+            <div class="name">Buzzer (A/B)</div>
+            <div class="badge" id="stBuzzer">—</div>
           </div>
-
-          <div class="field">
-            <div class="lbl">Buzzer (GRACZE)</div>
-            <div class="row2">
-              <input class="inp" id="buzzerLink" readonly />
-              <button class="btn" id="btnCopyBuzzer" type="button">Kopiuj</button>
-              <button class="btn gold" id="btnOpenBuzzer" type="button">Otwórz</button>
-            </div>
+          <div class="meta">Telefon/tablet w trybie pełnoekranowym, dwa przyciski.</div>
+          <div class="rowBtns">
+            <input class="inp" id="linkBuzzer" readonly />
+            <button class="btn" id="copyBuzzer" type="button">Kopiuj</button>
+            <button class="btn gold" id="openBuzzer" type="button">Otwórz</button>
           </div>
+        </div>
 
-          <div class="field">
-            <div class="lbl">Display screen (RZUTNIK)</div>
-            <div class="row2">
-              <input class="inp" id="displayLink" readonly />
-              <button class="btn" id="btnCopyDisplay" type="button">Kopiuj</button>
-              <button class="btn gold" id="btnOpenDisplay" type="button">Otwórz</button>
-            </div>
+        <div class="card">
+          <div class="head">
+            <div class="name">Tablet prowadzącego</div>
+            <div class="badge" id="stHost">—</div>
           </div>
-
-          <div class="small">
-            QR dodamy chwilę później (osobna karta albo overlay na display).
+          <div class="meta">Prowadzący widzi tylko pytanie + przycisk “Ukryj”.</div>
+          <div class="rowBtns">
+            <input class="inp" id="linkHost" readonly />
+            <button class="btn" id="copyHost" type="button">Kopiuj</button>
+            <button class="btn gold" id="openHost" type="button">Otwórz</button>
           </div>
         </div>
       </div>
 
       <div class="foot">
-        <div class="msg" id="msgDevices"></div>
+        <div class="msg" id="msg"></div>
       </div>
     </section>
 
-    <!-- GAME -->
-    <section class="panel" data-panel="game" style="display:none;">
-      <div class="grid2">
-        <div class="card">
-          <div class="cardTitle">Start</div>
-          <div class="small">
-            Start gry i rundy zablokowany, jeśli HOST/BUZZER nie działa albo gra nie spełnia wymagań.
-          </div>
-
-          <div class="row3">
-            <button class="btn gold" id="btnStartGame" type="button">Start gry</button>
-            <button class="btn gold" id="btnStartRound" type="button">Start rundy</button>
-            <button class="btn" id="btnResetBuzzer" type="button">Reset buzzera</button>
-          </div>
-
-          <div class="stats">
-            <div><span class="k">Runda:</span> <span id="stRound">—</span></div>
-            <div><span class="k">×</span><span id="stMult">—</span></div>
-            <div><span class="k">Etap:</span> <span id="stStep">—</span></div>
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="cardTitle">Decyzje</div>
-          <div class="row3">
-            <button class="btn" id="btnPlay" type="button">GRAJ</button>
-            <button class="btn" id="btnPass" type="button">PAS</button>
-            <button class="btn danger" id="btnX" type="button">X / CZAS</button>
-          </div>
-
-          <div class="stats">
-            <div><span class="k">Buzzer:</span> <span id="stBuzz">—</span></div>
-            <div><span class="k">Gra:</span> <span id="stTeam">—</span></div>
-            <div><span class="k">X:</span> <span id="stStrikes">0</span></div>
-            <div><span class="k">Suma rundy:</span> <span id="stSum">0</span></div>
-          </div>
-        </div>
+    <!-- ===== Gra ===== -->
+    <section class="panel" id="panelGame" style="display:none;">
+      <div class="hint">
+        Na razie: start show + reset rundy. Logikę rund/finału dopniemy w następnym kroku.
       </div>
 
-      <div class="card" style="margin-top:14px;">
-        <div class="cardTitle">Odpowiedzi</div>
-        <div class="answers" id="answers"></div>
+      <div class="gameGrid">
+        <div class="card">
+          <div class="name">Start / Reset</div>
+          <div class="meta">Przygotowanie do gry: czyści X, sumę rundy i odblokowuje buzzer.</div>
+          <div class="rowBtns">
+            <button class="btn gold" id="btnStartShow" type="button">Start gry</button>
+            <button class="btn danger" id="btnResetRound" type="button">Reset rundy</button>
+          </div>
+        </div>
 
-        <div class="row3" style="margin-top:12px;">
-          <button class="btn" id="btnRevealNext" type="button">Odkryj pozostałe (po kolei)</button>
-          <button class="btn gold" id="btnEndRound" type="button">Zakończ rundę</button>
+        <div class="card">
+          <div class="name">Awaryjnie</div>
+          <div class="meta">Szybka zamiana A/B (na przyszłość). Teraz tylko placeholder.</div>
+          <div class="rowBtns">
+            <button class="btn" id="btnSwapAB" type="button">Zmień na A/B</button>
+          </div>
         </div>
       </div>
 
       <div class="foot">
-        <div class="msg" id="msgGame"></div>
+        <div class="msg" id="msg2"></div>
       </div>
     </section>
   </main>
