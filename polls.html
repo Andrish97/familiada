@@ -11,6 +11,7 @@
   <link rel="stylesheet" href="css/polls.css"/>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js" defer></script>
   <script type="module" src="js/pages/polls.js" defer></script>
 </head>
 
@@ -35,7 +36,7 @@
 
       <div class="statusBox">
         <div class="chip" id="chipKind">—</div>
-        <div class="chip" id="chipStatus">—</div>
+        <div class="chip status" id="chipStatus">—</div>
       </div>
     </div>
 
@@ -47,6 +48,13 @@
         <input class="inp" id="pollLink" readonly />
         <button class="btn" id="btnCopy" type="button">Kopiuj link</button>
         <button class="btn gold" id="btnOpen" type="button">Otwórz link</button>
+      </div>
+
+      <div class="row" style="align-items:flex-start;">
+        <div id="qr" style="width:160px;height:160px;"></div>
+        <div class="small" style="max-width:560px;opacity:.8;line-height:1.35;">
+          QR i link pojawią się dopiero po uruchomieniu sondażu i gdy gra ma pytania z odpowiedziami.
+        </div>
       </div>
 
       <div class="row">
