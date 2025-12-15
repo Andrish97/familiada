@@ -22,6 +22,38 @@
 }
 .inp:focus{ border-color: rgba(255,234,166,.45); }
 
+/* ZOSTAŁO */
+.remainRow{
+  display:flex;
+  gap:12px;
+  align-items:center;
+  flex-wrap:wrap;
+  margin-top:10px;
+}
+.remainBox{
+  display:flex;
+  align-items:baseline;
+  gap:10px;
+  padding:10px 12px;
+  border-radius:999px;
+  border:1px solid rgba(255,234,166,.28);
+  background: rgba(255,234,166,.10);
+  color:#ffeaa6;
+  font-weight:1000;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+}
+.remainBox span{ font-size:11px; opacity:.9; }
+.remainBox b{
+  font-size:18px;
+  letter-spacing:.02em;
+  color:#fff;
+}
+.remainHint{
+  opacity:.75;
+  font-size:12px;
+}
+
 .layout{
   display:grid;
   grid-template-columns: 360px 1fr;
@@ -115,15 +147,6 @@
 }
 .ta:focus{ border-color: rgba(255,234,166,.35); }
 
-.actions{
-  display:flex;
-  justify-content:flex-start;
-  align-items:flex-end;
-  gap:10px;
-  flex-wrap:wrap;
-  margin-top:8px;
-}
-
 .ahead{
   margin-top:10px;
   display:grid;
@@ -177,7 +200,7 @@
 .foot{ margin-top:12px; min-height:20px; }
 .msg{ color:#ffeaa6; font-weight:900; opacity:.9; }
 
-/* gdy gra jest poll — ukryj kolumnę punktów w całym edytorze */
+/* gdy gra jest poll — ukryj kolumnę punktów */
 .editor-body.is-poll .ahead,
 .editor-body.is-poll .arow{
   grid-template-columns: 1fr 40px;
