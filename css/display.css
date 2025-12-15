@@ -1,126 +1,249 @@
-// js/core/ledfont.js
-// Prosty font LED 5x7 + polskie znaki (stała szerokość znaków)
+/* css/display.css */
 
-const GLYPHS = {
-  " ": [
-    "00000",
-    "00000",
-    "00000",
-    "00000",
-    "00000",
-    "00000",
-    "00000",
-  ],
-
-  "0": ["01110","10001","10011","10101","11001","10001","01110"],
-  "1": ["00100","01100","00100","00100","00100","00100","01110"],
-  "2": ["01110","10001","00001","00010","00100","01000","11111"],
-  "3": ["11110","00001","00001","01110","00001","00001","11110"],
-  "4": ["00010","00110","01010","10010","11111","00010","00010"],
-  "5": ["11111","10000","10000","11110","00001","00001","11110"],
-  "6": ["00110","01000","10000","11110","10001","10001","01110"],
-  "7": ["11111","00001","00010","00100","01000","01000","01000"],
-  "8": ["01110","10001","10001","01110","10001","10001","01110"],
-  "9": ["01110","10001","10001","01111","00001","00010","01100"],
-
-  "A": ["01110","10001","10001","11111","10001","10001","10001"],
-  "B": ["11110","10001","10001","11110","10001","10001","11110"],
-  "C": ["01110","10001","10000","10000","10000","10001","01110"],
-  "D": ["11100","10010","10001","10001","10001","10010","11100"],
-  "E": ["11111","10000","10000","11110","10000","10000","11111"],
-  "F": ["11111","10000","10000","11110","10000","10000","10000"],
-  "G": ["01110","10001","10000","10111","10001","10001","01110"],
-  "H": ["10001","10001","10001","11111","10001","10001","10001"],
-  "I": ["01110","00100","00100","00100","00100","00100","01110"],
-  "J": ["00111","00010","00010","00010","10010","10010","01100"],
-  "K": ["10001","10010","10100","11000","10100","10010","10001"],
-  "L": ["10000","10000","10000","10000","10000","10000","11111"],
-  "M": ["10001","11011","10101","10101","10001","10001","10001"],
-  "N": ["10001","11001","10101","10011","10001","10001","10001"],
-  "O": ["01110","10001","10001","10001","10001","10001","01110"],
-  "P": ["11110","10001","10001","11110","10000","10000","10000"],
-  "Q": ["01110","10001","10001","10001","10101","10010","01101"],
-  "R": ["11110","10001","10001","11110","10100","10010","10001"],
-  "S": ["01111","10000","10000","01110","00001","00001","11110"],
-  "T": ["11111","00100","00100","00100","00100","00100","00100"],
-  "U": ["10001","10001","10001","10001","10001","10001","01110"],
-  "V": ["10001","10001","10001","10001","01010","01010","00100"],
-  "W": ["10001","10001","10001","10101","10101","11011","10001"],
-  "X": ["10001","01010","00100","00100","00100","01010","10001"],
-  "Y": ["10001","01010","00100","00100","00100","00100","00100"],
-  "Z": ["11111","00001","00010","00100","01000","10000","11111"],
-
-  "-": ["00000","00000","00000","11111","00000","00000","00000"],
-  ".": ["00000","00000","00000","00000","00000","00100","00100"],
-  ":": ["00000","00100","00100","00000","00100","00100","00000"],
-  "!": ["00100","00100","00100","00100","00100","00000","00100"],
-  "?": ["01110","10001","00001","00010","00100","00000","00100"],
-  "/": ["00001","00010","00100","01000","10000","00000","00000"],
-  "+": ["00000","00100","00100","11111","00100","00100","00000"],
-  "×": ["00000","10001","01010","00100","01010","10001","00000"],
-  "X": ["10001","01010","00100","00100","00100","01010","10001"],
-};
-
-// Polskie znaki robimy jako: baza + diakrytyk pikselami.
-// W 5×7 mamy mało miejsca, więc robię “teleturniejowy kompromis”:
-// akcent/kropka w górnym rzędzie, ogonek w dolnym.
-const POLISH = {
-  "Ą": { base: "A", tail: true },
-  "Ć": { base: "C", acute: true },
-  "Ę": { base: "E", tail: true },
-  "Ł": { base: "L", slash: true },
-  "Ń": { base: "N", acute: true },
-  "Ó": { base: "O", acute: true },
-  "Ś": { base: "S", acute: true },
-  "Ż": { base: "Z", dot: true },
-  "Ź": { base: "Z", acute: true },
-};
-
-function cloneGlyph(g) {
-  return g.map((row) => row.split("").map((c) => c === "1"));
+.disp-shell {
+  min-height: 100vh;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
 
-function boolToRows(b) {
-  return b.map((row) => row.map((v) => (v ? "1" : "0")).join(""));
+.disp-top {
+  display: grid;
+  grid-template-columns: 1fr 2fr 1fr;
+  gap: 12px;
+  align-items: stretch;
 }
 
-function applyAcute(b) {
-  // mały akcent: jeden piksel nad prawą stroną
-  b[0][3] = true;
-}
-function applyDot(b) {
-  // kropka: piksel na środku góry
-  b[0][2] = true;
-}
-function applyTail(b) {
-  // ogonek: piksel pod lewym dołem
-  b[6][1] = true;
-}
-function applySlashL(b) {
-  // ukośnik przez L: 2 piksele w środku
-  b[3][2] = true;
-  b[4][3] = true;
+.disp-team {
+  border: 1px solid rgba(148,163,184,.25);
+  border-radius: 16px;
+  background: rgba(2,6,23,.35);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
 
-export function getGlyph(chRaw) {
-  if (!chRaw) return GLYPHS[" "];
-  const ch = String(chRaw).toUpperCase();
+.disp-team-name {
+  font-weight: 900;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  font-size: 12px;
+  color: var(--muted);
+}
 
-  if (GLYPHS[ch]) return GLYPHS[ch];
+.disp-team-score {
+  font-weight: 1000;
+  font-size: 46px;
+  line-height: 1;
+  text-align: right;
+}
 
-  if (POLISH[ch]) {
-    const { base, acute, dot, tail, slash } = POLISH[ch];
-    const baseGlyph = GLYPHS[base] || GLYPHS[" "];
-    const b = cloneGlyph(baseGlyph);
+.disp-mid {
+  border: 1px solid rgba(148,163,184,.25);
+  border-radius: 16px;
+  background: rgba(2,6,23,.35);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
 
-    if (acute) applyAcute(b);
-    if (dot) applyDot(b);
-    if (tail) applyTail(b);
-    if (slash) applySlashL(b);
+.disp-game {
+  font-weight: 1000;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  font-size: 14px;
+  color: var(--text);
+  opacity: .9;
+}
 
-    return boolToRows(b);
-  }
+.disp-question {
+  font-weight: 900;
+  font-size: 22px;
+  line-height: 1.1;
+  min-height: 52px;
+}
 
-  // fallback: nieznany znak -> spacja
-  return GLYPHS[" "];
+.disp-sum {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  color: var(--muted);
+  font-weight: 900;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  font-size: 12px;
+}
+
+.disp-sum-val {
+  color: var(--text);
+  font-size: 22px;
+  letter-spacing: .06em;
+}
+
+.disp-board {
+  position: relative;
+  border: 1px solid rgba(148,163,184,.25);
+  border-radius: 18px;
+  background: rgba(2,6,23,.25);
+  padding: 14px;
+  flex: 1 1 auto;
+  overflow: hidden;
+}
+
+.disp-strikes {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  display: flex;
+  gap: 10px;
+}
+
+.disp-x {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  border: 1px solid rgba(239,68,68,.35);
+  background: rgba(239,68,68,.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 1000;
+  font-size: 22px;
+  opacity: 0.2;
+}
+
+.disp-x.on {
+  opacity: 1;
+}
+
+.disp-answers {
+  display: grid;
+  gap: 10px;
+  margin-top: 46px;
+}
+
+.disp-row {
+  display: grid;
+  grid-template-columns: 44px 1fr 70px;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(148,163,184,.18);
+  background: rgba(2,6,23,.25);
+}
+
+.disp-nr {
+  font-weight: 1000;
+  font-size: 18px;
+  opacity: .9;
+}
+
+.disp-text {
+  font-weight: 900;
+  font-size: 18px;
+  letter-spacing: .02em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.disp-pts {
+  text-align: right;
+  font-weight: 1000;
+  font-size: 18px;
+  opacity: .95;
+}
+
+.disp-row.revealed {
+  border-color: rgba(34,197,94,.25);
+  background: rgba(34,197,94,.08);
+}
+
+/* setup overlay */
+.disp-setup {
+  position: fixed;
+  inset: 0;
+  background: rgba(2,6,23,.85);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  z-index: 9999;
+}
+
+.disp-setup-card {
+  width: min(980px, 100%);
+  border-radius: 18px;
+  border: 1px solid rgba(148,163,184,.25);
+  background: rgba(15,23,42,.92);
+  padding: 16px;
+}
+
+.disp-setup-title {
+  font-weight: 1000;
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  margin-bottom: 10px;
+}
+
+.disp-setup-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.disp-setup-box {
+  border: 1px solid rgba(148,163,184,.2);
+  border-radius: 16px;
+  padding: 12px;
+  background: rgba(2,6,23,.25);
+}
+
+.disp-setup-label {
+  font-weight: 1000;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+
+.disp-setup-qr {
+  width: 180px;
+  height: 180px;
+  border-radius: 16px;
+  border: 1px solid rgba(148,163,184,.25);
+  background: rgba(2,6,23,.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.disp-setup-qr canvas,
+.disp-setup-qr img {
+  max-width: 172px;
+  max-height: 172px;
+}
+
+.disp-setup-link {
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--muted);
+  word-break: break-all;
+}
+
+.disp-setup-foot {
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+@media (max-width: 900px) {
+  .disp-top { grid-template-columns: 1fr; }
+  .disp-setup-grid { grid-template-columns: 1fr; }
 }
