@@ -35,7 +35,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   const u = await getUser();
   if (u) {
-    location.href = "game.tml";
+    location.href = "game.html";
     return;
   }
   setStatus("Niezalogowany.");
