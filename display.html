@@ -13,8 +13,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js" defer></script>
 
-    <script src="js/core/auth.js" defer></script>
-    <script src="js/pages/display.js" defer></script>
+    <script type="module" src="js/pages/display.js"></script>
   </head>
 
   <body class="arcade-body">
@@ -48,51 +47,12 @@
         </div>
 
         <div class="disp-answers">
-          <!-- 8 wierszy -->
-          <div class="disp-row" data-i="1">
-            <div class="disp-nr">1</div>
-            <div class="disp-text">••••••••••••</div>
-            <div class="disp-pts">—</div>
-          </div>
-          <div class="disp-row" data-i="2">
-            <div class="disp-nr">2</div>
-            <div class="disp-text">••••••••••••</div>
-            <div class="disp-pts">—</div>
-          </div>
-          <div class="disp-row" data-i="3">
-            <div class="disp-nr">3</div>
-            <div class="disp-text">••••••••••••</div>
-            <div class="disp-pts">—</div>
-          </div>
-          <div class="disp-row" data-i="4">
-            <div class="disp-nr">4</div>
-            <div class="disp-text">••••••••••••</div>
-            <div class="disp-pts">—</div>
-          </div>
-          <div class="disp-row" data-i="5">
-            <div class="disp-nr">5</div>
-            <div class="disp-text">••••••••••••</div>
-            <div class="disp-pts">—</div>
-          </div>
-          <div class="disp-row" data-i="6">
-            <div class="disp-nr">6</div>
-            <div class="disp-text">••••••••••••</div>
-            <div class="disp-pts">—</div>
-          </div>
-          <div class="disp-row" data-i="7">
-            <div class="disp-nr">7</div>
-            <div class="disp-text">••••••••••••</div>
-            <div class="disp-pts">—</div>
-          </div>
-          <div class="disp-row" data-i="8">
-            <div class="disp-nr">8</div>
-            <div class="disp-text">••••••••••••</div>
-            <div class="disp-pts">—</div>
-          </div>
+          ${Array.from({length:8}).map((_,i)=>`<div class="disp-row" data-i="${i+1}">
+            <div class="disp-nr">${i+1}</div><div class="disp-text">••••••••••••</div><div class="disp-pts">—</div>
+          </div>`).join("")}
         </div>
       </div>
 
-      <!-- Setup overlay -->
       <div class="disp-setup" style="display:none;">
         <div class="disp-setup-card">
           <div class="disp-setup-title">Ustawienia wstępne</div>
@@ -112,5 +72,25 @@
         </div>
       </div>
     </div>
+
+    <script>
+      // ten mały trik jest tylko po to, żeby nie pisać 8 wierszy ręcznie w HTML
+      // (nie dotyka Supabase). Jeśli nie chcesz, to usuń i wklej ręcznie 8 divów.
+      const wrap = document.querySelector(".disp-answers");
+      if (wrap && wrap.textContent.includes("${Array.from")) {
+        wrap.innerHTML = "";
+        for (let i = 1; i <= 8; i++) {
+          const row = document.createElement("div");
+          row.className = "disp-row";
+          row.setAttribute("data-i", String(i));
+          row.innerHTML = `
+            <div class="disp-nr">${i}</div>
+            <div class="disp-text">••••••••••••</div>
+            <div class="disp-pts">—</div>
+          `;
+          wrap.appendChild(row);
+        }
+      }
+    </script>
   </body>
 </html>
