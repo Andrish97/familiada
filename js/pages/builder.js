@@ -1,3 +1,4 @@
+// js/pages/builder.js
 import { sb } from "../core/supabase.js";
 import { requireAuth, signOut } from "../core/auth.js";
 import { guardDesktopOnly } from "../core/device-guard.js";
@@ -21,44 +22,61 @@ const btnCancelType = document.getElementById("btnCancelType");
 
 let currentUser = null;
 let games = [];
-let selectedId = null;
+let selectedGame = null; // cały rekord
 
-function setHint(t){ hint.textContent = t || ""; }
+function setHint(t) {
+  if (hint) hint.textContent = t || "";
+}
 
-function setButtons(){
-  const g = games.find(x => x.id === selectedId) || null;
-  const has = !!g;
+function openTypeModal() {
+  typeOverlay.style.display = "";
+}
 
-  btnEdit.disabled = !has;
-  btnPlay.disabled = !has;
-  btnPoll.disabled = !has;
+function closeTypeModal() {
+  typeOverlay.style.display = "none";
+}
 
-  if(!g){
+function syncActions() {
+  const hasSel = !!selectedGame;
+
+  // Edytuj: tylko gdy coś wybrane + dodatkowo blokada gdy sondaż otwarty
+  btnEdit.disabled = !hasSel || (selectedGame?.kind === "poll" && selectedGame?.status === "poll_open");
+
+  // Graj: tylko gdy coś wybrane + jeśli poll to musi być ready
+  btnPlay.disabled = !hasSel || (selectedGame?.kind === "poll" && selectedGame?.status !== "ready");
+
+  // Sondaż: tylko gdy coś wybrane + tylko dla kind=poll
+  btnPoll.disabled = !hasSel || (selectedGame?.kind !== "poll");
+
+  if (!hasSel) {
     setHint("Kliknij kafelek, żeby go zaznaczyć.");
-    btnPoll.disabled = true;
     return;
   }
 
-  if(g.kind === "fixed"){
-    btnPoll.disabled = true;
-    setHint("Gra lokalna: Edytuj / Graj. (Sondaż niedostępny)");
+  if (selectedGame.kind === "poll") {
+    const st = selectedGame.status || "draft";
+    if (st === "poll_open") setHint(`Wybrano: ${selectedGame.name} (sondażowa • OTWARTY)`);
+    else if (st === "ready") setHint(`Wybrano: ${selectedGame.name} (sondażowa • GOTOWA)`);
+    else setHint(`Wybrano: ${selectedGame.name} (sondażowa • szkic)`);
   } else {
-    // poll
-    btnPoll.disabled = false;
-    if(g.status !== "ready"){
-      setHint(`Gra sondażowa: status = ${g.status}. Do grania musi być READY (zamknięty i przeliczony).`);
-    } else {
-      setHint("Gra sondażowa READY: możesz grać.");
-    }
-  }
-
-  // blokada Graj dla poll jeśli nie ready
-  if(g.kind === "poll" && g.status !== "ready"){
-    btnPlay.disabled = true;
+    setHint(`Wybrano: ${selectedGame.name} (lokalna)`);
   }
 }
 
-function cardGame(g){
+function clearSelection() {
+  selectedGame = null;
+  document.querySelectorAll(".card").forEach((c) => c.classList.remove("selected"));
+  syncActions();
+}
+
+function selectCard(el, g) {
+  document.querySelectorAll(".card").forEach((c) => c.classList.remove("selected"));
+  el.classList.add("selected");
+  selectedGame = g;
+  syncActions();
+}
+
+function cardGame(g) {
   const el = document.createElement("div");
   el.className = "card";
   el.innerHTML = `
@@ -68,154 +86,164 @@ function cardGame(g){
   `;
   el.querySelector(".name").textContent = g.name;
 
-  const meta = g.kind === "fixed"
-    ? "Lokalna (punkty wpisane)"
-    : `Sondażowa (${g.status})`;
-
+  const meta =
+    g.kind === "poll"
+      ? `Sondażowa • status: ${(g.status || "draft")}`
+      : "Lokalna • podane wartości";
   el.querySelector(".meta").textContent = meta;
 
-  el.addEventListener("click", ()=>{
-    selectedId = g.id;
-    Array.from(grid.querySelectorAll(".card")).forEach(c=>c.classList.remove("selected"));
-    el.classList.add("selected");
-    setButtons();
-  });
+  el.addEventListener("click", () => selectCard(el, g));
 
-  el.querySelector(".x").addEventListener("click", async (e)=>{
+  el.querySelector(".x").addEventListener("click", async (e) => {
     e.stopPropagation();
+
     const ok = await confirmModal({
       title: "Usuń Familiadę",
-      text: `Na pewno usunąć "${g.name}"?`,
+      text: `Na pewno usunąć "${g.name}"? Tego nie da się łatwo odkręcić.`,
       okText: "Usuń",
       cancelText: "Anuluj",
     });
-    if(!ok) return;
+    if (!ok) return;
 
     const { error } = await sb().from("games").delete().eq("id", g.id);
-    if(error){
+    if (error) {
       console.error("[builder] delete error:", error);
       alert("Nie udało się usunąć. Sprawdź konsolę.");
       return;
     }
+
     await refresh();
   });
 
   return el;
 }
 
-function cardPlus(){
+function cardPlus() {
   const el = document.createElement("div");
   el.className = "card plus";
-  el.innerHTML = `<div><div class="big">+</div><div class="small">Nowa</div><div class="tiny">Wybierz typ</div></div>`;
-  el.addEventListener("click", ()=>{
-    typeOverlay.style.display = "";
-  });
+  el.innerHTML = `
+    <div>
+      <div class="big">+</div>
+      <div class="small">Nowa</div>
+      <div class="tiny">Lokalna / Sondażowa</div>
+    </div>
+  `;
+
+  el.addEventListener("click", () => openTypeModal());
   return el;
 }
 
-async function createGame(kind){
-  if(!currentUser?.id){
-    alert("Brak sesji. Zaloguj się ponownie.");
+async function createGame(kind) {
+  if (!currentUser?.id) {
+    alert("Brak sesji użytkownika. Zaloguj się ponownie.");
     location.href = "index.html";
-    return;
+    return null;
   }
 
-  const { data: game, error } = await sb()
-    .from("games")
-    .insert({
-      name: "Nowa Familiada",
-      owner_id: currentUser.id,
-      kind,
-      status: (kind === "poll") ? "draft" : "draft",
-    })
-    .select("*")
-    .single();
+  // status dla poll: draft
+  const payload = {
+    name: "Nowa Familiada",
+    owner_id: currentUser.id,
+    kind, // "fixed" albo "poll"
+    status: kind === "poll" ? "draft" : "ready", // lokalna jest od razu “do edycji”, status nie musi być używany
+  };
 
-  if(error){
+  const { data: game, error } = await sb().from("games").insert(payload).select("*").single();
+  if (error) {
     console.error("[builder] create game error:", error);
     alert("Nie udało się utworzyć gry. Sprawdź konsolę.");
-    return;
+    return null;
   }
 
-  // live_state zawsze tworzymy (pod display/buzzer/host)
-  const { error: lsErr } = await sb().from("live_state").insert({ game_id: game.id });
-  if(lsErr){
-    console.warn("[builder] live_state insert warn:", lsErr);
-  }
+  // Upewnij się, że live_state istnieje (sterowanie)
+  const { error: lsErr } = await sb().from("live_state").insert({ game_id: game.id }).select().maybeSingle();
+  if (lsErr) console.warn("[builder] live_state insert warn:", lsErr);
 
-  location.href = `editor.html?id=${encodeURIComponent(game.id)}`;
+  return game;
 }
 
-async function refresh(){
+async function refresh() {
   const { data, error } = await sb()
     .from("games")
     .select("id,name,kind,status,created_at")
-    .order("created_at", { ascending:false });
+    .order("created_at", { ascending: false });
 
-  if(error){
+  if (error) {
     console.error("[builder] list games error:", error);
-    alert("Nie udało się wczytać listy. Sprawdź konsolę.");
+    alert("Nie udało się wczytać listy gier. Sprawdź konsolę.");
     return;
   }
 
   games = data || [];
-  selectedId = null;
 
   grid.innerHTML = "";
-  games.forEach(g => grid.appendChild(cardGame(g)));
+  games.forEach((g) => grid.appendChild(cardGame(g)));
   grid.appendChild(cardPlus());
 
-  setButtons();
+  clearSelection();
 }
 
-document.addEventListener("DOMContentLoaded", async ()=>{
+document.addEventListener("DOMContentLoaded", async () => {
   currentUser = await requireAuth("index.html");
   who.textContent = currentUser?.email || "—";
 
-  btnLogout.addEventListener("click", async ()=>{
+  btnLogout.addEventListener("click", async () => {
     await signOut();
     location.href = "index.html";
   });
 
-  // modal
-  btnCancelType.addEventListener("click", ()=> typeOverlay.style.display = "none");
-  btnCreateFixed.addEventListener("click", async ()=>{
-    typeOverlay.style.display = "none";
-    await createGame("fixed");
-  });
-  btnCreatePoll.addEventListener("click", async ()=>{
-    typeOverlay.style.display = "none";
-    await createGame("poll");
-  });
+  btnEdit.addEventListener("click", async () => {
+    if (!selectedGame) return;
 
-  // akcje na zaznaczonej grze
-  btnEdit.addEventListener("click", ()=>{
-    if(!selectedId) return;
-    location.href = `editor.html?id=${encodeURIComponent(selectedId)}`;
-  });
-
-  btnPlay.addEventListener("click", async ()=>{
-    if(!selectedId) return;
-    const g = games.find(x=>x.id === selectedId);
-    if(!g) return;
-
-    if(g.kind === "poll" && g.status !== "ready"){
-      alert("Nie możesz grać: sondaż nie jest zamknięty i przeliczony (READY).");
+    // jeśli poll i poll_open -> blokada edycji
+    if (selectedGame.kind === "poll" && selectedGame.status === "poll_open") {
+      alert("Sondaż jest otwarty — edycja zablokowana. Zamknij sondaż, jeśli chcesz edytować.");
       return;
     }
 
-    location.href = `control.html?id=${encodeURIComponent(selectedId)}`;
+    location.href = `editor.html?id=${encodeURIComponent(selectedGame.id)}`;
   });
 
-  btnPoll.addEventListener("click", async ()=>{
-    if(!selectedId) return;
-    const g = games.find(x=>x.id === selectedId);
-    if(!g) return;
+  btnPlay.addEventListener("click", async () => {
+    if (!selectedGame) return;
 
-    if(g.kind !== "poll"){
+    if (selectedGame.kind === "poll" && selectedGame.status !== "ready") {
+      alert("Ta Familiada sondażowa nie jest gotowa do gry. Najpierw zamknij sondaż.");
       return;
     }
-    location.href = `polls.html?id=${encodeURIComponent(selectedId)}`;
+
+    location.href = `control.html?id=${encodeURIComponent(selectedGame.id)}`;
+  });
+
+  btnPoll.addEventListener("click", async () => {
+    if (!selectedGame) return;
+
+    if (selectedGame.kind !== "poll") return;
+
+    // polls.html zawsze otwieramy z id — ale tam i tak zablokujemy link/QR jeśli gra pusta albo status nie poll_open
+    location.href = `polls.html?id=${encodeURIComponent(selectedGame.id)}`;
+  });
+
+  // modal wyboru typu
+  btnCancelType.addEventListener("click", () => closeTypeModal());
+  typeOverlay.addEventListener("click", (e) => {
+    if (e.target === typeOverlay) closeTypeModal();
+  });
+
+  btnCreateFixed.addEventListener("click", async () => {
+    closeTypeModal();
+    const g = await createGame("fixed");
+    if (!g) return;
+    await refresh();
+    location.href = `editor.html?id=${encodeURIComponent(g.id)}`;
+  });
+
+  btnCreatePoll.addEventListener("click", async () => {
+    closeTypeModal();
+    const g = await createGame("poll");
+    if (!g) return;
+    await refresh();
+    location.href = `editor.html?id=${encodeURIComponent(g.id)}`;
   });
 
   await refresh();
