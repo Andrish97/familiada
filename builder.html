@@ -45,31 +45,25 @@
     <div class="grid" id="grid"></div>
   </main>
 
-  <!-- Modal: wybór typu gry (nowa) -->
-  <div class="overlay" id="typeOverlay" style="display:none;">
-    <div class="modal">
-      <div class="mTitle">Nowa Familiada</div>
-      <div class="mSub">Wybierz typ:</div>
+<!-- ===== Import JSON ===== -->
+<div class="overlay" id="importOverlay" style="display:none;">
+  <div class="modal">
+    <div class="mTitle">Import Familiady</div>
+    <div class="mSub">Wklej JSON lub wybierz plik</div>
 
-      <div class="mGrid">
-        <button class="mCard" id="btnCreateFixed" type="button">
-          <div class="mBig">LOKALNA</div>
-          <div class="mSmall">Wpisujesz wartości odpowiedzi</div>
-          <div class="mTiny">Wymagane: 10 pytań, 5 odpowiedzi</div>
-        </button>
+    <textarea id="importTa" class="ta" style="min-height:180px"></textarea>
 
-        <button class="mCard" id="btnCreatePoll" type="button">
-          <div class="mBig">SONDAŻOWA</div>
-          <div class="mSmall">Zbierasz głosy, potem zamykasz</div>
-          <div class="mTiny">Wymagane: 10 pytań, 5 odpowiedzi</div>
-        </button>
-      </div>
-
-      <div class="mFoot">
-        <button class="btn" id="btnCancelType" type="button">Anuluj</button>
-      </div>
+    <div class="actions" style="margin-top:10px;">
+      <input type="file" id="importFile" accept=".json" />
+      <button class="btn" id="btnImportFile" type="button">Wczytaj plik</button>
+      <button class="btn gold" id="btnImportJson" type="button">Importuj</button>
+      <button class="btn" id="btnCancelImport" type="button">Anuluj</button>
     </div>
+
+    <div class="msg" id="importMsg"></div>
   </div>
+</div>
+
 
 <!-- Modal: import JSON -->
 <div class="overlay" id="importOverlay" style="display:none;">
