@@ -1,210 +1,151 @@
 <!DOCTYPE html>
 <html lang="pl">
-  <head>
-    <meta charset="UTF-8" />
-    <title>Familiada – Sterowanie</title>
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Familiada — sterowanie</title>
 
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <link rel="icon" href="favicon.ico" />
+  <link rel="icon" href="favicon.ico"/>
 
-    <link rel="stylesheet" href="css/theme.css" />
-    <link rel="stylesheet" href="css/control.css" />
+  <link rel="stylesheet" href="css/base.css"/>
+  <link rel="stylesheet" href="css/control.css"/>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <script type="module" src="js/pages/control.js" defer></script>
+</head>
 
-    <script type="module" src="js/core/auth.js"></script>
-    <script type="module" src="js/pages/control.js"></script>
-  </head>
+<body class="control-body">
+  <header class="topbar">
+    <div class="brand">FAMILIADA</div>
+    <div class="right">
+      <button class="btn" id="btnBack" type="button">← Edytor</button>
+      <span class="who" id="who">—</span>
+      <button class="btn" id="btnLogout" type="button">Wyloguj</button>
+    </div>
+  </header>
 
-  <body class="arcade-body">
-    <div class="shell">
-      <div class="card">
-        <header class="ctl-header">
-          <div>
-            <div class="ctl-title">STEROWANIE</div>
-            <div class="ctl-subtitle">Setup + rozgrywka rund</div>
-          </div>
+  <main class="wrap">
+    <div class="row">
+      <div>
+        <div class="title">Sterowanie</div>
+        <div class="sub" id="gameLabel">—</div>
+      </div>
 
-          <div class="ctl-right">
-            <button class="arcade-btn ctl-open-display" type="button">
-              Ekran rzutnika
-            </button>
-          </div>
-        </header>
-
-        <div class="ctl-statusline">
-          <span class="ctl-game-name">Gra: —</span>
-          <span class="ctl-sep">•</span>
-          <span class="ctl-login">Status: —</span>
-          <span class="ctl-sep">•</span>
-          <span class="ctl-live">Live: —</span>
-        </div>
-
-        <!-- SETUP -->
-        <div class="ctl-grid">
-          <section class="ctl-box">
-            <div class="ctl-box-title">
-              Tablet prowadzącego (HOST)
-              <span class="ctl-pill ctl-host-pill">—</span>
-            </div>
-
-            <div class="ctl-row">
-              <input class="arcade-input ctl-host-link" readonly />
-              <button class="arcade-btn ctl-copy-host" type="button">Kopiuj</button>
-            </div>
-
-            <div class="ctl-qr-row">
-              <div class="ctl-qr" id="qr-host"></div>
-              <div class="ctl-qr-help">
-                Host musi być otwarty przed startem sterowania.
-              </div>
-            </div>
-          </section>
-
-          <section class="ctl-box">
-            <div class="ctl-box-title">
-              Przycisk (BUZZER)
-              <span class="ctl-pill ctl-buzzer-pill">—</span>
-            </div>
-
-            <div class="ctl-row">
-              <input class="arcade-input ctl-buzzer-link" readonly />
-              <button class="arcade-btn ctl-copy-buzzer" type="button">Kopiuj</button>
-            </div>
-
-            <div class="ctl-qr-row">
-              <div class="ctl-qr" id="qr-buzzer"></div>
-              <div class="ctl-qr-help">
-                Buzzer musi być otwarty przed startem sterowania.
-              </div>
-            </div>
-          </section>
-
-          <section class="ctl-box ctl-box-wide">
-            <div class="ctl-box-title">
-              QR na rzutniku
-              <span class="ctl-pill ctl-display-pill">—</span>
-            </div>
-
-            <div class="ctl-actions">
-              <button class="arcade-btn ctl-show-setup" type="button">Pokaż QR</button>
-              <button class="arcade-btn logout ctl-hide-setup" type="button">Ukryj QR</button>
-            </div>
-
-            <div class="ctl-small">
-              Działa tylko jeśli rzutnik jest otwarty na tym samym komputerze.
-            </div>
-          </section>
-        </div>
-
-        <hr class="ctl-hr" />
-
-        <!-- START / RUNDA -->
-        <section class="ctl-round">
-          <div class="ctl-round-head">
-            <div>
-              <div class="ctl-box-title">Rozgrywka rund</div>
-              <div class="ctl-small ctl-round-meta">
-                Runda: <span class="ctl-round-no">—</span> • Mnożnik:
-                <span class="ctl-mult">—</span> • Faza:
-                <span class="ctl-step">—</span>
-              </div>
-            </div>
-
-            <div class="ctl-round-actions">
-              <button class="arcade-btn ctl-start-game" type="button" disabled>
-                Start gry
-              </button>
-
-              <button class="arcade-btn ctl-start-round" type="button" disabled>
-                Start rundy
-              </button>
-
-              <button class="arcade-btn logout ctl-reset-buzzer" type="button" disabled>
-                Reset buzzera
-              </button>
-            </div>
-          </div>
-
-          <div class="ctl-panels">
-            <!-- Panel: wybór pytania -->
-            <div class="ctl-box ctl-panel">
-              <div class="ctl-box-title">Pytanie rundy</div>
-
-              <div class="ctl-row">
-                <select class="arcade-input ctl-question-select"></select>
-                <button class="arcade-btn ctl-load-questions" type="button">
-                  Odśwież
-                </button>
-              </div>
-
-              <div class="ctl-small">
-                Start rundy ustawia aktywne pytanie i odblokowuje buzzer.
-              </div>
-
-              <div class="ctl-divider"></div>
-
-              <div class="ctl-row ctl-teamnames">
-                <input class="arcade-input ctl-team-a" placeholder="Nazwa drużyny A" />
-                <input class="arcade-input ctl-team-b" placeholder="Nazwa drużyny B" />
-                <button class="arcade-btn ctl-save-teams" type="button">Zapisz</button>
-              </div>
-            </div>
-
-            <!-- Panel: sterowanie rundą -->
-            <div class="ctl-box ctl-panel">
-              <div class="ctl-box-title">Sterowanie</div>
-
-              <div class="ctl-flow">
-                <div class="ctl-flow-line">
-                  Zwycięzca buzzera:
-                  <span class="ctl-buzz-winner">—</span>
-                </div>
-
-                <div class="ctl-flow-line">
-                  Drużyna grająca:
-                  <span class="ctl-playing-team">—</span>
-                </div>
-
-                <div class="ctl-flow-line">
-                  Strzały (X):
-                  <span class="ctl-strikes">0</span>/3
-                </div>
-
-                <div class="ctl-flow-line">
-                  Suma rundy:
-                  <span class="ctl-round-sum">0</span>
-                </div>
-
-                <div class="ctl-actions ctl-decision">
-                  <button class="arcade-btn ctl-play" type="button" disabled>GRAJ</button>
-                  <button class="arcade-btn ctl-pass" type="button" disabled>PAS</button>
-                </div>
-
-                <div class="ctl-divider"></div>
-
-                <div class="ctl-small ctl-hint">
-                  Operator klika odpowiedź lub X (czas też = X).
-                </div>
-
-                <div class="ctl-answers"></div>
-
-                <div class="ctl-actions ctl-after">
-                  <button class="arcade-btn ctl-reveal-next" type="button" disabled>
-                    Odkryj kolejne
-                  </button>
-                  <button class="arcade-btn logout ctl-end-round" type="button" disabled>
-                    Zakończ rundę (reset planszy)
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <div class="ctl-error"></div>
+      <div class="tabs">
+        <button class="tab active" data-tab="devices" type="button">Urządzenia</button>
+        <button class="tab" data-tab="game" type="button">Gra</button>
       </div>
     </div>
-  </body>
+
+    <!-- DEVICES -->
+    <section class="panel" data-panel="devices">
+      <div class="grid2">
+        <div class="card">
+          <div class="cardTitle">Status</div>
+          <div class="pills">
+            <span class="pill" id="pillHost">HOST: —</span>
+            <span class="pill" id="pillBuzzer">BUZZER: —</span>
+            <span class="pill" id="pillDisplay">DISPLAY: —</span>
+          </div>
+          <div class="small" id="deviceHint">
+            Host i buzzer muszą być odpalone (ping). Display otwierasz na tym samym komputerze.
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="cardTitle">Linki</div>
+
+          <div class="field">
+            <div class="lbl">Pulpit prowadzącego (HOST)</div>
+            <div class="row2">
+              <input class="inp" id="hostLink" readonly />
+              <button class="btn" id="btnCopyHost" type="button">Kopiuj</button>
+              <button class="btn gold" id="btnOpenHost" type="button">Otwórz</button>
+            </div>
+          </div>
+
+          <div class="field">
+            <div class="lbl">Buzzer (GRACZE)</div>
+            <div class="row2">
+              <input class="inp" id="buzzerLink" readonly />
+              <button class="btn" id="btnCopyBuzzer" type="button">Kopiuj</button>
+              <button class="btn gold" id="btnOpenBuzzer" type="button">Otwórz</button>
+            </div>
+          </div>
+
+          <div class="field">
+            <div class="lbl">Display screen (RZUTNIK)</div>
+            <div class="row2">
+              <input class="inp" id="displayLink" readonly />
+              <button class="btn" id="btnCopyDisplay" type="button">Kopiuj</button>
+              <button class="btn gold" id="btnOpenDisplay" type="button">Otwórz</button>
+            </div>
+          </div>
+
+          <div class="small">
+            QR dodamy chwilę później (osobna karta albo overlay na display).
+          </div>
+        </div>
+      </div>
+
+      <div class="foot">
+        <div class="msg" id="msgDevices"></div>
+      </div>
+    </section>
+
+    <!-- GAME -->
+    <section class="panel" data-panel="game" style="display:none;">
+      <div class="grid2">
+        <div class="card">
+          <div class="cardTitle">Start</div>
+          <div class="small">
+            Start gry i rundy zablokowany, jeśli HOST/BUZZER nie działa albo gra nie spełnia wymagań.
+          </div>
+
+          <div class="row3">
+            <button class="btn gold" id="btnStartGame" type="button">Start gry</button>
+            <button class="btn gold" id="btnStartRound" type="button">Start rundy</button>
+            <button class="btn" id="btnResetBuzzer" type="button">Reset buzzera</button>
+          </div>
+
+          <div class="stats">
+            <div><span class="k">Runda:</span> <span id="stRound">—</span></div>
+            <div><span class="k">×</span><span id="stMult">—</span></div>
+            <div><span class="k">Etap:</span> <span id="stStep">—</span></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="cardTitle">Decyzje</div>
+          <div class="row3">
+            <button class="btn" id="btnPlay" type="button">GRAJ</button>
+            <button class="btn" id="btnPass" type="button">PAS</button>
+            <button class="btn danger" id="btnX" type="button">X / CZAS</button>
+          </div>
+
+          <div class="stats">
+            <div><span class="k">Buzzer:</span> <span id="stBuzz">—</span></div>
+            <div><span class="k">Gra:</span> <span id="stTeam">—</span></div>
+            <div><span class="k">X:</span> <span id="stStrikes">0</span></div>
+            <div><span class="k">Suma rundy:</span> <span id="stSum">0</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:14px;">
+        <div class="cardTitle">Odpowiedzi</div>
+        <div class="answers" id="answers"></div>
+
+        <div class="row3" style="margin-top:12px;">
+          <button class="btn" id="btnRevealNext" type="button">Odkryj pozostałe (po kolei)</button>
+          <button class="btn gold" id="btnEndRound" type="button">Zakończ rundę</button>
+        </div>
+      </div>
+
+      <div class="foot">
+        <div class="msg" id="msgGame"></div>
+      </div>
+    </section>
+  </main>
+</body>
 </html>
