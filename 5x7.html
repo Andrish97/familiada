@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<title>Edytor matrycy 5x7</title>
+<style>
+  body {
+    font-family: sans-serif;
+    padding: 20px;
+    background: #f5f5f5;
+  }
+
+  .matrix {
+    display: grid;
+    grid-template-columns: repeat(5, 30px);
+    grid-template-rows: repeat(7, 30px);
+    gap: 4px;
+    margin-bottom: 15px;
+  }
+
+  .dot {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: #ccc;
+    cursor: pointer;
+  }
+
+  .dot.on {
+    background: #000;
+  }
+
+  table {
+    border-collapse: collapse;
+    margin-top: 20px;
+    width: 100%;
+  }
+
+  th, td {
+    border: 1px solid #aaa;
+    padding: 6px;
+    text-align: center;
+    font-size: 14px;
+  }
+
+  textarea {
+    width: 100%;
+    height: 120px;
+    margin-top: 10px;
+  }
+</style>
+</head>
+<body>
+
+<h2>Matryca 5×7</h2>
+
+<div id="matrix" class="matrix"></div>
+
+<label>
+  Symbol:
+  <input id="symbolInput" maxlength="5">
+</label>
+<button onclick="saveSymbol()">Zapisz</button>
+<button onclick="clearMatrix()">Wyczyść</button>
+
+<h3>Zapisane symbole</h3>
+<table>
+  <thead>
+    <tr>
+      <th>Symbol</th>
+      <th>Dane (bin)</th>
+    </tr>
+  </thead>
+  <tbody id="symbolsTable"></tbody>
+</table>
+
+<h3>Eksport (C / Arduino / JS)</h3>
+<button onclick="exportCode()">Eksportuj</button>
+<textarea id="exportOutput" readonly></textarea>
+
+<script>
+const matrixEl = document.getElementById("matrix");
+const dots = [];
+const symbols = [];
+
+for (let i = 0; i < 35; i++) {
+  const d = document.createElement("div");
+  d.className = "dot";
+  d.onclick = () => d.classList.toggle("on");
+  dots.push(d);
+  matrixEl.appendChild(d);
+}
+
+function getMatrixData() {
+  const rows = [];
+  for (let y = 0; y < 7; y++) {
+    let row = 0;
+    for (let x = 0; x < 5; x++) {
+      const idx = y * 5 + x;
+      if (dots[idx].classList.contains("on")) {
+        row |= (1 << (4 - x));
+      }
+    }
+    rows.push(row);
+  }
+  return rows;
+}
+
+function saveSymbol() {
+  const sym = document.getElementById("symbolInput").value;
+  if (!sym) return;
+
+  const data = getMatrixData();
+  symbols.push({ sym, data });
+
+  const tr = document.createElement("tr");
+  tr.innerHTML = `
+    <td>${sym}</td>
+    <td>${data.map(b => "0b" + b.toString(2).padStart(5, "0")).join(", ")}</td>
+  `;
+  document.getElementById("symbolsTable").appendChild(tr);
+}
+
+function clearMatrix() {
+  dots.forEach(d => d.classList.remove("on"));
+}
+
+function exportCode() {
+  let out = "const uint8_t font5x7[][7] = {\n";
+  symbols.forEach(s => {
+    out += "  { " + s.data.map(b => "0b" + b.toString(2).padStart(5, "0")).join(", ") + " }, // " + s.sym + "\n";
+  });
+  out += "};";
+  document.getElementById("exportOutput").value = out;
+}
+</script>
+
+</body>
+</html>
