@@ -30,7 +30,7 @@
       <div>
         <div class="title">Sondaż</div>
         <div class="hint">
-          Uruchom sondaż, zbieraj głosy, podejrzyj wyniki, a na końcu zamknij — wtedy punkty zostaną znormalizowane do 100 i gra będzie gotowa do zagrania.
+          Link i QR pojawiają się dopiero po uruchomieniu sondażu i tylko gdy gra spełnia zasady: 10 pytań, 5 odpowiedzi.
         </div>
       </div>
 
@@ -46,25 +46,23 @@
 
       <div class="row">
         <input class="inp" id="pollLink" readonly />
-        <button class="btn" id="btnCopy" type="button">Kopiuj link</button>
-        <button class="btn gold" id="btnOpen" type="button">Otwórz link</button>
-        <button class="btn" id="btnOpenQr" type="button">Rzutnik QR</button>
+        <button class="btn" id="btnCopy" type="button" disabled>Kopiuj link</button>
+        <button class="btn gold" id="btnOpen" type="button" disabled>Otwórz link</button>
+        <button class="btn" id="btnOpenQr" type="button" disabled>Rzutnik QR</button>
       </div>
 
       <div class="row" style="align-items:flex-start;">
         <div id="qr" style="width:160px;height:160px;"></div>
         <div class="small" style="max-width:560px;opacity:.8;line-height:1.35;">
-          QR i link pojawią się dopiero po uruchomieniu sondażu i gdy gra ma pytania z odpowiedziami.
+          QR jest aktywny tylko gdy sondaż jest <b>poll_open</b>.
         </div>
       </div>
 
       <div class="row">
         <button class="btn gold" id="btnStart" type="button">Uruchom sondaż</button>
+        <button class="btn" id="btnReopen" type="button">Otwórz ponownie</button>
         <button class="btn danger" id="btnClose" type="button">Zakończ sondaż</button>
-        <button class="btn" id="btnPreview" type="button">Podgląd głosów</button>
       </div>
-
-      <pre class="votes" id="votes" style="display:none;"></pre>
     </div>
 
     <div class="card" id="cardEmpty">
