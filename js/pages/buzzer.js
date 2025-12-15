@@ -1,3 +1,4 @@
+// js/pages/buzzer.js
 import { sb } from "../core/supabase.js";
 
 const qs = new URLSearchParams(location.search);
@@ -11,85 +12,92 @@ const btnFS = document.getElementById("btnFS");
 const btnA = document.getElementById("btnA");
 const btnB = document.getElementById("btnB");
 
-let locked = false;
-
-function setStatus(ok, t){
+function setStatus(ok, t) {
   dot.style.background = ok ? "#22e06f" : "#ff6b6b";
   txt.textContent = t;
 }
 
-async function ping(){
-  try{
+function applyState(ls) {
+  const locked = !!ls?.buzzer_locked;
+  const winner = ls?.buzzer_winner || null;
+
+  // “gaśnie” zwycięzca (Ty masz klasę .winner – możesz w CSS zrobić np. opacity: .25)
+  btnA.classList.toggle("winner", winner === "A");
+  btnB.classList.toggle("winner", winner === "B");
+
+  btnA.disabled = locked;
+  btnB.disabled = locked;
+
+  setStatus(true, locked ? (winner ? `Wygrywa: ${winner}` : "Zablokowane") : "Gotowe");
+}
+
+async function ping() {
+  try {
     await sb().rpc("public_ping", { p_game_id: gameId, p_kind: "buzzer", p_key: key });
-    setStatus(true, locked ? "Zablokowane" : "Gotowe");
-  }catch{
+  } catch {
     setStatus(false, "Brak połączenia");
   }
 }
 
-async function press(team){
-  if(locked) return;
+async function press(team) {
+  // jeśli już zablokowane, nie rób nic
+  if (btnA.disabled || btnB.disabled) return;
 
-  try{
+  try {
     const res = await sb().rpc("buzzer_press", { p_game_id: gameId, p_key: key, p_team: team });
     const accepted = !!res.data?.accepted;
-    const winner = res.data?.winner;
 
-    locked = !!res.data?.locked;
-
-    // ten, który wygrał, “gaśnie”
-    btnA.classList.toggle("winner", winner === "A");
-    btnB.classList.toggle("winner", winner === "B");
-
-    // blokada inputu po pierwszym zwycięzcy
-    btnA.disabled = locked;
-    btnB.disabled = locked;
-
-    if(accepted){
-      setStatus(true, "Zgłoszono!");
-    }else{
-      setStatus(true, "Za późno");
-    }
-  }catch{
+    if (accepted) setStatus(true, "Zgłoszono!");
+    else setStatus(true, "Za późno");
+  } catch {
     setStatus(false, "Błąd");
   }
 }
 
-btnA.addEventListener("click", ()=>press("A"));
-btnB.addEventListener("click", ()=>press("B"));
+function subLive() {
+  const ch = sb()
+    .channel(`buzzer_live:${gameId}`)
+    .on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "live_state", filter: `game_id=eq.${gameId}` },
+      (payload) => applyState(payload.new)
+    )
+    .subscribe();
 
-btnFS.addEventListener("click", async ()=>{
-  try{
-    if(!document.fullscreenElement){
-      await document.documentElement.requestFullscreen();
-    } else {
-      await document.exitFullscreen();
-    }
-  }catch{}
+  return () => sb().removeChannel(ch);
+}
+
+btnA.addEventListener("click", () => press("A"));
+btnB.addEventListener("click", () => press("B"));
+
+btnFS.addEventListener("click", async () => {
+  try {
+    if (!document.fullscreenElement) await document.documentElement.requestFullscreen();
+    else await document.exitFullscreen();
+  } catch {}
 });
 
-// alert przy odświeżeniu (nie psuje UX, ale ostrzega)
-window.addEventListener("beforeunload", (e)=>{
+window.addEventListener("beforeunload", (e) => {
   e.preventDefault();
   e.returnValue = "";
 });
 
-// start
-document.addEventListener("DOMContentLoaded", ()=>{
-  if(!gameId || !key){
+document.addEventListener("DOMContentLoaded", async () => {
+  if (!gameId || !key) {
     setStatus(false, "Zły link");
     btnA.disabled = true;
     btnB.disabled = true;
     return;
   }
 
-  // ping co 5s
+  // stan startowy z live_state
+  try {
+    const { data } = await sb().from("live_state").select("buzzer_locked,buzzer_winner").eq("game_id", gameId).single();
+    applyState(data);
+  } catch {}
+
+  subLive();
+
   ping();
   setInterval(ping, 5000);
-
-  // reset wyglądu
-  btnA.disabled = false;
-  btnB.disabled = false;
-  btnA.classList.remove("winner");
-  btnB.classList.remove("winner");
 });
