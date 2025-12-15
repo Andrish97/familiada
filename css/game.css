@@ -1,0 +1,120 @@
+/* css/games.css */
+
+.desktop-only { display: block; }
+.mobile-block { display: none; }
+
+@media (max-width: 980px) {
+  .desktop-only { display: none; }
+  .mobile-block {
+    display: flex;
+    min-height: 100vh;
+    align-items: center;
+    justify-content: center;
+    padding: 18px;
+  }
+  .mobile-card {
+    max-width: 520px;
+    width: 100%;
+    border: 1px solid var(--stroke);
+    background: rgba(2,6,23,.35);
+    border-radius: 18px;
+    padding: 18px;
+  }
+  .mobile-title { font-weight: 900; letter-spacing: .06em; text-transform: uppercase; }
+  .mobile-sub { margin-top: 8px; color: var(--muted); font-size: 13px; line-height: 1.35; }
+}
+
+.g-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.g-title {
+  font-weight: 1000;
+  letter-spacing: .10em;
+  text-transform: uppercase;
+  font-size: 18px;
+}
+
+.g-sub { color: var(--muted); font-size: 12px; margin-top: 2px; }
+
+.g-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
+.g-status { color: var(--muted); font-size: 12px; margin: 6px 0 12px; }
+
+.g-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+@media (max-width: 1100px) {
+  .g-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+.g-card {
+  border: 1px solid rgba(148,163,184,.20);
+  background: rgba(2,6,23,.30);
+  border-radius: 18px;
+  padding: 14px;
+  position: relative;
+  cursor: pointer;
+  min-height: 92px;
+  transition: transform .08s ease, filter .08s ease;
+}
+
+.g-card:hover { transform: translateY(-1px); filter: brightness(1.05); }
+
+.g-name {
+  font-weight: 1000;
+  font-size: 14px;
+  letter-spacing: .02em;
+  padding-right: 34px;
+}
+
+.g-meta {
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.g-del {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 28px;
+  height: 28px;
+  border-radius: 10px;
+  border: 1px solid rgba(239,68,68,.45);
+  background: rgba(239,68,68,.08);
+  color: #fecaca;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.g-del:hover { filter: brightness(1.06); }
+
+.g-new-tile {
+  border: 1px dashed rgba(148,163,184,.35);
+  background: rgba(2,6,23,.18);
+  border-radius: 18px;
+  padding: 14px;
+  min-height: 92px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.g-new-tile span { font-weight: 1000; letter-spacing: .06em; text-transform: uppercase; font-size: 12px; }
+
+.g-error {
+  margin-top: 12px;
+  color: #fca5a5;
+  font-size: 12px;
+  min-height: 18px;
+}
