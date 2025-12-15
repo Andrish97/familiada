@@ -266,7 +266,7 @@ function renderAnswers(){
     if(isFixed()){
       row.innerHTML = `
         <input class="aText" />
-        <input class="aPts" type="number" min="0" max="100" inputmode="numeric" />
+        <input class="aPts" type="number" min="1" max="100" step="1" inputmode="numeric" />
         <button class="aDel" type="button" title="Wyczyść" ${locked ? "disabled" : ""}>✕</button>
       `;
     }else{
@@ -308,7 +308,7 @@ function renderAnswers(){
       const applyLive = async (commit)=>{
         if(locked) return;
 
-        let cur = clampInt(aPts.value, 0, 100);
+        let cur = clampInt(aPts.value, 1, 100);
 
         // suma pozostałych
         const otherSum = answers
