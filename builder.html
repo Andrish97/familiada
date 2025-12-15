@@ -1,31 +1,102 @@
-
 <!DOCTYPE html>
 <html lang="pl">
-<head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Familiada — moje gry</title>
-  
-  <link rel="icon" type="image/png" href="favicon.ico"
-    
-  <link rel="stylesheet" href="css/base.css"/>
-  <link rel="stylesheet" href="css/builder.css"/>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Familiada – Edytor</title>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-  <script type="module" src="js/pages/builder.js" defer></script>
-</head>
-<body class="builder-body">
-  <header class="topbar">
-    <div class="brand">FAMILIADA</div>
-    <div class="right">
-      <span class="who" id="who">—</span>
-      <button class="btn" id="btnLogout" type="button">Wyloguj</button>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" href="favicon.ico" />
+
+    <link rel="stylesheet" href="css/theme.css" />
+    <link rel="stylesheet" href="css/builder.css" />
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+
+    <script type="module" src="js/core/auth.js"></script>
+    <script type="module" src="js/pages/builder.js"></script>
+  </head>
+
+  <body class="arcade-body">
+    <div class="mobile-block">
+      <div class="mobile-card">
+        <div class="mobile-title">Edytor jest tylko na komputer</div>
+        <div class="mobile-sub">Otwórz na desktopie.</div>
+      </div>
     </div>
-  </header>
 
-  <main class="wrap">
-    <div class="title">Twoje Familiady</div>
-    <div class="grid" id="grid"></div>
-  </main>
-</body>
+    <div class="shell desktop-only">
+      <div class="card">
+        <header class="b-head">
+          <div>
+            <div class="b-title">EDYTOR</div>
+            <div class="b-sub">Pytania i odpowiedzi</div>
+          </div>
+
+          <div class="b-right">
+            <button class="arcade-btn b-back" type="button">← Gry</button>
+            <button class="arcade-btn b-control" type="button">Sterowanie</button>
+          </div>
+        </header>
+
+        <div class="b-topline">
+          <input class="arcade-input b-game-name" />
+          <button class="arcade-btn b-save-name" type="button">Zapisz nazwę</button>
+        </div>
+
+        <div class="b-main">
+          <!-- lista pytań -->
+          <aside class="b-left">
+            <div class="b-left-head">
+              <div class="b-left-title">Pytania</div>
+              <button class="arcade-btn b-add-q" type="button">+ Dodaj</button>
+            </div>
+
+            <div class="b-q-list"></div>
+          </aside>
+
+          <!-- edycja pytania -->
+          <section class="b-rightpanel">
+            <div class="b-q-editor">
+              <div class="b-q-row">
+                <div class="b-label">Treść pytania</div>
+                <textarea class="b-q-text"></textarea>
+              </div>
+
+              <div class="b-q-row b-q-row2">
+                <div class="b-label">Tryb</div>
+                <div class="b-mode">
+                  <button class="arcade-btn b-mode-fixed" type="button">Podane wartości</button>
+                  <button class="arcade-btn b-mode-poll" type="button">Sondaż</button>
+                </div>
+
+                <div class="b-label">Akcje</div>
+                <div class="b-q-actions">
+                  <button class="arcade-btn logout b-del-q" type="button">Usuń pytanie</button>
+                </div>
+              </div>
+
+              <div class="b-answers-head">
+                <div class="b-left-title">Odpowiedzi</div>
+                <button class="arcade-btn b-add-a" type="button">+ Dodaj</button>
+              </div>
+
+              <div class="b-a-list"></div>
+            </div>
+
+            <div class="b-empty">
+              Wybierz pytanie z listy lub dodaj nowe.
+            </div>
+          </section>
+        </div>
+
+        <div class="b-foot">
+          <div class="b-hint">
+            Limity: odpowiedź max 17 znaków (edytor), finał max 11 (później).
+          </div>
+          <div class="b-error"></div>
+        </div>
+      </div>
+    </div>
+  </body>
 </html>
+
