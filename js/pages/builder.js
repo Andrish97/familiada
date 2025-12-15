@@ -1,139 +1,142 @@
-// js/pages/builder.js
+// js/pages/games.js
 import { sb } from "../core/supabase.js";
 import { requireAuth, signOut } from "../core/auth.js";
-import { guardDesktopOnly } from "../core/device-guard.js";
-import { confirmModal } from "../core/modal.js";
 
-const grid = document.getElementById("grid");
-const who = document.getElementById("who");
-const btnLogout = document.getElementById("btnLogout");
+const $ = (s) => document.querySelector(s);
 
-guardDesktopOnly({ message: "Panel tworzenia Familiad jest dostępny tylko na komputerze." });
+const ui = {
+  status: $(".g-status"),
+  grid: $(".g-grid"),
+  err: $(".g-error"),
+  btnNew: $(".g-new"),
+  btnLogout: $(".g-logout"),
+};
 
-let currentUser = null;
+let client = null;
 
-function cardGame(g) {
-  const el = document.createElement("div");
-  el.className = "card";
-  el.innerHTML = `
-    <div class="x" title="Usuń">✕</div>
-    <div class="name"></div>
-    <div class="meta">Kliknij, aby edytować</div>
-  `;
-  el.querySelector(".name").textContent = g.name;
-
-  el.addEventListener("click", () => {
-    location.href = `editor.html?id=${encodeURIComponent(g.id)}`;
-  });
-
-  el.querySelector(".x").addEventListener("click", async (e) => {
-    e.stopPropagation();
-    const ok = await confirmModal({
-      title: "Usuń Familiadę",
-      text: `Na pewno usunąć "${g.name}"? Tego nie da się łatwo odkręcić.`,
-      okText: "Usuń",
-      cancelText: "Anuluj",
-    });
-    if (!ok) return;
-
-    const { error } = await sb().from("games").delete().eq("id", g.id);
-    if (error) {
-      console.error("[builder] delete error:", error);
-      alert("Nie udało się usunąć. Sprawdź konsolę.");
-      return;
-    }
-
-    await refresh();
-  });
-
-  return el;
+function setError(msg) {
+  ui.err.textContent = msg || "";
 }
 
-function cardPlus() {
-  const el = document.createElement("div");
-  el.className = "card plus";
-  el.innerHTML = `<div><div class="big">+</div><div class="small">Nowa / Import</div></div>`;
-
-  el.addEventListener("click", async () => {
-    const ok = await confirmModal({
-      title: "Nowa Familiada",
-      text: "Utworzyć nową Familiadę?",
-      okText: "Utwórz",
-      cancelText: "Anuluj",
-    });
-    if (!ok) return;
-
-    if (!currentUser?.id) {
-      alert("Brak sesji użytkownika. Zaloguj się ponownie.");
-      location.href = "index.html";
-      return;
-    }
-
-    // Insert: z triggerem owner_id może być pominięte,
-    // ale jawnie podajemy owner_id, żeby RLS nie miało wątpliwości.
-    const { data: game, error } = await sb()
-      .from("games")
-      .insert({
-        name: "Nowa Familiada",
-        owner_id: currentUser.id,
-      })
-      .select("*")
-      .single();
-
-    if (error) {
-      console.error("[builder] create game error:", error);
-      alert(
-        "Nie udało się utworzyć gry.\n\n" +
-        "Najczęściej: RLS/owner_id albo brak sesji.\n" +
-        "Sprawdź konsolę (F12) i polityki w Supabase."
-      );
-      return;
-    }
-
-    // Upewnij się, że live_state istnieje
-    const { error: lsErr } = await sb()
-      .from("live_state")
-      .insert({ game_id: game.id })
-      .select()
-      .maybeSingle();
-
-    // Ignorujemy konflikt/brak uprawnień jeśli RLS już to kontroluje inaczej,
-    // ale w Twoim schemacie owner powinien móc.
-    if (lsErr) {
-      console.warn("[builder] live_state insert warn:", lsErr);
-    }
-
-    location.href = `editor.html?id=${encodeURIComponent(game.id)}`;
-  });
-
-  return el;
+function fmtDate(ts) {
+  try {
+    return new Date(ts).toLocaleString();
+  } catch {
+    return "";
+  }
 }
 
-async function refresh() {
-  const { data, error } = await sb()
+async function loadGames() {
+  const { data, error } = await client
     .from("games")
     .select("id,name,created_at")
     .order("created_at", { ascending: false });
 
-  if (error) {
-    console.error("[builder] list games error:", error);
-    alert("Nie udało się wczytać listy gier. Sprawdź konsolę.");
-    return;
-  }
-
-  grid.innerHTML = "";
-  (data || []).forEach((g) => grid.appendChild(cardGame(g)));
-  grid.appendChild(cardPlus());
+  if (error) throw error;
+  return data || [];
 }
 
-document.addEventListener("DOMContentLoaded", async () => {
-  currentUser = await requireAuth("index.html");
-  who.textContent = currentUser?.email || "—";
+async function createGame() {
+  const { data, error } = await client
+    .from("games")
+    .insert({ name: "Nowa Familiada" })
+    .select("*")
+    .single();
 
-  btnLogout.addEventListener("click", async () => {
+  if (error) throw error;
+  return data;
+}
+
+async function deleteGame(id) {
+  const { error } = await client.from("games").delete().eq("id", id);
+  if (error) throw error;
+}
+
+function render(games) {
+  ui.grid.innerHTML = "";
+
+  // kafelek +
+  const plus = document.createElement("div");
+  plus.className = "g-new-tile";
+  plus.innerHTML = `<span>+ dodaj grę</span>`;
+  plus.addEventListener("click", async () => {
+    try {
+      setError("");
+      ui.status.textContent = "Tworzę…";
+      const g = await createGame();
+      location.href = `builder.html?game=${encodeURIComponent(g.id)}`;
+    } catch (e) {
+      console.error(e);
+      setError(e?.message || "Nie udało się utworzyć gry.");
+      ui.status.textContent = "Błąd.";
+    }
+  });
+  ui.grid.appendChild(plus);
+
+  games.forEach((g) => {
+    const card = document.createElement("div");
+    card.className = "g-card";
+    card.innerHTML = `
+      <button class="g-del" type="button" title="Usuń">✕</button>
+      <div class="g-name"></div>
+      <div class="g-meta">Utworzono: ${fmtDate(g.created_at)}</div>
+    `;
+
+    card.querySelector(".g-name").textContent = g.name;
+
+    card.addEventListener("click", (ev) => {
+      // klik w X nie ma otwierać
+      if (ev.target.closest(".g-del")) return;
+      location.href = `builder.html?game=${encodeURIComponent(g.id)}`;
+    });
+
+    card.querySelector(".g-del").addEventListener("click", async () => {
+      const ok = confirm(`Usunąć grę „${g.name}”?`);
+      if (!ok) return;
+
+      try {
+        setError("");
+        ui.status.textContent = "Usuwam…";
+        await deleteGame(g.id);
+        const list = await loadGames();
+        ui.status.textContent = `Gry: ${list.length}`;
+        render(list);
+      } catch (e) {
+        console.error(e);
+        setError(e?.message || "Nie udało się usunąć.");
+        ui.status.textContent = "Błąd.";
+      }
+    });
+
+    ui.grid.appendChild(card);
+  });
+}
+
+async function main() {
+  await requireAuth("index.html");
+
+  client = sb();
+
+  ui.btnLogout.addEventListener("click", async () => {
     await signOut();
     location.href = "index.html";
   });
 
-  await refresh();
+  ui.btnNew.addEventListener("click", async () => {
+    const g = await createGame();
+    location.href = `builder.html?game=${encodeURIComponent(g.id)}`;
+  });
+
+  ui.status.textContent = "Ładuję gry…";
+  const games = await loadGames();
+  ui.status.textContent = `Gry: ${games.length}`;
+  render(games);
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  main().catch((e) => {
+    console.error(e);
+    setError(e?.message || "Błąd krytyczny.");
+    ui.status.textContent = "Błąd.";
+  });
 });
