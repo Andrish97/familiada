@@ -1,36 +1,29 @@
 <!DOCTYPE html>
 <html lang="pl">
-  <head>
-    <meta charset="UTF-8" />
-    <title>Familiada – Przycisk</title>
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Familiada — buzzer</title>
 
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <link rel="icon" href="favicon.ico" />
+  <link rel="icon" href="favicon.ico"/>
 
-    <link rel="stylesheet" href="css/theme.css" />
-    <link rel="stylesheet" href="css/buzzer.css" />
+  <link rel="stylesheet" href="css/base.css"/>
+  <link rel="stylesheet" href="css/buzzer.css"/>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <script type="module" src="js/pages/buzzer.js" defer></script>
+</head>
 
-    <script type="module" src="js/pages/buzzer.js"></script>
-  </head>
+<body class="buzzer-body">
+  <div class="hud" id="hud">
+    <div class="dot" id="dot"></div>
+    <div class="txt" id="txt">Łączę…</div>
+    <button class="fs" id="btnFS" type="button" title="Pełny ekran">⛶</button>
+  </div>
 
-  <body class="arcade-body">
-    <div class="bz-shell">
-      <div class="bz-top">
-        <div class="bz-title">PRZYCISK</div>
-        <div class="bz-status">Ładuję…</div>
-      </div>
-
-      <div class="bz-buttons">
-        <button class="bz-btn bz-a" type="button">A</button>
-        <button class="bz-btn bz-b" type="button">B</button>
-      </div>
-
-      <div class="bz-foot">
-        <span class="bz-live">—</span>
-        <span class="bz-error"></span>
-      </div>
-    </div>
-  </body>
+  <div class="arena">
+    <button class="big red" id="btnA" type="button" aria-label="Buzzer A"></button>
+    <button class="big green" id="btnB" type="button" aria-label="Buzzer B"></button>
+  </div>
+</body>
 </html>
