@@ -30,6 +30,11 @@ const btnCopy = document.getElementById("btnCopy");
 const btnOpen = document.getElementById("btnOpen");
 const btnOpenQr = document.getElementById("btnOpenQr");
 
+const qrOverlay = document.getElementById("qrOverlay");
+const qrInline = document.getElementById("qrInline");
+const qrInlineUrl = document.getElementById("qrInlineUrl");
+const btnCloseQr = document.getElementById("btnCloseQr");
+
 const btnStart = document.getElementById("btnStart");
 const btnClose = document.getElementById("btnClose");
 const btnReopen = document.getElementById("btnReopen");
@@ -81,6 +86,21 @@ async function renderQr(link) {
   } catch {
     clearQr();
   }
+}
+
+async function openInlineQr(link){
+  qrInline.innerHTML = "";
+  qrInlineUrl.textContent = link;
+
+  if(window.QRCode){
+    QRCode.toCanvas(link, { width: 240, margin: 1 }, (err, canvas)=>{
+      if(!err) qrInline.appendChild(canvas);
+    });
+  }else{
+    qrInline.textContent = "Brak biblioteki QR";
+  }
+
+  qrOverlay.style.display = "";
 }
 
 async function loadGame() {
@@ -214,6 +234,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   btnOpenQr?.addEventListener("click", () => {
     if (!pollLinkEl?.value) return;
+    openInlineQr(pollLinkEl.value);
     const u = new URL("poll-qr.html", location.href);
     u.searchParams.set("url", pollLinkEl.value);
     window.open(u.toString(), "_blank", "noopener,noreferrer");
@@ -292,6 +313,10 @@ document.addEventListener("DOMContentLoaded", async () => {
       console.error("[polls] close error:", e);
       alert("Nie udało się zamknąć sondażu. Sprawdź konsolę.");
     }
+  });
+
+  btnCloseQr?.addEventListener("click", ()=>{
+    qrOverlay.style.display = "none";
   });
 
   await refresh();
