@@ -1,4 +1,3 @@
-
 // js/pages/builder.js
 import { sb } from "../core/supabase.js";
 import { requireAuth, signOut } from "../core/auth.js";
@@ -19,9 +18,13 @@ function cardGame(g) {
   el.innerHTML = `
     <div class="x" title="Usuń">✕</div>
     <div class="name"></div>
-    <div class="meta">Kliknij, aby edytować</div>
+    <div class="meta"></div>
   `;
   el.querySelector(".name").textContent = g.name;
+
+  const kindTxt = g.kind === "poll" ? "SONDAŻ" : "LOKALNA";
+  const statusTxt = g.status || "draft";
+  el.querySelector(".meta").textContent = `${kindTxt} • status: ${statusTxt} • kliknij, aby edytować`;
 
   el.addEventListener("click", () => {
     location.href = `editor.html?id=${encodeURIComponent(g.id)}`;
@@ -53,16 +56,31 @@ function cardGame(g) {
 function cardPlus() {
   const el = document.createElement("div");
   el.className = "card plus";
-  el.innerHTML = `<div><div class="big">+</div><div class="small">Nowa / Import</div></div>`;
+  el.innerHTML = `
+    <div>
+      <div class="big">+</div>
+      <div class="small">Nowa / Import</div>
+      <div class="tiny">LOKALNA lub SONDAŻ</div>
+    </div>
+  `;
 
   el.addEventListener("click", async () => {
+    // 1) czy tworzyć
     const ok = await confirmModal({
       title: "Nowa Familiada",
       text: "Utworzyć nową Familiadę?",
-      okText: "Utwórz",
+      okText: "Dalej",
       cancelText: "Anuluj",
     });
     if (!ok) return;
+
+    // 2) wybór typu (tak, to dwa kroki, ale bez dokładania nowego typu modala)
+    const isPoll = await confirmModal({
+      title: "Typ Familiady",
+      text: "Czy to ma być Familiada SONDAŻOWA?\n\nTAK = sondaż (głosy → normalizacja do 100 → gotowa do gry)\nNIE = lokalna (wprowadzasz wartości ręcznie).",
+      okText: "TAK (sondaż)",
+      cancelText: "NIE (lokalna)",
+    });
 
     if (!currentUser?.id) {
       alert("Brak sesji użytkownika. Zaloguj się ponownie.");
@@ -70,39 +88,33 @@ function cardPlus() {
       return;
     }
 
-    // Insert: z triggerem owner_id może być pominięte,
-    // ale jawnie podajemy owner_id, żeby RLS nie miało wątpliwości.
+    const kind = isPoll ? "poll" : "fixed";
+    const status = isPoll ? "draft" : "draft";
+
     const { data: game, error } = await sb()
       .from("games")
       .insert({
-        name: "Nowa Familiada",
+        name: isPoll ? "Nowa Familiada (sondaż)" : "Nowa Familiada",
         owner_id: currentUser.id,
+        kind,
+        status,
       })
       .select("*")
       .single();
 
     if (error) {
       console.error("[builder] create game error:", error);
-      alert(
-        "Nie udało się utworzyć gry.\n\n" +
-        "Najczęściej: RLS/owner_id albo brak sesji.\n" +
-        "Sprawdź konsolę (F12) i polityki w Supabase."
-      );
+      alert("Nie udało się utworzyć gry. Sprawdź konsolę.");
       return;
     }
 
-    // Upewnij się, że live_state istnieje
     const { error: lsErr } = await sb()
       .from("live_state")
       .insert({ game_id: game.id })
       .select()
       .maybeSingle();
 
-    // Ignorujemy konflikt/brak uprawnień jeśli RLS już to kontroluje inaczej,
-    // ale w Twoim schemacie owner powinien móc.
-    if (lsErr) {
-      console.warn("[builder] live_state insert warn:", lsErr);
-    }
+    if (lsErr) console.warn("[builder] live_state insert warn:", lsErr);
 
     location.href = `editor.html?id=${encodeURIComponent(game.id)}`;
   });
@@ -110,10 +122,24 @@ function cardPlus() {
   return el;
 }
 
+function cardPollsShortcut(){
+  const el = document.createElement("div");
+  el.className = "card plus";
+  el.innerHTML = `
+    <div>
+      <div class="big">📊</div>
+      <div class="small">Sondaże</div>
+      <div class="tiny">uruchom / podgląd / zakończ</div>
+    </div>
+  `;
+  el.addEventListener("click", ()=> location.href = "polls.html");
+  return el;
+}
+
 async function refresh() {
   const { data, error } = await sb()
     .from("games")
-    .select("id,name,created_at")
+    .select("id,name,created_at,kind,status")
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -125,6 +151,7 @@ async function refresh() {
   grid.innerHTML = "";
   (data || []).forEach((g) => grid.appendChild(cardGame(g)));
   grid.appendChild(cardPlus());
+  grid.appendChild(cardPollsShortcut());
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -138,3 +165,4 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   await refresh();
 });
+
