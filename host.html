@@ -1,44 +1,35 @@
 <!DOCTYPE html>
 <html lang="pl">
-  <head>
-    <meta charset="UTF-8" />
-    <title>Familiada – Prowadzący</title>
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Familiada — prowadzący</title>
 
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <link rel="icon" href="favicon.ico" />
+  <link rel="icon" href="favicon.ico"/>
 
-    <link rel="stylesheet" href="css/theme.css" />
-    <link rel="stylesheet" href="css/host.css" />
+  <link rel="stylesheet" href="css/base.css"/>
+  <link rel="stylesheet" href="css/host.css"/>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <script type="module" src="js/pages/host.js" defer></script>
+</head>
 
-    <script type="module" src="js/pages/host.js"></script>
-  </head>
+<body class="host-body">
+  <button class="hideBtn" id="btnHide" type="button">UKRYJ</button>
 
-  <body class="arcade-body">
-    <button class="host-toggle" type="button">UKRYJ</button>
+  <div class="sheet">
+    <div class="hTitle">Pytanie</div>
+    <div class="q" id="q">Ładuję…</div>
 
-    <div class="host-wrap">
-      <div class="host-top">
-        <div class="host-title">PROWADZĄCY</div>
-        <div class="host-timer">
-          <span class="host-timer-label">Czas:</span>
-          <span class="host-timer-val">—</span>
-        </div>
-      </div>
+    <div class="hTitle" style="margin-top:14px;">Podgląd odpowiedzi (tylko dla prowadzącego)</div>
+    <div class="alist" id="alist"></div>
+  </div>
 
-      <div class="host-card">
-        <div class="host-game">Gra: —</div>
-        <div class="host-phase">Stan: —</div>
-
-        <div class="host-question-title">Pytanie</div>
-        <div class="host-question">Czekam na start…</div>
-
-        <div class="host-foot">
-          <span class="host-live">—</span>
-          <span class="host-error"></span>
-        </div>
-      </div>
+  <div class="cover" id="cover" style="display:none;">
+    <div class="coverCard">
+      <div class="coverTitle">UKRYTE</div>
+      <div class="coverSub">Kliknij, aby odsłonić</div>
     </div>
-  </body>
+  </div>
+</body>
 </html>
