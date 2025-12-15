@@ -1,32 +1,57 @@
-// js/pages/builder.js
 import { sb } from "../core/supabase.js";
 import { requireAuth, signOut } from "../core/auth.js";
 import { guardDesktopOnly } from "../core/device-guard.js";
 import { confirmModal } from "../core/modal.js";
 
+guardDesktopOnly({ message: "Panel tworzenia Familiad jest dostępny tylko na komputerze." });
+
 const grid = document.getElementById("grid");
 const who = document.getElementById("who");
 const btnLogout = document.getElementById("btnLogout");
 
-guardDesktopOnly({ message: "Panel tworzenia Familiad jest dostępny tylko na komputerze." });
+const btnEdit = document.getElementById("btnEdit");
+const btnPlay = document.getElementById("btnPlay");
+const btnPoll = document.getElementById("btnPoll");
+const hint = document.getElementById("hint");
+
+// modal typu
+const typeOverlay = document.getElementById("typeOverlay");
+const btnCreateFixed = document.getElementById("btnCreateFixed");
+const btnCreatePoll = document.getElementById("btnCreatePoll");
+const btnCancelType = document.getElementById("btnCancelType");
 
 let currentUser = null;
 let games = [];
 let selectedId = null;
 
-function setSelected(id) {
-  selectedId = id;
-  [...grid.querySelectorAll(".card")].forEach((c) => c.classList.remove("selected"));
-  const el = grid.querySelector(`.card[data-id="${CSS.escape(id)}"]`);
-  if (el) el.classList.add("selected");
-  renderActionsBar();
-}
-
-function getSelectedGame() {
+function getSelected() {
   return games.find((g) => g.id === selectedId) || null;
 }
 
-function statusLabel(g) {
+function isPollGame(g) {
+  return (g.kind || "fixed") === "poll";
+}
+
+function isPollOpen(g) {
+  return isPollGame(g) && (g.status || "draft") === "poll_open";
+}
+
+function canEdit(g) {
+  // Twoja zasada: jeśli sondaż otwarty -> blok edycji
+  return !!g && !isPollOpen(g);
+}
+
+function canPlay(g) {
+  if (!g) return false;
+  if (isPollGame(g)) return (g.status || "draft") === "ready";
+  return true;
+}
+
+function canPoll(g) {
+  return !!g && isPollGame(g);
+}
+
+function labelMeta(g) {
   const kind = g.kind || "fixed";
   const status = g.status || "draft";
 
@@ -35,94 +60,95 @@ function statusLabel(g) {
     if (status === "ready") return "Sondaż: ZAMKNIĘTY (gotowa)";
     return "Sondaż: nieuruchomiony";
   }
-
   return "Lokalna";
 }
 
-function canEdit(g) {
-  // Twoja zasada: jeśli poll jest otwarty – nie pozwalamy edytować
-  return !(g.kind === "poll" && g.status === "poll_open");
-}
+function syncButtons() {
+  const g = getSelected();
 
-function canPlay(g) {
-  // lokalna zawsze (o ile ma dane — walidację dopniemy później)
-  // sondażowa dopiero po status=ready
-  if (g.kind === "poll") return g.status === "ready";
-  return true;
-}
-
-function canPoll(g) {
-  return g.kind === "poll";
-}
-
-function renderActionsBar() {
-  // usuń poprzedni pasek akcji
-  const old = document.getElementById("actionsBar");
-  if (old) old.remove();
-
-  const g = getSelectedGame();
-
-  const bar = document.createElement("div");
-  bar.id = "actionsBar";
-  bar.className = "actionsBar";
-
-  bar.innerHTML = `
-    <button class="btn" id="actEdit" type="button" ${!g || !canEdit(g) ? "disabled" : ""}>Edytuj</button>
-    <button class="btn gold" id="actPlay" type="button" ${!g || !canPlay(g) ? "disabled" : ""}>Graj</button>
-    <button class="btn" id="actPoll" type="button" ${!g || !canPoll(g) ? "disabled" : ""}>Sondaż</button>
-    <button class="btn danger" id="actDelete" type="button" ${!g ? "disabled" : ""}>Usuń</button>
-    <div class="actionsHint" id="actionsHint"></div>
-  `;
-
-  grid.parentElement.appendChild(bar);
-
-  const hint = bar.querySelector("#actionsHint");
+  btnEdit.disabled = !g || !canEdit(g);
+  btnPlay.disabled = !g || !canPlay(g);
+  btnPoll.disabled = !g || !canPoll(g);
 
   if (!g) {
-    hint.textContent = "Zaznacz Familiadę, żeby sterować.";
+    hint.textContent = "Kliknij kafelek, żeby go zaznaczyć.";
     return;
   }
 
-  if (g.kind === "poll" && g.status === "poll_open") {
-    hint.textContent = "Sondaż jest otwarty — edycja zablokowana.";
-  } else if (g.kind === "poll" && g.status !== "ready") {
-    hint.textContent = "Gra sondażowa: uruchom i zakończ sondaż, aby była gotowa do gry.";
-  } else {
-    hint.textContent = statusLabel(g);
+  if (isPollOpen(g)) {
+    hint.textContent = "Sondaż jest OTWARTY — edycja zablokowana.";
+    return;
   }
 
-  bar.querySelector("#actEdit").addEventListener("click", () => {
-    location.href = `editor.html?id=${encodeURIComponent(g.id)}`;
+  if (isPollGame(g) && (g.status || "draft") !== "ready") {
+    hint.textContent = "Gra sondażowa: uruchom i zakończ sondaż, aby była gotowa do gry.";
+    return;
+  }
+
+  hint.textContent = `Zaznaczono: ${g.name} • ${labelMeta(g)}`;
+}
+
+function setSelected(id) {
+  selectedId = id;
+
+  [...grid.querySelectorAll(".card[data-id]")].forEach((el) => {
+    el.classList.toggle("selected", el.dataset.id === id);
   });
 
-  bar.querySelector("#actPlay").addEventListener("click", () => {
-    // na razie kierujemy do control (walidacje min pytań itd. dopniemy w control)
-    location.href = `control.html?id=${encodeURIComponent(g.id)}`;
+  syncButtons();
+}
+
+function openTypeModal(open) {
+  typeOverlay.style.display = open ? "" : "none";
+}
+
+async function createGame(kind) {
+  if (!currentUser?.id) {
+    alert("Brak sesji użytkownika. Zaloguj się ponownie.");
+    location.href = "index.html";
+    return null;
+  }
+
+  const base = {
+    name: "Nowa Familiada",
+    owner_id: currentUser.id,
+    kind: kind, // 'fixed' | 'poll'
+    status: "draft", // 'draft' | 'poll_open' | 'ready'
+  };
+
+  const { data: game, error } = await sb()
+    .from("games")
+    .insert(base)
+    .select("id,name,kind,status,created_at")
+    .single();
+
+  if (error) throw error;
+
+  // upewnij się, że live_state istnieje (jeśli już jest, ostrzeżenie ignorujemy)
+  const { error: lsErr } = await sb()
+    .from("live_state")
+    .insert({ game_id: game.id })
+    .select()
+    .maybeSingle();
+
+  if (lsErr) {
+    console.warn("[builder] live_state insert warn:", lsErr);
+  }
+
+  return game;
+}
+
+async function deleteGame(g) {
+  const ok = await confirmModal({
+    title: "Usuń Familiadę",
+    text: `Na pewno usunąć "${g.name}"? Tego nie da się łatwo odkręcić.`,
+    okText: "Usuń",
+    cancelText: "Anuluj",
   });
+  if (!ok) return;
 
-  bar.querySelector("#actPoll").addEventListener("click", () => {
-    location.href = `polls.html?id=${encodeURIComponent(g.id)}`;
-  });
-
-  bar.querySelector("#actDelete").addEventListener("click", async () => {
-    const ok = await confirmModal({
-      title: "Usuń Familiadę",
-      text: `Na pewno usunąć "${g.name}"? Tego nie da się łatwo odkręcić.`,
-      okText: "Usuń",
-      cancelText: "Anuluj",
-    });
-    if (!ok) return;
-
-    const { error } = await sb().from("games").delete().eq("id", g.id);
-    if (error) {
-      console.error("[builder] delete error:", error);
-      alert("Nie udało się usunąć. Sprawdź konsolę.");
-      return;
-    }
-
-    selectedId = null;
-    await refresh();
-  });
+  const { error } = await sb().from("games").delete().eq("id", g.id);
+  if (error) throw error;
 }
 
 function cardGame(g) {
@@ -131,18 +157,31 @@ function cardGame(g) {
   el.dataset.id = g.id;
 
   el.innerHTML = `
+    <div class="x" title="Usuń">✕</div>
     <div class="name"></div>
     <div class="meta"></div>
   `;
 
   el.querySelector(".name").textContent = g.name;
-  el.querySelector(".meta").textContent = statusLabel(g);
+  el.querySelector(".meta").textContent = labelMeta(g);
 
   el.addEventListener("click", () => setSelected(g.id));
+
   el.addEventListener("dblclick", () => {
-    // szybkie wejście do edytora, ale respektujemy blokadę
     if (!canEdit(g)) return;
     location.href = `editor.html?id=${encodeURIComponent(g.id)}`;
+  });
+
+  el.querySelector(".x").addEventListener("click", async (e) => {
+    e.stopPropagation();
+    try {
+      await deleteGame(g);
+      if (selectedId === g.id) selectedId = null;
+      await refresh();
+    } catch (err) {
+      console.error("[builder] delete error:", err);
+      alert("Nie udało się usunąć. Sprawdź konsolę.");
+    }
   });
 
   return el;
@@ -151,55 +190,15 @@ function cardGame(g) {
 function cardPlus() {
   const el = document.createElement("div");
   el.className = "card plus";
+  el.innerHTML = `
+    <div>
+      <div class="big">+</div>
+      <div class="small">Nowa</div>
+      <div class="tiny">Lokalna / Sondaż</div>
+    </div>
+  `;
 
-  el.innerHTML = `<div><div class="big">+</div><div class="small">Nowa Familiada</div></div>`;
-
-  el.addEventListener("click", async () => {
-    // tu później dorobimy ładny wybór typu (lokalna/sondażowa) w UI buildera
-    // na razie tworzymy lokalną, a typ gry ustawisz później (albo dopniemy modal)
-    const ok = await confirmModal({
-      title: "Nowa Familiada",
-      text: "Utworzyć nową Familiadę (lokalną)?",
-      okText: "Utwórz",
-      cancelText: "Anuluj",
-    });
-    if (!ok) return;
-
-    if (!currentUser?.id) {
-      alert("Brak sesji użytkownika. Zaloguj się ponownie.");
-      location.href = "index.html";
-      return;
-    }
-
-    const { data: game, error } = await sb()
-      .from("games")
-      .insert({
-        name: "Nowa Familiada",
-        owner_id: currentUser.id,
-        kind: "fixed",
-        status: "draft",
-      })
-      .select("*")
-      .single();
-
-    if (error) {
-      console.error("[builder] create game error:", error);
-      alert("Nie udało się utworzyć gry. Sprawdź konsolę.");
-      return;
-    }
-
-    // upewnij się, że live_state istnieje
-    const { error: lsErr } = await sb()
-      .from("live_state")
-      .insert({ game_id: game.id })
-      .select()
-      .maybeSingle();
-    if (lsErr) console.warn("[builder] live_state insert warn:", lsErr);
-
-    await refresh();
-    setSelected(game.id);
-  });
-
+  el.addEventListener("click", () => openTypeModal(true));
   return el;
 }
 
@@ -209,24 +208,20 @@ async function refresh() {
     .select("id,name,created_at,kind,status")
     .order("created_at", { ascending: false });
 
-  if (error) {
-    console.error("[builder] list games error:", error);
-    alert("Nie udało się wczytać listy gier. Sprawdź konsolę.");
-    return;
-  }
+  if (error) throw error;
 
   games = data || [];
-  grid.innerHTML = "";
 
+  grid.innerHTML = "";
   games.forEach((g) => grid.appendChild(cardGame(g)));
   grid.appendChild(cardPlus());
 
-  // odśwież zaznaczenie jeśli dalej istnieje
+  // odśwież zaznaczenie
   if (selectedId && !games.some((g) => g.id === selectedId)) {
     selectedId = null;
   }
   if (selectedId) setSelected(selectedId);
-  else renderActionsBar();
+  else syncButtons();
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -238,5 +233,63 @@ document.addEventListener("DOMContentLoaded", async () => {
     location.href = "index.html";
   });
 
-  await refresh();
+  // akcje górne
+  btnEdit.addEventListener("click", () => {
+    const g = getSelected();
+    if (!g || !canEdit(g)) return;
+    location.href = `editor.html?id=${encodeURIComponent(g.id)}`;
+  });
+
+  btnPlay.addEventListener("click", () => {
+    const g = getSelected();
+    if (!g || !canPlay(g)) return;
+    location.href = `control.html?id=${encodeURIComponent(g.id)}`;
+  });
+
+  btnPoll.addEventListener("click", () => {
+    const g = getSelected();
+    if (!g || !canPoll(g)) return;
+    location.href = `polls.html?id=${encodeURIComponent(g.id)}`;
+  });
+
+  // modal typu
+  btnCancelType.addEventListener("click", () => openTypeModal(false));
+
+  // klik poza modalem zamyka
+  typeOverlay.addEventListener("click", (e) => {
+    if (e.target === typeOverlay) openTypeModal(false);
+  });
+
+  btnCreateFixed.addEventListener("click", async () => {
+    openTypeModal(false);
+    try {
+      const g = await createGame("fixed");
+      await refresh();
+      setSelected(g.id);
+      location.href = `editor.html?id=${encodeURIComponent(g.id)}`;
+    } catch (err) {
+      console.error("[builder] create fixed error:", err);
+      alert("Nie udało się utworzyć gry. Sprawdź konsolę.");
+    }
+  });
+
+  btnCreatePoll.addEventListener("click", async () => {
+    openTypeModal(false);
+    try {
+      const g = await createGame("poll");
+      await refresh();
+      setSelected(g.id);
+      location.href = `editor.html?id=${encodeURIComponent(g.id)}`;
+    } catch (err) {
+      console.error("[builder] create poll error:", err);
+      alert("Nie udało się utworzyć gry. Sprawdź konsolę.");
+    }
+  });
+
+  try {
+    await refresh();
+  } catch (err) {
+    console.error("[builder] refresh error:", err);
+    alert("Nie udało się wczytać listy gier. Sprawdź konsolę.");
+  }
 });
