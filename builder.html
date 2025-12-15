@@ -71,23 +71,30 @@
     </div>
   </div>
 
-  <!-- Modal: import JSON -->
-  <div class="overlay" id="importOverlay" style="display:none;">
-    <div class="modal">
-      <div class="mTitle">Import Familiady</div>
-      <div class="mSub">Wybierz plik JSON albo wklej JSON poniżej.</div>
+<!-- Modal: import JSON -->
+<div class="overlay" id="importOverlay" style="display:none;">
+  <div class="modal">
+    <div class="mTitle">Import Familiady</div>
+    <div class="mSub">Wybierz plik <b>.json</b> (lokalna lub sondażowa).</div>
 
-      <div class="mImportRow">
-        <input class="file" id="importFile" type="file" accept="application/json"/>
-        <button class="btn" id="btnImportFile" type="button">Wczytaj plik</button>
-        <button class="btn gold" id="btnImportJson" type="button">Importuj</button>
-        <button class="btn" id="btnCancelImport" type="button">Anuluj</button>
+    <div class="mGrid" style="grid-template-columns: 1fr;">
+
+      <label class="btn gold fileBtn">
+        Wybierz plik
+        <input id="importFile" type="file" accept="application/json,.json" hidden />
+      </label>
+
+      <div class="importInfo" id="importInfo">Nie wybrano pliku.</div>
+
+      <div class="rowBtns">
+        <button class="btn gold" id="btnDoImport" type="button" disabled>Importuj</button>
+        <button class="btn" id="btnCloseImport" type="button">Zamknij</button>
       </div>
 
-      <textarea class="mTa" id="importTa" spellcheck="false" placeholder='Wklej tutaj JSON...'></textarea>
-
-      <div class="mTiny" id="importMsg"></div>
+      <div class="importErr" id="importErr" style="display:none;"></div>
     </div>
   </div>
+</div>
+
 </body>
 </html>
