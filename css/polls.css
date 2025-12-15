@@ -1,0 +1,61 @@
+.polls-body{
+  margin:0; min-height:100vh;
+  font-family:system-ui,-apple-system,Segoe UI,sans-serif;
+  background:#050914; color:#fff;
+}
+
+.wrap{ width:min(1100px,94vw); margin:0 auto; padding:18px; }
+.title{ font-weight:1000; font-size:18px; margin:10px 0 10px; letter-spacing:.06em; }
+.hint{ opacity:.8; font-size:13px; margin-bottom:14px; line-height:1.35; }
+
+.grid{
+  display:grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap:14px;
+}
+@media (max-width: 1100px){ .grid{ grid-template-columns: 1fr; } }
+
+.card{
+  border-radius:20px;
+  border:1px solid rgba(255,255,255,.14);
+  background:rgba(255,255,255,.06);
+  padding:14px;
+  box-shadow:0 24px 60px rgba(0,0,0,.45);
+}
+
+.name{ font-weight:1000; font-size:16px; letter-spacing:.04em; }
+.meta{ opacity:.75; font-size:12px; margin-top:6px; }
+
+.row{ display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; align-items:center; }
+.inp{
+  padding:10px 12px; border-radius:14px;
+  border:1px solid rgba(255,255,255,.18);
+  background:rgba(255,255,255,.06);
+  color:#fff;
+  width:min(520px,100%);
+  font-weight:800;
+}
+.btn.gold{
+  border-color: rgba(255,234,166,.35);
+  background: rgba(255,234,166,.10);
+  color:#ffeaa6;
+}
+.btn.danger{
+  border-color: rgba(255,120,120,.35);
+  background: rgba(255,120,120,.12);
+}
+
+.small{ opacity:.75; font-size:12px; margin-top:10px; }
+pre{
+  margin:10px 0 0;
+  padding:10px 12px;
+  border-radius:16px;
+  border:1px solid rgba(255,255,255,.12);
+  background:rgba(0,0,0,.25);
+  overflow:auto;
+  font-size:12px;
+}
+
+.foot{ margin-top:12px; min-height:20px; }
+.msg{ color:#ffeaa6; font-weight:900; opacity:.9; }
+
