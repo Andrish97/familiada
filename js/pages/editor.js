@@ -1,4 +1,3 @@
-// js/pages/editor.js
 import { sb } from "../core/supabase.js";
 import { requireAuth, signOut } from "../core/auth.js";
 import { guardDesktopOnly } from "../core/device-guard.js";
@@ -24,7 +23,6 @@ const qText = document.getElementById("qText");
 const btnAddQ = document.getElementById("btnAddQ");
 const btnDelQ = document.getElementById("btnDelQ");
 
-// te przyciski zostają w HTML, ale tu je ignorujemy/ukrywamy
 const btnModeFixed = document.getElementById("btnModeFixed");
 const btnModePoll = document.getElementById("btnModePoll");
 
@@ -32,6 +30,12 @@ const btnAddA = document.getElementById("btnAddA");
 const aList = document.getElementById("aList");
 
 const msg = document.getElementById("msg");
+
+// nowe elementy z HTML
+const gameKindBadge = document.getElementById("gameKindBadge");
+const lockBadge = document.getElementById("lockBadge");
+const hintFixed = document.getElementById("hintFixed");
+const hintPoll = document.getElementById("hintPoll");
 
 let currentUser = null;
 let game = null;
@@ -62,30 +66,42 @@ function effectiveQuestionMode() {
 }
 
 function isEditLocked() {
-  // blokujemy edycję, jeśli sondaż otwarty
   return EDIT_LOCKED;
+}
+
+function syncBadges() {
+  const poll = isPollGame();
+  document.body.classList.toggle("is-poll", poll);
+
+  if (gameKindBadge) {
+    gameKindBadge.textContent = poll ? "SONDAŻOWA" : "LOKALNA";
+  }
+
+  if (lockBadge) {
+    lockBadge.style.display = isEditLocked() ? "" : "none";
+  }
+
+  if (hintFixed) hintFixed.style.display = poll ? "none" : "";
+  if (hintPoll) hintPoll.style.display = poll ? "" : "none";
 }
 
 function applyLockUI() {
   const locked = isEditLocked();
 
-  // Global disable
   btnAddQ.disabled = locked;
   btnDelQ.disabled = locked;
   btnAddA.disabled = locked;
   btnSaveName.disabled = locked;
 
-  // inputy
   gameName.disabled = locked;
   qText.disabled = locked;
 
-  // ukryj przełączniki mode (bo już nie istnieją w logice)
+  // stare przyciski trybu chowamy (nie używamy)
   if (btnModeFixed) btnModeFixed.style.display = "none";
   if (btnModePoll) btnModePoll.style.display = "none";
 
-  // jeśli locked, pokaż komunikat
   if (locked) {
-    setMsg("Sondaż jest otwarty — edycja zablokowana. Zamknij sondaż w zakładce Sondaże.");
+    setMsg("Sondaż jest otwarty — edycja zablokowana.");
   }
 }
 
@@ -128,7 +144,6 @@ async function insertQuestion() {
 }
 
 async function updateQuestion(qid, patch) {
-  // gwarancja: tryb zawsze zgodny z grą
   const safe = { ...patch, mode: effectiveQuestionMode() };
   const { error } = await sb().from("questions").update(safe).eq("id", qid);
   if (error) throw error;
@@ -152,7 +167,6 @@ async function loadAnswers(qid) {
 async function insertAnswer(qid) {
   const ord = answers.length ? Math.max(...answers.map((a) => a.ord)) + 1 : 1;
 
-  // w poll i tak nie używamy fixed_points, ale niech będzie 0
   const { data, error } = await sb()
     .from("answers")
     .insert({ question_id: qid, ord, text: "ODPOWIEDŹ", fixed_points: 0 })
@@ -174,11 +188,11 @@ async function deleteAnswer(aid) {
 
 function renderQuestions() {
   qList.innerHTML = "";
+  const modeLabel = isPollGame() ? "Sondaż" : "Wartości";
+
   questions.forEach((q) => {
     const el = document.createElement("div");
     el.className = "qcard" + (activeQ?.id === q.id ? " active" : "");
-
-    const modeLabel = isPollGame() ? "Sondaż" : "Wartości";
     el.innerHTML = `
       <div class="qord">#${q.ord}</div>
       <div class="qprev"></div>
@@ -201,14 +215,7 @@ function renderEditorShell() {
     return;
   }
   rightPanel.classList.add("hasQ");
-
   qText.value = activeQ.text || "";
-
-  // przełączniki mode są wyłączone/ukryte
-  if (btnModeFixed) btnModeFixed.style.display = "none";
-  if (btnModePoll) btnModePoll.style.display = "none";
-
-  // lock
   qText.disabled = isEditLocked();
 }
 
@@ -223,7 +230,7 @@ function renderAnswers() {
     const row = document.createElement("div");
     row.className = "arow";
 
-    // w poll ukrywamy punkty (albo robimy read-only placeholder)
+    // HTML ma zawsze 3 elementy, CSS w poll ukrywa środek
     row.innerHTML = `
       <input class="aText" />
       <input class="aPts" type="number" min="0" max="999" />
@@ -238,17 +245,8 @@ function renderAnswers() {
     aText.disabled = locked;
 
     aPts.value = typeof a.fixed_points === "number" ? a.fixed_points : 0;
-
-    if (poll) {
-      // punkty nie mają sensu w sondażu — blokujemy i wizualnie wygaszamy
-      aPts.disabled = true;
-      aPts.value = "";
-      aPts.placeholder = "SONDAŻ";
-      aPts.style.opacity = ".45";
-      aPts.style.cursor = "not-allowed";
-    } else {
-      aPts.disabled = locked;
-    }
+    aPts.disabled = locked || poll;
+    if (poll) aPts.value = 0; // niewidoczne anyway
 
     aDel.disabled = locked;
 
@@ -298,12 +296,9 @@ function renderAnswers() {
 }
 
 async function normalizeQuestionModes() {
-  // po wczytaniu gry: dopilnuj, że wszystkie pytania mają właściwy mode
   const mode = effectiveQuestionMode();
   const need = questions.filter(q => q.mode !== mode);
   if (!need.length) return;
-
-  // jeśli edycja zablokowana, nie dotykamy
   if (isEditLocked()) return;
 
   for (const q of need) {
@@ -319,12 +314,13 @@ async function loadActive() {
   questions = await loadQuestions();
   await normalizeQuestionModes();
 
-  activeQ = questions.find((x) => x.id === activeQ.id) || null;
+  activeQ = activeQ ? (questions.find((x) => x.id === activeQ.id) || null) : null;
 
   answers = activeQ ? await loadAnswers(activeQ.id) : [];
   renderQuestions();
   renderEditorShell();
   renderAnswers();
+  syncBadges();
   applyLockUI();
 }
 
@@ -335,25 +331,21 @@ async function refreshAll() {
   EDIT_LOCKED = (GAME_KIND === "poll" && GAME_STATUS === "poll_open");
 
   gameName.value = game.name || "Familiada";
+  syncBadges();
 
   questions = await loadQuestions();
   await normalizeQuestionModes();
-
   renderQuestions();
 
-  if (activeQ) {
-    activeQ = questions.find((x) => x.id === activeQ.id) || null;
-  }
+  if (activeQ) activeQ = questions.find((x) => x.id === activeQ.id) || null;
   renderEditorShell();
 
   if (activeQ) {
     answers = await loadAnswers(activeQ.id);
-    renderAnswers();
   } else {
     answers = [];
-    renderAnswers();
   }
-
+  renderAnswers();
   applyLockUI();
 }
 
@@ -443,10 +435,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     activeQ.text = t;
     renderQuestions();
   });
-
-  // usunięte: zmiana mode (już nie istnieje w logice)
-  if (btnModeFixed) btnModeFixed.style.display = "none";
-  if (btnModePoll) btnModePoll.style.display = "none";
 
   btnDelQ.addEventListener("click", async () => {
     if (!activeQ) return;
