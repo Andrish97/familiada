@@ -35,7 +35,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   const u = await getUser();
   if (u) {
-    location.href = "game.html";
+    location.href = "builder.html";
     return;
   }
   setStatus("Niezalogowany.");
@@ -62,7 +62,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       } else {
         setStatus("Loguję…");
         await signIn(mail, pwd);
-        location.href = "game.html";
+        location.href = "builder.html";
       }
     } catch (e) {
       console.error(e);
