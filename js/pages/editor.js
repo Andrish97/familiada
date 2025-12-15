@@ -15,7 +15,6 @@ const btnBack = document.getElementById("btnBack");
 
 const gameName = document.getElementById("gameName");
 const btnSaveName = document.getElementById("btnSaveName");
-const btnExport = document.getElementById("btnExport");
 
 const qList = document.getElementById("qList");
 const rightPanel = document.querySelector(".rightPanel");
@@ -380,44 +379,6 @@ async function refreshAll() {
   }
 }
 
-function downloadJson(filename, obj) {
-  const blob = new Blob([JSON.stringify(obj, null, 2)], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
-}
-
-async function exportConfig() {
-  const payload = {
-    game: { id: game.id, name: game.name, kind: game.kind, status: game.status },
-    questions: [],
-  };
-
-  for (const q of questions) {
-    const ans = await loadAnswers(q.id);
-    payload.questions.push({
-      ord: q.ord,
-      text: q.text,
-      mode: q.mode,
-      answers: ans
-        .sort((a,b)=>(a.ord||0)-(b.ord||0))
-        .slice(0,5)
-        .map((a) => ({
-          ord: a.ord,
-          text: a.text,
-          fixed_points: a.fixed_points,
-        })),
-    });
-  }
-
-  downloadJson(`familiada_${game.id}.json`, payload);
-}
-
 document.addEventListener("DOMContentLoaded", async () => {
   if (!gameId) {
     alert("Brak parametru id w URL (editor.html?id=...).");
@@ -444,16 +405,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     await updateGameName(name);
     setMsg("Zapisano nazwę.");
     await refreshAll();
-  });
-
-  btnExport.addEventListener("click", async () => {
-    try {
-      await exportConfig();
-      setMsg("Zapisano plik konfiguracji.");
-    } catch (e) {
-      console.error("[editor] export error:", e);
-      alert("Nie udało się zapisać pliku. Sprawdź konsolę.");
-    }
   });
 
   btnAddQ.addEventListener("click", async () => {
