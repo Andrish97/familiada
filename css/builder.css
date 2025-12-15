@@ -224,3 +224,30 @@
   color:#ffeaa6;
   padding:6px 0;
 }
+
+/* ===== fix: input type=file wygląda jak reszta ===== */
+.inp[type="file"]{
+  padding:10px 12px;
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,.18);
+  background:rgba(255,255,255,.06);
+  color:#fff;
+  font-weight:900;
+  width:min(520px,100%);
+}
+
+/* przycisk "Wybierz plik" w środku inputa */
+.inp[type="file"]::file-selector-button{
+  margin-right:10px;
+  padding:10px 12px;
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,.18);
+  background:rgba(0,0,0,.22);
+  color:#ffeaa6;
+  font-weight:1000;
+  letter-spacing:.06em;
+  cursor:pointer;
+}
+.inp[type="file"]::file-selector-button:hover{
+  filter:brightness(1.06);
+}
