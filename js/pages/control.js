@@ -3,6 +3,7 @@ import { sb } from "../core/supabase.js";
 import { requireAuth, signOut } from "../core/auth.js";
 import { guardDesktopOnly } from "../core/device-guard.js";
 import { playSfx } from "../core/sfx.js";
+import { validateGameReadyToPlay } from "../core/game-validate.js";
 
 guardDesktopOnly({ message: "Sterowanie Familiady jest dostępne tylko na komputerze." });
 
@@ -334,9 +335,9 @@ async function endRound() {
   setMsg(msgGame, "Runda zakończona.");
 }
 
-async function startGame() {
-  const chk = await validateGameReady();
-  if (!chk.ok) {
+async function startGame(gameId) {
+  const chk = await validateGameReadyToPlay(gameId);
+  if(!chk.ok){
     setMsg(msgGame, chk.reason);
     return;
   }
@@ -379,8 +380,8 @@ async function startGame() {
 }
 
 async function startRound() {
-  const chk = await validateGameReady();
-  if (!chk.ok) {
+  const chk = await validateGameReadyToPlay(gameId);
+  if(!chk.ok){
     setMsg(msgGame, chk.reason);
     return;
   }
