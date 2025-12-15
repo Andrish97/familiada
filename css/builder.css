@@ -184,9 +184,7 @@
   line-height:1.35;
 }
 /* ===== Import modal ===== */
-#importOverlay .modal { width:min(860px,94vw); }
-
-.fileRow{
+.importRow{
   display:flex;
   gap:10px;
   align-items:center;
@@ -194,8 +192,9 @@
   margin-top:12px;
 }
 
-.fileInput{
-  width:min(520px,100%);
+.file{
+  flex: 1;
+  min-width: 260px;
   padding:10px 12px;
   border-radius:14px;
   border:1px solid rgba(255,255,255,.18);
@@ -204,36 +203,24 @@
   font-weight:800;
 }
 
-.fileInput::file-selector-button{
-  padding:10px 12px;
-  border-radius:14px;
-  border:1px solid rgba(255,255,255,.18);
-  background:rgba(255,255,255,.06);
-  color:#fff;
-  font-weight:1000;
-  cursor:pointer;
-  margin-right:10px;
-}
-
-.fileInput::file-selector-button:hover{ filter:brightness(1.08); }
-
 .importTa{
   width:100%;
   min-height:220px;
   margin-top:12px;
-  padding:12px;
+  padding:12px 12px;
   border-radius:16px;
   border:1px solid rgba(255,255,255,.18);
   background:rgba(0,0,0,.25);
   color:#fff;
-  font-weight:700;
   outline:none;
-  resize:vertical;
+  resize: vertical;
+  font-weight:800;
 }
 
 .importMsg{
-  margin-top:10px;
-  opacity:.9;
-  color:#ffeaa6;
+  margin-left:auto;
+  opacity:.85;
   font-weight:900;
+  color:#ffeaa6;
+  padding:6px 0;
 }
