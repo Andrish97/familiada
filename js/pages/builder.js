@@ -6,99 +6,42 @@ import { confirmModal } from "../core/modal.js";
 
 guardDesktopOnly({ message: "Panel tworzenia Familiad jest dostępny tylko na komputerze." });
 
-/* ===== ZASADY ===== */
-const QN = 10; // min/stała liczba pytań
-const AN = 5;  // stała liczba odpowiedzi
-
-/* ===== DOM ===== */
 const grid = document.getElementById("grid");
 const who = document.getElementById("who");
 const btnLogout = document.getElementById("btnLogout");
 
-const btnNew = document.getElementById("btnNew");
 const btnEdit = document.getElementById("btnEdit");
 const btnPlay = document.getElementById("btnPlay");
 const btnPoll = document.getElementById("btnPoll");
-const btnExport = document.getElementById("btnExport");
-const btnImport = document.getElementById("btnImport");
 
+// modal typu (jak w Twoim HTML)
 const typeOverlay = document.getElementById("typeOverlay");
 const btnCreateFixed = document.getElementById("btnCreateFixed");
 const btnCreatePoll = document.getElementById("btnCreatePoll");
 const btnCancelType = document.getElementById("btnCancelType");
 
-const importOverlay = document.getElementById("importOverlay");
-const importFile = document.getElementById("importFile");
-const btnImportFile = document.getElementById("btnImportFile");
-const btnImportJson = document.getElementById("btnImportJson");
-const btnCancelImport = document.getElementById("btnCancelImport");
-const importTa = document.getElementById("importTa");
-const importMsg = document.getElementById("importMsg");
+// jeśli masz przycisk “Nowa” w HTML — podepnij
+const btnNew = document.getElementById("btnNew");
 
-/* ===== STATE ===== */
 let currentUser = null;
 let games = [];
 let selectedId = null;
 
-/* ===== HELPERS ===== */
-function on(el, evt, fn){
-  if (!el) return;
-  el.addEventListener(evt, fn);
-}
+const QN = 10;
+const AN = 5;
 
-function show(el, visible){
-  if (!el) return;
-  el.style.display = visible ? "" : "none";
-}
+function show(el, on){ if(el) el.style.display = on ? "" : "none"; }
 
-function setImportMsg(t){
-  if (!importMsg) return;
-  importMsg.textContent = t || "";
-}
+function openTypeModal(){ show(typeOverlay, true); }
+function closeTypeModal(){ show(typeOverlay, false); }
 
-function safeInt(v, def = 0){
-  const n = Number(v);
-  if (!Number.isFinite(n)) return def;
-  return Math.trunc(n);
-}
-
-function clampInt(v, min, max){
-  return Math.max(min, Math.min(max, safeInt(v, min)));
-}
-
-function downloadJson(filename, obj){
-  const blob = new Blob([JSON.stringify(obj, null, 2)], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
-}
-
-async function readFileAsText(file){
-  return await new Promise((resolve, reject)=>{
-    const r = new FileReader();
-    r.onload = ()=>resolve(String(r.result || ""));
-    r.onerror = ()=>reject(new Error("Nie udało się wczytać pliku."));
-    r.readAsText(file);
-  });
-}
-
-function guessKindFromQuestions(qs){
-  return (qs || []).some(q => q.mode === "poll") ? "poll" : "fixed";
-}
-
-/* ===== SUPABASE ===== */
 async function listGames(){
   const { data, error } = await sb()
     .from("games")
-    .select("id,name,created_at")
+    .select("id,name,created_at,kind,status")
     .order("created_at", { ascending:false });
 
-  if (error) throw error;
+  if(error) throw error;
   return data || [];
 }
 
@@ -109,7 +52,7 @@ async function loadQuestions(gameId){
     .eq("game_id", gameId)
     .order("ord", { ascending:true });
 
-  if (error) throw error;
+  if(error) throw error;
   return data || [];
 }
 
@@ -120,7 +63,7 @@ async function loadAnswers(qid){
     .eq("question_id", qid)
     .order("ord", { ascending:true });
 
-  if (error) throw error;
+  if(error) throw error;
   return data || [];
 }
 
@@ -131,238 +74,52 @@ async function ensureLive(gameId){
     .eq("game_id", gameId)
     .maybeSingle();
 
-  // jeśli SELECT wywali (RLS) – nie stopujemy buildera, ale logujemy
-  if (error){
-    console.warn("[builder] ensureLive select error:", error);
-    return;
-  }
+  if(error) throw error;
+  if(data?.game_id) return;
 
-  if (data?.game_id) return;
-
-  const ins = await sb().from("live_state").insert({ game_id: gameId });
-  if (ins.error){
-    console.warn("[builder] ensureLive insert error:", ins.error);
-  }
+  const { error: insErr } = await sb().from("live_state").insert({ game_id: gameId });
+  if(insErr) throw insErr;
 }
 
 async function createGame(kind){
-  // kind: "fixed" | "poll"
-
+  // NIE tworzymy pytań/odpowiedzi. Tylko gra.
   const { data: game, error } = await sb()
     .from("games")
     .insert({
       name: kind === "poll" ? "Nowa Familiada (Sondaż)" : "Nowa Familiada",
       owner_id: currentUser.id,
-
-      // KLUCZ: zapis typu gry do games
-      kind: kind,
-
-      // status bazowy
+      kind: kind === "poll" ? "poll" : "fixed",
       status: "draft",
     })
-    .select("*")
+    .select("id,name,kind,status")
     .single();
 
   if(error) throw error;
 
   await ensureLive(game.id);
-
-  // 10 pytań x 5 odpowiedzi
-  for(let i=1;i<=QN;i++){
-    const { data: q, error: qErr } = await sb()
-      .from("questions")
-      .insert({
-        game_id: game.id,
-        ord: i,
-        text: `Pytanie ${i}`,
-        mode: kind === "poll" ? "poll" : "fixed",
-      })
-      .select("*")
-      .single();
-
-    if(qErr) throw qErr;
-
-    // fixed_points zawsze liczba (0) – unikamy 400 jeśli kolumna NOT NULL
-    for(let j=1;j<=AN;j++){
-      const { error: aErr } = await sb()
-        .from("answers")
-        .insert({
-          question_id: q.id,
-          ord: j,
-          text: `ODP ${j}`,
-          fixed_points: 0,
-        });
-
-      if(aErr) throw aErr;
-    }
-  }
-
   return game;
 }
 
 async function deleteGame(game){
   const ok = await confirmModal({
-    title: "Usuń Familiadę",
-    text: `Na pewno usunąć "${game.name}"?`,
-    okText: "Usuń",
-    cancelText: "Anuluj",
+    title:"Usuń Familiadę",
+    text:`Na pewno usunąć "${game.name}"?`,
+    okText:"Usuń",
+    cancelText:"Anuluj",
   });
-  if (!ok) return;
+  if(!ok) return;
 
   const { error } = await sb().from("games").delete().eq("id", game.id);
-  if (error){
+  if(error){
     console.error("[builder] delete error:", error);
     alert("Nie udało się usunąć. Sprawdź konsolę.");
   }
 }
 
-/* ===== IMPORT/EXPORT FORMAT ===== */
-function normalizeImportedPayload(raw){
-  // wejście: { game:{name, kind}, questions:[{text, answers:[{text,fixed_points}]}] }
-  const p = raw || {};
-  const g = p.game || {};
-  const kind = (g.kind === "poll") ? "poll" : "fixed";
-  const name = String(g.name || "Zaimportowana Familiada").slice(0, 80);
-
-  const srcQs = Array.isArray(p.questions) ? p.questions : [];
-
-  const outQs = [];
-  for (let i = 0; i < QN; i++){
-    const srcQ = srcQs[i] || {};
-    const qText = String(srcQ.text || `Pytanie ${i+1}`).slice(0, 200);
-
-    const srcA = Array.isArray(srcQ.answers) ? srcQ.answers : [];
-    const answers = [];
-
-    for (let j = 0; j < AN; j++){
-      const a = srcA[j] || {};
-      const aText = String(a.text || `ODP ${j+1}`).slice(0, 17);
-
-      // fixed_points: zawsze int
-      let pts = 0;
-      if (kind === "fixed"){
-        pts = clampInt(a.fixed_points, 0, 999); // int4 i tak, ale trzymamy rozsądnie
-      }
-
-      answers.push({ ord: j+1, text: aText, fixed_points: pts });
-    }
-
-    outQs.push({
-      ord: i+1,
-      text: qText,
-      mode: kind === "poll" ? "poll" : "fixed",
-      answers,
-    });
-  }
-
-  return { game: { name, kind }, questions: outQs };
-}
-
-async function doExportSelected(){
-  const sel = games.find(g => g.id === selectedId);
-  if (!sel) return;
-
-  const qs = await loadQuestions(sel.id);
-  const kind = guessKindFromQuestions(qs);
-
-  const payload = { game: { name: sel.name, kind }, questions: [] };
-
-  for (const q of qs){
-    const ans = await loadAnswers(q.id);
-    payload.questions.push({
-      ord: q.ord,
-      text: q.text,
-      mode: q.mode,
-      answers: ans.map(a => ({
-        ord: a.ord,
-        text: a.text,
-        fixed_points: safeInt(a.fixed_points, 0),
-      })),
-    });
-  }
-
-  const safe = sel.name.replace(/[^\w\d\- ]+/g, "").trim().slice(0, 40) || "familiada";
-  downloadJson(`${safe}.json`, payload);
-}
-
-async function doImportPayload(rawObj){
-  const payload = normalizeImportedPayload(rawObj);
-
-  const { data: game, error } = await sb()
-    .from("games")
-    .insert({
-      name: payload.game.name,
-      owner_id: currentUser.id,
-
-      // KLUCZ: zapis typu gry do games
-      kind: payload.game.kind,
-
-      // startowo draft
-      status: "draft",
-    })
-    .select("*")
-    .single();
-
-  if(error) throw error;
-
-  await ensureLive(game.id);
-
-  for(const q of payload.questions){
-    const { data: qRow, error: qErr } = await sb()
-      .from("questions")
-      .insert({
-        game_id: game.id,
-        ord: q.ord,
-        text: q.text,
-        mode: q.mode,
-      })
-      .select("*")
-      .single();
-
-    if(qErr) throw qErr;
-
-    for(const a of q.answers){
-      // fixed_points zawsze liczba (0 też OK)
-      const { error: aErr } = await sb()
-        .from("answers")
-        .insert({
-          question_id: qRow.id,
-          ord: a.ord,
-          text: a.text,
-          fixed_points: Number(a.fixed_points) || 0,
-        });
-
-      if(aErr) throw aErr;
-    }
-  }
-
-  return game;
-}
-
-/* ===== UI ===== */
-function setActionState(kind = null){
-  const has = !!selectedId;
-
-  if (btnEdit) btnEdit.disabled = !has;
-  if (btnPlay) btnPlay.disabled = !has;
-  if (btnExport) btnExport.disabled = !has;
-
-  // Poll tylko dla sondażowej
-  if (btnPoll) btnPoll.disabled = !has || (kind && kind !== "poll");
-}
-
-function openTypeModal(){ show(typeOverlay, true); }
-function closeTypeModal(){ show(typeOverlay, false); }
-
-function openImportModal(){
-  if (importTa) importTa.value = "";
-  if (importFile) importFile.value = "";
-  setImportMsg("");
-  show(importOverlay, true);
-}
-function closeImportModal(){
-  show(importOverlay, false);
-  setImportMsg("");
+function setButtonsState({ hasSel, canEdit, canPlay, canPoll }){
+  if(btnEdit) btnEdit.disabled = !hasSel || !canEdit;
+  if(btnPlay) btnPlay.disabled = !hasSel || !canPlay;
+  if(btnPoll) btnPoll.disabled = !hasSel || !canPoll;
 }
 
 function cardGame(g){
@@ -375,19 +132,16 @@ function cardGame(g){
   `;
 
   el.querySelector(".name").textContent = g.name;
-  el.querySelector(".meta").textContent = "Kliknij, aby zaznaczyć";
+
+  const meta = el.querySelector(".meta");
+  const st = (g.status || "draft").toUpperCase();
+  const kind = (g.kind || "fixed") === "poll" ? "SONDAŻ" : "LOKALNA";
+  meta.textContent = `${kind} • ${st}`;
 
   el.addEventListener("click", async ()=>{
     selectedId = g.id;
     render();
-
-    try{
-      const qs = await loadQuestions(selectedId);
-      const kind = guessKindFromQuestions(qs);
-      setActionState(kind);
-    }catch{
-      setActionState(null);
-    }
+    await updateActionState(); // dociągnij walidację
   });
 
   el.querySelector(".x").addEventListener("click", async (e)=>{
@@ -400,165 +154,191 @@ function cardGame(g){
 }
 
 function render(){
-  if (!grid) return;
-
   grid.innerHTML = "";
-  for (const g of games){
+  for(const g of games){
     const el = cardGame(g);
-    if (g.id === selectedId) el.classList.add("selected");
+    if(g.id === selectedId) el.classList.add("selected");
     grid.appendChild(el);
   }
 
-  // domyślnie: brak wyboru = przyciski disabled
-  setActionState(null);
+  // nic nie wybrane => wszystko off
+  setButtonsState({ hasSel: !!selectedId, canEdit:false, canPlay:false, canPoll:false });
+}
+
+async function validateGameForRules(game){
+  // Zasada: 10 pytań, 5 odpowiedzi.
+  // Dla lokalnej: dodatkowo suma punktów <= 100 na pytanie.
+  // Dla sondażu:
+  // - status poll_open => NIE gra, NIE edycja
+  // - status ready => można grać
+  // - draft => można edytować, można wejść w panel sondażu, ale nie grać
+  const res = {
+    okQuestions: false,
+    okAnswers: false,
+    okPoints: true,
+    reason: "",
+  };
+
+  const qs = await loadQuestions(game.id);
+  if(qs.length !== QN){
+    res.reason = `Wymagane ${QN} pytań. Masz: ${qs.length}.`;
+    return res;
+  }
+  res.okQuestions = true;
+
+  for(const q of qs){
+    const ans = await loadAnswers(q.id);
+    if(ans.length !== AN){
+      res.reason = `Pytanie #${q.ord}: wymagane ${AN} odpowiedzi. Masz: ${ans.length}.`;
+      res.okAnswers = false;
+      return res;
+    }
+    res.okAnswers = true;
+
+    if(game.kind === "fixed"){
+      const sum = ans.reduce((s,a)=> s + (Number(a.fixed_points)||0), 0);
+      if(sum > 100){
+        res.okPoints = false;
+        res.reason = `Pytanie #${q.ord}: suma punktów = ${sum} (max 100).`;
+        return res;
+      }
+    }
+  }
+
+  return res;
+}
+
+async function updateActionState(){
+  const sel = games.find(g => g.id === selectedId) || null;
+  if(!sel){
+    setButtonsState({ hasSel:false, canEdit:false, canPlay:false, canPoll:false });
+    return;
+  }
+
+  // statusowe blokady
+  const kind = sel.kind || "fixed";
+  const status = sel.status || "draft";
+
+  // jeśli poll_open: nic nie wolno poza wejściem w panel sondażu
+  if(kind === "poll" && status === "poll_open"){
+    setButtonsState({ hasSel:true, canEdit:false, canPlay:false, canPoll:true });
+    return;
+  }
+
+  // walidacja zasad 10×5 (+ suma<=100 dla fixed) decyduje o “Graj”
+  let rules;
+  try{
+    rules = await validateGameForRules(sel);
+  }catch(e){
+    console.error("[builder] validate error:", e);
+    setButtonsState({ hasSel:true, canEdit:true, canPlay:false, canPoll:(kind==="poll") });
+    return;
+  }
+
+  const canEdit = true; // jeśli nie poll_open, można edytować
+  const canPoll = (kind === "poll"); // panel sondażu tylko dla poll
+
+  // gra:
+  // - fixed: musi spełniać reguły
+  // - poll: musi mieć status=ready i spełniać reguły
+  const canPlay =
+    (kind === "fixed" && rules.okQuestions && rules.okAnswers && rules.okPoints) ||
+    (kind === "poll" && status === "ready" && rules.okQuestions && rules.okAnswers);
+
+  setButtonsState({ hasSel:true, canEdit, canPlay, canPoll });
 }
 
 async function refresh(){
   games = await listGames();
-
-  if (selectedId && !games.some(g => g.id === selectedId)){
-    selectedId = null;
-  }
+  if(selectedId && !games.some(g=>g.id === selectedId)) selectedId = null;
 
   render();
-
-  if (selectedId){
-    try{
-      const qs = await loadQuestions(selectedId);
-      const kind = guessKindFromQuestions(qs);
-      setActionState(kind);
-    }catch{
-      setActionState(null);
-    }
-  } else {
-    setActionState(null);
-  }
+  await updateActionState();
 }
 
-/* ===== START ===== */
 document.addEventListener("DOMContentLoaded", async ()=>{
   currentUser = await requireAuth("index.html");
-  if (who) who.textContent = currentUser?.email || "—";
+  who.textContent = currentUser?.email || "—";
 
-  on(btnLogout, "click", async ()=>{
+  btnLogout?.addEventListener("click", async ()=>{
     await signOut();
     location.href = "index.html";
   });
 
-  on(btnNew, "click", openTypeModal);
-  on(btnCancelType, "click", closeTypeModal);
+  // jeśli masz btnNew w HTML, super; jeśli nie masz - i tak modal można otworzyć inaczej
+  btnNew?.addEventListener("click", openTypeModal);
 
-  on(btnCreateFixed, "click", async ()=>{
+  btnCancelType?.addEventListener("click", closeTypeModal);
+
+  btnCreateFixed?.addEventListener("click", async ()=>{
     closeTypeModal();
     try{
-      await createGame("fixed");
+      const g = await createGame("fixed");
+      selectedId = g.id;
       await refresh();
     }catch(e){
-      console.error("[builder] create fixed error:", e);
-      alert("Nie udało się utworzyć gry (fixed). Sprawdź konsolę.");
+      console.error(e);
+      alert("Nie udało się utworzyć gry.");
     }
   });
 
-  on(btnCreatePoll, "click", async ()=>{
+  btnCreatePoll?.addEventListener("click", async ()=>{
     closeTypeModal();
     try{
-      await createGame("poll");
+      const g = await createGame("poll");
+      selectedId = g.id;
       await refresh();
     }catch(e){
-      console.error("[builder] create poll error:", e);
-      alert("Nie udało się utworzyć gry (poll). Sprawdź konsolę.");
+      console.error(e);
+      alert("Nie udało się utworzyć gry.");
     }
   });
 
-  on(btnEdit, "click", ()=>{
-    if (!selectedId) return;
+  btnEdit?.addEventListener("click", async ()=>{
+    if(!selectedId) return;
+
+    const sel = games.find(g=>g.id === selectedId);
+    if(sel?.kind === "poll" && sel?.status === "poll_open"){
+      alert("Sondaż jest otwarty — edycja zablokowana.");
+      return;
+    }
+
     location.href = `editor.html?id=${encodeURIComponent(selectedId)}`;
   });
 
-  on(btnPlay, "click", ()=>{
-    if (!selectedId) return;
+  btnPlay?.addEventListener("click", async ()=>{
+    if(!selectedId) return;
+
+    const sel = games.find(g=>g.id === selectedId);
+    if(!sel) return;
+
+    if(sel.kind === "poll" && sel.status !== "ready"){
+      alert("Nie można grać: sondaż nie jest zakończony (status nie READY).");
+      return;
+    }
+
+    const rules = await validateGameForRules(sel);
+    if(!(rules.okQuestions && rules.okAnswers && rules.okPoints)){
+      alert(rules.reason || "Gra nie spełnia wymagań.");
+      await updateActionState();
+      return;
+    }
+
     location.href = `control.html?id=${encodeURIComponent(selectedId)}`;
   });
 
-  on(btnPoll, "click", async ()=>{
-    if (!selectedId) return;
+  btnPoll?.addEventListener("click", async ()=>{
+    if(!selectedId) return;
 
-    try{
-      const qs = await loadQuestions(selectedId);
-      const kind = guessKindFromQuestions(qs);
-      if (kind !== "poll"){
-        alert("To nie jest Familiada sondażowa.");
-        return;
-      }
-    }catch(e){
-      console.error("[builder] poll kind check error:", e);
-      alert("Nie udało się sprawdzić typu gry.");
+    const sel = games.find(g=>g.id === selectedId);
+    if(!sel) return;
+
+    if(sel.kind !== "poll"){
+      alert("To nie jest Familiada sondażowa.");
       return;
     }
 
     location.href = `polls.html?id=${encodeURIComponent(selectedId)}`;
-  });
-
-  on(btnExport, "click", async ()=>{
-    try{
-      await doExportSelected();
-    }catch(e){
-      console.error("[builder] export error:", e);
-      alert("Nie udało się wyeksportować. Sprawdź konsolę.");
-    }
-  });
-
-  on(btnImport, "click", openImportModal);
-  on(btnCancelImport, "click", closeImportModal);
-
-  // klik w tło modala importu zamyka (opcjonalnie, ale wygodne)
-  if (importOverlay){
-    importOverlay.addEventListener("click", (e)=>{
-      if (e.target === importOverlay) closeImportModal();
-    });
-  }
-  if (typeOverlay){
-    typeOverlay.addEventListener("click", (e)=>{
-      if (e.target === typeOverlay) closeTypeModal();
-    });
-  }
-
-  on(btnImportFile, "click", async ()=>{
-    try{
-      const f = importFile?.files?.[0];
-      if (!f){
-        setImportMsg("Wybierz plik JSON.");
-        return;
-      }
-      const txt = await readFileAsText(f);
-      if (importTa) importTa.value = txt;
-      setImportMsg("Plik wczytany. Kliknij Importuj.");
-    }catch(e){
-      console.error("[builder] read file error:", e);
-      setImportMsg("Nie udało się wczytać pliku.");
-    }
-  });
-
-  on(btnImportJson, "click", async ()=>{
-    try{
-      const txt = (importTa?.value || "").trim();
-      if (!txt){
-        setImportMsg("Wklej JSON albo wczytaj plik.");
-        return;
-      }
-
-      const obj = JSON.parse(txt);
-      const g = await doImportPayload(obj);
-
-      closeImportModal();
-
-      // odśwież + zaznacz nową
-      selectedId = g.id;
-      await refresh();
-    }catch(e){
-      console.error("[builder] IMPORT ERROR:", e);
-      setImportMsg("Błąd importu: zły JSON albo problem z bazą (sprawdź konsolę).");
-    }
   });
 
   await refresh();
