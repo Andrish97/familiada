@@ -2,98 +2,276 @@
 <html lang="pl">
 <head>
 <meta charset="UTF-8">
-<title>Siatka 30×10 matryc 5×7</title>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Edytor 5×7 — tryby + zapisy</title>
 <style>
-  :root{
-    --px: 12px;      /* rozmiar piksela */
-    --gap: 2px;      /* odstęp między pikselami */
-    --matgap: 12px;  /* odstęp między matrycami = 1 piksel */
-    --off: #cfcfcf;
-    --on: #111;
-    --bg: #f5f5f5;
+  :root{ --px: 30px; --gap: 4px; --off:#ccc; --on:#111; --bg:#f5f5f5; }
+  body{ font-family: system-ui, sans-serif; background:var(--bg); padding:16px; margin:0; }
+  .toolbar{
+    display:flex; flex-wrap:wrap; gap:10px; align-items:center;
+    background:#fff; padding:10px; border-radius:12px; box-shadow:0 1px 8px rgba(0,0,0,.08);
+    position: sticky; top: 0; z-index: 2;
   }
+  .group{display:flex; gap:8px; align-items:center; padding-right:10px; border-right:1px solid #e8e8e8;}
+  .group:last-child{border-right:none; padding-right:0;}
+  button{ border:1px solid #ccc; background:#fff; padding:6px 10px; border-radius:10px; cursor:pointer; font:inherit; }
+  button.active{ border-color:#111; box-shadow: inset 0 0 0 1px #111; }
+  label{ display:flex; gap:8px; align-items:center; }
+  .hint{ opacity:.7; font-size:13px; }
 
-  body{
-    font-family: system-ui, sans-serif;
-    background: var(--bg);
-    margin: 0;
-    padding: 16px;
-  }
-
-  #canvas{
-    display: grid;
-    user-select: none;
+  .stage{ margin-top:12px; background:#fff; padding:12px; border-radius:12px; box-shadow:0 1px 10px rgba(0,0,0,.08); }
+  #matrix{
+    display:grid;
+    grid-template-columns: repeat(5, var(--px));
+    grid-template-rows: repeat(7, var(--px));
+    gap: var(--gap);
     width: max-content;
-    background: #fff;
-    padding: 12px;
-    border-radius: 12px;
-    box-shadow: 0 1px 8px rgba(0,0,0,.1);
+    user-select:none;
+    touch-action:none;
   }
+  .dot{ width:var(--px); height:var(--px); border-radius:50%; background:var(--off); cursor:crosshair; }
+  .dot.on{ background:var(--on); }
 
-  .px{
-    width: var(--px);
-    height: var(--px);
-    background: var(--off);
-    border-radius: 3px;
-    cursor: crosshair;
-  }
-  .px.on{ background: var(--on); }
-
-  .sep{
-    width: var(--matgap);
-    height: var(--matgap);
-    pointer-events: none;
-  }
+  table{ border-collapse: collapse; margin-top: 14px; width: 100%; background:#fff; }
+  th,td{ border:1px solid #bbb; padding:6px; text-align:center; font-size:14px; }
+  textarea{ width:100%; height:120px; margin-top:10px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
 </style>
 </head>
 <body>
 
-<h2>30×10 matryc 5×7 (z odstępami)</h2>
+<div class="toolbar">
+  <div class="group">
+    <span class="hint">Tryb:</span>
+    <button id="modePencil" class="active">Pędzel</button>
+    <button id="modeFill">Zalewanie</button>
+    <button id="modeToggle">Toggle</button>
+  </div>
 
-<div id="canvas"></div>
+  <div class="group">
+    <label>
+      Akcja pędzla:
+      <select id="pencilAction">
+        <option value="paint">Maluj (ON)</option>
+        <option value="erase">Gumka (OFF)</option>
+      </select>
+    </label>
+  </div>
+
+  <div class="group">
+    <label>
+      Szerokość pędzla:
+      <input id="brushSize" type="range" min="1" max="7" value="1" />
+      <span id="brushLabel">1</span>
+    </label>
+  </div>
+
+  <div class="group">
+    <label>Symbol: <input id="symbolInput" maxlength="8"></label>
+    <button id="saveBtn">Zapisz</button>
+    <button id="clearBtn">Wyczyść</button>
+    <button id="exportBtn">Eksport</button>
+  </div>
+</div>
+
+<div class="stage">
+  <div id="matrix"></div>
+
+  <h3>Zapisane symbole</h3>
+  <table>
+    <thead>
+      <tr><th>Symbol</th><th>Dane (bin)</th></tr>
+    </thead>
+    <tbody id="symbolsTable"></tbody>
+  </table>
+
+  <h3>Eksport (C / Arduino)</h3>
+  <textarea id="exportOut" readonly></textarea>
+</div>
 
 <script>
 (() => {
-  const MAT_W = 5, MAT_H = 7;
-  const MATS_X = 30, MATS_Y = 10;
+  const W=5, H=7;
+  const matrixEl = document.getElementById('matrix');
 
-  const canvas = document.getElementById('canvas');
+  const modePencil = document.getElementById('modePencil');
+  const modeFill   = document.getElementById('modeFill');
+  const modeToggle = document.getElementById('modeToggle');
 
-  // całkowite wymiary z separatorami
-  const COLS = MATS_X * MAT_W + (MATS_X - 1);
-  const ROWS = MATS_Y * MAT_H + (MATS_Y - 1);
+  const pencilAction = document.getElementById('pencilAction');
+  const brushSize = document.getElementById('brushSize');
+  const brushLabel = document.getElementById('brushLabel');
 
-  canvas.style.gridTemplateColumns = `repeat(${COLS}, auto)`;
-  canvas.style.gridTemplateRows = `repeat(${ROWS}, auto)`;
+  const symbolInput = document.getElementById('symbolInput');
+  const saveBtn = document.getElementById('saveBtn');
+  const clearBtn = document.getElementById('clearBtn');
+  const exportBtn = document.getElementById('exportBtn');
+  const exportOut = document.getElementById('exportOut');
+  const symbolsTable = document.getElementById('symbolsTable');
 
-  const state = [];
+  let mode = 'pencil'; // pencil|fill|toggle
+  let isDown = false;
+  let lastKey = null;
 
-  for (let y = 0; y < ROWS; y++) {
-    for (let x = 0; x < COLS; x++) {
+  const state = new Uint8Array(W*H);
+  const dots = new Array(W*H);
 
-      // czy to separator między matrycami?
-      const isVsep = (x % (MAT_W + 1)) === MAT_W;
-      const isHsep = (y % (MAT_H + 1)) === MAT_H;
+  const idxOf = (x,y)=> y*W+x;
+  const inBounds=(x,y)=> x>=0&&x<W&&y>=0&&y<H;
 
-      if (isVsep || isHsep) {
-        const sep = document.createElement('div');
-        sep.className = 'sep';
-        canvas.appendChild(sep);
-        state.push(null);
-        continue;
+  brushSize.addEventListener('input', ()=> brushLabel.textContent = brushSize.value);
+
+  function setMode(m){
+    mode=m;
+    modePencil.classList.toggle('active', m==='pencil');
+    modeFill.classList.toggle('active',   m==='fill');
+    modeToggle.classList.toggle('active', m==='toggle');
+  }
+  modePencil.onclick=()=>setMode('pencil');
+  modeFill.onclick=()=>setMode('fill');
+  modeToggle.onclick=()=>setMode('toggle');
+
+  function setPixel(x,y,val){
+    if(!inBounds(x,y)) return;
+    const i=idxOf(x,y);
+    if(state[i]===val) return;
+    state[i]=val;
+    dots[i].classList.toggle('on', !!val);
+  }
+  function togglePixel(x,y){
+    if(!inBounds(x,y)) return;
+    const i=idxOf(x,y);
+    state[i]= state[i]?0:1;
+    dots[i].classList.toggle('on', !!state[i]);
+  }
+
+  function paintBrush(cx,cy){
+    const size = parseInt(brushSize.value,10);
+    const r = Math.floor(size/2);
+    const val = (pencilAction.value==='paint')?1:0;
+    for(let y=cy-r;y<=cy+r;y++){
+      for(let x=cx-r;x<=cx+r;x++){
+        setPixel(x,y,val);
       }
-
-      const px = document.createElement('div');
-      px.className = 'px';
-
-      px.onclick = () => {
-        px.classList.toggle('on');
-      };
-
-      canvas.appendChild(px);
-      state.push(px);
     }
   }
+
+  function floodFill(sx,sy,newVal){
+    if(!inBounds(sx,sy)) return;
+    const target = state[idxOf(sx,sy)];
+    if(target===newVal) return;
+
+    const qx = new Int16Array(W*H);
+    const qy = new Int16Array(W*H);
+    let h=0,t=0;
+    qx[t]=sx; qy[t]=sy; t++;
+
+    while(h<t){
+      const x=qx[h], y=qy[h]; h++;
+      if(!inBounds(x,y)) continue;
+      const i=idxOf(x,y);
+      if(state[i]!==target) continue;
+
+      state[i]=newVal;
+      dots[i].classList.toggle('on', !!newVal);
+
+      qx[t]=x+1; qy[t]=y; t++;
+      qx[t]=x-1; qy[t]=y; t++;
+      qx[t]=x; qy[t]=y+1; t++;
+      qx[t]=x; qy[t]=y-1; t++;
+    }
+  }
+
+  function handleDot(el){
+    if(!el || !el.classList || !el.classList.contains('dot')) return;
+    const x=parseInt(el.dataset.x,10);
+    const y=parseInt(el.dataset.y,10);
+
+    const key = `${x},${y},${mode},${pencilAction.value},${brushSize.value}`;
+    if(isDown && key===lastKey) return;
+    lastKey=key;
+
+    if(mode==='toggle') togglePixel(x,y);
+    else if(mode==='pencil') paintBrush(x,y);
+    else if(mode==='fill'){
+      const cur = state[idxOf(x,y)];
+      floodFill(x,y, cur?0:1);
+    }
+  }
+
+  // build dots
+  const frag=document.createDocumentFragment();
+  for(let y=0;y<H;y++){
+    for(let x=0;x<W;x++){
+      const i=idxOf(x,y);
+      const d=document.createElement('div');
+      d.className='dot';
+      d.dataset.x=x; d.dataset.y=y;
+      dots[i]=d;
+      frag.appendChild(d);
+    }
+  }
+  matrixEl.appendChild(frag);
+
+  // pointer events
+  matrixEl.addEventListener('pointerdown',(e)=>{
+    isDown=true;
+    matrixEl.setPointerCapture(e.pointerId);
+    lastKey=null;
+    handleDot(e.target);
+  });
+  matrixEl.addEventListener('pointermove',(e)=>{
+    if(!isDown) return;
+    if(mode!=='pencil') return; // drag tylko pędzel/gumka
+    const el=document.elementFromPoint(e.clientX,e.clientY);
+    handleDot(el);
+  });
+  matrixEl.addEventListener('pointerup',()=>{isDown=false; lastKey=null;});
+  matrixEl.addEventListener('pointercancel',()=>{isDown=false; lastKey=null;});
+
+  function getRows5bit(){
+    const rows=[];
+    for(let y=0;y<7;y++){
+      let bits=0;
+      for(let x=0;x<5;x++){
+        if(state[idxOf(x,y)]) bits |= (1 << (4-x));
+      }
+      rows.push(bits);
+    }
+    return rows;
+  }
+
+  const symbols = [];
+
+  saveBtn.onclick = () => {
+    const sym = symbolInput.value.trim();
+    if(!sym) return;
+    const rows = getRows5bit();
+    symbols.push({ sym, rows });
+
+    const tr=document.createElement('tr');
+    tr.innerHTML = `
+      <td>${sym}</td>
+      <td>${rows.map(b=>'0b'+b.toString(2).padStart(5,'0')).join(', ')}</td>
+    `;
+    symbolsTable.appendChild(tr);
+    exportOut.value='';
+  };
+
+  clearBtn.onclick = () => {
+    state.fill(0);
+    dots.forEach(d=>d.classList.remove('on'));
+    exportOut.value='';
+  };
+
+  exportBtn.onclick = () => {
+    let out = "const uint8_t font5x7[][7] = {\n";
+    for(const s of symbols){
+      out += "  { " + s.rows.map(b=>'0b'+b.toString(2).padStart(5,'0')).join(', ')
+          + " }, // " + s.sym + "\n";
+    }
+    out += "};\n";
+    exportOut.value = out;
+  };
 })();
 </script>
 
