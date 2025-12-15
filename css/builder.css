@@ -12,9 +12,20 @@
   margin-top:8px;
 }
 .title{ font-weight:1000; font-size:18px; margin:10px 0 6px; letter-spacing:.06em; }
-.hint{ opacity:.8; font-size:13px; margin:6px 0 14px; }
+.hint{ opacity:.8; font-size:13px; margin:6px 0 0; }
 
-.actions{ display:flex; gap:10px; flex-wrap:wrap; }
+.actions{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+
+.btn{
+  padding:10px 12px; border-radius:14px;
+  border:1px solid rgba(255,255,255,.18);
+  background:rgba(255,255,255,.06);
+  color:#fff; cursor:pointer; font-weight:900;
+}
+.btn:hover{ filter:brightness(1.08); }
+.btn:active{ transform:translateY(1px); }
+.btn:disabled{ opacity:.45; cursor:not-allowed; }
+
 .btn.gold{
   border-color: rgba(255,234,166,.35);
   background: rgba(255,234,166,.10);
@@ -22,6 +33,7 @@
 }
 
 .grid{
+  margin-top:14px;
   display:grid;
   grid-template-columns: repeat(3, 1fr);
   gap:14px;
@@ -44,18 +56,9 @@
 .card.selected{
   border-color: rgba(255,234,166,.45);
   background: rgba(255,234,166,.10);
-}
-.actionsBar{
-  margin-top: 14px;
-  display:flex;
-  gap:10px;
-  flex-wrap:wrap;
-  align-items:center;
-}
-.actionsHint{
-  opacity:.8;
-  font-size:12px;
-  margin-left: 6px;
+  box-shadow:
+    0 24px 60px rgba(0,0,0,.45),
+    0 0 0 2px rgba(255,234,166,.14);
 }
 
 .card .name{ font-weight:1000; font-size:16px; letter-spacing:.04em; }
@@ -72,22 +75,7 @@
 }
 .x:hover{ filter:brightness(1.06); }
 
-.plus{
-  display:grid; place-items:center;
-  font-weight:1000; letter-spacing:.12em; text-transform:uppercase;
-  color:#ffeaa6;
-}
-.plus .big{ font-size:46px; line-height:1; }
-.plus .small{ opacity:.85; font-size:12px; margin-top:6px; }
-.plus .tiny{
-  margin-top: 6px;
-  opacity: .72;
-  font-size: 11px;
-  letter-spacing: .08em;
-  text-transform: uppercase;
-}
-
-/* ===== Modal wyboru typu ===== */
+/* ===== Modal ===== */
 .overlay{
   position:fixed; inset:0;
   background: rgba(2,6,23,.82);
@@ -129,6 +117,36 @@
 .mCard:hover{ filter:brightness(1.06); }
 .mBig{ font-weight:1000; letter-spacing:.14em; text-transform:uppercase; }
 .mSmall{ margin-top:8px; opacity:.85; font-weight:800; }
-.mTiny{ margin-top:6px; opacity:.7; font-size:12px; }
+.mTiny{ margin-top:8px; opacity:.7; font-size:12px; line-height:1.35; }
 
 .mFoot{ display:flex; justify-content:flex-end; margin-top:14px; }
+
+/* ===== Import ===== */
+.mImportRow{
+  margin-top:14px;
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  align-items:center;
+}
+.file{
+  padding:10px 12px;
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,.18);
+  background:rgba(0,0,0,.18);
+  color:#fff;
+}
+.mTa{
+  margin-top:12px;
+  width:100%;
+  min-height:220px;
+  padding:12px;
+  border-radius:16px;
+  border:1px solid rgba(255,255,255,.18);
+  background:rgba(0,0,0,.25);
+  color:#fff;
+  font-weight:800;
+  outline:none;
+  resize:vertical;
+}
+.mTa:focus{ border-color: rgba(255,234,166,.35); }
