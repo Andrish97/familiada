@@ -108,7 +108,7 @@ async function ensureLive() {
 async function loadGame() {
   const { data, error } = await sb()
     .from("games")
-    .select("id,name,kind,status,share_key_display,share_key_remote,share_key_buzzer,share_key_host")
+    .select("id,name,kind,status,share_key_display,share_key_buzzer,share_key_host")
     .eq("id", gameId)
     .single();
   if (error) throw error;
