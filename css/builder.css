@@ -251,3 +251,9 @@
 .inp[type="file"]::file-selector-button:hover{
   filter:brightness(1.06);
 }
+/* === Sondaż: bez punktów i licznika === */
+.editor-body.is-poll .aPts,
+.editor-body.is-poll .ptsCol,
+.editor-body.is-poll #remainRow {
+  display: none !important;
+}
