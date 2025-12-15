@@ -1,3 +1,4 @@
+// js/pages/editor.js
 import { sb } from "../core/supabase.js";
 import { requireAuth, signOut } from "../core/auth.js";
 import { guardDesktopOnly } from "../core/device-guard.js";
@@ -11,7 +12,6 @@ const gameId = qs.get("id");
 const who = document.getElementById("who");
 const btnLogout = document.getElementById("btnLogout");
 const btnBack = document.getElementById("btnBack");
-const btnControl = document.getElementById("btnControl");
 
 const gameName = document.getElementById("gameName");
 const btnSaveName = document.getElementById("btnSaveName");
@@ -21,31 +21,24 @@ const qList = document.getElementById("qList");
 const rightPanel = document.querySelector(".rightPanel");
 const qText = document.getElementById("qText");
 const btnAddQ = document.getElementById("btnAddQ");
-const btnDelQ = document.getElementById("btnDelQ");
 
-const btnModeFixed = document.getElementById("btnModeFixed");
-const btnModePoll = document.getElementById("btnModePoll");
-
-const btnAddA = document.getElementById("btnAddA");
 const aList = document.getElementById("aList");
 
 const msg = document.getElementById("msg");
 
-// nowe elementy z HTML
 const gameKindBadge = document.getElementById("gameKindBadge");
 const lockBadge = document.getElementById("lockBadge");
 const hintFixed = document.getElementById("hintFixed");
 const hintPoll = document.getElementById("hintPoll");
+
+const remainRow = document.getElementById("remainRow");
+const remainVal = document.getElementById("remainVal");
 
 let currentUser = null;
 let game = null;
 let questions = [];
 let activeQ = null;
 let answers = [];
-
-let GAME_KIND = "fixed"; // 'fixed' | 'poll'
-let GAME_STATUS = "draft";
-let EDIT_LOCKED = false;
 
 function setMsg(t) {
   msg.textContent = t || "";
@@ -57,52 +50,41 @@ function clip17(s) {
   return t.length <= 17 ? t : t.slice(0, 17);
 }
 
-function isPollGame() {
-  return GAME_KIND === "poll";
+function isLocked(){
+  return game?.kind === "poll" && game?.status === "poll_open";
 }
 
-function effectiveQuestionMode() {
-  return isPollGame() ? "poll" : "fixed";
+function isFixed(){
+  return game?.kind === "fixed";
 }
 
-function isEditLocked() {
-  return EDIT_LOCKED;
+function updateBadges(){
+  if(!game) return;
+
+  gameKindBadge.textContent = (game.kind === "poll") ? "SONDAŻOWA" : "LOKALNA";
+  document.body.classList.toggle("is-poll", game.kind === "poll");
+
+  const locked = isLocked();
+  lockBadge.style.display = locked ? "" : "none";
+
+  // “zostało” tylko dla lokalnej i tylko jeśli jest aktywne pytanie
+  remainRow.style.display = (isFixed() && activeQ) ? "" : "none";
+  hintFixed.style.display = isFixed() ? "" : "none";
+  hintPoll.style.display = (game.kind === "poll") ? "" : "none";
 }
 
-function syncBadges() {
-  const poll = isPollGame();
-  document.body.classList.toggle("is-poll", poll);
+function calcSum(){
+  return answers.reduce((s,a)=> s + (Number(a.fixed_points)||0), 0);
+}
 
-  if (gameKindBadge) {
-    gameKindBadge.textContent = poll ? "SONDAŻOWA" : "LOKALNA";
+function updateRemaining(){
+  if(!isFixed() || !activeQ){
+    remainRow.style.display = "none";
+    return;
   }
-
-  if (lockBadge) {
-    lockBadge.style.display = isEditLocked() ? "" : "none";
-  }
-
-  if (hintFixed) hintFixed.style.display = poll ? "none" : "";
-  if (hintPoll) hintPoll.style.display = poll ? "" : "none";
-}
-
-function applyLockUI() {
-  const locked = isEditLocked();
-
-  btnAddQ.disabled = locked;
-  btnDelQ.disabled = locked;
-  btnAddA.disabled = locked;
-  btnSaveName.disabled = locked;
-
-  gameName.disabled = locked;
-  qText.disabled = locked;
-
-  // stare przyciski trybu chowamy (nie używamy)
-  if (btnModeFixed) btnModeFixed.style.display = "none";
-  if (btnModePoll) btnModePoll.style.display = "none";
-
-  if (locked) {
-    setMsg("Sondaż jest otwarty — edycja zablokowana.");
-  }
+  const sum = calcSum();
+  const left = Math.max(0, 100 - sum);
+  remainVal.textContent = String(left);
 }
 
 async function loadGame() {
@@ -132,11 +114,9 @@ async function loadQuestions() {
 
 async function insertQuestion() {
   const ord = questions.length ? Math.max(...questions.map((q) => q.ord)) + 1 : 1;
-  const mode = effectiveQuestionMode();
-
   const { data, error } = await sb()
     .from("questions")
-    .insert({ game_id: gameId, ord, text: "Nowe pytanie", mode })
+    .insert({ game_id: gameId, ord, text: "Nowe pytanie", mode: game?.kind === "poll" ? "poll" : "fixed" })
     .select("*")
     .single();
   if (error) throw error;
@@ -144,8 +124,7 @@ async function insertQuestion() {
 }
 
 async function updateQuestion(qid, patch) {
-  const safe = { ...patch, mode: effectiveQuestionMode() };
-  const { error } = await sb().from("questions").update(safe).eq("id", qid);
+  const { error } = await sb().from("questions").update(patch).eq("id", qid);
   if (error) throw error;
 }
 
@@ -164,12 +143,10 @@ async function loadAnswers(qid) {
   return data || [];
 }
 
-async function insertAnswer(qid) {
-  const ord = answers.length ? Math.max(...answers.map((a) => a.ord)) + 1 : 1;
-
+async function insertAnswer(qid, ord, text = "ODPOWIEDŹ") {
   const { data, error } = await sb()
     .from("answers")
-    .insert({ question_id: qid, ord, text: "ODPOWIEDŹ", fixed_points: 0 })
+    .insert({ question_id: qid, ord, text, fixed_points: 0 })
     .select("*")
     .single();
   if (error) throw error;
@@ -186,17 +163,48 @@ async function deleteAnswer(aid) {
   if (error) throw error;
 }
 
+async function ensureExactlyFiveAnswers(){
+  if(!activeQ) return;
+
+  answers = await loadAnswers(activeQ.id);
+
+  // jeśli mniej niż 5 — dopychamy
+  while(answers.length < 5){
+    const ord = answers.length ? Math.max(...answers.map(a=>a.ord)) + 1 : 1;
+    await insertAnswer(activeQ.id, ord, "ODPOWIEDŹ");
+    answers = await loadAnswers(activeQ.id);
+  }
+
+  // jeśli więcej niż 5 — przycinamy (od końca po ord)
+  if(answers.length > 5){
+    const sorted = [...answers].sort((a,b)=> (a.ord||0) - (b.ord||0));
+    const toDelete = sorted.slice(5);
+    for(const a of toDelete){
+      await deleteAnswer(a.id);
+    }
+    answers = await loadAnswers(activeQ.id);
+  }
+
+  // wyrównaj ord na 1..5
+  const sorted2 = [...answers].sort((a,b)=> (a.ord||0) - (b.ord||0));
+  for(let i=0;i<sorted2.length;i++){
+    const want = i+1;
+    if(sorted2[i].ord !== want){
+      await updateAnswer(sorted2[i].id, { ord: want });
+    }
+  }
+  answers = await loadAnswers(activeQ.id);
+}
+
 function renderQuestions() {
   qList.innerHTML = "";
-  const modeLabel = isPollGame() ? "Sondaż" : "Wartości";
-
   questions.forEach((q) => {
     const el = document.createElement("div");
     el.className = "qcard" + (activeQ?.id === q.id ? " active" : "");
     el.innerHTML = `
       <div class="qord">#${q.ord}</div>
       <div class="qprev"></div>
-      <div class="qmode">${modeLabel}</div>
+      <div class="qmode">${game?.kind === "poll" ? "Sondaż" : "Lokalna"}</div>
     `;
     el.querySelector(".qprev").textContent = q.text;
 
@@ -212,29 +220,38 @@ function renderQuestions() {
 function renderEditorShell() {
   if (!activeQ) {
     rightPanel.classList.remove("hasQ");
+    remainRow.style.display = "none";
     return;
   }
   rightPanel.classList.add("hasQ");
+
   qText.value = activeQ.text || "";
-  qText.disabled = isEditLocked();
+  qText.disabled = isLocked();
+  btnAddQ.disabled = isLocked();
+
+  updateBadges();
+}
+
+function clampInt(n, min, max){
+  const x = Number(n);
+  if(!Number.isFinite(x)) return min;
+  return Math.max(min, Math.min(max, Math.floor(x)));
 }
 
 function renderAnswers() {
   aList.innerHTML = "";
   if (!activeQ) return;
 
-  const locked = isEditLocked();
-  const poll = isPollGame();
+  const locked = isLocked();
 
   answers.forEach((a) => {
     const row = document.createElement("div");
     row.className = "arow";
 
-    // HTML ma zawsze 3 elementy, CSS w poll ukrywa środek
     row.innerHTML = `
       <input class="aText" />
-      <input class="aPts" type="number" min="0" max="999" />
-      <button class="aDel" type="button" title="Usuń">✕</button>
+      <input class="aPts" type="number" min="0" max="100" inputmode="numeric" />
+      <button class="aDel" type="button" title="Usuń" ${locked ? "disabled" : ""}>✕</button>
     `;
 
     const aText = row.querySelector(".aText");
@@ -242,16 +259,11 @@ function renderAnswers() {
     const aDel = row.querySelector(".aDel");
 
     aText.value = a.text || "";
-    aText.disabled = locked;
-
     aPts.value = typeof a.fixed_points === "number" ? a.fixed_points : 0;
-    aPts.disabled = locked || poll;
-    if (poll) aPts.value = 0; // niewidoczne anyway
 
-    aDel.disabled = locked;
-
+    // tekst
+    aText.disabled = locked;
     aText.addEventListener("input", () => {
-      if (locked) return;
       const t = aText.value || "";
       if (t.length > 17) {
         aText.value = t.slice(0, 17);
@@ -260,93 +272,112 @@ function renderAnswers() {
     });
 
     aText.addEventListener("change", async () => {
-      if (locked) return;
+      if(locked) return;
       const t = clip17(aText.value).trim() || "ODPOWIEDŹ";
       aText.value = t;
       await updateAnswer(a.id, { text: t });
       a.text = t;
     });
 
-    aPts.addEventListener("change", async () => {
-      if (locked || poll) return;
-      const n = Number(aPts.value);
-      const pts = Number.isFinite(n) ? Math.max(0, Math.min(999, Math.floor(n))) : 0;
-      aPts.value = String(pts);
-      await updateAnswer(a.id, { fixed_points: pts });
-      a.fixed_points = pts;
-    });
+    // punkty (TYLKO dla lokalnych)
+    if(!isFixed()){
+      aPts.style.display = "none";
+      aPts.disabled = true;
+    } else {
+      aPts.disabled = locked;
 
+      const applyPtsLive = async (commit=false) => {
+        if(locked) return;
+
+        // bieżąca suma bez tego pola
+        const current = clampInt(aPts.value, 0, 100);
+        const otherSum = answers
+          .filter(x=>x.id !== a.id)
+          .reduce((s,x)=> s + (Number(x.fixed_points)||0), 0);
+
+        // ile max możemy dać, żeby nie przebić 100
+        const maxAllowed = Math.max(0, 100 - otherSum);
+        const next = Math.min(current, maxAllowed);
+
+        if(next !== current){
+          aPts.value = String(next);
+          setMsg("Suma nie może przekroczyć 100.");
+        }
+
+        a.fixed_points = next;
+        updateRemaining();
+
+        if(commit){
+          await updateAnswer(a.id, { fixed_points: next });
+        }
+      };
+
+      aPts.addEventListener("input", ()=>{ applyPtsLive(false); });
+      aPts.addEventListener("change", ()=>{ applyPtsLive(true); });
+    }
+
+    // usuń odpowiedź — w tej wersji trzymamy “dokładnie 5”, więc NIE usuwamy.
+    // zostawiamy X jako “wyczyść” (szybko) zamiast kasowania rekordu.
+    aDel.disabled = locked;
     aDel.addEventListener("click", async () => {
-      if (locked) return;
+      if(locked) return;
       const ok = await confirmModal({
-        title: "Usuń odpowiedź",
-        text: "Na pewno usunąć tę odpowiedź?",
-        okText: "Usuń",
+        title: "Wyczyść odpowiedź",
+        text: "Wyczyścić tekst i ustawić 0 pkt?",
+        okText: "Wyczyść",
         cancelText: "Anuluj",
       });
-      if (!ok) return;
+      if(!ok) return;
 
-      await deleteAnswer(a.id);
-      answers = await loadAnswers(activeQ.id);
+      await updateAnswer(a.id, { text: "ODPOWIEDŹ", fixed_points: 0 });
+      a.text = "ODPOWIEDŹ";
+      a.fixed_points = 0;
       renderAnswers();
+      updateRemaining();
     });
 
     aList.appendChild(row);
   });
-}
 
-async function normalizeQuestionModes() {
-  const mode = effectiveQuestionMode();
-  const need = questions.filter(q => q.mode !== mode);
-  if (!need.length) return;
-  if (isEditLocked()) return;
-
-  for (const q of need) {
-    try {
-      await sb().from("questions").update({ mode }).eq("id", q.id);
-    } catch (e) {
-      console.warn("[editor] normalize mode failed:", e);
-    }
-  }
+  updateRemaining();
 }
 
 async function loadActive() {
   questions = await loadQuestions();
-  await normalizeQuestionModes();
+  activeQ = questions.find((x) => x.id === activeQ.id) || null;
 
-  activeQ = activeQ ? (questions.find((x) => x.id === activeQ.id) || null) : null;
+  if(activeQ){
+    await ensureExactlyFiveAnswers();
+  } else {
+    answers = [];
+  }
 
-  answers = activeQ ? await loadAnswers(activeQ.id) : [];
   renderQuestions();
   renderEditorShell();
   renderAnswers();
-  syncBadges();
-  applyLockUI();
 }
 
 async function refreshAll() {
   game = await loadGame();
-  GAME_KIND = game.kind || "fixed";
-  GAME_STATUS = game.status || "draft";
-  EDIT_LOCKED = (GAME_KIND === "poll" && GAME_STATUS === "poll_open");
-
   gameName.value = game.name || "Familiada";
-  syncBadges();
+
+  updateBadges();
 
   questions = await loadQuestions();
-  await normalizeQuestionModes();
   renderQuestions();
 
-  if (activeQ) activeQ = questions.find((x) => x.id === activeQ.id) || null;
+  if (activeQ) {
+    activeQ = questions.find((x) => x.id === activeQ.id) || null;
+  }
   renderEditorShell();
 
   if (activeQ) {
-    answers = await loadAnswers(activeQ.id);
+    await ensureExactlyFiveAnswers();
+    renderAnswers();
   } else {
     answers = [];
+    renderAnswers();
   }
-  renderAnswers();
-  applyLockUI();
 }
 
 function downloadJson(filename, obj) {
@@ -363,7 +394,7 @@ function downloadJson(filename, obj) {
 
 async function exportConfig() {
   const payload = {
-    game: { id: game.id, name: game.name, kind: GAME_KIND, status: GAME_STATUS },
+    game: { id: game.id, name: game.name, kind: game.kind, status: game.status },
     questions: [],
   };
 
@@ -372,12 +403,15 @@ async function exportConfig() {
     payload.questions.push({
       ord: q.ord,
       text: q.text,
-      mode: effectiveQuestionMode(),
-      answers: ans.map((a) => ({
-        ord: a.ord,
-        text: a.text,
-        fixed_points: a.fixed_points,
-      })),
+      mode: q.mode,
+      answers: ans
+        .sort((a,b)=>(a.ord||0)-(b.ord||0))
+        .slice(0,5)
+        .map((a) => ({
+          ord: a.ord,
+          text: a.text,
+          fixed_points: a.fixed_points,
+        })),
     });
   }
 
@@ -400,10 +434,12 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
   btnBack.addEventListener("click", () => (location.href = "builder.html"));
-  btnControl.addEventListener("click", () => (location.href = `control.html?id=${encodeURIComponent(gameId)}`));
 
   btnSaveName.addEventListener("click", async () => {
-    if (isEditLocked()) return;
+    if(isLocked()){
+      setMsg("Sondaż jest otwarty — nie można edytować.");
+      return;
+    }
     const name = (gameName.value || "").trim() || "Familiada";
     await updateGameName(name);
     setMsg("Zapisano nazwę.");
@@ -421,7 +457,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
   btnAddQ.addEventListener("click", async () => {
-    if (isEditLocked()) return;
+    if(isLocked()){
+      setMsg("Sondaż jest otwarty — nie można dodawać pytań.");
+      return;
+    }
     const q = await insertQuestion();
     activeQ = q;
     await loadActive();
@@ -429,37 +468,41 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   qText.addEventListener("change", async () => {
     if (!activeQ) return;
-    if (isEditLocked()) return;
+    if(isLocked()){
+      setMsg("Sondaż jest otwarty — nie można edytować.");
+      return;
+    }
     const t = (qText.value || "").trim() || "Nowe pytanie";
     await updateQuestion(activeQ.id, { text: t });
     activeQ.text = t;
     renderQuestions();
   });
 
-  btnDelQ.addEventListener("click", async () => {
-    if (!activeQ) return;
-    if (isEditLocked()) return;
+  // Usuwanie pytania: klik PPM na kafelku? (na razie zostawiamy “prosto”: alt+click)
+  // Żeby nie mieszać UI — dodajemy delete po Shift+klik na kafelek.
+  qList.addEventListener("click", async (e)=>{
+    const card = e.target?.closest?.(".qcard");
+    if(!card) return;
+    if(!e.shiftKey) return;
+    if(isLocked()){
+      setMsg("Sondaż jest otwarty — nie można usuwać pytań.");
+      return;
+    }
+    if(!activeQ) return;
 
     const ok = await confirmModal({
-      title: "Usuń pytanie",
-      text: "Usunąć pytanie i wszystkie odpowiedzi?",
-      okText: "Usuń",
-      cancelText: "Anuluj",
+      title:"Usuń pytanie",
+      text:"Usunąć pytanie i 5 odpowiedzi?",
+      okText:"Usuń",
+      cancelText:"Anuluj",
     });
-    if (!ok) return;
+    if(!ok) return;
 
     await deleteQuestion(activeQ.id);
     activeQ = null;
     answers = [];
     await refreshAll();
-  });
-
-  btnAddA.addEventListener("click", async () => {
-    if (!activeQ) return;
-    if (isEditLocked()) return;
-    await insertAnswer(activeQ.id);
-    answers = await loadAnswers(activeQ.id);
-    renderAnswers();
+    setMsg("Usunięto pytanie.");
   });
 
   await refreshAll();
