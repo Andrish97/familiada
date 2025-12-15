@@ -14,7 +14,16 @@
   <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js" defer></script>
   <script type="module" src="js/pages/polls.js" defer></script>
 </head>
-
+<div class="overlay" id="qrOverlay" style="display:none;">
+  <div class="modal" style="max-width:420px;text-align:center;">
+    <div class="mTitle">Kod QR sondażu</div>
+    <div id="qrInline" style="margin:14px auto;width:240px;height:240px;"></div>
+    <div class="small" id="qrInlineUrl" style="word-break:break-all;"></div>
+    <div class="mFoot">
+      <button class="btn" id="btnCloseQr" type="button">Zamknij</button>
+    </div>
+  </div>
+</div>
 <body class="polls-body">
   <header class="topbar">
     <div class="brand">FAMILIADA</div>
