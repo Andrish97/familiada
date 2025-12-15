@@ -1,9 +1,5 @@
-.control-body{
-  margin:0; min-height:100vh;
-  font-family:system-ui,-apple-system,Segoe UI,sans-serif;
-  background:#050914; color:#fff;
-}
-
+/* css/control.css */
+.control-body{ background:#050914; color:#fff; min-height:100vh; }
 .wrap{ width:min(1200px,94vw); margin:0 auto; padding:18px; }
 
 .row{
@@ -14,6 +10,7 @@
 .title{ font-weight:1000; font-size:18px; margin:10px 0 6px; letter-spacing:.06em; }
 
 .tabs{ display:flex; gap:10px; flex-wrap:wrap; }
+.tab{ composes: btn; } /* jeśli Twoje środowisko nie wspiera composes, usuń tę linię */
 .tab{
   padding:10px 12px; border-radius:14px;
   border:1px solid rgba(255,255,255,.18);
@@ -42,18 +39,14 @@
   grid-template-columns: repeat(3, 1fr);
   gap:14px;
 }
-@media (max-width: 1100px){
-  .cards{ grid-template-columns: 1fr; }
-}
+@media (max-width: 1100px){ .cards{ grid-template-columns: 1fr; } }
 
 .gameGrid{
   display:grid;
   grid-template-columns: 1fr 1fr;
   gap:14px;
 }
-@media (max-width: 1100px){
-  .gameGrid{ grid-template-columns: 1fr; }
-}
+@media (max-width: 1100px){ .gameGrid{ grid-template-columns: 1fr; } }
 
 .card{
   border-radius:20px;
@@ -63,12 +56,8 @@
   box-shadow:0 18px 45px rgba(0,0,0,.45);
 }
 
-.head{
-  display:flex; justify-content:space-between; align-items:center;
-  gap:10px;
-}
+.head{ display:flex; justify-content:space-between; align-items:center; gap:10px; }
 .name{ font-weight:1000; font-size:15px; letter-spacing:.04em; }
-.meta{ opacity:.75; font-size:12px; margin-top:6px; line-height:1.25; }
 
 .badge{
   padding:6px 10px;
@@ -80,14 +69,8 @@
   text-transform:uppercase;
   font-size:11px;
 }
-.badge.ok{
-  border-color: rgba(120,255,160,.28);
-  background: rgba(120,255,160,.10);
-}
-.badge.bad{
-  border-color: rgba(255,120,120,.35);
-  background: rgba(255,120,120,.12);
-}
+.badge.ok{ border-color: rgba(120,255,160,.28); background: rgba(120,255,160,.10); }
+.badge.bad{ border-color: rgba(255,120,120,.35); background: rgba(255,120,120,.12); }
 
 .rowBtns{ display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; align-items:center; }
 
@@ -100,15 +83,30 @@
   font-weight:800;
 }
 
-.btn.gold{
+.answers{
+  display:grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap:10px;
+}
+@media (max-width: 900px){ .answers{ grid-template-columns: 1fr; } }
+
+.aBtn{
+  border-radius:18px;
+  border:1px solid rgba(255,255,255,.14);
+  background:rgba(255,255,255,.05);
+  color:#fff;
+  padding:12px;
+  cursor:pointer;
+  text-align:left;
+}
+.aBtn:hover{ filter:brightness(1.06); }
+.aBtn:disabled{ opacity:.45; cursor:not-allowed; }
+.aBtn.revealed{
   border-color: rgba(255,234,166,.35);
-  background: rgba(255,234,166,.10);
-  color:#ffeaa6;
+  background: rgba(255,234,166,.08);
 }
-.btn.danger{
-  border-color: rgba(255,120,120,.35);
-  background: rgba(255,120,120,.12);
-}
+.aTop{ display:flex; justify-content:space-between; opacity:.85; font-weight:900; font-size:12px; }
+.aText{ margin-top:6px; font-weight:1000; }
 
 .foot{ margin-top:12px; min-height:20px; }
 .msg{ color:#ffeaa6; font-weight:900; opacity:.9; }
