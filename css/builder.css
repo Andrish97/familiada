@@ -64,3 +64,14 @@
 }
 .plus .big{ font-size:46px; line-height:1; }
 .plus .small{ opacity:.85; font-size:12px; margin-top:6px; }
+
+
+/* mały dopisek w kafelkach (+ / Sondaże) */
+.tiny{
+  margin-top: 6px;
+  opacity: .72;
+  font-size: 11px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
