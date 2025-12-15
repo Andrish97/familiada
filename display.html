@@ -1,37 +1,116 @@
 <!DOCTYPE html>
 <html lang="pl">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Familiada — Display</title>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Familiada – Rzutnik</title>
 
-  <link rel="icon" type="image/png" href="favicon.ico">
-  <link rel="stylesheet" href="css/base.css?v=5" />
-  <link rel="stylesheet" href="css/display.css?v=5" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" href="favicon.ico" />
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+    <link rel="stylesheet" href="css/theme.css" />
+    <link rel="stylesheet" href="css/display.css" />
 
-  <!-- Renderer LED -->
-  <script type="module" src="js/pages/display.js?v=5" defer></script>
-</head>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js" defer></script>
 
-<body class="display-body">
-  <div class="display-shell">
+    <script src="js/core/auth.js" defer></script>
+    <script src="js/pages/display.js" defer></script>
+  </head>
 
-    <header class="topbar">
-      <div class="logo">FAMILIADA</div>
-      <div class="actions">
-        <button class="btn" id="btnFullscreen" type="button">Pełny ekran</button>
+  <body class="arcade-body">
+    <div class="disp-shell">
+      <div class="disp-top">
+        <div class="disp-team disp-a">
+          <div class="disp-team-name">DRUŻYNA A</div>
+          <div class="disp-team-score">0</div>
+        </div>
+
+        <div class="disp-mid">
+          <div class="disp-game">FAMILIADA</div>
+          <div class="disp-question">—</div>
+          <div class="disp-sum">
+            <span>SUMA</span>
+            <span class="disp-sum-val">0</span>
+          </div>
+        </div>
+
+        <div class="disp-team disp-b">
+          <div class="disp-team-name">DRUŻYNA B</div>
+          <div class="disp-team-score">0</div>
+        </div>
       </div>
-    </header>
 
-    <main class="stage">
-      <div class="frame">
-        <canvas id="board" width="1920" height="1080"></canvas>
+      <div class="disp-board">
+        <div class="disp-strikes">
+          <div class="disp-x disp-x1">X</div>
+          <div class="disp-x disp-x2">X</div>
+          <div class="disp-x disp-x3">X</div>
+        </div>
+
+        <div class="disp-answers">
+          <!-- 8 wierszy -->
+          <div class="disp-row" data-i="1">
+            <div class="disp-nr">1</div>
+            <div class="disp-text">••••••••••••</div>
+            <div class="disp-pts">—</div>
+          </div>
+          <div class="disp-row" data-i="2">
+            <div class="disp-nr">2</div>
+            <div class="disp-text">••••••••••••</div>
+            <div class="disp-pts">—</div>
+          </div>
+          <div class="disp-row" data-i="3">
+            <div class="disp-nr">3</div>
+            <div class="disp-text">••••••••••••</div>
+            <div class="disp-pts">—</div>
+          </div>
+          <div class="disp-row" data-i="4">
+            <div class="disp-nr">4</div>
+            <div class="disp-text">••••••••••••</div>
+            <div class="disp-pts">—</div>
+          </div>
+          <div class="disp-row" data-i="5">
+            <div class="disp-nr">5</div>
+            <div class="disp-text">••••••••••••</div>
+            <div class="disp-pts">—</div>
+          </div>
+          <div class="disp-row" data-i="6">
+            <div class="disp-nr">6</div>
+            <div class="disp-text">••••••••••••</div>
+            <div class="disp-pts">—</div>
+          </div>
+          <div class="disp-row" data-i="7">
+            <div class="disp-nr">7</div>
+            <div class="disp-text">••••••••••••</div>
+            <div class="disp-pts">—</div>
+          </div>
+          <div class="disp-row" data-i="8">
+            <div class="disp-nr">8</div>
+            <div class="disp-text">••••••••••••</div>
+            <div class="disp-pts">—</div>
+          </div>
+        </div>
       </div>
-      <div class="status" id="statusLine">Łączenie…</div>
-    </main>
 
-  </div>
-</body>
+      <!-- Setup overlay -->
+      <div class="disp-setup" style="display:none;">
+        <div class="disp-setup-card">
+          <div class="disp-setup-title">Ustawienia wstępne</div>
+          <div class="disp-setup-grid">
+            <div class="disp-setup-box">
+              <div class="disp-setup-label">HOST</div>
+              <div class="disp-setup-qr" id="qr-setup-host"></div>
+              <div class="disp-setup-link disp-setup-host-link">—</div>
+            </div>
+            <div class="disp-setup-box">
+              <div class="disp-setup-label">BUZZER</div>
+              <div class="disp-setup-qr" id="qr-setup-buzzer"></div>
+              <div class="disp-setup-link disp-setup-buzzer-link">—</div>
+            </div>
+          </div>
+          <div class="disp-setup-foot">Zeskanuj QR lub wpisz link. Potem wróć do gry.</div>
+        </div>
+      </div>
+    </div>
+  </body>
 </html>
