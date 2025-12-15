@@ -3,6 +3,8 @@ import { sb } from "../core/supabase.js";
 import { requireAuth, signOut } from "../core/auth.js";
 import { guardDesktopOnly } from "../core/device-guard.js";
 import { confirmModal } from "../core/modal.js";
+import { loadGameBasic, validateGameReadyToPlay } from "../core/game-validate.js";
+
 
 guardDesktopOnly({ message: "Panel tworzenia Familiad jest dostępny tylko na komputerze." });
 
@@ -305,40 +307,38 @@ document.addEventListener("DOMContentLoaded", async ()=>{
 
     location.href = `editor.html?id=${encodeURIComponent(selectedId)}`;
   });
-
-  btnPlay?.addEventListener("click", async ()=>{
+  
+  btnPlay.addEventListener("click", async ()=>{
     if(!selectedId) return;
-
-    const sel = games.find(g=>g.id === selectedId);
-    if(!sel) return;
-
-    if(sel.kind === "poll" && sel.status !== "ready"){
-      alert("Nie można grać: sondaż nie jest zakończony (status nie READY).");
-      return;
+  
+    try{
+      const chk = await validateGameReadyToPlay(selectedId);
+      if(!chk.ok){
+        alert(chk.reason);
+        return;
+      }
+      location.href = `control.html?id=${encodeURIComponent(selectedId)}`;
+    }catch(e){
+      console.error(e);
+      alert("Nie udało się sprawdzić gry (błąd bazy).");
     }
-
-    const rules = await validateGameForRules(sel);
-    if(!(rules.okQuestions && rules.okAnswers && rules.okPoints)){
-      alert(rules.reason || "Gra nie spełnia wymagań.");
-      await updateActionState();
-      return;
-    }
-
-    location.href = `control.html?id=${encodeURIComponent(selectedId)}`;
   });
 
-  btnPoll?.addEventListener("click", async ()=>{
+
+  btnPoll.addEventListener("click", async ()=>{
     if(!selectedId) return;
-
-    const sel = games.find(g=>g.id === selectedId);
-    if(!sel) return;
-
-    if(sel.kind !== "poll"){
-      alert("To nie jest Familiada sondażowa.");
-      return;
+  
+    try{
+      const g = await loadGameBasic(selectedId);
+      if(g.kind !== "poll"){
+        alert("To nie jest Familiada sondażowa.");
+        return;
+      }
+      location.href = `polls.html?id=${encodeURIComponent(selectedId)}`;
+    }catch(e){
+      console.error(e);
+      alert("Nie udało się sprawdzić typu gry (błąd bazy).");
     }
-
-    location.href = `polls.html?id=${encodeURIComponent(selectedId)}`;
   });
 
   await refresh();
