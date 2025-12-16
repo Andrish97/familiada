@@ -1,119 +1,44 @@
-const main  = document.getElementById("main");
-const left  = document.getElementById("left");
-const right = document.getElementById("right");
-const topP  = document.getElementById("top");
-const botL  = document.getElementById("botL");
-const botR  = document.getElementById("botR");
-
 const fsBtn = document.getElementById("fsBtn");
+const dbg = document.getElementById("dbg");
 
 fsBtn.onclick = async () => {
-  if (!document.fullscreenElement)
-    await document.documentElement.requestFullscreen();
-  else
-    await document.exitFullscreen();
+  try{
+    if(!document.fullscreenElement) await document.documentElement.requestFullscreen();
+    else await document.exitFullscreen();
+  }catch(e){ console.warn(e); }
 };
 
-/*
-GEOMETRIA WYŚWIETLACZY (w jednostkach dotMain)
-------------------------------------------------
-segment 5x7:
-  width  = 5d + 4g + 2p
-  height = 7d + 6g + 2p
-gdzie:
-  g = 0.2d
-  p = 0.1d
-*/
+const E = {
+  main:  document.getElementById("frameMain"),
+  left:  document.getElementById("frameLeft"),
+  right: document.getElementById("frameRight"),
+  top:   document.getElementById("frameTop"),
+  bl:    document.getElementById("frameBL"),
+  br:    document.getElementById("frameBR"),
+};
 
-function segmentSize(d){
-  const g = 0.2 * d;
-  const p = 0.1 * d;
-  return {
-    w: 5*d + 4*g + 2*p,
-    h: 7*d + 6*g + 2*p
-  };
-}
+// ======= “Projektowe” wymiary RELATYWNE =======
+// Ustalmy bazę w jednostkach “segment 5x7” skali 1.
+// segmentW = 1 unit, segmentH = 1 unit (umownie), a reszta jako mnożniki.
+//
+// MAIN: 30x10 segmentów (modułów) + przerwy między segmentami.
+// SIDE/TOP: 3 segmenty obok siebie (to jest ważna poprawka!)
+// STRIP: dwa dolne to 96x7 “pikseli”, ale jako RAMA przyjmujemy proporcję długiego paska.
+// (Tu na razie rama – bez diod)
 
-/* WYMIARY EKRANÓW */
-function screenSizes(dot){
-  const seg = segmentSize(dot);
+function computeLayoutScale(vw, vh){
+  // Ustalmy:
+  // - segW = 1 unit
+  // - gap = segW (min odstęp) -> też zależny od skali
+  // W praktyce skala S przelicza unit->px.
 
-  const mainW = 30*seg.w + 29*(seg.w*0.2);
-  const mainH = 10*seg.h + 9 *(seg.w*0.2);
+  const segW = 1;
+  const segH = 1;
 
-  return {
-    main:  { w: mainW, h: mainH },
-    side:  { w: 3*seg.w, h: seg.h },
-    strip: { w: 96*dot,  h: 7*dot }
-  };
-}
+  // Parametry “konstrukcyjne” (w unitach)
+  const gapU = 1;            // min odstęp = 1 segment
+  const edgeU = 1;           // margines od krawędzi (w unitach, stały w tej samej skali)
 
-/* MAKSYMALNY dotMain Z VIEWPORTU */
-function computeDot(){
-  const vw = window.innerWidth;
-  const vh = window.innerHeight;
-
-  for(let d = 18; d >= 6; d--){
-    const s = screenSizes(d);
-    const gap = segmentSize(d).w;
-
-    const fitsW =
-      s.side.w + gap + s.main.w + gap + s.side.w <= vw;
-
-    const fitsH =
-      s.side.h + gap + s.main.h + gap + s.strip.h <= vh;
-
-    if(fitsW && fitsH) return d;
-  }
-  return 6;
-}
-
-function layout(){
-  const dot = computeDot();
-  const s = screenSizes(dot);
-  const gap = segmentSize(dot).w;
-  const EDGE = 20;
-
-  /* MAIN – środek */
-  main.style.width  = s.main.w + "px";
-  main.style.height = s.main.h + "px";
-  main.style.left   = "50%";
-  main.style.top    = "50%";
-  main.style.transform = "translate(-50%,-50%)";
-
-  /* LEFT */
-  left.style.width  = s.side.w + "px";
-  left.style.height = s.side.h + "px";
-  left.style.left   = EDGE + "px";
-  left.style.top    = "50%";
-  left.style.transform = "translateY(-50%)";
-
-  /* RIGHT */
-  right.style.width  = s.side.w + "px";
-  right.style.height = s.side.h + "px";
-  right.style.right  = EDGE + "px";
-  right.style.top    = "50%";
-  right.style.transform = "translateY(-50%)";
-
-  /* TOP */
-  topP.style.width  = s.side.w + "px";
-  topP.style.height = s.side.h + "px";
-  topP.style.left   = "50%";
-  topP.style.top    = EDGE + "px";
-  topP.style.transform = "translateX(-50%)";
-
-  /* BOTTOM */
-  botL.style.width  = s.strip.w + "px";
-  botL.style.height = s.strip.h + "px";
-  botL.style.left   = EDGE + "px";
-  botL.style.bottom = EDGE + "px";
-
-  botR.style.width  = s.strip.w + "px";
-  botR.style.height = s.strip.h + "px";
-  botR.style.right  = EDGE + "px";
-  botR.style.bottom = EDGE + "px";
-}
-
-window.addEventListener("resize", layout);
-window.addEventListener("fullscreenchange", layout);
-layout();
+  // MAIN: 30 segmentów + 29 przerw (przerwa = 1 segW, jak chciałeś)
+  // To jest uproszczenie: w realu przerwa to “szerokość diody”, ale Ty teraz chcesz operować segmentami.
+  const mainW = 30*segW + 29*segW
