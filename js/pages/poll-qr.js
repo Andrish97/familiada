@@ -1,8 +1,8 @@
+// js/pages/poll-qr.js
 const qs = new URLSearchParams(location.search);
 const url = qs.get("url");
 
 const qr = document.getElementById("qr");
-const urlEl = document.getElementById("url");
 const btnFS = document.getElementById("btnFS");
 
 function waitForQRCode(){
@@ -14,7 +14,7 @@ function waitForQRCode(){
         resolve(window.QRCode);
       }
       tries++;
-      if(tries > 50){
+      if(tries > 80){
         clearInterval(i);
         reject(new Error("QRCode lib not loaded"));
       }
@@ -23,28 +23,30 @@ function waitForQRCode(){
 }
 
 async function render(u){
-  urlEl.textContent = u || "Brak URL";
   qr.innerHTML = "";
-  if(!u) return;
+  if(!u){
+    qr.textContent = "Brak URL";
+    return;
+  }
 
   try{
     const QRCode = await waitForQRCode();
     QRCode.toCanvas(u, { width: 420, margin: 1 }, (err, canvas)=>{
-      if(err) return;
+      if(err) {
+        qr.textContent = "Nie udało się wygenerować QR";
+        return;
+      }
       qr.appendChild(canvas);
     });
-  }catch(e){
+  }catch{
     qr.textContent = "Nie udało się załadować QR";
   }
 }
 
-btnFS.addEventListener("click", async ()=>{
+btnFS?.addEventListener("click", async ()=>{
   try{
-    if(!document.fullscreenElement){
-      await document.documentElement.requestFullscreen();
-    }else{
-      await document.exitFullscreen();
-    }
+    if(!document.fullscreenElement) await document.documentElement.requestFullscreen();
+    else await document.exitFullscreen();
   }catch{}
 });
 
