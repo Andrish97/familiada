@@ -1,106 +1,222 @@
 :root{
-  /* “diody” */
-  --dot: 8px;           /* rozmiar kropki (main) */
-  --dotGap: 2px;        /* odstęp kropek wewnątrz modułu */
-  --moduleGap: calc(var(--dot) + var(--dotGap)); /* przerwa między modułami = szerokość diody */
+  --bg1:#b11b32;
+  --bg2:#ff5a7a;
+  --bg3:#1a4ea8;
 
-  --dotOn: #ffd34a;     /* żółte */
-  --dotOff: #2a2a2a;    /* zgaszone */
-  --panel: #060606;     /* czarne pole */
-  --panelBorder: #1b1b1b;
-  --stage: #101010;     /* tło “studio” */
-  --chrome: #1a1a1a;    /* ramki / “ciemny szary” */
+  --panel:#070707;
+  --panel2:#0e0e0e;
+
+  --metal1:#f2f2f2;
+  --metal2:#cfcfcf;
+  --metal3:#9d9d9d;
+
+  --dot:8px;        /* main “dioda” */
+  --dotGap:2px;
+  --dotOn:#ffd34a;
+  --dotOff:#2a2a2a;
+
+  /* przerwa między modułami = szerokość jednej diody (wraz z gapem) */
+  --moduleGap: calc(var(--dot) + var(--dotGap));
 }
 
-*{ box-sizing: border-box; }
-html,body{ height:100%; }
-body{
-  margin:0;
-  background: radial-gradient(1200px 600px at 30% 20%, #1b1b1b 0%, var(--stage) 55%, #0b0b0b 100%);
-  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-  color:#eaeaea;
-}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;font-family:system-ui,Segoe UI,Roboto,Arial,sans-serif}
 
-/* Cały “set” */
-.stage{
+.studio{
   min-height:100%;
   display:flex;
   align-items:center;
   justify-content:center;
-  padding:24px;
-}
-
-.board{
-  width:min(1400px, 96vw);
-  display:grid;
-  grid-template-columns: 1fr 420px;
-  gap:18px;
-}
-
-/* Prawa kolumna: 3 małe */
-.side{
-  display:grid;
-  grid-template-rows: repeat(3, 1fr);
-  gap:18px;
-}
-
-/* Panel (czarne pole) */
-.panel{
-  background: linear-gradient(180deg, #0b0b0b 0%, var(--panel) 100%);
-  border: 2px solid var(--panelBorder);
-  border-radius: 18px;
-  box-shadow:
-    0 20px 60px rgba(0,0,0,.55),
-    inset 0 0 0 2px rgba(255,255,255,.03);
-  overflow:hidden;
-}
-
-.panel__inner{
-  padding:14px 14px 18px;
+  padding:28px;
   background:
-    linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,0));
+    radial-gradient(900px 420px at 52% 30%, rgba(255,255,255,.25), rgba(255,255,255,0) 55%),
+    linear-gradient(180deg, #2b0810 0%, #18060b 35%, #08060a 100%);
 }
 
-.panel__title{
-  font-size:12px;
-  letter-spacing:.14em;
-  opacity:.7;
-  margin:0 0 10px 2px;
+.rig{
+  width:min(980px, 96vw);
+  position:relative;
 }
 
-.panel--big .panel__inner{
+/* ---------- czarne panele ---------- */
+.panelBlack{
+  background: linear-gradient(180deg, var(--panel2), var(--panel));
+  border:2px solid rgba(255,255,255,.08);
+  box-shadow:
+    0 18px 50px rgba(0,0,0,.55),
+    inset 0 0 0 2px rgba(255,255,255,.03);
+}
+
+/* ---------- górny mały wyświetlacz ---------- */
+.topCounter{
+  position:absolute;
+  left:50%;
+  top:-18px;
+  transform:translateX(-50%);
+  width:190px;
+  height:54px;
+  border-radius:10px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index:5;
+}
+
+/* ---------- pierścień (czerwony + niebieski) ---------- */
+.ring{
+  position:relative;
+  height:420px;
+  border-radius:999px;
+  padding:34px;
+  /* tło “studio” pod pierścieniem */
+  background:
+    radial-gradient(closest-side at 50% 50%, rgba(0,0,0,.25), rgba(0,0,0,.0) 60%);
+
+  /* conic-gradient robi dwie połówki jak na zdjęciu */
+}
+.ring::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  border-radius:999px;
+  background:
+    conic-gradient(from 270deg,
+      #db2a49 0deg, #ff607d 160deg,
+      #2b66d4 200deg, #1f4aa0 360deg
+    );
+  box-shadow: 0 30px 80px rgba(0,0,0,.55);
+}
+.ring::after{
+  /* “segmenty” na pierścieniu */
+  content:"";
+  position:absolute;
+  inset:18px;
+  border-radius:999px;
+  background:
+    repeating-linear-gradient(
+      90deg,
+      rgba(255,255,255,.10) 0px,
+      rgba(255,255,255,.10) 3px,
+      rgba(255,255,255,0) 3px,
+      rgba(255,255,255,0) 72px
+    );
+  mix-blend-mode: overlay;
+  opacity:.55;
+  pointer-events:none;
+}
+
+/* ---------- boczne liczniki ---------- */
+.sideCounter{
+  position:absolute;
+  top:50%;
+  transform:translateY(-50%);
+  width:150px;
+  height:70px;
+  border-radius:12px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index:4;
+}
+.sideCounter--left{ left:-12px; }
+.sideCounter--right{ right:-12px; }
+
+/* ---------- metalowe “okno” ---------- */
+.window{
+  position:relative;
+  z-index:3;
+  height:100%;
+  border-radius:999px;
+  padding:22px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.35), rgba(255,255,255,.08)),
+    radial-gradient(1200px 600px at 30% 35%, rgba(255,255,255,.55), rgba(255,255,255,0) 55%),
+    linear-gradient(180deg, var(--metal1), var(--metal2) 55%, var(--metal3));
+  box-shadow:
+    inset 0 0 0 2px rgba(0,0,0,.25),
+    inset 0 12px 25px rgba(255,255,255,.18);
+}
+.windowInner{
+  height:100%;
+  border-radius:999px;
+  padding:26px 34px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.22), rgba(255,255,255,.06));
+  box-shadow: inset 0 0 0 2px rgba(0,0,0,.18);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+/* ---------- centralny ekran ---------- */
+.mainScreen{
+  width:min(620px, 78%);
+  height:240px;
+  border-radius:10px;
   padding:18px;
+  position:relative;
+}
+.mainCaption{
+  position:absolute;
+  left:18px;
+  right:18px;
+  bottom:12px;
+  height:56px;
+  border-radius:10px;
+  padding:10px 12px;
+  background: linear-gradient(180deg, #0f0f0f, #070707);
 }
 
-/* Obszar wyświetlacza (ciemnoszare tło pod diodami) */
-.display{
-  width:100%;
-  background: linear-gradient(180deg, #121212 0%, var(--chrome) 100%);
-  border-radius: 14px;
-  padding:16px;
-  box-shadow: inset 0 0 0 2px rgba(255,255,255,.05);
+/* ---------- dół ---------- */
+.base{
+  margin-top:18px;
+  height:120px;
+  position:relative;
+  display:grid;
+  grid-template-columns: 1fr 1.2fr 1fr;
+  gap:18px;
+  align-items:stretch;
+}
+.podium{
+  border-radius:22px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.18), rgba(255,255,255,0)),
+    linear-gradient(180deg, #2a2a2a, #0f0f0f);
+  box-shadow:
+    0 18px 60px rgba(0,0,0,.55),
+    inset 0 0 0 2px rgba(255,255,255,.06);
+}
+.podium--center{
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.22), rgba(255,255,255,0)),
+    linear-gradient(180deg, #f4ff2c, #d8e100 55%, #b9c300);
+  box-shadow:
+    0 18px 60px rgba(0,0,0,.55),
+    inset 0 0 0 2px rgba(0,0,0,.18);
 }
 
-/* === Budulec diodek === */
+/* ---------- diody ---------- */
+.dotDisplay{ width:100%; height:100%; display:flex; align-items:center; justify-content:center; }
+
 .dot{
-  width: var(--dot);
-  height: var(--dot);
-  border-radius: 999px;
-  background: var(--dotOff);
+  width:var(--dot);
+  height:var(--dot);
+  border-radius:999px;
+  background:var(--dotOff);
   box-shadow:
     inset 0 -1px 0 rgba(0,0,0,.45),
     0 0 0 1px rgba(0,0,0,.25);
 }
-
 .dot.on{
-  background: var(--dotOn);
+  background:var(--dotOn);
   box-shadow:
     0 0 14px rgba(255,211,74,.25),
     inset 0 -1px 0 rgba(0,0,0,.35),
     0 0 0 1px rgba(0,0,0,.2);
 }
 
-/* Moduł 5x7 */
+/* moduł 5x7 */
 .module{
   display:grid;
   grid-template-columns: repeat(5, var(--dot));
@@ -108,7 +224,7 @@ body{
   gap: var(--dotGap);
 }
 
-/* Siatka modułów dla dużej tablicy: 30x10 */
+/* siatka modułów */
 .modulesGrid{
   display:grid;
   gap: var(--moduleGap);
@@ -116,16 +232,7 @@ body{
   justify-content:start;
 }
 
-/* Małe: 3 duże moduły obok siebie */
-.bigModulesRow{
-  display:grid;
-  grid-template-columns: repeat(3, max-content);
-  gap: calc(var(--dot) * 1.2);
-  align-content:start;
-  justify-content:start;
-}
-
-/* Paski 96x7 “pikseli” */
+/* pasek pikseli 96x7 */
 .pixelGrid{
   display:grid;
   gap: var(--dotGap);
@@ -133,19 +240,18 @@ body{
   justify-content:start;
 }
 
-/* Responsywność */
-@media (max-width: 1100px){
-  .board{
-    grid-template-columns: 1fr;
-  }
-  .side{
-    grid-template-rows: none;
-    grid-template-columns: repeat(3, 1fr);
-  }
+/* responsywność */
+@media (max-width: 860px){
+  .ring{ height:360px; padding:26px; }
+  .sideCounter{ width:130px; height:62px; }
+  .mainScreen{ height:220px; }
+  .topCounter{ width:170px; }
 }
-
-@media (max-width: 820px){
-  .side{
-    grid-template-columns: 1fr;
-  }
+@media (max-width: 680px){
+  .ring{ height:320px; }
+  .sideCounter{ display:none; }
+  .topCounter{ top:-10px; }
+  .base{ grid-template-columns: 1fr; height:auto; }
+  .podium{ height:90px; }
+  .podium--center{ height:110px; }
 }
