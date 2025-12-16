@@ -2,64 +2,26 @@
 <html lang="pl">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Familiada – wyświetlacz</title>
   <link rel="icon" href="favicon.ico" />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <button id="fsBtn" class="fsBtn" title="Pełny ekran" aria-label="Pełny ekran">⛶</button>
 
-  <div class="stage" id="stage">
-    <!-- owal = tło -->
-    <div class="megaRing" aria-hidden="true"></div>
+<button id="fsBtn">⛶</button>
 
-    <!-- TU skaluje się cała “warstwa ekranów” -->
-    <div class="screens" id="screens">
-      <!-- MAIN -->
-      <div class="panel panel--main hasSegments" id="mainPanel">
-        <div class="panel__surface">
-          <div id="mainMatrix" class="dotHost"></div>
-        </div>
-      </div>
+<!-- tło -->
+<div class="oval"></div>
 
-      <!-- TOP -->
-      <div class="panel panel--top hasSegments" id="topPanel">
-        <div class="panel__surface">
-          <div id="topDigit" class="dotHost"></div>
-        </div>
-      </div>
+<!-- EKRANY -->
+<div id="main"  class="panel main"></div>
+<div id="left"  class="panel side"></div>
+<div id="right" class="panel side"></div>
+<div id="top"   class="panel side"></div>
+<div id="botL"  class="panel strip"></div>
+<div id="botR"  class="panel strip"></div>
 
-      <!-- LEFT -->
-      <div class="panel panel--left hasSegments" id="leftPanel">
-        <div class="panel__surface">
-          <div id="leftScore" class="dotHost"></div>
-        </div>
-      </div>
-
-      <!-- RIGHT -->
-      <div class="panel panel--right hasSegments" id="rightPanel">
-        <div class="panel__surface">
-          <div id="rightScore" class="dotHost"></div>
-        </div>
-      </div>
-
-      <!-- BOTTOM LEFT -->
-      <div class="panel panel--stripL noSegments" id="stripLPanel">
-        <div class="panel__surface">
-          <div id="strip1" class="dotHost"></div>
-        </div>
-      </div>
-
-      <!-- BOTTOM RIGHT -->
-      <div class="panel panel--stripR noSegments" id="stripRPanel">
-        <div class="panel__surface">
-          <div id="strip2" class="dotHost"></div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <script src="app.js"></script>
+<script src="app.js"></script>
 </body>
 </html>
