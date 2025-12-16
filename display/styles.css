@@ -1,31 +1,24 @@
 :root{
-  --panel:#070707;
-  --panel2:#0e0e0e;
+  /* tła */
+  --panelOuter1:#0c0c0c;
+  --panelOuter2:#050505;
 
-  /* kolory (domyślny = główny żółty) */
-  --dotOn:#ffd34a;
+  --displayBg:#1a1a1a;   /* tło całego wyświetlacza = ciemny szary */
+  --segmentBg:#000000;   /* tło segmentu 5x7 = czarne */
+
+  /* diody */
+  --dotOn:#ffd34a;       /* domyślnie żółty (MAIN) */
   --dotOff:#2a2a2a;
 
-  /* te zmienne wylicza JS */
-  --dotMain: 10px;
-  --gapMain: 2px;
-  --moduleGapMain: 12px;
-
-  --dotStrip: 15px;  /* 1.5× */
-  --gapStrip: 3px;
-
-  --dotBig: 30px;    /* 3× */
-  --gapBig: 5px;
+  /* rozmiary (liczy JS) */
+  --dotMain: 10px;   --gapMain: 2px;   --moduleGapMain: 12px;
+  --dotStrip: 15px;  --gapStrip: 3px;
+  --dotBig: 30px;    --gapBig: 5px;
 }
 
 *{box-sizing:border-box}
 html,body{height:100%}
-body{
-  margin:0;
-  background:#08060a;
-  font-family:system-ui,Segoe UI,Roboto,Arial,sans-serif;
-  overscroll-behavior:none;
-}
+body{margin:0;background:#08060a;font-family:system-ui,Segoe UI,Roboto,Arial,sans-serif;overscroll-behavior:none}
 
 /* fullscreen btn */
 .fsBtn{
@@ -39,17 +32,15 @@ body{
   background: rgba(0,0,0,.55);
   color:#fff;
   font-size:18px;
-  display:grid;
-  place-items:center;
+  display:grid;place-items:center;
   cursor:pointer;
   -webkit-tap-highlight-color: transparent;
 }
-.fsBtn:active{ transform: scale(.98); }
+.fsBtn:active{ transform:scale(.98); }
 
 .stage{
   position:relative;
   min-height:100%;
-  display:block;
   padding:
     max(12px, env(safe-area-inset-top))
     max(12px, env(safe-area-inset-right))
@@ -61,14 +52,13 @@ body{
   overflow:hidden;
 }
 
-/* mega owal prawie na całą szerokość */
+/* mega owal na szerokość */
 .megaRing{
   position:absolute;
-  left:50%;
-  top:50%;
+  left:50%; top:50%;
   transform:translate(-50%,-52%);
-  width:min(96vw, 1600px);
-  height:min(78vh, 760px);
+  width:min(96vw, 1800px);
+  height:min(78vh, 820px);
   border-radius:999px;
   background:
     conic-gradient(from 270deg,
@@ -79,11 +69,10 @@ body{
 }
 .megaRing::after{
   content:"";
-  position:absolute;
-  inset:18px;
+  position:absolute; inset:18px;
   border-radius:999px;
   background:
-    radial-gradient(closest-side at 50% 50%, rgba(0,0,0,.15), rgba(0,0,0,0) 62%),
+    radial-gradient(closest-side at 50% 50%, rgba(0,0,0,.18), rgba(0,0,0,0) 62%),
     repeating-linear-gradient(
       90deg,
       rgba(255,255,255,.12) 0px,
@@ -96,93 +85,70 @@ body{
   pointer-events:none;
 }
 
-/* warstwa wyświetlaczy */
-.hud{
-  position:relative;
-  width:100%;
-  height:100%;
-}
+.hud{ position:relative; width:100%; height:100%; }
 
-/* wspólny wygląd paneli */
-.panelBlack{
-  background: linear-gradient(180deg, var(--panel2), var(--panel));
+/* PANEL: obwódka + “ciemny plastik” */
+.panel{
+  position:absolute;
+  background: linear-gradient(180deg, var(--panelOuter1), var(--panelOuter2));
   border:2px solid rgba(255,255,255,.08);
-  box-shadow:
-    0 18px 55px rgba(0,0,0,.55),
-    inset 0 0 0 2px rgba(255,255,255,.03);
+  box-shadow: 0 18px 55px rgba(0,0,0,.55), inset 0 0 0 2px rgba(255,255,255,.03);
   border-radius:14px;
+  padding:10px;
 }
 
-/* pozycje zgodnie z Twoim opisem */
-.topCounter{
-  position:absolute;
+/* powierzchnia wyświetlacza = tło ciemny szary */
+.panel__surface{
+  background: linear-gradient(180deg, #242424, var(--displayBg));
+  border-radius:12px;
+  padding:12px;
+  box-shadow: inset 0 0 0 2px rgba(255,255,255,.05);
+}
+
+/* pozycjonowanie zgodnie z Twoim opisem */
+.panel--top{
   left:50%;
-  top: max(2vh, 14px);
+  top:max(2vh, 12px);
   transform:translateX(-50%);
-  padding:10px 12px;
-  z-index:5;
-
-  /* górny zielony */
-  --dotOn: #35ff6a;
 }
-
-.sideCounter{
-  position:absolute;
-  top: max(8vh, 46px);
-  padding:10px 12px;
-  z-index:5;
-  width: max-content;
+.panel--left{
+  left:max(1.2vw, 10px);
+  top:max(6vh, 30px);
 }
-.sideCounter--left{
-  left: max(2vw, 14px);
-  /* lewy czerwony */
-  --dotOn: #ff4b4b;
+.panel--right{
+  right:max(1.2vw, 10px);
+  top:max(6vh, 30px);
 }
-.sideCounter--right{
-  right: max(2vw, 14px);
-  /* prawy zielony */
-  --dotOn: #35ff6a;
-}
-
-.mainWrap{
-  position:absolute;
+.panel--main{
   left:50%;
   top:50%;
   transform:translate(-50%,-48%);
-  z-index:4;
-
-  /* DUŻE pole robocze, niezależne od zawartości */
-  width: min(92vw, 1500px);
-  height: min(62vh, 780px);
-
-  padding:16px;
-  border-radius:16px;
+  width:min(92vw, 1700px);
+  height:min(62vh, 860px);
+}
+.panel--stripL{
+  left:max(1.2vw, 10px);
+  bottom:max(2vh, 12px);
+}
+.panel--stripR{
+  right:max(1.2vw, 10px);
+  bottom:max(2vh, 12px);
 }
 
-.bottomStrip{
-  position:absolute;
-  bottom: max(2vh, 14px);
-  padding:10px 12px;
-  z-index:5;
-  border-radius:14px;
+/* KOLORY świecenia wg Twojego systemu */
+.panel--main{ --dotOn:#ffd34a; }      /* żółty */
+.panel--left{ --dotOn:#ff4b4b; }      /* czerwony */
+.panel--right{ --dotOn:#35ff6a; }     /* zielony */
+.panel--top{ --dotOn:#35ff6a; }       /* zielony */
+.panel--stripL, .panel--stripR{ --dotOn:#cfff3a; } /* zielonkawo-żółty */
 
-  /* dolne zielonkawo-żółte */
-  --dotOn: #cfff3a;
-}
-.bottomStrip--left{ left: max(2vw, 14px); }
-.bottomStrip--right{ right: max(2vw, 14px); }
+/* host */
+.dotHost{ display:flex; align-items:flex-start; justify-content:center; }
 
-/* hosty na diody */
-.dotHost{
-  display:flex;
-  align-items:center;
-  justify-content:center;
-}
-
-/* diody */
+/* Dioda: rozmiar bierze z --dotSize (ustawiamy per panel) */
 .dot{
-  width: var(--dotMain);
-  height: var(--dotMain);
+  width: var(--dotSize);
+  height: var(--dotSize);
   border-radius:999px;
   background: var(--dotOff);
   box-shadow: inset 0 -1px 0 rgba(0,0,0,.45), 0 0 0 1px rgba(0,0,0,.25);
@@ -192,46 +158,35 @@ body{
   box-shadow: 0 0 14px rgba(255,211,74,.22), inset 0 -1px 0 rgba(0,0,0,.35), 0 0 0 1px rgba(0,0,0,.2);
 }
 
-/* moduł 5x7 */
-.module{
+/* ===== SEGMENTY 5x7: tło segmentu czarne + kropki w środku ===== */
+.hasSegments .module{
+  background: var(--segmentBg);
+  border-radius:6px;
+  padding: var(--cellPad);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.05);
   display:grid;
-  grid-template-columns: repeat(5, var(--dotMain));
-  grid-template-rows: repeat(7, var(--dotMain));
-  gap: var(--gapMain);
+  grid-template-columns: repeat(5, var(--dotSize));
+  grid-template-rows: repeat(7, var(--dotSize));
+  gap: var(--dotGap);
 }
 
-/* siatka modułów */
-.modulesGrid{
+/* siatka segmentów */
+.hasSegments .modulesGrid{
   display:grid;
-  gap: var(--moduleGapMain);
+  gap: var(--moduleGap);
   align-content:start;
   justify-content:start;
 }
 
-/* 96x7 pikseli */
-.pixelGrid{
+/* ===== PASKI 96x7: BEZ segmentów ===== */
+.noSegments .pixelGrid{
   display:grid;
-  gap: var(--gapStrip);
+  gap: var(--dotGap);
   align-content:start;
   justify-content:start;
 }
 
-/* “duże” 5x7 (boki i góra) */
-.bigModule{
-  display:grid;
-  grid-template-columns: repeat(5, var(--dotBig));
-  grid-template-rows: repeat(7, var(--dotBig));
-  gap: var(--gapBig);
-}
-.bigRow{
-  display:grid;
-  grid-template-columns: repeat(var(--bigCount), max-content);
-  gap: calc(var(--dotBig) * 0.8);
-  align-content:start;
-  justify-content:start;
-}
-
-/* Telefon: zgodnie z Twoim życzeniem — komunikat i koniec */
+/* Telefon: Twoje życzenie */
 @media (max-width: 740px){
   .stage > * { display:none; }
   body::before{
