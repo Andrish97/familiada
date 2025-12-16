@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Owal – poprawione kółka</title>
+<title>Owal – kontrolowany margines</title>
 <style>
   html, body { height:100%; margin:0; }
   body{
@@ -32,7 +32,7 @@
 <div class="wrap">
 <svg viewBox="0 0 1600 900" xmlns="http://www.w3.org/2000/svg">
 
-<!-- ===== OWAŁ – WERSJA POPRZEDNIA (BEZ ZMIAN) ===== -->
+<!-- ===== OWAŁ – POPRZEDNIA WERSJA ===== -->
 <defs>
   <linearGradient id="rimGrad" x1="0" y1="0" x2="1" y2="0">
     <stop offset="0" stop-color="#000000"/>
@@ -47,12 +47,9 @@
   </linearGradient>
 </defs>
 
-<!-- zewnętrzny owal -->
 <rect x="50" y="135" width="1500" height="630" rx="315" fill="url(#rimGrad)"/>
-<!-- wewnętrzny jasny -->
 <rect x="210" y="225" width="1180" height="450" rx="225" fill="url(#innerGrad)"/>
 
-<!-- linie -->
 <g stroke="#ffffff" stroke-opacity="0.22" stroke-width="6">
   <line x1="800" y1="135" x2="800" y2="225"/>
   <line x1="170" y1="185" x2="360" y2="340"/>
@@ -80,7 +77,7 @@ const COLOR_DOT  = "#2e2e32";
 const DOTS_X=5, DOTS_Y=7;
 
 // ===================
-// ŚRODEK 30x10
+// ŚRODEK
 // ===================
 const center=document.getElementById("center");
 
@@ -89,13 +86,16 @@ const d=r*2;
 const pitch=d+1;
 const gap=d;
 
-// KLUCZ: STYCZNOŚĆ
-const margin=r;
+// ODSTĘP MIĘDZY KÓŁKAMI
+const gapDot = pitch - d;
+
+// MARGINES = dokładnie odstęp między kółkami
+const margin = gapDot;
 
 const CELLS_X=30, CELLS_Y=10;
 
-const cellW=(DOTS_X-1)*pitch+margin*2;
-const cellH=(DOTS_Y-1)*pitch+margin*2;
+const cellW=(DOTS_X-1)*pitch + margin*2;
+const cellH=(DOTS_Y-1)*pitch + margin*2;
 
 const gridW=CELLS_X*cellW+(CELLS_X-1)*gap;
 const gridH=CELLS_Y*cellH+(CELLS_Y-1)*gap;
@@ -131,7 +131,7 @@ for(let y=0;y<CELLS_Y;y++){
 }
 
 // ===================
-// PANELE (3 identyczne)
+// PANELE
 // ===================
 const panels=document.getElementById("panels");
 
@@ -139,11 +139,14 @@ const dP=d*3;
 const rP=dP/2;
 const pitchP=dP+1;
 
-// KLUCZ: STYCZNOŚĆ
-const marginP=rP;
+// ODSTĘP MIĘDZY KÓŁKAMI (PANELE)
+const gapDotP = pitchP - dP;
 
-const subW=(DOTS_X-1)*pitchP+marginP*2;
-const subH=(DOTS_Y-1)*pitchP+marginP*2;
+// TEN SAM WARUNEK: margines = odstęp
+const marginP = gapDotP;
+
+const subW=(DOTS_X-1)*pitchP + marginP*2;
+const subH=(DOTS_Y-1)*pitchP + marginP*2;
 
 const subGap=10;
 const panelW=3*subW+2*subGap;
