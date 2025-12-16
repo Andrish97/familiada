@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Scenografia – spójna geometria</title>
+  <title>Scenografia – spójna geometria + dół</title>
   <style>
     html, body { height:100%; margin:0; }
     body{
@@ -58,6 +58,9 @@
     <line x1="1430" y1="715" x2="1240" y2="560"/>
   </g>
 
+  <!-- NOWE: dół na tle -->
+  <g id="bottom"></g>
+
   <g id="panels"></g>
   <g id="center"></g>
 
@@ -75,21 +78,23 @@
   const COLOR_DOT  = "#2e2e32"; // kółka: ciemny szary
 
   // ===== PARAMETRY JEDNOSTEK =====
-  const d = 4;   // średnica kółka w środku (czyli r=2)
-  const g = 1;   // odstęp (między kółkami i jako margines)
+  const d = 4;   // średnica kółka w środku
+  const g = 1;   // odstęp
   const r = d/2;
 
-  // Siatka w małym prostokącie
+  // siatka w małym prostokącie
   const DOTS_X = 5, DOTS_Y = 7;
 
-  // Wymiary małego prostokąta (Twoje wzory)
+  // wymiary małego prostokąta (Twoje wzory)
   const W_small = 5*d + 6*g;
   const H_small = 7*d + 8*g;
 
-  // Odstęp między MAŁYMI prostokątami w dużej siatce = średnica (d)
+  // odstęp między małymi prostokątami w dużej siatce = średnica
   const gapCells = d;
 
-  // ===== ŚRODEK: 30 x 10 małych =====
+  // =========================
+  // ŚRODEK: 30 x 10 małych
+  // =========================
   const CELLS_X = 30, CELLS_Y = 10;
 
   const W_big = 30*W_small + 29*gapCells + 2*g;
@@ -101,25 +106,23 @@
 
   const centerG = document.getElementById("center");
 
-  // duże tło środkowe (bez zaokrągleń)
+  // duże tło środkowe
   centerG.appendChild(mk("rect", {
     x: bigX, y: bigY, width: W_big, height: H_big,
     rx: 0, fill: COLOR_BIG
   }));
 
-  // rysowanie małych prostokątów + kropek
+  // małe prostokąty + kółka
   for (let cy=0; cy<CELLS_Y; cy++){
     for (let cx=0; cx<CELLS_X; cx++){
       const cellX = bigX + g + cx*(W_small + gapCells);
       const cellY = bigY + g + cy*(H_small + gapCells);
 
-      // mały prostokąt (czarny, bez zaokrągleń)
       centerG.appendChild(mk("rect",{
         x: cellX, y: cellY, width: W_small, height: H_small,
         rx: 0, fill: COLOR_CELL
       }));
 
-      // kółka 5x7: start = g, krok = d+g
       const step = d + g;
       for (let j=0; j<DOTS_Y; j++){
         for (let i=0; i<DOTS_X; i++){
@@ -134,36 +137,34 @@
     }
   }
 
-  // ===== PANELE BOCZNE: każdy ma 3 małe (w poziomie), 1 w pionie =====
-  // Kółka w panelach: 3x większa średnica (szerokość) => dP = 3d
-  const dP = 3*d;
+  // =========================
+  // PANELE BOCZNE (3 identyczne)
+  // =========================
+  const panelsG = document.getElementById("panels");
+
+  const dP = 3*d;          // 3x szerokość
   const rP = dP/2;
 
-  // mały w panelu (na bazie dP i tego samego g)
   const W_small_P = 5*dP + 6*g;
   const H_small_P = 7*dP + 8*g;
 
-  // duży panel boczny (Twoje wzory)
-  const W_side = 3*W_small_P + 2*gapCells /*=2d*/ + 2*g;
+  const W_side = 3*W_small_P + 2*gapCells + 2*g;
   const H_side = 1*H_small_P + 2*g;
 
   function drawSidePanel(x, y){
-    const panelsG = document.getElementById("panels");
-    const gPanel = mk("g");
-    panelsG.appendChild(gPanel);
+    const grp = mk("g");
+    panelsG.appendChild(grp);
 
-    // duży panel
-    gPanel.appendChild(mk("rect",{
+    grp.appendChild(mk("rect",{
       x, y, width: W_side, height: H_side,
       rx: 0, fill: COLOR_BIG
     }));
 
-    // trzy małe wewnątrz
     for (let k=0; k<3; k++){
       const cellX = x + g + k*(W_small_P + gapCells);
       const cellY = y + g;
 
-      gPanel.appendChild(mk("rect",{
+      grp.appendChild(mk("rect",{
         x: cellX, y: cellY, width: W_small_P, height: H_small_P,
         rx: 0, fill: COLOR_CELL
       }));
@@ -171,7 +172,7 @@
       const stepP = dP + g;
       for (let j=0; j<DOTS_Y; j++){
         for (let i=0; i<DOTS_X; i++){
-          gPanel.appendChild(mk("circle",{
+          grp.appendChild(mk("circle",{
             cx: cellX + g + rP + i*stepP,
             cy: cellY + g + rP + j*stepP,
             r: rP,
@@ -182,10 +183,70 @@
     }
   }
 
-  // Pozycje paneli (jak wcześniej: lewy bardziej w lewo, prawy bardziej w prawo, górny wyżej)
   drawSidePanel(10, 390);
   drawSidePanel(1600 - W_side - 10, 390);
   drawSidePanel(800 - W_side/2, 85);
+
+  // =========================
+  // NOWE: DWA PROSTOKĄTY NA DOLE (95 x 7 kółek)
+  // =========================
+  const bottomG = document.getElementById("bottom");
+
+  const BX = 95, BY = 7;
+
+  // mały (wewnętrzny) wg Twojego wzoru:
+  const Wb_small = BX*d + (BX+1)*g;   // 95d + 96g
+  const Hb_small = BY*d + (BY+1)*g;   // 7d + 8g
+
+  // większy (zewnętrzny):
+  const Wb_outer = Wb_small + 2*g;
+  const Hb_outer = Hb_small + 2*g;
+
+  const gapBetween = 24; // odstęp między dwoma prostokątami (możesz zmienić)
+  const totalW = Wb_outer*2 + gapBetween;
+
+  // pozycja: mały odstęp od owalu (owal kończy się na y = 135+630 = 765)
+  const ovalBottomY = 135 + 630;
+  const gapFromOval = 12;
+
+  const yOuter = ovalBottomY + gapFromOval;
+  const xLeftOuter = 800 - totalW/2;
+  const xRightOuter = xLeftOuter + Wb_outer + gapBetween;
+
+  function drawBottomBlock(xOuter, yOuter){
+    // zewnętrzny (ciemny szary)
+    bottomG.appendChild(mk("rect",{
+      x: xOuter, y: yOuter,
+      width: Wb_outer, height: Hb_outer,
+      rx: 0, fill: COLOR_BIG
+    }));
+
+    // wewnętrzny (czarny) odsunięty o g
+    const xInner = xOuter + g;
+    const yInner = yOuter + g;
+
+    bottomG.appendChild(mk("rect",{
+      x: xInner, y: yInner,
+      width: Wb_small, height: Hb_small,
+      rx: 0, fill: COLOR_CELL
+    }));
+
+    // kółka 95 x 7
+    const step = d + g;
+    for(let j=0;j<BY;j++){
+      for(let i=0;i<BX;i++){
+        bottomG.appendChild(mk("circle",{
+          cx: xInner + g + r + i*step,
+          cy: yInner + g + r + j*step,
+          r: r,
+          fill: COLOR_DOT
+        }));
+      }
+    }
+  }
+
+  drawBottomBlock(xLeftOuter, yOuter);
+  drawBottomBlock(xRightOuter, yOuter);
 
 })();
 </script>
