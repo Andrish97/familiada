@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Wyświetlacz Familiady – prototype</title>
+  <link rel="icon" href="favicon.ico" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+
+<body>
+  <main class="stage">
+    <section class="board">
+      <div class="panel panel--big">
+        <div class="panel__inner">
+          <div class="panel__title">TABLICA</div>
+          <div id="mainDisplay" class="display"></div>
+        </div>
+      </div>
+
+      <aside class="side">
+        <div class="panel panel--small">
+          <div class="panel__inner">
+            <div class="panel__title">PUNKTY / RUNDA</div>
+            <div id="smallTop" class="display"></div>
+          </div>
+        </div>
+
+        <div class="panel panel--small">
+          <div class="panel__inner">
+            <div class="panel__title">PASEK 1</div>
+            <div id="smallMid" class="display"></div>
+          </div>
+        </div>
+
+        <div class="panel panel--small">
+          <div class="panel__inner">
+            <div class="panel__title">PASEK 2</div>
+            <div id="smallBot" class="display"></div>
+          </div>
+        </div>
+      </aside>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
