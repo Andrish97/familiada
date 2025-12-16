@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Owal + siatki (ulepszone)</title>
+  <title>Owal + siatki (poprawione)</title>
   <style>
     html, body { height: 100%; margin: 0; }
     body{
@@ -22,8 +22,7 @@
       width:100%;
       height:100%;
       display:block;
-      transform: scaleY(1.08);
-      transform-origin: center center;
+      /* USUNIĘTE scaleY -> koła znów są kołami */
     }
   </style>
 </head>
@@ -42,23 +41,20 @@
       </linearGradient>
     </defs>
 
-    <!-- OWAL prawie do krawędzi -->
-    <rect x="60" y="150" width="1480" height="600" rx="300" fill="url(#rimGrad)"/>
-    <rect x="210" y="230" width="1180" height="440" rx="220" fill="url(#innerGrad)"/>
+    <!-- OWAL prawie do krawędzi + trochę wyższy (zamiast scaleY) -->
+    <rect x="50" y="135" width="1500" height="630" rx="315" fill="url(#rimGrad)"/>
+    <rect x="210" y="225" width="1180" height="450" rx="225" fill="url(#innerGrad)"/>
 
     <!-- LINIE -->
     <g stroke="#ffffff" stroke-opacity="0.22" stroke-width="6">
-      <line x1="800" y1="150" x2="800" y2="230"/>
-      <line x1="180" y1="190" x2="360" y2="340"/>
-      <line x1="1420" y1="190" x2="1240" y2="340"/>
-      <line x1="180" y1="710" x2="360" y2="560"/>
-      <line x1="1420" y1="710" x2="1240" y2="560"/>
+      <line x1="800" y1="135" x2="800" y2="225"/>
+      <line x1="170" y1="185" x2="360" y2="340"/>
+      <line x1="1430" y1="185" x2="1240" y2="340"/>
+      <line x1="170" y1="715" x2="360" y2="560"/>
+      <line x1="1430" y1="715" x2="1240" y2="560"/>
     </g>
 
-    <!-- PANELE (czarne) – wnętrza generowane w JS -->
     <g id="panels"></g>
-
-    <!-- EKRAN ŚRODKOWY – generowany w JS -->
     <g id="screenGroup"></g>
   </svg>
 </div>
@@ -73,21 +69,19 @@
   };
 
   // ---------------------------
-  // 1) ŚRODKOWY EKRAN: 30x10 komórek, każda 5x7 kropek
+  // ŚRODKOWY EKRAN: 30x10 komórek, każda 5x7 kropek
   // ---------------------------
   const screenG = document.getElementById("screenGroup");
 
-  // kropki w centrum
   const r = 2;                 // promień kropki (centrum)
-  const d = r * 2;             // średnica
-  const gap = d;               // odstęp między komórkami = 1 okrąg (średnica)
-  const pitch = d + 1;         // odstęp między środkami okręgów w komórce
-  const margin = 2;            // <<< mniejsze marginesy (było ~d)
+  const d = r * 2;
+  const gap = d;               // odstęp między komórkami = 1 średnica kropki
+  const pitch = d + 1;
+  const margin = 2;            // mniejsze marginesy
 
   const dotsCols = 5, dotsRows = 7;
   const cellCols = 30, cellRows = 10;
 
-  // rozmiar komórki (ciemny szary prostokąt)
   const cellW = (dotsCols - 1) * pitch + margin * 2;
   const cellH = (dotsRows - 1) * pitch + margin * 2;
 
@@ -98,7 +92,6 @@
   const screenW = gridW + pad * 2;
   const screenH = gridH + pad * 2;
 
-  // wyśrodkowanie w viewBox (800,450)
   const screenX = 800 - screenW / 2;
   const screenY = 450 - screenH / 2;
 
@@ -110,7 +103,7 @@
   const inner = mk("g", { transform: `translate(${screenX + pad}, ${screenY + pad})` });
   screenG.appendChild(inner);
 
-  const cellRx = 1.5; // <<< mniejsze zaokrąglenie prostokątów 5x7
+  const cellRx = 1.5; // mniejsze zaokrąglenia prostokątów-komórek
 
   for (let row = 0; row < cellRows; row++) {
     for (let col = 0; col < cellCols; col++) {
@@ -136,11 +129,11 @@
   }
 
   // ---------------------------
-  // 2) PANELE: lewy/prawy/górny – każdy zawiera 3 prostokąty, a w nich 5x7 kropek (3x większe)
+  // PANELE: lewy/prawy/górny – IDENTYCZNE rozmiarem i wnętrzem
   // ---------------------------
   const panels = document.getElementById("panels");
 
-  // kropki w panelach: 3x większe
+  // w panelach kropki 3x większe
   const rP = r * 3;
   const dP = rP * 2;
   const pitchP = dP + 2;
@@ -149,33 +142,28 @@
   const subW = (dotsCols - 1) * pitchP + marginP * 2;
   const subH = (dotsRows - 1) * pitchP + marginP * 2;
 
-  const subPad = 10;      // padding wewnątrz czarnego panelu
-  const subGap = 10;      // odstęp między 3 sub-prostokątami
+  const subGap = 10;
+  const panelPad = 10;
 
-  // funkcja: narysuj panel z 3 sub-prostokątami (w poziomie)
-  function addPanel(x, y, w, h, rx, moveUp=0) {
+  const panelW = (3 * subW + 2 * subGap) + 2 * panelPad;
+  const panelH = subH + 2 * panelPad;
+
+  function addPanel(x, y, moveY = 0) {
     const g = mk("g");
     panels.appendChild(g);
 
-    // czarny panel
-    g.appendChild(mk("rect", { x, y: y + moveUp, width: w, height: h, rx, fill: "#000" }));
+    g.appendChild(mk("rect", { x, y: y + moveY, width: panelW, height: panelH, rx: 10, fill: "#000" }));
 
-    // oblicz pozycje 3 sub-prostokątów na środku panelu
     const totalSubW = 3 * subW + 2 * subGap;
-    const startX = x + (w - totalSubW) / 2;
-    const startY = (y + moveUp) + (h - subH) / 2;
+    const startX = x + (panelW - totalSubW) / 2;
+    const startY = (y + moveY) + (panelH - subH) / 2;
 
     for (let i = 0; i < 3; i++) {
       const sx = startX + i * (subW + subGap);
       const sy = startY;
 
-      // sub-prostokąt (ciemny szary)
-      g.appendChild(mk("rect", {
-        x: sx, y: sy, width: subW, height: subH,
-        rx: 2, fill: "#2e2e32"
-      }));
+      g.appendChild(mk("rect", { x: sx, y: sy, width: subW, height: subH, rx: 2, fill: "#2e2e32" }));
 
-      // kropki 5x7 (większe)
       for (let dy = 0; dy < dotsRows; dy++) {
         for (let dx = 0; dx < dotsCols; dx++) {
           g.appendChild(mk("circle", {
@@ -189,25 +177,12 @@
     }
   }
 
-  // dopasuj rozmiary paneli do zawartości (3 sub-prostokąty + padding)
-  const panelW = (3 * subW + 2 * subGap) + 2 * subPad;
-  const panelH = subH + 2 * subPad;
+  // lewy / prawy (tak jak wcześniej, tylko dopasowany rozmiar)
+  addPanel(50, 390, 0);
+  addPanel(1550 - panelW, 390, 0);
 
-  // lewy / prawy – osadzone podobnie jak wcześniej, ale rozmiar z automatu
-  addPanel(60, 390, panelW, panelH, 10);
-  addPanel(1540 - panelW, 390, panelW, panelH, 10);
-
-  // górny panel – mniejszy, ale nadal 3 sub-prostokąty; przesunięty ciut do góry
-  // (żeby był "panelikiem", a nie klocem, zmniejszamy padding i gap)
-  // Zrobimy osobne parametry dla górnego:
-  const topSubGap = 8;
-  const topPad = 8;
-  const topW = (3 * subW + 2 * topSubGap) + 2 * topPad;
-  const topH = subH + 2 * topPad;
-
-  // ręcznie: górny jest na osi X=800
-  addPanel(800 - topW/2, 165, topW, topH, 10, -12); // <<< ciut do góry
-
+  // górny: ten SAM panel (identyczny), tylko wyżej
+  addPanel(800 - panelW/2, 165, -28); // <<< „jeszcze trochę do góry”
 })();
 </script>
 </body>
