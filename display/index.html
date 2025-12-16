@@ -3,87 +3,146 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Scenografia SVG – skalowana</title>
+  <title>Owal + ekran z siatkami</title>
   <style>
-    html, body {
-      height: 100%;
-      margin: 0;
+    html, body { height: 100%; margin: 0; }
+    body{
+      display:grid;
+      place-items:center;
+      background: radial-gradient(1400px 700px at 50% 25%, #ff5aa0 0%, #ff3b63 22%, #c43e79 45%, #6a4aa7 72%, #1b1a2b 100%);
+      overflow:hidden;
     }
-
-    body {
-      display: grid;
-      place-items: center;
-      background: radial-gradient(
-        1400px 700px at 50% 25%,
-        #ff5aa0 0%,
-        #ff3b63 22%,
-        #c43e79 45%,
-        #6a4aa7 72%,
-        #1b1a2b 100%
-      );
-      overflow: hidden;
+    /* owal prawie do krawędzi strony */
+    .wrap{
+      width: 99vw;
+      height: 92vh;
+      display:grid;
+      place-items:center;
     }
-
-    /* prawie cała szerokość ekranu */
-    .wrap {
-      width: 98vw;
-      height: 80vh;
-      display: grid;
-      place-items: center;
-    }
-
-    svg {
-      width: 100%;
-      height: 100%;
-      display: block;
-
-      /* kluczowe: skalowanie CAŁOŚCI */
-      transform: scaleY(1.08);
+    svg{
+      width:100%;
+      height:100%;
+      display:block;
+      transform: scaleY(1.08);          /* lekkie rozciągnięcie w pionie */
       transform-origin: center center;
     }
   </style>
 </head>
 <body>
-
 <div class="wrap">
-<svg viewBox="0 0 1600 900" xmlns="http://www.w3.org/2000/svg">
+  <svg id="scene" viewBox="0 0 1600 900" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="rimGrad" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0" stop-color="#3a2a2f"/>
+        <stop offset="0.5" stop-color="#4a353c"/>
+        <stop offset="1" stop-color="#2f2b3c"/>
+      </linearGradient>
+      <linearGradient id="innerGrad" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#dfe6ea"/>
+        <stop offset="1" stop-color="#bfc7cf"/>
+      </linearGradient>
+    </defs>
 
-  <defs>
-    <linearGradient id="rimGrad" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0" stop-color="#3a2a2f"/>
-      <stop offset="0.5" stop-color="#4a353c"/>
-      <stop offset="1" stop-color="#2f2b3c"/>
-    </linearGradient>
+    <!-- OWAL prawie na całą szerokość -->
+    <rect x="60" y="150" width="1480" height="600" rx="300" fill="url(#rimGrad)"/>
+    <rect x="210" y="230" width="1180" height="440" rx="220" fill="url(#innerGrad)"/>
 
-    <linearGradient id="innerGrad" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#dfe6ea"/>
-      <stop offset="1" stop-color="#bfc7cf"/>
-    </linearGradient>
-  </defs>
+    <!-- LINIE -->
+    <g stroke="#ffffff" stroke-opacity="0.22" stroke-width="6">
+      <line x1="800" y1="150" x2="800" y2="230"/>
+      <line x1="180" y1="190" x2="360" y2="340"/>
+      <line x1="1420" y1="190" x2="1240" y2="340"/>
+      <line x1="180" y1="710" x2="360" y2="560"/>
+      <line x1="1420" y1="710" x2="1240" y2="560"/>
+    </g>
 
-  <!-- OWALE -->
-  <rect x="160" y="120" width="1280" height="560" rx="280" fill="url(#rimGrad)"/>
-  <rect x="300" y="200" width="1000" height="400" rx="200" fill="url(#innerGrad)"/>
+    <!-- 3 pozostałe czarne prostokąty -->
+    <rect x="60"   y="390" width="160" height="120" rx="10" fill="#000"/>
+    <rect x="1380" y="390" width="160" height="120" rx="10" fill="#000"/>
+    <rect x="740"  y="165" width="120" height="70"  rx="10" fill="#000"/>
 
-  <!-- LINIE -->
-  <g stroke="#ffffff" stroke-opacity="0.22" stroke-width="6">
-    <line x1="800" y1="120" x2="800" y2="200"/>
-    <line x1="280" y1="160" x2="450" y2="300"/>
-    <line x1="1320" y1="160" x2="1150" y2="300"/>
-    <line x1="280" y1="640" x2="450" y2="500"/>
-    <line x1="1320" y1="640" x2="1150" y2="500"/>
-  </g>
-
-  <!-- CZARNE PROSTOKĄTY -->
-  <rect x="160" y="345" width="140" height="110" rx="10" fill="#000"/>
-  <rect x="1300" y="345" width="140" height="110" rx="10" fill="#000"/>
-  <rect x="740" y="135" width="120" height="70" rx="10" fill="#000"/>
-
-  <!-- ŚRODKOWY EKRAN -->
-  <rect x="420" y="250" width="760" height="320" rx="18" fill="#000"/>
-
-</svg>
+    <!-- EKRAN (duży czarny) + jego wnętrze generowane w JS -->
+    <g id="screenGroup"></g>
+  </svg>
 </div>
 
+<script>
+(() => {
+  const NS = "http://www.w3.org/2000/svg";
+  const g = document.getElementById("screenGroup");
+
+  // --- parametry okręgów i komórek ---
+  const r = 2;                 // promień okręgu
+  const d = r * 2;             // średnica (to też odstęp między prostokątami)
+  const gap = d;               // odstęp między szarymi prostokątami = 1 okrąg
+  const pitch = d + 1;         // odstęp między środkami okręgów w komórce
+  const margin = d;            // margines w komórce
+
+  const dotsCols = 5, dotsRows = 7;     // 5x7 w każdej komórce
+  const cellCols = 30, cellRows = 10;   // 30x10 komórek na ekranie
+
+  // rozmiar pojedynczej komórki (szary prostokąt)
+  const cellW = (dotsCols - 1) * pitch + margin * 2;
+  const cellH = (dotsRows - 1) * pitch + margin * 2;
+
+  // rozmiar całej siatki komórek
+  const gridW = cellCols * cellW + (cellCols - 1) * gap;
+  const gridH = cellRows * cellH + (cellRows - 1) * gap;
+
+  // padding ekranu (czarnego) dookoła siatki
+  const pad = 18;
+
+  // docelowy ekran: wyśrodkowany w viewBox 1600x900 (środek: 800,450)
+  const screenW = gridW + pad * 2;
+  const screenH = gridH + pad * 2;
+  const screenX = 800 - screenW / 2;
+  const screenY = 450 - screenH / 2;
+
+  // czarny ekran
+  const screen = document.createElementNS(NS, "rect");
+  screen.setAttribute("x", screenX);
+  screen.setAttribute("y", screenY);
+  screen.setAttribute("width", screenW);
+  screen.setAttribute("height", screenH);
+  screen.setAttribute("rx", 18);
+  screen.setAttribute("fill", "#000");
+  g.appendChild(screen);
+
+  // grupa na komórki + kropki (żeby łatwo przesunąć jednym translate)
+  const inner = document.createElementNS(NS, "g");
+  inner.setAttribute("transform", `translate(${screenX + pad}, ${screenY + pad})`);
+  g.appendChild(inner);
+
+  // rysujemy 30x10 ciemnoszarych komórek, w każdej 5x7 czarnych kropek
+  for (let row = 0; row < cellRows; row++) {
+    for (let col = 0; col < cellCols; col++) {
+      const x0 = col * (cellW + gap);
+      const y0 = row * (cellH + gap);
+
+      // komórka (ciemny szary prostokąt)
+      const cell = document.createElementNS(NS, "rect");
+      cell.setAttribute("x", x0);
+      cell.setAttribute("y", y0);
+      cell.setAttribute("width", cellW);
+      cell.setAttribute("height", cellH);
+      cell.setAttribute("rx", 4);
+      cell.setAttribute("fill", "#2e2e32");
+      inner.appendChild(cell);
+
+      // kropki w komórce (5x7)
+      for (let dy = 0; dy < dotsRows; dy++) {
+        for (let dx = 0; dx < dotsCols; dx++) {
+          const c = document.createElementNS(NS, "circle");
+          c.setAttribute("cx", x0 + margin + dx * pitch);
+          c.setAttribute("cy", y0 + margin + dy * pitch);
+          c.setAttribute("r", r);
+          c.setAttribute("fill", "#000");
+          inner.appendChild(c);
+        }
+      }
+    }
+  }
+})();
+</script>
 </body>
 </html>
