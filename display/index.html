@@ -3,36 +3,48 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Scenografia SVG – linie</title>
+  <title>Scenografia SVG – skalowana</title>
   <style>
     html, body {
       height: 100%;
       margin: 0;
     }
+
     body {
       display: grid;
       place-items: center;
       background: radial-gradient(
-        1200px 600px at 50% 25%,
+        1400px 700px at 50% 25%,
         #ff5aa0 0%,
         #ff3b63 22%,
         #c43e79 45%,
         #6a4aa7 72%,
         #1b1a2b 100%
       );
+      overflow: hidden;
     }
+
+    /* prawie cała szerokość ekranu */
     .wrap {
-      width: min(1100px, 96vw);
-      aspect-ratio: 16 / 9;
+      width: 98vw;
+      height: 80vh;
+      display: grid;
+      place-items: center;
     }
+
     svg {
       width: 100%;
       height: 100%;
       display: block;
+
+      /* kluczowe: skalowanie CAŁOŚCI */
+      transform: scaleY(1.08);
+      transform-origin: center center;
     }
   </style>
 </head>
 <body>
+
 <div class="wrap">
 <svg viewBox="0 0 1600 900" xmlns="http://www.w3.org/2000/svg">
 
@@ -53,21 +65,12 @@
   <rect x="160" y="120" width="1280" height="560" rx="280" fill="url(#rimGrad)"/>
   <rect x="300" y="200" width="1000" height="400" rx="200" fill="url(#innerGrad)"/>
 
-  <!-- LINIE KONSTRUKCYJNE -->
+  <!-- LINIE -->
   <g stroke="#ffffff" stroke-opacity="0.22" stroke-width="6">
-    <!-- górna oś -->
     <line x1="800" y1="120" x2="800" y2="200"/>
-
-    <!-- lewa góra -->
     <line x1="280" y1="160" x2="450" y2="300"/>
-
-    <!-- prawa góra -->
     <line x1="1320" y1="160" x2="1150" y2="300"/>
-
-    <!-- lewy dół -->
     <line x1="280" y1="640" x2="450" y2="500"/>
-
-    <!-- prawy dół -->
     <line x1="1320" y1="640" x2="1150" y2="500"/>
   </g>
 
@@ -81,5 +84,6 @@
 
 </svg>
 </div>
+
 </body>
 </html>
