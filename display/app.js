@@ -4,11 +4,9 @@ function el(tag, className, styleVars = {}) {
   for (const [k, v] of Object.entries(styleVars)) n.style.setProperty(k, v);
   return n;
 }
-
 function createDot(isOn = false) {
   return el("div", "dot" + (isOn ? " on" : ""));
 }
-
 function create5x7Module() {
   const m = el("div", "module");
   const dots = [];
@@ -22,10 +20,7 @@ function create5x7Module() {
 
 /* 30x10 modułów 5x7 */
 function buildMainMatrix(root) {
-  const grid = el("div", "modulesGrid", {
-    "--dot": "8px",
-    "--dotGap": "2px",
-  });
+  const grid = el("div", "modulesGrid", { "--dot":"10px", "--dotGap":"2px" });
   grid.style.gridTemplateColumns = `repeat(30, max-content)`;
   grid.style.gridTemplateRows = `repeat(10, max-content)`;
 
@@ -36,34 +31,33 @@ function buildMainMatrix(root) {
     grid.appendChild(mod.node);
   }
   root.appendChild(grid);
-  return { grid, modules };
+  return { modules };
 }
 
-/* “duże” moduły 5x7 do cyfr (np. 3 cyfry na bokach) */
-function buildBigDigits(root, digitsCount, dotPx) {
+/* “duże” 5x7 do cyfr */
+function buildBigDigits(root, count, dotPx) {
   const wrap = el("div", "modulesGrid", {
     "--dot": `${dotPx}px`,
     "--dotGap": `${Math.max(3, Math.round(dotPx * 0.18))}px`,
   });
-  wrap.style.gridTemplateColumns = `repeat(${digitsCount}, max-content)`;
-  wrap.style.gridAutoRows = `max-content`;
+  wrap.style.gridTemplateColumns = `repeat(${count}, max-content)`;
   wrap.style.gap = `${Math.round(dotPx * 0.7)}px`;
 
   const modules = [];
-  for (let i = 0; i < digitsCount; i++) {
+  for (let i = 0; i < count; i++) {
     const mod = create5x7Module();
     modules.push(mod);
     wrap.appendChild(mod.node);
   }
   root.appendChild(wrap);
-  return { wrap, modules };
+  return { modules };
 }
 
-/* pasek 96x7 (SUMA / podpis) */
+/* 96x7 pikseli, piksel 1.5x większy niż main (main=10px => 15px) */
 function buildStrip96x7(root, dotPx) {
   const grid = el("div", "pixelGrid", {
     "--dot": `${dotPx}px`,
-    "--dotGap": `${Math.max(2, Math.round(dotPx * 0.25))}px`,
+    "--dotGap": `${Math.max(2, Math.round(dotPx * 0.22))}px`,
   });
   grid.style.gridTemplateColumns = `repeat(96, var(--dot))`;
   grid.style.gridTemplateRows = `repeat(7, var(--dot))`;
@@ -75,46 +69,68 @@ function buildStrip96x7(root, dotPx) {
     grid.appendChild(d);
   }
   root.appendChild(grid);
-  return { grid, dots };
+  return { dots };
 }
 
-/* demo “życia” */
+/* --------- skalowanie na telefony --------- */
+const rig = document.getElementById("rig");
+const DESIGN_W = 980;
+const DESIGN_H = 560;
+
+function updateScale() {
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  const margin = 24;
+  const s = Math.min((vw - margin) / DESIGN_W, (vh - margin) / DESIGN_H);
+  rig.style.setProperty("--scale", String(Math.min(1, s)));
+}
+window.addEventListener("resize", updateScale);
+window.addEventListener("orientationchange", updateScale);
+updateScale();
+
+/* --------- fullscreen --------- */
+const fsBtn = document.getElementById("fsBtn");
+const stage = document.getElementById("stage");
+
+async function toggleFullscreen() {
+  try {
+    if (!document.fullscreenElement) await stage.requestFullscreen();
+    else await document.exitFullscreen();
+  } catch (e) {
+    console.warn("Fullscreen error:", e);
+  }
+}
+fsBtn.addEventListener("click", toggleFullscreen);
+document.addEventListener("fullscreenchange", () => {
+  fsBtn.textContent = document.fullscreenElement ? "⤢" : "⛶";
+  updateScale();
+});
+
+/* --------- budowa wyświetlaczy --------- */
+const main = buildMainMatrix(document.getElementById("mainMatrix"));
+const left = buildBigDigits(document.getElementById("leftScore"), 3, 20);
+const right = buildBigDigits(document.getElementById("rightScore"), 3, 20);
+const top = buildBigDigits(document.getElementById("topDigit"), 2, 18);
+
+const strip1 = buildStrip96x7(document.getElementById("strip1"), 15);
+const strip2 = buildStrip96x7(document.getElementById("strip2"), 15);
+
+/* demo */
 function randomizeModule(mod, density = 0.18) {
   for (const d of mod.dots) d.classList.toggle("on", Math.random() < density);
 }
-function randomizeDots(dots, density = 0.08) {
+function randomizeDots(dots, density = 0.06) {
   for (const d of dots) d.classList.toggle("on", Math.random() < density);
 }
-
-/* init */
-const mainRoot = document.getElementById("mainMatrix");
-const leftRoot = document.getElementById("leftScore");
-const rightRoot = document.getElementById("rightScore");
-const topRoot = document.getElementById("topDigit");
-const sumRoot = document.getElementById("sumStrip");
-
-const main = buildMainMatrix(mainRoot);
-
-// zbliżone proporcje do zdjęcia: boki = 3 cyfry, góra = 1-2 cyfry
-const left = buildBigDigits(leftRoot, 3, 16);
-const right = buildBigDigits(rightRoot, 3, 16);
-const top = buildBigDigits(topRoot, 2, 14);
-
-// dolny podpis jak “SUMA 0” – na razie tylko kropki w pasku
-const sum = buildStrip96x7(sumRoot, 10);
-
-/* animacja testowa (żeby widać było, że to “wyświetlacze”) */
 setInterval(() => {
-  // trochę losu na głównym
-  for (let i = 0; i < 28; i++) {
+  for (let i = 0; i < 26; i++) {
     const m = main.modules[(Math.random() * main.modules.length) | 0];
-    randomizeModule(m, 0.22);
+    randomizeModule(m, 0.20);
   }
-  // boki i góra bardziej “stabilne”
-  for (const m of left.modules) randomizeModule(m, 0.16);
-  for (const m of right.modules) randomizeModule(m, 0.16);
-  for (const m of top.modules) randomizeModule(m, 0.14);
+  for (const m of left.modules) randomizeModule(m, 0.14);
+  for (const m of right.modules) randomizeModule(m, 0.14);
+  for (const m of top.modules) randomizeModule(m, 0.12);
 
-  // pasek suma bardzo delikatnie
-  randomizeDots(sum.dots, 0.05);
+  randomizeDots(strip1.dots, 0.045);
+  randomizeDots(strip2.dots, 0.045);
 }, 220);
