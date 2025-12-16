@@ -2,83 +2,64 @@
 <html lang="pl">
 <head>
   <meta charset="utf-8" />
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1, viewport-fit=cover"
-  />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Familiada – wyświetlacz</title>
-
-  <!-- favicon -->
   <link rel="icon" href="favicon.ico" />
-
-  <!-- styles -->
   <link rel="stylesheet" href="styles.css" />
 </head>
-
 <body>
-  <!-- fullscreen button -->
-  <button
-    id="fsBtn"
-    class="fsBtn"
-    aria-label="Pełny ekran"
-    title="Pełny ekran"
-  >
-    ⛶
-  </button>
+  <button id="fsBtn" class="fsBtn" title="Pełny ekran" aria-label="Pełny ekran">⛶</button>
 
-  <!-- STAGE = cały ekran -->
   <div class="stage" id="stage">
-
-    <!-- OVAL = tło, niezależne od ekranów -->
+    <!-- owal = tło -->
     <div class="megaRing" aria-hidden="true"></div>
 
-    <!-- ===== EKRANY ===== -->
+    <!-- TU skaluje się cała “warstwa ekranów” -->
+    <div class="screens" id="screens">
+      <!-- MAIN -->
+      <div class="panel panel--main hasSegments" id="mainPanel">
+        <div class="panel__surface">
+          <div id="mainMatrix" class="dotHost"></div>
+        </div>
+      </div>
 
-    <!-- GŁÓWNY – środek -->
-    <div class="panel panel--main hasSegments" id="mainPanel">
-      <div class="panel__surface">
-        <div id="mainMatrix" class="dotHost"></div>
+      <!-- TOP -->
+      <div class="panel panel--top hasSegments" id="topPanel">
+        <div class="panel__surface">
+          <div id="topDigit" class="dotHost"></div>
+        </div>
+      </div>
+
+      <!-- LEFT -->
+      <div class="panel panel--left hasSegments" id="leftPanel">
+        <div class="panel__surface">
+          <div id="leftScore" class="dotHost"></div>
+        </div>
+      </div>
+
+      <!-- RIGHT -->
+      <div class="panel panel--right hasSegments" id="rightPanel">
+        <div class="panel__surface">
+          <div id="rightScore" class="dotHost"></div>
+        </div>
+      </div>
+
+      <!-- BOTTOM LEFT -->
+      <div class="panel panel--stripL noSegments" id="stripLPanel">
+        <div class="panel__surface">
+          <div id="strip1" class="dotHost"></div>
+        </div>
+      </div>
+
+      <!-- BOTTOM RIGHT -->
+      <div class="panel panel--stripR noSegments" id="stripRPanel">
+        <div class="panel__surface">
+          <div id="strip2" class="dotHost"></div>
+        </div>
       </div>
     </div>
-
-    <!-- GÓRNY – środek górnej krawędzi -->
-    <div class="panel panel--top hasSegments" id="topPanel">
-      <div class="panel__surface">
-        <div id="topDigit" class="dotHost"></div>
-      </div>
-    </div>
-
-    <!-- LEWY – środek lewej krawędzi -->
-    <div class="panel panel--left hasSegments" id="leftPanel">
-      <div class="panel__surface">
-        <div id="leftScore" class="dotHost"></div>
-      </div>
-    </div>
-
-    <!-- PRAWY – środek prawej krawędzi -->
-    <div class="panel panel--right hasSegments" id="rightPanel">
-      <div class="panel__surface">
-        <div id="rightScore" class="dotHost"></div>
-      </div>
-    </div>
-
-    <!-- DOLNY LEWY – róg -->
-    <div class="panel panel--stripL noSegments" id="stripLPanel">
-      <div class="panel__surface">
-        <div id="strip1" class="dotHost"></div>
-      </div>
-    </div>
-
-    <!-- DOLNY PRAWY – róg -->
-    <div class="panel panel--stripR noSegments" id="stripRPanel">
-      <div class="panel__surface">
-        <div id="strip2" class="dotHost"></div>
-      </div>
-    </div>
-
   </div>
 
-  <!-- logic -->
   <script src="app.js"></script>
 </body>
 </html>
