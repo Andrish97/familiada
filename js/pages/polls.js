@@ -1,5 +1,4 @@
 // js/pages/polls.js
-import QRCode from "https://cdn.jsdelivr.net/npm/qrcode@1.5.3/+esm";
 import { sb } from "../core/supabase.js";
 import { requireAuth, signOut } from "../core/auth.js";
 import { guardDesktopOnly } from "../core/device-guard.js";
@@ -10,50 +9,37 @@ guardDesktopOnly({ message: "Sondaże są dostępne tylko na komputerze." });
 const qs = new URLSearchParams(location.search);
 const gameId = qs.get("id");
 
-const RULES = { QN: 10, AN: 5 };
+const who = document.getElementById("who");
+const btnLogout = document.getElementById("btnLogout");
+const btnBack = document.getElementById("btnBack");
+const msg = document.getElementById("msg");
 
-const $ = (id) => document.getElementById(id);
-function on(el, evt, fn) { if (el) el.addEventListener(evt, fn); }
-function show(el, yes) { if (el) el.style.display = yes ? "" : "none"; }
-function dis(el, yes) { if (el) el.disabled = !!yes; }
-function txt(el, t) { if (el) el.textContent = t ?? ""; }
-function val(el, v) { if (el) el.value = v ?? ""; }
+const cardMain = document.getElementById("cardMain");
+const cardEmpty = document.getElementById("cardEmpty");
 
-const who = $("who");
-const btnLogout = $("btnLogout");
-const btnBack = $("btnBack");
-const msg = $("msg");
+const chipKind = document.getElementById("chipKind");
+const chipStatus = document.getElementById("chipStatus");
 
-const cardMain = $("cardMain");
-const cardEmpty = $("cardEmpty");
+const gName = document.getElementById("gName");
+const gMeta = document.getElementById("gMeta");
+const pollLinkEl = document.getElementById("pollLink");
 
-const chipKind = $("chipKind");
-const chipStatus = $("chipStatus");
+const qrBox = document.getElementById("qr");
 
-const gName = $("gName");
-const gMeta = $("gMeta");
-const pollLinkEl = $("pollLink");
+const btnCopy = document.getElementById("btnCopy");
+const btnOpen = document.getElementById("btnOpen");
+const btnOpenQr = document.getElementById("btnOpenQr");
 
-const qrBox = $("qr");
+const btnStart = document.getElementById("btnStart");
+const btnClose = document.getElementById("btnClose");
+const btnReopen = document.getElementById("btnReopen");
 
-const btnCopy = $("btnCopy");
-const btnOpen = $("btnOpen");
-const btnQrSmall = $("btnQrSmall"); // modal QR
-const btnOpenQr = $("btnOpenQr");   // rzutnik QR
-
-const qrOverlay = $("qrOverlay");
-const qrInline = $("qrInline");
-const qrInlineUrl = $("qrInlineUrl");
-const btnCloseQr = $("btnCloseQr");
-
-const btnStart = $("btnStart");
-const btnClose = $("btnClose");
-const btnReopen = $("btnReopen");
-
-const btnPreview = $("btnPreview");
-const votesEl = $("votes");
+const btnPreview = document.getElementById("btnPreview");
+const votesEl = document.getElementById("votes");
 
 let game = null;
+
+const RULES = { QN: 10, AN: 5 };
 
 function setMsg(t) {
   if (!msg) return;
@@ -69,52 +55,53 @@ function pollLink(g) {
 }
 
 function setChips(g) {
-  txt(chipKind, g.kind === "poll" ? "SONDAŻOWA" : "LOKALNA");
+  if (chipKind) chipKind.textContent = g.kind === "poll" ? "SONDAŻOWA" : "LOKALNA";
 
   if (chipStatus) {
     chipStatus.className = "chip status";
     const st = g.status || "draft";
     chipStatus.textContent = st.toUpperCase();
+
     if (st === "ready") chipStatus.classList.add("ok");
     else if (st === "poll_open") chipStatus.classList.add("warn");
     else chipStatus.classList.add("bad");
   }
 }
 
-async function qrCanvas(link, size) {
-  const canvas = document.createElement("canvas");
-  await QRCode.toCanvas(canvas, link, { width: size, margin: 1 });
-  return canvas;
+function clearQr() {
+  if (qrBox) qrBox.innerHTML = "";
+}
+
+function waitForQRCode() {
+  return new Promise((resolve, reject) => {
+    let tries = 0;
+    const i = setInterval(() => {
+      if (window.QRCode) {
+        clearInterval(i);
+        resolve(window.QRCode);
+      }
+      tries++;
+      if (tries > 80) {
+        clearInterval(i);
+        reject(new Error("QRCode lib not loaded"));
+      }
+    }, 50);
+  });
 }
 
 async function renderSmallQr(link) {
   if (!qrBox) return;
   qrBox.innerHTML = "";
-  try {
-    qrBox.appendChild(await qrCanvas(link, 160));
-  } catch (e) {
-    console.error("[polls] QR small error:", e);
-    qrBox.textContent = "QR error";
-  }
-}
-
-async function openInlineQr(link) {
-  if (!qrOverlay || !qrInline || !qrInlineUrl) {
-    setMsg("Brak elementów modala QR w HTML.");
-    return;
-  }
-
-  qrInline.innerHTML = "";
-  qrInlineUrl.textContent = link;
+  if (!link) return;
 
   try {
-    qrInline.appendChild(await qrCanvas(link, 240));
-  } catch (e) {
-    console.error("[polls] QR modal error:", e);
-    qrInline.textContent = "Nie udało się wygenerować QR.";
+    const QRCode = await waitForQRCode();
+    QRCode.toCanvas(link, { width: 260, margin: 1 }, (err, canvas) => {
+      if (!err && canvas) qrBox.appendChild(canvas);
+    });
+  } catch {
+    qrBox.textContent = "QR nie działa (brak biblioteki).";
   }
-
-  show(qrOverlay, true);
 }
 
 async function loadGame() {
@@ -127,7 +114,7 @@ async function loadGame() {
   return data;
 }
 
-// 10 pytań, każde dokładnie 5 odpowiedzi (bierzemy pierwsze 10)
+// Twarda zasada: 10 pytań i każde ma DOKŁADNIE 5 odpowiedzi (bierzemy pierwsze 10)
 async function pollSetupCheck(gid) {
   const { data: qs, error: qErr } = await sb()
     .from("questions")
@@ -136,7 +123,9 @@ async function pollSetupCheck(gid) {
     .order("ord", { ascending: true });
 
   if (qErr) return { ok: false, reason: "Błąd wczytywania pytań." };
-  if (!qs || qs.length < RULES.QN) return { ok: false, reason: `Za mało pytań: ${qs?.length || 0} / ${RULES.QN}.` };
+  if (!qs || qs.length < RULES.QN) {
+    return { ok: false, reason: `Za mało pytań: ${qs?.length || 0} / ${RULES.QN}.` };
+  }
 
   const ten = qs.slice(0, RULES.QN);
 
@@ -147,20 +136,22 @@ async function pollSetupCheck(gid) {
       .eq("question_id", q.id);
 
     if (aErr) return { ok: false, reason: `Błąd wczytywania odpowiedzi (pytanie #${q.ord}).` };
-    if (!ans || ans.length !== RULES.AN) return { ok: false, reason: `Pytanie #${q.ord} ma ${ans?.length || 0} / ${RULES.AN} odpowiedzi.` };
+    if (!ans || ans.length !== RULES.AN) {
+      return { ok: false, reason: `Pytanie #${q.ord} ma ${ans?.length || 0} / ${RULES.AN} odpowiedzi.` };
+    }
   }
 
   return { ok: true, reason: "" };
 }
 
-function setLinkUi(on) {
-  dis(btnCopy, !on);
-  dis(btnOpen, !on);
-  dis(btnQrSmall, !on);
-  dis(btnOpenQr, !on);
-  if (!on && qrBox) qrBox.innerHTML = "";
+function setLinkUiVisible(on) {
+  btnCopy && (btnCopy.disabled = !on);
+  btnOpen && (btnOpen.disabled = !on);
+  btnOpenQr && (btnOpenQr.disabled = !on);
+  if (!on) clearQr();
 }
 
+// Podgląd głosów (z ostatniej sesji per pytanie)
 async function previewVotes() {
   if (!votesEl) return;
 
@@ -173,7 +164,10 @@ async function previewVotes() {
     .eq("game_id", gameId)
     .order("ord", { ascending: true });
 
-  if (qErr) { votesEl.textContent = "Błąd wczytywania pytań."; return; }
+  if (qErr) {
+    votesEl.textContent = "Błąd wczytywania pytań.";
+    return;
+  }
 
   const ten = (qs || []).slice(0, RULES.QN);
   let out = [];
@@ -185,7 +179,11 @@ async function previewVotes() {
       .eq("question_id", q.id)
       .order("ord", { ascending: true });
 
-    if (aErr) { out.push(`Q${q.ord}: błąd odpowiedzi`); out.push(""); continue; }
+    if (aErr) {
+      out.push(`Q${q.ord}: błąd odpowiedzi`);
+      out.push("");
+      continue;
+    }
 
     const { data: sess, error: sErr } = await sb()
       .from("poll_sessions")
@@ -196,9 +194,14 @@ async function previewVotes() {
       .limit(1)
       .maybeSingle();
 
-    if (sErr) { out.push(`Q${q.ord}: błąd sesji`); out.push(""); continue; }
+    if (sErr) {
+      out.push(`Q${q.ord}: błąd sesji`);
+      out.push("");
+      continue;
+    }
 
-    const sid = sess?.id;
+    const sid = sess?.id || null;
+
     const counts = new Map();
     (ans || []).forEach(a => counts.set(a.id, 0));
 
@@ -210,13 +213,15 @@ async function previewVotes() {
 
       if (!vErr) {
         for (const v of (votes || [])) {
-          if (counts.has(v.answer_id)) counts.set(v.answer_id, counts.get(v.answer_id) + 1);
+          if (counts.has(v.answer_id)) counts.set(v.answer_id, (counts.get(v.answer_id) || 0) + 1);
         }
       }
     }
 
     out.push(`Q${q.ord}: ${q.text}`);
-    for (const a of (ans || [])) out.push(`  - ${a.text}: ${counts.get(a.id) || 0} głosów`);
+    for (const a of (ans || [])) {
+      out.push(`  - ${a.text}: ${counts.get(a.id) || 0} głosów`);
+    }
     out.push("");
   }
 
@@ -225,8 +230,10 @@ async function previewVotes() {
 
 async function refresh() {
   if (!gameId) {
-    show(cardMain, false);
-    show(cardEmpty, true);
+    cardMain && (cardMain.style.display = "none");
+    cardEmpty && (cardEmpty.style.display = "");
+    chipKind && (chipKind.textContent = "—");
+    chipStatus && (chipStatus.textContent = "—");
     setMsg("Brak parametru id.");
     return;
   }
@@ -234,37 +241,43 @@ async function refresh() {
   game = await loadGame();
 
   if (game.kind !== "poll") {
-    show(cardMain, false);
-    show(cardEmpty, true);
+    cardMain && (cardMain.style.display = "none");
+    cardEmpty && (cardEmpty.style.display = "");
     setMsg("To nie jest gra sondażowa.");
     return;
   }
 
   setChips(game);
-  show(cardEmpty, false);
-  show(cardMain, true);
 
-  txt(gName, game.name || "Sondaż");
-  txt(gMeta, "Link i QR pojawiają się tylko gdy sondaż jest OTWARTY i gra spełnia zasady (10 pytań, 5 odpowiedzi).");
+  cardEmpty && (cardEmpty.style.display = "none");
+  cardMain && (cardMain.style.display = "");
 
-  val(pollLinkEl, "");
-  setLinkUi(false);
+  if (gName) gName.textContent = game.name || "Sondaż";
+  if (gMeta) gMeta.textContent =
+    "Link i QR pojawiają się tylko, gdy sondaż jest OTWARTY i gra spełnia zasady (10 pytań, 5 odpowiedzi).";
+
+  // OFF domyślnie
+  if (pollLinkEl) pollLinkEl.value = "";
+  setLinkUiVisible(false);
+  clearQr();
 
   const st = game.status || "draft";
   const chk = await pollSetupCheck(game.id);
 
-  dis(btnStart, !chk.ok || st === "poll_open");
-  dis(btnClose, st !== "poll_open");
-  dis(btnReopen, !chk.ok || st !== "ready");
+  btnStart && (btnStart.disabled = !chk.ok || st === "poll_open");
+  btnClose && (btnClose.disabled = st !== "poll_open");
+  btnReopen && (btnReopen.disabled = !chk.ok || st !== "ready");
 
   if (st === "poll_open" && chk.ok) {
     const link = pollLink(game);
-    val(pollLinkEl, link);
-    setLinkUi(true);
+    if (pollLinkEl) pollLinkEl.value = link;
+    setLinkUiVisible(true);
     await renderSmallQr(link);
     setMsg("");
   } else {
-    setLinkUi(false);
+    setLinkUiVisible(false);
+    clearQr();
+
     if (!chk.ok) setMsg(chk.reason);
     else if (st === "ready") setMsg("Sondaż jest zamknięty (wyniki policzone). Możesz go otworzyć ponownie.");
     else setMsg("Sondaż jest nieaktywny — uruchom go, żeby pokazać link i QR.");
@@ -273,42 +286,44 @@ async function refresh() {
 
 document.addEventListener("DOMContentLoaded", async () => {
   const u = await requireAuth("index.html");
-  txt(who, u?.email || "—");
+  if (who) who.textContent = u?.email || "—";
 
-  on(btnBack, "click", () => (location.href = "builder.html"));
-  on(btnLogout, "click", async () => { await signOut(); location.href = "index.html"; });
-
-  on(btnCopy, "click", async () => {
-    if (!pollLinkEl?.value) return;
-    try { await navigator.clipboard.writeText(pollLinkEl.value); setMsg("Skopiowano link sondażu."); }
-    catch { setMsg("Nie udało się skopiować."); }
+  btnBack?.addEventListener("click", () => (location.href = "builder.html"));
+  btnLogout?.addEventListener("click", async () => {
+    await signOut();
+    location.href = "index.html";
   });
 
-  on(btnOpen, "click", () => {
+  btnCopy?.addEventListener("click", async () => {
+    if (!pollLinkEl?.value) return;
+    try {
+      await navigator.clipboard.writeText(pollLinkEl.value);
+      setMsg("Skopiowano link sondażu.");
+    } catch {
+      setMsg("Nie udało się skopiować.");
+    }
+  });
+
+  btnOpen?.addEventListener("click", () => {
     if (!pollLinkEl?.value) return;
     window.open(pollLinkEl.value, "_blank", "noopener,noreferrer");
   });
 
-  on(btnQrSmall, "click", async () => {
-    if (!pollLinkEl?.value) return;
-    await openInlineQr(pollLinkEl.value);
-  });
-
-  on(btnOpenQr, "click", () => {
+  btnOpenQr?.addEventListener("click", () => {
     if (!pollLinkEl?.value) return;
     const u = new URL("poll-qr.html", location.href);
     u.searchParams.set("url", pollLinkEl.value);
     window.open(u.toString(), "_blank", "noopener,noreferrer");
   });
 
-  on(btnCloseQr, "click", () => show(qrOverlay, false));
-  on(qrOverlay, "click", (e) => { if (e.target === qrOverlay) show(qrOverlay, false); });
-
-  on(btnStart, "click", async () => {
+  btnStart?.addEventListener("click", async () => {
     if (!game) return;
 
     const chk = await pollSetupCheck(gameId);
-    if (!chk.ok) { setMsg(chk.reason); return; }
+    if (!chk.ok) {
+      setMsg(chk.reason);
+      return;
+    }
 
     const ok = await confirmModal({
       title: "Uruchomić sondaż?",
@@ -328,11 +343,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   });
 
-  on(btnReopen, "click", async () => {
+  btnReopen?.addEventListener("click", async () => {
     if (!game) return;
 
     const chk = await pollSetupCheck(gameId);
-    if (!chk.ok) { setMsg(chk.reason); return; }
+    if (!chk.ok) {
+      setMsg(chk.reason);
+      return;
+    }
 
     const ok = await confirmModal({
       title: "Otworzyć ponownie?",
@@ -352,7 +370,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   });
 
-  on(btnClose, "click", async () => {
+  btnClose?.addEventListener("click", async () => {
     if (!game) return;
 
     const ok = await confirmModal({
@@ -373,7 +391,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   });
 
-  on(btnPreview, "click", async () => {
+  btnPreview?.addEventListener("click", async () => {
     if (!votesEl) return;
     if (votesEl.style.display === "none") await previewVotes();
     else votesEl.style.display = "none";
