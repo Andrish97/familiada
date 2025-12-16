@@ -3,25 +3,24 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Familiada – wyświetlacz</title>
+  <title>Familiada – display</title>
   <link rel="icon" href="favicon.ico" />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
+  <button id="fsBtn" class="fsBtn">⛶</button>
 
-<button id="fsBtn">⛶</button>
+  <div class="oval" aria-hidden="true"></div>
 
-<!-- tło -->
-<div class="oval"></div>
+  <div id="frameMain" class="frame main"></div>
+  <div id="frameLeft" class="frame side left"></div>
+  <div id="frameRight" class="frame side right"></div>
+  <div id="frameTop" class="frame side top"></div>
+  <div id="frameBL" class="frame strip bl"></div>
+  <div id="frameBR" class="frame strip br"></div>
 
-<!-- EKRANY -->
-<div id="main"  class="panel main"></div>
-<div id="left"  class="panel side"></div>
-<div id="right" class="panel side"></div>
-<div id="top"   class="panel side"></div>
-<div id="botL"  class="panel strip"></div>
-<div id="botR"  class="panel strip"></div>
+  <div id="dbg" class="dbg"></div>
 
-<script src="app.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>
