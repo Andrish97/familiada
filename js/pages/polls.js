@@ -3,6 +3,7 @@ import { sb } from "../core/supabase.js";
 import { requireAuth, signOut } from "../core/auth.js";
 import { guardDesktopOnly } from "../core/device-guard.js";
 import { confirmModal } from "../core/modal.js";
+import QRCode from "https://cdn.jsdelivr.net/npm/qrcode@1.5.3/+esm";
 
 guardDesktopOnly({ message: "Sondaże są dostępne tylko na komputerze." });
 
@@ -72,35 +73,17 @@ function clearQr() {
   if (qrBox) qrBox.innerHTML = "";
 }
 
-function waitForQRCode() {
-  return new Promise((resolve, reject) => {
-    let tries = 0;
-    const i = setInterval(() => {
-      if (window.QRCode) {
-        clearInterval(i);
-        resolve(window.QRCode);
-      }
-      tries++;
-      if (tries > 80) {
-        clearInterval(i);
-        reject(new Error("QRCode lib not loaded"));
-      }
-    }, 50);
-  });
-}
-
 async function renderSmallQr(link) {
   if (!qrBox) return;
   qrBox.innerHTML = "";
   if (!link) return;
 
   try {
-    const QRCode = await waitForQRCode();
-    QRCode.toCanvas(link, { width: 260, margin: 1 }, (err, canvas) => {
-      if (!err && canvas) qrBox.appendChild(canvas);
-    });
+    const canvas = document.createElement("canvas");
+    await QRCode.toCanvas(canvas, link, { width: 260, margin: 1 });
+    qrBox.appendChild(canvas);
   } catch {
-    qrBox.textContent = "QR nie działa (brak biblioteki).";
+    qrBox.textContent = "QR nie działa.";
   }
 }
 
@@ -114,7 +97,7 @@ async function loadGame() {
   return data;
 }
 
-// Twarda zasada: 10 pytań i każde ma DOKŁADNIE 5 odpowiedzi (bierzemy pierwsze 10)
+// 10 pytań, każde ma DOKŁADNIE 5 odpowiedzi (bierzemy pierwsze 10)
 async function pollSetupCheck(gid) {
   const { data: qs, error: qErr } = await sb()
     .from("questions")
@@ -151,7 +134,7 @@ function setLinkUiVisible(on) {
   if (!on) clearQr();
 }
 
-// Podgląd głosów (z ostatniej sesji per pytanie)
+// Podgląd głosów: z ostatniej sesji per pytanie
 async function previewVotes() {
   if (!votesEl) return;
 
@@ -256,7 +239,6 @@ async function refresh() {
   if (gMeta) gMeta.textContent =
     "Link i QR pojawiają się tylko, gdy sondaż jest OTWARTY i gra spełnia zasady (10 pytań, 5 odpowiedzi).";
 
-  // OFF domyślnie
   if (pollLinkEl) pollLinkEl.value = "";
   setLinkUiVisible(false);
   clearQr();
