@@ -1,8 +1,4 @@
 :root{
-  --bg1:#b11b32;
-  --bg2:#ff5a7a;
-  --bg3:#1a4ea8;
-
   --panel:#070707;
   --panel2:#0e0e0e;
 
@@ -10,70 +6,99 @@
   --metal2:#cfcfcf;
   --metal3:#9d9d9d;
 
-  --dot:8px;        /* main “dioda” */
+  --dot:10px;        /* większe “diody” w głównym */
   --dotGap:2px;
   --dotOn:#ffd34a;
   --dotOff:#2a2a2a;
 
-  /* przerwa między modułami = szerokość jednej diody (wraz z gapem) */
+  /* przerwa między modułami = szerokość jednej diody */
   --moduleGap: calc(var(--dot) + var(--dotGap));
+
+  --scale: 1;
 }
 
 *{box-sizing:border-box}
 html,body{height:100%}
-body{margin:0;font-family:system-ui,Segoe UI,Roboto,Arial,sans-serif}
+body{
+  margin:0;
+  font-family:system-ui,Segoe UI,Roboto,Arial,sans-serif;
+  background:#08060a;
+  overscroll-behavior:none;
+}
+
+/* fullscreen */
+.fsBtn{
+  position:fixed;
+  left: max(10px, env(safe-area-inset-left));
+  top:  max(10px, env(safe-area-inset-top));
+  z-index:9999;
+  width:38px;height:38px;
+  border-radius:10px;
+  border:1px solid rgba(255,255,255,.18);
+  background: rgba(0,0,0,.55);
+  color:#fff;
+  font-size:18px;
+  display:grid;
+  place-items:center;
+  cursor:pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.fsBtn:active{ transform: scale(.98); }
 
 .studio{
   min-height:100%;
   display:flex;
   align-items:center;
   justify-content:center;
-  padding:28px;
+  padding:
+    max(16px, env(safe-area-inset-top))
+    max(16px, env(safe-area-inset-right))
+    max(16px, env(safe-area-inset-bottom))
+    max(16px, env(safe-area-inset-left));
   background:
     radial-gradient(900px 420px at 52% 30%, rgba(255,255,255,.25), rgba(255,255,255,0) 55%),
     linear-gradient(180deg, #2b0810 0%, #18060b 35%, #08060a 100%);
 }
 
+/* projektowe wymiary + skalowanie */
 .rig{
-  width:min(980px, 96vw);
+  width:980px;
+  height:560px;
   position:relative;
+  transform: scale(var(--scale));
+  transform-origin:center center;
 }
 
-/* ---------- czarne panele ---------- */
+/* panele */
 .panelBlack{
   background: linear-gradient(180deg, var(--panel2), var(--panel));
   border:2px solid rgba(255,255,255,.08);
-  box-shadow:
-    0 18px 50px rgba(0,0,0,.55),
-    inset 0 0 0 2px rgba(255,255,255,.03);
+  box-shadow: 0 18px 50px rgba(0,0,0,.55), inset 0 0 0 2px rgba(255,255,255,.03);
 }
 
-/* ---------- górny mały wyświetlacz ---------- */
+/* top */
 .topCounter{
   position:absolute;
   left:50%;
-  top:-18px;
+  top:6px;
   transform:translateX(-50%);
-  width:190px;
-  height:54px;
-  border-radius:10px;
+  width:230px;
+  height:70px;
+  border-radius:12px;
   display:flex;
   align-items:center;
   justify-content:center;
   z-index:5;
 }
 
-/* ---------- pierścień (czerwony + niebieski) ---------- */
+/* ring */
 .ring{
-  position:relative;
-  height:420px;
+  position:absolute;
+  left:0; right:0;
+  top:76px;
+  height:470px;
   border-radius:999px;
-  padding:34px;
-  /* tło “studio” pod pierścieniem */
-  background:
-    radial-gradient(closest-side at 50% 50%, rgba(0,0,0,.25), rgba(0,0,0,.0) 60%);
-
-  /* conic-gradient robi dwie połówki jak na zdjęciu */
+  padding:36px;
 }
 .ring::before{
   content:"";
@@ -88,7 +113,6 @@ body{margin:0;font-family:system-ui,Segoe UI,Roboto,Arial,sans-serif}
   box-shadow: 0 30px 80px rgba(0,0,0,.55);
 }
 .ring::after{
-  /* “segmenty” na pierścieniu */
   content:"";
   position:absolute;
   inset:18px;
@@ -106,23 +130,23 @@ body{margin:0;font-family:system-ui,Segoe UI,Roboto,Arial,sans-serif}
   pointer-events:none;
 }
 
-/* ---------- boczne liczniki ---------- */
+/* side */
 .sideCounter{
   position:absolute;
   top:50%;
   transform:translateY(-50%);
-  width:150px;
-  height:70px;
-  border-radius:12px;
+  width:190px;
+  height:92px;
+  border-radius:14px;
   display:flex;
   align-items:center;
   justify-content:center;
   z-index:4;
 }
-.sideCounter--left{ left:-12px; }
-.sideCounter--right{ right:-12px; }
+.sideCounter--left{ left:10px; }
+.sideCounter--right{ right:10px; }
 
-/* ---------- metalowe “okno” ---------- */
+/* window */
 .window{
   position:relative;
   z-index:3;
@@ -133,106 +157,74 @@ body{margin:0;font-family:system-ui,Segoe UI,Roboto,Arial,sans-serif}
     linear-gradient(180deg, rgba(255,255,255,.35), rgba(255,255,255,.08)),
     radial-gradient(1200px 600px at 30% 35%, rgba(255,255,255,.55), rgba(255,255,255,0) 55%),
     linear-gradient(180deg, var(--metal1), var(--metal2) 55%, var(--metal3));
-  box-shadow:
-    inset 0 0 0 2px rgba(0,0,0,.25),
-    inset 0 12px 25px rgba(255,255,255,.18);
+  box-shadow: inset 0 0 0 2px rgba(0,0,0,.25), inset 0 12px 25px rgba(255,255,255,.18);
 }
 .windowInner{
   height:100%;
   border-radius:999px;
-  padding:26px 34px;
-  background:
-    linear-gradient(180deg, rgba(255,255,255,.22), rgba(255,255,255,.06));
+  padding:28px 40px;
+  background: linear-gradient(180deg, rgba(255,255,255,.22), rgba(255,255,255,.06));
   box-shadow: inset 0 0 0 2px rgba(0,0,0,.18);
   display:flex;
   align-items:center;
   justify-content:center;
 }
 
-/* ---------- centralny ekran ---------- */
+/* central */
 .mainScreen{
-  width:min(620px, 78%);
-  height:240px;
-  border-radius:10px;
+  width:720px;      /* większy centralny */
+  height:340px;
+  border-radius:12px;
   padding:18px;
   position:relative;
+  display:flex;
+  flex-direction:column;
+  gap:14px;
 }
-.mainCaption{
-  position:absolute;
-  left:18px;
-  right:18px;
-  bottom:12px;
-  height:56px;
-  border-radius:10px;
+
+.mainMatrix{
+  flex: 1 1 auto;
+  display:flex;
+  align-items:flex-start;
+  justify-content:center;
+}
+
+.bottomStrips{
+  flex: 0 0 auto;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+.strip{
+  border-radius:12px;
   padding:10px 12px;
-  background: linear-gradient(180deg, #0f0f0f, #070707);
 }
 
-/* ---------- dół ---------- */
-.base{
-  margin-top:18px;
-  height:120px;
-  position:relative;
-  display:grid;
-  grid-template-columns: 1fr 1.2fr 1fr;
-  gap:18px;
-  align-items:stretch;
-}
-.podium{
-  border-radius:22px;
-  background:
-    linear-gradient(180deg, rgba(255,255,255,.18), rgba(255,255,255,0)),
-    linear-gradient(180deg, #2a2a2a, #0f0f0f);
-  box-shadow:
-    0 18px 60px rgba(0,0,0,.55),
-    inset 0 0 0 2px rgba(255,255,255,.06);
-}
-.podium--center{
-  background:
-    linear-gradient(180deg, rgba(255,255,255,.22), rgba(255,255,255,0)),
-    linear-gradient(180deg, #f4ff2c, #d8e100 55%, #b9c300);
-  box-shadow:
-    0 18px 60px rgba(0,0,0,.55),
-    inset 0 0 0 2px rgba(0,0,0,.18);
-}
-
-/* ---------- diody ---------- */
+/* diody */
 .dotDisplay{ width:100%; height:100%; display:flex; align-items:center; justify-content:center; }
-
 .dot{
   width:var(--dot);
   height:var(--dot);
   border-radius:999px;
   background:var(--dotOff);
-  box-shadow:
-    inset 0 -1px 0 rgba(0,0,0,.45),
-    0 0 0 1px rgba(0,0,0,.25);
+  box-shadow: inset 0 -1px 0 rgba(0,0,0,.45), 0 0 0 1px rgba(0,0,0,.25);
 }
 .dot.on{
   background:var(--dotOn);
-  box-shadow:
-    0 0 14px rgba(255,211,74,.25),
-    inset 0 -1px 0 rgba(0,0,0,.35),
-    0 0 0 1px rgba(0,0,0,.2);
+  box-shadow: 0 0 14px rgba(255,211,74,.25), inset 0 -1px 0 rgba(0,0,0,.35), 0 0 0 1px rgba(0,0,0,.2);
 }
-
-/* moduł 5x7 */
 .module{
   display:grid;
   grid-template-columns: repeat(5, var(--dot));
   grid-template-rows: repeat(7, var(--dot));
   gap: var(--dotGap);
 }
-
-/* siatka modułów */
 .modulesGrid{
   display:grid;
   gap: var(--moduleGap);
   align-content:start;
   justify-content:start;
 }
-
-/* pasek pikseli 96x7 */
 .pixelGrid{
   display:grid;
   gap: var(--dotGap);
@@ -240,18 +232,7 @@ body{margin:0;font-family:system-ui,Segoe UI,Roboto,Arial,sans-serif}
   justify-content:start;
 }
 
-/* responsywność */
-@media (max-width: 860px){
-  .ring{ height:360px; padding:26px; }
-  .sideCounter{ width:130px; height:62px; }
-  .mainScreen{ height:220px; }
-  .topCounter{ width:170px; }
-}
-@media (max-width: 680px){
-  .ring{ height:320px; }
+/* mobilki: chowamy boczne liczniki gdy brakuje miejsca */
+@media (max-width: 740px){
   .sideCounter{ display:none; }
-  .topCounter{ top:-10px; }
-  .base{ grid-template-columns: 1fr; height:auto; }
-  .podium{ height:90px; }
-  .podium--center{ height:110px; }
 }
