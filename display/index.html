@@ -1,274 +1,183 @@
 <!doctype html>
 <html lang="pl">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Owal dopasowany do środka</title>
-  <style>
-    html, body { height: 100%; margin: 0; }
-    body{
-      display:grid;
-      place-items:center;
-      overflow:hidden;
-      background: radial-gradient(
-        1400px 700px at 50% 25%,
-        #ff5aa0 0%,
-        #ff3b63 22%,
-        #c43e79 45%,
-        #6a4aa7 72%,
-        #1b1a2b 100%
-      );
-    }
-    .wrap{
-      width: 99vw;
-      height: 92vh;
-      display:grid;
-      place-items:center;
-    }
-    svg{ width:100%; height:100%; display:block; }
-  </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Owal – poprawione kółka</title>
+<style>
+  html, body { height:100%; margin:0; }
+  body{
+    display:grid;
+    place-items:center;
+    overflow:hidden;
+    background: radial-gradient(
+      1400px 700px at 50% 25%,
+      #ff5aa0 0%,
+      #ff3b63 22%,
+      #c43e79 45%,
+      #6a4aa7 72%,
+      #1b1a2b 100%
+    );
+  }
+  .wrap{
+    width:99vw;
+    height:92vh;
+    display:grid;
+    place-items:center;
+  }
+  svg{ width:100%; height:100%; display:block; }
+</style>
 </head>
 <body>
 <div class="wrap">
-  <svg viewBox="0 0 1600 900" xmlns="http://www.w3.org/2000/svg">
-    <defs>
-      <!-- Bazowy gradient owalu: góra jasnoszara, dół ciemniejszy -->
-      <linearGradient id="ovalBase" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0" stop-color="#d9dde3"/>
-        <stop offset="0.55" stop-color="#aeb6c3"/>
-        <stop offset="1" stop-color="#2f2b3c"/>
-      </linearGradient>
+<svg viewBox="0 0 1600 900" xmlns="http://www.w3.org/2000/svg">
 
-      <!-- Dół-lewa: czarny "kopnięty" w narożnik -->
-      <radialGradient id="ovalBL" cx="0" cy="1" r="1">
-        <stop offset="0" stop-color="#000000" stop-opacity="0.85"/>
-        <stop offset="0.55" stop-color="#000000" stop-opacity="0.25"/>
-        <stop offset="1" stop-color="#000000" stop-opacity="0"/>
-      </radialGradient>
+<!-- ===== OWAŁ – WERSJA POPRZEDNIA (BEZ ZMIAN) ===== -->
+<defs>
+  <linearGradient id="rimGrad" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0" stop-color="#000000"/>
+    <stop offset="0.35" stop-color="#2f2b3c"/>
+    <stop offset="0.65" stop-color="#2a62ff"/>
+    <stop offset="1" stop-color="#2a62ff"/>
+  </linearGradient>
 
-      <!-- Dół-prawa: niebieski narożnik -->
-      <radialGradient id="ovalBR" cx="1" cy="1" r="1">
-        <stop offset="0" stop-color="#2a62ff" stop-opacity="0.75"/>
-        <stop offset="0.6" stop-color="#2a62ff" stop-opacity="0.22"/>
-        <stop offset="1" stop-color="#2a62ff" stop-opacity="0"/>
-      </radialGradient>
+  <linearGradient id="innerGrad" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#e6eaef"/>
+    <stop offset="1" stop-color="#bfc7cf"/>
+  </linearGradient>
+</defs>
 
-      <!-- Wewnętrzny "jasny środek" spinający się z górą -->
-      <linearGradient id="innerGrad" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0" stop-color="#e6eaef"/>
-        <stop offset="1" stop-color="#bfc7cf"/>
-      </linearGradient>
-    </defs>
+<!-- zewnętrzny owal -->
+<rect x="50" y="135" width="1500" height="630" rx="315" fill="url(#rimGrad)"/>
+<!-- wewnętrzny jasny -->
+<rect x="210" y="225" width="1180" height="450" rx="225" fill="url(#innerGrad)"/>
 
-    <!-- OWAL (3 warstwy, ta sama geometria) — ustawiany w JS -->
-    <rect id="ovalOuterBase" rx="0" fill="url(#ovalBase)"/>
-    <rect id="ovalOuterBL"   rx="0" fill="url(#ovalBL)"/>
-    <rect id="ovalOuterBR"   rx="0" fill="url(#ovalBR)"/>
+<!-- linie -->
+<g stroke="#ffffff" stroke-opacity="0.22" stroke-width="6">
+  <line x1="800" y1="135" x2="800" y2="225"/>
+  <line x1="170" y1="185" x2="360" y2="340"/>
+  <line x1="1430" y1="185" x2="1240" y2="340"/>
+  <line x1="170" y1="715" x2="360" y2="560"/>
+  <line x1="1430" y1="715" x2="1240" y2="560"/>
+</g>
 
-    <!-- Wewnętrzny owal (jasny) — ustawiany w JS -->
-    <rect id="ovalInner" rx="0" fill="url(#innerGrad)" opacity="0.95"/>
+<g id="panels"></g>
+<g id="center"></g>
 
-    <!-- Linie konstrukcyjne (ustawiane w JS razem z owalem) -->
-    <g id="lines" stroke="#ffffff" stroke-opacity="0.22" stroke-width="6"></g>
-
-    <!-- Generowane elementy -->
-    <g id="panels"></g>
-    <g id="center"></g>
-  </svg>
+</svg>
 </div>
 
 <script>
 (() => {
-  const NS = "http://www.w3.org/2000/svg";
-  const mk = (name, attrs={}) => {
-    const el = document.createElementNS(NS, name);
-    for (const [k,v] of Object.entries(attrs)) el.setAttribute(k, v);
-    return el;
-  };
-  const setRect = (id, x, y, w, h, rx) => {
-    const r = document.getElementById(id);
-    r.setAttribute("x", x);
-    r.setAttribute("y", y);
-    r.setAttribute("width", w);
-    r.setAttribute("height", h);
-    r.setAttribute("rx", rx);
-  };
+const NS="http://www.w3.org/2000/svg";
+const mk=(n,a={})=>{const e=document.createElementNS(NS,n);for(const k in a)e.setAttribute(k,a[k]);return e};
 
-  // Kolory siatek (zgodnie z Twoim opisem)
-  const COLOR_BIG  = "#2e2e32"; // duże prostokąty (tło środka i panele)
-  const COLOR_CELL = "#000000"; // małe prostokąty
-  const COLOR_DOT  = "#2e2e32"; // kółka (ciemny szary)
+// kolory
+const COLOR_BIG  = "#2e2e32";
+const COLOR_CELL = "#000000";
+const COLOR_DOT  = "#2e2e32";
 
-  const DOTS_X = 5, DOTS_Y = 7;
+const DOTS_X=5, DOTS_Y=7;
 
-  // =========================
-  // ŚRODEK: 30x10 komórek
-  // =========================
-  const centerG = document.getElementById("center");
+// ===================
+// ŚRODEK 30x10
+// ===================
+const center=document.getElementById("center");
 
-  const r = 2;            // promień kropek w środku
-  const d = r * 2;        // średnica
-  const pitch = d + 1;
-  const gap = d;
+const r=2;
+const d=r*2;
+const pitch=d+1;
+const gap=d;
 
-  // STYCZNIE do krawędzi małego prostokąta:
-  const margin = r;
+// KLUCZ: STYCZNOŚĆ
+const margin=r;
 
-  const CELLS_X = 30, CELLS_Y = 10;
+const CELLS_X=30, CELLS_Y=10;
 
-  const cellW = (DOTS_X - 1) * pitch + margin * 2;
-  const cellH = (DOTS_Y - 1) * pitch + margin * 2;
+const cellW=(DOTS_X-1)*pitch+margin*2;
+const cellH=(DOTS_Y-1)*pitch+margin*2;
 
-  const gridW = CELLS_X * cellW + (CELLS_X - 1) * gap;
-  const gridH = CELLS_Y * cellH + (CELLS_Y - 1) * gap;
+const gridW=CELLS_X*cellW+(CELLS_X-1)*gap;
+const gridH=CELLS_Y*cellH+(CELLS_Y-1)*gap;
 
-  const gridX = 800 - gridW / 2;
-  const gridY = 450 - gridH / 2;
+const gridX=800-gridW/2;
+const gridY=450-gridH/2;
 
-  // Duże tło pod siatką (bez "ramki", bez zaokrągleń)
-  centerG.appendChild(mk("rect", {
-    x: gridX, y: gridY, width: gridW, height: gridH,
-    rx: 0, fill: COLOR_BIG
-  }));
+// tło środka
+center.appendChild(mk("rect",{
+  x:gridX,y:gridY,width:gridW,height:gridH,rx:0,fill:COLOR_BIG
+}));
 
-  // Komórki + kropki (bez zaokrągleń)
-  for (let y = 0; y < CELLS_Y; y++) {
-    for (let x = 0; x < CELLS_X; x++) {
-      const x0 = gridX + x * (cellW + gap);
-      const y0 = gridY + y * (cellH + gap);
+for(let y=0;y<CELLS_Y;y++){
+  for(let x=0;x<CELLS_X;x++){
+    const x0=gridX+x*(cellW+gap);
+    const y0=gridY+y*(cellH+gap);
 
-      centerG.appendChild(mk("rect", {
-        x: x0, y: y0, width: cellW, height: cellH,
-        rx: 0, fill: COLOR_CELL
-      }));
-
-      for (let j = 0; j < DOTS_Y; j++) {
-        for (let i = 0; i < DOTS_X; i++) {
-          centerG.appendChild(mk("circle", {
-            cx: x0 + margin + i * pitch,
-            cy: y0 + margin + j * pitch,
-            r: r,
-            fill: COLOR_DOT
-          }));
-        }
-      }
-    }
-  }
-
-  // =========================
-  // Owale dopasowane do dużego prostokąta środkowego
-  // (oval „opisany dookoła” środka + trochę luzu)
-  // =========================
-  const padX_outer = 120;
-  const padY_outer = 150;
-  const padX_inner = 70;
-  const padY_inner = 95;
-
-  const outerX = gridX - padX_outer;
-  const outerY = gridY - padY_outer;
-  const outerW = gridW + padX_outer * 2;
-  const outerH = gridH + padY_outer * 2;
-
-  const innerX = gridX - padX_inner;
-  const innerY = gridY - padY_inner;
-  const innerW = gridW + padX_inner * 2;
-  const innerH = gridH + padY_inner * 2;
-
-  // Owale = zaokrąglenie jako połowa wysokości (kapsuła)
-  const outerRx = outerH / 2;
-  const innerRx = innerH / 2;
-
-  setRect("ovalOuterBase", outerX, outerY, outerW, outerH, outerRx);
-  setRect("ovalOuterBL",   outerX, outerY, outerW, outerH, outerRx);
-  setRect("ovalOuterBR",   outerX, outerY, outerW, outerH, outerRx);
-  setRect("ovalInner",     innerX, innerY, innerW, innerH, innerRx);
-
-  // Linie konstrukcyjne – dopasowane do nowej geometrii owalu
-  const lines = document.getElementById("lines");
-  lines.innerHTML = "";
-
-  const cx = 800;
-  const topY = outerY;
-  const innerTopY = innerY;
-
-  // pionowa oś
-  lines.appendChild(mk("line", { x1: cx, y1: topY, x2: cx, y2: innerTopY }));
-
-  // 4 ukośne (na oko jak wcześniej, ale związane z rozmiarem)
-  const leftX  = outerX + outerW * 0.08;
-  const rightX = outerX + outerW * 0.92;
-
-  const upY1 = outerY + outerH * 0.10;
-  const upY2 = outerY + outerH * 0.32;
-
-  const dnY1 = outerY + outerH * 0.90;
-  const dnY2 = outerY + outerH * 0.68;
-
-  const midLX = outerX + outerW * 0.20;
-  const midRX = outerX + outerW * 0.80;
-
-  lines.appendChild(mk("line", { x1: leftX,  y1: upY1, x2: midLX, y2: upY2 }));
-  lines.appendChild(mk("line", { x1: rightX, y1: upY1, x2: midRX, y2: upY2 }));
-  lines.appendChild(mk("line", { x1: leftX,  y1: dnY1, x2: midLX, y2: dnY2 }));
-  lines.appendChild(mk("line", { x1: rightX, y1: dnY1, x2: midRX, y2: dnY2 }));
-
-  // =========================
-  // PANELE: 3 identyczne, każdy ma 3 sub-prostokąty z siatką 5x7
-  // kółka w panelach: 3x ŚREDNICA względem środka (3x "szerokość")
-  // =========================
-  const panelsG = document.getElementById("panels");
-
-  const dP = d * 3;
-  const rP = dP / 2;
-  const pitchP = dP + 1;
-
-  // STYCZNIE do krawędzi w sub-prostokątach:
-  const marginP = rP;
-
-  const subW = (DOTS_X - 1) * pitchP + marginP * 2;
-  const subH = (DOTS_Y - 1) * pitchP + marginP * 2;
-
-  const subGap = 10;
-  const panelW = 3 * subW + 2 * subGap;
-  const panelH = subH;
-
-  function addPanel(x, y) {
-    const g = mk("g");
-    panelsG.appendChild(g);
-
-    // duży panel (ciemny szary, bez zaokrągleń)
-    g.appendChild(mk("rect", {
-      x, y, width: panelW, height: panelH,
-      rx: 0, fill: COLOR_BIG
+    center.appendChild(mk("rect",{
+      x:x0,y:y0,width:cellW,height:cellH,rx:0,fill:COLOR_CELL
     }));
 
-    // 3 sub-prostokąty (czarne, bez zaokrągleń) + kółka
-    for (let k = 0; k < 3; k++) {
-      const sx = x + k * (subW + subGap);
-      const sy = y;
-
-      g.appendChild(mk("rect", {
-        x: sx, y: sy, width: subW, height: subH,
-        rx: 0, fill: COLOR_CELL
-      }));
-
-      for (let j = 0; j < DOTS_Y; j++) {
-        for (let i = 0; i < DOTS_X; i++) {
-          g.appendChild(mk("circle", {
-            cx: sx + marginP + i * pitchP,
-            cy: sy + marginP + j * pitchP,
-            r: rP,
-            fill: COLOR_DOT
-          }));
-        }
+    for(let j=0;j<DOTS_Y;j++){
+      for(let i=0;i<DOTS_X;i++){
+        center.appendChild(mk("circle",{
+          cx:x0+margin+i*pitch,
+          cy:y0+margin+j*pitch,
+          r:r,
+          fill:COLOR_DOT
+        }));
       }
     }
   }
+}
 
-  // przesunięcia: lewy dalej w lewo, prawy dalej w prawo, górny mocniej w górę
-  addPanel(outerX - 60, 390);
-  addPanel(outerX + outerW - panelW + 60, 390);
-  addPanel(800 - panelW / 2, outerY - 55);
+// ===================
+// PANELE (3 identyczne)
+// ===================
+const panels=document.getElementById("panels");
+
+const dP=d*3;
+const rP=dP/2;
+const pitchP=dP+1;
+
+// KLUCZ: STYCZNOŚĆ
+const marginP=rP;
+
+const subW=(DOTS_X-1)*pitchP+marginP*2;
+const subH=(DOTS_Y-1)*pitchP+marginP*2;
+
+const subGap=10;
+const panelW=3*subW+2*subGap;
+const panelH=subH;
+
+function panel(x,y){
+  const g=mk("g");
+  panels.appendChild(g);
+
+  g.appendChild(mk("rect",{x,y,width:panelW,height:panelH,rx:0,fill:COLOR_BIG}));
+
+  for(let k=0;k<3;k++){
+    const sx=x+k*(subW+subGap);
+    const sy=y;
+
+    g.appendChild(mk("rect",{x:sx,y:sy,width:subW,height:subH,rx:0,fill:COLOR_CELL}));
+
+    for(let j=0;j<DOTS_Y;j++){
+      for(let i=0;i<DOTS_X;i++){
+        g.appendChild(mk("circle",{
+          cx:sx+marginP+i*pitchP,
+          cy:sy+marginP+j*pitchP,
+          r:rP,
+          fill:COLOR_DOT
+        }));
+      }
+    }
+  }
+}
+
+// pozycje jak wcześniej
+panel(10,390);
+panel(1600-panelW-10,390);
+panel(800-panelW/2,85);
 
 })();
 </script>
