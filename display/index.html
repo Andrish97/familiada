@@ -1,188 +1,164 @@
 <!doctype html>
 <html lang="pl">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Owal + siatki (poprawione)</title>
-  <style>
-    html, body { height: 100%; margin: 0; }
-    body{
-      display:grid;
-      place-items:center;
-      background: radial-gradient(1400px 700px at 50% 25%, #ff5aa0 0%, #ff3b63 22%, #c43e79 45%, #6a4aa7 72%, #1b1a2b 100%);
-      overflow:hidden;
-    }
-    .wrap{
-      width: 99vw;
-      height: 92vh;
-      display:grid;
-      place-items:center;
-    }
-    svg{
-      width:100%;
-      height:100%;
-      display:block;
-      /* USUNIĘTE scaleY -> koła znów są kołami */
-    }
-  </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Owal – siatki bez ramek</title>
+<style>
+  html, body { height:100%; margin:0; }
+  body{
+    display:grid;
+    place-items:center;
+    background: radial-gradient(
+      1400px 700px at 50% 25%,
+      #ff5aa0 0%,
+      #ff3b63 22%,
+      #c43e79 45%,
+      #6a4aa7 72%,
+      #1b1a2b 100%
+    );
+    overflow:hidden;
+  }
+  .wrap{
+    width:99vw;
+    height:92vh;
+    display:grid;
+    place-items:center;
+  }
+  svg{ width:100%; height:100%; display:block; }
+</style>
 </head>
 <body>
 <div class="wrap">
-  <svg id="scene" viewBox="0 0 1600 900" xmlns="http://www.w3.org/2000/svg">
-    <defs>
-      <linearGradient id="rimGrad" x1="0" y1="0" x2="1" y2="0">
-        <stop offset="0" stop-color="#3a2a2f"/>
-        <stop offset="0.5" stop-color="#4a353c"/>
-        <stop offset="1" stop-color="#2f2b3c"/>
-      </linearGradient>
-      <linearGradient id="innerGrad" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0" stop-color="#dfe6ea"/>
-        <stop offset="1" stop-color="#bfc7cf"/>
-      </linearGradient>
-    </defs>
+<svg viewBox="0 0 1600 900" xmlns="http://www.w3.org/2000/svg">
 
-    <!-- OWAL prawie do krawędzi + trochę wyższy (zamiast scaleY) -->
-    <rect x="50" y="135" width="1500" height="630" rx="315" fill="url(#rimGrad)"/>
-    <rect x="210" y="225" width="1180" height="450" rx="225" fill="url(#innerGrad)"/>
+<defs>
+  <linearGradient id="rimGrad" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0" stop-color="#3a2a2f"/>
+    <stop offset="0.5" stop-color="#4a353c"/>
+    <stop offset="1" stop-color="#2f2b3c"/>
+  </linearGradient>
+  <linearGradient id="innerGrad" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#dfe6ea"/>
+    <stop offset="1" stop-color="#bfc7cf"/>
+  </linearGradient>
+</defs>
 
-    <!-- LINIE -->
-    <g stroke="#ffffff" stroke-opacity="0.22" stroke-width="6">
-      <line x1="800" y1="135" x2="800" y2="225"/>
-      <line x1="170" y1="185" x2="360" y2="340"/>
-      <line x1="1430" y1="185" x2="1240" y2="340"/>
-      <line x1="170" y1="715" x2="360" y2="560"/>
-      <line x1="1430" y1="715" x2="1240" y2="560"/>
-    </g>
+<!-- OWALE -->
+<rect x="50" y="135" width="1500" height="630" rx="315" fill="url(#rimGrad)"/>
+<rect x="210" y="225" width="1180" height="450" rx="225" fill="url(#innerGrad)"/>
 
-    <g id="panels"></g>
-    <g id="screenGroup"></g>
-  </svg>
+<!-- LINIE -->
+<g stroke="#ffffff" stroke-opacity="0.22" stroke-width="6">
+  <line x1="800" y1="135" x2="800" y2="225"/>
+  <line x1="170" y1="185" x2="360" y2="340"/>
+  <line x1="1430" y1="185" x2="1240" y2="340"/>
+  <line x1="170" y1="715" x2="360" y2="560"/>
+  <line x1="1430" y1="715" x2="1240" y2="560"/>
+</g>
+
+<g id="panels"></g>
+<g id="centerGrid"></g>
+
+</svg>
 </div>
 
 <script>
 (() => {
-  const NS = "http://www.w3.org/2000/svg";
-  const mk = (name, attrs={}) => {
-    const el = document.createElementNS(NS, name);
-    for (const [k,v] of Object.entries(attrs)) el.setAttribute(k, v);
-    return el;
-  };
+const NS="http://www.w3.org/2000/svg";
+const mk=(n,a={})=>{const e=document.createElementNS(NS,n);for(const k in a)e.setAttribute(k,a[k]);return e};
 
-  // ---------------------------
-  // ŚRODKOWY EKRAN: 30x10 komórek, każda 5x7 kropek
-  // ---------------------------
-  const screenG = document.getElementById("screenGroup");
+// KOLORY
+const panelColor = "#2e2e32"; // duże prostokąty – ciemny szary
+const cellColor  = "#000";    // małe prostokąty – czarne
+const dotColor   = "#2e2e32"; // kółka – ciemny szary
 
-  const r = 2;                 // promień kropki (centrum)
-  const d = r * 2;
-  const gap = d;               // odstęp między komórkami = 1 średnica kropki
-  const pitch = d + 1;
-  const margin = 2;            // mniejsze marginesy
+// PARAMETRY SIATKI 5x7
+const dotsCols=5, dotsRows=7;
 
-  const dotsCols = 5, dotsRows = 7;
-  const cellCols = 30, cellRows = 10;
+// ---------- ŚRODEK ----------
+const center = document.getElementById("centerGrid");
 
-  const cellW = (dotsCols - 1) * pitch + margin * 2;
-  const cellH = (dotsRows - 1) * pitch + margin * 2;
+const r=2, d=r*2;
+const pitch=d+1;
+const margin=2;
+const gap=d;
 
-  const gridW = cellCols * cellW + (cellCols - 1) * gap;
-  const gridH = cellRows * cellH + (cellRows - 1) * gap;
+const cellCols=30, cellRows=10;
 
-  const pad = 14;
-  const screenW = gridW + pad * 2;
-  const screenH = gridH + pad * 2;
+const cellW=(dotsCols-1)*pitch+margin*2;
+const cellH=(dotsRows-1)*pitch+margin*2;
 
-  const screenX = 800 - screenW / 2;
-  const screenY = 450 - screenH / 2;
+const gridW=cellCols*cellW+(cellCols-1)*gap;
+const gridH=cellRows*cellH+(cellRows-1)*gap;
 
-  screenG.appendChild(mk("rect", {
-    x: screenX, y: screenY, width: screenW, height: screenH,
-    rx: 14, fill: "#000"
-  }));
+const startX=800-gridW/2;
+const startY=450-gridH/2;
 
-  const inner = mk("g", { transform: `translate(${screenX + pad}, ${screenY + pad})` });
-  screenG.appendChild(inner);
+for(let y=0;y<cellRows;y++){
+  for(let x=0;x<cellCols;x++){
+    const cx=startX+x*(cellW+gap);
+    const cy=startY+y*(cellH+gap);
 
-  const cellRx = 1.5; // mniejsze zaokrąglenia prostokątów-komórek
+    center.appendChild(mk("rect",{x:cx,y:cy,width:cellW,height:cellH,rx:1.5,fill:cellColor}));
 
-  for (let row = 0; row < cellRows; row++) {
-    for (let col = 0; col < cellCols; col++) {
-      const x0 = col * (cellW + gap);
-      const y0 = row * (cellH + gap);
-
-      inner.appendChild(mk("rect", {
-        x: x0, y: y0, width: cellW, height: cellH,
-        rx: cellRx, fill: "#2e2e32"
-      }));
-
-      for (let dy = 0; dy < dotsRows; dy++) {
-        for (let dx = 0; dx < dotsCols; dx++) {
-          inner.appendChild(mk("circle", {
-            cx: x0 + margin + dx * pitch,
-            cy: y0 + margin + dy * pitch,
-            r: r,
-            fill: "#000"
-          }));
-        }
+    for(let j=0;j<dotsRows;j++){
+      for(let i=0;i<dotsCols;i++){
+        center.appendChild(mk("circle",{
+          cx:cx+margin+i*pitch,
+          cy:cy+margin+j*pitch,
+          r:r,
+          fill:dotColor
+        }));
       }
     }
   }
+}
 
-  // ---------------------------
-  // PANELE: lewy/prawy/górny – IDENTYCZNE rozmiarem i wnętrzem
-  // ---------------------------
-  const panels = document.getElementById("panels");
+// ---------- PANELE ----------
+const panels=document.getElementById("panels");
 
-  // w panelach kropki 3x większe
-  const rP = r * 3;
-  const dP = rP * 2;
-  const pitchP = dP + 2;
-  const marginP = 4;
+// większe kółka (3x)
+const rP=r*3, dP=rP*2;
+const pitchP=dP+2, marginP=4;
 
-  const subW = (dotsCols - 1) * pitchP + marginP * 2;
-  const subH = (dotsRows - 1) * pitchP + marginP * 2;
+const subW=(dotsCols-1)*pitchP+marginP*2;
+const subH=(dotsRows-1)*pitchP+marginP*2;
+const subGap=10;
 
-  const subGap = 10;
-  const panelPad = 10;
+const panelW=3*subW+2*subGap;
+const panelH=subH;
 
-  const panelW = (3 * subW + 2 * subGap) + 2 * panelPad;
-  const panelH = subH + 2 * panelPad;
+function panel(x,y){
+  const g=mk("g");
+  panels.appendChild(g);
 
-  function addPanel(x, y, moveY = 0) {
-    const g = mk("g");
-    panels.appendChild(g);
+  g.appendChild(mk("rect",{x,y,width:panelW,height:panelH,rx:10,fill:panelColor}));
 
-    g.appendChild(mk("rect", { x, y: y + moveY, width: panelW, height: panelH, rx: 10, fill: "#000" }));
+  for(let k=0;k<3;k++){
+    const sx=x+k*(subW+subGap);
+    const sy=y;
 
-    const totalSubW = 3 * subW + 2 * subGap;
-    const startX = x + (panelW - totalSubW) / 2;
-    const startY = (y + moveY) + (panelH - subH) / 2;
+    g.appendChild(mk("rect",{x:sx,y:sy,width:subW,height:subH,rx:2,fill:cellColor}));
 
-    for (let i = 0; i < 3; i++) {
-      const sx = startX + i * (subW + subGap);
-      const sy = startY;
-
-      g.appendChild(mk("rect", { x: sx, y: sy, width: subW, height: subH, rx: 2, fill: "#2e2e32" }));
-
-      for (let dy = 0; dy < dotsRows; dy++) {
-        for (let dx = 0; dx < dotsCols; dx++) {
-          g.appendChild(mk("circle", {
-            cx: sx + marginP + dx * pitchP,
-            cy: sy + marginP + dy * pitchP,
-            r: rP,
-            fill: "#000"
-          }));
-        }
+    for(let j=0;j<dotsRows;j++){
+      for(let i=0;i<dotsCols;i++){
+        g.appendChild(mk("circle",{
+          cx:sx+marginP+i*pitchP,
+          cy:sy+marginP+j*pitchP,
+          r:rP,
+          fill:dotColor
+        }));
       }
     }
   }
+}
 
-  // lewy / prawy (tak jak wcześniej, tylko dopasowany rozmiar)
-  addPanel(50, 390, 0);
-  addPanel(1550 - panelW, 390, 0);
+// PRZESUNIĘCIA
+panel(10,390);                     // lewy – dalej w lewo
+panel(1600-panelW-10,390);         // prawy – dalej w prawo
+panel(800-panelW/2,110);           // górny – wyraźnie wyżej
 
-  // górny: ten SAM panel (identyczny), tylko wyżej
-  addPanel(800 - panelW/2, 165, -28); // <<< „jeszcze trochę do góry”
 })();
 </script>
 </body>
