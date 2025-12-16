@@ -2,46 +2,54 @@
 <html lang="pl">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Wyświetlacz Familiady – prototype</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Familiada – wyświetlacz (layout)</title>
   <link rel="icon" href="favicon.ico" />
   <link rel="stylesheet" href="styles.css" />
 </head>
-
 <body>
-  <main class="stage">
-    <section class="board">
-      <div class="panel panel--big">
-        <div class="panel__inner">
-          <div class="panel__title">TABLICA</div>
-          <div id="mainDisplay" class="display"></div>
+
+  <div class="studio">
+    <div class="rig">
+
+      <!-- górny mały wyświetlacz -->
+      <div class="topCounter panelBlack">
+        <div id="topDigit" class="dotDisplay"></div>
+      </div>
+
+      <!-- pierścień + „okno” -->
+      <div class="ring">
+        <!-- boczne liczniki -->
+        <div class="sideCounter sideCounter--left panelBlack">
+          <div id="leftScore" class="dotDisplay"></div>
+        </div>
+
+        <div class="sideCounter sideCounter--right panelBlack">
+          <div id="rightScore" class="dotDisplay"></div>
+        </div>
+
+        <!-- metalowe okno -->
+        <div class="window">
+          <div class="windowInner">
+            <div class="mainScreen panelBlack">
+              <div id="mainMatrix" class="dotDisplay"></div>
+              <div class="mainCaption panelBlack">
+                <div id="sumStrip" class="dotDisplay"></div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
-      <aside class="side">
-        <div class="panel panel--small">
-          <div class="panel__inner">
-            <div class="panel__title">PUNKTY / RUNDA</div>
-            <div id="smallTop" class="display"></div>
-          </div>
-        </div>
+      <!-- dół (żółta baza + boczne “pulpity”) -->
+      <div class="base">
+        <div class="podium podium--left"></div>
+        <div class="podium podium--center"></div>
+        <div class="podium podium--right"></div>
+      </div>
 
-        <div class="panel panel--small">
-          <div class="panel__inner">
-            <div class="panel__title">PASEK 1</div>
-            <div id="smallMid" class="display"></div>
-          </div>
-        </div>
-
-        <div class="panel panel--small">
-          <div class="panel__inner">
-            <div class="panel__title">PASEK 2</div>
-            <div id="smallBot" class="display"></div>
-          </div>
-        </div>
-      </aside>
-    </section>
-  </main>
+    </div>
+  </div>
 
   <script src="app.js"></script>
 </body>
