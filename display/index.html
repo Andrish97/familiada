@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Owal + siatki</title>
+  <title>Owal + siatki (bez zaokrągleń)</title>
   <style>
     html, body { height: 100%; margin: 0; }
     body{
@@ -44,11 +44,11 @@
         </linearGradient>
       </defs>
 
-      <!-- Owale prawie do krawędzi -->
+      <!-- Owale -->
       <rect x="50" y="135" width="1500" height="630" rx="315" fill="url(#rimGrad)"/>
       <rect x="210" y="225" width="1180" height="450" rx="225" fill="url(#innerGrad)"/>
 
-      <!-- Linie konstrukcyjne -->
+      <!-- Linie -->
       <g stroke="#ffffff" stroke-opacity="0.22" stroke-width="6">
         <line x1="800" y1="135" x2="800" y2="225"/>
         <line x1="170" y1="185" x2="360" y2="340"/>
@@ -72,25 +72,24 @@
     return el;
   };
 
-  // Kolory (zgodnie z opisem)
+  // Kolory
   const COLOR_BIG  = "#2e2e32"; // duże prostokąty: ciemny szary
-  const COLOR_CELL = "#000000"; // mniejsze prostokąty: czarne
+  const COLOR_CELL = "#000000"; // małe prostokąty: czarne
   const COLOR_DOT  = "#2e2e32"; // kółka: ciemny szary
 
-  // Wspólne parametry siatki 5x7
   const DOTS_X = 5, DOTS_Y = 7;
 
   // =========================
-  // ŚRODKOWA SIATKA: 30 x 10 komórek (każda 5x7 kropek)
+  // ŚRODEK (30x10 komórek)
   // =========================
   const centerG = document.getElementById("center");
 
-  const r = 2;            // promień kółek w środku
-  const d = r * 2;        // średnica
-  const pitch = d + 1;    // odstęp środków kółek w komórce
-  const gap = d;          // odstęp między komórkami = 1 średnica kółka
+  const r = 2;
+  const d = r * 2;
+  const pitch = d + 1;
+  const gap = d;
 
-  // Żeby nic nie wystawało: margines >= promień (+ mały luz)
+  // margines tak, by kółka nie wychodziły
   const margin = r + 2;
 
   const CELLS_X = 30, CELLS_Y = 10;
@@ -104,13 +103,13 @@
   const gridX = 800 - gridW / 2;
   const gridY = 450 - gridH / 2;
 
-  // Duże tło pod siatką (bez ramki = dokładnie gridW x gridH)
+  // Duże tło pod siatką (BEZ zaokrągleń)
   centerG.appendChild(mk("rect", {
     x: gridX, y: gridY, width: gridW, height: gridH,
-    rx: 14, fill: COLOR_BIG
+    rx: 0, fill: COLOR_BIG
   }));
 
-  // Komórki + kropki
+  // Komórki (BEZ zaokrągleń) + kropki
   for (let y = 0; y < CELLS_Y; y++) {
     for (let x = 0; x < CELLS_X; x++) {
       const x0 = gridX + x * (cellW + gap);
@@ -118,7 +117,7 @@
 
       centerG.appendChild(mk("rect", {
         x: x0, y: y0, width: cellW, height: cellH,
-        rx: 1.5, fill: COLOR_CELL
+        rx: 0, fill: COLOR_CELL
       }));
 
       for (let j = 0; j < DOTS_Y; j++) {
@@ -135,21 +134,20 @@
   }
 
   // =========================
-  // PANELE: 3 identyczne (lewy/prawy/górny)
-  // każdy zawiera 3 prostokąty, a każdy z nich ma 5x7 kropek
-  // kółka w panelach: 3x większa ŚREDNICA (czyli 3x "szerokość")
+  // PANELE (3 identyczne)
   // =========================
   const panelsG = document.getElementById("panels");
 
-  const dP = d * 3;       // średnica panelowych kropek = 3x średnica środka
-  const rP = dP / 2;      // promień
-  const pitchP = dP + 1;  // ciaśniej, żeby nie wyglądało "nadmuchane"
-  const marginP = rP + 2; // gwarancja: kółka nie wyjdą poza prostokąt
+  // panelowe kółka: 3x średnica
+  const dP = d * 3;
+  const rP = dP / 2;
+  const pitchP = dP + 1;
+  const marginP = rP + 2;
 
   const subW = (DOTS_X - 1) * pitchP + marginP * 2;
   const subH = (DOTS_Y - 1) * pitchP + marginP * 2;
 
-  const subGap = 10;                 // odstęp między 3 sub-prostokątami
+  const subGap = 10;
   const panelW = 3 * subW + 2 * subGap;
   const panelH = subH;
 
@@ -157,20 +155,20 @@
     const g = mk("g");
     panelsG.appendChild(g);
 
-    // duży panel (ciemny szary)
+    // duży panel (BEZ zaokrągleń)
     g.appendChild(mk("rect", {
       x, y, width: panelW, height: panelH,
-      rx: 10, fill: COLOR_BIG
+      rx: 0, fill: COLOR_BIG
     }));
 
-    // 3 sub-prostokąty (czarne) + kropki
+    // 3 sub-prostokąty (BEZ zaokrągleń) + kropki
     for (let k = 0; k < 3; k++) {
       const sx = x + k * (subW + subGap);
       const sy = y;
 
       g.appendChild(mk("rect", {
         x: sx, y: sy, width: subW, height: subH,
-        rx: 2, fill: COLOR_CELL
+        rx: 0, fill: COLOR_CELL
       }));
 
       for (let j = 0; j < DOTS_Y; j++) {
@@ -186,10 +184,10 @@
     }
   }
 
-  // Przesunięcia paneli (mocniej w boki i do góry)
-  addPanel(10, 390);                          // lewy bardziej w lewo
-  addPanel(1600 - panelW - 10, 390);          // prawy bardziej w prawo
-  addPanel(800 - panelW / 2, 85);             // górny bardziej do góry
+  // przesunięcia
+  addPanel(10, 390);
+  addPanel(1600 - panelW - 10, 390);
+  addPanel(800 - panelW / 2, 85);
 
 })();
 </script>
