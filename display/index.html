@@ -1,163 +1,195 @@
 <!doctype html>
 <html lang="pl">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Owal – siatki bez ramek</title>
-<style>
-  html, body { height:100%; margin:0; }
-  body{
-    display:grid;
-    place-items:center;
-    background: radial-gradient(
-      1400px 700px at 50% 25%,
-      #ff5aa0 0%,
-      #ff3b63 22%,
-      #c43e79 45%,
-      #6a4aa7 72%,
-      #1b1a2b 100%
-    );
-    overflow:hidden;
-  }
-  .wrap{
-    width:99vw;
-    height:92vh;
-    display:grid;
-    place-items:center;
-  }
-  svg{ width:100%; height:100%; display:block; }
-</style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Owal + siatki</title>
+  <style>
+    html, body { height: 100%; margin: 0; }
+    body{
+      display:grid;
+      place-items:center;
+      overflow:hidden;
+      background: radial-gradient(
+        1400px 700px at 50% 25%,
+        #ff5aa0 0%,
+        #ff3b63 22%,
+        #c43e79 45%,
+        #6a4aa7 72%,
+        #1b1a2b 100%
+      );
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    }
+    .wrap{
+      width: 99vw;
+      height: 92vh;
+      display:grid;
+      place-items:center;
+    }
+    svg{ width:100%; height:100%; display:block; }
+  </style>
 </head>
 <body>
-<div class="wrap">
-<svg viewBox="0 0 1600 900" xmlns="http://www.w3.org/2000/svg">
+  <div class="wrap">
+    <svg viewBox="0 0 1600 900" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="rimGrad" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stop-color="#3a2a2f"/>
+          <stop offset="0.5" stop-color="#4a353c"/>
+          <stop offset="1" stop-color="#2f2b3c"/>
+        </linearGradient>
+        <linearGradient id="innerGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#dfe6ea"/>
+          <stop offset="1" stop-color="#bfc7cf"/>
+        </linearGradient>
+      </defs>
 
-<defs>
-  <linearGradient id="rimGrad" x1="0" y1="0" x2="1" y2="0">
-    <stop offset="0" stop-color="#3a2a2f"/>
-    <stop offset="0.5" stop-color="#4a353c"/>
-    <stop offset="1" stop-color="#2f2b3c"/>
-  </linearGradient>
-  <linearGradient id="innerGrad" x1="0" y1="0" x2="0" y2="1">
-    <stop offset="0" stop-color="#dfe6ea"/>
-    <stop offset="1" stop-color="#bfc7cf"/>
-  </linearGradient>
-</defs>
+      <!-- Owale prawie do krawędzi -->
+      <rect x="50" y="135" width="1500" height="630" rx="315" fill="url(#rimGrad)"/>
+      <rect x="210" y="225" width="1180" height="450" rx="225" fill="url(#innerGrad)"/>
 
-<!-- OWALE -->
-<rect x="50" y="135" width="1500" height="630" rx="315" fill="url(#rimGrad)"/>
-<rect x="210" y="225" width="1180" height="450" rx="225" fill="url(#innerGrad)"/>
+      <!-- Linie konstrukcyjne -->
+      <g stroke="#ffffff" stroke-opacity="0.22" stroke-width="6">
+        <line x1="800" y1="135" x2="800" y2="225"/>
+        <line x1="170" y1="185" x2="360" y2="340"/>
+        <line x1="1430" y1="185" x2="1240" y2="340"/>
+        <line x1="170" y1="715" x2="360" y2="560"/>
+        <line x1="1430" y1="715" x2="1240" y2="560"/>
+      </g>
 
-<!-- LINIE -->
-<g stroke="#ffffff" stroke-opacity="0.22" stroke-width="6">
-  <line x1="800" y1="135" x2="800" y2="225"/>
-  <line x1="170" y1="185" x2="360" y2="340"/>
-  <line x1="1430" y1="185" x2="1240" y2="340"/>
-  <line x1="170" y1="715" x2="360" y2="560"/>
-  <line x1="1430" y1="715" x2="1240" y2="560"/>
-</g>
-
-<g id="panels"></g>
-<g id="centerGrid"></g>
-
-</svg>
-</div>
+      <!-- Generowane elementy -->
+      <g id="panels"></g>
+      <g id="center"></g>
+    </svg>
+  </div>
 
 <script>
 (() => {
-const NS="http://www.w3.org/2000/svg";
-const mk=(n,a={})=>{const e=document.createElementNS(NS,n);for(const k in a)e.setAttribute(k,a[k]);return e};
+  const NS = "http://www.w3.org/2000/svg";
+  const mk = (name, attrs={}) => {
+    const el = document.createElementNS(NS, name);
+    for (const [k,v] of Object.entries(attrs)) el.setAttribute(k, v);
+    return el;
+  };
 
-// KOLORY
-const panelColor = "#2e2e32"; // duże prostokąty – ciemny szary
-const cellColor  = "#000";    // małe prostokąty – czarne
-const dotColor   = "#2e2e32"; // kółka – ciemny szary
+  // Kolory (zgodnie z opisem)
+  const COLOR_BIG  = "#2e2e32"; // duże prostokąty: ciemny szary
+  const COLOR_CELL = "#000000"; // mniejsze prostokąty: czarne
+  const COLOR_DOT  = "#2e2e32"; // kółka: ciemny szary
 
-// PARAMETRY SIATKI 5x7
-const dotsCols=5, dotsRows=7;
+  // Wspólne parametry siatki 5x7
+  const DOTS_X = 5, DOTS_Y = 7;
 
-// ---------- ŚRODEK ----------
-const center = document.getElementById("centerGrid");
+  // =========================
+  // ŚRODKOWA SIATKA: 30 x 10 komórek (każda 5x7 kropek)
+  // =========================
+  const centerG = document.getElementById("center");
 
-const r=2, d=r*2;
-const pitch=d+1;
-const margin=2+r;
-const gap=d;
+  const r = 2;            // promień kółek w środku
+  const d = r * 2;        // średnica
+  const pitch = d + 1;    // odstęp środków kółek w komórce
+  const gap = d;          // odstęp między komórkami = 1 średnica kółka
 
-const cellCols=30, cellRows=10;
+  // Żeby nic nie wystawało: margines >= promień (+ mały luz)
+  const margin = r + 2;
 
-const cellW=(dotsCols-1)*pitch+margin*2;
-const cellH=(dotsRows-1)*pitch+margin*2;
+  const CELLS_X = 30, CELLS_Y = 10;
 
-const gridW=cellCols*cellW+(cellCols-1)*gap;
-const gridH=cellRows*cellH+(cellRows-1)*gap;
+  const cellW = (DOTS_X - 1) * pitch + margin * 2;
+  const cellH = (DOTS_Y - 1) * pitch + margin * 2;
 
-const startX=800-gridW/2;
-const startY=450-gridH/2;
+  const gridW = CELLS_X * cellW + (CELLS_X - 1) * gap;
+  const gridH = CELLS_Y * cellH + (CELLS_Y - 1) * gap;
 
-for(let y=0;y<cellRows;y++){
-  for(let x=0;x<cellCols;x++){
-    const cx=startX+x*(cellW+gap);
-    const cy=startY+y*(cellH+gap);
+  const gridX = 800 - gridW / 2;
+  const gridY = 450 - gridH / 2;
 
-    center.appendChild(mk("rect",{x:cx,y:cy,width:cellW,height:cellH,rx:1.5,fill:cellColor}));
+  // Duże tło pod siatką (bez ramki = dokładnie gridW x gridH)
+  centerG.appendChild(mk("rect", {
+    x: gridX, y: gridY, width: gridW, height: gridH,
+    rx: 14, fill: COLOR_BIG
+  }));
 
-    for(let j=0;j<dotsRows;j++){
-      for(let i=0;i<dotsCols;i++){
-        center.appendChild(mk("circle",{
-          cx:cx+margin+i*pitch,
-          cy:cy+margin+j*pitch,
-          r:r,
-          fill:dotColor
-        }));
+  // Komórki + kropki
+  for (let y = 0; y < CELLS_Y; y++) {
+    for (let x = 0; x < CELLS_X; x++) {
+      const x0 = gridX + x * (cellW + gap);
+      const y0 = gridY + y * (cellH + gap);
+
+      centerG.appendChild(mk("rect", {
+        x: x0, y: y0, width: cellW, height: cellH,
+        rx: 1.5, fill: COLOR_CELL
+      }));
+
+      for (let j = 0; j < DOTS_Y; j++) {
+        for (let i = 0; i < DOTS_X; i++) {
+          centerG.appendChild(mk("circle", {
+            cx: x0 + margin + i * pitch,
+            cy: y0 + margin + j * pitch,
+            r: r,
+            fill: COLOR_DOT
+          }));
+        }
       }
     }
   }
-}
 
-// ---------- PANELE ----------
-const panels=document.getElementById("panels");
+  // =========================
+  // PANELE: 3 identyczne (lewy/prawy/górny)
+  // każdy zawiera 3 prostokąty, a każdy z nich ma 5x7 kropek
+  // kółka w panelach: 3x większa ŚREDNICA (czyli 3x "szerokość")
+  // =========================
+  const panelsG = document.getElementById("panels");
 
-// większe kółka (3x)
-const rP=r*3, dP=rP*2;
-const pitchP=dP+2, marginP=4+rP;
+  const dP = d * 3;       // średnica panelowych kropek = 3x średnica środka
+  const rP = dP / 2;      // promień
+  const pitchP = dP + 1;  // ciaśniej, żeby nie wyglądało "nadmuchane"
+  const marginP = rP + 2; // gwarancja: kółka nie wyjdą poza prostokąt
 
-const subW=(dotsCols-1)*pitchP+marginP*2;
-const subH=(dotsRows-1)*pitchP+marginP*2;
-const subGap=10;
+  const subW = (DOTS_X - 1) * pitchP + marginP * 2;
+  const subH = (DOTS_Y - 1) * pitchP + marginP * 2;
 
-const panelW=3*subW+2*subGap;
-const panelH=subH;
+  const subGap = 10;                 // odstęp między 3 sub-prostokątami
+  const panelW = 3 * subW + 2 * subGap;
+  const panelH = subH;
 
-function panel(x,y){
-  const g=mk("g");
-  panels.appendChild(g);
+  function addPanel(x, y) {
+    const g = mk("g");
+    panelsG.appendChild(g);
 
-  g.appendChild(mk("rect",{x,y,width:panelW,height:panelH,rx:10,fill:panelColor}));
+    // duży panel (ciemny szary)
+    g.appendChild(mk("rect", {
+      x, y, width: panelW, height: panelH,
+      rx: 10, fill: COLOR_BIG
+    }));
 
-  for(let k=0;k<3;k++){
-    const sx=x+k*(subW+subGap);
-    const sy=y;
+    // 3 sub-prostokąty (czarne) + kropki
+    for (let k = 0; k < 3; k++) {
+      const sx = x + k * (subW + subGap);
+      const sy = y;
 
-    g.appendChild(mk("rect",{x:sx,y:sy,width:subW,height:subH,rx:2,fill:cellColor}));
+      g.appendChild(mk("rect", {
+        x: sx, y: sy, width: subW, height: subH,
+        rx: 2, fill: COLOR_CELL
+      }));
 
-    for(let j=0;j<dotsRows;j++){
-      for(let i=0;i<dotsCols;i++){
-        g.appendChild(mk("circle",{
-          cx:sx+marginP+i*pitchP,
-          cy:sy+marginP+j*pitchP,
-          r:rP,
-          fill:dotColor
-        }));
+      for (let j = 0; j < DOTS_Y; j++) {
+        for (let i = 0; i < DOTS_X; i++) {
+          g.appendChild(mk("circle", {
+            cx: sx + marginP + i * pitchP,
+            cy: sy + marginP + j * pitchP,
+            r: rP,
+            fill: COLOR_DOT
+          }));
+        }
       }
     }
   }
-}
 
-// PRZESUNIĘCIA
-panel(10,390);                     // lewy – dalej w lewo
-panel(1600-panelW-10,390);         // prawy – dalej w prawo
-panel(800-panelW/2,110);           // górny – wyraźnie wyżej
+  // Przesunięcia paneli (mocniej w boki i do góry)
+  addPanel(10, 390);                          // lewy bardziej w lewo
+  addPanel(1600 - panelW - 10, 390);          // prawy bardziej w prawo
+  addPanel(800 - panelW / 2, 85);             // górny bardziej do góry
 
 })();
 </script>
