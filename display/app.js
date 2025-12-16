@@ -1,3 +1,27 @@
+// Jeśli to telefon/tablet – pokaż komunikat i zakończ.
+const isMobile =
+  /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent) ||
+  Math.min(window.innerWidth, window.innerHeight) < 740;
+
+if (isMobile) {
+  document.body.innerHTML = `
+    <div style="
+      min-height:100vh; display:flex; align-items:center; justify-content:center;
+      background:#08060a; color:#fff; font-family:system-ui,Segoe UI,Roboto,Arial,sans-serif;
+      padding:24px; text-align:center;
+    ">
+      <div style="
+        max-width:520px; border:1px solid rgba(255,255,255,.15);
+        border-radius:16px; padding:18px 16px; background:rgba(0,0,0,.45);
+      ">
+        <div style="font-size:20px; margin-bottom:8px;">Strona nie działa na telefonie</div>
+        <div style="opacity:.75; font-size:14px;">Otwórz na komputerze lub na ekranie prowadzącego.</div>
+      </div>
+    </div>
+  `;
+  throw new Error("Mobile blocked");
+}
+
 function el(tag, className, styleVars = {}) {
   const n = document.createElement(tag);
   if (className) n.className = className;
@@ -71,23 +95,6 @@ function buildStrip96x7(root, dotPx) {
   root.appendChild(grid);
   return { dots };
 }
-
-/* --------- skalowanie na telefony --------- */
-const rig = document.getElementById("rig");
-const DESIGN_W = 980;
-const DESIGN_H = 560;
-
-function updateScale() {
-  const vw = window.innerWidth;
-  const vh = window.innerHeight;
-  const margin = 24;
-  const s = Math.min((vw - margin) / DESIGN_W, (vh - margin) / DESIGN_H);
-  rig.style.setProperty("--scale", String(Math.min(1, s)));
-}
-window.addEventListener("resize", updateScale);
-window.addEventListener("orientationchange", updateScale);
-updateScale();
-
 /* --------- fullscreen --------- */
 const fsBtn = document.getElementById("fsBtn");
 const stage = document.getElementById("stage");
