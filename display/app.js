@@ -1,6 +1,3 @@
-// Prosty generator “diodek” (divy), bez rysowania tekstu.
-// Na razie chodzi o układ i wymiary siatek.
-
 function el(tag, className, styleVars = {}) {
   const n = document.createElement(tag);
   if (className) n.className = className;
@@ -9,14 +6,9 @@ function el(tag, className, styleVars = {}) {
 }
 
 function createDot(isOn = false) {
-  const d = el("div", "dot" + (isOn ? " on" : ""));
-  return d;
+  return el("div", "dot" + (isOn ? " on" : ""));
 }
 
-/**
- * Tworzy moduł 5x7.
- * Zwraca { node, dots } gdzie dots to tablica 35 elementów (kolejność: wierszami).
- */
 function create5x7Module() {
   const m = el("div", "module");
   const dots = [];
@@ -28,109 +20,101 @@ function create5x7Module() {
   return { node: m, dots };
 }
 
-/**
- * Duża tablica: 30x10 modułów 5x7, z przerwą między modułami = jedna dioda
- */
-function buildMainDisplay(root) {
-  const grid = el("div", "modulesGrid");
+/* 30x10 modułów 5x7 */
+function buildMainMatrix(root) {
+  const grid = el("div", "modulesGrid", {
+    "--dot": "8px",
+    "--dotGap": "2px",
+  });
   grid.style.gridTemplateColumns = `repeat(30, max-content)`;
   grid.style.gridTemplateRows = `repeat(10, max-content)`;
 
-  // kolekcja dla ewentualnej animacji
   const modules = [];
-  for (let y = 0; y < 10; y++) {
-    for (let x = 0; x < 30; x++) {
-      const mod = create5x7Module();
-      modules.push(mod);
-      grid.appendChild(mod.node);
-    }
+  for (let i = 0; i < 30 * 10; i++) {
+    const mod = create5x7Module();
+    modules.push(mod);
+    grid.appendChild(mod.node);
   }
-
   root.appendChild(grid);
   return { grid, modules };
 }
 
-/**
- * Mały górny: 3 "większe" moduły 5x7 (kropki ~3x)
- */
-function buildSmallTop(root) {
-  const wrap = el("div", "bigModulesRow", {
-    "--dot": "24px",
-    "--dotGap": "4px",
+/* “duże” moduły 5x7 do cyfr (np. 3 cyfry na bokach) */
+function buildBigDigits(root, digitsCount, dotPx) {
+  const wrap = el("div", "modulesGrid", {
+    "--dot": `${dotPx}px`,
+    "--dotGap": `${Math.max(3, Math.round(dotPx * 0.18))}px`,
   });
+  wrap.style.gridTemplateColumns = `repeat(${digitsCount}, max-content)`;
+  wrap.style.gridAutoRows = `max-content`;
+  wrap.style.gap = `${Math.round(dotPx * 0.7)}px`;
 
   const modules = [];
-  for (let i = 0; i < 3; i++) {
+  for (let i = 0; i < digitsCount; i++) {
     const mod = create5x7Module();
     modules.push(mod);
     wrap.appendChild(mod.node);
   }
-
   root.appendChild(wrap);
   return { wrap, modules };
 }
 
-/**
- * Pasek: siatka 96x7 pikseli, piksel 1.5x większy niż main
- */
-function buildPixelStrip(root) {
-  const strip = el("div", "pixelGrid", {
-    "--dot": "12px",   // 1.5x przy main=8px
-    "--dotGap": "3px",
+/* pasek 96x7 (SUMA / podpis) */
+function buildStrip96x7(root, dotPx) {
+  const grid = el("div", "pixelGrid", {
+    "--dot": `${dotPx}px`,
+    "--dotGap": `${Math.max(2, Math.round(dotPx * 0.25))}px`,
   });
-
-  strip.style.gridTemplateColumns = `repeat(96, var(--dot))`;
-  strip.style.gridTemplateRows = `repeat(7, var(--dot))`;
+  grid.style.gridTemplateColumns = `repeat(96, var(--dot))`;
+  grid.style.gridTemplateRows = `repeat(7, var(--dot))`;
 
   const dots = [];
   for (let i = 0; i < 96 * 7; i++) {
     const d = createDot(false);
     dots.push(d);
-    strip.appendChild(d);
+    grid.appendChild(d);
   }
-
-  root.appendChild(strip);
-  return { strip, dots };
+  root.appendChild(grid);
+  return { grid, dots };
 }
 
-/* === DEMO: losowe “mruganie”, żeby było widać, że to żyje === */
-
+/* demo “życia” */
 function randomizeModule(mod, density = 0.18) {
-  for (const d of mod.dots) {
-    d.classList.toggle("on", Math.random() < density);
-  }
+  for (const d of mod.dots) d.classList.toggle("on", Math.random() < density);
+}
+function randomizeDots(dots, density = 0.08) {
+  for (const d of dots) d.classList.toggle("on", Math.random() < density);
 }
 
-function randomizeStrip(stripDots, density = 0.08) {
-  for (const d of stripDots) {
-    d.classList.toggle("on", Math.random() < density);
-  }
-}
+/* init */
+const mainRoot = document.getElementById("mainMatrix");
+const leftRoot = document.getElementById("leftScore");
+const rightRoot = document.getElementById("rightScore");
+const topRoot = document.getElementById("topDigit");
+const sumRoot = document.getElementById("sumStrip");
 
-/* === Init === */
+const main = buildMainMatrix(mainRoot);
 
-const mainRoot = document.getElementById("mainDisplay");
-const topRoot  = document.getElementById("smallTop");
-const midRoot  = document.getElementById("smallMid");
-const botRoot  = document.getElementById("smallBot");
+// zbliżone proporcje do zdjęcia: boki = 3 cyfry, góra = 1-2 cyfry
+const left = buildBigDigits(leftRoot, 3, 16);
+const right = buildBigDigits(rightRoot, 3, 16);
+const top = buildBigDigits(topRoot, 2, 14);
 
-const main = buildMainDisplay(mainRoot);
-const smallTop = buildSmallTop(topRoot);
-const strip1 = buildPixelStrip(midRoot);
-const strip2 = buildPixelStrip(botRoot);
+// dolny podpis jak “SUMA 0” – na razie tylko kropki w pasku
+const sum = buildStrip96x7(sumRoot, 10);
 
-// Delikatna animacja testowa
+/* animacja testowa (żeby widać było, że to “wyświetlacze”) */
 setInterval(() => {
-  // kilka losowych modułów na dużej tablicy
-  for (let i = 0; i < 24; i++) {
+  // trochę losu na głównym
+  for (let i = 0; i < 28; i++) {
     const m = main.modules[(Math.random() * main.modules.length) | 0];
     randomizeModule(m, 0.22);
   }
+  // boki i góra bardziej “stabilne”
+  for (const m of left.modules) randomizeModule(m, 0.16);
+  for (const m of right.modules) randomizeModule(m, 0.16);
+  for (const m of top.modules) randomizeModule(m, 0.14);
 
-  // 3 duże moduły (bardziej “czytelne”)
-  for (const m of smallTop.modules) randomizeModule(m, 0.28);
-
-  // paski
-  randomizeStrip(strip1.dots, 0.06);
-  randomizeStrip(strip2.dots, 0.06);
+  // pasek suma bardzo delikatnie
+  randomizeDots(sum.dots, 0.05);
 }, 220);
