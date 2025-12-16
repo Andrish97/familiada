@@ -6,7 +6,6 @@
   <title>Familiada — sondaż</title>
 
   <link rel="icon" href="favicon.ico"/>
-
   <link rel="stylesheet" href="css/base.css"/>
   <link rel="stylesheet" href="css/polls.css"/>
 
@@ -14,17 +13,20 @@
   <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js" defer></script>
   <script type="module" src="js/pages/polls.js" defer></script>
 </head>
-<div class="overlay" id="qrOverlay" style="display:none;">
-  <div class="modal" style="max-width:420px;text-align:center;">
-    <div class="mTitle">Kod QR sondażu</div>
-    <div id="qrInline" style="margin:14px auto;width:240px;height:240px;"></div>
-    <div class="small" id="qrInlineUrl" style="word-break:break-all;"></div>
-    <div class="mFoot">
-      <button class="btn" id="btnCloseQr" type="button">Zamknij</button>
+
+<body class="polls-body">
+  <!-- ✅ Overlay MUSI być w body -->
+  <div class="overlay" id="qrOverlay" style="display:none;">
+    <div class="modal" style="max-width:420px;text-align:center;">
+      <div class="mTitle">Kod QR sondażu</div>
+      <div id="qrInline" style="margin:14px auto;width:240px;height:240px;"></div>
+      <div class="small" id="qrInlineUrl" style="word-break:break-all;"></div>
+      <div class="mFoot">
+        <button class="btn" id="btnCloseQr" type="button">Zamknij</button>
+      </div>
     </div>
   </div>
-</div>
-<body class="polls-body">
+
   <header class="topbar">
     <div class="brand">FAMILIADA</div>
     <div class="right">
@@ -57,10 +59,14 @@
         <input class="inp" id="pollLink" readonly />
         <button class="btn" id="btnCopy" type="button" disabled>Kopiuj link</button>
         <button class="btn gold" id="btnOpen" type="button" disabled>Otwórz link</button>
+
+        <!-- ✅ osobne przyciski -->
+        <button class="btn" id="btnQrSmall" type="button" disabled>QR</button>
         <button class="btn" id="btnOpenQr" type="button" disabled>Rzutnik QR</button>
       </div>
 
-      <div class="row" style="align-items:flex-start;">
+      <!-- ✅ QR ma być NAD (nie obok) -->
+      <div class="row" style="flex-direction:column;align-items:flex-start;">
         <div id="qr" style="width:160px;height:160px;"></div>
         <div class="small" style="max-width:560px;opacity:.8;line-height:1.35;">
           QR jest aktywny tylko gdy sondaż jest <b>poll_open</b>.
@@ -71,7 +77,12 @@
         <button class="btn gold" id="btnStart" type="button">Uruchom sondaż</button>
         <button class="btn" id="btnReopen" type="button">Otwórz ponownie</button>
         <button class="btn danger" id="btnClose" type="button">Zakończ sondaż</button>
+
+        <!-- ✅ wraca preview -->
+        <button class="btn" id="btnPreview" type="button">Podgląd wyników</button>
       </div>
+
+      <pre class="votes" id="votes" style="display:none;"></pre>
     </div>
 
     <div class="card" id="cardEmpty">
