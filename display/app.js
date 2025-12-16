@@ -4,7 +4,6 @@ const stage = document.getElementById("stage");
 
 function requestFs(el) {
   if (el.requestFullscreen) return el.requestFullscreen();
-  // Safari (starsze)
   if (el.webkitRequestFullscreen) return el.webkitRequestFullscreen();
   return Promise.reject(new Error("Fullscreen API not supported"));
 }
@@ -13,52 +12,42 @@ function exitFs() {
   if (document.webkitExitFullscreen) return document.webkitExitFullscreen();
   return Promise.reject(new Error("Exit Fullscreen not supported"));
 }
-
 async function toggleFullscreen() {
   try {
-    if (!document.fullscreenElement && !document.webkitFullscreenElement) {
-      await requestFs(stage);
-    } else {
-      await exitFs();
-    }
+    if (!document.fullscreenElement && !document.webkitFullscreenElement) await requestFs(stage);
+    else await exitFs();
   } catch (e) {
     console.warn("Fullscreen error:", e);
-    // UWAGA: fullscreen zwykle działa tylko na https albo localhost
+    // Fullscreen zwykle działa pewnie na https/localhost (nie zawsze na file:///)
   }
 }
 fsBtn.addEventListener("click", toggleFullscreen);
 
-document.addEventListener("fullscreenchange", () => {
-  fsBtn.textContent = document.fullscreenElement ? "⤢" : "⛶";
-  layoutAndRebuild();
-});
-document.addEventListener("webkitfullscreenchange", () => {
-  fsBtn.textContent = document.webkitFullscreenElement ? "⤢" : "⛶";
-  layoutAndRebuild();
-});
+document.addEventListener("fullscreenchange", layoutAndRebuild);
+document.addEventListener("webkitfullscreenchange", layoutAndRebuild);
 
-// ---------- Helpers ----------
-function el(tag, className) {
+// ---------- DOM helpers ----------
+function el(tag, cls) {
   const n = document.createElement(tag);
-  if (className) n.className = className;
+  if (cls) n.className = cls;
   return n;
 }
-function createDot(isOn = false) {
-  return el("div", "dot" + (isOn ? " on" : ""));
+function createDot() {
+  return el("div", "dot");
 }
 
-function create5x7Module(className) {
-  const m = el("div", className);
+// ---------- builders ----------
+function create5x7Module() {
+  const m = el("div", "module");
   const dots = [];
   for (let i = 0; i < 35; i++) {
-    const d = createDot(false);
+    const d = createDot();
     dots.push(d);
     m.appendChild(d);
   }
   return { node: m, dots };
 }
 
-// ---------- Builders ----------
 function buildMainMatrix(root) {
   const grid = el("div", "modulesGrid");
   grid.style.gridTemplateColumns = `repeat(30, max-content)`;
@@ -66,7 +55,7 @@ function buildMainMatrix(root) {
 
   const modules = [];
   for (let i = 0; i < 30 * 10; i++) {
-    const mod = create5x7Module("module");
+    const mod = create5x7Module();
     modules.push(mod);
     grid.appendChild(mod.node);
   }
@@ -75,29 +64,28 @@ function buildMainMatrix(root) {
 }
 
 function buildBigDigits(root, count) {
-  const row = el("div", "bigRow");
-  row.style.setProperty("--bigCount", String(count));
+  const grid = el("div", "modulesGrid");
+  grid.style.gridTemplateColumns = `repeat(${count}, max-content)`;
+  grid.style.gridAutoRows = `max-content`;
 
   const modules = [];
   for (let i = 0; i < count; i++) {
-    const mod = create5x7Module("bigModule");
+    const mod = create5x7Module();
     modules.push(mod);
-    row.appendChild(mod.node);
+    grid.appendChild(mod.node);
   }
-  root.appendChild(row);
+  root.appendChild(grid);
   return { modules };
 }
 
 function buildStrip96x7(root) {
   const grid = el("div", "pixelGrid");
-  grid.style.gridTemplateColumns = `repeat(96, var(--dotStrip))`;
-  grid.style.gridTemplateRows = `repeat(7, var(--dotStrip))`;
+  grid.style.gridTemplateColumns = `repeat(96, var(--dotSize))`;
+  grid.style.gridTemplateRows = `repeat(7, var(--dotSize))`;
 
   const dots = [];
   for (let i = 0; i < 96 * 7; i++) {
-    const d = createDot(false);
-    d.style.width = "var(--dotStrip)";
-    d.style.height = "var(--dotStrip)";
+    const d = createDot();
     dots.push(d);
     grid.appendChild(d);
   }
@@ -105,54 +93,41 @@ function buildStrip96x7(root) {
   return { dots };
 }
 
-// ---------- Sizing (ważne) ----------
-function computeDotMainPx(mainWrapEl) {
-  const rect = mainWrapEl.getBoundingClientRect();
+// ---------- sizing logic (1× / 1.5× / 3×) ----------
+function computeDotMainPx(mainPanelEl) {
+  // mainPanelEl = .panel--main (ma stałe wymiary w CSS)
+  const rect = mainPanelEl.getBoundingClientRect();
 
-  // realna przestrzeń na samą matrycę (odliczamy paddingi i trochę bufora)
-  const availableW = Math.max(200, rect.width - 40);
-  const availableH = Math.max(160, rect.height - 40);
+  // odejmujemy padding panelu i surface (2x: panel padding 10 + surface padding 12)
+  const availableW = Math.max(200, rect.width - (10+12)*2 - 10);
+  const availableH = Math.max(160, rect.height - (10+12)*2 - 10);
 
   let best = 8;
 
-  for (let dot = 8; dot <= 22; dot++) {
+  for (let dot = 8; dot <= 26; dot++) {
     const gap = Math.max(2, Math.round(dot * 0.20));
-    const modW = 5 * dot + 4 * gap;
-    const modH = 7 * dot + 6 * gap;
-    const moduleGap = dot + gap;
+    const pad = Math.max(1, Math.round(dot * 0.10)); // padding w segmencie (czarne tło wokół kropek)
 
-    const totalW = 30 * modW + 29 * moduleGap;
-    const totalH = 10 * modH + 9 * moduleGap;
+    const modW = 5*dot + 4*gap + 2*pad;
+    const modH = 7*dot + 6*gap + 2*pad;
+    const moduleGap = dot + gap; // przerwa między segmentami ~ szerokość diody
+
+    const totalW = 30*modW + 29*moduleGap;
+    const totalH = 10*modH + 9*moduleGap;
 
     if (totalW <= availableW && totalH <= availableH) best = dot;
   }
+
   return best;
 }
 
-function applyDotSizing(dotMain) {
-  const root = document.documentElement;
-
-  const gapMain = Math.max(2, Math.round(dotMain * 0.20));
-  const moduleGapMain = dotMain + gapMain;
-
-  const dotStrip = Math.round(dotMain * 1.5);
-  const gapStrip = Math.max(2, Math.round(dotStrip * 0.22));
-
-  const dotBig = Math.round(dotMain * 3);
-  const gapBig = Math.max(3, Math.round(dotBig * 0.18));
-
-  root.style.setProperty("--dotMain", `${dotMain}px`);
-  root.style.setProperty("--gapMain", `${gapMain}px`);
-  root.style.setProperty("--moduleGapMain", `${moduleGapMain}px`);
-
-  root.style.setProperty("--dotStrip", `${dotStrip}px`);
-  root.style.setProperty("--gapStrip", `${gapStrip}px`);
-
-  root.style.setProperty("--dotBig", `${dotBig}px`);
-  root.style.setProperty("--gapBig", `${gapBig}px`);
+function setPanelVars(panelEl, dotSize, dotGap, moduleGap, cellPad) {
+  panelEl.style.setProperty("--dotSize", `${dotSize}px`);
+  panelEl.style.setProperty("--dotGap", `${dotGap}px`);
+  panelEl.style.setProperty("--moduleGap", `${moduleGap}px`);
+  panelEl.style.setProperty("--cellPad", `${cellPad}px`);
 }
 
-// ---------- Rebuild ----------
 let mainDisp, leftDisp, rightDisp, topDisp, stripL, stripR;
 
 function clearHost(id) {
@@ -162,27 +137,51 @@ function clearHost(id) {
 }
 
 function layoutAndRebuild() {
-  const mainWrap = document.getElementById("mainWrap");
-  const dotMain = computeDotMainPx(mainWrap);
-  applyDotSizing(dotMain);
+  const mainPanel = document.getElementById("mainWrap");
+  const dotMain = computeDotMainPx(mainPanel);
 
-  mainDisp = buildMainMatrix(clearHost("mainMatrix"));
-  leftDisp = buildBigDigits(clearHost("leftScore"), 3);
+  const gapMain = Math.max(2, Math.round(dotMain * 0.20));
+  const padMain = Math.max(1, Math.round(dotMain * 0.10));
+  const moduleGapMain = dotMain + gapMain;
+
+  const dotStrip = Math.round(dotMain * 1.5);
+  const gapStrip = Math.max(2, Math.round(dotStrip * 0.22));
+
+  const dotBig = Math.round(dotMain * 3);
+  const gapBig = Math.max(3, Math.round(dotBig * 0.18));
+  const padBig = Math.max(2, Math.round(dotBig * 0.10));
+  const moduleGapBig = dotBig + gapBig;
+
+  // MAIN (segmenty)
+  setPanelVars(mainPanel, dotMain, gapMain, moduleGapMain, padMain);
+
+  // LEFT/RIGHT/TOP (segmenty, 3×)
+  setPanelVars(document.querySelector(".panel--left"),  dotBig, gapBig, moduleGapBig, padBig);
+  setPanelVars(document.querySelector(".panel--right"), dotBig, gapBig, moduleGapBig, padBig);
+  setPanelVars(document.querySelector(".panel--top"),   dotBig, gapBig, moduleGapBig, padBig);
+
+  // STRIPS (bez segmentów, 1.5×, moduleGap i cellPad nie mają znaczenia)
+  setPanelVars(document.querySelector(".panel--stripL"), dotStrip, gapStrip, 0, 0);
+  setPanelVars(document.querySelector(".panel--stripR"), dotStrip, gapStrip, 0, 0);
+
+  // przebudowa DOM
+  mainDisp  = buildMainMatrix(clearHost("mainMatrix"));
+  leftDisp  = buildBigDigits(clearHost("leftScore"), 3);
   rightDisp = buildBigDigits(clearHost("rightScore"), 3);
-  topDisp = buildBigDigits(clearHost("topDigit"), 2);
-  stripL = buildStrip96x7(clearHost("strip1"));
-  stripR = buildStrip96x7(clearHost("strip2"));
+  topDisp   = buildBigDigits(clearHost("topDigit"), 2);
+  stripL    = buildStrip96x7(clearHost("strip1"));
+  stripR    = buildStrip96x7(clearHost("strip2"));
 }
 
 window.addEventListener("resize", layoutAndRebuild);
 window.addEventListener("orientationchange", layoutAndRebuild);
 layoutAndRebuild();
 
-// ---------- Demo (żeby było widać, że świeci) ----------
-function randomizeModule(mod, density = 0.16) {
+// ---------- demo: żeby było widać świecenie ----------
+function randomizeModule(mod, density) {
   for (const d of mod.dots) d.classList.toggle("on", Math.random() < density);
 }
-function randomizeDots(dots, density = 0.04) {
+function randomizeDots(dots, density) {
   for (const d of dots) d.classList.toggle("on", Math.random() < density);
 }
 
@@ -191,9 +190,10 @@ setInterval(() => {
     const m = mainDisp.modules[(Math.random() * mainDisp.modules.length) | 0];
     randomizeModule(m, 0.18);
   }
-  for (const m of leftDisp.modules) randomizeModule(m, 0.10);
+  for (const m of leftDisp.modules)  randomizeModule(m, 0.10);
   for (const m of rightDisp.modules) randomizeModule(m, 0.10);
-  for (const m of topDisp.modules) randomizeModule(m, 0.08);
+  for (const m of topDisp.modules)   randomizeModule(m, 0.08);
+
   randomizeDots(stripL.dots, 0.03);
   randomizeDots(stripR.dots, 0.03);
 }, 220);
