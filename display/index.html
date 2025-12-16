@@ -3,14 +3,20 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Prosta scenografia (HTML/SVG)</title>
+  <title>Minimalna scenografia SVG</title>
   <style>
     html, body { height: 100%; margin: 0; }
     body{
       display:grid;
       place-items:center;
-      background: radial-gradient(1200px 600px at 50% 25%, #ff5aa0 0%, #ff3b63 22%, #c43e79 45%, #6a4aa7 72%, #1b1a2b 100%);
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: radial-gradient(
+        1200px 600px at 50% 25%,
+        #ff5aa0 0%,
+        #ff3b63 22%,
+        #c43e79 45%,
+        #6a4aa7 72%,
+        #1b1a2b 100%
+      );
     }
     .wrap{ width:min(1100px, 96vw); aspect-ratio: 16/9; }
     svg{ width:100%; height:100%; display:block; }
@@ -19,32 +25,8 @@
 <body>
   <div class="wrap">
     <svg viewBox="0 0 1600 900" xmlns="http://www.w3.org/2000/svg">
-      <!-- "podłoga/scena" -->
-      <rect x="0" y="650" width="1600" height="250" fill="#f3e3c5" opacity="0.95"/>
-      <rect x="0" y="640" width="1600" height="20" fill="#ffffff" opacity="0.25"/>
 
-      <!-- publiczność (proste kropki/krzaki) -->
-      <g opacity="0.9">
-        <circle cx="80" cy="820" r="28" fill="#14111a"/>
-        <circle cx="120" cy="840" r="34" fill="#14111a"/>
-        <circle cx="1550" cy="830" r="34" fill="#14111a"/>
-        <circle cx="1500" cy="850" r="28" fill="#14111a"/>
-        <g fill="#14111a">
-          <circle cx="720" cy="860" r="10"/>
-          <circle cx="760" cy="865" r="12"/>
-          <circle cx="800" cy="862" r="11"/>
-          <circle cx="840" cy="868" r="13"/>
-          <circle cx="880" cy="863" r="10"/>
-        </g>
-        <g fill="#2a2431" opacity="0.75">
-          <circle cx="560" cy="855" r="14"/>
-          <circle cx="600" cy="860" r="12"/>
-          <circle cx="1000" cy="858" r="13"/>
-          <circle cx="1040" cy="862" r="12"/>
-        </g>
-      </g>
-
-      <!-- zewnętrzna "obręcz" -->
+      <!-- obręcz -->
       <defs>
         <linearGradient id="rimGrad" x1="0" y1="0" x2="1" y2="0">
           <stop offset="0" stop-color="#3a2a2f"/>
@@ -56,66 +38,27 @@
           <stop offset="0" stop-color="#dfe6ea"/>
           <stop offset="1" stop-color="#bfc7cf"/>
         </linearGradient>
-
-        <!-- "kropki" do wyświetlacza -->
-        <pattern id="dotPattern" width="18" height="18" patternUnits="userSpaceOnUse">
-          <rect x="0" y="0" width="18" height="18" fill="none"/>
-          <rect x="5" y="5" width="8" height="8" rx="1.5" fill="#c9d66b"/>
-        </pattern>
-
-        <!-- maska: tekst wycina pattern -->
-        <mask id="dotTextMask">
-          <rect x="0" y="0" width="1600" height="900" fill="black"/>
-          <text x="800" y="425"
-                text-anchor="middle"
-                font-size="160"
-                font-weight="800"
-                font-family="ui-monospace, Menlo, Consolas, monospace"
-                letter-spacing="6"
-                fill="white">FAMILY100</text>
-        </mask>
       </defs>
 
-      <!-- zewnętrzny kapsułkowy kształt -->
-      <rect x="160" y="110" width="1280" height="560" rx="280" fill="url(#rimGrad)" opacity="0.95"/>
-
-      <!-- segmenty/linie na obręczy -->
-      <g stroke="#ffffff" stroke-opacity="0.18" stroke-width="6">
-        <line x1="280" y1="150" x2="450" y2="270"/>
-        <line x1="1320" y1="150" x2="1150" y2="270"/>
-        <line x1="280" y1="630" x2="450" y2="510"/>
-        <line x1="1320" y1="630" x2="1150" y2="510"/>
-        <line x1="800" y1="120" x2="800" y2="210"/>
-      </g>
-
-      <!-- głośniki (czarne prostokąty) -->
-      <rect x="160" y="340" width="140" height="110" rx="10" fill="#111016"/>
-      <rect x="1300" y="340" width="140" height="110" rx="10" fill="#111016"/>
-
-      <!-- mały panel na górze -->
-      <rect x="740" y="125" width="120" height="70" rx="10" fill="#111016"/>
-      <g opacity="0.35" fill="#ffffff">
-        <circle cx="760" cy="145" r="3"/><circle cx="772" cy="145" r="3"/><circle cx="784" cy="145" r="3"/>
-        <circle cx="760" cy="157" r="3"/><circle cx="772" cy="157" r="3"/><circle cx="784" cy="157" r="3"/>
-        <circle cx="760" cy="169" r="3"/><circle cx="772" cy="169" r="3"/><circle cx="784" cy="169" r="3"/>
-      </g>
+      <rect x="160" y="110" width="1280" height="560" rx="280"
+            fill="url(#rimGrad)"/>
 
       <!-- wewnętrzna rama -->
-      <rect x="300" y="190" width="1000" height="420" rx="210" fill="url(#innerGrad)"/>
-      <rect x="330" y="220" width="940" height="360" rx="190" fill="#e9eef2" opacity="0.35"/>
+      <rect x="300" y="190" width="1000" height="420" rx="210"
+            fill="url(#innerGrad)"/>
 
-      <!-- ekran -->
-      <rect x="470" y="260" width="660" height="290" rx="14" fill="#2a2a2d"/>
+      <!-- 4 CZARNE PROSTOKĄTY -->
 
-      <!-- "kropkowy" napis na ekranie -->
-      <rect x="470" y="260" width="660" height="290" fill="url(#dotPattern)" mask="url(#dotTextMask)" opacity="0.95"/>
+      <!-- lewy -->
+      <rect x="160" y="340" width="140" height="110" rx="10"
+            fill="#000"/>
 
-      <!-- subtelny podświetlony rant ekranu -->
-      <rect x="470" y="260" width="660" height="290" rx="14" fill="none" stroke="#ffffff" stroke-opacity="0.18" stroke-width="6"/>
+      <!-- prawy -->
+      <rect x="1300" y="340" width="140" height="110" rx="10"
+            fill="#000"/>
 
-      <!-- jasna linia przy scenie (jak barierka) -->
-      <rect x="540" y="650" width="520" height="10" rx="5" fill="#ffffff" opacity="0.55"/>
-    </svg>
-  </div>
-</body>
-</html>
+      <!-- górny -->
+      <rect x="740" y="125" width="120" height="70" rx="10"
+            fill="#000"/>
+
+      <!-- centralny ekran -->
