@@ -46,6 +46,19 @@ let games = [];
 let selectedId = null;
 
 /* ====== helpers UI ====== */
+
+function kindPL(kind){
+  return kind === "poll" ? "SONDAŻOWA" : "LOKALNA";
+}
+
+function statusPL(status){
+  const s = status || "draft";
+  if(s === "draft") return "SZKIC";
+  if(s === "poll_open") return "OTWARTY";
+  if(s === "ready") return "GOTOWA";
+  return s.toUpperCase();
+}
+
 function show(el, on) {
   if (!el) return;
   el.style.display = on ? "" : "none";
@@ -158,7 +171,7 @@ function cardGame(g) {
   const meta = el.querySelector(".meta");
   const st = (g.status || "draft").toUpperCase();
   const kind = (g.kind || "fixed") === "poll" ? "SONDAŻ" : "LOKALNA";
-  meta.textContent = `${kind} • ${st}`;
+  meta.textContent = `${kindPL(g.kind)} • ${statusPL(g.status)}`;
 
   el.addEventListener("click", async () => {
     selectedId = g.id;
