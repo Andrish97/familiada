@@ -213,6 +213,32 @@ body{
   background:var(--dotOn);
   box-shadow: 0 0 14px rgba(255,211,74,.25), inset 0 -1px 0 rgba(0,0,0,.35), 0 0 0 1px rgba(0,0,0,.2);
 }
+
+/* Domyślnie (główny) zostaje żółty */
+:root{
+  --dotOn:#ffd34a;
+}
+
+/* Lewy licznik – czerwony */
+.sideCounter--left{
+  --dotOn: #ff4b4b;
+}
+
+/* Prawy licznik – zielony */
+.sideCounter--right{
+  --dotOn: #35ff6a;
+}
+
+/* Górny – zielony */
+.topCounter{
+  --dotOn: #35ff6a;
+}
+
+/* Dwa dolne paski – zielonkawo-żółte */
+.strip{
+  --dotOn: #cfff3a;
+}
+
 .module{
   display:grid;
   grid-template-columns: repeat(5, var(--dot));
