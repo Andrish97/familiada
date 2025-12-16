@@ -45,7 +45,19 @@ const RULES = { QN: 10, AN: 5 };
 function setMsg(t) {
   if (!msg) return;
   msg.textContent = t || "";
-  if (t) setTimeout(() => (msg.textContent = ""), 2000);
+  if (t) setTimeout(() => (msg.textContent = ""), 2200);
+}
+
+function kindPL(kind) {
+  return kind === "poll" ? "SONDAŻOWA" : "LOKALNA";
+}
+
+function statusPL(status) {
+  const s = status || "draft";
+  if (s === "draft") return "SZKIC";
+  if (s === "poll_open") return "OTWARTY";
+  if (s === "ready") return "GOTOWA";
+  return String(s).toUpperCase();
 }
 
 function pollLink(g) {
@@ -56,12 +68,12 @@ function pollLink(g) {
 }
 
 function setChips(g) {
-  if (chipKind) chipKind.textContent = g.kind === "poll" ? "SONDAŻOWA" : "LOKALNA";
+  if (chipKind) chipKind.textContent = kindPL(g.kind);
 
   if (chipStatus) {
     chipStatus.className = "chip status";
     const st = g.status || "draft";
-    chipStatus.textContent = st.toUpperCase();
+    chipStatus.textContent = statusPL(st);
 
     if (st === "ready") chipStatus.classList.add("ok");
     else if (st === "poll_open") chipStatus.classList.add("warn");
@@ -82,7 +94,8 @@ async function renderSmallQr(link) {
     const canvas = document.createElement("canvas");
     await QRCode.toCanvas(canvas, link, { width: 260, margin: 1 });
     qrBox.appendChild(canvas);
-  } catch {
+  } catch (e) {
+    console.error("[polls] QR error:", e);
     qrBox.textContent = "QR nie działa.";
   }
 }
@@ -99,18 +112,18 @@ async function loadGame() {
 
 // 10 pytań, każde ma DOKŁADNIE 5 odpowiedzi (bierzemy pierwsze 10)
 async function pollSetupCheck(gid) {
-  const { data: qs, error: qErr } = await sb()
+  const { data: qsRows, error: qErr } = await sb()
     .from("questions")
     .select("id,ord")
     .eq("game_id", gid)
     .order("ord", { ascending: true });
 
   if (qErr) return { ok: false, reason: "Błąd wczytywania pytań." };
-  if (!qs || qs.length < RULES.QN) {
-    return { ok: false, reason: `Za mało pytań: ${qs?.length || 0} / ${RULES.QN}.` };
+  if (!qsRows || qsRows.length < RULES.QN) {
+    return { ok: false, reason: `Za mało pytań: ${qsRows?.length || 0} / ${RULES.QN}.` };
   }
 
-  const ten = qs.slice(0, RULES.QN);
+  const ten = qsRows.slice(0, RULES.QN);
 
   for (const q of ten) {
     const { data: ans, error: aErr } = await sb()
@@ -141,7 +154,7 @@ async function previewVotes() {
   votesEl.style.display = "";
   votesEl.textContent = "Ładuję…";
 
-  const { data: qs, error: qErr } = await sb()
+  const { data: qsRows, error: qErr } = await sb()
     .from("questions")
     .select("id,ord,text")
     .eq("game_id", gameId)
@@ -152,7 +165,7 @@ async function previewVotes() {
     return;
   }
 
-  const ten = (qs || []).slice(0, RULES.QN);
+  const ten = (qsRows || []).slice(0, RULES.QN);
   let out = [];
 
   for (const q of ten) {
@@ -163,7 +176,7 @@ async function previewVotes() {
       .order("ord", { ascending: true });
 
     if (aErr) {
-      out.push(`Q${q.ord}: błąd odpowiedzi`);
+      out.push(`P${q.ord}: błąd odpowiedzi`);
       out.push("");
       continue;
     }
@@ -178,7 +191,7 @@ async function previewVotes() {
       .maybeSingle();
 
     if (sErr) {
-      out.push(`Q${q.ord}: błąd sesji`);
+      out.push(`P${q.ord}: błąd sesji`);
       out.push("");
       continue;
     }
@@ -194,14 +207,18 @@ async function previewVotes() {
         .select("answer_id")
         .eq("poll_session_id", sid);
 
-      if (!vErr) {
-        for (const v of (votes || [])) {
-          if (counts.has(v.answer_id)) counts.set(v.answer_id, (counts.get(v.answer_id) || 0) + 1);
-        }
+      if (vErr) {
+        out.push(`P${q.ord}: błąd głosów`);
+        out.push("");
+        continue;
+      }
+
+      for (const v of (votes || [])) {
+        if (counts.has(v.answer_id)) counts.set(v.answer_id, (counts.get(v.answer_id) || 0) + 1);
       }
     }
 
-    out.push(`Q${q.ord}: ${q.text}`);
+    out.push(`P${q.ord}: ${q.text}`);
     for (const a of (ans || [])) {
       out.push(`  - ${a.text}: ${counts.get(a.id) || 0} głosów`);
     }
@@ -250,6 +267,7 @@ async function refresh() {
   btnClose && (btnClose.disabled = st !== "poll_open");
   btnReopen && (btnReopen.disabled = !chk.ok || st !== "ready");
 
+  // QR+link tylko gdy poll_open i wszystko OK
   if (st === "poll_open" && chk.ok) {
     const link = pollLink(game);
     if (pollLinkEl) pollLinkEl.value = link;
@@ -316,12 +334,17 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (!ok) return;
 
     try {
-      await sb().rpc("poll_open", { p_game_id: gameId, p_key: game.share_key_poll });
+      const { error } = await sb().rpc("poll_open", {
+        p_game_id: gameId,
+        p_key: game.share_key_poll,
+      });
+      if (error) throw error;
+
       setMsg("Sondaż uruchomiony.");
       await refresh();
     } catch (e) {
       console.error("[polls] open error:", e);
-      alert("Nie udało się uruchomić sondażu. Sprawdź konsolę.");
+      alert(`Nie udało się uruchomić sondażu.\n\n${e?.message || e}`);
     }
   });
 
@@ -343,12 +366,17 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (!ok) return;
 
     try {
-      await sb().rpc("poll_open", { p_game_id: gameId, p_key: game.share_key_poll });
+      const { error } = await sb().rpc("poll_open", {
+        p_game_id: gameId,
+        p_key: game.share_key_poll,
+      });
+      if (error) throw error;
+
       setMsg("Sondaż otwarty ponownie.");
       await refresh();
     } catch (e) {
       console.error("[polls] reopen error:", e);
-      alert("Nie udało się otworzyć ponownie. Sprawdź konsolę.");
+      alert(`Nie udało się otworzyć ponownie.\n\n${e?.message || e}`);
     }
   });
 
@@ -364,19 +392,27 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (!ok) return;
 
     try {
-      await sb().rpc("poll_close_and_normalize", { p_game_id: gameId, p_key: game.share_key_poll });
+      const { error } = await sb().rpc("poll_close_and_normalize", {
+        p_game_id: gameId,
+        p_key: game.share_key_poll,
+      });
+      if (error) throw error;
+
       setMsg("Sondaż zamknięty. Gra gotowa do zagrania.");
       await refresh();
     } catch (e) {
       console.error("[polls] close error:", e);
-      alert("Nie udało się zamknąć sondażu. Sprawdź konsolę.");
+      alert(`Nie udało się zamknąć sondażu.\n\n${e?.message || e}`);
     }
   });
 
   btnPreview?.addEventListener("click", async () => {
     if (!votesEl) return;
-    if (votesEl.style.display === "none") await previewVotes();
-    else votesEl.style.display = "none";
+    if (votesEl.style.display === "none") {
+      await previewVotes();
+    } else {
+      votesEl.style.display = "none";
+    }
   });
 
   await refresh();
