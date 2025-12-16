@@ -2,28 +2,32 @@
 <html lang="pl">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Familiada – wyświetlacz (layout)</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Familiada – wyświetlacz</title>
   <link rel="icon" href="favicon.ico" />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
 
-  <div class="studio">
-    <div class="rig">
+  <button id="fsBtn" class="fsBtn" aria-label="Pełny ekran" title="Pełny ekran">⛶</button>
 
-      <!-- górny mały wyświetlacz -->
+  <div class="studio" id="stage">
+    <div class="rig" id="rig">
+
+      <!-- górny -->
       <div class="topCounter panelBlack">
         <div id="topDigit" class="dotDisplay"></div>
       </div>
 
-      <!-- pierścień + „okno” -->
+      <!-- pierścień + okno -->
       <div class="ring">
-        <!-- boczne liczniki -->
+
+        <!-- bok lewy -->
         <div class="sideCounter sideCounter--left panelBlack">
           <div id="leftScore" class="dotDisplay"></div>
         </div>
 
+        <!-- bok prawy -->
         <div class="sideCounter sideCounter--right panelBlack">
           <div id="rightScore" class="dotDisplay"></div>
         </div>
@@ -31,23 +35,25 @@
         <!-- metalowe okno -->
         <div class="window">
           <div class="windowInner">
+
             <div class="mainScreen panelBlack">
-              <div id="mainMatrix" class="dotDisplay"></div>
-              <div class="mainCaption panelBlack">
-                <div id="sumStrip" class="dotDisplay"></div>
+              <div id="mainMatrix" class="dotDisplay mainMatrix"></div>
+
+              <!-- dwa długie na dole -->
+              <div class="bottomStrips">
+                <div class="strip panelBlack">
+                  <div id="strip1" class="dotDisplay"></div>
+                </div>
+                <div class="strip panelBlack">
+                  <div id="strip2" class="dotDisplay"></div>
+                </div>
               </div>
             </div>
+
           </div>
         </div>
-      </div>
 
-      <!-- dół (żółta baza + boczne “pulpity”) -->
-      <div class="base">
-        <div class="podium podium--left"></div>
-        <div class="podium podium--center"></div>
-        <div class="podium podium--right"></div>
       </div>
-
     </div>
   </div>
 
