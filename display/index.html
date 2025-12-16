@@ -81,7 +81,7 @@ const center = document.getElementById("centerGrid");
 
 const r=2, d=r*2;
 const pitch=d+1;
-const margin=2;
+const margin=2+r;
 const gap=d;
 
 const cellCols=30, cellRows=10;
@@ -120,7 +120,7 @@ const panels=document.getElementById("panels");
 
 // większe kółka (3x)
 const rP=r*3, dP=rP*2;
-const pitchP=dP+2, marginP=4;
+const pitchP=dP+2, marginP=4+rP;
 
 const subW=(dotsCols-1)*pitchP+marginP*2;
 const subH=(dotsRows-1)*pitchP+marginP*2;
