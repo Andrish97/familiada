@@ -1,72 +1,60 @@
 :root{
-  /* tła */
   --panelOuter1:#0c0c0c;
   --panelOuter2:#050505;
+
   --displayBg:#1a1a1a;   /* tło całego wyświetlacza */
   --segmentBg:#000000;   /* tło segmentu 5x7 */
 
-  /* diody */
   --dotOff:#2a2a2a;
 
-  /* bazowe rozmiary (stałe proporcje!) */
-  --dotMain: 10px;  --gapMain: 2px;  --moduleGapMain: 12px; --cellPadMain: 1px;
-  --dotStrip: 15px; --gapStrip: 3px;
-  --dotBig: 30px;   --gapBig: 5px;  --moduleGapBig: 35px;  --cellPadBig: 2px;
-
-  /* rig */
-  --designW: 1920;
-  --designH: 1080;
-  --edgePad: 46px;   /* odstęp od krawędzi dla “przypiętych” paneli */
+  /* te będą nadpisywane z JS per panel przez CSS vars inline */
 }
 
-*{box-sizing:border-box}
-html,body{height:100%}
-body{
-  margin:0;
-  background:#08060a;
-  font-family:system-ui,Segoe UI,Roboto,Arial,sans-serif;
-  overscroll-behavior:none;
-}
-
-/* fullscreen */
-.fsBtn{
-  position:fixed;
-  left:max(10px, env(safe-area-inset-left));
-  top:max(10px, env(safe-area-inset-top));
-  z-index:9999;
-  width:38px;height:38px;
-  border-radius:10px;
-  border:1px solid rgba(255,255,255,.18);
-  background: rgba(0,0,0,.55);
-  color:#fff;
-  font-size:18px;
-  display:grid;place-items:center;
-  cursor:pointer;
-  -webkit-tap-highlight-color: transparent;
-}
-.fsBtn:active{ transform:scale(.98); }
-
+/* Stage */
 .stage{
   position:relative;
-  min-height:100%;
+  min-height:100vh;
   overflow:hidden;
   background:
     radial-gradient(900px 420px at 52% 30%, rgba(255,255,255,.20), rgba(255,255,255,0) 60%),
     linear-gradient(180deg, #2b0810 0%, #18060b 35%, #08060a 100%);
 }
 
-/* RIG w stałych proporcjach; skaluje się transformem */
-.rig{
+/* Owal = tło strony, prawie na całą szerokość */
+.megaRing{
   position:absolute;
   left:50%;
   top:50%;
-  width: calc(var(--designW) * 1px);
-  height: calc(var(--designH) * 1px);
-  transform: translate(-50%,-50%) scale(var(--rigScale, 1));
-  transform-origin: center center;
+  transform:translate(-50%,-52%);
+  width: calc(100vw - 16px);   /* “malutki margines” */
+  height: min(78vh, 860px);
+  border-radius:999px;
+  background:
+    conic-gradient(from 270deg,
+      #db2a49 0deg, #ff607d 160deg,
+      #2b66d4 200deg, #1f4aa0 360deg
+    );
+  box-shadow: 0 40px 110px rgba(0,0,0,.60);
+  pointer-events:none;
+}
+.megaRing::after{
+  content:"";
+  position:absolute; inset:18px;
+  border-radius:999px;
+  background:
+    radial-gradient(closest-side at 50% 50%, rgba(0,0,0,.18), rgba(0,0,0,0) 62%),
+    repeating-linear-gradient(
+      90deg,
+      rgba(255,255,255,.12) 0px,
+      rgba(255,255,255,.12) 3px,
+      rgba(255,255,255,0) 3px,
+      rgba(255,255,255,0) 76px
+    );
+  mix-blend-mode: overlay;
+  opacity:.6;
 }
 
-/* ===== PANELE ===== */
+/* Panele (wyświetlacze) */
 .panel{
   position:absolute;
   background: linear-gradient(180deg, var(--panelOuter1), var(--panelOuter2));
@@ -86,14 +74,14 @@ body{
 
 .dotHost{ display:block; }
 
-/* ===== Kolory świecenia ===== */
-.panel--main{ --dotOn:#ffd34a; }      /* żółty */
-.panel--left{ --dotOn:#ff4b4b; }      /* czerwony */
-.panel--right{ --dotOn:#35ff6a; }     /* zielony */
-.panel--top{ --dotOn:#35ff6a; }       /* zielony */
-.panel--stripL, .panel--stripR{ --dotOn:#cfff3a; } /* zielonkawo-żółty */
+/* Kolory świecenia */
+.panel--main{ --dotOn:#ffd34a; }
+.panel--left{ --dotOn:#ff4b4b; }
+.panel--right{ --dotOn:#35ff6a; }
+.panel--top{ --dotOn:#35ff6a; }
+.panel--stripL, .panel--stripR{ --dotOn:#cfff3a; }
 
-/* ===== Dioda ===== */
+/* Dioda */
 .dot{
   width: var(--dotSize);
   height: var(--dotSize);
@@ -106,7 +94,7 @@ body{
   box-shadow: 0 0 14px rgba(255,211,74,.22), inset 0 -1px 0 rgba(0,0,0,.35), 0 0 0 1px rgba(0,0,0,.2);
 }
 
-/* ===== Segment 5x7 (ma tło czarne) ===== */
+/* Segmenty 5x7 (mają tło czarne) */
 .hasSegments .module{
   background: var(--segmentBg);
   border-radius:6px;
@@ -124,89 +112,10 @@ body{
   justify-content:start;
 }
 
-/* ===== Paski 96x7 (bez segmentów) ===== */
+/* Paski 96x7 (bez segmentów) */
 .noSegments .pixelGrid{
   display:grid;
   gap: var(--dotGap);
   align-content:start;
   justify-content:start;
-}
-
-/* ===== Centrum: owal + główny jako jedna bryła ===== */
-.centerGroup{
-  position:absolute;
-  left:50%;
-  top:50%;
-  transform: translate(-50%,-50%);
-  width: 1500px;
-  height: 800px;
-}
-
-/* owal prawie na szerokość sceny, ale skalowany razem z centerGroup */
-.megaRing{
-  position:absolute;
-  left:50%;
-  top:50%;
-  transform:translate(-50%,-50%);
-  width: 1500px;
-  height: 800px;
-  border-radius:999px;
-  background:
-    conic-gradient(from 270deg,
-      #db2a49 0deg, #ff607d 160deg,
-      #2b66d4 200deg, #1f4aa0 360deg
-    );
-  box-shadow: 0 40px 110px rgba(0,0,0,.60);
-}
-.megaRing::after{
-  content:"";
-  position:absolute; inset:18px;
-  border-radius:999px;
-  background:
-    radial-gradient(closest-side at 50% 50%, rgba(0,0,0,.18), rgba(0,0,0,0) 62%),
-    repeating-linear-gradient(
-      90deg,
-      rgba(255,255,255,.12) 0px,
-      rgba(255,255,255,.12) 3px,
-      rgba(255,255,255,0) 3px,
-      rgba(255,255,255,0) 76px
-    );
-  mix-blend-mode: overlay;
-  opacity:.6;
-  pointer-events:none;
-}
-
-/* główny panel w centrum centerGroup */
-.panel--main{
-  left:50%;
-  top:50%;
-  transform: translate(-50%,-50%);
-  width: 1220px;
-  height: 520px;
-  border-radius:16px;
-}
-
-/* przypięte panele: górny i boczne */
-.panel--top{
-  left:50%;
-  top: var(--edgePad);
-  transform: translateX(-50%);
-}
-.panel--left{
-  left: var(--edgePad);
-  top: calc(var(--edgePad) + 40px);
-}
-.panel--right{
-  right: var(--edgePad);
-  top: calc(var(--edgePad) + 40px);
-}
-
-/* dolne w rogach */
-.panel--stripL{
-  left: var(--edgePad);
-  bottom: var(--edgePad);
-}
-.panel--stripR{
-  right: var(--edgePad);
-  bottom: var(--edgePad);
 }
