@@ -8,52 +8,44 @@
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-
   <button id="fsBtn" class="fsBtn" aria-label="Pełny ekran" title="Pełny ekran">⛶</button>
 
-  <div class="studio" id="stage">
-    <div class="rig" id="rig">
+  <div class="stage" id="stage">
+    <!-- wielki owal jako tło -->
+    <div class="megaRing" aria-hidden="true"></div>
 
-      <!-- górny -->
+    <!-- wyświetlacze jako warstwa na wierzchu -->
+    <div class="hud" id="hud">
+
+      <!-- górny (zielony) -->
       <div class="topCounter panelBlack">
-        <div id="topDigit" class="dotDisplay"></div>
+        <div id="topDigit" class="dotHost"></div>
       </div>
 
-      <!-- pierścień + okno -->
-      <div class="ring">
-
-        <!-- bok lewy -->
-        <div class="sideCounter sideCounter--left panelBlack">
-          <div id="leftScore" class="dotDisplay"></div>
-        </div>
-
-        <!-- bok prawy -->
-        <div class="sideCounter sideCounter--right panelBlack">
-          <div id="rightScore" class="dotDisplay"></div>
-        </div>
-
-        <!-- metalowe okno -->
-        <div class="window">
-          <div class="windowInner">
-
-            <div class="mainScreen panelBlack">
-              <div id="mainMatrix" class="dotDisplay mainMatrix"></div>
-
-              <!-- dwa długie na dole -->
-              <div class="bottomStrips">
-                <div class="strip panelBlack">
-                  <div id="strip1" class="dotDisplay"></div>
-                </div>
-                <div class="strip panelBlack">
-                  <div id="strip2" class="dotDisplay"></div>
-                </div>
-              </div>
-            </div>
-
-          </div>
-        </div>
-
+      <!-- lewy (czerwony) -->
+      <div class="sideCounter sideCounter--left panelBlack">
+        <div id="leftScore" class="dotHost"></div>
       </div>
+
+      <!-- prawy (zielony) -->
+      <div class="sideCounter sideCounter--right panelBlack">
+        <div id="rightScore" class="dotHost"></div>
+      </div>
+
+      <!-- środkowy największy (żółty) -->
+      <div class="mainWrap panelBlack" id="mainWrap">
+        <div id="mainMatrix" class="dotHost mainMatrixHost"></div>
+      </div>
+
+      <!-- dolne paski w rogach (zielonkawo-żółte) -->
+      <div class="bottomStrip bottomStrip--left panelBlack">
+        <div id="strip1" class="dotHost"></div>
+      </div>
+
+      <div class="bottomStrip bottomStrip--right panelBlack">
+        <div id="strip2" class="dotHost"></div>
+      </div>
+
     </div>
   </div>
 
