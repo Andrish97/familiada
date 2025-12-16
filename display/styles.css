@@ -149,12 +149,13 @@ body{
   left:50%;
   top:50%;
   transform:translate(-50%,-48%);
-  padding:16px;
   z-index:4;
-  max-width: 92vw;
-  max-height: 70vh;
-  width: max-content;
-  height: max-content;
+
+  /* DUŻE pole robocze, niezależne od zawartości */
+  width: min(92vw, 1500px);
+  height: min(62vh, 780px);
+
+  padding:16px;
   border-radius:16px;
 }
 
