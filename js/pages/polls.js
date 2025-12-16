@@ -1,4 +1,5 @@
 // js/pages/polls.js
+import QRCode from "https://cdn.jsdelivr.net/npm/qrcode@1.5.3/+esm";
 import { sb } from "../core/supabase.js";
 import { requireAuth, signOut } from "../core/auth.js";
 import { guardDesktopOnly } from "../core/device-guard.js";
@@ -11,47 +12,17 @@ const gameId = qs.get("id");
 
 const RULES = { QN: 10, AN: 5 };
 
-// ---------- helpers ----------
 const $ = (id) => document.getElementById(id);
-
 function on(el, evt, fn) { if (el) el.addEventListener(evt, fn); }
 function show(el, yes) { if (el) el.style.display = yes ? "" : "none"; }
 function dis(el, yes) { if (el) el.disabled = !!yes; }
 function txt(el, t) { if (el) el.textContent = t ?? ""; }
 function val(el, v) { if (el) el.value = v ?? ""; }
 
-function setMsg(t) {
-  const msg = $("msg");
-  if (!msg) return;
-  msg.textContent = t || "";
-  if (t) setTimeout(() => (msg.textContent = ""), 2000);
-}
-
-function waitForQRCode() {
-  return new Promise((resolve, reject) => {
-    let tries = 0;
-    const i = setInterval(() => {
-      if (window.QRCode) { clearInterval(i); resolve(window.QRCode); }
-      tries++;
-      if (tries > 80) { clearInterval(i); reject(new Error("QRCode lib not loaded")); }
-    }, 50);
-  });
-}
-
-async function qrCanvas(link, size) {
-  const QRCode = await waitForQRCode();
-  return await new Promise((resolve, reject) => {
-    QRCode.toCanvas(link, { width: size, margin: 1 }, (err, canvas) => {
-      if (err) reject(err);
-      else resolve(canvas);
-    });
-  });
-}
-
-// ---------- DOM ----------
 const who = $("who");
 const btnLogout = $("btnLogout");
 const btnBack = $("btnBack");
+const msg = $("msg");
 
 const cardMain = $("cardMain");
 const cardEmpty = $("cardEmpty");
@@ -67,8 +38,8 @@ const qrBox = $("qr");
 
 const btnCopy = $("btnCopy");
 const btnOpen = $("btnOpen");
-const btnQrSmall = $("btnQrSmall");   // ✅ NOWY
-const btnOpenQr = $("btnOpenQr");     // ✅ rzutnik
+const btnQrSmall = $("btnQrSmall"); // modal QR
+const btnOpenQr = $("btnOpenQr");   // rzutnik QR
 
 const qrOverlay = $("qrOverlay");
 const qrInline = $("qrInline");
@@ -79,10 +50,16 @@ const btnStart = $("btnStart");
 const btnClose = $("btnClose");
 const btnReopen = $("btnReopen");
 
-const btnPreview = $("btnPreview");   // ✅ WRACA
-const votesEl = $("votes");           // ✅ WRACA
+const btnPreview = $("btnPreview");
+const votesEl = $("votes");
 
 let game = null;
+
+function setMsg(t) {
+  if (!msg) return;
+  msg.textContent = t || "";
+  if (t) setTimeout(() => (msg.textContent = ""), 2000);
+}
 
 function pollLink(g) {
   const base = new URL("poll.html", location.href);
@@ -104,22 +81,26 @@ function setChips(g) {
   }
 }
 
-function clearQr() { if (qrBox) qrBox.innerHTML = ""; }
+async function qrCanvas(link, size) {
+  const canvas = document.createElement("canvas");
+  await QRCode.toCanvas(canvas, link, { width: size, margin: 1 });
+  return canvas;
+}
 
 async function renderSmallQr(link) {
   if (!qrBox) return;
   qrBox.innerHTML = "";
   try {
-    const canvas = await qrCanvas(link, 160);
-    qrBox.appendChild(canvas);
-  } catch {
-    clearQr();
+    qrBox.appendChild(await qrCanvas(link, 160));
+  } catch (e) {
+    console.error("[polls] QR small error:", e);
+    qrBox.textContent = "QR error";
   }
 }
 
 async function openInlineQr(link) {
   if (!qrOverlay || !qrInline || !qrInlineUrl) {
-    setMsg("Brak okienka QR w HTML (qrOverlay/qrInline/qrInlineUrl).");
+    setMsg("Brak elementów modala QR w HTML.");
     return;
   }
 
@@ -127,9 +108,9 @@ async function openInlineQr(link) {
   qrInlineUrl.textContent = link;
 
   try {
-    const canvas = await qrCanvas(link, 240);
-    qrInline.appendChild(canvas);
-  } catch {
+    qrInline.appendChild(await qrCanvas(link, 240));
+  } catch (e) {
+    console.error("[polls] QR modal error:", e);
     qrInline.textContent = "Nie udało się wygenerować QR.";
   }
 
@@ -146,11 +127,11 @@ async function loadGame() {
   return data;
 }
 
-// ✅ twarda zasada: bierzemy pierwsze 10 pytań, każde ma dokładnie 5 odp
+// 10 pytań, każde dokładnie 5 odpowiedzi (bierzemy pierwsze 10)
 async function pollSetupCheck(gid) {
   const { data: qs, error: qErr } = await sb()
     .from("questions")
-    .select("id,ord,text")
+    .select("id,ord")
     .eq("game_id", gid)
     .order("ord", { ascending: true });
 
@@ -177,10 +158,9 @@ function setLinkUi(on) {
   dis(btnOpen, !on);
   dis(btnQrSmall, !on);
   dis(btnOpenQr, !on);
-  if (!on) clearQr();
+  if (!on && qrBox) qrBox.innerHTML = "";
 }
 
-// ✅ PREVIEW: pokazuje liczbę głosów z ostatniej sesji na pytanie
 async function previewVotes() {
   if (!votesEl) return;
 
@@ -196,8 +176,8 @@ async function previewVotes() {
   if (qErr) { votesEl.textContent = "Błąd wczytywania pytań."; return; }
 
   const ten = (qs || []).slice(0, RULES.QN);
-
   let out = [];
+
   for (const q of ten) {
     const { data: ans, error: aErr } = await sb()
       .from("answers")
@@ -236,9 +216,7 @@ async function previewVotes() {
     }
 
     out.push(`Q${q.ord}: ${q.text}`);
-    for (const a of (ans || [])) {
-      out.push(`  - ${a.text}: ${counts.get(a.id) || 0} głosów`);
-    }
+    for (const a of (ans || [])) out.push(`  - ${a.text}: ${counts.get(a.id) || 0} głosów`);
     out.push("");
   }
 
@@ -249,8 +227,6 @@ async function refresh() {
   if (!gameId) {
     show(cardMain, false);
     show(cardEmpty, true);
-    txt(chipKind, "—");
-    txt(chipStatus, "—");
     setMsg("Brak parametru id.");
     return;
   }
@@ -269,7 +245,7 @@ async function refresh() {
   show(cardMain, true);
 
   txt(gName, game.name || "Sondaż");
-  txt(gMeta, "Link i QR pojawiają się tylko, gdy sondaż jest OTWARTY i gra spełnia zasady (10 pytań, 5 odpowiedzi).");
+  txt(gMeta, "Link i QR pojawiają się tylko gdy sondaż jest OTWARTY i gra spełnia zasady (10 pytań, 5 odpowiedzi).");
 
   val(pollLinkEl, "");
   setLinkUi(false);
@@ -295,7 +271,6 @@ async function refresh() {
   }
 }
 
-// ---------- init ----------
 document.addEventListener("DOMContentLoaded", async () => {
   const u = await requireAuth("index.html");
   txt(who, u?.email || "—");
@@ -314,13 +289,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     window.open(pollLinkEl.value, "_blank", "noopener,noreferrer");
   });
 
-  // ✅ QR: małe okienko na stronie
   on(btnQrSmall, "click", async () => {
     if (!pollLinkEl?.value) return;
     await openInlineQr(pollLinkEl.value);
   });
 
-  // ✅ Rzutnik QR: nowa karta poll-qr.html
   on(btnOpenQr, "click", () => {
     if (!pollLinkEl?.value) return;
     const u = new URL("poll-qr.html", location.href);
@@ -400,7 +373,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   });
 
-  // ✅ wraca preview
   on(btnPreview, "click", async () => {
     if (!votesEl) return;
     if (votesEl.style.display === "none") await previewVotes();
