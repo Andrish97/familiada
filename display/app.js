@@ -18,10 +18,10 @@
 
   // Kolory świecenia
   const LIT = {
-    main:  "#d7ff3d",
-    top:   "#34ff6a",
-    left:  "#ff2e3b",
-    right: "#2bff65",
+    main:  "#d7ff3d", // główny żółto-zielonkawy
+    top:   "#34ff6a", // górny zielony
+    left:  "#ff2e3b", // lewy czerwony
+    right: "#2bff65", // prawy zielony
   };
 
   // Geometria (jak w oryginale)
@@ -37,6 +37,14 @@
   // ============================================================
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   const isDigit = (ch) => ch >= "0" && ch <= "9";
+
+  const colorByName = (name) => {
+    const k = (name ?? "main").toString().toLowerCase();
+    if (k === "top") return LIT.top;
+    if (k === "left") return LIT.left;
+    if (k === "right") return LIT.right;
+    return LIT.main;
+  };
 
   // ============================================================
   // Fullscreen button
@@ -224,6 +232,7 @@
     return snap;
   };
 
+  // eslint-disable-next-line no-unused-vars
   const restoreArea = (big, c1, r1, snap) => {
     const H = snap.length, W = snap[0].length;
     for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
@@ -241,8 +250,6 @@
   // Animations (kaflami)
   // ============================================================
   const anim = {
-    // typy: edge / matrix
-    // in/out
     async inEdge(big, area, dir = "left", stepMs = 6) {
       const { c1,r1,c2,r2 } = area;
       const snap = snapArea(big, c1,r1,c2,r2);
@@ -349,6 +356,35 @@
   };
 
   // ============================================================
+  // LOGO grid JSON (jak win)
+  // ============================================================
+  const drawLogoGrid = (GLYPHS, big, logoJson) => {
+    const safeFrom = logoJson?.meta?.safeRows?.from ?? 2;
+    const safeTo   = logoJson?.meta?.safeRows?.to   ?? 8;
+
+    // czyścimy tylko obszar roboczy
+    clearArea(big, 1, safeFrom, 30, safeTo);
+
+    const layers = Array.isArray(logoJson?.layers) ? logoJson.layers : [];
+    for (const layer of layers) {
+      const color = colorByName(layer?.color ?? "main");
+      const rows = Array.isArray(layer?.rows) ? layer.rows : [];
+
+      for (let ry = 0; ry < 7; ry++) {
+        const rowStr = (rows[ry] ?? "").toString();
+        const row1 = safeFrom + ry; // 2..8
+        if (row1 < safeFrom || row1 > safeTo) continue;
+
+        for (let cx = 0; cx < 30; cx++) {
+          const ch = rowStr[cx] ?? " ";
+          if (ch === " ") continue;
+          putCharAt(GLYPHS, big, 1 + cx, row1, ch, color);
+        }
+      }
+    }
+  };
+
+  // ============================================================
   // WIN (font_win.json) – węższe cyfry -> centrowanie poziome, pion stały 2..8
   // ============================================================
   const measureWinDigit = (pat) => {
@@ -393,7 +429,6 @@
     s = s.padStart(5, "0");
 
     const fieldW = 30;
-    const fieldH = 7;
     const rowTop1 = 2; // rzędy 2..8
     const gap = 1;
 
@@ -447,7 +482,7 @@
 
   const updateField = async (GLYPHS, big, f, text, opts = {}) => {
     const {
-      out = null, // {type:"edge"/"matrix", dir/axis, ms}
+      out = null,
       in: inn = null,
       color = LIT.main,
     } = opts;
@@ -467,12 +502,7 @@
     }
   };
 
-  // ROUNDS: interpretacja spójna z Twoimi koordynatami:
-  // - 5 rund = rzędy 2..6
-  // - numer rundy: kol 5
-  // - tekst: kol 7..23 (17)
-  // - punkty: kol 24..25 (2)
-  // - SUMA: kol 18..21 w rzędzie 8, wartość: kol 23..25 (3)
+  // ROUNDS: wszystko w obszarze 2..8
   const ROUNDS = (() => {
     const rows = [2,3,4,5,6];
     const roundNums = rows.map((r, i) => field(`R${i+1}_NUM`, 5, r, 1));
@@ -494,12 +524,7 @@
     return { rows, roundNums, answers, points, sumaLabel, sumaVal, xCells };
   })();
 
-  // FINAL: przyjmuję 5 wierszy odpowiedzi = rzędy 2..6 (jak w ROUNDS)
-  // - lewy tekst 11: col 1..11
-  // - pkt A 2: col 13..14
-  // - pkt B 2: col 17..18
-  // - prawy tekst 11: col 20..30
-  // - SUMA: (literówka w spec) ustawiam: SUMA label col 11 row 8, value col 16..18 row 8
+  // FINAL: wiersze 2..6 + SUMA w 8
   const FINAL = (() => {
     const rows = [2,3,4,5,6];
     const leftTxt  = rows.map((r,i)=>field(`F${i+1}_LTXT`, 1,  r, 11));
@@ -507,7 +532,7 @@
     const ptsB     = rows.map((r,i)=>field(`F${i+1}_B`,    17, r, 2));
     const rightTxt = rows.map((r,i)=>field(`F${i+1}_RTXT`, 20, r, 11));
 
-    const sumaLabel = field("FSUMA_LABEL", 11, 8, 4); // SUMA
+    const sumaLabel = field("FSUMA_LABEL", 11, 8, 4);
     const sumaVal   = field("FSUMA_VAL",   16, 8, 3);
 
     return { rows, leftTxt, ptsA, ptsB, rightTxt, sumaLabel, sumaVal };
@@ -534,7 +559,6 @@
     let s = (text ?? "").toString().toUpperCase();
     if (s.length > 15) s = s.slice(0, 15);
 
-    // clear
     for (let y = 0; y < panel.Y; y++) for (let x = 0; x < panel.X; x++) {
       panel.dots[y][x].setAttribute("fill", COLORS.dotOff);
     }
@@ -570,6 +594,10 @@
 
     const FONTWIN = await loadJson("./font_win.json");
     const WIN_DIGITS = FONTWIN?.digits || {};
+
+    // LOGO JSON (opcjonalnie – można doładować komendą)
+    let LOGO_JSON = null;
+    try { LOGO_JSON = await loadJson("./logo_familiada.json"); } catch (_) {}
 
     // SVG layers
     const center  = $("center");
@@ -692,12 +720,10 @@
           if (!BIG_MODES[mm]) throw new Error(`Nieznany tryb: ${m}`);
           mode = mm;
 
-          // “init” widoku
           clearBig(big);
 
           if (mode === BIG_MODES.ROUNDS) {
             writeField(GLYPHS, big, ROUNDS.sumaLabel, "SUMA");
-            // numery 1..5
             for (let i = 0; i < 5; i++) writeField(GLYPHS, big, ROUNDS.roundNums[i], String(i+1));
           }
 
@@ -705,9 +731,9 @@
             writeField(GLYPHS, big, FINAL.sumaLabel, "SUMA");
           }
 
-          if (opts?.animIn) {
-            await api.big.animIn(opts.animIn);
-          }
+          // LOGO: nic automatycznie, bo idzie z JSON-a i api.logo.draw/show
+
+          if (opts?.animIn) await api.big.animIn(opts.animIn);
         },
       },
 
@@ -724,6 +750,7 @@
       // Big generic
       big: {
         areaAll: () => ({ c1:1, r1:1, c2:30, r2:10 }),
+        areaWork: () => ({ c1:1, r1:2, c2:30, r2:8 }),
 
         animIn: async ({ type="edge", dir="left", axis="down", ms=10, area=null } = {}) => {
           const A = area ?? api.big.areaAll();
@@ -738,24 +765,34 @@
         },
 
         clear: () => clearBig(big),
-
-        // low-level: symbol at col:row
         put: (col, row, ch, color=LIT.main) => putCharAt(GLYPHS, big, col, row, ch, color),
       },
 
-      // LOGO
+      // LOGO (grid JSON jak win)
       logo: {
-        // layout: [{col,row,ch}]
-        setLayout: (layout) => {
-          if (!Array.isArray(layout)) throw new Error("layout musi być tablicą {col,row,ch}");
-          clearBig(big);
-          for (const it of layout) {
-            if (!it) continue;
-            putCharAt(GLYPHS, big, it.col, it.row, it.ch, LIT.main);
-          }
+        _json: LOGO_JSON,
+
+        load: async (url = "./logo_familiada.json") => {
+          api.logo._json = await loadJson(url);
+          return api.logo._json;
         },
-        show: async (animIn) => api.big.animIn(animIn ?? { type:"edge", dir:"left", ms:8 }),
-        hide: async (animOut) => api.big.animOut(animOut ?? { type:"edge", dir:"right", ms:8 }),
+
+        set: (json) => { api.logo._json = json; },
+
+        draw: () => {
+          if (!api.logo._json) throw new Error("LOGO: brak JSON (logo.load lub logo.set).");
+          drawLogoGrid(GLYPHS, big, api.logo._json);
+        },
+
+        show: async (animIn = { type:"edge", dir:"left", ms:8 }) => {
+          await api.mode.set("LOGO");
+          api.logo.draw();
+          await api.big.animIn({ ...animIn, area: api.big.areaWork() });
+        },
+
+        hide: async (animOut = { type:"edge", dir:"right", ms:8 }) => {
+          await api.big.animOut({ ...animOut, area: api.big.areaWork() });
+        },
       },
 
       // WIN
@@ -787,10 +824,7 @@
         },
 
         setX: (name, on) => {
-          if (mode !== BIG_MODES.ROUNDS) {
-            // celowo bez await, bo to “twarde”
-            mode = BIG_MODES.ROUNDS;
-          }
+          if (mode !== BIG_MODES.ROUNDS) mode = BIG_MODES.ROUNDS;
           const key = (name ?? "").toString().toUpperCase();
           const cell = ROUNDS.xCells[key];
           if (!cell) throw new Error(`Nieznane X: ${name}`);
@@ -821,25 +855,8 @@
     };
 
     // ============================================================
-    // Backend text commands (ładne, ale proste)
+    // Backend text commands
     // ============================================================
-    // Przykłady:
-    //   MODE ROUNDS
-    //   MODE FINAL ANIMIN edge left 8
-    //
-    //   WIN 01234
-    //   WIN 01234 ANIMOUT edge right 6 ANIMIN matrix down 20
-    //
-    //   R 1 TXT "ODP 1" PTS 10 ANIM edge left 6
-    //   RSUMA 120 ANIM matrix right 20
-    //   RX 2A ON
-    //
-    //   F 1 L "ALA MA KOTA" A 12 B 34 R "KOT MA ALE" ANIM edge top 6
-    //   FSUMA 999 ANIM matrix down 20
-    //
-    //   TOP 123 | LEFT 045 | RIGHT 999
-    //   LONG1 "TEKST..." | LONG2 "..."
-    //
     const unquote = (s) => {
       const t = (s ?? "").trim();
       if (t.startsWith('"') && t.endsWith('"')) return t.slice(1, -1);
@@ -847,8 +864,6 @@
     };
 
     const parseAnim = (tokens, startIdx) => {
-      // "ANIM edge left 6" albo "ANIM matrix down 20"
-      // zwraca { animOut, animIn } albo pojedyncze
       const type = (tokens[startIdx] ?? "").toLowerCase();
       const dirOrAxis = (tokens[startIdx + 1] ?? "").toLowerCase();
       const ms = parseInt(tokens[startIdx + 2] ?? "10", 10);
@@ -862,7 +877,7 @@
       const raw = (line ?? "").toString().trim();
       if (!raw) return;
 
-      // bardzo proste tokenizowanie z obsługą "..."
+      // tokenizacja z obsługą "..."
       const tokens = [];
       let i = 0;
       while (i < raw.length) {
@@ -892,11 +907,37 @@
       // mode
       if (head === "MODE") {
         const m = (tokens[1] ?? "").toUpperCase();
-        // opcjonalnie: "MODE ROUNDS ANIMIN edge left 8"
         let animIn = null;
         const ai = tokens.findIndex(t => t.toUpperCase() === "ANIMIN");
         if (ai >= 0) animIn = parseAnim(tokens, ai + 1);
         return api.mode.set(m, { animIn });
+      }
+
+      // LOGO
+      if (head === "LOGO") {
+        const op = (tokens[1] ?? "").toUpperCase();
+        if (op === "LOAD") {
+          const url = tokens[2] ? unquote(tokens[2]) : "./logo_familiada.json";
+          await api.logo.load(url);
+          return;
+        }
+        if (op === "DRAW") {
+          await api.mode.set("LOGO");
+          api.logo.draw();
+          return;
+        }
+        if (op === "SHOW") {
+          let animIn = null;
+          const ai = tokens.findIndex(t => t.toUpperCase() === "ANIMIN");
+          if (ai >= 0) animIn = parseAnim(tokens, ai + 1);
+          return api.logo.show(animIn ?? { type:"edge", dir:"left", ms:8 });
+        }
+        if (op === "HIDE") {
+          let animOut = null;
+          const ao = tokens.findIndex(t => t.toUpperCase() === "ANIMOUT");
+          if (ao >= 0) animOut = parseAnim(tokens, ao + 1);
+          return api.logo.hide(animOut ?? { type:"edge", dir:"right", ms:8 });
+        }
       }
 
       // WIN
@@ -1006,16 +1047,19 @@
     api.small.long1("FAMILIADA");
     api.small.long2("SUMA 000");
 
-    await api.mode.set("ROUNDS");
-    await api.rounds.setRow(1, { text: "PRZYKŁAD", pts: "10", animOut: {type:"edge", dir:"left", ms:6}, animIn: {type:"edge", dir:"left", ms:6} });
-    api.rounds.setX("2A", true);
-    await api.rounds.setSuma("120", { animOut: {type:"matrix", axis:"right", ms:20}, animIn: {type:"matrix", axis:"right", ms:20} });
+    // jeśli jest logo json, pokaż
+    if (api.logo._json) {
+      await api.logo.show({ type:"matrix", axis:"down", ms:16 });
+    } else {
+      await api.mode.set("ROUNDS");
+    }
 
     window.scene = { api, handleCommand, BIG_MODES };
     console.log("scene.api gotowe.");
-    console.log(`Przykład: scene.handleCommand('WIN 01234 ANIMOUT edge right 6 ANIMIN matrix down 20')`);
-    console.log(`Przykład: scene.handleCommand('MODE FINAL ANIMIN edge top 8')`);
-    console.log(`Przykład: scene.handleCommand('F 1 L "ALA MA KOTA" A 12 B 34 R "KOT MA ALE" ANIM edge left 6')`);
+    console.log(`LOGO: scene.handleCommand('LOGO LOAD'); scene.handleCommand('LOGO SHOW ANIMIN edge left 8')`);
+    console.log(`WIN:  scene.handleCommand('WIN 01234 ANIMOUT edge right 6 ANIMIN matrix down 20')`);
+    console.log(`ROUNDS: scene.handleCommand('MODE ROUNDS'); scene.handleCommand('R 1 TXT \"TEST\" PTS 10 ANIM edge left 6')`);
+    console.log(`FINAL: scene.handleCommand('MODE FINAL'); scene.handleCommand('F 1 L \"ALA\" A 12 B 34 R \"KOT\" ANIM matrix right 14')`);
   };
 
   window.addEventListener("DOMContentLoaded", () => {
