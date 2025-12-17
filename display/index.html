@@ -3,11 +3,13 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Scenografia – czysta geometria</title>
+  <title>Scenografia – spójna i odchudzona</title>
   <style>
     html, body { height:100%; margin:0; }
     body{
-      display:grid; place-items:center; overflow:hidden;
+      display:grid;
+      place-items:center;
+      overflow:hidden;
       background: radial-gradient(1400px 700px at 50% 25%,
         #ff5aa0 0%, #ff3b63 22%, #c43e79 45%, #6a4aa7 72%, #1b1a2b 100%);
     }
@@ -18,40 +20,34 @@
 <body>
 <div class="wrap">
 <svg viewBox="0 0 1600 900" xmlns="http://www.w3.org/2000/svg">
-  <!-- Owal – poprzednia wersja -->
   <defs>
+    <!-- owal: czerwony + niebieski (zamiast czarnego) -->
     <linearGradient id="rimGrad" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0" stop-color="#c4002f"/>   <!-- czerwony -->
+      <stop offset="0" stop-color="#c4002f"/>
       <stop offset="0.35" stop-color="#7a1230"/>
-      <stop offset="0.65" stop-color="#2a62ff"/> <!-- niebieski -->
+      <stop offset="0.65" stop-color="#2a62ff"/>
       <stop offset="1" stop-color="#2a62ff"/>
     </linearGradient>
+
     <linearGradient id="innerGrad" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0" stop-color="#e6eaef"/>
       <stop offset="1" stop-color="#bfc7cf"/>
     </linearGradient>
   </defs>
 
+  <!-- owal: „bardziej okrągły”, ta sama idea grubości -->
   <rect x="150" y="110" width="1300" height="680" rx="340" fill="url(#rimGrad)"/>
   <rect x="300" y="210" width="1000" height="470" rx="235" fill="url(#innerGrad)"/>
 
-  <g stroke="#ffffff" stroke-opacity="0.22" stroke-width="6">
-    <!-- górna -->
+  <!-- linie (lekko pod nowe położenie) -->
+  <g id="lines" stroke="#fff" stroke-opacity="0.22" stroke-width="6">
     <line x1="800" y1="110" x2="800" y2="210"/>
-  
-    <!-- lewa-góra -->
     <line x1="300" y1="180" x2="420" y2="320"/>
-  
-    <!-- prawa-góra -->
     <line x1="1300" y1="180" x2="1180" y2="320"/>
-  
-    <!-- lewa-dół -->
     <line x1="300" y1="720" x2="420" y2="560"/>
-  
-    <!-- prawa-dół -->
     <line x1="1300" y1="720" x2="1180" y2="560"/>
   </g>
-  
+
   <g id="center"></g>
   <g id="panels"></g>
   <g id="bottom"></g>
@@ -68,24 +64,29 @@
     return n;
   };
 
-  // ====== USTAWIENIA (jedno źródło prawdy) ======
-  const C = {
+  // ===== KONFIG =====
+  const VIEW = { W: 1600, H: 900, CX: 800, CY: 450 };
+
+  const COLORS = {
     big:  "#2e2e32",  // duże prostokąty
     cell: "#000000",  // małe prostokąty
     dot:  "#2e2e32"   // kółka
   };
 
-  // Jednostki:
-  const d = 4;        // średnica kółka w środku
-  const g = 1;        // odstęp (między kółkami i jako margines)
-  const gapCells = d; // odstęp między małymi prostokątami w układach = średnica
+  // jednostki świata
+  const d = 4;          // średnica (środek)
+  const g = 1;          // odstęp / margines
+  const gapCells = d;   // odstęp między małymi prostokątami (kaflami) = średnica
 
-  // ====== GEOMETRIA (Twoje wzory, jako funkcje) ======
-  const gridW = (X, d, g) => X*d + (X+1)*g;
-  const gridH = (Y, d, g) => Y*d + (Y+1)*g;
+  // siatka w kaflu
+  const DOTS = { X: 5, Y: 7 };
 
-  const drawDotGrid = (parent, x, y, X, Y, d, g, color) => {
-    const r = d/2, step = d + g;
+  // ===== FUNKCJE GEOMETRII (Twoje wzory) =====
+  const Wgrid = (X, d, g) => X*d + (X+1)*g;
+  const Hgrid = (Y, d, g) => Y*d + (Y+1)*g;
+
+  const drawDots = (parent, x, y, X, Y, dDots, g, color) => {
+    const r = dDots/2, step = dDots + g;
     for (let j=0; j<Y; j++) for (let i=0; i<X; i++) {
       parent.appendChild(el("circle", {
         cx: x + g + r + i*step,
@@ -95,106 +96,115 @@
     }
   };
 
-  // Rysuje: duży prostokąt (tło) + siatkę małych prostokątów,
-  // gdzie w każdym jest siatka kropek (dotX x dotY).
+  // duży prostokąt (tło) zawierający kafle tilesX x tilesY,
+  // każdy kafel to dotX x dotY kropek o średnicy dDots
   const drawTiled = (parent, x, y, tilesX, tilesY, dotX, dotY, dDots, g, gap, colors) => {
-    const wSmall = gridW(dotX, dDots, g);
-    const hSmall = gridH(dotY, dDots, g);
+    const wSmall = Wgrid(dotX, dDots, g);
+    const hSmall = Hgrid(dotY, dDots, g);
+
+    // Twoje wzory:
+    // W = tilesX*wSmall + (tilesX-1)*gap + 2g
+    // H = tilesY*hSmall + (tilesY-1)*gap + 2g
     const W = tilesX*wSmall + (tilesX-1)*gap + 2*g;
     const H = tilesY*hSmall + (tilesY-1)*gap + 2*g;
 
-    // tło
     parent.appendChild(el("rect", { x, y, width: W, height: H, rx: 0, fill: colors.big }));
 
-    // kafle + kropki
     for (let ty=0; ty<tilesY; ty++) for (let tx=0; tx<tilesX; tx++) {
       const cx = x + g + tx*(wSmall + gap);
       const cy = y + g + ty*(hSmall + gap);
+
       parent.appendChild(el("rect", { x: cx, y: cy, width: wSmall, height: hSmall, rx: 0, fill: colors.cell }));
-      drawDotGrid(parent, cx, cy, dotX, dotY, dDots, g, colors.dot);
+      drawDots(parent, cx, cy, dotX, dotY, dDots, g, colors.dot);
     }
+
     return { W, H, wSmall, hSmall };
   };
 
-  // Rysuje blok: zewnętrzny prostokąt + wewnętrzny prostokąt z siatką kropek (X x Y)
+  // blok: zewnętrzny (big) + wewnętrzny (cell) z siatką XxY kropek
   const drawFramedGrid = (parent, x, y, X, Y, dDots, g, colors) => {
-    const wInner = gridW(X, dDots, g);
-    const hInner = gridH(Y, dDots, g);
+    const wInner = Wgrid(X, dDots, g);
+    const hInner = Hgrid(Y, dDots, g);
     const wOuter = wInner + 2*g;
     const hOuter = hInner + 2*g;
 
     parent.appendChild(el("rect", { x, y, width: wOuter, height: hOuter, rx: 0, fill: colors.big }));
     parent.appendChild(el("rect", { x: x+g, y: y+g, width: wInner, height: hInner, rx: 0, fill: colors.cell }));
-    drawDotGrid(parent, x+g, y+g, X, Y, dDots, g, colors.dot);
+    drawDots(parent, x+g, y+g, X, Y, dDots, g, colors.dot);
 
     return { wOuter, hOuter };
   };
 
-  // ====== ŚRODEK (30 x 10 kafli, każdy 5 x 7 kropek) ======
+  // ===== 1) ŚRODEK =====
   const center = $("center");
-  const centerSize = (() => {
-    // liczymy tylko po to, by wyśrodkować
-    const wSmall = gridW(5, d, g), hSmall = gridH(7, d, g);
-    const W = 30*wSmall + 29*gapCells + 2*g;
-    const H = 10*hSmall + 9*gapCells  + 2*g;
-    return { W, H };
-  })();
-
-  const centerX = 800 - centerSize.W/2;
-  const centerY = 450 - centerSize.H/2;
-
-  drawTiled(center, centerX, centerY, 30, 10, 5, 7, d, g, gapCells, C);
-
-  // ====== PANELE BOCZNE (3 kafle w poziomie, 1 w pionie; kółka 3x średnicy) ======
-  const panels = $("panels");
-  const dP = 3*d;
-
-  // policz szer/wys panelu, żeby dobrze ustawić prawy i górny
-  const panelDims = (() => {
-    const wSmall = gridW(5, dP, g), hSmall = gridH(7, dP, g);
+  const centerDims = (() => {
+    const wSmall = Wgrid(DOTS.X, d, g);
+    const hSmall = Hgrid(DOTS.Y, d, g);
     return {
-      W: 3*wSmall + 2*gapCells + 2*g,   // Twoje: 3*Wsmall + 2*d + 2*g (gapCells=d)
-      H: 1*hSmall + 2*g
+      W: 30*wSmall + 29*gapCells + 2*g,
+      H: 10*hSmall +  9*gapCells + 2*g
     };
   })();
-  
-  const inset = wBlock * 0.2;
-  
-  const leftX  = 800 - totalW/2 + inset;
-  const rightX = leftX + wBlock + gapBetween - inset*2;
 
-  const sideY  = 390;
-  const topX   = 800 - panelDims.W/2;
-  const topY   = 85;
+  const centerX = VIEW.CX - centerDims.W/2;
+  const centerY = VIEW.CY - centerDims.H/2;
 
-  drawTiled(panels, leftX,  sideY, 3, 1, 5, 7, dP, g, gapCells, C);
-  drawTiled(panels, rightX, sideY, 3, 1, 5, 7, dP, g, gapCells, C);
-  drawTiled(panels, topX,   topY,  3, 1, 5, 7, dP, g, gapCells, C);
+  drawTiled(center, centerX, centerY, 30, 10, DOTS.X, DOTS.Y, d, g, gapCells, COLORS);
 
-  // ====== DÓŁ: dwa bloki 95 x 7 (na tle, tuż pod owalem) ======
+  // ===== 2) PANELE (lewy/prawy/górny) =====
+  const panels = $("panels");
+  const dP = 3*d; // panelowe kółka mają 3x średnicę
+
+  const panelDims = (() => {
+    const wSmallP = Wgrid(DOTS.X, dP, g);
+    const hSmallP = Hgrid(DOTS.Y, dP, g);
+    return {
+      W: 3*wSmallP + 2*gapCells + 2*g, // 3 kafle + 2 przerwy (d) + 2g
+      H: 1*hSmallP + 2*g
+    };
+  })();
+
+  // przesunięcie do środka ~ 1/4 szerokości
+  const shift = panelDims.W / 4;
+
+  const sideY = 390;
+  const leftX  = 10 + shift;
+  const rightX = VIEW.W - panelDims.W - 10 - shift;
+
+  const topY = 85;
+  const topX = VIEW.CX - panelDims.W/2;
+
+  drawTiled(panels, leftX,  sideY, 3, 1, DOTS.X, DOTS.Y, dP, g, gapCells, COLORS);
+  drawTiled(panels, rightX, sideY, 3, 1, DOTS.X, DOTS.Y, dP, g, gapCells, COLORS);
+  drawTiled(panels, topX,   topY,  3, 1, DOTS.X, DOTS.Y, dP, g, gapCells, COLORS);
+
+  // ===== 3) DÓŁ (dwa bloki 95x7, z dBottom = 1.5*d) =====
   const bottom = $("bottom");
-  const ovalBottomY = 135 + 630;
+
+  const dBottom = 1.5*d;
+  const Xb = 95, Yb = 7;
+
   const gapFromOval = 12;
   const gapBetween  = 24;
-  
-  const dBottom = d * 1.5;          // <-- Twój mnożnik
-  const Xb = 95, Yb = 7;
-  
-  // policz wymiary bloku (zewnętrzny = wewnętrzny + 2g)
-  const wInner = gridW(Xb, dBottom, g);
-  const hInner = gridH(Yb, dBottom, g);
-  const wBlock = wInner + 2*g;
-  const hBlock = hInner + 2*g;
-  
+
+  const ovalBottomY = 110 + 680;        // zewnętrzny owal: y + h
   const yBottom = ovalBottomY + gapFromOval;
-  
-  // dwa obok siebie, z odstępem
+
+  // policz rozmiar bloku (bez rysowania) – ważne dla layoutu
+  const wInnerB = Wgrid(Xb, dBottom, g);
+  const wBlock  = wInnerB + 2*g;
+
   const totalW = 2*wBlock + gapBetween;
-  const xLeft  = 800 - totalW/2;
-  const xRight = xLeft + wBlock + gapBetween;
-  
-  drawFramedGrid(bottom, xLeft,  yBottom, Xb, Yb, dBottom, g, C);
-  drawFramedGrid(bottom, xRight, yBottom, Xb, Yb, dBottom, g, C);
+
+  // „ściągnięcie do środka” (regulowane)
+  const insetFactor = 0.20;             // <-- zmień np. 0.10 / 0.25
+  const inset = wBlock * insetFactor;
+
+  const xLeft  = VIEW.CX - totalW/2 + inset;
+  const xRight = xLeft + wBlock + gapBetween - 2*inset;
+
+  drawFramedGrid(bottom, xLeft,  yBottom, Xb, Yb, dBottom, g, COLORS);
+  drawFramedGrid(bottom, xRight, yBottom, Xb, Yb, dBottom, g, COLORS);
 
 })();
 </script>
