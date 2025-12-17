@@ -224,10 +224,20 @@
     filter: "url(#neonBlue)"
   }));
 
-  // neonowe podziały paska (3 linie)
-  const cuts = 3;
-  for (let i=1; i<=cuts; i++){
-    const lx = barX + (barW * i) / (cuts + 1);
+  // neonowe podziały paska (3 linie) – jedna dokładnie w przerwie między blokami
+  const gapCenterX = (xLeft + wBlock + xRight) / 2; // środek przerwy (między blokami)
+  
+  // dobieramy odsunięcie bocznych linii – proporcja od szerokości paska
+  const sideOffset = barW * 0.22;
+  
+  // pozycje: lewa, środkowa (w przerwie), prawa
+  const cutXs = [
+    Math.max(barX + 12, gapCenterX - sideOffset),
+    gapCenterX,
+    Math.min(barX + barW - 12, gapCenterX + sideOffset),
+  ];
+  
+  for (const lx of cutXs) {
     basebar.appendChild(el("line", {
       x1: lx, y1: barY, x2: lx, y2: barY + barH,
       stroke: "#40a9ff",
