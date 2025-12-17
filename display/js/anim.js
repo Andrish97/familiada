@@ -4,23 +4,20 @@ export const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
  * Animator pracuje na obszarze kafli (tile = 5x7 kropek).
  * snapArea() zwraca dla każdego tile w obszarze: [7][5] kolorów (string fill).
  *
- * Animacje:
- * - edge   (kaflami):   inEdge / outEdge
- * - matrix (wipe):      inMatrix / outMatrix
- * - rain   (pikselami): inRain / outRain (alias: inMatrixRain / outMatrixRain)
+ * Wspierane animacje:
+ * - edge   (kaflami):  inEdge/outEdge
+ * - matrix (wipe):     inMatrix/outMatrix
+ * - rain   (pikselami): inRain/outRain (dwustronnie: do środka / od środka)
  *
- * Ważne:
- * - dotOff MUSI być przekazane (kolor wygaszonych kropek), inaczej rain nie wie co jest OFF.
+ * UWAGA: przekaż dotOff z scene.js:
+ *   const anim = createAnimator({ tileAt, snapArea, clearArea, clearTileAt, dotOff: COLORS.dotOff });
  */
 export const createAnimator = ({ tileAt, snapArea, clearArea, clearTileAt, dotOff }) => {
-  const OFF = (dotOff ?? "#2e2e32").toString();
-
   // -----------------------------
   // Helpers
   // -----------------------------
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
-  // (szybciej niż [...Array(n).keys()])
   const range = (n) => {
     const out = new Array(n);
     for (let i = 0; i < n; i++) out[i] = i;
@@ -38,8 +35,7 @@ export const createAnimator = ({ tileAt, snapArea, clearArea, clearTileAt, dotOf
     }
   };
 
-  // Buduje listę kropek w obszarze na podstawie snapshotu.
-  // gx/gy to globalna pozycja w siatce kropek (w obrębie obszaru, nie px).
+  // Z snapshotu budujemy listę wszystkich kropek w area
   const buildDotsFromSnap = (big, area, snap) => {
     const { c1, r1, c2, r2 } = area;
     const tilesW = c2 - c1 + 1;
@@ -57,111 +53,98 @@ export const createAnimator = ({ tileAt, snapArea, clearArea, clearTileAt, dotOf
             dots.push({
               el: t.dots[rr][cc],
               targetFill: data[rr][cc],
-              gx: tx * 5 + cc,
+              gx: tx * 5 + cc, // global w obrębie area (w jednostkach kropek)
               gy: ty * 7 + rr,
             });
           }
         }
       }
     }
-    return { dots, tilesW, tilesH };
+    return dots;
   };
 
   // -----------------------------
-  // RAIN (pikselami) — rozsypane, lane losują strony
+  // RAIN (dwustronny wipe pikselami)
   // -----------------------------
   const runRain = async ({
     big,
     area,
-    axis = "down",   // down/up/left/right (tylko jako “bias”)
-    stepMs = 24,
-    density = 0.12,  // 0..1: ile kropek w paczce (mniej = bardziej “porcjami”)
-    scatter = 1.0,   // 0..2: chaos w kolejności (więcej = bardziej rozsypane)
-    mode = "in",     // "in" | "out"
+    axis = "down",      // down/up = pion, left/right = poziom
+    stepMs = 24,        // przerwa między paczkami
+    density = 0.10,     // 0..1: ile kropek na paczkę (więcej = grubsze porcje)
+    scatter = 1.25,     // >=0: jak mocno “rozsypać” kolejność
+    mode = "in",        // "in" | "out"
   } = {}) => {
+    if (!dotOff) throw new Error("Animator: dotOff is required (pass dotOff from scene COLORS.dotOff).");
+
     const { c1, r1, c2, r2 } = area;
 
-    // Snapshot docelowy (dla IN), oraz baza do listy kropek
+    // snapshot “docelowego obrazu”
     const snap = snapArea(big, c1, r1, c2, r2);
 
-    // IN: czyścimy przed startem
+    // IN: czyścimy zanim zaczniemy ujawniać
     if (mode === "in") clearArea(big, c1, r1, c2, r2);
 
-    const { dots, tilesW, tilesH } = buildDotsFromSnap(big, area, snap);
-    if (!dots.length) return;
+    const dotsAll = buildDotsFromSnap(big, area, snap);
+    if (!dotsAll.length) return;
+
+    // Pracujemy tylko na tych, które mają sens:
+    // IN: tylko docelowo świecące (żeby nie “mrugało dookoła”)
+    // OUT: tylko aktualnie świecące (żeby było co gasić)
+    let work = [];
+    if (mode === "in") {
+      work = dotsAll.filter(d => d.targetFill !== dotOff);
+    } else {
+      work = dotsAll.filter(d => (d.el.getAttribute("fill") || dotOff) !== dotOff);
+    }
+    if (!work.length) {
+      // i tak final pass (dla pewności)
+      if (mode === "in") for (const d of dotsAll) d.el.setAttribute("fill", d.targetFill);
+      return;
+    }
 
     // Rozmiar obszaru w “kropkach”
+    const tilesW = c2 - c1 + 1;
+    const tilesH = r2 - r1 + 1;
     const W = tilesW * 5;
     const H = tilesH * 7;
 
-    // Filtr: żeby nie było “mrugania dookoła tekstu”
-    // IN: animujemy tylko te kropki, które docelowo mają świecić
-    // OUT: animujemy tylko te, które aktualnie świecą
-    let work = dots;
-    if (mode === "in") {
-      work = dots.filter(d => d.targetFill !== OFF);
-    } else {
-      work = dots.filter(d => (d.el.getAttribute("fill") ?? OFF) !== OFF);
-    }
-    if (!work.length) return;
-
-    // Lane mix:
-    // - jeśli animacja “pionowa”: lane = kolumny (gx)
-    // - jeśli “pozioma”:        lane = wiersze (gy)
+    // Orientacja: pion vs poziom
     const vertical = (axis === "down" || axis === "up");
-    const laneCount = vertical ? W : H;
-    const spanMain = vertical ? H : W; // długość lane
+    const spanMain = vertical ? H : W; // długość “wycierania”
+    const spanLane = vertical ? W : H; // ilość lane (żeby nie robiło pasów)
 
-    // Każda lane losuje swój “start” (raz z jednej, raz z drugiej strony)
-    const laneDir = new Array(laneCount);
-    for (let i = 0; i < laneCount; i++) laneDir[i] = Math.random() < 0.5;
+    // ring = odległość od najbliższej krawędzi w osi głównej
+    const ring = (pos) => Math.min(pos, (spanMain - 1 - pos));
 
-    // “Bias” stron (delikatny) — ale lane i tak losują, więc nie będzie startu z jednej krawędzi
-    const axisBias = (() => {
-      if (axis === "down")  return 0.10;
-      if (axis === "up")    return 0.10;
-      if (axis === "left")  return 0.10;
-      if (axis === "right") return 0.10;
-      return 0.10;
-    })();
+    // Szumy: rozbijają idealne “pierścienie”, ale nie psują symetrii dwóch stron
+    const noiseMain = spanMain * 0.55 * scatter;
+    const noiseLane = spanLane * 0.25 * scatter;
 
-    // Sort: lane + pozycja w lane + chaos
-    const noiseMain = spanMain * (0.85 * scatter);
-    const noiseLane = laneCount * (0.25 * scatter);
-
+    // Sort: IN = krawędzie -> środek, OUT = odwrotnie (przez reverse)
     work.sort((a, b) => {
-      const la = vertical ? a.gx : a.gy;
-      const lb = vertical ? b.gx : b.gy;
+      const posA  = vertical ? a.gy : a.gx;
+      const posB  = vertical ? b.gy : b.gx;
 
-      const pa = vertical ? a.gy : a.gx;
-      const pb = vertical ? b.gy : b.gx;
+      const laneA = vertical ? a.gx : a.gy;
+      const laneB = vertical ? b.gx : b.gy;
 
-      // kierunek lane: losowy, ale lekko “podkręcony” przez axis
-      const da = laneDir[la];
-      const db = laneDir[lb];
+      const keyA = ring(posA) + (Math.random() - 0.5) * noiseMain;
+      const keyB = ring(posB) + (Math.random() - 0.5) * noiseMain;
 
-      const baseA = (da ? pa : (spanMain - 1 - pa));
-      const baseB = (db ? pb : (spanMain - 1 - pb));
+      const laneKeyA = laneA + (Math.random() - 0.5) * noiseLane;
+      const laneKeyB = laneB + (Math.random() - 0.5) * noiseLane;
 
-      // chaos
-      const ka = baseA + (Math.random() - 0.5) * noiseMain;
-      const kb = baseB + (Math.random() - 0.5) * noiseMain;
-
-      // lane też trochę mieszamy, żeby nie robić pasów
-      const laneA = la + (Math.random() - 0.5) * noiseLane;
-      const laneB = lb + (Math.random() - 0.5) * noiseLane;
-
-      // mikro-bias, żeby nadal “czuć” oś (ale nie psuć rozproszenia)
-      const bias = (Math.random() - 0.5) * axisBias;
-
-      return (laneA + ka / spanMain + bias) - (laneB + kb / spanMain + bias);
+      return (keyA + laneKeyA / spanLane) - (keyB + laneKeyB / spanLane);
     });
 
     if (mode === "out") work.reverse();
 
+    // batch size
     const total = work.length;
-    const batch = clamp(Math.floor(total * density), 40, 900);
+    const batch = clamp(Math.floor(total * density), 80, 1600);
 
+    // porcje
     for (let i = 0; i < total; i += batch) {
       const end = Math.min(total, i + batch);
 
@@ -173,18 +156,16 @@ export const createAnimator = ({ tileAt, snapArea, clearArea, clearTileAt, dotOf
       } else {
         for (let k = i; k < end; k++) {
           const d = work[k];
-          d.el.setAttribute("fill", OFF);
+          d.el.setAttribute("fill", dotOff);
         }
       }
 
       if (stepMs) await sleep(stepMs);
     }
 
-    // FINAL PASS — zero “niedopalonych”
+    // FINAL PASS: żadnych “niedopalonych”
     if (mode === "in") {
-      for (const d of dots) d.el.setAttribute("fill", d.targetFill);
-    } else {
-      for (const d of work) d.el.setAttribute("fill", OFF);
+      for (const d of dotsAll) d.el.setAttribute("fill", d.targetFill);
     }
   };
 
@@ -192,7 +173,9 @@ export const createAnimator = ({ tileAt, snapArea, clearArea, clearTileAt, dotOf
   // Public API
   // -----------------------------
   return {
+    // -----------------------------
     // EDGE (kaflami)
+    // -----------------------------
     async inEdge(big, area, dir = "left", stepMs = 12) {
       const { c1, r1, c2, r2 } = area;
       const snap = snapArea(big, c1, r1, c2, r2);
@@ -228,7 +211,9 @@ export const createAnimator = ({ tileAt, snapArea, clearArea, clearTileAt, dotOf
       }
     },
 
+    // -----------------------------
     // MATRIX (wipe kaflami)
+    // -----------------------------
     async inMatrix(big, area, axis = "down", stepMs = 36) {
       const { c1, r1, c2, r2 } = area;
       const snap = snapArea(big, c1, r1, c2, r2);
@@ -270,15 +255,18 @@ export const createAnimator = ({ tileAt, snapArea, clearArea, clearTileAt, dotOf
       }
     },
 
-    // RAIN
+    // -----------------------------
+    // RAIN (dwustronny wipe pikselami)
+    // axis: down/up = pion, left/right = poziom
+    // -----------------------------
     async inRain(big, area, axis = "down", stepMs = 24, opts = {}) {
       return runRain({
         big,
         area,
         axis,
         stepMs,
-        density: opts.density ?? 0.12,
-        scatter: opts.scatter ?? 1.2,
+        density: opts.density ?? 0.10,
+        scatter: opts.scatter ?? 1.25,
         mode: "in",
       });
     },
@@ -289,21 +277,21 @@ export const createAnimator = ({ tileAt, snapArea, clearArea, clearTileAt, dotOf
         area,
         axis,
         stepMs,
-        density: opts.density ?? 0.12,
-        scatter: opts.scatter ?? 1.2,
+        density: opts.density ?? 0.10,
+        scatter: opts.scatter ?? 1.25,
         mode: "out",
       });
     },
 
-    // aliasy
+    // aliasy “matrix_rain”
     async inMatrixRain(big, area, axis = "down", stepMs = 24, opts = {}) {
       return runRain({
         big,
         area,
         axis,
         stepMs,
-        density: opts.density ?? 0.12,
-        scatter: opts.scatter ?? 1.2,
+        density: opts.density ?? 0.10,
+        scatter: opts.scatter ?? 1.25,
         mode: "in",
       });
     },
@@ -314,8 +302,8 @@ export const createAnimator = ({ tileAt, snapArea, clearArea, clearTileAt, dotOf
         area,
         axis,
         stepMs,
-        density: opts.density ?? 0.12,
-        scatter: opts.scatter ?? 1.2,
+        density: opts.density ?? 0.10,
+        scatter: opts.scatter ?? 1.25,
         mode: "out",
       });
     },
