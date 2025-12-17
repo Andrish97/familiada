@@ -94,3 +94,6 @@ svg{
   z-index: 1500;
 }
 
+svg circle { transition: none !important; }
+svg rect   { transition: none !important; }
+
