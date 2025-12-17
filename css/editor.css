@@ -211,3 +211,8 @@
 }
 
 .addArow{ margin-top:10px; }
+
+.list, .alist{
+  padding-bottom: 12px;   /* żeby ostatni kafelek nie był “ucięty” */
+  scrollbar-gutter: stable; /* opcjonalnie: stabilne miejsce na scrollbar */
+}
