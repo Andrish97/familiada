@@ -23,19 +23,55 @@ window.addEventListener("DOMContentLoaded", async () => {
   // 3) scena gry
   const scene = await createScene();
 
-  // 4) global mode switcher
+  // referencje do ekranów
+  const blackScreen = document.getElementById("blackScreen");
+  const qrScreen    = document.getElementById("qrScreen");
+  const gameScreen  = document.getElementById("gameScreen");
+  
+  const APP_MODES = {
+    BLACK: "BLACK_SCREEN",
+    GRA: "GRA",
+    QR: "QR",
+  };
+  
   const app = {
-    mode: "GRA",
+    mode: APP_MODES.BLACK,
+  
     setMode(m) {
-      const mm = (m ?? "").toString().toUpperCase();
-      if (mm !== "GRA" && mm !== "QR") throw new Error("Mode musi być GRA albo QR");
-      app.mode = mm;
-      if (mm === "QR") qr.show();
-      else qr.hide();
+      let mm = (m ?? "").toString().toUpperCase();
+      if (mm === "BLACK") mm = APP_MODES.BLACK;
+  
+      if (!Object.values(APP_MODES).includes(mm)) {
+        throw new Error("Mode musi być BLACK_SCREEN / GRA / QR");
+      }
+  
+      this.mode = mm;
+  
+      // reset widoczności
+      blackScreen.classList.add("hidden");
+      qrScreen.classList.add("hidden");
+      gameScreen.classList.add("hidden");
+  
+      // pokaż wybrany ekran
+      if (mm === APP_MODES.BLACK) {
+        blackScreen.classList.remove("hidden");
+        return;
+      }
+  
+      if (mm === APP_MODES.QR) {
+        blackScreen.classList.add("hidden"); // optional, i tak hidden już jest
+        qrScreen.classList.remove("hidden");
+        return;
+      }
+  
+      // GRA
+      gameScreen.classList.remove("hidden");
     },
+  
     qr,
     scene,
   };
+
 
   // 5) komendy z backendu
   const handleCommand = createCommandHandler(app);
