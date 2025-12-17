@@ -4,23 +4,23 @@ export const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
  * Animator pracuje na obszarze kafli (tile = 5x7 kropek).
  * snapArea() zwraca dla każdego tile w obszarze: [7][5] kolorów (string fill).
  *
- * Wspierane animacje:
- * - edge (kaflami): inEdge/outEdge
- * - matrix (wipe kaflami): inMatrix/outMatrix
- * - rain (pikselami, efekt Matrix): inRain/outRain (alias inMatrixRain/outMatrixRain)
+ * Animacje:
+ * - edge   (kaflami):   inEdge / outEdge
+ * - matrix (wipe):      inMatrix / outMatrix
+ * - rain   (pikselami): inRain / outRain (alias: inMatrixRain / outMatrixRain)
+ *
+ * Ważne:
+ * - dotOff MUSI być przekazane (kolor wygaszonych kropek), inaczej rain nie wie co jest OFF.
  */
 export const createAnimator = ({ tileAt, snapArea, clearArea, clearTileAt, dotOff }) => {
+  const OFF = (dotOff ?? "#2e2e32").toString();
+
   // -----------------------------
   // Helpers
   // -----------------------------
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
-  const getAreaWH = (area) => {
-    const W = area.c2 - area.c1 + 1;
-    const H = area.r2 - area.r1 + 1;
-    return { W, H };
-  };
-
-  // (szybciej niż tworzyć tablice [...Array(n).keys()])
+  // (szybciej niż [...Array(n).keys()])
   const range = (n) => {
     const out = new Array(n);
     for (let i = 0; i < n; i++) out[i] = i;
@@ -38,167 +38,133 @@ export const createAnimator = ({ tileAt, snapArea, clearArea, clearTileAt, dotOf
     }
   };
 
-    // Buduje listę "pikseli" w obszarze (pojedyncze kropki).
-    // Każdy element: { el, targetFill, gx, gy } gdzie gx/gy to współrzędne globalne w siatce "kropelek"
-    // gx,gy liczone w jednostkach "kropka" w obrębie obszaru, nie w px SVG.
-    const buildDotList = (big, area, snap) => {
-      const { c1, r1, c2, r2 } = area;
-      const tilesW = c2 - c1 + 1;
-      const tilesH = r2 - r1 + 1;
-  
-      const dots = [];
-      for (let ty = 0; ty < tilesH; ty++) {
-        for (let tx = 0; tx < tilesW; tx++) {
-          const t = tileAt(big, c1 + tx, r1 + ty);
-          const data = snap?.[ty]?.[tx];
-          if (!t || !data) continue;
-  
-          for (let rr = 0; rr < 7; rr++) {
-            for (let cc = 0; cc < 5; cc++) {
-              dots.push({
-                el: t.dots[rr][cc],
-                targetFill: data[rr][cc],
-                // globalna pozycja "kropki" w obrębie obszaru
-                gx: tx * 5 + cc,
-                gy: ty * 7 + rr,
-              });
-            }
-          }
-        }
-      }
-      return dots;
-    };
-  
-    // Klucz sortowania dla kierunku (oś animacji) + szum
-    const axisKey = (d, axis, maxGX, maxGY) => {
-      switch (axis) {
-        case "down":  return d.gy;                 // góra -> dół
-        case "up":    return maxGY - d.gy;         // dół -> góra
-        case "right": return d.gx;                 // lewo -> prawo
-        case "left":  return maxGX - d.gx;         // prawo -> lewo
-        default:      return d.gy;
-      }
-    };
-  
-    // Matrix Rain: piksele “przylatują/odlatują” w kierunku axis, z losowym jitterem.
-    // reveal/hide w “pakietach” (batch), żeby wyglądało jak cyfrowy deszcz.
-  
-  // Build list wszystkich kropek w obszarze (z docelowym fill ze snapshotu)
-  const buildDotListFromSnap = (big, area, snap) => {
+  // Buduje listę kropek w obszarze na podstawie snapshotu.
+  // gx/gy to globalna pozycja w siatce kropek (w obrębie obszaru, nie px).
+  const buildDotsFromSnap = (big, area, snap) => {
     const { c1, r1, c2, r2 } = area;
     const tilesW = c2 - c1 + 1;
     const tilesH = r2 - r1 + 1;
-  
+
     const dots = [];
     for (let ty = 0; ty < tilesH; ty++) {
       for (let tx = 0; tx < tilesW; tx++) {
         const t = tileAt(big, c1 + tx, r1 + ty);
         const data = snap?.[ty]?.[tx];
         if (!t || !data) continue;
-  
+
         for (let rr = 0; rr < 7; rr++) {
           for (let cc = 0; cc < 5; cc++) {
             dots.push({
               el: t.dots[rr][cc],
               targetFill: data[rr][cc],
-              gx: tx * 5 + cc, // global w obrębie obszaru
+              gx: tx * 5 + cc,
               gy: ty * 7 + rr,
             });
           }
         }
       }
     }
-    return dots;
+    return { dots, tilesW, tilesH };
   };
-  
-  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
-  
+
+  // -----------------------------
+  // RAIN (pikselami) — rozsypane, lane losują strony
+  // -----------------------------
   const runRain = async ({
     big,
     area,
-    axis = "down",      // down/up/left/right
-    stepMs = 24,        // przerwa między paczkami
-    density = 0.14,     // 0..1: ile kropek w paczce (większe = “grubsze porcje”)
-    jitter = 0.95,      // 0..1: rozproszenie kolejności (większe = bardziej chaotycznie)
-    mode = "in",        // "in" | "out"
+    axis = "down",   // down/up/left/right (tylko jako “bias”)
+    stepMs = 24,
+    density = 0.12,  // 0..1: ile kropek w paczce (mniej = bardziej “porcjami”)
+    scatter = 1.0,   // 0..2: chaos w kolejności (więcej = bardziej rozsypane)
+    mode = "in",     // "in" | "out"
   } = {}) => {
     const { c1, r1, c2, r2 } = area;
-  
-    // zawsze bierzemy snapshot docelowego obrazu dla IN
+
+    // Snapshot docelowy (dla IN), oraz baza do listy kropek
     const snap = snapArea(big, c1, r1, c2, r2);
-  
-    // IN: czyścimy obszar
+
+    // IN: czyścimy przed startem
     if (mode === "in") clearArea(big, c1, r1, c2, r2);
-  
-    const dots = buildDotListFromSnap(big, area, snap);
+
+    const { dots, tilesW, tilesH } = buildDotsFromSnap(big, area, snap);
     if (!dots.length) return;
-  
+
     // Rozmiar obszaru w “kropkach”
-    const tilesW = c2 - c1 + 1;
-    const tilesH = r2 - r1 + 1;
     const W = tilesW * 5;
     const H = tilesH * 7;
-  
-    // Lane = kolumny (gdy oś pionowa) lub wiersze (gdy oś pozioma)
-    // Każda lane ma LOSOWY kierunek startu: raz z góry, raz z dołu / raz z lewej, raz z prawej.
+
+    // Filtr: żeby nie było “mrugania dookoła tekstu”
+    // IN: animujemy tylko te kropki, które docelowo mają świecić
+    // OUT: animujemy tylko te, które aktualnie świecą
+    let work = dots;
+    if (mode === "in") {
+      work = dots.filter(d => d.targetFill !== OFF);
+    } else {
+      work = dots.filter(d => (d.el.getAttribute("fill") ?? OFF) !== OFF);
+    }
+    if (!work.length) return;
+
+    // Lane mix:
+    // - jeśli animacja “pionowa”: lane = kolumny (gx)
+    // - jeśli “pozioma”:        lane = wiersze (gy)
     const vertical = (axis === "down" || axis === "up");
     const laneCount = vertical ? W : H;
-  
+    const spanMain = vertical ? H : W; // długość lane
+
+    // Każda lane losuje swój “start” (raz z jednej, raz z drugiej strony)
     const laneDir = new Array(laneCount);
-    for (let i = 0; i < laneCount; i++) {
-      // true = start “od przodu osi”, false = od przeciwnej strony
-      // czyli: przy pionie -> raz top->bottom, raz bottom->top
-      // przy poziomie -> raz left->right, raz right->left
-      laneDir[i] = Math.random() < 0.5;
-    }
-  
-    // Filtr: żeby nie było efektu “tekst pojawia się od razu a wokół mruga”
-    // IN: animujemy TYLKO te kropki, które docelowo mają świecić.
-    // OUT: animujemy TYLKO te, które aktualnie świecą (lub docelowo świecą), żeby było “co wyłączać”.
-    let work = dots;
-  
-    if (mode === "in") {
-      work = dots.filter(d => d.targetFill !== dotOff);
-    } else {
-      // OUT: bierzemy te, które w tym momencie nie są dotOff (czyli świecą)
-      work = dots.filter(d => d.el.getAttribute("fill") !== dotOff);
-    }
-  
-    if (!work.length) return;
-  
-    // Klucz sortowania: najpierw lane, potem pozycja w lane zależnie od losowego kierunku tej lane
-    const spanMain = vertical ? H : W;             // długość lane
-    const spanLane = laneCount;                    // ile lane
-    const noiseSpan = spanMain * jitter;
-  
+    for (let i = 0; i < laneCount; i++) laneDir[i] = Math.random() < 0.5;
+
+    // “Bias” stron (delikatny) — ale lane i tak losują, więc nie będzie startu z jednej krawędzi
+    const axisBias = (() => {
+      if (axis === "down")  return 0.10;
+      if (axis === "up")    return 0.10;
+      if (axis === "left")  return 0.10;
+      if (axis === "right") return 0.10;
+      return 0.10;
+    })();
+
+    // Sort: lane + pozycja w lane + chaos
+    const noiseMain = spanMain * (0.85 * scatter);
+    const noiseLane = laneCount * (0.25 * scatter);
+
     work.sort((a, b) => {
-      const la = vertical ? a.gx : a.gy;           // lane index
+      const la = vertical ? a.gx : a.gy;
       const lb = vertical ? b.gx : b.gy;
-  
-      const pa = vertical ? a.gy : a.gx;           // pozycja w lane
+
+      const pa = vertical ? a.gy : a.gx;
       const pb = vertical ? b.gy : b.gx;
-  
+
+      // kierunek lane: losowy, ale lekko “podkręcony” przez axis
       const da = laneDir[la];
       const db = laneDir[lb];
-  
-      // kierunek lane: start raz z jednej, raz z drugiej strony
-      const ka = (da ? pa : (spanMain - 1 - pa)) + (Math.random() - 0.5) * noiseSpan;
-      const kb = (db ? pb : (spanMain - 1 - pb)) + (Math.random() - 0.5) * noiseSpan;
-  
-      // lane też mieszamy odrobinę, żeby “nie było pasów”
-      const laneNoise = (Math.random() - 0.5) * (spanLane * 0.20);
-  
-      return (la + laneNoise + ka / spanMain) - (lb + laneNoise + kb / spanMain);
+
+      const baseA = (da ? pa : (spanMain - 1 - pa));
+      const baseB = (db ? pb : (spanMain - 1 - pb));
+
+      // chaos
+      const ka = baseA + (Math.random() - 0.5) * noiseMain;
+      const kb = baseB + (Math.random() - 0.5) * noiseMain;
+
+      // lane też trochę mieszamy, żeby nie robić pasów
+      const laneA = la + (Math.random() - 0.5) * noiseLane;
+      const laneB = lb + (Math.random() - 0.5) * noiseLane;
+
+      // mikro-bias, żeby nadal “czuć” oś (ale nie psuć rozproszenia)
+      const bias = (Math.random() - 0.5) * axisBias;
+
+      return (laneA + ka / spanMain + bias) - (laneB + kb / spanMain + bias);
     });
-  
-    // batch size
+
+    if (mode === "out") work.reverse();
+
     const total = work.length;
-    const batch = clamp(Math.floor(total * density), 60, 1200);
-  
-    // animacja porcjami
+    const batch = clamp(Math.floor(total * density), 40, 900);
+
     for (let i = 0; i < total; i += batch) {
       const end = Math.min(total, i + batch);
-  
+
       if (mode === "in") {
         for (let k = i; k < end; k++) {
           const d = work[k];
@@ -207,27 +173,26 @@ export const createAnimator = ({ tileAt, snapArea, clearArea, clearTileAt, dotOf
       } else {
         for (let k = i; k < end; k++) {
           const d = work[k];
-          d.el.setAttribute("fill", dotOff);
+          d.el.setAttribute("fill", OFF);
         }
       }
-  
+
       if (stepMs) await sleep(stepMs);
     }
-  
-    // FINAL PASS = brak niedopalonych pikseli
-    // IN: ustaw cały obszar zgodnie ze snapshotem (ON i OFF)
+
+    // FINAL PASS — zero “niedopalonych”
     if (mode === "in") {
       for (const d of dots) d.el.setAttribute("fill", d.targetFill);
+    } else {
+      for (const d of work) d.el.setAttribute("fill", OFF);
     }
   };
-  
+
   // -----------------------------
   // Public API
   // -----------------------------
   return {
-    // -----------------------------
-    // EDGE (kaflami) – domyślnie wolniej
-    // -----------------------------
+    // EDGE (kaflami)
     async inEdge(big, area, dir = "left", stepMs = 12) {
       const { c1, r1, c2, r2 } = area;
       const snap = snapArea(big, c1, r1, c2, r2);
@@ -263,9 +228,7 @@ export const createAnimator = ({ tileAt, snapArea, clearArea, clearTileAt, dotOf
       }
     },
 
-    // -----------------------------
-    // MATRIX (wipe kaflami) – domyślnie wolniej
-    // -----------------------------
+    // MATRIX (wipe kaflami)
     async inMatrix(big, area, axis = "down", stepMs = 36) {
       const { c1, r1, c2, r2 } = area;
       const snap = snapArea(big, c1, r1, c2, r2);
@@ -307,22 +270,15 @@ export const createAnimator = ({ tileAt, snapArea, clearArea, clearTileAt, dotOf
       }
     },
 
-    // -----------------------------
-    // MATRIX RAIN (pikselami) – “jak w Matrix”
-    // Komendy w API: type = "rain" albo "matrix_rain"
-    // axis: up/down/left/right
-    // stepMs: przerwa między paczkami pikseli
-    // density: ile pikseli w paczce (0..1)
-    // jitter: losowy chaos kolejności (0..1)
-    // -----------------------------
+    // RAIN
     async inRain(big, area, axis = "down", stepMs = 24, opts = {}) {
       return runRain({
         big,
         area,
         axis,
         stepMs,
-        density: opts.density ?? 0.18,
-        jitter: opts.jitter ?? 0.65,
+        density: opts.density ?? 0.12,
+        scatter: opts.scatter ?? 1.2,
         mode: "in",
       });
     },
@@ -333,21 +289,21 @@ export const createAnimator = ({ tileAt, snapArea, clearArea, clearTileAt, dotOf
         area,
         axis,
         stepMs,
-        density: opts.density ?? 0.18,
-        jitter: opts.jitter ?? 0.65,
+        density: opts.density ?? 0.12,
+        scatter: opts.scatter ?? 1.2,
         mode: "out",
       });
     },
 
-    // aliasy pod nazwę “matrix_rain”
+    // aliasy
     async inMatrixRain(big, area, axis = "down", stepMs = 24, opts = {}) {
       return runRain({
         big,
         area,
         axis,
         stepMs,
-        density: opts.density ?? 0.18,
-        jitter: opts.jitter ?? 0.65,
+        density: opts.density ?? 0.12,
+        scatter: opts.scatter ?? 1.2,
         mode: "in",
       });
     },
@@ -358,8 +314,8 @@ export const createAnimator = ({ tileAt, snapArea, clearArea, clearTileAt, dotOf
         area,
         axis,
         stepMs,
-        density: opts.density ?? 0.18,
-        jitter: opts.jitter ?? 0.65,
+        density: opts.density ?? 0.12,
+        scatter: opts.scatter ?? 1.2,
         mode: "out",
       });
     },
