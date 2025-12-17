@@ -69,9 +69,8 @@ export async function validateStructure(gameId) {
   }
 
   // UI rozgrywki i tak jedzie na pierwszych 10 (reszta może istnieć)
-  const ten = qs.slice(0, RULES.QN_MIN);
 
-  for (const q of ten) {
+  for (const q of qs) {
     const ans = await loadAnswers(q.id);
     if (ans.length < RULES.AN_MIN || ans.length > RULES.AN_MAX) {
       return {
