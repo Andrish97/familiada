@@ -9,7 +9,7 @@ export const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
  * - matrix (wipe kaflami): inMatrix/outMatrix
  * - rain (pikselami, efekt Matrix): inRain/outRain (alias inMatrixRain/outMatrixRain)
  */
-export const createAnimator = ({ tileAt, snapArea, clearArea, clearTileAt }) => {
+export const createAnimator = ({ tileAt, snapArea, clearArea, clearTileAt, dotOff }) => {
   // -----------------------------
   // Helpers
   // -----------------------------
