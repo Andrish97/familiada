@@ -85,9 +85,9 @@ Czyści fragment.
 - `await scene.api.big.animOut({ type, dir|axis, ms, area? })`
 
 Parametry:
-- `type: "edge" | "matrix"`
+- `type: "edge" | "matrix" | "rain"`
 - dla `edge`: `dir: "left" | "right" | "top" | "bottom"`
-- dla `matrix`: `axis: "down" | "up" | "right" | "left"`
+- dla `matrix i rain`: `axis: "down" | "up" | "right" | "left"`
 - `ms`: opóźnienie kroku (mniejsze = szybciej)
 - `area`: `{c1,r1,c2,r2}` – jeśli chcesz animować tylko fragment
 
