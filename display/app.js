@@ -9,11 +9,11 @@
 
   const VIEW = { W: 1600, H: 900, CX: 800, CY: 450 };
 
-  // Wygląd
+  // Wygląd (nie zmieniamy)
   const COLORS = {
     big:    "#2e2e32",
     cell:   "#000000",
-    dotOff: "#2e2e32"
+    dotOff: "#2e2e32",
   };
 
   // Kolory świecenia
@@ -21,17 +21,22 @@
     main:  "#d7ff3d",
     top:   "#34ff6a",
     left:  "#ff2e3b",
-    right: "#2bff65"
+    right: "#2bff65",
   };
 
   // Geometria (jak w oryginale)
   const d = 4;
   const g = 1;
   const gapCells = d;
-  const DOTS = { X: 5, Y: 7 };
 
   const Wgrid = (X, dDots, gap) => X * dDots + (X + 1) * gap;
   const Hgrid = (Y, dDots, gap) => Y * dDots + (Y + 1) * gap;
+
+  // ============================================================
+  // Utils
+  // ============================================================
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+  const isDigit = (ch) => ch >= "0" && ch <= "9";
 
   // ============================================================
   // Fullscreen button
@@ -65,7 +70,7 @@
   };
 
   // ============================================================
-  // Loaders
+  // JSON + font
   // ============================================================
   const loadJson = async (url) => {
     const res = await fetch(url, { cache: "no-store" });
@@ -88,8 +93,6 @@
     return v;
   };
 
-  const isDigit = (ch) => ch >= "0" && ch <= "9";
-
   // ============================================================
   // Drawing primitives (zgodne z Twoim oryginałem)
   // ============================================================
@@ -104,7 +107,7 @@
           cx: x + gap + r + i * step,
           cy: y + gap + r + j * step,
           r,
-          fill: color
+          fill: color,
         });
         parent.appendChild(c);
         dots[j][i] = c;
@@ -120,7 +123,7 @@
     parent.appendChild(el("rect", { x, y, width: wSmall, height: hSmall, rx: 0, fill: colors.cell }));
     const dots = drawDotsStored(parent, x, y, 5, 7, dDots, gap, colors.dotOff);
 
-    return { x, y, wSmall, hSmall, dots };
+    return { x, y, dots };
   };
 
   const drawTiledDisplay5x7 = (parent, x, y, tilesX, tilesY, dDots, gap, tileGap, colors) => {
@@ -142,7 +145,7 @@
       }
     }
 
-    return { x, y, W, H, tiles, tilesX, tilesY };
+    return { tiles, tilesX, tilesY };
   };
 
   const drawFramedDotPanel = (parent, x, y, X, Y, dDots, gap, colors) => {
@@ -155,7 +158,7 @@
     parent.appendChild(el("rect", { x: x + gap, y: y + gap, width: wInner, height: hInner, rx: 0, fill: colors.cell }));
 
     const dots = drawDotsStored(parent, x + gap, y + gap, X, Y, dDots, gap, colors.dotOff);
-    return { x, y, X, Y, dots };
+    return { X, Y, dots };
   };
 
   // ============================================================
@@ -180,48 +183,7 @@
   };
 
   // ============================================================
-  // Small displays: rules
-  // ============================================================
-  const setTripleDigits = (GLYPHS, tripleTiles, text, onColor) => {
-    const s = (text ?? "").toString();
-    for (let i = 0; i < 3; i++) {
-      const raw = s[i] ?? " ";
-      const ch = isDigit(raw) ? raw : " ";
-      renderCharToTile(GLYPHS, tripleTiles[i], ch, onColor, COLORS.dotOff);
-    }
-  };
-
-  const setLongTextCenteredMax15 = (GLYPHS, panel, text, onColor) => {
-    let s = (text ?? "").toString().toUpperCase();
-    if (s.length > 15) s = s.slice(0, 15);
-
-    for (let y = 0; y < panel.Y; y++) for (let x = 0; x < panel.X; x++) {
-      panel.dots[y][x].setAttribute("fill", COLORS.dotOff);
-    }
-
-    const glyphs = Array.from(s).map(ch => resolveGlyph(GLYPHS, ch));
-    const charW = 5;
-    const gapCol = 1;
-    const totalW = glyphs.length === 0 ? 0 : (glyphs.length * charW + (glyphs.length - 1) * gapCol);
-    const startX = Math.max(0, Math.floor((panel.X - totalW) / 2));
-
-    let xCursor = startX;
-    for (const glyph of glyphs) {
-      for (let row = 0; row < 7; row++) {
-        const bits = glyph[row] | 0;
-        for (let col = 0; col < 5; col++) {
-          const mask = 1 << (4 - col);
-          const on = (bits & mask) !== 0;
-          const px = xCursor + col;
-          if (px >= 0 && px < panel.X) panel.dots[row][px].setAttribute("fill", on ? onColor : COLORS.dotOff);
-        }
-      }
-      xCursor += charW + gapCol;
-    }
-  };
-
-  // ============================================================
-  // Big display helpers (1-based coords)
+  // Big display addressing (1-based col:row)
   // ============================================================
   const tileAt = (big, col1, row1) => {
     const x = (col1 | 0) - 1;
@@ -242,28 +204,152 @@
     clearTile(t);
   };
 
-  const clearBig = (big) => {
-    for (let r = 1; r <= big.tilesY; r++) for (let c = 1; c <= big.tilesX; c++) {
-      clearTileAt(big, c, r);
+  const clearArea = (big, c1, r1, c2, r2) => {
+    for (let r = r1; r <= r2; r++) for (let c = c1; c <= c2; c++) clearTileAt(big, c, r);
+  };
+
+  const clearBig = (big) => clearArea(big, 1, 1, big.tilesX, big.tilesY);
+
+  // ============================================================
+  // Big: snapshot/restore (pod animacje)
+  // ============================================================
+  const snapArea = (big, c1, r1, c2, r2) => {
+    const W = c2 - c1 + 1, H = r2 - r1 + 1;
+    const snap = Array.from({ length: H }, () => Array.from({ length: W }, () => null));
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+      const t = tileAt(big, c1 + x, r1 + y);
+      if (!t) continue;
+      snap[y][x] = t.dots.map(row => row.map(c => c.getAttribute("fill")));
+    }
+    return snap;
+  };
+
+  const restoreArea = (big, c1, r1, snap) => {
+    const H = snap.length, W = snap[0].length;
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+      const data = snap[y][x];
+      if (!data) continue;
+      const t = tileAt(big, c1 + x, r1 + y);
+      if (!t) continue;
+      for (let rr = 0; rr < 7; rr++) for (let cc = 0; cc < 5; cc++) {
+        t.dots[rr][cc].setAttribute("fill", data[rr][cc]);
+      }
     }
   };
 
-  // X 3x3 (środek ⧗)
-  const drawBigX_3x3 = (GLYPHS, big, col1, row1, color = LIT.main) => {
-    putCharAt(GLYPHS, big, col1 + 0, row1 + 0, "⇖", color);
-    putCharAt(GLYPHS, big, col1 + 1, row1 + 0, "⎵", color);
-    putCharAt(GLYPHS, big, col1 + 2, row1 + 0, "⇗", color);
+  // ============================================================
+  // Animations (kaflami)
+  // ============================================================
+  const anim = {
+    // typy: edge / matrix
+    // in/out
+    async inEdge(big, area, dir = "left", stepMs = 6) {
+      const { c1,r1,c2,r2 } = area;
+      const snap = snapArea(big, c1,r1,c2,r2);
+      clearArea(big, c1,r1,c2,r2);
 
-    putCharAt(GLYPHS, big, col1 + 1, row1 + 1, "⧗", color);
+      const W = c2 - c1 + 1, H = r2 - r1 + 1;
+      const coords = [];
 
-    putCharAt(GLYPHS, big, col1 + 0, row1 + 2, "⇙", color);
-    putCharAt(GLYPHS, big, col1 + 1, row1 + 2, "⎴", color);
-    putCharAt(GLYPHS, big, col1 + 2, row1 + 2, "⇘", color);
+      if (dir === "left")       for (let x = 0; x < W; x++) for (let y = 0; y < H; y++) coords.push([x,y]);
+      else if (dir === "right") for (let x = W-1; x >= 0; x--) for (let y = 0; y < H; y++) coords.push([x,y]);
+      else if (dir === "top")   for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) coords.push([x,y]);
+      else                      for (let y = H-1; y >= 0; y--) for (let x = 0; x < W; x++) coords.push([x,y]);
+
+      for (const [tx, ty] of coords) {
+        const data = snap[ty][tx];
+        if (!data) continue;
+        const t = tileAt(big, c1 + tx, r1 + ty);
+        if (!t) continue;
+        for (let rr = 0; rr < 7; rr++) for (let cc = 0; cc < 5; cc++) t.dots[rr][cc].setAttribute("fill", data[rr][cc]);
+        if (stepMs) await sleep(stepMs);
+      }
+    },
+
+    async outEdge(big, area, dir = "left", stepMs = 6) {
+      const { c1,r1,c2,r2 } = area;
+      const W = c2 - c1 + 1, H = r2 - r1 + 1;
+      const coords = [];
+
+      if (dir === "left")       for (let x = 0; x < W; x++) for (let y = 0; y < H; y++) coords.push([x,y]);
+      else if (dir === "right") for (let x = W-1; x >= 0; x--) for (let y = 0; y < H; y++) coords.push([x,y]);
+      else if (dir === "top")   for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) coords.push([x,y]);
+      else                      for (let y = H-1; y >= 0; y--) for (let x = 0; x < W; x++) coords.push([x,y]);
+
+      for (const [tx, ty] of coords) {
+        clearTileAt(big, c1 + tx, r1 + ty);
+        if (stepMs) await sleep(stepMs);
+      }
+    },
+
+    async inMatrix(big, area, axis = "down", stepMs = 18) {
+      const { c1,r1,c2,r2 } = area;
+      const snap = snapArea(big, c1,r1,c2,r2);
+      clearArea(big, c1,r1,c2,r2);
+
+      const W = c2 - c1 + 1, H = r2 - r1 + 1;
+
+      if (axis === "down" || axis === "up") {
+        const ys = axis === "down"
+          ? Array.from({length:H}, (_,i)=>i)
+          : Array.from({length:H}, (_,i)=>H-1-i);
+
+        for (const y of ys) {
+          for (let x = 0; x < W; x++) {
+            const data = snap[y][x];
+            if (!data) continue;
+            const t = tileAt(big, c1 + x, r1 + y);
+            if (!t) continue;
+            for (let rr = 0; rr < 7; rr++) for (let cc = 0; cc < 5; cc++) t.dots[rr][cc].setAttribute("fill", data[rr][cc]);
+          }
+          if (stepMs) await sleep(stepMs);
+        }
+      } else {
+        const xs = axis === "right"
+          ? Array.from({length:W}, (_,i)=>i)
+          : Array.from({length:W}, (_,i)=>W-1-i);
+
+        for (const x of xs) {
+          for (let y = 0; y < H; y++) {
+            const data = snap[y][x];
+            if (!data) continue;
+            const t = tileAt(big, c1 + x, r1 + y);
+            if (!t) continue;
+            for (let rr = 0; rr < 7; rr++) for (let cc = 0; cc < 5; cc++) t.dots[rr][cc].setAttribute("fill", data[rr][cc]);
+          }
+          if (stepMs) await sleep(stepMs);
+        }
+      }
+    },
+
+    async outMatrix(big, area, axis = "down", stepMs = 18) {
+      const { c1,r1,c2,r2 } = area;
+      const W = c2 - c1 + 1, H = r2 - r1 + 1;
+
+      if (axis === "down" || axis === "up") {
+        const ys = axis === "down"
+          ? Array.from({length:H}, (_,i)=>i)
+          : Array.from({length:H}, (_,i)=>H-1-i);
+
+        for (const y of ys) {
+          for (let x = 0; x < W; x++) clearTileAt(big, c1 + x, r1 + y);
+          if (stepMs) await sleep(stepMs);
+        }
+      } else {
+        const xs = axis === "right"
+          ? Array.from({length:W}, (_,i)=>i)
+          : Array.from({length:W}, (_,i)=>W-1-i);
+
+        for (const x of xs) {
+          for (let y = 0; y < H; y++) clearTileAt(big, c1 + x, r1 + y);
+          if (stepMs) await sleep(stepMs);
+        }
+      }
+    },
   };
 
   // ============================================================
-  // WIN (font_win.json) – cyfry mogą być "węższe": centrowanie poziome
-  // pion stały: rzędy 2..8
+  // WIN (font_win.json) – węższe cyfry -> centrowanie poziome, pion stały 2..8
   // ============================================================
   const measureWinDigit = (pat) => {
     const H = 7;
@@ -294,11 +380,8 @@
     for (let y = 0; y < H; y++) {
       for (let x = 0; x < w; x++) {
         const ch = rows[y][left + x] ?? " ";
-        const col = col1 + x;
-        const row = rowTop1 + y;
-
-        if (ch === " ") clearTileAt(big, col, row);
-        else putCharAt(GLYPHS, big, col, row, ch, color);
+        if (ch === " ") clearTileAt(big, col1 + x, rowTop1 + y);
+        else putCharAt(GLYPHS, big, col1 + x, rowTop1 + y, ch, color);
       }
     }
     return w;
@@ -314,12 +397,8 @@
     const rowTop1 = 2; // rzędy 2..8
     const gap = 1;
 
-    // czyść pole WIN
-    for (let y = 0; y < fieldH; y++) for (let x = 0; x < fieldW; x++) {
-      clearTileAt(big, 1 + x, rowTop1 + y);
-    }
+    clearArea(big, 1, rowTop1, 30, rowTop1 + 6);
 
-    // policz tight widths
     const widths = s.split("").map(d => {
       const pat = WIN_DIGITS[d];
       return pat ? measureWinDigit(pat).w : 0;
@@ -336,66 +415,186 @@
   };
 
   // ============================================================
-  // Big modes (szkielet)
+  // X 3x3 (środek ⧗)
   // ============================================================
-  const BIG_MODES = { LOGO:"LOGO", ROUNDS:"ROUNDS", FINAL:"FINAL", WIN:"WIN" };
+  // ⇖⎵⇗
+  //  ⧗
+  // ⇙⎴⇘
+  const drawBigX_3x3 = (GLYPHS, big, col1, row1, color = LIT.main) => {
+    putCharAt(GLYPHS, big, col1 + 0, row1 + 0, "⇖", color);
+    putCharAt(GLYPHS, big, col1 + 1, row1 + 0, "⎵", color);
+    putCharAt(GLYPHS, big, col1 + 2, row1 + 0, "⇗", color);
 
-  const BigLayouts = {
-    ROUNDS: {
-      xCells: {
-        "1A": { col1: 1,  row1: 8 },
-        "2A": { col1: 1,  row1: 5 },
-        "3A": { col1: 1,  row1: 2 },
-        "1B": { col1: 28, row1: 8 },
-        "2B": { col1: 28, row1: 5 },
-        "3B": { col1: 28, row1: 2 }
-      }
+    putCharAt(GLYPHS, big, col1 + 1, row1 + 1, "⧗", color);
+
+    putCharAt(GLYPHS, big, col1 + 0, row1 + 2, "⇙", color);
+    putCharAt(GLYPHS, big, col1 + 1, row1 + 2, "⎴", color);
+    putCharAt(GLYPHS, big, col1 + 2, row1 + 2, "⇘", color);
+  };
+
+  // ============================================================
+  // Fields + layout (ROUNDS + FINAL)
+  // ============================================================
+  const field = (name, c1, r1, len) => ({ name, c1, r1, c2: c1 + len - 1, r2: r1 });
+
+  const writeField = (GLYPHS, big, f, text, color = LIT.main) => {
+    const s = (text ?? "").toString().toUpperCase();
+    const len = f.c2 - f.c1 + 1;
+    for (let i = 0; i < len; i++) {
+      putCharAt(GLYPHS, big, f.c1 + i, f.r1, s[i] ?? " ", color);
     }
   };
 
-  const initBigMode = (GLYPHS, big, mode) => {
-    clearBig(big);
-    // LOGO/ROUNDS/FINAL wypełnimy później – WIN rysuje się na komendę
+  const updateField = async (GLYPHS, big, f, text, opts = {}) => {
+    const {
+      out = null, // {type:"edge"/"matrix", dir/axis, ms}
+      in: inn = null,
+      color = LIT.main,
+    } = opts;
+
+    const area = { c1: f.c1, r1: f.r1, c2: f.c2, r2: f.r2 };
+
+    if (out) {
+      if (out.type === "edge")   await anim.outEdge(big, area, out.dir ?? "left", out.ms ?? 6);
+      if (out.type === "matrix") await anim.outMatrix(big, area, out.axis ?? "down", out.ms ?? 18);
+    }
+
+    writeField(GLYPHS, big, f, text, color);
+
+    if (inn) {
+      if (inn.type === "edge")   await anim.inEdge(big, area, inn.dir ?? "left", inn.ms ?? 6);
+      if (inn.type === "matrix") await anim.inMatrix(big, area, inn.axis ?? "down", inn.ms ?? 18);
+    }
+  };
+
+  // ROUNDS: interpretacja spójna z Twoimi koordynatami:
+  // - 5 rund = rzędy 2..6
+  // - numer rundy: kol 5
+  // - tekst: kol 7..23 (17)
+  // - punkty: kol 24..25 (2)
+  // - SUMA: kol 18..21 w rzędzie 8, wartość: kol 23..25 (3)
+  const ROUNDS = (() => {
+    const rows = [2,3,4,5,6];
+    const roundNums = rows.map((r, i) => field(`R${i+1}_NUM`, 5, r, 1));
+    const answers   = rows.map((r, i) => field(`R${i+1}_TXT`, 7, r, 17));
+    const points    = rows.map((r, i) => field(`R${i+1}_PTS`, 24, r, 2));
+
+    const sumaLabel = field("SUMA_LABEL", 18, 8, 4);
+    const sumaVal   = field("SUMA_VAL",   23, 8, 3);
+
+    const xCells = {
+      "1A": { c1: 1,  r1: 8,  c2: 3,  r2: 10 },
+      "2A": { c1: 1,  r1: 5,  c2: 3,  r2: 7  },
+      "3A": { c1: 1,  r1: 2,  c2: 3,  r2: 4  },
+      "1B": { c1: 28, r1: 8,  c2: 30, r2: 10 },
+      "2B": { c1: 28, r1: 5,  c2: 30, r2: 7  },
+      "3B": { c1: 28, r1: 2,  c2: 30, r2: 4  },
+    };
+
+    return { rows, roundNums, answers, points, sumaLabel, sumaVal, xCells };
+  })();
+
+  // FINAL: przyjmuję 5 wierszy odpowiedzi = rzędy 2..6 (jak w ROUNDS)
+  // - lewy tekst 11: col 1..11
+  // - pkt A 2: col 13..14
+  // - pkt B 2: col 17..18
+  // - prawy tekst 11: col 20..30
+  // - SUMA: (literówka w spec) ustawiam: SUMA label col 11 row 8, value col 16..18 row 8
+  const FINAL = (() => {
+    const rows = [2,3,4,5,6];
+    const leftTxt  = rows.map((r,i)=>field(`F${i+1}_LTXT`, 1,  r, 11));
+    const ptsA     = rows.map((r,i)=>field(`F${i+1}_A`,    13, r, 2));
+    const ptsB     = rows.map((r,i)=>field(`F${i+1}_B`,    17, r, 2));
+    const rightTxt = rows.map((r,i)=>field(`F${i+1}_RTXT`, 20, r, 11));
+
+    const sumaLabel = field("FSUMA_LABEL", 11, 8, 4); // SUMA
+    const sumaVal   = field("FSUMA_VAL",   16, 8, 3);
+
+    return { rows, leftTxt, ptsA, ptsB, rightTxt, sumaLabel, sumaVal };
+  })();
+
+  // ============================================================
+  // Modes
+  // ============================================================
+  const BIG_MODES = { LOGO:"LOGO", ROUNDS:"ROUNDS", FINAL:"FINAL", WIN:"WIN" };
+
+  // ============================================================
+  // Small displays rules
+  // ============================================================
+  const setTripleDigits = (GLYPHS, tripleTiles, text, onColor) => {
+    const s = (text ?? "").toString();
+    for (let i = 0; i < 3; i++) {
+      const raw = s[i] ?? " ";
+      const ch = isDigit(raw) ? raw : " ";
+      renderCharToTile(GLYPHS, tripleTiles[i], ch, onColor, COLORS.dotOff);
+    }
+  };
+
+  const setLongTextCenteredMax15 = (GLYPHS, panel, text, onColor) => {
+    let s = (text ?? "").toString().toUpperCase();
+    if (s.length > 15) s = s.slice(0, 15);
+
+    // clear
+    for (let y = 0; y < panel.Y; y++) for (let x = 0; x < panel.X; x++) {
+      panel.dots[y][x].setAttribute("fill", COLORS.dotOff);
+    }
+
+    const glyphs = Array.from(s).map(ch => resolveGlyph(GLYPHS, ch));
+    const charW = 5;
+    const gapCol = 1;
+    const totalW = glyphs.length === 0 ? 0 : (glyphs.length * charW + (glyphs.length - 1) * gapCol);
+    const startX = Math.max(0, Math.floor((panel.X - totalW) / 2));
+
+    let xCursor = startX;
+    for (const glyph of glyphs) {
+      for (let row = 0; row < 7; row++) {
+        const bits = glyph[row] | 0;
+        for (let col = 0; col < 5; col++) {
+          const mask = 1 << (4 - col);
+          const on = (bits & mask) !== 0;
+          const px = xCursor + col;
+          if (px >= 0 && px < panel.X) panel.dots[row][px].setAttribute("fill", on ? onColor : COLORS.dotOff);
+        }
+      }
+      xCursor += charW + gapCol;
+    }
   };
 
   // ============================================================
   // Bootstrap
   // ============================================================
   const bootstrap = async () => {
-    // fonts
-    const FONT5x7 = await loadJson("./font_5x7.json");
-    const GLYPHS  = buildGlyphMap(FONT5x7);
+    // Fonts
+    const FONT5 = await loadJson("./font_5x7.json");
+    const GLYPHS = buildGlyphMap(FONT5);
 
     const FONTWIN = await loadJson("./font_win.json");
     const WIN_DIGITS = FONTWIN?.digits || {};
 
-    // svg layers
+    // SVG layers
     const center  = $("center");
     const panels  = $("panels");
     const basebar = $("basebar");
     const bottom  = $("bottom");
 
-    // ===== ŚRODEK 30x10 (centrowany jak w oryginale) =====
+    // ===== BIG (30x10) =====
     const wSmall = Wgrid(5, d, g);
     const hSmall = Hgrid(7, d, g);
     const centerW = 30 * wSmall + 29 * gapCells + 2 * g;
     const centerH = 10 * hSmall +  9 * gapCells + 2 * g;
-
     const centerX = VIEW.CX - centerW / 2;
     const centerY = VIEW.CY - centerH / 2;
-
     const big = drawTiledDisplay5x7(center, centerX, centerY, 30, 10, d, g, gapCells, COLORS);
 
-    // ===== POTRÓJNE (3x1), jak w oryginale =====
+    // ===== Triples (3x1) =====
     const dP = 3 * d;
     const wSmallP = Wgrid(5, dP, g);
     const panelW = 3 * wSmallP + 2 * gapCells + 2 * g;
-
     const shift = panelW / 4;
+
     const sideY = 390;
     const leftX  = 10 + shift;
     const rightX = VIEW.W - panelW - 10 - shift;
-
     const topY = 65;
     const topX = VIEW.CX - panelW / 2;
 
@@ -407,10 +606,9 @@
     const rightTriple = [rightPanel.tiles[0][0], rightPanel.tiles[0][1], rightPanel.tiles[0][2]];
     const topTriple   = [topPanel.tiles[0][0],   topPanel.tiles[0][1],   topPanel.tiles[0][2]];
 
-    // ===== DÓŁ + PASEK (jak w oryginale) =====
+    // ===== Bottom (95x7) + basebar (jak w Twoim SVG) =====
     const dBottom = 1.5 * d;
     const Xb = 95, Yb = 7;
-
     const gapFromOval = 22;
     const gapBetween  = 40;
 
@@ -431,7 +629,7 @@
     const xLeft  = VIEW.CX - totalW / 2;
     const xRight = xLeft + wBlock + gapEff;
 
-    // pasek
+    // basebar
     const barX = 50, barW = 1500;
     const barPadY = 12;
     const barY = yBottom - barPadY;
@@ -443,14 +641,14 @@
       stroke: "#4db4ff",
       "stroke-width": 10,
       "stroke-opacity": 0.65,
-      filter: "url(#neonBlue)"
+      filter: "url(#neonBlue)",
     }));
     basebar.appendChild(el("rect", {
       x: barX, y: barY, width: barW, height: barH,
       fill: "none",
       stroke: "#9fe0ff",
       "stroke-width": 2,
-      "stroke-opacity": 0.95
+      "stroke-opacity": 0.95,
     }));
 
     const gapCenterX = xLeft + wBlock + gapEff / 2;
@@ -459,7 +657,7 @@
     const cutXs = [
       Math.max(barX + 18, gapCenterX - sideOffset),
       gapCenterX,
-      Math.min(barX + barW - 18, gapCenterX + sideOffset)
+      Math.min(barX + barW - 18, gapCenterX + sideOffset),
     ];
 
     for (const lx of cutXs) {
@@ -468,111 +666,356 @@
         stroke: "#4db4ff",
         "stroke-width": 10,
         "stroke-opacity": 0.55,
-        filter: "url(#neonBlue)"
+        filter: "url(#neonBlue)",
       }));
       basebar.appendChild(el("line", {
         x1: lx, y1: barY, x2: lx, y2: barY + barH,
         stroke: "#9fe0ff",
         "stroke-width": 2,
-        "stroke-opacity": 0.95
+        "stroke-opacity": 0.95,
       }));
     }
 
     const long1 = drawFramedDotPanel(bottom, xLeft,  yBottom, Xb, Yb, dBottom, g, COLORS);
     const long2 = drawFramedDotPanel(bottom, xRight, yBottom, Xb, Yb, dBottom, g, COLORS);
 
-    // ===== API =====
-    let currentBigMode = BIG_MODES.LOGO;
+    // ============================================================
+    // Pretty API
+    // ============================================================
+    let mode = BIG_MODES.LOGO;
 
     const api = {
-      // digits-only
-      topDigits:   (ddd) => setTripleDigits(GLYPHS, topTriple,   ddd, LIT.top),
-      leftDigits:  (ddd) => setTripleDigits(GLYPHS, leftTriple,  ddd, LIT.left),
-      rightDigits: (ddd) => setTripleDigits(GLYPHS, rightTriple, ddd, LIT.right),
+      mode: {
+        get: () => mode,
+        set: async (m, opts = {}) => {
+          const mm = (m ?? "").toString().toUpperCase();
+          if (!BIG_MODES[mm]) throw new Error(`Nieznany tryb: ${m}`);
+          mode = mm;
 
-      // long max 15
-      long1: (txt) => setLongTextCenteredMax15(GLYPHS, long1, txt, LIT.main),
-      long2: (txt) => setLongTextCenteredMax15(GLYPHS, long2, txt, LIT.main),
+          // “init” widoku
+          clearBig(big);
 
-      // big mode
-      bigMode: (mode) => {
-        const m = (mode ?? "").toString().toUpperCase();
-        if (!BIG_MODES[m]) throw new Error(`Nieznany tryb big: ${mode}`);
-        currentBigMode = m;
-        initBigMode(GLYPHS, big, currentBigMode);
+          if (mode === BIG_MODES.ROUNDS) {
+            writeField(GLYPHS, big, ROUNDS.sumaLabel, "SUMA");
+            // numery 1..5
+            for (let i = 0; i < 5; i++) writeField(GLYPHS, big, ROUNDS.roundNums[i], String(i+1));
+          }
+
+          if (mode === BIG_MODES.FINAL) {
+            writeField(GLYPHS, big, FINAL.sumaLabel, "SUMA");
+          }
+
+          if (opts?.animIn) {
+            await api.big.animIn(opts.animIn);
+          }
+        },
+      },
+
+      // Small displays
+      small: {
+        topDigits:   (ddd) => setTripleDigits(GLYPHS, topTriple,   ddd, LIT.top),
+        leftDigits:  (ddd) => setTripleDigits(GLYPHS, leftTriple,  ddd, LIT.left),
+        rightDigits: (ddd) => setTripleDigits(GLYPHS, rightTriple, ddd, LIT.right),
+
+        long1: (txt) => setLongTextCenteredMax15(GLYPHS, long1, txt, LIT.main),
+        long2: (txt) => setLongTextCenteredMax15(GLYPHS, long2, txt, LIT.main),
+      },
+
+      // Big generic
+      big: {
+        areaAll: () => ({ c1:1, r1:1, c2:30, r2:10 }),
+
+        animIn: async ({ type="edge", dir="left", axis="down", ms=10, area=null } = {}) => {
+          const A = area ?? api.big.areaAll();
+          if (type === "edge")   return anim.inEdge(big, A, dir, ms);
+          if (type === "matrix") return anim.inMatrix(big, A, axis, ms);
+        },
+
+        animOut: async ({ type="edge", dir="left", axis="down", ms=10, area=null } = {}) => {
+          const A = area ?? api.big.areaAll();
+          if (type === "edge")   return anim.outEdge(big, A, dir, ms);
+          if (type === "matrix") return anim.outMatrix(big, A, axis, ms);
+        },
+
+        clear: () => clearBig(big),
+
+        // low-level: symbol at col:row
+        put: (col, row, ch, color=LIT.main) => putCharAt(GLYPHS, big, col, row, ch, color),
+      },
+
+      // LOGO
+      logo: {
+        // layout: [{col,row,ch}]
+        setLayout: (layout) => {
+          if (!Array.isArray(layout)) throw new Error("layout musi być tablicą {col,row,ch}");
+          clearBig(big);
+          for (const it of layout) {
+            if (!it) continue;
+            putCharAt(GLYPHS, big, it.col, it.row, it.ch, LIT.main);
+          }
+        },
+        show: async (animIn) => api.big.animIn(animIn ?? { type:"edge", dir:"left", ms:8 }),
+        hide: async (animOut) => api.big.animOut(animOut ?? { type:"edge", dir:"right", ms:8 }),
       },
 
       // WIN
-      bigWin: (num) => {
-        if (currentBigMode !== BIG_MODES.WIN) api.bigMode("WIN");
-        drawWinNumber5(GLYPHS, big, WIN_DIGITS, num, LIT.main);
+      win: {
+        area: () => ({ c1:1, r1:2, c2:30, r2:8 }),
+        set: async (num, { animOut, animIn } = {}) => {
+          if (mode !== BIG_MODES.WIN) await api.mode.set("WIN");
+          const A = api.win.area();
+          if (animOut) await api.big.animOut({ ...animOut, area: A });
+          drawWinNumber5(GLYPHS, big, WIN_DIGITS, num, LIT.main);
+          if (animIn) await api.big.animIn({ ...animIn, area: A });
+        },
       },
 
-      // X (ROUNDS)
-      bigSetX: (cellName, on) => {
-        if (currentBigMode !== BIG_MODES.ROUNDS) api.bigMode("ROUNDS");
-        const cell = BigLayouts.ROUNDS.xCells[(cellName ?? "").toUpperCase()];
-        if (!cell) throw new Error(`Nieznana komórka X: ${cellName}`);
-        if (on) drawBigX_3x3(GLYPHS, big, cell.col1, cell.row1, LIT.main);
-        else {
-          for (let dy = 0; dy < 3; dy++) for (let dx = 0; dx < 3; dx++) clearTileAt(big, cell.col1 + dx, cell.row1 + dy);
-        }
+      // ROUNDS
+      rounds: {
+        setRow: async (idx1to5, { text="", pts="", animOut=null, animIn=null } = {}) => {
+          if (mode !== BIG_MODES.ROUNDS) await api.mode.set("ROUNDS");
+          const i = (idx1to5|0) - 1;
+          if (i < 0 || i > 4) throw new Error("idx1to5 musi być 1..5");
+
+          await updateField(GLYPHS, big, ROUNDS.answers[i], text, { out: animOut, in: animIn });
+          await updateField(GLYPHS, big, ROUNDS.points[i],  pts,  { out: animOut, in: animIn });
+        },
+
+        setSuma: async (val, { animOut=null, animIn=null } = {}) => {
+          if (mode !== BIG_MODES.ROUNDS) await api.mode.set("ROUNDS");
+          await updateField(GLYPHS, big, ROUNDS.sumaVal, val, { out: animOut, in: animIn });
+        },
+
+        setX: (name, on) => {
+          if (mode !== BIG_MODES.ROUNDS) {
+            // celowo bez await, bo to “twarde”
+            mode = BIG_MODES.ROUNDS;
+          }
+          const key = (name ?? "").toString().toUpperCase();
+          const cell = ROUNDS.xCells[key];
+          if (!cell) throw new Error(`Nieznane X: ${name}`);
+
+          if (on) drawBigX_3x3(GLYPHS, big, cell.c1, cell.r1, LIT.main);
+          else clearArea(big, cell.c1, cell.r1, cell.c2, cell.r2);
+        },
       },
 
-      _clearBig: () => clearBig(big)
+      // FINAL
+      final: {
+        setRow: async (idx1to5, { left="", a="", b="", right="", animOut=null, animIn=null } = {}) => {
+          if (mode !== BIG_MODES.FINAL) await api.mode.set("FINAL");
+          const i = (idx1to5|0) - 1;
+          if (i < 0 || i > 4) throw new Error("idx1to5 musi być 1..5");
+
+          await updateField(GLYPHS, big, FINAL.leftTxt[i],  left,  { out: animOut, in: animIn });
+          await updateField(GLYPHS, big, FINAL.ptsA[i],     a,     { out: animOut, in: animIn });
+          await updateField(GLYPHS, big, FINAL.ptsB[i],     b,     { out: animOut, in: animIn });
+          await updateField(GLYPHS, big, FINAL.rightTxt[i], right, { out: animOut, in: animIn });
+        },
+
+        setSuma: async (val, { animOut=null, animIn=null } = {}) => {
+          if (mode !== BIG_MODES.FINAL) await api.mode.set("FINAL");
+          await updateField(GLYPHS, big, FINAL.sumaVal, val, { out: animOut, in: animIn });
+        },
+      },
     };
 
-    // ===== Backend command decoder =====
+    // ============================================================
+    // Backend text commands (ładne, ale proste)
+    // ============================================================
+    // Przykłady:
+    //   MODE ROUNDS
+    //   MODE FINAL ANIMIN edge left 8
+    //
+    //   WIN 01234
+    //   WIN 01234 ANIMOUT edge right 6 ANIMIN matrix down 20
+    //
+    //   R 1 TXT "ODP 1" PTS 10 ANIM edge left 6
+    //   RSUMA 120 ANIM matrix right 20
+    //   RX 2A ON
+    //
+    //   F 1 L "ALA MA KOTA" A 12 B 34 R "KOT MA ALE" ANIM edge top 6
+    //   FSUMA 999 ANIM matrix down 20
+    //
+    //   TOP 123 | LEFT 045 | RIGHT 999
+    //   LONG1 "TEKST..." | LONG2 "..."
+    //
+    const unquote = (s) => {
+      const t = (s ?? "").trim();
+      if (t.startsWith('"') && t.endsWith('"')) return t.slice(1, -1);
+      return t;
+    };
+
+    const parseAnim = (tokens, startIdx) => {
+      // "ANIM edge left 6" albo "ANIM matrix down 20"
+      // zwraca { animOut, animIn } albo pojedyncze
+      const type = (tokens[startIdx] ?? "").toLowerCase();
+      const dirOrAxis = (tokens[startIdx + 1] ?? "").toLowerCase();
+      const ms = parseInt(tokens[startIdx + 2] ?? "10", 10);
+
+      if (type === "edge")   return { type:"edge", dir: dirOrAxis || "left", ms: isFinite(ms) ? ms : 10 };
+      if (type === "matrix") return { type:"matrix", axis: dirOrAxis || "down", ms: isFinite(ms) ? ms : 18 };
+      return null;
+    };
+
     const handleCommand = async (line) => {
       const raw = (line ?? "").toString().trim();
       if (!raw) return;
 
-      const parts = raw.split(/\s+/);
-      const head = (parts[0] || "").toUpperCase();
-
-      if (head === "TOP")   return api.topDigits(parts.slice(1).join(""));
-      if (head === "LEFT")  return api.leftDigits(parts.slice(1).join(""));
-      if (head === "RIGHT") return api.rightDigits(parts.slice(1).join(""));
-
-      if (head === "LONG1") {
-        const rest = raw.slice(5).trim();
-        const txt = rest.startsWith('"') && rest.endsWith('"') ? rest.slice(1, -1) : rest;
-        return api.long1(txt);
-      }
-      if (head === "LONG2") {
-        const rest = raw.slice(5).trim();
-        const txt = rest.startsWith('"') && rest.endsWith('"') ? rest.slice(1, -1) : rest;
-        return api.long2(txt);
-      }
-
-      if (head === "BIG") {
-        const op = (parts[1] || "").toUpperCase();
-
-        if (op === "MODE") return api.bigMode(parts[2] || "");
-        if (op === "WIN")  return api.bigWin(parts[2] || "");
-
-        if (op === "X") {
-          const cellName = parts[2] || "";
-          const state = (parts[3] || "").toUpperCase();
-          const on = (state === "ON" || state === "1" || state === "TRUE");
-          return api.bigSetX(cellName, on);
+      // bardzo proste tokenizowanie z obsługą "..."
+      const tokens = [];
+      let i = 0;
+      while (i < raw.length) {
+        if (raw[i] === " ") { i++; continue; }
+        if (raw[i] === '"') {
+          let j = i + 1;
+          while (j < raw.length && raw[j] !== '"') j++;
+          tokens.push(raw.slice(i, j + 1));
+          i = j + 1;
+        } else {
+          let j = i;
+          while (j < raw.length && raw[j] !== " ") j++;
+          tokens.push(raw.slice(i, j));
+          i = j;
         }
+      }
+
+      const head = (tokens[0] ?? "").toUpperCase();
+
+      // small
+      if (head === "TOP")   return api.small.topDigits((tokens[1] ?? ""));
+      if (head === "LEFT")  return api.small.leftDigits((tokens[1] ?? ""));
+      if (head === "RIGHT") return api.small.rightDigits((tokens[1] ?? ""));
+      if (head === "LONG1") return api.small.long1(unquote(tokens.slice(1).join(" ")));
+      if (head === "LONG2") return api.small.long2(unquote(tokens.slice(1).join(" ")));
+
+      // mode
+      if (head === "MODE") {
+        const m = (tokens[1] ?? "").toUpperCase();
+        // opcjonalnie: "MODE ROUNDS ANIMIN edge left 8"
+        let animIn = null;
+        const ai = tokens.findIndex(t => t.toUpperCase() === "ANIMIN");
+        if (ai >= 0) animIn = parseAnim(tokens, ai + 1);
+        return api.mode.set(m, { animIn });
+      }
+
+      // WIN
+      if (head === "WIN") {
+        const num = (tokens[1] ?? "");
+        let animOut = null, animIn = null;
+
+        const ao = tokens.findIndex(t => t.toUpperCase() === "ANIMOUT");
+        const ai = tokens.findIndex(t => t.toUpperCase() === "ANIMIN");
+        if (ao >= 0) animOut = parseAnim(tokens, ao + 1);
+        if (ai >= 0) animIn  = parseAnim(tokens, ai + 1);
+
+        return api.win.set(num, { animOut, animIn });
+      }
+
+      // ROUNDS row
+      if (head === "R") {
+        const idx = parseInt(tokens[1] ?? "0", 10);
+        let text = "", pts = "";
+        let animOut = null, animIn = null;
+
+        const tIdx = tokens.findIndex(t => t.toUpperCase() === "TXT");
+        if (tIdx >= 0) text = unquote(tokens[tIdx + 1] ?? "");
+
+        const pIdx = tokens.findIndex(t => t.toUpperCase() === "PTS");
+        if (pIdx >= 0) pts = (tokens[pIdx + 1] ?? "");
+
+        const aIdx = tokens.findIndex(t => t.toUpperCase() === "ANIM");
+        if (aIdx >= 0) {
+          const A = parseAnim(tokens, aIdx + 1);
+          animOut = A;
+          animIn  = A;
+        }
+
+        return api.rounds.setRow(idx, { text, pts, animOut, animIn });
+      }
+
+      if (head === "RSUMA") {
+        const val = tokens[1] ?? "";
+        let animOut = null, animIn = null;
+
+        const aIdx = tokens.findIndex(t => t.toUpperCase() === "ANIM");
+        if (aIdx >= 0) {
+          const A = parseAnim(tokens, aIdx + 1);
+          animOut = A;
+          animIn  = A;
+        }
+        return api.rounds.setSuma(val, { animOut, animIn });
+      }
+
+      if (head === "RX") {
+        const name = (tokens[1] ?? "").toUpperCase();
+        const on = ((tokens[2] ?? "").toUpperCase() === "ON");
+        return api.rounds.setX(name, on);
+      }
+
+      // FINAL row
+      if (head === "F") {
+        const idx = parseInt(tokens[1] ?? "0", 10);
+        let left = "", a = "", b = "", right = "";
+        let animOut = null, animIn = null;
+
+        const L = tokens.findIndex(t => t.toUpperCase() === "L");
+        if (L >= 0) left = unquote(tokens[L + 1] ?? "");
+
+        const A = tokens.findIndex(t => t.toUpperCase() === "A");
+        if (A >= 0) a = (tokens[A + 1] ?? "");
+
+        const B = tokens.findIndex(t => t.toUpperCase() === "B");
+        if (B >= 0) b = (tokens[B + 1] ?? "");
+
+        const R = tokens.findIndex(t => t.toUpperCase() === "R");
+        if (R >= 0) right = unquote(tokens[R + 1] ?? "");
+
+        const an = tokens.findIndex(t => t.toUpperCase() === "ANIM");
+        if (an >= 0) {
+          const X = parseAnim(tokens, an + 1);
+          animOut = X;
+          animIn  = X;
+        }
+
+        return api.final.setRow(idx, { left, a, b, right, animOut, animIn });
+      }
+
+      if (head === "FSUMA") {
+        const val = tokens[1] ?? "";
+        let animOut = null, animIn = null;
+
+        const aIdx = tokens.findIndex(t => t.toUpperCase() === "ANIM");
+        if (aIdx >= 0) {
+          const A = parseAnim(tokens, aIdx + 1);
+          animOut = A;
+          animIn  = A;
+        }
+        return api.final.setSuma(val, { animOut, animIn });
       }
 
       console.warn("Nieznana komenda:", raw);
     };
 
-    // ===== Demo =====
-    api.topDigits("123");
-    api.leftDigits("045");
-    api.rightDigits("999");
-    api.long1("FAMILIADA");
-    api.long2("SUMA 000");
-    api.bigWin("01234");
+    // ============================================================
+    // Demo start
+    // ============================================================
+    api.small.topDigits("123");
+    api.small.leftDigits("045");
+    api.small.rightDigits("999");
+    api.small.long1("FAMILIADA");
+    api.small.long2("SUMA 000");
+
+    await api.mode.set("ROUNDS");
+    await api.rounds.setRow(1, { text: "PRZYKŁAD", pts: "10", animOut: {type:"edge", dir:"left", ms:6}, animIn: {type:"edge", dir:"left", ms:6} });
+    api.rounds.setX("2A", true);
+    await api.rounds.setSuma("120", { animOut: {type:"matrix", axis:"right", ms:20}, animIn: {type:"matrix", axis:"right", ms:20} });
 
     window.scene = { api, handleCommand, BIG_MODES };
     console.log("scene.api gotowe.");
-    console.log(`Przykład: scene.handleCommand('BIG WIN 98765')`);
+    console.log(`Przykład: scene.handleCommand('WIN 01234 ANIMOUT edge right 6 ANIMIN matrix down 20')`);
+    console.log(`Przykład: scene.handleCommand('MODE FINAL ANIMIN edge top 8')`);
+    console.log(`Przykład: scene.handleCommand('F 1 L "ALA MA KOTA" A 12 B 34 R "KOT MA ALE" ANIM edge left 6')`);
   };
 
   window.addEventListener("DOMContentLoaded", () => {
