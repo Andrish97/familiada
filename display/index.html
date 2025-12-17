@@ -9,10 +9,25 @@
 </head>
 <body>
   <button id="fsBtn" class="fs-btn" type="button" title="Pełny ekran">⛶</button>
-  <div class="wrap">
+
+  <!-- TRYB QR -->
+  <div id="qrScreen" class="qr-screen hidden" aria-hidden="true">
+    <div class="qr-grid">
+      <div class="qr-card">
+        <img id="qrHostImg" class="qr-img" alt="QR Prowadzący" />
+        <div class="qr-label">Prowadzący</div>
+      </div>
+      <div class="qr-card">
+        <img id="qrBuzzerImg" class="qr-img" alt="QR Przyciski" />
+        <div class="qr-label">Przyciski</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TRYB GRA -->
+  <div id="gameScreen" class="wrap">
     <svg viewBox="0 0 1600 900" xmlns="http://www.w3.org/2000/svg">
       <defs>
-        <!-- owal: czerwony + niebieski -->
         <linearGradient id="rimGrad" x1="0" y1="0" x2="1" y2="0">
           <stop offset="0" stop-color="#c4002f"/>
           <stop offset="0.35" stop-color="#7a1230"/>
@@ -25,25 +40,22 @@
           <stop offset="1" stop-color="#bfc7cf"/>
         </linearGradient>
 
-        <!-- srebrny pasek -->
         <linearGradient id="silverGrad" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0" stop-color="#f6f7f9"/>
           <stop offset="0.55" stop-color="#d1d5db"/>
           <stop offset="1" stop-color="#aab1bb"/>
         </linearGradient>
 
-        <!-- neon (mocniejszy, żeby było widać) -->
         <filter id="neonBlue" x="-60%" y="-120%" width="220%" height="340%">
           <feDropShadow dx="0" dy="0" stdDeviation="4" flood-color="#4db4ff" flood-opacity="0.95"/>
           <feDropShadow dx="0" dy="0" stdDeviation="10" flood-color="#4db4ff" flood-opacity="0.60"/>
         </filter>
       </defs>
 
-      <!-- OWAL -->
-      <rect x="120" y="95" width="1360" height="710" rx="355" fill="url(#rimGrad)"/>
-      <rect x="280" y="200" width="1040" height="510" rx="255" fill="url(#innerGrad)"/>
-      
-      <!-- LINIE -->
+      <!-- OWAL (jak było — nie ruszam wyglądu) -->
+      <rect x="150" y="110" width="1300" height="680" rx="340" fill="url(#rimGrad)"/>
+      <rect x="300" y="210" width="1000" height="470" rx="235" fill="url(#innerGrad)"/>
+
       <g stroke="#fff" stroke-opacity="0.22" stroke-width="6">
         <line x1="800" y1="110" x2="800" y2="210"/>
         <line x1="300" y1="180" x2="420" y2="320"/>
@@ -52,16 +64,13 @@
         <line x1="1300" y1="720" x2="1180" y2="560"/>
       </g>
 
-      <!-- SCENA -->
       <g id="center"></g>
       <g id="panels"></g>
-
-      <!-- pasek ma być POD dolnymi -->
       <g id="basebar"></g>
       <g id="bottom"></g>
     </svg>
   </div>
 
-  <script src="./app.js"></script>
+  <script type="module" src="./js/main.js"></script>
 </body>
 </html>
