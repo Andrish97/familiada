@@ -237,8 +237,10 @@ Komendy są tekstowe (jednolinijkowe). Backend może wysyłać dokładnie takie 
 #### Przełącz ekran strony
 - `MODE QR`
 - `MODE GRA`
+- `MODE BLACK_SCREEN` alias `MODE BLACK`
 - `APP MODE QR`
 - `APP MODE GRA`
+- `APP MODE BLACK_SCREEN` alias `APP MODE BLACK`
 
 #### Ustaw QR (i przełącz na QR)
 - `QR HOST "https://..." BUZZER "https://..."`
@@ -299,8 +301,11 @@ Wszystko poniżej możesz wklejać do konsoli DevTools.
 
 ### 4.1 Szybki sanity check – global
 ```js
-app.setMode("QR");
-app.setMode("GRA");
+app.setMode("BLACK_SCREEN"); // czarny ekran
+app.setMode("GRA");          // wraca scenografia
+app.setMode("QR");           // QR
+app.setMode("BLACK");        // alias
+
 ```
 
 ### 4.2 QR
