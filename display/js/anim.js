@@ -84,73 +84,125 @@ export const createAnimator = ({ tileAt, snapArea, clearArea, clearTileAt }) => 
   // Matrix Rain: piksele “przylatują/odlatują” w kierunku axis, z losowym jitterem.
   // reveal/hide w “pakietach” (batch), żeby wyglądało jak cyfrowy deszcz.
   const runRain = async ({
-    big,
-    area,
-    axis = "down",
-    stepMs = 24,
-    density = 0.18,     // ile pikseli na “krok” (0..1)
-    jitter = 0.65,      // ilość losowego szumu w kolejności (0..1)
-    mode = "in",        // "in" lub "out"
-  }) => {
-    const { c1, r1, c2, r2 } = area;
+  big,
+  area,
+  axis = "down",
+  stepMs = 40,
+  density = 0.18,   // ile pikseli ujawniamy na krok (0..1)
+  jitter = 0.45,    // losowy szum w kolejności wewnątrz pasa (0..1)
+  mode = "in",      // "in" lub "out"
+  offFill = "#2e2e32",
+}) => {
+  const { c1, r1, c2, r2 } = area;
 
-    // snapshot docelowego obrazu (dla IN), albo aktualnego (dla OUT też nam się przydaje, bo snapshot bierze fill)
-    const snap = snapArea(big, c1, r1, c2, r2);
+  // snapshot docelowego obrazu (IN) albo bieżącego (OUT)
+  const snap = snapArea(big, c1, r1, c2, r2);
 
-    // IN: czyścimy obszar zanim zaczniemy ujawniać
-    if (mode === "in") clearArea(big, c1, r1, c2, r2);
+  // IN: zaczynamy od czystego obszaru
+  if (mode === "in") clearArea(big, c1, r1, c2, r2);
 
-    const dots = buildDotList(big, area, snap);
-    if (!dots.length) return;
+  const dots = buildDotList(big, area, snap);
+  if (!dots.length) return;
 
-    // maxGX/maxGY do odwrócenia osi
-    let maxGX = 0, maxGY = 0;
-    for (const d of dots) { if (d.gx > maxGX) maxGX = d.gx; if (d.gy > maxGY) maxGY = d.gy; }
+  // rozmiary w siatce kropek
+  let maxGX = 0, maxGY = 0;
+  for (const d of dots) { if (d.gx > maxGX) maxGX = d.gx; if (d.gy > maxGY) maxGY = d.gy; }
+  const W = maxGX + 1;
+  const H = maxGY + 1;
 
-    // kolejność: axisKey + szum
-    // jitter działa tak: do axisKey dodajemy losowy offset proporcjonalny do rozmiaru.
-    const span = (axis === "left" || axis === "right") ? (maxGX + 1) : (maxGY + 1);
-    const jSpan = span * jitter;
+  // Czy robimy pasy jako ROWS czy COLS?
+  // - jeśli axis jest pionowy (down/up) => pasy to KOLUMNY (gx)
+  // - jeśli axis jest poziomy (left/right) => pasy to RZĘDY (gy)
+  const vertical = (axis === "down" || axis === "up");
+  const stripeCount = vertical ? W : H;
 
-    dots.sort((a, b) => {
-      const ka = axisKey(a, axis, maxGX, maxGY) + (Math.random() - 0.5) * jSpan;
-      const kb = axisKey(b, axis, maxGX, maxGY) + (Math.random() - 0.5) * jSpan;
-      return ka - kb;
+  // Grupowanie kropek do pasów
+  const stripes = Array.from({ length: stripeCount }, () => []);
+  for (const d of dots) {
+    const idx = vertical ? d.gx : d.gy;
+    stripes[idx].push(d);
+  }
+
+  // Każdy pas losuje stronę startu (mix sides)
+  // pionowo: każda kolumna losuje "up" albo "down"
+  // poziomo: każdy rząd losuje "left" albo "right"
+  const stripeDir = stripes.map(() => {
+    if (vertical) return (Math.random() < 0.5 ? "up" : "down");
+    return (Math.random() < 0.5 ? "left" : "right");
+  });
+
+  // Sortowanie wewnątrz pasa: od strony startu + trochę szumu
+  const jX = W * jitter;
+  const jY = H * jitter;
+
+  for (let i = 0; i < stripes.length; i++) {
+    const dir = stripeDir[i];
+    const arr = stripes[i];
+
+    arr.sort((a, b) => {
+      let ka = 0, kb = 0;
+
+      if (dir === "down") { ka = a.gy; kb = b.gy; }
+      else if (dir === "up") { ka = (H - 1 - a.gy); kb = (H - 1 - b.gy); }
+      else if (dir === "right") { ka = a.gx; kb = b.gx; }
+      else if (dir === "left") { ka = (W - 1 - a.gx); kb = (W - 1 - b.gx); }
+
+      // szum, żeby nie było „laserowego” frontu
+      const noiseA = (Math.random() - 0.5) * (vertical ? jY : jX);
+      const noiseB = (Math.random() - 0.5) * (vertical ? jY : jX);
+      return (ka + noiseA) - (kb + noiseB);
     });
 
-    // OUT: odwróć kolejność (żeby “odlatywało” w ten sam kierunek)
-    if (mode === "out") dots.reverse();
+    // OUT: odwracamy, żeby „odlatywało” (ale nadal zgodnie z wylosowaną stroną pasa)
+    if (mode === "out") arr.reverse();
+  }
 
-    // batch size = density * total, ale minimum sensowne
-    const total = dots.length;
-    const batch = clamp(Math.floor(total * density), 40, 800); // limity dla płynności
+  // Zlecamy ujawnianie porcjami:
+  // zamiast jednego wspólnego sortu, robimy round-robin po pasach,
+  // żeby faktycznie wyglądało jak „wjeżdżają” różne pasy naraz.
+  const total = dots.length;
+  const batch = clamp(Math.floor(total * density), 40, 1200);
 
-    // Każdy krok: zmieniamy fill dla paczki kropek
-    for (let i = 0; i < total; i += batch) {
-      const end = Math.min(total, i + batch);
+  // indeksy postępu dla każdego pasa
+  const pos = stripes.map(() => 0);
 
-      if (mode === "in") {
-        for (let k = i; k < end; k++) {
-          const d = dots[k];
-          d.el.setAttribute("fill", d.targetFill);
-        }
-      } else {
-        for (let k = i; k < end; k++) {
-          const d = dots[k];
-          // “wyłącz” piksel -> off jest w snap jako kolor wygaszenia?
-          // My czyścimy do dotOff przez clearTileAt, ale tu operujemy na pojedynczych kropkach,
-          // więc bierzemy fill z pierwszego snapshotu tła? Najprościej: ustawimy na to,
-          // co zwykle jest "off" (kolor wygaszenia) w scenie — snapshot już to ma w data.
-          // Jeśli chcesz absolutnie “ciemno” niezależnie od startu, to najpierw clearArea() i potem OUT bez sensu.
-          // Dla OUT przyjmujemy: "odlatuje" -> robi się off, czyli najczęściej "#2e2e32".
-          d.el.setAttribute("fill", "#2e2e32");
-        }
-      }
+  let done = 0;
+  while (done < total) {
+    let wrote = 0;
 
-      if (stepMs) await sleep(stepMs);
+    // losowa kolejność pasów w tym kroku (żeby nie było „równo”)
+    const order = range(stripes.length);
+    for (let i = order.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [order[i], order[j]] = [order[j], order[i]];
     }
-  };
 
+    for (const si of order) {
+      const arr = stripes[si];
+      let p = pos[si];
+      if (p >= arr.length) continue;
+
+      // ile z tego pasa bierzemy w tym kroku
+      // (mniej więcej równomiernie, ale z losowym dodatkiem)
+      const want = Math.max(1, Math.floor(batch / stripes.length) + Math.floor(Math.random() * 8));
+
+      const end = Math.min(arr.length, p + want);
+      for (let k = p; k < end; k++) {
+        const d = arr[k];
+        if (mode === "in") d.el.setAttribute("fill", d.targetFill);
+        else d.el.setAttribute("fill", offFill);
+        wrote++;
+        done++;
+        if (wrote >= batch) break;
+      }
+      pos[si] = end;
+      if (wrote >= batch) break;
+    }
+
+    if (stepMs) await sleep(stepMs);
+  }
+};
+  
   // -----------------------------
   // Public API
   // -----------------------------
