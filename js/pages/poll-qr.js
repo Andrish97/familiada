@@ -7,8 +7,15 @@ const url = qs.get("url");
 const qr = document.getElementById("qr");
 const btnFS = document.getElementById("btnFS");
 
+function updateFsIcon(){
+  if(!btnFS) return;
+  // fullscreen ON -> ⧉, OFF -> ⛶
+  btnFS.textContent = document.fullscreenElement ? "⧉" : "⛶";
+}
+
 async function render(u){
   qr.innerHTML = "";
+
   if(!u){
     qr.textContent = "Brak URL";
     return;
@@ -16,7 +23,10 @@ async function render(u){
 
   try{
     const canvas = document.createElement("canvas");
-    await QRCode.toCanvas(canvas, u, { width: 420, margin: 1 });
+    await QRCode.toCanvas(canvas, u, {
+      width: 420,
+      margin: 1,
+    });
     qr.appendChild(canvas);
   }catch(e){
     console.error("[poll-qr] QR error:", e);
@@ -26,9 +36,19 @@ async function render(u){
 
 btnFS?.addEventListener("click", async ()=>{
   try{
-    if(!document.fullscreenElement) await document.documentElement.requestFullscreen();
-    else await document.exitFullscreen();
-  }catch{}
+    if(!document.fullscreenElement){
+      await document.documentElement.requestFullscreen();
+    }else{
+      await document.exitFullscreen();
+    }
+  }catch(e){
+    console.warn("[poll-qr] fullscreen error", e);
+  }
 });
 
+// reaguj także na ESC / systemowe wyjście
+document.addEventListener("fullscreenchange", updateFsIcon);
+
+// init
+updateFsIcon();
 render(url);
