@@ -176,21 +176,25 @@
   const ovalBottomY = 135 + 630;
   const gapFromOval = 12;
   const gapBetween  = 24;
-
+  
+  const dBottom = d * 1.5;          // <-- Twój mnożnik
+  const Xb = 95, Yb = 7;
+  
+  // policz wymiary bloku (zewnętrzny = wewnętrzny + 2g)
+  const wInner = gridW(Xb, dBottom, g);
+  const hInner = gridH(Yb, dBottom, g);
+  const wBlock = wInner + 2*g;
+  const hBlock = hInner + 2*g;
+  
   const yBottom = ovalBottomY + gapFromOval;
-
-  const block = drawFramedGrid(el("g"), 0, 0, 95, 7, d, g, C); // tylko do wymiarów
-  const wBlock = block.wOuter, hBlock = block.hOuter;
-
-  // Wyrównanie do środka (dwa obok siebie)
+  
+  // dwa obok siebie, z odstępem
   const totalW = 2*wBlock + gapBetween;
   const xLeft  = 800 - totalW/2;
   const xRight = xLeft + wBlock + gapBetween;
-
-  const dBottom = d * 1.5;
-
-  drawFramedGrid(bottom, xLeft,  yBottom, 95, 7, dBottom, g, C);
-  drawFramedGrid(bottom, xRight, yBottom, 95, 7, dBottom, g, C);
+  
+  drawFramedGrid(bottom, xLeft,  yBottom, Xb, Yb, dBottom, g, C);
+  drawFramedGrid(bottom, xRight, yBottom, Xb, Yb, dBottom, g, C);
 
 })();
 </script>
