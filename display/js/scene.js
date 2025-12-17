@@ -200,22 +200,24 @@ export async function createScene() {
     }
     return w;
   };
-
+  
   const drawWinNumber5 = (GLYPHS, big, WIN_DIGITS, number, color) => {
     let s = (number ?? "").toString().replace(/\D/g, "");
-    if (s.length > 5) s = s.slice(-5);
-    s = s.padStart(5, "0");
-
+    if (s.length > 5) s = s.slice(-5);     // max 5, bez dopisywania
+    // jeśli pusto, po prostu wyczyść i wyjdź
     const rowTop1 = 2; // 2..8
-    const gap = 1;
     clearArea(big, 1, rowTop1, 30, rowTop1 + 6);
-
+    if (!s.length) return;
+  
+    const gap = 1;
+  
     const widths = s.split("").map(d => (WIN_DIGITS[d] ? measureWinDigit(WIN_DIGITS[d]).w : 0));
-    const totalW = widths.reduce((a,b)=>a+b,0) + gap * 4;
+    const totalW = widths.reduce((a,b)=>a+b,0) + gap * (s.length - 1);
+  
     const startCol1 = 1 + Math.max(0, Math.floor((30 - totalW) / 2));
-
+  
     let cx = startCol1;
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < s.length; i++) {
       const w = drawWinDigitTight(GLYPHS, big, WIN_DIGITS, cx, rowTop1, s[i], color);
       cx += w + gap;
     }
