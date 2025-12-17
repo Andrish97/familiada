@@ -81,6 +81,6 @@ window.addEventListener("DOMContentLoaded", async () => {
   window.handleCommand = handleCommand;
 
   // demo:
-  app.setMode("GRA");
-  console.log("Gotowe. Użyj: handleCommand('QR HOST \"https://...\" BUZZER \"https://...\"')");
+  app.setMode("BLACK_SCREEN");
+  console.log("Gotowe.");
 });
