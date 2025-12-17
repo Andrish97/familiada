@@ -39,28 +39,70 @@ export const createAnimator = ({ tileAt, snapArea, clearArea, clearTileAt }) => 
     }
   };
 
-  // Buduje listę "pikseli" w obszarze (pojedyncze kropki).
-  // Każdy element: { el, targetFill, gx, gy } gdzie gx/gy to współrzędne globalne w siatce "kropelek"
-  // gx,gy liczone w jednostkach "kropka" w obrębie obszaru, nie w px SVG.
-  const buildDotList = (big, area, snap) => {
+    // Buduje listę "pikseli" w obszarze (pojedyncze kropki).
+    // Każdy element: { el, targetFill, gx, gy } gdzie gx/gy to współrzędne globalne w siatce "kropelek"
+    // gx,gy liczone w jednostkach "kropka" w obrębie obszaru, nie w px SVG.
+    const buildDotList = (big, area, snap) => {
+      const { c1, r1, c2, r2 } = area;
+      const tilesW = c2 - c1 + 1;
+      const tilesH = r2 - r1 + 1;
+  
+      const dots = [];
+      for (let ty = 0; ty < tilesH; ty++) {
+        for (let tx = 0; tx < tilesW; tx++) {
+          const t = tileAt(big, c1 + tx, r1 + ty);
+          const data = snap?.[ty]?.[tx];
+          if (!t || !data) continue;
+  
+          for (let rr = 0; rr < 7; rr++) {
+            for (let cc = 0; cc < 5; cc++) {
+              dots.push({
+                el: t.dots[rr][cc],
+                targetFill: data[rr][cc],
+                // globalna pozycja "kropki" w obrębie obszaru
+                gx: tx * 5 + cc,
+                gy: ty * 7 + rr,
+              });
+            }
+          }
+        }
+      }
+      return dots;
+    };
+  
+    // Klucz sortowania dla kierunku (oś animacji) + szum
+    const axisKey = (d, axis, maxGX, maxGY) => {
+      switch (axis) {
+        case "down":  return d.gy;                 // góra -> dół
+        case "up":    return maxGY - d.gy;         // dół -> góra
+        case "right": return d.gx;                 // lewo -> prawo
+        case "left":  return maxGX - d.gx;         // prawo -> lewo
+        default:      return d.gy;
+      }
+    };
+  
+    // Matrix Rain: piksele “przylatują/odlatują” w kierunku axis, z losowym jitterem.
+    // reveal/hide w “pakietach” (batch), żeby wyglądało jak cyfrowy deszcz.
+  
+  // Build list wszystkich kropek w obszarze (z docelowym fill ze snapshotu)
+  const buildDotListFromSnap = (big, area, snap) => {
     const { c1, r1, c2, r2 } = area;
     const tilesW = c2 - c1 + 1;
     const tilesH = r2 - r1 + 1;
-
+  
     const dots = [];
     for (let ty = 0; ty < tilesH; ty++) {
       for (let tx = 0; tx < tilesW; tx++) {
         const t = tileAt(big, c1 + tx, r1 + ty);
         const data = snap?.[ty]?.[tx];
         if (!t || !data) continue;
-
+  
         for (let rr = 0; rr < 7; rr++) {
           for (let cc = 0; cc < 5; cc++) {
             dots.push({
               el: t.dots[rr][cc],
               targetFill: data[rr][cc],
-              // globalna pozycja "kropki" w obrębie obszaru
-              gx: tx * 5 + cc,
+              gx: tx * 5 + cc, // global w obrębie obszaru
               gy: ty * 7 + rr,
             });
           }
@@ -69,166 +111,116 @@ export const createAnimator = ({ tileAt, snapArea, clearArea, clearTileAt }) => 
     }
     return dots;
   };
-
-  // Klucz sortowania dla kierunku (oś animacji) + szum
-  const axisKey = (d, axis, maxGX, maxGY) => {
-    switch (axis) {
-      case "down":  return d.gy;                 // góra -> dół
-      case "up":    return maxGY - d.gy;         // dół -> góra
-      case "right": return d.gx;                 // lewo -> prawo
-      case "left":  return maxGX - d.gx;         // prawo -> lewo
-      default:      return d.gy;
-    }
-  };
-
-  // Matrix Rain: piksele “przylatują/odlatują” w kierunku axis, z losowym jitterem.
-  // reveal/hide w “pakietach” (batch), żeby wyglądało jak cyfrowy deszcz.
-
+  
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  
   const runRain = async ({
-  big,
-  area,
-  axis = "down",
-  stepMs = 24,
-
-  // ile „porcji” na jeden krok — więcej = więcej dzieje się naraz
-  bursts = 6,
-
-  // gęstość w porcji (0..1) => ile pikseli łapiemy w jednym kroku
-  density = 0.08,
-
-  // szansa na migotnięcie zanim piksel trafi na finalny kolor (0..1)
-  flicker = 0.25,
-
-  // długość ogona (ile wcześniejszych kroków zostaje „włączonych”)
-  trail = 2,
-
-  // chaos w kolejności (0..1.5) – im więcej tym bardziej rozproszone
-  jitter = 1.2,
-
-  mode = "in", // "in" | "out"
-} = {}) => {
-  const { c1, r1, c2, r2 } = area;
-
-  const snap = snapArea(big, c1, r1, c2, r2);
-  if (mode === "in") clearArea(big, c1, r1, c2, r2);
-
-  const dots = buildDotList(big, area, snap);
-  if (!dots.length) return;
-
-  // wyznacz maxGX/maxGY
-  let maxGX = 0, maxGY = 0;
-  for (const d of dots) { if (d.gx > maxGX) maxGX = d.gx; if (d.gy > maxGY) maxGY = d.gy; }
-
-  const isH = (axis === "left" || axis === "right");
-  const span = isH ? (maxGX + 1) : (maxGY + 1);
-
-  const axisKeyLocal = (d, ax) => {
-    switch (ax) {
-      case "down":  return d.gy;
-      case "up":    return maxGY - d.gy;
-      case "right": return d.gx;
-      case "left":  return maxGX - d.gx;
-      default:      return d.gy;
+    big,
+    area,
+    axis = "down",      // down/up/left/right
+    stepMs = 24,        // przerwa między paczkami
+    density = 0.14,     // 0..1: ile kropek w paczce (większe = “grubsze porcje”)
+    jitter = 0.95,      // 0..1: rozproszenie kolejności (większe = bardziej chaotycznie)
+    mode = "in",        // "in" | "out"
+  } = {}) => {
+    const { c1, r1, c2, r2 } = area;
+  
+    // zawsze bierzemy snapshot docelowego obrazu dla IN
+    const snap = snapArea(big, c1, r1, c2, r2);
+  
+    // IN: czyścimy obszar
+    if (mode === "in") clearArea(big, c1, r1, c2, r2);
+  
+    const dots = buildDotListFromSnap(big, area, snap);
+    if (!dots.length) return;
+  
+    // Rozmiar obszaru w “kropkach”
+    const tilesW = c2 - c1 + 1;
+    const tilesH = r2 - r1 + 1;
+    const W = tilesW * 5;
+    const H = tilesH * 7;
+  
+    // Lane = kolumny (gdy oś pionowa) lub wiersze (gdy oś pozioma)
+    // Każda lane ma LOSOWY kierunek startu: raz z góry, raz z dołu / raz z lewej, raz z prawej.
+    const vertical = (axis === "down" || axis === "up");
+    const laneCount = vertical ? W : H;
+  
+    const laneDir = new Array(laneCount);
+    for (let i = 0; i < laneCount; i++) {
+      // true = start “od przodu osi”, false = od przeciwnej strony
+      // czyli: przy pionie -> raz top->bottom, raz bottom->top
+      // przy poziomie -> raz left->right, raz right->left
+      laneDir[i] = Math.random() < 0.5;
     }
-  };
-
-  // robimy kilka „pasów” = strumieni równolegle
-  // każdy pas losuje stronę (odwraca oś) => „pojawia się z różnych stron”
-  const passes = bursts;
-  const lanes = Array.from({ length: passes }, () => []);
-
-  // przypisz piksele do pasów (round-robin po losowym shuffle)
-  // UWAGA: stabilny shuffle, nie random w sort comparatorze
-  for (let i = dots.length - 1; i > 0; i--) {
-    const j = (Math.random() * (i + 1)) | 0;
-    [dots[i], dots[j]] = [dots[j], dots[i]];
-  }
-  for (let i = 0; i < dots.length; i++) lanes[i % passes].push(dots[i]);
-
-  // przygotuj dla każdego pasa: kierunek (czasem odwrócony) + kolejność „prawie kierunkowa”
-  const laneDirs = lanes.map(() => {
-    // losowo odwróć kierunek dla danego pasa
-    if (axis === "down")  return (Math.random() < 0.5 ? "down"  : "up");
-    if (axis === "up")    return (Math.random() < 0.5 ? "up"    : "down");
-    if (axis === "left")  return (Math.random() < 0.5 ? "left"  : "right");
-    if (axis === "right") return (Math.random() < 0.5 ? "right" : "left");
-    return axis;
-  });
-
-  // sort w pasie: kierunek + jitter w „oknach”
-  const shuffleRange = (arr, a, b) => {
-    for (let i = b - 1; i > a; i--) {
-      const j = a + ((Math.random() * (i - a + 1)) | 0);
-      [arr[i], arr[j]] = [arr[j], arr[i]];
+  
+    // Filtr: żeby nie było efektu “tekst pojawia się od razu a wokół mruga”
+    // IN: animujemy TYLKO te kropki, które docelowo mają świecić.
+    // OUT: animujemy TYLKO te, które aktualnie świecą (lub docelowo świecą), żeby było “co wyłączać”.
+    let work = dots;
+  
+    if (mode === "in") {
+      work = dots.filter(d => d.targetFill !== dotOff);
+    } else {
+      // OUT: bierzemy te, które w tym momencie nie są dotOff (czyli świecą)
+      work = dots.filter(d => d.el.getAttribute("fill") !== dotOff);
     }
-  };
-
-  for (let p = 0; p < passes; p++) {
-    const ax = laneDirs[p];
-    const arr = lanes[p];
-
-    arr.sort((a, b) => axisKeyLocal(a, ax) - axisKeyLocal(b, ax));
-
-    const win = Math.max(40, Math.floor(span * jitter));
-    for (let i = 0; i < arr.length; i += win) {
-      shuffleRange(arr, i, Math.min(arr.length, i + win));
-    }
-
-    if (mode === "out") arr.reverse();
-  }
-
-  // batch w jednym kroku na każdy pas
-  const total = dots.length;
-  const batch = Math.max(20, Math.floor(total * density));
-
-  // wskaźniki postępu dla pasów
-  const idx = new Array(passes).fill(0);
-
-  // ile kroków? bierzemy maksymalny postęp pasa
-  const maxLen = Math.max(...lanes.map(a => a.length));
-
-  for (let step = 0; step < maxLen; step += batch) {
-    // w jednym kroku obsługujemy wszystkie pasy => „więcej naraz”
-    for (let p = 0; p < passes; p++) {
-      const arr = lanes[p];
-      const i0 = idx[p];
-      if (i0 >= arr.length) continue;
-
-      const i1 = Math.min(arr.length, i0 + batch);
-
-      // „ogon”: dodatkowo doświetl kilka wcześniejszych porcji
-      const t0 = Math.max(0, i0 - trail * batch);
-      const t1 = i1;
-
+  
+    if (!work.length) return;
+  
+    // Klucz sortowania: najpierw lane, potem pozycja w lane zależnie od losowego kierunku tej lane
+    const spanMain = vertical ? H : W;             // długość lane
+    const spanLane = laneCount;                    // ile lane
+    const noiseSpan = spanMain * jitter;
+  
+    work.sort((a, b) => {
+      const la = vertical ? a.gx : a.gy;           // lane index
+      const lb = vertical ? b.gx : b.gy;
+  
+      const pa = vertical ? a.gy : a.gx;           // pozycja w lane
+      const pb = vertical ? b.gy : b.gx;
+  
+      const da = laneDir[la];
+      const db = laneDir[lb];
+  
+      // kierunek lane: start raz z jednej, raz z drugiej strony
+      const ka = (da ? pa : (spanMain - 1 - pa)) + (Math.random() - 0.5) * noiseSpan;
+      const kb = (db ? pb : (spanMain - 1 - pb)) + (Math.random() - 0.5) * noiseSpan;
+  
+      // lane też mieszamy odrobinę, żeby “nie było pasów”
+      const laneNoise = (Math.random() - 0.5) * (spanLane * 0.20);
+  
+      return (la + laneNoise + ka / spanMain) - (lb + laneNoise + kb / spanMain);
+    });
+  
+    // batch size
+    const total = work.length;
+    const batch = clamp(Math.floor(total * density), 60, 1200);
+  
+    // animacja porcjami
+    for (let i = 0; i < total; i += batch) {
+      const end = Math.min(total, i + batch);
+  
       if (mode === "in") {
-        for (let k = t0; k < t1; k++) {
-          const d = arr[k];
-          // flicker: chwilowe błyski
-          if (k >= i0 && Math.random() < flicker) {
-            d.el.setAttribute("fill", "#ffffff"); // szybki błysk
-          } else {
-            d.el.setAttribute("fill", d.targetFill);
-          }
+        for (let k = i; k < end; k++) {
+          const d = work[k];
+          d.el.setAttribute("fill", d.targetFill);
         }
       } else {
-        for (let k = t0; k < t1; k++) {
-          arr[k].el.setAttribute("fill", "#2e2e32");
+        for (let k = i; k < end; k++) {
+          const d = work[k];
+          d.el.setAttribute("fill", dotOff);
         }
       }
-
-      idx[p] = i1;
+  
+      if (stepMs) await sleep(stepMs);
     }
-
-    if (stepMs) await sleep(stepMs);
-  }
-
-  // twardy commit: koniec zawsze 100% poprawny
-  if (mode === "in") {
-    for (const d of dots) d.el.setAttribute("fill", d.targetFill);
-  } else {
-    for (const d of dots) d.el.setAttribute("fill", "#2e2e32");
-  }
-};
+  
+    // FINAL PASS = brak niedopalonych pikseli
+    // IN: ustaw cały obszar zgodnie ze snapshotem (ON i OFF)
+    if (mode === "in") {
+      for (const d of dots) d.el.setAttribute("fill", d.targetFill);
+    }
+  };
   
   // -----------------------------
   // Public API
