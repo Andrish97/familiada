@@ -472,6 +472,41 @@ async function loadActive() {
 
 async function refreshAll() {
   game = await loadGame();
+
+  // 🔒 PAS BEZPIECZEŃSTWA
+  if (game.kind === "poll" && game.status === "ready") {
+    const ok = await confirmModal({
+      title: "Uwaga — gra po sondażu",
+      text:
+        "Ta gra ma zakończony sondaż.\n\n" +
+        "Jeśli przejdziesz do edycji:\n" +
+        "• punkty z sondażu zostaną USUNIĘTE\n" +
+        "• gra wróci do stanu SZKIC\n\n" +
+        "Czy chcesz kontynuować?",
+      okText: "Edytuj i usuń punkty",
+      cancelText: "Wróć",
+    });
+
+    if (!ok) {
+      location.href = "builder.html";
+      return;
+    }
+
+    // reset gry do edycji
+    await sb().from("games").update({ status: "draft" }).eq("id", game.id);
+
+    // wyczyść punkty
+    await sb()
+      .from("answers")
+      .update({ fixed_points: 0 })
+      .in(
+        "question_id",
+        (await loadQuestions()).map(q => q.id)
+      );
+
+    game.status = "draft";
+  }
+    
   if (gameName) gameName.value = game.name || "Familiada";
 
   updateBadges();
