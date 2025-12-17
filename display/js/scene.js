@@ -866,19 +866,23 @@ export async function createScene() {
     console.warn("Nieznana komenda (scene):", raw);
   };
 
-  // demo start (bez mrugania)
-  api.small.topDigits("123");
-  api.small.leftDigits("045");
-  api.small.rightDigits("999");
-  api.small.long1("FAMILIADA");
-  api.small.long2("SUMA 000");
+    // ============================================================
+  // BRAK domyślnych treści / BRAK demo / BRAK auto-trybu
+  // ============================================================
+  // Nic nie wyświetlamy przy starcie — backend/console steruje.
+  //
+  // Jeśli chcesz, możesz tylko wyczyścić wszystko:
+  clearBig(big);
+  api.big.clearArea(1, 1, 30, 10); // opcjonalnie redundantne
+  // małe panele też czyścimy na start:
+  api.small.topDigits("   ");
+  api.small.leftDigits("   ");
+  api.small.rightDigits("   ");
+  api.small.long1("");
+  api.small.long2("");
 
-  if (api.logo._json) {
-    await api.logo.show({ type:"matrix", axis:"down", ms:16 });
-  } else {
-    await api.mode.set("ROUNDS");
-  }
+  // Zostawiamy mode jako LOGO (stan logiczny), ale nic nie rysujemy.
+  mode = BIG_MODES.LOGO;
 
   return { api, BIG_MODES, handleCommand };
 }
-
