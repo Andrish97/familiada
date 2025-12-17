@@ -17,7 +17,7 @@ export const createAnimator = ({ tileAt, snapArea, clearArea, clearTileAt }) => 
 
   const getAreaWH = (area) => {
     const W = area.c2 - area.c1 + 1;
-    const H = area.r2 - area.r1 + 1.Qt;
+    const H = area.r2 - area.r1 + 1;
     return { W, H };
   };
 
