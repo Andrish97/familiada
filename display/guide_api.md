@@ -19,6 +19,7 @@ Ten dokument opisuje **całe API sterowania stroną display**: tryby globalne (`
 To jest **tryb strony**:
 - `GRA` – pokazuje scenografię (SVG + wyświetlacze)
 - `QR` – czarny ekran + 2 kody QR
+- `BLACK_SCREEN` – czarny ekran (domyślny)
 
 Sterujesz:
 - przez JS: `app.setMode("GRA")`, `app.setMode("QR")`
