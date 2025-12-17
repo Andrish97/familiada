@@ -721,10 +721,19 @@
   };
 
 window.addEventListener("DOMContentLoaded", () => {
-  // 1) Fullscreen button
+  // ---------- Fullscreen button ----------
   const fsBtn = document.getElementById("fsBtn");
+
   if (fsBtn) {
-    const sync = () => fsBtn.classList.toggle("on", !!document.fullscreenElement);
+    const ICON_ENTER = "⛶"; // wejście fullscreen
+    const ICON_EXIT  = "⧉"; // wyjście fullscreen
+
+    const sync = () => {
+      const on = !!document.fullscreenElement;
+      fsBtn.textContent = on ? ICON_EXIT : ICON_ENTER;
+      fsBtn.classList.toggle("on", on);
+      fsBtn.title = on ? "Wyjście z pełnego ekranu" : "Pełny ekran";
+    };
 
     fsBtn.addEventListener("click", async () => {
       try {
@@ -734,7 +743,7 @@ window.addEventListener("DOMContentLoaded", () => {
           await document.exitFullscreen();
         }
       } catch (e) {
-        console.warn("Fullscreen failed:", e);
+        console.warn("Fullscreen error:", e);
       }
       sync();
     });
@@ -743,7 +752,7 @@ window.addEventListener("DOMContentLoaded", () => {
     sync();
   }
 
-  // 2) Start app
+  // ---------- Start aplikacji ----------
   bootstrap().catch((e) => console.error(e));
 });
 
