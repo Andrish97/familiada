@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Scenografia – spójna i odchudzona</title>
+  <title>Scenografia – spójna i większa</title>
   <style>
     html, body { height:100%; margin:0; }
     body{
@@ -13,15 +13,26 @@
       background: radial-gradient(1400px 700px at 50% 25%,
         #ff5aa0 0%, #ff3b63 22%, #c43e79 45%, #6a4aa7 72%, #1b1a2b 100%);
     }
-    .wrap{ width:99vw; height:92vh; display:grid; place-items:center; }
-    svg{ width:100%; height:100%; display:block; }
+    /* większe względem strony */
+    .wrap{
+      width:100vw;
+      height:100vh;
+      display:grid;
+      place-items:center;
+    }
+    svg{
+      width:100%;
+      height:100%;
+      display:block;
+      transform: scale(1.08);         /* jednolite powiększenie -> koła zostają kołami */
+      transform-origin: center center;
+    }
   </style>
 </head>
 <body>
 <div class="wrap">
 <svg viewBox="0 0 1600 900" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <!-- owal: czerwony + niebieski (zamiast czarnego) -->
     <linearGradient id="rimGrad" x1="0" y1="0" x2="1" y2="0">
       <stop offset="0" stop-color="#c4002f"/>
       <stop offset="0.35" stop-color="#7a1230"/>
@@ -35,12 +46,10 @@
     </linearGradient>
   </defs>
 
-  <!-- owal: „bardziej okrągły”, ta sama idea grubości -->
   <rect x="150" y="110" width="1300" height="680" rx="340" fill="url(#rimGrad)"/>
   <rect x="300" y="210" width="1000" height="470" rx="235" fill="url(#innerGrad)"/>
 
-  <!-- linie (lekko pod nowe położenie) -->
-  <g id="lines" stroke="#fff" stroke-opacity="0.22" stroke-width="6">
+  <g stroke="#fff" stroke-opacity="0.22" stroke-width="6">
     <line x1="800" y1="110" x2="800" y2="210"/>
     <line x1="300" y1="180" x2="420" y2="320"/>
     <line x1="1300" y1="180" x2="1180" y2="320"/>
@@ -64,24 +73,19 @@
     return n;
   };
 
-  // ===== KONFIG =====
-  const VIEW = { W: 1600, H: 900, CX: 800, CY: 450 };
+  const VIEW = { W:1600, H:900, CX:800, CY:450 };
 
   const COLORS = {
-    big:  "#2e2e32",  // duże prostokąty
-    cell: "#000000",  // małe prostokąty
-    dot:  "#2e2e32"   // kółka
+    big:  "#2e2e32",
+    cell: "#000000",
+    dot:  "#2e2e32"
   };
 
-  // jednostki świata
-  const d = 4;          // średnica (środek)
-  const g = 1;          // odstęp / margines
-  const gapCells = d;   // odstęp między małymi prostokątami (kaflami) = średnica
+  const d = 4;
+  const g = 1;
+  const gapCells = d;
+  const DOTS = { X:5, Y:7 };
 
-  // siatka w kaflu
-  const DOTS = { X: 5, Y: 7 };
-
-  // ===== FUNKCJE GEOMETRII (Twoje wzory) =====
   const Wgrid = (X, d, g) => X*d + (X+1)*g;
   const Hgrid = (Y, d, g) => Y*d + (Y+1)*g;
 
@@ -96,89 +100,69 @@
     }
   };
 
-  // duży prostokąt (tło) zawierający kafle tilesX x tilesY,
-  // każdy kafel to dotX x dotY kropek o średnicy dDots
   const drawTiled = (parent, x, y, tilesX, tilesY, dotX, dotY, dDots, g, gap, colors) => {
     const wSmall = Wgrid(dotX, dDots, g);
     const hSmall = Hgrid(dotY, dDots, g);
-
-    // Twoje wzory:
-    // W = tilesX*wSmall + (tilesX-1)*gap + 2g
-    // H = tilesY*hSmall + (tilesY-1)*gap + 2g
     const W = tilesX*wSmall + (tilesX-1)*gap + 2*g;
     const H = tilesY*hSmall + (tilesY-1)*gap + 2*g;
 
-    parent.appendChild(el("rect", { x, y, width: W, height: H, rx: 0, fill: colors.big }));
+    parent.appendChild(el("rect", { x, y, width: W, height: H, rx:0, fill: colors.big }));
 
     for (let ty=0; ty<tilesY; ty++) for (let tx=0; tx<tilesX; tx++) {
       const cx = x + g + tx*(wSmall + gap);
       const cy = y + g + ty*(hSmall + gap);
-
-      parent.appendChild(el("rect", { x: cx, y: cy, width: wSmall, height: hSmall, rx: 0, fill: colors.cell }));
+      parent.appendChild(el("rect", { x:cx, y:cy, width:wSmall, height:hSmall, rx:0, fill: colors.cell }));
       drawDots(parent, cx, cy, dotX, dotY, dDots, g, colors.dot);
     }
-
-    return { W, H, wSmall, hSmall };
+    return { W, H };
   };
 
-  // blok: zewnętrzny (big) + wewnętrzny (cell) z siatką XxY kropek
   const drawFramedGrid = (parent, x, y, X, Y, dDots, g, colors) => {
     const wInner = Wgrid(X, dDots, g);
     const hInner = Hgrid(Y, dDots, g);
     const wOuter = wInner + 2*g;
     const hOuter = hInner + 2*g;
 
-    parent.appendChild(el("rect", { x, y, width: wOuter, height: hOuter, rx: 0, fill: colors.big }));
-    parent.appendChild(el("rect", { x: x+g, y: y+g, width: wInner, height: hInner, rx: 0, fill: colors.cell }));
+    parent.appendChild(el("rect", { x, y, width:wOuter, height:hOuter, rx:0, fill: colors.big }));
+    parent.appendChild(el("rect", { x:x+g, y:y+g, width:wInner, height:hInner, rx:0, fill: colors.cell }));
     drawDots(parent, x+g, y+g, X, Y, dDots, g, colors.dot);
 
     return { wOuter, hOuter };
   };
 
-  // ===== 1) ŚRODEK =====
+  // ===== ŚRODEK =====
   const center = $("center");
-  const centerDims = (() => {
-    const wSmall = Wgrid(DOTS.X, d, g);
-    const hSmall = Hgrid(DOTS.Y, d, g);
-    return {
-      W: 30*wSmall + 29*gapCells + 2*g,
-      H: 10*hSmall +  9*gapCells + 2*g
-    };
-  })();
+  const wSmall = Wgrid(DOTS.X, d, g);
+  const hSmall = Hgrid(DOTS.Y, d, g);
+  const centerW = 30*wSmall + 29*gapCells + 2*g;
+  const centerH = 10*hSmall +  9*gapCells + 2*g;
 
-  const centerX = VIEW.CX - centerDims.W/2;
-  const centerY = VIEW.CY - centerDims.H/2;
+  const centerX = VIEW.CX - centerW/2;
+  const centerY = VIEW.CY - centerH/2;
 
   drawTiled(center, centerX, centerY, 30, 10, DOTS.X, DOTS.Y, d, g, gapCells, COLORS);
 
-  // ===== 2) PANELE (lewy/prawy/górny) =====
+  // ===== PANELE =====
   const panels = $("panels");
-  const dP = 3*d; // panelowe kółka mają 3x średnicę
+  const dP = 3*d;
+  const wSmallP = Wgrid(DOTS.X, dP, g);
+  const hSmallP = Hgrid(DOTS.Y, dP, g);
+  const panelW = 3*wSmallP + 2*gapCells + 2*g;
+  const panelH = 1*hSmallP + 2*g;
 
-  const panelDims = (() => {
-    const wSmallP = Wgrid(DOTS.X, dP, g);
-    const hSmallP = Hgrid(DOTS.Y, dP, g);
-    return {
-      W: 3*wSmallP + 2*gapCells + 2*g, // 3 kafle + 2 przerwy (d) + 2g
-      H: 1*hSmallP + 2*g
-    };
-  })();
-
-  // przesunięcie do środka ~ 1/4 szerokości
-  const shift = panelDims.W / 4;
-
+  const shift = panelW/4;
   const sideY = 390;
   const leftX  = 10 + shift;
-  const rightX = VIEW.W - panelDims.W - 10 - shift;
+  const rightX = VIEW.W - panelW - 10 - shift;
 
   const topY = 85;
-  const topX = VIEW.CX - panelDims.W/2;
+  const topX = VIEW.CX - panelW/2;
 
   drawTiled(panels, leftX,  sideY, 3, 1, DOTS.X, DOTS.Y, dP, g, gapCells, COLORS);
   drawTiled(panels, rightX, sideY, 3, 1, DOTS.X, DOTS.Y, dP, g, gapCells, COLORS);
   drawTiled(panels, topX,   topY,  3, 1, DOTS.X, DOTS.Y, dP, g, gapCells, COLORS);
 
-  // ===== 3) DÓŁ (dwa bloki 95x7, z dBottom = 1.5*d) =====
+  // ===== DÓŁ (naprawione: bez nakładania) =====
   const bottom = $("bottom");
 
   const dBottom = 1.5*d;
@@ -187,25 +171,25 @@
   const gapFromOval = 12;
   const gapBetween  = 24;
 
-  const ovalBottomY = 110 + 680;        // zewnętrzny owal: y + h
+  const ovalBottomY = 110 + 680;
   const yBottom = ovalBottomY + gapFromOval;
 
-  // policz rozmiar bloku (bez rysowania) – ważne dla layoutu
   const wInnerB = Wgrid(Xb, dBottom, g);
   const wBlock  = wInnerB + 2*g;
 
-  const totalW = 2*wBlock + gapBetween;
+  // chcesz "do środka": działa, ale nie może zjeść całego gapBetween
+  const insetFactor = 0.20;
+  const insetWanted = wBlock * insetFactor;
 
-  // „ściągnięcie do środka” (regulowane)
-  const insetFactor = 0.20;             // <-- zmień np. 0.10 / 0.25
-  const inset = wBlock * insetFactor;
+  const minGap = 6; // żeby zawsze była szpara
+  const gapEff = Math.max(minGap, gapBetween - 2*insetWanted);
 
-  const xLeft  = VIEW.CX - totalW/2 + inset;
-  const xRight = xLeft + wBlock + gapBetween - 2*inset;
+  const totalW = 2*wBlock + gapEff;
+  const xLeft  = VIEW.CX - totalW/2;
+  const xRight = xLeft + wBlock + gapEff;
 
   drawFramedGrid(bottom, xLeft,  yBottom, Xb, Yb, dBottom, g, COLORS);
   drawFramedGrid(bottom, xRight, yBottom, Xb, Yb, dBottom, g, COLORS);
-
 })();
 </script>
 </body>
