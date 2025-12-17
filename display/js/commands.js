@@ -1,20 +1,29 @@
+// commands.js
+// Router komend tekstowych: GLOBAL (APP) + SCENA (GRA)
+// Zasada: komendy globalne mają pierwszeństwo i nie trafiają do sceny.
+// Komendy sceny wykonują się tylko gdy app.mode === "GRA".
+
 const tokenize = (raw) => {
   const tokens = [];
   let i = 0;
+
   while (i < raw.length) {
     if (raw[i] === " ") { i++; continue; }
+
     if (raw[i] === '"') {
       let j = i + 1;
       while (j < raw.length && raw[j] !== '"') j++;
-      tokens.push(raw.slice(i, j + 1));
-      i = j + 1;
-    } else {
-      let j = i;
-      while (j < raw.length && raw[j] !== " ") j++;
-      tokens.push(raw.slice(i, j));
-      i = j;
+      tokens.push(raw.slice(i, Math.min(j + 1, raw.length)));
+      i = Math.min(j + 1, raw.length);
+      continue;
     }
+
+    let j = i;
+    while (j < raw.length && raw[j] !== " ") j++;
+    tokens.push(raw.slice(i, j));
+    i = j;
   }
+
   return tokens;
 };
 
@@ -24,18 +33,29 @@ const unquote = (s) => {
   return t;
 };
 
-const parseAnim = (tokens, startIdx) => {
-  const type = (tokens[startIdx] ?? "").toLowerCase();
-  const dirOrAxis = (tokens[startIdx + 1] ?? "").toLowerCase();
-  const ms = parseInt(tokens[startIdx + 2] ?? "10", 10);
-
-  if (type === "edge")   return { type:"edge", dir: dirOrAxis || "left", ms: isFinite(ms) ? ms : 10 };
-  if (type === "matrix") return { type:"matrix", axis: dirOrAxis || "down", ms: isFinite(ms) ? ms : 18 };
-  return null;
-};
-
 export const createCommandHandler = (app) => {
-  const { scene, qr } = app;
+  const getSceneHandler = () => {
+    const sc = app?.scene;
+    const fn = sc?.handleCommand;
+    if (typeof fn === "function") return fn.bind(sc);
+    return null;
+  };
+
+  const toGlobalMode = (mRaw) => {
+    const m = (mRaw ?? "").toString().toUpperCase();
+
+    if (m === "BLACK") return "BLACK_SCREEN";
+    if (m === "BLACK_SCREEN") return "BLACK_SCREEN";
+    if (m === "QR") return "QR";
+    if (m === "GRA") return "GRA";
+
+    return null;
+  };
+
+  const setModeSafe = (mode) => {
+    if (!mode) return;
+    app.setMode(mode);
+  };
 
   return async (line) => {
     const raw = (line ?? "").toString().trim();
@@ -44,38 +64,50 @@ export const createCommandHandler = (app) => {
     const tokens = tokenize(raw);
     const head = (tokens[0] ?? "").toUpperCase();
 
-    // GLOBAL MODE
+    // 1) GLOBALNE: APP MODE ...
     if (head === "APP") {
-      // APP MODE QR / APP MODE GRA
       const op = (tokens[1] ?? "").toUpperCase();
       if (op === "MODE") {
-        app.setMode(tokens[2] ?? "GRA");
+        const gm = toGlobalMode(tokens[2]);
+        if (!gm) throw new Error("APP MODE wymaga: BLACK / BLACK_SCREEN / GRA / QR");
+        setModeSafe(gm);
         return;
       }
     }
 
-    // shortcut: MODE QR / MODE GRA (globalne)
+    // 2) MODE: albo globalny, albo lokalny (scena)
     if (head === "MODE") {
-      const m = (tokens[1] ?? "").toUpperCase();
-      if (m === "QR" || m === "GRA") { app.setMode(m); return; }
-      // inaczej: to jest tryb dużego wyświetlacza w grze
-      return scene.handleCommand(raw); // jeśli chcesz zachować stary handler w scenie
+      const gm = toGlobalMode(tokens[1]);
+      if (gm) {
+        setModeSafe(gm);
+        return;
+      }
+
+      // nie-globalny MODE -> lokalny dla sceny, ale tylko w GRA
+      if (app.mode !== "GRA") return;
+
+      const sceneHandle = getSceneHandler();
+      if (!sceneHandle) throw new Error("Brak scene.handleCommand (scena niegotowa?)");
+      return sceneHandle(raw);
     }
 
-    // QR: QR HOST "<url>" BUZZER "<url>"
+    // 3) GLOBALNE: QR HOST ... BUZZER ...
     if (head === "QR") {
       const hostIdx = tokens.findIndex(t => t.toUpperCase() === "HOST");
       const buzIdx  = tokens.findIndex(t => t.toUpperCase() === "BUZZER");
 
-      if (hostIdx >= 0) qr.setHost(unquote(tokens[hostIdx + 1] ?? ""));
-      if (buzIdx  >= 0) qr.setBuzzer(unquote(tokens[buzIdx + 1] ?? ""));
+      if (hostIdx >= 0) app.qr.setHost(unquote(tokens[hostIdx + 1] ?? ""));
+      if (buzIdx  >= 0) app.qr.setBuzzer(unquote(tokens[buzIdx + 1] ?? ""));
 
-      // auto przełącz na QR jeśli są linki
-      app.setMode("QR");
+      setModeSafe("QR");
       return;
     }
 
-    // Reszta: przekazujemy do sceny (GRA)
-    return scene.handleCommand(raw);
+    // 4) RESZTA: tylko do sceny i tylko w GRA
+    if (app.mode !== "GRA") return;
+
+    const sceneHandle = getSceneHandler();
+    if (!sceneHandle) throw new Error("Brak scene.handleCommand (scena niegotowa?)");
+    return sceneHandle(raw);
   };
 };
