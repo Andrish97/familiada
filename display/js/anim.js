@@ -83,123 +83,150 @@ export const createAnimator = ({ tileAt, snapArea, clearArea, clearTileAt }) => 
 
   // Matrix Rain: piksele “przylatują/odlatują” w kierunku axis, z losowym jitterem.
   // reveal/hide w “pakietach” (batch), żeby wyglądało jak cyfrowy deszcz.
+
   const runRain = async ({
   big,
   area,
   axis = "down",
-  stepMs = 40,
-  density = 0.18,   // ile pikseli ujawniamy na krok (0..1)
-  jitter = 0.45,    // losowy szum w kolejności wewnątrz pasa (0..1)
-  mode = "in",      // "in" lub "out"
-  offFill = "#2e2e32",
-}) => {
+  stepMs = 24,
+
+  // ile „porcji” na jeden krok — więcej = więcej dzieje się naraz
+  bursts = 6,
+
+  // gęstość w porcji (0..1) => ile pikseli łapiemy w jednym kroku
+  density = 0.08,
+
+  // szansa na migotnięcie zanim piksel trafi na finalny kolor (0..1)
+  flicker = 0.25,
+
+  // długość ogona (ile wcześniejszych kroków zostaje „włączonych”)
+  trail = 2,
+
+  // chaos w kolejności (0..1.5) – im więcej tym bardziej rozproszone
+  jitter = 1.2,
+
+  mode = "in", // "in" | "out"
+} = {}) => {
   const { c1, r1, c2, r2 } = area;
 
-  // snapshot docelowego obrazu (IN) albo bieżącego (OUT)
   const snap = snapArea(big, c1, r1, c2, r2);
-
-  // IN: zaczynamy od czystego obszaru
   if (mode === "in") clearArea(big, c1, r1, c2, r2);
 
   const dots = buildDotList(big, area, snap);
   if (!dots.length) return;
 
-  // rozmiary w siatce kropek
+  // wyznacz maxGX/maxGY
   let maxGX = 0, maxGY = 0;
   for (const d of dots) { if (d.gx > maxGX) maxGX = d.gx; if (d.gy > maxGY) maxGY = d.gy; }
-  const W = maxGX + 1;
-  const H = maxGY + 1;
 
-  // Czy robimy pasy jako ROWS czy COLS?
-  // - jeśli axis jest pionowy (down/up) => pasy to KOLUMNY (gx)
-  // - jeśli axis jest poziomy (left/right) => pasy to RZĘDY (gy)
-  const vertical = (axis === "down" || axis === "up");
-  const stripeCount = vertical ? W : H;
+  const isH = (axis === "left" || axis === "right");
+  const span = isH ? (maxGX + 1) : (maxGY + 1);
 
-  // Grupowanie kropek do pasów
-  const stripes = Array.from({ length: stripeCount }, () => []);
-  for (const d of dots) {
-    const idx = vertical ? d.gx : d.gy;
-    stripes[idx].push(d);
+  const axisKeyLocal = (d, ax) => {
+    switch (ax) {
+      case "down":  return d.gy;
+      case "up":    return maxGY - d.gy;
+      case "right": return d.gx;
+      case "left":  return maxGX - d.gx;
+      default:      return d.gy;
+    }
+  };
+
+  // robimy kilka „pasów” = strumieni równolegle
+  // każdy pas losuje stronę (odwraca oś) => „pojawia się z różnych stron”
+  const passes = bursts;
+  const lanes = Array.from({ length: passes }, () => []);
+
+  // przypisz piksele do pasów (round-robin po losowym shuffle)
+  // UWAGA: stabilny shuffle, nie random w sort comparatorze
+  for (let i = dots.length - 1; i > 0; i--) {
+    const j = (Math.random() * (i + 1)) | 0;
+    [dots[i], dots[j]] = [dots[j], dots[i]];
   }
+  for (let i = 0; i < dots.length; i++) lanes[i % passes].push(dots[i]);
 
-  // Każdy pas losuje stronę startu (mix sides)
-  // pionowo: każda kolumna losuje "up" albo "down"
-  // poziomo: każdy rząd losuje "left" albo "right"
-  const stripeDir = stripes.map(() => {
-    if (vertical) return (Math.random() < 0.5 ? "up" : "down");
-    return (Math.random() < 0.5 ? "left" : "right");
+  // przygotuj dla każdego pasa: kierunek (czasem odwrócony) + kolejność „prawie kierunkowa”
+  const laneDirs = lanes.map(() => {
+    // losowo odwróć kierunek dla danego pasa
+    if (axis === "down")  return (Math.random() < 0.5 ? "down"  : "up");
+    if (axis === "up")    return (Math.random() < 0.5 ? "up"    : "down");
+    if (axis === "left")  return (Math.random() < 0.5 ? "left"  : "right");
+    if (axis === "right") return (Math.random() < 0.5 ? "right" : "left");
+    return axis;
   });
 
-  // Sortowanie wewnątrz pasa: od strony startu + trochę szumu
-  const jX = W * jitter;
-  const jY = H * jitter;
+  // sort w pasie: kierunek + jitter w „oknach”
+  const shuffleRange = (arr, a, b) => {
+    for (let i = b - 1; i > a; i--) {
+      const j = a + ((Math.random() * (i - a + 1)) | 0);
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+  };
 
-  for (let i = 0; i < stripes.length; i++) {
-    const dir = stripeDir[i];
-    const arr = stripes[i];
+  for (let p = 0; p < passes; p++) {
+    const ax = laneDirs[p];
+    const arr = lanes[p];
 
-    arr.sort((a, b) => {
-      let ka = 0, kb = 0;
+    arr.sort((a, b) => axisKeyLocal(a, ax) - axisKeyLocal(b, ax));
 
-      if (dir === "down") { ka = a.gy; kb = b.gy; }
-      else if (dir === "up") { ka = (H - 1 - a.gy); kb = (H - 1 - b.gy); }
-      else if (dir === "right") { ka = a.gx; kb = b.gx; }
-      else if (dir === "left") { ka = (W - 1 - a.gx); kb = (W - 1 - b.gx); }
+    const win = Math.max(40, Math.floor(span * jitter));
+    for (let i = 0; i < arr.length; i += win) {
+      shuffleRange(arr, i, Math.min(arr.length, i + win));
+    }
 
-      // szum, żeby nie było „laserowego” frontu
-      const noiseA = (Math.random() - 0.5) * (vertical ? jY : jX);
-      const noiseB = (Math.random() - 0.5) * (vertical ? jY : jX);
-      return (ka + noiseA) - (kb + noiseB);
-    });
-
-    // OUT: odwracamy, żeby „odlatywało” (ale nadal zgodnie z wylosowaną stroną pasa)
     if (mode === "out") arr.reverse();
   }
 
-  // Zlecamy ujawnianie porcjami:
-  // zamiast jednego wspólnego sortu, robimy round-robin po pasach,
-  // żeby faktycznie wyglądało jak „wjeżdżają” różne pasy naraz.
+  // batch w jednym kroku na każdy pas
   const total = dots.length;
-  const batch = clamp(Math.floor(total * density), 40, 1200);
+  const batch = Math.max(20, Math.floor(total * density));
 
-  // indeksy postępu dla każdego pasa
-  const pos = stripes.map(() => 0);
+  // wskaźniki postępu dla pasów
+  const idx = new Array(passes).fill(0);
 
-  let done = 0;
-  while (done < total) {
-    let wrote = 0;
+  // ile kroków? bierzemy maksymalny postęp pasa
+  const maxLen = Math.max(...lanes.map(a => a.length));
 
-    // losowa kolejność pasów w tym kroku (żeby nie było „równo”)
-    const order = range(stripes.length);
-    for (let i = order.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [order[i], order[j]] = [order[j], order[i]];
-    }
+  for (let step = 0; step < maxLen; step += batch) {
+    // w jednym kroku obsługujemy wszystkie pasy => „więcej naraz”
+    for (let p = 0; p < passes; p++) {
+      const arr = lanes[p];
+      const i0 = idx[p];
+      if (i0 >= arr.length) continue;
 
-    for (const si of order) {
-      const arr = stripes[si];
-      let p = pos[si];
-      if (p >= arr.length) continue;
+      const i1 = Math.min(arr.length, i0 + batch);
 
-      // ile z tego pasa bierzemy w tym kroku
-      // (mniej więcej równomiernie, ale z losowym dodatkiem)
-      const want = Math.max(1, Math.floor(batch / stripes.length) + Math.floor(Math.random() * 8));
+      // „ogon”: dodatkowo doświetl kilka wcześniejszych porcji
+      const t0 = Math.max(0, i0 - trail * batch);
+      const t1 = i1;
 
-      const end = Math.min(arr.length, p + want);
-      for (let k = p; k < end; k++) {
-        const d = arr[k];
-        if (mode === "in") d.el.setAttribute("fill", d.targetFill);
-        else d.el.setAttribute("fill", offFill);
-        wrote++;
-        done++;
-        if (wrote >= batch) break;
+      if (mode === "in") {
+        for (let k = t0; k < t1; k++) {
+          const d = arr[k];
+          // flicker: chwilowe błyski
+          if (k >= i0 && Math.random() < flicker) {
+            d.el.setAttribute("fill", "#ffffff"); // szybki błysk
+          } else {
+            d.el.setAttribute("fill", d.targetFill);
+          }
+        }
+      } else {
+        for (let k = t0; k < t1; k++) {
+          arr[k].el.setAttribute("fill", "#2e2e32");
+        }
       }
-      pos[si] = end;
-      if (wrote >= batch) break;
+
+      idx[p] = i1;
     }
 
     if (stepMs) await sleep(stepMs);
+  }
+
+  // twardy commit: koniec zawsze 100% poprawny
+  if (mode === "in") {
+    for (const d of dots) d.el.setAttribute("fill", d.targetFill);
+  } else {
+    for (const d of dots) d.el.setAttribute("fill", "#2e2e32");
   }
 };
   
