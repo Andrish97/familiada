@@ -1,12 +1,6 @@
 {
-  "meta": {
-    "name": "logo-familiada-v0",
-    "grid": { "width": 30, "height": 10 },
-    "safeRows": { "from": 2, "to": 8 }
-  },
   "layers": [
     {
-      "name": "main",
       "color": "main",
       "rows": [
         "███◢█◣ █  █ █ █  █ ◢█◣ ██◣ ◢█◣",
