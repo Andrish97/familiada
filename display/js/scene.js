@@ -274,15 +274,26 @@ export async function createScene() {
       if (inn.type === "rain")   await anim.inRain(big, area, inn.axis ?? "down", scaleMs(inn.ms, 24), inn.opts ?? {});
     }
   };
-
+  
   const ROUNDS = (() => {
-    const rows = [2,3,4,5,6];
+    const rows = [2,3,4,5,6,7]; // <-- było 5, jest 6
     const roundNums = rows.map((r, i) => field(`R${i+1}_NUM`, 5, r, 1));
     const answers   = rows.map((r, i) => field(`R${i+1}_TXT`, 7, r, 17));
     const points    = rows.map((r, i) => field(`R${i+1}_PTS`, 24, r, 2));
     const sumaLabel = field("SUMA_LABEL", 18, 8, 4);
     const sumaVal   = field("SUMA_VAL",   23, 8, 3);
 
+    const roundsState = {
+      text: Array(6).fill(""),
+    };
+    const hasVisibleText = (s) => (s ?? "").toString().trim().length > 0;
+    
+    const setRoundNumberVisible = (idx1to6, on) => {
+      const i = (idx1to6 | 0) - 1;
+      if (i < 0 || i > 5) return;
+      writeField(GLYPHS, big, ROUNDS.roundNums[i], on ? String(i + 1) : " ", LIT.main);
+    };
+  
     const xCells = {
       "1A": { c1: 1,  r1: 8,  c2: 3,  r2: 10 },
       "2A": { c1: 1,  r1: 5,  c2: 3,  r2: 7  },
@@ -291,7 +302,7 @@ export async function createScene() {
       "2B": { c1: 28, r1: 5,  c2: 30, r2: 7  },
       "3B": { c1: 28, r1: 2,  c2: 30, r2: 4  },
     };
-
+  
     return { rows, roundNums, answers, points, sumaLabel, sumaVal, xCells };
   })();
 
@@ -537,10 +548,10 @@ export async function createScene() {
 
         // Uwaga: tryb zawsze czyści big, żeby backend miał pewność stanu
         clearBig(big);
-
+        
         if (mode === BIG_MODES.ROUNDS) {
           writeField(GLYPHS, big, ROUNDS.sumaLabel, "SUMA", LIT.main);
-          for (let i = 0; i < 5; i++) writeField(GLYPHS, big, ROUNDS.roundNums[i], String(i+1), LIT.main);
+          // numery NIE są rysowane na start — pokażą się dopiero, gdy tekst nie jest pusty
         }
 
         if (mode === BIG_MODES.FINAL) {
@@ -635,23 +646,34 @@ export async function createScene() {
     },
 
     rounds: {
-      setText: async (idx1to5, text, { animOut=null, animIn=null } = {}) => {
+      setText: async (idx1to6, text, { animOut=null, animIn=null } = {}) => {
         if (mode !== BIG_MODES.ROUNDS) await api.mode.set("ROUNDS");
-        const i = (idx1to5|0) - 1;
-        if (i < 0 || i > 4) throw new Error("idx1to5 musi być 1..5");
+      
+        const i = (idx1to6 | 0) - 1;
+        if (i < 0 || i > 5) throw new Error("idx1to6 musi być 1..6");
+      
+        roundsState.text[i] = (text ?? "").toString();
+      
         await updateField(GLYPHS, big, ROUNDS.answers[i], text, { out: animOut, in: animIn, color: LIT.main });
+      
+        // numer tylko gdy tekst ma treść
+        setRoundNumberVisible(idx1to6, hasVisibleText(roundsState.text[i]));
       },
 
-      setPts: async (idx1to5, pts, { animOut=null, animIn=null } = {}) => {
+      setPts: async (idx1to6, pts, { animOut=null, animIn=null } = {}) => {
         if (mode !== BIG_MODES.ROUNDS) await api.mode.set("ROUNDS");
-        const i = (idx1to5|0) - 1;
-        if (i < 0 || i > 4) throw new Error("idx1to5 musi być 1..5");
+      
+        const i = (idx1to6 | 0) - 1;
+        if (i < 0 || i > 5) throw new Error("idx1to6 musi być 1..6");
+      
         await updateField(GLYPHS, big, ROUNDS.points[i], pts, { out: animOut, in: animIn, color: LIT.main });
+      
+        // nie wymuszamy numeru przy punktach — decyduje wyłącznie tekst
       },
 
-      setRow: async (idx1to5, { text=undefined, pts=undefined, animOut=null, animIn=null } = {}) => {
-        if (text !== undefined) await api.rounds.setText(idx1to5, text, { animOut, animIn });
-        if (pts  !== undefined) await api.rounds.setPts(idx1to5, pts,  { animOut, animIn });
+      setRow: async (idx1to6, { text=undefined, pts=undefined, animOut=null, animIn=null } = {}) => {
+        if (text !== undefined) await api.rounds.setText(idx1to6, text, { animOut, animIn });
+        if (pts  !== undefined) await api.rounds.setPts(idx1to6, pts,  { animOut, animIn });
       },
 
       setSuma: async (val, { animOut=null, animIn=null } = {}) => {
