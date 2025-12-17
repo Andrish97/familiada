@@ -13,7 +13,6 @@
       background: radial-gradient(1400px 700px at 50% 25%,
         #ff5aa0 0%, #ff3b63 22%, #c43e79 45%, #6a4aa7 72%, #1b1a2b 100%);
     }
-    /* większe względem strony */
     .wrap{
       width:100vw;
       height:100vh;
@@ -24,7 +23,7 @@
       width:100%;
       height:100%;
       display:block;
-      transform: scale(1.08);         /* jednolite powiększenie -> koła zostają kołami */
+      transform: scale(1.08);
       transform-origin: center center;
     }
   </style>
@@ -44,6 +43,19 @@
       <stop offset="0" stop-color="#e6eaef"/>
       <stop offset="1" stop-color="#bfc7cf"/>
     </linearGradient>
+
+    <!-- srebrny pasek -->
+    <linearGradient id="silverGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f4f6f8"/>
+      <stop offset="0.55" stop-color="#cfd3d9"/>
+      <stop offset="1" stop-color="#aeb4bd"/>
+    </linearGradient>
+
+    <!-- neon niebieski -->
+    <filter id="neonBlue" x="-40%" y="-80%" width="180%" height="260%">
+      <feDropShadow dx="0" dy="0" stdDeviation="3" flood-color="#40a9ff" flood-opacity="0.95"/>
+      <feDropShadow dx="0" dy="0" stdDeviation="7" flood-color="#40a9ff" flood-opacity="0.55"/>
+    </filter>
   </defs>
 
   <rect x="150" y="110" width="1300" height="680" rx="340" fill="url(#rimGrad)"/>
@@ -59,6 +71,9 @@
 
   <g id="center"></g>
   <g id="panels"></g>
+
+  <!-- pasek MA BYĆ POD dolnymi -->
+  <g id="basebar"></g>
   <g id="bottom"></g>
 </svg>
 </div>
@@ -162,32 +177,67 @@
   drawTiled(panels, rightX, sideY, 3, 1, DOTS.X, DOTS.Y, dP, g, gapCells, COLORS);
   drawTiled(panels, topX,   topY,  3, 1, DOTS.X, DOTS.Y, dP, g, gapCells, COLORS);
 
-  // ===== DÓŁ (naprawione: bez nakładania) =====
-  const bottom = $("bottom");
+  // ===== DÓŁ + PASEK POD NIM =====
+  const basebar = $("basebar");
+  const bottom  = $("bottom");
 
   const dBottom = 1.5*d;
   const Xb = 95, Yb = 7;
 
-  const gapFromOval = 12;
+  // większy odstęp od owalu (bo dochodzi pasek)
+  const gapFromOval = 22;
   const gapBetween  = 40;
 
   const ovalBottomY = 110 + 680;
   const yBottom = ovalBottomY + gapFromOval;
 
+  // wymiary bloczka dolnego (liczone, żeby layout był pewny)
   const wInnerB = Wgrid(Xb, dBottom, g);
+  const hInnerB = Hgrid(Yb, dBottom, g);
   const wBlock  = wInnerB + 2*g;
+  const hBlock  = hInnerB + 2*g;
 
-  // chcesz "do środka": działa, ale nie może zjeść całego gapBetween
+  // „do środka”, ale bez ryzyka nakładania:
   const insetFactor = 0.20;
   const insetWanted = wBlock * insetFactor;
-
-  const minGap = 6; // żeby zawsze była szpara
+  const minGap = 10; // trochę większa "szpara" żeby wyglądało czyściej
   const gapEff = Math.max(minGap, gapBetween - 2*insetWanted);
 
   const totalW = 2*wBlock + gapEff;
   const xLeft  = VIEW.CX - totalW/2;
   const xRight = xLeft + wBlock + gapEff;
 
+  // --- PASEK (warstwa niżej) ---
+  const barX = 50;          // "na całą długość" w kadrze
+  const barW = 1500;
+  const barPadY = 12;       // ile pasek wystaje ponad/pod bloczki
+  const barY = yBottom - barPadY;
+  const barH = hBlock + barPadY*2;
+
+  // srebrny korpus + neonowy stroke
+  basebar.appendChild(el("rect", {
+    x: barX, y: barY, width: barW, height: barH,
+    rx: 0,
+    fill: "url(#silverGrad)",
+    stroke: "#40a9ff",
+    "stroke-width": 3,
+    filter: "url(#neonBlue)"
+  }));
+
+  // neonowe podziały paska (3 linie)
+  const cuts = 3;
+  for (let i=1; i<=cuts; i++){
+    const lx = barX + (barW * i) / (cuts + 1);
+    basebar.appendChild(el("line", {
+      x1: lx, y1: barY, x2: lx, y2: barY + barH,
+      stroke: "#40a9ff",
+      "stroke-width": 3,
+      "stroke-opacity": 0.9,
+      filter: "url(#neonBlue)"
+    }));
+  }
+
+  // --- DOLNE BLOKI (warstwa wyżej) ---
   drawFramedGrid(bottom, xLeft,  yBottom, Xb, Yb, dBottom, g, COLORS);
   drawFramedGrid(bottom, xRight, yBottom, Xb, Yb, dBottom, g, COLORS);
 })();
