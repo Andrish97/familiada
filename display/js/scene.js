@@ -377,9 +377,9 @@ export async function createScene() {
   const rightPanel = drawTiledDisplay5x7(panels, rightX, sideY, 3, 1, dP, g, gapCells, COLORS);
   const topPanel   = drawTiledDisplay5x7(panels, topX,   topY,  3, 1, dP, g, gapCells, COLORS);
 
-  const leftTriple  = [leftPanel.tiles[0][0],  leftPanel.tiles[0][1],  leftPanel.tiles[0][2]];
-  const rightTriple = [rightPanel.tiles[0][0], rightPanel.tiles[0][1], rightPanel.tiles[0][2]];
-  const topTriple   = [topPanel.tiles[0][0],   topPanel.tiles[0][1],   topPanel.tiles[0][2]];
+  const leftTriple  = [leftPanel.tiles[0][2],  leftPanel.tiles[0][1],  leftPanel.tiles[0][0]];
+  const rightTriple = [rightPanel.tiles[0][2], rightPanel.tiles[0][1], rightPanel.tiles[0][0]];
+  const topTriple   = [topPanel.tiles[0][2],   topPanel.tiles[0][1],   topPanel.tiles[0][0]];
 
   // Bottom (95x7) + basebar
   const dBottom = 1.5 * d;
