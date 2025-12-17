@@ -720,7 +720,31 @@
     console.log(`Przykład: scene.handleCommand('BIG X 2A ON')`);
   };
 
-  window.addEventListener("DOMContentLoaded", () => {
-    bootstrap().catch((e) => console.error(e));
-  });
+window.addEventListener("DOMContentLoaded", () => {
+  // 1) Fullscreen button
+  const fsBtn = document.getElementById("fsBtn");
+  if (fsBtn) {
+    const sync = () => fsBtn.classList.toggle("on", !!document.fullscreenElement);
+
+    fsBtn.addEventListener("click", async () => {
+      try {
+        if (!document.fullscreenElement) {
+          await document.documentElement.requestFullscreen();
+        } else {
+          await document.exitFullscreen();
+        }
+      } catch (e) {
+        console.warn("Fullscreen failed:", e);
+      }
+      sync();
+    });
+
+    document.addEventListener("fullscreenchange", sync);
+    sync();
+  }
+
+  // 2) Start app
+  bootstrap().catch((e) => console.error(e));
+});
+
 })();
