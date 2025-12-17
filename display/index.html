@@ -159,8 +159,10 @@
   })();
 
   // pozycje (jak ustaliliśmy)
-  const leftX  = 10;
-  const rightX = 1600 - panelDims.W - 10;
+  const shift = panelDims.W / 4;     // ~1/4 szerokości panelu
+  const leftX  = 10 + shift;         // lewy w prawo
+  const rightX = 1600 - panelDims.W - 10 - shift; // prawy w lewo
+
   const sideY  = 390;
   const topX   = 800 - panelDims.W/2;
   const topY   = 85;
@@ -185,8 +187,10 @@
   const xLeft  = 800 - totalW/2;
   const xRight = xLeft + wBlock + gapBetween;
 
-  drawFramedGrid(bottom, xLeft,  yBottom, 95, 7, d, g, C);
-  drawFramedGrid(bottom, xRight, yBottom, 95, 7, d, g, C);
+  const dBottom = d * 1.5;
+
+  drawFramedGrid(bottom, xLeft,  yBottom, 95, 7, dBottom, g, C);
+  drawFramedGrid(bottom, xRight, yBottom, 95, 7, dBottom, g, C);
 
 })();
 </script>
