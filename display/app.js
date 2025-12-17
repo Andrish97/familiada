@@ -9,31 +9,33 @@
 
   const VIEW = { W: 1600, H: 900, CX: 800, CY: 450 };
 
-  // Wygląd (nie zmieniamy)
+  // Wygląd
   const COLORS = {
-    big:   "#2e2e32",
-    cell:  "#000000",
-    dotOff:"#2e2e32"
+    big:    "#2e2e32",
+    cell:   "#000000",
+    dotOff: "#2e2e32"
   };
 
   // Kolory świecenia
   const LIT = {
-    main:  "#d7ff3d", // główny żółty lekko zielonkawy
-    top:   "#34ff6a", // górny zielony
-    left:  "#ff2e3b", // lewy czerwony
-    right: "#2bff65"  // prawy zielony
+    main:  "#d7ff3d",
+    top:   "#34ff6a",
+    left:  "#ff2e3b",
+    right: "#2bff65"
   };
 
   // Geometria (jak w oryginale)
   const d = 4;
   const g = 1;
-  const gapCells = d;  // odstęp między kaflami = średnica
+  const gapCells = d;
   const DOTS = { X: 5, Y: 7 };
 
   const Wgrid = (X, dDots, gap) => X * dDots + (X + 1) * gap;
   const Hgrid = (Y, dDots, gap) => Y * dDots + (Y + 1) * gap;
 
-  // ---------- Fullscreen button ----------
+  // ============================================================
+  // Fullscreen button
+  // ============================================================
   const initFullscreenButton = () => {
     const fsBtn = document.getElementById("fsBtn");
     if (!fsBtn) return;
@@ -62,7 +64,9 @@
     sync();
   };
 
-  // ---------- Font loaders ----------
+  // ============================================================
+  // Loaders
+  // ============================================================
   const loadJson = async (url) => {
     const res = await fetch(url, { cache: "no-store" });
     if (!res.ok) throw new Error(`Nie można wczytać: ${url}`);
@@ -86,8 +90,9 @@
 
   const isDigit = (ch) => ch >= "0" && ch <= "9";
 
-  // ---------- Drawing primitives (1:1 z Twoim oryginałem) ----------
-  // Rysuje kropki i zwraca referencje [7][5]
+  // ============================================================
+  // Drawing primitives (zgodne z Twoim oryginałem)
+  // ============================================================
   const drawDotsStored = (parent, x, y, X, Y, dDots, gap, color) => {
     const dots = Array.from({ length: Y }, () => Array.from({ length: X }, () => null));
     const r = dDots / 2;
@@ -108,17 +113,16 @@
     return dots;
   };
 
-  // Oryginalny kafel: rect(cell) + kropki; bez osobnej ramki
   const drawCell5x7 = (parent, x, y, dDots, gap, colors) => {
     const wSmall = Wgrid(5, dDots, gap);
     const hSmall = Hgrid(7, dDots, gap);
 
     parent.appendChild(el("rect", { x, y, width: wSmall, height: hSmall, rx: 0, fill: colors.cell }));
     const dots = drawDotsStored(parent, x, y, 5, 7, dDots, gap, colors.dotOff);
+
     return { x, y, wSmall, hSmall, dots };
   };
 
-  // Oryginalny tiled display: duży rect + komórki
   const drawTiledDisplay5x7 = (parent, x, y, tilesX, tilesY, dDots, gap, tileGap, colors) => {
     const wSmall = Wgrid(5, dDots, gap);
     const hSmall = Hgrid(7, dDots, gap);
@@ -138,10 +142,9 @@
       }
     }
 
-    return { x, y, W, H, tiles, tilesX, tilesY, wSmall, hSmall, tileGap, gap };
+    return { x, y, W, H, tiles, tilesX, tilesY };
   };
 
-  // Framed grid (dolne bloki) – jak w oryginale, ale z referencjami
   const drawFramedDotPanel = (parent, x, y, X, Y, dDots, gap, colors) => {
     const wInner = Wgrid(X, dDots, gap);
     const hInner = Hgrid(Y, dDots, gap);
@@ -152,10 +155,12 @@
     parent.appendChild(el("rect", { x: x + gap, y: y + gap, width: wInner, height: hInner, rx: 0, fill: colors.cell }));
 
     const dots = drawDotsStored(parent, x + gap, y + gap, X, Y, dDots, gap, colors.dotOff);
-    return { x, y, X, Y, dots, wOuter, hOuter };
+    return { x, y, X, Y, dots };
   };
 
-  // ---------- Glyph render into tile (5x7 dots) ----------
+  // ============================================================
+  // Render 5x7 glyph into a tile
+  // ============================================================
   const renderCharToTile = (GLYPHS, tile, ch, onColor, offColor) => {
     const glyph = resolveGlyph(GLYPHS, ch);
     for (let row = 0; row < 7; row++) {
@@ -174,7 +179,9 @@
     }
   };
 
-  // ---------- Small displays rules ----------
+  // ============================================================
+  // Small displays: rules
+  // ============================================================
   const setTripleDigits = (GLYPHS, tripleTiles, text, onColor) => {
     const s = (text ?? "").toString();
     for (let i = 0; i < 3; i++) {
@@ -184,12 +191,10 @@
     }
   };
 
-  // Podłużne: max 15 znaków, przerwa 1 kolumna, centrowane
   const setLongTextCenteredMax15 = (GLYPHS, panel, text, onColor) => {
     let s = (text ?? "").toString().toUpperCase();
     if (s.length > 15) s = s.slice(0, 15);
 
-    // clear
     for (let y = 0; y < panel.Y; y++) for (let x = 0; x < panel.X; x++) {
       panel.dots[y][x].setAttribute("fill", COLORS.dotOff);
     }
@@ -215,7 +220,9 @@
     }
   };
 
-  // ---------- Big addressing helpers ----------
+  // ============================================================
+  // Big display helpers (1-based coords)
+  // ============================================================
   const tileAt = (big, col1, row1) => {
     const x = (col1 | 0) - 1;
     const y = (row1 | 0) - 1;
@@ -236,13 +243,12 @@
   };
 
   const clearBig = (big) => {
-    for (let r = 1; r <= big.tilesY; r++) for (let c = 1; c <= big.tilesX; c++) clearTileAt(big, c, r);
+    for (let r = 1; r <= big.tilesY; r++) for (let c = 1; c <= big.tilesX; c++) {
+      clearTileAt(big, c, r);
+    }
   };
 
-  // ---------- X 3x3 (środek ⧗) ----------
-  // ⇖⎵⇗
-  //  ⧗
-  // ⇙⎴⇘
+  // X 3x3 (środek ⧗)
   const drawBigX_3x3 = (GLYPHS, big, col1, row1, color = LIT.main) => {
     putCharAt(GLYPHS, big, col1 + 0, row1 + 0, "⇖", color);
     putCharAt(GLYPHS, big, col1 + 1, row1 + 0, "⎵", color);
@@ -256,9 +262,9 @@
   };
 
   // ============================================================
-  // WIN font (JSON) + tight centering in horizontal, vertical fixed 2..8
+  // WIN (font_win.json) – cyfry mogą być "węższe": centrowanie poziome
+  // pion stały: rzędy 2..8
   // ============================================================
-
   const measureWinDigit = (pat) => {
     const H = 7;
     const rows = Array.from({ length: H }, (_, i) => (pat[i] ?? ""));
@@ -277,7 +283,6 @@
     return { left, w: right - left + 1 };
   };
 
-  // Rysuje jedną cyfrę WIN w kolumnach starting col1, wysokość zawsze 7 (rowTop1..rowTop1+6)
   const drawWinDigitTight = (GLYPHS, big, WIN_DIGITS, col1, rowTop1, digit, color = LIT.main) => {
     const pat = WIN_DIGITS[digit];
     if (!pat) return 0;
@@ -288,8 +293,7 @@
 
     for (let y = 0; y < H; y++) {
       for (let x = 0; x < w; x++) {
-        const srcX = left + x;
-        const ch = rows[y][srcX] ?? " ";
+        const ch = rows[y][left + x] ?? " ";
         const col = col1 + x;
         const row = rowTop1 + y;
 
@@ -300,7 +304,6 @@
     return w;
   };
 
-  // Pole WIN: kolumny 1..30, rzędy 2..8
   const drawWinNumber5 = (GLYPHS, big, WIN_DIGITS, number, color = LIT.main) => {
     let s = (number ?? "").toString().replace(/\D/g, "");
     if (s.length > 5) s = s.slice(-5);
@@ -308,14 +311,12 @@
 
     const fieldW = 30;
     const fieldH = 7;
-    const rowTop1 = 2;
+    const rowTop1 = 2; // rzędy 2..8
     const gap = 1;
 
-    // czyść całe pole WIN
-    for (let y = 0; y < fieldH; y++) {
-      for (let x = 0; x < fieldW; x++) {
-        clearTileAt(big, 1 + x, rowTop1 + y);
-      }
+    // czyść pole WIN
+    for (let y = 0; y < fieldH; y++) for (let x = 0; x < fieldW; x++) {
+      clearTileAt(big, 1 + x, rowTop1 + y);
     }
 
     // policz tight widths
@@ -324,7 +325,7 @@
       return pat ? measureWinDigit(pat).w : 0;
     });
 
-    const totalW = widths.reduce((a, b) => a + b, 0) + gap * (widths.length - 1);
+    const totalW = widths.reduce((a, b) => a + b, 0) + gap * 4;
     const startCol1 = 1 + Math.max(0, Math.floor((fieldW - totalW) / 2));
 
     let cx = startCol1;
@@ -335,16 +336,12 @@
   };
 
   // ============================================================
-  // Big modes
+  // Big modes (szkielet)
   // ============================================================
+  const BIG_MODES = { LOGO:"LOGO", ROUNDS:"ROUNDS", FINAL:"FINAL", WIN:"WIN" };
 
-  const BIG_MODES = { LOGO: "LOGO", ROUNDS: "ROUNDS", FINAL: "FINAL", WIN: "WIN" };
-
-  // Minimalny layout (szkielet) – rozbudujemy jak wejdziemy w ROUNDS/FINAL na serio
   const BigLayouts = {
-    LOGO: { fixed: [] },
     ROUNDS: {
-      // X-cells (3x3)
       xCells: {
         "1A": { col1: 1,  row1: 8 },
         "2A": { col1: 1,  row1: 5 },
@@ -353,43 +350,32 @@
         "2B": { col1: 28, row1: 5 },
         "3B": { col1: 28, row1: 2 }
       }
-    },
-    FINAL: {},
-    WIN: {}
+    }
   };
 
   const initBigMode = (GLYPHS, big, mode) => {
     clearBig(big);
-
-    if (mode === BIG_MODES.LOGO) {
-      for (const it of (BigLayouts.LOGO.fixed || [])) {
-        putCharAt(GLYPHS, big, it.col, it.row, it.ch, LIT.main);
-      }
-    }
-
-    // ROUNDS / FINAL na razie tylko czyste tło – dopiszemy pola potem
+    // LOGO/ROUNDS/FINAL wypełnimy później – WIN rysuje się na komendę
   };
 
   // ============================================================
-  // Bootstrap: rysowanie sceny (tło + wyświetlacze)
+  // Bootstrap
   // ============================================================
-
   const bootstrap = async () => {
-    // Fonts
-    const FONT5x7 = await loadJson("./font_5x7.json");  // musi być poprawny JSON (bez trailing commas)
+    // fonts
+    const FONT5x7 = await loadJson("./font_5x7.json");
     const GLYPHS  = buildGlyphMap(FONT5x7);
 
-    // WIN font json: { meta, digits: { "0":[...], ... } }
     const FONTWIN = await loadJson("./font_win.json");
     const WIN_DIGITS = FONTWIN?.digits || {};
 
-    // SVG layers
+    // svg layers
     const center  = $("center");
     const panels  = $("panels");
     const basebar = $("basebar");
     const bottom  = $("bottom");
 
-    // ===== ŚRODEK (30x10) – geometria jak w oryginale, więc nie przesunie się =====
+    // ===== ŚRODEK 30x10 (centrowany jak w oryginale) =====
     const wSmall = Wgrid(5, d, g);
     const hSmall = Hgrid(7, d, g);
     const centerW = 30 * wSmall + 29 * gapCells + 2 * g;
@@ -400,7 +386,7 @@
 
     const big = drawTiledDisplay5x7(center, centerX, centerY, 30, 10, d, g, gapCells, COLORS);
 
-    // ===== PANELE (potrójne 3x1) – też jak w oryginale =====
+    // ===== POTRÓJNE (3x1), jak w oryginale =====
     const dP = 3 * d;
     const wSmallP = Wgrid(5, dP, g);
     const panelW = 3 * wSmallP + 2 * gapCells + 2 * g;
@@ -409,6 +395,7 @@
     const sideY = 390;
     const leftX  = 10 + shift;
     const rightX = VIEW.W - panelW - 10 - shift;
+
     const topY = 65;
     const topX = VIEW.CX - panelW / 2;
 
@@ -416,14 +403,11 @@
     const rightPanel = drawTiledDisplay5x7(panels, rightX, sideY, 3, 1, dP, g, gapCells, COLORS);
     const topPanel   = drawTiledDisplay5x7(panels, topX,   topY,  3, 1, dP, g, gapCells, COLORS);
 
-    // helper: wyciągnij 3 kafle z panelu (y=0)
-    const triple = (panel) => [panel.tiles[0][0], panel.tiles[0][1], panel.tiles[0][2]];
+    const leftTriple  = [leftPanel.tiles[0][0],  leftPanel.tiles[0][1],  leftPanel.tiles[0][2]];
+    const rightTriple = [rightPanel.tiles[0][0], rightPanel.tiles[0][1], rightPanel.tiles[0][2]];
+    const topTriple   = [topPanel.tiles[0][0],   topPanel.tiles[0][1],   topPanel.tiles[0][2]];
 
-    const leftTriple  = triple(leftPanel);
-    const rightTriple = triple(rightPanel);
-    const topTriple   = triple(topPanel);
-
-    // ===== DÓŁ + PASEK (jak u Ciebie) =====
+    // ===== DÓŁ + PASEK (jak w oryginale) =====
     const dBottom = 1.5 * d;
     const Xb = 95, Yb = 7;
 
@@ -539,13 +523,6 @@
     };
 
     // ===== Backend command decoder =====
-    // TOP 123
-    // LEFT 045
-    // RIGHT 999
-    // LONG1 "FAMILIADA"
-    // BIG MODE WIN
-    // BIG WIN 01234
-    // BIG X 2A ON
     const handleCommand = async (line) => {
       const raw = (line ?? "").toString().trim();
       if (!raw) return;
@@ -585,7 +562,7 @@
       console.warn("Nieznana komenda:", raw);
     };
 
-    // ===== Demo start =====
+    // ===== Demo =====
     api.topDigits("123");
     api.leftDigits("045");
     api.rightDigits("999");
