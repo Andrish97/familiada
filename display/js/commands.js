@@ -1,29 +1,20 @@
-// commands.js
-// Router komend tekstowych: GLOBAL (APP) + SCENA (GRA)
-// Zasada: komendy globalne mają pierwszeństwo i nie trafiają do sceny.
-// Komendy sceny wykonują się tylko gdy app.mode === "GRA".
-
 const tokenize = (raw) => {
   const tokens = [];
   let i = 0;
-
   while (i < raw.length) {
     if (raw[i] === " ") { i++; continue; }
-
     if (raw[i] === '"') {
       let j = i + 1;
       while (j < raw.length && raw[j] !== '"') j++;
-      tokens.push(raw.slice(i, Math.min(j + 1, raw.length)));
-      i = Math.min(j + 1, raw.length);
-      continue;
+      tokens.push(raw.slice(i, j + 1));
+      i = j + 1;
+    } else {
+      let j = i;
+      while (j < raw.length && raw[j] !== " ") j++;
+      tokens.push(raw.slice(i, j));
+      i = j;
     }
-
-    let j = i;
-    while (j < raw.length && raw[j] !== " ") j++;
-    tokens.push(raw.slice(i, j));
-    i = j;
   }
-
   return tokens;
 };
 
@@ -33,28 +24,26 @@ const unquote = (s) => {
   return t;
 };
 
+const normalizeAppMode = (m) => {
+  const mm = (m ?? "").toString().trim().toUpperCase();
+  if (mm === "BLACK") return "BLACK_SCREEN";
+  if (mm === "BLACK_SCREEN") return "BLACK_SCREEN";
+  if (mm === "GRA" || mm === "GAME") return "GRA";
+  if (mm === "QR") return "QR";
+  return mm;
+};
+
+// Lokalny tryb dużego wyświetlacza (komendy sceny)
+const isSceneBigMode = (m) => {
+  const mm = (m ?? "").toString().trim().toUpperCase();
+  return mm === "LOGO" || mm === "ROUNDS" || mm === "FINAL" || mm === "WIN";
+};
+
 export const createCommandHandler = (app) => {
-  const getSceneHandler = () => {
-    const sc = app?.scene;
-    const fn = sc?.handleCommand;
-    if (typeof fn === "function") return fn.bind(sc);
-    return null;
-  };
+  const { scene, qr } = app;
 
-  const toGlobalMode = (mRaw) => {
-    const m = (mRaw ?? "").toString().toUpperCase();
-
-    if (m === "BLACK") return "BLACK_SCREEN";
-    if (m === "BLACK_SCREEN") return "BLACK_SCREEN";
-    if (m === "QR") return "QR";
-    if (m === "GRA") return "GRA";
-
-    return null;
-  };
-
-  const setModeSafe = (mode) => {
-    if (!mode) return;
-    app.setMode(mode);
+  const ensureGameMode = () => {
+    if (app.mode !== "GRA") app.setMode("GRA");
   };
 
   return async (line) => {
@@ -64,50 +53,65 @@ export const createCommandHandler = (app) => {
     const tokens = tokenize(raw);
     const head = (tokens[0] ?? "").toUpperCase();
 
-    // 1) GLOBALNE: APP MODE ...
+    // =========================================================
+    // GLOBAL MODE (zalecane)
+    // APP MODE BLACK_SCREEN | APP MODE BLACK | APP MODE GRA | APP MODE QR
+    // =========================================================
     if (head === "APP") {
       const op = (tokens[1] ?? "").toUpperCase();
       if (op === "MODE") {
-        const gm = toGlobalMode(tokens[2]);
-        if (!gm) throw new Error("APP MODE wymaga: BLACK / BLACK_SCREEN / GRA / QR");
-        setModeSafe(gm);
+        app.setMode(normalizeAppMode(tokens[2] ?? "BLACK_SCREEN"));
         return;
       }
     }
 
-    // 2) MODE: albo globalny, albo lokalny (scena)
+    // =========================================================
+    // MODE ... (globalny shortcut albo scene big-mode)
+    // MODE QR/GRA/BLACK -> global
+    // MODE LOGO/ROUNDS/FINAL/WIN -> scena (wymusza GRA)
+    // =========================================================
     if (head === "MODE") {
-      const gm = toGlobalMode(tokens[1]);
-      if (gm) {
-        setModeSafe(gm);
+      const arg = tokens[1] ?? "";
+      const mGlobal = normalizeAppMode(arg);
+
+      // global
+      if (mGlobal === "QR" || mGlobal === "GRA" || mGlobal === "BLACK_SCREEN") {
+        app.setMode(mGlobal);
         return;
       }
 
-      // nie-globalny MODE -> lokalny dla sceny, ale tylko w GRA
-      if (app.mode !== "GRA") return;
+      // scene big modes
+      if (isSceneBigMode(arg)) {
+        ensureGameMode();
+        return scene.handleCommand(raw);
+      }
 
-      const sceneHandle = getSceneHandler();
-      if (!sceneHandle) throw new Error("Brak scene.handleCommand (scena niegotowa?)");
-      return sceneHandle(raw);
+      // jeśli ktoś podał coś dziwnego:
+      console.warn("[commands] Nieznany MODE:", raw);
+      return;
     }
 
-    // 3) GLOBALNE: QR HOST ... BUZZER ...
+    // =========================================================
+    // QR: QR HOST "<url>" BUZZER "<url>"
+    // (ustawia i przełącza na QR)
+    // =========================================================
     if (head === "QR") {
       const hostIdx = tokens.findIndex(t => t.toUpperCase() === "HOST");
       const buzIdx  = tokens.findIndex(t => t.toUpperCase() === "BUZZER");
 
-      if (hostIdx >= 0) app.qr.setHost(unquote(tokens[hostIdx + 1] ?? ""));
-      if (buzIdx  >= 0) app.qr.setBuzzer(unquote(tokens[buzIdx + 1] ?? ""));
+      if (hostIdx >= 0) qr.setHost(unquote(tokens[hostIdx + 1] ?? ""));
+      if (buzIdx  >= 0) qr.setBuzzer(unquote(tokens[buzIdx + 1] ?? ""));
 
-      setModeSafe("QR");
+      app.setMode("QR");
       return;
     }
 
-    // 4) RESZTA: tylko do sceny i tylko w GRA
-    if (app.mode !== "GRA") return;
-
-    const sceneHandle = getSceneHandler();
-    if (!sceneHandle) throw new Error("Brak scene.handleCommand (scena niegotowa?)");
-    return sceneHandle(raw);
+    // =========================================================
+    // Reszta komend -> scena
+    // Zamiast ignorować gdy nie w GRA, wymuszamy GRA,
+    // bo backend zwykle “leje” komendy niezależnie od ekranu.
+    // =========================================================
+    ensureGameMode();
+    return scene.handleCommand(raw);
   };
 };
