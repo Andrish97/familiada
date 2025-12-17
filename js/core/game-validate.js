@@ -1,10 +1,11 @@
 // js/core/game-validate.js
 import { sb } from "./supabase.js";
 
-// Twoje zasady (dla gry i dla sondaża):
+// Zasady globalne:
 export const RULES = {
-  QN: 10, // min (i w praktyce wymagane) 10 pytań
-  AN: 5,  // wymagane 5 odpowiedzi
+  QN_MIN: 10,   // min 10 pytań
+  AN_MIN: 5,    // min 5 odpowiedzi
+  AN_MAX: 6,    // max 6 odpowiedzi
 };
 
 // bezpieczny parse
@@ -44,7 +45,7 @@ export async function loadAnswers(questionId) {
 }
 
 /**
- * Walidacja "czy wolno w ogóle edytować"
+ * Walidacja "czy wolno edytować"
  * - jeśli poll i status=poll_open -> edycja zablokowana
  */
 export function canEditGame(game) {
@@ -56,48 +57,69 @@ export function canEditGame(game) {
 }
 
 /**
+ * Wspólna walidacja struktury:
+ * - min 10 pytań
+ * - dla pierwszych 10 pytań: odpowiedzi 5..6
+ */
+export async function validateStructure(gameId) {
+  const qs = await loadQuestions(gameId);
+
+  if (qs.length < RULES.QN_MIN) {
+    return { ok: false, reason: `Gra musi mieć co najmniej ${RULES.QN_MIN} pytań. Masz: ${qs.length}.` };
+  }
+
+  // UI rozgrywki i tak jedzie na pierwszych 10 (reszta może istnieć)
+  const ten = qs.slice(0, RULES.QN_MIN);
+
+  for (const q of ten) {
+    const ans = await loadAnswers(q.id);
+    if (ans.length < RULES.AN_MIN || ans.length > RULES.AN_MAX) {
+      return {
+        ok: false,
+        reason: `Pytanie #${q.ord}: musi mieć ${RULES.AN_MIN}–${RULES.AN_MAX} odpowiedzi (masz: ${ans.length}).`,
+      };
+    }
+  }
+
+  return { ok: true, reason: "" };
+}
+
+/**
  * Walidacja "czy wolno odpalić grę" (Control/Play)
  *
  * Zasady:
  * - zawsze: min 10 pytań
- * - zawsze: każde pytanie ma DOKŁADNIE 5 odpowiedzi
- * - fixed (lokalna):
+ * - dla pierwszych 10 pytań: 5..6 odpowiedzi
+ * - fixed:
  *   - każda odpowiedź ma pkt 1..100 (zero zabronione)
  *   - suma punktów w pytaniu musi być DOKŁADNIE 100
- * - poll (sondażowa):
+ * - poll:
  *   - nie wolno startować gdy status=poll_open
  *   - wolno startować dopiero gdy status=ready
- *   - po ready zakładamy, że answers.fixed_points już policzone (też nie mogą zawierać 0 i suma=100)
+ *   - po ready zakładamy: fixed_points już policzone (też >0 i suma=100)
  */
 export async function validateGameReadyToPlay(gameId) {
   const game = await loadGameBasic(gameId);
 
-  // blokada: nie odpalamy gry, gdy sondaż jest otwarty
   if (game.kind === "poll") {
     if (game.status === "poll_open") {
       return { ok: false, reason: "Nie można uruchomić gry: sondaż jest OTWARTY." };
     }
     if (game.status !== "ready") {
-      return { ok: false, reason: "Nie można uruchomić gry: sondaż nie jest zakończony (status != READY)." };
+      return { ok: false, reason: "Nie można uruchomić gry: sondaż nie jest zakończony (status != GOTOWA)." };
     }
   }
 
-  const qs = await loadQuestions(gameId);
-  if (qs.length < RULES.QN) {
-    return { ok: false, reason: `Gra musi mieć co najmniej ${RULES.QN} pytań. Masz: ${qs.length}.` };
-  }
+  const s = await validateStructure(gameId);
+  if (!s.ok) return s;
 
-  // sprawdzamy pierwsze 10 pytań (bo reguła “min 10” — a UI i tak będzie na 10)
-  const ten = qs.slice(0, RULES.QN);
+  const qs = await loadQuestions(gameId);
+  const ten = qs.slice(0, RULES.QN_MIN);
 
   for (const q of ten) {
     const ans = await loadAnswers(q.id);
 
-    if (ans.length !== RULES.AN) {
-      return { ok: false, reason: `Pytanie #${q.ord}: musi mieć dokładnie ${RULES.AN} odpowiedzi (masz: ${ans.length}).` };
-    }
-
-    // dla obu typów wymagamy sensownych punktów (bo później w grze to leci na tablicę)
+    // punkty w obu typach muszą być sensowne, bo później leci to na tablicę
     const pts = ans.map(a => n(a.fixed_points));
 
     // zero zabronione
@@ -105,7 +127,7 @@ export async function validateGameReadyToPlay(gameId) {
       return { ok: false, reason: `Pytanie #${q.ord}: żadna odpowiedź nie może mieć 0 pkt.` };
     }
 
-    // sufit 100 na odpowiedź
+    // sufit 100
     if (pts.some(p => p > 100)) {
       return { ok: false, reason: `Pytanie #${q.ord}: odpowiedź nie może mieć więcej niż 100 pkt.` };
     }
@@ -122,8 +144,9 @@ export async function validateGameReadyToPlay(gameId) {
 /**
  * Walidacja "czy wolno uruchomić sondaż"
  * - tylko dla game.kind=poll
- * - tylko gdy nie jest poll_open (czyli draft/ready -> możemy otworzyć)
- * - min 10 pytań i każde ma 5 odpowiedzi (tekstowe)
+ * - tylko gdy nie jest poll_open
+ * - min 10 pytań
+ * - dla pierwszych 10: odpowiedzi 5..6 (tekstowe)
  */
 export async function validatePollReadyToOpen(gameId) {
   const game = await loadGameBasic(gameId);
@@ -135,20 +158,8 @@ export async function validatePollReadyToOpen(gameId) {
     return { ok: false, reason: "Sondaż już jest otwarty." };
   }
 
-  const qs = await loadQuestions(gameId);
-  if (qs.length < RULES.QN) {
-    return { ok: false, reason: `Sondaż wymaga min ${RULES.QN} pytań. Masz: ${qs.length}.` };
-  }
-
-  const ten = qs.slice(0, RULES.QN);
-
-  for (const q of ten) {
-    const ans = await loadAnswers(q.id);
-    if (ans.length !== RULES.AN) {
-      return { ok: false, reason: `Pytanie #${q.ord}: musi mieć dokładnie ${RULES.AN} odpowiedzi.` };
-    }
-    // tu nie wymagamy punktów (bo punkty policzą się po zamknięciu)
-  }
+  const s = await validateStructure(gameId);
+  if (!s.ok) return s;
 
   return { ok: true, reason: "" };
 }
