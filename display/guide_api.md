@@ -19,7 +19,6 @@ Ten dokument opisuje **całe API sterowania stroną display**: tryby globalne (`
 To jest **tryb strony**:
 - `GRA` – pokazuje scenografię (SVG + wyświetlacze)
 - `QR` – czarny ekran + 2 kody QR
-- `BLACK_SCREEN` – czarny ekran (domyślny)
 
 Sterujesz:
 - przez JS: `app.setMode("GRA")`, `app.setMode("QR")`
@@ -85,9 +84,9 @@ Czyści fragment.
 - `await scene.api.big.animOut({ type, dir|axis, ms, area? })`
 
 Parametry:
-- `type: "edge" | "matrix" | "rain"`
+- `type: "edge" | "matrix"`
 - dla `edge`: `dir: "left" | "right" | "top" | "bottom"`
-- dla `matrix i rain`: `axis: "down" | "up" | "right" | "left"`
+- dla `matrix`: `axis: "down" | "up" | "right" | "left"`
 - `ms`: opóźnienie kroku (mniejsze = szybciej)
 - `area`: `{c1,r1,c2,r2}` – jeśli chcesz animować tylko fragment
 
@@ -237,10 +236,8 @@ Komendy są tekstowe (jednolinijkowe). Backend może wysyłać dokładnie takie 
 #### Przełącz ekran strony
 - `MODE QR`
 - `MODE GRA`
-- `MODE BLACK_SCREEN` alias `MODE BLACK`
 - `APP MODE QR`
 - `APP MODE GRA`
-- `APP MODE BLACK_SCREEN` alias `APP MODE BLACK`
 
 #### Ustaw QR (i przełącz na QR)
 - `QR HOST "https://..." BUZZER "https://..."`
@@ -301,11 +298,8 @@ Wszystko poniżej możesz wklejać do konsoli DevTools.
 
 ### 4.1 Szybki sanity check – global
 ```js
-app.setMode("BLACK_SCREEN"); // czarny ekran
-app.setMode("GRA");          // wraca scenografia
-app.setMode("QR");           // QR
-app.setMode("BLACK");        // alias
-
+app.setMode("QR");
+app.setMode("GRA");
 ```
 
 ### 4.2 QR
@@ -386,5 +380,92 @@ Schowaj:
 ```js
 handleCommand('LOGO HIDE ANIMOUT edge right 6');
 ```
+
+---
+
+## 5) Presence – szybki test “czy display żyje”
+
+W tej karcie:
+```js
+localStorage.getItem("familiada_display_alive")
+```
+
+W “innej stronie” (innej karcie tej samej przeglądarki) logika online/offline:
+```js
+const ts = Number(localStorage.getItem("familiada_display_alive") || 0);
+const online = Date.now() - ts < 4000;
+console.log({ ts, online });
+```
+
+Jeśli chcesz wersję “push” (BroadcastChannel) do debug:
+```js
+const bc = new BroadcastChannel("familiada-display");
+bc.onmessage = (e) => console.log("presence msg:", e.data);
+```
+
+---
+
+## 6) Diagnostyka: brak tła w trybie GRA (checklista)
+
+Jeżeli w `GRA` widzisz białe tło zamiast gradientu, to prawie zawsze oznacza, że **CSS nie został załadowany** albo **reguła na `body` jest nadpisana**.
+
+### 6.1 Sprawdź czy `styles.css` się ładuje
+W DevTools → Console/Network:
+- Czy nie ma `GET .../styles.css 404`?
+- Czy `Content-Type` wygląda jak `text/css`?
+
+Jeśli GitHub Pages, to najczęstsze powody:
+- plik na dysku ma inną nazwę (`styles.css` vs `style.css`)
+- inna wielkość liter (`Styles.css` ≠ `styles.css`)
+- zła ścieżka (`./styles.css` zakłada “w tym samym folderze co index.html”)
+
+### 6.2 Sprawdź czy reguły tła są w `styles.css`
+Minimalny “rdzeń” który musi istnieć:
+```css
+html, body { height:100%; margin:0; }
+body{
+  display:grid;
+  place-items:center;
+  overflow:hidden;
+  background: radial-gradient(1400px 700px at 50% 25%,
+    #ff5aa0 0%, #ff3b63 22%, #c43e79 45%, #6a4aa7 72%, #1b1a2b 100%);
+}
+.wrap{
+  width:100vw;
+  height:100vh;
+  display:grid;
+  place-items:center;
+}
+svg{
+  width:100%;
+  height:100%;
+  display:block;
+  transform: scale(1.08);
+  transform-origin: center center;
+}
+```
+
+### 6.3 Sprawdź czy QR overlay nie zasłania gry
+W `QR` overlay ma `position:fixed; inset:0; background:#000; z-index:2000;`
+Ale w `GRA` powinien mieć klasę `.hidden` → `display:none`.
+
+Sprawdź w konsoli:
+```js
+document.getElementById("qrScreen")?.className
+```
+Jeśli **nie ma** `hidden`, to overlay może zasłaniać scenę.
+
+Wymuś:
+```js
+document.getElementById("qrScreen")?.classList.add("hidden");
+document.getElementById("gameScreen")?.classList.remove("hidden");
+```
+
+### 6.4 Najprostszy test “czy CSS w ogóle działa”
+W konsoli:
+```js
+getComputedStyle(document.body).backgroundImage
+```
+Jeśli zwraca `none`, to CSS z gradientem nie działa / nie jest załadowany.
 
 ---
