@@ -1,3 +1,4 @@
+// anim.js
 export const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 /**
@@ -6,16 +7,17 @@ export const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
  *
  * Wspierane animacje:
  * - edge   (kaflami):  inEdge/outEdge
- * - matrix (wipe):     inMatrix/outMatrix
- * - rain   (pikselami): inRain/outRain (dwustronnie: do środka / od środka)
+ * - matrix (wipe):    inMatrix/outMatrix
+ * - rain   (pikselami, “zbieranie/rozmazywanie”): inRain/outRain (alias inMatrixRain/outMatrixRain)
  *
- * UWAGA: przekaż dotOff z scene.js:
- *   const anim = createAnimator({ tileAt, snapArea, clearArea, clearTileAt, dotOff: COLORS.dotOff });
+ * WAŻNE:
+ * - dotOff MUSI być przekazane z scene.js (np. COLORS.dotOff),
+ *   bo animacje pikselowe nie mogą “zgadywać” koloru zgaszonego.
  */
 export const createAnimator = ({ tileAt, snapArea, clearArea, clearTileAt, dotOff }) => {
-  // -----------------------------
+  // ============================================================
   // Helpers
-  // -----------------------------
+  // ============================================================
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
   const range = (n) => {
@@ -35,8 +37,8 @@ export const createAnimator = ({ tileAt, snapArea, clearArea, clearTileAt, dotOf
     }
   };
 
-  // Z snapshotu budujemy listę wszystkich kropek w area
-  const buildDotsFromSnap = (big, area, snap) => {
+  // Lista wszystkich kropek w obszarze + ich docelowy fill ze snapshota
+  const buildDotListFromSnap = (big, area, snap) => {
     const { c1, r1, c2, r2 } = area;
     const tilesW = c2 - c1 + 1;
     const tilesH = r2 - r1 + 1;
@@ -53,7 +55,7 @@ export const createAnimator = ({ tileAt, snapArea, clearArea, clearTileAt, dotOf
             dots.push({
               el: t.dots[rr][cc],
               targetFill: data[rr][cc],
-              gx: tx * 5 + cc, // global w obrębie area (w jednostkach kropek)
+              gx: tx * 5 + cc, // global w obrębie obszaru (w jednostkach “kropka”)
               gy: ty * 7 + rr,
             });
           }
@@ -63,210 +65,221 @@ export const createAnimator = ({ tileAt, snapArea, clearArea, clearTileAt, dotOf
     return dots;
   };
 
-  // -----------------------------
-  // RAIN (dwustronny wipe pikselami)
-  // -----------------------------
+  // ============================================================
+  // RAIN (pikselami) — “więcej się dzieje”, ale finalnie zawsze 100% poprawny obraz
+  //
+  // Założenia efektu:
+  // - IN: start “z dwóch stron” do środka (góra+dół lub lewo+prawo), ale z chaosem (rozproszenie).
+  // - OUT: “rozmazywanie” od środka na dwie strony.
+  // - Prelude: najpierw rzadko (mało pasów), potem coraz więcej — jakby “szukało sygnału”.
+  // - Zero obcych kolorów: używamy TYLKO dotOff i targetFill.
+  // - Na końcu zawsze “final pass” -> żadnych niedopalonych pikseli.
+  // ============================================================
   const runRain = async ({
     big,
     area,
-    axis = "down",        // down/up = pion (kolumny), left/right = poziom (wiersze)
-    stepMs = 24,          // przerwa między paczkami w fazie “zbierania”
-    density = 0.10,       // “zbieranie”: ile kropek w paczce
-    scatter = 1.25,       // “zbieranie”: rozproszenie kolejności
-  
-    // --- NOWE: faza “jazdy” przed zbieraniem ---
-    preludeMs = 22,       // przerwa między klatkami “jazdy”
-    preludeSteps = 22,    // ile klatek “jazdy”
-    lanesFrom = 0.12,     // startowa część aktywnych pasów (rzadko)
-    lanesTo = 0.65,       // końcowa część aktywnych pasów (gęsto)
-    trail = 8,            // długość “ogonka” w pasie (ile kropek świeci za “głową”)
-    flicker = 0.18,       // losowe mrugnięcia w pobliżu (0..1) — dodaje “życia”
-    mode = "in",          // "in" | "out"
+    axis = "down",      // down/up/left/right (tu to bardziej “orientacja” niż kierunek)
+    stepMs = 22,        // przerwa między porcjami
+    speedMul = 1.0,     // >1 wolniej, <1 szybciej
+    density = 0.10,     // 0..1: porcja kropek (większe = szybciej wypełnia, ale mniej “gry”)
+    scatter = 1.35,     // >=1: jak bardzo rozproszyć kolejność (większe = bardziej chaotycznie)
+    preludeSteps = 22,  // ile kroków “szumu zanim zacznie się zbierać”
+    preludeMs = 16,     // tempo prelude
+    lanesFrom = 0.10,   // start: % aktywnych pasów w prelude (rzadko)
+    lanesTo = 0.70,     // koniec: % aktywnych pasów w prelude (gęściej)
+    trail = 8,          // “ogon” w prelude: ile porcji cofamy (gasimy) żeby piksele “jeździły”
+    mode = "in",        // "in" | "out"
   } = {}) => {
-    if (!dotOff) throw new Error("Animator: dotOff is required (pass dotOff from scene COLORS.dotOff).");
-  
+    if (!dotOff) throw new Error("anim.js: dotOff is required in createAnimator({... dotOff })");
+
     const { c1, r1, c2, r2 } = area;
-  
+
     // Snapshot docelowego obrazu
     const snap = snapArea(big, c1, r1, c2, r2);
-  
-    // Zbuduj listę wszystkich kropek w area
+
+    // IN: czyścimy obszar na start, żeby nie mieszać stanów
+    if (mode === "in") clearArea(big, c1, r1, c2, r2);
+
     const dotsAll = buildDotListFromSnap(big, area, snap);
     if (!dotsAll.length) return;
-  
-    // Dla IN: czyścimy od razu, bo faza “jazdy” ma działać na pustym tle
-    if (mode === "in") clearArea(big, c1, r1, c2, r2);
-  
-    // Pracujemy tylko na “docelowo świecących” (żeby nie mrugało wokół tekstu / w tle)
-    // OUT: pracujemy tylko na aktualnie świecących
-    let work = [];
-    if (mode === "in") {
-      work = dotsAll.filter(d => d.targetFill !== dotOff);
-    } else {
-      work = dotsAll.filter(d => (d.el.getAttribute("fill") || dotOff) !== dotOff);
-    }
-    if (!work.length) {
-      if (mode === "in") for (const d of dotsAll) d.el.setAttribute("fill", d.targetFill);
-      return;
-    }
-  
+
     // Rozmiar obszaru w “kropkach”
     const tilesW = c2 - c1 + 1;
     const tilesH = r2 - r1 + 1;
-    const W = tilesW * 5;
-    const H = tilesH * 7;
-  
+    const W = tilesW * 5; // lanes przy pionie
+    const H = tilesH * 7; // lanes przy poziomie
+
     const vertical = (axis === "down" || axis === "up");
-    const laneCount = vertical ? W : H;        // pasy: kolumny lub wiersze
-    const laneLen   = vertical ? H : W;        // długość pasa
-  
-    // Szybki indeks: lane -> lista kropek w tej lane (posortowana po pozycji)
-    const lanes = Array.from({ length: laneCount }, () => []);
-    for (const d of work) {
-      const lane = vertical ? d.gx : d.gy;
-      const pos  = vertical ? d.gy : d.gx;
-      lanes[lane].push({ ...d, _pos: pos });
+    const laneCount = vertical ? W : H;     // ile pasów
+    const spanMain  = vertical ? H : W;     // długość pasa
+
+    // Wybór “kandydatów”:
+    // - IN: animujemy tylko pixele, które docelowo mają świecić (unikamy mrugania tła)
+    // - OUT: animujemy tylko te, które TERAZ świecą (czyli nie-dotOff)
+    let work = dotsAll;
+    if (mode === "in") {
+      work = dotsAll.filter(d => d.targetFill !== dotOff);
+    } else {
+      work = dotsAll.filter(d => d.el.getAttribute("fill") !== dotOff);
     }
-    for (let i = 0; i < laneCount; i++) lanes[i].sort((a,b)=>a._pos-b._pos);
-  
-    // --- FAZA 1: “JAZDA” PASAMI (rzadko -> gęsto), start z losowych miejsc, chwilę “jedzie” ---
-    // Idea: w każdej klatce aktywujemy część lanes (narastająco),
-    // w każdej lane mamy “głowę” (losowy start) i losowy kierunek (lewo/prawo lub góra/dół),
-    // świecimy “ogon” o długości trail w docelowym kolorze (targetFill),
-    // a resztę z tej lane (która jeszcze nie ma być ujawniona) wygaszamy do dotOff.
+    if (!work.length) {
+      // ale i tak final pass (żeby stan się nie rozjechał)
+      if (mode === "in") for (const d of dotsAll) d.el.setAttribute("fill", d.targetFill);
+      return;
+    }
+
+    const sStep = Math.max(1, Math.round(stepMs * (Number.isFinite(speedMul) ? speedMul : 1)));
+    const sPreludeMs = Math.max(1, Math.round(preludeMs * (Number.isFinite(speedMul) ? speedMul : 1)));
+
+    // Mapujemy dot -> laneIndex + posInLane (dla pion/poziom)
+    const laneOf = (d) => vertical ? d.gx : d.gy;
+    const posOf  = (d) => vertical ? d.gy : d.gx;
+
+    // ============================================================
+    // PRELUDE: “jeżdżą” porcje w losowych pasach, najpierw rzadko potem gęściej
     //
-    // UWAGA: działamy tylko na kropkach work (docelowo ON), więc tło nie migocze.
-  
-    // Stan lane
-    const laneState = Array.from({ length: laneCount }, () => ({
-      dir: Math.random() < 0.5 ? 1 : -1,
-      head: Math.floor(Math.random() * laneLen),
-      speed: 1 + (Math.random() < 0.25 ? 1 : 0), // czasem “szybszy pas”
-    }));
-  
-    // Pomocniczo: szybka funkcja “czy kropka jest w ogonie”
-    const inTrail = (pos, head, dir, len, L) => {
-      // liczymy odległość wzdłuż kierunku (wrap nie robimy — efekt “przelotu” kończy się na krawędzi)
-      // trail ciągnie się ZA głową
-      const delta = dir === 1 ? (head - pos) : (pos - head);
-      return delta >= 0 && delta < len;
-    };
-  
-    // W fazie OUT też możemy zrobić “mazanie” (od środka na zewnątrz) jako jazdę,
-    // ale Ty opisujesz głównie IN. Dla OUT robimy krótszą jazdę “rozmazującą”.
-    const preludeStepsEff = mode === "out" ? Math.max(8, Math.floor(preludeSteps * 0.6)) : preludeSteps;
-  
-    for (let s = 0; s < preludeStepsEff; s++) {
-      // ile lanes aktywnych w tej klatce (narastająco)
-      const t = preludeStepsEff <= 1 ? 1 : (s / (preludeStepsEff - 1));
-      const frac = lanesFrom + (lanesTo - lanesFrom) * t;
-      const activeCount = Math.max(1, Math.floor(laneCount * frac));
-  
-      // wybieramy losowy podzbiór lanes (żeby start nie był “od brzegu”)
-      // trik: losujemy permutację indeksów i bierzemy pierwsze activeCount
-      const idx = new Array(laneCount);
-      for (let i = 0; i < laneCount; i++) idx[i] = i;
-      for (let i = laneCount - 1; i > 0; i--) {
-        const j = (Math.random() * (i + 1)) | 0;
-        const tmp = idx[i]; idx[i] = idx[j]; idx[j] = tmp;
-      }
-      const active = idx.slice(0, activeCount);
-  
-      // dla aktywnych lanes: przesuń głowę i ustaw ogon
-      for (const li of active) {
-        const st = laneState[li];
-        st.head += st.dir * st.speed;
-  
-        // odbicie od krawędzi (żeby było “pojeżdżenie”)
-        if (st.head < 0) { st.head = 0; st.dir = 1; }
-        if (st.head > laneLen - 1) { st.head = laneLen - 1; st.dir = -1; }
-  
-        const laneDots = lanes[li];
-        if (!laneDots.length) continue;
-  
-        // W tej lane: ON tylko ogon, reszta OFF (ale tylko w obrębie work!)
-        for (const d of laneDots) {
-          const pos = d._pos;
-  
-          if (mode === "in") {
-            const on = inTrail(pos, st.head, st.dir, trail, laneLen);
-            if (on) d.el.setAttribute("fill", d.targetFill);
-            else    d.el.setAttribute("fill", dotOff);
-          } else {
-            // OUT: “rozmazywanie” — ogon oznacza “wycieramy” -> OFF,
-            // reszta zostaje jak jest
-            const off = inTrail(pos, st.head, st.dir, trail, laneLen);
-            if (off) d.el.setAttribute("fill", dotOff);
-          }
-        }
-  
-        // lekkie “iskry” w pobliżu (opcjonalnie, ale daje wrażenie życia)
-        if (mode === "in" && flicker > 0 && Math.random() < flicker) {
-          const laneDots2 = laneDots;
-          if (laneDots2.length) {
-            const pick = laneDots2[(Math.random() * laneDots2.length) | 0];
-            pick.el.setAttribute("fill", pick.targetFill);
-          }
+    // IN: krótkie “zapalenia” targetFill, potem gaszenie -> wrażenie ruchu
+    // OUT: krótkie “gaszenia” dotOff, potem przywracanie -> wrażenie rozmazywania
+    // ============================================================
+    const byLane = new Array(laneCount);
+    for (let i = 0; i < laneCount; i++) byLane[i] = [];
+    for (const d of work) byLane[laneOf(d)].push(d);
+
+    // sort w ramach pasa: od jednej z dwóch stron LOSOWO (żeby nie było “sztywno od krawędzi”)
+    for (let lane = 0; lane < laneCount; lane++) {
+      const arr = byLane[lane];
+      if (!arr.length) continue;
+      const fromTop = Math.random() < 0.5;
+      arr.sort((a, b) => (fromTop ? posOf(a) - posOf(b) : posOf(b) - posOf(a)));
+      // rozproszenie w pasie
+      if (scatter > 1) {
+        // lekki chaos przez “swap” losowych elementów
+        const swaps = Math.floor(arr.length * 0.02 * (scatter - 1));
+        for (let k = 0; k < swaps; k++) {
+          const i = (Math.random() * arr.length) | 0;
+          const j = (Math.random() * arr.length) | 0;
+          const tmp = arr[i]; arr[i] = arr[j]; arr[j] = tmp;
         }
       }
-  
-      if (preludeMs) await sleep(preludeMs);
     }
-  
-    // --- FAZA 2: “ZBIERANIE W OBRAZ” (dwustronnie: krawędzie -> środek / środek -> krawędzie) ---
-    const ring = (pos) => Math.min(pos, (laneLen - 1 - pos));
-    const noiseMain = laneLen * 0.55 * scatter;
-    const noiseLane = laneCount * 0.25 * scatter;
-  
-    // sort wg odległości od najbliższej krawędzi (symetrycznie od 2 stron),
-    // + szum żeby było bardziej “rozsypane”
-    const sorted = work.slice().sort((a, b) => {
-      const posA  = vertical ? a.gy : a.gx;
-      const posB  = vertical ? b.gy : b.gx;
-      const laneA = vertical ? a.gx : a.gy;
-      const laneB = vertical ? b.gx : b.gy;
-  
-      const kA = ring(posA) + (Math.random() - 0.5) * noiseMain;
-      const kB = ring(posB) + (Math.random() - 0.5) * noiseMain;
-  
-      const lA = laneA + (Math.random() - 0.5) * noiseLane;
-      const lB = laneB + (Math.random() - 0.5) * noiseLane;
-  
-      return (kA + lA / laneCount) - (kB + lB / laneCount);
+
+    // prelude “głowice” – ile elementów z każdego pasa jest “aktywnie przesuwane”
+    const laneHeads = new Array(laneCount).fill(0);
+
+    const prelude = Math.max(0, preludeSteps | 0);
+    for (let step = 0; step < prelude; step++) {
+      const t = prelude <= 1 ? 1 : step / (prelude - 1);
+      const activeFrac = lanesFrom + (lanesTo - lanesFrom) * t;
+      const activeLanes = clamp(Math.floor(laneCount * activeFrac), 1, laneCount);
+
+      // wybierz losowy zestaw pasów dla tego kroku
+      const picks = [];
+      for (let i = 0; i < laneCount; i++) picks.push(i);
+      // partial shuffle
+      for (let i = 0; i < activeLanes; i++) {
+        const j = i + ((Math.random() * (laneCount - i)) | 0);
+        const tmp = picks[i]; picks[i] = picks[j]; picks[j] = tmp;
+      }
+
+      const lanes = picks.slice(0, activeLanes);
+
+      // ile “kropek” poruszamy w każdym aktywnym pasie w tym kroku
+      const perLaneBatch = clamp(Math.floor(spanMain * 0.06), 3, 30);
+
+      for (const lane of lanes) {
+        const arr = byLane[lane];
+        if (!arr.length) continue;
+
+        // przesuwamy “głowicę” w pasie
+        const start = laneHeads[lane];
+        const end = Math.min(arr.length, start + perLaneBatch);
+
+        // IN: zapal porcję / OUT: zgaś porcję
+        if (mode === "in") {
+          for (let i = start; i < end; i++) arr[i].el.setAttribute("fill", arr[i].targetFill);
+        } else {
+          for (let i = start; i < end; i++) arr[i].el.setAttribute("fill", dotOff);
+        }
+
+        // ogon: gaś/zapal to co było “trail” porcji temu (żeby wyglądało jak jeżdżenie)
+        const tailStart = Math.max(0, start - trail * perLaneBatch);
+        const tailEnd = Math.min(arr.length, tailStart + perLaneBatch);
+
+        if (trail > 0) {
+          if (mode === "in") {
+            // cofnij do off
+            for (let i = tailStart; i < tailEnd; i++) arr[i].el.setAttribute("fill", dotOff);
+          } else {
+            // przy OUT przywróć (żeby wyglądało jak rozmazywanie, a nie natychmiastowe czernienie)
+            for (let i = tailStart; i < tailEnd; i++) {
+              // jeśli ktoś nie ma docelowego fill (teoretycznie), to lepiej przywrócić aktualny targetFill ze snap
+              arr[i].el.setAttribute("fill", arr[i].targetFill);
+            }
+          }
+        }
+
+        laneHeads[lane] = end >= arr.length ? 0 : end; // zapętlenie = “jeżdżenie”
+      }
+
+      if (sPreludeMs) await sleep(sPreludeMs);
+    }
+
+    // ============================================================
+    // CONVERGE / WIPE: właściwe “zbieranie do obrazu” lub “wycieranie na dwie strony”
+    //
+    // Klucz: odległość od NAJBLIŻSZEJ krawędzi wzdłuż osi (czyli start z DWÓCH stron)
+    // distToNearestEdge = min(pos, spanMain-1-pos)
+    //
+    // IN: rośnie dist -> idziemy od krawędzi do środka
+    // OUT: maleje dist -> idziemy od środka do krawędzi (“ścierka na dwie strony”)
+    // + dodatkowy chaos (scatter) aby nie było pasów
+    // ============================================================
+    const noiseSpan = spanMain * 0.35 * Math.max(1, scatter);
+
+    const keyed = work.map((d) => {
+      const pos = posOf(d);
+      const dist = Math.min(pos, (spanMain - 1) - pos); // DWIE STRONY -> środek
+      const lane = laneOf(d);
+      const laneNoise = (Math.random() - 0.5) * (Math.max(1, laneCount) * 0.12 * scatter);
+      const posNoise  = (Math.random() - 0.5) * noiseSpan;
+      return { d, key: dist + posNoise + laneNoise * 0.01, lane };
     });
-  
-    if (mode === "out") sorted.reverse();
-  
-    const total = sorted.length;
-    const batch = clamp(Math.floor(total * density), 120, 2200);
-  
+
+    keyed.sort((a, b) => a.key - b.key);
+    if (mode === "out") keyed.reverse(); // od środka na dwie strony
+
+    const total = keyed.length;
+    const batch = clamp(Math.floor(total * density), 80, 1600);
+
     for (let i = 0; i < total; i += batch) {
       const end = Math.min(total, i + batch);
-  
+
       if (mode === "in") {
         for (let k = i; k < end; k++) {
-          const d = sorted[k];
+          const d = keyed[k].d;
           d.el.setAttribute("fill", d.targetFill);
         }
       } else {
         for (let k = i; k < end; k++) {
-          const d = sorted[k];
+          const d = keyed[k].d;
           d.el.setAttribute("fill", dotOff);
         }
       }
-  
-      if (stepMs) await sleep(stepMs);
+
+      if (sStep) await sleep(sStep);
     }
-  
-    // FINAL PASS: brak “niedopalonych”
+
+    // ============================================================
+    // FINAL PASS: brak “niedopalonych” pikseli
+    // ============================================================
     if (mode === "in") {
       for (const d of dotsAll) d.el.setAttribute("fill", d.targetFill);
     }
   };
 
-  // -----------------------------
+  // ============================================================
   // Public API
-  // -----------------------------
+  // ============================================================
   return {
     // -----------------------------
     // EDGE (kaflami)
@@ -279,10 +292,10 @@ export const createAnimator = ({ tileAt, snapArea, clearArea, clearTileAt, dotOf
       const W = c2 - c1 + 1, H = r2 - r1 + 1;
       const coords = [];
 
-      if (dir === "left")       for (let x = 0; x < W; x++)     for (let y = 0; y < H; y++) coords.push([x, y]);
-      else if (dir === "right") for (let x = W - 1; x >= 0; x--) for (let y = 0; y < H; y++) coords.push([x, y]);
-      else if (dir === "top")   for (let y = 0; y < H; y++)     for (let x = 0; x < W; x++) coords.push([x, y]);
-      else                      for (let y = H - 1; y >= 0; y--) for (let x = 0; x < W; x++) coords.push([x, y]);
+      if (dir === "left")       for (let x = 0; x < W; x++)       for (let y = 0; y < H; y++) coords.push([x, y]);
+      else if (dir === "right") for (let x = W - 1; x >= 0; x--)  for (let y = 0; y < H; y++) coords.push([x, y]);
+      else if (dir === "top")   for (let y = 0; y < H; y++)       for (let x = 0; x < W; x++) coords.push([x, y]);
+      else                      for (let y = H - 1; y >= 0; y--)  for (let x = 0; x < W; x++) coords.push([x, y]);
 
       for (const [tx, ty] of coords) {
         setTileFromSnap(big, c1, r1, tx, ty, snap[ty][tx]);
@@ -295,10 +308,10 @@ export const createAnimator = ({ tileAt, snapArea, clearArea, clearTileAt, dotOf
       const W = c2 - c1 + 1, H = r2 - r1 + 1;
       const coords = [];
 
-      if (dir === "left")       for (let x = 0; x < W; x++)     for (let y = 0; y < H; y++) coords.push([x, y]);
-      else if (dir === "right") for (let x = W - 1; x >= 0; x--) for (let y = 0; y < H; y++) coords.push([x, y]);
-      else if (dir === "top")   for (let y = 0; y < H; y++)     for (let x = 0; x < W; x++) coords.push([x, y]);
-      else                      for (let y = H - 1; y >= 0; y--) for (let x = 0; x < W; x++) coords.push([x, y]);
+      if (dir === "left")       for (let x = 0; x < W; x++)       for (let y = 0; y < H; y++) coords.push([x, y]);
+      else if (dir === "right") for (let x = W - 1; x >= 0; x--)  for (let y = 0; y < H; y++) coords.push([x, y]);
+      else if (dir === "top")   for (let y = 0; y < H; y++)       for (let x = 0; x < W; x++) coords.push([x, y]);
+      else                      for (let y = H - 1; y >= 0; y--)  for (let x = 0; x < W; x++) coords.push([x, y]);
 
       for (const [tx, ty] of coords) {
         clearTileAt(big, c1 + tx, r1 + ty);
@@ -351,55 +364,50 @@ export const createAnimator = ({ tileAt, snapArea, clearArea, clearTileAt, dotOf
     },
 
     // -----------------------------
-    // RAIN (dwustronny wipe pikselami)
-    // axis: down/up = pion, left/right = poziom
+    // RAIN (pikselami)
     // -----------------------------
-    async inRain(big, area, axis = "down", stepMs = 24, opts = {}) {
+    async inRain(big, area, axis = "down", stepMs = 22, opts = {}) {
       return runRain({
         big,
         area,
         axis,
         stepMs,
-        density: opts.density ?? 0.10,
-        scatter: opts.scatter ?? 1.25,
         mode: "in",
+        ...opts,
       });
     },
 
-    async outRain(big, area, axis = "down", stepMs = 24, opts = {}) {
+    async outRain(big, area, axis = "down", stepMs = 22, opts = {}) {
       return runRain({
         big,
         area,
         axis,
         stepMs,
-        density: opts.density ?? 0.10,
-        scatter: opts.scatter ?? 1.25,
         mode: "out",
+        ...opts,
       });
     },
 
-    // aliasy “matrix_rain”
-    async inMatrixRain(big, area, axis = "down", stepMs = 24, opts = {}) {
+    // aliasy
+    async inMatrixRain(big, area, axis = "down", stepMs = 22, opts = {}) {
       return runRain({
         big,
         area,
         axis,
         stepMs,
-        density: opts.density ?? 0.10,
-        scatter: opts.scatter ?? 1.25,
         mode: "in",
+        ...opts,
       });
     },
 
-    async outMatrixRain(big, area, axis = "down", stepMs = 24, opts = {}) {
+    async outMatrixRain(big, area, axis = "down", stepMs = 22, opts = {}) {
       return runRain({
         big,
         area,
         axis,
         stepMs,
-        density: opts.density ?? 0.10,
-        scatter: opts.scatter ?? 1.25,
         mode: "out",
+        ...opts,
       });
     },
   };
