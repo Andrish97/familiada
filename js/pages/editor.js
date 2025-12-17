@@ -87,18 +87,16 @@ function updateRemaining() {
   }
 
   remainRow.style.display = "";
+
   const sum = calcSum();
-  const diff = 100 - sum; // dodatnie = brakuje, 0 = ok, ujemne = za dużo
+  const left = 100 - sum; // >0 brakuje, 0 ok, <0 za dużo
 
-  // tekst
-  if (diff > 0) remainVal.textContent = `-${diff}`;     // brakuje
-  else if (diff === 0) remainVal.textContent = "OK";    // idealnie
-  else remainVal.textContent = `+${Math.abs(diff)}`;    // za dużo
+  remainVal.textContent = String(left);
 
-  // opcjonalnie: kolor przez class
-  remainRow.classList.toggle("ok", diff === 0);
-  remainRow.classList.toggle("warn", diff !== 0);
-  remainRow.classList.toggle("bad", diff < 0);
+  // opcjonalnie klasy (jeśli chcesz potem ostylować)
+  remainRow.classList.toggle("ok", left === 0);
+  remainRow.classList.toggle("bad", left < 0);
+  remainRow.classList.toggle("warn", left > 0);
 }
 
 function updateBadges() {
