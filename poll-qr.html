@@ -3,32 +3,37 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
+
   <title>Familiada — QR</title>
+
   <link rel="icon" href="favicon.ico"/>
   <link rel="stylesheet" href="css/base.css"/>
+  <link rel="stylesheet" href="css/poll-qr.css"/>
+
   <script type="module" src="js/pages/poll-qr.js" defer></script>
 </head>
 
-<body style="margin:0;min-height:100vh;background:#050914;color:#fff;display:grid;place-items:center;">
-  <!-- ✅ mały przycisk w rogu -->
-  <button id="btnFS" class="btn gold" type="button"
+<body class="poll-qr-body">
+  <!-- przycisk fullscreen -->
+  <button
+    id="btnFS"
+    class="btn gold qr-fs-btn"
+    type="button"
     aria-label="Pełny ekran"
     title="Pełny ekran"
-    style="
-      position:fixed; top:14px; right:14px;
-      width:46px; height:46px; padding:0;
-      border-radius:14px;
-      display:grid; place-items:center;
-      font-weight:1000;
-    ">
+  >
     ⛶
   </button>
 
-  <div style="text-align:center;padding:18px;width:min(900px,94vw);">
-    <div style="font-weight:1000;letter-spacing:.18em;color:#ffeaa6;">FAMILIADA</div>
-    <div style="font-weight:1000;font-size:18px;margin-top:10px;letter-spacing:.06em;">Zeskanuj QR, aby zagłosować</div>
-    <div id="qr" style="margin:18px auto;width:420px;height:420px;"></div>
-    <!-- ✅ USUWAMY link z rzutnika: nie ma już #url -->
-  </div>
+  <!-- zawartość rzutnika -->
+  <main class="qr-wrap">
+    <div class="qr-brand">FAMILIADA</div>
+
+    <div class="qr-title">
+      Zeskanuj QR, aby zagłosować
+    </div>
+
+    <div id="qr" class="qr-box"></div>
+  </main>
 </body>
 </html>
