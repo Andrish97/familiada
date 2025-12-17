@@ -267,14 +267,14 @@
   // ---------------- Special: rysowanie X w 3x3 tile ----------------
   // Wzór:
   // ⇖⎵⇗
-  //  █
+  //  ⧗
   // ⇙⎴⇘
   const drawBigX_3x3 = (GLYPHS, big, col1, row1, color = LIT.main) => {
     putCharAt(GLYPHS, big, col1 + 0, row1 + 0, "⇖", color);
     putCharAt(GLYPHS, big, col1 + 1, row1 + 0, "⎵", color);
     putCharAt(GLYPHS, big, col1 + 2, row1 + 0, "⇗", color);
 
-    putCharAt(GLYPHS, big, col1 + 1, row1 + 1, "█", color);
+    putCharAt(GLYPHS, big, col1 + 1, row1 + 1, "⧗", color);
 
     putCharAt(GLYPHS, big, col1 + 0, row1 + 2, "⇙", color);
     putCharAt(GLYPHS, big, col1 + 1, row1 + 2, "⎴", color);
