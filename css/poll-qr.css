@@ -1,0 +1,33 @@
+/* css/poll-qr.css */
+
+#btnFS{
+  position: fixed;
+  top: 14px;
+  right: 14px;
+  width: 46px;
+  height: 46px;
+  padding: 0;
+  border-radius: 14px;
+
+  display: grid;
+  place-items: center;
+
+  font-size: 20px;
+  line-height: 1;
+  font-weight: 1000;
+
+  cursor: pointer;
+}
+
+#btnFS:hover{
+  filter: brightness(1.15);
+}
+
+#btnFS:active{
+  transform: scale(0.96);
+}
+
+#qr canvas{
+  display: block;
+  margin: 0 auto;
+}
