@@ -160,7 +160,7 @@ export async function createScene() {
     return snap;
   };
 
-  const anim = createAnimator({ tileAt, snapArea, clearArea, clearTileAt });
+  const anim = createAnimator({ tileAt, snapArea, clearArea, clearTileAt, dotOff: COLORS.dotOff });
 
   // ============================
   // GLOBAL ANIMATION SPEED
