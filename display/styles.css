@@ -85,3 +85,12 @@ svg{
   color: #fff;
   letter-spacing: 0.6px;
 }
+
+/* ===== BLACK SCREEN (domyślny) ===== */
+.black-screen{
+  position: fixed;
+  inset: 0;
+  background: #000;
+  z-index: 1500;
+}
+
