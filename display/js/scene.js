@@ -30,7 +30,7 @@ export async function createScene() {
   // Geometria (jak w oryginale)
   const d = 4;
   const g = 1;
-  const gapCells = d;
+  const gapCells = 2 * d;
 
   const Wgrid = (X, dDots, gap) => X * dDots + (X + 1) * gap;
   const Hgrid = (Y, dDots, gap) => Y * dDots + (Y + 1) * gap;
