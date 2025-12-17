@@ -13,7 +13,6 @@ export const createAnimator = ({ tileAt, snapArea, clearArea, clearTileAt }) => 
   // -----------------------------
   // Helpers
   // -----------------------------
-  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
   const getAreaWH = (area) => {
     const W = area.c2 - area.c1 + 1;
