@@ -90,6 +90,46 @@ function safeDownloadName(name) {
 }
 
 /* ====== DB ====== */
+
+async function resetPollResultsForEditing(gameId){
+  // 1) status -> draft (żeby sondaż “znowu przed”)
+  const { error: gErr } = await sb()
+    .from("games")
+    .update({ status: "draft", poll_closed_at: null })
+    .eq("id", gameId);
+  if (gErr) throw gErr;
+
+  // 2) pobierz pytania gry
+  const { data: qs, error: qErr } = await sb()
+    .from("questions")
+    .select("id")
+    .eq("game_id", gameId);
+
+  if (qErr) throw qErr;
+
+  const qIds = (qs || []).map(x => x.id);
+  if (!qIds.length) return;
+
+  // 3) pobierz odpowiedzi dla tych pytań
+  const { data: ans, error: aErr } = await sb()
+    .from("answers")
+    .select("id")
+    .in("question_id", qIds);
+
+  if (aErr) throw aErr;
+
+  const aIds = (ans || []).map(x => x.id);
+  if (!aIds.length) return;
+
+  // 4) wyzeruj fixed_points
+  const { error: uErr } = await sb()
+    .from("answers")
+    .update({ fixed_points: 0 })
+    .in("id", aIds);
+
+  if (uErr) throw uErr;
+}
+
 async function listGames() {
   const { data, error } = await sb()
     .from("games")
@@ -319,13 +359,36 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   btnEdit?.addEventListener("click", async () => {
     if (!selectedId) return;
-
+  
     const g = games.find((x) => x.id === selectedId);
-    if (g?.kind === "poll" && g?.status === "poll_open") {
+    if (!g) return;
+  
+    // twarda blokada: poll_open
+    if (g.kind === "poll" && g.status === "poll_open") {
       alert("Sondaż jest otwarty — edycja zablokowana.");
       return;
     }
-
+  
+    // NOWE: ostrzeżenie dla READY (po sondażu)
+    if (g.kind === "poll" && g.status === "ready") {
+      const ok = await confirmModal({
+        title: "Edycja po sondażu",
+        text: "W razie edycji punkty uzyskane w sondażu zostaną usunięte, a sondaż wróci do stanu SZKIC. Kontynuować?",
+        okText: "Edytuj",
+        cancelText: "Anuluj",
+      });
+      if (!ok) return;
+  
+      try {
+        await resetPollResultsForEditing(g.id);
+        await refresh(); // odśwież status na kafelkach
+      } catch (e) {
+        console.error("[builder] reset poll results error:", e);
+        alert("Nie udało się przygotować gry do edycji (sprawdź konsolę).");
+        return;
+      }
+    }
+  
     location.href = `editor.html?id=${encodeURIComponent(selectedId)}`;
   });
 
