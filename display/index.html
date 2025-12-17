@@ -157,11 +157,11 @@
       H: 1*hSmall + 2*g
     };
   })();
-
-  // pozycje (jak ustaliliśmy)
-  const shift = panelDims.W / 4;     // ~1/4 szerokości panelu
-  const leftX  = 10 + shift;         // lewy w prawo
-  const rightX = 1600 - panelDims.W - 10 - shift; // prawy w lewo
+  
+  const inset = wBlock * 0.2;
+  
+  const xLeft  = 800 - totalW/2 + inset;
+  const xRight = xLeft + wBlock + gapBetween - inset*2;
 
   const sideY  = 390;
   const topX   = 800 - panelDims.W/2;
