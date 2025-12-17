@@ -3,6 +3,7 @@ import { sb } from "../core/supabase.js";
 import { requireAuth, signOut } from "../core/auth.js";
 import { guardDesktopOnly } from "../core/device-guard.js";
 import { confirmModal } from "../core/modal.js";
+import { RULES } from "../core/game-validate.js";
 
 guardDesktopOnly({ message: "Edytor Familiady jest dostępny tylko na komputerze." });
 
@@ -22,6 +23,7 @@ const qText = document.getElementById("qText");
 const btnAddQ = document.getElementById("btnAddQ");
 
 const aList = document.getElementById("aList");
+const btnAddA = document.getElementById("btnAddA");
 const msg = document.getElementById("msg");
 
 const gameKindBadge = document.getElementById("gameKindBadge");
@@ -38,9 +40,6 @@ let questions = [];
 let activeQ = null;
 let answers = [];
 
-const QN = 10;
-const AN = 5;
-
 function setMsg(t){
   if(!msg) return;
   msg.textContent = t || "";
@@ -55,7 +54,6 @@ function clip17(s){
 function isPoll(){ return game?.kind === "poll"; }
 function isFixed(){ return game?.kind === "fixed"; }
 function isLocked(){
-  // twarda blokada edycji gdy sondaż otwarty
   return isPoll() && game?.status === "poll_open";
 }
 
@@ -75,9 +73,13 @@ function updateBadges(){
   if(hintFixed) hintFixed.style.display = isFixed() ? "" : "none";
   if(hintPoll) hintPoll.style.display = isPoll() ? "" : "none";
 
-  // “ZOSTAŁO” tylko dla lokalnej i tylko gdy pytanie wybrane
   if(remainRow){
     remainRow.style.display = (isFixed() && !!activeQ) ? "" : "none";
+  }
+
+  if(btnAddA){
+    btnAddA.style.display = activeQ ? "" : "none";
+    btnAddA.disabled = isLocked() || !activeQ || answers.length >= RULES.AN_MAX;
   }
 }
 
@@ -122,7 +124,6 @@ async function loadQuestions(){
 }
 
 async function insertQuestion(){
-  // pytania numerujemy po ord
   const ord = questions.length ? Math.max(...questions.map(q=>q.ord||0)) + 1 : 1;
 
   const { data, error } = await sb()
@@ -161,7 +162,6 @@ async function loadAnswers(qid){
 }
 
 async function insertAnswer(qid, ord){
-  // fixed_points zawsze liczba (0), żeby nie waliło 400 / NOT NULL
   const { data, error } = await sb()
     .from("answers")
     .insert({ question_id: qid, ord, text: "ODPOWIEDŹ", fixed_points: 0 })
@@ -176,39 +176,47 @@ async function updateAnswer(aid, patch){
   if(error) throw error;
 }
 
-async function ensureExactlyFiveAnswers(){
+async function deleteAnswer(aid){
+  const { error } = await sb().from("answers").delete().eq("id", aid);
+  if(error) throw error;
+}
+
+async function normalizeAnswerOrds(qid){
+  const list = await loadAnswers(qid);
+  const sorted = [...list].sort((a,b)=>(a.ord||0)-(b.ord||0));
+  for(let i=0;i<sorted.length;i++){
+    const want = i+1;
+    if(sorted[i].ord !== want){
+      await updateAnswer(sorted[i].id, { ord: want });
+    }
+  }
+  return await loadAnswers(qid);
+}
+
+/**
+ * Zapewnij MIN 5 odpowiedzi, MAX 6 (nadmiar ucinamy).
+ */
+async function ensureAnswersRange(){
   if(!activeQ) return;
 
   answers = await loadAnswers(activeQ.id);
 
-  // dopychamy do 5
-  while(answers.length < AN){
+  while(answers.length < RULES.AN_MIN){
     const ord = answers.length ? Math.max(...answers.map(a=>a.ord||0)) + 1 : 1;
     await insertAnswer(activeQ.id, ord);
     answers = await loadAnswers(activeQ.id);
   }
 
-  // przycinamy nadmiar (jeśli ktoś kiedyś wstawił więcej)
-  if(answers.length > AN){
+  if(answers.length > RULES.AN_MAX){
+    // tniemy do 6: kasujemy “najwyższe ord” po sortowaniu
     const sorted = [...answers].sort((a,b)=>(a.ord||0)-(b.ord||0));
-    const toDel = sorted.slice(AN);
+    const toDel = sorted.slice(RULES.AN_MAX);
     for(const a of toDel){
-      const { error } = await sb().from("answers").delete().eq("id", a.id);
-      if(error) throw error;
-    }
-    answers = await loadAnswers(activeQ.id);
-  }
-
-  // ord = 1..5
-  const sorted2 = [...answers].sort((a,b)=>(a.ord||0)-(b.ord||0));
-  for(let i=0;i<sorted2.length;i++){
-    const want = i+1;
-    if(sorted2[i].ord !== want){
-      await updateAnswer(sorted2[i].id, { ord: want });
+      await deleteAnswer(a.id);
     }
   }
 
-  answers = await loadAnswers(activeQ.id);
+  answers = await normalizeAnswerOrds(activeQ.id);
 }
 
 function renderQuestions(){
@@ -256,33 +264,32 @@ function renderAnswers(){
 
   const locked = isLocked();
 
-  answers.forEach((a)=>{
+  answers.forEach((a, idx)=>{
     const row = document.createElement("div");
     row.className = "arow";
 
-    // TEMPLATE:
-    // - fixed: text + pts + X
-    // - poll:  text + X (bez pts, bez “ZOSTAŁO”)
+    const canDeleteRow = (answers.length > RULES.AN_MIN) && (idx === answers.length - 1); // usuwamy tylko “ostatnią” (6-tą)
+    const delLabel = canDeleteRow ? "Usuń" : "Wyczyść";
+
     if(isFixed()){
       row.innerHTML = `
         <input class="aText" />
-        <input class="aPts" type="number" min="1" max="100" step="1" inputmode="numeric" />
-        <button class="aDel" type="button" title="Wyczyść" ${locked ? "disabled" : ""}>✕</button>
+        <input class="aPts" type="number" min="0" max="100" step="1" inputmode="numeric" />
+        <button class="aDel" type="button" title="${delLabel}" ${locked ? "disabled" : ""}>✕</button>
       `;
     }else{
       row.innerHTML = `
         <input class="aText" />
-        <button class="aDel" type="button" title="Wyczyść" ${locked ? "disabled" : ""}>✕</button>
+        <button class="aDel" type="button" title="${delLabel}" ${locked ? "disabled" : ""}>✕</button>
       `;
     }
 
     const aText = row.querySelector(".aText");
     const aPts  = row.querySelector(".aPts");
     const aDel  = row.querySelector(".aDel");
-    
-    if(aText) aText.value = a.text || "";
-    if(aPts)  aPts.value  = typeof a.fixed_points === "number" ? a.fixed_points : 0;
 
+    if(aText) aText.value = a.text || "";
+    if(aPts)  aPts.value  = String(typeof a.fixed_points === "number" ? a.fixed_points : 0);
 
     aText.addEventListener("input", ()=>{
       const t = aText.value || "";
@@ -300,17 +307,14 @@ function renderAnswers(){
       a.text = t;
     });
 
-    // Punkty tylko dla lokalnej
     if(isFixed() && aPts){
       aPts.disabled = locked;
-      aPts.value = String(typeof a.fixed_points === "number" ? a.fixed_points : 0);
 
       const applyLive = async (commit)=>{
         if(locked) return;
 
-        let cur = clampInt(aPts.value, 1, 100);
+        let cur = clampInt(aPts.value, 0, 100);
 
-        // suma pozostałych
         const otherSum = answers
           .filter(x=>x.id !== a.id)
           .reduce((s,x)=> s + (Number(x.fixed_points)||0), 0);
@@ -331,14 +335,30 @@ function renderAnswers(){
         }
       };
 
-      if(aPts) aPts.addEventListener("input", ()=>{ applyLive(false); });
-      if(aPts) aPts.addEventListener("change", ()=>{ applyLive(true); });
+      aPts.addEventListener("input", ()=>{ applyLive(false); });
+      aPts.addEventListener("change", ()=>{ applyLive(true); });
     }
 
-    // X = “wyczyść” (bo zawsze 5 odpowiedzi)
     aDel.disabled = locked;
     aDel.addEventListener("click", async ()=>{
       if(locked) return;
+
+      if(canDeleteRow){
+        const ok = await confirmModal({
+          title: "Usunąć odpowiedź?",
+          text: "To usunie 6-tą odpowiedź (wrócisz do 5).",
+          okText: "Usuń",
+          cancelText: "Anuluj",
+        });
+        if(!ok) return;
+
+        await deleteAnswer(a.id);
+        answers = await normalizeAnswerOrds(activeQ.id);
+        updateBadges();
+        renderAnswers();
+        updateRemaining();
+        return;
+      }
 
       const ok = await confirmModal({
         title:"Wyczyść odpowiedź",
@@ -365,6 +385,7 @@ function renderAnswers(){
     aList.appendChild(row);
   });
 
+  updateBadges();
   updateRemaining();
 }
 
@@ -373,7 +394,7 @@ async function loadActive(){
   activeQ = questions.find(x=>x.id === activeQ.id) || null;
 
   if(activeQ){
-    await ensureExactlyFiveAnswers();
+    await ensureAnswersRange();
   }else{
     answers = [];
   }
@@ -392,7 +413,6 @@ async function refreshAll(){
   questions = await loadQuestions();
   renderQuestions();
 
-  // jeśli aktywne pytanie zniknęło
   if(activeQ){
     activeQ = questions.find(x=>x.id === activeQ.id) || null;
   }
@@ -400,7 +420,7 @@ async function refreshAll(){
   renderEditorShell();
 
   if(activeQ){
-    await ensureExactlyFiveAnswers();
+    await ensureAnswersRange();
     renderAnswers();
   }else{
     answers = [];
@@ -446,6 +466,25 @@ document.addEventListener("DOMContentLoaded", async ()=>{
     await loadActive();
   });
 
+  btnAddA?.addEventListener("click", async ()=>{
+    if(!activeQ) return;
+    if(isLocked()) return;
+
+    answers = await loadAnswers(activeQ.id);
+    if(answers.length >= RULES.AN_MAX){
+      setMsg(`Maksymalnie ${RULES.AN_MAX} odpowiedzi.`);
+      updateBadges();
+      return;
+    }
+
+    const ord = answers.length ? Math.max(...answers.map(a=>a.ord||0)) + 1 : 1;
+    await insertAnswer(activeQ.id, ord);
+    answers = await normalizeAnswerOrds(activeQ.id);
+
+    setMsg("Dodano odpowiedź.");
+    renderAnswers();
+  });
+
   qText?.addEventListener("change", async ()=>{
     if(!activeQ) return;
     if(isLocked()){
@@ -458,7 +497,7 @@ document.addEventListener("DOMContentLoaded", async ()=>{
     renderQuestions();
   });
 
-  // Usuwanie pytania: SHIFT+klik w kafelek
+  // SHIFT+klik na kafelku = usuń pytanie
   qList?.addEventListener("click", async (e)=>{
     const card = e.target?.closest?.(".qcard");
     if(!card) return;
