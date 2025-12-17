@@ -162,6 +162,18 @@ export async function createScene() {
 
   const anim = createAnimator({ tileAt, snapArea, clearArea, clearTileAt });
 
+  // ============================
+  // GLOBAL ANIMATION SPEED
+  // ============================
+  const ANIM_SPEED = {
+    mul: 1.0, // 1 = normalnie, 2 = wolniej, 0.5 = szybciej
+  };
+  
+  const scaleMs = (ms, fallback) => {
+    const base = Number.isFinite(ms) ? ms : fallback;
+    return Math.max(1, Math.round(base * ANIM_SPEED.mul));
+  };
+
   // ============================================================
   // WIN (font_win.json) – bez dopisywania zer, centrowanie poziome
   // ============================================================
@@ -249,17 +261,17 @@ export async function createScene() {
     const area = { c1: f.c1, r1: f.r1, c2: f.c2, r2: f.r2 };
 
     if (out) {
-      if (out.type === "edge")   await anim.outEdge(big, area, out.dir ?? "left", out.ms ?? 12);
-      if (out.type === "matrix") await anim.outMatrix(big, area, out.axis ?? "down", out.ms ?? 36);
-      if (out.type === "rain")   await anim.outRain(big, area, out.axis ?? "down", out.ms ?? 24, out.opts ?? {});
+      if (out.type === "edge")   await anim.outEdge(big, area, out.dir ?? "left", scaleMs(out.ms, 12));
+      if (out.type === "matrix") await anim.outMatrix(big, area, out.axis ?? "down", scaleMs(out.ms, 36));
+      if (out.type === "rain")   await anim.outRain(big, area, out.axis ?? "down", scaleMs(out.ms, 24), out.opts ?? {});
     }
 
     writeField(GLYPHS, big, f, text, color);
 
     if (inn) {
-      if (inn.type === "edge")   await anim.inEdge(big, area, inn.dir ?? "left", inn.ms ?? 12);
-      if (inn.type === "matrix") await anim.inMatrix(big, area, inn.axis ?? "down", inn.ms ?? 36);
-      if (inn.type === "rain")   await anim.inRain(big, area, inn.axis ?? "down", inn.ms ?? 24, inn.opts ?? {});
+      if (inn.type === "edge")   await anim.inEdge(big, area, inn.dir ?? "left", scaleMs(inn.ms, 12));
+      if (inn.type === "matrix") await anim.inMatrix(big, area, inn.axis ?? "down", scaleMs(inn.ms, 36));
+      if (inn.type === "rain")   await anim.inRain(big, area, inn.axis ?? "down", scaleMs(inn.ms, 24), inn.opts ?? {});
     }
   };
 
@@ -540,22 +552,28 @@ export async function createScene() {
     },
 
     big: {
+      
+      speed: (mul) => {
+        const v = Number(mul);
+        if (!Number.isFinite(v) || v <= 0) throw new Error("ANIM_SPEED.mul musi być > 0");
+        ANIM_SPEED.mul = v;
+      },
       areaAll:  () => ({ c1:1, r1:1, c2:30, r2:10 }),
       areaWin:  () => ({ c1:1, r1:2, c2:30, r2:8 }),
       areaLogo: () => ({ c1:1, r1:3, c2:30, r2:7 }),
 
       animIn: async ({ type="edge", dir="left", axis="down", ms=12, area=null, opts=null } = {}) => {
         const A = area ?? api.big.areaAll();
-        if (type === "edge")   return anim.inEdge(big, A, dir, ms);
-        if (type === "matrix") return anim.inMatrix(big, A, axis, ms);
-        if (type === "rain")   return anim.inRain(big, A, axis, ms, opts ?? {});
+        if (type === "edge")   return anim.inEdge(big, A, dir,  scaleMs(ms, 14));
+        if (type === "matrix") return anim.inMatrix(big, A, axis, scaleMs(ms, 36));
+        if (type === "rain")   return anim.inRain(big, A, axis,  scaleMs(ms, 24), opts ?? {});
       },
 
       animOut: async ({ type="edge", dir="left", axis="down", ms=12, area=null, opts=null } = {}) => {
         const A = area ?? api.big.areaAll();
-        if (type === "edge")   return anim.outEdge(big, A, dir, ms);
-        if (type === "matrix") return anim.outMatrix(big, A, axis, ms);
-        if (type === "rain")   return anim.outRain(big, A, axis, ms, opts ?? {});
+        if (type === "edge")   return anim.outEdge(big, A, dir,  scaleMs(ms, 14));
+        if (type === "matrix") return anim.outMatrix(big, A, axis, scaleMs(ms, 36));
+        if (type === "rain")   return anim.outRain(big, A, axis,  scaleMs(ms, 24), opts ?? {});
       },
 
       clear: () => clearBig(big),
@@ -736,6 +754,11 @@ export async function createScene() {
 
     const tokens = tokenize(raw);
     const head = (tokens[0] ?? "").toUpperCase();
+
+    if (head === "ANIMSPEED") {
+      api.big.speed(parseFloat(tokens[1] ?? "1"));
+      return;
+    }
 
     // small
     if (head === "TOP")   return api.small.topDigits(tokens[1] ?? "");
