@@ -12,7 +12,7 @@ export async function createScene() {
 
   const VIEW = { W: 1600, H: 900, CX: 800, CY: 450 };
 
-  // Wygląd (nie ruszamy)
+  // Wygląd
   const COLORS = {
     big:    "#2e2e32",
     cell:   "#000000",
@@ -35,7 +35,6 @@ export async function createScene() {
   const Wgrid = (X, dDots, gap) => X * dDots + (X + 1) * gap;
   const Hgrid = (Y, dDots, gap) => Y * dDots + (Y + 1) * gap;
 
-  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   const isDigit = (ch) => ch >= "0" && ch <= "9";
 
   // ============================================================
@@ -65,7 +64,6 @@ export async function createScene() {
 
     parent.appendChild(el("rect", { x, y, width: wSmall, height: hSmall, rx: 0, fill: colors.cell }));
     const dots = drawDotsStored(parent, x, y, 5, 7, dDots, gap, colors.dotOff);
-
     return { x, y, dots };
   };
 
@@ -165,7 +163,7 @@ export async function createScene() {
   const anim = createAnimator({ tileAt, snapArea, clearArea, clearTileAt });
 
   // ============================================================
-  // WIN (font_win.json)
+  // WIN (font_win.json) – bez dopisywania zer, centrowanie poziome
   // ============================================================
   const measureWinDigit = (pat) => {
     const rows = Array.from({ length: 7 }, (_, i) => (pat[i] ?? ""));
@@ -200,22 +198,20 @@ export async function createScene() {
     }
     return w;
   };
-  
+
   const drawWinNumber5 = (GLYPHS, big, WIN_DIGITS, number, color) => {
     let s = (number ?? "").toString().replace(/\D/g, "");
-    if (s.length > 5) s = s.slice(-5);     // max 5, bez dopisywania
-    // jeśli pusto, po prostu wyczyść i wyjdź
+    if (s.length > 5) s = s.slice(-5); // max 5, bez padStart
+
     const rowTop1 = 2; // 2..8
     clearArea(big, 1, rowTop1, 30, rowTop1 + 6);
     if (!s.length) return;
-  
+
     const gap = 1;
-  
     const widths = s.split("").map(d => (WIN_DIGITS[d] ? measureWinDigit(WIN_DIGITS[d]).w : 0));
-    const totalW = widths.reduce((a,b)=>a+b,0) + gap * (s.length - 1);
-  
+    const totalW = widths.reduce((a, b) => a + b, 0) + gap * (s.length - 1);
     const startCol1 = 1 + Math.max(0, Math.floor((30 - totalW) / 2));
-  
+
     let cx = startCol1;
     for (let i = 0; i < s.length; i++) {
       const w = drawWinDigitTight(GLYPHS, big, WIN_DIGITS, cx, rowTop1, s[i], color);
@@ -253,15 +249,17 @@ export async function createScene() {
     const area = { c1: f.c1, r1: f.r1, c2: f.c2, r2: f.r2 };
 
     if (out) {
-      if (out.type === "edge")   await anim.outEdge(big, area, out.dir ?? "left", out.ms ?? 6);
-      if (out.type === "matrix") await anim.outMatrix(big, area, out.axis ?? "down", out.ms ?? 18);
+      if (out.type === "edge")   await anim.outEdge(big, area, out.dir ?? "left", out.ms ?? 12);
+      if (out.type === "matrix") await anim.outMatrix(big, area, out.axis ?? "down", out.ms ?? 36);
+      if (out.type === "rain")   await anim.outRain(big, area, out.axis ?? "down", out.ms ?? 24, out.opts ?? {});
     }
 
     writeField(GLYPHS, big, f, text, color);
 
     if (inn) {
-      if (inn.type === "edge")   await anim.inEdge(big, area, inn.dir ?? "left", inn.ms ?? 6);
-      if (inn.type === "matrix") await anim.inMatrix(big, area, inn.axis ?? "down", inn.ms ?? 18);
+      if (inn.type === "edge")   await anim.inEdge(big, area, inn.dir ?? "left", inn.ms ?? 12);
+      if (inn.type === "matrix") await anim.inMatrix(big, area, inn.axis ?? "down", inn.ms ?? 36);
+      if (inn.type === "rain")   await anim.inRain(big, area, inn.axis ?? "down", inn.ms ?? 24, inn.opts ?? {});
     }
   };
 
@@ -456,13 +454,35 @@ export async function createScene() {
   // ============================================================
   // LOGO: wysokość 5, rzędy 3..7
   // Format logo_familiada.json:
-  // { layers: [{ color:"main", rows:[ "....30 znaków...." x5 ]}, ...] }
+  // { layers: [{ color:"main", rows:[ "...30..." x5 ]}, ...] }
   // ============================================================
-  const drawLogoGrid5 = (logoJson) => {
-    const layers = Array.isArray(logoJson?.layers) ? logoJson.layers : [];
+  const normalizeLogoRow = (s) => {
+    const t = (s ?? "").toString();
+    // dokładnie 30 znaków: utnij lub dopaduj spacjami
+    if (t.length === 30) return t;
+    if (t.length > 30) return t.slice(0, 30);
+    return t.padEnd(30, " ");
+  };
+
+  const normalizeLogoJson = (logoJson) => {
+    const layersIn = Array.isArray(logoJson?.layers) ? logoJson.layers : [];
+    const layers = layersIn.map((layer) => {
+      const rowsIn = Array.isArray(layer?.rows) ? layer.rows : [];
+      const rows = [];
+      for (let i = 0; i < 5; i++) rows.push(normalizeLogoRow(rowsIn[i] ?? ""));
+      return { color: layer?.color ?? "main", rows };
+    });
+    return { layers };
+  };
+
+  const drawLogoGrid5 = (logoJsonRaw) => {
+    const logoJson = normalizeLogoJson(logoJsonRaw);
+    const layers = logoJson.layers;
+
     const rowFrom = 3;
     const rowTo = 7;
 
+    // najpierw czyścimy tylko obszar logo
     clearArea(big, 1, rowFrom, 30, rowTo);
 
     for (const layer of layers) {
@@ -473,9 +493,9 @@ export async function createScene() {
         colorName === "right" ? LIT.right :
         LIT.main;
 
-      const rows = Array.isArray(layer?.rows) ? layer.rows : [];
+      const rows = layer.rows;
       for (let ry = 0; ry < 5; ry++) {
-        const rowStr = (rows[ry] ?? "").toString();
+        const rowStr = rows[ry];
         const row1 = rowFrom + ry; // 3..7
         for (let cx = 0; cx < 30; cx++) {
           const ch = rowStr[cx] ?? " ";
@@ -503,6 +523,7 @@ export async function createScene() {
         if (!BIG_MODES[mm]) throw new Error(`Nieznany tryb: ${m}`);
         mode = mm;
 
+        // Uwaga: tryb zawsze czyści big, żeby backend miał pewność stanu
         clearBig(big);
 
         if (mode === BIG_MODES.ROUNDS) {
@@ -514,8 +535,6 @@ export async function createScene() {
           writeField(GLYPHS, big, FINAL.sumaLabel, "SUMA", LIT.main);
         }
 
-        // LOGO/WIN renderowane przez dedykowane metody
-
         if (opts?.animIn) await api.big.animIn(opts.animIn);
       },
     },
@@ -525,16 +544,18 @@ export async function createScene() {
       areaWin:  () => ({ c1:1, r1:2, c2:30, r2:8 }),
       areaLogo: () => ({ c1:1, r1:3, c2:30, r2:7 }),
 
-      animIn: async ({ type="edge", dir="left", axis="down", ms=10, area=null } = {}) => {
+      animIn: async ({ type="edge", dir="left", axis="down", ms=12, area=null, opts=null } = {}) => {
         const A = area ?? api.big.areaAll();
         if (type === "edge")   return anim.inEdge(big, A, dir, ms);
         if (type === "matrix") return anim.inMatrix(big, A, axis, ms);
+        if (type === "rain")   return anim.inRain(big, A, axis, ms, opts ?? {});
       },
 
-      animOut: async ({ type="edge", dir="left", axis="down", ms=10, area=null } = {}) => {
+      animOut: async ({ type="edge", dir="left", axis="down", ms=12, area=null, opts=null } = {}) => {
         const A = area ?? api.big.areaAll();
         if (type === "edge")   return anim.outEdge(big, A, dir, ms);
         if (type === "matrix") return anim.outMatrix(big, A, axis, ms);
+        if (type === "rain")   return anim.outRain(big, A, axis, ms, opts ?? {});
       },
 
       clear: () => clearBig(big),
@@ -548,6 +569,13 @@ export async function createScene() {
       rightDigits: (ddd) => setTripleDigits(GLYPHS, rightTriple, ddd, LIT.right),
       long1: (txt) => setLongTextCenteredMax15(GLYPHS, long1, txt, LIT.main),
       long2: (txt) => setLongTextCenteredMax15(GLYPHS, long2, txt, LIT.main),
+      clearAll: () => {
+        setTripleDigits(GLYPHS, topTriple,   "   ", LIT.top);
+        setTripleDigits(GLYPHS, leftTriple,  "   ", LIT.left);
+        setTripleDigits(GLYPHS, rightTriple, "   ", LIT.right);
+        setLongTextCenteredMax15(GLYPHS, long1, "", LIT.main);
+        setLongTextCenteredMax15(GLYPHS, long2, "", LIT.main);
+      },
     },
 
     logo: {
@@ -565,13 +593,15 @@ export async function createScene() {
         drawLogoGrid5(api.logo._json);
       },
 
-      show: async (animIn = { type:"edge", dir:"left", ms:8 }) => {
+      // Klucz: robimy snapshot z logo, więc kolejność:
+      // clear (tryb) -> draw -> animIn (na obszarze logo)
+      show: async (animIn = { type:"edge", dir:"left", ms:14 }) => {
         await api.mode.set("LOGO");
         api.logo.draw();
         await api.big.animIn({ ...animIn, area: api.big.areaLogo() });
       },
 
-      hide: async (animOut = { type:"edge", dir:"right", ms:8 }) => {
+      hide: async (animOut = { type:"edge", dir:"right", ms:14 }) => {
         await api.big.animOut({ ...animOut, area: api.big.areaLogo() });
       },
     },
@@ -587,7 +617,6 @@ export async function createScene() {
     },
 
     rounds: {
-      // Opcja A: osobne settery
       setText: async (idx1to5, text, { animOut=null, animIn=null } = {}) => {
         if (mode !== BIG_MODES.ROUNDS) await api.mode.set("ROUNDS");
         const i = (idx1to5|0) - 1;
@@ -602,7 +631,6 @@ export async function createScene() {
         await updateField(GLYPHS, big, ROUNDS.points[i], pts, { out: animOut, in: animIn, color: LIT.main });
       },
 
-      // legacy wygodne
       setRow: async (idx1to5, { text=undefined, pts=undefined, animOut=null, animIn=null } = {}) => {
         if (text !== undefined) await api.rounds.setText(idx1to5, text, { animOut, animIn });
         if (pts  !== undefined) await api.rounds.setPts(idx1to5, pts,  { animOut, animIn });
@@ -623,7 +651,6 @@ export async function createScene() {
     },
 
     final: {
-      // Opcja A: osobne settery
       setLeft: async (idx1to5, text, { animOut=null, animIn=null } = {}) => {
         if (mode !== BIG_MODES.FINAL) await api.mode.set("FINAL");
         const i = (idx1to5|0) - 1;
@@ -649,7 +676,6 @@ export async function createScene() {
         await updateField(GLYPHS, big, FINAL.rightTxt[i], text, { out: animOut, in: animIn, color: LIT.main });
       },
 
-      // legacy
       setRow: async (idx1to5, { left=undefined, a=undefined, b=undefined, right=undefined, animOut=null, animIn=null } = {}) => {
         if (left  !== undefined) await api.final.setLeft(idx1to5, left,  { animOut, animIn });
         if (a     !== undefined) await api.final.setA(idx1to5, a,        { animOut, animIn });
@@ -696,10 +722,11 @@ export async function createScene() {
   const parseAnim = (tokens, startIdx) => {
     const type = (tokens[startIdx] ?? "").toLowerCase();
     const dirOrAxis = (tokens[startIdx + 1] ?? "").toLowerCase();
-    const ms = parseInt(tokens[startIdx + 2] ?? "10", 10);
+    const ms = parseInt(tokens[startIdx + 2] ?? "12", 10);
 
-    if (type === "edge")   return { type:"edge", dir: dirOrAxis || "left", ms: isFinite(ms) ? ms : 10 };
-    if (type === "matrix") return { type:"matrix", axis: dirOrAxis || "down", ms: isFinite(ms) ? ms : 18 };
+    if (type === "edge")   return { type:"edge", dir: dirOrAxis || "left", ms: isFinite(ms) ? ms : 12 };
+    if (type === "matrix") return { type:"matrix", axis: dirOrAxis || "down", ms: isFinite(ms) ? ms : 36 };
+    if (type === "rain" || type === "matrix_rain") return { type:"rain", axis: dirOrAxis || "down", ms: isFinite(ms) ? ms : 24 };
     return null;
   };
 
@@ -729,6 +756,7 @@ export async function createScene() {
     // LOGO
     if (head === "LOGO") {
       const op = (tokens[1] ?? "").toUpperCase();
+
       if (op === "LOAD") {
         const url = tokens[2] ? unquote(tokens[2]) : "./logo_familiada.json";
         await api.logo.load(url);
@@ -743,13 +771,13 @@ export async function createScene() {
         let animIn = null;
         const ai = tokens.findIndex(t => t.toUpperCase() === "ANIMIN");
         if (ai >= 0) animIn = parseAnim(tokens, ai + 1);
-        return api.logo.show(animIn ?? { type:"edge", dir:"left", ms:8 });
+        return api.logo.show(animIn ?? { type:"edge", dir:"left", ms:14 });
       }
       if (op === "HIDE") {
         let animOut = null;
         const ao = tokens.findIndex(t => t.toUpperCase() === "ANIMOUT");
         if (ao >= 0) animOut = parseAnim(tokens, ao + 1);
-        return api.logo.hide(animOut ?? { type:"edge", dir:"right", ms:8 });
+        return api.logo.hide(animOut ?? { type:"edge", dir:"right", ms:14 });
       }
     }
 
@@ -764,8 +792,7 @@ export async function createScene() {
       return api.win.set(num, { animOut, animIn });
     }
 
-    // ROUNDS: nowe komendy liniowe
-    // RTXT 2 "TEKST" ANIM edge left 6
+    // ROUNDS (krótkie)
     if (head === "RTXT") {
       const idx = parseInt(tokens[1] ?? "0", 10);
       const text = unquote(tokens[2] ?? "");
@@ -773,8 +800,6 @@ export async function createScene() {
       const A = aIdx >= 0 ? parseAnim(tokens, aIdx + 1) : null;
       return api.rounds.setText(idx, text, { animOut: A, animIn: A });
     }
-
-    // RPTS 2 25 ANIM matrix down 18
     if (head === "RPTS") {
       const idx = parseInt(tokens[1] ?? "0", 10);
       const pts = tokens[2] ?? "";
@@ -783,7 +808,7 @@ export async function createScene() {
       return api.rounds.setPts(idx, pts, { animOut: A, animIn: A });
     }
 
-    // legacy: R 2 TXT "..." PTS 10 ANIM ...
+    // ROUNDS (legacy)
     if (head === "R") {
       const idx = parseInt(tokens[1] ?? "0", 10);
       const tIdx = tokens.findIndex(t => t.toUpperCase() === "TXT");
@@ -810,7 +835,7 @@ export async function createScene() {
       return api.rounds.setX(name, on);
     }
 
-    // FINAL: nowe komendy liniowe
+    // FINAL (krótkie)
     if (head === "FL") {
       const idx = parseInt(tokens[1] ?? "0", 10);
       const text = unquote(tokens[2] ?? "");
@@ -840,7 +865,7 @@ export async function createScene() {
       return api.final.setRight(idx, text, { animOut: A, animIn: A });
     }
 
-    // legacy: F 1 L "..." A 12 B 34 R "..."
+    // FINAL (legacy)
     if (head === "F") {
       const idx = parseInt(tokens[1] ?? "0", 10);
       const L = tokens.findIndex(t => t.toUpperCase() === "L");
@@ -868,22 +893,18 @@ export async function createScene() {
     console.warn("Nieznana komenda (scene):", raw);
   };
 
-    // ============================================================
-  // BRAK domyślnych treści / BRAK demo / BRAK auto-trybu
   // ============================================================
-  // Nic nie wyświetlamy przy starcie — backend/console steruje.
-  //
-  // Jeśli chcesz, możesz tylko wyczyścić wszystko:
+  // START: nic nie pokazujemy (backend/console steruje)
+  // ============================================================
   clearBig(big);
-  api.big.clearArea(1, 1, 30, 10); // opcjonalnie redundantne
-  // małe panele też czyścimy na start:
-  api.small.topDigits("   ");
-  api.small.leftDigits("   ");
-  api.small.rightDigits("   ");
-  api.small.long1("");
-  api.small.long2("");
+  // małe panele czyścimy:
+  setTripleDigits(GLYPHS, topTriple,   "   ", LIT.top);
+  setTripleDigits(GLYPHS, leftTriple,  "   ", LIT.left);
+  setTripleDigits(GLYPHS, rightTriple, "   ", LIT.right);
+  setLongTextCenteredMax15(GLYPHS, long1, "", LIT.main);
+  setLongTextCenteredMax15(GLYPHS, long2, "", LIT.main);
 
-  // Zostawiamy mode jako LOGO (stan logiczny), ale nic nie rysujemy.
+  // stan logiczny zostawiamy, ale NIC nie rysujemy
   mode = BIG_MODES.LOGO;
 
   return { api, BIG_MODES, handleCommand };
