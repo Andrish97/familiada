@@ -87,8 +87,18 @@ function updateRemaining() {
   }
 
   remainRow.style.display = "";
-  const left = Math.max(0, 100 - calcSum());
-  remainVal.textContent = String(left);
+  const sum = calcSum();
+  const diff = 100 - sum; // dodatnie = brakuje, 0 = ok, ujemne = za dużo
+
+  // tekst
+  if (diff > 0) remainVal.textContent = `-${diff}`;     // brakuje
+  else if (diff === 0) remainVal.textContent = "OK";    // idealnie
+  else remainVal.textContent = `+${Math.abs(diff)}`;    // za dużo
+
+  // opcjonalnie: kolor przez class
+  remainRow.classList.toggle("ok", diff === 0);
+  remainRow.classList.toggle("warn", diff !== 0);
+  remainRow.classList.toggle("bad", diff < 0);
 }
 
 function updateBadges() {
@@ -362,31 +372,20 @@ function renderAnswers() {
     // punkty tylko dla lokalnej
     if (isFixed() && aPts) {
       aPts.disabled = locked;
-
+      
       const applyLive = async (commit) => {
         if (locked) return;
-
-        let cur = clampInt(aPts.value, 0, 100);
-
-        // max 100 w pytaniu: ograniczamy bieżącą odpowiedź
-        const otherSum = answers
-          .filter(x => x.id !== a.id)
-          .reduce((s, x) => s + (Number(x.fixed_points) || 0), 0);
-
-        const maxAllowed = Math.max(0, 100 - otherSum);
-        const next = Math.min(cur, maxAllowed);
-
-        if (next !== cur) {
-          aPts.value = String(next);
-          setMsg("Suma nie może przekroczyć 100.");
-        }
-
-        a.fixed_points = next;
+      
+        const cur = clampInt(aPts.value, 0, 100);
+        aPts.value = String(cur);
+      
+        // NIE ograniczamy względem sumy pytania
+        a.fixed_points = cur;
         updateRemaining();
-
+      
         if (commit) {
           try {
-            await updateAnswer(a.id, { fixed_points: next });
+            await updateAnswer(a.id, { fixed_points: cur });
           } catch (e) {
             console.error("[editor] update points error:", e);
             setMsg("Nie udało się zapisać punktów.");
