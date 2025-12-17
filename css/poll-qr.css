@@ -1,33 +1,50 @@
-/* css/poll-qr.css */
-
-#btnFS{
-  position: fixed;
-  top: 14px;
-  right: 14px;
-  width: 46px;
-  height: 46px;
-  padding: 0;
-  border-radius: 14px;
-
-  display: grid;
-  place-items: center;
-
-  font-size: 20px;
-  line-height: 1;
-  font-weight: 1000;
-
-  cursor: pointer;
+.poll-qr-body{
+  margin:0;
+  min-height:100vh;
+  background:#050914;
+  color:#fff;
+  display:grid;
+  place-items:center;
+  font-family:system-ui,-apple-system,Segoe UI,sans-serif;
 }
 
-#btnFS:hover{
-  filter: brightness(1.15);
+/* przycisk fullscreen */
+.qr-fs-btn{
+  position:fixed;
+  top:14px;
+  right:14px;
+  width:46px;
+  height:46px;
+  padding:0;
+  border-radius:14px;
+  display:grid;
+  place-items:center;
+  font-weight:1000;
+  z-index:50;
 }
 
-#btnFS:active{
-  transform: scale(0.96);
+/* wrapper */
+.qr-wrap{
+  text-align:center;
+  padding:18px;
+  width:min(900px,94vw);
 }
 
-#qr canvas{
-  display: block;
-  margin: 0 auto;
+.qr-brand{
+  font-weight:1000;
+  letter-spacing:.18em;
+  color:#ffeaa6;
+}
+
+.qr-title{
+  font-weight:1000;
+  font-size:18px;
+  margin-top:10px;
+  letter-spacing:.06em;
+}
+
+.qr-box{
+  margin:18px auto;
+  width:420px;
+  height:420px;
 }
