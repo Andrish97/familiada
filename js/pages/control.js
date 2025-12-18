@@ -21,6 +21,8 @@ async function sendToDisplay(gameId, line){
     payload: { line: String(line) }
   });
 }
+window.sendToDisplay = sendToDisplay;
+window.ensureDisplayChannel = ensureDisplayChannel;
 
 guardDesktopOnly({ message: "Sterowanie Familiady jest dostępne tylko na komputerze." });
 
