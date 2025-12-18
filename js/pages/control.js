@@ -24,37 +24,38 @@ async function sendToDisplay(gameId, line){
 window.sendToDisplay = sendToDisplay;
 window.ensureDisplayChannel = ensureDisplayChannel;
 
-let chBuzzer = null;
-let chHost = null;
+let hostChannel = null;
+function ensureHostChannel(gameId){
+  if (hostChannel) return hostChannel;
+  hostChannel = sb().channel(`familiada-host:${gameId}`).subscribe();
+  return hostChannel;
+}
+async function sendToHost(gameId, line){
+  const ch = ensureHostChannel(gameId);
+  await ch.send({ type:"broadcast", event:"HOST_CMD", payload:{ line:String(line) } });
+}
+window.sendToHost = sendToHost;
 
-function ensureCmdChannel(kind, gameId){
-  const name = `familiada-${kind}:${gameId}`;
-  if (kind === "buzzer") {
-    if (!chBuzzer) chBuzzer = sb().channel(name).subscribe();
-    return chBuzzer;
-  }
-  if (kind === "host") {
-    if (!chHost) chHost = sb().channel(name).subscribe();
-    return chHost;
-  }
-  throw new Error("bad kind");
+let buzzerChannel = null;
+
+function ensureBuzzerChannel(gameId){
+  if (buzzerChannel) return buzzerChannel;
+  buzzerChannel = sb().channel(`familiada-buzzer:${gameId}`).subscribe();
+  return buzzerChannel;
 }
 
-async function sendCmd(kind, gameId, line){
-  const ch = ensureCmdChannel(kind, gameId);
-  const payload = { line: String(line) };
-
-  // ✅ preferowane (bez warninga)
-  if (typeof ch.httpSend === "function") {
-    await ch.httpSend({ type:"broadcast", event:"CMD", payload });
-    return;
-  }
-
-  // fallback (starsze wersje)
-  await ch.send({ type:"broadcast", event:"CMD", payload });
+async function sendToBuzzer(gameId, line){
+  const ch = ensureBuzzerChannel(gameId);
+  await ch.send({
+    type: "broadcast",
+    event: "BUZZER_CMD",
+    payload: { line: String(line) }
+  });
 }
 
-window.sendCmd = sendCmd; // debug w konsoli
+// debug z konsoli
+window.ensureBuzzerChannel = ensureBuzzerChannel;
+window.sendToBuzzer = sendToBuzzer;
 
 guardDesktopOnly({ message: "Sterowanie Familiady jest dostępne tylko na komputerze." });
 
