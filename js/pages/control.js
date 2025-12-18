@@ -18,15 +18,6 @@ function ensureDisplayChannel(gameId){
 
 async function sendToDisplay(gameId, line){
   const ch = ensureDisplayChannel(gameId);
-  await ch.send({
-    type: "broadcast",
-    event: "DISPLAY_CMD",          // zostawiamy to samo
-    payload: { line: String(line) }
-  });
-}
-
-async function sendToDisplay(gameId, line){
-  const ch = ensureDisplayChannel(gameId);
   if (displayChannelReady) await displayChannelReady; // <- klucz
   await ch.send({
     type: "broadcast",
