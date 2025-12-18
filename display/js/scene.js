@@ -284,7 +284,8 @@ export async function createScene() {
     const sumaVal   = field("SUMA_VAL",   23, 8, 3);
 
     const roundsState = {
-      text: Array(6).fill(""),
+        text: Array(6).fill(""),
+        pts:  Array(6).fill(""),
     };
     const hasVisibleText = (s) => (s ?? "").toString().trim().length > 0;
     
