@@ -24,6 +24,38 @@ async function sendToDisplay(gameId, line){
 window.sendToDisplay = sendToDisplay;
 window.ensureDisplayChannel = ensureDisplayChannel;
 
+let chBuzzer = null;
+let chHost = null;
+
+function ensureCmdChannel(kind, gameId){
+  const name = `familiada-${kind}:${gameId}`;
+  if (kind === "buzzer") {
+    if (!chBuzzer) chBuzzer = sb().channel(name).subscribe();
+    return chBuzzer;
+  }
+  if (kind === "host") {
+    if (!chHost) chHost = sb().channel(name).subscribe();
+    return chHost;
+  }
+  throw new Error("bad kind");
+}
+
+async function sendCmd(kind, gameId, line){
+  const ch = ensureCmdChannel(kind, gameId);
+  const payload = { line: String(line) };
+
+  // ✅ preferowane (bez warninga)
+  if (typeof ch.httpSend === "function") {
+    await ch.httpSend({ type:"broadcast", event:"CMD", payload });
+    return;
+  }
+
+  // fallback (starsze wersje)
+  await ch.send({ type:"broadcast", event:"CMD", payload });
+}
+
+window.sendCmd = sendCmd; // debug w konsoli
+
 guardDesktopOnly({ message: "Sterowanie Familiady jest dostępne tylko na komputerze." });
 
 const qs = new URLSearchParams(location.search);
