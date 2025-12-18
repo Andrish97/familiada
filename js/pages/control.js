@@ -5,63 +5,73 @@ import { guardDesktopOnly } from "../core/device-guard.js";
 import { playSfx } from "../core/sfx.js";
 import { validateGameReadyToPlay } from "../core/game-validate.js";
 
+/* =========================================================
+   Realtime channels (DISPLAY / HOST / BUZZER)
+========================================================= */
 let displayChannel = null;
-
-function ensureDisplayChannel(gameId){
+function ensureDisplayChannel(gameId) {
   if (displayChannel) return displayChannel;
   displayChannel = sb().channel(`familiada-display:${gameId}`).subscribe();
   return displayChannel;
 }
-
-async function sendToDisplay(gameId, line){
+async function sendToDisplay(gameId, line) {
   const ch = ensureDisplayChannel(gameId);
   await ch.send({
     type: "broadcast",
     event: "DISPLAY_CMD",
-    payload: { line: String(line) }
+    payload: { line: String(line) },
   });
 }
-window.sendToDisplay = sendToDisplay;
-window.ensureDisplayChannel = ensureDisplayChannel;
 
 let hostChannel = null;
-function ensureHostChannel(gameId){
+function ensureHostChannel(gameId) {
   if (hostChannel) return hostChannel;
   hostChannel = sb().channel(`familiada-host:${gameId}`).subscribe();
   return hostChannel;
 }
-async function sendToHost(gameId, line){
+async function sendToHost(gameId, line) {
   const ch = ensureHostChannel(gameId);
-  await ch.send({ type:"broadcast", event:"HOST_CMD", payload:{ line:String(line) } });
+  await ch.send({
+    type: "broadcast",
+    event: "HOST_CMD",
+    payload: { line: String(line) },
+  });
 }
-window.sendToHost = sendToHost;
 
 let buzzerChannel = null;
-
-function ensureBuzzerChannel(gameId){
+function ensureBuzzerChannel(gameId) {
   if (buzzerChannel) return buzzerChannel;
   buzzerChannel = sb().channel(`familiada-buzzer:${gameId}`).subscribe();
   return buzzerChannel;
 }
-
-async function sendToBuzzer(gameId, line){
+async function sendToBuzzer(gameId, line) {
   const ch = ensureBuzzerChannel(gameId);
   await ch.send({
     type: "broadcast",
     event: "BUZZER_CMD",
-    payload: { line: String(line) }
+    payload: { line: String(line) },
   });
 }
 
-// debug z konsoli
-window.ensureBuzzerChannel = ensureBuzzerChannel;
+// debug / konsola
+window.sendToDisplay = sendToDisplay;
+window.ensureDisplayChannel = ensureDisplayChannel;
+window.sendToHost = sendToHost;
+window.ensureHostChannel = ensureHostChannel;
 window.sendToBuzzer = sendToBuzzer;
+window.ensureBuzzerChannel = ensureBuzzerChannel;
 
+/* =========================================================
+   Guard + params
+========================================================= */
 guardDesktopOnly({ message: "Sterowanie Familiady jest dostępne tylko na komputerze." });
 
 const qs = new URLSearchParams(location.search);
 const gameId = qs.get("id");
 
+/* =========================================================
+   DOM refs
+========================================================= */
 const who = document.getElementById("who");
 const btnLogout = document.getElementById("btnLogout");
 const btnBack = document.getElementById("btnBack");
@@ -110,12 +120,21 @@ const answersBox = document.getElementById("answers");
 const btnRevealNext = document.getElementById("btnRevealNext");
 const btnEndRound = document.getElementById("btnEndRound");
 
+/* =========================================================
+   State
+========================================================= */
 let displayWin = null;
+let hostWin = null;
+let buzzerWin = null;
+
 let game = null;
 let questions = [];
 let answersForActive = [];
 let revealQueue = [];
 
+/* =========================================================
+   Helpers
+========================================================= */
 function setMsg(where, t) {
   where.textContent = t || "";
   if (t) setTimeout(() => (where.textContent = ""), 1400);
@@ -134,10 +153,17 @@ function buildLink(file, params) {
 }
 
 async function copyText(text) {
-  try { await navigator.clipboard.writeText(text); return true; } catch { return false; }
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
-function otherTeam(t) { return t === "A" ? "B" : "A"; }
+function otherTeam(t) {
+  return t === "A" ? "B" : "A";
+}
 
 function multiplierForRound(n) {
   if (n === 1) return 1;
@@ -149,9 +175,32 @@ function parseArr(v) {
   try {
     if (Array.isArray(v)) return v;
     return JSON.parse(v || "[]");
-  } catch { return []; }
+  } catch {
+    return [];
+  }
 }
 
+function tabSwitch(name) {
+  tabs.forEach((t) => t.classList.toggle("active", t.dataset.tab === name));
+  panels.forEach((p) => (p.style.display = p.dataset.panel === name ? "" : "none"));
+}
+
+tabs.forEach((t) => t.addEventListener("click", () => tabSwitch(t.dataset.tab)));
+
+function pingOk(seenAtIso) {
+  if (!seenAtIso) return false;
+  const seen = new Date(seenAtIso).getTime();
+  const now = Date.now();
+  return now - seen <= 15000;
+}
+
+function openPopup(url, name) {
+  return window.open(url, name, "noopener,noreferrer");
+}
+
+/* =========================================================
+   DB helpers
+========================================================= */
 async function ensureLive() {
   const { data } = await sb().from("live_state").select("game_id").eq("game_id", gameId).maybeSingle();
   if (data?.game_id) return;
@@ -199,49 +248,41 @@ async function updateLive(patch) {
   if (error) throw error;
 }
 
-function tabSwitch(name) {
-  tabs.forEach(t => t.classList.toggle("active", t.dataset.tab === name));
-  panels.forEach(p => p.style.display = p.dataset.panel === name ? "" : "none");
-}
-
-tabs.forEach(t => t.addEventListener("click", () => tabSwitch(t.dataset.tab)));
-
-function pingOk(seenAtIso) {
-  if (!seenAtIso) return false;
-  const seen = new Date(seenAtIso).getTime();
-  const now = Date.now();
-  return (now - seen) <= 15000;
-}
-
-async function validateGameReady(){
+/* =========================================================
+   Validation
+========================================================= */
+async function validateGameReady() {
   const qs = await loadQuestions();
   questions = qs;
 
-  if(!qs || qs.length < 10){
-    return { ok:false, reason:`Gra musi mieć min. 10 pytań. Masz: ${qs?.length||0}.` };
+  if (!qs || qs.length < 10) {
+    return { ok: false, reason: `Gra musi mieć min. 10 pytań. Masz: ${qs?.length || 0}.` };
   }
 
-  for(const q of qs){
+  for (const q of qs) {
     const ans = await loadAnswers(q.id);
-    if(!ans || ans.length !== 5){
-      return { ok:false, reason:`Pytanie #${q.ord} musi mieć dokładnie 5 odpowiedzi.` };
+    if (!ans || ans.length !== 5) {
+      return { ok: false, reason: `Pytanie #${q.ord} musi mieć dokładnie 5 odpowiedzi.` };
     }
 
-    if(game.kind === "fixed"){
-      const sum = ans.reduce((s,a)=>s + (Number(a.fixed_points)||0), 0);
-      if(sum > 100){
-        return { ok:false, reason:`Pytanie #${q.ord}: suma punktów = ${sum} (max 100).` };
+    if (game.kind === "fixed") {
+      const sum = ans.reduce((s, a) => s + (Number(a.fixed_points) || 0), 0);
+      if (sum > 100) {
+        return { ok: false, reason: `Pytanie #${q.ord}: suma punktów = ${sum} (max 100).` };
       }
     }
   }
 
-  if(game.kind === "poll" && game.status !== "ready"){
-    return { ok:false, reason:"Sondażowa nie jest gotowa: najpierw zamknij sondaż (status READY)." };
+  if (game.kind === "poll" && game.status !== "ready") {
+    return { ok: false, reason: "Sondażowa nie jest gotowa: najpierw zamknij sondaż (status READY)." };
   }
 
-  return { ok:true, reason:"" };
+  return { ok: true, reason: "" };
 }
 
+/* =========================================================
+   Game logic (unchanged)
+========================================================= */
 function pickNextQuestionId(ls) {
   const used = parseArr(ls.used_question_ids);
   for (const q of questions) {
@@ -296,12 +337,13 @@ async function confirmCorrect(ls, ans) {
 
   playSfx("ui_tick");
 
-  const all = answersForActive.map(a => a.id);
-  const allRevealed = all.every(id => revealed.includes(id));
+  const all = answersForActive.map((a) => a.id);
+  const allRevealed = all.every((id) => revealed.includes(id));
   if (allRevealed) {
-    const awardTo = ls.step === "steal"
-      ? (ls.steal_team || otherTeam(ls.playing_team || ls.buzzer_winner || "A"))
-      : (ls.playing_team || ls.buzzer_winner || "A");
+    const awardTo =
+      ls.step === "steal"
+        ? ls.steal_team || otherTeam(ls.playing_team || ls.buzzer_winner || "A")
+        : ls.playing_team || ls.buzzer_winner || "A";
 
     await awardRound(ls, awardTo);
   }
@@ -333,7 +375,7 @@ async function awardRound(ls, teamToAward) {
   await updateLive(patch);
 
   const revealed = parseArr(ls.revealed_answer_ids);
-  const remaining = answersForActive.map(a => a.id).filter(id => !revealed.includes(id));
+  const remaining = answersForActive.map((a) => a.id).filter((id) => !revealed.includes(id));
   revealQueue = remaining.slice();
 
   playSfx("round_transition");
@@ -389,7 +431,7 @@ async function endRound() {
 
 async function startGame(gameId) {
   const chk = await validateGameReadyToPlay(gameId);
-  if(!chk.ok){
+  if (!chk.ok) {
     setMsg(msgGame, chk.reason);
     return;
   }
@@ -433,7 +475,7 @@ async function startGame(gameId) {
 
 async function startRound() {
   const chk = await validateGameReadyToPlay(gameId);
-  if(!chk.ok){
+  if (!chk.ok) {
     setMsg(msgGame, chk.reason);
     return;
   }
@@ -501,7 +543,7 @@ async function resetBuzzer() {
 async function choosePlay() {
   const ls = await readLive();
   if (ls.step !== "decision") return;
-  await updateLive({ step: "play", playing_team: (ls.buzzer_winner || "A") });
+  await updateLive({ step: "play", playing_team: ls.buzzer_winner || "A" });
 }
 
 async function choosePass() {
@@ -522,13 +564,16 @@ async function pressX() {
   }
 }
 
+/* =========================================================
+   UI sync + live subscribe
+========================================================= */
 function syncUi(ls) {
   const hostOk = pingOk(ls.seen_host_at);
   const buzOk = pingOk(ls.seen_buzzer_at);
 
   setPill(pillHost, hostOk, hostOk ? "HOST: OK" : "HOST: BRAK");
   setPill(pillBuzzer, buzOk, buzOk ? "BUZZER: OK" : "BUZZER: BRAK");
-  
+
   const dispOk = pingOk(ls.seen_display_at) || (!!displayWin && !displayWin.closed);
   setPill(pillDisplay, dispOk, dispOk ? "DISPLAY: OK" : "DISPLAY: BRAK");
 
@@ -557,7 +602,8 @@ function syncUi(ls) {
 function subLive(onChange) {
   const ch = sb()
     .channel(`live_state:${gameId}`)
-    .on("postgres_changes",
+    .on(
+      "postgres_changes",
       { event: "*", schema: "public", table: "live_state", filter: `game_id=eq.${gameId}` },
       (payload) => onChange(payload.new)
     )
@@ -566,10 +612,9 @@ function subLive(onChange) {
   return () => sb().removeChannel(ch);
 }
 
-function openPopup(url, name) {
-  return window.open(url, name, "noopener,noreferrer");
-}
-
+/* =========================================================
+   MAIN
+========================================================= */
 async function main() {
   if (!gameId) {
     alert("Brak parametru id w URL (control.html?id=...).");
@@ -585,7 +630,7 @@ async function main() {
     location.href = "index.html";
   });
 
-  btnBack.addEventListener("click", ()=> location.href = "builder.html");
+  btnBack.addEventListener("click", () => (location.href = "builder.html"));
 
   await ensureLive();
 
@@ -602,25 +647,51 @@ async function main() {
   buzzerLink.value = buzUrl;
   displayLink.value = dispUrl;
 
-  btnCopyHost.addEventListener("click", async () => setMsg(msgDevices, (await copyText(hostUrl)) ? "Skopiowano link HOST." : "Nie udało się skopiować."));
-  btnCopyBuzzer.addEventListener("click", async () => setMsg(msgDevices, (await copyText(buzUrl)) ? "Skopiowano link BUZZER." : "Nie udało się skopiować."));
-  btnCopyDisplay.addEventListener("click", async () => setMsg(msgDevices, (await copyText(dispUrl)) ? "Skopiowano link DISPLAY." : "Nie udało się skopiować."));
+  btnCopyHost.addEventListener("click", async () =>
+    setMsg(msgDevices, (await copyText(hostUrl)) ? "Skopiowano link HOST." : "Nie udało się skopiować.")
+  );
+  btnCopyBuzzer.addEventListener("click", async () =>
+    setMsg(msgDevices, (await copyText(buzUrl)) ? "Skopiowano link BUZZER." : "Nie udało się skopiować.")
+  );
+  btnCopyDisplay.addEventListener("click", async () =>
+    setMsg(msgDevices, (await copyText(dispUrl)) ? "Skopiowano link DISPLAY." : "Nie udało się skopiować.")
+  );
 
-  btnOpenHost.addEventListener("click", () => openPopup(hostUrl, "fam_host"));
-  btnOpenBuzzer.addEventListener("click", () => openPopup(buzUrl, "fam_buzzer"));
+  btnOpenHost.addEventListener("click", () => {
+    hostWin = openPopup(hostUrl, "fam_host");
+    setMsg(msgDevices, "Otworzono host.");
+    // tylko podpinka kanału do konsoli / mniej fallbacków
+    ensureHostChannel(game.id);
+  });
+
+  btnOpenBuzzer.addEventListener("click", () => {
+    buzzerWin = openPopup(buzUrl, "fam_buzzer");
+    setMsg(msgDevices, "Otworzono buzzer.");
+    ensureBuzzerChannel(game.id);
+
+    // domyślnie OFF
+    const burst = async () => {
+      try { await sendToBuzzer(game.id, "OFF"); } catch {}
+      try { await sendToBuzzer(game.id, "RESET"); } catch {}
+    };
+    setTimeout(burst, 400);
+    setTimeout(burst, 900);
+    setTimeout(burst, 1600);
+  });
+
   btnOpenDisplay.addEventListener("click", async () => {
     displayWin = openPopup(dispUrl, "fam_display");
     setMsg(msgDevices, "Otworzono display.");
-  
+    ensureDisplayChannel(game.id);
+
     const lineMode = `MODE QR`;
-    const lineQR   = `QR HOST "${hostLink.value}" BUZZER "${buzzerLink.value}"`;
-  
+    const lineQR = `QR HOST "${hostLink.value}" BUZZER "${buzzerLink.value}"`;
+
     const burst = async () => {
       try { await sendToDisplay(game.id, lineMode); } catch {}
       try { await sendToDisplay(game.id, lineQR); } catch {}
     };
 
-    // ⏱ retry — display może jeszcze nie być podpięty
     setTimeout(burst, 400);
     setTimeout(burst, 900);
     setTimeout(burst, 1600);
@@ -643,7 +714,7 @@ async function main() {
   if (ls.active_question_id) {
     answersForActive = await loadAnswers(ls.active_question_id);
     const revealed = parseArr(ls.revealed_answer_ids);
-    revealQueue = answersForActive.map(a => a.id).filter(id => !revealed.includes(id));
+    revealQueue = answersForActive.map((a) => a.id).filter((id) => !revealed.includes(id));
   }
 
   let lastBuzzerLock = !!ls.buzzer_locked;
@@ -666,7 +737,8 @@ async function main() {
         }
 
         if (ls.step === "licytacja") {
-          const any = parseArr(ls.revealed_answer_ids).length > 0 || (Number(ls.strikes) || 0) > 0;
+          const any =
+            parseArr(ls.revealed_answer_ids).length > 0 || (Number(ls.strikes) || 0) > 0;
           if (any) await updateLive({ step: "decision" });
         }
       }
@@ -675,7 +747,7 @@ async function main() {
         answersForActive = await loadAnswers(ls.active_question_id);
         const revealed = parseArr(ls.revealed_answer_ids);
         if (ls.step === "reveal_end") {
-          revealQueue = answersForActive.map(a => a.id).filter(id => !revealed.includes(id));
+          revealQueue = answersForActive.map((a) => a.id).filter((id) => !revealed.includes(id));
         }
       } else {
         answersForActive = [];
@@ -692,20 +764,28 @@ async function main() {
 
   tabSwitch("devices");
 
+  // konsola: jeden obiekt, wszystko w nim
   window.__ctl = {
     gameId: game.id,
     hostUrl,
     buzUrl,
     dispUrl,
+
     ensureDisplayChannel,
     sendToDisplay,
+
+    ensureHostChannel,
+    sendToHost,
+
+    ensureBuzzerChannel,
+    sendToBuzzer,
   };
 
   console.log("[control] __ctl ready", window.__ctl);
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  main().catch(e => {
+  main().catch((e) => {
     console.error(e);
     alert("Błąd sterowania. Sprawdź konsolę (F12).");
   });
