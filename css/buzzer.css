@@ -1,71 +1,116 @@
-html, body {
-  margin: 0;
-  height: 100%;
-  overscroll-behavior: none;
-  touch-action: none;
+.buzzer-body{
+  margin:0;
+  min-height:100vh;
+  background:#02040b;
+  overflow:hidden;
+  overscroll-behavior:none;
+  touch-action:none;
+  -webkit-user-select:none;
+  user-select:none;
 }
 
-.buzzer {
-  background: #02040b;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.arena {
-  width: 100%;
-  height: 100%;
-  display: grid;
+.arena{
+  min-height:100vh;
+  display:grid;
   grid-template-columns: 1fr 1fr;
-  gap: 5vw;
-  padding: 5vw;
+  gap: 18px;
+  padding: 18px;
+  box-sizing:border-box;
+  align-items:center;
+  justify-items:center;
 }
 
-.btn {
-  border-radius: 50%;
-  border: 10px solid #cfd3da;
-  box-shadow:
-    inset 0 18px 28px rgba(255,255,255,.18),
-    inset 0 -28px 40px rgba(0,0,0,.65),
-    0 30px 90px rgba(0,0,0,.85);
-  cursor: pointer;
-  transition: transform .06s ease, opacity .2s ease;
-}
+.btnBig{
+  /* ZAWSZE OKRĄGŁE */
+  aspect-ratio: 1 / 1;
+  width: min(46vw, 520px);
+  border-radius: 9999px;
 
-.btn:active { transform: scale(.97); }
-.btn:disabled { opacity: .25; cursor: default; }
-
-.red {
-  background: radial-gradient(circle at 30% 25%, #ffaaaa, #c41212);
-}
-
-.green {
-  background: radial-gradient(circle at 30% 25%, #aaffcc, #118a4b);
-}
-
-.btn.winner {
-  opacity: .15;
-}
-
-.fs {
-  position: fixed;
-  top: 14px;
-  right: 14px;
-  width: 36px;
-  height: 36px;
   border: none;
-  background: none;
-  cursor: pointer;
+  cursor:pointer;
+
+  /* duży, srebrny pierścień + 3D */
+  box-shadow:
+    /* zewnętrzny “metal” */
+    0 0 0 18px rgba(220,230,255,.18),
+    0 0 0 22px rgba(255,255,255,.08),
+
+    /* 3D bryła */
+    inset 0 22px 34px rgba(255,255,255,.14),
+    inset 0 -34px 55px rgba(0,0,0,.65),
+    0 40px 110px rgba(0,0,0,.78);
+
+  transition: transform .06s ease, filter .06s ease, opacity .06s ease;
 }
 
-.fs::before,
-.fs::after {
-  content: "";
-  position: absolute;
-  border: 2px solid #fff;
-  width: 14px;
-  height: 14px;
+.btnBig:active{ transform: translateY(3px) scale(.995); }
+.btnBig:disabled{ cursor:not-allowed; opacity:.40; }
+
+.btnBig.winner{
+  opacity:.18;                /* “gaśnie” zwycięzca */
+  filter: saturate(.8) brightness(.75);
 }
 
-.fs::before { top: 6px; left: 6px; }
-.fs::after { bottom: 6px; right: 6px; }
+.red{
+  background:
+    radial-gradient(circle at 30% 22%, rgba(255,255,255,.22), transparent 42%),
+    radial-gradient(circle at 55% 64%, rgba(0,0,0,.38), transparent 58%),
+    linear-gradient(180deg, #ff3b3b, #8f0b0b);
+}
+
+.green{
+  background:
+    radial-gradient(circle at 30% 22%, rgba(255,255,255,.22), transparent 42%),
+    radial-gradient(circle at 55% 64%, rgba(0,0,0,.38), transparent 58%),
+    linear-gradient(180deg, #22e06f, #096b2f);
+}
+
+.icon{
+  font-family: system-ui, -apple-system, Segoe UI, sans-serif;
+  font-weight: 1000;
+  font-size: min(12vw, 110px);
+  letter-spacing:.06em;
+  color: rgba(255,255,255,.92);
+  text-shadow: 0 10px 30px rgba(0,0,0,.45);
+}
+
+.fsBtn{
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  z-index: 60;
+
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+
+  border: 1px solid rgba(255,255,255,.20);
+  background: rgba(255,255,255,.07);
+  box-shadow:
+    inset 0 10px 18px rgba(255,255,255,.10),
+    0 18px 50px rgba(0,0,0,.55);
+
+  color:#fff;
+  font-weight: 1000;
+  font-size: 18px;
+  cursor:pointer;
+}
+
+/* OFF = czarny ekran */
+.off{
+  position: fixed;
+  inset: 0;
+  background:#000;
+  display:none;
+  place-items:center;
+  z-index: 40;
+}
+.off.on{ display:grid; }
+
+.offDot{
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.15);
+  box-shadow: 0 0 0 10px rgba(255,255,255,.03);
+}
