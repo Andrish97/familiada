@@ -6,7 +6,9 @@ const key = qs.get("key");
 
 const paperText = document.getElementById("paperText");
 const hint = document.getElementById("hint");
+
 const blank = document.getElementById("blank");
+const blankHint = document.getElementById("blankHint");
 
 const btnFS = document.getElementById("btnFS");
 const fsIco = document.getElementById("fsIco");
@@ -21,18 +23,22 @@ function setFullscreenIcon(){
 }
 
 // ---------- hide / reveal ----------
-
 function setHidden(on){
   if (on === hidden) return;
   hidden = on;
+
+  // pokaz/ukryj karton
+  blank.hidden = !on;
 
   if (on) {
     lastText = paperText.textContent;
     paperText.textContent = "";
     hint.textContent = "Przeciągnij w górę aby odsłonić";
+    blankHint.textContent = "Przeciągnij w górę aby odsłonić";
   } else {
     paperText.textContent = lastText || "";
     hint.textContent = "Przeciągnij w dół żeby zasłonić";
+    blankHint.textContent = "Przeciągnij w górę aby odsłonić";
   }
 }
 
@@ -62,7 +68,7 @@ function onMove(y){
     return;
   }
 
-  // ↑ odsłoń (z czarnej zasłony)
+  // ↑ odsłoń (z kartonu)
   if (hidden && dy < -70) {
     setHidden(false);
     startY = null;
@@ -74,6 +80,11 @@ function onUp(){
   startY = null;
   startOK = false;
 }
+
+// twarde blokowanie pinch/zoom/scroll (iOS lubi robić “dziwne rzeczy” przy 2 palcach)
+document.addEventListener("gesturestart", (e) => e.preventDefault());
+document.addEventListener("gesturechange", (e) => e.preventDefault());
+document.addEventListener("gestureend", (e) => e.preventDefault());
 
 // touch + mouse
 document.addEventListener("touchstart", (e)=> onDown(e.touches?.[0]?.clientY ?? 0), { passive:false });
@@ -96,16 +107,14 @@ document.addEventListener("fullscreenchange", setFullscreenIcon);
 // ---------- commands ----------
 function norm(s){ return String(s ?? "").trim(); }
 
-function setText(t){
-  paperText.textContent = t ?? "";
-}
-
 function handleCmd(line){
   const cmd = line.toUpperCase();
 
+  // OFF/ON = zasłona (karton)
   if (cmd === "OFF") { setHidden(true); return; }
   if (cmd === "ON")  { setHidden(false); return; }
 
+  // SEND "Tekst..."
   if (/^SEND\b/i.test(line)) {
     const m = line.match(/^SEND\s+"([\s\S]*)"\s*$/i);
     const text = m ? m[1] : line.replace(/^SEND\s+/i, "");
@@ -135,14 +144,15 @@ document.addEventListener("DOMContentLoaded", ()=>{
   setFullscreenIcon();
 
   // start bez “Ładuję…”
-  setText("");
+  paperText.textContent = "";
+  lastText = "";
 
   if (!gameId || !key) {
     setHidden(true);
-    setText("");
     return;
   }
 
+  // domyślnie odsłonięte (jak w Twojej wersji)
   setHidden(false);
   ensureChannel();
 
@@ -151,4 +161,4 @@ document.addEventListener("DOMContentLoaded", ()=>{
 });
 
 // debug
-window.__host = { setText, setHidden, handleCmd };
+window.__host = { setHidden, handleCmd };
