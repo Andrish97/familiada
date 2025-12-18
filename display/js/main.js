@@ -4,7 +4,6 @@ import { createQRController } from "./qr.js";
 import { createScene } from "./scene.js";
 import { createCommandHandler } from "./commands.js";
 
-// ✅ Twoje Supabase (window.supabase + anon key)
 import { sb } from "../js/core/supabase.js";
 
 const $ = (id) => document.getElementById(id);
@@ -27,7 +26,6 @@ async function authDisplayOrThrow(gameId, key) {
 
   if (error) throw error;
 
-  // supabase czasem zwraca obiekt, czasem tablicę (zależnie od RPC)
   const row = Array.isArray(data) ? data[0] : data;
   if (!row?.id) throw new Error("Zły klucz (display) albo gra nie istnieje.");
 
@@ -55,17 +53,17 @@ window.addEventListener("DOMContentLoaded", async () => {
   };
 
   try {
-    // ✅ 0) AUTH z URL
+    // 0) AUTH
     const { gameId, key } = parseParams();
     const game = await authDisplayOrThrow(gameId, key);
 
-    // ✅ 1) presence (heartbeat)
+    // 1) presence (heartbeat)
     startPresence({
       channel: `familiada-display:${game.id}`,
       key: "familiada_display_alive",
     });
 
-    // ✅ 2) QR controller
+    // 2) QR controller
     const qr = createQRController({
       qrScreen: $("qrScreen"),
       gameScreen: $("gameScreen"),
@@ -73,7 +71,7 @@ window.addEventListener("DOMContentLoaded", async () => {
       buzzerImg: $("qrBuzzerImg"),
     });
 
-    // ✅ 3) scena gry
+    // 3) scena gry
     const scene = await createScene();
 
     const app = {
@@ -107,20 +105,17 @@ window.addEventListener("DOMContentLoaded", async () => {
       qr,
       scene,
 
-      // info pomocnicze
       game,
       gameId: game.id,
       key,
     };
 
-    // ✅ 4) komendy
     const handleCommand = createCommandHandler(app);
 
     window.app = app;
     window.scene = scene;
     window.handleCommand = handleCommand;
 
-    // domyślnie czarny ekran
     app.setMode("BLACK_SCREEN");
     console.log("Display OK. Game:", game.name, game.id);
   } catch (e) {
