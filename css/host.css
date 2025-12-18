@@ -1,43 +1,15 @@
-/* Cała strona = kartka. Bez scrolla. */
+@import url("https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap");
+
+html, body { height:100%; }
+
 .host-body{
   margin:0;
   height:100vh;
   overflow:hidden;
-  background:#0b1220; /* tło “poza kartką” (gdy ukryte) */
-  touch-action:none;  /* blokuje scroll/swipe przeglądarki */
-  user-select:none;
-}
+  overscroll-behavior:none;
+  touch-action:none;
 
-/* Fullscreen button – mały, ładny, stanowy */
-.fsBtn{
-  position:fixed;
-  top:10px; right:10px;
-  z-index:40;
-  width:44px; height:44px;
-  border-radius:14px;
-  border:1px solid rgba(255,255,255,.18);
-  background:rgba(255,255,255,.08);
-  color:#fff;
-  font-weight:1000;
-  cursor:pointer;
-  display:grid;
-  place-items:center;
-  box-shadow: 0 14px 40px rgba(0,0,0,.35);
-}
-.fsBtn:active{ transform: translateY(1px); }
-.fsBtn.isOn{
-  border-color: rgba(255,234,166,.35);
-  background: rgba(255,234,166,.12);
-  color:#ffeaa6;
-}
-
-/* Kartka: pełny ekran */
-.page{
-  position:fixed;
-  inset:0;
-  z-index:10;
-
-  /* “papier” */
+  /* kartka jako tło CAŁEJ strony */
   background:
     repeating-linear-gradient(
       to bottom,
@@ -45,90 +17,144 @@
       #fafaf9 30px,
       #e7eefc 31px
     );
-
-  /* delikatne “brzegi” */
-  box-shadow: 0 30px 90px rgba(0,0,0,.55);
-}
-
-/* Tekst jako “notatka” na liniach */
-.note{
-  margin:0;
-  padding:22px 18px 86px; /* dół pod pull-bar */
-  height:100%;
-  box-sizing:border-box;
-
-  white-space:pre-wrap;
-  word-break:break-word;
-
-  /* ręczne pismo – sensowny fallback na systemowych */
-  font-family: "Segoe Print","Bradley Hand","Comic Sans MS",cursive;
-  font-size:22px;
-  line-height:31px; /* ma się zgrywać z liniami (31px) */
   color:#0b1220;
-  font-weight:700;
 }
 
-/* Pasek na dole do przeciągania */
-.pull{
-  position:absolute;
-  left:0; right:0; bottom:0;
-  padding:10px 16px 14px;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  gap:8px;
-
-  background: linear-gradient(to top, rgba(0,0,0,.12), rgba(0,0,0,0));
-}
-
-.pullHandle{
-  width:62px;
-  height:8px;
-  border-radius:999px;
-  background: rgba(15,23,42,.28);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.35);
-}
-
-.pullHint{
-  font-family: system-ui,-apple-system,Segoe UI,sans-serif;
-  font-size:12px;
-  font-weight:900;
-  letter-spacing:.08em;
-  text-transform:uppercase;
-  color: rgba(15,23,42,.70);
-}
-
-/* Ukryty stan: pusto */
-.hiddenStage{
+/* “kartka” = cała strona */
+.sheet{
   position:fixed;
   inset:0;
-  z-index:5;
-  background:#0b1220;
-  display:none;
-  place-items:end center;
-  padding:0 16px 18px;
+  padding:22px 18px 52px; /* dół zostawiamy na hint */
   box-sizing:border-box;
 }
 
-.hiddenStage.on{
-  display:grid;
+/* tytułki */
+.hTitle{
+  font-weight:1000;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:#0f172a;
+  font-size:12px;
+  opacity:.85;
 }
 
-.hiddenHint{
-  opacity:.8;
-  color:#fff;
-  font-family: system-ui,-apple-system,Segoe UI,sans-serif;
+/* pytanie (ładniejsze “odręczne”) */
+.q{
+  margin-top:10px;
+  font-family: "Patrick Hand", system-ui, -apple-system, Segoe UI, sans-serif;
+  font-size:30px;
+  font-weight:400;
+  color:#0b1220;
+  line-height:1.15;
+  white-space:pre-wrap;
+}
+
+/* lista odpowiedzi */
+.alist{
+  margin-top:12px;
+  display:grid;
+  gap:10px;
+}
+
+.a{
+  padding:10px 12px;
+  border-radius:14px;
+  border:1px solid rgba(0,0,0,.10);
+  background: rgba(255,255,255,.70);
+  box-shadow: 0 10px 28px rgba(0,0,0,.08);
   font-weight:900;
+  color:#0b1220;
+  display:flex;
+  justify-content:space-between;
+  align-items:baseline;
+}
+
+.aTxt{
+  font-family: "Patrick Hand", system-ui, -apple-system, Segoe UI, sans-serif;
+  font-size:20px;
+  font-weight:400;
+}
+.aPts{
+  font-weight:1000;
+  opacity:.7;
+  letter-spacing:.08em;
+}
+
+/* “ukryte” – zasłona, ale nadal kartka */
+.cover{
+  position:fixed;
+  inset:0;
+  background:
+    repeating-linear-gradient(
+      to bottom,
+      #fafaf9 0px,
+      #fafaf9 30px,
+      #e7eefc 31px
+    );
+  display:none;
+  z-index:40;
+}
+.cover.on{ display:block; }
+
+.coverNote{
+  position:absolute;
+  left:0; right:0;
+  top:38%;
+  text-align:center;
+  font-weight:1000;
+  letter-spacing:.18em;
+  text-transform:uppercase;
+  color:#0f172a;
+  opacity:.75;
+  font-size:16px;
+}
+.coverSub{
+  margin-top:8px;
+  font-size:12px;
+  letter-spacing:.10em;
+  opacity:.65;
+}
+
+/* hint na dole */
+.swipeHint{
+  position:fixed;
+  left:0; right:0;
+  bottom:10px;
+  text-align:center;
+  font-weight:1000;
   letter-spacing:.08em;
   text-transform:uppercase;
-  font-size:12px;
+  font-size:11px;
+  color:#0f172a;
+  opacity:.55;
+  pointer-events:none;
+  z-index:50;
 }
 
-/* Animacja “schowania” kartki */
-.page{
-  transform: translateY(0);
-  transition: transform 220ms ease;
+/* fullscreen button (ikona “dwie warstwy”) */
+.fsBtn{
+  position:fixed;
+  top:12px; right:12px;
+  width:46px; height:46px;
+  border-radius:16px;
+  border:1px solid rgba(15,23,42,.18);
+  background: rgba(255,255,255,.65);
+  cursor:pointer;
+  z-index:60;
 }
-.page.hidden{
-  transform: translateY(-105%);
+
+.fsBtn::before,
+.fsBtn::after{
+  content:"";
+  position:absolute;
+  width:18px; height:14px;
+  border-radius:4px;
+  border:2px solid rgba(15,23,42,.80);
+}
+.fsBtn::before{ transform: translate(16px, 12px); opacity:.85; }
+.fsBtn::after { transform: translate(12px, 16px); opacity:.55; }
+
+.fsBtn.on{
+  border-color: rgba(255,234,166,.75);
+  background: rgba(255,234,166,.55);
 }
