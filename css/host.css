@@ -1,49 +1,36 @@
 :root{
-  /* dynamiczna wysokość bez “ram” od paska adresu */
-  --vh: 100dvh;
-
-  /* skala zależna od rozmiaru ekranu */
   --u: clamp(10px, 1.35vmin, 18px);
-
-  /* siatka linii */
   --line: calc(var(--u) * 2.2);
 
-  /* margines czerwony + odsunięcia */
   --margin-x: calc(var(--u) * 4.2);
   --text-left: calc(var(--margin-x) + var(--u) * 1.0);
   --text-right: calc(var(--u) * 2.6);
 
-  /* start od ~3 linijki */
   --top-pad: calc(var(--line) * 2);
-
-  /* miejsce na hint (1 linia) */
   --bottom-pad: calc(var(--line) * 1.2);
 
-  /* bezpieczne obszary (notch) */
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-right: env(safe-area-inset-right, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --safe-left: env(safe-area-inset-left, 0px);
 }
 
-html, body { height: 100%; }
+html, body { height:100%; }
 
 .host-body{
   margin:0;
   background:#0b1220;
   overflow:hidden;
-  touch-action:none;        /* blok pinch/scroll */
+  touch-action:none; /* blok zoom/scroll gestami */
   -webkit-user-select:none;
   user-select:none;
-  -webkit-touch-callout:none;
 }
 
-/* fullscreen button */
 .fsBtn{
   position:fixed;
   top: calc(var(--safe-top) + var(--u) * 0.8);
   right: calc(var(--safe-right) + var(--u) * 0.8);
-  z-index:60;
+  z-index:100;
 
   width: calc(var(--u) * 3.2);
   height: calc(var(--u) * 3.2);
@@ -56,33 +43,24 @@ html, body { height: 100%; }
   cursor:pointer;
 }
 .fsBtn:active{ transform: translateY(1px); }
-.fsBtn .ico{
-  font-size: calc(var(--u) * 1.25);
-  letter-spacing:-2px;
-}
+.fsBtn .ico{ font-size: calc(var(--u) * 1.25); letter-spacing:-2px; }
 
-/* Kartka = całe okno */
 .paper{
   position:fixed;
   inset:0;
-  height: var(--vh);
   z-index:10;
-  pointer-events:auto;
 
-  padding:
-    var(--safe-top)
-    var(--safe-right)
-    var(--safe-bottom)
-    var(--safe-left);
+  padding: var(--safe-top) var(--safe-right) var(--safe-bottom) var(--safe-left);
 
-  /* tylko równe linie — zero “dziesiątek”, zero gradientów */
-  background:
-    repeating-linear-gradient(
-      to bottom,
-      #fffdf5 0px,
-      #fffdf5 calc(var(--line) - 1px),
-      #e7e2d3 var(--line)
-    );
+  /* bez “gradientu”: twarde paski */
+  background-color:#fffdf5;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    #fffdf5 0px,
+    #fffdf5 calc(var(--line) - 1px),
+    #e7e2d3 var(--line)
+  );
+  background-repeat: repeat;
 }
 
 .redMargin{
@@ -99,14 +77,13 @@ html, body { height: 100%; }
   right: calc(var(--safe-right) + var(--text-right));
   top: calc(var(--safe-top) + var(--top-pad));
   bottom: calc(var(--safe-bottom) + var(--bottom-pad));
-
   margin:0;
+
   white-space:pre-wrap;
   word-break:break-word;
 
-  /* bardziej czytelne “pisane” bez webfontów */
-  font-family: "Segoe Print","Bradley Hand","Segoe Script","Comic Sans MS",cursive;
-  font-size: clamp(18px, calc(var(--u) * 1.75), 30px);
+  font-family: "Bradley Hand", "Segoe Script", "Comic Sans MS", cursive;
+  font-size: clamp(18px, calc(var(--u) * 1.7), 30px);
   line-height: var(--line);
   color:#111;
 }
@@ -117,35 +94,32 @@ html, body { height: 100%; }
   right: calc(var(--safe-right) + var(--text-right));
   bottom: calc(var(--safe-bottom) + 0px);
 
-  font-family: "Segoe Print","Bradley Hand","Segoe Script","Comic Sans MS",cursive;
-  font-size: clamp(16px, calc(var(--u) * 1.55), 28px);
+  font-family: "Bradley Hand", "Segoe Script", "Comic Sans MS", cursive;
+  font-size: clamp(16px, calc(var(--u) * 1.45), 26px);
   line-height: var(--line);
-  color: rgba(0,0,0,.55);
+  color:rgba(0,0,0,.55);
 }
 
-/* Kartonowa okładka (blank) */
+/* Okładka: karton, bez gradientu */
 .blank{
   position:fixed;
   inset:0;
-  height: var(--vh);
-  z-index:50;
-
-  /* karton — jednolicie (bez gradientów) */
-  background: #c7a77a;
-
-  /* pełna zasłona */
-  display:block;
-  pointer-events:auto;
+  z-index:90;
+  background:#c8b08a; /* karton */
+  display:grid;
+  place-items:end center;
+  padding:
+    calc(var(--safe-top) + var(--u) * 2)
+    calc(var(--safe-right) + var(--u) * 2)
+    calc(var(--safe-bottom) + var(--u) * 2)
+    calc(var(--safe-left) + var(--u) * 2);
 }
 
-.blankHint{
-  position:absolute;
-  left: calc(var(--safe-left) + var(--text-left));
-  right: calc(var(--safe-right) + var(--text-right));
-  bottom: calc(var(--safe-bottom) + 0px);
-
-  font-family: "Segoe Print","Bradley Hand","Segoe Script","Comic Sans MS",cursive;
-  font-size: clamp(16px, calc(var(--u) * 1.55), 28px);
+.blankText{
+  width:100%;
+  text-align:left;
+  font-family: "Bradley Hand", "Segoe Script", "Comic Sans MS", cursive;
+  font-size: clamp(16px, calc(var(--u) * 1.45), 26px);
   line-height: var(--line);
-  color: rgba(30,20,10,.55);
+  color: rgba(40,25,10,.65);
 }
