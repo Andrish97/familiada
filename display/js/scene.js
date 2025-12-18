@@ -274,6 +274,22 @@ export async function createScene() {
       if (inn.type === "rain")   await anim.inRain(big, area, inn.axis ?? "down", scaleMs(inn.ms, 24), inn.opts ?? {});
     }
   };
+
+  // ============================================================
+  // ROUNDS STATE + helpers (MUSI BYĆ W SCOPE createScene())
+  // ============================================================
+  const roundsState = {
+    text: Array(6).fill(""),
+    pts:  Array(6).fill(""),
+  };
+  
+  const hasVisibleText = (s) => (s ?? "").toString().trim().length > 0;
+  
+  const setRoundNumberVisible = (ROUNDS_OBJ, idx1to6, on) => {
+    const i = (idx1to6 | 0) - 1;
+    if (i < 0 || i > 5) return;
+    writeField(GLYPHS, big, ROUNDS_OBJ.roundNums[i], on ? String(i + 1) : " ", LIT.main);
+  };
   
   const ROUNDS = (() => {
     const rows = [2,3,4,5,6,7]; // <-- było 5, jest 6
@@ -646,7 +662,7 @@ export async function createScene() {
         await updateField(GLYPHS, big, ROUNDS.answers[i], text, { out: animOut, in: animIn, color: LIT.main });
       
         // numer tylko gdy tekst ma treść
-        setRoundNumberVisible(idx1to6, hasVisibleText(roundsState.text[i]));
+        setRoundNumberVisible(ROUNDS, idx1to6, hasVisibleText(roundsState.text[i]));
       },
 
       setPts: async (idx1to6, pts, { animOut=null, animIn=null } = {}) => {
