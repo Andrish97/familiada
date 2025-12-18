@@ -2,11 +2,10 @@
 <html lang="pl">
 <head>
   <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
   <title>Familiada — buzzer</title>
 
   <link rel="icon" href="favicon.ico"/>
-
   <link rel="stylesheet" href="css/base.css"/>
   <link rel="stylesheet" href="css/buzzer.css"/>
 
@@ -15,15 +14,13 @@
 </head>
 
 <body class="buzzer-body">
-  <div class="hud" id="hud">
-    <div class="dot" id="dot"></div>
-    <div class="txt" id="txt">Łączę…</div>
-    <button class="fs" id="btnFS" type="button" title="Pełny ekran">⛶</button>
-  </div>
+  <button class="fsBtn" id="btnFS" type="button" aria-label="Pełny ekran" title="Pełny ekran"></button>
 
   <div class="arena">
     <button class="big red" id="btnA" type="button" aria-label="Buzzer A"></button>
     <button class="big green" id="btnB" type="button" aria-label="Buzzer B"></button>
   </div>
+
+  <div class="off" id="off" aria-hidden="true"></div>
 </body>
 </html>
