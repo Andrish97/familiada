@@ -1,102 +1,134 @@
+/* Cała strona = kartka. Bez scrolla. */
 .host-body{
-  margin:0; min-height:100vh;
-  font-family:system-ui,-apple-system,Segoe UI,sans-serif;
-  background:#0b1220;
-  color:#111;
+  margin:0;
+  height:100vh;
+  overflow:hidden;
+  background:#0b1220; /* tło “poza kartką” (gdy ukryte) */
+  touch-action:none;  /* blokuje scroll/swipe przeglądarki */
+  user-select:none;
 }
 
-.hideBtn{
+/* Fullscreen button – mały, ładny, stanowy */
+.fsBtn{
   position:fixed;
-  top:12px; right:12px;
-  z-index:30;
-  padding:12px 14px;
-  border-radius:16px;
-  border:1px solid rgba(120,170,255,.35);
-  background: rgba(120,170,255,.16);
-  color:#dbeafe;
-  font-weight:1000;
-  letter-spacing:.08em;
-  cursor:pointer;
-}
-
-.hTitle{
-  font-weight:1000;
-  letter-spacing:.12em;
-  text-transform:uppercase;
-  color:#0f172a;
-  font-size:12px;
-}
-
-.alist{
-  margin-top:10px;
-  display:grid;
-  gap:10px;
-}
-
-.a{
-  padding:10px 12px;
+  top:10px; right:10px;
+  z-index:40;
+  width:44px; height:44px;
   border-radius:14px;
-  border:1px solid rgba(0,0,0,.10);
-  background: rgba(255,255,255,.65);
-  font-weight:800;
-  color:#0b1220;
-  display:flex;
-  justify-content:space-between;
-}
-
-.cover{
-  position:fixed;
-  inset:0;
-  background: rgba(2,6,23,.92);
+  border:1px solid rgba(255,255,255,.18);
+  background:rgba(255,255,255,.08);
+  color:#fff;
+  font-weight:1000;
+  cursor:pointer;
   display:grid;
   place-items:center;
-  z-index:50;
-  cursor:pointer;
+  box-shadow: 0 14px 40px rgba(0,0,0,.35);
 }
-
-.coverCard{
-  width:min(520px,92vw);
-  border-radius:22px;
-  border:1px solid rgba(255,255,255,.16);
-  background: rgba(255,255,255,.06);
-  box-shadow:0 30px 90px rgba(0,0,0,.75);
-  padding:22px;
-  text-align:center;
-}
-
-.coverTitle{
-  font-weight:1000;
-  letter-spacing:.18em;
-  text-transform:uppercase;
+.fsBtn:active{ transform: translateY(1px); }
+.fsBtn.isOn{
+  border-color: rgba(255,234,166,.35);
+  background: rgba(255,234,166,.12);
   color:#ffeaa6;
-  font-size:18px;
-}
-.coverSub{
-  margin-top:10px;
-  opacity:.8;
-  color:#fff;
-  font-weight:800;
 }
 
-html, body{ height:100%; overflow:hidden; overscroll-behavior:none; touch-action:none; }
+/* Kartka: pełny ekran */
+.page{
+  position:fixed;
+  inset:0;
+  z-index:10;
 
-.sheet{
-  /* paski co 28px */
+  /* “papier” */
   background:
     repeating-linear-gradient(
       to bottom,
-      #fffdf6 0px,
-      #fffdf6 27px,
-      #f7e7a6 28px
+      #fafaf9 0px,
+      #fafaf9 30px,
+      #e7eefc 31px
     );
+
+  /* delikatne “brzegi” */
+  box-shadow: 0 30px 90px rgba(0,0,0,.55);
 }
 
-.q{
-  margin-top:10px;
-  font-family: ui-rounded, "Comic Sans MS", "Segoe Print", system-ui, sans-serif; /* “odręczne-ish” */
-  font-size:22px;
-  font-weight:800;
-  color:#0b1220;
-  line-height:28px; /* MUSI pasować do pasków */
+/* Tekst jako “notatka” na liniach */
+.note{
+  margin:0;
+  padding:22px 18px 86px; /* dół pod pull-bar */
+  height:100%;
+  box-sizing:border-box;
+
   white-space:pre-wrap;
+  word-break:break-word;
+
+  /* ręczne pismo – sensowny fallback na systemowych */
+  font-family: "Segoe Print","Bradley Hand","Comic Sans MS",cursive;
+  font-size:22px;
+  line-height:31px; /* ma się zgrywać z liniami (31px) */
+  color:#0b1220;
+  font-weight:700;
+}
+
+/* Pasek na dole do przeciągania */
+.pull{
+  position:absolute;
+  left:0; right:0; bottom:0;
+  padding:10px 16px 14px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:8px;
+
+  background: linear-gradient(to top, rgba(0,0,0,.12), rgba(0,0,0,0));
+}
+
+.pullHandle{
+  width:62px;
+  height:8px;
+  border-radius:999px;
+  background: rgba(15,23,42,.28);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.35);
+}
+
+.pullHint{
+  font-family: system-ui,-apple-system,Segoe UI,sans-serif;
+  font-size:12px;
+  font-weight:900;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color: rgba(15,23,42,.70);
+}
+
+/* Ukryty stan: pusto */
+.hiddenStage{
+  position:fixed;
+  inset:0;
+  z-index:5;
+  background:#0b1220;
+  display:none;
+  place-items:end center;
+  padding:0 16px 18px;
+  box-sizing:border-box;
+}
+
+.hiddenStage.on{
+  display:grid;
+}
+
+.hiddenHint{
+  opacity:.8;
+  color:#fff;
+  font-family: system-ui,-apple-system,Segoe UI,sans-serif;
+  font-weight:900;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  font-size:12px;
+}
+
+/* Animacja “schowania” kartki */
+.page{
+  transform: translateY(0);
+  transition: transform 220ms ease;
+}
+.page.hidden{
+  transform: translateY(-105%);
 }
