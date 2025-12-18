@@ -561,7 +561,7 @@ async function main() {
 
   const hostUrl = buildLink("host.html", { id: game.id, key: game.share_key_host });
   const buzUrl = buildLink("buzzer.html", { id: game.id, key: game.share_key_buzzer });
-  const dispUrl = buildLink("display.html", { id: game.id, key: game.share_key_display });
+  const dispUrl = buildLink("../display/index.html", { id: game.id, key: game.share_key_display });
 
   hostLink.value = hostUrl;
   buzzerLink.value = buzUrl;
