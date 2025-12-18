@@ -1,107 +1,71 @@
-html, body{ height:100%; }
-
-.buzzer-body{
-  margin:0;
-  height:100vh;
-  background:#02040b;
-  overflow:hidden;
-  overscroll-behavior:none;
-  touch-action:none;
+html, body {
+  margin: 0;
+  height: 100%;
+  overscroll-behavior: none;
+  touch-action: none;
 }
 
-/* fullscreen button (dwie “warstwy”) */
-.fsBtn{
-  position:fixed;
-  top:12px; right:12px;
-  width:46px; height:46px;
-  border-radius:16px;
-  border:1px solid rgba(255,255,255,.16);
-  background: rgba(255,255,255,.06);
-  cursor:pointer;
-  z-index:50;
+.buzzer {
+  background: #02040b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.fsBtn::before,
-.fsBtn::after{
-  content:"";
-  position:absolute;
-  width:18px; height:14px;
-  border-radius:4px;
-  border:2px solid rgba(255,255,255,.85);
-}
-.fsBtn::before{ transform: translate(16px, 12px); opacity:.85; }
-.fsBtn::after { transform: translate(12px, 16px); opacity:.55; }
-
-.fsBtn.on{
-  border-color: rgba(255,234,166,.45);
-  background: rgba(255,234,166,.12);
-}
-
-.arena{
-  height:100%;
-  display:grid;
+.arena {
+  width: 100%;
+  height: 100%;
+  display: grid;
   grid-template-columns: 1fr 1fr;
-  gap:22px;
-  padding:22px;
-  align-items:center;
+  gap: 5vw;
+  padding: 5vw;
 }
 
-/* zawsze koło + duży “pierścień” + 3D */
-.big{
-  width:100%;
-  aspect-ratio: 1 / 1;
-  border-radius:999px;
-  border:0;
-  cursor:pointer;
-
-  /* “srebrny” pierścień */
+.btn {
+  border-radius: 50%;
+  border: 10px solid #cfd3da;
   box-shadow:
-    0 0 0 16px rgba(255,255,255,.16),
-    0 0 0 30px rgba(0,0,0,.40),
-
-    inset 0 26px 44px rgba(255,255,255,.10),
-    inset 0 -34px 54px rgba(0,0,0,.70),
-
-    0 34px 110px rgba(0,0,0,.85);
-
-  transition: transform .06s ease, filter .06s ease, opacity .06s ease;
+    inset 0 18px 28px rgba(255,255,255,.18),
+    inset 0 -28px 40px rgba(0,0,0,.65),
+    0 30px 90px rgba(0,0,0,.85);
+  cursor: pointer;
+  transition: transform .06s ease, opacity .2s ease;
 }
 
-.big:active{ transform: translateY(2px); }
-.big:disabled{ cursor:not-allowed; opacity:.45; }
+.btn:active { transform: scale(.97); }
+.btn:disabled { opacity: .25; cursor: default; }
 
-/* kolory “korpusu” */
-.red{
-  background:
-    radial-gradient(circle at 30% 25%, rgba(255,255,255,.16), transparent 38%),
-    radial-gradient(circle at 55% 60%, rgba(0,0,0,.35), transparent 58%),
-    linear-gradient(180deg, #ff3b3b, #8f0c0c);
+.red {
+  background: radial-gradient(circle at 30% 25%, #ffaaaa, #c41212);
 }
 
-.green{
-  background:
-    radial-gradient(circle at 30% 25%, rgba(255,255,255,.16), transparent 38%),
-    radial-gradient(circle at 55% 60%, rgba(0,0,0,.35), transparent 58%),
-    linear-gradient(180deg, #22e06f, #0a6a30);
+.green {
+  background: radial-gradient(circle at 30% 25%, #aaffcc, #118a4b);
 }
 
-/* zwycięzca świeci mocniej */
-.big.winner{
-  filter: brightness(1.12) saturate(1.15);
+.btn.winner {
+  opacity: .15;
 }
 
-/* przegrany przygasa */
-.big.loser{
-  opacity:.25;
-  filter: brightness(.75) saturate(.8);
+.fs {
+  position: fixed;
+  top: 14px;
+  right: 14px;
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: none;
+  cursor: pointer;
 }
 
-/* OFF = czarny ekran */
-.off{
-  position:fixed;
-  inset:0;
-  background:#000;
-  display:none;
-  z-index:40;
+.fs::before,
+.fs::after {
+  content: "";
+  position: absolute;
+  border: 2px solid #fff;
+  width: 14px;
+  height: 14px;
 }
-.off.on{ display:block; }
+
+.fs::before { top: 6px; left: 6px; }
+.fs::after { bottom: 6px; right: 6px; }
