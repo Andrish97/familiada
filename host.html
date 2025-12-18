@@ -2,40 +2,35 @@
 <html lang="pl">
 <head>
   <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
-  <title>Familiada — prowadzący</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no"/>
+  <title>Familiada — host</title>
 
   <link rel="icon" href="favicon.ico"/>
   <link rel="stylesheet" href="css/base.css"/>
   <link rel="stylesheet" href="css/host.css"/>
-
-  <!-- “odręczna” czcionka -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&display=swap" rel="stylesheet">
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
   <script type="module" src="js/pages/host.js" defer></script>
 </head>
 
 <body class="host-body">
-  <button class="fsBtn" id="btnFS" type="button" aria-label="Pełny ekran">▢</button>
+  <button class="fsBtn" id="btnFS" type="button" aria-label="Pełny ekran" title="Pełny ekran">
+    <span class="ico" id="fsIco" aria-hidden="true">▢▢</span>
+  </button>
 
-  <main class="paper" id="paper">
-    <div class="label">PYTANIE</div>
-    <div class="content" id="q">Ładuję…</div>
-
-    <div class="label" style="margin-top:18px;">PODGLĄD ODPOWIEDZI</div>
-    <div class="alist" id="alist"></div>
-
-    <div class="hint" id="hint">Przeciągnij w górę/dół, aby ukryć/pokazać</div>
+  <!-- WIDOK ODSŁONIĘTY -->
+  <main class="sheet" id="sheetOn">
+    <div class="paper">
+      <div class="text" id="text">Łączę…</div>
+      <div class="hintLine" id="hintOn">Przeciągnij w dół żeby zasłonić</div>
+    </div>
   </main>
 
-  <div class="cover" id="cover" aria-hidden="true">
-    <div class="coverCard">
-      <div class="coverTitle">UKRYTE</div>
-      <div class="coverSub">Przeciągnij w dół, aby pokazać</div>
+  <!-- WIDOK ZASŁONIĘTY: PUSTA STRONA -->
+  <main class="sheet" id="sheetOff" hidden>
+    <div class="paper paperBlank">
+      <div class="hintLine" id="hintOff">Przeciągnij w górę aby odsłonić</div>
     </div>
-  </div>
+  </main>
 </body>
 </html>
