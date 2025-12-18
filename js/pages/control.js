@@ -6,15 +6,28 @@ import { playSfx } from "../core/sfx.js";
 import { validateGameReadyToPlay } from "../core/game-validate.js";
 
 let displayChannel = null;
+let displayChannelReady = null;
 
 function ensureDisplayChannel(gameId){
   if (displayChannel) return displayChannel;
-  displayChannel = sb().channel(`fam_display:${gameId}`).subscribe();
+  displayChannel = sb().channel(`fam_display:${gameId}`);
+
+  // ZAPAMIĘTAJ promise "gotowości"
+  displayChannelReady = new Promise((resolve, reject) => {
+    displayChannel.subscribe((status) => {
+      if (status === "SUBSCRIBED") resolve(true);
+      if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+        reject(new Error(`Display channel: ${status}`));
+      }
+    });
+  });
+
   return displayChannel;
 }
 
 async function sendToDisplay(gameId, line){
   const ch = ensureDisplayChannel(gameId);
+  if (displayChannelReady) await displayChannelReady; // <- klucz
   await ch.send({
     type: "broadcast",
     event: "DISPLAY_CMD",
