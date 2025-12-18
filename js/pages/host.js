@@ -33,8 +33,8 @@ function setHidden(on){
   blank.hidden = !hidden;
 
   hint.textContent = hidden
-    ? "Przeciągnij w górę aby odsłonić"
-    : "Przeciągnij w dół żeby zasłonić";
+    ? "Podwójne dotknięcie aby odsłonić"
+    : "Podwójne dotknięcie aby zasłonić";
 }
 
 function setText(t){
@@ -47,63 +47,47 @@ function clearText(){
   if (!hidden) paperText.textContent = "";
 }
 
-// ---------- gestures (touch + mouse) ----------
-let startY = null;
-let startOK = false;
+// ---------- double tap / double click ----------
+const DOUBLE_MS = 320;
+let lastTapAt = 0;
 
 function yOK(y){
   const h = window.innerHeight || 1;
   return (y > 70) && (y < h - 70);
 }
 
-function onDown(y){
-  startY = y;
-  startOK = yOK(y);
-}
-
-function onMove(y){
-  if (startY == null || !startOK) return;
-  const dy = y - startY;
-
-  // widoczne -> zasłoń (swipe w dół)
-  if (!hidden && dy > 70){
-    setHidden(true);
-    startY = null;
-    return;
-  }
-
-  // zasłonięte -> odsłoń (swipe w górę)
-  if (hidden && dy < -70){
+function toggleCover(){
+  if (hidden) {
     setHidden(false);
-    // po odsłonięciu przywróć tekst
     paperText.textContent = lastText;
-    startY = null;
-    return;
+  } else {
+    setHidden(true);
   }
 }
 
-function onUp(){
-  startY = null;
-  startOK = false;
+function handleTap(y){
+  if (!yOK(y)) return;
+
+  const now = Date.now();
+  if (now - lastTapAt <= DOUBLE_MS) {
+    lastTapAt = 0;
+    toggleCover();
+  } else {
+    lastTapAt = now;
+  }
 }
 
-// touch: blokuj tylko pinch / multi-touch, nie “zwykły” swipe
+// touch: ignoruj multi-touch (pinch)
 document.addEventListener("touchstart", (e)=>{
   if (e.touches && e.touches.length > 1) { e.preventDefault(); return; }
-  onDown(e.touches?.[0]?.clientY ?? 0);
+  const y = e.touches?.[0]?.clientY ?? 0;
+  handleTap(y);
 }, { passive:false });
 
-document.addEventListener("touchmove", (e)=>{
-  if (e.touches && e.touches.length > 1) { e.preventDefault(); return; }
-  onMove(e.touches?.[0]?.clientY ?? 0);
-}, { passive:false });
-
-document.addEventListener("touchend", ()=> onUp(), { passive:true });
-
-// mouse (desktop)
-document.addEventListener("mousedown", (e)=> onDown(e.clientY));
-document.addEventListener("mousemove", (e)=> onMove(e.clientY));
-document.addEventListener("mouseup", ()=> onUp());
+// desktop: double click
+document.addEventListener("dblclick", (e)=>{
+  handleTap(e.clientY);
+});
 
 // blokuj ctrl+scroll zoom (desktop)
 document.addEventListener("wheel", (e)=>{
@@ -117,11 +101,9 @@ function handleCmd(lineRaw){
   const line = norm(lineRaw);
   const up = line.toUpperCase();
 
-  // zasłona
   if (up === "OFF") { setHidden(true); return; }
   if (up === "ON")  { setHidden(false); paperText.textContent = lastText; return; }
 
-  // SET "tekst"  |  SET bez cudzysłowu
   if (/^SET\b/i.test(line)){
     const m = line.match(/^SET\s+"([\s\S]*)"\s*$/i);
     const text = m ? m[1] : line.replace(/^SET\s+/i, "");
@@ -129,7 +111,6 @@ function handleCmd(lineRaw){
     return;
   }
 
-  // CLEAR
   if (up === "CLEAR"){
     clearText();
     return;
@@ -158,7 +139,7 @@ document.addEventListener("fullscreenchange", setFullscreenIcon);
 
 document.addEventListener("DOMContentLoaded", ()=>{
   setFullscreenIcon();
-  paperText.textContent = "";   // bez “Ładuję…”
+  paperText.textContent = "";
 
   if (!gameId || !key){
     setHidden(true);
