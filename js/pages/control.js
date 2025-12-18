@@ -590,16 +590,12 @@ async function main() {
     displayWin = openPopup(dispUrl, "fam_display");
     setMsg(msgDevices, "Otworzono display.");
   
-    // upewnij się, że kanał jest gotowy zanim strzelisz komendą
-    try {
-      await sendToDisplay(
-        game.id,
-        `QR HOST "${hostLink.value}" BUZZER "${buzzerLink.value}"`
-      );
-    } catch (e) {
-      console.error("[control] sendToDisplay error:", e);
-      setMsg(msgDevices, "Nie udało się wysłać QR na display (sprawdź konsolę).");
-    }
+    const qrLine = `QR HOST "${hostLink.value}" BUZZER "${buzzerLink.value}"`;
+  
+    // ⏱ retry — display może jeszcze nie być podpięty
+    setTimeout(() => sendToDisplay(game.id, qrLine).catch(()=>{}), 600);
+    setTimeout(() => sendToDisplay(game.id, qrLine).catch(()=>{}), 1400);
+    setTimeout(() => sendToDisplay(game.id, qrLine).catch(()=>{}), 2400);
   });
 
   btnStartGame.addEventListener("click", startGame);
