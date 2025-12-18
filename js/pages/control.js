@@ -6,19 +6,15 @@ import { playSfx } from "../core/sfx.js";
 import { validateGameReadyToPlay } from "../core/game-validate.js";
 
 let displayChannel = null;
-let displayChannelReady = null;
 
 function ensureDisplayChannel(gameId){
   if (displayChannel) return displayChannel;
-
-  // ✅ ten sam kanał co display (startPresence)
   displayChannel = sb().channel(`familiada-display:${gameId}`).subscribe();
   return displayChannel;
 }
 
 async function sendToDisplay(gameId, line){
   const ch = ensureDisplayChannel(gameId);
-  if (displayChannelReady) await displayChannelReady; // <- klucz
   await ch.send({
     type: "broadcast",
     event: "DISPLAY_CMD",
