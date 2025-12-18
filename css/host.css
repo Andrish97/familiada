@@ -56,13 +56,6 @@ html, body { height: 100%; }
 .fsBtn:active{ transform: translateY(1px); }
 .fsBtn .ico{ font-size: calc(var(--u) * 1.25); letter-spacing:-2px; }
 
-.blank{
-  position:fixed;
-  inset:0;
-  background:#000;
-  z-index:50;
-}
-
 /* Kartka = całe okno, bez “ramek” */
 .paper{
   position:fixed;
