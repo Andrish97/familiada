@@ -1,4 +1,18 @@
-html, body { height:100%; }
+html, body {
+  height: 100%;
+  overscroll-behavior: none;
+}
+
+body {
+  touch-action: none;              /* blokuje pinch/pan w większości przeglądarek */
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+button, .arena, .paper, .blank {
+  touch-action: none;
+}
 
 .buzzer-body{
   margin:0;
