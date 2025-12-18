@@ -2,27 +2,40 @@
 <html lang="pl">
 <head>
   <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no"/>
-  <title>Familiada — host</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+  <title>Familiada — prowadzący</title>
 
   <link rel="icon" href="favicon.ico"/>
+  <link rel="stylesheet" href="css/base.css"/>
   <link rel="stylesheet" href="css/host.css"/>
+
+  <!-- “odręczna” czcionka -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&display=swap" rel="stylesheet">
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
   <script type="module" src="js/pages/host.js" defer></script>
 </head>
 
-<body class="host">
-  <button id="btnFS" class="fs" title="Pełny ekran"></button>
+<body class="host-body">
+  <button class="fsBtn" id="btnFS" type="button" aria-label="Pełny ekran">▢</button>
 
-  <div id="sheet" class="sheet">
-    <pre id="text" class="text"></pre>
+  <main class="paper" id="paper">
+    <div class="label">PYTANIE</div>
+    <div class="content" id="q">Ładuję…</div>
 
-    <div class="hint">
-      przeciągnij ↑ / ↓ aby ukryć / pokazać
+    <div class="label" style="margin-top:18px;">PODGLĄD ODPOWIEDZI</div>
+    <div class="alist" id="alist"></div>
+
+    <div class="hint" id="hint">Przeciągnij w górę/dół, aby ukryć/pokazać</div>
+  </main>
+
+  <div class="cover" id="cover" aria-hidden="true">
+    <div class="coverCard">
+      <div class="coverTitle">UKRYTE</div>
+      <div class="coverSub">Przeciągnij w dół, aby pokazać</div>
     </div>
   </div>
-
-  <div id="blank" class="blank"></div>
 </body>
 </html>
