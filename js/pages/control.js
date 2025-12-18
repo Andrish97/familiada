@@ -658,6 +658,17 @@ async function main() {
   document.addEventListener("click", () => playSfx("ui_tick"), { once: true });
 
   tabSwitch("devices");
+
+  window.__ctl = {
+    gameId: game.id,
+    hostUrl,
+    buzUrl,
+    dispUrl,
+    ensureDisplayChannel,
+    sendToDisplay,
+  };
+
+  console.log("[control] __ctl ready", window.__ctl);
 }
 
 document.addEventListener("DOMContentLoaded", () => {
