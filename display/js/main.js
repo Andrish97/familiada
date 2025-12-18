@@ -3,6 +3,7 @@ import { startPresence } from "./presence.js";
 import { createQRController } from "./qr.js";
 import { createScene } from "./scene.js";
 import { createCommandHandler } from "./commands.js";
+import { sb } from "../js/core/supabase.js";
 
 const $ = (id) => document.getElementById(id);
 
@@ -80,6 +81,32 @@ window.addEventListener("DOMContentLoaded", async () => {
   window.scene = scene; // kompatybilnie z tym jak używałeś wcześniej
   window.handleCommand = handleCommand;
 
+  // 6) Realtime: komendy z CONTROL -> DISPLAY (broadcast)
+  const qs = new URLSearchParams(location.search);
+  const gameId = qs.get("id");
+
+  if (!gameId) {
+    console.warn("[display] Brak id w URL (display.html?id=...) — realtime bez gameId nie ruszy.");
+  } else {
+    const ch = sb()
+      .channel(`fam_display:${gameId}`)
+      .on("broadcast", { event: "DISPLAY_CMD" }, ({ payload }) => {
+        const line = String(payload?.line || "").trim();
+        if (!line) return;
+        try {
+          window.handleCommand(line);
+        } catch (e) {
+          console.error("[display] handleCommand error:", e, line);
+        }
+      })
+      .subscribe((status) => {
+        console.log("[display] realtime:", status);
+      });
+
+    // (opcjonalnie) gdybyś chciał kiedyś sprzątać:
+    // window.addEventListener("beforeunload", () => sb().removeChannel(ch));
+  }
+  
   // demo:
   app.setMode("BLACK_SCREEN");
   console.log("Gotowe.");
