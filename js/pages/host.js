@@ -11,18 +11,22 @@ const blank = document.getElementById("blank");
 const btnFS = document.getElementById("btnFS");
 const fsIco = document.getElementById("fsIco");
 
+// ---------- fullscreen ----------
 function setFullscreenIcon(){
-  fsIco.textContent = document.fullscreenElement ? "▢" : "▢▢";
+  // ⧉ = “dwa nałożone”, ▢ = “jeden”
+  fsIco.textContent = document.fullscreenElement ? "▢" : "⧉";
 }
 
+// ---------- hide / reveal ----------
+let hidden = false;
+
 function setHidden(on){
-  blank.hidden = !on;
-  hint.textContent = on
+  hidden = !!on;
+  blank.hidden = !hidden;
+  hint.textContent = hidden
     ? "Przeciągnij w górę aby odsłonić"
     : "Przeciągnij w dół żeby zasłonić";
 }
-
-function norm(s){ return String(s ?? "").trim(); }
 
 // swipe/drag w całym ekranie, ale nie przy samej górze/dole
 let startY = null;
@@ -40,15 +44,18 @@ function onDown(y){
 
 function onMove(y){
   if (startY == null || !startOK) return;
+
   const dy = y - startY;
 
-  // próg
-  if (!blank.hidden && dy > 70) {
+  // ↓ zasłoń (z widocznej kartki)
+  if (!hidden && dy > 70) {
     setHidden(true);
     startY = null;
     return;
   }
-  if (blank.hidden && dy < -70) {
+
+  // ↑ odsłoń (z czarnej zasłony)
+  if (hidden && dy < -70) {
     setHidden(false);
     startY = null;
     return;
@@ -75,41 +82,47 @@ btnFS.addEventListener("click", async () => {
     if (!document.fullscreenElement) await document.documentElement.requestFullscreen();
     else await document.exitFullscreen();
   }catch{}
-  setFullscreenIcon();
 });
 document.addEventListener("fullscreenchange", setFullscreenIcon);
 
-// komendy z control: kanał familiada-host:{gameId}, event HOST_CMD, payload.line
+// ---------- commands ----------
+function norm(s){ return String(s ?? "").trim(); }
+
+function setText(t){
+  paperText.textContent = t ?? "";
+}
+
+function handleCmd(lineRaw){
+  const line = norm(lineRaw);
+
+  // CLEAR
+  if (/^CLEAR$/i.test(line)) {
+    setText("");
+    return;
+  }
+
+  // SET "Tekst..."
+  if (/^SET\b/i.test(line)) {
+    const m = line.match(/^SET\s+"([\s\S]*)"\s*$/i);
+    const text = m ? m[1] : line.replace(/^SET\s+/i, "");
+    setText(text || "");
+    return;
+  }
+}
+
+// ---------- channel ----------
 let ch = null;
 function ensureChannel(){
   if (ch) return ch;
   ch = sb().channel(`familiada-host:${gameId}`)
     .on("broadcast", { event:"HOST_CMD" }, (msg)=>{
-      const line = norm(msg?.payload?.line);
-      handleCmd(line);
+      handleCmd(norm(msg?.payload?.line));
     })
     .subscribe();
   return ch;
 }
 
-function handleCmd(lineRaw){
-  const line = lineRaw;
-
-  // OFF/ON dla hosta (zasłona)
-  if (line.toUpperCase() === "OFF") { setHidden(true); return; }
-  if (line.toUpperCase() === "ON")  { setHidden(false); return; }
-
-  // SEND "Tekst..."
-  // przyjmujemy też SEND bez cudzysłowu (na wszelki)
-  if (/^SEND\b/i.test(line)) {
-    const m = line.match(/^SEND\s+"([\s\S]*)"\s*$/i);
-    const text = m ? m[1] : line.replace(/^SEND\s+/i, "");
-    paperText.textContent = text || "";
-    return;
-  }
-}
-
-// ping (jak masz public_ping)
+// ping (opcjonalnie)
 async function ping(){
   try { await sb().rpc("public_ping", { p_game_id: gameId, p_kind:"host", p_key:key }); } catch {}
 }
@@ -117,9 +130,12 @@ async function ping(){
 document.addEventListener("DOMContentLoaded", ()=>{
   setFullscreenIcon();
 
+  // start bez “Ładuję…”
+  setText("");
+
   if (!gameId || !key) {
-    paperText.textContent = "Zły link.";
     setHidden(true);
+    setText("");
     return;
   }
 
@@ -129,3 +145,6 @@ document.addEventListener("DOMContentLoaded", ()=>{
   ping();
   setInterval(ping, 5000);
 });
+
+// debug
+window.__host = { setText, setHidden, handleCmd };
