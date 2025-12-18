@@ -10,19 +10,19 @@ let displayChannelReady = null;
 
 function ensureDisplayChannel(gameId){
   if (displayChannel) return displayChannel;
-  displayChannel = sb().channel(`fam_display:${gameId}`);
 
-  // ZAPAMIĘTAJ promise "gotowości"
-  displayChannelReady = new Promise((resolve, reject) => {
-    displayChannel.subscribe((status) => {
-      if (status === "SUBSCRIBED") resolve(true);
-      if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
-        reject(new Error(`Display channel: ${status}`));
-      }
-    });
-  });
-
+  // ✅ ten sam kanał co display (startPresence)
+  displayChannel = sb().channel(`familiada-display:${gameId}`).subscribe();
   return displayChannel;
+}
+
+async function sendToDisplay(gameId, line){
+  const ch = ensureDisplayChannel(gameId);
+  await ch.send({
+    type: "broadcast",
+    event: "DISPLAY_CMD",          // zostawiamy to samo
+    payload: { line: String(line) }
+  });
 }
 
 async function sendToDisplay(gameId, line){
