@@ -56,44 +56,42 @@ function onDown(y){
   startOK = yOK(y);
 }
 
-function onMove(y){
-  if (startY == null || !startOK) return;
-
-  const dy = y - startY;
-
-  // ↓ zasłoń (z widocznej kartki)
-  if (!hidden && dy > 70) {
-    setHidden(true);
+function onUp(endY){
+  if (startY == null || !startOK) {
     startY = null;
+    startOK = false;
     return;
   }
 
-  // ↑ odsłoń (z kartonu)
-  if (hidden && dy < -70) {
-    setHidden(false);
-    startY = null;
-    return;
-  }
-}
+  const dy = endY - startY;
 
-function onUp(){
+  // próg
+  if (!hidden && dy > 70) setHidden(true);      // ↓ zasłoń
+  else if (hidden && dy < -70) setHidden(false); // ↑ odsłoń
+
   startY = null;
   startOK = false;
 }
 
-// twarde blokowanie pinch/zoom/scroll (iOS lubi robić “dziwne rzeczy” przy 2 palcach)
-document.addEventListener("gesturestart", (e) => e.preventDefault());
-document.addEventListener("gesturechange", (e) => e.preventDefault());
-document.addEventListener("gestureend", (e) => e.preventDefault());
+// touch
+document.addEventListener("touchstart", (e)=> {
+  if (e.touches?.length > 1) return; // ignoruj multi-touch
+  onDown(e.touches?.[0]?.clientY ?? 0);
+}, { passive:false });
 
-// touch + mouse
-document.addEventListener("touchstart", (e)=> onDown(e.touches?.[0]?.clientY ?? 0), { passive:false });
-document.addEventListener("touchmove",  (e)=> { e.preventDefault(); onMove(e.touches?.[0]?.clientY ?? 0); }, { passive:false });
-document.addEventListener("touchend",   ()=> onUp(), { passive:true });
+document.addEventListener("touchmove", (e)=> {
+  // blokuj scroll/zoom, ale nie próbuj przełączać w trakcie ruchu
+  e.preventDefault();
+}, { passive:false });
 
+document.addEventListener("touchend", (e)=> {
+  const y = e.changedTouches?.[0]?.clientY ?? 0;
+  onUp(y);
+}, { passive:true });
+
+// mouse
 document.addEventListener("mousedown", (e)=> onDown(e.clientY));
-document.addEventListener("mousemove", (e)=> onMove(e.clientY));
-document.addEventListener("mouseup",   ()=> onUp());
+document.addEventListener("mouseup",   (e)=> onUp(e.clientY));
 
 // fullscreen
 btnFS.addEventListener("click", async () => {
