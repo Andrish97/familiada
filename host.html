@@ -15,28 +15,23 @@
 </head>
 
 <body class="host-body">
-  <!-- małe sterowanie -->
-  <button class="iconBtn" id="btnFS" type="button" title="Pełny ekran">⛶</button>
-  <button class="hideBtn" id="btnHide" type="button" title="Ukryj">UKRYJ</button>
+  <!-- fullscreen -->
+  <button class="fsBtn" id="btnFS" type="button" title="Pełny ekran" aria-label="Pełny ekran">⛶</button>
 
-  <!-- kartka -->
-  <main class="sheet" aria-label="Kartka prowadzącego">
-    <div class="hTitle">TEKST (tylko dla prowadzącego)</div>
+  <!-- „kartka” na całą stronę -->
+  <main class="page" id="page" aria-live="polite">
+    <pre class="note" id="q"></pre>
 
-    <!-- jedno pole tekstowe, z enterami -->
-    <pre class="note" id="q">Ładuję…</pre>
-
-    <div class="swipeHint" id="swipeHint">
-      Przeciągnij palcem <b>góra/dół</b>, żeby ukryć / pokazać
+    <!-- podpowiedź + “uchwyt” do przeciągania -->
+    <div class="pull" id="pull">
+      <div class="pullHandle" aria-hidden="true"></div>
+      <div class="pullHint" id="pullHint">Pociągnij w górę / dół, aby ukryć / pokazać</div>
     </div>
   </main>
 
-  <!-- zasłona -->
-  <div class="cover" id="cover" style="display:none;" role="button" aria-label="Odsłoń">
-    <div class="coverCard">
-      <div class="coverTitle">UKRYTE</div>
-      <div class="coverSub">Kliknij, aby odsłonić</div>
-    </div>
+  <!-- stan ukryty: pusta strona -->
+  <div class="hiddenStage" id="hiddenStage" aria-hidden="true">
+    <div class="hiddenHint">Pociągnij z dołu, aby pokazać</div>
   </div>
 </body>
 </html>
