@@ -5,128 +5,161 @@ const gameId = qs.get("id");
 const key = qs.get("key");
 
 const btnFS = document.getElementById("btnFS");
+const fsIco = document.getElementById("fsIco");
+
+const offScreen = document.getElementById("offScreen");
+const arena = document.getElementById("arena");
 const btnA = document.getElementById("btnA");
 const btnB = document.getElementById("btnB");
 
-const off = document.getElementById("off");
+const STATE = {
+  OFF: "OFF",
+  ON: "ON",
+  PUSHED_A: "PUSHED_A",
+  PUSHED_B: "PUSHED_B",
+};
 
-let localMode = "ON"; // ON | OFF
+let cur = STATE.OFF;
 
-function setFsIcon(){
-  const on = !!document.fullscreenElement;
-  btnFS.textContent = on ? "⧉" : "▢";
-  btnFS.setAttribute("aria-label", on ? "Wyjdź z pełnego ekranu" : "Pełny ekran");
+// ---------- UI ----------
+function setFullscreenIcon() {
+  fsIco.textContent = document.fullscreenElement ? "▢" : "▢▢";
 }
 
-btnFS.addEventListener("click", async () => {
+function show(state) {
+  cur = state;
+
+  const isOff = state === STATE.OFF;
+  offScreen.hidden = !isOff;
+  arena.hidden = isOff;
+
+  // reset klasy
+  btnA.classList.remove("win", "dim");
+  btnB.classList.remove("win", "dim");
+
+  if (state === STATE.ON) {
+    btnA.disabled = false;
+    btnB.disabled = false;
+    return;
+  }
+
+  if (state === STATE.PUSHED_A) {
+    btnA.disabled = true;
+    btnB.disabled = true;
+    btnA.classList.add("win");
+    btnB.classList.add("dim");
+    return;
+  }
+
+  if (state === STATE.PUSHED_B) {
+    btnA.disabled = true;
+    btnB.disabled = true;
+    btnB.classList.add("win");
+    btnA.classList.add("dim");
+    return;
+  }
+
+  // OFF
+  btnA.disabled = true;
+  btnB.disabled = true;
+}
+
+// ---------- networking ----------
+let ch = null;
+
+function ensureChannel() {
+  if (ch) return ch;
+  ch = sb().channel(`familiada-buzzer:${gameId}`)
+    .on("broadcast", { event: "BUZZER_CMD" }, (msg) => {
+      const line = String(msg?.payload?.line ?? "").trim();
+      handleCmd(line);
+    })
+    .subscribe();
+  return ch;
+}
+
+async function ping() {
   try {
-    if (!document.fullscreenElement) await document.documentElement.requestFullscreen();
-    else await document.exitFullscreen();
-  } catch {}
-});
-document.addEventListener("fullscreenchange", setFsIcon);
-
-function blockScrollAndRefresh(){
-  window.addEventListener("wheel", (e) => e.preventDefault(), { passive:false });
-  window.addEventListener("touchmove", (e) => e.preventDefault(), { passive:false });
-}
-
-function setMode(m){
-  localMode = (m || "").toUpperCase() === "OFF" ? "OFF" : "ON";
-  off.classList.toggle("on", localMode === "OFF");
-  applyEnabledState();
-}
-
-function applyEnabledState(ls){
-  const locked = !!ls?.buzzer_locked;
-  const winner = ls?.buzzer_winner || null;
-
-  btnA.classList.toggle("winner", winner === "A");
-  btnB.classList.toggle("winner", winner === "B");
-
-  const enabled = (localMode === "ON") && !locked;
-  btnA.disabled = !enabled;
-  btnB.disabled = !enabled;
-}
-
-async function ping(){
-  try {
+    // jak masz swoje RPC public_ping – użyj go, ale nie musisz
     await sb().rpc("public_ping", { p_game_id: gameId, p_kind: "buzzer", p_key: key });
   } catch {}
 }
 
-async function readState(){
-  try {
-    const { data } = await sb()
-      .from("live_state")
-      .select("buzzer_locked,buzzer_winner")
-      .eq("game_id", gameId)
-      .single();
-    applyEnabledState(data);
-  } catch {}
+async function sendClick(team) {
+  // minimalnie: idź przez broadcast do control (jak chcesz),
+  // ale skoro control i tak subskrybuje live_state,
+  // najprościej: RPC buzzer_press (jeśli masz), albo broadcast.
+  // Tu robimy broadcast "CLICK A/B" do CONTROL kanału.
+  try{
+    const ctl = sb().channel(`familiada-control:${gameId}`).subscribe();
+    await ctl.send({
+      type:"broadcast",
+      event:"BUZZER_EVT",
+      payload:{ line:`CLICK ${team}` }
+    });
+    // opcjonalnie odsub:
+    sb().removeChannel(ctl);
+  }catch{}
 }
 
-async function press(team){
-  if (btnA.disabled || btnB.disabled) return;
-
-  try {
-    const res = await sb().rpc("buzzer_press", { p_game_id: gameId, p_key: key, p_team: team });
-    const accepted = !!res.data?.accepted;
-    if (!accepted) return;
-  } catch {}
+// ---------- commands ----------
+function norm(line){
+  return line.trim().toUpperCase();
 }
 
-function subLive(){
-  const ch = sb()
-    .channel(`buzzer_live:${gameId}`)
-    .on("postgres_changes",
-      { event: "*", schema: "public", table: "live_state", filter: `game_id=eq.${gameId}` },
-      (payload) => applyEnabledState(payload.new)
-    )
-    .subscribe();
+function handleCmd(lineRaw) {
+  const line = norm(lineRaw);
 
-  return () => sb().removeChannel(ch);
+  if (line === "OFF") { show(STATE.OFF); return; }
+  if (line === "ON") { show(STATE.ON); return; }
+  if (line === "RESET") { show(STATE.ON); return; }
+
+  // opcjonalnie: wymuszenie stanu
+  if (line === "PUSHED A" || line === "PUSHED_A") { show(STATE.PUSHED_A); return; }
+  if (line === "PUSHED B" || line === "PUSHED_B") { show(STATE.PUSHED_B); return; }
 }
 
-/** Komendy z control: familliada-buzzer:${id} event BUZZER_CMD payload {line} */
-function installBuzzerCommands(){
-  const ch = sb()
-    .channel(`familiada-buzzer:${gameId}`)
-    .on("broadcast", { event: "BUZZER_CMD" }, async (payload) => {
-      const line = String(payload?.payload?.line || "").trim().toUpperCase();
+// ---------- input ----------
+async function press(team) {
+  if (cur !== STATE.ON) return;
 
-      if (line === "OFF" || line === "MODE OFF") { setMode("OFF"); return; }
-      if (line === "ON"  || line === "MODE ON")  { setMode("ON");  await readState(); return; }
-      if (line === "RESET") { await readState(); return; }
-    })
-    .subscribe();
+  // ustaw lokalnie natychmiast
+  show(team === "A" ? STATE.PUSHED_A : STATE.PUSHED_B);
 
-  return () => sb().removeChannel(ch);
+  // wyślij event (do dopięcia w control)
+  await sendClick(team);
 }
 
 btnA.addEventListener("click", () => press("A"));
 btnB.addEventListener("click", () => press("B"));
 
-window.addEventListener("beforeunload", (e) => {
-  e.preventDefault();
-  e.returnValue = "";
+// fullscreen
+btnFS.addEventListener("click", async () => {
+  try {
+    if (!document.fullscreenElement) await document.documentElement.requestFullscreen();
+    else await document.exitFullscreen();
+  } catch {}
+  setFullscreenIcon();
 });
 
+document.addEventListener("fullscreenchange", setFullscreenIcon);
+
+// blokuj iOS “bounce”
+document.addEventListener("touchmove", (e) => e.preventDefault(), { passive:false });
+
 document.addEventListener("DOMContentLoaded", async () => {
-  setFsIcon();
-  blockScrollAndRefresh();
+  setFullscreenIcon();
 
   if (!gameId || !key) {
-    setMode("OFF");
-    btnA.disabled = true;
-    btnB.disabled = true;
+    show(STATE.OFF);
     return;
   }
 
-  installBuzzerCommands();
-  subLive();
+  // domyślnie OFF (jak chciałeś)
+  show(STATE.OFF);
 
-  await readState();
-  await ping();
+  ensureChannel();
+
+  ping();
   setInterval(ping, 5000);
 });
