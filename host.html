@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
   <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no"/>
   <title>Familiada — prowadzący</title>
 
   <link rel="icon" href="favicon.ico"/>
@@ -17,6 +17,11 @@
   <button class="fsBtn" id="btnFS" type="button" aria-label="Pełny ekran" title="Pełny ekran">
     <span class="ico" id="fsIco" aria-hidden="true">⧉</span>
   </button>
+
+  <!-- Kartonowa zasłona -->
+  <div class="blank" id="blank" hidden>
+    <div class="blankHint" id="blankHint">Przeciągnij w górę aby odsłonić</div>
+  </div>
 
   <!-- Kartka -->
   <div class="paper" id="paper">
