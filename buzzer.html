@@ -14,22 +14,17 @@
 </head>
 
 <body class="buzzer-body">
+  <!-- OFF overlay: czarny ekran -->
+  <div class="off" id="off" hidden></div>
+
+  <!-- Fullscreen ma zniknąć w OFF -->
   <button class="fsBtn" id="btnFS" type="button" aria-label="Pełny ekran" title="Pełny ekran">
     <span class="ico" id="fsIco" aria-hidden="true">▢▢</span>
   </button>
 
-  <!-- OFF: czarno, nic -->
-  <div class="off" id="offScreen" hidden></div>
-
-  <!-- ON / PUSHED: przyciski -->
-  <div class="arena" id="arena" hidden>
-    <button class="btnRing red" id="btnA" type="button" aria-label="Buzzer A">
-      <span class="btnIco">▢</span>
-    </button>
-
-    <button class="btnRing green" id="btnB" type="button" aria-label="Buzzer B">
-      <span class="btnIco">▢</span>
-    </button>
-  </div>
+  <main class="arena" id="arena">
+    <button class="ringBtn red is-dim" id="btnA" type="button" aria-label="Buzzer A"></button>
+    <button class="ringBtn green is-dim" id="btnB" type="button" aria-label="Buzzer B"></button>
+  </main>
 </body>
 </html>
