@@ -9,13 +9,15 @@ import { sb } from "../../js/core/supabase.js";
 const $ = (id) => document.getElementById(id);
 
 async function pingDisplay(gameId) {
-  try {
-    await sb()
-      .from("live_state")
-      .update({ seen_display_at: new Date().toISOString() })
-      .eq("game_id", gameId);
-  } catch (e) {
-    console.warn("[display] ping failed", e);
+  const now = new Date().toISOString();
+
+  // upsert = działa nawet jeśli wiersza live_state jeszcze nie ma
+  const { error } = await sb()
+    .from("live_state")
+    .upsert({ game_id: gameId, seen_display_at: now }, { onConflict: "game_id" });
+
+  if (error) {
+    console.warn("[display] ping failed", error);
   }
 }
 
@@ -67,7 +69,11 @@ window.addEventListener("DOMContentLoaded", async () => {
     // 0) AUTH
     const { gameId, key } = parseParams();
     const game = await authDisplayOrThrow(gameId, key);
+    
+    // ping od razu + co 5s
     await pingDisplay(game.id);
+    setInterval(() => pingDisplay(game.id), 2000);
+    
     // 1) presence (heartbeat)
     startPresence({
       channel: `familiada-display:${game.id}`,
