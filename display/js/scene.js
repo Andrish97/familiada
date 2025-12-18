@@ -1,3 +1,4 @@
+// scene.js
 import { loadJson, buildGlyphMap, resolveGlyph } from "./fonts.js";
 import { createAnimator } from "./anim.js";
 
@@ -30,6 +31,8 @@ export async function createScene() {
   // Geometria (jak w oryginale)
   const d = 4;
   const g = 1;
+
+  // odstęp między małymi prostokątami = 2 średnice (czyli 2*d)
   const gapCells = 2 * d;
 
   const Wgrid = (X, dDots, gap) => X * dDots + (X + 1) * gap;
@@ -160,15 +163,13 @@ export async function createScene() {
     return snap;
   };
 
+  // Animator (dotOff przekazujemy jawnie)
   const anim = createAnimator({ tileAt, snapArea, clearArea, clearTileAt, dotOff: COLORS.dotOff });
 
   // ============================
   // GLOBAL ANIMATION SPEED
   // ============================
-  const ANIM_SPEED = {
-    mul: 1.0, // 1 = normalnie, 2 = wolniej, 0.5 = szybciej
-  };
-  
+  const ANIM_SPEED = { mul: 1.0 }; // 1 = normal, 2 = wolniej, 0.5 = szybciej
   const scaleMs = (ms, fallback) => {
     const base = Number.isFinite(ms) ? ms : fallback;
     return Math.max(1, Math.round(base * ANIM_SPEED.mul));
@@ -275,30 +276,18 @@ export async function createScene() {
     }
   };
 
-  // ============================================================
-  // ROUNDS STATE + helpers (MUSI BYĆ W SCOPE createScene())
-  // ============================================================
-  const roundsState = {
-    text: Array(6).fill(""),
-    pts:  Array(6).fill(""),
-  };
-  
-  const hasVisibleText = (s) => (s ?? "").toString().trim().length > 0;
-  
-  const setRoundNumberVisible = (ROUNDS_OBJ, idx1to6, on) => {
-    const i = (idx1to6 | 0) - 1;
-    if (i < 0 || i > 5) return;
-    writeField(GLYPHS, big, ROUNDS_OBJ.roundNums[i], on ? String(i + 1) : " ", LIT.main);
-  };
-  
+  // ============================
+  // Layout: ROUNDS (6 linii)
+  // ============================
   const ROUNDS = (() => {
-    const rows = [2,3,4,5,6,7]; // <-- było 5, jest 6
+    const rows = [2,3,4,5,6,7]; // 6 wierszy
     const roundNums = rows.map((r, i) => field(`R${i+1}_NUM`, 5, r, 1));
     const answers   = rows.map((r, i) => field(`R${i+1}_TXT`, 7, r, 17));
     const points    = rows.map((r, i) => field(`R${i+1}_PTS`, 24, r, 2));
+
     const sumaLabel = field("SUMA_LABEL", 18, 8, 4);
     const sumaVal   = field("SUMA_VAL",   23, 8, 3);
-  
+
     const xCells = {
       "1A": { c1: 1,  r1: 8,  c2: 3,  r2: 10 },
       "2A": { c1: 1,  r1: 5,  c2: 3,  r2: 7  },
@@ -307,16 +296,28 @@ export async function createScene() {
       "2B": { c1: 28, r1: 5,  c2: 30, r2: 7  },
       "3B": { c1: 28, r1: 2,  c2: 30, r2: 4  },
     };
-  
+
     return { rows, roundNums, answers, points, sumaLabel, sumaVal, xCells };
   })();
 
+  // Stan i zasada “numer tylko gdy jest tekst”
+  const roundsState = { text: Array(6).fill(""), pts: Array(6).fill("") };
+  const hasVisibleText = (s) => (s ?? "").toString().trim().length > 0;
+  const setRoundNumberVisible = (idx1to6, on) => {
+    const i = (idx1to6|0) - 1;
+    if (i < 0 || i > 5) return;
+    writeField(GLYPHS, big, ROUNDS.roundNums[i], on ? String(i + 1) : " ", LIT.main);
+  };
+
+  // ============================
+  // Layout: FINAL
+  // ============================
   const FINAL = (() => {
     const rows = [2,3,4,5,6];
-    const leftTxt  = rows.map((r,i)=>field(`F${i+1}_LTXT`, 1,  r, 11));
-    const ptsA     = rows.map((r,i)=>field(`F${i+1}_A`,    13, r, 2));
-    const ptsB     = rows.map((r,i)=>field(`F${i+1}_B`,    17, r, 2));
-    const rightTxt = rows.map((r,i)=>field(`F${i+1}_RTXT`, 20, r, 11));
+    const leftTxt   = rows.map((r,i)=>field(`F${i+1}_LTXT`, 1,  r, 11));
+    const ptsA      = rows.map((r,i)=>field(`F${i+1}_A`,    13, r, 2));
+    const ptsB      = rows.map((r,i)=>field(`F${i+1}_B`,    17, r, 2));
+    const rightTxt  = rows.map((r,i)=>field(`F${i+1}_RTXT`, 20, r, 11));
     const sumaLabel = field("FSUMA_LABEL", 11, 8, 4);
     const sumaVal   = field("FSUMA_VAL",   16, 8, 3);
     return { rows, leftTxt, ptsA, ptsB, rightTxt, sumaLabel, sumaVal };
@@ -415,7 +416,9 @@ export async function createScene() {
   const gapFromOval = 22;
   const gapBetween  = 40;
 
-  const ovalBottomY = 110 + 680;
+  // UWAGA: u Ciebie owal był zmieniony w SVG, więc tu trzymamy “dolną krawędź owalu” logicznie:
+  // jeśli w SVG masz outer rect y=30 height=840, to dół = 870. Dla kompatybilności zostawiamy:
+  const ovalBottomY = 30 + 840;
   const yBottom = ovalBottomY + gapFromOval;
 
   const wInnerB = Wgrid(Xb, dBottom, g);
@@ -486,7 +489,6 @@ export async function createScene() {
   // ============================================================
   const normalizeLogoRow = (s) => {
     const t = (s ?? "").toString();
-    // dokładnie 30 znaków: utnij lub dopaduj spacjami
     if (t.length === 30) return t;
     if (t.length > 30) return t.slice(0, 30);
     return t.padEnd(30, " ");
@@ -510,7 +512,6 @@ export async function createScene() {
     const rowFrom = 3;
     const rowTo = 7;
 
-    // najpierw czyścimy tylko obszar logo
     clearArea(big, 1, rowFrom, 30, rowTo);
 
     for (const layer of layers) {
@@ -551,12 +552,12 @@ export async function createScene() {
         if (!BIG_MODES[mm]) throw new Error(`Nieznany tryb: ${m}`);
         mode = mm;
 
-        // Uwaga: tryb zawsze czyści big, żeby backend miał pewność stanu
+        // Tryb zawsze czyści big (backend ma pewność stanu)
         clearBig(big);
-        
+
         if (mode === BIG_MODES.ROUNDS) {
+          // inicjalizacja: tylko SUMA label, numery pojawią się dopiero gdy jest tekst
           writeField(GLYPHS, big, ROUNDS.sumaLabel, "SUMA", LIT.main);
-          // numery NIE są rysowane na start — pokażą się dopiero, gdy tekst nie jest pusty
         }
 
         if (mode === BIG_MODES.FINAL) {
@@ -568,12 +569,12 @@ export async function createScene() {
     },
 
     big: {
-      
       speed: (mul) => {
         const v = Number(mul);
         if (!Number.isFinite(v) || v <= 0) throw new Error("ANIM_SPEED.mul musi być > 0");
         ANIM_SPEED.mul = v;
       },
+
       areaAll:  () => ({ c1:1, r1:1, c2:30, r2:10 }),
       areaWin:  () => ({ c1:1, r1:2, c2:30, r2:8 }),
       areaLogo: () => ({ c1:1, r1:3, c2:30, r2:7 }),
@@ -627,8 +628,6 @@ export async function createScene() {
         drawLogoGrid5(api.logo._json);
       },
 
-      // Klucz: robimy snapshot z logo, więc kolejność:
-      // clear (tryb) -> draw -> animIn (na obszarze logo)
       show: async (animIn = { type:"edge", dir:"left", ms:14 }) => {
         await api.mode.set("LOGO");
         api.logo.draw();
@@ -653,27 +652,29 @@ export async function createScene() {
     rounds: {
       setText: async (idx1to6, text, { animOut=null, animIn=null } = {}) => {
         if (mode !== BIG_MODES.ROUNDS) await api.mode.set("ROUNDS");
-      
+
         const i = (idx1to6 | 0) - 1;
         if (i < 0 || i > 5) throw new Error("idx1to6 musi być 1..6");
-      
-        roundsState.text[i] = (text ?? "").toString();
-      
-        await updateField(GLYPHS, big, ROUNDS.answers[i], text, { out: animOut, in: animIn, color: LIT.main });
-      
+
+        const t = (text ?? "").toString();
+        roundsState.text[i] = t;
+
+        await updateField(GLYPHS, big, ROUNDS.answers[i], t, { out: animOut, in: animIn, color: LIT.main });
+
         // numer tylko gdy tekst ma treść
-        setRoundNumberVisible(ROUNDS, idx1to6, hasVisibleText(roundsState.text[i]));
+        setRoundNumberVisible(idx1to6, hasVisibleText(roundsState.text[i]));
       },
 
       setPts: async (idx1to6, pts, { animOut=null, animIn=null } = {}) => {
         if (mode !== BIG_MODES.ROUNDS) await api.mode.set("ROUNDS");
-      
+
         const i = (idx1to6 | 0) - 1;
         if (i < 0 || i > 5) throw new Error("idx1to6 musi być 1..6");
-      
-        await updateField(GLYPHS, big, ROUNDS.points[i], pts, { out: animOut, in: animIn, color: LIT.main });
-      
-        // nie wymuszamy numeru przy punktach — decyduje wyłącznie tekst
+
+        const p = (pts ?? "").toString();
+        roundsState.pts[i] = p;
+
+        await updateField(GLYPHS, big, ROUNDS.points[i], p, { out: animOut, in: animIn, color: LIT.main });
       },
 
       setRow: async (idx1to6, { text=undefined, pts=undefined, animOut=null, animIn=null } = {}) => {
@@ -692,6 +693,35 @@ export async function createScene() {
         if (!cell) throw new Error(`Nieznane X: ${name}`);
         if (on) drawBigX_3x3(GLYPHS, big, cell.c1, cell.r1, LIT.main);
         else clearArea(big, cell.c1, cell.r1, cell.c2, cell.r2);
+      },
+
+      // ====== NOWE: batch (jedna animacja na całość) ======
+      setAll: async ({ rows = [], suma = undefined, animOut = null, animIn = null } = {}) => {
+        if (mode !== BIG_MODES.ROUNDS) await api.mode.set("ROUNDS");
+
+        const A_ALL = api.big.areaAll();
+
+        if (animOut) await api.big.animOut({ ...animOut, area: A_ALL });
+
+        // docelowy obraz (bez animacji per-pole)
+        writeField(GLYPHS, big, ROUNDS.sumaLabel, "SUMA", LIT.main);
+
+        for (let i = 0; i < 6; i++) {
+          const r = rows[i] ?? {};
+          const t = (r.text ?? "").toString();
+          const p = (r.pts  ?? "").toString();
+
+          roundsState.text[i] = t;
+          roundsState.pts[i]  = p;
+
+          writeField(GLYPHS, big, ROUNDS.answers[i], t, LIT.main);
+          writeField(GLYPHS, big, ROUNDS.points[i],  p, LIT.main);
+          setRoundNumberVisible(i + 1, hasVisibleText(t));
+        }
+
+        if (suma !== undefined) writeField(GLYPHS, big, ROUNDS.sumaVal, suma, LIT.main);
+
+        if (animIn) await api.big.animIn({ ...animIn, area: A_ALL });
       },
     },
 
@@ -731,6 +761,29 @@ export async function createScene() {
       setSuma: async (val, { animOut=null, animIn=null } = {}) => {
         if (mode !== BIG_MODES.FINAL) await api.mode.set("FINAL");
         await updateField(GLYPHS, big, FINAL.sumaVal, val, { out: animOut, in: animIn, color: LIT.main });
+      },
+
+      // ====== NOWE: batch (jedna animacja na całość) ======
+      setAll: async ({ rows = [], suma = undefined, animOut = null, animIn = null } = {}) => {
+        if (mode !== BIG_MODES.FINAL) await api.mode.set("FINAL");
+
+        const A_ALL = api.big.areaAll();
+
+        if (animOut) await api.big.animOut({ ...animOut, area: A_ALL });
+
+        writeField(GLYPHS, big, FINAL.sumaLabel, "SUMA", LIT.main);
+
+        for (let i = 0; i < 5; i++) {
+          const r = rows[i] ?? {};
+          writeField(GLYPHS, big, FINAL.leftTxt[i],  (r.left  ?? ""), LIT.main);
+          writeField(GLYPHS, big, FINAL.ptsA[i],     (r.a     ?? ""), LIT.main);
+          writeField(GLYPHS, big, FINAL.ptsB[i],     (r.b     ?? ""), LIT.main);
+          writeField(GLYPHS, big, FINAL.rightTxt[i], (r.right ?? ""), LIT.main);
+        }
+
+        if (suma !== undefined) writeField(GLYPHS, big, FINAL.sumaVal, suma, LIT.main);
+
+        if (animIn) await api.big.animIn({ ...animIn, area: A_ALL });
       },
     },
   };
@@ -782,6 +835,7 @@ export async function createScene() {
     const tokens = tokenize(raw);
     const head = (tokens[0] ?? "").toUpperCase();
 
+    // prędkość animacji globalnie
     if (head === "ANIMSPEED") {
       api.big.speed(parseFloat(tokens[1] ?? "1"));
       return;
@@ -842,6 +896,30 @@ export async function createScene() {
       return api.win.set(num, { animOut, animIn });
     }
 
+    // ====== NOWE: ROUNDS batch ======
+    // Format:
+    // RBATCH SUMA 070 R1 "TXT" 30 R2 "TXT" 25 ... R6 "TXT" 00 ANIMOUT ... ANIMIN ...
+    if (head === "RBATCH") {
+      const ao = tokens.findIndex(t => t.toUpperCase() === "ANIMOUT");
+      const ai = tokens.findIndex(t => t.toUpperCase() === "ANIMIN");
+      const animOut = ao >= 0 ? parseAnim(tokens, ao + 1) : null;
+      const animIn  = ai >= 0 ? parseAnim(tokens, ai + 1) : null;
+
+      const sIdx = tokens.findIndex(t => t.toUpperCase() === "SUMA");
+      const suma = sIdx >= 0 ? (tokens[sIdx + 1] ?? "") : undefined;
+
+      const rows = Array.from({ length: 6 }, () => ({ text:"", pts:"" }));
+      for (let i = 1; i <= 6; i++) {
+        const k = tokens.findIndex(t => t.toUpperCase() === `R${i}`);
+        if (k >= 0) {
+          rows[i-1].text = unquote(tokens[k + 1] ?? "");
+          rows[i-1].pts  = (tokens[k + 2] ?? "");
+        }
+      }
+
+      return api.rounds.setAll({ rows, suma, animOut, animIn });
+    }
+
     // ROUNDS (krótkie)
     if (head === "RTXT") {
       const idx = parseInt(tokens[1] ?? "0", 10);
@@ -883,6 +961,32 @@ export async function createScene() {
       const name = (tokens[1] ?? "").toUpperCase();
       const on = ((tokens[2] ?? "").toUpperCase() === "ON");
       return api.rounds.setX(name, on);
+    }
+
+    // ====== NOWE: FINAL batch ======
+    // Format:
+    // FBATCH SUMA 999 F1 "L" 12 34 "R" F2 "L" 01 99 "R" ... ANIMOUT ... ANIMIN ...
+    if (head === "FBATCH") {
+      const ao = tokens.findIndex(t => t.toUpperCase() === "ANIMOUT");
+      const ai = tokens.findIndex(t => t.toUpperCase() === "ANIMIN");
+      const animOut = ao >= 0 ? parseAnim(tokens, ao + 1) : null;
+      const animIn  = ai >= 0 ? parseAnim(tokens, ai + 1) : null;
+
+      const sIdx = tokens.findIndex(t => t.toUpperCase() === "SUMA");
+      const suma = sIdx >= 0 ? (tokens[sIdx + 1] ?? "") : undefined;
+
+      const rows = Array.from({ length: 5 }, () => ({ left:"", a:"", b:"", right:"" }));
+      for (let i = 1; i <= 5; i++) {
+        const k = tokens.findIndex(t => t.toUpperCase() === `F${i}`);
+        if (k >= 0) {
+          rows[i-1].left  = unquote(tokens[k + 1] ?? "");
+          rows[i-1].a     = (tokens[k + 2] ?? "");
+          rows[i-1].b     = (tokens[k + 3] ?? "");
+          rows[i-1].right = unquote(tokens[k + 4] ?? "");
+        }
+      }
+
+      return api.final.setAll({ rows, suma, animOut, animIn });
     }
 
     // FINAL (krótkie)
@@ -947,6 +1051,7 @@ export async function createScene() {
   // START: nic nie pokazujemy (backend/console steruje)
   // ============================================================
   clearBig(big);
+
   // małe panele czyścimy:
   setTripleDigits(GLYPHS, topTriple,   "   ", LIT.top);
   setTripleDigits(GLYPHS, leftTriple,  "   ", LIT.left);
@@ -954,7 +1059,6 @@ export async function createScene() {
   setLongTextCenteredMax15(GLYPHS, long1, "", LIT.main);
   setLongTextCenteredMax15(GLYPHS, long2, "", LIT.main);
 
-  // stan logiczny zostawiamy, ale NIC nie rysujemy
   mode = BIG_MODES.LOGO;
 
   return { api, BIG_MODES, handleCommand };
