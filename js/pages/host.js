@@ -6,19 +6,25 @@ const key = qs.get("key");
 
 const paperText = document.getElementById("paperText");
 const hint = document.getElementById("hint");
-
 const blank = document.getElementById("blank");
-const blankHint = document.getElementById("blankHint");
 
 const btnFS = document.getElementById("btnFS");
 const fsIco = document.getElementById("fsIco");
 
-let lastText = "";
 let hidden = false;
+let lastText = "";
 
 // ---------- fullscreen ----------
 function setFullscreenIcon(){
   fsIco.textContent = document.fullscreenElement ? "▢" : "⧉";
+}
+
+async function toggleFullscreen(){
+  try{
+    if (!document.fullscreenElement) await document.documentElement.requestFullscreen();
+    else await document.exitFullscreen();
+  }catch{}
+  setFullscreenIcon();
 }
 
 // ---------- hide / reveal ----------
@@ -26,17 +32,23 @@ function setHidden(on){
   hidden = !!on;
   blank.hidden = !hidden;
 
-  if (hidden) {
-    hint.textContent = "";
-    blankHint.textContent = "Przeciągnij w górę aby odsłonić";
-  } else {
-    hint.textContent = "Przeciągnij w dół żeby zasłonić";
-  }
+  hint.textContent = hidden
+    ? "Przeciągnij w górę aby odsłonić"
+    : "Przeciągnij w dół żeby zasłonić";
 }
 
-// ---------- gesture (Pointer Events - stabilne na iOS) ----------
-let pid = null;
-let startY = 0;
+function setText(t){
+  lastText = String(t ?? "");
+  if (!hidden) paperText.textContent = lastText;
+}
+
+function clearText(){
+  lastText = "";
+  if (!hidden) paperText.textContent = "";
+}
+
+// ---------- gestures (touch + mouse) ----------
+let startY = null;
 let startOK = false;
 
 function yOK(y){
@@ -44,68 +56,82 @@ function yOK(y){
   return (y > 70) && (y < h - 70);
 }
 
-function onPointerDown(e){
-  // tylko jeden “palec/mysz” naraz
-  if (pid !== null) return;
-  pid = e.pointerId;
-  startY = e.clientY;
-  startOK = yOK(startY);
-
-  // ważne: przejmij kontrolę nad pointerem
-  try { document.body.setPointerCapture(pid); } catch {}
+function onDown(y){
+  startY = y;
+  startOK = yOK(y);
 }
 
-function onPointerUp(e){
-  if (pid === null || e.pointerId !== pid) return;
+function onMove(y){
+  if (startY == null || !startOK) return;
+  const dy = y - startY;
 
-  const endY = e.clientY;
-  const dy = endY - startY;
-
-  if (startOK) {
-    if (!hidden && dy > 70) setHidden(true);        // ↓ zasłoń
-    else if (hidden && dy < -70) setHidden(false);  // ↑ odsłoń
+  // widoczne -> zasłoń (swipe w dół)
+  if (!hidden && dy > 70){
+    setHidden(true);
+    startY = null;
+    return;
   }
 
-  pid = null;
+  // zasłonięte -> odsłoń (swipe w górę)
+  if (hidden && dy < -70){
+    setHidden(false);
+    // po odsłonięciu przywróć tekst
+    paperText.textContent = lastText;
+    startY = null;
+    return;
+  }
+}
+
+function onUp(){
+  startY = null;
   startOK = false;
 }
 
-document.addEventListener("pointerdown", onPointerDown, { passive:false });
-document.addEventListener("pointerup", onPointerUp, { passive:true });
-document.addEventListener("pointercancel", () => { pid = null; startOK = false; }, { passive:true });
+// touch: blokuj tylko pinch / multi-touch, nie “zwykły” swipe
+document.addEventListener("touchstart", (e)=>{
+  if (e.touches && e.touches.length > 1) { e.preventDefault(); return; }
+  onDown(e.touches?.[0]?.clientY ?? 0);
+}, { passive:false });
+
+document.addEventListener("touchmove", (e)=>{
+  if (e.touches && e.touches.length > 1) { e.preventDefault(); return; }
+  onMove(e.touches?.[0]?.clientY ?? 0);
+}, { passive:false });
+
+document.addEventListener("touchend", ()=> onUp(), { passive:true });
+
+// mouse (desktop)
+document.addEventListener("mousedown", (e)=> onDown(e.clientY));
+document.addEventListener("mousemove", (e)=> onMove(e.clientY));
+document.addEventListener("mouseup", ()=> onUp());
+
+// blokuj ctrl+scroll zoom (desktop)
+document.addEventListener("wheel", (e)=>{
+  if (e.ctrlKey) e.preventDefault();
+}, { passive:false });
 
 // ---------- commands ----------
 function norm(s){ return String(s ?? "").trim(); }
 
-function handleCmd(line){
-  const raw = norm(line);
-  const up = raw.toUpperCase();
+function handleCmd(lineRaw){
+  const line = norm(lineRaw);
+  const up = line.toUpperCase();
 
-  // OFF/ON = zasłoń/odsłoń
+  // zasłona
   if (up === "OFF") { setHidden(true); return; }
-  if (up === "ON")  { setHidden(false); return; }
+  if (up === "ON")  { setHidden(false); paperText.textContent = lastText; return; }
 
-  // SET "tekst" / CLEAR
-  if (up === "CLEAR") {
-    lastText = "";
-    paperText.textContent = "";
+  // SET "tekst"  |  SET bez cudzysłowu
+  if (/^SET\b/i.test(line)){
+    const m = line.match(/^SET\s+"([\s\S]*)"\s*$/i);
+    const text = m ? m[1] : line.replace(/^SET\s+/i, "");
+    setText(text);
     return;
   }
 
-  if (/^SET\b/i.test(raw)) {
-    const m = raw.match(/^SET\s+"([\s\S]*)"\s*$/i);
-    const text = m ? m[1] : raw.replace(/^SET\s+/i, "");
-    lastText = text || "";
-    paperText.textContent = lastText;
-    return;
-  }
-
-  // kompatybilnie z wcześniejszym SEND
-  if (/^SEND\b/i.test(raw)) {
-    const m = raw.match(/^SEND\s+"([\s\S]*)"\s*$/i);
-    const text = m ? m[1] : raw.replace(/^SEND\s+/i, "");
-    lastText = text || "";
-    paperText.textContent = lastText;
+  // CLEAR
+  if (up === "CLEAR"){
+    clearText();
     return;
   }
 }
@@ -116,7 +142,7 @@ function ensureChannel(){
   if (ch) return ch;
   ch = sb().channel(`familiada-host:${gameId}`)
     .on("broadcast", { event:"HOST_CMD" }, (msg)=>{
-      handleCmd(norm(msg?.payload?.line));
+      handleCmd(msg?.payload?.line);
     })
     .subscribe();
   return ch;
@@ -127,23 +153,14 @@ async function ping(){
   try { await sb().rpc("public_ping", { p_game_id: gameId, p_kind:"host", p_key:key }); } catch {}
 }
 
-// fullscreen
-btnFS.addEventListener("click", async () => {
-  try{
-    if (!document.fullscreenElement) await document.documentElement.requestFullscreen();
-    else await document.exitFullscreen();
-  }catch{}
-});
+btnFS.addEventListener("click", toggleFullscreen);
 document.addEventListener("fullscreenchange", setFullscreenIcon);
 
 document.addEventListener("DOMContentLoaded", ()=>{
   setFullscreenIcon();
+  paperText.textContent = "";   // bez “Ładuję…”
 
-  // start: bez “Ładuję…”
-  paperText.textContent = "";
-  lastText = "";
-
-  if (!gameId || !key) {
+  if (!gameId || !key){
     setHidden(true);
     return;
   }
@@ -156,4 +173,4 @@ document.addEventListener("DOMContentLoaded", ()=>{
 });
 
 // debug
-window.__host = { setHidden, handleCmd };
+window.__host = { setHidden, setText, clearText, handleCmd };
