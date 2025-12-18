@@ -282,18 +282,6 @@ export async function createScene() {
     const points    = rows.map((r, i) => field(`R${i+1}_PTS`, 24, r, 2));
     const sumaLabel = field("SUMA_LABEL", 18, 8, 4);
     const sumaVal   = field("SUMA_VAL",   23, 8, 3);
-
-    const roundsState = {
-        text: Array(6).fill(""),
-        pts:  Array(6).fill(""),
-    };
-    const hasVisibleText = (s) => (s ?? "").toString().trim().length > 0;
-    
-    const setRoundNumberVisible = (idx1to6, on) => {
-      const i = (idx1to6 | 0) - 1;
-      if (i < 0 || i > 5) return;
-      writeField(GLYPHS, big, ROUNDS.roundNums[i], on ? String(i + 1) : " ", LIT.main);
-    };
   
     const xCells = {
       "1A": { c1: 1,  r1: 8,  c2: 3,  r2: 10 },
