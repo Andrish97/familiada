@@ -8,6 +8,17 @@ import { sb } from "../../js/core/supabase.js";
 
 const $ = (id) => document.getElementById(id);
 
+async function pingDisplay(gameId) {
+  try {
+    await sb()
+      .from("live_state")
+      .update({ seen_display_at: new Date().toISOString() })
+      .eq("game_id", gameId);
+  } catch (e) {
+    console.warn("[display] ping failed", e);
+  }
+}
+
 function parseParams() {
   const u = new URL(location.href);
   return {
@@ -56,7 +67,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     // 0) AUTH
     const { gameId, key } = parseParams();
     const game = await authDisplayOrThrow(gameId, key);
-
+    await pingDisplay(game.id);
     // 1) presence (heartbeat)
     startPresence({
       channel: `familiada-display:${game.id}`,
