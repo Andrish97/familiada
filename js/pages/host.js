@@ -18,32 +18,25 @@ let hidden = false;
 
 // ---------- fullscreen ----------
 function setFullscreenIcon(){
-  // ⧉ = “dwa nałożone”, ▢ = “jeden”
   fsIco.textContent = document.fullscreenElement ? "▢" : "⧉";
 }
 
 // ---------- hide / reveal ----------
 function setHidden(on){
-  if (on === hidden) return;
-  hidden = on;
+  hidden = !!on;
+  blank.hidden = !hidden;
 
-  // pokaz/ukryj karton
-  blank.hidden = !on;
-
-  if (on) {
-    lastText = paperText.textContent;
-    paperText.textContent = "";
-    hint.textContent = "Przeciągnij w górę aby odsłonić";
+  if (hidden) {
+    hint.textContent = "";
     blankHint.textContent = "Przeciągnij w górę aby odsłonić";
   } else {
-    paperText.textContent = lastText || "";
     hint.textContent = "Przeciągnij w dół żeby zasłonić";
-    blankHint.textContent = "Przeciągnij w górę aby odsłonić";
   }
 }
 
-// swipe/drag w całym ekranie, ale nie przy samej górze/dole
-let startY = null;
+// ---------- gesture (Pointer Events - stabilne na iOS) ----------
+let pid = null;
+let startY = 0;
 let startOK = false;
 
 function yOK(y){
@@ -51,73 +44,69 @@ function yOK(y){
   return (y > 70) && (y < h - 70);
 }
 
-function onDown(y){
-  startY = y;
-  startOK = yOK(y);
+function onPointerDown(e){
+  // tylko jeden “palec/mysz” naraz
+  if (pid !== null) return;
+  pid = e.pointerId;
+  startY = e.clientY;
+  startOK = yOK(startY);
+
+  // ważne: przejmij kontrolę nad pointerem
+  try { document.body.setPointerCapture(pid); } catch {}
 }
 
-function onUp(endY){
-  if (startY == null || !startOK) {
-    startY = null;
-    startOK = false;
-    return;
-  }
+function onPointerUp(e){
+  if (pid === null || e.pointerId !== pid) return;
 
+  const endY = e.clientY;
   const dy = endY - startY;
 
-  // próg
-  if (!hidden && dy > 70) setHidden(true);      // ↓ zasłoń
-  else if (hidden && dy < -70) setHidden(false); // ↑ odsłoń
+  if (startOK) {
+    if (!hidden && dy > 70) setHidden(true);        // ↓ zasłoń
+    else if (hidden && dy < -70) setHidden(false);  // ↑ odsłoń
+  }
 
-  startY = null;
+  pid = null;
   startOK = false;
 }
 
-// touch
-document.addEventListener("touchstart", (e)=> {
-  if (e.touches?.length > 1) return; // ignoruj multi-touch
-  onDown(e.touches?.[0]?.clientY ?? 0);
-}, { passive:false });
-
-document.addEventListener("touchmove", (e)=> {
-  // blokuj scroll/zoom, ale nie próbuj przełączać w trakcie ruchu
-  e.preventDefault();
-}, { passive:false });
-
-document.addEventListener("touchend", (e)=> {
-  const y = e.changedTouches?.[0]?.clientY ?? 0;
-  onUp(y);
-}, { passive:true });
-
-// mouse
-document.addEventListener("mousedown", (e)=> onDown(e.clientY));
-document.addEventListener("mouseup",   (e)=> onUp(e.clientY));
-
-// fullscreen
-btnFS.addEventListener("click", async () => {
-  try{
-    if (!document.fullscreenElement) await document.documentElement.requestFullscreen();
-    else await document.exitFullscreen();
-  }catch{}
-});
-document.addEventListener("fullscreenchange", setFullscreenIcon);
+document.addEventListener("pointerdown", onPointerDown, { passive:false });
+document.addEventListener("pointerup", onPointerUp, { passive:true });
+document.addEventListener("pointercancel", () => { pid = null; startOK = false; }, { passive:true });
 
 // ---------- commands ----------
 function norm(s){ return String(s ?? "").trim(); }
 
 function handleCmd(line){
-  const cmd = line.toUpperCase();
+  const raw = norm(line);
+  const up = raw.toUpperCase();
 
-  // OFF/ON = zasłona (karton)
-  if (cmd === "OFF") { setHidden(true); return; }
-  if (cmd === "ON")  { setHidden(false); return; }
+  // OFF/ON = zasłoń/odsłoń
+  if (up === "OFF") { setHidden(true); return; }
+  if (up === "ON")  { setHidden(false); return; }
 
-  // SEND "Tekst..."
-  if (/^SEND\b/i.test(line)) {
-    const m = line.match(/^SEND\s+"([\s\S]*)"\s*$/i);
-    const text = m ? m[1] : line.replace(/^SEND\s+/i, "");
+  // SET "tekst" / CLEAR
+  if (up === "CLEAR") {
+    lastText = "";
+    paperText.textContent = "";
+    return;
+  }
+
+  if (/^SET\b/i.test(raw)) {
+    const m = raw.match(/^SET\s+"([\s\S]*)"\s*$/i);
+    const text = m ? m[1] : raw.replace(/^SET\s+/i, "");
     lastText = text || "";
-    if (!hidden) paperText.textContent = lastText;
+    paperText.textContent = lastText;
+    return;
+  }
+
+  // kompatybilnie z wcześniejszym SEND
+  if (/^SEND\b/i.test(raw)) {
+    const m = raw.match(/^SEND\s+"([\s\S]*)"\s*$/i);
+    const text = m ? m[1] : raw.replace(/^SEND\s+/i, "");
+    lastText = text || "";
+    paperText.textContent = lastText;
+    return;
   }
 }
 
@@ -138,10 +127,19 @@ async function ping(){
   try { await sb().rpc("public_ping", { p_game_id: gameId, p_kind:"host", p_key:key }); } catch {}
 }
 
+// fullscreen
+btnFS.addEventListener("click", async () => {
+  try{
+    if (!document.fullscreenElement) await document.documentElement.requestFullscreen();
+    else await document.exitFullscreen();
+  }catch{}
+});
+document.addEventListener("fullscreenchange", setFullscreenIcon);
+
 document.addEventListener("DOMContentLoaded", ()=>{
   setFullscreenIcon();
 
-  // start bez “Ładuję…”
+  // start: bez “Ładuję…”
   paperText.textContent = "";
   lastText = "";
 
@@ -150,7 +148,6 @@ document.addEventListener("DOMContentLoaded", ()=>{
     return;
   }
 
-  // domyślnie odsłonięte (jak w Twojej wersji)
   setHidden(false);
   ensureChannel();
 
