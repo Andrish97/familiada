@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
   <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no"/>
   <title>Familiada — buzzer</title>
 
   <link rel="icon" href="favicon.ico"/>
@@ -14,20 +14,22 @@
 </head>
 
 <body class="buzzer-body">
-  <button class="fsBtn" id="btnFS" type="button" aria-label="Pełny ekran">▢</button>
+  <button class="fsBtn" id="btnFS" type="button" aria-label="Pełny ekran" title="Pełny ekran">
+    <span class="ico" id="fsIco" aria-hidden="true">▢▢</span>
+  </button>
 
-  <div class="arena" id="arena">
-    <button class="btnBig red" id="btnA" type="button" aria-label="Buzzer A">
-      <span class="icon">A</span>
+  <!-- OFF: czarno, nic -->
+  <div class="off" id="offScreen" hidden></div>
+
+  <!-- ON / PUSHED: przyciski -->
+  <div class="arena" id="arena" hidden>
+    <button class="btnRing red" id="btnA" type="button" aria-label="Buzzer A">
+      <span class="btnIco">▢</span>
     </button>
 
-    <button class="btnBig green" id="btnB" type="button" aria-label="Buzzer B">
-      <span class="icon">B</span>
+    <button class="btnRing green" id="btnB" type="button" aria-label="Buzzer B">
+      <span class="btnIco">▢</span>
     </button>
-  </div>
-
-  <div class="off" id="off">
-    <div class="offDot"></div>
   </div>
 </body>
 </html>
