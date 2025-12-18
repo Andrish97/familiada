@@ -2,38 +2,27 @@
 <html lang="pl">
 <head>
   <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
-  <title>Familiada — prowadzący</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no"/>
+  <title>Familiada — host</title>
 
   <link rel="icon" href="favicon.ico"/>
-  <link rel="stylesheet" href="css/base.css"/>
   <link rel="stylesheet" href="css/host.css"/>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
   <script type="module" src="js/pages/host.js" defer></script>
 </head>
 
-<body class="host-body">
-  <button class="fsBtn" id="btnFS" type="button" aria-label="Pełny ekran" title="Pełny ekran"></button>
+<body class="host">
+  <button id="btnFS" class="fs" title="Pełny ekran"></button>
 
-  <main class="sheet" id="sheet">
-    <div class="hTitle">Pytanie</div>
-    <div class="q" id="q">Ładuję…</div>
+  <div id="sheet" class="sheet">
+    <pre id="text" class="text"></pre>
 
-    <div class="hTitle" style="margin-top:14px;">Podgląd odpowiedzi</div>
-    <div class="alist" id="alist"></div>
-  </main>
-
-  <!-- “ukryte” = czysta kartka bez treści (ale dalej w stylu kartki) -->
-  <div class="cover" id="cover" aria-hidden="true">
-    <div class="coverNote">
-      UKRYTE
-      <div class="coverSub">Przeciągnij w dół, aby pokazać</div>
+    <div class="hint">
+      przeciągnij ↑ / ↓ aby ukryć / pokazać
     </div>
   </div>
 
-  <div class="swipeHint" id="swipeHint">
-    Przeciągnij w górę / w dół, aby ukryć / pokazać
-  </div>
+  <div id="blank" class="blank"></div>
 </body>
 </html>
