@@ -11,6 +11,9 @@ const blank = document.getElementById("blank");
 const btnFS = document.getElementById("btnFS");
 const fsIco = document.getElementById("fsIco");
 
+let lastText = "";
+let hidden = false;
+
 // ---------- fullscreen ----------
 function setFullscreenIcon(){
   // ⧉ = “dwa nałożone”, ▢ = “jeden”
@@ -18,14 +21,19 @@ function setFullscreenIcon(){
 }
 
 // ---------- hide / reveal ----------
-let hidden = false;
 
 function setHidden(on){
-  hidden = !!on;
-  blank.hidden = !hidden;
-  hint.textContent = hidden
-    ? "Przeciągnij w górę aby odsłonić"
-    : "Przeciągnij w dół żeby zasłonić";
+  if (on === hidden) return;
+  hidden = on;
+
+  if (on) {
+    lastText = paperText.textContent;
+    paperText.textContent = "";
+    hint.textContent = "Przeciągnij w górę aby odsłonić";
+  } else {
+    paperText.textContent = lastText || "";
+    hint.textContent = "Przeciągnij w dół żeby zasłonić";
+  }
 }
 
 // swipe/drag w całym ekranie, ale nie przy samej górze/dole
@@ -92,21 +100,17 @@ function setText(t){
   paperText.textContent = t ?? "";
 }
 
-function handleCmd(lineRaw){
-  const line = norm(lineRaw);
+function handleCmd(line){
+  const cmd = line.toUpperCase();
 
-  // CLEAR
-  if (/^CLEAR$/i.test(line)) {
-    setText("");
-    return;
-  }
+  if (cmd === "OFF") { setHidden(true); return; }
+  if (cmd === "ON")  { setHidden(false); return; }
 
-  // SET "Tekst..."
-  if (/^SET\b/i.test(line)) {
-    const m = line.match(/^SET\s+"([\s\S]*)"\s*$/i);
-    const text = m ? m[1] : line.replace(/^SET\s+/i, "");
-    setText(text || "");
-    return;
+  if (/^SEND\b/i.test(line)) {
+    const m = line.match(/^SEND\s+"([\s\S]*)"\s*$/i);
+    const text = m ? m[1] : line.replace(/^SEND\s+/i, "");
+    lastText = text || "";
+    if (!hidden) paperText.textContent = lastText;
   }
 }
 
