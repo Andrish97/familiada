@@ -103,8 +103,20 @@ window.addEventListener("DOMContentLoaded", async () => {
         console.log("[display] realtime:", status);
       });
 
-    // (opcjonalnie) gdybyś chciał kiedyś sprzątać:
-    // window.addEventListener("beforeunload", () => sb().removeChannel(ch));
+      // 7) Heartbeat do live_state (żeby CONTROL widział DISPLAY: OK)
+      const ping = async () => {
+        try {
+          await sb()
+            .from("live_state")
+            .update({ seen_display_at: new Date().toISOString() })
+            .eq("game_id", gameId);
+        } catch (e) {
+          // cisza - jak RLS/timeout, nie spamujemy
+        }
+      };
+  
+      ping();
+      setInterval(ping, 6000);
   }
   
   // demo:
