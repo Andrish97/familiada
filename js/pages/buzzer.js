@@ -4,104 +4,105 @@ const qs = new URLSearchParams(location.search);
 const gameId = qs.get("id");
 const key = qs.get("key");
 
-const btnHide = document.getElementById("btnHide");
-const cover = document.getElementById("cover");
+const btnFS = document.getElementById("btnFS");
+const btnA = document.getElementById("btnA");
+const btnB = document.getElementById("btnB");
+const off = document.getElementById("off");
 
-const qEl = document.getElementById("q");
+let isOff = false;
 
-function showCover(on){ cover.style.display = on ? "" : "none"; }
-btnHide.addEventListener("click", () => showCover(true));
-cover.addEventListener("click", () => showCover(false));
-
-function setText(t){
-  qEl.textContent = String(t ?? "");
+function setOff(on){
+  isOff = !!on;
+  off.classList.toggle("on", isOff);
+  off.setAttribute("aria-hidden", isOff ? "false" : "true");
+  btnA.disabled = isOff || btnA.disabled; // nie “odblokowujemy” tu logiki gry
+  btnB.disabled = isOff || btnB.disabled;
 }
 
-function parseQuoted(str){
-  // TEXT "...." (z obsługą \n)
-  const m = str.match(/^TEXT\s+"([\s\S]*)"\s*$/i);
-  if (!m) return null;
-  return m[1]
-    .replace(/\\n/g, "\n")
-    .replace(/\\"/g, '"');
+function applyState(ls) {
+  const locked = !!ls?.buzzer_locked;
+  const winner = ls?.buzzer_winner || null;
+
+  btnA.classList.toggle("winner", winner === "A");
+  btnB.classList.toggle("winner", winner === "B");
+
+  btnA.classList.toggle("loser", !!winner && winner !== "A");
+  btnB.classList.toggle("loser", !!winner && winner !== "B");
+
+  btnA.disabled = isOff || locked;
+  btnB.disabled = isOff || locked;
 }
 
-function handleCommand(line){
-  const s = String(line || "").trim();
-  if (!s) return;
-
-  const v = parseQuoted(s);
-  if (v !== null) {
-    setText(v);
-    return;
-  }
-
-  if (s.toUpperCase() === "HIDE") return showCover(true);
-  if (s.toUpperCase() === "SHOW") return showCover(false);
-  if (s.toUpperCase() === "CLEAR") return setText("");
-
-  console.warn("[host] unknown cmd:", s);
+async function ping() {
+  try {
+    await sb().rpc("public_ping", { p_game_id: gameId, p_kind: "buzzer", p_key: key });
+  } catch {}
 }
 
-function subscribeCommands(){
+async function press(team) {
+  if (isOff) return;
+  if (btnA.disabled || btnB.disabled) return;
+
+  try {
+    await sb().rpc("buzzer_press", { p_game_id: gameId, p_key: key, p_team: team });
+  } catch {}
+}
+
+function subLive() {
   const ch = sb()
-    .channel(`familiada-host:${gameId}`)
-    .on("broadcast", { event:"CMD" }, (payload) => {
-      handleCommand(payload?.payload?.line);
-    })
+    .channel(`buzzer_live:${gameId}`)
+    .on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "live_state", filter: `game_id=eq.${gameId}` },
+      (payload) => applyState(payload.new)
+    )
     .subscribe();
 
   return () => sb().removeChannel(ch);
 }
 
-async function ping(){
-  try { await sb().rpc("public_ping", { p_game_id: gameId, p_kind: "host", p_key: key }); } catch {}
+/* fullscreen */
+async function syncFSIcon(){
+  btnFS?.classList.toggle("on", !!document.fullscreenElement);
 }
+btnFS?.addEventListener("click", async () => {
+  try{
+    if (!document.fullscreenElement) await document.documentElement.requestFullscreen();
+    else await document.exitFullscreen();
+  }catch{}
+  syncFSIcon();
+});
+document.addEventListener("fullscreenchange", syncFSIcon);
 
-/* swipe góra/dół bez scrolla */
-let y0 = null;
-let lastToggleAt = 0;
+btnA.addEventListener("click", () => press("A"));
+btnB.addEventListener("click", () => press("B"));
 
-function onTouchStart(e){
-  if (!e.touches?.length) return;
-  y0 = e.touches[0].clientY;
-}
-function onTouchMove(e){
-  // blokuj przewijanie
-  e.preventDefault();
-}
-function onTouchEnd(e){
-  if (y0 == null) return;
-  const y1 = (e.changedTouches?.[0]?.clientY ?? y0);
-  const dy = y1 - y0; // + w dół
-  y0 = null;
+document.addEventListener("DOMContentLoaded", async () => {
+  syncFSIcon();
 
-  const now = Date.now();
-  if (now - lastToggleAt < 500) return;
-
-  if (dy > 80) { // swipe w dół => ukryj
-    showCover(true);
-    lastToggleAt = now;
-  } else if (dy < -80) { // swipe w górę => pokaż
-    showCover(false);
-    lastToggleAt = now;
+  if (!gameId || !key) {
+    setOff(true);
+    return;
   }
-}
 
-document.addEventListener("DOMContentLoaded", () => {
-  if (!gameId || !key) { setText("Zły link."); return; }
+  // start: ON (czyli normalny ekran)
+  setOff(false);
 
-  // start
-  setText("Ładuję…");
-  subscribeCommands();
+  // stan startowy z live_state
+  try {
+    const { data } = await sb()
+      .from("live_state")
+      .select("buzzer_locked,buzzer_winner")
+      .eq("game_id", gameId)
+      .single();
+    applyState(data);
+  } catch {}
+
+  subLive();
+
   ping();
   setInterval(ping, 5000);
 
-  // blok scroll / pull-to-refresh
-  document.addEventListener("touchstart", onTouchStart, { passive:false });
-  document.addEventListener("touchmove", onTouchMove, { passive:false });
-  document.addEventListener("touchend", onTouchEnd, { passive:false });
-
-  // debug:
-  window.handleCommand = handleCommand;
+  // (opcjonalnie) do testów w konsoli:
+  window.__buzzer = { setOff };
 });
