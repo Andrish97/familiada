@@ -32,11 +32,13 @@ html, body { height: 100%; }
   margin:0;
   background:#0b1220;
   overflow:hidden;
-  touch-action:none;
+  touch-action:none;        /* blok pinch/scroll */
   -webkit-user-select:none;
   user-select:none;
+  -webkit-touch-callout:none;
 }
 
+/* fullscreen button */
 .fsBtn{
   position:fixed;
   top: calc(var(--safe-top) + var(--u) * 0.8);
@@ -54,9 +56,12 @@ html, body { height: 100%; }
   cursor:pointer;
 }
 .fsBtn:active{ transform: translateY(1px); }
-.fsBtn .ico{ font-size: calc(var(--u) * 1.25); letter-spacing:-2px; }
+.fsBtn .ico{
+  font-size: calc(var(--u) * 1.25);
+  letter-spacing:-2px;
+}
 
-/* Kartka = całe okno, bez “ramek” */
+/* Kartka = całe okno */
 .paper{
   position:fixed;
   inset:0;
@@ -69,6 +74,7 @@ html, body { height: 100%; }
     var(--safe-bottom)
     var(--safe-left);
 
+  /* tylko równe linie — zero “dziesiątek”, zero gradientów */
   background:
     repeating-linear-gradient(
       to bottom,
@@ -97,8 +103,9 @@ html, body { height: 100%; }
   white-space:pre-wrap;
   word-break:break-word;
 
-  font-family: "Bradley Hand", "Segoe Script", "Comic Sans MS", cursive;
-  font-size: clamp(16px, calc(var(--u) * 1.55), 28px);
+  /* bardziej czytelne “pisane” bez webfontów */
+  font-family: "Segoe Print","Bradley Hand","Segoe Script","Comic Sans MS",cursive;
+  font-size: clamp(18px, calc(var(--u) * 1.75), 30px);
   line-height: var(--line);
   color:#111;
 }
@@ -109,8 +116,34 @@ html, body { height: 100%; }
   right: calc(var(--safe-right) + var(--text-right));
   bottom: calc(var(--safe-bottom) + 0px);
 
-  font-family: "Bradley Hand", "Segoe Script", "Comic Sans MS", cursive;
-  font-size: clamp(14px, calc(var(--u) * 1.35), 24px);
+  font-family: "Segoe Print","Bradley Hand","Segoe Script","Comic Sans MS",cursive;
+  font-size: clamp(16px, calc(var(--u) * 1.55), 28px);
   line-height: var(--line);
-  color:rgba(0,0,0,.55);
+  color: rgba(0,0,0,.55);
+}
+
+/* Kartonowa okładka (blank) */
+.blank{
+  position:fixed;
+  inset:0;
+  height: var(--vh);
+  z-index:50;
+
+  /* karton — jednolicie (bez gradientów) */
+  background: #c7a77a;
+
+  /* pełna zasłona */
+  display:block;
+}
+
+.blankHint{
+  position:absolute;
+  left: calc(var(--safe-left) + var(--text-left));
+  right: calc(var(--safe-right) + var(--text-right));
+  bottom: calc(var(--safe-bottom) + 0px);
+
+  font-family: "Segoe Print","Bradley Hand","Segoe Script","Comic Sans MS",cursive;
+  font-size: clamp(16px, calc(var(--u) * 1.55), 28px);
+  line-height: var(--line);
+  color: rgba(30,20,10,.55);
 }
