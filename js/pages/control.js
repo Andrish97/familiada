@@ -52,7 +52,27 @@ async function sendToBuzzer(gameId, line) {
     payload: { line: String(line) },
   });
 }
+// ===== BUZZER -> CONTROL (eventy z buzzera) =====
+let controlChannel = null;
 
+function ensureControlChannel(gameId){
+  if (controlChannel) return controlChannel;
+
+  controlChannel = sb()
+    .channel(`familiada-control:${gameId}`)
+    .on("broadcast", { event: "BUZZER_EVT" }, (msg) => {
+      const line = String(msg?.payload?.line ?? "").trim();
+      console.log("[control] BUZZER_EVT:", line);
+
+      // na razie debug — później podepniemy logikę gry
+      // np. jeśli line === "CLICK A" -> updateLive({ buzzer_locked:true, buzzer_winner:"A", ... })
+    })
+    .subscribe();
+
+  return controlChannel;
+}
+
+window.ensureControlChannel = ensureControlChannel;
 // debug / konsola
 window.sendToDisplay = sendToDisplay;
 window.ensureDisplayChannel = ensureDisplayChannel;
@@ -621,9 +641,10 @@ async function main() {
     location.href = "builder.html";
     return;
   }
-
-  const u = await requireAuth("index.html");
-  who.textContent = u?.email || "—";
+   
+   const u = await requireAuth("index.html");
+   ensureControlChannel(gameId);
+   who.textContent = u?.email || "—";
 
   btnLogout.addEventListener("click", async () => {
     await signOut();
