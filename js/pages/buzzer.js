@@ -32,18 +32,24 @@ function show(state) {
   cur = state;
 
   const isOff = state === STATE.OFF;
+
+  // OFF = czarny ekran, nic więcej
   offScreen.hidden = !isOff;
   arena.hidden = isOff;
 
-  // reset: ring zawsze ten sam, grzebiemy tylko w “wnętrzu”
+  // reset klas
   btnA.classList.remove("lit", "dim");
   btnB.classList.remove("lit", "dim");
+
+  if (isOff) {
+    btnA.disabled = true;
+    btnB.disabled = true;
+    return;
+  }
 
   if (state === STATE.ON) {
     btnA.disabled = false;
     btnB.disabled = false;
-
-    // ON = oba zgaszone (wnętrze ciemniejsze)
     btnA.classList.add("dim");
     btnB.classList.add("dim");
     return;
@@ -52,7 +58,6 @@ function show(state) {
   if (state === STATE.PUSHED_A) {
     btnA.disabled = true;
     btnB.disabled = true;
-
     btnA.classList.add("lit");
     btnB.classList.add("dim");
     return;
@@ -61,15 +66,9 @@ function show(state) {
   if (state === STATE.PUSHED_B) {
     btnA.disabled = true;
     btnB.disabled = true;
-
     btnB.classList.add("lit");
     btnA.classList.add("dim");
-    return;
   }
-
-  // OFF
-  btnA.disabled = true;
-  btnB.disabled = true;
 }
 
 // ---------- networking ----------
@@ -116,7 +115,6 @@ function handleCmd(lineRaw) {
 
   if (line === "OFF")   { show(STATE.OFF); return; }
   if (line === "ON")    { show(STATE.ON); return; }
-  if (line === "RESET") { show(STATE.ON); return; }
 
   // wymuszenie stanów (opcjonalne)
   if (line === "PUSHED A" || line === "PUSHED_A") { show(STATE.PUSHED_A); return; }
