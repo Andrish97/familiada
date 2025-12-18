@@ -2,11 +2,10 @@
 <html lang="pl">
 <head>
   <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
   <title>Familiada — prowadzący</title>
 
   <link rel="icon" href="favicon.ico"/>
-
   <link rel="stylesheet" href="css/base.css"/>
   <link rel="stylesheet" href="css/host.css"/>
 
@@ -15,23 +14,26 @@
 </head>
 
 <body class="host-body">
-  <!-- fullscreen -->
-  <button class="fsBtn" id="btnFS" type="button" title="Pełny ekran" aria-label="Pełny ekran">⛶</button>
+  <button class="fsBtn" id="btnFS" type="button" aria-label="Pełny ekran" title="Pełny ekran"></button>
 
-  <!-- „kartka” na całą stronę -->
-  <main class="page" id="page" aria-live="polite">
-    <pre class="note" id="q"></pre>
+  <main class="sheet" id="sheet">
+    <div class="hTitle">Pytanie</div>
+    <div class="q" id="q">Ładuję…</div>
 
-    <!-- podpowiedź + “uchwyt” do przeciągania -->
-    <div class="pull" id="pull">
-      <div class="pullHandle" aria-hidden="true"></div>
-      <div class="pullHint" id="pullHint">Pociągnij w górę / dół, aby ukryć / pokazać</div>
-    </div>
+    <div class="hTitle" style="margin-top:14px;">Podgląd odpowiedzi</div>
+    <div class="alist" id="alist"></div>
   </main>
 
-  <!-- stan ukryty: pusta strona -->
-  <div class="hiddenStage" id="hiddenStage" aria-hidden="true">
-    <div class="hiddenHint">Pociągnij z dołu, aby pokazać</div>
+  <!-- “ukryte” = czysta kartka bez treści (ale dalej w stylu kartki) -->
+  <div class="cover" id="cover" aria-hidden="true">
+    <div class="coverNote">
+      UKRYTE
+      <div class="coverSub">Przeciągnij w dół, aby pokazać</div>
+    </div>
+  </div>
+
+  <div class="swipeHint" id="swipeHint">
+    Przeciągnij w górę / w dół, aby ukryć / pokazać
   </div>
 </body>
 </html>
