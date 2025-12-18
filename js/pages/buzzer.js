@@ -4,162 +4,134 @@ const qs = new URLSearchParams(location.search);
 const gameId = qs.get("id");
 const key = qs.get("key");
 
+const btnA = document.getElementById("btnA");
+const btnB = document.getElementById("btnB");
+const off = document.getElementById("off");
+const arena = document.getElementById("arena");
+
 const btnFS = document.getElementById("btnFS");
 const fsIco = document.getElementById("fsIco");
 
-const offScreen = document.getElementById("offScreen");
-const arena = document.getElementById("arena");
-const btnA = document.getElementById("btnA");
-const btnB = document.getElementById("btnB");
-
-const STATE = {
-  OFF: "OFF",
-  ON: "ON",
-  PUSHED_A: "PUSHED_A",
-  PUSHED_B: "PUSHED_B",
-};
-
-let cur = STATE.OFF;
-
-// ---------- UI ----------
-function setFullscreenIcon() {
+function setFullscreenIcon(){
   fsIco.textContent = document.fullscreenElement ? "▢" : "▢▢";
 }
 
-function show(state) {
-  cur = state;
+function setOff(){
+  off.hidden = false;
+  arena.style.display = "none";
+  btnFS.style.display = "none"; // OFF = brak czegokolwiek
+}
 
-  const isOff = state === STATE.OFF;
-  offScreen.hidden = !isOff;
-  arena.hidden = isOff;
+function setOn(){
+  off.hidden = true;
+  arena.style.display = "";
+  btnFS.style.display = "";
 
-  // reset klasy
-  btnA.classList.remove("win", "dim");
-  btnB.classList.remove("win", "dim");
+  // obie zgaszone, ale aktywne
+  btnA.disabled = false;
+  btnB.disabled = false;
 
-  if (state === STATE.ON) {
-    btnA.disabled = false;
-    btnB.disabled = false;
-    return;
-  }
+  btnA.classList.add("is-dim");
+  btnB.classList.add("is-dim");
+  btnA.classList.remove("is-lit");
+  btnB.classList.remove("is-lit");
+}
 
-  if (state === STATE.PUSHED_A) {
-    btnA.disabled = true;
-    btnB.disabled = true;
-    btnA.classList.add("win");
-    btnB.classList.add("dim");
-    return;
-  }
+function setPushed(winner){
+  off.hidden = true;
+  arena.style.display = "";
+  btnFS.style.display = "";
 
-  if (state === STATE.PUSHED_B) {
-    btnA.disabled = true;
-    btnB.disabled = true;
-    btnB.classList.add("win");
-    btnA.classList.add("dim");
-    return;
-  }
-
-  // OFF
+  // blokada
   btnA.disabled = true;
   btnB.disabled = true;
+
+  // winner świeci
+  if (winner === "A") {
+    btnA.classList.remove("is-dim");
+    btnA.classList.add("is-lit");
+    btnB.classList.add("is-dim");
+    btnB.classList.remove("is-lit");
+  } else {
+    btnB.classList.remove("is-dim");
+    btnB.classList.add("is-lit");
+    btnA.classList.add("is-dim");
+    btnA.classList.remove("is-lit");
+  }
 }
 
-// ---------- networking ----------
-let ch = null;
+function applyCmd(lineRaw){
+  const line = String(lineRaw ?? "").trim();
+  if (!line) return;
 
-function ensureChannel() {
-  if (ch) return ch;
-  ch = sb().channel(`familiada-buzzer:${gameId}`)
-    .on("broadcast", { event: "BUZZER_CMD" }, (msg) => {
-      const line = String(msg?.payload?.line ?? "").trim();
-      handleCmd(line);
+  const up = line.toUpperCase();
+  if (up === "OFF") { setOff(); return; }
+  if (up === "ON") { setOn(); return; }
+  if (up === "RESET") { setOn(); return; }
+  if (up === "PUSHED A") { setPushed("A"); return; }
+  if (up === "PUSHED B") { setPushed("B"); return; }
+}
+
+async function press(team){
+  // działa tylko w ON (czyli OFF ukrywa arenę, PUSHED ma disabled)
+  if (btnA.disabled || btnB.disabled) return;
+
+  // UX: natychmiast blokujemy klik
+  btnA.disabled = true;
+  btnB.disabled = true;
+
+  try{
+    await sb().rpc("buzzer_press", { p_game_id: gameId, p_key: key, p_team: team });
+  }catch{
+    // jak błąd, wróć do ON
+    setOn();
+  }
+}
+
+function ensureChannel(){
+  return sb().channel(`familiada-buzzer:${gameId}`)
+    .on("broadcast", { event:"BUZZER_CMD" }, (msg)=>{
+      applyCmd(msg?.payload?.line);
     })
     .subscribe();
-  return ch;
 }
 
-async function ping() {
-  try {
-    // jak masz swoje RPC public_ping – użyj go, ale nie musisz
-    await sb().rpc("public_ping", { p_game_id: gameId, p_kind: "buzzer", p_key: key });
-  } catch {}
-}
-
-async function sendClick(team) {
-  // minimalnie: idź przez broadcast do control (jak chcesz),
-  // ale skoro control i tak subskrybuje live_state,
-  // najprościej: RPC buzzer_press (jeśli masz), albo broadcast.
-  // Tu robimy broadcast "CLICK A/B" do CONTROL kanału.
-  try{
-    const ctl = sb().channel(`familiada-control:${gameId}`).subscribe();
-    await ctl.send({
-      type:"broadcast",
-      event:"BUZZER_EVT",
-      payload:{ line:`CLICK ${team}` }
-    });
-    // opcjonalnie odsub:
-    sb().removeChannel(ctl);
-  }catch{}
-}
-
-// ---------- commands ----------
-function norm(line){
-  return line.trim().toUpperCase();
-}
-
-function handleCmd(lineRaw) {
-  const line = norm(lineRaw);
-
-  if (line === "OFF") { show(STATE.OFF); return; }
-  if (line === "ON") { show(STATE.ON); return; }
-  if (line === "RESET") { show(STATE.ON); return; }
-
-  // opcjonalnie: wymuszenie stanu
-  if (line === "PUSHED A" || line === "PUSHED_A") { show(STATE.PUSHED_A); return; }
-  if (line === "PUSHED B" || line === "PUSHED_B") { show(STATE.PUSHED_B); return; }
-}
-
-// ---------- input ----------
-async function press(team) {
-  if (cur !== STATE.ON) return;
-
-  // ustaw lokalnie natychmiast
-  show(team === "A" ? STATE.PUSHED_A : STATE.PUSHED_B);
-
-  // wyślij event (do dopięcia w control)
-  await sendClick(team);
-}
-
-btnA.addEventListener("click", () => press("A"));
-btnB.addEventListener("click", () => press("B"));
+// blok swipe/scroll
+document.addEventListener("touchmove", (e)=> e.preventDefault(), { passive:false });
 
 // fullscreen
 btnFS.addEventListener("click", async () => {
-  try {
+  try{
     if (!document.fullscreenElement) await document.documentElement.requestFullscreen();
     else await document.exitFullscreen();
-  } catch {}
+  }catch{}
   setFullscreenIcon();
 });
-
 document.addEventListener("fullscreenchange", setFullscreenIcon);
 
-// blokuj iOS “bounce”
-document.addEventListener("touchmove", (e) => e.preventDefault(), { passive:false });
+btnA.addEventListener("click", ()=> press("A"));
+btnB.addEventListener("click", ()=> press("B"));
 
-document.addEventListener("DOMContentLoaded", async () => {
+async function ping(){
+  try { await sb().rpc("public_ping", { p_game_id: gameId, p_kind:"buzzer", p_key:key }); } catch {}
+}
+
+document.addEventListener("DOMContentLoaded", ()=>{
   setFullscreenIcon();
 
   if (!gameId || !key) {
-    show(STATE.OFF);
+    setOff();
     return;
   }
 
-  // domyślnie OFF (jak chciałeś)
-  show(STATE.OFF);
+  // domyślnie OFF
+  setOff();
 
   ensureChannel();
 
   ping();
   setInterval(ping, 5000);
+
+  // debug lokalny:
+  window.__buzzer = { setOff, setOn, setPushed, applyCmd };
 });
