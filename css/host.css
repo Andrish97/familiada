@@ -1,19 +1,18 @@
-html, body { height: 100%; }
+html, body { height:100%; }
 
 .host-body{
   margin:0;
   background:#0b1220;
-  overflow:hidden;          /* blok scroll */
-  touch-action:none;        /* blok swipe scroll (gesty bierzemy sami) */
+  overflow:hidden;
+  touch-action:none;
   -webkit-user-select:none;
   user-select:none;
 }
 
-/* Fullscreen button */
 .fsBtn{
   position:fixed;
   top:10px; right:10px;
-  z-index:80;
+  z-index:60;
   width:44px; height:44px;
   border-radius:14px;
   border:1px solid rgba(255,255,255,.18);
@@ -22,86 +21,60 @@ html, body { height: 100%; }
   font-weight:900;
   cursor:pointer;
 }
-.fsBtn:active{ transform: translateY(1px); }
-.fsBtn .ico{
-  font-size:16px;
-  letter-spacing:-2px; /* nałożone kwadraciki bliżej */
-}
+.fsBtn .ico{ font-size:16px; letter-spacing:-2px; }
 
-/* Sheet fills viewport */
-.sheet{
+.blank{
   position:fixed;
   inset:0;
-  padding:16px 14px;
+  background:#000;
+  z-index:50;
 }
 
-/* Lined paper */
 .paper{
-  position:absolute;
-  inset:12px;
-  border-radius:18px;
-  border:1px solid rgba(0,0,0,.12);
-  box-shadow:0 30px 90px rgba(0,0,0,.55);
+  position:fixed;
+  inset:0;
   background:
     repeating-linear-gradient(
       to bottom,
-      #fbfbfa 0px,
-      #fbfbfa 26px,
-      #e6edf9 27px
+      #fffdf5 0px,
+      #fffdf5 30px,
+      #e7e2d3 31px
     );
-  overflow:hidden;
+  z-index:10;
 }
 
-/* Left margin (red line) */
-.paper::before{
-  content:"";
+.redMargin{
   position:absolute;
   top:0; bottom:0;
-  left:84px;                /* pozycja czerwonego marginesu */
+  left:64px; /* margines */
   width:2px;
-  background: rgba(255, 80, 80, .45);
+  background: rgba(255,80,80,.55);
 }
 
-/* handwriting-ish stack (bez zewnętrznych fontów) */
-.text, .hintLine{
-  font-family: "Segoe Print","Bradley Hand","Comic Sans MS","Chalkboard SE",cursive;
-  color:#0b1220;
-}
-
-/* Main text:
-   - start from 3rd line: padding-top = 2 * 27px + trochę
-   - start after margin line
-   - end before right edge */
 .text{
   position:absolute;
-  top:0; left:0; right:0; bottom:0;
-  padding-top: 62px;        /* ~3 linijka */
-  padding-left: 104px;      /* za czerwoną linią */
-  padding-right: 40px;      /* prawy margines */
-  padding-bottom: 54px;     /* miejsce na hintLine */
-  font-size: 22px;
-  font-weight: 700;
-  line-height: 27px;        /* dopasowane do linijek */
-  white-space: pre-wrap;    /* \n działa */
-  overflow:hidden;
+  left:78px;              /* zaczynamy po marginesie */
+  right:48px;             /* kończymy przed prawą “krawędzią” */
+  top:60px;               /* start od ~3 linijki */
+  bottom:56px;            /* zostaw miejsce na hint */
+  margin:0;
+  white-space:pre-wrap;
+  word-break:break-word;
+
+  /* “bardziej pisana” – bez webfontów: systemowe kursywy + fallback */
+  font-family: "Bradley Hand", "Segoe Script", "Comic Sans MS", cursive;
+  font-size:22px;
+  line-height:31px; /* dopasowane do linii tła */
+  color:#111;
 }
 
-/* Hint as last line, same font */
-.hintLine{
+.hint{
   position:absolute;
-  left:104px;
-  right:40px;
-  bottom:14px;
-  font-size:18px;
-  font-weight:700;
-  line-height:27px;
-  opacity:.75;
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
-}
-
-/* Blank page variant: no text, only hint */
-.paperBlank .hintLine{
-  opacity:.85;
+  left:78px;
+  right:48px;
+  bottom:10px;
+  font-family: "Bradley Hand", "Segoe Script", "Comic Sans MS", cursive;
+  font-size:20px;
+  line-height:31px;
+  color:rgba(0,0,0,.55);
 }
