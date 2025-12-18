@@ -19,37 +19,12 @@
   cursor:pointer;
 }
 
-.sheet{
-  width:min(900px,94vw);
-  margin:0 auto;
-  padding:22px 18px 30px;
-  margin-top:18px;
-  border-radius:18px;
-  background:
-    repeating-linear-gradient(
-      to bottom,
-      #fafaf9 0px,
-      #fafaf9 26px,
-      #e7eefc 27px
-    );
-  box-shadow:0 30px 90px rgba(0,0,0,.55);
-  border:1px solid rgba(0,0,0,.10);
-}
-
 .hTitle{
   font-weight:1000;
   letter-spacing:.12em;
   text-transform:uppercase;
   color:#0f172a;
   font-size:12px;
-}
-
-.q{
-  margin-top:10px;
-  font-size:22px;
-  font-weight:900;
-  color:#0b1220;
-  line-height:1.25;
 }
 
 .alist{
@@ -101,4 +76,27 @@
   opacity:.8;
   color:#fff;
   font-weight:800;
+}
+
+html, body{ height:100%; overflow:hidden; overscroll-behavior:none; touch-action:none; }
+
+.sheet{
+  /* paski co 28px */
+  background:
+    repeating-linear-gradient(
+      to bottom,
+      #fffdf6 0px,
+      #fffdf6 27px,
+      #f7e7a6 28px
+    );
+}
+
+.q{
+  margin-top:10px;
+  font-family: ui-rounded, "Comic Sans MS", "Segoe Print", system-ui, sans-serif; /* “odręczne-ish” */
+  font-size:22px;
+  font-weight:800;
+  color:#0b1220;
+  line-height:28px; /* MUSI pasować do pasków */
+  white-space:pre-wrap;
 }
