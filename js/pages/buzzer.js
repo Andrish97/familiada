@@ -1,70 +1,114 @@
-// js/pages/buzzer.js
 import { sb } from "../core/supabase.js";
 
 const qs = new URLSearchParams(location.search);
 const gameId = qs.get("id");
 const key = qs.get("key");
 
-const dot = document.getElementById("dot");
-const txt = document.getElementById("txt");
 const btnFS = document.getElementById("btnFS");
-
 const btnA = document.getElementById("btnA");
 const btnB = document.getElementById("btnB");
+const hud = document.getElementById("hud");
+const dot = document.getElementById("dot");
+const txt = document.getElementById("txt");
 
-function setStatus(ok, t) {
+let mode = "OFF";        // OFF | ON
+let pushed = null;       // null | "A" | "B"
+
+function setHud(ok, t){
   dot.style.background = ok ? "#22e06f" : "#ff6b6b";
-  txt.textContent = t;
+  txt.textContent = t || "";
 }
 
-function applyState(ls) {
-  const locked = !!ls?.buzzer_locked;
-  const winner = ls?.buzzer_winner || null;
-
-  // “gaśnie” zwycięzca (Ty masz klasę .winner – możesz w CSS zrobić np. opacity: .25)
-  btnA.classList.toggle("winner", winner === "A");
-  btnB.classList.toggle("winner", winner === "B");
-
-  btnA.disabled = locked;
-  btnB.disabled = locked;
-
-  setStatus(true, locked ? (winner ? `Wygrywa: ${winner}` : "Zablokowane") : "Gotowe");
+function setOff(){
+  mode = "OFF";
+  pushed = null;
+  document.body.classList.add("is-off");
+  btnA.disabled = true;
+  btnB.disabled = true;
+  btnA.classList.remove("lit","dim");
+  btnB.classList.remove("lit","dim");
+  setHud(true, "OFF");
 }
 
-async function ping() {
-  try {
-    await sb().rpc("public_ping", { p_game_id: gameId, p_kind: "buzzer", p_key: key });
-  } catch {
-    setStatus(false, "Brak połączenia");
+function setOn(){
+  mode = "ON";
+  pushed = null;
+  document.body.classList.remove("is-off");
+  btnA.disabled = false;
+  btnB.disabled = false;
+  btnA.classList.remove("lit","dim");
+  btnB.classList.remove("lit","dim");
+  setHud(true, "ON");
+}
+
+function setPushed(team){
+  mode = "ON";
+  pushed = team;
+
+  btnA.disabled = true;
+  btnB.disabled = true;
+
+  if (team === "A") {
+    btnA.classList.add("lit");
+    btnB.classList.add("dim");
+  } else {
+    btnB.classList.add("lit");
+    btnA.classList.add("dim");
   }
+
+  setHud(true, `PUSHED ${team}`);
 }
 
-async function press(team) {
-  // jeśli już zablokowane, nie rób nic
-  if (btnA.disabled || btnB.disabled) return;
+function handleCommand(line){
+  const s = String(line || "").trim();
 
-  try {
-    const res = await sb().rpc("buzzer_press", { p_game_id: gameId, p_key: key, p_team: team });
-    const accepted = !!res.data?.accepted;
+  if (!s) return;
 
-    if (accepted) setStatus(true, "Zgłoszono!");
-    else setStatus(true, "Za późno");
-  } catch {
-    setStatus(false, "Błąd");
-  }
+  const up = s.toUpperCase();
+
+  if (up === "OFF") return setOff();
+  if (up === "ON") return setOn();
+  if (up === "RESET") return setOn();
+
+  // opcjonalnie: wymuszenie winnera z control
+  if (up === "PUSHED A") return setPushed("A");
+  if (up === "PUSHED B") return setPushed("B");
+
+  console.warn("[buzzer] unknown cmd:", s);
 }
 
-function subLive() {
+function subscribeCommands(){
   const ch = sb()
-    .channel(`buzzer_live:${gameId}`)
-    .on(
-      "postgres_changes",
-      { event: "*", schema: "public", table: "live_state", filter: `game_id=eq.${gameId}` },
-      (payload) => applyState(payload.new)
-    )
+    .channel(`familiada-buzzer:${gameId}`)
+    .on("broadcast", { event:"CMD" }, (payload) => {
+      handleCommand(payload?.payload?.line);
+    })
     .subscribe();
 
   return () => sb().removeChannel(ch);
+}
+
+// ✅ ping „żyję” możesz zostawić jak masz
+async function ping(){
+  try {
+    await sb().rpc("public_ping", { p_game_id: gameId, p_kind: "buzzer", p_key: key });
+  } catch {
+    setHud(false, "BRAK POŁĄCZENIA");
+  }
+}
+
+async function press(team){
+  if (mode !== "ON" || pushed) return;
+
+  try{
+    const res = await sb().rpc("buzzer_press", { p_game_id: gameId, p_key: key, p_team: team });
+    const accepted = !!res.data?.accepted;
+
+    if (accepted) setPushed(team);
+    else setHud(true, "ZA PÓŹNO");
+  } catch {
+    setHud(false, "BŁĄD");
+  }
 }
 
 btnA.addEventListener("click", () => press("A"));
@@ -77,27 +121,13 @@ btnFS.addEventListener("click", async () => {
   } catch {}
 });
 
-window.addEventListener("beforeunload", (e) => {
-  e.preventDefault();
-  e.returnValue = "";
-});
-
-document.addEventListener("DOMContentLoaded", async () => {
-  if (!gameId || !key) {
-    setStatus(false, "Zły link");
-    btnA.disabled = true;
-    btnB.disabled = true;
-    return;
-  }
-
-  // stan startowy z live_state
-  try {
-    const { data } = await sb().from("live_state").select("buzzer_locked,buzzer_winner").eq("game_id", gameId).single();
-    applyState(data);
-  } catch {}
-
-  subLive();
-
+document.addEventListener("DOMContentLoaded", () => {
+  if (!gameId || !key) { setHud(false, "ZŁY LINK"); setOff(); return; }
+  subscribeCommands();
+  setOff();          // start domyślnie OFF
   ping();
   setInterval(ping, 5000);
 });
+
+// debug:
+window.handleCommand = handleCommand;
