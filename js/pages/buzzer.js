@@ -1,5 +1,27 @@
 import { sb } from "../core/supabase.js";
 
+
+// blokuj pinch-zoom (iOS Safari)
+document.addEventListener("gesturestart", (e) => e.preventDefault(), { passive: false });
+document.addEventListener("gesturechange", (e) => e.preventDefault(), { passive: false });
+document.addEventListener("gestureend", (e) => e.preventDefault(), { passive: false });
+
+// blokuj double-tap zoom
+let lastTouchEnd = 0;
+document.addEventListener("touchend", (e) => {
+  const now = Date.now();
+  if (now - lastTouchEnd <= 250) e.preventDefault();
+  lastTouchEnd = now;
+}, { passive: false });
+
+// opcjonalnie: blokuj też multi-touch w ogóle (żeby 2 palce nie robiły “akcji”)
+document.addEventListener("touchstart", (e) => {
+  if (e.touches && e.touches.length > 1) e.preventDefault();
+}, { passive: false });
+document.addEventListener("touchmove", (e) => {
+  if (e.touches && e.touches.length > 1) e.preventDefault();
+}, { passive: false });
+
 const qs = new URLSearchParams(location.search);
 const gameId = qs.get("id");
 const key = qs.get("key");
