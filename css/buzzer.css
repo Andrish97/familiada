@@ -29,23 +29,30 @@ html, body { height:100%; }
   letter-spacing:-2px; /* “nałożone” bliżej */
 }
 
-/* OFF = czarny ekran i nic więcej */
+
+/* 1) hidden musi naprawdę chować (czasem style z base.css potrafią to popsuć) */
+[hidden] { display: none !important; }
+
+/* 2) OFF overlay ma być NAJwyżej i brać cały ekran */
 .off{
-  position:fixed;
-  inset:0;
-  background:#000;
+  position: fixed;
+  inset: 0;
+  background: #000;
+  z-index: 9999;        /* wysoko, żeby nic nie “przebiło” */
+  pointer-events: auto; /* może też blokować dotyk klik */
 }
 
-/* arena */
+/* 3) Arena jest niżej */
 .arena{
-  position:fixed;
-  inset:0;
-  display:grid;
+  position: fixed;
+  inset: 0;
+  z-index: 10;          /* niżej niż .off */
+  display: grid;
   grid-template-columns: 1fr 1fr;
-  gap:min(6vw, 28px);
-  padding:min(5vw, 28px);
-  align-items:center;
-  justify-items:center;
+  gap: min(6vw, 28px);
+  padding: min(5vw, 28px);
+  align-items: center;
+  justify-items: center;
 }
 
 /* idealny okrąg: width == height */
