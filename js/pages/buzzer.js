@@ -36,7 +36,10 @@ function show(state) {
   // OFF = czarny ekran, nic więcej
   offScreen.hidden = !isOff;
   arena.hidden = isOff;
-
+  
+  arena.style.pointerEvents = isOff ? "none" : "";
+  arena.style.visibility    = isOff
+  
   // reset klas
   btnA.classList.remove("lit", "dim");
   btnB.classList.remove("lit", "dim");
