@@ -1,123 +1,21 @@
-// js/pages/host.js
 import { sb } from "../core/supabase.js";
 
 const qs = new URLSearchParams(location.search);
 const gameId = qs.get("id");
 const key = qs.get("key");
 
-const page = document.getElementById("page");
-const hiddenStage = document.getElementById("hiddenStage");
-
-const qEl = document.getElementById("q");
-const pull = document.getElementById("pull");
-const pullHint = document.getElementById("pullHint");
-
 const btnFS = document.getElementById("btnFS");
+const cover = document.getElementById("cover");
+const qEl = document.getElementById("q");
+const alist = document.getElementById("alist");
 
-let isHidden = false;
-
-// ===== Fullscreen (stan + ikonka) =====
-function syncFSBtn(){
-  const on = !!document.fullscreenElement;
-  btnFS.classList.toggle("isOn", on);
-  btnFS.textContent = on ? "⤫" : "⛶";
-  btnFS.title = on ? "Wyjdź z pełnego ekranu" : "Pełny ekran";
+function showCover(on) {
+  cover.classList.toggle("on", !!on);
+  cover.setAttribute("aria-hidden", on ? "false" : "true");
 }
 
-btnFS?.addEventListener("click", async () => {
-  try{
-    if (!document.fullscreenElement) await document.documentElement.requestFullscreen();
-    else await document.exitFullscreen();
-  }catch{}
-});
-document.addEventListener("fullscreenchange", syncFSBtn);
-
-// ===== Ukrywanie/pokazywanie =====
-function setHidden(on){
-  isHidden = !!on;
-
-  page.classList.toggle("hidden", isHidden);
-  hiddenStage.classList.toggle("on", isHidden);
-
-  // hint tekstowy (opcjonalnie)
-  if (pullHint) pullHint.textContent = isHidden
-    ? "Pociągnij z dołu, aby pokazać"
-    : "Pociągnij w górę / dół, aby ukryć / pokazać";
-}
-
-// drag tylko “na dole” (i na hiddenStage też)
-function attachPullGesture(el){
-  if (!el) return;
-
-  let dragging = false;
-  let startY = 0;
-  let lastY = 0;
-
-  const TH = 80; // próg przełączenia
-
-  const onDown = (e) => {
-    dragging = true;
-    startY = (e.touches?.[0]?.clientY ?? e.clientY);
-    lastY = startY;
-    try { el.setPointerCapture?.(e.pointerId); } catch {}
-  };
-
-  const onMove = (e) => {
-    if (!dragging) return;
-    lastY = (e.touches?.[0]?.clientY ?? e.clientY);
-  };
-
-  const onUp = () => {
-    if (!dragging) return;
-    dragging = false;
-
-    const dy = lastY - startY;
-
-    // dy>0 = ruch w dół
-    // dy<0 = ruch w górę
-    if (!isHidden && dy < -TH) setHidden(true);   // schowaj “do góry”
-    if (isHidden && dy > TH) setHidden(false);    // pokaż “z dołu”
-  };
-
-  el.addEventListener("pointerdown", onDown);
-  el.addEventListener("pointermove", onMove);
-  el.addEventListener("pointerup", onUp);
-  el.addEventListener("pointercancel", onUp);
-
-  // touch fallback (niektóre webview)
-  el.addEventListener("touchstart", onDown, { passive: true });
-  el.addEventListener("touchmove", onMove, { passive: true });
-  el.addEventListener("touchend", onUp);
-}
-
-attachPullGesture(pull);
-attachPullGesture(hiddenStage);
-
-// ===== Komendy “ładne” (opcjonalnie) =====
-// TEXT "...."  -> ustawia treść kartki
-// HIDE / SHOW  -> ukrywa/pokazuje
-function parseQuoted(s){
-  const m = String(s).match(/"([\s\S]*)"/);
-  return m ? m[1] : "";
-}
-
-function handleHostCommand(line){
-  const l = String(line || "").trim();
-  const up = l.toUpperCase();
-
-  if (up === "HIDE") { setHidden(true); return; }
-  if (up === "SHOW") { setHidden(false); return; }
-  if (up.startsWith("TEXT ")) {
-    const t = parseQuoted(l);
-    qEl.textContent = t;
-    return;
-  }
-}
-
-// ===== Ping + dane =====
 async function ping() {
   try {
-    // Jeśli masz public_ping sprawdzające key, to zostawiamy:
     await sb().rpc("public_ping", { p_game_id: gameId, p_kind: "host", p_key: key });
   } catch {}
 }
@@ -130,20 +28,32 @@ async function loadSnapshot() {
       p_key: key,
     });
 
-    // Jeśli snapshot ma “question.text” -> wpisujemy na kartkę
-    const q = data?.question?.text ?? "";
-    qEl.textContent = String(q);
+    const q = data?.question;
+    const ans = data?.answers || [];
+
+    qEl.textContent = q?.text || "—";
+    alist.innerHTML = "";
+
+    ans.forEach((a) => {
+      const row = document.createElement("div");
+      row.className = "a";
+      row.innerHTML = `
+        <span class="aTxt">${a.text || "—"}</span>
+        <span class="aPts">${typeof a.fixed_points === "number" ? a.fixed_points : 0} pkt</span>
+      `;
+      alist.appendChild(row);
+    });
   } catch {
-    // nie wywalajmy błędami, po prostu nic
+    qEl.textContent = "Brak danych / błąd połączenia.";
+    alist.innerHTML = "";
   }
 }
 
-// ===== Subskrypcje =====
-function subLiveRefresh(){
-  // odśwież po zmianie live_state (tak jak wcześniej)
+function subLive() {
   const ch = sb()
     .channel(`host_live:${gameId}`)
-    .on("postgres_changes",
+    .on(
+      "postgres_changes",
       { event: "*", schema: "public", table: "live_state", filter: `game_id=eq.${gameId}` },
       () => loadSnapshot()
     )
@@ -152,41 +62,85 @@ function subLiveRefresh(){
   return () => sb().removeChannel(ch);
 }
 
-function subHostCommands(){
-  // kanał komend dla hosta (control -> host)
-  const ch = sb()
-    .channel(`familiada-host:${gameId}`)
-    .on("broadcast", { event: "HOST_CMD" }, (payload) => {
-      const line = payload?.payload?.line ?? payload?.payload ?? payload?.line;
-      if (line) handleHostCommand(line);
-    })
-    .subscribe();
+/* fullscreen: stan + ikonka */
+async function syncFSIcon() {
+  btnFS?.classList.toggle("on", !!document.fullscreenElement);
+}
+btnFS?.addEventListener("click", async () => {
+  try {
+    if (!document.fullscreenElement) await document.documentElement.requestFullscreen();
+    else await document.exitFullscreen();
+  } catch {}
+  syncFSIcon();
+});
+document.addEventListener("fullscreenchange", syncFSIcon);
 
-  return () => sb().removeChannel(ch);
+/* swipe/drag: działa wszędzie, ale nie przy samej górze i dole */
+function setupSwipeHide() {
+  const SAFE_TOP = 70;
+  const SAFE_BOT = 70;
+  const THRESH = 80;
+
+  let startY = null;
+  let startX = null;
+  let armed = false;
+
+  const isInSafeZone = (y) => {
+    const h = window.innerHeight || 0;
+    return y > SAFE_TOP && y < (h - SAFE_BOT);
+  };
+
+  const onDown = (x, y) => {
+    if (!isInSafeZone(y)) return;
+    startY = y; startX = x; armed = true;
+  };
+
+  const onMove = (x, y) => {
+    if (!armed || startY == null || startX == null) return;
+
+    const dy = y - startY;
+    const dx = x - startX;
+
+    if (Math.abs(dx) > Math.abs(dy) * 1.2) return;
+
+    if (dy > THRESH) { showCover(false); armed = false; }
+    else if (dy < -THRESH) { showCover(true); armed = false; }
+  };
+
+  const onUp = () => { startY = null; startX = null; armed = false; };
+
+  window.addEventListener("touchstart", (e) => {
+    const t = e.touches?.[0]; if (!t) return;
+    onDown(t.clientX, t.clientY);
+  }, { passive: true });
+
+  window.addEventListener("touchmove", (e) => {
+    const t = e.touches?.[0]; if (!t) return;
+    onMove(t.clientX, t.clientY);
+  }, { passive: true });
+
+  window.addEventListener("touchend", onUp, { passive: true });
+
+  window.addEventListener("mousedown", (e) => onDown(e.clientX, e.clientY));
+  window.addEventListener("mousemove", (e) => onMove(e.clientX, e.clientY));
+  window.addEventListener("mouseup", onUp);
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
-  syncFSBtn();
+  syncFSIcon();
+  setupSwipeHide();
 
   if (!gameId || !key) {
-    qEl.textContent = "";
+    qEl.textContent = "Zły link.";
     return;
   }
 
-  // start: pusta kartka (bez “Ładuję…”)
-  qEl.textContent = "";
+  // startowo: pokazane
+  showCover(false);
 
-  // bazowo: snapshot + sub live
-  await loadSnapshot();
-  subLiveRefresh();
-
-  // komendy (jeśli w control będziesz wysyłał)
-  subHostCommands();
-
-  // ping do “pillHost OK”
   ping();
-  setInterval(ping, 5000);
+  loadSnapshot();
+  subLive();
 
-  // start: pokazane
-  setHidden(false);
+  setInterval(ping, 5000);
 });
