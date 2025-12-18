@@ -590,12 +590,19 @@ async function main() {
     displayWin = openPopup(dispUrl, "fam_display");
     setMsg(msgDevices, "Otworzono display.");
   
-    const qrLine = `QR HOST "${hostLink.value}" BUZZER "${buzzerLink.value}"`;
+    const lineMode = `MODE QR`;
+    const lineQR   = `QR HOST "${hostLink.value}" BUZZER "${buzzerLink.value}"`;
   
+    const burst = async () => {
+      try { await sendToDisplay(game.id, lineMode); } catch {}
+      try { await sendToDisplay(game.id, lineQR); } catch {}
+    };
+
     // ⏱ retry — display może jeszcze nie być podpięty
-    setTimeout(() => sendToDisplay(game.id, qrLine).catch(()=>{}), 600);
-    setTimeout(() => sendToDisplay(game.id, qrLine).catch(()=>{}), 1400);
-    setTimeout(() => sendToDisplay(game.id, qrLine).catch(()=>{}), 2400);
+    setTimeout(burst, 400);
+    setTimeout(burst, 900);
+    setTimeout(burst, 1600);
+    setTimeout(burst, 2600);
   });
 
   btnStartGame.addEventListener("click", startGame);
