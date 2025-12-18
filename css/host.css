@@ -67,6 +67,7 @@ html, body { height: 100%; }
   inset:0;
   height: var(--vh);
   z-index:10;
+  pointer-events:auto;
 
   padding:
     var(--safe-top)
@@ -134,6 +135,7 @@ html, body { height: 100%; }
 
   /* pełna zasłona */
   display:block;
+  pointer-events:auto;
 }
 
 .blankHint{
