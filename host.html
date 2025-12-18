@@ -15,17 +15,24 @@
 </head>
 
 <body class="host-body">
-  <button class="hideBtn" id="btnHide" type="button">UKRYJ</button>
+  <!-- małe sterowanie -->
+  <button class="iconBtn" id="btnFS" type="button" title="Pełny ekran">⛶</button>
+  <button class="hideBtn" id="btnHide" type="button" title="Ukryj">UKRYJ</button>
 
-  <div class="sheet">
-    <div class="hTitle">Pytanie</div>
-    <div class="q" id="q">Ładuję…</div>
+  <!-- kartka -->
+  <main class="sheet" aria-label="Kartka prowadzącego">
+    <div class="hTitle">TEKST (tylko dla prowadzącego)</div>
 
-    <div class="hTitle" style="margin-top:14px;">Podgląd odpowiedzi (tylko dla prowadzącego)</div>
-    <div class="alist" id="alist"></div>
-  </div>
+    <!-- jedno pole tekstowe, z enterami -->
+    <pre class="note" id="q">Ładuję…</pre>
 
-  <div class="cover" id="cover" style="display:none;">
+    <div class="swipeHint" id="swipeHint">
+      Przeciągnij palcem <b>góra/dół</b>, żeby ukryć / pokazać
+    </div>
+  </main>
+
+  <!-- zasłona -->
+  <div class="cover" id="cover" style="display:none;" role="button" aria-label="Odsłoń">
     <div class="coverCard">
       <div class="coverTitle">UKRYTE</div>
       <div class="coverSub">Kliknij, aby odsłonić</div>
