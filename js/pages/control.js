@@ -5,6 +5,23 @@ import { guardDesktopOnly } from "../core/device-guard.js";
 import { playSfx } from "../core/sfx.js";
 import { validateGameReadyToPlay } from "../core/game-validate.js";
 
+let displayChannel = null;
+
+function ensureDisplayChannel(gameId){
+  if (displayChannel) return displayChannel;
+  displayChannel = sb().channel(`fam_display:${gameId}`).subscribe();
+  return displayChannel;
+}
+
+async function sendToDisplay(gameId, line){
+  const ch = ensureDisplayChannel(gameId);
+  await ch.send({
+    type: "broadcast",
+    event: "DISPLAY_CMD",
+    payload: { line: String(line) }
+  });
+}
+
 guardDesktopOnly({ message: "Sterowanie Familiady jest dostępne tylko na komputerze." });
 
 const qs = new URLSearchParams(location.search);
@@ -556,9 +573,22 @@ async function main() {
 
   btnOpenHost.addEventListener("click", () => openPopup(hostUrl, "fam_host"));
   btnOpenBuzzer.addEventListener("click", () => openPopup(buzUrl, "fam_buzzer"));
-  btnOpenDisplay.addEventListener("click", () => {
+  btnOpenDisplay.addEventListener("click", async () => {
     displayWin = openPopup(dispUrl, "fam_display");
     setMsg(msgDevices, "Otworzono display.");
+  
+    // 🔽 test: po 0.8s wyślij komendę
+    setTimeout(async () => {
+      try{
+        await sendToDisplay(game.id, "MODE QR");
+        await sendToDisplay(
+          game.id,
+          `QR HOST "${hostLink.value}" BUZZER "${buzzerLink.value}"`
+        );
+      }catch(e){
+        console.error("[control] sendToDisplay error:", e);
+      }
+    }, 800);
   });
 
   btnStartGame.addEventListener("click", startGame);
