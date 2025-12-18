@@ -493,9 +493,9 @@ function syncUi(ls) {
 
   setPill(pillHost, hostOk, hostOk ? "HOST: OK" : "HOST: BRAK");
   setPill(pillBuzzer, buzOk, buzOk ? "BUZZER: OK" : "BUZZER: BRAK");
-
-  const dispOk = !!displayWin && !displayWin.closed;
-  setPill(pillDisplay, dispOk, dispOk ? "DISPLAY: OTWARTY" : "DISPLAY: BRAK");
+  
+  const dispOk = pingOk(ls.seen_display_at) || (!!displayWin && !displayWin.closed);
+  setPill(pillDisplay, dispOk, dispOk ? "DISPLAY: OK" : "DISPLAY: BRAK");
 
   stRound.textContent = String(ls.round_no ?? "—");
   stMult.textContent = String(ls.multiplier ?? "—");
