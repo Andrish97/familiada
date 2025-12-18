@@ -3,25 +3,18 @@ html, body { height:100%; }
 .buzzer-body{
   margin:0;
   background:#000;
-  overflow:hidden;
-  touch-action:none;
+  overflow:hidden;           /* blok scroll */
+  overscroll-behavior:none;  /* mniej “bounce” */
+  touch-action:manipulation; /* tap działa (NIE dawaj none) */
   -webkit-user-select:none;
   user-select:none;
 }
 
-/* OFF = nic nie widać */
-.off{
-  position:fixed;
-  inset:0;
-  background:#000;
-  z-index:100;
-}
-
-/* fullscreen identyczny jak w host */
+/* fullscreen button jak w host (prosty, schludny) */
 .fsBtn{
   position:fixed;
   top:10px; right:10px;
-  z-index:60;
+  z-index:50;
   width:44px; height:44px;
   border-radius:14px;
   border:1px solid rgba(255,255,255,.18);
@@ -30,7 +23,18 @@ html, body { height:100%; }
   font-weight:900;
   cursor:pointer;
 }
-.fsBtn .ico{ font-size:16px; letter-spacing:-2px; }
+.fsBtn:active{ transform: translateY(1px); }
+.fsBtn .ico{
+  font-size:16px;
+  letter-spacing:-2px; /* “nałożone” bliżej */
+}
+
+/* OFF = czarny ekran i nic więcej */
+.off{
+  position:fixed;
+  inset:0;
+  background:#000;
+}
 
 /* arena */
 .arena{
@@ -38,65 +42,89 @@ html, body { height:100%; }
   inset:0;
   display:grid;
   grid-template-columns: 1fr 1fr;
-  gap: clamp(14px, 3vw, 22px);
-  padding: clamp(14px, 3vw, 22px);
+  gap:min(6vw, 28px);
+  padding:min(5vw, 28px);
   align-items:center;
   justify-items:center;
 }
 
-/* okrągłe zawsze + stały pierścień */
-.ringBtn{
-  width: min(44vh, 520px);
-  height: min(44vh, 520px);
-  aspect-ratio: 1 / 1;
-  border-radius: 9999px;
-  border: none;
+/* idealny okrąg: width == height */
+.btnRing{
+  width:min(42vw, 520px);
+  aspect-ratio:1/1;
+  height:auto;
+  border-radius:9999px;
+  border:none;
   cursor:pointer;
+  position:relative;
+  display:grid;
+  place-items:center;
 
-  /* pierścień 3D - ma NIE zmieniać wyglądu między stanami */
+  /* srebrny gruby ring 3D (zostaje taki sam w każdym stanie) */
+  background:
+    radial-gradient(circle at 30% 30%, rgba(255,255,255,.35), rgba(255,255,255,0) 45%),
+    radial-gradient(circle at 50% 65%, rgba(0,0,0,.55), rgba(0,0,0,0) 55%),
+    radial-gradient(circle at 50% 50%,
+      rgba(230,230,230,1) 0%,
+      rgba(210,210,210,1) 28%,
+      rgba(140,140,140,1) 42%,
+      rgba(220,220,220,1) 58%,
+      rgba(120,120,120,1) 76%,
+      rgba(245,245,245,1) 100%
+    );
+
   box-shadow:
-    0 26px 70px rgba(0,0,0,.70),
-    inset 0 0 0 20px rgba(220,230,245,.58),
-    inset 0 0 0 30px rgba(20,20,25,.24),
-    inset 0 22px 38px rgba(255,255,255,.18),
-    inset 0 -34px 52px rgba(0,0,0,.60);
+    inset 0 18px 30px rgba(255,255,255,.18),
+    inset 0 -26px 44px rgba(0,0,0,.65),
+    0 35px 90px rgba(0,0,0,.75);
 
-  transition: transform .06s ease, filter .08s ease, opacity .08s ease;
+  transition: transform .06s ease, filter .12s ease, opacity .12s ease;
 }
 
-.ringBtn:active{ transform: translateY(2px); }
-.ringBtn:disabled{ cursor:not-allowed; }
+.btnRing:active{ transform: translateY(2px); }
+.btnRing:disabled{ cursor:not-allowed; }
 
-/* Bazowe kolory (to jest “świeci”) */
-.red{
+/* kolorowe wnętrze 3D */
+.btnRing::after{
+  content:"";
+  position:absolute;
+  inset:10%;
+  border-radius:9999px;
+
+  box-shadow:
+    inset 0 16px 26px rgba(255,255,255,.14),
+    inset 0 -22px 34px rgba(0,0,0,.55);
+
+  transition: filter .12s ease, opacity .12s ease;
+}
+
+.btnRing.red::after{
   background:
-    radial-gradient(circle at 32% 28%, rgba(255,255,255,.28), transparent 38%),
-    radial-gradient(circle at 55% 65%, rgba(0,0,0,.22), transparent 55%),
-    linear-gradient(180deg, #ff5a5a, #c10f0f);
-}
-.green{
-  background:
-    radial-gradient(circle at 32% 28%, rgba(255,255,255,.28), transparent 38%),
-    radial-gradient(circle at 55% 65%, rgba(0,0,0,.22), transparent 55%),
-    linear-gradient(180deg, #35ff88, #0aa24a);
+    radial-gradient(circle at 30% 25%, rgba(255,255,255,.22), transparent 45%),
+    radial-gradient(circle at 50% 65%, rgba(0,0,0,.35), transparent 55%),
+    linear-gradient(180deg, #ff3b3b, #8f0c0c);
 }
 
-/* “zgaszone” = tylko środek ciemniejszy, pierścień ten sam */
-.ringBtn.is-dim{
+.btnRing.green::after{
+  background:
+    radial-gradient(circle at 30% 25%, rgba(255,255,255,.22), transparent 45%),
+    radial-gradient(circle at 50% 65%, rgba(0,0,0,.35), transparent 55%),
+    linear-gradient(180deg, #22e06f, #0a6b2f);
+}
+
+/* ===== STANY wg Twoich zasad =====
+   ON: oba “zgaszone” (tylko wnętrze ciemniejsze) — ring bez zmian
+   PUSHED: zwycięzca świeci, przegrany zgaszony (tylko wnętrze)
+*/
+.btnRing.dim::after{
   filter: brightness(.55) saturate(.85);
-  opacity: 1;
 }
 
-/* “świeci” = wyłączamy dim + lekko podbijamy */
-.ringBtn.is-lit{
-  filter: brightness(1.12) saturate(1.08);
+.btnRing.lit::after{
+  filter: brightness(1.12) saturate(1.06);
 }
 
-/* responsywność */
-@media (max-width: 900px){
-  .arena{ grid-template-columns: 1fr; }
-  .ringBtn{
-    width: min(38vh, 520px);
-    height: min(38vh, 520px);
-  }
-}
+/* (opcjonalnie) delikatne “wyciszenie” całego przycisku przy przegranym,
+   ale jeśli chcesz TYLKO wnętrze, to zostaw to wyłączone:
+.btnRing.dim{ filter:none; opacity:1; }
+*/
