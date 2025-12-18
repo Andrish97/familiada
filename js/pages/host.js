@@ -4,185 +4,128 @@ const qs = new URLSearchParams(location.search);
 const gameId = qs.get("id");
 const key = qs.get("key");
 
-const btnFS = document.getElementById("btnFS");
-const cover = document.getElementById("cover");
-const qEl = document.getElementById("q");
-const alist = document.getElementById("alist");
+const paperText = document.getElementById("paperText");
+const hint = document.getElementById("hint");
+const blank = document.getElementById("blank");
 
-let isHidden = false;
+const btnFS = document.getElementById("btnFS");
+const fsIco = document.getElementById("fsIco");
+
+function setFullscreenIcon(){
+  fsIco.textContent = document.fullscreenElement ? "▢" : "▢▢";
+}
 
 function setHidden(on){
-  isHidden = !!on;
-  cover.classList.toggle("on", isHidden);
-  cover.setAttribute("aria-hidden", isHidden ? "false" : "true");
+  blank.hidden = !on;
+  hint.textContent = on
+    ? "Przeciągnij w górę aby odsłonić"
+    : "Przeciągnij w dół żeby zasłonić";
 }
 
-function setFsIcon(){
-  const on = !!document.fullscreenElement;
-  btnFS.textContent = on ? "⧉" : "▢";
-  btnFS.setAttribute("aria-label", on ? "Wyjdź z pełnego ekranu" : "Pełny ekran");
+function norm(s){ return String(s ?? "").trim(); }
+
+// swipe/drag w całym ekranie, ale nie przy samej górze/dole
+let startY = null;
+let startOK = false;
+
+function yOK(y){
+  const h = window.innerHeight || 1;
+  return (y > 70) && (y < h - 70);
 }
 
-btnFS.addEventListener("click", async () => {
-  try {
-    if (!document.fullscreenElement) await document.documentElement.requestFullscreen();
-    else await document.exitFullscreen();
-  } catch {}
-});
-document.addEventListener("fullscreenchange", setFsIcon);
-
-function blockScrollAndRefresh(){
-  // blokuj scroll kółkiem / touchmove
-  window.addEventListener("wheel", (e) => e.preventDefault(), { passive:false });
-  window.addEventListener("touchmove", (e) => e.preventDefault(), { passive:false });
+function onDown(y){
+  startY = y;
+  startOK = yOK(y);
 }
 
-function installHideGesture(){
-  let active = false;
-  let startY = 0;
-  let startX = 0;
+function onMove(y){
+  if (startY == null || !startOK) return;
+  const dy = y - startY;
 
-  const TOP_GUARD = 70;   // “nie na samej górze”
-  const BOT_GUARD = 90;   // “nie na samym dole”
-  const THRESH = 60;      // ile trzeba przeciągnąć
-
-  const onDown = (e) => {
-    const p = e.touches?.[0] || e;
-    const y = p.clientY;
-    const x = p.clientX;
-
-    const h = window.innerHeight || 0;
-    if (y < TOP_GUARD) return;
-    if (y > (h - BOT_GUARD)) return;
-
-    active = true;
-    startY = y;
-    startX = x;
-  };
-
-  const onMove = (e) => {
-    if (!active) return;
-    const p = e.touches?.[0] || e;
-    const dy = p.clientY - startY;
-    const dx = p.clientX - startX;
-
-    // ignoruj “poziome” machnięcia
-    if (Math.abs(dx) > Math.abs(dy)) return;
-
-    // w górę = ukryj
-    if (!isHidden && dy < -THRESH) {
-      setHidden(true);
-      active = false;
-    }
-
-    // w dół = pokaż
-    if (isHidden && dy > THRESH) {
-      setHidden(false);
-      active = false;
-    }
-  };
-
-  const onUp = () => { active = false; };
-
-  window.addEventListener("touchstart", onDown, { passive:true });
-  window.addEventListener("touchmove", onMove, { passive:true });
-  window.addEventListener("touchend", onUp, { passive:true });
-
-  window.addEventListener("mousedown", onDown);
-  window.addEventListener("mousemove", onMove);
-  window.addEventListener("mouseup", onUp);
-}
-
-async function ping(){
-  try {
-    await sb().rpc("public_ping", { p_game_id: gameId, p_kind: "host", p_key: key });
-  } catch {}
-}
-
-async function loadSnapshot(){
-  try {
-    const { data } = await sb().rpc("get_public_snapshot", {
-      p_game_id: gameId,
-      p_kind: "host",
-      p_key: key,
-    });
-
-    const q = data?.question;
-    const ans = data?.answers || [];
-
-    qEl.textContent = q?.text || "—";
-    alist.innerHTML = "";
-
-    ans.forEach((a) => {
-      const row = document.createElement("div");
-      row.className = "a";
-      row.innerHTML = `<span>${a.text || ""}</span><span>${typeof a.fixed_points === "number" ? a.fixed_points : 0} pkt</span>`;
-      alist.appendChild(row);
-    });
-  } catch {
-    qEl.textContent = "Brak danych / błąd połączenia.";
-    alist.innerHTML = "";
+  // próg
+  if (!blank.hidden && dy > 70) {
+    setHidden(true);
+    startY = null;
+    return;
+  }
+  if (blank.hidden && dy < -70) {
+    setHidden(false);
+    startY = null;
+    return;
   }
 }
 
-/** Komendy z control: familliada-host:${id} event HOST_CMD payload {line} */
-function installHostCommands(){
-  const ch = sb()
-    .channel(`familiada-host:${gameId}`)
-    .on("broadcast", { event: "HOST_CMD" }, async (payload) => {
-      const line = String(payload?.payload?.line || "").trim();
+function onUp(){
+  startY = null;
+  startOK = false;
+}
 
-      // SEND "..." / SEND ...
-      if (/^SEND\b/i.test(line)) {
-        const m = line.match(/^SEND\s+(.+)$/i);
-        let txt = (m?.[1] ?? "").trim();
-        // obsługa cudzysłowów
-        if ((txt.startsWith('"') && txt.endsWith('"')) || (txt.startsWith("'") && txt.endsWith("'"))) {
-          txt = txt.slice(1, -1);
-        }
-        qEl.textContent = txt || "";
-        return;
-      }
+// touch + mouse
+document.addEventListener("touchstart", (e)=> onDown(e.touches?.[0]?.clientY ?? 0), { passive:false });
+document.addEventListener("touchmove",  (e)=> { e.preventDefault(); onMove(e.touches?.[0]?.clientY ?? 0); }, { passive:false });
+document.addEventListener("touchend",   ()=> onUp(), { passive:true });
 
-      // MODE OFF / MODE ON (opcjonalnie)
-      if (/^MODE\s+OFF$/i.test(line)) { setHidden(true); return; }
-      if (/^MODE\s+ON$/i.test(line))  { setHidden(false); return; }
+document.addEventListener("mousedown", (e)=> onDown(e.clientY));
+document.addEventListener("mousemove", (e)=> onMove(e.clientY));
+document.addEventListener("mouseup",   ()=> onUp());
 
-      // RESET = odśwież snapshot
-      if (/^RESET$/i.test(line)) { await loadSnapshot(); return; }
+// fullscreen
+btnFS.addEventListener("click", async () => {
+  try{
+    if (!document.fullscreenElement) await document.documentElement.requestFullscreen();
+    else await document.exitFullscreen();
+  }catch{}
+  setFullscreenIcon();
+});
+document.addEventListener("fullscreenchange", setFullscreenIcon);
+
+// komendy z control: kanał familiada-host:{gameId}, event HOST_CMD, payload.line
+let ch = null;
+function ensureChannel(){
+  if (ch) return ch;
+  ch = sb().channel(`familiada-host:${gameId}`)
+    .on("broadcast", { event:"HOST_CMD" }, (msg)=>{
+      const line = norm(msg?.payload?.line);
+      handleCmd(line);
     })
     .subscribe();
-
-  return () => sb().removeChannel(ch);
+  return ch;
 }
 
-function subLive(){
-  const ch = sb()
-    .channel(`host_live:${gameId}`)
-    .on("postgres_changes",
-      { event: "*", schema: "public", table: "live_state", filter: `game_id=eq.${gameId}` },
-      () => loadSnapshot()
-    )
-    .subscribe();
+function handleCmd(lineRaw){
+  const line = lineRaw;
 
-  return () => sb().removeChannel(ch);
+  // OFF/ON dla hosta (zasłona)
+  if (line.toUpperCase() === "OFF") { setHidden(true); return; }
+  if (line.toUpperCase() === "ON")  { setHidden(false); return; }
+
+  // SEND "Tekst..."
+  // przyjmujemy też SEND bez cudzysłowu (na wszelki)
+  if (/^SEND\b/i.test(line)) {
+    const m = line.match(/^SEND\s+"([\s\S]*)"\s*$/i);
+    const text = m ? m[1] : line.replace(/^SEND\s+/i, "");
+    paperText.textContent = text || "";
+    return;
+  }
 }
 
-document.addEventListener("DOMContentLoaded", async () => {
-  setFsIcon();
-  blockScrollAndRefresh();
-  installHideGesture();
+// ping (jak masz public_ping)
+async function ping(){
+  try { await sb().rpc("public_ping", { p_game_id: gameId, p_kind:"host", p_key:key }); } catch {}
+}
+
+document.addEventListener("DOMContentLoaded", ()=>{
+  setFullscreenIcon();
 
   if (!gameId || !key) {
-    qEl.textContent = "Zły link.";
+    paperText.textContent = "Zły link.";
+    setHidden(true);
     return;
   }
 
-  installHostCommands();
+  setHidden(false);
+  ensureChannel();
 
-  // fallback: stare działanie dalej żyje
-  await ping();
-  await loadSnapshot();
-  subLive();
+  ping();
   setInterval(ping, 5000);
 });
