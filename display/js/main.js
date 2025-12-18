@@ -4,7 +4,7 @@ import { createQRController } from "./qr.js";
 import { createScene } from "./scene.js";
 import { createCommandHandler } from "./commands.js";
 
-import { sb } from "../js/core/supabase.js";
+import { sb } from "../../js/core/supabase.js";
 
 const $ = (id) => document.getElementById(id);
 
