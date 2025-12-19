@@ -7,7 +7,7 @@ import { sb } from "./supabase.js";
  * - poll_points  => Punktacja odpowiedzi (głosowanie na odpowiedź)
  * - prepared     => Preparowany (manualne punkty, suma=100)
  */
-export const KINDS = {
+export const TYPES = {
   POLL_TEXT: "poll_text",
   POLL_POINTS: "poll_points",
   PREPARED: "prepared",
@@ -34,7 +34,7 @@ function n(v) {
 export async function loadGameBasic(gameId) {
   const { data, error } = await sb()
     .from("games")
-    .select("id,name,kind,status")
+    .select("id,name,type,status")
     .eq("id", gameId)
     .single();
   if (error) throw error;
@@ -114,7 +114,7 @@ export async function validatePointsPollClosable(/*gameId*/) {
 export function canEnterEdit(game) {
   if (!game) return { ok: false, reason: "Brak gry." };
 
-  if (game.kind === KINDS.PREPARED) {
+  if (game.type === TYPES.PREPARED) {
     return { ok: true, reason: "", needsResetWarning: false };
   }
 
@@ -146,7 +146,7 @@ export function canEnterEdit(game) {
 export async function validatePollEntry(gameId) {
   const game = await loadGameBasic(gameId);
 
-  if (game.kind === KINDS.PREPARED) {
+  if (game.type === TYPES.PREPARED) {
     return { ok: false, reason: "Preparowany nie ma sondażu." };
   }
 
@@ -166,7 +166,7 @@ export async function validatePollEntry(gameId) {
 export async function validatePollReadyToOpen(gameId) {
   const game = await loadGameBasic(gameId);
 
-  if (game.kind === KINDS.PREPARED) {
+  if (game.type === TYPES.PREPARED) {
     return { ok: false, reason: "Preparowany nie ma sondażu." };
   }
   if (game.status === STATUS.POLL_OPEN) {
@@ -179,7 +179,7 @@ export async function validatePollReadyToOpen(gameId) {
     return { ok: false, reason: `Musi być co najmniej ${RULES.QN_MIN} pytań (masz: ${qs.length}).` };
   }
 
-  if (game.kind === KINDS.POLL_POINTS) {
+  if (game.type === TYPES.POLL_POINTS) {
     for (const q of qs) {
       const ans = ansByQ.get(q.id) || [];
       if (!clampAnswersCountOk(ans.length)) {
@@ -209,7 +209,7 @@ export async function validateGameReadyToPlay(gameId) {
   const game = await loadGameBasic(gameId);
 
   // poll_*: tylko po zamknięciu
-  if (game.kind === KINDS.POLL_TEXT || game.kind === KINDS.POLL_POINTS) {
+  if (game.type === TYPES.POLL_TEXT || game.type === TYPES.POLL_POINTS) {
     if (game.status !== STATUS.READY) {
       return { ok: false, reason: "Gra dostępna dopiero po zamknięciu sondażu." };
     }
