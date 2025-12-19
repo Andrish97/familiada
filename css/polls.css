@@ -114,17 +114,21 @@ pre{
 
 .foot{ margin-top:12px; min-height:20px; }
 .msg{ color: var(--gold); font-weight:900; opacity:.95; }
-/* results */
+
+/* ===== Results ===== */
 .resultQ{
   border:1px solid var(--line);
   background: var(--card2);
   border-radius:18px;
   padding:12px;
 }
+
 .resultQ .qTitle{
   font-weight:1000;
   margin-bottom:8px;
+  line-height:1.25;
 }
+
 .resultQ .aRow{
   display:flex;
   justify-content:space-between;
@@ -135,5 +139,17 @@ pre{
   background: rgba(255,255,255,.05);
   margin-top:8px;
 }
-.resultQ .aTxt{ font-weight:900; }
-.resultQ .aVal{ opacity:.9; font-weight:1000; color: var(--gold); }
+
+.resultQ .aTxt{
+  font-weight:900;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+.resultQ .aVal{
+  opacity:.95;
+  font-weight:1000;
+  color: var(--gold);
+  flex: 0 0 auto;
+}
