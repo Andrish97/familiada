@@ -274,7 +274,7 @@ function cardGame(g) {
   el.className = "card";
 
   el.innerHTML = `
-    <div class="x" title="Usuń">⧗</div>
+    <div class="x" title="Usuń">✕</div>
     <div class="name"></div>
     <div class="meta"></div>
   `;
