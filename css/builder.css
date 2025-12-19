@@ -212,3 +212,36 @@ body.builder-body{
   color: var(--gold);
   padding:6px 0;
 }
+
+/* ===== Add card ===== */
+.addCard{
+  border-radius:20px;
+  border:1px dashed rgba(255,234,166,.35);
+  background: rgba(255,234,166,.06);
+  padding:14px;
+  min-height:120px;
+  cursor:pointer;
+  user-select:none;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  gap:8px;
+  box-shadow:0 24px 60px rgba(0,0,0,.35);
+}
+.addCard:hover{ filter:brightness(1.08); }
+.addCard .plus{
+  font-weight:1000;
+  font-size:28px;
+  color: var(--gold);
+  line-height:1;
+}
+.addCard .txt{
+  font-weight:1000;
+  letter-spacing:.06em;
+}
+.addCard .sub{
+  opacity:.78;
+  font-size:12px;
+  line-height:1.35;
+}
+
