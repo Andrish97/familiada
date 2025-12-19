@@ -2,9 +2,11 @@
 import { sb } from "../core/supabase.js";
 import { requireAuth, signOut } from "../core/auth.js";
 import { parseQaText, clip as clipN } from "../core/text-import.js";
-import { canEnterEdit } from "../core/game-validate.js";
+import { canEnterEdit, RULES as GV_RULES } from "../core/game-validate.js";
 
-const RULES = { QN: 10, AN: 6 };
+const QN_MIN = GV_RULES.QN_MIN;      // 10
+const AN_MIN = GV_RULES.AN_MIN;      // 3
+const AN_MAX = GV_RULES.AN_MAX;      // 6
 
 const $ = (id) => document.getElementById(id);
 
@@ -148,8 +150,14 @@ async function updateAnswer(aId, patch) {
   if (error) throw error;
 }
 
-function nextOrd(items, limit) {
-  const used = new Set(items.map((x) => x.ord));
+function nextQuestionOrd(items) {
+  let max = 0;
+  for (const x of items) max = Math.max(max, Number(x.ord) || 0);
+  return max + 1;
+}
+
+function nextAnswerOrd(items, limit) {
+  const used = new Set(items.map(x => x.ord));
   for (let i = 1; i <= limit; i++) if (!used.has(i)) return i;
   return null;
 }
@@ -316,38 +324,43 @@ export async function bootEditor(cfg) {
     if (!qList) return;
     qList.innerHTML = "";
 
-    // kafelek dodawania (zawsze na górze)
-    const canAddQ = questions.length < RULES.QN;
-    const addQBtn = document.createElement("button");
-    addQBtn.type = "button";
-    addQBtn.className = "qcard";
-    addQBtn.disabled = !canAddQ;
-    addQBtn.innerHTML = `
-      <div class="qprev">${canAddQ ? "+ Dodaj pytanie" : "Limit pytań osiągnięty"}</div>
-      <div class="qmeta">${questions.length}/${RULES.QN}</div>
-    `;
-    addQBtn.addEventListener("click", async () => {
-      if (!canAddQ) return;
-      try {
-        const ord = nextOrd(questions, RULES.QN);
-        if (!ord) return;
-
-        const q = await createQuestion(gameId, ord);
-        questions = await listQuestions(gameId);
-        activeQId = q.id;
-
-        await loadAnswersForActive();
-        await refreshCounts();
-
-        renderQuestions();
-        renderEditor();
-        setMsg("Dodano pytanie.");
-      } catch (e) {
-        console.error(e);
-        setMsg("Błąd dodawania pytania (konsola).");
-      }
-    });
-    qList.appendChild(addQBtn);
+  // ✅ kafelek dodawania (zawsze, bez limitu pytań)
+  const qCount = questions.length;
+  const meetsMin = qCount >= RULES.QN_MIN;
+  
+  const addQBtn = document.createElement("button");
+  addQBtn.type = "button";
+  addQBtn.className = "qcard";
+  
+  addQBtn.innerHTML = `
+    <div class="qprev">+ Dodaj pytanie</div>
+    <div class="qmeta">
+      ${meetsMin ? "Minimum spełnione" : `Wymagane minimum: ${RULES.QN_MIN} (masz ${qCount})`}
+    </div>
+  `;
+  
+  addQBtn.addEventListener("click", async () => {
+    try {
+      const ord = nextQuestionOrd(questions);
+      const q = await createQuestion(gameId, ord, cfg.mode);
+  
+      questions = await listQuestions(gameId);
+      activeQId = q.id;
+      activeOrd = q.ord;
+  
+      await loadAnswersForActive();
+      await refreshCounts();
+  
+      renderQuestions();
+      renderEditor();
+      setMsg("Dodano pytanie.");
+    } catch (e) {
+      console.error(e);
+      setMsg("Błąd dodawania pytania (konsola).");
+    }
+  });
+  
+  qList.appendChild(addQBtn);
 
     // lista pytań
     for (const q of questions) {
@@ -365,7 +378,7 @@ export async function bootEditor(cfg) {
       const meta = el.querySelector(".qmeta");
       if (cfg.allowAnswers) {
         const cnt = q.__answerCount ?? 0;
-        meta.textContent = `${cnt}/${RULES.AN} odpowiedzi`;
+        meta.textContent = `${cnt}/${RULES.AN_MAX} odpowiedzi`;
       } else {
         meta.textContent = `Tylko pytania`;
       }
@@ -453,7 +466,7 @@ export async function bootEditor(cfg) {
     }
 
     // add-tile (zawsze na dole)
-    const canAddA = answers.length < RULES.AN;
+    const canAddA = answers.length < RULES.AN_MAX;
     const addABtn = document.createElement("button");
     addABtn.type = "button";
     addABtn.className = "arow addTile";
@@ -476,7 +489,7 @@ export async function bootEditor(cfg) {
     addABtn.addEventListener("click", async () => {
       if (!canAddA || !activeQId) return;
       try {
-        const ord = nextOrd(answers, RULES.AN);
+        const ord = nextOrd(answers, RULES.AN_MAX);
         if (!ord) return;
 
         await createAnswer(activeQId, ord, `ODP ${ord}`, 0);
