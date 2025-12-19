@@ -6,7 +6,7 @@ import { confirmModal } from "../core/modal.js";
 import { exportGame, importGame, downloadJson } from "./builder-import-export.js";
 
 import {
-  KINDS,
+  TYPES,
   STATUS,
   loadGameBasic,
   canEnterEdit,
@@ -47,7 +47,7 @@ let gamesAll = [];
 let selectedId = null;
 
 // DOMYŚLNIE: PREPAROWANY
-let activeTab = KINDS.PREPARED;
+let activeTab = TYPES.PREPARED;
 
 /* ================= UI helpers ================= */
 function show(el, on) {
@@ -82,27 +82,27 @@ function safeDownloadName(name) {
 }
 
 /**
- * UI-kind (3 zakładki) vs DB-kind (często tylko fixed/poll).
- * - Jeśli masz nową bazę z kind = poll_text/poll_points/prepared -> działa wprost.
- * - Jeśli masz starą bazę z kind = fixed/poll ->:
+ * UI-type (3 zakładki) vs DB-type (często tylko fixed/poll).
+ * - Jeśli masz nową bazę z type = poll_text/poll_points/prepared -> działa wprost.
+ * - Jeśli masz starą bazę z type = fixed/poll ->:
  *    fixed => prepared
  *    poll  => poll_text albo poll_points (wnioskujemy po nazwie)
  */
 function uiKindFromRow(g) {
-  const k = String(g?.kind || "");
-  if (k === KINDS.POLL_TEXT || k === KINDS.POLL_POINTS || k === KINDS.PREPARED) return k;
-  if (k === "fixed") return KINDS.PREPARED;
+  const k = String(g?.type || "");
+  if (k === TYPES.POLL_TEXT || k === TYPES.POLL_POINTS || k === TYPES.PREPARED) return k;
+  if (k === "fixed") return TYPES.PREPARED;
   if (k === "poll") {
     const nm = String(g?.name || "").toLowerCase();
-    return nm.includes("punkt") ? KINDS.POLL_POINTS : KINDS.POLL_TEXT;
+    return nm.includes("punkt") ? TYPES.POLL_POINTS : TYPES.POLL_TEXT;
   }
-  return KINDS.PREPARED;
+  return TYPES.PREPARED;
 }
 
-function kindLabel(uiKind) {
-  if (uiKind === KINDS.POLL_TEXT) return "TYPOWY SONDAŻ";
-  if (uiKind === KINDS.POLL_POINTS) return "PUNKTACJA";
-  if (uiKind === KINDS.PREPARED) return "PREPAROWANY";
+function typeLabel(uiKind) {
+  if (uiKind === TYPES.POLL_TEXT) return "TYPOWY SONDAŻ";
+  if (uiKind === TYPES.POLL_POINTS) return "PUNKTACJA";
+  if (uiKind === TYPES.PREPARED) return "PREPAROWANY";
   return String(uiKind || "—").toUpperCase();
 }
 
@@ -122,12 +122,12 @@ function setButtonsState({ hasSel, canEdit, canPlay, canPoll, canExport }) {
 }
 
 /* ================= Tabs ================= */
-function setActiveTab(kind) {
-  activeTab = kind;
+function setActiveTab(type) {
+  activeTab = type;
 
-  tabPollText?.classList.toggle("active", kind === KINDS.POLL_TEXT);
-  tabPollPoints?.classList.toggle("active", kind === KINDS.POLL_POINTS);
-  tabPrepared?.classList.toggle("active", kind === KINDS.PREPARED);
+  tabPollText?.classList.toggle("active", type === TYPES.POLL_TEXT);
+  tabPollPoints?.classList.toggle("active", type === TYPES.POLL_POINTS);
+  tabPrepared?.classList.toggle("active", type === TYPES.PREPARED);
 
   // jeśli zaznaczona gra nie pasuje do zakładki – odznacz
   const sel = gamesAll.find(g => g.id === selectedId);
@@ -141,7 +141,7 @@ function setActiveTab(kind) {
 async function listGames() {
   const { data, error } = await sb()
     .from("games")
-    .select("id,name,created_at,kind,status")
+    .select("id,name,created_at,type,status")
     .order("created_at", { ascending: false });
 
   if (error) throw error;
@@ -167,30 +167,30 @@ async function ensureLive(gameId) {
 }
 
 function defaultNameForUiKind(uiKind) {
-  if (uiKind === KINDS.POLL_TEXT) return "Nowa Familiada (Sondaż)";
-  if (uiKind === KINDS.POLL_POINTS) return "Nowa Familiada (Punktacja)";
+  if (uiKind === TYPES.POLL_TEXT) return "Nowa Familiada (Sondaż)";
+  if (uiKind === TYPES.POLL_POINTS) return "Nowa Familiada (Punktacja)";
   return "Nowa Familiada (Preparowana)";
 }
 
 /**
  * Tworzenie gry:
- * - najpierw próbujemy wstawić kind = uiKind (pod nową bazę)
+ * - najpierw próbujemy wstawić type = uiKind (pod nową bazę)
  * - jeśli DB ma check fixed/poll (23514), robimy fallback:
  *    prepared -> fixed, polls -> poll
  */
 async function createGame(uiKind) {
   const name = defaultNameForUiKind(uiKind);
 
-  // 1) próbuj nowy schemat (kind = poll_text/poll_points/prepared)
+  // 1) próbuj nowy schemat (type = poll_text/poll_points/prepared)
   let ins = await sb()
     .from("games")
     .insert({
       name,
       owner_id: currentUser.id,
-      kind: uiKind,
+      type: uiKind,
       status: STATUS.DRAFT,
     })
-    .select("id,name,kind,status")
+    .select("id,name,type,status")
     .single();
 
   if (ins.error) {
@@ -198,23 +198,23 @@ async function createGame(uiKind) {
     const msg = String(ins.error?.message || "");
     const isKindCheck =
       code === "23514" ||
-      msg.includes("games_kind_check") ||
+      msg.includes("games_type_check") ||
       msg.includes("violates check constraint");
 
     if (!isKindCheck) throw ins.error;
 
-    // 2) fallback pod starą bazę (kind = fixed/poll)
-    const dbKind = (uiKind === KINDS.PREPARED) ? "fixed" : "poll";
+    // 2) fallback pod starą bazę (type = fixed/poll)
+    const dbKind = (uiKind === TYPES.PREPARED) ? "fixed" : "poll";
 
     ins = await sb()
       .from("games")
       .insert({
         name,
         owner_id: currentUser.id,
-        kind: dbKind,
+        type: dbKind,
         status: STATUS.DRAFT,
       })
-      .select("id,name,kind,status")
+      .select("id,name,type,status")
       .single();
 
     if (ins.error) throw ins.error;
@@ -280,7 +280,7 @@ function cardGame(g) {
   `;
 
   el.querySelector(".name").textContent = g.name || "—";
-  el.querySelector(".meta").textContent = `${kindLabel(uiKind)} • ${statusLabel(g.status)}`;
+  el.querySelector(".meta").textContent = `${typeLabel(uiKind)} • ${statusLabel(g.status)}`;
 
   el.addEventListener("click", async () => {
     selectedId = g.id;
@@ -303,7 +303,7 @@ function cardAdd(uiKind) {
   el.innerHTML = `
     <div class="plus">＋</div>
     <div class="txt">Nowa gra</div>
-    <div class="sub">${kindLabel(uiKind)}</div>
+    <div class="sub">${typeLabel(uiKind)}</div>
   `;
   el.addEventListener("click", async () => {
     try {
@@ -393,12 +393,12 @@ async function readFileAsText(file) {
   });
 }
 
-function editorUrlForKind(kind, id, name) {
-  // wspieramy i nowe kind-y, i stare fixed/poll
-  const k = String(kind || "");
-  if (k === KINDS.POLL_TEXT) return `editor-poll-text.html?id=${encodeURIComponent(id)}`;
-  if (k === KINDS.POLL_POINTS) return `editor-poll-points.html?id=${encodeURIComponent(id)}`;
-  if (k === KINDS.PREPARED) return `editor-prepared.html?id=${encodeURIComponent(id)}`;
+function editorUrlForKind(type, id, name) {
+  // wspieramy i nowe type-y, i stare fixed/poll
+  const k = String(type || "");
+  if (k === TYPES.POLL_TEXT) return `editor-poll-text.html?id=${encodeURIComponent(id)}`;
+  if (k === TYPES.POLL_POINTS) return `editor-poll-points.html?id=${encodeURIComponent(id)}`;
+  if (k === TYPES.PREPARED) return `editor-prepared.html?id=${encodeURIComponent(id)}`;
 
   // stare:
   if (k === "fixed") return `editor-prepared.html?id=${encodeURIComponent(id)}`;
@@ -432,9 +432,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     location.href = "index.html";
   });
 
-  tabPollText?.addEventListener("click", () => setActiveTab(KINDS.POLL_TEXT));
-  tabPollPoints?.addEventListener("click", () => setActiveTab(KINDS.POLL_POINTS));
-  tabPrepared?.addEventListener("click", () => setActiveTab(KINDS.PREPARED));
+  tabPollText?.addEventListener("click", () => setActiveTab(TYPES.POLL_TEXT));
+  tabPollPoints?.addEventListener("click", () => setActiveTab(TYPES.POLL_POINTS));
+  tabPrepared?.addEventListener("click", () => setActiveTab(TYPES.PREPARED));
 
   // EDIT
   btnEdit?.addEventListener("click", async () => {
@@ -468,7 +468,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
     }
 
-    location.href = editorUrlForKind(g.kind, g.id, g.name);
+    location.href = editorUrlForKind(g.type, g.id, g.name);
   });
 
   // PLAY
@@ -564,8 +564,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       try {
         const ng = await loadGameBasic(newId);
-        if (ng?.kind) {
-          // ustaw zakładkę wg UI-kind
+        if (ng?.type) {
+          // ustaw zakładkę wg UI-type
           const ui = uiKindFromRow(ng);
           setActiveTab(ui);
         }
@@ -579,6 +579,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
   // init
-  setActiveTab(KINDS.PREPARED);
+  setActiveTab(TYPES.PREPARED);
   await refresh();
 });
