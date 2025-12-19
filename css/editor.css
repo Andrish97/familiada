@@ -1,58 +1,50 @@
-.editor-body{
-  margin:0; min-height:100vh;
-  font-family:system-ui,-apple-system,Segoe UI,sans-serif;
-  background:#050914; color:#fff;
+/* css/editor.css */
+
+body.editor-body{
+  min-height:100vh;
+  background: var(--bg);
+  color:#fff;
 }
 
-.wrap{ width:min(1200px,94vw); margin:0 auto; padding:18px; }
+.wrap{
+  width:min(1200px,94vw);
+  margin:0 auto;
+  padding:18px;
+}
 
-.row{ display:flex; justify-content:space-between; gap:14px; align-items:flex-end; flex-wrap:wrap; }
-.title{ font-weight:1000; font-size:18px; margin:10px 0 10px; letter-spacing:.06em; }
+.rowTop{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-end;
+  gap:14px;
+  flex-wrap:wrap;
+}
 
-.namebar{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+.title{
+  font-weight:1000;
+  font-size:18px;
+  margin:10px 0 10px;
+  letter-spacing:.06em;
+}
+
+.namebar{
+  display:flex;
+  gap:10px;
+  align-items:center;
+  flex-wrap:wrap;
+}
+
 .inp{
   min-width: 320px;
   padding:10px 12px;
   border-radius:14px;
-  border:1px solid rgba(255,255,255,.18);
-  background:rgba(255,255,255,.06);
+  border:1px solid var(--line2);
+  background: rgba(255,255,255,.06);
   color:#fff;
   font-weight:900;
   outline:none;
 }
 .inp:focus{ border-color: rgba(255,234,166,.45); }
-
-/* ZOSTAŁO */
-.remainRow{
-  display:flex;
-  gap:12px;
-  align-items:center;
-  flex-wrap:wrap;
-  margin-top:10px;
-}
-.remainBox{
-  display:flex;
-  align-items:baseline;
-  gap:10px;
-  padding:10px 12px;
-  border-radius:999px;
-  border:1px solid rgba(255,234,166,.28);
-  background: rgba(255,234,166,.10);
-  color:#ffeaa6;
-  font-weight:1000;
-  letter-spacing:.12em;
-  text-transform:uppercase;
-}
-.remainBox span{ font-size:11px; opacity:.9; }
-.remainBox b{
-  font-size:18px;
-  letter-spacing:.02em;
-  color:#fff;
-}
-.remainHint{
-  opacity:.75;
-  font-size:12px;
-}
 
 .layout{
   display:grid;
@@ -62,26 +54,46 @@
 }
 @media (max-width: 1100px){
   .layout{ grid-template-columns: 1fr; }
-  .inp{ min-width: 0; width: 100%; }
+  .inp{ min-width:0; width:100%; }
 }
 
 .left, .rightPanel{
   border-radius:20px;
-  border:1px solid rgba(255,255,255,.14);
-  background:rgba(255,255,255,.06);
+  border:1px solid var(--line);
+  background: var(--card);
   box-shadow:0 24px 60px rgba(0,0,0,.45);
   padding:14px;
 }
 
-.panelHead{ display:flex; justify-content:space-between; align-items:center; gap:10px; }
-.panelTitle{ font-weight:1000; letter-spacing:.12em; text-transform:uppercase; color:#ffeaa6; font-size:12px; }
+.panelHead{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+}
+.panelTitle{
+  font-weight:1000;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color: var(--gold);
+  font-size:12px;
+}
 
-.list{ margin-top:10px; display:grid; gap:10px; max-height: 520px; overflow:auto; padding-right:6px; }
+.list{
+  margin-top:10px;
+  display:grid;
+  gap:10px;
+  max-height:520px;
+  overflow:auto;
+  padding-right:6px;
+  padding-bottom:12px;
+  scrollbar-gutter: stable;
+}
 
 .qcard{
   border-radius:18px;
-  border:1px solid rgba(255,255,255,.14);
-  background:rgba(255,255,255,.05);
+  border:1px solid var(--line);
+  background: rgba(255,255,255,.05);
   padding:12px;
   cursor:pointer;
 }
@@ -90,15 +102,23 @@
   border-color: rgba(255,234,166,.35);
   background: rgba(255,234,166,.08);
 }
+
 .qord{ opacity:.75; font-size:12px; }
-.qprev{ font-weight:1000; font-size:14px; margin-top:6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.qmode{ opacity:.75; font-size:12px; margin-top:6px; }
+.qprev{
+  font-weight:1000;
+  font-size:14px;
+  margin-top:6px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.qmeta{ opacity:.75; font-size:12px; margin-top:6px; }
 
 .empty{ opacity:.8; font-size:13px; padding:16px; }
 
-.editor{ display:none; }
-.rightPanel.hasQ .editor{ display:block; }
-.rightPanel.hasQ #empty{ display:none; }
+.editorBox{ display:none; }
+.rightPanel.hasQ .editorBox{ display:block; }
+.rightPanel.hasQ .empty{ display:none; }
 
 .badgeRow{
   display:flex;
@@ -111,18 +131,18 @@
   padding:8px 10px;
   border-radius:999px;
   border:1px solid rgba(255,255,255,.16);
-  background:rgba(0,0,0,.22);
+  background: var(--card2);
   font-weight:1000;
   letter-spacing:.12em;
   text-transform:uppercase;
   font-size:11px;
-  color:#ffeaa6;
+  color: var(--gold);
 }
 .lock{
   padding:8px 10px;
   border-radius:999px;
   border:1px solid rgba(255,120,120,.35);
-  background:rgba(255,120,120,.10);
+  background: rgba(255,120,120,.10);
   font-weight:1000;
   letter-spacing:.10em;
   text-transform:uppercase;
@@ -131,15 +151,21 @@
 }
 
 .block{ margin-bottom:12px; }
-.lbl{ opacity:.8; font-size:12px; letter-spacing:.12em; text-transform:uppercase; margin-bottom:8px; }
+.lbl{
+  opacity:.8;
+  font-size:12px;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  margin-bottom:8px;
+}
 
 .ta{
   width:100%;
   min-height:90px;
   padding:10px 12px;
   border-radius:16px;
-  border:1px solid rgba(255,255,255,.18);
-  background:rgba(0,0,0,.25);
+  border:1px solid var(--line2);
+  background: rgba(0,0,0,.25);
   color:#fff;
   outline:none;
   resize: vertical;
@@ -147,8 +173,10 @@
 }
 .ta:focus{ border-color: rgba(255,234,166,.35); }
 
+/* Answers header + list */
+.answersBlock{ margin-top:10px; }
+
 .ahead{
-  margin-top:10px;
   display:grid;
   grid-template-columns: 1fr 110px 40px;
   gap:10px;
@@ -161,7 +189,16 @@
 }
 .ahead .ptsCol{ text-align:center; }
 
-.alist{ display:grid; gap:10px; margin-top:10px; max-height: 360px; overflow:auto; padding-right:6px; }
+.alist{
+  display:grid;
+  gap:10px;
+  margin-top:10px;
+  max-height:360px;
+  overflow:auto;
+  padding-right:6px;
+  padding-bottom:12px;
+  scrollbar-gutter: stable;
+}
 
 .arow{
   display:grid;
@@ -169,15 +206,16 @@
   gap:10px;
   align-items:center;
   border-radius:18px;
-  border:1px solid rgba(255,255,255,.14);
-  background:rgba(0,0,0,.18);
+  border:1px solid var(--line);
+  background: var(--card2);
   padding:10px;
 }
+
 .aText, .aPts{
   padding:10px 12px;
   border-radius:14px;
-  border:1px solid rgba(255,255,255,.18);
-  background:rgba(255,255,255,.06);
+  border:1px solid var(--line2);
+  background: rgba(255,255,255,.06);
   color:#fff;
   outline:none;
   font-weight:900;
@@ -194,25 +232,62 @@
   cursor:pointer;
   font-weight:1000;
 }
-
-.hint{ margin-top:10px; opacity:.7; font-size:12px; }
-
-.foot{ margin-top:12px; min-height:20px; }
-.msg{ color:#ffeaa6; font-weight:900; opacity:.9; }
-
-/* gdy gra jest poll — ukryj kolumnę punktów */
-.editor-body.is-poll .ahead,
-.editor-body.is-poll .arow{
-  grid-template-columns: 1fr 40px;
-}
-.editor-body.is-poll .aPts,
-.editor-body.is-poll .ptsCol{
-  display:none;
-}
+.aDel:disabled{ opacity:.45; cursor:not-allowed; }
 
 .addArow{ margin-top:10px; }
 
-.list, .alist{
-  padding-bottom: 12px;   /* żeby ostatni kafelek nie był “ucięty” */
-  scrollbar-gutter: stable; /* opcjonalnie: stabilne miejsce na scrollbar */
+/* foot msg */
+.foot{ margin-top:12px; min-height:20px; }
+.msg{ color: var(--gold); font-weight:900; opacity:.95; }
+
+/* ===== Modes ===== */
+
+/* no-points => hide points col */
+.editor.no-points .ahead,
+.editor.no-points .arow{
+  grid-template-columns: 1fr 40px;
+}
+.editor.no-points .aPts,
+.editor.no-points .ptsCol{
+  display:none;
+}
+
+/* only-questions => hide entire answers block */
+.editor.only-questions .answersBlock{
+  display:none !important;
+}
+
+/* prepared helper row (optional) */
+.remainRow{
+  display:flex;
+  gap:12px;
+  align-items:center;
+  flex-wrap:wrap;
+  margin-top:10px;
+}
+.remainBox{
+  display:flex;
+  align-items:baseline;
+  gap:10px;
+  padding:10px 12px;
+  border-radius:999px;
+  border:1px solid rgba(255,234,166,.28);
+  background: rgba(255,234,166,.10);
+  color: var(--gold);
+  font-weight:1000;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+}
+.remainBox span{ font-size:11px; opacity:.9; }
+.remainBox b{
+  font-size:18px;
+  letter-spacing:.02em;
+  color:#fff;
+}
+.remainHint{ opacity:.75; font-size:12px; }
+
+/* red points when >100 */
+.aPts.tooMuch{
+  border-color: rgba(255,120,120,.35);
+  background: rgba(255,120,120,.14);
 }
