@@ -1,11 +1,9 @@
-.poll-qr-body{
-  margin:0;
+/* css/poll-qr.css */
+
+body.poll-qr-body{
   min-height:100vh;
-  background:#050914;
-  color:#fff;
   display:grid;
   place-items:center;
-  font-family:system-ui,-apple-system,Segoe UI,sans-serif;
 }
 
 /* przycisk fullscreen */
@@ -27,13 +25,14 @@
 .qr-wrap{
   text-align:center;
   padding:18px;
-  width:min(900px,94vw);
+  width:100%;
+  max-width:900px;
 }
 
 .qr-brand{
   font-weight:1000;
   letter-spacing:.18em;
-  color:#ffeaa6;
+  color:var(--gold);
 }
 
 .qr-title{
@@ -43,8 +42,15 @@
   letter-spacing:.06em;
 }
 
+/* QR box – responsywny */
 .qr-box{
   margin:18px auto;
-  width:420px;
-  height:420px;
+  width:min(420px, 86vw);
+  height:min(420px, 86vw);
+}
+
+/* żeby canvas nie wychodził poza box */
+.qr-box canvas{
+  width:100% !important;
+  height:100% !important;
 }
