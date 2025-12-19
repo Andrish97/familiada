@@ -339,7 +339,7 @@ export async function bootEditor(cfg) {
 
   // ✅ kafelek dodawania (zawsze, bez limitu pytań)
   const qCount = questions.length;
-  const meetsMin = qCount >= RULES.QN_MIN;
+  const meetsMin = qCount >= QN_MIN;
   
   const addQBtn = document.createElement("button");
   addQBtn.type = "button";
@@ -348,7 +348,7 @@ export async function bootEditor(cfg) {
   addQBtn.innerHTML = `
     <div class="qprev">+ Dodaj pytanie</div>
     <div class="qmeta">
-      ${meetsMin ? "Minimum spełnione" : `Wymagane minimum: ${RULES.QN_MIN} (masz ${qCount})`}
+      ${meetsMin ? "Minimum spełnione" : `Wymagane minimum: ${QN_MIN} (masz ${qCount})`}
     </div>
   `;
   
@@ -391,7 +391,7 @@ export async function bootEditor(cfg) {
       const meta = el.querySelector(".qmeta");
       if (cfg.allowAnswers) {
         const cnt = q.__answerCount ?? 0;
-        meta.textContent = `${cnt}/${RULES.AN_MAX} odpowiedzi`;
+        meta.textContent = `${cnt}/${AN_MAX} odpowiedzi`;
       } else {
         meta.textContent = `Tylko pytania`;
       }
@@ -497,7 +497,7 @@ export async function bootEditor(cfg) {
     }
 
     // add-tile (zawsze na dole)
-    const canAddA = answers.length < RULES.AN_MAX;
+    const canAddA = answers.length < AN_MAX;
     const addABtn = document.createElement("button");
     addABtn.type = "button";
     addABtn.className = "arow addTile";
@@ -513,14 +513,14 @@ export async function bootEditor(cfg) {
         ${canAddA ? "+ Dodaj odpowiedź" : "Limit odpowiedzi osiągnięty"}
       </div>
       <div style="margin-left:auto; text-align:right; font-weight:900; opacity:.8;">
-        ${answers.length}/${RULES.AN}
+        ${answers.length}/${AN_MAX}
       </div>
     `;
 
     addABtn.addEventListener("click", async () => {
       if (!canAddA || !activeQId) return;
       try {
-        const ord = nextOrd(answers, RULES.AN_MAX);
+        const ord = nextOrd(answers, AN_MAX);
         if (!ord) return;
 
         await createAnswer(activeQId, ord, `ODP ${ord}`, 0);
@@ -650,12 +650,6 @@ export async function bootEditor(cfg) {
 
       await refreshCounts();
 
-      let qOrd = nextOrd(questions, RULES.QN);
-      if (!qOrd) {
-        setTxtMsg(`Brak miejsca — limit pytań ${RULES.QN}.`);
-        return;
-      }
-
       for (const item of parsed.items) {
         if (!qOrd) break;
 
@@ -668,7 +662,7 @@ export async function bootEditor(cfg) {
         if (cfg.allowAnswers) {
           let aOrd = 1;
           for (const a of item.answers || []) {
-            if (aOrd > RULES.AN) break;
+            if (aOrd > AN_MAX) break;
 
             const text = clip17(a.text);
             const pts =
@@ -683,7 +677,7 @@ export async function bootEditor(cfg) {
 
         // następny wolny ord (na świeżo z DB, bo ktoś mógł mieć dziury)
         const latestQs = await listQuestions(gameId);
-        qOrd = nextOrd(latestQs, RULES.QN);
+        qOrd++
       }
 
       await refreshCounts();
