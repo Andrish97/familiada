@@ -341,3 +341,21 @@ body.editor-body .wrap{
 
 .arow.addTile{ cursor:pointer; }
 .editor.no-points .arow.addTile{ grid-template-columns: 1fr 120px; }
+
+.remainBox{
+  display:flex;
+  align-items:baseline;
+  gap:10px;
+  padding:10px 12px;
+  border-radius:999px;
+  border:1px solid rgba(255,234,166,.28);
+  background: rgba(255,234,166,.10);
+  color: var(--gold);
+  font-weight:1000;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+}
+.remainBox b{
+  font-size:18px;
+  color:#fff;
+}
