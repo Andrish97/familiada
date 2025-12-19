@@ -202,19 +202,41 @@ export async function bootEditor(cfg) {
 
   // name
   const gameName = $("gameName");
-  const btnSave = $("btnSave");
   if (gameName) gameName.value = game.name || "";
-
-  btnSave?.addEventListener("click", async () => {
+  
+  // autosave nazwy przy wyjściu z pola
+  let lastSavedName = normName(game.name || "");
+  let savingName = false;
+  
+  async function saveNameIfChanged() {
+    if (!gameName) return;
+    const cur = normName(gameName.value || "");
+    if (cur === lastSavedName) return;
+    if (savingName) return;
+  
+    savingName = true;
     try {
-      setMsg("Zapisuję nazwę…");
-      await saveGameName(gameId, gameName?.value || "");
-      setMsg("Zapisano.");
+      await saveGameName(gameId, cur);
+      lastSavedName = cur;
+      setMsg("Zapisano nazwę.");
     } catch (e) {
       console.error(e);
       setMsg("Błąd zapisu nazwy (konsola).");
+    } finally {
+      savingName = false;
+    }
+  }
+  
+  gameName?.addEventListener("blur", saveNameIfChanged);
+  
+  // opcjonalnie: Enter = blur (szybkie zatwierdzanie)
+  gameName?.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      gameName.blur();
     }
   });
+
 
   // state
   let questions = await listQuestions(gameId);
