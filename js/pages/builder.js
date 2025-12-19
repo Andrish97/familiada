@@ -88,7 +88,7 @@ function safeDownloadName(name) {
  *    fixed => prepared
  *    poll  => poll_text albo poll_points (wnioskujemy po nazwie)
  */
-function uiKindFromRow(g) {
+function uiTypeFromRow(g) {
   const k = String(g?.type || "");
   if (k === TYPES.POLL_TEXT || k === TYPES.POLL_POINTS || k === TYPES.PREPARED) return k;
   if (k === "fixed") return TYPES.PREPARED;
@@ -99,11 +99,11 @@ function uiKindFromRow(g) {
   return TYPES.PREPARED;
 }
 
-function typeLabel(uiKind) {
-  if (uiKind === TYPES.POLL_TEXT) return "TYPOWY SONDAŻ";
-  if (uiKind === TYPES.POLL_POINTS) return "PUNKTACJA";
-  if (uiKind === TYPES.PREPARED) return "PREPAROWANY";
-  return String(uiKind || "—").toUpperCase();
+function typeLabel(uiType) {
+  if (uiType === TYPES.POLL_TEXT) return "TYPOWY SONDAŻ";
+  if (uiType === TYPES.POLL_POINTS) return "PUNKTACJA";
+  if (uiType === TYPES.PREPARED) return "PREPAROWANY";
+  return String(uiType || "—").toUpperCase();
 }
 
 function statusLabel(st) {
@@ -131,7 +131,7 @@ function setActiveTab(type) {
 
   // jeśli zaznaczona gra nie pasuje do zakładki – odznacz
   const sel = gamesAll.find(g => g.id === selectedId);
-  if (sel && uiKindFromRow(sel) !== activeTab) selectedId = null;
+  if (sel && uiTypeFromRow(sel) !== activeTab) selectedId = null;
 
   render();
   updateActionState();
@@ -166,20 +166,20 @@ async function ensureLive(gameId) {
   }
 }
 
-function defaultNameForUiKind(uiKind) {
-  if (uiKind === TYPES.POLL_TEXT) return "Nowa Familiada (Sondaż)";
-  if (uiKind === TYPES.POLL_POINTS) return "Nowa Familiada (Punktacja)";
+function defaultNameForUiType(uiType) {
+  if (uiType === TYPES.POLL_TEXT) return "Nowa Familiada (Sondaż)";
+  if (uiType === TYPES.POLL_POINTS) return "Nowa Familiada (Punktacja)";
   return "Nowa Familiada (Preparowana)";
 }
 
 /**
  * Tworzenie gry:
- * - najpierw próbujemy wstawić type = uiKind (pod nową bazę)
+ * - najpierw próbujemy wstawić type = uiType (pod nową bazę)
  * - jeśli DB ma check fixed/poll (23514), robimy fallback:
  *    prepared -> fixed, polls -> poll
  */
-async function createGame(uiKind) {
-  const name = defaultNameForUiKind(uiKind);
+async function createGame(uiType) {
+  const name = defaultNameForUiType(uiType);
 
   // 1) próbuj nowy schemat (type = poll_text/poll_points/prepared)
   let ins = await sb()
@@ -187,7 +187,7 @@ async function createGame(uiKind) {
     .insert({
       name,
       owner_id: currentUser.id,
-      type: uiKind,
+      type: uiType,
       status: STATUS.DRAFT,
     })
     .select("id,name,type,status")
@@ -196,22 +196,22 @@ async function createGame(uiKind) {
   if (ins.error) {
     const code = ins.error?.code;
     const msg = String(ins.error?.message || "");
-    const isKindCheck =
+    const isTypeCheck =
       code === "23514" ||
       msg.includes("games_type_check") ||
       msg.includes("violates check constraint");
 
-    if (!isKindCheck) throw ins.error;
+    if (!isTypeCheck) throw ins.error;
 
     // 2) fallback pod starą bazę (type = fixed/poll)
-    const dbKind = (uiKind === TYPES.PREPARED) ? "fixed" : "poll";
+    const dbType = (uiType === TYPES.PREPARED) ? "fixed" : "poll";
 
     ins = await sb()
       .from("games")
       .insert({
         name,
         owner_id: currentUser.id,
-        type: dbKind,
+        type: dbType,
         status: STATUS.DRAFT,
       })
       .select("id,name,type,status")
@@ -268,7 +268,7 @@ async function resetPollForEditing(gameId) {
 
 /* ================= Render ================= */
 function cardGame(g) {
-  const uiKind = uiKindFromRow(g);
+  const uiType = uiTypeFromRow(g);
 
   const el = document.createElement("div");
   el.className = "card";
@@ -280,7 +280,7 @@ function cardGame(g) {
   `;
 
   el.querySelector(".name").textContent = g.name || "—";
-  el.querySelector(".meta").textContent = `${typeLabel(uiKind)} • ${statusLabel(g.status)}`;
+  el.querySelector(".meta").textContent = `${typeLabel(uiType)} • ${statusLabel(g.status)}`;
 
   el.addEventListener("click", async () => {
     selectedId = g.id;
@@ -297,17 +297,17 @@ function cardGame(g) {
   return el;
 }
 
-function cardAdd(uiKind) {
+function cardAdd(uiType) {
   const el = document.createElement("div");
   el.className = "addCard";
   el.innerHTML = `
     <div class="plus">＋</div>
     <div class="txt">Nowa gra</div>
-    <div class="sub">${typeLabel(uiKind)}</div>
+    <div class="sub">${typeLabel(uiType)}</div>
   `;
   el.addEventListener("click", async () => {
     try {
-      const g = await createGame(uiKind);
+      const g = await createGame(uiType);
       selectedId = g.id;
       await refresh();
     } catch (e) {
@@ -322,7 +322,7 @@ function render() {
   if (!grid) return;
   grid.innerHTML = "";
 
-  const games = (gamesAll || []).filter(g => uiKindFromRow(g) === activeTab);
+  const games = (gamesAll || []).filter(g => uiTypeFromRow(g) === activeTab);
 
   // pierwszy kafelek: dodawanie w aktualnej zakładce
   grid.appendChild(cardAdd(activeTab));
@@ -393,7 +393,7 @@ async function readFileAsText(file) {
   });
 }
 
-function editorUrlForKind(type, id, name) {
+function editorUrlForType(type, id, name) {
   // wspieramy i nowe type-y, i stare fixed/poll
   const k = String(type || "");
   if (k === TYPES.POLL_TEXT) return `editor-poll-text.html?id=${encodeURIComponent(id)}`;
@@ -468,7 +468,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
     }
 
-    location.href = editorUrlForKind(g.type, g.id, g.name);
+    location.href = editorUrlForType(g.type, g.id, g.name);
   });
 
   // PLAY
@@ -566,7 +566,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         const ng = await loadGameBasic(newId);
         if (ng?.type) {
           // ustaw zakładkę wg UI-type
-          const ui = uiKindFromRow(ng);
+          const ui = uiTypeFromRow(ng);
           setActiveTab(ui);
         }
       } catch {}
