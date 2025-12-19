@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Familiada — sondaż</title>
+
+  <link rel="icon" href="favicon.ico"/>
+  <link rel="stylesheet" href="css/base.css"/>
+  <link rel="stylesheet" href="css/poll.css"/>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <script type="module" src="js/pages/poll-text.js" defer></script>
+</head>
+
+<body class="pollpub-body is-text">
+  <main class="wrap">
+    <div class="card">
+      <div class="brand">FAMILIADA</div>
+
+      <div class="title" id="title">Sondaż</div>
+      <div class="sub" id="sub">Ładuję…</div>
+
+      <!-- START: aktywny sondaż -->
+      <div class="qbox" id="qbox" style="display:none;">
+        <div class="qtext" id="qtext">—</div>
+
+        <div class="trow">
+          <input class="inp" id="answerInput" placeholder="Wpisz odpowiedź..." autocomplete="off" />
+          <button class="btn gold" id="btnSend" type="button">Wyślij</button>
+        </div>
+
+        <div class="tinyHint" id="tinyHint">
+          Podpowiedź: pisz poprawnie. Liczymy bez wielkości liter i bez spacji na początku/końcu (ale spacje w środku zostają).
+        </div>
+
+        <div class="nav">
+          <div class="small" id="prog">—</div>
+        </div>
+      </div>
+      <!-- END -->
+
+      <!-- zamknięty / błąd -->
+      <div class="closed" id="closed" style="display:none;">
+        Sondaż jest zamknięty. Dziękujemy!
+      </div>
+    </div>
+  </main>
+</body>
+</html>
