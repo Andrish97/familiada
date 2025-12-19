@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Familiada — edytor (typowy sondaż)</title>
+
+  <link rel="icon" href="favicon.ico"/>
+  <link rel="stylesheet" href="css/base.css"/>
+  <link rel="stylesheet" href="css/editor.css"/>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <script type="module" src="js/pages/editor-poll-text.js" defer></script>
+</head>
+
+<body class="editor-body editor only-questions no-points">
+  <header class="topbar">
+    <div class="brand">FAMILIADA</div>
+    <div class="right">
+      <button class="btn" id="btnBack" type="button">← Moje gry</button>
+      <span class="who" id="who">—</span>
+      <button class="btn" id="btnLogout" type="button">Wyloguj</button>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div class="rowTop">
+      <div>
+        <div class="title">Edytor — Typowy sondaż</div>
+        <div class="hint" id="hintTop">
+          Podpowiedź: zalecamy nie mniej niż 10 pytań. Tu edytujesz tylko pytania (odpowiedzi powstaną po sondażu).
+        </div>
+      </div>
+
+      <div class="namebar">
+        <input id="gameName" class="inp" placeholder="Nazwa gry"/>
+        <button id="btnSave" class="btn gold" type="button">Zapisz</button>
+      </div>
+    </div>
+
+    <div class="layout">
+      <aside class="left">
+        <div class="panelHead">
+          <div class="panelTitle">Pytania</div>
+          <button class="btn" id="btnAddQ" type="button">+ Dodaj</button>
+        </div>
+
+        <div id="qList" class="list"></div>
+
+        <div class="hint" style="margin-top:10px;">
+          Import przyjmie tylko pytania (odpowiedzi ignorowane).
+        </div>
+
+        <div class="row" style="margin-top:10px;">
+          <button class="btn" id="btnImportTxt" type="button">Import</button>
+          <button class="btn" id="btnHowTxt" type="button">Jak przygotować plik</button>
+        </div>
+      </aside>
+
+      <section class="rightPanel">
+        <div id="empty" class="empty">Wybierz pytanie po lewej lub dodaj nowe.</div>
+
+        <div id="editor" class="editorBox">
+          <div class="badgeRow">
+            <div class="badge" id="kindBadge">Typowy sondaż</div>
+            <div class="lock" id="lockBadge" style="display:none;">SONDAŻ OTWARTY — EDYCJA ZABLOKOWANA</div>
+          </div>
+
+          <div class="block">
+            <div class="lbl">Treść pytania</div>
+            <textarea id="qText" class="ta" spellcheck="false"></textarea>
+          </div>
+
+          <!-- answersBlock ukryty przez klasę only-questions -->
+
+          <div class="hint" id="hintBottom">
+            Zapisuj często. Jeśli wyjdziesz bez zapisu, pokażemy alert o niezapisaniu.
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <div class="foot">
+      <div id="msg" class="msg"></div>
+    </div>
+  </main>
+
+  <!-- Modal: import TXT -->
+  <div class="overlay" id="txtImportOverlay" style="display:none;">
+    <div class="modal">
+      <div class="mTitle">Import pytań</div>
+      <div class="mSub">Wczytaj plik tekstowy lub wklej treść. Błędy układu pokażemy w komunikacie.</div>
+
+      <div class="importRow">
+        <input id="txtFile" class="inp" type="file" accept=".txt,text/plain">
+        <button class="btn" id="btnTxtLoadFile" type="button">Wczytaj plik</button>
+      </div>
+
+      <textarea id="txtTa" class="importTa" spellcheck="false" placeholder="#Pytanie..."></textarea>
+
+      <div class="importRow">
+        <button class="btn gold" id="btnTxtImport" type="button">Importuj</button>
+        <button class="btn" id="btnTxtClose" type="button">Zamknij</button>
+        <div class="importMsg" id="txtMsg"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: jak przygotować -->
+  <div class="overlay" id="howOverlay" style="display:none;">
+    <div class="modal">
+      <div class="mTitle">Jak przygotować plik</div>
+      <div class="mSub">
+        Pytanie oznaczaj znakiem <b>#</b> na początku linii. Odpowiedzi mogą występować, ale w tym edytorze będą ignorowane.
+      </div>
+
+      <pre class="importTa" style="min-height:260px;white-space:pre-wrap;">
+#Zwierzeta w Afryce
+1 Słoń /29
+2 Lew /19
+3 Tygrys /17
+4 Małpa/16
+5 Hipopotam /12
+
+#Drugie pytanie
+1 Odp 1
+2 Odp 2
+      </pre>
+
+      <div class="mSub" style="margin-top:10px;">
+        Import jest tolerancyjny: ignoruje nadmiar spacji/tabulacje, znaki typu <b>.</b> lub <b>)</b> po numerze,
+        oraz spacje przed/po <b>/</b>. Jeśli plik ma zły układ — dostaniesz komunikat błędu.
+      </div>
+
+      <div class="mFoot">
+        <button class="btn" id="btnHowClose" type="button">Zamknij</button>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
