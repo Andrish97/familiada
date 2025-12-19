@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Familiada — moje gry</title>
+  <title>Familiada — builder</title>
 
   <link rel="icon" href="favicon.ico"/>
-
   <link rel="stylesheet" href="css/base.css"/>
   <link rel="stylesheet" href="css/builder.css"/>
 
+  <!-- Supabase + JS podłączysz później -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
   <script type="module" src="js/pages/builder.js" defer></script>
 </head>
@@ -24,15 +24,20 @@
   </header>
 
   <main class="wrap">
-    <div class="tabs">
-      <button class="tab active" data-tab="poll_text" type="button">Typowy sondaż</button>
-      <button class="tab" data-tab="poll_points" type="button">Punktacja odpowiedzi</button>
-      <button class="tab" data-tab="prepared" type="button">Preparowany</button>
+    <!-- Zakładki (3 typy gier) -->
+    <div class="tabs" id="tabs">
+      <button class="tab active" id="tabPollText" data-kind="poll_text" type="button">Typowy sondaż</button>
+      <button class="tab" id="tabPollPoints" data-kind="poll_points" type="button">Punktacja odpowiedzi</button>
+      <button class="tab" id="tabPrepared" data-kind="prepared" type="button">Preparowany</button>
     </div>
+
     <div class="bar">
       <div>
-        <div class="title">Twoje Familiady</div>
-        <div class="hint" id="hint">Kliknij kafelek, żeby go zaznaczyć.</div>
+        <div class="title">Twoje gry</div>
+        <!-- Ten hint ma służyć do komunikatów dlaczego coś jest wyszarzone -->
+        <div class="hint" id="hint">
+          Kliknij kafelek, żeby go zaznaczyć. Warunki uruchomienia oznaczają niewyszarzony przycisk.
+        </div>
       </div>
 
       <div class="actions">
@@ -44,35 +49,43 @@
         <button class="btn" id="btnImport" type="button">Import</button>
       </div>
     </div>
-    
+
     <div class="grid" id="grid"></div>
   </main>
 
-  <!-- Modal: wybór typu gry -->
+  <!-- Modal: wybór typu gry (3 karty) -->
   <div class="overlay" id="typeOverlay" style="display:none;">
     <div class="modal">
-      <div class="mTitle">Nowa Familiada</div>
-      <div class="mSub">Wybierz typ:</div>
+      <div class="mTitle">Nowa gra</div>
+      <div class="mSub">Wybierz typ (to ustawi edytor i tryb sondażu/gry):</div>
 
-        <div class="mGrid">
-          <button class="mCard" id="btnCreatePollText" type="button">
-            <div class="mBig">TYPOWY SONDAŻ</div>
-            <div class="mSmall">Pytania → odpowiedzi tekstowe</div>
-            <div class="mTiny">Gra dopiero po zamknięciu sondażu</div>
-          </button>
-        
-          <button class="mCard" id="btnCreatePollPoints" type="button">
-            <div class="mBig">PUNKTACJA ODPOWIEDZI</div>
-            <div class="mSmall">Pytania + gotowe odpowiedzi</div>
-            <div class="mTiny">Uczestnicy klikają odpowiedź, wynik normalizuje się do 100</div>
-          </button>
-        
-          <button class="mCard" id="btnCreatePrepared" type="button">
-            <div class="mBig">PREPAROWANY</div>
-            <div class="mSmall">Min 10 pytań • 3–6 odpowiedzi</div>
-            <div class="mTiny">Suma punktów w pytaniu = 100</div>
-          </button>
-        </div>
+      <div class="mGrid">
+        <button class="mCard" id="btnCreatePollText" type="button">
+          <div class="mBig">Typowy sondaż</div>
+          <div class="mSmall">Zbieranie odpowiedzi tekstowych</div>
+          <div class="mTiny">
+            Uruchomienie sondażu: zawsze. Gra: tylko gdy sondaż zamknięty.<br/>
+            Zamknięcie: bierze top 3–6 i normalizuje do 100.
+          </div>
+        </button>
+
+        <button class="mCard" id="btnCreatePollPoints" type="button">
+          <div class="mBig">Punktacja odpowiedzi</div>
+          <div class="mSmall">Klikane odpowiedzi → zbieranie punktów</div>
+          <div class="mTiny">
+            Uruchomienie sondażu: zawsze. Gra: tylko gdy sondaż zamknięty.<br/>
+            Zamknięcie: 0→1, potem normalizacja do 100.
+          </div>
+        </button>
+
+        <button class="mCard" id="btnCreatePrepared" type="button">
+          <div class="mBig">Preparowany</div>
+          <div class="mSmall">10+ pytań, 3–6 odp., suma = 100</div>
+          <div class="mTiny">
+            Sondaż: nigdy. Gra: wymaga kompletu (min 10 pytań, 3–6 odpowiedzi, suma 100).
+          </div>
+        </button>
+      </div>
 
       <div class="mFoot">
         <button class="btn" id="btnCancelType" type="button">Anuluj</button>
@@ -80,11 +93,13 @@
     </div>
   </div>
 
-  <!-- Modal: import -->
+  <!-- Modal: import/export JSON (transport) -->
   <div class="overlay" id="importOverlay" style="display:none;">
     <div class="modal">
-      <div class="mTitle">Import Familiady</div>
-      <div class="mSub">Wybierz plik JSON lub wklej JSON poniżej.</div>
+      <div class="mTitle">Import / Eksport</div>
+      <div class="mSub">
+        To jest transporter JSON między kontami. Nie waliduje — jeśli ktoś edytuje JSON ręcznie, to jego wina.
+      </div>
 
       <div class="importRow">
         <input id="importFile" class="inp" type="file" accept="application/json">
