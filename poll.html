@@ -6,32 +6,82 @@
   <title>Familiada — sondaż</title>
 
   <link rel="icon" href="favicon.ico"/>
-
   <link rel="stylesheet" href="css/base.css"/>
-  <link rel="stylesheet" href="css/poll.css"/>
+  <link rel="stylesheet" href="css/polls.css"/>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-  <script type="module" src="js/pages/poll.js" defer></script>
+  <script type="module" src="js/pages/polls.js" defer></script>
 </head>
 
-<body class="pollpub-body">
-  <main class="wrap">
-    <div class="card">
-      <div class="brand">FAMILIADA</div>
-      <div class="title" id="title">Sondaż</div>
-      <div class="sub" id="sub">Ładuję…</div>
+<body class="polls-body">
+  <header class="topbar">
+    <div class="brand">FAMILIADA</div>
+    <div class="right">
+      <button class="btn" id="btnBack" type="button">← Moje gry</button>
+      <span class="who" id="who">—</span>
+      <button class="btn" id="btnLogout" type="button">Wyloguj</button>
+    </div>
+  </header>
 
-      <div class="qbox" id="qbox" style="display:none;">
-        <div class="qtext" id="qtext"></div>
-        <div class="alist" id="alist"></div>
-        <div class="nav">
-          <div class="small" id="prog">—</div>
+  <main class="wrap">
+    <div class="rowTop">
+      <div>
+        <div class="title">Sondaż</div>
+        <div class="hint" id="hintTop">
+          Link i QR pojawiają się po uruchomieniu sondażu i tylko gdy gra spełnia warunki dla danego typu.
         </div>
       </div>
 
-      <div class="closed" id="closed" style="display:none;">
-        Sondaż jest zamknięty. Dziękujemy!
+      <div class="statusBox">
+        <div class="chip" id="chipKind">—</div>
+        <div class="chip status" id="chipStatus">—</div>
       </div>
+    </div>
+
+    <div class="card" id="cardMain" style="display:none;">
+      <div class="name" id="gName">—</div>
+      <div class="meta" id="gMeta">—</div>
+
+      <div class="row">
+        <input class="inp" id="pollLink" readonly placeholder="Link pojawi się po uruchomieniu..." />
+        <button class="btn" id="btnCopy" type="button" disabled>Kopiuj link</button>
+        <button class="btn gold" id="btnOpen" type="button" disabled>Otwórz link</button>
+        <button class="btn" id="btnOpenQr" type="button" disabled>QR na rzutniku</button>
+      </div>
+
+      <div class="row" style="flex-direction:column;align-items:flex-start;">
+        <div id="qr" style="width:260px;height:260px;"></div>
+      </div>
+
+      <div class="row">
+        <!-- ✅ jeden przycisk stanowy -->
+        <button class="btn gold" id="btnPollAction" type="button">—</button>
+
+        <!-- wyniki niezależnie od stanu -->
+        <button class="btn" id="btnPreview" type="button">Podgląd wyników</button>
+      </div>
+
+      <!-- ✅ Wyniki jako osobna karta (toggle) -->
+      <div class="card" id="resultsCard" style="display:none; margin-top:12px;">
+        <div class="name">Wyniki</div>
+        <div class="meta" id="resultsMeta">—</div>
+
+        <div id="resultsList" style="margin-top:10px; display:grid; gap:12px;"></div>
+
+        <!-- awaryjnie -->
+        <pre id="resultsRaw" style="display:none;"></pre>
+      </div>
+    </div>
+
+    <div class="card" id="cardEmpty">
+      <div class="name">Brak gry</div>
+      <div class="meta">
+        Otwórz stronę z parametrem <b>polls.html?id=...</b> (builder zrobi to automatycznie).
+      </div>
+    </div>
+
+    <div class="foot">
+      <div class="msg" id="msg"></div>
     </div>
   </main>
 </body>
