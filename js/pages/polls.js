@@ -3,6 +3,7 @@ import { sb } from "../core/supabase.js";
 import { requireAuth, signOut } from "../core/auth.js";
 import { guardDesktopOnly } from "../core/device-guard.js";
 import { confirmModal } from "../core/modal.js";
+import { RULES, validatePollReadyToOpen } from "../core/game-validate.js";
 import QRCode from "https://cdn.jsdelivr.net/npm/qrcode@1.5.3/+esm";
 
 guardDesktopOnly({ message: "Sondaże są dostępne tylko na komputerze." });
@@ -40,8 +41,6 @@ const votesEl = document.getElementById("votes");
 
 let game = null;
 
-const RULES = { QN: 10, AN: 5 };
-
 function setMsg(t) {
   if (!msg) return;
   msg.textContent = t || "";
@@ -51,7 +50,6 @@ function setMsg(t) {
 function kindPL(kind) {
   return kind === "poll" ? "SONDAŻOWA" : "LOKALNA";
 }
-
 function statusPL(status) {
   const s = status || "draft";
   if (s === "draft") return "SZKIC";
@@ -110,36 +108,6 @@ async function loadGame() {
   return data;
 }
 
-// 10 pytań, każde ma DOKŁADNIE 5 odpowiedzi (bierzemy pierwsze 10)
-async function pollSetupCheck(gid) {
-  const { data: qsRows, error: qErr } = await sb()
-    .from("questions")
-    .select("id,ord")
-    .eq("game_id", gid)
-    .order("ord", { ascending: true });
-
-  if (qErr) return { ok: false, reason: "Błąd wczytywania pytań." };
-  if (!qsRows || qsRows.length < RULES.QN) {
-    return { ok: false, reason: `Za mało pytań: ${qsRows?.length || 0} / ${RULES.QN}.` };
-  }
-
-  const ten = qsRows.slice(0, RULES.QN);
-
-  for (const q of ten) {
-    const { data: ans, error: aErr } = await sb()
-      .from("answers")
-      .select("id")
-      .eq("question_id", q.id);
-
-    if (aErr) return { ok: false, reason: `Błąd wczytywania odpowiedzi (pytanie #${q.ord}).` };
-    if (!ans || ans.length !== RULES.AN) {
-      return { ok: false, reason: `Pytanie #${q.ord} ma ${ans?.length || 0} / ${RULES.AN} odpowiedzi.` };
-    }
-  }
-
-  return { ok: true, reason: "" };
-}
-
 function setLinkUiVisible(on) {
   btnCopy && (btnCopy.disabled = !on);
   btnOpen && (btnOpen.disabled = !on);
@@ -147,7 +115,7 @@ function setLinkUiVisible(on) {
   if (!on) clearQr();
 }
 
-// Podgląd głosów: z ostatniej sesji per pytanie
+// preview: pokazujemy pierwsze 10 pytań (bo tyle przewidujesz w rozgrywce/UI)
 async function previewVotes() {
   if (!votesEl) return;
 
@@ -165,7 +133,7 @@ async function previewVotes() {
     return;
   }
 
-  const ten = (qsRows || []).slice(0, RULES.QN);
+  const ten = (qsRows || []).slice(0, RULES.QN_MIN);
   let out = [];
 
   for (const q of ten) {
@@ -254,33 +222,52 @@ async function refresh() {
 
   if (gName) gName.textContent = game.name || "Sondaż";
   if (gMeta) gMeta.textContent =
-    "Link i QR pojawiają się tylko, gdy sondaż jest OTWARTY i gra spełnia zasady (10 pytań, 5 odpowiedzi).";
+    `Link i QR pojawiają się tylko, gdy sondaż jest OTWARTY i gra spełnia zasady (min ${RULES.QN_MIN} pytań, ${RULES.AN_MIN}–${RULES.AN_MAX} odpowiedzi).`;
 
   if (pollLinkEl) pollLinkEl.value = "";
   setLinkUiVisible(false);
   clearQr();
 
   const st = game.status || "draft";
-  const chk = await pollSetupCheck(game.id);
+
+  // walidacja z core:
+  const chk = await validatePollReadyToOpen(game.id); // zwróci ok także w "ready/draft" (byle nie poll_open), ale my i tak poniżej kontrolujemy UI
 
   btnStart && (btnStart.disabled = !chk.ok || st === "poll_open");
   btnClose && (btnClose.disabled = st !== "poll_open");
   btnReopen && (btnReopen.disabled = !chk.ok || st !== "ready");
 
-  // QR+link tylko gdy poll_open i wszystko OK
-  if (st === "poll_open" && chk.ok) {
-    const link = pollLink(game);
-    if (pollLinkEl) pollLinkEl.value = link;
-    setLinkUiVisible(true);
-    await renderSmallQr(link);
-    setMsg("");
-  } else {
+  if (st === "poll_open") {
+    // gdy otwarty: wymagamy “struktura ok”, inaczej nie pokazujemy link/qr
+    const chk2 = await (async ()=>{
+      // tu potrzebujemy check “struktury” nawet gdy poll_open — validatePollReadyToOpen blokuje poll_open
+      // więc robimy szybki trik: na czas UI sprawdzamy strukturę ręcznie przez core validateStructure:
+      const mod = await import("../core/game-validate.js");
+      return await mod.validateStructure(game.id);
+    })();
+
+    if (chk2.ok) {
+      const link = pollLink(game);
+      if (pollLinkEl) pollLinkEl.value = link;
+      setLinkUiVisible(true);
+      await renderSmallQr(link);
+      setMsg("");
+      return;
+    }
+
     setLinkUiVisible(false);
     clearQr();
+    setMsg(chk2.reason);
+    return;
+  }
 
-    if (!chk.ok) setMsg(chk.reason);
-    else if (st === "ready") setMsg("Sondaż jest zamknięty (wyniki policzone). Możesz go otworzyć ponownie.");
-    else setMsg("Sondaż jest nieaktywny — uruchom go, żeby pokazać link i QR.");
+  // nie otwarty:
+  if (!chk.ok) {
+    setMsg(chk.reason);
+  } else if (st === "ready") {
+    setMsg("Sondaż jest zamknięty (wyniki policzone). Możesz go otworzyć ponownie.");
+  } else {
+    setMsg("Sondaż jest nieaktywny — uruchom go, żeby pokazać link i QR.");
   }
 }
 
@@ -319,7 +306,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   btnStart?.addEventListener("click", async () => {
     if (!game) return;
 
-    const chk = await pollSetupCheck(gameId);
+    // do otwarcia: używamy core walidacji
+    const chk = await validatePollReadyToOpen(gameId);
     if (!chk.ok) {
       setMsg(chk.reason);
       return;
@@ -351,7 +339,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   btnReopen?.addEventListener("click", async () => {
     if (!game) return;
 
-    const chk = await pollSetupCheck(gameId);
+    const chk = await validatePollReadyToOpen(gameId);
     if (!chk.ok) {
       setMsg(chk.reason);
       return;
@@ -408,11 +396,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   btnPreview?.addEventListener("click", async () => {
     if (!votesEl) return;
-    if (votesEl.style.display === "none") {
-      await previewVotes();
-    } else {
-      votesEl.style.display = "none";
-    }
+    if (votesEl.style.display === "none") await previewVotes();
+    else votesEl.style.display = "none";
   });
 
   await refresh();
