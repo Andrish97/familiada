@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Familiada — edytor (preparowany)</title>
+
+  <link rel="icon" href="favicon.ico"/>
+  <link rel="stylesheet" href="css/base.css"/>
+  <link rel="stylesheet" href="css/editor.css"/>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <script type="module" src="js/pages/editor-prepared.js" defer></script>
+</head>
+
+<body class="editor-body editor">
+  <header class="topbar">
+    <div class="brand">FAMILIADA</div>
+    <div class="right">
+      <button class="btn" id="btnBack" type="button">← Moje gry</button>
+      <span class="who" id="who">—</span>
+      <button class="btn" id="btnLogout" type="button">Wyloguj</button>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div class="rowTop">
+      <div>
+        <div class="title">Edytor — Preparowany</div>
+        <div class="hint" id="hintTop">
+          Podpowiedź: min 10 pytań, w pytaniu 3–6 odpowiedzi, suma punktów w pytaniu = 100.
+          Licznik pokazuje różnicę. Odpowiedź z punktami &gt; 100 podświetli się i nie wejdzie do licznika.
+        </div>
+      </div>
+
+      <div class="namebar">
+        <input id="gameName" class="inp" placeholder="Nazwa gry"/>
+        <button id="btnSave" class="btn gold" type="button">Zapisz</button>
+      </div>
+    </div>
+
+    <div class="remainRow" id="remainRow" style="display:none;">
+      <div class="remainBox">
+        <span>RÓŻNICA</span>
+        <b id="remainVal">0</b>
+      </div>
+      <div class="remainHint" id="remainHint">
+        0 = idealnie. Dodatnia = brakuje do 100. Ujemna = za dużo.
+      </div>
+    </div>
+
+    <div class="layout">
+      <aside class="left">
+        <div class="panelHead">
+          <div class="panelTitle">Pytania</div>
+          <button class="btn" id="btnAddQ" type="button">+ Dodaj</button>
+        </div>
+
+        <div id="qList" class="list"></div>
+
+        <div class="hint" style="margin-top:10px;">
+          Import bierze wszystko. Brak punktów → ustawiamy 0.
+        </div>
+
+        <div class="row" style="margin-top:10px;">
+          <button class="btn" id="btnImportTxt" type="button">Import</button>
+          <button class="btn" id="btnHowTxt" type="button">Jak przygotować plik</button>
+        </div>
+      </aside>
+
+      <section class="rightPanel">
+        <div id="empty" class="empty">Wybierz pytanie po lewej lub dodaj nowe.</div>
+
+        <div id="editor" class="editorBox">
+          <div class="badgeRow">
+            <div class="badge" id="kindBadge">Preparowany</div>
+            <div class="lock" id="lockBadge" style="display:none;">SONDAŻ OTWARTY — EDYCJA ZABLOKOWANA</div>
+          </div>
+
+          <div class="block">
+            <div class="lbl">Treść pytania</div>
+            <textarea id="qText" class="ta" spellcheck="false"></textarea>
+          </div>
+
+          <div class="answersBlock">
+            <div class="ahead" id="aHead">
+              <div>Odpowiedź</div>
+              <div class="ptsCol">Pkt</div>
+              <div></div>
+            </div>
+
+            <div id="aList" class="alist"></div>
+
+            <div class="addArow">
+              <button class="btn" id="btnAddA" type="button">+ Odpowiedź</button>
+            </div>
+          </div>
+
+          <div class="hint" id="hintBottom">
+            Punkty 0–100. Do gry wymagana suma = 100 w każdym pytaniu (a minimalnie 10 pytań).
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <div class="foot">
+      <div id="msg" class="msg"></div>
+    </div>
+  </main>
+
+  <!-- Modal: import TXT -->
+  <div class="overlay" id="txtImportOverlay" style="display:none;">
+    <div class="modal">
+      <div class="mTitle">Import (preparowany)</div>
+      <div class="mSub">Wczytaj plik tekstowy lub wklej treść. Punkty po <b>/</b> są opcjonalne, brak → 0.</div>
+
+      <div class="importRow">
+        <input id="txtFile" class="inp" type="file" accept=".txt,text/plain">
+        <button class="btn" id="btnTxtLoadFile" type="button">Wczytaj plik</button>
+      </div>
+
+      <textarea id="txtTa" class="importTa" spellcheck="false" placeholder="#Pytanie..."></textarea>
+
+      <div class="importRow">
+        <button class="btn gold" id="btnTxtImport" type="button">Importuj</button>
+        <button class="btn" id="btnTxtClose" type="button">Zamknij</button>
+        <div class="importMsg" id="txtMsg"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: jak przygotować -->
+  <div class="overlay" id="howOverlay" style="display:none;">
+    <div class="modal">
+      <div class="mTitle">Jak przygotować plik</div>
+      <div class="mSub">
+        Pytanie: <b>#</b> + treść. Odpowiedzi: numer + treść + opcjonalnie <b>/punkty</b>.
+      </div>
+
+      <pre class="importTa" style="min-height:260px;white-space:pre-wrap;">
+#Zwierzeta w Afryce
+1 Słoń /29
+2 Lew /19
+3 Tygrys /17
+4 Małpa/16
+5 Hipopotam /12
+
+#Drugie pytanie
+1 Odp 1 /40
+2 Odp 2 /30
+3 Odp 3 /30
+      </pre>
+
+      <div class="mSub" style="margin-top:10px;">
+        Import ignoruje: nadmiar spacji/taby, znaki typu <b>.</b> lub <b>)</b> po numerze,
+        spacje przy <b>/</b>. Zły układ → komunikat błędu.
+      </div>
+
+      <div class="mFoot">
+        <button class="btn" id="btnHowClose" type="button">Zamknij</button>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
