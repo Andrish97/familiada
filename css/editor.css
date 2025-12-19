@@ -359,3 +359,19 @@ body.editor-body .wrap{
   font-size:18px;
   color:#fff;
 }
+
+/* szersze pole nazwy gry */
+#gameName{
+  width:100%;
+  max-width:680px;   /* możesz dać 720px jeśli chcesz jeszcze szerzej */
+  font-size:16px;
+  font-weight:900;
+}
+
+.namebar{
+  width:100%;
+}
+
+.namebar #gameName{
+  flex:1;
+}
