@@ -30,7 +30,7 @@
       </div>
 
       <div class="actions">
-        <button class="btn sm" id="btnNew" type="button">+ Nowa</button>
+        <!-- +Nowa usunięte (nowa gra jest kafelkiem w gridzie) -->
 
         <button class="btn sm" id="btnEdit" type="button" disabled>
           <span class="only-desktop">Edytuj</span>
@@ -58,46 +58,16 @@
         </button>
       </div>
     </div>
-  <!-- Tabs -->
-  <nav class="tabs">
-    <button class="tab active" id="tabPollText" type="button">Typowy sondaż</button>
-    <button class="tab" id="tabPollPoints" type="button">Punktacja</button>
-    <button class="tab" id="tabPrepared" type="button">Preparowany</button>
-  </nav>
+
+    <!-- Tabs (teraz nad gridem, w wrapie) -->
+    <nav class="tabs">
+      <button class="tab" id="tabPollText" type="button">Typowy sondaż</button>
+      <button class="tab" id="tabPollPoints" type="button">Punktacja</button>
+      <button class="tab" id="tabPrepared" type="button">Preparowany</button>
+    </nav>
+
     <div class="grid" id="grid"></div>
   </main>
-
-  <!-- Modal: wybór typu gry -->
-  <div class="overlay" id="typeOverlay" style="display:none;">
-    <div class="modal">
-      <div class="mTitle">Nowa gra</div>
-      <div class="mSub">Wybierz typ:</div>
-
-      <div class="mGrid">
-        <button class="mCard" id="btnCreatePollText" type="button">
-          <div class="mBig">TYPOWY SONDAŻ</div>
-          <div class="mSmall">Odpowiedzi tekstowe</div>
-          <div class="mTiny">Sondaż: zawsze • Gra: po zamknięciu</div>
-        </button>
-
-        <button class="mCard" id="btnCreatePollPoints" type="button">
-          <div class="mBig">PUNKTACJA</div>
-          <div class="mSmall">Wybór odpowiedzi</div>
-          <div class="mTiny">Sondaż: zawsze • Gra: po zamknięciu</div>
-        </button>
-
-        <button class="mCard" id="btnCreatePrepared" type="button">
-          <div class="mBig">PREPAROWANY</div>
-          <div class="mSmall">Punkty ustawiasz ręcznie</div>
-          <div class="mTiny">Sondaż: nigdy • Gra: po walidacji</div>
-        </button>
-      </div>
-
-      <div class="mFoot">
-        <button class="btn sm" id="btnCancelType" type="button">Anuluj</button>
-      </div>
-    </div>
-  </div>
 
   <!-- Modal: import JSON -->
   <div class="overlay" id="importOverlay" style="display:none;">
