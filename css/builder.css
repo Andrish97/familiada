@@ -1,50 +1,91 @@
-.builder-body{
-  margin:0; min-height:100vh;
-  font-family:system-ui,-apple-system,Segoe UI,sans-serif;
-  background:#050914; color:#fff;
+/* css/builder.css */
+
+body.builder-body{
+  min-height:100vh;
+  background: var(--bg);
+  color:#fff;
 }
 
-.wrap{ width:min(1100px,94vw); margin:0 auto; padding:18px; }
+.wrap{
+  width:min(1100px,94vw);
+  margin:0 auto;
+  padding:18px;
+}
 
 .bar{
-  display:flex; justify-content:space-between; align-items:flex-end;
-  gap:14px; flex-wrap:wrap;
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-end;
+  gap:14px;
+  flex-wrap:wrap;
   margin-top:8px;
 }
-.title{ font-weight:1000; font-size:18px; margin:10px 0 6px; letter-spacing:.06em; }
-.hint{ opacity:.8; font-size:13px; margin:6px 0 0; }
 
-.actions{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
-
-.btn{
-  padding:10px 12px; border-radius:14px;
-  border:1px solid rgba(255,255,255,.18);
-  background:rgba(255,255,255,.06);
-  color:#fff; cursor:pointer; font-weight:900;
+.title{
+  font-weight:1000;
+  font-size:18px;
+  margin:10px 0 6px;
+  letter-spacing:.06em;
 }
-.btn:hover{ filter:brightness(1.08); }
-.btn:active{ transform:translateY(1px); }
-.btn:disabled{ opacity:.45; cursor:not-allowed; }
+.hint{
+  opacity:.8;
+  font-size:13px;
+  margin:6px 0 0;
+  line-height:1.35;
+}
 
-.btn.gold{
-  border-color: rgba(255,234,166,.35);
+.actions{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  align-items:center;
+}
+
+/* ===== Tabs ===== */
+.tabs{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-top:10px;
+}
+
+.tab{
+  padding:10px 12px;
+  border-radius:999px;
+  border:1px solid var(--line2);
+  background: var(--card2);
+  color:#fff;
+  cursor:pointer;
+  font-weight:900;
+  line-height:1;
+}
+.tab:hover{ filter:brightness(1.06); }
+.tab.active{
+  border-color: rgba(255,234,166,.45);
   background: rgba(255,234,166,.10);
-  color:#ffeaa6;
+  color: var(--gold);
 }
 
+/* ===== Grid ===== */
 .grid{
   margin-top:14px;
   display:grid;
   grid-template-columns: repeat(3, 1fr);
   gap:14px;
 }
-@media (max-width: 1100px){ .grid{ grid-template-columns: repeat(2,1fr);} }
+@media (max-width: 1100px){
+  .grid{ grid-template-columns: repeat(2,1fr); }
+}
+@media (max-width: 720px){
+  .grid{ grid-template-columns: 1fr; }
+}
 
+/* ===== Game card ===== */
 .card{
   position:relative;
   border-radius:20px;
-  border:1px solid rgba(255,255,255,.14);
-  background:rgba(255,255,255,.06);
+  border:1px solid var(--line);
+  background: var(--card);
   padding:14px;
   box-shadow:0 24px 60px rgba(0,0,0,.45);
   cursor:pointer;
@@ -61,16 +102,30 @@
     0 0 0 2px rgba(255,234,166,.14);
 }
 
-.card .name{ font-weight:1000; font-size:16px; letter-spacing:.04em; }
-.card .meta{ opacity:.75; font-size:12px; margin-top:6px; line-height:1.25; }
+.card .name{
+  font-weight:1000;
+  font-size:16px;
+  letter-spacing:.04em;
+}
+.card .meta{
+  opacity:.75;
+  font-size:12px;
+  margin-top:6px;
+  line-height:1.25;
+}
 
+/* delete */
 .x{
-  position:absolute; top:10px; right:10px;
-  width:34px; height:34px; border-radius:12px;
+  position:absolute;
+  top:10px; right:10px;
+  width:34px; height:34px;
+  border-radius:12px;
   border:1px solid rgba(255,120,120,.35);
-  background:rgba(255,120,120,.12);
-  color:#fff; font-weight:1000;
-  display:grid; place-items:center;
+  background: rgba(255,120,120,.12);
+  color:#fff;
+  font-weight:1000;
+  display:grid;
+  place-items:center;
   cursor:pointer;
 }
 .x:hover{ filter:brightness(1.06); }
@@ -83,16 +138,27 @@
   place-items:center;
   z-index:50;
 }
+
 .modal{
-  width:min(860px, 94vw);
+  width:min(860px,94vw);
   border-radius:22px;
-  border:1px solid rgba(255,255,255,.14);
-  background: rgba(255,255,255,.06);
+  border:1px solid var(--line);
+  background: var(--card);
   box-shadow:0 30px 90px rgba(0,0,0,.75);
   padding:18px;
 }
-.mTitle{ font-weight:1000; font-size:18px; letter-spacing:.06em; color:#ffeaa6; }
-.mSub{ opacity:.8; font-size:13px; margin-top:6px; }
+
+.mTitle{
+  font-weight:1000;
+  font-size:18px;
+  letter-spacing:.06em;
+  color: var(--gold);
+}
+.mSub{
+  opacity:.8;
+  font-size:13px;
+  margin-top:6px;
+}
 
 .mGrid{
   display:grid;
@@ -106,8 +172,8 @@
 
 .mCard{
   border-radius:20px;
-  border:1px solid rgba(255,255,255,.14);
-  background: rgba(0,0,0,.18);
+  border:1px solid var(--line);
+  background: var(--card2);
   color:#fff;
   padding:16px;
   cursor:pointer;
@@ -115,74 +181,17 @@
   box-shadow:0 18px 45px rgba(0,0,0,.45);
 }
 .mCard:hover{ filter:brightness(1.06); }
+
 .mBig{ font-weight:1000; letter-spacing:.14em; text-transform:uppercase; }
-.mSmall{ margin-top:8px; opacity:.85; font-weight:800; }
+.mSmall{ margin-top:8px; opacity:.85; font-weight:900; }
 .mTiny{ margin-top:8px; opacity:.7; font-size:12px; line-height:1.35; }
 
-.mFoot{ display:flex; justify-content:flex-end; margin-top:14px; }
-
-/* ===== Import ===== */
-.mImportRow{
+.mFoot{
+  display:flex;
+  justify-content:flex-end;
   margin-top:14px;
-  display:flex;
-  gap:10px;
-  flex-wrap:wrap;
-  align-items:center;
-}
-.file{
-  padding:10px 12px;
-  border-radius:14px;
-  border:1px solid rgba(255,255,255,.18);
-  background:rgba(0,0,0,.18);
-  color:#fff;
-}
-.mTa{
-  margin-top:12px;
-  width:100%;
-  min-height:220px;
-  padding:12px;
-  border-radius:16px;
-  border:1px solid rgba(255,255,255,.18);
-  background:rgba(0,0,0,.25);
-  color:#fff;
-  font-weight:800;
-  outline:none;
-  resize:vertical;
-}
-.mTa:focus{ border-color: rgba(255,234,166,.35); }
-.fileBtn{
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  gap:10px;
-  user-select:none;
 }
 
-.importInfo{
-  padding:10px 12px;
-  border-radius:14px;
-  border:1px solid rgba(255,255,255,.16);
-  background: rgba(0,0,0,.18);
-  opacity:.9;
-  font-weight:900;
-}
-
-.rowBtns{
-  display:flex;
-  gap:10px;
-  flex-wrap:wrap;
-  align-items:center;
-}
-
-.importErr{
-  padding:12px 12px;
-  border-radius:14px;
-  border:1px solid rgba(255,120,120,.35);
-  background: rgba(255,120,120,.12);
-  color:#fff;
-  font-weight:900;
-  line-height:1.35;
-}
 /* ===== Import modal ===== */
 .importRow{
   display:flex;
@@ -192,25 +201,35 @@
   margin-top:12px;
 }
 
-.file{
-  flex: 1;
-  min-width: 260px;
+.inp[type="file"]{
   padding:10px 12px;
   border-radius:14px;
-  border:1px solid rgba(255,255,255,.18);
-  background:rgba(255,255,255,.06);
+  border:1px solid var(--line2);
+  background: rgba(255,255,255,.06);
   color:#fff;
-  font-weight:800;
+  font-weight:900;
+  width:min(520px,100%);
 }
+.inp[type="file"]::file-selector-button{
+  margin-right:10px;
+  padding:10px 12px;
+  border-radius:12px;
+  border:1px solid var(--line2);
+  background: var(--card2);
+  color: var(--gold);
+  font-weight:1000;
+  cursor:pointer;
+}
+.inp[type="file"]::file-selector-button:hover{ filter:brightness(1.06); }
 
 .importTa{
   width:100%;
   min-height:220px;
   margin-top:12px;
-  padding:12px 12px;
+  padding:12px;
   border-radius:16px;
-  border:1px solid rgba(255,255,255,.18);
-  background:rgba(0,0,0,.25);
+  border:1px solid var(--line2);
+  background: rgba(0,0,0,.25);
   color:#fff;
   outline:none;
   resize: vertical;
@@ -221,45 +240,6 @@
   margin-left:auto;
   opacity:.85;
   font-weight:900;
-  color:#ffeaa6;
+  color: var(--gold);
   padding:6px 0;
 }
-
-/* ===== fix: input type=file wygląda jak reszta ===== */
-.inp[type="file"]{
-  padding:10px 12px;
-  border-radius:14px;
-  border:1px solid rgba(255,255,255,.18);
-  background:rgba(255,255,255,.06);
-  color:#fff;
-  font-weight:900;
-  width:min(520px,100%);
-}
-
-/* przycisk "Wybierz plik" w środku inputa */
-.inp[type="file"]::file-selector-button{
-  margin-right:10px;
-  padding:10px 12px;
-  border-radius:12px;
-  border:1px solid rgba(255,255,255,.18);
-  background:rgba(0,0,0,.22);
-  color:#ffeaa6;
-  font-weight:1000;
-  letter-spacing:.06em;
-  cursor:pointer;
-}
-.inp[type="file"]::file-selector-button:hover{
-  filter:brightness(1.06);
-}
-/* === Sondaż: bez punktów i licznika === */
-.editor-body.is-poll .aPts,
-.editor-body.is-poll .ptsCol,
-.editor-body.is-poll #remainRow {
-  display: none !important;
-}
-
-<div class="tabs">
-  <button class="tab active" data-tab="poll_text" type="button">Typowy sondaż</button>
-  <button class="tab" data-tab="poll_points" type="button">Punktacja odpowiedzi</button>
-  <button class="tab" data-tab="prepared" type="button">Preparowany</button>
-</div>
