@@ -114,3 +114,26 @@ pre{
 
 .foot{ margin-top:12px; min-height:20px; }
 .msg{ color: var(--gold); font-weight:900; opacity:.95; }
+/* results */
+.resultQ{
+  border:1px solid var(--line);
+  background: var(--card2);
+  border-radius:18px;
+  padding:12px;
+}
+.resultQ .qTitle{
+  font-weight:1000;
+  margin-bottom:8px;
+}
+.resultQ .aRow{
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  padding:8px 10px;
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,.10);
+  background: rgba(255,255,255,.05);
+  margin-top:8px;
+}
+.resultQ .aTxt{ font-weight:900; }
+.resultQ .aVal{ opacity:.9; font-weight:1000; color: var(--gold); }
