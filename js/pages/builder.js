@@ -55,7 +55,7 @@ let currentUser = null;
 let gamesAll = [];
 let selectedId = null;
 
-let activeTab = KINDS.POLL_TEXT; // domyślnie
+let activeTab = KINDS.PREPARED; // domyślnie (Preparowany)
 
 /* ================= UI helpers ================= */
 function show(el, on) {
@@ -371,7 +371,16 @@ document.addEventListener("DOMContentLoaded", async () => {
   tabPrepared?.addEventListener("click", () => setActiveTab(KINDS.PREPARED));
 
   // new game modal
-  btnNew?.addEventListener("click", openTypeModal);
+  btnNew?.addEventListener("click", async () => {
+    try {
+      const g = await createGame(activeTab);
+      selectedId = g.id;
+      await refresh();
+    } catch (e) {
+      console.error(e);
+      alert(e?.message || "Nie udało się utworzyć gry.");
+    }
+  });
   btnCancelType?.addEventListener("click", closeTypeModal);
 
   btnCreatePollText?.addEventListener("click", async () => {
@@ -555,6 +564,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
   // init
-  setActiveTab(KINDS.POLL_TEXT);
+  setActiveTab(KINDS.PREPARED);
   await refresh();
 });
