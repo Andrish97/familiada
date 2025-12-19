@@ -21,7 +21,7 @@ async function resetPollForEditing(gameId) {
   // draft
   const { error: gErr } = await sb()
     .from("games")
-    .update({ status: "draft" })
+    .update({ status: "draft", poll_opened_at: null, poll_closed_at: null })
     .eq("id", gameId);
   if (gErr) throw gErr;
 
@@ -426,13 +426,20 @@ export async function bootEditor(cfg) {
     add.className = "arow";
     add.style.cursor = canAdd ? "pointer" : "not-allowed";
     add.style.opacity = canAdd ? "1" : ".55";
+    const add = document.createElement("button");
+    add.type = "button";
+    add.className = "arow addTile";
+    add.disabled = !canAdd;
+    
     add.innerHTML = `
       <div style="font-weight:1000;">
         ${canAdd ? "+ Dodaj odpowiedź" : "Limit odpowiedzi osiągnięty"}
       </div>
-      ${cfg.allowPoints ? `<div style="opacity:.75;text-align:center;">${answers.length}/${RULES.AN}</div>` : ""}
-      <div></div>
+      <div style="text-align:right; font-weight:900; opacity:.8;">
+        ${answers.length}/${RULES.AN}
+      </div>
     `;
+
 
     add.addEventListener("click", async () => {
       if (!canAdd || !activeQId) return;
