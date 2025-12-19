@@ -288,3 +288,54 @@ body.editor-body .wrap{
   .list{ max-height: 300px; }
   .alist{ max-height: 320px; }
 }
+
+/* ===== Add tiles (zamiast przycisków "Dodaj") ===== */
+
+.addTile{
+  border-radius:18px;
+  border:1px dashed rgba(255,255,255,.20);
+  background: rgba(255,255,255,.04);
+  padding:12px;
+  cursor:pointer;
+  display:flex;
+  gap:10px;
+  align-items:center;
+  justify-content:flex-start;
+  user-select:none;
+}
+
+.addTile:hover{ filter:brightness(1.08); }
+
+.addTile .plus{
+  width:34px; height:34px;
+  border-radius:14px;
+  border:1px solid rgba(255,234,166,.28);
+  background: rgba(255,234,166,.10);
+  color: var(--gold);
+  display:grid;
+  place-items:center;
+  font-weight:1000;
+  flex:0 0 auto;
+}
+
+.addTile .txt{
+  font-weight:1000;
+  letter-spacing:.02em;
+}
+
+.addTile .sub{
+  opacity:.75;
+  font-size:12px;
+  font-weight:800;
+  margin-top:2px;
+  line-height:1.25;
+}
+
+.addTile.disabled{
+  opacity:.45;
+  cursor:not-allowed;
+  filter:saturate(.6);
+}
+
+.addTile.disabled:hover{ filter:saturate(.6); }
+
