@@ -180,8 +180,6 @@ export async function bootEditor(cfg) {
   const qList = $("qList");
   const qText = $("qText");
   const aList = $("aList");
-  const btnAddQ = $("btnAddQ");
-  const btnAddA = $("btnAddA");
 
   const typeBadge = $("typeBadge");
   if (typeBadge) {
@@ -208,7 +206,6 @@ export async function bootEditor(cfg) {
         <div class="qprev">+ Dodaj pierwsze pytanie</div>
         <div class="qmeta">Limit: ${RULES.QN}</div>
       `;
-      tile.addEventListener("click", () => btnAddQ?.click());
       qList.appendChild(tile);
       return;
     }
@@ -283,12 +280,11 @@ export async function bootEditor(cfg) {
       tile.className = "arow";
       tile.style.cursor = "pointer";
       tile.innerHTML = `<div style="font-weight:1000;">+ Dodaj pierwszą odpowiedź</div>`;
-      tile.addEventListener("click", () => btnAddA?.click());
       aList.appendChild(tile);
       return;
     }
 
-    for (const a of answers) {
+    for (const a of answers) {✕
       const row = document.createElement("div");
       row.className = "arow";
 
@@ -376,53 +372,6 @@ export async function bootEditor(cfg) {
     } catch (e) {
       console.error(e);
       setMsg("Błąd zapisu pytania (konsola).");
-    }
-  });
-
-  // Dodaj pytanie
-  btnAddQ?.addEventListener("click", async () => {
-    try {
-      await refreshCounts();
-      const ord = nextOrd(questions, RULES.QN);
-      if (!ord) {
-        setMsg(`Limit pytań: ${RULES.QN}.`);
-        return;
-      }
-      setMsg("Dodaję pytanie…");
-      const q = await createQuestion(gameId, ord, cfg.mode);
-      await refreshCounts();
-      activeQId = q.id;
-      activeOrd = q.ord;
-      await loadAnswersForActive();
-      renderQuestions();
-      renderEditor();
-      setMsg("Dodano.");
-    } catch (e) {
-      console.error(e);
-      setMsg("Błąd dodawania pytania (konsola).");
-    }
-  });
-
-  // Dodaj odpowiedź
-  btnAddA?.addEventListener("click", async () => {
-    if (!cfg.allowAnswers) return;
-    if (!activeQId) return;
-    try {
-      const ord = nextOrd(answers, RULES.AN);
-      if (!ord) {
-        setMsg(`Limit odpowiedzi: ${RULES.AN}.`);
-        return;
-      }
-      setMsg("Dodaję odpowiedź…");
-      const a = await createAnswer(activeQId, ord, `ODP ${ord}`, cfg.allowPoints ? 0 : 0);
-      answers = await listAnswers(activeQId);
-      await refreshCounts();
-      renderQuestions();
-      renderAnswers();
-      setMsg("Dodano.");
-    } catch (e) {
-      console.error(e);
-      setMsg("Błąd dodawania odpowiedzi (konsola).");
     }
   });
 
