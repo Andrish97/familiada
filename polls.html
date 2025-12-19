@@ -17,9 +17,9 @@
   <header class="topbar">
     <div class="brand">FAMILIADA</div>
     <div class="right">
-      <button class="btn" id="btnBack" type="button">← Moje gry</button>
+      <button class="btn sm" id="btnBack" type="button">← Moje gry</button>
       <span class="who" id="who">—</span>
-      <button class="btn" id="btnLogout" type="button">Wyloguj</button>
+      <button class="btn sm" id="btnLogout" type="button">Wyloguj</button>
     </div>
   </header>
 
@@ -27,8 +27,8 @@
     <div class="rowTop">
       <div>
         <div class="title">Sondaż</div>
-        <div class="hint">
-          Link i QR pojawiają się dopiero po uruchomieniu sondażu i tylko gdy gra spełnia zasady: 10 pytań, 5 odpowiedzi.
+        <div class="hint" id="hintTop">
+          Link i QR pojawiają się po uruchomieniu sondażu.
         </div>
       </div>
 
@@ -43,30 +43,45 @@
       <div class="meta" id="gMeta">—</div>
 
       <div class="row">
-        <input class="inp" id="pollLink" readonly />
-        <button class="btn" id="btnCopy" type="button" disabled>Kopiuj link</button>
-        <button class="btn gold" id="btnOpen" type="button" disabled>Otwórz link</button>
-        <button class="btn" id="btnOpenQr" type="button" disabled>QR na rzutniku</button>
+        <input class="inp" id="pollLink" readonly placeholder="Link pojawi się po uruchomieniu..." />
+
+        <button class="btn sm" id="btnCopy" type="button" disabled>
+          <span class="only-desktop">Kopiuj link</span>
+          <span class="only-mobile">Kopiuj</span>
+        </button>
+
+        <button class="btn sm gold" id="btnOpen" type="button" disabled>
+          <span class="only-desktop">Otwórz link</span>
+          <span class="only-mobile">Otwórz</span>
+        </button>
+
+        <button class="btn sm" id="btnOpenQr" type="button" disabled>QR</button>
       </div>
 
-      <!-- ✅ zostaje TYLKO jeden QR, większy, bez podpisu pod spodem -->
       <div class="row" style="flex-direction:column;align-items:flex-start;">
         <div id="qr" style="width:260px;height:260px;"></div>
       </div>
 
       <div class="row">
-        <button class="btn gold" id="btnStart" type="button">Uruchom sondaż</button>
-        <button class="btn" id="btnReopen" type="button">Otwórz ponownie</button>
-        <button class="btn danger" id="btnClose" type="button">Zakończ sondaż</button>
-        <button class="btn" id="btnPreview" type="button">Podgląd wyników</button>
+        <button class="btn sm gold" id="btnPollAction" type="button">—</button>
+
+        <button class="btn sm" id="btnPreview" type="button">
+          <span class="only-desktop">Podgląd wyników</span>
+          <span class="only-mobile">Wyniki</span>
+        </button>
       </div>
 
-      <pre class="votes" id="votes" style="display:none;"></pre>
+      <div class="card" id="resultsCard" style="display:none; margin-top:12px;">
+        <div class="name">Wyniki</div>
+        <div class="meta" id="resultsMeta">—</div>
+        <div id="resultsList" style="margin-top:10px; display:grid; gap:12px;"></div>
+        <pre id="resultsRaw" style="display:none;"></pre>
+      </div>
     </div>
 
     <div class="card" id="cardEmpty">
       <div class="name">Brak gry</div>
-      <div class="meta">Otwórz stronę z parametrem <b>polls.html?id=...</b> (builder zrobi to automatycznie).</div>
+      <div class="meta">Otwórz stronę z parametrem <b>polls.html?id=...</b>.</div>
     </div>
 
     <div class="foot">
