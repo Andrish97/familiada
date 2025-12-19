@@ -2,8 +2,9 @@
 import { sb } from "../core/supabase.js";
 import { requireAuth, signOut } from "../core/auth.js";
 import { parseQaText, clip as clipN } from "../core/text-import.js";
+import { canEnterEdit } from "../core/game-validate.js";
 
-const RULES = { QN: 10, AN: 5 };
+const RULES = { QN: 10, AN: 6 };
 
 const $ = (id) => document.getElementById(id);
 const clip17 = (s) => clipN(String(s ?? ""), 17);
@@ -15,6 +16,32 @@ const clampPts = (v) => {
   if (!Number.isFinite(n)) return 0;
   return Math.max(0, Math.min(100, Math.floor(n)));
 };
+
+async function resetPollForEditing(gameId) {
+  // draft
+  const { error: gErr } = await sb()
+    .from("games")
+    .update({ status: "draft" })
+    .eq("id", gameId);
+  if (gErr) throw gErr;
+
+  // answers.fixed_points => 0
+  const { data: qs, error: qErr } = await sb()
+    .from("questions")
+    .select("id")
+    .eq("game_id", gameId);
+  if (qErr) throw qErr;
+
+  const qIds = (qs || []).map(x => x.id);
+  if (!qIds.length) return;
+
+  const { error: aErr } = await sb()
+    .from("answers")
+    .update({ fixed_points: 0 })
+    .in("question_id", qIds);
+  if (aErr) throw aErr;
+}
+
 
 function getIdFromQuery() {
   return new URLSearchParams(location.search).get("id");
@@ -153,6 +180,25 @@ export async function bootEditor(cfg) {
     if (game.type === "poll_points") location.href = `editor-poll-points.html?id=${encodeURIComponent(gameId)}`;
     return;
   }
+  // ✅ twarde sprawdzenie edycji (jak w builderze) przy wejściu URL-em
+  const editInfo = canEnterEdit(game);
+  if (!editInfo?.ok) {
+    alert(editInfo?.reason || "Nie możesz edytować tej gry w tym momencie.");
+    location.href = "builder.html";
+    return;
+  }
+
+  if (editInfo.needsResetWarning) {
+    const ok = confirm(
+      "Edycja po sondażu:\n\nDane sondażowe zostaną usunięte, a gra wróci do stanu SZKIC.\n\nKontynuować?"
+    );
+    if (!ok) {
+      location.href = "builder.html";
+      return;
+    }
+    await resetPollForEditing(gameId);
+    game = await loadGame(gameId); // odśwież
+  }
 
   // name
   const gameName = $("gameName");
@@ -284,7 +330,7 @@ export async function bootEditor(cfg) {
       return;
     }
 
-    for (const a of answers) {✕
+    for (const a of answers) {
       const row = document.createElement("div");
       row.className = "arow";
 
