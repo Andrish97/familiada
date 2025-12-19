@@ -21,6 +21,19 @@ const clampPts = (v) => {
   return Math.max(0, Math.min(100, Math.floor(n)));
 };
 
+function calcQuestionPoints(answers) {
+  let sum = 0;
+
+  for (const a of answers) {
+    const p = Number(a.fixed_points);
+    if (!Number.isFinite(p)) continue;
+    if (p < 0 || p > 100) continue; // ignorujemy >100
+    sum += p;
+  }
+
+  return sum;
+}
+
 function debounce(fn, ms = 350) {
   let t = null;
   return (...args) => {
@@ -440,6 +453,24 @@ export async function bootEditor(cfg) {
           setMsg("Błąd zapisu (konsola).");
         }
       };
+
+      if (cfg.allowPoints) {
+      const sum = calcQuestionPoints(answers);
+      const diff = 100 - sum;
+    
+      const remain = document.createElement("div");
+      remain.className = "remainBox";
+    
+      if (diff === 0) {
+        remain.innerHTML = `<span>OK</span><b>100</b>`;
+      } else if (diff > 0) {
+        remain.innerHTML = `<span>ZOSTAŁO</span><b>${diff}</b>`;
+      } else {
+        remain.innerHTML = `<span>ZA DUŻO</span><b>${-diff}</b>`;
+      }
+    
+      aList.appendChild(remain);
+    }
 
       const save = debounce(saveNow, 350);
 
