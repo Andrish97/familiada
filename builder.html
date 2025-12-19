@@ -54,19 +54,25 @@
       <div class="mTitle">Nowa Familiada</div>
       <div class="mSub">Wybierz typ:</div>
 
-      <div class="mGrid">
-        <button class="mCard" id="btnCreateFixed" type="button">
-          <div class="mBig">LOKALNA</div>
-          <div class="mSmall">10 pytań, 5 odpowiedzi</div>
-          <div class="mTiny">Suma punktów ≤ 100 na pytanie</div>
-        </button>
-
-        <button class="mCard" id="btnCreatePoll" type="button">
-          <div class="mBig">SONDAŻOWA</div>
-          <div class="mSmall">10 pytań, 5 odpowiedzi</div>
-          <div class="mTiny">Po zamknięciu normalizuje do 100</div>
-        </button>
-      </div>
+        <div class="mGrid">
+          <button class="mCard" id="btnCreatePollText" type="button">
+            <div class="mBig">TYPOWY SONDAŻ</div>
+            <div class="mSmall">Pytania → odpowiedzi tekstowe</div>
+            <div class="mTiny">Gra dopiero po zamknięciu sondażu</div>
+          </button>
+        
+          <button class="mCard" id="btnCreatePollPoints" type="button">
+            <div class="mBig">PUNKTACJA ODPOWIEDZI</div>
+            <div class="mSmall">Pytania + gotowe odpowiedzi</div>
+            <div class="mTiny">Uczestnicy klikają odpowiedź, wynik normalizuje się do 100</div>
+          </button>
+        
+          <button class="mCard" id="btnCreatePrepared" type="button">
+            <div class="mBig">PREPAROWANY</div>
+            <div class="mSmall">Min 10 pytań • 3–6 odpowiedzi</div>
+            <div class="mTiny">Suma punktów w pytaniu = 100</div>
+          </button>
+        </div>
 
       <div class="mFoot">
         <button class="btn" id="btnCancelType" type="button">Anuluj</button>
