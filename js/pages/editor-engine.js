@@ -243,18 +243,38 @@ export async function bootEditor(cfg) {
     if (!qList) return;
     qList.innerHTML = "";
 
-    // kafelek dodawania gdy pusto
-    if (!questions.length) {
-      const tile = document.createElement("button");
-      tile.type = "button";
-      tile.className = "qcard";
-      tile.innerHTML = `
-        <div class="qprev">+ Dodaj pierwsze pytanie</div>
-        <div class="qmeta">Limit: ${RULES.QN}</div>
-      `;
-      qList.appendChild(tile);
-      return;
-    }
+    // ✅ kafelek dodawania (zawsze)
+    const canAdd = questions.length < RULES.QN;
+    const add = document.createElement("button");
+    add.type = "button";
+    add.className = "qcard";
+    add.disabled = !canAdd;
+    add.innerHTML = `
+      <div class="qprev">${canAdd ? "+ Dodaj pytanie" : "Limit pytań osiągnięty"}</div>
+      <div class="qmeta">${questions.length}/${RULES.QN}</div>
+    `;
+    add.addEventListener("click", async () => {
+      if (!canAdd) return;
+      try {
+        const ord = nextOrd(questions, RULES.QN);
+        if (!ord) return;
+        const q = await createQuestion(gameId, ord, cfg.mode);
+        // domyślnie aktywuj nowo dodane
+        questions = await listQuestions(gameId);
+        activeQId = q.id;
+        activeOrd = q.ord;
+        await loadAnswersForActive();
+        await refreshCounts();
+        renderQuestions();
+        renderEditor();
+        setMsg("Dodano pytanie.");
+      } catch (e) {
+        console.error(e);
+        setMsg("Błąd dodawania pytania (konsola).");
+      }
+    });
+    qList.appendChild(add);
+
 
     for (const q of questions) {
       const el = document.createElement("div");
@@ -319,17 +339,6 @@ export async function bootEditor(cfg) {
     if (!aList) return;
     aList.innerHTML = "";
 
-    // kafelek gdy pusto
-    if (!answers.length) {
-      const tile = document.createElement("button");
-      tile.type = "button";
-      tile.className = "arow";
-      tile.style.cursor = "pointer";
-      tile.innerHTML = `<div style="font-weight:1000;">+ Dodaj pierwszą odpowiedź</div>`;
-      aList.appendChild(tile);
-      return;
-    }
-
     for (const a of answers) {
       const row = document.createElement("div");
       row.className = "arow";
@@ -389,6 +398,39 @@ export async function bootEditor(cfg) {
 
       aList.appendChild(row);
     }
+        const canAdd = answers.length < RULES.AN;
+    const add = document.createElement("button");
+    add.type = "button";
+    add.className = "arow";
+    add.style.cursor = canAdd ? "pointer" : "not-allowed";
+    add.style.opacity = canAdd ? "1" : ".55";
+    add.innerHTML = `
+      <div style="font-weight:1000;">
+        ${canAdd ? "+ Dodaj odpowiedź" : "Limit odpowiedzi osiągnięty"}
+      </div>
+      ${cfg.allowPoints ? `<div style="opacity:.75;text-align:center;">${answers.length}/${RULES.AN}</div>` : ""}
+      <div></div>
+    `;
+
+    add.addEventListener("click", async () => {
+      if (!canAdd || !activeQId) return;
+      try {
+        const ord = nextOrd(answers, RULES.AN);
+        if (!ord) return;
+        const a = await createAnswer(activeQId, ord, `ODP ${ord}`, 0);
+        answers = await listAnswers(activeQId);
+        await refreshCounts();
+        renderQuestions();
+        renderAnswers();
+        setMsg("Dodano odpowiedź.");
+      } catch (e) {
+        console.error(e);
+        setMsg("Błąd dodawania odpowiedzi (konsola).");
+      }
+    });
+
+    aList.appendChild(add);
+
   }
 
   function renderEditor() {
