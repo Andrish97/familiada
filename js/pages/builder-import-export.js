@@ -4,7 +4,7 @@ import { sb } from "../core/supabase.js";
 /* ===== helpers ===== */
 const safeName = (s) => (String(s ?? "Gra").trim() || "Gra").slice(0, 80);
 
-const safeKind = (k) => {
+const safeType = (k) => {
   const v = String(k || "");
   if (v === "poll_text" || v === "poll_points" || v === "prepared") return v;
   // fallback — jak ktoś wklei syf, zróbmy najbezpieczniej:
@@ -46,7 +46,7 @@ export async function exportGame(gameId) {
   if (qErr) throw qErr;
 
   const out = {
-    game: { name: game?.name ?? "Gra", type: safeKind(game?.type) },
+    game: { name: game?.name ?? "Gra", type: safeType(game?.type) },
     questions: [],
   };
 
@@ -75,7 +75,7 @@ export async function importGame(payload, ownerId) {
     throw new Error("Zły format pliku (brak game / questions).");
   }
 
-  const type = safeKind(payload.game.type);
+  const type = safeType(payload.game.type);
   const name = safeName(payload.game.name);
 
   // 1) tworzymy grę (zawsze nowa)
