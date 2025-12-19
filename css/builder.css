@@ -257,3 +257,9 @@
 .editor-body.is-poll #remainRow {
   display: none !important;
 }
+
+<div class="tabs">
+  <button class="tab active" data-tab="poll_text" type="button">Typowy sondaż</button>
+  <button class="tab" data-tab="poll_points" type="button">Punktacja odpowiedzi</button>
+  <button class="tab" data-tab="prepared" type="button">Preparowany</button>
+</div>
