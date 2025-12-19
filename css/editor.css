@@ -339,3 +339,5 @@ body.editor-body .wrap{
 
 .addTile.disabled:hover{ filter:saturate(.6); }
 
+.arow.addTile{ cursor:pointer; }
+.editor.no-points .arow.addTile{ grid-template-columns: 1fr 120px; }
