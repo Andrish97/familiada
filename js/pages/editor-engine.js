@@ -17,6 +17,14 @@ const clampPts = (v) => {
   return Math.max(0, Math.min(100, Math.floor(n)));
 };
 
+function debounce(fn, ms = 350) {
+  let t = null;
+  return (...args) => {
+    clearTimeout(t);
+    t = setTimeout(() => fn(...args), ms);
+  };
+}
+
 async function resetPollForEditing(gameId) {
   // draft
   const { error: gErr } = await sb()
@@ -386,13 +394,12 @@ export async function bootEditor(cfg) {
 
       const bDel = row.querySelector(".aDel");
 
-      const save = async () => {
+      const saveNow = async () => {
         try {
-          setMsg("Zapisuję…");
           const patch = { text: clip17(iText.value) };
           if (cfg.allowPoints) patch.fixed_points = clampPts(iPts.value);
           else patch.fixed_points = 0;
-
+      
           await updateAnswer(a.id, patch);
           setMsg("Zapisano.");
         } catch (e) {
@@ -400,22 +407,26 @@ export async function bootEditor(cfg) {
           setMsg("Błąd zapisu (konsola).");
         }
       };
+      
+      const save = debounce(saveNow, 350);
 
       iText.addEventListener("input", () => {
         if (iText.value.length > 17) iText.value = iText.value.slice(0, 17);
+        setMsg("Piszesz…");
         save();
       });
 
       iPts?.addEventListener("input", () => {
         const v = Number(iPts.value);
         iPts.classList.toggle("tooMuch", isNum(v) && v > 100);
+        setMsg("Piszesz…");
         save();
       });
 
       bDel.addEventListener("click", async () => {
         iText.value = "";
         if (iPts) iPts.value = "0";
-        await save();
+        await saveNow();
       });
 
       aList.appendChild(row);
@@ -477,7 +488,7 @@ export async function bootEditor(cfg) {
   }
 
   // zapis pytania
-  qText?.addEventListener("input", async () => {
+  const saveQuestionDebounced = debounce(async () => {
     if (!activeQId) return;
     try {
       const t = normQ(qText.value);
@@ -490,6 +501,12 @@ export async function bootEditor(cfg) {
       console.error(e);
       setMsg("Błąd zapisu pytania (konsola).");
     }
+  }, 350);
+  
+  qText?.addEventListener("input", () => {
+    if (!activeQId) return;
+    setMsg("Piszesz…");
+    saveQuestionDebounced();
   });
 
   // ====== Import TXT ======
