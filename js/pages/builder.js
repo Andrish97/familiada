@@ -21,8 +21,6 @@ const who = document.getElementById("who");
 const hint = document.getElementById("hint");
 
 const btnLogout = document.getElementById("btnLogout");
-
-const btnNew = document.getElementById("btnNew");
 const btnEdit = document.getElementById("btnEdit");
 const btnPlay = document.getElementById("btnPlay");
 const btnPoll = document.getElementById("btnPoll");
@@ -33,13 +31,6 @@ const btnImport = document.getElementById("btnImport");
 const tabPollText = document.getElementById("tabPollText");
 const tabPollPoints = document.getElementById("tabPollPoints");
 const tabPrepared = document.getElementById("tabPrepared");
-
-// Modal typu gry
-const typeOverlay = document.getElementById("typeOverlay");
-const btnCreatePollText = document.getElementById("btnCreatePollText");
-const btnCreatePollPoints = document.getElementById("btnCreatePollPoints");
-const btnCreatePrepared = document.getElementById("btnCreatePrepared");
-const btnCancelType = document.getElementById("btnCancelType");
 
 // Modal importu JSON
 const importOverlay = document.getElementById("importOverlay");
@@ -55,7 +46,8 @@ let currentUser = null;
 let gamesAll = [];
 let selectedId = null;
 
-let activeTab = KINDS.PREPARED; // domyślnie (Preparowany)
+// DOMYŚLNIE: PREPAROWANY
+let activeTab = KINDS.PREPARED;
 
 /* ================= UI helpers ================= */
 function show(el, on) {
@@ -73,9 +65,6 @@ function setImportMsg(t) {
   importMsg.textContent = t || "";
 }
 
-function openTypeModal() { show(typeOverlay, true); }
-function closeTypeModal() { show(typeOverlay, false); }
-
 function openImportModal() {
   if (importTa) importTa.value = "";
   if (importFile) importFile.value = "";
@@ -92,11 +81,29 @@ function safeDownloadName(name) {
   return `${base}.json`;
 }
 
-function kindLabel(kind) {
-  if (kind === KINDS.POLL_TEXT) return "TYPOWY SONDAŻ";
-  if (kind === KINDS.POLL_POINTS) return "PUNKTACJA";
-  if (kind === KINDS.PREPARED) return "PREPAROWANY";
-  return String(kind || "—").toUpperCase();
+/**
+ * UI-kind (3 zakładki) vs DB-kind (często tylko fixed/poll).
+ * - Jeśli masz nową bazę z kind = poll_text/poll_points/prepared -> działa wprost.
+ * - Jeśli masz starą bazę z kind = fixed/poll ->:
+ *    fixed => prepared
+ *    poll  => poll_text albo poll_points (wnioskujemy po nazwie)
+ */
+function uiKindFromRow(g) {
+  const k = String(g?.kind || "");
+  if (k === KINDS.POLL_TEXT || k === KINDS.POLL_POINTS || k === KINDS.PREPARED) return k;
+  if (k === "fixed") return KINDS.PREPARED;
+  if (k === "poll") {
+    const nm = String(g?.name || "").toLowerCase();
+    return nm.includes("punkt") ? KINDS.POLL_POINTS : KINDS.POLL_TEXT;
+  }
+  return KINDS.PREPARED;
+}
+
+function kindLabel(uiKind) {
+  if (uiKind === KINDS.POLL_TEXT) return "TYPOWY SONDAŻ";
+  if (uiKind === KINDS.POLL_POINTS) return "PUNKTACJA";
+  if (uiKind === KINDS.PREPARED) return "PREPAROWANY";
+  return String(uiKind || "—").toUpperCase();
 }
 
 function statusLabel(st) {
@@ -124,7 +131,7 @@ function setActiveTab(kind) {
 
   // jeśli zaznaczona gra nie pasuje do zakładki – odznacz
   const sel = gamesAll.find(g => g.id === selectedId);
-  if (sel && sel.kind !== activeTab) selectedId = null;
+  if (sel && uiKindFromRow(sel) !== activeTab) selectedId = null;
 
   render();
   updateActionState();
@@ -142,8 +149,7 @@ async function listGames() {
 }
 
 async function ensureLive(gameId) {
-  // jeśli używasz live_state jak wcześniej — zostawiamy.
-  // Jeśli nie masz tabeli, można bezpiecznie wywalić całą funkcję.
+  // jeśli nie masz live_state, ta funkcja się sama “wyciszy”
   try {
     const { data, error } = await sb()
       .from("live_state")
@@ -156,28 +162,65 @@ async function ensureLive(gameId) {
     const { error: insErr } = await sb().from("live_state").insert({ game_id: gameId });
     if (insErr) throw insErr;
   } catch {
-    // celowo ignorujemy – żeby builder nie wywalał, jeśli live_state nie istnieje
+    // ignorujemy: nie każdy ma live_state
   }
 }
 
-async function createGame(kind) {
-  const name =
-    kind === KINDS.POLL_TEXT ? "Nowa gra (Typowy sondaż)" :
-    kind === KINDS.POLL_POINTS ? "Nowa gra (Punktacja)" :
-    "Nowa gra (Preparowany)";
+function defaultNameForUiKind(uiKind) {
+  if (uiKind === KINDS.POLL_TEXT) return "Nowa Familiada (Sondaż)";
+  if (uiKind === KINDS.POLL_POINTS) return "Nowa Familiada (Punktacja)";
+  return "Nowa Familiada (Preparowana)";
+}
 
-  const { data: game, error } = await sb()
+/**
+ * Tworzenie gry:
+ * - najpierw próbujemy wstawić kind = uiKind (pod nową bazę)
+ * - jeśli DB ma check fixed/poll (23514), robimy fallback:
+ *    prepared -> fixed, polls -> poll
+ */
+async function createGame(uiKind) {
+  const name = defaultNameForUiKind(uiKind);
+
+  // 1) próbuj nowy schemat (kind = poll_text/poll_points/prepared)
+  let ins = await sb()
     .from("games")
     .insert({
       name,
       owner_id: currentUser.id,
-      kind,
+      kind: uiKind,
       status: STATUS.DRAFT,
     })
     .select("id,name,kind,status")
     .single();
 
-  if (error) throw error;
+  if (ins.error) {
+    const code = ins.error?.code;
+    const msg = String(ins.error?.message || "");
+    const isKindCheck =
+      code === "23514" ||
+      msg.includes("games_kind_check") ||
+      msg.includes("violates check constraint");
+
+    if (!isKindCheck) throw ins.error;
+
+    // 2) fallback pod starą bazę (kind = fixed/poll)
+    const dbKind = (uiKind === KINDS.PREPARED) ? "fixed" : "poll";
+
+    ins = await sb()
+      .from("games")
+      .insert({
+        name,
+        owner_id: currentUser.id,
+        kind: dbKind,
+        status: STATUS.DRAFT,
+      })
+      .select("id,name,kind,status")
+      .single();
+
+    if (ins.error) throw ins.error;
+  }
+
+  const game = ins.data;
   await ensureLive(game.id);
   return game;
 }
@@ -198,12 +241,6 @@ async function deleteGame(game) {
   }
 }
 
-/**
- * Reset danych sondażowych przy wejściu do edycji ze stanu READY.
- * Minimalna wersja (bez dłubania w tabelach głosów):
- * - games.status => draft
- * - answers.fixed_points => 0 (żeby nie mieszać)
- */
 async function resetPollForEditing(gameId) {
   const { error: gErr } = await sb()
     .from("games")
@@ -231,17 +268,19 @@ async function resetPollForEditing(gameId) {
 
 /* ================= Render ================= */
 function cardGame(g) {
+  const uiKind = uiKindFromRow(g);
+
   const el = document.createElement("div");
   el.className = "card";
 
   el.innerHTML = `
-    <div class="x" title="Usuń">✕</div>
+    <div class="x" title="Usuń">⧗</div>
     <div class="name"></div>
     <div class="meta"></div>
   `;
 
   el.querySelector(".name").textContent = g.name || "—";
-  el.querySelector(".meta").textContent = `${kindLabel(g.kind)} • ${statusLabel(g.status)}`;
+  el.querySelector(".meta").textContent = `${kindLabel(uiKind)} • ${statusLabel(g.status)}`;
 
   el.addEventListener("click", async () => {
     selectedId = g.id;
@@ -258,11 +297,35 @@ function cardGame(g) {
   return el;
 }
 
+function cardAdd(uiKind) {
+  const el = document.createElement("div");
+  el.className = "addCard";
+  el.innerHTML = `
+    <div class="plus">＋</div>
+    <div class="txt">Nowa gra</div>
+    <div class="sub">${kindLabel(uiKind)}</div>
+  `;
+  el.addEventListener("click", async () => {
+    try {
+      const g = await createGame(uiKind);
+      selectedId = g.id;
+      await refresh();
+    } catch (e) {
+      console.error("[builder] create error:", e);
+      alert("Nie udało się utworzyć gry (sprawdź konsolę).");
+    }
+  });
+  return el;
+}
+
 function render() {
   if (!grid) return;
   grid.innerHTML = "";
 
-  const games = (gamesAll || []).filter(g => (g.kind || "") === activeTab);
+  const games = (gamesAll || []).filter(g => uiKindFromRow(g) === activeTab);
+
+  // pierwszy kafelek: dodawanie w aktualnej zakładce
+  grid.appendChild(cardAdd(activeTab));
 
   for (const g of games) {
     const el = cardGame(g);
@@ -278,7 +341,7 @@ function render() {
     canExport: false,
   });
 
-  setHint("Kliknij kafelek, żeby go zaznaczyć.");
+  setHint("Kliknij kafelek, żeby go zaznaczyć. Nową grę dodasz kafelkiem „＋”.");
 }
 
 /* ================= Button logic ================= */
@@ -291,11 +354,9 @@ async function updateActionState() {
 
   let canExport = true;
 
-  // EDYCJA
   const edit = canEnterEdit(sel);
   const canEdit = !!edit.ok;
 
-  // GRA
   let canPlay = false;
   try {
     const chk = await validateGameReadyToPlay(sel.id);
@@ -304,14 +365,10 @@ async function updateActionState() {
     console.error("[builder] validateGameReadyToPlay error:", e);
   }
 
-  // SONDAŻ (wejście na polls.html)
   let canPoll = false;
   try {
     const entry = await validatePollEntry(sel.id);
     if (entry.ok) {
-      // przycisk ma sens, jeśli:
-      // - status poll_open/ready => zawsze można wejść
-      // - draft => tylko jeśli spełnia warunki uruchomienia (żeby nie wchodzić w pustą stronę)
       if (sel.status === STATUS.POLL_OPEN || sel.status === STATUS.READY) {
         canPoll = true;
       } else {
@@ -336,11 +393,23 @@ async function readFileAsText(file) {
   });
 }
 
-/* ================= Navigation helpers ================= */
-function editorUrlForKind(kind, id) {
-  // Ty masz 3 pliki edytorów — tu ustaw swoje nazwy:
-  if (kind === KINDS.POLL_TEXT) return `editor-poll-text.html?id=${encodeURIComponent(id)}`;
-  if (kind === KINDS.POLL_POINTS) return `editor-poll-points.html?id=${encodeURIComponent(id)}`;
+function editorUrlForKind(kind, id, name) {
+  // wspieramy i nowe kind-y, i stare fixed/poll
+  const k = String(kind || "");
+  if (k === KINDS.POLL_TEXT) return `editor-poll-text.html?id=${encodeURIComponent(id)}`;
+  if (k === KINDS.POLL_POINTS) return `editor-poll-points.html?id=${encodeURIComponent(id)}`;
+  if (k === KINDS.PREPARED) return `editor-prepared.html?id=${encodeURIComponent(id)}`;
+
+  // stare:
+  if (k === "fixed") return `editor-prepared.html?id=${encodeURIComponent(id)}`;
+  if (k === "poll") {
+    const nm = String(name || "").toLowerCase();
+    const isPoints = nm.includes("punkt");
+    return isPoints
+      ? `editor-poll-points.html?id=${encodeURIComponent(id)}`
+      : `editor-poll-text.html?id=${encodeURIComponent(id)}`;
+  }
+
   return `editor-prepared.html?id=${encodeURIComponent(id)}`;
 }
 
@@ -348,10 +417,8 @@ function editorUrlForKind(kind, id) {
 async function refresh() {
   gamesAll = await listGames();
 
-  // jeśli usunięto zaznaczoną
   if (selectedId && !gamesAll.some(g => g.id === selectedId)) selectedId = null;
 
-  // jeśli aktywna zakładka nie ma gier, nadal renderujemy (pusty grid)
   render();
   await updateActionState();
 }
@@ -365,62 +432,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     location.href = "index.html";
   });
 
-  // tabs
   tabPollText?.addEventListener("click", () => setActiveTab(KINDS.POLL_TEXT));
   tabPollPoints?.addEventListener("click", () => setActiveTab(KINDS.POLL_POINTS));
   tabPrepared?.addEventListener("click", () => setActiveTab(KINDS.PREPARED));
-
-  // new game modal
-  btnNew?.addEventListener("click", async () => {
-    try {
-      const g = await createGame(activeTab);
-      selectedId = g.id;
-      await refresh();
-    } catch (e) {
-      console.error(e);
-      alert(e?.message || "Nie udało się utworzyć gry.");
-    }
-  });
-  btnCancelType?.addEventListener("click", closeTypeModal);
-
-  btnCreatePollText?.addEventListener("click", async () => {
-    closeTypeModal();
-    try {
-      const g = await createGame(KINDS.POLL_TEXT);
-      selectedId = g.id;
-      setActiveTab(KINDS.POLL_TEXT);
-      await refresh();
-    } catch (e) {
-      console.error(e);
-      alert("Nie udało się utworzyć gry.");
-    }
-  });
-
-  btnCreatePollPoints?.addEventListener("click", async () => {
-    closeTypeModal();
-    try {
-      const g = await createGame(KINDS.POLL_POINTS);
-      selectedId = g.id;
-      setActiveTab(KINDS.POLL_POINTS);
-      await refresh();
-    } catch (e) {
-      console.error(e);
-      alert("Nie udało się utworzyć gry.");
-    }
-  });
-
-  btnCreatePrepared?.addEventListener("click", async () => {
-    closeTypeModal();
-    try {
-      const g = await createGame(KINDS.PREPARED);
-      selectedId = g.id;
-      setActiveTab(KINDS.PREPARED);
-      await refresh();
-    } catch (e) {
-      console.error(e);
-      alert("Nie udało się utworzyć gry.");
-    }
-  });
 
   // EDIT
   btnEdit?.addEventListener("click", async () => {
@@ -454,7 +468,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
     }
 
-    location.href = editorUrlForKind(g.kind, g.id);
+    location.href = editorUrlForKind(g.kind, g.id, g.name);
   });
 
   // PLAY
@@ -487,7 +501,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         return;
       }
 
-      // jeśli draft, nie wpuszczamy na “pustą” stronę
       if (g.status !== STATUS.POLL_OPEN && g.status !== STATUS.READY) {
         const chk = await validatePollReadyToOpen(selectedId);
         if (!chk.ok) {
@@ -543,17 +556,19 @@ document.addEventListener("DOMContentLoaded", async () => {
         return;
       }
 
-      // UWAGA: import/export to “badziewie transportowe” — nie walidujemy
       const obj = JSON.parse(txt);
       const newId = await importGame(obj, currentUser.id);
 
       closeImportModal();
       selectedId = newId;
 
-      // ustaw zakładkę na typ świeżo zaimportowanej gry
       try {
         const ng = await loadGameBasic(newId);
-        if (ng?.kind) setActiveTab(ng.kind);
+        if (ng?.kind) {
+          // ustaw zakładkę wg UI-kind
+          const ui = uiKindFromRow(ng);
+          setActiveTab(ui);
+        }
       } catch {}
 
       await refresh();
