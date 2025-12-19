@@ -23,7 +23,7 @@ const safePts = (v) => {
 /*
   FORMAT:
   {
-    game: { name, kind }, // kind: poll_text | poll_points | prepared
+    game: { name, type }, // type: poll_text | poll_points | prepared
     questions: [
       { text, answers: [{ text, fixed_points }] }
     ]
@@ -33,7 +33,7 @@ const safePts = (v) => {
 export async function exportGame(gameId) {
   const { data: game, error: gErr } = await sb()
     .from("games")
-    .select("id,name,kind")
+    .select("id,name,type")
     .eq("id", gameId)
     .single();
   if (gErr) throw gErr;
@@ -46,7 +46,7 @@ export async function exportGame(gameId) {
   if (qErr) throw qErr;
 
   const out = {
-    game: { name: game?.name ?? "Gra", kind: safeKind(game?.kind) },
+    game: { name: game?.name ?? "Gra", type: safeKind(game?.type) },
     questions: [],
   };
 
@@ -75,7 +75,7 @@ export async function importGame(payload, ownerId) {
     throw new Error("Zły format pliku (brak game / questions).");
   }
 
-  const kind = safeKind(payload.game.kind);
+  const type = safeKind(payload.game.type);
   const name = safeName(payload.game.name);
 
   // 1) tworzymy grę (zawsze nowa)
@@ -83,7 +83,7 @@ export async function importGame(payload, ownerId) {
     .from("games")
     .insert({
       name,
-      kind,
+      type,
       status: "draft",
       owner_id: ownerId,
     })
