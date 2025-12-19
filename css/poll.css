@@ -10,12 +10,13 @@ body.pollpub-body{
   justify-content:center;
 }
 
-.wrap{
-  width:min(720px,94vw);
+/* poll ma własny “wrap” (węższy niż base) */
+body.pollpub-body .wrap{
+  max-width:720px;
   padding:18px;
 }
 
-.card{
+body.pollpub-body .card{
   border-radius:22px;
   border:1px solid var(--line);
   background: var(--card);
@@ -23,21 +24,22 @@ body.pollpub-body{
   box-shadow:0 24px 60px rgba(0,0,0,.45);
 }
 
-.brand{
+/* nagłówki */
+body.pollpub-body .brand{
   font-weight:1000;
   letter-spacing:.18em;
   text-transform:uppercase;
   color: var(--gold);
 }
 
-.title{
+body.pollpub-body .title{
   font-weight:1000;
   font-size:18px;
   margin-top:10px;
   letter-spacing:.06em;
 }
 
-.sub{
+body.pollpub-body .sub{
   opacity:.82;
   font-size:13px;
   margin-top:6px;
@@ -45,6 +47,7 @@ body.pollpub-body{
 }
 
 .qbox{ margin-top:14px; }
+
 .qtext{
   font-weight:1000;
   font-size:16px;
@@ -52,12 +55,12 @@ body.pollpub-body{
   line-height:1.25;
 }
 
+/* points mode answers */
 .alist{
   display:grid;
   gap:10px;
 }
 
-/* buttons answers (points mode) */
 .abtn{
   padding:14px 14px;
   border-radius:18px;
@@ -77,7 +80,7 @@ body.pollpub-body{
   transform:none;
 }
 
-/* text mode row */
+/* text mode input row */
 .trow{
   display:flex;
   gap:10px;
@@ -85,17 +88,11 @@ body.pollpub-body{
   flex-wrap:wrap;
 }
 
-.inp{
+/* tu NIE nadpisujemy globalnej .inp — tylko doprecyzowanie w kontekście poll */
+.trow .inp{
   flex: 1 1 260px;
-  padding:12px 12px;
-  border-radius:14px;
-  border:1px solid var(--line2);
-  background: rgba(255,255,255,.06);
-  color:#fff;
-  font-weight:900;
-  outline:none;
+  padding:12px 12px; /* ciut większy niż standard */
 }
-.inp:focus{ border-color: rgba(255,234,166,.45); }
 
 .tinyHint{
   margin-top:10px;
