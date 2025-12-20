@@ -1,17 +1,8 @@
 // js/pages/polls.js
 import { sb } from "../core/supabase.js";
 import { requireAuth, signOut } from "../core/auth.js";
-import { guardDesktopOnly } from "../core/device-guard.js";
 import { confirmModal } from "../core/modal.js";
 import QRCode from "https://cdn.jsdelivr.net/npm/qrcode@1.5.3/+esm";
-
-import { TYPES, STATUS, RULES } from "../core/game-validate.js";
-
-guardDesktopOnly({ message: "Sondaże są dostępne tylko na komputerze." });
-
-/* =======================
-   Helpers
-======================= */
 
 const qs = new URLSearchParams(location.search);
 const gameId = qs.get("id");
@@ -33,7 +24,6 @@ const hintTop = $("hintTop");
 const gName = $("gName");
 const gMeta = $("gMeta");
 const pollLinkEl = $("pollLink");
-
 const qrBox = $("qr");
 
 const btnCopy = $("btnCopy");
@@ -53,15 +43,31 @@ const textCloseList = $("textCloseList");
 const btnCancelTextClose = $("btnCancelTextClose");
 const btnFinishTextClose = $("btnFinishTextClose");
 
+const TYPES = {
+  POLL_TEXT: "poll_text",
+  POLL_POINTS: "poll_points",
+  PREPARED: "prepared",
+};
+
+const STATUS = {
+  DRAFT: "draft",
+  POLL_OPEN: "poll_open",
+  READY: "ready",
+};
+
+const RULES = {
+  QN_MIN: 10,
+  AN_MIN: 3,
+  AN_MAX: 6,
+};
+
 let game = null;
 let textCloseModel = null;
-let msgTimer = null;
 
 function setMsg(t) {
   if (!msg) return;
   msg.textContent = t || "";
-  clearTimeout(msgTimer);
-  if (t) msgTimer = setTimeout(() => (msg.textContent = ""), 2400);
+  if (t) setTimeout(() => (msg.textContent = ""), 2400);
 }
 
 function typePL(type) {
@@ -124,15 +130,29 @@ async function renderSmallQr(link) {
 }
 
 function setLinkUiVisible(on) {
-  if (btnCopy) btnCopy.disabled = !on;
-  if (btnOpen) btnOpen.disabled = !on;
-  if (btnOpenQr) btnOpenQr.disabled = !on;
+  btnCopy && (btnCopy.disabled = !on);
+  btnOpen && (btnOpen.disabled = !on);
+  btnOpenQr && (btnOpenQr.disabled = !on);
   if (!on) clearQr();
 }
 
-/* =======================
-   DB loaders
-======================= */
+function setActionButton(label, disabled, hint) {
+  if (btnPollAction) {
+    btnPollAction.textContent = label;
+    btnPollAction.disabled = !!disabled;
+  }
+  if (hintTop) hintTop.textContent = hint || "";
+}
+
+function updatePreviewButtonState() {
+  if (!btnPreview || !game) return;
+
+  const st = game.status || STATUS.DRAFT;
+  const isPollType = game.type === TYPES.POLL_TEXT || game.type === TYPES.POLL_POINTS;
+  const okStatus = st === STATUS.POLL_OPEN || st === STATUS.READY;
+
+  btnPreview.disabled = !(isPollType && okStatus);
+}
 
 async function loadGame() {
   const { data, error } = await sb()
@@ -140,7 +160,6 @@ async function loadGame() {
     .select("id,name,type,status,share_key_poll,poll_opened_at,poll_closed_at")
     .eq("id", gameId)
     .single();
-
   if (error) throw error;
   return data;
 }
@@ -161,7 +180,6 @@ async function listQuestionsBasic() {
     .select("id,ord,text")
     .eq("game_id", gameId)
     .order("ord", { ascending: true });
-
   if (error) throw error;
   return data || [];
 }
@@ -176,15 +194,28 @@ async function countAnswersForQuestion(qid) {
   return count || 0;
 }
 
+async function getLastSessionIdForQuestion(questionId) {
+  const { data, error } = await sb()
+    .from("poll_sessions")
+    .select("id,created_at")
+    .eq("game_id", gameId)
+    .eq("question_id", questionId)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) throw error;
+  return data?.id || null;
+}
+
 /* =======================
-   Walidacje UI (start/close/reopen)
+   WALIDACJE (UI)
 ======================= */
 
 async function validateCanOpen(g) {
-  if ((g.status || STATUS.DRAFT) !== STATUS.DRAFT) {
+  if (g.status !== STATUS.DRAFT) {
     return { ok: false, reason: "Sondaż można uruchomić tylko ze stanu SZKIC." };
   }
-
   if (g.type === TYPES.PREPARED) {
     return { ok: false, reason: "Gra preparowana nie ma sondażu." };
   }
@@ -214,34 +245,21 @@ async function validateCanOpen(g) {
 }
 
 async function validateCanReopen(g) {
-  if ((g.status || STATUS.DRAFT) !== STATUS.READY) {
-    return { ok: false, reason: "Ponowne uruchomienie jest możliwe tylko gdy sondaż jest ZAMKNIĘTY." };
+  if (g.status !== STATUS.READY) {
+    return { ok: false, reason: "Ponowne uruchomienie możliwe tylko gdy sondaż jest ZAMKNIĘTY." };
   }
-  // zasady jak start, tylko udajemy draft
-  return await validateCanOpen({ ...g, status: STATUS.DRAFT });
-}
-
-async function getLastSessionIdForQuestion(questionId) {
-  const { data, error } = await sb()
-    .from("poll_sessions")
-    .select("id,created_at")
-    .eq("game_id", gameId)
-    .eq("question_id", questionId)
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  if (error) throw error;
-  return data?.id || null;
+  return { ok: true, reason: "Wszystkie poprzednie dane zostaną usunięte." };
 }
 
 async function validateCanClose(g) {
-  if ((g.status || STATUS.DRAFT) !== STATUS.POLL_OPEN) {
+  if (g.status !== STATUS.POLL_OPEN) {
     return { ok: false, reason: "Sondaż można zamknąć tylko gdy jest OTWARTY." };
   }
 
+  const qsList = await listQuestionsBasic();
+
   if (g.type === TYPES.POLL_POINTS) {
-    const qsList = await listQuestionsBasic();
+    // warunek: w każdym pytaniu co najmniej 2 odpowiedzi mają głosy >0
     for (const q of qsList) {
       const sid = await getLastSessionIdForQuestion(q.id);
       if (!sid) return { ok: false, reason: "Brak aktywnej sesji głosowania." };
@@ -253,19 +271,17 @@ async function validateCanClose(g) {
         .eq("question_id", q.id);
 
       if (error) throw error;
+
       const uniq = new Set((data || []).map((x) => x.answer_id).filter(Boolean));
       if (uniq.size < 2) {
-        return {
-          ok: false,
-          reason: "Aby zamknąć: w każdym pytaniu co najmniej 2 odpowiedzi muszą mieć głosy > 0.",
-        };
+        return { ok: false, reason: "Aby zamknąć: w każdym pytaniu ≥ 2 odpowiedzi muszą mieć głosy > 0." };
       }
     }
     return { ok: true, reason: "" };
   }
 
   if (g.type === TYPES.POLL_TEXT) {
-    const qsList = await listQuestionsBasic();
+    // warunek: w każdym pytaniu >=3 różne odpowiedzi
     for (const q of qsList) {
       const sid = await getLastSessionIdForQuestion(q.id);
       if (!sid) return { ok: false, reason: "Brak aktywnej sesji." };
@@ -280,7 +296,7 @@ async function validateCanClose(g) {
 
       const uniq = new Set((data || []).map((x) => (x.answer_norm || "").trim()).filter(Boolean));
       if (uniq.size < 3) {
-        return { ok: false, reason: "Aby zamknąć: w każdym pytaniu muszą być co najmniej 3 różne odpowiedzi." };
+        return { ok: false, reason: "Aby zamknąć: w każdym pytaniu muszą być ≥ 3 różne odpowiedzi." };
       }
     }
     return { ok: true, reason: "" };
@@ -290,18 +306,17 @@ async function validateCanClose(g) {
 }
 
 /* =======================
-   Preview wyników
+   PREVIEW (panel)
 ======================= */
 
 async function previewResults() {
-  if (!game || !resultsCard || !resultsList || !resultsMeta) return;
+  if (!game) return;
 
   resultsCard.style.display = "";
   resultsList.innerHTML = "";
   resultsMeta.textContent = "Ładuję…";
 
   const qsList = await listQuestionsBasic();
-  const out = [];
 
   if (game.type === TYPES.POLL_POINTS) {
     for (const q of qsList) {
@@ -312,7 +327,6 @@ async function previewResults() {
         .select("id,ord,text")
         .eq("question_id", q.id)
         .order("ord", { ascending: true });
-
       if (aErr) throw aErr;
 
       const counts = new Map();
@@ -324,55 +338,63 @@ async function previewResults() {
           .select("answer_id")
           .eq("poll_session_id", sid)
           .eq("question_id", q.id);
-
         if (vErr) throw vErr;
-        for (const v of votes || []) counts.set(v.answer_id, (counts.get(v.answer_id) || 0) + 1);
-      }
 
-      out.push({
-        q,
-        answers: (ans || []).map((a) => ({ text: a.text, val: counts.get(a.id) || 0 })),
-      });
-    }
-    resultsMeta.textContent = "Podgląd: liczba głosów w ostatniej sesji (na pytanie).";
-  } else {
-    // poll_text
-    for (const q of qsList) {
-      const sid = await getLastSessionIdForQuestion(q.id);
-      const map = new Map();
-
-      if (sid) {
-        const { data, error } = await sb()
-          .from("poll_text_entries")
-          .select("answer_norm")
-          .eq("poll_session_id", sid)
-          .eq("question_id", q.id);
-
-        if (error) throw error;
-
-        for (const r of data || []) {
-          const k = (r.answer_norm || "").trim();
-          if (!k) continue;
-          map.set(k, (map.get(k) || 0) + 1);
+        for (const v of votes || []) {
+          counts.set(v.answer_id, (counts.get(v.answer_id) || 0) + 1);
         }
       }
 
-      const rows = [...map.entries()]
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 12)
-        .map(([txt, cnt]) => ({ text: txt, val: cnt }));
+      const box = document.createElement("div");
+      box.className = "resultQ";
+      box.innerHTML = `<div class="qTitle">P${q.ord}: ${q.text}</div>`;
 
-      out.push({ q, answers: rows });
+      for (const a of ans || []) {
+        const row = document.createElement("div");
+        row.className = "aRow";
+        row.innerHTML = `<div class="aTxt"></div><div class="aVal"></div>`;
+        row.querySelector(".aTxt").textContent = a.text;
+        row.querySelector(".aVal").textContent = String(counts.get(a.id) || 0);
+        box.appendChild(row);
+      }
+
+      resultsList.appendChild(box);
     }
-    resultsMeta.textContent = "Podgląd: agregacja odpowiedzi (lowercase + trim) w ostatniej sesji.";
+
+    resultsMeta.textContent = "Podgląd: liczba głosów w ostatniej sesji (na pytanie).";
+    return;
   }
 
-  for (const item of out) {
+  // poll_text
+  for (const q of qsList) {
+    const sid = await getLastSessionIdForQuestion(q.id);
+    const map = new Map();
+
+    if (sid) {
+      const { data, error } = await sb()
+        .from("poll_text_entries")
+        .select("answer_norm")
+        .eq("poll_session_id", sid)
+        .eq("question_id", q.id);
+      if (error) throw error;
+
+      for (const r of data || []) {
+        const k = (r.answer_norm || "").trim();
+        if (!k) continue;
+        map.set(k, (map.get(k) || 0) + 1);
+      }
+    }
+
+    const rows = [...map.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 12)
+      .map(([txt, cnt]) => ({ text: txt, val: cnt }));
+
     const box = document.createElement("div");
     box.className = "resultQ";
-    box.innerHTML = `<div class="qTitle">P${item.q.ord}: ${item.q.text}</div>`;
+    box.innerHTML = `<div class="qTitle">P${q.ord}: ${q.text}</div>`;
 
-    for (const a of item.answers) {
+    for (const a of rows) {
       const row = document.createElement("div");
       row.className = "aRow";
       row.innerHTML = `<div class="aTxt"></div><div class="aVal"></div>`;
@@ -383,13 +405,15 @@ async function previewResults() {
 
     resultsList.appendChild(box);
   }
+
+  resultsMeta.textContent = "Podgląd: agregacja odpowiedzi (lowercase + trim) w ostatniej sesji.";
 }
 
 /* =======================
-   poll_text: zamknięcie z panelem merge/delete
+   poll_text CLOSE PANEL (merge + normalize)
 ======================= */
 
-function clip17Final(s) {
+function clip17(s) {
   const t = String(s ?? "").trim();
   if (!t) return "";
   return t.length > 17 ? t.slice(0, 17) : t;
@@ -405,11 +429,7 @@ function normalizeTo100Int(items) {
   const raw = top.map((x) => {
     const r = (100 * (x.count | 0)) / total;
     const f = Math.floor(r);
-    return { ...x, raw: r, floor: f, frac: r - f };
-  });
-
-  raw.forEach((x) => {
-    if (x.floor < 1) x.floor = 1;
+    return { ...x, raw: r, floor: Math.max(1, f), frac: r - f };
   });
 
   let sum = raw.reduce((s, x) => s + x.floor, 0);
@@ -422,7 +442,7 @@ function normalizeTo100Int(items) {
     diff = -diff;
     raw.sort((a, b) => b.floor - a.floor);
     let i = 0;
-    while (diff > 0 && i < raw.length * 5) {
+    while (diff > 0 && i < raw.length * 10) {
       const idx = i % raw.length;
       if (raw[idx].floor > 1) {
         raw[idx].floor -= 1;
@@ -441,7 +461,8 @@ async function buildTextClosePanel() {
   if (!textCloseCard || !textCloseList || !textCloseMeta) return null;
 
   textCloseCard.style.display = "";
-  if (resultsCard) resultsCard.style.display = "none";
+  resultsCard && (resultsCard.style.display = "none");
+
   textCloseList.innerHTML = "";
   textCloseMeta.textContent = "Ładuję odpowiedzi z ostatniej sesji…";
 
@@ -469,7 +490,7 @@ async function buildTextClosePanel() {
     }
 
     const items = [...map.entries()]
-      .map(([text, count]) => ({ text, count }))
+      .map(([txt, count]) => ({ text: txt, count }))
       .sort((a, b) => b.count - a.count);
 
     model.push({ question_id: q.id, ord: q.ord, text: q.text, items });
@@ -485,7 +506,7 @@ async function buildTextClosePanel() {
       <div class="head">
         <div>
           <div class="qTitle">P${q.ord}: ${q.text}</div>
-          <div class="qHint">Przeciągnij, żeby połączyć • max 17 znaków w finalnych odpowiedziach</div>
+          <div class="qHint">Przeciągnij, żeby połączyć • final max 17 znaków</div>
         </div>
       </div>
       <div class="tcList"></div>
@@ -552,29 +573,21 @@ async function buildTextClosePanel() {
 }
 
 /* =======================
-   UI
+   REFRESH UI
 ======================= */
-
-function setActionButton(label, disabled, hint) {
-  if (btnPollAction) {
-    btnPollAction.textContent = label;
-    btnPollAction.disabled = !!disabled;
-  }
-  if (hintTop) hintTop.textContent = hint || "";
-}
 
 async function refresh() {
   if (!gameId) {
-    if (cardMain) cardMain.style.display = "none";
-    if (cardEmpty) cardEmpty.style.display = "";
+    cardMain && (cardMain.style.display = "none");
+    cardEmpty && (cardEmpty.style.display = "");
     setMsg("Brak parametru id.");
     return;
   }
 
   game = await loadGame();
 
-  if (cardEmpty) cardEmpty.style.display = "none";
-  if (cardMain) cardMain.style.display = "";
+  cardEmpty && (cardEmpty.style.display = "none");
+  cardMain && (cardMain.style.display = "");
 
   setChips(game);
 
@@ -595,8 +608,8 @@ async function refresh() {
   setLinkUiVisible(false);
   clearQr();
 
-  if (textCloseCard) textCloseCard.style.display = "none";
-  if (resultsCard) resultsCard.style.display = "none";
+  resultsCard && (resultsCard.style.display = "none");
+  textCloseCard && (textCloseCard.style.display = "none");
   textCloseModel = null;
 
   const st = game.status || STATUS.DRAFT;
@@ -608,7 +621,8 @@ async function refresh() {
     await renderSmallQr(link);
   }
 
-  // przycisk stanowy
+  updatePreviewButtonState();
+
   if (game.type === TYPES.PREPARED) {
     setActionButton("Brak sondażu", true, "Gra preparowana nie ma sondażu.");
     return;
@@ -616,13 +630,21 @@ async function refresh() {
 
   if (st === STATUS.DRAFT) {
     const chk = await validateCanOpen(game);
-    setActionButton("Uruchomić sondaż", !chk.ok, chk.ok ? "Gotowe do uruchomienia." : chk.reason);
+    setActionButton(
+      "Uruchomić sondaż",
+      !chk.ok,
+      chk.ok ? "Gotowe do uruchomienia." : chk.reason
+    );
     return;
   }
 
   if (st === STATUS.POLL_OPEN) {
     const chk = await validateCanClose(game);
-    setActionButton("Zamknąć sondaż", !chk.ok, chk.ok ? "Możesz zamknąć sondaż." : chk.reason);
+    setActionButton(
+      "Zamknąć sondaż",
+      !chk.ok,
+      chk.ok ? "Możesz zamknąć sondaż." : chk.reason
+    );
     return;
   }
 
@@ -631,7 +653,7 @@ async function refresh() {
     setActionButton(
       "Uruchomić ponownie",
       !chk.ok,
-      chk.ok ? "Otworzy nową sesję (poprzednie dane przestają być aktywne)." : chk.reason
+      chk.ok ? chk.reason : chk.reason
     );
     return;
   }
@@ -640,7 +662,7 @@ async function refresh() {
 }
 
 /* =======================
-   Start + eventy
+   INIT
 ======================= */
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -676,12 +698,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
   btnPreview?.addEventListener("click", async () => {
-    if (!resultsCard) return;
-    if (resultsCard.style.display === "none" || resultsCard.style.display === "") {
-      await previewResults();
-    } else {
-      resultsCard.style.display = "none";
-    }
+    if (!game || btnPreview.disabled) return;
+    if (resultsCard?.style.display === "none") await previewResults();
+    else resultsCard.style.display = "none";
   });
 
   btnPollAction?.addEventListener("click", async () => {
@@ -692,10 +711,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     // START
     if (st === STATUS.DRAFT) {
       const chk = await validateCanOpen(game);
-      if (!chk.ok) {
-        setMsg(chk.reason);
-        return;
-      }
+      if (!chk.ok) return setMsg(chk.reason);
 
       const ok = await confirmModal({
         title: "Uruchomić sondaż?",
@@ -706,10 +722,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (!ok) return;
 
       try {
-        const { error } = await sb().rpc("poll_open", {
-          p_game_id: gameId,
-          p_key: game.share_key_poll,
-        });
+        const { error } = await sb().rpc("poll_open", { p_game_id: gameId, p_key: game.share_key_poll });
         if (error) throw error;
 
         setMsg("Sondaż uruchomiony.");
@@ -724,10 +737,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     // CLOSE
     if (st === STATUS.POLL_OPEN) {
       const chk = await validateCanClose(game);
-      if (!chk.ok) {
-        setMsg(chk.reason);
-        return;
-      }
+      if (!chk.ok) return setMsg(chk.reason);
 
       // poll_points: zamykamy od razu
       if (game.type === TYPES.POLL_POINTS) {
@@ -758,10 +768,10 @@ document.addEventListener("DOMContentLoaded", async () => {
       // poll_text: panel merge/delete + finalizacja
       try {
         textCloseModel = await buildTextClosePanel();
-        setMsg("Edytuj odpowiedzi, a potem kliknij „Zamknij i przelicz”.");
+        setMsg("Połącz/usuń odpowiedzi, a potem kliknij „Zamknij i przelicz”.");
       } catch (e) {
         console.error("[polls] build text close:", e);
-        alert("Nie udało się wczytać odpowiedzi tekstowych.");
+        alert(`Nie udało się wczytać odpowiedzi.\n\n${e?.message || e}`);
       }
       return;
     }
@@ -769,24 +779,18 @@ document.addEventListener("DOMContentLoaded", async () => {
     // REOPEN
     if (st === STATUS.READY) {
       const chk = await validateCanReopen(game);
-      if (!chk.ok) {
-        setMsg(chk.reason);
-        return;
-      }
+      if (!chk.ok) return setMsg(chk.reason);
 
       const ok = await confirmModal({
         title: "Uruchomić ponownie?",
-        text: "Otworzyć sondaż ponownie? Poprzednie dane nie będą użyte w aktywnej sesji.",
+        text: "Otworzyć sondaż ponownie? Wszystkie poprzednie dane zostaną usunięte.",
         okText: "Otwórz ponownie",
         cancelText: "Anuluj",
       });
       if (!ok) return;
 
       try {
-        const { error } = await sb().rpc("poll_open", {
-          p_game_id: gameId,
-          p_key: game.share_key_poll,
-        });
+        const { error } = await sb().rpc("poll_open", { p_game_id: gameId, p_key: game.share_key_poll });
         if (error) throw error;
 
         setMsg("Sondaż uruchomiony ponownie.");
@@ -800,7 +804,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
   btnCancelTextClose?.addEventListener("click", () => {
-    if (textCloseCard) textCloseCard.style.display = "none";
+    textCloseCard.style.display = "none";
     textCloseModel = null;
     setMsg("Anulowano zamykanie (sondaż dalej otwarty).");
   });
@@ -812,23 +816,20 @@ document.addEventListener("DOMContentLoaded", async () => {
     const payloadItems = [];
 
     for (const q of textCloseModel) {
-      const cleaned = (q.items || [])
-        .map((x) => ({ text: clip17Final(x.text), count: Number(x.count) || 0 }))
+      const cleaned = q.items
+        .map((x) => ({ text: clip17(x.text), count: Number(x.count) || 0 }))
         .filter((x) => x.text && x.count > 0);
 
       const final = normalizeTo100Int(cleaned)
-        .map((x) => ({ text: clip17Final(x.text), points: Number(x.points) || 0 }))
+        .map((x) => ({ text: clip17(x.text), points: Number(x.points) || 0 }))
         .filter((x) => x.text);
 
       if (final.length < 3) {
-        alert(`Pytanie ${q.ord}: po edycji zostało mniej niż 3 odpowiedzi. Dodaj/połącz inaczej.`);
+        alert(`Pytanie ${q.ord}: po edycji zostało mniej niż 3 odpowiedzi. Połącz/usuwaj inaczej.`);
         return;
       }
 
-      payloadItems.push({
-        question_id: q.question_id,
-        answers: final,
-      });
+      payloadItems.push({ question_id: q.question_id, answers: final });
     }
 
     const ok = await confirmModal({
@@ -848,7 +849,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (error) throw error;
 
       setMsg("Sondaż zamknięty. Gra gotowa.");
-      if (textCloseCard) textCloseCard.style.display = "none";
+      textCloseCard.style.display = "none";
       textCloseModel = null;
       await refresh();
     } catch (e) {
@@ -858,4 +859,134 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
   await refresh();
+});
+
+
+// js/pages/poll-points.js
+import { sb } from "../core/supabase.js";
+
+const qs = new URLSearchParams(location.search);
+const gameId = qs.get("id");
+const key = qs.get("key");
+
+const $ = (id) => document.getElementById(id);
+
+const msg = $("msg");
+const title = $("title");
+const qText = $("qText");
+const answersBox = $("answers");
+const btnNext = $("btnNext");
+
+function setMsg(t) {
+  if (!msg) return;
+  msg.textContent = t || "";
+}
+
+function getVoterToken() {
+  const k = `fam_voter_${gameId}_${key}`;
+  let t = localStorage.getItem(k);
+  if (!t) {
+    t = (crypto?.randomUUID?.() || `${Date.now()}_${Math.random().toString(16).slice(2)}`);
+    localStorage.setItem(k, t);
+  }
+  return t;
+}
+
+async function loadPayload() {
+  const { data, error } = await sb().rpc("poll_get_payload", { p_game_id: gameId, p_key: key });
+  if (error) throw error;
+  return data;
+}
+
+async function vote(questionId, answerId) {
+  const voter = getVoterToken();
+  const { error } = await sb().rpc("poll_points_vote", {
+    p_game_id: gameId,
+    p_key: key,
+    p_question_id: questionId,
+    p_answer_id: answerId,
+    p_voter_token: voter,
+  });
+  if (error) throw error;
+}
+
+let payload = null;
+let idx = 0;
+
+function renderQuestion() {
+  const questions = payload?.questions || [];
+  const q = questions[idx];
+
+  if (!q) {
+    if (qText) qText.textContent = "Dziękujemy!";
+    if (answersBox) answersBox.innerHTML = "";
+    if (btnNext) btnNext.disabled = true;
+    setMsg("Oddałeś głosy na wszystkie pytania.");
+    return;
+  }
+
+  if (title) title.textContent = payload?.game?.name || "Sondaż";
+  if (qText) qText.textContent = `P${q.ord}: ${q.text}`;
+
+  if (answersBox) {
+    answersBox.innerHTML = "";
+    const ans = q.answers || [];
+
+    for (const a of ans) {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "ansBtn";
+      b.textContent = a.text || `ODP ${a.ord}`;
+
+      b.addEventListener("click", async () => {
+        try {
+          b.disabled = true;
+          setMsg("Zapisuję głos…");
+
+          await vote(q.id, a.id);
+
+          setMsg("Zapisano. Następne pytanie.");
+          idx++;
+          renderQuestion();
+        } catch (e) {
+          console.error("[poll-points] vote error:", e);
+          setMsg(`Błąd: ${e?.message || e}`);
+          b.disabled = false;
+        }
+      });
+
+      answersBox.appendChild(b);
+    }
+  }
+
+  if (btnNext) {
+    btnNext.disabled = false;
+    btnNext.textContent = "Pomiń";
+  }
+}
+
+document.addEventListener("DOMContentLoaded", async () => {
+  try {
+    if (!gameId || !key) return setMsg("Brak parametru id lub key.");
+
+    setMsg("Ładuję…");
+    payload = await loadPayload();
+
+    if ((payload?.game?.type || "") !== "poll_points") {
+      return setMsg("To nie jest sondaż punktacji.");
+    }
+
+    idx = 0;
+    renderQuestion();
+
+    btnNext?.addEventListener("click", () => {
+      idx++;
+      renderQuestion();
+    });
+
+    setMsg("");
+  } catch (e) {
+    console.error("[poll-points] init error:", e);
+    setMsg(`Nie można otworzyć sondażu: ${e?.message || e}`);
+  }
 });
