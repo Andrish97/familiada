@@ -1,58 +1,59 @@
-// js/pages/poll-points.js
 import { sb } from "../core/supabase.js";
 
 const qs = new URLSearchParams(location.search);
-const key = qs.get("key");          // najważniejsze
-const gameId = qs.get("id") || null; // opcjonalne (nie wymagamy)
+const gameId = qs.get("id");
+const key = qs.get("key");
 
 const title = document.getElementById("title");
 const sub = document.getElementById("sub");
+
 const qbox = document.getElementById("qbox");
 const qtext = document.getElementById("qtext");
 const alist = document.getElementById("alist");
 const prog = document.getElementById("prog");
+
 const closed = document.getElementById("closed");
 
-function voterToken() {
-  const k = `fam_poll_token_${key || gameId || "x"}`;
+function token() {
+  const k = `fam_poll_token_${gameId}`;
   let t = localStorage.getItem(k);
   if (!t) {
-    // >= 8 znaków (constraint pv_token_len)
-    t = (Math.random().toString(16).slice(2) + Date.now().toString(16)).padEnd(12, "0");
+    t = Math.random().toString(16).slice(2) + Date.now().toString(16);
     localStorage.setItem(k, t);
   }
   return t;
 }
 
-let bundle = null;
+let data = null;
 let idx = 0;
 let busy = false;
 
-function showBox(on) {
+function showBox(on){
   qbox.style.display = on ? "" : "none";
   closed.style.display = on ? "none" : "";
 }
 
-function showClosed(msg) {
+function showClosed(msg){
   showBox(false);
   closed.textContent = msg || "Sondaż jest zamknięty. Dziękujemy!";
   sub.textContent = "Ten sondaż nie przyjmuje już głosów.";
 }
 
-function showError(msg) {
+function showError(msg){
   showBox(false);
   closed.textContent = msg || "Nie udało się wczytać sondażu.";
   sub.textContent = "—";
 }
 
 function render() {
-  const g = bundle?.game;
-  const qlist = bundle?.questions || [];
-
+  const g = data?.game;
   title.textContent = g?.name ? `Sondaż: ${g.name}` : "Sondaż";
 
   if (!g) return showError("Brak danych gry.");
+  if (g.type !== "poll_points") return showError("To nie jest sondaż punktowany.");
   if (g.status !== "poll_open") return showClosed("Sondaż jest zamknięty. Dziękujemy!");
+
+  const qlist = data?.questions || [];
   if (!qlist.length) return showError("Brak pytań do głosowania.");
 
   if (idx >= qlist.length) {
@@ -72,12 +73,11 @@ function render() {
   prog.textContent = `Pytanie ${idx + 1} / ${qlist.length}`;
 
   alist.innerHTML = "";
-
   for (const a of answers) {
     const b = document.createElement("button");
     b.type = "button";
     b.className = "abtn";
-    b.textContent = a.text || "—";
+    b.textContent = a.text;
 
     b.addEventListener("click", async () => {
       if (busy) return;
@@ -85,19 +85,13 @@ function render() {
       b.disabled = true;
 
       try {
-        const qOrd = Number(q.ord);
-        const aOrd = Number(a.ord);
-        if (!Number.isFinite(qOrd) || !Number.isFinite(aOrd)) {
-          throw new Error("Błędne ORD w danych sondażu.");
-        }
-
-        const { error } = await sb().rpc("poll_vote", {
+        const { error } = await sb().rpc("poll_vote_points", {
+          p_game_id: gameId,
           p_key: key,
-          p_question_ord: qOrd,
-          p_answer_ord: aOrd,
-          p_voter_token: voterToken(),
+          p_question_id: q.id,
+          p_answer_id: a.id,
+          p_voter_token: token(),
         });
-
         if (error) throw error;
 
         idx += 1;
@@ -105,12 +99,8 @@ function render() {
         render();
       } catch (e) {
         busy = false;
-
-        const m = String(e?.message || e).toLowerCase();
-        if (m.includes("closed") || m.includes("poll closed")) {
-          return showClosed("Sondaż jest zamknięty. Dziękujemy!");
-        }
-
+        const m = (e?.message || String(e)).toLowerCase();
+        if (m.includes("poll closed")) return showClosed("Sondaż jest zamknięty. Dziękujemy!");
         alert("Nie udało się oddać głosu. Spróbuj ponownie.");
         b.disabled = false;
       }
@@ -121,15 +111,14 @@ function render() {
 }
 
 async function load() {
-  if (!key) return showError("Nieprawidłowy link sondażu (brak key).");
+  if (!gameId || !key) return showError("Nieprawidłowy link sondażu.");
 
   try {
-    const res = await sb().rpc("get_poll_bundle", { p_key: key });
-    bundle = res.data;
+    const res = await sb().rpc("get_poll_game", { p_game_id: gameId, p_key: key });
+    data = res.data;
     idx = 0;
     render();
-  } catch (e) {
-    console.error("[poll-points] load error:", e);
+  } catch {
     showError("Nie udało się wczytać sondażu.");
   }
 }
