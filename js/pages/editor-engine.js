@@ -26,7 +26,6 @@ function calcQuestionPoints(answers) {
   for (const a of answers) {
     const p = Number(a.fixed_points);
     if (!Number.isFinite(p)) continue;
-    // tu nie filtrujemy >100, bo clampujemy przy zapisie; ale zostawiamy porządek:
     if (p < 0) continue;
     sum += p;
   }
@@ -54,14 +53,9 @@ function openOverlay(id, on) {
   const el = $(id);
   if (!el) return;
   el.style.display = on ? "" : "none";
+  document.body.classList.toggle("modalOpen", !!on); // jak w builder (opcjonalnie, jeśli masz CSS)
 }
 
-/**
- * READY -> edycja wymaga resetu do szkicu:
- * - games.status = draft
- * - poll_opened_at / poll_closed_at = null
- * - answers.fixed_points = 0 (dla poll_points jako “dane sondażowe”)
- */
 async function resetPollForEditing(gameId) {
   const { error: gErr } = await sb()
     .from("games")
@@ -166,15 +160,28 @@ function nextAnswerOrd(items, limit) {
 }
 
 /**
- * cfg:
- * {
- *   type: "poll_text" | "poll_points" | "prepared",
- *   allowAnswers: boolean,
- *   allowPoints: boolean,        // tylko prepared
- *   ignoreImportPoints: boolean, // poll_points + poll_text
- * }
+ * Enter = blur (globalnie w edytorze) dla INPUTów.
+ * Nie dotykamy TEXTAREA (żeby Enter robił nową linię w pytaniu).
  */
+function installEnterAsBlur() {
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "Enter") return;
+    if (e.shiftKey || e.ctrlKey || e.altKey || e.metaKey) return;
+
+    const t = e.target;
+    if (!t) return;
+
+    // tylko inputy (text/number itd.)
+    if (t.tagName === "INPUT") {
+      e.preventDefault();
+      t.blur();
+    }
+  });
+}
+
 export async function bootEditor(cfg) {
+  installEnterAsBlur();
+
   // ===== auth / topbar =====
   const user = await requireAuth("index.html");
   const who = $("who");
@@ -273,12 +280,6 @@ export async function bootEditor(cfg) {
   }
 
   gameName?.addEventListener("blur", saveNameIfChanged);
-  gameName?.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      gameName.blur();
-    }
-  });
 
   window.addEventListener("beforeunload", () => {
     saveNameIfChanged();
@@ -325,6 +326,29 @@ export async function bootEditor(cfg) {
     rightPanel.classList.toggle("hasQ", !!on);
   }
 
+  function buildRemainBox() {
+    const sum = calcQuestionPoints(answers);
+    const diff = 100 - sum;
+
+    const remain = document.createElement("div");
+    remain.className = "remainBox";
+    remain.style.marginBottom = "10px";
+    remain.classList.remove("ok", "over");
+
+    if (diff === 0) {
+      remain.classList.add("ok");
+      remain.innerHTML = `<span>OK</span><b>100</b>`;
+    } else if (diff > 0) {
+      // default (żółty)
+      remain.innerHTML = `<span>ZOSTAŁO</span><b>${diff}</b>`;
+    } else {
+      remain.classList.add("over");
+      remain.innerHTML = `<span>ZA DUŻO</span><b>${-diff}</b>`;
+    }
+
+    return remain;
+  }
+
   // ===== render questions =====
   function renderQuestions() {
     if (!qList) return;
@@ -337,7 +361,6 @@ export async function bootEditor(cfg) {
     const addQBtn = document.createElement("button");
     addQBtn.type = "button";
     addQBtn.className = "qcard";
-
     addQBtn.innerHTML = `
       <div class="qprev">+ Dodaj pytanie</div>
       <div class="qmeta">
@@ -367,7 +390,6 @@ export async function bootEditor(cfg) {
 
     qList.appendChild(addQBtn);
 
-    // lista pytań
     for (const q of questions) {
       const el = document.createElement("div");
       el.className = "qcard";
@@ -400,43 +422,16 @@ export async function bootEditor(cfg) {
     }
   }
 
-  function buildRemainBox() {
-    const sum = calcQuestionPoints(answers);
-    const diff = 100 - sum;
-
-    const remain = document.createElement("div");
-    remain.className = "remainBox";
-    remain.style.marginBottom = "10px";
-
-    // kolorujemy TYLKO licznik
-    remain.classList.remove("ok", "over");
-
-    if (diff === 0) {
-      remain.classList.add("ok");
-      remain.innerHTML = `<span>OK</span><b>100</b>`;
-    } else if (diff > 0) {
-      // default (żółty) = bez klasy
-      remain.innerHTML = `<span>ZOSTAŁO</span><b>${diff}</b>`;
-    } else {
-      remain.classList.add("over");
-      remain.innerHTML = `<span>ZA DUŻO</span><b>${-diff}</b>`;
-    }
-
-    return remain;
-  }
-
   function renderAnswers() {
     if (!cfg.allowAnswers) return;
     if (!aList) return;
 
     aList.innerHTML = "";
 
-    // 1 licznik na pytanie (tylko prepared)
     if (cfg.allowPoints) {
       aList.appendChild(buildRemainBox());
     }
 
-    // rows
     for (const a of answers) {
       const row = document.createElement("div");
       row.className = "arow";
@@ -462,13 +457,11 @@ export async function bootEditor(cfg) {
 
       const bDel = row.querySelector(".aDel");
 
-      // ===== save handlers =====
-
-      // tekst – może zapisywać na debounce (jak było)
+      // tekst: zapis na debounce
       const saveTextNow = async () => {
         try {
-          const patch = { text: clip17(iText.value), fixed_points: 0 };
-          if (cfg.allowPoints) patch.fixed_points = clampPts(iPts?.value);
+          const patch = { text: clip17(iText.value) };
+          if (!cfg.allowPoints) patch.fixed_points = 0;
 
           await updateAnswer(a.id, patch);
           setMsg("Zapisano.");
@@ -479,14 +472,13 @@ export async function bootEditor(cfg) {
       };
       const saveText = debounce(saveTextNow, 350);
 
-      // punkty – zapis TYLKO na blur / enter
+      // punkty: zapis TYLKO na blur
       const savePointsNow = async () => {
         if (!cfg.allowPoints || !iPts) return;
         try {
           const newPts = clampPts(iPts.value);
           await updateAnswer(a.id, { fixed_points: newPts });
 
-          // odśwież dane + licznik (najprościej)
           answers = await listAnswers(activeQId);
           renderAnswers();
           setMsg("Zapisano.");
@@ -496,34 +488,24 @@ export async function bootEditor(cfg) {
         }
       };
 
-      // ===== events =====
-
       iText.addEventListener("input", () => {
         if (iText.value.length > 17) iText.value = iText.value.slice(0, 17);
         setMsg("Piszesz…");
         saveText();
       });
 
-      // ✅ punkty: NIE zapisujemy na input
-      // - blur = zapis
-      // - Enter = blur (i zapis)
-      // - opcjonalnie blokujemy kółko myszy żeby nie “skakało” przypadkiem
       if (iPts) {
-        iPts.addEventListener("blur", () => {
-          savePointsNow();
-        });
+        iPts.addEventListener("blur", savePointsNow);
 
-        iPts.addEventListener("keydown", (e) => {
-          if (e.key === "Enter") {
+        // nie zmieniamy kolorów inputa punktów — tylko licznik (remainBox)
+        // (czyli żadnych .tooMuch i tym podobnych)
+        iPts.addEventListener(
+          "wheel",
+          (e) => {
             e.preventDefault();
-            iPts.blur();
-          }
-        });
-
-        iPts.addEventListener("wheel", (e) => {
-          // żeby przypadkowo nie zmieniać wartości scrollując listę
-          e.preventDefault();
-        }, { passive: false });
+          },
+          { passive: false }
+        );
       }
 
       bDel.addEventListener("click", async () => {
@@ -531,8 +513,7 @@ export async function bootEditor(cfg) {
           iText.value = "";
           if (iPts) iPts.value = "0";
 
-          const patch = { text: "", fixed_points: 0 };
-          await updateAnswer(a.id, patch);
+          await updateAnswer(a.id, { text: "", fixed_points: 0 });
 
           if (cfg.allowPoints) {
             answers = await listAnswers(activeQId);
@@ -605,7 +586,7 @@ export async function bootEditor(cfg) {
     renderAnswers();
   }
 
-  // ===== debounced save question =====
+  // pytanie: zapis debounced (textarea ma normalny Enter)
   const saveQuestionDebounced = debounce(async () => {
     if (!activeQId) return;
     try {
@@ -629,10 +610,8 @@ export async function bootEditor(cfg) {
     saveQuestionDebounced();
   });
 
-  // ===== Import TXT =====
+  // ===== Import (JEDEN MODAL) =====
   const btnImportTxt = $("btnImportTxt");
-  const btnHowTxt = $("btnHowTxt");
-  const btnHowClose = $("btnHowClose");
 
   const txtLoadFile = $("btnTxtLoadFile");
   const txtFile = $("txtFile");
@@ -652,12 +631,7 @@ export async function bootEditor(cfg) {
     openOverlay("txtImportOverlay", true);
   });
 
-  btnTxtClose?.addEventListener("click", () =>
-    openOverlay("txtImportOverlay", false)
-  );
-
-  btnHowTxt?.addEventListener("click", () => openOverlay("howOverlay", true));
-  btnHowClose?.addEventListener("click", () => openOverlay("howOverlay", false));
+  btnTxtClose?.addEventListener("click", () => openOverlay("txtImportOverlay", false));
 
   async function readFileAsText(file) {
     return await new Promise((resolve, reject) => {
@@ -672,7 +646,7 @@ export async function bootEditor(cfg) {
     try {
       const f = txtFile?.files?.[0];
       if (!f) {
-        setTxtMsg("Wybierz plik TXT.");
+        setTxtMsg("Wybierz plik TXT albo wklej treść w pole niżej.");
         return;
       }
       const txt = await readFileAsText(f);
@@ -700,7 +674,14 @@ export async function bootEditor(cfg) {
 
       setTxtMsg("Importuję…");
 
-      await refreshCounts();
+      // @Nazwa Gry => ustaw i zapisz nazwę
+      if (parsed.name && gameName) {
+        const nm = normName(parsed.name);
+        gameName.value = nm;
+        await saveGameName(gameId, nm);
+        lastSavedName = nm;
+      }
+
       let qOrd = nextQuestionOrd(await listQuestions(gameId));
 
       for (const item of parsed.items) {
@@ -734,6 +715,8 @@ export async function bootEditor(cfg) {
 
       setTxtMsg("Zaimportowano.");
       setMsg("Import zakończony.");
+
+      openOverlay("txtImportOverlay", false);
     } catch (e) {
       console.error(e);
       setTxtMsg("Błąd importu (konsola).");
