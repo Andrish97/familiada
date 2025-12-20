@@ -4,22 +4,25 @@ import { requireAuth, signOut } from "../core/auth.js";
 import { parseQaText, clip as clipN } from "../core/text-import.js";
 import { canEnterEdit, RULES as GV_RULES, TYPES } from "../core/game-validate.js";
 
+/* ================= Rules (z game-validate) ================= */
 const QN_MIN = GV_RULES.QN_MIN; // 10
 const AN_MIN = GV_RULES.AN_MIN; // 3
 const AN_MAX = GV_RULES.AN_MAX; // 6
 const SUM_PREPARED = GV_RULES.SUM_PREPARED ?? 100;
 
+/* ================= DOM helpers ================= */
 const $ = (id) => document.getElementById(id);
 
-const clip17 = (s) => clipN(String(s ?? ""), 17);
-const normQ = (s) => String(s ?? "").trim().slice(0, 200);
-const normName = (s) => (String(s ?? "Nowa Familiada").trim() || "Nowa Familiada").slice(0, 80);
+function setMsg(t) {
+  const el = $("msg");
+  if (el) el.textContent = t || "";
+}
 
-const clampPts = (v) => {
-  const n = Number(v);
-  if (!Number.isFinite(n)) return 0;
-  return Math.max(0, Math.min(100, Math.floor(n)));
-};
+function openOverlay(id, on) {
+  const el = $(id);
+  if (!el) return;
+  el.style.display = on ? "" : "none";
+}
 
 function debounce(fn, ms = 350) {
   let t = null;
@@ -33,25 +36,58 @@ function getIdFromQuery() {
   return new URLSearchParams(location.search).get("id");
 }
 
-function setMsg(t) {
-  const el = $("msg");
-  if (el) el.textContent = t || "";
+/* ================= Normalizers ================= */
+const clip17 = (s) => clipN(String(s ?? ""), 17);
+const normQ = (s) => String(s ?? "").trim().slice(0, 200);
+const normName = (s) => (String(s ?? "Nowa Familiada").trim() || "Nowa Familiada").slice(0, 80);
+
+// „zwykłe pole”: pozwalamy wpisać co chce, zapis na blur, bez clamp w trakcie pisania
+function normalizeInt(v, fallback = 0) {
+  const s = String(v ?? "").trim();
+  if (!s) return fallback;
+  const n = Number(s);
+  if (!Number.isFinite(n)) return fallback;
+  return Math.floor(n);
 }
 
-function openOverlay(id, on) {
-  const el = $(id);
-  if (!el) return;
-  el.style.display = on ? "" : "none";
+// do importu: tu możemy clampować, żeby nie zasypać DB śmieciem
+function clamp0_100(v) {
+  const n = Number(v);
+  if (!Number.isFinite(n)) return 0;
+  return Math.max(0, Math.min(100, Math.floor(n)));
 }
 
-function calcQuestionPoints(ans) {
+/* ================= Points math ================= */
+function sumPointsFromAnswers(ans) {
   let sum = 0;
-  for (const a of ans) sum += clampPts(a.fixed_points);
+  for (const a of ans || []) {
+    const n = Number(a?.fixed_points);
+    if (!Number.isFinite(n)) continue;
+    sum += n;
+  }
   return sum;
 }
 
-// ====== DB ======
+/* ================= Enter = blur (global) ================= */
+function wireEnterAsBlur() {
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "Enter") return;
 
+    const el = e.target;
+    if (!(el instanceof HTMLElement)) return;
+
+    // textarea: Enter = nowa linia
+    if (el.tagName === "TEXTAREA") return;
+
+    // input/select: Enter = blur
+    if (el.tagName === "INPUT" || el.tagName === "SELECT") {
+      e.preventDefault();
+      el.blur();
+    }
+  });
+}
+
+/* ================= DB layer ================= */
 async function loadGame(gameId) {
   const { data, error } = await sb()
     .from("games")
@@ -103,7 +139,7 @@ async function updateQuestion(qId, patch) {
 }
 
 async function deleteQuestionDeep(qId) {
-  // usuń odpowiedzi -> usuń pytanie
+  // answers -> question
   const { error: aErr } = await sb().from("answers").delete().eq("question_id", qId);
   if (aErr) throw aErr;
 
@@ -112,8 +148,9 @@ async function deleteQuestionDeep(qId) {
 }
 
 async function createAnswer(questionId, ord, text, fixed_points) {
-  const safeText = clip17(text || `ODP ${ord}`) || `ODP ${ord}`;
-  const safePts = clampPts(fixed_points);
+  // answers_text_len constraint: max 17 i niepuste
+  const safeText = (clip17(text || `ODP ${ord}`) || `ODP ${ord}`).trim() || `ODP ${ord}`;
+  const safePts = normalizeInt(fixed_points, 0);
 
   const { data, error } = await sb()
     .from("answers")
@@ -135,10 +172,10 @@ async function deleteAnswer(aId) {
 }
 
 /**
- * READY -> edycja wymaga resetu:
- * - games.status = draft
- * - poll_opened_at / poll_closed_at = null
- * - answers.fixed_points = 0 (bo to “dane sondażowe” dla poll_points)
+ * READY -> reset do szkicu:
+ * - status=draft
+ * - poll_* = null
+ * - answers.fixed_points = 0
  */
 async function resetPollForEditing(gameId) {
   const { error: gErr } = await sb()
@@ -147,10 +184,7 @@ async function resetPollForEditing(gameId) {
     .eq("id", gameId);
   if (gErr) throw gErr;
 
-  const { data: qs, error: qErr } = await sb()
-    .from("questions")
-    .select("id")
-    .eq("game_id", gameId);
+  const { data: qs, error: qErr } = await sb().from("questions").select("id").eq("game_id", gameId);
   if (qErr) throw qErr;
 
   const qIds = (qs || []).map((x) => x.id);
@@ -160,11 +194,10 @@ async function resetPollForEditing(gameId) {
   if (aErr) throw aErr;
 }
 
-// ====== ord helpers ======
-
+/* ================= ord helpers ================= */
 function nextQuestionOrd(questions) {
   let max = 0;
-  for (const q of questions) max = Math.max(max, Number(q.ord) || 0);
+  for (const q of questions || []) max = Math.max(max, Number(q.ord) || 0);
   return max + 1;
 }
 
@@ -174,8 +207,7 @@ function nextAnswerOrd(answers) {
   return null;
 }
 
-// ====== config by game.type ======
-
+/* ================= UI config by type ================= */
 function cfgFromGameType(type) {
   if (type === TYPES.POLL_TEXT) {
     return {
@@ -188,7 +220,6 @@ function cfgFromGameType(type) {
       ignoreImportPoints: true,
     };
   }
-
   if (type === TYPES.POLL_POINTS) {
     return {
       type,
@@ -200,8 +231,6 @@ function cfgFromGameType(type) {
       ignoreImportPoints: true,
     };
   }
-
-  // prepared
   return {
     type,
     title: "Edytor — Preparowany",
@@ -213,33 +242,11 @@ function cfgFromGameType(type) {
   };
 }
 
-// ====== Enter=blur (dla inputów) ======
-
-function wireEnterAsBlur() {
-  document.addEventListener("keydown", (e) => {
-    if (e.key !== "Enter") return;
-
-    const el = e.target;
-    if (!(el instanceof HTMLElement)) return;
-
-    // textarea zostawiamy w spokoju (Enter = nowa linia)
-    if (el.tagName === "TEXTAREA") return;
-
-    // tylko inputy / selecty
-    if (el.tagName === "INPUT" || el.tagName === "SELECT") {
-      e.preventDefault();
-      el.blur();
-    }
-  });
-}
-
-// ====== BOOT ======
-
+/* ================= Boot ================= */
 async function boot() {
-  // auth / topbar
+  /* ---------- auth/topbar ---------- */
   const user = await requireAuth("index.html");
-  const who = $("who");
-  if (who) who.textContent = user?.email || "—";
+  $("who") && ($("who").textContent = user?.email || "—");
 
   $("btnLogout")?.addEventListener("click", async () => {
     await signOut();
@@ -252,7 +259,7 @@ async function boot() {
 
   wireEnterAsBlur();
 
-  // id
+  /* ---------- game ---------- */
   const gameId = getIdFromQuery();
   if (!gameId) {
     alert("Brak parametru id.");
@@ -283,15 +290,12 @@ async function boot() {
     game = await loadGame(gameId);
   }
 
-  // UI: tytuły / hinty / badge
+  /* ---------- UI header ---------- */
   const titleEl = $("pageTitle");
   if (titleEl) titleEl.textContent = cfg.title;
 
-  const hintTop = $("hintTop");
-  if (hintTop) hintTop.textContent = cfg.hintTop;
-
-  const hintBottom = $("hintBottom");
-  if (hintBottom) hintBottom.textContent = cfg.hintBottom;
+  $("hintTop") && ($("hintTop").textContent = cfg.hintTop);
+  $("hintBottom") && ($("hintBottom").textContent = cfg.hintBottom);
 
   const typeBadge = $("typeBadge");
   if (typeBadge) {
@@ -301,12 +305,11 @@ async function boot() {
       "Typowy sondaż";
   }
 
-  // body classes (ukrywanie sekcji)
-  const body = document.body;
-  body.classList.toggle("only-questions", !cfg.allowAnswers);
-  body.classList.toggle("no-points", !cfg.allowPoints);
+  // klasy trybów
+  document.body.classList.toggle("only-questions", !cfg.allowAnswers);
+  document.body.classList.toggle("no-points", !cfg.allowPoints);
 
-  // name autosave (blur)
+  /* ---------- name autosave ---------- */
   const gameName = $("gameName");
   if (gameName) gameName.value = game.name || "";
 
@@ -334,20 +337,19 @@ async function boot() {
 
   gameName?.addEventListener("blur", saveNameIfChanged);
 
-  // state
+  /* ---------- state ---------- */
   let questions = await listQuestions(gameId);
   let activeQId = questions[0]?.id || null;
   let answers = activeQId && cfg.allowAnswers ? await listAnswers(activeQId) : [];
 
-  // refs
+  /* ---------- refs ---------- */
   const qList = $("qList");
   const qText = $("qText");
   const aList = $("aList");
   const rightPanel = document.querySelector(".rightPanel");
 
   function setHasQ(on) {
-    if (!rightPanel) return;
-    rightPanel.classList.toggle("hasQ", !!on);
+    rightPanel?.classList.toggle("hasQ", !!on);
   }
 
   async function refreshCounts() {
@@ -371,8 +373,48 @@ async function boot() {
     answers = await listAnswers(activeQId);
   }
 
-  // ===== render questions (z X delete) =====
+  /* ---------- remain counter (prepared) ---------- */
+  function makeRemainBox() {
+    const sum = sumPointsFromAnswers(answers);
+    const diff = SUM_PREPARED - sum;
 
+    const el = document.createElement("div");
+    el.className = "remainBox";
+    el.style.marginBottom = "10px";
+
+    // CSS: default=żółty, ok=zielony, over=czerwony
+    if (diff === 0) el.classList.add("ok");
+    else if (diff < 0) el.classList.add("over");
+
+    if (diff === 0) el.innerHTML = `<span>OK</span><b>${SUM_PREPARED}</b>`;
+    else if (diff > 0) el.innerHTML = `<span>ZOSTAŁO</span><b>${diff}</b>`;
+    else el.innerHTML = `<span>ZA DUŻO</span><b>${-diff}</b>`;
+
+    return el;
+  }
+
+  // liczymy sumę z DOM (z tego co user właśnie wpisuje), bez przebudowy listy
+  function updateRemainBoxFromDom() {
+    if (!cfg.allowPoints || !aList) return;
+    const remain = aList.querySelector(".remainBox");
+    if (!remain) return;
+
+    const inputs = aList.querySelectorAll("input.aPts");
+    let sum = 0;
+    inputs.forEach((inp) => (sum += normalizeInt(inp.value, 0)));
+
+    const diff = SUM_PREPARED - sum;
+
+    remain.classList.remove("ok", "over");
+    if (diff === 0) remain.classList.add("ok");
+    else if (diff < 0) remain.classList.add("over");
+
+    if (diff === 0) remain.innerHTML = `<span>OK</span><b>${SUM_PREPARED}</b>`;
+    else if (diff > 0) remain.innerHTML = `<span>ZOSTAŁO</span><b>${diff}</b>`;
+    else remain.innerHTML = `<span>ZA DUŻO</span><b>${-diff}</b>`;
+  }
+
+  /* ---------- render questions ---------- */
   function mkXButton() {
     const x = document.createElement("button");
     x.type = "button";
@@ -382,11 +424,62 @@ async function boot() {
     return x;
   }
 
+  async function onAddQuestion() {
+    try {
+      const ord = nextQuestionOrd(questions);
+      const q = await createQuestion(gameId, ord);
+
+      // jeśli DB ma constraint na 1..10, to tu wpadniemy w catch z kodem 23514
+      questions = await listQuestions(gameId);
+      activeQId = q.id;
+
+      await loadAnswersForActive();
+      await refreshCounts();
+
+      renderQuestions();
+      renderEditor();
+      setMsg("Dodano pytanie.");
+    } catch (e) {
+      console.error(e);
+
+      const msg = String(e?.message || "");
+      if (e?.code === "23514" || msg.includes("violates check constraint")) {
+        // u Ciebie widać constraint questions_ord_range -> to jest realny limit po stronie DB
+        setMsg("Nie można dodać więcej pytań — ograniczenie bazy (sprawdź constraint questions_ord_range).");
+      } else {
+        setMsg("Błąd dodawania pytania (konsola).");
+      }
+    }
+  }
+
+  async function onDeleteQuestion(qId) {
+    const ok = confirm("Usunąć to pytanie i wszystkie jego odpowiedzi?");
+    if (!ok) return;
+
+    try {
+      await deleteQuestionDeep(qId);
+
+      questions = await listQuestions(gameId);
+      await refreshCounts();
+
+      if (activeQId === qId) {
+        activeQId = questions[0]?.id || null;
+        await loadAnswersForActive();
+      }
+
+      renderQuestions();
+      renderEditor();
+      setMsg("Usunięto pytanie.");
+    } catch (e) {
+      console.error(e);
+      setMsg("Błąd usuwania pytania (konsola).");
+    }
+  }
+
   function renderQuestions() {
     if (!qList) return;
     qList.innerHTML = "";
 
-    // kafelek dodawania (bez limitu)
     const qCount = questions.length;
     const meetsMin = qCount >= QN_MIN;
 
@@ -400,119 +493,93 @@ async function boot() {
         <div class="sub">${meetsMin ? "Minimum spełnione" : `Wymagane minimum: ${QN_MIN} (masz ${qCount})`}</div>
       </div>
     `;
-    addQ.addEventListener("click", async () => {
-      try {
-        const ord = nextQuestionOrd(questions);
-        const q = await createQuestion(gameId, ord);
-        questions = await listQuestions(gameId);
-        activeQId = q.id;
-        await loadAnswersForActive();
-        await refreshCounts();
-        renderQuestions();
-        renderEditor();
-        setMsg("Dodano pytanie.");
-      } catch (e) {
-        console.error(e);
-        setMsg("Błąd dodawania pytania (konsola).");
-      }
-    });
+    addQ.addEventListener("click", onAddQuestion);
     qList.appendChild(addQ);
 
-    // lista pytań
     for (const q of questions) {
-      const el = document.createElement("div");
-      el.className = "qcard";
-      if (q.id === activeQId) el.classList.add("active");
-      el.style.position = "relative";
+      const card = document.createElement("div");
+      card.className = "qcard";
+      if (q.id === activeQId) card.classList.add("active");
+      card.style.position = "relative";
 
       const x = mkXButton();
-      x.addEventListener("click", async (ev) => {
+      x.addEventListener("click", (ev) => {
         ev.stopPropagation();
-
-        const ok = confirm("Usunąć to pytanie i wszystkie jego odpowiedzi?");
-        if (!ok) return;
-
-        try {
-          await deleteQuestionDeep(q.id);
-
-          questions = await listQuestions(gameId);
-          await refreshCounts();
-
-          if (activeQId === q.id) {
-            activeQId = questions[0]?.id || null;
-            await loadAnswersForActive();
-          }
-
-          renderQuestions();
-          renderEditor();
-          setMsg("Usunięto pytanie.");
-        } catch (e) {
-          console.error(e);
-          setMsg("Błąd usuwania pytania (konsola).");
-        }
+        onDeleteQuestion(q.id);
       });
 
-      el.innerHTML = `
+      card.innerHTML = `
         <div class="qord">Pytanie ${q.ord}</div>
         <div class="qprev"></div>
         <div class="qmeta"></div>
       `;
-      el.appendChild(x);
+      card.appendChild(x);
 
-      el.querySelector(".qprev").textContent = (q.text || "").trim() || `Pytanie ${q.ord}`;
+      card.querySelector(".qprev").textContent = (q.text || "").trim() || `Pytanie ${q.ord}`;
 
-      const meta = el.querySelector(".qmeta");
-      if (!cfg.allowAnswers) {
-        meta.textContent = "Tylko pytania";
-      } else {
-        const cnt = q.__answerCount ?? 0;
-        meta.textContent = `${cnt}/${AN_MAX} odpowiedzi`;
-      }
+      const meta = card.querySelector(".qmeta");
+      if (!cfg.allowAnswers) meta.textContent = "Tylko pytania";
+      else meta.textContent = `${q.__answerCount ?? 0}/${AN_MAX} odpowiedzi`;
 
-      el.addEventListener("click", async () => {
+      card.addEventListener("click", async () => {
         activeQId = q.id;
         await loadAnswersForActive();
         renderQuestions();
         renderEditor();
       });
 
-      qList.appendChild(el);
+      qList.appendChild(card);
     }
   }
 
-  // ===== remain counter (prepared) =====
+  /* ---------- render answers ---------- */
+  async function onDeleteAnswer(aId) {
+    const ok = confirm("Usunąć tę odpowiedź?");
+    if (!ok) return;
 
-  function renderRemainCounter(container) {
-    if (!cfg.allowPoints) return;
-
-    const sum = calcQuestionPoints(answers);
-    const diff = SUM_PREPARED - sum;
-
-    const remain = document.createElement("div");
-    remain.className = "remainBox";
-    remain.style.marginBottom = "10px";
-
-    // kolorujemy tylko licznik (klasami)
-    remain.classList.remove("remain-ok", "remain-over", "remain-under");
-    if (diff === 0) remain.classList.add("remain-ok");
-    else if (diff < 0) remain.classList.add("remain-over");
-    else remain.classList.add("remain-under");
-
-    if (diff === 0) remain.innerHTML = `<span>OK</span><b>${SUM_PREPARED}</b>`;
-    else if (diff > 0) remain.innerHTML = `<span>ZOSTAŁO</span><b>${diff}</b>`;
-    else remain.innerHTML = `<span>ZA DUŻO</span><b>${-diff}</b>`;
-
-    container.appendChild(remain);
+    try {
+      await deleteAnswer(aId);
+      answers = await listAnswers(activeQId);
+      await refreshCounts();
+      renderQuestions();
+      renderAnswers();
+      setMsg("Usunięto odpowiedź.");
+    } catch (e) {
+      console.error(e);
+      setMsg("Błąd usuwania odpowiedzi (konsola).");
+    }
   }
 
-  // ===== render answers (delete row, points save on blur) =====
+  async function onAddAnswer() {
+    if (!activeQId) return;
+
+    try {
+      const ord = nextAnswerOrd(answers);
+      if (!ord) {
+        setMsg(`Limit odpowiedzi: ${AN_MAX}.`);
+        return;
+      }
+
+      await createAnswer(activeQId, ord, `ODP ${ord}`, 0);
+
+      answers = await listAnswers(activeQId);
+      await refreshCounts();
+
+      renderQuestions();
+      renderAnswers();
+      setMsg("Dodano odpowiedź.");
+    } catch (e) {
+      console.error(e);
+      setMsg("Błąd dodawania odpowiedzi (konsola).");
+    }
+  }
 
   function renderAnswers() {
     if (!cfg.allowAnswers || !aList) return;
 
     aList.innerHTML = "";
 
-    renderRemainCounter(aList);
+    if (cfg.allowPoints) aList.appendChild(makeRemainBox());
 
     for (const a of answers) {
       const row = document.createElement("div");
@@ -521,7 +588,7 @@ async function boot() {
       if (cfg.allowPoints) {
         row.innerHTML = `
           <input class="aText" type="text" maxlength="17" placeholder="ODP ${a.ord}">
-          <input class="aPts" type="number" min="0" max="100" step="1" inputmode="numeric">
+          <input class="aPts" type="number" step="1" inputmode="numeric">
           <button class="aDel" type="button" title="Usuń">✕</button>
         `;
       } else {
@@ -532,19 +599,17 @@ async function boot() {
       }
 
       const iText = row.querySelector(".aText");
-      iText.value = a.text || "";
-
       const iPts = cfg.allowPoints ? row.querySelector(".aPts") : null;
-      if (iPts) iPts.value = Number(a.fixed_points) || 0;
-
       const bDel = row.querySelector(".aDel");
 
-      // TEXT: zapis debounce + blur (Enter robi blur globalnie)
+      iText.value = a.text || "";
+      if (iPts) iPts.value = String(Number(a.fixed_points) || 0);
+
+      // TEXT: debounce + blur (Enter zrobi blur globalnie)
       const saveTextNow = async () => {
         try {
           const t = clip17(iText.value);
-          // jeśli ktoś wyczyści -> nie zapisujemy pustego (constraint), tylko ustawiamy minimalny tekst
-          const safe = t.trim() ? t : `ODP ${a.ord}`;
+          const safe = (t || "").trim() ? t : `ODP ${a.ord}`; // nie zapisujemy pustego (constraint)
           await updateAnswer(a.id, { text: safe });
           setMsg("Zapisano.");
         } catch (e) {
@@ -561,60 +626,47 @@ async function boot() {
       });
       iText.addEventListener("blur", saveTextNow);
 
-      // PTS (prepared): nie zapisuj w trakcie pisania, tylko:
-      // - input: tylko odśwież licznik lokalnie
-      // - blur: zapisz
+      // PTS (prepared): input tylko liczy licznik, blur zapisuje
       const savePtsNow = async () => {
         if (!cfg.allowPoints || !iPts) return;
-        try {
-          await updateAnswer(a.id, { fixed_points: clampPts(iPts.value) });
 
-          // odśwież listę + licznik
+        try {
+          const val = normalizeInt(iPts.value, 0);
+          await updateAnswer(a.id, { fixed_points: val });
+
           answers = await listAnswers(activeQId);
           renderAnswers();
           setMsg("Zapisano.");
         } catch (e) {
           console.error(e);
-          setMsg("Błąd zapisu punktów (konsola).");
+          const msg = String(e?.message || "");
+          if (e?.code === "23514" || msg.includes("violates check constraint")) {
+            setMsg("Błąd: niepoprawne punkty (ograniczenie bazy).");
+          } else {
+            setMsg("Błąd zapisu punktów (konsola).");
+          }
         }
       };
 
       iPts?.addEventListener("input", () => {
-        // tylko lokalny update licznika
-        a.fixed_points = clampPts(iPts.value);
-        // odśwież licznik bez przeładowywania całej listy z DB
-        renderAnswers();
+        updateRemainBoxFromDom();
       });
       iPts?.addEventListener("blur", savePtsNow);
 
-      // DELETE: usuwa rekord (żadnego czyszczenia tekstu)
-      bDel.addEventListener("click", async () => {
-        const ok = confirm("Usunąć tę odpowiedź?");
-        if (!ok) return;
-
-        try {
-          await deleteAnswer(a.id);
-          answers = await listAnswers(activeQId);
-          await refreshCounts();
-          renderQuestions();
-          renderAnswers();
-          setMsg("Usunięto odpowiedź.");
-        } catch (e) {
-          console.error(e);
-          setMsg("Błąd usuwania odpowiedzi (konsola).");
-        }
-      });
+      // DELETE
+      bDel.addEventListener("click", () => onDeleteAnswer(a.id));
 
       aList.appendChild(row);
     }
 
-    // add answer tile
+    // add tile
     const canAdd = answers.length < AN_MAX;
     const addA = document.createElement("button");
     addA.type = "button";
     addA.className = "arow addTile";
     addA.disabled = !canAdd;
-
+    addA.style.cursor = canAdd ? "pointer" : "not-allowed";
+    addA.style.opacity = canAdd ? "1" : ".55";
     addA.innerHTML = `
       <div style="font-weight:1000;">
         ${canAdd ? "+ Dodaj odpowiedź" : "Limit odpowiedzi osiągnięty"}
@@ -623,25 +675,15 @@ async function boot() {
         ${answers.length}/${AN_MAX}
       </div>
     `;
-
-    addA.addEventListener("click", async () => {
-      if (!canAdd || !activeQId) return;
-      try {
-        const ord = nextAnswerOrd(answers);
-        if (!ord) return;
-        await createAnswer(activeQId, ord, `ODP ${ord}`, 0);
-        answers = await listAnswers(activeQId);
-        await refreshCounts();
-        renderQuestions();
-        renderAnswers();
-        setMsg("Dodano odpowiedź.");
-      } catch (e) {
-        console.error(e);
-        setMsg("Błąd dodawania odpowiedzi (konsola).");
-      }
+    addA.addEventListener("click", () => {
+      if (!canAdd) return;
+      onAddAnswer();
     });
 
     aList.appendChild(addA);
+
+    // po renderze: licznik zgodny z DOM (dla prepared)
+    if (cfg.allowPoints) updateRemainBoxFromDom();
   }
 
   function renderEditor() {
@@ -659,9 +701,10 @@ async function boot() {
     renderAnswers();
   }
 
-  // Q TEXT: debounce + blur
+  /* ---------- question text save ---------- */
   const saveQuestionNow = async () => {
     if (!activeQId) return;
+
     try {
       const t = normQ(qText?.value || "");
       await updateQuestion(activeQId, { text: t });
@@ -685,8 +728,7 @@ async function boot() {
   });
   qText?.addEventListener("blur", saveQuestionNow);
 
-  // ===== Import modal (jedyny, z instrukcją w środku) =====
-
+  /* ---------- Import modal ---------- */
   const btnImportTxt = $("btnImportTxt");
   const txtFile = $("txtFile");
   const btnTxtLoadFile = $("btnTxtLoadFile");
@@ -749,10 +791,12 @@ async function boot() {
 
       setTxtMsg("Importuję…");
 
-      // jeśli w tekście jest @Nazwa gry — ustaw w polu i zapisz
+      // jeśli @Nazwa Gry
       if (parsed.name && gameName) {
         gameName.value = parsed.name;
-        await saveNameIfChanged();
+        // zapis przez blur/enter i tak działa, ale tu robimy jawnie:
+        await saveGameName(gameId, parsed.name);
+        setMsg("Zapisano nazwę.");
       }
 
       // start ord = max+1
@@ -760,6 +804,7 @@ async function boot() {
       let qOrd = nextQuestionOrd(questions);
 
       for (const item of parsed.items) {
+        // jeśli DB ma limit ord (np. 1..10) -> error 23514 i stop
         const q = await createQuestion(gameId, qOrd);
         await updateQuestion(q.id, { text: normQ(item.qText) });
 
@@ -771,7 +816,7 @@ async function boot() {
             const text = clip17(a.text);
             const pts =
               cfg.allowPoints && !cfg.ignoreImportPoints
-                ? clampPts(a.points)
+                ? clamp0_100(a.points) // import clamp
                 : 0;
 
             await createAnswer(q.id, aOrd, text || `ODP ${aOrd}`, pts);
@@ -794,11 +839,17 @@ async function boot() {
       setMsg("Import zakończony.");
     } catch (e) {
       console.error(e);
-      setTxtMsg("Błąd importu (konsola).");
+      const msg = String(e?.message || "");
+
+      if (e?.code === "23514" || msg.includes("violates check constraint")) {
+        setTxtMsg("Import przerwany: ograniczenie bazy (np. limit liczby pytań / zakres ord).");
+      } else {
+        setTxtMsg("Błąd importu (konsola).");
+      }
     }
   });
 
-  // init
+  /* ---------- init ---------- */
   await refreshCounts();
   questions = await listQuestions(gameId);
   activeQId = questions[0]?.id || null;
