@@ -393,26 +393,6 @@ async function readFileAsText(file) {
   });
 }
 
-function editorUrlForType(type, id, name) {
-  // wspieramy i nowe type-y, i stare fixed/poll
-  const k = String(type || "");
-  if (k === TYPES.POLL_TEXT) return `editor-poll-text.html?id=${encodeURIComponent(id)}`;
-  if (k === TYPES.POLL_POINTS) return `editor-poll-points.html?id=${encodeURIComponent(id)}`;
-  if (k === TYPES.PREPARED) return `editor-prepared.html?id=${encodeURIComponent(id)}`;
-
-  // stare:
-  if (k === "fixed") return `editor-prepared.html?id=${encodeURIComponent(id)}`;
-  if (k === "poll") {
-    const nm = String(name || "").toLowerCase();
-    const isPoints = nm.includes("punkt");
-    return isPoints
-      ? `editor-poll-points.html?id=${encodeURIComponent(id)}`
-      : `editor-poll-text.html?id=${encodeURIComponent(id)}`;
-  }
-
-  return `editor-prepared.html?id=${encodeURIComponent(id)}`;
-}
-
 /* ================= Main ================= */
 async function refresh() {
   gamesAll = await listGames();
@@ -468,7 +448,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
     }
 
-    location.href = editorUrlForType(g.type, g.id, g.name);
+    location.href = `editor.html?id=${encodeURIComponent(g.id)}`;
   });
 
   // PLAY
