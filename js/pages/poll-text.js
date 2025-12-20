@@ -1,5 +1,19 @@
 import { sb } from "../core/supabase.js";
 
+const countEl = document.getElementById("count");
+const MAXLEN = 17;
+let busy = false;
+
+function updateCount() {
+  if (!countEl || !answerInput) return;
+  const n = (answerInput.value || "").length;
+  countEl.textContent = `${n}/${MAXLEN}`;
+}
+// normalizacja do zliczania: trim + lower, bez grzebania w środku
+function normForCount(s) {
+  return String(s ?? "").trim().toLowerCase();
+}
+
 const qs = new URLSearchParams(location.search);
 const gameId = qs.get("id");
 const key = qs.get("key");
@@ -74,45 +88,75 @@ function render() {
 
   if (answerInput) answerInput.value = "";
   answerInput?.focus();
+  updateCount();
 }
 
 async function send() {
-  if (!data?.questions?.length) return;
   if (busy) return;
+  if (!data || !data.game || data.game.status !== "poll_open") {
+    return showClosed("Sondaż jest zamknięty. Dziękujemy!");
+  }
 
-  const g = data?.game;
-  if (!g || g.status !== "poll_open") return showClosed("Sondaż jest zamknięty.");
+  const qlist = data.questions || [];
+  const q = qlist[idx];
+  if (!q) return;
 
-  const q = data.questions[idx];
-  const raw = String(answerInput?.value || "").trim();
-  if (!raw) return;
+  // 1) pobierz raw
+  let raw = String(answerInput?.value ?? "");
 
+  // 2) utnij twardo do 17 (na wypadek obejścia maxlength)
+  if (raw.length > MAXLEN) raw = raw.slice(0, MAXLEN);
+
+  // 3) trimujemy TYLKO początek/koniec (w środku zostaje)
+  raw = raw.trim();
+
+  // 4) po trimie może się okazać puste
+  if (!raw) {
+    setSub?.("Wpisz odpowiedź (max 17 znaków)."); // jeśli masz sub helper, inaczej usuń
+    return;
+  }
+
+  // 5) normalizacja do zliczania / klucza
+  const norm = normForCount(raw); // trim + lower
+  if (!norm) return;
+
+  // UX: opcjonalnie wstaw “przycięty” tekst z powrotem do inputa
+  answerInput.value = raw;
+  updateCount?.();
+
+  // 6) wysyłka
   busy = true;
-  btnSend.disabled = true;
+  btnSend && (btnSend.disabled = true);
 
   try {
+    // Tu masz 2 warianty zależnie od tego, jak zapisujesz tekstowe odpowiedzi.
+    // A) jeśli masz RPC np. poll_text_submit / poll_text_vote — podstaw nazwę:
     const { error } = await sb().rpc("poll_text_submit", {
       p_game_id: gameId,
       p_key: key,
-      p_question_id: q.id,
+      p_question_ord: q.ord,       // albo q.id — zależy od backendu
+      p_answer_raw: raw,           // oryginał (ładny do wyświetlania)
+      p_answer_norm: norm,         // klucz do zliczania
       p_voter_token: token(),
-      p_answer_text: raw,
     });
     if (error) throw error;
 
+    // 7) przejście dalej
+    answerInput.value = "";
+    updateCount?.();
     idx += 1;
-    busy = false;
-    btnSend.disabled = false;
     render();
   } catch (e) {
-    busy = false;
-    btnSend.disabled = false;
-
-    const m = String(e?.message || e).toLowerCase();
-    if (m.includes("poll closed")) return showClosed("Sondaż jest zamknięty. Dziękujemy!");
-    if (m.includes("empty")) return;
-
+    const m = (e?.message || String(e)).toLowerCase();
+    if (m.includes("poll closed") || m.includes("poll_closed")) {
+      showClosed("Sondaż jest zamknięty. Dziękujemy!");
+      return;
+    }
+    console.error("[poll-text] send error:", e);
     alert("Nie udało się wysłać odpowiedzi. Spróbuj ponownie.");
+  } finally {
+    busy = false;
+    btnSend && (btnSend.disabled = false);
   }
 }
 
@@ -133,6 +177,13 @@ document.addEventListener("DOMContentLoaded", () => {
   btnSend?.addEventListener("click", send);
   answerInput?.addEventListener("keydown", (e) => {
     if (e.key === "Enter") { e.preventDefault(); send(); }
+  });
+  answerInput?.addEventListener("input", () => {
+    // maxlength w HTML już pilnuje, ale to zabezpieczenie na wypadek wklejek/bugów
+    if (answerInput.value.length > MAXLEN) {
+      answerInput.value = answerInput.value.slice(0, MAXLEN);
+    }
+    updateCount();
   });
   load();
 });
