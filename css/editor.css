@@ -38,7 +38,7 @@ body.editor-body .wrap{
 /* szersze pole nazwy gry */
 #gameName{
   width:100%;
-  max-width:680px; /* możesz zwiększyć np. do 720px */
+  max-width:680px;
   font-size:16px;
   font-weight:900;
 }
@@ -47,7 +47,7 @@ body.editor-body .wrap{
 /* layout */
 .layout{
   display:grid;
-  grid-template-columns: 360px 1fr;
+  grid-template-columns: minmax(360px, 360px) 1fr; /* stała szerokość kolumny pytań */
   gap:14px;
   margin-top:12px;
 }
@@ -97,12 +97,22 @@ body.editor-body .wrap{
   background: rgba(255,255,255,.05);
   padding:12px;
   cursor:pointer;
-  position:relative; /* pod X */
+  position:relative;
 }
 .qcard:hover{ filter:brightness(1.06); }
 .qcard.active{
   border-color: rgba(255,234,166,.35);
   background: rgba(255,234,166,.08);
+}
+
+/* status kolorów kafelków */
+.qcard.good{
+  border-color: rgba(120,255,120,.28);
+  background: rgba(120,255,120,.06);
+}
+.qcard.bad{
+  border-color: rgba(255,120,120,.28);
+  background: rgba(255,120,120,.06);
 }
 
 .qord{ opacity:.75; font-size:12px; }
@@ -113,6 +123,8 @@ body.editor-body .wrap{
   white-space:nowrap;
   overflow:hidden;
   text-overflow:ellipsis;
+  max-width:100%;
+  display:block;
 }
 .qmeta{ opacity:.75; font-size:12px; margin-top:6px; }
 
@@ -228,8 +240,7 @@ body.editor-body .wrap{
 .aText:focus, .aPts:focus{ border-color: rgba(255,234,166,.35); }
 .aPts{ text-align:center; }
 
-/* nie kolorujemy pola punktów — tylko licznik */
-
+/* delete button */
 .aDel{
   width:40px; height:40px;
   border-radius:14px;
@@ -242,8 +253,6 @@ body.editor-body .wrap{
 .aDel:disabled{ opacity:.45; cursor:not-allowed; }
 
 /* ===== Modes ===== */
-
-/* no-points => hide points col */
 .editor.no-points .ahead,
 .editor.no-points .arow{
   grid-template-columns: 1fr 40px;
@@ -252,14 +261,11 @@ body.editor-body .wrap{
 .editor.no-points .ptsCol{
   display:none;
 }
-
-/* only-questions => hide answers block */
 .editor.only-questions .answersBlock{
   display:none !important;
 }
 
-/* ===== prepared: remain counter (kolorujemy TYLKO licznik) ===== */
-
+/* ===== prepared: remain counter ===== */
 .remainBox{
   display:flex;
   align-items:baseline;
@@ -274,15 +280,12 @@ body.editor-body .wrap{
   text-transform:uppercase;
   margin-bottom:10px;
 }
-
 .remainBox span{ font-size:11px; opacity:.9; }
 .remainBox b{
   font-size:18px;
   letter-spacing:.02em;
   color:#fff;
 }
-
-/* default (= zostało) jest żółty */
 .remainBox.ok{
   border-color: rgba(120,255,120,.35);
   background: rgba(120,255,120,.10);
@@ -301,7 +304,6 @@ body.editor-body .wrap{
 }
 
 /* ===== Add tiles ===== */
-
 .addTile{
   border-radius:18px;
   border:1px dashed rgba(255,255,255,.20);
@@ -335,7 +337,6 @@ body.editor-body .wrap{
   margin-top:2px;
   line-height:1.25;
 }
-
 .addTile.disabled{
   opacity:.45;
   cursor:not-allowed;
@@ -346,9 +347,7 @@ body.editor-body .wrap{
 .arow.addTile{ cursor:pointer; }
 .editor.no-points .arow.addTile{ grid-template-columns: 1fr 120px; }
 
-/* ===== Ładniejsze strzałeczki w polu punktów (bez zmiany koloru pola) ===== */
-
-/* WebKit: Chrome/Edge/Safari */
+/* ===== spin buttons ===== */
 .aPts::-webkit-inner-spin-button,
 .aPts::-webkit-outer-spin-button{
   opacity: 0.85;
@@ -361,8 +360,6 @@ body.editor-body .wrap{
   filter: brightness(1.18);
 }
 .aPts::-webkit-inner-spin-button{ cursor: pointer; }
-
-/* Firefox */
 .aPts{ -moz-appearance: number-input; }
 
 /* ===== X na kafelku pytania ===== */
@@ -381,7 +378,7 @@ body.editor-body .wrap{
 }
 .qcard .x:hover{ filter:brightness(1.06); }
 
-/* ===== Modal / overlay (skopiowane podejście z builder) ===== */
+/* ===== Modal / overlay ===== */
 .overlay{
   position:fixed; inset:0;
   background: rgba(2,6,23,.82);
@@ -398,7 +395,6 @@ body.editor-body .wrap{
   box-shadow:0 30px 90px rgba(0,0,0,.75);
   padding:18px;
 }
-
 .mTitle{
   font-weight:1000;
   font-size:18px;
@@ -411,8 +407,6 @@ body.editor-body .wrap{
   margin-top:6px;
   line-height:1.45;
 }
-
-/* import modal helpers (tak jak w builder) */
 .importRow{
   display:flex;
   gap:10px;
