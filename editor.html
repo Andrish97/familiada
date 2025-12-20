@@ -3,17 +3,17 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Familiada — edytor (punktacja odpowiedzi)</title>
+  <title>Familiada — edytor</title>
 
   <link rel="icon" href="favicon.ico"/>
   <link rel="stylesheet" href="css/base.css"/>
   <link rel="stylesheet" href="css/editor.css"/>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-  <script type="module" src="js/pages/editor-poll-points.js" defer></script>
+  <script type="module" src="js/pages/editor.js" defer></script>
 </head>
 
-<body class="editor-body editor no-points">
+<body class="editor-body editor">
   <header class="topbar">
     <div class="brand">FAMILIADA</div>
     <div class="right">
@@ -26,10 +26,8 @@
   <main class="wrap">
     <div class="rowTop">
       <div>
-        <div class="title">Edytor — Punktacja odpowiedzi</div>
-        <div class="hint" id="hintTop">
-          Podpowiedź: zalecamy nie mniej niż 10 pytań. W pytaniu zalecane 3–6 odpowiedzi.
-        </div>
+        <div class="title" id="pageTitle">Edytor</div>
+        <div class="hint" id="hintTop"></div>
       </div>
 
       <div class="namebar">
@@ -46,7 +44,7 @@
         <div id="qList" class="list"></div>
 
         <div class="hint" style="margin-top:10px;">
-          Import bierze pytania i odpowiedzi. Jeśli brak odpowiedzi — doda samo pytania.
+          Import działa z pliku TXT albo z wklejonej treści.
         </div>
 
         <div class="row" style="margin-top:10px;">
@@ -59,7 +57,7 @@
 
         <div id="editor" class="editorBox">
           <div class="badgeRow">
-            <div class="badge" id="typeBadge">Punktacja odpowiedzi</div>
+            <div class="badge" id="typeBadge">—</div>
             <div class="lock" id="lockBadge" style="display:none;">SONDAŻ OTWARTY — EDYCJA ZABLOKOWANA</div>
           </div>
 
@@ -78,9 +76,7 @@
             <div id="aList" class="alist"></div>
           </div>
 
-          <div class="hint" id="hintBottom">
-            Ten tryb nie edytuje punktów w builderze. Punkty policzą się po zamknięciu sondażu.
-          </div>
+          <div class="hint" id="hintBottom"></div>
         </div>
       </section>
     </div>
@@ -93,15 +89,35 @@
   <!-- Modal: import TXT -->
   <div class="overlay" id="txtImportOverlay" style="display:none;">
     <div class="modal">
-      <div class="mTitle">Import pytań i odpowiedzi</div>
-      <div class="mSub">Wczytaj plik tekstowy lub wklej treść. Jeśli odpowiedź ma /punkty — tu i tak zignorujemy punkty.</div>
+      <div class="mTitle">Import pytań</div>
+      <div class="mSub">
+        Możesz <b>wkleić treść</b> albo <b>wczytać plik TXT</b>.
+        Opcjonalnie na początku dodaj linię <b>@Nazwa gry</b>.
+        Pytania zaczynają się od <b>#</b>. Odpowiedzi mogą mieć numer.
+        Punkty po <b>/</b> są opcjonalne (w sondażach mogą być ignorowane).
+      </div>
 
-      <div class="importRow">
+      <div class="importRow" style="margin-top:12px;">
         <input id="txtFile" class="inp" type="file" accept=".txt,text/plain">
         <button class="btn" id="btnTxtLoadFile" type="button">Wczytaj plik</button>
       </div>
 
-      <textarea id="txtTa" class="importTa" spellcheck="false" placeholder="#Pytanie..."></textarea>
+      <textarea id="txtTa" class="importTa" spellcheck="false" placeholder="@Moja gra
+#Zwierzeta w Afryce
+1 Słoń /29
+2 Lew /19
+3 Małpa /16
+
+#Drugie pytanie
+1 Odpowiedź 1
+2 Odpowiedź 2
+3 Odpowiedź 3"></textarea>
+
+      <div class="mSub" style="margin-top:10px;">
+        Działa też format bez numerów (po prostu linie z odpowiedziami).
+        Import toleruje spacje/taby, „1.”, „2)” itp.
+        Jeśli odpowiedź ma więcej niż 17 znaków, zostanie ucięta.
+      </div>
 
       <div class="importRow">
         <button class="btn gold" id="btnTxtImport" type="button">Importuj</button>
@@ -110,6 +126,5 @@
       </div>
     </div>
   </div>
-  
 </body>
 </html>
