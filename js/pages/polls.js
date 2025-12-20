@@ -43,6 +43,9 @@ const textCloseList = $("textCloseList");
 const btnCancelTextClose = $("btnCancelTextClose");
 const btnFinishTextClose = $("btnFinishTextClose");
 
+let game = null;
+let textCloseModel = null;
+
 const TYPES = {
   POLL_TEXT: "poll_text",
   POLL_POINTS: "poll_points",
@@ -60,9 +63,6 @@ const RULES = {
   AN_MIN: 3,
   AN_MAX: 6,
 };
-
-let game = null;
-let textCloseModel = null;
 
 function setMsg(t) {
   if (!msg) return;
@@ -98,16 +98,15 @@ function pollLink(g) {
 
 function setChips(g) {
   if (chipType) chipType.textContent = typePL(g.type);
+  if (!chipStatus) return;
 
-  if (chipStatus) {
-    chipStatus.className = "chip status";
-    const st = g.status || STATUS.DRAFT;
-    chipStatus.textContent = statusPL(st);
+  chipStatus.className = "chip status";
+  const st = g.status || STATUS.DRAFT;
+  chipStatus.textContent = statusPL(st);
 
-    if (st === STATUS.READY) chipStatus.classList.add("ok");
-    else if (st === STATUS.POLL_OPEN) chipStatus.classList.add("warn");
-    else chipStatus.classList.add("bad");
-  }
+  if (st === STATUS.READY) chipStatus.classList.add("ok");
+  else if (st === STATUS.POLL_OPEN) chipStatus.classList.add("warn");
+  else chipStatus.classList.add("bad");
 }
 
 function clearQr() {
@@ -146,13 +145,15 @@ function setActionButton(label, disabled, hint) {
 
 function updatePreviewButtonState() {
   if (!btnPreview || !game) return;
-
   const st = game.status || STATUS.DRAFT;
-  const isPollType = game.type === TYPES.POLL_TEXT || game.type === TYPES.POLL_POINTS;
+  const isPoll = game.type === TYPES.POLL_TEXT || game.type === TYPES.POLL_POINTS;
   const okStatus = st === STATUS.POLL_OPEN || st === STATUS.READY;
-
-  btnPreview.disabled = !(isPollType && okStatus);
+  btnPreview.disabled = !(isPoll && okStatus);
 }
+
+/* =======================
+   DB
+======================= */
 
 async function loadGame() {
   const { data, error } = await sb()
@@ -169,7 +170,6 @@ async function countQuestions() {
     .from("questions")
     .select("id", { count: "exact", head: true })
     .eq("game_id", gameId);
-
   if (error) throw error;
   return count || 0;
 }
@@ -189,7 +189,6 @@ async function countAnswersForQuestion(qid) {
     .from("answers")
     .select("id", { count: "exact", head: true })
     .eq("question_id", qid);
-
   if (error) throw error;
   return count || 0;
 }
@@ -197,7 +196,7 @@ async function countAnswersForQuestion(qid) {
 async function getLastSessionIdForQuestion(questionId) {
   const { data, error } = await sb()
     .from("poll_sessions")
-    .select("id,created_at")
+    .select("id,created_at,is_open")
     .eq("game_id", gameId)
     .eq("question_id", questionId)
     .order("created_at", { ascending: false })
@@ -209,23 +208,16 @@ async function getLastSessionIdForQuestion(questionId) {
 }
 
 /* =======================
-   WALIDACJE (UI)
+   WALIDACJE UI
 ======================= */
 
 async function validateCanOpen(g) {
-  if (g.status !== STATUS.DRAFT) {
-    return { ok: false, reason: "Sondaż można uruchomić tylko ze stanu SZKIC." };
-  }
-  if (g.type === TYPES.PREPARED) {
-    return { ok: false, reason: "Gra preparowana nie ma sondażu." };
-  }
+  if (g.status !== STATUS.DRAFT) return { ok: false, reason: "Sondaż można uruchomić tylko ze stanu SZKIC." };
+  if (g.type === TYPES.PREPARED) return { ok: false, reason: "Gra preparowana nie ma sondażu." };
 
   const qn = await countQuestions();
   if (qn < RULES.QN_MIN) {
-    return {
-      ok: false,
-      reason: `Żeby uruchomić sondaż, liczba pytań musi być ≥ ${RULES.QN_MIN} (masz ${qn}).`,
-    };
+    return { ok: false, reason: `Żeby uruchomić: liczba pytań musi być ≥ ${RULES.QN_MIN} (masz ${qn}).` };
   }
 
   if (g.type === TYPES.POLL_POINTS) {
@@ -233,10 +225,7 @@ async function validateCanOpen(g) {
     for (const q of qsList) {
       const an = await countAnswersForQuestion(q.id);
       if (an < RULES.AN_MIN || an > RULES.AN_MAX) {
-        return {
-          ok: false,
-          reason: `W trybie PUNKTACJA każde pytanie musi mieć ${RULES.AN_MIN}–${RULES.AN_MAX} odpowiedzi.`,
-        };
+        return { ok: false, reason: `PUNKTACJA: każde pytanie musi mieć ${RULES.AN_MIN}–${RULES.AN_MAX} odpowiedzi.` };
       }
     }
   }
@@ -245,24 +234,19 @@ async function validateCanOpen(g) {
 }
 
 async function validateCanReopen(g) {
-  if (g.status !== STATUS.READY) {
-    return { ok: false, reason: "Ponowne uruchomienie możliwe tylko gdy sondaż jest ZAMKNIĘTY." };
-  }
-  return { ok: true, reason: "Wszystkie poprzednie dane zostaną usunięte." };
+  if (g.status !== STATUS.READY) return { ok: false, reason: "Ponowne uruchomienie tylko gdy sondaż jest ZAMKNIĘTY." };
+  return await validateCanOpen({ ...g, status: STATUS.DRAFT });
 }
 
 async function validateCanClose(g) {
-  if (g.status !== STATUS.POLL_OPEN) {
-    return { ok: false, reason: "Sondaż można zamknąć tylko gdy jest OTWARTY." };
-  }
+  if (g.status !== STATUS.POLL_OPEN) return { ok: false, reason: "Zamknąć można tylko gdy sondaż jest OTWARTY." };
 
   const qsList = await listQuestionsBasic();
 
   if (g.type === TYPES.POLL_POINTS) {
-    // warunek: w każdym pytaniu co najmniej 2 odpowiedzi mają głosy >0
     for (const q of qsList) {
       const sid = await getLastSessionIdForQuestion(q.id);
-      if (!sid) return { ok: false, reason: "Brak aktywnej sesji głosowania." };
+      if (!sid) return { ok: false, reason: "Brak aktywnej sesji." };
 
       const { data, error } = await sb()
         .from("poll_votes")
@@ -272,16 +256,13 @@ async function validateCanClose(g) {
 
       if (error) throw error;
 
-      const uniq = new Set((data || []).map((x) => x.answer_id).filter(Boolean));
-      if (uniq.size < 2) {
-        return { ok: false, reason: "Aby zamknąć: w każdym pytaniu ≥ 2 odpowiedzi muszą mieć głosy > 0." };
-      }
+      const uniq = new Set((data || []).map(x => x.answer_id).filter(Boolean));
+      if (uniq.size < 2) return { ok: false, reason: "Aby zamknąć: w każdym pytaniu ≥ 2 odpowiedzi muszą mieć głosy > 0." };
     }
     return { ok: true, reason: "" };
   }
 
   if (g.type === TYPES.POLL_TEXT) {
-    // warunek: w każdym pytaniu >=3 różne odpowiedzi
     for (const q of qsList) {
       const sid = await getLastSessionIdForQuestion(q.id);
       if (!sid) return { ok: false, reason: "Brak aktywnej sesji." };
@@ -294,10 +275,8 @@ async function validateCanClose(g) {
 
       if (error) throw error;
 
-      const uniq = new Set((data || []).map((x) => (x.answer_norm || "").trim()).filter(Boolean));
-      if (uniq.size < 3) {
-        return { ok: false, reason: "Aby zamknąć: w każdym pytaniu muszą być ≥ 3 różne odpowiedzi." };
-      }
+      const uniq = new Set((data || []).map(x => (x.answer_norm || "").trim()).filter(Boolean));
+      if (uniq.size < 3) return { ok: false, reason: "Aby zamknąć: w każdym pytaniu ≥ 3 różne odpowiedzi." };
     }
     return { ok: true, reason: "" };
   }
@@ -306,7 +285,7 @@ async function validateCanClose(g) {
 }
 
 /* =======================
-   PREVIEW (panel)
+   PODGLĄD
 ======================= */
 
 async function previewResults() {
@@ -330,7 +309,7 @@ async function previewResults() {
       if (aErr) throw aErr;
 
       const counts = new Map();
-      (ans || []).forEach((a) => counts.set(a.id, 0));
+      (ans || []).forEach(a => counts.set(a.id, 0));
 
       if (sid) {
         const { data: votes, error: vErr } = await sb()
@@ -340,7 +319,7 @@ async function previewResults() {
           .eq("question_id", q.id);
         if (vErr) throw vErr;
 
-        for (const v of votes || []) {
+        for (const v of (votes || [])) {
           counts.set(v.answer_id, (counts.get(v.answer_id) || 0) + 1);
         }
       }
@@ -349,7 +328,7 @@ async function previewResults() {
       box.className = "resultQ";
       box.innerHTML = `<div class="qTitle">P${q.ord}: ${q.text}</div>`;
 
-      for (const a of ans || []) {
+      for (const a of (ans || [])) {
         const row = document.createElement("div");
         row.className = "aRow";
         row.innerHTML = `<div class="aTxt"></div><div class="aVal"></div>`;
@@ -361,7 +340,7 @@ async function previewResults() {
       resultsList.appendChild(box);
     }
 
-    resultsMeta.textContent = "Podgląd: liczba głosów w ostatniej sesji (na pytanie).";
+    resultsMeta.textContent = "Podgląd: liczba głosów w ostatniej sesji.";
     return;
   }
 
@@ -378,7 +357,7 @@ async function previewResults() {
         .eq("question_id", q.id);
       if (error) throw error;
 
-      for (const r of data || []) {
+      for (const r of (data || [])) {
         const k = (r.answer_norm || "").trim();
         if (!k) continue;
         map.set(k, (map.get(k) || 0) + 1);
@@ -406,11 +385,11 @@ async function previewResults() {
     resultsList.appendChild(box);
   }
 
-  resultsMeta.textContent = "Podgląd: agregacja odpowiedzi (lowercase + trim) w ostatniej sesji.";
+  resultsMeta.textContent = "Podgląd: agregacja odpowiedzi (trim + lowercase, spacje w środku zachowane).";
 }
 
 /* =======================
-   poll_text CLOSE PANEL (merge + normalize)
+   poll_text: panel merge/delete + finalizacja
 ======================= */
 
 function clip17(s) {
@@ -426,11 +405,13 @@ function normalizeTo100Int(items) {
 
   const total = top.reduce((s, x) => s + Math.max(0, x.count | 0), 0) || 1;
 
-  const raw = top.map((x) => {
+  const raw = top.map(x => {
     const r = (100 * (x.count | 0)) / total;
     const f = Math.floor(r);
-    return { ...x, raw: r, floor: Math.max(1, f), frac: r - f };
+    return { ...x, raw: r, floor: f, frac: r - f };
   });
+
+  raw.forEach(x => { if (x.floor < 1) x.floor = 1; });
 
   let sum = raw.reduce((s, x) => s + x.floor, 0);
   let diff = 100 - sum;
@@ -442,27 +423,21 @@ function normalizeTo100Int(items) {
     diff = -diff;
     raw.sort((a, b) => b.floor - a.floor);
     let i = 0;
-    while (diff > 0 && i < raw.length * 10) {
+    while (diff > 0 && i < raw.length * 5) {
       const idx = i % raw.length;
-      if (raw[idx].floor > 1) {
-        raw[idx].floor -= 1;
-        diff--;
-      }
+      if (raw[idx].floor > 1) { raw[idx].floor -= 1; diff--; }
       i++;
     }
   }
 
   return raw
     .sort((a, b) => b.count - a.count)
-    .map((x) => ({ text: x.text, points: x.floor }));
+    .map(x => ({ text: x.text, points: x.floor }));
 }
 
 async function buildTextClosePanel() {
-  if (!textCloseCard || !textCloseList || !textCloseMeta) return null;
-
   textCloseCard.style.display = "";
-  resultsCard && (resultsCard.style.display = "none");
-
+  resultsCard.style.display = "none";
   textCloseList.innerHTML = "";
   textCloseMeta.textContent = "Ładuję odpowiedzi z ostatniej sesji…";
 
@@ -482,7 +457,7 @@ async function buildTextClosePanel() {
 
       if (error) throw error;
 
-      for (const r of data || []) {
+      for (const r of (data || [])) {
         const k = (r.answer_norm || "").trim();
         if (!k) continue;
         map.set(k, (map.get(k) || 0) + 1);
@@ -497,7 +472,7 @@ async function buildTextClosePanel() {
   }
 
   textCloseMeta.textContent =
-    "Przeciągnij odpowiedź na inną, aby je połączyć (sumuje liczbę). Możesz też usuwać. Na końcu bierzemy TOP 6 i normalizujemy do 100.";
+    "Przeciągnij odpowiedź na inną, aby je połączyć (sumuje liczbę). Możesz usuwać. Finalnie bierzemy TOP 6 i normalizujemy do 100.";
 
   for (const q of model) {
     const box = document.createElement("div");
@@ -506,7 +481,7 @@ async function buildTextClosePanel() {
       <div class="head">
         <div>
           <div class="qTitle">P${q.ord}: ${q.text}</div>
-          <div class="qHint">Przeciągnij, żeby połączyć • final max 17 znaków</div>
+          <div class="qHint">Przeciągnij, żeby połączyć • max 17 znaków w finalu</div>
         </div>
       </div>
       <div class="tcList"></div>
@@ -544,8 +519,8 @@ async function buildTextClosePanel() {
           e.dataTransfer.setData("text/plain", String(idx));
         });
         row.addEventListener("dragend", () => row.classList.remove("dragging"));
-        row.addEventListener("dragover", (e) => e.preventDefault());
 
+        row.addEventListener("dragover", (e) => e.preventDefault());
         row.addEventListener("drop", (e) => {
           e.preventDefault();
           const fromIdx = Number(e.dataTransfer.getData("text/plain"));
@@ -595,22 +570,20 @@ async function refresh() {
 
   if (gMeta) {
     if (game.type === TYPES.POLL_TEXT) {
-      gMeta.textContent = `Tryb: typowy sondaż (tekst). Start: ≥ ${RULES.QN_MIN} pytań. Zamknięcie: w każdym pytaniu ≥ 3 różne odpowiedzi.`;
+      gMeta.textContent = `Typowy sondaż (tekst). Start: ≥ ${RULES.QN_MIN} pytań. Zamknięcie: w każdym pytaniu ≥ 3 różne odpowiedzi.`;
     } else if (game.type === TYPES.POLL_POINTS) {
-      gMeta.textContent = `Tryb: punktacja. Start: ≥ ${RULES.QN_MIN} pytań i każde pytanie ma ${RULES.AN_MIN}–${RULES.AN_MAX} odpowiedzi. Zamknięcie: w każdym pytaniu ≥ 2 odpowiedzi mają głosy > 0.`;
+      gMeta.textContent = `Punktacja. Start: ≥ ${RULES.QN_MIN} pytań i każde pytanie ma ${RULES.AN_MIN}–${RULES.AN_MAX} odpowiedzi. Zamknięcie: w każdym pytaniu ≥ 2 odpowiedzi mają głosy > 0.`;
     } else {
       gMeta.textContent = "Gra preparowana nie ma sondażu.";
     }
   }
 
-  // link/qr
   if (pollLinkEl) pollLinkEl.value = "";
   setLinkUiVisible(false);
   clearQr();
 
-  resultsCard && (resultsCard.style.display = "none");
-  textCloseCard && (textCloseCard.style.display = "none");
-  textCloseModel = null;
+  if (textCloseCard) textCloseCard.style.display = "none";
+  if (resultsCard) resultsCard.style.display = "none";
 
   const st = game.status || STATUS.DRAFT;
 
@@ -630,31 +603,19 @@ async function refresh() {
 
   if (st === STATUS.DRAFT) {
     const chk = await validateCanOpen(game);
-    setActionButton(
-      "Uruchomić sondaż",
-      !chk.ok,
-      chk.ok ? "Gotowe do uruchomienia." : chk.reason
-    );
+    setActionButton("Uruchomić sondaż", !chk.ok, chk.ok ? "Gotowe do uruchomienia." : chk.reason);
     return;
   }
 
   if (st === STATUS.POLL_OPEN) {
     const chk = await validateCanClose(game);
-    setActionButton(
-      "Zamknąć sondaż",
-      !chk.ok,
-      chk.ok ? "Możesz zamknąć sondaż." : chk.reason
-    );
+    setActionButton("Zamknąć sondaż", !chk.ok, chk.ok ? "Możesz zamknąć sondaż." : chk.reason);
     return;
   }
 
   if (st === STATUS.READY) {
     const chk = await validateCanReopen(game);
-    setActionButton(
-      "Uruchomić ponownie",
-      !chk.ok,
-      chk.ok ? chk.reason : chk.reason
-    );
+    setActionButton("Uruchomić ponownie", !chk.ok, chk.ok ? "Wyczyści poprzednie dane i otworzy nową sesję." : chk.reason);
     return;
   }
 
@@ -699,19 +660,70 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   btnPreview?.addEventListener("click", async () => {
     if (!game || btnPreview.disabled) return;
-    if (resultsCard?.style.display === "none") await previewResults();
+    if (resultsCard.style.display === "none") await previewResults();
     else resultsCard.style.display = "none";
+  });
+
+  btnCancelTextClose?.addEventListener("click", () => {
+    textCloseCard.style.display = "none";
+    setMsg("Anulowano zamykanie (sondaż dalej otwarty).");
+  });
+
+  btnFinishTextClose?.addEventListener("click", async () => {
+    if (!game || game.type !== TYPES.POLL_TEXT) return;
+    if (!textCloseModel) return;
+
+    const payloadItems = [];
+
+    for (const q of textCloseModel) {
+      const cleaned = q.items
+        .map(x => ({ text: clip17(x.text), count: Number(x.count) || 0 }))
+        .filter(x => x.text && x.count > 0);
+
+      const final = normalizeTo100Int(cleaned)
+        .map(x => ({ text: clip17(x.text), points: Number(x.points) || 0 }))
+        .filter(x => x.text);
+
+      if (final.length < 3) {
+        alert(`Pytanie ${q.ord}: po edycji zostało mniej niż 3 odpowiedzi. Dodaj/połącz inaczej.`);
+        return;
+      }
+
+      payloadItems.push({ question_id: q.question_id, answers: final });
+    }
+
+    const ok = await confirmModal({
+      title: "Zamknąć sondaż?",
+      text: "Zamknąć sondaż, wybrać TOP 6 i zapisać punkty do 100 dla każdego pytania?",
+      okText: "Zamknij",
+      cancelText: "Anuluj",
+    });
+    if (!ok) return;
+
+    try {
+      const { error } = await sb().rpc("poll_text_close_apply", {
+        p_game_id: gameId,
+        p_key: game.share_key_poll,
+        p_payload: { items: payloadItems },
+      });
+      if (error) throw error;
+
+      setMsg("Sondaż zamknięty. Gra gotowa.");
+      textCloseCard.style.display = "none";
+      await refresh();
+    } catch (e) {
+      console.error("[polls] close text error:", e);
+      alert(`Nie udało się zamknąć sondażu.\n\n${e?.message || e}`);
+    }
   });
 
   btnPollAction?.addEventListener("click", async () => {
     if (!game) return;
-
     const st = game.status || STATUS.DRAFT;
 
-    // START
     if (st === STATUS.DRAFT) {
       const chk = await validateCanOpen(game);
-      if (!chk.ok) return setMsg(chk.reason);
+      if (!chk.ok) { setMsg(chk.reason); return; }
 
       const ok = await confirmModal({
         title: "Uruchomić sondaż?",
@@ -724,7 +736,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       try {
         const { error } = await sb().rpc("poll_open", { p_game_id: gameId, p_key: game.share_key_poll });
         if (error) throw error;
-
         setMsg("Sondaż uruchomiony.");
         await refresh();
       } catch (e) {
@@ -734,12 +745,10 @@ document.addEventListener("DOMContentLoaded", async () => {
       return;
     }
 
-    // CLOSE
     if (st === STATUS.POLL_OPEN) {
       const chk = await validateCanClose(game);
-      if (!chk.ok) return setMsg(chk.reason);
+      if (!chk.ok) { setMsg(chk.reason); return; }
 
-      // poll_points: zamykamy od razu
       if (game.type === TYPES.POLL_POINTS) {
         const ok = await confirmModal({
           title: "Zakończyć sondaż?",
@@ -765,21 +774,20 @@ document.addEventListener("DOMContentLoaded", async () => {
         return;
       }
 
-      // poll_text: panel merge/delete + finalizacja
+      // poll_text: panel łączenia/usuwania
       try {
         textCloseModel = await buildTextClosePanel();
-        setMsg("Połącz/usuń odpowiedzi, a potem kliknij „Zamknij i przelicz”.");
+        setMsg("Edytuj odpowiedzi, potem kliknij „Zamknij” w panelu.");
       } catch (e) {
         console.error("[polls] build text close:", e);
-        alert(`Nie udało się wczytać odpowiedzi.\n\n${e?.message || e}`);
+        alert("Nie udało się wczytać odpowiedzi tekstowych.");
       }
       return;
     }
 
-    // REOPEN
     if (st === STATUS.READY) {
       const chk = await validateCanReopen(game);
-      if (!chk.ok) return setMsg(chk.reason);
+      if (!chk.ok) { setMsg(chk.reason); return; }
 
       const ok = await confirmModal({
         title: "Uruchomić ponownie?",
@@ -792,69 +800,12 @@ document.addEventListener("DOMContentLoaded", async () => {
       try {
         const { error } = await sb().rpc("poll_open", { p_game_id: gameId, p_key: game.share_key_poll });
         if (error) throw error;
-
         setMsg("Sondaż uruchomiony ponownie.");
         await refresh();
       } catch (e) {
         console.error("[polls] reopen error:", e);
         alert(`Nie udało się otworzyć ponownie.\n\n${e?.message || e}`);
       }
-      return;
-    }
-  });
-
-  btnCancelTextClose?.addEventListener("click", () => {
-    textCloseCard.style.display = "none";
-    textCloseModel = null;
-    setMsg("Anulowano zamykanie (sondaż dalej otwarty).");
-  });
-
-  btnFinishTextClose?.addEventListener("click", async () => {
-    if (!game || game.type !== TYPES.POLL_TEXT) return;
-    if (!textCloseModel) return;
-
-    const payloadItems = [];
-
-    for (const q of textCloseModel) {
-      const cleaned = q.items
-        .map((x) => ({ text: clip17(x.text), count: Number(x.count) || 0 }))
-        .filter((x) => x.text && x.count > 0);
-
-      const final = normalizeTo100Int(cleaned)
-        .map((x) => ({ text: clip17(x.text), points: Number(x.points) || 0 }))
-        .filter((x) => x.text);
-
-      if (final.length < 3) {
-        alert(`Pytanie ${q.ord}: po edycji zostało mniej niż 3 odpowiedzi. Połącz/usuwaj inaczej.`);
-        return;
-      }
-
-      payloadItems.push({ question_id: q.question_id, answers: final });
-    }
-
-    const ok = await confirmModal({
-      title: "Zamknąć sondaż?",
-      text: "Zamknąć sondaż, wybrać TOP 6 i zapisać punkty do 100 dla każdego pytania?",
-      okText: "Zamknij",
-      cancelText: "Anuluj",
-    });
-    if (!ok) return;
-
-    try {
-      const { error } = await sb().rpc("poll_text_close_apply", {
-        p_game_id: gameId,
-        p_key: game.share_key_poll,
-        p_payload: { items: payloadItems },
-      });
-      if (error) throw error;
-
-      setMsg("Sondaż zamknięty. Gra gotowa.");
-      textCloseCard.style.display = "none";
-      textCloseModel = null;
-      await refresh();
-    } catch (e) {
-      console.error("[polls] close text error:", e);
-      alert(`Nie udało się zamknąć sondażu.\n\n${e?.message || e}`);
     }
   });
 
