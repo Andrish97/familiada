@@ -4,17 +4,17 @@ import { requireAuth, signOut } from "../core/auth.js";
 import { parseQaText, clip as clipN } from "../core/text-import.js";
 import { canEnterEdit, RULES as GV_RULES } from "../core/game-validate.js";
 
-const QN_MIN = GV_RULES.QN_MIN;      // 10
-const AN_MIN = GV_RULES.AN_MIN;      // 3
-const AN_MAX = GV_RULES.AN_MAX;      // 6
+const QN_MIN = GV_RULES.QN_MIN; // 10
+const AN_MIN = GV_RULES.AN_MIN; // 3
+const AN_MAX = GV_RULES.AN_MAX; // 6
 
 const $ = (id) => document.getElementById(id);
 
 const clip17 = (s) => clipN(String(s ?? ""), 17);
 const normQ = (s) => String(s ?? "").trim().slice(0, 200);
-const normName = (s) => (String(s ?? "Nowa Familiada").trim() || "Nowa Familiada").slice(0, 80);
+const normName = (s) =>
+  (String(s ?? "Nowa Familiada").trim() || "Nowa Familiada").slice(0, 80);
 
-const isNum = (v) => Number.isFinite(Number(v));
 const clampPts = (v) => {
   const n = Number(v);
   if (!Number.isFinite(n)) return 0;
@@ -23,14 +23,13 @@ const clampPts = (v) => {
 
 function calcQuestionPoints(answers) {
   let sum = 0;
-
   for (const a of answers) {
     const p = Number(a.fixed_points);
     if (!Number.isFinite(p)) continue;
-    if (p < 0 || p > 100) continue; // ignorujemy >100
+    // tu nie filtrujemy >100, bo clampujemy przy zapisie; ale zostawiamy porządek:
+    if (p < 0) continue;
     sum += p;
   }
-
   return sum;
 }
 
@@ -61,9 +60,7 @@ function openOverlay(id, on) {
  * READY -> edycja wymaga resetu do szkicu:
  * - games.status = draft
  * - poll_opened_at / poll_closed_at = null
- * - answers.fixed_points = 0 (bo to Twoje “dane sondażowe” dla poll_points)
- *
- * Jeśli kiedyś dopniesz osobne tabele wyników sondażu, to tu też je czyścisz.
+ * - answers.fixed_points = 0 (dla poll_points jako “dane sondażowe”)
  */
 async function resetPollForEditing(gameId) {
   const { error: gErr } = await sb()
@@ -72,7 +69,6 @@ async function resetPollForEditing(gameId) {
     .eq("id", gameId);
   if (gErr) throw gErr;
 
-  // answers.fixed_points => 0 (dla wszystkich pytań w grze)
   const { data: qs, error: qErr } = await sb()
     .from("questions")
     .select("id")
@@ -100,7 +96,10 @@ async function loadGame(gameId) {
 }
 
 async function saveGameName(gameId, name) {
-  const { error } = await sb().from("games").update({ name: normName(name) }).eq("id", gameId);
+  const { error } = await sb()
+    .from("games")
+    .update({ name: normName(name) })
+    .eq("id", gameId);
   if (error) throw error;
 }
 
@@ -127,11 +126,7 @@ async function listAnswers(questionId) {
 async function createQuestion(gameId, ord) {
   const { data, error } = await sb()
     .from("questions")
-    .insert({
-      game_id: gameId,
-      ord,
-      text: `Pytanie ${ord}`,
-    })
+    .insert({ game_id: gameId, ord, text: `Pytanie ${ord}` })
     .select("id,ord,text")
     .single();
   if (error) throw error;
@@ -146,12 +141,7 @@ async function updateQuestion(qId, patch) {
 async function createAnswer(questionId, ord, text, fixed_points) {
   const { data, error } = await sb()
     .from("answers")
-    .insert({
-      question_id: questionId,
-      ord,
-      text,
-      fixed_points,
-    })
+    .insert({ question_id: questionId, ord, text, fixed_points })
     .select("id,ord,text,fixed_points")
     .single();
   if (error) throw error;
@@ -170,7 +160,7 @@ function nextQuestionOrd(items) {
 }
 
 function nextAnswerOrd(items, limit) {
-  const used = new Set(items.map(x => x.ord));
+  const used = new Set(items.map((x) => x.ord));
   for (let i = 1; i <= limit; i++) if (!used.has(i)) return i;
   return null;
 }
@@ -213,13 +203,16 @@ export async function bootEditor(cfg) {
 
   // jeśli ktoś wszedł w zły edytor – przerzut
   if (game.type !== cfg.type) {
-    if (game.type === "prepared") location.href = `editor-prepared.html?id=${encodeURIComponent(gameId)}`;
-    if (game.type === "poll_text") location.href = `editor-poll-text.html?id=${encodeURIComponent(gameId)}`;
-    if (game.type === "poll_points") location.href = `editor-poll-points.html?id=${encodeURIComponent(gameId)}`;
+    if (game.type === "prepared")
+      location.href = `editor-prepared.html?id=${encodeURIComponent(gameId)}`;
+    if (game.type === "poll_text")
+      location.href = `editor-poll-text.html?id=${encodeURIComponent(gameId)}`;
+    if (game.type === "poll_points")
+      location.href = `editor-poll-points.html?id=${encodeURIComponent(gameId)}`;
     return;
   }
 
-  // twarde sprawdzenie edycji przy wejściu URL-em
+  // twarde sprawdzenie edycji
   const editInfo = canEnterEdit(game);
   if (!editInfo?.ok) {
     alert(editInfo?.reason || "Nie możesz edytować tej gry w tym momencie.");
@@ -243,9 +236,11 @@ export async function bootEditor(cfg) {
   const badge = $("kindBadge") || $("typeBadge");
   if (badge) {
     badge.textContent =
-      cfg.type === "prepared" ? "Preparowany" :
-      cfg.type === "poll_points" ? "Punktacja odpowiedzi" :
-      "Typowy sondaż";
+      cfg.type === "prepared"
+        ? "Preparowany"
+        : cfg.type === "poll_points"
+        ? "Punktacja odpowiedzi"
+        : "Typowy sondaż";
   }
 
   const lockBadge = $("lockBadge");
@@ -285,9 +280,7 @@ export async function bootEditor(cfg) {
     }
   });
 
-  // na wypadek “ucieczki” bez blura (np. klik back / zamknięcie karty)
   window.addEventListener("beforeunload", () => {
-    // fire-and-forget: przeglądarka może to uciąć, ale często zapisze
     saveNameIfChanged();
   });
 
@@ -337,42 +330,42 @@ export async function bootEditor(cfg) {
     if (!qList) return;
     qList.innerHTML = "";
 
-  // ✅ kafelek dodawania (zawsze, bez limitu pytań)
-  const qCount = questions.length;
-  const meetsMin = qCount >= QN_MIN;
-  
-  const addQBtn = document.createElement("button");
-  addQBtn.type = "button";
-  addQBtn.className = "qcard";
-  
-  addQBtn.innerHTML = `
-    <div class="qprev">+ Dodaj pytanie</div>
-    <div class="qmeta">
-      ${meetsMin ? "Minimum spełnione" : `Wymagane minimum: ${QN_MIN} (masz ${qCount})`}
-    </div>
-  `;
-  
-  addQBtn.addEventListener("click", async () => {
-    try {
-      const ord = nextQuestionOrd(questions);
-      const q = await createQuestion(gameId, ord, cfg.mode);
-  
-      questions = await listQuestions(gameId);
-      activeQId = q.id;
-  
-      await loadAnswersForActive();
-      await refreshCounts();
-  
-      renderQuestions();
-      renderEditor();
-      setMsg("Dodano pytanie.");
-    } catch (e) {
-      console.error(e);
-      setMsg("Błąd dodawania pytania (konsola).");
-    }
-  });
-  
-  qList.appendChild(addQBtn);
+    // kafelek dodawania pytania (bez limitu)
+    const qCount = questions.length;
+    const meetsMin = qCount >= QN_MIN;
+
+    const addQBtn = document.createElement("button");
+    addQBtn.type = "button";
+    addQBtn.className = "qcard";
+
+    addQBtn.innerHTML = `
+      <div class="qprev">+ Dodaj pytanie</div>
+      <div class="qmeta">
+        ${meetsMin ? "Minimum spełnione" : `Wymagane minimum: ${QN_MIN} (masz ${qCount})`}
+      </div>
+    `;
+
+    addQBtn.addEventListener("click", async () => {
+      try {
+        const ord = nextQuestionOrd(questions);
+        const q = await createQuestion(gameId, ord);
+
+        questions = await listQuestions(gameId);
+        activeQId = q.id;
+
+        await loadAnswersForActive();
+        await refreshCounts();
+
+        renderQuestions();
+        renderEditor();
+        setMsg("Dodano pytanie.");
+      } catch (e) {
+        console.error(e);
+        setMsg("Błąd dodawania pytania (konsola).");
+      }
+    });
+
+    qList.appendChild(addQBtn);
 
     // lista pytań
     for (const q of questions) {
@@ -385,7 +378,8 @@ export async function bootEditor(cfg) {
         <div class="qprev"></div>
         <div class="qmeta"></div>
       `;
-      el.querySelector(".qprev").textContent = (q.text || "").trim() || `Pytanie ${q.ord}`;
+      el.querySelector(".qprev").textContent =
+        (q.text || "").trim() || `Pytanie ${q.ord}`;
 
       const meta = el.querySelector(".qmeta");
       if (cfg.allowAnswers) {
@@ -406,37 +400,47 @@ export async function bootEditor(cfg) {
     }
   }
 
+  function buildRemainBox() {
+    const sum = calcQuestionPoints(answers);
+    const diff = 100 - sum;
+
+    const remain = document.createElement("div");
+    remain.className = "remainBox";
+    remain.style.marginBottom = "10px";
+
+    // kolorujemy TYLKO licznik
+    remain.classList.remove("ok", "over");
+
+    if (diff === 0) {
+      remain.classList.add("ok");
+      remain.innerHTML = `<span>OK</span><b>100</b>`;
+    } else if (diff > 0) {
+      // default (żółty) = bez klasy
+      remain.innerHTML = `<span>ZOSTAŁO</span><b>${diff}</b>`;
+    } else {
+      remain.classList.add("over");
+      remain.innerHTML = `<span>ZA DUŻO</span><b>${-diff}</b>`;
+    }
+
+    return remain;
+  }
+
   function renderAnswers() {
     if (!cfg.allowAnswers) return;
     if (!aList) return;
-  
+
     aList.innerHTML = "";
-  
-    // ✅ 1 licznik na pytanie (tylko prepared)
+
+    // 1 licznik na pytanie (tylko prepared)
     if (cfg.allowPoints) {
-      const sum = calcQuestionPoints(answers);
-      const diff = 100 - sum;
-  
-      const remain = document.createElement("div");
-      remain.className = "remainBox";
-      remain.style.marginBottom = "10px"; // żeby nie kleiło się do pierwszej odpowiedzi
-  
-      if (diff === 0) {
-        remain.innerHTML = `<span>OK</span><b>100</b>`;
-      } else if (diff > 0) {
-        remain.innerHTML = `<span>ZOSTAŁO</span><b>${diff}</b>`;
-      } else {
-        remain.innerHTML = `<span>ZA DUŻO</span><b>${-diff}</b>`;
-      }
-  
-      aList.appendChild(remain);
+      aList.appendChild(buildRemainBox());
     }
-  
-    // existing answers rows
+
+    // rows
     for (const a of answers) {
       const row = document.createElement("div");
       row.className = "arow";
-  
+
       if (cfg.allowPoints) {
         row.innerHTML = `
           <input class="aText" type="text" maxlength="17" placeholder="ODP ${a.ord}">
@@ -449,68 +453,109 @@ export async function bootEditor(cfg) {
           <button class="aDel" type="button" title="Wyczyść">✕</button>
         `;
       }
-  
+
       const iText = row.querySelector(".aText");
       iText.value = a.text || "";
-  
+
       const iPts = cfg.allowPoints ? row.querySelector(".aPts") : null;
       if (iPts) iPts.value = Number(a.fixed_points) || 0;
-  
+
       const bDel = row.querySelector(".aDel");
-  
-      const saveNow = async () => {
+
+      // ===== save handlers =====
+
+      // tekst – może zapisywać na debounce (jak było)
+      const saveTextNow = async () => {
         try {
-          const patch = { text: clip17(iText.value) };
-          if (cfg.allowPoints) patch.fixed_points = clampPts(iPts.value);
-          else patch.fixed_points = 0;
-  
+          const patch = { text: clip17(iText.value), fixed_points: 0 };
+          if (cfg.allowPoints) patch.fixed_points = clampPts(iPts?.value);
+
           await updateAnswer(a.id, patch);
-  
-          // ✅ po zapisie punktów odśwież licznik (dla prepared)
-          if (cfg.allowPoints) {
-            answers = await listAnswers(activeQId);
-            renderAnswers();
-            return;
-          }
-  
           setMsg("Zapisano.");
         } catch (e) {
           console.error(e);
           setMsg("Błąd zapisu (konsola).");
         }
       };
-  
-      const save = debounce(saveNow, 350);
-  
+      const saveText = debounce(saveTextNow, 350);
+
+      // punkty – zapis TYLKO na blur / enter
+      const savePointsNow = async () => {
+        if (!cfg.allowPoints || !iPts) return;
+        try {
+          const newPts = clampPts(iPts.value);
+          await updateAnswer(a.id, { fixed_points: newPts });
+
+          // odśwież dane + licznik (najprościej)
+          answers = await listAnswers(activeQId);
+          renderAnswers();
+          setMsg("Zapisano.");
+        } catch (e) {
+          console.error(e);
+          setMsg("Błąd zapisu punktów (konsola).");
+        }
+      };
+
+      // ===== events =====
+
       iText.addEventListener("input", () => {
         if (iText.value.length > 17) iText.value = iText.value.slice(0, 17);
         setMsg("Piszesz…");
-        save();
+        saveText();
       });
-  
-      iPts?.addEventListener("input", () => {
-        const v = Number(iPts.value);
-        iPts.classList.toggle("tooMuch", isNum(v) && v > 100);
-        setMsg("Piszesz…");
-        save();
-      });
-  
+
+      // ✅ punkty: NIE zapisujemy na input
+      // - blur = zapis
+      // - Enter = blur (i zapis)
+      // - opcjonalnie blokujemy kółko myszy żeby nie “skakało” przypadkiem
+      if (iPts) {
+        iPts.addEventListener("blur", () => {
+          savePointsNow();
+        });
+
+        iPts.addEventListener("keydown", (e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            iPts.blur();
+          }
+        });
+
+        iPts.addEventListener("wheel", (e) => {
+          // żeby przypadkowo nie zmieniać wartości scrollując listę
+          e.preventDefault();
+        }, { passive: false });
+      }
+
       bDel.addEventListener("click", async () => {
-        iText.value = "";
-        if (iPts) iPts.value = "0";
-        await saveNow();
+        try {
+          iText.value = "";
+          if (iPts) iPts.value = "0";
+
+          const patch = { text: "", fixed_points: 0 };
+          await updateAnswer(a.id, patch);
+
+          if (cfg.allowPoints) {
+            answers = await listAnswers(activeQId);
+            renderAnswers();
+          } else {
+            setMsg("Zapisano.");
+          }
+        } catch (e) {
+          console.error(e);
+          setMsg("Błąd zapisu (konsola).");
+        }
       });
-  
+
       aList.appendChild(row);
     }
-  
-    // add-tile (zawsze na dole)
+
+    // add-tile
     const canAddA = answers.length < AN_MAX;
     const addABtn = document.createElement("button");
     addABtn.type = "button";
     addABtn.className = "arow addTile";
     addABtn.disabled = !canAddA;
-  
+
     addABtn.style.cursor = canAddA ? "pointer" : "not-allowed";
     addABtn.style.opacity = canAddA ? "1" : ".55";
     addABtn.innerHTML = `
@@ -521,18 +566,18 @@ export async function bootEditor(cfg) {
         ${answers.length}/${AN_MAX}
       </div>
     `;
-  
+
     addABtn.addEventListener("click", async () => {
       if (!canAddA || !activeQId) return;
       try {
-        const ord = nextAnswerOrd(answers, AN_MAX); // ✅ było nextOrd
+        const ord = nextAnswerOrd(answers, AN_MAX);
         if (!ord) return;
-  
+
         await createAnswer(activeQId, ord, `ODP ${ord}`, 0);
-  
+
         answers = await listAnswers(activeQId);
         await refreshCounts();
-  
+
         renderQuestions();
         renderAnswers();
         setMsg("Dodano odpowiedź.");
@@ -541,7 +586,7 @@ export async function bootEditor(cfg) {
         setMsg("Błąd dodawania odpowiedzi (konsola).");
       }
     });
-  
+
     aList.appendChild(addABtn);
   }
 
@@ -607,7 +652,9 @@ export async function bootEditor(cfg) {
     openOverlay("txtImportOverlay", true);
   });
 
-  btnTxtClose?.addEventListener("click", () => openOverlay("txtImportOverlay", false));
+  btnTxtClose?.addEventListener("click", () =>
+    openOverlay("txtImportOverlay", false)
+  );
 
   btnHowTxt?.addEventListener("click", () => openOverlay("howOverlay", true));
   btnHowClose?.addEventListener("click", () => openOverlay("howOverlay", false));
@@ -654,17 +701,12 @@ export async function bootEditor(cfg) {
       setTxtMsg("Importuję…");
 
       await refreshCounts();
-
       let qOrd = nextQuestionOrd(await listQuestions(gameId));
 
       for (const item of parsed.items) {
-
         const q = await createQuestion(gameId, qOrd);
         await updateQuestion(q.id, { text: normQ(item.qText) });
 
-        // poll_text: tylko pytania (cfg.allowAnswers=false)
-        // poll_points: pytania + odpowiedzi, punkty ignorujemy
-        // prepared: pytania + odpowiedzi + punkty
         if (cfg.allowAnswers) {
           let aOrd = 1;
           for (const a of item.answers || []) {
@@ -672,15 +714,14 @@ export async function bootEditor(cfg) {
 
             const text = clip17(a.text);
             const pts =
-              cfg.allowPoints && !cfg.ignoreImportPoints
-                ? clampPts(a.points)
-                : 0;
+              cfg.allowPoints && !cfg.ignoreImportPoints ? clampPts(a.points) : 0;
 
             await createAnswer(q.id, aOrd, text || `ODP ${aOrd}`, pts);
             aOrd++;
           }
         }
-        qOrd++
+
+        qOrd++;
       }
 
       await refreshCounts();
