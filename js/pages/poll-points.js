@@ -1,169 +1,137 @@
-create or replace function public.poll_close_and_normalize(p_game_id uuid, p_key text)
-returns void
-language plpgsql
-security definer
-as $function$
-declare
-  g public.games;
-begin
-  select * into g
-  from public.games
-  where id = p_game_id
-    and share_key_poll = p_key
-  limit 1;
+// js/pages/poll-points.js
+import { sb } from "../core/supabase.js";
 
-  if not found then
-    raise exception 'bad key or game';
-  end if;
+const qs = new URLSearchParams(location.search);
+const key = qs.get("key");          // najważniejsze
+const gameId = qs.get("id") || null; // opcjonalne (nie wymagamy)
 
-  if g.type <> 'poll_points'::public.game_type then
-    raise exception 'poll_close_and_normalize works only for poll_points';
-  end if;
+const title = document.getElementById("title");
+const sub = document.getElementById("sub");
+const qbox = document.getElementById("qbox");
+const qtext = document.getElementById("qtext");
+const alist = document.getElementById("alist");
+const prog = document.getElementById("prog");
+const closed = document.getElementById("closed");
 
-  if g.status <> 'poll_open'::public.game_status then
-    raise exception 'poll is not open';
-  end if;
+function voterToken() {
+  const k = `fam_poll_token_${key || gameId || "x"}`;
+  let t = localStorage.getItem(k);
+  if (!t) {
+    // >= 8 znaków (constraint pv_token_len)
+    t = (Math.random().toString(16).slice(2) + Date.now().toString(16)).padEnd(12, "0");
+    localStorage.setItem(k, t);
+  }
+  return t;
+}
 
-  if (select count(*) from public.questions where game_id = p_game_id) < 10 then
-    raise exception 'Za mało pytań (min 10)';
-  end if;
+let bundle = null;
+let idx = 0;
+let busy = false;
 
-  /*
-    Mapujemy ord->question_id i ord->answer_id, a głosy liczymy z poll_votes (ord-owo).
-    Uwaga: działamy tylko na pytaniach 1..10.
-  */
+function showBox(on) {
+  qbox.style.display = on ? "" : "none";
+  closed.style.display = on ? "none" : "";
+}
 
-  with q10 as (
-    select id as question_id, ord as qord
-    from public.questions
-    where game_id = p_game_id
-      and ord between 1 and 10
-  ),
-  a as (
-    select
-      q10.question_id,
-      q10.qord,
-      an.id as answer_id,
-      an.ord as aord
-    from q10
-    join public.answers an
-      on an.question_id = q10.question_id
-    where an.ord between 1 and 6
-  ),
-  c as (
-    select
-      a.question_id,
-      a.answer_id,
-      a.qord,
-      a.aord,
-      coalesce(count(v.id), 0)::int as cnt
-    from a
-    left join public.poll_votes v
-      on v.game_id = p_game_id
-     and v.question_ord = a.qord
-     and v.answer_ord  = a.aord
-    group by a.question_id, a.answer_id, a.qord, a.aord
-  ),
-  c_fixed as (
-    select
-      question_id,
-      answer_id,
-      qord,
-      aord,
-      case when cnt = 0 then 1 else cnt end as cnt1
-    from c
-  ),
-  tot as (
-    select question_id, sum(cnt1)::int as total
-    from c_fixed
-    group by question_id
-  ),
-  raw as (
-    select
-      cf.question_id,
-      cf.answer_id,
-      cf.aord,
-      (100.0 * cf.cnt1 / nullif(t.total, 0)) as raw_p,
-      floor(100.0 * cf.cnt1 / nullif(t.total, 0))::int as base_floor,
-      (100.0 * cf.cnt1 / nullif(t.total, 0)) - floor(100.0 * cf.cnt1 / nullif(t.total, 0)) as frac
-    from c_fixed cf
-    join tot t on t.question_id = cf.question_id
-  ),
-  base as (
-    select
-      question_id,
-      answer_id,
-      aord,
-      greatest(1, base_floor) as p0,
-      frac
-    from raw
-  ),
-  sum_base as (
-    select question_id, sum(p0)::int as s0
-    from base
-    group by question_id
-  ),
-  need as (
-    select
-      b.question_id,
-      b.answer_id,
-      b.aord,
-      b.p0,
-      b.frac,
-      (100 - sb.s0)::int as diff
-    from base b
-    join sum_base sb on sb.question_id = b.question_id
-  ),
-  ranked_plus as (
-    select
-      n.*,
-      row_number() over (partition by question_id order by frac desc, aord asc) as rn_plus
-    from need n
-  ),
-  ranked_minus as (
-    select
-      n.*,
-      row_number() over (partition by question_id order by p0 desc, frac asc, aord desc) as rn_minus
-    from need n
-    where p0 > 1
-  ),
-  final as (
-    select
-      n.answer_id,
-      case
-        when n.diff > 0 then
-          n.p0 + case when rp.rn_plus <= n.diff then 1 else 0 end
-        when n.diff < 0 then
-          n.p0 - case
-            when rm.rn_minus is not null and rm.rn_minus <= abs(n.diff) then 1
-            else 0
-          end
-        else
-          n.p0
-      end as p_final
-    from need n
-    left join ranked_plus rp
-      on rp.question_id = n.question_id and rp.answer_id = n.answer_id
-    left join ranked_minus rm
-      on rm.question_id = n.question_id and rm.answer_id = n.answer_id
-  )
-  update public.answers aup
-  set fixed_points = f.p_final
-  from final f
-  where aup.id = f.answer_id;
+function showClosed(msg) {
+  showBox(false);
+  closed.textContent = msg || "Sondaż jest zamknięty. Dziękujemy!";
+  sub.textContent = "Ten sondaż nie przyjmuje już głosów.";
+}
 
-  -- zamknij sesje
-  update public.poll_sessions
-  set is_open = false,
-      closed_at = now()
-  where game_id = p_game_id
-    and is_open = true;
+function showError(msg) {
+  showBox(false);
+  closed.textContent = msg || "Nie udało się wczytać sondażu.";
+  sub.textContent = "—";
+}
 
-  -- zamknij grę
-  update public.games
-  set status = 'ready'::public.game_status,
-      poll_closed_at = now()
-  where id = p_game_id;
+function render() {
+  const g = bundle?.game;
+  const qlist = bundle?.questions || [];
 
-end;
-$function$;
+  title.textContent = g?.name ? `Sondaż: ${g.name}` : "Sondaż";
+
+  if (!g) return showError("Brak danych gry.");
+  if (g.status !== "poll_open") return showClosed("Sondaż jest zamknięty. Dziękujemy!");
+  if (!qlist.length) return showError("Brak pytań do głosowania.");
+
+  if (idx >= qlist.length) {
+    sub.textContent = "Dzięki! Oddałeś(aś) głos na wszystkie pytania.";
+    showBox(false);
+    closed.textContent = "Dziękujemy za udział w sondażu!";
+    return;
+  }
+
+  const q = qlist[idx];
+  const answers = q?.answers || [];
+  if (!answers.length) return showError("Błąd: pytanie bez odpowiedzi.");
+
+  showBox(true);
+  sub.textContent = "Wybierz odpowiedź, która najbardziej pasuje.";
+  qtext.textContent = q.text || "—";
+  prog.textContent = `Pytanie ${idx + 1} / ${qlist.length}`;
+
+  alist.innerHTML = "";
+
+  for (const a of answers) {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "abtn";
+    b.textContent = a.text || "—";
+
+    b.addEventListener("click", async () => {
+      if (busy) return;
+      busy = true;
+      b.disabled = true;
+
+      try {
+        const qOrd = Number(q.ord);
+        const aOrd = Number(a.ord);
+        if (!Number.isFinite(qOrd) || !Number.isFinite(aOrd)) {
+          throw new Error("Błędne ORD w danych sondażu.");
+        }
+
+        const { error } = await sb().rpc("poll_vote", {
+          p_key: key,
+          p_question_ord: qOrd,
+          p_answer_ord: aOrd,
+          p_voter_token: voterToken(),
+        });
+
+        if (error) throw error;
+
+        idx += 1;
+        busy = false;
+        render();
+      } catch (e) {
+        busy = false;
+
+        const m = String(e?.message || e).toLowerCase();
+        if (m.includes("closed") || m.includes("poll closed")) {
+          return showClosed("Sondaż jest zamknięty. Dziękujemy!");
+        }
+
+        alert("Nie udało się oddać głosu. Spróbuj ponownie.");
+        b.disabled = false;
+      }
+    });
+
+    alist.appendChild(b);
+  }
+}
+
+async function load() {
+  if (!key) return showError("Nieprawidłowy link sondażu (brak key).");
+
+  try {
+    const res = await sb().rpc("get_poll_bundle", { p_key: key });
+    bundle = res.data;
+    idx = 0;
+    render();
+  } catch (e) {
+    console.error("[poll-points] load error:", e);
+    showError("Nie udało się wczytać sondażu.");
+  }
+}
+
+document.addEventListener("DOMContentLoaded", load);
