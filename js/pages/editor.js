@@ -42,14 +42,12 @@ const normQ = (s) => String(s ?? "").trim().slice(0, 200);
 const normName = (s) => (String(s ?? "Nowa Familiada").trim() || "Nowa Familiada").slice(0, 80);
 
 function normalizeIntLoose(v, fallback = 0) {
-  // "zwykłe pole": pozwól wpisać cokolwiek, ale do DB idzie int albo fallback
   const s = String(v ?? "").trim();
   if (!s) return fallback;
   const n = Number(s);
   if (!Number.isFinite(n)) return fallback;
   return Math.floor(n);
 }
-
 function nonNegativeInt(v, fallback = 0) {
   const n = normalizeIntLoose(v, fallback);
   return Math.max(0, n);
@@ -63,10 +61,8 @@ function wireEnterAsBlur() {
     const el = e.target;
     if (!(el instanceof HTMLElement)) return;
 
-    // textarea: Enter = nowa linia
     if (el.tagName === "TEXTAREA") return;
 
-    // input/select: Enter = blur
     if (el.tagName === "INPUT" || el.tagName === "SELECT") {
       e.preventDefault();
       el.blur();
@@ -126,7 +122,6 @@ async function updateQuestion(qId, patch) {
 }
 
 async function deleteQuestionDeep(qId) {
-  // answers -> question
   const { error: aErr } = await sb().from("answers").delete().eq("question_id", qId);
   if (aErr) throw aErr;
 
@@ -135,7 +130,6 @@ async function deleteQuestionDeep(qId) {
 }
 
 async function createAnswer(questionId, ord, text, fixed_points) {
-  // answers_text_len constraint: max 17 i niepuste
   const safeText = (clip17(text || `ODP ${ord}`) || `ODP ${ord}`).trim() || `ODP ${ord}`;
   const safePts = nonNegativeInt(fixed_points, 0);
 
@@ -158,12 +152,6 @@ async function deleteAnswer(aId) {
   if (error) throw error;
 }
 
-/**
- * READY -> reset do szkicu:
- * - status=draft
- * - poll_* = null
- * - answers.fixed_points = 0
- */
 async function resetPollForEditing(gameId) {
   const { error: gErr } = await sb()
     .from("games")
@@ -183,7 +171,6 @@ async function resetPollForEditing(gameId) {
 
 /* ================= Renumber / wipe ================= */
 async function renumberQuestions(gameId) {
-  // ord ma być zawsze 1..N bez dziur
   const qs = await listQuestions(gameId);
   for (let i = 0; i < qs.length; i++) {
     const q = qs[i];
@@ -195,7 +182,6 @@ async function renumberQuestions(gameId) {
 }
 
 async function wipeGameContent(gameId) {
-  // usuń answers wszystkich pytań, potem pytania
   const qs = await listQuestions(gameId);
   const qIds = qs.map((q) => q.id);
 
@@ -210,7 +196,6 @@ async function wipeGameContent(gameId) {
 
 /* ================= ord helpers ================= */
 function nextQuestionOrd(questions) {
-  // po renumeracji wystarczy length+1, ale zostawiamy bezpiecznie:
   let max = 0;
   for (const q of questions || []) max = Math.max(max, Number(q.ord) || 0);
   return max + 1;
@@ -246,7 +231,6 @@ function cfgFromGameType(type) {
       ignoreImportPoints: true,
     };
   }
-  // prepared
   return {
     type,
     title: "Edytor — Preparowany",
@@ -328,7 +312,6 @@ async function boot() {
   let game = await loadGame(gameId);
   const cfg = cfgFromGameType(game.type);
 
-  // twarde sprawdzenie edycji
   const editInfo = canEnterEdit(game);
   if (!editInfo?.ok) {
     alert(editInfo?.reason || "Nie możesz edytować tej gry w tym momencie.");
@@ -351,12 +334,8 @@ async function boot() {
   /* ---------- UI header ---------- */
   const titleEl = $("pageTitle");
   if (titleEl) titleEl.textContent = cfg.title;
-
-  const hintTop = $("hintTop");
-  if (hintTop) hintTop.textContent = cfg.hintTop;
-
-  const hintBottom = $("hintBottom");
-  if (hintBottom) hintBottom.textContent = cfg.hintBottom;
+  $("hintTop") && ($("hintTop").textContent = cfg.hintTop);
+  $("hintBottom") && ($("hintBottom").textContent = cfg.hintBottom);
 
   const typeBadge = $("typeBadge");
   if (typeBadge) {
@@ -398,7 +377,7 @@ async function boot() {
   gameName?.addEventListener("blur", saveNameIfChanged);
 
   /* ---------- state ---------- */
-  let questions = await renumberQuestions(gameId); // od razu porządek 1..N
+  let questions = await renumberQuestions(gameId);
   let activeQId = questions[0]?.id || null;
   let answers = activeQId && cfg.allowAnswers ? await listAnswers(activeQId) : [];
 
@@ -412,16 +391,31 @@ async function boot() {
     rightPanel?.classList.toggle("hasQ", !!on);
   }
 
+  // KLUCZ: liczymy count + (prepared) sumę punktów -> do kafelków i kolorów
   async function refreshCounts() {
+    const qs = await listQuestions(gameId);
+
     if (!cfg.allowAnswers) {
-      questions = await listQuestions(gameId);
+      questions = qs;
       return;
     }
-    const qs = await listQuestions(gameId);
+
     for (const q of qs) {
       const as = await listAnswers(q.id);
       q.__answerCount = as.length;
+
+      if (cfg.allowPoints) {
+        let sum = 0;
+        for (const a of as) {
+          const n = Number(a.fixed_points);
+          if (Number.isFinite(n)) sum += n;
+        }
+        q.__sumPoints = sum;
+      } else {
+        q.__sumPoints = null;
+      }
     }
+
     questions = qs;
   }
 
@@ -448,7 +442,7 @@ async function boot() {
       const ord = nextQuestionOrd(questions);
       const q = await createQuestion(gameId, ord);
 
-      questions = await renumberQuestions(gameId); // zawsze po dodaniu porządek
+      questions = await renumberQuestions(gameId);
       activeQId = q.id;
 
       await loadAnswersForActive();
@@ -492,6 +486,24 @@ async function boot() {
     }
   }
 
+  function applyCardStatusClass(card, q) {
+    // kolorowanie kafelków wg Twoich zasad
+    if (cfg.type === TYPES.PREPARED) {
+      const cnt = Number(q.__answerCount ?? 0);
+      const sum = Number(q.__sumPoints ?? 0);
+      const good = cnt >= AN_MIN && sum === SUM_PREPARED;
+      card.classList.add(good ? "good" : "bad");
+      return;
+    }
+    if (cfg.type === TYPES.POLL_POINTS) {
+      const cnt = Number(q.__answerCount ?? 0);
+      const good = cnt >= AN_MIN;
+      card.classList.add(good ? "good" : "bad");
+      return;
+    }
+    // poll_text: bez kolorów
+  }
+
   function renderQuestions() {
     if (!qList) return;
     qList.innerHTML = "";
@@ -517,6 +529,8 @@ async function boot() {
       card.className = "qcard";
       if (q.id === activeQId) card.classList.add("active");
 
+      applyCardStatusClass(card, q);
+
       const x = mkXButton();
       x.addEventListener("click", (ev) => {
         ev.stopPropagation();
@@ -533,8 +547,13 @@ async function boot() {
       card.querySelector(".qprev").textContent = (q.text || "").trim() || `Pytanie ${q.ord}`;
 
       const meta = card.querySelector(".qmeta");
-      if (!cfg.allowAnswers) meta.textContent = "Tylko pytania";
-      else meta.textContent = `${q.__answerCount ?? 0}/${AN_MAX} odpowiedzi`;
+      if (!cfg.allowAnswers) {
+        meta.textContent = "Tylko pytania";
+      } else if (cfg.type === TYPES.PREPARED) {
+        meta.textContent = `${q.__answerCount ?? 0}/${AN_MAX} odpowiedzi • suma ${q.__sumPoints ?? 0}/${SUM_PREPARED}`;
+      } else {
+        meta.textContent = `${q.__answerCount ?? 0}/${AN_MAX} odpowiedzi`;
+      }
 
       card.addEventListener("click", async () => {
         activeQId = q.id;
@@ -595,7 +614,6 @@ async function boot() {
     aList.innerHTML = "";
 
     if (cfg.allowPoints) {
-      // na start licznik z aktualnych danych
       const sum = answers.reduce((acc, a) => acc + nonNegativeInt(a.fixed_points, 0), 0);
       aList.appendChild(makeRemainBox(sum));
     }
@@ -624,11 +642,10 @@ async function boot() {
       iText.value = a.text || "";
       if (iPts) iPts.value = String(nonNegativeInt(a.fixed_points, 0));
 
-      // TEXT: debounce + blur
       const saveTextNow = async () => {
         try {
           const t = clip17(iText.value);
-          const safe = (t || "").trim() ? t : `ODP ${a.ord}`; // nie zapisujemy pustego (constraint)
+          const safe = (t || "").trim() ? t : `ODP ${a.ord}`;
           await updateAnswer(a.id, { text: safe });
           setMsg("Zapisano.");
         } catch (e) {
@@ -645,15 +662,15 @@ async function boot() {
       });
       iText.addEventListener("blur", saveTextNow);
 
-      // PTS (prepared): input tylko licznik, blur zapis
       const savePtsNow = async () => {
         if (!cfg.allowPoints || !iPts) return;
         try {
           const val = nonNegativeInt(iPts.value, 0);
           await updateAnswer(a.id, { fixed_points: val });
 
-          // odśwież dane i render (żeby licznik był pewny)
           answers = await listAnswers(activeQId);
+          await refreshCounts(); // ważne dla kafelków w lewo
+          renderQuestions();
           renderAnswers();
           setMsg("Zapisano.");
         } catch (e) {
@@ -667,9 +684,7 @@ async function boot() {
         }
       };
 
-      iPts?.addEventListener("input", () => {
-        updateRemainBox(aList);
-      });
+      iPts?.addEventListener("input", () => updateRemainBox(aList));
       iPts?.addEventListener("blur", savePtsNow);
 
       bDel.addEventListener("click", () => removeAnswer(a.id));
@@ -677,7 +692,6 @@ async function boot() {
       aList.appendChild(row);
     }
 
-    // add tile
     const canAdd = answers.length < AN_MAX;
     const addA = document.createElement("button");
     addA.type = "button";
@@ -818,18 +832,14 @@ async function boot() {
 
       setTxtMsg("Importuję…");
 
-      // @Nazwa gry (jeśli parseQaText zwraca parsed.name)
       if (parsed.name && gameName) {
         gameName.value = parsed.name;
         await saveNameIfChanged();
       }
 
-      // 1) usuń starą zawartość
       await wipeGameContent(gameId);
 
-      // 2) wgraj od zera (ord 1..N)
       let qOrd = 1;
-
       for (const item of parsed.items) {
         const q = await createQuestion(gameId, qOrd);
         await updateQuestion(q.id, { text: normQ(item.qText) });
@@ -840,8 +850,6 @@ async function boot() {
             if (aOrd > AN_MAX) break;
 
             const text = clip17(a.text);
-
-            // punkty: bierzemy tylko w prepared, a i tak tylko >=0 (bez limitu górnego)
             const pts =
               cfg.allowPoints && !cfg.ignoreImportPoints
                 ? nonNegativeInt(a.points, 0)
@@ -855,7 +863,6 @@ async function boot() {
         qOrd++;
       }
 
-      // 3) renumeruj i odśwież UI
       questions = await renumberQuestions(gameId);
       await refreshCounts();
 
