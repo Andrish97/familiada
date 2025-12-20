@@ -387,3 +387,18 @@ body.editor-body .wrap{
 .aPts{
   -moz-appearance: number-input;
 }
+/* delete button on card */
+.x{
+  position:absolute;
+  top:10px; right:10px;
+  width:34px; height:34px;
+  border-radius:12px;
+  border:1px solid rgba(255,120,120,.35);
+  background: rgba(255,120,120,.12);
+  color:#fff;
+  font-weight:1000;
+  display:grid;
+  place-items:center;
+  cursor:pointer;
+}
+.x:hover{ filter:brightness(1.06); }
