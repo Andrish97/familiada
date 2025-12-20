@@ -1,4 +1,3 @@
-// js/pages/poll-text.js
 import { sb } from "../core/supabase.js";
 
 const qs = new URLSearchParams(location.search);
@@ -10,31 +9,21 @@ const $ = (id) => document.getElementById(id);
 const msg = $("msg");
 const title = $("title");
 const qText = $("qText");
-const inp = $("inp");
-const btnSend = $("btnSend");
+const answersBox = $("answers");
 const btnNext = $("btnNext");
 
 function setMsg(t) {
-  if (!msg) return;
-  msg.textContent = t || "";
+  if (msg) msg.textContent = t || "";
 }
 
 function getVoterToken() {
   const k = `fam_voter_${gameId}_${key}`;
   let t = localStorage.getItem(k);
   if (!t) {
-    t = (crypto?.randomUUID?.() || `${Date.now()}_${Math.random().toString(16).slice(2)}`);
+    t = (crypto?.randomUUID?.() || String(Date.now()) + "_" + Math.random().toString(16).slice(2));
     localStorage.setItem(k, t);
   }
   return t;
-}
-
-function norm(s) {
-  // ignorujemy wielkość liter i spacje przed/po; nie ruszamy spacji w środku poza “wiele na jedną”
-  return String(s ?? "")
-    .trim()
-    .toLowerCase()
-    .replace(/\s+/g, " ");
 }
 
 async function loadPayload() {
@@ -43,23 +32,14 @@ async function loadPayload() {
   return data;
 }
 
-async function submit(questionId, raw) {
+async function vote(questionId, answerId) {
   const voter = getVoterToken();
-
-  const rawS = String(raw ?? "").trim();
-  const normS = norm(rawS);
-
-  if (!rawS) throw new Error("Wpisz odpowiedź.");
-  if (!normS) throw new Error("Wpisz odpowiedź.");
-
-  // używamy wersji z raw+norm (masz ją w bazie)
-  const { error } = await sb().rpc("poll_text_submit", {
+  const { error } = await sb().rpc("poll_points_vote", {
     p_game_id: gameId,
     p_key: key,
     p_question_id: questionId,
+    p_answer_id: answerId,
     p_voter_token: voter,
-    p_answer_raw: rawS,
-    p_answer_norm: normS,
   });
   if (error) throw error;
 }
@@ -73,73 +53,71 @@ function renderQuestion() {
 
   if (!q) {
     if (qText) qText.textContent = "Dziękujemy!";
-    if (inp) {
-      inp.value = "";
-      inp.disabled = true;
-    }
-    if (btnSend) btnSend.disabled = true;
+    if (answersBox) answersBox.innerHTML = "";
     if (btnNext) btnNext.disabled = true;
-    setMsg("Wysłano odpowiedzi do wszystkich pytań.");
+    setMsg("Oddałeś głosy na wszystkie pytania.");
     return;
   }
 
   if (title) title.textContent = payload?.game?.name || "Sondaż";
   if (qText) qText.textContent = `P${q.ord}: ${q.text}`;
 
-  if (inp) {
-    inp.disabled = false;
-    inp.value = "";
-    inp.focus();
+  if (answersBox) {
+    answersBox.innerHTML = "";
+    for (const a of (q.answers || [])) {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "ansBtn";
+      b.textContent = a.text || `ODP ${a.ord}`;
+
+      b.addEventListener("click", async () => {
+        try {
+          b.disabled = true;
+          setMsg("Zapisuję głos…");
+          await vote(q.id, a.id);
+          setMsg("Zapisano. Następne pytanie.");
+          idx++;
+          renderQuestion();
+        } catch (e) {
+          console.error("[poll-points] vote error:", e);
+          setMsg(`Błąd: ${e?.message || e}`);
+          b.disabled = false;
+        }
+      });
+
+      answersBox.appendChild(b);
+    }
   }
 
-  if (btnSend) btnSend.disabled = false;
-  if (btnNext) btnNext.disabled = false;
+  if (btnNext) {
+    btnNext.disabled = false;
+    btnNext.textContent = "Pomiń";
+  }
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
   try {
-    if (!gameId || !key) return setMsg("Brak parametru id lub key.");
+    if (!gameId || !key) { setMsg("Brak parametru id lub key."); return; }
 
     setMsg("Ładuję…");
     payload = await loadPayload();
 
-    if ((payload?.game?.type || "") !== "poll_text") {
-      return setMsg("To nie jest typowy sondaż.");
+    if ((payload?.game?.type || "") !== "poll_points") {
+      setMsg("To nie jest sondaż punktacji.");
+      return;
     }
 
     idx = 0;
     renderQuestion();
-    setMsg("");
-
-    btnSend?.addEventListener("click", async () => {
-      try {
-        const questions = payload?.questions || [];
-        const q = questions[idx];
-        if (!q) return;
-
-        btnSend.disabled = true;
-        setMsg("Wysyłam…");
-
-        await submit(q.id, inp?.value || "");
-
-        setMsg("Wysłano. Następne pytanie.");
-        idx++;
-        renderQuestion();
-      } catch (e) {
-        console.error("[poll-text] submit error:", e);
-        setMsg(`Błąd: ${e?.message || e}`);
-      } finally {
-        const questions = payload?.questions || [];
-        if (btnSend && questions[idx]) btnSend.disabled = false;
-      }
-    });
 
     btnNext?.addEventListener("click", () => {
       idx++;
       renderQuestion();
     });
+
+    setMsg("");
   } catch (e) {
-    console.error("[poll-text] init error:", e);
+    console.error("[poll-points] init error:", e);
     setMsg(`Nie można otworzyć sondażu: ${e?.message || e}`);
   }
 });
