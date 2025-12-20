@@ -820,62 +820,64 @@ async function boot() {
 
      setTxtMsg("Importuję…");
 
-    const ok = confirm(
-      "Import TXT ZASTĄPI zawartość gry:\n\n- usunie wszystkie dotychczasowe pytania i odpowiedzi\n- wgra dane z tekstu\n\nKontynuować?"
-    );
-    if (!ok) { setTxtMsg("Anulowano."); return; }
-    
-    // @Nazwa gry (jeśli masz parsed.name)
-    if (parsed.name && gameName) {
-      gameName.value = parsed.name;
-      await saveNameIfChanged();
-    }
-    
-    // WYMAZUJEMY WSZYSTKO
-    await wipeGameContent(gameId);
-    
-    // WGRYWAMY OD ZERA (ord zawsze 1..N)
-    let qOrd = 1;
-    
-    for (const item of parsed.items) {
-      const q = await createQuestion(gameId, nextQuestionOrd(questions));
-      questions = await renumberQuestions(gameId); // <- to wyrówna
-      activeQId = q.id;
+      const ok = confirm(
+        "Import TXT ZASTĄPI zawartość gry:\n\n- usunie wszystkie dotychczasowe pytania i odpowiedzi\n- wgra dane z tekstu\n\nKontynuować?"
+      );
+      if (!ok) { setTxtMsg("Anulowano."); return; }
       
-      await updateQuestion(q.id, { text: normQ(item.qText) });
-    
-      if (cfg.allowAnswers) {
-        let aOrd = 1;
-        for (const a of item.answers || []) {
-          if (aOrd > AN_MAX) break;
-    
-          const text = clip17(a.text);
-          const pts =
-            cfg.allowPoints && !cfg.ignoreImportPoints
-              ? clampPts(a.points)
-              : 0;
-    
-          await createAnswer(q.id, aOrd, text || `ODP ${aOrd}`, pts);
-          aOrd++;
-        }
+      // @Nazwa gry (jeśli masz parsed.name)
+      if (parsed.name && gameName) {
+        gameName.value = parsed.name;
+        await saveNameIfChanged();
       }
-    
-      qOrd++;
+      
+      // WYMAZUJEMY WSZYSTKO
+      await wipeGameContent(gameId);
+      
+      // WGRYWAMY OD ZERA (ord zawsze 1..N)
+      let qOrd = 1;
+      
+      for (const item of parsed.items) {
+        const q = await createQuestion(gameId, nextQuestionOrd(questions));
+        questions = await renumberQuestions(gameId); // <- to wyrówna
+        activeQId = q.id;
+        
+        await updateQuestion(q.id, { text: normQ(item.qText) });
+      
+        if (cfg.allowAnswers) {
+          let aOrd = 1;
+          for (const a of item.answers || []) {
+            if (aOrd > AN_MAX) break;
+      
+            const text = clip17(a.text);
+            const pts =
+              cfg.allowPoints && !cfg.ignoreImportPoints
+                ? clampPts(a.points)
+                : 0;
+      
+            await createAnswer(q.id, aOrd, text || `ODP ${aOrd}`, pts);
+            aOrd++;
+          }
+        }
+      
+        qOrd++;
+      }
+      
+      // odśwież + renumeruj (na wypadek czegokolwiek)
+      questions = await renumberQuestions(gameId);
+      await refreshCounts();
+      
+      activeQId = questions[0]?.id || null;
+      await loadAnswersForActive();
+      
+      renderQuestions();
+      renderEditor();
+      
+      setTxtMsg("Zaimportowano (zastąpiono zawartość).");
+      setMsg("Import zakończony.");
+
     }
     
-    // odśwież + renumeruj (na wypadek czegokolwiek)
-    questions = await renumberQuestions(gameId);
-    await refreshCounts();
-    
-    activeQId = questions[0]?.id || null;
-    await loadAnswersForActive();
-    
-    renderQuestions();
-    renderEditor();
-    
-    setTxtMsg("Zaimportowano (zastąpiono zawartość).");
-    setMsg("Import zakończony.");
-
   });
 
   /* ---------- init ---------- */
