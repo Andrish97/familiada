@@ -27,13 +27,11 @@
     <div class="rowTop">
       <div>
         <div class="title">Sondaż</div>
-        <div class="hint" id="hintTop">
-          Link i QR pojawiają się po uruchomieniu sondażu.
-        </div>
+        <div class="hint" id="hintTop">—</div>
       </div>
 
       <div class="statusBox">
-        <div class="chip" id="chipKind">—</div>
+        <div class="chip" id="chipType">—</div>
         <div class="chip status" id="chipStatus">—</div>
       </div>
     </div>
@@ -71,11 +69,22 @@
         </button>
       </div>
 
+      <!-- panel dla poll_text: edycja/łączenie/usuwanie + finalizacja -->
+      <div class="card" id="textCloseCard" style="display:none; margin-top:12px;">
+        <div class="name">Zamykanie — edycja odpowiedzi</div>
+        <div class="meta" id="textCloseMeta">—</div>
+        <div id="textCloseList" style="margin-top:10px; display:grid; gap:12px;"></div>
+
+        <div class="row" style="margin-top:12px;">
+          <button class="btn sm" id="btnCancelTextClose" type="button">Anuluj</button>
+          <button class="btn sm gold" id="btnFinishTextClose" type="button">Zamknij i przelicz</button>
+        </div>
+      </div>
+
       <div class="card" id="resultsCard" style="display:none; margin-top:12px;">
         <div class="name">Wyniki</div>
         <div class="meta" id="resultsMeta">—</div>
         <div id="resultsList" style="margin-top:10px; display:grid; gap:12px;"></div>
-        <pre id="resultsRaw" style="display:none;"></pre>
       </div>
     </div>
 
