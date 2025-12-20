@@ -10,7 +10,6 @@ body.pollpub-body{
   justify-content:center;
 }
 
-/* poll ma własny “wrap” (węższy niż base) */
 body.pollpub-body .wrap{
   max-width:720px;
   padding:18px;
@@ -24,7 +23,6 @@ body.pollpub-body .card{
   box-shadow:0 24px 60px rgba(0,0,0,.45);
 }
 
-/* nagłówki */
 body.pollpub-body .brand{
   font-weight:1000;
   letter-spacing:.18em;
@@ -55,7 +53,6 @@ body.pollpub-body .sub{
   line-height:1.25;
 }
 
-/* points mode answers */
 .alist{
   display:grid;
   gap:10px;
@@ -80,7 +77,6 @@ body.pollpub-body .sub{
   transform:none;
 }
 
-/* text mode input row */
 .trow{
   display:flex;
   gap:10px;
@@ -88,10 +84,9 @@ body.pollpub-body .sub{
   flex-wrap:wrap;
 }
 
-/* tu NIE nadpisujemy globalnej .inp — tylko doprecyzowanie w kontekście poll */
 .trow .inp{
   flex: 1 1 260px;
-  padding:12px 12px; /* ciut większy niż standard */
+  padding:12px 12px;
 }
 
 .tinyHint{
