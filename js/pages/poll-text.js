@@ -1,189 +1,147 @@
+// js/pages/poll-text.js
 import { sb } from "../core/supabase.js";
-
-const countEl = document.getElementById("count");
-const MAXLEN = 17;
-let busy = false;
-
-function updateCount() {
-  if (!countEl || !answerInput) return;
-  const n = (answerInput.value || "").length;
-  countEl.textContent = `${n}/${MAXLEN}`;
-}
-// normalizacja do zliczania: trim + lower, bez grzebania w środku
-function normForCount(s) {
-  return String(s ?? "").trim().toLowerCase();
-}
 
 const qs = new URLSearchParams(location.search);
 const gameId = qs.get("id");
 const key = qs.get("key");
 
-const title = document.getElementById("title");
-const sub = document.getElementById("sub");
+const $ = (id) => document.getElementById(id);
 
-const qbox = document.getElementById("qbox");
-const qtext = document.getElementById("qtext");
-const prog = document.getElementById("prog");
+const msg = $("msg");
+const title = $("title");
+const qText = $("qText");
+const inp = $("inp");
+const btnSend = $("btnSend");
+const btnNext = $("btnNext");
 
-const answerInput = document.getElementById("answerInput");
-const btnSend = document.getElementById("btnSend");
+function setMsg(t) {
+  if (!msg) return;
+  msg.textContent = t || "";
+}
 
-const closed = document.getElementById("closed");
-
-function token() {
-  const k = `fam_poll_token_${gameId}`;
+function getVoterToken() {
+  const k = `fam_voter_${gameId}_${key}`;
   let t = localStorage.getItem(k);
   if (!t) {
-    t = Math.random().toString(16).slice(2) + Date.now().toString(16);
+    t = (crypto?.randomUUID?.() || String(Date.now()) + "_" + Math.random().toString(16).slice(2));
     localStorage.setItem(k, t);
   }
   return t;
 }
 
-let data = null;
+function norm(s) {
+  return String(s ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, " ");
+}
+
+async function loadPayload() {
+  const { data, error } = await sb().rpc("poll_get_payload", {
+    p_game_id: gameId,
+    p_key: key,
+  });
+  if (error) throw error;
+  return data;
+}
+
+let payload = null;
 let idx = 0;
-let busy = false;
 
-function showBox(on){
-  qbox.style.display = on ? "" : "none";
-  closed.style.display = on ? "none" : "";
-}
+function renderQuestion() {
+  if (!payload) return;
 
-function showClosed(msg){
-  showBox(false);
-  closed.textContent = msg || "Sondaż jest zamknięty. Dziękujemy!";
-  sub.textContent = "Ten sondaż nie przyjmuje już odpowiedzi.";
-}
+  const questions = payload.questions || [];
+  const q = questions[idx];
 
-function showError(msg){
-  showBox(false);
-  closed.textContent = msg || "Nie udało się wczytać sondażu.";
-  sub.textContent = "—";
-}
-
-function render() {
-  const g = data?.game;
-  title.textContent = g?.name ? `Sondaż: ${g.name}` : "Sondaż";
-
-  if (!g) return showError("Brak danych gry.");
-  if (g.type !== "poll_text") return showError("To nie jest sondaż tekstowy.");
-  if (g.status !== "poll_open") return showClosed("Sondaż jest zamknięty. Dziękujemy!");
-
-  const qlist = data?.questions || [];
-  if (!qlist.length) return showError("Brak pytań do sondażu.");
-
-  if (idx >= qlist.length) {
-    sub.textContent = "Dzięki! Udzieliłeś(aś) odpowiedzi na wszystkie pytania.";
-    showBox(false);
-    closed.textContent = "Dziękujemy za udział w sondażu!";
+  if (!q) {
+    if (qText) qText.textContent = "Dziękujemy!";
+    if (inp) inp.value = "";
+    if (inp) inp.disabled = true;
+    if (btnSend) btnSend.disabled = true;
+    if (btnNext) btnNext.disabled = true;
+    setMsg("Wysłano odpowiedzi do wszystkich pytań.");
     return;
   }
 
-  const q = qlist[idx];
+  if (title) title.textContent = payload.game?.name || "Sondaż";
+  if (qText) qText.textContent = `P${q.ord}: ${q.text}`;
+  if (inp) {
+    inp.disabled = false;
+    inp.value = "";
+    inp.focus();
+  }
 
-  showBox(true);
-  sub.textContent = "Wpisz odpowiedź (starannie).";
-  qtext.textContent = q.text || "—";
-  prog.textContent = `Pytanie ${idx + 1} / ${qlist.length}`;
-
-  if (answerInput) answerInput.value = "";
-  answerInput?.focus();
-  updateCount();
+  if (btnSend) btnSend.disabled = false;
+  if (btnNext) btnNext.disabled = false;
 }
 
-async function send() {
-  if (busy) return;
-  if (!data || !data.game || data.game.status !== "poll_open") {
-    return showClosed("Sondaż jest zamknięty. Dziękujemy!");
-  }
+async function submit(questionId, raw) {
+  const voter = getVoterToken();
 
-  const qlist = data.questions || [];
-  const q = qlist[idx];
-  if (!q) return;
+  const rawS = String(raw ?? "").trim();
+  const normS = norm(rawS);
 
-  // 1) pobierz raw
-  let raw = String(answerInput?.value ?? "");
+  if (!rawS) throw new Error("Wpisz odpowiedź.");
+  if (!normS) throw new Error("Wpisz odpowiedź.");
 
-  // 2) utnij twardo do 17 (na wypadek obejścia maxlength)
-  if (raw.length > MAXLEN) raw = raw.slice(0, MAXLEN);
+  const { error } = await sb().rpc("poll_text_submit", {
+    p_game_id: gameId,
+    p_key: key,
+    p_question_id: questionId,
+    p_voter_token: voter,
+    p_answer_raw: rawS,
+    p_answer_norm: normS,
+  });
 
-  // 3) trimujemy TYLKO początek/koniec (w środku zostaje)
-  raw = raw.trim();
+  if (error) throw error;
+}
 
-  // 4) po trimie może się okazać puste
-  if (!raw) {
-    setSub?.("Wpisz odpowiedź (max 17 znaków)."); // jeśli masz sub helper, inaczej usuń
-    return;
-  }
-
-  // 5) normalizacja do zliczania / klucza
-  const norm = normForCount(raw); // trim + lower
-  if (!norm) return;
-
-  // UX: opcjonalnie wstaw “przycięty” tekst z powrotem do inputa
-  answerInput.value = raw;
-  updateCount?.();
-
-  // 6) wysyłka
-  busy = true;
-  btnSend && (btnSend.disabled = true);
-
+document.addEventListener("DOMContentLoaded", async () => {
   try {
-    // Tu masz 2 warianty zależnie od tego, jak zapisujesz tekstowe odpowiedzi.
-    // A) jeśli masz RPC np. poll_text_submit / poll_text_vote — podstaw nazwę:
-    const { error } = await sb().rpc("poll_text_submit", {
-      p_game_id: gameId,
-      p_key: key,
-      p_question_ord: q.ord,       // albo q.id — zależy od backendu
-      p_answer_raw: raw,           // oryginał (ładny do wyświetlania)
-      p_answer_norm: norm,         // klucz do zliczania
-      p_voter_token: token(),
-    });
-    if (error) throw error;
-
-    // 7) przejście dalej
-    answerInput.value = "";
-    updateCount?.();
-    idx += 1;
-    render();
-  } catch (e) {
-    const m = (e?.message || String(e)).toLowerCase();
-    if (m.includes("poll closed") || m.includes("poll_closed")) {
-      showClosed("Sondaż jest zamknięty. Dziękujemy!");
+    if (!gameId || !key) {
+      setMsg("Brak parametru id lub key.");
       return;
     }
-    console.error("[poll-text] send error:", e);
-    alert("Nie udało się wysłać odpowiedzi. Spróbuj ponownie.");
-  } finally {
-    busy = false;
-    btnSend && (btnSend.disabled = false);
-  }
-}
 
-async function load() {
-  if (!gameId || !key) return showError("Nieprawidłowy link sondażu.");
+    setMsg("Ładuję…");
+    payload = await loadPayload();
 
-  try {
-    const res = await sb().rpc("get_poll_game", { p_game_id: gameId, p_key: key });
-    data = res.data;
-    idx = 0;
-    render();
-  } catch {
-    showError("Nie udało się wczytać sondażu.");
-  }
-}
-
-document.addEventListener("DOMContentLoaded", () => {
-  btnSend?.addEventListener("click", send);
-  answerInput?.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") { e.preventDefault(); send(); }
-  });
-  answerInput?.addEventListener("input", () => {
-    // maxlength w HTML już pilnuje, ale to zabezpieczenie na wypadek wklejek/bugów
-    if (answerInput.value.length > MAXLEN) {
-      answerInput.value = answerInput.value.slice(0, MAXLEN);
+    if ((payload.game?.type || "") !== "poll_text") {
+      setMsg("To nie jest typowy sondaż.");
+      return;
     }
-    updateCount();
-  });
-  load();
+
+    idx = 0;
+    renderQuestion();
+    setMsg("");
+
+    btnSend?.addEventListener("click", async () => {
+      try {
+        const questions = payload.questions || [];
+        const q = questions[idx];
+        if (!q) return;
+
+        btnSend.disabled = true;
+        setMsg("Wysyłam…");
+        await submit(q.id, inp?.value || "");
+        setMsg("Wysłano. Następne pytanie.");
+        idx++;
+        renderQuestion();
+      } catch (e) {
+        console.error("[poll-text] submit error:", e);
+        setMsg(`Błąd: ${e?.message || e}`);
+      } finally {
+        if (btnSend && (payload.questions || [])[idx]) btnSend.disabled = false;
+      }
+    });
+
+    btnNext?.addEventListener("click", () => {
+      idx++;
+      renderQuestion();
+    });
+  } catch (e) {
+    console.error("[poll-text] init error:", e);
+    setMsg(`Nie można otworzyć sondażu: ${e?.message || e}`);
+  }
 });
