@@ -88,6 +88,35 @@ function wireEnterAsBlur() {
 }
 
 /* ================= DB layer ================= */
+
+async function renumberQuestions(gameId) {
+  // pobierz po ord, potem ustaw ord = index+1
+  const qs = await listQuestions(gameId);
+
+  for (let i = 0; i < qs.length; i++) {
+    const q = qs[i];
+    const newOrd = i + 1;
+    if (Number(q.ord) === newOrd) continue;
+    await updateQuestion(q.id, { ord: newOrd });
+  }
+
+  return await listQuestions(gameId);
+}
+
+async function wipeGameContent(gameId) {
+  // Usuń answers wszystkich pytań, potem pytania
+  const qs = await listQuestions(gameId);
+  const qIds = qs.map(q => q.id);
+
+  if (qIds.length) {
+    const { error: aErr } = await sb().from("answers").delete().in("question_id", qIds);
+    if (aErr) throw aErr;
+
+    const { error: qErr } = await sb().from("questions").delete().eq("game_id", gameId);
+    if (qErr) throw qErr;
+  }
+}
+
 async function loadGame(gameId) {
   const { data, error } = await sb()
     .from("games")
@@ -459,7 +488,7 @@ async function boot() {
     try {
       await deleteQuestionDeep(qId);
 
-      questions = await listQuestions(gameId);
+      questions = await renumberQuestions(gameId);
       await refreshCounts();
 
       if (activeQId === qId) {
@@ -789,64 +818,64 @@ async function boot() {
         return;
       }
 
-      setTxtMsg("Importuję…");
+     setTxtMsg("Importuję…");
 
-      // jeśli @Nazwa Gry
-      if (parsed.name && gameName) {
-        gameName.value = parsed.name;
-        // zapis przez blur/enter i tak działa, ale tu robimy jawnie:
-        await saveGameName(gameId, parsed.name);
-        setMsg("Zapisano nazwę.");
-      }
-
-      // start ord = max+1
-      questions = await listQuestions(gameId);
-      let qOrd = nextQuestionOrd(questions);
-
-      for (const item of parsed.items) {
-        // jeśli DB ma limit ord (np. 1..10) -> error 23514 i stop
-        const q = await createQuestion(gameId, qOrd);
-        await updateQuestion(q.id, { text: normQ(item.qText) });
-
-        if (cfg.allowAnswers) {
-          let aOrd = 1;
-          for (const a of item.answers || []) {
-            if (aOrd > AN_MAX) break;
-
-            const text = clip17(a.text);
-            const pts =
-              cfg.allowPoints && !cfg.ignoreImportPoints
-                ? clamp0_100(a.points) // import clamp
-                : 0;
-
-            await createAnswer(q.id, aOrd, text || `ODP ${aOrd}`, pts);
-            aOrd++;
-          }
-        }
-
-        qOrd++;
-      }
-
-      await refreshCounts();
-      questions = await listQuestions(gameId);
-      activeQId = questions[0]?.id || null;
-      await loadAnswersForActive();
-
-      renderQuestions();
-      renderEditor();
-
-      setTxtMsg("Zaimportowano.");
-      setMsg("Import zakończony.");
-    } catch (e) {
-      console.error(e);
-      const msg = String(e?.message || "");
-
-      if (e?.code === "23514" || msg.includes("violates check constraint")) {
-        setTxtMsg("Import przerwany: ograniczenie bazy (np. limit liczby pytań / zakres ord).");
-      } else {
-        setTxtMsg("Błąd importu (konsola).");
-      }
+    const ok = confirm(
+      "Import TXT ZASTĄPI zawartość gry:\n\n- usunie wszystkie dotychczasowe pytania i odpowiedzi\n- wgra dane z tekstu\n\nKontynuować?"
+    );
+    if (!ok) { setTxtMsg("Anulowano."); return; }
+    
+    // @Nazwa gry (jeśli masz parsed.name)
+    if (parsed.name && gameName) {
+      gameName.value = parsed.name;
+      await saveNameIfChanged();
     }
+    
+    // WYMAZUJEMY WSZYSTKO
+    await wipeGameContent(gameId);
+    
+    // WGRYWAMY OD ZERA (ord zawsze 1..N)
+    let qOrd = 1;
+    
+    for (const item of parsed.items) {
+      const q = await createQuestion(gameId, nextQuestionOrd(questions));
+      questions = await renumberQuestions(gameId); // <- to wyrówna
+      activeQId = q.id;
+      
+      await updateQuestion(q.id, { text: normQ(item.qText) });
+    
+      if (cfg.allowAnswers) {
+        let aOrd = 1;
+        for (const a of item.answers || []) {
+          if (aOrd > AN_MAX) break;
+    
+          const text = clip17(a.text);
+          const pts =
+            cfg.allowPoints && !cfg.ignoreImportPoints
+              ? clampPts(a.points)
+              : 0;
+    
+          await createAnswer(q.id, aOrd, text || `ODP ${aOrd}`, pts);
+          aOrd++;
+        }
+      }
+    
+      qOrd++;
+    }
+    
+    // odśwież + renumeruj (na wypadek czegokolwiek)
+    questions = await renumberQuestions(gameId);
+    await refreshCounts();
+    
+    activeQId = questions[0]?.id || null;
+    await loadAnswersForActive();
+    
+    renderQuestions();
+    renderEditor();
+    
+    setTxtMsg("Zaimportowano (zastąpiono zawartość).");
+    setMsg("Import zakończony.");
+
   });
 
   /* ---------- init ---------- */
