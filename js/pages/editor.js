@@ -881,8 +881,8 @@ async function boot() {
   });
 
   /* ---------- init ---------- */
-  await refreshCounts();
   questions = await renumberQuestions(gameId);
+  await refreshCounts();
   activeQId = questions[0]?.id || null;
   await loadAnswersForActive();
 
