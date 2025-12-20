@@ -1,4 +1,3 @@
-// js/pages/poll-points.js
 import { sb } from "../core/supabase.js";
 
 const qs = new URLSearchParams(location.search);
@@ -14,15 +13,14 @@ const answersBox = $("answers");
 const btnNext = $("btnNext");
 
 function setMsg(t) {
-  if (!msg) return;
-  msg.textContent = t || "";
+  if (msg) msg.textContent = t || "";
 }
 
 function getVoterToken() {
   const k = `fam_voter_${gameId}_${key}`;
   let t = localStorage.getItem(k);
   if (!t) {
-    t = (crypto?.randomUUID?.() || `${Date.now()}_${Math.random().toString(16).slice(2)}`);
+    t = (crypto?.randomUUID?.() || String(Date.now()) + "_" + Math.random().toString(16).slice(2));
     localStorage.setItem(k, t);
   }
   return t;
@@ -66,9 +64,7 @@ function renderQuestion() {
 
   if (answersBox) {
     answersBox.innerHTML = "";
-    const ans = q.answers || [];
-
-    for (const a of ans) {
+    for (const a of (q.answers || [])) {
       const b = document.createElement("button");
       b.type = "button";
       b.className = "ansBtn";
@@ -78,9 +74,7 @@ function renderQuestion() {
         try {
           b.disabled = true;
           setMsg("Zapisuję głos…");
-
           await vote(q.id, a.id);
-
           setMsg("Zapisano. Następne pytanie.");
           idx++;
           renderQuestion();
@@ -103,13 +97,14 @@ function renderQuestion() {
 
 document.addEventListener("DOMContentLoaded", async () => {
   try {
-    if (!gameId || !key) return setMsg("Brak parametru id lub key.");
+    if (!gameId || !key) { setMsg("Brak parametru id lub key."); return; }
 
     setMsg("Ładuję…");
     payload = await loadPayload();
 
     if ((payload?.game?.type || "") !== "poll_points") {
-      return setMsg("To nie jest sondaż punktacji.");
+      setMsg("To nie jest sondaż punktacji.");
+      return;
     }
 
     idx = 0;
