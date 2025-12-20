@@ -1,4 +1,3 @@
-// js/pages/poll-text.js
 import { sb } from "../core/supabase.js";
 
 const qs = new URLSearchParams(location.search);
@@ -7,13 +6,15 @@ const key = qs.get("key");
 
 const title = document.getElementById("title");
 const sub = document.getElementById("sub");
+
 const qbox = document.getElementById("qbox");
 const qtext = document.getElementById("qtext");
 const prog = document.getElementById("prog");
-const closed = document.getElementById("closed");
 
 const answerInput = document.getElementById("answerInput");
 const btnSend = document.getElementById("btnSend");
+
+const closed = document.getElementById("closed");
 
 function token() {
   const k = `fam_poll_token_${gameId}`;
@@ -46,85 +47,84 @@ function showError(msg){
   sub.textContent = "—";
 }
 
-function render(){
+function render() {
   const g = data?.game;
   title.textContent = g?.name ? `Sondaż: ${g.name}` : "Sondaż";
 
   if (!g) return showError("Brak danych gry.");
+  if (g.type !== "poll_text") return showError("To nie jest sondaż tekstowy.");
   if (g.status !== "poll_open") return showClosed("Sondaż jest zamknięty. Dziękujemy!");
 
   const qlist = data?.questions || [];
   if (!qlist.length) return showError("Brak pytań do sondażu.");
 
   if (idx >= qlist.length) {
-    sub.textContent = "Dzięki! Odpowiedziałeś(aś) na wszystkie pytania.";
+    sub.textContent = "Dzięki! Udzieliłeś(aś) odpowiedzi na wszystkie pytania.";
     showBox(false);
     closed.textContent = "Dziękujemy za udział w sondażu!";
     return;
   }
 
   const q = qlist[idx];
-  showBox(true);
 
-  sub.textContent = "Wpisz odpowiedź (liczymy bez wielkości liter i bez spacji na początku/końcu).";
+  showBox(true);
+  sub.textContent = "Wpisz odpowiedź (starannie).";
   qtext.textContent = q.text || "—";
   prog.textContent = `Pytanie ${idx + 1} / ${qlist.length}`;
 
-  if (answerInput) {
-    answerInput.value = "";
-    answerInput.focus();
-  }
+  if (answerInput) answerInput.value = "";
+  answerInput?.focus();
 }
 
-async function send(){
+async function send() {
+  if (!data?.questions?.length) return;
   if (busy) return;
 
-  const qlist = data?.questions || [];
-  const q = qlist[idx];
-  if (!q) return;
+  const g = data?.game;
+  if (!g || g.status !== "poll_open") return showClosed("Sondaż jest zamknięty.");
 
-  const raw = String(answerInput?.value || "");
-  if (!raw.trim()) {
-    answerInput?.focus();
-    return;
-  }
+  const q = data.questions[idx];
+  const raw = String(answerInput?.value || "").trim();
+  if (!raw) return;
 
   busy = true;
-  btnSend && (btnSend.disabled = true);
+  btnSend.disabled = true;
 
   try {
     const { error } = await sb().rpc("poll_text_submit", {
       p_game_id: gameId,
       p_key: key,
       p_question_id: q.id,
-      p_answer_raw: raw,
       p_voter_token: token(),
+      p_answer_text: raw,
     });
     if (error) throw error;
 
     idx += 1;
     busy = false;
-    btnSend && (btnSend.disabled = false);
+    btnSend.disabled = false;
     render();
   } catch (e) {
     busy = false;
-    btnSend && (btnSend.disabled = false);
-    const m = (e?.message || String(e)).toLowerCase();
-    if (m.includes("closed")) return showClosed("Sondaż jest zamknięty. Dziękujemy!");
+    btnSend.disabled = false;
+
+    const m = String(e?.message || e).toLowerCase();
+    if (m.includes("poll closed")) return showClosed("Sondaż jest zamknięty. Dziękujemy!");
+    if (m.includes("empty")) return;
+
     alert("Nie udało się wysłać odpowiedzi. Spróbuj ponownie.");
   }
 }
 
-async function load(){
+async function load() {
   if (!gameId || !key) return showError("Nieprawidłowy link sondażu.");
 
   try {
-    const res = await sb().rpc("get_poll_text_game", { p_game_id: gameId, p_key: key });
+    const res = await sb().rpc("get_poll_game", { p_game_id: gameId, p_key: key });
     data = res.data;
     idx = 0;
     render();
-  } catch (e) {
-    console.error(e);
+  } catch {
     showError("Nie udało się wczytać sondażu.");
   }
 }
@@ -132,10 +132,7 @@ async function load(){
 document.addEventListener("DOMContentLoaded", () => {
   btnSend?.addEventListener("click", send);
   answerInput?.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      send();
-    }
+    if (e.key === "Enter") { e.preventDefault(); send(); }
   });
   load();
 });
