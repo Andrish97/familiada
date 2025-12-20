@@ -448,3 +448,36 @@ body.editor-body .wrap{
   font-size:12px;
   font-weight:800;
 }
+
+/* =========================================================
+   QUESTION CARD STATUS (good / bad)
+   (musi być na końcu pliku, żeby przebiło .qcard.active)
+========================================================= */
+
+/* tylko zwykłe kafelki pytań – nie dotykamy addTile */
+.qcard:not(.addTile).good{
+  border-color: rgba(120,255,120,.45);
+  background: rgba(120,255,120,.10);
+}
+
+.qcard:not(.addTile).bad{
+  border-color: rgba(255,120,120,.45);
+  background: rgba(255,120,120,.10);
+}
+
+/* aktywny kafelek nadal “aktywny”, ale pokazuje status */
+.qcard.active.good{
+  border-color: rgba(120,255,120,.55);
+  background: rgba(120,255,120,.14);
+  box-shadow:
+    0 24px 60px rgba(0,0,0,.45),
+    0 0 0 2px rgba(120,255,120,.14);
+}
+
+.qcard.active.bad{
+  border-color: rgba(255,120,120,.55);
+  background: rgba(255,120,120,.14);
+  box-shadow:
+    0 24px 60px rgba(0,0,0,.45),
+    0 0 0 2px rgba(255,120,120,.14);
+}
