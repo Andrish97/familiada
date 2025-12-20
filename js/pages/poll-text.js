@@ -35,7 +35,10 @@ function getVoterToken() {
 
 // ignorujemy wielkość liter i spacje przed/po, ale nie w środku
 function norm(s) {
-  return String(s ?? "").trim().toLowerCase();
+  return String(s ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, " "); // wiele spacji/tabów/enterów -> jedna spacja
 }
 
 async function loadPayload() {
