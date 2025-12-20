@@ -811,74 +811,79 @@ async function boot() {
         setTxtMsg("Wklej treść albo wczytaj plik.");
         return;
       }
-
+  
       const parsed = parseQaText(raw);
       if (!parsed.ok) {
         setTxtMsg(parsed.error || "Błąd formatu.");
         return;
       }
-
-     setTxtMsg("Importuję…");
-
+  
       const ok = confirm(
-        "Import TXT ZASTĄPI zawartość gry:\n\n- usunie wszystkie dotychczasowe pytania i odpowiedzi\n- wgra dane z tekstu\n\nKontynuować?"
+        "Import TXT ZASTĄPI zawartość gry:\n\n" +
+        "- usunie wszystkie dotychczasowe pytania i odpowiedzi\n" +
+        "- wgra dane z tekstu\n\n" +
+        "Kontynuować?"
       );
-      if (!ok) { setTxtMsg("Anulowano."); return; }
-      
-      // @Nazwa gry (jeśli masz parsed.name)
+      if (!ok) {
+        setTxtMsg("Anulowano.");
+        return;
+      }
+  
+      setTxtMsg("Importuję…");
+  
+      // @Nazwa gry (jeśli wspierasz parsed.name)
       if (parsed.name && gameName) {
         gameName.value = parsed.name;
         await saveNameIfChanged();
       }
-      
-      // WYMAZUJEMY WSZYSTKO
+  
+      // 1) usuń starą zawartość
       await wipeGameContent(gameId);
-      
-      // WGRYWAMY OD ZERA (ord zawsze 1..N)
+  
+      // 2) wgraj od zera (ord 1..N)
       let qOrd = 1;
-      
+  
       for (const item of parsed.items) {
-        const q = await createQuestion(gameId, nextQuestionOrd(questions));
-        questions = await renumberQuestions(gameId); // <- to wyrówna
-        activeQId = q.id;
-        
+        const q = await createQuestion(gameId, qOrd);
         await updateQuestion(q.id, { text: normQ(item.qText) });
-      
+  
         if (cfg.allowAnswers) {
           let aOrd = 1;
           for (const a of item.answers || []) {
             if (aOrd > AN_MAX) break;
-      
+  
             const text = clip17(a.text);
             const pts =
               cfg.allowPoints && !cfg.ignoreImportPoints
                 ? clampPts(a.points)
                 : 0;
-      
+  
             await createAnswer(q.id, aOrd, text || `ODP ${aOrd}`, pts);
             aOrd++;
           }
         }
-      
+  
         qOrd++;
       }
-      
-      // odśwież + renumeruj (na wypadek czegokolwiek)
+  
+      // 3) renumeruj i odśwież UI
       questions = await renumberQuestions(gameId);
       await refreshCounts();
-      
+  
       activeQId = questions[0]?.id || null;
       await loadAnswersForActive();
-      
+  
       renderQuestions();
       renderEditor();
-      
+  
       setTxtMsg("Zaimportowano (zastąpiono zawartość).");
       setMsg("Import zakończony.");
-
+    } catch (e) {
+      console.error(e);
+      setTxtMsg("Błąd importu (konsola).");
     }
-    
   });
+
 
   /* ---------- init ---------- */
   await refreshCounts();
