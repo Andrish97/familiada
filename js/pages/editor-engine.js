@@ -4,9 +4,13 @@ import { requireAuth, signOut } from "../core/auth.js";
 import { parseQaText, clip as clipN } from "../core/text-import.js";
 import { canEnterEdit, RULES as GV_RULES } from "../core/game-validate.js";
 
-const QN_MIN = GV_RULES.QN_MIN; // 10
-const AN_MIN = GV_RULES.AN_MIN; // 3
-const AN_MAX = GV_RULES.AN_MAX; // 6
+const QN_MIN = GV_RULES.QN_MIN ?? 10;
+const AN_MIN = GV_RULES.AN_MIN ?? 3;
+const AN_MAX = GV_RULES.AN_MAX ?? 6;
+
+// WAŻNE: Twoja baza ma constraint questions_ord_range, więc realnie max = 10.
+// Jeśli kiedyś zdejmiesz constraint, wystarczy zmienić QN_MAX i nextQuestionOrd().
+const QN_MAX = GV_RULES.QN_MAX ?? 10;
 
 const $ = (id) => document.getElementById(id);
 
@@ -20,17 +24,6 @@ const clampPts = (v) => {
   if (!Number.isFinite(n)) return 0;
   return Math.max(0, Math.min(100, Math.floor(n)));
 };
-
-function calcQuestionPoints(answers) {
-  let sum = 0;
-  for (const a of answers) {
-    const p = Number(a.fixed_points);
-    if (!Number.isFinite(p)) continue;
-    if (p < 0) continue;
-    sum += p;
-  }
-  return sum;
-}
 
 function debounce(fn, ms = 350) {
   let t = null;
@@ -53,7 +46,22 @@ function openOverlay(id, on) {
   const el = $(id);
   if (!el) return;
   el.style.display = on ? "" : "none";
-  document.body.classList.toggle("modalOpen", !!on); // jak w builder (opcjonalnie, jeśli masz CSS)
+}
+
+function installEnterAsBlur() {
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "Enter") return;
+    if (e.shiftKey || e.ctrlKey || e.altKey || e.metaKey) return;
+
+    const t = e.target;
+    if (!t) return;
+
+    // Enter=blur tylko dla INPUT, textarea zostaje multiline
+    if (t.tagName === "INPUT") {
+      e.preventDefault();
+      t.blur();
+    }
+  });
 }
 
 async function resetPollForEditing(gameId) {
@@ -132,10 +140,20 @@ async function updateQuestion(qId, patch) {
   if (error) throw error;
 }
 
+async function deleteQuestionCascade(qId) {
+  // Najpierw odpowiedzi, potem pytanie (działa zawsze, niezależnie od ON DELETE CASCADE).
+  const { error: aErr } = await sb().from("answers").delete().eq("question_id", qId);
+  if (aErr) throw aErr;
+
+  const { error: qErr } = await sb().from("questions").delete().eq("id", qId);
+  if (qErr) throw qErr;
+}
+
 async function createAnswer(questionId, ord, text, fixed_points) {
+  const safeText = clip17(text); // musi pasować do answers_text_len
   const { data, error } = await sb()
     .from("answers")
-    .insert({ question_id: questionId, ord, text, fixed_points })
+    .insert({ question_id: questionId, ord, text: safeText, fixed_points })
     .select("id,ord,text,fixed_points")
     .single();
   if (error) throw error;
@@ -143,62 +161,61 @@ async function createAnswer(questionId, ord, text, fixed_points) {
 }
 
 async function updateAnswer(aId, patch) {
-  const { error } = await sb().from("answers").update(patch).eq("id", aId);
+  // pilnujemy długości text zawsze (baza ma constraint)
+  const p = { ...patch };
+  if (typeof p.text !== "undefined") p.text = clip17(p.text);
+
+  const { error } = await sb().from("answers").update(p).eq("id", aId);
   if (error) throw error;
 }
 
-function nextQuestionOrd(items) {
-  let max = 0;
-  for (const x of items) max = Math.max(max, Number(x.ord) || 0);
-  return max + 1;
+async function deleteAnswer(aId) {
+  const { error } = await sb().from("answers").delete().eq("id", aId);
+  if (error) throw error;
 }
 
-function nextAnswerOrd(items, limit) {
-  const used = new Set(items.map((x) => x.ord));
-  for (let i = 1; i <= limit; i++) if (!used.has(i)) return i;
+// ord dla pytań: najpierw dziury 1..QN_MAX, jak pełne -> null
+function nextQuestionOrdWithinLimit(questions) {
+  const used = new Set(questions.map((q) => Number(q.ord)));
+  for (let i = 1; i <= QN_MAX; i++) if (!used.has(i)) return i;
   return null;
 }
 
-/**
- * Enter = blur (globalnie w edytorze) dla INPUTów.
- * Nie dotykamy TEXTAREA (żeby Enter robił nową linię w pytaniu).
- */
-function installEnterAsBlur() {
-  document.addEventListener("keydown", (e) => {
-    if (e.key !== "Enter") return;
-    if (e.shiftKey || e.ctrlKey || e.altKey || e.metaKey) return;
+// ord dla odpowiedzi: dziury 1..AN_MAX
+function nextAnswerOrd(answers) {
+  const used = new Set(answers.map((a) => Number(a.ord)));
+  for (let i = 1; i <= AN_MAX; i++) if (!used.has(i)) return i;
+  return null;
+}
 
-    const t = e.target;
-    if (!t) return;
-
-    // tylko inputy (text/number itd.)
-    if (t.tagName === "INPUT") {
-      e.preventDefault();
-      t.blur();
-    }
-  });
+function calcQuestionPoints(answers) {
+  let sum = 0;
+  for (const a of answers) {
+    const p = Number(a.fixed_points);
+    if (!Number.isFinite(p)) continue;
+    if (p < 0) continue;
+    sum += p;
+  }
+  return sum;
 }
 
 export async function bootEditor(cfg) {
   installEnterAsBlur();
 
-  // ===== auth / topbar =====
+  // auth/topbar
   const user = await requireAuth("index.html");
   const who = $("who");
   if (who) who.textContent = user?.email || "—";
 
-  const btnLogout = $("btnLogout");
-  btnLogout?.addEventListener("click", async () => {
+  $("btnLogout")?.addEventListener("click", async () => {
     await signOut();
     location.href = "index.html";
   });
 
-  const btnBack = $("btnBack");
-  btnBack?.addEventListener("click", () => {
+  $("btnBack")?.addEventListener("click", () => {
     location.href = "builder.html";
   });
 
-  // ===== id =====
   const gameId = getIdFromQuery();
   if (!gameId) {
     alert("Brak parametru id.");
@@ -208,7 +225,7 @@ export async function bootEditor(cfg) {
 
   let game = await loadGame(gameId);
 
-  // jeśli ktoś wszedł w zły edytor – przerzut
+  // przerzut do właściwego edytora
   if (game.type !== cfg.type) {
     if (game.type === "prepared")
       location.href = `editor-prepared.html?id=${encodeURIComponent(gameId)}`;
@@ -219,7 +236,7 @@ export async function bootEditor(cfg) {
     return;
   }
 
-  // twarde sprawdzenie edycji
+  // walidacja wejścia do edycji
   const editInfo = canEnterEdit(game);
   if (!editInfo?.ok) {
     alert(editInfo?.reason || "Nie możesz edytować tej gry w tym momencie.");
@@ -239,7 +256,7 @@ export async function bootEditor(cfg) {
     game = await loadGame(gameId);
   }
 
-  // ===== badge =====
+  // badge
   const badge = $("kindBadge") || $("typeBadge");
   if (badge) {
     badge.textContent =
@@ -249,11 +266,10 @@ export async function bootEditor(cfg) {
         ? "Punktacja odpowiedzi"
         : "Typowy sondaż";
   }
-
   const lockBadge = $("lockBadge");
   if (lockBadge) lockBadge.style.display = "none";
 
-  // ===== name autosave =====
+  // name autosave
   const gameName = $("gameName");
   if (gameName) gameName.value = game.name || "";
 
@@ -280,21 +296,23 @@ export async function bootEditor(cfg) {
   }
 
   gameName?.addEventListener("blur", saveNameIfChanged);
+  window.addEventListener("beforeunload", () => saveNameIfChanged());
 
-  window.addEventListener("beforeunload", () => {
-    saveNameIfChanged();
-  });
-
-  // ===== state =====
-  let questions = await listQuestions(gameId);
-  let activeQId = questions[0]?.id || null;
-  let answers = activeQId && cfg.allowAnswers ? await listAnswers(activeQId) : [];
-
-  // ===== UI refs =====
+  // UI refs
   const qList = $("qList");
   const qText = $("qText");
   const aList = $("aList");
   const rightPanel = document.querySelector(".rightPanel");
+
+  function setHasQ(on) {
+    if (!rightPanel) return;
+    rightPanel.classList.toggle("hasQ", !!on);
+  }
+
+  // state
+  let questions = await listQuestions(gameId);
+  let activeQId = questions[0]?.id || null;
+  let answers = activeQId && cfg.allowAnswers ? await listAnswers(activeQId) : [];
 
   async function refreshCounts() {
     if (!cfg.allowAnswers) {
@@ -321,11 +339,6 @@ export async function bootEditor(cfg) {
     answers = await listAnswers(activeQId);
   }
 
-  function setHasQ(on) {
-    if (!rightPanel) return;
-    rightPanel.classList.toggle("hasQ", !!on);
-  }
-
   function buildRemainBox() {
     const sum = calcQuestionPoints(answers);
     const diff = 100 - sum;
@@ -339,7 +352,6 @@ export async function bootEditor(cfg) {
       remain.classList.add("ok");
       remain.innerHTML = `<span>OK</span><b>100</b>`;
     } else if (diff > 0) {
-      // default (żółty)
       remain.innerHTML = `<span>ZOSTAŁO</span><b>${diff}</b>`;
     } else {
       remain.classList.add("over");
@@ -349,33 +361,36 @@ export async function bootEditor(cfg) {
     return remain;
   }
 
-  // ===== render questions =====
   function renderQuestions() {
     if (!qList) return;
     qList.innerHTML = "";
 
-    // kafelek dodawania pytania (bez limitu)
+    // kafelek dodawania pytań (max 10 bo baza)
     const qCount = questions.length;
-    const meetsMin = qCount >= QN_MIN;
+    const canAdd = qCount < QN_MAX;
 
     const addQBtn = document.createElement("button");
     addQBtn.type = "button";
     addQBtn.className = "qcard";
+    addQBtn.disabled = !canAdd;
+
     addQBtn.innerHTML = `
-      <div class="qprev">+ Dodaj pytanie</div>
-      <div class="qmeta">
-        ${meetsMin ? "Minimum spełnione" : `Wymagane minimum: ${QN_MIN} (masz ${qCount})`}
-      </div>
+      <div class="qprev">${canAdd ? "+ Dodaj pytanie" : "Limit pytań osiągnięty"}</div>
+      <div class="qmeta">${qCount}/${QN_MAX} • ${qCount >= QN_MIN ? "minimum OK" : `min: ${QN_MIN}`}</div>
     `;
 
     addQBtn.addEventListener("click", async () => {
+      if (!canAdd) return;
       try {
-        const ord = nextQuestionOrd(questions);
+        const ord = nextQuestionOrdWithinLimit(questions);
+        if (!ord) {
+          setMsg(`Masz już komplet (${QN_MAX}) pytań.`);
+          return;
+        }
         const q = await createQuestion(gameId, ord);
 
         questions = await listQuestions(gameId);
         activeQId = q.id;
-
         await loadAnswersForActive();
         await refreshCounts();
 
@@ -384,6 +399,7 @@ export async function bootEditor(cfg) {
         setMsg("Dodano pytanie.");
       } catch (e) {
         console.error(e);
+        // tu często wpadnie questions_ord_range jeśli ktoś ma constraint i ord wyjedzie
         setMsg("Błąd dodawania pytania (konsola).");
       }
     });
@@ -391,19 +407,23 @@ export async function bootEditor(cfg) {
     qList.appendChild(addQBtn);
 
     for (const q of questions) {
-      const el = document.createElement("div");
-      el.className = "qcard";
-      if (q.id === activeQId) el.classList.add("active");
+      const card = document.createElement("div");
+      card.className = "qcard";
+      if (q.id === activeQId) card.classList.add("active");
 
-      el.innerHTML = `
+      // X na kafelku (jak w builderze)
+      // UWAGA: w editor.css nie masz stylu .x — możesz skopiować z builder.css (ten czerwony kwadrat).
+      card.innerHTML = `
+        <button class="x" type="button" title="Usuń pytanie">✕</button>
         <div class="qord">Pytanie ${q.ord}</div>
         <div class="qprev"></div>
         <div class="qmeta"></div>
       `;
-      el.querySelector(".qprev").textContent =
+
+      card.querySelector(".qprev").textContent =
         (q.text || "").trim() || `Pytanie ${q.ord}`;
 
-      const meta = el.querySelector(".qmeta");
+      const meta = card.querySelector(".qmeta");
       if (cfg.allowAnswers) {
         const cnt = q.__answerCount ?? 0;
         meta.textContent = `${cnt}/${AN_MAX} odpowiedzi`;
@@ -411,14 +431,42 @@ export async function bootEditor(cfg) {
         meta.textContent = `Tylko pytania`;
       }
 
-      el.addEventListener("click", async () => {
+      card.addEventListener("click", async () => {
         activeQId = q.id;
         renderQuestions();
         await loadAnswersForActive();
         renderEditor();
       });
 
-      qList.appendChild(el);
+      const btnDel = card.querySelector(".x");
+      btnDel.addEventListener("click", async (e) => {
+        e.stopPropagation();
+
+        const ok = confirm(
+          `Usunąć pytanie ${q.ord}?\n\nTo usunie też wszystkie odpowiedzi w tym pytaniu.`
+        );
+        if (!ok) return;
+
+        try {
+          await deleteQuestionCascade(q.id);
+
+          questions = await listQuestions(gameId);
+          await refreshCounts();
+
+          // wybierz sensowne active
+          activeQId = questions[0]?.id || null;
+          await loadAnswersForActive();
+
+          renderQuestions();
+          renderEditor();
+          setMsg("Usunięto pytanie.");
+        } catch (err) {
+          console.error(err);
+          setMsg("Błąd usuwania pytania (konsola).");
+        }
+      });
+
+      qList.appendChild(card);
     }
   }
 
@@ -440,12 +488,12 @@ export async function bootEditor(cfg) {
         row.innerHTML = `
           <input class="aText" type="text" maxlength="17" placeholder="ODP ${a.ord}">
           <input class="aPts" type="number" min="0" max="100" step="1" inputmode="numeric">
-          <button class="aDel" type="button" title="Wyczyść">✕</button>
+          <button class="aDel" type="button" title="Usuń odpowiedź">✕</button>
         `;
       } else {
         row.innerHTML = `
           <input class="aText" type="text" maxlength="17" placeholder="ODP ${a.ord}">
-          <button class="aDel" type="button" title="Wyczyść">✕</button>
+          <button class="aDel" type="button" title="Usuń odpowiedź">✕</button>
         `;
       }
 
@@ -457,13 +505,10 @@ export async function bootEditor(cfg) {
 
       const bDel = row.querySelector(".aDel");
 
-      // tekst: zapis na debounce
+      // zapis tekstu debounced
       const saveTextNow = async () => {
         try {
-          const patch = { text: clip17(iText.value) };
-          if (!cfg.allowPoints) patch.fixed_points = 0;
-
-          await updateAnswer(a.id, patch);
+          await updateAnswer(a.id, { text: clip17(iText.value) });
           setMsg("Zapisano.");
         } catch (e) {
           console.error(e);
@@ -472,65 +517,57 @@ export async function bootEditor(cfg) {
       };
       const saveText = debounce(saveTextNow, 350);
 
-      // punkty: zapis TYLKO na blur
-      const savePointsNow = async () => {
-        if (!cfg.allowPoints || !iPts) return;
-        try {
-          const newPts = clampPts(iPts.value);
-          await updateAnswer(a.id, { fixed_points: newPts });
-
-          answers = await listAnswers(activeQId);
-          renderAnswers();
-          setMsg("Zapisano.");
-        } catch (e) {
-          console.error(e);
-          setMsg("Błąd zapisu punktów (konsola).");
-        }
-      };
-
       iText.addEventListener("input", () => {
         if (iText.value.length > 17) iText.value = iText.value.slice(0, 17);
         setMsg("Piszesz…");
         saveText();
       });
 
+      // punkty tylko na blur (jak ustaliliśmy)
       if (iPts) {
-        iPts.addEventListener("blur", savePointsNow);
-
-        // nie zmieniamy kolorów inputa punktów — tylko licznik (remainBox)
-        // (czyli żadnych .tooMuch i tym podobnych)
-        iPts.addEventListener(
-          "wheel",
-          (e) => {
-            e.preventDefault();
-          },
-          { passive: false }
-        );
+        iPts.addEventListener("blur", async () => {
+          try {
+            await updateAnswer(a.id, { fixed_points: clampPts(iPts.value) });
+            answers = await listAnswers(activeQId);
+            renderAnswers(); // odświeża licznik
+            setMsg("Zapisano.");
+          } catch (e) {
+            console.error(e);
+            setMsg("Błąd zapisu punktów (konsola).");
+          }
+        });
       }
 
+      // USUWANIE odpowiedzi (a nie czyszczenie)
       bDel.addEventListener("click", async () => {
+        // jeśli pilnujesz minimum w UI:
+        const filledCount = answers.filter((x) => (x.text || "").trim()).length;
+        const wouldBe = Math.max(0, filledCount - ((a.text || "").trim() ? 1 : 0));
+
+        const ok = confirm(
+          `Usunąć odpowiedź ${a.ord}?\n\nPo usunięciu w tym pytaniu będzie ${wouldBe} odpowiedzi (zalecane ${AN_MIN}–${AN_MAX}).`
+        );
+        if (!ok) return;
+
         try {
-          iText.value = "";
-          if (iPts) iPts.value = "0";
+          await deleteAnswer(a.id);
 
-          await updateAnswer(a.id, { text: "", fixed_points: 0 });
+          answers = await listAnswers(activeQId);
+          await refreshCounts();
 
-          if (cfg.allowPoints) {
-            answers = await listAnswers(activeQId);
-            renderAnswers();
-          } else {
-            setMsg("Zapisano.");
-          }
+          renderQuestions();
+          renderAnswers();
+          setMsg("Usunięto odpowiedź.");
         } catch (e) {
           console.error(e);
-          setMsg("Błąd zapisu (konsola).");
+          setMsg("Błąd usuwania odpowiedzi (konsola).");
         }
       });
 
       aList.appendChild(row);
     }
 
-    // add-tile
+    // add tile (odpowiedzi)
     const canAddA = answers.length < AN_MAX;
     const addABtn = document.createElement("button");
     addABtn.type = "button";
@@ -551,7 +588,7 @@ export async function bootEditor(cfg) {
     addABtn.addEventListener("click", async () => {
       if (!canAddA || !activeQId) return;
       try {
-        const ord = nextAnswerOrd(answers, AN_MAX);
+        const ord = nextAnswerOrd(answers);
         if (!ord) return;
 
         await createAnswer(activeQId, ord, `ODP ${ord}`, 0);
@@ -586,7 +623,7 @@ export async function bootEditor(cfg) {
     renderAnswers();
   }
 
-  // pytanie: zapis debounced (textarea ma normalny Enter)
+  // zapis pytania debounced
   const saveQuestionDebounced = debounce(async () => {
     if (!activeQId) return;
     try {
@@ -610,9 +647,9 @@ export async function bootEditor(cfg) {
     saveQuestionDebounced();
   });
 
-  // ===== Import (JEDEN MODAL) =====
+  // ===== MODALE (na Twoim przykładzie) =====
+  // 1) Import modal
   const btnImportTxt = $("btnImportTxt");
-
   const txtLoadFile = $("btnTxtLoadFile");
   const txtFile = $("txtFile");
   const txtTa = $("txtTa");
@@ -646,7 +683,7 @@ export async function bootEditor(cfg) {
     try {
       const f = txtFile?.files?.[0];
       if (!f) {
-        setTxtMsg("Wybierz plik TXT albo wklej treść w pole niżej.");
+        setTxtMsg("Wybierz plik TXT albo wklej treść poniżej.");
         return;
       }
       const txt = await readFileAsText(f);
@@ -674,7 +711,7 @@ export async function bootEditor(cfg) {
 
       setTxtMsg("Importuję…");
 
-      // @Nazwa Gry => ustaw i zapisz nazwę
+      // Jeśli parseQaText zwraca name (jeśli masz @Nazwa Gry w imporcie)
       if (parsed.name && gameName) {
         const nm = normName(parsed.name);
         gameName.value = nm;
@@ -682,27 +719,30 @@ export async function bootEditor(cfg) {
         lastSavedName = nm;
       }
 
-      let qOrd = nextQuestionOrd(await listQuestions(gameId));
+      // mamy max 10 pytań w DB
+      questions = await listQuestions(gameId);
+      let ord = nextQuestionOrdWithinLimit(questions);
 
       for (const item of parsed.items) {
-        const q = await createQuestion(gameId, qOrd);
+        if (!ord) break;
+
+        const q = await createQuestion(gameId, ord);
         await updateQuestion(q.id, { text: normQ(item.qText) });
 
         if (cfg.allowAnswers) {
           let aOrd = 1;
           for (const a of item.answers || []) {
             if (aOrd > AN_MAX) break;
-
             const text = clip17(a.text);
-            const pts =
-              cfg.allowPoints && !cfg.ignoreImportPoints ? clampPts(a.points) : 0;
-
+            const pts = cfg.allowPoints && !cfg.ignoreImportPoints ? clampPts(a.points) : 0;
             await createAnswer(q.id, aOrd, text || `ODP ${aOrd}`, pts);
             aOrd++;
           }
         }
 
-        qOrd++;
+        // następne wolne ord
+        questions = await listQuestions(gameId);
+        ord = nextQuestionOrdWithinLimit(questions);
       }
 
       await refreshCounts();
@@ -713,7 +753,11 @@ export async function bootEditor(cfg) {
       renderQuestions();
       renderEditor();
 
-      setTxtMsg("Zaimportowano.");
+      if (!ord && parsed.items.length) {
+        setTxtMsg(`Zaimportowano do limitu ${QN_MAX} pytań.`);
+      } else {
+        setTxtMsg("Zaimportowano.");
+      }
       setMsg("Import zakończony.");
 
       openOverlay("txtImportOverlay", false);
@@ -722,6 +766,13 @@ export async function bootEditor(cfg) {
       setTxtMsg("Błąd importu (konsola).");
     }
   });
+
+  // 2) Modal “Jak przygotować plik” — pokazuję na Twoim przykładzie
+  const btnHowTxt = $("btnHowTxt");
+  const btnHowClose = $("btnHowClose");
+
+  btnHowTxt?.addEventListener("click", () => openOverlay("howOverlay", true));
+  btnHowClose?.addEventListener("click", () => openOverlay("howOverlay", false));
 
   // ===== init =====
   await refreshCounts();
