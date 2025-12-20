@@ -6,7 +6,6 @@ body.poll-qr-body{
   place-items:center;
 }
 
-/* przycisk fullscreen */
 .qr-fs-btn{
   position:fixed;
   top:14px;
@@ -21,7 +20,6 @@ body.poll-qr-body{
   z-index:50;
 }
 
-/* wrapper */
 .qr-wrap{
   text-align:center;
   padding:18px;
@@ -42,14 +40,12 @@ body.poll-qr-body{
   letter-spacing:.06em;
 }
 
-/* QR box – responsywny */
 .qr-box{
   margin:18px auto;
   width:min(420px, 86vw);
   height:min(420px, 86vw);
 }
 
-/* żeby canvas nie wychodził poza box */
 .qr-box canvas{
   width:100% !important;
   height:100% !important;
