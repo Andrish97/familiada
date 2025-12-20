@@ -3,7 +3,7 @@ import { sb } from "../core/supabase.js";
 import { requireAuth, signOut } from "../core/auth.js";
 import { guardDesktopOnly } from "../core/device-guard.js";
 import { confirmModal } from "../core/modal.js";
-import { RULES, validatePollReadyToOpen } from "../core/game-validate.js";
+import { TYPES, STATUS, RULES } from "../core/game-validate.js";
 import QRCode from "https://cdn.jsdelivr.net/npm/qrcode@1.5.3/+esm";
 
 guardDesktopOnly({ message: "Sondaże są dostępne tylko na komputerze." });
@@ -24,57 +24,57 @@ const chipStatus = document.getElementById("chipStatus");
 
 const gName = document.getElementById("gName");
 const gMeta = document.getElementById("gMeta");
-const pollLinkEl = document.getElementById("pollLink");
+const hintTop = document.getElementById("hintTop");
 
+const pollLinkEl = document.getElementById("pollLink");
 const qrBox = document.getElementById("qr");
 
 const btnCopy = document.getElementById("btnCopy");
 const btnOpen = document.getElementById("btnOpen");
 const btnOpenQr = document.getElementById("btnOpenQr");
 
-const btnStart = document.getElementById("btnStart");
-const btnClose = document.getElementById("btnClose");
-const btnReopen = document.getElementById("btnReopen");
-
+const btnPollAction = document.getElementById("btnPollAction");
 const btnPreview = document.getElementById("btnPreview");
-const votesEl = document.getElementById("votes");
+
+const resultsCard = document.getElementById("resultsCard");
+const resultsMeta = document.getElementById("resultsMeta");
+const resultsList = document.getElementById("resultsList");
 
 let game = null;
+
+/* ================= UI helpers ================= */
 
 function setMsg(t) {
   if (!msg) return;
   msg.textContent = t || "";
-  if (t) setTimeout(() => (msg.textContent = ""), 2200);
+  if (t) setTimeout(() => (msg.textContent = ""), 2600);
 }
 
-function kindPL(kind) {
-  return kind === "poll" ? "SONDAŻOWA" : "LOKALNA";
+function typePL(t) {
+  if (t === TYPES.POLL_TEXT) return "SONDAŻ (TEKST)";
+  if (t === TYPES.POLL_POINTS) return "SONDAŻ (PUNKTY)";
+  if (t === TYPES.PREPARED) return "PREPAROWANY";
+  return String(t || "—").toUpperCase();
 }
-function statusPL(status) {
-  const s = status || "draft";
-  if (s === "draft") return "SZKIC";
-  if (s === "poll_open") return "OTWARTY";
-  if (s === "ready") return "GOTOWA";
+
+function statusPL(st) {
+  const s = st || STATUS.DRAFT;
+  if (s === STATUS.DRAFT) return "SZKIC";
+  if (s === STATUS.POLL_OPEN) return "OTWARTY";
+  if (s === STATUS.READY) return "ZAMKNIĘTY";
   return String(s).toUpperCase();
 }
 
-function pollLink(g) {
-  const base = new URL("poll.html", location.href);
-  base.searchParams.set("id", g.id);
-  base.searchParams.set("key", g.share_key_poll);
-  return base.toString();
-}
-
 function setChips(g) {
-  if (chipKind) chipKind.textContent = kindPL(g.kind);
+  if (chipKind) chipKind.textContent = typePL(g.type);
 
   if (chipStatus) {
     chipStatus.className = "chip status";
-    const st = g.status || "draft";
+    const st = g.status || STATUS.DRAFT;
     chipStatus.textContent = statusPL(st);
 
-    if (st === "ready") chipStatus.classList.add("ok");
-    else if (st === "poll_open") chipStatus.classList.add("warn");
+    if (st === STATUS.READY) chipStatus.classList.add("ok");
+    else if (st === STATUS.POLL_OPEN) chipStatus.classList.add("warn");
     else chipStatus.classList.add("bad");
   }
 }
@@ -98,102 +98,294 @@ async function renderSmallQr(link) {
   }
 }
 
+function setLinkUiVisible(on) {
+  if (btnCopy) btnCopy.disabled = !on;
+  if (btnOpen) btnOpen.disabled = !on;
+  if (btnOpenQr) btnOpenQr.disabled = !on;
+  if (!on) clearQr();
+}
+
+/* ================= Link ================= */
+
+function pollUrlForGame(g) {
+  const file =
+    g.type === TYPES.POLL_TEXT ? "poll-text.html" :
+    g.type === TYPES.POLL_POINTS ? "poll-points.html" :
+    null;
+
+  if (!file) return "";
+
+  const u = new URL(file, location.href);
+  u.searchParams.set("id", g.id);
+  u.searchParams.set("key", g.share_key_poll);
+  return u.toString();
+}
+
+/* ================= DB ================= */
+
 async function loadGame() {
   const { data, error } = await sb()
     .from("games")
-    .select("id,name,kind,status,share_key_poll")
+    .select("id,name,type,status,share_key_poll")
     .eq("id", gameId)
     .single();
   if (error) throw error;
   return data;
 }
 
-function setLinkUiVisible(on) {
-  btnCopy && (btnCopy.disabled = !on);
-  btnOpen && (btnOpen.disabled = !on);
-  btnOpenQr && (btnOpenQr.disabled = !on);
-  if (!on) clearQr();
-}
-
-// preview: pokazujemy pierwsze 10 pytań (bo tyle przewidujesz w rozgrywce/UI)
-async function previewVotes() {
-  if (!votesEl) return;
-
-  votesEl.style.display = "";
-  votesEl.textContent = "Ładuję…";
-
-  const { data: qsRows, error: qErr } = await sb()
+async function fetchQuestions(gameId) {
+  const { data, error } = await sb()
     .from("questions")
     .select("id,ord,text")
     .eq("game_id", gameId)
     .order("ord", { ascending: true });
+  if (error) throw error;
+  return data || [];
+}
 
-  if (qErr) {
-    votesEl.textContent = "Błąd wczytywania pytań.";
-    return;
+async function fetchAnswers(questionId) {
+  const { data, error } = await sb()
+    .from("answers")
+    .select("id,ord,text,fixed_points")
+    .eq("question_id", questionId)
+    .order("ord", { ascending: true });
+  if (error) throw error;
+  return data || [];
+}
+
+/* ================= VALIDACJE (Twoje reguły) ================= */
+
+async function validateCanOpen(g) {
+  // tylko dla poll_* typów
+  if (!(g.type === TYPES.POLL_TEXT || g.type === TYPES.POLL_POINTS)) {
+    return { ok: false, reason: "To nie jest gra sondażowa." };
   }
 
-  const ten = (qsRows || []).slice(0, RULES.QN_MIN);
-  let out = [];
+  const qs = await fetchQuestions(g.id);
+  if (qs.length < RULES.QN_MIN) {
+    return { ok: false, reason: `Żeby uruchomić: min ${RULES.QN_MIN} pytań (masz ${qs.length}).` };
+  }
 
-  for (const q of ten) {
-    const { data: ans, error: aErr } = await sb()
-      .from("answers")
-      .select("id,ord,text")
-      .eq("question_id", q.id)
-      .order("ord", { ascending: true });
+  if (g.type === TYPES.POLL_TEXT) {
+    // typowy sondaż: tylko liczba pytań
+    return { ok: true, reason: "" };
+  }
 
-    if (aErr) {
-      out.push(`P${q.ord}: błąd odpowiedzi`);
-      out.push("");
-      continue;
+  // poll_points: każde pytanie ma 3..6 odpowiedzi
+  for (const q of qs) {
+    const as = await fetchAnswers(q.id);
+    if (as.length < RULES.AN_MIN || as.length > RULES.AN_MAX) {
+      return {
+        ok: false,
+        reason: `Żeby uruchomić: każde pytanie musi mieć ${RULES.AN_MIN}–${RULES.AN_MAX} odpowiedzi. (Pyt. ${q.ord} ma ${as.length}).`
+      };
     }
+  }
 
-    const { data: sess, error: sErr } = await sb()
-      .from("poll_sessions")
-      .select("id,created_at")
-      .eq("game_id", gameId)
-      .eq("question_id", q.id)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
+  return { ok: true, reason: "" };
+}
 
-    if (sErr) {
-      out.push(`P${q.ord}: błąd sesji`);
-      out.push("");
-      continue;
+async function latestSessionId(gameId, questionId) {
+  const { data, error } = await sb()
+    .from("poll_sessions")
+    .select("id,created_at")
+    .eq("game_id", gameId)
+    .eq("question_id", questionId)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) throw error;
+  return data?.id || null;
+}
+
+async function validateCanClose(g) {
+  if (g.status !== STATUS.POLL_OPEN) return { ok: false, reason: "Sondaż nie jest otwarty." };
+
+  const qs = await fetchQuestions(g.id);
+  if (!qs.length) return { ok: false, reason: "Brak pytań." };
+
+  // TEXT: w każdym pytaniu min 3 RÓŻNE odpowiedzi (zebrane)
+  if (g.type === TYPES.POLL_TEXT) {
+    // zakładamy tabelę poll_text_entries z kolumnami:
+    // poll_session_id, question_id, answer_norm
+    for (const q of qs) {
+      const sid = await latestSessionId(g.id, q.id);
+      if (!sid) return { ok: false, reason: `Brak sesji dla pytania ${q.ord}.` };
+
+      const { data, error } = await sb()
+        .from("poll_text_entries")
+        .select("answer_norm")
+        .eq("poll_session_id", sid)
+        .eq("question_id", q.id);
+
+      if (error) {
+        console.error("[polls] missing poll_text_entries?", error);
+        return { ok: false, reason: "Brak tabeli poll_text_entries / brak dostępu — nie da się policzyć odpowiedzi." };
+      }
+
+      const uniq = new Set((data || []).map(r => String(r.answer_norm || "").trim()).filter(Boolean));
+      if (uniq.size < RULES.AN_MIN) {
+        return {
+          ok: false,
+          reason: `Żeby zamknąć: w każdym pytaniu min ${RULES.AN_MIN} różne odpowiedzi. (Pyt. ${q.ord} ma ${uniq.size}).`
+        };
+      }
     }
+    return { ok: true, reason: "" };
+  }
 
-    const sid = sess?.id || null;
+  // POINTS: w każdym pytaniu co najmniej 2 odpowiedzi mają punkty != 0
+  // (czyli w praktyce: co najmniej 2 odpowiedzi dostały przynajmniej 1 głos w sesji)
+  if (g.type === TYPES.POLL_POINTS) {
+    for (const q of qs) {
+      const sid = await latestSessionId(g.id, q.id);
+      if (!sid) return { ok: false, reason: `Brak sesji dla pytania ${q.ord}.` };
 
-    const counts = new Map();
-    (ans || []).forEach(a => counts.set(a.id, 0));
+      const as = await fetchAnswers(q.id);
+      const allowed = new Set(as.map(a => a.id));
 
-    if (sid) {
       const { data: votes, error: vErr } = await sb()
         .from("poll_votes")
         .select("answer_id")
         .eq("poll_session_id", sid);
 
-      if (vErr) {
-        out.push(`P${q.ord}: błąd głosów`);
-        out.push("");
-        continue;
-      }
+      if (vErr) throw vErr;
 
+      const counts = new Map();
+      for (const a of as) counts.set(a.id, 0);
       for (const v of (votes || [])) {
-        if (counts.has(v.answer_id)) counts.set(v.answer_id, (counts.get(v.answer_id) || 0) + 1);
+        if (allowed.has(v.answer_id)) counts.set(v.answer_id, (counts.get(v.answer_id) || 0) + 1);
+      }
+
+      let nonZero = 0;
+      for (const [_, c] of counts) if ((c || 0) > 0) nonZero++;
+
+      if (nonZero < 2) {
+        return { ok: false, reason: `Żeby zamknąć: w każdym pytaniu min 2 odpowiedzi muszą mieć punkty ≠ 0. (Pyt. ${q.ord} ma ${nonZero}).` };
       }
     }
-
-    out.push(`P${q.ord}: ${q.text}`);
-    for (const a of (ans || [])) {
-      out.push(`  - ${a.text}: ${counts.get(a.id) || 0} głosów`);
-    }
-    out.push("");
+    return { ok: true, reason: "" };
   }
 
-  votesEl.textContent = out.join("\n").trim() || "Brak danych.";
+  return { ok: false, reason: "Nieznany typ sondażu." };
+}
+
+/* ================= Preview wyników (light) ================= */
+
+async function previewResults(g) {
+  if (!resultsCard || !resultsList || !resultsMeta) return;
+
+  if (resultsCard.style.display === "none") {
+    resultsCard.style.display = "";
+  } else {
+    resultsCard.style.display = "none";
+    return;
+  }
+
+  resultsMeta.textContent = "Ładuję…";
+  resultsList.innerHTML = "";
+
+  const qs = (await fetchQuestions(g.id)).slice(0, RULES.QN_MIN);
+
+  if (g.type === TYPES.POLL_POINTS) {
+    // pokaż liczbę głosów na odpowiedź z ostatniej sesji
+    for (const q of qs) {
+      const sid = await latestSessionId(g.id, q.id);
+      const as = await fetchAnswers(q.id);
+
+      const counts = new Map();
+      for (const a of as) counts.set(a.id, 0);
+
+      if (sid) {
+        const { data: votes } = await sb()
+          .from("poll_votes")
+          .select("answer_id")
+          .eq("poll_session_id", sid);
+        for (const v of (votes || [])) {
+          if (counts.has(v.answer_id)) counts.set(v.answer_id, (counts.get(v.answer_id) || 0) + 1);
+        }
+      }
+
+      const box = document.createElement("div");
+      box.className = "resultQ";
+      box.innerHTML = `<div class="qTitle"></div>`;
+      box.querySelector(".qTitle").textContent = `P${q.ord}: ${q.text || "—"}`;
+
+      for (const a of as) {
+        const row = document.createElement("div");
+        row.className = "aRow";
+        row.innerHTML = `<div class="aTxt"></div><div class="aVal"></div>`;
+        row.querySelector(".aTxt").textContent = a.text || "—";
+        row.querySelector(".aVal").textContent = String(counts.get(a.id) || 0);
+        box.appendChild(row);
+      }
+
+      resultsList.appendChild(box);
+    }
+
+    resultsMeta.textContent = "Podgląd: liczba głosów z ostatniej sesji.";
+    return;
+  }
+
+  if (g.type === TYPES.POLL_TEXT) {
+    // pokaż top zgrupowane po answer_norm (jeśli masz poll_text_entries)
+    for (const q of qs) {
+      const sid = await latestSessionId(g.id, q.id);
+      if (!sid) continue;
+
+      const { data, error } = await sb()
+        .from("poll_text_entries")
+        .select("answer_norm")
+        .eq("poll_session_id", sid)
+        .eq("question_id", q.id);
+
+      if (error) {
+        resultsMeta.textContent = "Brak tabeli poll_text_entries — nie da się pokazać podglądu text.";
+        return;
+      }
+
+      const counts = new Map();
+      for (const r of (data || [])) {
+        const k = String(r.answer_norm || "").trim();
+        if (!k) continue;
+        counts.set(k, (counts.get(k) || 0) + 1);
+      }
+
+      const top = [...counts.entries()].sort((a,b)=>b[1]-a[1]).slice(0, 10);
+
+      const box = document.createElement("div");
+      box.className = "resultQ";
+      box.innerHTML = `<div class="qTitle"></div>`;
+      box.querySelector(".qTitle").textContent = `P${q.ord}: ${q.text || "—"}`;
+
+      for (const [k, c] of top) {
+        const row = document.createElement("div");
+        row.className = "aRow";
+        row.innerHTML = `<div class="aTxt"></div><div class="aVal"></div>`;
+        row.querySelector(".aTxt").textContent = k;
+        row.querySelector(".aVal").textContent = String(c);
+        box.appendChild(row);
+      }
+
+      resultsList.appendChild(box);
+    }
+
+    resultsMeta.textContent = "Podgląd: TOP odpowiedzi (po normalizacji answer_norm).";
+    return;
+  }
+
+  resultsMeta.textContent = "Podgląd niedostępny dla tego typu gry.";
+}
+
+/* ================= Action button state ================= */
+
+function setActionButton(label, enabled, hintText) {
+  if (btnPollAction) {
+    btnPollAction.textContent = label;
+    btnPollAction.disabled = !enabled;
+  }
+  if (hintTop && hintText) hintTop.textContent = hintText;
 }
 
 async function refresh() {
@@ -208,7 +400,8 @@ async function refresh() {
 
   game = await loadGame();
 
-  if (game.kind !== "poll") {
+  // tylko poll_* na tej stronie
+  if (!(game.type === TYPES.POLL_TEXT || game.type === TYPES.POLL_POINTS)) {
     cardMain && (cardMain.style.display = "none");
     cardEmpty && (cardEmpty.style.display = "");
     setMsg("To nie jest gra sondażowa.");
@@ -221,55 +414,161 @@ async function refresh() {
   cardMain && (cardMain.style.display = "");
 
   if (gName) gName.textContent = game.name || "Sondaż";
-  if (gMeta) gMeta.textContent =
-    `Link i QR pojawiają się tylko, gdy sondaż jest OTWARTY i gra spełnia zasady (min ${RULES.QN_MIN} pytań, ${RULES.AN_MIN}–${RULES.AN_MAX} odpowiedzi).`;
+  if (gMeta) {
+    gMeta.textContent =
+      game.type === TYPES.POLL_TEXT
+        ? `Uruchom: min ${RULES.QN_MIN} pytań. Zamknij: w każdym pytaniu min ${RULES.AN_MIN} różne odpowiedzi.`
+        : `Uruchom: min ${RULES.QN_MIN} pytań i każde pytanie ma ${RULES.AN_MIN}–${RULES.AN_MAX} odpowiedzi. Zamknij: w każdym pytaniu min 2 odpowiedzi mają punkty ≠ 0.`;
+  }
 
+  // link/qr tylko gdy otwarty
   if (pollLinkEl) pollLinkEl.value = "";
   setLinkUiVisible(false);
   clearQr();
 
-  const st = game.status || "draft";
+  const st = game.status || STATUS.DRAFT;
 
-  // walidacja z core:
-  const chk = await validatePollReadyToOpen(game.id); // zwróci ok także w "ready/draft" (byle nie poll_open), ale my i tak poniżej kontrolujemy UI
+  if (st === STATUS.POLL_OPEN) {
+    const link = pollUrlForGame(game);
+    if (pollLinkEl) pollLinkEl.value = link;
+    setLinkUiVisible(true);
+    await renderSmallQr(link);
 
-  btnStart && (btnStart.disabled = !chk.ok || st === "poll_open");
-  btnClose && (btnClose.disabled = st !== "poll_open");
-  btnReopen && (btnReopen.disabled = !chk.ok || st !== "ready");
-
-  if (st === "poll_open") {
-    // gdy otwarty: wymagamy “struktura ok”, inaczej nie pokazujemy link/qr
-    const chk2 = await (async ()=>{
-      // tu potrzebujemy check “struktury” nawet gdy poll_open — validatePollReadyToOpen blokuje poll_open
-      // więc robimy szybki trik: na czas UI sprawdzamy strukturę ręcznie przez core validateStructure:
-      const mod = await import("../core/game-validate.js");
-      return await mod.validateStructure(game.id);
-    })();
-
-    if (chk2.ok) {
-      const link = pollLink(game);
-      if (pollLinkEl) pollLinkEl.value = link;
-      setLinkUiVisible(true);
-      await renderSmallQr(link);
-      setMsg("");
-      return;
-    }
-
-    setLinkUiVisible(false);
-    clearQr();
-    setMsg(chk2.reason);
+    const chkClose = await validateCanClose(game);
+    setActionButton(
+      "Zamknąć sondaż",
+      chkClose.ok,
+      chkClose.ok ? "Możesz zamknąć sondaż." : chkClose.reason
+    );
     return;
   }
 
-  // nie otwarty:
-  if (!chk.ok) {
-    setMsg(chk.reason);
-  } else if (st === "ready") {
-    setMsg("Sondaż jest zamknięty (wyniki policzone). Możesz go otworzyć ponownie.");
-  } else {
-    setMsg("Sondaż jest nieaktywny — uruchom go, żeby pokazać link i QR.");
+  if (st === STATUS.DRAFT) {
+    const chkOpen = await validateCanOpen(game);
+    setActionButton(
+      "Uruchomić sondaż",
+      chkOpen.ok,
+      chkOpen.ok ? "Link i QR pojawią się po uruchomieniu." : chkOpen.reason
+    );
+    return;
   }
+
+  // READY (zamknięty)
+  if (st === STATUS.READY) {
+    // otworzyć ponownie: zawsze możliwe, ale ostrzegamy że czyścimy dane
+    setActionButton(
+      "Uruchomić ponownie",
+      true,
+      "Otworzy ponownie sondaż i usunie poprzednie dane głosowania."
+    );
+    return;
+  }
+
+  // fallback
+  setActionButton("—", false, "Nieznany stan.");
 }
+
+/* ================= Actions ================= */
+
+async function actionOpen() {
+  const chk = await validateCanOpen(game);
+  if (!chk.ok) return setMsg(chk.reason);
+
+  const ok = await confirmModal({
+    title: "Uruchomić sondaż?",
+    text: `Uruchomić sondaż dla "${game.name}"?`,
+    okText: "Uruchom",
+    cancelText: "Anuluj",
+  });
+  if (!ok) return;
+
+  const { error } = await sb().rpc("poll_open", {
+    p_game_id: gameId,
+    p_key: game.share_key_poll,
+  });
+  if (error) throw error;
+
+  setMsg("Sondaż uruchomiony.");
+  await refresh();
+}
+
+async function actionReopen() {
+  const ok = await confirmModal({
+    title: "Uruchomić ponownie?",
+    text: "Uruchomić sondaż ponownie? Poprzednie dane głosowania zostaną usunięte.",
+    okText: "Uruchom ponownie",
+    cancelText: "Anuluj",
+  });
+  if (!ok) return;
+
+  // Preferowane: osobny RPC, który CZYŚCI dane i otwiera nową sesję
+  const { error } = await sb().rpc("poll_reopen_wipe", {
+    p_game_id: gameId,
+    p_key: game.share_key_poll,
+  });
+
+  if (error) {
+    console.error("[polls] poll_reopen_wipe missing? fallback to poll_open", error);
+
+    // fallback: jeżeli nie masz RPC poll_reopen_wipe, to i tak otworzy nową sesję,
+    // ale stare dane zostaną w historii — zgodnie z Twoim opisem to NIE jest idealne.
+    const res2 = await sb().rpc("poll_open", {
+      p_game_id: gameId,
+      p_key: game.share_key_poll,
+    });
+    if (res2.error) throw res2.error;
+  }
+
+  setMsg("Sondaż uruchomiony ponownie.");
+  await refresh();
+}
+
+async function actionClose() {
+  const chk = await validateCanClose(game);
+  if (!chk.ok) return setMsg(chk.reason);
+
+  // points: automatyczne zamknięcie i normalizacja do 100
+  if (game.type === TYPES.POLL_POINTS) {
+    const ok = await confirmModal({
+      title: "Zamknąć sondaż?",
+      text: "Zamknąć sondaż i przeliczyć punkty do 100 (0 głosów => min 1 pkt)?",
+      okText: "Zamknij",
+      cancelText: "Anuluj",
+    });
+    if (!ok) return;
+
+    const { error } = await sb().rpc("poll_close_and_normalize", {
+      p_game_id: gameId,
+      p_key: game.share_key_poll,
+    });
+    if (error) throw error;
+
+    setMsg("Sondaż zamknięty. Gra gotowa.");
+    await refresh();
+    return;
+  }
+
+  // text: u Ciebie jest ręczny panel łączenia — to jest osobny krok UI.
+  // Na teraz robimy: zamknij sondaż (blokuje dalsze wpisy), a “panel merge” dołożymy jako następny ekran/overlay.
+  const ok = await confirmModal({
+    title: "Zamknąć sondaż?",
+    text: "Zamknąć sondaż? Potem przejdziesz do porządkowania odpowiedzi (łączenie/usuwanie) i normalizacji do 100.",
+    okText: "Zamknij",
+    cancelText: "Anuluj",
+  });
+  if (!ok) return;
+
+  const { error } = await sb().rpc("poll_text_close", {
+    p_game_id: gameId,
+    p_key: game.share_key_poll,
+  });
+  if (error) throw error;
+
+  setMsg("Sondaż zamknięty. Teraz porządkujemy odpowiedzi.");
+  await refresh();
+}
+
+/* ================= Init ================= */
 
 document.addEventListener("DOMContentLoaded", async () => {
   const u = await requireAuth("index.html");
@@ -298,106 +597,33 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   btnOpenQr?.addEventListener("click", () => {
     if (!pollLinkEl?.value) return;
-    const u = new URL("poll-qr.html", location.href);
-    u.searchParams.set("url", pollLinkEl.value);
-    window.open(u.toString(), "_blank", "noopener,noreferrer");
+    const u2 = new URL("poll-qr.html", location.href);
+    u2.searchParams.set("url", pollLinkEl.value);
+    window.open(u2.toString(), "_blank", "noopener,noreferrer");
   });
 
-  btnStart?.addEventListener("click", async () => {
+  btnPollAction?.addEventListener("click", async () => {
     if (!game) return;
 
-    // do otwarcia: używamy core walidacji
-    const chk = await validatePollReadyToOpen(gameId);
-    if (!chk.ok) {
-      setMsg(chk.reason);
-      return;
-    }
-
-    const ok = await confirmModal({
-      title: "Uruchomić sondaż?",
-      text: `Uruchomić sondaż dla "${game.name}"?`,
-      okText: "Uruchom",
-      cancelText: "Anuluj",
-    });
-    if (!ok) return;
-
     try {
-      const { error } = await sb().rpc("poll_open", {
-        p_game_id: gameId,
-        p_key: game.share_key_poll,
-      });
-      if (error) throw error;
-
-      setMsg("Sondaż uruchomiony.");
-      await refresh();
+      const st = game.status || STATUS.DRAFT;
+      if (st === STATUS.DRAFT) return await actionOpen();
+      if (st === STATUS.POLL_OPEN) return await actionClose();
+      if (st === STATUS.READY) return await actionReopen();
     } catch (e) {
-      console.error("[polls] open error:", e);
-      alert(`Nie udało się uruchomić sondażu.\n\n${e?.message || e}`);
-    }
-  });
-
-  btnReopen?.addEventListener("click", async () => {
-    if (!game) return;
-
-    const chk = await validatePollReadyToOpen(gameId);
-    if (!chk.ok) {
-      setMsg(chk.reason);
-      return;
-    }
-
-    const ok = await confirmModal({
-      title: "Otworzyć ponownie?",
-      text: "Otworzyć sondaż ponownie? Utworzy nową sesję głosowania (stare głosy zostają w historii).",
-      okText: "Otwórz ponownie",
-      cancelText: "Anuluj",
-    });
-    if (!ok) return;
-
-    try {
-      const { error } = await sb().rpc("poll_open", {
-        p_game_id: gameId,
-        p_key: game.share_key_poll,
-      });
-      if (error) throw error;
-
-      setMsg("Sondaż otwarty ponownie.");
-      await refresh();
-    } catch (e) {
-      console.error("[polls] reopen error:", e);
-      alert(`Nie udało się otworzyć ponownie.\n\n${e?.message || e}`);
-    }
-  });
-
-  btnClose?.addEventListener("click", async () => {
-    if (!game) return;
-
-    const ok = await confirmModal({
-      title: "Zakończyć sondaż?",
-      text: "Zamknąć sondaż i przeliczyć punkty do 100 (0 głosów => min 1 pkt)?",
-      okText: "Zakończ",
-      cancelText: "Anuluj",
-    });
-    if (!ok) return;
-
-    try {
-      const { error } = await sb().rpc("poll_close_and_normalize", {
-        p_game_id: gameId,
-        p_key: game.share_key_poll,
-      });
-      if (error) throw error;
-
-      setMsg("Sondaż zamknięty. Gra gotowa do zagrania.");
-      await refresh();
-    } catch (e) {
-      console.error("[polls] close error:", e);
-      alert(`Nie udało się zamknąć sondażu.\n\n${e?.message || e}`);
+      console.error("[polls] action error:", e);
+      alert(`Operacja nie powiodła się.\n\n${e?.message || e}`);
     }
   });
 
   btnPreview?.addEventListener("click", async () => {
-    if (!votesEl) return;
-    if (votesEl.style.display === "none") await previewVotes();
-    else votesEl.style.display = "none";
+    if (!game) return;
+    try {
+      await previewResults(game);
+    } catch (e) {
+      console.error("[polls] preview error:", e);
+      setMsg("Nie udało się wczytać podglądu (konsola).");
+    }
   });
 
   await refresh();
