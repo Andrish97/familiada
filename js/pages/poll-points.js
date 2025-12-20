@@ -22,28 +22,35 @@ function getVoterToken() {
   const k = `fam_voter_${gameId}_${key}`;
   let t = localStorage.getItem(k);
   if (!t) {
-    t = (crypto?.randomUUID?.() || String(Date.now()) + "_" + Math.random().toString(16).slice(2));
+    t = (crypto?.randomUUID?.() || `${Date.now()}_${Math.random().toString(16).slice(2)}`);
     localStorage.setItem(k, t);
   }
   return t;
 }
 
 async function loadPayload() {
-  const { data, error } = await sb().rpc("poll_get_payload", {
-    p_game_id: gameId,
-    p_key: key,
-  });
+  const { data, error } = await sb().rpc("poll_get_payload", { p_game_id: gameId, p_key: key });
   if (error) throw error;
   return data;
+}
+
+async function vote(questionId, answerId) {
+  const voter = getVoterToken();
+  const { error } = await sb().rpc("poll_points_vote", {
+    p_game_id: gameId,
+    p_key: key,
+    p_question_id: questionId,
+    p_answer_id: answerId,
+    p_voter_token: voter,
+  });
+  if (error) throw error;
 }
 
 let payload = null;
 let idx = 0;
 
 function renderQuestion() {
-  if (!payload) return;
-
-  const questions = payload.questions || [];
+  const questions = payload?.questions || [];
   const q = questions[idx];
 
   if (!q) {
@@ -54,7 +61,7 @@ function renderQuestion() {
     return;
   }
 
-  if (title) title.textContent = payload.game?.name || "Sondaż";
+  if (title) title.textContent = payload?.game?.name || "Sondaż";
   if (qText) qText.textContent = `P${q.ord}: ${q.text}`;
 
   if (answersBox) {
@@ -66,6 +73,7 @@ function renderQuestion() {
       b.type = "button";
       b.className = "ansBtn";
       b.textContent = a.text || `ODP ${a.ord}`;
+
       b.addEventListener("click", async () => {
         try {
           b.disabled = true;
@@ -93,33 +101,15 @@ function renderQuestion() {
   }
 }
 
-async function vote(questionId, answerId) {
-  const voter = getVoterToken();
-
-  const { error } = await sb().rpc("poll_points_vote", {
-    p_game_id: gameId,
-    p_key: key,
-    p_question_id: questionId,
-    p_answer_id: answerId,
-    p_voter_token: voter,
-  });
-
-  if (error) throw error;
-}
-
 document.addEventListener("DOMContentLoaded", async () => {
   try {
-    if (!gameId || !key) {
-      setMsg("Brak parametru id lub key.");
-      return;
-    }
+    if (!gameId || !key) return setMsg("Brak parametru id lub key.");
 
     setMsg("Ładuję…");
     payload = await loadPayload();
 
-    if ((payload.game?.type || "") !== "poll_points") {
-      setMsg("To nie jest sondaż punktacji.");
-      return;
+    if ((payload?.game?.type || "") !== "poll_points") {
+      return setMsg("To nie jest sondaż punktacji.");
     }
 
     idx = 0;
