@@ -1,12 +1,15 @@
 // js/core/text-import.js
 
 /**
- * Parsuje plik tekstowy:
+ * Parsuje tekst:
+ *  - nazwa gry: linia zaczynająca się od @ (np. "@Moja Gra") — działa tylko PRZED pierwszym pytaniem
  *  - pytanie: linia z # (ignoruje spacje/taby przed #, między # a tekstem)
  *  - odpowiedź: opcjonalnie numer + separatory (.,), potem tekst, opcjonalnie /punkty
  *  - ignoruje spacje przed/po / oraz w okolicy numeru
  *
- * Zwraca { ok, error, items } gdzie items = [{ qText, answers:[{text, points|null}] }]
+ * Zwraca { ok, error, items, name } gdzie:
+ *  items = [{ qText, answers:[{text, points|null}] }]
+ *  name = string | null
  */
 export function parseQaText(raw) {
   const text = String(raw ?? "").replace(/\r\n?/g, "\n");
@@ -14,6 +17,9 @@ export function parseQaText(raw) {
 
   const items = [];
   let cur = null;
+
+  let name = null;
+  let seenFirstQuestion = false;
 
   const pushCur = () => {
     if (cur && cur.qText.trim()) items.push(cur);
@@ -23,30 +29,39 @@ export function parseQaText(raw) {
   for (let li = 0; li < lines.length; li++) {
     let line = lines[li];
 
-    // usuń taby -> spacje, trim tylko z boków
     line = line.replace(/\t+/g, " ").trim();
     if (!line) continue;
 
+    // @Nazwa Gry (tylko przed pierwszym pytaniem)
+    if (!seenFirstQuestion) {
+      const mName = line.match(/^@\s*(.+)$/);
+      if (mName) {
+        const nm = String(mName[1] || "").trim();
+        if (nm) name = nm;
+        continue;
+      }
+    }
+
     // pytanie (#)
-    // ignorujemy spacje przed # oraz spacje między # a treścią
     const mQ = line.match(/^#+\s*(.+)$/);
     if (mQ) {
+      seenFirstQuestion = true;
       pushCur();
       cur = { qText: (mQ[1] || "").trim(), answers: [] };
       continue;
     }
 
-    // odpowiedź (może być bez numeru, ale najczęściej jest)
+    // odpowiedź
     if (!cur) {
       return {
         ok: false,
         error: `Błąd układu: odpowiedź przed pierwszym pytaniem (linia ${li + 1}).`,
         items: [],
+        name,
       };
     }
 
     // rozbij na "tekst / punkty"
-    // dopuszczamy spacje przed/po / i punkty na końcu
     let left = line;
     let pts = null;
 
@@ -59,7 +74,6 @@ export function parseQaText(raw) {
         pts = Number(rightPart);
         left = leftPart;
       } else {
-        // jak po / nie ma liczby -> traktuj całe jako tekst odpowiedzi
         left = line;
         pts = null;
       }
@@ -68,7 +82,6 @@ export function parseQaText(raw) {
     // usuń prefix typu: "1.", "2)", "3 -" itd.
     left = left.replace(/^\s*\d+\s*[\.\)\-:]*\s*/g, "").trim();
 
-    // finalny tekst odpowiedzi
     const aText = left.trim();
     if (!aText) continue;
 
@@ -78,10 +91,15 @@ export function parseQaText(raw) {
   pushCur();
 
   if (!items.length) {
-    return { ok: false, error: "Brak pytań. Pamiętaj o liniach zaczynających się od #.", items: [] };
+    return {
+      ok: false,
+      error: "Brak pytań. Pamiętaj o liniach zaczynających się od #.",
+      items: [],
+      name,
+    };
   }
 
-  return { ok: true, error: "", items };
+  return { ok: true, error: "", items, name };
 }
 
 /**
