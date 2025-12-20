@@ -1,126 +1,138 @@
+// js/pages/poll-points.js
 import { sb } from "../core/supabase.js";
 
 const qs = new URLSearchParams(location.search);
 const gameId = qs.get("id");
 const key = qs.get("key");
 
-const title = document.getElementById("title");
-const sub = document.getElementById("sub");
+const $ = (id) => document.getElementById(id);
 
-const qbox = document.getElementById("qbox");
-const qtext = document.getElementById("qtext");
-const alist = document.getElementById("alist");
-const prog = document.getElementById("prog");
+const msg = $("msg");
+const title = $("title");
+const qText = $("qText");
+const answersBox = $("answers");
+const btnNext = $("btnNext");
 
-const closed = document.getElementById("closed");
+function setMsg(t) {
+  if (!msg) return;
+  msg.textContent = t || "";
+}
 
-function token() {
-  const k = `fam_poll_token_${gameId}`;
+function getVoterToken() {
+  const k = `fam_voter_${gameId}_${key}`;
   let t = localStorage.getItem(k);
   if (!t) {
-    t = Math.random().toString(16).slice(2) + Date.now().toString(16);
+    t = (crypto?.randomUUID?.() || String(Date.now()) + "_" + Math.random().toString(16).slice(2));
     localStorage.setItem(k, t);
   }
   return t;
 }
 
-let data = null;
+async function loadPayload() {
+  const { data, error } = await sb().rpc("poll_get_payload", {
+    p_game_id: gameId,
+    p_key: key,
+  });
+  if (error) throw error;
+  return data;
+}
+
+let payload = null;
 let idx = 0;
-let busy = false;
 
-function showBox(on){
-  qbox.style.display = on ? "" : "none";
-  closed.style.display = on ? "none" : "";
-}
+function renderQuestion() {
+  if (!payload) return;
 
-function showClosed(msg){
-  showBox(false);
-  closed.textContent = msg || "Sondaż jest zamknięty. Dziękujemy!";
-  sub.textContent = "Ten sondaż nie przyjmuje już głosów.";
-}
+  const questions = payload.questions || [];
+  const q = questions[idx];
 
-function showError(msg){
-  showBox(false);
-  closed.textContent = msg || "Nie udało się wczytać sondażu.";
-  sub.textContent = "—";
-}
-
-function render() {
-  const g = data?.game;
-  title.textContent = g?.name ? `Sondaż: ${g.name}` : "Sondaż";
-
-  if (!g) return showError("Brak danych gry.");
-  if (g.type !== "poll_points") return showError("To nie jest sondaż punktowany.");
-  if (g.status !== "poll_open") return showClosed("Sondaż jest zamknięty. Dziękujemy!");
-
-  const qlist = data?.questions || [];
-  if (!qlist.length) return showError("Brak pytań do głosowania.");
-
-  if (idx >= qlist.length) {
-    sub.textContent = "Dzięki! Oddałeś(aś) głos na wszystkie pytania.";
-    showBox(false);
-    closed.textContent = "Dziękujemy za udział w sondażu!";
+  if (!q) {
+    if (qText) qText.textContent = "Dziękujemy!";
+    if (answersBox) answersBox.innerHTML = "";
+    if (btnNext) btnNext.disabled = true;
+    setMsg("Oddałeś głosy na wszystkie pytania.");
     return;
   }
 
-  const q = qlist[idx];
-  const answers = q?.answers || [];
-  if (!answers.length) return showError("Błąd: pytanie bez odpowiedzi.");
+  if (title) title.textContent = payload.game?.name || "Sondaż";
+  if (qText) qText.textContent = `P${q.ord}: ${q.text}`;
 
-  showBox(true);
-  sub.textContent = "Wybierz odpowiedź, która najbardziej pasuje.";
-  qtext.textContent = q.text || "—";
-  prog.textContent = `Pytanie ${idx + 1} / ${qlist.length}`;
+  if (answersBox) {
+    answersBox.innerHTML = "";
+    const ans = q.answers || [];
 
-  alist.innerHTML = "";
-  for (const a of answers) {
-    const b = document.createElement("button");
-    b.type = "button";
-    b.className = "abtn";
-    b.textContent = a.text;
+    for (const a of ans) {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "ansBtn";
+      b.textContent = a.text || `ODP ${a.ord}`;
+      b.addEventListener("click", async () => {
+        try {
+          b.disabled = true;
+          setMsg("Zapisuję głos…");
 
-    b.addEventListener("click", async () => {
-      if (busy) return;
-      busy = true;
-      b.disabled = true;
+          await vote(q.id, a.id);
 
-      try {
-        const { error } = await sb().rpc("poll_vote_points", {
-          p_game_id: gameId,
-          p_key: key,
-          p_question_id: q.id,
-          p_answer_id: a.id,
-          p_voter_token: token(),
-        });
-        if (error) throw error;
+          setMsg("Zapisano. Następne pytanie.");
+          idx++;
+          renderQuestion();
+        } catch (e) {
+          console.error("[poll-points] vote error:", e);
+          setMsg(`Błąd: ${e?.message || e}`);
+          b.disabled = false;
+        }
+      });
 
-        idx += 1;
-        busy = false;
-        render();
-      } catch (e) {
-        busy = false;
-        const m = (e?.message || String(e)).toLowerCase();
-        if (m.includes("poll closed")) return showClosed("Sondaż jest zamknięty. Dziękujemy!");
-        alert("Nie udało się oddać głosu. Spróbuj ponownie.");
-        b.disabled = false;
-      }
+      answersBox.appendChild(b);
+    }
+  }
+
+  if (btnNext) {
+    btnNext.disabled = false;
+    btnNext.textContent = "Pomiń";
+  }
+}
+
+async function vote(questionId, answerId) {
+  const voter = getVoterToken();
+
+  const { error } = await sb().rpc("poll_points_vote", {
+    p_game_id: gameId,
+    p_key: key,
+    p_question_id: questionId,
+    p_answer_id: answerId,
+    p_voter_token: voter,
+  });
+
+  if (error) throw error;
+}
+
+document.addEventListener("DOMContentLoaded", async () => {
+  try {
+    if (!gameId || !key) {
+      setMsg("Brak parametru id lub key.");
+      return;
+    }
+
+    setMsg("Ładuję…");
+    payload = await loadPayload();
+
+    if ((payload.game?.type || "") !== "poll_points") {
+      setMsg("To nie jest sondaż punktacji.");
+      return;
+    }
+
+    idx = 0;
+    renderQuestion();
+
+    btnNext?.addEventListener("click", () => {
+      idx++;
+      renderQuestion();
     });
 
-    alist.appendChild(b);
+    setMsg("");
+  } catch (e) {
+    console.error("[poll-points] init error:", e);
+    setMsg(`Nie można otworzyć sondażu: ${e?.message || e}`);
   }
-}
-
-async function load() {
-  if (!gameId || !key) return showError("Nieprawidłowy link sondażu.");
-
-  try {
-    const res = await sb().rpc("get_poll_game", { p_game_id: gameId, p_key: key });
-    data = res.data;
-    idx = 0;
-    render();
-  } catch {
-    showError("Nie udało się wczytać sondażu.");
-  }
-}
-
-document.addEventListener("DOMContentLoaded", load);
+});
