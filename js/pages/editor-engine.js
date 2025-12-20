@@ -359,7 +359,6 @@ export async function bootEditor(cfg) {
   
       questions = await listQuestions(gameId);
       activeQId = q.id;
-      activeOrd = q.ord;
   
       await loadAnswersForActive();
       await refreshCounts();
@@ -407,18 +406,37 @@ export async function bootEditor(cfg) {
     }
   }
 
-  // ===== render answers =====
   function renderAnswers() {
     if (!cfg.allowAnswers) return;
     if (!aList) return;
-
+  
     aList.innerHTML = "";
-
+  
+    // ✅ 1 licznik na pytanie (tylko prepared)
+    if (cfg.allowPoints) {
+      const sum = calcQuestionPoints(answers);
+      const diff = 100 - sum;
+  
+      const remain = document.createElement("div");
+      remain.className = "remainBox";
+      remain.style.marginBottom = "10px"; // żeby nie kleiło się do pierwszej odpowiedzi
+  
+      if (diff === 0) {
+        remain.innerHTML = `<span>OK</span><b>100</b>`;
+      } else if (diff > 0) {
+        remain.innerHTML = `<span>ZOSTAŁO</span><b>${diff}</b>`;
+      } else {
+        remain.innerHTML = `<span>ZA DUŻO</span><b>${-diff}</b>`;
+      }
+  
+      aList.appendChild(remain);
+    }
+  
     // existing answers rows
     for (const a of answers) {
       const row = document.createElement("div");
       row.className = "arow";
-
+  
       if (cfg.allowPoints) {
         row.innerHTML = `
           <input class="aText" type="text" maxlength="17" placeholder="ODP ${a.ord}">
@@ -431,81 +449,68 @@ export async function bootEditor(cfg) {
           <button class="aDel" type="button" title="Wyczyść">✕</button>
         `;
       }
-
+  
       const iText = row.querySelector(".aText");
       iText.value = a.text || "";
-
+  
       const iPts = cfg.allowPoints ? row.querySelector(".aPts") : null;
       if (iPts) iPts.value = Number(a.fixed_points) || 0;
-
+  
       const bDel = row.querySelector(".aDel");
-
+  
       const saveNow = async () => {
         try {
           const patch = { text: clip17(iText.value) };
           if (cfg.allowPoints) patch.fixed_points = clampPts(iPts.value);
           else patch.fixed_points = 0;
-
+  
           await updateAnswer(a.id, patch);
+  
+          // ✅ po zapisie punktów odśwież licznik (dla prepared)
+          if (cfg.allowPoints) {
+            answers = await listAnswers(activeQId);
+            renderAnswers();
+            return;
+          }
+  
           setMsg("Zapisano.");
         } catch (e) {
           console.error(e);
           setMsg("Błąd zapisu (konsola).");
         }
       };
-
-      if (cfg.allowPoints) {
-      const sum = calcQuestionPoints(answers);
-      const diff = 100 - sum;
-    
-      const remain = document.createElement("div");
-      remain.className = "remainBox";
-    
-      if (diff === 0) {
-        remain.innerHTML = `<span>OK</span><b>100</b>`;
-      } else if (diff > 0) {
-        remain.innerHTML = `<span>ZOSTAŁO</span><b>${diff}</b>`;
-      } else {
-        remain.innerHTML = `<span>ZA DUŻO</span><b>${-diff}</b>`;
-      }
-    
-      aList.appendChild(remain);
-    }
-
+  
       const save = debounce(saveNow, 350);
-
+  
       iText.addEventListener("input", () => {
         if (iText.value.length > 17) iText.value = iText.value.slice(0, 17);
         setMsg("Piszesz…");
         save();
       });
-
+  
       iPts?.addEventListener("input", () => {
         const v = Number(iPts.value);
         iPts.classList.toggle("tooMuch", isNum(v) && v > 100);
         setMsg("Piszesz…");
         save();
       });
-
+  
       bDel.addEventListener("click", async () => {
         iText.value = "";
         if (iPts) iPts.value = "0";
         await saveNow();
       });
-
+  
       aList.appendChild(row);
     }
-
+  
     // add-tile (zawsze na dole)
     const canAddA = answers.length < AN_MAX;
     const addABtn = document.createElement("button");
     addABtn.type = "button";
     addABtn.className = "arow addTile";
     addABtn.disabled = !canAddA;
-
-    // Dwie kolumny “ładnie” niezależnie od trybu points/no-points:
-    // - tekst po lewej
-    // - licznik po prawej
+  
     addABtn.style.cursor = canAddA ? "pointer" : "not-allowed";
     addABtn.style.opacity = canAddA ? "1" : ".55";
     addABtn.innerHTML = `
@@ -516,18 +521,18 @@ export async function bootEditor(cfg) {
         ${answers.length}/${AN_MAX}
       </div>
     `;
-
+  
     addABtn.addEventListener("click", async () => {
       if (!canAddA || !activeQId) return;
       try {
-        const ord = nextOrd(answers, AN_MAX);
+        const ord = nextAnswerOrd(answers, AN_MAX); // ✅ było nextOrd
         if (!ord) return;
-
+  
         await createAnswer(activeQId, ord, `ODP ${ord}`, 0);
-
+  
         answers = await listAnswers(activeQId);
         await refreshCounts();
-
+  
         renderQuestions();
         renderAnswers();
         setMsg("Dodano odpowiedź.");
@@ -536,7 +541,7 @@ export async function bootEditor(cfg) {
         setMsg("Błąd dodawania odpowiedzi (konsola).");
       }
     });
-
+  
     aList.appendChild(addABtn);
   }
 
@@ -650,8 +655,9 @@ export async function bootEditor(cfg) {
 
       await refreshCounts();
 
+      let qOrd = nextQuestionOrd(await listQuestions(gameId));
+
       for (const item of parsed.items) {
-        if (!qOrd) break;
 
         const q = await createQuestion(gameId, qOrd);
         await updateQuestion(q.id, { text: normQ(item.qText) });
@@ -674,9 +680,6 @@ export async function bootEditor(cfg) {
             aOrd++;
           }
         }
-
-        // następny wolny ord (na świeżo z DB, bo ktoś mógł mieć dziury)
-        const latestQs = await listQuestions(gameId);
         qOrd++
       }
 
