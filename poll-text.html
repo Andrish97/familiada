@@ -24,7 +24,10 @@
         <div class="qtext" id="qtext">—</div>
 
         <div class="trow">
-          <input class="inp" id="answerInput" placeholder="Wpisz odpowiedź..." autocomplete="off" />
+          <input class="inp" id="answerInput"
+             placeholder="Wpisz odpowiedź..."
+             autocomplete="off"
+             maxlength="17" />
           <button class="btn gold full" id="btnSend" type="button">
             <span class="only-desktop">Wyślij</span>
             <span class="only-mobile">OK</span>
@@ -32,11 +35,13 @@
         </div>
 
         <div class="tinyHint" id="tinyHint">
-          Liczymy bez wielkości liter i bez spacji na początku/końcu (spacje w środku zostają).
+          Maksymalnie 17 znaków. Liczymy bez wielkości liter i bez spacji na początku/końcu
+          (spacje w środku zostają).
         </div>
 
         <div class="nav">
           <div class="small" id="prog">—</div>
+          <div class="small" id="count">0/17</div>
         </div>
       </div>
 
