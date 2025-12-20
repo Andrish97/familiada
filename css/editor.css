@@ -228,7 +228,7 @@ body.editor-body .wrap{
 .aText:focus, .aPts:focus{ border-color: rgba(255,234,166,.35); }
 .aPts{ text-align:center; }
 
-/* nie kolorujemy pola punktów — tylko licznik, więc tu bez .tooMuch itd. */
+/* nie kolorujemy pola punktów — tylko licznik */
 
 .aDel{
   width:40px; height:40px;
@@ -272,6 +272,7 @@ body.editor-body .wrap{
   font-weight:1000;
   letter-spacing:.12em;
   text-transform:uppercase;
+  margin-bottom:10px;
 }
 
 .remainBox span{ font-size:11px; opacity:.9; }
@@ -281,13 +282,12 @@ body.editor-body .wrap{
   color:#fff;
 }
 
-/* default (= zostało) jest żółty, więc klasy tylko na OK i ZA DUŻO */
+/* default (= zostało) jest żółty */
 .remainBox.ok{
   border-color: rgba(120,255,120,.35);
   background: rgba(120,255,120,.10);
   color: rgba(180,255,180,.95);
 }
-
 .remainBox.over{
   border-color: rgba(255,120,120,.40);
   background: rgba(255,120,120,.10);
@@ -327,7 +327,6 @@ body.editor-body .wrap{
   font-weight:1000;
   flex:0 0 auto;
 }
-
 .addTile .txt{ font-weight:1000; letter-spacing:.02em; }
 .addTile .sub{
   opacity:.75;
@@ -361,14 +360,12 @@ body.editor-body .wrap{
   opacity: 1;
   filter: brightness(1.18);
 }
-.aPts::-webkit-inner-spin-button{
-  cursor: pointer;
-}
+.aPts::-webkit-inner-spin-button{ cursor: pointer; }
 
 /* Firefox */
 .aPts{ -moz-appearance: number-input; }
 
-/* ===== X na kafelku pytania (tylko w edytorze) ===== */
+/* ===== X na kafelku pytania ===== */
 .qcard .x{
   position:absolute;
   top:10px; right:10px;
@@ -383,3 +380,64 @@ body.editor-body .wrap{
   cursor:pointer;
 }
 .qcard .x:hover{ filter:brightness(1.06); }
+
+/* ===== Modal / overlay (skopiowane podejście z builder) ===== */
+.overlay{
+  position:fixed; inset:0;
+  background: rgba(2,6,23,.82);
+  display:grid;
+  place-items:center;
+  z-index:50;
+  padding: 14px;
+}
+.modal{
+  width:min(860px,94vw);
+  border-radius:22px;
+  border:1px solid var(--line);
+  background: var(--card);
+  box-shadow:0 30px 90px rgba(0,0,0,.75);
+  padding:18px;
+}
+
+.mTitle{
+  font-weight:1000;
+  font-size:18px;
+  letter-spacing:.06em;
+  color: var(--gold);
+}
+.mSub{
+  opacity:.8;
+  font-size:13px;
+  margin-top:6px;
+  line-height:1.45;
+}
+
+/* import modal helpers (tak jak w builder) */
+.importRow{
+  display:flex;
+  gap:10px;
+  align-items:center;
+  flex-wrap:wrap;
+  margin-top:12px;
+}
+.importTa{
+  width:100%;
+  min-height:220px;
+  margin-top:12px;
+  padding:12px;
+  border-radius:16px;
+  border:1px solid var(--line2);
+  background: rgba(0,0,0,.25);
+  color:#fff;
+  outline:none;
+  resize: vertical;
+  font-weight:800;
+  white-space:pre-wrap;
+}
+.importMsg{
+  margin-left:auto;
+  opacity:.85;
+  font-weight:900;
+  color: var(--gold);
+  padding:6px 0;
+}
