@@ -51,7 +51,6 @@
 
         <div class="row" style="margin-top:10px;">
           <button class="btn" id="btnImportTxt" type="button">Import</button>
-          <button class="btn" id="btnHowTxt" type="button">Jak przygotować plik</button>
         </div>
       </aside>
 
@@ -111,38 +110,6 @@
       </div>
     </div>
   </div>
-
-  <!-- Modal: jak przygotować -->
-  <div class="overlay" id="howOverlay" style="display:none;">
-    <div class="modal">
-      <div class="mTitle">Jak przygotować plik</div>
-      <div class="mSub">
-        Pytanie: linia z <b>#</b>. Odpowiedzi: linie z numerem i treścią (punkty po <b>/</b> są opcjonalne).
-      </div>
-
-      <pre class="importTa" style="min-height:260px;white-space:pre-wrap;">
-#Zwierzeta w Afryce
-1 Słoń /29
-2 Lew /19
-3 Tygrys /17
-4 Małpa/16
-5 Hipopotam /12
-
-#Drugie pytanie
-1 Odpowiedź 1
-2 Odpowiedź 2
-3 Odpowiedź 3
-      </pre>
-
-      <div class="mSub" style="margin-top:10px;">
-        Import ignoruje: nadmiar spacji/taby, znaki typu <b>.</b> lub <b>)</b> po numerze, spacje przy <b>/</b>.
-        Jeśli plik ma zły układ — pokażemy błąd.
-      </div>
-
-      <div class="mFoot">
-        <button class="btn" id="btnHowClose" type="button">Zamknij</button>
-      </div>
-    </div>
-  </div>
+  
 </body>
 </html>
