@@ -19,17 +19,24 @@ const answerInput = $("answerInput");
 const btnSend = $("btnSend");
 const countEl = $("count");
 
-function showThanks(text = "Dziękujemy za udział!") {
+let finished = false;
+
+function showFinished() {
+  if (finished) return;
+  finished = true;
+
+  const sub = document.getElementById("sub");
   const qbox = document.getElementById("qbox");
   const closed = document.getElementById("closed");
-  const sub = document.getElementById("sub");
 
+  // chowamy całe UI pytań (input + hint + liczniki)
   if (qbox) qbox.style.display = "none";
-  if (closed) {
-    closed.style.display = "";
-    closed.textContent = text;
-  }
-  if (sub) sub.textContent = "";
+
+  // chowamy "sondaż zamknięty", bo to inny stan
+  if (closed) closed.style.display = "none";
+
+  // pokazujemy tylko jedno podziękowanie
+  if (sub) sub.textContent = "Dziękujemy za udział!";
 }
 
 function setSub(t) {
@@ -123,7 +130,7 @@ function render() {
   showClosed(false);
 
   if (!q) {
-    showThanks("Dziękujemy za udział!");
+    showFinished();
     return;
   }
 
