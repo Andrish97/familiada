@@ -29,41 +29,24 @@ function getVoterToken() {
   return t;
 }
 
-// ✅ trim + lowercase + wiele spacji -> jedna
 function norm(s) {
   return String(s ?? "")
     .trim()
     .toLowerCase()
-    .replace(/\s+/g, " ");
+    .replace(/\s+/g, " "); // <-- wiele spacji / tabów / enterów => jedna spacja
 }
 
-// supabase-js bywa thenable bez .finally()
-// więc zawsze owijamy w natywny Promise
-function asPromise(x) {
-  return Promise.resolve(x);
-}
-
-function withTimeout(promiseLike, ms, label) {
-  const p = asPromise(promiseLike);
+function withTimeout(promiseLike, ms, errMsg) {
+  const p = Promise.resolve(promiseLike); // <-- klucz: supabase potrafi dać "thenable" bez finally
   let to = null;
 
-  const t = new Promise((_, rej) => {
-    to = setTimeout(() => rej(new Error(label)), ms);
+  const timeout = new Promise((_, rej) => {
+    to = setTimeout(() => rej(new Error(errMsg || "Timeout")), ms);
   });
 
-  return Promise.race([
-    p.then(
-      (v) => {
-        clearTimeout(to);
-        return v;
-      },
-      (e) => {
-        clearTimeout(to);
-        throw e;
-      }
-    ),
-    t,
-  ]);
+  return Promise.race([p, timeout]).finally(() => {
+    if (to) clearTimeout(to);
+  });
 }
 
 async function loadPayload() {
@@ -79,9 +62,9 @@ async function submit(questionId, raw) {
   const rawS = String(raw ?? "").trim();
   const normS = norm(rawS);
 
-  if (!rawS) throw new Error("Wpisz odpowiedź.");
-  if (!normS) throw new Error("Wpisz odpowiedź.");
+  if (!rawS || !normS) throw new Error("Wpisz odpowiedź.");
 
+  // używamy nowszej sygnatury (raw+norm)
   const { error } = await sb().rpc("poll_text_submit", {
     p_game_id: gameId,
     p_key: key,
@@ -98,7 +81,9 @@ let payload = null;
 let idx = 0;
 
 function renderQuestion() {
-  const questions = payload?.questions || [];
+  if (!payload) return;
+
+  const questions = payload.questions || [];
   const q = questions[idx];
 
   if (!q) {
@@ -113,13 +98,14 @@ function renderQuestion() {
     return;
   }
 
-  if (title) title.textContent = payload?.game?.name || "Sondaż";
+  if (title) title.textContent = payload.game?.name || "Sondaż";
   if (qText) qText.textContent = `P${q.ord}: ${q.text}`;
 
   if (inp) {
     inp.disabled = false;
     inp.value = "";
     inp.focus();
+    inp.placeholder = "Wpisz odpowiedź (pisz poprawnie 🙂)";
   }
 
   if (btnSend) btnSend.disabled = false;
@@ -136,7 +122,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     setMsg("Ładuję…");
     payload = await loadPayload();
 
-    if ((payload?.game?.type || "") !== "poll_text") {
+    if ((payload.game?.type || "") !== "poll_text") {
       setMsg("To nie jest typowy sondaż.");
       return;
     }
@@ -147,7 +133,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     btnSend?.addEventListener("click", async () => {
       try {
-        const q = (payload.questions || [])[idx];
+        const questions = payload.questions || [];
+        const q = questions[idx];
         if (!q) return;
 
         btnSend.disabled = true;
@@ -160,13 +147,21 @@ document.addEventListener("DOMContentLoaded", async () => {
         console.error("[poll-text] submit error:", e);
         setMsg(`Błąd: ${e?.message || e}`);
       } finally {
-        if (btnSend && (payload.questions || [])[idx]) btnSend.disabled = false;
+        const questions = payload?.questions || [];
+        if (btnSend && questions[idx]) btnSend.disabled = false;
       }
     });
 
     btnNext?.addEventListener("click", () => {
       idx++;
       renderQuestion();
+    });
+
+    inp?.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        btnSend?.click();
+      }
     });
   } catch (e) {
     console.error("[poll-text] init error:", e);
