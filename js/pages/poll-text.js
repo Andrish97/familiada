@@ -37,23 +37,45 @@ function norm(s) {
     .replace(/\s+/g, " ");
 }
 
-function withTimeout(promise, ms, label = "timeout") {
+// supabase-js bywa thenable bez .finally()
+// więc zawsze owijamy w natywny Promise
+function asPromise(x) {
+  return Promise.resolve(x);
+}
+
+function withTimeout(promiseLike, ms, label) {
+  const p = asPromise(promiseLike);
   let to = null;
+
   const t = new Promise((_, rej) => {
     to = setTimeout(() => rej(new Error(label)), ms);
   });
-  return Promise.race([promise.finally(() => clearTimeout(to)), t]);
+
+  return Promise.race([
+    p.then(
+      (v) => {
+        clearTimeout(to);
+        return v;
+      },
+      (e) => {
+        clearTimeout(to);
+        throw e;
+      }
+    ),
+    t,
+  ]);
 }
 
 async function loadPayload() {
-  const p = sb().rpc("poll_get_payload", { p_game_id: gameId, p_key: key });
-  const { data, error } = await withTimeout(p, 12000, "Nie można pobrać pytań (timeout).");
+  const req = sb().rpc("poll_get_payload", { p_game_id: gameId, p_key: key });
+  const { data, error } = await withTimeout(req, 12000, "Nie można pobrać pytań (timeout).");
   if (error) throw error;
   return data;
 }
 
 async function submit(questionId, raw) {
   const voter = getVoterToken();
+
   const rawS = String(raw ?? "").trim();
   const normS = norm(rawS);
 
@@ -81,7 +103,10 @@ function renderQuestion() {
 
   if (!q) {
     if (qText) qText.textContent = "Dziękujemy!";
-    if (inp) { inp.value = ""; inp.disabled = true; }
+    if (inp) {
+      inp.value = "";
+      inp.disabled = true;
+    }
     if (btnSend) btnSend.disabled = true;
     if (btnNext) btnNext.disabled = true;
     setMsg("Wysłano odpowiedzi do wszystkich pytań.");
@@ -143,7 +168,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       idx++;
       renderQuestion();
     });
-
   } catch (e) {
     console.error("[poll-text] init error:", e);
     setMsg(`Nie można otworzyć sondażu: ${e?.message || e}`);
