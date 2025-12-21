@@ -106,7 +106,7 @@ function render() {
   showClosed(false);
 
   if (!q) {
-    showFinished(;
+    showFinished();
     return;
   }
 
