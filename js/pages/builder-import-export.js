@@ -86,7 +86,9 @@ export async function importGame(payload, ownerId) {
       type,
       status: "draft",
       owner_id: ownerId,
-    })
+    },
+    { defaultToNull: false }
+  )
     .select("id")
     .single();
   if (gErr) throw gErr;
