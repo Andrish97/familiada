@@ -11,6 +11,33 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
   <script type="module" src="/familiada/js/pages/control.js" defer></script>
+
+  <style>
+    /* drobne dodatki pod nowe elementy (bez rozwalania Twojego CSS) */
+    .ta { width: 100%; resize: vertical; min-height: 120px; }
+    .cmdGrid .card .name { margin-bottom: 8px; }
+    .aBtn{
+      width:100%;
+      text-align:left;
+      border-radius:16px;
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(0,0,0,.18);
+      padding:12px;
+      cursor:pointer;
+      color:#fff;
+      box-shadow:0 12px 30px rgba(0,0,0,.35);
+    }
+    .aBtn:active{ transform: translateY(1px); }
+    .aTop{ display:flex; justify-content:space-between; opacity:.9; font-weight:900; letter-spacing:.06em; font-size:12px; }
+    .aText{ margin-top:6px; font-weight:900; line-height:1.25; }
+    .qaGrid{
+      margin-top:12px;
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:12px;
+    }
+    @media (max-width: 1100px){ .qaGrid{ grid-template-columns: 1fr; } }
+  </style>
 </head>
 
 <body class="control-body">
@@ -32,7 +59,7 @@
 
       <div class="tabs">
         <button class="tab active" data-tab="devices" type="button">Urządzenia</button>
-        <button class="tab" data-tab="cmd" type="button">Komendy</button>
+        <button class="tab" data-tab="cmd" type="button">Komendy / testy</button>
       </div>
     </div>
 
@@ -110,7 +137,7 @@
     <!-- ===== COMMANDS / TESTS ===== -->
     <section class="panel" data-panel="cmd" style="display:none;">
       <div class="hint">
-        Testy realtime: komendy, host tekst, buzzer stany, odsłuch buzzera, SFX, pytania/odpowiedzi.
+        Testy realtime: komendy, host tekst, buzzer stany, display testpack, SFX, pytania/odpowiedzi.
       </div>
 
       <div class="cmdGrid">
@@ -127,21 +154,21 @@
             <input class="inp" id="manualLine" placeholder='np. MODE LOGO / OFF / SET "..."' />
             <button class="btn gold" id="btnManualSend" type="button">Wyślij</button>
           </div>
+
           <div class="mini">
-            <div>Wysyłasz broadcast na kanał urządzenia. Kanały są trzymane stale (bez “REST fallback”).</div>
+            <div>Kanały są trzymane stale (bez REST fallback / bez zamykania websocketów).</div>
           </div>
         </div>
 
         <!-- host text -->
         <div class="card">
           <div class="name">HOST — tekst z Control</div>
-          <div class="hint">SET podmienia całość. APPEND dokleja na koniec (z nową linią). CLEAR czyści.</div>
+          <div class="hint">Wyślij robi <code>SET "..."</code>. Obsługuje nowe linie (po stronie host.js musi być unescape).</div>
 
           <textarea class="inp ta" id="hostText" rows="6" placeholder="Wpisz tekst dla prowadzącego (może mieć nowe linie)"></textarea>
 
           <div class="rowBtns">
-            <button class="btn gold" id="btnHostSet" type="button">SET</button>
-            <button class="btn" id="btnHostAppend" type="button">APPEND</button>
+            <button class="btn gold" id="btnHostSend" type="button">Wyślij tekst (SET)</button>
             <button class="btn danger" id="btnHostClear" type="button">CLEAR</button>
           </div>
 
@@ -154,7 +181,7 @@
         <!-- buzzer states -->
         <div class="card">
           <div class="name">BUZZER — stany</div>
-          <div class="hint">Te przyciski wysyłają komendy na buzzer. RESET warto mieć do logiki.</div>
+          <div class="hint">RESET przywraca stan domyślny (zależnie od buzzer.js, zwykle OFF albo ON).</div>
 
           <div class="rowBtns">
             <button class="btn" id="btnBuzzOn" type="button">ON</button>
@@ -163,52 +190,98 @@
           </div>
 
           <div class="rowBtns">
-            <button class="btn" id="btnBuzzPA" type="button">PUSHED_A</button>
-            <button class="btn" id="btnBuzzPB" type="button">PUSHED_B</button>
+            <button class="btn" id="btnBuzzPA" type="button">PUSHED A</button>
+            <button class="btn" id="btnBuzzPB" type="button">PUSHED B</button>
           </div>
 
           <div class="mini">
-            <div>Odsłuch kliknięć poniżej: <b id="buzzEvtLast">—</b></div>
+            <div>Last: <b id="buzzEvtLast">—</b></div>
+            <div class="hint">Ten element jest tylko podglądem (JS go nie aktualizuje jeszcze).</div>
+          </div>
+        </div>
+
+        <!-- display test pack -->
+        <div class="card">
+          <div class="name">DISPLAY — testpack</div>
+          <div class="hint">Komendy wg Twojego Guide API (MODE, RBATCH, FBATCH).</div>
+
+          <div class="rowBtns">
+            <button class="btn" id="btnDispBlack" type="button">MODE BLACK</button>
+            <button class="btn" id="btnDispQR" type="button">MODE QR</button>
+            <button class="btn gold" id="btnDispGRA" type="button">MODE GRA</button>
+          </div>
+
+          <div class="rowBtns">
+            <button class="btn" id="btnDispLogo" type="button">MODE LOGO</button>
+            <button class="btn" id="btnDispRounds" type="button">MODE ROUNDS</button>
+            <button class="btn" id="btnDispFinal" type="button">MODE FINAL</button>
+            <button class="btn" id="btnDispWin" type="button">MODE WIN</button>
+          </div>
+
+          <div class="rowBtns">
+            <button class="btn" id="btnDispDemoRounds" type="button">DEMO ROUNDS (RBATCH)</button>
+            <button class="btn" id="btnDispDemoFinal" type="button">DEMO FINAL (FBATCH)</button>
           </div>
         </div>
 
         <!-- sfx -->
         <div class="card">
           <div class="name">SFX tester</div>
-          <div class="hint">Lista do testów. Timer pokazuje sekundy od startu (preferuje audio.currentTime).</div>
+          <div class="hint">PLAY uruchamia miksowanie (możesz dołączać dźwięk “na sekundzie”).</div>
 
           <div class="rowBtns">
-            <select class="inp" id="sfxPick" style="max-width:320px;"></select>
+            <select class="inp" id="sfxSelect" style="max-width:320px;"></select>
             <button class="btn gold" id="btnSfxPlay" type="button">PLAY</button>
             <button class="btn" id="btnSfxStop" type="button">STOP</button>
-            <div class="badge">t: <b id="sfxTime">0.0</b>s</div>
+            <div class="badge">t: <b id="sfxClock">0.0s</b></div>
           </div>
 
-          <div class="mini" id="sfxDebug"></div>
+          <div class="mini">
+            <div class="hint">Zagraj dodatkowy SFX na konkretnej sekundzie:</div>
+            <div class="rowBtns">
+              <input class="inp" id="sfxAtSec" style="max-width:120px;" placeholder="sek" inputmode="decimal" />
+              <select class="inp" id="sfxAtName" style="max-width:260px;"></select>
+              <button class="btn gold" id="btnSfxAtArm" type="button">ARM</button>
+              <button class="btn" id="btnSfxAtClear" type="button">CLEAR</button>
+            </div>
+          </div>
         </div>
 
         <!-- questions -->
         <div class="card" style="grid-column:1/-1;">
           <div class="name">Pytania / odpowiedzi (podgląd)</div>
           <div class="hint">
-            Próbuje czytać z tabel <code>questions</code> i <code>answers</code>.
-            Jeśli masz inne nazwy — powiedz jakie, dopasuję bez filozofowania.
+            Czyta z <code>questions(id,ord,text)</code> i <code>answers(question_id,ord,text,fixed_points)</code>.
           </div>
 
           <div class="rowBtns">
-            <select class="inp" id="qPick" style="max-width:520px;"></select>
-            <button class="btn" id="btnQRefresh" type="button">Odśwież</button>
+            <select class="inp" id="qPick" style="max-width:720px;"></select>
+            <button class="btn" id="btnQReload" type="button">Odśwież</button>
           </div>
 
-          <div class="qBox" id="qBox"></div>
-          <div class="msg" id="msgQuestions"></div>
+          <div class="qaGrid">
+            <div>
+              <div class="hint" style="margin-top:0;">Pytania</div>
+              <div class="cmdGrid" id="qList" style="grid-template-columns: 1fr; gap:10px;"></div>
+            </div>
+
+            <div>
+              <div class="hint" style="margin-top:0;">Odpowiedzi + punkty</div>
+              <div class="cmdGrid" id="aList" style="grid-template-columns: 1fr; gap:10px;"></div>
+            </div>
+          </div>
         </div>
 
-        <!-- buzzer evt log -->
+        <!-- buzzer evt log (placeholder) -->
         <div class="card" style="grid-column:1/-1;">
           <div class="name">Log: BUZZER_EVT (kliknięcia)</div>
-          <div class="hint">Kanał: <code>familiada-control:&lt;gameId&gt;</code>, event: <code>BUZZER_EVT</code></div>
-          <div class="log" id="buzzLog"></div>
+          <div class="hint">
+            Ten panel jest przygotowany pod kolejną wersję: nasłuch z kanału <code>familiada-control:&lt;gameId&gt;</code>.
+          </div>
+          <div class="mini">
+            <div>(jeszcze nie podpięte w JS) — zostawiamy UI gotowe.</div>
+          </div>
+
           <div class="rowBtns">
             <button class="btn" id="btnBuzzLogClear" type="button">Wyczyść log</button>
           </div>
