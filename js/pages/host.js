@@ -188,11 +188,11 @@ function ensureChannel() {
 // ---------- ping ----------
 async function ping() {
   try {
-    await sb().rpc("device_ping", {
-      p_game_id,
+    await ssb().rpc("public_ping", {
+      p_game_id: gameId,
       p_device_type: "host",
-      p_device_id: "tablet",
-      p_key,
+      p_key: key,
+      p_device_id: deviceId,
     });
   } catch {}
 }
