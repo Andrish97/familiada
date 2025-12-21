@@ -60,7 +60,7 @@ function show(state) {
   arena.hidden = isOff;
   
   arena.style.pointerEvents = isOff ? "none" : "";
-  arena.style.visibility    = isOff
+  arena.style.visibility    = isOff ? "hidden" : "visible";
   
   // reset klas
   btnA.classList.remove("lit", "dim");
