@@ -26,15 +26,11 @@ function showFinished() {
   const qbox = document.getElementById("qbox");
   const closed = document.getElementById("closed");
 
-  // chowamy całe UI pytań (input + hint + liczniki)
   if (qbox) qbox.style.display = "none";
-
-  // chowamy "sondaż zamknięty", bo to inny stan
   if (closed) closed.style.display = "none";
-
-  // pokazujemy tylko jedno podziękowanie
   if (sub) sub.textContent = "Dziękujemy za udział!";
 }
+
 
 function setSub(t) {
   if (subEl) subEl.textContent = t || "";
