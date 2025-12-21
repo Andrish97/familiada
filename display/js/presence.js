@@ -20,16 +20,19 @@ export async function startPresence({
 
   const chName = channel || `familiada-display:${game.id}`;
 
+  // zamiast upsert do live_state:
+  let deviceId = localStorage.getItem("familiada:deviceId:display") || "";
+  
   const ping = async () => {
-    try {
-      await sb().rpc("device_ping", {
-        p_game_id: game.id,
-        p_device_type: "display",
-        p_device_id: "main",
-        p_key: key,
-      });
-    } catch (e) {
-      console.warn("[display] ping failed", e);
+    const { data, error } = await sb().rpc("public_ping", {
+      p_game_id: game.id,
+      p_kind: "display",
+      p_key: key,
+      p_device_id: deviceId,
+    });
+    if (!error && data?.device_id && !deviceId) {
+      deviceId = data.device_id;
+      localStorage.setItem("familiada:deviceId:display", deviceId);
     }
   };
 
