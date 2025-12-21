@@ -19,6 +19,19 @@ const answerInput = $("answerInput");
 const btnSend = $("btnSend");
 const countEl = $("count");
 
+function showThanks(text = "Dziękujemy za udział!") {
+  const qbox = document.getElementById("qbox");
+  const closed = document.getElementById("closed");
+  const sub = document.getElementById("sub");
+
+  if (qbox) qbox.style.display = "none";
+  if (closed) {
+    closed.style.display = "";
+    closed.textContent = text;
+  }
+  if (sub) sub.textContent = "";
+}
+
 function setSub(t) {
   if (subEl) subEl.textContent = t || "";
 }
@@ -110,17 +123,10 @@ function render() {
   showClosed(false);
 
   if (!q) {
-    // koniec
-    if (qtext) qtext.textContent = "Dziękujemy!";
-    if (answerInput) {
-      answerInput.value = "";
-      answerInput.disabled = true;
-    }
-    if (btnSend) btnSend.disabled = true;
-    if (prog) prog.textContent = "Koniec";
-    setSub("Dziękujemy za udział.");
+    showThanks("Dziękujemy za udział!");
     return;
   }
+
 
   if (qtext) qtext.textContent = q.text || "—";
   if (prog) prog.textContent = `Pytanie ${q.ord}/${questions.length}`;
