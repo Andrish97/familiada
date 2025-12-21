@@ -21,7 +21,7 @@ function setMsg(t) {
 function openOverlay(id, on) {
   const el = $(id);
   if (!el) return;
-  el.style.display = on ? "" : "none";
+  el.style.display = on ? "grid" : "none"; // <-- było ""
 }
 
 function debounce(fn, ms = 350) {
