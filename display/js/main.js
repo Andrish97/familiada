@@ -79,11 +79,25 @@ window.addEventListener("DOMContentLoaded", async () => {
 
     // 5) AUTH + ping + realtime commands w presence.js
     const pres = await startPresence({
-      // ten kanał ma pasować do controla:
-      channel: null, // => domyślnie familiada-display:<gameId>
       pingMs: 5000,
       debug: true,
       onCommand: (line) => handleCommand(line),
+    
+      onSnapshot: (devices) => {
+        // ODTWÓRZ stan po odświeżeniu:
+        // 1) global APP mode
+        const mode = String(devices?.display_mode ?? "BLACK").toUpperCase();
+        if (mode === "GRA") app.setMode("GRA");
+        else if (mode === "QR") app.setMode("QR");
+        else app.setMode("BLACK_SCREEN");
+    
+        // 2) scena (tylko jak jesteśmy w GRA)
+        const sceneMode = String(devices?.display_scene ?? "LOGO").toUpperCase();
+        try { handleCommand(`MODE ${sceneMode}`); } catch {}
+    
+        // 3) payload (jeśli chcesz odtwarzać tablicę bez “komend”)
+        // Na razie zostawiamy — control będzie to trzymał i wysyłał batch/komendy.
+      },
     });
 
     // wpisz info o grze do app (przyda się w komendach/QR)
