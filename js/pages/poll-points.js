@@ -28,23 +28,43 @@ function getVoterToken() {
   return t;
 }
 
-function withTimeout(promise, ms, label = "timeout") {
+function asPromise(x) {
+  return Promise.resolve(x);
+}
+
+function withTimeout(promiseLike, ms, label) {
+  const p = asPromise(promiseLike);
   let to = null;
+
   const t = new Promise((_, rej) => {
     to = setTimeout(() => rej(new Error(label)), ms);
   });
-  return Promise.race([promise.finally(() => clearTimeout(to)), t]);
+
+  return Promise.race([
+    p.then(
+      (v) => {
+        clearTimeout(to);
+        return v;
+      },
+      (e) => {
+        clearTimeout(to);
+        throw e;
+      }
+    ),
+    t,
+  ]);
 }
 
 async function loadPayload() {
-  const p = sb().rpc("poll_get_payload", { p_game_id: gameId, p_key: key });
-  const { data, error } = await withTimeout(p, 12000, "Nie można pobrać pytań (timeout).");
+  const req = sb().rpc("poll_get_payload", { p_game_id: gameId, p_key: key });
+  const { data, error } = await withTimeout(req, 12000, "Nie można pobrać pytań (timeout).");
   if (error) throw error;
   return data;
 }
 
 async function vote(questionId, answerId) {
   const voter = getVoterToken();
+
   const { error } = await sb().rpc("poll_points_vote", {
     p_game_id: gameId,
     p_key: key,
@@ -52,6 +72,7 @@ async function vote(questionId, answerId) {
     p_answer_id: answerId,
     p_voter_token: voter,
   });
+
   if (error) throw error;
 }
 
@@ -80,6 +101,7 @@ function renderQuestion() {
       b.type = "button";
       b.className = "ansBtn";
       b.textContent = a.text || `ODP ${a.ord}`;
+
       b.addEventListener("click", async () => {
         try {
           b.disabled = true;
@@ -94,6 +116,7 @@ function renderQuestion() {
           b.disabled = false;
         }
       });
+
       answersBox.appendChild(b);
     }
   }
@@ -127,9 +150,9 @@ document.addEventListener("DOMContentLoaded", async () => {
       idx++;
       renderQuestion();
     });
-
   } catch (e) {
     console.error("[poll-points] init error:", e);
     setMsg(`Nie można otworzyć sondażu: ${e?.message || e}`);
   }
 });
+
