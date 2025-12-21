@@ -26,7 +26,7 @@ export async function startPresence({
   const ping = async () => {
     const { data, error } = await sb().rpc("public_ping", {
       p_game_id: game.id,
-      p_kind: "display",
+      p_device_type: "display",
       p_key: key,
       p_device_id: deviceId,
     });
