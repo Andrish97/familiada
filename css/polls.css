@@ -172,3 +172,5 @@ body.polls-body{
   cursor:pointer;
   flex:0 0 auto;
 }
+
+#resultsList { display:grid; gap:12px; }
