@@ -1,10 +1,10 @@
-// js/pages/host.js
 import { sb } from "../core/supabase.js";
 
 const qs = new URLSearchParams(location.search);
 const gameId = qs.get("id");
 const key = qs.get("key");
 
+const paper = document.getElementById("paper");
 const paperText = document.getElementById("paperText");
 const hint = document.getElementById("hint");
 const blank = document.getElementById("blank");
@@ -12,9 +12,8 @@ const blank = document.getElementById("blank");
 const btnFS = document.getElementById("btnFS");
 const fsIco = document.getElementById("fsIco");
 
-// device id (żeby presence było stabilne)
 const DEVICE_ID_KEY = "familiada:deviceId:host";
-let deviceId = localStorage.getItem(DEVICE_ID_KEY) || "tablet";
+let deviceId = localStorage.getItem(DEVICE_ID_KEY) || "";
 
 // stan
 let hidden = false;
@@ -29,8 +28,8 @@ function setFullscreenIcon() {
 async function toggleFullscreen() {
   try {
     if (!document.fullscreenElement) {
+      // Fullscreen API bywa ograniczone na iOS Safari — ale to jest poprawne wywołanie
       await document.documentElement.requestFullscreen?.({ navigationUI: "hide" });
-      // iOS Safari często nie wspiera Fullscreen API -> wtedy po prostu nic
     } else {
       await document.exitFullscreen?.();
     }
@@ -39,16 +38,17 @@ async function toggleFullscreen() {
 }
 
 // ===== UI =====
+function renderHint() {
+  if (!hint) return;
+  hint.textContent = hidden
+    ? "Podwójne dotknięcie / dwuklik aby odsłonić"
+    : "Podwójne dotknięcie / dwuklik aby zasłonić";
+}
+
 function setHidden(on) {
   hidden = !!on;
   if (blank) blank.hidden = !hidden;
-
-  if (hint) {
-    hint.textContent = hidden
-      ? "Podwójne dotknięcie aby odsłonić"
-      : "Podwójne dotknięcie aby zasłonić";
-  }
-
+  renderHint();
   if (!hidden && paperText) paperText.textContent = lastText;
 }
 
@@ -62,40 +62,40 @@ function clearText() {
   if (!hidden && paperText) paperText.textContent = "";
 }
 
-// ===== snapshot (opcjonalny, ale polecam) =====
-async function persistHostState() {
+// ===== snapshot (device_state) =====
+async function persistState() {
   if (!gameId || !key) return;
   try {
     await sb().rpc("device_state_set_public", {
       p_game_id: gameId,
-      p_kind: "host",
+      p_device_type: "host",
       p_key: key,
       p_patch: { hidden, text: lastText },
     });
   } catch {}
 }
 
-async function restoreFromSnapshot() {
+async function restoreState() {
   if (!gameId || !key) return;
   try {
     const { data, error } = await sb().rpc("device_state_get", {
       p_game_id: gameId,
-      p_kind: "host",
+      p_device_type: "host",
       p_key: key,
     });
     if (error) throw error;
 
-    const s = data || {};
-    // najpierw tekst, potem ukrycie (żeby odsłonięcie pokazało treść)
-    setText(typeof s.text === "string" ? s.text : "");
-    setHidden(!!s.hidden);
+    const st = data || {};
+    // najpierw tekst, potem hidden (żeby odsłonięcie pokazało treść)
+    setText(typeof st.text === "string" ? st.text : "");
+    setHidden(!!st.hidden);
   } catch {
     setText("");
     setHidden(false);
   }
 }
 
-// ===== double tap / double click =====
+// ===== double tap / double click (działa wszędzie) =====
 const DOUBLE_MS = 320;
 let lastTapAt = 0;
 
@@ -106,7 +106,7 @@ function yOK(y) {
 
 async function toggleCover() {
   setHidden(!hidden);
-  await persistHostState();
+  await persistState();
 }
 
 function handleTap(y) {
@@ -120,6 +120,7 @@ function handleTap(y) {
   }
 }
 
+// dotyk
 document.addEventListener(
   "touchstart",
   (e) => {
@@ -133,8 +134,16 @@ document.addEventListener(
   { passive: false }
 );
 
-document.addEventListener("dblclick", (e) => handleTap(e.clientY));
+// desktop: dblclick na CAŁEJ kartce i okładce (nie tylko na dokumencie)
+function dbl(e) {
+  if (e.target?.closest?.("#btnFS")) return;
+  handleTap(e.clientY);
+}
+paper?.addEventListener("dblclick", dbl);
+blank?.addEventListener("dblclick", dbl);
+document.addEventListener("dblclick", dbl);
 
+// blokuj ctrl+scroll zoom (desktop)
 document.addEventListener(
   "wheel",
   (e) => {
@@ -143,7 +152,7 @@ document.addEventListener(
   { passive: false }
 );
 
-// ===== komendy z controla =====
+// ===== commands from control =====
 function norm(s) {
   return String(s ?? "").trim();
 }
@@ -154,12 +163,12 @@ async function handleCmd(lineRaw) {
 
   if (up === "OFF") {
     setHidden(true);
-    await persistHostState();
+    await persistState();
     return;
   }
   if (up === "ON") {
     setHidden(false);
-    await persistHostState();
+    await persistState();
     return;
   }
 
@@ -167,18 +176,18 @@ async function handleCmd(lineRaw) {
     const m = line.match(/^SET\s+"([\s\S]*)"\s*$/i);
     const text = m ? m[1] : line.replace(/^SET\s+/i, "");
     setText(text);
-    await persistHostState();
+    await persistState();
     return;
   }
 
   if (up === "CLEAR") {
     clearText();
-    await persistHostState();
+    await persistState();
     return;
   }
 }
 
-// ===== realtime =====
+// ===== realtime channel =====
 let ch = null;
 function ensureChannel() {
   if (ch) return ch;
@@ -193,14 +202,21 @@ function ensureChannel() {
 
 // ===== presence ping =====
 async function ping() {
+  if (!gameId || !key) return;
   try {
-    await sb().rpc("device_ping", {
-      p_game_id: game.id,
-      p_device_type: "host",   // "buzzer" / "display"
+    const { data } = await sb().rpc("device_ping", {
+      p_game_id: gameId,
+      p_device_type: "host",
       p_key: key,
       p_device_id: deviceId || null,
-      p_meta: {}
+      p_meta: {},
     });
+
+    // jeśli backend nada device_id — zapamiętaj
+    if (data?.device_id && !deviceId) {
+      deviceId = data.device_id;
+      localStorage.setItem(DEVICE_ID_KEY, deviceId);
+    }
   } catch {}
 }
 
@@ -211,17 +227,14 @@ document.addEventListener("fullscreenchange", setFullscreenIcon);
 document.addEventListener("DOMContentLoaded", async () => {
   setFullscreenIcon();
 
-  if (!paperText || !blank || !hint) {
-    console.warn("[host] Brak wymaganych elementów DOM (paperText/hint/blank).");
-  }
-
   if (!gameId || !key) {
     setText("");
     setHidden(true);
     return;
   }
 
-  await restoreFromSnapshot();
+  // start: odtwórz stan i włącz komunikację
+  await restoreState();
   ensureChannel();
 
   ping();
