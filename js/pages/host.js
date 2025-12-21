@@ -29,53 +29,154 @@ function setFullscreenIcon() {
 async function toggleFullscreen() {
   try {
     if (!document.fullscreenElement) {
-      // iOS Safari lubi jak request jest na elemencie <html>
       await document.documentElement.requestFullscreen?.({ navigationUI: "hide" });
     } else {
       await document.exitFullscreen?.();
     }
-  } catch (e) {
-    // iOS czasem rzuca bez sensu – nie przerywamy UI
-    // console.warn("[host] fullscreen failed", e);
-  }
+  } catch (e) {}
   setFullscreenIcon();
 }
 
-/* ========= UI ========= */
-function render() {
-  if (blank) blank.hidden = !hidden;
+/* ========= AUDIO: szuranie kartki (bez plików) ========= */
+let ac = null;
+function ensureAudio() {
+  if (ac) return ac;
+  const Ctx = window.AudioContext || window.webkitAudioContext;
+  if (!Ctx) return null;
+  ac = new Ctx();
+  return ac;
+}
+
+async function playRustle() {
+  const ctx = ensureAudio();
+  if (!ctx) return;
+  try {
+    if (ctx.state === "suspended") await ctx.resume();
+  } catch {}
+
+  const dur = 0.22;
+  const sr = ctx.sampleRate;
+  const len = Math.max(1, Math.floor(sr * dur));
+  const buf = ctx.createBuffer(1, len, sr);
+  const data = buf.getChannelData(0);
+
+  for (let i = 0; i < len; i++) {
+    const t = i / len;
+    const white = (Math.random() * 2 - 1);
+    const grain = (Math.random() * 2 - 1) * (Math.random() < 0.12 ? 1 : 0.15);
+    data[i] = (white * 0.55 + grain * 0.45) * (1 - t);
+  }
+
+  const src = ctx.createBufferSource();
+  src.buffer = buf;
+
+  const bp = ctx.createBiquadFilter();
+  bp.type = "bandpass";
+  bp.frequency.value = 1900;
+  bp.Q.value = 0.8;
+
+  const hs = ctx.createBiquadFilter();
+  hs.type = "highshelf";
+  hs.frequency.value = 3200;
+  hs.gain.value = 4.5;
+
+  const g = ctx.createGain();
+  g.gain.value = 0;
+
+  src.connect(bp);
+  bp.connect(hs);
+  hs.connect(g);
+  g.connect(ctx.destination);
+
+  const now = ctx.currentTime;
+  g.gain.setValueAtTime(0.0001, now);
+  g.gain.linearRampToValueAtTime(0.22, now + 0.018);
+  g.gain.exponentialRampToValueAtTime(0.0001, now + dur);
+
+  src.start(now);
+  src.stop(now + dur + 0.02);
+}
+
+/* ========= UI/ANIM ========= */
+function setBlankInstant(on) {
+  if (!blank) return;
+  blank.classList.add("noAnim");
+
+  if (on) {
+    blank.classList.add("blankOn");
+    blank.classList.remove("blankOffLeft", "blankOffRight");
+  } else {
+    blank.classList.remove("blankOn");
+    blank.classList.add("blankOffLeft");
+    blank.classList.remove("blankOffRight");
+  }
+
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => blank.classList.remove("noAnim"));
+  });
+}
+
+function animateHide() {
+  if (!blank) return;
+  blank.classList.remove("blankOffLeft");
+  blank.classList.add("blankOffRight");
+  blank.classList.remove("blankOn");
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => blank.classList.add("blankOn"));
+  });
+}
+
+function animateOpen() {
+  if (!blank) return;
+  blank.classList.remove("blankOffRight");
+  blank.classList.add("blankOffLeft");
+  requestAnimationFrame(() => {
+    blank.classList.remove("blankOn");
+  });
+}
+
+function render(opts = {}) {
+  const animate = !!opts.animate;
 
   if (hint) {
     hint.textContent = hidden
-      ? "Szybki podwójny tap aby odsłonić"
-      : "Szybki podwójny tap aby zasłonić";
+      ? "Przesuń w lewo, żeby odsłonić"
+      : "Przesuń w prawo, żeby zasłonić";
   }
 
-  if (paperText) {
-    paperText.textContent = hidden ? "" : text;
+  if (paperText) paperText.textContent = hidden ? "" : text;
+
+  if (!blank) return;
+
+  if (!animate) {
+    setBlankInstant(hidden);
+    return;
   }
+
+  if (hidden) animateHide();
+  else animateOpen();
 }
 
-function setHidden(on) {
+function setHidden(on, opts = {}) {
   hidden = !!on;
-  render();
+  render(opts);
 }
 
-function setText(next) {
+function setText(next, opts = {}) {
   text = String(next ?? "");
-  render();
+  render(opts);
 }
 
-function clearText() {
+function clearText(opts = {}) {
   text = "";
-  render();
+  render(opts);
 }
 
-function appendLine(line) {
+function appendLine(line, opts = {}) {
   const s = String(line ?? "");
   if (!s) return;
   text = text ? (text + "\n" + s) : s;
-  render();
+  render(opts);
 }
 
 /* ========= SNAPSHOT (device_state) ========= */
@@ -106,35 +207,31 @@ async function restoreState() {
     const s = data || {};
     text = typeof s.text === "string" ? s.text : "";
     hidden = !!s.hidden;
-    render();
+    render({ animate: false });
   } catch (e) {
-    // start bez snapshotu
     text = "";
     hidden = false;
-    render();
+    render({ animate: false });
   }
 }
 
 /* ========= KOMENDY Z CONTROLA =========
 Obsługujemy:
-- OFF / ON
+- OFF / ON   (OFF=HIDE, ON=OPEN)
+- HIDE / OPEN (dodatkowo, bez szkody)
 - SET "..."
 - APPEND "..."
 - CLEAR
 W SET/APPEND wspieramy \n w stringu.
 */
 function unquotePayload(line, keyword) {
-  // SET "...." (może zawierać \n)
   const re = new RegExp(`^${keyword}\\s+"([\\s\\S]*)"\\s*$`, "i");
   const m = String(line).match(re);
   if (m) return m[1];
-
-  // SET cokolwiek (bez cudzysłowu)
   return String(line).replace(new RegExp(`^${keyword}\\s+`, "i"), "");
 }
 
 function decodeEscapes(s) {
-  // pozwala wysyłać \n z controla jako dwa znaki i zamienić na newline
   return String(s)
     .replace(/\\n/g, "\n")
     .replace(/\\t/g, "\t")
@@ -147,34 +244,36 @@ async function handleCmd(lineRaw) {
 
   if (!line) return;
 
-  if (up === "OFF") {
-    setHidden(true);
+  if (up === "OFF" || up === "HIDE") {
+    setHidden(true, { animate: true });
+    playRustle();
     await persistState();
     return;
   }
 
-  if (up === "ON") {
-    setHidden(false);
+  if (up === "ON" || up === "OPEN") {
+    setHidden(false, { animate: true });
+    playRustle();
     await persistState();
     return;
   }
 
   if (up === "CLEAR") {
-    clearText();
+    clearText({ animate: false });
     await persistState();
     return;
   }
 
   if (/^SET\b/i.test(line)) {
     const payload = decodeEscapes(unquotePayload(line, "SET"));
-    setText(payload);
+    setText(payload, { animate: false });
     await persistState();
     return;
   }
 
   if (/^APPEND\b/i.test(line)) {
     const payload = decodeEscapes(unquotePayload(line, "APPEND"));
-    appendLine(payload);
+    appendLine(payload, { animate: false });
     await persistState();
     return;
   }
@@ -201,12 +300,11 @@ async function ping() {
       p_game_id: gameId,
       p_device_type: "host",
       p_key: key,
-      p_device_id: deviceId, // null ok
+      p_device_id: deviceId,
       p_meta: {},
     });
     if (error) throw error;
 
-    // jeśli backend nadał device_id albo zwrócił inny
     const nextId = data?.device_id;
     if (nextId && nextId !== deviceId) {
       deviceId = nextId;
@@ -217,37 +315,62 @@ async function ping() {
   }
 }
 
-/* ========= PODWÓJNY TAP / KLIK (szybki, bez „mulenia”) =========
-Używamy pointerdown:
-- działa na dotyku i myszce
-- nie czekamy na dblclick (który na mobile bywa opóźniony)
+/* ========= SWIPE =========
+Prawo  -> HIDE
+Lewo   -> OPEN
+Start nie z krawędzi (systemowe cofanie).
 */
-const DOUBLE_MS = 240; // szybciej niż 320, mniej „mielenia”
-let lastTapAt = 0;
+const EDGE_GUARD = 28;
+const SWIPE_MIN = 70;
+const SWIPE_SLOPE = 1.25;
 
-function yOK(y) {
-  const h = window.innerHeight || 1;
-  return y > 70 && y < h - 70;
-}
+let swDown = false;
+let sx = 0, sy = 0, st = 0;
 
-async function toggleCover() {
-  setHidden(!hidden);
-  await persistState();
+function startAllowed(x) {
+  const w = window.innerWidth || 1;
+  return x > EDGE_GUARD && x < (w - EDGE_GUARD);
 }
 
 function onPointerDown(ev) {
-  // ignoruj multi-touch: pointerType + isPrimary
   if (ev.pointerType === "touch" && ev.isPrimary === false) return;
 
-  const y = ev.clientY ?? 0;
-  if (!yOK(y)) return;
+  const x = ev.clientX ?? 0;
+  if (!startAllowed(x)) return;
 
-  const now = Date.now();
-  if (now - lastTapAt <= DOUBLE_MS) {
-    lastTapAt = 0;
-    toggleCover();
+  swDown = true;
+  sx = x;
+  sy = ev.clientY ?? 0;
+  st = Date.now();
+}
+
+async function onPointerUp(ev) {
+  if (!swDown) return;
+  swDown = false;
+
+  const dx = (ev.clientX ?? 0) - sx;
+  const dy = Math.abs((ev.clientY ?? 0) - sy);
+
+  if (Date.now() - st > 650) return;
+
+  const adx = Math.abs(dx);
+  if (adx < SWIPE_MIN) return;
+  if (adx < dy * SWIPE_SLOPE) return;
+
+  if (dx > 0) {
+    // swipe w prawo => HIDE
+    if (!hidden) {
+      setHidden(true, { animate: true });
+      playRustle();
+      await persistState();
+    }
   } else {
-    lastTapAt = now;
+    // swipe w lewo => OPEN
+    if (hidden) {
+      setHidden(false, { animate: true });
+      playRustle();
+      await persistState();
+    }
   }
 }
 
@@ -267,16 +390,17 @@ document.addEventListener("fullscreenchange", setFullscreenIcon);
 document.addEventListener("DOMContentLoaded", async () => {
   setFullscreenIcon();
 
+  // bez parametrów = zasłonięte i puste
   if (!gameId || !key) {
-    // bez parametrów = zasłonięte i puste
     text = "";
     hidden = true;
-    render();
+    render({ animate: false });
     return;
   }
 
-  // szybki toggle: tap/click
   document.addEventListener("pointerdown", onPointerDown, { passive: true });
+  document.addEventListener("pointerup", onPointerUp, { passive: true });
+  document.addEventListener("pointercancel", () => (swDown = false), { passive: true });
 
   await restoreState();
   ensureChannel();
