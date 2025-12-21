@@ -14,7 +14,15 @@ const btnA = document.getElementById("btnA");
 const btnB = document.getElementById("btnB");
 
 const DEVICE_ID_KEY = "familiada:deviceId:buzzer";
-let deviceId = localStorage.getItem(DEVICE_ID_KEY) || null;
+let deviceId = localStorage.getItem(DEVICE_ID_KEY);
+
+// zawsze string, nigdy null/undefined
+if (!deviceId) {
+  deviceId = (crypto?.randomUUID?.() || Math.random().toString(16).slice(2))  // stabilne id
+    .replace(/-/g, "")
+    .slice(0, 16);
+  localStorage.setItem(DEVICE_ID_KEY, deviceId);
+}
 
 const STATE = {
   OFF: "OFF",
@@ -163,21 +171,24 @@ async function press(team, ev) {
 /* ========= PRESENCE ========= */
 async function ping() {
   if (!gameId || !key) return;
-  try {
-    const { data } = await sb().rpc("device_ping", {
-      p_game_id: gameId,
-      p_device_type: "buzzer",
-      p_key: key,
-      p_device_id: deviceId,
-      p_meta: {},
-    });
 
-    if (data?.device_id && data.device_id !== deviceId) {
-      deviceId = data.device_id;
-      localStorage.setItem(DEVICE_ID_KEY, deviceId);
-    }
-  } catch (e) {
-    console.warn("[buzzer] ping failed", e);
+  const { data, error } = await sb().rpc("device_ping", {
+    p_game_id: gameId,
+    p_device_type: "buzzer",
+    p_key: key,
+    p_device_id: String(deviceId),   // <- ważne: string
+    p_meta: {},                      // <- jsonb
+  });
+
+  if (error) {
+    console.warn("[buzzer] device_ping error:", error);
+    return;
+  }
+
+  // jeśli funkcja zwraca device_id (u Ciebie tak robi dla display), utrzymaj spójność
+  if (data?.device_id && data.device_id !== deviceId) {
+    deviceId = data.device_id;
+    localStorage.setItem(DEVICE_ID_KEY, deviceId);
   }
 }
 
