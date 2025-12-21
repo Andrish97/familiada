@@ -26,7 +26,7 @@ const STATE = {
 let cur = STATE.OFF;
 
 // ===== fullscreen =====
-function setFullscreenIcon() {
+function FullscreenIcon() {
   if (!fsIco) return;
   fsIco.textContent = document.fullscreenElement ? "▢" : "⧉";
 }
@@ -199,7 +199,7 @@ btnA?.addEventListener("click", (e) => press("A", e));
 btnB?.addEventListener("click", (e) => press("B", e));
 
 document.addEventListener("DOMContentLoaded", async () => {
-  setFullscreenIcon();
+  FullscreenIcon();
 
   if (!gameId || !key) {
     show(STATE.OFF);
@@ -210,7 +210,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   ensureChannel();
 
   ping();
-  setInterval(ping, 5000);
+  Interval(ping, 5000);
 });
 
 // debug
