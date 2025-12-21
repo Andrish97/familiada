@@ -129,6 +129,7 @@ function ensureChannel() {
 
       if (line === "OFF") return show(STATE.OFF), persistState();
       if (line === "ON")  return show(STATE.ON),  persistState();
+      if (line === "RESET") return show(STATE.ON), persistState();
 
       if (line === "PUSHED A" || line === "PUSHED_A")
         return show(STATE.PUSHED_A), persistState();
