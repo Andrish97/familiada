@@ -1,129 +1,95 @@
-// main/display/js/main.js
-import { initFullscreenButton } from "./fullscreen.js";
-import { startPresence } from "./presence.js";
-import { createQRController } from "./qr.js";
-import { createScene } from "./scene.js";
-import { createCommandHandler } from "./commands.js";
+// main/display/js/presence.js
+import { sb } from "../../js/core/supabase.js";
 
-const $ = (id) => document.getElementById(id);
+/**
+ * Presence dla DISPLAY:
+ * - auth: rpc display_auth (zostaje)
+ * - ping: rpc device_ping
+ * - snapshot: rpc device_state_get  (po refreshu)
+ * - realtime: DISPLAY_CMD
+ */
+export async function startPresence({
+  channel = null,
+  pingMs = 5000,
+  onCommand = null,
+  onSnapshot = null,
+  debug = false,
+} = {}) {
+  const { gameId, key } = parseParams();
+  const game = await authDisplayOrThrow(gameId, key);
 
-window.addEventListener("DOMContentLoaded", async () => {
-  initFullscreenButton();
+  const chName = channel || `familiada-display:${game.id}`;
 
-  const blackScreen = $("blackScreen");
-  const qrScreen = $("qrScreen");
-  const gameScreen = $("gameScreen");
-
-  const APP_MODES = {
-    BLACK: "BLACK_SCREEN",
-    GRA: "GRA",
-    QR: "QR",
-  };
-
-  const showBlack = (msg) => {
-    blackScreen?.classList.remove("hidden");
-    qrScreen?.classList.add("hidden");
-    gameScreen?.classList.add("hidden");
-    if (msg) console.warn("[display]", msg);
-  };
-
-  try {
-    // 1) QR controller
-    const qr = createQRController({
-      qrScreen,
-      gameScreen,
-      hostImg: $("qrHostImg"),
-      buzzerImg: $("qrBuzzerImg"),
-    });
-
-    // 2) scena gry
-    const scene = await createScene();
-
-    // 3) app (router ekranów)
-    const app = {
-      mode: APP_MODES.BLACK,
-      setMode(m) {
-        let mm = (m ?? "").toString().toUpperCase();
-        if (mm === "BLACK") mm = APP_MODES.BLACK;
-
-        if (!Object.values(APP_MODES).includes(mm)) {
-          throw new Error("Mode musi być BLACK_SCREEN / GRA / QR");
-        }
-
-        this.mode = mm;
-
-        blackScreen?.classList.add("hidden");
-        qrScreen?.classList.add("hidden");
-        gameScreen?.classList.add("hidden");
-
-        if (mm === APP_MODES.BLACK) return blackScreen?.classList.remove("hidden");
-        if (mm === APP_MODES.QR) return qrScreen?.classList.remove("hidden");
-        return gameScreen?.classList.remove("hidden");
-      },
-
-      qr,
-      scene,
-
-      // uzupełnimy po auth w presence:
-      game: null,
-      gameId: null,
-    };
-
-    // 4) komendy (router global + scena)
-    const handleCommand = createCommandHandler(app);
-
-    window.app = app;
-    window.scene = scene;
-    window.handleCommand = handleCommand;
-
-    // flagi, żeby snapshot nie “walczył” z init
-    let snapshotApplied = false;
-
-    // 5) AUTH + snapshot + ping + realtime commands
-    const pres = await startPresence({
-      pingMs: 5000,
-      debug: true,
-
-      onCommand: (line) => handleCommand(line),
-
-      onSnapshot: (devices) => {
-        snapshotApplied = true;
-
-        // 1) global APP mode
-        // preferujemy display_app_mode, ale wspieramy też stare display_mode
-        let mode = String(devices?.display_app_mode ?? devices?.display_mode ?? "BLACK_SCREEN")
-          .toUpperCase();
-
-        if (mode === "BLACK") mode = "BLACK_SCREEN";
-
-        if (mode === "GRA") app.setMode("GRA");
-        else if (mode === "QR") app.setMode("QR");
-        else app.setMode("BLACK_SCREEN");
-
-        // 2) najprościej: odtwórz ostatnią komendę (np. MODE LOGO / RBATCH / QR HOST...)
-        const lastCmd = String(devices?.display_last_cmd ?? "").trim();
-        if (lastCmd) {
-          try { handleCommand(lastCmd); } catch {}
-          return;
-        }
-
-        // 3) fallback: scena, jeśli trzymasz osobno
-        const sceneMode = String(devices?.display_scene ?? "LOGO").toUpperCase();
-        try { handleCommand(`MODE ${sceneMode}`); } catch {}
-      },
-    });
-
-    // wpisz info o grze do app
-    app.game = pres.game;
-    app.gameId = pres.game.id;
-
-    // jeśli snapshot nie przyszedł (np. RPC padło w połowie), daj bezpieczny start
-    if (!snapshotApplied) {
-      app.setMode("BLACK_SCREEN");
+  const ping = async () => {
+    try {
+      await sb().rpc("device_ping", {
+        p_game_id: game.id,
+        p_kind: "display",
+        p_key: key,
+      });
+    } catch (e) {
+      if (debug) console.warn("[display] ping failed", e);
     }
+  };
 
-    console.log("Display OK. Game:", pres.game.name, pres.game.id);
-  } catch (e) {
-    showBlack(e?.message || String(e));
-  }
-});
+  const getSnapshot = async () => {
+    try {
+      const { data, error } = await sb().rpc("device_state_get", {
+        p_game_id: game.id,
+        p_kind: "display",
+        p_key: key,
+      });
+      if (error) throw error;
+      return data || {};
+    } catch (e) {
+      if (debug) console.warn("[display] snapshot failed", e);
+      return {};
+    }
+  };
+
+  // 0) snapshot po wejściu (żeby odtworzyć ekran po refreshu)
+  const snap = await getSnapshot();
+  try { onSnapshot?.(snap); } catch (e) { if (debug) console.warn(e); }
+
+  // 1) ping
+  await ping();
+  const pingTimer = setInterval(ping, pingMs);
+
+  // 2) realtime commands
+  const ch = sb()
+    .channel(chName)
+    .on("broadcast", { event: "DISPLAY_CMD" }, (msg) => {
+      const line = msg?.payload?.line;
+      if (!line) return;
+      if (debug) console.log("[display] cmd:", line);
+      try { onCommand?.(String(line)); } catch (e) { if (debug) console.warn(e); }
+    })
+    .subscribe();
+
+  const stop = () => {
+    try { clearInterval(pingTimer); } catch {}
+    try { sb().removeChannel(ch); } catch {}
+  };
+
+  window.addEventListener("beforeunload", stop);
+
+  window.__presence = { game, channel: chName, stop, ping, getSnapshot };
+  return { game, stop };
+}
+
+function parseParams() {
+  const u = new URL(location.href);
+  return {
+    gameId: u.searchParams.get("id") || "",
+    key: u.searchParams.get("key") || "",
+  };
+}
+
+async function authDisplayOrThrow(gameId, key) {
+  if (!gameId || !key) throw new Error("Brak id lub key w URL.");
+  const { data, error } = await sb().rpc("display_auth", { p_game_id: gameId, p_key: key });
+  if (error) throw error;
+  const row = Array.isArray(data) ? data[0] : data;
+  if (!row?.id) throw new Error("Zły klucz (display) albo gra nie istnieje.");
+  return row;
+}
