@@ -484,120 +484,83 @@ body.editor-body .wrap{
 
 
 /* =========================================================
-   MOBILE TWEAKS – mniejsze kafelki pytań + lepsza lista
+   MOBILE – odpowiedzi (aList) robią się zbyt szerokie
 ========================================================= */
 
 @media (max-width: 720px){
 
-  /* mniej "ciężkie" panele na mobile */
-  .left,
-  .rightPanel{
-    padding:12px;
-    border-radius:18px;
-  }
-
-  /* lista pytań: zamiast wielkich kafli jeden pod drugim,
-     robimy 2 kolumny (oszczędza ekran) */
-  .list{
-    grid-template-columns: 1fr 1fr;
+  /* wąskie kolumny zamiast 110px + mniej powietrza */
+  .ahead{
+    grid-template-columns: 1fr 72px 36px;
     gap:8px;
-    max-height:none;     /* bez scrolla w środku na telefonie */
-    overflow:visible;
-    padding-right:0;
-    padding-bottom:6px;
+    padding:0 4px;
   }
 
-  /* na bardzo wąskich ekranach wróć do 1 kolumny */
-  @media (max-width: 380px){
-    .list{ grid-template-columns: 1fr; }
-  }
-
-  /* mniejsze kafelki pytań */
-  .qcard{
-    padding:10px;
+  .arow{
+    grid-template-columns: 1fr 72px 36px;
+    gap:8px;
+    padding:8px;
     border-radius:16px;
   }
 
-  .qord{ font-size:11px; }
-  .qprev{ font-size:13px; margin-top:4px; }
-  .qmeta{ font-size:11px; margin-top:4px; }
+  /* bardzo ważne: pozwala polom się zwężać w gridzie */
+  .arow > *{ min-width:0; }
 
-  /* mniejszy X w kafelku */
-  .qcard .x{
-    top:8px; right:8px;
-    width:28px; height:28px;
-    border-radius:10px;
+  .aText,
+  .aPts{
+    padding:8px 10px;
+    border-radius:12px;
+    font-weight:900;
   }
 
-  /* addTile też troszkę ciaśniej, żeby pasował do reszty */
-  .addTile{
-    padding:10px;
-    border-radius:16px;
+  .aPts{
+    text-align:center;
   }
-  .addTile .plus{
-    width:30px; height:30px;
+
+  .aDel{
+    width:36px;
+    height:36px;
     border-radius:12px;
   }
 }
 
+/* jeszcze ciaśniej na bardzo wąskich ekranach */
+@media (max-width: 420px){
+  .ahead,
+  .arow{
+    grid-template-columns: 1fr 64px 34px;
+    gap:7px;
+  }
+  .aDel{ width:34px; height:34px; }
+}
 /* =========================================================
-   MODAL (jak w builderze) – editor
+   MODAL – wymuszenie pełnoekranowego overlay nawet gdy JS daje display:block
 ========================================================= */
 
 .overlay{
-  position:fixed; inset:0;
+  position: fixed;
+  inset: 0;
   background: rgba(2,6,23,.82);
-  display:grid;
-  place-items:center;
-  z-index:50;
+  place-items: center;
+  z-index: 50;
+
+  /* domyślnie ukryty */
+  display: none;
 }
+
+/* gdy inline style NIE zawiera "display:none" (np. display:block), wymuś grid */
+.overlay:not([style*="display:none"]){
+  display: grid !important;
+}
+
 .modal{
-  width:min(860px,94vw);
-  border-radius:22px;
-  border:1px solid var(--line);
+  width: min(860px, 94vw);
+  max-height: 92vh;        /* żeby nie uciekał poza ekran */
+  overflow: auto;          /* przewijanie wewnątrz okna */
+  border-radius: 22px;
+  border: 1px solid var(--line);
   background: var(--card);
-  box-shadow:0 30px 90px rgba(0,0,0,.75);
-  padding:18px;
-}
-
-.mTitle{
-  font-weight:1000;
-  font-size:18px;
-  letter-spacing:.06em;
-  color: var(--gold);
-}
-.mSub{
-  opacity:.8;
-  font-size:13px;
-  margin-top:6px;
-}
-
-.importRow{
-  display:flex;
-  gap:10px;
-  align-items:center;
-  flex-wrap:wrap;
-  margin-top:12px;
-}
-
-.importTa{
-  width:100%;
-  min-height:220px;
-  margin-top:12px;
-  padding:12px;
-  border-radius:16px;
-  border:1px solid var(--line2);
-  background: rgba(0,0,0,.25);
-  color:#fff;
-  outline:none;
-  resize: vertical;
-  font-weight:800;
-}
-
-.importMsg{
-  margin-left:auto;
-  opacity:.85;
-  font-weight:900;
-  color: var(--gold);
-  padding:6px 0;
+  box-shadow: 0 30px 90px rgba(0,0,0,.75);
+  padding: 18px;
+  -webkit-overflow-scrolling: touch;
 }
