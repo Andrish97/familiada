@@ -142,6 +142,20 @@ function setActionButton(label, disabled, hint) {
   if (hintTop) hintTop.textContent = hint || "";
 }
 
+function hidePreview() {
+  if (resultsCard) resultsCard.style.display = "none";
+  if (resultsMeta) resultsMeta.textContent = "";
+  if (resultsList) {
+    resultsList.innerHTML = "";
+    resultsList.style.display = "none"; // <- zabija inline display:grid
+  }
+}
+
+function showPreview() {
+  if (resultsCard) resultsCard.style.display = "";
+  if (resultsList) resultsList.style.display = "grid"; // albo "" jeśli przeniesiesz do CSS
+}
+
 function updatePreviewButtonState() {
   if (!btnPreview || !game) return;
 
@@ -294,8 +308,9 @@ async function validateCanClose(g) {
 ======================= */
 
 async function previewResults() {
+  showPreview();
+  resultsList.style.display = "grid";
   if (!game) return;
-
   resultsCard.style.display = "";
   resultsList.innerHTML = "";
   resultsMeta.textContent = "Ładuję…";
@@ -583,6 +598,7 @@ async function refresh() {
 
   textCloseCard && (textCloseCard.style.display = "none");
   resultsCard && (resultsCard.style.display = "none");
+  hidePreview();
 
   const st = game.status || STATUS.DRAFT;
 
@@ -663,8 +679,15 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   btnPreview?.addEventListener("click", async () => {
     if (!game || btnPreview.disabled) return;
-    if (resultsCard.style.display === "none") await previewResults();
-    else resultsCard.style.display = "none";
+  
+    const isOpen = resultsCard && resultsCard.style.display !== "none";
+    if (isOpen) {
+      hidePreview();
+      return;
+    }
+  
+    showPreview();
+    await previewResults();
   });
 
   btnPollAction?.addEventListener("click", async () => {
