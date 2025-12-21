@@ -1,348 +1,337 @@
 import { sb } from "../js/core/supabase.js";
+import { playSfx } from "../js/core/sfx.js";
 
 const $ = (id) => document.getElementById(id);
+const qs = new URLSearchParams(location.search);
+const gameId = qs.get("id");
 
-const ui = {
-  authPill: $("authPill"),
-  btnReload: $("btnReload"),
+// ===== UI refs
+const who = $("who");
+const btnBack = $("btnBack");
+const btnLogout = $("btnLogout");
 
-  inGameId: $("inGameId"),
-  inKey: $("inKey"),
-  btnConnect: $("btnConnect"),
-  connectMsg: $("connectMsg"),
+const gameLabel = $("gameLabel");
+const gameMeta = $("gameMeta");
 
-  gameCard: $("gameCard"),
-  gName: $("gName"),
-  gId: $("gId"),
-  gType: $("gType"),
-  gStatus: $("gStatus"),
-  gameDump: $("gameDump"),
+const msgDevices = $("msgDevices");
+const msgCmd = $("msgCmd");
 
-  devicesCard: $("devicesCard"),
-  dDisplay: $("dDisplay"),
-  dHost: $("dHost"),
-  dBuzzer: $("dBuzzer"),
-  sDisplay: $("sDisplay"),
-  sHost: $("sHost"),
-  sBuzzer: $("sBuzzer"),
-  liveMsg: $("liveMsg"),
+// links + pills + seen + lastcmd
+const displayLink = $("displayLink");
+const hostLink = $("hostLink");
+const buzzerLink = $("buzzerLink");
 
-  cmdDisplay: $("cmdDisplay"),
-  cmdHost: $("cmdHost"),
-  cmdBuzzer: $("cmdBuzzer"),
-  sendDisplay: $("sendDisplay"),
-  sendHost: $("sendHost"),
-  sendBuzzer: $("sendBuzzer"),
+const pillDisplay = $("pillDisplay");
+const pillHost = $("pillHost");
+const pillBuzzer = $("pillBuzzer");
 
-  buzOn: $("buzOn"),
-  buzOff: $("buzOff"),
-  buzReset: $("buzReset"),
+const seenDisplay = $("seenDisplay");
+const seenHost = $("seenHost");
+const seenBuzzer = $("seenBuzzer");
 
-  logCard: $("logCard"),
-  log: $("log"),
+const lastCmdDisplay = $("lastCmdDisplay");
+const lastCmdHost = $("lastCmdHost");
+const lastCmdBuzzer = $("lastCmdBuzzer");
+
+const btnCopyDisplay = $("btnCopyDisplay");
+const btnCopyHost = $("btnCopyHost");
+const btnCopyBuzzer = $("btnCopyBuzzer");
+
+const btnOpenDisplay = $("btnOpenDisplay");
+const btnOpenHost = $("btnOpenHost");
+const btnOpenBuzzer = $("btnOpenBuzzer");
+
+const btnResendDisplay = $("btnResendDisplay");
+const btnResendHost = $("btnResendHost");
+const btnResendBuzzer = $("btnResendBuzzer");
+
+// manual send
+const manualTarget = $("manualTarget");
+const manualLine = $("manualLine");
+const btnManualSend = $("btnManualSend");
+
+// tabs
+document.querySelectorAll(".tab").forEach((b) => {
+  b.addEventListener("click", () => {
+    document.querySelectorAll(".tab").forEach(x => x.classList.remove("active"));
+    b.classList.add("active");
+
+    const tab = b.dataset.tab;
+    document.querySelectorAll("[data-panel]").forEach(p => p.style.display = "none");
+    document.querySelector(`[data-panel="${tab}"]`).style.display = "";
+  });
+});
+
+// ===== state
+let game = null;
+
+// ostatnia komenda per device, trzymamy też lokalnie (UI)
+const lastCmd = {
+  display: null,
+  host: null,
+  buzzer: null,
 };
 
-const st = {
-  gameId: "",
-  key: "",
-  game: null,
-  pollTimer: null,
-  channels: {
-    display: null,
-    host: null,
-    buzzer: null,
-    control: null, // do BUZZER_EVT (opcjonalnie)
-  },
-};
+const ONLINE_MS = 12_000;
 
-function log(line) {
-  ui.logCard.hidden = false;
-  ui.log.textContent += `${new Date().toLocaleTimeString()}  ${line}\n`;
-  ui.log.scrollTop = ui.log.scrollHeight;
+// ===== helpers
+function setMsg(el, text) {
+  if (!el) return;
+  el.textContent = text || "";
 }
 
-function setPill(pillEl, status, extra = "") {
-  // status: ok | bad | warn | idle
-  const map = {
-    ok: "● OK",
-    bad: "● OFF",
-    warn: "● ???",
-    idle: "● …",
-  };
-  pillEl.textContent = `${map[status] ?? "● …"}${extra ? "  " + extra : ""}`;
+function badge(el, status, text) {
+  el.classList.remove("ok", "bad", "mid");
+  if (status) el.classList.add(status);
+  el.textContent = text;
 }
 
-/* ---------- URL helpers ---------- */
-
-function readUrlParams() {
-  const qs = new URLSearchParams(location.search);
-  const id = qs.get("id") || "";
-  const key = qs.get("key") || "";
-  return { id, key };
+function fmtSince(ts) {
+  if (!ts) return "—";
+  const ms = Date.now() - new Date(ts).getTime();
+  const s = Math.max(0, Math.round(ms / 1000));
+  return `${s}s temu`;
 }
 
-function writeUrlParams(id, key) {
-  const u = new URL(location.href);
-  if (id) u.searchParams.set("id", id); else u.searchParams.delete("id");
-  if (key) u.searchParams.set("key", key); else u.searchParams.delete("key");
-  history.replaceState({}, "", u.toString());
+function makeUrl(path, id, key) {
+  const u = new URL(path, location.origin);
+  u.searchParams.set("id", id);
+  u.searchParams.set("key", key);
+  return u.toString();
 }
 
-/* ---------- auth indicator (tylko info) ---------- */
-
-async function refreshAuthPill() {
+async function copyToClipboard(text) {
   try {
-    const { data } = await sb().auth.getSession();
-    const has = !!data?.session?.user?.id;
-    ui.authPill.textContent = has ? "auth: zalogowany" : "auth: niezalogowany";
+    await navigator.clipboard.writeText(text);
+    playSfx("ui_tick");
+    return true;
   } catch {
-    ui.authPill.textContent = "auth: ?";
+    return false;
   }
 }
 
-/* ---------- read game ---------- */
+// ===== auth / load game
+async function ensureAuth() {
+  const { data } = await sb().auth.getUser();
+  const user = data?.user || null;
+  if (!user) {
+    // u Ciebie pewnie jest router/login – tu minimalnie:
+    location.href = "../login.html";
+    return null;
+  }
+  who.textContent = user.email || user.id;
+  return user;
+}
 
-/**
- * Minimalnie: używamy RPC get_game_by_key(p_key).
- * To działa nawet bez logowania, bo w Twojej bazie to RPC nie sprawdza auth.uid.
- */
-async function loadGameByKey({ key, idHint = "" }) {
-  // 1) po kluczu
-  const { data, error } = await sb().rpc("get_game_by_key", { p_key: key });
+async function loadGameOrThrow() {
+  if (!gameId) throw new Error("Brak ?id w URL.");
+
+  // owner ma RLS -> może czytać
+  const { data, error } = await sb()
+    .from("games")
+    .select("id,name,type,status,share_key_display,share_key_host,share_key_control,share_key_poll")
+    .eq("id", gameId)
+    .single();
+
   if (error) throw error;
+  if (!data?.id) throw new Error("Gra nie istnieje albo brak uprawnień.");
 
-  const row = Array.isArray(data) ? data[0] : data;
-  if (!row?.id) throw new Error("Zły key (control) albo gra nie istnieje.");
-
-  // 2) jeśli ktoś podał id w URL i nie pasuje – pokaż ostrzeżenie, ale i tak jedź na row.id
-  if (idHint && idHint !== row.id) {
-    log(`Uwaga: URL id != gra z klucza. Używam id z klucza: ${row.id}`);
-  }
-
-  return row; // {id,name,type,status}
+  return data;
 }
 
-/**
- * Próba pobrania pytań/odpowiedzi przez SELECT.
- * Jeśli RLS zablokuje (bo control nie jest ownerem / nie jest zalogowany),
- * pokażemy tylko “game meta” i komunikat.
- */
-async function tryLoadContent(gameId) {
-  try {
-    const { data, error } = await sb()
-      .from("questions")
-      .select("id,ord,text,answers(id,ord,text,fixed_points)")
-      .eq("game_id", gameId)
-      .order("ord", { ascending: true });
+// ===== device presence read (device_presence)
+async function fetchPresence() {
+  // Oczekiwany schemat:
+  // device_presence: game_id, device_type ('display'|'host'|'buzzer'), device_id, last_seen_at
+  const { data, error } = await sb()
+    .from("device_presence")
+    .select("device_type,device_id,last_seen_at")
+    .eq("game_id", game.id);
 
-    if (error) throw error;
-
-    // sort answers
-    const fixed = (data || []).map((q) => ({
-      ...q,
-      answers: (q.answers || []).slice().sort((a, b) => (a.ord ?? 0) - (b.ord ?? 0)),
-    }));
-
-    return { ok: true, data: fixed };
-  } catch (e) {
-    return { ok: false, error: e };
+  if (error) {
+    setMsg(msgDevices, `presence: ${error.message}`);
+    return [];
   }
+  return data || [];
 }
 
-function renderGame(game, content) {
-  ui.gameCard.hidden = false;
-  ui.devicesCard.hidden = false;
+function applyPresence(rows) {
+  const now = Date.now();
 
-  ui.gName.textContent = game.name ?? "-";
-  ui.gId.textContent = game.id ?? "-";
-  ui.gType.textContent = game.type ?? "-";
-  ui.gStatus.textContent = game.status ?? "-";
+  const byType = (t) => {
+    const list = rows.filter(r => (r.device_type || "").toLowerCase() === t);
+    // bierzemy najświeższy (gdyby było kilka device_id)
+    list.sort((a,b) => new Date(b.last_seen_at) - new Date(a.last_seen_at));
+    return list[0] || null;
+  };
 
-  const dump = { game, content };
-  ui.gameDump.textContent = JSON.stringify(dump, null, 2);
+  const d = byType("display");
+  const h = byType("host");
+  const b = byType("buzzer");
+
+  const isOn = (row) => {
+    if (!row?.last_seen_at) return false;
+    return (now - new Date(row.last_seen_at).getTime()) < ONLINE_MS;
+  };
+
+  badge(pillDisplay, isOn(d) ? "ok" : "bad", isOn(d) ? "OK" : "OFFLINE");
+  badge(pillHost,    isOn(h) ? "ok" : "bad", isOn(h) ? "OK" : "OFFLINE");
+  badge(pillBuzzer,  isOn(b) ? "ok" : "bad", isOn(b) ? "OK" : "OFFLINE");
+
+  seenDisplay.textContent = fmtSince(d?.last_seen_at);
+  seenHost.textContent = fmtSince(h?.last_seen_at);
+  seenBuzzer.textContent = fmtSince(b?.last_seen_at);
 }
 
-/* ---------- realtime: send commands ---------- */
-
-function ensureChannels(gameId) {
-  // display
-  if (!st.channels.display) {
-    st.channels.display = sb()
-      .channel(`familiada-display:${gameId}`)
-      .subscribe();
-  }
-
-  // host
-  if (!st.channels.host) {
-    st.channels.host = sb()
-      .channel(`familiada-host:${gameId}`)
-      .subscribe();
-  }
-
-  // buzzer
-  if (!st.channels.buzzer) {
-    st.channels.buzzer = sb()
-      .channel(`familiada-buzzer:${gameId}`)
-      .subscribe();
-  }
-
-  // control (opcjonalnie: nasłuch BUZZER_EVT)
-  if (!st.channels.control) {
-    st.channels.control = sb()
-      .channel(`familiada-control:${gameId}`)
-      .on("broadcast", { event: "BUZZER_EVT" }, (msg) => {
-        const line = String(msg?.payload?.line ?? "");
-        if (!line) return;
-        log(`[BUZZER_EVT] ${line}`);
-      })
-      .subscribe();
-  }
+// ===== command send
+function channelName(target) {
+  // zgodnie z Twoimi plikami:
+  if (target === "display") return `familiada-display:${game.id}`;
+  if (target === "host") return `familiada-host:${game.id}`;
+  return `familiada-buzzer:${game.id}`;
 }
 
-async function broadcast(ch, event, line) {
-  await ch.send({
+function eventName(target) {
+  if (target === "display") return "DISPLAY_CMD";
+  if (target === "host") return "HOST_CMD";
+  return "BUZZER_CMD";
+}
+
+async function sendCmd(target, line) {
+  const t = String(target || "").toLowerCase();
+  const l = String(line ?? "").trim();
+  if (!l) return;
+
+  // realtime broadcast
+  const ch = sb().channel(channelName(t));
+  await ch.subscribe();
+
+  const { error } = await ch.send({
     type: "broadcast",
-    event,
-    payload: { line: String(line) },
+    event: eventName(t),
+    payload: { line: l },
   });
-}
 
-async function sendDisplayCmd(line) {
-  ensureChannels(st.gameId);
-  await broadcast(st.channels.display, "DISPLAY_CMD", line);
-  log(`[DISPLAY_CMD] ${line}`);
-}
+  sb().removeChannel(ch);
 
-async function sendHostCmd(line) {
-  ensureChannels(st.gameId);
-  await broadcast(st.channels.host, "HOST_CMD", line);
-  log(`[HOST_CMD] ${line}`);
-}
-
-async function sendBuzzerCmd(line) {
-  ensureChannels(st.gameId);
-  await broadcast(st.channels.buzzer, "BUZZER_CMD", line);
-  log(`[BUZZER_CMD] ${line}`);
-}
-
-/* ---------- device snapshots ---------- */
-
-async function getDeviceSnapshot(kind) {
-  const { data, error } = await sb().rpc("device_state_get", {
-    p_game_id: st.gameId,
-    p_kind: kind,
-    p_key: st.key,
-  });
   if (error) throw error;
-  return data || {};
+
+  // zapamiętaj (local + DB, jeśli masz device_state)
+  lastCmd[t] = l;
+  refreshLastCmdUI();
+
+  playSfx("ui_tick");
+
+  // Opcjonalnie: zapisz do DB (jeśli masz tabelę device_state)
+  // await saveLastCmdToDb(t, l).catch(()=>{});
 }
 
-async function refreshDeviceSnapshots() {
-  if (!st.gameId || !st.key) return;
+function refreshLastCmdUI() {
+  lastCmdDisplay.textContent = lastCmd.display || "—";
+  lastCmdHost.textContent = lastCmd.host || "—";
+  lastCmdBuzzer.textContent = lastCmd.buzzer || "—";
+}
+
+// ===== links
+function fillLinks() {
+  // ścieżki dopasuj do Twojego projektu
+  const displayUrl = makeUrl("/main/display/index.html", game.id, game.share_key_display);
+  const hostUrl    = makeUrl("/main/host/index.html",    game.id, game.share_key_host);
+  const buzzerUrl  = makeUrl("/main/buzzer/index.html",  game.id, game.share_key_buzzer || game.share_key_host /* jeśli jeszcze nie masz buzzer key */);
+
+  displayLink.value = displayUrl;
+  hostLink.value = hostUrl;
+  buzzerLink.value = buzzerUrl;
+
+  // open
+  btnOpenDisplay.onclick = () => window.open(displayUrl, "_blank");
+  btnOpenHost.onclick = () => window.open(hostUrl, "_blank");
+  btnOpenBuzzer.onclick = () => window.open(buzzerUrl, "_blank");
+
+  // copy
+  btnCopyDisplay.onclick = async () => setMsg(msgDevices, (await copyToClipboard(displayUrl)) ? "Skopiowano link display." : "Nie mogę skopiować.");
+  btnCopyHost.onclick = async () => setMsg(msgDevices, (await copyToClipboard(hostUrl)) ? "Skopiowano link host." : "Nie mogę skopiować.");
+  btnCopyBuzzer.onclick = async () => setMsg(msgDevices, (await copyToClipboard(buzzerUrl)) ? "Skopiowano link buzzer." : "Nie mogę skopiować.");
+}
+
+// ===== resend
+btnResendDisplay.onclick = async () => {
+  if (!lastCmd.display) return setMsg(msgCmd, "Brak ostatniej komendy dla display.");
+  await sendCmd("display", lastCmd.display);
+  setMsg(msgCmd, `Display <= ${lastCmd.display}`);
+};
+btnResendHost.onclick = async () => {
+  if (!lastCmd.host) return setMsg(msgCmd, "Brak ostatniej komendy dla host.");
+  await sendCmd("host", lastCmd.host);
+  setMsg(msgCmd, `Host <= ${lastCmd.host}`);
+};
+btnResendBuzzer.onclick = async () => {
+  if (!lastCmd.buzzer) return setMsg(msgCmd, "Brak ostatniej komendy dla buzzer.");
+  await sendCmd("buzzer", lastCmd.buzzer);
+  setMsg(msgCmd, `Buzzer <= ${lastCmd.buzzer}`);
+};
+
+// ===== buttons with data-send
+document.addEventListener("click", async (e) => {
+  const btn = e.target?.closest?.("[data-send]");
+  if (!btn) return;
+
+  const t = btn.dataset.send;
+  const line = btn.dataset.line;
 
   try {
-    const [d, h, b] = await Promise.all([
-      getDeviceSnapshot("display"),
-      getDeviceSnapshot("host"),
-      getDeviceSnapshot("buzzer"),
-    ]);
-
-    ui.sDisplay.textContent = JSON.stringify(d, null, 2);
-    ui.sHost.textContent = JSON.stringify(h, null, 2);
-    ui.sBuzzer.textContent = JSON.stringify(b, null, 2);
-
-    // prosta heurystyka “czy żyje”: jeśli snapshot ma last_seen_at albo podobne pola – pokaż
-    // (w migracji zrobimy spójne pola; tu tylko wstępnie)
-    setPill(ui.dDisplay, "ok", "");
-    setPill(ui.dHost, "ok", "");
-    setPill(ui.dBuzzer, "ok", "");
-
-    ui.liveMsg.textContent = `snapshot: ${new Date().toLocaleTimeString()}`;
-  } catch (e) {
-    setPill(ui.dDisplay, "warn");
-    setPill(ui.dHost, "warn");
-    setPill(ui.dBuzzer, "warn");
-    ui.liveMsg.textContent = `snapshot error: ${e?.message || e}`;
+    await sendCmd(t, line);
+    setMsg(msgCmd, `${t} <= ${line}`);
+  } catch (err) {
+    setMsg(msgCmd, `Błąd: ${err?.message || String(err)}`);
   }
-}
+});
 
-/* ---------- connect flow ---------- */
-
-async function connect() {
-  const idHint = ui.inGameId.value.trim();
-  const key = ui.inKey.value.trim();
-
-  ui.connectMsg.textContent = "";
-  if (!key) {
-    ui.connectMsg.textContent = "Wpisz key control.";
-    return;
-  }
-
-  st.key = key;
-
-  ui.btnConnect.disabled = true;
+// ===== manual send
+btnManualSend.onclick = async () => {
   try {
-    // 1) load game meta by key
-    const game = await loadGameByKey({ key, idHint });
-    st.game = game;
-    st.gameId = game.id;
-
-    // 2) try load questions/answers
-    const content = await tryLoadContent(st.gameId);
-
-    renderGame(game, content.ok ? content.data : { rls: "blocked", error: String(content.error?.message || content.error) });
-
-    // 3) channels
-    ensureChannels(st.gameId);
-
-    // 4) snapshots polling
-    if (st.pollTimer) clearInterval(st.pollTimer);
-    await refreshDeviceSnapshots();
-    st.pollTimer = setInterval(refreshDeviceSnapshots, 2500);
-
-    // 5) persist URL
-    writeUrlParams(st.gameId, st.key);
-
-    ui.connectMsg.textContent = "Połączono.";
-    log(`Połączono z grą: ${game.name} (${game.id})`);
-    if (!content.ok) {
-      log(`RLS zablokował pytania/odpowiedzi — na razie pokazuję tylko meta gry.`);
-    }
-  } catch (e) {
-    ui.connectMsg.textContent = e?.message || String(e);
-    log(`Błąd connect: ${e?.message || e}`);
-  } finally {
-    ui.btnConnect.disabled = false;
+    await sendCmd(manualTarget.value, manualLine.value);
+    setMsg(msgCmd, `${manualTarget.value} <= ${manualLine.value}`);
+    manualLine.value = "";
+  } catch (err) {
+    setMsg(msgCmd, `Błąd: ${err?.message || String(err)}`);
   }
+};
+
+// ===== topbar
+btnBack.onclick = () => (location.href = "../builder/index.html");
+btnLogout.onclick = async () => {
+  await sb().auth.signOut().catch(()=>{});
+  location.href = "../login.html";
+};
+
+// ===== boot
+async function main() {
+  setMsg(msgDevices, "");
+  setMsg(msgCmd, "");
+
+  const user = await ensureAuth();
+  if (!user) return;
+
+  game = await loadGameOrThrow();
+
+  gameLabel.textContent = `Control — ${game.name}`;
+  gameMeta.textContent = `${game.type} / ${game.status}`;
+
+  refreshLastCmdUI();
+  fillLinks();
+
+  // presence loop
+  const tick = async () => {
+    const rows = await fetchPresence();
+    applyPresence(rows);
+  };
+
+  await tick();
+  setInterval(tick, 1500);
 }
 
-/* ---------- UI events ---------- */
-
-ui.btnConnect.addEventListener("click", connect);
-ui.btnReload.addEventListener("click", async () => {
-  await refreshAuthPill();
-  if (st.key) connect();
+main().catch((e) => {
+  setMsg(msgDevices, e?.message || String(e));
 });
 
-ui.sendDisplay.addEventListener("click", () => sendDisplayCmd(ui.cmdDisplay.value));
-ui.sendHost.addEventListener("click", () => sendHostCmd(ui.cmdHost.value));
-ui.sendBuzzer.addEventListener("click", () => sendBuzzerCmd(ui.cmdBuzzer.value));
-
-ui.buzOn.addEventListener("click", () => sendBuzzerCmd("ON"));
-ui.buzOff.addEventListener("click", () => sendBuzzerCmd("OFF"));
-ui.buzReset.addEventListener("click", () => sendBuzzerCmd("RESET"));
-
-/* ---------- boot ---------- */
-
-window.addEventListener("DOMContentLoaded", async () => {
-  await refreshAuthPill();
-
-  const { id, key } = readUrlParams();
-  if (id) ui.inGameId.value = id;
-  if (key) ui.inKey.value = key;
-
-  if (key) connect();
-});
-
-// debug
-window.__control = { st, connect, refreshDeviceSnapshots, sendDisplayCmd, sendHostCmd, sendBuzzerCmd };
