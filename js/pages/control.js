@@ -1,6 +1,6 @@
 // js/pages/control.js
 import { sb } from "../core/supabase.js";
-import { playSfx, createSfxMixer, listSfx } from "../core/sfx.js";
+import { playSfx, createSfxMixer, listSfx, unlockAudio, isAudioUnlocked } from "../core/sfx.js";
 import { requireAuth, signOut } from "../core/auth.js";
 
 import {
@@ -653,6 +653,23 @@ async function main() {
     applyPresence(res.rows);
     setMsg(msgDevices, "");
   };
+
+  const btnUnlockAudio = document.getElementById("btnUnlockAudio");
+  const audioStatus = document.getElementById("audioStatus");
+  
+  function refreshAudioStatus() {
+    if (!audioStatus) return;
+    audioStatus.textContent = isAudioUnlocked() ? "OK" : "ZABLOKOWANE";
+    audioStatus.className = "badge " + (isAudioUnlocked() ? "ok" : "bad");
+  }
+  
+  btnUnlockAudio?.addEventListener("click", () => {
+    unlockAudio();
+    playSfx("ui_tick"); // feedback
+    refreshAudioStatus();
+  });
+  
+  refreshAudioStatus();
 
   await tick();
   setInterval(tick, 1500);
