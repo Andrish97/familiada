@@ -30,7 +30,7 @@ export async function startPresence({
     try {
       const { data, error } = await sb().rpc("device_state_get", {
         p_game_id: game.id,
-        p_kind: "display",
+        p_device_type: "display",
         p_key: key,
       });
       if (error) throw error;
