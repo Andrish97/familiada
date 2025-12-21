@@ -17,12 +17,17 @@ export async function startPresence({
   let deviceId = localStorage.getItem(DEVICE_ID_KEY) || "tv";
 
   const ping = async () => {
-    const { error } = await sb().rpc("device_ping", {
+    const { data, error } = await sb().rpc("device_ping", {
       p_game_id: game.id,
-      p_device_type: "display",
+      p_device_type: "display",   // "host" / "buzzer"
       p_key: key,
-      p_device_id: deviceId,
+      p_device_id: deviceId || null,
+      p_meta: {}                  // opcjonalnie
     });
+    if (!error && data?.device_id && !deviceId) {
+      deviceId = data.device_id;
+      localStorage.setItem("familiada:deviceId:display", deviceId);
+    }
     if (error && debug) console.warn("[display] ping failed", error);
   };
 
