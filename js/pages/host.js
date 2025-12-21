@@ -14,7 +14,7 @@ const fsIco = document.getElementById("fsIco");
 let hidden = false;
 let lastText = "";
 
-// ===== fullscreen =====
+// ---------- fullscreen ----------
 function setFullscreenIcon() {
   fsIco.textContent = document.fullscreenElement ? "▢" : "⧉";
 }
@@ -26,7 +26,7 @@ async function toggleFullscreen() {
   setFullscreenIcon();
 }
 
-// ===== hide/reveal =====
+// ---------- state + UI ----------
 function setHidden(on) {
   hidden = !!on;
   blank.hidden = !hidden;
@@ -34,6 +34,8 @@ function setHidden(on) {
   hint.textContent = hidden
     ? "Podwójne dotknięcie aby odsłonić"
     : "Podwójne dotknięcie aby zasłonić";
+
+  if (!hidden) paperText.textContent = lastText;
 }
 
 function setText(t) {
@@ -46,7 +48,44 @@ function clearText() {
   if (!hidden) paperText.textContent = "";
 }
 
-// ===== double tap / dblclick =====
+async function persistHostState() {
+  if (!gameId || !key) return;
+  try {
+    await sb().rpc("device_state_set_public", {
+      p_game_id: gameId,
+      p_kind: "host",
+      p_key: key,
+      p_patch: { hidden, text: lastText },
+    });
+  } catch {}
+}
+
+async function restoreFromSnapshot() {
+  if (!gameId || !key) return;
+  try {
+    const { data, error } = await sb().rpc("device_state_get", {
+      p_game_id: gameId,
+      p_kind: "host",
+      p_key: key,
+    });
+    if (error) throw error;
+
+    const s = data || {};
+    // snapshot może być pusty
+    const snapHidden = !!s.hidden;
+    const snapText = typeof s.text === "string" ? s.text : "";
+
+    // najpierw tekst, potem hidden (żeby odsłonięcie pokazało treść)
+    setText(snapText);
+    setHidden(snapHidden);
+  } catch {
+    // jak nie ma snapshotu – start “odsłonięty, pusto”
+    setText("");
+    setHidden(false);
+  }
+}
+
+// ---------- double tap / double click ----------
 const DOUBLE_MS = 320;
 let lastTapAt = 0;
 
@@ -55,13 +94,9 @@ function yOK(y) {
   return y > 70 && y < h - 70;
 }
 
-function toggleCover() {
-  if (hidden) {
-    setHidden(false);
-    paperText.textContent = lastText;
-  } else {
-    setHidden(true);
-  }
+async function toggleCover() {
+  setHidden(!hidden);
+  await persistHostState();
 }
 
 function handleTap(y) {
@@ -76,74 +111,85 @@ function handleTap(y) {
   }
 }
 
-document.addEventListener("touchstart", (e) => {
-  if (e.touches && e.touches.length > 1) { e.preventDefault(); return; }
-  const y = e.touches?.[0]?.clientY ?? 0;
-  handleTap(y);
-}, { passive: false });
+// touch: ignoruj multi-touch (pinch)
+document.addEventListener(
+  "touchstart",
+  (e) => {
+    if (e.touches && e.touches.length > 1) {
+      e.preventDefault();
+      return;
+    }
+    const y = e.touches?.[0]?.clientY ?? 0;
+    handleTap(y);
+  },
+  { passive: false }
+);
 
+// desktop: double click
 document.addEventListener("dblclick", (e) => handleTap(e.clientY));
-document.addEventListener("wheel", (e) => { if (e.ctrlKey) e.preventDefault(); }, { passive: false });
 
-// ===== realtime commands =====
-let ch = null;
-function ensureChannel() {
-  if (ch) return ch;
-  ch = sb()
-    .channel(`familiada-host:${gameId}`)
-    .on("broadcast", { event: "HOST_CMD" }, (msg) => handleCmd(msg?.payload?.line))
-    .subscribe();
-  return ch;
+// blokuj ctrl+scroll zoom (desktop)
+document.addEventListener(
+  "wheel",
+  (e) => {
+    if (e.ctrlKey) e.preventDefault();
+  },
+  { passive: false }
+);
+
+// ---------- commands from control ----------
+function norm(s) {
+  return String(s ?? "").trim();
 }
 
-function norm(s) { return String(s ?? "").trim(); }
-
-function handleCmd(lineRaw) {
+async function handleCmd(lineRaw) {
   const line = norm(lineRaw);
   const up = line.toUpperCase();
 
-  if (up === "OFF") { setHidden(true); return; }
-  if (up === "ON")  { setHidden(false); paperText.textContent = lastText; return; }
+  if (up === "OFF") {
+    setHidden(true);
+    await persistHostState();
+    return;
+  }
+  if (up === "ON") {
+    setHidden(false);
+    await persistHostState();
+    return;
+  }
 
   if (/^SET\b/i.test(line)) {
     const m = line.match(/^SET\s+"([\s\S]*)"\s*$/i);
     const text = m ? m[1] : line.replace(/^SET\s+/i, "");
     setText(text);
+    await persistHostState();
     return;
   }
 
   if (up === "CLEAR") {
     clearText();
+    await persistHostState();
     return;
   }
 }
 
-// ===== presence + snapshot =====
-async function ping() {
-  try {
-    await sb().rpc("device_ping_v2", { p_game_id: gameId, p_kind: "host", p_key: key });
-  } catch {}
+// ---------- realtime channel ----------
+let ch = null;
+function ensureChannel() {
+  if (ch) return ch;
+  ch = sb()
+    .channel(`familiada-host:${gameId}`)
+    .on("broadcast", { event: "HOST_CMD" }, (msg) => {
+      handleCmd(msg?.payload?.line);
+    })
+    .subscribe();
+  return ch;
 }
 
-async function loadSnapshotOrHide() {
+// ---------- ping ----------
+async function ping() {
   try {
-    const { data, error } = await sb().rpc("get_public_snapshot_v2", {
-      p_game_id: gameId,
-      p_kind: "host",
-      p_key: key,
-    });
-    if (error) throw error;
-
-    const devices = data?.devices || {};
-    const h = !!devices?.host_hidden;
-    const t = String(devices?.host_text ?? "");
-
-    setHidden(h);
-    setText(t);
-    if (h) paperText.textContent = ""; // zakryte => nie pokazuj
-  } catch {
-    setHidden(true);
-  }
+    await sb().rpc("device_ping", { p_game_id: gameId, p_kind: "host", p_key: key });
+  } catch {}
 }
 
 btnFS.addEventListener("click", toggleFullscreen);
@@ -154,15 +200,18 @@ document.addEventListener("DOMContentLoaded", async () => {
   paperText.textContent = "";
 
   if (!gameId || !key) {
+    // brak paramów => zasłonięte
+    setText("");
     setHidden(true);
     return;
   }
 
-  await loadSnapshotOrHide();
+  await restoreFromSnapshot();
   ensureChannel();
 
-  await ping();
+  ping();
   setInterval(ping, 5000);
 });
 
-window.__host = { setHidden, setText, clearText, handleCmd };
+// debug
+window.__host = { setHidden, setText, clearText, handleCmd, persistHostState };
