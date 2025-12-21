@@ -126,11 +126,11 @@ async function ensureAuthOrRedirect() {
 async function loadGameOrThrow() {
   if (!gameId) throw new Error("Brak ?id w URL.");
 
-  const { data, error } = await sb()
-    .from("games")
-    .select("id,name,type,status,share_key_display,share_key_host,share_key_control,share_key_poll")
-    .eq("id", gameId)
-    .maybeSingle();
+const { data, error } = await sb()
+  .from("games")
+  .select("id,name,type,status,share_key_display,share_key_host,share_key_buzzer,share_key_control,share_key_poll")
+  .eq("id", gameId)
+  .maybeSingle();
 
   if (error) throw error;
   if (!data?.id) throw new Error("Gra nie istnieje albo brak uprawnień.");
@@ -216,29 +216,36 @@ async function sendCmd(target, line) {
 }
 
 function fillLinks() {
-  // GH Pages: https://andrish97.github.io/familiada/...
   const displayUrl = makeUrl("/familiada/display/index.html", game.id, game.share_key_display);
-  const hostUrl = makeUrl("/familiada/host.html", game.id, game.share_key_host);
+  const hostUrl    = makeUrl("/familiada/host.html", game.id, game.share_key_host);
 
-  // buzzer key: na razie host key (dopóki nie dodasz share_key_buzzer w games)
-  const buzzerUrl = makeUrl("/familiada/buzzer.html", game.id, game.share_key_host);
+  const buzKey = game.share_key_buzzer;
+  const buzzerUrl = makeUrl("/familiada/buzzer.html", game.id, buzKey || "");
 
-  if (displayLink) displayLink.value = displayUrl;
-  if (hostLink) hostLink.value = hostUrl;
-  if (buzzerLink) buzzerLink.value = buzzerUrl;
+  displayLink && (displayLink.value = displayUrl);
+  hostLink    && (hostLink.value = hostUrl);
+  buzzerLink  && (buzzerLink.value = buzzerUrl);
 
-  if (btnOpenDisplay) btnOpenDisplay.onclick = () => window.open(displayUrl, "_blank");
-  if (btnOpenHost) btnOpenHost.onclick = () => window.open(hostUrl, "_blank");
-  if (btnOpenBuzzer) btnOpenBuzzer.onclick = () => window.open(buzzerUrl, "_blank");
+  btnOpenDisplay && (btnOpenDisplay.onclick = () => window.open(displayUrl, "_blank"));
+  btnOpenHost    && (btnOpenHost.onclick = () => window.open(hostUrl, "_blank"));
 
-  if (btnCopyDisplay) btnCopyDisplay.onclick = async () =>
-    setMsg(msgDevices, (await copyToClipboard(displayUrl)) ? "Skopiowano link display." : "Nie mogę skopiować.");
+  btnOpenBuzzer && (btnOpenBuzzer.onclick = () => {
+    if (!buzKey) return setMsg(msgDevices, "Brak share_key_buzzer w tej grze.");
+    window.open(buzzerUrl, "_blank");
+  });
 
-  if (btnCopyHost) btnCopyHost.onclick = async () =>
-    setMsg(msgDevices, (await copyToClipboard(hostUrl)) ? "Skopiowano link host." : "Nie mogę skopiować.");
+  btnCopyDisplay && (btnCopyDisplay.onclick = async () =>
+    setMsg(msgDevices, (await copyToClipboard(displayUrl)) ? "Skopiowano link display." : "Nie mogę skopiować.")
+  );
 
-  if (btnCopyBuzzer) btnCopyBuzzer.onclick = async () =>
+  btnCopyHost && (btnCopyHost.onclick = async () =>
+    setMsg(msgDevices, (await copyToClipboard(hostUrl)) ? "Skopiowano link host." : "Nie mogę skopiować.")
+  );
+
+  btnCopyBuzzer && (btnCopyBuzzer.onclick = async () => {
+    if (!buzKey) return setMsg(msgDevices, "Brak share_key_buzzer w tej grze.");
     setMsg(msgDevices, (await copyToClipboard(buzzerUrl)) ? "Skopiowano link buzzer." : "Nie mogę skopiować.");
+  });
 }
 
 // resend
