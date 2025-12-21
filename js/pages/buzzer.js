@@ -155,6 +155,7 @@ async function press(team) {
 
   await sendClick(team);
 }
+e.preventDefault
 
 btnA.addEventListener("touchstart", (e) => press("A", e), { passive: false });
 btnB.addEventListener("touchstart", (e) => press("B", e), { passive: false });
