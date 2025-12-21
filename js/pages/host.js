@@ -1,3 +1,4 @@
+// js/pages/host.js
 import { sb } from "../core/supabase.js";
 
 const qs = new URLSearchParams(location.search);
@@ -7,19 +8,24 @@ const key = qs.get("key");
 const paperText = document.getElementById("paperText");
 const hint = document.getElementById("hint");
 const blank = document.getElementById("blank");
+
 const btnFS = document.getElementById("btnFS");
 const fsIco = document.getElementById("fsIco");
 
+// device id (żeby presence było stabilne)
 const DEVICE_ID_KEY = "familiada:deviceId:host";
 let deviceId = localStorage.getItem(DEVICE_ID_KEY) || "tablet";
 
+// stan
 let hidden = false;
 let lastText = "";
 
-// fullscreen
+// ===== fullscreen =====
 function setFullscreenIcon() {
-  if (fsIco) fsIco.textContent = document.fullscreenElement ? "▢" : "⧉";
+  if (!fsIco) return;
+  fsIco.textContent = document.fullscreenElement ? "▢" : "⧉";
 }
+
 async function toggleFullscreen() {
   try {
     if (!document.fullscreenElement) await document.documentElement.requestFullscreen();
@@ -28,23 +34,31 @@ async function toggleFullscreen() {
   setFullscreenIcon();
 }
 
-// UI state
+// ===== UI =====
 function setHidden(on) {
   hidden = !!on;
-  if (blank) blank.classList.toggle("hidden", !hidden);
-  if (hint) hint.textContent = hidden ? "Podwójne dotknięcie aby odsłonić" : "Podwójne dotknięcie aby zasłonić";
+  if (blank) blank.hidden = !hidden;
+
+  if (hint) {
+    hint.textContent = hidden
+      ? "Podwójne dotknięcie aby odsłonić"
+      : "Podwójne dotknięcie aby zasłonić";
+  }
+
   if (!hidden && paperText) paperText.textContent = lastText;
 }
+
 function setText(t) {
   lastText = String(t ?? "");
   if (!hidden && paperText) paperText.textContent = lastText;
 }
+
 function clearText() {
   lastText = "";
   if (!hidden && paperText) paperText.textContent = "";
 }
 
-// snapshot
+// ===== snapshot (opcjonalny, ale polecam) =====
 async function persistHostState() {
   if (!gameId || !key) return;
   try {
@@ -60,13 +74,15 @@ async function persistHostState() {
 async function restoreFromSnapshot() {
   if (!gameId || !key) return;
   try {
-    const { data } = await sb().rpc("device_state_get", {
+    const { data, error } = await sb().rpc("device_state_get", {
       p_game_id: gameId,
       p_kind: "host",
       p_key: key,
     });
+    if (error) throw error;
 
     const s = data || {};
+    // najpierw tekst, potem ukrycie (żeby odsłonięcie pokazało treść)
     setText(typeof s.text === "string" ? s.text : "");
     setHidden(!!s.hidden);
   } catch {
@@ -75,15 +91,73 @@ async function restoreFromSnapshot() {
   }
 }
 
-// commands
-function norm(s) { return String(s ?? "").trim(); }
+// ===== double tap / double click =====
+const DOUBLE_MS = 320;
+let lastTapAt = 0;
+
+function yOK(y) {
+  const h = window.innerHeight || 1;
+  return y > 70 && y < h - 70;
+}
+
+async function toggleCover() {
+  setHidden(!hidden);
+  await persistHostState();
+}
+
+function handleTap(y) {
+  if (!yOK(y)) return;
+  const now = Date.now();
+  if (now - lastTapAt <= DOUBLE_MS) {
+    lastTapAt = 0;
+    toggleCover();
+  } else {
+    lastTapAt = now;
+  }
+}
+
+document.addEventListener(
+  "touchstart",
+  (e) => {
+    if (e.touches && e.touches.length > 1) {
+      e.preventDefault();
+      return;
+    }
+    const y = e.touches?.[0]?.clientY ?? 0;
+    handleTap(y);
+  },
+  { passive: false }
+);
+
+document.addEventListener("dblclick", (e) => handleTap(e.clientY));
+
+document.addEventListener(
+  "wheel",
+  (e) => {
+    if (e.ctrlKey) e.preventDefault();
+  },
+  { passive: false }
+);
+
+// ===== komendy z controla =====
+function norm(s) {
+  return String(s ?? "").trim();
+}
 
 async function handleCmd(lineRaw) {
   const line = norm(lineRaw);
   const up = line.toUpperCase();
 
-  if (up === "OFF") { setHidden(true); await persistHostState(); return; }
-  if (up === "ON")  { setHidden(false); await persistHostState(); return; }
+  if (up === "OFF") {
+    setHidden(true);
+    await persistHostState();
+    return;
+  }
+  if (up === "ON") {
+    setHidden(false);
+    await persistHostState();
+    return;
+  }
 
   if (/^SET\b/i.test(line)) {
     const m = line.match(/^SET\s+"([\s\S]*)"\s*$/i);
@@ -96,21 +170,24 @@ async function handleCmd(lineRaw) {
   if (up === "CLEAR") {
     clearText();
     await persistHostState();
+    return;
   }
 }
 
-// realtime
+// ===== realtime =====
 let ch = null;
 function ensureChannel() {
   if (ch) return ch;
   ch = sb()
     .channel(`familiada-host:${gameId}`)
-    .on("broadcast", { event: "HOST_CMD" }, (msg) => handleCmd(msg?.payload?.line))
+    .on("broadcast", { event: "HOST_CMD" }, (msg) => {
+      handleCmd(msg?.payload?.line);
+    })
     .subscribe();
   return ch;
 }
 
-// presence ping
+// ===== presence ping =====
 async function ping() {
   try {
     await sb().rpc("device_ping", {
@@ -122,39 +199,22 @@ async function ping() {
   } catch {}
 }
 
-// double tap hide/reveal
-const DOUBLE_MS = 320;
-let lastTapAt = 0;
-
-function yOK(y) {
-  const h = window.innerHeight || 1;
-  return y > 70 && y < h - 70;
-}
-async function toggleCover() {
-  setHidden(!hidden);
-  await persistHostState();
-}
-function handleTap(y) {
-  if (!yOK(y)) return;
-  const now = Date.now();
-  if (now - lastTapAt <= DOUBLE_MS) { lastTapAt = 0; toggleCover(); }
-  else lastTapAt = now;
-}
-
-document.addEventListener("touchstart", (e) => {
-  if (e.touches && e.touches.length > 1) { e.preventDefault(); return; }
-  handleTap(e.touches?.[0]?.clientY ?? 0);
-}, { passive:false });
-
-document.addEventListener("dblclick", (e) => handleTap(e.clientY));
-document.addEventListener("wheel", (e) => { if (e.ctrlKey) e.preventDefault(); }, { passive:false });
-
+// ===== boot =====
 btnFS?.addEventListener("click", toggleFullscreen);
 document.addEventListener("fullscreenchange", setFullscreenIcon);
 
 document.addEventListener("DOMContentLoaded", async () => {
   setFullscreenIcon();
-  if (!gameId || !key) { setText(""); setHidden(true); return; }
+
+  if (!paperText || !blank || !hint) {
+    console.warn("[host] Brak wymaganych elementów DOM (paperText/hint/blank).");
+  }
+
+  if (!gameId || !key) {
+    setText("");
+    setHidden(true);
+    return;
+  }
 
   await restoreFromSnapshot();
   ensureChannel();
@@ -163,4 +223,5 @@ document.addEventListener("DOMContentLoaded", async () => {
   setInterval(ping, 5000);
 });
 
+// debug
 window.__host = { setHidden, setText, clearText, handleCmd };
