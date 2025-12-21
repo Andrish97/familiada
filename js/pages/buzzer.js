@@ -101,7 +101,8 @@ let ch = null;
 
 function ensureChannel() {
   if (ch) return ch;
-  ch = sb().channel(`familiada-buzzer:${gameId}`)
+  ch = sb()
+    .channel(`familiada-buzzer:${gameId}`)
     .on("broadcast", { event: "BUZZER_CMD" }, (msg) => {
       const line = String(msg?.payload?.line ?? "").trim();
       handleCmd(line);
@@ -112,13 +113,25 @@ function ensureChannel() {
 
 async function ping() {
   try {
-    await sb().rpc("public_ping", { p_game_id: gameId, p_kind: "buzzer", p_key: key });
+    await sb().rpc("device_ping", { p_game_id: gameId, p_kind: "buzzer", p_key: key });
   } catch {}
 }
 
+async function loadSnapshot() {
+  try {
+    const { data } = await sb().rpc("get_device_snapshot", {
+      p_game_id: gameId,
+      p_kind: "buzzer",
+      p_key: key,
+    });
+    const mode = data?.devices?.buzzer_mode;
+    if (mode) show(String(mode).toUpperCase());
+  } catch {
+    // jak snapshot padnie, zostaw OFF
+  }
+}
+
 async function sendClick(team) {
-  // docelowo możesz to podpiąć do RPC buzzer_press,
-  // a na razie broadcast do control jest OK do testów
   try {
     const ctl = sb().channel(`familiada-control:${gameId}`).subscribe();
     await ctl.send({
@@ -129,6 +142,37 @@ async function sendClick(team) {
     sb().removeChannel(ctl);
   } catch {}
 }
+
+// ---------- input ----------
+async function press(team, e) {
+  if (e?.preventDefault) e.preventDefault();
+  if (cur !== STATE.ON) return;
+
+  show(team === "A" ? STATE.PUSHED_A : STATE.PUSHED_B);
+  await sendClick(team);
+}
+
+btnA.addEventListener("touchstart", (e) => press("A", e), { passive: false });
+btnB.addEventListener("touchstart", (e) => press("B", e), { passive: false });
+btnA.addEventListener("click", (e) => press("A", e));
+btnB.addEventListener("click", (e) => press("B", e));
+
+document.addEventListener("DOMContentLoaded", async () => {
+  setFullscreenIcon();
+
+  if (!gameId || !key) {
+    show(STATE.OFF);
+    return;
+  }
+
+  show(STATE.OFF);
+  ensureChannel();
+
+  await loadSnapshot();  // <-- ODTWÓRZ stan po odświeżeniu
+
+  ping();
+  setInterval(ping, 5000);
+});
 
 // ---------- commands ----------
 function norm(line){
@@ -145,22 +189,6 @@ function handleCmd(lineRaw) {
   if (line === "PUSHED A" || line === "PUSHED_A") { show(STATE.PUSHED_A); return; }
   if (line === "PUSHED B" || line === "PUSHED_B") { show(STATE.PUSHED_B); return; }
 }
-
-// ---------- input ----------
-async function press(team) {
-  if (cur !== STATE.ON) return;
-
-  // natychmiast lokalnie
-  show(team === "A" ? STATE.PUSHED_A : STATE.PUSHED_B);
-
-  await sendClick(team);
-}
-e.preventDefault
-
-btnA.addEventListener("touchstart", (e) => press("A", e), { passive: false });
-btnB.addEventListener("touchstart", (e) => press("B", e), { passive: false });
-btnA.addEventListener("click", () => press("A"));
-btnB.addEventListener("click", () => press("B"));
 
 // fullscreen
 btnFS.addEventListener("click", async () => {
