@@ -7,15 +7,22 @@ const key = qs.get("key");
 
 const $ = (id) => document.getElementById(id);
 
-const msg = $("msg");
-const title = $("title");
-const qText = $("qText");
-const answersBox = $("answers");
-const btnNext = $("btnNext");
+const titleEl = $("title");
+const subEl = $("sub");
 
-function setMsg(t) {
-  if (!msg) return;
-  msg.textContent = t || "";
+const qbox = $("qbox");
+const qtext = $("qtext");
+const alist = $("alist");
+const prog = $("prog");
+const closed = $("closed");
+
+function setSub(t) {
+  if (subEl) subEl.textContent = t || "";
+}
+
+function showClosed(on) {
+  if (closed) closed.style.display = on ? "" : "none";
+  if (qbox) qbox.style.display = on ? "none" : "";
 }
 
 function getVoterToken() {
@@ -28,22 +35,24 @@ function getVoterToken() {
   return t;
 }
 
-function withTimeout(promiseLike, ms, errMsg) {
+async function withTimeout(promiseLike, ms, errMsg) {
   const p = Promise.resolve(promiseLike);
-  let to = null;
 
+  let timer = null;
   const timeout = new Promise((_, rej) => {
-    to = setTimeout(() => rej(new Error(errMsg || "Timeout")), ms);
+    timer = setTimeout(() => rej(new Error(errMsg || "Timeout")), ms);
   });
 
-  return Promise.race([p, timeout]).finally(() => {
-    if (to) clearTimeout(to);
-  });
+  try {
+    return await Promise.race([p, timeout]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
 }
 
 async function loadPayload() {
   const req = sb().rpc("poll_get_payload", { p_game_id: gameId, p_key: key });
-  const { data, error } = await withTimeout(req, 12000, "Nie można pobrać pytań (timeout).");
+  const { data, error } = await withTimeout(req, 15000, "Nie można pobrać pytań (timeout).");
   if (error) throw error;
   return data;
 }
@@ -65,84 +74,91 @@ async function vote(questionId, answerId) {
 let payload = null;
 let idx = 0;
 
-function renderQuestion() {
-  if (!payload) return;
-
-  const questions = payload.questions || [];
+function render() {
+  const game = payload?.game || {};
+  const questions = payload?.questions || [];
   const q = questions[idx];
 
-  if (!q) {
-    if (qText) qText.textContent = "Dziękujemy!";
-    if (answersBox) answersBox.innerHTML = "";
-    if (btnNext) btnNext.disabled = true;
-    setMsg("Oddałeś głosy na wszystkie pytania.");
+  if (titleEl) titleEl.textContent = game.name || "Sondaż";
+
+  if (game.status !== "poll_open") {
+    showClosed(true);
+    setSub("Sondaż jest zamknięty.");
     return;
   }
 
-  if (title) title.textContent = payload.game?.name || "Sondaż";
-  if (qText) qText.textContent = `P${q.ord}: ${q.text}`;
+  showClosed(false);
 
-  if (answersBox) {
-    answersBox.innerHTML = "";
-    const ans = q.answers || [];
+  if (!q) {
+    if (qtext) qtext.textContent = "Dziękujemy!";
+    if (alist) alist.innerHTML = "";
+    if (prog) prog.textContent = "Koniec";
+    setSub("Dziękujemy za udział.");
+    return;
+  }
 
-    for (const a of ans) {
+  if (qtext) qtext.textContent = q.text || "—";
+  if (prog) prog.textContent = `Pytanie ${q.ord}/${questions.length}`;
+  setSub("");
+
+  if (alist) {
+    alist.innerHTML = "";
+    const answers = q.answers || [];
+
+    for (const a of answers) {
       const b = document.createElement("button");
       b.type = "button";
-      b.className = "ansBtn";
+      b.className = "btn full"; // dostosuj do CSS jeśli masz inną klasę
       b.textContent = a.text || `ODP ${a.ord}`;
 
       b.addEventListener("click", async () => {
         try {
-          b.disabled = true;
-          setMsg("Zapisuję głos…");
+          // zablokuj cały panel na czas zapisu
+          [...alist.querySelectorAll("button")].forEach(x => (x.disabled = true));
+          setSub("Zapisuję głos…");
+
           await vote(q.id, a.id);
-          setMsg("Zapisano. Następne pytanie.");
+
           idx++;
-          renderQuestion();
+          render();
         } catch (e) {
           console.error("[poll-points] vote error:", e);
-          setMsg(`Błąd: ${e?.message || e}`);
-          b.disabled = false;
+          setSub(`Błąd: ${e?.message || e}`);
+          // odblokuj
+          [...alist.querySelectorAll("button")].forEach(x => (x.disabled = false));
         }
       });
 
-      answersBox.appendChild(b);
+      alist.appendChild(b);
     }
-  }
-
-  if (btnNext) {
-    btnNext.disabled = false;
-    btnNext.textContent = "Pomiń";
   }
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
   try {
     if (!gameId || !key) {
-      setMsg("Brak parametru id lub key.");
+      setSub("Brak parametru id lub key.");
+      showClosed(true);
       return;
     }
 
-    setMsg("Ładuję…");
+    setSub("Ładuję…");
+    showClosed(false);
+
     payload = await loadPayload();
 
-    if ((payload.game?.type || "") !== "poll_points") {
-      setMsg("To nie jest sondaż punktacji.");
+    if ((payload?.game?.type || "") !== "poll_points") {
+      setSub("To nie jest sondaż punktacji.");
+      showClosed(true);
       return;
     }
 
     idx = 0;
-    renderQuestion();
-
-    btnNext?.addEventListener("click", () => {
-      idx++;
-      renderQuestion();
-    });
-
-    setMsg("");
+    render();
   } catch (e) {
     console.error("[poll-points] init error:", e);
-    setMsg(`Nie można otworzyć sondażu: ${e?.message || e}`);
+    setSub(`Nie można otworzyć sondażu: ${e?.message || e}`);
+    showClosed(true);
   }
 });
+
