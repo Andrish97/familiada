@@ -189,7 +189,9 @@ async function createGame(uiType) {
       owner_id: currentUser.id,
       type: uiType,
       status: STATUS.DRAFT,
-    })
+      },
+      { defaultToNull: false }
+    )
     .select("id,name,type,status")
     .single();
 
@@ -213,7 +215,9 @@ async function createGame(uiType) {
         owner_id: currentUser.id,
         type: dbType,
         status: STATUS.DRAFT,
-      })
+      },
+      { defaultToNull: false }
+    )
       .select("id,name,type,status")
       .single();
 
