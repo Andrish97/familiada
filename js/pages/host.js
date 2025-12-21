@@ -131,13 +131,33 @@ function ensureChannel(){
 
 // ping (opcjonalnie)
 async function ping(){
-  try { await sb().rpc("public_ping", { p_game_id: gameId, p_kind:"host", p_key:key }); } catch {}
+  try { await sb().rpc("device_ping", { p_game_id: gameId, p_kind:"host", p_key:key }); } catch {}
 }
 
-btnFS.addEventListener("click", toggleFullscreen);
-document.addEventListener("fullscreenchange", setFullscreenIcon);
+async function loadSnapshot(){
+  try{
+    const { data } = await sb().rpc("get_device_snapshot", {
+      p_game_id: gameId,
+      p_kind: "host",
+      p_key: key,
+    });
 
-document.addEventListener("DOMContentLoaded", ()=>{
+    const d = data?.devices || {};
+    setHidden(!!d.host_hidden);
+    if (!d.host_hidden) {
+      lastText = String(d.host_text ?? "");
+      paperText.textContent = lastText;
+    } else {
+      lastText = String(d.host_text ?? "");
+      paperText.textContent = "";
+    }
+    hint.textContent = String(d.host_hint ?? hint.textContent);
+  } catch {
+    // jak snapshot padnie: zostaw jak jest
+  }
+}
+
+document.addEventListener("DOMContentLoaded", async ()=>{
   setFullscreenIcon();
   paperText.textContent = "";
 
@@ -148,6 +168,8 @@ document.addEventListener("DOMContentLoaded", ()=>{
 
   setHidden(false);
   ensureChannel();
+
+  await loadSnapshot();  // <-- ODTWÓRZ stan po odświeżeniu
 
   ping();
   setInterval(ping, 5000);
