@@ -28,7 +28,6 @@ window.addEventListener("DOMContentLoaded", async () => {
   };
 
   try {
-    // 1) QR controller
     const qr = createQRController({
       qrScreen,
       gameScreen,
@@ -36,20 +35,14 @@ window.addEventListener("DOMContentLoaded", async () => {
       buzzerImg: $("qrBuzzerImg"),
     });
 
-    // 2) scena gry
     const scene = await createScene();
 
-    // 3) app (router ekranów)
     const app = {
       mode: APP_MODES.BLACK,
       setMode(m) {
         let mm = (m ?? "").toString().toUpperCase();
         if (mm === "BLACK") mm = APP_MODES.BLACK;
-
-        if (!Object.values(APP_MODES).includes(mm)) {
-          throw new Error("Mode musi być BLACK_SCREEN / GRA / QR");
-        }
-
+        if (!Object.values(APP_MODES).includes(mm)) throw new Error("Mode musi być BLACK_SCREEN / GRA / QR");
         this.mode = mm;
 
         blackScreen?.classList.add("hidden");
@@ -60,69 +53,57 @@ window.addEventListener("DOMContentLoaded", async () => {
         if (mm === APP_MODES.QR) return qrScreen?.classList.remove("hidden");
         return gameScreen?.classList.remove("hidden");
       },
-
       qr,
       scene,
-
-      // uzupełnimy po auth w presence:
       game: null,
       gameId: null,
     };
 
-    // 4) komendy (router global + scena)
     const handleCommand = createCommandHandler(app);
 
     window.app = app;
     window.scene = scene;
     window.handleCommand = handleCommand;
 
-    // flagi, żeby snapshot nie “walczył” z init
-    let snapshotApplied = false;
-
-    // 5) AUTH + snapshot + ping + realtime commands
     const pres = await startPresence({
       pingMs: 5000,
       debug: true,
-
       onCommand: (line) => handleCommand(line),
 
-      onSnapshot: (devices) => {
-        snapshotApplied = true;
-
-        // 1) global APP mode
-        // preferujemy display_app_mode, ale wspieramy też stare display_mode
-        let mode = String(devices?.display_app_mode ?? devices?.display_mode ?? "BLACK_SCREEN")
-          .toUpperCase();
-
-        if (mode === "BLACK") mode = "BLACK_SCREEN";
-
+      // SNAPSHOT z device_state.state
+      onSnapshot: async (st) => {
+        const mode = String(st?.app_mode ?? "BLACK").toUpperCase();
         if (mode === "GRA") app.setMode("GRA");
         else if (mode === "QR") app.setMode("QR");
         else app.setMode("BLACK_SCREEN");
 
-        // 2) najprościej: odtwórz ostatnią komendę (np. MODE LOGO / RBATCH / QR HOST...)
-        const lastCmd = String(devices?.display_last_cmd ?? "").trim();
-        if (lastCmd) {
-          try { handleCommand(lastCmd); } catch {}
-          return;
+        // QR linki (jeśli trzymasz je w state)
+        if (st?.qr?.host)  try { handleCommand(`QR HOST "${st.qr.host}" BUZZER "${st.qr.buzzer || ""}"`); } catch {}
+        if (mode === "QR") {
+          // w QR i tak komenda QR HOST/BUZZER robi robotę, ale zostawiamy.
         }
 
-        // 3) fallback: scena, jeśli trzymasz osobno
-        const sceneMode = String(devices?.display_scene ?? "LOGO").toUpperCase();
-        try { handleCommand(`MODE ${sceneMode}`); } catch {}
+        // scena (tylko gdy GRA)
+        const sceneMode = String(st?.scene ?? "LOGO").toUpperCase();
+        if (mode === "GRA") {
+          try { handleCommand(`MODE ${sceneMode}`); } catch {}
+        }
+
+        // ostatnia “komenda budująca ekran”
+        const last = String(st?.last_cmd ?? "");
+        if (last) {
+          try { handleCommand(last); } catch {}
+        }
       },
     });
 
-    // wpisz info o grze do app
     app.game = pres.game;
     app.gameId = pres.game.id;
 
-    // jeśli snapshot nie przyszedł (np. RPC padło w połowie), daj bezpieczny start
-    if (!snapshotApplied) {
-      app.setMode("BLACK_SCREEN");
-    }
+    // Jeżeli control jeszcze nic nie zapisał do device_state, startuj na czarno
+    app.setMode("BLACK_SCREEN");
 
-    console.log("Display OK. Game:", pres.game.name, pres.game.id);
+    console.log("Display OK:", pres.game.name, pres.game.id);
   } catch (e) {
     showBlack(e?.message || String(e));
   }
