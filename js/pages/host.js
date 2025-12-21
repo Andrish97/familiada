@@ -191,10 +191,11 @@ function ensureChannel() {
 async function ping() {
   try {
     await sb().rpc("device_ping", {
-      p_game_id: gameId,
-      p_device_type: "host",
+      p_game_id: game.id,
+      p_device_type: "host",   // "buzzer" / "display"
       p_key: key,
-      p_device_id: deviceId,
+      p_device_id: deviceId || null,
+      p_meta: {}
     });
   } catch {}
 }
