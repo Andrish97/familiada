@@ -28,31 +28,17 @@ function getVoterToken() {
   return t;
 }
 
-function asPromise(x) {
-  return Promise.resolve(x);
-}
-
-function withTimeout(promiseLike, ms, label) {
-  const p = asPromise(promiseLike);
+function withTimeout(promiseLike, ms, errMsg) {
+  const p = Promise.resolve(promiseLike);
   let to = null;
 
-  const t = new Promise((_, rej) => {
-    to = setTimeout(() => rej(new Error(label)), ms);
+  const timeout = new Promise((_, rej) => {
+    to = setTimeout(() => rej(new Error(errMsg || "Timeout")), ms);
   });
 
-  return Promise.race([
-    p.then(
-      (v) => {
-        clearTimeout(to);
-        return v;
-      },
-      (e) => {
-        clearTimeout(to);
-        throw e;
-      }
-    ),
-    t,
-  ]);
+  return Promise.race([p, timeout]).finally(() => {
+    if (to) clearTimeout(to);
+  });
 }
 
 async function loadPayload() {
@@ -80,7 +66,9 @@ let payload = null;
 let idx = 0;
 
 function renderQuestion() {
-  const questions = payload?.questions || [];
+  if (!payload) return;
+
+  const questions = payload.questions || [];
   const q = questions[idx];
 
   if (!q) {
@@ -91,12 +79,14 @@ function renderQuestion() {
     return;
   }
 
-  if (title) title.textContent = payload?.game?.name || "Sondaż";
+  if (title) title.textContent = payload.game?.name || "Sondaż";
   if (qText) qText.textContent = `P${q.ord}: ${q.text}`;
 
   if (answersBox) {
     answersBox.innerHTML = "";
-    for (const a of (q.answers || [])) {
+    const ans = q.answers || [];
+
+    for (const a of ans) {
       const b = document.createElement("button");
       b.type = "button";
       b.className = "ansBtn";
@@ -137,22 +127,22 @@ document.addEventListener("DOMContentLoaded", async () => {
     setMsg("Ładuję…");
     payload = await loadPayload();
 
-    if ((payload?.game?.type || "") !== "poll_points") {
+    if ((payload.game?.type || "") !== "poll_points") {
       setMsg("To nie jest sondaż punktacji.");
       return;
     }
 
     idx = 0;
     renderQuestion();
-    setMsg("");
 
     btnNext?.addEventListener("click", () => {
       idx++;
       renderQuestion();
     });
+
+    setMsg("");
   } catch (e) {
     console.error("[poll-points] init error:", e);
     setMsg(`Nie można otworzyć sondażu: ${e?.message || e}`);
   }
 });
-
