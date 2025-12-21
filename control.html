@@ -107,20 +107,111 @@
       <div class="foot"><div class="msg" id="msgDevices"></div></div>
     </section>
 
-    <!-- ===== COMMANDS ===== -->
+    <!-- ===== COMMANDS / TESTS ===== -->
     <section class="panel" data-panel="cmd" style="display:none;">
-      <div class="hint">Ręczne wysyłanie komend realtime (broadcast).</div>
+      <div class="hint">
+        Testy realtime: komendy, host tekst, buzzer stany, odsłuch buzzera, SFX, pytania/odpowiedzi.
+      </div>
 
-      <div class="card">
-        <div class="rowBtns">
-          <select class="inp" id="manualTarget" style="max-width:220px;">
-            <option value="display">display</option>
-            <option value="host">host</option>
-            <option value="buzzer">buzzer</option>
-          </select>
+      <div class="cmdGrid">
+        <!-- manual send -->
+        <div class="card">
+          <div class="name">Ręczna komenda</div>
+          <div class="rowBtns">
+            <select class="inp sel" id="manualTarget">
+              <option value="display">display</option>
+              <option value="host">host</option>
+              <option value="buzzer">buzzer</option>
+            </select>
 
-          <input class="inp" id="manualLine" placeholder='np. MODE LOGO / OFF / SET "..."' />
-          <button class="btn gold" id="btnManualSend" type="button">Wyślij</button>
+            <input class="inp" id="manualLine" placeholder='np. MODE LOGO / OFF / SET "..."' />
+            <button class="btn gold" id="btnManualSend" type="button">Wyślij</button>
+          </div>
+          <div class="mini">
+            <div>Wysyłasz broadcast na kanał urządzenia. Kanały są trzymane stale (bez “REST fallback”).</div>
+          </div>
+        </div>
+
+        <!-- host text -->
+        <div class="card">
+          <div class="name">HOST — tekst z Control</div>
+          <div class="hint">SET podmienia całość. APPEND dokleja na koniec (z nową linią). CLEAR czyści.</div>
+
+          <textarea class="inp ta" id="hostText" rows="6" placeholder="Wpisz tekst dla prowadzącego (może mieć nowe linie)"></textarea>
+
+          <div class="rowBtns">
+            <button class="btn gold" id="btnHostSet" type="button">SET</button>
+            <button class="btn" id="btnHostAppend" type="button">APPEND</button>
+            <button class="btn danger" id="btnHostClear" type="button">CLEAR</button>
+          </div>
+
+          <div class="rowBtns">
+            <button class="btn" id="btnHostOn" type="button">ON</button>
+            <button class="btn" id="btnHostOff" type="button">OFF</button>
+          </div>
+        </div>
+
+        <!-- buzzer states -->
+        <div class="card">
+          <div class="name">BUZZER — stany</div>
+          <div class="hint">Te przyciski wysyłają komendy na buzzer. RESET warto mieć do logiki.</div>
+
+          <div class="rowBtns">
+            <button class="btn" id="btnBuzzOn" type="button">ON</button>
+            <button class="btn" id="btnBuzzOff" type="button">OFF</button>
+            <button class="btn gold" id="btnBuzzReset" type="button">RESET</button>
+          </div>
+
+          <div class="rowBtns">
+            <button class="btn" id="btnBuzzPA" type="button">PUSHED_A</button>
+            <button class="btn" id="btnBuzzPB" type="button">PUSHED_B</button>
+          </div>
+
+          <div class="mini">
+            <div>Odsłuch kliknięć poniżej: <b id="buzzEvtLast">—</b></div>
+          </div>
+        </div>
+
+        <!-- sfx -->
+        <div class="card">
+          <div class="name">SFX tester</div>
+          <div class="hint">Lista do testów. Timer pokazuje sekundy od startu (preferuje audio.currentTime).</div>
+
+          <div class="rowBtns">
+            <select class="inp" id="sfxPick" style="max-width:320px;"></select>
+            <button class="btn gold" id="btnSfxPlay" type="button">PLAY</button>
+            <button class="btn" id="btnSfxStop" type="button">STOP</button>
+            <div class="badge">t: <b id="sfxTime">0.0</b>s</div>
+          </div>
+
+          <div class="mini" id="sfxDebug"></div>
+        </div>
+
+        <!-- questions -->
+        <div class="card" style="grid-column:1/-1;">
+          <div class="name">Pytania / odpowiedzi (podgląd)</div>
+          <div class="hint">
+            Próbuje czytać z tabel <code>questions</code> i <code>answers</code>.
+            Jeśli masz inne nazwy — powiedz jakie, dopasuję bez filozofowania.
+          </div>
+
+          <div class="rowBtns">
+            <select class="inp" id="qPick" style="max-width:520px;"></select>
+            <button class="btn" id="btnQRefresh" type="button">Odśwież</button>
+          </div>
+
+          <div class="qBox" id="qBox"></div>
+          <div class="msg" id="msgQuestions"></div>
+        </div>
+
+        <!-- buzzer evt log -->
+        <div class="card" style="grid-column:1/-1;">
+          <div class="name">Log: BUZZER_EVT (kliknięcia)</div>
+          <div class="hint">Kanał: <code>familiada-control:&lt;gameId&gt;</code>, event: <code>BUZZER_EVT</code></div>
+          <div class="log" id="buzzLog"></div>
+          <div class="rowBtns">
+            <button class="btn" id="btnBuzzLogClear" type="button">Wyczyść log</button>
+          </div>
         </div>
       </div>
 
