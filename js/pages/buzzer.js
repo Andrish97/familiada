@@ -1,192 +1,217 @@
 import { sb } from "../core/supabase.js";
 
-// ===== anti-zoom iOS (zostawiamy) =====
-document.addEventListener("gesturestart", (e) => e.preventDefault(), { passive: false });
-document.addEventListener("gesturechange", (e) => e.preventDefault(), { passive: false });
-document.addEventListener("gestureend", (e) => e.preventDefault(), { passive: false });
-
-let lastTouchEnd = 0;
-document.addEventListener("touchend", (e) => {
-  const now = Date.now();
-  if (now - lastTouchEnd <= 250) e.preventDefault();
-  lastTouchEnd = now;
-}, { passive: false });
-
-document.addEventListener("touchstart", (e) => {
-  if (e.touches && e.touches.length > 1) e.preventDefault();
-}, { passive: false });
-document.addEventListener("touchmove", (e) => {
-  if (e.touches && e.touches.length > 1) e.preventDefault();
-}, { passive: false });
-
-// ===== params =====
 const qs = new URLSearchParams(location.search);
 const gameId = qs.get("id");
 const key = qs.get("key");
 
-// ===== DOM =====
+const paperText = document.getElementById("paperText");
+const hint = document.getElementById("hint");
+const blank = document.getElementById("blank");
+
 const btnFS = document.getElementById("btnFS");
 const fsIco = document.getElementById("fsIco");
 
-const offScreen = document.getElementById("offScreen");
-const arena = document.getElementById("arena");
-const btnA = document.getElementById("btnA");
-const btnB = document.getElementById("btnB");
+let hidden = false;
+let lastText = "";
 
-// ===== state =====
-const STATE = {
-  OFF: "OFF",
-  ON: "ON",
-  PUSHED_A: "PUSHED_A",
-  PUSHED_B: "PUSHED_B",
-};
-let cur = STATE.OFF;
-
-// ===== fullscreen =====
+// ---------- fullscreen ----------
 function setFullscreenIcon() {
   fsIco.textContent = document.fullscreenElement ? "▢" : "⧉";
 }
+async function toggleFullscreen() {
+  try {
+    if (!document.fullscreenElement) await document.documentElement.requestFullscreen();
+    else await document.exitFullscreen();
+  } catch {}
+  setFullscreenIcon();
+}
 
-// ===== UI =====
-function show(state) {
-  cur = state;
+// ---------- state + UI ----------
+function setHidden(on) {
+  hidden = !!on;
+  blank.hidden = !hidden;
 
-  const isOff = state === STATE.OFF;
-  offScreen.hidden = !isOff;
-  arena.hidden = isOff;
+  hint.textContent = hidden
+    ? "Podwójne dotknięcie aby odsłonić"
+    : "Podwójne dotknięcie aby zasłonić";
 
-  arena.style.pointerEvents = isOff ? "none" : "";
-  arena.style.visibility = isOff ? "hidden" : "visible";
+  if (!hidden) paperText.textContent = lastText;
+}
 
-  btnA.classList.remove("lit", "dim");
-  btnB.classList.remove("lit", "dim");
+function setText(t) {
+  lastText = String(t ?? "");
+  if (!hidden) paperText.textContent = lastText;
+}
 
-  if (isOff) {
-    btnA.disabled = true;
-    btnB.disabled = true;
-    return;
-  }
+function clearText() {
+  lastText = "";
+  if (!hidden) paperText.textContent = "";
+}
 
-  if (state === STATE.ON) {
-    btnA.disabled = false;
-    btnB.disabled = false;
-    btnA.classList.add("dim");
-    btnB.classList.add("dim");
-    return;
-  }
+async function persistHostState() {
+  if (!gameId || !key) return;
+  try {
+    await sb().rpc("device_state_set_public", {
+      p_game_id: gameId,
+      p_kind: "host",
+      p_key: key,
+      p_patch: { hidden, text: lastText },
+    });
+  } catch {}
+}
 
-  if (state === STATE.PUSHED_A) {
-    btnA.disabled = true;
-    btnB.disabled = true;
-    btnA.classList.add("lit");
-    btnB.classList.add("dim");
-    return;
-  }
+async function restoreFromSnapshot() {
+  if (!gameId || !key) return;
+  try {
+    const { data, error } = await sb().rpc("device_state_get", {
+      p_game_id: gameId,
+      p_kind: "host",
+      p_key: key,
+    });
+    if (error) throw error;
 
-  if (state === STATE.PUSHED_B) {
-    btnA.disabled = true;
-    btnB.disabled = true;
-    btnB.classList.add("lit");
-    btnA.classList.add("dim");
+    const s = data || {};
+    // snapshot może być pusty
+    const snapHidden = !!s.hidden;
+    const snapText = typeof s.text === "string" ? s.text : "";
+
+    // najpierw tekst, potem hidden (żeby odsłonięcie pokazało treść)
+    setText(snapText);
+    setHidden(snapHidden);
+  } catch {
+    // jak nie ma snapshotu – start “odsłonięty, pusto”
+    setText("");
+    setHidden(false);
   }
 }
 
-function norm(line) {
-  return String(line ?? "").trim().toUpperCase();
+// ---------- double tap / double click ----------
+const DOUBLE_MS = 320;
+let lastTapAt = 0;
+
+function yOK(y) {
+  const h = window.innerHeight || 1;
+  return y > 70 && y < h - 70;
 }
 
-// ===== realtime commands (od controla) =====
+async function toggleCover() {
+  setHidden(!hidden);
+  await persistHostState();
+}
+
+function handleTap(y) {
+  if (!yOK(y)) return;
+
+  const now = Date.now();
+  if (now - lastTapAt <= DOUBLE_MS) {
+    lastTapAt = 0;
+    toggleCover();
+  } else {
+    lastTapAt = now;
+  }
+}
+
+// touch: ignoruj multi-touch (pinch)
+document.addEventListener(
+  "touchstart",
+  (e) => {
+    if (e.touches && e.touches.length > 1) {
+      e.preventDefault();
+      return;
+    }
+    const y = e.touches?.[0]?.clientY ?? 0;
+    handleTap(y);
+  },
+  { passive: false }
+);
+
+// desktop: double click
+document.addEventListener("dblclick", (e) => handleTap(e.clientY));
+
+// blokuj ctrl+scroll zoom (desktop)
+document.addEventListener(
+  "wheel",
+  (e) => {
+    if (e.ctrlKey) e.preventDefault();
+  },
+  { passive: false }
+);
+
+// ---------- commands from control ----------
+function norm(s) {
+  return String(s ?? "").trim();
+}
+
+async function handleCmd(lineRaw) {
+  const line = norm(lineRaw);
+  const up = line.toUpperCase();
+
+  if (up === "OFF") {
+    setHidden(true);
+    await persistHostState();
+    return;
+  }
+  if (up === "ON") {
+    setHidden(false);
+    await persistHostState();
+    return;
+  }
+
+  if (/^SET\b/i.test(line)) {
+    const m = line.match(/^SET\s+"([\s\S]*)"\s*$/i);
+    const text = m ? m[1] : line.replace(/^SET\s+/i, "");
+    setText(text);
+    await persistHostState();
+    return;
+  }
+
+  if (up === "CLEAR") {
+    clearText();
+    await persistHostState();
+    return;
+  }
+}
+
+// ---------- realtime channel ----------
 let ch = null;
 function ensureChannel() {
   if (ch) return ch;
   ch = sb()
-    .channel(`familiada-buzzer:${gameId}`)
-    .on("broadcast", { event: "BUZZER_CMD" }, (msg) => {
-      const line = norm(msg?.payload?.line);
-      handleCmd(line);
+    .channel(`familiada-host:${gameId}`)
+    .on("broadcast", { event: "HOST_CMD" }, (msg) => {
+      handleCmd(msg?.payload?.line);
     })
     .subscribe();
   return ch;
 }
 
-function handleCmd(line) {
-  if (line === "OFF") return show(STATE.OFF);
-  if (line === "ON") return show(STATE.ON);
-  if (line === "PUSHED A" || line === "PUSHED_A") return show(STATE.PUSHED_A);
-  if (line === "PUSHED B" || line === "PUSHED_B") return show(STATE.PUSHED_B);
-}
-
-// ===== presence + snapshot =====
+// ---------- ping ----------
 async function ping() {
   try {
-    await sb().rpc("device_ping_v2", { p_game_id: gameId, p_kind: "buzzer", p_key: key });
+    await sb().rpc("device_ping", { p_game_id: gameId, p_kind: "host", p_key: key });
   } catch {}
 }
 
-async function loadSnapshotOrOff() {
-  try {
-    const { data, error } = await sb().rpc("get_public_snapshot_v2", {
-      p_game_id: gameId,
-      p_kind: "buzzer",
-      p_key: key,
-    });
-    if (error) throw error;
-
-    const devices = data?.devices || {};
-    const st = String(devices?.buzzer_state || "OFF").toUpperCase();
-
-    if (STATE[st]) show(STATE[st]);
-    else show(STATE.OFF);
-  } catch {
-    show(STATE.OFF);
-  }
-}
-
-// ===== input =====
-async function press(team, ev) {
-  try { ev?.preventDefault?.(); } catch {}
-
-  if (cur !== STATE.ON) return;
-
-  // natychmiast lokalnie
-  show(team === "A" ? STATE.PUSHED_A : STATE.PUSHED_B);
-
-  // atomowo w DB (kto pierwszy)
-  try {
-    await sb().rpc("buzzer_press_v2", { p_game_id: gameId, p_key: key, p_team: team });
-  } catch {
-    // jeśli nie przeszło, control i tak to wyprostuje snapshotem
-  }
-}
-
-btnA.addEventListener("touchstart", (e) => press("A", e), { passive: false });
-btnB.addEventListener("touchstart", (e) => press("B", e), { passive: false });
-btnA.addEventListener("click", (e) => press("A", e));
-btnB.addEventListener("click", (e) => press("B", e));
-
-// fullscreen
-btnFS.addEventListener("click", async () => {
-  try {
-    if (!document.fullscreenElement) await document.documentElement.requestFullscreen();
-    else await document.exitFullscreen();
-  } catch {}
-});
+btnFS.addEventListener("click", toggleFullscreen);
 document.addEventListener("fullscreenchange", setFullscreenIcon);
 
-// ===== main =====
 document.addEventListener("DOMContentLoaded", async () => {
   setFullscreenIcon();
+  paperText.textContent = "";
 
   if (!gameId || !key) {
-    show(STATE.OFF);
+    // brak paramów => zasłonięte
+    setText("");
+    setHidden(true);
     return;
   }
 
-  await loadSnapshotOrOff();
+  await restoreFromSnapshot();
   ensureChannel();
 
-  await ping();
+  ping();
   setInterval(ping, 5000);
 });
 
-window.__buzzer = { show, STATE };
+// debug
+window.__host = { setHidden, setText, clearText, handleCmd, persistHostState };
