@@ -14,6 +14,10 @@ const $ = (id) => document.getElementById(id);
 const qs = new URLSearchParams(location.search);
 const gameId = qs.get("id");
 
+const buzzEvtLast = $("buzzEvtLast");
+const buzzLog = $("buzzLog");
+const btnBuzzLogClear = $("btnBuzzLogClear");
+
 const who = $("who");
 const btnBack = $("btnBack");
 const btnLogout = $("btnLogout");
@@ -182,6 +186,52 @@ async function ensureAuthOrRedirect() {
   const user = await requireAuth("/familiada/login.html");
   if (who) who.textContent = user?.email || user?.id || "—";
   return user;
+}
+
+
+function logBuzz(text) {
+  const ts = new Date().toLocaleTimeString();
+  if (buzzEvtLast) buzzEvtLast.textContent = text || "—";
+
+  if (!buzzLog) return;
+  const line = document.createElement("div");
+  line.textContent = `[${ts}] ${text}`;
+  buzzLog.prepend(line);
+
+  // limit żeby nie puchło
+  while (buzzLog.childNodes.length > 60) buzzLog.removeChild(buzzLog.lastChild);
+}
+
+let controlCh = null;
+
+function startControlListener() {
+  if (controlCh) return;
+
+  controlCh = sb()
+    .channel(`familiada-control:${gameId}`)
+    .on("broadcast", { event: "BUZZER_EVT" }, (msg) => {
+      const line = String(msg?.payload?.line || "").trim();
+      if (!line) return;
+      logBuzz(line);
+      // opcjonalnie: dźwięk na klik
+      // playSfx("buzzer_press");
+    })
+    .subscribe((status) => {
+      // debug: status może być "SUBSCRIBED" / "CHANNEL_ERROR" itp.
+      // console.log("[control] control channel status:", status);
+    });
+
+  if (btnBuzzLogClear) {
+    btnBuzzLogClear.onclick = () => {
+      if (buzzLog) buzzLog.textContent = "";
+      if (buzzEvtLast) buzzEvtLast.textContent = "—";
+    };
+  }
+
+  window.addEventListener("beforeunload", () => {
+    try { if (controlCh) sb().removeChannel(controlCh); } catch {}
+    controlCh = null;
+  });
 }
 
 /* ====== GAME LOAD + VALIDATE ====== */
@@ -575,6 +625,7 @@ async function main() {
 
   await ensureAuthOrRedirect();
   game = await loadGameOrThrow();
+  startControlListener();
 
   if (gameLabel) gameLabel.textContent = `Control — ${game.name}`;
   if (gameMeta) gameMeta.textContent = `${game.type} / ${game.status} / ${game.id}`;
