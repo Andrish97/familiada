@@ -1,3 +1,4 @@
+// js/pages/buzzer.js
 import { sb } from "../core/supabase.js";
 
 const qs = new URLSearchParams(location.search);
@@ -24,10 +25,12 @@ const STATE = {
 
 let cur = STATE.OFF;
 
-// fullscreen
+// ===== fullscreen =====
 function setFullscreenIcon() {
-  if (fsIco) fsIco.textContent = document.fullscreenElement ? "▢" : "⧉";
+  if (!fsIco) return;
+  fsIco.textContent = document.fullscreenElement ? "▢" : "⧉";
 }
+
 async function toggleFullscreen() {
   try {
     if (!document.fullscreenElement) await document.documentElement.requestFullscreen();
@@ -36,38 +39,46 @@ async function toggleFullscreen() {
   setFullscreenIcon();
 }
 
-// UI
+// ===== UI =====
 function show(state) {
   cur = state;
 
   const isOff = state === STATE.OFF;
-  if (offScreen) offScreen.classList.toggle("hidden", !isOff);
-  if (arena) arena.classList.toggle("hidden", isOff);
+
+  if (offScreen) offScreen.hidden = !isOff;
+  if (arena) arena.hidden = isOff;
+
+  // reset
+  btnA?.classList.remove("lit", "dim");
+  btnB?.classList.remove("lit", "dim");
 
   if (btnA) btnA.disabled = true;
   if (btnB) btnB.disabled = true;
 
-  btnA?.classList.remove("lit", "dim");
-  btnB?.classList.remove("lit", "dim");
-
   if (isOff) return;
 
   if (state === STATE.ON) {
-    btnA.disabled = false; btnB.disabled = false;
-    btnA.classList.add("dim"); btnB.classList.add("dim");
+    btnA.disabled = false;
+    btnB.disabled = false;
+    btnA.classList.add("dim");
+    btnB.classList.add("dim");
     return;
   }
 
+  // PUSHED
   if (state === STATE.PUSHED_A) {
-    btnA.classList.add("lit"); btnB.classList.add("dim");
+    btnA.classList.add("lit");
+    btnB.classList.add("dim");
     return;
   }
+
   if (state === STATE.PUSHED_B) {
-    btnB.classList.add("lit"); btnA.classList.add("dim");
+    btnB.classList.add("lit");
+    btnA.classList.add("dim");
   }
 }
 
-// snapshot
+// ===== snapshot (opcjonalnie) =====
 async function persistBuzzerState() {
   if (!gameId || !key) return;
   try {
@@ -83,12 +94,14 @@ async function persistBuzzerState() {
 async function restoreFromSnapshot() {
   if (!gameId || !key) return;
   try {
-    const { data } = await sb().rpc("device_state_get", {
+    const { data, error } = await sb().rpc("device_state_get", {
       p_game_id: gameId,
       p_kind: "buzzer",
       p_key: key,
     });
-    const st = String(data?.state || "OFF").toUpperCase();
+    if (error) throw error;
+
+    const st = String(data?.state ?? "OFF").toUpperCase();
     if (STATE[st]) show(STATE[st]);
     else show(STATE.OFF);
   } catch {
@@ -96,16 +109,19 @@ async function restoreFromSnapshot() {
   }
 }
 
-// realtime: komendy z controla
+// ===== realtime komendy =====
 let ch = null;
+
 function ensureChannel() {
   if (ch) return ch;
   ch = sb()
     .channel(`familiada-buzzer:${gameId}`)
     .on("broadcast", { event: "BUZZER_CMD" }, (msg) => {
       const line = String(msg?.payload?.line ?? "").trim().toUpperCase();
+
       if (line === "OFF") { show(STATE.OFF); persistBuzzerState(); return; }
       if (line === "ON")  { show(STATE.ON);  persistBuzzerState(); return; }
+
       if (line === "PUSHED A" || line === "PUSHED_A") { show(STATE.PUSHED_A); persistBuzzerState(); return; }
       if (line === "PUSHED B" || line === "PUSHED_B") { show(STATE.PUSHED_B); persistBuzzerState(); return; }
     })
@@ -113,7 +129,7 @@ function ensureChannel() {
   return ch;
 }
 
-// wysyłka kliknięcia do controla (event BUZZER_EVT na kanale control)
+// ===== send click → control =====
 async function sendClick(team) {
   try {
     const ctl = sb().channel(`familiada-control:${gameId}`);
@@ -127,14 +143,16 @@ async function sendClick(team) {
   } catch {}
 }
 
-async function press(team) {
+async function press(team, ev) {
+  if (ev?.preventDefault) ev.preventDefault();
   if (cur !== STATE.ON) return;
+
   show(team === "A" ? STATE.PUSHED_A : STATE.PUSHED_B);
   await persistBuzzerState();
   await sendClick(team);
 }
 
-// presence ping
+// ===== presence ping =====
 async function ping() {
   try {
     await sb().rpc("device_ping", {
@@ -146,18 +164,42 @@ async function ping() {
   } catch {}
 }
 
-// input
-btnA?.addEventListener("touchstart", (e) => { e.preventDefault(); press("A"); }, { passive:false });
-btnB?.addEventListener("touchstart", (e) => { e.preventDefault(); press("B"); }, { passive:false });
-btnA?.addEventListener("click", () => press("A"));
-btnB?.addEventListener("click", () => press("B"));
-
+// ===== boot =====
 btnFS?.addEventListener("click", toggleFullscreen);
 document.addEventListener("fullscreenchange", setFullscreenIcon);
 
+// touch UX: blokuj pinch/doubletap zoom (jak miałeś)
+document.addEventListener("gesturestart", (e) => e.preventDefault(), { passive: false });
+document.addEventListener("gesturechange", (e) => e.preventDefault(), { passive: false });
+document.addEventListener("gestureend", (e) => e.preventDefault(), { passive: false });
+
+let lastTouchEnd = 0;
+document.addEventListener("touchend", (e) => {
+  const now = Date.now();
+  if (now - lastTouchEnd <= 250) e.preventDefault();
+  lastTouchEnd = now;
+}, { passive: false });
+
+document.addEventListener("touchstart", (e) => {
+  if (e.touches && e.touches.length > 1) e.preventDefault();
+}, { passive: false });
+
+document.addEventListener("touchmove", (e) => {
+  if (e.touches && e.touches.length > 1) e.preventDefault();
+}, { passive: false });
+
+btnA?.addEventListener("touchstart", (e) => press("A", e), { passive: false });
+btnB?.addEventListener("touchstart", (e) => press("B", e), { passive: false });
+btnA?.addEventListener("click", (e) => press("A", e));
+btnB?.addEventListener("click", (e) => press("B", e));
+
 document.addEventListener("DOMContentLoaded", async () => {
   setFullscreenIcon();
-  if (!gameId || !key) { show(STATE.OFF); return; }
+
+  if (!gameId || !key) {
+    show(STATE.OFF);
+    return;
+  }
 
   await restoreFromSnapshot();
   ensureChannel();
@@ -166,4 +208,5 @@ document.addEventListener("DOMContentLoaded", async () => {
   setInterval(ping, 5000);
 });
 
+// debug
 window.__buzzer = { show, STATE };
