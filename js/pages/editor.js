@@ -21,7 +21,7 @@ function setMsg(t) {
 function openOverlay(id, on) {
   const el = $(id);
   if (!el) return;
-  el.style.display = on ? "grid" : "none"; // <-- było ""
+  el.style.display = on ? "grid" : "none";
 }
 
 function debounce(fn, ms = 350) {
@@ -779,6 +779,10 @@ async function boot() {
   });
 
   btnTxtClose?.addEventListener("click", () => openOverlay("txtImportOverlay", false));
+
+  $("txtImportOverlay")?.addEventListener("click", (e) => {
+    if (e.target?.id === "txtImportOverlay") openOverlay("txtImportOverlay", false);
+  });
 
   async function readFileAsText(file) {
     return await new Promise((resolve, reject) => {
