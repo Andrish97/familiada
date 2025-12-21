@@ -1,44 +1,52 @@
 import { sb } from "../../js/core/supabase.js";
 
+/**
+ * Display Presence / Snapshot / Commands (v2)
+ *
+ * - czyta ?id=...&key=...
+ * - pobiera snapshot get_public_snapshot_v2 (żeby po refresh wróciło)
+ * - ping device_ping_v2 co pingMs
+ * - subskrybuje DISPLAY_CMD i woła onCommand(line)
+ *
+ * Zwraca: { game, snapshot, stop(), sendDebug(line) }
+ */
 export async function startPresence({
   channel = null,
   pingMs = 5000,
   onCommand = null,
-  onSnapshot = null,   // <-- NOWE: callback do odtworzenia stanu
   debug = false,
 } = {}) {
   const { gameId, key } = parseParams();
+  if (!gameId || !key) throw new Error("Brak id lub key w URL.");
 
-  // 1) snapshot = autoryzacja + restore
   const snap = await getSnapshotOrThrow(gameId, key);
-  const game = snap.game;
-  const devices = snap.devices;
+  const game = snap?.game;
+  const devices = snap?.devices;
 
   const chName = channel || `familiada-display:${game.id}`;
 
-  // 2) ping przez RPC
+  // 1) ping do bazy
   const ping = async () => {
     try {
-      await sb().rpc("device_ping", { p_game_id: game.id, p_kind: "display", p_key: key });
+      await sb().rpc("device_ping_v2", { p_game_id: game.id, p_kind: "display", p_key: key });
     } catch (e) {
       if (debug) console.warn("[display] ping failed", e);
     }
   };
 
-  // najpierw odtwórz stan UI
-  try { onSnapshot?.(devices); } catch {}
-
   await ping();
   const pingTimer = setInterval(ping, pingMs);
 
-  // 3) realtime: DISPLAY_CMD
+  // 2) realtime: komendy z controla
   const ch = sb()
     .channel(chName)
     .on("broadcast", { event: "DISPLAY_CMD" }, (msg) => {
       const line = msg?.payload?.line;
       if (!line) return;
       if (debug) console.log("[display] cmd:", line);
-      try { onCommand?.(String(line)); } catch (e) { console.warn("[display] onCommand error", e); }
+      try { onCommand?.(String(line)); } catch (e) {
+        console.warn("[display] onCommand error", e);
+      }
     })
     .subscribe();
 
@@ -51,32 +59,31 @@ export async function startPresence({
 
   const sendDebug = async (line) => {
     try {
-      await ch.send({ type:"broadcast", event:"DISPLAY_CMD", payload:{ line:String(line) } });
+      await ch.send({ type: "broadcast", event: "DISPLAY_CMD", payload: { line: String(line) } });
     } catch (e) {
       if (debug) console.warn("[display] sendDebug failed", e);
     }
   };
 
   window.__presence = { game, channel: chName, ping, stop };
-
-  return { game, devices, stop, sendDebug };
+  return { game, snapshot: { game, devices }, stop, sendDebug };
 }
 
 function parseParams() {
   const u = new URL(location.href);
-  return { gameId: u.searchParams.get("id") || "", key: u.searchParams.get("key") || "" };
+  return {
+    gameId: u.searchParams.get("id") || "",
+    key: u.searchParams.get("key") || "",
+  };
 }
 
 async function getSnapshotOrThrow(gameId, key) {
-  if (!gameId || !key) throw new Error("Brak id lub key w URL.");
-
-  const { data, error } = await sb().rpc("get_device_snapshot", {
+  const { data, error } = await sb().rpc("get_public_snapshot_v2", {
     p_game_id: gameId,
     p_kind: "display",
     p_key: key,
   });
   if (error) throw error;
-
-  if (!data?.ok) throw new Error("Brak dostępu do display (zły key) albo gra nie istnieje.");
-  return data; // {ok, game, devices}
+  if (!data?.game?.id) throw new Error("Zły klucz (display) albo gra nie istnieje.");
+  return data;
 }
