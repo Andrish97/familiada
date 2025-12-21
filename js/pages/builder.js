@@ -148,24 +148,6 @@ async function listGames() {
   return data || [];
 }
 
-async function ensureLive(gameId) {
-  // jeśli nie masz live_state, ta funkcja się sama “wyciszy”
-  try {
-    const { data, error } = await sb()
-      .from("live_state")
-      .select("game_id")
-      .eq("game_id", gameId)
-      .maybeSingle();
-    if (error) throw error;
-    if (data?.game_id) return;
-
-    const { error: insErr } = await sb().from("live_state").insert({ game_id: gameId });
-    if (insErr) throw insErr;
-  } catch {
-    // ignorujemy: nie każdy ma live_state
-  }
-}
-
 function defaultNameForUiType(uiType) {
   if (uiType === TYPES.POLL_TEXT) return "Nowa Familiada (Sondaż)";
   if (uiType === TYPES.POLL_POINTS) return "Nowa Familiada (Punktacja)";
@@ -225,7 +207,6 @@ async function createGame(uiType) {
   }
 
   const game = ins.data;
-  await ensureLive(game.id);
   return game;
 }
 
