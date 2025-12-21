@@ -14,21 +14,20 @@ const fsIco = document.getElementById("fsIco");
 let hidden = false;
 let lastText = "";
 
-// ---------- fullscreen ----------
-function setFullscreenIcon(){
+// ===== fullscreen =====
+function setFullscreenIcon() {
   fsIco.textContent = document.fullscreenElement ? "▢" : "⧉";
 }
-
-async function toggleFullscreen(){
-  try{
+async function toggleFullscreen() {
+  try {
     if (!document.fullscreenElement) await document.documentElement.requestFullscreen();
     else await document.exitFullscreen();
-  }catch{}
+  } catch {}
   setFullscreenIcon();
 }
 
-// ---------- hide / reveal ----------
-function setHidden(on){
+// ===== hide/reveal =====
+function setHidden(on) {
   hidden = !!on;
   blank.hidden = !hidden;
 
@@ -37,26 +36,26 @@ function setHidden(on){
     : "Podwójne dotknięcie aby zasłonić";
 }
 
-function setText(t){
+function setText(t) {
   lastText = String(t ?? "");
   if (!hidden) paperText.textContent = lastText;
 }
 
-function clearText(){
+function clearText() {
   lastText = "";
   if (!hidden) paperText.textContent = "";
 }
 
-// ---------- double tap / double click ----------
+// ===== double tap / dblclick =====
 const DOUBLE_MS = 320;
 let lastTapAt = 0;
 
-function yOK(y){
+function yOK(y) {
   const h = window.innerHeight || 1;
-  return (y > 70) && (y < h - 70);
+  return y > 70 && y < h - 70;
 }
 
-function toggleCover(){
+function toggleCover() {
   if (hidden) {
     setHidden(false);
     paperText.textContent = lastText;
@@ -65,7 +64,7 @@ function toggleCover(){
   }
 }
 
-function handleTap(y){
+function handleTap(y) {
   if (!yOK(y)) return;
 
   const now = Date.now();
@@ -77,103 +76,93 @@ function handleTap(y){
   }
 }
 
-// touch: ignoruj multi-touch (pinch)
-document.addEventListener("touchstart", (e)=>{
+document.addEventListener("touchstart", (e) => {
   if (e.touches && e.touches.length > 1) { e.preventDefault(); return; }
   const y = e.touches?.[0]?.clientY ?? 0;
   handleTap(y);
-}, { passive:false });
+}, { passive: false });
 
-// desktop: double click
-document.addEventListener("dblclick", (e)=>{
-  handleTap(e.clientY);
-});
+document.addEventListener("dblclick", (e) => handleTap(e.clientY));
+document.addEventListener("wheel", (e) => { if (e.ctrlKey) e.preventDefault(); }, { passive: false });
 
-// blokuj ctrl+scroll zoom (desktop)
-document.addEventListener("wheel", (e)=>{
-  if (e.ctrlKey) e.preventDefault();
-}, { passive:false });
+// ===== realtime commands =====
+let ch = null;
+function ensureChannel() {
+  if (ch) return ch;
+  ch = sb()
+    .channel(`familiada-host:${gameId}`)
+    .on("broadcast", { event: "HOST_CMD" }, (msg) => handleCmd(msg?.payload?.line))
+    .subscribe();
+  return ch;
+}
 
-// ---------- commands ----------
-function norm(s){ return String(s ?? "").trim(); }
+function norm(s) { return String(s ?? "").trim(); }
 
-function handleCmd(lineRaw){
+function handleCmd(lineRaw) {
   const line = norm(lineRaw);
   const up = line.toUpperCase();
 
   if (up === "OFF") { setHidden(true); return; }
   if (up === "ON")  { setHidden(false); paperText.textContent = lastText; return; }
 
-  if (/^SET\b/i.test(line)){
+  if (/^SET\b/i.test(line)) {
     const m = line.match(/^SET\s+"([\s\S]*)"\s*$/i);
     const text = m ? m[1] : line.replace(/^SET\s+/i, "");
     setText(text);
     return;
   }
 
-  if (up === "CLEAR"){
+  if (up === "CLEAR") {
     clearText();
     return;
   }
 }
 
-// ---------- channel ----------
-let ch = null;
-function ensureChannel(){
-  if (ch) return ch;
-  ch = sb().channel(`familiada-host:${gameId}`)
-    .on("broadcast", { event:"HOST_CMD" }, (msg)=>{
-      handleCmd(msg?.payload?.line);
-    })
-    .subscribe();
-  return ch;
+// ===== presence + snapshot =====
+async function ping() {
+  try {
+    await sb().rpc("device_ping_v2", { p_game_id: gameId, p_kind: "host", p_key: key });
+  } catch {}
 }
 
-// ping (opcjonalnie)
-async function ping(){
-  try { await sb().rpc("device_ping", { p_game_id: gameId, p_kind:"host", p_key:key }); } catch {}
-}
-
-async function loadSnapshot(){
-  try{
-    const { data } = await sb().rpc("get_device_snapshot", {
+async function loadSnapshotOrHide() {
+  try {
+    const { data, error } = await sb().rpc("get_public_snapshot_v2", {
       p_game_id: gameId,
       p_kind: "host",
       p_key: key,
     });
+    if (error) throw error;
 
-    const d = data?.devices || {};
-    setHidden(!!d.host_hidden);
-    if (!d.host_hidden) {
-      lastText = String(d.host_text ?? "");
-      paperText.textContent = lastText;
-    } else {
-      lastText = String(d.host_text ?? "");
-      paperText.textContent = "";
-    }
-    hint.textContent = String(d.host_hint ?? hint.textContent);
+    const devices = data?.devices || {};
+    const h = !!devices?.host_hidden;
+    const t = String(devices?.host_text ?? "");
+
+    setHidden(h);
+    setText(t);
+    if (h) paperText.textContent = ""; // zakryte => nie pokazuj
   } catch {
-    // jak snapshot padnie: zostaw jak jest
+    setHidden(true);
   }
 }
 
-document.addEventListener("DOMContentLoaded", async ()=>{
+btnFS.addEventListener("click", toggleFullscreen);
+document.addEventListener("fullscreenchange", setFullscreenIcon);
+
+document.addEventListener("DOMContentLoaded", async () => {
   setFullscreenIcon();
   paperText.textContent = "";
 
-  if (!gameId || !key){
+  if (!gameId || !key) {
     setHidden(true);
     return;
   }
 
-  setHidden(false);
+  await loadSnapshotOrHide();
   ensureChannel();
 
-  await loadSnapshot();  // <-- ODTWÓRZ stan po odświeżeniu
-
-  ping();
+  await ping();
   setInterval(ping, 5000);
 });
 
-// debug
 window.__host = { setHidden, setText, clearText, handleCmd };
