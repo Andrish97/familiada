@@ -1,6 +1,11 @@
+*{ -webkit-tap-highlight-color: transparent; }
+button:focus{ outline:none; }
+
+}
 html, body {
   height: 100%;
   overscroll-behavior: none;
+  overflow: hidden;
 }
 
 body {
@@ -8,6 +13,8 @@ body {
   -webkit-user-select: none;
   user-select: none;
   -webkit-touch-callout: none;
+  position: fixed;
+  inset: 0;
 }
 
 button, .arena, .paper, .blank {
@@ -22,6 +29,25 @@ button, .arena, .paper, .blank {
   touch-action:manipulation; /* tap działa (NIE dawaj none) */
   -webkit-user-select:none;
   user-select:none;
+}
+
+.buzzer-body::before,
+.buzzer-body::after{
+  content:"";
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  width: 24px;          /* ← kluczowe */
+  z-index: 10000;
+  pointer-events: auto;
+}
+
+.buzzer-body::before{
+  left: 0;
+}
+
+.buzzer-body::after{
+  right: 0;
 }
 
 /* fullscreen button jak w host (prosty, schludny) */
