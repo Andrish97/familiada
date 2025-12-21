@@ -156,13 +156,18 @@ async function press(team, ev) {
 async function ping() {
   try {
     await sb().rpc("device_ping", {
-      p_game_id: gameId,
-      p_device_type: "buzzer",
+      p_game_id: game.id,
+      p_device_type: "buzzer",   // "host" / "display"
       p_key: key,
-      p_device_id: deviceId,
+      p_device_id: deviceId || null,
+      p_meta: {}                  // opcjonalnie
     });
   } catch {}
 }
+
+const { data, error } = await sb().rpc("device_ping", {
+  
+});
 
 // ===== boot =====
 btnFS?.addEventListener("click", toggleFullscreen);
