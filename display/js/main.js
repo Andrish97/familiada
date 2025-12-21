@@ -67,45 +67,61 @@ window.addEventListener("DOMContentLoaded", async () => {
       // uzupełnimy po auth w presence:
       game: null,
       gameId: null,
-      key: null,
     };
 
-    // 4) komendy
+    // 4) komendy (router global + scena)
     const handleCommand = createCommandHandler(app);
 
     window.app = app;
     window.scene = scene;
     window.handleCommand = handleCommand;
 
-    // 5) AUTH + ping + realtime commands w presence.js
+    // flagi, żeby snapshot nie “walczył” z init
+    let snapshotApplied = false;
+
+    // 5) AUTH + snapshot + ping + realtime commands
     const pres = await startPresence({
       pingMs: 5000,
       debug: true,
+
       onCommand: (line) => handleCommand(line),
-    
+
       onSnapshot: (devices) => {
-        // ODTWÓRZ stan po odświeżeniu:
+        snapshotApplied = true;
+
         // 1) global APP mode
-        const mode = String(devices?.display_mode ?? "BLACK").toUpperCase();
+        // preferujemy display_app_mode, ale wspieramy też stare display_mode
+        let mode = String(devices?.display_app_mode ?? devices?.display_mode ?? "BLACK_SCREEN")
+          .toUpperCase();
+
+        if (mode === "BLACK") mode = "BLACK_SCREEN";
+
         if (mode === "GRA") app.setMode("GRA");
         else if (mode === "QR") app.setMode("QR");
         else app.setMode("BLACK_SCREEN");
-    
-        // 2) scena (tylko jak jesteśmy w GRA)
+
+        // 2) najprościej: odtwórz ostatnią komendę (np. MODE LOGO / RBATCH / QR HOST...)
+        const lastCmd = String(devices?.display_last_cmd ?? "").trim();
+        if (lastCmd) {
+          try { handleCommand(lastCmd); } catch {}
+          return;
+        }
+
+        // 3) fallback: scena, jeśli trzymasz osobno
         const sceneMode = String(devices?.display_scene ?? "LOGO").toUpperCase();
         try { handleCommand(`MODE ${sceneMode}`); } catch {}
-    
-        // 3) payload (jeśli chcesz odtwarzać tablicę bez “komend”)
-        // Na razie zostawiamy — control będzie to trzymał i wysyłał batch/komendy.
       },
     });
 
-    // wpisz info o grze do app (przyda się w komendach/QR)
+    // wpisz info o grze do app
     app.game = pres.game;
     app.gameId = pres.game.id;
 
-    // startowo czarny
-    app.setMode("BLACK_SCREEN");
+    // jeśli snapshot nie przyszedł (np. RPC padło w połowie), daj bezpieczny start
+    if (!snapshotApplied) {
+      app.setMode("BLACK_SCREEN");
+    }
+
     console.log("Display OK. Game:", pres.game.name, pres.game.id);
   } catch (e) {
     showBlack(e?.message || String(e));
