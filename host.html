@@ -2,35 +2,22 @@
 <html lang="pl">
 <head>
   <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
-  <title>Familiada — prowadzący</title>
-
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Familiada — Host</title>
   <link rel="icon" href="favicon.ico"/>
-  <link rel="stylesheet" href="css/base.css"/>
-  <link rel="stylesheet" href="css/host.css"/>
+  <link rel="stylesheet" href="/familiada/css/base.css"/>
+  <link rel="stylesheet" href="/familiada/css/host.css"/>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-  <script type="module" src="js/pages/host.js" defer></script>
+  <script type="module" src="/familiada/js/pages/host.js" defer></script>
 </head>
+<body>
+  <button id="btnFS" class="btn fsBtn" type="button"><span id="fsIco">⧉</span></button>
 
-<body class="host-body">
-  <button class="fsBtn" id="btnFS" type="button" aria-label="Pełny ekran" title="Pełny ekran">
-    <span class="ico" id="fsIco" aria-hidden="true">⧉</span>
-  </button>
-
-  <!-- Kartka -->
-  <main class="paper" id="paper">
-    <i class="redMargin" aria-hidden="true"></i>
-    <pre class="text" id="paperText"></pre>
-    <div class="hint" id="hint"> </div>
-  </main>
-
-  <!-- Okładka (overlay) -->
-  <div class="blank" id="blank" hidden>
-    <div class="blankCard">
-      <div class="blankTitle">ZASŁONIĘTE</div>
-      <div class="blankHint">Podwójne dotknięcie aby odsłonić</div>
-    </div>
+  <div id="blank" class="blank hidden"></div>
+  <div class="paper">
+    <div id="hint" class="hint">—</div>
+    <div id="paperText" class="paperText"></div>
   </div>
 </body>
 </html>
