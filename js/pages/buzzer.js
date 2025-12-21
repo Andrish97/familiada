@@ -1,12 +1,10 @@
 import { sb } from "../core/supabase.js";
 
-
-// blokuj pinch-zoom (iOS Safari)
+// ===== anti-zoom iOS (zostawiamy) =====
 document.addEventListener("gesturestart", (e) => e.preventDefault(), { passive: false });
 document.addEventListener("gesturechange", (e) => e.preventDefault(), { passive: false });
 document.addEventListener("gestureend", (e) => e.preventDefault(), { passive: false });
 
-// blokuj double-tap zoom
 let lastTouchEnd = 0;
 document.addEventListener("touchend", (e) => {
   const now = Date.now();
@@ -14,7 +12,6 @@ document.addEventListener("touchend", (e) => {
   lastTouchEnd = now;
 }, { passive: false });
 
-// opcjonalnie: blokuj też multi-touch w ogóle (żeby 2 palce nie robiły “akcji”)
 document.addEventListener("touchstart", (e) => {
   if (e.touches && e.touches.length > 1) e.preventDefault();
 }, { passive: false });
@@ -22,10 +19,12 @@ document.addEventListener("touchmove", (e) => {
   if (e.touches && e.touches.length > 1) e.preventDefault();
 }, { passive: false });
 
+// ===== params =====
 const qs = new URLSearchParams(location.search);
 const gameId = qs.get("id");
 const key = qs.get("key");
 
+// ===== DOM =====
 const btnFS = document.getElementById("btnFS");
 const fsIco = document.getElementById("fsIco");
 
@@ -34,35 +33,31 @@ const arena = document.getElementById("arena");
 const btnA = document.getElementById("btnA");
 const btnB = document.getElementById("btnB");
 
+// ===== state =====
 const STATE = {
   OFF: "OFF",
   ON: "ON",
   PUSHED_A: "PUSHED_A",
   PUSHED_B: "PUSHED_B",
 };
-
 let cur = STATE.OFF;
 
-// ---------- fullscreen ----------
+// ===== fullscreen =====
 function setFullscreenIcon() {
-  // ⧉ = “dwa nałożone”, ▢ = “jeden”
   fsIco.textContent = document.fullscreenElement ? "▢" : "⧉";
 }
 
-// ---------- UI ----------
+// ===== UI =====
 function show(state) {
   cur = state;
 
   const isOff = state === STATE.OFF;
-
-  // OFF = czarny ekran, nic więcej
   offScreen.hidden = !isOff;
   arena.hidden = isOff;
-  
+
   arena.style.pointerEvents = isOff ? "none" : "";
-  arena.style.visibility    = isOff ? "hidden" : "visible";
-  
-  // reset klas
+  arena.style.visibility = isOff ? "hidden" : "visible";
+
   btnA.classList.remove("lit", "dim");
   btnB.classList.remove("lit", "dim");
 
@@ -96,99 +91,78 @@ function show(state) {
   }
 }
 
-// ---------- networking ----------
-let ch = null;
+function norm(line) {
+  return String(line ?? "").trim().toUpperCase();
+}
 
+// ===== realtime commands (od controla) =====
+let ch = null;
 function ensureChannel() {
   if (ch) return ch;
   ch = sb()
     .channel(`familiada-buzzer:${gameId}`)
     .on("broadcast", { event: "BUZZER_CMD" }, (msg) => {
-      const line = String(msg?.payload?.line ?? "").trim();
+      const line = norm(msg?.payload?.line);
       handleCmd(line);
     })
     .subscribe();
   return ch;
 }
 
+function handleCmd(line) {
+  if (line === "OFF") return show(STATE.OFF);
+  if (line === "ON") return show(STATE.ON);
+  if (line === "PUSHED A" || line === "PUSHED_A") return show(STATE.PUSHED_A);
+  if (line === "PUSHED B" || line === "PUSHED_B") return show(STATE.PUSHED_B);
+}
+
+// ===== presence + snapshot =====
 async function ping() {
   try {
-    await sb().rpc("device_ping", { p_game_id: gameId, p_kind: "buzzer", p_key: key });
+    await sb().rpc("device_ping_v2", { p_game_id: gameId, p_kind: "buzzer", p_key: key });
   } catch {}
 }
 
-async function loadSnapshot() {
+async function loadSnapshotOrOff() {
   try {
-    const { data } = await sb().rpc("get_device_snapshot", {
+    const { data, error } = await sb().rpc("get_public_snapshot_v2", {
       p_game_id: gameId,
       p_kind: "buzzer",
       p_key: key,
     });
-    const mode = data?.devices?.buzzer_mode;
-    if (mode) show(String(mode).toUpperCase());
+    if (error) throw error;
+
+    const devices = data?.devices || {};
+    const st = String(devices?.buzzer_state || "OFF").toUpperCase();
+
+    if (STATE[st]) show(STATE[st]);
+    else show(STATE.OFF);
   } catch {
-    // jak snapshot padnie, zostaw OFF
+    show(STATE.OFF);
   }
 }
 
-async function sendClick(team) {
-  try {
-    const ctl = sb().channel(`familiada-control:${gameId}`).subscribe();
-    await ctl.send({
-      type: "broadcast",
-      event: "BUZZER_EVT",
-      payload: { line: `CLICK ${team}` },
-    });
-    sb().removeChannel(ctl);
-  } catch {}
-}
+// ===== input =====
+async function press(team, ev) {
+  try { ev?.preventDefault?.(); } catch {}
 
-// ---------- input ----------
-async function press(team, e) {
-  if (e?.preventDefault) e.preventDefault();
   if (cur !== STATE.ON) return;
 
+  // natychmiast lokalnie
   show(team === "A" ? STATE.PUSHED_A : STATE.PUSHED_B);
-  await sendClick(team);
+
+  // atomowo w DB (kto pierwszy)
+  try {
+    await sb().rpc("buzzer_press_v2", { p_game_id: gameId, p_key: key, p_team: team });
+  } catch {
+    // jeśli nie przeszło, control i tak to wyprostuje snapshotem
+  }
 }
 
 btnA.addEventListener("touchstart", (e) => press("A", e), { passive: false });
 btnB.addEventListener("touchstart", (e) => press("B", e), { passive: false });
 btnA.addEventListener("click", (e) => press("A", e));
 btnB.addEventListener("click", (e) => press("B", e));
-
-document.addEventListener("DOMContentLoaded", async () => {
-  setFullscreenIcon();
-
-  if (!gameId || !key) {
-    show(STATE.OFF);
-    return;
-  }
-
-  show(STATE.OFF);
-  ensureChannel();
-
-  await loadSnapshot();  // <-- ODTWÓRZ stan po odświeżeniu
-
-  ping();
-  setInterval(ping, 5000);
-});
-
-// ---------- commands ----------
-function norm(line){
-  return line.trim().toUpperCase();
-}
-
-function handleCmd(lineRaw) {
-  const line = norm(lineRaw);
-
-  if (line === "OFF")   { show(STATE.OFF); return; }
-  if (line === "ON")    { show(STATE.ON); return; }
-
-  // wymuszenie stanów (opcjonalne)
-  if (line === "PUSHED A" || line === "PUSHED_A") { show(STATE.PUSHED_A); return; }
-  if (line === "PUSHED B" || line === "PUSHED_B") { show(STATE.PUSHED_B); return; }
-}
 
 // fullscreen
 btnFS.addEventListener("click", async () => {
@@ -197,9 +171,9 @@ btnFS.addEventListener("click", async () => {
     else await document.exitFullscreen();
   } catch {}
 });
-
 document.addEventListener("fullscreenchange", setFullscreenIcon);
 
+// ===== main =====
 document.addEventListener("DOMContentLoaded", async () => {
   setFullscreenIcon();
 
@@ -208,14 +182,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     return;
   }
 
-  // domyślnie OFF
-  show(STATE.OFF);
-
+  await loadSnapshotOrOff();
   ensureChannel();
 
-  ping();
+  await ping();
   setInterval(ping, 5000);
 });
 
-// debug (opcjonalnie)
 window.__buzzer = { show, STATE };
