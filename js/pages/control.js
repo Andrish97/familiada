@@ -1,5 +1,7 @@
-import { sb } from "js/core/supabase.js";
-import { playSfx } from "js/core/sfx.js";
+import { sb } from "../core/supabase.js";
+import { playSfx } from "../core/sfx.js";
+
+import { requireAuth, signOut } from "../core/auth.js";
 
 const $ = (id) => document.getElementById(id);
 const qs = new URLSearchParams(location.search);
