@@ -20,6 +20,10 @@ const files = {
   ui_tick: "ui_tick.mp3",
 };
 
+export function listSfx() {
+  return Object.keys(files);
+}
+
 const cache = new Map();
 
 function loadAudio(name) {
