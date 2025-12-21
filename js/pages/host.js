@@ -1,4 +1,4 @@
-// familiada/js/pages/host.js
+// /familiada/js/pages/host.js
 import { sb } from "../core/supabase.js";
 
 const qs = new URLSearchParams(location.search);
@@ -12,13 +12,13 @@ const blank = document.getElementById("blank");
 const btnFS = document.getElementById("btnFS");
 const fsIco = document.getElementById("fsIco");
 
-// stabilny device id dla presence
+// stabilny device_id dla presence
 const DEVICE_ID_KEY = "familiada:deviceId:host";
 let deviceId = localStorage.getItem(DEVICE_ID_KEY) || null;
 
 // stan hosta
 let hidden = false;
-let lastText = "";
+let text = "";
 
 /* ========= FULLSCREEN ========= */
 function setFullscreenIcon() {
@@ -26,83 +26,74 @@ function setFullscreenIcon() {
   fsIco.textContent = document.fullscreenElement ? "▢" : "⧉";
 }
 
-async function toggleFullscreen(ev) {
-  // iOS/Chrome wymagają bezpośredniego gestu użytkownika
-  ev?.preventDefault?.();
+async function toggleFullscreen() {
   try {
     if (!document.fullscreenElement) {
+      // iOS Safari lubi jak request jest na elemencie <html>
       await document.documentElement.requestFullscreen?.({ navigationUI: "hide" });
     } else {
       await document.exitFullscreen?.();
     }
   } catch (e) {
-    // na iOS czasem rzuca bez sensu — nie spamujemy
-    console.warn("[host] fullscreen failed", e);
+    // iOS czasem rzuca bez sensu – nie przerywamy UI
+    // console.warn("[host] fullscreen failed", e);
   }
   setFullscreenIcon();
 }
 
 /* ========= UI ========= */
-function setHidden(on) {
-  hidden = !!on;
+function render() {
   if (blank) blank.hidden = !hidden;
 
   if (hint) {
     hint.textContent = hidden
-      ? "Podwójne dotknięcie aby odsłonić"
-      : "Podwójne dotknięcie aby zasłonić";
+      ? "Szybki podwójny tap aby odsłonić"
+      : "Szybki podwójny tap aby zasłonić";
   }
 
-  if (!hidden && paperText) paperText.textContent = lastText;
+  if (paperText) {
+    paperText.textContent = hidden ? "" : text;
+  }
 }
 
-function setText(t) {
-  lastText = String(t ?? "");
-  if (!hidden && paperText) paperText.textContent = lastText;
+function setHidden(on) {
+  hidden = !!on;
+  render();
+}
+
+function setText(next) {
+  text = String(next ?? "");
+  render();
 }
 
 function clearText() {
-  lastText = "";
-  if (!hidden && paperText) paperText.textContent = "";
+  text = "";
+  render();
 }
 
-/* ========= ESCAPES / PARSING ========= */
-// pozwala wysyłać z controla: SET "linia1\nlinia2"
-function decodeEscapes(s) {
-  return String(s ?? "")
-    .replace(/\\n/g, "\n")
-    .replace(/\\t/g, "\t")
-    .replace(/\\"/g, '"')
-    .replace(/\\\\/g, "\\");
+function appendLine(line) {
+  const s = String(line ?? "");
+  if (!s) return;
+  text = text ? (text + "\n" + s) : s;
+  render();
 }
 
-function parseQuotedOrRest(line, cmd) {
-  const re = new RegExp(`^${cmd}\\s+"([\\s\\S]*)"\\s*$`, "i");
-  const m = String(line).match(re);
-  if (m) return decodeEscapes(m[1]);
-  return decodeEscapes(String(line).replace(new RegExp(`^${cmd}\\s+`, "i"), ""));
-}
-
-function norm(s) {
-  return String(s ?? "").trim();
-}
-
-/* ========= SNAPSHOT (DB) ========= */
-async function persistHostState() {
+/* ========= SNAPSHOT (device_state) ========= */
+async function persistState() {
   if (!gameId || !key) return;
   try {
     await sb().rpc("device_state_set_public", {
       p_game_id: gameId,
       p_device_type: "host",
       p_key: key,
-      p_patch: { hidden, text: lastText },
+      p_patch: { hidden, text },
     });
   } catch (e) {
     console.warn("[host] persist failed", e);
   }
 }
 
-async function restoreFromSnapshot() {
+async function restoreState() {
   if (!gameId || !key) return;
   try {
     const { data, error } = await sb().rpc("device_state_get", {
@@ -113,52 +104,78 @@ async function restoreFromSnapshot() {
     if (error) throw error;
 
     const s = data || {};
-    // kolejność: tekst -> hidden (żeby odsłonięcie miało co pokazać)
-    setText(typeof s.text === "string" ? s.text : "");
-    setHidden(!!s.hidden);
+    text = typeof s.text === "string" ? s.text : "";
+    hidden = !!s.hidden;
+    render();
   } catch (e) {
-    // start awaryjny
-    console.warn("[host] snapshot get failed", e);
-    setText("");
-    setHidden(false);
+    // start bez snapshotu
+    text = "";
+    hidden = false;
+    render();
   }
 }
 
-/* ========= COMMANDS (z controla) ========= */
+/* ========= KOMENDY Z CONTROLA =========
+Obsługujemy:
+- OFF / ON
+- SET "..."
+- APPEND "..."
+- CLEAR
+W SET/APPEND wspieramy \n w stringu.
+*/
+function unquotePayload(line, keyword) {
+  // SET "...." (może zawierać \n)
+  const re = new RegExp(`^${keyword}\\s+"([\\s\\S]*)"\\s*$`, "i");
+  const m = String(line).match(re);
+  if (m) return m[1];
+
+  // SET cokolwiek (bez cudzysłowu)
+  return String(line).replace(new RegExp(`^${keyword}\\s+`, "i"), "");
+}
+
+function decodeEscapes(s) {
+  // pozwala wysyłać \n z controla jako dwa znaki i zamienić na newline
+  return String(s)
+    .replace(/\\n/g, "\n")
+    .replace(/\\t/g, "\t")
+    .replace(/\\"/g, '"');
+}
+
 async function handleCmd(lineRaw) {
-  const line = norm(lineRaw);
+  const line = String(lineRaw ?? "").trim();
   const up = line.toUpperCase();
+
+  if (!line) return;
 
   if (up === "OFF") {
     setHidden(true);
-    await persistHostState();
+    await persistState();
     return;
   }
 
   if (up === "ON") {
     setHidden(false);
-    await persistHostState();
-    return;
-  }
-
-  if (/^SET\b/i.test(line)) {
-    const text = parseQuotedOrRest(line, "SET");
-    setText(text);
-    await persistHostState();
-    return;
-  }
-
-  if (/^APPEND\b/i.test(line)) {
-    const add = parseQuotedOrRest(line, "APPEND");
-    const base = String(lastText ?? "");
-    setText(base ? (base + "\n" + add) : add);
-    await persistHostState();
+    await persistState();
     return;
   }
 
   if (up === "CLEAR") {
     clearText();
-    await persistHostState();
+    await persistState();
+    return;
+  }
+
+  if (/^SET\b/i.test(line)) {
+    const payload = decodeEscapes(unquotePayload(line, "SET"));
+    setText(payload);
+    await persistState();
+    return;
+  }
+
+  if (/^APPEND\b/i.test(line)) {
+    const payload = decodeEscapes(unquotePayload(line, "APPEND"));
+    appendLine(payload);
+    await persistState();
     return;
   }
 }
@@ -167,18 +184,16 @@ async function handleCmd(lineRaw) {
 let ch = null;
 function ensureChannel() {
   if (ch) return ch;
-
   ch = sb()
     .channel(`familiada-host:${gameId}`)
     .on("broadcast", { event: "HOST_CMD" }, (msg) => {
       handleCmd(msg?.payload?.line);
     })
     .subscribe();
-
   return ch;
 }
 
-/* ========= PRESENCE ========= */
+/* ========= PRESENCE (device_presence) ========= */
 async function ping() {
   if (!gameId || !key) return;
   try {
@@ -186,26 +201,29 @@ async function ping() {
       p_game_id: gameId,
       p_device_type: "host",
       p_key: key,
-      p_device_id: deviceId,
+      p_device_id: deviceId, // null ok
       p_meta: {},
     });
     if (error) throw error;
 
-    if (data?.device_id && data.device_id !== deviceId) {
-      deviceId = data.device_id;
+    // jeśli backend nadał device_id albo zwrócił inny
+    const nextId = data?.device_id;
+    if (nextId && nextId !== deviceId) {
+      deviceId = nextId;
       localStorage.setItem(DEVICE_ID_KEY, deviceId);
     }
   } catch (e) {
-    console.warn("[host] ping failed", e);
+    console.warn("[host] device_ping failed", e);
   }
 }
 
-/* ========= DOUBLE TAP (szybkie i stabilne) ========= */
-const DOUBLE_MS = 240;
-const DOUBLE_PX = 32;
+/* ========= PODWÓJNY TAP / KLIK (szybki, bez „mulenia”) =========
+Używamy pointerdown:
+- działa na dotyku i myszce
+- nie czekamy na dblclick (który na mobile bywa opóźniony)
+*/
+const DOUBLE_MS = 240; // szybciej niż 320, mniej „mielenia”
 let lastTapAt = 0;
-let lastX = 0;
-let lastY = 0;
 
 function yOK(y) {
   const h = window.innerHeight || 1;
@@ -214,37 +232,26 @@ function yOK(y) {
 
 async function toggleCover() {
   setHidden(!hidden);
-  await persistHostState();
+  await persistState();
 }
 
-function onPointerUp(e) {
-  // nie łap klików w przycisk fullscreen
-  if (e.target && e.target.closest?.("#btnFS")) return;
+function onPointerDown(ev) {
+  // ignoruj multi-touch: pointerType + isPrimary
+  if (ev.pointerType === "touch" && ev.isPrimary === false) return;
 
-  const y = e.clientY ?? 0;
+  const y = ev.clientY ?? 0;
   if (!yOK(y)) return;
 
   const now = Date.now();
-  const dx = (e.clientX ?? 0) - lastX;
-  const dy = (e.clientY ?? 0) - lastY;
-  const near = (dx * dx + dy * dy) <= (DOUBLE_PX * DOUBLE_PX);
-
-  if (near && (now - lastTapAt) <= DOUBLE_MS) {
+  if (now - lastTapAt <= DOUBLE_MS) {
     lastTapAt = 0;
-    e.preventDefault?.(); // blokuj podwójny-tap zoom
     toggleCover();
-    return;
+  } else {
+    lastTapAt = now;
   }
-
-  lastTapAt = now;
-  lastX = e.clientX ?? 0;
-  lastY = e.clientY ?? 0;
 }
 
-// pointer events: działa na dotyku i myszy
-document.addEventListener("pointerup", onPointerUp, { passive: false });
-
-// blokuj ctrl+scroll zoom na desktop
+// blokuj ctrl+scroll zoom (desktop)
 document.addEventListener(
   "wheel",
   (e) => {
@@ -261,17 +268,29 @@ document.addEventListener("DOMContentLoaded", async () => {
   setFullscreenIcon();
 
   if (!gameId || !key) {
-    setText("");
-    setHidden(true);
+    // bez parametrów = zasłonięte i puste
+    text = "";
+    hidden = true;
+    render();
     return;
   }
 
-  await restoreFromSnapshot();
+  // szybki toggle: tap/click
+  document.addEventListener("pointerdown", onPointerDown, { passive: true });
+
+  await restoreState();
   ensureChannel();
 
-  await ping();
+  ping();
   setInterval(ping, 5000);
 });
 
 // debug
-window.__host = { setHidden, setText, clearText, handleCmd };
+window.__host = {
+  setHidden,
+  setText,
+  clearText,
+  appendLine,
+  handleCmd,
+  ping,
+};
