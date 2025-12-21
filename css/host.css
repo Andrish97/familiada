@@ -15,6 +15,9 @@
   --bottom-pad: calc(var(--line) * 1.2); /* miejsce na hint */
 }
 
+/* usuń “mignięcie” highlight na iOS/Android */
+*{ -webkit-tap-highlight-color: transparent; }
+
 html, body { height: 100%; }
 
 .host-body{
@@ -56,7 +59,6 @@ html, body { height: 100%; }
     var(--safe-left);
 
   background-color:#fffdf5;
-  /* bez “gradientowych schodków”: powtarzane paski jako background-size */
   background-image: linear-gradient(to bottom, #e7e2d3 1px, transparent 1px);
   background-size: 100% var(--line);
   background-position: 0 0;
@@ -83,9 +85,10 @@ html, body { height: 100%; }
   white-space:pre-wrap;
   word-break:break-word;
 
-  /* czytelniejsza “pisana” (bez webfontów) */
   font-family: "Segoe Print", "Bradley Hand", "Segoe Script", "Comic Sans MS", cursive;
-  font-size: 26px;
+
+  /* ↑ większa czcionka w linijkach */
+  font-size: 30px;
   line-height: var(--line);
   color:#111;
 }
@@ -97,48 +100,98 @@ html, body { height: 100%; }
   bottom: calc(var(--safe-bottom) + 0px);
 
   font-family: "Segoe Print", "Bradley Hand", "Segoe Script", "Comic Sans MS", cursive;
-  font-size: 22px;
+  font-size: 24px;
   line-height: var(--line);
   color: rgba(0,0,0,.55);
 }
 
-/* Okładka kartonowa */
+/* ========= OKŁADKA (zeszyt + animacja) ========= */
 .blank{
   position:fixed;
   inset:0;
   z-index: 50;
 
-  background:
-    radial-gradient(circle at 20% 20%, rgba(255,255,255,.08), transparent 55%),
-    radial-gradient(circle at 80% 30%, rgba(0,0,0,.10), transparent 55%),
-    linear-gradient(180deg, #c9b08a, #b79c73);
+  background-color:#fffdf5;
+  background-image: linear-gradient(to bottom, rgba(231,226,211,.95) 1px, transparent 1px);
+  background-size: 100% var(--line);
+  background-position: 0 0;
+
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(var(--blank-tx, 0));
+  transition: transform 180ms ease, opacity 160ms ease;
+  will-change: transform, opacity;
 }
 
+/* “karton okładki” + cienie po bokach */
+.blank::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:
+    radial-gradient(circle at 20% 20%, rgba(0,0,0,.06), transparent 55%),
+    radial-gradient(circle at 80% 30%, rgba(0,0,0,.08), transparent 55%),
+    linear-gradient(90deg,
+      rgba(183,156,115,.55),
+      transparent 18%,
+      transparent 82%,
+      rgba(183,156,115,.55)
+    );
+  pointer-events:none;
+}
+
+/* widoczna okładka */
+.blank.blankOn{
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateX(0);
+}
+
+/* “czeka poza ekranem” */
+.blank.blankOffLeft{ --blank-tx: -120%; }
+.blank.blankOffRight{ --blank-tx: 120%; }
+
+/* wyłącz animację przy starcie/restore */
+.blank.noAnim{ transition: none !important; }
+
+/* “etykieta” do podpisu (też w linie) */
 .blankCard{
   position:absolute;
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
-  width: min(560px, 92vw);
-  border-radius: 22px;
-  border: 1px solid rgba(255,255,255,.18);
-  background: rgba(0,0,0,.12);
-  box-shadow: 0 30px 90px rgba(0,0,0,.55);
+  width: min(640px, 92vw);
+
+  border-radius: 18px;
+  border: 2px solid rgba(0,0,0,.18);
+
+  background:
+    linear-gradient(to bottom, rgba(231,226,211,.95) 1px, transparent 1px);
+  background-size: 100% var(--line);
+  background-position: 0 0;
+
+  box-shadow: 0 20px 60px rgba(0,0,0,.25);
   padding: 22px;
-  text-align:center;
+  text-align:left;
 }
 
 .blankTitle{
   font-weight: 1000;
-  letter-spacing: .18em;
+  letter-spacing: .14em;
   text-transform: uppercase;
-  color: rgba(255,255,255,.92);
+  color: rgba(0,0,0,.62);
   font-size: 18px;
+  margin-bottom: 10px;
 }
 
 .blankHint{
-  margin-top: 12px;
+  margin-top: 6px;
   font-family: "Segoe Print", "Bradley Hand", "Segoe Script", "Comic Sans MS", cursive;
-  font-size: 22px;
-  color: rgba(255,255,255,.92);
+  font-size: 26px;
+  line-height: var(--line);
+  color: rgba(0,0,0,.72);
+}
+
+@media (prefers-reduced-motion: reduce){
+  .blank{ transition: none !important; }
 }
