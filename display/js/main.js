@@ -1,4 +1,3 @@
-// main/display/js/main.js
 import { initFullscreenButton } from "./fullscreen.js";
 import { startPresence } from "./presence.js";
 import { createQRController } from "./qr.js";
@@ -42,7 +41,7 @@ window.addEventListener("DOMContentLoaded", async () => {
       setMode(m) {
         let mm = (m ?? "").toString().toUpperCase();
         if (mm === "BLACK") mm = APP_MODES.BLACK;
-        if (!Object.values(APP_MODES).includes(mm)) throw new Error("Mode musi być BLACK_SCREEN / GRA / QR");
+        if (!Object.values(APP_MODES).includes(mm)) throw new Error("Mode: BLACK_SCREEN / GRA / QR");
         this.mode = mm;
 
         blackScreen?.classList.add("hidden");
@@ -60,7 +59,6 @@ window.addEventListener("DOMContentLoaded", async () => {
     };
 
     const handleCommand = createCommandHandler(app);
-
     window.app = app;
     window.scene = scene;
     window.handleCommand = handleCommand;
@@ -70,26 +68,18 @@ window.addEventListener("DOMContentLoaded", async () => {
       debug: true,
       onCommand: (line) => handleCommand(line),
 
-      // SNAPSHOT z device_state.state
-      onSnapshot: async (st) => {
+      // snapshot odtwarza “stan ekranu”
+      onSnapshot: (st) => {
         const mode = String(st?.app_mode ?? "BLACK").toUpperCase();
         if (mode === "GRA") app.setMode("GRA");
         else if (mode === "QR") app.setMode("QR");
         else app.setMode("BLACK_SCREEN");
 
-        // QR linki (jeśli trzymasz je w state)
-        if (st?.qr?.host)  try { handleCommand(`QR HOST "${st.qr.host}" BUZZER "${st.qr.buzzer || ""}"`); } catch {}
-        if (mode === "QR") {
-          // w QR i tak komenda QR HOST/BUZZER robi robotę, ale zostawiamy.
-        }
-
-        // scena (tylko gdy GRA)
         const sceneMode = String(st?.scene ?? "LOGO").toUpperCase();
         if (mode === "GRA") {
           try { handleCommand(`MODE ${sceneMode}`); } catch {}
         }
 
-        // ostatnia “komenda budująca ekran”
         const last = String(st?.last_cmd ?? "");
         if (last) {
           try { handleCommand(last); } catch {}
@@ -100,9 +90,8 @@ window.addEventListener("DOMContentLoaded", async () => {
     app.game = pres.game;
     app.gameId = pres.game.id;
 
-    // Jeżeli control jeszcze nic nie zapisał do device_state, startuj na czarno
+    // jeśli nie było snapshotu – start czarny
     app.setMode("BLACK_SCREEN");
-
     console.log("Display OK:", pres.game.name, pres.game.id);
   } catch (e) {
     showBlack(e?.message || String(e));
