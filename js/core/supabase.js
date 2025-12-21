@@ -22,3 +22,6 @@ export function sb() {
 
   return _client;
 }
+// debug helper:
+globalThis.__sb = sb;
+globalThis.__sbClient = sb();
