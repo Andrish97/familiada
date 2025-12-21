@@ -1,31 +1,37 @@
 import { sb } from "../../js/core/supabase.js";
 
 /**
- * Display Presence / Snapshot / Commands (v2)
+ * Display Presence / Snapshot / Commands
  *
  * - czyta ?id=...&key=...
- * - pobiera snapshot get_public_snapshot_v2 (żeby po refresh wróciło)
+ * - pobiera snapshot get_public_snapshot_v2
+ * - woła onSnapshot(devices) (na starcie)
  * - ping device_ping_v2 co pingMs
  * - subskrybuje DISPLAY_CMD i woła onCommand(line)
- *
- * Zwraca: { game, snapshot, stop(), sendDebug(line) }
  */
 export async function startPresence({
   channel = null,
   pingMs = 5000,
   onCommand = null,
+  onSnapshot = null, // <<<<<< DODANE
   debug = false,
 } = {}) {
   const { gameId, key } = parseParams();
   if (!gameId || !key) throw new Error("Brak id lub key w URL.");
 
+  // 1) snapshot (żeby po refresh wrócić do stanu)
   const snap = await getSnapshotOrThrow(gameId, key);
   const game = snap?.game;
-  const devices = snap?.devices;
+  const devices = snap?.devices || {};
+
+  // hook do main.js
+  try { onSnapshot?.(devices); } catch (e) {
+    if (debug) console.warn("[display] onSnapshot error", e);
+  }
 
   const chName = channel || `familiada-display:${game.id}`;
 
-  // 1) ping do bazy
+  // 2) ping (presence)
   const ping = async () => {
     try {
       await sb().rpc("device_ping_v2", { p_game_id: game.id, p_kind: "display", p_key: key });
@@ -37,7 +43,7 @@ export async function startPresence({
   await ping();
   const pingTimer = setInterval(ping, pingMs);
 
-  // 2) realtime: komendy z controla
+  // 3) realtime: komendy
   const ch = sb()
     .channel(chName)
     .on("broadcast", { event: "DISPLAY_CMD" }, (msg) => {
@@ -57,6 +63,7 @@ export async function startPresence({
 
   window.addEventListener("beforeunload", stop);
 
+  // debug helper
   const sendDebug = async (line) => {
     try {
       await ch.send({ type: "broadcast", event: "DISPLAY_CMD", payload: { line: String(line) } });
@@ -65,16 +72,13 @@ export async function startPresence({
     }
   };
 
-  window.__presence = { game, channel: chName, ping, stop };
-  return { game, snapshot: { game, devices }, stop, sendDebug };
+  window.__presence = { game, devices, channel: chName, ping, stop };
+  return { game, devices, stop, sendDebug };
 }
 
 function parseParams() {
   const u = new URL(location.href);
-  return {
-    gameId: u.searchParams.get("id") || "",
-    key: u.searchParams.get("key") || "",
-  };
+  return { gameId: u.searchParams.get("id") || "", key: u.searchParams.get("key") || "" };
 }
 
 async function getSnapshotOrThrow(gameId, key) {
