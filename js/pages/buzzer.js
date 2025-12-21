@@ -16,11 +16,9 @@ const btnB = document.getElementById("btnB");
 const DEVICE_ID_KEY = "familiada:deviceId:buzzer";
 let deviceId = localStorage.getItem(DEVICE_ID_KEY);
 
-// zawsze string, nigdy null/undefined
 if (!deviceId) {
-  deviceId = (crypto?.randomUUID?.() || Math.random().toString(16).slice(2))  // stabilne id
-    .replace(/-/g, "")
-    .slice(0, 16);
+  deviceId = "buz_" + (crypto?.randomUUID?.() || String(Math.random()).slice(2));
+  deviceId = deviceId.replace(/-/g, "").slice(0, 24);
   localStorage.setItem(DEVICE_ID_KEY, deviceId);
 }
 
@@ -173,11 +171,11 @@ async function ping() {
   if (!gameId || !key) return;
 
   const { data, error } = await sb().rpc("device_ping", {
-    p_game_id: gameId,
-    p_device_type: "buzzer",
-    p_key: key,
-    p_device_id: String(deviceId),   // <- ważne: string
-    p_meta: {},                      // <- jsonb
+      p_game_id: gameId,
+      p_device_type: "buzzer",
+      p_key: key,
+      p_device_id: deviceId,
+      p_meta: {},
   });
 
   if (error) {
