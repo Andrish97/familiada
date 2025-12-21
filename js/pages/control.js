@@ -329,7 +329,7 @@ if (btnManualSend)
   };
 
 // ===== topbar
-if (btnBack) btnBack.onclick = () => (location.href = "../builder/index.html");
+if (btnBack) btnBack.onclick = () => (location.href = "../../builder.html");
 if (btnLogout)
   btnLogout.onclick = async () => {
     await signOut().catch(() => {});
