@@ -3,33 +3,31 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Familiada — control</title>
+  <title>Familiada — Control</title>
 
   <link rel="icon" href="favicon.ico"/>
-
-  <link rel="stylesheet" href="css/base.css"/>
-  <link rel="stylesheet" href="css/control.css"/>
+  <link rel="stylesheet" href="/familiada/css/base.css"/>
+  <link rel="stylesheet" href="/familiada/css/control.css"/>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-  <script type="module" src="js/pages/control.js"></script>
+  <script type="module" src="/familiada/js/pages/control.js" defer></script>
 </head>
 
 <body class="control-body">
   <header class="topbar">
     <div class="brand">FAMILIADA</div>
-
     <div class="right">
-      <span class="who" id="who">—</span>
       <button class="btn" id="btnBack" type="button">← Moje gry</button>
+      <span class="who" id="who">—</span>
       <button class="btn" id="btnLogout" type="button">Wyloguj</button>
     </div>
   </header>
 
   <main class="wrap">
     <div class="row">
-      <div class="title">
-        <span id="gameLabel">Control</span>
-        <span class="sub" id="gameMeta">—</span>
+      <div>
+        <div class="title" id="gameLabel">Control</div>
+        <div class="hint" id="gameMeta">—</div>
       </div>
 
       <div class="tabs">
@@ -38,125 +36,95 @@
       </div>
     </div>
 
-    <!-- ============ DEVICES ============ -->
+    <!-- ===== DEVICES ===== -->
     <section class="panel" data-panel="devices">
       <div class="hint">
-        Control pokazuje <b>online/offline</b> na podstawie <code>device_presence.last_seen_at</code>.
-        Linki otwierają urządzenia na niezalogowanych sprzętach (klucze w URL).
+        Status jest liczony z <code>device_presence.last_seen_at</code> (ping co ~5s).
       </div>
 
       <div class="cards">
+        <!-- DISPLAY -->
         <div class="card">
           <div class="head">
             <div class="name">DISPLAY</div>
             <div class="badge" id="pillDisplay">—</div>
           </div>
+
+          <div class="rowBtns">
+            <div class="badge">Ostatnio: <b id="seenDisplay">—</b></div>
+            <div class="badge">Last: <b id="lastCmdDisplay">—</b></div>
+          </div>
+
           <div class="rowBtns">
             <input class="inp" id="displayLink" readonly />
             <button class="btn" id="btnCopyDisplay" type="button">Kopiuj</button>
             <button class="btn gold" id="btnOpenDisplay" type="button">Otwórz</button>
-          </div>
-          <div class="mini">
-            <div>Ostatnio: <b id="seenDisplay">—</b></div>
-            <div>Ostatnia komenda: <b id="lastCmdDisplay">—</b></div>
-            <button class="btn" id="btnResendDisplay" type="button">Wyślij ostatnią ponownie</button>
+            <button class="btn" id="btnResendDisplay" type="button">Wyślij last</button>
           </div>
         </div>
 
+        <!-- HOST -->
         <div class="card">
           <div class="head">
             <div class="name">HOST</div>
             <div class="badge" id="pillHost">—</div>
           </div>
+
+          <div class="rowBtns">
+            <div class="badge">Ostatnio: <b id="seenHost">—</b></div>
+            <div class="badge">Last: <b id="lastCmdHost">—</b></div>
+          </div>
+
           <div class="rowBtns">
             <input class="inp" id="hostLink" readonly />
             <button class="btn" id="btnCopyHost" type="button">Kopiuj</button>
             <button class="btn gold" id="btnOpenHost" type="button">Otwórz</button>
-          </div>
-          <div class="mini">
-            <div>Ostatnio: <b id="seenHost">—</b></div>
-            <div>Ostatnia komenda: <b id="lastCmdHost">—</b></div>
-            <button class="btn" id="btnResendHost" type="button">Wyślij ostatnią ponownie</button>
+            <button class="btn" id="btnResendHost" type="button">Wyślij last</button>
           </div>
         </div>
 
+        <!-- BUZZER -->
         <div class="card">
           <div class="head">
             <div class="name">BUZZER</div>
             <div class="badge" id="pillBuzzer">—</div>
           </div>
+
+          <div class="rowBtns">
+            <div class="badge">Ostatnio: <b id="seenBuzzer">—</b></div>
+            <div class="badge">Last: <b id="lastCmdBuzzer">—</b></div>
+          </div>
+
           <div class="rowBtns">
             <input class="inp" id="buzzerLink" readonly />
             <button class="btn" id="btnCopyBuzzer" type="button">Kopiuj</button>
             <button class="btn gold" id="btnOpenBuzzer" type="button">Otwórz</button>
-          </div>
-          <div class="mini">
-            <div>Ostatnio: <b id="seenBuzzer">—</b></div>
-            <div>Ostatnia komenda: <b id="lastCmdBuzzer">—</b></div>
-            <button class="btn" id="btnResendBuzzer" type="button">Wyślij ostatnią ponownie</button>
+            <button class="btn" id="btnResendBuzzer" type="button">Wyślij last</button>
           </div>
         </div>
       </div>
 
-      <div class="foot">
-        <div class="msg" id="msgDevices"></div>
-      </div>
+      <div class="foot"><div class="msg" id="msgDevices"></div></div>
     </section>
 
-    <!-- ============ COMMANDS ============ -->
+    <!-- ===== COMMANDS ===== -->
     <section class="panel" data-panel="cmd" style="display:none;">
-      <div class="hint">
-        Komendy lecą realtime broadcastem na kanały urządzeń.
-        Control zapisuje „ostatnią komendę” per urządzenie (żeby móc ją powtórzyć po refresh).
-      </div>
+      <div class="hint">Ręczne wysyłanie komend realtime (broadcast).</div>
 
-      <div class="cmdGrid">
-        <div class="card">
-          <div class="name">DISPLAY</div>
-          <div class="rowBtns">
-            <button class="btn" data-send="display" data-line="MODE BLACK">BLACK</button>
-            <button class="btn gold" data-send="display" data-line="MODE QR">QR</button>
-            <button class="btn gold" data-send="display" data-line="MODE GRA">GRA</button>
-          </div>
-        </div>
+      <div class="card">
+        <div class="rowBtns">
+          <select class="inp" id="manualTarget" style="max-width:220px;">
+            <option value="display">display</option>
+            <option value="host">host</option>
+            <option value="buzzer">buzzer</option>
+          </select>
 
-        <div class="card">
-          <div class="name">HOST</div>
-          <div class="rowBtns">
-            <button class="btn" data-send="host" data-line="OFF">OFF</button>
-            <button class="btn gold" data-send="host" data-line="ON">ON</button>
-            <button class="btn" data-send="host" data-line='SET "Test prowadzącego"'>SET TEST</button>
-            <button class="btn" data-send="host" data-line="CLEAR">CLEAR</button>
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="name">BUZZER</div>
-          <div class="rowBtns">
-            <button class="btn" data-send="buzzer" data-line="OFF">OFF</button>
-            <button class="btn gold" data-send="buzzer" data-line="ON">ON</button>
-            <button class="btn" data-send="buzzer" data-line="PUSHED A">PUSHED A</button>
-            <button class="btn" data-send="buzzer" data-line="PUSHED B">PUSHED B</button>
-          </div>
-        </div>
-
-        <div class="card" style="grid-column:1/-1;">
-          <div class="name">Wysyłka ręczna</div>
-          <div class="rowBtns">
-            <select class="inp sel" id="manualTarget">
-              <option value="display">display</option>
-              <option value="host">host</option>
-              <option value="buzzer">buzzer</option>
-            </select>
-            <input class="inp" id="manualLine" placeholder='np. MODE GRA albo SET "tekst"'/>
-            <button class="btn gold" id="btnManualSend" type="button">Wyślij</button>
-          </div>
+          <input class="inp" id="manualLine" placeholder='np. MODE LOGO / OFF / SET "..."' />
+          <button class="btn gold" id="btnManualSend" type="button">Wyślij</button>
         </div>
       </div>
 
-      <div class="foot">
-        <div class="msg" id="msgCmd"></div>
-      </div>
+      <div class="foot"><div class="msg" id="msgCmd"></div></div>
     </section>
   </main>
 </body>
