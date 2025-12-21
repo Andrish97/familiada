@@ -40,6 +40,25 @@
         Otwórz ekrany na docelowych urządzeniach. Status “OK” pojawi się, gdy urządzenie wysyła ping.
       </div>
 
+      <div class="card" id="teamNamesCard" style="display:none;">
+        <div class="name">Drużyny</div>
+        <div class="rowBtns" style="margin-top:10px;">
+          <input class="inp" id="teamA" placeholder="Nazwa drużyny A (max 16)" maxlength="16" style="width:min(260px,100%);" />
+          <input class="inp" id="teamB" placeholder="Nazwa drużyny B (max 16)" maxlength="16" style="width:min(260px,100%);" />
+          <button class="btn gold" id="btnTeamsOk" type="button">Zatwierdź</button>
+        </div>
+        <div class="hint" style="margin-top:10px; opacity:.75;">Nazwy będą widoczne przez całą grę.</div>
+      </div>
+    
+      <div class="card" id="buzzConfirmCard" style="display:none;">
+        <div class="name">Buzzer — potwierdzenie</div>
+        <div class="rowBtns" style="margin-top:10px;">
+          <button class="btn gold" id="btnBuzzOk" type="button">Zatwierdź buzz</button>
+          <button class="btn" id="btnBuzzRetry" type="button">Powtórz buzz</button>
+        </div>
+        <div class="hint" style="margin-top:10px; opacity:.75;">Używaj tylko w stanie BUZZ_CONFIRM.</div>
+      </div>
+
       <div class="cards">
         <div class="card">
           <div class="head">
