@@ -1,3 +1,4 @@
+// js/pages/control.js
 import { sb } from "../core/supabase.js";
 import { playSfx } from "../core/sfx.js";
 import { requireAuth, signOut } from "../core/auth.js";
