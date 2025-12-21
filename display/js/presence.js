@@ -24,11 +24,12 @@ export async function startPresence({
     try {
       await sb().rpc("device_ping", {
         p_game_id: game.id,
-        p_kind: "display",
+        p_device_type: "display",
+        p_device_id: "main",
         p_key: key,
       });
     } catch (e) {
-      if (debug) console.warn("[display] ping failed", e);
+      console.warn("[display] ping failed", e);
     }
   };
 
