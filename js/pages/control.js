@@ -214,11 +214,11 @@ function startControlListener() {
       if (!line) return;
       logBuzz(line);
       // opcjonalnie: dźwięk na klik
-      // playSfx("buzzer_press");
+      playSfx("buzzer_press");
     })
     .subscribe((status) => {
       // debug: status może być "SUBSCRIBED" / "CHANNEL_ERROR" itp.
-      // console.log("[control] control channel status:", status);
+      console.log("[control] control channel status:", status);
     });
 
   if (btnBuzzLogClear) {
