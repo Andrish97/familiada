@@ -28,8 +28,12 @@ function setFullscreenIcon() {
 
 async function toggleFullscreen() {
   try {
-    if (!document.fullscreenElement) await document.documentElement.requestFullscreen();
-    else await document.exitFullscreen();
+    if (!document.fullscreenElement) {
+      await document.documentElement.requestFullscreen?.({ navigationUI: "hide" });
+      // iOS Safari często nie wspiera Fullscreen API -> wtedy po prostu nic
+    } else {
+      await document.exitFullscreen?.();
+    }
   } catch {}
   setFullscreenIcon();
 }
