@@ -16,6 +16,19 @@ const alist = $("alist");
 const prog = $("prog");
 const closed = $("closed");
 
+function showThanks(text = "Dziękujemy za udział!") {
+  const qbox = document.getElementById("qbox");
+  const closed = document.getElementById("closed");
+  const sub = document.getElementById("sub");
+
+  if (qbox) qbox.style.display = "none";
+  if (closed) {
+    closed.style.display = "";
+    closed.textContent = text;
+  }
+  if (sub) sub.textContent = "";
+}
+
 function setSub(t) {
   if (subEl) subEl.textContent = t || "";
 }
@@ -90,10 +103,7 @@ function render() {
   showClosed(false);
 
   if (!q) {
-    if (qtext) qtext.textContent = "Dziękujemy!";
-    if (alist) alist.innerHTML = "";
-    if (prog) prog.textContent = "Koniec";
-    setSub("Dziękujemy za udział.");
+    showThanks("Dziękujemy za udział!");
     return;
   }
 
