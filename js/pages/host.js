@@ -1,3 +1,4 @@
+// js/pages/host.js
 import { sb } from "../core/supabase.js";
 
 const qs = new URLSearchParams(location.search);
