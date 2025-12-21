@@ -1,153 +1,125 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pl">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Familiada — sterowanie</title>
-
-  <link rel="icon" href="favicon.ico"/>
-
-  <link rel="stylesheet" href="css/base.css"/>
-  <link rel="stylesheet" href="css/control.css"/>
-
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-  <script type="module" src="js/pages/control.js" defer></script>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Control</title>
+  <link rel="stylesheet" href="./control.css" />
 </head>
+<body>
+  <header class="top">
+    <div class="brand">
+      <div class="logo">✕</div>
+      <div>
+        <div class="t1">FAMILIADA</div>
+        <div class="t2">CONTROL</div>
+      </div>
+    </div>
 
-<body class="control-body">
-  <header class="topbar">
-    <div class="brand">FAMILIADA</div>
-    <div class="right">
-      <button class="btn" id="btnBack" type="button">← Moje gry</button>
-      <span class="who" id="who">—</span>
-      <button class="btn" id="btnLogout" type="button">Wyloguj</button>
+    <div class="topRight">
+      <div class="pill" id="authPill">auth: …</div>
+      <button class="btn" id="btnReload">Odśwież</button>
     </div>
   </header>
 
   <main class="wrap">
-    <div class="row">
-      <div class="title" id="gameLabel">Sterowanie</div>
+    <section class="card">
+      <h2>Wejście</h2>
 
-      <div class="tabs">
-        <button class="tab active" data-tab="devices" type="button">Urządzenia</button>
-        <button class="tab" data-tab="game" type="button">Gra</button>
-      </div>
-    </div>
+      <div class="grid2">
+        <label class="field">
+          <span>gameId (opcjonalnie)</span>
+          <input id="inGameId" placeholder="uuid" />
+        </label>
 
-    <!-- ===== Urządzenia ===== -->
-    <section class="panel" data-panel="devices">
-      <div class="hint">
-        Otwórz ekrany na docelowych urządzeniach. Status “OK” pojawi się, gdy urządzenie wysyła ping.
-      </div>
-
-      <div class="card" id="teamNamesCard" style="display:none;">
-        <div class="name">Drużyny</div>
-        <div class="rowBtns" style="margin-top:10px;">
-          <input class="inp" id="teamA" placeholder="Nazwa drużyny A (max 16)" maxlength="16" style="width:min(260px,100%);" />
-          <input class="inp" id="teamB" placeholder="Nazwa drużyny B (max 16)" maxlength="16" style="width:min(260px,100%);" />
-          <button class="btn gold" id="btnTeamsOk" type="button">Zatwierdź</button>
-        </div>
-        <div class="hint" style="margin-top:10px; opacity:.75;">Nazwy będą widoczne przez całą grę.</div>
-      </div>
-    
-      <div class="card" id="buzzConfirmCard" style="display:none;">
-        <div class="name">Buzzer — potwierdzenie</div>
-        <div class="rowBtns" style="margin-top:10px;">
-          <button class="btn gold" id="btnBuzzOk" type="button">Zatwierdź buzz</button>
-          <button class="btn" id="btnBuzzRetry" type="button">Powtórz buzz</button>
-        </div>
-        <div class="hint" style="margin-top:10px; opacity:.75;">Używaj tylko w stanie BUZZ_CONFIRM.</div>
+        <label class="field">
+          <span>key control</span>
+          <input id="inKey" placeholder="share_key_control" />
+        </label>
       </div>
 
-      <div class="cards">
-        <div class="card">
-          <div class="head">
-            <div class="name">HOST (prowadzący)</div>
-            <div class="badge" id="pillHost">—</div>
-          </div>
-          <div class="rowBtns">
-            <input class="inp" id="hostLink" readonly />
-            <button class="btn" id="btnCopyHost" type="button">Kopiuj</button>
-            <button class="btn gold" id="btnOpenHost" type="button">Otwórz</button>
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="head">
-            <div class="name">BUZZER (A/B)</div>
-            <div class="badge" id="pillBuzzer">—</div>
-          </div>
-          <div class="rowBtns">
-            <input class="inp" id="buzzerLink" readonly />
-            <button class="btn" id="btnCopyBuzzer" type="button">Kopiuj</button>
-            <button class="btn gold" id="btnOpenBuzzer" type="button">Otwórz</button>
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="head">
-            <div class="name">DISPLAY (rzutnik)</div>
-            <div class="badge" id="pillDisplay">—</div>
-          </div>
-          <div class="rowBtns">
-            <input class="inp" id="displayLink" readonly />
-            <button class="btn" id="btnCopyDisplay" type="button">Kopiuj</button>
-            <button class="btn gold" id="btnOpenDisplay" type="button">Otwórz</button>
-          </div>
-        </div>
+      <div class="row">
+        <button class="btn primary" id="btnConnect">Połącz</button>
+        <div class="muted" id="connectMsg"></div>
       </div>
-
-      <div class="foot"><div class="msg" id="msgDevices"></div></div>
     </section>
 
-    <!-- ===== Gra ===== -->
-    <section class="panel" data-panel="game" style="display:none;">
-      <div class="hint">
-        Gra jest dostępna dopiero gdy masz min. 10 pytań i każde ma 5 odpowiedzi.
+    <section class="card" id="gameCard" hidden>
+      <h2>Gra</h2>
+      <div class="kv">
+        <div><span>Nazwa</span><b id="gName">-</b></div>
+        <div><span>ID</span><code id="gId">-</code></div>
+        <div><span>Typ</span><b id="gType">-</b></div>
+        <div><span>Status</span><b id="gStatus">-</b></div>
       </div>
 
-      <div class="gameGrid">
-        <div class="card">
-          <div class="name">Start</div>
-          <div class="rowBtns">
-            <button class="btn gold" id="btnStartGame" type="button">Start gry</button>
-            <button class="btn gold" id="btnStartRound" type="button">Start rundy</button>
-            <button class="btn" id="btnResetBuzzer" type="button">Reset buzzer</button>
+      <details class="details">
+        <summary>Pytania / odpowiedzi (jeśli RLS pozwoli)</summary>
+        <pre class="pre" id="gameDump">…</pre>
+      </details>
+    </section>
+
+    <section class="card" id="devicesCard" hidden>
+      <h2>Urządzenia</h2>
+
+      <div class="devices">
+        <div class="device">
+          <div class="deviceHead">
+            <b>DISPLAY</b>
+            <div class="pill" id="dDisplay">…</div>
+          </div>
+          <pre class="pre" id="sDisplay">…</pre>
+
+          <div class="cmdRow">
+            <input id="cmdDisplay" placeholder='np. MODE LOGO / BLACK / QR / ...' />
+            <button class="btn" id="sendDisplay">Wyślij</button>
           </div>
         </div>
 
-        <div class="card">
-          <div class="name">Status</div>
-          <div class="rowBtns">
-            <div class="badge">Runda: <b id="stRound">—</b></div>
-            <div class="badge">x<b id="stMult">—</b></div>
-            <div class="badge">Krok: <b id="stStep">—</b></div>
+        <div class="device">
+          <div class="deviceHead">
+            <b>HOST</b>
+            <div class="pill" id="dHost">…</div>
           </div>
-          <div class="rowBtns" style="margin-top:10px;">
-            <div class="badge">Buzzer: <b id="stBuzz">—</b></div>
-            <div class="badge">Team: <b id="stTeam">—</b></div>
-            <div class="badge">X: <b id="stStrikes">0</b></div>
-            <div class="badge">Suma: <b id="stSum">0</b></div>
+          <pre class="pre" id="sHost">…</pre>
+
+          <div class="cmdRow">
+            <input id="cmdHost" placeholder='np. SET "tekst" / OFF / ON / CLEAR' />
+            <button class="btn" id="sendHost">Wyślij</button>
           </div>
         </div>
 
-        <div class="card" style="grid-column:1/-1;">
-          <div class="name">Odpowiedzi</div>
-          <div class="rowBtns">
-            <button class="btn gold" id="btnPlay" type="button">GRA</button>
-            <button class="btn gold" id="btnPass" type="button">PASS</button>
-            <button class="btn danger" id="btnX" type="button">X</button>
+        <div class="device">
+          <div class="deviceHead">
+            <b>BUZZER</b>
+            <div class="pill" id="dBuzzer">…</div>
+          </div>
+          <pre class="pre" id="sBuzzer">…</pre>
 
-            <button class="btn" id="btnRevealNext" type="button">Odkryj następną</button>
-            <button class="btn" id="btnEndRound" type="button">Zakończ rundę</button>
+          <div class="cmdRow">
+            <input id="cmdBuzzer" placeholder="np. ON / OFF / RESET" />
+            <button class="btn" id="sendBuzzer">Wyślij</button>
           </div>
 
-          <div id="answers" class="answers" style="margin-top:12px;"></div>
+          <div class="row gap">
+            <button class="btn" id="buzOn">ON</button>
+            <button class="btn" id="buzOff">OFF</button>
+            <button class="btn" id="buzReset">RESET</button>
+          </div>
         </div>
       </div>
 
-      <div class="foot"><div class="msg" id="msgGame"></div></div>
+      <div class="row">
+        <div class="muted" id="liveMsg">snapshot: …</div>
+      </div>
+    </section>
+
+    <section class="card" id="logCard" hidden>
+      <h2>Log</h2>
+      <pre class="pre" id="log"></pre>
     </section>
   </main>
+
+  <script type="module" src="./control.js"></script>
 </body>
 </html>
