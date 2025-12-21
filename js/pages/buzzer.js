@@ -14,7 +14,7 @@ const btnA = document.getElementById("btnA");
 const btnB = document.getElementById("btnB");
 
 const DEVICE_ID_KEY = "familiada:deviceId:buzzer";
-let deviceId = localStorage.getItem(DEVICE_ID_KEY) || "";
+let deviceId = localStorage.getItem(DEVICE_ID_KEY) || null;
 
 const STATE = {
   OFF: "OFF",
@@ -25,7 +25,7 @@ const STATE = {
 
 let cur = STATE.OFF;
 
-// ===== fullscreen =====
+/* ========= FULLSCREEN ========= */
 function setFullscreenIcon() {
   if (!fsIco) return;
   fsIco.textContent = document.fullscreenElement ? "▢" : "⧉";
@@ -34,27 +34,28 @@ function setFullscreenIcon() {
 async function toggleFullscreen() {
   try {
     if (!document.fullscreenElement) {
-      await document.documentElement.requestFullscreen?.({ navigationUI: "hide" });
+      await document.documentElement.requestFullscreen();
     } else {
-      await document.exitFullscreen?.();
+      await document.exitFullscreen();
     }
   } catch {}
   setFullscreenIcon();
 }
 
-// ===== UI =====
+/* ========= UI ========= */
 function show(state) {
   cur = state;
 
   const isOff = state === STATE.OFF;
-  if (offScreen) offScreen.hidden = !isOff;
-  if (arena) arena.hidden = isOff;
+
+  offScreen && (offScreen.hidden = !isOff);
+  arena && (arena.hidden = isOff);
 
   btnA?.classList.remove("lit", "dim");
   btnB?.classList.remove("lit", "dim");
 
-  if (btnA) btnA.disabled = true;
-  if (btnB) btnB.disabled = true;
+  btnA && (btnA.disabled = true);
+  btnB && (btnB.disabled = true);
 
   if (isOff) return;
 
@@ -78,7 +79,7 @@ function show(state) {
   }
 }
 
-// ===== snapshot =====
+/* ========= SNAPSHOT ========= */
 async function persistState() {
   if (!gameId || !key) return;
   try {
@@ -88,7 +89,9 @@ async function persistState() {
       p_key: key,
       p_patch: { state: cur },
     });
-  } catch {}
+  } catch (e) {
+    console.warn("[buzzer] persist failed", e);
+  }
 }
 
 async function restoreState() {
@@ -101,14 +104,14 @@ async function restoreState() {
     });
     if (error) throw error;
 
-    const st = String(data?.state ?? "OFF").toUpperCase();
-    show(STATE[st] ? STATE[st] : STATE.OFF);
+    const st = String(data?.state || "OFF").toUpperCase();
+    show(STATE[st] ?? STATE.OFF);
   } catch {
     show(STATE.OFF);
   }
 }
 
-// ===== realtime commands =====
+/* ========= REALTIME ========= */
 let ch = null;
 function ensureChannel() {
   if (ch) return ch;
@@ -116,20 +119,23 @@ function ensureChannel() {
   ch = sb()
     .channel(`familiada-buzzer:${gameId}`)
     .on("broadcast", { event: "BUZZER_CMD" }, (msg) => {
-      const line = String(msg?.payload?.line ?? "").trim().toUpperCase();
+      const line = String(msg?.payload?.line || "").toUpperCase().trim();
 
-      if (line === "OFF") { show(STATE.OFF); persistState(); return; }
-      if (line === "ON")  { show(STATE.ON);  persistState(); return; }
+      if (line === "OFF") return show(STATE.OFF), persistState();
+      if (line === "ON")  return show(STATE.ON),  persistState();
 
-      if (line === "PUSHED A" || line === "PUSHED_A") { show(STATE.PUSHED_A); persistState(); return; }
-      if (line === "PUSHED B" || line === "PUSHED_B") { show(STATE.PUSHED_B); persistState(); return; }
+      if (line === "PUSHED A" || line === "PUSHED_A")
+        return show(STATE.PUSHED_A), persistState();
+
+      if (line === "PUSHED B" || line === "PUSHED_B")
+        return show(STATE.PUSHED_B), persistState();
     })
     .subscribe();
 
   return ch;
 }
 
-// ===== click -> control =====
+/* ========= CLICK -> CONTROL ========= */
 async function sendClick(team) {
   try {
     const ctl = sb().channel(`familiada-control:${gameId}`);
@@ -140,7 +146,9 @@ async function sendClick(team) {
       payload: { line: `CLICK ${team}` },
     });
     sb().removeChannel(ctl);
-  } catch {}
+  } catch (e) {
+    console.warn("[buzzer] click failed", e);
+  }
 }
 
 async function press(team, ev) {
@@ -152,7 +160,7 @@ async function press(team, ev) {
   await sendClick(team);
 }
 
-// ===== presence ping =====
+/* ========= PRESENCE ========= */
 async function ping() {
   if (!gameId || !key) return;
   try {
@@ -160,38 +168,20 @@ async function ping() {
       p_game_id: gameId,
       p_device_type: "buzzer",
       p_key: key,
-      p_device_id: deviceId || null,
+      p_device_id: deviceId,
       p_meta: {},
     });
 
-    if (data?.device_id && !deviceId) {
+    if (data?.device_id && data.device_id !== deviceId) {
       deviceId = data.device_id;
       localStorage.setItem(DEVICE_ID_KEY, deviceId);
     }
-  } catch {}
+  } catch (e) {
+    console.warn("[buzzer] ping failed", e);
+  }
 }
 
-// ===== touch UX: blokuj pinch + double-tap zoom =====
-document.addEventListener("gesturestart", (e) => e.preventDefault(), { passive: false });
-document.addEventListener("gesturechange", (e) => e.preventDefault(), { passive: false });
-document.addEventListener("gestureend", (e) => e.preventDefault(), { passive: false });
-
-let lastTouchEnd = 0;
-document.addEventListener("touchend", (e) => {
-  const now = Date.now();
-  if (now - lastTouchEnd <= 250) e.preventDefault();
-  lastTouchEnd = now;
-}, { passive: false });
-
-document.addEventListener("touchstart", (e) => {
-  if (e.touches && e.touches.length > 1) e.preventDefault();
-}, { passive: false });
-
-document.addEventListener("touchmove", (e) => {
-  if (e.touches && e.touches.length > 1) e.preventDefault();
-}, { passive: false });
-
-// ===== boot =====
+/* ========= BOOT ========= */
 btnFS?.addEventListener("click", toggleFullscreen);
 document.addEventListener("fullscreenchange", setFullscreenIcon);
 
@@ -203,7 +193,10 @@ btnB?.addEventListener("click", (e) => press("B", e));
 document.addEventListener("DOMContentLoaded", async () => {
   setFullscreenIcon();
 
-  if (!gameId || !key) { show(STATE.OFF); return; }
+  if (!gameId || !key) {
+    show(STATE.OFF);
+    return;
+  }
 
   await restoreState();
   ensureChannel();
