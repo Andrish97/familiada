@@ -8,7 +8,7 @@ const key = qs.get("key");
 const $ = (id) => document.getElementById(id);
 
 const msg = $("msg");
-const titleEl = $("title");
+const title = $("title");
 const qText = $("qText");
 const inp = $("inp");
 const btnSend = $("btnSend");
@@ -19,12 +19,8 @@ function setMsg(t) {
   msg.textContent = t || "";
 }
 
-function voterStorageKey() {
-  return `fam_voter_${gameId}_${key}`;
-}
-
 function getVoterToken() {
-  const k = voterStorageKey();
+  const k = `fam_voter_${gameId}_${key}`;
   let t = localStorage.getItem(k);
   if (!t) {
     t = (crypto?.randomUUID?.() || `${Date.now()}_${Math.random().toString(16).slice(2)}`);
@@ -33,31 +29,36 @@ function getVoterToken() {
   return t;
 }
 
-// ignorujemy wielkość liter i spacje przed/po, ale nie w środku
+// ✅ trim + lowercase + wiele spacji -> jedna
 function norm(s) {
   return String(s ?? "")
     .trim()
     .toLowerCase()
-    .replace(/\s+/g, " "); // wiele spacji/tabów/enterów -> jedna spacja
+    .replace(/\s+/g, " ");
+}
+
+function withTimeout(promise, ms, label = "timeout") {
+  let to = null;
+  const t = new Promise((_, rej) => {
+    to = setTimeout(() => rej(new Error(label)), ms);
+  });
+  return Promise.race([promise.finally(() => clearTimeout(to)), t]);
 }
 
 async function loadPayload() {
-  const { data, error } = await sb().rpc("poll_get_payload", {
-    p_game_id: gameId,
-    p_key: key,
-  });
+  const p = sb().rpc("poll_get_payload", { p_game_id: gameId, p_key: key });
+  const { data, error } = await withTimeout(p, 12000, "Nie można pobrać pytań (timeout).");
   if (error) throw error;
   return data;
 }
 
 async function submit(questionId, raw) {
+  const voter = getVoterToken();
   const rawS = String(raw ?? "").trim();
   const normS = norm(rawS);
 
   if (!rawS) throw new Error("Wpisz odpowiedź.");
   if (!normS) throw new Error("Wpisz odpowiedź.");
-
-  const voter = getVoterToken();
 
   const { error } = await sb().rpc("poll_text_submit", {
     p_game_id: gameId,
@@ -87,18 +88,17 @@ function renderQuestion() {
     return;
   }
 
-  if (titleEl) titleEl.textContent = payload?.game?.name || "Sondaż";
+  if (title) title.textContent = payload?.game?.name || "Sondaż";
   if (qText) qText.textContent = `P${q.ord}: ${q.text}`;
 
   if (inp) {
     inp.disabled = false;
     inp.value = "";
-    inp.placeholder = "Wpisz odpowiedź dokładnie (bez żartów 😄)";
     inp.focus();
   }
 
   if (btnSend) btnSend.disabled = false;
-  if (btnNext) { btnNext.disabled = false; btnNext.textContent = "Pomiń"; }
+  if (btnNext) btnNext.disabled = false;
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -122,7 +122,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     btnSend?.addEventListener("click", async () => {
       try {
-        const q = (payload?.questions || [])[idx];
+        const q = (payload.questions || [])[idx];
         if (!q) return;
 
         btnSend.disabled = true;
@@ -131,20 +131,17 @@ document.addEventListener("DOMContentLoaded", async () => {
         setMsg("Wysłano. Następne pytanie.");
         idx++;
         renderQuestion();
-        setMsg("");
       } catch (e) {
         console.error("[poll-text] submit error:", e);
         setMsg(`Błąd: ${e?.message || e}`);
       } finally {
-        const q = (payload?.questions || [])[idx];
-        if (btnSend && q) btnSend.disabled = false;
+        if (btnSend && (payload.questions || [])[idx]) btnSend.disabled = false;
       }
     });
 
     btnNext?.addEventListener("click", () => {
       idx++;
       renderQuestion();
-      setMsg("");
     });
 
   } catch (e) {
@@ -152,5 +149,3 @@ document.addEventListener("DOMContentLoaded", async () => {
     setMsg(`Nie można otworzyć sondażu: ${e?.message || e}`);
   }
 });
-
-
