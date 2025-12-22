@@ -530,23 +530,15 @@ export async function createScene() {
     const makeLamp = (parent, cx, cy, r, colorOn) => {
     const svg = parent.ownerSVGElement;
   
-    // === STROJENIE (JAŚNIEJ, SPOKOJNIEJ) ===
+    // === TUNE ===
     const TUNE = {
-      baseFill: "#2a2f36", // jaśniejszy grafit (korpus)
-      glassOff: 0.25,     // szkło OFF – czytelne
-      glassOn:  0.20,     // szkło ON – prawie znika
-      glowOn: 0.75,       // glow spokojniejsze
-      bodyOn: 0.95,       // światło wewnętrzne
+      baseOff: "#15181d",           // 1) baza OFF (ciemna)
+      baseOn:  "#3a4049",           // 1) baza ON  (jaśniejsza)
+      glassOpacity: 0.38,           // 2) szkło (STAŁE) przezroczystość
+      ring: "rgba(255,255,255,0.42)",
+      ringOpacity: 0.92,
+      shadowOpacity: 0.10,
     };
-  
-    // === GRADIENT ŚWIECENIA ===
-    const gid = `lampGrad_${Math.random().toString(16).slice(2)}`;
-  
-    let defs = svg.querySelector("defs");
-    if (!defs) {
-      defs = document.createElementNS(svg.namespaceURI, "defs");
-      svg.insertBefore(defs, svg.firstChild);
-    }
   
     const mk = (name, attrs) => {
       const n = document.createElementNS(svg.namespaceURI, name);
@@ -554,85 +546,69 @@ export async function createScene() {
       return n;
     };
   
-    const grad = mk("radialGradient", {
-      id: gid,
-      cx: "50%",
-      cy: "45%",
-      r: "70%"
-    });
+    // === Gradient szkła (stały) ===
+    const gid = `lampGlass_${Math.random().toString(16).slice(2)}`;
   
-    grad.appendChild(mk("stop", { offset: "0%",   "stop-color": colorOn, "stop-opacity": "1" }));
-    grad.appendChild(mk("stop", { offset: "100%", "stop-color": "#000",  "stop-opacity": "0.35" }));
+    let defs = svg.querySelector("defs");
+    if (!defs) {
+      defs = mk("defs", {});
+      svg.insertBefore(defs, svg.firstChild);
+    }
+  
+    // “szkło” ma gradient: jaśniej u góry-lewej, ciemniej na brzegach
+    const grad = mk("radialGradient", { id: gid, cx: "35%", cy: "30%", r: "75%" });
+    grad.appendChild(mk("stop", { offset: "0%",   "stop-color": "#ffffff", "stop-opacity": "0.55" }));
+    grad.appendChild(mk("stop", { offset: "30%",  "stop-color": colorOn,   "stop-opacity": "1" }));
+    grad.appendChild(mk("stop", { offset: "100%", "stop-color": "#000000", "stop-opacity": "0.25" }));
     defs.appendChild(grad);
   
     const g = mk("g", {});
   
-    // === CIEŃ POD LAMPKĄ (BARDZO SUBTELNY) ===
+    // cień “osadzenia” (zawsze ten sam)
     const shadow = mk("circle", {
       cx: cx + r * 0.06,
       cy: cy + r * 0.10,
       r: r * 1.03,
       fill: "#000",
-      opacity: "0.10"
+      opacity: String(TUNE.shadowOpacity),
     });
   
-    // === BAZA (KORPUS – ZAWSZE 100%) ===
-    const baseCore = mk("circle", {
+    // 1) BAZA: pełna, zmienia kolor OFF/ON
+    const base = mk("circle", {
       cx, cy,
       r: r * 0.98,
-      fill: TUNE.baseFill,
-      opacity: "1"
+      fill: TUNE.baseOff,
+      opacity: "1",
     });
   
-    // === SZKŁO (KOLOR) ===
+    // 2) SZKŁO: stałe, półprzezroczyste, gradient + kolor
     const glass = mk("circle", {
       cx, cy,
       r,
-      fill: colorOn,
-      opacity: TUNE.glassOff
-    });
-  
-    // === ŚWIATŁO WEWNĘTRZNE ===
-    const onBody = mk("circle", {
-      cx, cy,
-      r,
       fill: `url(#${gid})`,
-      opacity: "0"
+      opacity: String(TUNE.glassOpacity),
     });
   
-    // === GLOW ===
-    const glow = mk("circle", {
-      cx, cy,
-      r: r * 1.06,
-      fill: colorOn,
-      opacity: "0",
-      filter: "url(#neonBlue)"
-    });
-  
-    // === RING ===
+    // ring/otoczka
     const ring = mk("circle", {
       cx, cy,
       r: r + 2,
       fill: "none",
-      stroke: "rgba(255,255,255,0.35)",
-      "stroke-width": 2,
-      opacity: "0.9"
+      stroke: TUNE.ring,
+      "stroke-width": "2",
+      opacity: String(TUNE.ringOpacity),
     });
   
     g.appendChild(shadow);
-    g.appendChild(glow);
-    g.appendChild(baseCore);
+    g.appendChild(base);
     g.appendChild(glass);
-    g.appendChild(onBody);
     g.appendChild(ring);
   
     parent.appendChild(g);
   
-    // === API ===
+    // API: tylko baza zmienia się OFF/ON
     const setOn = (on) => {
-      glass.setAttribute("opacity", on ? TUNE.glassOn : TUNE.glassOff);
-      onBody.setAttribute("opacity", on ? TUNE.bodyOn : "0");
-      glow.setAttribute("opacity", on ? TUNE.glowOn : "0");
+      base.setAttribute("fill", on ? TUNE.baseOn : TUNE.baseOff);
     };
   
     return { setOn, node: g };
