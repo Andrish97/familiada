@@ -13,7 +13,7 @@
   <script type="module" src="/familiada/js/pages/control.js" defer></script>
 
   <style>
-    /* drobne dodatki pod nowe elementy (bez rozwalania Twojego CSS) */
+    /* dodatki pod nowe elementy */
     .ta { width: 100%; resize: vertical; min-height: 120px; }
     .cmdGrid .card .name { margin-bottom: 8px; }
     .aBtn{
@@ -30,6 +30,7 @@
     .aBtn:active{ transform: translateY(1px); }
     .aTop{ display:flex; justify-content:space-between; opacity:.9; font-weight:900; letter-spacing:.06em; font-size:12px; }
     .aText{ margin-top:6px; font-weight:900; line-height:1.25; }
+
     .qaGrid{
       margin-top:12px;
       display:grid;
@@ -37,6 +38,7 @@
       gap:12px;
     }
     @media (max-width: 1100px){ .qaGrid{ grid-template-columns: 1fr; } }
+
     .log{
       margin-top:10px;
       padding:10px;
@@ -49,7 +51,6 @@
       white-space: pre-wrap;
       line-height: 1.35;
     }
-    
   </style>
 </head>
 
@@ -153,20 +154,16 @@
         Testy realtime: komendy, host tekst, buzzer stany, display testpack, SFX, pytania/odpowiedzi.
       </div>
 
+      <!-- AUDIO UNLOCK -->
       <div class="card">
         <div class="name">Audio</div>
-        <div class="hint">
-          Wymagane przez przeglądarki. Kliknij raz, aby odblokować dźwięk.
-        </div>
-      
+        <div class="hint">Wymagane przez przeglądarki. Kliknij raz, aby odblokować dźwięk.</div>
         <div class="rowBtns">
-          <button class="btn gold" id="btnUnlockAudio" type="button">
-            🔊 Odblokuj audio
-          </button>
+          <button class="btn gold" id="btnUnlockAudio" type="button">🔊 Odblokuj audio</button>
           <div class="badge" id="audioStatus">ZABLOKOWANE</div>
         </div>
       </div>
-      
+
       <div class="cmdGrid">
         <!-- manual send -->
         <div class="card">
@@ -190,7 +187,7 @@
         <!-- host text -->
         <div class="card">
           <div class="name">HOST — tekst z Control</div>
-          <div class="hint">Wyślij robi <code>SET "..."</code>. Obsługuje nowe linie (po stronie host.js musi być unescape).</div>
+          <div class="hint">Wyślij robi <code>SET "..."</code>. Nowe linie OK (host.js musi je umieć odtworzyć).</div>
 
           <textarea class="inp ta" id="hostText" rows="6" placeholder="Wpisz tekst dla prowadzącego (może mieć nowe linie)"></textarea>
 
@@ -208,7 +205,7 @@
         <!-- buzzer states -->
         <div class="card">
           <div class="name">BUZZER — stany</div>
-          <div class="hint">RESET przywraca stan domyślny (zależnie od buzzer.js, zwykle OFF albo ON).</div>
+          <div class="hint">RESET przywraca stan domyślny wg buzzer.js.</div>
 
           <div class="rowBtns">
             <button class="btn" id="btnBuzzOn" type="button">ON</button>
@@ -222,37 +219,29 @@
           </div>
         </div>
 
+        <!-- buzzer check (no self-test) -->
         <div class="card">
-          <div class="name">Buzzer — test połączenia</div>
+          <div class="name">Buzzer — test odbioru (Control)</div>
           <div class="hint">
             1) Presence: czy jest świeży ping w <code>device_presence</code><br/>
             2) Realtime: czy Control odbiera <code>BUZZER_EVT</code> (CLICK A/B)
           </div>
-        
+
           <div class="rowBtns">
             <button class="btn gold" id="btnBuzzCheck" type="button">Sprawdź buzzer</button>
             <div class="badge" id="buzzCheckStatus">NIE SPRAWDZONO</div>
           </div>
-        
+
           <div class="mini">
             <div>Presence: <b id="buzzPresence">—</b></div>
             <div>Realtime (ostatni event): <b id="buzzEvtLast">—</b></div>
-          </div>
-        </div>
-        
-        <div class="card" style="grid-column:1/-1;">
-          <div class="name">Log: BUZZER_EVT (kliknięcia)</div>
-          <div class="hint">Kanał: <code>familiada-control:&lt;gameId&gt;</code>, event: <code>BUZZER_EVT</code></div>
-          <div class="log" id="buzzLog"></div>
-          <div class="rowBtns">
-            <button class="btn" id="btnBuzzLogClear" type="button">Wyczyść log</button>
           </div>
         </div>
 
         <!-- display test pack -->
         <div class="card">
           <div class="name">DISPLAY — testpack</div>
-          <div class="hint">Komendy wg Twojego Guide API (MODE, RBATCH, FBATCH).</div>
+          <div class="hint">Komendy wg Guide API (MODE, RBATCH, FBATCH).</div>
 
           <div class="rowBtns">
             <button class="btn" id="btnDispBlack" type="button">MODE BLACK</button>
@@ -318,6 +307,16 @@
               <div class="hint" style="margin-top:0;">Odpowiedzi + punkty</div>
               <div class="cmdGrid" id="aList" style="grid-template-columns: 1fr; gap:10px;"></div>
             </div>
+          </div>
+        </div>
+
+        <!-- BUZZER EVT LOG -->
+        <div class="card" style="grid-column:1/-1;">
+          <div class="name">Log: BUZZER_EVT (kliknięcia)</div>
+          <div class="hint">Kanał: <code>familiada-control:&lt;gameId&gt;</code>, event: <code>BUZZER_EVT</code></div>
+          <div class="log" id="buzzLog"></div>
+          <div class="rowBtns">
+            <button class="btn" id="btnBuzzLogClear" type="button">Wyczyść log</button>
           </div>
         </div>
       </div>
