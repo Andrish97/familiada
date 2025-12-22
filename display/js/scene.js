@@ -481,6 +481,43 @@ export async function createScene() {
   const long1 = drawFramedDotPanel(bottom, xLeft,  yBottom, Xb, Yb, dBottom, g, COLORS);
   const long2 = drawFramedDotPanel(bottom, xRight, yBottom, Xb, Yb, dBottom, g, COLORS);
 
+
+  // ============================================================
+  // SNAPSHOT / RESTORE (screen dump)
+  // ============================================================
+  const snapDotsGrid = (panel) =>
+    panel.dots.map(row => row.map(el => el.getAttribute("fill")));
+  
+  const restoreDotsGrid = (panel, snap) => {
+    if (!snap) return;
+    for (let y = 0; y < panel.dots.length; y++) {
+      for (let x = 0; x < panel.dots[0].length; x++) {
+        const fill = snap?.[y]?.[x];
+        if (fill != null) panel.dots[y][x].setAttribute("fill", fill);
+      }
+    }
+  };
+  
+  const snapTriple = (tripleTiles) => {
+    // [1][3][7][5] – zgodne z logiką snapArea
+    return [tripleTiles.map(t => t.dots.map(row => row.map(c => c.getAttribute("fill"))))];
+  };
+  
+  const restoreTriple = (tripleTiles, snap) => {
+    const row0 = snap?.[0];
+    if (!row0) return;
+    for (let tx = 0; tx < 3; tx++) {
+      const t = tripleTiles[tx];
+      const data = row0?.[tx];
+      if (!t || !data) continue;
+      for (let rr = 0; rr < 7; rr++) for (let cc = 0; cc < 5; cc++) {
+        t.dots[rr][cc].setAttribute("fill", data[rr][cc]);
+      }
+    }
+  };
+
+
+  
   // ============================================================
   // LOGO: wysokość 5, rzędy 3..7
   // Format logo_familiada.json:
@@ -611,7 +648,46 @@ export async function createScene() {
         setLongTextCenteredMax15(GLYPHS, long2, "", LIT.main);
       },
     },
+    // ============================================================
+    // Screen snapshot (big + small) – zapis / odtworzenie 1:1
+    // ============================================================
+    snapshotAll: () => ({
+      v: 1,
+      sceneMode: mode,
+      big: snapArea(big, 1, 1, 30, 10), // [10][30][7][5]
+      small: {
+        top:   snapTriple(topTriple),
+        left:  snapTriple(leftTriple),
+        right: snapTriple(rightTriple),
+        long1: snapDotsGrid(long1),     // [7][95]
+        long2: snapDotsGrid(long2),
+      },
+    }),
 
+    restoreAll: (S) => {
+      if (!S) return;
+
+      // big
+      if (S.big) {
+        for (let ty = 0; ty < 10; ty++) for (let tx = 0; tx < 30; tx++) {
+          const t = tileAt(big, 1 + tx, 1 + ty);
+          const data = S.big?.[ty]?.[tx];
+          if (!t || !data) continue;
+          for (let rr = 0; rr < 7; rr++) for (let cc = 0; cc < 5; cc++) {
+            t.dots[rr][cc].setAttribute("fill", data[rr][cc]);
+          }
+        }
+      }
+
+      // small
+      restoreTriple(topTriple,   S.small?.top);
+      restoreTriple(leftTriple,  S.small?.left);
+      restoreTriple(rightTriple, S.small?.right);
+      restoreDotsGrid(long1, S.small?.long1);
+      restoreDotsGrid(long2, S.small?.long2);
+    },
+
+    
     logo: {
       _json: LOGO_JSON,
 
