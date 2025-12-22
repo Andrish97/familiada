@@ -8,7 +8,6 @@
 }
 
 .title{ font-weight:1000; font-size:18px; margin:10px 0 6px; letter-spacing:.06em; display:flex; gap:10px; align-items:baseline; }
-.sub{ opacity:.7; font-size:12px; font-weight:900; letter-spacing:.08em; text-transform:uppercase; }
 
 .tabs{ display:flex; gap:10px; flex-wrap:wrap; }
 .tab{
@@ -40,13 +39,6 @@
   gap:14px;
 }
 @media (max-width: 1100px){ .cards{ grid-template-columns: 1fr; } }
-
-.cmdGrid{
-  display:grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap:14px;
-}
-@media (max-width: 1100px){ .cmdGrid{ grid-template-columns: 1fr; } }
 
 .card{
   border-radius:20px;
@@ -83,7 +75,6 @@
   width:min(520px,100%);
   font-weight:800;
 }
-.sel{ width:160px; }
 
 .mini{
   margin-top:12px;
@@ -99,76 +90,11 @@
 .msg{ color:#ffeaa6; font-weight:900; opacity:.9; }
 code{ opacity:.9; }
 
-
-/* === dodatki do nowych kart === */
-
-.ta{
-  width: min(760px, 100%);
-  resize: vertical;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-  font-weight: 800;
-  line-height: 1.25;
-}
-
-.log{
-  margin-top: 10px;
-  border-radius: 16px;
-  border: 1px solid rgba(255,255,255,.14);
-  background: rgba(0,0,0,.22);
-  padding: 10px;
-  max-height: 220px;
-  overflow: auto;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-  font-size: 12px;
-  line-height: 1.35;
-  white-space: pre-wrap;
-}
-
-.log .row{
-  margin: 0;
-  padding: 6px 8px;
-  border-radius: 12px;
-  border: 1px solid rgba(255,255,255,.08);
-  background: rgba(255,255,255,.04);
-  display:flex;
-  justify-content:space-between;
-  gap:10px;
-}
-.log .row + .row{ margin-top: 8px; }
-.log .t{ opacity:.8; }
-.log .v{ font-weight: 900; }
-
-.qBox{
-  margin-top: 12px;
-  border-radius: 18px;
-  border: 1px solid rgba(255,255,255,.14);
-  background: rgba(0,0,0,.18);
-  padding: 12px;
-}
-
-.qTitle{
-  font-weight: 1000;
-  letter-spacing: .04em;
-  margin-bottom: 10px;
-}
-
-.qAns{
+/* GRA grid */
+.gameGrid{
   display:grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap:10px;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap:14px;
+  margin-top:14px;
 }
-@media (max-width: 900px){ .qAns{ grid-template-columns: 1fr; } }
-
-.qItem{
-  border-radius: 16px;
-  border: 1px solid rgba(255,255,255,.12);
-  background: rgba(255,255,255,.04);
-  padding: 10px;
-  display:flex;
-  justify-content:space-between;
-  gap:10px;
-  align-items:flex-start;
-}
-.qItem b{ color:#ffeaa6; }
-.qTxt{ font-weight: 900; }
-.qPts{ opacity:.9; white-space:nowrap; }
+@media (max-width: 1100px){ .gameGrid{ grid-template-columns: 1fr; } }
