@@ -683,10 +683,10 @@ export async function createScene() {
         setLongTextCenteredMax15(GLYPHS, long2, "", LIT.main);
       },
     },
-
+    
     snapshotAll,
 
-    restoreAll,
+    restoreSnapshot,
     
     logo: {
       _json: LOGO_JSON,
@@ -862,6 +862,10 @@ export async function createScene() {
       },
     },
   };
+
+  api.SnapshotAll=snapshotAll;
+
+  api.restoreSnapshot=restoreSnapshot;
 
   // ============================================================
   // Text command handler (GRA)
