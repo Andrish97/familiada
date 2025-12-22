@@ -63,6 +63,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     window.app = app;
     window.scene = scene;
     window.handleCommand = handleCommand;
+    app.setMode("BLACK_SCREEN");
 
     const pres = await startPresence({
       pingMs: 5000,
@@ -72,15 +73,17 @@ window.addEventListener("DOMContentLoaded", async () => {
       // snapshot odtwarza “stan ekranu”
       onSnapshot: (st) => {
         const mode = String(st?.app_mode ?? "BLACK").toUpperCase();
+        // 1:1 odtwórz piksele (jeśli jest screen)
         if (mode === "GRA") app.setMode("GRA");
         else if (mode === "QR") app.setMode("QR");
         else app.setMode("BLACK_SCREEN");
-
+        if (st?.screen && scene?.api?.restoreAll) {
+          try { scene.api.restoreAll(st.screen); } catch (e) { console.warn(e); }
+        }
         const sceneMode = String(st?.scene ?? "LOGO").toUpperCase();
-        if (mode === "GRA") {
+        if (mode === "GRA" && !st?.screen) {
           try { handleCommand(`MODE ${sceneMode}`); } catch {}
         }
-
         const last = String(st?.last_cmd ?? "");
         if (last) {
           try { handleCommand(last); } catch {}
@@ -90,9 +93,6 @@ window.addEventListener("DOMContentLoaded", async () => {
 
     app.game = pres.game;
     app.gameId = pres.game.id;
-
-    // jeśli nie było snapshotu – start czarny
-    app.setMode("BLACK_SCREEN");
     console.log("Display OK:", pres.game.name, pres.game.id);
   } catch (e) {
     showBlack(e?.message || String(e));
