@@ -104,43 +104,6 @@ export async function createScene() {
   };
 
   // ============================================================
-  // Indicator lamp helper
-  // ============================================================
-  const makeLamp = (parent, cx, cy, r, colorOn) => {
-    const glow = el("circle", {
-      cx, cy, r: r * 1.05,
-      fill: colorOn,
-      opacity: "0",
-      filter: "url(#neonBlue)"
-    });
-  
-    const core = el("circle", {
-      cx, cy, r,
-      fill: colorOn,
-      opacity: "0.18"
-    });
-  
-    const ring = el("circle", {
-      cx, cy, r: r + 2,
-      fill: "none",
-      stroke: "rgba(255,255,255,0.45)",
-      "stroke-width": 2,
-      opacity: "0.9"
-    });
-  
-    parent.appendChild(glow);
-    parent.appendChild(core);
-    parent.appendChild(ring);
-  
-    const setOn = (on) => {
-      glow.setAttribute("opacity", on ? "0.85" : "0");
-      core.setAttribute("opacity", on ? "0.95" : "0.18");
-    };
-  
-    return { setOn };
-  };
-
-  // ============================================================
   // Render 5x7 glyph into a tile
   // ============================================================
   const renderCharToTile = (GLYPHS, tile, ch, onColor, offColor) => {
