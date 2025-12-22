@@ -72,21 +72,31 @@ window.addEventListener("DOMContentLoaded", async () => {
 
       // snapshot odtwarza “stan ekranu”
       onSnapshot: (st) => {
-        if (!st || !st.screen) return;
+        const mode = String(st?.app_mode ?? "BLACK_SCREEN").toUpperCase();
+        const appMode =
+          mode === "BLACK" ? "BLACK_SCREEN" :
+          (mode === "GRA" || mode === "QR" || mode === "BLACK_SCREEN") ? mode :
+          "BLACK_SCREEN";
       
-        // 1. tryb APP
-        const appMode = String(st.app_mode || "BLACK_SCREEN").toUpperCase();
+        // Odtwórz QR linki (nieważne czy finalnie pokażesz QR od razu)
+        const hostUrl = st?.qr?.hostUrl ?? "";
+        const buzzerUrl = st?.qr?.buzzerUrl ?? "";
+        if (hostUrl) app.qr.setHost(hostUrl);
+        if (buzzerUrl) app.qr.setBuzzer(buzzerUrl);
+      
+        // Przełącz tryb strony
         app.setMode(appMode);
       
-        // 2. jeśli nie GRA → nic więcej nie robimy
-        if (appMode !== "GRA") return;
+        // “sztywne wejście” po snapshot: bez animacji, bez komend
+        if (appMode === "GRA") {
+          // tu odtwarzasz zrzut ekranu jeśli masz restore w scene
+          app.scene.api.restoreAll?.(st?.screen);
+          // albo: app.scene.api.restoreSnapshot?.(st?.screen); (zależnie jak nazwałeś)
+          return;
+        }
       
-        // 3. tryb sceny — BEZ komend
-        const sceneMode = String(st.scene || "LOGO").toUpperCase();
-        scene.api.mode.set(sceneMode); // ← UWAGA: bez animIn
-      
-        // 4. TWARDY restore pikseli
-        scene.api.restoreSnapshot(st.screen);
+        // QR/BLACK: nic więcej nie odpalamy
+        return;
       }
     });
 
