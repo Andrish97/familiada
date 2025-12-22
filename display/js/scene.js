@@ -575,8 +575,8 @@ export async function createScene() {
     // OFF: bardzo ciemna “szkło-kulka”
     const offBody = el("circle", {
       cx, cy, r,
-      fill: "#0a0a0a",
-      opacity: "0.92"
+      fill: colorON,
+      opacity: "0.22"
     });
   
     // ON: korpus z gradientem (bardziej “3D”)
