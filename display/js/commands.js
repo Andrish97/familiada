@@ -56,17 +56,21 @@ export const createCommandHandler = (app) => {
 
   const saveSnapshot = debounce(async (lastCmd) => {
     if (!app?.gameId || !key) return;
-    const snapFn = app?.scene?.api?.snapshotAll;
-    if (typeof snapFn !== "function") return;
-
+  
+    const qrState = app.qr?.get?.() ?? {};
+  
     const patch = {
-      app_mode: app.mode,
-      scene: app.scene.api.mode.get?.() ?? null,
+      app_mode: app.mode, // BLACK_SCREEN/QR/GRA
+      scene: app.scene?.api?.mode?.get?.() ?? null,
       last_cmd: String(lastCmd ?? ""),
-      screen: snapFn(),
+      screen: app.scene?.api?.snapshotAll?.() ?? null,
+      qr: {
+        hostUrl: qrState.hostUrl ?? "",
+        buzzerUrl: qrState.buzzerUrl ?? "",
+      },
       ts: Date.now(),
     };
-
+  
     try {
       await sb().rpc("device_state_set_public", {
         p_game_id: app.gameId,
