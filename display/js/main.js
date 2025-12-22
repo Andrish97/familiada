@@ -90,7 +90,7 @@ window.addEventListener("DOMContentLoaded", async () => {
         // “sztywne wejście” po snapshot: bez animacji, bez komend
         if (appMode === "GRA") {
           // tu odtwarzasz zrzut ekranu jeśli masz restore w scene
-          app.scene.api.restoreAll?.(st?.screen);
+          app.scene.api.restoreSnapshot?.(st?.screen);
           // albo: app.scene.api.restoreSnapshot?.(st?.screen); (zależnie jak nazwałeś)
           return;
         }
