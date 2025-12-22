@@ -1,6 +1,7 @@
 // js/pages/control.js
 import { sb } from "../core/supabase.js";
-import { playSfx, createSfxMixer, listSfx, unlockAudio, isAudioUnlocked } from "../core/sfx.js";
+import * as SFX from "../core/sfx.js";
+import { rt } from "../core/realtime.js";
 import { requireAuth, signOut } from "../core/auth.js";
 
 import {
@@ -14,13 +15,7 @@ const $ = (id) => document.getElementById(id);
 const qs = new URLSearchParams(location.search);
 const gameId = qs.get("id");
 
-const btnBuzzCheck = $("btnBuzzCheck");
-const buzzCheckStatus = $("buzzCheckStatus");
-const buzzPresence = $("buzzPresence");
-const buzzEvtLast = $("buzzEvtLast");
-const buzzLog = $("buzzLog");
-const btnBuzzLogClear = $("btnBuzzLogClear");
-
+/* ===== DOM ===== */
 const who = $("who");
 const btnBack = $("btnBack");
 const btnLogout = $("btnLogout");
@@ -65,8 +60,7 @@ const manualTarget = $("manualTarget");
 const manualLine = $("manualLine");
 const btnManualSend = $("btnManualSend");
 
-// ===== NEW UI (cards) =====
-// host text
+// host card
 const hostText = $("hostText");
 const btnHostSend = $("btnHostSend");
 const btnHostOn = $("btnHostOn");
@@ -91,15 +85,17 @@ const btnDispWin = $("btnDispWin");
 const btnDispDemoRounds = $("btnDispDemoRounds");
 const btnDispDemoFinal = $("btnDispDemoFinal");
 
-// sfx test
-const sfxSelect = $("sfxSelect");
-const btnSfxPlay = $("btnSfxPlay");
-const btnSfxStop = $("btnSfxStop");
-const sfxClock = $("sfxClock");
-const sfxAtSec = $("sfxAtSec");
-const sfxAtName = $("sfxAtName");
-const btnSfxAtArm = $("btnSfxAtArm");
-const btnSfxAtClear = $("btnSfxAtClear");
+// buzzer check/log
+const btnBuzzCheck = $("btnBuzzCheck");
+const buzzCheckStatus = $("buzzCheckStatus");
+const buzzPresence = $("buzzPresence");
+const buzzEvtLast = $("buzzEvtLast");
+const buzzLog = $("buzzLog");
+const btnBuzzLogClear = $("btnBuzzLogClear");
+
+// audio unlock (opcjonalne)
+const btnUnlockAudio = $("btnUnlockAudio");
+const audioStatus = $("audioStatus");
 
 // questions
 const qList = $("qList");
@@ -107,6 +103,7 @@ const aList = $("aList");
 const qPick = $("qPick");
 const btnQReload = $("btnQReload");
 
+/* ===== tabs ===== */
 document.querySelectorAll(".tab").forEach((b) => {
   b.addEventListener("click", () => {
     document.querySelectorAll(".tab").forEach((x) => x.classList.remove("active"));
@@ -119,19 +116,23 @@ document.querySelectorAll(".tab").forEach((b) => {
   });
 });
 
-// ===== state =====
+/* ===== state ===== */
 let game = null;
 
-// last command (per game, localStorage)
 const ONLINE_MS = 12_000;
 const LS_KEY = (kind) => `familiada:lastcmd:${gameId}:${kind}`;
 const lastCmd = { display: null, host: null, buzzer: null };
 
-// realtime channels (persistent)
-let chDisplay = null;
-let chHost = null;
-let chBuzzer = null;
+// presence cache – JEDYNE źródło statusu urządzeń i buzz-check
+let presenceRows = [];
 
+// realtime managers (persistent)
+let rtDisplay = null;
+let rtHost = null;
+let rtBuzzer = null;
+let rtControl = null;
+
+/* ===== helpers ===== */
 function setMsg(el, text) {
   if (el) el.textContent = text || "";
 }
@@ -160,7 +161,7 @@ function makeUrl(path, id, key) {
 async function copyToClipboard(text) {
   try {
     await navigator.clipboard.writeText(text);
-    playSfx("ui_tick"); // to jest OK i zamierzone 😄
+    SFX.playSfx?.("ui_tick"); // zamierzone 😄
     return true;
   } catch {
     return false;
@@ -174,9 +175,7 @@ function loadLastCmdFromStorage() {
 }
 
 function saveLastCmdToStorage(kind, line) {
-  try {
-    localStorage.setItem(LS_KEY(kind), String(line));
-  } catch {}
+  try { localStorage.setItem(LS_KEY(kind), String(line)); } catch {}
 }
 
 function refreshLastCmdUI() {
@@ -194,8 +193,8 @@ async function ensureAuthOrRedirect() {
 function setBuzzStatus(kind, text) {
   if (!buzzCheckStatus) return;
   buzzCheckStatus.textContent = text;
-  buzzCheckStatus.classList.remove("ok","bad","mid");
-  buzzCheckStatus.classList.add(kind); // ok/bad/mid
+  buzzCheckStatus.classList.remove("ok", "bad", "mid");
+  buzzCheckStatus.classList.add(kind);
 }
 
 function logBuzz(line) {
@@ -204,35 +203,43 @@ function logBuzz(line) {
   buzzLog.textContent = `[${ts}] ${line}\n` + buzzLog.textContent;
 }
 
+function newestPresenceRow(type) {
+  const t = String(type || "").toLowerCase();
+  return (
+    (presenceRows || [])
+      .filter((r) => String(r.device_type || "").toLowerCase() === t)
+      .sort((a, b) => new Date(b.last_seen_at) - new Date(a.last_seen_at))[0] || null
+  );
+}
 
-/* ====== GAME LOAD + VALIDATE ====== */
+function isOnline(row) {
+  if (!row?.last_seen_at) return false;
+  const age = Date.now() - new Date(row.last_seen_at).getTime();
+  return age < ONLINE_MS;
+}
+
+/* ===== game load + validate ===== */
 async function loadGameOrThrow() {
   if (!gameId) throw new Error("Brak ?id w URL.");
 
-  // podstawowe
   const basic = await loadGameBasic(gameId);
 
-  // zabezpieczenie: Control tylko dla gier gotowych do PLAY
   const v = await validateGameReadyToPlay(gameId);
-  if (!v.ok) {
-    throw new Error(`Ta gra nie jest gotowa do PLAY: ${v.reason}`);
-  }
+  if (!v.ok) throw new Error(`Ta gra nie jest gotowa do PLAY: ${v.reason}`);
 
-  // dociągnij klucze (do linków)
   const { data, error } = await sb()
     .from("games")
     .select("id,name,type,status,share_key_display,share_key_host,share_key_buzzer")
     .eq("id", gameId)
     .single();
-  if (error) throw error;
 
-  // sanity
+  if (error) throw error;
   if (data.id !== basic.id) throw new Error("Rozjazd danych gry (validate vs games).");
 
   return data;
 }
 
-/* ====== PRESENCE ====== */
+/* ===== presence ===== */
 async function fetchPresenceSafe() {
   const { data, error } = await sb()
     .from("device_presence")
@@ -244,29 +251,29 @@ async function fetchPresenceSafe() {
 }
 
 function applyPresence(rows) {
-  const now = Date.now();
+  presenceRows = rows || [];
 
-  const pickNewest = (t) =>
-    rows
-      .filter((r) => String(r.device_type || "").toLowerCase() === t)
-      .sort((a, b) => new Date(b.last_seen_at) - new Date(a.last_seen_at))[0] || null;
+  const d = newestPresenceRow("display");
+  const h = newestPresenceRow("host");
+  const b = newestPresenceRow("buzzer");
 
-  const d = pickNewest("display");
-  const h = pickNewest("host");
-  const b = pickNewest("buzzer");
-
-  const isOn = (row) => row?.last_seen_at && now - new Date(row.last_seen_at).getTime() < ONLINE_MS;
-
-  badge(pillDisplay, isOn(d) ? "ok" : "bad", isOn(d) ? "OK" : "OFFLINE");
-  badge(pillHost, isOn(h) ? "ok" : "bad", isOn(h) ? "OK" : "OFFLINE");
-  badge(pillBuzzer, isOn(b) ? "ok" : "bad", isOn(b) ? "OK" : "OFFLINE");
+  badge(pillDisplay, isOnline(d) ? "ok" : "bad", isOnline(d) ? "OK" : "OFFLINE");
+  badge(pillHost, isOnline(h) ? "ok" : "bad", isOnline(h) ? "OK" : "OFFLINE");
+  badge(pillBuzzer, isOnline(b) ? "ok" : "bad", isOnline(b) ? "OK" : "OFFLINE");
 
   if (seenDisplay) seenDisplay.textContent = fmtSince(d?.last_seen_at);
   if (seenHost) seenHost.textContent = fmtSince(h?.last_seen_at);
   if (seenBuzzer) seenBuzzer.textContent = fmtSince(b?.last_seen_at);
+
+  // buzz-check UI też z tego samego źródła (bez query drugi raz)
+  if (buzzPresence) {
+    if (!b) buzzPresence.textContent = "—";
+    else buzzPresence.textContent = `${b.device_id || "?"} — ${fmtSince(b.last_seen_at)}`;
+  }
 }
 
 function applyPresenceUnavailable() {
+  presenceRows = [];
   badge(pillDisplay, "mid", "—");
   badge(pillHost, "mid", "—");
   badge(pillBuzzer, "mid", "—");
@@ -275,23 +282,32 @@ function applyPresenceUnavailable() {
   if (seenBuzzer) seenBuzzer.textContent = "brak tabeli";
 }
 
-/* ====== REALTIME SEND (persistent channel; no subscribe spam) ====== */
-function ensureChannels() {
-  if (!chDisplay) chDisplay = sb().channel(`familiada-display:${game.id}`).subscribe();
-  if (!chHost) chHost = sb().channel(`familiada-host:${game.id}`).subscribe();
-  if (!chBuzzer) chBuzzer = sb().channel(`familiada-buzzer:${game.id}`).subscribe();
+/* ===== realtime (rt manager) ===== */
+function topicFor(target) {
+  if (target === "display") return `familiada-display:${game.id}`;
+  if (target === "host") return `familiada-host:${game.id}`;
+  return `familiada-buzzer:${game.id}`;
 }
 
-function chFor(target) {
-  if (target === "display") return chDisplay;
-  if (target === "host") return chHost;
-  return chBuzzer;
-}
-
-function eventName(target) {
+function eventFor(target) {
   if (target === "display") return "DISPLAY_CMD";
   if (target === "host") return "HOST_CMD";
   return "BUZZER_CMD";
+}
+
+async function ensureRealtime() {
+  rtDisplay ??= rt(topicFor("display"));
+  rtHost ??= rt(topicFor("host"));
+  rtBuzzer ??= rt(topicFor("buzzer"));
+  rtControl ??= rt(`familiada-control:${game.id}`);
+
+  // podnieś WS wcześniej
+  await Promise.all([
+    rtDisplay.whenReady().catch(() => false),
+    rtHost.whenReady().catch(() => false),
+    rtBuzzer.whenReady().catch(() => false),
+    rtControl.whenReady().catch(() => false),
+  ]);
 }
 
 async function sendCmd(target, line) {
@@ -299,24 +315,16 @@ async function sendCmd(target, line) {
   const l = String(line ?? "").trim();
   if (!l) return;
 
-  ensureChannels();
-
-  const ch = chFor(t);
-  const { error } = await ch.send({
-    type: "broadcast",
-    event: eventName(t),
-    payload: { line: l },
-  });
-
-  if (error) throw error;
+  await ensureRealtime();
+  await rt(topicFor(t)).sendBroadcast(eventFor(t), { line: l });
 
   lastCmd[t] = l;
   saveLastCmdToStorage(t, l);
   refreshLastCmdUI();
-  playSfx("ui_tick");
+  SFX.playSfx?.("ui_tick");
 }
 
-/* ====== LINKS ====== */
+/* ===== links ===== */
 function fillLinks() {
   const displayUrl = makeUrl("/familiada/display/index.html", game.id, game.share_key_display);
   const hostUrl = makeUrl("/familiada/host.html", game.id, game.share_key_host);
@@ -330,84 +338,71 @@ function fillLinks() {
 
   btnOpenDisplay && (btnOpenDisplay.onclick = () => window.open(displayUrl, "_blank"));
   btnOpenHost && (btnOpenHost.onclick = () => window.open(hostUrl, "_blank"));
-  btnOpenBuzzer &&
-    (btnOpenBuzzer.onclick = () => {
-      if (!buzKey) return setMsg(msgDevices, "Brak share_key_buzzer w tej grze.");
-      window.open(buzzerUrl, "_blank");
-    });
+  btnOpenBuzzer && (btnOpenBuzzer.onclick = () => {
+    if (!buzKey) return setMsg(msgDevices, "Brak share_key_buzzer w tej grze.");
+    window.open(buzzerUrl, "_blank");
+  });
 
-  btnCopyDisplay &&
-    (btnCopyDisplay.onclick = async () =>
-      setMsg(msgDevices, (await copyToClipboard(displayUrl)) ? "Skopiowano link display." : "Nie mogę skopiować."));
-
-  btnCopyHost &&
-    (btnCopyHost.onclick = async () =>
-      setMsg(msgDevices, (await copyToClipboard(hostUrl)) ? "Skopiowano link host." : "Nie mogę skopiować."));
-
-  btnCopyBuzzer &&
-    (btnCopyBuzzer.onclick = async () => {
-      if (!buzKey) return setMsg(msgDevices, "Brak share_key_buzzer w tej grze.");
-      setMsg(msgDevices, (await copyToClipboard(buzzerUrl)) ? "Skopiowano link buzzer." : "Nie mogę skopiować.");
-    });
+  btnCopyDisplay && (btnCopyDisplay.onclick = async () =>
+    setMsg(msgDevices, (await copyToClipboard(displayUrl)) ? "Skopiowano link display." : "Nie mogę skopiować.")
+  );
+  btnCopyHost && (btnCopyHost.onclick = async () =>
+    setMsg(msgDevices, (await copyToClipboard(hostUrl)) ? "Skopiowano link host." : "Nie mogę skopiować.")
+  );
+  btnCopyBuzzer && (btnCopyBuzzer.onclick = async () => {
+    if (!buzKey) return setMsg(msgDevices, "Brak share_key_buzzer w tej grze.");
+    setMsg(msgDevices, (await copyToClipboard(buzzerUrl)) ? "Skopiowano link buzzer." : "Nie mogę skopiować.");
+  });
 }
 
-/* ====== RESEND ====== */
-btnResendDisplay &&
-  (btnResendDisplay.onclick = async () => {
-    if (!lastCmd.display) return setMsg(msgCmd, "Brak last dla display.");
-    await sendCmd("display", lastCmd.display);
-    setMsg(msgCmd, `display <= ${lastCmd.display}`);
-  });
+/* ===== resend ===== */
+btnResendDisplay && (btnResendDisplay.onclick = async () => {
+  if (!lastCmd.display) return setMsg(msgCmd, "Brak last dla display.");
+  await sendCmd("display", lastCmd.display);
+  setMsg(msgCmd, `display <= ${lastCmd.display}`);
+});
+btnResendHost && (btnResendHost.onclick = async () => {
+  if (!lastCmd.host) return setMsg(msgCmd, "Brak last dla host.");
+  await sendCmd("host", lastCmd.host);
+  setMsg(msgCmd, `host <= ${lastCmd.host}`);
+});
+btnResendBuzzer && (btnResendBuzzer.onclick = async () => {
+  if (!lastCmd.buzzer) return setMsg(msgCmd, "Brak last dla buzzer.");
+  await sendCmd("buzzer", lastCmd.buzzer);
+  setMsg(msgCmd, `buzzer <= ${lastCmd.buzzer}`);
+});
 
-btnResendHost &&
-  (btnResendHost.onclick = async () => {
-    if (!lastCmd.host) return setMsg(msgCmd, "Brak last dla host.");
-    await sendCmd("host", lastCmd.host);
-    setMsg(msgCmd, `host <= ${lastCmd.host}`);
-  });
+/* ===== manual ===== */
+btnManualSend && (btnManualSend.onclick = async () => {
+  try {
+    await sendCmd(manualTarget?.value, manualLine?.value);
+    setMsg(msgCmd, `${manualTarget?.value} <= ${manualLine?.value}`);
+    if (manualLine) manualLine.value = "";
+  } catch (err) {
+    setMsg(msgCmd, `Błąd: ${err?.message || String(err)}`);
+  }
+});
 
-btnResendBuzzer &&
-  (btnResendBuzzer.onclick = async () => {
-    if (!lastCmd.buzzer) return setMsg(msgCmd, "Brak last dla buzzer.");
-    await sendCmd("buzzer", lastCmd.buzzer);
-    setMsg(msgCmd, `buzzer <= ${lastCmd.buzzer}`);
-  });
-
-/* ====== MANUAL SEND ====== */
-btnManualSend &&
-  (btnManualSend.onclick = async () => {
-    try {
-      await sendCmd(manualTarget?.value, manualLine?.value);
-      setMsg(msgCmd, `${manualTarget?.value} <= ${manualLine?.value}`);
-      if (manualLine) manualLine.value = "";
-    } catch (err) {
-      setMsg(msgCmd, `Błąd: ${err?.message || String(err)}`);
-    }
-  });
-
-/* ====== HOST: text + buttons ====== */
-btnHostSend &&
-  (btnHostSend.onclick = async () => {
-    const t = String(hostText?.value ?? "");
-    // pozwól na nowe linie: wysyłamy JSON-escaped przez cudzysłów
-    // komenda hosta parsuje SET "...." (z obsługą \n po stronie host.js)
-    const payload = t.replaceAll("\\", "\\\\").replaceAll('"', '\\"').replaceAll("\r\n", "\n");
-    await sendCmd("host", `SET "${payload}"`);
-    setMsg(msgCmd, `host <= SET "${t.slice(0, 40)}${t.length > 40 ? "…" : ""}"`);
-  });
-
+/* ===== host card ===== */
+btnHostSend && (btnHostSend.onclick = async () => {
+  const t = String(hostText?.value ?? "");
+  // minimalne “bezpieczne” cytowanie: \ i "
+  const payload = t.replaceAll("\\", "\\\\").replaceAll('"', '\\"').replaceAll("\r\n", "\n");
+  await sendCmd("host", `SET "${payload}"`);
+  setMsg(msgCmd, `host <= SET (${t.length} znaków)`);
+});
 btnHostOn && (btnHostOn.onclick = async () => sendCmd("host", "ON"));
 btnHostOff && (btnHostOff.onclick = async () => sendCmd("host", "OFF"));
 btnHostClear && (btnHostClear.onclick = async () => sendCmd("host", "CLEAR"));
 
-/* ====== BUZZER: state buttons ====== */
+/* ===== buzzer state buttons ===== */
 btnBuzzOff && (btnBuzzOff.onclick = async () => sendCmd("buzzer", "OFF"));
 btnBuzzOn && (btnBuzzOn.onclick = async () => sendCmd("buzzer", "ON"));
 btnBuzzReset && (btnBuzzReset.onclick = async () => sendCmd("buzzer", "RESET"));
 btnBuzzPA && (btnBuzzPA.onclick = async () => sendCmd("buzzer", "PUSHED A"));
 btnBuzzPB && (btnBuzzPB.onclick = async () => sendCmd("buzzer", "PUSHED B"));
 
-/* ====== DISPLAY: test pack (Guide API) ====== */
+/* ===== display tests (Guide API) ===== */
 btnDispBlack && (btnDispBlack.onclick = async () => sendCmd("display", "MODE BLACK"));
 btnDispQR && (btnDispQR.onclick = async () => sendCmd("display", "MODE QR"));
 btnDispGRA && (btnDispGRA.onclick = async () => sendCmd("display", "MODE GRA"));
@@ -417,92 +412,74 @@ btnDispRounds && (btnDispRounds.onclick = async () => sendCmd("display", "MODE R
 btnDispFinal && (btnDispFinal.onclick = async () => sendCmd("display", "MODE FINAL"));
 btnDispWin && (btnDispWin.onclick = async () => sendCmd("display", "MODE WIN"));
 
-btnDispDemoRounds &&
-  (btnDispDemoRounds.onclick = async () =>
-    sendCmd(
-      "display",
-      'RBATCH SUMA 120 R1 "PIERWSZA" 10 R2 "DRUGA" 25 R3 "TRZECIA" 05 R4 "" 00 R5 "PIATA" 30 R6 "SZOSTA" 15 ANIMOUT edge right 18 ANIMIN rain down 22'
-    ));
+btnDispDemoRounds && (btnDispDemoRounds.onclick = async () =>
+  sendCmd(
+    "display",
+    'RBATCH SUMA 120 R1 "PIERWSZA" 10 R2 "DRUGA" 25 R3 "TRZECIA" 05 R4 "" 00 R5 "PIATA" 30 R6 "SZOSTA" 15 ANIMOUT edge right 18 ANIMIN rain down 22'
+  )
+);
+btnDispDemoFinal && (btnDispDemoFinal.onclick = async () =>
+  sendCmd(
+    "display",
+    'FBATCH SUMA 999 F1 "ALFA" 12 34 "BETA" F2 "GAMMA" 01 99 "DELTA" ANIMOUT matrix right 20 ANIMIN rain down 22'
+  )
+);
 
-btnDispDemoFinal &&
-  (btnDispDemoFinal.onclick = async () =>
-    sendCmd(
-      "display",
-      'FBATCH SUMA 999 F1 "ALFA" 12 34 "BETA" F2 "GAMMA" 01 99 "DELTA" ANIMOUT matrix right 20 ANIMIN rain down 22'
-    ));
-
-/* ====== SFX: mixer + clock + schedule-at-second ====== */
-let mixer = null;
-let sfxTimer = null;
-let sfxT0 = 0;
-let armed = null; // {sec:number, name:string, fired:boolean}
-
-function setClock() {
-  if (!sfxClock) return;
-  if (!sfxTimer) return (sfxClock.textContent = "0.0s");
-  const t = (performance.now() - sfxT0) / 1000;
-  sfxClock.textContent = `${t.toFixed(1)}s`;
-
-  if (armed && !armed.fired && t >= armed.sec) {
-    armed.fired = true;
-    // miks: dograj sfx na wierzch
-    mixer?.play(armed.name).catch(() => {});
-  }
+/* ===== BUZZER EVT listener ===== */
+function attachBuzzerEvt() {
+  rtControl.onBroadcast("BUZZER_EVT", (msg) => {
+    const line = String(msg?.payload?.line ?? "").trim();
+    if (!line) return;
+    if (buzzEvtLast) buzzEvtLast.textContent = line;
+    logBuzz(`BUZZER_EVT: ${line}`);
+  });
 }
 
-function sfxStopAll() {
-  mixer?.stopAll?.();
-  clearInterval(sfxTimer);
-  sfxTimer = null;
-  sfxT0 = 0;
-  armed = null;
-  setClock();
-}
+/* ===== buzz check: NO DB query, uses presence cache ===== */
+btnBuzzCheck?.addEventListener("click", async () => {
+  try {
+    setBuzzStatus("mid", "SPRAWDZAM…");
+    await ensureRealtime();
 
-function fillSfxList() {
-  if (!sfxSelect) return;
-  const names = listSfx();
-  sfxSelect.innerHTML = names.map((n) => `<option value="${n}">${n}</option>`).join("");
-  if (sfxAtName) sfxAtName.innerHTML = names.map((n) => `<option value="${n}">${n}</option>`).join("");
-}
-
-btnSfxPlay &&
-  (btnSfxPlay.onclick = async () => {
-    const name = sfxSelect?.value;
-    if (!name) return;
-
-    // miksujemy przez WebAudio (nowy sfx.js)
-    mixer ??= createSfxMixer();
-    await mixer.play(name);
-
-    if (!sfxTimer) {
-      sfxT0 = performance.now();
-      sfxTimer = setInterval(setClock, 100);
+    const b = newestPresenceRow("buzzer");
+    if (!b) {
+      setBuzzStatus("bad", "BRAK");
+      logBuzz("Brak rekordu presence dla buzzera (jeszcze nie pingował).");
+      return;
     }
-    setClock();
-  });
 
-btnSfxStop && (btnSfxStop.onclick = () => sfxStopAll());
+    if (!isOnline(b)) {
+      setBuzzStatus("bad", "OFFLINE");
+      logBuzz(`Presence: OFFLINE (${fmtSince(b.last_seen_at)}).`);
+      return;
+    }
 
-btnSfxAtArm &&
-  (btnSfxAtArm.onclick = () => {
-    const sec = Number(sfxAtSec?.value ?? "");
-    const nm = String(sfxAtName?.value ?? "");
-    if (!Number.isFinite(sec) || sec < 0 || !nm) return;
-    armed = { sec, name: nm, fired: false };
-    setMsg(msgCmd, `SFX armed: at ${sec}s => ${nm}`);
-  });
+    setBuzzStatus("ok", "ONLINE");
+    logBuzz("Presence: ONLINE. Kliknij A/B na buzzerze — powinno wpaść BUZZER_EVT.");
+  } catch (e) {
+    setBuzzStatus("bad", "BŁĄD");
+    logBuzz(`Błąd: ${e?.message || String(e)}`);
+  }
+});
 
-btnSfxAtClear &&
-  (btnSfxAtClear.onclick = () => {
-    armed = null;
-    setMsg(msgCmd, "SFX armed: cleared");
-  });
+btnBuzzLogClear?.addEventListener("click", () => {
+  if (buzzLog) buzzLog.textContent = "";
+  if (buzzEvtLast) buzzEvtLast.textContent = "—";
+});
 
-/* ====== QUESTIONS: load + render ====== */
+/* ===== questions ===== */
 let questions = [];
 let answersByQ = new Map();
 let activeQid = null;
+
+function escapeHtml(s) {
+  return String(s ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
 
 function renderQuestions() {
   if (!qList || !qPick) return;
@@ -517,7 +494,10 @@ function renderQuestions() {
     })
     .join("");
 
-  qPick.innerHTML = questions.map((q) => `<option value="${q.id}">#${q.ord} — ${escapeHtml(q.text || "")}</option>`).join("");
+  qPick.innerHTML = questions
+    .map((q) => `<option value="${q.id}">#${q.ord} — ${escapeHtml(q.text || "")}</option>`)
+    .join("");
+
   if (activeQid) qPick.value = activeQid;
 }
 
@@ -538,22 +518,12 @@ function renderAnswers() {
     .join("");
 }
 
-function escapeHtml(s) {
-  return String(s ?? "")
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
-}
-
 async function reloadQA() {
   setMsg(msgCmd, "Ładuję pytania…");
   questions = await loadQuestions(game.id);
   answersByQ = new Map();
   for (const q of questions) {
-    const a = await loadAnswers(q.id);
-    answersByQ.set(q.id, a);
+    answersByQ.set(q.id, await loadAnswers(q.id));
   }
   activeQid ||= questions[0]?.id || null;
   renderQuestions();
@@ -561,116 +531,52 @@ async function reloadQA() {
   setMsg(msgCmd, `Załadowano: ${questions.length} pytań.`);
 }
 
-qList &&
-  qList.addEventListener("click", (e) => {
-    const b = e.target.closest?.("[data-qid]");
-    if (!b) return;
-    const id = b.dataset.qid;
-    if (!id) return;
-    activeQid = id;
-    renderQuestions();
-    renderAnswers();
-  });
+qList?.addEventListener("click", (e) => {
+  const b = e.target.closest?.("[data-qid]");
+  if (!b) return;
+  activeQid = b.dataset.qid || null;
+  renderQuestions();
+  renderAnswers();
+});
 
-qPick &&
-  qPick.addEventListener("change", () => {
-    activeQid = qPick.value || null;
-    renderQuestions();
-    renderAnswers();
-  });
+qPick?.addEventListener("change", () => {
+  activeQid = qPick.value || null;
+  renderQuestions();
+  renderAnswers();
+});
 
 btnQReload && (btnQReload.onclick = () => reloadQA().catch((e) => setMsg(msgCmd, e?.message || String(e))));
 
-/* ====== TOPBAR ====== */
+/* ===== audio unlock UI (opcjonalne, tylko jeśli masz to w sfx.js) ===== */
+function refreshAudioStatus() {
+  if (!audioStatus) return;
+  const ok = typeof SFX.isAudioUnlocked === "function" ? !!SFX.isAudioUnlocked() : false;
+  audioStatus.textContent = ok ? "OK" : "ZABLOKOWANE";
+  audioStatus.className = "badge " + (ok ? "ok" : "bad");
+}
+
+btnUnlockAudio?.addEventListener("click", async () => {
+  try {
+    if (typeof SFX.unlockAudio === "function") await SFX.unlockAudio();
+    SFX.playSfx?.("ui_tick");
+  } catch {}
+  refreshAudioStatus();
+});
+
+/* ===== topbar ===== */
 btnBack && (btnBack.onclick = () => (location.href = "/familiada/builder.html"));
-btnLogout &&
-  (btnLogout.onclick = async () => {
-    await signOut().catch(() => {});
-    location.href = "/familiada/index.html";
-  });
+btnLogout && (btnLogout.onclick = async () => {
+  await signOut().catch(() => {});
+  location.href = "/familiada/index.html";
+});
 
-
-let ctlCh = null;
-
-function ensureControlChannel() {
-  if (ctlCh) return ctlCh;
-
-  ctlCh = sb()
-    .channel(`familiada-control:${game.id}`)
-    .on("broadcast", { event: "BUZZER_EVT" }, (msg) => {
-      const line = String(msg?.payload?.line ?? "").trim();
-      if (!line) return;
-      if (buzzEvtLast) buzzEvtLast.textContent = line;
-      logBuzz(`BUZZER_EVT: ${line}`);
-    })
-    .subscribe();
-
-  return ctlCh;
-}
-
-async function checkBuzzerPresence() {
-  const { data, error } = await sb()
-    .from("device_presence")
-    .select("device_type,device_id,last_seen_at")
-    .eq("game_id", game.id)
-    .eq("device_type", "buzzer")
-    .order("last_seen_at", { ascending: false })
-    .limit(1);
-
-  if (error) throw error;
-
-  const row = data?.[0] || null;
-  if (!row?.last_seen_at) return { ok: false, reason: "Brak rekordu presence dla buzzera." };
-
-  const ageMs = Date.now() - new Date(row.last_seen_at).getTime();
-  const ageS = Math.max(0, Math.round(ageMs / 1000));
-  const ok = ageMs < ONLINE_MS;
-
-  return { ok, row, ageS };
-}
-
-/* ====== BOOT ====== */
+/* ===== boot ===== */
 async function main() {
   setMsg(msgDevices, "");
   setMsg(msgCmd, "");
 
   await ensureAuthOrRedirect();
   game = await loadGameOrThrow();
-  // po: game = await loadGameOrThrow();
-
-  ensureControlChannel(); // zaczynamy słuchać BUZZER_EVT od razu
-  
-  btnBuzzLogClear?.addEventListener("click", () => {
-    if (buzzLog) buzzLog.textContent = "";
-    if (buzzEvtLast) buzzEvtLast.textContent = "—";
-  });
-  
-  btnBuzzCheck?.addEventListener("click", async () => {
-    try {
-      setBuzzStatus("mid", "SPRAWDZAM...");
-      ensureControlChannel();
-  
-      const pres = await checkBuzzerPresence();
-  
-      if (buzzPresence) {
-        buzzPresence.textContent = pres.row
-          ? `${pres.row.device_id || "?"} — ${pres.ageS}s temu`
-          : "—";
-      }
-  
-      if (!pres.ok) {
-        setBuzzStatus("bad", "OFFLINE");
-        logBuzz("Presence: OFFLINE (brak świeżego pinga).");
-        return;
-      }
-  
-      setBuzzStatus("ok", "ONLINE");
-      logBuzz("Presence: ONLINE. Kliknij A/B na buzzerze — powinno wpaść BUZZER_EVT.");
-    } catch (e) {
-      setBuzzStatus("bad", "BŁĄD");
-      logBuzz(`Błąd: ${e?.message || String(e)}`);
-    }
-  });
 
   if (gameLabel) gameLabel.textContent = `Control — ${game.name}`;
   if (gameMeta) gameMeta.textContent = `${game.type} / ${game.status} / ${game.id}`;
@@ -679,15 +585,13 @@ async function main() {
   refreshLastCmdUI();
   fillLinks();
 
-  ensureChannels(); // utrzymuj websocket/kanaly
+  await ensureRealtime();
+  attachBuzzerEvt();
 
-  fillSfxList();
-  setClock();
+  refreshAudioStatus();
 
-  // pytania
   await reloadQA().catch(() => {});
 
-  // presence loop
   const tick = async () => {
     const res = await fetchPresenceSafe();
     if (!res.ok) {
@@ -698,23 +602,6 @@ async function main() {
     applyPresence(res.rows);
     setMsg(msgDevices, "");
   };
-
-  const btnUnlockAudio = document.getElementById("btnUnlockAudio");
-  const audioStatus = document.getElementById("audioStatus");
-  
-  function refreshAudioStatus() {
-    if (!audioStatus) return;
-    audioStatus.textContent = isAudioUnlocked() ? "OK" : "ZABLOKOWANE";
-    audioStatus.className = "badge " + (isAudioUnlocked() ? "ok" : "bad");
-  }
-  
-  btnUnlockAudio?.addEventListener("click", () => {
-    unlockAudio();
-    playSfx("ui_tick"); // feedback
-    refreshAudioStatus();
-  });
-  
-  refreshAudioStatus();
 
   await tick();
   setInterval(tick, 1500);
