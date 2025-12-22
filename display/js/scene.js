@@ -104,6 +104,43 @@ export async function createScene() {
   };
 
   // ============================================================
+  // Indicator lamp helper
+  // ============================================================
+  const makeLamp = (parent, cx, cy, r, colorOn) => {
+    const glow = el("circle", {
+      cx, cy, r: r * 1.05,
+      fill: colorOn,
+      opacity: "0",
+      filter: "url(#neonBlue)"
+    });
+  
+    const core = el("circle", {
+      cx, cy, r,
+      fill: colorOn,
+      opacity: "0.18"
+    });
+  
+    const ring = el("circle", {
+      cx, cy, r: r + 2,
+      fill: "none",
+      stroke: "rgba(255,255,255,0.45)",
+      "stroke-width": 2,
+      opacity: "0.9"
+    });
+  
+    parent.appendChild(glow);
+    parent.appendChild(core);
+    parent.appendChild(ring);
+  
+    const setOn = (on) => {
+      glow.setAttribute("opacity", on ? "0.85" : "0");
+      core.setAttribute("opacity", on ? "0.95" : "0.18");
+    };
+  
+    return { setOn };
+  };
+
+  // ============================================================
   // Render 5x7 glyph into a tile
   // ============================================================
   const renderCharToTile = (GLYPHS, tile, ch, onColor, offColor) => {
@@ -524,6 +561,33 @@ export async function createScene() {
     }));
   }
 
+  // ============================================================
+  // INDICATOR lamps on basebar (A left red, B right blue)
+  // ============================================================
+  const makeLamp = (parent, cx, cy, r, colorOn) => {
+    const glow = el("circle", { cx, cy, r: r * 1.05, fill: colorOn, opacity: "0", filter: "url(#neonBlue)" });
+    const core = el("circle", { cx, cy, r, fill: colorOn, opacity: "0.18" });
+    const ring = el("circle", { cx, cy, r: r + 2, fill: "none", stroke: "rgba(255,255,255,0.45)", "stroke-width": 2, opacity: "0.9" });
+    parent.appendChild(glow); parent.appendChild(core); parent.appendChild(ring);
+    const setOn = (on) => { glow.setAttribute("opacity", on ? "0.85" : "0"); core.setAttribute("opacity", on ? "0.95" : "0.18"); };
+    return { setOn };
+  };
+  
+  const lampsY = barY + barH / 2;
+  const lampR  = barH * 0.42;
+  const padX   = lampR * 1.6;
+  
+  const lampAX = barX + padX;        // A po lewej
+  const lampBX = barX + barW - padX; // B po prawej
+  
+  const lampA = makeLamp(basebar, lampAX, lampsY, lampR, "#ff2e3b");
+  const lampB = makeLamp(basebar, lampBX, lampsY, lampR, "#2a62ff");
+  
+  lampA.setOn(false);
+  lampB.setOn(false);
+  
+  let indicatorState = "OFF";
+
   const long1 = drawFramedDotPanel(bottom, xLeft,  yBottom, Xb, Yb, dBottom, g, COLORS);
   const long2 = drawFramedDotPanel(bottom, xRight, yBottom, Xb, Yb, dBottom, g, COLORS);
 
@@ -732,6 +796,32 @@ export async function createScene() {
         setLongTextCenteredMax15(GLYPHS, long1, "", LIT.main);
         setLongTextCenteredMax15(GLYPHS, long2, "", LIT.main);
       },
+    },
+
+    indicator: {
+      get: () => indicatorState,
+      set: (state) => {
+        const s = (state ?? "").toString().toUpperCase();
+        if (s === "OFF") {
+          lampA.setOn(false);
+          lampB.setOn(false);
+          indicatorState = "OFF";
+          return;
+        }
+        if (s === "ON_A") {
+          lampA.setOn(true);
+          lampB.setOn(false);
+          indicatorState = "ON_A";
+          return;
+        }
+        if (s === "ON_B") {
+          lampA.setOn(false);
+          lampB.setOn(true);
+          indicatorState = "ON_B";
+          return;
+        }
+        throw new Error(`INDICATOR: zły stan: ${state}`);
+      }
     },
     
     snapshotAll,
@@ -995,6 +1085,10 @@ export async function createScene() {
       const ai = tokens.findIndex(t => t.toUpperCase() === "ANIMIN");
       if (ai >= 0) animIn = parseAnim(tokens, ai + 1);
       return api.mode.set(m, { animIn });
+    }
+    
+    if (head === "INDICATOR") {
+      return api.indicator.set(tokens[1] ?? "OFF");
     }
 
     // LOGO
