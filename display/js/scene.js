@@ -527,18 +527,16 @@ export async function createScene() {
   // ============================================================
   // INDICATOR lamps on basebar (A left red, B right blue)
   // ============================================================
-  const makeLamp = (parent, cx, cy, r, colorOn) => {
+    const makeLamp = (parent, cx, cy, r, colorOn) => {
     const svg = parent.ownerSVGElement;
   
-    // === STROJENIE ===
+    // === STROJENIE (JAŚNIEJ, SPOKOJNIEJ) ===
     const TUNE = {
-      baseFill: "#1a1d22", // grafitowy korpus
-      glassOff: 0.26,     // szkło OFF
-      glassOn:  0.08,     // szkło ON (prawie znika, bo świeci wnętrze)
-      highlightOff: 0.22,
-      highlightOn:  0.30,
-      glowOn: 0.85,
-      bodyOn: 0.98,
+      baseFill: "#2a2f36", // jaśniejszy grafit (korpus)
+      glassOff: 0.32,     // szkło OFF – czytelne
+      glassOn:  0.10,     // szkło ON – prawie znika
+      glowOn: 0.75,       // glow spokojniejsze
+      bodyOn: 0.95,       // światło wewnętrzne
     };
   
     // === GRADIENT ŚWIECENIA ===
@@ -550,92 +548,82 @@ export async function createScene() {
       svg.insertBefore(defs, svg.firstChild);
     }
   
-    const grad = document.createElementNS(svg.namespaceURI, "radialGradient");
-    grad.setAttribute("id", gid);
-    grad.setAttribute("cx", "35%");
-    grad.setAttribute("cy", "30%");
-    grad.setAttribute("r", "70%");
-  
-    const mkStop = (o, c, a) => {
-      const s = document.createElementNS(svg.namespaceURI, "stop");
-      s.setAttribute("offset", o);
-      s.setAttribute("stop-color", c);
-      s.setAttribute("stop-opacity", a);
-      return s;
+    const mk = (name, attrs) => {
+      const n = document.createElementNS(svg.namespaceURI, name);
+      for (const k in attrs) n.setAttribute(k, attrs[k]);
+      return n;
     };
   
-    grad.appendChild(mkStop("0%",  "#ffffff", "0.65"));
-    grad.appendChild(mkStop("25%", colorOn,   "1"));
-    grad.appendChild(mkStop("100%","#000000", "0.35"));
+    const grad = mk("radialGradient", {
+      id: gid,
+      cx: "50%",
+      cy: "45%",
+      r: "70%"
+    });
+  
+    grad.appendChild(mk("stop", { offset: "0%",   "stop-color": colorOn, "stop-opacity": "1" }));
+    grad.appendChild(mk("stop", { offset: "100%", "stop-color": "#000",  "stop-opacity": "0.35" }));
     defs.appendChild(grad);
   
-    const g = document.createElementNS(svg.namespaceURI, "g");
+    const g = mk("g", {});
   
-    // === CIEŃ POD LAMPKĄ ===
-    const shadow = document.createElementNS(svg.namespaceURI, "circle");
-    shadow.setAttribute("cx", cx + r * 0.08);
-    shadow.setAttribute("cy", cy + r * 0.12);
-    shadow.setAttribute("r", r * 1.04);
-    shadow.setAttribute("fill", "#000");
-    shadow.setAttribute("opacity", "0.14");
+    // === CIEŃ POD LAMPKĄ (BARDZO SUBTELNY) ===
+    const shadow = mk("circle", {
+      cx: cx + r * 0.06,
+      cy: cy + r * 0.10,
+      r: r * 1.03,
+      fill: "#000",
+      opacity: "0.10"
+    });
   
-    // === BAZA (ZAWSZE 100%) ===
-    const baseCore = document.createElementNS(svg.namespaceURI, "circle");
-    baseCore.setAttribute("cx", cx);
-    baseCore.setAttribute("cy", cy);
-    baseCore.setAttribute("r", r * 0.98);
-    baseCore.setAttribute("fill", TUNE.baseFill);
-    baseCore.setAttribute("opacity", "1"); // ← kluczowe
+    // === BAZA (KORPUS – ZAWSZE 100%) ===
+    const baseCore = mk("circle", {
+      cx, cy,
+      r: r * 0.98,
+      fill: TUNE.baseFill,
+      opacity: "1"
+    });
   
     // === SZKŁO (KOLOR) ===
-    const glass = document.createElementNS(svg.namespaceURI, "circle");
-    glass.setAttribute("cx", cx);
-    glass.setAttribute("cy", cy);
-    glass.setAttribute("r", r);
-    glass.setAttribute("fill", colorOn);
-    glass.setAttribute("opacity", TUNE.glassOff);
+    const glass = mk("circle", {
+      cx, cy,
+      r,
+      fill: colorOn,
+      opacity: TUNE.glassOff
+    });
   
     // === ŚWIATŁO WEWNĘTRZNE ===
-    const onBody = document.createElementNS(svg.namespaceURI, "circle");
-    onBody.setAttribute("cx", cx);
-    onBody.setAttribute("cy", cy);
-    onBody.setAttribute("r", r);
-    onBody.setAttribute("fill", `url(#${gid})`);
-    onBody.setAttribute("opacity", "0");
+    const onBody = mk("circle", {
+      cx, cy,
+      r,
+      fill: `url(#${gid})`,
+      opacity: "0"
+    });
   
     // === GLOW ===
-    const glow = document.createElementNS(svg.namespaceURI, "circle");
-    glow.setAttribute("cx", cx);
-    glow.setAttribute("cy", cy);
-    glow.setAttribute("r", r * 1.08);
-    glow.setAttribute("fill", colorOn);
-    glow.setAttribute("opacity", "0");
-    glow.setAttribute("filter", "url(#neonBlue)");
-  
-    // === HIGHLIGHT ===
-    const highlight = document.createElementNS(svg.namespaceURI, "circle");
-    highlight.setAttribute("cx", cx - r * 0.28);
-    highlight.setAttribute("cy", cy - r * 0.30);
-    highlight.setAttribute("r", r * 0.22);
-    highlight.setAttribute("fill", "#ffffff");
-    highlight.setAttribute("opacity", TUNE.highlightOff);
+    const glow = mk("circle", {
+      cx, cy,
+      r: r * 1.06,
+      fill: colorOn,
+      opacity: "0",
+      filter: "url(#neonBlue)"
+    });
   
     // === RING ===
-    const ring = document.createElementNS(svg.namespaceURI, "circle");
-    ring.setAttribute("cx", cx);
-    ring.setAttribute("cy", cy);
-    ring.setAttribute("r", r + 2);
-    ring.setAttribute("fill", "none");
-    ring.setAttribute("stroke", "rgba(255,255,255,0.42)");
-    ring.setAttribute("stroke-width", "2");
-    ring.setAttribute("opacity", "0.95");
+    const ring = mk("circle", {
+      cx, cy,
+      r: r + 2,
+      fill: "none",
+      stroke: "rgba(255,255,255,0.35)",
+      "stroke-width": 2,
+      opacity: "0.9"
+    });
   
     g.appendChild(shadow);
     g.appendChild(glow);
     g.appendChild(baseCore);
     g.appendChild(glass);
     g.appendChild(onBody);
-    g.appendChild(highlight);
     g.appendChild(ring);
   
     parent.appendChild(g);
@@ -645,7 +633,6 @@ export async function createScene() {
       glass.setAttribute("opacity", on ? TUNE.glassOn : TUNE.glassOff);
       onBody.setAttribute("opacity", on ? TUNE.bodyOn : "0");
       glow.setAttribute("opacity", on ? TUNE.glowOn : "0");
-      highlight.setAttribute("opacity", on ? TUNE.highlightOn : TUNE.highlightOff);
     };
   
     return { setOn, node: g };
