@@ -77,7 +77,9 @@
       </div>
 
       <div class="tabs">
-        <button class="tab active" data-tab="devices" type="button">Urządzenia</button>
+        <button class="tab active" data-tab="devices" type="button">Gra</button>
+        <button class="tab" data-tab="devices" type="button">Urządzenia</button>
+        <button class="tab" data-tab="cmd" type="button">Komendy / testy</button>
         <button class="tab" data-tab="cmd" type="button">Komendy / testy</button>
       </div>
     </div>
@@ -309,8 +311,41 @@
           </div>
         </div>
       </div>
-
       <div class="foot"><div class="msg" id="msgCmd"></div></div>
+    </section>
+    <!-- ===== GAME (FSM) ===== -->
+    <section class="panel" data-panel="game" style="display:none;">
+      <div class="hint">
+        Logika gry (FSM): wejścia do stanów wysyłają paczki komend na DISPLAY / HOST / BUZZER.
+        <span style="opacity:.85">Testy zostają w „Komendy / testy”.</span>
+      </div>
+    
+      <!-- (TEST_UI) Na razie przyciski do ręcznego wchodzenia w stany -->
+      <div class="card">
+        <div class="name">Sekwencje (ENTER state)</div>
+        <div class="hint">
+          To są <b>enter-actions</b> dla stanów. Docelowo zrobimy tu normalny flow z przyciskami kontekstowymi.
+        </div>
+    
+        <div class="rowBtns">
+          <button class="btn gold" id="btnEnterToolsSetup" type="button">ENTER: TOOLS_SETUP</button>
+          <button class="btn" id="btnEnterToolsLinks" type="button">ENTER: TOOLS_LINKS</button>
+          <button class="btn" id="btnEnterTeamNames" type="button">ENTER: TEAM_NAMES</button>
+          <button class="btn" id="btnEnterGameReady" type="button">ENTER: GAME_READY</button>
+        </div>
+    
+        <div class="rowBtns">
+          <button class="btn gold" id="btnEnterGameIntro" type="button">ENTER: GAME_INTRO</button>
+          <button class="btn" id="btnEnterRoundReady" type="button">ENTER: ROUND_READY</button>
+          <button class="btn" id="btnEnterRoundTransitionIn" type="button">ENTER: ROUND_TRANSITION_IN</button>
+        </div>
+    
+        <div class="mini">
+          <div>Uwaga: display jest uniwersalny → trzeba mu jawnie mówić co ma pokazać (APP/scene/small).</div>
+        </div>
+      </div>
+    
+      <div class="foot"><div class="msg" id="msgGame"></div></div>
     </section>
   </main>
 </body>
