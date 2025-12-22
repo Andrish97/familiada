@@ -285,9 +285,6 @@ export async function createScene() {
     const answers   = rows.map((r, i) => field(`R${i+1}_TXT`, 7, r, 17));
     const points    = rows.map((r, i) => field(`R${i+1}_PTS`, 24, r, 2));
 
-    const sumaLabel = field("SUMA_LABEL", 18, 8, 4);
-    const sumaVal   = field("SUMA_VAL",   23, 8, 3);
-
     const xCells = {
       "1A": { c1: 1,  r1: 8,  c2: 3,  r2: 10 },
       "2A": { c1: 1,  r1: 5,  c2: 3,  r2: 7  },
@@ -297,16 +294,64 @@ export async function createScene() {
       "3B": { c1: 28, r1: 2,  c2: 30, r2: 4  },
     };
 
-    return { rows, roundNums, answers, points, sumaLabel, sumaVal, xCells };
+    return { rows, roundNums, answers, points, xCells };
   })();
 
   // Stan i zasada “numer tylko gdy jest tekst”
-  const roundsState = { text: Array(6).fill(""), pts: Array(6).fill("") };
+  const roundsState = {
+    text: Array(6).fill(""),
+    pts:  Array(6).fill(""),
+    suma: "",
+    sumaRow: 9, // startowo na dole
+  };
+
   const hasVisibleText = (s) => (s ?? "").toString().trim().length > 0;
   const setRoundNumberVisible = (idx1to6, on) => {
     const i = (idx1to6|0) - 1;
     if (i < 0 || i > 5) return;
     writeField(GLYPHS, big, ROUNDS.roundNums[i], on ? String(i + 1) : " ", LIT.main);
+  };
+
+  const isNonEmpty = (s) => (s ?? "").toString().trim().length > 0;
+
+  const computeLastUsedRow = () => {
+    let lastIdx = -1;
+    for (let i = 0; i < 6; i++) {
+      if (isNonEmpty(roundsState.text[i]) || isNonEmpty(roundsState.pts[i])) lastIdx = i;
+    }
+    if (lastIdx < 0) return null; // brak odpowiedzi
+    return ROUNDS.rows[lastIdx];  // np. 2..7
+  };
+  
+  const computeSumaRow = () => {
+    const last = computeLastUsedRow();
+    if (last == null) return 9;           // jak nic nie ma, suma na dole
+    return Math.min(10, last + 2);        // 1 przerwa + 1 suma
+  };
+  
+  const roundsSumaFields = () => {
+    const r = roundsState.sumaRow;
+    return {
+      label: field("SUMA_LABEL", 18, r, 4),
+      val:   field("SUMA_VAL",   23, r, 3),
+    };
+  };
+  
+  const clearRow = (r) => clearArea(big, 1, r, 30, r);
+  
+  const relocateSumaIfNeeded = () => {
+    const nextRow = computeSumaRow();
+    if (nextRow === roundsState.sumaRow) return;
+  
+    // wyczyść stary wiersz sumy, żeby nie zostawał duch
+    clearRow(roundsState.sumaRow);
+  
+    roundsState.sumaRow = nextRow;
+  
+    // narysuj SUMA w nowym miejscu
+    const F = roundsSumaFields();
+    writeField(GLYPHS, big, F.label, "SUMA", LIT.main);
+    if (isNonEmpty(roundsState.suma)) writeField(GLYPHS, big, F.val, roundsState.suma, LIT.main);
   };
 
   // ============================
@@ -537,7 +582,7 @@ export async function createScene() {
   // ============================================================
   // Modes (duży ekran)
   // ============================================================
-  const BIG_MODES = { LOGO:"LOGO", ROUNDS:"ROUNDS", FINAL:"FINAL", WIN:"WIN" };
+  const BIG_MODES = { BLANK: "BLANK", LOGO:"LOGO", ROUNDS:"ROUNDS", FINAL:"FINAL", WIN:"WIN" };
   let mode = BIG_MODES.LOGO;
 
 
@@ -622,19 +667,23 @@ export async function createScene() {
         const mm = (m ?? "").toString().toUpperCase();
         if (!BIG_MODES[mm]) throw new Error(`Nieznany tryb: ${m}`);
         mode = mm;
-
-        // Tryb zawsze czyści big (backend ma pewność stanu)
+      
+        // zawsze czyścimy Big
         clearBig(big);
-
+      
+        // BLANK = absolutnie nic więcej
+        if (mode === BIG_MODES.BLANK) {
+          return;
+        }
+      
         if (mode === BIG_MODES.ROUNDS) {
-          // inicjalizacja: tylko SUMA label, numery pojawią się dopiero gdy jest tekst
           writeField(GLYPHS, big, ROUNDS.sumaLabel, "SUMA", LIT.main);
         }
-
+      
         if (mode === BIG_MODES.FINAL) {
           writeField(GLYPHS, big, FINAL.sumaLabel, "SUMA", LIT.main);
         }
-
+      
         if (opts?.animIn) await api.big.animIn(opts.animIn);
       },
     },
@@ -738,6 +787,7 @@ export async function createScene() {
 
         // numer tylko gdy tekst ma treść
         setRoundNumberVisible(idx1to6, hasVisibleText(roundsState.text[i]));
+        relocateSumaIfNeeded();
       },
 
       setPts: async (idx1to6, pts, { animOut=null, animIn=null } = {}) => {
@@ -750,6 +800,8 @@ export async function createScene() {
         roundsState.pts[i] = p;
 
         await updateField(GLYPHS, big, ROUNDS.points[i], p, { out: animOut, in: animIn, color: LIT.main });
+        setRoundNumberVisible(idx1to6, isNonEmpty(roundsState.text[i]) || isNonEmpty(roundsState.pts[i]));
+        relocateSumaIfNeeded();
       },
 
       setRow: async (idx1to6, { text=undefined, pts=undefined, animOut=null, animIn=null } = {}) => {
@@ -759,8 +811,14 @@ export async function createScene() {
 
       setSuma: async (val, { animOut=null, animIn=null } = {}) => {
         if (mode !== BIG_MODES.ROUNDS) await api.mode.set("ROUNDS");
-        await updateField(GLYPHS, big, ROUNDS.sumaVal, val, { out: animOut, in: animIn, color: LIT.main });
+      
+        roundsState.suma = (val ?? "").toString();
+        relocateSumaIfNeeded();
+      
+        const F = roundsSumaFields();
+        await updateField(GLYPHS, big, F.val, roundsState.suma, { out: animOut, in: animIn, color: LIT.main });
       },
+
 
       setX: (name, on) => {
         const key = (name ?? "").toString().toUpperCase();
@@ -779,7 +837,6 @@ export async function createScene() {
         if (animOut) await api.big.animOut({ ...animOut, area: A_ALL });
 
         // docelowy obraz (bez animacji per-pole)
-        writeField(GLYPHS, big, ROUNDS.sumaLabel, "SUMA", LIT.main);
 
         for (let i = 0; i < 6; i++) {
           const r = rows[i] ?? {};
@@ -791,8 +848,17 @@ export async function createScene() {
 
           writeField(GLYPHS, big, ROUNDS.answers[i], t, LIT.main);
           writeField(GLYPHS, big, ROUNDS.points[i],  p, LIT.main);
-          setRoundNumberVisible(i + 1, hasVisibleText(t));
+          setRoundNumberVisible(i + 1, isNonEmpty(t) || isNonEmpty(p));
         }
+
+        // ustaw sumę i przelicz pozycję
+        if (suma !== undefined) roundsState.suma = (suma ?? "").toString();
+        else roundsState.suma = (roundsState.suma ?? "").toString();
+        
+        roundsState.sumaRow = computeSumaRow();
+        const F = roundsSumaFields();
+        writeField(GLYPHS, big, F.label, "SUMA", LIT.main);
+        if (isNonEmpty(roundsState.suma)) writeField(GLYPHS, big, F.val, roundsState.suma, LIT.main);
 
         if (suma !== undefined) writeField(GLYPHS, big, ROUNDS.sumaVal, suma, LIT.main);
 
@@ -863,7 +929,7 @@ export async function createScene() {
     },
   };
 
-  api.SnapshotAll=snapshotAll;
+  api.snapshotAll=snapshotAll;
 
   api.restoreSnapshot=restoreSnapshot;
 
