@@ -14,6 +14,9 @@ const $ = (id) => document.getElementById(id);
 const qs = new URLSearchParams(location.search);
 const gameId = qs.get("id");
 
+const btnBuzzCheck = $("btnBuzzCheck");
+const buzzCheckStatus = $("buzzCheckStatus");
+const buzzPresence = $("buzzPresence");
 const buzzEvtLast = $("buzzEvtLast");
 const buzzLog = $("buzzLog");
 const btnBuzzLogClear = $("btnBuzzLogClear");
@@ -188,51 +191,19 @@ async function ensureAuthOrRedirect() {
   return user;
 }
 
+function setBuzzStatus(kind, text) {
+  if (!buzzCheckStatus) return;
+  buzzCheckStatus.textContent = text;
+  buzzCheckStatus.classList.remove("ok","bad","mid");
+  buzzCheckStatus.classList.add(kind); // ok/bad/mid
+}
 
-function logBuzz(text) {
-  const ts = new Date().toLocaleTimeString();
-  if (buzzEvtLast) buzzEvtLast.textContent = text || "—";
-
+function logBuzz(line) {
   if (!buzzLog) return;
-  const line = document.createElement("div");
-  line.textContent = `[${ts}] ${text}`;
-  buzzLog.prepend(line);
-
-  // limit żeby nie puchło
-  while (buzzLog.childNodes.length > 60) buzzLog.removeChild(buzzLog.lastChild);
+  const ts = new Date().toLocaleTimeString();
+  buzzLog.textContent = `[${ts}] ${line}\n` + buzzLog.textContent;
 }
 
-let controlCh = null;
-
-function startControlListener() {
-  if (controlCh) return;
-
-  controlCh = sb()
-    .channel(`familiada-control:${gameId}`)
-    .on("broadcast", { event: "BUZZER_EVT" }, (msg) => {
-      const line = String(msg?.payload?.line || "").trim();
-      if (!line) return;
-      logBuzz(line);
-      // opcjonalnie: dźwięk na klik
-      playSfx("buzzer_press");
-    })
-    .subscribe((status) => {
-      // debug: status może być "SUBSCRIBED" / "CHANNEL_ERROR" itp.
-      console.log("[control] control channel status:", status);
-    });
-
-  if (btnBuzzLogClear) {
-    btnBuzzLogClear.onclick = () => {
-      if (buzzLog) buzzLog.textContent = "";
-      if (buzzEvtLast) buzzEvtLast.textContent = "—";
-    };
-  }
-
-  window.addEventListener("beforeunload", () => {
-    try { if (controlCh) sb().removeChannel(controlCh); } catch {}
-    controlCh = null;
-  });
-}
 
 /* ====== GAME LOAD + VALIDATE ====== */
 async function loadGameOrThrow() {
@@ -618,6 +589,46 @@ btnLogout &&
     location.href = "/familiada/login.html";
   });
 
+
+let ctlCh = null;
+
+function ensureControlChannel() {
+  if (ctlCh) return ctlCh;
+
+  ctlCh = sb()
+    .channel(`familiada-control:${game.id}`)
+    .on("broadcast", { event: "BUZZER_EVT" }, (msg) => {
+      const line = String(msg?.payload?.line ?? "").trim();
+      if (!line) return;
+      if (buzzEvtLast) buzzEvtLast.textContent = line;
+      logBuzz(`BUZZER_EVT: ${line}`);
+    })
+    .subscribe();
+
+  return ctlCh;
+}
+
+async function checkBuzzerPresence() {
+  const { data, error } = await sb()
+    .from("device_presence")
+    .select("device_type,device_id,last_seen_at")
+    .eq("game_id", game.id)
+    .eq("device_type", "buzzer")
+    .order("last_seen_at", { ascending: false })
+    .limit(1);
+
+  if (error) throw error;
+
+  const row = data?.[0] || null;
+  if (!row?.last_seen_at) return { ok: false, reason: "Brak rekordu presence dla buzzera." };
+
+  const ageMs = Date.now() - new Date(row.last_seen_at).getTime();
+  const ageS = Math.max(0, Math.round(ageMs / 1000));
+  const ok = ageMs < ONLINE_MS;
+
+  return { ok, row, ageS };
+}
+
 /* ====== BOOT ====== */
 async function main() {
   setMsg(msgDevices, "");
@@ -625,7 +636,41 @@ async function main() {
 
   await ensureAuthOrRedirect();
   game = await loadGameOrThrow();
-  startControlListener();
+  // po: game = await loadGameOrThrow();
+
+  ensureControlChannel(); // zaczynamy słuchać BUZZER_EVT od razu
+  
+  btnBuzzLogClear?.addEventListener("click", () => {
+    if (buzzLog) buzzLog.textContent = "";
+    if (buzzEvtLast) buzzEvtLast.textContent = "—";
+  });
+  
+  btnBuzzCheck?.addEventListener("click", async () => {
+    try {
+      setBuzzStatus("mid", "SPRAWDZAM...");
+      ensureControlChannel();
+  
+      const pres = await checkBuzzerPresence();
+  
+      if (buzzPresence) {
+        buzzPresence.textContent = pres.row
+          ? `${pres.row.device_id || "?"} — ${pres.ageS}s temu`
+          : "—";
+      }
+  
+      if (!pres.ok) {
+        setBuzzStatus("bad", "OFFLINE");
+        logBuzz("Presence: OFFLINE (brak świeżego pinga).");
+        return;
+      }
+  
+      setBuzzStatus("ok", "ONLINE");
+      logBuzz("Presence: ONLINE. Kliknij A/B na buzzerze — powinno wpaść BUZZER_EVT.");
+    } catch (e) {
+      setBuzzStatus("bad", "BŁĄD");
+      logBuzz(`Błąd: ${e?.message || String(e)}`);
+    }
+  });
 
   if (gameLabel) gameLabel.textContent = `Control — ${game.name}`;
   if (gameMeta) gameMeta.textContent = `${game.type} / ${game.status} / ${game.id}`;
