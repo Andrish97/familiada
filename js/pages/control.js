@@ -51,6 +51,37 @@ const btnResendDisplay = $("btnResendDisplay");
 const btnResendHost = $("btnResendHost");
 const btnResendBuzzer = $("btnResendBuzzer");
 
+// ===== GAME (FSM) =====
+const msgGame = $("msgGame");
+const fsmStateEl = $("fsmState");
+const fsmRoundEl = $("fsmRound");
+const fsmScoreAEl = $("fsmScoreA");
+const fsmScoreBEl = $("fsmScoreB");
+
+const btnStatePrev = $("btnStatePrev");
+const btnStateNext = $("btnStateNext");
+const btnStateReset = $("btnStateReset");
+
+const teamAInp = $("teamA");
+const teamBInp = $("teamB");
+const btnTeamsApply = $("btnTeamsApply");
+const btnPushSmall = $("btnPushSmall");
+
+const btnAPlus = $("btnAPlus");
+const btnAMinus = $("btnAMinus");
+const btnBPlus = $("btnBPlus");
+const btnBMinus = $("btnBMinus");
+const scoreASet = $("scoreASet");
+const scoreBSet = $("scoreBSet");
+const btnScoreSet = $("btnScoreSet");
+
+const roundSet = $("roundSet");
+const btnRoundSet = $("btnRoundSet");
+
+const btnShowQR = $("btnShowQR");
+const btnBlack = $("btnBlack");
+const btnGra = $("btnGra");
+
 // tabs
 document.querySelectorAll(".tab").forEach((b) => {
   b.addEventListener("click", () => {
@@ -199,6 +230,119 @@ function logBuzz(line) {
 }
 
 /* ============================================================
+   GAME FSM (persist + triplet logic)
+   ============================================================ */
+const FSM_ORDER = ["TOOLS_SETUP", "TOOLS_LINKS", "TEAM_NAMES", "GAME_READY"];
+const LS_FSM = `familiada:fsm:${gameId}`;
+
+function fmt3(n) {
+  const x = Math.max(0, Number(n) || 0);
+  return String(Math.floor(x)).padStart(3, "0").slice(-3);
+}
+
+function clampInt(v, min, max) {
+  const n = Number(v);
+  if (!Number.isFinite(n)) return min;
+  return Math.min(max, Math.max(min, Math.trunc(n)));
+}
+
+const FSM = {
+  state: "TOOLS_SETUP",
+  ctx: {
+    teamA: "DRUŻYNA A",
+    teamB: "DRUŻYNA B",
+    scoreA: 0,
+    scoreB: 0,
+    roundNo: 1,
+  },
+};
+
+function fsmSave() {
+  try { localStorage.setItem(LS_FSM, JSON.stringify({ state: FSM.state, ctx: FSM.ctx })); } catch {}
+}
+
+function fsmLoad() {
+  try {
+    const raw = localStorage.getItem(LS_FSM);
+    if (!raw) return;
+    const obj = JSON.parse(raw);
+    if (obj?.state) FSM.state = obj.state;
+    if (obj?.ctx) FSM.ctx = { ...FSM.ctx, ...obj.ctx };
+  } catch {}
+}
+
+function fsmSetState(st) {
+  FSM.state = st;
+  fsmSave();
+  renderFSM();
+}
+
+function fsmNext() {
+  const i = Math.max(0, FSM_ORDER.indexOf(FSM.state));
+  const nx = FSM_ORDER[Math.min(FSM_ORDER.length - 1, i + 1)];
+  fsmSetState(nx);
+}
+
+function fsmPrev() {
+  const i = Math.max(0, FSM_ORDER.indexOf(FSM.state));
+  const pv = FSM_ORDER[Math.max(0, i - 1)];
+  fsmSetState(pv);
+}
+
+function fsmReset() {
+  FSM.state = "TOOLS_SETUP";
+  FSM.ctx = { teamA: "DRUŻYNA A", teamB: "DRUŻYNA B", scoreA: 0, scoreB: 0, roundNo: 1 };
+  fsmSave();
+  renderFSM();
+}
+
+function renderFSM() {
+  if (fsmStateEl) {
+    fsmStateEl.textContent = FSM.state;
+    fsmStateEl.classList.remove("ok","bad","mid");
+    fsmStateEl.classList.add("mid");
+  }
+  if (fsmRoundEl) fsmRoundEl.textContent = String(FSM.ctx.roundNo ?? "—");
+  if (fsmScoreAEl) fsmScoreAEl.textContent = String(FSM.ctx.scoreA ?? "—");
+  if (fsmScoreBEl) fsmScoreBEl.textContent = String(FSM.ctx.scoreB ?? "—");
+
+  if (teamAInp && !teamAInp.value) teamAInp.value = FSM.ctx.teamA || "";
+  if (teamBInp && !teamBInp.value) teamBInp.value = FSM.ctx.teamB || "";
+}
+
+function setGameMsg(t) { if (msgGame) msgGame.textContent = t || ""; }
+
+/**
+ * Triplet proposal (prosto i czytelnie):
+ * - LEFT  = score A (000..999)
+ * - RIGHT = score B (000..999)
+ * - TOP   = roundNo (001..999)  (albo timer później)
+ * - LONG1 = teamA (max 15 wg guide; ucinamy)
+ * - LONG2 = teamB (max 15 wg guide; ucinamy)
+ */
+async function pushSmallLayerToDisplay() {
+  // warunek: od GAME_READY wzwyż (na razie: dokładnie GAME_READY)
+  const should = (FSM.state === "GAME_READY");
+  if (!should) {
+    setGameMsg("Small layer wysyłamy od GAME_READY (na razie).");
+    return;
+  }
+
+  const a = String(FSM.ctx.teamA || "").slice(0, 15);
+  const b = String(FSM.ctx.teamB || "").slice(0, 15);
+
+  await sendCmd("display", `MODE GRA`, { uiTick:false });
+  await sendCmd("display", `LONG1 "${a}"`, { uiTick:false });
+  await sendCmd("display", `LONG2 "${b}"`, { uiTick:false });
+
+  await sendCmd("display", `LEFT ${fmt3(FSM.ctx.scoreA)}`, { uiTick:false });
+  await sendCmd("display", `RIGHT ${fmt3(FSM.ctx.scoreB)}`, { uiTick:false });
+  await sendCmd("display", `TOP ${fmt3(FSM.ctx.roundNo)}`, { uiTick:false });
+
+  setGameMsg("Wysłano small layer: LONG1/LONG2 + triplet (TOP/LEFT/RIGHT).");
+}
+
+/* ============================================================
    auth
    ============================================================ */
 async function ensureAuthOrRedirect() {
@@ -301,7 +445,6 @@ async function sendCmd(target, line) {
   lastCmd[t] = l;
   saveLastCmdToStorage(t, l);
   refreshLastCmdUI();
-  playSfx("ui_tick");
 }
 
 /* ============================================================
@@ -614,37 +757,75 @@ btnLogout?.addEventListener("click", async () => {
   location.href = "/familiada/index.html";
 });
 
-/* ============================================================
-   MINI-FSM szkic (na razie tylko struktura)
-   - tu później wejdzie Twoja pełna logika stanów
-   ============================================================ */
-const FSM = {
-  state: "TOOLS_SETUP",
-  ctx: {
-    teamA: "DRUŻYNA A",
-    teamB: "DRUŻYNA B",
-    scoreA: 0,
-    scoreB: 0,
-    roundNo: 1,
-  },
-};
+/* ===== GAME UI events ===== */
+btnStatePrev?.addEventListener("click", () => { fsmPrev(); setGameMsg(""); });
+btnStateNext?.addEventListener("click", () => { fsmNext(); setGameMsg(""); });
+btnStateReset?.addEventListener("click", () => { fsmReset(); setGameMsg("FSM zresetowany."); });
 
-// helper do tripletów (3 cyfry)
-function fmt3(n) {
-  const x = Math.max(0, Number(n) || 0);
-  return String(Math.floor(x)).padStart(3, "0").slice(-3);
-}
+btnTeamsApply?.addEventListener("click", () => {
+  FSM.ctx.teamA = String(teamAInp?.value ?? "").trim().slice(0, 16);
+  FSM.ctx.teamB = String(teamBInp?.value ?? "").trim().slice(0, 16);
+  if (!FSM.ctx.teamA) FSM.ctx.teamA = "DRUŻYNA A";
+  if (!FSM.ctx.teamB) FSM.ctx.teamB = "DRUŻYNA B";
+  fsmSave();
+  renderFSM();
+  setGameMsg("Nazwy zapisane w Control (persist).");
+});
 
-// “warstwa stała” – od GAME_READY do końca (na razie tylko helper)
-async function displaySmallBase() {
-  // UWAGA: to jest gotowe do użycia później, ale nie odpalam automatycznie,
-  // żeby teraz nie mieszać testów.
-  // await sendCmd("display", `LONG1 "${FSM.ctx.teamA}"`);
-  // await sendCmd("display", `LONG2 "${FSM.ctx.teamB}"`);
-  // await sendCmd("display", `LEFT ${fmt3(FSM.ctx.scoreA)}`);
-  // await sendCmd("display", `RIGHT ${fmt3(FSM.ctx.scoreB)}`);
-  // await sendCmd("display", `TOP ${fmt3(FSM.ctx.roundNo)}`);
-}
+btnPushSmall?.addEventListener("click", () => {
+  pushSmallLayerToDisplay().catch((e) => setGameMsg(e?.message || String(e)));
+});
+
+btnAPlus?.addEventListener("click", () => {
+  FSM.ctx.scoreA = clampInt(FSM.ctx.scoreA + 1, 0, 999);
+  fsmSave(); renderFSM();
+});
+btnAMinus?.addEventListener("click", () => {
+  FSM.ctx.scoreA = clampInt(FSM.ctx.scoreA - 1, 0, 999);
+  fsmSave(); renderFSM();
+});
+btnBPlus?.addEventListener("click", () => {
+  FSM.ctx.scoreB = clampInt(FSM.ctx.scoreB + 1, 0, 999);
+  fsmSave(); renderFSM();
+});
+btnBMinus?.addEventListener("click", () => {
+  FSM.ctx.scoreB = clampInt(FSM.ctx.scoreB - 1, 0, 999);
+  fsmSave(); renderFSM();
+});
+
+btnScoreSet?.addEventListener("click", () => {
+  FSM.ctx.scoreA = clampInt(scoreASet?.value, 0, 999);
+  FSM.ctx.scoreB = clampInt(scoreBSet?.value, 0, 999);
+  fsmSave(); renderFSM();
+  setGameMsg("Punkty ustawione (persist).");
+});
+
+btnRoundSet?.addEventListener("click", () => {
+  FSM.ctx.roundNo = clampInt(roundSet?.value, 1, 999);
+  fsmSave(); renderFSM();
+  setGameMsg("Runda ustawiona (persist).");
+});
+
+// TOOLS_LINKS: QR helper
+btnShowQR?.addEventListener("click", async () => {
+  try {
+    const hostUrl = hostLink?.value || "";
+    const buzUrl = buzzerLink?.value || "";
+    if (!hostUrl || !buzUrl) return setGameMsg("Brak linków HOST/BUZZER (wejdź w Urządzenia).");
+
+    await sendCmd("display", "MODE QR", { uiTick:false });
+    // QR komenda wg Twojego guide:
+    await sendCmd("display", `QR HOST "${hostUrl}" BUZZER "${buzUrl}"`, { uiTick:false });
+
+    setGameMsg("Display ustawiony na QR (HOST+BUZZER).");
+  } catch (e) {
+    setGameMsg(e?.message || String(e));
+  }
+});
+
+btnBlack?.addEventListener("click", () => sendCmd("display", "MODE BLACK", { uiTick:false }).catch(()=>{}));
+btnGra?.addEventListener("click", () => sendCmd("display", "MODE GRA", { uiTick:false }).catch(()=>{}));
+
 
 /* ============================================================
    boot
@@ -655,6 +836,9 @@ async function main() {
 
   await ensureAuthOrRedirect();
   game = await loadGameOrThrow();
+   // FSM persist
+  fsmLoad();
+  renderFSM();
 
   if (gameLabel) gameLabel.textContent = `Control — ${game.name}`;
   if (gameMeta) gameMeta.textContent = `${game.type} / ${game.status} / ${game.id}`;
