@@ -530,102 +530,125 @@ export async function createScene() {
   const makeLamp = (parent, cx, cy, r, colorOn) => {
     const svg = parent.ownerSVGElement;
   
+    // === STROJENIE ===
+    const TUNE = {
+      baseFill: "#1a1d22", // grafitowy korpus
+      glassOff: 0.26,     // szkło OFF
+      glassOn:  0.08,     // szkło ON (prawie znika, bo świeci wnętrze)
+      highlightOff: 0.22,
+      highlightOn:  0.30,
+      glowOn: 0.85,
+      bodyOn: 0.98,
+    };
+  
+    // === GRADIENT ŚWIECENIA ===
     const gid = `lampGrad_${Math.random().toString(16).slice(2)}`;
   
     let defs = svg.querySelector("defs");
     if (!defs) {
-      defs = el("defs");
+      defs = document.createElementNS(svg.namespaceURI, "defs");
       svg.insertBefore(defs, svg.firstChild);
     }
   
-    const grad = el("radialGradient", { id: gid, cx: "35%", cy: "30%", r: "70%" });
-    grad.appendChild(el("stop", { offset: "0%",   "stop-color": "#ffffff", "stop-opacity": "0.65" }));
-    grad.appendChild(el("stop", { offset: "25%",  "stop-color": colorOn,   "stop-opacity": "1" }));
-    grad.appendChild(el("stop", { offset: "100%", "stop-color": "#000000", "stop-opacity": "0.35" }));
-    defs.appendChild(grad);
+    const grad = document.createElementNS(svg.namespaceURI, "radialGradient");
+    grad.setAttribute("id", gid);
+    grad.setAttribute("cx", "35%");
+    grad.setAttribute("cy", "30%");
+    grad.setAttribute("r", "70%");
   
-    const gLamp = el("g", {});
-  
-    // 1) cień „osadzenia” pod lampką (zawsze subtelny)
-    const shadow = el("circle", {
-      cx: cx + r * 0.08,
-      cy: cy + r * 0.12,
-      r: r * 1.04,
-      fill: "#000",
-      opacity: "0.14"
-    });
-  
-    // 2) czarna baza (pod szkłem) – daje „wnętrze”
-    const baseCore = el("circle", {
-      cx, cy, r: r * 0.98,
-      fill: "#000",
-      opacity: "0.28"   // <-- tu jest „czarne pod spodem”, ale NIE przesadnie
-    });
-  
-    // 3) OFF: szkło w kolorze lampki (ciemne, ale nie czarne)
-    const offGlass = el("circle", {
-      cx, cy, r,
-      fill: colorOn,
-      opacity: "0.22"
-    });
-  
-    // 4) ON: świecący korpus (gradient)
-    const onBody = el("circle", {
-      cx, cy, r,
-      fill: `url(#${gid})`,
-      opacity: "0"
-    });
-  
-    // 5) glow zewnętrzny
-    const glow = el("circle", {
-      cx, cy, r: r * 1.08,
-      fill: colorOn,
-      opacity: "0",
-      filter: "url(#neonBlue)"
-    });
-  
-    // 6) highlight szkła
-    const highlight = el("circle", {
-      cx: cx - r * 0.28,
-      cy: cy - r * 0.30,
-      r: r * 0.22,
-      fill: "#fff",
-      opacity: "0.18"
-    });
-  
-    // 7) ring
-    const ring = el("circle", {
-      cx, cy, r: r + 2,
-      fill: "none",
-      stroke: "rgba(255,255,255,0.42)",
-      "stroke-width": 2,
-      opacity: "0.95"
-    });
-  
-    gLamp.appendChild(shadow);
-    gLamp.appendChild(glow);
-    gLamp.appendChild(baseCore);
-    gLamp.appendChild(offGlass);
-    gLamp.appendChild(onBody);
-    gLamp.appendChild(highlight);
-    gLamp.appendChild(ring);
-  
-    parent.appendChild(gLamp);
-  
-    const setOn = (on) => {
-      // OFF: widać bazę + szkło
-      baseCore.setAttribute("opacity", on ? "0.08" : "0.28");
-      offGlass.setAttribute("opacity", on ? "0.06" : "0.22");
-  
-      // ON: świecenie
-      onBody.setAttribute("opacity", on ? "0.98" : "0");
-      glow.setAttribute("opacity", on ? "0.85" : "0");
-  
-      // szkło „łapie światło” mocniej gdy świeci
-      highlight.setAttribute("opacity", on ? "0.28" : "0.18");
+    const mkStop = (o, c, a) => {
+      const s = document.createElementNS(svg.namespaceURI, "stop");
+      s.setAttribute("offset", o);
+      s.setAttribute("stop-color", c);
+      s.setAttribute("stop-opacity", a);
+      return s;
     };
   
-    return { setOn, node: gLamp };
+    grad.appendChild(mkStop("0%",  "#ffffff", "0.65"));
+    grad.appendChild(mkStop("25%", colorOn,   "1"));
+    grad.appendChild(mkStop("100%","#000000", "0.35"));
+    defs.appendChild(grad);
+  
+    const g = document.createElementNS(svg.namespaceURI, "g");
+  
+    // === CIEŃ POD LAMPKĄ ===
+    const shadow = document.createElementNS(svg.namespaceURI, "circle");
+    shadow.setAttribute("cx", cx + r * 0.08);
+    shadow.setAttribute("cy", cy + r * 0.12);
+    shadow.setAttribute("r", r * 1.04);
+    shadow.setAttribute("fill", "#000");
+    shadow.setAttribute("opacity", "0.14");
+  
+    // === BAZA (ZAWSZE 100%) ===
+    const baseCore = document.createElementNS(svg.namespaceURI, "circle");
+    baseCore.setAttribute("cx", cx);
+    baseCore.setAttribute("cy", cy);
+    baseCore.setAttribute("r", r * 0.98);
+    baseCore.setAttribute("fill", TUNE.baseFill);
+    baseCore.setAttribute("opacity", "1"); // ← kluczowe
+  
+    // === SZKŁO (KOLOR) ===
+    const glass = document.createElementNS(svg.namespaceURI, "circle");
+    glass.setAttribute("cx", cx);
+    glass.setAttribute("cy", cy);
+    glass.setAttribute("r", r);
+    glass.setAttribute("fill", colorOn);
+    glass.setAttribute("opacity", TUNE.glassOff);
+  
+    // === ŚWIATŁO WEWNĘTRZNE ===
+    const onBody = document.createElementNS(svg.namespaceURI, "circle");
+    onBody.setAttribute("cx", cx);
+    onBody.setAttribute("cy", cy);
+    onBody.setAttribute("r", r);
+    onBody.setAttribute("fill", `url(#${gid})`);
+    onBody.setAttribute("opacity", "0");
+  
+    // === GLOW ===
+    const glow = document.createElementNS(svg.namespaceURI, "circle");
+    glow.setAttribute("cx", cx);
+    glow.setAttribute("cy", cy);
+    glow.setAttribute("r", r * 1.08);
+    glow.setAttribute("fill", colorOn);
+    glow.setAttribute("opacity", "0");
+    glow.setAttribute("filter", "url(#neonBlue)");
+  
+    // === HIGHLIGHT ===
+    const highlight = document.createElementNS(svg.namespaceURI, "circle");
+    highlight.setAttribute("cx", cx - r * 0.28);
+    highlight.setAttribute("cy", cy - r * 0.30);
+    highlight.setAttribute("r", r * 0.22);
+    highlight.setAttribute("fill", "#ffffff");
+    highlight.setAttribute("opacity", TUNE.highlightOff);
+  
+    // === RING ===
+    const ring = document.createElementNS(svg.namespaceURI, "circle");
+    ring.setAttribute("cx", cx);
+    ring.setAttribute("cy", cy);
+    ring.setAttribute("r", r + 2);
+    ring.setAttribute("fill", "none");
+    ring.setAttribute("stroke", "rgba(255,255,255,0.42)");
+    ring.setAttribute("stroke-width", "2");
+    ring.setAttribute("opacity", "0.95");
+  
+    g.appendChild(shadow);
+    g.appendChild(glow);
+    g.appendChild(baseCore);
+    g.appendChild(glass);
+    g.appendChild(onBody);
+    g.appendChild(highlight);
+    g.appendChild(ring);
+  
+    parent.appendChild(g);
+  
+    // === API ===
+    const setOn = (on) => {
+      glass.setAttribute("opacity", on ? TUNE.glassOn : TUNE.glassOff);
+      onBody.setAttribute("opacity", on ? TUNE.bodyOn : "0");
+      glow.setAttribute("opacity", on ? TUNE.glowOn : "0");
+      highlight.setAttribute("opacity", on ? TUNE.highlightOn : TUNE.highlightOff);
+    };
+  
+    return { setOn, node: g };
   };
   
   const lampsY = barY + barH / 2;
