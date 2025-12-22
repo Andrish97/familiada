@@ -72,23 +72,22 @@ window.addEventListener("DOMContentLoaded", async () => {
 
       // snapshot odtwarza “stan ekranu”
       onSnapshot: (st) => {
-        const mode = String(st?.app_mode ?? "BLACK").toUpperCase();
-        // 1:1 odtwórz piksele (jeśli jest screen)
-        if (mode === "GRA") app.setMode("GRA");
-        else if (mode === "QR") app.setMode("QR");
-        else app.setMode("BLACK_SCREEN");
-        if (st?.screen && scene?.api?.restoreAll) {
-          try { scene.api.restoreAll(st.screen); } catch (e) { console.warn(e); }
-        }
-        const sceneMode = String(st?.scene ?? "LOGO").toUpperCase();
-        if (mode === "GRA" && !st?.screen) {
-          try { handleCommand(`MODE ${sceneMode}`); } catch {}
-        }
-        const last = String(st?.last_cmd ?? "");
-        if (last) {
-          try { handleCommand(last); } catch {}
-        }
-      },
+        if (!st || !st.screen) return;
+      
+        // 1. tryb APP
+        const appMode = String(st.app_mode || "BLACK_SCREEN").toUpperCase();
+        app.setMode(appMode);
+      
+        // 2. jeśli nie GRA → nic więcej nie robimy
+        if (appMode !== "GRA") return;
+      
+        // 3. tryb sceny — BEZ komend
+        const sceneMode = String(st.scene || "LOGO").toUpperCase();
+        scene.api.mode.set(sceneMode); // ← UWAGA: bez animIn
+      
+        // 4. TWARDY restore pikseli
+        scene.api.restoreSnapshot(st.screen);
+      }
     });
 
     app.game = pres.game;
