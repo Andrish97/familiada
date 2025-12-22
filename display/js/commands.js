@@ -1,4 +1,5 @@
 import { sb } from "../../js/core/supabase.js";
+
 const tokenize = (raw) => {
   const tokens = [];
   let i = 0;
@@ -34,10 +35,17 @@ const normalizeAppMode = (m) => {
   return mm;
 };
 
-// Lokalny tryb dużego wyświetlacza (komendy sceny)
 const isSceneBigMode = (m) => {
   const mm = (m ?? "").toString().trim().toUpperCase();
   return mm === "LOGO" || mm === "ROUNDS" || mm === "FINAL" || mm === "WIN";
+};
+
+const debounce = (fn, ms) => {
+  let t = null;
+  return (...args) => {
+    clearTimeout(t);
+    t = setTimeout(() => fn(...args), ms);
+  };
 };
 
 export const createCommandHandler = (app) => {
@@ -46,64 +54,16 @@ export const createCommandHandler = (app) => {
   const u = new URL(location.href);
   const key = u.searchParams.get("key") || "";
 
-  const tokenize = (raw) => {
-    const tokens = [];
-    let i = 0;
-    while (i < raw.length) {
-      if (raw[i] === " ") { i++; continue; }
-      if (raw[i] === '"') {
-        let j = i + 1;
-        while (j < raw.length && raw[j] !== '"') j++;
-        tokens.push(raw.slice(i, j + 1));
-        i = j + 1;
-      } else {
-        let j = i;
-        while (j < raw.length && raw[j] !== " ") j++;
-        tokens.push(raw.slice(i, j));
-        i = j;
-      }
-    }
-    return tokens;
-  };
-
-  const unquote = (s) => {
-    const t = (s ?? "").trim();
-    if (t.startsWith('"') && t.endsWith('"')) return t.slice(1, -1);
-    return t;
-  };
-
-  const normalizeAppMode = (m) => {
-    const mm = (m ?? "").toString().trim().toUpperCase();
-    if (mm === "BLACK") return "BLACK_SCREEN";
-    if (mm === "BLACK_SCREEN") return "BLACK_SCREEN";
-    if (mm === "GRA" || mm === "GAME") return "GRA";
-    if (mm === "QR") return "QR";
-    return mm;
-  };
-
-  const isSceneBigMode = (m) => {
-    const mm = (m ?? "").toString().trim().toUpperCase();
-    return mm === "LOGO" || mm === "ROUNDS" || mm === "FINAL" || mm === "WIN";
-  };
-
-  const debounce = (fn, ms) => {
-    let t = null;
-    return (...args) => {
-      clearTimeout(t);
-      t = setTimeout(() => fn(...args), ms);
-    };
-  };
-
-  // zapis stanu (po komendzie)
   const saveSnapshot = debounce(async (lastCmd) => {
     if (!app?.gameId || !key) return;
-    if (!app?.scene?.api?.snapshotAll) return;
+    const snapFn = app?.scene?.api?.snapshotAll;
+    if (typeof snapFn !== "function") return;
 
     const patch = {
       app_mode: app.mode,
       scene: app.scene.api.mode.get?.() ?? null,
       last_cmd: String(lastCmd ?? ""),
-      screen: app.scene.api.snapshotAll(), // <-- “zrzut” stanu ekranu
+      screen: snapFn(),
       ts: Date.now(),
     };
 
@@ -123,9 +83,6 @@ export const createCommandHandler = (app) => {
     if (app.mode !== "GRA") app.setMode("GRA");
   };
 
-  // =========================================================
-  // TO JEST ROUTER
-  // =========================================================
   return async (line) => {
     const raw = (line ?? "").toString().trim();
     if (!raw) return;
@@ -133,17 +90,12 @@ export const createCommandHandler = (app) => {
     const tokens = tokenize(raw);
     const head = (tokens[0] ?? "").toUpperCase();
 
-    // APP MODE ...
-    if (head === "APP") {
-      const op = (tokens[1] ?? "").toUpperCase();
-      if (op === "MODE") {
-        app.setMode(normalizeAppMode(tokens[2] ?? "BLACK_SCREEN"));
-        saveSnapshot(raw);
-        return;
-      }
+    if (head === "APP" && (tokens[1] ?? "").toUpperCase() === "MODE") {
+      app.setMode(normalizeAppMode(tokens[2] ?? "BLACK_SCREEN"));
+      saveSnapshot(raw);
+      return;
     }
 
-    // MODE ...
     if (head === "MODE") {
       const arg = tokens[1] ?? "";
       const mGlobal = normalizeAppMode(arg);
@@ -165,7 +117,6 @@ export const createCommandHandler = (app) => {
       return;
     }
 
-    // QR HOST ... BUZZER ...
     if (head === "QR") {
       const hostIdx = tokens.findIndex(t => t.toUpperCase() === "HOST");
       const buzIdx  = tokens.findIndex(t => t.toUpperCase() === "BUZZER");
@@ -178,7 +129,6 @@ export const createCommandHandler = (app) => {
       return;
     }
 
-    // reszta -> scena
     ensureGameMode();
     await scene.handleCommand(raw);
     saveSnapshot(raw);
