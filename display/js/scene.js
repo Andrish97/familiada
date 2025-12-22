@@ -417,7 +417,6 @@ export async function createScene() {
   const gapBetween  = 40;
 
   const ovalBottomY = 110 + 680;
-  const yBottom = ovalBottomY + gapFromOval;
   const BOTTOM_LIFT = 40; // <-- ustaw sobie: 20..80
   const yBottom = ovalBottomY + gapFromOval - BOTTOM_LIFT;
   
