@@ -1,5 +1,6 @@
 // js/pages/control.js
 import { sb } from "../core/supabase.js";
+import { rt } from "../core/realtime.js";
 import { playSfx, createSfxMixer, listSfx, unlockAudio, isAudioUnlocked } from "../core/sfx.js";
 import { requireAuth, signOut } from "../core/auth.js";
 import { validateGameReadyToPlay, loadGameBasic, loadQuestions, loadAnswers } from "../core/game-validate.js";
@@ -8,7 +9,9 @@ const $ = (id) => document.getElementById(id);
 const qs = new URLSearchParams(location.search);
 const gameId = qs.get("id");
 
-/* ===== DOM ===== */
+/* ============================================================
+   DOM
+   ============================================================ */
 const who = $("who");
 const btnBack = $("btnBack");
 const btnLogout = $("btnLogout");
@@ -19,7 +22,7 @@ const gameMeta = $("gameMeta");
 const msgDevices = $("msgDevices");
 const msgCmd = $("msgCmd");
 
-// device cards
+// devices
 const displayLink = $("displayLink");
 const hostLink = $("hostLink");
 const buzzerLink = $("buzzerLink");
@@ -60,7 +63,10 @@ document.querySelectorAll(".tab").forEach((b) => {
   });
 });
 
-// manual
+/* ============================================================
+   TEST_UI: elementy testowe (do łatwego usunięcia)
+   Szukaj: TEST_UI
+   ============================================================ */
 const manualTarget = $("manualTarget");
 const manualLine = $("manualLine");
 const btnManualSend = $("btnManualSend");
@@ -76,14 +82,14 @@ const btnHostOn = $("btnHostOn");
 const btnHostOff = $("btnHostOff");
 const btnHostClear = $("btnHostClear");
 
-// buzzer state buttons
+// buzzer states
 const btnBuzzOff = $("btnBuzzOff");
 const btnBuzzOn = $("btnBuzzOn");
 const btnBuzzReset = $("btnBuzzReset");
 const btnBuzzPA = $("btnBuzzPA");
 const btnBuzzPB = $("btnBuzzPB");
 
-// display test buttons
+// display testpack
 const btnDispBlack = $("btnDispBlack");
 const btnDispQR = $("btnDispQR");
 const btnDispGRA = $("btnDispGRA");
@@ -114,21 +120,20 @@ const btnQReload = $("btnQReload");
 const buzzEvtLast = $("buzzEvtLast");
 const buzzLog = $("buzzLog");
 const btnBuzzLogClear = $("btnBuzzLogClear");
+/* ======================= /TEST_UI ======================= */
 
-/* ===== state ===== */
+/* ============================================================
+   state
+   ============================================================ */
 let game = null;
 
 const ONLINE_MS = 12_000;
 const LS_KEY = (kind) => `familiada:lastcmd:${gameId}:${kind}`;
 const lastCmd = { display: null, host: null, buzzer: null };
 
-// realtime channels (persistent)
-let chDisplay = null;
-let chHost = null;
-let chBuzzer = null;
-let ctlCh = null;
-
-/* ===== helpers ===== */
+/* ============================================================
+   helpers
+   ============================================================ */
 function setMsg(el, text) { if (el) el.textContent = text || ""; }
 
 function badge(el, status, text) {
@@ -193,14 +198,18 @@ function logBuzz(line) {
   buzzLog.textContent = `[${ts}] ${line}\n` + (buzzLog.textContent || "");
 }
 
-/* ===== auth ===== */
+/* ============================================================
+   auth
+   ============================================================ */
 async function ensureAuthOrRedirect() {
   const user = await requireAuth("/familiada/index.html");
   if (who) who.textContent = user?.email || user?.id || "—";
   return user;
 }
 
-/* ===== game load + validate ===== */
+/* ============================================================
+   game load + validate
+   ============================================================ */
 async function loadGameOrThrow() {
   if (!gameId) throw new Error("Brak ?id w URL.");
 
@@ -220,7 +229,9 @@ async function loadGameOrThrow() {
   return data;
 }
 
-/* ===== presence ===== */
+/* ============================================================
+   presence
+   ============================================================ */
 async function fetchPresenceSafe() {
   const { data, error } = await sb()
     .from("device_presence")
@@ -263,17 +274,14 @@ function applyPresenceUnavailable() {
   if (seenBuzzer) seenBuzzer.textContent = "brak tabeli";
 }
 
-/* ===== realtime send (persistent) ===== */
-function ensureChannels() {
-  if (!chDisplay) chDisplay = sb().channel(`familiada-display:${game.id}`).subscribe();
-  if (!chHost) chHost = sb().channel(`familiada-host:${game.id}`).subscribe();
-  if (!chBuzzer) chBuzzer = sb().channel(`familiada-buzzer:${game.id}`).subscribe();
-}
-
-function chFor(target) {
-  if (target === "display") return chDisplay;
-  if (target === "host") return chHost;
-  return chBuzzer;
+/* ============================================================
+   realtime send/listen przez rt()  (managed channels)
+   ============================================================ */
+function topicFor(target) {
+  if (target === "display") return `familiada-display:${game.id}`;
+  if (target === "host") return `familiada-host:${game.id}`;
+  if (target === "buzzer") return `familiada-buzzer:${game.id}`;
+  throw new Error("Zły target");
 }
 
 function eventName(target) {
@@ -287,16 +295,8 @@ async function sendCmd(target, line) {
   const l = String(line ?? "").trim();
   if (!l) return;
 
-  ensureChannels();
-
-  const ch = chFor(t);
-  const { error } = await ch.send({
-    type: "broadcast",
-    event: eventName(t),
-    payload: { line: l },
-  });
-
-  if (error) throw error;
+  const topic = topicFor(t);
+  await rt(topic).sendBroadcast(eventName(t), { line: l });
 
   lastCmd[t] = l;
   saveLastCmdToStorage(t, l);
@@ -304,24 +304,25 @@ async function sendCmd(target, line) {
   playSfx("ui_tick");
 }
 
-/* ===== control channel: BUZZER_EVT log ===== */
-function ensureControlChannel() {
-  if (ctlCh) return ctlCh;
-
-  ctlCh = sb()
-    .channel(`familiada-control:${game.id}`)
-    .on("broadcast", { event: "BUZZER_EVT" }, (msg) => {
-      const line = String(msg?.payload?.line ?? "").trim();
-      if (!line) return;
-      if (buzzEvtLast) buzzEvtLast.textContent = line;
-      logBuzz(`BUZZER_EVT: ${line}`);
-    })
-    .subscribe();
-
-  return ctlCh;
+/* ============================================================
+   control channel: BUZZER_EVT log (TEST_UI)
+   ============================================================ */
+function enableBuzzerEvtLog() {
+  // TEST_UI: log kliknięć z buzzera
+  const topic = `familiada-control:${game.id}`;
+  rt(topic).onBroadcast("BUZZER_EVT", (msg) => {
+    const line = String(msg?.payload?.line ?? "").trim();
+    if (!line) return;
+    if (buzzEvtLast) buzzEvtLast.textContent = line;
+    logBuzz(`BUZZER_EVT: ${line}`);
+  });
+  // kanał i tak odpali się przy pierwszym onBroadcast (ensureChannel())
+  rt(topic).whenReady().catch(() => {});
 }
 
-/* ===== links ===== */
+/* ============================================================
+   links
+   ============================================================ */
 function fillLinks() {
   const displayUrl = makeUrl("/familiada/display/index.html", game.id, game.share_key_display);
   const hostUrl = makeUrl("/familiada/host.html", game.id, game.share_key_host);
@@ -351,27 +352,31 @@ function fillLinks() {
   };
 }
 
-/* ===== resend ===== */
-if (btnResendDisplay) btnResendDisplay.onclick = async () => {
+/* ============================================================
+   resend (devices)
+   ============================================================ */
+btnResendDisplay && (btnResendDisplay.onclick = async () => {
   if (!lastCmd.display) return setMsg(msgCmd, "Brak last dla display.");
   await sendCmd("display", lastCmd.display);
   setMsg(msgCmd, `display <= ${lastCmd.display}`);
-};
+});
 
-if (btnResendHost) btnResendHost.onclick = async () => {
+btnResendHost && (btnResendHost.onclick = async () => {
   if (!lastCmd.host) return setMsg(msgCmd, "Brak last dla host.");
   await sendCmd("host", lastCmd.host);
   setMsg(msgCmd, `host <= ${lastCmd.host}`);
-};
+});
 
-if (btnResendBuzzer) btnResendBuzzer.onclick = async () => {
+btnResendBuzzer && (btnResendBuzzer.onclick = async () => {
   if (!lastCmd.buzzer) return setMsg(msgCmd, "Brak last dla buzzer.");
   await sendCmd("buzzer", lastCmd.buzzer);
   setMsg(msgCmd, `buzzer <= ${lastCmd.buzzer}`);
-};
+});
 
-/* ===== manual send ===== */
-if (btnManualSend) btnManualSend.onclick = async () => {
+/* ============================================================
+   TEST_UI: manual send
+   ============================================================ */
+btnManualSend && (btnManualSend.onclick = async () => {
   try {
     await sendCmd(manualTarget?.value, manualLine?.value);
     setMsg(msgCmd, `${manualTarget?.value} <= ${manualLine?.value}`);
@@ -379,49 +384,54 @@ if (btnManualSend) btnManualSend.onclick = async () => {
   } catch (err) {
     setMsg(msgCmd, `Błąd: ${err?.message || String(err)}`);
   }
-};
+});
 
-/* ===== audio unlock ===== */
+/* ============================================================
+   TEST_UI: audio unlock
+   ============================================================ */
 function refreshAudioStatus() {
   if (!audioStatus) return;
   const ok = !!isAudioUnlocked?.();
   audioStatus.textContent = ok ? "OK" : "ZABLOKOWANE";
   audioStatus.className = "badge " + (ok ? "ok" : "bad");
 }
-
 btnUnlockAudio?.addEventListener("click", () => {
   unlockAudio?.();
   playSfx("ui_tick");
   refreshAudioStatus();
 });
 
-/* ===== host: SET/CLEAR/ON/OFF ===== */
+/* ============================================================
+   TEST_UI: host commands
+   ============================================================ */
 function escapeForQuotedCommand(raw) {
   return String(raw ?? "")
     .replaceAll("\\", "\\\\")
     .replaceAll('"', '\\"')
     .replaceAll("\r\n", "\n");
 }
-
 btnHostSend?.addEventListener("click", async () => {
   const t = String(hostText?.value ?? "");
   const payload = escapeForQuotedCommand(t);
   await sendCmd("host", `SET "${payload}"`);
   setMsg(msgCmd, `host <= SET (${t.length} znaków)`);
 });
-
 btnHostOn?.addEventListener("click", async () => sendCmd("host", "ON"));
 btnHostOff?.addEventListener("click", async () => sendCmd("host", "OFF"));
 btnHostClear?.addEventListener("click", async () => sendCmd("host", "CLEAR"));
 
-/* ===== buzzer: state buttons ===== */
+/* ============================================================
+   TEST_UI: buzzer state buttons
+   ============================================================ */
 btnBuzzOff?.addEventListener("click", async () => sendCmd("buzzer", "OFF"));
 btnBuzzOn?.addEventListener("click", async () => sendCmd("buzzer", "ON"));
 btnBuzzReset?.addEventListener("click", async () => sendCmd("buzzer", "RESET"));
 btnBuzzPA?.addEventListener("click", async () => sendCmd("buzzer", "PUSHED A"));
 btnBuzzPB?.addEventListener("click", async () => sendCmd("buzzer", "PUSHED B"));
 
-/* ===== display: test pack ===== */
+/* ============================================================
+   TEST_UI: display test pack
+   ============================================================ */
 btnDispBlack?.addEventListener("click", async () => sendCmd("display", "MODE BLACK"));
 btnDispQR?.addEventListener("click", async () => sendCmd("display", "MODE QR"));
 btnDispGRA?.addEventListener("click", async () => sendCmd("display", "MODE GRA"));
@@ -432,20 +442,20 @@ btnDispFinal?.addEventListener("click", async () => sendCmd("display", "MODE FIN
 btnDispWin?.addEventListener("click", async () => sendCmd("display", "MODE WIN"));
 
 btnDispDemoRounds?.addEventListener("click", async () =>
-  sendCmd(
-    "display",
+  sendCmd("display",
     'RBATCH SUMA 120 R1 "PIERWSZA" 10 R2 "DRUGA" 25 R3 "TRZECIA" 05 R4 "" 00 R5 "PIATA" 30 R6 "SZOSTA" 15 ANIMOUT edge right 18 ANIMIN rain down 22'
   )
 );
 
 btnDispDemoFinal?.addEventListener("click", async () =>
-  sendCmd(
-    "display",
+  sendCmd("display",
     'FBATCH SUMA 999 F1 "ALFA" 12 34 "BETA" F2 "GAMMA" 01 99 "DELTA" ANIMOUT matrix right 20 ANIMIN rain down 22'
   )
 );
 
-/* ===== SFX: mixer + clock + arm ===== */
+/* ============================================================
+   TEST_UI: SFX mixer + clock + arm
+   ============================================================ */
 let mixer = null;
 let sfxTimer = null;
 let sfxT0 = 0;
@@ -454,10 +464,8 @@ let armed = null; // {sec:number, name:string, fired:boolean}
 function setClock() {
   if (!sfxClock) return;
   if (!sfxTimer) { sfxClock.textContent = "0.0s"; return; }
-
   const t = (performance.now() - sfxT0) / 1000;
   sfxClock.textContent = `${t.toFixed(1)}s`;
-
   if (armed && !armed.fired && t >= armed.sec) {
     armed.fired = true;
     mixer?.play?.(armed.name).catch?.(() => {});
@@ -493,10 +501,8 @@ function fillSfxList() {
 btnSfxPlay?.addEventListener("click", async () => {
   const name = sfxSelect?.value;
   if (!name) return;
-
   mixer ??= createSfxMixer();
   await mixer.play(name);
-
   if (!sfxTimer) {
     sfxT0 = performance.now();
     sfxTimer = setInterval(setClock, 100);
@@ -519,7 +525,9 @@ btnSfxAtClear?.addEventListener("click", () => {
   setMsg(msgCmd, "SFX armed: cleared");
 });
 
-/* ===== QUESTIONS: load + render ===== */
+/* ============================================================
+   TEST_UI: questions preview
+   ============================================================ */
 let questions = [];
 let answersByQ = new Map();
 let activeQid = null;
@@ -527,15 +535,13 @@ let activeQid = null;
 function renderQuestions() {
   if (!qList || !qPick) return;
 
-  qList.innerHTML = questions
-    .map((q) => {
-      const active = q.id === activeQid ? ` style="border-color: rgba(255,234,166,.35)"` : "";
-      return `<button class="aBtn" data-qid="${q.id}"${active}>
-        <div class="aTop"><span>#${q.ord}</span><span>${q.id.slice(0, 6)}…</span></div>
-        <div class="aText">${escapeHtml(q.text || "")}</div>
-      </button>`;
-    })
-    .join("");
+  qList.innerHTML = questions.map((q) => {
+    const active = q.id === activeQid ? ` style="border-color: rgba(255,234,166,.35)"` : "";
+    return `<button class="aBtn" data-qid="${q.id}"${active}>
+      <div class="aTop"><span>#${q.ord}</span><span>${q.id.slice(0, 6)}…</span></div>
+      <div class="aText">${escapeHtml(q.text || "")}</div>
+    </button>`;
+  }).join("");
 
   qPick.innerHTML = questions
     .map((q) => `<option value="${q.id}">#${q.ord} — ${escapeHtml(q.text || "")}</option>`)
@@ -547,18 +553,16 @@ function renderQuestions() {
 function renderAnswers() {
   if (!aList) return;
   const ans = answersByQ.get(activeQid) || [];
-  aList.innerHTML = ans
-    .map((a) => {
-      const pts = Number.isFinite(Number(a.fixed_points)) ? Number(a.fixed_points) : 0;
-      return `<div class="card" style="padding:12px;">
-        <div class="head">
-          <div class="name">${escapeHtml(a.text || "")}</div>
-          <div class="badge ok">${String(pts)}</div>
-        </div>
-        <div class="hint">ord: ${a.ord} • id: ${a.id}</div>
-      </div>`;
-    })
-    .join("");
+  aList.innerHTML = ans.map((a) => {
+    const pts = Number.isFinite(Number(a.fixed_points)) ? Number(a.fixed_points) : 0;
+    return `<div class="card" style="padding:12px;">
+      <div class="head">
+        <div class="name">${escapeHtml(a.text || "")}</div>
+        <div class="badge ok">${String(pts)}</div>
+      </div>
+      <div class="hint">ord: ${a.ord} • id: ${a.id}</div>
+    </div>`;
+  }).join("");
 }
 
 async function reloadQA() {
@@ -593,20 +597,58 @@ qPick?.addEventListener("change", () => {
 
 btnQReload?.addEventListener("click", () => reloadQA().catch((e) => setMsg(msgCmd, e?.message || String(e))));
 
-/* ===== buzzer log UI ===== */
+/* ============================================================
+   TEST_UI: buzzer log clear
+   ============================================================ */
 btnBuzzLogClear?.addEventListener("click", () => {
   if (buzzLog) buzzLog.textContent = "";
   if (buzzEvtLast) buzzEvtLast.textContent = "—";
 });
 
-/* ===== topbar ===== */
+/* ============================================================
+   topbar
+   ============================================================ */
 btnBack?.addEventListener("click", () => (location.href = "/familiada/builder.html"));
 btnLogout?.addEventListener("click", async () => {
   await signOut().catch(() => {});
   location.href = "/familiada/index.html";
 });
 
-/* ===== boot ===== */
+/* ============================================================
+   MINI-FSM szkic (na razie tylko struktura)
+   - tu później wejdzie Twoja pełna logika stanów
+   ============================================================ */
+const FSM = {
+  state: "TOOLS_SETUP",
+  ctx: {
+    teamA: "DRUŻYNA A",
+    teamB: "DRUŻYNA B",
+    scoreA: 0,
+    scoreB: 0,
+    roundNo: 1,
+  },
+};
+
+// helper do tripletów (3 cyfry)
+function fmt3(n) {
+  const x = Math.max(0, Number(n) || 0);
+  return String(Math.floor(x)).padStart(3, "0").slice(-3);
+}
+
+// “warstwa stała” – od GAME_READY do końca (na razie tylko helper)
+async function displaySmallBase() {
+  // UWAGA: to jest gotowe do użycia później, ale nie odpalam automatycznie,
+  // żeby teraz nie mieszać testów.
+  // await sendCmd("display", `LONG1 "${FSM.ctx.teamA}"`);
+  // await sendCmd("display", `LONG2 "${FSM.ctx.teamB}"`);
+  // await sendCmd("display", `LEFT ${fmt3(FSM.ctx.scoreA)}`);
+  // await sendCmd("display", `RIGHT ${fmt3(FSM.ctx.scoreB)}`);
+  // await sendCmd("display", `TOP ${fmt3(FSM.ctx.roundNo)}`);
+}
+
+/* ============================================================
+   boot
+   ============================================================ */
 async function main() {
   setMsg(msgDevices, "");
   setMsg(msgCmd, "");
@@ -621,13 +663,16 @@ async function main() {
   refreshLastCmdUI();
   fillLinks();
 
-  ensureChannels();        // trzy kanały na urządzenia
-  ensureControlChannel();  // log BUZZER_EVT
+  // Podbijamy gotowość kanałów (nie musisz, ale daje szybszą reakcję po wejściu)
+  rt(`familiada-display:${game.id}`).whenReady().catch(() => {});
+  rt(`familiada-host:${game.id}`).whenReady().catch(() => {});
+  rt(`familiada-buzzer:${game.id}`).whenReady().catch(() => {});
 
+  // TEST_UI
+  enableBuzzerEvtLog();
   fillSfxList();
   refreshAudioStatus();
   setClock();
-
   await reloadQA().catch(() => {});
 
   const tick = async () => {
