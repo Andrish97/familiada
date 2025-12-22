@@ -533,8 +533,8 @@ export async function createScene() {
     // === STROJENIE (JAŚNIEJ, SPOKOJNIEJ) ===
     const TUNE = {
       baseFill: "#2a2f36", // jaśniejszy grafit (korpus)
-      glassOff: 0.32,     // szkło OFF – czytelne
-      glassOn:  0.10,     // szkło ON – prawie znika
+      glassOff: 0.25,     // szkło OFF – czytelne
+      glassOn:  0.20,     // szkło ON – prawie znika
       glowOn: 0.75,       // glow spokojniejsze
       bodyOn: 0.95,       // światło wewnętrzne
     };
