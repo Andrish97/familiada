@@ -1,3 +1,4 @@
+import { sb } from "../../js/core/supabase.js";
 const tokenize = (raw) => {
   const tokens = [];
   let i = 0;
@@ -41,6 +42,41 @@ const isSceneBigMode = (m) => {
 
 export const createCommandHandler = (app) => {
   const { scene, qr } = app;
+  
+  const u = new URL(location.href);
+  const key = u.searchParams.get("key") || "";
+  
+  const debounce = (fn, ms) => {
+    let t = null;
+    return (...args) => {
+      clearTimeout(t);
+      t = setTimeout(() => fn(...args), ms);
+    };
+  };
+  
+  const saveSnapshot = debounce(async (lastCmd) => {
+    if (!app?.gameId || !key) return;
+    if (!app?.scene?.api?.snapshotAll) return;
+  
+    const patch = {
+      app_mode: app.mode, // BLACK_SCREEN/QR/GRA
+      scene: app.scene.api.mode.get?.() ?? null,
+      last_cmd: String(lastCmd ?? ""),
+      screen: app.scene.api.snapshotAll(),
+      ts: Date.now(),
+    };
+  
+    try {
+      await sb().rpc("device_state_set_public", {
+        p_game_id: app.gameId,
+        p_device_type: "display",
+        p_key: key,
+        p_patch: patch,
+      });
+    } catch (e) {
+      console.warn("[display] snapshot save failed", e);
+    }
+  }, 350);
 
   const ensureGameMode = () => {
     if (app.mode !== "GRA") app.setMode("GRA");
@@ -113,5 +149,7 @@ export const createCommandHandler = (app) => {
     // =========================================================
     ensureGameMode();
     return scene.handleCommand(raw);
+    
   };
+  saveSnapshot(line);
 };
