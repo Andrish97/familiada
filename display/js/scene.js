@@ -677,9 +677,9 @@ export async function createScene() {
         }
       
         if (mode === BIG_MODES.ROUNDS) {
-          writeField(GLYPHS, big, ROUNDS.sumaLabel, "SUMA", LIT.main);
+          relocateSumaIfNeeded();
         }
-      
+  
         if (mode === BIG_MODES.FINAL) {
           writeField(GLYPHS, big, FINAL.sumaLabel, "SUMA", LIT.main);
         }
@@ -854,14 +854,8 @@ export async function createScene() {
         // ustaw sumę i przelicz pozycję
         if (suma !== undefined) roundsState.suma = (suma ?? "").toString();
         else roundsState.suma = (roundsState.suma ?? "").toString();
+        relocateSumaIfNeeded();
         
-        roundsState.sumaRow = computeSumaRow();
-        const F = roundsSumaFields();
-        writeField(GLYPHS, big, F.label, "SUMA", LIT.main);
-        if (isNonEmpty(roundsState.suma)) writeField(GLYPHS, big, F.val, roundsState.suma, LIT.main);
-
-        if (suma !== undefined) writeField(GLYPHS, big, ROUNDS.sumaVal, suma, LIT.main);
-
         if (animIn) await api.big.animIn({ ...animIn, area: A_ALL });
       },
     },
