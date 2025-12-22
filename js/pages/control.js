@@ -721,8 +721,8 @@ btnHostSend?.addEventListener("click", async () => {
   await sendCmd("host", `SET "${payload}"`);
   setMsg(msgCmd, `host <= SET (${t.length} znaków)`);
 });
-btnHostOn?.addEventListener("click", async () => sendCmd("host", "ON"));
-btnHostOff?.addEventListener("click", async () => sendCmd("host", "OFF"));
+btnHostOpen?.addEventListener("click", async () => sendCmd("host", "OPEN"));
+btnHostHide?.addEventListener("click", async () => sendCmd("host", "HIDE"));
 btnHostClear?.addEventListener("click", async () => sendCmd("host", "CLEAR"));
 
 /* ============================================================
