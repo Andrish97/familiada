@@ -151,6 +151,18 @@ const btnQReload = $("btnQReload");
 const buzzEvtLast = $("buzzEvtLast");
 const buzzLog = $("buzzLog");
 const btnBuzzLogClear = $("btnBuzzLogClear");
+
+// ===== GAME: enter-actions =====
+const btnEnterToolsSetup = $("btnEnterToolsSetup");
+const btnEnterToolsLinks = $("btnEnterToolsLinks");
+const btnEnterTeamNames = $("btnEnterTeamNames");
+const btnEnterGameReady = $("btnEnterGameReady");
+
+const btnEnterGameIntro = $("btnEnterGameIntro");
+const btnEnterRoundReady = $("btnEnterRoundReady");
+const btnEnterRoundTransitionIn = $("btnEnterRoundTransitionIn");
+
+
 /* ======================= /TEST_UI ======================= */
 
 /* ============================================================
@@ -343,6 +355,136 @@ async function pushSmallLayerToDisplay() {
 }
 
 /* ============================================================
+   GAME STATE MACHINE (rozszerzenie: stany “poza” setup)
+   ============================================================ */
+const GAME_STATES = [
+  "TOOLS_SETUP",
+  "TOOLS_LINKS",
+  "TEAM_NAMES",
+  "GAME_READY",
+  "GAME_INTRO",
+  "ROUND_READY",
+  "ROUND_TRANSITION_IN",
+];
+
+function canEnterState(st) {
+  return GAME_STATES.includes(st);
+}
+
+async function enterState(st) {
+  if (!canEnterState(st)) throw new Error(`Nieznany stan: ${st}`);
+
+  FSM.state = st;
+  fsmSave();
+  renderFSM();
+  setGameMsg("");
+
+  // UWAGA: display jest “uniwersalny” — ustawiamy mu jawnie tryby
+  // i warstwy (APP/scene/small).
+  if (st === "TOOLS_SETUP") {
+    // 🖥️ czarny ekran, 🔘 OFF, 📱 OFF (host nieaktywny)
+    await sendDisplay("MODE BLACK_SCREEN");
+    await sendBuzzer("OFF");
+    await sendHost("OFF");
+    setGameMsg("TOOLS_SETUP: display BLACK, buzzer OFF, host OFF");
+    return;
+  }
+
+  if (st === "TOOLS_LINKS") {
+    // 🖥️ QR + ustaw linki
+    const hostUrl = hostLink?.value || "";
+    const buzUrl = buzzerLink?.value || "";
+    if (!hostUrl || !buzUrl) throw new Error("Brak linków HOST/BUZZER (wejdź w Urządzenia).");
+
+    await sendDisplay("MODE QR");
+    await sendDisplay(`QR HOST "${hostUrl}" BUZZER "${buzUrl}"`);
+    await sendBuzzer("OFF");
+    await sendHost("OFF");
+    setGameMsg("TOOLS_LINKS: display QR (HOST+BUZZER), buzzer OFF, host OFF");
+    return;
+  }
+
+  if (st === "TEAM_NAMES") {
+    // 🖥️ czarny, 🔘 OFF
+    await sendDisplay("MODE BLACK_SCREEN");
+    await sendBuzzer("OFF");
+    setGameMsg("TEAM_NAMES: display BLACK, buzzer OFF. Ustaw nazwy i przejdź dalej.");
+    return;
+  }
+
+  if (st === "GAME_READY") {
+    // 🖥️ tryb GRA, pusto (logo dopiero w intro wg Ciebie)
+    await sendDisplay("MODE GRA");
+    await sendBuzzer("OFF");
+
+    // od GAME_READY utrzymujemy small layer (nazwy + triplet)
+    await pushSmallLayerToDisplay().catch(() => {});
+    setGameMsg("GAME_READY: display GRA (bez LOGO), buzzer OFF, small layer wysłany.");
+    return;
+  }
+
+  if (st === "GAME_INTRO") {
+    // 🔊 show_intro ×2, a w 14 sekundzie pierwszego: LOGO SHOW (rain poziomo)
+    // Tu robimy “sterowanie display”, audio zostawiamy jako osobny krok (żeby nie robić zgadywanek o duration).
+    // Docelowo: dołożymy timeline audio na mixerze gdy dopniemy API duration/time.
+    await sendDisplay("MODE GRA");
+    // LOGO: zakładam, że display ma asset logo_familiada.json dostępny względnie do display/
+    await sendDisplay('LOGO LOAD "./logo_familiada.json"');
+    // “w 14s” dopniemy za chwilę; na razie: ręcznie pokazujemy logo wejściem jak w spec
+    await sendDisplay("LOGO SHOW ANIMIN rain right 22");
+    setGameMsg("GAME_INTRO: MODE GRA + LOGO SHOW (rain right). Audio timeline dopniemy w kolejnym kroku.");
+    return;
+  }
+
+  if (st === "ROUND_READY") {
+    // 🖥️ logo świeci, 🔘 OFF
+    // Nie wymuszam LOGO SHOW jeśli już jest — ale jak chcesz twardo, to odpalamy show bez animacji:
+    await sendDisplay("MODE GRA");
+    await sendDisplay("MODE LOGO");
+    await sendBuzzer("OFF");
+    await pushSmallLayerToDisplay().catch(() => {});
+    setGameMsg("ROUND_READY: MODE GRA + MODE LOGO, buzzer OFF.");
+    return;
+  }
+
+  if (st === "ROUND_TRANSITION_IN") {
+    // 🖥️ LOGO HIDE + wejście tablicy (ROUNDS) + przygotowane “kropki”
+    // 🔘 ON
+    // 🔊 round_transition + miks ui_tick pod koniec (audio dopniemy potem — tu tylko komendy)
+    await sendDisplay("MODE GRA");
+    await sendDisplay("LOGO HIDE ANIMOUT rain right 22");
+
+    // tu robimy “wjechanie tablicy” – na razie: ustawiamy ROUNDS i ładujemy puste wiersze
+    await sendDisplay("MODE ROUNDS");
+
+    // przygotuj 6 wierszy: 17 × “…” i pts “— —” (u Ciebie to font i znak “—”, więc wysyłamy “—”)
+    // PUNKTY w ROUNDS to 2 znaki: daję "——" (dwa razy emdash), SUMA "000"
+    const dots = "…".repeat(17);
+    await sendDisplay(
+      `RBATCH SUMA 000 ` +
+      `R1 "${dots}" —— ` +
+      `R2 "${dots}" —— ` +
+      `R3 "${dots}" —— ` +
+      `R4 "${dots}" —— ` +
+      `R5 "${dots}" —— ` +
+      `R6 "${dots}" —— ` +
+      `ANIMOUT rain down 18 ANIMIN edge top 18`
+    , { uiTick: true }); // <-- tu ma prawo ui_tick polecieć wg Twojej reguły
+
+    // boczne/górny triplet: 000 / 000 / 000
+    FSM.ctx.roundNo = clampInt(FSM.ctx.roundNo, 1, 999);
+    FSM.ctx.scoreA = clampInt(FSM.ctx.scoreA, 0, 999);
+    FSM.ctx.scoreB = clampInt(FSM.ctx.scoreB, 0, 999);
+    fsmSave();
+    await pushSmallLayerToDisplay().catch(() => {});
+
+    await sendBuzzer("ON");
+    setGameMsg("ROUND_TRANSITION_IN: tablica ROUNDS wjechała, buzzer ON, ui_tick dozwolony.");
+    return;
+  }
+}
+
+/* ============================================================
    auth
    ============================================================ */
 async function ensureAuthOrRedirect() {
@@ -445,6 +587,26 @@ async function sendCmd(target, line) {
   lastCmd[t] = l;
   saveLastCmdToStorage(t, l);
   refreshLastCmdUI();
+}
+
+function isBatchCmd(line) {
+  const s = String(line || "").trim().toUpperCase();
+  return s.startsWith("RBATCH ") || s.startsWith("FBATCH ");
+}
+
+// tu masz centralną politykę dźwięków UI w Control
+async function sendDisplay(line, { uiTick = false } = {}) {
+  // ui_tick tylko kiedy RBATCH/FBATCH (pokaz/ukryj tablicę rund/finału)
+  const tick = uiTick || isBatchCmd(line);
+  return sendCmd("display", line, { uiTick: tick });
+}
+
+async function sendBuzzer(line, { uiTick = false } = {}) {
+  return sendCmd("buzzer", line, { uiTick });
+}
+
+async function sendHost(line, { uiTick = false } = {}) {
+  return sendCmd("host", line, { uiTick });
 }
 
 /* ============================================================
@@ -826,6 +988,14 @@ btnShowQR?.addEventListener("click", async () => {
 btnBlack?.addEventListener("click", () => sendCmd("display", "MODE BLACK", { uiTick:false }).catch(()=>{}));
 btnGra?.addEventListener("click", () => sendCmd("display", "MODE GRA", { uiTick:false }).catch(()=>{}));
 
+btnEnterToolsSetup?.addEventListener("click", () => enterState("TOOLS_SETUP").catch(e => setGameMsg(e?.message || String(e))));
+btnEnterToolsLinks?.addEventListener("click", () => enterState("TOOLS_LINKS").catch(e => setGameMsg(e?.message || String(e))));
+btnEnterTeamNames?.addEventListener("click", () => enterState("TEAM_NAMES").catch(e => setGameMsg(e?.message || String(e))));
+btnEnterGameReady?.addEventListener("click", () => enterState("GAME_READY").catch(e => setGameMsg(e?.message || String(e))));
+
+btnEnterGameIntro?.addEventListener("click", () => enterState("GAME_INTRO").catch(e => setGameMsg(e?.message || String(e))));
+btnEnterRoundReady?.addEventListener("click", () => enterState("ROUND_READY").catch(e => setGameMsg(e?.message || String(e))));
+btnEnterRoundTransitionIn?.addEventListener("click", () => enterState("ROUND_TRANSITION_IN").catch(e => setGameMsg(e?.message || String(e))));
 
 /* ============================================================
    boot
@@ -839,6 +1009,11 @@ async function main() {
    // FSM persist
   fsmLoad();
   renderFSM();
+   
+   // po refresh: NIE wysyłamy automatycznie enter-actions (żeby nie robić “niespodzianek” na żywo),
+  // ale stan w UI wraca.
+  // Jeśli chcesz, żeby enter-actions też się odpalały automatycznie po refresh:
+  // await enterState(FSM.state);
 
   if (gameLabel) gameLabel.textContent = `Control — ${game.name}`;
   if (gameMeta) gameMeta.textContent = `${game.type} / ${game.status} / ${game.id}`;
