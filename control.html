@@ -13,10 +13,7 @@
   <script type="module" src="/familiada/js/pages/control.js" defer></script>
 
   <style>
-    /* ============================================================
-       TEST_UI: dodatki pod testowe elementy (do łatwego wywalenia)
-       Szukaj: TEST_UI
-       ============================================================ */
+    /* dodatki pod nowe elementy */
     .ta { width: 100%; resize: vertical; min-height: 120px; }
     .cmdGrid .card .name { margin-bottom: 8px; }
 
@@ -55,7 +52,15 @@
       white-space: pre-wrap;
       line-height: 1.35;
     }
-    /* ======================= /TEST_UI ======================= */
+
+    /* GRA: prosta kratka */
+    .gameGrid{
+      display:grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap:14px;
+      margin-top:14px;
+    }
+    @media (max-width: 1100px){ .gameGrid{ grid-template-columns: 1fr; } }
   </style>
 </head>
 
@@ -77,8 +82,8 @@
       </div>
 
       <div class="tabs">
-        <button class="tab active" data-tab="game" type="button">Gra</button>
-        <button class="tab" data-tab="devices" type="button">Urządzenia</button>
+        <button class="tab active" data-tab="devices" type="button">Urządzenia</button>
+        <button class="tab" data-tab="game" type="button">Gra</button>
         <button class="tab" data-tab="cmd" type="button">Komendy / testy</button>
       </div>
     </div>
@@ -154,15 +159,63 @@
       <div class="foot"><div class="msg" id="msgDevices"></div></div>
     </section>
 
+    <!-- ===== GAME ===== -->
+    <section class="panel" data-panel="game" style="display:none;">
+      <div class="hint">
+        Sterowanie “prawdziwymi” stanami wyświetlacza (wstępnie). Wszystko tu jest po stronie Control: wysyła komendy na DISPLAY.
+      </div>
+
+      <div class="gameGrid">
+        <div class="card">
+          <div class="name">GAME_READY</div>
+          <div class="hint">
+            MODE GRA, big pusty, tylko nazwy drużyn na longach. Triplet pusty (żadnych zer).
+          </div>
+          <div class="rowBtns">
+            <input class="inp" id="teamA" placeholder="Drużyna A" style="max-width:260px;"/>
+            <input class="inp" id="teamB" placeholder="Drużyna B" style="max-width:260px;"/>
+          </div>
+          <div class="rowBtns">
+            <button class="btn gold" id="btnGameReady" type="button">Ustaw GAME_READY</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="name">GAME_INTRO: logo</div>
+          <div class="hint">
+            Logo wjeżdża: <code>LOGO ANIMIN rain right 80</code>
+          </div>
+          <div class="rowBtns">
+            <button class="btn gold" id="btnIntroLogo" type="button">Pokaż logo</button>
+            <button class="btn" id="btnHideBoard" type="button">HIDE (rain left 80)</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="name">ROUND_TRANSITION_IN</div>
+          <div class="hint">
+            Logo znika (HIDE rain left 80), potem wjeżdża runda (edge top) z placeholderami i SUMA=00. Triplet: 000/000/000.
+          </div>
+          <div class="rowBtns">
+            <input class="inp" id="roundAnsCnt" placeholder="ile odpowiedzi (1..6)" inputmode="numeric" style="max-width:210px;"/>
+            <button class="btn gold" id="btnRoundIn" type="button">Wejście rundy</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="foot"><div class="msg" id="msgGame"></div></div>
+    </section>
+
     <!-- ===== COMMANDS / TESTS ===== -->
     <section class="panel" data-panel="cmd" style="display:none;">
       <div class="hint">
-        (TEST_UI) Testy realtime: komendy, host tekst, buzzer stany, display testpack, SFX, pytania/odpowiedzi.
+        Twoje testy ręczne + SFX + log buzzera. (Testpacki oznaczone TEST ONLY).
       </div>
 
       <div class="card">
-        <div class="name">(TEST_UI) Audio</div>
+        <div class="name">Audio</div>
         <div class="hint">Wymagane przez przeglądarki. Kliknij raz, aby odblokować dźwięk.</div>
+
         <div class="rowBtns">
           <button class="btn gold" id="btnUnlockAudio" type="button">🔊 Odblokuj audio</button>
           <div class="badge" id="audioStatus">ZABLOKOWANE</div>
@@ -172,7 +225,7 @@
       <div class="cmdGrid">
         <!-- manual send -->
         <div class="card">
-          <div class="name">(TEST_UI) Ręczna komenda</div>
+          <div class="name">Ręczna komenda</div>
           <div class="rowBtns">
             <select class="inp sel" id="manualTarget">
               <option value="display">display</option>
@@ -185,13 +238,13 @@
           </div>
 
           <div class="mini">
-            <div>Kanały idą przez <code>rt()</code> (managed channel). Brak “subscribe spam”.</div>
+            <div>Kanały są trzymane stale (bez zamykania websocketów).</div>
           </div>
         </div>
 
         <!-- host text -->
         <div class="card">
-          <div class="name">(TEST_UI) HOST — tekst z Control</div>
+          <div class="name">HOST — tekst z Control</div>
           <div class="hint">Wyślij robi <code>SET "..."</code>. Nowe linie przechodzą (host.js musi je odtworzyć).</div>
 
           <textarea class="inp ta" id="hostText" rows="6" placeholder="Wpisz tekst dla prowadzącego (może mieć nowe linie)"></textarea>
@@ -202,14 +255,14 @@
           </div>
 
           <div class="rowBtns">
-            <button class="btn" id="btnHostOpen" type="button">Open</button>
-            <button class="btn" id="btnHostHide" type="button">Hide</button>
+            <button class="btn" id="btnHostOn" type="button">ON</button>
+            <button class="btn" id="btnHostOff" type="button">OFF</button>
           </div>
         </div>
 
         <!-- buzzer states -->
         <div class="card">
-          <div class="name">(TEST_UI) BUZZER — stany</div>
+          <div class="name">BUZZER — stany</div>
           <div class="hint">RESET: komenda do logiki (buzzer.js powinien ją obsłużyć).</div>
 
           <div class="rowBtns">
@@ -226,7 +279,7 @@
 
         <!-- log -->
         <div class="card" style="grid-column:1/-1;">
-          <div class="name">(TEST_UI) Log: BUZZER_EVT (kliknięcia)</div>
+          <div class="name">Log: BUZZER_EVT (kliknięcia)</div>
           <div class="hint">Kanał: <code>familiada-control:&lt;gameId&gt;</code>, event: <code>BUZZER_EVT</code></div>
 
           <div class="mini">
@@ -242,8 +295,8 @@
 
         <!-- display test pack -->
         <div class="card">
-          <div class="name">(TEST_UI) DISPLAY — testpack</div>
-          <div class="hint">Komendy wg Guide API (MODE, RBATCH, FBATCH).</div>
+          <div class="name">DISPLAY — testpack (TEST ONLY)</div>
+          <div class="hint">To zostawiamy tymczasowo. Docelowo usuniemy po spięciu stanów gry.</div>
 
           <div class="rowBtns">
             <button class="btn" id="btnDispBlack" type="button">MODE BLACK</button>
@@ -266,7 +319,7 @@
 
         <!-- sfx -->
         <div class="card">
-          <div class="name">(TEST_UI) SFX tester</div>
+          <div class="name">SFX tester</div>
           <div class="hint">Lista z <code>listSfx()</code>. PLAY miksuje. Możesz uzbroić dźwięk “na sekundzie”.</div>
 
           <div class="rowBtns">
@@ -289,8 +342,10 @@
 
         <!-- questions -->
         <div class="card" style="grid-column:1/-1;">
-          <div class="name">(TEST_UI) Pytania / odpowiedzi (podgląd)</div>
-          <div class="hint">Czyta z <code>questions</code> i <code>answers</code>.</div>
+          <div class="name">Pytania / odpowiedzi (podgląd)</div>
+          <div class="hint">
+            Czyta z <code>questions(id,ord,text)</code> i <code>answers(question_id,ord,text,fixed_points)</code>.
+          </div>
 
           <div class="rowBtns">
             <select class="inp" id="qPick" style="max-width:720px;"></select>
@@ -310,41 +365,8 @@
           </div>
         </div>
       </div>
+
       <div class="foot"><div class="msg" id="msgCmd"></div></div>
-    </section>
-    <!-- ===== GAME (FSM) ===== -->
-    <section class="panel" data-panel="game" style="display:none;">
-      <div class="hint">
-        Logika gry (FSM): wejścia do stanów wysyłają paczki komend na DISPLAY / HOST / BUZZER.
-        <span style="opacity:.85">Testy zostają w „Komendy / testy”.</span>
-      </div>
-    
-      <!-- (TEST_UI) Na razie przyciski do ręcznego wchodzenia w stany -->
-      <div class="card">
-        <div class="name">Sekwencje (ENTER state)</div>
-        <div class="hint">
-          To są <b>enter-actions</b> dla stanów. Docelowo zrobimy tu normalny flow z przyciskami kontekstowymi.
-        </div>
-    
-        <div class="rowBtns">
-          <button class="btn gold" id="btnEnterToolsSetup" type="button">ENTER: TOOLS_SETUP</button>
-          <button class="btn" id="btnEnterToolsLinks" type="button">ENTER: TOOLS_LINKS</button>
-          <button class="btn" id="btnEnterTeamNames" type="button">ENTER: TEAM_NAMES</button>
-          <button class="btn" id="btnEnterGameReady" type="button">ENTER: GAME_READY</button>
-        </div>
-    
-        <div class="rowBtns">
-          <button class="btn gold" id="btnEnterGameIntro" type="button">ENTER: GAME_INTRO</button>
-          <button class="btn" id="btnEnterRoundReady" type="button">ENTER: ROUND_READY</button>
-          <button class="btn" id="btnEnterRoundTransitionIn" type="button">ENTER: ROUND_TRANSITION_IN</button>
-        </div>
-    
-        <div class="mini">
-          <div>Uwaga: display jest uniwersalny → trzeba mu jawnie mówić co ma pokazać (APP/scene/small).</div>
-        </div>
-      </div>
-    
-      <div class="foot"><div class="msg" id="msgGame"></div></div>
     </section>
   </main>
 </body>
