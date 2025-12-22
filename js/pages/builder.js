@@ -446,7 +446,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         alert(chk.reason);
         return;
       }
-      location.href = `control.html?id=${encodeURIComponent(selectedId)}`;
+      location.href = `control/control.html?id=${encodeURIComponent(selectedId)}`;
     } catch (e) {
       console.error(e);
       alert("Nie udało się sprawdzić gry (błąd bazy).");
