@@ -1,6 +1,5 @@
 // js/pages/control.js
 import { sb } from "../core/supabase.js";
-import { rt } from "../core/realtime.js";
 import { playSfx, createSfxMixer, listSfx, unlockAudio, isAudioUnlocked } from "../core/sfx.js";
 import { requireAuth, signOut } from "../core/auth.js";
 import { validateGameReadyToPlay, loadGameBasic, loadQuestions, loadAnswers } from "../core/game-validate.js";
@@ -9,9 +8,7 @@ const $ = (id) => document.getElementById(id);
 const qs = new URLSearchParams(location.search);
 const gameId = qs.get("id");
 
-/* ============================================================
-   DOM
-   ============================================================ */
+/* ===== DOM ===== */
 const who = $("who");
 const btnBack = $("btnBack");
 const btnLogout = $("btnLogout");
@@ -21,8 +18,9 @@ const gameMeta = $("gameMeta");
 
 const msgDevices = $("msgDevices");
 const msgCmd = $("msgCmd");
+const msgGame = $("msgGame");
 
-// devices
+// device cards
 const displayLink = $("displayLink");
 const hostLink = $("hostLink");
 const buzzerLink = $("buzzerLink");
@@ -51,37 +49,6 @@ const btnResendDisplay = $("btnResendDisplay");
 const btnResendHost = $("btnResendHost");
 const btnResendBuzzer = $("btnResendBuzzer");
 
-// ===== GAME (FSM) =====
-const msgGame = $("msgGame");
-const fsmStateEl = $("fsmState");
-const fsmRoundEl = $("fsmRound");
-const fsmScoreAEl = $("fsmScoreA");
-const fsmScoreBEl = $("fsmScoreB");
-
-const btnStatePrev = $("btnStatePrev");
-const btnStateNext = $("btnStateNext");
-const btnStateReset = $("btnStateReset");
-
-const teamAInp = $("teamA");
-const teamBInp = $("teamB");
-const btnTeamsApply = $("btnTeamsApply");
-const btnPushSmall = $("btnPushSmall");
-
-const btnAPlus = $("btnAPlus");
-const btnAMinus = $("btnAMinus");
-const btnBPlus = $("btnBPlus");
-const btnBMinus = $("btnBMinus");
-const scoreASet = $("scoreASet");
-const scoreBSet = $("scoreBSet");
-const btnScoreSet = $("btnScoreSet");
-
-const roundSet = $("roundSet");
-const btnRoundSet = $("btnRoundSet");
-
-const btnShowQR = $("btnShowQR");
-const btnBlack = $("btnBlack");
-const btnGra = $("btnGra");
-
 // tabs
 document.querySelectorAll(".tab").forEach((b) => {
   b.addEventListener("click", () => {
@@ -94,10 +61,7 @@ document.querySelectorAll(".tab").forEach((b) => {
   });
 });
 
-/* ============================================================
-   TEST_UI: elementy testowe (do łatwego usunięcia)
-   Szukaj: TEST_UI
-   ============================================================ */
+// manual
 const manualTarget = $("manualTarget");
 const manualLine = $("manualLine");
 const btnManualSend = $("btnManualSend");
@@ -109,18 +73,18 @@ const audioStatus = $("audioStatus");
 // host text
 const hostText = $("hostText");
 const btnHostSend = $("btnHostSend");
-const btnHostOpen = $("btnHostOpen");
-const btnHostHide = $("btnHostHide");
+const btnHostOn = $("btnHostOn");
+const btnHostOff = $("btnHostOff");
 const btnHostClear = $("btnHostClear");
 
-// buzzer states
+// buzzer state buttons
 const btnBuzzOff = $("btnBuzzOff");
 const btnBuzzOn = $("btnBuzzOn");
 const btnBuzzReset = $("btnBuzzReset");
 const btnBuzzPA = $("btnBuzzPA");
 const btnBuzzPB = $("btnBuzzPB");
 
-// display testpack
+// display test buttons (TEST ONLY)
 const btnDispBlack = $("btnDispBlack");
 const btnDispQR = $("btnDispQR");
 const btnDispGRA = $("btnDispGRA");
@@ -152,31 +116,29 @@ const buzzEvtLast = $("buzzEvtLast");
 const buzzLog = $("buzzLog");
 const btnBuzzLogClear = $("btnBuzzLogClear");
 
-// ===== GAME: enter-actions =====
-const btnEnterToolsSetup = $("btnEnterToolsSetup");
-const btnEnterToolsLinks = $("btnEnterToolsLinks");
-const btnEnterTeamNames = $("btnEnterTeamNames");
-const btnEnterGameReady = $("btnEnterGameReady");
+// GRA panel
+const teamA = $("teamA");
+const teamB = $("teamB");
+const btnGameReady = $("btnGameReady");
+const btnIntroLogo = $("btnIntroLogo");
+const btnHideBoard = $("btnHideBoard");
+const roundAnsCnt = $("roundAnsCnt");
+const btnRoundIn = $("btnRoundIn");
 
-const btnEnterGameIntro = $("btnEnterGameIntro");
-const btnEnterRoundReady = $("btnEnterRoundReady");
-const btnEnterRoundTransitionIn = $("btnEnterRoundTransitionIn");
-
-
-/* ======================= /TEST_UI ======================= */
-
-/* ============================================================
-   state
-   ============================================================ */
+/* ===== state ===== */
 let game = null;
 
 const ONLINE_MS = 12_000;
 const LS_KEY = (kind) => `familiada:lastcmd:${gameId}:${kind}`;
 const lastCmd = { display: null, host: null, buzzer: null };
 
-/* ============================================================
-   helpers
-   ============================================================ */
+// realtime channels (persistent)
+let chDisplay = null;
+let chHost = null;
+let chBuzzer = null;
+let ctlCh = null;
+
+/* ===== helpers ===== */
 function setMsg(el, text) { if (el) el.textContent = text || ""; }
 
 function badge(el, status, text) {
@@ -241,261 +203,57 @@ function logBuzz(line) {
   buzzLog.textContent = `[${ts}] ${line}\n` + (buzzLog.textContent || "");
 }
 
-/* ============================================================
-   GAME FSM (persist + triplet logic)
-   ============================================================ */
-const FSM_ORDER = ["TOOLS_SETUP", "TOOLS_LINKS", "TEAM_NAMES", "GAME_READY"];
-const LS_FSM = `familiada:fsm:${gameId}`;
-
-function fmt3(n) {
-  const x = Math.max(0, Number(n) || 0);
-  return String(Math.floor(x)).padStart(3, "0").slice(-3);
+/* ===== FORMATY: PUNKTY vs SEKUNDY ===== */
+function nInt(v, def = 0) {
+  const x = Number.parseInt(String(v ?? ""), 10);
+  return Number.isFinite(x) ? x : def;
 }
 
-function clampInt(v, min, max) {
-  const n = Number(v);
-  if (!Number.isFinite(n)) return min;
-  return Math.min(max, Math.max(min, Math.trunc(n)));
+// Triplet: PUNKTY -> zawsze 3 cyfry z zerami
+function fmtTripletPoints(val) {
+  const x = Math.max(0, nInt(val, 0));
+  return String(x).slice(0, 3).padStart(3, "0"); // 5 => "005"
 }
 
-const FSM = {
-  state: "TOOLS_SETUP",
-  ctx: {
-    teamA: "DRUŻYNA A",
-    teamB: "DRUŻYNA B",
-    scoreA: 0,
-    scoreB: 0,
-    roundNo: 1,
-  },
+// Triplet: SEKUNDY -> bez zer z przodu
+function fmtTripletSeconds(val) {
+  const x = Math.max(0, nInt(val, 0));
+  return String(x); // 15 => "15", 9 => "9", 0 => "0"
+}
+
+// BIG: punkty bez zer z przodu
+function fmtBigPoints(val) {
+  const x = Math.max(0, nInt(val, 0));
+  return String(x); // 05 nie robimy nigdy
+}
+
+// ROUNDS suma: start = "00", dalej bez zer
+function fmtRoundsSuma(val, { isStart = false } = {}) {
+  const x = Math.max(0, nInt(val, 0));
+  if (isStart) return "00";
+  return String(x);
+}
+
+function repeatChar(ch, n) {
+  let out = "";
+  for (let i = 0; i < n; i++) out += ch;
+  return out;
+}
+
+const PLACE = {
+  roundsText: repeatChar("…", 17),
+  roundsPts: "——",      // U+2014 x2
+  roundsSumaStart: "00",
 };
 
-function fsmSave() {
-  try { localStorage.setItem(LS_FSM, JSON.stringify({ state: FSM.state, ctx: FSM.ctx })); } catch {}
-}
-
-function fsmLoad() {
-  try {
-    const raw = localStorage.getItem(LS_FSM);
-    if (!raw) return;
-    const obj = JSON.parse(raw);
-    if (obj?.state) FSM.state = obj.state;
-    if (obj?.ctx) FSM.ctx = { ...FSM.ctx, ...obj.ctx };
-  } catch {}
-}
-
-function fsmSetState(st) {
-  FSM.state = st;
-  fsmSave();
-  renderFSM();
-}
-
-function fsmNext() {
-  const i = Math.max(0, FSM_ORDER.indexOf(FSM.state));
-  const nx = FSM_ORDER[Math.min(FSM_ORDER.length - 1, i + 1)];
-  fsmSetState(nx);
-}
-
-function fsmPrev() {
-  const i = Math.max(0, FSM_ORDER.indexOf(FSM.state));
-  const pv = FSM_ORDER[Math.max(0, i - 1)];
-  fsmSetState(pv);
-}
-
-function fsmReset() {
-  FSM.state = "TOOLS_SETUP";
-  FSM.ctx = { teamA: "DRUŻYNA A", teamB: "DRUŻYNA B", scoreA: 0, scoreB: 0, roundNo: 1 };
-  fsmSave();
-  renderFSM();
-}
-
-function renderFSM() {
-  if (fsmStateEl) {
-    fsmStateEl.textContent = FSM.state;
-    fsmStateEl.classList.remove("ok","bad","mid");
-    fsmStateEl.classList.add("mid");
-  }
-  if (fsmRoundEl) fsmRoundEl.textContent = String(FSM.ctx.roundNo ?? "—");
-  if (fsmScoreAEl) fsmScoreAEl.textContent = String(FSM.ctx.scoreA ?? "—");
-  if (fsmScoreBEl) fsmScoreBEl.textContent = String(FSM.ctx.scoreB ?? "—");
-
-  if (teamAInp && !teamAInp.value) teamAInp.value = FSM.ctx.teamA || "";
-  if (teamBInp && !teamBInp.value) teamBInp.value = FSM.ctx.teamB || "";
-}
-
-function setGameMsg(t) { if (msgGame) msgGame.textContent = t || ""; }
-
-/**
- * Triplet proposal (prosto i czytelnie):
- * - LEFT  = score A (000..999)
- * - RIGHT = score B (000..999)
- * - TOP   = roundNo (001..999)  (albo timer później)
- * - LONG1 = teamA (max 15 wg guide; ucinamy)
- * - LONG2 = teamB (max 15 wg guide; ucinamy)
- */
-async function pushSmallLayerToDisplay() {
-  // warunek: od GAME_READY wzwyż (na razie: dokładnie GAME_READY)
-  const should = (FSM.state === "GAME_READY");
-  if (!should) {
-    setGameMsg("Small layer wysyłamy od GAME_READY (na razie).");
-    return;
-  }
-
-  const a = String(FSM.ctx.teamA || "").slice(0, 15);
-  const b = String(FSM.ctx.teamB || "").slice(0, 15);
-
-  await sendCmd("display", `MODE GRA`, { uiTick:false });
-  await sendCmd("display", `LONG1 "${a}"`, { uiTick:false });
-  await sendCmd("display", `LONG2 "${b}"`, { uiTick:false });
-
-  await sendCmd("display", `LEFT ${fmt3(FSM.ctx.scoreA)}`, { uiTick:false });
-  await sendCmd("display", `RIGHT ${fmt3(FSM.ctx.scoreB)}`, { uiTick:false });
-  await sendCmd("display", `TOP ${fmt3(FSM.ctx.roundNo)}`, { uiTick:false });
-
-  setGameMsg("Wysłano small layer: LONG1/LONG2 + triplet (TOP/LEFT/RIGHT).");
-}
-
-/* ============================================================
-   GAME STATE MACHINE (rozszerzenie: stany “poza” setup)
-   ============================================================ */
-const GAME_STATES = [
-  "TOOLS_SETUP",
-  "TOOLS_LINKS",
-  "TEAM_NAMES",
-  "GAME_READY",
-  "GAME_INTRO",
-  "ROUND_READY",
-  "ROUND_TRANSITION_IN",
-];
-
-function canEnterState(st) {
-  return GAME_STATES.includes(st);
-}
-
-async function enterState(st) {
-  if (!canEnterState(st)) throw new Error(`Nieznany stan: ${st}`);
-
-  FSM.state = st;
-  fsmSave();
-  renderFSM();
-  setGameMsg("");
-
-  // UWAGA: display jest “uniwersalny” — ustawiamy mu jawnie tryby
-  // i warstwy (APP/scene/small).
-  if (st === "TOOLS_SETUP") {
-    // 🖥️ czarny ekran, 🔘 OFF, 📱 OFF (host nieaktywny)
-    await sendDisplay("MODE BLACK_SCREEN");
-    await sendBuzzer("OFF");
-    await sendHost("OFF");
-    setGameMsg("TOOLS_SETUP: display BLACK, buzzer OFF, host OFF");
-    return;
-  }
-
-  if (st === "TOOLS_LINKS") {
-    // 🖥️ QR + ustaw linki
-    const hostUrl = hostLink?.value || "";
-    const buzUrl = buzzerLink?.value || "";
-    if (!hostUrl || !buzUrl) throw new Error("Brak linków HOST/BUZZER (wejdź w Urządzenia).");
-
-    await sendDisplay("MODE QR");
-    await sendDisplay(`QR HOST "${hostUrl}" BUZZER "${buzUrl}"`);
-    await sendBuzzer("OFF");
-    await sendHost("OFF");
-    setGameMsg("TOOLS_LINKS: display QR (HOST+BUZZER), buzzer OFF, host OFF");
-    return;
-  }
-
-  if (st === "TEAM_NAMES") {
-    // 🖥️ czarny, 🔘 OFF
-    await sendDisplay("MODE BLACK_SCREEN");
-    await sendBuzzer("OFF");
-    setGameMsg("TEAM_NAMES: display BLACK, buzzer OFF. Ustaw nazwy i przejdź dalej.");
-    return;
-  }
-
-  if (st === "GAME_READY") {
-    // 🖥️ tryb GRA, pusto (logo dopiero w intro wg Ciebie)
-    await sendDisplay("MODE GRA");
-    await sendBuzzer("OFF");
-
-    // od GAME_READY utrzymujemy small layer (nazwy + triplet)
-    await pushSmallLayerToDisplay().catch(() => {});
-    setGameMsg("GAME_READY: display GRA (bez LOGO), buzzer OFF, small layer wysłany.");
-    return;
-  }
-
-  if (st === "GAME_INTRO") {
-    // 🔊 show_intro ×2, a w 14 sekundzie pierwszego: LOGO SHOW (rain poziomo)
-    // Tu robimy “sterowanie display”, audio zostawiamy jako osobny krok (żeby nie robić zgadywanek o duration).
-    // Docelowo: dołożymy timeline audio na mixerze gdy dopniemy API duration/time.
-    await sendDisplay("MODE GRA");
-    // LOGO: zakładam, że display ma asset logo_familiada.json dostępny względnie do display/
-    await sendDisplay('LOGO LOAD "./logo_familiada.json"');
-    // “w 14s” dopniemy za chwilę; na razie: ręcznie pokazujemy logo wejściem jak w spec
-    await sendDisplay("LOGO SHOW ANIMIN rain right 22");
-    setGameMsg("GAME_INTRO: MODE GRA + LOGO SHOW (rain right). Audio timeline dopniemy w kolejnym kroku.");
-    return;
-  }
-
-  if (st === "ROUND_READY") {
-    // 🖥️ logo świeci, 🔘 OFF
-    // Nie wymuszam LOGO SHOW jeśli już jest — ale jak chcesz twardo, to odpalamy show bez animacji:
-    await sendDisplay("MODE GRA");
-    await sendDisplay("MODE LOGO");
-    await sendBuzzer("OFF");
-    await pushSmallLayerToDisplay().catch(() => {});
-    setGameMsg("ROUND_READY: MODE GRA + MODE LOGO, buzzer OFF.");
-    return;
-  }
-
-  if (st === "ROUND_TRANSITION_IN") {
-    // 🖥️ LOGO HIDE + wejście tablicy (ROUNDS) + przygotowane “kropki”
-    // 🔘 ON
-    // 🔊 round_transition + miks ui_tick pod koniec (audio dopniemy potem — tu tylko komendy)
-    await sendDisplay("MODE GRA");
-    await sendDisplay("LOGO HIDE ANIMOUT rain right 22");
-
-    // tu robimy “wjechanie tablicy” – na razie: ustawiamy ROUNDS i ładujemy puste wiersze
-    await sendDisplay("MODE ROUNDS");
-
-    // przygotuj 6 wierszy: 17 × “…” i pts “— —” (u Ciebie to font i znak “—”, więc wysyłamy “—”)
-    // PUNKTY w ROUNDS to 2 znaki: daję "——" (dwa razy emdash), SUMA "000"
-    const dots = "…".repeat(17);
-    await sendDisplay(
-      `RBATCH SUMA 000 ` +
-      `R1 "${dots}" —— ` +
-      `R2 "${dots}" —— ` +
-      `R3 "${dots}" —— ` +
-      `R4 "${dots}" —— ` +
-      `R5 "${dots}" —— ` +
-      `R6 "${dots}" —— ` +
-      `ANIMOUT rain down 18 ANIMIN edge top 18`
-    , { uiTick: true }); // <-- tu ma prawo ui_tick polecieć wg Twojej reguły
-
-    // boczne/górny triplet: 000 / 000 / 000
-    FSM.ctx.roundNo = clampInt(FSM.ctx.roundNo, 1, 999);
-    FSM.ctx.scoreA = clampInt(FSM.ctx.scoreA, 0, 999);
-    FSM.ctx.scoreB = clampInt(FSM.ctx.scoreB, 0, 999);
-    fsmSave();
-    await pushSmallLayerToDisplay().catch(() => {});
-
-    await sendBuzzer("ON");
-    setGameMsg("ROUND_TRANSITION_IN: tablica ROUNDS wjechała, buzzer ON, ui_tick dozwolony.");
-    return;
-  }
-}
-
-/* ============================================================
-   auth
-   ============================================================ */
+/* ===== auth ===== */
 async function ensureAuthOrRedirect() {
   const user = await requireAuth("/familiada/index.html");
   if (who) who.textContent = user?.email || user?.id || "—";
   return user;
 }
 
-/* ============================================================
-   game load + validate
-   ============================================================ */
+/* ===== game load + validate ===== */
 async function loadGameOrThrow() {
   if (!gameId) throw new Error("Brak ?id w URL.");
 
@@ -515,9 +273,7 @@ async function loadGameOrThrow() {
   return data;
 }
 
-/* ============================================================
-   presence
-   ============================================================ */
+/* ===== presence ===== */
 async function fetchPresenceSafe() {
   const { data, error } = await sb()
     .from("device_presence")
@@ -560,14 +316,17 @@ function applyPresenceUnavailable() {
   if (seenBuzzer) seenBuzzer.textContent = "brak tabeli";
 }
 
-/* ============================================================
-   realtime send/listen przez rt()  (managed channels)
-   ============================================================ */
-function topicFor(target) {
-  if (target === "display") return `familiada-display:${game.id}`;
-  if (target === "host") return `familiada-host:${game.id}`;
-  if (target === "buzzer") return `familiada-buzzer:${game.id}`;
-  throw new Error("Zły target");
+/* ===== realtime send (persistent) ===== */
+function ensureChannels() {
+  if (!chDisplay) chDisplay = sb().channel(`familiada-display:${game.id}`).subscribe();
+  if (!chHost) chHost = sb().channel(`familiada-host:${game.id}`).subscribe();
+  if (!chBuzzer) chBuzzer = sb().channel(`familiada-buzzer:${game.id}`).subscribe();
+}
+
+function chFor(target) {
+  if (target === "display") return chDisplay;
+  if (target === "host") return chHost;
+  return chBuzzer;
 }
 
 function eventName(target) {
@@ -581,53 +340,40 @@ async function sendCmd(target, line) {
   const l = String(line ?? "").trim();
   if (!l) return;
 
-  const topic = topicFor(t);
-  await rt(topic).sendBroadcast(eventName(t), { line: l });
+  ensureChannels();
+
+  const ch = chFor(t);
+  const { error } = await ch.send({
+    type: "broadcast",
+    event: eventName(t),
+    payload: { line: l },
+  });
+
+  if (error) throw error;
 
   lastCmd[t] = l;
   saveLastCmdToStorage(t, l);
   refreshLastCmdUI();
 }
 
-function isBatchCmd(line) {
-  const s = String(line || "").trim().toUpperCase();
-  return s.startsWith("RBATCH ") || s.startsWith("FBATCH ");
+/* ===== control channel: BUZZER_EVT log ===== */
+function ensureControlChannel() {
+  if (ctlCh) return ctlCh;
+
+  ctlCh = sb()
+    .channel(`familiada-control:${game.id}`)
+    .on("broadcast", { event: "BUZZER_EVT" }, (msg) => {
+      const line = String(msg?.payload?.line ?? "").trim();
+      if (!line) return;
+      if (buzzEvtLast) buzzEvtLast.textContent = line;
+      logBuzz(`BUZZER_EVT: ${line}`);
+    })
+    .subscribe();
+
+  return ctlCh;
 }
 
-// tu masz centralną politykę dźwięków UI w Control
-async function sendDisplay(line, { uiTick = false } = {}) {
-  // ui_tick tylko kiedy RBATCH/FBATCH (pokaz/ukryj tablicę rund/finału)
-  const tick = uiTick || isBatchCmd(line);
-  return sendCmd("display", line, { uiTick: tick });
-}
-
-async function sendBuzzer(line, { uiTick = false } = {}) {
-  return sendCmd("buzzer", line, { uiTick });
-}
-
-async function sendHost(line, { uiTick = false } = {}) {
-  return sendCmd("host", line, { uiTick });
-}
-
-/* ============================================================
-   control channel: BUZZER_EVT log (TEST_UI)
-   ============================================================ */
-function enableBuzzerEvtLog() {
-  // TEST_UI: log kliknięć z buzzera
-  const topic = `familiada-control:${game.id}`;
-  rt(topic).onBroadcast("BUZZER_EVT", (msg) => {
-    const line = String(msg?.payload?.line ?? "").trim();
-    if (!line) return;
-    if (buzzEvtLast) buzzEvtLast.textContent = line;
-    logBuzz(`BUZZER_EVT: ${line}`);
-  });
-  // kanał i tak odpali się przy pierwszym onBroadcast (ensureChannel())
-  rt(topic).whenReady().catch(() => {});
-}
-
-/* ============================================================
-   links
-   ============================================================ */
+/* ===== links ===== */
 function fillLinks() {
   const displayUrl = makeUrl("/familiada/display/index.html", game.id, game.share_key_display);
   const hostUrl = makeUrl("/familiada/host.html", game.id, game.share_key_host);
@@ -657,110 +403,233 @@ function fillLinks() {
   };
 }
 
-/* ============================================================
-   resend (devices)
-   ============================================================ */
-btnResendDisplay && (btnResendDisplay.onclick = async () => {
+/* ===== resend ===== */
+btnResendDisplay?.addEventListener("click", async () => {
   if (!lastCmd.display) return setMsg(msgCmd, "Brak last dla display.");
   await sendCmd("display", lastCmd.display);
   setMsg(msgCmd, `display <= ${lastCmd.display}`);
+  playSfx("ui_tick");
 });
 
-btnResendHost && (btnResendHost.onclick = async () => {
+btnResendHost?.addEventListener("click", async () => {
   if (!lastCmd.host) return setMsg(msgCmd, "Brak last dla host.");
   await sendCmd("host", lastCmd.host);
   setMsg(msgCmd, `host <= ${lastCmd.host}`);
+  playSfx("ui_tick");
 });
 
-btnResendBuzzer && (btnResendBuzzer.onclick = async () => {
+btnResendBuzzer?.addEventListener("click", async () => {
   if (!lastCmd.buzzer) return setMsg(msgCmd, "Brak last dla buzzer.");
   await sendCmd("buzzer", lastCmd.buzzer);
   setMsg(msgCmd, `buzzer <= ${lastCmd.buzzer}`);
+  playSfx("ui_tick");
 });
 
-/* ============================================================
-   TEST_UI: manual send
-   ============================================================ */
-btnManualSend && (btnManualSend.onclick = async () => {
+/* ===== manual send ===== */
+btnManualSend?.addEventListener("click", async () => {
   try {
     await sendCmd(manualTarget?.value, manualLine?.value);
     setMsg(msgCmd, `${manualTarget?.value} <= ${manualLine?.value}`);
     if (manualLine) manualLine.value = "";
+    playSfx("ui_tick");
   } catch (err) {
     setMsg(msgCmd, `Błąd: ${err?.message || String(err)}`);
   }
 });
 
-/* ============================================================
-   TEST_UI: audio unlock
-   ============================================================ */
+/* ===== audio unlock ===== */
 function refreshAudioStatus() {
   if (!audioStatus) return;
   const ok = !!isAudioUnlocked?.();
   audioStatus.textContent = ok ? "OK" : "ZABLOKOWANE";
   audioStatus.className = "badge " + (ok ? "ok" : "bad");
 }
+
 btnUnlockAudio?.addEventListener("click", () => {
   unlockAudio?.();
   playSfx("ui_tick");
   refreshAudioStatus();
 });
 
-/* ============================================================
-   TEST_UI: host commands
-   ============================================================ */
+/* ===== host: SET/CLEAR/ON/OFF ===== */
 function escapeForQuotedCommand(raw) {
   return String(raw ?? "")
     .replaceAll("\\", "\\\\")
     .replaceAll('"', '\\"')
     .replaceAll("\r\n", "\n");
 }
+
 btnHostSend?.addEventListener("click", async () => {
   const t = String(hostText?.value ?? "");
   const payload = escapeForQuotedCommand(t);
   await sendCmd("host", `SET "${payload}"`);
   setMsg(msgCmd, `host <= SET (${t.length} znaków)`);
+  playSfx("ui_tick");
 });
-btnHostOpen?.addEventListener("click", async () => sendCmd("host", "OPEN"));
-btnHostHide?.addEventListener("click", async () => sendCmd("host", "HIDE"));
-btnHostClear?.addEventListener("click", async () => sendCmd("host", "CLEAR"));
 
-/* ============================================================
-   TEST_UI: buzzer state buttons
-   ============================================================ */
-btnBuzzOff?.addEventListener("click", async () => sendCmd("buzzer", "OFF"));
-btnBuzzOn?.addEventListener("click", async () => sendCmd("buzzer", "ON"));
-btnBuzzReset?.addEventListener("click", async () => sendCmd("buzzer", "RESET"));
-btnBuzzPA?.addEventListener("click", async () => sendCmd("buzzer", "PUSHED A"));
-btnBuzzPB?.addEventListener("click", async () => sendCmd("buzzer", "PUSHED B"));
+btnHostOn?.addEventListener("click", async () => { await sendCmd("host", "ON"); playSfx("ui_tick"); });
+btnHostOff?.addEventListener("click", async () => { await sendCmd("host", "OFF"); playSfx("ui_tick"); });
+btnHostClear?.addEventListener("click", async () => { await sendCmd("host", "CLEAR"); playSfx("ui_tick"); });
 
-/* ============================================================
-   TEST_UI: display test pack
-   ============================================================ */
-btnDispBlack?.addEventListener("click", async () => sendCmd("display", "MODE BLACK"));
-btnDispQR?.addEventListener("click", async () => sendCmd("display", "MODE QR"));
-btnDispGRA?.addEventListener("click", async () => sendCmd("display", "MODE GRA"));
+/* ===== buzzer: state buttons ===== */
+btnBuzzOff?.addEventListener("click", async () => { await sendCmd("buzzer", "OFF"); playSfx("ui_tick"); });
+btnBuzzOn?.addEventListener("click", async () => { await sendCmd("buzzer", "ON"); playSfx("ui_tick"); });
+btnBuzzReset?.addEventListener("click", async () => { await sendCmd("buzzer", "RESET"); playSfx("ui_tick"); });
+btnBuzzPA?.addEventListener("click", async () => { await sendCmd("buzzer", "PUSHED A"); playSfx("ui_tick"); });
+btnBuzzPB?.addEventListener("click", async () => { await sendCmd("buzzer", "PUSHED B"); playSfx("ui_tick"); });
 
-btnDispLogo?.addEventListener("click", async () => sendCmd("display", "MODE LOGO"));
-btnDispRounds?.addEventListener("click", async () => sendCmd("display", "MODE ROUNDS"));
-btnDispFinal?.addEventListener("click", async () => sendCmd("display", "MODE FINAL"));
-btnDispWin?.addEventListener("click", async () => sendCmd("display", "MODE WIN"));
+/* ===== buzzer log UI ===== */
+btnBuzzLogClear?.addEventListener("click", () => {
+  if (buzzLog) buzzLog.textContent = "";
+  if (buzzEvtLast) buzzEvtLast.textContent = "—";
+});
+
+/* ===== topbar ===== */
+btnBack?.addEventListener("click", () => (location.href = "/familiada/builder.html"));
+btnLogout?.addEventListener("click", async () => {
+  await signOut().catch(() => {});
+  location.href = "/familiada/index.html";
+});
+
+/* =========================================================
+   DISPLAY DRIVER (wstępny) — zgodny z Twoimi zasadami
+   ========================================================= */
+
+async function disp(line) {
+  await sendCmd("display", line);
+}
+
+async function setTeamsLongs(a, b) {
+  await disp(`LONG1 "${escapeForQuotedCommand(a)}"`);
+  await disp(`LONG2 "${escapeForQuotedCommand(b)}"`);
+}
+
+// GAME_READY: MODE GRA, big pusty (BLANK), tylko longi, triplet pusty
+async function displayGameReady(teamAName, teamBName) {
+  await disp("MODE GRA");
+  await disp("MODE BLANK"); // <-- zgodnie z tym co pisałeś: big pusty, nie round
+  await setTeamsLongs(teamAName, teamBName);
+
+  // brak zer: triplet pusty
+  await disp(`TOP ""`);
+  await disp(`LEFT ""`);
+  await disp(`RIGHT ""`);
+}
+
+// INTRO: logo wjeżdża
+async function displayIntroLogoIn() {
+  // zakładamy, że app jest już w GRA
+  await disp("MODE GRA");
+  await disp("LOGO ANIMIN rain right 80");
+}
+
+// HIDE board/logo: rain left 80
+async function displayHideRainLeft() {
+  await disp("HIDE ANIMOUT rain left 80");
+}
+
+// ROUND IN: hide logo, potem RBATCH z placeholderami i triplet 000
+async function displayRoundTransitionIn(ansCount) {
+  const n = Math.max(1, Math.min(6, nInt(ansCount, 6)));
+
+  // logo znika
+  await disp("HIDE ANIMOUT rain left 80");
+
+  // w tej wersji testowej nie robimy timera pod dźwięk — to do spięcia ze stanami gry
+  // (tu tylko “gołe” wejście)
+  const rows = [];
+  for (let i = 1; i <= 6; i++) {
+    if (i <= n) {
+      rows.push(`R${i} "${PLACE.roundsText}" ${PLACE.roundsPts}`);
+    } else {
+      rows.push(`R${i} "" ""`);
+    }
+  }
+
+  // suma start: 00 (wyjątek)
+  const cmd =
+    `RBATCH SUMA ${PLACE.roundsSumaStart} ` +
+    rows.join(" ") +
+    ` ANIMIN edge top 20`;
+
+  await disp(cmd);
+
+  // triplet = 000 (punkty)
+  await disp(`TOP "${fmtTripletPoints(0)}"`);
+  await disp(`LEFT "${fmtTripletPoints(0)}"`);
+  await disp(`RIGHT "${fmtTripletPoints(0)}"`);
+}
+
+/* ===== GRA UI ===== */
+btnGameReady?.addEventListener("click", async () => {
+  try {
+    const a = String(teamA?.value ?? "").trim();
+    const b = String(teamB?.value ?? "").trim();
+    await displayGameReady(a, b);
+    setMsg(msgGame, "GAME_READY wysłane.");
+    playSfx("ui_tick");
+  } catch (e) {
+    setMsg(msgGame, e?.message || String(e));
+  }
+});
+
+btnIntroLogo?.addEventListener("click", async () => {
+  try {
+    await displayIntroLogoIn();
+    setMsg(msgGame, "LOGO (intro) wysłane.");
+    playSfx("ui_tick");
+  } catch (e) {
+    setMsg(msgGame, e?.message || String(e));
+  }
+});
+
+btnHideBoard?.addEventListener("click", async () => {
+  try {
+    await displayHideRainLeft();
+    setMsg(msgGame, "HIDE (rain left 80) wysłane.");
+    playSfx("ui_tick");
+  } catch (e) {
+    setMsg(msgGame, e?.message || String(e));
+  }
+});
+
+btnRoundIn?.addEventListener("click", async () => {
+  try {
+    const n = nInt(roundAnsCnt?.value, 6);
+    await displayRoundTransitionIn(n);
+    setMsg(msgGame, `ROUND_TRANSITION_IN wysłane (odpowiedzi: ${Math.max(1, Math.min(6, n))}).`);
+    // tu nie gramy ui_tick — bo ui_tick ma być tylko przy RBATCH show/hide
+    playSfx("ui_tick"); // ← tymczasowo, jak wepniesz sfx wg stanów: wywalimy stąd i zrobimy w state driverze
+  } catch (e) {
+    setMsg(msgGame, e?.message || String(e));
+  }
+});
+
+/* =========================================================
+   TEST ONLY: display testpack (zostawiamy na razie)
+   ========================================================= */
+btnDispBlack?.addEventListener("click", async () => { await disp("MODE BLACK"); });
+btnDispQR?.addEventListener("click", async () => { await disp("MODE QR"); });
+btnDispGRA?.addEventListener("click", async () => { await disp("MODE GRA"); });
+
+btnDispLogo?.addEventListener("click", async () => { await disp("MODE LOGO"); });
+btnDispRounds?.addEventListener("click", async () => { await disp("MODE ROUNDS"); });
+btnDispFinal?.addEventListener("click", async () => { await disp("MODE FINAL"); });
+btnDispWin?.addEventListener("click", async () => { await disp("MODE WIN"); });
 
 btnDispDemoRounds?.addEventListener("click", async () =>
-  sendCmd("display",
-    'RBATCH SUMA 120 R1 "PIERWSZA" 10 R2 "DRUGA" 25 R3 "TRZECIA" 05 R4 "" 00 R5 "PIATA" 30 R6 "SZOSTA" 15 ANIMOUT edge right 18 ANIMIN rain down 22'
+  disp(
+    'RBATCH SUMA 00 R1 "PIERWSZA" 10 R2 "DRUGA" 25 R3 "TRZECIA" 5 R4 "" "" R5 "" "" R6 "" "" ANIMIN edge top 20'
   )
 );
 
 btnDispDemoFinal?.addEventListener("click", async () =>
-  sendCmd("display",
-    'FBATCH SUMA 999 F1 "ALFA" 12 34 "BETA" F2 "GAMMA" 01 99 "DELTA" ANIMOUT matrix right 20 ANIMIN rain down 22'
+  disp(
+    'FBATCH SUMA 999 F1 "ALFA" 12 34 "BETA" F2 "GAMMA" 1 99 "DELTA" ANIMOUT matrix right 20 ANIMIN rain down 22'
   )
 );
 
-/* ============================================================
-   TEST_UI: SFX mixer + clock + arm
-   ============================================================ */
+/* ===== SFX: mixer + clock + arm ===== */
 let mixer = null;
 let sfxTimer = null;
 let sfxT0 = 0;
@@ -769,8 +638,10 @@ let armed = null; // {sec:number, name:string, fired:boolean}
 function setClock() {
   if (!sfxClock) return;
   if (!sfxTimer) { sfxClock.textContent = "0.0s"; return; }
+
   const t = (performance.now() - sfxT0) / 1000;
   sfxClock.textContent = `${t.toFixed(1)}s`;
+
   if (armed && !armed.fired && t >= armed.sec) {
     armed.fired = true;
     mixer?.play?.(armed.name).catch?.(() => {});
@@ -806,8 +677,10 @@ function fillSfxList() {
 btnSfxPlay?.addEventListener("click", async () => {
   const name = sfxSelect?.value;
   if (!name) return;
+
   mixer ??= createSfxMixer();
   await mixer.play(name);
+
   if (!sfxTimer) {
     sfxT0 = performance.now();
     sfxTimer = setInterval(setClock, 100);
@@ -830,9 +703,7 @@ btnSfxAtClear?.addEventListener("click", () => {
   setMsg(msgCmd, "SFX armed: cleared");
 });
 
-/* ============================================================
-   TEST_UI: questions preview
-   ============================================================ */
+/* ===== QUESTIONS: load + render ===== */
 let questions = [];
 let answersByQ = new Map();
 let activeQid = null;
@@ -840,13 +711,15 @@ let activeQid = null;
 function renderQuestions() {
   if (!qList || !qPick) return;
 
-  qList.innerHTML = questions.map((q) => {
-    const active = q.id === activeQid ? ` style="border-color: rgba(255,234,166,.35)"` : "";
-    return `<button class="aBtn" data-qid="${q.id}"${active}>
-      <div class="aTop"><span>#${q.ord}</span><span>${q.id.slice(0, 6)}…</span></div>
-      <div class="aText">${escapeHtml(q.text || "")}</div>
-    </button>`;
-  }).join("");
+  qList.innerHTML = questions
+    .map((q) => {
+      const active = q.id === activeQid ? ` style="border-color: rgba(255,234,166,.35)"` : "";
+      return `<button class="aBtn" data-qid="${q.id}"${active}>
+        <div class="aTop"><span>#${q.ord}</span><span>${q.id.slice(0, 6)}…</span></div>
+        <div class="aText">${escapeHtml(q.text || "")}</div>
+      </button>`;
+    })
+    .join("");
 
   qPick.innerHTML = questions
     .map((q) => `<option value="${q.id}">#${q.ord} — ${escapeHtml(q.text || "")}</option>`)
@@ -858,16 +731,18 @@ function renderQuestions() {
 function renderAnswers() {
   if (!aList) return;
   const ans = answersByQ.get(activeQid) || [];
-  aList.innerHTML = ans.map((a) => {
-    const pts = Number.isFinite(Number(a.fixed_points)) ? Number(a.fixed_points) : 0;
-    return `<div class="card" style="padding:12px;">
-      <div class="head">
-        <div class="name">${escapeHtml(a.text || "")}</div>
-        <div class="badge ok">${String(pts)}</div>
-      </div>
-      <div class="hint">ord: ${a.ord} • id: ${a.id}</div>
-    </div>`;
-  }).join("");
+  aList.innerHTML = ans
+    .map((a) => {
+      const pts = Number.isFinite(Number(a.fixed_points)) ? Number(a.fixed_points) : 0;
+      return `<div class="card" style="padding:12px;">
+        <div class="head">
+          <div class="name">${escapeHtml(a.text || "")}</div>
+          <div class="badge ok">${String(pts)}</div>
+        </div>
+        <div class="hint">ord: ${a.ord} • id: ${a.id}</div>
+      </div>`;
+    })
+    .join("");
 }
 
 async function reloadQA() {
@@ -902,118 +777,14 @@ qPick?.addEventListener("change", () => {
 
 btnQReload?.addEventListener("click", () => reloadQA().catch((e) => setMsg(msgCmd, e?.message || String(e))));
 
-/* ============================================================
-   TEST_UI: buzzer log clear
-   ============================================================ */
-btnBuzzLogClear?.addEventListener("click", () => {
-  if (buzzLog) buzzLog.textContent = "";
-  if (buzzEvtLast) buzzEvtLast.textContent = "—";
-});
-
-/* ============================================================
-   topbar
-   ============================================================ */
-btnBack?.addEventListener("click", () => (location.href = "/familiada/builder.html"));
-btnLogout?.addEventListener("click", async () => {
-  await signOut().catch(() => {});
-  location.href = "/familiada/index.html";
-});
-
-/* ===== GAME UI events ===== */
-btnStatePrev?.addEventListener("click", () => { fsmPrev(); setGameMsg(""); });
-btnStateNext?.addEventListener("click", () => { fsmNext(); setGameMsg(""); });
-btnStateReset?.addEventListener("click", () => { fsmReset(); setGameMsg("FSM zresetowany."); });
-
-btnTeamsApply?.addEventListener("click", () => {
-  FSM.ctx.teamA = String(teamAInp?.value ?? "").trim().slice(0, 16);
-  FSM.ctx.teamB = String(teamBInp?.value ?? "").trim().slice(0, 16);
-  if (!FSM.ctx.teamA) FSM.ctx.teamA = "DRUŻYNA A";
-  if (!FSM.ctx.teamB) FSM.ctx.teamB = "DRUŻYNA B";
-  fsmSave();
-  renderFSM();
-  setGameMsg("Nazwy zapisane w Control (persist).");
-});
-
-btnPushSmall?.addEventListener("click", () => {
-  pushSmallLayerToDisplay().catch((e) => setGameMsg(e?.message || String(e)));
-});
-
-btnAPlus?.addEventListener("click", () => {
-  FSM.ctx.scoreA = clampInt(FSM.ctx.scoreA + 1, 0, 999);
-  fsmSave(); renderFSM();
-});
-btnAMinus?.addEventListener("click", () => {
-  FSM.ctx.scoreA = clampInt(FSM.ctx.scoreA - 1, 0, 999);
-  fsmSave(); renderFSM();
-});
-btnBPlus?.addEventListener("click", () => {
-  FSM.ctx.scoreB = clampInt(FSM.ctx.scoreB + 1, 0, 999);
-  fsmSave(); renderFSM();
-});
-btnBMinus?.addEventListener("click", () => {
-  FSM.ctx.scoreB = clampInt(FSM.ctx.scoreB - 1, 0, 999);
-  fsmSave(); renderFSM();
-});
-
-btnScoreSet?.addEventListener("click", () => {
-  FSM.ctx.scoreA = clampInt(scoreASet?.value, 0, 999);
-  FSM.ctx.scoreB = clampInt(scoreBSet?.value, 0, 999);
-  fsmSave(); renderFSM();
-  setGameMsg("Punkty ustawione (persist).");
-});
-
-btnRoundSet?.addEventListener("click", () => {
-  FSM.ctx.roundNo = clampInt(roundSet?.value, 1, 999);
-  fsmSave(); renderFSM();
-  setGameMsg("Runda ustawiona (persist).");
-});
-
-// TOOLS_LINKS: QR helper
-btnShowQR?.addEventListener("click", async () => {
-  try {
-    const hostUrl = hostLink?.value || "";
-    const buzUrl = buzzerLink?.value || "";
-    if (!hostUrl || !buzUrl) return setGameMsg("Brak linków HOST/BUZZER (wejdź w Urządzenia).");
-
-    await sendCmd("display", "MODE QR", { uiTick:false });
-    // QR komenda wg Twojego guide:
-    await sendCmd("display", `QR HOST "${hostUrl}" BUZZER "${buzUrl}"`, { uiTick:false });
-
-    setGameMsg("Display ustawiony na QR (HOST+BUZZER).");
-  } catch (e) {
-    setGameMsg(e?.message || String(e));
-  }
-});
-
-btnBlack?.addEventListener("click", () => sendCmd("display", "MODE BLACK", { uiTick:false }).catch(()=>{}));
-btnGra?.addEventListener("click", () => sendCmd("display", "MODE GRA", { uiTick:false }).catch(()=>{}));
-
-btnEnterToolsSetup?.addEventListener("click", () => enterState("TOOLS_SETUP").catch(e => setGameMsg(e?.message || String(e))));
-btnEnterToolsLinks?.addEventListener("click", () => enterState("TOOLS_LINKS").catch(e => setGameMsg(e?.message || String(e))));
-btnEnterTeamNames?.addEventListener("click", () => enterState("TEAM_NAMES").catch(e => setGameMsg(e?.message || String(e))));
-btnEnterGameReady?.addEventListener("click", () => enterState("GAME_READY").catch(e => setGameMsg(e?.message || String(e))));
-
-btnEnterGameIntro?.addEventListener("click", () => enterState("GAME_INTRO").catch(e => setGameMsg(e?.message || String(e))));
-btnEnterRoundReady?.addEventListener("click", () => enterState("ROUND_READY").catch(e => setGameMsg(e?.message || String(e))));
-btnEnterRoundTransitionIn?.addEventListener("click", () => enterState("ROUND_TRANSITION_IN").catch(e => setGameMsg(e?.message || String(e))));
-
-/* ============================================================
-   boot
-   ============================================================ */
+/* ===== boot ===== */
 async function main() {
   setMsg(msgDevices, "");
   setMsg(msgCmd, "");
+  setMsg(msgGame, "");
 
   await ensureAuthOrRedirect();
   game = await loadGameOrThrow();
-   // FSM persist
-  fsmLoad();
-  renderFSM();
-   
-   // po refresh: NIE wysyłamy automatycznie enter-actions (żeby nie robić “niespodzianek” na żywo),
-  // ale stan w UI wraca.
-  // Jeśli chcesz, żeby enter-actions też się odpalały automatycznie po refresh:
-  // await enterState(FSM.state);
 
   if (gameLabel) gameLabel.textContent = `Control — ${game.name}`;
   if (gameMeta) gameMeta.textContent = `${game.type} / ${game.status} / ${game.id}`;
@@ -1022,16 +793,13 @@ async function main() {
   refreshLastCmdUI();
   fillLinks();
 
-  // Podbijamy gotowość kanałów (nie musisz, ale daje szybszą reakcję po wejściu)
-  rt(`familiada-display:${game.id}`).whenReady().catch(() => {});
-  rt(`familiada-host:${game.id}`).whenReady().catch(() => {});
-  rt(`familiada-buzzer:${game.id}`).whenReady().catch(() => {});
+  ensureChannels();        // trzy kanały na urządzenia
+  ensureControlChannel();  // log BUZZER_EVT
 
-  // TEST_UI
-  enableBuzzerEvtLog();
   fillSfxList();
   refreshAudioStatus();
   setClock();
+
   await reloadQA().catch(() => {});
 
   const tick = async () => {
