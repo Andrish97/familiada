@@ -23,9 +23,10 @@ export async function createScene() {
   // Kolory świecenia
   const LIT = {
     main:  "#d7ff3d",
-    top:   "#34ff6a",
-    left:  "#ff2e3b",
-    right: "#2bff65",
+    top:   "#d7ff3d",
+    left:  "#d7ff3d",
+    right: "#d7ff3d",
+    bottom: "#d7ff3d"
   };
 
   // Geometria (jak w oryginale)
@@ -722,8 +723,8 @@ export async function createScene() {
       topDigits:   (ddd) => setTripleDigits(GLYPHS, topTriple,   ddd, LIT.top),
       leftDigits:  (ddd) => setTripleDigits(GLYPHS, leftTriple,  ddd, LIT.left),
       rightDigits: (ddd) => setTripleDigits(GLYPHS, rightTriple, ddd, LIT.right),
-      long1: (txt) => setLongTextCenteredMax15(GLYPHS, long1, txt, LIT.main),
-      long2: (txt) => setLongTextCenteredMax15(GLYPHS, long2, txt, LIT.main),
+      long1: (txt) => setLongTextCenteredMax15(GLYPHS, long1, txt, LIT.bottom),
+      long2: (txt) => setLongTextCenteredMax15(GLYPHS, long2, txt, LIT.bottom),
       clearAll: () => {
         setTripleDigits(GLYPHS, topTriple,   "   ", LIT.top);
         setTripleDigits(GLYPHS, leftTriple,  "   ", LIT.left);
