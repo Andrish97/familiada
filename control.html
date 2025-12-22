@@ -37,6 +37,19 @@
       gap:12px;
     }
     @media (max-width: 1100px){ .qaGrid{ grid-template-columns: 1fr; } }
+    .log{
+      margin-top:10px;
+      padding:10px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.22);
+      min-height: 90px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-size: 12px;
+      white-space: pre-wrap;
+      line-height: 1.35;
+    }
+    
   </style>
 </head>
 
@@ -207,10 +220,32 @@
             <button class="btn" id="btnBuzzPA" type="button">PUSHED A</button>
             <button class="btn" id="btnBuzzPB" type="button">PUSHED B</button>
           </div>
+        </div>
 
+        <div class="card">
+          <div class="name">Buzzer — test połączenia</div>
+          <div class="hint">
+            1) Presence: czy jest świeży ping w <code>device_presence</code><br/>
+            2) Realtime: czy Control odbiera <code>BUZZER_EVT</code> (CLICK A/B)
+          </div>
+        
+          <div class="rowBtns">
+            <button class="btn gold" id="btnBuzzCheck" type="button">Sprawdź buzzer</button>
+            <div class="badge" id="buzzCheckStatus">NIE SPRAWDZONO</div>
+          </div>
+        
           <div class="mini">
-            <div>Last: <b id="buzzEvtLast">—</b></div>
-            <div class="hint">Ten element jest tylko podglądem (JS go nie aktualizuje jeszcze).</div>
+            <div>Presence: <b id="buzzPresence">—</b></div>
+            <div>Realtime (ostatni event): <b id="buzzEvtLast">—</b></div>
+          </div>
+        </div>
+        
+        <div class="card" style="grid-column:1/-1;">
+          <div class="name">Log: BUZZER_EVT (kliknięcia)</div>
+          <div class="hint">Kanał: <code>familiada-control:&lt;gameId&gt;</code>, event: <code>BUZZER_EVT</code></div>
+          <div class="log" id="buzzLog"></div>
+          <div class="rowBtns">
+            <button class="btn" id="btnBuzzLogClear" type="button">Wyczyść log</button>
           </div>
         </div>
 
