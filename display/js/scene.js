@@ -416,11 +416,11 @@ export async function createScene() {
   const gapFromOval = 22;
   const gapBetween  = 40;
 
-  // UWAGA: u Ciebie owal był zmieniony w SVG, więc tu trzymamy “dolną krawędź owalu” logicznie:
-  // jeśli w SVG masz outer rect y=30 height=840, to dół = 870. Dla kompatybilności zostawiamy:
-  const ovalBottomY = 30 + 840;
+  const ovalBottomY = 110 + 680;
   const yBottom = ovalBottomY + gapFromOval;
-
+  const BOTTOM_LIFT = 40; // <-- ustaw sobie: 20..80
+  const yBottom = ovalBottomY + gapFromOval - BOTTOM_LIFT;
+  
   const wInnerB = Wgrid(Xb, dBottom, g);
   const hInnerB = Hgrid(Yb, dBottom, g);
   const wBlock  = wInnerB + 2 * g;
