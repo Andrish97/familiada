@@ -109,8 +109,8 @@ const audioStatus = $("audioStatus");
 // host text
 const hostText = $("hostText");
 const btnHostSend = $("btnHostSend");
-const btnHostOn = $("btnHostOn");
-const btnHostOff = $("btnHostOff");
+const btnHostOpen = $("btnHostOpen");
+const btnHostHide = $("btnHostHide");
 const btnHostClear = $("btnHostClear");
 
 // buzzer states
