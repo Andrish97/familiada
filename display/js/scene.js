@@ -575,7 +575,7 @@ export async function createScene() {
     // OFF: bardzo ciemna “szkło-kulka”
     const offBody = el("circle", {
       cx, cy, r,
-      fill: colorON,
+      fill: colorOn,
       opacity: "0.22"
     });
   
