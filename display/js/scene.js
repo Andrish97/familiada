@@ -530,63 +530,53 @@ export async function createScene() {
   const makeLamp = (parent, cx, cy, r, colorOn) => {
     const svg = parent.ownerSVGElement;
   
-    // unikalne ID gradientu
     const gid = `lampGrad_${Math.random().toString(16).slice(2)}`;
   
-    // defs jeśli nie ma
     let defs = svg.querySelector("defs");
     if (!defs) {
       defs = el("defs");
       svg.insertBefore(defs, svg.firstChild);
     }
   
-    // radial gradient: jasny hotspot u góry-lewej + ciemniej na brzegach
-    const grad = el("radialGradient", {
-      id: gid,
-      cx: "35%",
-      cy: "30%",
-      r: "70%"
-    });
-    grad.appendChild(el("stop", { offset: "0%",  "stop-color": "#ffffff", "stop-opacity": "0.65" }));
-    grad.appendChild(el("stop", { offset: "25%", "stop-color": colorOn,   "stop-opacity": "1" }));
-    grad.appendChild(el("stop", { offset: "100%","stop-color": "#000000", "stop-opacity": "0.35" }));
+    const grad = el("radialGradient", { id: gid, cx: "35%", cy: "30%", r: "70%" });
+    grad.appendChild(el("stop", { offset: "0%",   "stop-color": "#ffffff", "stop-opacity": "0.65" }));
+    grad.appendChild(el("stop", { offset: "25%",  "stop-color": colorOn,   "stop-opacity": "1" }));
+    grad.appendChild(el("stop", { offset: "100%", "stop-color": "#000000", "stop-opacity": "0.35" }));
     defs.appendChild(grad);
   
     const gLamp = el("g", {});
   
-    // cień pod lampką (subtelny, daje “osadzenie”)
+    // 1) cień „osadzenia” pod lampką (zawsze subtelny)
     const shadow = el("circle", {
       cx: cx + r * 0.08,
       cy: cy + r * 0.12,
-      r: r * 1.02,
+      r: r * 1.04,
       fill: "#000",
-      opacity: "0.20"
+      opacity: "0.14"
     });
   
-    // obwódka / ring
-    const ring = el("circle", {
-      cx, cy, r: r + 2,
-      fill: "none",
-      stroke: "rgba(255,255,255,0.42)",
-      "stroke-width": 2,
-      opacity: "0.95"
+    // 2) czarna baza (pod szkłem) – daje „wnętrze”
+    const baseCore = el("circle", {
+      cx, cy, r: r * 0.98,
+      fill: "#000",
+      opacity: "0.28"   // <-- tu jest „czarne pod spodem”, ale NIE przesadnie
     });
   
-    // OFF: bardzo ciemna “szkło-kulka”
-    const offBody = el("circle", {
+    // 3) OFF: szkło w kolorze lampki (ciemne, ale nie czarne)
+    const offGlass = el("circle", {
       cx, cy, r,
       fill: colorOn,
       opacity: "0.22"
     });
   
-    // ON: korpus z gradientem (bardziej “3D”)
+    // 4) ON: świecący korpus (gradient)
     const onBody = el("circle", {
       cx, cy, r,
       fill: `url(#${gid})`,
       opacity: "0"
     });
   
-    // glow na zewnątrz
+    // 5) glow zewnętrzny
     const glow = el("circle", {
       cx, cy, r: r * 1.08,
       fill: colorOn,
@@ -594,7 +584,7 @@ export async function createScene() {
       filter: "url(#neonBlue)"
     });
   
-    // specular highlight (mała biała plamka)
+    // 6) highlight szkła
     const highlight = el("circle", {
       cx: cx - r * 0.28,
       cy: cy - r * 0.30,
@@ -603,9 +593,19 @@ export async function createScene() {
       opacity: "0.18"
     });
   
+    // 7) ring
+    const ring = el("circle", {
+      cx, cy, r: r + 2,
+      fill: "none",
+      stroke: "rgba(255,255,255,0.42)",
+      "stroke-width": 2,
+      opacity: "0.95"
+    });
+  
     gLamp.appendChild(shadow);
     gLamp.appendChild(glow);
-    gLamp.appendChild(offBody);
+    gLamp.appendChild(baseCore);
+    gLamp.appendChild(offGlass);
     gLamp.appendChild(onBody);
     gLamp.appendChild(highlight);
     gLamp.appendChild(ring);
@@ -613,14 +613,16 @@ export async function createScene() {
     parent.appendChild(gLamp);
   
     const setOn = (on) => {
-      // OFF: ciemno, ale widać szkło
-      offBody.setAttribute("opacity", on ? "0.20" : "0.95");
-      // ON: główna kula
+      // OFF: widać bazę + szkło
+      baseCore.setAttribute("opacity", on ? "0.08" : "0.28");
+      offGlass.setAttribute("opacity", on ? "0.06" : "0.22");
+  
+      // ON: świecenie
       onBody.setAttribute("opacity", on ? "0.98" : "0");
-      // glow
       glow.setAttribute("opacity", on ? "0.85" : "0");
-      // highlight trochę mocniejszy gdy świeci (efekt szkła)
-      highlight.setAttribute("opacity", on ? "0.28" : "0.14");
+  
+      // szkło „łapie światło” mocniej gdy świeci
+      highlight.setAttribute("opacity", on ? "0.28" : "0.18");
     };
   
     return { setOn, node: gLamp };
