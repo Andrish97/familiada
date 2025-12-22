@@ -77,8 +77,10 @@ app.qr.setBuzzer("https://example.com/buzzer");
 ## 3) Tryby sceny (scene) – API JS
 
 ### 3.1 `scene.api.mode`
-- `scene.api.mode.get() -> "LOGO" | "ROUNDS" | "FINAL" | "WIN"`
+- `scene.api.mode.get() -> | "BLANK" | "LOGO" | "ROUNDS" | "FINAL" | "WIN"`
 - `await scene.api.mode.set(mode, { animIn? })`
+
+`"BLANK"` - wyświetla pusty duży wyświetlacz
 
 `animIn` (opcjonalne) to animacja wejścia dla **dużego wyświetlacza** (domyślnie całe 30×10), chyba że podasz `area`.
 
