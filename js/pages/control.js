@@ -186,7 +186,7 @@ function refreshLastCmdUI() {
 }
 
 async function ensureAuthOrRedirect() {
-  const user = await requireAuth("/familiada/login.html");
+  const user = await requireAuth("/familiada/index.html");
   if (who) who.textContent = user?.email || user?.id || "—";
   return user;
 }
@@ -586,7 +586,7 @@ btnBack && (btnBack.onclick = () => (location.href = "/familiada/builder.html"))
 btnLogout &&
   (btnLogout.onclick = async () => {
     await signOut().catch(() => {});
-    location.href = "/familiada/login.html";
+    location.href = "/familiada/index.html";
   });
 
 
