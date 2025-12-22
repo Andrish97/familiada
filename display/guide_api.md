@@ -24,6 +24,7 @@ To jest **tryb strony** – co w ogóle widzi widz:
 
 ### 0.2 Poziom sceny (scene / “duży wyświetlacz”)
 To jest **tryb zawartości dużego wyświetlacza 30×10**:
+- `BLANK`
 - `LOGO`
 - `ROUNDS`
 - `FINAL`
