@@ -8,7 +8,6 @@ export function createFinalPicker({ ui, store, loadQuestions }) {
   function emit() { for (const fn of subs) fn(); }
 
   function getSelectedIds() { return Array.from(selected); }
-
   function canPickMore() { return selected.size < 5; }
 
   function toggle(id) {
@@ -73,7 +72,6 @@ export function createFinalPicker({ ui, store, loadQuestions }) {
   }
 
   function render(enabled) {
-    // sync from store if store already has 5
     const storeSel = new Set(store.state.finalQuestionIds || []);
     if (storeSel.size > 0 && storeSel.size !== selected.size) selected = storeSel;
 
