@@ -1,11 +1,7 @@
 .control-body{ background:#050914; color:#fff; min-height:100vh; }
 .wrap{ width:min(1200px,94vw); margin:0 auto; padding:18px; }
 
-.row{
-  display:flex; justify-content:space-between; align-items:flex-end;
-  gap:14px; flex-wrap:wrap;
-  margin-top:8px;
-}
+.hdrRow{ justify-content:space-between; align-items:flex-end; margin-top:8px; gap:14px; }
 
 .title{ font-weight:1000; font-size:18px; margin:10px 0 6px; letter-spacing:.06em; display:flex; gap:10px; align-items:baseline; }
 
@@ -30,8 +26,6 @@
   box-shadow:0 24px 60px rgba(0,0,0,.45);
   padding:14px;
 }
-
-.hint{ opacity:.8; font-size:13px; margin:6px 0 14px; line-height:1.35; }
 
 .cards{
   display:grid;
@@ -66,15 +60,7 @@
 .badge.mid{ border-color: rgba(255,234,166,.35); background: rgba(255,234,166,.10); color:#ffeaa6; }
 
 .rowBtns{ display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; align-items:center; }
-
-.inp{
-  padding:10px 12px; border-radius:14px;
-  border:1px solid rgba(255,255,255,.18);
-  background:rgba(255,255,255,.06);
-  color:#fff;
-  width:min(520px,100%);
-  font-weight:800;
-}
+.sel{ width:180px; }
 
 .mini{
   margin-top:12px;
@@ -90,7 +76,23 @@
 .msg{ color:#ffeaa6; font-weight:900; opacity:.9; }
 code{ opacity:.9; }
 
-/* log */
+/* game layout */
+.gameTop{
+  display:grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap:14px;
+  margin-top:14px;
+}
+@media (max-width: 1100px){ .gameTop{ grid-template-columns: 1fr; } }
+
+.gameGrid{
+  display:grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap:14px;
+  margin-top:14px;
+}
+@media (max-width: 1100px){ .gameGrid{ grid-template-columns: 1fr; } }
+
 .log{
   margin-top: 10px;
   border-radius: 16px;
@@ -105,12 +107,41 @@ code{ opacity:.9; }
   white-space: pre-wrap;
 }
 
-/* GRA grid */
-.gameGrid{
-  display:grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap:14px;
-  margin-top:14px;
+/* answers UI */
+.qBox{
+  margin-top: 12px;
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,.14);
+  background: rgba(0,0,0,.18);
+  padding: 12px;
 }
-@media (max-width: 1100px){ .gameGrid{ grid-template-columns: 1fr; } }
+.qTitle{ font-weight:1000; letter-spacing:.04em; margin-bottom:10px; }
+.qAns{
+  display:grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap:10px;
+}
+@media (max-width: 900px){ .qAns{ grid-template-columns: 1fr; } }
 
+.qItem{
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.04);
+  padding: 10px;
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  align-items:flex-start;
+}
+.qItem b{ color:#ffeaa6; }
+.qTxt{ font-weight: 900; }
+.qPts{ opacity:.9; white-space:nowrap; }
+
+/* round grid */
+.roundGrid{
+  margin-top: 10px;
+  display:grid;
+  grid-template-columns: 1fr 1.2fr;
+  gap:14px;
+}
+@media (max-width: 1100px){ .roundGrid{ grid-template-columns: 1fr; } }
