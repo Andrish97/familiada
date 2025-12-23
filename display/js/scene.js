@@ -538,10 +538,10 @@ export async function createScene() {
 
   // strojenie
   const T = {
-    baseOff: "#1a1f26",   // ciemna baza
-    baseOn:  "#525c6a",   // jasna baza (tu jest "świecenie" wnętrza)
-    glassOpacity: 0.42,   // szkło STAŁE
-    glowOn: 0.85,         // intensywność świecenia
+    baseOff: "#ffffff",   // ciemna baza
+    baseOn:  "#000000",   // jasna baza (tu jest "świecenie" wnętrza)
+    glassOpacity: 0.60,   // szkło STAŁE
+    glowOn: 0.50,         // intensywność świecenia
     innerOn: 0.55,        // wewnętrzne „halo” (nie szkło)
   };
 
@@ -645,7 +645,7 @@ export async function createScene() {
   const lampBX = barX + barW - padX; // B po prawej
   
   const lampA = makeLamp(basebar, lampAX, lampsY, lampR, "#ff2e3b");
-  const lampB = makeLamp(basebar, lampBX, lampsY, lampR, "#7A8FFF");
+  const lampB = makeLamp(basebar, lampBX, lampsY, lampR, "#2A62FF");
   
   lampA.setOn(false);
   lampB.setOn(false);
