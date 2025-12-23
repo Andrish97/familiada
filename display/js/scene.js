@@ -538,11 +538,11 @@ export async function createScene() {
 
   // strojenie
   const T = {
-    baseOff: "#ffffff",   // ciemna baza
-    baseOn:  "#000000",   // jasna baza (tu jest "świecenie" wnętrza)
-    glassOpacity: 0.60,   // szkło STAŁE
-    glowOn: 0.50,         // intensywność świecenia
-    innerOn: 0.55,        // wewnętrzne „halo” (nie szkło)
+    baseOff: "#e4edf0",   // ciemna baza
+    baseOn:  "#2a2b2b",   // jasna baza (tu jest "świecenie" wnętrza)
+    glassOpacity: 0.40,   // szkło STAŁE
+    glowOn: 0.90,         // intensywność świecenia
+    innerOn: 0.75,        // wewnętrzne „halo” (nie szkło)
   };
 
   // zapewnij defs
