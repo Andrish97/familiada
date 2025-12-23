@@ -527,18 +527,8 @@ export async function createScene() {
   // ============================================================
   // INDICATOR lamps on basebar (A left red, B right blue)
   // ============================================================
-    const makeLamp = (parent, cx, cy, r, colorOn) => {
+   const makeLamp = (parent, cx, cy, r, colorOn) => {
     const svg = parent.ownerSVGElement;
-  
-    // === TUNE ===
-    const TUNE = {
-      baseOff: "#15181d",           // 1) baza OFF (ciemna)
-      baseOn:  "#3a4049",           // 1) baza ON  (jaśniejsza)
-      glassOpacity: 0.38,           // 2) szkło (STAŁE) przezroczystość
-      ring: "rgba(255,255,255,0.42)",
-      ringOpacity: 0.92,
-      shadowOpacity: 0.10,
-    };
   
     const mk = (name, attrs) => {
       const n = document.createElementNS(svg.namespaceURI, name);
@@ -546,8 +536,26 @@ export async function createScene() {
       return n;
     };
   
-    // === Gradient szkła (stały) ===
-    const gid = `lampGlass_${Math.random().toString(16).slice(2)}`;
+    // ===== TUNE =====
+    const TUNE = {
+      // baza (OFF/ON) — to są kolory "materiału", nie świecenia
+      baseOffCenter: "#1a1f26",
+      baseOffEdge:   "#0d0f13",
+      baseOnCenter:  "#3a424d",
+      baseOnEdge:    "#1a1f26",
+  
+      // szkło (STAŁE)
+      glassOpacity: 0.42,
+      glassEdgeDark: "#000000",
+      glassEdgeAlpha: 0.22,
+  
+      // ring
+      ringStroke: "rgba(255,255,255,0.40)",
+      ringOpacity: 0.92,
+  
+      // cień pod lampką (bardzo delikatny)
+      shadowOpacity: 0.10,
+    };
   
     let defs = svg.querySelector("defs");
     if (!defs) {
@@ -555,37 +563,62 @@ export async function createScene() {
       svg.insertBefore(defs, svg.firstChild);
     }
   
-    // “szkło” ma gradient: jaśniej u góry-lewej, ciemniej na brzegach
-    const grad = mk("radialGradient", { id: gid, cx: "35%", cy: "30%", r: "75%" });
-    grad.appendChild(mk("stop", { offset: "0%",   "stop-color": "#ffffff", "stop-opacity": "0.55" }));
-    grad.appendChild(mk("stop", { offset: "30%",  "stop-color": colorOn,   "stop-opacity": "1" }));
-    grad.appendChild(mk("stop", { offset: "100%", "stop-color": "#000000", "stop-opacity": "0.25" }));
-    defs.appendChild(grad);
+    // ===== Gradienty bazy (OFF/ON) =====
+    const idBaseOff = `lampBaseOff_${Math.random().toString(16).slice(2)}`;
+    const idBaseOn  = `lampBaseOn_${Math.random().toString(16).slice(2)}`;
   
+    const baseGrad = (id, c0, c1) => {
+      // jaśniej u góry-lewej, ciemniej na krawędzi
+      const g = mk("radialGradient", { id, cx: "35%", cy: "30%", r: "85%" });
+      g.appendChild(mk("stop", { offset: "0%",   "stop-color": c0, "stop-opacity": "1" }));
+      g.appendChild(mk("stop", { offset: "100%", "stop-color": c1, "stop-opacity": "1" }));
+      defs.appendChild(g);
+    };
+  
+    baseGrad(idBaseOff, TUNE.baseOffCenter, TUNE.baseOffEdge);
+    baseGrad(idBaseOn,  TUNE.baseOnCenter,  TUNE.baseOnEdge);
+  
+    // ===== Gradient szkła (STAŁY) =====
+    const idGlass = `lampGlass_${Math.random().toString(16).slice(2)}`;
+    const glassGrad = mk("radialGradient", { id: idGlass, cx: "40%", cy: "35%", r: "90%" });
+  
+    // tu NIE robimy białych odblasków-kropek; tylko subtelnie "wypukłe szkło"
+    glassGrad.appendChild(mk("stop", {
+      offset: "0%",
+      "stop-color": colorOn,
+      "stop-opacity": "1"
+    }));
+    glassGrad.appendChild(mk("stop", {
+      offset: "100%",
+      "stop-color": TUNE.glassEdgeDark,
+      "stop-opacity": String(TUNE.glassEdgeAlpha)
+    }));
+    defs.appendChild(glassGrad);
+  
+    // ===== Warstwy =====
     const g = mk("g", {});
   
-    // cień “osadzenia” (zawsze ten sam)
     const shadow = mk("circle", {
       cx: cx + r * 0.06,
       cy: cy + r * 0.10,
-      r: r * 1.03,
+      r: r * 1.04,
       fill: "#000",
       opacity: String(TUNE.shadowOpacity),
     });
   
-    // 1) BAZA: pełna, zmienia kolor OFF/ON
+    // 1) BAZA (gradient OFF/ON), NIEPRZEZROCZYSTA
     const base = mk("circle", {
       cx, cy,
       r: r * 0.98,
-      fill: TUNE.baseOff,
+      fill: `url(#${idBaseOff})`,
       opacity: "1",
     });
   
-    // 2) SZKŁO: stałe, półprzezroczyste, gradient + kolor
+    // 2) SZKŁO (STAŁE), półprzezroczyste
     const glass = mk("circle", {
       cx, cy,
       r,
-      fill: `url(#${gid})`,
+      fill: `url(#${idGlass})`,
       opacity: String(TUNE.glassOpacity),
     });
   
@@ -594,7 +627,7 @@ export async function createScene() {
       cx, cy,
       r: r + 2,
       fill: "none",
-      stroke: TUNE.ring,
+      stroke: TUNE.ringStroke,
       "stroke-width": "2",
       opacity: String(TUNE.ringOpacity),
     });
@@ -603,17 +636,16 @@ export async function createScene() {
     g.appendChild(base);
     g.appendChild(glass);
     g.appendChild(ring);
-  
     parent.appendChild(g);
   
-    // API: tylko baza zmienia się OFF/ON
+    // tylko baza zmienia się OFF/ON
     const setOn = (on) => {
-      base.setAttribute("fill", on ? TUNE.baseOn : TUNE.baseOff);
+      base.setAttribute("fill", on ? `url(#${idBaseOn})` : `url(#${idBaseOff})`);
     };
   
     return { setOn, node: g };
   };
-  
+    
   const lampsY = barY + barH / 2;
   const lampR  = barH * 0.32;
   const padX   = lampR * 1.6;
