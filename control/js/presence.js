@@ -1,4 +1,3 @@
-// control/js/presence.js
 import { sb } from "/familiada/js/core/supabase.js";
 
 const ONLINE_MS = 12_000;
@@ -71,11 +70,11 @@ export function createPresence({ game, ui, store, devices }) {
 
     store.setOnlineFlags({ display: dOn, host: hOn, buzzer: bOn });
 
+    // after projector connected -> send BLACK once
     if (dOn && !store.state.flags.sentBlackAfterDisplayOnline) {
       try {
         await devices.sendDisplayCmd("MODE BLACK");
         store.markSentBlackAfterDisplayOnline();
-        ui.setMsg("msgDevices", "Wyświetlacz online → MODE BLACK.");
       } catch {}
     }
   }
