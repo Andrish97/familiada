@@ -30,40 +30,41 @@
     </div>
 
     <div class="right">
-      <button class="btn" id="btnBack" type="button">← Moje gry</button>
+      <button class="btn sm" id="btnBack" type="button">← Moje gry</button>
       <span class="who" id="who">—</span>
-      <button class="btn" id="btnLogout" type="button">Wyloguj</button>
+      <button class="btn sm" id="btnLogout" type="button">Wyloguj</button>
     </div>
   </header>
 
+  <div class="alertBar hidden" id="alertBar">
+    <div class="alertTxt" id="alertTxt">—</div>
+    <button class="btn xs" id="btnAlertClose" type="button">OK</button>
+  </div>
+
   <main class="wrap wide">
     <div class="shell">
-      <!-- ===== LEFT: cards list ===== -->
+      <!-- LEFT -->
       <aside class="side">
         <div class="gameHdr">
           <div class="title" id="gameLabel">Control</div>
-          <div class="hint" id="gameMeta">—</div>
+          <div class="hint" id="gameMeta"></div>
         </div>
 
         <nav class="nav">
-          <button class="navItem active" data-card="devices" id="navDevices" type="button">
-            <span class="k">1</span> Urządzenia
-            <span class="lock" id="lockDevices"></span>
+          <button class="navItem active" data-card="devices" id="navDevices" type="button" title="Urządzenia">
+            <span class="ico">🔌</span>
           </button>
 
-          <button class="navItem" data-card="setup" id="navSetup" type="button" disabled>
-            <span class="k">2</span> Pytania i ustawienia
-            <span class="lock" id="lockSetup">🔒</span>
+          <button class="navItem" data-card="setup" id="navSetup" type="button" title="Pytania i ustawienia" disabled>
+            <span class="ico">📝</span>
           </button>
 
-          <button class="navItem" data-card="game" id="navGame" type="button" disabled>
-            <span class="k">3</span> Rozgrywka
-            <span class="lock" id="lockGame">🔒</span>
+          <button class="navItem" data-card="game" id="navGame" type="button" title="Rozgrywka" disabled>
+            <span class="ico">🎮</span>
           </button>
 
-          <button class="navItem" data-card="final" id="navFinal" type="button" disabled>
-            <span class="k">4</span> Finał
-            <span class="lock" id="lockFinal">🔒</span>
+          <button class="navItem" data-card="final" id="navFinal" type="button" title="Finał" disabled>
+            <span class="ico">🏁</span>
           </button>
         </nav>
 
@@ -72,18 +73,18 @@
         </div>
       </aside>
 
-      <!-- ===== RIGHT: card content ===== -->
+      <!-- RIGHT -->
       <section class="main">
-        <!-- CARD: DEVICES -->
+        <!-- DEVICES -->
         <section class="cardPanel" data-card="devices">
           <div class="panelHead">
             <div>
               <div class="panelTitle">Urządzenia</div>
-              <div class="hint">Najpierw wyświetlacz. Potem prowadzący i przycisk. QR możesz pokazać na stronie i (opcjonalnie) na wyświetlaczu.</div>
+              <div class="hint">Najpierw wyświetlacz. Potem prowadzący i przycisk.</div>
             </div>
           </div>
 
-          <!-- step 1: display -->
+          <!-- step 1 -->
           <div class="step" data-step="devices_display">
             <div class="stepTitle">1/2 — Wyświetlacz</div>
 
@@ -106,25 +107,35 @@
 
                 <div class="mini">
                   <div class="hint">
-                    Gdy wyświetlacz pojawi się online, Control automatycznie wyśle <code>MODE BLACK</code> (czarny ekran).
+                    Gdy wyświetlacz pojawi się online, Control automatycznie wyśle <code>MODE BLACK</code>.
+                  </div>
+                </div>
+              </div>
+
+              <div class="card" id="qrInlineCard">
+                <div class="name">QR (na stronie)</div>
+                <div class="hint">Do pokazania na laptopie operatora.</div>
+
+                <div class="qrGrid2">
+                  <div class="qrBox">
+                    <div class="qTitle">Prowadzący</div>
+                    <img id="qrHostInlineImg" alt="QR prowadzącego" />
+                    <div class="hint mono" id="qrHostInlineUrl">—</div>
+                  </div>
+
+                  <div class="qrBox">
+                    <div class="qTitle">Przycisk</div>
+                    <img id="qrBuzzerInlineImg" alt="QR przycisku" />
+                    <div class="hint mono" id="qrBuzzerInlineUrl">—</div>
                   </div>
                 </div>
               </div>
 
               <div class="card">
-                <div class="name">QR (okienko na stronie)</div>
-                <div class="hint">To jest QR “pomocniczy” — do pokazania na laptopie operatora.</div>
-                <div class="rowBtns">
-                  <button class="btn" id="btnOpenQrModal" type="button">Pokaż QR prowadzącego i przycisku</button>
-                </div>
-              </div>
-
-              <div class="card">
-                <div class="name">QR na wyświetlaczu</div>
-                <div class="hint">Opcjonalnie: przełącz wyświetlacz w tryb QR (z kodami prowadzącego i przycisku).</div>
+                <div class="name">Ekran wyświetlacza</div>
+                <div class="hint">Ręcznie: czarny ekran.</div>
                 <div class="rowBtns">
                   <button class="btn" id="btnDispBlack" type="button">Czarny ekran</button>
-                  <button class="btn gold" id="btnDispQr" type="button">Pokaż QR</button>
                 </div>
               </div>
             </div>
@@ -135,11 +146,11 @@
             </div>
           </div>
 
-          <!-- step 2: host+buzzer -->
+          <!-- step 2 -->
           <div class="step hidden" data-step="devices_hostbuzzer">
             <div class="stepTitle">2/2 — Prowadzący i przycisk</div>
 
-            <div class="cards3">
+            <div class="cards2">
               <div class="card">
                 <div class="head">
                   <div class="name">Prowadzący</div>
@@ -154,6 +165,17 @@
                   <input class="inp" id="hostLink" readonly />
                   <button class="btn" id="btnCopyHost" type="button">Kopiuj</button>
                   <button class="btn gold" id="btnOpenHost" type="button">Otwórz</button>
+                  <button class="btn" id="btnSendQrToDisplay" type="button" title="Wyślij QR prowadzącego i przycisku na wyświetlacz">
+                    QR na wyświetlaczu
+                  </button>
+                </div>
+
+                <div class="mini">
+                  <div class="hint">QR obok (na telefon):</div>
+                  <div class="qrRow">
+                    <img id="qrHostCardImg" alt="QR prowadzącego"/>
+                    <div class="mono" id="qrHostCardUrl">—</div>
+                  </div>
                 </div>
               </div>
 
@@ -171,15 +193,17 @@
                   <input class="inp" id="buzzerLink" readonly />
                   <button class="btn" id="btnCopyBuzzer" type="button">Kopiuj</button>
                   <button class="btn gold" id="btnOpenBuzzer" type="button">Otwórz</button>
+                  <button class="btn" id="btnSendQrToDisplay2" type="button" title="Wyślij QR prowadzącego i przycisku na wyświetlacz">
+                    QR na wyświetlaczu
+                  </button>
                 </div>
-              </div>
 
-              <div class="card">
-                <div class="name">Log kliknięć przycisku</div>
-                <div class="hint">Tylko log (bez testów). Źródło: broadcast <code>BUZZER_EVT</code>.</div>
-                <div class="log" id="buzzLog" style="max-height: 180px;"></div>
-                <div class="rowBtns">
-                  <button class="btn" id="btnBuzzLogClear" type="button">Wyczyść</button>
+                <div class="mini">
+                  <div class="hint">QR obok (na telefon):</div>
+                  <div class="qrRow">
+                    <img id="qrBuzzerCardImg" alt="QR przycisku"/>
+                    <div class="mono" id="qrBuzzerCardUrl">—</div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -192,12 +216,12 @@
           </div>
         </section>
 
-        <!-- CARD: SETUP -->
+        <!-- SETUP -->
         <section class="cardPanel hidden" data-card="setup">
           <div class="panelHead">
             <div>
               <div class="panelTitle">Pytania i ustawienia</div>
-              <div class="hint">Ustaw nazwy drużyn, zdecyduj czy finał, i (jeśli finał) wybierz 5 pytań.</div>
+              <div class="hint">Nazwy drużyn + czy finał + wybór 5 pytań finałowych.</div>
             </div>
           </div>
 
@@ -206,7 +230,6 @@
 
             <div class="card">
               <div class="name">Drużyny</div>
-              <div class="hint">Nazwy będą widoczne przez całą grę (dolne długie wyświetlacze).</div>
 
               <div class="rowBtns">
                 <div class="field">
@@ -248,22 +271,23 @@
                     <span>Nie</span>
                   </label>
                 </div>
-
                 <div class="mini">
-                  <div class="hint">Jeśli wybierzesz “Nie”, po końcu gry wracamy do logo i można puścić intro jeszcze raz (bez trybu WIN).</div>
+                  <div class="hint">Jeśli “Nie”: po końcu gry wracamy do logo (bez WIN).</div>
                 </div>
               </div>
 
               <div class="card" id="finalPickerCard">
-                <div class="name">Wybierz 5 pytań finałowych</div>
-                <div class="hint">Klikaj, aż będzie dokładnie 5. Potem odblokuje się “Zatwierdź”.</div>
+                <div class="name">Pytania finałowe</div>
 
                 <div class="rowBtns" style="align-items:flex-end;">
                   <div class="badge">Wybrane: <b id="pickedCount">0</b>/5</div>
-                  <button class="btn" id="btnReloadQuestions" type="button">Odśwież listę</button>
+                  <button class="btn" id="btnReloadQuestions" type="button">Odśwież</button>
                 </div>
 
-                <div class="picked" id="pickedChips"></div>
+                <div class="pickedBox">
+                  <div class="pickedTitle">Wybrane (5)</div>
+                  <div class="picked" id="pickedChips"></div>
+                </div>
 
                 <div class="qList" id="finalQList"></div>
 
@@ -276,54 +300,37 @@
 
             <div class="stepFoot">
               <button class="btn" id="btnSetupBack" type="button">Wstecz</button>
-              <button class="btn gold" id="btnSetupFinish" type="button" disabled>Zakończ ustawienia</button>
+              <button class="btn gold" id="btnSetupFinish" type="button" disabled>Gotowe — przejdź dalej</button>
               <div class="msg" id="msgSetup2"></div>
             </div>
           </div>
         </section>
 
-        <!-- CARD: GAME -->
+        <!-- GAME -->
         <section class="cardPanel hidden" data-card="game">
           <div class="panelHead">
             <div>
               <div class="panelTitle">Rozgrywka</div>
-              <div class="hint">Tu będzie pełna logika rund (kolejne ekrany w jednej karcie). Na razie: szkielet + kontrola “start gry / start rundy”.</div>
+              <div class="hint">Następny krok: pełna logika rund (operator zatwierdza przycisk, indicator, bank, X-y).</div>
             </div>
           </div>
 
           <div class="card">
             <div class="name">Start</div>
-            <div class="hint">Stan “gra_gotowa”: tylko nazwy drużyn na longach, wyświetlacz w GRA, reszta bez zmian.</div>
+            <div class="hint">Na razie: tylko bezpieczne komendy (MODE / LONG).</div>
             <div class="rowBtns">
               <button class="btn gold" id="btnGameReady" type="button">Ustaw “gra gotowa” na wyświetlaczu</button>
               <div class="msg" id="msgGame"></div>
             </div>
           </div>
-
-          <div class="card">
-            <div class="name">Logo (start gry)</div>
-            <div class="hint">Logo tylko na początku gry.</div>
-            <div class="rowBtns">
-              <button class="btn gold" id="btnShowLogo" type="button">Pokaż logo</button>
-              <button class="btn" id="btnHideBoard" type="button">Schowaj (HIDE)</button>
-            </div>
-          </div>
-
-          <div class="card">
-            <div class="name">Runda</div>
-            <div class="hint">Tu docelowo będzie cała runda (buzzer → zatwierdzenie przez operatora → odsłanianie → bank → przerzucanie punktów → koniec rundy).</div>
-            <div class="rowBtns">
-              <button class="btn gold" id="btnStartRound" type="button">Rozpocznij rundę (placeholder)</button>
-            </div>
-          </div>
         </section>
 
-        <!-- CARD: FINAL -->
+        <!-- FINAL -->
         <section class="cardPanel hidden" data-card="final">
           <div class="panelHead">
             <div>
               <div class="panelTitle">Finał</div>
-              <div class="hint">Tu będzie wpisywanie (Enter / Cmd+Enter powtórzenie), mapowanie, odsłanianie, sumy i liczniki na bocznym tripletcie.</div>
+              <div class="hint">Tu wejdzie wpisywanie i mapowanie (Enter / Cmd+Enter powtórzenie).</div>
             </div>
           </div>
 
@@ -332,38 +339,9 @@
             <div class="hint" id="finalStatus">—</div>
           </div>
         </section>
+
       </section>
     </div>
   </main>
-
-  <!-- ===== QR MODAL ===== -->
-  <div class="modal hidden" id="qrModal" role="dialog" aria-modal="true" aria-label="QR">
-    <div class="modalBack" id="qrBack"></div>
-    <div class="modalCard">
-      <div class="modalHead">
-        <div class="name">QR — prowadzący i przycisk</div>
-        <button class="btn icon" id="btnQrClose" type="button">✕</button>
-      </div>
-
-      <div class="qrGrid">
-        <div class="qrBox">
-          <div class="qTitle">Prowadzący</div>
-          <img id="qrHostImg" alt="QR prowadzącego" />
-          <div class="hint mono" id="qrHostUrl">—</div>
-        </div>
-
-        <div class="qrBox">
-          <div class="qTitle">Przycisk</div>
-          <img id="qrBuzzerImg" alt="QR przycisku" />
-          <div class="hint mono" id="qrBuzzerUrl">—</div>
-        </div>
-      </div>
-
-      <div class="rowBtns" style="justify-content:flex-end;">
-        <button class="btn" id="btnQrCopyHost" type="button">Kopiuj link prowadzącego</button>
-        <button class="btn" id="btnQrCopyBuzzer" type="button">Kopiuj link przycisku</button>
-      </div>
-    </div>
-  </div>
 </body>
 </html>
