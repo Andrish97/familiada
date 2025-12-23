@@ -1,9 +1,14 @@
 import { sb } from "../../js/core/supabase.js";
 import { rt } from "../../js/core/realtime.js";
+import { playSfx } from "../../js/core/sfx.js";
 
 const $ = (id) => document.getElementById(id);
 
 const ONLINE_MS = 12_000;
+
+const LS_KEY = (gameId, kind) => `familiada:lastcmd:${gameId}:${kind}`;
+
+function setMsg(el, text) { if (el) el.textContent = text || ""; }
 
 function badge(el, status, text) {
   if (!el) return;
@@ -29,13 +34,21 @@ function makeUrl(path, id, key) {
 async function copyToClipboard(text) {
   try {
     await navigator.clipboard.writeText(text);
+    playSfx("ui_tick");
     return true;
   } catch {
     return false;
   }
 }
 
-export function createDevices({ gameId, setMsgDevices }) {
+export function createDevicesController({ game }) {
+  // DOM
+  const msgDevices = $("msgDevices");
+
+  const displayLink = $("displayLink");
+  const hostLink = $("hostLink");
+  const buzzerLink = $("buzzerLink");
+
   const pillDisplay = $("pillDisplay");
   const pillHost = $("pillHost");
   const pillBuzzer = $("pillBuzzer");
@@ -47,10 +60,6 @@ export function createDevices({ gameId, setMsgDevices }) {
   const lastCmdDisplay = $("lastCmdDisplay");
   const lastCmdHost = $("lastCmdHost");
   const lastCmdBuzzer = $("lastCmdBuzzer");
-
-  const displayLink = $("displayLink");
-  const hostLink = $("hostLink");
-  const buzzerLink = $("buzzerLink");
 
   const btnCopyDisplay = $("btnCopyDisplay");
   const btnCopyHost = $("btnCopyHost");
@@ -64,13 +73,18 @@ export function createDevices({ gameId, setMsgDevices }) {
   const btnResendHost = $("btnResendHost");
   const btnResendBuzzer = $("btnResendBuzzer");
 
-  const LS_KEY = (kind) => `familiada:lastcmd:${gameId}:${kind}`;
-  const lastCmd = { display: null, host: null, buzzer: null };
+  // buzzer log
+  const buzzLog = $("buzzLog");
+  const buzzEvtLast = $("buzzEvtLast");
+  const btnBuzzLogClear = $("btnBuzzLogClear");
 
-  // channels przez realtime manager
-  const chDisplay = rt(`familiada-display:${gameId}`);
-  const chHost = rt(`familiada-host:${gameId}`);
-  const chBuzzer = rt(`familiada-buzzer:${gameId}`);
+  let presenceTimer = null;
+
+  const lastCmd = {
+    display: localStorage.getItem(LS_KEY(game.id, "display")) || "",
+    host: localStorage.getItem(LS_KEY(game.id, "host")) || "",
+    buzzer: localStorage.getItem(LS_KEY(game.id, "buzzer")) || "",
+  };
 
   function refreshLastCmdUI() {
     if (lastCmdDisplay) lastCmdDisplay.textContent = lastCmd.display || "—";
@@ -78,45 +92,79 @@ export function createDevices({ gameId, setMsgDevices }) {
     if (lastCmdBuzzer) lastCmdBuzzer.textContent = lastCmd.buzzer || "—";
   }
 
-  function loadLastCmdFromStorage() {
-    lastCmd.display = localStorage.getItem(LS_KEY("display"));
-    lastCmd.host = localStorage.getItem(LS_KEY("host"));
-    lastCmd.buzzer = localStorage.getItem(LS_KEY("buzzer"));
+  function logBuzz(line) {
+    if (!buzzLog) return;
+    const ts = new Date().toLocaleTimeString();
+    buzzLog.textContent = `[${ts}] ${line}\n` + (buzzLog.textContent || "");
   }
 
-  function saveLastCmdToStorage(kind, line) {
-    try { localStorage.setItem(LS_KEY(kind), String(line)); } catch {}
-  }
+  // Realtime send (managed by rt())
+  const chDisplay = rt(`familiada-display:${game.id}`);
+  const chHost = rt(`familiada-host:${game.id}`);
+  const chBuzzer = rt(`familiada-buzzer:${game.id}`);
+  const chControl = rt(`familiada-control:${game.id}`);
 
-  function eventName(target) {
+  function chFor(target) {
+    if (target === "display") return chDisplay;
+    if (target === "host") return chHost;
+    return chBuzzer;
+  }
+  function evFor(target) {
     if (target === "display") return "DISPLAY_CMD";
     if (target === "host") return "HOST_CMD";
     return "BUZZER_CMD";
   }
 
-  function channelFor(target) {
-    if (target === "display") return chDisplay;
-    if (target === "host") return chHost;
-    return chBuzzer;
-  }
-
-  async function send(target, line) {
+  async function sendCmd(target, line, { remember = true } = {}) {
     const t = String(target || "").toLowerCase();
     const l = String(line ?? "").trim();
-    if (!l) return;
+    if (!l) return false;
 
-    await channelFor(t).sendBroadcast(eventName(t), { line: l });
+    const ch = chFor(t);
+    await ch.sendBroadcast(evFor(t), { line: l });
 
-    lastCmd[t] = l;
-    saveLastCmdToStorage(t, l);
-    refreshLastCmdUI();
+    if (remember) {
+      lastCmd[t] = l;
+      try { localStorage.setItem(LS_KEY(game.id, t), l); } catch {}
+      refreshLastCmdUI();
+    }
+    return true;
+  }
+
+  function fillLinks() {
+    const displayUrl = makeUrl("/familiada/display/index.html", game.id, game.share_key_display);
+    const hostUrl = makeUrl("/familiada/host.html", game.id, game.share_key_host);
+    const buzKey = game.share_key_buzzer;
+    const buzzerUrl = makeUrl("/familiada/buzzer.html", game.id, buzKey || "");
+
+    if (displayLink) displayLink.value = displayUrl;
+    if (hostLink) hostLink.value = hostUrl;
+    if (buzzerLink) buzzerLink.value = buzzerUrl;
+
+    if (btnOpenDisplay) btnOpenDisplay.onclick = () => window.open(displayUrl, "_blank");
+    if (btnOpenHost) btnOpenHost.onclick = () => window.open(hostUrl, "_blank");
+    if (btnOpenBuzzer) btnOpenBuzzer.onclick = () => {
+      if (!buzKey) return setMsg(msgDevices, "Brak share_key_buzzer w tej grze.");
+      window.open(buzzerUrl, "_blank");
+    };
+
+    if (btnCopyDisplay) btnCopyDisplay.onclick = async () =>
+      setMsg(msgDevices, (await copyToClipboard(displayUrl)) ? "Skopiowano link display." : "Nie mogę skopiować.");
+
+    if (btnCopyHost) btnCopyHost.onclick = async () =>
+      setMsg(msgDevices, (await copyToClipboard(hostUrl)) ? "Skopiowano link host." : "Nie mogę skopiować.");
+
+    if (btnCopyBuzzer) btnCopyBuzzer.onclick = async () => {
+      if (!buzKey) return setMsg(msgDevices, "Brak share_key_buzzer w tej grze.");
+      setMsg(msgDevices, (await copyToClipboard(buzzerUrl)) ? "Skopiowano link buzzer." : "Nie mogę skopiować.");
+    };
   }
 
   async function fetchPresenceSafe() {
     const { data, error } = await sb()
       .from("device_presence")
       .select("device_type,device_id,last_seen_at")
-      .eq("game_id", gameId);
+      .eq("game_id", game.id);
 
     if (error) return { ok: false, rows: [], error };
     return { ok: true, rows: data || [], error: null };
@@ -143,6 +191,13 @@ export function createDevices({ gameId, setMsgDevices }) {
     if (seenDisplay) seenDisplay.textContent = fmtSince(d?.last_seen_at);
     if (seenHost) seenHost.textContent = fmtSince(h?.last_seen_at);
     if (seenBuzzer) seenBuzzer.textContent = fmtSince(b?.last_seen_at);
+
+    return {
+      displayOnline: isOn(d),
+      hostOnline: isOn(h),
+      buzzerOnline: isOn(b),
+      rows,
+    };
   }
 
   function applyPresenceUnavailable() {
@@ -152,90 +207,84 @@ export function createDevices({ gameId, setMsgDevices }) {
     if (seenDisplay) seenDisplay.textContent = "brak tabeli";
     if (seenHost) seenHost.textContent = "brak tabeli";
     if (seenBuzzer) seenBuzzer.textContent = "brak tabeli";
+    return { displayOnline: false, hostOnline: false, buzzerOnline: false, rows: [] };
   }
 
-  async function fillLinks() {
-    const { data, error } = await sb()
-      .from("games")
-      .select("id,share_key_display,share_key_host,share_key_buzzer")
-      .eq("id", gameId)
-      .single();
-
-    if (error) throw error;
-
-    const displayUrl = makeUrl("/familiada/display/index.html", data.id, data.share_key_display);
-    const hostUrl = makeUrl("/familiada/host.html", data.id, data.share_key_host);
-    const buzKey = data.share_key_buzzer;
-    const buzzerUrl = makeUrl("/familiada/buzzer.html", data.id, buzKey || "");
-
-    if (displayLink) displayLink.value = displayUrl;
-    if (hostLink) hostLink.value = hostUrl;
-    if (buzzerLink) buzzerLink.value = buzzerUrl;
-
-    btnOpenDisplay && (btnOpenDisplay.onclick = () => window.open(displayUrl, "_blank"));
-    btnOpenHost && (btnOpenHost.onclick = () => window.open(hostUrl, "_blank"));
-    btnOpenBuzzer && (btnOpenBuzzer.onclick = () => {
-      if (!buzKey) return setMsgDevices?.("Brak share_key_buzzer w tej grze.");
-      window.open(buzzerUrl, "_blank");
+  function hookBuzzerLog() {
+    chControl.onBroadcast("BUZZER_EVT", (msg) => {
+      const line = String(msg?.payload?.line ?? "").trim();
+      if (!line) return;
+      if (buzzEvtLast) buzzEvtLast.textContent = line;
+      logBuzz(`BUZZER_EVT: ${line}`);
     });
-
-    btnCopyDisplay && (btnCopyDisplay.onclick = async () =>
-      setMsgDevices?.((await copyToClipboard(displayUrl)) ? "Skopiowano link display." : "Nie mogę skopiować."));
-    btnCopyHost && (btnCopyHost.onclick = async () =>
-      setMsgDevices?.((await copyToClipboard(hostUrl)) ? "Skopiowano link host." : "Nie mogę skopiować."));
-    btnCopyBuzzer && (btnCopyBuzzer.onclick = async () => {
-      if (!buzKey) return setMsgDevices?.("Brak share_key_buzzer w tej grze.");
-      setMsgDevices?.((await copyToClipboard(buzzerUrl)) ? "Skopiowano link buzzer." : "Nie mogę skopiować.");
-    });
+    // ensure subscribed early
+    chControl.whenReady().catch(() => {});
   }
 
-
-  async function initPresencePolling() {
-    const tick = async () => {
-      const res = await fetchPresenceSafe();
-      if (!res.ok) {
-        applyPresenceUnavailable();
-        setMsgDevices?.("Brak tabeli device_presence (status = —).");
-        return;
-      }
-      applyPresence(res.rows);
-      setMsgDevices?.("");
-    };
-
-    await tick();
-    setInterval(tick, 1500);
-  }
-
-  async function init() {
-    loadLastCmdFromStorage();
-    refreshLastCmdUI();
-
-    await fillLinks();
-    initBuzzerEvtLog();
-    await initPresencePolling();
-
-    // resend przyciski
+  function hookResendButtons() {
     btnResendDisplay?.addEventListener("click", async () => {
-      if (!lastCmd.display) return setMsgDevices?.("Brak last dla display.");
-      await send("display", lastCmd.display);
-      setMsgDevices?.(`display <= ${lastCmd.display}`);
+      if (!lastCmd.display) return setMsg(msgDevices, "Brak last dla display.");
+      await sendCmd("display", lastCmd.display, { remember: false });
+      playSfx("ui_tick");
     });
     btnResendHost?.addEventListener("click", async () => {
-      if (!lastCmd.host) return setMsgDevices?.("Brak last dla host.");
-      await send("host", lastCmd.host);
-      setMsgDevices?.(`host <= ${lastCmd.host}`);
+      if (!lastCmd.host) return setMsg(msgDevices, "Brak last dla host.");
+      await sendCmd("host", lastCmd.host, { remember: false });
+      playSfx("ui_tick");
     });
     btnResendBuzzer?.addEventListener("click", async () => {
-      if (!lastCmd.buzzer) return setMsgDevices?.("Brak last dla buzzer.");
-      await send("buzzer", lastCmd.buzzer);
-      setMsgDevices?.(`buzzer <= ${lastCmd.buzzer}`);
+      if (!lastCmd.buzzer) return setMsg(msgDevices, "Brak last dla buzzer.");
+      await sendCmd("buzzer", lastCmd.buzzer, { remember: false });
+      playSfx("ui_tick");
     });
+  }
+
+  btnBuzzLogClear?.addEventListener("click", () => {
+    if (buzzLog) buzzLog.textContent = "";
+    if (buzzEvtLast) buzzEvtLast.textContent = "—";
+  });
+
+  let lastPresence = { displayOnline: false, hostOnline: false, buzzerOnline: false, rows: [] };
+
+  async function tickPresence() {
+    const res = await fetchPresenceSafe();
+    if (!res.ok) {
+      lastPresence = applyPresenceUnavailable();
+      setMsg(msgDevices, "Brak tabeli device_presence (status = —).");
+      return lastPresence;
+    }
+    lastPresence = applyPresence(res.rows);
+    setMsg(msgDevices, "");
+    return lastPresence;
+  }
+
+  async function start() {
+    fillLinks();
+    refreshLastCmdUI();
+    hookResendButtons();
+    hookBuzzerLog();
+
+    await tickPresence();
+    presenceTimer = setInterval(tickPresence, 1500);
+  }
+
+  function stop() {
+    try { if (presenceTimer) clearInterval(presenceTimer); } catch {}
+    presenceTimer = null;
   }
 
   return {
-    init,
-    sendDisplay: (line) => send("display", line),
-    sendHost: (line) => send("host", line),
-    sendBuzzer: (line) => send("buzzer", line),
+    game,
+    start,
+    stop,
+
+    // presence
+    get presence() { return lastPresence; },
+
+    // realtime send
+    sendCmd,
+
+    // for game controller
+    logBuzz,
   };
 }
