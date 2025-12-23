@@ -645,7 +645,7 @@ export async function createScene() {
   const lampBX = barX + barW - padX; // B po prawej
   
   const lampA = makeLamp(basebar, lampAX, lampsY, lampR, "#ff2e3b");
-  const lampB = makeLamp(basebar, lampBX, lampsY, lampR, "#5A7CFF");
+  const lampB = makeLamp(basebar, lampBX, lampsY, lampR, "#7A8FFF");
   
   lampA.setOn(false);
   lampB.setOn(false);
