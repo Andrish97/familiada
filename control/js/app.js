@@ -4,6 +4,8 @@ import { sb } from "/familiada/js/core/supabase.js";
 import { rt } from "/familiada/js/core/realtime.js";
 import { loadGameBasic, validateGameReadyToPlay, loadQuestions } from "/familiada/js/core/game-validate.js";
 
+import { unlockAudio, isAudioUnlocked, playSfx } from "/familiada/js/core/sfx.js";
+
 import { createStore } from "./store.js";
 import { createPresence } from "./presence.js";
 import { createDevices } from "./devices.js";
@@ -50,6 +52,9 @@ async function main() {
   const store = createStore(game.id);
   store.hydrate();
 
+  // audio state init
+  store.setAudioUnlocked(!!isAudioUnlocked());
+
   const chDisplay = rt(`familiada-display:${game.id}`);
   const chHost = rt(`familiada-host:${game.id}`);
   const chBuzzer = rt(`familiada-buzzer:${game.id}`);
@@ -66,7 +71,6 @@ async function main() {
     loadQuestions: () => loadQuestions(game.id),
   });
 
-  // nav
   ui.mountNavigation({
     canEnter: (card) => store.canEnterCard(card),
     onNavigate: (card) => store.setActiveCard(card),
@@ -76,16 +80,24 @@ async function main() {
   ui.on("devices.next", () => store.setDevicesStep("devices_hostbuzzer"));
   ui.on("devices.back", () => store.setDevicesStep("devices_display"));
 
-  ui.on("devices.finish", () => {
-    // mark done + lock devices card, then go setup
+  ui.on("devices.toAudio", () => store.setDevicesStep("devices_audio"));
+  ui.on("audio.back", () => store.setDevicesStep("devices_hostbuzzer"));
+
+  ui.on("devices.complete", () => {
     store.completeCard("devices");
     store.setActiveCard("setup");
+  });
+
+  ui.on("audio.unlock", () => {
+    const ok = unlockAudio();
+    store.setAudioUnlocked(!!ok);
+    ui.setMsg("msgAudio", ok ? "Dźwięk odblokowany." : "Nie udało się odblokować dźwięku.");
+    playSfx("ui_tick");
   });
 
   // SETUP steps
   ui.on("setup.next", () => store.setSetupStep("setup_final"));
   ui.on("setup.back", () => store.setSetupStep("setup_names"));
-
   ui.on("setup.finish", () => {
     store.completeCard("setup");
     store.setActiveCard("game");
@@ -95,6 +107,7 @@ async function main() {
   ui.on("teams.save", () => {
     store.setTeams(ui.getTeamA(), ui.getTeamB());
     ui.setMsg("msgTeams", "Zapisano.");
+    playSfx("ui_tick");
   });
 
   // Final toggle
@@ -102,6 +115,7 @@ async function main() {
   ui.on("final.save", () => {
     store.setFinalQuestionIds(picker.getSelectedIds());
     ui.setMsg("msgFinalPick", "Zapisano 5 pytań.");
+    playSfx("ui_tick");
   });
   ui.on("final.reload", () => picker.reload());
 
@@ -109,18 +123,21 @@ async function main() {
   ui.on("display.black", async () => {
     await devices.sendDisplayCmd("MODE BLACK");
     ui.setMsg("msgDevices", "Wyświetlacz: czarny ekran.");
+    playSfx("ui_tick");
   });
 
   ui.on("display.sendQrToDisplay", async () => {
     await devices.sendQrToDisplay();
     ui.setMsg("msgDevices2", "Wysłano QR na wyświetlacz.");
+    playSfx("ui_tick");
   });
 
-  // GAME (na razie bez LOGO/HIDE)
+  // GAME
   ui.on("game.ready", async () => {
     const { teamA, teamB } = store.state.teams;
     await display.gameReady(teamA, teamB);
     ui.setMsg("msgGame", "Wysłano: gra gotowa.");
+    playSfx("ui_tick");
   });
 
   // topbar
@@ -130,17 +147,15 @@ async function main() {
     location.href = "/familiada/index.html";
   });
 
-  // links + QR inline
-  devices.initLinksAndQrInline();
+  // links + QR
+  devices.initLinksAndQr();
 
-  // render
   function render() {
     ui.showCard(store.state.activeCard);
 
     ui.showDevicesStep(store.state.steps.devices);
     ui.showSetupStep(store.state.steps.setup);
 
-    // card availability (and lock completed)
     ui.setNavEnabled({
       devices: store.canEnterCard("devices"),
       setup: store.canEnterCard("setup"),
@@ -148,11 +163,15 @@ async function main() {
       final: store.canEnterCard("final"),
     });
 
-    // devices step buttons
+    // Devices gating
     ui.setEnabled("btnDevicesNext", store.state.flags.displayOnline);
-    ui.setEnabled("btnDevicesFinish", store.state.flags.displayOnline && store.state.flags.hostOnline && store.state.flags.buzzerOnline);
+    ui.setEnabled("btnDevicesToAudio", store.state.flags.displayOnline && store.state.flags.hostOnline && store.state.flags.buzzerOnline);
 
-    // setup
+    // Audio status
+    ui.setAudioStatus(store.state.flags.audioUnlocked);
+    ui.setEnabled("btnDevicesFinish", store.state.flags.audioUnlocked);
+
+    // Setup
     ui.setEnabled("btnSetupNext", store.state.teams.teamA.trim().length > 0 || store.state.teams.teamB.trim().length > 0);
     ui.setEnabled("btnSetupFinish", store.canFinishSetup());
 
@@ -160,9 +179,6 @@ async function main() {
     picker.render(store.state.hasFinal === true);
 
     ui.setFinalStatus(store);
-
-    // hide QR inline once you leave devices card
-    ui.setQrInlineVisible(store.state.activeCard === "devices" && store.state.steps.devices === "devices_display");
   }
 
   store.subscribe(render);
