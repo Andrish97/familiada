@@ -1,13 +1,13 @@
 // control/js/store.js
 export function createStore(gameId) {
-  const KEY = `familiada:control:v3:${gameId}`;
+  const KEY = `familiada:control:v4:${gameId}`;
   const listeners = new Set();
 
   const state = {
     activeCard: "devices",
 
     steps: {
-      devices: "devices_display",
+      devices: "devices_display", // devices_display | devices_hostbuzzer | devices_audio
       setup: "setup_names",
     },
 
@@ -23,7 +23,7 @@ export function createStore(gameId) {
       teamB: "",
     },
 
-    hasFinal: null, // null | true | false
+    hasFinal: null,
     finalQuestionIds: [],
 
     flags: {
@@ -31,13 +31,8 @@ export function createStore(gameId) {
       hostOnline: false,
       buzzerOnline: false,
       sentBlackAfterDisplayOnline: false,
+      audioUnlocked: false,
     },
-
-    lastOnline: {
-      display: null,
-      host: null,
-      buzzer: null,
-    }
   };
 
   function emit() {
@@ -52,7 +47,6 @@ export function createStore(gameId) {
       const p = JSON.parse(raw);
 
       if (p?.activeCard) state.activeCard = p.activeCard;
-
       if (p?.steps?.devices) state.steps.devices = p.steps.devices;
       if (p?.steps?.setup) state.steps.setup = p.steps.setup;
 
@@ -74,66 +68,33 @@ export function createStore(gameId) {
         state.flags.hostOnline = !!p.flags.hostOnline;
         state.flags.buzzerOnline = !!p.flags.buzzerOnline;
         state.flags.sentBlackAfterDisplayOnline = !!p.flags.sentBlackAfterDisplayOnline;
-      }
-
-      if (p?.lastOnline) {
-        state.lastOnline.display = p.lastOnline.display ?? null;
-        state.lastOnline.host = p.lastOnline.host ?? null;
-        state.lastOnline.buzzer = p.lastOnline.buzzer ?? null;
+        state.flags.audioUnlocked = !!p.flags.audioUnlocked;
       }
     } catch {}
   }
 
   function subscribe(fn) { listeners.add(fn); return () => listeners.delete(fn); }
 
-  function setActiveCard(card) {
-    // never enter completed (locked) cards except the current one
-    if (!canEnterCard(card)) return;
-    state.activeCard = card;
-    emit();
-  }
-
+  function setActiveCard(card) { if (!canEnterCard(card)) return; state.activeCard = card; emit(); }
   function setDevicesStep(step) { state.steps.devices = step; emit(); }
   function setSetupStep(step) { state.steps.setup = step; emit(); }
-
-  function completeCard(card) {
-    if (state.completed[card] != null) state.completed[card] = true;
-    emit();
-  }
+  function completeCard(card) { if (state.completed[card] != null) state.completed[card] = true; emit(); }
 
   function setTeams(a, b) { state.teams.teamA = String(a ?? ""); state.teams.teamB = String(b ?? ""); emit(); }
+  function setHasFinal(v) { state.hasFinal = v; if (v === false) state.finalQuestionIds = []; emit(); }
+  function setFinalQuestionIds(ids) { state.finalQuestionIds = Array.isArray(ids) ? ids.slice(0, 5) : []; emit(); }
 
-  function setHasFinal(v) {
-    state.hasFinal = v;
-    if (v === false) state.finalQuestionIds = [];
-    emit();
-  }
-
-  function setFinalQuestionIds(ids) {
-    state.finalQuestionIds = Array.isArray(ids) ? ids.slice(0, 5) : [];
-    emit();
-  }
-
-  function setOnlineFlags({ display, host, buzzer, lastSeen }) {
+  function setOnlineFlags({ display, host, buzzer }) {
     state.flags.displayOnline = !!display;
     state.flags.hostOnline = !!host;
     state.flags.buzzerOnline = !!buzzer;
-
-    if (lastSeen) {
-      state.lastOnline.display = lastSeen.display ?? state.lastOnline.display;
-      state.lastOnline.host = lastSeen.host ?? state.lastOnline.host;
-      state.lastOnline.buzzer = lastSeen.buzzer ?? state.lastOnline.buzzer;
-    }
-
     emit();
   }
 
   function markSentBlackAfterDisplayOnline() { state.flags.sentBlackAfterDisplayOnline = true; emit(); }
+  function setAudioUnlocked(v) { state.flags.audioUnlocked = !!v; emit(); }
 
-  // ---- rules ----
-  function allDevicesOnline() {
-    return state.flags.displayOnline && state.flags.hostOnline && state.flags.buzzerOnline;
-  }
+  function allDevicesOnline() { return state.flags.displayOnline && state.flags.hostOnline && state.flags.buzzerOnline; }
 
   function canFinishSetup() {
     const namesOk = state.teams.teamA.trim().length > 0 || state.teams.teamB.trim().length > 0;
@@ -144,16 +105,12 @@ export function createStore(gameId) {
   }
 
   function canEnterCard(card) {
-    // completed cards are locked
     if (state.completed[card]) return false;
 
     if (card === "devices") return !state.completed.devices;
-
-    if (card === "setup") return allDevicesOnline() && !state.completed.setup;
-
-    if (card === "game") return allDevicesOnline() && canFinishSetup() && !state.completed.game;
-
-    if (card === "final") return allDevicesOnline() && canFinishSetup() && state.hasFinal === true && !state.completed.final;
+    if (card === "setup") return allDevicesOnline() && state.flags.audioUnlocked && !state.completed.setup;
+    if (card === "game") return allDevicesOnline() && state.flags.audioUnlocked && canFinishSetup() && !state.completed.game;
+    if (card === "final") return allDevicesOnline() && state.flags.audioUnlocked && canFinishSetup() && state.hasFinal === true && !state.completed.final;
 
     return false;
   }
@@ -162,7 +119,6 @@ export function createStore(gameId) {
     state,
     hydrate,
     subscribe,
-    emit,
 
     setActiveCard,
     setDevicesStep,
@@ -175,6 +131,7 @@ export function createStore(gameId) {
 
     setOnlineFlags,
     markSentBlackAfterDisplayOnline,
+    setAudioUnlocked,
 
     canFinishSetup,
     canEnterCard,
