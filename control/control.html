@@ -80,15 +80,15 @@
           <div class="panelHead">
             <div>
               <div class="panelTitle">Urządzenia</div>
-              <div class="hint">Najpierw wyświetlacz. Potem prowadzący i przycisk.</div>
+              <div class="hint">Krok po kroku: wyświetlacz → prowadzący i przycisk → dźwięk.</div>
             </div>
           </div>
 
           <!-- step 1 -->
           <div class="step" data-step="devices_display">
-            <div class="stepTitle">1/2 — Wyświetlacz</div>
+            <div class="stepTitle">1/3 — Wyświetlacz</div>
 
-            <div class="cards3">
+            <div class="cards2">
               <div class="card">
                 <div class="head">
                   <div class="name">Wyświetlacz</div>
@@ -99,10 +99,16 @@
                   <div class="badge">Ostatnio: <b id="seenDisplay">—</b></div>
                 </div>
 
+                <div class="qrBig">
+                  <div class="qTitle">QR do wyświetlacza</div>
+                  <img id="qrDisplayImg" alt="QR wyświetlacza"/>
+                </div>
+
                 <div class="rowBtns">
                   <input class="inp" id="displayLink" readonly />
                   <button class="btn" id="btnCopyDisplay" type="button">Kopiuj</button>
                   <button class="btn gold" id="btnOpenDisplay" type="button">Otwórz</button>
+                  <button class="btn" id="btnDispBlack" type="button">Czarny ekran</button>
                 </div>
 
                 <div class="mini">
@@ -112,30 +118,13 @@
                 </div>
               </div>
 
-              <div class="card" id="qrInlineCard">
-                <div class="name">QR (na stronie)</div>
-                <div class="hint">Do pokazania na laptopie operatora.</div>
-
-                <div class="qrGrid2">
-                  <div class="qrBox">
-                    <div class="qTitle">Prowadzący</div>
-                    <img id="qrHostInlineImg" alt="QR prowadzącego" />
-                    <div class="hint mono" id="qrHostInlineUrl">—</div>
-                  </div>
-
-                  <div class="qrBox">
-                    <div class="qTitle">Przycisk</div>
-                    <img id="qrBuzzerInlineImg" alt="QR przycisku" />
-                    <div class="hint mono" id="qrBuzzerInlineUrl">—</div>
-                  </div>
-                </div>
-              </div>
-
               <div class="card">
-                <div class="name">Ekran wyświetlacza</div>
-                <div class="hint">Ręcznie: czarny ekran.</div>
-                <div class="rowBtns">
-                  <button class="btn" id="btnDispBlack" type="button">Czarny ekran</button>
+                <div class="name">Co dalej?</div>
+                <div class="hint">
+                  Jak wyświetlacz będzie online, przejdziemy do prowadzącego i przycisku.
+                </div>
+                <div class="mini">
+                  <div class="hint">Ten krok odblokowuje się, gdy wyświetlacz jest online.</div>
                 </div>
               </div>
             </div>
@@ -148,7 +137,7 @@
 
           <!-- step 2 -->
           <div class="step hidden" data-step="devices_hostbuzzer">
-            <div class="stepTitle">2/2 — Prowadzący i przycisk</div>
+            <div class="stepTitle">2/3 — Prowadzący i przycisk</div>
 
             <div class="cards2">
               <div class="card">
@@ -161,21 +150,15 @@
                   <div class="badge">Ostatnio: <b id="seenHost">—</b></div>
                 </div>
 
+                <div class="qrBig">
+                  <div class="qTitle">QR</div>
+                  <img id="qrHostImg" alt="QR prowadzącego"/>
+                </div>
+
                 <div class="rowBtns">
                   <input class="inp" id="hostLink" readonly />
                   <button class="btn" id="btnCopyHost" type="button">Kopiuj</button>
                   <button class="btn gold" id="btnOpenHost" type="button">Otwórz</button>
-                  <button class="btn" id="btnSendQrToDisplay" type="button" title="Wyślij QR prowadzącego i przycisku na wyświetlacz">
-                    QR na wyświetlaczu
-                  </button>
-                </div>
-
-                <div class="mini">
-                  <div class="hint">QR obok (na telefon):</div>
-                  <div class="qrRow">
-                    <img id="qrHostCardImg" alt="QR prowadzącego"/>
-                    <div class="mono" id="qrHostCardUrl">—</div>
-                  </div>
                 </div>
               </div>
 
@@ -189,29 +172,45 @@
                   <div class="badge">Ostatnio: <b id="seenBuzzer">—</b></div>
                 </div>
 
+                <div class="qrBig">
+                  <div class="qTitle">QR</div>
+                  <img id="qrBuzzerImg" alt="QR przycisku"/>
+                </div>
+
                 <div class="rowBtns">
                   <input class="inp" id="buzzerLink" readonly />
                   <button class="btn" id="btnCopyBuzzer" type="button">Kopiuj</button>
                   <button class="btn gold" id="btnOpenBuzzer" type="button">Otwórz</button>
-                  <button class="btn" id="btnSendQrToDisplay2" type="button" title="Wyślij QR prowadzącego i przycisku na wyświetlacz">
-                    QR na wyświetlaczu
-                  </button>
-                </div>
-
-                <div class="mini">
-                  <div class="hint">QR obok (na telefon):</div>
-                  <div class="qrRow">
-                    <img id="qrBuzzerCardImg" alt="QR przycisku"/>
-                    <div class="mono" id="qrBuzzerCardUrl">—</div>
-                  </div>
                 </div>
               </div>
             </div>
 
             <div class="stepFoot">
               <button class="btn" id="btnDevicesBack" type="button">Wstecz</button>
-              <button class="btn gold" id="btnDevicesFinish" type="button" disabled>Gotowe — przejdź dalej</button>
+              <button class="btn" id="btnSendQrToDisplay" type="button">QR na wyświetlaczu</button>
+              <button class="btn gold" id="btnDevicesToAudio" type="button" disabled>Dalej</button>
               <div class="msg" id="msgDevices2"></div>
+            </div>
+          </div>
+
+          <!-- step 3 -->
+          <div class="step hidden" data-step="devices_audio">
+            <div class="stepTitle">3/3 — Dźwięk (operator)</div>
+
+            <div class="card">
+              <div class="name">Odblokuj dźwięk</div>
+              <div class="hint">Przeglądarki wymagają akcji użytkownika. Kliknij raz.</div>
+
+              <div class="rowBtns">
+                <button class="btn gold" id="btnUnlockAudio" type="button">🔊 Odblokuj dźwięk</button>
+                <div class="badge bad" id="audioStatus">ZABLOKOWANE</div>
+              </div>
+            </div>
+
+            <div class="stepFoot">
+              <button class="btn" id="btnAudioBack" type="button">Wstecz</button>
+              <button class="btn gold" id="btnDevicesFinish" type="button" disabled>Gotowe — przejdź dalej</button>
+              <div class="msg" id="msgAudio"></div>
             </div>
           </div>
         </section>
@@ -277,23 +276,25 @@
               </div>
 
               <div class="card" id="finalPickerCard">
-                <div class="name">Pytania finałowe</div>
-
-                <div class="rowBtns" style="align-items:flex-end;">
+                <div class="head">
+                  <div class="name">Pytania finałowe</div>
                   <div class="badge">Wybrane: <b id="pickedCount">0</b>/5</div>
-                  <button class="btn" id="btnReloadQuestions" type="button">Odśwież</button>
                 </div>
-
-                <div class="pickedBox">
-                  <div class="pickedTitle">Wybrane (5)</div>
-                  <div class="picked" id="pickedChips"></div>
-                </div>
-
-                <div class="qList" id="finalQList"></div>
 
                 <div class="rowBtns">
+                  <button class="btn" id="btnReloadQuestions" type="button">Odśwież</button>
                   <button class="btn gold" id="btnSaveFinalQs" type="button" disabled>Zatwierdź 5 pytań</button>
                   <div class="msg" id="msgFinalPick"></div>
+                </div>
+
+                <!-- LEFT picked / RIGHT list -->
+                <div class="finalPickGrid">
+                  <div class="pickedBox">
+                    <div class="pickedTitle">Wybrane (5)</div>
+                    <div class="picked" id="pickedChips"></div>
+                  </div>
+
+                  <div class="qList" id="finalQList"></div>
                 </div>
               </div>
             </div>
@@ -311,13 +312,13 @@
           <div class="panelHead">
             <div>
               <div class="panelTitle">Rozgrywka</div>
-              <div class="hint">Następny krok: pełna logika rund (operator zatwierdza przycisk, indicator, bank, X-y).</div>
+              <div class="hint">Teraz już będziemy jechać wg guide (MODE/LOGO/ROUNDS/RBATCH itd.).</div>
             </div>
           </div>
 
           <div class="card">
             <div class="name">Start</div>
-            <div class="hint">Na razie: tylko bezpieczne komendy (MODE / LONG).</div>
+            <div class="hint">Na razie: “gra gotowa” ustawia tryb i nazwy drużyn.</div>
             <div class="rowBtns">
               <button class="btn gold" id="btnGameReady" type="button">Ustaw “gra gotowa” na wyświetlaczu</button>
               <div class="msg" id="msgGame"></div>
@@ -330,7 +331,7 @@
           <div class="panelHead">
             <div>
               <div class="panelTitle">Finał</div>
-              <div class="hint">Tu wejdzie wpisywanie i mapowanie (Enter / Cmd+Enter powtórzenie).</div>
+              <div class="hint">Tu wejdzie wpisywanie i mapowanie.</div>
             </div>
           </div>
 
