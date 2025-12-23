@@ -8,8 +8,8 @@ export function createDisplay({ devices, store }) {
   }
 
   async function gameReady(teamA, teamB) {
-    // Bez LOGO/HIDE (u Ciebie “nieznana komenda”)
-    await devices.sendDisplayCmd("MODE GRA");
+    await devices.sendDisplayCmd("MODE GRA");     // APP=GRA
+    await devices.sendDisplayCmd("MODE BLANK");  // scene=BLANK
     await devices.sendDisplayCmd(`LONG1 "${q(teamA)}"`);
     await devices.sendDisplayCmd(`LONG2 "${q(teamB)}"`);
   }
