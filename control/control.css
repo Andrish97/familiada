@@ -1,6 +1,5 @@
 /* control/control.css */
 .control-body{ min-height:100vh; }
-
 .wrap.wide{ max-width: 1400px; }
 
 .shell{
@@ -10,9 +9,7 @@
   align-items:start;
   padding-top: 14px;
 }
-@media (max-width: 1050px){
-  .shell{ grid-template-columns: 1fr; }
-}
+@media (max-width: 1050px){ .shell{ grid-template-columns: 1fr; } }
 
 .side{
   position: sticky;
@@ -24,9 +21,7 @@
   box-shadow:0 24px 60px rgba(0,0,0,.45);
   padding:12px;
 }
-@media (max-width: 1050px){
-  .side{ position: static; }
-}
+@media (max-width: 1050px){ .side{ position: static; } }
 
 .gameHdr .title{
   font-weight:1000;
@@ -87,7 +82,6 @@
   font-size: 16px;
   letter-spacing:.06em;
 }
-
 .stepTitle{
   font-weight:1000;
   letter-spacing:.06em;
@@ -102,22 +96,12 @@
   flex-wrap:wrap;
 }
 
-.cards3{
-  display:grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap:14px;
-}
-@media (max-width: 1100px){
-  .cards3{ grid-template-columns: 1fr; }
-}
 .cards2{
   display:grid;
   grid-template-columns: 1fr 1fr;
   gap:14px;
 }
-@media (max-width: 1100px){
-  .cards2{ grid-template-columns: 1fr; }
-}
+@media (max-width: 1100px){ .cards2{ grid-template-columns: 1fr; } }
 
 .card{
   border-radius:20px;
@@ -156,6 +140,7 @@
 }
 .radio input{ transform: translateY(1px); }
 
+/* top dots */
 .top-status{
   display:flex;
   gap:10px;
@@ -175,29 +160,20 @@
   font-weight:900;
 }
 .dotRow .lbl{ opacity:.85; }
-
 .dot{
   width:10px;
   height:10px;
   border-radius:999px;
   border:1px solid rgba(255,255,255,.18);
   background: rgba(255,255,255,.08);
-  box-shadow: 0 0 0 rgba(0,0,0,0);
 }
 .dot.ok{ background: rgba(120,255,160,.70); border-color: rgba(120,255,160,.40); box-shadow: 0 0 16px rgba(120,255,160,.25); }
 .dot.bad{ background: rgba(255,120,120,.75); border-color: rgba(255,120,120,.45); box-shadow: 0 0 16px rgba(255,120,120,.18); }
 .dot.mid{ background: rgba(255,234,166,.50); border-color: rgba(255,234,166,.35); box-shadow: 0 0 16px rgba(255,234,166,.10); }
 
-/* inline QR */
-.qrGrid2{
-  display:grid;
-  grid-template-columns: 1fr 1fr;
-  gap:12px;
-}
-@media (max-width: 1100px){
-  .qrGrid2{ grid-template-columns: 1fr; }
-}
-.qrBox{
+/* QR blocks */
+.qrBig{
+  margin-top: 12px;
   border-radius:18px;
   border:1px solid rgba(255,255,255,.12);
   background: rgba(0,0,0,.20);
@@ -208,39 +184,30 @@
   letter-spacing:.06em;
   margin-bottom: 10px;
 }
-.qrBox img{
-  width: 160px;
-  height: 160px;
-  border-radius: 14px;
+.qrBig img{
+  width: 220px;
+  height: 220px;
+  border-radius: 16px;
   border:1px solid rgba(255,255,255,.14);
   background:#000;
-}
-.qrRow{
-  display:flex;
-  gap:10px;
-  align-items:center;
-}
-.qrRow img{
-  width: 120px;
-  height: 120px;
-  border-radius: 14px;
-  border:1px solid rgba(255,255,255,.14);
-  background:#000;
-}
-.mono{
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
-  font-size: 12px;
-  opacity: .85;
-  word-break: break-all;
 }
 
-/* final picker */
+/* Final picker layout: picked LEFT, list RIGHT */
+.finalPickGrid{
+  margin-top: 12px;
+  display:grid;
+  grid-template-columns: 320px 1fr;
+  gap:12px;
+}
+@media (max-width: 1100px){
+  .finalPickGrid{ grid-template-columns: 1fr; }
+}
 .pickedBox{
-  margin-top: 10px;
   border-radius: 16px;
   border: 1px solid rgba(255,255,255,.10);
   background: rgba(255,255,255,.04);
   padding: 10px;
+  height: fit-content;
 }
 .pickedTitle{
   font-weight: 1000;
@@ -273,9 +240,7 @@
   font-weight:1000;
   padding:0;
 }
-
 .qList{
-  margin-top: 12px;
   display:grid;
   gap:10px;
   max-height: 420px;
