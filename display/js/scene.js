@@ -528,16 +528,106 @@ export async function createScene() {
   // INDICATOR lamps on basebar (A left red, B right blue)
   // ============================================================
   const makeLamp = (parent, cx, cy, r, colorOn) => {
-    const glow = el("circle", { cx, cy, r: r * 1.05, fill: colorOn, opacity: "0", filter: "url(#neonBlue)" });
-    const core = el("circle", { cx, cy, r, fill: colorOn, opacity: "0.18" });
-    const ring = el("circle", { cx, cy, r: r + 2, fill: "none", stroke: "rgba(255,255,255,0.45)", "stroke-width": 2, opacity: "0.9" });
-    parent.appendChild(glow); parent.appendChild(core); parent.appendChild(ring);
-    const setOn = (on) => { glow.setAttribute("opacity", on ? "0.85" : "0"); core.setAttribute("opacity", on ? "0.95" : "0.18"); };
-    return { setOn };
+    const svg = parent.ownerSVGElement;
+  
+    // unikalne ID gradientu
+    const gid = `lampGrad_${Math.random().toString(16).slice(2)}`;
+  
+    // defs jeśli nie ma
+    let defs = svg.querySelector("defs");
+    if (!defs) {
+      defs = el("defs");
+      svg.insertBefore(defs, svg.firstChild);
+    }
+  
+    // radial gradient: jasny hotspot u góry-lewej + ciemniej na brzegach
+    const grad = el("radialGradient", {
+      id: gid,
+      cx: "35%",
+      cy: "30%",
+      r: "70%"
+    });
+    grad.appendChild(el("stop", { offset: "0%",  "stop-color": "#ffffff", "stop-opacity": "0.65" }));
+    grad.appendChild(el("stop", { offset: "25%", "stop-color": colorOn,   "stop-opacity": "1" }));
+    grad.appendChild(el("stop", { offset: "100%","stop-color": "#000000", "stop-opacity": "0.35" }));
+    defs.appendChild(grad);
+  
+    const gLamp = el("g", {});
+  
+    // cień pod lampką (subtelny, daje “osadzenie”)
+    const shadow = el("circle", {
+      cx: cx + r * 0.08,
+      cy: cy + r * 0.12,
+      r: r * 1.02,
+      fill: "#000",
+      opacity: "0.20"
+    });
+  
+    // obwódka / ring
+    const ring = el("circle", {
+      cx, cy, r: r + 2,
+      fill: "none",
+      stroke: "rgba(255,255,255,0.42)",
+      "stroke-width": 2,
+      opacity: "0.95"
+    });
+  
+    // OFF: bardzo ciemna “szkło-kulka”
+    const offBody = el("circle", {
+      cx, cy, r,
+      fill: "#0a0a0a",
+      opacity: "0.92"
+    });
+  
+    // ON: korpus z gradientem (bardziej “3D”)
+    const onBody = el("circle", {
+      cx, cy, r,
+      fill: `url(#${gid})`,
+      opacity: "0"
+    });
+  
+    // glow na zewnątrz
+    const glow = el("circle", {
+      cx, cy, r: r * 1.08,
+      fill: colorOn,
+      opacity: "0",
+      filter: "url(#neonBlue)"
+    });
+  
+    // specular highlight (mała biała plamka)
+    const highlight = el("circle", {
+      cx: cx - r * 0.28,
+      cy: cy - r * 0.30,
+      r: r * 0.22,
+      fill: "#fff",
+      opacity: "0.18"
+    });
+  
+    gLamp.appendChild(shadow);
+    gLamp.appendChild(glow);
+    gLamp.appendChild(offBody);
+    gLamp.appendChild(onBody);
+    gLamp.appendChild(highlight);
+    gLamp.appendChild(ring);
+  
+    parent.appendChild(gLamp);
+  
+    const setOn = (on) => {
+      // OFF: ciemno, ale widać szkło
+      offBody.setAttribute("opacity", on ? "0.20" : "0.95");
+      // ON: główna kula
+      onBody.setAttribute("opacity", on ? "0.98" : "0");
+      // glow
+      glow.setAttribute("opacity", on ? "0.85" : "0");
+      // highlight trochę mocniejszy gdy świeci (efekt szkła)
+      highlight.setAttribute("opacity", on ? "0.28" : "0.14");
+    };
+  
+    return { setOn, node: gLamp };
   };
   
   const lampsY = barY + barH / 2;
-  const lampR  = barH * 0.42;
+  const lampR  = barH * 0.32;
   const padX   = lampR * 1.6;
   
   const lampAX = barX + padX;        // A po lewej
