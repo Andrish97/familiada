@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="pl">
 <head>
@@ -11,7 +10,7 @@
   <link rel="stylesheet" href="/familiada/control/control.css"/>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-  <script type="module" src="/familiada/control/js/main.js" defer></script>
+  <script type="module" src="/familiada/control/js/control.js" defer></script>
 </head>
 
 <body class="control-body">
@@ -25,7 +24,7 @@
   </header>
 
   <main class="wrap">
-    <div class="row">
+    <div class="row hdrRow">
       <div>
         <div class="title" id="gameLabel">Control</div>
         <div class="hint" id="gameMeta">—</div>
@@ -40,7 +39,7 @@
     <!-- ===== DEVICES ===== -->
     <section class="panel" data-panel="devices">
       <div class="hint">
-        Status jest liczony z <code>device_presence.last_seen_at</code> (ping co ~5s).
+        Status z <code>device_presence.last_seen_at</code> (ping co ~5s).
       </div>
 
       <div class="cards">
@@ -105,67 +104,231 @@
         </div>
       </div>
 
-      <!-- diagnostyka zostaje: log BUZZER_EVT -->
-      <div class="card" style="margin-top:14px;">
-        <div class="name">Log: BUZZER_EVT</div>
-        <div class="hint">
-          Kanał: <code>familiada-control:&lt;gameId&gt;</code>, event: <code>BUZZER_EVT</code>
-        </div>
-        <div class="mini">
-          <div>Ostatni event: <b id="buzzEvtLast">—</b></div>
-        </div>
-        <div class="log" id="buzzLog"></div>
-        <div class="rowBtns">
-          <button class="btn" id="btnBuzzLogClear" type="button">Wyczyść log</button>
-        </div>
-      </div>
-
       <div class="foot"><div class="msg" id="msgDevices"></div></div>
     </section>
 
     <!-- ===== GAME ===== -->
     <section class="panel" data-panel="game" style="display:none;">
-      <div class="hint">
-        Tu jest “prawdziwe” sterowanie stanami (zaczynamy od 3 kroków).
-        Testy ręczne zostały usunięte.
+      <div class="hint" id="gameHint">
+        Sterowanie rozgrywką. Stan trzymany lokalnie (refresh Control nic nie psuje).
+      </div>
+
+      <div class="gameTop">
+        <div class="card">
+          <div class="head">
+            <div class="name">Stan gry</div>
+            <div class="badge mid" id="pillState">—</div>
+          </div>
+          <div class="mini">
+            <div>Runda: <b id="uiRound">—</b></div>
+            <div>Pytanie: <b id="uiQuestion">—</b></div>
+            <div>Buzzer: <b id="uiBuzz">—</b></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="name">Drużyny</div>
+          <div class="rowBtns">
+            <input class="inp" id="teamA" placeholder="Drużyna A" maxlength="16" style="max-width:260px;"/>
+            <input class="inp" id="teamB" placeholder="Drużyna B" maxlength="16" style="max-width:260px;"/>
+          </div>
+          <div class="rowBtns">
+            <button class="btn gold" id="btnTeamsSave" type="button">Zapisz nazwy</button>
+            <button class="btn" id="btnResetGame" type="button">Reset gry (local)</button>
+          </div>
+          <div class="mini">
+            <div>Punkty A: <b id="uiPtsA">000</b></div>
+            <div>Punkty B: <b id="uiPtsB">000</b></div>
+            <div>Wygrana runda: <b id="uiRoundWin">—</b></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="name">Audio (Control)</div>
+          <div class="hint">Tylko odblokowanie. Control sam gra SFX tylko gdy mu każesz.</div>
+          <div class="rowBtns">
+            <button class="btn gold" id="btnUnlockAudio" type="button">🔊 Odblokuj audio</button>
+            <div class="badge" id="audioStatus">ZABLOKOWANE</div>
+          </div>
+        </div>
       </div>
 
       <div class="gameGrid">
+        <!-- TOOLS -->
         <div class="card">
-          <div class="name">GAME_READY</div>
+          <div class="name">0) NARZĘDZIA</div>
           <div class="hint">
-            <code>MODE GRA</code>, big: <code>BLANK</code>, tylko nazwy drużyn na longach,
-            triplet pusty (nic).
+            Setup urządzeń. Display musi być ONLINE żeby iść dalej.
           </div>
           <div class="rowBtns">
-            <input class="inp" id="teamA" placeholder="Drużyna A" style="max-width:260px;"/>
-            <input class="inp" id="teamB" placeholder="Drużyna B" style="max-width:260px;"/>
+            <button class="btn gold" id="btnToToolsSetup" type="button">TOOLS_SETUP</button>
+            <button class="btn" id="btnToToolsLinks" type="button">TOOLS_LINKS</button>
           </div>
-          <div class="rowBtns">
-            <button class="btn gold" id="btnGameReady" type="button">Ustaw GAME_READY</button>
+          <div class="mini">
+            <div>TOOLS_SETUP: Display czarny, buzzer OFF, host OFF.</div>
+            <div>TOOLS_LINKS: Display QR (HOST+BUZZER), buzzer OFF.</div>
           </div>
         </div>
 
+        <!-- TEAM NAMES -->
         <div class="card">
-          <div class="name">GAME_INTRO</div>
+          <div class="name">1) PRZED GRĄ</div>
           <div class="hint">
-            Logo wjeżdża: <code>LOGO ANIMIN rain right 80</code>
+            TEAM_NAMES → GAME_READY → GAME_INTRO (logo).
           </div>
           <div class="rowBtns">
-            <button class="btn gold" id="btnIntroLogo" type="button">Pokaż logo</button>
+            <button class="btn gold" id="btnToTeamNames" type="button">TEAM_NAMES</button>
+            <button class="btn" id="btnToGameReady" type="button">GAME_READY</button>
+            <button class="btn" id="btnToGameIntro" type="button">GAME_INTRO</button>
           </div>
         </div>
 
+        <!-- ROUND FLOW -->
         <div class="card">
-          <div class="name">ROUND_TRANSITION_IN</div>
+          <div class="name">2) RUNDA</div>
           <div class="hint">
-            Najpierw: <code>HIDE ANIMOUT rain left 80</code><br/>
-            Potem: <code>RBATCH</code> (edge top), placeholdery tylko dla istniejących odpowiedzi,
-            <code>SUMA 00</code>, triplet: <code>000/000/000</code>.
+            ROUND_READY (logo zostaje) → ROUND_TRANSITION_IN (logo znika + wjeżdża plansza) → ROUND_BUZZ → BUZZ_CONFIRM → ROUND_PLAY
           </div>
           <div class="rowBtns">
-            <input class="inp" id="roundAnsCnt" placeholder="ile odpowiedzi (1..6)" inputmode="numeric" style="max-width:210px;"/>
-            <button class="btn gold" id="btnRoundIn" type="button">Wejście rundy</button>
+            <button class="btn gold" id="btnToRoundReady" type="button">ROUND_READY</button>
+            <button class="btn" id="btnRoundStart" type="button">Start rundy</button>
+          </div>
+
+          <div class="rowBtns">
+            <select class="inp sel" id="pickRound" style="max-width:220px;"></select>
+            <button class="btn" id="btnPickRoundApply" type="button">Ustaw rundę</button>
+          </div>
+
+          <div class="mini">
+            <div>Aktualna runda ma <b id="uiRoundAnsCount">—</b> odpowiedzi.</div>
+          </div>
+        </div>
+
+        <!-- QUESTION PICK -->
+        <div class="card">
+          <div class="name">Pytanie</div>
+          <div class="hint">Wybierz pytanie do rundy (Control + Host). Display w rundzie nie pokazuje pytania – host pokazuje.</div>
+          <div class="rowBtns">
+            <select class="inp" id="qPick" style="max-width:720px;"></select>
+            <button class="btn" id="btnQReload" type="button">Odśwież</button>
+          </div>
+          <div class="rowBtns">
+            <button class="btn gold" id="btnSendQuestionToHost" type="button">Wyślij pytanie na HOST</button>
+            <button class="btn danger" id="btnHostClear" type="button">HOST CLEAR</button>
+          </div>
+        </div>
+
+        <!-- BUZZ CONFIRM -->
+        <div class="card">
+          <div class="name">Buzzer</div>
+          <div class="hint">
+            W ROUND_BUZZ buzzer ON. Po kliknięciu: buzzer OFF i decyzja na HOST: Zatwierdź / Powtórz.
+          </div>
+          <div class="rowBtns">
+            <button class="btn gold" id="btnBuzzOn" type="button">BUZZER ON</button>
+            <button class="btn" id="btnBuzzOff" type="button">BUZZER OFF</button>
+          </div>
+          <div class="rowBtns">
+            <button class="btn gold" id="btnBuzzConfirm" type="button">Zatwierdź</button>
+            <button class="btn danger" id="btnBuzzRepeat" type="button">Powtórz</button>
+          </div>
+          <div class="mini">
+            <div>Ostatni klik: <b id="buzzEvtLast">—</b></div>
+          </div>
+        </div>
+
+        <!-- ROUND PLAY UI -->
+        <div class="card" style="grid-column:1/-1;">
+          <div class="head">
+            <div class="name">ROUNDS — odsłanianie</div>
+            <div class="badge" id="pillRoundMode">—</div>
+          </div>
+          <div class="hint">
+            Klikasz odpowiedź → odsłaniamy tekst+punkty na DISPLAY i liczymy SUMA. X dodaje błąd (3× → steal).
+          </div>
+
+          <div class="roundGrid">
+            <div class="roundLeft">
+              <div class="mini">
+                <div>X: <b id="uiXCount">0</b> / 3</div>
+                <div>Suma rundy (góra): <b id="uiTopSum">000</b></div>
+              </div>
+
+              <div class="rowBtns">
+                <button class="btn danger" id="btnAddX" type="button">Dodaj X (✕)</button>
+                <button class="btn" id="btnUndoLast" type="button">Cofnij ostatnie</button>
+                <button class="btn" id="btnForceSteal" type="button">Przejdź do STEAL</button>
+              </div>
+
+              <div class="rowBtns">
+                <button class="btn gold" id="btnEndRound" type="button">Zakończ rundę</button>
+                <select class="inp sel" id="pickRoundWinner" style="max-width:180px;">
+                  <option value="">— zwycięzca —</option>
+                  <option value="A">Drużyna A</option>
+                  <option value="B">Drużyna B</option>
+                </select>
+              </div>
+
+              <div class="mini">
+                <div>W STEAL: wpisz odpowiedź / zatwierdź (0 pkt też możliwe).</div>
+              </div>
+              <div class="rowBtns">
+                <input class="inp" id="stealInput" placeholder="Odpowiedź drużyny (STEAL)" style="max-width:420px;"/>
+                <button class="btn gold" id="btnStealAccept" type="button">Zatwierdź STEAL</button>
+                <button class="btn danger" id="btnStealFail" type="button">STEAL: 0 pkt</button>
+              </div>
+            </div>
+
+            <div class="roundRight">
+              <div class="qBox">
+                <div class="qTitle">Odpowiedzi w tej rundzie</div>
+                <div class="qAns" id="roundAnswers"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- FINAL -->
+        <div class="card" style="grid-column:1/-1;">
+          <div class="head">
+            <div class="name">FINAŁ</div>
+            <div class="badge" id="pillFinal">—</div>
+          </div>
+          <div class="hint">
+            Minimalnie: FINAL_PREP → FINAL_P1_INPUT(15s) → REVEAL → (hide) → P2_INPUT(20s) → REVEAL → WIN/LOSE
+          </div>
+
+          <div class="rowBtns">
+            <button class="btn gold" id="btnFinalPrep" type="button">FINAL_PREP</button>
+            <button class="btn" id="btnFinalP1" type="button">P1 START (15s)</button>
+            <button class="btn" id="btnFinalP1Stop" type="button">P1 STOP</button>
+            <button class="btn" id="btnFinalP2" type="button">P2 START (20s)</button>
+            <button class="btn" id="btnFinalP2Stop" type="button">P2 STOP</button>
+          </div>
+
+          <div class="rowBtns">
+            <button class="btn" id="btnFinalHide" type="button">Ukryj dla P2</button>
+            <button class="btn gold" id="btnFinalRevealAll" type="button">Odsłoń wszystko</button>
+          </div>
+
+          <div class="rowBtns">
+            <button class="btn gold" id="btnFinalWin" type="button">FINAL_WIN</button>
+            <button class="btn danger" id="btnFinalLose" type="button">FINAL_LOSE</button>
+          </div>
+
+          <div class="mini">
+            <div>Timer (sekundy) idzie na boczny triplet zwycięskiej drużyny.</div>
+            <div>Top triplet w finale pokazuje sumę (punkty), a boczne na koniec puste.</div>
+          </div>
+        </div>
+
+        <!-- BUZZ LOG -->
+        <div class="card" style="grid-column:1/-1;">
+          <div class="name">Log: BUZZER_EVT</div>
+          <div class="hint">Kanał: <code>familiada-control:&lt;gameId&gt;</code>, event: <code>BUZZER_EVT</code></div>
+          <div class="log" id="buzzLog"></div>
+          <div class="rowBtns">
+            <button class="btn" id="btnBuzzLogClear" type="button">Wyczyść log</button>
           </div>
         </div>
       </div>
