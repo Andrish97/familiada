@@ -38,7 +38,7 @@ export function createPresence({ game, ui, store, devices }) {
 
   function alertIfDropped(prevOn, nowOn, label) {
     if (prevOn === true && nowOn === false) {
-      ui.showAlert(`Uwaga: ${label} rozłączony.`);
+      ui.showAlert(`Uwaga: ${label} rozłączony. Sprawdź połączenie z internetem na urządzeniu.`);
     }
   }
 
@@ -59,7 +59,6 @@ export function createPresence({ game, ui, store, devices }) {
     const hOn = isOnline(h);
     const bOn = isOnline(b);
 
-    // alerts on drop
     alertIfDropped(store.state.flags.displayOnline, dOn, "Wyświetlacz");
     alertIfDropped(store.state.flags.hostOnline, hOn, "Prowadzący");
     alertIfDropped(store.state.flags.buzzerOnline, bOn, "Przycisk");
@@ -70,26 +69,14 @@ export function createPresence({ game, ui, store, devices }) {
       buzzer: { on: bOn, seen: fmtSince(b?.last_seen_at) },
     });
 
-    store.setOnlineFlags({
-      display: dOn,
-      host: hOn,
-      buzzer: bOn,
-      lastSeen: {
-        display: d?.last_seen_at ?? null,
-        host: h?.last_seen_at ?? null,
-        buzzer: b?.last_seen_at ?? null,
-      }
-    });
+    store.setOnlineFlags({ display: dOn, host: hOn, buzzer: bOn });
 
-    // auto MODE BLACK once when display becomes online
     if (dOn && !store.state.flags.sentBlackAfterDisplayOnline) {
       try {
         await devices.sendDisplayCmd("MODE BLACK");
         store.markSentBlackAfterDisplayOnline();
         ui.setMsg("msgDevices", "Wyświetlacz online → MODE BLACK.");
-      } catch {
-        // retry next tick
-      }
+      } catch {}
     }
   }
 
