@@ -1,4 +1,3 @@
-// control/js/devices.js
 export function createDevices({ game, ui, store, chDisplay, chHost, chBuzzer }) {
   function makeUrl(path, id, key) {
     const u = new URL(path, location.origin);
@@ -7,17 +6,11 @@ export function createDevices({ game, ui, store, chDisplay, chHost, chBuzzer }) 
     return u.toString();
   }
 
-  function escapeForQuotedCommand(raw) {
-    return String(raw ?? "")
-      .replaceAll("\\", "\\\\")
-      .replaceAll('"', '\\"')
-      .replaceAll("\r\n", "\n");
-  }
-
   async function sendCmd(channel, event, line) {
     const l = String(line ?? "").trim();
     if (!l) return;
-    await channel.sendBroadcast(event, { line: l });
+    const { error } = await channel.sendBroadcast(event, { line: l });
+    if (error) throw error;
   }
 
   async function sendDisplayCmd(line) { await sendCmd(chDisplay, "DISPLAY_CMD", line); }
@@ -26,48 +19,48 @@ export function createDevices({ game, ui, store, chDisplay, chHost, chBuzzer }) 
 
   function qrSrc(url) {
     const u = encodeURIComponent(String(url));
-    return `https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=${u}`;
+    return `https://api.qrserver.com/v1/create-qr-code/?size=320x320&data=${u}`;
   }
 
   async function copyToClipboard(text) {
     try { await navigator.clipboard.writeText(text); return true; } catch { return false; }
   }
 
+  let urls = { displayUrl:"", hostUrl:"", buzzerUrl:"" };
+
   function initLinksAndQr() {
     const displayUrl = makeUrl("/familiada/display/index.html", game.id, game.share_key_display);
     const hostUrl = makeUrl("/familiada/host.html", game.id, game.share_key_host);
     const buzzerUrl = makeUrl("/familiada/buzzer.html", game.id, game.share_key_buzzer || "");
+    urls = { displayUrl, hostUrl, buzzerUrl };
 
     ui.setValue("displayLink", displayUrl);
     ui.setValue("hostLink", hostUrl);
     ui.setValue("buzzerLink", buzzerUrl);
 
-    // QR images (no extra links)
     ui.setImg("qrDisplayImg", qrSrc(displayUrl));
     ui.setImg("qrHostImg", qrSrc(hostUrl));
     ui.setImg("qrBuzzerImg", qrSrc(buzzerUrl));
 
-    // open/copy
     ui.on("devices.openDisplay", () => window.open(displayUrl, "_blank"));
     ui.on("devices.openHost", () => window.open(hostUrl, "_blank"));
     ui.on("devices.openBuzzer", () => window.open(buzzerUrl, "_blank"));
 
-    ui.on("devices.copyDisplay", async () =>
-      ui.setMsg("msgDevices", (await copyToClipboard(displayUrl)) ? "Skopiowano link wyświetlacza." : "Nie mogę skopiować.")
-    );
-    ui.on("devices.copyHost", async () =>
-      ui.setMsg("msgDevices2", (await copyToClipboard(hostUrl)) ? "Skopiowano link prowadzącego." : "Nie mogę skopiować.")
-    );
-    ui.on("devices.copyBuzzer", async () =>
-      ui.setMsg("msgDevices2", (await copyToClipboard(buzzerUrl)) ? "Skopiowano link przycisku." : "Nie mogę skopiować.")
-    );
-
-    ui.on("display.sendQrToDisplay", async () => sendQrToDisplay(hostUrl, buzzerUrl));
+    ui.on("devices.copyDisplay", async () => ui.setMsg("msgDevices", (await copyToClipboard(displayUrl)) ? "Skopiowano." : "Nie mogę skopiować."));
+    ui.on("devices.copyHost", async () => ui.setMsg("msgDevices2", (await copyToClipboard(hostUrl)) ? "Skopiowano." : "Nie mogę skopiować."));
+    ui.on("devices.copyBuzzer", async () => ui.setMsg("msgDevices2", (await copyToClipboard(buzzerUrl)) ? "Skopiowano." : "Nie mogę skopiować."));
   }
 
-  async function sendQrToDisplay(hostUrl, buzzerUrl) {
+  function escQ(raw) {
+    return String(raw ?? "")
+      .replaceAll("\\", "\\\\")
+      .replaceAll('"', '\\"')
+      .replaceAll("\r\n", "\n");
+  }
+
+  async function sendQrToDisplay() {
     await sendDisplayCmd("MODE QR");
-    await sendDisplayCmd(`QR HOST "${escapeForQuotedCommand(hostUrl)}" BUZZER "${escapeForQuotedCommand(buzzerUrl)}"`);
+    await sendDisplayCmd(`QR HOST "${escQ(urls.hostUrl)}" BUZZER "${escQ(urls.buzzerUrl)}"`);
   }
 
   return {
