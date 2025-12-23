@@ -7,13 +7,9 @@ export function createFinalPicker({ ui, store, loadQuestions }) {
   function onChange(fn) { subs.add(fn); return () => subs.delete(fn); }
   function emit() { for (const fn of subs) fn(); }
 
-  function getSelectedIds() {
-    return Array.from(selected);
-  }
+  function getSelectedIds() { return Array.from(selected); }
 
-  function canPickMore() {
-    return selected.size < 5;
-  }
+  function canPickMore() { return selected.size < 5; }
 
   function toggle(id) {
     if (selected.has(id)) selected.delete(id);
@@ -24,13 +20,10 @@ export function createFinalPicker({ ui, store, loadQuestions }) {
     emit();
   }
 
-  function remove(id) {
-    selected.delete(id);
-    emit();
-  }
+  function remove(id) { selected.delete(id); emit(); }
 
   function renderChips() {
-    const root = ui.el("pickedChips");
+    const root = document.getElementById("pickedChips");
     if (!root) return;
 
     const picked = all.filter((q) => selected.has(q.id));
@@ -50,7 +43,7 @@ export function createFinalPicker({ ui, store, loadQuestions }) {
   }
 
   function renderList() {
-    const root = ui.el("finalQList");
+    const root = document.getElementById("finalQList");
     if (!root) return;
 
     root.innerHTML = all
@@ -80,26 +73,16 @@ export function createFinalPicker({ ui, store, loadQuestions }) {
   }
 
   function render(enabled) {
-    // keep selected in sync with store (on first render or if external set)
+    // sync from store if store already has 5
     const storeSel = new Set(store.state.finalQuestionIds || []);
-    if (storeSel.size > 0 && storeSel.size !== selected.size) {
-      selected = storeSel;
-    }
+    if (storeSel.size > 0 && storeSel.size !== selected.size) selected = storeSel;
 
     ui.setText("pickedCount", String(selected.size));
     renderChips();
     renderList();
-
     ui.setEnabled("btnSaveFinalQs", enabled && selected.size === 5);
   }
 
-  // wiring UI
-  ui.on("final.reload", () => reload().catch((e) => ui.setMsg("msgFinalPick", e?.message || String(e))));
-
-  // initial load
-  reload().catch(() => {});
-
-  // emit causes UI refresh via store subscriber too
   onChange(() => {
     ui.setText("pickedCount", String(selected.size));
     renderChips();
@@ -107,6 +90,7 @@ export function createFinalPicker({ ui, store, loadQuestions }) {
     ui.setEnabled("btnSaveFinalQs", store.state.hasFinal === true && selected.size === 5);
   });
 
+  reload().catch(() => {});
   return { render, reload, onChange, getSelectedIds };
 }
 
