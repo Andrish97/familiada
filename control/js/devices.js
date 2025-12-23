@@ -64,11 +64,6 @@ export function createDevices({ gameId, setMsgDevices }) {
   const btnResendHost = $("btnResendHost");
   const btnResendBuzzer = $("btnResendBuzzer");
 
-  // BUZZER_EVT log
-  const buzzEvtLast = $("buzzEvtLast");
-  const buzzLog = $("buzzLog");
-  const btnBuzzLogClear = $("btnBuzzLogClear");
-
   const LS_KEY = (kind) => `familiada:lastcmd:${gameId}:${kind}`;
   const lastCmd = { display: null, host: null, buzzer: null };
 
@@ -91,12 +86,6 @@ export function createDevices({ gameId, setMsgDevices }) {
 
   function saveLastCmdToStorage(kind, line) {
     try { localStorage.setItem(LS_KEY(kind), String(line)); } catch {}
-  }
-
-  function logBuzz(line) {
-    if (!buzzLog) return;
-    const ts = new Date().toLocaleTimeString();
-    buzzLog.textContent = `[${ts}] ${line}\n` + (buzzLog.textContent || "");
   }
 
   function eventName(target) {
@@ -200,25 +189,6 @@ export function createDevices({ gameId, setMsgDevices }) {
     });
   }
 
-  function initBuzzerEvtLog() {
-    // subskrypcja eventów z buzzera (diagnostyka)
-    const ctl = sb()
-      .channel(`familiada-control:${gameId}`)
-      .on("broadcast", { event: "BUZZER_EVT" }, (msg) => {
-        const line = String(msg?.payload?.line ?? "").trim();
-        if (!line) return;
-        if (buzzEvtLast) buzzEvtLast.textContent = line;
-        logBuzz(`BUZZER_EVT: ${line}`);
-      })
-      .subscribe();
-
-    btnBuzzLogClear?.addEventListener("click", () => {
-      if (buzzLog) buzzLog.textContent = "";
-      if (buzzEvtLast) buzzEvtLast.textContent = "—";
-    });
-
-    return ctl;
-  }
 
   async function initPresencePolling() {
     const tick = async () => {
