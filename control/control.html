@@ -5,63 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>Familiada — Control</title>
 
-  <link rel="icon" href="favicon.ico"/>
+  <link rel="icon" href="/familiada/favicon.ico"/>
   <link rel="stylesheet" href="/familiada/css/base.css"/>
   <link rel="stylesheet" href="/familiada/control/control.css"/>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-  <script type="module" src="/familiada/control/js/control.js" defer></script>
-
-  <style>
-    /* dodatki pod nowe elementy */
-    .ta { width: 100%; resize: vertical; min-height: 120px; }
-    .cmdGrid .card .name { margin-bottom: 8px; }
-
-    .aBtn{
-      width:100%;
-      text-align:left;
-      border-radius:16px;
-      border:1px solid rgba(255,255,255,.14);
-      background:rgba(0,0,0,.18);
-      padding:12px;
-      cursor:pointer;
-      color:#fff;
-      box-shadow:0 12px 30px rgba(0,0,0,.35);
-    }
-    .aBtn:active{ transform: translateY(1px); }
-    .aTop{ display:flex; justify-content:space-between; opacity:.9; font-weight:900; letter-spacing:.06em; font-size:12px; }
-    .aText{ margin-top:6px; font-weight:900; line-height:1.25; }
-
-    .qaGrid{
-      margin-top:12px;
-      display:grid;
-      grid-template-columns: 1fr 1fr;
-      gap:12px;
-    }
-    @media (max-width: 1100px){ .qaGrid{ grid-template-columns: 1fr; } }
-
-    .log{
-      margin-top:10px;
-      padding:10px;
-      border-radius:14px;
-      border:1px solid rgba(255,255,255,.12);
-      background: rgba(0,0,0,.22);
-      min-height: 90px;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
-      font-size: 12px;
-      white-space: pre-wrap;
-      line-height: 1.35;
-    }
-
-    /* GRA: prosta kratka */
-    .gameGrid{
-      display:grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      gap:14px;
-      margin-top:14px;
-    }
-    @media (max-width: 1100px){ .gameGrid{ grid-template-columns: 1fr; } }
-  </style>
+  <script type="module" src="/familiada/control/js/main.js" defer></script>
 </head>
 
 <body class="control-body">
@@ -84,7 +33,6 @@
       <div class="tabs">
         <button class="tab active" data-tab="devices" type="button">Urządzenia</button>
         <button class="tab" data-tab="game" type="button">Gra</button>
-        <button class="tab" data-tab="cmd" type="button">Komendy / testy</button>
       </div>
     </div>
 
@@ -156,20 +104,37 @@
         </div>
       </div>
 
+      <!-- diagnostyka zostaje: log BUZZER_EVT -->
+      <div class="card" style="margin-top:14px;">
+        <div class="name">Log: BUZZER_EVT</div>
+        <div class="hint">
+          Kanał: <code>familiada-control:&lt;gameId&gt;</code>, event: <code>BUZZER_EVT</code>
+        </div>
+        <div class="mini">
+          <div>Ostatni event: <b id="buzzEvtLast">—</b></div>
+        </div>
+        <div class="log" id="buzzLog"></div>
+        <div class="rowBtns">
+          <button class="btn" id="btnBuzzLogClear" type="button">Wyczyść log</button>
+        </div>
+      </div>
+
       <div class="foot"><div class="msg" id="msgDevices"></div></div>
     </section>
 
     <!-- ===== GAME ===== -->
     <section class="panel" data-panel="game" style="display:none;">
       <div class="hint">
-        Sterowanie “prawdziwymi” stanami wyświetlacza (wstępnie). Wszystko tu jest po stronie Control: wysyła komendy na DISPLAY.
+        Tu jest “prawdziwe” sterowanie stanami (zaczynamy od 3 kroków).
+        Testy ręczne zostały usunięte.
       </div>
 
       <div class="gameGrid">
         <div class="card">
           <div class="name">GAME_READY</div>
           <div class="hint">
-            MODE GRA, big pusty, tylko nazwy drużyn na longach. Triplet pusty (żadnych zer).
+            <code>MODE GRA</code>, big: <code>BLANK</code>, tylko nazwy drużyn na longach,
+            triplet pusty (nic).
           </div>
           <div class="rowBtns">
             <input class="inp" id="teamA" placeholder="Drużyna A" style="max-width:260px;"/>
@@ -181,20 +146,21 @@
         </div>
 
         <div class="card">
-          <div class="name">GAME_INTRO: logo</div>
+          <div class="name">GAME_INTRO</div>
           <div class="hint">
             Logo wjeżdża: <code>LOGO ANIMIN rain right 80</code>
           </div>
           <div class="rowBtns">
             <button class="btn gold" id="btnIntroLogo" type="button">Pokaż logo</button>
-            <button class="btn" id="btnHideBoard" type="button">HIDE (rain left 80)</button>
           </div>
         </div>
 
         <div class="card">
           <div class="name">ROUND_TRANSITION_IN</div>
           <div class="hint">
-            Logo znika (HIDE rain left 80), potem wjeżdża runda (edge top) z placeholderami i SUMA=00. Triplet: 000/000/000.
+            Najpierw: <code>HIDE ANIMOUT rain left 80</code><br/>
+            Potem: <code>RBATCH</code> (edge top), placeholdery tylko dla istniejących odpowiedzi,
+            <code>SUMA 00</code>, triplet: <code>000/000/000</code>.
           </div>
           <div class="rowBtns">
             <input class="inp" id="roundAnsCnt" placeholder="ile odpowiedzi (1..6)" inputmode="numeric" style="max-width:210px;"/>
@@ -204,153 +170,6 @@
       </div>
 
       <div class="foot"><div class="msg" id="msgGame"></div></div>
-    </section>
-
-    <!-- ===== COMMANDS / TESTS ===== -->
-    <section class="panel" data-panel="cmd" style="display:none;">
-      <div class="hint">
-        Twoje testy ręczne + SFX + log buzzera. (Testpacki oznaczone TEST ONLY).
-      </div>
-
-      <div class="card">
-        <div class="name">Audio</div>
-        <div class="hint">Wymagane przez przeglądarki. Kliknij raz, aby odblokować dźwięk.</div>
-
-        <div class="rowBtns">
-          <button class="btn gold" id="btnUnlockAudio" type="button">🔊 Odblokuj audio</button>
-          <div class="badge" id="audioStatus">ZABLOKOWANE</div>
-        </div>
-      </div>
-
-      <div class="cmdGrid">
-        <!-- manual send -->
-        <div class="card">
-          <div class="name">Ręczna komenda</div>
-          <div class="rowBtns">
-            <select class="inp sel" id="manualTarget">
-              <option value="display">display</option>
-              <option value="host">host</option>
-              <option value="buzzer">buzzer</option>
-            </select>
-
-            <input class="inp" id="manualLine" placeholder='np. MODE LOGO / OFF / SET "..."' />
-            <button class="btn gold" id="btnManualSend" type="button">Wyślij</button>
-          </div>
-
-          <div class="mini">
-            <div>Kanały są trzymane stale (bez zamykania websocketów).</div>
-          </div>
-        </div>
-
-        <!-- host text -->
-        <div class="card">
-          <div class="name">HOST — tekst z Control</div>
-          <div class="hint">Wyślij robi <code>SET "..."</code>. Nowe linie przechodzą (host.js musi je odtworzyć).</div>
-
-          <textarea class="inp ta" id="hostText" rows="6" placeholder="Wpisz tekst dla prowadzącego (może mieć nowe linie)"></textarea>
-
-          <div class="rowBtns">
-            <button class="btn gold" id="btnHostSend" type="button">Wyślij tekst (SET)</button>
-            <button class="btn danger" id="btnHostClear" type="button">CLEAR</button>
-          </div>
-
-          <div class="rowBtns">
-            <button class="btn" id="btnHostOn" type="button">ON</button>
-            <button class="btn" id="btnHostOff" type="button">OFF</button>
-          </div>
-        </div>
-
-        <!-- buzzer states -->
-        <div class="card">
-          <div class="name">BUZZER — stany</div>
-          <div class="hint">RESET: komenda do logiki (buzzer.js powinien ją obsłużyć).</div>
-
-          <div class="rowBtns">
-            <button class="btn" id="btnBuzzOn" type="button">ON</button>
-            <button class="btn" id="btnBuzzOff" type="button">OFF</button>
-            <button class="btn gold" id="btnBuzzReset" type="button">RESET</button>
-          </div>
-
-          <div class="rowBtns">
-            <button class="btn" id="btnBuzzPA" type="button">PUSHED A</button>
-            <button class="btn" id="btnBuzzPB" type="button">PUSHED B</button>
-          </div>
-        </div>
-
-        <!-- display test pack -->
-        <div class="card">
-          <div class="name">DISPLAY — testpack (TEST ONLY)</div>
-          <div class="hint">To zostawiamy tymczasowo. Docelowo usuniemy po spięciu stanów gry.</div>
-
-          <div class="rowBtns">
-            <button class="btn" id="btnDispBlack" type="button">MODE BLACK</button>
-            <button class="btn" id="btnDispQR" type="button">MODE QR</button>
-            <button class="btn gold" id="btnDispGRA" type="button">MODE GRA</button>
-          </div>
-
-          <div class="rowBtns">
-            <button class="btn" id="btnDispLogo" type="button">MODE LOGO</button>
-            <button class="btn" id="btnDispRounds" type="button">MODE ROUNDS</button>
-            <button class="btn" id="btnDispFinal" type="button">MODE FINAL</button>
-            <button class="btn" id="btnDispWin" type="button">MODE WIN</button>
-          </div>
-
-          <div class="rowBtns">
-            <button class="btn" id="btnDispDemoRounds" type="button">DEMO ROUNDS (RBATCH)</button>
-            <button class="btn" id="btnDispDemoFinal" type="button">DEMO FINAL (FBATCH)</button>
-          </div>
-        </div>
-
-        <!-- sfx -->
-        <div class="card">
-          <div class="name">SFX tester</div>
-          <div class="hint">Lista z <code>listSfx()</code>. PLAY miksuje. Możesz uzbroić dźwięk “na sekundzie”.</div>
-
-          <div class="rowBtns">
-            <select class="inp" id="sfxSelect" style="max-width:320px;"></select>
-            <button class="btn gold" id="btnSfxPlay" type="button">PLAY</button>
-            <button class="btn" id="btnSfxStop" type="button">STOP</button>
-            <div class="badge">t: <b id="sfxClock">0.0s</b></div>
-          </div>
-
-          <div class="mini">
-            <div class="hint">Zagraj dodatkowy SFX na konkretnej sekundzie:</div>
-            <div class="rowBtns">
-              <input class="inp" id="sfxAtSec" style="max-width:120px;" placeholder="sek" inputmode="decimal" />
-              <select class="inp" id="sfxAtName" style="max-width:260px;"></select>
-              <button class="btn gold" id="btnSfxAtArm" type="button">ARM</button>
-              <button class="btn" id="btnSfxAtClear" type="button">CLEAR</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- questions -->
-        <div class="card" style="grid-column:1/-1;">
-          <div class="name">Pytania / odpowiedzi (podgląd)</div>
-          <div class="hint">
-            Czyta z <code>questions(id,ord,text)</code> i <code>answers(question_id,ord,text,fixed_points)</code>.
-          </div>
-
-          <div class="rowBtns">
-            <select class="inp" id="qPick" style="max-width:720px;"></select>
-            <button class="btn" id="btnQReload" type="button">Odśwież</button>
-          </div>
-
-          <div class="qaGrid">
-            <div>
-              <div class="hint" style="margin-top:0;">Pytania</div>
-              <div class="cmdGrid" id="qList" style="grid-template-columns: 1fr; gap:10px;"></div>
-            </div>
-
-            <div>
-              <div class="hint" style="margin-top:0;">Odpowiedzi + punkty</div>
-              <div class="cmdGrid" id="aList" style="grid-template-columns: 1fr; gap:10px;"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="foot"><div class="msg" id="msgCmd"></div></div>
     </section>
   </main>
 </body>
