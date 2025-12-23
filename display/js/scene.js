@@ -528,124 +528,23 @@ export async function createScene() {
   // INDICATOR lamps on basebar (A left red, B right blue)
   // ============================================================
   const makeLamp = (parent, cx, cy, r, colorOn) => {
-  const svg = parent.ownerSVGElement;
-
-  const mk = (name, attrs) => {
-    const n = document.createElementNS(svg.namespaceURI, name);
-    for (const k in attrs) n.setAttribute(k, attrs[k]);
-    return n;
+    const glow = el("circle", { cx, cy, r: r * 1.05, fill: colorOn, opacity: "0", filter: "url(#neonBlue)" });
+    const core = el("circle", { cx, cy, r, fill: colorOn, opacity: "0.18" });
+    const ring = el("circle", { cx, cy, r: r + 2, fill: "none", stroke: "rgba(255,255,255,0.45)", "stroke-width": 2, opacity: "0.9" });
+    parent.appendChild(glow); parent.appendChild(core); parent.appendChild(ring);
+    const setOn = (on) => { glow.setAttribute("opacity", on ? "0.85" : "0"); core.setAttribute("opacity", on ? "0.95" : "0.18"); };
+    return { setOn };
   };
-
-  // strojenie
-  const T = {
-    baseOff: "#e4edf0",   // ciemna baza
-    baseOn:  "#2a2b2b",   // jasna baza (tu jest "świecenie" wnętrza)
-    glassOpacity: 0.40,   // szkło STAŁE
-    glowOn: 0.90,         // intensywność świecenia
-    innerOn: 0.75,        // wewnętrzne „halo” (nie szkło)
-  };
-
-  // zapewnij defs
-  let defs = svg.querySelector("defs");
-  if (!defs) {
-    defs = mk("defs", {});
-    svg.insertBefore(defs, svg.firstChild);
-  }
-
-  // gradient szkła (stały)
-  const gidGlass = `lampGlass_${Math.random().toString(16).slice(2)}`;
-  const glassGrad = mk("radialGradient", { id: gidGlass, cx: "40%", cy: "35%", r: "90%" });
-  glassGrad.appendChild(mk("stop", { offset: "0%",   "stop-color": colorOn, "stop-opacity": "1" }));
-  glassGrad.appendChild(mk("stop", { offset: "100%", "stop-color": "#000",  "stop-opacity": "0.22" }));
-  defs.appendChild(glassGrad);
-
-  // delikatne wewnętrzne halo (sterowane ON/OFF)
-  const gidInner = `lampInner_${Math.random().toString(16).slice(2)}`;
-  const innerGrad = mk("radialGradient", { id: gidInner, cx: "45%", cy: "45%", r: "70%" });
-  innerGrad.appendChild(mk("stop", { offset: "0%",   "stop-color": colorOn, "stop-opacity": "1" }));
-  innerGrad.appendChild(mk("stop", { offset: "100%", "stop-color": "#000",  "stop-opacity": "0.55" }));
-  defs.appendChild(innerGrad);
-
-  const g = mk("g", { "data-lamp": "1" });
-
-  // cień
-  const shadow = mk("circle", {
-    cx: cx + r * 0.06,
-    cy: cy + r * 0.10,
-    r: r * 1.04,
-    fill: "#000",
-    opacity: "0.10",
-  });
-
-  // baza (TYLKO ONA zmienia kolor)
-  const base = mk("circle", {
-    cx, cy,
-    r: r * 0.98,
-    fill: T.baseOff,
-    opacity: "1",
-  });
-
-  // wewnętrzne halo (ON/OFF)
-  const inner = mk("circle", {
-    cx, cy,
-    r: r * 0.98,
-    fill: `url(#${gidInner})`,
-    opacity: "0",
-  });
-
-  // szkło (STAŁE, nie zmienia się)
-  const glass = mk("circle", {
-    cx, cy,
-    r,
-    fill: `url(#${gidGlass})`,
-    opacity: String(T.glassOpacity),
-  });
-
-  // glow zewnętrzny (ON/OFF)
-  const glow = mk("circle", {
-    cx, cy,
-    r: r * 1.08,
-    fill: colorOn,
-    opacity: "0",
-    filter: "url(#neonBlue)",
-  });
-
-  // ring/otoczka
-  const ring = mk("circle", {
-    cx, cy,
-    r: r + 2,
-    fill: "none",
-    stroke: "rgba(255,255,255,0.42)",
-    "stroke-width": "2",
-    opacity: "0.92",
-  });
-
-  g.appendChild(shadow);
-  g.appendChild(glow);
-  g.appendChild(base);
-  g.appendChild(inner);
-  g.appendChild(glass);
-  g.appendChild(ring);
-  parent.appendChild(g);
-
-  const setOn = (on) => {
-    base.setAttribute("fill", on ? T.baseOn : T.baseOff);     // 1) zmienia się
-    inner.setAttribute("opacity", on ? String(T.innerOn) : "0"); // efekt ON
-    glow.setAttribute("opacity", on ? String(T.glowOn) : "0");   // efekt ON
-  };
-
-  return { setOn, node: g };
-};
-    
+  
   const lampsY = barY + barH / 2;
-  const lampR  = barH * 0.32;
+  const lampR  = barH * 0.42;
   const padX   = lampR * 1.6;
   
   const lampAX = barX + padX;        // A po lewej
   const lampBX = barX + barW - padX; // B po prawej
   
   const lampA = makeLamp(basebar, lampAX, lampsY, lampR, "#ff2e3b");
-  const lampB = makeLamp(basebar, lampBX, lampsY, lampR, "#2A62FF");
+  const lampB = makeLamp(basebar, lampBX, lampsY, lampR, "#2a62ff");
   
   lampA.setOn(false);
   lampB.setOn(false);
