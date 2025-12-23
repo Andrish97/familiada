@@ -406,4 +406,127 @@ Usuń duplikat deklaracji w module.
 
 ---
 
+
+# 15) INDICATOR – kontrolki drużyn (A / B)
+
+INDICATOR to para okrągłych kontrolek (czerwona i niebieska) umieszczonych na pasku drużyn.
+Działa niezależnie od trybu dużego wyświetlacza (LOGO / ROUNDS / FINAL / WIN) i jest dostępny zawsze, gdy APP = GRA.
+
+Kontrolki mają dwa stany wizualne:
+- zgaszona
+- zapalona
+
+Zawsze świeci co najwyżej jedna kontrolka.
+
+---
+
+## 15.1 Dostępność
+
+- INDICATOR jest aktywny tylko w trybie APP = GRA
+- Zmiana trybu sceny (MODE LOGO / ROUNDS / FINAL / WIN) nie wpływa na stan kontrolek
+- Zmiana trybu APP na QR lub BLACK_SCREEN ukrywa całą scenografię, w tym kontrolki
+
+---
+
+## 15.2 API JS (bezpośrednie)
+
+### scene.api.indicator.get()
+
+Zwraca aktualny stan:
+
+"OFF" | "ON_A" | "ON_B"
+
+---
+
+### scene.api.indicator.set(state)
+
+Ustawia stan kontrolek.
+
+Dozwolone wartości:
+- OFF – obie kontrolki zgaszone
+- ON_A – świeci czerwona (A), niebieska zgaszona
+- ON_B – świeci niebieska (B), czerwona zgaszona
+
+Przykłady:
+scene.api.indicator.set("ON_A");
+scene.api.indicator.set("ON_B");
+scene.api.indicator.set("OFF");
+
+Funkcja nie zwraca wartości.
+
+---
+
+## 15.3 Komendy tekstowe (backend → handleCommand)
+
+Składnia:
+INDICATOR <STATE>
+
+Dozwolone stany:
+- OFF
+- ON_A
+- ON_B
+
+Przykłady:
+handleCommand("INDICATOR ON_A");
+handleCommand("INDICATOR ON_B");
+handleCommand("INDICATOR OFF");
+
+UWAGA:
+Komenda "INDICATOR SET ON_A" jest niepoprawna.
+
+---
+
+## 15.4 Zasady wizualne (implementacyjne)
+
+- Każda kontrolka składa się z dwóch warstw:
+  1. Baza (nieprzezroczysta, zmienia jasność OFF ↔ ON)
+  2. Warstwa koloru z gradientem (półprzezroczysta, stała)
+
+- Efekt świecenia:
+  - rozjaśnienie bazy
+  - wewnętrzne halo
+  - zewnętrzny glow (SVG filter)
+
+- Kolory:
+  - A (czerwona) – wysoka luminancja
+  - B (niebieska) – jaśniejszy wariant brandowego niebieskiego, bez przesunięcia w cyjan/zielony
+
+---
+
+## 15.5 Testy diagnostyczne (konsola)
+
+Sprawdzenie istnienia kontrolek:
+document.querySelectorAll('[data-lamp]').length
+
+Test wizualny:
+scene.api.indicator.set("ON_A");
+scene.api.indicator.set("ON_B");
+scene.api.indicator.set("OFF");
+
+---
+
+## 15.6 Typowe błędy
+
+Błąd:
+INDICATOR: zły stan: SET
+
+Przyczyna:
+INDICATOR SET ON_A
+
+Poprawnie:
+INDICATOR ON_A
+
+---
+
+## 15.7 Zależności od trybów
+
+MODE LOGO / ROUNDS / FINAL / WIN – brak wpływu
+MODE QR – ukrywa całość
+MODE BLACK / BLACK_SCREEN – ukrywa całość
+
+---
+
+Status:
+Zaimplementowane. Stabilne. Niezależne od sceny.
+
 KONIEC.
