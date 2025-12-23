@@ -90,6 +90,21 @@
 .msg{ color:#ffeaa6; font-weight:900; opacity:.9; }
 code{ opacity:.9; }
 
+/* log */
+.log{
+  margin-top: 10px;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,.14);
+  background: rgba(0,0,0,.22);
+  padding: 10px;
+  max-height: 220px;
+  overflow: auto;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 12px;
+  line-height: 1.35;
+  white-space: pre-wrap;
+}
+
 /* GRA grid */
 .gameGrid{
   display:grid;
@@ -98,3 +113,4 @@ code{ opacity:.9; }
   margin-top:14px;
 }
 @media (max-width: 1100px){ .gameGrid{ grid-template-columns: 1fr; } }
+
