@@ -10,12 +10,25 @@
   <link rel="stylesheet" href="/familiada/control/control.css"/>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-  <script type="module" src="/familiada/control/js/main.js" defer></script>
+  <script type="module" src="/familiada/control/js/app.js" defer></script>
 </head>
 
 <body class="control-body">
   <header class="topbar">
     <div class="brand">FAMILIADA</div>
+
+    <div class="top-status" aria-label="Status urządzeń">
+      <div class="dotRow">
+        <span class="dot mid" id="dotDisplay" title="Wyświetlacz"></span><span class="lbl">Wyświetlacz</span>
+      </div>
+      <div class="dotRow">
+        <span class="dot mid" id="dotHost" title="Prowadzący"></span><span class="lbl">Prowadzący</span>
+      </div>
+      <div class="dotRow">
+        <span class="dot mid" id="dotBuzzer" title="Przycisk"></span><span class="lbl">Przycisk</span>
+      </div>
+    </div>
+
     <div class="right">
       <button class="btn" id="btnBack" type="button">← Moje gry</button>
       <span class="who" id="who">—</span>
@@ -23,228 +36,334 @@
     </div>
   </header>
 
-  <main class="wrap">
-    <div class="row headRow">
-      <div>
-        <div class="title" id="gameLabel">Control</div>
-        <div class="hint" id="gameMeta">—</div>
+  <main class="wrap wide">
+    <div class="shell">
+      <!-- ===== LEFT: cards list ===== -->
+      <aside class="side">
+        <div class="gameHdr">
+          <div class="title" id="gameLabel">Control</div>
+          <div class="hint" id="gameMeta">—</div>
+        </div>
+
+        <nav class="nav">
+          <button class="navItem active" data-card="devices" id="navDevices" type="button">
+            <span class="k">1</span> Urządzenia
+            <span class="lock" id="lockDevices"></span>
+          </button>
+
+          <button class="navItem" data-card="setup" id="navSetup" type="button" disabled>
+            <span class="k">2</span> Pytania i ustawienia
+            <span class="lock" id="lockSetup">🔒</span>
+          </button>
+
+          <button class="navItem" data-card="game" id="navGame" type="button" disabled>
+            <span class="k">3</span> Rozgrywka
+            <span class="lock" id="lockGame">🔒</span>
+          </button>
+
+          <button class="navItem" data-card="final" id="navFinal" type="button" disabled>
+            <span class="k">4</span> Finał
+            <span class="lock" id="lockFinal">🔒</span>
+          </button>
+        </nav>
+
+        <div class="footMsg">
+          <div class="msg" id="msgSide"></div>
+        </div>
+      </aside>
+
+      <!-- ===== RIGHT: card content ===== -->
+      <section class="main">
+        <!-- CARD: DEVICES -->
+        <section class="cardPanel" data-card="devices">
+          <div class="panelHead">
+            <div>
+              <div class="panelTitle">Urządzenia</div>
+              <div class="hint">Najpierw wyświetlacz. Potem prowadzący i przycisk. QR możesz pokazać na stronie i (opcjonalnie) na wyświetlaczu.</div>
+            </div>
+          </div>
+
+          <!-- step 1: display -->
+          <div class="step" data-step="devices_display">
+            <div class="stepTitle">1/2 — Wyświetlacz</div>
+
+            <div class="cards3">
+              <div class="card">
+                <div class="head">
+                  <div class="name">Wyświetlacz</div>
+                  <div class="badge mid" id="pillDisplay">—</div>
+                </div>
+
+                <div class="rowBtns">
+                  <div class="badge">Ostatnio: <b id="seenDisplay">—</b></div>
+                </div>
+
+                <div class="rowBtns">
+                  <input class="inp" id="displayLink" readonly />
+                  <button class="btn" id="btnCopyDisplay" type="button">Kopiuj</button>
+                  <button class="btn gold" id="btnOpenDisplay" type="button">Otwórz</button>
+                </div>
+
+                <div class="mini">
+                  <div class="hint">
+                    Gdy wyświetlacz pojawi się online, Control automatycznie wyśle <code>MODE BLACK</code> (czarny ekran).
+                  </div>
+                </div>
+              </div>
+
+              <div class="card">
+                <div class="name">QR (okienko na stronie)</div>
+                <div class="hint">To jest QR “pomocniczy” — do pokazania na laptopie operatora.</div>
+                <div class="rowBtns">
+                  <button class="btn" id="btnOpenQrModal" type="button">Pokaż QR prowadzącego i przycisku</button>
+                </div>
+              </div>
+
+              <div class="card">
+                <div class="name">QR na wyświetlaczu</div>
+                <div class="hint">Opcjonalnie: przełącz wyświetlacz w tryb QR (z kodami prowadzącego i przycisku).</div>
+                <div class="rowBtns">
+                  <button class="btn" id="btnDispBlack" type="button">Czarny ekran</button>
+                  <button class="btn gold" id="btnDispQr" type="button">Pokaż QR</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="stepFoot">
+              <button class="btn gold" id="btnDevicesNext" type="button" disabled>Dalej</button>
+              <div class="msg" id="msgDevices"></div>
+            </div>
+          </div>
+
+          <!-- step 2: host+buzzer -->
+          <div class="step hidden" data-step="devices_hostbuzzer">
+            <div class="stepTitle">2/2 — Prowadzący i przycisk</div>
+
+            <div class="cards3">
+              <div class="card">
+                <div class="head">
+                  <div class="name">Prowadzący</div>
+                  <div class="badge mid" id="pillHost">—</div>
+                </div>
+
+                <div class="rowBtns">
+                  <div class="badge">Ostatnio: <b id="seenHost">—</b></div>
+                </div>
+
+                <div class="rowBtns">
+                  <input class="inp" id="hostLink" readonly />
+                  <button class="btn" id="btnCopyHost" type="button">Kopiuj</button>
+                  <button class="btn gold" id="btnOpenHost" type="button">Otwórz</button>
+                </div>
+              </div>
+
+              <div class="card">
+                <div class="head">
+                  <div class="name">Przycisk</div>
+                  <div class="badge mid" id="pillBuzzer">—</div>
+                </div>
+
+                <div class="rowBtns">
+                  <div class="badge">Ostatnio: <b id="seenBuzzer">—</b></div>
+                </div>
+
+                <div class="rowBtns">
+                  <input class="inp" id="buzzerLink" readonly />
+                  <button class="btn" id="btnCopyBuzzer" type="button">Kopiuj</button>
+                  <button class="btn gold" id="btnOpenBuzzer" type="button">Otwórz</button>
+                </div>
+              </div>
+
+              <div class="card">
+                <div class="name">Log kliknięć przycisku</div>
+                <div class="hint">Tylko log (bez testów). Źródło: broadcast <code>BUZZER_EVT</code>.</div>
+                <div class="log" id="buzzLog" style="max-height: 180px;"></div>
+                <div class="rowBtns">
+                  <button class="btn" id="btnBuzzLogClear" type="button">Wyczyść</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="stepFoot">
+              <button class="btn" id="btnDevicesBack" type="button">Wstecz</button>
+              <button class="btn gold" id="btnDevicesFinish" type="button" disabled>Gotowe — przejdź dalej</button>
+              <div class="msg" id="msgDevices2"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- CARD: SETUP -->
+        <section class="cardPanel hidden" data-card="setup">
+          <div class="panelHead">
+            <div>
+              <div class="panelTitle">Pytania i ustawienia</div>
+              <div class="hint">Ustaw nazwy drużyn, zdecyduj czy finał, i (jeśli finał) wybierz 5 pytań.</div>
+            </div>
+          </div>
+
+          <div class="step" data-step="setup_names">
+            <div class="stepTitle">1/2 — Nazwy drużyn</div>
+
+            <div class="card">
+              <div class="name">Drużyny</div>
+              <div class="hint">Nazwy będą widoczne przez całą grę (dolne długie wyświetlacze).</div>
+
+              <div class="rowBtns">
+                <div class="field">
+                  <div class="lbl2">Drużyna A</div>
+                  <input class="inp" id="teamA" autocomplete="off" />
+                </div>
+
+                <div class="field">
+                  <div class="lbl2">Drużyna B</div>
+                  <input class="inp" id="teamB" autocomplete="off" />
+                </div>
+              </div>
+
+              <div class="rowBtns">
+                <button class="btn gold" id="btnSaveTeams" type="button">Zapisz</button>
+                <div class="msg" id="msgTeams"></div>
+              </div>
+            </div>
+
+            <div class="stepFoot">
+              <button class="btn gold" id="btnSetupNext" type="button" disabled>Dalej</button>
+              <div class="msg" id="msgSetup"></div>
+            </div>
+          </div>
+
+          <div class="step hidden" data-step="setup_final">
+            <div class="stepTitle">2/2 — Finał</div>
+
+            <div class="cards2">
+              <div class="card">
+                <div class="name">Czy gramy finał?</div>
+                <div class="rowBtns">
+                  <label class="radio">
+                    <input type="radio" name="hasFinal" value="yes" id="finalYes"/>
+                    <span>Tak</span>
+                  </label>
+                  <label class="radio">
+                    <input type="radio" name="hasFinal" value="no" id="finalNo"/>
+                    <span>Nie</span>
+                  </label>
+                </div>
+
+                <div class="mini">
+                  <div class="hint">Jeśli wybierzesz “Nie”, po końcu gry wracamy do logo i można puścić intro jeszcze raz (bez trybu WIN).</div>
+                </div>
+              </div>
+
+              <div class="card" id="finalPickerCard">
+                <div class="name">Wybierz 5 pytań finałowych</div>
+                <div class="hint">Klikaj, aż będzie dokładnie 5. Potem odblokuje się “Zatwierdź”.</div>
+
+                <div class="rowBtns" style="align-items:flex-end;">
+                  <div class="badge">Wybrane: <b id="pickedCount">0</b>/5</div>
+                  <button class="btn" id="btnReloadQuestions" type="button">Odśwież listę</button>
+                </div>
+
+                <div class="picked" id="pickedChips"></div>
+
+                <div class="qList" id="finalQList"></div>
+
+                <div class="rowBtns">
+                  <button class="btn gold" id="btnSaveFinalQs" type="button" disabled>Zatwierdź 5 pytań</button>
+                  <div class="msg" id="msgFinalPick"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="stepFoot">
+              <button class="btn" id="btnSetupBack" type="button">Wstecz</button>
+              <button class="btn gold" id="btnSetupFinish" type="button" disabled>Zakończ ustawienia</button>
+              <div class="msg" id="msgSetup2"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- CARD: GAME -->
+        <section class="cardPanel hidden" data-card="game">
+          <div class="panelHead">
+            <div>
+              <div class="panelTitle">Rozgrywka</div>
+              <div class="hint">Tu będzie pełna logika rund (kolejne ekrany w jednej karcie). Na razie: szkielet + kontrola “start gry / start rundy”.</div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="name">Start</div>
+            <div class="hint">Stan “gra_gotowa”: tylko nazwy drużyn na longach, wyświetlacz w GRA, reszta bez zmian.</div>
+            <div class="rowBtns">
+              <button class="btn gold" id="btnGameReady" type="button">Ustaw “gra gotowa” na wyświetlaczu</button>
+              <div class="msg" id="msgGame"></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="name">Logo (start gry)</div>
+            <div class="hint">Logo tylko na początku gry.</div>
+            <div class="rowBtns">
+              <button class="btn gold" id="btnShowLogo" type="button">Pokaż logo</button>
+              <button class="btn" id="btnHideBoard" type="button">Schowaj (HIDE)</button>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="name">Runda</div>
+            <div class="hint">Tu docelowo będzie cała runda (buzzer → zatwierdzenie przez operatora → odsłanianie → bank → przerzucanie punktów → koniec rundy).</div>
+            <div class="rowBtns">
+              <button class="btn gold" id="btnStartRound" type="button">Rozpocznij rundę (placeholder)</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- CARD: FINAL -->
+        <section class="cardPanel hidden" data-card="final">
+          <div class="panelHead">
+            <div>
+              <div class="panelTitle">Finał</div>
+              <div class="hint">Tu będzie wpisywanie (Enter / Cmd+Enter powtórzenie), mapowanie, odsłanianie, sumy i liczniki na bocznym tripletcie.</div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="name">Status</div>
+            <div class="hint" id="finalStatus">—</div>
+          </div>
+        </section>
+      </section>
+    </div>
+  </main>
+
+  <!-- ===== QR MODAL ===== -->
+  <div class="modal hidden" id="qrModal" role="dialog" aria-modal="true" aria-label="QR">
+    <div class="modalBack" id="qrBack"></div>
+    <div class="modalCard">
+      <div class="modalHead">
+        <div class="name">QR — prowadzący i przycisk</div>
+        <button class="btn icon" id="btnQrClose" type="button">✕</button>
       </div>
 
-      <div class="tabs">
-        <button class="tab active" data-tab="devices" type="button">Urządzenia</button>
-        <button class="tab" data-tab="game" type="button">Gra</button>
+      <div class="qrGrid">
+        <div class="qrBox">
+          <div class="qTitle">Prowadzący</div>
+          <img id="qrHostImg" alt="QR prowadzącego" />
+          <div class="hint mono" id="qrHostUrl">—</div>
+        </div>
+
+        <div class="qrBox">
+          <div class="qTitle">Przycisk</div>
+          <img id="qrBuzzerImg" alt="QR przycisku" />
+          <div class="hint mono" id="qrBuzzerUrl">—</div>
+        </div>
+      </div>
+
+      <div class="rowBtns" style="justify-content:flex-end;">
+        <button class="btn" id="btnQrCopyHost" type="button">Kopiuj link prowadzącego</button>
+        <button class="btn" id="btnQrCopyBuzzer" type="button">Kopiuj link przycisku</button>
       </div>
     </div>
-
-    <!-- ===== URZĄDZENIA ===== -->
-    <section class="panel" data-panel="devices">
-      <div class="hint">
-        Status z <code>device_presence.last_seen_at</code> (ping ~5s).
-      </div>
-
-      <div class="cards">
-        <!-- 1) WYŚWIETLACZ -->
-        <div class="card">
-          <div class="head">
-            <div class="name">Wyświetlacz</div>
-            <div class="badge" id="pillDisplay">—</div>
-          </div>
-
-          <div class="rowBtns">
-            <div class="badge">Ostatnio: <b id="seenDisplay">—</b></div>
-            <div class="badge">Last: <b id="lastCmdDisplay">—</b></div>
-          </div>
-
-          <div class="rowBtns">
-            <input class="inp" id="displayLink" readonly />
-            <button class="btn" id="btnCopyDisplay" type="button">Kopiuj</button>
-            <button class="btn gold" id="btnOpenDisplay" type="button">Otwórz</button>
-            <button class="btn" id="btnQrDisplay" type="button">QR</button>
-          </div>
-        </div>
-
-        <!-- 2) PROWADZĄCY -->
-        <div class="card">
-          <div class="head">
-            <div class="name">Prowadzący</div>
-            <div class="badge" id="pillHost">—</div>
-          </div>
-
-          <div class="rowBtns">
-            <div class="badge">Ostatnio: <b id="seenHost">—</b></div>
-            <div class="badge">Last: <b id="lastCmdHost">—</b></div>
-          </div>
-
-          <div class="rowBtns">
-            <input class="inp" id="hostLink" readonly />
-            <button class="btn" id="btnCopyHost" type="button">Kopiuj</button>
-            <button class="btn gold" id="btnOpenHost" type="button">Otwórz</button>
-            <button class="btn" id="btnQrHost" type="button">QR</button>
-          </div>
-        </div>
-
-        <!-- 3) PRZYCISK -->
-        <div class="card">
-          <div class="head">
-            <div class="name">Przycisk</div>
-            <div class="badge" id="pillBuzzer">—</div>
-          </div>
-
-          <div class="rowBtns">
-            <div class="badge">Ostatnio: <b id="seenBuzzer">—</b></div>
-            <div class="badge">Last: <b id="lastCmdBuzzer">—</b></div>
-          </div>
-
-          <div class="rowBtns">
-            <input class="inp" id="buzzerLink" readonly />
-            <button class="btn" id="btnCopyBuzzer" type="button">Kopiuj</button>
-            <button class="btn gold" id="btnOpenBuzzer" type="button">Otwórz</button>
-            <button class="btn" id="btnQrBuzzer" type="button">QR</button>
-          </div>
-        </div>
-      </div>
-
-      <div class="foot">
-        <div class="msg" id="msgDevices"></div>
-      </div>
-
-      <!-- QR okienko (tylko w Control) -->
-      <div class="modal" id="qrModal" style="display:none;">
-        <div class="modalCard">
-          <div class="modalHead">
-            <div class="name" id="qrTitle">QR</div>
-            <button class="btn" id="btnQrClose" type="button">Zamknij</button>
-          </div>
-          <div class="hint" id="qrHint">—</div>
-          <div class="qrBox">
-            <!-- zostawiamy jako <img> – generowanie QR zrobimy w kolejnym kroku -->
-            <div class="qrStub">QR (w kolejnym kroku podpinamy generator)</div>
-            <div class="qrUrl" id="qrUrl">—</div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ===== GRA ===== -->
-    <section class="panel" data-panel="game" style="display:none;">
-      <div class="hint" id="gameStepHint">
-        Wkładki idą po kolei. Następne odblokowują się po spełnieniu warunków.
-      </div>
-
-      <!-- WKŁADKI -->
-      <div class="stack" id="gameSteps">
-
-        <!-- KROK 1: DISPLAY ONLINE -->
-        <div class="step card" data-step="TOOLS_DISPLAY">
-          <div class="head">
-            <div class="name">1) Wyświetlacz</div>
-            <div class="badge mid" id="stepPill_DISPLAY">—</div>
-          </div>
-          <div class="hint">Najpierw musi być aktywny wyświetlacz.</div>
-          <div class="rowBtns">
-            <button class="btn gold" id="btnStepDisplayOk" type="button">Dalej</button>
-          </div>
-        </div>
-
-        <!-- KROK 2: HOST + PRZYCISK ONLINE -->
-        <div class="step card locked" data-step="TOOLS_LINKS">
-          <div class="head">
-            <div class="name">2) Prowadzący + Przycisk</div>
-            <div class="badge mid" id="stepPill_LINKS">—</div>
-          </div>
-          <div class="hint">Podłącz prowadzącego i przycisk. Dopiero wtedy odblokuje się kolejny krok.</div>
-          <div class="rowBtns">
-            <button class="btn gold" id="btnStepLinksOk" type="button">Dalej</button>
-          </div>
-        </div>
-
-        <!-- KROK 3: FINAŁ (TAK/NIE) + WYBÓR PYTAŃ -->
-        <div class="step card locked" data-step="FINAL_SETUP">
-          <div class="head">
-            <div class="name">3) Finał</div>
-            <div class="badge mid" id="stepPill_FINAL">—</div>
-          </div>
-
-          <div class="rowBtns">
-            <label class="chk">
-              <input type="checkbox" id="chkFinal"/>
-              <span>Gramy finał</span>
-            </label>
-            <button class="btn" id="btnPickFinalQuestions" type="button" disabled>Wybierz pytania finału</button>
-          </div>
-
-          <div class="mini" id="finalPickSummary" style="display:none;"></div>
-
-          <div class="rowBtns">
-            <button class="btn gold" id="btnFinalSetupOk" type="button">Dalej</button>
-          </div>
-        </div>
-
-        <!-- KROK 4: NAZWY DRUŻYN -->
-        <div class="step card locked" data-step="TEAM_NAMES">
-          <div class="head">
-            <div class="name">4) Nazwy drużyn</div>
-            <div class="badge mid" id="stepPill_TEAMS">—</div>
-          </div>
-
-          <div class="rowBtns">
-            <input class="inp" id="teamA" placeholder="Drużyna A" style="max-width:260px;"/>
-            <input class="inp" id="teamB" placeholder="Drużyna B" style="max-width:260px;"/>
-            <button class="btn" id="btnAdv" type="button">Ustawienia zaawansowane</button>
-          </div>
-
-          <div class="rowBtns">
-            <button class="btn gold" id="btnTeamsOk" type="button">Zatwierdź</button>
-          </div>
-        </div>
-
-        <!-- KROK 5: GRA GOTOWA -->
-        <div class="step card locked" data-step="GAME_READY">
-          <div class="head">
-            <div class="name">5) Gra gotowa</div>
-            <div class="badge mid" id="stepPill_READY">—</div>
-          </div>
-          <div class="hint">
-            Wyświetlacz: tylko nazwy drużyn na dolnych wyświetlaczach. Nic więcej.
-          </div>
-          <div class="rowBtns">
-            <button class="btn gold" id="btnGameReady" type="button">Ustaw stan „gra gotowa”</button>
-          </div>
-        </div>
-
-        <!-- KROK 6: START GRY (LOGO + MUZYKA) -->
-        <div class="step card locked" data-step="GAME_START">
-          <div class="head">
-            <div class="name">6) Start gry</div>
-            <div class="badge mid" id="stepPill_START">—</div>
-          </div>
-          <div class="hint">Logo tylko na początku gry.</div>
-          <div class="rowBtns">
-            <button class="btn gold" id="btnGameStart" type="button">Start gry (logo + intro)</button>
-          </div>
-        </div>
-
-        <!-- KROK 7: START RUNDY -->
-        <div class="step card locked" data-step="ROUND_START">
-          <div class="head">
-            <div class="name">7) Start rundy</div>
-            <div class="badge mid" id="stepPill_ROUND">—</div>
-          </div>
-          <div class="hint">
-            Muzyka rundy, plansza rundy, przycisk aktywny automatycznie, pytanie dla prowadzącego.
-          </div>
-          <div class="rowBtns">
-            <button class="btn gold" id="btnRoundStart" type="button">Rozpocznij rundę</button>
-          </div>
-        </div>
-
-      </div>
-
-      <div class="foot">
-        <div class="msg" id="msgGame"></div>
-      </div>
-    </section>
-
-  </main>
+  </div>
 </body>
 </html>
