@@ -1,44 +1,94 @@
-// /familiada/control/js/devices.js
-import { sb } from "/familiada/js/core/supabase.js";
+// control/js/devices.js
+export function createDevices({ game, ui, store, chDisplay, chHost, chBuzzer, chControl }) {
+  function makeUrl(path, id, key) {
+    const u = new URL(path, location.origin);
+    u.searchParams.set("id", id);
+    u.searchParams.set("key", key);
+    return u.toString();
+  }
 
-const ONLINE_MS = 12_000;
+  async function copyToClipboard(text) {
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch {
+      return false;
+    }
+  }
 
-export async function fetchPresence(gameId) {
-  const { data, error } = await sb()
-    .from("device_presence")
-    .select("device_type,device_id,last_seen_at")
-    .eq("game_id", gameId);
+  async function sendCmd(channel, event, line) {
+    const l = String(line ?? "").trim();
+    if (!l) return;
 
-  if (error) return { ok: false, rows: [], error };
-  return { ok: true, rows: data || [], error: null };
-}
+    // use your managed channel
+    await channel.sendBroadcast(event, { line: l });
+  }
 
-function pickNewest(rows, t) {
-  return (
-    rows
-      .filter((r) => String(r.device_type || "").toLowerCase() === t)
-      .sort((a, b) => new Date(b.last_seen_at) - new Date(a.last_seen_at))[0] || null
-  );
-}
+  async function sendDisplayCmd(line) {
+    await sendCmd(chDisplay, "DISPLAY_CMD", line);
+  }
+  async function sendHostCmd(line) {
+    await sendCmd(chHost, "HOST_CMD", line);
+  }
+  async function sendBuzzerCmd(line) {
+    await sendCmd(chBuzzer, "BUZZER_CMD", line);
+  }
 
-export function presenceSnapshot(rows) {
-  const now = Date.now();
-  const d = pickNewest(rows, "display");
-  const h = pickNewest(rows, "host");
-  const b = pickNewest(rows, "buzzer");
+  function initLinksAndQr() {
+    const displayUrl = makeUrl("/familiada/display/index.html", game.id, game.share_key_display);
+    const hostUrl = makeUrl("/familiada/host.html", game.id, game.share_key_host);
+    const buzKey = game.share_key_buzzer;
+    const buzzerUrl = makeUrl("/familiada/buzzer.html", game.id, buzKey || "");
 
-  const isOn = (row) => row?.last_seen_at && now - new Date(row.last_seen_at).getTime() < ONLINE_MS;
+    ui.setValue("displayLink", displayUrl);
+    ui.setValue("hostLink", hostUrl);
+    ui.setValue("buzzerLink", buzzerUrl);
+
+    ui.on("devices.openDisplay", () => window.open(displayUrl, "_blank"));
+    ui.on("devices.openHost", () => window.open(hostUrl, "_blank"));
+    ui.on("devices.openBuzzer", () => window.open(buzzerUrl, "_blank"));
+
+    ui.on("devices.copyDisplay", async () => ui.setMsg("msgDevices", (await copyToClipboard(displayUrl)) ? "Skopiowano link wyświetlacza." : "Nie mogę skopiować."));
+    ui.on("devices.copyHost", async () => ui.setMsg("msgDevices", (await copyToClipboard(hostUrl)) ? "Skopiowano link prowadzącego." : "Nie mogę skopiować."));
+    ui.on("devices.copyBuzzer", async () => ui.setMsg("msgDevices", (await copyToClipboard(buzzerUrl)) ? "Skopiowano link przycisku." : "Nie mogę skopiować."));
+
+    // QR modal: external QR image generator (simple and works everywhere)
+    ui.on("qr.open", () => ui.openQrModal({ hostUrl, buzzerUrl }));
+    ui.on("qr.copyHost", async () => ui.setMsg("msgDevices", (await copyToClipboard(hostUrl)) ? "Skopiowano link prowadzącego." : "Nie mogę skopiować."));
+    ui.on("qr.copyBuzzer", async () => ui.setMsg("msgDevices", (await copyToClipboard(buzzerUrl)) ? "Skopiowano link przycisku." : "Nie mogę skopiować."));
+
+    // QR on display
+    ui.on("display.black", async () => {
+      await sendDisplayCmd("MODE BLACK");
+      ui.setMsg("msgDevices", "Wyświetlacz: czarny ekran.");
+    });
+
+    ui.on("display.qr", async () => {
+      await sendDisplayCmd("MODE QR");
+      await sendDisplayCmd(`QR HOST "${escapeForQuotedCommand(hostUrl)}" BUZZER "${escapeForQuotedCommand(buzzerUrl)}"`);
+      ui.setMsg("msgDevices", "Wyświetlacz: QR prowadzącego i przycisku.");
+    });
+
+    // BUZZER_EVT log only
+    chControl.onBroadcast("BUZZER_EVT", (msg) => {
+      const line = String(msg?.payload?.line ?? "").trim();
+      if (!line) return;
+      ui.appendBuzzLog(line);
+    });
+  }
+
+  function escapeForQuotedCommand(raw) {
+    return String(raw ?? "")
+      .replaceAll("\\", "\\\\")
+      .replaceAll('"', '\\"')
+      .replaceAll("\r\n", "\n");
+  }
 
   return {
-    display: { on: isOn(d), last: d?.last_seen_at || null },
-    host: { on: isOn(h), last: h?.last_seen_at || null },
-    buzzer: { on: isOn(b), last: b?.last_seen_at || null },
-  };
-}
+    initLinksAndQr,
 
-export function fmtSince(ts) {
-  if (!ts) return "—";
-  const ms = Date.now() - new Date(ts).getTime();
-  const s = Math.max(0, Math.round(ms / 1000));
-  return `${s}s temu`;
+    sendDisplayCmd,
+    sendHostCmd,
+    sendBuzzerCmd,
+  };
 }
