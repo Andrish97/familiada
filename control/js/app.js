@@ -109,22 +109,22 @@ async function main() {
 
   ui.on("display.black", async () => {
     await devices.sendDisplayCmd("MODE BLACK");
-    playSfx("ui_tick");
   });
 
   ui.on("qr.toggle", async () => {
     const now = store.state.flags.qrOnDisplay;
+  
     if (!now) {
-      await devices.sendQrToDisplay();
+      await devices.sendQrToDisplay();       // pokaż QR zawsze (linki są zawsze)
       store.setQrOnDisplay(true);
-      ui.setQrToggleLabel(true);
+      ui.setQrToggleLabel(true, store.state.flags.hostOnline && store.state.flags.buzzerOnline);
     } else {
       await devices.sendDisplayCmd("MODE BLACK");
       store.setQrOnDisplay(false);
-      ui.setQrToggleLabel(false);
+      ui.setQrToggleLabel(false, store.state.flags.hostOnline && store.state.flags.buzzerOnline);
     }
-    playSfx("ui_tick");
   });
+
 
   // SETUP
   ui.on("setup.backToDevices", () => store.setActiveCard("devices"));
