@@ -117,7 +117,7 @@ export function unlockAudio() {
     // minimalny dźwięk – spełnia warunek "user gesture"
     const a = new Audio();
     a.volume = 0;
-    a.src = PATH + files.ui_tick;
+    a.src = PATH + files.bells;
     a.play().catch(() => {});
     unlocked = true;
     return true;
