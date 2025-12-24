@@ -152,6 +152,15 @@ export function createUI() {
       ?.classList.remove("hidden");
   }
 
+  function setRoundsStep(step) {
+    document.querySelectorAll('[data-round-step]').forEach(el => {
+      el.classList.toggle(
+        "hidden",
+        el.dataset.roundStep !== step
+      );
+    });
+  }
+
   function setQrToggleLabel(isOn, hostAndBuzzerOnline = false) {
     const b = $("btnQrToggle");
     if (!b) return;
