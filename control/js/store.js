@@ -150,6 +150,10 @@ export function createStore(gameId) {
     emit();
   }
 
+  function isFinalActive() {
+    return state.final?.runtime?.phase && state.final.runtime.phase !== "IDLE";
+  }
+
   function setDevicesStep(step) { state.steps.devices = step; emit(); }
   function setSetupStep(step) { state.steps.setup = step; emit(); }
 
@@ -197,14 +201,22 @@ export function createStore(gameId) {
   function canStartRounds() {
     return allDevicesOnline() && state.flags.audioUnlocked && canFinishSetup();
   }
-
+  
   function canEnterCard(card) {
-    if (card === "devices") return !state.completed.devices;
-    if (card === "setup") return state.completed.devices && allDevicesOnline() && state.flags.audioUnlocked && !state.completed.setup && !state.locks.gameStarted;
-    if (card === "rounds") return state.completed.devices && canFinishSetup();
-    if (card === "final") {
-      return state.hasFinal === true && canFinishSetup() && state.rounds.phase === "IDLE";
+    if (card === "devices") return true;
+  
+    if (card === "setup") {
+      return state.completed.devices && canFinishSetup() && !isFinalActive();
     }
+  
+    if (card === "rounds") {
+      return state.completed.devices && canFinishSetup();
+    }
+  
+    if (card === "final") {
+      return state.hasFinal === true && canFinishSetup();
+    }
+  
     return false;
   }
 
