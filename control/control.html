@@ -377,55 +377,186 @@
               <div class="badge">Czas: <b id="finalTimer">—</b></div>
             </div>
           </div>
-
-          <div class="cards2">
-            <div class="card">
-              <div class="name">Start finału</div>
-
-              <div class="rowBtns">
-                <button class="btn gold" id="btnFinalStart" type="button" disabled>Start finału</button>
-                <button class="btn" id="btnFinalBackToRounds" type="button">Wstecz</button>
+        
+          <!-- STEP 1: START -->
+          <section class="step" data-step="final_start" id="finalStepStart">
+            <div class="stepTitle">1/— — Start finału</div>
+        
+            <div class="cards2">
+              <div class="card">
+                <div class="name">Start finału</div>
+        
+                <div class="mini">
+                  <div class="hint">
+                    Kliknięcie uruchamia finał: dźwięk finału, zmiana planszy, placeholdery oraz wysłanie pytań do prowadzącego.
+                  </div>
+                </div>
+        
+                <div class="msg" id="msgFinalStart"></div>
+        
+                <div class="stepFoot">
+                  <button class="btn" id="btnFinalBackToRounds" type="button">Wstecz</button>
+                  <button class="btn gold" id="btnFinalStart" type="button" disabled>Start finału</button>
+                </div>
               </div>
-
+        
+              <div class="card">
+                <div class="name">Podgląd (opcjonalny)</div>
+                <div class="mini">
+                  <div class="hint">
+                    Operator nie musi widzieć statusów. Jeśli chcesz, możesz tu pokazać krótką checklistę “co jest gotowe”.
+                  </div>
+                </div>
+                <div class="msg" id="msgFinalChecklist"></div>
+              </div>
+            </div>
+          </section>
+        
+          <!-- STEP 2: ENTRY P1 + TIMER 15s -->
+          <section class="step hidden" data-step="final_p1_entry" id="finalStepP1Entry">
+            <div class="stepTitle">2/— — Runda 1: wpisywanie + 15 s</div>
+        
+            <div class="card">
+              <div class="head">
+                <div class="name">Wpisywanie odpowiedzi (Gracz 1)</div>
+                <div class="badge">Timer: <b id="finalP1TimerLabel">15</b> s</div>
+              </div>
+        
               <div class="mini">
-                <div class="hint">Enter = odpowiedź udzielona (dźwięk poprawnej). Cmd/Ctrl+Enter = powtórzenie (dźwięk powtórzenia).</div>
+                <div class="hint">
+                  Operator widzi pola i przyciski. Status i “kontrolki” są dla prowadzącego (wysyłane komendami do hosta).
+                </div>
               </div>
-              <div class="msg" id="msgFinal"></div>
+        
+              <!-- tu JS renderuje 5 pytań + pola -->
+              <div class="finalGrid" id="finalP1Inputs"></div>
+        
+              <div class="stepFoot">
+                <button class="btn" id="btnFinalP1StartTimer" type="button" disabled>Rozpocznij odliczanie (15 s)</button>
+                <button class="btn gold" id="btnFinalP1Next" type="button" disabled>Dalej</button>
+                <div class="msg" id="msgFinalP1"></div>
+              </div>
             </div>
-
+          </section>
+        
+          <!-- STEP 3.n: MAPPING P1 (one screen per question) -->
+          <section class="step hidden" data-step="final_p1_map" id="finalStepP1Map">
+            <div class="stepTitle">3/— — Runda 1: odsłanianie (po pytaniach)</div>
+        
             <div class="card">
-              <div class="name">Status pytań</div>
-              <div class="finalStatusList" id="finalStatusList"></div>
+              <div class="head">
+                <div class="name">Pytanie <b id="finalP1MapIndex">1</b>/5</div>
+                <div class="badge">Mapowanie (Gracz 1)</div>
+              </div>
+        
+              <!-- jeśli coś wpisane: pokaż UI mapowania; jeśli nie: pokaż tylko treść -->
+              <div class="qPrompt" id="finalP1MapQuestion">—</div>
+        
+              <!-- ten blok JS pokazuje tylko jeśli była wpisana odpowiedź -->
+              <div class="mappingGrid" id="finalP1Mapping"></div>
+        
+              <div class="stepFoot">
+                <button class="btn" id="btnFinalP1MapPrev" type="button" disabled>Wstecz</button>
+                <button class="btn gold" id="btnFinalP1MapNext" type="button" disabled>Dalej</button>
+                <div class="msg" id="msgFinalP1Map"></div>
+              </div>
             </div>
-          </div>
-
-          <div class="card" style="margin-top:14px;">
-            <div class="head">
-              <div class="name">Wpisywanie (runda 1 / runda 2)</div>
-              <div class="badge">Nie zatwierdza automatycznie</div>
+          </section>
+        
+          <!-- STEP 4: START ROUND 2 -->
+          <section class="step hidden" data-step="final_round2_start" id="finalStepRound2Start">
+            <div class="stepTitle">4/— — Start rundy 2</div>
+        
+            <div class="card">
+              <div class="name">Rozpocznij rundę 2</div>
+        
+              <div class="mini">
+                <div class="hint">
+                  Kliknięcie: dźwięk rundy, odpowiedzi na tablicy znikają (zostaje suma), timer zmienia się na 20 s.
+                </div>
+              </div>
+        
+              <div class="msg" id="msgFinalRound2Start"></div>
+        
+              <div class="stepFoot">
+                <button class="btn" id="btnFinalRound2Back" type="button">Wstecz</button>
+                <button class="btn gold" id="btnFinalRound2Start" type="button" disabled>Rozpocznij rundę 2</button>
+              </div>
             </div>
-
-            <div class="finalGrid" id="finalInputs"></div>
-
-            <div class="rowBtns" style="margin-top:12px;">
-              <button class="btn gold" id="btnFinalToMapping" type="button" disabled>Przejdź do mapowania</button>
-              <button class="btn" id="btnFinalRevealAll" type="button" disabled>Odsłoń wszystko</button>
+          </section>
+        
+          <!-- STEP 5: ENTRY P2 + TIMER 20s -->
+          <section class="step hidden" data-step="final_p2_entry" id="finalStepP2Entry">
+            <div class="stepTitle">5/— — Runda 2: wpisywanie + 20 s</div>
+        
+            <div class="card">
+              <div class="head">
+                <div class="name">Wpisywanie odpowiedzi (Gracz 2)</div>
+                <div class="badge">Timer: <b id="finalP2TimerLabel">20</b> s</div>
+              </div>
+        
+              <div class="mini">
+                <div class="hint">
+                  Obok każdego pola widać odpowiedź gracza 1. Jest też przycisk “Powtórzenie” (tylko dźwięk + info do prowadzącego).
+                </div>
+              </div>
+        
+              <!-- tu JS renderuje 5 pytań + pola (z podglądem odpowiedzi gracza 1) -->
+              <div class="finalGrid" id="finalP2Inputs"></div>
+        
+              <div class="stepFoot">
+                <button class="btn" id="btnFinalP2StartTimer" type="button" disabled>Rozpocznij odliczanie (20 s)</button>
+                <button class="btn gold" id="btnFinalP2Next" type="button" disabled>Dalej</button>
+                <div class="msg" id="msgFinalP2"></div>
+              </div>
             </div>
-          </div>
-
-          <div class="card" style="margin-top:14px;">
-            <div class="head">
-              <div class="name">Mapowanie (operator)</div>
-              <div class="badge">Poprawki literówek tylko tu</div>
+          </section>
+        
+          <!-- STEP 6.n: MAPPING P2 (one screen per question) -->
+          <section class="step hidden" data-step="final_p2_map" id="finalStepP2Map">
+            <div class="stepTitle">6/— — Runda 2: odsłanianie (po pytaniach)</div>
+        
+            <div class="card">
+              <div class="head">
+                <div class="name">Pytanie <b id="finalP2MapIndex">1</b>/5</div>
+                <div class="badge">Mapowanie (Gracz 2)</div>
+              </div>
+        
+              <div class="qPrompt" id="finalP2MapQuestion">—</div>
+        
+              <div class="mappingGrid" id="finalP2Mapping"></div>
+        
+              <div class="stepFoot">
+                <button class="btn" id="btnFinalP2MapPrev" type="button" disabled>Wstecz</button>
+                <button class="btn gold" id="btnFinalP2MapNext" type="button" disabled>Dalej</button>
+                <div class="msg" id="msgFinalP2Map"></div>
+              </div>
             </div>
-
-            <div class="mappingGrid" id="finalMapping"></div>
-
-            <div class="rowBtns" style="margin-top:12px;">
-              <button class="btn gold" id="btnFinalCommit" type="button" disabled>Zatwierdź na tablicę</button>
-              <button class="btn" id="btnFinalFinish" type="button" disabled>Zakończ finał</button>
+          </section>
+        
+          <!-- STEP 7: FINISH / PRIZE -->
+          <section class="step hidden" data-step="final_finish" id="finalStepFinish">
+            <div class="stepTitle">7/— — Zakończenie</div>
+        
+            <div class="card">
+              <div class="name">Zakończ finał</div>
+        
+              <div class="mini">
+                <div class="hint">
+                  Jeśli w trakcie odsłaniania padło 200 punktów: przechodzimy tu od razu.
+                  Jeżeli nie: pokaż nagrodę / brak nagrody / nagrodę główną wg ustawień zaawansowanych, a na koniec zawsze dźwięk finału.
+                </div>
+              </div>
+        
+              <div class="msg" id="msgFinalFinish"></div>
+        
+              <div class="stepFoot">
+                <button class="btn" id="btnFinalFinishBack" type="button">Wstecz</button>
+                <button class="btn gold" id="btnFinalFinish" type="button" disabled>Zakończ finał</button>
+              </div>
             </div>
-          </div>
+          </section>
+        
         </section>
 
       </section>
