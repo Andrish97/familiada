@@ -70,6 +70,7 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
 
   async function stateGameReady() {
     const { teamA, teamB } = store.state.teams;
+    store.state.rounds.phase = "READY";
     await display.stateGameReady(teamA, teamB);
     ui.setMsg("msgRounds", "Ustawiono stan: gra gotowa.");
     playSfx("ui_tick");
@@ -81,16 +82,23 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     const { teamA, teamB } = store.state.teams;
 
     playSfx("show_intro");
-    await display.stateIntroLogo(teamA, teamB);
+    setTimeout(() => {
+      display.stateIntroLogo(teamA, teamB).catch(() => {});
+    }, 14000);
 
-    ui.setMsg("msgRounds", "Start gry: logo + muzyka. Następnie rozpocznij rundę.");
-    playSfx("ui_tick");
+    setTimeout(() => {
+      playSfx("show_intro");
+    }, 18000);
+
+    ui.setMsg("msgRounds", "Intro uruchomione. Potem rozpocznij rundę.");
 
     // allow round start
     ui.setEnabled("btnStartRound", store.canStartRounds());
   }
 
   async function startRound() {
+    store.state.rounds.phase = "ROUND_ACTIVE";
+    
     lockGameStart();
 
     resetRoundStateKeepTotals();
@@ -108,6 +116,7 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
 
     // board transition: hide logo (if any), then placeholders
     playSfx("round_transition");
+    await new Promise((r) => setTimeout(r, 900));
     await display.hideLogo();
     // placeholder count = answers length (clamp 1..6)
     await display.roundsBoardPlaceholders(Math.max(1, Math.min(6, store.state.rounds.answers.length || 6)));
@@ -175,8 +184,11 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
         updateUiRound();
         return;
       }
+      const leftMs = r.timer3.endsAt - Date.now();
+      r.timer3.secLeft = Math.max(0, Math.ceil(leftMs / 1000));
       requestAnimationFrame(tick);
     };
+    r.timer3.secLeft = 3;
     requestAnimationFrame(tick);
   }
 
