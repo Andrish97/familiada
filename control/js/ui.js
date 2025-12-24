@@ -131,7 +131,6 @@ export function createUI() {
   }
 
   function setFinalConfirmed(confirmed) {
-    // list becomes read-only view; “Edytuj” visible after confirm
     const only = $("finalOnlyView");
     const btnEdit = $("btnEditFinal");
     const btnConfirm = $("btnConfirmFinal");
@@ -153,7 +152,7 @@ export function createUI() {
     setText("bankPts", String(r.bankPts));
     setText("xA", String(r.xA));
     setText("xB", String(r.xB));
-    setText("t3", r.timer3.running ? "TRWA" : "—");
+    setText("t3", r.timer3.running ? String(r.timer3.secLeft ?? 3) : "—");
   }
 
   function setGameHeader(name, meta) {
@@ -161,7 +160,6 @@ export function createUI() {
     setText("gameMeta", meta || "");
   }
 
-  // ===== ROUNDS render helpers =====
   function setRoundQuestion(text) { setText("roundQuestion", text || "—"); }
 
   function renderRoundAnswers(answers, revealedSet) {
@@ -188,7 +186,6 @@ export function createUI() {
     });
   }
 
-  // ===== FINAL UI (rendered from module) =====
   function setFinalStatusList(linesHtml) {
     const root = $("finalStatusList");
     if (root) root.innerHTML = linesHtml || "";
@@ -200,6 +197,18 @@ export function createUI() {
   function setFinalMapping(html) {
     const root = $("finalMapping");
     if (root) root.innerHTML = html || "";
+  }
+
+  // ROUNDS: sterowanie widokami kroków
+  function setRoundsStep(step) {
+    const a = $("rStepReady");
+    const b = $("rStepIntro");
+    const c = $("rStepRound");
+    if (!a || !b || !c) return;
+
+    a.classList.toggle("hidden", step !== "READY");
+    b.classList.toggle("hidden", step !== "INTRO");
+    c.classList.toggle("hidden", step !== "ROUND");
   }
 
   function wire() {
@@ -234,18 +243,36 @@ export function createUI() {
     $("btnSetupBack")?.addEventListener("click", () => emit("setup.back"));
     $("btnSetupFinish")?.addEventListener("click", () => emit("setup.finish"));
 
+    $("btnTeamMore")?.addEventListener("click", () => {
+      $("teamExtra")?.classList.toggle("hidden");
+    });
+
+    // LIVE wpis nazw + Enter -> następne pole (bez zatwierdzania)
+    const a = $("teamA");
+    const b = $("teamB");
+    if (a && b) {
+      a.addEventListener("input", () => emit("teams.change", { teamA: a.value, teamB: b.value }));
+      b.addEventListener("input", () => emit("teams.change", { teamA: a.value, teamB: b.value }));
+
+      a.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") { e.preventDefault(); b.focus(); }
+      });
+      b.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") { e.preventDefault(); b.blur(); }
+      });
+    }
+
     $("finalYes")?.addEventListener("change", () => emit("final.toggle", true));
     $("finalNo")?.addEventListener("change", () => emit("final.toggle", false));
     $("btnReloadQuestions")?.addEventListener("click", () => emit("final.reload"));
     $("btnConfirmFinal")?.addEventListener("click", () => emit("final.confirm"));
     $("btnEditFinal")?.addEventListener("click", () => emit("final.edit"));
 
-    // rounds
+    // rounds (kroki)
     $("btnBackToSetup")?.addEventListener("click", () => emit("rounds.backToSetup"));
     $("btnGameReady")?.addEventListener("click", () => emit("game.ready"));
     $("btnStartShowIntro")?.addEventListener("click", () => emit("game.startIntro"));
     $("btnStartRound")?.addEventListener("click", () => emit("rounds.start"));
-    $("btnResetRoundState")?.addEventListener("click", () => emit("rounds.resetRound"));
 
     $("btnBuzzEnable")?.addEventListener("click", () => emit("buzz.enable"));
     $("btnBuzzAcceptA")?.addEventListener("click", () => emit("buzz.acceptA"));
@@ -295,6 +322,7 @@ export function createUI() {
     setQrToggleLabel,
 
     setRoundsHud,
+    setRoundsStep,
     setRoundQuestion,
     renderRoundAnswers,
 
