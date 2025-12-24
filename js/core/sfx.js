@@ -41,12 +41,17 @@ function loadAudio(name) {
 /* ========= SIMPLE SFX ========= */
 
 export function playSfx(name) {
-  const a = loadAudio(name);
-  if (!a) return;
-  try {
-    a.currentTime = 0;
-    a.play().catch(() => {});
-  } catch {}
+  if (!name) return;
+
+  const file = SFX[name];
+  if (!file) {
+    console.warn("Brak dźwięku:", name);
+    return;
+  }
+
+  if (!unlocked) return;
+  const a = new Audio(PATH + file);
+  a.play().catch(() => {});
 }
 
 /* ========= MIXER / TIMER ========= */
