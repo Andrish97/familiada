@@ -134,6 +134,10 @@ async function main() {
     playSfx("ui_tick");
   });
 
+  ui.on("teams.change", ({ teamA, teamB }) => {
+    store.setTeams(teamA, teamB);
+  });
+
   ui.on("setup.next", () => store.setSetupStep("setup_final"));
   ui.on("setup.back", () => store.setSetupStep("setup_names"));
 
@@ -243,6 +247,12 @@ async function main() {
 
   store.subscribe(render);
   render();
+
+  ui.setRoundsStep(
+    store.state.rounds.phase === "IDLE" || store.state.rounds.phase === "READY" ? "READY" :
+    store.state.rounds.phase === "INTRO" ? "INTRO" :
+    "ROUND"
+  );
 
   // boot view state
   ui.setQrToggleLabel(store.state.flags.qrOnDisplay);
