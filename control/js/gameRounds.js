@@ -310,6 +310,7 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
 
     if (r.steal.active) {
       // kradzież trafiona => bank przechodzi do stealTeam
+      store.state.rounds.stealWon = true;
       stealResolved = true;
       ui.setMsg("msgRoundsSteal", "Trafiona! Bank przejdzie do przeciwników.");
       ui.setEnabled("btnGoEndRoundFromSteal", true);
@@ -342,6 +343,7 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     // po 3 X => kradzież
     if (xNow >= 3) {
       r.steal.active = true;
+      store.state.rounds.stealWon = false;
       stealTeam = otherTeam(r.controlTeam);
       stealResolved = false;
 
@@ -364,6 +366,7 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
 
   function stealMiss() {
     if (!store.state.rounds.steal.active) return;
+    store.state.rounds.stealWon = true;
     stealResolved = true;
     playSfx("answer_wrong");
     ui.setMsg("msgRoundsSteal", "Nietrafiona. Bank zostaje u grających.");
