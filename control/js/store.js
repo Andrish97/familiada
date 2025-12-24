@@ -157,8 +157,8 @@ export function createStore(gameId) {
     }
   }
 
-  // po store.hydrate();
-  if (!store.canEnterCard(store.state.activeCard)) store.setActiveCard("devices");
+  // po .hydrate();
+  if (!canEnterCard(state.activeCard)) setActiveCard("devices");
 
 
   function serialize(s) {
