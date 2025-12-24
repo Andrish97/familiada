@@ -193,25 +193,22 @@ async function main() {
 
 
   // FINAL
-  ui.on("final.back", () => store.setActiveCard("rounds"));
+  final.bootIfNeeded();
+  
   ui.on("final.start", () => final.startFinal());
+  ui.on("final.back", (card) => store.setActiveCard(card)); // albo Twoja nawigacja
+  ui.on("final.backStep", (step) => final.backTo(step));
+  
+  ui.on("final.p1.timer", () => final.p1StartTimer());
+  ui.on("final.p1.toQ", (n) => final.toP1MapQ(n));
+  ui.on("final.p1.nextQ", (n) => final.nextFromP1Q(n));
+  
+  ui.on("final.p2.start", () => final.startP2Round());
+  ui.on("final.p2.timer", () => final.p2StartTimer());
+  ui.on("final.p2.toQ", (n) => final.toP2MapQ(n));
+  ui.on("final.p2.nextQ", (n) => final.nextFromP2Q(n));
+  
   ui.on("final.finish", () => final.finishFinal());
-  ui.on("final.p1.timerStart", () => final.startTimerP1());
-  ui.on("final.p1.next", () => final.goToP1Map());
-  
-  ui.on("final.p1.mapPrev", () => final.mapPrev("P1"));
-  ui.on("final.p1.mapNext", () => final.mapNext("P1"));
-  
-  ui.on("final.round2.back", () => final.backToP1Map());
-  ui.on("final.round2.start", () => final.startRound2());
-  
-  ui.on("final.p2.timerStart", () => final.startTimerP2());
-  ui.on("final.p2.next", () => final.goToP2Map());
-  
-  ui.on("final.p2.mapPrev", () => final.mapPrev("P2"));
-  ui.on("final.p2.mapNext", () => final.mapNext("P2"));
-  
-  ui.on("final.finish.back", () => final.backFromFinish());
 
   // Presence loop
   await presence.start();
