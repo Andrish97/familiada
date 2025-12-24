@@ -17,7 +17,7 @@ const files = {
 
   time_over: "time_over.mp3",
 
-  ui_tick: "ui_tick.mp3",
+  bells: "bells.mp3",
 };
 
 export function listSfx() {
