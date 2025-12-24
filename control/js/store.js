@@ -60,6 +60,9 @@ export function createStore(gameId) {
       xA: 0,
       xB: 0,
       totals: { A: 0, B: 0 },
+      step: "r_ready",
+      passUsed: false,
+      stealWon: false,
 
       question: null, // {id, ord, text}
       answers: [],    // [{id, ord, text, fixed_points}]
@@ -100,7 +103,12 @@ export function createStore(gameId) {
       const p = JSON.parse(raw);
 
       // minimal safe hydrate
-      if (p?.activeCard) state.activeCard = p.activeCard;
+      if (p?.activeCard && typeof p.activeCard === "string") {
+        // ustaw tymczasowo, ale potem app i tak wywoła render + setNavEnabled.
+        // bezpieczniej: zostaw devices jeśli nie wolno wejść
+        state.activeCard = p.activeCard;
+      }
+
 
       if (p?.steps?.devices) state.steps.devices = p.steps.devices;
       if (p?.steps?.setup) state.steps.setup = p.steps.setup;
@@ -146,6 +154,10 @@ export function createStore(gameId) {
       state.activeCard = order.find((c) => canEnterCard(c)) || "devices";
     }
   }
+
+  // po store.hydrate();
+  if (!store.canEnterCard(store.state.activeCard)) store.setActiveCard("devices");
+
 
   function serialize(s) {
     // convert Sets
