@@ -7,22 +7,22 @@
   background: rgba(0,0,0,.22);
   backdrop-filter: blur(10px);
 }
+
 .gameTitle{
-  padding: 10px 0 12px;
+  padding: 6px 0 7px;       /* było 10 / 12 — robimy niższy */
   display:flex;
   flex-direction:column;
-  gap:4px;
+  gap:2px;                  /* ciaśniej */
 }
+
 .gameTitle .t1{
-  font-weight:1000;
-  letter-spacing:.06em;
-}
-.gameTitle .t2{
-  opacity:.75;
-  font-size:12px;
   font-weight:900;
-  letter-spacing:.08em;
-  text-transform:uppercase;
+  letter-spacing:.05em;
+  font-size:15px;
+}
+
+.gameTitle .t2{
+  display:none;             /* ukrywamy meta */
 }
 
 /* layout */
