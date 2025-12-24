@@ -131,7 +131,6 @@ async function main() {
   ui.on("teams.save", () => {
     store.setTeams(ui.getTeamA(), ui.getTeamB());
     ui.setMsg("msgTeams", "Zapisano.");
-    playSfx("ui_tick");
   });
 
   ui.on("teams.change", ({ teamA, teamB }) => {
@@ -150,14 +149,12 @@ async function main() {
     store.confirmFinalQuestions(final.pickerGetSelectedIds());
     ui.setFinalConfirmed(true);
     ui.setMsg("msgFinalPick", "Zatwierdzono.");
-    playSfx("ui_tick");
   });
 
   ui.on("final.edit", () => {
     store.unconfirmFinalQuestions();
     ui.setFinalConfirmed(false);
     ui.setMsg("msgFinalPick", "");
-    playSfx("ui_tick");
   });
 
   ui.on("setup.finish", () => {
