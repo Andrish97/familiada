@@ -25,17 +25,21 @@ export function createStore(gameId) {
     },
 
     hasFinal: null,
-
+    
     final: {
       picked: [],
       confirmed: false,
       runtime: {
-        phase: "IDLE", // IDLE | P1_ENTRY | P1_MAPPING | P2_ENTRY | P2_MAPPING | REVEAL | DONE
+        phase: "IDLE", // IDLE | P1_ENTRY | P1_MAP | ROUND2_START | P2_ENTRY | P2_MAP | FINISH
         sum: 0,
-        timer: { running:false, secLeft:0, teamSide:"A" }, // timer on winning side only (display)
-        p1: {}, // qid -> {text, status}
-        p2: {}, // qid -> {text, status}
-        map: {}, // qid -> {choice:"MATCH"|"MISS"|"SKIP"|"REPEAT", matchId?, outText, pts}
+        winSide: "A",            // "A"|"B" (strona timera)
+        timer: { running:false, secLeft:0, phase:"P1" }, // P1=15, P2=20
+        mapIndex: 0,             // 0..4
+        p1List: null,            // [{text,status}] len 5, status: EMPTY|FILLED
+        p2List: null,            // [{text,status}] len 5, status: EMPTY|FILLED|REPEAT
+        mapP1: null,             // [{choice, matchId, outText, pts}] len 5
+        mapP2: null,             // [{choice, matchId, outText, pts}] len 5
+        reached200: false,
       },
     },
 
@@ -135,6 +139,12 @@ export function createStore(gameId) {
         state.rounds.totals = p.rounds.totals || state.rounds.totals;
       }
     } catch {}
+    // sanity po hydracji
+    if (!canEnterCard(state.activeCard)) {
+      // preferuj rounds, potem final, potem setup, potem devices
+      const order = ["rounds", "final", "setup", "devices"];
+      state.activeCard = order.find((c) => canEnterCard(c)) || "devices";
+    }
   }
 
   function serialize(s) {
@@ -206,6 +216,7 @@ export function createStore(gameId) {
     if (card === "devices") return true;
   
     if (card === "setup") {
+      // ustawień nie zmieniamy podczas finału
       return state.completed.devices && canFinishSetup() && !isFinalActive();
     }
   
