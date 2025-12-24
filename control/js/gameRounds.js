@@ -1,4 +1,4 @@
-import { playSfx } from "/familiada/js/core/sfx.js";
+import { playSfx, playSfxAndWait } from "/familiada/js/core/sfx.js";
 
 function nInt(v, d=0){ const x = Number.parseInt(String(v??""),10); return Number.isFinite(x)?x:d; }
 
@@ -79,7 +79,6 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     } catch {}
   
     ui.setMsg("msgRounds", "Ustawiono stan: gra gotowa.");
-    playSfx("ui_tick");
   }
 
 
@@ -122,28 +121,24 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     }));
 
     // board transition: hide logo (if any), then placeholders
-    // dźwięk startu rundy
-    playSfx("round_transition");
+    await playSfxAndWait("round_transition");
     
-    // pod koniec dźwięku: host dostaje pytanie i odsłania
-    setTimeout(async () => {
-      try {
-        await devices.sendHostCmd("CLEAR");
-        // ważne: w SET możesz wysłać \n, host to dekoduje
-        await devices.sendHostCmd(`SET "${String(q.text ?? "").replaceAll('"','\\"')}"`);
-        await devices.sendHostCmd("OPEN");
-      } catch {}
-    }, 5000); // <-- dopasuj do realnego "pod koniec dźwięku"
-
+    // po końcu dźwięku: host dostaje pytanie i jest odsłonięty
+    try {
+      await devices.sendHostCmd("CLEAR");
+      await devices.sendHostCmd(`SET "${String(q.text ?? "").replaceAll("\\", "\\\\").replaceAll('"', '\\"').replaceAll("\n", "\\n")}"`);
+      await devices.sendHostCmd("OPEN");
+    } catch {}
+    
+    // teraz plansza
     await display.hideLogo();
-    // placeholder count = answers length (clamp 1..6)
-    await display.roundsBoardPlaceholders(Math.max(1, Math.min(6, store.state.rounds.answers.length || 6)));
-
-    // bank on triplet = 000
+    await display.roundsBoardPlaceholders(
+      Math.max(1, Math.min(6, store.state.rounds.answers.length || 6))
+    );
+    
     await display.setBankTriplet(0);
     await display.setTotalsTriplets(store.state.rounds.totals);
-
-    // buzzer ready (operator will click “Aktywuj”)
+    
     ui.setMsg("msgRounds", "Runda rozpoczęta. Aktywuj pojedynek przyciskiem.");
     updateUiRound();
   }
