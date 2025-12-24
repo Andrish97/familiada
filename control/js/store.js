@@ -98,19 +98,128 @@ export function createStore(gameId) {
 
   function subscribe(fn) { listeners.add(fn); return () => listeners.delete(fn); }
 
+  function serialize(s) {
+    // convert Sets
+    const out = structuredClone(s);
+    out.rounds.revealed = Array.from(s.rounds.revealed);
+    return out;
+  }
+
+  function isFinalActive() {
+    return state.final?.runtime?.phase && state.final.runtime.phase !== "IDLE";
+  }
+
+  function teamsOk() {
+    return state.teams.teamA.trim().length > 0 || state.teams.teamB.trim().length > 0;
+  }
+
+  function canFinishSetup() {
+    if (!teamsOk()) return false;
+    if (state.hasFinal === false) return true;
+    if (state.hasFinal === true) {
+      return state.final.confirmed === true && state.final.picked.length === 5;
+    }
+    return false;
+  }
+
+  function allDevicesOnline() {
+    return state.flags.displayOnline && state.flags.hostOnline && state.flags.buzzerOnline;
+  }
+
+  function canStartRounds() {
+    return allDevicesOnline() && state.flags.audioUnlocked && canFinishSetup();
+  }
+
+  function canEnterCard(card) {
+    if (card === "devices") return true;
+
+    if (card === "setup") {
+      // Do ustawień możemy wejść po ukończeniu urządzeń,
+      // ale nie wolno wchodzić, gdy finał jest aktywny.
+      return state.completed.devices && !isFinalActive();
+    }
+
+    if (card === "rounds") {
+      // Do rozgrywki dopiero po pełnym setupie
+      return state.completed.devices && canFinishSetup();
+    }
+
+    if (card === "final") {
+      // Do finału tylko jeśli finał włączony i setup skończony
+      return state.hasFinal === true && canFinishSetup();
+    }
+
+    return false;
+  }
+
+  function setActiveCard(card) {
+    if (!canEnterCard(card)) return;
+    state.activeCard = card;
+    emit();
+  }
+
+  function setDevicesStep(step) { state.steps.devices = step; emit(); }
+  function setSetupStep(step) { state.steps.setup = step; emit(); }
+
+  function completeCard(card) { state.completed[card] = true; emit(); }
+
+  function setTeams(a, b) {
+    state.teams.teamA = String(a ?? "");
+    state.teams.teamB = String(b ?? "");
+    emit();
+  }
+
+  function setHasFinal(v) {
+    state.hasFinal = v;
+    if (v === false) {
+      state.final.picked = [];
+      state.final.confirmed = false;
+    }
+    emit();
+  }
+
+  function confirmFinalQuestions(ids) {
+    state.final.picked = Array.isArray(ids) ? ids.slice(0, 5) : [];
+    state.final.confirmed = true;
+    emit();
+  }
+
+  function unconfirmFinalQuestions() {
+    state.final.confirmed = false;
+    emit();
+  }
+
+  function setOnlineFlags({ display, host, buzzer }) {
+    state.flags.displayOnline = !!display;
+    state.flags.hostOnline = !!host;
+    state.flags.buzzerOnline = !!buzzer;
+    emit();
+  }
+
+  function markSentBlackAfterDisplayOnline() {
+    state.flags.sentBlackAfterDisplayOnline = true;
+    emit();
+  }
+
+  function setAudioUnlocked(v) {
+    state.flags.audioUnlocked = !!v;
+    emit();
+  }
+
+  function setQrOnDisplay(v) {
+    state.flags.qrOnDisplay = !!v;
+    emit();
+  }
+
   function hydrate() {
     try {
       const raw = localStorage.getItem(KEY);
       if (!raw) return;
       const p = JSON.parse(raw);
 
-      // minimal safe hydrate
       if (p?.activeCard && typeof p.activeCard === "string") {
-        // ustaw tymczasowo, ale potem app i tak wywoła render + setNavEnabled.
-        // bezpieczniej: zostaw devices jeśli nie wolno wejść
         state.activeCard = p.activeCard;
       }
-
 
       if (p?.steps?.devices) state.steps.devices = p.steps.devices;
       if (p?.steps?.setup) state.steps.setup = p.steps.setup;
@@ -144,106 +253,20 @@ export function createStore(gameId) {
       }
 
       if (p?.rounds) {
-        // keep totals & roundNo
         state.rounds.roundNo = Number(p.rounds.roundNo || 1);
         state.rounds.totals = p.rounds.totals || state.rounds.totals;
       }
     } catch {}
+
     // sanity po hydracji
     if (!canEnterCard(state.activeCard)) {
-      // preferuj rounds, potem final, potem setup, potem devices
       const order = ["rounds", "final", "setup", "devices"];
       state.activeCard = order.find((c) => canEnterCard(c)) || "devices";
     }
   }
 
-  // po .hydrate();
+  // po .hydrate(); – startowo upewnij się, że jesteśmy co najmniej na devices
   if (!canEnterCard(state.activeCard)) setActiveCard("devices");
-
-
-  function serialize(s) {
-    // convert Sets
-    const out = structuredClone(s);
-    out.rounds.revealed = Array.from(s.rounds.revealed);
-    return out;
-  }
-
-  function setActiveCard(card) {
-    if (!canEnterCard(card)) return;
-    state.activeCard = card;
-    emit();
-  }
-
-  function isFinalActive() {
-    return state.final?.runtime?.phase && state.final.runtime.phase !== "IDLE";
-  }
-
-  function setDevicesStep(step) { state.steps.devices = step; emit(); }
-  function setSetupStep(step) { state.steps.setup = step; emit(); }
-
-  function completeCard(card) { state.completed[card] = true; emit(); }
-
-  function setTeams(a, b) { state.teams.teamA = String(a ?? ""); state.teams.teamB = String(b ?? ""); emit(); }
-  function setHasFinal(v) { state.hasFinal = v; if (v === false) { state.final.picked = []; state.final.confirmed = false; } emit(); }
-
-  function confirmFinalQuestions(ids) {
-    state.final.picked = Array.isArray(ids) ? ids.slice(0, 5) : [];
-    state.final.confirmed = true;
-    emit();
-  }
-  function unconfirmFinalQuestions() {
-    state.final.confirmed = false;
-    emit();
-  }
-
-  function setOnlineFlags({ display, host, buzzer }) {
-    state.flags.displayOnline = !!display;
-    state.flags.hostOnline = !!host;
-    state.flags.buzzerOnline = !!buzzer;
-    emit();
-  }
-
-  function markSentBlackAfterDisplayOnline() { state.flags.sentBlackAfterDisplayOnline = true; emit(); }
-  function setAudioUnlocked(v) { state.flags.audioUnlocked = !!v; emit(); }
-  function setQrOnDisplay(v) { state.flags.qrOnDisplay = !!v; emit(); }
-
-  function teamsOk() {
-    return state.teams.teamA.trim().length > 0 || state.teams.teamB.trim().length > 0;
-  }
-
-  function canFinishSetup() {
-    if (!teamsOk()) return false;
-    if (state.hasFinal === false) return true;
-    if (state.hasFinal === true) return state.final.confirmed === true && state.final.picked.length === 5;
-    return false;
-  }
-
-  function allDevicesOnline() {
-    return state.flags.displayOnline && state.flags.hostOnline && state.flags.buzzerOnline;
-  }
-
-  function canStartRounds() {
-    return allDevicesOnline() && state.flags.audioUnlocked && canFinishSetup();
-  }
-  
-  function canEnterCard(card) {
-    if (card === "devices") return true;
-  
-    if (card === "setup") {
-      // ustawień nie zmieniamy podczas finału
-      return state.completed.devices && canFinishSetup() && !isFinalActive();
-    }
-  
-    if (card === "rounds") {
-      return state.completed.devices && canFinishSetup();
-    }
-  
-    if (card === "final") {
-      return state.hasFinal === true && canFinishSetup();
-    }
-  
-    return false;
-  }
 
   return {
     state,
