@@ -150,7 +150,6 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
 
     // indicator off until accepted
     display.setIndicator(null).catch(() => {});
-    playSfx("ui_tick");
     updateUiRound();
   }
 
@@ -175,7 +174,6 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     r.controlTeam = other;
     r.allowPass = false;
     display.setIndicator(other).catch(() => {});
-    playSfx("ui_tick");
     updateUiRound();
   }
 
@@ -265,7 +263,6 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
 
     // now operator should click one answer (if found) -> points to stealing team bank (per rules)
     // We implement: next revealed answer will go to stealing team totals at end if steal succeeds.
-    playSfx("ui_tick");
     updateUiRound();
   }
 
@@ -302,7 +299,6 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     resetRoundStateKeepTotals();
     updateUiRound();
     ui.setMsg("msgRounds", "Zresetowano stan rundy (bez kasowania wyników).");
-    playSfx("ui_tick");
   }
 
   // expose for app render tick
