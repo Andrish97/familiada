@@ -418,6 +418,8 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
   async function gotoEnd(hit200) {
     ensureRuntime();
     stopTimer();
+    
+    store.state.final.runtime.hit200 = !!hit200;
 
     // tekst końcowy: nagroda / logo / itd.
     const hasPrize = store.state?.final?.hasPrize !== false; // default: true
@@ -562,13 +564,21 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
   }
 
   async function finishFinal() {
-    // zawsze dźwięk finału na koniec
     playSfx("final_theme");
-
+  
     store.state.locks.finalActive = false;
-
+  
     await display.setIndicator?.(null);
-    await display.showLogo?.(); // wracamy do logo
+  
+    const winEnabled = store.state?.advanced?.winEnabled === true; // <- ustawienia dodatkowe
+    const hit200 = (store.state.final.runtime?.sum || 0) >= 200;
+  
+    if (winEnabled && hit200) {
+      await display.showWin?.();      // <- Twoja implementacja WIN
+    } else {
+      await display.showLogo?.();     // <- default jak dotąd
+    }
+  
     ui.setMsg("msgFinalEnd", "Finał zakończony.");
   }
 
