@@ -45,9 +45,13 @@ async function main() {
   await ensureAuthOrRedirect();
   const game = await loadGameOrThrow();
 
+  const qsAll = await loadQuestions(game.id);
+  sessionStorage.setItem("familiada:questionsCache", JSON.stringify(qsAll));
+
+  
   const ui = createUI();
   ui.setGameHeader(game.name, `${game.type} / ${game.status}`);
-
+  
   const store = createStore(game.id);
   store.hydrate();
 
