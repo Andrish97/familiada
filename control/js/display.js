@@ -27,7 +27,15 @@ export function createDisplay({ devices, store }) {
     await devices.sendDisplayCmd(`LONG2 "${q(teamB)}"`);
   }
 
-  // display.js
+  async function showWin(amount) {
+    const txt = String(Math.max(0, Number(amount || 0))).slice(0, 5); // max 5 znaków
+    await send(`WIN "${txt}" ANIMIN rain right 80`);
+  }
+
+  async function showLogo() {
+    await send("MODE GRA");
+    await send("LOGO SHOW ANIMIN rain right 80");
+  }
 
   async function finalSetSideTimer(team, txt) {
     if (!team) return;
@@ -163,6 +171,8 @@ export function createDisplay({ devices, store }) {
     stateGameReady,
     stateIntroLogo,
     hideLogo,
+    showLogo,
+    showWin,
 
     roundsBoardPlaceholders,
     roundsRevealRow,
