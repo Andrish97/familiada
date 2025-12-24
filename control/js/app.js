@@ -347,8 +347,10 @@ async function main() {
       store.state.flags.displayOnline && store.state.flags.hostOnline && store.state.flags.buzzerOnline
     );
 
-    ui.setEnabled("btnDevicesFinish", store.state.flags.audioUnlocked);
-
+    ui.setEnabled(
+      "btnDevicesFinish",
+      store.state.steps.devices === "devices_audio" && store.state.flags.audioUnlocked
+    );
     ui.setEnabled("btnSetupNext", store.teamsOk());
     ui.setEnabled("btnSetupFinish", store.canFinishSetup());
 
