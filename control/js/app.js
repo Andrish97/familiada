@@ -255,7 +255,10 @@ async function main() {
   );
 
   // boot view state
-  ui.setQrToggleLabel(store.state.flags.qrOnDisplay);
+  ui.setQrToggleLabel(
+    store.state.flags.qrOnDisplay,
+    store.state.flags.hostOnline && store.state.flags.buzzerOnline
+  );
 
   // init questions picker for final
   await final.pickerReload().catch(() => {});
