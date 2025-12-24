@@ -70,11 +70,18 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
 
   async function stateGameReady() {
     const { teamA, teamB } = store.state.teams;
-    store.state.rounds.phase = "READY";
     await display.stateGameReady(teamA, teamB);
+  
+    // host: wyczyść i zasłoń
+    try {
+      await devices.sendHostCmd("CLEAR");
+      await devices.sendHostCmd("HIDE");
+    } catch {}
+  
     ui.setMsg("msgRounds", "Ustawiono stan: gra gotowa.");
     playSfx("ui_tick");
   }
+
 
   async function stateStartGameIntro() {
     // logo only at start
@@ -115,8 +122,19 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     }));
 
     // board transition: hide logo (if any), then placeholders
+    // dźwięk startu rundy
     playSfx("round_transition");
-    await new Promise((r) => setTimeout(r, 900));
+    
+    // pod koniec dźwięku: host dostaje pytanie i odsłania
+    setTimeout(async () => {
+      try {
+        await devices.sendHostCmd("CLEAR");
+        // ważne: w SET możesz wysłać \n, host to dekoduje
+        await devices.sendHostCmd(`SET "${String(q.text ?? "").replaceAll('"','\\"')}"`);
+        await devices.sendHostCmd("OPEN");
+      } catch {}
+    }, 5000); // <-- dopasuj do realnego "pod koniec dźwięku"
+
     await display.hideLogo();
     // placeholder count = answers length (clamp 1..6)
     await display.roundsBoardPlaceholders(Math.max(1, Math.min(6, store.state.rounds.answers.length || 6)));
