@@ -2,7 +2,7 @@
 // Dźwięki lecą na komputerze operatora (control).
 // Pliki są w /audio w root repo.
 
-const PATH = "audio/";
+const PATH = "../audio/";
 
 const files = {
   show_intro: "show_intro.mp3",
