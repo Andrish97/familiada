@@ -178,7 +178,7 @@ export function createUI() {
 
   function setRoundQuestion(text) { setText("roundQuestion", text || "—"); }
 
-  function renderRoundAnswers(answers, revealedSet) {
+  function renderRoundAnswers(answers, revealedSet, rootId = "roundAnswers") {
     const root = $("roundAnswers");
     if (!root) return;
 
@@ -216,15 +216,11 @@ export function createUI() {
   }
 
   // ROUNDS: sterowanie widokami kroków
-  function setRoundsStep(step) {
-    const a = $("rStepReady");
-    const b = $("rStepIntro");
-    const c = $("rStepRound");
-    if (!a || !b || !c) return;
-
-    a.classList.toggle("hidden", step !== "READY");
-    b.classList.toggle("hidden", step !== "INTRO");
-    c.classList.toggle("hidden", step !== "ROUND");
+  function showRoundsStep(step) {
+    document.querySelectorAll('.cardPanel[data-card="rounds"] .step[data-step]')
+      .forEach((s) => s.classList.add("hidden"));
+    document.querySelector(`.cardPanel[data-card="rounds"] .step[data-step="${step}"]`)
+      ?.classList.remove("hidden");
   }
 
   function wire() {
@@ -301,6 +297,21 @@ export function createUI() {
     $("btnStealTry")?.addEventListener("click", () => emit("rounds.stealTry"));
     $("btnEndRound")?.addEventListener("click", () => emit("rounds.end"));
 
+    $("btnRoundsBackFromIntro")?.addEventListener("click", () => emit("rounds.back", "r_ready"));
+    $("btnRoundsBackFromRoundStart")?.addEventListener("click", () => emit("rounds.back", "r_intro"));
+    $("btnRoundsBackFromDuel")?.addEventListener("click", () => emit("rounds.back", "r_roundStart"));
+    $("btnRoundsBackFromPlay")?.addEventListener("click", () => emit("rounds.back", "r_duel"));
+    $("btnRoundsBackFromSteal")?.addEventListener("click", () => emit("rounds.back", "r_play"));
+    $("btnRoundsBackFromEnd")?.addEventListener("click", () => emit("rounds.back", "r_play"));
+    
+    $("btnBuzzRetry")?.addEventListener("click", () => emit("buzz.retry"));
+    
+    $("btnGoSteal")?.addEventListener("click", () => emit("rounds.goSteal"));
+    $("btnStealMiss")?.addEventListener("click", () => emit("rounds.stealMiss"));
+    $("btnGoEndRound")?.addEventListener("click", () => emit("rounds.goEnd"));
+    $("btnGoEndRoundFromSteal")?.addEventListener("click", () => emit("rounds.goEnd"));
+
+
     // final (kroki)
     $("btnFinalP1StartTimer")?.addEventListener("click", () => emit("final.p1.timerStart"));
     $("btnFinalP1Next")?.addEventListener("click", () => emit("final.p1.next"));
@@ -351,8 +362,9 @@ export function createUI() {
     setRoundsHud,
     setRoundsStep,
     setRoundQuestion,
+    
     renderRoundAnswers,
-
+    showRoundsStep,
     setFinalStatusList,
     setFinalInputs,
     setFinalMapping,
