@@ -100,7 +100,7 @@ async function main() {
     store.setAudioUnlocked(!!ok);
     ui.setAudioStatus(!!ok);
     ui.setMsg("msgAudio", ok ? "Dźwięk odblokowany." : "Nie udało się odblokować dźwięku.");
-    playSfx("ui_tick");
+    playSfx("answer_correct");
   });
 
   ui.on("devices.finish", () => {
