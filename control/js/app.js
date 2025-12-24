@@ -218,7 +218,7 @@ async function main() {
     });
 
     ui.setEnabled("btnDevicesNext", store.state.flags.displayOnline);
-    ui.setEnabled("btnQrToggle", store.state.flags.hostOnline && store.state.flags.buzzerOnline);
+    ui.setEnabled("btnQrToggle", store.state.flags.displayOnline);
     ui.setEnabled("btnDevicesToAudio", store.state.flags.displayOnline && store.state.flags.hostOnline && store.state.flags.buzzerOnline);
 
     ui.setEnabled("btnDevicesFinish", store.state.flags.audioUnlocked);
