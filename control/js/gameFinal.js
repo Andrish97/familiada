@@ -445,37 +445,47 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
       ui.setMsg("msgFinal", "Zatwierdź 5 pytań finału w ustawieniach.");
       return;
     }
-
+  
+    // sprawdź czy ktoś ma 300+ (dodatkowe zabezpieczenie, poza canEnterCard)
+    const totals = store.state.rounds?.totals || { A: 0, B: 0 };
+    const has300 = (totals.A || 0) >= 300 || (totals.B || 0) >= 300;
+    if (!has300) {
+      ui.setMsg("msgFinal", "Finał dostępny dopiero po osiągnięciu 300 punktów.");
+      return;
+    }
+  
     ensureRuntime();
-
-    // blokada zmiany ustawień, ale karty nieblokowane (nawigacja działa)
-    store.state.locks.finalActive = true;
-
+  
+    // blokada setupu / nawigacji podczas finału
+    if (typeof store.setFinalActive === "function") {
+      store.setFinalActive(true);
+    } else {
+      store.state.locks.finalActive = true;
+    }
+  
     await loadFinalPicked();
-
-    // dźwięk finału + plansza
+  
     playSfx("final_theme");
     await display.hideLogo?.();
-    await display.finalBoardPlaceholders?.(); // placeholdery + triplet “0”
+    await display.finalBoardPlaceholders?.();
     await display.finalSetSuma?.(0);
-
-    // placeholdery treści
+  
     for (let i = 1; i <= 5; i++) {
       await display.finalSetLeft?.(i, display.PLACE?.finalText || "—");
       await display.finalSetRight?.(i, display.PLACE?.finalText || "—");
       await display.finalSetA?.(i, "00");
       await display.finalSetB?.(i, "00");
     }
-
-    // timer OFF na start (a potem w entry)
+  
     await display.finalSetSideTimer?.(getWinnerTeam(), "");
-
+  
     ui.setMsg("msgFinal", "Finał rozpoczęty.");
     updateSumUI();
     setStep("f_p1_entry");
     renderP1Entry();
     ui.setEnabled("btnFinalToP1MapQ1", false);
   }
+
 
   function backTo(step) {
     setStep(step);
