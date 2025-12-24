@@ -27,6 +27,28 @@ export function createDisplay({ devices, store }) {
     await devices.sendDisplayCmd(`LONG2 "${q(teamB)}"`);
   }
 
+  // display.js
+
+  async function finalSetSideTimer(team, txt) {
+    if (!team) return;
+  
+    // txt = "15", "9", "0", "" itp.
+    await send(`FINAL TIMER ${team} ${txt}`);
+  }
+
+  // display.js
+
+  async function finalHideAnswersKeepSum() {
+    for (let i = 1; i <= 5; i++) {
+      await send(`FINAL LEFT ${i} —`);
+      await send(`FINAL RIGHT ${i} —`);
+      await send(`FINAL A ${i} 00`);
+      await send(`FINAL B ${i} 00`);
+    }
+    // SUMA zostaje nietknięta
+  }
+
+
   // ===== states =====
   async function stateGameReady(teamA, teamB) {
     await appGra();
@@ -132,13 +154,6 @@ export function createDisplay({ devices, store }) {
     await devices.sendDisplayCmd(`FB ${i} ${String(pts)}`);
   }
 
-  async function finalTimerOnSide(team, sec) {
-    // seconds without leading zeros (distinguish from points)
-    const s = String(Math.max(0, Number(sec||0)));
-    if (team === "A") await devices.sendDisplayCmd(`LEFT ${s}`);
-    if (team === "B") await devices.sendDisplayCmd(`RIGHT ${s}`);
-  }
-
   return {
     PLACE,
 
@@ -162,6 +177,7 @@ export function createDisplay({ devices, store }) {
     finalSetRight,
     finalSetA,
     finalSetB,
-    finalTimerOnSide,
+    finalSetSideTimer,
+    finalHideAnswersKeepSum,
   };
 }
