@@ -1,804 +1,603 @@
-// control/js/gameFinal.js
+// /familiada/js/pages/control/gameFinal.js
 import { playSfx } from "/familiada/js/core/sfx.js";
-
-/*
-WYMAGANE ID w HTML (nowy finał krokowy):
-- kontenery:
-  - finalStatusList
-  - finalP1Inputs
-  - finalP2Inputs
-  - finalP1Mapping
-  - finalP2Mapping
-  - finalSum
-  - finalTimer
-  - msgFinalStart (opcjonalnie) / msgFinal (jeśli chcesz wspólny)
-  - msgFinalP1 (opcjonalnie)
-  - msgFinalP2 (opcjonalnie)
-  - msgFinalMap (opcjonalnie)
-  - msgFinalFinish (opcjonalnie)
-
-- tekst pytania w mapowaniu:
-  - finalMapQuestion (lub dwa: finalP1MapQuestion / finalP2MapQuestion)
-  - finalMapIndex   (lub dwa: finalP1MapIndex / finalP2MapIndex)
-
-- przyciski:
-  - btnFinalStart
-  - btnFinalP1StartTimer
-  - btnFinalP1Next
-  - btnFinalP1MapPrev
-  - btnFinalP1MapNext
-  - btnFinalRound2Start
-  - btnFinalP2StartTimer
-  - btnFinalP2Next
-  - btnFinalP2MapPrev
-  - btnFinalP2MapNext
-  - btnFinalFinish
-*/
 
 function nInt(v, d = 0) {
   const x = Number.parseInt(String(v ?? ""), 10);
   return Number.isFinite(x) ? x : d;
 }
 
+function escapeHtml(s) {
+  return String(s ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+function clip11(s) {
+  const t = String(s ?? "");
+  return t.length > 11 ? t.slice(0, 11) : t;
+}
+
 export function createFinal({ ui, store, devices, display, loadAnswers }) {
-  let qPicked = []; // 5 questions: [{id,ord,text}]
-  let answersByQ = new Map(); // qid -> [{id,ord,text,fixed_points}]
+  let qPicked = []; // [{id, text, ord}]
+  let answersByQ = new Map(); // qid -> [{id, text, fixed_points, ord}]
 
-  // picker (zostaje)
-  let pickerAll = [];
-  let pickerSelected = new Set();
+  let raf = null;
 
-  // timer
-  let timerId = null;
-
-  // ---------- helpers ----------
-  function escapeHtml(s) {
-    return String(s ?? "")
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;")
-      .replaceAll("'", "&#039;");
-  }
-
-  function setMsgAny(id, text) {
-    // nie zakładamy, że wszystkie msg-* istnieją
-    try {
-      ui.setMsg(id, text);
-    } catch {}
-  }
-
-  function stopTimer() {
-    if (timerId) clearInterval(timerId);
-    timerId = null;
-    const rt = store.state.final.runtime;
-    if (rt?.timer) rt.timer.running = false;
-  }
-
-  function ensureRuntime() {
-    const rt = store.state.final.runtime;
-
-    // fazy: IDLE | P1_ENTRY | P1_MAP | ROUND2_START | P2_ENTRY | P2_MAP | FINISH
-    if (!rt.phase) rt.phase = "IDLE";
-
-    if (!Number.isFinite(rt.sum)) rt.sum = 0;
-    if (!rt.winSide) rt.winSide = "A"; // tym sterujesz stroną timera na display
-
-    if (!rt.timer) rt.timer = { running: false, secLeft: 0, phase: "P1" };
-
-    if (!Array.isArray(rt.p1List)) rt.p1List = Array.from({ length: 5 }, () => ({ text: "", status: "EMPTY" })); // EMPTY|FILLED
-    if (!Array.isArray(rt.p2List)) rt.p2List = Array.from({ length: 5 }, () => ({ text: "", status: "EMPTY" })); // EMPTY|FILLED|REPEAT
-
-    if (!Array.isArray(rt.mapP1)) rt.mapP1 = Array.from({ length: 5 }, () => ({ choice: null, matchId: null, outText: "", pts: 0 })); // MATCH|MISS|SKIP
-    if (!Array.isArray(rt.mapP2)) rt.mapP2 = Array.from({ length: 5 }, () => ({ choice: null, matchId: null, outText: "", pts: 0 })); // MATCH|MISS|SKIP|REPEAT
-
-    if (!Number.isFinite(rt.mapIndex)) rt.mapIndex = 0;
-    if (typeof rt.reached200 !== "boolean") rt.reached200 = false;
-  }
-
-  function showStep(step) {
-    // wymaga ui.showFinalStep w ui.js
+  function setStep(step) {
+    store.state.final.step = step;
     ui.showFinalStep(step);
   }
 
-  function setTimerOnDisplay(sec) {
-    // timer na stronie zwycięzców, bez zer z przodu — display.finalTimerOnSide już to robi
-    display.finalTimerOnSide(store.state.final.runtime.winSide, sec).catch(() => {});
+  function ensureRuntime() {
+    const f = store.state.final;
+    if (!f.runtime) f.runtime = {};
+    const rt = f.runtime;
+
+    if (!rt.p1) rt.p1 = Array.from({ length: 5 }, () => ({ text: "", entered: false }));
+    if (!rt.p2) rt.p2 = Array.from({ length: 5 }, () => ({ text: "", entered: false, repeat: false }));
+
+    // mapping decisions per slot (osobno dla r1 i r2)
+    // kind: "MATCH" | "MISS" | "SKIP"
+    // matchId: string|null
+    // outText: string
+    // pts: number
+    if (!rt.map1) rt.map1 = Array.from({ length: 5 }, () => ({ kind: "SKIP", matchId: null, outText: "", pts: 0 }));
+    if (!rt.map2) rt.map2 = Array.from({ length: 5 }, () => ({ kind: "SKIP", matchId: null, outText: "", pts: 0 }));
+
+    if (!rt.sum) rt.sum = 0;
+
+    if (!rt.timer) rt.timer = { running: false, endsAt: 0, seconds: 0, phase: null }; // phase: "P1"|"P2"|null
+    if (!rt.done) rt.done = false;
   }
 
-  function setSum(val) {
+  function stopTimer() {
     const rt = store.state.final.runtime;
-    rt.sum = Math.max(0, nInt(val, 0));
-    ui.setText("finalSum", String(rt.sum));
-    display.finalSetSuma(rt.sum).catch(() => {});
+    rt.timer.running = false;
+    rt.timer.endsAt = 0;
+    rt.timer.seconds = 0;
+    rt.timer.phase = null;
+    if (raf) cancelAnimationFrame(raf);
+    raf = null;
+    ui.setText("finalTimer", "—");
   }
 
-  // ---------- picker ----------
-  async function pickerReload() {
-    const raw = sessionStorage.getItem("familiada:questionsCache");
-    pickerAll = raw ? JSON.parse(raw) : [];
-    pickerSelected = new Set(store.state.final.picked || []);
-    pickerRender();
+  // Zwycięska drużyna (do timera na bocznym tripletcie).
+  // U Ciebie to zwykle “drużyna która weszła do finału”.
+  // Jeśli masz to w store, podepnij tu; jeśli nie, fallback: teamA.
+  function getWinnerTeam() {
+    return store.state?.winnerTeam || store.state?.final?.winnerTeam || "A";
   }
 
-  function pickerGetSelectedIds() {
-    return Array.from(pickerSelected);
-  }
-
-  function pickerRender() {
-    const root = document.getElementById("finalQList");
-    const chips = document.getElementById("pickedChips");
-    const cnt = document.getElementById("pickedCount");
-    if (!root || !chips || !cnt) return;
-
-    const confirmed = store.state.final.confirmed === true;
-
-    const picked = pickerAll.filter((q) => pickerSelected.has(q.id));
-    cnt.textContent = String(picked.length);
-
-    chips.innerHTML = picked
-      .map(
-        (q) => `
-      <div class="chip">
-        <span>#${q.ord}</span>
-        <span>${escapeHtml(q.text || "")}</span>
-        ${confirmed ? "" : `<button type="button" data-x="${q.id}">✕</button>`}
-      </div>
-    `
-      )
-      .join("");
-
-    if (!confirmed) {
-      chips.querySelectorAll("button[data-x]").forEach((b) => {
-        b.addEventListener("click", () => {
-          pickerSelected.delete(b.dataset.x);
-          store.state.final.picked = Array.from(pickerSelected).slice(0, 5);
-          pickerRender();
-        });
-      });
-    }
-
-    if (confirmed) {
-      root.innerHTML = picked
-        .map(
-          (q) => `
-        <div class="qRow">
-          <div class="meta">#${q.ord}</div>
-          <div class="txt">${escapeHtml(q.text || "")}</div>
-        </div>
-      `
-        )
-        .join("");
-      return;
-    }
-
-    root.innerHTML = pickerAll
-      .map((q) => {
-        const checked = pickerSelected.has(q.id);
-        const disabled = !checked && pickerSelected.size >= 5;
-        return `
-        <label class="qRow">
-          <input type="checkbox" data-qid="${q.id}" ${checked ? "checked" : ""} ${disabled ? "disabled" : ""}/>
-          <div class="meta">#${q.ord}</div>
-          <div class="txt">${escapeHtml(q.text || "")}</div>
-        </label>
-      `;
-      })
-      .join("");
-
-    root.querySelectorAll("input[data-qid]").forEach((inp) => {
-      inp.addEventListener("change", () => {
-        const id = inp.dataset.qid;
-        if (!id) return;
-
-        if (inp.checked) {
-          if (pickerSelected.size >= 5) {
-            inp.checked = false;
-            return;
-          }
-          pickerSelected.add(id);
-        } else {
-          pickerSelected.delete(id);
-        }
-
-        store.state.final.picked = Array.from(pickerSelected).slice(0, 5);
-        pickerRender();
-      });
-    });
-  }
-
-  // ---------- loading questions/answers ----------
-  async function loadFinalQuestionsAndAnswers() {
+  async function loadFinalPicked() {
+    // Zakładam jak wcześniej: `store.state.final.picked` to 5 ID pytań
+    const pickedIds = store.state.final.picked || [];
     const raw = sessionStorage.getItem("familiada:questionsCache");
     const all = raw ? JSON.parse(raw) : [];
+    qPicked = pickedIds.map((id) => all.find((q) => q.id === id)).filter(Boolean);
 
-    qPicked = (store.state.final.picked || [])
-      .map((id) => all.find((q) => q.id === id))
-      .filter(Boolean);
-
-    if (qPicked.length !== 5) throw new Error("Brakuje 5 pytań finału (zatwierdź w ustawieniach).");
+    if (qPicked.length !== 5) {
+      throw new Error("Brakuje 5 pytań finału (zatwierdź w ustawieniach).");
+    }
 
     answersByQ = new Map();
     for (const q of qPicked) {
       const a = await loadAnswers(q.id);
-      answersByQ.set(
-        q.id,
-        (a || []).map((x) => ({
-          id: x.id,
-          ord: x.ord,
-          text: x.text,
-          fixed_points: nInt(x.fixed_points, 0),
-        }))
-      );
+      answersByQ.set(q.id, (a || []).map((x) => ({
+        id: x.id,
+        ord: x.ord,
+        text: x.text,
+        fixed_points: nInt(x.fixed_points, 0),
+      })));
     }
   }
 
-  // ---------- status list (opcjonalnie, dla prowadzącego / podglądu) ----------
-  function renderStatusList() {
+  function updateSumUI() {
     const rt = store.state.final.runtime;
-    const qTexts = qPicked.map((q) => q.text || "");
-
-    const lines = qTexts
-      .map((q, i) => {
-        const a = rt.p1List[i]?.status === "FILLED" ? "g" : "r";
-        const b = rt.p2List[i]?.status === "FILLED" || rt.p2List[i]?.status === "REPEAT" ? "g" : "r";
-        return `
-          <div class="fLine">
-            <div class="left">
-              <span class="dotS ${a}"></span><span>P1.${i + 1}</span>
-              <span style="opacity:.55;">/</span>
-              <span class="dotS ${b}"></span><span>P2.${i + 1}</span>
-            </div>
-            <div>${escapeHtml(q)}</div>
-          </div>
-        `;
-      })
-      .join("");
-
-    ui.setFinalStatusList(lines);
+    ui.setText("finalSum", String(rt.sum || 0));
   }
 
-  // ---------- entry renders ----------
-  function renderEntryP1() {
+  async function displaySetTimerSeconds(sec) {
+    // Timer tylko na bocznym tripletcie finału po stronie zwycięzców.
+    // Zakładam istnienie metody display.finalSetSideTimer(team, text)
+    // Jeśli nie masz, dopisz ją w display.js (checklista niżej).
+    const team = getWinnerTeam();
+    const txt = String(Math.max(0, sec)); // bez wiodących zer
+    ui.setText("finalTimer", txt);
+    await display.finalSetSideTimer?.(team, txt);
+  }
+
+  function startCountdown(seconds, phase /* "P1"|"P2" */) {
     ensureRuntime();
     const rt = store.state.final.runtime;
 
-    const html = qPicked
-      .map((q, i) => {
-        const v = rt.p1List[i]?.text ?? "";
-        return `
-          <div class="fQ">
-            <div class="qT">Pytanie ${i + 1}: ${escapeHtml(q.text || "")}</div>
-            <div class="rows">
-              <div>
-                <input class="inp" data-i="${i}" value="${escapeHtml(v)}" placeholder="Wpisz…" autocomplete="off"/>
-                <div class="rowBtns">
-                  <button class="btn sm gold" type="button" data-act="ok" data-i="${i}">Zatwierdź</button>
-                </div>
-              </div>
-            </div>
-          </div>
-        `;
-      })
-      .join("");
-
-    const root = document.getElementById("finalP1Inputs");
-    if (root) root.innerHTML = html;
-
-    root?.querySelectorAll('input[data-i]').forEach((inp) => {
-      inp.addEventListener("input", () => {
-        const i = Number(inp.dataset.i);
-        rt.p1List[i].text = String(inp.value ?? "");
-      });
-
-      // Enter przechodzi do następnego pola, bez zatwierdzania
-      inp.addEventListener("keydown", (e) => {
-        if (e.key !== "Enter") return;
-        e.preventDefault();
-        const i = Number(inp.dataset.i);
-        const next = root.querySelector(`input[data-i="${i + 1}"]`);
-        next?.focus();
-      });
-    });
-
-    root?.querySelectorAll('button[data-act="ok"]').forEach((b) => {
-      b.addEventListener("click", () => {
-        const i = Number(b.dataset.i);
-        const v = String(rt.p1List[i].text ?? "").trim();
-        rt.p1List[i].status = v ? "FILLED" : "EMPTY";
-        renderStatusList();
-      });
-    });
-
-    renderStatusList();
-  }
-
-  function renderEntryP2() {
-    ensureRuntime();
-    const rt = store.state.final.runtime;
-
-    const html = qPicked
-      .map((q, i) => {
-        const v = rt.p2List[i]?.text ?? "";
-        const p1 = String(rt.p1List[i]?.text ?? "").trim() || "—";
-        return `
-          <div class="fQ">
-            <div class="qT">Pytanie ${i + 1}: ${escapeHtml(q.text || "")}</div>
-            <div class="rows">
-              <div>
-                <div class="lbl2">Odp. gracza 1</div>
-                <div class="badge" style="width:100%;">${escapeHtml(p1)}</div>
-              </div>
-              <div>
-                <input class="inp" data-i="${i}" value="${escapeHtml(v)}" placeholder="Wpisz…" autocomplete="off"/>
-                <div class="rowBtns">
-                  <button class="btn sm gold" type="button" data-act="ok" data-i="${i}">Zatwierdź</button>
-                  <button class="btn sm danger" type="button" data-act="rep" data-i="${i}">Powtórzenie</button>
-                </div>
-              </div>
-            </div>
-          </div>
-        `;
-      })
-      .join("");
-
-    const root = document.getElementById("finalP2Inputs");
-    if (root) root.innerHTML = html;
-
-    root?.querySelectorAll('input[data-i]').forEach((inp) => {
-      inp.addEventListener("input", () => {
-        const i = Number(inp.dataset.i);
-        rt.p2List[i].text = String(inp.value ?? "");
-      });
-
-      // Enter przechodzi do następnego pola, bez zatwierdzania
-      inp.addEventListener("keydown", (e) => {
-        if (e.key !== "Enter") return;
-        e.preventDefault();
-        const i = Number(inp.dataset.i);
-        const next = root.querySelector(`input[data-i="${i + 1}"]`);
-        next?.focus();
-      });
-    });
-
-    root?.querySelectorAll('button[data-act="ok"]').forEach((b) => {
-      b.addEventListener("click", () => {
-        const i = Number(b.dataset.i);
-        const v = String(rt.p2List[i].text ?? "").trim();
-        rt.p2List[i].status = v ? "FILLED" : "EMPTY";
-        renderStatusList();
-      });
-    });
-
-    root?.querySelectorAll('button[data-act="rep"]').forEach((b) => {
-      b.addEventListener("click", () => {
-        const i = Number(b.dataset.i);
-        rt.p2List[i].status = "REPEAT";
-        // tylko dźwięk + info dla prowadzącego (operator widzi wizualnie)
-        playSfx("answer_repeat");
-        renderStatusList();
-      });
-    });
-
-    renderStatusList();
-  }
-
-  // ---------- timers ----------
-  function startTimer(seconds, phaseLabel) {
-    ensureRuntime();
     stopTimer();
-
-    const rt = store.state.final.runtime;
     rt.timer.running = true;
-    rt.timer.secLeft = nInt(seconds, seconds);
-    rt.timer.phase = phaseLabel;
+    rt.timer.phase = phase;
+    rt.timer.endsAt = Date.now() + seconds * 1000;
+    rt.timer.seconds = seconds;
 
-    ui.setText("finalTimer", String(rt.timer.secLeft));
-    setTimerOnDisplay(rt.timer.secLeft);
+    // start: pokaż pełny czas
+    displaySetTimerSeconds(seconds).catch(() => {});
 
-    // blokuj DALEJ do końca odliczania
-    if (phaseLabel === "P1") ui.setEnabled("btnFinalP1Next", false);
-    if (phaseLabel === "P2") ui.setEnabled("btnFinalP2Next", false);
-
-    timerId = setInterval(() => {
-      rt.timer.secLeft = Math.max(0, nInt(rt.timer.secLeft, 0) - 1);
-
-      ui.setText("finalTimer", String(rt.timer.secLeft));
-      setTimerOnDisplay(rt.timer.secLeft);
-
-      if (rt.timer.secLeft <= 0) {
-        stopTimer();
-        playSfx("time_over");
-        if (phaseLabel === "P1") ui.setEnabled("btnFinalP1Next", true);
-        if (phaseLabel === "P2") ui.setEnabled("btnFinalP2Next", true);
+    const tick = () => {
+      if (!rt.timer.running) return;
+      const leftMs = Math.max(0, rt.timer.endsAt - Date.now());
+      const s = Math.ceil(leftMs / 1000);
+      if (s !== rt.timer.seconds) {
+        rt.timer.seconds = s;
+        displaySetTimerSeconds(s).catch(() => {});
       }
-    }, 1000);
+      if (leftMs <= 0) {
+        rt.timer.running = false;
+        ui.setText("finalTimer", "0");
+        displaySetTimerSeconds(0).catch(() => {});
+        playSfx("answer_wrong"); // “czas minął” w finale: u Ciebie był osobny, ale ustaliliśmy: poprawna/błędna — tu traktuj jako sygnał końca czasu
+        // odblokuj “Dalej”
+        if (phase === "P1") ui.setEnabled("btnFinalToP1MapQ1", true);
+        if (phase === "P2") ui.setEnabled("btnFinalToP2MapQ1", true);
+        return;
+      }
+      raf = requestAnimationFrame(tick);
+    };
+
+    raf = requestAnimationFrame(tick);
   }
 
-  function startTimerP1() {
-    startTimer(15, "P1");
-  }
-
-  function startTimerP2() {
-    startTimer(20, "P2");
-  }
-
-  // ---------- mapping (jedno pytanie naraz) ----------
-  function setMapHeader(which) {
-    const rt = store.state.final.runtime;
-    const i = rt.mapIndex;
-    const q = qPicked[i];
-
-    // obsłuż oba warianty ID: wspólne albo osobne
-    const idxId = which === "P1" ? "finalP1MapIndex" : "finalP2MapIndex";
-    const qId = which === "P1" ? "finalP1MapQuestion" : "finalP2MapQuestion";
-
-    if (document.getElementById(idxId)) ui.setText(idxId, String(i + 1));
-    else if (document.getElementById("finalMapIndex")) ui.setText("finalMapIndex", String(i + 1));
-
-    if (document.getElementById(qId)) ui.setText(qId, q?.text || "—");
-    else if (document.getElementById("finalMapQuestion")) ui.setText("finalMapQuestion", q?.text || "—");
-  }
-
-  function renderMap(which) {
+  // ---------- Render: P1 entry ----------
+  function renderP1Entry() {
     ensureRuntime();
     const rt = store.state.final.runtime;
-    const i = rt.mapIndex;
 
-    const q = qPicked[i];
+    const html = qPicked.map((q, i) => {
+      const val = rt.p1[i].text || "";
+      const entered = rt.p1[i].entered === true;
+      return `
+        <div class="card" style="margin-bottom:10px;">
+          <div class="name">Pytanie ${i + 1}</div>
+          <div class="qPrompt">${escapeHtml(q.text || "")}</div>
+
+          <div class="rowBtns" style="margin-top:10px;">
+            <input class="inp" data-p="1" data-i="${i}" value="${escapeHtml(val)}" placeholder="Wpisz…" autocomplete="off"/>
+            <button class="btn sm gold" type="button" data-enter="1" data-i="${i}">${entered ? "Zatwierdzone" : "Zatwierdź"}</button>
+          </div>
+        </div>
+      `;
+    }).join("");
+
+    ui.setHtml("finalP1Inputs", html);
+
+    // input
+    document.querySelectorAll('#finalP1Inputs input[data-p="1"]').forEach((inp) => {
+      inp.addEventListener("input", () => {
+        const i = Number(inp.dataset.i);
+        rt.p1[i].text = String(inp.value ?? "");
+      });
+      inp.addEventListener("keydown", (e) => {
+        if (e.key !== "Enter") return;
+        e.preventDefault();
+        // Enter przechodzi do następnego pola (bez zatwierdzania)
+        const i = Number(inp.dataset.i);
+        const next = document.querySelector(`#finalP1Inputs input[data-p="1"][data-i="${i + 1}"]`);
+        next?.focus();
+      });
+    });
+
+    // confirm
+    document.querySelectorAll('#finalP1Inputs button[data-enter="1"]').forEach((b) => {
+      b.addEventListener("click", () => {
+        const i = Number(b.dataset.i);
+        rt.p1[i].entered = true;
+        playSfx("answer_correct"); // sygnał “odpowiedź udzielona”
+        renderP1Entry();
+      });
+    });
+
+    ui.setEnabled("btnFinalToP1MapQ1", rt.timer.running === false && rt.timer.phase === "P1" ? true : false);
+  }
+
+  // ---------- Render: P2 entry ----------
+  function renderP2Entry() {
+    ensureRuntime();
+    const rt = store.state.final.runtime;
+
+    const html = qPicked.map((q, i) => {
+      const v2 = rt.p2[i].text || "";
+      const entered = rt.p2[i].entered === true;
+      const repeat = rt.p2[i].repeat === true;
+      const p1 = (rt.p1[i].text || "").trim() || "—";
+      return `
+        <div class="card" style="margin-bottom:10px;">
+          <div class="name">Pytanie ${i + 1}</div>
+          <div class="qPrompt">${escapeHtml(q.text || "")}</div>
+
+          <div class="mini"><div class="hint">Odpowiedź gracza 1: <b>${escapeHtml(p1)}</b></div></div>
+
+          <div class="rowBtns" style="margin-top:10px;">
+            <input class="inp" data-p="2" data-i="${i}" value="${escapeHtml(v2)}" placeholder="Wpisz…" autocomplete="off"/>
+            <button class="btn sm gold" type="button" data-enter="2" data-i="${i}">${entered ? "Zatwierdzone" : "Zatwierdź"}</button>
+            <button class="btn sm danger" type="button" data-repeat="2" data-i="${i}">${repeat ? "Powtórzenie ✓" : "Powtórzenie"}</button>
+          </div>
+        </div>
+      `;
+    }).join("");
+
+    ui.setHtml("finalP2Inputs", html);
+
+    document.querySelectorAll('#finalP2Inputs input[data-p="2"]').forEach((inp) => {
+      inp.addEventListener("input", () => {
+        const i = Number(inp.dataset.i);
+        rt.p2[i].text = String(inp.value ?? "");
+      });
+      inp.addEventListener("keydown", (e) => {
+        if (e.key !== "Enter") return;
+        e.preventDefault();
+        const i = Number(inp.dataset.i);
+        const next = document.querySelector(`#finalP2Inputs input[data-p="2"][data-i="${i + 1}"]`);
+        next?.focus();
+      });
+    });
+
+    document.querySelectorAll('#finalP2Inputs button[data-enter="2"]').forEach((b) => {
+      b.addEventListener("click", () => {
+        const i = Number(b.dataset.i);
+        rt.p2[i].entered = true;
+        playSfx("answer_correct");
+        renderP2Entry();
+      });
+    });
+
+    document.querySelectorAll('#finalP2Inputs button[data-repeat="2"]').forEach((b) => {
+      b.addEventListener("click", () => {
+        const i = Number(b.dataset.i);
+        rt.p2[i].repeat = !rt.p2[i].repeat;
+        playSfx("answer_repeat");
+        renderP2Entry();
+      });
+    });
+
+    ui.setEnabled("btnFinalToP2MapQ1", rt.timer.running === false && rt.timer.phase === "P2" ? true : false);
+  }
+
+  // ---------- Render: mapping (one question) ----------
+  function renderMapOne(roundNo /*1|2*/, idx /*0..4*/) {
+    ensureRuntime();
+    const rt = store.state.final.runtime;
+    const q = qPicked[idx];
     const aList = answersByQ.get(q.id) || [];
 
-    const entry = which === "P1" ? rt.p1List[i] : rt.p2List[i];
-    const mapRow = which === "P1" ? rt.mapP1[i] : rt.mapP2[i];
+    const input = (roundNo === 1 ? rt.p1[idx].text : rt.p2[idx].text).trim();
+    const mapArr = roundNo === 1 ? rt.map1 : rt.map2;
+    const row = mapArr[idx];
 
-    setMapHeader(which);
+    const hostHint = input.length ? `Wpisano: <b>${escapeHtml(input)}</b>` : `<i>Brak wpisu</i>`;
 
-    const typed = String(entry.text || "").trim();
-    const status = entry.status || "EMPTY";
+    const left = aList.map((a) => {
+      const active = row.kind === "MATCH" && row.matchId === a.id;
+      return `
+        <button class="btn sm ${active ? "gold" : ""}" type="button" data-kind="match" data-id="${a.id}">
+          ${escapeHtml(a.text)} <span style="opacity:.7;">(${nInt(a.fixed_points,0)})</span>
+        </button>
+      `;
+    }).join("");
 
-    const root = document.getElementById(which === "P1" ? "finalP1Mapping" : "finalP2Mapping");
-    if (!root) return;
+    const missActive = row.kind === "MISS";
+    const skipActive = row.kind === "SKIP";
 
-    // brak wpisu → tylko treść pytania, dalej przechodzi dalej (bez wysyłki)
-    if (status !== "FILLED" || !typed) {
-      root.innerHTML = `<div class="mini"><div class="hint">Brak odpowiedzi — przejdź dalej.</div></div>`;
-      // w tym przypadku nie wymagamy wyboru
-      ui.setEnabled(which === "P1" ? "btnFinalP1MapNext" : "btnFinalP2MapNext", true);
-      return;
-    }
+    const outDefault = row.outText || input || "";
+    const outVal = escapeHtml(outDefault);
 
-    // P2 może mieć REPEAT (operator zaznacza) – wtedy na tablicy X/0, dźwięk już był, a tu tylko informacja
-    if (which === "P2" && status === "REPEAT") {
-      root.innerHTML = `<div class="mini"><div class="hint">Powtórzenie — 0 pkt. Na tablicy wygląda jak X/0.</div></div>`;
-      ui.setEnabled("btnFinalP2MapNext", true);
-      return;
-    }
+    const html = `
+      <div class="name">Pytanie ${idx + 1}</div>
+      <div class="qPrompt">${escapeHtml(q.text || "")}</div>
+      <div class="mini"><div class="hint">${hostHint}</div></div>
 
-    const opts = aList
-      .map((a) => {
-        const active = mapRow.choice === "MATCH" && mapRow.matchId === a.id;
-        return `
-          <div class="mapOpt ${active ? "active" : ""}" data-kind="match" data-id="${a.id}">
-            ${escapeHtml(a.text)} <span style="opacity:.7;">(${nInt(a.fixed_points, 0)})</span>
-          </div>
-        `;
-      })
-      .join("");
+      ${input.length === 0 ? `
+        <div class="mini"><div class="hint">Nie wpisano odpowiedzi — “Dalej” pokaże puste / 0 pkt.</div></div>
+      ` : ``}
 
-    const missActive = mapRow.choice === "MISS";
-
-    root.innerHTML = `
-      <div class="cards2" style="margin-top:10px;">
+      <div class="cards2" style="margin-top:12px;">
         <div class="card">
           <div class="name">Lista odpowiedzi</div>
-          <div class="mappingGrid" style="margin-top:10px;">
-            ${opts || `<div class="hint">Brak listy odpowiedzi.</div>`}
+          <div class="rowBtns" style="flex-wrap:wrap; gap:8px;">
+            ${left || `<div class="hint">Brak listy odpowiedzi.</div>`}
           </div>
         </div>
 
         <div class="card">
-          <div class="name">Odpowiedź wpisana</div>
-          <div class="mini"><div class="hint">Jeśli nie ma na liście — wybierz „Nie ma na liście”.</div></div>
+          <div class="name">Własna / brak</div>
 
-          <div class="rowBtns">
-            <button class="btn ${missActive ? "gold" : ""}" type="button" data-kind="miss">Nie ma na liście (0 pkt)</button>
+          <div class="rowBtns" style="align-items:flex-start;">
+            <button class="btn sm ${skipActive ? "gold" : ""}" type="button" data-kind="skip">Brak odpowiedzi</button>
+            <button class="btn sm danger ${missActive ? "gold" : ""}" type="button" data-kind="miss">Nie ma na liście (0 pkt)</button>
           </div>
 
-          <div class="rowBtns">
-            <input class="inp" data-kind="out" value="${escapeHtml(mapRow.outText || typed)}" maxlength="11"/>
-          </div>
+          <div class="mini"><div class="hint">Tekst do wyświetlenia (gdy “Nie ma na liście”).</div></div>
+          <input class="inp" data-kind="out" value="${outVal}" placeholder="Tekst (0 pkt)"/>
         </div>
       </div>
     `;
 
-    // bind match
-    root.querySelectorAll('.mapOpt[data-kind="match"]').forEach((el) => {
-      el.addEventListener("click", () => {
-        mapRow.choice = "MATCH";
-        mapRow.matchId = el.dataset.id || null;
-        mapRow.outText = "";
-        renderMap(which);
+    const rootId = roundNo === 1
+      ? `finalP1MapQ${idx + 1}`
+      : `finalP2MapQ${idx + 1}`;
+
+    ui.setHtml(rootId, html);
+
+    // wire buttons
+    const root = document.getElementById(rootId);
+    if (!root) return;
+
+    root.querySelectorAll('button[data-kind="match"]').forEach((b) => {
+      b.addEventListener("click", () => {
+        row.kind = "MATCH";
+        row.matchId = b.dataset.id || null;
+        row.outText = "";
+        renderMapOne(roundNo, idx);
       });
     });
 
-    // bind miss
     root.querySelector('button[data-kind="miss"]')?.addEventListener("click", () => {
-      mapRow.choice = "MISS";
-      mapRow.matchId = null;
-      if (!mapRow.outText) mapRow.outText = typed;
-      renderMap(which);
+      row.kind = "MISS";
+      row.matchId = null;
+      if (!row.outText) row.outText = input;
+      renderMapOne(roundNo, idx);
     });
 
-    // bind out text
+    root.querySelector('button[data-kind="skip"]')?.addEventListener("click", () => {
+      row.kind = "SKIP";
+      row.matchId = null;
+      row.outText = "";
+      renderMapOne(roundNo, idx);
+    });
+
     root.querySelector('input[data-kind="out"]')?.addEventListener("input", (e) => {
-      mapRow.outText = String(e.target.value ?? "");
+      row.outText = String(e.target?.value ?? "");
     });
-
-    // “Dalej” dopiero gdy wybrano MATCH albo MISS
-    const ok = mapRow.choice === "MATCH" || mapRow.choice === "MISS";
-    ui.setEnabled(which === "P1" ? "btnFinalP1MapNext" : "btnFinalP2MapNext", ok);
   }
 
-  async function applyMapped(which) {
+  async function commitReveal(roundNo /*1|2*/, idx /*0..4*/) {
     ensureRuntime();
     const rt = store.state.final.runtime;
-    const i = rt.mapIndex;
-    const q = qPicked[i];
+    const q = qPicked[idx];
     const aList = answersByQ.get(q.id) || [];
 
-    const entry = which === "P1" ? rt.p1List[i] : rt.p2List[i];
-    const status = entry.status || "EMPTY";
-    const typed = String(entry.text || "").trim();
+    const mapArr = roundNo === 1 ? rt.map1 : rt.map2;
+    const row = mapArr[idx];
 
-    // brak wpisu -> nic nie wysyłamy, przechodzimy dalej
-    if (status !== "FILLED" || !typed) return { pts: 0, didSend: false };
-
-    // P2 repeat -> 0 pkt, wyświetl jako placeholder + 0
-    if (which === "P2" && status === "REPEAT") {
-      await display.finalSetLeft(i + 1, display.PLACE.finalText);
-      await display.finalSetA(i + 1, "00");
-      playSfx("answer_repeat");
-      return { pts: 0, didSend: true };
-    }
-
-    const row = which === "P1" ? rt.mapP1[i] : rt.mapP2[i];
-
-    let outText = "";
     let pts = 0;
-    let sfx = null;
+    let out = "";
 
-    if (row.choice === "MATCH") {
+    if (row.kind === "MATCH") {
       const a = aList.find((x) => x.id === row.matchId);
-      outText = a?.text || "";
-      pts = nInt(a?.fixed_points, 0);
-      sfx = "answer_correct";
-    } else if (row.choice === "MISS") {
-      outText = String(row.outText || typed).trim();
+      pts = a ? nInt(a.fixed_points, 0) : 0;
+      out = a?.text || "";
+    } else if (row.kind === "MISS") {
       pts = 0;
-      sfx = "answer_wrong";
+      out = row.outText || "";
     } else {
-      // brak wyboru (nie powinno się zdarzyć gdy UI blokuje)
-      outText = String(row.outText || typed).trim();
       pts = 0;
-      sfx = "answer_wrong";
+      out = "";
     }
 
-    // wyślij na display: na razie używamy LEWEJ kolumny (jak w Twojej implementacji)
-    // (jak będziesz chciał: P1 lewa, P2 prawa — dopisz później łatwo)
-    const txt11 = outText ? outText.slice(0, 11) : display.PLACE.finalText;
+    row.pts = pts;
 
-    await display.finalSetLeft(i + 1, txt11);
-    await display.finalSetA(i + 1, String(pts).padStart(2, "0").slice(-2));
+    // Ustalenia: jeśli brak pasującej => 0 pkt i wyświetlamy wpisany tekst,
+    // a jeśli brak wpisu -> placeholder/puste.
+    const txt = out.trim().length ? out.trim() : display.PLACE?.finalText || "—";
 
-    if (sfx) playSfx(sfx);
+    // pokaż na tablicy:
+    // runda 1 -> lewa kolumna + A punkty, runda 2 -> prawa kolumna + B punkty
+    if (roundNo === 1) {
+      await display.finalSetLeft(idx + 1, clip11(txt));
+      await display.finalSetA(idx + 1, String(pts).padStart(2, "0").slice(-2));
+      playSfx(pts > 0 ? "answer_correct" : "answer_wrong");
+    } else {
+      await display.finalSetRight(idx + 1, clip11(txt));
+      await display.finalSetB(idx + 1, String(pts).padStart(2, "0").slice(-2));
+      // jeśli operator zaznaczył powtórzenie w entry — tylko dźwięk inny, punkty normalnie:
+      const rep = rt.p2[idx].repeat === true;
+      if (rep) playSfx("answer_repeat");
+      else playSfx(pts > 0 ? "answer_correct" : "answer_wrong");
+    }
 
-    return { pts, didSend: true };
+    rt.sum = (rt.sum || 0) + pts;
+    await display.finalSetSuma(rt.sum);
+    updateSumUI();
+
+    // przerwij po 200+
+    if (rt.sum >= 200) {
+      await gotoEnd(true);
+      return true; // ended
+    }
+    return false;
   }
 
-  function mapPrev(which) {
+  async function gotoEnd(hit200) {
     ensureRuntime();
-    const rt = store.state.final.runtime;
-    if (rt.mapIndex <= 0) return;
-    rt.mapIndex -= 1;
-    renderMap(which);
-    ui.setEnabled(which === "P1" ? "btnFinalP1MapPrev" : "btnFinalP2MapPrev", rt.mapIndex > 0);
+    stopTimer();
+
+    // tekst końcowy: nagroda / logo / itd.
+    const hasPrize = store.state?.final?.hasPrize !== false; // default: true
+    const mainPrize = store.state?.final?.prizeMain || "Nagroda główna";
+    const smallPrize = store.state?.final?.prizeSmall || "Nagroda";
+
+    const hint = document.getElementById("finalEndHint");
+    if (hint) {
+      if (!hasPrize) hint.textContent = "Finał zakończony. Brak trybu nagrody — wracamy do logo.";
+      else hint.textContent = hit200 ? `200+! ${mainPrize}` : `Poniżej 200. ${smallPrize}`;
+    }
+
+    setStep("f_end");
   }
 
-  async function mapNext(which) {
-    ensureRuntime();
-    const rt = store.state.final.runtime;
-
-    // wyślij wynik tego pytania
-    const res = await applyMapped(which);
-
-    // suma
-    if (res?.didSend) {
-      const nextSum = Math.min(200, nInt(rt.sum, 0) + nInt(res.pts, 0));
-      setSum(nextSum);
-
-      if (nextSum >= 200) {
-        rt.reached200 = true;
-        rt.phase = "FINISH";
-        showStep("final_finish");
-        ui.setEnabled("btnFinalFinish", true);
-        setMsgAny("msgFinalFinish", "Osiągnięto 200 punktów — finał przerwany.");
-        return;
-      }
-    }
-
-    // następny indeks
-    if (rt.mapIndex < 4) {
-      rt.mapIndex += 1;
-      renderMap(which);
-      ui.setEnabled(which === "P1" ? "btnFinalP1MapPrev" : "btnFinalP2MapPrev", rt.mapIndex > 0);
-      return;
-    }
-
-    // koniec mapowania rundy
-    if (which === "P1") {
-      rt.phase = "ROUND2_START";
-      showStep("final_round2_start");
-      ui.setEnabled("btnFinalRound2Start", true);
-      return;
-    }
-
-    // koniec P2 map => finish
-    rt.phase = "FINISH";
-    showStep("final_finish");
-    ui.setEnabled("btnFinalFinish", true);
-  }
-
-  // ---------- phase transitions ----------
+  // ---------- Public actions (hooki pod UI) ----------
   async function startFinal() {
-    ensureRuntime();
-    stopTimer();
-
     if (store.state.hasFinal !== true) {
-      setMsgAny("msgFinalStart", "Finał jest wyłączony.");
-      setMsgAny("msgFinal", "Finał jest wyłączony.");
+      ui.setMsg("msgFinal", "Finał jest wyłączony.");
       return;
     }
-    if (!store.state.final.confirmed || store.state.final.picked.length !== 5) {
-      setMsgAny("msgFinalStart", "Zatwierdź 5 pytań finału w ustawieniach.");
-      setMsgAny("msgFinal", "Zatwierdź 5 pytań finału w ustawieniach.");
+    if (!store.state.final.confirmed || (store.state.final.picked || []).length !== 5) {
+      ui.setMsg("msgFinal", "Zatwierdź 5 pytań finału w ustawieniach.");
       return;
     }
 
-    // prepare runtime
-    const rt = store.state.final.runtime;
-    rt.phase = "P1_ENTRY";
-    rt.sum = 0;
-    rt.reached200 = false;
-    rt.mapIndex = 0;
+    ensureRuntime();
 
-    // reset lists
-    rt.p1List = Array.from({ length: 5 }, () => ({ text: "", status: "EMPTY" }));
-    rt.p2List = Array.from({ length: 5 }, () => ({ text: "", status: "EMPTY" }));
-    rt.mapP1 = Array.from({ length: 5 }, () => ({ choice: null, matchId: null, outText: "", pts: 0 }));
-    rt.mapP2 = Array.from({ length: 5 }, () => ({ choice: null, matchId: null, outText: "", pts: 0 }));
+    // blokada zmiany ustawień, ale karty nieblokowane (nawigacja działa)
+    store.state.locks.finalActive = true;
 
-    await loadFinalQuestionsAndAnswers();
+    await loadFinalPicked();
 
-    // display: start finału
+    // dźwięk finału + plansza
     playSfx("final_theme");
-    await display.finalBoardPlaceholders();
-    await display.finalSetSuma(0);
+    await display.hideLogo?.();
+    await display.finalBoardPlaceholders?.(); // placeholdery + triplet “0”
+    await display.finalSetSuma?.(0);
 
-    // timer label w UI
-    ui.setText("finalTimer", "—");
+    // placeholdery treści
+    for (let i = 1; i <= 5; i++) {
+      await display.finalSetLeft?.(i, display.PLACE?.finalText || "—");
+      await display.finalSetRight?.(i, display.PLACE?.finalText || "—");
+      await display.finalSetA?.(i, "00");
+      await display.finalSetB?.(i, "00");
+    }
 
-    // przejście od razu na kartę 2 (P1 wpisywanie)
-    showStep("final_p1_entry");
-    renderEntryP1();
+    // timer OFF na start (a potem w entry)
+    await display.finalSetSideTimer?.(getWinnerTeam(), "");
 
-    ui.setEnabled("btnFinalP1StartTimer", true);
-    ui.setEnabled("btnFinalP1Next", false);
-
-    // map buttons safety
-    ui.setEnabled("btnFinalP1MapPrev", false);
-    ui.setEnabled("btnFinalP1MapNext", false);
-
-    setMsgAny("msgFinalStart", "");
-    setMsgAny("msgFinal", "Finał: wpisywanie odpowiedzi gracza 1.");
+    ui.setMsg("msgFinal", "Finał rozpoczęty.");
+    updateSumUI();
+    setStep("f_p1_entry");
+    renderP1Entry();
+    ui.setEnabled("btnFinalToP1MapQ1", false);
   }
 
-  function goToP1Map() {
-    ensureRuntime();
-    stopTimer();
+  function backTo(step) {
+    setStep(step);
 
-    const rt = store.state.final.runtime;
-    rt.phase = "P1_MAP";
-    rt.mapIndex = 0;
+    // odśwież widok kroku
+    if (step === "f_p1_entry") renderP1Entry();
+    if (step === "f_p2_entry") renderP2Entry();
 
-    showStep("final_p1_map");
-    renderMap("P1");
-
-    ui.setEnabled("btnFinalP1MapPrev", false);
-    // next jest sterowany przez renderMap (czy jest wybór)
-    ui.setEnabled("btnFinalP1MapNext", true);
+    // mapping kroki
+    if (step.startsWith("f_p1_map_q")) {
+      const idx = Number(step.slice(-1)) - 1;
+      renderMapOne(1, idx);
+    }
+    if (step.startsWith("f_p2_map_q")) {
+      const idx = Number(step.slice(-1)) - 1;
+      renderMapOne(2, idx);
+    }
   }
 
-  async function startRound2() {
-    ensureRuntime();
+  function p1StartTimer() {
+    startCountdown(15, "P1");
+    ui.setEnabled("btnFinalToP1MapQ1", false);
+    ui.setMsg("msgFinalP1Entry", "Odliczanie trwa…");
+  }
+
+  function p2StartTimer() {
+    startCountdown(20, "P2");
+    ui.setEnabled("btnFinalToP2MapQ1", false);
+    ui.setMsg("msgFinalP2Entry", "Odliczanie trwa…");
+  }
+
+  function toP1MapQ(idx1based) {
     stopTimer();
+    const idx = idx1based - 1;
+    setStep(`f_p1_map_q${idx1based}`);
+    renderMapOne(1, idx);
+  }
 
-    const rt = store.state.final.runtime;
-    rt.phase = "P2_ENTRY";
-    rt.mapIndex = 0;
+  function toP2Start() {
+    stopTimer();
+    setStep("f_p2_start");
+  }
 
-    // dźwięk rundy 2 (wg Twojej reguły round_transition zostaje na początku i na końcu rundy)
+  async function startP2Round() {
+    // schowaj odpowiedzi (zostaje suma) i ustaw timer 20 w tym samym miejscu co 15
     playSfx("round_transition");
+    await display.finalHideAnswersKeepSum?.(); // dopisz w display jeśli nie masz
+    await display.finalSetSideTimer?.(getWinnerTeam(), "20");
 
-    // TODO: jeśli masz komendę display do "ukryj odpowiedzi, zostaw sumę" – dodaj tu.
-    // Na razie zostawiamy jak jest, bo display API tego nie ma w Twoim pliku.
-
-    showStep("final_p2_entry");
-    renderEntryP2();
-
-    ui.setEnabled("btnFinalP2StartTimer", true);
-    ui.setEnabled("btnFinalP2Next", false);
-
-    ui.setEnabled("btnFinalP2MapPrev", false);
-    ui.setEnabled("btnFinalP2MapNext", false);
-
-    setMsgAny("msgFinal", "Finał: wpisywanie odpowiedzi gracza 2.");
+    setStep("f_p2_entry");
+    renderP2Entry();
+    ui.setEnabled("btnFinalToP2MapQ1", false);
+    ui.setMsg("msgFinalP2Start", "Runda 2 rozpoczęta.");
   }
 
-  function goToP2Map() {
-    ensureRuntime();
+  async function nextFromP1Q(idx1based) {
+    const idx = idx1based - 1;
+    const ended = await commitReveal(1, idx);
+    if (ended) return;
+
+    if (idx1based < 5) {
+      toP1MapQ(idx1based + 1);
+    } else {
+      // koniec r1 -> karta start r2
+      setStep("f_p2_start");
+    }
+  }
+
+  function toP2MapQ(idx1based) {
     stopTimer();
+    const idx = idx1based - 1;
+    setStep(`f_p2_map_q${idx1based}`);
+    renderMapOne(2, idx);
+  }
 
-    const rt = store.state.final.runtime;
-    rt.phase = "P2_MAP";
-    rt.mapIndex = 0;
+  async function nextFromP2Q(idx1based) {
+    const idx = idx1based - 1;
+    const ended = await commitReveal(2, idx);
+    if (ended) return;
 
-    showStep("final_p2_map");
-    renderMap("P2");
-
-    ui.setEnabled("btnFinalP2MapPrev", false);
-    ui.setEnabled("btnFinalP2MapNext", true);
+    if (idx1based < 5) {
+      toP2MapQ(idx1based + 1);
+    } else {
+      await gotoEnd(false);
+    }
   }
 
   async function finishFinal() {
-    ensureRuntime();
-    stopTimer();
-
-    const rt = store.state.final.runtime;
-    rt.phase = "FINISH";
-
-    // zawsze dźwięk finału na koniec (tak jak chcesz)
+    // zawsze dźwięk finału na koniec
     playSfx("final_theme");
 
-    // TODO: nagrody / logo / wariant bez nagrody
-    // Na razie: tylko komunikat. (Nagrody dodamy jak dopniesz “ustawienia zaawansowane” w setup.)
-    setMsgAny("msgFinalFinish", rt.sum >= 200 ? "Wygrana (>=200) — zakończono finał." : "Koniec finału — <200.");
+    store.state.locks.finalActive = false;
 
-    ui.setEnabled("btnFinalFinish", false);
+    await display.setIndicator?.(null);
+    await display.showLogo?.(); // wracamy do logo
+    ui.setMsg("msgFinalEnd", "Finał zakończony.");
+  }
+
+  function bootIfNeeded() {
+    ensureRuntime();
+    if (!store.state.final.step) store.state.final.step = "f_start";
+    ui.showFinalStep(store.state.final.step);
+    updateSumUI();
   }
 
   return {
-    // picker
-    pickerReload,
-    pickerRender,
-    pickerGetSelectedIds,
+    bootIfNeeded,
 
-    // phases
     startFinal,
+    backTo,
 
-    // timers
-    startTimerP1,
-    startTimerP2,
+    p1StartTimer,
+    toP1MapQ,
 
-    // transitions
-    goToP1Map,
-    startRound2,
-    goToP2Map,
+    nextFromP1Q,
 
-    // mapping nav
-    mapPrev,
-    mapNext,
+    toP2Start,
+    startP2Round,
 
-    // finish
+    p2StartTimer,
+    toP2MapQ,
+
+    nextFromP2Q,
+
     finishFinal,
   };
 }
