@@ -49,6 +49,7 @@ export function createStore(gameId) {
     },
 
     rounds: {
+      phase: "IDLE", // IDLE | READY | INTRO | ROUND_ACTIVE
       roundNo: 1,
       controlTeam: null, // "A"|"B"
       bankPts: 0,
@@ -201,7 +202,9 @@ export function createStore(gameId) {
     if (card === "devices") return !state.completed.devices;
     if (card === "setup") return state.completed.devices && allDevicesOnline() && state.flags.audioUnlocked && !state.completed.setup && !state.locks.gameStarted;
     if (card === "rounds") return state.completed.devices && canFinishSetup();
-    if (card === "final") return state.hasFinal === true && canFinishSetup();
+    if (card === "final") {
+      return state.hasFinal === true && canFinishSetup() && state.rounds.phase === "IDLE";
+    }
     return false;
   }
 
