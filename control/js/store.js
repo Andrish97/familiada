@@ -30,7 +30,7 @@ export function createStore(gameId) {
       picked: [],
       confirmed: false,
       runtime: {
-        phase: "IDLE", // IDLE | P1_ENTRY | P2_ENTRY | MAPPING | REVEAL | DONE
+        phase: "IDLE", // IDLE | P1_ENTRY | P1_MAPPING | P2_ENTRY | P2_MAPPING | REVEAL | DONE
         sum: 0,
         timer: { running:false, secLeft:0, teamSide:"A" }, // timer on winning side only (display)
         p1: {}, // qid -> {text, status}
