@@ -195,7 +195,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
       });
     });
 
-    ui.setEnabled("btnFinalToP1MapQ1", rt.timer.running === false && rt.timer.phase === "P1" ? true : false);
+    ui.setEnabled("btnFinalToP1MapQ1", !rt.timer.running);
   }
 
   // ---------- Render: P2 entry ----------
@@ -258,7 +258,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
       });
     });
 
-    ui.setEnabled("btnFinalToP2MapQ1", rt.timer.running === false && rt.timer.phase === "P2" ? true : false);
+    ui.setEnabled("btnFinalToP2MapQ1", !rt.timer.running);
   }
 
   // ---------- Render: mapping (one question) ----------
