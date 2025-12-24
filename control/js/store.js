@@ -17,6 +17,7 @@ export function createStore(gameId) {
 
     locks: {
       gameStarted: false,     // po „Start gry” blokujemy powrót do setup (tak jak ustaliliście)
+      finalActive: false    
     },
 
     teams: {
@@ -41,6 +42,7 @@ export function createStore(gameId) {
         mapP2: null,             // [{choice, matchId, outText, pts}] len 5
         reached200: false,
       },
+      step: "f_start",
     },
 
     flags: {
