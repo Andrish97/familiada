@@ -66,6 +66,7 @@ async function main() {
 
   const display = createDisplay({ devices, store });
   const rounds = createRounds({ ui, store, devices, display, loadQuestions, loadAnswers });
+  rounds.bootIfNeeded();
   const final = createFinal({ ui, store, devices, display, loadAnswers });
 
   // init links + QR images
@@ -163,36 +164,33 @@ async function main() {
   });
 
   // ROUNDS
-  ui.on("rounds.backToSetup", () => {
-    if (store.state.locks.gameStarted) return; // after start -> blocked (as agreed)
-    store.setActiveCard("setup");
-  });
-
-  ui.on("game.ready", async () => {
-    await rounds.stateGameReady();
-  });
-
-  ui.on("game.startIntro", async () => {
-    await rounds.stateStartGameIntro();
-  });
-
-  ui.on("rounds.start", async () => {
-    await rounds.startRound();
-  });
-
-  ui.on("rounds.resetRound", () => rounds.resetRound());
-
+  ui.on("game.ready", async () => { await rounds.stateGameReady(); });
+  
+  ui.on("game.startIntro", async () => { await rounds.stateStartGameIntro(); });
+  
+  ui.on("rounds.start", async () => { await rounds.startRound(); });
+  
+  // back buttons:
+  ui.on("rounds.back", (step) => rounds.backTo(step));
+  
+  // duel
   ui.on("buzz.enable", () => rounds.enableBuzzerDuel());
+  ui.on("buzz.retry", () => rounds.retryDuel());
   ui.on("buzz.acceptA", () => rounds.acceptBuzz("A"));
   ui.on("buzz.acceptB", () => rounds.acceptBuzz("B"));
-
+  
+  // play
   ui.on("rounds.pass", () => rounds.passQuestion());
   ui.on("rounds.timer3", () => rounds.startTimer3());
-
   ui.on("rounds.answerClick", (ord) => rounds.revealAnswerByOrd(ord));
   ui.on("rounds.addX", () => rounds.addX());
-  ui.on("rounds.stealTry", () => rounds.stealTry());
+  
+  // steal/end
+  ui.on("rounds.goSteal", () => rounds.goSteal());
+  ui.on("rounds.stealMiss", () => rounds.stealMiss());
+  ui.on("rounds.goEnd", () => rounds.goEndRound());
   ui.on("rounds.end", () => rounds.endRound());
+
 
   // FINAL
   ui.on("final.back", () => store.setActiveCard("rounds"));
