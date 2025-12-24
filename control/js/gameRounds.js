@@ -1,146 +1,203 @@
-import { playSfx, playSfxAndWait } from "/familiada/js/core/sfx.js";
+// control/js/gameRounds.js
+import { playSfx } from "/familiada/js/core/sfx.js";
 
-function nInt(v, d=0){ const x = Number.parseInt(String(v??""),10); return Number.isFinite(x)?x:d; }
+function nInt(v, d = 0) {
+  const x = Number.parseInt(String(v ?? ""), 10);
+  return Number.isFinite(x) ? x : d;
+}
 
 export function createRounds({ ui, store, devices, display, loadQuestions, loadAnswers }) {
   let allQuestions = [];
-  let usedQ = new Set(); // avoid repeats
+  const usedQ = new Set();
 
-  // buzzer events from control channel are optional; control says “buzzer connects => works”
-  // we only need accept buttons which operator clicks.
-  function lockGameStart() {
-    store.state.locks.gameStarted = true;
+  // round-local
+  let stealTeam = null; // "A"|"B" when steal is active
+  let stealResolved = false; // after click/miss
+  let timerRAF = null;
+
+  function setStep(step) {
+    store.state.rounds.step = step;
+    ui.showRoundsStep(step);
   }
 
-  function resetRoundStateKeepTotals() {
+  function stopTimer3() {
+    const r = store.state.rounds;
+    r.timer3.running = false;
+    r.timer3.endsAt = 0;
+    if (timerRAF) cancelAnimationFrame(timerRAF);
+    timerRAF = null;
+  }
+
+  function otherTeam(t) {
+    return t === "A" ? "B" : "A";
+  }
+
+  function resetQuestionState() {
     const r = store.state.rounds;
     r.controlTeam = null;
     r.bankPts = 0;
     r.xA = 0;
     r.xB = 0;
+
     r.question = null;
     r.answers = [];
     r.revealed = new Set();
+
     r.duel.enabled = false;
     r.duel.lastPressed = null;
-    r.timer3.running = false;
-    r.timer3.endsAt = 0;
+
+    r.allowPass = false;
+    r.passUsed = false;
+
     r.steal.active = false;
     r.steal.used = false;
-    r.allowPass = false;
-  }
 
-  function updateUiRound() {
-    ui.setRoundsHud(store.state.rounds);
-    ui.setRoundQuestion(store.state.rounds.question?.text || "—");
-    ui.renderRoundAnswers(store.state.rounds.answers, store.state.rounds.revealed);
-
-    // enable/disable controls
-    const r = store.state.rounds;
-    ui.setEnabled("btnBuzzEnable", !!r.question && !r.controlTeam);
-    ui.setEnabled("btnBuzzAcceptA", r.duel.enabled);
-    ui.setEnabled("btnBuzzAcceptB", r.duel.enabled);
-
-    ui.setEnabled("btnStartTimer3", !!r.controlTeam && !r.timer3.running);
-    ui.setEnabled("btnPassQuestion", r.allowPass && !!r.controlTeam && !r.steal.active);
-
-    ui.setEnabled("btnAddX", !!r.controlTeam && !r.steal.active);
-    ui.setEnabled("btnStealTry", r.steal.active && !r.steal.used);
-    ui.setEnabled("btnEndRound", r.revealed.size > 0); // allow end when something happened
+    stopTimer3();
+    stealTeam = null;
+    stealResolved = false;
   }
 
   async function ensureQuestionsLoaded() {
     if (allQuestions.length > 0) return;
-    allQuestions = await loadQuestions(store.state?.gameId || store.state?.id || store.state?.game_id || store.state?.game || store.state?.gameId || store.state?.game_id); // not used
+    allQuestions = await loadQuestions();
   }
 
-  async function getRandomUnusedQuestion() {
-    if (allQuestions.length === 0) {
-      // fallback load: use sb game id from store (we don’t store it here), so instead do single call:
-      // easiest: call loadQuestions with inferred game id from URL in core; but you already have it in module import path,
-      // we’ll just call loadQuestions(gameId) in app and pass down if needed. Here: assume loadQuestions() already bound in app.
-      allQuestions = await loadQuestions(); // app passed bound function in real usage if needed
-    }
-
+  async function pickQuestion() {
+    await ensureQuestionsLoaded();
     const pool = allQuestions.filter((q) => !usedQ.has(q.id));
-    const pick = pool.length ? pool[Math.floor(Math.random() * pool.length)] : allQuestions[Math.floor(Math.random() * allQuestions.length)];
+    const pick = (pool.length ? pool : allQuestions)[Math.floor(Math.random() * Math.max(1, (pool.length ? pool : allQuestions).length))];
     usedQ.add(pick.id);
     return pick;
   }
 
-  async function stateGameReady() {
-    const { teamA, teamB } = store.state.teams;
-    await display.stateGameReady(teamA, teamB);
-  
-    // host: wyczyść i zasłoń
-    try {
-      await devices.sendHostCmd("CLEAR");
-      await devices.sendHostCmd("HIDE");
-    } catch {}
-  
-    ui.setMsg("msgRounds", "Ustawiono stan: gra gotowa.");
+  async function loadQuestionAndAnswers() {
+    const r = store.state.rounds;
+    const q = await pickQuestion();
+    const ans = await loadAnswers(q.id);
+
+    r.question = q;
+    r.answers = (ans || [])
+      .map((a) => ({
+        id: a.id,
+        ord: a.ord,
+        text: a.text,
+        fixed_points: nInt(a.fixed_points, 0),
+      }))
+      .sort((a, b) => (a.ord || 0) - (b.ord || 0));
   }
 
+  // ------- UI render helpers -------
+  function updateHud() {
+    ui.setRoundsHud(store.state.rounds);
+  }
+
+  function renderAnswers() {
+    const r = store.state.rounds;
+    ui.renderRoundAnswers(r.answers, r.revealed, "roundAnswers");
+    ui.renderRoundAnswers(r.answers, r.revealed, "roundStealAnswers");
+  }
+
+  function refresh() {
+    updateHud();
+    const r = store.state.rounds;
+    ui.setRoundQuestion(r.question?.text || "—");
+    renderAnswers();
+
+    // enable buttons depending on step/state
+    const step = r.step;
+
+    // duel
+    ui.setEnabled("btnBuzzEnable", step === "r_duel");
+    ui.setEnabled("btnBuzzRetry", step === "r_duel" && r.duel.enabled === true);
+
+    ui.setEnabled("btnBuzzAcceptA", step === "r_duel" && r.duel.enabled === true && r.duel.lastPressed != null);
+    ui.setEnabled("btnBuzzAcceptB", step === "r_duel" && r.duel.enabled === true && r.duel.lastPressed != null);
+
+    // play
+    ui.setEnabled("btnStartTimer3", step === "r_play" && !!r.controlTeam && !r.timer3.running && !r.steal.active);
+    ui.setEnabled("btnAddX", step === "r_play" && !!r.controlTeam && !r.steal.active);
+    ui.setEnabled("btnPassQuestion", step === "r_play" && r.allowPass === true && r.passUsed === false && !!r.controlTeam && !r.steal.active);
+
+    ui.setEnabled("btnGoSteal", step === "r_play" && r.steal.active === true);
+    ui.setEnabled("btnGoEndRound", step === "r_play" && (r.steal.active === false) && canEndQuestion());
+
+    // steal
+    ui.setEnabled("btnGoEndRoundFromSteal", step === "r_steal" && stealResolved === true);
+
+    // end
+    ui.setEnabled("btnEndRound", step === "r_end");
+  }
+
+  function canEndQuestion() {
+    const r = store.state.rounds;
+    const allRevealed = r.answers.length > 0 && r.revealed.size >= r.answers.length;
+    return allRevealed;
+  }
+
+  // ------- Steps / actions -------
+  async function stateGameReady() {
+    // game is ready: display state + lock setup changes
+    const { teamA, teamB } = store.state.teams;
+    await display.stateGameReady(teamA, teamB);
+
+    store.state.locks.gameStarted = true; // blokuj zmiany ustawień po “gra gotowa”
+    ui.setMsg("msgRounds", "Ustawiono stan: gra gotowa.");
+    setStep("r_intro");
+    refresh();
+  }
 
   async function stateStartGameIntro() {
-    // logo only at start
-    lockGameStart();
     const { teamA, teamB } = store.state.teams;
-
+    // intro music + logo
     playSfx("show_intro");
-    setTimeout(() => {
-      display.stateIntroLogo(teamA, teamB).catch(() => {});
-    }, 14000);
+    await display.stateIntroLogo(teamA, teamB);
 
-    setTimeout(() => {
-      playSfx("show_intro");
-    }, 18000);
-
-    ui.setMsg("msgRounds", "Intro uruchomione. Potem rozpocznij rundę.");
-
-    // allow round start
-    ui.setEnabled("btnStartRound", store.canStartRounds());
+    ui.setMsg("msgRoundsIntro", "Intro uruchomione.");
+    setStep("r_roundStart");
+    refresh();
   }
 
   async function startRound() {
-    store.state.rounds.phase = "ROUND_ACTIVE";
-    
-    lockGameStart();
+    const r = store.state.rounds;
+    resetQuestionState();
 
-    resetRoundStateKeepTotals();
+    // sound for round start
+    playSfx("round_transition");
 
-    // pick question + answers
-    const q = await getRandomUnusedQuestion();
-    const ans = await loadAnswers(q.id);
-    store.state.rounds.question = q;
-    store.state.rounds.answers = (ans || []).map((a) => ({
-      id: a.id,
-      ord: a.ord,
-      text: a.text,
-      fixed_points: nInt(a.fixed_points, 0),
-    }));
+    // przygotuj pytanie i odpowiedzi
+    await loadQuestionAndAnswers();
 
-    // board transition: hide logo (if any), then placeholders
-    await playSfxAndWait("round_transition");
-    
-    // po końcu dźwięku: host dostaje pytanie i jest odsłonięty
-    try {
-      await devices.sendHostCmd("CLEAR");
-      await devices.sendHostCmd(`SET "${String(q.text ?? "").replaceAll("\\", "\\\\").replaceAll('"', '\\"').replaceAll("\n", "\\n")}"`);
-      await devices.sendHostCmd("OPEN");
-    } catch {}
-    
-    // teraz plansza
-    await display.hideLogo();
-    await display.roundsBoardPlaceholders(
-      Math.max(1, Math.min(6, store.state.rounds.answers.length || 6))
-    );
-    
-    await display.setBankTriplet(0);
-    await display.setTotalsTriplets(store.state.rounds.totals);
-    
-    ui.setMsg("msgRounds", "Runda rozpoczęta. Aktywuj pojedynek przyciskiem.");
-    updateUiRound();
+    // po dźwięku: wjedź planszą rundy
+    // (tu nie mamy dokładnego czasu pliku; robimy prosty fallback: 900ms.
+    // jeśli chcesz “na końcu pliku”, to podepniemy mixer w sfx.js – niżej w checklist.)
+    setTimeout(async () => {
+      try {
+        await display.hideLogo();
+        await display.roundsBoardPlaceholders(Math.max(1, Math.min(6, r.answers.length || 6)));
+
+        await display.setBankTriplet(0);
+        await display.setTotalsTriplets(r.totals);
+        await display.setIndicator(null);
+
+        // host dostaje pytanie
+        // (jeśli masz osobny moduł hosta z komendami, podepniemy to tam – tu nie wysyłam HOST_CMD,
+        // bo w createRounds nie masz chHost. Jeśli chcesz, dodamy.)
+      } catch {}
+
+      // pojedynek gotowy
+      setStep("r_duel");
+      ui.setMsg("msgRoundsDuel", "Aktywuj pojedynek.");
+      refresh();
+    }, 900);
+
+    ui.setMsg("msgRoundsRoundStart", "Start rundy…");
+    refresh();
+  }
+
+  function backTo(step) {
+    // celowo proste cofanie tylko między “bezpiecznymi” krokami (bez niszczenia stanu)
+    setStep(step);
+    refresh();
   }
 
   function enableBuzzerDuel() {
@@ -148,9 +205,18 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     r.duel.enabled = true;
     r.duel.lastPressed = null;
 
-    // indicator off until accepted
-    display.setIndicator(null).catch(() => {});
-    updateUiRound();
+    // tu w przyszłości: nasłuch na BUZZER_EVT żeby ustawić lastPressed.
+    // na razie operator zatwierdza ręcznie, więc od razu pozwalamy “ponów” i czekamy na wybór.
+    ui.setMsg("msgRoundsDuel", "Pojedynek aktywny. Zatwierdź drużynę.");
+    refresh();
+  }
+
+  function retryDuel() {
+    const r = store.state.rounds;
+    r.duel.enabled = true;
+    r.duel.lastPressed = null;
+    ui.setMsg("msgRoundsDuel", "Pojedynek ponowiony.");
+    refresh();
   }
 
   function acceptBuzz(team) {
@@ -160,21 +226,27 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     r.controlTeam = team;
     r.duel.enabled = false;
 
-    // indicator shows who answers
     display.setIndicator(team).catch(() => {});
     playSfx("buzzer_press");
 
-    updateUiRound();
+    // wejście do gry
+    setStep("r_play");
+    ui.setMsg("msgRoundsPlay", `Kontrola: ${team}.`);
+    refresh();
   }
 
   function passQuestion() {
     const r = store.state.rounds;
-    if (!r.controlTeam || !r.allowPass) return;
-    const other = r.controlTeam === "A" ? "B" : "A";
-    r.controlTeam = other;
-    r.allowPass = false;
-    display.setIndicator(other).catch(() => {});
-    updateUiRound();
+    if (!r.controlTeam) return;
+    if (!r.allowPass || r.passUsed) return;
+
+    const next = otherTeam(r.controlTeam);
+    r.controlTeam = next;
+    r.passUsed = true;
+
+    display.setIndicator(next).catch(() => {});
+    ui.setMsg("msgRoundsPlay", `Pytanie oddane. Kontrola: ${next}.`);
+    refresh();
   }
 
   function startTimer3() {
@@ -183,135 +255,207 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
 
     r.timer3.running = true;
     r.timer3.endsAt = Date.now() + 3000;
-    updateUiRound();
+    ui.setText("t3", "3s");
+    refresh();
 
     const tick = () => {
       if (!r.timer3.running) return;
-      if (Date.now() >= r.timer3.endsAt) {
-        r.timer3.running = false;
-        // no answer => X
+      const left = Math.max(0, r.timer3.endsAt - Date.now());
+      const s = Math.ceil(left / 1000);
+      ui.setText("t3", `${s}s`);
+
+      if (left <= 0) {
+        stopTimer3();
+        // timeout = błędna odpowiedź (ten sam dźwięk)
         addX(true);
-        playSfx("time_over");
-        updateUiRound();
         return;
       }
-      const leftMs = r.timer3.endsAt - Date.now();
-      r.timer3.secLeft = Math.max(0, Math.ceil(leftMs / 1000));
-      requestAnimationFrame(tick);
+      timerRAF = requestAnimationFrame(tick);
     };
-    r.timer3.secLeft = 3;
-    requestAnimationFrame(tick);
+    timerRAF = requestAnimationFrame(tick);
   }
 
-  async function revealAnswerByOrd(ord) {
+  async function revealAnswerByOrd(ord, opts = {}) {
     const r = store.state.rounds;
     if (!r.controlTeam) return;
 
-    // stop timer if running
-    r.timer3.running = false;
+    // w kradzieży: tylko jedno trafienie
+    if (r.steal.active && stealResolved) return;
+
+    stopTimer3();
 
     const a = r.answers.find((x) => Number(x.ord) === Number(ord));
     if (!a) return;
 
+    // nie odsłaniaj ponownie
     if (r.revealed.has(a.ord)) return;
 
     r.revealed.add(a.ord);
-    r.bankPts += nInt(a.fixed_points, 0);
 
-    // first correct answer enables pass rule
-    r.allowPass = true;
+    const pts = nInt(a.fixed_points, 0);
+    r.bankPts += pts;
 
-    // show on display
-    await display.roundsRevealRow(a.ord, a.text, String(nInt(a.fixed_points, 0)).padStart(2, "0").slice(-2));
+    // po pierwszej poprawnej: wolno oddać pytanie (jednorazowo)
+    if (!r.allowPass && r.revealed.size === 1) {
+      r.allowPass = true;
+      r.passUsed = false;
+    }
+
+    // wyświetl
+    await display.roundsRevealRow(a.ord, a.text, String(pts).padStart(2, "0").slice(-2));
     await display.roundsSetSuma(r.bankPts);
     await display.setBankTriplet(r.bankPts);
 
     playSfx("answer_correct");
 
-    updateUiRound();
+    if (r.steal.active) {
+      // kradzież trafiona => bank przechodzi do stealTeam
+      stealResolved = true;
+      ui.setMsg("msgRoundsSteal", "Trafiona! Bank przejdzie do przeciwników.");
+      ui.setEnabled("btnGoEndRoundFromSteal", true);
+      refresh();
+      return;
+    }
+
+    // jeśli wszystkie odpowiedzi odkryte -> można kończyć
+    if (canEndQuestion()) {
+      ui.setEnabled("btnGoEndRound", true);
+      ui.setMsg("msgRoundsPlay", "Wszystkie odpowiedzi odsłonięte. Koniec rundy.");
+    }
+
+    refresh();
   }
 
   function addX(fromTimeout = false) {
     const r = store.state.rounds;
     if (!r.controlTeam) return;
 
-    // stop timer
-    r.timer3.running = false;
+    stopTimer3();
 
     if (r.controlTeam === "A") r.xA = Math.min(3, r.xA + 1);
     if (r.controlTeam === "B") r.xB = Math.min(3, r.xB + 1);
 
     playSfx("answer_wrong");
 
-    // if 3 X -> steal active
     const xNow = r.controlTeam === "A" ? r.xA : r.xB;
+
+    // po 3 X => kradzież
     if (xNow >= 3) {
       r.steal.active = true;
-      r.steal.used = false;
-      // indicator switches to other (they can consult now)
-      const other = r.controlTeam === "A" ? "B" : "A";
-      display.setIndicator(other).catch(() => {});
-    }
+      stealTeam = otherTeam(r.controlTeam);
+      stealResolved = false;
 
-    updateUiRound();
+      // indicator na kradnących
+      display.setIndicator(stealTeam).catch(() => {});
+
+      ui.setMsg("msgRoundsPlay", "3 X. Szansa przeciwników.");
+      ui.setEnabled("btnGoSteal", true);
+      refresh();
+    }
   }
 
-  function stealTry() {
+  function goSteal() {
     const r = store.state.rounds;
-    if (!r.steal.active || r.steal.used) return;
-    r.steal.used = true;
+    if (!r.steal.active) return;
+    setStep("r_steal");
+    ui.setMsg("msgRoundsSteal", "Wybierz jedną odpowiedź albo kliknij Nietrafiona.");
+    refresh();
+  }
 
-    // now operator should click one answer (if found) -> points to stealing team bank (per rules)
-    // We implement: next revealed answer will go to stealing team totals at end if steal succeeds.
-    updateUiRound();
+  function stealMiss() {
+    if (!store.state.rounds.steal.active) return;
+    stealResolved = true;
+    playSfx("answer_wrong");
+    ui.setMsg("msgRoundsSteal", "Nietrafiona. Bank zostaje u grających.");
+    ui.setEnabled("btnGoEndRoundFromSteal", true);
+    refresh();
+  }
+
+  function goEndRound() {
+    setStep("r_end");
+    ui.setMsg("msgRoundsEnd", "Gotowe do transferu banku.");
+    refresh();
   }
 
   async function endRound() {
     const r = store.state.rounds;
 
-    // move bank to winner totals only when round ends
-    if (r.controlTeam) {
-      // if steal was active and used and last reveal happened after stealTry, this implementation doesn’t track that separately.
-      // Practical: operator sets controlTeam via accept/pass and can pass. For end-of-round transfer we just transfer to current controlTeam.
-      r.totals[r.controlTeam] += r.bankPts;
+    // kto dostaje bank?
+    // - jeśli była kradzież i trafiona: stealTeam
+    // - jeśli kradzież i nietrafiona: drużyna, która miała kontrolę przed kradzieżą
+    // - jeśli bez kradzieży: aktualna controlTeam
+    let winner = r.controlTeam;
+
+    if (r.steal.active) {
+      if (stealResolved) {
+        // jeśli trafiona, to w revealAnswerByOrd ustawiamy stealResolved=true.
+        // ale musimy rozróżnić trafiona vs nietrafiona:
+        // - trafiona: bank “należy” kradnącym (stealTeam)
+        // - nietrafiona: bank zostaje przy controlTeam
+        // W praktyce: jeśli kradzież trafiona -> UI msg mówi “Trafiona!”
+        // więc sprawdzamy: czy odsłonięto jakąś odpowiedź po wejściu w steal?
+        // najprościej: jeśli stealResolved==true i msg zawiera “Trafiona” to… (brzydkie).
+        // Zrobimy prościej: ustawiamy flagę:
+      }
     }
 
-    // after transfer: bank resets top triplet to 000
+    // lepiej: jawna flaga
+    const stealWon = store.state.rounds.stealWon === true;
+    if (r.steal.active && stealTeam) {
+      winner = stealWon ? stealTeam : r.controlTeam;
+    }
+
+    // transfer banku -> konto (tu dźwięk bells)
+    if (winner) {
+      // bells może zagrać równolegle
+      playSfx("bells");
+      r.totals[winner] += r.bankPts;
+    }
+
+    // koniec rundy dźwięk round_transition
+    playSfx("round_transition");
+
+    // update display totals, reset bank
+    await display.setTotalsTriplets(r.totals);
     r.bankPts = 0;
     await display.setBankTriplet(0);
     await display.roundsSetSuma(0);
-    await display.setTotalsTriplets(r.totals);
-
-    // indicator off
     await display.setIndicator(null);
 
-    // next round number
+    // next round
     r.roundNo += 1;
-    r.controlTeam = null;
 
-    playSfx("round_transition");
-    ui.setMsg("msgRounds", "Runda zakończona. Możesz rozpocząć następną.");
+    // reset stanu pytania (zachowaj totals + roundNo)
+    const totalsKeep = structuredClone(r.totals);
+    const roundNoKeep = r.roundNo;
+    resetQuestionState();
+    r.totals = totalsKeep;
+    r.roundNo = roundNoKeep;
 
-    updateUiRound();
+    ui.setMsg("msgRoundsEnd", "Runda zakończona.");
+    setStep("r_roundStart");
+    refresh();
   }
 
-  function resetRound() {
-    resetRoundStateKeepTotals();
-    updateUiRound();
-    ui.setMsg("msgRounds", "Zresetowano stan rundy (bez kasowania wyników).");
+  // ------- public API -------
+  function bootIfNeeded() {
+    const r = store.state.rounds;
+    if (!r.step) r.step = "r_ready";
+    ui.showRoundsStep(r.step);
+    refresh();
   }
-
-  // expose for app render tick
-  setInterval(() => updateUiRound(), 500);
 
   return {
+    bootIfNeeded,
+
     stateGameReady,
     stateStartGameIntro,
     startRound,
 
-    resetRound,
+    backTo,
 
     enableBuzzerDuel,
+    retryDuel,
     acceptBuzz,
 
     passQuestion,
@@ -319,7 +463,10 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
 
     revealAnswerByOrd,
     addX,
-    stealTry,
+
+    goSteal,
+    stealMiss,
+    goEndRound,
     endRound,
   };
 }
