@@ -309,21 +309,24 @@
           <div class="cards2">
             <div class="card">
               <div class="name">Start / przejścia</div>
-
-              <div class="rowBtns">
-                <button class="btn gold" id="btnGameReady" type="button">Stan: gra gotowa</button>
-                <button class="btn gold" id="btnStartShowIntro" type="button">Start gry (logo + muzyka)</button>
+              
+              <div class="rowBtns" id="rStepReady">
+                <button class="btn gold" id="btnGameReady" type="button">Gra gotowa</button>
               </div>
-
+              
+              <div class="rowBtns hidden" id="rStepIntro">
+                <button class="btn gold" id="btnStartShowIntro" type="button">Rozpocznij grę</button>
+              </div>
+              
+              <div class="rowBtns hidden" id="rStepRound">
+                <button class="btn gold" id="btnStartRound" type="button">Rozpocznij rundę</button>
+              </div>
+              
               <div class="rowBtns">
-                <button class="btn gold" id="btnStartRound" type="button" disabled>Rozpocznij rundę</button>
                 <button class="btn" id="btnBackToSetup" type="button">Wstecz do ustawień</button>
-              </div>
-
-              <div class="rowBtns">
-                <button class="btn danger" id="btnResetRoundState" type="button">Reset bieżącej rundy</button>
                 <div class="msg" id="msgRounds"></div>
               </div>
+
             </div>
 
             <div class="card">
