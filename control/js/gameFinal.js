@@ -566,20 +566,22 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
   async function finishFinal() {
     playSfx("final_theme");
   
-    store.state.locks.finalActive = false;
+    const sum = Number(store.state.final.runtime?.sum || 0);     // S
+    const moneyEarned = Number(store.state.moneyEarned || 0);    // M
   
-    await display.setIndicator?.(null);
+    const winEnabled = store.state?.advanced?.winEnabled === true;
+    const hit200 = sum >= 200;
   
-    const winEnabled = store.state?.advanced?.winEnabled === true; // <- ustawienia dodatkowe
-    const hit200 = (store.state.final.runtime?.sum || 0) >= 200;
-  
-    if (winEnabled && hit200) {
-      await display.showWin?.();      // <- Twoja implementacja WIN
-    } else {
-      await display.showLogo?.();     // <- default jak dotąd
+    if (!winEnabled) {
+      await display.showLogo();
+      return;
     }
   
-    ui.setMsg("msgFinalEnd", "Finał zakończony.");
+    const winAmount = hit200
+      ? (moneyEarned + 25000)
+      : moneyEarned;
+  
+    await display.showWin(winAmount); // showWin zrobi animację rain right 80
   }
 
   function bootIfNeeded() {
