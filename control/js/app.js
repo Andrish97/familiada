@@ -1,3 +1,4 @@
+// /familiada/js/pages/control/app.js
 import { requireAuth, signOut } from "/familiada/js/core/auth.js";
 import { sb } from "/familiada/js/core/supabase.js";
 import { rt } from "/familiada/js/core/realtime.js";
@@ -48,10 +49,9 @@ async function main() {
   const qsAll = await loadQuestions(game.id);
   sessionStorage.setItem("familiada:questionsCache", JSON.stringify(qsAll));
 
-  
   const ui = createUI();
   ui.setGameHeader(game.name, `${game.type} / ${game.status}`);
-  
+
   const store = createStore(game.id);
   store.hydrate();
 
@@ -68,6 +68,113 @@ async function main() {
   const rounds = createRounds({ ui, store, devices, display, loadQuestions, loadAnswers });
   rounds.bootIfNeeded();
   const final = createFinal({ ui, store, devices, display, loadAnswers });
+
+  // === PICKER PYTAŃ FINAŁU (przeniesiony z dawnego gameFinal) ===
+  let finalPickerAll = [];
+  let finalPickerSelected = new Set();
+
+  function escapeHtml(s) {
+    return String(s ?? "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+  }
+
+  async function finalPickerReload() {
+    const raw = sessionStorage.getItem("familiada:questionsCache");
+    finalPickerAll = raw ? JSON.parse(raw) : [];
+    finalPickerSelected = new Set(store.state.final.picked || []);
+    finalPickerRender();
+  }
+
+  function finalPickerGetSelectedIds() {
+    return Array.from(finalPickerSelected);
+  }
+
+  function finalPickerRender() {
+    const root = document.getElementById("finalQList");
+    const chips = document.getElementById("pickedChips");
+    const cnt = document.getElementById("pickedCount");
+    if (!root || !chips || !cnt) return;
+
+    const confirmed = store.state.final.confirmed === true;
+
+    const picked = finalPickerAll.filter((q) => finalPickerSelected.has(q.id));
+    cnt.textContent = String(picked.length);
+
+    // chips
+    chips.innerHTML = picked
+      .map(
+        (q) => `
+      <div class="chip">
+        <span>#${q.ord}</span>
+        <span>${escapeHtml(q.text || "")}</span>
+        ${confirmed ? "" : `<button type="button" data-x="${q.id}">✕</button>`}
+      </div>
+    `
+      )
+      .join("");
+
+    if (!confirmed) {
+      chips.querySelectorAll("button[data-x]").forEach((b) => {
+        b.addEventListener("click", () => {
+          finalPickerSelected.delete(b.dataset.x);
+          store.state.final.picked = Array.from(finalPickerSelected).slice(0, 5);
+          finalPickerRender();
+        });
+      });
+    }
+
+    // lista pytań
+    if (confirmed) {
+      root.innerHTML = picked
+        .map(
+          (q) => `
+        <div class="qRow">
+          <div class="meta">#${q.ord}</div>
+          <div class="txt">${escapeHtml(q.text || "")}</div>
+        </div>
+      `
+        )
+        .join("");
+      return;
+    }
+
+    root.innerHTML = finalPickerAll
+      .map((q) => {
+        const checked = finalPickerSelected.has(q.id);
+        const disabled = !checked && finalPickerSelected.size >= 5;
+        return `
+        <label class="qRow">
+          <input type="checkbox" data-qid="${q.id}" ${checked ? "checked" : ""} ${disabled ? "disabled" : ""}/>
+          <div class="meta">#${q.ord}</div>
+          <div class="txt">${escapeHtml(q.text || "")}</div>
+        </label>
+      `;
+      })
+      .join("");
+
+    root.querySelectorAll("input[data-qid]").forEach((inp) => {
+      inp.addEventListener("change", () => {
+        const id = inp.dataset.qid;
+        if (!id) return;
+        if (inp.checked) {
+          if (finalPickerSelected.size >= 5) {
+            inp.checked = false;
+            return;
+          }
+          finalPickerSelected.add(id);
+        } else {
+          finalPickerSelected.delete(id);
+        }
+        store.state.final.picked = Array.from(finalPickerSelected).slice(0, 5);
+        finalPickerRender();
+      });
+    });
+  }
+  // === KONIEC pickera pytań finału ===
 
   // init links + QR images
   devices.initLinksAndQr();
@@ -114,9 +221,9 @@ async function main() {
 
   ui.on("qr.toggle", async () => {
     const now = store.state.flags.qrOnDisplay;
-  
+
     if (!now) {
-      await devices.sendQrToDisplay();       // pokaż QR zawsze (linki są zawsze)
+      await devices.sendQrToDisplay(); // pokaż QR zawsze (linki są zawsze)
       store.setQrOnDisplay(true);
       ui.setQrToggleLabel(true, store.state.flags.hostOnline && store.state.flags.buzzerOnline);
     } else {
@@ -125,7 +232,6 @@ async function main() {
       ui.setQrToggleLabel(false, store.state.flags.hostOnline && store.state.flags.buzzerOnline);
     }
   });
-
 
   // SETUP
   ui.on("setup.backToDevices", () => store.setActiveCard("devices"));
@@ -143,19 +249,22 @@ async function main() {
 
   ui.on("final.toggle", (hasFinal) => store.setHasFinal(hasFinal));
 
-  ui.on("final.reload", () => final.pickerReload().catch((e) => ui.setMsg("msgFinalPick", e?.message || String(e))));
+  ui.on("final.reload", () =>
+    finalPickerReload().catch((e) => ui.setMsg("msgFinalPick", e?.message || String(e)))
+  );
 
   ui.on("final.confirm", () => {
-    // lock list into “only view”
-    store.confirmFinalQuestions(final.pickerGetSelectedIds());
+    store.confirmFinalQuestions(finalPickerGetSelectedIds());
     ui.setFinalConfirmed(true);
     ui.setMsg("msgFinalPick", "Zatwierdzono.");
+    finalPickerRender();
   });
 
   ui.on("final.edit", () => {
     store.unconfirmFinalQuestions();
     ui.setFinalConfirmed(false);
     ui.setMsg("msgFinalPick", "");
+    finalPickerRender();
   });
 
   ui.on("setup.finish", () => {
@@ -164,50 +273,55 @@ async function main() {
   });
 
   // ROUNDS
-  ui.on("game.ready", async () => { await rounds.stateGameReady(); });
-  
-  ui.on("game.startIntro", async () => { await rounds.stateStartGameIntro(); });
-  
-  ui.on("rounds.start", async () => { await rounds.startRound(); });
-  
+  ui.on("game.ready", async () => {
+    await rounds.stateGameReady();
+  });
+
+  ui.on("game.startIntro", async () => {
+    await rounds.stateStartGameIntro();
+  });
+
+  ui.on("rounds.start", async () => {
+    await rounds.startRound();
+  });
+
   // back buttons:
   ui.on("rounds.back", (step) => rounds.backTo(step));
-  
+
   // duel
   ui.on("buzz.enable", () => rounds.enableBuzzerDuel());
   ui.on("buzz.retry", () => rounds.retryDuel());
   ui.on("buzz.acceptA", () => rounds.acceptBuzz("A"));
   ui.on("buzz.acceptB", () => rounds.acceptBuzz("B"));
-  
+
   // play
   ui.on("rounds.pass", () => rounds.passQuestion());
   ui.on("rounds.timer3", () => rounds.startTimer3());
   ui.on("rounds.answerClick", (ord) => rounds.revealAnswerByOrd(ord));
   ui.on("rounds.addX", () => rounds.addX());
-  
+
   // steal/end
   ui.on("rounds.goSteal", () => rounds.goSteal());
   ui.on("rounds.stealMiss", () => rounds.stealMiss());
   ui.on("rounds.goEnd", () => rounds.goEndRound());
   ui.on("rounds.end", () => rounds.endRound());
 
-
-  // FINAL
+  // FINAL (runtime – nie picker)
   final.bootIfNeeded();
-  
+
   ui.on("final.start", () => final.startFinal());
-  ui.on("final.back", (card) => store.setActiveCard(card)); // albo Twoja nawigacja
+  ui.on("final.back", (card) => store.setActiveCard(card));
   ui.on("final.backStep", (step) => final.backTo(step));
-  
+
   ui.on("final.p1.timer", () => final.p1StartTimer());
   ui.on("final.p1.toQ", (n) => final.toP1MapQ(n));
   ui.on("final.p1.nextQ", (n) => final.nextFromP1Q(n));
-  
+
   ui.on("final.p2.start", () => final.startP2Round());
   ui.on("final.p2.timer", () => final.p2StartTimer());
   ui.on("final.p2.toQ", (n) => final.toP2MapQ(n));
   ui.on("final.p2.nextQ", (n) => final.nextFromP2Q(n));
-  
+
   ui.on("final.finish", () => final.finishFinal());
 
   // Presence loop
@@ -228,7 +342,10 @@ async function main() {
 
     ui.setEnabled("btnDevicesNext", store.state.flags.displayOnline);
     ui.setEnabled("btnQrToggle", store.state.flags.displayOnline);
-    ui.setEnabled("btnDevicesToAudio", store.state.flags.displayOnline && store.state.flags.hostOnline && store.state.flags.buzzerOnline);
+    ui.setEnabled(
+      "btnDevicesToAudio",
+      store.state.flags.displayOnline && store.state.flags.hostOnline && store.state.flags.buzzerOnline
+    );
 
     ui.setEnabled("btnDevicesFinish", store.state.flags.audioUnlocked);
 
@@ -238,25 +355,38 @@ async function main() {
     ui.setFinalHasFinal(store.state.hasFinal === true);
     ui.setFinalConfirmed(store.state.final.confirmed === true);
 
-    ui.setEnabled("btnConfirmFinal", store.state.hasFinal === true && store.state.final.confirmed === false && store.state.final.picked.length === 5);
-    ui.setEnabled("btnEditFinal", store.state.hasFinal === true && store.state.final.confirmed === true);
+    ui.setEnabled(
+      "btnConfirmFinal",
+      store.state.hasFinal === true &&
+        store.state.final.confirmed === false &&
+        store.state.final.picked.length === 5
+    );
+    ui.setEnabled(
+      "btnEditFinal",
+      store.state.hasFinal === true && store.state.final.confirmed === true
+    );
 
     ui.setEnabled("btnStartRound", store.canStartRounds());
 
     // rounds HUD
     ui.setRoundsHud(store.state.rounds);
 
-    // final UI
-    ui.setEnabled("btnFinalStart", store.canEnterCard("final") && store.state.final.runtime.phase === "IDLE");
+    // final UI – Start finału tylko na kroku f_start
+    ui.setEnabled(
+      "btnFinalStart",
+      store.canEnterCard("final") && store.state.final.step === "f_start"
+    );
   };
 
   store.subscribe(render);
   render();
 
   ui.setRoundsStep(
-    store.state.rounds.phase === "IDLE" || store.state.rounds.phase === "READY" ? "READY" :
-    store.state.rounds.phase === "INTRO" ? "INTRO" :
-    "ROUND"
+    store.state.rounds.phase === "IDLE" || store.state.rounds.phase === "READY"
+      ? "READY"
+      : store.state.rounds.phase === "INTRO"
+      ? "INTRO"
+      : "ROUND"
   );
 
   // boot view state
@@ -265,9 +395,8 @@ async function main() {
     store.state.flags.hostOnline && store.state.flags.buzzerOnline
   );
 
-  // init questions picker for final
-  await final.pickerReload().catch(() => {});
-  final.pickerRender();
+  // init questions picker for final (setup karta)
+  await finalPickerReload().catch(() => {});
 }
 
 main().catch((e) => {
