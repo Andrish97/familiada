@@ -130,27 +130,41 @@ export function createStore(gameId) {
     return allDevicesOnline() && state.flags.audioUnlocked && canFinishSetup();
   }
 
-  function canEnterCard(card) {
-    if (card === "devices") return true;
+function isFinalActive() {
+  // zamiast patrzeć na runtime.phase (którego nie ustawiamy),
+  // korzystamy z locka
+  return state.locks.finalActive === true;
+}
 
-    if (card === "setup") {
-      // Do ustawień możemy wejść po ukończeniu urządzeń,
-      // ale nie wolno wchodzić, gdy finał jest aktywny.
-      return state.completed.devices && !isFinalActive();
-    }
+function canEnterCard(card) {
+  if (card === "devices") return true;
 
-    if (card === "rounds") {
-      // Do rozgrywki dopiero po pełnym setupie
-      return state.completed.devices && canFinishSetup();
-    }
-
-    if (card === "final") {
-      // Do finału tylko jeśli finał włączony i setup skończony
-      return state.hasFinal === true && canFinishSetup();
-    }
-
-    return false;
+  if (card === "setup") {
+    // można wejść do ustawień po urządzeniach,
+    // ale NIE w trakcie finału i NIE po starcie gry (lock)
+    if (isFinalActive()) return false;
+    if (state.locks.gameStarted) return false;
+    return state.completed.devices;
   }
+
+  if (card === "rounds") {
+    // do rozgrywki dopiero po pełnym setupie
+    return state.completed.devices && canFinishSetup();
+  }
+
+  if (card === "final") {
+    // finał dopiero gdy:
+    // - jest włączony
+    // - setup skończony
+    // - ktoś nabił >= 300 punktów
+    const totals = state.rounds?.totals || { A: 0, B: 0 };
+    const has300 = (totals.A || 0) >= 300 || (totals.B || 0) >= 300;
+    return state.hasFinal === true && canFinishSetup() && has300;
+  }
+
+  return false;
+}
+
 
   function setActiveCard(card) {
     if (!canEnterCard(card)) return;
@@ -175,6 +189,11 @@ export function createStore(gameId) {
       state.final.picked = [];
       state.final.confirmed = false;
     }
+    emit();
+  }
+
+  function setFinalActive(v) {
+    state.locks.finalActive = !!v;
     emit();
   }
 
@@ -287,6 +306,7 @@ export function createStore(gameId) {
     markSentBlackAfterDisplayOnline,
     setAudioUnlocked,
     setQrOnDisplay,
+    setFinalActive,
 
     teamsOk,
     canFinishSetup,
