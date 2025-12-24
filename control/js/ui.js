@@ -140,6 +140,13 @@ export function createUI() {
     if (btnConfirm) btnConfirm.style.display = confirmed ? "none" : "";
   }
 
+  function showFinalStep(step) {
+    // ukryj wszystkie final-stepy
+    document.querySelectorAll('section.step[data-step^="final_"]').forEach((s) => s.classList.add("hidden"));
+    // pokaż wybrany
+    document.querySelector(`section.step[data-step="${step}"]`)?.classList.remove("hidden");
+  }
+
   function setQrToggleLabel(isOn, hostAndBuzzerOnline = false) {
     const b = $("btnQrToggle");
     if (!b) return;
@@ -294,13 +301,23 @@ export function createUI() {
     $("btnStealTry")?.addEventListener("click", () => emit("rounds.stealTry"));
     $("btnEndRound")?.addEventListener("click", () => emit("rounds.end"));
 
-    // final
-    $("btnFinalBackToRounds")?.addEventListener("click", () => emit("final.back"));
-    $("btnFinalStart")?.addEventListener("click", () => emit("final.start"));
-    $("btnFinalToMapping")?.addEventListener("click", () => emit("final.toMapping"));
-    $("btnFinalRevealAll")?.addEventListener("click", () => emit("final.revealAll"));
-    $("btnFinalCommit")?.addEventListener("click", () => emit("final.commit"));
-    $("btnFinalFinish")?.addEventListener("click", () => emit("final.finish"));
+    // final (kroki)
+    $("btnFinalP1StartTimer")?.addEventListener("click", () => emit("final.p1.timerStart"));
+    $("btnFinalP1Next")?.addEventListener("click", () => emit("final.p1.next"));
+    
+    $("btnFinalP1MapPrev")?.addEventListener("click", () => emit("final.p1.mapPrev"));
+    $("btnFinalP1MapNext")?.addEventListener("click", () => emit("final.p1.mapNext"));
+    
+    $("btnFinalRound2Back")?.addEventListener("click", () => emit("final.round2.back"));
+    $("btnFinalRound2Start")?.addEventListener("click", () => emit("final.round2.start"));
+    
+    $("btnFinalP2StartTimer")?.addEventListener("click", () => emit("final.p2.timerStart"));
+    $("btnFinalP2Next")?.addEventListener("click", () => emit("final.p2.next"));
+    
+    $("btnFinalP2MapPrev")?.addEventListener("click", () => emit("final.p2.mapPrev"));
+    $("btnFinalP2MapNext")?.addEventListener("click", () => emit("final.p2.mapNext"));
+    
+    $("btnFinalFinishBack")?.addEventListener("click", () => emit("final.finish.back"));
   }
 
   wire();
@@ -327,6 +344,7 @@ export function createUI() {
 
     setFinalHasFinal,
     setFinalConfirmed,
+    showFinalStep,
 
     setQrToggleLabel,
 
