@@ -147,15 +147,38 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
   }
 
   async function stateStartGameIntro() {
-    const { teamA, teamB } = store.state.teams;
-    // intro music + logo
+    const r = store.state.rounds;
+  
+    if (r.step !== "r_intro") {
+      ui.setMsg("msgRounds", "Intro można włączyć tylko z ekranu „Start gry”.");
+      return;
+    }
+  
+    ui.setMsg("msgRounds", "Intro gry — poczekaj na zakończenie, potem pojawi się logo.");
+    
+    // flaga, żeby nie odpalać intro kilka razy
+    if (r.introStarted) return;
+    r.introStarted = true;
+  
+    // 1. pierwsze intro
     playSfx("show_intro");
-    await display.stateIntroLogo(teamA, teamB);
-
-    ui.setMsg("msgRoundsIntro", "Intro uruchomione.");
-    setStep("r_roundStart");
-    refresh();
+  
+    // 2. drugie intro po ~7s
+    setTimeout(() => {
+      playSfx("show_intro");
+    }, 7000);
+  
+    // 3. po 14s od pierwszego:
+    //    - pokazujemy logo z nazwami drużyn
+    //    - przechodzimy do ekranu startu rundy
+    setTimeout(async () => {
+      await display.stateIntroLogo(store.state.teams.teamA, store.state.teams.teamB);
+      setStep("r_roundStart");
+      ui.setMsg("msgRounds", "Intro skończone — możesz rozpocząć rundę.");
+      refresh();
+    }, 14000);
   }
+
 
   async function startRound() {
     const r = store.state.rounds;
