@@ -140,10 +140,19 @@ export function createUI() {
     if (btnConfirm) btnConfirm.style.display = confirmed ? "none" : "";
   }
 
-  function setQrToggleLabel(isOn) {
+  function setQrToggleLabel(isOn, hostAndBuzzerOnline = false) {
     const b = $("btnQrToggle");
     if (!b) return;
-    b.textContent = isOn ? "Ukryj QR" : "QR na wyświetlaczu";
+  
+    // Gdy QR są pokazane:
+    // - jeśli host i buzzer są już online, sensowniejsze jest "Czarny ekran"
+    // - w przeciwnym razie "Schowaj QR"
+    if (isOn) {
+      b.textContent = hostAndBuzzerOnline ? "Czarny ekran" : "Schowaj QR";
+      return;
+    }
+  
+    b.textContent = "QR na wyświetlaczu";
   }
 
   function setRoundsHud(r) {
