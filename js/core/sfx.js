@@ -129,3 +129,44 @@ export function unlockAudio() {
 export function isAudioUnlocked() {
   return unlocked;
 }
+
+export function playSfxAndWait(name) {
+  return new Promise((resolve) => {
+    const a = loadAudio(name);
+    if (!a) return resolve();
+
+    try {
+      a.currentTime = 0;
+
+      // Jeśli duration nieznane, rozwiązujemy po zdarzeniu "ended"
+      const onEnd = () => {
+        cleanup();
+        resolve();
+      };
+
+      const cleanup = () => {
+        a.removeEventListener("ended", onEnd);
+      };
+
+      a.addEventListener("ended", onEnd, { once: true });
+      a.play().catch(() => {
+        cleanup();
+        resolve();
+      });
+
+      // Awaryjnie: jeśli ktoś przerwie / przeskoczy track i "ended" nie wpadnie
+      // to kończymy, gdy audio stanie.
+      const chk = () => {
+        if (a.paused) {
+          cleanup();
+          resolve();
+          return;
+        }
+        requestAnimationFrame(chk);
+      };
+      requestAnimationFrame(chk);
+    } catch {
+      resolve();
+    }
+  });
+}
