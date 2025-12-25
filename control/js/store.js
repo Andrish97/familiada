@@ -140,31 +140,23 @@ function canEnterCard(card) {
   if (card === "devices") return true;
 
   if (card === "setup") {
-    // można wejść do ustawień po urządzeniach,
-    // ale NIE w trakcie finału i NIE po starcie gry (lock)
-    if (isFinalActive()) return false;
-    if (state.locks.gameStarted) return false;
-    return state.completed.devices;
+    // Można wejść do ustawień, gdy urządzenia są gotowe
+    // (ale nie, gdy finał już trwa).
+    return state.completed.devices && !isFinalActive();
   }
 
   if (card === "rounds") {
-    // do rozgrywki dopiero po pełnym setupie
+    // Do rozgrywki dopiero gdy setup da się zakończyć
     return state.completed.devices && canFinishSetup();
   }
 
   if (card === "final") {
-    // finał dopiero gdy:
-    // - jest włączony
-    // - setup skończony
-    // - ktoś nabił >= 300 punktów
-    const totals = state.rounds?.totals || { A: 0, B: 0 };
-    const has300 = (totals.A || 0) >= 300 || (totals.B || 0) >= 300;
-    return state.hasFinal === true && canFinishSetup() && has300;
+    // Do finału dopiero gdy setup kompletny i finał włączony
+    return state.hasFinal === true && canFinishSetup();
   }
 
   return false;
 }
-
 
   function setActiveCard(card) {
     if (!canEnterCard(card)) return;
