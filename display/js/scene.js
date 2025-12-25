@@ -166,7 +166,7 @@ export async function createScene() {
 
   // Animator (dotOff przekazujemy jawnie)
   const anim = createAnimator({ tileAt, snapArea, clearArea, clearTileAt, dotOff: COLORS.dotOff });
-
+  const ANIM_SPEED = { mul: 1 };
   // ============================
   // GLOBAL ANIMATION SPEED
   // ============================
