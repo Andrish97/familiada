@@ -35,9 +35,16 @@ const normalizeAppMode = (m) => {
   return mm;
 };
 
+// ⬇️ TU DODAŁEM BLANK
 const isSceneBigMode = (m) => {
   const mm = (m ?? "").toString().trim().toUpperCase();
-  return mm === "LOGO" || mm === "ROUNDS" || mm === "FINAL" || mm === "WIN";
+  return (
+    mm === "LOGO"   ||
+    mm === "ROUNDS" ||
+    mm === "FINAL"  ||
+    mm === "WIN"    ||
+    mm === "BLANK"
+  );
 };
 
 const debounce = (fn, ms) => {
@@ -94,22 +101,26 @@ export const createCommandHandler = (app) => {
     const tokens = tokenize(raw);
     const head = (tokens[0] ?? "").toUpperCase();
 
+    // APP MODE ...
     if (head === "APP" && (tokens[1] ?? "").toUpperCase() === "MODE") {
       app.setMode(normalizeAppMode(tokens[2] ?? "BLACK_SCREEN"));
       saveSnapshot(raw);
       return;
     }
 
+    // MODE ...
     if (head === "MODE") {
       const arg = tokens[1] ?? "";
       const mGlobal = normalizeAppMode(arg);
 
+      // globalny tryb: GRA / QR / BLACK(_SCREEN)
       if (mGlobal === "QR" || mGlobal === "GRA" || mGlobal === "BLACK_SCREEN") {
         app.setMode(mGlobal);
         saveSnapshot(raw);
         return;
       }
 
+      // tryb sceny: LOGO / ROUNDS / FINAL / WIN / BLANK
       if (isSceneBigMode(arg)) {
         ensureGameMode();
         await scene.handleCommand(raw);
@@ -121,6 +132,7 @@ export const createCommandHandler = (app) => {
       return;
     }
 
+    // QR HOST/BUZZER ...
     if (head === "QR") {
       const hostIdx = tokens.findIndex(t => t.toUpperCase() === "HOST");
       const buzIdx  = tokens.findIndex(t => t.toUpperCase() === "BUZZER");
@@ -133,6 +145,7 @@ export const createCommandHandler = (app) => {
       return;
     }
 
+    // wszystko inne → scena (GRA)
     ensureGameMode();
     await scene.handleCommand(raw);
     saveSnapshot(raw);
