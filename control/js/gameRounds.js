@@ -146,23 +146,26 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     refresh();
   }
 
-  async function stateStartGameIntro() {
+   async function stateStartGameIntro() {
     const ok = await devices.sendDisplayCmd("PING");
-    if (!ok) { ui.setMsg("msgRoundsIntro", "Wyświetlacz offline."); return; }
+    if (!ok) {
+      ui.setMsg("msgRoundsIntro", "Wyświetlacz offline.");
+      return;
+    }
 
-    store.state.rounds.phase = "INTRO";
+    const r = store.state.rounds;
+    r.phase = "INTRO";
     setStep("r_intro");
-    ui.setMsg("msgRoundsIntro", "Intro start…");
 
-    // dźwięk i display
-    playSfx("show_intro");
+    // teraz CAŁA sekwencja (2x intro + logo w 14s) siedzi w display.stateIntroLogo
     await display.stateIntroLogo();
 
-    // po intro przełącz na start rundy
+    // dopiero po dwóch odtworzeniach intro przechodzimy dalej
     setStep("r_roundStart");
-    ui.setMsg("msgRoundsIntro", "Intro zakończone. Można zaczynać rundę.");
+    ui.setMsg("msgRoundsIntro", "Intro zakończone. Możesz rozpocząć rundę.");
     refresh();
   }
+
 
 
   async function startRound() {
