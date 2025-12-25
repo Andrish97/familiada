@@ -297,7 +297,7 @@ export async function createScene() {
     const rows = [2,3,4,5,6,7]; // 6 wierszy
     const roundNums = rows.map((r, i) => field(`R${i+1}_NUM`, 5, r, 1));
     const answers   = rows.map((r, i) => field(`R${i+1}_TXT`, 7, r, 17));
-    const points    = rows.map((r, i) => field(`R${i+1}_PTS`, 24, r, 2));
+    const points    = rows.map((r, i) => field(`R${i+1}_PTS`, 25, r, 2));
 
     const xCells = {
       "1A": { c1: 1,  r1: 8,  c2: 3,  r2: 10 },
@@ -346,8 +346,8 @@ export async function createScene() {
   const roundsSumaFields = () => {
     const r = roundsState.sumaRow;
     return {
-      label: field("SUMA_LABEL", 18, r, 4),
-      val:   field("SUMA_VAL",   23, r, 3),
+      label: field("SUMA_LABEL", 19, r, 4),
+      val:   field("SUMA_VAL",   24, r, 3),
     };
   };
   
