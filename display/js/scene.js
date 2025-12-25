@@ -975,31 +975,44 @@ export async function createScene() {
       // ====== NOWE: batch (jedna animacja na całość) ======
       setAll: async ({ rows = [], suma = undefined, animOut = null, animIn = null } = {}) => {
         if (mode !== BIG_MODES.ROUNDS) await api.mode.set("ROUNDS");
-
+      
         const A_ALL = api.big.areaAll();
-
+      
+        // najpierw animacja wyjścia całości (opcjonalna)
         if (animOut) await api.big.animOut({ ...animOut, area: A_ALL });
-
+      
         // docelowy obraz (bez animacji per-pole)
-
         for (let i = 0; i < 6; i++) {
           const r = rows[i] ?? {};
           const t = (r.text ?? "").toString();
           const p = (r.pts  ?? "").toString();
-
+      
           roundsState.text[i] = t;
           roundsState.pts[i]  = p;
-
+      
           writeField(GLYPHS, big, ROUNDS.answers[i], t, LIT.main);
           writeField(GLYPHS, big, ROUNDS.points[i],  p, LIT.main);
           setRoundNumberVisible(i + 1, isNonEmpty(t) || isNonEmpty(p));
         }
-
-        // ustaw sumę i przelicz pozycję
-        if (suma !== undefined) roundsState.suma = (suma ?? "").toString();
-        else roundsState.suma = (roundsState.suma ?? "").toString();
+      
+        // ustaw sumę w stanie
+        if (suma !== undefined) {
+          roundsState.suma = (suma ?? "").toString();
+        } else {
+          roundsState.suma = (roundsState.suma ?? "").toString();
+        }
+      
+        // przelicz rząd dla SUMA i narysuj ją
         relocateSumaIfNeeded();
-        
+        const F = roundsSumaFields();
+        writeField(GLYPHS, big, F.label, "SUMA", LIT.main);
+        if (isNonEmpty(roundsState.suma)) {
+          writeField(GLYPHS, big, F.val, roundsState.suma, LIT.main);
+        } else {
+          writeField(GLYPHS, big, F.val, "", LIT.main);
+        }
+      
+        // animacja wejścia całości (opcjonalna)
         if (animIn) await api.big.animIn({ ...animIn, area: A_ALL });
       },
     },
