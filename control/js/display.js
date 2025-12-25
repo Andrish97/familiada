@@ -20,7 +20,7 @@ export function createDisplay({ devices, store }) {
   const introMixer = createSfxMixer ? createSfxMixer() : null;
 
   // ===== basics =====
-  async function appGra() { await devices.sendDisplayCmd("MODE GRA"); }
+  async function appGra() { await devices.sendDisplayCmd("MODE GAME"); }
   async function appBlack() { await devices.sendDisplayCmd("MODE BLACK"); }
 
   async function setTeamsLongs(teamA, teamB) {
@@ -35,7 +35,7 @@ export function createDisplay({ devices, store }) {
   }
 
   async function showLogo() {
-    await send("MODE GRA");
+    await send("MODE GAME");
     await send("LOGO SHOW ANIMIN rain right 80");
   }
 
