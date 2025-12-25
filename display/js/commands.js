@@ -30,7 +30,7 @@ const normalizeAppMode = (m) => {
   const mm = (m ?? "").toString().trim().toUpperCase();
   if (mm === "BLACK") return "BLACK_SCREEN";
   if (mm === "BLACK_SCREEN") return "BLACK_SCREEN";
-  if (mm === "GRA" || mm === "GAME") return "GRA";
+  if (mm === "GAME" || mm === "GAME") return "GAME";
   if (mm === "QR") return "QR";
   return mm;
 };
@@ -67,7 +67,7 @@ export const createCommandHandler = (app) => {
     const qrState = app.qr?.get?.() ?? {};
   
     const patch = {
-      app_mode: app.mode, // BLACK_SCREEN/QR/GRA
+      app_mode: app.mode, // BLACK_SCREEN/QR/GAME
       scene: app.scene?.api?.mode?.get?.() ?? null,
       last_cmd: String(lastCmd ?? ""),
       screen: app.scene?.api?.snapshotAll?.() ?? null,
@@ -91,7 +91,7 @@ export const createCommandHandler = (app) => {
   }, 350);
 
   const ensureGameMode = () => {
-    if (app.mode !== "GRA") app.setMode("GRA");
+    if (app.mode !== "GAME") app.setMode("GAME");
   };
 
   return async (line) => {
@@ -113,8 +113,8 @@ export const createCommandHandler = (app) => {
       const arg = tokens[1] ?? "";
       const mGlobal = normalizeAppMode(arg);
 
-      // globalny tryb: GRA / QR / BLACK(_SCREEN)
-      if (mGlobal === "QR" || mGlobal === "GRA" || mGlobal === "BLACK_SCREEN") {
+      // globalny tryb: GAME / QR / BLACK(_SCREEN)
+      if (mGlobal === "QR" || mGlobal === "GAME" || mGlobal === "BLACK_SCREEN") {
         app.setMode(mGlobal);
         saveSnapshot(raw);
         return;
@@ -145,7 +145,7 @@ export const createCommandHandler = (app) => {
       return;
     }
 
-    // wszystko inne → scena (GRA)
+    // wszystko inne → scena (GAME)
     ensureGameMode();
     await scene.handleCommand(raw);
     saveSnapshot(raw);
