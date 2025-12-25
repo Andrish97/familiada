@@ -845,15 +845,24 @@ export async function createScene() {
 
       animIn: async ({ type="edge", dir="left", axis="down", ms=12, area=null, opts=null } = {}) => {
         const A = area ?? api.big.areaAll();
-        if (type === "edge")   return anim.inEdge(big, A, dir,  scaleMs(ms, 14));
-        if (type === "matrix") return anim.inMatrix(big, A, axis, scaleMs(ms, 36));
+        const speed = scaleMs(ms, type === "matrix" ? 36 : 14);
+        if (type === "edge") {
+          return anim.inEdge(big, A, dir, speed, opts || {});
+        }
+        if (type === "matrix") {
+          return anim.inMatrix(big, A, axis, speed, opts || {});
+        }
       },
-
+    
       animOut: async ({ type="edge", dir="left", axis="down", ms=12, area=null, opts=null } = {}) => {
         const A = area ?? api.big.areaAll();
-        if (type === "edge")   return anim.outEdge(big, A, dir,  scaleMs(ms, 14));
-        if (type === "matrix") return anim.outMatrix(big, A, axis, scaleMs(ms, 36));
-      },
+        const speed = scaleMs(ms, type === "matrix" ? 36 : 14);
+        if (type === "edge") {
+          return anim.outEdge(big, A, dir, speed, opts || {});
+        }
+        if (type === "matrix") {
+          return anim.outMatrix(big, A, axis, speed, opts || {});
+        },
 
       clear: () => clearBig(big),
       put: (col, row, ch, color=LIT.main) => putCharAt(GLYPHS, big, col, row, ch, color),
