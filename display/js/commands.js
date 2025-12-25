@@ -79,6 +79,7 @@ export const createCommandHandler = (app) => {
         hostUrl:   qrState.hostUrl   ?? "",
         buzzerUrl: qrState.buzzerUrl ?? "",
       },
+      anim_speed: ANIM_SPEED.mul, 
       ts: Date.now(),
     };
 
