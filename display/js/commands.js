@@ -69,6 +69,8 @@ export const createCommandHandler = (app) => {
     if (!app?.gameId || !key) return;
 
     const qrState = app.qr?.get?.() ?? {};
+    const currentSpeed =
+      app.scene?.api?.big?.getSpeed?.() ?? 1;
 
     const patch = {
       app_mode: app.mode,                               // GAME / QR / BLACK_SCREEN
@@ -79,10 +81,10 @@ export const createCommandHandler = (app) => {
         hostUrl:   qrState.hostUrl   ?? "",
         buzzerUrl: qrState.buzzerUrl ?? "",
       },
-      anim_speed: ANIM_SPEED.mul, 
+      anim_speed: currentSpeed,
       ts: Date.now(),
     };
-
+    
     try {
       await sb().rpc("device_state_set_public", {
         p_game_id: app.gameId,
@@ -127,6 +129,26 @@ export const createCommandHandler = (app) => {
       // APP MODE ... jest niepoprawne zgodnie z nową specyfikacją
       if (modeArg === "MODE") {
         console.warn("[commands] Niepoprawna komenda: APP MODE ...  (użyj APP GAME / APP QR / APP BLACK)");
+        return;
+      }
+
+      if (head === "ANIMSPEED") {
+
+        // działa WYŁĄCZNIE w APP = GAME
+        if (app.mode !== "GAME") {
+          console.warn("[display] ANIMSPEED dostępne tylko w trybie GAME");
+          return;
+        }
+      
+        const v = parseFloat(tokens[1] ?? "1");
+      
+        try {
+          scene.api?.big?.speed?.(v);
+        } catch (e) {
+          console.warn("[display] ANIMSPEED błąd:", e);
+        }
+      
+        saveSnapshot(raw);   // zapisze też anim_speed
         return;
       }
 
