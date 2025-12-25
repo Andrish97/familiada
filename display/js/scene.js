@@ -166,21 +166,11 @@ export async function createScene() {
 
   // Animator (dotOff przekazujemy jawnie)
   const anim = createAnimator({ tileAt, snapArea, clearArea, clearTileAt, dotOff: COLORS.dotOff });
-  const ANIM_SPEED = { mul: 1 };
-  // ============================
-  // GLOBAL ANIMATION SPEED
-  // ============================
-  const scaleMs = (ms, fallback) => {
+  
+  // Prosta normalizacja ms: albo użyj podanego, albo fallback, bez globalnego mnożnika
+  const normMs = (ms, fallback) => {
     const base = Number.isFinite(ms) ? ms : fallback;
-  
-    // mocniejsze skalowanie, żeby 1..10 było naprawdę różne
-    const scaled = base * ANIM_SPEED.mul * 6; // *6 możesz sobie potem doregulować
-  
-    // 1 ms wciąż minimalnie, ale teraz:
-    // ms=2  -> ~12
-    // ms=5  -> ~30
-    // ms=10 -> ~60
-    return Math.max(1, Math.round(scaled));
+    return Math.max(0, base | 0);
   };
 
   // ============================================================
@@ -301,10 +291,10 @@ export async function createScene() {
     // ------- ANIM OUT -------
     if (out) {
       const type = out.type || "edge";
-      const msBase = Number.isFinite(out.ms) ? out.ms : (type === "matrix" ? 36 : 12);
-      const step = scaleMs(msBase, type === "matrix" ? 36 : 12);
+      // jeden wspólny sensowny fallback, np. 20 ms
+      const step = normMs(out.ms, 20);
       const opts = normalizeOpts(out);
-  
+    
       if (type === "edge") {
         await anim.outEdge(big, area, out.dir || "left", step, opts);
       } else if (type === "matrix") {
@@ -318,10 +308,9 @@ export async function createScene() {
     // ------- ANIM IN -------
     if (inn) {
       const type = inn.type || "edge";
-      const msBase = Number.isFinite(inn.ms) ? inn.ms : (type === "matrix" ? 36 : 12);
-      const step = scaleMs(msBase, type === "matrix" ? 36 : 12);
+      const step = normMs(inn.ms, 20);
       const opts = normalizeOpts(inn);
-  
+    
       if (type === "edge") {
         await anim.inEdge(big, area, inn.dir || "left", step, opts);
       } else if (type === "matrix") {
@@ -872,20 +861,15 @@ export async function createScene() {
     },
 
     big: {
-      speed: (mul) => {
-        const v = Number(mul);
-        if (!Number.isFinite(v) || v <= 0) throw new Error("ANIM_SPEED.mul musi być > 0");
-        ANIM_SPEED.mul = v;
-      },
-      getSpeed: () => ANIM_SPEED.mul,
-
+      // BRAK globalnej prędkości, cały blok speed wyrzucamy
+    
       areaAll:  () => ({ c1:1, r1:1, c2:30, r2:10 }),
       areaWin:  () => ({ c1:1, r1:2, c2:30, r2:8 }),
       areaLogo: () => ({ c1:1, r1:3, c2:30, r2:7 }),
-
-      animIn: async ({ type="edge", dir="left", axis="down", ms=12, area=null, opts=null } = {}) => {
+    
+      animIn: async ({ type = "edge", dir = "left", axis = "down", ms = 20, area = null, opts = null } = {}) => {
         const A = area ?? api.big.areaAll();
-        const speed = scaleMs(ms, type === "matrix" ? 36 : 14);
+        const speed = normMs(ms, 20);
         if (type === "edge") {
           return anim.inEdge(big, A, dir, speed, opts || {});
         }
@@ -894,9 +878,9 @@ export async function createScene() {
         }
       },
     
-      animOut: async ({ type="edge", dir="left", axis="down", ms=12, area=null, opts=null } = {}) => {
+      animOut: async ({ type = "edge", dir = "left", axis = "down", ms = 20, area = null, opts = null } = {}) => {
         const A = area ?? api.big.areaAll();
-        const speed = scaleMs(ms, type === "matrix" ? 36 : 14);
+        const speed = normMs(ms, 20);
         if (type === "edge") {
           return anim.outEdge(big, A, dir, speed, opts || {});
         }
