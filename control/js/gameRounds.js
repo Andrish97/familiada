@@ -147,36 +147,21 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
   }
 
   async function stateStartGameIntro() {
-    const r = store.state.rounds;
-  
-    if (r.step !== "r_intro") {
-      ui.setMsg("msgRounds", "Intro można włączyć tylko z ekranu „Start gry”.");
-      return;
-    }
-  
-    ui.setMsg("msgRounds", "Intro gry — poczekaj na zakończenie, potem pojawi się logo.");
-    
-    // flaga, żeby nie odpalać intro kilka razy
-    if (r.introStarted) return;
-    r.introStarted = true;
-  
-    // 1. pierwsze intro
+    const ok = await devices.sendDisplayCmd("PING");
+    if (!ok) { ui.setMsg("msgRoundsIntro", "Wyświetlacz offline."); return; }
+
+    store.state.rounds.phase = "INTRO";
+    setStep("r_intro");
+    ui.setMsg("msgRoundsIntro", "Intro start…");
+
+    // dźwięk i display
     playSfx("show_intro");
-  
-    // 2. drugie intro po ~7s
-    setTimeout(() => {
-      playSfx("show_intro");
-    }, 7000);
-  
-    // 3. po 14s od pierwszego:
-    //    - pokazujemy logo z nazwami drużyn
-    //    - przechodzimy do ekranu startu rundy
-    setTimeout(async () => {
-      await display.stateIntroLogo(store.state.teams.teamA, store.state.teams.teamB);
-      setStep("r_roundStart");
-      ui.setMsg("msgRounds", "Intro skończone — możesz rozpocząć rundę.");
-      refresh();
-    }, 14000);
+    await display.stateIntroLogo();
+
+    // po intro przełącz na start rundy
+    setStep("r_roundStart");
+    ui.setMsg("msgRoundsIntro", "Intro zakończone. Można zaczynać rundę.");
+    refresh();
   }
 
 
