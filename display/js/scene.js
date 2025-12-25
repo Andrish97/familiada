@@ -898,7 +898,8 @@ export async function createScene() {
         }
         if (type === "matrix") {
           return anim.outMatrix(big, A, axis, speed, opts || {});
-        },
+        }
+    },
 
       clear: () => clearBig(big),
       put: (col, row, ch, color=LIT.main) => putCharAt(GLYPHS, big, col, row, ch, color),
