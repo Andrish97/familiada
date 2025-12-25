@@ -877,6 +877,7 @@ export async function createScene() {
         if (!Number.isFinite(v) || v <= 0) throw new Error("ANIM_SPEED.mul musi być > 0");
         ANIM_SPEED.mul = v;
       },
+      getSpeed: () => ANIM_SPEED.mul,
 
       areaAll:  () => ({ c1:1, r1:1, c2:30, r2:10 }),
       areaWin:  () => ({ c1:1, r1:2, c2:30, r2:8 }),
