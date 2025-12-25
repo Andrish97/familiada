@@ -1213,23 +1213,21 @@ export async function createScene() {
     const type = (tokens[startIdx] ?? "").toLowerCase();
     const dirOrAxis = (tokens[startIdx + 1] ?? "").toLowerCase();
     const ms = parseInt(tokens[startIdx + 2] ?? "12", 10);
+    const extra = (tokens[startIdx + 3] ?? "").toLowerCase();
   
-    if (type === "edge") {
-      return {
-        type: "edge",
-        dir: dirOrAxis || "left",
-        ms: Number.isFinite(ms) ? ms : 12,
-      };
+    const base = {
+      type: type === "matrix" ? "matrix" : "edge",
+      ms: isFinite(ms) ? ms : (type === "matrix" ? 36 : 12),
+    };
+  
+    if (type === "edge")  base.dir  = dirOrAxis || "left";
+    if (type === "matrix") base.axis = dirOrAxis || "down";
+  
+    if (extra === "pixel") {
+      base.pixel = true;
     }
   
-    if (type === "matrix") {
-      return {
-        type: "matrix",
-        axis: dirOrAxis || "down",
-        ms: Number.isFinite(ms) ? ms : 36,
-      };
-    }
-    return null;
+    return base;
   };
 
   const parseAnimPair = (tokens) => {
