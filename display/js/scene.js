@@ -1208,10 +1208,33 @@ export async function createScene() {
     const type = (tokens[startIdx] ?? "").toLowerCase();
     const dirOrAxis = (tokens[startIdx + 1] ?? "").toLowerCase();
     const ms = parseInt(tokens[startIdx + 2] ?? "12", 10);
-
-    if (type === "edge")   return { type:"edge", dir: dirOrAxis || "left", ms: isFinite(ms) ? ms : 12 };
-    if (type === "matrix") return { type:"matrix", axis: dirOrAxis || "down", ms: isFinite(ms) ? ms : 36 };
-    if (type === "rain" || type === "matrix_rain") return { type:"rain", axis: dirOrAxis || "down", ms: isFinite(ms) ? ms : 24 };
+  
+    if (type === "edge") {
+      return {
+        type: "edge",
+        dir: dirOrAxis || "left",
+        ms: Number.isFinite(ms) ? ms : 12,
+      };
+    }
+  
+    if (type === "matrix") {
+      return {
+        type: "matrix",
+        axis: dirOrAxis || "down",
+        ms: Number.isFinite(ms) ? ms : 36,
+      };
+    }
+  
+    // stare komendy "rain"/"matrix_rain" traktujemy jak matrix down,
+    // żeby nie wywalić starych presetów
+    if (type === "rain" || type === "matrix_rain") {
+      return {
+        type: "matrix",
+        axis: dirOrAxis || "down",
+        ms: Number.isFinite(ms) ? ms : 24,
+      };
+    }
+  
     return null;
   };
 
