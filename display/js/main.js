@@ -16,7 +16,7 @@ window.addEventListener("DOMContentLoaded", async () => {
 
   const APP_MODES = {
     BLACK: "BLACK_SCREEN",
-    GRA: "GRA",
+    GAME: "GAME",
     QR: "QR",
   };
 
@@ -42,7 +42,7 @@ window.addEventListener("DOMContentLoaded", async () => {
       setMode(m) {
         let mm = (m ?? "").toString().toUpperCase();
         if (mm === "BLACK") mm = APP_MODES.BLACK;
-        if (!Object.values(APP_MODES).includes(mm)) throw new Error("Mode: BLACK_SCREEN / GRA / QR");
+        if (!Object.values(APP_MODES).includes(mm)) throw new Error("Mode: BLACK_SCREEN / GAME / QR");
         this.mode = mm;
 
         blackScreen?.classList.add("hidden");
@@ -75,7 +75,7 @@ window.addEventListener("DOMContentLoaded", async () => {
         const mode = String(st?.app_mode ?? "BLACK_SCREEN").toUpperCase();
         const appMode =
           mode === "BLACK" ? "BLACK_SCREEN" :
-          (mode === "GRA" || mode === "QR" || mode === "BLACK_SCREEN") ? mode :
+          (mode === "GAME" || mode === "QR" || mode === "BLACK_SCREEN") ? mode :
           "BLACK_SCREEN";
       
         // Odtwórz QR linki (nieważne czy finalnie pokażesz QR od razu)
@@ -88,7 +88,7 @@ window.addEventListener("DOMContentLoaded", async () => {
         app.setMode(appMode);
       
         // “sztywne wejście” po snapshot: bez animacji, bez komend
-        if (appMode === "GRA") {
+        if (appMode === "GAME") {
           // tu odtwarzasz zrzut ekranu jeśli masz restore w scene
           app.scene.api.restoreSnapshot?.(st?.screen);
           // albo: app.scene.api.restoreSnapshot?.(st?.screen); (zależnie jak nazwałeś)
