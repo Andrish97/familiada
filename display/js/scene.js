@@ -1200,6 +1200,16 @@ export async function createScene() {
     return null;
   };
 
+  const parseAnimPair = (tokens) => {
+    const aOutIdx = tokens.findIndex(t => t.toUpperCase() === "ANIMOUT");
+    const aInIdx  = tokens.findIndex(t => t.toUpperCase() === "ANIMIN");
+
+    let animOut = aOutIdx >= 0 ? parseAnim(tokens, aOutIdx + 1) : null;
+    let animIn  = aInIdx  >= 0 ? parseAnim(tokens, aInIdx  + 1) : null;
+
+    return { animOut, animIn };
+  };
+
   const handleCommand = async (line) => {
     const raw = (line ?? "").toString().trim();
     if (!raw) return;
