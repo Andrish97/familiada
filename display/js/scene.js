@@ -285,7 +285,6 @@ export async function createScene() {
     if (out) {
       if (out.type === "edge")   await anim.outEdge(big, area, out.dir ?? "left", scaleMs(out.ms, 12));
       if (out.type === "matrix") await anim.outMatrix(big, area, out.axis ?? "down", scaleMs(out.ms, 36));
-      if (out.type === "rain")   await anim.outRain(big, area, out.axis ?? "down", scaleMs(out.ms, 24), out.opts ?? {});
     }
 
     writeField(GLYPHS, big, f, text, color);
@@ -293,7 +292,6 @@ export async function createScene() {
     if (inn) {
       if (inn.type === "edge")   await anim.inEdge(big, area, inn.dir ?? "left", scaleMs(inn.ms, 12));
       if (inn.type === "matrix") await anim.inMatrix(big, area, inn.axis ?? "down", scaleMs(inn.ms, 36));
-      if (inn.type === "rain")   await anim.inRain(big, area, inn.axis ?? "down", scaleMs(inn.ms, 24), inn.opts ?? {});
     }
   };
 
@@ -849,14 +847,12 @@ export async function createScene() {
         const A = area ?? api.big.areaAll();
         if (type === "edge")   return anim.inEdge(big, A, dir,  scaleMs(ms, 14));
         if (type === "matrix") return anim.inMatrix(big, A, axis, scaleMs(ms, 36));
-        if (type === "rain")   return anim.inRain(big, A, axis,  scaleMs(ms, 24), opts ?? {});
       },
 
       animOut: async ({ type="edge", dir="left", axis="down", ms=12, area=null, opts=null } = {}) => {
         const A = area ?? api.big.areaAll();
         if (type === "edge")   return anim.outEdge(big, A, dir,  scaleMs(ms, 14));
         if (type === "matrix") return anim.outMatrix(big, A, axis, scaleMs(ms, 36));
-        if (type === "rain")   return anim.outRain(big, A, axis,  scaleMs(ms, 24), opts ?? {});
       },
 
       clear: () => clearBig(big),
@@ -1224,17 +1220,6 @@ export async function createScene() {
         ms: Number.isFinite(ms) ? ms : 36,
       };
     }
-  
-    // stare komendy "rain"/"matrix_rain" traktujemy jak matrix down,
-    // żeby nie wywalić starych presetów
-    if (type === "rain" || type === "matrix_rain") {
-      return {
-        type: "matrix",
-        axis: dirOrAxis || "down",
-        ms: Number.isFinite(ms) ? ms : 24,
-      };
-    }
-  
     return null;
   };
 
