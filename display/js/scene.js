@@ -267,6 +267,11 @@ export async function createScene() {
       : " ".repeat(width - s.length) + s;
   };
   
+  const clipText = (val, max) => {
+    const s = (val ?? "").toString();
+    return s.length > max ? s.slice(0, max) : s;
+  };
+  
   const updateField = async (GLYPHS, big, f, text, { out=null, in: inn=null, color=LIT.main } = {}) => {
     const area = { c1: f.c1, r1: f.r1, c2: f.c2, r2: f.r2 };
 
@@ -932,11 +937,16 @@ export async function createScene() {
         const i = (idx1to6 | 0) - 1;
         if (i < 0 || i > 5) throw new Error("idx1to6 musi być 1..6");
 
-        const t = (text ?? "").toString();
+        const raw = (text ?? "").toString();
+        const t   = clipText(raw, 17);   // max 17, do lewej
+        
         roundsState.text[i] = t;
-
-        await updateField(GLYPHS, big, ROUNDS.answers[i], t, { out: animOut, in: animIn, color: LIT.main });
-
+        
+        await updateField(GLYPHS, big, ROUNDS.answers[i], t, {
+          out: animOut,
+          in: animIn,
+          color: LIT.main
+        });
         // numer tylko gdy tekst ma treść
         setRoundNumberVisible(idx1to6, hasVisibleText(roundsState.text[i]));
         relocateSumaIfNeeded();
@@ -948,10 +958,16 @@ export async function createScene() {
         const i = (idx1to6 | 0) - 1;
         if (i < 0 || i > 5) throw new Error("idx1to6 musi być 1..6");
 
-        const p = (pts ?? "").toString();
-        roundsState.pts[i] = p;
-
-        await updateField(GLYPHS, big, ROUNDS.points[i], p, { out: animOut, in: animIn, color: LIT.main });
+        const raw = (pts ?? "").toString();
+        const p   = alignRight(raw, 2);   // 2 pola, do prawej
+        
+        roundsState.pts[i] = raw;
+        
+        await updateField(GLYPHS, big, ROUNDS.points[i], p, {
+          out: animOut,
+          in: animIn,
+          color: LIT.main
+        });
         setRoundNumberVisible(idx1to6, isNonEmpty(roundsState.text[i]) || isNonEmpty(roundsState.pts[i]));
         relocateSumaIfNeeded();
       },
@@ -966,10 +982,10 @@ export async function createScene() {
       
         roundsState.suma = (val ?? "").toString();
         relocateSumaIfNeeded();
-      
-        const F = roundsSumaFields();
+        
+        const F   = roundsSumaFields();
         const txt = alignRight(roundsState.suma, 3);
-      
+        
         await updateField(GLYPHS, big, F.val, txt, {
           out: animOut,
           in: animIn,
@@ -997,15 +1013,18 @@ export async function createScene() {
         // docelowy obraz (bez animacji per-pole)
         for (let i = 0; i < 6; i++) {
           const r = rows[i] ?? {};
-          const t = (r.text ?? "").toString();
-          const p = (r.pts  ?? "").toString();
-      
+          const rawT = (r.text ?? "").toString();
+          const rawP = (r.pts  ?? "").toString();
+          
+          const t = clipText(rawT, 17);   // tekst do lewej, max 17
+          const p = alignRight(rawP, 2);  // punkty do prawej na 2 znakach
+          
           roundsState.text[i] = t;
-          roundsState.pts[i]  = p;
-      
+          roundsState.pts[i]  = rawP;
+          
           writeField(GLYPHS, big, ROUNDS.answers[i], t, LIT.main);
           writeField(GLYPHS, big, ROUNDS.points[i],  p, LIT.main);
-          setRoundNumberVisible(i + 1, isNonEmpty(t) || isNonEmpty(p));
+          setRoundNumberVisible(i + 1, isNonEmpty(t) || isNonEmpty(rawP));
         }
       
         // ustaw sumę w stanie
@@ -1036,25 +1055,53 @@ export async function createScene() {
         if (mode !== BIG_MODES.FINAL) await api.mode.set("FINAL");
         const i = (idx1to5|0) - 1;
         if (i < 0 || i > 4) throw new Error("idx1to5 musi być 1..5");
-        await updateField(GLYPHS, big, FINAL.leftTxt[i], text, { out: animOut, in: animIn, color: LIT.main });
+        const raw = (text ?? "").toString();
+        const t   = clipText(raw, 11);   // max 11, do lewej
+        
+        await updateField(GLYPHS, big, FINAL.leftTxt[i], t, {
+          out: animOut,
+          in: animIn,
+          color: LIT.main
+        });
       },
       setA: async (idx1to5, pts, { animOut=null, animIn=null } = {}) => {
         if (mode !== BIG_MODES.FINAL) await api.mode.set("FINAL");
         const i = (idx1to5|0) - 1;
         if (i < 0 || i > 4) throw new Error("idx1to5 musi być 1..5");
-        await updateField(GLYPHS, big, FINAL.ptsA[i], pts, { out: animOut, in: animIn, color: LIT.main });
+        const raw = (pts ?? "").toString();
+        const p   = alignRight(raw, 2);
+        
+        await updateField(GLYPHS, big, FINAL.ptsA[i], p, {
+          out: animOut,
+          in: animIn,
+          color: LIT.main
+        });
       },
       setB: async (idx1to5, pts, { animOut=null, animIn=null } = {}) => {
         if (mode !== BIG_MODES.FINAL) await api.mode.set("FINAL");
         const i = (idx1to5|0) - 1;
         if (i < 0 || i > 4) throw new Error("idx1to5 musi być 1..5");
-        await updateField(GLYPHS, big, FINAL.ptsB[i], pts, { out: animOut, in: animIn, color: LIT.main });
+        const raw = (pts ?? "").toString();
+        const p   = alignRight(raw, 2);
+        
+        await updateField(GLYPHS, big, FINAL.ptsB[i], p, {
+          out: animOut,
+          in: animIn,
+          color: LIT.main
+        });
       },
       setRight: async (idx1to5, text, { animOut=null, animIn=null } = {}) => {
         if (mode !== BIG_MODES.FINAL) await api.mode.set("FINAL");
         const i = (idx1to5|0) - 1;
         if (i < 0 || i > 4) throw new Error("idx1to5 musi być 1..5");
-        await updateField(GLYPHS, big, FINAL.rightTxt[i], text, { out: animOut, in: animIn, color: LIT.main });
+        const raw = (text ?? "").toString();
+        const t   = clipText(raw, 11);
+        
+        await updateField(GLYPHS, big, FINAL.rightTxt[i], t, {
+          out: animOut,
+          in: animIn,
+          color: LIT.main
+        });
       },
 
       setRow: async (idx1to5, { left=undefined, a=undefined, b=undefined, right=undefined, animOut=null, animIn=null } = {}) => {
@@ -1088,10 +1135,16 @@ export async function createScene() {
 
         for (let i = 0; i < 5; i++) {
           const r = rows[i] ?? {};
-          writeField(GLYPHS, big, FINAL.leftTxt[i],  (r.left  ?? ""), LIT.main);
-          writeField(GLYPHS, big, FINAL.ptsA[i],     (r.a     ?? ""), LIT.main);
-          writeField(GLYPHS, big, FINAL.ptsB[i],     (r.b     ?? ""), LIT.main);
-          writeField(GLYPHS, big, FINAL.rightTxt[i], (r.right ?? ""), LIT.main);
+          
+          const L = clipText((r.left  ?? "").toString(), 11);  // lewy tekst
+          const A = alignRight((r.a    ?? "").toString(), 2);  // A do prawej
+          const B = alignRight((r.b    ?? "").toString(), 2);  // B do prawej
+          const R = clipText((r.right ?? "").toString(), 11);  // prawy tekst
+          
+          writeField(GLYPHS, big, FINAL.leftTxt[i],  L, LIT.main);
+          writeField(GLYPHS, big, FINAL.ptsA[i],     A, LIT.main);
+          writeField(GLYPHS, big, FINAL.ptsB[i],     B, LIT.main);
+          writeField(GLYPHS, big, FINAL.rightTxt[i], R, LIT.main);
         }
 
         if (suma !== undefined) {
