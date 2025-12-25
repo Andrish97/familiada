@@ -94,60 +94,71 @@ export const createCommandHandler = (app) => {
     if (app.mode !== "GAME") app.setMode("GAME");
   };
 
-  return async (line) => {
-    const raw = (line ?? "").toString().trim();
-    if (!raw) return;
+  let commandChain = Promise.resolve();
 
-    const tokens = tokenize(raw);
-    const head = (tokens[0] ?? "").toUpperCase();
+  const runInChain = (fn, raw) => {
+    // jeśli poprzednia komenda rzuciła, nie zatrzymujemy kolejki
+    commandChain = commandChain
+      .catch(() => {})
+      .then(() => fn(raw));
+    return commandChain;
+  };
 
-    // APP MODE ...
-    if (head === "APP" && (tokens[1] ?? "").toUpperCase() === "MODE") {
-      app.setMode(normalizeAppMode(tokens[2] ?? "BLACK_SCREEN"));
-      saveSnapshot(raw);
-      return;
-    }
-
-    // MODE ...
-    if (head === "MODE") {
-      const arg = tokens[1] ?? "";
-      const mGlobal = normalizeAppMode(arg);
-
-      // globalny tryb: GAME / QR / BLACK(_SCREEN)
-      if (mGlobal === "QR" || mGlobal === "GAME" || mGlobal === "BLACK_SCREEN") {
-        app.setMode(mGlobal);
+    return (line) => runInChain(async (raw) => {
+      raw = (raw ?? "").toString().trim();
+      if (!raw) return;
+  
+      const tokens = tokenize(raw);
+      const head = (tokens[0] ?? "").toUpperCase();
+  
+      // APP MODE ...
+      if (head === "APP" && (tokens[1] ?? "").toUpperCase() === "MODE") {
+        app.setMode(normalizeAppMode(tokens[2] ?? "BLACK_SCREEN"));
         saveSnapshot(raw);
         return;
       }
-
-      // tryb sceny: LOGO / ROUNDS / FINAL / WIN / BLANK
-      if (isSceneBigMode(arg)) {
-        ensureGameMode();
-        await scene.handleCommand(raw);
+  
+      // MODE ...
+      if (head === "MODE") {
+        const arg = tokens[1] ?? "";
+        const mGlobal = normalizeAppMode(arg);
+  
+        // global: GRA / QR / BLACK_SCREEN
+        if (mGlobal === "QR" || mGlobal === "GRA" || mGlobal === "BLACK_SCREEN") {
+          app.setMode(mGlobal);
+          saveSnapshot(raw);
+          return;
+        }
+  
+        // scena: LOGO / ROUNDS / FINAL / WIN / BLANK
+        if (isSceneBigMode(arg)) {
+          ensureGameMode();
+          await scene.handleCommand(raw);
+          saveSnapshot(raw);
+          return;
+        }
+  
+        console.warn("[commands] Nieznany MODE:", raw);
+        return;
+      }
+  
+      // QR HOST/BUZZER ...
+      if (head === "QR") {
+        const hostIdx = tokens.findIndex(t => t.toUpperCase() === "HOST");
+        const buzIdx  = tokens.findIndex(t => t.toUpperCase() === "BUZZER");
+  
+        if (hostIdx >= 0) qr.setHost(unquote(tokens[hostIdx + 1] ?? ""));
+        if (buzIdx  >= 0) qr.setBuzzer(unquote(tokens[buzIdx + 1] ?? ""));
+  
+        app.setMode("QR");
         saveSnapshot(raw);
         return;
       }
-
-      console.warn("[commands] Nieznany MODE:", raw);
-      return;
-    }
-
-    // QR HOST/BUZZER ...
-    if (head === "QR") {
-      const hostIdx = tokens.findIndex(t => t.toUpperCase() === "HOST");
-      const buzIdx  = tokens.findIndex(t => t.toUpperCase() === "BUZZER");
-
-      if (hostIdx >= 0) qr.setHost(unquote(tokens[hostIdx + 1] ?? ""));
-      if (buzIdx  >= 0) qr.setBuzzer(unquote(tokens[buzIdx + 1] ?? ""));
-
-      app.setMode("QR");
+  
+      // wszystko inne → scena (GRA)
+      ensureGameMode();
+      await scene.handleCommand(raw);
       saveSnapshot(raw);
-      return;
-    }
-
-    // wszystko inne → scena (GAME)
-    ensureGameMode();
-    await scene.handleCommand(raw);
-    saveSnapshot(raw);
+    }, line);
   };
 };
