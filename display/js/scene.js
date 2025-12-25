@@ -761,6 +761,7 @@ export async function createScene() {
       long1: snapDotsGrid(long1),
       long2: snapDotsGrid(long2),
     },
+    indicator: indicatorState,   // <--- DODAJ TO
   });
   
   const restoreSnapshot = (S) => {
@@ -784,6 +785,13 @@ export async function createScene() {
     restoreTriple(rightTriple, S.small?.right);
     restoreDotsGrid(long1, S.small?.long1);
     restoreDotsGrid(long2, S.small?.long2);
+  
+    // INDICATOR
+    if (S.indicator) {
+      try { api.indicator.set(S.indicator); } catch (e) {
+        console.warn("Nie można przywrócić INDICATOR ze snapshotu:", e);
+      }
+    }
   };
 
 
