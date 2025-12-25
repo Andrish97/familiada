@@ -279,21 +279,57 @@ export async function createScene() {
     return s.length > max ? s.slice(0, max) : s;
   };
   
-  const updateField = async (GLYPHS, big, f, text, { out=null, in: inn=null, color=LIT.main } = {}) => {
+  const updateField = async (
+    GLYPHS,
+    big,
+    f,
+    text,
+    { out = null, in: inn = null, color = LIT.main } = {}
+  ) => {
     const area = { c1: f.c1, r1: f.r1, c2: f.c2, r2: f.r2 };
-
+  
+    const normalizeOpts = (a) => {
+      if (!a) return undefined;
+      const opts = {};
+      if (a.pixel)    opts.pixel    = true;
+      if (a.pxBatch != null)  opts.pxBatch  = a.pxBatch;
+      if (a.stepPxMs != null) opts.stepPxMs = a.stepPxMs;
+      if (a.tileMs   != null) opts.tileMs   = a.tileMs;
+      return opts;
+    };
+  
+    // ------- ANIM OUT -------
     if (out) {
-      if (out.type === "edge")   await anim.outEdge(big, area, out.dir ?? "left", scaleMs(out.ms, 12));
-      if (out.type === "matrix") await anim.outMatrix(big, area, out.axis ?? "down", scaleMs(out.ms, 36));
+      const type = out.type || "edge";
+      const msBase = Number.isFinite(out.ms) ? out.ms : (type === "matrix" ? 36 : 12);
+      const step = scaleMs(msBase, type === "matrix" ? 36 : 12);
+      const opts = normalizeOpts(out);
+  
+      if (type === "edge") {
+        await anim.outEdge(big, area, out.dir || "left", step, opts);
+      } else if (type === "matrix") {
+        await anim.outMatrix(big, area, out.axis || "down", step, opts);
+      }
     }
-
+  
+    // zapisujemy nowe znaki
     writeField(GLYPHS, big, f, text, color);
-
+  
+    // ------- ANIM IN -------
     if (inn) {
-      if (inn.type === "edge")   await anim.inEdge(big, area, inn.dir ?? "left", scaleMs(inn.ms, 12));
-      if (inn.type === "matrix") await anim.inMatrix(big, area, inn.axis ?? "down", scaleMs(inn.ms, 36));
+      const type = inn.type || "edge";
+      const msBase = Number.isFinite(inn.ms) ? inn.ms : (type === "matrix" ? 36 : 12);
+      const step = scaleMs(msBase, type === "matrix" ? 36 : 12);
+      const opts = normalizeOpts(inn);
+  
+      if (type === "edge") {
+        await anim.inEdge(big, area, inn.dir || "left", step, opts);
+      } else if (type === "matrix") {
+        await anim.inMatrix(big, area, inn.axis || "down", step, opts);
+      }
     }
   };
+  
 
   // ============================
   // Layout: ROUNDS (6 linii)
