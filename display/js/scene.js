@@ -258,7 +258,15 @@ export async function createScene() {
       putCharAt(GLYPHS, big, f.c1 + i, f.r1, s[i] ?? " ", color);
     }
   };
-
+  
+  const alignRight = (val, width) => {
+    const s = (val ?? "").toString();
+    if (!s.length) return " ".repeat(width);
+    return s.length >= width
+      ? s.slice(-width)
+      : " ".repeat(width - s.length) + s;
+  };
+  
   const updateField = async (GLYPHS, big, f, text, { out=null, in: inn=null, color=LIT.main } = {}) => {
     const area = { c1: f.c1, r1: f.r1, c2: f.c2, r2: f.r2 };
 
@@ -960,9 +968,14 @@ export async function createScene() {
         relocateSumaIfNeeded();
       
         const F = roundsSumaFields();
-        await updateField(GLYPHS, big, F.val, roundsState.suma, { out: animOut, in: animIn, color: LIT.main });
+        const txt = alignRight(roundsState.suma, 3);
+      
+        await updateField(GLYPHS, big, F.val, txt, {
+          out: animOut,
+          in: animIn,
+          color: LIT.main
+        });
       },
-
 
       setX: (name, on) => {
         const key = (name ?? "").toString().toUpperCase();
@@ -1006,11 +1019,12 @@ export async function createScene() {
         relocateSumaIfNeeded();
         const F = roundsSumaFields();
         writeField(GLYPHS, big, F.label, "SUMA", LIT.main);
-        if (isNonEmpty(roundsState.suma)) {
-          writeField(GLYPHS, big, F.val, roundsState.suma, LIT.main);
-        } else {
-          writeField(GLYPHS, big, F.val, "", LIT.main);
-        }
+        
+        const txt = isNonEmpty(roundsState.suma)
+          ? alignRight(roundsState.suma, 3)
+          : "   ";
+        
+        writeField(GLYPHS, big, F.val, txt, LIT.main);
       
         // animacja wejścia całości (opcjonalna)
         if (animIn) await api.big.animIn({ ...animIn, area: A_ALL });
@@ -1052,7 +1066,14 @@ export async function createScene() {
 
       setSuma: async (val, { animOut=null, animIn=null } = {}) => {
         if (mode !== BIG_MODES.FINAL) await api.mode.set("FINAL");
-        await updateField(GLYPHS, big, FINAL.sumaVal, val, { out: animOut, in: animIn, color: LIT.main });
+      
+        const txt = alignRight(val, 3);
+      
+        await updateField(GLYPHS, big, FINAL.sumaVal, txt, {
+          out: animOut,
+          in: animIn,
+          color: LIT.main
+        });
       },
 
       // ====== NOWE: batch (jedna animacja na całość) ======
@@ -1073,7 +1094,9 @@ export async function createScene() {
           writeField(GLYPHS, big, FINAL.rightTxt[i], (r.right ?? ""), LIT.main);
         }
 
-        if (suma !== undefined) writeField(GLYPHS, big, FINAL.sumaVal, suma, LIT.main);
+        if (suma !== undefined) {
+          writeField(GLYPHS, big, FINAL.sumaVal, alignRight(suma, 3), LIT.main);
+        }
 
         if (animIn) await api.big.animIn({ ...animIn, area: A_ALL });
       },
