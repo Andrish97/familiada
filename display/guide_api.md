@@ -1,15 +1,14 @@
-# Guide API – Familiada Display (GRA/QR/BLACK)
+# Guide API – Familiada Display
 
 Ten dokument opisuje **całe, aktualne API sterowania stroną display**: tryby globalne (APP), tryby “wewnątrz gry” (scene / duży wyświetlacz), komendy tekstowe (backend → `handleCommand("...")`), animacje (`edge`, `matrix`, `rain` z `opts`), oraz kompletne paczki komend do testów w konsoli.
 
 Dokument jest spójny z obecną architekturą:
 - **Globalny router komend** (`window.handleCommand(line)`) rozdziela komendy na:
-  - komendy globalne (APP: `GRA/QR/BLACK_SCREEN`)
-  - komendy sceny (GRA: `LOGO/ROUNDS/FINAL/WIN` + settery pól)
-- **Scene** zwraca API (`scene.api`) oraz lokalny parser komend (`scene.handleCommand`), który działa **tylko w trybie APP=GRA**.
-- Komenda `MODE ...` jest “dwuznaczna”, ale router rozwiązuje to po tokenie:
-  - `MODE GRA/QR/BLACK/BLACK_SCREEN` = **global**
-  - `MODE LOGO/ROUNDS/FINAL/WIN` = **lokalna scena** (tylko jeśli APP=GRA)
+  - komendy globalne (APP: `GAME/QR/BLACK_SCREEN`)
+  - komendy sceny (GAME: `LOGO/ROUNDS/FINAL/WIN/BLANK` + settery pól)
+- **Scene** zwraca API (`scene.api`) oraz lokalny parser komend (`scene.handleCommand`), który działa **tylko w trybie APP=GAME**.
+- Komendy globalne używają prefiksu `APP` (np. `APP GAME`, `APP QR`, `APP BLACK`).
+- Komendy bez `APP` są zawsze traktowane jako komendy sceny (pod warunkiem, że APP=GAME).
 
 ---
 
@@ -17,13 +16,13 @@ Dokument jest spójny z obecną architekturą:
 
 ### 0.1 Poziom globalny (APP)
 To jest **tryb strony** – co w ogóle widzi widz:
-- `GRA` – scenografia SVG + wyświetlacze (duży + małe)
+- `GAME` – scenografia SVG + wyświetlacze (duży + małe)
 - `QR` – czarny ekran + 2 kody QR
 - `BLACK_SCREEN` – czarny ekran bez QR
-- `BLACK` – alias `BLACK_SCREEN`
+- `BLACK` – alias `BLACK_SCREEN` (tylko jako wartość trybu, NIE jako komenda)
 
 ### 0.2 Poziom sceny (scene / “duży wyświetlacz”)
-To jest **tryb zawartości dużego wyświetlacza 30×10**:
+To jest **tryb zawartości dużego wyświetlacza 30×10** (aktywny tylko, gdy APP=GAME):
 - `BLANK`
 - `LOGO`
 - `ROUNDS`
@@ -55,10 +54,10 @@ Powinno zwrócić: `"object"`, `"object"`, `"function"`.
 Przełącza ekran strony.
 
 Dozwolone:
-- `app.setMode("GRA")`
+- `app.setMode("GAME")`
 - `app.setMode("QR")`
 - `app.setMode("BLACK_SCREEN")`
-- `app.setMode("BLACK")` (alias)
+- `app.setMode("BLACK")` (alias `BLACK_SCREEN`)
 
 Przykład:
 ```js
@@ -81,7 +80,7 @@ app.qr.setBuzzer("https://example.com/buzzer");
 - `scene.api.mode.get() -> | "BLANK" | "LOGO" | "ROUNDS" | "FINAL" | "WIN"`
 - `await scene.api.mode.set(mode, { animIn? })`
 
-`"BLANK"` - wyświetla pusty duży wyświetlacz
+`"BLANK"` – wyświetla pusty duży wyświetlacz (czyści i nic nie rysuje).
 
 `animIn` (opcjonalne) to animacja wejścia dla **dużego wyświetlacza** (domyślnie całe 30×10), chyba że podasz `area`.
 
@@ -210,15 +209,22 @@ await scene.api.win.set("98765", {
 
 W trybie `ROUNDS` masz 6 takich samych linii (jedna pod drugą), każda zawiera:
 - numer (1 znak, kol=5)
-- tekst odpowiedzi (17 znaków, kol=7..23)
-- punkty (2 znaki, kol=24..25)
+- tekst odpowiedzi (max 17 znaków, kol=7..23, wyrównany do lewej)
+- punkty (2 znaki, kol=25..26, wyrównane do prawej)
+
+SUMA:
+- etykieta "SUMA" – 4 znaki, kol=19..22
+- wartość SUMA – 3 znaki, kol=24..26, wyrównana do prawej
+- wiersz z SUMĄ „wędruje” w dół w zależności od ostatniego niepustego wiersza odpowiedzi
 
 ### 8.1 Zasada numeru
-Numer jest widoczny **tylko wtedy**, gdy pole tekstu w danej linii nie jest puste (po trim).
+Numer jest widoczny **tylko wtedy**, gdy pole tekstu lub punktów w danej linii nie jest puste (po trim).
 
 ### 8.2 API (pojedyncze pola)
-- `await scene.api.rounds.setText(i, "TEKST", { animOut?, animIn? })` (i = 1..6)
-- `await scene.api.rounds.setPts(i, "10", { animOut?, animIn? })` (i = 1..6)
+- `await scene.api.rounds.setText(i, "TEKST", { animOut?, animIn? })` (i = 1..6)  
+  - TEKST: max 17 znaków, reszta ucinana, wyrównanie do lewej
+- `await scene.api.rounds.setPts(i, "10", { animOut?, animIn? })` (i = 1..6)  
+  - punkty: max 2 znaki, wyrównane do prawej
 - `await scene.api.rounds.setRow(i, { text?, pts?, animOut?, animIn? })` (i = 1..6)
 - `await scene.api.rounds.setSuma("120", { animOut?, animIn? })`
 - `scene.api.rounds.setX("2A", true|false)` (jeśli używasz X-ów)
@@ -240,24 +246,37 @@ await scene.api.rounds.setAll({
 });
 ```
 
+W batchu teksty są automatycznie:
+- ucinane do 17 znaków (do lewej),
+- punkty wyrównywane do prawej na 2 miejscach,
+- SUMA do prawej na 3 miejscach (kolumny 24–26).
+
 ---
 
 ## 9) FINAL (`scene.api.final`)
 
 Układ FINAL:
 - rzędy: `2..6` (5 wierszy)
-- lewy tekst: kol `1..11`
-- A: kol `13..14`
-- B: kol `17..18`
-- prawy tekst: kol `20..30`
-- SUMA: label + value na dole
+- lewy tekst: max 11 znaków, kol `1..11`, wyrównany do lewej
+- A: 2 znaki, kol `13..14`, wyrównane do prawej
+- B: 2 znaki, kol `17..18`, wyrównane do prawej
+- prawy tekst: max 11 znaków, kol `20..30`, wyrównany do lewej
+
+SUMA (na dole):
+- etykieta "SUMA": 4 znaki, kol `11..14`
+- wartość SUMA: 3 znaki, kol `16..18`, wyrównana do prawej
 
 ### 9.1 API (pojedyncze pola)
-- `await scene.api.final.setLeft(i, "TEKST", { animOut?, animIn? })`
-- `await scene.api.final.setA(i, "12", { animOut?, animIn? })`
-- `await scene.api.final.setB(i, "34", { animOut?, animIn? })`
-- `await scene.api.final.setRight(i, "TEKST", { animOut?, animIn? })`
-- `await scene.api.final.setSuma("999", { animOut?, animIn? })`
+- `await scene.api.final.setLeft(i, "TEKST", { animOut?, animIn? })`  
+  - TEKST – max 11 znaków, reszta ucinana, wyrównanie do lewej
+- `await scene.api.final.setA(i, "12", { animOut?, animIn? })`  
+  - punkty A – 2 znaki, wyrównanie do prawej
+- `await scene.api.final.setB(i, "34", { animOut?, animIn? })`  
+  - punkty B – 2 znaki, wyrównanie do prawej
+- `await scene.api.final.setRight(i, "TEKST", { animOut?, animIn? })`  
+  - TEKST – max 11 znaków, wyrównanie do lewej
+- `await scene.api.final.setSuma("999", { animOut?, animIn? })`  
+  - SUMA – 3 znaki, kol 16–18, wyrównanie do prawej
 
 ### 9.2 API (batch – jedna animacja na całość)
 ```js
@@ -270,31 +289,41 @@ await scene.api.final.setAll({
     { left:"",      a:"",   b:"",   right:""      }
   ],
   suma: "999",
-  animOut: { type:"edge", dir:"right", ms:18 },
-  animIn:  { type:"rain", axis:"down", ms:22, opts:{ density:0.18, jitter:0.65 } }
+  animOut: { type:"edge",  dir:"right", ms:18 },
+  animIn:  { type:"rain",  axis:"down", ms:22, opts:{ density:0.18, jitter:0.65 } }
 });
 ```
+
+W batchu:
+- lewy/prawy tekst – ucinane do 11 znaków,
+- A/B – wyrównywane do prawej na 2 znakach,
+- SUMA – wyrównana do prawej na 3 znakach (kol 16–18).
 
 ---
 
 ## 10) Komendy tekstowe (backend → `handleCommand("...")`)
 
 ### 10.1 Globalne (APP)
-- `MODE GRA`
-- `MODE QR`
-- `MODE BLACK_SCREEN`
-- `MODE BLACK`
 
-Z prefiksem:
-- `APP MODE GRA`
+Uwaga: **globalne komendy ZAWSZE z prefiksem `APP`**.  
+`APP MODE ...` to **błędna komenda** – poprawnie podajemy tylko tryb bez `MODE`.
+
+Dozwolone:
+- `APP GAME`
+- `APP QR`
+- `APP BLACK`
+- `APP BLACK_SCREEN`
+
+Błędne:
+- `APP MODE GAME`
 - `APP MODE QR`
-- `APP MODE BLACK_SCREEN`
 - `APP MODE BLACK`
 
 QR (ustawia i przełącza na QR):
-- `QR HOST "https://..." BUZZER "https://..."`
+- `QR HOST "https://..." BUZZER "https://..."`  
+  (uruchamia tryb QR + ustawia dwa kody)
 
-### 10.2 Scena (tylko APP=GRA)
+### 10.2 Scena (tylko APP=GAME)
 
 Małe wyświetlacze:
 - `TOP 123`
@@ -303,11 +332,12 @@ Małe wyświetlacze:
 - `LONG1 "FAMILIADA"`
 - `LONG2 "SUMA 000"`
 
-Tryby:
+Tryby dużego wyświetlacza:
 - `MODE LOGO`
 - `MODE ROUNDS`
 - `MODE FINAL`
 - `MODE WIN`
+- `MODE BLANK`
 
 LOGO:
 - `LOGO LOAD "./logo_familiada.json"`
@@ -330,6 +360,11 @@ FINAL:
 - `FB 1 34`
 - `FR 1 "BETA" ANIM matrix right 28`
 - `FSUMA 999 ANIM rain down 22`
+
+INDICATOR (patrz rozdział 15):
+- `INDICATOR OFF`
+- `INDICATOR ON_A`
+- `INDICATOR ON_B`
 
 ### 10.3 Batch komendy (jedna animacja na całość)
 
@@ -373,160 +408,182 @@ const gapCells = 2 * d;
 
 ---
 
-## 13) Pakiety testowe do konsoli
+## 13) Snapshot / restore – pełny stan ekranu
+
+Scena przechowuje kompletny stan wyświetlacza, żeby po odświeżeniu przeglądarki można było odtworzyć obraz **bez animacji**.
+
+### 13.1 Zapis (snapshot)
 
 ```js
-handleCommand("MODE GRA");
+const snap = scene.api.snapshotAll();
+```
+
+Zawiera m.in.:
+- `sceneMode` – `"BLANK" | "LOGO" | "ROUNDS" | "FINAL" | "WIN"`
+- `big` – wszystkie kafle 30×10
+- `small` – top/left/right/long1/long2
+- `indicator` – `"OFF" | "ON_A" | "ON_B"` (jeśli dopiszesz do snapshotu)
+
+Globalny `commands.js` pakuje to do pola `screen` i wysyła do Supabase.
+
+### 13.2 Odtwarzanie (restore)
+
+W `main.js` w `onSnapshot`:
+- najpierw przełącza się APP (`GAME/QR/BLACK_SCREEN`),
+- jeśli `appMode === "GAME"` – woła:
+  ```js
+  app.scene.api.restoreSnapshot?.(st?.screen);
+  ```
+
+`restoreSnapshot` odtwarza:
+- duży wyświetlacz,
+- małe wyświetlacze,
+- (opcjonalnie) stan INDICATOR – jeśli jest w snapshotcie.
+
+Ważne:
+- restore działa **bez animacji**, to jest “sztywne wejście” po reconnect/refresh.
+
+---
+
+## 14) Pakiety testowe do konsoli
+
+```js
+// 1. Wejście do GAME + logo
+handleCommand("APP GAME");
 handleCommand('LOGO LOAD "./logo_familiada.json"');
 handleCommand('LOGO SHOW ANIMIN rain down 22');
 
+// 2. ROUNDS – plansza z przykładowymi danymi
 handleCommand('RBATCH SUMA 120 R1 "PIERWSZA" 10 R2 "DRUGA" 25 R3 "TRZECIA" 05 R4 "" 00 R5 "PIATA" 30 R6 "SZOSTA" 15 ANIMOUT edge right 18 ANIMIN rain down 22');
 
+// 3. FINAL – przykładowa plansza
 handleCommand('FBATCH SUMA 999 F1 "ALFA" 12 34 "BETA" F2 "GAMMA" 01 99 "DELTA" ANIMOUT matrix right 20 ANIMIN rain down 22');
 
-handleCommand("MODE BLACK");
-handleCommand("MODE QR");
+// 4. BLANK
+handleCommand("MODE BLANK");
+
+// 5. BLACK / QR
+handleCommand("APP BLACK");
+handleCommand("APP QR");
 handleCommand('QR HOST "https://example.com/host" BUZZER "https://example.com/buzzer"');
+
+// 6. INDICATOR
+handleCommand("APP GAME");
+handleCommand("INDICATOR ON_A");
+handleCommand("INDICATOR ON_B");
+handleCommand("INDICATOR OFF");
 ```
 
 ---
 
-## 14) Najczęstsze błędy
+## 15) INDICATOR – kontrolki drużyn (A / B)
 
-### `dotOff is not defined`
-```js
-const anim = createAnimator({ tileAt, snapArea, clearArea, clearTileAt, dotOff: COLORS.dotOff });
-```
-
-### `Identifier 'clamp' has already been declared`
-Usuń duplikat deklaracji w module.
-
-### `roundsState is not defined`
-`roundsState` musi być w zasięgu metod `api.rounds.*` (nie wewnątrz IIFE).
-
----
-
-
-# 15) INDICATOR – kontrolki drużyn (A / B)
-
-INDICATOR to para okrągłych kontrolek (czerwona i niebieska) umieszczonych na pasku drużyn.
-Działa niezależnie od trybu dużego wyświetlacza (LOGO / ROUNDS / FINAL / WIN) i jest dostępny zawsze, gdy APP = GRA.
+INDICATOR to para okrągłych kontrolek (czerwona i niebieska) umieszczonych na pasku na dole.
+Działa niezależnie od trybu dużego wyświetlacza (LOGO / ROUNDS / FINAL / WIN / BLANK) i jest dostępny zawsze, gdy APP = GAME.
 
 Kontrolki mają dwa stany wizualne:
-- zgaszona
-- zapalona
+- **zgaszona**
+- **zapalona**
 
 Zawsze świeci co najwyżej jedna kontrolka.
 
 ---
 
-## 15.1 Dostępność
+### 15.1 Dostępność
 
-- INDICATOR jest aktywny tylko w trybie APP = GRA
-- Zmiana trybu sceny (MODE LOGO / ROUNDS / FINAL / WIN) nie wpływa na stan kontrolek
+- INDICATOR jest aktywny tylko w trybie APP = GAME
+- Zmiana trybu sceny (`MODE LOGO / ROUNDS / FINAL / WIN / BLANK`) nie wpływa na stan kontrolek
 - Zmiana trybu APP na QR lub BLACK_SCREEN ukrywa całą scenografię, w tym kontrolki
 
 ---
 
-## 15.2 API JS (bezpośrednie)
+### 15.2 API JS (bezpośrednie)
 
-### scene.api.indicator.get()
+#### `scene.api.indicator.get()`
 
 Zwraca aktualny stan:
 
-"OFF" | "ON_A" | "ON_B"
+`"OFF" | "ON_A" | "ON_B"`
 
----
-
-### scene.api.indicator.set(state)
+#### `scene.api.indicator.set(state)`
 
 Ustawia stan kontrolek.
 
 Dozwolone wartości:
-- OFF – obie kontrolki zgaszone
-- ON_A – świeci czerwona (A), niebieska zgaszona
-- ON_B – świeci niebieska (B), czerwona zgaszona
+- `"OFF"` – obie kontrolki zgaszone
+- `"ON_A"` – świeci czerwona (A), niebieska zgaszona
+- `"ON_B"` – świeci niebieska (B), czerwona zgaszona
 
 Przykłady:
+```js
 scene.api.indicator.set("ON_A");
 scene.api.indicator.set("ON_B");
 scene.api.indicator.set("OFF");
-
-Funkcja nie zwraca wartości.
+```
 
 ---
 
-## 15.3 Komendy tekstowe (backend → handleCommand)
+### 15.3 Komendy tekstowe (backend → `handleCommand`)
 
 Składnia:
+```text
 INDICATOR <STATE>
+```
 
 Dozwolone stany:
-- OFF
-- ON_A
-- ON_B
+- `OFF`
+- `ON_A`
+- `ON_B`
 
 Przykłady:
+```js
 handleCommand("INDICATOR ON_A");
 handleCommand("INDICATOR ON_B");
 handleCommand("INDICATOR OFF");
+```
 
-UWAGA:
-Komenda "INDICATOR SET ON_A" jest niepoprawna.
-
----
-
-## 15.4 Zasady wizualne (implementacyjne)
-
-- Każda kontrolka składa się z dwóch warstw:
-  1. Baza (nieprzezroczysta, zmienia jasność OFF ↔ ON)
-  2. Warstwa koloru z gradientem (półprzezroczysta, stała)
-
-- Efekt świecenia:
-  - rozjaśnienie bazy
-  - wewnętrzne halo
-  - zewnętrzny glow (SVG filter)
-
-- Kolory:
-  - A (czerwona) – wysoka luminancja
-  - B (niebieska) – jaśniejszy wariant brandowego niebieskiego, bez przesunięcia w cyjan/zielony
+Uwaga:
+- Komenda `INDICATOR SET ON_A` jest **niepoprawna** i wywoła błąd (`INDICATOR: zły stan: SET`).
 
 ---
 
-## 15.5 Testy diagnostyczne (konsola)
+### 15.4 Snapshot / restore a INDICATOR
 
-Sprawdzenie istnienia kontrolek:
-document.querySelectorAll('[data-lamp]').length
+Jeśli dopiszesz stan kontrolek do snapshotu sceny:
+```js
+const snap = scene.api.snapshotAll();
+// snap.indicator === "OFF" | "ON_A" | "ON_B"
+```
 
-Test wizualny:
-scene.api.indicator.set("ON_A");
-scene.api.indicator.set("ON_B");
-scene.api.indicator.set("OFF");
+to w `restoreSnapshot` po odtworzeniu big + small wyświetlaczy możesz również:
+
+```js
+if (snap.indicator) {
+  scene.api.indicator.set(snap.indicator);
+}
+```
+
+Dzięki temu po odświeżeniu strony lampki wracają dokładnie do poprzedniego stanu, razem z planszą.
 
 ---
 
-## 15.6 Typowe błędy
+### 15.5 Typowe błędy
 
-Błąd:
-INDICATOR: zły stan: SET
+**Błąd:**  
+`INDICATOR: zły stan: SET`
 
-Przyczyna:
+**Przyczyna:**  
+Użyto komendy:
+```text
 INDICATOR SET ON_A
+```
 
-Poprawnie:
+**Poprawnie:**
+```text
 INDICATOR ON_A
+```
 
 ---
 
-## 15.7 Zależności od trybów
-
-MODE LOGO / ROUNDS / FINAL / WIN – brak wpływu
-MODE QR – ukrywa całość
-MODE BLACK / BLACK_SCREEN – ukrywa całość
-
----
-
-Status:
-Zaimplementowane. Stabilne. Niezależne od sceny.
-
-KONIEC.
+Status:  
+Zaimplementowane. Stabilne. Niezależne od LOGO/ROUNDS/FINAL/WIN/BLANK.
