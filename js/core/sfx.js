@@ -43,7 +43,7 @@ function loadAudio(name) {
 export function playSfx(name) {
   if (!name) return;
 
-  const file = SFX[name];
+  const file = files[name];
   if (!file) {
     console.warn("Brak dźwięku:", name);
     return;
