@@ -170,10 +170,17 @@ export async function createScene() {
   // ============================
   // GLOBAL ANIMATION SPEED
   // ============================
-  const ANIM_SPEED = { mul: 1.0 }; // 1 = normal, 2 = wolniej, 0.5 = szybciej
   const scaleMs = (ms, fallback) => {
     const base = Number.isFinite(ms) ? ms : fallback;
-    return Math.max(1, Math.round(base * ANIM_SPEED.mul));
+  
+    // mocniejsze skalowanie, żeby 1..10 było naprawdę różne
+    const scaled = base * ANIM_SPEED.mul * 6; // *6 możesz sobie potem doregulować
+  
+    // 1 ms wciąż minimalnie, ale teraz:
+    // ms=2  -> ~12
+    // ms=5  -> ~30
+    // ms=10 -> ~60
+    return Math.max(1, Math.round(scaled));
   };
 
   // ============================================================
