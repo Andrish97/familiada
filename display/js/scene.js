@@ -1072,7 +1072,7 @@ export async function createScene() {
   api.restoreSnapshot=restoreSnapshot;
 
   // ============================================================
-  // Text command handler (GRA)
+  // Text command handler (GAME)
   // ============================================================
   const unquote = (s) => {
     const t = (s ?? "").trim();
