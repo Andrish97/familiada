@@ -1,3 +1,4 @@
+import { createSfxMixer, playSfx } from "/familiada/js/core/sfx.js";
 export function createDisplay({ devices, store }) {
   const ELLIPSIS = "…"; // ważne: znak z fontu
 
@@ -16,6 +17,7 @@ export function createDisplay({ devices, store }) {
     finalText: rep("—", 11), // placeholder dla tekstu w finale na tablicy (po stronie gracza)
     finalPts: "▒▒",
   };
+  const introMixer = createSfxMixer ? createSfxMixer() : null;
 
   // ===== basics =====
   async function appGra() { await devices.sendDisplayCmd("MODE GRA"); }
@@ -71,11 +73,54 @@ export function createDisplay({ devices, store }) {
     await devices.sendDisplayCmd("INDICATOR OFF");
   }
 
-  async function stateIntroLogo(teamA, teamB) {
+  async function stateIntroLogo() {
+    if (!devices.displayOnline()) return;
+
+    // plansza intro (bez logo na starcie)
     await appGra();
-    await setTeamsLongs(teamA, teamB);
-    // logo show with your requested anim
-    await devices.sendDisplayCmd('LOGO SHOW ANIMIN rain right 80');
+    const { teamA, teamB } = store.state.teams;
+    await setTeamsLong(teamA, teamB);
+    await send("MODE INTRO");
+
+    // jeśli z jakiegoś powodu mixer nie jest dostępny – fallback: 2x intro, logo po 14s "na czas"
+    if (!introMixer) {
+      playSfx("show_intro");
+      setTimeout(() => { send("LOGO SHOW"); }, 14000);
+      // drugi raz intro "na oko" po zakończeniu pierwszego – np. ~15s
+      setTimeout(() => { playSfx("show_intro"); }, 15000);
+      return;
+    }
+
+    await new Promise((resolve) => {
+      let loops = 0;
+      let logoShown = false;
+
+      const off = introMixer.onTime(async (currentTime, duration) => {
+        // 1) Logo na 14 sekundzie PIERWSZEGO odtworzenia
+        if (!logoShown && currentTime >= 14) {
+          logoShown = true;
+          await send("LOGO SHOW");
+        }
+
+        // 2) Koniec pojedynczego odtworzenia
+        if (duration > 0 && currentTime >= duration - 0.05) {
+          loops += 1;
+
+          if (loops < 2) {
+            // odpal drugie odtworzenie
+            introMixer.play("show_intro");
+          } else {
+            // 2 odtworzenia zagrane – koniec
+            off();
+            introMixer.stop();
+            resolve();
+          }
+        }
+      });
+
+      // start pierwszego odtworzenia
+      introMixer.play("show_intro");
+    });
   }
 
   async function hideLogo() {
