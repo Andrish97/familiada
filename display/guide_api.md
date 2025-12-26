@@ -1,327 +1,343 @@
-# Guide API – Familiada Display (aktualny)
+# Guide API – ekran „display” Familiady
 
-Ten dokument opisuje **całe, aktualne API sterowania stroną display**:
+Ten dokument opisuje **aktualne API sterowania stroną display**:
 
-- tryby globalne (APP: `GAME / QR / BLACK_SCREEN`),
-- tryby sceny (duży wyświetlacz: `LOGO / ROUNDS / FINAL / WIN / BLANK`),
-- API JS (`scene.api.*`),
+- tryby globalne strony (`APP`: `GAME / QR / BLACK_SCREEN`),
+- tryby sceny (duży wyświetlacz 30×10: `LOGO / ROUNDS / FINAL / WIN / BLANK`),
+- API JS (`scene.api`, `app`),
 - komendy tekstowe (`handleCommand("...")`),
-- **animacje** (`edge`, `matrix`, wariant `pixel`) – **bez globalnego ANIM_SPEED**,
-- snapshot / restore ekranu,
-- wskaźnik drużyn **INDICATOR**.
+- animacje (`edge`, `matrix`, opcjonalne `pixel`),
+- snapshot/restore stanu ekranu,
+- INDICATOR (lampki A/B).
 
-Dokument opisuje **stan docelowy** po ostatnich poprawkach:  
-**bez komendy ANIM (globalnej)**, tylko **ANIMOUT / ANIMIN** per operacja.
+Jest to zgodne z aktualnym `scene.js` i routerem komend w `commands.js`:
+- **APP** steruje *całą stroną* (GAME vs QR vs BLACK_SCREEN),
+- **scene** działa **tylko w APP=GAME** i steruje dużym i małymi wyświetlaczami.
 
 ---
 
-## 0) Warstwy: APP vs scena
+## 0. Poziomy sterowania: APP vs scene
 
-### 0.1 Poziom globalny (APP)
+### 0.1 APP – tryb globalny strony
 
-To jest tryb całej strony – co widz w ogóle widzi:
+APP decyduje **co ogólnie widzi widz**:
 
-- `GAME` – scenografia SVG + wyświetlacze (duży + małe),
-- `QR` – czarny ekran + 2 kody QR,
-- `BLACK_SCREEN` – czarny ekran bez niczego,
+- `GAME` – scenografia SVG (podłoga, tło) + duży wyświetlacz 30×10 + małe wyświetlacze + INDICATOR.
+- `QR` – czarny ekran + 2 kody QR (host, przycisk).
+- `BLACK_SCREEN` – czarny ekran, bez QR.
 - `BLACK` – alias `BLACK_SCREEN` (tylko jako wartość, nie komenda).
 
-Za przełączanie APP odpowiada **`app.setMode`** oraz komendy `APP ...`.
+APP ustawiamy:
+- albo komendą tekstową (`APP ...`),
+- albo bezpośrednio przez `app.setMode("GAME" | "QR" | "BLACK_SCREEN")`.
 
-### 0.2 Poziom sceny (scene)
-
-Działa **tylko w APP=GAME** i steruje dużym wyświetlaczem 30×10:
-
-- `BLANK` – pusty ekran (wyczyszczony big),
-- `LOGO` – logo z JSON-a,
-- `ROUNDS` – plansza z 6 odpowiedziami,
-- `FINAL` – plansza finałowa,
-- `WIN` – ekran zwycięstwa.
-
-Za to odpowiada **`scene.api.mode`** oraz komendy `MODE ...` i pokrewne.
+Scena (LOGO/ROUNDS/FINAL/WIN/BLANK) działa **tylko**, gdy `APP = GAME`.
 
 ---
 
-## 1) Co istnieje po starcie
+### 0.2 scene – tryb „dużego wyświetlacza”
 
-Po załadowaniu strony (main.js) mamy globalnie:
+Gdy APP = GAME, scena ma własny tryb wewnętrzny:
 
-- `window.app` – kontroler globalny (APP + QR),
-- `window.scene` – obiekt sceny (`createScene()`),
-- `window.handleCommand(line)` – router komend (globalny).
+- `BLANK`
+- `LOGO`
+- `ROUNDS`
+- `FINAL`
+- `WIN`
 
-Szybki test w konsoli:
+Za to odpowiada `scene.api.mode`.
+
+---
+
+## 1. Obiekty globalne po starcie
+
+Po załadowaniu frontu (main.js) mamy:
+
+- `window.app` – kontroler APP + QR + powiązanie z Supabase.
+- `window.scene` – wynik `await createScene()`, czyli:
+  ```js
+  {
+    api,        // scene.api – całe API JS
+    BIG_MODES,  // stałe trybów sceny
+    handleCommand, // lokalny parser komend sceny (tylko w APP=GAME)
+  }
+  ```
+- `window.handleCommand(line)` – **główny router komend tekstowych**:
+  - komendy `APP ...` i `QR ...` obsługuje globalnie,
+  - wszystko inne przepycha do `scene.handleCommand`, **po wymuszeniu APP=GAME**.
+
+Szybki sanity check w konsoli:
 
 ```js
-typeof app        // "object"
-typeof scene      // "object"
+typeof app          // "object"
+typeof scene        // "object"
 typeof handleCommand // "function"
 ```
 
 ---
 
-## 2) APP – tryby globalne i QR
+## 2. API APP (globalne)
 
-### 2.1 `app.setMode(mode)`
-
-Dozwolone wartości:
+### 2.1 Ustawianie trybu strony
 
 ```js
 app.setMode("GAME");
 app.setMode("QR");
-app.setMode("BLACK_SCREEN"); // alias: "BLACK"
+app.setMode("BLACK_SCREEN");
+// alias:
+app.setMode("BLACK");
 ```
 
-Z poziomu komend tekstowych: **Zawsze używamy prefiksu `APP`.**
-
-Poprawne:
-
-```text
-APP GAME
-APP QR
-APP BLACK
-APP BLACK_SCREEN
-```
-
-Błędne (ignorowane, log warning):
-
-```text
-APP MODE GAME
-APP MODE QR
-APP MODE BLACK
-```
-
-### 2.2 QR linki
+### 2.2 QR (linki do hosta i przycisku)
 
 ```js
 app.qr.setHost("https://example.com/host");
 app.qr.setBuzzer("https://example.com/buzzer");
 ```
 
-Komenda tekstowa (ustawia linki + przełącza na APP=QR):
-
-```text
-QR HOST "https://example.com/host" BUZZER "https://example.com/buzzer"
-```
+W APP=QR te adresy są rysowane jako dwa kody QR.
 
 ---
 
-## 3) Scena – overview API JS
-
-`createScene()` zwraca obiekt:
+## 3. API sceny – ogólnie
 
 ```js
-const { api, BIG_MODES, handleCommand } = await createScene();
+const { api, BIG_MODES, handleCommand } = scene;
 ```
 
-Najważniejsze gałęzie:
-
-- `api.mode` – tryb dużego wyświetlacza (`BLANK/LOGO/ROUNDS/FINAL/WIN`),
-- `api.big` – niski poziom dużego 30×10 (put/clear + animacje),
-- `api.small` – trzy „potrójne” + dwa długie panele,
-- `api.logo` – logo (load/draw/show/hide),
-- `api.win` – ekran WIN,
-- `api.rounds` – plansza rund,
-- `api.final` – plansza finału,
-- `api.indicator` – lampki A/B,
-- `api.snapshotAll()` / `api.restoreSnapshot(snap)` – zapis/odtworzenie ekranu.
-
-Lokalny **parser komend sceny** to `handleCommand(line)`.  
-Globalny router (`window.handleCommand`) odpala go **tylko, jeśli APP=GAME**.
-
----
-
-## 4) Tryb sceny: `scene.api.mode`
+### 3.1 Tryb sceny
 
 ```js
-scene.api.mode.get(); // "BLANK" | "LOGO" | "ROUNDS" | "FINAL" | "WIN"
+api.mode.get(); // "BLANK" | "LOGO" | "ROUNDS" | "FINAL" | "WIN"
 
-await scene.api.mode.set("ROUNDS", {
-  animIn: { type: "edge", dir: "top", ms: 400 }
-});
+await api.mode.set("ROUNDS", { animIn: { type:"edge", dir:"top", ms:180 } });
 ```
+
+Parametry `animIn` – pełne wyjaśnienie w sekcji „Animacje”.
 
 Zasady:
 
-- zawsze czyści cały „big”,
-- `BLANK` – po prostu pusty ekran,
-- `ROUNDS` – przygotowuje logikę SUMA,
-- `FINAL` – wpisuje etykietę "SUMA" na dole,
-- opcjonalny `animIn` animuje **cały duży obszar** (domyślnie 30×10, chyba że podasz własne `area`).
+- `BLANK` – czyści duży wyświetlacz, nie rysuje nic więcej.
+- `LOGO` – przygotowuje scenę pod logo (ale samo logo rysujemy przez `api.logo.show()` / `draw()`).
+- `ROUNDS` – tryb rund: 6 wierszy odpowiedzi + SUMA z adaptacyjnym wierszem.
+- `FINAL` – tryb finału: 5 wierszy + SUMA w stałym wierszu.
+- `WIN` – tryb „zwycięstwo”: duże cyfry środka.
 
 ---
 
-## 5) Duży wyświetlacz 30×10 – `scene.api.big`
+## 4. Duży wyświetlacz 30×10 – API low‑level (`api.big`)
 
-### 5.1 Podstawy
+### 4.1 Podstawowe operacje
 
 ```js
-scene.api.big.put(col, row, ch, color?);
-scene.api.big.clear();
-scene.api.big.clearArea(c1, r1, c2, r2);
+api.big.clear();                 // czyści cały 30x10
+api.big.clearArea(1,1,30,10);   // czyści wycinek
+api.big.put(5, 3, "A");         // rysuje pojedynczy znak (kol=5, wiersz=3)
 ```
 
-Współrzędne są **1-based**:
+Koordynaty są **1‑based**: kolumny 1..30, wiersze 1..10.
 
-- kolumny: 1..30,
-- wiersze: 1..10.
-
-### 5.2 Obszary pomocnicze
+### 4.2 Gotowe obszary
 
 ```js
-scene.api.big.areaAll();   // {c1:1, r1:1, c2:30, r2:10}
-scene.api.big.areaLogo();  // {c1:1, r1:3, c2:30, r2:7}
-scene.api.big.areaWin();   // {c1:1, r1:2, c2:30, r2:8}
+api.big.areaAll();   // { c1:1, r1:1, c2:30, r2:10 }
+api.big.areaLogo();  // { c1:1, r1:3, c2:30, r2:7 }
+api.big.areaWin();   // { c1:1, r1:2, c2:30, r2:8 }
 ```
 
-### 5.3 Animacje: **edge / matrix**, ms = czas całego bloku
+---
 
-API niskopoziomowe:
+## 5. Animacje dużego wyświetlacza (`api.big.animIn` / `animOut`)
+
+### 5.1 Ogólna sygnatura
 
 ```js
-await scene.api.big.animIn({
-  type: "edge",      // "edge" | "matrix"
-  dir: "left",       // tylko dla edge: "left"|"right"|"top"|"bottom" (up/down = aliasy)
-  axis: "down",      // tylko dla matrix: "down"|"up"|"left"|"right" (top/bottom = aliasy)
-  ms: 500,           // ~czas trwania całej animacji tego obszaru w ms
-  area: scene.api.big.areaAll(), // optional, domyślnie całe 30×10
+await api.big.animIn({
+  type: "edge" | "matrix",
+  dir,   // tylko dla edge
+  axis,  // tylko dla matrix
+  ms,    // docelowy czas animacji w ms
+  area,  // opcjonalnie: { c1,r1,c2,r2 }, domyślnie areaAll()
+  opts,  // opcjonalnie: szczegóły wariantu pixelowego
+});
+
+await api.big.animOut( ... ); // analogicznie
+```
+
+---
+
+### 5.2 Jak interpretowane jest `ms`
+
+**`ms` traktujemy jako docelowy czas trwania animacji dla całego bloku** (np. całego 30×10 lub wycinka), niezależnie od rozmiaru tego bloku.
+
+Pod spodem animator:
+
+- liczy liczbę kroków animacji,
+- dzieli `ms` przez liczbę kroków, żeby wyliczyć opóźnienie między krokami,
+- dla bardzo małych wartości `ms` przeglądarka (szczególnie Edge) **i tak** ogranicza minimalne opóźnienie `setTimeout` (typowo ~4 ms), więc przy skrajnie małych `ms` *realny* czas będzie większy niż zadany.
+
+Ważne:
+
+- `ms` jest **tym samym parametrem** dla animacji kafelkowej i pixelowej,
+- niezależnie od tego, czy area to 1×1 czy 30×10 – przy tym samym `ms` target jest „jednakowy czas dla całego bloku” (różnice mogą wynikać tylko z klampowania przeglądarki i ilości ciężkiej roboty w każdym kroku).
+
+---
+
+### 5.3 Typy animacji
+
+#### 5.3.1 `type: "edge"`
+
+Animacja „od krawędzi”, kafelkowa (opcjonalnie pixelowa w środku kafla).
+
+- kierunek (`dir`): `"left" | "right" | "top" | "bottom"`.
+
+Przykład:
+
+```js
+await api.big.animIn({
+  type: "edge",
+  dir:  "left",
+  ms:   200,
+});
+```
+
+Opcje pixelowe – patrz sekcja 5.5.
+
+---
+
+#### 5.3.2 `type: "matrix"`
+
+„Zasłona” wierszami/kolumnami, kafelkowa (opcjonalnie pixelowa).
+
+- oś (`axis`): `"down" | "up" | "left" | "right"`.
+
+Przykład:
+
+```js
+await api.big.animOut({
+  type: "matrix",
+  axis: "down",
+  ms:   180,
+});
+```
+
+---
+
+### 5.4 Wariant `pixel` – wewnątrz kafelków 5×7
+
+Dla obu typów (`edge` i `matrix`) możesz włączyć tryb pixelowy:
+
+- **dla komend tekstowych** – słowo `pixel` po ms:
+  - `ANIMIN edge left 200 pixel`
+  - `ANIMOUT matrix down 150 pixel`
+- **dla API JS** – `opts.pixel = true`:
+
+```js
+await api.big.animIn({
+  type: "edge",
+  dir:  "left",
+  ms:   200,
   opts: {
-    pixel: true,     // opcjonalnie: animacja piksel po pikselu
-    // pxBatch / stepPxMs można doprecyzować z JS, w komendach tekstowych nie używamy
-  }
+    pixel: true,
+    pxBatch: 8,     // opcjonalnie – ile pikseli na krok
+    stepPxMs: 2,    // opcjonalnie – minimalny odstęp między batchami pikseli
+    tileMs: 0,      // opcjonalnie – pauza po ukończeniu kafla
+  },
 });
-
-await scene.api.big.animOut({ ... });
 ```
 
-**BARDZO WAŻNE:**
+W trybie `pixel`:
 
-- **`ms` to czas dla CAŁEGO BLOKU**, niezależnie od rozmiaru (`1×1`, `1×17`, `30×10`…),
-- dla trybu kafelkowego dzielimy ten czas przez liczbę kroków,
-- dla trybu `pixel` dzielimy ten czas przez liczbę „paczek pikseli”,
-- **nie ma już żadnego globalnego ANIM_SPEED**.
-
-#### 5.3.1 EDGE
-
-- `type: "edge"`,
-- `dir`: `"left" | "right" | "top" | "bottom"`,
-- aliasy: `"up"` ≡ `"top"`, `"down"` ≡ `"bottom"`.
-
-Kierunek określa **od której krawędzi** wchodzą/wychodzą kafelki.
-
-#### 5.3.2 MATRIX
-
-- `type: "matrix"`,
-- `axis`: `"down" | "up" | "left" | "right"`,
-- aliasy: `"top" ≡ "up"`, `"bottom" ≡ "down"`.
-
-Kierunek to **kierunek „przesuwania się kurtyny”** (wierszami lub kolumnami).
-
-#### 5.3.3 Wariant `pixel`
-
-Jeśli w `opts` ustawisz `pixel: true`, animacja działa tak:
-
-- kafelek jest nadal jednostką, ale **w jego środku** piksele zapalają się po kolei,
-- kierunek w kafelku jest zgodny z `dir/axis`,
-- `ms` dalej oznacza **czas dla całego bloku**,
-- biblioteka liczy ile jest kafelków × ile „paczek pikseli” i dzieli `ms` tak, żeby całość mniej więcej trwała tyle, ile podasz.
-
-Z JS możesz jeszcze dopieścić:
-
-```js
-opts: {
-  pixel: true,
-  pxBatch: 8,     // ile pikseli w paczce (im więcej, tym „grubiej”)
-  stepPxMs: 0     // jeśli ustawisz jawnie, nadpiszesz automatyczny podział ms
-}
-```
-
-Z poziomu komend tekstowych używamy tylko słowa kluczowego `pixel` (bez pxBatch/stepPxMs).
+- kolejność pikseli w kafelku jest spójna z kierunkiem (od góry, od dołu, itp.),
+- `ms` dalej oznacza **czas pojawiania się całego bloku**, a nie jednego kafla,
+- parametry w `opts` pozwalają „doszlifować” wrażenie (czy widać przebieg po pikselach, czy prawie wszystko naraz).
 
 ---
 
-## 6) Małe wyświetlacze – `scene.api.small`
+### 5.5 Różnica edge vs matrix (praktyczna)
 
-### 6.1 Trzy potrójne panele 5×7 (cyfry)
+- `matrix` – ma mniej kroków (wiersze/kolumny), więc **łatwiej trafia w zadane `ms`**.
+- `edge` – przechodzi po kafelkach „po krawędzi”, więc kroków jest więcej. Przy bardzo małych `ms` realny czas może odbiegać od targetu przez ograniczenia `setTimeout` w przeglądarce.
+
+W skrócie: **`ms` to target**, a środowisko JS próbuje go „udźwignąć”. Przy rozsądnych wartościach (200–500 ms) jest to najbardziej przewidywalne.
+
+---
+
+## 6. Małe wyświetlacze (`api.small`)
+
+### 6.1 Trzy „potrójne” (po 3 kafle 5×7) – cyfry
 
 ```js
-scene.api.small.topDigits("123");
-scene.api.small.leftDigits("045");
-scene.api.small.rightDigits("999");
+api.small.topDigits("123");
+api.small.leftDigits("045");
+api.small.rightDigits("999");
 ```
 
 Zasady:
 
-- przyjmują string, biorą pierwsze 3 znaki,
-- niecyfry → spacje,
-- wyświetlanie lewo→prawo.
+- przyjmują string, wszystko poza cyframi → spacja,
+- 3 miejsca, reszta ignorowana.
 
-### 6.2 Dwa długie panele 95×7 (tekst max 15)
+### 6.2 Dwa długie panele (95×7) – tekst max 15 znaków
 
 ```js
-scene.api.small.long1("FAMILIADA");
-scene.api.small.long2("SUMA 000");
+api.small.long1("FAMILIADA");
+api.small.long2("SUMA 000");
 ```
 
 Zasady:
 
-- maksymalnie 15 znaków (reszta ucinana),
-- tekst centrowany,
-- między literami 1 kolumna przerwy:
-  - litera = 5 kolumn,
-  - litery są rysowane z odstępem 1.
+- tekst konwertowany do UPPERCASE,
+- max 15 znaków (reszta ucinana),
+- tekst centrowany w poziomie,
+- między literami jest 1 kolumna przerwy.
 
-### 6.3 Czyszczenie małych paneli
+### 6.3 Czyszczenie wszystkich małych
 
 ```js
-scene.api.small.clearAll();
+api.small.clearAll();
 ```
 
-Czyści wszystkie trzy potrójne + oba długie.
+Ustawia:
+
+- potrójne – na spacje,
+- długie – na pusto.
 
 ---
 
-## 7) LOGO – `scene.api.logo`
+## 7. LOGO (`api.logo`)
 
-Logo rysujemy na dużym wyświetlaczu w obszarze:
+Logo rysowane jest w obszarze 30×5 kafli:
 
-- wiersze: 3..7 (5 wierszy),
-- kolumny: 1..30.
+- wiersze 3..7,
+- kolumny 1..30.
 
 ### 7.1 API
 
 ```js
-await scene.api.logo.load("./logo_familiada.json"); // wczytaj z URL
-scene.api.logo.set(json);                           // wstaw gotowy JSON
-scene.api.logo.draw();                              // narysuj (bez animacji)
+await api.logo.load("./logo_familiada.json"); // ładuje JSON do pamięci
+api.logo.set(json);                           // jeśli chcesz wstrzyknąć własny obiekt
+api.logo.draw();                              // rysuje logo bez animacji
+await api.logo.show(animIn?);                 // tryb LOGO + rysowanie + animacja wejścia
+await api.logo.hide(animOut?);                // animacja wyjścia (bez zmiany trybu sceny)
 ```
 
-Wygodne skróty z animacją:
+Domyślne animacje w środku:
+
+- `show` → edge left, ms=14, tylko areaLogo()
+- `hide` → edge right, ms=14, tylko areaLogo()
+
+Przykład:
 
 ```js
-await scene.api.logo.show({
-  type: "edge",  // animIn
-  dir: "left",
-  ms: 300
-});
-
-await scene.api.logo.hide({
-  type: "edge",  // animOut
-  dir: "right",
-  ms: 300
+await api.mode.set("LOGO");
+await api.logo.load("./logo_familiada.json");
+await api.logo.show({
+  type: "matrix",
+  axis: "down",
+  ms: 250,
 });
 ```
-
-`logo.show`:
-
-- ustawia `mode = LOGO`,
-- rysuje logo,
-- animuje wejście **tylko obszaru logo** (`areaLogo`).
-
-`logo.hide`:
-
-- animuje wyjście obszaru logo,
-- nie zmienia trybu sceny (możesz np. zrobić potem `MODE ROUNDS`).
 
 ### 7.2 Format `logo_familiada.json`
 
@@ -329,7 +345,7 @@ await scene.api.logo.hide({
 {
   "layers": [
     {
-      "color": "main",
+      "color": "main",      // "main" | "top" | "left" | "right"
       "rows": [
         "..............................",
         "..............................",
@@ -344,483 +360,528 @@ await scene.api.logo.hide({
 
 Zasady:
 
-- `layers`: lista warstw, rysowane w kolejności,
-- `rows`: dokładnie 5 stringów,
-- każdy string ma docelowo 30 znaków:
-  - za długie → ucięte,
-  - za krótkie → uzupełnione spacją,
-- `" "` = „nic nie rysuj”,
-- `color`: `"main" | "top" | "left" | "right"` → mapowane na odpowiednie kolory świecenia.
+- `rows` musi mieć 5 stringów (za mało → dopełnienie spacjami, za dużo → ucięte),
+- każdy string docelowo 30 znaków (dopełnianie/ucinanie),
+- spacja `" "` = brak znaku,
+- `color` wybiera kolor z `LIT`: `"main"`, `"top"`, `"left"`, `"right"`.
 
 ---
 
-## 8) WIN – `scene.api.win`
+## 8. WIN (`api.win`)
+
+Duży numer zwycięstwa, rysowany w obszarze:
+
+- wiersze 2..8,
+- kolumny 1..30.
 
 ### 8.1 API
 
 ```js
-await scene.api.win.set("01234", {
-  animOut: { type:"edge", dir:"right", ms:300 },
-  animIn:  { type:"matrix", axis:"down", ms:400 }
+await api.win.set("01234", {
+  animOut: { type:"edge",   dir:"right", ms:200 },
+  animIn:  { type:"matrix", axis:"down", ms:250 },
 });
 ```
 
 Zasady:
 
-- przyjmuje string (lub liczbę), z którego zostają **ostatnie 5 cyfr**,
-- liczba jest centrowana poziomo,
-- używany jest dodatkowy font `font_win.json`,
-- rysuje się w obszarze `areaWin()` → wiersze 2..8.
-
-Jeśli nie podasz animacji, po prostu **natychmiast** podmienia zawartość WIN.
+- liczba jest czyszczona do cyfr (`0-9`),
+- max 5 cyfr – jeśli więcej, bierzemy 5 ostatnich,
+- cyfry są rysowane na podstawie `font_win.json`, „ściśle” (bez stałego odstępu),
+- całość centrowana poziomo.
 
 ---
 
-## 9) ROUNDS – `scene.api.rounds`
+## 9. ROUNDS (`api.rounds`)
 
-Układ linii (6 wierszy):
+Układ:
 
-- numer: 1 znak – kolumna 5,
-- tekst odpowiedzi: 17 znaków – kolumny 7..23 (do lewej),
-- punkty: 2 znaki – kolumny 25..26 (do prawej).
+- 6 wierszy odpowiedzi, wiersze (tile-row): 2,3,4,5,6,7.
+- w każdej linii:
+  - numer rundy: kol=5 (1 znak),
+  - tekst odpowiedzi: kol=7..23 (17 znaków, do lewej),
+  - punkty: kol=25..26 (2 znaki, do prawej).
+- SUMA:
+  - etykieta „SUMA”: kol=19..22,
+  - wartość SUMA: kol=24..26 (3 znaki, do prawej),
+  - wiersz SUMY „wędruje w dół” w zależności od ostatniego niepustego wiersza.
 
-### 9.1 Numer linii
+### 9.1 Zasada numerów
 
-Numer (1..6) jest widoczny tylko wtedy, gdy:
+Numer wiersza (1–6) jest widoczny **tylko jeśli**:
 
-- tekst **lub** punkty w tej linii są niepuste (po `trim()`),
-- w przeciwnym razie pole numeru jest czyszczone (spacja).
+- tekst odpowiedzi lub punkty w tej linii są niepuste po `trim()`.
 
-### 9.2 SUMA – „wędrujący” wiersz
+Czyli wyczyszczenie tekstu i punktów automatycznie „gasi” numer.
 
-SUMA składa się z:
+---
 
-- etykiety `"SUMA"` – kolumny 19..22,
-- wartości SUMA – 3 miejsca, kolumny 24..26 (do prawej).
-
-Położenie SUMA:
-
-- jeśli wszystkie linie puste → SUMA rysuje się na wierszu 9,
-- w przeciwnym razie – jeden wiersz przerwy + SUMA poniżej ostatniego niepustego wiersza,
-  ale maksymalnie do wiersza 10.
-
-### 9.3 API pojedynczych pól
+### 9.2 API pojedynczych pól
 
 ```js
-await scene.api.rounds.setText(i, text, { animOut?, animIn? });
-await scene.api.rounds.setPts(i, pts, { animOut?, animIn? });
-await scene.api.rounds.setRow(i, { text?, pts?, animOut?, animIn? });
-await scene.api.rounds.setSuma(val, { animOut?, animIn? });
-scene.api.rounds.setX("2A", true);  // rysuj/gaś X
+// tekst
+await api.rounds.setText(2, "ODPOWIEDZ", {
+  animOut: { type:"edge",   dir:"right", ms:200 },
+  animIn:  { type:"matrix", axis:"down", ms:180 },
+});
+
+// punkty
+await api.rounds.setPts(2, "25", {
+  animOut: { type:"edge", dir:"left", ms:150 },
+  animIn:  { type:"edge", dir:"left", ms:150 },
+});
+
+// tekst + punkty naraz
+await api.rounds.setRow(3, {
+  text: "TRZECIA",
+  pts:  "10",
+  animOut: { type:"matrix", axis:"down", ms:200 },
+  animIn:  { type:"matrix", axis:"down", ms:200 },
+});
+
+// SUMA
+await api.rounds.setSuma("120", {
+  animOut: { type:"edge", dir:"right", ms:200 },
+  animIn:  { type:"edge", dir:"left",  ms:200 },
+});
+
+// X-y
+api.rounds.setX("1A", true);
+api.rounds.setX("1A", false);
 ```
 
-Gdzie:
+Ograniczenia:
 
-- `i` = 1..6,
-- `text` – string:
+- `idx` – 1..6,
+- tekst:
   - ucinany do 17 znaków,
-  - wyrównany do lewej,
-- `pts` – string (np. `"5"`, `"10"`):
-  - wyrównany do prawej na 2 miejscach,
-- `val` (SUMA) – wyrównany do prawej na 3 miejscach.
+  - wyświetlany w UPPERCASE,
+- punkty:
+  - wyrównane do prawej w 2 miejscach,
+  - np. `"5"` → `" 5"`, `"123"` → `"23"`,
+- SUMA:
+  - wyrównana do prawej w 3 miejscach,
+  - wiersz SUMA przeliczany przy każdej zmianie odpowiedzi/punktów.
 
-`animOut` / `animIn` mają taki sam format jak dla `big.animOut/animIn`, z tym że **działają na obszarze pojedynczego pola** (np. samego tekstu).
+X-y:
 
-### 9.4 API batch – cała plansza jednym strzałem
+- dostępne klucze: `1A`, `2A`, `3A`, `1B`, `2B`, `3B`,
+- każdy X to blok 3×3 kafli z dużym krzyżykiem.
+
+---
+
+### 9.3 API batch – `setAll`
+
+Jeśli chcesz jedną animacją wprowadzić całą planszę ROUNDS:
 
 ```js
-await scene.api.rounds.setAll({
+await api.rounds.setAll({
   rows: [
     { text:"PIERWSZA", pts:"10" },
     { text:"DRUGA",    pts:"25" },
     { text:"TRZECIA",  pts:"05" },
     { text:"",         pts:"00" },
-    { text:"PIĄTA",    pts:"30" },
-    { text:"SZÓSTA",   pts:"15" }
+    { text:"PIATA",    pts:"30" },
+    { text:"SZOSTA",   pts:"15" },
   ],
   suma: "120",
-  animOut: { type:"edge",   dir:"right", axis:"down", ms:400 },
-  animIn:  { type:"matrix", axis:"down",             ms:400 }
+  animOut: { type:"edge",   dir:"right", ms:220 },
+  animIn:  { type:"matrix", axis:"down", ms:260 },
+});
+```
+
+W środku:
+
+1. Jeśli `animOut` podany → `api.big.animOut` na **całym obszarze** 30×10.
+2. Wszystkie wiersze i SUMA są wpisywane „na sztywno” (bez per‑pole animacji).
+3. Jeśli `animIn` podany → `api.big.animIn` na całym 30×10.
+
+---
+
+## 10. FINAL (`api.final`)
+
+Układ:
+
+- wiersze 2..6 (5 wierszy),
+- w każdej linii:
+  - lewy tekst: kol=1..11 (11 znaków, do lewej),
+  - A: kol=13..14 (2 znaki, do prawej),
+  - B: kol=17..18 (2 znaki, do prawej),
+  - prawy tekst: kol=20..30 (11 znaków, do lewej),
+- SUMA:
+  - etykieta „SUMA”: kol=11..14, wiersz 8,
+  - wartość SUMA: kol=16..18 (3 znaki, do prawej), wiersz 8.
+
+### 10.1 API pojedynczych pól
+
+```js
+// lewa odpowiedź
+await api.final.setLeft(1, "ALFA", {
+  animOut: { type:"edge",   dir:"right", ms:200 },
+  animIn:  { type:"matrix", axis:"down", ms:220 },
+});
+
+// punkty A / B
+await api.final.setA(1, "12", { animOut:null, animIn:null });
+await api.final.setB(1, "34", { animOut:null, animIn:null });
+
+// prawa odpowiedź
+await api.final.setRight(1, "BETA", {
+  animOut: { type:"edge", dir:"left", ms:180 },
+  animIn:  { type:"edge", dir:"left", ms:180 },
+});
+
+// SUMA finałowa
+await api.final.setSuma("999", {
+  animOut: { type:"matrix", axis:"right", ms:200 },
+  animIn:  { type:"matrix", axis:"right", ms:200 },
 });
 ```
 
 Zasady:
 
-- najpierw (opcjonalnie) **animOut** dla całego `areaAll()`,
-- potem wpisywane są wszystkie pola **bez animacji per pole**,
-- na koniec (opcjonalnie) **animIn** dla całego `areaAll()`,
-- `text` i `pts` są przycinane i wyrównywane tak jak w setText/setPts,
-- SUMA jest przeliczana na nowy wiersz i rysowana razem z planszą.
+- indeksy 1..5,
+- lewy i prawy tekst ucinane do 11 znaków, UPPERCASE,
+- A/B – wyrównywane do prawej na 2 znakach,
+- SUMA – wyrównywana do prawej na 3 znakach.
 
 ---
 
-## 10) FINAL – `scene.api.final`
-
-Układ jednej linii (5 wierszy, rzędy 2..6):
-
-- lewy tekst: 11 znaków – kolumny 1..11 (do lewej),
-- A: 2 znaki – kolumny 13..14 (do prawej),
-- B: 2 znaki – kolumny 17..18 (do prawej),
-- prawy tekst: 11 znaków – kolumny 20..30 (do lewej).
-
-SUMA na dole:
-
-- `"SUMA"` – kolumny 11..14,
-- wartość – 3 miejsca, kolumny 16..18 (do prawej).
-
-### 10.1 API pojedynczych pól
+### 10.2 API batch – `setAll`
 
 ```js
-await scene.api.final.setLeft(i, text, { animOut?, animIn? });
-await scene.api.final.setA(i, pts, { animOut?, animIn? });
-await scene.api.final.setB(i, pts, { animOut?, animIn? });
-await scene.api.final.setRight(i, text, { animOut?, animIn? });
-await scene.api.final.setRow(i, { left?, a?, b?, right?, animOut?, animIn? });
-
-await scene.api.final.setSuma(val, { animOut?, animIn? });
-```
-
-Zasady:
-
-- `i` = 1..5,
-- teksty ucinane do 11 znaków (do lewej),
-- punkty A/B wyrównane do prawej na 2 miejscach,
-- SUMA wyrównana do prawej na 3 miejscach.
-
-### 10.2 API batch – cała plansza jednym strzałem
-
-```js
-await scene.api.final.setAll({
+await api.final.setAll({
   rows: [
     { left:"ALFA",  a:"12", b:"34", right:"BETA"  },
     { left:"GAMMA", a:"01", b:"99", right:"DELTA" },
     { left:"",      a:"",   b:"",   right:""      },
     { left:"",      a:"",   b:"",   right:""      },
-    { left:"",      a:"",   b:"",   right:""      }
+    { left:"",      a:"",   b:"",   right:""      },
   ],
   suma: "999",
-  animOut: { type:"edge",   dir:"right", ms:400 },
-  animIn:  { type:"matrix", axis:"down", ms:400 }
+  animOut: { type:"edge",   dir:"right", ms:220 },
+  animIn:  { type:"matrix", axis:"down", ms:260 },
 });
 ```
 
-Tak jak w ROUNDS:
+Działanie:
 
-- animOut/In działają globalnie (cały `areaAll()`),
-- teksty/pts/suma są wstawiane bez animacji per pole, potem animIn na całość.
+1. Jeśli `animOut` → `api.big.animOut` na całym obszarze.
+2. Wpisuje wszystkie pola i SUMĘ „na sztywno” (bez per‑pole animacji).
+3. Jeśli `animIn` → `api.big.animIn` na całym obszarze.
 
 ---
 
-## 11) INDICATOR – lampki drużyn A/B
+## 11. INDICATOR – lampki drużyn A/B
 
-INDICATOR to para „lampek” na dolnym pasku:
+Na dolnym pasku (`basebar`) są dwa okrągłe „LED‑y”:
 
-- lewa – drużyna A (czerwona),
-- prawa – drużyna B (niebieska).
+- lewy (czerwony) – drużyna A,
+- prawy (niebieski) – drużyna B.
 
-Działa **zawsze, gdy APP=GAME**, niezależnie od LOGO/ROUNDS/FINAL/WIN/BLANK.
+INDICATOR jest widoczny tylko, gdy `APP = GAME`, ale jego stan jest niezależny od trybu sceny (LOGO/ROUNDS/FINAL/WIN/BLANK).
 
 ### 11.1 API JS
 
 ```js
-scene.api.indicator.get(); // "OFF" | "ON_A" | "ON_B"
-
-scene.api.indicator.set("OFF");
-scene.api.indicator.set("ON_A");
-scene.api.indicator.set("ON_B");
+api.indicator.get();        // "OFF" | "ON_A" | "ON_B"
+api.indicator.set("OFF");
+api.indicator.set("ON_A");
+api.indicator.set("ON_B");
 ```
 
 Zasady:
 
 - `OFF` – obie lampki zgaszone,
-- `ON_A` – świeci A, B zgaszona,
-- `ON_B` – świeci B, A zgaszona.
-
-### 11.2 Komendy tekstowe
-
-```text
-INDICATOR OFF
-INDICATOR ON_A
-INDICATOR ON_B
-```
-
-Błędne:
-
-```text
-INDICATOR SET ON_A  // zły stan: "SET"
-```
-
-### 11.3 Snapshot / restore
-
-Stan INDICATOR jest częścią snapshotu:
-
-```js
-const snap = scene.api.snapshotAll();
-snap.indicator; // "OFF" | "ON_A" | "ON_B"
-```
-
-Przy przywracaniu:
-
-```js
-scene.api.restoreSnapshot(snap);
-```
-
-wewnątrz `restoreSnapshot` stan lampek jest również odtwarzany.
+- `ON_A` – świeci lewa (czerwona),
+- `ON_B` – świeci prawa (niebieska),
+- nie ma trybu „obie świecą”, zawsze co najwyżej jedna.
 
 ---
 
-## 12) Snapshot / restore – pełny stan wyświetlacza
+## 12. Snapshot / restore
 
-### 12.1 `scene.api.snapshotAll()`
+Scena potrafi zrzucić **pełny stan wyświetlaczy** i go odtworzyć – do integracji z Supabase.
 
-Zwraca obiekt:
+### 12.1 Snapshot
 
 ```js
+const snap = api.snapshotAll();
+```
+
+Struktura (wysyłana z `commands.js` jako `screen`):
+
+```ts
 {
   v: 1,
-  sceneMode: "ROUNDS", // BLANK/LOGO/ROUNDS/FINAL/WIN
-  big:   ...,          // wszystkie kafle 30×10
-  small: {             // małe panele:
+  sceneMode: "BLANK" | "LOGO" | "ROUNDS" | "FINAL" | "WIN",
+  big:   /* [10][30][7][5] kolorków */,
+  small: {
     top:   ...,
     left:  ...,
     right: ...,
     long1: ...,
-    long2: ...
+    long2: ...,
   },
-  indicator: "OFF" | "ON_A" | "ON_B"
+  indicator: "OFF" | "ON_A" | "ON_B",
 }
 ```
 
-Globalny router (`commands.js`) pakuje to do patcha jako pole `screen` i wysyła do Supabase.
+### 12.2 Restore
 
-### 12.2 `scene.api.restoreSnapshot(snap)`
+```js
+api.restoreSnapshot(snap);
+```
 
-Przy odtwarzaniu:
+Działanie:
 
-1. Globalny kod ustawia najpierw `app.mode` (GAME/QR/BLACK_SCREEN).
-2. Jeśli APP=GAME – woła:
-   ```js
-   scene.api.restoreSnapshot(snap.screen);
-   ```
+- odtwarza duży wyświetlacz (30×10) z zapisanych kolorów,
+- odtwarza małe wyświetlacze,
+- jeśli jest `indicator` → ustawia `api.indicator.set(...)`,
+- **bez animacji** – to jest czyste odwzorowanie obrazu.
 
-`restoreSnapshot`:
+Na poziomie globalnym:
 
-- odtwarza stan dużego wyświetlacza,
-- odtwarza małe panele,
-- ustawia INDICATOR.
-
-Ważne:
-
-- **restore nie używa animacji** – to jest „twarde” przywrócenie stanu po reconnect/refresh.
+- backend trzyma też:
+  - `app_mode` (`GAME/QR/BLACK_SCREEN`),
+  - `scene` (`LOGO/ROUNDS/...`),
+  - `screen` (snapshot),
+- przy reconnect/refresh:
+  - najpierw APP (GAME/QR/BLACK_SCREEN),
+  - jeśli `GAME` → `scene.api.restoreSnapshot(screen)`.
 
 ---
 
-## 13) Komendy tekstowe – składnia docelowa
+## 13. Komendy tekstowe (`handleCommand("...")`)
 
-Tutaj chodzi o to, co backend wysyła do `window.handleCommand("...")`.
+### 13.1 Globalne (APP, QR)
 
-### 13.1 APP (globalne)
+APP – **bez słowa MODE**:
 
-```text
+```txt
 APP GAME
 APP QR
 APP BLACK
 APP BLACK_SCREEN
+```
 
+- `APP MODE GAME` → BŁĘDNA komenda (ignorowana z ostrzeżeniem).
+
+QR – ustawia linki i przełącza w APP=QR:
+
+```txt
 QR HOST "https://example.com/host" BUZZER "https://example.com/buzzer"
 ```
 
-### 13.2 Małe panele
+---
 
-```text
+### 13.2 Scena (tylko w APP=GAME)
+
+#### Małe wyświetlacze
+
+```txt
 TOP 123
 LEFT 045
 RIGHT 999
-
 LONG1 "FAMILIADA"
 LONG2 "SUMA 000"
 ```
 
-### 13.3 MODE (scena)
+#### Tryb sceny
 
-```text
+```txt
 MODE LOGO
 MODE ROUNDS
 MODE FINAL
 MODE WIN
 MODE BLANK
+
+// z animacją wejścia:
+MODE ROUNDS ANIMIN edge left 220
+MODE FINAL ANIMIN matrix down 260
 ```
 
-Z animacją wejścia:
+Składnia `ANIMIN`:
 
-```text
-MODE ROUNDS ANIMIN edge top 400
-MODE FINAL  ANIMIN matrix down 500 pixel
-```
-
-Składnia `ANIMIN` / `ANIMOUT`:
-
-```text
-ANIMIN  <type> <dir/axis> <ms> [pixel]
-ANIMOUT <type> <dir/axis> <ms> [pixel]
+```txt
+ANIMIN <type> <dirOrAxis> <ms> [pixel]
 ```
 
 - `type`: `edge` | `matrix`,
-- dla `edge`: `dir = left|right|top|bottom` (up/down jako alias do top/bottom),
-- dla `matrix`: `axis = down|up|left|right` (top/bottom jako aliasy),
-- `ms`: **czas całego bloku w ms**,
-- `pixel` – opcjonalny sufiks, włącza wariant pikselowy.
+- `dirOrAxis`:
+  - dla edge: `left|right|top|bottom`,
+  - dla matrix: `down|up|left|right`,
+- `ms`: liczba (docelowy czas bloku),
+- `pixel`: opcjonalne słowo – włącza wariant pixelowy.
 
-### 13.4 LOGO
+---
 
-```text
+#### LOGO
+
+```txt
 LOGO LOAD "./logo_familiada.json"
 LOGO DRAW
-
 LOGO SHOW
-LOGO SHOW ANIMIN edge left 300
-LOGO SHOW ANIMIN matrix down 400 pixel
+LOGO SHOW ANIMIN edge left 180
+LOGO SHOW ANIMIN matrix down 250 pixel
 
 LOGO HIDE
-LOGO HIDE ANIMOUT edge right 300
+LOGO HIDE ANIMOUT edge right 180
+LOGO HIDE ANIMOUT matrix up 220 pixel
 ```
 
-### 13.5 WIN
+Składnia `ANIMOUT` taka sama jak `ANIMIN`.
 
-```text
+---
+
+#### WIN
+
+```txt
 WIN 01234
-WIN 01234 ANIMOUT edge right 300
-WIN 01234 ANIMOUT edge right 300 ANIMIN matrix down 400 pixel
-```
-
-### 13.6 ROUNDS – pojedyncze pola
-
-```text
-RTXT 2 "NOWA ODPOWIEDZ"
-RTXT 2 "NOWA ODPOWIEDZ" ANIMOUT edge left 300 ANIMIN edge left 300
-
-RPTS 2 25
-RPTS 2 25 ANIMOUT matrix down 400 ANIMIN matrix down 400
-
-R 3 TXT "TRZECIA" PTS 05
-R 3 TXT "TRZECIA" PTS 05 ANIMOUT edge right 300 ANIMIN edge right 300
-
-RSUMA 120
-RSUMA 120 ANIMOUT edge right 300 ANIMIN edge right 300
-
-RX 2A ON
-RX 2A OFF
-```
-
-Zasada parsowania:
-
-- `ANIMOUT ...` / `ANIMIN ...` mogą być w dowolnym miejscu po reszcie argumentów,
-- oba są opcjonalne – możesz użyć tylko `ANIMIN`, tylko `ANIMOUT` albo żadnego.
-
-### 13.7 ROUNDS – batch (`RBATCH`)
-
-```text
-RBATCH
-  SUMA 120
-  R1 "PIERWSZA" 10
-  R2 "DRUGA"    25
-  R3 "TRZECIA"  05
-  R4 ""         00
-  R5 "PIATA"    30
-  R6 "SZOSTA"   15
-  ANIMOUT edge right 400
-  ANIMIN  matrix down 400
-```
-
-Bez łamań w praktyce, np.:
-
-```text
-RBATCH SUMA 120 R1 "PIERWSZA" 10 R2 "DRUGA" 25 R3 "TRZECIA" 05 R4 "" 00 R5 "PIATA" 30 R6 "SZOSTA" 15 ANIMOUT edge right 400 ANIMIN matrix down 400
-```
-
-### 13.8 FINAL – pojedyncze pola
-
-```text
-FL 1 "ALFA"
-FL 1 "ALFA" ANIMOUT edge left 300 ANIMIN edge left 300
-
-FA 1 12
-FB 1 34
-
-FR 1 "BETA"
-FR 1 "BETA" ANIMOUT matrix right 400 ANIMIN matrix right 400
-
-FSUMA 999
-FSUMA 999 ANIMOUT edge right 300 ANIMIN edge right 300
-```
-
-### 13.9 FINAL – batch (`FBATCH`)
-
-```text
-FBATCH
-  SUMA 999
-  F1 "ALFA"  12 34 "BETA"
-  F2 "GAMMA" 01 99 "DELTA"
-  ANIMOUT edge right 400
-  ANIMIN  matrix down 400
-```
-
-W jednej linii:
-
-```text
-FBATCH SUMA 999 F1 "ALFA" 12 34 "BETA" F2 "GAMMA" 01 99 "DELTA" ANIMOUT edge right 400 ANIMIN matrix down 400
-```
-
-### 13.10 INDICATOR
-
-```text
-INDICATOR ON_A
-INDICATOR ON_B
-INDICATOR OFF
+WIN 01234 ANIMIN edge left 200
+WIN 01234 ANIMOUT matrix down 250 ANIMIN edge left 200
 ```
 
 ---
 
-## 14) Przykładowe paczki testowe
+#### ROUNDS – pojedyncze
 
-### 14.1 Start gry + logo
+```txt
+// tekst
+RTXT 2 "DRUGA ODPOW" ANIMOUT edge right 200 ANIMIN matrix down 250
+
+// punkty
+RPTS 2 25 ANIMOUT edge left 150 ANIMIN edge left 150
+
+// cała linia (legacy)
+R 2 TXT "DRUGA ODPOW" PTS 25 ANIMOUT matrix down 220 ANIMIN matrix down 220
+
+// SUMA
+RSUMA 120 ANIMOUT edge right 200 ANIMIN edge left 200
+
+// X-y
+RX 1A ON
+RX 1A OFF
+```
+
+---
+
+#### ROUNDS – batch `RBATCH`
+
+```txt
+RBATCH
+  SUMA 120
+  R1 "PIERWSZA" 10
+  R2 "DRUGA" 25
+  R3 "TRZECIA" 05
+  R4 "" 00
+  R5 "PIATA" 30
+  R6 "SZOSTA" 15
+  ANIMOUT edge right 220
+  ANIMIN  matrix down 260
+```
+
+W jednej linii, np.:
+
+```txt
+RBATCH SUMA 120 R1 "PIERWSZA" 10 R2 "DRUGA" 25 R3 "TRZECIA" 05 R4 "" 00 R5 "PIATA" 30 R6 "SZOSTA" 15 ANIMOUT edge right 220 ANIMIN matrix down 260
+```
+
+---
+
+#### FINAL – pojedyncze
+
+```txt
+FL 1 "ALFA" ANIMOUT edge right 200 ANIMIN matrix down 220
+FA 1 12 ANIMOUT edge left 150 ANIMIN edge left 150
+FB 1 34
+FR 1 "BETA" ANIMOUT matrix right 200 ANIMIN matrix right 200
+
+// legacy, cała linia:
+F 1 L "ALFA" A 12 B 34 R "BETA" ANIMOUT edge right 220 ANIMIN matrix down 260
+
+// SUMA
+FSUMA 999 ANIMOUT edge right 200 ANIMIN edge left 200
+```
+
+---
+
+#### FINAL – batch `FBATCH`
+
+```txt
+FBATCH
+  SUMA 999
+  F1 "ALFA"  12 34 "BETA"
+  F2 "GAMMA" 01 99 "DELTA"
+  F3 ""      "" "" ""
+  F4 ""      "" "" ""
+  F5 ""      "" "" ""
+  ANIMOUT edge right 220
+  ANIMIN  matrix down 260
+```
+
+W jednej linii:
+
+```txt
+FBATCH SUMA 999 F1 "ALFA" 12 34 "BETA" F2 "GAMMA" 01 99 "DELTA" ANIMOUT edge right 220 ANIMIN matrix down 260
+```
+
+---
+
+#### INDICATOR
+
+```txt
+INDICATOR OFF
+INDICATOR ON_A
+INDICATOR ON_B
+```
+
+Uwaga: **bez** słowa `SET`.  
+`INDICATOR SET ON_A` → błąd: `INDICATOR: zły stan: SET`.
+
+---
+
+## 14. Paczki testowe do wklejenia w konsolę
 
 ```js
+// 1. Przejście do gry + logo
 handleCommand("APP GAME");
 handleCommand('LOGO LOAD "./logo_familiada.json"');
-handleCommand('LOGO SHOW ANIMIN edge left 400');
-```
+handleCommand('LOGO SHOW ANIMIN edge left 220');
 
-### 14.2 Plansza ROUNDS
+// 2. Plansza ROUNDS
+handleCommand('RBATCH SUMA 120 R1 "PIERWSZA" 10 R2 "DRUGA" 25 R3 "TRZECIA" 05 R4 "" 00 R5 "PIATA" 30 R6 "SZOSTA" 15 ANIMOUT edge right 220 ANIMIN matrix down 260');
 
-```js
-handleCommand('RBATCH SUMA 120 R1 "PIERWSZA" 10 R2 "DRUGA" 25 R3 "TRZECIA" 05 R4 "" 00 R5 "PIATA" 30 R6 "SZOSTA" 15 ANIMOUT edge right 400 ANIMIN matrix down 400');
-```
+// 3. Plansza FINAL
+handleCommand('FBATCH SUMA 999 F1 "ALFA" 12 34 "BETA" F2 "GAMMA" 01 99 "DELTA" ANIMOUT edge right 220 ANIMIN matrix down 260');
 
-### 14.3 Plansza FINAL
-
-```js
-handleCommand('FBATCH SUMA 999 F1 "ALFA" 12 34 "BETA" F2 "GAMMA" 01 99 "DELTA" ANIMOUT edge right 400 ANIMIN matrix down 400');
-```
-
-### 14.4 Blank / Black / QR
-
-```js
+// 4. BLANK
 handleCommand("MODE BLANK");
 
+// 5. BLACK / QR
 handleCommand("APP BLACK");
-
 handleCommand("APP QR");
 handleCommand('QR HOST "https://example.com/host" BUZZER "https://example.com/buzzer"');
-```
 
-### 14.5 INDICATOR – lampki drużyn
-
-```js
+// 6. INDICATOR
 handleCommand("APP GAME");
 handleCommand("INDICATOR ON_A");
 handleCommand("INDICATOR ON_B");
 handleCommand("INDICATOR OFF");
 ```
 
-To jest komplet aktualnego API – łącznie z animacjami liczonymi jako **czas całego bloku**, brakiem globalnego ANIM_SPEED, nowym INDICATOR-em i batchowymi komendami dla plansz.
+---
+
+## 15. Podsumowanie
+
+- APP steruje *całą* stroną (`GAME/QR/BLACK_SCREEN`).
+- Gdy APP=GAME, scena (`scene.api`) steruje:
+  - dużym wyświetlaczem (LOGO/ROUNDS/FINAL/WIN/BLANK),
+  - trzema potrójnymi i dwoma długimi panelami,
+  - lampkami INDICATOR.
+- Animacje przyjmują `ms` jako **docelowy czas pojawiania się całego bloku**:
+  - w `edge` i `matrix`,
+  - dla kafelków i trybu `pixel`.
+- Snapshot/restore pozwalają odtworzyć obraz bez animacji po reconnect/refresh.
+
+Jeśli trzymasz się tych komend i sygnatur, front i backend będą gadać jednym, pokojowo nastawionym protokołem.
