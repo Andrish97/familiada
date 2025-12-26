@@ -1,4 +1,3 @@
-import { createSfxMixer, playSfx } from "/familiada/js/core/sfx.js";
 export function createDisplay({ devices, store }) {
   const ELLIPSIS = "…"; // ważne: znak z fontu
 
@@ -14,214 +13,266 @@ export function createDisplay({ devices, store }) {
   const PLACE = {
     roundsText: rep(ELLIPSIS, 17),
     roundsPts: "——",   // em dash x2
-    finalText: rep("—", 11), // placeholder dla tekstu w finale na tablicy (po stronie gracza)
+    finalText: "———————————",
     finalPts: "▒▒",
+    finalSuma: "▒▒",
   };
-  const introMixer = createSfxMixer ? createSfxMixer() : null;
 
-  // ===== basics =====
-  async function appGra() { await devices.sendDisplayCmd("MODE GAME"); }
-  async function appBlack() { await devices.sendDisplayCmd("MODE BLACK"); }
+  async function send(cmd) {
+    await devices.sendDisplayCmd(cmd);
+  }
+
+  // === tryb app / podstawy ===
+
+  async function appGra() {
+    await send("APP GAME");
+  }
+
+  async function blank() {
+    await send("MODE BLANK");
+  }
 
   async function setTeamsLongs(teamA, teamB) {
-    // long displays are team names (as you wanted)
-    await devices.sendDisplayCmd(`LONG1 "${q(teamA)}"`);
-    await devices.sendDisplayCmd(`LONG2 "${q(teamB)}"`);
+    const a = String(teamA || "Drużyna A");
+    const b = String(teamB || "Drużyna B");
+    await send(`TEAMNAMES "${q(a)}" "${q(b)}"`);
   }
 
-  async function showWin(amount) {
-    const txt = String(Math.max(0, Number(amount || 0))).slice(0, 5); // max 5 znaków
-    await send(`WIN "${txt}" ANIMIN rain right 80`);
-  }
+  // === Stany wysokiego poziomu ===
 
-  async function showLogo() {
-    await send("MODE GAME");
-    await send("LOGO SHOW ANIMIN rain right 80");
-  }
-
-  async function finalSetSideTimer(team, txt) {
-    if (!team) return;
-  
-    // txt = "15", "9", "0", "" itp.
-    await send(`FINAL TIMER ${team} ${txt}`);
-  }
-
-  // display.js
-
-  async function finalHideAnswersKeepSum() {
-    for (let i = 1; i <= 5; i++) {
-      await send(`FINAL LEFT ${i} —`);
-      await send(`FINAL RIGHT ${i} —`);
-      await send(`FINAL A ${i} 00`);
-      await send(`FINAL B ${i} 00`);
-    }
-    // SUMA zostaje nietknięta
-  }
-
-
-  // ===== states =====
+  // "Gra gotowa": wyczyść wszystko, przygotuj app GAME, blank, puste triplety, zgaś INDICATOR
   async function stateGameReady(teamA, teamB) {
     await appGra();
-    await devices.sendDisplayCmd("MODE BLANK"); // scene blank
+    await blank();
     await setTeamsLongs(teamA, teamB);
 
-    // no zeros in counters
-    await devices.sendDisplayCmd(`TOP ""`);
-    await devices.sendDisplayCmd(`LEFT ""`);
-    await devices.sendDisplayCmd(`RIGHT ""`);
+    await send('TOP ""');
+    await send('LEFT ""');
+    await send('RIGHT ""');
 
-    await devices.sendDisplayCmd("INDICATOR OFF");
+    await send("INDICATOR OFF");
   }
 
-  async function stateIntroLogo() {
-    if (!devices.displayOnline()) return;
-
-    // plansza intro (bez logo na starcie)
+  // Intro: przygotowanie ekranu pod intro
+  // Uwaga: NIE pokazuje logo – to robi logika w gameRounds (po 14s pierwszego intra).
+  async function stateIntroLogo(teamA, teamB) {
     await appGra();
-    const { teamA, teamB } = store.state.teams;
-    await setTeamsLong(teamA, teamB);
-    await send("MODE INTRO");
-
-    // jeśli z jakiegoś powodu mixer nie jest dostępny – fallback: 2x intro, logo po 14s "na czas"
-    if (!introMixer) {
-      playSfx("show_intro");
-      setTimeout(() => { send("LOGO SHOW"); }, 14000);
-      // drugi raz intro "na oko" po zakończeniu pierwszego – np. ~15s
-      setTimeout(() => { playSfx("show_intro"); }, 15000);
-      return;
-    }
-
-    await new Promise((resolve) => {
-      let loops = 0;
-      let logoShown = false;
-
-      const off = introMixer.onTime(async (currentTime, duration) => {
-        // 1) Logo na 14 sekundzie PIERWSZEGO odtworzenia
-        if (!logoShown && currentTime >= 14) {
-          logoShown = true;
-          await send("LOGO SHOW");
-        }
-
-        // 2) Koniec pojedynczego odtworzenia
-        if (duration > 0 && currentTime >= duration - 0.05) {
-          loops += 1;
-
-          if (loops < 2) {
-            // odpal drugie odtworzenie
-            introMixer.play("show_intro");
-          } else {
-            // 2 odtworzenia zagrane – koniec
-            off();
-            introMixer.stop();
-            resolve();
-          }
-        }
-      });
-
-      // start pierwszego odtworzenia
-      introMixer.play("show_intro");
-    });
+    await setTeamsLongs(teamA, teamB);
+    // Ekran przygotowany pod intro — logo pokażemy osobno (po 14s pierwszego intra).
   }
 
-  async function hideLogo() {
-    // correct command per guide
-    await devices.sendDisplayCmd('LOGO HIDE ANIMOUT rain left 80');
+  // === ROUNDS – plansza/odpowiedzi/X/suma ===
+
+  async function roundsBoardPlaceholders() {
+    await send("MODE ROUNDS");
+    const line = PLACE.roundsText;
+    const pts = PLACE.roundsPts;
+
+    await send(
+      'RBATCH ' +
+      'SUMA 00 ' +
+      `R1 "${line}" ${pts} ` +
+      `R2 "${line}" ${pts} ` +
+      `R3 "${line}" ${pts} ` +
+      `R4 "${line}" ${pts} ` +
+      `R5 "${line}" ${pts} ` +
+      `R6 "${line}" ${pts} ` +
+      "ANIMIN matrix down 1500"
+    );
   }
 
-  async function roundsBoardPlaceholders(ansCount) {
-    const n = Math.max(1, Math.min(6, Number(ansCount || 6)));
+  async function roundsBoardPlaceholdersNewRound() {
+    // chowanie poprzedniej planszy + nowa pustka z inną animacją
+    await send("RBATCH ANIMOUT edge down 1000");
 
-    // RBATCH: send only up to n; do NOT send empty rows (your rule)
-    const parts = [`RBATCH SUMA 00`];
-    for (let i = 1; i <= n; i++) {
-      parts.push(`R${i} "${PLACE.roundsText}" ${PLACE.roundsPts}`);
-    }
-    parts.push(`ANIMIN edge top 20`);
-    await devices.sendDisplayCmd(parts.join(" "));
+    const line = PLACE.roundsText;
+    const pts = PLACE.roundsPts;
 
-    // triplets start 000
-    await devices.sendDisplayCmd(`TOP 000`);
-    await devices.sendDisplayCmd(`LEFT 000`);
-    await devices.sendDisplayCmd(`RIGHT 000`);
+    await send(
+      'RBATCH ' +
+      'SUMA 00 ' +
+      `R1 "${line}" ${pts} ` +
+      `R2 "${line}" ${pts} ` +
+      `R3 "${line}" ${pts} ` +
+      `R4 "${line}" ${pts} ` +
+      `R5 "${line}" ${pts} ` +
+      `R6 "${line}" ${pts} ` +
+      "ANIMIN matrix down 1500 pixel"
+    );
   }
 
   async function roundsRevealRow(ord, text, pts) {
-    // number appears automatically if text not empty (your display logic)
-    await devices.sendDisplayCmd(`RTXT ${ord} "${q(text)}"`);
-    await devices.sendDisplayCmd(`RPTS ${ord} ${String(pts)}`);
+    const t = q(text || "");
+    const p = String(nInt(pts, 0)).padStart(2, "0");
+
+    await send(
+      `R ${ord} TXT "${t}" PTS ${p} ANIMIN matrix right 500`
+    );
   }
 
-  async function roundsSetSuma(val) {
-    // BIG suma without leading zeros, except start already 00
-    await devices.sendDisplayCmd(`RSUMA ${String(val)}`);
+  async function roundsSetSum(sum) {
+    const p = String(nInt(sum, 0)).padStart(2, "0");
+    await send(`RSUMA ${p} ANIMIN matrix right 500`);
   }
 
-  async function setIndicator(team) {
-    if (team === "A") return devices.sendDisplayCmd("INDICATOR ON_A");
-    if (team === "B") return devices.sendDisplayCmd("INDICATOR ON_B");
-    return devices.sendDisplayCmd("INDICATOR OFF");
-  }
+  async function roundsSetX(team, count) {
+    const c = Math.max(0, Math.min(3, nInt(count, 0)));
+    // RX 2A ON / RX 2B ON itd. – ustawiamy wszystkie X wg count
+    // Najpierw wszystko OFF
+    await send("RX 1A OFF");
+    await send("RX 2A OFF");
+    await send("RX 3A OFF");
+    await send("RX 1B OFF");
+    await send("RX 2B OFF");
+    await send("RX 3B OFF");
 
-  async function setTotalsTriplets({ A, B }) {
-    const a = String(Math.max(0, Number(A||0))).padStart(3, "0").slice(-3);
-    const b = String(Math.max(0, Number(B||0))).padStart(3, "0").slice(-3);
-    await devices.sendDisplayCmd(`LEFT ${a}`);
-    await devices.sendDisplayCmd(`RIGHT ${b}`);
-  }
-
-  async function setBankTriplet(val) {
-    const x = String(Math.max(0, Number(val||0))).padStart(3, "0").slice(-3);
-    await devices.sendDisplayCmd(`TOP ${x}`);
-  }
-
-  // FINAL board
-  async function finalBoardPlaceholders() {
-    await appGra();
-    await devices.sendDisplayCmd("MODE FINAL");
-    // FBATCH with 5 rows placeholders
-    // show SUMA label always (it’s in scene)
-    const parts = [`FBATCH SUMA 00`];
-    for (let i = 1; i <= 5; i++) {
-      parts.push(`F${i} "${PLACE.finalText}" "" "" "${PLACE.finalText}"`);
+    for (let i = 1; i <= c; i++) {
+      await send(`RX ${i}${team} ON`);
     }
-    parts.push(`ANIMIN edge top 20`);
-    await devices.sendDisplayCmd(parts.join(" "));
-    // top triplet empty at start (your rule)
-    await devices.sendDisplayCmd(`TOP ""`);
   }
 
-  async function finalSetSuma(val) {
-    await devices.sendDisplayCmd(`FSUMA ${String(val)}`);
+  async function roundsSetTotals(totals) {
+    const a = String(nInt(totals?.A, 0)).padStart(3, "0");
+    const b = String(nInt(totals?.B, 0)).padStart(3, "0");
+    await send(`TOP ${a}`);
+    await send(`LEFT ${a}`);
+    await send(`RIGHT ${b}`);
   }
 
-  async function finalSetLeft(i, text) {
-    await devices.sendDisplayCmd(`FL ${i} "${q(text)}"`);
+  // INDICATOR: OFF / ON_A / ON_B
+  async function setIndicator(mode) {
+    if (!mode || mode === "OFF") {
+      await send("INDICATOR OFF");
+    } else if (mode === "A") {
+      await send("INDICATOR ON_A");
+    } else if (mode === "B") {
+      await send("INDICATOR ON_B");
+    }
   }
-  async function finalSetRight(i, text) {
-    await devices.sendDisplayCmd(`FR ${i} "${q(text)}"`);
+
+  async function setTotalsTriplets(totals) {
+    const a = String(nInt(totals?.A, 0)).padStart(3, "0");
+    const b = String(nInt(totals?.B, 0)).padStart(3, "0");
+    await send(`LEFT ${a}`);
+    await send(`RIGHT ${b}`);
   }
-  async function finalSetA(i, pts) {
-    await devices.sendDisplayCmd(`FA ${i} ${String(pts)}`);
+
+  async function setBankTriplet(bank) {
+    const p = String(nInt(bank, 0)).padStart(3, "0");
+    await send(`TOP ${p}`);
   }
-  async function finalSetB(i, pts) {
-    await devices.sendDisplayCmd(`FB ${i} ${String(pts)}`);
+
+  // === FINAŁ – plansza, odpowiedzi, suma, timer ===
+
+  async function finalBoardPlaceholders() {
+    await send("MODE FINAL");
+    const t = PLACE.finalText;
+    const p = PLACE.finalPts;
+    const s = PLACE.finalSuma;
+
+    await send(
+      "FBATCH " +
+      `SUMA A ${s} ` +
+      `F1 "${t}" ${p} ${p} "${t}" ` +
+      `F2 "${t}" ${p} ${p} "${t}" ` +
+      `F3 "${t}" ${p} ${p} "${t}" ` +
+      `F4 "${t}" ${p} ${p} "${t}" ` +
+      `F5 "${t}" ${p} ${p} "${t}" ` +
+      "ANIMIN matrix down 1500"
+    );
+  }
+
+  async function finalHideAnswersKeepSum() {
+    // Zasłaniamy odpowiedzi, suma zostaje
+    await send(
+      "FHALF A " +
+      `"${PLACE.finalText}" ${PLACE.finalPts} ` +
+      `"${PLACE.finalText}" ${PLACE.finalPts} ` +
+      `"${PLACE.finalText}" ${PLACE.finalPts} ` +
+      `"${PLACE.finalText}" ${PLACE.finalPts} ` +
+      `"${PLACE.finalText}" ${PLACE.finalPts} ` +
+      "ANIMIN matrix down 1000"
+    );
+  }
+
+  async function finalSetLeft(n, text) {
+    const txt = q(String(text || ""));
+    await send(`F ${n} L "${txt}" A 00 ANIMIN matrix right 500`);
+  }
+
+  async function finalSetRight(n, text) {
+    const txt = q(String(text || ""));
+    await send(`F ${n} R "${txt}" B 00 ANIMIN matrix right 500`);
+  }
+
+  async function finalSetA(n, pts) {
+    const p = String(nInt(pts, 0)).padStart(2, "0");
+    await send(`F ${n} L "" A ${p} ANIMIN matrix right 500`);
+  }
+
+  async function finalSetB(n, pts) {
+    const p = String(nInt(pts, 0)).padStart(2, "0");
+    await send(`F ${n} R "" B ${p} ANIMIN matrix right 500`);
+  }
+
+  async function finalSetSuma(sum) {
+    const p = String(nInt(sum, 0)).padStart(3, "0");
+    // domyślnie pokazujemy sumę pod stroną A (tak jak w przykładzie)
+    await send(`FSUMA A ${p} ANIMIN matrix right 500`);
+  }
+
+  async function finalSetSideTimer(team, text) {
+    const t = String(text || "");
+    // Timer na bocznym tripletcie – wykorzystujemy TOP/LEFT/RIGHT,
+    // ale tylko po stronie zwycięskiej drużyny (ty ustalasz w Control).
+    const sum = store.state.rounds?.totals || { A: 0, B: 0 };
+    const a = String(nInt(sum.A, 0)).padStart(3, "0");
+    const b = String(nInt(sum.B, 0)).padStart(3, "0");
+
+    if (team === "A") {
+      await send(`LEFT ${t}`);
+      await send(`RIGHT ${b}`);
+    } else if (team === "B") {
+      await send(`LEFT ${a}`);
+      await send(`RIGHT ${t}`);
+    } else {
+      await send(`LEFT ${a}`);
+      await send(`RIGHT ${b}`);
+    }
+  }
+
+  // === Logo / Win ===
+
+  async function showLogo() {
+    await send('LOGO SHOW ANIMIN edge up 1000');
+  }
+
+  async function hideLogo() {
+    await send('LOGO HIDE ANIMOUT edge down 1000');
+  }
+
+  async function showWin(amount) {
+    const num = nInt(amount, 0);
+    const txt = String(num).padStart(5, "0");
+    await send(`WIN ${txt} ANIMIN rain right 80`);
+  }
+
+  function nInt(v, d = 0) {
+    const x = Number.parseInt(String(v ?? ""), 10);
+    return Number.isFinite(x) ? x : d;
   }
 
   return {
-    PLACE,
-
-    appGra,
-    appBlack,
-
     stateGameReady,
     stateIntroLogo,
-    hideLogo,
-    showLogo,
-    showWin,
 
     roundsBoardPlaceholders,
+    roundsBoardPlaceholdersNewRound,
     roundsRevealRow,
-    roundsSetSuma,
+    roundsSetSum,
+    roundsSetX,
+    roundsSetTotals,
+
     setIndicator,
     setTotalsTriplets,
     setBankTriplet,
@@ -234,5 +285,11 @@ export function createDisplay({ devices, store }) {
     finalSetB,
     finalSetSideTimer,
     finalHideAnswersKeepSum,
+
+    showLogo,
+    hideLogo,
+    showWin,
+    appGra,
+    blank,
   };
 }
