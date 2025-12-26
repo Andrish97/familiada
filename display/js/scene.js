@@ -441,9 +441,8 @@ export async function createScene() {
   const clearFinalSumRow = () => clearArea(big, 1, 9, 30, 9);
   
   // Rysuje na ekranie tylko tę sumę, która jest w finalState.sumMode
-  const drawFinalSum = () => {
-    clearFinalSumRow();
   
+  const drawFinalSum = () => {
     if (finalState.sumMode === "A") {
       writeField(GLYPHS, big, FINAL.sumaALabel, "SUMA", LIT.main);
       const txt = alignRight(finalState.sumA, 3);
