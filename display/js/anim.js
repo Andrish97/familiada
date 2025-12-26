@@ -13,21 +13,21 @@ export const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
  * - dotOff MUSI być przekazane z scene.js (np. COLORS.dotOff),
  *   bo warianty pikselowe muszą wiedzieć, jakim kolorem “gasić” kropki.
  *
- * Back-compat:
- * - Dotychczasowe wywołania (bez opts) działają identycznie jak wcześniej.
- * - Dodatkowe parametry opts są opcjonalne i nic nie psują.
+ * NOWE:
+ * - parametr ms / stepMs jest traktowany jako *całkowity czas animacji bloku*,
+ *   niezależnie od rozmiaru obszaru.
  */
 export const createAnimator = ({ tileAt, snapArea, clearArea, clearTileAt, dotOff }) => {
   // ============================================================
   // Helpers
   // ============================================================
-  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
-
   const range = (n) => {
     const out = new Array(n);
     for (let i = 0; i < n; i++) out[i] = i;
     return out;
   };
+
+  const TILE_PIXELS = 5 * 7; // 35 punktów w kafelku
 
   const setTileFromSnap = (big, c1, r1, tx, ty, snapTile) => {
     if (!snapTile) return;
@@ -40,32 +40,55 @@ export const createAnimator = ({ tileAt, snapArea, clearArea, clearTileAt, dotOf
     }
   };
 
+  // całkowity czas T → opóźnienie między krokami
+  const delayFromTotal = (totalMs, steps) => {
+    const T = Math.max(0, totalMs | 0);
+    if (T === 0 || steps <= 0) return 0;
+    return Math.max(0, Math.floor(T / steps));
+  };
+
+  // dla pixel: liczba grup pikseli (przy pxBatch) w całym obszarze
+  const computePixelTiming = (totalMs, tilesCount, pxBatch, overrideStepPxMs) => {
+    if (overrideStepPxMs != null) {
+      // jeśli ktoś jawnie podał stepPxMs – szanujemy to, totalMs jest wtedy mniej ważne
+      const stepPxMs = Math.max(0, overrideStepPxMs | 0);
+      return { stepPxMs, tileMs: 0 };
+    }
+
+    const batch = Math.max(1, pxBatch | 0);
+    const groupsPerTile = Math.ceil(TILE_PIXELS / batch); // ile "paczek" na kafelek
+    const totalGroups = tilesCount * groupsPerTile;
+    const stepPxMs = delayFromTotal(totalMs, totalGroups);
+    return { stepPxMs, tileMs: 0 }; // całość czasu idzie na pixele, bez dodatkowego tileMs
+  };
+
   // kolejność pikseli w pojedynczym kafelku 5x7 zależnie od kierunku/osi
   const tilePixelOrder = (dirOrAxis) => {
-    const key = (d) => {
-      // d: {rr,cc}
-      // “matrix”:
-      if (dirOrAxis === "down")  return d.rr * 5 + d.cc;
-      if (dirOrAxis === "up")    return (6 - d.rr) * 5 + d.cc;
-      if (dirOrAxis === "right") return d.cc * 7 + d.rr;
-      if (dirOrAxis === "left")  return (4 - d.cc) * 7 + d.rr;
+    const d = (dirOrAxis ?? "").toLowerCase();
 
-      // “edge” (dir):
-      if (dirOrAxis === "top")    return d.rr * 5 + d.cc;
-      if (dirOrAxis === "bottom") return (6 - d.rr) * 5 + d.cc;
-      if (dirOrAxis === "left")   return d.cc * 7 + d.rr;
-      if (dirOrAxis === "right")  return (4 - d.cc) * 7 + d.rr;
+    const key = (p) => {
+      // p: {rr,cc}
+      // matrix axes
+      if (d === "down")  return p.rr * 5 + p.cc;
+      if (d === "up")    return (6 - p.rr) * 5 + p.cc;
+      if (d === "right") return p.cc * 7 + p.rr;
+      if (d === "left")  return (4 - p.cc) * 7 + p.rr;
 
-      return d.rr * 5 + d.cc;
+      // edge synonyms
+      if (d === "top")    return p.rr * 5 + p.cc;
+      if (d === "bottom") return (6 - p.rr) * 5 + p.cc;
+
+      return p.rr * 5 + p.cc;
     };
+
     return key;
   };
 
   const revealTilePixelsFromSnap = async ({
     big, c1, r1, tx, ty, snapTile,
     orderKey,
-    pxBatch = 8,
-    stepPxMs = 2,
+    pxBatch,
+    stepPxMs,
   }) => {
     const t = tileAt(big, c1 + tx, r1 + ty);
     if (!t || !snapTile) return;
@@ -91,8 +114,8 @@ export const createAnimator = ({ tileAt, snapArea, clearArea, clearTileAt, dotOf
   const clearTilePixels = async ({
     big, c1, r1, tx, ty,
     orderKey,
-    pxBatch = 8,
-    stepPxMs = 2,
+    pxBatch,
+    stepPxMs,
   }) => {
     const t = tileAt(big, c1 + tx, r1 + ty);
     if (!t) return;
@@ -121,12 +144,10 @@ export const createAnimator = ({ tileAt, snapArea, clearArea, clearTileAt, dotOf
   return {
     // -----------------------------
     // EDGE
-    //
-    // opts.pixel = true -> piksele w kafelku “po kolei”
-    // opts.pxBatch, opts.stepPxMs -> kontrola gęstości/tempa w obrębie kafelka
-    // opts.tileMs -> pauza między kafelkami (opcjonalnie; domyślnie stepMs)
+    // ms = całkowity czas animacji bloku
+    // opts.pixel = true -> piksele
     // -----------------------------
-    async inEdge(big, area, dir = "left", stepMs = 12, opts = {}) {
+    async inEdge(big, area, dir = "left", totalMs = 0, opts = {}) {
       const { c1, r1, c2, r2 } = area;
       const snap = snapArea(big, c1, r1, c2, r2);
       clearArea(big, c1, r1, c2, r2);
@@ -134,23 +155,29 @@ export const createAnimator = ({ tileAt, snapArea, clearArea, clearTileAt, dotOf
       const W = c2 - c1 + 1;
       const H = r2 - r1 + 1;
 
+      // normalizacja dir: up/down jako top/bottom
+      let d = (dir ?? "").toLowerCase();
+      if (d === "up") d = "top";
+      if (d === "down") d = "bottom";
+
       const coords = [];
-      if (dir === "left") {
+      if (d === "left") {
         for (let x = 0; x < W; x++)        for (let y = 0; y < H; y++) coords.push([x, y]);
-      } else if (dir === "right") {
+      } else if (d === "right") {
         for (let x = W - 1; x >= 0; x--)   for (let y = 0; y < H; y++) coords.push([x, y]);
-      } else if (dir === "top") {
+      } else if (d === "top") {
         for (let y = 0; y < H; y++)        for (let x = 0; x < W; x++) coords.push([x, y]);
       } else { // bottom
         for (let y = H - 1; y >= 0; y--)   for (let x = 0; x < W; x++) coords.push([x, y]);
       }
 
+      const tilesCount = coords.length;
+
       // wariant pikselowy
       if (opts?.pixel) {
-        const orderKey  = tilePixelOrder(dir);
-        const pxBatch   = Math.max(1, opts.pxBatch ?? 8);
-        const stepPxMs  = Math.max(0, opts.stepPxMs ?? Math.max(1, Math.round(stepMs / 6)));
-        const tileMs    = Math.max(0, opts.tileMs ?? stepMs);
+        const pxBatch = Math.max(1, opts.pxBatch ?? 8);
+        const { stepPxMs } = computePixelTiming(totalMs, tilesCount, pxBatch, opts.stepPxMs);
+        const orderKey = tilePixelOrder(d);
 
         for (const [tx, ty] of coords) {
           await revealTilePixelsFromSnap({
@@ -160,41 +187,44 @@ export const createAnimator = ({ tileAt, snapArea, clearArea, clearTileAt, dotOf
             pxBatch,
             stepPxMs,
           });
-          if (tileMs) await sleep(tileMs);
         }
         return;
       }
 
-      // klasyczny edge (po tile'ach)
-      const delay = Math.max(0, stepMs | 0);
+      // klasyczny edge (po tile'ach): totalMs = czas całości
+      const delay = delayFromTotal(totalMs, tilesCount);
       for (const [tx, ty] of coords) {
-        setTileFromSnap(big, c1, r1, tx, ty, snap[ty][tx]);
+        setTileFromSnap(big, c1, r1, tx, ty, snap?.[ty]?.[tx]);
         if (delay) await sleep(delay);
       }
     },
 
-    async outEdge(big, area, dir = "left", stepMs = 12, opts = {}) {
+    async outEdge(big, area, dir = "left", totalMs = 0, opts = {}) {
       const { c1, r1, c2, r2 } = area;
       const W = c2 - c1 + 1;
       const H = r2 - r1 + 1;
 
+      let d = (dir ?? "").toLowerCase();
+      if (d === "up") d = "top";
+      if (d === "down") d = "bottom";
+
       const coords = [];
-      if (dir === "left") {
+      if (d === "left") {
         for (let x = 0; x < W; x++)        for (let y = 0; y < H; y++) coords.push([x, y]);
-      } else if (dir === "right") {
+      } else if (d === "right") {
         for (let x = W - 1; x >= 0; x--)   for (let y = 0; y < H; y++) coords.push([x, y]);
-      } else if (dir === "top") {
+      } else if (d === "top") {
         for (let y = 0; y < H; y++)        for (let x = 0; x < W; x++) coords.push([x, y]);
       } else { // bottom
         for (let y = H - 1; y >= 0; y--)   for (let x = 0; x < W; x++) coords.push([x, y]);
       }
 
-      // wariant pikselowy
+      const tilesCount = coords.length;
+
       if (opts?.pixel) {
-        const orderKey  = tilePixelOrder(dir);
-        const pxBatch   = Math.max(1, opts.pxBatch ?? 8);
-        const stepPxMs  = Math.max(0, opts.stepPxMs ?? Math.max(1, Math.round(stepMs / 6)));
-        const tileMs    = Math.max(0, opts.tileMs ?? stepMs);
+        const pxBatch = Math.max(1, opts.pxBatch ?? 8);
+        const { stepPxMs } = computePixelTiming(totalMs, tilesCount, pxBatch, opts.stepPxMs);
+        const orderKey = tilePixelOrder(d);
 
         for (const [tx, ty] of coords) {
           await clearTilePixels({
@@ -203,13 +233,11 @@ export const createAnimator = ({ tileAt, snapArea, clearArea, clearTileAt, dotOf
             pxBatch,
             stepPxMs,
           });
-          if (tileMs) await sleep(tileMs);
         }
         return;
       }
 
-      // klasyczny edge out (po tile'ach)
-      const delay = Math.max(0, stepMs | 0);
+      const delay = delayFromTotal(totalMs, tilesCount);
       for (const [tx, ty] of coords) {
         clearTileAt(big, c1 + tx, r1 + ty);
         if (delay) await sleep(delay);
@@ -218,12 +246,9 @@ export const createAnimator = ({ tileAt, snapArea, clearArea, clearTileAt, dotOf
 
     // -----------------------------
     // MATRIX
-    //
-    // opts.pixel = true -> “płynnie”: rząd/kolumna pikseli w kafelku,
-    //                      ale kafelki w kolejności matrix
-    // opts.pxBatch, opts.stepPxMs, opts.tileMs jak wyżej
+    // ms = całkowity czas animacji bloku
     // -----------------------------
-    async inMatrix(big, area, axis = "down", stepMs = 36, opts = {}) {
+    async inMatrix(big, area, axis = "down", totalMs = 0, opts = {}) {
       const { c1, r1, c2, r2 } = area;
       const snap = snapArea(big, c1, r1, c2, r2);
       clearArea(big, c1, r1, c2, r2);
@@ -231,21 +256,25 @@ export const createAnimator = ({ tileAt, snapArea, clearArea, clearTileAt, dotOf
       const Wt = c2 - c1 + 1;
       const Ht = r2 - r1 + 1;
 
+      let ax = (axis ?? "").toLowerCase();
+      if (ax === "top") ax = "up";
+      if (ax === "bottom") ax = "down";
+
       // pikselowo
       if (opts?.pixel) {
         const tileOrder = [];
-        if (axis === "down" || axis === "up") {
-          const ys = axis === "down" ? range(Ht) : range(Ht).reverse();
+        if (ax === "down" || ax === "up") {
+          const ys = ax === "down" ? range(Ht) : range(Ht).reverse();
           for (const ty of ys) for (let tx = 0; tx < Wt; tx++) tileOrder.push([tx, ty]);
         } else {
-          const xs = axis === "right" ? range(Wt) : range(Wt).reverse();
+          const xs = ax === "right" ? range(Wt) : range(Wt).reverse();
           for (const tx of xs) for (let ty = 0; ty < Ht; ty++) tileOrder.push([tx, ty]);
         }
 
-        const orderKey  = tilePixelOrder(axis);
-        const pxBatch   = Math.max(1, opts.pxBatch ?? 10);
-        const stepPxMs  = Math.max(0, opts.stepPxMs ?? Math.max(1, Math.round(stepMs / 10)));
-        const tileMs    = Math.max(0, opts.tileMs ?? stepMs);
+        const tilesCount = tileOrder.length;
+        const pxBatch = Math.max(1, opts.pxBatch ?? 10);
+        const { stepPxMs } = computePixelTiming(totalMs, tilesCount, pxBatch, opts.stepPxMs);
+        const orderKey = tilePixelOrder(ax);
 
         for (const [tx, ty] of tileOrder) {
           await revealTilePixelsFromSnap({
@@ -255,51 +284,55 @@ export const createAnimator = ({ tileAt, snapArea, clearArea, clearTileAt, dotOf
             pxBatch,
             stepPxMs,
           });
-          if (tileMs) await sleep(tileMs);
         }
         return;
       }
 
-      // klasyczny matrix (po tile'ach)
+      // klasyczny matrix (po pasach)
       const W = Wt;
       const H = Ht;
-      const delay = Math.max(0, stepMs | 0);
 
-      if (axis === "down" || axis === "up") {
-        const ys = axis === "down" ? range(H) : range(H).reverse();
+      if (ax === "down" || ax === "up") {
+        const ys = ax === "down" ? range(H) : range(H).reverse();
+        const delay = delayFromTotal(totalMs, ys.length);
         for (const y of ys) {
-          for (let x = 0; x < W; x++) setTileFromSnap(big, c1, r1, x, y, snap[y][x]);
+          for (let x = 0; x < W; x++) setTileFromSnap(big, c1, r1, x, y, snap?.[y]?.[x]);
           if (delay) await sleep(delay);
         }
       } else {
-        const xs = axis === "right" ? range(W) : range(W).reverse();
+        const xs = ax === "right" ? range(W) : range(W).reverse();
+        const delay = delayFromTotal(totalMs, xs.length);
         for (const x of xs) {
-          for (let y = 0; y < H; y++) setTileFromSnap(big, c1, r1, x, y, snap[y][x]);
+          for (let y = 0; y < H; y++) setTileFromSnap(big, c1, r1, x, y, snap?.[y]?.[x]);
           if (delay) await sleep(delay);
         }
       }
     },
 
-    async outMatrix(big, area, axis = "down", stepMs = 36, opts = {}) {
+    async outMatrix(big, area, axis = "down", totalMs = 0, opts = {}) {
       const { c1, r1, c2, r2 } = area;
       const Wt = c2 - c1 + 1;
       const Ht = r2 - r1 + 1;
 
+      let ax = (axis ?? "").toLowerCase();
+      if (ax === "top") ax = "up";
+      if (ax === "bottom") ax = "down";
+
       // pikselowo
       if (opts?.pixel) {
         const tileOrder = [];
-        if (axis === "down" || axis === "up") {
-          const ys = axis === "down" ? range(Ht) : range(Ht).reverse();
+        if (ax === "down" || ax === "up") {
+          const ys = ax === "down" ? range(Ht) : range(Ht).reverse();
           for (const ty of ys) for (let tx = 0; tx < Wt; tx++) tileOrder.push([tx, ty]);
         } else {
-          const xs = axis === "right" ? range(Wt) : range(Wt).reverse();
+          const xs = ax === "right" ? range(Wt) : range(Wt).reverse();
           for (const tx of xs) for (let ty = 0; ty < Ht; ty++) tileOrder.push([tx, ty]);
         }
 
-        const orderKey  = tilePixelOrder(axis);
-        const pxBatch   = Math.max(1, opts.pxBatch ?? 10);
-        const stepPxMs  = Math.max(0, opts.stepPxMs ?? Math.max(1, Math.round(stepMs / 10)));
-        const tileMs    = Math.max(0, opts.tileMs ?? stepMs);
+        const tilesCount = tileOrder.length;
+        const pxBatch = Math.max(1, opts.pxBatch ?? 10);
+        const { stepPxMs } = computePixelTiming(totalMs, tilesCount, pxBatch, opts.stepPxMs);
+        const orderKey = tilePixelOrder(ax);
 
         for (const [tx, ty] of tileOrder) {
           await clearTilePixels({
@@ -308,24 +341,24 @@ export const createAnimator = ({ tileAt, snapArea, clearArea, clearTileAt, dotOf
             pxBatch,
             stepPxMs,
           });
-          if (tileMs) await sleep(tileMs);
         }
         return;
       }
 
-      // klasyczny matrix out (po tile'ach)
+      // klasyczny matrix out (po pasach)
       const W = Wt;
       const H = Ht;
-      const delay = Math.max(0, stepMs | 0);
 
-      if (axis === "down" || axis === "up") {
-        const ys = axis === "down" ? range(H) : range(H).reverse();
+      if (ax === "down" || ax === "up") {
+        const ys = ax === "down" ? range(H) : range(H).reverse();
+        const delay = delayFromTotal(totalMs, ys.length);
         for (const y of ys) {
           for (let x = 0; x < W; x++) clearTileAt(big, c1 + x, r1 + y);
           if (delay) await sleep(delay);
         }
       } else {
-        const xs = axis === "right" ? range(W) : range(W).reverse();
+        const xs = ax === "right" ? range(W) : range(W).reverse();
+        const delay = delayFromTotal(totalMs, xs.length);
         for (const x of xs) {
           for (let y = 0; y < H; y++) clearTileAt(big, c1 + x, r1 + y);
           if (delay) await sleep(delay);
