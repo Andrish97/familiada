@@ -141,12 +141,14 @@ export const createAnimator = ({ tileAt, snapArea, clearArea, clearTileAt, dotOf
     //
     // ms = czas trwania całej animacji w danym area
     // -----------------------------
-    async inEdge(big, area, dir = "left", ms = 200, opts = {}) {
-      const { c1, r1, c2, r2 } = area;
-      dir = normEdgeDir(dir);
+  // anim.js (fragment)
+  async inEdge(big, area, dir = "left", ms = 200, opts = {}) {
+     const { c1, r1, c2, r2 } = area;
+     dir = normEdgeDir(dir);
 
       const snap = snapArea(big, c1, r1, c2, r2);
-      clearArea(big, c1, r1, c2, r2);
+      // NIE czyścimy tutaj – IN tylko nadpisuje
+      // clearArea(big, c1, r1, c2, r2);
 
       const W = c2 - c1 + 1;
       const H = r2 - r1 + 1;
@@ -196,12 +198,14 @@ export const createAnimator = ({ tileAt, snapArea, clearArea, clearTileAt, dotOf
       }
     },
 
-    async outEdge(big, area, dir = "left", ms = 200, opts = {}) {
+    async inMatrix(big, area, axis = "down", ms = 200, opts = {}) {
       const { c1, r1, c2, r2 } = area;
-      dir = normEdgeDir(dir);
+      const snap = snapArea(big, c1, r1, c2,
+     // Tu też nie czyścimy:
+     // clearArea(big, c1, r1, c2, r2);
 
-      const W = c2 - c1 + 1;
-      const H = r2 - r1 + 1;
+      const Wt = c2 - c1 + 1;
+      const Ht = r2 - r1 + 1;
 
       const coords = [];
       if (dir === "left") {
