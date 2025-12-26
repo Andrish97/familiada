@@ -1595,6 +1595,42 @@ export async function createScene() {
       return api.final.setAll({ rows, suma, sumaSide, animOut, animIn });
     }
 
+    // ====== NOWE: FINAL half ======
+    // FHALF A F1 "ODP1" 12 F2 "ODP2" 34 ... ANIMOUT ... ANIMIN ...
+    // FHALF B F1 12 "ODP1" F2 34 "ODP2" ... ANIMOUT ... ANIMIN ...
+    if (head === "FHALF") {
+      const side = (tokens[1] ?? "").toUpperCase(); // "A" albo "B"
+
+      const ao = tokens.findIndex((t, idx) => idx > 1 && t.toUpperCase() === "ANIMOUT");
+      const ai = tokens.findIndex((t, idx) => idx > 1 && t.toUpperCase() === "ANIMIN");
+
+      const animOut = ao >= 0 ? parseAnim(tokens, ao + 1) : null;
+      const animIn  = ai >= 0 ? parseAnim(tokens, ai + 1) : null;
+
+      const rows = Array.from({ length: 5 }, () => ({}));
+
+      for (let i = 1; i <= 5; i++) {
+        const k = tokens.findIndex(t => t.toUpperCase() === `F${i}`);
+        if (k < 0) continue;
+
+        if (side === "A") {
+          // FHALF A F1 "LEWY" 12
+          const txt = unquote(tokens[k + 1] ?? "");
+          const a   = tokens[k + 2] ?? "";
+          rows[i-1] = { left: txt, a };
+        } else if (side === "B") {
+          // FHALF B F1 12 "PRAWY"
+          const b   = tokens[k + 1] ?? "";
+          const txt = unquote(tokens[k + 2] ?? "");
+          rows[i-1] = { b, right: txt };
+        } else {
+          throw new Error(`FHALF: nieznana strona: ${side}`);
+        }
+      }
+
+      return api.final.setHalf(side, { rows, animOut, animIn });
+    }
+    
     // FINAL (krótkie)
     if (head === "FL") {
       const idx  = parseInt(tokens[1] ?? "0", 10);
@@ -1670,30 +1706,29 @@ export async function createScene() {
       return api.final.setRow(idx, { left, a, b, right, animOut, animIn });
     }
 
-    // FSUMA [A|B] <wartość> [ANIMOUT ...] [ANIMIN ...]
-    // - bez A/B: działa na aktualnie wybranej sumie (sumMode)
-    // - z A/B: ustawia sumę tej strony i przełącza widok na nią
     if (head === "FSUMA") {
-      let side = null;
+      // FSUMA 120
+      // FSUMA A 120
+      // FSUMA B 085
+      let side = (tokens[1] ?? "").toUpperCase();
       let valIdx = 1;
-    
-      const t1 = (tokens[1] ?? "").toUpperCase();
-      if (t1 === "A" || t1 === "B") {
-        side = t1;
+
+      if (side === "A" || side === "B") {
         valIdx = 2;
+      } else {
+        side = null; // użyj aktualnego trybu sumy (finalState.sumMode)
       }
-    
+
       const val = tokens[valIdx] ?? "";
-    
-      const ao = tokens.findIndex(t => t.toUpperCase() === "ANIMOUT");
-      const ai = tokens.findIndex(t => t.toUpperCase() === "ANIMIN");
-    
+
+      const ao = tokens.findIndex((t, idx) => idx > valIdx && t.toUpperCase() === "ANIMOUT");
+      const ai = tokens.findIndex((t, idx) => idx > valIdx && t.toUpperCase() === "ANIMIN");
+
       const animOut = ao >= 0 ? parseAnim(tokens, ao + 1) : null;
       const animIn  = ai >= 0 ? parseAnim(tokens, ai + 1) : null;
-    
-      if (side) {
-        return api.final.setSumaFor(side, val, { animOut, animIn });
-      }
+
+      if (side === "A") return api.final.setSumaA(val, { animOut, animIn });
+      if (side === "B") return api.final.setSumaB(val, { animOut, animIn });
       return api.final.setSuma(val, { animOut, animIn });
     }
 
