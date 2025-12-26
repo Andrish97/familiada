@@ -309,11 +309,10 @@ export async function createScene() {
       const opts = normalizeOpts(out);
 
       if (type === "edge") {
-        await anim.outEdge(big, area, out.dir || "left", step, opts);
+        await anim.outEdge(area, out.dir || "left", step, opts);
       } else if (type === "matrix") {
-        await anim.outMatrix(big, area, out.axis || "down", step, opts);
+        await anim.outMatrix(area, out.axis || "down", step, opts);
       }
-
       // po wyjściu nadpisujemy nową treścią
       writeField(GLYPHS, big, f, text, color);
     } else {
@@ -329,12 +328,13 @@ export async function createScene() {
       const type = inn.type || "edge";
       const step = normMs(inn.ms, 20);
       const opts = normalizeOpts(inn);
-
+      
       if (type === "edge") {
-        await anim.inEdge(big, area, inn.dir || "left", step, opts);
+        await anim.inEdge(area, inn.dir || "left", step, opts);
       } else if (type === "matrix") {
-        await anim.inMatrix(big, area, inn.axis || "down", step, opts);
+        await anim.inMatrix(area, inn.axis || "down", step, opts);
       }
+    
     }
   };
 
@@ -967,21 +967,21 @@ export async function createScene() {
         const A = area ?? api.big.areaAll();
         const speed = normMs(ms, 20);
         if (type === "edge") {
-          return anim.inEdge(big, A, dir, speed, opts || {});
+          return anim.inEdge(A, dir, speed, opts || {});
         }
         if (type === "matrix") {
-          return anim.inMatrix(big, A, axis, speed, opts || {});
+          return anim.inMatrix(A, axis, speed, opts || {});
         }
       },
-    
+      
       animOut: async ({ type = "edge", dir = "left", axis = "down", ms = 20, area = null, opts = null } = {}) => {
         const A = area ?? api.big.areaAll();
         const speed = normMs(ms, 20);
         if (type === "edge") {
-          return anim.outEdge(big, A, dir, speed, opts || {});
+          return anim.outEdge(A, dir, speed, opts || {});
         }
         if (type === "matrix") {
-          return anim.outMatrix(big, A, axis, speed, opts || {});
+          return anim.outMatrix(A, axis, speed, opts || {});
         }
       },
 
