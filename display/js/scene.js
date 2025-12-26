@@ -1231,33 +1231,6 @@ export async function createScene() {
         }
       },
     
-      // FSUMA [A|B] <wartość> [ANIMOUT ...] [ANIMIN ...]
-      // - bez A/B: działa na aktualnie wybranej sumie (sumMode)
-      // - z A/B: ustawia sumę tej strony i przełącza widok na nią
-      if (head === "FSUMA") {
-        let side = null;
-        let valIdx = 1;
-      
-        const t1 = (tokens[1] ?? "").toUpperCase();
-        if (t1 === "A" || t1 === "B") {
-          side = t1;
-          valIdx = 2;
-        }
-      
-        const val = tokens[valIdx] ?? "";
-      
-        const ao = tokens.findIndex(t => t.toUpperCase() === "ANIMOUT");
-        const ai = tokens.findIndex(t => t.toUpperCase() === "ANIMIN");
-      
-        const animOut = ao >= 0 ? parseAnim(tokens, ao + 1) : null;
-        const animIn  = ai >= 0 ? parseAnim(tokens, ai + 1) : null;
-      
-        if (side) {
-          return api.final.setSumaFor(side, val, { animOut, animIn });
-        }
-        return api.final.setSuma(val, { animOut, animIn });
-      }
-    
       // aliasy jeśli będziesz chciał sterować konkretną sumą z JS
       setSumaA: async (val, anims={}) => {
         const prevMode = finalState.sumMode;
@@ -1697,8 +1670,20 @@ export async function createScene() {
       return api.final.setRow(idx, { left, a, b, right, animOut, animIn });
     }
 
+    // FSUMA [A|B] <wartość> [ANIMOUT ...] [ANIMIN ...]
+    // - bez A/B: działa na aktualnie wybranej sumie (sumMode)
+    // - z A/B: ustawia sumę tej strony i przełącza widok na nią
     if (head === "FSUMA") {
-      const val = tokens[1] ?? "";
+      let side = null;
+      let valIdx = 1;
+    
+      const t1 = (tokens[1] ?? "").toUpperCase();
+      if (t1 === "A" || t1 === "B") {
+        side = t1;
+        valIdx = 2;
+      }
+    
+      const val = tokens[valIdx] ?? "";
     
       const ao = tokens.findIndex(t => t.toUpperCase() === "ANIMOUT");
       const ai = tokens.findIndex(t => t.toUpperCase() === "ANIMIN");
@@ -1706,6 +1691,9 @@ export async function createScene() {
       const animOut = ao >= 0 ? parseAnim(tokens, ao + 1) : null;
       const animIn  = ai >= 0 ? parseAnim(tokens, ai + 1) : null;
     
+      if (side) {
+        return api.final.setSumaFor(side, val, { animOut, animIn });
+      }
       return api.final.setSuma(val, { animOut, animIn });
     }
 
