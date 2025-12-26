@@ -309,9 +309,9 @@ export async function createScene() {
       const opts = normalizeOpts(out);
 
       if (type === "edge") {
-        await anim.outEdge(area, out.dir || "left", step, opts);
+        await anim.outEdge(big, area, out.dir || "left", step, opts);
       } else if (type === "matrix") {
-        await anim.outMatrix(area, out.axis || "down", step, opts);
+        await anim.outMatrix(big, area, out.axis || "down", step, opts);
       }
       // po wyjściu nadpisujemy nową treścią
       writeField(GLYPHS, big, f, text, color);
@@ -328,11 +328,11 @@ export async function createScene() {
       const type = inn.type || "edge";
       const step = normMs(inn.ms, 20);
       const opts = normalizeOpts(inn);
-      
+            
       if (type === "edge") {
-        await anim.inEdge(area, inn.dir || "left", step, opts);
+        await anim.inEdge(big, area, inn.dir || "left", step, opts);
       } else if (type === "matrix") {
-        await anim.inMatrix(area, inn.axis || "down", step, opts);
+        await anim.inMatrix(big, area, inn.axis || "down", step, opts);
       }
     
     }
@@ -967,10 +967,10 @@ export async function createScene() {
         const A = area ?? api.big.areaAll();
         const speed = normMs(ms, 20);
         if (type === "edge") {
-          return anim.inEdge(A, dir, speed, opts || {});
+          return anim.inEdge(big, A, dir, speed, opts || {});
         }
         if (type === "matrix") {
-          return anim.inMatrix(A, axis, speed, opts || {});
+          return anim.inMatrix(big, A, axis, speed, opts || {});
         }
       },
       
@@ -978,10 +978,10 @@ export async function createScene() {
         const A = area ?? api.big.areaAll();
         const speed = normMs(ms, 20);
         if (type === "edge") {
-          return anim.outEdge(A, dir, speed, opts || {});
+          return anim.outEdge(big, A, dir, speed, opts || {});
         }
         if (type === "matrix") {
-          return anim.outMatrix(A, axis, speed, opts || {});
+          return anim.outMatrix(big, A, axis, speed, opts || {});
         }
       },
 
@@ -1343,10 +1343,10 @@ export async function createScene() {
       
       setAll: async ({ rows = [], suma = undefined, sumaSide = null, animOut = null, animIn = null } = {}) => {
         if (mode !== BIG_MODES.FINAL) await api.mode.set("FINAL");
-
+      
         const A_ALL = api.big.areaAll();
-
-        // --- SPECJALNY PRZYPADEK: tylko ANIMOUT, brak nowych danych ---
+      
+        // ---- SPECIAL CASE: tylko ANIMOUT, bez nowych danych ----
         const hasAnyRowData = rows.some(r =>
           isNonEmpty(r?.left) ||
           isNonEmpty(r?.a)    ||
@@ -1354,22 +1354,21 @@ export async function createScene() {
           isNonEmpty(r?.right)
         );
         const hasSumaArg = (suma !== undefined);
-
+      
         if (animOut && !animIn && !hasAnyRowData && !hasSumaArg) {
-          // 1) animacja wyjścia całego FINAL (łącznie z SUMĄ)
+          // 1) animacja wyjścia całego FINAL
           await api.big.animOut({ ...animOut, area: A_ALL });
-
-          // 2) czyścimy ekran i stan finału
+      
+          // 2) czyścimy ekran + stan finału
           clearBig(big);
           finalState.sumA = "";
           finalState.sumB = "";
-          finalState.sumMode = "B"; // domyślnie
-
-          return; // NIC nie rysujemy z powrotem
+          // sumMode możesz zostawić "B" albo nie ruszać – to już kwestia preferencji
+      
+          return;
         }
-
-        // --- NORMALNY TRYB: wstawiamy nową zawartość ---
-
+      
+        // ---- NORMALNY TRYB: pełna wymiana zawartości ----
         if (animOut) await api.big.animOut({ ...animOut, area: A_ALL });
 
         // lewa i prawa część
