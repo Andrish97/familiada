@@ -406,6 +406,43 @@ export async function createScene() {
     writeField(GLYPHS, big, F.label, "SUMA", LIT.main);
     if (isNonEmpty(roundsState.suma)) writeField(GLYPHS, big, F.val, roundsState.suma, LIT.main);
   };
+
+    // Odtwarza cały ekran ROUNDS na podstawie roundsState
+  const redrawRounds = () => {
+    // 1) czyścimy cały big
+    clearBig(big);
+  
+    // 2) 6 wierszy odpowiedzi + punktów
+    for (let i = 0; i < 6; i++) {
+      const tRaw = roundsState.text[i] ?? "";
+      const pRaw = roundsState.pts[i]  ?? "";
+  
+      const t = clipText(tRaw, 17);    // tekst max 17 znaków
+      const p = alignRight(pRaw, 2);   // punkty na 2 znaki
+  
+      // odpowiedź
+      writeField(GLYPHS, big, ROUNDS.answers[i], t, LIT.main);
+      // punkty
+      writeField(GLYPHS, big, ROUNDS.points[i],  p, LIT.main);
+  
+      // numer rundy tylko gdy mamy tekst lub punkty
+      const hasData = isNonEmpty(tRaw) || isNonEmpty(pRaw);
+      setRoundNumberVisible(i + 1, hasData);
+    }
+  
+    // 3) SUMA pod odpowiednią ostatnią linią
+    //    (używamy obecnego roundsState.suma i roundsState.sumaRow)
+    relocateSumaIfNeeded();
+    const F = roundsSumaFields();
+  
+    writeField(GLYPHS, big, F.label, "SUMA", LIT.main);
+  
+    const sumaTxt = isNonEmpty(roundsState.suma)
+      ? alignRight(roundsState.suma, 3)
+      : "   ";
+  
+    writeField(GLYPHS, big, F.val, sumaTxt, LIT.main);
+  };
   
   // ============================
   // Layout: FINAL (o 1 wiersz niżej) + 2 sumy
@@ -439,10 +476,11 @@ export async function createScene() {
   
   // Czyści całą linijkę z sumą (rząd 9)
   const clearFinalSumRow = () => clearArea(big, 1, 9, 30, 9);
-  
   // Rysuje na ekranie tylko tę sumę, która jest w finalState.sumMode
-  
   const drawFinalSum = () => {
+    // ZAWSZE czyścimy całą linię 9, żeby nie było hybryd typu "SUMAS"
+    clearFinalSumRow();
+  
     if (finalState.sumMode === "A") {
       writeField(GLYPHS, big, FINAL.sumaALabel, "SUMA", LIT.main);
       const txt = alignRight(finalState.sumA, 3);
@@ -886,24 +924,25 @@ export async function createScene() {
         const mm = (m ?? "").toString().toUpperCase();
         if (!BIG_MODES[mm]) throw new Error(`Nieznany tryb: ${m}`);
         mode = mm;
-      
-        // zawsze czyścimy Big
-        clearBig(big);
-      
-        // BLANK = absolutnie nic więcej
+
+        // BLANK = pusty ekran, nic więcej
         if (mode === BIG_MODES.BLANK) {
+          clearBig(big);
           return;
         }
-      
+
         if (mode === BIG_MODES.ROUNDS) {
-          relocateSumaIfNeeded();
-        }
-  
-        if (mode === BIG_MODES.FINAL) {
-          // przy wejściu w FINAL rysujemy aktualnie wybraną sumę (A lub B)
+          // wejdź w ROUNDS i odtwórz całą planszę z roundsState
+          redrawRounds();
+        } else if (mode === BIG_MODES.FINAL) {
+          // FINAL: na wejściu czyścimy i rysujemy tylko sumę (resztę robią F/FBATCH/FHALF)
+          clearBig(big);
           drawFinalSum();
+        } else {
+          // LOGO, WIN itp. – czyścimy, rysowaniem zajmują się odpowiednie API (logo.show, win.set)
+          clearBig(big);
         }
-      
+
         if (opts?.animIn) await api.big.animIn(opts.animIn);
       },
     },
