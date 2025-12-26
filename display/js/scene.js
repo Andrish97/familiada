@@ -397,20 +397,58 @@ export async function createScene() {
     writeField(GLYPHS, big, F.label, "SUMA", LIT.main);
     if (isNonEmpty(roundsState.suma)) writeField(GLYPHS, big, F.val, roundsState.suma, LIT.main);
   };
-
+  
   // ============================
-  // Layout: FINAL
+  // Layout: FINAL (o 1 wiersz niżej) + 2 sumy
   // ============================
   const FINAL = (() => {
-    const rows = [2,3,4,5,6];
+    // było [2,3,4,5,6], teraz 1 w dół:
+    const rows = [3,4,5,6,7];
+  
     const leftTxt   = rows.map((r,i)=>field(`F${i+1}_LTXT`, 1,  r, 11));
     const ptsA      = rows.map((r,i)=>field(`F${i+1}_A`,    13, r, 2));
     const ptsB      = rows.map((r,i)=>field(`F${i+1}_B`,    17, r, 2));
     const rightTxt  = rows.map((r,i)=>field(`F${i+1}_RTXT`, 20, r, 11));
-    const sumaLabel = field("FSUMA_LABEL", 11, 8, 4);
-    const sumaVal   = field("FSUMA_VAL",   16, 8, 3);
-    return { rows, leftTxt, ptsA, ptsB, rightTxt, sumaLabel, sumaVal };
+  
+    // Suma A – label od kol. 7, value od 12, rząd 9
+    const sumaALabel = field("FSUMA_A_LABEL", 7,  9, 4);
+    const sumaAVal   = field("FSUMA_A_VAL",   12, 9, 3);
+  
+    // Suma B – jak było, tylko też w rzędzie 9
+    const sumaBLabel = field("FSUMA_B_LABEL", 11, 9, 4);
+    const sumaBVal   = field("FSUMA_B_VAL",   16, 9, 3);
+  
+    return { rows, leftTxt, ptsA, ptsB, rightTxt, sumaALabel, sumaAVal, sumaBLabel, sumaBVal };
   })();
+
+  // Stan dwóch sum w FINAL – na ekranie widać tylko jedną naraz
+  const finalState = {
+    sumMode: "B", // "A" | "B" – która suma jest aktualnie wyświetlana
+    sumA: "",
+    sumB: "",
+  };
+  
+  // Czyści całą linijkę z sumą (rząd 9)
+  const clearFinalSumRow = () => clearArea(big, 1, 9, 30, 9);
+  
+  // Rysuje na ekranie tylko tę sumę, która jest w finalState.sumMode
+  const drawFinalSum = () => {
+    clearFinalSumRow();
+  
+    if (finalState.sumMode === "A") {
+      writeField(GLYPHS, big, FINAL.sumaALabel, "SUMA", LIT.main);
+      const txt = alignRight(finalState.sumA, 3);
+      writeField(GLYPHS, big, FINAL.sumaAVal, txt, LIT.main);
+    } else {
+      writeField(GLYPHS, big, FINAL.sumaBLabel, "SUMA", LIT.main);
+      const txt = alignRight(finalState.sumB, 3);
+      writeField(GLYPHS, big, FINAL.sumaBVal, txt, LIT.main);
+    }
+  };
+  
+  // Obszary połówek FINAL (bez sum)
+  const FINAL_AREA_LEFT  = { c1: 1,  r1: 3, c2: 14, r2: 7 }; // left + A
+  const FINAL_AREA_RIGHT = { c1: 17, r1: 3, c2: 30, r2: 7 }; // B + right
 
   // ============================================================
   // Small displays rules
@@ -854,7 +892,8 @@ export async function createScene() {
         }
   
         if (mode === BIG_MODES.FINAL) {
-          writeField(GLYPHS, big, FINAL.sumaLabel, "SUMA", LIT.main);
+          // przy wejściu w FINAL rysujemy aktualnie wybraną sumę (A lub B)
+          drawFinalSum();
         }
       
         if (opts?.animIn) await api.big.animIn(opts.animIn);
@@ -1132,6 +1171,7 @@ export async function createScene() {
           color: LIT.main
         });
       },
+    
       setA: async (idx1to5, pts, { animOut=null, animIn=null } = {}) => {
         if (mode !== BIG_MODES.FINAL) await api.mode.set("FINAL");
         const i = (idx1to5|0) - 1;
@@ -1145,6 +1185,7 @@ export async function createScene() {
           color: LIT.main
         });
       },
+    
       setB: async (idx1to5, pts, { animOut=null, animIn=null } = {}) => {
         if (mode !== BIG_MODES.FINAL) await api.mode.set("FINAL");
         const i = (idx1to5|0) - 1;
@@ -1158,6 +1199,7 @@ export async function createScene() {
           color: LIT.main
         });
       },
+    
       setRight: async (idx1to5, text, { animOut=null, animIn=null } = {}) => {
         if (mode !== BIG_MODES.FINAL) await api.mode.set("FINAL");
         const i = (idx1to5|0) - 1;
@@ -1171,68 +1213,155 @@ export async function createScene() {
           color: LIT.main
         });
       },
-
+    
       setRow: async (idx1to5, { left=undefined, a=undefined, b=undefined, right=undefined, animOut=null, animIn=null } = {}) => {
         if (left  !== undefined) await api.final.setLeft(idx1to5, left,  { animOut, animIn });
         if (a     !== undefined) await api.final.setA(idx1to5, a,        { animOut, animIn });
         if (b     !== undefined) await api.final.setB(idx1to5, b,        { animOut, animIn });
         if (right !== undefined) await api.final.setRight(idx1to5, right,{ animOut, animIn });
       },
-
-      setSuma: async (val, { animOut=null, animIn=null } = {}) => {
-        if (mode !== BIG_MODES.FINAL) await api.mode.set("FINAL");
+    
+      // tryb sumy: "A" albo "B" – decyduje, która geometria jest używana
+      setSumMode: (side) => {
+        const s = (side ?? "").toString().toUpperCase();
+        if (s !== "A" && s !== "B") throw new Error(`FSUMMODE: nieznana strona: ${side}`);
+        finalState.sumMode = s;
+        if (mode === BIG_MODES.FINAL) {
+          drawFinalSum();
+        }
+      },
+    
+      // FSUMA [A|B] <wartość> [ANIMOUT ...] [ANIMIN ...]
+      // - bez A/B: działa na aktualnie wybranej sumie (sumMode)
+      // - z A/B: ustawia sumę tej strony i przełącza widok na nią
+      if (head === "FSUMA") {
+        let side = null;
+        let valIdx = 1;
       
-        const txt = alignRight(val, 3);
+        const t1 = (tokens[1] ?? "").toUpperCase();
+        if (t1 === "A" || t1 === "B") {
+          side = t1;
+          valIdx = 2;
+        }
       
-        await updateField(GLYPHS, big, FINAL.sumaVal, txt, {
-          out: animOut,
-          in: animIn,
-          color: LIT.main
-        });
+        const val = tokens[valIdx] ?? "";
+      
+        const ao = tokens.findIndex(t => t.toUpperCase() === "ANIMOUT");
+        const ai = tokens.findIndex(t => t.toUpperCase() === "ANIMIN");
+      
+        const animOut = ao >= 0 ? parseAnim(tokens, ao + 1) : null;
+        const animIn  = ai >= 0 ? parseAnim(tokens, ai + 1) : null;
+      
+        if (side) {
+          return api.final.setSumaFor(side, val, { animOut, animIn });
+        }
+        return api.final.setSuma(val, { animOut, animIn });
+      }
+    
+      // aliasy jeśli będziesz chciał sterować konkretną sumą z JS
+      setSumaA: async (val, anims={}) => {
+        const prevMode = finalState.sumMode;
+        finalState.sumMode = "A";
+        await api.final.setSuma(val, anims);
+        finalState.sumMode = prevMode;
+      },
+      setSumaB: async (val, anims={}) => {
+        const prevMode = finalState.sumMode;
+        finalState.sumMode = "B";
+        await api.final.setSuma(val, anims);
+        finalState.sumMode = prevMode;
       },
 
-      // ====== NOWE: batch (jedna animacja na całość) ======
-      setAll: async ({ rows = [], suma = undefined, animOut = null, animIn = null } = {}) => {
+      // Ustawia konkretną sumę (A/B) i przełącza widok na nią
+      setSumaFor: async (side, val, anims = {}) => {
+        const s = (side ?? "").toString().toUpperCase();
+        if (s !== "A" && s !== "B") throw new Error(`setSumaFor: nieznana strona: ${side}`);
+        finalState.sumMode = s;
+        return api.final.setSuma(val, anims);
+      },
+      
+      setAll: async ({ rows = [], suma = undefined, sumaSide = null, animOut = null, animIn = null } = {}) => {
         if (mode !== BIG_MODES.FINAL) await api.mode.set("FINAL");
       
         const A_ALL = api.big.areaAll();
       
-        // ---- SPECIAL CASE: tylko ANIMOUT, brak nowych danych ----
-        const hasAnyRowData = rows.some(r =>
-          isNonEmpty(r?.left) || isNonEmpty(r?.a) || isNonEmpty(r?.b) || isNonEmpty(r?.right)
-        );
-        const hasSumaArg = (suma !== undefined);
-      
-        if (animOut && !animIn && !hasAnyRowData && !hasSumaArg) {
-          await api.big.animOut({ ...animOut, area: A_ALL });
-          clearBig(big);
-          return;
-        }
-      
-        // ---- NORMALNY TRYB: wymiana zawartości ----
         if (animOut) await api.big.animOut({ ...animOut, area: A_ALL });
       
-        writeField(GLYPHS, big, FINAL.sumaLabel, "SUMA", LIT.main);
-      
+        // lewa i prawa część
         for (let i = 0; i < 5; i++) {
           const r = rows[i] ?? {};
-      
-          const L = clipText((r.left  ?? "").toString(), 11);  // lewy tekst
-          const A = alignRight((r.a    ?? "").toString(), 2);  // A do prawej
-          const B = alignRight((r.b    ?? "").toString(), 2);  // B do prawej
-          const R = clipText((r.right ?? "").toString(), 11);  // prawy tekst
-      
+          
+          const L = clipText((r.left  ?? "").toString(), 11);
+          const A = alignRight((r.a    ?? "").toString(), 2);
+          const B = alignRight((r.b    ?? "").toString(), 2);
+          const R = clipText((r.right ?? "").toString(), 11);
+          
           writeField(GLYPHS, big, FINAL.leftTxt[i],  L, LIT.main);
           writeField(GLYPHS, big, FINAL.ptsA[i],     A, LIT.main);
           writeField(GLYPHS, big, FINAL.ptsB[i],     B, LIT.main);
           writeField(GLYPHS, big, FINAL.rightTxt[i], R, LIT.main);
         }
       
-        if (suma !== undefined) {
-          writeField(GLYPHS, big, FINAL.sumaVal, alignRight(suma, 3), LIT.main);
+        // SUMA – tylko jeśli podana i strona poprawna
+        if (suma !== undefined && (sumaSide === "A" || sumaSide === "B")) {
+          if (sumaSide === "A") {
+            finalState.sumA = (suma ?? "").toString();
+            finalState.sumMode = "A";
+          } else {
+            finalState.sumB = (suma ?? "").toString();
+            finalState.sumMode = "B";
+          }
         }
       
+        drawFinalSum();
+      
         if (animIn) await api.big.animIn({ ...animIn, area: A_ALL });
+      },
+    
+      /**
+       * Zmienia jedną połówkę FINAL (A albo B) jedną animacją.
+       * side: "A" | "B"
+       * rows: tablica max 5 elementów:
+       *   - dla "A": { left, a }
+       *   - dla "B": { b, right }
+       */
+      setHalf: async (side, { rows = [], animOut = null, animIn = null } = {}) => {
+        if (mode !== BIG_MODES.FINAL) await api.mode.set("FINAL");
+    
+        const s = (side ?? "").toString().toUpperCase();
+        let area;
+        if (s === "A") area = FINAL_AREA_LEFT;
+        else if (s === "B") area = FINAL_AREA_RIGHT;
+        else throw new Error(`final.setHalf: nieznana strona: ${side}`);
+    
+        // 1) animacja WYJŚCIA połówki (jeśli jest)
+        if (animOut) {
+          await api.big.animOut({ ...animOut, area });
+        }
+    
+        // 2) wpisujemy nowe dane w odpowiednie pola
+        for (let i = 0; i < 5; i++) {
+          const r = rows[i] ?? {};
+    
+          if (s === "A") {
+            const L = clipText((r.left ?? "").toString(), 11);
+            const A = alignRight((r.a   ?? "").toString(), 2);
+    
+            writeField(GLYPHS, big, FINAL.leftTxt[i], L, LIT.main);
+            writeField(GLYPHS, big, FINAL.ptsA[i],    A, LIT.main);
+          } else {
+            const B = alignRight((r.b    ?? "").toString(), 2);
+            const R = clipText((r.right ?? "").toString(), 11);
+    
+            writeField(GLYPHS, big, FINAL.ptsB[i],    B, LIT.main);
+            writeField(GLYPHS, big, FINAL.rightTxt[i], R, LIT.main);
+          }
+        }
+    
+        // 3) animacja WEJŚCIA połówki (jeśli jest)
+        if (animIn) {
+          await api.big.animIn({ ...animIn, area });
+        }
       },
     },
   };
@@ -1456,16 +1585,29 @@ export async function createScene() {
 
     // ====== NOWE: FINAL batch ======
     // Format:
-    // FBATCH SUMA 999 F1 "L" 12 34 "R" F2 "L" 01 99 "R" ... ANIMOUT ... ANIMIN ...
+    // FBATCH SUMA A 999 F1 "L" 12 34 "R" ...  /  FBATCH SUMA B 999 ...
     if (head === "FBATCH") {
       const ao = tokens.findIndex(t => t.toUpperCase() === "ANIMOUT");
       const ai = tokens.findIndex(t => t.toUpperCase() === "ANIMIN");
       const animOut = ao >= 0 ? parseAnim(tokens, ao + 1) : null;
       const animIn  = ai >= 0 ? parseAnim(tokens, ai + 1) : null;
-
+    
+      // SUMA A 999 / SUMA B 999
+      let suma = undefined;
+      let sumaSide = null;
       const sIdx = tokens.findIndex(t => t.toUpperCase() === "SUMA");
-      const suma = sIdx >= 0 ? (tokens[sIdx + 1] ?? "") : undefined;
-
+      if (sIdx >= 0) {
+        const sideTok = (tokens[sIdx + 1] ?? "").toUpperCase();
+        if (sideTok === "A" || sideTok === "B") {
+          sumaSide = sideTok;
+          suma = tokens[sIdx + 2] ?? "";
+        } else {
+          // brak A/B → FBATCH NIE rusza sumy
+          suma = undefined;
+          sumaSide = null;
+        }
+      }
+    
       const rows = Array.from({ length: 5 }, () => ({ left:"", a:"", b:"", right:"" }));
       for (let i = 1; i <= 5; i++) {
         const k = tokens.findIndex(t => t.toUpperCase() === `F${i}`);
@@ -1476,8 +1618,8 @@ export async function createScene() {
           rows[i-1].right = unquote(tokens[k + 4] ?? "");
         }
       }
-
-      return api.final.setAll({ rows, suma, animOut, animIn });
+    
+      return api.final.setAll({ rows, suma, sumaSide, animOut, animIn });
     }
 
     // FINAL (krótkie)
