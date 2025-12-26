@@ -166,6 +166,15 @@ export async function createScene() {
 
   // Animator (dotOff przekazujemy jawnie)
   const anim = createAnimator({ tileAt, snapArea, clearArea, clearTileAt, dotOff: COLORS.dotOff });
+
+  // Backward-compat: gdy animator nie ma OUT, robimy aliasy na IN,
+  // żeby ANIMOUT przynajmniej nie wywalał się błędem.
+  if (typeof anim.outEdge !== "function" && typeof anim.inEdge === "function") {
+    anim.outEdge = (...args) => anim.inEdge(...args);
+  }
+  if (typeof anim.outMatrix !== "function" && typeof anim.inMatrix === "function") {
+    anim.outMatrix = (...args) => anim.inMatrix(...args);
+  }
   
   // Prosta normalizacja ms: albo użyj podanego, albo fallback, bez globalnego mnożnika
   const normMs = (ms, fallback) => {
@@ -1290,18 +1299,19 @@ export async function createScene() {
           finalState.sumB = v;
         }
 
-        // wybieramy odpowiednie pola pod aktualny tryb sumy
         const isA = (finalState.sumMode === "A");
         const labelField = isA ? FINAL.sumaALabel : FINAL.sumaBLabel;
         const valField   = isA ? FINAL.sumaAVal   : FINAL.sumaBVal;
 
         const txt = alignRight(v, 3);
 
-        // animacja WYJŚCIA / WEJŚCIA tylko na polu wartości (ew. label jak chcesz)
-        // label rysujemy na sztywno jako "SUMA" bez kombinacji
+        // Najpierw czyścimy CAŁĄ linię 9, żeby nie zostały resztki drugiej SUMY
+        clearFinalSumRow();
+
+        // label rysujemy "na sztywno"
         writeField(GLYPHS, big, labelField, "SUMA", LIT.main);
 
-        // animacja na VALUE
+        // wartość przez updateField (z ANIMOUT/ANIMIN)
         await updateField(GLYPHS, big, valField, txt, {
           out: animOut,
           in: animIn,
@@ -1805,8 +1815,11 @@ export async function createScene() {
       const animOut = ao >= 0 ? parseAnim(tokens, ao + 1) : null;
       const animIn  = ai >= 0 ? parseAnim(tokens, ai + 1) : null;
 
-      if (side === "A") return api.final.setSumaA(val, { animOut, animIn });
-      if (side === "B") return api.final.setSumaB(val, { animOut, animIn });
+      if (side === "A" || side === "B") {
+        // ustawiamy sumę dla konkretnej strony i przełączamy widok
+        return api.final.setSumaFor(side, val, { animOut, animIn });
+      }
+      // bez A/B – użyj aktualnego finalState.sumMode
       return api.final.setSuma(val, { animOut, animIn });
     }
 
