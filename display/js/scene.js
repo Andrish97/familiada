@@ -1343,26 +1343,50 @@ export async function createScene() {
       
       setAll: async ({ rows = [], suma = undefined, sumaSide = null, animOut = null, animIn = null } = {}) => {
         if (mode !== BIG_MODES.FINAL) await api.mode.set("FINAL");
-      
+
         const A_ALL = api.big.areaAll();
-      
+
+        // --- SPECJALNY PRZYPADEK: tylko ANIMOUT, brak nowych danych ---
+        const hasAnyRowData = rows.some(r =>
+          isNonEmpty(r?.left) ||
+          isNonEmpty(r?.a)    ||
+          isNonEmpty(r?.b)    ||
+          isNonEmpty(r?.right)
+        );
+        const hasSumaArg = (suma !== undefined);
+
+        if (animOut && !animIn && !hasAnyRowData && !hasSumaArg) {
+          // 1) animacja wyjścia całego FINAL (łącznie z SUMĄ)
+          await api.big.animOut({ ...animOut, area: A_ALL });
+
+          // 2) czyścimy ekran i stan finału
+          clearBig(big);
+          finalState.sumA = "";
+          finalState.sumB = "";
+          finalState.sumMode = "B"; // domyślnie
+
+          return; // NIC nie rysujemy z powrotem
+        }
+
+        // --- NORMALNY TRYB: wstawiamy nową zawartość ---
+
         if (animOut) await api.big.animOut({ ...animOut, area: A_ALL });
-      
+
         // lewa i prawa część
         for (let i = 0; i < 5; i++) {
           const r = rows[i] ?? {};
-          
+
           const L = clipText((r.left  ?? "").toString(), 11);
           const A = alignRight((r.a    ?? "").toString(), 2);
           const B = alignRight((r.b    ?? "").toString(), 2);
           const R = clipText((r.right ?? "").toString(), 11);
-          
+
           writeField(GLYPHS, big, FINAL.leftTxt[i],  L, LIT.main);
           writeField(GLYPHS, big, FINAL.ptsA[i],     A, LIT.main);
           writeField(GLYPHS, big, FINAL.ptsB[i],     B, LIT.main);
           writeField(GLYPHS, big, FINAL.rightTxt[i], R, LIT.main);
         }
-      
+
         // SUMA – tylko jeśli podana i strona poprawna
         if (suma !== undefined && (sumaSide === "A" || sumaSide === "B")) {
           if (sumaSide === "A") {
@@ -1373,19 +1397,13 @@ export async function createScene() {
             finalState.sumMode = "B";
           }
         }
-      
+
+        // odrysuj bieżącą sumę (albo nic, jeśli puste)
         drawFinalSum();
-      
+
         if (animIn) await api.big.animIn({ ...animIn, area: A_ALL });
       },
-    
-      /**
-       * Zmienia jedną połówkę FINAL (A albo B) jedną animacją.
-       * side: "A" | "B"
-       * rows: tablica max 5 elementów:
-       *   - dla "A": { left, a }
-       *   - dla "B": { b, right }
-       */
+      
       setHalf: async (side, { rows = [], animOut = null, animIn = null } = {}) => {
         if (mode !== BIG_MODES.FINAL) await api.mode.set("FINAL");
     
