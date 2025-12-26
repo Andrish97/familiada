@@ -822,9 +822,6 @@ export async function createScene() {
         console.warn("Nie można przywrócić INDICATOR ze snapshotu:", e);
       }
     }
-    if (S.anim_speed != null) {
-      ANIM_SPEED.mul = Number(S.anim_speed) || 1;
-    }
   };
 
 
