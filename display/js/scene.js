@@ -1049,6 +1049,28 @@ export async function createScene() {
       
         const A_ALL = api.big.areaAll();
       
+        // ---- SPECIAL CASE: tylko ANIMOUT, brak nowych danych ----
+        const hasAnyRowData = rows.some(r =>
+          isNonEmpty(r?.text) || isNonEmpty(r?.pts)
+        );
+        const hasSumaArg = (suma !== undefined);
+      
+        if (animOut && !animIn && !hasAnyRowData && !hasSumaArg) {
+          // 1) animacja wyjścia całej planszy
+          await api.big.animOut({ ...animOut, area: A_ALL });
+      
+          // 2) czyścimy Big + stan rund
+          clearBig(big);
+          roundsState.text = Array(6).fill("");
+          roundsState.pts  = Array(6).fill("");
+          roundsState.suma = "";
+          roundsState.sumaRow = 9;
+      
+          return; // niczego nie rysujemy z powrotem
+        }
+      
+        // ---- NORMALNY TRYB: wymiana zawartości ----
+      
         // najpierw animacja wyjścia całości (opcjonalna)
         if (animOut) await api.big.animOut({ ...animOut, area: A_ALL });
       
@@ -1057,13 +1079,13 @@ export async function createScene() {
           const r = rows[i] ?? {};
           const rawT = (r.text ?? "").toString();
           const rawP = (r.pts  ?? "").toString();
-          
+      
           const t = clipText(rawT, 17);   // tekst do lewej, max 17
           const p = alignRight(rawP, 2);  // punkty do prawej na 2 znakach
-          
+      
           roundsState.text[i] = t;
           roundsState.pts[i]  = rawP;
-          
+      
           writeField(GLYPHS, big, ROUNDS.answers[i], t, LIT.main);
           writeField(GLYPHS, big, ROUNDS.points[i],  p, LIT.main);
           setRoundNumberVisible(i + 1, isNonEmpty(t) || isNonEmpty(rawP));
@@ -1080,11 +1102,11 @@ export async function createScene() {
         relocateSumaIfNeeded();
         const F = roundsSumaFields();
         writeField(GLYPHS, big, F.label, "SUMA", LIT.main);
-        
+      
         const txt = isNonEmpty(roundsState.suma)
           ? alignRight(roundsState.suma, 3)
           : "   ";
-        
+      
         writeField(GLYPHS, big, F.val, txt, LIT.main);
       
         // animacja wejścia całości (opcjonalna)
@@ -1168,31 +1190,44 @@ export async function createScene() {
       // ====== NOWE: batch (jedna animacja na całość) ======
       setAll: async ({ rows = [], suma = undefined, animOut = null, animIn = null } = {}) => {
         if (mode !== BIG_MODES.FINAL) await api.mode.set("FINAL");
-
+      
         const A_ALL = api.big.areaAll();
-
+      
+        // ---- SPECIAL CASE: tylko ANIMOUT, brak nowych danych ----
+        const hasAnyRowData = rows.some(r =>
+          isNonEmpty(r?.left) || isNonEmpty(r?.a) || isNonEmpty(r?.b) || isNonEmpty(r?.right)
+        );
+        const hasSumaArg = (suma !== undefined);
+      
+        if (animOut && !animIn && !hasAnyRowData && !hasSumaArg) {
+          await api.big.animOut({ ...animOut, area: A_ALL });
+          clearBig(big);
+          return;
+        }
+      
+        // ---- NORMALNY TRYB: wymiana zawartości ----
         if (animOut) await api.big.animOut({ ...animOut, area: A_ALL });
-
+      
         writeField(GLYPHS, big, FINAL.sumaLabel, "SUMA", LIT.main);
-
+      
         for (let i = 0; i < 5; i++) {
           const r = rows[i] ?? {};
-          
+      
           const L = clipText((r.left  ?? "").toString(), 11);  // lewy tekst
           const A = alignRight((r.a    ?? "").toString(), 2);  // A do prawej
           const B = alignRight((r.b    ?? "").toString(), 2);  // B do prawej
           const R = clipText((r.right ?? "").toString(), 11);  // prawy tekst
-          
+      
           writeField(GLYPHS, big, FINAL.leftTxt[i],  L, LIT.main);
           writeField(GLYPHS, big, FINAL.ptsA[i],     A, LIT.main);
           writeField(GLYPHS, big, FINAL.ptsB[i],     B, LIT.main);
           writeField(GLYPHS, big, FINAL.rightTxt[i], R, LIT.main);
         }
-
+      
         if (suma !== undefined) {
           writeField(GLYPHS, big, FINAL.sumaVal, alignRight(suma, 3), LIT.main);
         }
-
+      
         if (animIn) await api.big.animIn({ ...animIn, area: A_ALL });
       },
     },
