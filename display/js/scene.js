@@ -1269,11 +1269,6 @@ export async function createScene() {
     const tokens = tokenize(raw);
     const head = (tokens[0] ?? "").toUpperCase();
 
-    // prędkość animacji globalnie
-    if (head === "ANIMSPEED") {
-      api.big.speed(parseFloat(tokens[1] ?? "1"));
-      return;
-    }
 
     // small
     if (head === "TOP")   return api.small.topDigits(tokens[1] ?? "");
@@ -1360,39 +1355,58 @@ export async function createScene() {
 
     // ROUNDS (krótkie)
     if (head === "RTXT") {
-      const idx = parseInt(tokens[1] ?? "0", 10);
+      const idx  = parseInt(tokens[1] ?? "0", 10);
       const text = unquote(tokens[2] ?? "");
-      const aIdx = tokens.findIndex(t => t.toUpperCase() === "ANIM");
-      const A = aIdx >= 0 ? parseAnim(tokens, aIdx + 1) : null;
-      return api.rounds.setText(idx, text, { animOut: A, animIn: A });
+    
+      const ao = tokens.findIndex(t => t.toUpperCase() === "ANIMOUT");
+      const ai = tokens.findIndex(t => t.toUpperCase() === "ANIMIN");
+    
+      const animOut = ao >= 0 ? parseAnim(tokens, ao + 1) : null;
+      const animIn  = ai >= 0 ? parseAnim(tokens, ai + 1) : null;
+    
+      return api.rounds.setText(idx, text, { animOut, animIn });
     }
     if (head === "RPTS") {
       const idx = parseInt(tokens[1] ?? "0", 10);
       const pts = tokens[2] ?? "";
-      const aIdx = tokens.findIndex(t => t.toUpperCase() === "ANIM");
-      const A = aIdx >= 0 ? parseAnim(tokens, aIdx + 1) : null;
-      return api.rounds.setPts(idx, pts, { animOut: A, animIn: A });
+    
+      const ao = tokens.findIndex(t => t.toUpperCase() === "ANIMOUT");
+      const ai = tokens.findIndex(t => t.toUpperCase() === "ANIMIN");
+    
+      const animOut = ao >= 0 ? parseAnim(tokens, ao + 1) : null;
+      const animIn  = ai >= 0 ? parseAnim(tokens, ai + 1) : null;
+    
+      return api.rounds.setPts(idx, pts, { animOut, animIn });
     }
 
     // ROUNDS (legacy)
     if (head === "R") {
-      const idx = parseInt(tokens[1] ?? "0", 10);
+      const idx  = parseInt(tokens[1] ?? "0", 10);
       const tIdx = tokens.findIndex(t => t.toUpperCase() === "TXT");
       const pIdx = tokens.findIndex(t => t.toUpperCase() === "PTS");
-      const aIdx = tokens.findIndex(t => t.toUpperCase() === "ANIM");
-
+    
       const text = tIdx >= 0 ? unquote(tokens[tIdx + 1] ?? "") : undefined;
-      const pts  = pIdx >= 0 ? (tokens[pIdx + 1] ?? "") : undefined;
-      const A = aIdx >= 0 ? parseAnim(tokens, aIdx + 1) : null;
-
-      return api.rounds.setRow(idx, { text, pts, animOut: A, animIn: A });
+      const pts  = pIdx >= 0 ? (tokens[pIdx + 1] ?? "")       : undefined;
+    
+      const ao = tokens.findIndex(t => t.toUpperCase() === "ANIMOUT");
+      const ai = tokens.findIndex(t => t.toUpperCase() === "ANIMIN");
+    
+      const animOut = ao >= 0 ? parseAnim(tokens, ao + 1) : null;
+      const animIn  = ai >= 0 ? parseAnim(tokens, ai + 1) : null;
+    
+      return api.rounds.setRow(idx, { text, pts, animOut, animIn });
     }
 
     if (head === "RSUMA") {
       const val = tokens[1] ?? "";
-      const aIdx = tokens.findIndex(t => t.toUpperCase() === "ANIM");
-      const A = aIdx >= 0 ? parseAnim(tokens, aIdx + 1) : null;
-      return api.rounds.setSuma(val, { animOut: A, animIn: A });
+    
+      const ao = tokens.findIndex(t => t.toUpperCase() === "ANIMOUT");
+      const ai = tokens.findIndex(t => t.toUpperCase() === "ANIMIN");
+    
+      const animOut = ao >= 0 ? parseAnim(tokens, ao + 1) : null;
+      const animIn  = ai >= 0 ? parseAnim(tokens, ai + 1) : null;
+    
+      return api.rounds.setSuma(val, { animOut, animIn });
     }
 
     if (head === "RX") {
@@ -1429,57 +1443,89 @@ export async function createScene() {
 
     // FINAL (krótkie)
     if (head === "FL") {
-      const idx = parseInt(tokens[1] ?? "0", 10);
+      const idx  = parseInt(tokens[1] ?? "0", 10);
       const text = unquote(tokens[2] ?? "");
-      const aIdx = tokens.findIndex(t => t.toUpperCase() === "ANIM");
-      const A = aIdx >= 0 ? parseAnim(tokens, aIdx + 1) : null;
-      return api.final.setLeft(idx, text, { animOut: A, animIn: A });
+    
+      const ao = tokens.findIndex(t => t.toUpperCase() === "ANIMOUT");
+      const ai = tokens.findIndex(t => t.toUpperCase() === "ANIMIN");
+    
+      const animOut = ao >= 0 ? parseAnim(tokens, ao + 1) : null;
+      const animIn  = ai >= 0 ? parseAnim(tokens, ai + 1) : null;
+    
+      return api.final.setLeft(idx, text, { animOut, animIn });
     }
+    
     if (head === "FA") {
       const idx = parseInt(tokens[1] ?? "0", 10);
       const pts = tokens[2] ?? "";
-      const aIdx = tokens.findIndex(t => t.toUpperCase() === "ANIM");
-      const A = aIdx >= 0 ? parseAnim(tokens, aIdx + 1) : null;
-      return api.final.setA(idx, pts, { animOut: A, animIn: A });
+    
+      const ao = tokens.findIndex(t => t.toUpperCase() === "ANIMOUT");
+      const ai = tokens.findIndex(t => t.toUpperCase() === "ANIMIN");
+    
+      const animOut = ao >= 0 ? parseAnim(tokens, ao + 1) : null;
+      const animIn  = ai >= 0 ? parseAnim(tokens, ai + 1) : null;
+    
+      return api.final.setA(idx, pts, { animOut, animIn });
     }
+    
     if (head === "FB") {
       const idx = parseInt(tokens[1] ?? "0", 10);
       const pts = tokens[2] ?? "";
-      const aIdx = tokens.findIndex(t => t.toUpperCase() === "ANIM");
-      const A = aIdx >= 0 ? parseAnim(tokens, aIdx + 1) : null;
-      return api.final.setB(idx, pts, { animOut: A, animIn: A });
+    
+      const ao = tokens.findIndex(t => t.toUpperCase() === "ANIMOUT");
+      const ai = tokens.findIndex(t => t.toUpperCase() === "ANIMIN");
+    
+      const animOut = ao >= 0 ? parseAnim(tokens, ao + 1) : null;
+      const animIn  = ai >= 0 ? parseAnim(tokens, ai + 1) : null;
+    
+      return api.final.setB(idx, pts, { animOut, animIn });
     }
+    
     if (head === "FR") {
-      const idx = parseInt(tokens[1] ?? "0", 10);
+      const idx  = parseInt(tokens[1] ?? "0", 10);
       const text = unquote(tokens[2] ?? "");
-      const aIdx = tokens.findIndex(t => t.toUpperCase() === "ANIM");
-      const A = aIdx >= 0 ? parseAnim(tokens, aIdx + 1) : null;
-      return api.final.setRight(idx, text, { animOut: A, animIn: A });
+    
+      const ao = tokens.findIndex(t => t.toUpperCase() === "ANIMOUT");
+      const ai = tokens.findIndex(t => t.toUpperCase() === "ANIMIN");
+    
+      const animOut = ao >= 0 ? parseAnim(tokens, ao + 1) : null;
+      const animIn  = ai >= 0 ? parseAnim(tokens, ai + 1) : null;
+    
+      return api.final.setRight(idx, text, { animOut, animIn });
     }
 
     // FINAL (legacy)
     if (head === "F") {
       const idx = parseInt(tokens[1] ?? "0", 10);
-      const L = tokens.findIndex(t => t.toUpperCase() === "L");
-      const A = tokens.findIndex(t => t.toUpperCase() === "A");
-      const B = tokens.findIndex(t => t.toUpperCase() === "B");
-      const R = tokens.findIndex(t => t.toUpperCase() === "R");
-      const an = tokens.findIndex(t => t.toUpperCase() === "ANIM");
-      const X = an >= 0 ? parseAnim(tokens, an + 1) : null;
-
+      const L   = tokens.findIndex(t => t.toUpperCase() === "L");
+      const A   = tokens.findIndex(t => t.toUpperCase() === "A");
+      const B   = tokens.findIndex(t => t.toUpperCase() === "B");
+      const R   = tokens.findIndex(t => t.toUpperCase() === "R");
+    
       const left  = L >= 0 ? unquote(tokens[L + 1] ?? "") : undefined;
-      const a     = A >= 0 ? (tokens[A + 1] ?? "") : undefined;
-      const b     = B >= 0 ? (tokens[B + 1] ?? "") : undefined;
+      const a     = A >= 0 ? (tokens[A + 1] ?? "")        : undefined;
+      const b     = B >= 0 ? (tokens[B + 1] ?? "")        : undefined;
       const right = R >= 0 ? unquote(tokens[R + 1] ?? "") : undefined;
-
-      return api.final.setRow(idx, { left, a, b, right, animOut: X, animIn: X });
+    
+      const ao = tokens.findIndex(t => t.toUpperCase() === "ANIMOUT");
+      const ai = tokens.findIndex(t => t.toUpperCase() === "ANIMIN");
+    
+      const animOut = ao >= 0 ? parseAnim(tokens, ao + 1) : null;
+      const animIn  = ai >= 0 ? parseAnim(tokens, ai + 1) : null;
+    
+      return api.final.setRow(idx, { left, a, b, right, animOut, animIn });
     }
 
     if (head === "FSUMA") {
       const val = tokens[1] ?? "";
-      const aIdx = tokens.findIndex(t => t.toUpperCase() === "ANIM");
-      const A = aIdx >= 0 ? parseAnim(tokens, aIdx + 1) : null;
-      return api.final.setSuma(val, { animOut: A, animIn: A });
+    
+      const ao = tokens.findIndex(t => t.toUpperCase() === "ANIMOUT");
+      const ai = tokens.findIndex(t => t.toUpperCase() === "ANIMIN");
+    
+      const animOut = ao >= 0 ? parseAnim(tokens, ao + 1) : null;
+      const animIn  = ai >= 0 ? parseAnim(tokens, ai + 1) : null;
+    
+      return api.final.setSuma(val, { animOut, animIn });
     }
 
     console.warn("Nieznana komenda (scene):", raw);
