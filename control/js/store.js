@@ -133,34 +133,31 @@ export function createStore(gameId) {
     return allDevicesOnline() && state.flags.audioUnlocked && canFinishSetup();
   }
 
-function isFinalActive() {
-  // zamiast patrzeć na runtime.phase (którego nie ustawiamy),
-  // korzystamy z locka
-  return state.locks.finalActive === true;
-}
-
-function canEnterCard(card) {
-  if (card === "devices") return true;
-
-  if (card === "setup") {
-    // Można wejść do ustawień, gdy urządzenia są gotowe
-    // (ale nie, gdy finał już trwa).
-    return state.completed.devices && !isFinalActive();
+  function isFinalActive() {
+    // zamiast patrzeć na runtime.phase (którego nie ustawiamy),
+    // korzystamy z locka
+    return state.locks.finalActive === true;
   }
 
-  if (card === "rounds") {
-    // Do rozgrywki dopiero gdy setup da się zakończyć
-    return state.completed.devices && canFinishSetup();
+  function canEnterCard(card) {
+    if (card === "devices") return true;
+  
+    if (card === "setup") {
+      // można wejść po urządzeniach, ale NIE w trakcie finału
+      return state.completed.devices && !isFinalActive();
+    }
+  
+    if (card === "rounds") {
+      return state.completed.devices && canFinishSetup();
+    }
+  
+    if (card === "final") {
+      return state.hasFinal === true && canFinishSetup();
+    }
+  
+    return false;
   }
-
-  if (card === "final") {
-    // Do finału dopiero gdy setup kompletny i finał włączony
-    return state.hasFinal === true && canFinishSetup();
-  }
-
-  return false;
-}
-
+  
   function setActiveCard(card) {
     if (!canEnterCard(card)) return;
     state.activeCard = card;
