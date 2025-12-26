@@ -163,7 +163,6 @@ await api.big.animIn({
 
 await api.big.animOut( ... ); // analogicznie
 ```
-
 ---
 
 ### 5.2 Jak interpretowane jest `ms`
