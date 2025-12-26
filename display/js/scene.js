@@ -277,40 +277,50 @@ export async function createScene() {
     { out = null, in: inn = null, color = LIT.main } = {}
   ) => {
     const area = { c1: f.c1, r1: f.r1, c2: f.c2, r2: f.r2 };
-  
+
     const normalizeOpts = (a) => {
       if (!a) return undefined;
       const opts = {};
-      if (a.pixel)    opts.pixel    = true;
+      if (a.pixel)          opts.pixel    = true;
       if (a.pxBatch != null)  opts.pxBatch  = a.pxBatch;
       if (a.stepPxMs != null) opts.stepPxMs = a.stepPxMs;
       if (a.tileMs   != null) opts.tileMs   = a.tileMs;
       return opts;
     };
-  
-    // ------- ANIM OUT -------
-    if (out) {
+
+    const hasOut = !!out;
+    const hasIn  = !!inn;
+
+    // ======= 1) ANIMOUT + zapis =======
+    // Jeśli *jest* OUT, to go respektujemy:
+    //   OUT -> writeField -> (ew. IN)
+    if (hasOut) {
       const type = out.type || "edge";
-      // jeden wspólny sensowny fallback, np. 20 ms
       const step = normMs(out.ms, 20);
       const opts = normalizeOpts(out);
-    
+
       if (type === "edge") {
         await anim.outEdge(big, area, out.dir || "left", step, opts);
       } else if (type === "matrix") {
         await anim.outMatrix(big, area, out.axis || "down", step, opts);
       }
+
+      // po wyjściu nadpisujemy nową treścią
+      writeField(GLYPHS, big, f, text, color);
+    } else {
+      // ======= 2) BRAK ANIMOUT =======
+      // Reguła, o którą prosisz:
+      // traktujemy pole jak czyste i po prostu NADPISUJEMY,
+      // nie robimy żadnego dodatkowego czyszczenia przed.
+      writeField(GLYPHS, big, f, text, color);
     }
-  
-    // zapisujemy nowe znaki
-    writeField(GLYPHS, big, f, text, color);
-  
-    // ------- ANIM IN -------
-    if (inn) {
+
+    // ======= 3) ANIMIN (opcjonalny) =======
+    if (hasIn) {
       const type = inn.type || "edge";
       const step = normMs(inn.ms, 20);
       const opts = normalizeOpts(inn);
-    
+
       if (type === "edge") {
         await anim.inEdge(big, area, inn.dir || "left", step, opts);
       } else if (type === "matrix") {
@@ -318,7 +328,6 @@ export async function createScene() {
       }
     }
   };
-  
 
   // ============================
   // Layout: ROUNDS (6 linii)
