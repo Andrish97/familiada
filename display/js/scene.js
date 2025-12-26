@@ -1230,6 +1230,31 @@ export async function createScene() {
           drawFinalSum();
         }
       },
+
+            // Ustawia sumę aktualnie wybranego trybu (A/B) i rysuje w wierszu 9
+      setSuma: async (val, { animOut = null, animIn = null } = {}) => {
+        if (mode !== BIG_MODES.FINAL) await api.mode.set("FINAL");
+
+        const v = (val ?? "").toString();
+
+        if (finalState.sumMode === "A") {
+          finalState.sumA = v;
+        } else {
+          finalState.sumB = v;
+        }
+
+        const area = { c1: 1, r1: 9, c2: 30, r2: 9 };
+
+        if (animOut) {
+          await api.big.animOut({ ...animOut, area });
+        }
+
+        drawFinalSum();
+
+        if (animIn) {
+          await api.big.animIn({ ...animIn, area });
+        }
+      },
     
       // aliasy jeśli będziesz chciał sterować konkretną sumą z JS
       setSumaA: async (val, anims={}) => {
