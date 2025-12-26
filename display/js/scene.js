@@ -416,10 +416,14 @@ export async function createScene() {
   // Small displays rules
   // ============================================================
   const setTripleDigits = (GLYPHS, tripleTiles, text, onColor) => {
-    const s = (text ?? "").toString();
+    let s = (text ?? "").toString().replace(/\D/g, "");
+  
+    // maksymalnie 3 znaki, ale wyrównane do prawej
+    if (s.length > 3) s = s.slice(-3);
+    s = s.padStart(3, " ");
+  
     for (let i = 0; i < 3; i++) {
-      const raw = s[i] ?? " ";
-      const ch = isDigit(raw) ? raw : " ";
+      const ch = s[i];
       renderCharToTile(GLYPHS, tripleTiles[i], ch, onColor, COLORS.dotOff);
     }
   };
