@@ -106,8 +106,11 @@ export function createStore(gameId) {
   }
 
   function isFinalActive() {
-    return state.final?.runtime?.phase && state.final.runtime.phase !== "IDLE";
+    const step = state.final?.step || "f_start";
+    // wszystko poza ekranem startowym traktujemy jako "finał aktywny"
+    return step !== "f_start";
   }
+
 
   function teamsOk() {
     return state.teams.teamA.trim().length > 0 || state.teams.teamB.trim().length > 0;
