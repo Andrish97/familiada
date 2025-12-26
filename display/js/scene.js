@@ -1231,29 +1231,35 @@ export async function createScene() {
         }
       },
 
-            // Ustawia sumę aktualnie wybranego trybu (A/B) i rysuje w wierszu 9
+      // Ustawia sumę aktualnie wybranego trybu (A/B),
+      // bez ruszania reszty FINAL – tylko label + wartość.
       setSuma: async (val, { animOut = null, animIn = null } = {}) => {
-        if (mode !== BIG_MODES.FINAL) await api.mode.set("FINAL");
-
         const v = (val ?? "").toString();
 
+        // aktualizujemy stan
         if (finalState.sumMode === "A") {
           finalState.sumA = v;
         } else {
           finalState.sumB = v;
         }
 
-        const area = { c1: 1, r1: 9, c2: 30, r2: 9 };
+        // wybieramy odpowiednie pola pod aktualny tryb sumy
+        const isA = (finalState.sumMode === "A");
+        const labelField = isA ? FINAL.sumaALabel : FINAL.sumaBLabel;
+        const valField   = isA ? FINAL.sumaAVal   : FINAL.sumaBVal;
 
-        if (animOut) {
-          await api.big.animOut({ ...animOut, area });
-        }
+        const txt = alignRight(v, 3);
 
-        drawFinalSum();
+        // animacja WYJŚCIA / WEJŚCIA tylko na polu wartości (ew. label jak chcesz)
+        // label rysujemy na sztywno jako "SUMA" bez kombinacji
+        writeField(GLYPHS, big, labelField, "SUMA", LIT.main);
 
-        if (animIn) {
-          await api.big.animIn({ ...animIn, area });
-        }
+        // animacja na VALUE
+        await updateField(GLYPHS, big, valField, txt, {
+          out: animOut,
+          in: animIn,
+          color: LIT.main,
+        });
       },
     
       // aliasy jeśli będziesz chciał sterować konkretną sumą z JS
