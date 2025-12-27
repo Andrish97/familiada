@@ -456,58 +456,87 @@
 }
 
 
-.modal.hidden { display:none; }
+/* ===== Modal: link + QR urządzenia ===== */
+
+.modalBackdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.55);
+  backdrop-filter: blur(4px);
+  z-index: 90;
+}
+
 .modal {
-  position:fixed;
-  inset:0;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  z-index:50;
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 91;
 }
-.modalBack{
-  position:absolute;
-  inset:0;
-  background:rgba(0,0,0,.55);
+
+.modal.hidden,
+.modalBackdrop.hidden {
+  display: none;
 }
-.modalBox{
-  position:relative;
-  background:#111;
-  border-radius:12px;
-  padding:16px 18px;
-  min-width:260px;
-  max-width:360px;
-  box-shadow:0 18px 60px rgba(0,0,0,.6);
+
+.modalBox {
+  background: #05050a;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,.12);
+  padding: 16px 18px 18px;
+  width: min(420px, calc(100% - 32px));
+  box-shadow: 0 20px 40px rgba(0,0,0,.5);
 }
-.modalHead{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  margin-bottom:10px;
+
+.modalHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
 }
-.modalTitle{
-  font-weight:900;
-  letter-spacing:.05em;
-  text-transform:uppercase;
-  font-size:13px;
+
+.modalTitle {
+  font-weight: 700;
+  font-size: 15px;
 }
-.modalBody{
-  display:flex;
-  flex-direction:column;
-  gap:12px;
+
+.modalBody {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
 }
-.modalRow .lbl{
-  font-size:11px;
-  opacity:.75;
-  text-transform:uppercase;
-  margin-bottom:4px;
+
+.modalQr img {
+  width: 120px;
+  height: 120px;
+  border-radius: 8px;
+  background: #000;
 }
-.modalRow a{
-  word-break:break-all;
-  font-size:13px;
+
+.modalLink {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
-.modalRow img{
-  max-width:220px;
-  border-radius:6px;
-  border:1px solid rgba(255,255,255,.15);
+
+.modalLink label {
+  font-size: 11px;
+  opacity: .8;
 }
+
+.modalLink input {
+  width: 100%;
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(255,255,255,.2);
+  background: #05050a;
+  color: #fff;
+  font-size: 12px;
+}
+
+.modalLink .btn {
+  align-self: flex-start;
+}
+
