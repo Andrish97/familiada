@@ -108,6 +108,13 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     } catch {}
   }
 
+  // DODAJ TO:
+  function refresh() {
+    const r = store.state.rounds;
+    ui.setRoundsHud(r);
+    ui.showRoundsStep(r.step || "r_ready");
+  }
+  
   // === Główne stany gry ===
 
   async function stateGameReady() {
