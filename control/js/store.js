@@ -1,13 +1,8 @@
 export function createStore(gameId) {
-  const KEY = `familiada:control:v5:${gameId}`;
+  const KEY = `familiada:control:v6:${gameId}`;
   const listeners = new Set();
-  const STALE_MS = 5 * 60 * 1000; // 5 minut
 
   const state = {
-    gameId,
-    meta: {
-      savedAt: Date.now(),
-    },
     activeCard: "devices",
 
     steps: {
@@ -21,8 +16,7 @@ export function createStore(gameId) {
     },
 
     locks: {
-      gameStarted: false,     // po „Start gry” blokujemy powrót do setup (tak jak ustaliliście)
-      finalActive: false    
+      gameStarted: false, // po „Gra gotowa” blokujemy powrót do setup
     },
 
     teams: {
@@ -31,20 +25,20 @@ export function createStore(gameId) {
     },
 
     hasFinal: null,
-    
+
     final: {
       picked: [],
       confirmed: false,
       runtime: {
-        phase: "IDLE", // IDLE | P1_ENTRY | P1_MAP | ROUND2_START | P2_ENTRY | P2_MAP | FINISH
+        phase: "IDLE", // IDLE lub inny gdy finał trwa
         sum: 0,
-        winSide: "A",            // "A"|"B" (strona timera)
-        timer: { running:false, secLeft:0, phase:"P1" }, // P1=15, P2=20
-        mapIndex: 0,             // 0..4
-        p1List: null,            // [{text,status}] len 5, status: EMPTY|FILLED
-        p2List: null,            // [{text,status}] len 5, status: EMPTY|FILLED|REPEAT
-        mapP1: null,             // [{choice, matchId, outText, pts}] len 5
-        mapP2: null,             // [{choice, matchId, outText, pts}] len 5
+        winSide: "A",
+        timer: { running: false, secLeft: 0, phase: "P1" },
+        mapIndex: 0,
+        p1List: null,
+        p2List: null,
+        mapP1: null,
+        mapP2: null,
         reached200: false,
       },
       step: "f_start",
@@ -57,13 +51,12 @@ export function createStore(gameId) {
       sentBlackAfterDisplayOnline: false,
       audioUnlocked: false,
       qrOnDisplay: false,
-      finalUnlocked: false,
     },
 
     rounds: {
       phase: "IDLE", // IDLE | READY | INTRO | ROUND_ACTIVE
       roundNo: 1,
-      controlTeam: null, // "A"|"B"
+      controlTeam: null, // "A" | "B"
       bankPts: 0,
       xA: 0,
       xB: 0,
@@ -71,16 +64,14 @@ export function createStore(gameId) {
       step: "r_ready",
       passUsed: false,
       stealWon: false,
-      winnerTeam: null,  // "A" | "B" po dojściu do finału
 
-
-      question: null, // {id, ord, text}
-      answers: [],    // [{id, ord, text, fixed_points}]
-      revealed: new Set(), // ord set
+      question: null,
+      answers: [],
+      revealed: new Set(),
 
       duel: {
         enabled: false,
-        lastPressed: null, // "A"|"B"
+        lastPressed: null,
       },
 
       timer3: {
@@ -90,85 +81,116 @@ export function createStore(gameId) {
 
       steal: {
         active: false,
-        used: false, // single steal attempt
+        used: false,
       },
 
-      allowPass: false, // after first correct answer
-      canEnterFinal: false,
+      allowPass: false,
     },
   };
 
-  function emit() {
-    // aktualizuj timestamp przed zapisaniem
-    state.meta = state.meta || {};
-    state.meta.savedAt = Date.now();
+  // --- ZAPIS DO localStorage + TTL 5 minut ---
 
+  function serialize(s) {
+    const snap = structuredClone(s);
+    snap.rounds.revealed = Array.from(s.rounds.revealed);
+    return {
+      _v: 1,
+      savedAt: Date.now(),
+      state: snap,
+    };
+  }
+
+  function emit() {
     try {
       localStorage.setItem(KEY, JSON.stringify(serialize(state)));
     } catch {}
-
     for (const fn of listeners) fn(state);
   }
 
-  function subscribe(fn) { listeners.add(fn); return () => listeners.delete(fn); }
-
-  function serialize(s) {
-    // convert Sets
-    const out = structuredClone(s);
-    out.rounds.revealed = Array.from(s.rounds.revealed);
-    return out;
-  }
-
-  function teamsOk() {
-    return state.teams.teamA.trim().length > 0 || state.teams.teamB.trim().length > 0;
-  }
-
-  function canFinishSetup() {
-    if (!teamsOk()) return false;
-    if (state.hasFinal === false) return true;
-    if (state.hasFinal === true) {
-      return state.final.confirmed === true && state.final.picked.length === 5;
-    }
-    return false;
-  }
-
-  function allDevicesOnline() {
-    return state.flags.displayOnline && state.flags.hostOnline && state.flags.buzzerOnline;
-  }
-
-  function canStartRounds() {
-    return allDevicesOnline() && state.flags.audioUnlocked && canFinishSetup();
+  function subscribe(fn) {
+    listeners.add(fn);
+    return () => listeners.delete(fn);
   }
 
   function isFinalActive() {
-    // zamiast patrzeć na runtime.phase (którego nie ustawiamy),
-    // korzystamy z locka
-    return state.locks.finalActive === true;
+    return !!(state.final?.runtime?.phase && state.final.runtime.phase !== "IDLE");
   }
 
-  function canEnterCard(card) {
-    if (card === "devices") return true;
+  function hydrate() {
+    try {
+      const raw = localStorage.getItem(KEY);
+      if (!raw) return;
 
-    if (card === "setup") {
-      // ustawień nie zmieniamy podczas gry ani finału
-      return state.completed.devices && canFinishSetup() && !isFinalActive() && !state.locks.gameStarted;
+      const parsed = JSON.parse(raw);
+
+      // wersja z wrapperem {_v, savedAt, state}
+      const savedAt = typeof parsed?.savedAt === "number" ? parsed.savedAt : null;
+      const data =
+        parsed?.state && typeof parsed.state === "object" ? parsed.state : parsed;
+
+      // TTL: jeśli stan starszy niż 5 minut – ignorujemy i startujemy od zera
+      if (savedAt && Date.now() - savedAt > 5 * 60 * 1000) {
+        return;
+      }
+
+      if (data?.activeCard && typeof data.activeCard === "string") {
+        state.activeCard = data.activeCard;
+      }
+
+      if (data?.steps?.devices) state.steps.devices = data.steps.devices;
+      if (data?.steps?.setup) state.steps.setup = data.steps.setup;
+
+      if (data?.completed) {
+        state.completed.devices = !!data.completed.devices;
+        state.completed.setup = !!data.completed.setup;
+      }
+
+      if (data?.locks) {
+        state.locks.gameStarted = !!data.locks.gameStarted;
+      }
+
+      if (data?.teams) {
+        state.teams.teamA = String(data.teams.teamA ?? "");
+        state.teams.teamB = String(data.teams.teamB ?? "");
+      }
+
+      if (typeof data?.hasFinal === "boolean") state.hasFinal = data.hasFinal;
+
+      if (data?.final) {
+        state.final.picked = Array.isArray(data.final.picked)
+          ? data.final.picked.slice(0, 5)
+          : [];
+        state.final.confirmed = !!data.final.confirmed;
+        if (data.final.runtime) {
+          state.final.runtime.sum = Number(data.final.runtime.sum || 0);
+          state.final.runtime.winSide = data.final.runtime.winSide || "A";
+        }
+        if (data.final.step) {
+          state.final.step = data.final.step;
+        }
+      }
+
+      if (data?.flags) {
+        state.flags.displayOnline = !!data.flags.displayOnline;
+        state.flags.hostOnline = !!data.flags.hostOnline;
+        state.flags.buzzerOnline = !!data.flags.buzzerOnline;
+        state.flags.sentBlackAfterDisplayOnline =
+          !!data.flags.sentBlackAfterDisplayOnline;
+        state.flags.audioUnlocked = !!data.flags.audioUnlocked;
+        state.flags.qrOnDisplay = !!data.flags.qrOnDisplay;
+      }
+
+      if (data?.rounds) {
+        state.rounds.roundNo = Number(data.rounds.roundNo || 1);
+        state.rounds.totals = data.rounds.totals || state.rounds.totals;
+      }
+    } catch {
+      // cokolwiek poszło źle -> start od zera
     }
 
-    if (card === "rounds") {
-      return state.completed.devices && canFinishSetup();
+    if (!canEnterCard(state.activeCard)) {
+      setActiveCard("devices");
     }
-
-    if (card === "final") {
-      // finał tylko jeśli:
-      // - jest włączony
-      // - setup gotowy
-      // - ktoś dobił do 300 (lub masz tu osobny warunek/flagę)
-      const tot = state.rounds.totals || { A: 0, B: 0 };
-      const unlocked = (tot.A >= 300 || tot.B >= 300);
-      return state.hasFinal === true && canFinishSetup() && unlocked;
-    }
-
-    return false;
   }
 
   function setActiveCard(card) {
@@ -177,10 +199,20 @@ export function createStore(gameId) {
     emit();
   }
 
-  function setDevicesStep(step) { state.steps.devices = step; emit(); }
-  function setSetupStep(step) { state.steps.setup = step; emit(); }
+  function setDevicesStep(step) {
+    state.steps.devices = step;
+    emit();
+  }
 
-  function completeCard(card) { state.completed[card] = true; emit(); }
+  function setSetupStep(step) {
+    state.steps.setup = step;
+    emit();
+  }
+
+  function completeCard(card) {
+    state.completed[card] = true;
+    emit();
+  }
 
   function setTeams(a, b) {
     state.teams.teamA = String(a ?? "");
@@ -194,11 +226,6 @@ export function createStore(gameId) {
       state.final.picked = [];
       state.final.confirmed = false;
     }
-    emit();
-  }
-
-  function setFinalActive(v) {
-    state.locks.finalActive = !!v;
     emit();
   }
 
@@ -235,90 +262,60 @@ export function createStore(gameId) {
     emit();
   }
 
-  function hydrate() {
-    try {
-      const raw = localStorage.getItem(KEY);
-      if (!raw) return;
-
-      const p = JSON.parse(raw);
-
-      // --- sprawdzamy „wiek” zapisanego stanu ---
-      const now = Date.now();
-      const savedAt = (p.meta && typeof p.meta.savedAt === "number")
-        ? p.meta.savedAt
-        : null;
-
-      if (savedAt && now - savedAt > STALE_MS) {
-        // zapis jest za stary -> traktujemy jakby go nie było
-        localStorage.removeItem(KEY);
-        return;
-      }
-
-      // --- dalej już Twoje dotychczasowe przepisywanie wartości ---
-      if (p?.activeCard && typeof p.activeCard === "string") {
-        state.activeCard = p.activeCard;
-      }
-
-      if (p?.steps?.devices) state.steps.devices = p.steps.devices;
-      if (p?.steps?.setup) state.steps.setup = p.steps.setup;
-
-      if (p?.completed) {
-        state.completed.devices = !!p.completed.devices;
-        state.completed.setup = !!p.completed.setup;
-      }
-
-      if (p?.locks) {
-        state.locks.gameStarted = !!p.locks.gameStarted;
-        state.locks.finalActive = !!p.locks.finalActive;
-      }
-
-      if (p?.teams) {
-        state.teams.teamA = String(p.teams.teamA ?? "");
-        state.teams.teamB = String(p.teams.teamB ?? "");
-      }
-
-      if (typeof p?.hasFinal === "boolean") state.hasFinal = p.hasFinal;
-
-      if (p?.final) {
-        state.final.picked = Array.isArray(p.final.picked) ? p.final.picked.slice(0, 5) : [];
-        state.final.confirmed = !!p.final.confirmed;
-        if (p.final.step) state.final.step = p.final.step;
-        if (p.final.runtime) {
-          state.final.runtime = {
-            ...state.final.runtime,
-            ...p.final.runtime,
-          };
-        }
-      }
-
-      if (p?.flags) {
-        state.flags.displayOnline = !!p.flags.displayOnline;
-        state.flags.hostOnline = !!p.flags.hostOnline;
-        state.flags.buzzerOnline = !!p.flags.buzzerOnline;
-        state.flags.sentBlackAfterDisplayOnline = !!p.flags.sentBlackAfterDisplayOnline;
-        state.flags.audioUnlocked = !!p.flags.audioUnlocked;
-        state.flags.qrOnDisplay = !!p.flags.qrOnDisplay;
-      }
-
-      if (p?.rounds) {
-        state.rounds.roundNo = Number(p.rounds.roundNo || 1);
-        state.rounds.totals = p.rounds.totals || state.rounds.totals;
-        // resztę, jeśli chcesz, możesz też przepisać, ale
-        // nie musisz odtwarzać całego środka rundy po odświeżeniu
-      }
-    } catch {
-      // przy błędzie po prostu startujemy od stanu domyślnego
-    }
-
-    // sanity po hydracji – jak wcześniej:
-    if (!canEnterCard(state.activeCard)) {
-      const order = ["rounds", "final", "setup", "devices"];
-      state.activeCard = order.find((c) => canEnterCard(c)) || "devices";
-    }
+  function teamsOk() {
+    return (
+      state.teams.teamA.trim().length > 0 ||
+      state.teams.teamB.trim().length > 0
+    );
   }
 
-  // po .hydrate(); – startowo upewnij się, że jesteśmy co najmniej na devices
-  if (!canEnterCard(state.activeCard)) setActiveCard("devices");
+  function canFinishSetup() {
+    if (!teamsOk()) return false;
+    if (state.hasFinal === false) return true;
+    if (state.hasFinal === true) {
+      return state.final.confirmed === true && state.final.picked.length === 5;
+    }
+    return false;
+  }
+
+  function allDevicesOnline() {
+    return (
+      state.flags.displayOnline &&
+      state.flags.hostOnline &&
+      state.flags.buzzerOnline
+    );
+  }
+
+  function canStartRounds() {
+    return allDevicesOnline() && state.flags.audioUnlocked && canFinishSetup();
+  }
+
+  function canEnterCard(card) {
+    if (card === "devices") return true;
+
+    if (card === "setup") {
+      // Ustawień nie zmieniamy po starcie gry ani w trakcie finału
+      return state.completed.devices && !state.locks.gameStarted && !isFinalActive();
+    }
+
+    if (card === "rounds") {
+      return state.completed.devices && canFinishSetup();
+    }
+
+    if (card === "final") {
+      // Final odblokowany dopiero gdy gra wystartowała i setup jest skończony
+      return (
+        state.hasFinal === true &&
+        canFinishSetup() &&
+        state.locks.gameStarted === true
+      );
+    }
+
+    return false;
+  }
+
+  // Hydratacja na starcie
+  hydrate();
 
   return {
     state,
@@ -339,7 +336,6 @@ export function createStore(gameId) {
     markSentBlackAfterDisplayOnline,
     setAudioUnlocked,
     setQrOnDisplay,
-    setFinalActive,
 
     teamsOk,
     canFinishSetup,
