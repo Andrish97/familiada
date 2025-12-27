@@ -17,7 +17,7 @@ export function createUI() {
     const el = document.getElementById(id);
     if (el) el.innerHTML = html;
   }
-
+  
   function setMsg(id, text) { const el = $(id); if (el) el.textContent = text || ""; }
   function setText(id, text) { const el = $(id); if (el) el.textContent = text ?? ""; }
   function setValue(id, value) { const el = $(id); if (el) el.value = value ?? ""; }
@@ -176,6 +176,30 @@ export function createUI() {
     b.textContent = "QR na wyświetlaczu";
   }
 
+    function showDeviceModal(info) {
+    const box = $("devModal");
+    if (!box || !info) return;
+  
+    box.classList.remove("hidden");
+    setText("devModalTitle", info.label || "Urządzenie");
+  
+    const a = $("devModalLink");
+    if (a) {
+      a.href = info.url || "#";
+      a.textContent = info.url || "—";
+    }
+  
+    const img = $("devModalQr");
+    if (img) img.src = info.qr || "";
+  
+    // zamykanie
+    const close = $("devModalClose");
+    if (close) close.onclick = () => box.classList.add("hidden");
+    const back = box.querySelector(".modalBack");
+    if (back) back.onclick = () => box.classList.add("hidden");
+  }
+
+
   function setRoundsHud(r) {
     setText("roundNo", String(r.roundNo));
     setText("controlTeam", r.controlTeam ? (r.controlTeam === "A" ? "A" : "B") : "—");
@@ -241,6 +265,10 @@ export function createUI() {
     $("btnBack")?.addEventListener("click", () => emit("top.back"));
     $("btnLogout")?.addEventListener("click", () => emit("top.logout"));
     $("btnAlertClose")?.addEventListener("click", () => hideAlert());
+        // klik w status urządzeń w pasku
+    $("rowDisplay")?.addEventListener("click", () => emit("devices.showInfo", "display"));
+    $("rowHost")?.addEventListener("click", () => emit("devices.showInfo", "host"));
+    $("rowBuzzer")?.addEventListener("click", () => emit("devices.showInfo", "buzzer"));
 
     // devices
     $("btnDevicesNext")?.addEventListener("click", () => emit("devices.next"));
@@ -425,6 +453,7 @@ export function createUI() {
 
     setGameHeader,
     setHtml,
+    showDeviceModal,
   };
 }
 
