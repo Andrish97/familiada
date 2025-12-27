@@ -377,29 +377,29 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
 
   async function goEndRound() {
     const r = store.state.rounds;
-
+  
     const bank = nInt(r.bankPts, 0);
     if (!r.controlTeam) {
       ui.setMsg("msgRounds", "Brak drużyny z kontrolą – nie mogę przyznać banku.");
       return;
     }
-
-    // Jeżeli była kradzież i się udała – bank idzie do drużyny kradnącej (czyli odwrotnej)
-    let winner = r.controlTeam;
+  
+    // Jeżeli kradzież jest aktywna, ale jeszcze nie rozstrzygnięta – nie kończymy
     if (r.steal.active && !r.steal.used) {
-      // jeszcze nie rozstrzygnięta – nie kończymy
       ui.setMsg("msgRounds", "Najpierw rozstrzygnij kradzież.");
       return;
     }
-    if (r.stealUsed && r.stealWon) {
-      winner = r.controlTeam === "A" ? "B" : "A";
-    }
-
+  
+    // Domyślnie bank dostaje drużyna z kontrolą
+    let winner = r.controlTeam;
+  
+    // (na razie zakładamy, że jeśli kradzież była, to rozstrzygnięcie
+    //  kto wygrał, robisz w innym miejscu – tu tylko przyznajemy bank)
     r.totals[winner] = nInt(r.totals[winner], 0) + bank;
-
+  
     await display.roundsSetTotals(r.totals);
     ui.setRoundsHud(r);
-
+  
     ui.setMsg("msgRounds", `Koniec rundy. Bank ${bank} pkt dla drużyny ${winner}.`);
     setStep("r_end");
   }
