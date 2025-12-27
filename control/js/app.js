@@ -196,6 +196,12 @@ async function main() {
     location.href = "/familiada/index.html";
   });
 
+    // DEVICE modal z authbara
+  ui.on("devices.showInfo", (kind) => {
+    const info = devices.getDeviceInfo(kind);
+    ui.showDeviceModal(info);
+  });
+
   // DEVICE steps
   ui.on("devices.next", () => store.setDevicesStep("devices_hostbuzzer"));
   ui.on("devices.back", () => store.setDevicesStep("devices_display"));
