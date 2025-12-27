@@ -111,17 +111,33 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
   // === Główne stany gry ===
 
   async function stateGameReady() {
-    // przycisk "Gra gotowa"
+    // Twardy reset stanu rundy + ustawienie ekranu w tryb "gra gotowa"
+    const r = store.state.rounds;
+  
+    r.phase = "READY";
+    r.step = "r_intro";
+    r.bankPts = 0;
+    r.xA = 0;
+    r.xB = 0;
+    r.passUsed = false;
+    r.stealWon = false;
+    r.question = null;
+    r.answers = [];
+    r.revealed = new Set();
+    r.duel = { enabled: false, lastPressed: null };
+    r.timer3 = { running: false, endsAt: 0 };
+    r.steal = { active: false, used: false };
+    r.allowPass = false;
+  
+    // display: APP GAME + BLANK + wyczyszczenie trypletów
     const { teamA, teamB } = store.state.teams;
-    ensureRoundsState();
-
-    store.state.rounds.phase = "READY";
-    setStep("r_ready");
-
-    await display.stateGameReady(teamA, teamB);
-
-    ui.setMsg("msgRoundsIntro", "Gra gotowa. Ekran oczekuje na start.");
-    ui.setRoundsHud(store.state.rounds);
+    await display.stateGameReady(teamA || "", teamB || "");
+  
+    // blokujemy ustawienia od tego momentu
+    store.state.locks.gameStarted = true;
+  
+    ui.setMsg("msgRounds", "Ustawiono stan: gra gotowa. Ekran czeka na start gry.");
+    refresh(); // odświeża HUD i pokazuje krok r_intro
   }
 
   async function stateStartGameIntro() {
