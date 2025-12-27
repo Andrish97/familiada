@@ -86,6 +86,7 @@ export function createStore(gameId) {
       },
 
       allowPass: false, // after first correct answer
+      canEnterFinal: false,
     },
   };
 
@@ -143,20 +144,34 @@ export function createStore(gameId) {
     if (card === "devices") return true;
   
     if (card === "setup") {
-      // można wejść po urządzeniach, ale NIE w trakcie finału
-      return state.completed.devices && !isFinalActive();
+      // ustawienia:
+      // - wymagają ukończenia devices
+      // - NIE wolno tam wracać po "Gra gotowa"
+      if (!state.completed.devices) return false;
+      if (state.locks.gameStarted) return false;
+      return true;
     }
   
     if (card === "rounds") {
+      // rozgrywka dopiero, gdy:
+      // - devices ukończone
+      // - setup ukończony (drużyny + ewentualny finał)
       return state.completed.devices && canFinishSetup();
     }
   
     if (card === "final") {
-      return state.hasFinal === true && canFinishSetup();
+      // finał:
+      // - gra musi mieć finał
+      // - setup musi być dokończony
+      // - i dopiero jak "dojdziemy" do finału z rozgrywki (patrz rounds.canEnterFinal)
+      if (!state.hasFinal) return false;
+      if (!canFinishSetup()) return false;
+      return !!state.rounds.canEnterFinal;
     }
   
     return false;
   }
+
   
   function setActiveCard(card) {
     if (!canEnterCard(card)) return;
