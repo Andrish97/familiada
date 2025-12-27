@@ -328,13 +328,12 @@ export async function createScene() {
       const type = inn.type || "edge";
       const step = normMs(inn.ms, 20);
       const opts = normalizeOpts(inn);
-            
+
       if (type === "edge") {
         await anim.inEdge(big, area, inn.dir || "left", step, opts);
       } else if (type === "matrix") {
         await anim.inMatrix(big, area, inn.axis || "down", step, opts);
       }
-    
     }
   };
 
