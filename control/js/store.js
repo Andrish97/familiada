@@ -1,8 +1,13 @@
 export function createStore(gameId) {
   const KEY = `familiada:control:v5:${gameId}`;
   const listeners = new Set();
+  const STALE_MS = 5 * 60 * 1000; // 5 minut
 
   const state = {
+    gameId,
+    meta: {
+      savedAt: Date.now(),
+    ,}
     activeCard: "devices",
 
     steps: {
@@ -94,9 +99,14 @@ export function createStore(gameId) {
   };
 
   function emit() {
+    // aktualizuj timestamp przed zapisaniem
+    state.meta = state.meta || {};
+    state.meta.savedAt = Date.now();
+
     try {
       localStorage.setItem(KEY, JSON.stringify(serialize(state)));
     } catch {}
+
     for (const fn of listeners) fn(state);
   }
 
@@ -108,13 +118,6 @@ export function createStore(gameId) {
     out.rounds.revealed = Array.from(s.rounds.revealed);
     return out;
   }
-
-  function isFinalActive() {
-    const step = state.final?.step || "f_start";
-    // wszystko poza ekranem startowym traktujemy jako "finał aktywny"
-    return step !== "f_start";
-  }
-
 
   function teamsOk() {
     return state.teams.teamA.trim().length > 0 || state.teams.teamB.trim().length > 0;
@@ -145,36 +148,26 @@ export function createStore(gameId) {
 
   function canEnterCard(card) {
     if (card === "devices") return true;
-  
+
     if (card === "setup") {
-      // ustawienia:
-      // - wymagają ukończenia devices
-      // - NIE wolno tam wracać po "Gra gotowa"
-      if (!state.completed.devices) return false;
-      if (state.locks.gameStarted) return false;
-      return true;
+      // ustawień nie zmieniamy podczas gry ani finału
+      return state.completed.devices && canFinishSetup() && !isFinalActive() && !state.locks.gameStarted;
     }
-  
+
     if (card === "rounds") {
-      // rozgrywka dopiero, gdy:
-      // - devices ukończone
-      // - setup ukończony (drużyny + ewentualny finał)
       return state.completed.devices && canFinishSetup();
     }
-  
+
     if (card === "final") {
-      // finał dostępny dopiero gdy:
-      // - gra ma finał
-      // - setup jest poprawnie zakończony
-      // - i FINAŁ został odblokowany po dojściu do 300 pkt
-      //   albo finał jest już w trakcie (powrót do karty)
-      const finalActive = isFinalActive();
-      return (
-        state.hasFinal === true &&
-        canFinishSetup() &&
-        (state.flags.finalUnlocked || finalActive)
-      );
+      // finał tylko jeśli:
+      // - jest włączony
+      // - setup gotowy
+      // - ktoś dobił do 300 (lub masz tu osobny warunek/flagę)
+      const tot = state.rounds.totals || { A: 0, B: 0 };
+      const unlocked = (tot.A >= 300 || tot.B >= 300);
+      return state.hasFinal === true && canFinishSetup() && unlocked;
     }
+
     return false;
   }
 
@@ -246,8 +239,22 @@ export function createStore(gameId) {
     try {
       const raw = localStorage.getItem(KEY);
       if (!raw) return;
+
       const p = JSON.parse(raw);
 
+      // --- sprawdzamy „wiek” zapisanego stanu ---
+      const now = Date.now();
+      const savedAt = (p.meta && typeof p.meta.savedAt === "number")
+        ? p.meta.savedAt
+        : null;
+
+      if (savedAt && now - savedAt > STALE_MS) {
+        // zapis jest za stary -> traktujemy jakby go nie było
+        localStorage.removeItem(KEY);
+        return;
+      }
+
+      // --- dalej już Twoje dotychczasowe przepisywanie wartości ---
       if (p?.activeCard && typeof p.activeCard === "string") {
         state.activeCard = p.activeCard;
       }
@@ -260,7 +267,10 @@ export function createStore(gameId) {
         state.completed.setup = !!p.completed.setup;
       }
 
-      if (p?.locks) state.locks.gameStarted = !!p.locks.gameStarted;
+      if (p?.locks) {
+        state.locks.gameStarted = !!p.locks.gameStarted;
+        state.locks.finalActive = !!p.locks.finalActive;
+      }
 
       if (p?.teams) {
         state.teams.teamA = String(p.teams.teamA ?? "");
@@ -272,6 +282,13 @@ export function createStore(gameId) {
       if (p?.final) {
         state.final.picked = Array.isArray(p.final.picked) ? p.final.picked.slice(0, 5) : [];
         state.final.confirmed = !!p.final.confirmed;
+        if (p.final.step) state.final.step = p.final.step;
+        if (p.final.runtime) {
+          state.final.runtime = {
+            ...state.final.runtime,
+            ...p.final.runtime,
+          };
+        }
       }
 
       if (p?.flags) {
@@ -281,20 +298,19 @@ export function createStore(gameId) {
         state.flags.sentBlackAfterDisplayOnline = !!p.flags.sentBlackAfterDisplayOnline;
         state.flags.audioUnlocked = !!p.flags.audioUnlocked;
         state.flags.qrOnDisplay = !!p.flags.qrOnDisplay;
-        state.flags.finalUnlocked = !!p.flags.finalUnlocked;
       }
 
       if (p?.rounds) {
         state.rounds.roundNo = Number(p.rounds.roundNo || 1);
         state.rounds.totals = p.rounds.totals || state.rounds.totals;
+        // resztę, jeśli chcesz, możesz też przepisać, ale
+        // nie musisz odtwarzać całego środka rundy po odświeżeniu
       }
+    } catch {
+      // przy błędzie po prostu startujemy od stanu domyślnego
+    }
 
-      if (typeof p?.winnerTeam === "string") {
-        state.winnerTeam = p.winnerTeam;
-      }
-    } catch {}
-
-    // sanity po hydracji
+    // sanity po hydracji – jak wcześniej:
     if (!canEnterCard(state.activeCard)) {
       const order = ["rounds", "final", "setup", "devices"];
       state.activeCard = order.find((c) => canEnterCard(c)) || "devices";
