@@ -52,6 +52,7 @@ export function createStore(gameId) {
       sentBlackAfterDisplayOnline: false,
       audioUnlocked: false,
       qrOnDisplay: false,
+      finalUnlocked: false,
     },
 
     rounds: {
@@ -65,6 +66,8 @@ export function createStore(gameId) {
       step: "r_ready",
       passUsed: false,
       stealWon: false,
+      winnerTeam: null,  // "A" | "B" po dojściu do finału
+
 
       question: null, // {id, ord, text}
       answers: [],    // [{id, ord, text, fixed_points}]
@@ -160,15 +163,18 @@ export function createStore(gameId) {
     }
   
     if (card === "final") {
-      // finał:
-      // - gra musi mieć finał
-      // - setup musi być dokończony
-      // - i dopiero jak "dojdziemy" do finału z rozgrywki (patrz rounds.canEnterFinal)
-      if (!state.hasFinal) return false;
-      if (!canFinishSetup()) return false;
-      return !!state.rounds.canEnterFinal;
+      // finał dostępny dopiero gdy:
+      // - gra ma finał
+      // - setup jest poprawnie zakończony
+      // - i FINAŁ został odblokowany po dojściu do 300 pkt
+      //   albo finał jest już w trakcie (powrót do karty)
+      const finalActive = isFinalActive();
+      return (
+        state.hasFinal === true &&
+        canFinishSetup() &&
+        (state.flags.finalUnlocked || finalActive)
+      );
     }
-  
     return false;
   }
 
@@ -275,11 +281,16 @@ export function createStore(gameId) {
         state.flags.sentBlackAfterDisplayOnline = !!p.flags.sentBlackAfterDisplayOnline;
         state.flags.audioUnlocked = !!p.flags.audioUnlocked;
         state.flags.qrOnDisplay = !!p.flags.qrOnDisplay;
+        state.flags.finalUnlocked = !!p.flags.finalUnlocked;
       }
 
       if (p?.rounds) {
         state.rounds.roundNo = Number(p.rounds.roundNo || 1);
         state.rounds.totals = p.rounds.totals || state.rounds.totals;
+      }
+
+      if (typeof p?.winnerTeam === "string") {
+        state.winnerTeam = p.winnerTeam;
       }
     } catch {}
 
