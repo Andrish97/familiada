@@ -7,7 +7,7 @@ export function createStore(gameId) {
     gameId,
     meta: {
       savedAt: Date.now(),
-    ,}
+    },
     activeCard: "devices",
 
     steps: {
