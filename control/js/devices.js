@@ -63,11 +63,25 @@ export function createDevices({ game, ui, store, chDisplay, chHost, chBuzzer }) 
     await sendDisplayCmd(`QR HOST "${escQ(urls.hostUrl)}" BUZZER "${escQ(urls.buzzerUrl)}"`);
   }
 
+    function getDeviceInfo(kind) {
+    if (!urls[kind]) return null;
+    return {
+      url: urls[kind],
+      qr: qr[kind] || "",
+      label:
+        kind === "display" ? "Wyświetlacz" :
+        kind === "host"    ? "Prowadzący" :
+        kind === "buzzer"  ? "Przycisk"   :
+        "Urządzenie",
+    };
+  }
+
   return {
     initLinksAndQr,
     sendDisplayCmd,
     sendHostCmd,
     sendBuzzerCmd,
     sendQrToDisplay,
+    getDeviceInfo,
   };
 }
