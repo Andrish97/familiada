@@ -1,155 +1,204 @@
 // anim.js
-// Prosty animator dla wyświetlacza 5x7-tiles
-// API:
-//
-// const anim = createAnimator({ tileAt, snapArea, clearArea, clearTileAt, dotOff });
-//
-// anim.inEdge(big, area, dir, ms, opts)
-// anim.outEdge(big, area, dir, ms, opts)
-// anim.inMatrix(big, area, axis, ms, opts)
-// anim.outMatrix(big, area, axis, ms, opts)
+// Bardziej “higieniczny” animator: jeden spójny createAnimator, 4 funkcje publiczne.
+// Edge/Matrix działają na poziomie kafelków (5x7), bez cudów z pikselami.
+
+export const sleep = (ms) =>
+  new Promise((resolve) => setTimeout(resolve, Math.max(0, ms | 0)));
+
+const range = (n) => Array.from({ length: Math.max(0, n | 0) }, (_, i) => i);
 
 export function createAnimator({ tileAt, snapArea, clearArea, clearTileAt, dotOff }) {
-  const sleep = (ms) =>
-    ms > 0 ? new Promise((resolve) => setTimeout(resolve, ms)) : Promise.resolve();
-
-  const safeInt = (n) => {
-    const x = Number.isFinite(n) ? n : 0;
-    return x | 0;
+  // Mały helper: czy area jest sensowna?
+  const normArea = (area) => {
+    if (!area) throw new Error("Animator: brak area");
+    const c1 = area.c1 | 0;
+    const r1 = area.r1 | 0;
+    const c2 = area.c2 | 0;
+    const r2 = area.r2 | 0;
+    if (c2 < c1 || r2 < r1) throw new Error("Animator: area z ujemnym rozmiarem");
+    return { c1, r1, c2, r2 };
   };
 
-  const range = (n) => {
-    const len = Math.max(0, safeInt(n));
-    return Array.from({ length: len }, (_, i) => i);
+  // Odtej pory ms traktujemy jako *krok* (tak jak robisz w scene.js)
+  const normMs = (ms, fallback = 20) => {
+    const base = Number.isFinite(ms) ? ms : fallback;
+    return Math.max(0, base | 0);
   };
 
-  const clampArea = (area) => {
-    // minimalne sanity-checki, żeby nigdy nie zrobić length < 0
-    const c1 = safeInt(area?.c1 ?? 1);
-    const r1 = safeInt(area?.r1 ?? 1);
-    const c2 = safeInt(area?.c2 ?? c1);
-    const r2 = safeInt(area?.r2 ?? r1);
-    return {
-      c1: Math.min(c1, c2),
-      c2: Math.max(c1, c2),
-      r1: Math.min(r1, r2),
-      r2: Math.max(r1, r2),
-    };
-  };
-
-  const colsOrder = (area, dir) => {
-    const A = clampArea(area);
-    const cols = range(A.c2 - A.c1 + 1).map((i) => A.c1 + i);
-    if ((dir ?? "").toLowerCase() === "right") cols.reverse();
-    return cols;
-  };
-
-  const rowsOrder = (area, axis) => {
-    const A = clampArea(area);
-    const rows = range(A.r2 - A.r1 + 1).map((i) => A.r1 + i);
-    const ax = (axis ?? "").toLowerCase();
-    if (ax === "up") rows.reverse();
-    // "down" oraz inne traktujemy tak samo
-    return rows;
-  };
-
-  // =====================================================================
-  // EDGE OUT – wycieranie kolumna po kolumnie od krawędzi
-  // =====================================================================
-  async function outEdge(big, area, dir = "left", ms = 12, opts = {}) {
-    const A = clampArea(area);
-    const cols = colsOrder(A, dir);
-    const stepMs = safeInt(ms);
-
-    for (const c of cols) {
-      for (let r = A.r1; r <= A.r2; r++) {
-        clearTileAt(big, c, r);
+  // Odtwarzanie jednego kafla z snapshotu (snapArea)
+  const restoreTileFromSnap = (big, snap, area, col, row) => {
+    const { c1, r1 } = area;
+    const tx = col - c1;
+    const ty = row - r1;
+    const tile = tileAt(big, col, row);
+    const data = snap?.[ty]?.[tx];
+    if (!tile || !data) return;
+    for (let rr = 0; rr < tile.dots.length; rr++) {
+      for (let cc = 0; cc < tile.dots[0].length; cc++) {
+        const fill = data?.[rr]?.[cc];
+        if (fill != null) tile.dots[rr][cc].setAttribute("fill", fill);
       }
-      await sleep(stepMs);
     }
-  }
+  };
 
-  // =====================================================================
-  // EDGE IN – najpierw czyścimy obszar, potem odsłaniamy kolumny
-  // z wcześniej zrobionego snapshota
-  // =====================================================================
-  async function inEdge(big, area, dir = "left", ms = 12, opts = {}) {
-    const A = clampArea(area);
-    const cols = colsOrder(A, dir);
-    const stepMs = safeInt(ms);
+  // Grupowanie pól w “pasy” (kolumny lub wiersze)
+  const buildEdgeGroups = (area, dir) => {
+    const { c1, r1, c2, r2 } = normArea(area);
+    const groups = [];
 
-    // Snapshot zawartości docelowej
+    switch ((dir || "").toLowerCase()) {
+      case "left": {
+        // Wchodzi od prawej do lewej – pasami kolumnowymi
+        for (let c = c2; c >= c1; c--) {
+          const g = [];
+          for (let r = r1; r <= r2; r++) g.push({ c, r });
+          groups.push(g);
+        }
+        break;
+      }
+      case "right": {
+        for (let c = c1; c <= c2; c++) {
+          const g = [];
+          for (let r = r1; r <= r2; r++) g.push({ c, r });
+          groups.push(g);
+        }
+        break;
+      }
+      case "up": {
+        // od dołu do góry – pasy wierszy
+        for (let r = r2; r >= r1; r--) {
+          const g = [];
+          for (let c = c1; c <= c2; c++) g.push({ c, r });
+          groups.push(g);
+        }
+        break;
+      }
+      case "down":
+      default: {
+        for (let r = r1; r <= r2; r++) {
+          const g = [];
+          for (let c = c1; c <= c2; c++) g.push({ c, r });
+          groups.push(g);
+        }
+        break;
+      }
+    }
+    return groups;
+  };
+
+  // Matrix – na razie też “pasy”, tylko inne osie (dla odróżnienia)
+  const buildMatrixGroups = (area, axis) => {
+    const { c1, r1, c2, r2 } = normArea(area);
+    const groups = [];
+
+    switch ((axis || "").toLowerCase()) {
+      case "left": {
+        // od prawej do lewej, ale w “matrix” użyjemy wierszy
+        for (let r = r1; r <= r2; r++) {
+          const g = [];
+          for (let c = c2; c >= c1; c--) g.push({ c, r });
+          groups.push(g);
+        }
+        break;
+      }
+      case "right": {
+        for (let r = r1; r <= r2; r++) {
+          const g = [];
+          for (let c = c1; c <= c2; c++) g.push({ c, r });
+          groups.push(g);
+        }
+        break;
+      }
+      case "up": {
+        for (let c = c1; c <= c2; c++) {
+          const g = [];
+          for (let r = r2; r >= r1; r--) g.push({ c, r });
+          groups.push(g);
+        }
+        break;
+      }
+      case "down":
+      default: {
+        for (let c = c1; c <= c2; c++) {
+          const g = [];
+          for (let r = r1; r <= r2; r++) g.push({ c, r });
+          groups.push(g);
+        }
+        break;
+      }
+    }
+    return groups;
+  };
+
+  // ==========================
+  // EDGE IN
+  // ==========================
+  async function inEdge(big, area, dir = "left", ms = 20, opts = {}) {
+    const A = normArea(area);
+    const step = normMs(ms, 20);
+
     const snap = snapArea(big, A.c1, A.r1, A.c2, A.r2);
-
-    // Startujemy od pustego obszaru
     clearArea(big, A.c1, A.r1, A.c2, A.r2);
 
-    // Odsłaniamy kolumny w kolejności od wewnątrz
-    for (const c of cols) {
-      const sx = c - A.c1;
-      for (let r = A.r1; r <= A.r2; r++) {
-        const sy = r - A.r1;
-        const tileSnap = snap?.[sy]?.[sx];
-        if (!tileSnap) continue;
-        const t = tileAt(big, c, r);
-        if (!t) continue;
+    const groups = buildEdgeGroups(A, dir);
 
-        for (let yy = 0; yy < 7; yy++) {
-          for (let xx = 0; xx < 5; xx++) {
-            const fill = tileSnap[yy]?.[xx] ?? dotOff;
-            t.dots[yy][xx].setAttribute("fill", fill);
-          }
-        }
+    for (const group of groups) {
+      for (const { c, r } of group) {
+        restoreTileFromSnap(big, snap, A, c, r);
       }
-      await sleep(stepMs);
+      if (step > 0) await sleep(step);
     }
   }
 
-  // =====================================================================
-  // MATRIX OUT – wycieranie wiersz po wierszu (góra/dół)
-  // =====================================================================
-  async function outMatrix(big, area, axis = "down", ms = 36, opts = {}) {
-    const A = clampArea(area);
-    const rows = rowsOrder(A, axis);
-    const stepMs = safeInt(ms);
+  // ==========================
+  // EDGE OUT
+  // ==========================
+  async function outEdge(big, area, dir = "left", ms = 20, opts = {}) {
+    const A = normArea(area);
+    const step = normMs(ms, 20);
+    const groups = buildEdgeGroups(A, dir);
 
-    for (const r of rows) {
-      for (let c = A.c1; c <= A.c2; c++) {
+    for (const group of groups) {
+      for (const { c, r } of group) {
         clearTileAt(big, c, r);
       }
-      await sleep(stepMs);
+      if (step > 0) await sleep(step);
     }
   }
 
-  // =====================================================================
-  // MATRIX IN – najpierw czyścimy obszar, potem odsłaniamy wiersze
-  // z wcześniej zrobionego snapshota
-  // =====================================================================
-  async function inMatrix(big, area, axis = "down", ms = 36, opts = {}) {
-    const A = clampArea(area);
-    const rows = rowsOrder(A, axis);
-    const stepMs = safeInt(ms);
+  // ==========================
+  // MATRIX IN
+  // ==========================
+  async function inMatrix(big, area, axis = "down", ms = 20, opts = {}) {
+    const A = normArea(area);
+    const step = normMs(ms, 20);
 
     const snap = snapArea(big, A.c1, A.r1, A.c2, A.r2);
     clearArea(big, A.c1, A.r1, A.c2, A.r2);
 
-    for (const r of rows) {
-      const sy = r - A.r1;
-      for (let c = A.c1; c <= A.c2; c++) {
-        const sx = c - A.c1;
-        const tileSnap = snap?.[sy]?.[sx];
-        if (!tileSnap) continue;
-        const t = tileAt(big, c, r);
-        if (!t) continue;
+    const groups = buildMatrixGroups(A, axis);
 
-        for (let yy = 0; yy < 7; yy++) {
-          for (let xx = 0; xx < 5; xx++) {
-            const fill = tileSnap[yy]?.[xx] ?? dotOff;
-            t.dots[yy][xx].setAttribute("fill", fill);
-          }
-        }
+    for (const group of groups) {
+      for (const { c, r } of group) {
+        restoreTileFromSnap(big, snap, A, c, r);
       }
-      await sleep(stepMs);
+      if (step > 0) await sleep(step);
+    }
+  }
+
+  // ==========================
+  // MATRIX OUT
+  // ==========================
+  async function outMatrix(big, area, axis = "down", ms = 20, opts = {}) {
+    const A = normArea(area);
+    const step = normMs(ms, 20);
+    const groups = buildMatrixGroups(A, axis);
+
+    for (const group of groups) {
+      for (const { c, r } of group) {
+        clearTileAt(big, c, r);
+      }
+      if (step > 0) await sleep(step);
     }
   }
 
