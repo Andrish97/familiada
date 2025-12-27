@@ -176,28 +176,47 @@ export function createUI() {
     b.textContent = "QR na wyświetlaczu";
   }
 
-    function showDeviceModal(info) {
-    const box = $("devModal");
-    if (!box || !info) return;
-  
-    box.classList.remove("hidden");
-    setText("devModalTitle", info.label || "Urządzenie");
-  
-    const a = $("devModalLink");
-    if (a) {
-      a.href = info.url || "#";
-      a.textContent = info.url || "—";
+  // ===== Modal z linkiem/QR urządzenia =====
+
+  function openDeviceModal(kind) {
+    const modal = $("deviceModal");
+    const backdrop = $("deviceModalBackdrop");
+    const titleEl = $("deviceModalTitle");
+    const qrEl = $("deviceModalQr");
+    const linkEl = $("deviceModalLink");
+    if (!modal || !backdrop || !titleEl || !qrEl || !linkEl) return;
+
+    let title = "";
+    let link = "";
+    let qrSrc = "";
+
+    if (kind === "display") {
+      title = "Wyświetlacz";
+      link = $("displayLink")?.value || "";
+      qrSrc = $("imgDisplayQr")?.src || "";
+    } else if (kind === "host") {
+      title = "Prowadzący";
+      link = $("hostLink")?.value || "";
+      qrSrc = $("imgHostQr")?.src || "";
+    } else if (kind === "buzzer") {
+      title = "Przycisk";
+      link = $("buzzerLink")?.value || "";
+      qrSrc = $("imgBuzzerQr")?.src || "";
     }
-  
-    const img = $("devModalQr");
-    if (img) img.src = info.qr || "";
-  
-    // zamykanie
-    const close = $("devModalClose");
-    if (close) close.onclick = () => box.classList.add("hidden");
-    const back = box.querySelector(".modalBack");
-    if (back) back.onclick = () => box.classList.add("hidden");
+
+    titleEl.textContent = title;
+    linkEl.value = link;
+    if (qrSrc) qrEl.src = qrSrc;
+
+    backdrop.classList.remove("hidden");
+    modal.classList.remove("hidden");
   }
+
+  function closeDeviceModal() {
+    $("deviceModalBackdrop")?.classList.add("hidden");
+    $("deviceModal")?.classList.add("hidden");
+  }
+
 
 
   function setRoundsHud(r) {
@@ -265,10 +284,25 @@ export function createUI() {
     $("btnBack")?.addEventListener("click", () => emit("top.back"));
     $("btnLogout")?.addEventListener("click", () => emit("top.logout"));
     $("btnAlertClose")?.addEventListener("click", () => hideAlert());
-        // klik w status urządzeń w pasku
-    $("rowDisplay")?.addEventListener("click", () => emit("devices.showInfo", "display"));
-    $("rowHost")?.addEventListener("click", () => emit("devices.showInfo", "host"));
-    $("rowBuzzer")?.addEventListener("click", () => emit("devices.showInfo", "buzzer"));
+
+    // ===== Kliknięcia kontrolek urządzeń (pigułki) =====
+    $("pillDisplay")?.addEventListener("click", () => openDeviceModal("display"));
+    $("pillHost")?.addEventListener("click", () => openDeviceModal("host"));
+    $("pillBuzzer")?.addEventListener("click", () => openDeviceModal("buzzer"));
+
+    $("btnDeviceModalClose")?.addEventListener("click", () => closeDeviceModal());
+    $("deviceModalBackdrop")?.addEventListener("click", () => closeDeviceModal());
+
+    $("btnDeviceModalCopy")?.addEventListener("click", () => {
+      const inp = $("deviceModalLink");
+      if (!inp) return;
+      try {
+        inp.select();
+        document.execCommand("copy");
+      } catch {
+        // jak nie skopiuje, trudno – nic nie wysadzamy
+      }
+    });
 
     // devices
     $("btnDevicesNext")?.addEventListener("click", () => emit("devices.next"));
