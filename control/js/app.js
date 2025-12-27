@@ -53,7 +53,6 @@ async function main() {
   ui.setGameHeader(game.name, `${game.type} / ${game.status}`);
 
   const store = createStore(game.id);
-  store.hydrate();
 
   // realtime channels
   const chDisplay = rt(`familiada-display:${game.id}`);
