@@ -50,6 +50,26 @@
     <button class="btn xs" id="btnAlertClose" type="button">OK</button>
   </div>
 
+    <div id="devModal" class="modal hidden">
+    <div class="modalBack"></div>
+    <div class="modalBox">
+      <div class="modalHead">
+        <div class="modalTitle" id="devModalTitle">Urządzenie</div>
+        <button type="button" class="btn sm" id="devModalClose">✕</button>
+      </div>
+      <div class="modalBody">
+        <div class="modalRow">
+          <div class="lbl">Link</div>
+          <a href="#" target="_blank" id="devModalLink">—</a>
+        </div>
+        <div class="modalRow">
+          <div class="lbl">Kod QR</div>
+          <img id="devModalQr" alt="QR" />
+        </div>
+      </div>
+    </div>
+  </div>
+
   <main class="wrap wide">
     <div class="shell">
       <!-- LEFT: cards (very narrow) -->
