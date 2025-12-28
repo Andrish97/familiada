@@ -215,7 +215,7 @@ async function main() {
   });
 
   ui.on("display.black", async () => {
-    await devices.sendDisplayCmd("MODE BLACK");
+    await devices.sendDisplayCmd("APP BLACK");
   });
 
   ui.on("qr.toggle", async () => {
@@ -226,7 +226,7 @@ async function main() {
       store.setQrOnDisplay(true);
       ui.setQrToggleLabel(true, store.state.flags.hostOnline && store.state.flags.buzzerOnline);
     } else {
-      await devices.sendDisplayCmd("MODE BLACK");
+      await devices.sendDisplayCmd("APP BLACK");
       store.setQrOnDisplay(false);
       ui.setQrToggleLabel(false, store.state.flags.hostOnline && store.state.flags.buzzerOnline);
     }
