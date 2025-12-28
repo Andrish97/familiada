@@ -193,15 +193,15 @@ export function createUI() {
     if (kind === "display") {
       title = "Wyświetlacz";
       link = $("displayLink")?.value || "";
-      qrSrc = $("imgDisplayQr")?.src || "";
+      qrSrc = $("qrDisplayImg")?.src || "";
     } else if (kind === "host") {
       title = "Prowadzący";
       link = $("hostLink")?.value || "";
-      qrSrc = $("imgHostQr")?.src || "";
+      qrSrc = $("qrHostImg")?.src || "";
     } else if (kind === "buzzer") {
       title = "Przycisk";
       link = $("buzzerLink")?.value || "";
-      qrSrc = $("imgBuzzerQr")?.src || "";
+      qrSrc = $("qrBuzzerImg")?.src || "";
     }
 
     titleEl.textContent = title;
@@ -487,7 +487,10 @@ export function createUI() {
 
     setGameHeader,
     setHtml,
-    showDeviceModal,
+
+    // jeśli chcesz mieć dostęp z zewnątrz:
+    openDeviceModal,
+    closeDeviceModal,
   };
 }
 
