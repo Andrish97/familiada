@@ -91,14 +91,14 @@ export function createStore(gameId) {
   // --- ZAPIS DO localStorage + TTL 5 minut ---
 
   function serialize(s) {
-    const snap = structuredClone(s);
-    snap.rounds.revealed = Array.from(s.rounds.revealed);
-    return {
-      _v: 1,
-      savedAt: Date.now(),
-      state: snap,
-    };
+    const out = structuredClone(s);
+    // Sets → plain arrays
+    out.rounds.revealed = Array.from(s.rounds.revealed || []);
+    // Timestamp – żeby hydrate wiedział, czy to świeże
+    out.savedAt = Date.now();
+    return out;
   }
+
 
   function emit() {
     try {
@@ -124,7 +124,10 @@ export function createStore(gameId) {
       const parsed = JSON.parse(raw);
 
       // wersja z wrapperem {_v, savedAt, state}
-      const savedAt = typeof parsed?.savedAt === "number" ? parsed.savedAt : null;
+      const maxAgeMs = 5 * 60 * 1000;
+      if (typeof p.savedAt !== "number" || Date.now() - p.savedAt > maxAgeMs) {
+        return;
+      }
       const data =
         parsed?.state && typeof parsed.state === "object" ? parsed.state : parsed;
 
@@ -291,26 +294,33 @@ export function createStore(gameId) {
   }
 
   function canEnterCard(card) {
-    if (card === "devices") return true;
-
-    if (card === "setup") {
-      // Ustawień nie zmieniamy po starcie gry ani w trakcie finału
-      return state.completed.devices && !state.locks.gameStarted && !isFinalActive();
+    // URZĄDZENIA – tylko zanim „uzbroimy” grę
+    if (card === "devices") {
+      return !state.locks.gameStarted;
     }
-
+  
+    // USTAWIENIA – po urządzeniach i tylko przed startem gry
+    if (card === "setup") {
+      return state.completed.devices && !state.locks.gameStarted;
+    }
+  
+    // ROZGRYWKA – kiedy urządzenia są gotowe i setup domknięty
     if (card === "rounds") {
       return state.completed.devices && canFinishSetup();
     }
-
+  
+    // FINAŁ – tylko gdy:
+    // - mamy włączony finał
+    // - setup jest domknięty
+    // - któraś drużyna ma już ≥ 300 pkt
     if (card === "final") {
-      // Final odblokowany dopiero gdy gra wystartowała i setup jest skończony
-      return (
-        state.hasFinal === true &&
-        canFinishSetup() &&
-        state.locks.gameStarted === true
-      );
+      const totals = state.rounds.totals || { A: 0, B: 0 };
+      const a = Number(totals.A || 0);
+      const b = Number(totals.B || 0);
+      const unlocked = a >= 300 || b >= 300;
+      return state.hasFinal === true && canFinishSetup() && unlocked;
     }
-
+  
     return false;
   }
 
