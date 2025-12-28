@@ -74,16 +74,15 @@ export function createPresence({ game, ui, store, devices }) {
     if (dOn && !store.state.flags.sentBlackAfterDisplayOnline) {
       (async () => {
         try {
-          await devices.sendDisplayCmd("APP GAME");
-          await devices.sendDisplayCmd("MODE BLANK");
+          // startowo: czarny ekran aplikacji
+          await devices.sendDisplayCmd("APP BLACK");
           await devices.sendHostCmd('SET ""');
           await devices.sendHostCmd("HIDE");
           await devices.sendBuzzerCmd("OFF");
         } catch (_) {
-          // to tylko init – w razie błędu po prostu pomijamy
-        } finally {
-          store.markSentBlackAfterDisplayOnline();
+          // nic, nie wywalamy się
         }
+        store.markSentBlackAfterDisplayOnline();
       })();
     }
   }
