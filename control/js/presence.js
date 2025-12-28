@@ -72,12 +72,20 @@ export function createPresence({ game, ui, store, devices }) {
 
     // after projector connected -> send BLACK once
     if (dOn && !store.state.flags.sentBlackAfterDisplayOnline) {
-      try {
-        await devices.sendDisplayCmd("MODE BLACK");
-        store.markSentBlackAfterDisplayOnline();
-      } catch {}
+      (async () => {
+        try {
+          await devices.sendDisplayCmd("APP GAME");
+          await devices.sendDisplayCmd("MODE BLANK");
+          await devices.sendHostCmd('SET ""');
+          await devices.sendHostCmd("HIDE");
+          await devices.sendBuzzerCmd("OFF");
+        } catch (_) {
+          // to tylko init – w razie błędu po prostu pomijamy
+        } finally {
+          store.markSentBlackAfterDisplayOnline();
+        }
+      })();
     }
-  }
 
   async function start() {
     await tick();
