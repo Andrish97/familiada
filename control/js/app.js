@@ -64,8 +64,17 @@ async function main() {
   const presence = createPresence({ game, ui, store, devices });
 
   const display = createDisplay({ devices, store });
-  const rounds = createRounds({ ui, store, devices, display, loadQuestions, loadAnswers });
+  const rounds = createRounds({
+    ui,
+    store,
+    devices,
+    display,
+    loadQuestions,
+    loadAnswers,
+    gameId: game.id,   // <<< KLUCZOWE
+  });
   rounds.bootIfNeeded();
+
   const final = createFinal({ ui, store, devices, display, loadAnswers });
 
   // === PICKER PYTAŃ FINAŁU (przeniesiony z dawnego gameFinal) ===
