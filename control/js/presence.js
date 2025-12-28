@@ -87,15 +87,15 @@ export function createPresence({ game, ui, store, devices }) {
       })();
     }
 
-  async function start() {
-    await tick();
-    timer = setInterval(tick, 1500);
-  }
-
-  function stop() {
-    if (timer) clearInterval(timer);
-    timer = null;
-  }
-
-  return { start, stop };
+    async function start() {
+      await tick();
+      timer = setInterval(tick, 1500);
+    }
+  
+    function stop() {
+      if (timer) clearInterval(timer);
+      timer = null;
+    }
+  
+    return { start, stop };
 }
