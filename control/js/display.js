@@ -32,6 +32,11 @@ export function createDisplay({ devices, store }) {
     await send("MODE BLANK");
   }
 
+  async function appBlack() {
+    await devices.sendDisplayCmd("APP BLACK");
+  }
+
+
   async function setTeamsLongs(teamA, teamB) {
     const a = String(teamA || "Drużyna A");
     const b = String(teamB || "Drużyna B");
