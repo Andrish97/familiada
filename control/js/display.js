@@ -40,7 +40,8 @@ export function createDisplay({ devices, store }) {
   async function setTeamsLongs(teamA, teamB) {
     const a = String(teamA || "Drużyna A");
     const b = String(teamB || "Drużyna B");
-    await send(`TEAMNAMES "${q(a)}" "${q(b)}"`);
+    await send(`LONG1 "${q(a)}"`);
+    await send(`LONG2 "${q(b)}"`);
   }
 
   // === Stany wysokiego poziomu ===
@@ -48,7 +49,7 @@ export function createDisplay({ devices, store }) {
   // "Gra gotowa": wyczyść wszystko, przygotuj app GAME, blank, puste triplety, zgaś INDICATOR
   async function stateGameReady(teamA, teamB) {
     await appGra();
-    await blank();
+    await appBlack();
     await setTeamsLongs(teamA, teamB);
 
     await send('TOP ""');
@@ -295,6 +296,7 @@ export function createDisplay({ devices, store }) {
     hideLogo,
     showWin,
     appGra,
+    appBlack,
     blank,
   };
 }
