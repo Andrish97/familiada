@@ -117,37 +117,80 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
   
   // === Główne stany gry ===
 
-  async function stateGameReady() {
+  async function stateStartGameIntro() {
     const r = store.state.rounds;
   
-    r.phase = "READY";
+    r.phase = "INTRO";
     r.step = "r_intro";
-    r.bankPts = 0;
-    r.xA = 0;
-    r.xB = 0;
-    r.passUsed = false;
-    r.stealWon = false;
-    r.question = null;
-    r.answers = [];
-    r.revealed = new Set();
-    r.duel = { enabled: false, lastPressed: null };
-    r.timer3 = { running: false, endsAt: 0 };
-    r.steal = { active: false, used: false };
-    r.allowPass = false;
+    refresh();
   
-    // DISPLAY: APP GAME + BLANK + czyścimy tryplety
     const { teamA, teamB } = store.state.teams;
-    await display.stateGameReady(teamA || "", teamB || "");
   
-    // blokada ustawień
-    store.state.locks.gameStarted = true;
+    // Ustaw tryb gry + czysto + nazwy drużyn, ale bez planszy rund
+    await display.stateIntroLogo(teamA || "", teamB || "");
   
-    ui.setMsg("msgRounds", "Ustawiono stan: gra gotowa. Ekran czeka na start gry.");
+    ui.setMsg(
+      "msgRoundsIntro",
+      "Intro: 2×, logo w 14. sekundzie pierwszego."
+    );
   
-    // --- TU zamiast refresh() ---
-    ui.setRoundsHud(store.state.rounds);
-    ui.showRoundsStep("r_intro");
+    // Jeśli nie mamy miksora – prosty fallback na czas
+    if (!introMixer) {
+      // Start pierwszego intro
+      playSfx("show_intro");
+  
+      // Logo pojawia się w 14 sekundzie pierwszego odtwarzania
+      setTimeout(() => {
+        display.showLogo().catch(() => {});
+      }, 14000);
+  
+      // Drugi raz odpalamy intro po ~15 sekundach
+      setTimeout(() => {
+        playSfx("show_intro");
+      }, 15000);
+  
+      // Całość ~30 sekund
+      await new Promise((res) => setTimeout(res, 30000));
+    } else {
+      // Wersja z pomiarem czasu z createSfxMixer
+      introMixer.stop();
+      await new Promise((resolve) => {
+        let loop = 0;
+        let logoShown = false;
+  
+        const stop = introMixer.onTime((current, duration) => {
+          const d = duration || 0;
+  
+          // Logo w 14 sekundzie pierwszego intro
+          if (!logoShown && current >= 14) {
+            logoShown = true;
+            display.showLogo().catch(() => {});
+          }
+  
+          // Koniec aktualnego odtworzenia
+          if (d > 0 && current >= d - 0.05) {
+            loop += 1;
+            if (loop === 1) {
+              // druga pętla
+              playSfx("show_intro");
+            } else {
+              stop();
+              resolve();
+            }
+          }
+        });
+  
+        // start pierwszej pętli
+        playSfx("show_intro");
+      });
+    }
+  
+    // Po dwóch pętlach intro przechodzimy do ekranu startu rundy
+    r.step = "r_roundStart";
+    ui.setMsg("msgRoundsIntro", "Intro zakończone. Możesz rozpocząć rundę.");
+    refresh();
   }
+
 
   async function stateStartGameIntro() {
     const { teamA, teamB } = store.state.teams;
