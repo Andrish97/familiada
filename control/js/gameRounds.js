@@ -118,146 +118,44 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
   // === Główne stany gry ===
 
   async function stateStartGameIntro() {
-    const r = store.state.rounds;
-  
-    r.phase = "INTRO";
-    r.step = "r_intro";
-    refresh();
-  
     const { teamA, teamB } = store.state.teams;
   
-    // Ustaw tryb gry + czysto + nazwy drużyn, ale bez planszy rund
-    await display.stateIntroLogo(teamA || "", teamB || "");
-  
-    ui.setMsg(
-      "msgRoundsIntro",
-      "Intro: 2×, logo w 14. sekundzie pierwszego."
-    );
-  
-    // Jeśli nie mamy miksora – prosty fallback na czas
-    if (!introMixer) {
-      // Start pierwszego intro
-      playSfx("show_intro");
-  
-      // Logo pojawia się w 14 sekundzie pierwszego odtwarzania
-      setTimeout(() => {
-        display.showLogo().catch(() => {});
-      }, 14000);
-  
-      // Drugi raz odpalamy intro po ~15 sekundach
-      setTimeout(() => {
-        playSfx("show_intro");
-      }, 15000);
-  
-      // Całość ~30 sekund
-      await new Promise((res) => setTimeout(res, 30000));
-    } else {
-      // Wersja z pomiarem czasu z createSfxMixer
-      introMixer.stop();
-      await new Promise((resolve) => {
-        let loop = 0;
-        let logoShown = false;
-  
-        const stop = introMixer.onTime((current, duration) => {
-          const d = duration || 0;
-  
-          // Logo w 14 sekundzie pierwszego intro
-          if (!logoShown && current >= 14) {
-            logoShown = true;
-            display.showLogo().catch(() => {});
-          }
-  
-          // Koniec aktualnego odtworzenia
-          if (d > 0 && current >= d - 0.05) {
-            loop += 1;
-            if (loop === 1) {
-              // druga pętla
-              playSfx("show_intro");
-            } else {
-              stop();
-              resolve();
-            }
-          }
-        });
-  
-        // start pierwszej pętli
-        playSfx("show_intro");
-      });
-    }
-  
-    // Po dwóch pętlach intro przechodzimy do ekranu startu rundy
-    r.step = "r_roundStart";
-    ui.setMsg("msgRoundsIntro", "Intro zakończone. Możesz rozpocząć rundę.");
-    refresh();
-  }
-
-
-  async function stateStartGameIntro() {
-    const { teamA, teamB } = store.state.teams;
-
     setStep("r_intro");
-    ui.setRoundsHud(store.state.rounds);
-
-    // przygotuj wyświetlacz (tryb gry, blank, zera / puste triplety, nazwy drużyn – BEZ logo)
     await display.stateIntroLogo(teamA, teamB);
-
-    ui.setMsg("msgRoundsIntro", "Intro uruchomione.");
-
-    // Intro: gra dwa razy, logo pojawia się w 14 sekundzie pierwszego odtworzenia.
-    if (!introMixer) {
-      // Proste przybliżenie bez mierzenia długości pliku
-      playSfx("show_intro");
-
-      // logo po 14s
-      setTimeout(() => {
-        display.showLogo().catch(() => {});
-      }, 14000);
-
-      // drugi raz po ~15s od startu
-      setTimeout(() => {
-        playSfx("show_intro");
-      }, 15000);
-
-      // całość ok. 30s
-      await new Promise((res) => setTimeout(res, 30000));
-    } else {
-      introMixer.stop();
-      await new Promise((resolve) => {
-        let playCount = 0;
-        let logoShown = false;
-
-        const stop = introMixer.onTime((current, duration) => {
-          const d = duration || 0;
-
-          // logo w 14 sekundzie pierwszego intra
-          if (!logoShown && current >= 14) {
-            logoShown = true;
-            display.showLogo().catch(() => {});
+  
+    introMixer.stop();
+  
+    await new Promise((resolve) => {
+      let playCount = 0;
+      let logoShown = false;
+  
+      const off = introMixer.onTime((t, d) => {
+        if (!logoShown && t >= 14) {
+          logoShown = true;
+          display.showLogo().catch(() => {});
+        }
+  
+        if (d > 0 && t >= d - 0.05) {
+          playCount++;
+          if (playCount === 1) {
+            introMixer.play("show_intro");   // druga pętla
+          } else {
+            off();
+            introMixer.stop();
+            resolve();
           }
-
-          if (d > 0 && current >= d - 0.05) {
-            playCount += 1;
-            if (playCount === 1) {
-              // koniec pierwszej pętli -> start drugiej
-              playSfx("show_intro");
-            } else {
-              stop();
-              resolve();
-            }
-          }
-        });
-
-        // start pierwszej pętli
-        playSfx("show_intro");
+        }
       });
-    }
-
-    // Po dwóch pętlach intra przechodzimy do ekranu startu rundy
+  
+      introMixer.play("show_intro");
+    });
+  
     setStep("r_roundStart");
-    ui.setMsg("msgRoundsIntro", "Intro zakończone. Możesz rozpocząć rundę.");
-    ui.setRoundsHud(store.state.rounds);
   }
 
+
+
+  
   async function startRound() {
     await loadRoundsIfNeeded();
     const r = store.state.rounds;
