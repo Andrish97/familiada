@@ -1,4 +1,4 @@
-// js/core/sfx.js
+// /familiada/js/core/sfx.js
 // Dźwięki lecą na komputerze operatora (control).
 // Pliki są w /audio w root repo.
 
@@ -17,6 +17,7 @@ const files = {
 
   time_over: "time_over.mp3",
 
+  // dawny ui_tick -> teraz bells; zostawiam alias ui_tick dla bezpieczeństwa
   bells: "bells.mp3",
 };
 
@@ -35,26 +36,21 @@ function loadAudio(name) {
     a.preload = "auto";
     cache.set(name, a);
   }
-  return cache.get(name);
+  return cache.get(name) || null;
 }
 
-/* ========= SIMPLE SFX ========= */
+/* ========= PROSTE ODTWARZANIE ========= */
 
 export function playSfx(name) {
-  if (!name) return;
-
-  const file = files[name];
-  if (!file) {
-    console.warn("Brak dźwięku:", name);
-    return;
-  }
-
-  if (!unlocked) return;
-  const a = new Audio(PATH + file);
-  a.play().catch(() => {});
+  const a = loadAudio(name);
+  if (!a) return;
+  try {
+    a.currentTime = 0;
+    a.play().catch(() => {});
+  } catch {}
 }
 
-/* ========= MIXER / TIMER ========= */
+/* ========= MIKSER / ŚLEDZENIE CZASU ========= */
 
 export function createSfxMixer() {
   let audio = null;
@@ -64,7 +60,9 @@ export function createSfxMixer() {
 
   function notify() {
     if (!audio) return;
-    listeners.forEach((fn) => fn(audio.currentTime, audio.duration || 0));
+    const t = audio.currentTime || 0;
+    const d = audio.duration || 0;
+    for (const fn of listeners) fn(t, d);
   }
 
   function tick() {
@@ -113,16 +111,62 @@ export function createSfxMixer() {
   };
 }
 
+/* ========= DOKŁADNE MIERZENIE DŁUGOŚCI AUDIO ========= */
+
+const durationPromises = new Map();
+
+/**
+ * Zwraca Promise z dokładną długością dźwięku w sekundach (float).
+ * Jeśli nie da się odczytać – zwraca 0.
+ */
+export function getSfxDuration(name) {
+  if (durationPromises.has(name)) {
+    return durationPromises.get(name);
+  }
+
+  const a = loadAudio(name);
+  if (!a) {
+    const p = Promise.resolve(0);
+    durationPromises.set(name, p);
+    return p;
+  }
+
+  const p = new Promise((resolve) => {
+    // jeśli przeglądarka już wie
+    if (!Number.isNaN(a.duration) && a.duration > 0) {
+      resolve(a.duration);
+      return;
+    }
+
+    const onMeta = () => {
+      a.removeEventListener("loadedmetadata", onMeta);
+      resolve(a.duration || 0);
+    };
+
+    a.addEventListener("loadedmetadata", onMeta);
+
+    // awaryjnie po 5s zwróć cokolwiek udało się odczytać
+    setTimeout(() => {
+      a.removeEventListener("loadedmetadata", onMeta);
+      resolve(a.duration || 0);
+    }, 5000);
+  });
+
+  durationPromises.set(name, p);
+  return p;
+}
+
+/* ========= AUDIO UNLOCK (gesture) ========= */
+
 let unlocked = false;
 
 export function unlockAudio() {
   if (unlocked) return true;
 
   try {
-    // minimalny dźwięk – spełnia warunek "user gesture"
     const a = new Audio();
     a.volume = 0;
-    a.src = PATH + files.bells;
+    a.src = PATH + files.bells; // minimalny dźwięk – spełnia warunek "user gesture"
     a.play().catch(() => {});
     unlocked = true;
     return true;
@@ -133,45 +177,4 @@ export function unlockAudio() {
 
 export function isAudioUnlocked() {
   return unlocked;
-}
-
-export function playSfxAndWait(name) {
-  return new Promise((resolve) => {
-    const a = loadAudio(name);
-    if (!a) return resolve();
-
-    try {
-      a.currentTime = 0;
-
-      // Jeśli duration nieznane, rozwiązujemy po zdarzeniu "ended"
-      const onEnd = () => {
-        cleanup();
-        resolve();
-      };
-
-      const cleanup = () => {
-        a.removeEventListener("ended", onEnd);
-      };
-
-      a.addEventListener("ended", onEnd, { once: true });
-      a.play().catch(() => {
-        cleanup();
-        resolve();
-      });
-
-      // Awaryjnie: jeśli ktoś przerwie / przeskoczy track i "ended" nie wpadnie
-      // to kończymy, gdy audio stanie.
-      const chk = () => {
-        if (a.paused) {
-          cleanup();
-          resolve();
-          return;
-        }
-        requestAnimationFrame(chk);
-      };
-      requestAnimationFrame(chk);
-    } catch {
-      resolve();
-    }
-  });
 }
