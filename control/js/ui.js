@@ -1,3 +1,5 @@
+// /familiada/control/js/ui.js
+
 export function createUI() {
   const handlers = new Map();
   const $ = (id) => document.getElementById(id);
@@ -17,7 +19,6 @@ export function createUI() {
     const el = document.getElementById(id);
     if (el) el.innerHTML = html;
   }
-  
   function setMsg(id, text) { const el = $(id); if (el) el.textContent = text || ""; }
   function setText(id, text) { const el = $(id); if (el) el.textContent = text ?? ""; }
   function setValue(id, value) { const el = $(id); if (el) el.value = value ?? ""; }
@@ -154,29 +155,19 @@ export function createUI() {
 
   function setRoundsStep(step) {
     document.querySelectorAll('[data-round-step]').forEach(el => {
-      el.classList.toggle(
-        "hidden",
-        el.dataset.roundStep !== step
-      );
+      el.classList.toggle("hidden", el.dataset.roundStep !== step);
     });
   }
 
   function setQrToggleLabel(isOn, hostAndBuzzerOnline = false) {
     const b = $("btnQrToggle");
     if (!b) return;
-  
-    // Gdy QR są pokazane:
-    // - jeśli host i buzzer są już online, sensowniejsze jest "Czarny ekran"
-    // - w przeciwnym razie "Schowaj QR"
     if (isOn) {
       b.textContent = hostAndBuzzerOnline ? "Czarny ekran" : "Schowaj QR";
       return;
     }
-  
     b.textContent = "QR na wyświetlaczu";
   }
-
-  // ===== Modal z linkiem/QR urządzenia =====
 
   function openDeviceModal(kind) {
     const modal = $("deviceModal");
@@ -217,15 +208,13 @@ export function createUI() {
     $("deviceModal")?.classList.add("hidden");
   }
 
-
-
   function setRoundsHud(r) {
     setText("roundNo", String(r.roundNo));
     setText("controlTeam", r.controlTeam ? (r.controlTeam === "A" ? "A" : "B") : "—");
     setText("bankPts", String(r.bankPts));
     setText("xA", String(r.xA));
     setText("xB", String(r.xB));
-    setText("t3", r.timer3.running ? String(r.timer3.secLeft ?? 3) : "—");
+    setText("t3", r.timer3?.running ? String(r.timer3.secLeft ?? 3) : "—");
   }
 
   function setGameHeader(name, meta) {
@@ -236,10 +225,10 @@ export function createUI() {
   function setRoundQuestion(text) { setText("roundQuestion", text || "—"); }
 
   function renderRoundAnswers(answers, revealedSet, rootId = "roundAnswers") {
-    const root = $("roundAnswers");
+    const root = $(rootId);
     if (!root) return;
 
-    root.innerHTML = answers
+    root.innerHTML = (answers || [])
       .slice()
       .sort((a,b) => (a.ord||0) - (b.ord||0))
       .map((a) => {
@@ -263,16 +252,19 @@ export function createUI() {
     const root = $("finalStatusList");
     if (root) root.innerHTML = linesHtml || "";
   }
-  function setFinalInputs(html) {
-    const root = $("finalInputs");
+  function setFinalInputs(html, which = 1) {
+    const root = which === 1 ? $("finalP1Inputs") : $("finalP2Inputs");
     if (root) root.innerHTML = html || "";
   }
-  function setFinalMapping(html) {
-    const root = $("finalMapping");
+  function setFinalMapping(html, which = 1, qIndex = 1) {
+    const id =
+      which === 1
+        ? `finalP1MapQ${qIndex}`
+        : `finalP2MapQ${qIndex}`;
+    const root = $(id);
     if (root) root.innerHTML = html || "";
   }
 
-  // ROUNDS: sterowanie widokami kroków
   function showRoundsStep(step) {
     document.querySelectorAll('.cardPanel[data-card="rounds"] .step[data-step]')
       .forEach((s) => s.classList.add("hidden"));
@@ -280,12 +272,19 @@ export function createUI() {
       ?.classList.remove("hidden");
   }
 
+  function setFinalTimerText(text) {
+    setText("finalTimer", text ?? "—");
+  }
+
+  function setFinalSum(sum) {
+    setText("finalSum", String(sum ?? 0));
+  }
+
   function wire() {
     $("btnBack")?.addEventListener("click", () => emit("top.back"));
     $("btnLogout")?.addEventListener("click", () => emit("top.logout"));
     $("btnAlertClose")?.addEventListener("click", () => hideAlert());
 
-    // ===== Kliknięcia kontrolek urządzeń (pigułki) =====
     $("pillDisplay")?.addEventListener("click", () => openDeviceModal("display"));
     $("pillHost")?.addEventListener("click", () => openDeviceModal("host"));
     $("pillBuzzer")?.addEventListener("click", () => openDeviceModal("buzzer"));
@@ -299,9 +298,7 @@ export function createUI() {
       try {
         inp.select();
         document.execCommand("copy");
-      } catch {
-        // jak nie skopiuje, trudno – nic nie wysadzamy
-      }
+      } catch {}
     });
 
     // devices
@@ -335,7 +332,6 @@ export function createUI() {
       $("teamExtra")?.classList.toggle("hidden");
     });
 
-    // LIVE wpis nazw + Enter -> następne pole (bez zatwierdzania)
     const a = $("teamA");
     const b = $("teamB");
     if (a && b) {
@@ -356,13 +352,14 @@ export function createUI() {
     $("btnConfirmFinal")?.addEventListener("click", () => emit("final.confirm"));
     $("btnEditFinal")?.addEventListener("click", () => emit("final.edit"));
 
-    // rounds (kroki)
+    // rounds
     $("btnBackToSetup")?.addEventListener("click", () => emit("rounds.backToSetup"));
     $("btnGameReady")?.addEventListener("click", () => emit("game.ready"));
     $("btnStartShowIntro")?.addEventListener("click", () => emit("game.startIntro"));
     $("btnStartRound")?.addEventListener("click", () => emit("rounds.start"));
 
     $("btnBuzzEnable")?.addEventListener("click", () => emit("buzz.enable"));
+    $("btnBuzzRetry")?.addEventListener("click", () => emit("buzz.retry"));
     $("btnBuzzAcceptA")?.addEventListener("click", () => emit("buzz.acceptA"));
     $("btnBuzzAcceptB")?.addEventListener("click", () => emit("buzz.acceptB"));
 
@@ -370,8 +367,10 @@ export function createUI() {
     $("btnStartTimer3")?.addEventListener("click", () => emit("rounds.timer3"));
 
     $("btnAddX")?.addEventListener("click", () => emit("rounds.addX"));
-    $("btnStealTry")?.addEventListener("click", () => emit("rounds.stealTry"));
-    $("btnEndRound")?.addEventListener("click", () => emit("rounds.end"));
+    $("btnGoSteal")?.addEventListener("click", () => emit("rounds.goSteal"));
+    $("btnStealMiss")?.addEventListener("click", () => emit("rounds.stealMiss"));
+    $("btnGoEndRound")?.addEventListener("click", () => emit("rounds.goEnd"));
+    $("btnGoEndRoundFromSteal")?.addEventListener("click", () => emit("rounds.goEnd"));
 
     $("btnRoundsBackFromIntro")?.addEventListener("click", () => emit("rounds.back", "r_ready"));
     $("btnRoundsBackFromRoundStart")?.addEventListener("click", () => emit("rounds.back", "r_intro"));
@@ -379,40 +378,15 @@ export function createUI() {
     $("btnRoundsBackFromPlay")?.addEventListener("click", () => emit("rounds.back", "r_duel"));
     $("btnRoundsBackFromSteal")?.addEventListener("click", () => emit("rounds.back", "r_play"));
     $("btnRoundsBackFromEnd")?.addEventListener("click", () => emit("rounds.back", "r_play"));
-    
-    $("btnBuzzRetry")?.addEventListener("click", () => emit("buzz.retry"));
-    
-    $("btnGoSteal")?.addEventListener("click", () => emit("rounds.goSteal"));
-    $("btnStealMiss")?.addEventListener("click", () => emit("rounds.stealMiss"));
-    $("btnGoEndRound")?.addEventListener("click", () => emit("rounds.goEnd"));
-    $("btnGoEndRoundFromSteal")?.addEventListener("click", () => emit("rounds.goEnd"));
 
-
-    // final (kroki)
-    $("btnFinalP1StartTimer")?.addEventListener("click", () => emit("final.p1.timerStart"));
-    $("btnFinalP1Next")?.addEventListener("click", () => emit("final.p1.next"));
-    
-    $("btnFinalP1MapPrev")?.addEventListener("click", () => emit("final.p1.mapPrev"));
-    $("btnFinalP1MapNext")?.addEventListener("click", () => emit("final.p1.mapNext"));
-    
-    $("btnFinalRound2Back")?.addEventListener("click", () => emit("final.round2.back"));
-    $("btnFinalRound2Start")?.addEventListener("click", () => emit("final.round2.start"));
-    
-    $("btnFinalP2StartTimer")?.addEventListener("click", () => emit("final.p2.timerStart"));
-    $("btnFinalP2Next")?.addEventListener("click", () => emit("final.p2.next"));
-    
-    $("btnFinalP2MapPrev")?.addEventListener("click", () => emit("final.p2.mapPrev"));
-    $("btnFinalP2MapNext")?.addEventListener("click", () => emit("final.p2.mapNext"));
-    
-    $("btnFinalFinishBack")?.addEventListener("click", () => emit("final.finish.back"));
+    // final – uproszczony set eventów, spójny z app.js
     $("btnFinalStart")?.addEventListener("click", () => emit("final.start"));
-
     $("btnFinalBackToRounds")?.addEventListener("click", () => emit("final.back", "rounds"));
-    
+
     $("btnFinalBackFromP1Entry")?.addEventListener("click", () => emit("final.backStep", "f_start"));
     $("btnFinalP1StartTimer")?.addEventListener("click", () => emit("final.p1.timer"));
     $("btnFinalToP1MapQ1")?.addEventListener("click", () => emit("final.p1.toQ", 1));
-    
+
     $("btnFinalBackFromP1Q1")?.addEventListener("click", () => emit("final.backStep", "f_p1_entry"));
     $("btnFinalNextFromP1Q1")?.addEventListener("click", () => emit("final.p1.nextQ", 1));
     $("btnFinalBackFromP1Q2")?.addEventListener("click", () => emit("final.backStep", "f_p1_map_q1"));
@@ -423,14 +397,14 @@ export function createUI() {
     $("btnFinalNextFromP1Q4")?.addEventListener("click", () => emit("final.p1.nextQ", 4));
     $("btnFinalBackFromP1Q5")?.addEventListener("click", () => emit("final.backStep", "f_p1_map_q4"));
     $("btnFinalNextFromP1Q5")?.addEventListener("click", () => emit("final.p1.nextQ", 5));
-    
+
     $("btnFinalBackFromP2Start")?.addEventListener("click", () => emit("final.backStep", "f_p1_map_q5"));
     $("btnFinalStartP2")?.addEventListener("click", () => emit("final.p2.start"));
-    
+
     $("btnFinalBackFromP2Entry")?.addEventListener("click", () => emit("final.backStep", "f_p2_start"));
     $("btnFinalP2StartTimer")?.addEventListener("click", () => emit("final.p2.timer"));
     $("btnFinalToP2MapQ1")?.addEventListener("click", () => emit("final.p2.toQ", 1));
-    
+
     $("btnFinalBackFromP2Q1")?.addEventListener("click", () => emit("final.backStep", "f_p2_entry"));
     $("btnFinalNextFromP2Q1")?.addEventListener("click", () => emit("final.p2.nextQ", 1));
     $("btnFinalBackFromP2Q2")?.addEventListener("click", () => emit("final.backStep", "f_p2_map_q1"));
@@ -441,10 +415,10 @@ export function createUI() {
     $("btnFinalNextFromP2Q4")?.addEventListener("click", () => emit("final.p2.nextQ", 4));
     $("btnFinalBackFromP2Q5")?.addEventListener("click", () => emit("final.backStep", "f_p2_map_q4"));
     $("btnFinalNextFromP2Q5")?.addEventListener("click", () => emit("final.p2.nextQ", 5));
-    
-    $("btnFinalBackFromEnd")?.addEventListener("click", () => emit("final.backStep", "f_p2_map_q5"));
-    $("btnFinalFinish")?.addEventListener("click", () => emit("final.finish"));
 
+    $("btnFinalBackFromEnd")?.addEventListener("click", () => emit("final.backStep", "f_p2_map_q5"));
+    $("btnFinalFinish")?.addEventListener("click", () => emit("final.finish.back"));
+    $("btnFinalFinish")?.addEventListener("click", () => emit("final.finish"));
   }
 
   wire();
@@ -484,11 +458,12 @@ export function createUI() {
     setFinalStatusList,
     setFinalInputs,
     setFinalMapping,
+    setFinalTimerText,
+    setFinalSum,
 
     setGameHeader,
     setHtml,
 
-    // jeśli chcesz mieć dostęp z zewnątrz:
     openDeviceModal,
     closeDeviceModal,
   };
