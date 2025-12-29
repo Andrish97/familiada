@@ -1,10 +1,16 @@
-export function createStore(gameId) {
-  const KEY = `familiada:control:v6:${gameId}`;
-  const listeners = new Set();
+// /familiada/control/js/store.js
 
-  const state = {
+const FIVE_MIN = 5 * 60 * 1000;
+
+function clone(v) {
+  return JSON.parse(JSON.stringify(v));
+}
+
+function freshState(gameId) {
+  return {
+    gameId,
+
     activeCard: "devices",
-
     steps: {
       devices: "devices_display",
       setup: "setup_names",
@@ -13,10 +19,17 @@ export function createStore(gameId) {
     completed: {
       devices: false,
       setup: false,
+      rounds: false,
+      final: false,
     },
 
-    locks: {
-      gameStarted: false, // po „Gra gotowa” blokujemy powrót do setup
+    flags: {
+      displayOnline: false,
+      hostOnline: false,
+      buzzerOnline: false,
+      audioUnlocked: false,
+      qrOnDisplay: false,
+      sentBlackAfterDisplayOnline: false,
     },
 
     teams: {
@@ -24,180 +37,114 @@ export function createStore(gameId) {
       teamB: "",
     },
 
-    hasFinal: null,
-
+    hasFinal: null, // true / false
     final: {
       picked: [],
       confirmed: false,
-      runtime: {
-        phase: "IDLE", // IDLE lub inny gdy finał trwa
-        sum: 0,
-        winSide: "A",
-        timer: { running: false, secLeft: 0, phase: "P1" },
-        mapIndex: 0,
-        p1List: null,
-        p2List: null,
-        mapP1: null,
-        mapP2: null,
-        reached200: false,
-      },
       step: "f_start",
-    },
-
-    flags: {
-      displayOnline: false,
-      hostOnline: false,
-      buzzerOnline: false,
-      sentBlackAfterDisplayOnline: false,
-      audioUnlocked: false,
-      qrOnDisplay: false,
+      sum: 0,
+      timer: {
+        running: false,
+        endsAt: 0,
+        secLeft: 0,
+      },
+      p1: {
+        answers: ["", "", "", "", ""],
+        points: [0, 0, 0, 0, 0],
+      },
+      p2: {
+        answers: ["", "", "", "", ""],
+        points: [0, 0, 0, 0, 0],
+        repeats: [false, false, false, false, false],
+      },
     },
 
     rounds: {
       phase: "IDLE", // IDLE | READY | INTRO | ROUND_ACTIVE
+      step: "r_ready",
       roundNo: 1,
-      controlTeam: null, // "A" | "B"
+      totals: { A: 0, B: 0 },
+      question: null,
+      answers: [],
+      revealed: [],
       bankPts: 0,
       xA: 0,
       xB: 0,
-      totals: { A: 0, B: 0 },
-      step: "r_ready",
-      passUsed: false,
-      stealWon: false,
-
-      question: null,
-      answers: [],
-      revealed: new Set(),
-
-      duel: {
-        enabled: false,
-        lastPressed: null,
-      },
-
-      timer3: {
-        running: false,
-        endsAt: 0,
-      },
-
+      controlTeam: null,
+      allowPass: false,
       steal: {
         active: false,
         used: false,
+        wonBy: null, // "A" | "B" | null
       },
+      timer3: {
+        running: false,
+        endsAt: 0,
+        secLeft: 3,
+      },
+      _loadedRounds: [],
+    },
 
-      allowPass: false,
+    presence: {
+      available: false,
+    },
+
+    _meta: {
+      createdAt: Date.now(),
     },
   };
+}
 
-  // --- ZAPIS DO localStorage + TTL 5 minut ---
+export function createStore(gameId) {
+  const KEY = `familiada:control:${gameId || "unknown"}`;
 
-  function serialize(s) {
-    const out = structuredClone(s);
-    // Sets → plain arrays
-    out.rounds.revealed = Array.from(s.rounds.revealed || []);
-    // Timestamp – żeby hydrate wiedział, czy to świeże
-    out.savedAt = Date.now();
-    return out;
+  let state = null;
+  const listeners = new Set();
+
+  function loadFromStorage() {
+    try {
+      const raw = sessionStorage.getItem(KEY);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      if (!parsed || !parsed._meta) return null;
+      const age = Date.now() - (parsed._meta.createdAt || 0);
+      if (age > FIVE_MIN) return null; // po 5 minutach – nowy stan
+      return parsed;
+    } catch {
+      return null;
+    }
   }
 
+  function saveToStorage() {
+    try {
+      const copy = clone(state);
+      copy._meta = { createdAt: Date.now() };
+      sessionStorage.setItem(KEY, JSON.stringify(copy));
+    } catch {
+      // nic
+    }
+  }
 
   function emit() {
-    try {
-      localStorage.setItem(KEY, JSON.stringify(serialize(state)));
-    } catch {}
-    for (const fn of listeners) fn(state);
+    saveToStorage();
+    for (const fn of listeners) {
+      try { fn(state); } catch {}
+    }
   }
+
+  function reset() {
+    state = freshState(gameId);
+    emit();
+  }
+
+  state = loadFromStorage() || freshState(gameId);
 
   function subscribe(fn) {
     listeners.add(fn);
     return () => listeners.delete(fn);
   }
 
-  function isFinalActive() {
-    return !!(state.final?.runtime?.phase && state.final.runtime.phase !== "IDLE");
-  }
-
-  function hydrate() {
-    try {
-      const raw = localStorage.getItem(KEY);
-      if (!raw) return;
-
-      const parsed = JSON.parse(raw);
-
-      // wersja z wrapperem {_v, savedAt, state}
-      const maxAgeMs = 5 * 60 * 1000;
-      if (typeof p.savedAt !== "number" || Date.now() - p.savedAt > maxAgeMs) {
-        return;
-      }
-      const data =
-        parsed?.state && typeof parsed.state === "object" ? parsed.state : parsed;
-
-      // TTL: jeśli stan starszy niż 5 minut – ignorujemy i startujemy od zera
-      if (savedAt && Date.now() - savedAt > 5 * 60 * 1000) {
-        return;
-      }
-
-      if (data?.activeCard && typeof data.activeCard === "string") {
-        state.activeCard = data.activeCard;
-      }
-
-      if (data?.steps?.devices) state.steps.devices = data.steps.devices;
-      if (data?.steps?.setup) state.steps.setup = data.steps.setup;
-
-      if (data?.completed) {
-        state.completed.devices = !!data.completed.devices;
-        state.completed.setup = !!data.completed.setup;
-      }
-
-      if (data?.locks) {
-        state.locks.gameStarted = !!data.locks.gameStarted;
-      }
-
-      if (data?.teams) {
-        state.teams.teamA = String(data.teams.teamA ?? "");
-        state.teams.teamB = String(data.teams.teamB ?? "");
-      }
-
-      if (typeof data?.hasFinal === "boolean") state.hasFinal = data.hasFinal;
-
-      if (data?.final) {
-        state.final.picked = Array.isArray(data.final.picked)
-          ? data.final.picked.slice(0, 5)
-          : [];
-        state.final.confirmed = !!data.final.confirmed;
-        if (data.final.runtime) {
-          state.final.runtime.sum = Number(data.final.runtime.sum || 0);
-          state.final.runtime.winSide = data.final.runtime.winSide || "A";
-        }
-        if (data.final.step) {
-          state.final.step = data.final.step;
-        }
-      }
-
-      if (data?.flags) {
-        state.flags.displayOnline = !!data.flags.displayOnline;
-        state.flags.hostOnline = !!data.flags.hostOnline;
-        state.flags.buzzerOnline = !!data.flags.buzzerOnline;
-        state.flags.sentBlackAfterDisplayOnline =
-          !!data.flags.sentBlackAfterDisplayOnline;
-        state.flags.audioUnlocked = !!data.flags.audioUnlocked;
-        state.flags.qrOnDisplay = !!data.flags.qrOnDisplay;
-      }
-
-      if (data?.rounds) {
-        state.rounds.roundNo = Number(data.rounds.roundNo || 1);
-        state.rounds.totals = data.rounds.totals || state.rounds.totals;
-      }
-    } catch {
-      // cokolwiek poszło źle -> start od zera
-    }
-
-    if (!canEnterCard(state.activeCard)) {
-      setActiveCard("devices");
-    }
-  }
-
   function setActiveCard(card) {
-    if (!canEnterCard(card)) return;
     state.activeCard = card;
     emit();
   }
@@ -213,27 +160,28 @@ export function createStore(gameId) {
   }
 
   function completeCard(card) {
+    if (state.completed[card] === true) return;
     state.completed[card] = true;
     emit();
   }
 
-  function setTeams(a, b) {
-    state.teams.teamA = String(a ?? "");
-    state.teams.teamB = String(b ?? "");
+  function setTeams(teamA, teamB) {
+    state.teams.teamA = String(teamA || "").trim();
+    state.teams.teamB = String(teamB || "").trim();
     emit();
   }
 
-  function setHasFinal(v) {
-    state.hasFinal = v;
-    if (v === false) {
-      state.final.picked = [];
-      state.final.confirmed = false;
-    }
+  function teamsOk() {
+    return !!state.teams.teamA && !!state.teams.teamB;
+  }
+
+  function setHasFinal(on) {
+    state.hasFinal = !!on;
     emit();
   }
 
   function confirmFinalQuestions(ids) {
-    state.final.picked = Array.isArray(ids) ? ids.slice(0, 5) : [];
+    state.final.picked = (ids || []).slice(0, 5);
     state.final.confirmed = true;
     emit();
   }
@@ -243,10 +191,29 @@ export function createStore(gameId) {
     emit();
   }
 
-  function setOnlineFlags({ display, host, buzzer }) {
-    state.flags.displayOnline = !!display;
-    state.flags.hostOnline = !!host;
-    state.flags.buzzerOnline = !!buzzer;
+  function setAudioUnlocked(on) {
+    state.flags.audioUnlocked = !!on;
+    emit();
+  }
+
+  function setQrOnDisplay(on) {
+    state.flags.qrOnDisplay = !!on;
+    emit();
+  }
+
+  function setOnlineFlags(flags) {
+    state.flags.displayOnline = !!flags.display;
+    state.flags.hostOnline = !!flags.host;
+    state.flags.buzzerOnline = !!flags.buzzer;
+    state.presence.available = true;
+    emit();
+  }
+
+  function setPresenceUnavailable() {
+    state.presence.available = false;
+    state.flags.displayOnline = false;
+    state.flags.hostOnline = false;
+    state.flags.buzzerOnline = false;
     emit();
   }
 
@@ -255,101 +222,76 @@ export function createStore(gameId) {
     emit();
   }
 
-  function setAudioUnlocked(v) {
-    state.flags.audioUnlocked = !!v;
+  // rounds
+  function setRoundsState(patch) {
+    Object.assign(state.rounds, patch);
     emit();
   }
 
-  function setQrOnDisplay(v) {
-    state.flags.qrOnDisplay = !!v;
+  // final
+  function setFinalState(patch) {
+    Object.assign(state.final, patch);
     emit();
   }
 
-  function teamsOk() {
-    return (
-      state.teams.teamA.trim().length > 0 ||
-      state.teams.teamB.trim().length > 0
-    );
+  function canEnterCard(card) {
+    if (card === "devices") return true;
+
+    if (card === "setup") {
+      return state.completed.devices;
+    }
+
+    if (card === "rounds") {
+      return state.completed.setup;
+    }
+
+    if (card === "final") {
+      return state.completed.setup && state.hasFinal === true;
+    }
+
+    return false;
   }
 
   function canFinishSetup() {
     if (!teamsOk()) return false;
-    if (state.hasFinal === false) return true;
-    if (state.hasFinal === true) {
-      return state.final.confirmed === true && state.final.picked.length === 5;
-    }
-    return false;
-  }
-
-  function allDevicesOnline() {
-    return (
-      state.flags.displayOnline &&
-      state.flags.hostOnline &&
-      state.flags.buzzerOnline
-    );
+    if (state.hasFinal === null) return false;
+    if (state.hasFinal === true && state.final.confirmed !== true) return false;
+    return true;
   }
 
   function canStartRounds() {
-    return allDevicesOnline() && state.flags.audioUnlocked && canFinishSetup();
+    return state.completed.devices && state.completed.setup;
   }
-
-  function canEnterCard(card) {
-    // URZĄDZENIA – tylko zanim „uzbroimy” grę
-    if (card === "devices") {
-      return !state.locks.gameStarted;
-    }
-  
-    // USTAWIENIA – po urządzeniach i tylko przed startem gry
-    if (card === "setup") {
-      return state.completed.devices && !state.locks.gameStarted;
-    }
-  
-    // ROZGRYWKA – kiedy urządzenia są gotowe i setup domknięty
-    if (card === "rounds") {
-      return state.completed.devices && canFinishSetup();
-    }
-  
-    // FINAŁ – tylko gdy:
-    // - mamy włączony finał
-    // - setup jest domknięty
-    // - któraś drużyna ma już ≥ 300 pkt
-    if (card === "final") {
-      const totals = state.rounds.totals || { A: 0, B: 0 };
-      const a = Number(totals.A || 0);
-      const b = Number(totals.B || 0);
-      const unlocked = a >= 300 || b >= 300;
-      return state.hasFinal === true && canFinishSetup() && unlocked;
-    }
-  
-    return false;
-  }
-
-  // Hydratacja na starcie
-  hydrate();
 
   return {
     state,
-    hydrate,
     subscribe,
+    reset,
 
     setActiveCard,
     setDevicesStep,
     setSetupStep,
-
     completeCard,
+
     setTeams,
+    teamsOk,
+
     setHasFinal,
     confirmFinalQuestions,
     unconfirmFinalQuestions,
 
-    setOnlineFlags,
-    markSentBlackAfterDisplayOnline,
     setAudioUnlocked,
     setQrOnDisplay,
 
-    teamsOk,
+    setOnlineFlags,
+    setPresenceUnavailable,
+    markSentBlackAfterDisplayOnline,
+
+    setRoundsState,
+    setFinalState,
+
+    canEnterCard,
     canFinishSetup,
     canStartRounds,
-    canEnterCard,
   };
 }
