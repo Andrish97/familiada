@@ -5,14 +5,22 @@ export const sleep = (ms) =>
 
 /**
  * @param {Object} deps
+ * @param {(big: any, col1:number, row1:number) => { dots: SVGCircleElement[][] }} deps.tileAt
  * @param {(big: any, c1:number, r1:number, c2:number, r2:number) => any[][]} deps.snapArea
  * @param {(big: any, c1:number, r1:number, c2:number, r2:number) => void} deps.clearArea
  * @param {(big: any, col1:number, row1:number) => void} deps.clearTileAt
  * @param {string} deps.dotOff
  */
-export function createAnimator({ tileAt, snapArea, clearArea, clearTileAt, dotOff }) {
+export function createAnimator({
+  tileAt,
+  snapArea,
+  clearArea,
+  clearTileAt,
+  dotOff,
+}) {
   const clampMs = (ms, fallback) => {
-    const base = Number.isFinite(ms) ? ms : fallback;
+    const n = Number(ms);
+    const base = Number.isFinite(n) ? n : fallback;
     return Math.max(0, base | 0);
   };
 
@@ -32,102 +40,96 @@ export function createAnimator({ tileAt, snapArea, clearArea, clearTileAt, dotOf
   };
 
   // ============================================================
-  // EDGE – animacja całymi wierszami / kolumnami KAFELKÓW
+  // EDGE – animacja całymi KAFELKAMI 5x7 w odpowiedniej kolejności
+  //
+  // dir = "right":
+  //   kolumny od prawej do lewej, w kolumnie: od góry do dołu
+  //
+  // dir = "left":
+  //   kolumny od lewej do prawej, w kolumnie: od góry do dołu
+  //
+  // dir = "up":
+  //   rzędy od góry do dołu, w rzędzie: od lewej do prawej
+  //
+  // dir = "down":
+  //   rzędy od dołu do góry, w rzędzie: od lewej do prawej
+  //
+  // Całkowity czas animacji ~ totalMs.
   // ============================================================
+
+  const buildEdgeTileOrder = (area, dir = "left") => {
+    const A = area;
+    const { cols, rows } = makeTileGrid(A);
+    const d = (dir ?? "left").toLowerCase();
+    const order = [];
+
+    if (d === "left" || d === "right") {
+      const colSeq = d === "right" ? [...cols].reverse() : cols;
+      // kolumny → w każdej kafelki od góry w dół
+      for (const c of colSeq) {
+        for (const r of rows) {
+          order.push({ c, r });
+        }
+      }
+    } else if (d === "up" || d === "down") {
+      const rowSeq = d === "down" ? [...rows].reverse() : rows;
+      // rzędy → w każdym kafelki od lewej do prawej
+      for (const r of rowSeq) {
+        for (const c of cols) {
+          order.push({ c, r });
+        }
+      }
+    } else {
+      // fallback – jak "left"
+      for (const c of cols) {
+        for (const r of rows) {
+          order.push({ c, r });
+        }
+      }
+    }
+
+    return order;
+  };
+
   async function inEdge(big, area, dir = "left", totalMs = 300, opts = {}) {
     const A = area || { c1: 1, r1: 1, c2: 30, r2: 10 };
-    const { cols, rows } = makeTileGrid(A);
 
     // snapshot docelowego stanu
     const snap = snapArea(big, A.c1, A.r1, A.c2, A.r2);
 
-    // najpierw czyścimy obszar
+    // wyczyść cały obszar zanim zaczniemy rysować
     clearArea(big, A.c1, A.r1, A.c2, A.r2);
 
-    let bands = [];
-    if (dir === "left" || dir === "right") {
-      bands = cols.map((c) => ({ type: "col", idx: c }));
-      if (dir === "right") bands.reverse(); // fala idzie w prawo
-    } else {
-      bands = rows.map((r) => ({ type: "row", idx: r }));
-      if (dir === "down") {
-        // fala w dół – zaczynamy od góry (domyślnie)
-      } else if (dir === "up") {
-        bands.reverse(); // fala w górę
-      }
-    }
-
-    const steps = bands.length || 1;
+    const order = buildEdgeTileOrder(A, dir);
+    const steps = order.length || 1;
     const stepMs = clampMs(totalMs, 0) / steps;
 
     const rowOffset = A.r1;
     const colOffset = A.c1;
 
-    for (const band of bands) {
-      if (band.type === "col") {
-        const c = band.idx;
-        const snapColIndex = c - colOffset;
-        for (let r = A.r1; r <= A.r2; r++) {
-          const t = tileAt(big, c, r);
-          const snapTile = snap[r - rowOffset]?.[snapColIndex];
-          if (!t || !snapTile) continue;
-          for (let py = 0; py < 7; py++) {
-            for (let px = 0; px < 5; px++) {
-              t.dots[py][px].setAttribute("fill", snapTile[py][px]);
-            }
-          }
-        }
-      } else {
-        const r = band.idx;
-        const snapRowIndex = r - rowOffset;
-        for (let c = A.c1; c <= A.c2; c++) {
-          const t = tileAt(big, c, r);
-          const snapTile = snap[snapRowIndex]?.[c - colOffset];
-          if (!t || !snapTile) continue;
-          for (let py = 0; py < 7; py++) {
-            for (let px = 0; px < 5; px++) {
-              t.dots[py][px].setAttribute("fill", snapTile[py][px]);
-            }
+    for (const { c, r } of order) {
+      const t = tileAt(big, c, r);
+      const snapTile = snap[r - rowOffset]?.[c - colOffset];
+      if (t && snapTile) {
+        for (let py = 0; py < 7; py++) {
+          for (let px = 0; px < 5; px++) {
+            t.dots[py][px].setAttribute("fill", snapTile[py][px]);
           }
         }
       }
-
       await sleepStep(stepMs);
     }
   }
 
   async function outEdge(big, area, dir = "left", totalMs = 300, opts = {}) {
     const A = area || { c1: 1, r1: 1, c2: 30, r2: 10 };
-    const { cols, rows } = makeTileGrid(A);
 
-    let bands = [];
-    if (dir === "left" || dir === "right") {
-      bands = cols.map((c) => ({ type: "col", idx: c }));
-      if (dir === "right") bands.reverse(); // fala w prawo
-    } else {
-      bands = rows.map((r) => ({ type: "row", idx: r }));
-      if (dir === "down") {
-        // fala w dół – zaczynamy od góry (domyślnie)
-      } else if (dir === "up") {
-        bands.reverse(); // fala w górę
-      }
-    }
-
-    const steps = bands.length || 1;
+    const order = buildEdgeTileOrder(A, dir);
+    const steps = order.length || 1;
     const stepMs = clampMs(totalMs, 0) / steps;
 
-    for (const band of bands) {
-      if (band.type === "col") {
-        const c = band.idx;
-        for (let r = A.r1; r <= A.r2; r++) {
-          clearTileAt(big, c, r);
-        }
-      } else {
-        const r = band.idx;
-        for (let c = A.c1; c <= A.c2; c++) {
-          clearTileAt(big, c, r);
-        }
-      }
+    for (const { c, r } of order) {
+      clearTileAt(big, c, r);
       await sleepStep(stepMs);
     }
   }
@@ -135,6 +137,8 @@ export function createAnimator({ tileAt, snapArea, clearArea, clearTileAt, dotOf
   // ============================================================
   // MATRIX – animacja piksel po pikselu
   // axis: "down" | "up" | "left" | "right"
+  //
+  // TEJ CZĘŚCI NIE DOTYKAMY – działa jak chciałeś.
   // ============================================================
   async function inMatrix(big, area, axis = "down", totalMs = 600, opts = {}) {
     const A = area || { c1: 1, r1: 1, c2: 30, r2: 10 };
