@@ -1,87 +1,137 @@
-export function createDevices({ game, ui, store, chDisplay, chHost, chBuzzer }) {
-  function makeUrl(path, id, key) {
-    const u = new URL(path, location.origin);
-    u.searchParams.set("id", id);
-    u.searchParams.set("key", key);
-    return u.toString();
-  }
+// /familiada/control/js/devices.js
 
-  async function sendCmd(channel, event, line) {
-    const l = String(line ?? "").trim();
-    if (!l) return;
-    const { error } = await channel.sendBroadcast(event, { line: l });
-    if (error) throw error;
-  }
+// Zakładam, że rt(...) zwraca kanał Supabase Realtime
+// z metodami .send(...) i .on("broadcast", { event }, handler),
+// oraz .subscribe(cb).
 
-  async function sendDisplayCmd(line) { await sendCmd(chDisplay, "DISPLAY_CMD", line); }
-  async function sendHostCmd(line) { await sendCmd(chHost, "HOST_CMD", line); }
-  async function sendBuzzerCmd(line) { await sendCmd(chBuzzer, "BUZZER_CMD", line); }
+export function createDevices({ game, ui, store, chDisplay, chHost, chBuzzer, chControl }) {
+  const origin = window.location.origin;
 
-  function qrSrc(url) {
-    const u = encodeURIComponent(String(url));
-    return `https://api.qrserver.com/v1/create-qr-code/?size=320x320&data=${u}`;
-  }
+  // ===== LINKI DO URZĄDZEŃ =====
 
-  async function copyToClipboard(text) {
-    try { await navigator.clipboard.writeText(text); return true; } catch { return false; }
-  }
-
-  let urls = { displayUrl:"", hostUrl:"", buzzerUrl:"" };
+  const links = {
+    display: `${origin}/familiada/display.html?k=${encodeURIComponent(
+      game.share_key_display
+    )}`,
+    host: `${origin}/familiada/host.html?k=${encodeURIComponent(
+      game.share_key_host
+    )}`,
+    buzzer: `${origin}/familiada/buzzer.html?k=${encodeURIComponent(
+      game.share_key_buzzer
+    )}`,
+  };
 
   function initLinksAndQr() {
-    const displayUrl = makeUrl("/familiada/display/index.html", game.id, game.share_key_display);
-    const hostUrl = makeUrl("/familiada/host.html", game.id, game.share_key_host);
-    const buzzerUrl = makeUrl("/familiada/buzzer.html", game.id, game.share_key_buzzer || "");
-    urls = { displayUrl, hostUrl, buzzerUrl };
+    // wpisy w inputach
+    ui.setValue("displayLink", links.display);
+    ui.setValue("hostLink", links.host);
+    ui.setValue("buzzerLink", links.buzzer);
 
-    ui.setValue("displayLink", displayUrl);
-    ui.setValue("hostLink", hostUrl);
-    ui.setValue("buzzerLink", buzzerUrl);
-
-    ui.setImg("qrDisplayImg", qrSrc(displayUrl));
-    ui.setImg("qrHostImg", qrSrc(hostUrl));
-    ui.setImg("qrBuzzerImg", qrSrc(buzzerUrl));
-
-    ui.on("devices.openDisplay", () => window.open(displayUrl, "_blank"));
-    ui.on("devices.openHost", () => window.open(hostUrl, "_blank"));
-    ui.on("devices.openBuzzer", () => window.open(buzzerUrl, "_blank"));
-
-    ui.on("devices.copyDisplay", async () => ui.setMsg("msgDevices", (await copyToClipboard(displayUrl)) ? "Skopiowano." : "Nie mogę skopiować."));
-    ui.on("devices.copyHost", async () => ui.setMsg("msgDevices2", (await copyToClipboard(hostUrl)) ? "Skopiowano." : "Nie mogę skopiować."));
-    ui.on("devices.copyBuzzer", async () => ui.setMsg("msgDevices2", (await copyToClipboard(buzzerUrl)) ? "Skopiowano." : "Nie mogę skopiować."));
+    // obrazki QR – TU DOPASUJ endpoint jeśli masz inny
+    const qBase = `${origin}/familiada/api/qr?text=`;
+    ui.setImg("qrDisplayImg", qBase + encodeURIComponent(links.display));
+    ui.setImg("qrHostImg", qBase + encodeURIComponent(links.host));
+    ui.setImg("qrBuzzerImg", qBase + encodeURIComponent(links.buzzer));
   }
 
-  function escQ(raw) {
-    return String(raw ?? "")
-      .replaceAll("\\", "\\\\")
-      .replaceAll('"', '\\"')
-      .replaceAll("\r\n", "\n");
+  // ===== WYSYŁANIE KOMEND =====
+
+  async function sendDisplayCmd(cmd) {
+    console.log("[display] cmd:", cmd);
+    try {
+      await chDisplay.send({
+        type: "broadcast",
+        event: "DISPLAY_CMD",
+        payload: { cmd },
+      });
+    } catch (e) {
+      console.error("sendDisplayCmd error", e);
+    }
   }
 
+  async function sendHostCmd(cmd) {
+    console.log("[host] cmd:", cmd);
+    try {
+      await chHost.send({
+        type: "broadcast",
+        event: "HOST_CMD",
+        payload: { cmd },
+      });
+    } catch (e) {
+      console.error("sendHostCmd error", e);
+    }
+  }
+
+  async function sendBuzzerCmd(cmd) {
+    console.log("[buzzer] cmd:", cmd);
+    try {
+      await chBuzzer.send({
+        type: "broadcast",
+        event: "BUZZER_CMD",
+        payload: { cmd },
+      });
+    } catch (e) {
+      console.error("sendBuzzerCmd error", e);
+    }
+  }
+
+  // QR na dużym wyświetlaczu – wywoływane z app.js przy kliknięciu "QR na wyświetlaczu"
   async function sendQrToDisplay() {
+    // TU DOPASUJ do protokołu wyświetlacza – przykładowo:
+    // 1. przełącz w tryb QR
     await sendDisplayCmd("MODE QR");
-    await sendDisplayCmd(`QR HOST "${escQ(urls.hostUrl)}" BUZZER "${escQ(urls.buzzerUrl)}"`);
+    // 2. wyślij linki – np. host + buzzer
+    await sendDisplayCmd(
+      `QR_LINKS "${links.host}" "${links.buzzer}"`
+    );
+    // jeśli wyświetlacz ma inny format (np. 3 linki, albo osobne komendy),
+    // zamień powyższy wiersz na swój odpowiednik.
   }
 
-    function getDeviceInfo(kind) {
-    if (!urls[kind]) return null;
-    return {
-      url: urls[kind],
-      qr: qr[kind] || "",
-      label:
-        kind === "display" ? "Wyświetlacz" :
-        kind === "host"    ? "Prowadzący" :
-        kind === "buzzer"  ? "Przycisk"   :
-        "Urządzenie",
+  // ===== PRESENCE – stany online urządzeń =====
+  //
+  // presence.js oczekuje, że devices.onPresenceUpdate(cb)
+  // będzie wołało cb({ display: {on, seen}, host: {...}, buzzer: {...} })
+
+  function onPresenceUpdate(cb) {
+    // Odbieramy broadcast PRESENCE z kanału control
+    // DOPASUJ: jeśli w Twoim kodzie event nazywa się inaczej, zmień "PRESENCE"
+    chControl
+      .on("broadcast", { event: "PRESENCE" }, (payload) => {
+        try {
+          const st = payload.payload?.state;
+          if (!st) return;
+          // Oczekiwany format:
+          // {
+          //   display: { on: bool, seen: "..." },
+          //   host:    { on: bool, seen: "..." },
+          //   buzzer:  { on: bool, seen: "..." }
+          // }
+          cb(st);
+        } catch (e) {
+          console.error("presence handler error", e);
+        }
+      })
+      .subscribe((status) => {
+        console.log("[control] presence subscribe status:", status);
+      });
+
+    // Zwracamy funkcję "sprzątającą" (na razie no-op, bo supabase v2 nie ma .off)
+    return () => {
+      // Tu można dodać detach, jeśli w Twojej wersji supabase jest dostępny.
     };
   }
 
+  // ===== API eksportowane do app.js / innych modułów =====
+
   return {
     initLinksAndQr,
+
     sendDisplayCmd,
     sendHostCmd,
     sendBuzzerCmd,
     sendQrToDisplay,
-    getDeviceInfo,
+
+    onPresenceUpdate,
   };
 }
