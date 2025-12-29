@@ -1,5 +1,7 @@
+// /familiada/control/js/display.js
+
 export function createDisplay({ devices, store }) {
-  const ELLIPSIS = "…"; // ważne: znak z fontu
+  const ELLIPSIS = "…";
 
   function q(s) {
     return String(s ?? "")
@@ -12,7 +14,7 @@ export function createDisplay({ devices, store }) {
 
   const PLACE = {
     roundsText: rep(ELLIPSIS, 17),
-    roundsPts: "——",   // em dash x2
+    roundsPts: "——",
     finalText: "———————————",
     finalPts: "▒▒",
     finalSuma: "▒▒",
@@ -21,8 +23,6 @@ export function createDisplay({ devices, store }) {
   async function send(cmd) {
     await devices.sendDisplayCmd(cmd);
   }
-
-  // === tryb app / podstawy ===
 
   async function appGra() {
     await send("APP GAME");
@@ -33,41 +33,37 @@ export function createDisplay({ devices, store }) {
   }
 
   async function appBlack() {
-    await devices.sendDisplayCmd("APP BLACK");
+    await send("APP BLACK");
   }
 
-
-  async function setTeamsLongs(teamA, teamB) {
-    const a = String(teamA || "Drużyna A");
-    const b = String(teamB || "Drużyna B");
+  async function setTeamsLongs(arg1, arg2) {
+    let a, b;
+    if (arg1 && typeof arg1 === "object") {
+      a = String(arg1.teamA || "Drużyna A");
+      b = String(arg1.teamB || "Drużyna B");
+    } else {
+      a = String(arg1 || "Drużyna A");
+      b = String(arg2 || "Drużyna B");
+    }
     await send(`LONG1 "${q(a)}"`);
     await send(`LONG2 "${q(b)}"`);
   }
 
-  // === Stany wysokiego poziomu ===
-
-  // "Gra gotowa": wyczyść wszystko, przygotuj app GAME, blank, puste triplety, zgaś INDICATOR
   async function stateGameReady(teamA, teamB) {
     await appGra();
     await appBlack();
     await setTeamsLongs(teamA, teamB);
-
     await send('TOP ""');
     await send('LEFT ""');
     await send('RIGHT ""');
-
     await send("INDICATOR OFF");
   }
 
-  // Intro: przygotowanie ekranu pod intro
-  // Uwaga: NIE pokazuje logo – to robi logika w gameRounds (po 14s pierwszego intra).
   async function stateIntroLogo(teamA, teamB) {
     await appGra();
+    await appBlack();
     await setTeamsLongs(teamA, teamB);
-    // Ekran przygotowany pod intro — logo pokażemy osobno (po 14s pierwszego intra).
   }
-
-  // === ROUNDS – plansza/odpowiedzi/X/suma ===
 
   async function roundsBoardPlaceholders() {
     await send("MODE ROUNDS");
@@ -75,7 +71,7 @@ export function createDisplay({ devices, store }) {
     const pts = PLACE.roundsPts;
 
     await send(
-      'RBATCH ' +
+      "RBATCH " +
       'SUMA 00 ' +
       `R1 "${line}" ${pts} ` +
       `R2 "${line}" ${pts} ` +
@@ -88,14 +84,13 @@ export function createDisplay({ devices, store }) {
   }
 
   async function roundsBoardPlaceholdersNewRound() {
-    // chowanie poprzedniej planszy + nowa pustka z inną animacją
     await send("RBATCH ANIMOUT edge down 1000");
 
     const line = PLACE.roundsText;
     const pts = PLACE.roundsPts;
 
     await send(
-      'RBATCH ' +
+      "RBATCH " +
       'SUMA 00 ' +
       `R1 "${line}" ${pts} ` +
       `R2 "${line}" ${pts} ` +
@@ -107,13 +102,15 @@ export function createDisplay({ devices, store }) {
     );
   }
 
+  function nInt(v, d = 0) {
+    const x = Number.parseInt(String(v ?? ""), 10);
+    return Number.isFinite(x) ? x : d;
+  }
+
   async function roundsRevealRow(ord, text, pts) {
     const t = q(text || "");
     const p = String(nInt(pts, 0)).padStart(2, "0");
-
-    await send(
-      `R ${ord} TXT "${t}" PTS ${p} ANIMIN matrix right 500`
-    );
+    await send(`R ${ord} TXT "${t}" PTS ${p} ANIMIN matrix right 500`);
   }
 
   async function roundsSetSum(sum) {
@@ -123,15 +120,12 @@ export function createDisplay({ devices, store }) {
 
   async function roundsSetX(team, count) {
     const c = Math.max(0, Math.min(3, nInt(count, 0)));
-    // RX 2A ON / RX 2B ON itd. – ustawiamy wszystkie X wg count
-    // Najpierw wszystko OFF
     await send("RX 1A OFF");
     await send("RX 2A OFF");
     await send("RX 3A OFF");
     await send("RX 1B OFF");
     await send("RX 2B OFF");
     await send("RX 3B OFF");
-
     for (let i = 1; i <= c; i++) {
       await send(`RX ${i}${team} ON`);
     }
@@ -145,9 +139,8 @@ export function createDisplay({ devices, store }) {
     await send(`RIGHT ${b}`);
   }
 
-  // INDICATOR: OFF / ON_A / ON_B
   async function setIndicator(mode) {
-    if (!mode || mode === "OFF") {
+    if (!mode || mode === "OFF" || mode === null) {
       await send("INDICATOR OFF");
     } else if (mode === "A") {
       await send("INDICATOR ON_A");
@@ -168,8 +161,6 @@ export function createDisplay({ devices, store }) {
     await send(`TOP ${p}`);
   }
 
-  // === FINAŁ – plansza, odpowiedzi, suma, timer ===
-
   async function finalBoardPlaceholders() {
     await send("MODE FINAL");
     const t = PLACE.finalText;
@@ -189,7 +180,6 @@ export function createDisplay({ devices, store }) {
   }
 
   async function finalHideAnswersKeepSum() {
-    // Zasłaniamy odpowiedzi, suma zostaje
     await send(
       "FHALF A " +
       `"${PLACE.finalText}" ${PLACE.finalPts} ` +
@@ -223,14 +213,11 @@ export function createDisplay({ devices, store }) {
 
   async function finalSetSuma(sum) {
     const p = String(nInt(sum, 0)).padStart(3, "0");
-    // domyślnie pokazujemy sumę pod stroną A (tak jak w przykładzie)
     await send(`FSUMA A ${p} ANIMIN matrix right 500`);
   }
 
   async function finalSetSideTimer(team, text) {
     const t = String(text || "");
-    // Timer na bocznym tripletcie – wykorzystujemy TOP/LEFT/RIGHT,
-    // ale tylko po stronie zwycięskiej drużyny (ty ustalasz w Control).
     const sum = store.state.rounds?.totals || { A: 0, B: 0 };
     const a = String(nInt(sum.A, 0)).padStart(3, "0");
     const b = String(nInt(sum.B, 0)).padStart(3, "0");
@@ -247,8 +234,6 @@ export function createDisplay({ devices, store }) {
     }
   }
 
-  // === Logo / Win ===
-
   async function showLogo() {
     await send('LOGO SHOW ANIMIN edge up 1000');
   }
@@ -261,11 +246,6 @@ export function createDisplay({ devices, store }) {
     const num = nInt(amount, 0);
     const txt = String(num).padStart(5, "0");
     await send(`WIN ${txt} ANIMIN rain right 80`);
-  }
-
-  function nInt(v, d = 0) {
-    const x = Number.parseInt(String(v ?? ""), 10);
-    return Number.isFinite(x) ? x : d;
   }
 
   return {
