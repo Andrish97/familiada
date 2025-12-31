@@ -203,7 +203,7 @@ export async function validatePollReadyToOpen(gameId) {
  * prepared:
  * - >=10 pytań
  * - w każdym pytaniu 3..6 odpowiedzi
- * - suma punktów w pytaniu = 100
+ * - suma punktów w pytaniu <= 100
  */
 export async function validateGameReadyToPlay(gameId) {
   const game = await loadGameBasic(gameId);
@@ -241,8 +241,11 @@ export async function validateGameReadyToPlay(gameId) {
     }
 
     const sum = pts.reduce((s, x) => s + x, 0);
-    if (sum !== RULES.SUM_PREPARED) {
-      return { ok: false, reason: `Pytanie #${q.ord}: suma punktów musi wynosić ${RULES.SUM_PREPARED} (jest: ${sum}).` };
+    if (sum > RULES.SUM_PREPARED) {
+      return {
+        ok: false,
+        reason: `Pytanie #${q.ord}: suma punktów nie może przekroczyć ${RULES.SUM_PREPARED} (jest: ${sum}).`,
+      };
     }
   }
 
