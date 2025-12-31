@@ -58,6 +58,7 @@ export function createPresence({ game, ui, store, devices }) {
     const hOn = isOnline(h);
     const bOn = isOnline(b);
 
+    // spadki online -> alert
     alertIfDropped(store.state.flags.displayOnline, dOn, "Wyświetlacz");
     alertIfDropped(store.state.flags.hostOnline, hOn, "Prowadzący");
     alertIfDropped(store.state.flags.buzzerOnline, bOn, "Przycisk");
@@ -68,15 +69,33 @@ export function createPresence({ game, ui, store, devices }) {
       buzzer: { on: bOn, seen: fmtSince(b?.last_seen_at) },
     });
 
-    store.setOnlineFlags({ display: dOn, host: hOn, buzzer: bOn });
+    // *** NOWOŚĆ: stan zerowy po świeżym podpięciu ***
 
-    // after projector connected -> send BLACK once
+    // Host: SET "" + HIDE
+    if (hOn && !store.state.flags.hostOnline) {
+      try {
+        await devices.sendHostCmd('SET ""');
+        await devices.sendHostCmd("HIDE");
+      } catch {}
+    }
+
+    // Buzzer: OFF
+    if (bOn && !store.state.flags.buzzerOnline) {
+      try {
+        await devices.sendBuzzerCmd("OFF");
+      } catch {}
+    }
+
+    // Display: po pierwszym podpięciu -> APP BLACK (raz)
     if (dOn && !store.state.flags.sentBlackAfterDisplayOnline) {
       try {
         await devices.sendDisplayCmd("APP BLACK");
         store.markSentBlackAfterDisplayOnline();
       } catch {}
     }
+
+    // Na końcu aktualizujemy flagi online
+    store.setOnlineFlags({ display: dOn, host: hOn, buzzer: bOn });
   }
 
   async function start() {
