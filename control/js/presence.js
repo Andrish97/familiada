@@ -73,7 +73,7 @@ export function createPresence({ game, ui, store, devices }) {
     // after projector connected -> send BLACK once
     if (dOn && !store.state.flags.sentBlackAfterDisplayOnline) {
       try {
-        await devices.sendDisplayCmd("MODE BLACK");
+        await devices.sendDisplayCmd("APP BLACK");
         store.markSentBlackAfterDisplayOnline();
       } catch {}
     }
