@@ -50,6 +50,31 @@
     <button class="btn xs" id="btnAlertClose" type="button">OK</button>
   </div>
 
+    <!-- Modal QR urządzeń z top bara -->
+  <div class="qrModalOverlay hidden" id="qrModalOverlay">
+    <div class="qrModalBox">
+      <div class="qrModalHead">
+        <div class="qrModalTitle" id="qrModalTitle">Urządzenie</div>
+        <button class="btn xs" id="qrModalClose" type="button">✕</button>
+      </div>
+
+      <div class="qrModalBody">
+        <div class="qrModalQr">
+          <img id="qrModalImg" alt="Kod QR" />
+        </div>
+
+        <div class="rowBtns">
+          <input class="inp" id="qrModalLink" readonly />
+        </div>
+
+        <div class="rowBtns">
+          <button class="btn" id="qrModalCopy" type="button">Kopiuj link</button>
+          <button class="btn gold" id="qrModalOpen" type="button">Otwórz</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <main class="wrap wide">
     <div class="shell">
       <!-- LEFT: cards (very narrow) -->
