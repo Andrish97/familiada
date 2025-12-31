@@ -62,7 +62,7 @@ export function createDevices({ game, ui, store, chDisplay, chHost, chBuzzer }) 
   }
 
   async function sendQrToDisplay() {
-    await sendDisplayCmd("MODE QR");
+    await sendDisplayCmd("APP QR");
     await sendDisplayCmd(`QR HOST "${escQ(urls.hostUrl)}" BUZZER "${escQ(urls.buzzerUrl)}"`);
   }
 
