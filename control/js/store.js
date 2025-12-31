@@ -1,6 +1,7 @@
 export function createStore(gameId) {
   const KEY = `familiada:control:v5:${gameId}`;
   const listeners = new Set();
+  const FINAL_MIN_POINTS = 300; // domyślny próg do finału
 
   const state = {
     activeCard: "devices",
@@ -143,19 +144,31 @@ export function createStore(gameId) {
   }
 
   function canEnterCard(card) {
-    if (card === "devices") return true;
+    const totals = state.rounds?.totals || { A: 0, B: 0 };
+    const hasFinalPoints =
+      (totals.A || 0) >= FINAL_MIN_POINTS || (totals.B || 0) >= FINAL_MIN_POINTS;
 
-    if (card === "setup") {
-      // można wejść po urządzeniach, ale NIE w trakcie finału
-      return state.completed.devices && !isFinalActive();
+    // URZĄDZENIA – dostępne tylko do momentu "Gra gotowa"
+    if (card === "devices") {
+      return !state.locks.gameStarted;
     }
 
+    // USTAWIENIA – po urządzeniach, aż do "Gra gotowa"
+    if (card === "setup") {
+      return state.completed.devices && !state.locks.gameStarted;
+    }
+
+    // RUNDY – normalnie po skończeniu ustawień (tu nic nie blokujemy po "Gra gotowa")
     if (card === "rounds") {
       return state.completed.devices && canFinishSetup();
     }
 
+    // FINAŁ – tylko jeśli:
+    // - finał w ogóle jest,
+    // - ustawienia są zakończone,
+    // - ktoś przekroczył wymagany próg (domyślnie 300)
     if (card === "final") {
-      return state.hasFinal === true && canFinishSetup();
+      return state.hasFinal === true && canFinishSetup() && hasFinalPoints;
     }
 
     return false;
@@ -199,6 +212,11 @@ export function createStore(gameId) {
 
   function setFinalActive(v) {
     state.locks.finalActive = !!v;
+    emit();
+  }
+
+    function setGameStarted(v) {
+    state.locks.gameStarted = !!v;
     emit();
   }
 
@@ -364,6 +382,7 @@ export function createStore(gameId) {
     setAudioUnlocked,
     setQrOnDisplay,
     setFinalActive,
+    setGameStarted,
 
     teamsOk,
     canFinishSetup,
