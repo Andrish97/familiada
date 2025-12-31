@@ -27,6 +27,9 @@ export function createDevices({ game, ui, store, chDisplay, chHost, chBuzzer }) 
   }
 
   let urls = { displayUrl:"", hostUrl:"", buzzerUrl:"" };
+    function getUrls() {
+    return { ...urls };
+  }
 
   function initLinksAndQr() {
     const displayUrl = makeUrl("/familiada/display/index.html", game.id, game.share_key_display);
@@ -69,5 +72,6 @@ export function createDevices({ game, ui, store, chDisplay, chHost, chBuzzer }) 
     sendHostCmd,
     sendBuzzerCmd,
     sendQrToDisplay,
+    getUrls
   };
 }
