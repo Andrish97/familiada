@@ -153,20 +153,21 @@ export function createStore(gameId) {
       return !state.locks.gameStarted;
     }
 
-    // USTAWIENIA – po urządzeniach, aż do "Gra gotowa"
+    // USTAWIENIA – po urządzeniach, też tylko do "Gra gotowa"
     if (card === "setup") {
       return state.completed.devices && !state.locks.gameStarted;
     }
 
-    // RUNDY – normalnie po skończeniu ustawień (tu nic nie blokujemy po "Gra gotowa")
+    // ROUNDS – dostępne, gdy urządzenia ogarnięte,
+    // niezależnie od tego, czy jest finał i czy ustawienia już pełne.
     if (card === "rounds") {
-      return state.completed.devices && canFinishSetup();
+      return state.completed.devices;
     }
 
-    // FINAŁ – tylko jeśli:
-    // - finał w ogóle jest,
-    // - ustawienia są zakończone,
-    // - ktoś przekroczył wymagany próg (domyślnie 300)
+    // FINAŁ – tylko gdy:
+    // - gra ma finał,
+    // - ustawienia są kompletne,
+    // - ktoś przekroczył próg punktowy
     if (card === "final") {
       return state.hasFinal === true && canFinishSetup() && hasFinalPoints;
     }
