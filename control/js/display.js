@@ -35,7 +35,10 @@ export function createDisplay({ devices, store }) {
   async function setTeamsLongs(teamA, teamB) {
     const a = String(teamA || "Drużyna A");
     const b = String(teamB || "Drużyna B");
-    await send(`TEAMNAMES "${q(a)}" "${q(b)}"`);
+
+    // Nowy protokół: dwie osobne komendy LONG1 / LONG2
+    await send(`LONG1 "${q(a)}"`);
+    await send(`LONG2 "${q(b)}"`);
   }
 
   // === Stany wysokiego poziomu ===
