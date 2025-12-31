@@ -1,51 +1,24 @@
 // /familiada/control/js/presence.js
 
 export function createPresence({ game, ui, store, devices }) {
-  let stopFn = null;
+  function setAllOffline() {
+    ui.setDeviceBadgesUnavailable();
 
-  function updateBadges(state) {
-    if (!state) {
-      store.setPresenceUnavailable();
-      ui.setDeviceBadgesUnavailable();
-      return;
-    }
-
-    const { display, host, buzzer } = state;
-    store.setOnlineFlags({
-      display: display.on,
-      host: host.on,
-      buzzer: buzzer.on,
-    });
-
-    ui.setDeviceBadges({
-      display,
-      host,
-      buzzer,
-    });
-
-    if (display.on && !store.state.flags.sentBlackAfterDisplayOnline) {
-      devices.sendDisplayCmd("APP BLACK").catch(() => {});
-      store.markSentBlackAfterDisplayOnline();
-    }
+    store.state.flags.displayOnline = false;
+    store.state.flags.hostOnline = false;
+    store.state.flags.buzzerOnline = false;
   }
 
   async function start() {
-    updateBadges(null);
-    if (typeof devices.onPresenceUpdate === "function") {
-      stopFn = devices.onPresenceUpdate((st) => {
-        try {
-          updateBadges(st);
-        } catch {}
-      });
-    }
-  }
+    // Na start: wszystko "brak" / offline
+    setAllOffline();
 
-  function stop() {
-    if (stopFn) stopFn();
+    // TODO: jeśli chcesz prawdziwy presence z Supabase,
+    // trzeba tu podpiąć się do realnego kanału (sb().channel(...).on(...).subscribe()).
+    // Na razie nic NIE SUBSKRYBUJEMY, żeby nie wywalać błędów.
   }
 
   return {
     start,
-    stop,
   };
 }
