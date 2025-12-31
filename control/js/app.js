@@ -354,7 +354,10 @@ async function main() {
   });
 
   // ROUNDS
+  // ROUNDS
   ui.on("game.ready", async () => {
+    // blokujemy dalszą edycję urządzeń/ustawień
+    store.setGameStarted(true);
     await rounds.stateGameReady();
   });
 
