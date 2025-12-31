@@ -452,6 +452,8 @@ async function main() {
       store.state.hasFinal === true && store.state.final.confirmed === true
     );
 
+    ui.setEnabled("btnGameReady", store.canStartRounds());
+
     ui.setEnabled("btnStartRound", store.canStartRounds());
 
     // rounds HUD
