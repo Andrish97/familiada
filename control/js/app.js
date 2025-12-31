@@ -52,6 +52,73 @@ async function main() {
   const ui = createUI();
   ui.setGameHeader(game.name, `${game.type} / ${game.status}`);
 
+    // === Modal QR z auth bar (top-status) ===
+  let currentQrKind = null; // "display" | "host" | "buzzer"
+
+  function qrSrc(url) {
+    const u = encodeURIComponent(String(url ?? ""));
+    return `https://api.qrserver.com/v1/create-qr-code/?size=320x320&data=${u}`;
+  }
+
+  function getDeviceUrl(kind) {
+    if (!window || !kind) return null;
+    // devices będzie zdefiniowane niżej, ale w momencie użycia już istnieje
+    if (!devices || !devices.getUrls) return null;
+    const urls = devices.getUrls();
+    if (kind === "display") return urls.displayUrl;
+    if (kind === "host") return urls.hostUrl;
+    if (kind === "buzzer") return urls.buzzerUrl;
+    return null;
+  }
+
+  function hideQrModal() {
+    const overlay = document.getElementById("qrModalOverlay");
+    if (overlay) overlay.classList.add("hidden");
+  }
+
+  function showQrModal(kind) {
+    const url = getDeviceUrl(kind);
+    if (!url) return;
+
+    currentQrKind = kind;
+
+    const overlay = document.getElementById("qrModalOverlay");
+    const titleEl = document.getElementById("qrModalTitle");
+    const imgEl = document.getElementById("qrModalImg");
+    const linkEl = document.getElementById("qrModalLink");
+
+    if (!overlay || !titleEl || !imgEl || !linkEl) return;
+
+    const label =
+      kind === "display" ? "Wyświetlacz" :
+      kind === "host" ? "Prowadzący" :
+      kind === "buzzer" ? "Przycisk" :
+      "Urządzenie";
+
+    titleEl.textContent = label;
+    linkEl.value = url;
+    imgEl.src = qrSrc(url);
+
+    overlay.classList.remove("hidden");
+  }
+
+  async function copyQrLink() {
+    const url = getDeviceUrl(currentQrKind);
+    if (!url) return;
+    try {
+      await navigator.clipboard.writeText(url);
+      ui.showAlert("Skopiowano link do urządzenia.");
+    } catch {
+      ui.showAlert("Nie udało się skopiować linka.");
+    }
+  }
+
+  function openQrLink() {
+    const url = getDeviceUrl(currentQrKind);
+    if (!url) return;
+    window.open(url, "_blank");
+  }
+
   const store = createStore(game.id);
   store.hydrate();
 
@@ -194,6 +261,20 @@ async function main() {
   ui.on("top.logout", async () => {
     await signOut().catch(() => {});
     location.href = "/familiada/index.html";
+  });
+
+    // auth bar: QR z top bara
+  ui.on("auth.showQr", (kind) => {
+    showQrModal(kind);
+  });
+  ui.on("auth.qr.close", () => {
+    hideQrModal();
+  });
+  ui.on("auth.qr.copy", async () => {
+    await copyQrLink();
+  });
+  ui.on("auth.qr.open", () => {
+    openQrLink();
   });
 
   // DEVICE steps
