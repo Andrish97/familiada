@@ -16,8 +16,8 @@ export function createStore(gameId) {
     },
 
     locks: {
-      gameStarted: false,     // po „Start gry” blokujemy powrót do setup (tak jak ustaliliście)
-      finalActive: false    
+      gameStarted: false, // po „Start gry” blokujemy powrót do setup (tak jak ustaliliście)
+      finalActive: false,
     },
 
     teams: {
@@ -26,20 +26,20 @@ export function createStore(gameId) {
     },
 
     hasFinal: null,
-    
+
     final: {
       picked: [],
       confirmed: false,
       runtime: {
         phase: "IDLE", // IDLE | P1_ENTRY | P1_MAP | ROUND2_START | P2_ENTRY | P2_MAP | FINISH
         sum: 0,
-        winSide: "A",            // "A"|"B" (strona timera)
-        timer: { running:false, secLeft:0, phase:"P1" }, // P1=15, P2=20
-        mapIndex: 0,             // 0..4
-        p1List: null,            // [{text,status}] len 5, status: EMPTY|FILLED
-        p2List: null,            // [{text,status}] len 5, status: EMPTY|FILLED|REPEAT
-        mapP1: null,             // [{choice, matchId, outText, pts}] len 5
-        mapP2: null,             // [{choice, matchId, outText, pts}] len 5
+        winSide: "A", // "A"|"B" (strona timera)
+        timer: { running: false, secLeft: 0, phase: "P1" }, // P1=15, P2=20
+        mapIndex: 0, // 0..4
+        p1List: null, // [{text,status}] len 5, status: EMPTY|FILLED
+        p2List: null, // [{text,status}] len 5, status: EMPTY|FILLED|REPEAT
+        mapP1: null, // [{choice, matchId, outText, pts}] len 5
+        mapP2: null, // [{choice, matchId, outText, pts}] len 5
         reached200: false,
       },
       step: "f_start",
@@ -67,7 +67,7 @@ export function createStore(gameId) {
       stealWon: false,
 
       question: null, // {id, ord, text}
-      answers: [],    // [{id, ord, text, fixed_points}]
+      answers: [], // [{id, ord, text, fixed_points}]
       revealed: new Set(), // ord set
 
       duel: {
@@ -96,21 +96,25 @@ export function createStore(gameId) {
     for (const fn of listeners) fn(state);
   }
 
-  function subscribe(fn) { listeners.add(fn); return () => listeners.delete(fn); }
+  function subscribe(fn) {
+    listeners.add(fn);
+    return () => listeners.delete(fn);
+  }
 
   function serialize(s) {
-    // convert Sets
+    // konwersja Setów itp.
     const out = structuredClone(s);
     out.rounds.revealed = Array.from(s.rounds.revealed);
+    // znacznik czasu zapisu – potrzebny do limitu 5 minut
+    out._savedAt = Date.now();
     return out;
   }
 
-  function isFinalActive() {
+  // Stare isFinalActive – zostawione tylko jako pomocnicze (gdyby coś jeszcze wołało po kroku)
+  function isFinalActiveLegacy() {
     const step = state.final?.step || "f_start";
-    // wszystko poza ekranem startowym traktujemy jako "finał aktywny"
     return step !== "f_start";
   }
-
 
   function teamsOk() {
     return state.teams.teamA.trim().length > 0 || state.teams.teamB.trim().length > 0;
@@ -133,41 +137,50 @@ export function createStore(gameId) {
     return allDevicesOnline() && state.flags.audioUnlocked && canFinishSetup();
   }
 
+  // Właściwa funkcja – logika przełączona na locka
   function isFinalActive() {
-    // zamiast patrzeć na runtime.phase (którego nie ustawiamy),
-    // korzystamy z locka
     return state.locks.finalActive === true;
   }
 
   function canEnterCard(card) {
     if (card === "devices") return true;
-  
+
     if (card === "setup") {
       // można wejść po urządzeniach, ale NIE w trakcie finału
       return state.completed.devices && !isFinalActive();
     }
-  
+
     if (card === "rounds") {
       return state.completed.devices && canFinishSetup();
     }
-  
+
     if (card === "final") {
       return state.hasFinal === true && canFinishSetup();
     }
-  
+
     return false;
   }
-  
+
   function setActiveCard(card) {
     if (!canEnterCard(card)) return;
     state.activeCard = card;
     emit();
   }
 
-  function setDevicesStep(step) { state.steps.devices = step; emit(); }
-  function setSetupStep(step) { state.steps.setup = step; emit(); }
+  function setDevicesStep(step) {
+    state.steps.devices = step;
+    emit();
+  }
 
-  function completeCard(card) { state.completed[card] = true; emit(); }
+  function setSetupStep(step) {
+    state.steps.setup = step;
+    emit();
+  }
+
+  function completeCard(card) {
+    state.completed[card] = true;
+    emit();
+  }
 
   function setTeams(a, b) {
     state.teams.teamA = String(a ?? "");
@@ -222,11 +235,54 @@ export function createStore(gameId) {
     emit();
   }
 
+  // ---- obsługa typu wejścia na stronę (odświeżenie vs. nowa nawigacja) ----
+
+  function getNavigationType() {
+    try {
+      const navEntries = performance.getEntriesByType?.("navigation");
+      const nav = navEntries && navEntries[0];
+      if (nav && nav.type) return nav.type; // "navigate" | "reload" | "back_forward"
+
+      // legacy API
+      const legacy = performance.navigation;
+      if (legacy) {
+        if (legacy.type === 1) return "reload";
+        if (legacy.type === 2) return "back_forward";
+        return "navigate";
+      }
+    } catch {
+      // jeśli coś pójdzie nie tak, zachowujemy się konserwatywnie jak przy zwykłej nawigacji
+    }
+    return "navigate";
+  }
+
   function hydrate() {
+    const navType = getNavigationType();
+
+    // Stan przywracamy **tylko** przy twardym odświeżeniu (F5 / Ctrl+R).
+    // Wejście z buildera (normalny link) albo powrót wstecz/przód – start na czysto.
+    if (navType !== "reload") {
+      try {
+        localStorage.removeItem(KEY);
+      } catch {}
+      return;
+    }
+
     try {
       const raw = localStorage.getItem(KEY);
       if (!raw) return;
       const p = JSON.parse(raw);
+
+      const MAX_AGE_MS = 5 * 60 * 1000; // 5 minut
+      const savedAt = typeof p?._savedAt === "number" ? p._savedAt : null;
+
+      // brak lub za stary zapis -> traktujemy jak brak stanu
+      if (!savedAt || Date.now() - savedAt > MAX_AGE_MS) {
+        try {
+          localStorage.removeItem(KEY);
+        } catch {}
+        return;
+      }
 
       if (p?.activeCard && typeof p.activeCard === "string") {
         state.activeCard = p.activeCard;
@@ -240,7 +296,10 @@ export function createStore(gameId) {
         state.completed.setup = !!p.completed.setup;
       }
 
-      if (p?.locks) state.locks.gameStarted = !!p.locks.gameStarted;
+      if (p?.locks) {
+        state.locks.gameStarted = !!p.locks.gameStarted;
+        state.locks.finalActive = !!p.locks.finalActive;
+      }
 
       if (p?.teams) {
         state.teams.teamA = String(p.teams.teamA ?? "");
@@ -252,6 +311,7 @@ export function createStore(gameId) {
       if (p?.final) {
         state.final.picked = Array.isArray(p.final.picked) ? p.final.picked.slice(0, 5) : [];
         state.final.confirmed = !!p.final.confirmed;
+        // runtime specjalnie pomijamy – po refreshu i tak ogarniasz finał “ręcznie”
       }
 
       if (p?.flags) {
@@ -267,7 +327,12 @@ export function createStore(gameId) {
         state.rounds.roundNo = Number(p.rounds.roundNo || 1);
         state.rounds.totals = p.rounds.totals || state.rounds.totals;
       }
-    } catch {}
+    } catch {
+      // przy problemie z JSON-em po prostu startujemy od zera
+      try {
+        localStorage.removeItem(KEY);
+      } catch {}
+    }
 
     // sanity po hydracji
     if (!canEnterCard(state.activeCard)) {
