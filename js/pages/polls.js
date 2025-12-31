@@ -272,9 +272,21 @@ async function validateCanClose(g) {
         .eq("question_id", q.id);
       if (error) throw error;
 
-      const uniq = new Set((data || []).map((x) => x.answer_id).filter(Boolean));
-      if (uniq.size < 2) {
-        return { ok: false, reason: "Aby zamknąć: w każdym pytaniu ≥ 2 odpowiedzi muszą mieć głosy > 0." };
+      const counts = new Map();
+      for (const row of data || []) {
+        if (!row.answer_id) continue;
+        counts.set(row.answer_id, (counts.get(row.answer_id) || 0) + 1);
+      }
+
+      const items = [...counts.entries()].map(([id, count]) => ({ id, count }));
+      const normalized = normalizeCountsTo100(items);
+      const strong = normalized.filter((x) => x.points >= 3);
+
+      if (strong.length < 3) {
+        return {
+          ok: false,
+          reason: "Aby zamknąć: w każdym pytaniu co najmniej 3 odpowiedzi muszą mieć ≥ 3 punkty po przeliczeniu.",
+        };
       }
     }
     return { ok: true, reason: "" };
@@ -416,15 +428,23 @@ function clip17Final(s) {
   return t.length > 17 ? t.slice(0, 17) : t;
 }
 
-function normalizeTo100Int(items) {
-  const top = [...items].sort((a, b) => b.count - a.count).slice(0, 6);
-  if (!top.length) return [];
+// bazowy przelicznik: count -> punkty do 100 (bez limitu 6 odp.)
+function normalizeCountsTo100(items) {
+  const cleaned = (items || [])
+    .map((x) => ({
+      ...x,
+      count: Math.max(0, Number(x.count) || 0),
+    }))
+    .filter((x) => x.count > 0);
 
-  const total = top.reduce((s, x) => s + Math.max(0, x.count | 0), 0) || 1;
-  const raw = top.map((x) => {
-    const r = (100 * (x.count | 0)) / total;
+  if (!cleaned.length) return [];
+
+  const total = cleaned.reduce((s, x) => s + x.count, 0) || 1;
+
+  const raw = cleaned.map((x) => {
+    const r = (100 * x.count) / total;
     const f = Math.floor(r);
-    return { ...x, raw: r, floor: Math.max(1, f), frac: r - f };
+    return { ...x, raw: r, floor: f, frac: r - f };
   });
 
   let sum = raw.reduce((s, x) => s + x.floor, 0);
@@ -439,7 +459,7 @@ function normalizeTo100Int(items) {
     let i = 0;
     while (diff > 0 && i < raw.length * 5) {
       const idx = i % raw.length;
-      if (raw[idx].floor > 1) {
+      if (raw[idx].floor > 0) {
         raw[idx].floor -= 1;
         diff--;
       }
@@ -447,9 +467,23 @@ function normalizeTo100Int(items) {
     }
   }
 
-  return raw
-    .sort((a, b) => b.count - a.count)
-    .map((x) => ({ text: x.text, points: x.floor }));
+  return raw.map((x) => ({ ...x, points: x.floor }));
+}
+
+// klasyczny sondaż: normalizacja + odrzucenie <3 + max 6 bez dalszej normalizacji
+function normalizeTo100Int(items) {
+  const normalized = normalizeCountsTo100(items);
+  if (!normalized.length) return [];
+
+  let filtered = normalized.filter((x) => x.points >= 3);
+
+  filtered.sort((a, b) => b.points - a.points);
+
+  if (filtered.length > 6) {
+    filtered = filtered.slice(0, 6);
+  }
+
+  return filtered.map((x) => ({ text: x.text, points: x.points }));
 }
 
 async function buildTextClosePanel() {
