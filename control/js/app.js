@@ -356,7 +356,7 @@ async function main() {
   // ROUNDS
   // ROUNDS
   ui.on("game.ready", async () => {
-    // blokujemy dalszą edycję urządzeń/ustawień
+    // po "Gra gotowa" blokujemy Urządzenia i Ustawienia
     store.setGameStarted(true);
     await rounds.stateGameReady();
   });
@@ -452,8 +452,10 @@ async function main() {
       store.state.hasFinal === true && store.state.final.confirmed === true
     );
 
+    // "Gra gotowa" klikalne dopiero gdy gra spełnia warunki startu (validate + devices + audio)
     ui.setEnabled("btnGameReady", store.canStartRounds());
 
+    // Start pierwszej rundy też dopiero wtedy
     ui.setEnabled("btnStartRound", store.canStartRounds());
 
     // rounds HUD
