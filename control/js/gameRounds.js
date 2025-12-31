@@ -137,10 +137,10 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
 
     // Intro: gra dwa razy, logo pojawia się w 14 sekundzie pierwszego odtworzenia.
     if (!introMixer) {
-      // Proste przybliżenie bez mierzenia długości pliku
+      // Fallback: proste przybliżenie bez mierzenia długości pliku
       playSfx("show_intro");
 
-      // logo po 14s
+      // logo po 14s (na oko)
       setTimeout(() => {
         display.showLogo().catch(() => {});
       }, 14000);
@@ -153,7 +153,9 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
       // całość ok. 30s
       await new Promise((res) => setTimeout(res, 30000));
     } else {
-      introMixer.stop();
+      // Precyzyjna wersja z mikserem
+      introMixer.stop(); // na wszelki wypadek czyścimy poprzednie
+
       await new Promise((resolve) => {
         let playCount = 0;
         let logoShown = false;
@@ -161,18 +163,20 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
         const stop = introMixer.onTime((current, duration) => {
           const d = duration || 0;
 
-          // logo w 14 sekundzie pierwszego intra
+          // LOGO dokładnie przy 14 sekundzie pierwszej pętli
           if (!logoShown && current >= 14) {
             logoShown = true;
             display.showLogo().catch(() => {});
           }
 
+          // koniec jednego odtworzenia
           if (d > 0 && current >= d - 0.05) {
             playCount += 1;
             if (playCount === 1) {
               // koniec pierwszej pętli -> start drugiej
-              playSfx("show_intro");
+              introMixer.play("show_intro");
             } else {
+              // koniec drugiej pętli -> sprzątamy i kończymy
               stop();
               resolve();
             }
@@ -180,7 +184,7 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
         });
 
         // start pierwszej pętli
-        playSfx("show_intro");
+        introMixer.play("show_intro");
       });
     }
 
