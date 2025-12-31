@@ -1,0 +1,625 @@
+// /familiada/js/pages/control/gameFinal.js
+import { playSfx } from "/familiada/js/core/sfx.js";
+
+function nInt(v, d = 0) {
+  const x = Number.parseInt(String(v ?? ""), 10);
+  return Number.isFinite(x) ? x : d;
+}
+
+function escapeHtml(s) {
+  return String(s ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+function clip11(s) {
+  const t = String(s ?? "");
+  return t.length > 11 ? t.slice(0, 11) : t;
+}
+
+export function createFinal({ ui, store, devices, display, loadAnswers }) {
+  let qPicked = []; // [{id, text, ord}]
+  let answersByQ = new Map(); // qid -> [{id, text, fixed_points, ord}]
+
+  let raf = null;
+
+  function setStep(step) {
+    store.state.final.step = step;
+    ui.showFinalStep(step);
+  }
+
+  function ensureRuntime() {
+    const f = store.state.final;
+    if (!f.runtime) f.runtime = {};
+    const rt = f.runtime;
+
+    if (!rt.p1) rt.p1 = Array.from({ length: 5 }, () => ({ text: "", entered: false }));
+    if (!rt.p2) rt.p2 = Array.from({ length: 5 }, () => ({ text: "", entered: false, repeat: false }));
+
+    // mapping decisions per slot (osobno dla r1 i r2)
+    // kind: "MATCH" | "MISS" | "SKIP"
+    // matchId: string|null
+    // outText: string
+    // pts: number
+    if (!rt.map1) rt.map1 = Array.from({ length: 5 }, () => ({ kind: "SKIP", matchId: null, outText: "", pts: 0 }));
+    if (!rt.map2) rt.map2 = Array.from({ length: 5 }, () => ({ kind: "SKIP", matchId: null, outText: "", pts: 0 }));
+
+    if (!rt.sum) rt.sum = 0;
+
+    if (!rt.timer) rt.timer = { running: false, endsAt: 0, seconds: 0, phase: null }; // phase: "P1"|"P2"|null
+    if (!rt.done) rt.done = false;
+  }
+
+  function stopTimer() {
+    const rt = store.state.final.runtime;
+    rt.timer.running = false;
+    rt.timer.endsAt = 0;
+    rt.timer.seconds = 0;
+    rt.timer.phase = null;
+    if (raf) cancelAnimationFrame(raf);
+    raf = null;
+    ui.setText("finalTimer", "—");
+  }
+
+  // Zwycięska drużyna (do timera na bocznym tripletcie).
+  // U Ciebie to zwykle “drużyna która weszła do finału”.
+  // Jeśli masz to w store, podepnij tu; jeśli nie, fallback: teamA.
+  function getWinnerTeam() {
+    return store.state?.winnerTeam || store.state?.final?.winnerTeam || "A";
+  }
+
+  async function loadFinalPicked() {
+    // Zakładam jak wcześniej: `store.state.final.picked` to 5 ID pytań
+    const pickedIds = store.state.final.picked || [];
+    const raw = sessionStorage.getItem("familiada:questionsCache");
+    const all = raw ? JSON.parse(raw) : [];
+    qPicked = pickedIds.map((id) => all.find((q) => q.id === id)).filter(Boolean);
+
+    if (qPicked.length !== 5) {
+      throw new Error("Brakuje 5 pytań finału (zatwierdź w ustawieniach).");
+    }
+
+    answersByQ = new Map();
+    for (const q of qPicked) {
+      const a = await loadAnswers(q.id);
+      answersByQ.set(q.id, (a || []).map((x) => ({
+        id: x.id,
+        ord: x.ord,
+        text: x.text,
+        fixed_points: nInt(x.fixed_points, 0),
+      })));
+    }
+  }
+
+  function updateSumUI() {
+    const rt = store.state.final.runtime;
+    ui.setText("finalSum", String(rt.sum || 0));
+  }
+
+  async function displaySetTimerSeconds(sec) {
+    // Timer tylko na bocznym tripletcie finału po stronie zwycięzców.
+    // Zakładam istnienie metody display.finalSetSideTimer(team, text)
+    // Jeśli nie masz, dopisz ją w display.js (checklista niżej).
+    const team = getWinnerTeam();
+    const txt = String(Math.max(0, sec)); // bez wiodących zer
+    ui.setText("finalTimer", txt);
+    await display.finalSetSideTimer?.(team, txt);
+  }
+
+  function startCountdown(seconds, phase /* "P1"|"P2" */) {
+    ensureRuntime();
+    const rt = store.state.final.runtime;
+
+    stopTimer();
+    rt.timer.running = true;
+    rt.timer.phase = phase;
+    rt.timer.endsAt = Date.now() + seconds * 1000;
+    rt.timer.seconds = seconds;
+
+    // start: pokaż pełny czas
+    displaySetTimerSeconds(seconds).catch(() => {});
+
+    const tick = () => {
+      if (!rt.timer.running) return;
+      const leftMs = Math.max(0, rt.timer.endsAt - Date.now());
+      const s = Math.ceil(leftMs / 1000);
+      if (s !== rt.timer.seconds) {
+        rt.timer.seconds = s;
+        displaySetTimerSeconds(s).catch(() => {});
+      }
+      if (leftMs <= 0) {
+        rt.timer.running = false;
+        ui.setText("finalTimer", "0");
+        displaySetTimerSeconds(0).catch(() => {});
+        playSfx("answer_wrong"); // “czas minął” w finale: u Ciebie był osobny, ale ustaliliśmy: poprawna/błędna — tu traktuj jako sygnał końca czasu
+        // odblokuj “Dalej”
+        if (phase === "P1") ui.setEnabled("btnFinalToP1MapQ1", true);
+        if (phase === "P2") ui.setEnabled("btnFinalToP2MapQ1", true);
+        return;
+      }
+      raf = requestAnimationFrame(tick);
+    };
+
+    raf = requestAnimationFrame(tick);
+  }
+
+  // ---------- Render: P1 entry ----------
+  function renderP1Entry() {
+    ensureRuntime();
+    const rt = store.state.final.runtime;
+
+    const html = qPicked.map((q, i) => {
+      const val = rt.p1[i].text || "";
+      const entered = rt.p1[i].entered === true;
+      return `
+        <div class="card" style="margin-bottom:10px;">
+          <div class="name">Pytanie ${i + 1}</div>
+          <div class="qPrompt">${escapeHtml(q.text || "")}</div>
+
+          <div class="rowBtns" style="margin-top:10px;">
+            <input class="inp" data-p="1" data-i="${i}" value="${escapeHtml(val)}" placeholder="Wpisz…" autocomplete="off"/>
+            <button class="btn sm gold" type="button" data-enter="1" data-i="${i}">${entered ? "Zatwierdzone" : "Zatwierdź"}</button>
+          </div>
+        </div>
+      `;
+    }).join("");
+
+    ui.setHtml("finalP1Inputs", html);
+
+    // input
+    document.querySelectorAll('#finalP1Inputs input[data-p="1"]').forEach((inp) => {
+      inp.addEventListener("input", () => {
+        const i = Number(inp.dataset.i);
+        rt.p1[i].text = String(inp.value ?? "");
+      });
+      inp.addEventListener("keydown", (e) => {
+        if (e.key !== "Enter") return;
+        e.preventDefault();
+        // Enter przechodzi do następnego pola (bez zatwierdzania)
+        const i = Number(inp.dataset.i);
+        const next = document.querySelector(`#finalP1Inputs input[data-p="1"][data-i="${i + 1}"]`);
+        next?.focus();
+      });
+    });
+
+    // confirm
+    document.querySelectorAll('#finalP1Inputs button[data-enter="1"]').forEach((b) => {
+      b.addEventListener("click", () => {
+        const i = Number(b.dataset.i);
+        rt.p1[i].entered = true;
+        playSfx("answer_correct"); // sygnał “odpowiedź udzielona”
+        renderP1Entry();
+      });
+    });
+
+    ui.setEnabled("btnFinalToP1MapQ1", !rt.timer.running);
+  }
+
+  // ---------- Render: P2 entry ----------
+  function renderP2Entry() {
+    ensureRuntime();
+    const rt = store.state.final.runtime;
+
+    const html = qPicked.map((q, i) => {
+      const v2 = rt.p2[i].text || "";
+      const entered = rt.p2[i].entered === true;
+      const repeat = rt.p2[i].repeat === true;
+      const p1 = (rt.p1[i].text || "").trim() || "—";
+      return `
+        <div class="card" style="margin-bottom:10px;">
+          <div class="name">Pytanie ${i + 1}</div>
+          <div class="qPrompt">${escapeHtml(q.text || "")}</div>
+
+          <div class="mini"><div class="hint">Odpowiedź gracza 1: <b>${escapeHtml(p1)}</b></div></div>
+
+          <div class="rowBtns" style="margin-top:10px;">
+            <input class="inp" data-p="2" data-i="${i}" value="${escapeHtml(v2)}" placeholder="Wpisz…" autocomplete="off"/>
+            <button class="btn sm gold" type="button" data-enter="2" data-i="${i}">${entered ? "Zatwierdzone" : "Zatwierdź"}</button>
+            <button class="btn sm danger" type="button" data-repeat="2" data-i="${i}">${repeat ? "Powtórzenie ✓" : "Powtórzenie"}</button>
+          </div>
+        </div>
+      `;
+    }).join("");
+
+    ui.setHtml("finalP2Inputs", html);
+
+    document.querySelectorAll('#finalP2Inputs input[data-p="2"]').forEach((inp) => {
+      inp.addEventListener("input", () => {
+        const i = Number(inp.dataset.i);
+        rt.p2[i].text = String(inp.value ?? "");
+      });
+      inp.addEventListener("keydown", (e) => {
+        if (e.key !== "Enter") return;
+        e.preventDefault();
+        const i = Number(inp.dataset.i);
+        const next = document.querySelector(`#finalP2Inputs input[data-p="2"][data-i="${i + 1}"]`);
+        next?.focus();
+      });
+    });
+
+    document.querySelectorAll('#finalP2Inputs button[data-enter="2"]').forEach((b) => {
+      b.addEventListener("click", () => {
+        const i = Number(b.dataset.i);
+        rt.p2[i].entered = true;
+        playSfx("answer_correct");
+        renderP2Entry();
+      });
+    });
+
+    document.querySelectorAll('#finalP2Inputs button[data-repeat="2"]').forEach((b) => {
+      b.addEventListener("click", () => {
+        const i = Number(b.dataset.i);
+        rt.p2[i].repeat = !rt.p2[i].repeat;
+        playSfx("answer_repeat");
+        renderP2Entry();
+      });
+    });
+
+    ui.setEnabled("btnFinalToP2MapQ1", !rt.timer.running);
+  }
+
+  // ---------- Render: mapping (one question) ----------
+  function renderMapOne(roundNo /*1|2*/, idx /*0..4*/) {
+    ensureRuntime();
+    const rt = store.state.final.runtime;
+    const q = qPicked[idx];
+    const aList = answersByQ.get(q.id) || [];
+
+    const input = (roundNo === 1 ? rt.p1[idx].text : rt.p2[idx].text).trim();
+    const mapArr = roundNo === 1 ? rt.map1 : rt.map2;
+    const row = mapArr[idx];
+
+    const hostHint = input.length ? `Wpisano: <b>${escapeHtml(input)}</b>` : `<i>Brak wpisu</i>`;
+
+    const left = aList.map((a) => {
+      const active = row.kind === "MATCH" && row.matchId === a.id;
+      return `
+        <button class="btn sm ${active ? "gold" : ""}" type="button" data-kind="match" data-id="${a.id}">
+          ${escapeHtml(a.text)} <span style="opacity:.7;">(${nInt(a.fixed_points,0)})</span>
+        </button>
+      `;
+    }).join("");
+
+    const missActive = row.kind === "MISS";
+    const skipActive = row.kind === "SKIP";
+
+    const outDefault = row.outText || input || "";
+    const outVal = escapeHtml(outDefault);
+
+    const html = `
+      <div class="name">Pytanie ${idx + 1}</div>
+      <div class="qPrompt">${escapeHtml(q.text || "")}</div>
+      <div class="mini"><div class="hint">${hostHint}</div></div>
+
+      ${input.length === 0 ? `
+        <div class="mini"><div class="hint">Nie wpisano odpowiedzi — “Dalej” pokaże puste / 0 pkt.</div></div>
+      ` : ``}
+
+      <div class="cards2" style="margin-top:12px;">
+        <div class="card">
+          <div class="name">Lista odpowiedzi</div>
+          <div class="rowBtns" style="flex-wrap:wrap; gap:8px;">
+            ${left || `<div class="hint">Brak listy odpowiedzi.</div>`}
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="name">Własna / brak</div>
+
+          <div class="rowBtns" style="align-items:flex-start;">
+            <button class="btn sm ${skipActive ? "gold" : ""}" type="button" data-kind="skip">Brak odpowiedzi</button>
+            <button class="btn sm danger ${missActive ? "gold" : ""}" type="button" data-kind="miss">Nie ma na liście (0 pkt)</button>
+          </div>
+
+          <div class="mini"><div class="hint">Tekst do wyświetlenia (gdy “Nie ma na liście”).</div></div>
+          <input class="inp" data-kind="out" value="${outVal}" placeholder="Tekst (0 pkt)"/>
+        </div>
+      </div>
+    `;
+
+    const rootId = roundNo === 1
+      ? `finalP1MapQ${idx + 1}`
+      : `finalP2MapQ${idx + 1}`;
+
+    ui.setHtml(rootId, html);
+
+    // wire buttons
+    const root = document.getElementById(rootId);
+    if (!root) return;
+
+    root.querySelectorAll('button[data-kind="match"]').forEach((b) => {
+      b.addEventListener("click", () => {
+        row.kind = "MATCH";
+        row.matchId = b.dataset.id || null;
+        row.outText = "";
+        renderMapOne(roundNo, idx);
+      });
+    });
+
+    root.querySelector('button[data-kind="miss"]')?.addEventListener("click", () => {
+      row.kind = "MISS";
+      row.matchId = null;
+      if (!row.outText) row.outText = input;
+      renderMapOne(roundNo, idx);
+    });
+
+    root.querySelector('button[data-kind="skip"]')?.addEventListener("click", () => {
+      row.kind = "SKIP";
+      row.matchId = null;
+      row.outText = "";
+      renderMapOne(roundNo, idx);
+    });
+
+    root.querySelector('input[data-kind="out"]')?.addEventListener("input", (e) => {
+      row.outText = String(e.target?.value ?? "");
+    });
+  }
+
+  async function commitReveal(roundNo /*1|2*/, idx /*0..4*/) {
+    ensureRuntime();
+    const rt = store.state.final.runtime;
+    const q = qPicked[idx];
+    const aList = answersByQ.get(q.id) || [];
+
+    const mapArr = roundNo === 1 ? rt.map1 : rt.map2;
+    const row = mapArr[idx];
+
+    let pts = 0;
+    let out = "";
+
+    if (row.kind === "MATCH") {
+      const a = aList.find((x) => x.id === row.matchId);
+      pts = a ? nInt(a.fixed_points, 0) : 0;
+      out = a?.text || "";
+    } else if (row.kind === "MISS") {
+      pts = 0;
+      out = row.outText || "";
+    } else {
+      pts = 0;
+      out = "";
+    }
+
+    row.pts = pts;
+
+    // Ustalenia: jeśli brak pasującej => 0 pkt i wyświetlamy wpisany tekst,
+    // a jeśli brak wpisu -> placeholder/puste.
+    const txt = out.trim().length ? out.trim() : display.PLACE?.finalText || "—";
+
+    // pokaż na tablicy:
+    // runda 1 -> lewa kolumna + A punkty, runda 2 -> prawa kolumna + B punkty
+    if (roundNo === 1) {
+      await display.finalSetLeft(idx + 1, clip11(txt));
+      await display.finalSetA(idx + 1, String(pts).padStart(2, "0").slice(-2));
+      playSfx(pts > 0 ? "answer_correct" : "answer_wrong");
+    } else {
+      await display.finalSetRight(idx + 1, clip11(txt));
+      await display.finalSetB(idx + 1, String(pts).padStart(2, "0").slice(-2));
+      // jeśli operator zaznaczył powtórzenie w entry — tylko dźwięk inny, punkty normalnie:
+      const rep = rt.p2[idx].repeat === true;
+      if (rep) playSfx("answer_repeat");
+      else playSfx(pts > 0 ? "answer_correct" : "answer_wrong");
+    }
+
+    rt.sum = (rt.sum || 0) + pts;
+    await display.finalSetSuma(rt.sum);
+    updateSumUI();
+
+    // przerwij po 200+
+    if (rt.sum >= 200) {
+      await gotoEnd(true);
+      return true; // ended
+    }
+    return false;
+  }
+
+  async function gotoEnd(hit200) {
+    ensureRuntime();
+    stopTimer();
+    
+    store.state.final.runtime.hit200 = !!hit200;
+
+    // tekst końcowy: nagroda / logo / itd.
+    const hasPrize = store.state?.final?.hasPrize !== false; // default: true
+    const mainPrize = store.state?.final?.prizeMain || "Nagroda główna";
+    const smallPrize = store.state?.final?.prizeSmall || "Nagroda";
+
+    const hint = document.getElementById("finalEndHint");
+    if (hint) {
+      if (!hasPrize) hint.textContent = "Finał zakończony. Brak trybu nagrody — wracamy do logo.";
+      else hint.textContent = hit200 ? `200+! ${mainPrize}` : `Poniżej 200. ${smallPrize}`;
+    }
+
+    setStep("f_end");
+  }
+
+  // ---------- Public actions (hooki pod UI) ----------
+  async function startFinal() {
+    if (store.state.hasFinal !== true) {
+      ui.setMsg("msgFinal", "Finał jest wyłączony.");
+      return;
+    }
+    if (!store.state.final.confirmed || (store.state.final.picked || []).length !== 5) {
+      ui.setMsg("msgFinal", "Zatwierdź 5 pytań finału w ustawieniach.");
+      return;
+    }
+  
+    // sprawdź czy ktoś ma 300+ (dodatkowe zabezpieczenie, poza canEnterCard)
+    const totals = store.state.rounds?.totals || { A: 0, B: 0 };
+    const has300 = (totals.A || 0) >= 300 || (totals.B || 0) >= 300;
+    if (!has300) {
+      ui.setMsg("msgFinal", "Finał dostępny dopiero po osiągnięciu 300 punktów.");
+      return;
+    }
+  
+    ensureRuntime();
+  
+    // blokada setupu / nawigacji podczas finału
+    if (typeof store.setFinalActive === "function") {
+      store.setFinalActive(true);
+    } else {
+      store.state.locks.finalActive = true;
+    }
+  
+    await loadFinalPicked();
+  
+    playSfx("final_theme");
+    await display.hideLogo?.();
+    await display.finalBoardPlaceholders?.();
+    await display.finalSetSuma?.(0);
+  
+    for (let i = 1; i <= 5; i++) {
+      await display.finalSetLeft?.(i, display.PLACE?.finalText || "—");
+      await display.finalSetRight?.(i, display.PLACE?.finalText || "—");
+      await display.finalSetA?.(i, "00");
+      await display.finalSetB?.(i, "00");
+    }
+  
+    await display.finalSetSideTimer?.(getWinnerTeam(), "");
+  
+    ui.setMsg("msgFinal", "Finał rozpoczęty.");
+    updateSumUI();
+    setStep("f_p1_entry");
+    renderP1Entry();
+    ui.setEnabled("btnFinalToP1MapQ1", false);
+  }
+
+
+  function backTo(step) {
+    setStep(step);
+
+    // odśwież widok kroku
+    if (step === "f_p1_entry") renderP1Entry();
+    if (step === "f_p2_entry") renderP2Entry();
+
+    // mapping kroki
+    if (step.startsWith("f_p1_map_q")) {
+      const idx = Number(step.slice(-1)) - 1;
+      renderMapOne(1, idx);
+    }
+    if (step.startsWith("f_p2_map_q")) {
+      const idx = Number(step.slice(-1)) - 1;
+      renderMapOne(2, idx);
+    }
+  }
+
+  function p1StartTimer() {
+    startCountdown(15, "P1");
+    ui.setEnabled("btnFinalToP1MapQ1", false);
+    ui.setMsg("msgFinalP1Entry", "Odliczanie trwa…");
+  }
+
+  function p2StartTimer() {
+    startCountdown(20, "P2");
+    ui.setEnabled("btnFinalToP2MapQ1", false);
+    ui.setMsg("msgFinalP2Entry", "Odliczanie trwa…");
+  }
+
+  function toP1MapQ(idx1based) {
+    stopTimer();
+    const idx = idx1based - 1;
+    setStep(`f_p1_map_q${idx1based}`);
+    renderMapOne(1, idx);
+  }
+
+  function toP2Start() {
+    stopTimer();
+    setStep("f_p2_start");
+  }
+
+  async function startP2Round() {
+    // schowaj odpowiedzi (zostaje suma) i ustaw timer 20 w tym samym miejscu co 15
+    playSfx("round_transition");
+    await display.finalHideAnswersKeepSum?.(); // dopisz w display jeśli nie masz
+    await display.finalSetSideTimer?.(getWinnerTeam(), "20");
+
+    setStep("f_p2_entry");
+    renderP2Entry();
+    ui.setEnabled("btnFinalToP2MapQ1", false);
+    ui.setMsg("msgFinalP2Start", "Runda 2 rozpoczęta.");
+  }
+
+  async function nextFromP1Q(idx1based) {
+    const idx = idx1based - 1;
+    const ended = await commitReveal(1, idx);
+    if (ended) return;
+
+    if (idx1based < 5) {
+      toP1MapQ(idx1based + 1);
+    } else {
+      // koniec r1 -> karta start r2
+      setStep("f_p2_start");
+    }
+  }
+
+  function toP2MapQ(idx1based) {
+    stopTimer();
+    const idx = idx1based - 1;
+    setStep(`f_p2_map_q${idx1based}`);
+    renderMapOne(2, idx);
+  }
+
+  async function nextFromP2Q(idx1based) {
+    const idx = idx1based - 1;
+    const ended = await commitReveal(2, idx);
+    if (ended) return;
+
+    if (idx1based < 5) {
+      toP2MapQ(idx1based + 1);
+    } else {
+      await gotoEnd(false);
+    }
+  }
+
+  async function finishFinal() {
+    playSfx("final_theme");
+  
+    const sum = Number(store.state.final.runtime?.sum || 0);     // S
+    const moneyEarned = Number(store.state.moneyEarned || 0);    // M
+  
+    const winEnabled = store.state?.advanced?.winEnabled === true;
+    const hit200 = sum >= 200;
+  
+    if (!winEnabled) {
+      await display.showLogo();
+      return;
+    }
+  
+    const winAmount = hit200
+      ? (moneyEarned + 25000)
+      : moneyEarned;
+  
+    await display.showWin(winAmount); // showWin zrobi animację rain right 80
+  }
+
+  function bootIfNeeded() {
+    ensureRuntime();
+    if (!store.state.final.step) store.state.final.step = "f_start";
+    ui.showFinalStep(store.state.final.step);
+    updateSumUI();
+  }
+
+  return {
+    bootIfNeeded,
+
+    startFinal,
+    backTo,
+
+    p1StartTimer,
+    toP1MapQ,
+
+    nextFromP1Q,
+
+    toP2Start,
+    startP2Round,
+
+    p2StartTimer,
+    toP2MapQ,
+
+    nextFromP2Q,
+
+    finishFinal,
+  };
+}
