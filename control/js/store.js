@@ -4,6 +4,7 @@ export function createStore(gameId) {
   const FINAL_MIN_POINTS = 300; // domyślny próg do finału
 
   const state = {
+    gameId,
     activeCard: "devices",
 
     steps: {
