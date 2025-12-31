@@ -255,8 +255,9 @@ function makeRemainBox(sum) {
   el.className = "remainBox";
   el.style.marginBottom = "10px";
 
-  if (sum <= SUM_PREPARED) el.classList.add("ok");
-  else el.classList.add("over");
+  // 0–100: neutralny wygląd (bez klasy)
+  // >100: ostrzeżenie (czerwone, klasa "over")
+  if (sum > SUM_PREPARED) el.classList.add("over");
 
   el.innerHTML = `<span>SUMA</span><b>${sum}/${SUM_PREPARED}</b>`;
 
@@ -270,8 +271,7 @@ function updateRemainBox(container) {
   const sum = sumPointsFromDom(container);
 
   box.classList.remove("ok", "over");
-  if (sum <= SUM_PREPARED) box.classList.add("ok");
-  else box.classList.add("over");
+  if (sum > SUM_PREPARED) box.classList.add("over");
 
   box.innerHTML = `<span>SUMA</span><b>${sum}/${SUM_PREPARED}</b>`;
 }
