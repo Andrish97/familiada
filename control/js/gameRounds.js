@@ -114,17 +114,19 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     // przycisk "Gra gotowa"
     const { teamA, teamB } = store.state.teams;
     ensureRoundsState();
-
+  
     // faza READY – przygotowanie ekranu gry
     store.state.rounds.phase = "READY";
     setStep("r_ready");
-
+  
     // ustawiamy stan na wyświetlaczu (APP GAME, BLANK, LONG1/LONG2 itd.)
     await display.stateGameReady(teamA, teamB);
-
+  
     // po ustawieniu wszystkiego, przechodzimy do kolejnego kroku: intro gry
     ui.setMsg("msgRoundsIntro", "Gra gotowa. Ekran oczekuje na start.");
     ui.setRoundsHud(store.state.rounds);
+  
+    // tu jest kluczowa zmiana: automatycznie przechodzimy na krok "Rozpocznij grę"
     setStep("r_intro");
   }
 
