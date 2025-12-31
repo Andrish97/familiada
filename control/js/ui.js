@@ -242,6 +242,28 @@ export function createUI() {
     $("btnLogout")?.addEventListener("click", () => emit("top.logout"));
     $("btnAlertClose")?.addEventListener("click", () => hideAlert());
 
+        // auth bar – kliknięcie w status urządzeń
+    const topDisplayRow = $("dotDisplay")?.parentElement;
+    if (topDisplayRow) {
+      topDisplayRow.addEventListener("click", () => emit("auth.showQr", "display"));
+    }
+    const topHostRow = $("dotHost")?.parentElement;
+    if (topHostRow) {
+      topHostRow.addEventListener("click", () => emit("auth.showQr", "host"));
+    }
+    const topBuzzerRow = $("dotBuzzer")?.parentElement;
+    if (topBuzzerRow) {
+      topBuzzerRow.addEventListener("click", () => emit("auth.showQr", "buzzer"));
+    }
+
+    // modal QR
+    $("qrModalClose")?.addEventListener("click", () => emit("auth.qr.close"));
+    $("qrModalCopy")?.addEventListener("click", () => emit("auth.qr.copy"));
+    $("qrModalOpen")?.addEventListener("click", () => emit("auth.qr.open"));
+    $("qrModalOverlay")?.addEventListener("click", (ev) => {
+      if (ev.target && ev.target.id === "qrModalOverlay") emit("auth.qr.close");
+    });
+
     // devices
     $("btnDevicesNext")?.addEventListener("click", () => emit("devices.next"));
     $("btnDevicesBack")?.addEventListener("click", () => emit("devices.back"));
