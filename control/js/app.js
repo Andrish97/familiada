@@ -452,11 +452,20 @@ async function main() {
       store.state.hasFinal === true && store.state.final.confirmed === true
     );
 
-    // "Gra gotowa" klikalne dopiero gdy gra spełnia warunki startu (validate + devices + audio)
+    // "Gra gotowa" – tylko gdy wszystko gotowe
     ui.setEnabled("btnGameReady", store.canStartRounds());
-
-    // Start pierwszej rundy też dopiero wtedy
-    ui.setEnabled("btnStartRound", store.canStartRounds());
+    
+    // "Rozpocznij grę" – tylko na kroku r_intro i tylko gdy gra gotowa
+    ui.setEnabled(
+      "btnStartShowIntro",
+      store.canStartRounds() && store.state.rounds.step === "r_intro"
+    );
+    
+    // "Rozpocznij rundę" – dopiero po zakończeniu intra (krok r_roundStart)
+    ui.setEnabled(
+      "btnStartRound",
+      store.canStartRounds() && store.state.rounds.step === "r_roundStart"
+    );
 
     // rounds HUD
     ui.setRoundsHud(store.state.rounds);
