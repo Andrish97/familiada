@@ -158,16 +158,16 @@ export function createStore(gameId) {
       return state.completed.devices && !state.locks.gameStarted;
     }
 
-    // ROUNDS – dostępne, gdy urządzenia ogarnięte,
-    // niezależnie od tego, czy jest finał i czy ustawienia już pełne.
+    // ROUNDS – dostępne po Urządzeniach, niezależnie od tego,
+    // czy ustawienia są już perfekcyjne i czy jest finał
     if (card === "rounds") {
       return state.completed.devices;
     }
 
-    // FINAŁ – tylko gdy:
+    // FINAŁ – tylko jeśli:
     // - gra ma finał,
-    // - ustawienia są kompletne,
-    // - ktoś przekroczył próg punktowy
+    // - ustawienia są poprawne (w tym wybrane pytania finału),
+    // - któraś drużyna osiągnęła wymagany próg punktów
     if (card === "final") {
       return state.hasFinal === true && canFinishSetup() && hasFinalPoints;
     }
@@ -202,6 +202,11 @@ export function createStore(gameId) {
     emit();
   }
 
+  function setGameStarted(v) {
+    state.locks.gameStarted = !!v;
+    emit();
+  }
+
   function setHasFinal(v) {
     state.hasFinal = v;
     if (v === false) {
@@ -213,11 +218,6 @@ export function createStore(gameId) {
 
   function setFinalActive(v) {
     state.locks.finalActive = !!v;
-    emit();
-  }
-
-    function setGameStarted(v) {
-    state.locks.gameStarted = !!v;
     emit();
   }
 
