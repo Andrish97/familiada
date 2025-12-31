@@ -1,104 +1,104 @@
 // /familiada/js/pages/control/presence.js
 import { sb } from "/familiada/js/core/supabase.js";
 
-const ONLINE_MS = 15_000;
-const POLL_MS = 3_000;
-
 export function createPresence({ game, ui, store, devices }) {
-  let timer = null;
-  let stopFlag = false;
+  // jak długo urządzenie jest uznawane za "online" (ms)
+  const ONLINE_MS = 15000;
+  const POLL_MS = 5000;
 
-  function fmtAgo(ts) {
-    if (!ts) return "—";
-    const t = new Date(ts).getTime();
-    if (!Number.isFinite(t)) return "—";
-    const diff = Date.now() - t;
-    if (diff < 0) return "przed chwilą";
-    const sec = Math.floor(diff / 1000);
-    if (sec < 5) return "teraz";
-    if (sec < 60) return `${sec}s temu`;
-    const min = Math.floor(sec / 60);
-    if (min < 60) return `${min} min temu`;
-    const h = Math.floor(min / 60);
-    return `${h} h temu`;
+  let timer = null;
+
+  function formatSeen(iso) {
+    if (!iso) return "brak";
+    try {
+      const d = new Date(iso);
+      if (Number.isNaN(d.getTime())) return "brak";
+      const hh = String(d.getHours()).padStart(2, "0");
+      const mm = String(d.getMinutes()).padStart(2, "0");
+      const ss = String(d.getSeconds()).padStart(2, "0");
+      return `${hh}:${mm}:${ss}`;
+    } catch {
+      return "brak";
+    }
   }
 
   async function pollOnce() {
+    if (!game?.id) return;
+
     try {
       const { data, error } = await sb()
         .from("device_presence")
-        .select("device_kind,last_seen_at")
+        .select("*")
         .eq("game_id", game.id);
 
       if (error) throw error;
 
       const now = Date.now();
-      const base = {
-        display: { on: false, seen: "brak" },
-        host:    { on: false, seen: "brak" },
-        buzzer:  { on: false, seen: "brak" },
-      };
+
+      let displayOn = false;
+      let hostOn = false;
+      let buzzerOn = false;
+
+      let seenDisplay = null;
+      let seenHost = null;
+      let seenBuzzer = null;
 
       for (const row of data || []) {
-        const kind = row.device_kind;
-        const ts = row.last_seen_at ? new Date(row.last_seen_at).getTime() : NaN;
-        if (!["display", "host", "buzzer"].includes(kind)) continue;
-        const age = Number.isFinite(ts) ? now - ts : Infinity;
-        const online = age <= ONLINE_MS;
-        base[kind] = {
-          on: online,
-          seen: fmtAgo(row.last_seen_at),
-        };
-      }
+        // próbujemy odczytać "rodzaj" z device_id
+        const rawId = String(row.device_id ?? "").toLowerCase();
+        const lastSeenIso = row.last_seen_at || row.last_seen || row.seen_at || null;
+        const t = lastSeenIso ? Date.parse(lastSeenIso) : NaN;
+        const isOnline = Number.isFinite(t) && now - t < ONLINE_MS;
 
-      store.setOnlineFlags({
-        displayOnline: base.display.on,
-        hostOnline: base.host.on,
-        buzzerOnline: base.buzzer.on,
-      });
-
-      ui.setDeviceBadges({
-        display: base.display,
-        host: base.host,
-        buzzer: base.buzzer,
-      });
-
-      // Po pierwszym pojawieniu się wyświetlacza – jednorazowo wyślij APP BLACK
-      if (base.display.on && !store.state.flags.sentBlackAfterDisplayOnline) {
-        try {
-          await devices.sendDisplayCmd("APP BLACK");
-          store.markSentBlackAfterDisplayOnline();
-        } catch (e) {
-          // nie wysadzamy całego presence, najwyżej braknie czarnego ekranu
-          console.error("send APP BLACK failed", e);
+        if (rawId.includes("display")) {
+          displayOn = displayOn || isOnline;
+          seenDisplay = seenDisplay || lastSeenIso;
+        } else if (rawId.includes("host")) {
+          hostOn = hostOn || isOnline;
+          seenHost = seenHost || lastSeenIso;
+        } else if (rawId.includes("buzzer") || rawId.includes("button")) {
+          buzzerOn = buzzerOn || isOnline;
+          seenBuzzer = seenBuzzer || lastSeenIso;
         }
       }
+
+      // zapis do store (bez kombinowania z metodami – prosto i skutecznie)
+      const flags = store.state.flags || (store.state.flags = {});
+      flags.displayOnline = displayOn;
+      flags.hostOnline = hostOn;
+      flags.buzzerOnline = buzzerOn;
+
+      // odświeżamy badge w UI
+      ui.setDeviceBadges({
+        display: { on: displayOn, seen: formatSeen(seenDisplay) },
+        host: { on: hostOn, seen: formatSeen(seenHost) },
+        buzzer: { on: buzzerOn, seen: formatSeen(seenBuzzer) },
+      });
+
+      // przy okazji – przyciski zależne od online (żeby działało nawet
+      // jeśli render() z app.js nie odpali od razu)
+      ui.setEnabled("btnDevicesNext", displayOn);
+      ui.setEnabled("btnQrToggle", displayOn);
+      ui.setEnabled(
+        "btnDevicesToAudio",
+        displayOn && hostOn && buzzerOn
+      );
     } catch (e) {
-      console.error("presence poll error", e);
-      ui.showAlert("Problem z odczytem statusu urządzeń.");
+      console.warn("presence poll error", e);
       ui.setDeviceBadgesUnavailable();
     }
   }
 
-  async function loop() {
-    while (!stopFlag) {
-      await pollOnce();
-      await new Promise((r) => setTimeout(r, POLL_MS));
-    }
-  }
-
   async function start() {
-    stopFlag = false;
-    ui.setDeviceBadgesUnavailable();
+    // pierwszy strzał od razu
     await pollOnce();
-    if (!timer) {
-      // lecimy w tle w prostym setTimeout-loopie
-      timer = loop();
-    }
+    // potem co kilka sekund
+    timer = setInterval(pollOnce, POLL_MS);
   }
 
   function stop() {
-    stopFlag = true;
+    if (timer) clearInterval(timer);
+    timer = null;
   }
 
   return {
