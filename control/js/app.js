@@ -1,4 +1,4 @@
-// /familiada/control/js/app.js
+// /familiada/js/pages/control/app.js
 import { requireAuth, signOut } from "/familiada/js/core/auth.js";
 import { sb } from "/familiada/js/core/supabase.js";
 import { rt } from "/familiada/js/core/realtime.js";
@@ -53,22 +53,23 @@ async function main() {
   ui.setGameHeader(game.name, `${game.type} / ${game.status}`);
 
   const store = createStore(game.id);
+  store.hydrate();
 
   // realtime channels
   const chDisplay = rt(`familiada-display:${game.id}`);
   const chHost = rt(`familiada-host:${game.id}`);
   const chBuzzer = rt(`familiada-buzzer:${game.id}`);
-  const chControl = rt(`familiada-control:${game.id}`);
+  const chControl = rt(`familiada-control:${game.id}`); // BUZZER_EVT etc.
 
   const devices = createDevices({ game, ui, store, chDisplay, chHost, chBuzzer, chControl });
-  const display = createDisplay({ devices, store });
   const presence = createPresence({ game, ui, store, devices });
 
+  const display = createDisplay({ devices, store });
   const rounds = createRounds({ ui, store, devices, display, loadQuestions, loadAnswers });
   rounds.bootIfNeeded();
   const final = createFinal({ ui, store, devices, display, loadAnswers });
 
-  // === PICKER PYTAŃ FINAŁU ===
+  // === PICKER PYTAŃ FINAŁU (przeniesiony z dawnego gameFinal) ===
   let finalPickerAll = [];
   let finalPickerSelected = new Set();
 
@@ -103,6 +104,7 @@ async function main() {
     const picked = finalPickerAll.filter((q) => finalPickerSelected.has(q.id));
     cnt.textContent = String(picked.length);
 
+    // chips
     chips.innerHTML = picked
       .map(
         (q) => `
@@ -125,6 +127,7 @@ async function main() {
       });
     }
 
+    // lista pytań
     if (confirmed) {
       root.innerHTML = picked
         .map(
@@ -187,13 +190,9 @@ async function main() {
   });
 
   // TOP buttons
-  ui.on("top.back", () => {
-    sessionStorage.removeItem(`familiada:control:${game.id}`);
-    location.href = "/familiada/builder.html";
-  });
+  ui.on("top.back", () => (location.href = "/familiada/builder.html"));
   ui.on("top.logout", async () => {
     await signOut().catch(() => {});
-    sessionStorage.removeItem(`familiada:control:${game.id}`);
     location.href = "/familiada/index.html";
   });
 
@@ -208,7 +207,7 @@ async function main() {
     store.setAudioUnlocked(!!ok);
     ui.setAudioStatus(!!ok);
     ui.setMsg("msgAudio", ok ? "Dźwięk odblokowany." : "Nie udało się odblokować dźwięku.");
-    if (ok) playSfx("answer_correct");
+    playSfx("answer_correct");
   });
 
   ui.on("devices.finish", () => {
@@ -217,18 +216,18 @@ async function main() {
   });
 
   ui.on("display.black", async () => {
-    await display.appBlack();
+    await devices.sendDisplayCmd("MODE BLACK");
   });
 
   ui.on("qr.toggle", async () => {
     const now = store.state.flags.qrOnDisplay;
 
     if (!now) {
-      await devices.sendQrToDisplay();
+      await devices.sendQrToDisplay(); // pokaż QR zawsze (linki są zawsze)
       store.setQrOnDisplay(true);
       ui.setQrToggleLabel(true, store.state.flags.hostOnline && store.state.flags.buzzerOnline);
     } else {
-      await display.appBlack();
+      await devices.sendDisplayCmd("MODE BLACK");
       store.setQrOnDisplay(false);
       ui.setQrToggleLabel(false, store.state.flags.hostOnline && store.state.flags.buzzerOnline);
     }
@@ -286,6 +285,7 @@ async function main() {
     await rounds.startRound();
   });
 
+  // back buttons:
   ui.on("rounds.back", (step) => rounds.backTo(step));
 
   // duel
@@ -306,7 +306,7 @@ async function main() {
   ui.on("rounds.goEnd", () => rounds.goEndRound());
   ui.on("rounds.end", () => rounds.endRound());
 
-  // FINAL (runtime)
+  // FINAL (runtime – nie picker)
   final.bootIfNeeded();
 
   ui.on("final.start", () => final.startFinal());
@@ -327,7 +327,7 @@ async function main() {
   // Presence loop
   await presence.start();
 
-  // render loop – jeden centralny render
+  // render loop
   const render = () => {
     ui.showCard(store.state.activeCard);
     ui.showDevicesStep(store.state.steps.devices);
@@ -370,22 +370,34 @@ async function main() {
 
     ui.setEnabled("btnStartRound", store.canStartRounds());
 
+    // rounds HUD
     ui.setRoundsHud(store.state.rounds);
 
+    // final UI – Start finału tylko na kroku f_start
     ui.setEnabled(
       "btnFinalStart",
       store.canEnterCard("final") && store.state.final.step === "f_start"
-    );
-
-    ui.setQrToggleLabel(
-      store.state.flags.qrOnDisplay,
-      store.state.flags.hostOnline && store.state.flags.buzzerOnline
     );
   };
 
   store.subscribe(render);
   render();
 
+  ui.setRoundsStep(
+    store.state.rounds.phase === "IDLE" || store.state.rounds.phase === "READY"
+      ? "READY"
+      : store.state.rounds.phase === "INTRO"
+      ? "INTRO"
+      : "ROUND"
+  );
+
+  // boot view state
+  ui.setQrToggleLabel(
+    store.state.flags.qrOnDisplay,
+    store.state.flags.hostOnline && store.state.flags.buzzerOnline
+  );
+
+  // init questions picker for final (setup karta)
   await finalPickerReload().catch(() => {});
 }
 
