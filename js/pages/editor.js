@@ -235,7 +235,7 @@ function cfgFromGameType(type) {
     type,
     title: "Edytor — Preparowany",
     hintTop: `Podpowiedź: zalecamy nie mniej niż ${QN_MIN} pytań. W pytaniu wymagane ${AN_MIN}–${AN_MAX} odpowiedzi.`,
-    hintBottom: `W tym trybie ustawiasz punkty ręcznie. Suma w pytaniu powinna wynosić ${SUM_PREPARED}.`,
+    hintBottom: `W tym trybie ustawiasz punkty ręcznie. Suma w pytaniu nie może przekroczyć ${SUM_PREPARED}.`,
     allowAnswers: true,
     allowPoints: true,
     ignoreImportPoints: false,
@@ -251,18 +251,14 @@ function sumPointsFromDom(container) {
 }
 
 function makeRemainBox(sum) {
-  const diff = SUM_PREPARED - sum;
-
   const el = document.createElement("div");
   el.className = "remainBox";
   el.style.marginBottom = "10px";
 
-  if (diff === 0) el.classList.add("ok");
-  else if (diff < 0) el.classList.add("over");
+  if (sum <= SUM_PREPARED) el.classList.add("ok");
+  else el.classList.add("over");
 
-  if (diff === 0) el.innerHTML = `<span>OK</span><b>${SUM_PREPARED}</b>`;
-  else if (diff > 0) el.innerHTML = `<span>ZOSTAŁO</span><b>${diff}</b>`;
-  else el.innerHTML = `<span>ZA DUŻO</span><b>${-diff}</b>`;
+  el.innerHTML = `<span>SUMA</span><b>${sum}/${SUM_PREPARED}</b>`;
 
   return el;
 }
@@ -272,15 +268,12 @@ function updateRemainBox(container) {
   if (!box) return;
 
   const sum = sumPointsFromDom(container);
-  const diff = SUM_PREPARED - sum;
 
   box.classList.remove("ok", "over");
-  if (diff === 0) box.classList.add("ok");
-  else if (diff < 0) box.classList.add("over");
+  if (sum <= SUM_PREPARED) box.classList.add("ok");
+  else box.classList.add("over");
 
-  if (diff === 0) box.innerHTML = `<span>OK</span><b>${SUM_PREPARED}</b>`;
-  else if (diff > 0) box.innerHTML = `<span>ZOSTAŁO</span><b>${diff}</b>`;
-  else box.innerHTML = `<span>ZA DUŻO</span><b>${-diff}</b>`;
+  box.innerHTML = `<span>SUMA</span><b>${sum}/${SUM_PREPARED}</b>`;
 }
 
 /* ================= Boot ================= */
@@ -491,7 +484,7 @@ async function boot() {
     if (cfg.type === TYPES.PREPARED) {
       const cnt = Number(q.__answerCount ?? 0);
       const sum = Number(q.__sumPoints ?? 0);
-      const good = cnt >= AN_MIN && sum === SUM_PREPARED;
+      const good = cnt >= AN_MIN && sum <= SUM_PREPARED;
       card.classList.add(good ? "good" : "bad");
       return;
     }
