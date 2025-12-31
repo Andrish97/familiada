@@ -1,4 +1,4 @@
-import { playSfx, createSfxMixer } from "/familiada/js/core/sfx.js";
+import { playSfx, createSfxMixer, getSfxDuration } from "/familiada/js/core/sfx.js";
 
 function nInt(v, d = 0) {
   const x = Number.parseInt(String(v ?? ""), 10);
@@ -132,49 +132,59 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
 
   async function stateStartGameIntro() {
     const { teamA, teamB } = store.state.teams;
-
+  
     setStep("r_intro");
     ui.setRoundsHud(store.state.rounds);
-
-    // przygotuj wyświetlacz (tryb gry, blank, zera / puste triplety, nazwy drużyn – BEZ logo)
+  
+    // przygotuj wyświetlacz (tryb gry, blank, puste triplety, nazwy drużyn – BEZ logo)
     await display.stateIntroLogo(teamA, teamB);
-
+  
     ui.setMsg("msgRoundsIntro", "Intro uruchomione.");
-
-    // Intro: gra dwa razy, logo pojawia się w 14 sekundzie pierwszego odtworzenia.
+  
+    // Intro: ma zagrać 2×, logo w 14 sek. pierwszego odtworzenia.
     if (!introMixer) {
-      // Fallback: proste przybliżenie bez mierzenia długości pliku
+      // Fallback bez miksera – żadnych sztywnych "15s/30s",
+      // tylko realna długość z metadanych jeśli się da.
       playSfx("show_intro");
-
-      // logo po 14s (na oko)
+  
+      // logo po 14s (to akurat jest wymóg reguł, nie zgadywanie długości utworu)
       setTimeout(() => {
         display.showLogo().catch(() => {});
       }, 14000);
-
-      // drugi raz po ~15s od startu
-      setTimeout(() => {
-        playSfx("show_intro");
-      }, 15000);
-
-      // całość ok. 30s
-      await new Promise((res) => setTimeout(res, 30000));
+  
+      try {
+        const d = await getSfxDuration("show_intro"); // sekundy
+        if (d > 0) {
+          const ms = d * 1000;
+  
+          // druga pętla dokładnie po zakończeniu pierwszej
+          setTimeout(() => {
+            playSfx("show_intro");
+          }, ms);
+  
+          // czekamy tyle, ile realnie trwają dwie pętle razem
+          await new Promise((res) => setTimeout(res, ms * 2));
+        }
+      } catch {
+        // jeśli nie znamy długości – nie blokujemy UI, operator i tak "czuje" koniec po dźwięku
+      }
     } else {
-      // Precyzyjna wersja z mikserem
+      // Precyzyjna wersja z mikserem – zero magicznych 15s/30s
       introMixer.stop(); // na wszelki wypadek czyścimy poprzednie
-
+  
       await new Promise((resolve) => {
         let playCount = 0;
         let logoShown = false;
-
+  
         const stop = introMixer.onTime((current, duration) => {
           const d = duration || 0;
-
+  
           // LOGO dokładnie przy 14 sekundzie pierwszej pętli
           if (!logoShown && current >= 14) {
             logoShown = true;
             display.showLogo().catch(() => {});
           }
-
+  
           // koniec jednego odtworzenia
           if (d > 0 && current >= d - 0.05) {
             playCount += 1;
@@ -188,12 +198,12 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
             }
           }
         });
-
+  
         // start pierwszej pętli
         introMixer.play("show_intro");
       });
     }
-
+  
     // Po dwóch pętlach intra przechodzimy do ekranu startu rundy
     setStep("r_roundStart");
     ui.setMsg("msgRoundsIntro", "Intro zakończone. Możesz rozpocząć rundę.");
