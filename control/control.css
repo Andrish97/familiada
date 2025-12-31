@@ -454,3 +454,74 @@
   background: rgba(0,0,0,.14);
   padding: 12px;
 }
+
+/* top-status: klikane w celu pokazania QR */
+.top-status .dotRow{
+  cursor: pointer;
+  transition: background .15s ease, border-color .15s ease, transform .05s ease;
+}
+.top-status .dotRow:hover{
+  background: rgba(255,255,255,.12);
+  border-color: rgba(255,255,255,.24);
+  transform: translateY(-1px);
+}
+
+/* modal QR urządzeń (auth bar) */
+.qrModalOverlay{
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.65);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+.qrModalOverlay.hidden{
+  display: none;
+}
+
+.qrModalBox{
+  background: rgba(5,5,10,.98);
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,.16);
+  box-shadow: 0 18px 60px rgba(0,0,0,.85);
+  max-width: 420px;
+  width: calc(100% - 32px);
+  padding: 18px 18px 16px;
+}
+
+.qrModalHead{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.qrModalTitle{
+  font-weight: 1000;
+  letter-spacing: .06em;
+  font-size: 13px;
+  text-transform: uppercase;
+  opacity: .9;
+}
+
+.qrModalBody{
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.qrModalQr{
+  display: flex;
+  justify-content: center;
+  padding: 8px 0;
+}
+.qrModalQr img{
+  display: block;
+  max-width: 260px;
+  width: 100%;
+  height: auto;
+  border-radius: 12px;
+  background: #fff;
+}
