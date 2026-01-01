@@ -332,26 +332,24 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
 
   function enableBuzzerDuel() {
     const r = store.state.rounds;
-  
     r.duel.enabled = true;
     r.duel.lastPressed = null;
-  
-    ui.setMsg("msgDuel", "Pojedynek: czekam na przycisk.");
+    ui.setMsg("msgRoundsDuel", "Pojedynek: czekam na przycisk.");
     ui.setRoundsHud(r);
   
-    // 🔥 tu — zamiast enableBuzzerForDuel():
+    // włączamy fizyczny przycisk
     devices.sendBuzzerCmd("ON");
   }
-
-
+  
   function retryDuel() {
     const r = store.state.rounds;
     r.duel.enabled = true;
     r.duel.lastPressed = null;
-    ui.setMsg("msgDuel", "Powtórka pojedynku.");
+    ui.setMsg("msgRoundsDuel", "Powtórka pojedynku.");
     ui.setRoundsHud(r);
-
-    devices.enableBuzzerForDuel();
+  
+    // RESET + ponowne włączenie przycisku
+    devices.sendBuzzerCmd("RESET");
   }
 
   function acceptBuzz(team) {
@@ -359,7 +357,7 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     if (!r.duel.enabled) return;
     r.duel.enabled = false;
     r.controlTeam = team;
-    ui.setMsg("msgDuel", `Pierwsza odpowiedź: drużyna ${team}.`);
+    ui.setMsg("msgRoundsDuel", `Pierwsza odpowiedź: drużyna ${team}.`);
     ui.setRoundsHud(r);
   }
 
