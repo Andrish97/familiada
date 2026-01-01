@@ -130,86 +130,68 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     setStep("r_intro");
   }
 
-  async function stateStartGameIntro() {
-    const { teamA, teamB } = store.state.teams;
-  
-    setStep("r_intro");
-    ui.setRoundsHud(store.state.rounds);
-  
-    // przygotuj wyświetlacz (tryb gry, blank, puste triplety, nazwy drużyn – BEZ logo)
-    await display.stateIntroLogo(teamA, teamB);
-  
-    ui.setMsg("msgRoundsIntro", "Intro uruchomione.");
-  
-    // Intro: ma zagrać 2×, logo w 14 sek. pierwszego odtworzenia.
-    if (!introMixer) {
-      // Fallback bez miksera – żadnych sztywnych "15s/30s",
-      // tylko realna długość z metadanych jeśli się da.
-      playSfx("show_intro");
-  
-      // logo po 14s (to akurat jest wymóg reguł, nie zgadywanie długości utworu)
-      setTimeout(() => {
-        display.showLogo().catch(() => {});
-      }, 14000);
-  
-      try {
-        const d = await getSfxDuration("show_intro"); // sekundy
-        if (d > 0) {
-          const ms = d * 1000;
-  
-          // druga pętla dokładnie po zakończeniu pierwszej
-          setTimeout(() => {
-            playSfx("show_intro");
-          }, ms);
-  
-          // czekamy tyle, ile realnie trwają dwie pętle razem
-          await new Promise((res) => setTimeout(res, ms * 2));
-        }
-      } catch {
-        // jeśli nie znamy długości – nie blokujemy UI, operator i tak "czuje" koniec po dźwięku
+async function stateStartGameIntro() {
+  const { teamA, teamB } = store.state.teams;
+
+  setStep("r_intro");
+  ui.setRoundsHud(store.state.rounds);
+
+  // przygotuj wyświetlacz (APP GAME, BLANK, nazwy drużyn – BEZ logo)
+  await display.stateIntroLogo(teamA, teamB);
+
+  ui.setMsg("msgRoundsIntro", "Intro uruchomione.");
+
+  // Intro: 1×, logo w 14 sekundzie
+  if (!introMixer) {
+    // fallback bez miksera – ale z prawdziwą długością pliku
+    playSfx("show_intro");
+
+    // logo po 14 s (to jest wymóg gry)
+    setTimeout(() => {
+      display.showLogo().catch(() => {});
+    }, 14000);
+
+    try {
+      const duration = await getSfxDuration("show_intro"); // sekundy
+      if (duration > 0) {
+        await new Promise((res) => setTimeout(res, duration * 1000));
       }
-    } else {
-      // Precyzyjna wersja z mikserem – zero magicznych 15s/30s
-      introMixer.stop(); // na wszelki wypadek czyścimy poprzednie
-  
-      await new Promise((resolve) => {
-        let playCount = 0;
-        let logoShown = false;
-  
-        const stop = introMixer.onTime((current, duration) => {
-          const d = duration || 0;
-  
-          // LOGO dokładnie przy 14 sekundzie pierwszej pętli
-          if (!logoShown && current >= 14) {
-            logoShown = true;
-            display.showLogo().catch(() => {});
-          }
-  
-          // koniec jednego odtworzenia
-          if (d > 0 && current >= d - 0.05) {
-            playCount += 1;
-            if (playCount === 1) {
-              // koniec pierwszej pętli -> start drugiej
-              introMixer.play("show_intro");
-            } else {
-              // koniec drugiej pętli -> sprzątamy i kończymy
-              stop();
-              resolve();
-            }
-          }
-        });
-  
-        // start pierwszej pętli
-        introMixer.play("show_intro");
-      });
+    } catch {
+      // jeśli nie znamy długości – nie trzymamy na siłę UI
     }
-  
-    // Po dwóch pętlach intra przechodzimy do ekranu startu rundy
-    setStep("r_roundStart");
-    ui.setMsg("msgRoundsIntro", "Intro zakończone. Możesz rozpocząć rundę.");
-    ui.setRoundsHud(store.state.rounds);
+  } else {
+    // precyzyjna wersja z mikserem
+    introMixer.stop();
+
+    await new Promise((resolve) => {
+      let logoShown = false;
+
+      const off = introMixer.onTime((current, duration) => {
+        const d = duration || 0;
+
+        // LOGO przy 14 sekundzie
+        if (!logoShown && current >= 14) {
+          logoShown = true;
+          display.showLogo().catch(() => {});
+        }
+
+        // koniec intra
+        if (d > 0 && current >= d - 0.05) {
+          off();
+          resolve();
+        }
+      });
+
+      introMixer.play("show_intro");
+    });
   }
 
+  // Intro skończone -> dopiero teraz możemy "Rozpocząć rundę"
+  setStep("r_roundStart");
+  ui.setMsg("msgRoundsIntro", "Intro zakończone. Możesz rozpocząć rundę.");
+  ui.setRoundsHud(store.state.rounds);
+}
+  
   async function startRound() {
     await loadRoundsIfNeeded();
     const r = store.state.rounds;
