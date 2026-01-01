@@ -66,42 +66,39 @@ export function createDisplay({ devices, store }) {
 
   // === ROUNDS – plansza/odpowiedzi/X/suma ===
 
-  async function roundsBoardPlaceholders() {
+  async function roundsBoardPlaceholders(count = 6) {
     await send("MODE ROUNDS");
     const line = PLACE.roundsText;
     const pts = PLACE.roundsPts;
+    const rows = Math.max(1, Math.min(6, Number(count) || 6));
 
-    await send(
-      'RBATCH ' +
-      'SUMA 00 ' +
-      `R1 "${line}" ${pts} ` +
-      `R2 "${line}" ${pts} ` +
-      `R3 "${line}" ${pts} ` +
-      `R4 "${line}" ${pts} ` +
-      `R5 "${line}" ${pts} ` +
-      `R6 "${line}" ${pts} ` +
-      "ANIMIN matrix down 1500"
-    );
+    let cmd = 'RBATCH ' +
+      'SUMA 00 ';
+    for (let i = 1; i <= rows; i++) {
+      cmd += `R${i} "${line}" ${pts} `;
+    }
+    cmd += 'ANIMIN matrix down 1500';
+
+    await send(cmd);
   }
 
-  async function roundsBoardPlaceholdersNewRound() {
+
+  async function roundsBoardPlaceholdersNewRound(count = 6) {
     // chowanie poprzedniej planszy + nowa pustka z inną animacją
     await send("RBATCH ANIMOUT edge down 1000");
 
     const line = PLACE.roundsText;
     const pts = PLACE.roundsPts;
+    const rows = Math.max(1, Math.min(6, Number(count) || 6));
 
-    await send(
-      'RBATCH ' +
-      'SUMA 00 ' +
-      `R1 "${line}" ${pts} ` +
-      `R2 "${line}" ${pts} ` +
-      `R3 "${line}" ${pts} ` +
-      `R4 "${line}" ${pts} ` +
-      `R5 "${line}" ${pts} ` +
-      `R6 "${line}" ${pts} ` +
-      "ANIMIN matrix down 1500 pixel"
-    );
+    let cmd = 'RBATCH ' +
+      'SUMA 00 ';
+    for (let i = 1; i <= rows; i++) {
+      cmd += `R${i} "${line}" ${pts} `;
+    }
+    cmd += 'ANIMIN matrix down 1500 pixel';
+
+    await send(cmd);
   }
 
   async function roundsRevealRow(ord, text, pts) {
