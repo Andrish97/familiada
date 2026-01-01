@@ -194,43 +194,115 @@ async function stateStartGameIntro() {
   
   async function startRound() {
     await loadRoundsIfNeeded();
+
     const r = store.state.rounds;
-    const obj = currentRoundObj();
-    if (!obj) {
-      ui.setMsg("msgRounds", "Brak zdefiniowanych rund.");
+
+    if (!r.question) {
+      ui.setMsg("msgRoundsRoundStart", "Brak wybranego pytania dla tej rundy.");
       return;
     }
 
-    r.phase = "ROUND_ACTIVE";
-    r.step = "r_duel";
-    r.passUsed = false;
-    r.steal.active = false;
-    r.steal.used = false;
-    r.allowPass = false;
+    const obj = currentRoundObj();
+    if (!obj) {
+      ui.setMsg("msgRoundsRoundStart", "Nie udało się znaleźć danych pytania.");
+      return;
+    }
+
+    const answers = (obj.answers || []).slice().sort((a, b) => nInt(a.ord, 0) - nInt(b.ord, 0));
+
+    // reset runtime dla rundy
+    r.answers = answers;
+    r.revealed = new Set();
     r.bankPts = 0;
+    r.controlTeam = null;
     r.xA = 0;
     r.xB = 0;
-    r.controlTeam = null;
-    r.revealed = new Set();
-    r.question = { id: obj.id, ord: obj.ord, text: obj.text };
-    r.answers = obj.answers.slice().sort((a, b) => (a.ord || 0) - (b.ord || 0));
+    r.passUsed = false;
+    r.stealWon = false;
+    r.allowPass = false;
+
     r.duel.enabled = false;
     r.duel.lastPressed = null;
 
+    r.timer3.running = false;
+    r.timer3.endsAt = 0;
+
+    r.steal.active = false;
+    r.steal.used = false;
+
+    r.phase = "ROUND";
+    r.step = "r_roundStart";   // jesteśmy jeszcze na karcie "Rozpocznij rundę"
     clearTimer3();
 
+    // pytanie i odpowiedzi w Control (karta startu rundy)
     ui.setRoundQuestion(obj.text || "—");
     ui.renderRoundAnswers(r.answers, r.revealed);
-
-    await display.roundsBoardPlaceholders(); // pusta plansza rundy
-    await display.roundsSetSum(0);
-    await display.roundsSetX("A", 0);
-    await display.roundsSetX("B", 0);
-    await display.setIndicator(null);
-
-    ui.showRoundsStep("r_roundStart");
-    ui.setMsg("msgRounds", `Runda ${r.roundNo} przygotowana.`);
+    ui.setMsg("msgRoundsRoundStart", "Startuję rundę – leci dźwięk przejścia.");
     ui.setRoundsHud(r);
+
+    // === DŹWIĘK round_transition ===
+    let dur = 0;
+    try {
+      dur = await getSfxDuration("round_transition");
+    } catch (e) {
+      console.warn("getSfxDuration(round_transition) error", e);
+    }
+
+    const waitMs =
+      typeof dur === "number" && dur > 0
+        ? Math.max(0, (dur - 0.05) * 1000) // minimalny margines przed końcem
+        : 3000; // awaryjnie ~3s
+
+    playSfx("round_transition");
+
+    if (waitMs > 0) {
+      await new Promise((resolve) => setTimeout(resolve, waitMs));
+    }
+
+    // === PUSTA PLANSZA RUND – po zakończeniu dźwięku ===
+    try {
+      // animacja nowej planszy; jeśli to pierwsza runda, ANIMOUT nic nie zepsuje
+      if (display.roundsBoardPlaceholdersNewRound) {
+        display.roundsBoardPlaceholdersNewRound().catch(() => {});
+      } else if (display.roundsBoardPlaceholders) {
+        display.roundsBoardPlaceholders().catch?.(() => {});
+      }
+
+      // suma i iksy na planszy rund
+      await display.roundsSetSum(0);
+      await display.roundsSetX("A", 0);
+      await display.roundsSetX("B", 0);
+      await display.setIndicator(null);
+
+      // zera w tripletach (górny = bank, boczne = suma A/B)
+      if (display.setBankTriplet) {
+        await display.setBankTriplet(0);
+      }
+      if (display.setTotalsTriplets) {
+        await display.setTotalsTriplets(r.totals || { A: 0, B: 0 });
+      }
+    } catch (e) {
+      console.error("display setup for round failed", e);
+    }
+
+    // === Pytanie dla prowadzącego (HOST) ===
+    const qText = (obj.text || "").trim();
+    if (qText) {
+      const safe = qText.replace(/"/g, '\\"');
+      try {
+        // po podpięciu dawaliśmy: SET "" + HIDE
+        // tutaj: SET "pytanie" + SHOW
+        await devices.sendHostCmd(`SET "${safe}"`);
+        await devices.sendHostCmd("SHOW");
+      } catch (e) {
+        console.error("sendHostCmd error", e);
+      }
+    }
+
+    // === Przejście do karty POJEDYNEK w Control ===
+    setStep("r_duel");
+    ui.setMsg("msgRounds", `Runda ${r.roundNo} – pojedynek.`);
+    ui.setRoundsHud(store.state.rounds);
   }
 
   function backTo(step) {
