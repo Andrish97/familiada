@@ -344,9 +344,55 @@ export function createStore(gameId) {
       }
 
       if (p?.rounds) {
-        state.rounds.roundNo = Number(p.rounds.roundNo || 1);
-        state.rounds.totals = p.rounds.totals || state.rounds.totals;
+        const pr = p.rounds;
+
+        // podstawowe pola
+        state.rounds.phase = pr.phase || state.rounds.phase;
+        state.rounds.roundNo = Number(pr.roundNo || 1);
+        state.rounds.controlTeam = pr.controlTeam ?? null;
+        state.rounds.bankPts = pr.bankPts ?? 0;
+        state.rounds.xA = pr.xA ?? 0;
+        state.rounds.xB = pr.xB ?? 0;
+        state.rounds.totals = pr.totals || state.rounds.totals;
+        state.rounds.step = pr.step || state.rounds.step;
+        state.rounds.passUsed = !!pr.passUsed;
+        state.rounds.stealWon = !!pr.stealWon;
+
+        // dane pytania / odpowiedzi
+        state.rounds.question = pr.question || null;
+        state.rounds.answers = pr.answers || [];
+
+        // Set z odsłoniętymi odpowiedziami
+        state.rounds.revealed = new Set(pr.revealed || []);
+
+        // duel
+        if (pr.duel) {
+          state.rounds.duel.enabled = !!pr.duel.enabled;
+          state.rounds.duel.lastPressed = pr.duel.lastPressed || null;
+        }
+
+        // timer3 – po refreshu nie wznawiamy odliczania, tylko czyścimy
+        state.rounds.timer3.running = false;
+        state.rounds.timer3.endsAt = 0;
+        state.rounds.timer3.secLeft = 0;
+
+        // steal
+        if (pr.steal) {
+          state.rounds.steal.active = !!pr.steal.active;
+          state.rounds.steal.used = !!pr.steal.used;
+        } else {
+          state.rounds.steal.active = false;
+          state.rounds.steal.used = false;
+        }
+
+        state.rounds.allowPass = !!pr.allowPass;
+
+        // flagi pomocnicze (np. intro zagrane)
+        if (typeof pr._introPlayed === "boolean") {
+          state.rounds._introPlayed = pr._introPlayed;
+        }
       }
+      
     } catch {
       // przy problemie z JSON-em po prostu startujemy od zera
       try {
