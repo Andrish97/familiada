@@ -325,13 +325,17 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
 
   function enableBuzzerDuel() {
     const r = store.state.rounds;
+  
     r.duel.enabled = true;
     r.duel.lastPressed = null;
+  
     ui.setMsg("msgDuel", "Pojedynek: czekam na przycisk.");
     ui.setRoundsHud(r);
-
-    devices.enableBuzzerForDuel();
+  
+    // 🔥 tu — zamiast enableBuzzerForDuel():
+    devices.sendBuzzerCmd("ON");
   }
+
 
   function retryDuel() {
     const r = store.state.rounds;
