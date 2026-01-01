@@ -317,7 +317,6 @@ export function createUI() {
     $("btnEditFinal")?.addEventListener("click", () => emit("final.edit"));
 
     // rounds (kroki)
-    $("btnBackToSetup")?.addEventListener("click", () => emit("rounds.backToSetup"));
     $("btnGameReady")?.addEventListener("click", () => emit("game.ready"));
     $("btnStartShowIntro")?.addEventListener("click", () => emit("game.startIntro"));
     $("btnStartRound")?.addEventListener("click", () => emit("rounds.start"));
