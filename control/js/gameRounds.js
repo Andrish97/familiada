@@ -11,8 +11,18 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
   const introMixer = createSfxMixer?.();
 
   function setStep(step) {
-    store.state.rounds.step = step;
+    const r = store.state.rounds;
+    r.step = step;
     ui.showRoundsStep(step);
+
+    // "Rozpocznij rundę" ma być aktywne TYLKO gdy intro się skończyło
+    // i jesteśmy na kroku r_roundStart
+    const canStartRoundNow =
+      typeof store.canStartRounds === "function"
+        ? store.canStartRounds() && r.step === "r_roundStart"
+        : r.step === "r_roundStart";
+
+    ui.setEnabled("btnStartRound", canStartRoundNow);
   }
 
   function clearTimer3() {
@@ -130,115 +140,120 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     setStep("r_intro");
   }
 
-async function stateStartGameIntro() {
-  const { teamA, teamB } = store.state.teams;
+  async function stateStartGameIntro() {
+    const { teamA, teamB } = store.state.teams;
+    ensureRoundsState();
+    const r = store.state.rounds;
 
-  setStep("r_intro");
-  ui.setRoundsHud(store.state.rounds);
-
-  // przygotuj wyświetlacz (APP GAME, BLANK, nazwy drużyn – BEZ logo)
-  await display.stateIntroLogo(teamA, teamB);
-
-  ui.setMsg("msgRoundsIntro", "Intro uruchomione.");
-
-  // Intro: 1×, logo w 14 sekundzie
-  if (!introMixer) {
-    // fallback bez miksera – ale z prawdziwą długością pliku
-    playSfx("show_intro");
-
-    // logo po 14 s (to jest wymóg gry)
-    setTimeout(() => {
-      display.showLogo().catch(() => {});
-    }, 14000);
-
-    try {
-      const duration = await getSfxDuration("show_intro"); // sekundy
-      if (duration > 0) {
-        await new Promise((res) => setTimeout(res, duration * 1000));
-      }
-    } catch {
-      // jeśli nie znamy długości – nie trzymamy na siłę UI
+    // jeśli intro już było – drugi raz nic nie rób
+    if (r._introPlayed) {
+      ui.setMsg("msgRoundsIntro", "Intro gry zostało już odegrane.");
+      return;
     }
-  } else {
-    // precyzyjna wersja z mikserem
-    introMixer.stop();
+    r._introPlayed = true;
 
-    await new Promise((resolve) => {
-      let logoShown = false;
+    setStep("r_intro");
+    ui.setRoundsHud(r);
 
-      const off = introMixer.onTime((current, duration) => {
-        const d = duration || 0;
+    // zablokuj przycisk "Rozpocznij grę", żeby nie można go było klikać 10 razy
+    ui.setEnabled("btnStartShowIntro", false);
 
-        // LOGO przy 14 sekundzie
-        if (!logoShown && current >= 14) {
-          logoShown = true;
-          display.showLogo().catch(() => {});
+    // przygotuj ekran gry (APP GAME, BLANK, LONG1/LONG2 – bez logo)
+    await display.stateIntroLogo(teamA, teamB);
+
+    ui.setMsg("msgRoundsIntro", "Intro uruchomione.");
+
+    if (!introMixer) {
+      // fallback bez miksera: korzystamy z prawdziwej długości audio jeśli się da
+      playSfx("show_intro");
+
+      // logo po 14 sekundach (to jest wymóg gry)
+      setTimeout(() => {
+        display.showLogo().catch(() => {});
+      }, 14000);
+
+      try {
+        const dur = await getSfxDuration("show_intro"); // sekundy
+        if (dur > 0) {
+          await new Promise((res) => setTimeout(res, dur * 1000));
         }
+      } catch {
+        // jeśli nie umiemy odczytać długości, po prostu nie blokujemy dłużej
+      }
+    } else {
+      // precyzyjna wersja z mikserem – intro tylko raz
+      introMixer.stop();
 
-        // koniec intra
-        if (d > 0 && current >= d - 0.05) {
-          off();
-          resolve();
-        }
+      await new Promise((resolve) => {
+        let logoShown = false;
+
+        const off = introMixer.onTime((current, duration) => {
+          const d = duration || 0;
+
+          // LOGO dokładnie przy 14 sekundzie
+          if (!logoShown && current >= 14) {
+            logoShown = true;
+            display.showLogo().catch(() => {});
+          }
+
+          // koniec intra
+          if (d > 0 && current >= d - 0.05) {
+            off();
+            resolve();
+          }
+        });
+
+        introMixer.play("show_intro");
       });
+    }
 
-      introMixer.play("show_intro");
-    });
+    // intro skończone → dopiero teraz możemy przejść do "Rozpocznij rundę"
+    setStep("r_roundStart");
+    ui.setMsg("msgRoundsIntro", "Intro zakończone. Możesz rozpocząć rundę.");
+    ui.setRoundsHud(store.state.rounds);
   }
-
-  // Intro skończone -> dopiero teraz możemy "Rozpocząć rundę"
-  setStep("r_roundStart");
-  ui.setMsg("msgRoundsIntro", "Intro zakończone. Możesz rozpocząć rundę.");
-  ui.setRoundsHud(store.state.rounds);
-}
   
   async function startRound() {
     await loadRoundsIfNeeded();
+    ensureRoundsState();
 
     const r = store.state.rounds;
-
-    if (!r.question) {
-      ui.setMsg("msgRoundsRoundStart", "Brak wybranego pytania dla tej rundy.");
-      return;
-    }
-
     const obj = currentRoundObj();
     if (!obj) {
-      ui.setMsg("msgRoundsRoundStart", "Nie udało się znaleźć danych pytania.");
+      ui.setMsg("msgRoundsRoundStart", "Brak zdefiniowanych rund dla tej gry.");
       return;
     }
 
-    const answers = (obj.answers || []).slice().sort((a, b) => nInt(a.ord, 0) - nInt(b.ord, 0));
-
     // reset runtime dla rundy
-    r.answers = answers;
-    r.revealed = new Set();
+    r.phase = "ROUND_ACTIVE";
+    r.passUsed = false;
+    r.steal.active = false;
+    r.steal.used = false;
+    r.allowPass = false;
     r.bankPts = 0;
-    r.controlTeam = null;
     r.xA = 0;
     r.xB = 0;
-    r.passUsed = false;
-    r.stealWon = false;
-    r.allowPass = false;
+    r.controlTeam = null;
+    r.revealed = new Set();
+
+    r.question = { id: obj.id, ord: obj.ord, text: obj.text };
+    r.answers = (obj.answers || []).slice().sort(
+      (a, b) => nInt(a.ord, 0) - nInt(b.ord, 0)
+    );
 
     r.duel.enabled = false;
     r.duel.lastPressed = null;
 
-    r.timer3.running = false;
-    r.timer3.endsAt = 0;
-
-    r.steal.active = false;
-    r.steal.used = false;
-
-    r.phase = "ROUND";
-    r.step = "r_roundStart";   // jesteśmy jeszcze na karcie "Rozpocznij rundę"
     clearTimer3();
 
-    // pytanie i odpowiedzi w Control (karta startu rundy)
+    // pytanie + odpowiedzi w Control
     ui.setRoundQuestion(obj.text || "—");
     ui.renderRoundAnswers(r.answers, r.revealed);
     ui.setMsg("msgRoundsRoundStart", "Startuję rundę – leci dźwięk przejścia.");
     ui.setRoundsHud(r);
+
+    // zablokuj przycisk "Rozpocznij rundę" na czas dźwięku
+    ui.setEnabled("btnStartRound", false);
 
     // === DŹWIĘK round_transition ===
     let dur = 0;
@@ -251,7 +266,7 @@ async function stateStartGameIntro() {
     const waitMs =
       typeof dur === "number" && dur > 0
         ? Math.max(0, (dur - 0.05) * 1000) // minimalny margines przed końcem
-        : 3000; // awaryjnie ~3s
+        : 3000; // awaryjnie ~3s, jeśli nie znamy długości
 
     playSfx("round_transition");
 
@@ -261,20 +276,18 @@ async function stateStartGameIntro() {
 
     // === PUSTA PLANSZA RUND – po zakończeniu dźwięku ===
     try {
-      // animacja nowej planszy; jeśli to pierwsza runda, ANIMOUT nic nie zepsuje
       if (display.roundsBoardPlaceholdersNewRound) {
-        display.roundsBoardPlaceholdersNewRound().catch(() => {});
-      } else if (display.roundsBoardPlaceholders) {
-        display.roundsBoardPlaceholders().catch?.(() => {});
+        await display.roundsBoardPlaceholdersNewRound();
+      } else {
+        await display.roundsBoardPlaceholders();
       }
 
-      // suma i iksy na planszy rund
       await display.roundsSetSum(0);
       await display.roundsSetX("A", 0);
       await display.roundsSetX("B", 0);
       await display.setIndicator(null);
 
-      // zera w tripletach (górny = bank, boczne = suma A/B)
+      // zera w tripletach: górny = bank, boczne = sumy A/B
       if (display.setBankTriplet) {
         await display.setBankTriplet(0);
       }
@@ -290,8 +303,6 @@ async function stateStartGameIntro() {
     if (qText) {
       const safe = qText.replace(/"/g, '\\"');
       try {
-        // po podpięciu dawaliśmy: SET "" + HIDE
-        // tutaj: SET "pytanie" + SHOW
         await devices.sendHostCmd(`SET "${safe}"`);
         await devices.sendHostCmd("SHOW");
       } catch (e) {
@@ -299,10 +310,10 @@ async function stateStartGameIntro() {
       }
     }
 
-    // === Przejście do karty POJEDYNEK w Control ===
+    // === Przejście do karty "Pojedynek" w Control ===
     setStep("r_duel");
     ui.setMsg("msgRounds", `Runda ${r.roundNo} – pojedynek.`);
-    ui.setRoundsHud(store.state.rounds);
+    ui.setRoundsHud(r);
   }
 
   function backTo(step) {
