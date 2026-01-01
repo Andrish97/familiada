@@ -276,10 +276,17 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
 
     // === PUSTA PLANSZA RUND – po zakończeniu dźwięku ===
     try {
-      if (display.roundsBoardPlaceholdersNewRound) {
-        await display.roundsBoardPlaceholdersNewRound();
-      } else {
-        await display.roundsBoardPlaceholders();
+        // liczba odpowiedzi -> liczba wierszy planszy
+        const rowsCount = Math.max(1, Math.min(6, r.answers.length || 6));
+        
+        if (r._boardShown && typeof display.roundsBoardPlaceholdersNewRound === "function") {
+          // od drugiej rundy: ANIMOUT starej + nowa
+          await display.roundsBoardPlaceholdersNewRound(rowsCount);
+        } else {
+          // pierwsza runda: BEZ ANIMOUT — tylko pojawia się plansza po logo
+          await display.roundsBoardPlaceholders(rowsCount);
+          r._boardShown = true;
+        }
       }
 
       await display.roundsSetSum(0);
