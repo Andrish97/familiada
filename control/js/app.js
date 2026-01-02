@@ -126,7 +126,6 @@ async function main() {
   const chDisplay = rt(`familiada-display:${game.id}`);
   const chHost = rt(`familiada-host:${game.id}`);
   const chBuzzer = rt(`familiada-buzzer:${game.id}`);
-  const chControl = rt(`familiada-control:${game.id}`); // BUZZER_EVT etc.
 
   const devices = createDevices({ game, ui, store, chDisplay, chHost, chBuzzer, chControl });
   const presence = createPresence({ game, ui, store, devices });
@@ -135,45 +134,19 @@ async function main() {
   const rounds = createRounds({ ui, store, devices, display, loadQuestions, loadAnswers });
   rounds.bootIfNeeded();
   const final = createFinal({ ui, store, devices, display, loadAnswers });
-    // nasłuchiwanie naciśnięć przycisku (BUZZER_EVT z kanału control)
-  chControl.on("broadcast", { event: "BUZZER_EVT" }, (msg) => {
-    const raw = String(msg?.payload?.line || "").trim().toUpperCase();
-    if (!raw.startsWith("CLICK")) return;
 
-    const parts = raw.split(/\s+/);
-    const team = parts[1];
-    if (team !== "A" && team !== "B") return;
-
-    const r = store.state.rounds;
-
-    // reagujemy tylko w kroku Pojedynek
-    if (store.state.activeCard !== "rounds") return;
-    if (r.step !== "r_duel") return;
-    if (!r.duel?.enabled) return;
-
-    r.duel.lastPressed = team;
-    ui.setRoundsHud(r);
-
-    // komunikat + odblokowanie odpowiedniego przycisku "Zatwierdź"
-    ui.setMsg("msgRoundsDuel", `Przycisk: ${team}. Zatwierdź drużynę.`);
-
-    const btnA = document.getElementById("btnBuzzAcceptA");
-    const btnB = document.getElementById("btnBuzzAcceptB");
-    const btnEnable = document.getElementById("btnBuzzEnable");
-    const btnRetry = document.getElementById("btnBuzzRetry");
-
-    if (btnEnable) btnEnable.disabled = true;
-    if (btnRetry) btnRetry.disabled = false;
-
-    if (team === "A") {
-      if (btnA) btnA.disabled = false;
-      if (btnB) btnB.disabled = true;
-    } else {
-      if (btnB) btnB.disabled = false;
-      if (btnA) btnA.disabled = true;
-    }
-  });
-
+  // ===== Realtime: odbiór kliknięć z przycisku (BUZZER_EVT) =====
+  const chControlIn = sb()
+    .channel(`familiada-control:${game.id}`)
+    .on("broadcast", { event: "BUZZER_EVT" }, (msg) => {
+      const line = String(msg?.payload?.line || "").trim().toUpperCase();
+      // spodziewamy się formatu: "CLICK A" / "CLICK B"
+      const [cmd, team] = line.split(/\s+/);
+      if (cmd === "CLICK" && (team === "A" || team === "B")) {
+        rounds.handleBuzzerClick(team);
+      }
+    })
+    .subscribe();
 
   // === PICKER PYTAŃ FINAŁU (przeniesiony z dawnego gameFinal) ===
   let finalPickerAll = [];
