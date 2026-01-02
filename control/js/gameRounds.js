@@ -61,7 +61,13 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
         r.timer3.running = false;
         r.timer3.secLeft = 0;
         ui.setRoundsHud(r);
-        playSfx("answer_wrong"); // “czas minął”
+
+        // limit 3 sekund minął – traktujemy jak złą odpowiedź (kolejna „szansa”)
+        playSfx("answer_wrong");
+        try {
+          // addX jest async – tu nie czekamy na zakończenie
+          addX();
+        } catch {}
         return;
       }
       timerRAF = requestAnimationFrame(tick);
@@ -463,7 +469,6 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     // dopóki operator nie kliknie „Ponów pojedynek”.
   }
 
-
   function acceptBuzz(team) {
     const r = store.state.rounds;
     if (!r.duel.enabled) return;
@@ -471,24 +476,28 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     r.duel.enabled = false;
     r.controlTeam = team;
 
-    // przechodzimy do właściwej rozgrywki pytania
+    // buzzer zostaje w stanie PUSHED – nie wysyłamy OFF/RESET
+    // nowe kliknięcia i tak nie są możliwe po stronie urządzenia
+
+    // przechodzimy do kroku „Pytanie”
     setStep("r_play");
 
     ui.setMsg("msgDuel", `Pierwsza odpowiedź: drużyna ${team}.`);
     ui.setMsg("msgRoundsPlay", `Kontrolę ma drużyna ${team}.`);
-
-    // przyciski gry w rundzie – aktywne
-    if (ui.setEnabled) {
-      ui.setEnabled("btnPassQuestion", true);
-      ui.setEnabled("btnStartTimer3", true);
-      ui.setEnabled("btnAddX", true);
-      ui.setEnabled("btnGoSteal", true);
-      ui.setEnabled("btnGoEndRound", true);
-    }
-
     ui.setRoundsHud(r);
-  }
 
+    // odblokowanie przycisków gry
+    ui.setEnabled("btnPassQuestion", true);
+    ui.setEnabled("btnStartTimer3", true);
+    ui.setEnabled("btnAddX", true);
+    ui.setEnabled("btnGoSteal", true);
+    ui.setEnabled("btnGoEndRound", true);
+
+    // przyciski z kroku pojedynku nie są już potrzebne
+    ui.setEnabled("btnBuzzAcceptA", false);
+    ui.setEnabled("btnBuzzAcceptB", false);
+    ui.setEnabled("btnBuzzRetry", false);
+  }
 
   // === Gra właściwa w rundzie ===
 
@@ -523,25 +532,37 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     if (r.revealed.has(ord)) return;
 
     r.revealed.add(ord);
-    ui.renderRoundAnswers(r.answers, r.revealed);
 
-    const base = nInt(ans.fixed_points, 0);           // ile osób w ankiecie
-    const mult = getRoundMultiplier(r.roundNo);       // 1× / 2× / 3×
-    const gained = base * mult;                       // punkty do banku
+    // przeliczamy punkty według mnożnika rundy
+    const base = nInt(ans.fixed_points, 0);
+    const mul = getRoundMultiplier(r.roundNo);
+    const gained = base * mul;
 
     r.bankPts = nInt(r.bankPts, 0) + gained;
+
+    ui.renderRoundAnswers(r.answers, r.revealed);
     ui.setRoundsHud(r);
 
-    // Na tablicy przy odpowiedzi pokazujemy bazowe punkty (liczbę osób),
-    // ale "SUMA" pokazuje już wynik po mnożniku.
-    await display.roundsRevealRow(ord, ans.text, base);
+    // wyświetlacz: tekst + punkty po przeliczeniu
+    await display.roundsRevealRow(ord, ans.text, gained);
     await display.roundsSetSum(r.bankPts);
 
     // po pierwszej poprawnej odpowiedzi można już oddać pytanie
     if (!r.allowPass) r.allowPass = true;
 
+    // jeżeli jesteśmy w trybie „kradzieży” – jedna trafiona odpowiedź kończy kradzież
+    if (r.steal.active) {
+      r.steal.active = false;
+      r.steal.used = true;
+      r.stealWon = true;
+      ui.setMsg("msgRoundsSteal", "Kradzież udana – bank przechodzi do przeciwników.");
+      ui.setRoundsHud(r);
+      display.setIndicator(null);
+    }
+
     playSfx("answer_correct");
   }
+
 
   async function addX() {
     const r = store.state.rounds;
@@ -557,12 +578,10 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     await display.roundsSetX(r.controlTeam, r[key]);
     ui.setRoundsHud(r);
 
-    // dźwięk brzęczka jak w regulaminie (zła / brak odp. albo czas minął)
     playSfx("answer_wrong");
 
-    // po trzeciej pomyłce: szansa przeciwników
-    const strikes = r[key];
-    if (strikes >= 3 && !r.steal.active && !r.steal.used) {
+    // po 3 szansach – automatyczna „szansa przeciwników”
+    if (r[key] >= 3 && !r.steal.active && !r.steal.used) {
       goSteal();
     }
   }
@@ -609,13 +628,17 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
       ui.setMsg("msgRounds", "Najpierw rozstrzygnij kradzież.");
       return;
     }
-    if (r.stealUsed && r.stealWon) {
+    if (r.steal.used && r.stealWon) {
       winner = r.controlTeam === "A" ? "B" : "A";
     }
 
     r.totals[winner] = nInt(r.totals[winner], 0) + bank;
 
     await display.roundsSetTotals(r.totals);
+    if (display.setTotalsTriplets) {
+      await display.setTotalsTriplets(r.totals);
+    }
+
     ui.setRoundsHud(r);
 
     ui.setMsg("msgRounds", `Koniec rundy. Bank ${bank} pkt dla drużyny ${winner}.`);
