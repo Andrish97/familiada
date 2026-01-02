@@ -408,9 +408,6 @@ async function main() {
     await rounds.startRound();
   });
 
-  // back buttons:
-  ui.on("rounds.back", (step) => rounds.backTo(step));
-
   // duel
   ui.on("buzz.enable", () => rounds.enableBuzzerDuel());
   ui.on("buzz.retry", () => rounds.retryDuel());
