@@ -18,13 +18,13 @@
     <div class="brand">FAMILIADA</div>
 
     <div class="top-status" aria-label="Status urządzeń">
-      <div class="dotRow" title="Wyświetlacz">
+      <div class="dotRow" title="Wyświetlacz" id="dotDisplayRow">
         <span class="dot mid" id="dotDisplay"></span><span class="lbl">Wyświetlacz</span>
       </div>
-      <div class="dotRow" title="Prowadzący">
+      <div class="dotRow" title="Prowadzący" id="dotHostRow">
         <span class="dot mid" id="dotHost"></span><span class="lbl">Prowadzący</span>
       </div>
-      <div class="dotRow" title="Przycisk">
+      <div class="dotRow" title="Przycisk" id="dotBuzzerRow">
         <span class="dot mid" id="dotBuzzer"></span><span class="lbl">Przycisk</span>
       </div>
     </div>
@@ -50,7 +50,7 @@
     <button class="btn xs" id="btnAlertClose" type="button">OK</button>
   </div>
 
-    <!-- Modal QR urządzeń z top bara -->
+  <!-- Modal QR urządzeń z top bara -->
   <div class="qrModalOverlay hidden" id="qrModalOverlay">
     <div class="qrModalBox">
       <div class="qrModalHead">
@@ -77,33 +77,35 @@
 
   <main class="wrap wide">
     <div class="shell">
-      <!-- LEFT: cards (very narrow) -->
-      <aside class="side">
-        <nav class="nav">
-          <button class="navItem active" data-card="devices" id="navDevices" type="button" title="Urządzenia">
-            <span class="ico">🔌</span>
-          </button>
-
-          <button class="navItem" data-card="setup" id="navSetup" type="button" title="Pytania i ustawienia" disabled>
-            <span class="ico">📝</span>
-          </button>
-
-          <button class="navItem" data-card="rounds" id="navRounds" type="button" title="Rozgrywka" disabled>
-            <span class="ico">🎮</span>
-          </button>
-
-          <button class="navItem" data-card="final" id="navFinal" type="button" title="Finał" disabled>
-            <span class="ico">🏁</span>
-          </button>
-        </nav>
-
-        <div class="sideFoot">
-          <div class="msg" id="msgSide"></div>
-        </div>
-      </aside>
-
-      <!-- RIGHT -->
       <section class="main">
+        <!-- GÓRNE WKŁADKI (segregator) -->
+        <div class="tabsBar">
+          <nav class="tabs">
+            <button class="navItem active" data-card="devices" id="navDevices" type="button" title="Urządzenia">
+              <span class="ico">🔌</span>
+              <span class="navLabel">Urządzenia</span>
+            </button>
+
+            <button class="navItem" data-card="setup" id="navSetup" type="button" title="Pytania i ustawienia" disabled>
+              <span class="ico">📝</span>
+              <span class="navLabel">Ustawienia</span>
+            </button>
+
+            <button class="navItem" data-card="rounds" id="navRounds" type="button" title="Rozgrywka" disabled>
+              <span class="ico">🎮</span>
+              <span class="navLabel">Rozgrywka</span>
+            </button>
+
+            <button class="navItem" data-card="final" id="navFinal" type="button" title="Finał" disabled>
+              <span class="ico">🏁</span>
+              <span class="navLabel">Finał</span>
+            </button>
+          </nav>
+
+          <div class="tabsFoot">
+            <div class="msg" id="msgSide"></div>
+          </div>
+        </div>
 
         <!-- DEVICES -->
         <section class="cardPanel" data-card="devices">
@@ -141,12 +143,11 @@
                   </div>
                 </div>
               </div>
-            
-            <div class="stepFoot">
-              <button class="btn gold" id="btnDevicesNext" type="button" disabled>Dalej</button>
-              <div class="msg" id="msgDevices"></div>
-            </div>
 
+              <div class="stepFoot">
+                <button class="btn gold" id="btnDevicesNext" type="button" disabled>Dalej</button>
+                <div class="msg" id="msgDevices"></div>
+              </div>
             </div>
           </div>
 
@@ -219,12 +220,12 @@
                 <button class="btn gold" id="btnUnlockAudio" type="button">🔊 Odblokuj</button>
                 <div class="badge bad" id="audioStatus">ZABLOKOWANE</div>
               </div>
-            </div>
 
-            <div class="stepFoot">
-              <button class="btn" id="btnAudioBack" type="button">Wstecz</button>
-              <button class="btn gold" id="btnDevicesFinish" type="button" disabled>Gotowe — przejdź dalej</button>
-              <div class="msg" id="msgAudio"></div>
+              <div class="stepFoot">
+                <button class="btn" id="btnAudioBack" type="button">Wstecz</button>
+                <button class="btn gold" id="btnDevicesFinish" type="button" disabled>Gotowe — przejdź dalej</button>
+                <div class="msg" id="msgAudio"></div>
+              </div>
             </div>
           </div>
         </section>
@@ -258,11 +259,12 @@
               <div class="extra hidden" id="teamExtra">
                 <div class="hint">Tu będą dodatkowe ustawienia nazw drużyn (opcjonalne).</div>
               </div>
-            </div>
-            <div class="stepFoot">
-              <button class="btn" id="btnBackToDevices" type="button">Wstecz</button>
-              <button class="btn gold" id="btnSetupNext" type="button" disabled>Dalej</button>
-              <div class="msg" id="msgSetup"></div>
+
+              <div class="stepFoot">
+                <button class="btn" id="btnBackToDevices" type="button">Wstecz</button>
+                <button class="btn gold" id="btnSetupNext" type="button" disabled>Dalej</button>
+                <div class="msg" id="msgSetup"></div>
+              </div>
             </div>
           </div>
 
@@ -277,7 +279,6 @@
                   <label class="radio"><input type="radio" name="hasFinal" value="no" id="finalNo"/><span>Nie</span></label>
                 </div>
 
-                <!-- RIGHT slot (as you wanted): selected goes here -->
                 <div class="pickedPanel">
                   <div class="head">
                     <div class="name">Wybrane</div>
@@ -331,88 +332,87 @@
               <div class="badge">X B: <b id="xB">0</b>/3</div>
             </div>
           </div>
-        
+
           <!-- STEP R0 -->
           <div class="step" data-step="r_ready">
             <div class="stepTitle">Gra gotowa</div>
             <div class="card">
               <div class="name">Stan startowy</div>
               <div class="hint">Ustawia stan na wyświetlaczu i blokuje zmianę ustawień gry.</div>
-        
+
               <div class="stepFoot">
                 <button class="btn gold" id="btnGameReady" type="button">Gra gotowa</button>
                 <div class="msg" id="msgRounds"></div>
               </div>
             </div>
           </div>
-        
+
           <!-- STEP R1 -->
           <div class="step hidden" data-step="r_intro">
             <div class="stepTitle">Rozpocznij grę</div>
             <div class="card">
               <div class="name">Intro</div>
               <div class="hint">Muzyka + logo na wyświetlaczu.</div>
-        
+
               <div class="stepFoot">
                 <button class="btn gold" id="btnStartShowIntro" type="button">Rozpocznij grę</button>
                 <div class="msg" id="msgRoundsIntro"></div>
               </div>
             </div>
           </div>
-        
+
           <!-- STEP R2 -->
           <div class="step hidden" data-step="r_roundStart">
             <div class="stepTitle">Rozpocznij rundę</div>
             <div class="card">
               <div class="name">Start rundy</div>
               <div class="hint">Po dźwięku wjedzie plansza, pojedynek będzie gotowy, prowadzący zobaczy pytanie.</div>
-        
+
               <div class="stepFoot">
                 <button class="btn gold" id="btnStartRound" type="button">Rozpocznij rundę</button>
                 <div class="msg" id="msgRoundsRoundStart"></div>
               </div>
             </div>
           </div>
-        
+
           <!-- STEP R3 -->
           <div class="step hidden" data-step="r_duel">
             <div class="stepTitle">Pojedynek</div>
             <div class="card">
               <div class="name">Czekamy na przycisk</div>
               <div class="hint">Najpierw aktywuj pojedynek. Potem zatwierdź drużynę.</div>
-        
+
               <div class="rowBtns">
                 <button class="btn" id="btnBuzzEnable" type="button">Aktywuj przycisk (pojedynek)</button>
                 <button class="btn" id="btnBuzzRetry" type="button" disabled>Ponów pojedynek</button>
               </div>
-        
+
               <div class="rowBtns">
                 <button class="btn gold" id="btnBuzzAcceptA" type="button" disabled>Zatwierdź A</button>
                 <button class="btn gold" id="btnBuzzAcceptB" type="button" disabled>Zatwierdź B</button>
               </div>
-              
             </div>
           </div>
-        
+
           <!-- STEP R4 -->
           <div class="step hidden" data-step="r_play">
             <div class="stepTitle">Pytanie</div>
             <div class="card">
               <div class="name">Treść pytania</div>
               <div class="qPrompt" id="roundQuestion">—</div>
-        
+
               <div class="rowBtns">
                 <button class="btn" id="btnPassQuestion" type="button" disabled>Oddaj pytanie</button>
                 <button class="btn" id="btnStartTimer3" type="button" disabled>Start 3s</button>
                 <div class="badge">Timer: <b id="t3">—</b></div>
               </div>
-        
+
               <div class="ansGrid" id="roundAnswers"></div>
-        
+
               <div class="rowBtns" style="margin-top:12px;">
                 <button class="btn danger" id="btnAddX" type="button" disabled>X (zła / brak)</button>
               </div>
-        
+
               <div class="stepFoot">
                 <button class="btn gold" id="btnGoSteal" type="button" disabled>Szansa przeciwników</button>
                 <button class="btn gold" id="btnGoEndRound" type="button" disabled>Koniec rundy</button>
@@ -420,16 +420,16 @@
               </div>
             </div>
           </div>
-        
+
           <!-- STEP R5 -->
           <div class="step hidden" data-step="r_steal">
             <div class="stepTitle">Szansa przeciwników</div>
             <div class="card">
               <div class="name">Jedna odpowiedź</div>
               <div class="hint">Jeśli trafią — bank przechodzi do nich. Jeśli nie — bank zostaje.</div>
-        
+
               <div class="ansGrid" id="roundStealAnswers"></div>
-        
+
               <div class="stepFoot">
                 <button class="btn danger" id="btnStealMiss" type="button">Nietrafiona</button>
                 <button class="btn gold" id="btnGoEndRoundFromSteal" type="button" disabled>Koniec rundy</button>
@@ -437,14 +437,14 @@
               </div>
             </div>
           </div>
-        
+
           <!-- STEP R6 -->
           <div class="step hidden" data-step="r_end">
             <div class="stepTitle">Koniec rundy</div>
             <div class="card">
               <div class="name">Transfer banku</div>
               <div class="hint">Przeniesiemy punkty z banku na konto drużyny i wyczyścimy bank.</div>
-        
+
               <div class="stepFoot">
                 <button class="btn gold" id="btnEndRound" type="button">Zakończ rundę</button>
                 <div class="msg" id="msgRoundsEnd"></div>
@@ -462,7 +462,7 @@
               <div class="badge">Czas: <b id="finalTimer">—</b></div>
             </div>
           </div>
-        
+
           <!-- F1: Start finału -->
           <div class="step" data-step="f_start">
             <div class="stepTitle">Start finału</div>
@@ -472,7 +472,7 @@
                 Dźwięk finału, schowanie starej planszy, wjazd planszy finału z placeholderami.
                 Prowadzący dostaje pytania.
               </div>
-        
+
               <div class="stepFoot">
                 <button class="btn gold" id="btnFinalStart" type="button">Start finału</button>
                 <button class="btn" id="btnFinalBackToRounds" type="button">Wstecz</button>
@@ -480,7 +480,7 @@
               </div>
             </div>
           </div>
-        
+
           <!-- F2: Wpisywanie runda 1 -->
           <div class="step hidden" data-step="f_p1_entry">
             <div class="stepTitle">Runda 1 — wpisywanie</div>
@@ -489,9 +489,9 @@
               <div class="hint">
                 Operator wpisuje. Statusy widzi prowadzący (kontrolki). Timer dopiero po starcie.
               </div>
-        
+
               <div id="finalP1Inputs"></div>
-        
+
               <div class="stepFoot">
                 <button class="btn" id="btnFinalBackFromP1Entry" type="button">Wstecz</button>
                 <button class="btn" id="btnFinalP1StartTimer" type="button">Rozpocznij odliczanie (15s)</button>
@@ -500,14 +500,14 @@
               </div>
             </div>
           </div>
-        
+
           <!-- F3.1..F3.5: Mapowanie runda 1 -->
           <div class="step hidden" data-step="f_p1_map_q1"><div class="stepTitle">Runda 1 — mapowanie (P1)</div><div class="card"><div id="finalP1MapQ1"></div><div class="stepFoot"><button class="btn" id="btnFinalBackFromP1Q1" type="button">Wstecz</button><button class="btn gold" id="btnFinalNextFromP1Q1" type="button">Dalej</button><div class="msg" id="msgFinalP1Q1"></div></div></div></div>
           <div class="step hidden" data-step="f_p1_map_q2"><div class="stepTitle">Runda 1 — mapowanie (P2)</div><div class="card"><div id="finalP1MapQ2"></div><div class="stepFoot"><button class="btn" id="btnFinalBackFromP1Q2" type="button">Wstecz</button><button class="btn gold" id="btnFinalNextFromP1Q2" type="button">Dalej</button><div class="msg" id="msgFinalP1Q2"></div></div></div></div>
           <div class="step hidden" data-step="f_p1_map_q3"><div class="stepTitle">Runda 1 — mapowanie (P3)</div><div class="card"><div id="finalP1MapQ3"></div><div class="stepFoot"><button class="btn" id="btnFinalBackFromP1Q3" type="button">Wstecz</button><button class="btn gold" id="btnFinalNextFromP1Q3" type="button">Dalej</button><div class="msg" id="msgFinalP1Q3"></div></div></div></div>
           <div class="step hidden" data-step="f_p1_map_q4"><div class="stepTitle">Runda 1 — mapowanie (P4)</div><div class="card"><div id="finalP1MapQ4"></div><div class="stepFoot"><button class="btn" id="btnFinalBackFromP1Q4" type="button">Wstecz</button><button class="btn gold" id="btnFinalNextFromP1Q4" type="button">Dalej</button><div class="msg" id="msgFinalP1Q4"></div></div></div></div>
           <div class="step hidden" data-step="f_p1_map_q5"><div class="stepTitle">Runda 1 — mapowanie (P5)</div><div class="card"><div id="finalP1MapQ5"></div><div class="stepFoot"><button class="btn" id="btnFinalBackFromP1Q5" type="button">Wstecz</button><button class="btn gold" id="btnFinalNextFromP1Q5" type="button">Dalej</button><div class="msg" id="msgFinalP1Q5"></div></div></div></div>
-        
+
           <!-- F4: Start rundy 2 -->
           <div class="step hidden" data-step="f_p2_start">
             <div class="stepTitle">Runda 2 — start</div>
@@ -516,7 +516,7 @@
               <div class="hint">
                 Dźwięk rundy, odpowiedzi się chowają (zostaje suma), timer ustawiony na 20.
               </div>
-        
+
               <div class="stepFoot">
                 <button class="btn" id="btnFinalBackFromP2Start" type="button">Wstecz</button>
                 <button class="btn gold" id="btnFinalStartP2" type="button">Rozpocznij 2 rundę</button>
@@ -524,7 +524,7 @@
               </div>
             </div>
           </div>
-        
+
           <!-- F5: Wpisywanie runda 2 -->
           <div class="step hidden" data-step="f_p2_entry">
             <div class="stepTitle">Runda 2 — wpisywanie</div>
@@ -533,9 +533,9 @@
               <div class="hint">
                 Po lewej widzisz odpowiedź gracza 1. Powtórzenie to tylko dźwięk + status dla prowadzącego.
               </div>
-        
+
               <div id="finalP2Inputs"></div>
-        
+
               <div class="stepFoot">
                 <button class="btn" id="btnFinalBackFromP2Entry" type="button">Wstecz</button>
                 <button class="btn" id="btnFinalP2StartTimer" type="button">Rozpocznij odliczanie (20s)</button>
@@ -544,21 +544,21 @@
               </div>
             </div>
           </div>
-        
+
           <!-- F6.1..F6.5: Mapowanie runda 2 -->
           <div class="step hidden" data-step="f_p2_map_q1"><div class="stepTitle">Runda 2 — mapowanie (P1)</div><div class="card"><div id="finalP2MapQ1"></div><div class="stepFoot"><button class="btn" id="btnFinalBackFromP2Q1" type="button">Wstecz</button><button class="btn gold" id="btnFinalNextFromP2Q1" type="button">Dalej</button><div class="msg" id="msgFinalP2Q1"></div></div></div></div>
           <div class="step hidden" data-step="f_p2_map_q2"><div class="stepTitle">Runda 2 — mapowanie (P2)</div><div class="card"><div id="finalP2MapQ2"></div><div class="stepFoot"><button class="btn" id="btnFinalBackFromP2Q2" type="button">Wstecz</button><button class="btn gold" id="btnFinalNextFromP2Q2" type="button">Dalej</button><div class="msg" id="msgFinalP2Q2"></div></div></div></div>
           <div class="step hidden" data-step="f_p2_map_q3"><div class="stepTitle">Runda 2 — mapowanie (P3)</div><div class="card"><div id="finalP2MapQ3"></div><div class="stepFoot"><button class="btn" id="btnFinalBackFromP2Q3" type="button">Wstecz</button><button class="btn gold" id="btnFinalNextFromP2Q3" type="button">Dalej</button><div class="msg" id="msgFinalP2Q3"></div></div></div></div>
           <div class="step hidden" data-step="f_p2_map_q4"><div class="stepTitle">Runda 2 — mapowanie (P4)</div><div class="card"><div id="finalP2MapQ4"></div><div class="stepFoot"><button class="btn" id="btnFinalBackFromP2Q4" type="button">Wstecz</button><button class="btn gold" id="btnFinalNextFromP2Q4" type="button">Dalej</button><div class="msg" id="msgFinalP2Q4"></div></div></div></div>
           <div class="step hidden" data-step="f_p2_map_q5"><div class="stepTitle">Runda 2 — mapowanie (P5)</div><div class="card"><div id="finalP2MapQ5"></div><div class="stepFoot"><button class="btn" id="btnFinalBackFromP2Q5" type="button">Wstecz</button><button class="btn gold" id="btnFinalNextFromP2Q5" type="button">Dalej</button><div class="msg" id="msgFinalP2Q5"></div></div></div></div>
-        
+
           <!-- F7: Zakończ finał -->
           <div class="step hidden" data-step="f_end">
             <div class="stepTitle">Zakończ finał</div>
             <div class="card">
               <div class="name">Koniec</div>
               <div class="hint" id="finalEndHint">—</div>
-        
+
               <div class="stepFoot">
                 <button class="btn" id="btnFinalBackFromEnd" type="button">Wstecz</button>
                 <button class="btn gold" id="btnFinalFinish" type="button">Zakończ finał</button>
@@ -567,8 +567,6 @@
             </div>
           </div>
         </section>
-
-
       </section>
     </div>
   </main>
