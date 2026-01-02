@@ -1,6 +1,10 @@
 /* /familiada/control/control.css */
 
-.wrap.wide{ max-width: 1400px; }
+/* ========== OGÓLNY LAYOUT ========== */
+
+.wrap.wide{
+  max-width: 1100px;
+}
 
 .gameTitleBar{
   border-bottom:1px solid rgba(255,255,255,.10);
@@ -9,10 +13,10 @@
 }
 
 .gameTitle{
-  padding: 6px 0 7px;       /* było 10 / 12 — robimy niższy */
+  padding: 6px 0 7px;
   display:flex;
   flex-direction:column;
-  gap:2px;                  /* ciaśniej */
+  gap:2px;
 }
 
 .gameTitle .t1{
@@ -22,63 +26,64 @@
 }
 
 .gameTitle .t2{
-  display:none;             /* ukrywamy meta */
+  display:none;
 }
 
-/* layout */
+/* kontener – tytuł, zakładki, treść */
 .shell{
   padding-top: 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
 }
+
+/* ========== ZAKŁADKI NA GÓRZE ========== */
 
 .side{
   position: static;
   align-self: stretch;
-  border-radius: 0;
   border: none;
   background: transparent;
   box-shadow: none;
-  padding: 0 0 4px;
+  padding: 0;
 }
 
-.nav{
-  display: flex;
-  flex-direction: row;   /* ważne: w rzędzie, nie kolumna */
-  align-items: flex-end;
-  gap: 6px;
-
-  flex-wrap: nowrap;     /* nie łamie w dół */
-  overflow-x: auto;      /* jak będzie wężko, przewijalne w bok */
+/* pasek z zakładkami – W RZĘDZIE */
+.side .nav{
+  display:flex !important;
+  flex-direction:row !important;
+  align-items:flex-end;
+  gap:6px;
+  flex-wrap:nowrap;
+  overflow-x:auto;
 }
 
+/* pojedyncza zakładka */
+.side .navItem{
+  display:flex !important;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
 
-.navItem{
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
+  padding:6px 12px;
+  min-height:34px;
 
-  padding: 6px 12px;
-  min-height: 34px;
+  flex:0 0 auto;
+  width:auto !important;
 
-  flex: 0 0 auto;            /* szerokość według treści */
-  width: auto;
+  border-radius:10px;
+  border:1px solid rgba(255,255,255,.18);
+  background:rgba(0,0,0,.30);
+  color:#fff;
+  cursor:pointer;
 
-  border-radius: 10px;       /* pełny prostokąt, bez uciętej krawędzi */
-  border: 1px solid rgba(255,255,255,.18);
-  background: rgba(0,0,0,.30);
-  color: #fff;
-  cursor: pointer;
+  font-weight:1000;
+  font-size:11px;
+  letter-spacing:.04em;
+  text-transform:uppercase;
+  text-align:center;
 
-  font-weight: 1000;
-  font-size: 11px;
-  letter-spacing: .04em;
-  text-transform: uppercase;
-  text-align: center;
-
-  white-space: nowrap;       /* nie łamie tekstu w dół */
+  white-space:nowrap;
   transition:
     background .15s ease,
     border-color .15s ease,
@@ -86,26 +91,28 @@
     opacity .15s ease;
 }
 
-.navItem .ico{
-  font-size: 16px;
+.side .navItem .ico{
+  font-size:16px;
 }
 
-.navItem:disabled{
-  opacity: .45;
-  cursor: not-allowed;
+.side .navItem:disabled{
+  opacity:.45;
+  cursor:not-allowed;
 }
 
-.navItem.active{
+.side .navItem.active{
   border-color: rgba(255,234,166,.55);
   background: rgba(255,234,166,.20);
   color: var(--gold);
 }
 
+/* dolny pasek pod zakładkami – niepotrzebny */
 .sideFoot{
   display:none;
 }
 
-/* main */
+/* ========== GŁÓWNY OBSZAR (BEZ SZAREGO PROSTOKĄTA) ========== */
+
 .main{
   border:none;
   background:transparent;
@@ -113,8 +120,14 @@
   padding:0;
 }
 
+/* panele kart */
+.cardPanel{
+  margin-top:4px;
+}
 .cardPanel.hidden{ display:none; }
 .hidden{ display:none !important; }
+
+/* nagłówki / kroki */
 
 .panelHead{
   display:flex;
@@ -127,6 +140,13 @@
   font-weight:1000;
   font-size: 16px;
   letter-spacing:.06em;
+}
+
+.step{
+  margin-top:4px;
+}
+.step.hidden{
+  display:none;
 }
 
 .stepTitle{
@@ -143,13 +163,16 @@
   flex-wrap:wrap;
 }
 
-/* cards */
+/* ========== KARTY / GRIDY / POLA ========== */
+
 .cards2{
   display:grid;
   grid-template-columns: 1fr 1fr;
   gap:14px;
 }
-@media (max-width: 1100px){ .cards2{ grid-template-columns: 1fr; } }
+@media (max-width: 1100px){
+  .cards2{ grid-template-columns: 1fr; }
+}
 
 .card{
   border-radius:20px;
@@ -158,13 +181,50 @@
   padding:14px;
   box-shadow:0 18px 45px rgba(0,0,0,.45);
 }
-.head{ display:flex; justify-content:space-between; align-items:center; gap:10px; }
-.name{ font-weight:1000; font-size:15px; letter-spacing:.04em; }
 
-.rowBtns{ display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; align-items:center; }
+.head{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+}
+.name{
+  font-weight:1000;
+  font-size:15px;
+  letter-spacing:.04em;
+}
 
-.field{ display:grid; gap:6px; min-width: 240px; }
-.lbl2{ font-size:12px; opacity:.85; font-weight:900; letter-spacing:.06em; }
+.rowBtns{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-top:10px;
+  align-items:center;
+}
+
+.field{
+  display:grid;
+  gap:6px;
+  min-width: 240px;
+}
+.lbl2{
+  font-size:12px;
+  opacity:.85;
+  font-weight:900;
+  letter-spacing:.06em;
+}
+
+.hint{
+  font-size:13px;
+  opacity:.85;
+}
+
+.msg{
+  font-size:12px;
+  opacity:.9;
+}
+
+/* radio */
 
 .radio{
   display:flex;
@@ -177,9 +237,12 @@
   cursor:pointer;
   font-weight:900;
 }
-.radio input{ transform: translateY(1px); }
+.radio input{
+  transform: translateY(1px);
+}
 
-/* top dots */
+/* ========== STATUS URZĄDZEŃ (kropki) ========== */
+
 .top-status{
   display:flex;
   gap:10px;
@@ -206,11 +269,24 @@
   border:1px solid rgba(255,255,255,.18);
   background: rgba(255,255,255,.08);
 }
-.dot.ok{ background: rgba(120,255,160,.70); border-color: rgba(120,255,160,.40); box-shadow: 0 0 16px rgba(120,255,160,.25); }
-.dot.bad{ background: rgba(255,120,120,.75); border-color: rgba(255,120,120,.45); box-shadow: 0 0 16px rgba(255,120,120,.18); }
-.dot.mid{ background: rgba(255,234,166,.50); border-color: rgba(255,234,166,.35); box-shadow: 0 0 16px rgba(255,234,166,.10); }
+.dot.ok{
+  background: rgba(120,255,160,.70);
+  border-color: rgba(120,255,160,.40);
+  box-shadow: 0 0 16px rgba(120,255,160,.25);
+}
+.dot.bad{
+  background: rgba(255,120,120,.75);
+  border-color: rgba(255,120,120,.45);
+  box-shadow: 0 0 16px rgba(255,120,120,.18);
+}
+.dot.mid{
+  background: rgba(255,234,166,.50);
+  border-color: rgba(255,234,166,.35);
+  box-shadow: 0 0 16px rgba(255,234,166,.10);
+}
 
-/* device QR layout */
+/* ========== QR / URZĄDZENIA ========== */
+
 .qrRow{
   display:grid;
   grid-template-columns: 280px 1fr;
@@ -239,6 +315,7 @@
 }
 
 .qrControls{ display:block; }
+
 .qrSlim{
   margin-top: 10px;
   border-radius: 18px;
@@ -256,7 +333,8 @@
   margin-bottom: 10px;
 }
 
-/* final picker */
+/* ========== LISTA PYTAŃ FINAŁU ========== */
+
 .qList{
   margin-top: 12px;
   display:grid;
@@ -282,8 +360,13 @@
   white-space:nowrap;
   padding-top:2px;
 }
-.qRow .txt{ font-weight:900; line-height:1.25; }
-.qRow input{ margin-top: 2px; }
+.qRow .txt{
+  font-weight:900;
+  line-height:1.25;
+}
+.qRow input{
+  margin-top: 2px;
+}
 
 .pickedPanel{
   margin-top: 14px;
@@ -319,7 +402,8 @@
   padding:0;
 }
 
-/* rounds */
+/* ========== ROUNDS ========== */
+
 .roundTopRight{
   display:flex;
   gap:8px;
@@ -339,7 +423,9 @@
   gap:10px;
   margin-top: 12px;
 }
-@media (max-width: 900px){ .ansGrid{ grid-template-columns: 1fr; } }
+@media (max-width: 900px){
+  .ansGrid{ grid-template-columns: 1fr; }
+}
 .ansBtn{
   width:100%;
   text-align:left;
@@ -351,7 +437,9 @@
   color:#fff;
   box-shadow:0 12px 30px rgba(0,0,0,.35);
 }
-.ansBtn:active{ transform: translateY(1px); }
+.ansBtn:active{
+  transform: translateY(1px);
+}
 .ansTop{
   display:flex;
   justify-content:space-between;
@@ -360,13 +448,18 @@
   letter-spacing:.06em;
   font-size:12px;
 }
-.ansText{ margin-top:6px; font-weight:900; line-height:1.25; }
+.ansText{
+  margin-top:6px;
+  font-weight:900;
+  line-height:1.25;
+}
 .ansBtn.revealed{
   border-color: rgba(255,234,166,.35);
   background: rgba(255,234,166,.08);
 }
 
-/* final */
+/* ========== FINAL ========== */
+
 .finalStatusList{
   margin-top: 10px;
   display:grid;
@@ -382,10 +475,26 @@
   justify-content:space-between;
   gap:10px;
 }
-.fLine .left{ display:flex; gap:10px; align-items:center; }
-.fLine .dotS{ width:10px; height:10px; border-radius:999px; border:1px solid rgba(255,255,255,.18); background: rgba(255,255,255,.08); }
-.fLine .dotS.g{ background: rgba(120,255,160,.70); border-color: rgba(120,255,160,.40); }
-.fLine .dotS.r{ background: rgba(255,120,120,.75); border-color: rgba(255,120,120,.45); }
+.fLine .left{
+  display:flex;
+  gap:10px;
+  align-items:center;
+}
+.fLine .dotS{
+  width:10px;
+  height:10px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,.18);
+  background: rgba(255,255,255,.08);
+}
+.fLine .dotS.g{
+  background: rgba(120,255,160,.70);
+  border-color: rgba(120,255,160,.40);
+}
+.fLine .dotS.r{
+  background: rgba(255,120,120,.75);
+  border-color: rgba(255,120,120,.45);
+}
 
 .finalGrid{
   margin-top: 10px;
@@ -398,16 +507,24 @@
   background: rgba(0,0,0,.16);
   padding:12px;
 }
-.fQ .qT{ font-weight:1000; }
+.fQ .qT{
+  font-weight:1000;
+}
 .fQ .rows{
   margin-top: 10px;
   display:grid;
   grid-template-columns: 1fr 1fr;
   gap:10px;
 }
-@media (max-width: 900px){ .fQ .rows{ grid-template-columns: 1fr; } }
-.fQ input.inp{ width: 100%; }
-.fQ .rowBtns{ margin-top: 8px; }
+@media (max-width: 900px){
+  .fQ .rows{ grid-template-columns: 1fr; }
+}
+.fQ input.inp{
+  width: 100%;
+}
+.fQ .rowBtns{
+  margin-top: 8px;
+}
 
 .mappingGrid{
   margin-top: 10px;
@@ -426,7 +543,9 @@
   gap:10px;
   align-items:flex-start;
 }
-.mapRow .mQ{ font-weight:1000; }
+.mapRow .mQ{
+  font-weight:1000;
+}
 .mapRow .mBody{
   margin-top: 10px;
   display:grid;
@@ -437,7 +556,9 @@
   grid-template-columns: 1fr 1fr;
   gap:10px;
 }
-@media (max-width: 900px){ .mapPick{ grid-template-columns: 1fr; } }
+@media (max-width: 900px){
+  .mapPick{ grid-template-columns: 1fr; }
+}
 .mapOpt{
   border-radius:14px;
   border:1px solid rgba(255,255,255,.12);
@@ -452,8 +573,11 @@
   color: var(--gold);
 }
 
-/* alert bar */
-.alertBar.hidden{ display:none; }
+/* ========== ALERT BAR ========== */
+
+.alertBar.hidden{
+  display:none;
+}
 .alertBar{
   position: sticky;
   top: 0;
@@ -467,7 +591,12 @@
   border-bottom: 1px solid rgba(255,120,120,.28);
   backdrop-filter: blur(10px);
 }
-.alertTxt{ font-weight: 1000; letter-spacing: .02em; }
+.alertTxt{
+  font-weight: 1000;
+  letter-spacing: .02em;
+}
+
+/* ========== EXTRA ========== */
 
 .extra{
   margin-top: 12px;
@@ -477,7 +606,8 @@
   padding: 12px;
 }
 
-/* modal QR urządzeń (auth bar) */
+/* ========== MODAL QR ========== */
+
 .qrModalOverlay{
   position: fixed;
   inset: 0;
