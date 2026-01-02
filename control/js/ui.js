@@ -193,28 +193,36 @@ export function createUI() {
   function setRoundQuestion(text) { setText("roundQuestion", text || "—"); }
 
   function renderRoundAnswers(answers, revealedSet, rootId = "roundAnswers") {
-    const root = $("roundAnswers");
+    const root = $(rootId);
     if (!root) return;
 
-    root.innerHTML = answers
+    const html = (answers || [])
       .slice()
-      .sort((a,b) => (a.ord||0) - (b.ord||0))
+      .sort((a, b) => (a.ord || 0) - (b.ord || 0))
       .map((a) => {
         const rev = revealedSet?.has?.(a.ord) ? "revealed" : "";
         const pts = Number(a.fixed_points ?? 0);
+
         return `
           <button class="ansBtn ${rev}" type="button" data-ord="${a.ord}">
-            <div class="ansTop"><span>#${a.ord}</span><span>${rev ? pts : "—"}</span></div>
-            <div class="ansText">${escapeHtml(rev ? a.text : "—")}</div>
+            <div class="ansTop">
+              <span>#${a.ord}</span>
+              <span>${pts}</span>
+            </div>
+            <div class="ansText">${escapeHtml(a.text || "—")}</div>
           </button>
         `;
       })
       .join("");
 
+    root.innerHTML = html;
+
     root.querySelectorAll("button[data-ord]").forEach((b) => {
-      b.addEventListener("click", () => emit("rounds.answerClick", Number(b.dataset.ord)));
+      const ord = Number(b.getAttribute("data-ord"));
+      b.addEventListener("click", () => emit("rounds.answerClick", { ord }));
     });
   }
+
 
   function setFinalStatusList(linesHtml) {
     const root = $("finalStatusList");
