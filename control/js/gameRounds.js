@@ -444,9 +444,9 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
       );
       ui.setRoundsHud(r);
 
-      // odblokowujemy zatwierdzanie + reset
-      ui.setEnabled("btnBuzzAcceptA", true);
-      ui.setEnabled("btnBuzzAcceptB", true);
+      // AKTYWNA tylko właściwa strona:
+      ui.setEnabled("btnBuzzAcceptA", team === "A");
+      ui.setEnabled("btnBuzzAcceptB", team === "B");
       ui.setEnabled("btnBuzzRetry", true);
     }
 
