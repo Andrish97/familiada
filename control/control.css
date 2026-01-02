@@ -57,28 +57,45 @@
 .tabs{
   display:flex;
   flex-wrap:wrap;
-  gap:8px;
+  gap:4px;
 }
 
-/* „Wkładki” kart – łączą ikonę z podpisem */
+/* „Wkładki” kart – mniej zaokrąglone, z normalnym tłem */
 .navItem{
-  display:grid;
-  place-items:center;
-  width: 60px;
-  height: 60px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
 
-  border-radius:10px; /* mniej zaokrąglone */
-  border:1px solid rgba(255,255,255,.18);
-  background: rgba(0,0,0,.30); /* wyraźniejsze tło */
+  padding:6px 10px;
+
+  border-radius: 10px 10px 0 0;           /* mniej „pigułkowe” */
+  border:1px solid rgba(255,255,255,.16);
+  border-bottom:none;
+  background: rgba(0,0,0,.32);
   color:#fff;
   cursor:pointer;
-  font-weight:1000;
-  transition: background .15s ease, border-color .15s ease, transform .05s ease;
+  font-weight:800;
+  font-size:11px;
+  letter-spacing:.04em;
+  text-transform:uppercase;
+
+  position:relative;
+  top:1px;
+  flex:0 0 auto;                          /* szerokość wg treści */
+  max-width: 160px;                        /* limit – żeby nie były absurdalne */
+  text-align:center;
+
+  transition:
+    background .15s ease,
+    border-color .15s ease,
+    transform .05s ease,
+    opacity .15s ease;
 }
 
 .navItem:hover:not(:disabled){
-  background: rgba(255,255,255,.08);
-  border-color: rgba(255,255,255,.30);
+  background: rgba(255,255,255,.10);
+  border-color: rgba(255,255,255,.28);
   transform: translateY(-1px);
 }
 
@@ -88,22 +105,24 @@
 }
 
 .navItem.active{
+  background: rgba(18,18,26,1);
   border-color: rgba(255,234,166,.55);
-  background: rgba(255,234,166,.20);
   color: var(--gold);
 }
 
-
 .navItem .ico{
-  font-size: 18px;
+  font-size: 16px;
   line-height:1;
 }
 
+/* pozwalamy łamać linie, żeby tekst się mieścił */
 .navLabel{
-  white-space:nowrap;
+  display:block;
+  line-height:1.2;
+  white-space:normal;
 }
 
-/* Pasek pod zakładkami na komunikat (msgSide) */
+/* Pasek pod zakładkami na komunikat (msgSide) bez zmian */
 .tabsFoot{
   min-height: 20px;
   padding: 4px 2px 2px;
