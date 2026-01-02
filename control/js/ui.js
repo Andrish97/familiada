@@ -320,8 +320,7 @@ export function createUI() {
     $("btnGameReady")?.addEventListener("click", () => emit("game.ready"));
     $("btnStartShowIntro")?.addEventListener("click", () => emit("game.startIntro"));
     $("btnStartRound")?.addEventListener("click", () => emit("rounds.start"));
-
-    $("btnBuzzEnable")?.addEventListener("click", () => emit("buzz.enable"));
+    
     $("btnBuzzAcceptA")?.addEventListener("click", () => emit("buzz.acceptA"));
     $("btnBuzzAcceptB")?.addEventListener("click", () => emit("buzz.acceptB"));
 
