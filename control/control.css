@@ -44,36 +44,41 @@
 }
 
 .nav{
-  display:flex;
-  flex-wrap:wrap;
-  gap:6px;
+  display: flex;
+  flex-direction: row;   /* ważne: w rzędzie, nie kolumna */
+  align-items: flex-end;
+  gap: 6px;
+
+  flex-wrap: nowrap;     /* nie łamie w dół */
+  overflow-x: auto;      /* jak będzie wężko, przewijalne w bok */
 }
 
+
 .navItem{
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  gap:6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
 
-  padding:6px 10px;
-  min-height:36px;
-  width:auto;
+  padding: 6px 12px;
+  min-height: 34px;
 
-  border-radius:10px 10px 0 0;
-  border:1px solid rgba(255,255,255,.18);
-  border-bottom:none;
-  background:rgba(0,0,0,.30);
-  color:#fff;
-  cursor:pointer;
-  font-weight:1000;
-  font-size:11px;
-  letter-spacing:.04em;
-  text-transform:uppercase;
-  text-align:center;
+  flex: 0 0 auto;            /* szerokość według treści */
+  width: auto;
 
-  max-width:170px;
-  white-space:normal;
+  border-radius: 10px;       /* pełny prostokąt, bez uciętej krawędzi */
+  border: 1px solid rgba(255,255,255,.18);
+  background: rgba(0,0,0,.30);
+  color: #fff;
+  cursor: pointer;
 
+  font-weight: 1000;
+  font-size: 11px;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  text-align: center;
+
+  white-space: nowrap;       /* nie łamie tekstu w dół */
   transition:
     background .15s ease,
     border-color .15s ease,
@@ -81,16 +86,20 @@
     opacity .15s ease;
 }
 
-.navItem:disabled{
-  opacity:.45;
-  cursor:not-allowed;
+.navItem .ico{
+  font-size: 16px;
 }
+
+.navItem:disabled{
+  opacity: .45;
+  cursor: not-allowed;
+}
+
 .navItem.active{
-  border-color: rgba(255,234,166,.35);
-  background: rgba(255,234,166,.08);
+  border-color: rgba(255,234,166,.55);
+  background: rgba(255,234,166,.20);
   color: var(--gold);
 }
-.navItem .ico{ font-size: 22px; }
 
 .sideFoot{
   display:none;
