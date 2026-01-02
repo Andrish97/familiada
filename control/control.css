@@ -29,106 +29,11 @@
   display:none;
 }
 
-/* Główna siatka: lewy panel + karty */
 .shell{
-  display:grid;
-  grid-template-columns: 84px 1fr;       /* wąski lewy panel */
-  gap:14px;
-  align-items:stretch;
-  padding-top: 14px;
-  min-height: calc(100vh - 120px);      /* prawie pełne okno */
+  padding-top:14px;
 }
 
-@media (max-width: 1050px){
-  .shell{
-    grid-template-columns: 1fr;
-    min-height: auto;
-  }
-}
-
-/* ========== PANEL BOCZNY ========== */
-
-.side{
-  position: sticky;
-  top: 64px;
-  align-self:stretch;
-
-  border-radius:20px;
-  border:1px solid rgba(255,255,255,.12);
-  background: rgba(255,255,255,.06);
-  box-shadow:0 24px 60px rgba(0,0,0,.45);
-  padding:10px;
-
-  display:flex;
-  flex-direction:column;
-}
-
-@media (max-width: 1050px){
-  .side{
-    position: static;
-  }
-}
-
-.nav{
-  display:flex;
-  flex-direction:column;
-  gap:10px;
-  flex:1;                              /* wypełnij panel */
-  justify-content:space-between;       /* równe odstępy między ikonami */
-}
-
-.navItem{
-  display:grid;
-  place-items:center;
-  width: 60px;
-  height: 60px;
-
-  border-radius:16px;
-  border:1px solid rgba(255,255,255,.14);
-  background: rgba(0,0,0,.18);
-  color:#fff;
-  cursor:pointer;
-  font-weight:1000;
-  transition: background .15s ease, border-color .15s ease, transform .05s ease, opacity .15s ease;
-}
-
-.navItem:disabled{
-  opacity:.45;
-  cursor:not-allowed;
-}
-
-.navItem:hover:not(:disabled){
-  background: rgba(255,255,255,.12);
-  border-color: rgba(255,255,255,.24);
-  transform: translateY(-1px);
-}
-
-.navItem.active{
-  border-color: rgba(255,234,166,.35);
-  background: rgba(255,234,166,.08);
-  color: var(--gold);
-}
-
-.navItem .ico{
-  font-size: 22px;
-  line-height:1;
-}
-
-.sideFoot{
-  margin-top: 10px;
-  min-height: 20px;
-  font-size: 11px;
-  opacity:.85;
-}
-
-.sideFoot .msg{
-  max-height: 2.6em;               /* max ok. 2 linie */
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;             /* brak pionowego „ciągnięcia” przez długie błędy */
-}
-
-/* ========== PANEL GŁÓWNY ========== */
+/* ========== PANEL GŁÓWNY + WKŁADKI ========== */
 
 .main{
   border-radius:20px;
@@ -139,13 +44,102 @@
 
   display:flex;
   flex-direction:column;
+  min-height: calc(100vh - 140px); /* topbar + tytuł */
 }
 
-/* Panel z kartami (Devices / Setup / Rounds / Final) */
-.cardPanel{
+/* Górna belka zakładek */
+.tabsBar{
+  margin-bottom: 10px;
+}
+
+.tabs{
   display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+}
+
+/* „Wkładki” kart – łączą ikonę z podpisem */
+.navItem{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  padding:8px 12px;
+
+  border-radius: 999px 999px 0 0;
+  border:1px solid rgba(255,255,255,.16);
+  border-bottom:none;
+  background: rgba(0,0,0,.28);
+  color:#fff;
+  cursor:pointer;
+  font-weight:1000;
+  font-size:12px;
+  letter-spacing:.04em;
+
+  position:relative;
+  top:1px; /* żeby ładnie „siadło” na panelu */
+  transition:
+    background .15s ease,
+    border-color .15s ease,
+    transform .05s ease,
+    opacity .15s ease;
+}
+
+.navItem:disabled{
+  opacity:.45;
+  cursor:not-allowed;
+}
+
+.navItem:hover:not(:disabled){
+  background: rgba(255,255,255,.10);
+  border-color: rgba(255,255,255,.28);
+  transform: translateY(-1px);
+}
+
+.navItem.active{
+  background: rgba(18,18,26,1);
+  border-color: rgba(255,234,166,.45);
+  color: var(--gold);
+}
+
+.navItem .ico{
+  font-size: 18px;
+  line-height:1;
+}
+
+.navLabel{
+  white-space:nowrap;
+}
+
+/* Pasek pod zakładkami na komunikat (msgSide) */
+.tabsFoot{
+  min-height: 20px;
+  padding: 4px 2px 2px;
+  font-size: 11px;
+  opacity:.9;
+}
+
+.tabsFoot .msg{
+  max-height: 2.6em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ========== PANELS / STEPS / CARDS ========== */
+
+.cardPanel{
+  display:none;
   flex-direction:column;
-  min-height: 100%;
+  flex:1 1 auto;
+
+  border-radius:18px;
+  border:1px solid rgba(255,255,255,.12);
+  background: rgba(0,0,0,.24);
+  padding:12px;
+}
+
+.cardPanel[data-card].active{
+  display:flex;
 }
 
 .cardPanel.hidden{
@@ -162,7 +156,6 @@
   align-items:flex-start;
   gap:10px;
   margin-bottom: 10px;
-  flex:0 0 auto;
 }
 
 .panelTitle{
@@ -171,23 +164,18 @@
   letter-spacing:.06em;
 }
 
-/* Każdy step wypełnia panel i centruje zawartość, jeśli jest jej mało */
+/* Krok w panelu – wypełnia wysokość panelu i centruje treść, jeśli mało */
 .cardPanel > .step{
   flex:1 1 auto;
   display:none;
   flex-direction:column;
-  justify-content:center;      /* pionowe centrowanie */
-}
-
-.cardPanel > .step.hidden{
-  display:none;
+  justify-content:center;
 }
 
 .cardPanel > .step:not(.hidden){
   display:flex;
 }
 
-/* Stopki w krokach */
 .stepTitle{
   font-weight:1000;
   letter-spacing:.06em;
@@ -203,8 +191,7 @@
   flex-wrap:wrap;
 }
 
-/* ========== KARTY ========== */
-
+/* Grid dwóch kart (devices / final setup) */
 .cards2{
   display:grid;
   grid-template-columns: 1fr 1fr;
@@ -218,6 +205,7 @@
   }
 }
 
+/* Pojedyncza karta */
 .card{
   border-radius:20px;
   border:1px solid rgba(255,255,255,.14);
@@ -230,8 +218,8 @@
   gap:10px;
 
   max-width: 900px;
-  width: 100%;
-  margin: 0 auto;              /* wycentrowanie w poziomie */
+  width:100%;
+  margin: 0 auto;
 }
 
 .head{
@@ -284,7 +272,7 @@
   transform: translateY(1px);
 }
 
-/* ========== TOP STATUS / DOTY ========== */
+/* ========== TOP STATUS DOTS ========== */
 
 .top-status{
   display:flex;
@@ -336,7 +324,7 @@
   box-shadow: 0 0 16px rgba(255,234,166,.10);
 }
 
-/* klikane w celu pokazania QR */
+/* top-status: klikane w celu pokazania QR */
 .top-status .dotRow{
   cursor: pointer;
   transition: background .15s ease, border-color .15s ease, transform .05s ease;
