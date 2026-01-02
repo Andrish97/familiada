@@ -679,3 +679,48 @@
   border-radius: 12px;
   background: #fff;
 }
+
+/* ========= TWARDY FIX ZAKŁADEK ========= */
+
+/* wymuszamy poziomy układ paska */
+.side > .nav{
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: flex-end !important;
+  gap: 6px !important;
+  flex-wrap: nowrap !important;
+  overflow-x: auto !important;
+}
+
+/* każda zakładka = mały przycisk, NIE 100% szerokości */
+.side > .nav > .navItem{
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+
+  width: auto !important;
+  flex: 0 0 auto !important;
+
+  padding: 6px 12px !important;
+  min-height: 34px !important;
+
+  border-radius: 10px !important;
+  border: 1px solid rgba(255,255,255,.18) !important;
+  background: rgba(0,0,0,.30) !important;
+  color: #fff !important;
+
+  font-weight: 1000 !important;
+  font-size: 11px !important;
+  letter-spacing: .04em !important;
+  text-transform: uppercase !important;
+  white-space: nowrap !important;
+  box-shadow: 0 10px 25px rgba(0,0,0,.45) !important;
+}
+
+.side > .nav > .navItem.active{
+  border-color: rgba(255,234,166,.55) !important;
+  background: rgba(255,234,166,.20) !important;
+  color: var(--gold) !important;
+}
+
