@@ -30,40 +30,27 @@
 }
 
 /* kontener: zakładki + treść */
-
 .shell{
-  display:flex;
-  flex-direction: column;
-  gap:14px;
-  align-items:stretch;
-  padding-top: 14px;
+  margin-top: 14px;
 }
 
+/* ========== ZAKŁADKI NA GÓRZE (segregator) ========== */
 
-/* ========== ZAKŁADKI NA GÓRZE ========== */
-
-.side{
-  position:static;
-  align-self:stretch;
-  border:none;
-  background:transparent;
-  box-shadow:none;
-  padding:0;
+.tabsBar{
+  margin-bottom: 10px;
 }
 
-/* pasek z zakładkami */
-
-.nav{
+/* pasek zakładek */
+.tabs{
   display:flex;
-  flex-direction:row;
-  align-items:flex-end;
-  gap:6px;
-  flex-wrap:wrap;
-  overflow-x:auto;
+  flex-direction: row;
+  align-items: flex-end;
+  gap: 6px;
+  flex-wrap: wrap;
+  overflow-x: auto;
 }
 
 /* pojedyncza zakładka */
-
 .navItem{
   display:flex;
   align-items:center;
@@ -102,6 +89,10 @@
   font-size:16px;
 }
 
+.navItem .navLabel{
+  line-height:1;
+}
+
 .navItem:hover:not(:disabled){
   background:rgba(255,255,255,.10);
   border-color:rgba(255,255,255,.30);
@@ -119,8 +110,10 @@
   color: var(--gold);
 }
 
-.sideFoot{
-  display:none;
+/* podpis pod zakładkami (komunikaty) */
+.tabsFoot{
+  margin-top: 6px;
+  min-height: 18px;
 }
 
 /* ========== GŁÓWNY OBSZAR (bez wielkiego szarego prostokąta) ========== */
@@ -679,48 +672,3 @@
   border-radius: 12px;
   background: #fff;
 }
-
-/* ========= TWARDY FIX ZAKŁADEK ========= */
-
-/* wymuszamy poziomy układ paska */
-.side > .nav{
-  display: flex !important;
-  flex-direction: row !important;
-  align-items: flex-end !important;
-  gap: 6px !important;
-  flex-wrap: nowrap !important;
-  overflow-x: auto !important;
-}
-
-/* każda zakładka = mały przycisk, NIE 100% szerokości */
-.side > .nav > .navItem{
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  gap: 6px !important;
-
-  width: auto !important;
-  flex: 0 0 auto !important;
-
-  padding: 6px 12px !important;
-  min-height: 34px !important;
-
-  border-radius: 10px !important;
-  border: 1px solid rgba(255,255,255,.18) !important;
-  background: rgba(0,0,0,.30) !important;
-  color: #fff !important;
-
-  font-weight: 1000 !important;
-  font-size: 11px !important;
-  letter-spacing: .04em !important;
-  text-transform: uppercase !important;
-  white-space: nowrap !important;
-  box-shadow: 0 10px 25px rgba(0,0,0,.45) !important;
-}
-
-.side > .nav > .navItem.active{
-  border-color: rgba(255,234,166,.55) !important;
-  background: rgba(255,234,166,.20) !important;
-  color: var(--gold) !important;
-}
-
