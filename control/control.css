@@ -42,16 +42,17 @@
 .side{
   position: static;
   align-self: stretch;
+  border-radius: 0;
   border: none;
   background: transparent;
   box-shadow: none;
-  padding: 0;
+  padding: 0 0 4px;
 }
 
-/* pasek z zakładkami – W RZĘDZIE */
-.side .nav{
-  display:flex !important;
-  flex-direction:row !important;
+/* pasek z zakładkami – w jednym rzędzie */
+.nav{
+  display:flex;
+  flex-direction:row;
   align-items:flex-end;
   gap:6px;
   flex-wrap:nowrap;
@@ -59,8 +60,8 @@
 }
 
 /* pojedyncza zakładka */
-.side .navItem{
-  display:flex !important;
+.navItem{
+  display:flex;
   align-items:center;
   justify-content:center;
   gap:6px;
@@ -69,7 +70,7 @@
   min-height:34px;
 
   flex:0 0 auto;
-  width:auto !important;
+  width:auto;
 
   border-radius:10px;
   border:1px solid rgba(255,255,255,.18);
@@ -84,6 +85,7 @@
   text-align:center;
 
   white-space:nowrap;
+  box-shadow:0 10px 25px rgba(0,0,0,.45);
   transition:
     background .15s ease,
     border-color .15s ease,
@@ -91,36 +93,41 @@
     opacity .15s ease;
 }
 
-.side .navItem .ico{
+.navItem .ico{
   font-size:16px;
 }
 
-.side .navItem:disabled{
+.navItem:hover:not(:disabled){
+  background:rgba(255,255,255,.10);
+  border-color:rgba(255,255,255,.30);
+  transform:translateY(-1px);
+}
+
+.navItem:disabled{
   opacity:.45;
   cursor:not-allowed;
 }
 
-.side .navItem.active{
+.navItem.active{
   border-color: rgba(255,234,166,.55);
   background: rgba(255,234,166,.20);
   color: var(--gold);
 }
 
-/* dolny pasek pod zakładkami – niepotrzebny */
 .sideFoot{
   display:none;
 }
 
-/* ========== GŁÓWNY OBSZAR (BEZ SZAREGO PROSTOKĄTA) ========== */
+/* ========== GŁÓWNY OBSZAR (BEZ WIELKIEGO SZAREGO PROSTOKĄTA) ========== */
 
 .main{
   border:none;
+  border-radius:0;
   background:transparent;
   box-shadow:none;
   padding:0;
 }
 
-/* panele kart */
 .cardPanel{
   margin-top:4px;
 }
