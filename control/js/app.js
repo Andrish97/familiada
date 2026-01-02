@@ -127,7 +127,7 @@ async function main() {
   const chHost = rt(`familiada-host:${game.id}`);
   const chBuzzer = rt(`familiada-buzzer:${game.id}`);
 
-  const devices = createDevices({ game, ui, store, chDisplay, chHost, chBuzzer, chControl });
+  const devices = createDevices({ game, ui, store, chDisplay, chHost, chBuzzer, });
   const presence = createPresence({ game, ui, store, devices });
 
   const display = createDisplay({ devices, store });
