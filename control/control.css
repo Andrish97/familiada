@@ -32,11 +32,13 @@
 /* kontener: zakładki + treść */
 
 .shell{
-  padding-top:14px;
   display:flex;
-  flex-direction:column;
-  gap:10px;
+  flex-direction: column;
+  gap:14px;
+  align-items:stretch;
+  padding-top: 14px;
 }
+
 
 /* ========== ZAKŁADKI NA GÓRZE ========== */
 
