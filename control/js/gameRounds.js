@@ -384,6 +384,7 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     setStep("r_duel");
     ui.setMsg("msgRounds", `Runda ${r.roundNo} – pojedynek.`);
     ui.setRoundsHud(r);
+    enableBuzzerDuel()
   }
 
 
@@ -418,8 +419,10 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     ui.setEnabled("btnBuzzAcceptB", false);
     ui.setEnabled("btnBuzzRetry", false);
 
-    devices.sendBuzzerCmd("ON").catch(() => {});
+    // fizyczny reset przycisku – znowu można naciskać
+    devices.sendBuzzerCmd("RESET").catch(() => {});
   }
+
 
   // to jest wołane, gdy CONTROL dostanie BUZZER_EVT z Supabase
   function handleBuzzerClick(team) {
@@ -428,24 +431,30 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     // 1) ZAWSZE dźwięk po kliknięciu (z control, nie z urządzenia)
     playSfx("buzzer_press");
 
-    // 2) Odświeżamy przycisk – wracamy do stanu ON, żeby mógł znowu reagować
-    devices.sendBuzzerCmd("RESET").catch(() => {});
-
-    // 3) Logika gry tylko, jeśli pojedynek jest aktywny
+    // 2) Logika gry tylko, jeśli pojedynek jest aktywny
     if (!r.duel.enabled) return;
 
     // tylko pierwsze kliknięcie ustala "kto był pierwszy"
     if (!r.duel.lastPressed) {
       r.duel.lastPressed = team;
 
-      ui.setMsg("msgDuel", `Pierwszy klik: drużyna ${team}. Zatwierdź A/B.`);
+      ui.setMsg(
+        "msgDuel",
+        `Pierwszy klik: drużyna ${team}. Zatwierdź A/B albo powtórz pojedynek.`
+      );
       ui.setRoundsHud(r);
 
+      // odblokowujemy zatwierdzanie + reset
       ui.setEnabled("btnBuzzAcceptA", true);
       ui.setEnabled("btnBuzzAcceptB", true);
       ui.setEnabled("btnBuzzRetry", true);
     }
+
+    // UWAGA: NIE wysyłamy tutaj RESET/ON.
+    // Buzzer fizycznie zostaje "zablokowany" na A/B,
+    // dopóki operator nie kliknie „Ponów pojedynek”.
   }
+
 
   function acceptBuzz(team) {
     const r = store.state.rounds;
@@ -457,9 +466,30 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     // po zatwierdzeniu można spokojnie wyłączyć przycisk
     devices.sendBuzzerCmd("OFF").catch(() => {});
 
-    ui.setMsg("msgDuel", `Pierwsza odpowiedź: drużyna ${team}.`);
+    // zapalamy kontrolkę po stronie drużyny, która odpowiada
+    try {
+      display.setIndicator(team === "A" ? "ON_A" : "ON_B");
+    } catch (e) {
+      console.warn("[rounds] setIndicator failed", e);
+    }
+
+    ui.setMsg("msgRoundsDuel", `Pierwsza odpowiedź: drużyna ${team}.`);
     ui.setRoundsHud(r);
+
+    // dla pewności odświeżamy pytanie na hoście (może „jeszcze raz go wysłać”)
+    const qText = (r.question?.text || "").trim();
+    if (qText) {
+      const safe = qText.replace(/"/g, '\\"');
+      devices
+        .sendHostCmd(`SET "${safe}"`)
+        .then(() => devices.sendHostCmd("OPEN"))
+        .catch(() => {});
+    }
+
+    // przejście do rozgrywki pojedynku / dalszej gry
+    setStep("r_play");
   }
+
 
   // === Gra właściwa w rundzie ===
 
