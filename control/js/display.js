@@ -65,39 +65,44 @@ export function createDisplay({ devices, store }) {
   }
 
   // === ROUNDS – plansza/odpowiedzi/X/suma ===
-
-  async function roundsBoardPlaceholders(count = 6) {
+  
+  async function roundsBoardPlaceholders(count) {
     await send("MODE ROUNDS");
+  
     const line = PLACE.roundsText;
     const pts = PLACE.roundsPts;
+  
     const rows = Math.max(1, Math.min(6, Number(count) || 6));
-
-    let cmd = 'RBATCH ' +
-      'SUMA 00 ';
+  
+    let cmd = "RBATCH " +
+      "SUMA 00 ";
+  
     for (let i = 1; i <= rows; i++) {
       cmd += `R${i} "${line}" ${pts} `;
     }
-    cmd += 'ANIMIN matrix down 1500';
-
+  
+    cmd += "ANIMIN matrix down 1500";
+  
     await send(cmd);
   }
-
-
-  async function roundsBoardPlaceholdersNewRound(count = 6) {
-    // chowanie poprzedniej planszy + nowa pustka z inną animacją
-    await send("RBATCH ANIMOUT edge down 1000");
-
+  
+  async function roundsBoardPlaceholdersNewRound(count) {
     const line = PLACE.roundsText;
     const pts = PLACE.roundsPts;
     const rows = Math.max(1, Math.min(6, Number(count) || 6));
-
-    let cmd = 'RBATCH ' +
-      'SUMA 00 ';
+  
+    // chowanie poprzedniej planszy rund
+    await send("RBATCH ANIMOUT edge down 1000");
+  
+    let cmd = "RBATCH " +
+      "SUMA 00 ";
+  
     for (let i = 1; i <= rows; i++) {
       cmd += `R${i} "${line}" ${pts} `;
     }
-    cmd += 'ANIMIN matrix down 1500 pixel';
-
+  
+    cmd += "ANIMIN matrix down 1500";
+  
     await send(cmd);
   }
 
