@@ -62,37 +62,36 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
   }
 
   // === Załadowanie pytań/odpowiedzi do rund ===
-
+  
   async function pickQuestionsForRounds(gameId) {
     const all = await loadQuestions(gameId);
     const withAnswers = [];
   
     for (const q of all) {
       const ans = await loadAnswers(q.id);
-      if (!ans || !ans.length) continue; // pytanie bez odpowiedzi nas nie interesuje
+      if (!ans || !ans.length) continue; // tylko pytania z odpowiedziami
       withAnswers.push({ ...q, answers: ans });
     }
   
-    // pytania zarezerwowane do finału – nie mogą iść do rund
+    // ID pytań zarezerwowanych do finału – nie mogą trafić do rund
     const finalPicked = Array.isArray(store.state.final?.picked)
       ? new Set(store.state.final.picked)
       : null;
   
     let pool = withAnswers;
+  
     if (finalPicked && finalPicked.size > 0) {
       pool = withAnswers.filter((q) => !finalPicked.has(q.id));
     }
   
-    // losowa kolejność (Fisher–Yates)
+    // losowa kolejność pytań do rund (Fisher–Yates)
     for (let i = pool.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
-      const tmp = pool[i];
-      pool[i] = pool[j];
-      pool[j] = tmp;
+      [pool[i], pool[j]] = [pool[j], pool[i]];
     }
   
-    // bierzemy max 6 pytań (bo max 6 rund)
-    const rounds = pool.slice(0, 6).map((q, idx) => ({
+    // NIE przycinamy do 6 – rund może być tyle, ile pytań
+    const rounds = pool.map((q, idx) => ({
       id: q.id,
       ord: q.ord,
       text: q.text,
@@ -102,6 +101,7 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
   
     return rounds;
   }
+
 
   function ensureRoundsState() {
     const r = store.state.rounds;
@@ -232,13 +232,49 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     ensureRoundsState();
   
     const r = store.state.rounds;
+
+    const totals = r.totals || { A: 0, B: 0 };
+    const ptsA = nInt(totals.A, 0);
+    const ptsB = nInt(totals.B, 0);
+    const FINAL_MIN_POINTS = 300; // później idzie do ustawień zaawansowanych
+  
+    if (ptsA >= FINAL_MIN_POINTS || ptsB >= FINAL_MIN_POINTS) {
+      ui.setMsg(
+        "msgRoundsRoundStart",
+        `Próg ${FINAL_MIN_POINTS} pkt został już osiągnięty. Nie można zaczynać kolejnej rundy.`
+      );
+      ui.setRoundsHud(r);
+      return;
+    }
+    
     const obj = currentRoundObj();
   
     if (!obj) {
-      ui.setMsg("msgRoundsRoundStart", "Brak zdefiniowanych rund dla tej gry.");
+      const totals = r.totals || { A: 0, B: 0 };
+      const ptsA = nInt(totals.A, 0);
+      const ptsB = nInt(totals.B, 0);
+  
+      let msg;
+      if (ptsA > ptsB) {
+        msg = `Brak kolejnych pytań. Wygrywa drużyna A (${ptsA} : ${ptsB}).`;
+      } else if (ptsB > ptsA) {
+        msg = `Brak kolejnych pytań. Wygrywa drużyna B (${ptsB} : ${ptsA}).`;
+      } else {
+        msg = `Brak kolejnych pytań. Remis (${ptsA} : ${ptsB}).`;
+      }
+  
+      ui.setMsg("msgRoundsRoundStart", msg);
+      ui.setRoundsHud(r);
+  
+      try {
+        await display.setIndicator(null);
+        await display.showLogo?.();
+      } catch {}
+  
       return;
     }
   
+    
     // reset runtime dla rundy
     r.phase = "ROUND_ACTIVE";
     r.passUsed = false;
@@ -515,7 +551,7 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
   function endRound() {
     const r = store.state.rounds;
     r.roundNo = nInt(r.roundNo, 1) + 1;
-    if (r.roundNo > 6) r.roundNo = 6; // max 6 rund
+  
     r.question = null;
     r.answers = [];
     r.revealed = new Set();
@@ -526,13 +562,14 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     r.steal.active = false;
     r.steal.used = false;
     r.allowPass = false;
-
+  
     clearTimer3();
     ui.setRoundsHud(r);
-
+  
     setStep("r_ready");
     ui.setMsg("msgRounds", "Przejdź do kolejnej rundy.");
   }
+
 
   function bootIfNeeded() {
     ensureRoundsState();
