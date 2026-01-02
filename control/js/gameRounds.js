@@ -393,39 +393,71 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     const r = store.state.rounds;
     r.duel.enabled = true;
     r.duel.lastPressed = null;
-  
+
     ui.setMsg("msgDuel", "Pojedynek: czekam na przycisk.");
     ui.setRoundsHud(r);
-  
-    try {
-      // RESET w buzzer.js = ustaw OFF→ON i zapis stanu
-      devices.sendBuzzerCmd("RESET");
-    } catch (e) {
-      console.warn("[rounds] sendBuzzerCmd RESET failed", e);
-    }
+
+    // przygotuj przycisk
+    ui.setEnabled("btnBuzzAcceptA", false);
+    ui.setEnabled("btnBuzzAcceptB", false);
+    ui.setEnabled("btnBuzzRetry", false);
+
+    // BUZZER: włącz tryb aktywny
+    devices.sendBuzzerCmd("ON").catch(() => {});
   }
-  
+
   function retryDuel() {
     const r = store.state.rounds;
     r.duel.enabled = true;
     r.duel.lastPressed = null;
-  
+
     ui.setMsg("msgDuel", "Powtórka pojedynku.");
     ui.setRoundsHud(r);
-  
-    try {
-      devices.sendBuzzerCmd("RESET");
-    } catch (e) {
-      console.warn("[rounds] sendBuzzerCmd RESET failed", e);
+
+    ui.setEnabled("btnBuzzAcceptA", false);
+    ui.setEnabled("btnBuzzAcceptB", false);
+    ui.setEnabled("btnBuzzRetry", false);
+
+    devices.sendBuzzerCmd("ON").catch(() => {});
+  }
+
+  // to jest wołane, gdy CONTROL dostanie BUZZER_EVT z Supabase
+  function handleBuzzerClick(team) {
+    const r = store.state.rounds;
+
+    // 1) ZAWSZE dźwięk po kliknięciu (z control, nie z urządzenia)
+    playSfx("buzzer_press");
+
+    // 2) Odświeżamy przycisk – wracamy do stanu ON, żeby mógł znowu reagować
+    devices.sendBuzzerCmd("RESET").catch(() => {});
+
+    // 3) Logika gry tylko, jeśli pojedynek jest aktywny
+    if (!r.duel.enabled) return;
+
+    // tylko pierwsze kliknięcie ustala "kto był pierwszy"
+    if (!r.duel.lastPressed) {
+      r.duel.lastPressed = team;
+
+      ui.setMsg("msgDuel", `Pierwszy klik: drużyna ${team}. Zatwierdź A/B.`);
+      ui.setRoundsHud(r);
+
+      ui.setEnabled("btnBuzzAcceptA", true);
+      ui.setEnabled("btnBuzzAcceptB", true);
+      ui.setEnabled("btnBuzzRetry", true);
     }
   }
 
   function acceptBuzz(team) {
     const r = store.state.rounds;
     if (!r.duel.enabled) return;
+
     r.duel.enabled = false;
     r.controlTeam = team;
-    ui.setMsg("msgRoundsDuel", `Pierwsza odpowiedź: drużyna ${team}.`);
+
+    // po zatwierdzeniu można spokojnie wyłączyć przycisk
+    devices.sendBuzzerCmd("OFF").catch(() => {});
+
+    ui.setMsg("msgDuel", `Pierwsza odpowiedź: drużyna ${team}.`);
     ui.setRoundsHud(r);
   }
 
@@ -591,6 +623,7 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     enableBuzzerDuel,
     retryDuel,
     acceptBuzz,
+    handleBuzzerClick,
     passQuestion,
     startTimer3,
     revealAnswerByOrd,
