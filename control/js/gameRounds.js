@@ -10,6 +10,15 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
   let timerRAF = null;
   const introMixer = createSfxMixer?.();
 
+  function getRoundMultiplier(roundNo) {
+    const n = nInt(roundNo, 1);
+    // zgodnie z opisem: pierwsze pytania normalnie,
+    // potem podwójne, po czwartym – potrójne
+    if (n <= 3) return 1;
+    if (n === 4) return 2;
+    return 3;
+  }
+
   function setStep(step) {
     const r = store.state.rounds;
     r.step = step;
@@ -462,28 +471,22 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     r.duel.enabled = false;
     r.controlTeam = team;
 
-    // zapalamy kontrolkę po stronie drużyny, która odpowiada
-    try {
-      display.setIndicator(team === "A" ? "ON_A" : "ON_B");
-    } catch (e) {
-      console.warn("[rounds] setIndicator failed", e);
-    }
-
-    ui.setMsg("msgRoundsDuel", `Pierwsza odpowiedź: drużyna ${team}.`);
-    ui.setRoundsHud(r);
-
-    // dla pewności odświeżamy pytanie na hoście (może „jeszcze raz go wysłać”)
-    const qText = (r.question?.text || "").trim();
-    if (qText) {
-      const safe = qText.replace(/"/g, '\\"');
-      devices
-        .sendHostCmd(`SET "${safe}"`)
-        .then(() => devices.sendHostCmd("OPEN"))
-        .catch(() => {});
-    }
-
-    // przejście do rozgrywki pojedynku / dalszej gry
+    // przechodzimy do właściwej rozgrywki pytania
     setStep("r_play");
+
+    ui.setMsg("msgDuel", `Pierwsza odpowiedź: drużyna ${team}.`);
+    ui.setMsg("msgRoundsPlay", `Kontrolę ma drużyna ${team}.`);
+
+    // przyciski gry w rundzie – aktywne
+    if (ui.setEnabled) {
+      ui.setEnabled("btnPassQuestion", true);
+      ui.setEnabled("btnStartTimer3", true);
+      ui.setEnabled("btnAddX", true);
+      ui.setEnabled("btnGoSteal", true);
+      ui.setEnabled("btnGoEndRound", true);
+    }
+
+    ui.setRoundsHud(r);
   }
 
 
@@ -522,11 +525,16 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     r.revealed.add(ord);
     ui.renderRoundAnswers(r.answers, r.revealed);
 
-    const pts = nInt(ans.fixed_points, 0);
-    r.bankPts = nInt(r.bankPts, 0) + pts;
+    const base = nInt(ans.fixed_points, 0);           // ile osób w ankiecie
+    const mult = getRoundMultiplier(r.roundNo);       // 1× / 2× / 3×
+    const gained = base * mult;                       // punkty do banku
+
+    r.bankPts = nInt(r.bankPts, 0) + gained;
     ui.setRoundsHud(r);
 
-    await display.roundsRevealRow(ord, ans.text, pts);
+    // Na tablicy przy odpowiedzi pokazujemy bazowe punkty (liczbę osób),
+    // ale "SUMA" pokazuje już wynik po mnożniku.
+    await display.roundsRevealRow(ord, ans.text, base);
     await display.roundsSetSum(r.bankPts);
 
     // po pierwszej poprawnej odpowiedzi można już oddać pytanie
@@ -549,8 +557,16 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     await display.roundsSetX(r.controlTeam, r[key]);
     ui.setRoundsHud(r);
 
+    // dźwięk brzęczka jak w regulaminie (zła / brak odp. albo czas minął)
     playSfx("answer_wrong");
+
+    // po trzeciej pomyłce: szansa przeciwników
+    const strikes = r[key];
+    if (strikes >= 3 && !r.steal.active && !r.steal.used) {
+      goSteal();
+    }
   }
+
 
   // === Kradzież / koniec rundy ===
 
