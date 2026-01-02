@@ -1,10 +1,12 @@
 /* /familiada/control/control.css */
 
-/* ========== OGÓLNY LAYOUT ========== */
+/* ========== OGÓLNA SIATKA ========== */
 
 .wrap.wide{
   max-width: 1100px;
 }
+
+/* Pasek z tytułem gry */
 
 .gameTitleBar{
   border-bottom:1px solid rgba(255,255,255,.10);
@@ -29,7 +31,8 @@
   display:none;
 }
 
-/* kontener – tytuł, zakładki, treść */
+/* Główna kolumna: zakładki + treść */
+
 .shell{
   padding-top: 14px;
   display:flex;
@@ -41,15 +44,15 @@
 
 .side{
   position: static;
-  align-self: stretch;
-  border-radius: 0;
-  border: none;
-  background: transparent;
-  box-shadow: none;
-  padding: 0 0 4px;
+  align-self:stretch;
+  border:none;
+  background:transparent;
+  box-shadow:none;
+  padding:0;
 }
 
-/* pasek z zakładkami – w jednym rzędzie */
+/* pasek z zakładkami */
+
 .nav{
   display:flex;
   flex-direction:row;
@@ -60,6 +63,7 @@
 }
 
 /* pojedyncza zakładka */
+
 .navItem{
   display:flex;
   align-items:center;
@@ -86,6 +90,7 @@
 
   white-space:nowrap;
   box-shadow:0 10px 25px rgba(0,0,0,.45);
+
   transition:
     background .15s ease,
     border-color .15s ease,
@@ -118,15 +123,16 @@
   display:none;
 }
 
-/* ========== GŁÓWNY OBSZAR (BEZ WIELKIEGO SZAREGO PROSTOKĄTA) ========== */
+/* ========== GŁÓWNA TREŚĆ (BEZ SZAREGO PROSTOKĄTA) ========== */
 
 .main{
   border:none;
-  border-radius:0;
   background:transparent;
   box-shadow:none;
   padding:0;
 }
+
+/* panele kart */
 
 .cardPanel{
   margin-top:4px;
@@ -170,7 +176,7 @@
   flex-wrap:wrap;
 }
 
-/* ========== KARTY / GRIDY / POLA ========== */
+/* ========== KARTY, GRIDY, POLA ========== */
 
 .cards2{
   display:grid;
@@ -248,7 +254,7 @@
   transform: translateY(1px);
 }
 
-/* ========== STATUS URZĄDZEŃ (kropki) ========== */
+/* ========== STATUS URZĄDZEŃ (KROPKI) ========== */
 
 .top-status{
   display:flex;
@@ -613,7 +619,7 @@
   padding: 12px;
 }
 
-/* ========== MODAL QR ========== */
+/* ========== MODAL QR (TOPBAR) ========== */
 
 .qrModalOverlay{
   position: fixed;
