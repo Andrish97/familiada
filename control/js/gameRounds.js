@@ -463,9 +463,6 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     r.duel.enabled = false;
     r.controlTeam = team;
 
-    // po zatwierdzeniu można spokojnie wyłączyć przycisk
-    devices.sendBuzzerCmd("OFF").catch(() => {});
-
     // zapalamy kontrolkę po stronie drużyny, która odpowiada
     try {
       display.setIndicator(team === "A" ? "ON_A" : "ON_B");
