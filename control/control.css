@@ -165,7 +165,7 @@
   margin-top: 12px;
   display:flex;
   align-items:center;
-  gap:10px;
+  gap:8px;
   flex-wrap:wrap;
 }
 
@@ -181,7 +181,7 @@
 }
 
 .card{
-  border-radius:20px;
+  border-radius:18px;
   border:1px solid rgba(255,255,255,.14);
   background: rgba(0,0,0,.18);
   padding:14px;
@@ -202,16 +202,16 @@
 
 .rowBtns{
   display:flex;
-  gap:10px;
+  gap:8px;
   flex-wrap:wrap;
-  margin-top:10px;
+  margin-top:8px;
   align-items:center;
 }
 
 .field{
   display:grid;
   gap:6px;
-  min-width: 240px;
+  min-width: 220px;
 }
 .lbl2{
   font-size:12px;
@@ -295,48 +295,46 @@
 
 .qrRow{
   display:grid;
-  grid-template-columns: 280px 1fr;
-  gap:14px;
-  align-items:start;
+  grid-template-columns: 260px 1fr;
+  gap:18px;
+  align-items:center;
   margin-top: 10px;
 }
 @media (max-width: 1100px){
-  .qrRow{ grid-template-columns: 1fr; }
+  .qrRow{
+    grid-template-columns: 1fr;
+    justify-items:center;
+  }
 }
 
-.qrBox{
-  border-radius: 18px;
-  border:1px solid rgba(255,255,255,.12);
-  background: rgba(0,0,0,.20);
-  padding: 12px;
-  display:grid;
-  place-items:center;
-}
-.qrBox img{
-  width: 240px;
-  height: 240px;
-  border-radius: 16px;
-  border:1px solid rgba(255,255,255,.14);
-  background:#000;
-}
-
-.qrControls{ display:block; }
-
+/* lekkie kontenery – bez „głupiej ramki” */
+.qrBox,
 .qrSlim{
-  margin-top: 10px;
-  border-radius: 18px;
-  border:1px solid rgba(255,255,255,.12);
-  background: rgba(0,0,0,.18);
-  padding: 12px;
+  border:none;
+  background:transparent;
+  padding:0;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
 }
+
+.qrBox img,
 .qrSlim img{
   width: 220px;
   height: 220px;
+  max-width: 100%;
   border-radius: 16px;
-  border:1px solid rgba(255,255,255,.14);
+  border:1px solid rgba(255,255,255,.18);
   background:#000;
   display:block;
-  margin-bottom: 10px;
+}
+
+/* przyciski pod QR bardziej zbite */
+.qrControls .rowBtns,
+.qrSlim .rowBtns{
+  margin-top:6px;
+  gap:6px;
 }
 
 /* ========== LISTA PYTAŃ FINAŁU ========== */
