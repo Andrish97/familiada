@@ -66,26 +66,40 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
   async function pickQuestionsForRounds(gameId) {
     const all = await loadQuestions(gameId);
     const withAnswers = [];
-
+  
     for (const q of all) {
       const ans = await loadAnswers(q.id);
-      if (!ans || !ans.length) continue;
+      if (!ans || !ans.length) continue; // pytanie bez odpowiedzi nas nie interesuje
       withAnswers.push({ ...q, answers: ans });
     }
-
-    // prosto: bierzemy pierwsze 6 z odpowiedziami
-    const rounds = withAnswers
-      .slice()
-      .sort((a, b) => (a.ord || 0) - (b.ord || 0))
-      .slice(0, 6)
-      .map((q, idx) => ({
-        id: q.id,
-        ord: q.ord,
-        text: q.text,
-        answers: q.answers,
-        roundNo: idx + 1,
-      }));
-
+  
+    // pytania zarezerwowane do finału – nie mogą iść do rund
+    const finalPicked = Array.isArray(store.state.final?.picked)
+      ? new Set(store.state.final.picked)
+      : null;
+  
+    let pool = withAnswers;
+    if (finalPicked && finalPicked.size > 0) {
+      pool = withAnswers.filter((q) => !finalPicked.has(q.id));
+    }
+  
+    // losowa kolejność (Fisher–Yates)
+    for (let i = pool.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      const tmp = pool[i];
+      pool[i] = pool[j];
+      pool[j] = tmp;
+    }
+  
+    // bierzemy max 6 pytań (bo max 6 rund)
+    const rounds = pool.slice(0, 6).map((q, idx) => ({
+      id: q.id,
+      ord: q.ord,
+      text: q.text,
+      answers: q.answers,
+      roundNo: idx + 1,
+    }));
+  
     return rounds;
   }
 
