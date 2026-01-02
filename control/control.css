@@ -1,12 +1,10 @@
 /* /familiada/control/control.css */
 
-/* ========== OGÓLNA SIATKA ========== */
+/* ========== OGÓLNA SIATKA / TYTUŁ ========== */
 
 .wrap.wide{
   max-width: 1100px;
 }
-
-/* Pasek z tytułem gry */
 
 .gameTitleBar{
   border-bottom:1px solid rgba(255,255,255,.10);
@@ -31,10 +29,10 @@
   display:none;
 }
 
-/* Główna kolumna: zakładki + treść */
+/* kontener: zakładki + treść */
 
 .shell{
-  padding-top: 14px;
+  padding-top:14px;
   display:flex;
   flex-direction:column;
   gap:10px;
@@ -43,7 +41,7 @@
 /* ========== ZAKŁADKI NA GÓRZE ========== */
 
 .side{
-  position: static;
+  position:static;
   align-self:stretch;
   border:none;
   background:transparent;
@@ -58,7 +56,7 @@
   flex-direction:row;
   align-items:flex-end;
   gap:6px;
-  flex-wrap:nowrap;
+  flex-wrap:wrap;
   overflow-x:auto;
 }
 
@@ -123,7 +121,7 @@
   display:none;
 }
 
-/* ========== GŁÓWNA TREŚĆ (BEZ SZAREGO PROSTOKĄTA) ========== */
+/* ========== GŁÓWNY OBSZAR (bez wielkiego szarego prostokąta) ========== */
 
 .main{
   border:none;
@@ -176,7 +174,7 @@
   flex-wrap:wrap;
 }
 
-/* ========== KARTY, GRIDY, POLA ========== */
+/* ========== KARTY / GRIDY / POLA ========== */
 
 .cards2{
   display:grid;
@@ -254,7 +252,7 @@
   transform: translateY(1px);
 }
 
-/* ========== STATUS URZĄDZEŃ (KROPKI) ========== */
+/* ========== STATUS URZĄDZEŃ (kropki) ========== */
 
 .top-status{
   display:flex;
