@@ -196,15 +196,16 @@ export function createUI() {
     const root = $(rootId);
     if (!root) return;
 
-    const html = (answers || [])
+    root.innerHTML = (answers || [])
       .slice()
       .sort((a, b) => (a.ord || 0) - (b.ord || 0))
       .map((a) => {
-        const rev = revealedSet?.has?.(a.ord) ? "revealed" : "";
+        const isRev = revealedSet?.has?.(a.ord);
         const pts = Number(a.fixed_points ?? 0);
+        const cls = isRev ? "ansBtn revealed" : "ansBtn";
 
         return `
-          <button class="ansBtn ${rev}" type="button" data-ord="${a.ord}">
+          <button class="${cls}" type="button" data-ord="${a.ord}">
             <div class="ansTop">
               <span>#${a.ord}</span>
               <span>${pts}</span>
@@ -215,14 +216,10 @@ export function createUI() {
       })
       .join("");
 
-    root.innerHTML = html;
-
     root.querySelectorAll("button[data-ord]").forEach((b) => {
-      const ord = Number(b.getAttribute("data-ord"));
-      b.addEventListener("click", () => emit("rounds.answerClick", { ord }));
+      b.addEventListener("click", () => emit("rounds.answerClick", Number(b.dataset.ord)));
     });
   }
-
 
   function setFinalStatusList(linesHtml) {
     const root = $("finalStatusList");
