@@ -353,10 +353,9 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
         }
       }
   
-      await display.roundsSetSum(0);
       await display.roundsSetX("A", 0);
       await display.roundsSetX("B", 0);
-      await display.setIndicator(null);
+      await display.setIndicator("OFF");
   
       if (display.setBankTriplet) {
         await display.setBankTriplet(0);
