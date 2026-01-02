@@ -60,28 +60,24 @@
 
 /* „Wkładki” kart – łączą ikonę z podpisem */
 .navItem{
-  display:flex;
-  align-items:center;
-  gap:6px;
-  padding:8px 12px;
+  display:grid;
+  place-items:center;
+  width: 60px;
+  height: 60px;
 
-  border-radius: 999px 999px 0 0;
-  border:1px solid rgba(255,255,255,.16);
-  border-bottom:none;
-  background: rgba(0,0,0,.28);
+  border-radius:10px; /* mniej zaokrąglone */
+  border:1px solid rgba(255,255,255,.18);
+  background: rgba(0,0,0,.30); /* wyraźniejsze tło */
   color:#fff;
   cursor:pointer;
   font-weight:1000;
-  font-size:12px;
-  letter-spacing:.04em;
+  transition: background .15s ease, border-color .15s ease, transform .05s ease;
+}
 
-  position:relative;
-  top:1px; /* żeby ładnie „siadło” na panelu */
-  transition:
-    background .15s ease,
-    border-color .15s ease,
-    transform .05s ease,
-    opacity .15s ease;
+.navItem:hover:not(:disabled){
+  background: rgba(255,255,255,.08);
+  border-color: rgba(255,255,255,.30);
+  transform: translateY(-1px);
 }
 
 .navItem:disabled{
@@ -89,17 +85,12 @@
   cursor:not-allowed;
 }
 
-.navItem:hover:not(:disabled){
-  background: rgba(255,255,255,.10);
-  border-color: rgba(255,255,255,.28);
-  transform: translateY(-1px);
-}
-
 .navItem.active{
-  background: rgba(18,18,26,1);
-  border-color: rgba(255,234,166,.45);
+  border-color: rgba(255,234,166,.55);
+  background: rgba(255,234,166,.20);
   color: var(--gold);
 }
+
 
 .navItem .ico{
   font-size: 18px;
