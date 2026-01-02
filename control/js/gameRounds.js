@@ -588,7 +588,6 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     stateGameReady,
     stateStartGameIntro,
     startRound,
-    backTo,
     enableBuzzerDuel,
     retryDuel,
     acceptBuzz,
