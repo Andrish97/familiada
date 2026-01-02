@@ -331,11 +331,6 @@ export function createUI() {
     $("btnAddX")?.addEventListener("click", () => emit("rounds.addX"));
     $("btnStealTry")?.addEventListener("click", () => emit("rounds.stealTry"));
     $("btnEndRound")?.addEventListener("click", () => emit("rounds.end"));
-
-    $("btnRoundsBackFromDuel")?.addEventListener("click", () => emit("rounds.back", "r_roundStart"));
-    $("btnRoundsBackFromPlay")?.addEventListener("click", () => emit("rounds.back", "r_duel"));
-    $("btnRoundsBackFromSteal")?.addEventListener("click", () => emit("rounds.back", "r_play"));
-    $("btnRoundsBackFromEnd")?.addEventListener("click", () => emit("rounds.back", "r_play"));
     
     $("btnBuzzRetry")?.addEventListener("click", () => emit("buzz.retry"));
     
