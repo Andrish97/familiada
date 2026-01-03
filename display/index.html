@@ -64,7 +64,7 @@
       fill="url(#rimGrad)"
     />
     
-    <!-- OWAL WEWNĘTRZNY – geometrię (x,y,w,h) nadpisze JS -->
+    <!-- OWAL WEWNĘTRZNY – opisuje big, grubości jak panele -->
     <rect
       id="innerOval"
       x="226"
@@ -75,24 +75,9 @@
       fill="url(#innerGrad)"
     />
       
-    <!-- LINIE łączące wewnętrzny z zewnętrznym (na razie zostawiamy „ręczne”) -->
-    <g stroke="#fff" stroke-opacity="0.22" stroke-width="6" stroke-linecap="round">
-      <!-- pion na górze -->
-      <line x1="800" y1="30"  x2="800" y2="124"/>
-    
-      <!-- lewy górny -->
-      <line x1="226" y1="124" x2="420" y2="340"/>
-    
-      <!-- prawy górny -->
-      <line x1="1374" y1="124" x2="1180" y2="340"/>
-    
-      <!-- lewy dolny -->
-      <line x1="226" y1="776" x2="420" y2="560"/>
-    
-      <!-- prawy dolny -->
-      <line x1="1374" y1="776" x2="1180" y2="560"/>
-    </g>
-    
+    <!-- LINIE łączące wewnętrzny z zewnętrznym – rysowane w JS -->
+    <g id="frameLines"></g>
+
     <g id="center"></g>
     <g id="panels"></g>
     <g id="basebar"></g>
