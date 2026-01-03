@@ -831,10 +831,7 @@ export async function createScene() {
   lampB.setOn(false);
   
   let indicatorState = "OFF";
-
-  const long1 = drawFramedDotPanel(bottom, xLeft,  yBottom, Xb, Yb, dBottom, g, COLORS);
-  const long2 = drawFramedDotPanel(bottom, xRight, yBottom, Xb, Yb, dBottom, g, COLORS);
-
+  
   // ============================================================
   // LOGO: wysokość 5, rzędy 3..7
   // Format logo_familiada.json:
