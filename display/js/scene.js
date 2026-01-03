@@ -605,34 +605,34 @@ export async function createScene() {
   const innerRight  = inner.x + inner.w;
   const innerBottom = inner.y + inner.h;
 
-  // LINIE łączące wewnętrzny z zewnętrznym – parametrycznie
+  // LINIE dzielące owal na 6 segmentów:
+  // 2 kolumny (pion na środku), 3 wiersze (2 poziome linie).
   const frameLines = $("frameLines");
   if (frameLines) {
+    frameLines.innerHTML = ""; // na wszelki wypadek, gdyby scena była tworzona drugi raz
+
     const addLine = (x1, y1, x2, y2) => {
       frameLines.appendChild(el("line", {
         x1, y1, x2, y2,
         stroke: "#ffffff",
-        "stroke-opacity": 0.22,
-        "stroke-width": 6,
+        "stroke-opacity": 0.9,
+        "stroke-width": 4.5,
         "stroke-linecap": "round",
       }));
     };
 
-    // pion na górze: środek ekranu, od zewnętrznej do wewnętrznej krawędzi
-    addLine(VIEW.CX, outer.y, VIEW.CX, inner.y);
+    const midX  = outer.x + outer.w / 2;
+    const row1Y = outer.y + outer.h / 3;
+    const row2Y = outer.y + 2 * outer.h / 3;
 
-    // lewy górny – od narożnika inner do narożnika outer
-    addLine(inner.x, inner.y, outer.x, outer.y);
+    // pionowy podział na pół
+    addLine(midX, outer.y, midX, outerBottom);
 
-    // prawy górny
-    addLine(innerRight, inner.y, outerRight, outer.y);
-
-    // lewy dolny
-    addLine(inner.x, innerBottom, outer.x, outerBottom);
-
-    // prawy dolny
-    addLine(innerRight, innerBottom, outerRight, outerBottom);
+    // poziome podziały na 3 rzędy
+    addLine(outer.x, row1Y, outerRight, row1Y);
+    addLine(outer.x, row2Y, outerRight, row2Y);
   }
+
 
 
   // BIG (30x10) – wpisany w wewnętrzny owal, centrowany w nim
@@ -704,44 +704,92 @@ export async function createScene() {
   const barY = yBottom - barPadY;
   const barH = hBlock + barPadY * 2;
 
+  // TŁO paska – bez obrysu, tak jak było
   basebar.appendChild(el("rect", {
-    x: barX, y: barY, width: barW, height: barH,
-    fill: "url(#silverGrad)",
-    stroke: "#4db4ff",
-    "stroke-width": 10,
-    "stroke-opacity": 0.65,
+    x: barX,
+    y: barY,
+    width: barW,
+    height: barH,
+    fill: "url(#silverGrad)"
+  }));
+
+  const halfW = barW / 2;
+  const outlineW = 10;
+
+  // LEWA połówka – czerwony neon
+  basebar.appendChild(el("rect", {
+    x: barX,
+    y: barY,
+    width: halfW,
+    height: barH,
+    fill: "none",
+    stroke: "#c4002f",              // czerwony jak w gradiencie
+    "stroke-width": outlineW,
+    "stroke-opacity": 0.85,
+    "stroke-linejoin": "round",
     filter: "url(#neonBlue)",
   }));
+
+  // PRAWA połówka – niebieski neon
   basebar.appendChild(el("rect", {
-    x: barX, y: barY, width: barW, height: barH,
+    x: barX + halfW,
+    y: barY,
+    width: halfW,
+    height: barH,
     fill: "none",
-    stroke: "#9fe0ff",
-    "stroke-width": 2,
-    "stroke-opacity": 0.95,
+    stroke: "#2a62ff",
+    "stroke-width": outlineW,
+    "stroke-opacity": 0.85,
+    "stroke-linejoin": "round",
+    filter: "url(#neonBlue)",
   }));
+
+  // delikatny „wewnętrzny” kontur dla wyostrzenia krawędzi
+  basebar.appendChild(el("rect", {
+    x: barX + 1,
+    y: barY + 1,
+    width: barW - 2,
+    height: barH - 2,
+    fill: "none",
+    stroke: "#f6f7f9",
+    "stroke-width": 2,
+    "stroke-opacity": 0.75,
+  }));
+
 
   const gapCenterX = xLeft + wBlock + gapEff / 2;
   const sideOffset = barW * 0.22;
+
   const cutXs = [
     Math.max(barX + 18, gapCenterX - sideOffset),
     gapCenterX,
     Math.min(barX + barW - 18, gapCenterX + sideOffset),
   ];
-  for (const lx of cutXs) {
+
+  cutXs.forEach((lx, idx) => {
+    // lewa linia lekko czerwonawa, środkowa jasna, prawa niebieskawa
+    const mainStroke =
+      idx === 0 ? "#c4002f" :
+      idx === 2 ? "#2a62ff" :
+                  "#e5f3ff";
+
+    const innerStroke = "#f6f7f9";
+
     basebar.appendChild(el("line", {
       x1: lx, y1: barY, x2: lx, y2: barY + barH,
-      stroke: "#4db4ff",
-      "stroke-width": 10,
+      stroke: mainStroke,
+      "stroke-width": 8,
       "stroke-opacity": 0.55,
       filter: "url(#neonBlue)",
     }));
     basebar.appendChild(el("line", {
       x1: lx, y1: barY, x2: lx, y2: barY + barH,
-      stroke: "#9fe0ff",
+      stroke: innerStroke,
       "stroke-width": 2,
-      "stroke-opacity": 0.95,
+      "stroke-opacity": 0.9,
     }));
-  }
+  });
+
 
   const long1 = drawFramedDotPanel(bottom, xLeft,  yBottom, Xb, Yb, dBottom, g, COLORS);
   const long2 = drawFramedDotPanel(bottom, xRight, yBottom, Xb, Yb, dBottom, g, COLORS);
