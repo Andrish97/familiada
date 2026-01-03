@@ -370,13 +370,19 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
 
     try {
       if (!r._boardShown) {
-        // PIERWSZA runda → logo już wcześniej schowane, tu tylko wjazd pustej planszy
+        // PIERWSZA runda:
+        // 1) schowaj logo
+        // 2) wjedź pustą planszą rund
+        if (display.hideLogo) {
+          await display.hideLogo();
+        }
         if (display.roundsBoardPlaceholders) {
           await display.roundsBoardPlaceholders(rows);
         }
         r._boardShown = true;
       } else {
-        // KOLEJNE rundy → RBATCH ANIMOUT + nowa pustka
+        // DRUGA i kolejne rundy:
+        // RBATCH ANIMOUT + nowa pustka
         if (display.roundsBoardPlaceholdersNewRound) {
           await display.roundsBoardPlaceholdersNewRound(rows);
         } else if (display.roundsBoardPlaceholders) {
@@ -384,12 +390,10 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
         }
       }
 
-      // X-y i wskaźnik na zero
       await display.roundsSetX("A", 0);
       await display.roundsSetX("B", 0);
       await display.setIndicator(null);
 
-      // triplet banku i sum
       if (display.setBankTriplet) {
         await display.setBankTriplet(0);
       }
