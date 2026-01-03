@@ -404,6 +404,12 @@ async function main() {
   ui.on("rounds.goEnd", () => rounds.goEndRound());
   ui.on("rounds.end", () => rounds.endRound());
 
+  ui.on("rounds.stealTry", (ord) => rounds.stealTry(ord));
+
+  ui.on("rounds.showReveal", () => rounds.showRevealLeft());
+  ui.on("rounds.revealClick", (ord) => rounds.revealLeftByOrd(ord));
+  ui.on("rounds.revealDone", () => rounds.revealDone());
+
   // FINAL (runtime – nie picker)
   final.bootIfNeeded();
 
