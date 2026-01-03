@@ -582,9 +582,9 @@ export async function createScene() {
   const shift = panelW / 4;
 
   const sideY = 390;
-  const leftX  = 10 + shift;
-  const rightX = VIEW.W - panelW - 10 - shift;
-  const topY = 65;
+  const leftX  = shift;
+  const rightX = VIEW.W - panelW - shift;
+  const topY = 40;
   const topX = VIEW.CX - panelW / 2;
 
   const leftPanel  = drawTiledDisplay5x7(panels, leftX,  sideY, 3, 1, dP, g, gapCells, COLORS);
