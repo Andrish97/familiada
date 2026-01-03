@@ -474,6 +474,7 @@ export function createUI() {
     setRoundQuestion,
     
     renderRoundAnswers,
+    renderRoundRevealAnswers,
     showRoundsStep,
     setFinalStatusList,
     setFinalInputs,
