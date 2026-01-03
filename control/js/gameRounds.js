@@ -255,7 +255,7 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     }
 
     // reset runtime
-    r.phase = "ROUND_ACTIVE";
+    r.phase = "DUEL";
     r.passUsed = false;
     r.steal = r.steal || { active: false, used: false };
     r.steal.active = false;
@@ -427,22 +427,23 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     r.duel.enabled = false;
     r.controlTeam = team;
 
-    // kto aktualnie odpowiada → INDICATOR
-    if (display.setIndicator) {
-      display.setIndicator(team).catch?.(() => {});
-    }
-
     setStep("r_play");
+    r.phase = "DUEL";
 
     ui.setMsg("msgDuel", `Pierwsza odpowiedź: drużyna ${team}.`);
     ui.setMsg("msgRoundsPlay", `Kontrolę ma drużyna ${team}.`);
     ui.setRoundsHud(r);
 
-    ui.setEnabled("btnPassQuestion", true);
+    // kto aktualnie odpowiada → INDICATOR
+    if (display.setIndicator) {
+      display.setIndicator(team).catch?.(() => {});
+    }
+
+    ui.setEnabled("btnPassQuestion", false);
     ui.setEnabled("btnStartTimer3", true);
     ui.setEnabled("btnAddX", true);
-    ui.setEnabled("btnGoSteal", true);
-    ui.setEnabled("btnGoEndRound", true);
+    ui.setEnabled("btnGoSteal", false);
+    ui.setEnabled("btnGoEndRound", false);
 
     ui.setEnabled("btnBuzzAcceptA", false);
     ui.setEnabled("btnBuzzAcceptB", false);
@@ -501,9 +502,18 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
 
     // po pierwszej poprawnej -> można oddać; po kolejnej już nie
     if (r.revealed.size === 1) {
-      r.allowPass = true;
+      
+      r.phase = "ROUND";
+      r.allowPass = true; // można "grać lub oddawać"
+      ui.setMsg(
+        "msgRoundsPlay",
+        `Właściwa rozgrywka – kontrola: drużyna ${r.controlTeam}. Możesz grać lub oddać pytanie.`
+      );
+      ui.setEnabled("btnPassQuestion", true);
+      ui.setEnabled("btnGoEndRound", true);
     } else {
       r.allowPass = false;
+      ui.setEnabled("btnPassQuestion", false);
     }
 
     ui.setRoundsHud(r);
@@ -516,66 +526,96 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
 
   async function addX() {
     const r = store.state.rounds;
-  
+
     if (!r.controlTeam) {
-      ui.setMsg("msgRoundsPlay", "Najpierw musi być wybrana drużyna z kontrolą.");
+      ui.setMsg("msgRoundsPlay", "Najpierw drużyna musi mieć kontrolę.");
       return;
     }
-  
-    // po każdym pudle nie można już oddać pytania
-    r.allowPass = false;
-  
+
+    // POJEDYNEK – X tylko miga, nie liczymy do 3, zmienia się drużyna odpowiadająca
+    if (r.phase === "DUEL") {
+      if (display.roundsFlashDuelX) {
+        try {
+          await display.roundsFlashDuelX(r.controlTeam);
+        } catch {}
+      }
+      // po pudle w pojedynku przechodzi druga drużyna
+      r.controlTeam = r.controlTeam === "A" ? "B" : "A";
+
+      ui.setMsg(
+        "msgRoundsPlay",
+        `POJEDYNEK – pudło. Teraz odpowiada drużyna ${r.controlTeam}.`
+      );
+      ui.setRoundsHud(r);
+
+      if (display.setIndicator) {
+        display.setIndicator(r.controlTeam).catch?.(() => {});
+      }
+
+      // w pojedynku i tak nie można oddać pytania
+      r.allowPass = false;
+      ui.setEnabled("btnPassQuestion", false);
+
+      playSfx("answer_wrong");
+      return;
+    }
+
+    // WŁAŚCIWA ROZGRYWKA / KRADZIEŻ – normalne X-y do 3
+    r.allowPass = false; // po pudle nie można już oddać pytania
+    ui.setEnabled("btnPassQuestion", false);
+
     const key = r.controlTeam === "A" ? "xA" : "xB";
     const prev = r[key] || 0;
     const now = Math.min(prev + 1, 3);
     r[key] = now;
-  
+
     await display.roundsSetX(r.controlTeam, now);
     ui.setRoundsHud(r);
-  
+
     playSfx("answer_wrong");
-  
-    // jeśli mamy już 3 X i NIE jesteśmy w kradzieży → automatycznie przechodzimy do etapu kradzieży
-    if (now >= 3 && !r.steal.active) {
+
+    // 3 X tylko we właściwej rozgrywce → AUTOMATYCZNA kradzież
+    if (r.phase === "ROUND" && now >= 3 && !r.steal.active) {
       goSteal();
     }
   }
+
 
   // === Kradzież / koniec rundy ===
 
   function goSteal() {
     const r = store.state.rounds;
-  
+
     if (!r.controlTeam) {
       ui.setMsg("msgSteal", "Brak drużyny, która grała pytanie – nie mogę uruchomić kradzieży.");
       return;
     }
-  
+
     if (r.steal.active) {
-      // już jesteśmy w kradzieży
-      return;
+      return; // już jesteśmy w kradzieży
     }
-  
+
     const stealingTeam = r.controlTeam === "A" ? "B" : "A";
-  
+
+    r.phase = "STEAL";
     r.steal.active = true;
     r.steal.used = false;
     r.stealWon = false;
     r.steal.team = stealingTeam;
-  
+
     ui.showRoundsStep("r_steal");
     ui.setMsg(
       "msgSteal",
-      `Szansa przeciwników: odpowiada drużyna ${stealingTeam}. ` +
-        `Kliknij na planszy odpowiedź kapitana albo „Nie ma na tablicy”.`
+      `Kradzież: odpowiada drużyna ${stealingTeam}. ` +
+        `Kliknij odpowiedź kapitana na planszy albo przycisk „Nietrafiona”.`
     );
     ui.setRoundsHud(r);
-  
+
     if (display.setIndicator) {
-      display.setIndicator(stealingTeam);
+      display.setIndicator(stealingTeam).catch?.(() => {});
     }
-  
-    // siatka odpowiedzi do kradzieży
+
+    // siatka odpowiedzi do kradzieży (kliknięcie = stealTry)
     if (ui.renderRoundStealAnswers) {
       ui.renderRoundStealAnswers(r.answers || [], r.revealed || new Set());
     }
