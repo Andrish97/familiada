@@ -550,7 +550,7 @@ export async function createScene() {
   };
 
   // ============================================================
-  // Build SVG scene
+  // Build SVG scene – najpierw BIG, potem z niego stadion + panele
   // ============================================================
   const FONT5 = await loadJson("./font_5x7.json");
   const GLYPHS = buildGlyphMap(FONT5);
@@ -566,99 +566,88 @@ export async function createScene() {
   const basebar = $("basebar");
   const bottom  = $("bottom");
 
-  // ==============================
-  // GEOMETRIA: baza = BIG
-  // ==============================
+  // ---------- 1. BIG (30x10) – to jest nasz "główny prostokąt" ----------
+  const dCell = d;
+  const wSmall = Wgrid(5, dCell, g);
+  const hSmall = Hgrid(7, dCell, g);
 
-  // Triples (3x1) – sama geometria paneli (bez rysowania)
+  const width1  = 30 * wSmall + 29 * gapCells + 2 * g;  // szerokość BIG
+  const height1 = 10 * hSmall +  9 * gapCells + 2 * g;  // wysokość BIG
+
+  const bigCx = VIEW.CX;
+  const bigCy = VIEW.CY;
+
+  const bigX = bigCx - width1  / 2;
+  const bigY = bigCy - height1 / 2;
+
+  const big = drawTiledDisplay5x7(center, bigX, bigY, 30, 10, dCell, g, gapCells, COLORS);
+
+  // ---------- 2. Stadion wokół BIG-a: mały (inner) + duży (outer) ----------
+
+  // R2: minimalny stadion wpisany w prostokąt width1 x height1 (BIG rogami dotyka)
+  const R2      = (width1 * width1 + height1 * height1) / (4 * width1);
+  const width2  = 4 * R2;
+  const height2 = 2 * R2;
+
+  // Triplet: z niego bierzemy "domniemaną" grubość pierścienia
   const dP = 3 * d;
   const wSmallP = Wgrid(5, dP, g);
   const hSmallP = Hgrid(7, dP, g);
 
-  // rozmiar pojedynczego panelu 3×1 (LEWY / PRAWY / TOP)
-  const panelW = 3 * wSmallP + 2 * gapCells + 2 * g;
-  const panelH = 1 * hSmallP + 2 * g;
+  const panelW = 3 * wSmallP + 2 * gapCells + 2 * g; // wm
+  const panelH = 1 * hSmallP + 2 * g;                // hm
 
-  // ==============================
-  // 1) BIG – baza, centrowany w widoku
-  // ==============================
-  const wSmall = Wgrid(5, d, g);
-  const hSmall = Hgrid(7, d, g);
-  const centerW = 30 * wSmall + 29 * gapCells + 2 * g;
-  const centerH = 10 * hSmall +  9 * gapCells + 2 * g;
+  const dxRing = panelW * 0.95;
+  const dyRing = panelH * 0.95;
+  const dRing  = Math.min(dxRing, dyRing);
 
-  const bigX = VIEW.CX - centerW / 2;
-  const bigY = VIEW.CY - centerH / 2;
+  const R3      = R2 + dRing;
+  const width3  = 4 * R3;
+  const height3 = 2 * R3;
 
-  const big = drawTiledDisplay5x7(center, bigX, bigY, 30, 10, d, g, gapCells, COLORS);
-
-  const bigRect = {
-    x: bigX,
-    y: bigY,
-    w: centerW,
-    h: centerH,
-    cx: bigX + centerW / 2,
-    cy: bigY + centerH / 2,
-  };
-
-  // ==============================
-  // 2) Owal zewnętrzny wokół BIG
-  //    (trochę miejsca na pierścień)
-  // ==============================
-  // grubość pierścienia mniej więcej pod boczne/górny panel
-  const ringSide = panelW * 1.05;  // pozioma "grubość" pierścienia
-  const ringTop  = panelH * 1.05;  // pionowa "grubość" pierścienia
-
-  // prostokąt opisujący OVAL OUTER
+  // prostokąty stadionów w układzie ekranu (środek w bigCx/bigCy)
   const outer = {
-    x: bigRect.x - ringSide,
-    y: bigRect.y - ringTop,
-    w: bigRect.w + 2 * ringSide,
-    h: bigRect.h + 2 * ringTop,
+    x: bigCx - width3 / 2,
+    y: bigCy - height3 / 2,
+    w: width3,
+    h: height3,
   };
-  const outerRight  = outer.x + outer.w;
-  const outerBottom = outer.y + outer.h;
+  const inner = {
+    x: bigCx - width2 / 2,
+    y: bigCy - height2 / 2,
+    w: width2,
+    h: height2,
+  };
 
-  // jeśli w SVG jest <rect id="outerOval"> – dopasuj go do tej geometrii
+  const outerRight   = outer.x + outer.w;
+  const outerBottom  = outer.y + outer.h;
+  const innerRight   = inner.x + inner.w;
+  const innerBottom  = inner.y + inner.h;
+  const outerTop     = outer.y;
+  const innerTop     = inner.y;
+  const outerLeft    = outer.x;
+  const innerLeft    = inner.x;
+
+  // Podbijamy prostokąty stadionów do SVG (jeśli są w index.html)
   const outerOval = $("outerOval");
   if (outerOval) {
     outerOval.setAttribute("x", outer.x);
     outerOval.setAttribute("y", outer.y);
     outerOval.setAttribute("width",  outer.w);
     outerOval.setAttribute("height", outer.h);
-    // rx / ry zostawiamy takie jak w HTML (kształt elipsy)
+    // rx/ry zostają z HTML (stadion / "rounded rect" z gradientem)
   }
 
-  // ==============================
-  // 3) Owal wewnętrzny = outer minus grubość panelu
-  //    (pierścień ≈ wysokość paneli, ciut mniejszy)
-  // ==============================
-  const ringInnerSide = panelW * 0.90;
-  const ringInnerTop  = panelH * 0.90;
-
-  const inner = {
-    x: outer.x + ringInnerSide,
-    y: outer.y + ringInnerTop,
-    w: outer.w - 2 * ringInnerSide,
-    h: outer.h - 2 * ringInnerTop,
-  };
-  const innerRight  = inner.x + inner.w;
-  const innerBottom = inner.y + inner.h;
-
-  // wewnętrzny owal – <rect id="innerOval">
   const innerOval = $("innerOval");
   if (innerOval) {
     innerOval.setAttribute("x", inner.x);
     innerOval.setAttribute("y", inner.y);
     innerOval.setAttribute("width",  inner.w);
     innerOval.setAttribute("height", inner.h);
-    // rx / ry zostają z HTML, żeby zachować charakterystyczny kształt
   }
 
-  // ==============================
-  // 4) Linie dzielące owal na 6 segmentów
-  //    (3 kolumny × 2 rzędy, linie NIE wystają poza owal)
-  // ==============================
+  // ---------- 3. Linie podziału: 3 kolumny × 2 rzędy (6 segmentów) ----------
+  // bazujemy na prostokącie outer – linie NIE wychodzą poza stadion
   const frameLines = $("frameLines");
   if (frameLines) {
     frameLines.innerHTML = "";
@@ -673,39 +662,35 @@ export async function createScene() {
       }));
     };
 
-    // linie po prostokącie opisującym owal zewnętrzny
     const col1X = outer.x + outer.w / 3;
     const col2X = outer.x + 2 * outer.w / 3;
     const midY  = outer.y + outer.h / 2;
 
     // pionowe (3 kolumny)
-    addLine(col1X, outer.y, col1X, outerBottom);
-    addLine(col2X, outer.y, col2X, outerBottom);
-
+    addLine(col1X, outerTop,    col1X, outerBottom);
+    addLine(col2X, outerTop,    col2X, outerBottom);
     // pozioma (2 rzędy)
-    addLine(outer.x, midY, outerRight, midY);
+    addLine(outerLeft, midY,    outerRight, midY);
   }
 
-  // ==============================
-  // 5) Boczne i górny panel – na pierścieniu
-  // ==============================
-  const bandLeftW  = inner.x - outer.x;       // grubość pierścienia z lewej
-  const bandRightW = outerRight - innerRight; // z prawej
-  const bandTopH   = inner.y - outer.y;       // u góry
+  // ---------- 4. Triplet górny + boczne w grubości pierścienia ----------
 
-  // poziomo: centrowanie w pasku pierścienia
-  const leftX  = outer.x      + (bandLeftW  - panelW) / 2;
-  const rightX = innerRight   + (bandRightW - panelW) / 2;
+  // górny pasek: środek między outerTop a innerTop
+  const topCenterY = (outerTop + innerTop) / 2;
+  const topCenterX = bigCx;
 
-  // pionowo: środek pierścienia po bokach = środek BIG
-  const sideCenterY = bigRect.cy;
-  const sideY = sideCenterY - panelH / 2;
+  const topX = topCenterX - panelW / 2;
+  const topY = topCenterY - panelH / 2;
 
-  // górny panel – w środku górnego pierścienia
-  const topX = bigRect.cx - panelW / 2;
-  const topY = outer.y + (bandTopH - panelH) / 2;
+  // boczne paski: środki między outer/inner na bokach
+  const leftCenterX  = (outerLeft  + innerLeft)   / 2;
+  const rightCenterX = (outerRight + innerRight) / 2;
+  const sideCenterY  = bigCy;
 
-  // faktyczne rysowanie paneli 3×1
+  const leftX  = leftCenterX  - panelW / 2;
+  const rightX = rightCenterX - panelW / 2;
+  const sideY  = sideCenterY  - panelH / 2;
+
   const leftPanel  = drawTiledDisplay5x7(panels, leftX,  sideY, 3, 1, dP, g, gapCells, COLORS);
   const rightPanel = drawTiledDisplay5x7(panels, rightX, sideY, 3, 1, dP, g, gapCells, COLORS);
   const topPanel   = drawTiledDisplay5x7(panels, topX,   topY,  3, 1, dP, g, gapCells, COLORS);
@@ -714,9 +699,7 @@ export async function createScene() {
   const rightTriple = [rightPanel.tiles[0][0], rightPanel.tiles[0][1], rightPanel.tiles[0][2]];
   const topTriple   = [topPanel.tiles[0][0],   topPanel.tiles[0][1],   topPanel.tiles[0][2]];
 
-  // ==============================
-  // 6) Dolny panel – na pierścieniu (na dole owalu)
-  // ==============================
+  // ---------- 5. Dolny pasek + dwa longi "na pierścieniu" ----------
   const dBottom = 1.5 * d;
   const Xb = 95, Yb = 7;
 
@@ -725,26 +708,25 @@ export async function createScene() {
   const wBlock  = wInnerB + 2 * g;
   const hBlock  = hInnerB + 2 * g;
 
-  // przerwa między długimi panelami
   const gapBetweenBlocks = 160;
-
   const totalW = 2 * wBlock + gapBetweenBlocks;
-  const xLeft  = bigRect.cx - totalW / 2;
-  const xRight = xLeft + wBlock + gapBetweenBlocks;
 
-  // pasek (basebar) siedzi na środku pierścienia u dołu:
-  const ringBottomCenterY = innerBottom + (outerBottom - innerBottom) * 0.5;
+  const longCenterX = bigCx;
+  const xLeftBlock  = longCenterX - totalW / 2;
+  const xRightBlock = xLeftBlock + wBlock + gapBetweenBlocks;
+
+  // środek dolnego pierścienia: między innerBottom a outerBottom
+  const ringBottomCenterY = (innerBottom + outerBottom) / 2;
 
   const barPadY = 12;
   const barH = hBlock + barPadY * 2;
-
   const barY = ringBottomCenterY - barH / 2;
 
-  // szerokość paska tak, żeby był trochę węższy niż owal
+  // pasek trochę węższy niż outer, żeby zostawić margines
   const barX = outer.x + panelW * 0.2;
   const barW = outer.w - panelW * 0.4;
 
-  // TŁO paska
+  // Tło paska – gradient jak był (silver, albo co masz w <defs>)
   basebar.appendChild(el("rect", {
     x: barX,
     y: barY,
@@ -756,7 +738,7 @@ export async function createScene() {
   const halfW = barW / 2;
   const outlineW = 10;
 
-  // LEWA połówka – czerwony neon
+  // LEWA połówka obrysu – czerwona
   basebar.appendChild(el("rect", {
     x: barX,
     y: barY,
@@ -770,7 +752,7 @@ export async function createScene() {
     filter: "url(#neonBlue)",
   }));
 
-  // PRAWA połówka – niebieski neon
+  // PRAWA połówka – niebieska
   basebar.appendChild(el("rect", {
     x: barX + halfW,
     y: barY,
@@ -796,44 +778,12 @@ export async function createScene() {
     "stroke-opacity": 0.75,
   }));
 
-  // pionowe „nacięcia” na pasku – liczymy z gapBetweenBlocks (NIE gapEff)
-  const gapCenterX = xLeft + wBlock + gapBetweenBlocks / 2;
-  const sideOffset = barW * 0.22;
+  // longi – centrowane względem basebara
+  const yBottom = ringBottomCenterY - hBlock / 2;
 
-  const cutXs = [
-    Math.max(barX + 18, gapCenterX - sideOffset),
-    gapCenterX,
-    Math.min(barX + barW - 18, gapCenterX + sideOffset),
-  ];
+  const long1 = drawFramedDotPanel(bottom, xLeftBlock,  yBottom, Xb, Yb, dBottom, g, COLORS);
+  const long2 = drawFramedDotPanel(bottom, xRightBlock, yBottom, Xb, Yb, dBottom, g, COLORS);
 
-  cutXs.forEach((lx, idx) => {
-    const mainStroke =
-      idx === 0 ? "#c4002f" :
-      idx === 2 ? "#2a62ff" :
-                  "#e5f3ff";
-
-    const innerStroke = "#f6f7f9";
-
-    basebar.appendChild(el("line", {
-      x1: lx, y1: barY, x2: lx, y2: barY + barH,
-      stroke: mainStroke,
-      "stroke-width": 8,
-      "stroke-opacity": 0.55,
-      filter: "url(#neonBlue)",
-    }));
-    basebar.appendChild(el("line", {
-      x1: lx, y1: barY, x2: lx, y2: barY + barH,
-      stroke: innerStroke,
-      "stroke-width": 2,
-      "stroke-opacity": 0.9,
-    }));
-  });
-
-  // długie panele tekstowe w pasku
-  const yBottom = barY + barPadY;
-
-  const long1 = drawFramedDotPanel(bottom, xLeft,  yBottom, Xb, Yb, dBottom, g, COLORS);
-  const long2 = drawFramedDotPanel(bottom, xRight, yBottom, Xb, Yb, dBottom, g, COLORS);
 
   // ============================================================
   // INDICATOR lamps on basebar (A left red, B right blue)
