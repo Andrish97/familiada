@@ -516,25 +516,27 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
 
   async function addX() {
     const r = store.state.rounds;
+  
     if (!r.controlTeam) {
-      ui.setMsg("msgRounds", "Najpierw drużyna musi mieć kontrolę.");
+      ui.setMsg("msgRoundsPlay", "Najpierw musi być wybrana drużyna z kontrolą.");
       return;
     }
-
+  
+    // po każdym pudle nie można już oddać pytania
     r.allowPass = false;
-
+  
     const key = r.controlTeam === "A" ? "xA" : "xB";
-    r[key] = (r[key] || 0) + 1;
-    if (r[key] > 3) r[key] = 3;
-
-    await display.roundsSetX(r.controlTeam, r[key]);
+    const prev = r[key] || 0;
+    const now = Math.min(prev + 1, 3);
+    r[key] = now;
+  
+    await display.roundsSetX(r.controlTeam, now);
     ui.setRoundsHud(r);
-
+  
     playSfx("answer_wrong");
-
-    // przy 3 X-ach – zgodnie z regulaminem – przechodzimy do kradzieży
-    const strikes = r[key];
-    if (strikes >= 3) {
+  
+    // jeśli mamy już 3 X i NIE jesteśmy w kradzieży → automatycznie przechodzimy do etapu kradzieży
+    if (now >= 3 && !r.steal.active) {
       goSteal();
     }
   }
@@ -543,116 +545,172 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
 
   function goSteal() {
     const r = store.state.rounds;
+  
     if (!r.controlTeam) {
-      ui.setMsg("msgSteal", "Brak drużyny z kontrolą – nie mogę przejść do kradzieży.");
+      ui.setMsg("msgSteal", "Brak drużyny, która grała pytanie – nie mogę uruchomić kradzieży.");
       return;
     }
-
-    r.steal = r.steal || { active: false, used: false };
+  
+    if (r.steal.active) {
+      // już jesteśmy w kradzieży
+      return;
+    }
+  
+    const stealingTeam = r.controlTeam === "A" ? "B" : "A";
+  
     r.steal.active = true;
     r.steal.used = false;
     r.stealWon = false;
-
-    ui.setMsg("msgSteal", "Kradzież: druga drużyna odpowiada (jedna próba).");
+    r.steal.team = stealingTeam;
+  
+    ui.showRoundsStep("r_steal");
+    ui.setMsg(
+      "msgSteal",
+      `Szansa przeciwników: odpowiada drużyna ${stealingTeam}. ` +
+        `Kliknij na planszy odpowiedź kapitana albo „Nie ma na tablicy”.`
+    );
     ui.setRoundsHud(r);
-
-    const other = r.controlTeam === "A" ? "B" : "A";
+  
     if (display.setIndicator) {
-      display.setIndicator(other).catch?.(() => {});
+      display.setIndicator(stealingTeam);
     }
-
-    setStep("r_steal");
+  
+    // siatka odpowiedzi do kradzieży
+    if (ui.renderRoundStealAnswers) {
+      ui.renderRoundStealAnswers(r.answers || [], r.revealed || new Set());
+    }
   }
-
+  
   function stealMiss() {
     const r = store.state.rounds;
-    if (!r.steal || !r.steal.active || r.steal.used) return;
-
-    r.steal.used = true;
-    r.steal.active = false;
-    r.stealWon = false;
-
-    ui.setMsg("msgSteal", "Kradzież nieudana. Bank zostaje u grającej drużyny.");
-    ui.setRoundsHud(r);
-
-    if (display.setIndicator) {
-      display.setIndicator(null).catch?.(() => {});
-    }
-
-    setStep("r_end");
-  }
-
-  async function goEndRound() {
-    const r = store.state.rounds;
-
-    const bank = nInt(r.bankPts, 0);
-    if (!r.controlTeam) {
-      ui.setMsg("msgRounds", "Brak drużyny z kontrolą – nie mogę przyznać banku.");
+  
+    if (!r.steal.active) {
       return;
     }
+  
+    r.steal.active = false;
+    r.steal.used = true;
+    r.stealWon = false;
+  
+    ui.setMsg("msgSteal", "Kradzież nieudana. Bank zostaje u drużyny, która grała pytanie.");
+    ui.setRoundsHud(r);
+  
+    if (display.setIndicator) {
+      display.setIndicator(null);
+    }
+  
+    playSfx("answer_wrong");
+  }
 
-    const allRevealed =
-      r.answers &&
-      r.answers.length > 0 &&
-      r.revealed &&
-      r.revealed.size === r.answers.length;
+  async function stealTry(ord) {
+    const r = store.state.rounds;
+  
+    if (!r.steal.active) return;
+  
+    const ans = (r.answers || []).find((a) => a.ord === ord);
+    if (!ans) return;
+  
+    if (!r.revealed) r.revealed = new Set();
+  
+    const already = r.revealed.has(ord);
+    if (!already) {
+      r.revealed.add(ord);
+  
+      if (ui.renderRoundStealAnswers) {
+        ui.renderRoundStealAnswers(r.answers, r.revealed);
+      }
+  
+      const pts = nInt(ans.fixed_points, 0);
+      r.bankPts = nInt(r.bankPts, 0) + pts;
+  
+      try {
+        await display.roundsRevealRow(ord, ans.text, pts);
+        await display.roundsSetSum(r.bankPts);
+      } catch (e) {
+        console.warn("[rounds] stealTry display error", e);
+      }
+    } else {
+      // odpowiedź była już odsłonięta – ale nadal zaliczamy ją jako poprawną w kradzieży
+      if (ui.renderRoundStealAnswers) {
+        ui.renderRoundStealAnswers(r.answers, r.revealed);
+      }
+    }
+  
+    r.steal.active = false;
+    r.steal.used = true;
+    r.stealWon = true;
+  
+    ui.setMsg(
+      "msgSteal",
+      "Kradzież trafiona. Przyznaj bank przyciskiem „Koniec rundy”."
+    );
+    ui.setRoundsHud(r);
+  
+    if (display.setIndicator) {
+      display.setIndicator(null);
+    }
+  
+    playSfx("answer_correct");
+  }
 
-    const threeA = nInt(r.xA, 0) >= 3;
-    const threeB = nInt(r.xB, 0) >= 3;
-    const anyThree = threeA || threeB;
-
-    // Nie pozwalamy zakończyć rundy „z powietrza”
-    if (!allRevealed && !anyThree) {
+  
+  async function goEndRound() {
+    const r = store.state.rounds;
+  
+    const bank = nInt(r.bankPts, 0);
+  
+    // jeśli kradzież jest w toku i nie została jeszcze rozstrzygnięta – blokujemy
+    if (r.steal && r.steal.active && !r.steal.used) {
       ui.setMsg(
-        "msgRounds",
-        "Runda jeszcze trwa – albo odkryj wszystkie odpowiedzi, albo doprowadź do kradzieży."
+        "msgRoundsEnd",
+        "Najpierw rozstrzygnij kradzież (kliknij odpowiedź albo „Nie ma na tablicy”)."
       );
       return;
     }
-
-    // Jeśli kradzież nie została rozstrzygnięta – blokujemy
-    if (r.steal && r.steal.active && !r.steal.used) {
-      ui.setMsg("msgRounds", "Najpierw rozstrzygnij kradzież (trafiona / nietrafiona).");
-      return;
-    }
-
+  
     let winner = r.controlTeam;
-
+  
+    // jeśli kradzież była i się udała – bank przejmuje drużyna kradnąca
     if (r.steal && r.steal.used && r.stealWon) {
-      winner = r.controlTeam === "A" ? "B" : "A";
+      const stealingTeam = r.steal.team || (r.controlTeam === "A" ? "B" : "A");
+      winner = stealingTeam;
     }
-
-    r.totals[winner] = nInt(r.totals[winner], 0) + bank;
+  
+    if (!winner) {
+      ui.setMsg("msgRoundsEnd", "Brak drużyny z kontrolą – bank przepada.");
+    } else if (bank > 0) {
+      r.totals[winner] = nInt(r.totals[winner], 0) + bank;
+    }
+  
     ui.setRoundsHud(r);
-
+  
     try {
       await display.roundsSetTotals(r.totals);
-      if (display.setTotalsTriplets) {
-        await display.setTotalsTriplets(r.totals);
-      }
-      if (display.setBankTriplet) {
-        await display.setBankTriplet(0);
+      await display.roundsSetSum(0);
+      await display.roundsSetX("A", 0);
+      await display.roundsSetX("B", 0);
+      if (display.setIndicator) {
+        await display.setIndicator(null);
       }
     } catch (e) {
-      console.warn("[rounds] update totals failed", e);
+      console.warn("[rounds] goEndRound display error", e);
     }
-
-    // dźwięk końca rundy ZAWSZE
+  
+    const msgWinner = winner ? `drużyny ${winner}` : "nikogo";
+    ui.setMsg("msgRoundsEnd", `Koniec rundy. Bank ${bank} pkt dla ${msgWinner}.`);
+  
+    // przejście na kartę „Koniec rundy”
+    ui.showRoundsStep("r_end");
+  
     playSfx("round_transition");
-
-    ui.setMsg("msgRounds", `Koniec rundy. Bank ${bank} pkt dla drużyny ${winner}.`);
-
-    if (display.setIndicator) {
-      display.setIndicator(null).catch?.(() => {});
-    }
-
-    setStep("r_end");
   }
+
 
   function endRound() {
     const r = store.state.rounds;
-
+  
     r.roundNo = nInt(r.roundNo, 1) + 1;
+  
     r.question = null;
     r.answers = [];
     r.revealed = new Set();
@@ -660,65 +718,74 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     r.xA = 0;
     r.xB = 0;
     r.controlTeam = null;
-    r.steal = { active: false, used: false };
+  
+    r.steal = r.steal || {};
+    r.steal.active = false;
+    r.steal.used = false;
     r.stealWon = false;
+    r.steal.team = null;
+  
     r.allowPass = false;
-
+  
     clearTimer3();
     ui.setRoundsHud(r);
-
+  
+    // po rundzie NIE wracamy do „Gra gotowa”,
+    // tylko od razu do kroku „Rozpocznij rundę”
     setStep("r_roundStart");
-
-    if (!hasMoreQuestions()) {
-      ui.setMsg("msgRounds", "Brak dalszych pytań – gra zakończona na rundach.");
-    } else {
-      ui.setMsg("msgRounds", "Runda zakończona. Możesz rozpocząć kolejną.");
-    }
+    ui.setMsg("msgRoundsEnd", "Runda zakończona. Możesz rozpocząć następną rundę.");
   }
+
 
   function showRevealLeft() {
     const r = store.state.rounds;
-
+  
     if (!r.answers || !r.answers.length) {
-      setStep("r_reveal");
-      ui.renderRoundRevealAnswers([], new Set());
+      ui.showRoundsStep("r_reveal");
       ui.setMsg("msgRoundsReveal", "Brak odpowiedzi do odsłonięcia.");
       return;
     }
-
+  
     if (!r.revealed) r.revealed = new Set();
-
-    setStep("r_reveal");
-    ui.renderRoundRevealAnswers(r.answers, r.revealed);
-    ui.setMsg("msgRoundsReveal", "Klikaj brakujące odpowiedzi, żeby pokazać je na wyświetlaczu.");
+  
+    ui.showRoundsStep("r_reveal");
+    if (ui.renderRoundRevealAnswers) {
+      ui.renderRoundRevealAnswers(r.answers, r.revealed);
+    }
+    ui.setMsg(
+      "msgRoundsReveal",
+      "Klikaj brakujące odpowiedzi, żeby pokazać je na wyświetlaczu (bez zmiany punktów)."
+    );
   }
-
+  
   async function revealLeftByOrd(ord) {
     const r = store.state.rounds;
     if (!r.answers || !r.answers.length) return;
-
+  
     const ans = r.answers.find((a) => a.ord === ord);
     if (!ans) return;
-
+  
     if (!r.revealed) r.revealed = new Set();
     if (r.revealed.has(ord)) return; // już odsłonięta w trakcie rundy
-
+  
     r.revealed.add(ord);
-    ui.renderRoundRevealAnswers(r.answers, r.revealed);
-
+  
+    if (ui.renderRoundRevealAnswers) {
+      ui.renderRoundRevealAnswers(r.answers, r.revealed);
+    }
+  
     try {
       const pts = nInt(ans.fixed_points, 0);
-      // Display: pokaż odpowiedź i punkty, ale NIE ruszaj banku ani sum
       await display.roundsRevealRow(ord, ans.text, pts);
-      // celowo: brak roundsSetSum, brak modyfikacji r.bankPts / totals
+      // UWAGA: celowo NIE zmieniamy r.bankPts ani sum drużyn
     } catch (e) {
-      console.warn("[rounds] revealLeftByOrd failed", e);
+      console.warn("[rounds] revealLeftByOrd display error", e);
     }
   }
-
+  
   function revealDone() {
-    // Wracamy do ekranu końca rundy (tam nadal jest przycisk "Rozpocznij następną rundę")
-    setStep("r_end");
+    // wracamy do ekranu końca rundy (tam nadal jest „Zakończ rundę”)
+    ui.showRoundsStep("r_end");
     ui.setMsg("msgRoundsReveal", "");
     ui.setRoundsHud(store.state.rounds);
   }
