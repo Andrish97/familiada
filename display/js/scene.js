@@ -646,31 +646,125 @@ export async function createScene() {
     innerOval.setAttribute("height", inner.h);
   }
 
-  // ---------- 3. Linie podziału: 3 kolumny × 2 rzędy (6 segmentów) ----------
-  // bazujemy na prostokącie outer – linie NIE wychodzą poza stadion
+ // ============================================================
+  // LINIE Z ALGORYTMU STADIONU (8 linii z 2 promieni)
+  // – liczymy w układzie matematycznym (0,0 w środku stadionu, oś Y w górę),
+  //   a potem transformujemy na SVG: X = bigCx + x, Y = bigCy - y
+  // ============================================================
   const frameLines = $("frameLines");
   if (frameLines) {
     frameLines.innerHTML = "";
 
-    const addLine = (x1, y1, x2, y2) => {
+    // pomocniczo: przecinanie zewnętrznego stadionu promieniem
+    function intersectCapsuleFromCenter(R2, R3, theta) {
+      const cx = R2;  // środek małego PRAWEGO koła (tak jak w Twoim demie)
+      const cy = 0;
+      const dxDir = Math.cos(theta);
+      const dyDir = Math.sin(theta);
+      const eps = 1e-6;
+      let bestT = Infinity;
+
+      // 1) górna / dolna prosta dużego stadionu: y = ±R3
+      if (Math.abs(dyDir) > eps) {
+        const yLines = [ R3, -R3 ];
+        for (const yLine of yLines) {
+          const t = (yLine - cy) / dyDir;
+          if (t > R2 + eps) {
+            const x = cx + t * dxDir;
+            if (Math.abs(x) <= R3 + 1e-6 && t < bestT) {
+              bestT = t;
+            }
+          }
+        }
+      }
+
+      // 2) łuk prawego dużego koła: środek (R3,0), promień R3
+      const uX = cx - R3;
+      const uY = cy;
+      const A = 1.0;
+      const B = 2 * (uX * dxDir + uY * dyDir);
+      const C = uX*uX + uY*uY - R3*R3;
+      let disc = B*B - 4*A*C;
+      if (disc >= -1e-9) {
+        if (disc < 0) disc = 0;
+        const sqrtD = Math.sqrt(disc);
+        const t1 = (-B - sqrtD) / (2*A);
+        const t2 = (-B + sqrtD) / (2*A);
+        [t1, t2].forEach(t => {
+          if (t > R2 + eps) {
+            const x = cx + t*dxDir;
+            // prawe koło: x >= R3
+            if (x >= R3 - 1e-6 && t < bestT) {
+              bestT = t;
+            }
+          }
+        });
+      }
+
+      return bestT;
+    }
+
+    function baseLine(theta) {
+      const cxSmall = R2;
+      const cySmall = 0;
+      const dxDir   = Math.cos(theta);
+      const dyDir   = Math.sin(theta);
+
+      // punkt startowy na małym okręgu (prawa strona kapsuły)
+      const tSmall = R2;
+      const x1 = cxSmall + tSmall * dxDir;
+      const y1 = cySmall + tSmall * dyDir;
+
+      // trafienie w duży stadion
+      const tHit = intersectCapsuleFromCenter(R2, R3, theta);
+      const x2 = cxSmall + tHit * dxDir;
+      const y2 = cySmall + tHit * dyDir;
+
+      return { x1, y1, x2, y2 };
+    }
+
+    const lines = [];
+
+    function addSymmetricLines(L) {
+      const { x1, y1, x2, y2 } = L;
+      // oryginał
+      lines.push({ x1, y1, x2, y2 });
+      // odbicie w osi X
+      lines.push({ x1, y1: -y1, x2, y2: -y2 });
+      // odbicie w osi Y
+      lines.push({ x1: -x1, y1, x2: -x2, y2 });
+      // odbicie w obu osiach
+      lines.push({ x1: -x1, y1: -y1, x2: -x2, y2: -y2 });
+    }
+
+    // dwa promienie jak w Twoim przykładzie:
+    const theta1 = Math.PI / 6;   // "godzina 2" – 30°
+    const theta2 = -Math.PI / 2;  // "godzina 6" – -90°
+
+    const L1 = baseLine(theta1);
+    const L2 = baseLine(theta2);
+
+    addSymmetricLines(L1); // 2,4,8,10
+    addSymmetricLines(L2); // 6,12 po prawej i lustrzane po lewej
+
+    // rysujemy w SVG: środek (0,0) → (bigCx, bigCy), oś Y w dół
+    for (const ln of lines) {
+      const sx1 = bigCx + ln.x1;
+      const sy1 = bigCy - ln.y1;
+      const sx2 = bigCx + ln.x2;
+      const sy2 = bigCy - ln.y2;
+
       frameLines.appendChild(el("line", {
-        x1, y1, x2, y2,
+        x1: sx1,
+        y1: sy1,
+        x2: sx2,
+        y2: sy2,
         stroke: "#ffffff",
         "stroke-opacity": 0.9,
         "stroke-width": 4.5,
         "stroke-linecap": "round",
       }));
-    };
-
-    const col1X = outer.x + outer.w / 3;
-    const col2X = outer.x + 2 * outer.w / 3;
-    const midY  = outer.y + outer.h / 2;
-
-    // pionowe (3 kolumny)
-    addLine(col1X, outerTop,    col1X, outerBottom);
-    addLine(col2X, outerTop,    col2X, outerBottom);
-    // pozioma (2 rzędy)
-    addLine(outerLeft, midY,    outerRight, midY);
+    }
   }
 
   // ---------- 4. Triplet górny + boczne w grubości pierścienia ----------
