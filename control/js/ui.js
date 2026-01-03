@@ -369,6 +369,8 @@ export function createUI() {
     $("btnAddX")?.addEventListener("click", () => emit("rounds.addX"));
     $("btnStealTry")?.addEventListener("click", () => emit("rounds.stealTry"));
     $("btnEndRound")?.addEventListener("click", () => emit("rounds.end"));
+
+    $("btnShowReveal")?.addEventListener("click", () => emit("rounds.showReveal"));
     
     $("btnBuzzRetry")?.addEventListener("click", () => emit("buzz.retry"));
     
@@ -376,6 +378,8 @@ export function createUI() {
     $("btnStealMiss")?.addEventListener("click", () => emit("rounds.stealMiss"));
     $("btnGoEndRound")?.addEventListener("click", () => emit("rounds.goEnd"));
     $("btnGoEndRoundFromSteal")?.addEventListener("click", () => emit("rounds.goEnd"));
+
+    $("btnRevealBackToReady")?.addEventListener("click", () => emit("rounds.revealDone"));
 
 
     // final (kroki)
