@@ -586,7 +586,7 @@ export async function createScene() {
 
   // wymiary owalu – muszą odpowiadać <rect> w SVG
   const outer = { x: 10,  y: 30,  w: 1580, h: 840 };
-  const inner = { x: 200, y: 140, w: 1200, h: 620 };
+  const inner = { x: 240, y: 140, w: 1120, h: 620 };
 
   const outerRight  = outer.x + outer.w;
   const outerBottom = outer.y + outer.h;
