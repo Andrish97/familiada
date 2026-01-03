@@ -794,45 +794,49 @@ export async function createScene() {
   const topTriple   = [topPanel.tiles[0][0],   topPanel.tiles[0][1],   topPanel.tiles[0][2]];
 
   // ---------- 5. Dolny pasek + dwa longi "na pierścieniu" ----------
+  // Bottom (95x7) + basebar
   const dBottom = 1.5 * d;
   const Xb = 95, Yb = 7;
+  const gapFromOval = 22;
+
+  // dolna krawędź wewnętrznego owalu
+  const ovalBottomY = innerBottom;
+
+  const BOTTOM_LIFT = 8; // lekko niżej, ale nie wisi zbyt daleko
+  const yBottom = ovalBottomY + gapFromOval - BOTTOM_LIFT;
 
   const wInnerB = Wgrid(Xb, dBottom, g);
   const hInnerB = Hgrid(Yb, dBottom, g);
   const wBlock  = wInnerB + 2 * g;
   const hBlock  = hInnerB + 2 * g;
 
-  const gapBetweenBlocks = 160;
+  // long1 / long2 bliżej siebie
+  const gapBetweenBlocks = 80;
+
   const totalW = 2 * wBlock + gapBetweenBlocks;
+  const xLeft  = VIEW.CX - totalW / 2;
+  const xRight = xLeft + wBlock + gapBetweenBlocks;
 
-  const longCenterX = bigCx;
-  const xLeftBlock  = longCenterX - totalW / 2;
-  const xRightBlock = xLeftBlock + wBlock + gapBetweenBlocks;
-
-  // środek dolnego pierścienia: między innerBottom a outerBottom
-  const ringBottomCenterY = (innerBottom + outerBottom) / 2;
-
+  // Pasek – szerszy i delikatniejszy
+  const barX = 30;
+  const barW = VIEW.W - 60; // trochę marginesu z lewej/prawej, ale szerszy niż 1500
   const barPadY = 12;
+  const barY = yBottom - barPadY;
   const barH = hBlock + barPadY * 2;
-  const barY = ringBottomCenterY - barH / 2;
 
-  // pasek trochę węższy niż outer, żeby zostawić margines
-  const barX = outer.x + panelW * 0.2;
-  const barW = outer.w - panelW * 0.4;
-
-  // Tło paska – gradient jak był (silver, albo co masz w <defs>)
+  // TŁO paska
   basebar.appendChild(el("rect", {
     x: barX,
     y: barY,
     width: barW,
     height: barH,
-    fill: "url(#silverGrad)"
+    fill: "url(#silverGrad)",
   }));
 
   const halfW = barW / 2;
-  const outlineW = 10;
+  const outlineW = 6;
 
-  // LEWA połówka obrysu – czerwona
+  // LEWA połówka – czerwony, ale spokojniejszy
   basebar.appendChild(el("rect", {
     x: barX,
     y: barY,
@@ -841,12 +845,12 @@ export async function createScene() {
     fill: "none",
     stroke: "#c4002f",
     "stroke-width": outlineW,
-    "stroke-opacity": 0.85,
+    "stroke-opacity": 0.55,
     "stroke-linejoin": "round",
-    filter: "url(#neonBlue)",
+    // bez filtra neonowego – mniej „wali po oczach”
   }));
 
-  // PRAWA połówka – niebieska
+  // PRAWA połówka – niebieski, też spokojniejszy
   basebar.appendChild(el("rect", {
     x: barX + halfW,
     y: barY,
@@ -855,9 +859,8 @@ export async function createScene() {
     fill: "none",
     stroke: "#2a62ff",
     "stroke-width": outlineW,
-    "stroke-opacity": 0.85,
+    "stroke-opacity": 0.55,
     "stroke-linejoin": "round",
-    filter: "url(#neonBlue)",
   }));
 
   // delikatny wewnętrzny kontur
@@ -868,16 +871,13 @@ export async function createScene() {
     height: barH - 2,
     fill: "none",
     stroke: "#f6f7f9",
-    "stroke-width": 2,
-    "stroke-opacity": 0.75,
+    "stroke-width": 1.5,
+    "stroke-opacity": 0.7,
   }));
 
-  // longi – centrowane względem basebara
-  const yBottom = ringBottomCenterY - hBlock / 2;
-
-  const long1 = drawFramedDotPanel(bottom, xLeftBlock,  yBottom, Xb, Yb, dBottom, g, COLORS);
-  const long2 = drawFramedDotPanel(bottom, xRightBlock, yBottom, Xb, Yb, dBottom, g, COLORS);
-
+  // long1 / long2 – na tle paska, bliżej siebie
+  const long1 = drawFramedDotPanel(bottom, xLeft,  yBottom, Xb, Yb, dBottom, g, COLORS);
+  const long2 = drawFramedDotPanel(bottom, xRight, yBottom, Xb, Yb, dBottom, g, COLORS);
 
   // ============================================================
   // INDICATOR lamps on basebar (A left red, B right blue)
