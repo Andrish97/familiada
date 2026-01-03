@@ -366,7 +366,6 @@ export function createUI() {
 
       // KONIEC RUNDY / ODSŁANIANIE
     $("btnShowReveal")?.addEventListener("click", () => emit("rounds.showReveal"));
-    $("btnRevealBack")?.addEventListener("click", () => emit("rounds.revealDone"));
     $("btnRevealDone")?.addEventListener("click", () => emit("rounds.revealDone"));
 
 
