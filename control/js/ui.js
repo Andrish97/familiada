@@ -1,16 +1,27 @@
+// /familiada/js/pages/control/ui.js
 export function createUI() {
-  const handlers = new Map();
   const $ = (id) => document.getElementById(id);
 
-  function on(evt, fn) {
-    if (!handlers.has(evt)) handlers.set(evt, new Set());
-    handlers.get(evt).add(fn);
-    return () => handlers.get(evt).delete(fn);
+  // prosty event-bus
+  const handlers = new Map();
+
+  function on(event, fn) {
+    if (!handlers.has(event)) {
+      handlers.set(event, new Set());
+    }
+    handlers.get(event).add(fn);
   }
-  function emit(evt, payload) {
-    const set = handlers.get(evt);
+
+  function emit(event, payload) {
+    const set = handlers.get(event);
     if (!set) return;
-    for (const fn of set) fn(payload);
+    for (const fn of set) {
+      try {
+        fn(payload);
+      } catch (e) {
+        console.error("[ui] handler error", e);
+      }
+    }
   }
 
   function setHtml(id, html) {
@@ -195,49 +206,75 @@ export function createUI() {
   function renderAnswersGeneric(rootId, answers, revealedSet, eventName) {
     const root = $(rootId);
     if (!root) return;
-  
-    const revealed = revealedSet || new Set();
-  
+
+    // normalizacja: Set lub tablica -> Set
+    const revealed =
+      revealedSet instanceof Set
+        ? revealedSet
+        : new Set(revealedSet || []);
+
     root.innerHTML = (answers || [])
       .map((a) => {
         const ord = a.ord ?? 0;
         const isRevealed = revealed.has(ord);
         const pts = a.fixed_points ?? a.points ?? 0;
+
         return `
           <button
             type="button"
-            class="round-answer ${isRevealed ? "revealed" : ""}"
+            class="ansBtn ${isRevealed ? "revealed" : ""}"
             data-ord="${ord}"
           >
-            <span class="a-text">${escapeHtml(a.text || "—")}</span>
-            <span class="a-pts">${pts}</span>
+            <div class="ansTop">
+              <span>${ord}</span>
+              <span>${pts}</span>
+            </div>
+            <div class="ansText">${escapeHtml(a.text || "—")}</div>
           </button>
         `;
       })
       .join("");
-  
-    root.querySelectorAll("button.round-answer[data-ord]").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const ord = Number.parseInt(btn.dataset.ord || "0", 10);
-        if (!Number.isFinite(ord)) return;
-        bus.emit(eventName, ord);
+
+    root
+      .querySelectorAll("button.ansBtn[data-ord]")
+      .forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const ord = Number.parseInt(btn.dataset.ord || "0", 10);
+          if (!Number.isFinite(ord) || !ord) return;
+          // KLUCZ: używamy lokalnego emit, NIE bus.emit
+          emit(eventName, ord);
+        });
       });
-    });
   }
-  
+
   function renderRoundAnswers(answers, revealedSet) {
     // główna rozgrywka
-    renderAnswersGeneric("roundAnswers", answers, revealedSet, "rounds.answerClick");
+    renderAnswersGeneric(
+      "roundAnswers",
+      answers,
+      revealedSet,
+      "rounds.answerClick"
+    );
   }
-  
+
   function renderRoundStealAnswers(answers, revealedSet) {
     // karta „Szansa przeciwników”
-    renderAnswersGeneric("roundStealAnswers", answers, revealedSet, "rounds.stealTry");
+    renderAnswersGeneric(
+      "roundStealAnswers",
+      answers,
+      revealedSet,
+      "rounds.stealTry"
+    );
   }
-  
+
   function renderRoundRevealAnswers(answers, revealedSet) {
     // karta „Odsłanianie odpowiedzi”
-    renderAnswersGeneric("roundRevealAnswers", answers, revealedSet, "rounds.revealClick");
+    renderAnswersGeneric(
+      "roundRevealAnswers",
+      answers,
+      revealedSet,
+      "rounds.revealClick"
+    );
   }
 
   function setFinalStatusList(linesHtml) {
