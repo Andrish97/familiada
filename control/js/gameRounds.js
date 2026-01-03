@@ -62,12 +62,12 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
         r.timer3.secLeft = 0;
         ui.setRoundsHud(r);
 
-        // limit 3 sekund minął – traktujemy jak złą odpowiedź (kolejna „szansa”)
-        playSfx("answer_wrong");
-        try {
-          // addX jest async – tu nie czekamy na zakończenie
-          addX();
-        } catch {}
+        // po przekroczeniu czasu:
+        // - tracimy możliwość oddania pytania
+        // - liczymy to jak normalne pudło (X)
+        r.allowPass = false;
+        addX(); // async, nie czekamy – X + dźwięk
+
         return;
       }
       timerRAF = requestAnimationFrame(tick);
@@ -503,8 +503,12 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
 
   function passQuestion() {
     const r = store.state.rounds;
+
     if (!r.allowPass) {
-      ui.setMsg("msgRounds", "Nie możesz jeszcze oddać pytania (najpierw poprawna odpowiedź).");
+      ui.setMsg(
+        "msgRounds",
+        "Nie możesz już oddać pytania – ta decyzja jest tylko po pierwszej trafionej odpowiedzi."
+      );
       return;
     }
     if (!r.controlTeam) {
@@ -514,7 +518,8 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
 
     const other = r.controlTeam === "A" ? "B" : "A";
     r.controlTeam = other;
-    r.allowPass = false;
+    r.allowPass = false; // decyzja zapadła – dalej już grają oni
+
     ui.setMsg("msgRounds", `Pytanie oddane. Teraz odpowiada drużyna ${other}.`);
     ui.setRoundsHud(r);
   }
@@ -532,37 +537,28 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     if (r.revealed.has(ord)) return;
 
     r.revealed.add(ord);
-
-    // przeliczamy punkty według mnożnika rundy
-    const base = nInt(ans.fixed_points, 0);
-    const mul = getRoundMultiplier(r.roundNo);
-    const gained = base * mul;
-
-    r.bankPts = nInt(r.bankPts, 0) + gained;
-
     ui.renderRoundAnswers(r.answers, r.revealed);
+
+    const pts = nInt(ans.fixed_points, 0);
+    r.bankPts = nInt(r.bankPts, 0) + pts;
+
+    // LOGIKA “GRAMY / ODDAJEMY”:
+    // - po ODWIECIE pierwszej poprawnej odpowiedzi okno jest aktywne,
+    // - jeśli odsłonimy więcej niż jedną odpowiedź -> okno się zamyka.
+    if (r.revealed.size === 1) {
+      r.allowPass = true;
+    } else {
+      r.allowPass = false;
+    }
+
     ui.setRoundsHud(r);
 
-    // wyświetlacz: tekst + punkty po przeliczeniu
-    await display.roundsRevealRow(ord, ans.text, gained);
+    // display: linijka + suma banku
+    await display.roundsRevealRow(ord, ans.text, pts);
     await display.roundsSetSum(r.bankPts);
-
-    // po pierwszej poprawnej odpowiedzi można już oddać pytanie
-    if (!r.allowPass) r.allowPass = true;
-
-    // jeżeli jesteśmy w trybie „kradzieży” – jedna trafiona odpowiedź kończy kradzież
-    if (r.steal.active) {
-      r.steal.active = false;
-      r.steal.used = true;
-      r.stealWon = true;
-      ui.setMsg("msgRoundsSteal", "Kradzież udana – bank przechodzi do przeciwników.");
-      ui.setRoundsHud(r);
-      display.setIndicator(null);
-    }
 
     playSfx("answer_correct");
   }
-
 
   async function addX() {
     const r = store.state.rounds;
@@ -570,6 +566,9 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
       ui.setMsg("msgRounds", "Najpierw drużyna musi mieć kontrolę.");
       return;
     }
+
+    // po jakimkolwiek pudle nie można już oddać pytania
+    r.allowPass = false;
 
     const key = r.controlTeam === "A" ? "xA" : "xB";
     r[key] = (r[key] || 0) + 1;
@@ -579,11 +578,6 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     ui.setRoundsHud(r);
 
     playSfx("answer_wrong");
-
-    // po 3 szansach – automatyczna „szansa przeciwników”
-    if (r[key] >= 3 && !r.steal.active && !r.steal.used) {
-      goSteal();
-    }
   }
 
 
@@ -621,27 +615,42 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
       return;
     }
 
-    // Jeżeli była kradzież i się udała – bank idzie do drużyny kradnącej (czyli odwrotnej)
-    let winner = r.controlTeam;
-    if (r.steal.active && !r.steal.used) {
-      // jeszcze nie rozstrzygnięta – nie kończymy
-      ui.setMsg("msgRounds", "Najpierw rozstrzygnij kradzież.");
+    // jeśli kradzież jest aktywna i nierozstrzygnięta – najpierw ją dokończ
+    if (r.steal && r.steal.active && !r.steal.used) {
+      ui.setMsg("msgRounds", "Najpierw rozstrzygnij kradzież (trafiona / nietrafiona).");
       return;
     }
-    if (r.steal.used && r.stealWon) {
+
+    // domyślnie bank idzie do drużyny z kontrolą
+    let winner = r.controlTeam;
+
+    // jeśli kradzież była i się udała – bank idzie do przeciwników
+    if (r.steal && r.steal.used && r.stealWon) {
       winner = r.controlTeam === "A" ? "B" : "A";
     }
 
     r.totals[winner] = nInt(r.totals[winner], 0) + bank;
-
-    await display.roundsSetTotals(r.totals);
-    if (display.setTotalsTriplets) {
-      await display.setTotalsTriplets(r.totals);
-    }
-
     ui.setRoundsHud(r);
 
+    try {
+      await display.roundsSetTotals(r.totals);
+      if (display.setTotalsTriplets) {
+        await display.setTotalsTriplets(r.totals);
+      }
+      if (display.setBankTriplet) {
+        await display.setBankTriplet(0);
+      }
+    } catch (e) {
+      console.warn("[rounds] update totals failed", e);
+    }
+
+    // ZAWSZE: dźwięk końca rundy
+    playSfx("round_transition");
+
     ui.setMsg("msgRounds", `Koniec rundy. Bank ${bank} pkt dla drużyny ${winner}.`);
+
+    // Przejście na kartę “Koniec rundy” – stąd można przejść dalej,
+    // a osobna karta/etap do odsłaniania reszty odpowiedzi
     setStep("r_end");
   }
 
