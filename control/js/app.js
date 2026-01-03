@@ -395,6 +395,7 @@ async function main() {
 
   // odsłanianie pozostałych odpowiedzi
   ui.on("rounds.showReveal", () => rounds.showRevealLeft());
+  ui.on("rounds.revealClick", (ord) => rounds.revealLeftByOrd(ord));
   ui.on("rounds.revealDone", () => rounds.revealDone());
 
   // steal/end
