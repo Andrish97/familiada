@@ -578,21 +578,40 @@ export async function createScene() {
   // Triples (3x1)
   const dP = 3 * d;
   const wSmallP = Wgrid(5, dP, g);
+  const hSmallP = Hgrid(7, dP, g);
+
+  // rozmiar pojedynczego panelu 3×1
   const panelW = 3 * wSmallP + 2 * gapCells + 2 * g;
+  const panelH = 1 * hSmallP + 0 * gapCells + 2 * g;
 
-  // stały margines od lewej/prawej krawędzi viewBoxa
-  const SIDE_MARGIN = 20;   // możesz sobie zmieniać 10 / 20 / 30
+  // wymiary owalu – muszą odpowiadać <rect> w SVG
+  const outer = { x: 10,  y: 30,  w: 1580, h: 840 };
+  const inner = { x: 200, y: 140, w: 1200, h: 620 };
 
-  // wysokość bocznych paneli (góra/dół)
-  const sideY = 380;        // wyżej/niżej w pionie
+  const outerRight  = outer.x + outer.w;
+  const outerBottom = outer.y + outer.h;
+  const innerRight  = inner.x + inner.w;
+  const innerBottom = inner.y + inner.h;
 
-  // pozycje bocznych – przyklejone do krawędzi z marginesem
-  const leftX  = SIDE_MARGIN;
-  const rightX = VIEW.W - panelW - SIDE_MARGIN;
+  const bandLeftW  = inner.x - outer.x;        // grubość owalu z lewej
+  const bandRightW = outerRight - innerRight;  // grubość z prawej
+  const bandTopH   = inner.y - outer.y;        // grubość u góry
 
-  // górny panel – tylko pion możesz sobie korygować
-  const topY = 40;          // wyżej/niżej
+  // --- BOCZNE PANELE: centralnie w grubości owalu po bokach ---
+
+  // poziomo: centrowanie w pasku [outer.x .. inner.x] / [innerRight .. outerRight]
+  const leftX  = outer.x + (bandLeftW  - panelW) / 2;
+  const rightX = innerRight + (bandRightW - panelW) / 2;
+
+  // pionowo: mniej więcej w środku ekranu (pomiędzy górą i dołem owalu)
+  const sideCenterY = (outer.y + outerBottom) / 2;
+  const sideY = sideCenterY - panelH / 2;
+
+  // --- GÓRNY PANEL: centralnie w grubości owalu na górze ---
+
+  const topY = outer.y + (bandTopH - panelH) / 2;
   const topX = VIEW.CX - panelW / 2;
+
 
   const leftPanel  = drawTiledDisplay5x7(panels, leftX,  sideY, 3, 1, dP, g, gapCells, COLORS);
   const rightPanel = drawTiledDisplay5x7(panels, rightX, sideY, 3, 1, dP, g, gapCells, COLORS);
