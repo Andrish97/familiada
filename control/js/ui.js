@@ -221,6 +221,40 @@ export function createUI() {
     });
   }
 
+    function renderRoundRevealAnswers(answers, revealedSet) {
+    const root = $("roundRevealAnswers");
+    if (!root) return;
+
+    const revSet =
+      revealedSet && typeof revealedSet.has === "function"
+        ? revealedSet
+        : new Set();
+
+    // bierzemy tylko te odpowiedzi, które NIE były odkryte w trakcie rundy
+    const hidden = answers
+      .slice()
+      .sort((a, b) => (a.ord || 0) - (b.ord || 0))
+      .filter((a) => !revSet.has(a.ord));
+
+    root.innerHTML = hidden
+      .map((a) => {
+        const pts = Number(a.fixed_points ?? 0);
+        return `
+          <button class="ansBtn" type="button" data-ord="${a.ord}">
+            <div class="ansTop"><span>#${a.ord}</span><span>${pts}</span></div>
+            <div class="ansText">${escapeHtml(a.text)}</div>
+          </button>
+        `;
+      })
+      .join("");
+
+    root.querySelectorAll("button[data-ord]").forEach((b) => {
+      b.addEventListener("click", () =>
+        emit("rounds.revealLeftClick", Number(b.dataset.ord))
+      );
+    });
+  }
+
   function setFinalStatusList(linesHtml) {
     const root = $("finalStatusList");
     if (root) root.innerHTML = linesHtml || "";
