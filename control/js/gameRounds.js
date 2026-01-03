@@ -667,7 +667,7 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     clearTimer3();
     ui.setRoundsHud(r);
 
-    setStep("r_ready");
+    setStep("r_roundStart");
 
     if (!hasMoreQuestions()) {
       ui.setMsg("msgRounds", "Brak dalszych pytań – gra zakończona na rundach.");
