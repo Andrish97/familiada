@@ -26,33 +26,33 @@
     </div>
   </div>
 
-  <!-- TRYB GRA -->
-  <div id="gameScreen" class="wrap">
-    <svg viewBox="0 0 1600 900" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <linearGradient id="rimGrad" x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0" stop-color="#c4002f"/>
-          <stop offset="0.35" stop-color="#7a1230"/>
-          <stop offset="0.65" stop-color="#2a62ff"/>
-          <stop offset="1" stop-color="#2a62ff"/>
-        </linearGradient>
+<!-- TRYB GRA -->
+<div id="gameScreen" class="wrap">
+  <svg viewBox="0 0 1600 900" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="rimGrad" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0" stop-color="#c4002f"/>
+        <stop offset="0.35" stop-color="#7a1230"/>
+        <stop offset="0.65" stop-color="#2a62ff"/>
+        <stop offset="1" stop-color="#2a62ff"/>
+      </linearGradient>
 
-        <linearGradient id="innerGrad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stop-color="#e6eaef"/>
-          <stop offset="1" stop-color="#bfc7cf"/>
-        </linearGradient>
+      <linearGradient id="innerGrad" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#e6eaef"/>
+        <stop offset="1" stop-color="#bfc7cf"/>
+      </linearGradient>
 
-        <linearGradient id="silverGrad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stop-color="#f6f7f9"/>
-          <stop offset="0.55" stop-color="#d1d5db"/>
-          <stop offset="1" stop-color="#aab1bb"/>
-        </linearGradient>
+      <linearGradient id="silverGrad" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#f6f7f9"/>
+        <stop offset="0.55" stop-color="#d1d5db"/>
+        <stop offset="1" stop-color="#aab1bb"/>
+      </linearGradient>
 
-        <filter id="neonBlue" x="-60%" y="-120%" width="220%" height="340%">
-          <feDropShadow dx="0" dy="0" stdDeviation="4" flood-color="#4db4ff" flood-opacity="0.95"/>
-          <feDropShadow dx="0" dy="0" stdDeviation="10" flood-color="#4db4ff" flood-opacity="0.60"/>
-        </filter>
-      </defs>
+      <filter id="neonBlue" x="-60%" y="-120%" width="220%" height="340%">
+        <feDropShadow dx="0" dy="0" stdDeviation="4" flood-color="#4db4ff" flood-opacity="0.95"/>
+        <feDropShadow dx="0" dy="0" stdDeviation="10" flood-color="#4db4ff" flood-opacity="0.60"/>
+      </filter>
+    </defs>
 
     <!-- OWAL ZEWNĘTRZNY (granica ekranu) -->
     <rect
@@ -64,11 +64,9 @@
       fill="url(#rimGrad)"
     />
     
-    <!-- OWAL WEWNĘTRZNY – opisuje big, grubości jak panele -->
-    <!-- boczna grubość: 216 px (szerokość panelu) -->
-    <!-- górna/dolna grubość: 94 px (wysokość panelu TOP) -->
-      
+    <!-- OWAL WEWNĘTRZNY – geometrię (x,y,w,h) nadpisze JS -->
     <rect
+      id="innerOval"
       x="226"
       y="124"
       width="1148"
@@ -77,7 +75,7 @@
       fill="url(#innerGrad)"
     />
       
-    <!-- LINIE łączące wewnętrzny z zewnętrznym -->
+    <!-- LINIE łączące wewnętrzny z zewnętrznym (na razie zostawiamy „ręczne”) -->
     <g stroke="#fff" stroke-opacity="0.22" stroke-width="6" stroke-linecap="round">
       <!-- pion na górze -->
       <line x1="800" y1="30"  x2="800" y2="124"/>
@@ -100,8 +98,9 @@
     <g id="basebar"></g>
     <g id="bottom"></g>
 
-    </svg>
-  </div>
-  <div id="blackScreen" class="black-screen"></div>
+  </svg>
+</div>
+<div id="blackScreen" class="black-screen"></div>
+
 </body>
 </html>
