@@ -579,12 +579,19 @@ export async function createScene() {
   const dP = 3 * d;
   const wSmallP = Wgrid(5, dP, g);
   const panelW = 3 * wSmallP + 2 * gapCells + 2 * g;
-  const shift = panelW / 4;
 
-  const sideY = 390;
-  const leftX  = shift - 50;
-  const rightX = VIEW.W - panelW - shift + 50;
-  const topY = 40;
+  // stały margines od lewej/prawej krawędzi viewBoxa
+  const SIDE_MARGIN = 20;   // możesz sobie zmieniać 10 / 20 / 30
+
+  // wysokość bocznych paneli (góra/dół)
+  const sideY = 380;        // wyżej/niżej w pionie
+
+  // pozycje bocznych – przyklejone do krawędzi z marginesem
+  const leftX  = SIDE_MARGIN;
+  const rightX = VIEW.W - panelW - SIDE_MARGIN;
+
+  // górny panel – tylko pion możesz sobie korygować
+  const topY = 40;          // wyżej/niżej
   const topX = VIEW.CX - panelW / 2;
 
   const leftPanel  = drawTiledDisplay5x7(panels, leftX,  sideY, 3, 1, dP, g, gapCells, COLORS);
