@@ -606,10 +606,10 @@ export async function createScene() {
   const innerBottom = inner.y + inner.h;
 
   // LINIE dzielące owal na 6 segmentów:
-  // 2 kolumny (pion na środku), 3 wiersze (2 poziome linie).
+  // 3 kolumny (2 pionowe linie), 2 rzędy (1 pozioma linia).
   const frameLines = $("frameLines");
   if (frameLines) {
-    frameLines.innerHTML = ""; // na wszelki wypadek, gdyby scena była tworzona drugi raz
+    frameLines.innerHTML = "";
 
     const addLine = (x1, y1, x2, y2) => {
       frameLines.appendChild(el("line", {
@@ -621,17 +621,18 @@ export async function createScene() {
       }));
     };
 
-    const midX  = outer.x + outer.w / 2;
-    const row1Y = outer.y + outer.h / 3;
-    const row2Y = outer.y + 2 * outer.h / 3;
+    const col1X = outer.x + outer.w / 3;
+    const col2X = outer.x + 2 * outer.w / 3;
+    const midY  = outer.y + outer.h / 2;
 
-    // pionowy podział na pół
-    addLine(midX, outer.y, midX, outerBottom);
+    // pionowe (3 kolumny)
+    addLine(col1X, outer.y, col1X, outerBottom);
+    addLine(col2X, outer.y, col2X, outerBottom);
 
-    // poziome podziały na 3 rzędy
-    addLine(outer.x, row1Y, outerRight, row1Y);
-    addLine(outer.x, row2Y, outerRight, row2Y);
+    // pozioma (2 rzędy)
+    addLine(outer.x, midY, outerRight, midY);
   }
+
 
 
 
@@ -677,12 +678,12 @@ export async function createScene() {
   const dBottom = 1.5 * d;
   const Xb = 95, Yb = 7;
   const gapFromOval = 22;
-  const gapBetween  = 40;
+  const gapBetweenBlocks = 160;
 
   // dolna krawędź owalu = dół wewnętrznego prostokąta
   const ovalBottomY = innerBottom;
 
-  const BOTTOM_LIFT = 30; // można dalej kręcić tym parametrem
+  const BOTTOM_LIFT = 10; // lekko niżej niż dotąd
   const yBottom = ovalBottomY + gapFromOval - BOTTOM_LIFT;
 
   const wInnerB = Wgrid(Xb, dBottom, g);
@@ -690,14 +691,9 @@ export async function createScene() {
   const wBlock  = wInnerB + 2 * g;
   const hBlock  = hInnerB + 2 * g;
 
-  const insetFactor = 0.20;
-  const insetWanted = wBlock * insetFactor;
-  const minGap = 10;
-  const gapEff = Math.max(minGap, gapBetween - 2 * insetWanted);
-
-  const totalW = 2 * wBlock + gapEff;
+  const totalW = 2 * wBlock + gapBetweenBlocks;
   const xLeft  = VIEW.CX - totalW / 2;
-  const xRight = xLeft + wBlock + gapEff;
+  const xRight = xLeft + wBlock + gapBetweenBlocks;
 
   const barX = 50, barW = 1500;
   const barPadY = 12;
