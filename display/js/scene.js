@@ -566,6 +566,10 @@ export async function createScene() {
   const basebar = $("basebar");
   const bottom  = $("bottom");
 
+  // ==============================
+  // GEOMETRIA: baza = BIG
+  // ==============================
+
   // Triples (3x1) – sama geometria paneli (bez rysowania)
   const dP = 3 * d;
   const wSmallP = Wgrid(5, dP, g);
@@ -575,60 +579,86 @@ export async function createScene() {
   const panelW = 3 * wSmallP + 2 * gapCells + 2 * g;
   const panelH = 1 * hSmallP + 2 * g;
 
-  // OWAL ZEWNĘTRZNY – zgodnie z <rect> w SVG
-  const outer = { x: 10, y: 30, w: 1580, h: 840 };
-  const outerRight  = outer.x + outer.w;
-  const outerBottom = outer.y + outer.h;
-
-  // ===== BIG (30x10) – najpierw jego rozmiar, bez pozycjonowania =====
+  // ==============================
+  // 1) BIG – baza, centrowany w widoku
+  // ==============================
   const wSmall = Wgrid(5, d, g);
   const hSmall = Hgrid(7, d, g);
-
   const centerW = 30 * wSmall + 29 * gapCells + 2 * g;
   const centerH = 10 * hSmall +  9 * gapCells + 2 * g;
 
-  // ===== INNER OVAL: tak, żeby BIG był W PISANY rogami =====
-  const innerOval = $("innerOval");
+  const bigX = VIEW.CX - centerW / 2;
+  const bigY = VIEW.CY - centerH / 2;
 
-  // bazowy promień z SVG (albo 310, jeśli brak)
-  let R = innerOval ? parseFloat(innerOval.getAttribute("rx") || "0") : 0;
-  if (!Number.isFinite(R) || R <= 0) R = 310;
+  const big = drawTiledDisplay5x7(center, bigX, bigY, 30, 10, d, g, gapCells, COLORS);
 
-  // maksymalny promień, żeby inner nie wyszedł poza outer przy zadanym BIG
-  const maxR_W = (outer.w - centerW) / 2;
-  const maxR_H = (outer.h - centerH) / 2;
-  const maxR = Math.max(0, Math.min(maxR_W, maxR_H));
-
-  // faktycznie używany promień – tak duży jak się da, ale nie większy niż bazowy
-  R = Math.min(R, maxR);
-
-  // środek owalu = środek zewnętrznego prostokąta
-  const innerCX = outer.x + outer.w / 2;
-  const innerCY = outer.y + outer.h / 2;
-
-  // prostokąt zaokrąglony opisany na BIG-u:
-  // Winner = centerW + 2R, Hinner = centerH + 2R
-  const inner = {
-    x: innerCX - (centerW + 2 * R) / 2,
-    y: innerCY - (centerH + 2 * R) / 2,
-    w: centerW + 2 * R,
-    h: centerH + 2 * R,
+  const bigRect = {
+    x: bigX,
+    y: bigY,
+    w: centerW,
+    h: centerH,
+    cx: bigX + centerW / 2,
+    cy: bigY + centerH / 2,
   };
 
+  // ==============================
+  // 2) Owal zewnętrzny wokół BIG
+  //    (trochę miejsca na pierścień)
+  // ==============================
+  // grubość pierścienia mniej więcej pod boczne/górny panel
+  const ringSide = panelW * 1.05;  // pozioma "grubość" pierścienia
+  const ringTop  = panelH * 1.05;  // pionowa "grubość" pierścienia
+
+  // prostokąt opisujący OVAL OUTER
+  const outer = {
+    x: bigRect.x - ringSide,
+    y: bigRect.y - ringTop,
+    w: bigRect.w + 2 * ringSide,
+    h: bigRect.h + 2 * ringTop,
+  };
+  const outerRight  = outer.x + outer.w;
+  const outerBottom = outer.y + outer.h;
+
+  // jeśli w SVG jest <rect id="outerOval"> – dopasuj go do tej geometrii
+  const outerOval = $("outerOval");
+  if (outerOval) {
+    outerOval.setAttribute("x", outer.x);
+    outerOval.setAttribute("y", outer.y);
+    outerOval.setAttribute("width",  outer.w);
+    outerOval.setAttribute("height", outer.h);
+    // rx / ry zostawiamy takie jak w HTML (kształt elipsy)
+  }
+
+  // ==============================
+  // 3) Owal wewnętrzny = outer minus grubość panelu
+  //    (pierścień ≈ wysokość paneli, ciut mniejszy)
+  // ==============================
+  const ringInnerSide = panelW * 0.90;
+  const ringInnerTop  = panelH * 0.90;
+
+  const inner = {
+    x: outer.x + ringInnerSide,
+    y: outer.y + ringInnerTop,
+    w: outer.w - 2 * ringInnerSide,
+    h: outer.h - 2 * ringInnerTop,
+  };
   const innerRight  = inner.x + inner.w;
   const innerBottom = inner.y + inner.h;
 
-  // Aktualizacja <rect id="innerOval"> w SVG: BIG jest w nim wpisany rogami
+  // wewnętrzny owal – <rect id="innerOval">
+  const innerOval = $("innerOval");
   if (innerOval) {
     innerOval.setAttribute("x", inner.x);
     innerOval.setAttribute("y", inner.y);
-    innerOval.setAttribute("width", inner.w);
+    innerOval.setAttribute("width",  inner.w);
     innerOval.setAttribute("height", inner.h);
-    innerOval.setAttribute("rx", R);
-    innerOval.setAttribute("ry", R);
+    // rx / ry zostają z HTML, żeby zachować charakterystyczny kształt
   }
 
-  // ===== LINIE PODZIAŁU (3 kolumny × 2 rzędy) – przycięte do owalu zewn =====
+  // ==============================
+  // 4) Linie dzielące owal na 6 segmentów
+  //    (3 kolumny × 2 rzędy, linie NIE wystają poza owal)
+  // ==============================
   const frameLines = $("frameLines");
   if (frameLines) {
     frameLines.innerHTML = "";
@@ -643,6 +673,7 @@ export async function createScene() {
       }));
     };
 
+    // linie po prostokącie opisującym owal zewnętrzny
     const col1X = outer.x + outer.w / 3;
     const col2X = outer.x + 2 * outer.w / 3;
     const midY  = outer.y + outer.h / 2;
@@ -655,28 +686,24 @@ export async function createScene() {
     addLine(outer.x, midY, outerRight, midY);
   }
 
-  // ===== BIG narysowany na środku, wpisany w inner rogami =====
-  const bigX = inner.x + (inner.w - centerW) / 2;
-  const bigY = inner.y + (inner.h - centerH) / 2;
+  // ==============================
+  // 5) Boczne i górny panel – na pierścieniu
+  // ==============================
+  const bandLeftW  = inner.x - outer.x;       // grubość pierścienia z lewej
+  const bandRightW = outerRight - innerRight; // z prawej
+  const bandTopH   = inner.y - outer.y;       // u góry
 
-  const big = drawTiledDisplay5x7(center, bigX, bigY, 30, 10, d, g, gapCells, COLORS);
+  // poziomo: centrowanie w pasku pierścienia
+  const leftX  = outer.x      + (bandLeftW  - panelW) / 2;
+  const rightX = innerRight   + (bandRightW - panelW) / 2;
 
-  // --- BOCZNE PANELE: centralnie w grubości owalu po bokach ---
-  const bandLeftW  = inner.x - outer.x;       // grubość owalu z lewej
-  const bandRightW = outerRight - innerRight; // grubość z prawej
-  const bandTopH   = inner.y - outer.y;       // grubość u góry
-
-  // poziomo: centrowanie w pasku [outer.x .. inner.x] / [innerRight .. outerRight]
-  const leftX  = outer.x + (bandLeftW  - panelW) / 2;
-  const rightX = innerRight + (bandRightW - panelW) / 2;
-
-  // pionowo: mniej więcej w środku całego owalu
-  const sideCenterY = (outer.y + outerBottom) / 2;
+  // pionowo: środek pierścienia po bokach = środek BIG
+  const sideCenterY = bigRect.cy;
   const sideY = sideCenterY - panelH / 2;
 
-  // --- GÓRNY PANEL: centralnie w grubości owalu na górze ---
+  // górny panel – w środku górnego pierścienia
+  const topX = bigRect.cx - panelW / 2;
   const topY = outer.y + (bandTopH - panelH) / 2;
-  const topX = VIEW.CX - panelW / 2;
 
   // faktyczne rysowanie paneli 3×1
   const leftPanel  = drawTiledDisplay5x7(panels, leftX,  sideY, 3, 1, dP, g, gapCells, COLORS);
@@ -687,31 +714,35 @@ export async function createScene() {
   const rightTriple = [rightPanel.tiles[0][0], rightPanel.tiles[0][1], rightPanel.tiles[0][2]];
   const topTriple   = [topPanel.tiles[0][0],   topPanel.tiles[0][1],   topPanel.tiles[0][2]];
 
-  // ===== Bottom (95x7) + basebar =====
+  // ==============================
+  // 6) Dolny panel – na pierścieniu (na dole owalu)
+  // ==============================
   const dBottom = 1.5 * d;
   const Xb = 95, Yb = 7;
-  const gapFromOval = 22;
-  const gapBetweenBlocks = 160;
-
-  // dolna krawędź owalu = dół wewnętrznego prostokąta
-  const ovalBottomY = innerBottom;
-
-  const BOTTOM_LIFT = 10; // lekko niżej niż dotąd
-  const yBottom = ovalBottomY + gapFromOval - BOTTOM_LIFT;
 
   const wInnerB = Wgrid(Xb, dBottom, g);
   const hInnerB = Hgrid(Yb, dBottom, g);
   const wBlock  = wInnerB + 2 * g;
   const hBlock  = hInnerB + 2 * g;
 
+  // przerwa między długimi panelami
+  const gapBetweenBlocks = 160;
+
   const totalW = 2 * wBlock + gapBetweenBlocks;
-  const xLeft  = VIEW.CX - totalW / 2;
+  const xLeft  = bigRect.cx - totalW / 2;
   const xRight = xLeft + wBlock + gapBetweenBlocks;
 
-  const barX = 50, barW = 1500;
+  // pasek (basebar) siedzi na środku pierścienia u dołu:
+  const ringBottomCenterY = innerBottom + (outerBottom - innerBottom) * 0.5;
+
   const barPadY = 12;
-  const barY = yBottom - barPadY;
   const barH = hBlock + barPadY * 2;
+
+  const barY = ringBottomCenterY - barH / 2;
+
+  // szerokość paska tak, żeby był trochę węższy niż owal
+  const barX = outer.x + panelW * 0.2;
+  const barW = outer.w - panelW * 0.4;
 
   // TŁO paska
   basebar.appendChild(el("rect", {
@@ -725,7 +756,7 @@ export async function createScene() {
   const halfW = barW / 2;
   const outlineW = 10;
 
-  // LEWA połówka – czerwona
+  // LEWA połówka – czerwony neon
   basebar.appendChild(el("rect", {
     x: barX,
     y: barY,
@@ -739,7 +770,7 @@ export async function createScene() {
     filter: "url(#neonBlue)",
   }));
 
-  // PRAWA połówka – niebieska
+  // PRAWA połówka – niebieski neon
   basebar.appendChild(el("rect", {
     x: barX + halfW,
     y: barY,
@@ -765,7 +796,7 @@ export async function createScene() {
     "stroke-opacity": 0.75,
   }));
 
-  // ŚRODKOWE CIĘCIA – UWAŻAJ: tu poprawka gapEff -> gapBetweenBlocks
+  // pionowe „nacięcia” na pasku – liczymy z gapBetweenBlocks (NIE gapEff)
   const gapCenterX = xLeft + wBlock + gapBetweenBlocks / 2;
   const sideOffset = barW * 0.22;
 
@@ -797,6 +828,9 @@ export async function createScene() {
       "stroke-opacity": 0.9,
     }));
   });
+
+  // długie panele tekstowe w pasku
+  const yBottom = barY + barPadY;
 
   const long1 = drawFramedDotPanel(bottom, xLeft,  yBottom, Xb, Yb, dBottom, g, COLORS);
   const long2 = drawFramedDotPanel(bottom, xRight, yBottom, Xb, Yb, dBottom, g, COLORS);
