@@ -566,56 +566,74 @@ export async function createScene() {
   const basebar = $("basebar");
   const bottom  = $("bottom");
 
-  // wymiary owalu – muszą odpowiadać <rect> w SVG
-  const outer = { x: 10,  y: 30,  w: 1580, h: 840 };
-  const inner = { x: 226, y: 124, w: 1148, h: 652 };
-  
-  // BIG (30x10)
-  const wSmall = Wgrid(5, d, g);
-  const hSmall = Hgrid(7, d, g);
-  const centerW = 30 * wSmall + 29 * gapCells + 2 * g;
-  const centerH = 10 * hSmall +  9 * gapCells + 2 * g;
-  
-  // big wpisany w wewnętrzny owal (inner), centrowany w nim
-  const bigX = inner.x + (inner.w - centerW) / 2;
-  const bigY = inner.y + (inner.h - centerH) / 2;
-  
-  const big = drawTiledDisplay5x7(center, bigX, bigY, 30, 10, d, g, gapCells, COLORS);
-  
-  // Triples (3x1)
+  // Triples (3x1) – sama geometria paneli (bez rysowania)
   const dP = 3 * d;
   const wSmallP = Wgrid(5, dP, g);
   const hSmallP = Hgrid(7, dP, g);
 
-  // rozmiar pojedynczego panelu 3×1
-  const panelW = 3 * wSmallP + 2 * gapCells + 2 * g;
-  const panelH = 1 * hSmallP + 0 * gapCells + 2 * g;
+  // rozmiar pojedynczego panelu 3×1 (LEWY / PRAWY / TOP)
+  const panelW = 3 * wSmallP + 2 * gapCells + 2 * g; // ≈ 216
+  const panelH = 1 * hSmallP + 2 * g;                // ≈ 94
 
+  // OWAL ZEWNĘTRZNY – zgodnie z <rect> w SVG
+  const outer = { x: 10, y: 30, w: 1580, h: 840 };
+
+  // „Pasek” owalu: trochę grubszy niż panel
+  const bandSide = panelW * 1.10; // boczny margines ≈ 1.1 * szerokość panelu
+  const bandTop  = panelH * 1.10; // górny/dolny ≈ 1.1 * wysokość panelu
+
+  // OWAL WEWNĘTRZNY – opisuje big, panele siedzą w paskach
+  const inner = {
+    x: outer.x + bandSide,
+    y: outer.y + bandTop,
+    w: outer.w - 2 * bandSide,
+    h: outer.h - 2 * bandTop,
+  };
+
+  // Aktualizacja <rect id="innerOval"> w SVG
+  const innerOval = $("innerOval");
+  if (innerOval) {
+    innerOval.setAttribute("x", inner.x);
+    innerOval.setAttribute("y", inner.y);
+    innerOval.setAttribute("width", inner.w);
+    innerOval.setAttribute("height", inner.h);
+    // promień zostawiamy z HTML (rx="310"), jak będziesz chciał, możemy też policzyć dynamicznie
+  }
+
+  // BIG (30x10) – wpisany w wewnętrzny owal, centrowany w nim
+  const wSmall = Wgrid(5, d, g);
+  const hSmall = Hgrid(7, d, g);
+  const centerW = 30 * wSmall + 29 * gapCells + 2 * g;
+  const centerH = 10 * hSmall +  9 * gapCells + 2 * g;
+
+  const bigX = inner.x + (inner.w - centerW) / 2;
+  const bigY = inner.y + (inner.h - centerH) / 2;
+
+  const big = drawTiledDisplay5x7(center, bigX, bigY, 30, 10, d, g, gapCells, COLORS);
+
+  // --- BOCZNE PANELE: centralnie w grubości owalu po bokach ---
   const outerRight  = outer.x + outer.w;
   const outerBottom = outer.y + outer.h;
   const innerRight  = inner.x + inner.w;
   const innerBottom = inner.y + inner.h;
 
-  const bandLeftW  = inner.x - outer.x;        // grubość owalu z lewej
-  const bandRightW = outerRight - innerRight;  // grubość z prawej
-  const bandTopH   = inner.y - outer.y;        // grubość u góry
-
-  // --- BOCZNE PANELE: centralnie w grubości owalu po bokach ---
+  const bandLeftW  = inner.x - outer.x;       // grubość owalu z lewej
+  const bandRightW = outerRight - innerRight; // grubość z prawej
+  const bandTopH   = inner.y - outer.y;       // grubość u góry
 
   // poziomo: centrowanie w pasku [outer.x .. inner.x] / [innerRight .. outerRight]
   const leftX  = outer.x + (bandLeftW  - panelW) / 2;
   const rightX = innerRight + (bandRightW - panelW) / 2;
 
-  // pionowo: mniej więcej w środku ekranu (pomiędzy górą i dołem owalu)
+  // pionowo: mniej więcej w środku całego owalu
   const sideCenterY = (outer.y + outerBottom) / 2;
   const sideY = sideCenterY - panelH / 2;
 
   // --- GÓRNY PANEL: centralnie w grubości owalu na górze ---
-
   const topY = outer.y + (bandTopH - panelH) / 2;
   const topX = VIEW.CX - panelW / 2;
 
-
+  // faktyczne rysowanie paneli 3×1
   const leftPanel  = drawTiledDisplay5x7(panels, leftX,  sideY, 3, 1, dP, g, gapCells, COLORS);
   const rightPanel = drawTiledDisplay5x7(panels, rightX, sideY, 3, 1, dP, g, gapCells, COLORS);
   const topPanel   = drawTiledDisplay5x7(panels, topX,   topY,  3, 1, dP, g, gapCells, COLORS);
@@ -630,10 +648,12 @@ export async function createScene() {
   const gapFromOval = 22;
   const gapBetween  = 40;
 
-  const ovalBottomY = 110 + 680;
-  const BOTTOM_LIFT = 30; // <-- ustaw sobie: 20..80
+  // dolna krawędź owalu = dół wewnętrznego prostokąta
+  const ovalBottomY = innerBottom;
+
+  const BOTTOM_LIFT = 30; // można dalej kręcić tym parametrem
   const yBottom = ovalBottomY + gapFromOval - BOTTOM_LIFT;
-  
+
   const wInnerB = Wgrid(Xb, dBottom, g);
   const hInnerB = Hgrid(Yb, dBottom, g);
   const wBlock  = wInnerB + 2 * g;
@@ -691,6 +711,9 @@ export async function createScene() {
       "stroke-opacity": 0.95,
     }));
   }
+
+  const long1 = drawFramedDotPanel(bottom, xLeft,  yBottom, Xb, Yb, dBottom, g, COLORS);
+  const long2 = drawFramedDotPanel(bottom, xRight, yBottom, Xb, Yb, dBottom, g, COLORS);
 
   // ============================================================
   // INDICATOR lamps on basebar (A left red, B right blue)
