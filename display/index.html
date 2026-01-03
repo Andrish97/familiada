@@ -68,8 +68,10 @@
       stroke-opacity="0.9"
     />
 
-    
-    <!-- OWAL WEWNĘTRZNY – opisuje big, grubości jak panele -->
+    <!-- LINIE PODZIAŁU (tylko na ringu – resztę zakryje innerOval) -->
+    <g id="frameLines"></g>
+
+    <!-- OWAL WEWNĘTRZNY – opisuje big -->
     <rect
       id="innerOval"
       x="226"
@@ -79,9 +81,6 @@
       rx="310"
       fill="url(#innerGrad)"
     />
-      
-    <!-- LINIE łączące wewnętrzny z zewnętrznym – rysowane w JS -->
-    <g id="frameLines"></g>
 
     <g id="center"></g>
     <g id="panels"></g>
