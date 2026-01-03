@@ -579,8 +579,8 @@ export async function createScene() {
   const outer = { x: 10, y: 30, w: 1580, h: 840 };
 
   // „Pasek” owalu: trochę grubszy niż panel
-  const bandSide = panelW * 1.10; // boczny margines ≈ 1.1 * szerokość panelu
-  const bandTop  = panelH * 1.10; // górny/dolny ≈ 1.1 * wysokość panelu
+  const bandSide = panelW * 0.90;
+  const bandTop  = panelH * 0.90; 
 
   // OWAL WEWNĘTRZNY – opisuje big, panele siedzą w paskach
   const inner = {
