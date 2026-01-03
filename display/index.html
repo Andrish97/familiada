@@ -56,24 +56,25 @@
 
       <!-- OWAL (jak było — nie ruszam wyglądu) -->
       <rect x="10" y="30" width="1580" height="840" rx="420" fill="url(#rimGrad)"/>
-      <rect x="200" y="140" width="1200" height="620" rx="310" fill="url(#innerGrad)"/>
+      <rect x="240" y="140" width="1120" height="620" rx="310" fill="url(#innerGrad)"/>
 
       <g stroke="#fff" stroke-opacity="0.22" stroke-width="6" stroke-linecap="round">
-        <!-- góra (od krawędzi owalu do krawędzi inner) -->
+        <!-- góra (tu bez zmian, bo y=140 zostaje) -->
         <line x1="800" y1="30"  x2="800" y2="140"/>
-      
-        <!-- lewy górny (od inner do owalu) -->
-        <line x1="200" y1="140" x2="420" y2="340"/>
-      
-        <!-- prawy górny (od inner do owalu) -->
-        <line x1="1400" y1="140" x2="1180" y2="340"/>
-      
-        <!-- lewy dolny (od inner do owalu) -->
-        <line x1="200" y1="760" x2="420" y2="560"/>
-      
-        <!-- prawy dolny (od inner do owalu) -->
-        <line x1="1400" y1="760" x2="1180" y2="560"/>
+        
+        <!-- lewy górny (inner → outer) -->
+        <line x1="240" y1="140" x2="420" y2="340"/>
+        
+        <!-- prawy górny -->
+        <line x1="1360" y1="140" x2="1180" y2="340"/>
+        
+        <!-- lewy dolny -->
+        <line x1="240" y1="760" x2="420" y2="560"/>
+        
+        <!-- prawy dolny -->
+        <line x1="1360" y1="760" x2="1180" y2="560"/>
       </g>
+
 
       <g id="center"></g>
       <g id="panels"></g>
