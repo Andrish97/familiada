@@ -445,11 +445,31 @@
               <div class="hint">Przeniesiemy punkty z banku na konto drużyny i wyczyścimy bank.</div>
 
               <div class="stepFoot">
+                <button class="btn" id="btnShowReveal" type="button">Odsłoń brakujące odpowiedzi</button>
                 <button class="btn gold" id="btnEndRound" type="button">Zakończ rundę</button>
                 <div class="msg" id="msgRoundsEnd"></div>
               </div>
             </div>
           </div>
+
+          <!-- STEP R7 -->
+          <div class="step hidden" data-step="r_reveal">
+            <div class="stepTitle">Odsłanianie pozostałych odpowiedzi</div>
+            <div class="card">
+              <div class="name">Pozostałe odpowiedzi</div>
+              <div class="hint">
+                Klikaj odpowiedzi, które nie padły w trakcie rundy. Pokażemy je na wyświetlaczu, bez zmiany punktów.
+              </div>
+
+              <div class="ansGrid" id="roundRevealAnswers"></div>
+
+              <div class="stepFoot">
+                <button class="btn gold" id="btnRevealBackToReady" type="button">Zakończ odsłanianie</button>
+                <div class="msg" id="msgRoundsReveal"></div>
+              </div>
+            </div>
+          </div>
+
         </section>
 
         <!-- FINAL -->
