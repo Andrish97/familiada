@@ -54,48 +54,52 @@
         </filter>
       </defs>
 
-      <!-- OWAL (zewnętrzny, tło) -->
-      <rect
-        x="10"
-        y="30"
-        width="1580"
-        height="840"
-        rx="420"
-        fill="url(#rimGrad)"
-      />
+    <!-- OWAL ZEWNĘTRZNY (granica ekranu) -->
+    <rect
+      x="10"
+      y="30"
+      width="1580"
+      height="840"
+      rx="420"
+      fill="url(#rimGrad)"
+    />
+    
+    <!-- OWAL WEWNĘTRZNY – opisuje big, grubości jak panele -->
+    <!-- boczna grubość: 216 px (szerokość panelu) -->
+    <!-- górna/dolna grubość: 94 px (wysokość panelu TOP) -->
       
-      <!-- OWAL WEWNĘTRZNY (dopasowany do paneli) -->
-      <rect
-        x="240"
-        y="140"
-        width="1120"
-        height="620"
-        rx="310"
-        fill="url(#innerGrad)"
-      />
+    <rect
+      x="226"
+      y="124"
+      width="1148"
+      height="652"
+      rx="310"
+      fill="url(#innerGrad)"
+    />
       
-      <!-- LINIE łączące wewnętrzny z zewnętrznym -->
-      <g stroke="#fff" stroke-opacity="0.22" stroke-width="6" stroke-linecap="round">
-        <!-- góra: środek → wewnętrzny -->
-        <line x1="800" y1="30"  x2="800" y2="140"/>
-      
-        <!-- lewy górny: róg inner (240,140) → pas owalu -->
-        <line x1="240" y1="140" x2="420" y2="340"/>
-      
-        <!-- prawy górny -->
-        <line x1="1360" y1="140" x2="1180" y2="340"/>
-      
-        <!-- lewy dolny -->
-        <line x1="240" y1="760" x2="420" y2="560"/>
-      
-        <!-- prawy dolny -->
-        <line x1="1360" y1="760" x2="1180" y2="560"/>
-      </g>
+    <!-- LINIE łączące wewnętrzny z zewnętrznym -->
+    <g stroke="#fff" stroke-opacity="0.22" stroke-width="6" stroke-linecap="round">
+      <!-- pion na górze -->
+      <line x1="800" y1="30"  x2="800" y2="124"/>
+    
+      <!-- lewy górny -->
+      <line x1="226" y1="124" x2="420" y2="340"/>
+    
+      <!-- prawy górny -->
+      <line x1="1374" y1="124" x2="1180" y2="340"/>
+    
+      <!-- lewy dolny -->
+      <line x1="226" y1="776" x2="420" y2="560"/>
+    
+      <!-- prawy dolny -->
+      <line x1="1374" y1="776" x2="1180" y2="560"/>
+    </g>
+    
+    <g id="center"></g>
+    <g id="panels"></g>
+    <g id="basebar"></g>
+    <g id="bottom"></g>
 
-      <g id="center"></g>
-      <g id="panels"></g>
-      <g id="basebar"></g>
-      <g id="bottom"></g>
     </svg>
   </div>
   <div id="blackScreen" class="black-screen"></div>
