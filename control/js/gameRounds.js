@@ -676,12 +676,12 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     }
   }
 
-  // (opcjonalnie – jeśli wprowadzisz osobny etap odsłaniania brakujących)
   function showRevealLeft() {
     const r = store.state.rounds;
 
     if (!r.answers || !r.answers.length) {
-      setStep("r_end");
+      setStep("r_reveal");
+      ui.renderRoundRevealAnswers([], new Set());
       ui.setMsg("msgRoundsReveal", "Brak odpowiedzi do odsłonięcia.");
       return;
     }
@@ -689,11 +689,8 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     if (!r.revealed) r.revealed = new Set();
 
     setStep("r_reveal");
-    ui.renderRoundRevealAnswers?.(r.answers, r.revealed);
-    ui.setMsg(
-      "msgRoundsReveal",
-      "Klikaj brakujące odpowiedzi, żeby pokazać je na wyświetlaczu (bez zmiany punktów)."
-    );
+    ui.renderRoundRevealAnswers(r.answers, r.revealed);
+    ui.setMsg("msgRoundsReveal", "Klikaj brakujące odpowiedzi, żeby pokazać je na wyświetlaczu.");
   }
 
   async function revealLeftByOrd(ord) {
@@ -704,20 +701,23 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     if (!ans) return;
 
     if (!r.revealed) r.revealed = new Set();
-    if (r.revealed.has(ord)) return;
+    if (r.revealed.has(ord)) return; // już odsłonięta w trakcie rundy
 
     r.revealed.add(ord);
-    ui.renderRoundRevealAnswers?.(r.answers, r.revealed);
+    ui.renderRoundRevealAnswers(r.answers, r.revealed);
 
     try {
-      const pts = nInt(ans.fixed_points, 0) * getRoundMultiplier(r.roundNo);
+      const pts = nInt(ans.fixed_points, 0);
+      // Display: pokaż odpowiedź i punkty, ale NIE ruszaj banku ani sum
       await display.roundsRevealRow(ord, ans.text, pts);
+      // celowo: brak roundsSetSum, brak modyfikacji r.bankPts / totals
     } catch (e) {
       console.warn("[rounds] revealLeftByOrd failed", e);
     }
   }
 
   function revealDone() {
+    // Wracamy do ekranu końca rundy (tam nadal jest przycisk "Rozpocznij następną rundę")
     setStep("r_end");
     ui.setMsg("msgRoundsReveal", "");
     ui.setRoundsHud(store.state.rounds);
