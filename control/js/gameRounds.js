@@ -675,7 +675,53 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     setStep("r_ready");
     ui.setMsg("msgRounds", "Przejdź do kolejnej rundy.");
   }
+  
+    function showRevealLeft() {
+    const r = store.state.rounds;
 
+    // jeśli nie ma pytań/odpowiedzi – nic do odsłaniania
+    if (!r.answers || !r.answers.length) {
+      setStep("r_reveal");
+      ui.setMsg("msgRoundsReveal", "Brak odpowiedzi do odsłonięcia.");
+      return;
+    }
+
+    if (!r.revealed) r.revealed = new Set();
+
+    setStep("r_reveal");
+    ui.renderRoundRevealAnswers(r.answers, r.revealed);
+    ui.setMsg("msgRoundsReveal", "Klikaj brakujące odpowiedzi, żeby pokazać je na wyświetlaczu.");
+  }
+
+  async function revealLeftByOrd(ord) {
+    const r = store.state.rounds;
+    if (!r.answers || !r.answers.length) return;
+
+    const ans = r.answers.find((a) => a.ord === ord);
+    if (!ans) return;
+
+    if (!r.revealed) r.revealed = new Set();
+    if (r.revealed.has(ord)) return; // już odsłonięta w trakcie rundy
+
+    r.revealed.add(ord);
+    ui.renderRoundRevealAnswers(r.answers, r.revealed);
+
+    try {
+      const pts = nInt(ans.fixed_points, 0);
+      // Display: pokaż odpowiedź i punkty, ale NIE ruszaj banku ani sum
+      await display.roundsRevealRow(ord, ans.text, pts);
+      // celowo: brak roundsSetSum, brak modyfikacji r.bankPts / totals
+    } catch (e) {
+      console.warn("[rounds] revealLeftByOrd failed", e);
+    }
+  }
+
+  function revealDone() {
+    // Wracamy do ekranu końca rundy (tam nadal jest przycisk "Zakończ rundę")
+    setStep("r_end");
+    ui.setMsg("msgRoundsReveal", "");
+    ui.setRoundsHud(store.state.rounds);
+  }
 
   function bootIfNeeded() {
     ensureRoundsState();
@@ -706,5 +752,9 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     stealMiss,
     goEndRound,
     endRound,
+
+    showRevealLeft,
+    revealLeftByOrd,
+    revealDone,
   };
 }
