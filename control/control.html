@@ -320,210 +320,194 @@
           </div>
         </section>
 
-                <!-- ROUNDS -->
-        <section class="cardPanel hidden" data-card="rounds">
-          <div class="panelHead">
-            <div class="panelTitle">Rozgrywka</div>
-            <div class="roundTopRight">
-              <div class="badge">Runda: <b id="roundNo">1</b></div>
-              <div class="badge">Kontrola: <b id="controlTeam">—</b></div>
-              <div class="badge">Bank: <b id="bankPts">0</b></div>
-              <div class="badge">X A: <b id="xA">0</b>/3</div>
-              <div class="badge">X B: <b id="xB">0</b>/3</div>
-            </div>
+        <!-- ROUNDS -->
+        <section class="cardPage" data-card="rounds">
+          <div class="pageHead">
+            <h2>Rundy</h2>
+            <div class="hud" id="roundsHud"></div>
           </div>
-
-          <!-- STEP R0: stan startowy -->
-          <div class="step" data-step="r_ready">
-            <div class="stepTitle">Gra gotowa</div>
-            <div class="card">
-              <div class="name">Stan startowy</div>
-              <div class="hint">
-                Ustawia stan na wyświetlaczu (APP GAME, nazwy drużyn) i blokuje zmianę ustawień gry.
-              </div>
-
-              <div class="stepFoot">
-                <button class="btn gold" id="btnGameReady" type="button">Gra gotowa</button>
-                <div class="msg" id="msgRounds"></div>
+        
+          <div class="steps" id="roundsSteps">
+        
+            <!-- STEP R1: GRA GOTOWA -->
+            <div class="step" data-step="r_ready">
+              <div class="stepTitle">Gra gotowa</div>
+              <div class="card">
+                <div class="name">Przygotowanie gry</div>
+                <div class="hint">
+                  Upewnij się, że Wyświetlacz, Prowadzący i Przycisk są podłączone. Potem uruchom ekran gry.
+                </div>
+                <div class="stepFoot">
+                  <button class="btn gold" id="btnGameReady" type="button">Gra gotowa</button>
+                  <div class="msg" id="msgRoundsReady"></div>
+                </div>
               </div>
             </div>
-          </div>
-
-          <!-- STEP R1: intro gry -->
-          <div class="step hidden" data-step="r_intro">
-            <div class="stepTitle">Rozpocznij grę</div>
-            <div class="card">
-              <div class="name">Intro</div>
-              <div class="hint">
-                Dźwięk intro + logo na wyświetlaczu. Po zakończeniu intro będzie można rozpocząć pierwszą rundę.
-              </div>
-
-              <div class="stepFoot">
-                <button class="btn gold" id="btnStartShowIntro" type="button">Rozpocznij grę</button>
-                <div class="msg" id="msgRoundsIntro"></div>
-              </div>
-            </div>
-          </div>
-
-          <!-- STEP R2: start rundy -->
-          <div class="step hidden" data-step="r_roundStart">
-            <div class="stepTitle">Rozpocznij rundę</div>
-            <div class="card">
-              <div class="name">Start rundy</div>
-              <div class="hint">
-                Wybiera pytanie, przygotowuje pustą planszę rundy i pytanie dla prowadzącego.
-                Po dźwięku przejdziemy do pojedynku.
-              </div>
-
-              <div class="stepFoot">
-                <button class="btn gold" id="btnStartRound" type="button">Rozpocznij rundę</button>
-                <div class="msg" id="msgRoundsRoundStart"></div>
+        
+            <!-- STEP R2: INTRO -->
+            <div class="step hidden" data-step="r_intro">
+              <div class="stepTitle">Intro gry</div>
+              <div class="card">
+                <div class="name">Rozpocznij grę</div>
+                <div class="hint">
+                  Na wyświetlaczu pojawi się intro programu. Po zakończeniu przejdziesz do pierwszej rundy.
+                </div>
+                <div class="stepFoot">
+                  <button class="btn gold" id="btnStartShowIntro" type="button">Rozpocznij grę</button>
+                  <div class="msg" id="msgRoundsIntro"></div>
+                </div>
               </div>
             </div>
-          </div>
-
-          <!-- STEP R3: pojedynek — zatwierdzanie przycisku -->
-          <div class="step hidden" data-step="r_duel">
-            <div class="stepTitle">Pojedynek — przycisk</div>
-            <div class="card">
-              <div class="name">Kto pierwszy nacisnął?</div>
-              <div class="hint">
-                Buzzer działa automatycznie. Gdy ktoś naciśnie przycisk, zobaczysz wynik poniżej.
-                Następnie zatwierdź właściwą drużynę.
-              </div>
-
-              <div class="rowBtns">
-                <div class="badge">Jako pierwszy: <b id="duelFirst">—</b></div>
-                <div class="badge">Ostatni: <b id="duelLast">—</b></div>
-              </div>
-
-              <div class="rowBtns">
-                <button class="btn gold" id="btnBuzzAcceptA" type="button" disabled>Zatwierdź A</button>
-                <button class="btn gold" id="btnBuzzAcceptB" type="button" disabled>Zatwierdź B</button>
-              </div>
-
-              <div class="rowBtns">
-                <button class="btn" id="btnBuzzRetry" type="button" disabled>Ponów pojedynek</button>
-              </div>
-
-              <div class="stepFoot">
-                <div class="msg" id="msgDuel"></div>
+        
+            <!-- STEP R3: ROZPOCZNIJ RUNDĘ -->
+            <div class="step hidden" data-step="r_roundStart">
+              <div class="stepTitle">Rozpocznij rundę</div>
+              <div class="card">
+                <div class="name">Pusta plansza + pytanie</div>
+                <div class="hint">
+                  Na wyświetlaczu pojawi się pusta plansza rundy i pytanie u prowadzącego.
+                </div>
+                <div class="stepFoot">
+                  <button class="btn gold" id="btnStartRound" type="button">Rozpocznij rundę</button>
+                  <div class="msg" id="msgRoundsRoundStart"></div>
+                </div>
               </div>
             </div>
-          </div>
-
-          <!-- STEP R3.5: wybór drużyny do właściwej rozgrywki -->
-          <div class="step hidden" data-step="r_choose_control">
-            <div class="stepTitle">Kto gra rundę?</div>
-            <div class="card">
-              <div class="name">Wybór drużyny do właściwej rozgrywki</div>
-              <div class="hint">
-                Drużyna, która wygrała pojedynek (ma lepszą odpowiedź), może grać rundę
-                lub oddać pytanie przeciwnikom. Po tym kroku przycisk „oddaj pytanie” znika z dalszej gry.
-              </div>
-
-              <div class="rowBtns">
-                <div class="badge">Wygrana w pojedynku: <b id="duelWinnerLabel">—</b></div>
-              </div>
-
-              <div class="rowBtns">
-                <button class="btn gold" id="btnControlPlay" type="button" disabled>Grają zwycięzcy</button>
-                <button class="btn" id="btnControlPass" type="button" disabled>Oddaj pytanie</button>
-              </div>
-
-              <div class="stepFoot">
-                <div class="msg" id="msgChooseControl"></div>
-              </div>
-            </div>
-          </div>
-
-          <!-- STEP R4: właściwa rozgrywka (bez "Oddaj pytanie") -->
-          <div class="step hidden" data-step="r_play">
-            <div class="stepTitle">Runda — właściwa rozgrywka</div>
-            <div class="card">
-              <div class="name">Treść pytania</div>
-              <div class="qPrompt" id="roundQuestion">—</div>
-
-              <div class="rowBtns">
-                <button class="btn" id="btnStartTimer3" type="button" disabled>Start 3s</button>
-                <div class="badge">Timer: <b id="t3">—</b></div>
-              </div>
-
-              <div class="ansGrid" id="roundAnswers"></div>
-
-              <div class="rowBtns" style="margin-top:12px;">
-                <button class="btn danger" id="btnAddX" type="button" disabled>X (zła / brak)</button>
-              </div>
-
-              <div class="stepFoot">
-                <!-- brak ręcznego "Szansa przeciwników" i "Koniec rundy" – przejścia będą automatyczne -->
-                <div class="msg" id="msgRoundsPlay"></div>
+        
+            <!-- STEP R4: ZATWIERDŹ PRZYCISK -->
+            <div class="step hidden" data-step="r_duel">
+              <div class="stepTitle">Zatwierdź przycisk</div>
+              <div class="card">
+                <div class="name">Pojedynek przyciskiem</div>
+                <div class="hint">
+                  Przycisk jest już aktywny. Gdy któraś drużyna naciśnie – wybierz, kogo zatwierdzasz
+                  albo powtórz pojedynek.
+                </div>
+        
+                <ul class="hList">
+                  <li>
+                    <button class="btn" id="btnBuzzAcceptA" type="button">Zatwierdź drużynę A</button>
+                  </li>
+                  <li>
+                    <button class="btn" id="btnBuzzAcceptB" type="button">Zatwierdź drużynę B</button>
+                  </li>
+                  <li>
+                    <button class="btn" id="btnBuzzRetry" type="button">Ponów pojedynek</button>
+                  </li>
+                </ul>
+        
+                <div class="stepFoot">
+                  <div class="msg" id="msgDuel"></div>
+                </div>
               </div>
             </div>
-          </div>
-
-          <!-- STEP R5: Szansa przeciwników (kradzież) -->
-          <div class="step hidden" data-step="r_steal">
-            <div class="stepTitle">Szansa przeciwników</div>
-            <div class="card">
-              <div class="name">Jedna odpowiedź — kradzież</div>
-              <div class="hint">
-                Drużyna przeciwna ma jedną odpowiedź. Jeśli trafią — cały bank przechodzi do nich.
-                Jeśli nie — bank zostaje u poprzedniej drużyny.
-              </div>
-
-              <div class="ansGrid" id="roundStealAnswers"></div>
-
-              <div class="stepFoot">
-                <button class="btn danger" id="btnStealMiss" type="button">Nietrafiona</button>
-                <button class="btn gold" id="btnGoEndRoundFromSteal" type="button" disabled>Koniec rundy</button>
-                <div class="msg" id="msgRoundsSteal"></div>
-              </div>
-            </div>
-          </div>
-
-          <!-- STEP R6: Koniec rundy / przyznanie banku -->
-          <div class="step hidden" data-step="r_end">
-            <div class="stepTitle">Koniec rundy</div>
-            <div class="card">
-              <div class="name">Transfer banku</div>
-              <div class="hint">
-                Na podstawie przebiegu rundy bank trafi do odpowiedniej drużyny,
-                zostanie zaktualizowana suma punktów i wyzerujemy bank.
-              </div>
-
-              <div class="rowBtns">
-                <div class="badge">Bank po rundzie: <b id="endBank">0</b></div>
-                <div class="badge">Drużyna, która dostaje bank: <b id="endWinner">—</b></div>
-              </div>
-
-              <div class="stepFoot">
-                <button class="btn" id="btnShowReveal" type="button">Odsłoń brakujące odpowiedzi</button>
-                <button class="btn gold" id="btnEndRound" type="button">Zakończ rundę</button>
-                <div class="msg" id="msgRoundsEnd"></div>
+        
+            <!-- STEP R5: PYTANIE (POJEDYNEK + ROZGRYWKA) -->
+            <div class="step hidden" data-step="r_play">
+              <div class="stepTitle">Pytanie – pojedynek / rozgrywka</div>
+        
+              <div class="twoCol">
+                <div class="card">
+                  <div class="name">Pytanie</div>
+                  <div class="qText" id="roundQuestion">—</div>
+        
+                  <div class="rowBtns">
+                    <button class="btn" id="btnPassQuestion" type="button">Oddaj pytanie</button>
+                  </div>
+        
+                  <div class="rowBtns">
+                    <button class="btn" id="btnStartTimer3" type="button">Start timera 3 s</button>
+                    <div class="timer3" id="t3">—</div>
+                  </div>
+        
+                  <div class="rowBtns">
+                    <button class="btn danger" id="btnAddX" type="button">X (pudło)</button>
+                  </div>
+        
+                  <div class="stepFoot">
+                    <div class="msg" id="msgRoundsPlay"></div>
+                  </div>
+                </div>
+        
+                <div class="card">
+                  <div class="name">Odpowiedzi</div>
+                  <div class="hint">
+                    Kliknij odpowiedź, żeby ją odsłonić i dodać punkty do banku. W fazie kradzieży – kliknięcie
+                    oznacza odpowiedź kapitana drużyny kradnącej.
+                  </div>
+                  <div class="ansGrid" id="roundAnswers"></div>
+                </div>
               </div>
             </div>
-          </div>
-
-          <!-- STEP R7: Odsłanianie pozostałych odpowiedzi -->
-          <div class="step hidden" data-step="r_reveal">
-            <div class="stepTitle">Odsłanianie pozostałych odpowiedzi</div>
-            <div class="card">
-              <div class="name">Pozostałe odpowiedzi</div>
-              <div class="hint">
-                Klikaj odpowiedzi, które nie padły w trakcie rundy. Pokażemy je na wyświetlaczu,
-                bez zmiany banku ani sum drużyn.
-              </div>
-
-              <div class="ansGrid" id="roundRevealAnswers"></div>
-
-              <div class="stepFoot">
-                <button class="btn gold" id="btnRevealBackToReady" type="button">Zakończ odsłanianie</button>
-                <div class="msg" id="msgRoundsReveal"></div>
+        
+            <!-- STEP R6: SZANSA PRZECIWNIKÓW (KRADZIEŻ) -->
+            <div class="step hidden" data-step="r_steal">
+              <div class="stepTitle">Kradzież</div>
+        
+              <div class="twoCol">
+                <div class="card">
+                  <div class="name">Szansa przeciwników</div>
+                  <div class="hint">
+                    Kapitan drużyny przeciwnej podaje jedną odpowiedź. Kliknij ją na planszy.
+                    Jeśli odpowiedź jest z tablicy – kradną cały bank. Jeśli nie – bank zostaje u poprzedniej drużyny.
+                  </div>
+        
+                  <div class="rowBtns">
+                    <button class="btn" id="btnStealMiss" type="button">Nie ma na tablicy (pudło)</button>
+                  </div>
+        
+                  <div class="rowBtns">
+                    <button class="btn gold" id="btnGoEndRound" type="button">Przyznaj bank i zakończ rundę</button>
+                  </div>
+        
+                  <div class="stepFoot">
+                    <div class="msg" id="msgSteal"></div>
+                  </div>
+                </div>
+        
+                <div class="card">
+                  <div class="name">Odpowiedzi (kradzież)</div>
+                  <div class="ansGrid" id="roundAnswersSteal"></div>
+                </div>
               </div>
             </div>
+        
+            <!-- STEP R7: KONIEC RUNDY -->
+            <div class="step hidden" data-step="r_end">
+              <div class="stepTitle">Koniec rundy</div>
+              <div class="card">
+                <div class="name">Podsumowanie</div>
+                <div class="hint">
+                  Bank został przyznany. Możesz odsłonić pozostałe odpowiedzi albo przejść od razu do kolejnej rundy.
+                </div>
+                <div class="stepFoot">
+                  <button class="btn" id="btnShowReveal" type="button">Pokaż brakujące odpowiedzi</button>
+                  <button class="btn gold" id="btnEndRound" type="button">Rozpocznij następną rundę</button>
+                  <div class="msg" id="msgRoundsEnd"></div>
+                </div>
+              </div>
+            </div>
+        
+            <!-- STEP R8: ODSŁANIANIE ODPOWIEDZI -->
+            <div class="step hidden" data-step="r_reveal">
+              <div class="stepTitle">Odsłanianie odpowiedzi</div>
+              <div class="card">
+                <div class="name">Brakujące odpowiedzi</div>
+                <div class="hint">
+                  Klikaj brakujące odpowiedzi, żeby je pokazać na tablicy – bez zmiany banku i sumy punktów.
+                </div>
+        
+                <div class="ansGrid" id="roundRevealAnswers"></div>
+        
+                <div class="stepFoot">
+                  <button class="btn" id="btnRevealBack" type="button">Wróć</button>
+                  <button class="btn gold" id="btnRevealDone" type="button">Zakończ odsłanianie</button>
+                  <div class="msg" id="msgRoundsReveal"></div>
+                </div>
+              </div>
+            </div>
+        
           </div>
-
         </section>
 
         <!-- FINAL -->
