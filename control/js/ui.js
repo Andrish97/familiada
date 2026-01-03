@@ -221,37 +221,35 @@ export function createUI() {
     });
   }
 
-    function renderRoundRevealAnswers(answers, revealedSet) {
-    const root = $("roundRevealAnswers");
+  function renderRoundRevealAnswers(answers, revealedSet) {
+    const root = document.getElementById("roundRevealAnswers");
     if (!root) return;
 
-    const revSet =
-      revealedSet && typeof revealedSet.has === "function"
-        ? revealedSet
-        : new Set();
-
-    // bierzemy tylko te odpowiedzi, które NIE były odkryte w trakcie rundy
-    const hidden = answers
-      .slice()
-      .sort((a, b) => (a.ord || 0) - (b.ord || 0))
-      .filter((a) => !revSet.has(a.ord));
-
-    root.innerHTML = hidden
+    const revealed = new Set(revealedSet || []);
+    root.innerHTML = answers
       .map((a) => {
-        const pts = Number(a.fixed_points ?? 0);
+        const opened = revealed.has(a.ord);
+        const cls = opened ? "ans opened" : "ans";
         return `
-          <button class="ansBtn" type="button" data-ord="${a.ord}">
-            <div class="ansTop"><span>#${a.ord}</span><span>${pts}</span></div>
-            <div class="ansText">${escapeHtml(a.text)}</div>
+          <button
+            type="button"
+            class="${cls}"
+            data-reveal-ord="${a.ord}"
+          >
+            <span class="ord">${a.ord}</span>
+            <span class="txt">${escapeHtml(a.text || "—")}</span>
+            <span class="pts">${a.fixed_points ?? 0}</span>
           </button>
         `;
       })
       .join("");
 
-    root.querySelectorAll("button[data-ord]").forEach((b) => {
-      b.addEventListener("click", () =>
-        emit("rounds.revealLeftClick", Number(b.dataset.ord))
-      );
+    root.querySelectorAll("button[data-reveal-ord]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const ord = Number.parseInt(btn.dataset.revealOrd, 10);
+        if (!Number.isFinite(ord)) return;
+        emit("rounds.revealClick", ord);
+      });
     });
   }
 
@@ -379,7 +377,10 @@ export function createUI() {
     $("btnGoEndRound")?.addEventListener("click", () => emit("rounds.goEnd"));
     $("btnGoEndRoundFromSteal")?.addEventListener("click", () => emit("rounds.goEnd"));
 
-    $("btnRevealBackToReady")?.addEventListener("click", () => emit("rounds.revealDone"));
+      // KONIEC RUNDY / ODSŁANIANIE
+    $("btnShowReveal")?.addEventListener("click", () => emit("rounds.showReveal"));
+    $("btnRevealBack")?.addEventListener("click", () => emit("rounds.revealDone"));
+    $("btnRevealDone")?.addEventListener("click", () => emit("rounds.revealDone"));
 
 
     // final (kroki)
