@@ -270,51 +270,14 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
   async function startRound() {
     await loadRoundsIfNeeded();
     ensureRoundsState();
-
+  
     const r = store.state.rounds;
-
-    const totals = r.totals || { A: 0, B: 0 };
-    const ptsA = nInt(totals.A, 0);
-    const ptsB = nInt(totals.B, 0);
-    const FINAL_MIN_POINTS = 300; // później wyniesiemy do ustawień zaawansowanych
-
-    // nie zaczynamy kolejnej rundy, jeśli ktoś już przekroczył próg
-    if (ptsA >= FINAL_MIN_POINTS || ptsB >= FINAL_MIN_POINTS) {
-      ui.setMsg(
-        "msgRoundsRoundStart",
-        `Próg ${FINAL_MIN_POINTS} pkt został już osiągnięty. Nie można zaczynać kolejnej rundy.`
-      );
-      ui.setRoundsHud(r);
-      return;
-    }
-
-    // wybierz kolejne pytanie z puli
-    const obj = pickNextQuestionObj();
-
-    // brak pytań -> koniec gry
+    const obj = currentRoundObj();
     if (!obj) {
-      let msg;
-      if (ptsA > ptsB) {
-        msg = `Brak kolejnych pytań. Wygrywa drużyna A (${ptsA} : ${ptsB}).`;
-      } else if (ptsB > ptsA) {
-        msg = `Brak kolejnych pytań. Wygrywa drużyna B (${ptsB} : ${ptsA}).`;
-      } else {
-        msg = `Brak kolejnych pytań. Remis (${ptsA} : ${ptsB}).`;
-      }
-
-      ui.setMsg("msgRoundsRoundStart", msg);
-      ui.setRoundsHud(r);
-
-      try {
-        await display.setIndicator(null);
-        await display.showLogo?.();
-      } catch {}
-
-      // dodatkowo blokujemy przycisk "Rozpocznij rundę"
-      ui.setEnabled("btnStartRound", false);
+      ui.setMsg("msgRoundsRoundStart", "Brak zdefiniowanych rund dla tej gry.");
       return;
     }
-
+  
     // reset runtime dla rundy
     r.phase = "ROUND_ACTIVE";
     r.passUsed = false;
@@ -326,26 +289,26 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     r.xB = 0;
     r.controlTeam = null;
     r.revealed = new Set();
-
+  
     r.question = { id: obj.id, ord: obj.ord, text: obj.text };
     r.answers = (obj.answers || []).slice().sort(
       (a, b) => nInt(a.ord, 0) - nInt(b.ord, 0)
     );
-
+  
     r.duel.enabled = false;
     r.duel.lastPressed = null;
-
+  
     clearTimer3();
-
+  
     // pytanie + odpowiedzi w Control
     ui.setRoundQuestion(obj.text || "—");
     ui.renderRoundAnswers(r.answers, r.revealed);
     ui.setMsg("msgRoundsRoundStart", "Startuję rundę – leci dźwięk przejścia.");
     ui.setRoundsHud(r);
-
-    // blokujemy "Rozpocznij rundę" na czas dźwięku
+  
+    // zablokuj przycisk "Rozpocznij rundę" na czas przejścia
     ui.setEnabled("btnStartRound", false);
-
+  
     // === DŹWIĘK round_transition ===
     let dur = 0;
     try {
@@ -353,78 +316,85 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     } catch (e) {
       console.warn("getSfxDuration(round_transition) error", e);
     }
-
-    const waitMs =
-      typeof dur === "number" && dur > 0
-        ? Math.max(0, (dur - 0.05) * 1000) // mały margines
-        : 3000; // awaryjnie ~3s
-
+  
+    const totalMs = typeof dur === "number" && dur > 0 ? dur * 1000 : 3000;
+    const boardLeadMs = 800; // plansza zaczyna wjeżdżać ~0.8 s PRZED końcem dźwięku
+    const boardDelay = Math.max(0, totalMs - boardLeadMs);
+  
+    // start dźwięku
     playSfx("round_transition");
-
-    if (waitMs > 0) {
-      await new Promise((resolve) => setTimeout(resolve, waitMs));
+  
+    // logo znika NA POCZĄTKU round_transition (tylko przed pierwszą rundą)
+    if (!r._boardShown && typeof display.hideLogo === "function") {
+      display.hideLogo().catch((e) => {
+        console.error("hideLogo error", e);
+      });
     }
-
-    // === PUSTA PLANSZA RUND ===
-    const rows = r.answers.length || 0;
-
-    try {
-      if (!r._boardShown) {
-        // PIERWSZA runda:
-        // 1) schowaj logo
-        // 2) wjedź pustą planszą rund
-        if (display.hideLogo) {
-          await display.hideLogo();
+  
+    // zaplanuj wjazd pustej planszy PRZED końcem dźwięku
+    setTimeout(() => {
+      const rowsCount = Math.max(1, Math.min(6, r.answers.length || 6));
+  
+      (async () => {
+        try {
+          if (!r._boardShown) {
+            // pierwsza runda – po zniknięciu logo wjeżdża pierwsza plansza
+            if (typeof display.roundsBoardPlaceholders === "function") {
+              await display.roundsBoardPlaceholders(rowsCount);
+            }
+            r._boardShown = true;
+          } else if (typeof display.roundsBoardPlaceholdersNewRound === "function") {
+            // kolejne rundy – RBATCH ANIMOUT + nowa pustka
+            await display.roundsBoardPlaceholdersNewRound(rowsCount);
+          } else if (typeof display.roundsBoardPlaceholders === "function") {
+            // fallback gdyby nie było wersji NewRound
+            await display.roundsBoardPlaceholders(rowsCount);
+          }
+  
+          // wyzeruj X-y, wskaźnik i triplet banku / sum
+          await display.roundsSetX("A", 0);
+          await display.roundsSetX("B", 0);
+          await display.setIndicator(null);
+  
+          if (display.setBankTriplet) {
+            await display.setBankTriplet(0);
+          }
+          if (display.setTotalsTriplets) {
+            await display.setTotalsTriplets(r.totals || { A: 0, B: 0 });
+          }
+        } catch (e) {
+          console.error("display setup for round (delayed) failed", e);
         }
-        if (display.roundsBoardPlaceholders) {
-          await display.roundsBoardPlaceholders(rows);
-        }
-        r._boardShown = true;
-      } else {
-        // DRUGA i kolejne rundy:
-        // RBATCH ANIMOUT + nowa pustka
-        if (display.roundsBoardPlaceholdersNewRound) {
-          await display.roundsBoardPlaceholdersNewRound(rows);
-        } else if (display.roundsBoardPlaceholders) {
-          await display.roundsBoardPlaceholders(rows);
-        }
-      }
-
-      await display.roundsSetX("A", 0);
-      await display.roundsSetX("B", 0);
-      await display.setIndicator(null);
-
-      if (display.setBankTriplet) {
-        await display.setBankTriplet(0);
-      }
-      if (display.setTotalsTriplets) {
-        await display.setTotalsTriplets(r.totals || { A: 0, B: 0 });
-      }
-    } catch (e) {
-      console.error("display setup for round failed", e);
+      })();
+    }, boardDelay);
+  
+    // czekamy do KOŃCA round_transition zanim przejdziemy do pojedynku
+    if (totalMs > 0) {
+      await new Promise((resolve) => setTimeout(resolve, totalMs));
     }
-
+  
     // === Pytanie dla prowadzącego (HOST) ===
     const qText = (obj.text || "").trim();
     if (qText) {
       const safe = qText.replace(/"/g, '\\"');
       try {
         await devices.sendHostCmd(`SET "${safe}"`);
-        await devices.sendHostCmd("OPEN");
+        await devices.sendHostCmd("OPEN"); // zamiast SHOW
       } catch (e) {
         console.error("sendHostCmd error", e);
       }
     }
-
-    // === Przejście do karty "Pojedynek" + automatyczna aktywacja przycisku ===
+  
+    // === Przejście do karty "Pojedynek" w Control ===
     setStep("r_duel");
     ui.setMsg("msgRounds", `Runda ${r.roundNo} – pojedynek.`);
     ui.setRoundsHud(r);
-
-    // od razu aktywujemy przycisk na pojedynek
-    enableBuzzerDuel();
+  
+    // jeśli chcesz, żeby przycisk od razu był aktywny:
+    if (typeof enableBuzzerDuel === "function") {
+      enableBuzzerDuel();
+    }
   }
-
   // === Buzzer / pojedynek ===
 
   function enableBuzzerDuel() {
