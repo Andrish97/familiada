@@ -797,7 +797,7 @@ export async function createScene() {
   // Bottom (95x7) + basebar
   const dBottom = 1.5 * d;
   const Xb = 95, Yb = 7;
-  const gapFromOval = 22;
+  const gapFromOval = 40;
 
   // dolna krawędź wewnętrznego owalu
   const ovalBottomY = innerBottom;
@@ -811,7 +811,7 @@ export async function createScene() {
   const hBlock  = hInnerB + 2 * g;
 
   // long1 / long2 bliżej siebie
-  const gapBetweenBlocks = 80;
+  const gapBetweenBlocks = 40;
 
   const totalW = 2 * wBlock + gapBetweenBlocks;
   const xLeft  = VIEW.CX - totalW / 2;
