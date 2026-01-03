@@ -599,6 +599,41 @@ export async function createScene() {
     innerOval.setAttribute("height", inner.h);
     // promień zostawiamy z HTML (rx="310"), jak będziesz chciał, możemy też policzyć dynamicznie
   }
+  // Krawędzie outer/inner (do linii)
+  const outerRight  = outer.x + outer.w;
+  const outerBottom = outer.y + outer.h;
+  const innerRight  = inner.x + inner.w;
+  const innerBottom = inner.y + inner.h;
+
+  // LINIE łączące wewnętrzny z zewnętrznym – parametrycznie
+  const frameLines = $("frameLines");
+  if (frameLines) {
+    const addLine = (x1, y1, x2, y2) => {
+      frameLines.appendChild(el("line", {
+        x1, y1, x2, y2,
+        stroke: "#ffffff",
+        "stroke-opacity": 0.22,
+        "stroke-width": 6,
+        "stroke-linecap": "round",
+      }));
+    };
+
+    // pion na górze: środek ekranu, od zewnętrznej do wewnętrznej krawędzi
+    addLine(VIEW.CX, outer.y, VIEW.CX, inner.y);
+
+    // lewy górny – od narożnika inner do narożnika outer
+    addLine(inner.x, inner.y, outer.x, outer.y);
+
+    // prawy górny
+    addLine(innerRight, inner.y, outerRight, outer.y);
+
+    // lewy dolny
+    addLine(inner.x, innerBottom, outer.x, outerBottom);
+
+    // prawy dolny
+    addLine(innerRight, innerBottom, outerRight, outerBottom);
+  }
+
 
   // BIG (30x10) – wpisany w wewnętrzny owal, centrowany w nim
   const wSmall = Wgrid(5, d, g);
@@ -612,10 +647,6 @@ export async function createScene() {
   const big = drawTiledDisplay5x7(center, bigX, bigY, 30, 10, d, g, gapCells, COLORS);
 
   // --- BOCZNE PANELE: centralnie w grubości owalu po bokach ---
-  const outerRight  = outer.x + outer.w;
-  const outerBottom = outer.y + outer.h;
-  const innerRight  = inner.x + inner.w;
-  const innerBottom = inner.y + inner.h;
 
   const bandLeftW  = inner.x - outer.x;       // grubość owalu z lewej
   const bandRightW = outerRight - innerRight; // grubość z prawej
