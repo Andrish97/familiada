@@ -572,41 +572,63 @@ export async function createScene() {
   const hSmallP = Hgrid(7, dP, g);
 
   // rozmiar pojedynczego panelu 3×1 (LEWY / PRAWY / TOP)
-  const panelW = 3 * wSmallP + 2 * gapCells + 2 * g; // ≈ 216
-  const panelH = 1 * hSmallP + 2 * g;                // ≈ 94
+  const panelW = 3 * wSmallP + 2 * gapCells + 2 * g;
+  const panelH = 1 * hSmallP + 2 * g;
 
   // OWAL ZEWNĘTRZNY – zgodnie z <rect> w SVG
   const outer = { x: 10, y: 30, w: 1580, h: 840 };
+  const outerRight  = outer.x + outer.w;
+  const outerBottom = outer.y + outer.h;
 
-  // „Pasek” owalu: trochę grubszy niż panel
-  const bandSide = panelW * 0.90;
-  const bandTop  = panelH * 0.90; 
+  // ===== BIG (30x10) – najpierw jego rozmiar, bez pozycjonowania =====
+  const wSmall = Wgrid(5, d, g);
+  const hSmall = Hgrid(7, d, g);
 
-  // OWAL WEWNĘTRZNY – opisuje big, panele siedzą w paskach
+  const centerW = 30 * wSmall + 29 * gapCells + 2 * g;
+  const centerH = 10 * hSmall +  9 * gapCells + 2 * g;
+
+  // ===== INNER OVAL: tak, żeby BIG był W PISANY rogami =====
+  const innerOval = $("innerOval");
+
+  // bazowy promień z SVG (albo 310, jeśli brak)
+  let R = innerOval ? parseFloat(innerOval.getAttribute("rx") || "0") : 0;
+  if (!Number.isFinite(R) || R <= 0) R = 310;
+
+  // maksymalny promień, żeby inner nie wyszedł poza outer przy zadanym BIG
+  const maxR_W = (outer.w - centerW) / 2;
+  const maxR_H = (outer.h - centerH) / 2;
+  const maxR = Math.max(0, Math.min(maxR_W, maxR_H));
+
+  // faktycznie używany promień – tak duży jak się da, ale nie większy niż bazowy
+  R = Math.min(R, maxR);
+
+  // środek owalu = środek zewnętrznego prostokąta
+  const innerCX = outer.x + outer.w / 2;
+  const innerCY = outer.y + outer.h / 2;
+
+  // prostokąt zaokrąglony opisany na BIG-u:
+  // Winner = centerW + 2R, Hinner = centerH + 2R
   const inner = {
-    x: outer.x + bandSide,
-    y: outer.y + bandTop,
-    w: outer.w - 2 * bandSide,
-    h: outer.h - 2 * bandTop,
+    x: innerCX - (centerW + 2 * R) / 2,
+    y: innerCY - (centerH + 2 * R) / 2,
+    w: centerW + 2 * R,
+    h: centerH + 2 * R,
   };
 
-  // Aktualizacja <rect id="innerOval"> w SVG
-  const innerOval = $("innerOval");
+  const innerRight  = inner.x + inner.w;
+  const innerBottom = inner.y + inner.h;
+
+  // Aktualizacja <rect id="innerOval"> w SVG: BIG jest w nim wpisany rogami
   if (innerOval) {
     innerOval.setAttribute("x", inner.x);
     innerOval.setAttribute("y", inner.y);
     innerOval.setAttribute("width", inner.w);
     innerOval.setAttribute("height", inner.h);
-    // promień zostawiamy z HTML (rx="310"), jak będziesz chciał, możemy też policzyć dynamicznie
+    innerOval.setAttribute("rx", R);
+    innerOval.setAttribute("ry", R);
   }
-  // Krawędzie outer/inner (do linii)
-  const outerRight  = outer.x + outer.w;
-  const outerBottom = outer.y + outer.h;
-  const innerRight  = inner.x + inner.w;
-  const innerBottom = inner.y + inner.h;
 
-  // LINIE dzielące owal na 6 segmentów:
-  // 3 kolumny (2 pionowe linie), 2 rzędy (1 pozioma linia).
+  // ===== LINIE PODZIAŁU (3 kolumny × 2 rzędy) – przycięte do owalu zewn =====
   const frameLines = $("frameLines");
   if (frameLines) {
     frameLines.innerHTML = "";
@@ -633,22 +655,13 @@ export async function createScene() {
     addLine(outer.x, midY, outerRight, midY);
   }
 
-
-
-
-  // BIG (30x10) – wpisany w wewnętrzny owal, centrowany w nim
-  const wSmall = Wgrid(5, d, g);
-  const hSmall = Hgrid(7, d, g);
-  const centerW = 30 * wSmall + 29 * gapCells + 2 * g;
-  const centerH = 10 * hSmall +  9 * gapCells + 2 * g;
-
+  // ===== BIG narysowany na środku, wpisany w inner rogami =====
   const bigX = inner.x + (inner.w - centerW) / 2;
   const bigY = inner.y + (inner.h - centerH) / 2;
 
   const big = drawTiledDisplay5x7(center, bigX, bigY, 30, 10, d, g, gapCells, COLORS);
 
   // --- BOCZNE PANELE: centralnie w grubości owalu po bokach ---
-
   const bandLeftW  = inner.x - outer.x;       // grubość owalu z lewej
   const bandRightW = outerRight - innerRight; // grubość z prawej
   const bandTopH   = inner.y - outer.y;       // grubość u góry
@@ -674,7 +687,7 @@ export async function createScene() {
   const rightTriple = [rightPanel.tiles[0][0], rightPanel.tiles[0][1], rightPanel.tiles[0][2]];
   const topTriple   = [topPanel.tiles[0][0],   topPanel.tiles[0][1],   topPanel.tiles[0][2]];
 
-  // Bottom (95x7) + basebar
+  // ===== Bottom (95x7) + basebar =====
   const dBottom = 1.5 * d;
   const Xb = 95, Yb = 7;
   const gapFromOval = 22;
@@ -700,7 +713,7 @@ export async function createScene() {
   const barY = yBottom - barPadY;
   const barH = hBlock + barPadY * 2;
 
-  // TŁO paska – bez obrysu, tak jak było
+  // TŁO paska
   basebar.appendChild(el("rect", {
     x: barX,
     y: barY,
@@ -712,21 +725,21 @@ export async function createScene() {
   const halfW = barW / 2;
   const outlineW = 10;
 
-  // LEWA połówka – czerwony neon
+  // LEWA połówka – czerwona
   basebar.appendChild(el("rect", {
     x: barX,
     y: barY,
     width: halfW,
     height: barH,
     fill: "none",
-    stroke: "#c4002f",              // czerwony jak w gradiencie
+    stroke: "#c4002f",
     "stroke-width": outlineW,
     "stroke-opacity": 0.85,
     "stroke-linejoin": "round",
     filter: "url(#neonBlue)",
   }));
 
-  // PRAWA połówka – niebieski neon
+  // PRAWA połówka – niebieska
   basebar.appendChild(el("rect", {
     x: barX + halfW,
     y: barY,
@@ -740,7 +753,7 @@ export async function createScene() {
     filter: "url(#neonBlue)",
   }));
 
-  // delikatny „wewnętrzny” kontur dla wyostrzenia krawędzi
+  // delikatny wewnętrzny kontur
   basebar.appendChild(el("rect", {
     x: barX + 1,
     y: barY + 1,
@@ -752,8 +765,8 @@ export async function createScene() {
     "stroke-opacity": 0.75,
   }));
 
-
-  const gapCenterX = xLeft + wBlock + gapEff / 2;
+  // ŚRODKOWE CIĘCIA – UWAŻAJ: tu poprawka gapEff -> gapBetweenBlocks
+  const gapCenterX = xLeft + wBlock + gapBetweenBlocks / 2;
   const sideOffset = barW * 0.22;
 
   const cutXs = [
@@ -763,7 +776,6 @@ export async function createScene() {
   ];
 
   cutXs.forEach((lx, idx) => {
-    // lewa linia lekko czerwonawa, środkowa jasna, prawa niebieskawa
     const mainStroke =
       idx === 0 ? "#c4002f" :
       idx === 2 ? "#2a62ff" :
@@ -785,7 +797,6 @@ export async function createScene() {
       "stroke-opacity": 0.9,
     }));
   });
-
 
   const long1 = drawFramedDotPanel(bottom, xLeft,  yBottom, Xb, Yb, dBottom, g, COLORS);
   const long2 = drawFramedDotPanel(bottom, xRight, yBottom, Xb, Yb, dBottom, g, COLORS);
