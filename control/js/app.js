@@ -393,6 +393,10 @@ async function main() {
   ui.on("rounds.answerClick", (ord) => rounds.revealAnswerByOrd(ord));
   ui.on("rounds.addX", () => rounds.addX());
 
+  // odsłanianie pozostałych odpowiedzi
+  ui.on("rounds.showReveal", () => rounds.showRevealLeft());
+  ui.on("rounds.revealDone", () => rounds.revealDone());
+
   // steal/end
   ui.on("rounds.goSteal", () => rounds.goSteal());
   ui.on("rounds.stealMiss", () => rounds.stealMiss());
