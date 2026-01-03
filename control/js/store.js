@@ -57,7 +57,7 @@ export function createStore(gameId) {
     },
 
     rounds: {
-      phase: "IDLE", // IDLE | READY | INTRO | ROUND_ACTIVE
+      phase: "IDLE", // IDLE | DUEL | ROUND | STEAL | END
       roundNo: 1,
       controlTeam: null, // "A"|"B"
       bankPts: 0,
