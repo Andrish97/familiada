@@ -192,65 +192,52 @@ export function createUI() {
 
   function setRoundQuestion(text) { setText("roundQuestion", text || "—"); }
 
-  function renderRoundAnswers(answers, revealedSet, rootId = "roundAnswers") {
+  function renderAnswersGeneric(rootId, answers, revealedSet, eventName) {
     const root = $(rootId);
     if (!root) return;
-
+  
+    const revealed = revealedSet || new Set();
+  
     root.innerHTML = (answers || [])
-      .slice()
-      .sort((a, b) => (a.ord || 0) - (b.ord || 0))
       .map((a) => {
-        const isRev = revealedSet?.has?.(a.ord);
-        const pts = Number(a.fixed_points ?? 0);
-        const cls = isRev ? "ansBtn revealed" : "ansBtn";
-
-        return `
-          <button class="${cls}" type="button" data-ord="${a.ord}">
-            <div class="ansTop">
-              <span>#${a.ord}</span>
-              <span>${pts}</span>
-            </div>
-            <div class="ansText">${escapeHtml(a.text || "—")}</div>
-          </button>
-        `;
-      })
-      .join("");
-
-    root.querySelectorAll("button[data-ord]").forEach((b) => {
-      b.addEventListener("click", () => emit("rounds.answerClick", Number(b.dataset.ord)));
-    });
-  }
-
-  function renderRoundRevealAnswers(answers, revealedSet) {
-    const root = document.getElementById("roundRevealAnswers");
-    if (!root) return;
-
-    const revealed = new Set(revealedSet || []);
-    root.innerHTML = answers
-      .map((a) => {
-        const opened = revealed.has(a.ord);
-        const cls = opened ? "ans opened" : "ans";
+        const ord = a.ord ?? 0;
+        const isRevealed = revealed.has(ord);
+        const pts = a.fixed_points ?? a.points ?? 0;
         return `
           <button
             type="button"
-            class="${cls}"
-            data-reveal-ord="${a.ord}"
+            class="round-answer ${isRevealed ? "revealed" : ""}"
+            data-ord="${ord}"
           >
-            <span class="ord">${a.ord}</span>
-            <span class="txt">${escapeHtml(a.text || "—")}</span>
-            <span class="pts">${a.fixed_points ?? 0}</span>
+            <span class="a-text">${escapeHtml(a.text || "—")}</span>
+            <span class="a-pts">${pts}</span>
           </button>
         `;
       })
       .join("");
-
-    root.querySelectorAll("button[data-reveal-ord]").forEach((btn) => {
+  
+    root.querySelectorAll("button.round-answer[data-ord]").forEach((btn) => {
       btn.addEventListener("click", () => {
-        const ord = Number.parseInt(btn.dataset.revealOrd, 10);
+        const ord = Number.parseInt(btn.dataset.ord || "0", 10);
         if (!Number.isFinite(ord)) return;
-        emit("rounds.revealClick", ord);
+        bus.emit(eventName, ord);
       });
     });
+  }
+  
+  function renderRoundAnswers(answers, revealedSet) {
+    // główna rozgrywka
+    renderAnswersGeneric("roundAnswers", answers, revealedSet, "rounds.answerClick");
+  }
+  
+  function renderRoundStealAnswers(answers, revealedSet) {
+    // karta „Szansa przeciwników”
+    renderAnswersGeneric("roundStealAnswers", answers, revealedSet, "rounds.stealTry");
+  }
+  
+  function renderRoundRevealAnswers(answers, revealedSet) {
+    // karta „Odsłanianie odpowiedzi”
+    renderAnswersGeneric("roundRevealAnswers", answers, revealedSet, "rounds.revealClick");
   }
 
   function setFinalStatusList(linesHtml) {
@@ -475,7 +462,9 @@ export function createUI() {
     setRoundQuestion,
     
     renderRoundAnswers,
+    renderRoundStealAnswers,
     renderRoundRevealAnswers,
+    
     showRoundsStep,
     setFinalStatusList,
     setFinalInputs,
