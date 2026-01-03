@@ -566,15 +566,22 @@ export async function createScene() {
   const basebar = $("basebar");
   const bottom  = $("bottom");
 
+  // wymiary owalu – muszą odpowiadać <rect> w SVG
+  const outer = { x: 10,  y: 30,  w: 1580, h: 840 };
+  const inner = { x: 226, y: 124, w: 1148, h: 652 };
+  
   // BIG (30x10)
   const wSmall = Wgrid(5, d, g);
   const hSmall = Hgrid(7, d, g);
   const centerW = 30 * wSmall + 29 * gapCells + 2 * g;
   const centerH = 10 * hSmall +  9 * gapCells + 2 * g;
-  const centerX = VIEW.CX - centerW / 2;
-  const centerY = VIEW.CY - centerH / 2;
-  const big = drawTiledDisplay5x7(center, centerX, centerY, 30, 10, d, g, gapCells, COLORS);
-
+  
+  // big wpisany w wewnętrzny owal (inner), centrowany w nim
+  const bigX = inner.x + (inner.w - centerW) / 2;
+  const bigY = inner.y + (inner.h - centerH) / 2;
+  
+  const big = drawTiledDisplay5x7(center, bigX, bigY, 30, 10, d, g, gapCells, COLORS);
+  
   // Triples (3x1)
   const dP = 3 * d;
   const wSmallP = Wgrid(5, dP, g);
@@ -583,10 +590,6 @@ export async function createScene() {
   // rozmiar pojedynczego panelu 3×1
   const panelW = 3 * wSmallP + 2 * gapCells + 2 * g;
   const panelH = 1 * hSmallP + 0 * gapCells + 2 * g;
-
-  // wymiary owalu – muszą odpowiadać <rect> w SVG
-  const outer = { x: 10,  y: 30,  w: 1580, h: 840 };
-  const inner = { x: 226, y: 124, w: 1148, h: 652 };
 
   const outerRight  = outer.x + outer.w;
   const outerBottom = outer.y + outer.h;
