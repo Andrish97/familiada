@@ -582,8 +582,8 @@ export async function createScene() {
   const shift = panelW / 4;
 
   const sideY = 390;
-  const leftX  = shift-20;
-  const rightX = VIEW.W - panelW - shift + 20;
+  const leftX  = shift - 40;
+  const rightX = VIEW.W - panelW - shift + 40;
   const topY = 40;
   const topX = VIEW.CX - panelW / 2;
 
