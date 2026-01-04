@@ -402,109 +402,65 @@
               </div>
             </div>
         
-            <!-- STEP R5: PYTANIE (POJEDYNEK + ROZGRYWKA) -->
+            <!-- STEP R5: PYTANIE / ROZGRYWKA / KRADZIEŻ / KONIEC -->
             <div class="step hidden" data-step="r_play">
-              <div class="stepTitle">Pytanie – pojedynek / rozgrywka</div>
-        
+              <div class="stepTitle">Pytanie i rozgrywka</div>
+            
               <div class="twoCol">
                 <div class="card">
                   <div class="name">Pytanie</div>
                   <div class="qText" id="roundQuestion">—</div>
-        
+            
                   <div class="rowBtns">
                     <button class="btn" id="btnPassQuestion" type="button">Oddaj pytanie</button>
                   </div>
-        
+            
                   <div class="rowBtns">
                     <button class="btn" id="btnStartTimer3" type="button">Start timera 3 s</button>
                     <div class="timer3" id="t3">—</div>
                   </div>
-        
+            
                   <div class="rowBtns">
                     <button class="btn danger" id="btnAddX" type="button">X (pudło)</button>
                   </div>
-        
+            
+                  <div class="rowBtns">
+                    <button class="btn" id="btnStealMiss" type="button">Kradzież nietrafiona (pudło)</button>
+                  </div>
+            
                   <div class="stepFoot">
+                    <div class="rowBtns">
+                      <button class="btn" id="btnShowReveal" type="button">Pokaż brakujące odpowiedzi</button>
+                      <button class="btn gold" id="btnGoEndRound" type="button">Zakończ rundę</button>
+                    </div>
+            
                     <div class="msg" id="msgRoundsPlay"></div>
+                    <div class="msg" id="msgSteal"></div>
+                    <div class="msg" id="msgRoundsReveal"></div>
+                    <div class="msg" id="msgRoundsEnd"></div>
                   </div>
                 </div>
-        
+            
                 <div class="card">
                   <div class="name">Odpowiedzi</div>
                   <div class="hint">
-                    Kliknij odpowiedź, żeby ją odsłonić i dodać punkty do banku. W fazie kradzieży – kliknięcie
-                    oznacza odpowiedź kapitana drużyny kradnącej.
+                    Klikaj, żeby odsłaniać odpowiedzi. W czasie kradzieży kliknięcie oznacza odpowiedź
+                    kapitana drużyny kradnącej, a przy odsłanianiu brakujących – tylko pokazuje odpowiedź
+                    bez zmiany punktów.
                   </div>
+            
+                  <!-- tryb normalny -->
                   <div class="ansGrid" id="roundAnswers"></div>
+            
+                  <!-- kradzież -->
+                  <div class="ansGrid hidden" id="roundStealAnswers"></div>
+            
+                  <!-- odsłanianie braków po końcu rundy -->
+                  <div class="ansGrid hidden" id="roundRevealAnswers"></div>
                 </div>
               </div>
             </div>
-        
-            <!-- STEP R6: SZANSA PRZECIWNIKÓW (KRADZIEŻ) -->
-            <div class="step hidden" data-step="r_steal">
-              <div class="stepTitle">Kradzież</div>
-        
-              <div class="twoCol">
-                <div class="card">
-                  <div class="name">Szansa przeciwników</div>
-                  <div class="hint">
-                    Kapitan drużyny przeciwnej podaje jedną odpowiedź. Kliknij ją na planszy.
-                    Jeśli odpowiedź jest z tablicy – kradną cały bank. Jeśli nie – bank zostaje u poprzedniej drużyny.
-                  </div>
-        
-                  <div class="rowBtns">
-                    <button class="btn" id="btnStealMiss" type="button">Nie ma na tablicy (pudło)</button>
-                  </div>
-        
-                  <div class="rowBtns">
-                    <button class="btn gold" id="btnGoEndRound" type="button">Przyznaj bank i zakończ rundę</button>
-                  </div>
-        
-                  <div class="stepFoot">
-                    <div class="msg" id="msgSteal"></div>
-                  </div>
-                </div>
-        
-                <div class="card">
-                  <div class="name">Odpowiedzi (kradzież)</div>
-                  <div class="ansGrid" id="roundAnswersSteal"></div>
-                </div>
-              </div>
-            </div>
-        
-            <!-- STEP R7: KONIEC RUNDY -->
-            <div class="step hidden" data-step="r_end">
-              <div class="stepTitle">Koniec rundy</div>
-              <div class="card">
-                <div class="name">Podsumowanie</div>
-                <div class="hint">
-                   Przyznaj bank jednej z drużyn, a potem możesz zakończyć rundę.
-                </div>
-                <div class="stepFoot">
-                  <button class="btn" id="btnRoundsShowReveal" type="button">Pokaż brakujące odpowiedzi</button>
-                  <button class="btn gold" id="btnRoundsGoEnd" type="button">Rozpocznij następną rundę</button>
-                  <div class="msg" id="msgRoundsEnd"></div>
-                </div>
-              </div>
-            </div>
-        
-            <!-- STEP R8: ODSŁANIANIE ODPOWIEDZI -->
-            <div class="step hidden" data-step="r_reveal">
-              <div class="stepTitle">Odsłanianie odpowiedzi</div>
-              <div class="card">
-                <div class="name">Brakujące odpowiedzi</div>
-                <div class="hint">
-                  Klikaj brakujące odpowiedzi, żeby je pokazać na tablicy – bez zmiany banku i sumy punktów.
-                </div>
-        
-                <div class="ansGrid" id="roundRevealAnswers"></div>
-        
-                <div class="stepFoot">
-                  <button class="btn gold" id="btnRevealDone" type="button">Wróć do końca rundy</button>
-                  <div class="msg" id="msgRoundsReveal"></div>
-                </div>
-              </div>
-            </div>
+
         </section>
 
         <!-- FINAL -->
