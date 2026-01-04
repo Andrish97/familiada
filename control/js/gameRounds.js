@@ -606,6 +606,9 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
 
   async function revealAnswerByOrd(ord) {
     const r = store.state.rounds;
+
+    clearTimer3();
+    
     const ans = (r.answers || []).find((a) => a.ord === ord);
     if (!ans) return;
 
@@ -709,6 +712,8 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
   async function addX() {
     const r = store.state.rounds;
 
+    clearTimer3();
+    
     // POJEDYNEK: tylko flash X + logika pojedynku, bez naliczania X-ów
     if (r.phase === "DUEL") {
       const d = r.duel || {};
