@@ -713,48 +713,6 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     }
   }
 
-    // === GRA WŁAŚCIWA / KRADZIEŻ ===
-
-    if (r.revealed.has(ord)) return;
-    r.revealed.add(ord);
-
-    if (ui.renderRoundAnswers) {
-      ui.renderRoundAnswers(r.answers, r.revealed);
-    }
-
-    const pts = nInt(ans.fixed_points ?? ans.points, 0);
-    r.bankPts = nInt(r.bankPts, 0) + pts;
-    ui.setRoundsHud(r);
-
-    await display.roundsRevealRow(ord, ans.text, pts);
-    await display.roundsSetSum(r.bankPts);
-    if (display.setBankTriplet) {
-      await display.setBankTriplet(r.bankPts);
-    }
-
-    playSfx("answer_correct");
-
-    if (r.phase === "PLAY") {
-      // po pierwszej odpowiedzi / X nie można już oddać pytania
-      r.allowPass = false;
-      ui.setEnabled("btnGoEndRound", true);
-    } else if (r.phase === "STEAL") {
-      if (!r.steal || !r.steal.active || r.steal.used) return;
-
-      r.steal.used = true;
-      r.stealWon = true;
-      r.steal.active = false;
-
-      ui.setMsg("msgSteal", "Kradzież udana – bank trafi do drużyny kradnącej.");
-      ui.setRoundsHud(r);
-      ui.setEnabled("btnGoEndRound", true);
-
-      if (display.setIndicator) {
-        await display.setIndicator(null);
-      }
-    }
-  }
-
   async function addX() {
     const r = store.state.rounds;
 
