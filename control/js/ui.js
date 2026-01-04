@@ -64,21 +64,26 @@ export function createUI() {
     }
   }
 
-  function showCard(card) {
-    document.querySelectorAll(".cardPanel[data-card]").forEach((p) =>
-      p.classList.add("hidden")
-    );
-    document
-      .querySelector(`.cardPanel[data-card="${card}"]`)
-      ?.classList.remove("hidden");
-  
-    document.querySelectorAll(".navItem[data-card]").forEach((b) =>
-      b.classList.remove("active")
-    );
-    document
-      .querySelector(`.navItem[data-card="${card}"]`)
-      ?.classList.add("active");
-  }
+function showCard(card) {
+  // ukryj wszystkie panele kart
+  document
+    .querySelectorAll(".cardPanel[data-card]")
+    .forEach((p) => p.classList.add("hidden"));
+
+  // pokaż wybraną kartę
+  document
+    .querySelector(`.cardPanel[data-card="${card}"]`)
+    ?.classList.remove("hidden");
+
+  // zaktualizuj aktywną zakładkę
+  document
+    .querySelectorAll(".navItem[data-card]")
+    .forEach((b) => b.classList.remove("active"));
+
+  document
+    .querySelector(`.navItem[data-card="${card}"]`)
+    ?.classList.add("active");
+}
 
   function mountNavigation({ canEnter, onNavigate }) {
     document.querySelectorAll(".navItem[data-card]").forEach((b) => {
