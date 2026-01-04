@@ -29,7 +29,7 @@ export function createDisplay({ devices, store }) {
   }
 
   async function blank() {
-    await send("MODE BLANK");
+    await send("BLANK");
   }
 
   async function setTeamsLongs(teamA, teamB) {
@@ -67,8 +67,6 @@ export function createDisplay({ devices, store }) {
   // === ROUNDS – plansza/odpowiedzi/X/suma ===
   
   async function roundsBoardPlaceholders(count) {
-    await send("MODE ROUNDS");
-  
     const line = PLACE.roundsText;
     const pts = PLACE.roundsPts;
   
@@ -191,7 +189,6 @@ export function createDisplay({ devices, store }) {
   // === FINAŁ – plansza, odpowiedzi, suma, timer ===
 
   async function finalBoardPlaceholders() {
-    await send("MODE FINAL");
     const t = PLACE.finalText;
     const p = PLACE.finalPts;
     const s = PLACE.finalSuma;
