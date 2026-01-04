@@ -247,8 +247,28 @@ export function createUI() {
       });
   }
 
+
+  function setAnswersMode(mode) {
+    const ids = ["roundAnswers", "roundStealAnswers", "roundRevealAnswers"];
+    ids.forEach((id) => {
+      const el = $(id);
+      if (!el) return;
+      const show =
+        (mode === "play" && id === "roundAnswers") ||
+        (mode === "steal" && id === "roundStealAnswers") ||
+        (mode === "reveal" && id === "roundRevealAnswers");
+  
+      if (show) {
+        el.classList.remove("hidden");
+      } else {
+        el.classList.add("hidden");
+      }
+    });
+  }
+
   function renderRoundAnswers(answers, revealedSet) {
     // główna rozgrywka
+    setAnswersMode("play");
     renderAnswersGeneric(
       "roundAnswers",
       answers,
@@ -256,9 +276,10 @@ export function createUI() {
       "rounds.answerClick"
     );
   }
-
+  
   function renderRoundStealAnswers(answers, revealedSet) {
-    // karta „Szansa przeciwników”
+    // tryb kradzieży
+    setAnswersMode("steal");
     renderAnswersGeneric(
       "roundStealAnswers",
       answers,
@@ -266,9 +287,10 @@ export function createUI() {
       "rounds.stealTry"
     );
   }
-
+  
   function renderRoundRevealAnswers(answers, revealedSet) {
-    // karta „Odsłanianie odpowiedzi”
+    // odsłanianie brakujących odpowiedzi
+    setAnswersMode("reveal");
     renderAnswersGeneric(
       "roundRevealAnswers",
       answers,
