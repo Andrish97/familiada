@@ -29,18 +29,18 @@ export function createUI() {
     if (el) el.innerHTML = html;
   }
 
-  function setMsg(id, text) { const el = $(id); if (el) el.textContent = text || ""; }
-  function setText(id, text) { const el = $(id); if (el) el.textContent = text ?? ""; }
-  function setValue(id, value) { const el = $(id); if (el) el.value = value ?? ""; }
-  function setEnabled(id, enabled) { const el = $(id); if (el) el.disabled = !enabled; }
-  function setImg(id, src) { const el = $(id); if (el) el.src = src || ""; }
+  function setMsg(id, text) { const el = (id); if (el) el.textContent = text || ""; }
+  function setText(id, text) { const el = (id); if (el) el.textContent = text ?? ""; }
+  function setValue(id, value) { const el = (id); if (el) el.value = value ?? ""; }
+  function setEnabled(id, enabled) { const el = (id); if (el) el.disabled = !enabled; }
+  function setImg(id, src) { const el = (id); if (el) el.src = src || ""; }
 
   function showCard(card) {
     document.querySelectorAll(".cardPanel[data-card]").forEach((p) => p.classList.add("hidden"));
-    document.querySelector(`.cardPanel[data-card="${card}"]`)?.classList.remove("hidden");
+    document.querySelector(`.cardPanel[data-card="{card}"]`)?.classList.remove("hidden");
 
     document.querySelectorAll(".navItem[data-card]").forEach((b) => b.classList.remove("active"));
-    document.querySelector(`.navItem[data-card="${card}"]`)?.classList.add("active");
+    document.querySelector(`.navItem[data-card="{card}"]`)?.classList.add("active");
   }
 
   function mountNavigation({ canEnter, onNavigate }) {
@@ -56,7 +56,7 @@ export function createUI() {
   }
 
   function setNavEnabled(flags) {
-    if ($("navDevices")) $("navDevices").disabled = !flags.devices;
+    if (("navDevices")) $("navDevices").disabled = !flags.devices;
     if ($("navSetup")) $("navSetup").disabled = !flags.setup;
     if ($("navRounds")) $("navRounds").disabled = !flags.rounds;
     if ($("navFinal")) $("navFinal").disabled = !flags.final;
@@ -403,29 +403,16 @@ export function createUI() {
     $("btnGameReady")?.addEventListener("click", () => emit("game.ready"));
     $("btnStartShowIntro")?.addEventListener("click", () => emit("game.startIntro"));
     $("btnStartRound")?.addEventListener("click", () => emit("rounds.start"));
-    
+
     $("btnBuzzAcceptA")?.addEventListener("click", () => emit("buzz.acceptA"));
     $("btnBuzzAcceptB")?.addEventListener("click", () => emit("buzz.acceptB"));
+    $("btnBuzzRetry")?.addEventListener("click", () => emit("buzz.retry"));
 
     $("btnPassQuestion")?.addEventListener("click", () => emit("rounds.pass"));
     $("btnStartTimer3")?.addEventListener("click", () => emit("rounds.timer3"));
-
     $("btnAddX")?.addEventListener("click", () => emit("rounds.addX"));
-    $("btnStealTry")?.addEventListener("click", () => emit("rounds.stealTry"));
-    $("btnEndRound")?.addEventListener("click", () => emit("rounds.end"));
-
-    $("btnShowReveal")?.addEventListener("click", () => emit("rounds.showReveal"));
-    
-    $("btnBuzzRetry")?.addEventListener("click", () => emit("buzz.retry"));
-    
-    $("btnGoSteal")?.addEventListener("click", () => emit("rounds.goSteal"));
-    $("btnStealMiss")?.addEventListener("click", () => emit("rounds.stealMiss"));
     $("btnGoEndRound")?.addEventListener("click", () => emit("rounds.goEnd"));
-    $("btnGoEndRoundFromSteal")?.addEventListener("click", () => emit("rounds.goEnd"));
 
-      // KONIEC RUNDY / ODSŁANIANIE
-    $("btnShowReveal")?.addEventListener("click", () => emit("rounds.showReveal"));
-    $("btnRevealDone")?.addEventListener("click", () => emit("rounds.revealDone"));
 
 
     // final (kroki)
