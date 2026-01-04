@@ -565,26 +565,6 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     }
   }
 
-    // WŁAŚCIWA ROZGRYWKA / KRADZIEŻ – normalne X-y do 3
-    r.allowPass = false; // po pudle nie można już oddać pytania
-    ui.setEnabled("btnPassQuestion", false);
-
-    const key = r.controlTeam === "A" ? "xA" : "xB";
-    const prev = r[key] || 0;
-    const now = Math.min(prev + 1, 3);
-    r[key] = now;
-
-    await display.roundsSetX(r.controlTeam, now);
-    ui.setRoundsHud(r);
-
-    playSfx("answer_wrong");
-
-    // 3 X tylko we właściwej rozgrywce → AUTOMATYCZNA kradzież
-    if (r.phase === "ROUND" && now >= 3 && !r.steal.active) {
-      goSteal();
-    }
-  }
-
 
   // === Kradzież / koniec rundy ===
 
