@@ -321,8 +321,10 @@
         </section>
 
         <!-- ROUNDS -->
-        <section class="cardPanel hiden" data-card="rounds">
-         <div class="panelTitle">Rundy</div>
+        <section class="cardPanel hidden" data-card="rounds">
+          <div class="panelHead">
+            <div class="panelTitle">Rundy</div>
+          </div>
 
             <!-- STEP R1: GRA GOTOWA -->
             <div class="step" data-step="r_ready">
@@ -330,15 +332,18 @@
               <div class="card">
                 <div class="name">Przygotowanie gry</div>
                 <div class="hint">
-                  Upewnij się, że Wyświetlacz, Prowadzący i Przycisk są podłączone. Potem uruchom ekran gry.
+                  Upewnij się, że Wyświetlacz, Prowadzący i Przycisk są podłączone.
+                  Potem uruchom ekran gry.
                 </div>
                 <div class="stepFoot">
-                  <button class="btn gold" id="btnGameReady" type="button">Gra gotowa</button>
+                  <div class="stepFootLeft">
+                    <button class="btn gold" id="btnGameReady" type="button">Gra gotowa</button>
+                  </div>
                   <div class="msg" id="msgRoundsReady"></div>
                 </div>
               </div>
             </div>
-        
+          
             <!-- STEP R2: INTRO -->
             <div class="step hidden" data-step="r_intro">
               <div class="stepTitle">Intro gry</div>
