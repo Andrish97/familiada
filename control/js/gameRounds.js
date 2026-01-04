@@ -537,7 +537,7 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     ui.setRoundsHud(r);
   
     playSfx("answer_wrong");
-  
+
     // Właściwa gra: po 3 X przechodzimy do kradzieży (ale tylko,
     // jeśli są jeszcze nieodkryte odpowiedzi).
     if (r.phase !== "STEAL" && r[key] >= 3) {
@@ -547,18 +547,17 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
         await goEndRound();
         return;
       }
-  
+
       const other = r.controlTeam === "A" ? "B" : "A";
       r.phase = "STEAL";
       r.steal = r.steal || {};
       r.steal.active = true;
       r.steal.used = false;
       r.stealWon = false;
-  
+
       ui.setMsg("msgSteal", `Szansa na kradzież. Odpowiada drużyna ${other}.`);
-      ui.showRoundsStep("r_steal");
       ui.setRoundsHud(r);
-  
+
       if (display.setIndicator) {
         await display.setIndicator(other);
       }
@@ -570,39 +569,38 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
 
   function goSteal() {
     const r = store.state.rounds;
-
+  
     if (!r.controlTeam) {
       ui.setMsg("msgSteal", "Brak drużyny, która grała pytanie – nie mogę uruchomić kradzieży.");
       return;
     }
-
+  
     if (r.steal.active) {
       return; // już jesteśmy w kradzieży
     }
-
+  
     const stealingTeam = r.controlTeam === "A" ? "B" : "A";
-
+  
     r.phase = "STEAL";
     r.steal.active = true;
     r.steal.used = false;
     r.stealWon = false;
     r.steal.team = stealingTeam;
-
-    ui.showRoundsStep("r_steal");
+  
     ui.setMsg(
       "msgSteal",
       `Kradzież: odpowiada drużyna ${stealingTeam}. ` +
         `Kliknij odpowiedź kapitana na planszy albo przycisk „Nietrafiona”.`
     );
     ui.setRoundsHud(r);
-
+  
     if (display.setIndicator) {
       display.setIndicator(stealingTeam).catch?.(() => {});
     }
-
+  
     // siatka odpowiedzi do kradzieży (kliknięcie = stealTry)
     if (ui.renderRoundStealAnswers) {
-      ui.renderRoundStealAnswers(r.answers || [], r.revealed || new Set());
+      ui.renderRoundStealAnswers(r.answers, r.revealed);
     }
   }
   
@@ -711,12 +709,21 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
   
     // dźwięk końca rundy ZAWSZE
     playSfx("round_transition");
-  
+
     ui.setMsg("msgRoundsEnd", `Koniec rundy. Bank ${bank} pkt dla drużyny ${winner}.`);
-  
+
     r.phase = "END";
-    ui.showRoundsStep("r_end");
+
+    const hasHidden = (r.answers || []).some((a) => !r.revealed?.has(a.ord));
+    if (!hasHidden) {
+      // nie ma już nic do odsłonięcia – od razu kolejna runda
+      endRound();
+    } else {
+      // zostajemy na tej samej karcie, przełączamy tylko tryb odpowiedzi
+      showRevealLeft();
+    }
   }
+
 
   function endRound() {
     const r = store.state.rounds;
@@ -751,14 +758,14 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     const r = store.state.rounds;
   
     if (!r.answers || !r.answers.length) {
-      ui.showRoundsStep("r_reveal");
       ui.setMsg("msgRoundsReveal", "Brak odpowiedzi do odsłonięcia.");
       return;
     }
   
     if (!r.revealed) r.revealed = new Set();
   
-    ui.showRoundsStep("r_reveal");
+    r.phase = "REVEAL";
+  
     if (ui.renderRoundRevealAnswers) {
       ui.renderRoundRevealAnswers(r.answers, r.revealed);
     }
@@ -766,7 +773,17 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
       "msgRoundsReveal",
       "Klikaj brakujące odpowiedzi, żeby pokazać je na wyświetlaczu (bez zmiany punktów)."
     );
+  
+    // wyszarzamy przyciski gry – jesteśmy w trybie odsłaniania
+    ui.setEnabled("btnPassQuestion", false);
+    ui.setEnabled("btnStartTimer3", false);
+    ui.setEnabled("btnAddX", false);
+    ui.setEnabled("btnStealMiss", false);
+    ui.setEnabled("btnGoEndRound", false);
+  
+    ui.setRoundsHud(r);
   }
+
   
   async function revealLeftByOrd(ord) {
     const r = store.state.rounds;
@@ -791,13 +808,18 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     } catch (e) {
       console.warn("[rounds] revealLeftByOrd display error", e);
     }
+  
+    const hasHidden = (r.answers || []).some((a) => !r.revealed?.has(a.ord));
+    if (!hasHidden) {
+      ui.setMsg("msgRoundsReveal", "Wszystkie odpowiedzi odsłonięte. Koniec rundy.");
+      endRound();
+    }
   }
+
   
   function revealDone() {
-    // wracamy do ekranu końca rundy (tam nadal jest „Zakończ rundę”)
-    ui.showRoundsStep("r_end");
     ui.setMsg("msgRoundsReveal", "");
-    ui.setRoundsHud(store.state.rounds);
+    endRound();
   }
 
   function bootIfNeeded() {
