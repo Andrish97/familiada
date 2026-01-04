@@ -29,11 +29,40 @@ export function createUI() {
     if (el) el.innerHTML = html;
   }
 
-  function setMsg(id, text) { const el = (id); if (el) el.textContent = text || ""; }
-  function setText(id, text) { const el = (id); if (el) el.textContent = text ?? ""; }
-  function setValue(id, value) { const el = (id); if (el) el.value = value ?? ""; }
-  function setEnabled(id, enabled) { const el = (id); if (el) el.disabled = !enabled; }
-  function setImg(id, src) { const el = (id); if (el) el.src = src || ""; }
+  function setMsg(id, text) {
+    const el = typeof id === "string" ? $(id) : id;
+    if (el && "textContent" in el) {
+      el.textContent = text || "";
+    }
+  }
+
+  function setText(target, text) {
+    const el = typeof target === "string" ? document.getElementById(target) : target;
+    if (el && "textContent" in el) {
+      el.textContent = text ?? "";
+    }
+  }
+
+  function setValue(target, value) {
+    const el = typeof target === "string" ? document.getElementById(target) : target;
+    if (el && "value" in el) {
+      el.value = value ?? "";
+    }
+  }
+
+  function setEnabled(target, enabled) {
+    const el = typeof target === "string" ? document.getElementById(target) : target;
+    if (el && "disabled" in el) {
+      el.disabled = !enabled;
+    }
+  }
+
+  function setImg(target, src) {
+    const el = typeof target === "string" ? document.getElementById(target) : target;
+    if (el && "src" in el) {
+      el.src = src || "";
+    }
+  }
 
   function showCard(card) {
     document.querySelectorAll(".cardPanel[data-card]").forEach((p) => p.classList.add("hidden"));
