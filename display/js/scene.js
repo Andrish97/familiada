@@ -1141,30 +1141,16 @@ export async function createScene() {
   const api = {
     mode: {
       get: () => mode,
-      set: async (m, opts = {}) => {
+      set: async (m) => {
         const mm = (m ?? "").toString().toUpperCase();
         if (!BIG_MODES[mm]) throw new Error(`Nieznany tryb: ${m}`);
         mode = mm;
 
-        // BLANK = pusty ekran, nic więcej
+        // JEDYNA rzecz wizualna: BLANK czyści ekran
         if (mode === BIG_MODES.BLANK) {
           clearBig(big);
-          return;
         }
-
-        if (mode === BIG_MODES.ROUNDS) {
-          // wejdź w ROUNDS i odtwórz całą planszę z roundsState
-          redrawRounds();
-        } else if (mode === BIG_MODES.FINAL) {
-          // FINAL: na wejściu czyścimy i rysujemy tylko sumę (resztę robią F/FBATCH/FHALF)
-          clearBig(big);
-          drawFinalSum();
-        } else {
-          // LOGO, WIN itp. – czyścimy, rysowaniem zajmują się odpowiednie API (logo.show, win.set)
-          clearBig(big);
-        }
-
-        if (opts?.animIn) await api.big.animIn(opts.animIn);
+        // żadnego redrawRounds, drawFinalSum, clearBig dla innych trybów
       },
     },
 
