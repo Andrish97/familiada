@@ -1044,6 +1044,7 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     setStep("r_roundStart");
     ui.setMsg("msgRoundsEnd", "Runda zakończona. Możesz rozpocząć kolejną rundę.");
   }
+  
 
   function showRevealLeft() {
     const r = store.state.rounds;
@@ -1076,8 +1077,8 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
   
     ui.setRoundsHud(r);
   }
-
-  async function revealLeftByOrd(ord) {
+  
+   async function revealLeftByOrd(ord) {
     const r = store.state.rounds;
     if (!r.answers || !r.answers.length) return;
   
@@ -1107,7 +1108,6 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
       endRound(); // automatyczny skok do „Rozpocznij rundę”
     }
   }
-
   
   function revealDone() {
     ui.setMsg("msgRoundsReveal", "");
