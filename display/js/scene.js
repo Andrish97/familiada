@@ -1050,11 +1050,9 @@ export async function createScene() {
   };
 
   // ============================================================
-  // Modes (duży ekran)
+  // Duży wyświetlacz nie ma już osobnych trybów LOGO/ROUNDS/FINAL/WIN.
+  // Każda komenda sama rysuje potrzebny stan na BIG.
   // ============================================================
-  const BIG_MODES = { BLANK: "BLANK", LOGO:"LOGO", ROUNDS:"ROUNDS", FINAL:"FINAL", WIN:"WIN" };
-  let mode = BIG_MODES.LOGO;
-
 
   // ============================================================
   // SNAPSHOT / RESTORE (big + small) – zapis / odtworzenie 1:1
@@ -1091,7 +1089,6 @@ export async function createScene() {
   
   const snapshotAll = () => ({
     v: 1,
-    sceneMode: mode,
     big: snapArea(big, 1, 1, 30, 10),
     small: {
       top:   snapTriple(topTriple),
@@ -1139,20 +1136,6 @@ export async function createScene() {
   // API
   // ============================================================
   const api = {
-    mode: {
-      get: () => mode,
-      set: async (m) => {
-        const mm = (m ?? "").toString().toUpperCase();
-        if (!BIG_MODES[mm]) throw new Error(`Nieznany tryb: ${m}`);
-        mode = mm;
-
-        // JEDYNA rzecz wizualna: BLANK czyści ekran
-        if (mode === BIG_MODES.BLANK) {
-          clearBig(big);
-        }
-        // żadnego redrawRounds, drawFinalSum, clearBig dla innych trybów
-      },
-    },
 
     big: {
       // BRAK globalnej prędkości, cały blok speed wyrzucamy
@@ -1249,7 +1232,6 @@ export async function createScene() {
       },
 
       show: async (animIn = { type:"edge", dir:"left", ms:14 }) => {
-        await api.mode.set("LOGO");
         api.logo.draw();
         await api.big.animIn({ ...animIn, area: api.big.areaLogo() });
       },
@@ -1261,7 +1243,6 @@ export async function createScene() {
 
     win: {
       set: async (num, { animOut=null, animIn=null } = {}) => {
-        if (mode !== BIG_MODES.WIN) await api.mode.set("WIN");
         const A = api.big.areaWin();
         if (animOut) await api.big.animOut({ ...animOut, area: A });
         drawWinNumber5(GLYPHS, big, WIN_DIGITS, num, LIT.main);
@@ -1271,8 +1252,6 @@ export async function createScene() {
 
     rounds: {
       setText: async (idx1to6, text, { animOut=null, animIn=null } = {}) => {
-        if (mode !== BIG_MODES.ROUNDS) await api.mode.set("ROUNDS");
-
         const i = (idx1to6 | 0) - 1;
         if (i < 0 || i > 5) throw new Error("idx1to6 musi być 1..6");
 
@@ -1292,7 +1271,6 @@ export async function createScene() {
       },
 
       setPts: async (idx1to6, pts, { animOut=null, animIn=null } = {}) => {
-        if (mode !== BIG_MODES.ROUNDS) await api.mode.set("ROUNDS");
 
         const i = (idx1to6 | 0) - 1;
         if (i < 0 || i > 5) throw new Error("idx1to6 musi być 1..6");
@@ -1317,7 +1295,6 @@ export async function createScene() {
       },
 
       setSuma: async (val, { animOut=null, animIn=null } = {}) => {
-        if (mode !== BIG_MODES.ROUNDS) await api.mode.set("ROUNDS");
       
         roundsState.suma = (val ?? "").toString();
         relocateSumaIfNeeded();
@@ -1342,7 +1319,6 @@ export async function createScene() {
 
       // ====== NOWE: batch (jedna animacja na całość) ======
       setAll: async ({ rows = [], suma = undefined, animOut = null, animIn = null } = {}) => {
-        if (mode !== BIG_MODES.ROUNDS) await api.mode.set("ROUNDS");
       
         const A_ALL = api.big.areaAll();
       
@@ -1413,7 +1389,6 @@ export async function createScene() {
 
     final: {
       setLeft: async (idx1to5, text, { animOut=null, animIn=null } = {}) => {
-        if (mode !== BIG_MODES.FINAL) await api.mode.set("FINAL");
         const i = (idx1to5|0) - 1;
         if (i < 0 || i > 4) throw new Error("idx1to5 musi być 1..5");
         const raw = (text ?? "").toString();
@@ -1427,7 +1402,6 @@ export async function createScene() {
       },
     
       setA: async (idx1to5, pts, { animOut=null, animIn=null } = {}) => {
-        if (mode !== BIG_MODES.FINAL) await api.mode.set("FINAL");
         const i = (idx1to5|0) - 1;
         if (i < 0 || i > 4) throw new Error("idx1to5 musi być 1..5");
         const raw = (pts ?? "").toString();
@@ -1441,7 +1415,6 @@ export async function createScene() {
       },
     
       setB: async (idx1to5, pts, { animOut=null, animIn=null } = {}) => {
-        if (mode !== BIG_MODES.FINAL) await api.mode.set("FINAL");
         const i = (idx1to5|0) - 1;
         if (i < 0 || i > 4) throw new Error("idx1to5 musi być 1..5");
         const raw = (pts ?? "").toString();
@@ -1455,7 +1428,6 @@ export async function createScene() {
       },
     
       setRight: async (idx1to5, text, { animOut=null, animIn=null } = {}) => {
-        if (mode !== BIG_MODES.FINAL) await api.mode.set("FINAL");
         const i = (idx1to5|0) - 1;
         if (i < 0 || i > 4) throw new Error("idx1to5 musi być 1..5");
         const raw = (text ?? "").toString();
@@ -1480,10 +1452,9 @@ export async function createScene() {
         const s = (side ?? "").toString().toUpperCase();
         if (s !== "A" && s !== "B") throw new Error(`FSUMMODE: nieznana strona: ${side}`);
         finalState.sumMode = s;
-        if (mode === BIG_MODES.FINAL) {
-          drawFinalSum();
-        }
+        drawFinalSum();
       },
+
 
       // Ustawia sumę aktualnie wybranego trybu (A/B),
       // bez ruszania reszty FINAL – tylko label + wartość.
@@ -1540,7 +1511,6 @@ export async function createScene() {
       },
       
       setAll: async ({ rows = [], suma = undefined, sumaSide = null, animOut = null, animIn = null } = {}) => {
-        if (mode !== BIG_MODES.FINAL) await api.mode.set("FINAL");
       
         const A_ALL = api.big.areaAll();
       
@@ -1602,7 +1572,6 @@ export async function createScene() {
       },
       
       setHalf: async (side, { rows = [], animOut = null, animIn = null } = {}) => {
-        if (mode !== BIG_MODES.FINAL) await api.mode.set("FINAL");
     
         const s = (side ?? "").toString().toUpperCase();
         let area;
@@ -1721,25 +1690,6 @@ export async function createScene() {
     if (head === "LONG1") return api.small.long1(unquote(tokens.slice(1).join(" ")));
     if (head === "LONG2") return api.small.long2(unquote(tokens.slice(1).join(" ")));
 
-    // mode (big)
-    if (head === "MODE") {
-      const m = (tokens[1] ?? "").toUpperCase();
-      if (!BIG_MODES[m]) {
-        throw new Error(`Nieznany tryb: ${tokens[1] || ""}`);
-      }
-    
-      // tylko przełączamy tryb logicznie
-      mode = m;
-    
-      // JEDYNY efekt wizualny: BLANK czyści ekran
-      if (mode === BIG_MODES.BLANK) {
-        clearBig(big);
-      }
-    
-      // ignorujemy ANIMIN / ANIMOUT przy samej komendzie MODE
-      return;
-    }
-    
     // LOGO
     if (head === "LOGO") {
       const op = (tokens[1] ?? "").toUpperCase();
@@ -1750,7 +1700,6 @@ export async function createScene() {
         return;
       }
       if (op === "DRAW") {
-        await api.mode.set("LOGO");
         api.logo.draw();
         return;
       }
@@ -2059,7 +2008,5 @@ export async function createScene() {
   setLongTextCenteredMax15(GLYPHS, long1, "", LIT.main);
   setLongTextCenteredMax15(GLYPHS, long2, "", LIT.main);
 
-  mode = BIG_MODES.LOGO;
-
-  return { api, BIG_MODES, handleCommand };
+  return { api, handleCommand };
 }
