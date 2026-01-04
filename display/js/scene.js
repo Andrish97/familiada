@@ -1690,6 +1690,16 @@ export async function createScene() {
     if (head === "LONG1") return api.small.long1(unquote(tokens.slice(1).join(" ")));
     if (head === "LONG2") return api.small.long2(unquote(tokens.slice(1).join(" ")));
 
+    // INDICATOR <OFF|ON_A|ON_B>
+    if (head === "INDICATOR") {
+      const val = (tokens[1] ?? "OFF").toUpperCase();
+      if (val === "OFF" || val === "ON_A" || val === "ON_B") {
+        return api.indicator.set(val);
+      }
+      console.warn("INDICATOR: nieznany stan:", val);
+      return;
+    }
+    
     // BIG
     // BLANK
     if (head === "BLANK") {
