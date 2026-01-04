@@ -1736,30 +1736,24 @@ export async function createScene() {
     if (head === "LONG2") return api.small.long2(unquote(tokens.slice(1).join(" ")));
 
     // mode (big)
-    // MODE:
-    // - MODE BLANK  -> czyści ekran (NORMALNIE, przez api.mode.set)
-    // - MODE ROUNDS/FINAL/LOGO/WIN -> tylko zmiana trybu, bez rysowania
     if (head === "MODE") {
       const m = (tokens[1] ?? "").toUpperCase();
       if (!BIG_MODES[m]) {
         throw new Error(`Nieznany tryb: ${tokens[1] || ""}`);
       }
-
-      if (m === BIG_MODES.BLANK) {
-        // BLANK faktycznie czyści ekran
-        return api.mode.set("BLANK");
-      }
-
-      // pozostałe tryby: tylko przełącznik trybu,
-      // bez czyszczenia / animacji / rysowania
+    
+      // tylko przełączamy tryb logicznie
       mode = m;
+    
+      // JEDYNY efekt wizualny: BLANK czyści ekran
+      if (mode === BIG_MODES.BLANK) {
+        clearBig(big);
+      }
+    
+      // ignorujemy ANIMIN / ANIMOUT przy samej komendzie MODE
       return;
     }
     
-    if (head === "INDICATOR") {
-      return api.indicator.set(tokens[1] ?? "OFF");
-    }
-
     // LOGO
     if (head === "LOGO") {
       const op = (tokens[1] ?? "").toUpperCase();
