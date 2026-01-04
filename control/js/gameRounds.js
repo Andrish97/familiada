@@ -686,22 +686,56 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     // żeby nie wpadł drugi X z timera
     clearTimer3();
   
-    // POJEDYNEK: X to tylko błysk na planszy
+    // POJEDYNEK: X to odpowiedź tej drużyny z 0 punktów
     if (r.phase === "DUEL") {
-      if (!r.controlTeam) {
-        ui.setMsg("msgRoundsPlay", "Najpierw zatwierdź drużynę w pojedynku.");
-        return;
+      const d = r.duel || {};
+  
+      // Kto teraz odpowiada?
+      // 1) currentTeam – jeśli jesteśmy w trakcie cyklu
+      // 2) firstTeam – tuż po acceptBuzz
+      // 3) lastPressed – awaryjnie, jeśli coś poszło bokiem
+      let team = d.currentTeam || d.firstTeam || d.lastPressed;
+  
+      // Jeśli naprawdę nic nie wiemy (np. X wciśnięty zanim cokolwiek się zaczęło),
+      // nie blokujemy gry – domyślnie przypiszemy do A, zamiast wywalać komunikat.
+      if (!team) {
+        team = "A";
       }
+  
       if (display.roundsFlashDuelX) {
         try {
-          await display.roundsFlashDuelX(r.controlTeam);
+          await display.roundsFlashDuelX(team);
         } catch (e) {
           console.warn("[rounds] roundsFlashDuelX error", e);
         }
       }
       playSfx("answer_wrong");
+  
+      // traktujemy X jak odpowiedź z 0 punktów
+      const result = duelRegisterResult(team, { pts: 0, isX: true, isTop: false });
+  
+      if (result.type === "WIN") {
+        await beginPlayAfterDuel(result.winner);
+      } else if (result.type === "CONTINUE_SECOND") {
+        ui.setMsg("msgDuel", `Teraz odpowiada drużyna ${result.nextTeam}.`);
+        ui.setRoundsHud(r);
+        if (display.setIndicator) {
+          display.setIndicator(result.nextTeam).catch?.(() => {});
+        }
+      } else if (result.type === "RESET") {
+        ui.setMsg(
+          "msgDuel",
+          `Obie odpowiedzi pudło – nowy cykl pojedynku. Zaczyna drużyna ${d.firstTeam}.`
+        );
+        ui.setRoundsHud(r);
+        if (display.setIndicator && d.firstTeam) {
+          display.setIndicator(d.firstTeam).catch?.(() => {});
+        }
+      }
+  
       return;
     }
+
   
     // KRADZIEŻ: X = kradzież nietrafiona
     if (r.phase === "STEAL") {
