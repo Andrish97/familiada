@@ -94,10 +94,19 @@ export const createCommandHandler = (app) => {
     }
   }, 350);
 
-  // Wszystkie komendy sceny zakładamy w trybie GAME
-  const ensureGameMode = () => {
-    if (app.mode !== "GAME") app.setMode("GAME");
-  };
+  function ensureGameMode() {
+    if (app.mode === "GAME") return true;
+
+    console.warn("[display] KOMENDA SCENE zignorowana, bo APP =", app.mode, "(wymagane APP=GAME)");
+    return false;
+  }
+
+  function ensureQrMode() {
+    if (app.mode === "QR") return true;
+
+    console.warn("[display] KOMENDA QR zignorowana, bo APP =", app.mode, "(wymagane APP=QR)");
+    return false;
+  }
 
   // ===== KOLEJKA KOMEND =====
   let commandChain = Promise.resolve();
@@ -150,23 +159,34 @@ export const createCommandHandler = (app) => {
     //    (można wołać i z APP=QR, i z innego – zawsze skończy się w QR)
     // ------------------------------------------------------------------
     if (head === "QR") {
+      // najpierw sprawdzamy, czy APP = QR
+      if (!ensureQrMode()) {
+        saveSnapshot(raw);  // można zostawić, ekran się i tak nie zmienił
+        return;
+      }
+
       const hostIdx = tokens.findIndex(t => t.toUpperCase() === "HOST");
       const buzIdx  = tokens.findIndex(t => t.toUpperCase() === "BUZZER");
 
       if (hostIdx >= 0) qr.setHost(unquote(tokens[hostIdx + 1] ?? ""));
       if (buzIdx  >= 0) qr.setBuzzer(unquote(tokens[buzIdx + 1] ?? ""));
 
-      app.setMode("QR");
+      // UWAGA: tutaj JUŻ NIE zmieniamy app.mode!
+      // Tryb QR ustawiasz komendą: APP QR
       saveSnapshot(raw);
       return;
     }
 
+
     // ------------------------------------------------------------------
     // 3) Wszystko inne → komendy SCENY, ale tylko w APP=GAME
-    //    (tu wpada: MODE LOGO/ROUNDS/FINAL/BLANK/WIN,
-    //     RTXT, RPTS, RBATCH, FL, FB, FSUMA, WIN, LOGO, INDICATOR, itp.)
     // ------------------------------------------------------------------
-    ensureGameMode();
+    if (!ensureGameMode()) {
+      // jesteśmy w APP != GAME → komenda sceny jest ignorowana
+      saveSnapshot(raw); // opcjonalnie: zapisujemy fakt, że ktoś próbował
+      return;
+    }
+
     await scene.handleCommand(raw);
     saveSnapshot(raw);
   }, line);
