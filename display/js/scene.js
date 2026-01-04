@@ -1690,6 +1690,13 @@ export async function createScene() {
     if (head === "LONG1") return api.small.long1(unquote(tokens.slice(1).join(" ")));
     if (head === "LONG2") return api.small.long2(unquote(tokens.slice(1).join(" ")));
 
+    // BIG
+    // BLANK
+    if (head === "BLANK") {
+      api.big.clear();   // kasuje 30x10, panele boczne / dolne zostają
+      return;
+    }
+    
     // LOGO
     if (head === "LOGO") {
       const op = (tokens[1] ?? "").toUpperCase();
