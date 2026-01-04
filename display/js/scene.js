@@ -1609,12 +1609,34 @@ export async function createScene() {
         }
       },
     },
+        // 🔧 NOWE: debug fontu 5x7
+    debug: {
+      showFont: () => {
+        const groups = [];
+        if (FONT5.letters)     groups.push(FONT5.letters);
+        if (FONT5.digits)      groups.push(FONT5.digits);
+        if (FONT5.punctuation) groups.push(FONT5.punctuation);
+        if (FONT5.math)        groups.push(FONT5.math);
+        if (FONT5.special)     groups.push(FONT5.special);
+
+        // płaska lista wszystkich znaków z JSONa
+        const chars = groups.flatMap(obj => Object.keys(obj));
+
+        // czyścimy BIG
+        api.big.clear();
+
+        let i = 0;
+        for (let row = 1; row <= big.tilesY; row++) {
+          for (let col = 1; col <= big.tilesX; col++) {
+            if (i >= chars.length) return;
+            api.big.put(col, row, chars[i]);
+            i++;
+          }
+        }
+      },
+    },
   };
-
-  api.snapshotAll=snapshotAll;
-
-  api.restoreSnapshot=restoreSnapshot;
-
+  
   // ============================================================
   // Text command handler (GAME)
   // ============================================================
@@ -1682,6 +1704,13 @@ export async function createScene() {
     const tokens = tokenize(raw);
     const head = (tokens[0] ?? "").toUpperCase();
 
+    // 🔧 DEBUG
+    if (head === "DEBUG") {
+      const op = (tokens[1] ?? "").toUpperCase();
+      if (op === "FONT") {
+        return api.debug.showFont();
+      }
+    }
 
     // small
     if (head === "TOP")   return api.small.topDigits(tokens[1] ?? "");
