@@ -1,4 +1,11 @@
 export function createDevices({ game, ui, store, chDisplay, chHost, chBuzzer }) {
+  // --- NOWE: kolejki komend per urządzenie ---
+  const cmdQueues = {
+    display: [],
+    host: [],
+    buzzer: [],
+  };
+
   function makeUrl(path, id, key) {
     const u = new URL(path, location.origin);
     u.searchParams.set("id", id);
@@ -13,9 +20,87 @@ export function createDevices({ game, ui, store, chDisplay, chHost, chBuzzer }) 
     if (error) throw error;
   }
 
-  async function sendDisplayCmd(line) { await sendCmd(chDisplay, "DISPLAY_CMD", line); }
-  async function sendHostCmd(line) { await sendCmd(chHost, "HOST_CMD", line); }
-  async function sendBuzzerCmd(line) { await sendCmd(chBuzzer, "BUZZER_CMD", line); }
+  // pomocniczo: czy dane urządzenie jest online wg store
+  function isOnline(kind) {
+    const flags = store.state?.flags || {};
+    if (kind === "display") return !!flags.displayOnline;
+    if (kind === "host") return !!flags.hostOnline;
+    if (kind === "buzzer") return !!flags.buzzerOnline;
+    return false;
+  }
+
+  function enqueue(kind, line) {
+    const l = String(line ?? "").trim();
+    if (!l) return;
+    cmdQueues[kind].push(l);
+  }
+
+  // PUBLICZNE: flush kolejki (wywołane z presence po reconnect)
+  async function flushQueued(kind) {
+    if (!isOnline(kind)) return;
+
+    const q = cmdQueues[kind];
+    if (!q || !q.length) return;
+
+    let channel;
+    let event;
+
+    if (kind === "display") {
+      channel = chDisplay;
+      event = "DISPLAY_CMD";
+    } else if (kind === "host") {
+      channel = chHost;
+      event = "HOST_CMD";
+    } else if (kind === "buzzer") {
+      channel = chBuzzer;
+      event = "BUZZER_CMD";
+    } else {
+      return;
+    }
+
+    // wysyłamy po kolei – urządzenia i tak potrafią zjeść serię komend
+    while (q.length) {
+      const line = q.shift();
+      await sendCmd(channel, event, line);
+    }
+  }
+
+  // --- ZMODYFIKOWANE WYSYŁACZE KOMEND ---
+  // UWAGA: sygnatury niezmienione: dalej przyjmują TYLKO (line)
+
+  async function sendDisplayCmd(line) {
+    const l = String(line ?? "").trim();
+    if (!l) return;
+
+    if (isOnline("display")) {
+      await sendCmd(chDisplay, "DISPLAY_CMD", l);
+    } else {
+      // offline → tylko do kolejki, bez błędu
+      enqueue("display", l);
+    }
+  }
+
+  async function sendHostCmd(line) {
+    const l = String(line ?? "").trim();
+    if (!l) return;
+
+    if (isOnline("host")) {
+      await sendCmd(chHost, "HOST_CMD", l);
+    } else {
+      enqueue("host", l);
+    }
+  }
+
+  async function sendBuzzerCmd(line) {
+    const l = String(line ?? "").trim();
+    if (!l) return;
+
+    if (isOnline("buzzer")) {
+      await sendCmd(chBuzzer, "BUZZER_CMD", l);
+    } else {
+      enqueue("buzzer", l);
+    }
+  }
 
   function qrSrc(url) {
     const u = encodeURIComponent(String(url));
@@ -72,6 +157,7 @@ export function createDevices({ game, ui, store, chDisplay, chHost, chBuzzer }) 
     sendHostCmd,
     sendBuzzerCmd,
     sendQrToDisplay,
-    getUrls
+    getUrls,
+    flushQueued,
   };
 }
