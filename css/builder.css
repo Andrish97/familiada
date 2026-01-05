@@ -53,9 +53,13 @@ body.builder-body{
   margin-top:16px;
 }
 
-/* kontener: zakładki + karta */
+/* kontener: zakładki + karta
+   WAŻNE: ma tło = karta, więc kliny i wypustka nie „dziurawią” do tła strony */
 .tabs-card{
   position:relative;
+  background: var(--card);
+  border-radius: var(--builder-radius);
+  padding-top:0;
 }
 
 /* Pasek zakładek */
@@ -104,14 +108,12 @@ body.builder-body{
   color:rgba(255,255,255,.95);
 }
 
-/* stan aktywny: wyraźny tekst */
+/* stan aktywny: bardzo czytelny tekst */
 .tab.active{
   color:#111;
 }
 
-/* WYPUSTKA: aktywna zakładka – prostokąt + kliny
-   prostokąt jako pseudo-element kwaśno-symetryczny
-*/
+/* WYPUSTKA: prostokąt zakładki aktywnej, scala się z kartą */
 
 .tab.active::before{
   content:"";
@@ -127,7 +129,7 @@ body.builder-body{
   z-index:-1;
 }
 
-/* Kliny: kontenery */
+/* Kliny: kontenery (siedzą nad tłem tabs-card, które jest takie jak karta) */
 
 .tab-corner{
   position:absolute;
@@ -135,15 +137,15 @@ body.builder-body{
   width:var(--builder-radius);
   height:var(--builder-radius);
   overflow:hidden;
-  background-color:transparent;
+  background-color: var(--card); /* baza = kolor karty, więc zero prześwitów */
   z-index:1;
   pointer-events:none;
 }
 
-/* wypełnienie klina: wycięcie */
+/* wypełnienie klina – wycięcie kształtu, ale na tle var(--card) */
 .tab-corner-left{
   left:0;
-  transform:translateX(calc(-100% + 1px)); /* 1px przybliżenia do tab */
+  transform:translateX(calc(-100% + 1px)); /* 1px dosunięcia */
   background-image: radial-gradient(
     circle at 0% 0%,
     transparent var(--builder-radius),
@@ -162,6 +164,7 @@ body.builder-body{
 }
 
 /* obramowanie łukiem: całe kółko, ale widzimy ćwiartkę */
+
 .tab-corner::before{
   content:"";
   position:absolute;
@@ -172,7 +175,8 @@ body.builder-body{
   background:transparent;
 }
 
-/* fudge 2px, żeby łuk był na tej samej krawędzi co wypustka/karta */
+/* fudge 2px, żeby łuk leżał dokładnie na krawędzi */
+
 .tab-corner-left::before{
   top:  calc(-1 * var(--builder-radius) - 2px);
   left: calc(-1 * var(--builder-radius) - 2px);
@@ -182,14 +186,15 @@ body.builder-body{
   right: calc(-1 * var(--builder-radius) - 2px);
 }
 
-/* Pokazujemy kliny tylko dla aktywnego taba */
+/* Pokazujemy kliny tylko przy aktywnej zakładce */
+
 .tab-slot .tab-corner{ opacity:0; }
 .tab-slot:has(.tab.active) .tab-corner{ opacity:1; }
 
 /* Reguły krawędzi:
-   - jeśli aktywny pierwszy: brak lewego klina, karta bez lewego zaokrąglenia
-   - jeśli aktywny ostatni: brak prawego klina, karta bez prawego zaokrąglenia
-   - środkowy: oba rogi
+   - pierwszy aktywny: brak lewego klina + brak lewego zaokrąglenia karty
+   - ostatni aktywny: brak prawego klina + brak prawego zaokrąglenia karty
+   - środkowy: oba rogi obecne
 */
 
 .tabs-card:has(#tabPollText.active) .tab-slot--start .tab-corner-left{
@@ -211,7 +216,8 @@ body.builder-body{
   box-shadow: 0 18px 36px rgba(0,0,0,.35);
 }
 
-/* górna krawędź karty – scala się z wypustką */
+/* górna krawędź karty – scala się wizualnie z wypustką */
+
 .builder-card::before{
   content:"";
   position:absolute;
@@ -225,14 +231,17 @@ body.builder-body{
 }
 
 /* zakrzywienie karty zależne od aktywnej zakładki */
+
 .tabs-card:has(#tabPollText.active) .builder-card{
   border-top-left-radius:0;
   border-top-right-radius:var(--builder-radius);
 }
+
 .tabs-card:has(#tabPrepared.active) .builder-card{
   border-top-left-radius:var(--builder-radius);
   border-top-right-radius:0;
 }
+
 .tabs-card:has(#tabPollPoints.active) .builder-card{
   border-top-left-radius:var(--builder-radius);
   border-top-right-radius:var(--builder-radius);
@@ -246,15 +255,13 @@ body.builder-body{
   gap:14px;
 }
 
-/* pojedyncza gra – JS nadaje class="card" */
+/* pojedyncza gra – JS tworzy div.card, więc stylujemy .grid .card */
 
 .builder-body .grid .card{
   position:relative;
-  background: radial-gradient(circle at 0 0,
-    rgba(255,255,255,.18),
-    rgba(0,0,0,.65));
+  background: rgba(5, 8, 18, 0.96); /* jednolity, ciemny, spokojny kafelek */
   border-radius:18px;
-  border:1px solid rgba(255,255,255,.20);
+  border:1px solid rgba(255,255,255,.18);
   padding:14px 14px 12px;
   cursor:pointer;
   transition:
@@ -266,6 +273,7 @@ body.builder-body{
 }
 
 /* X do usuwania */
+
 .builder-body .grid .card .x{
   position:absolute;
   top:8px;
@@ -278,6 +286,7 @@ body.builder-body{
 }
 
 /* tytuł gry */
+
 .builder-body .grid .card .name{
   font-weight:900;
   font-size:14px;
@@ -290,6 +299,7 @@ body.builder-body{
 }
 
 /* meta (typ + status) */
+
 .builder-body .grid .card .meta{
   margin-top:4px;
   font-size:11px;
@@ -304,9 +314,7 @@ body.builder-body{
   transform: translateY(-2px);
   box-shadow: 0 10px 24px rgba(0,0,0,.45);
   border-color: var(--gold);
-  background: radial-gradient(circle at 0 0,
-    rgba(255,255,255,.22),
-    rgba(0,0,0,.80));
+  background: rgba(8, 12, 26, 1); /* lekko jaśniejszy przy hoverze */
 }
 
 .builder-body .grid .card.selected{
