@@ -1,4 +1,4 @@
-/* css/builder.css — przebudowany pod nowe karty */
+/* css/builder.css – wersja dopasowana do kształtu kart z wypustką */
 
 body.builder-body{
   min-height:100vh;
@@ -6,7 +6,7 @@ body.builder-body{
   color:#fff;
 }
 
-/* Główna belka u góry */
+/* ===== Górny pasek / wrapper ===== */
 
 .wrap{
   max-width: 1120px;
@@ -42,19 +42,23 @@ body.builder-body{
   flex-wrap:wrap;
 }
 
-/* ===== Tabs + karta (nowy kształt) ===== */
+/* ===== Tabs + karta ===== */
 
 :root{
   --builder-radius: 16px;
+  --builder-tab-height: 44px;
 }
-
-/* kontener na zakładki i kartę */
 
 .builder-shell{
   margin-top:16px;
 }
 
-/* pasek zakładek */
+/* kontener: zakładki + karta */
+.tabs-card{
+  position:relative;
+}
+
+/* Pasek zakładek */
 
 .tabs{
   display:flex;
@@ -64,41 +68,57 @@ body.builder-body{
   z-index:2;
 }
 
-/* pojedyncza zakładka */
+.tab-slot{
+  position:relative;
+  min-width:120px;
+  display:flex;
+  align-items:flex-end;
+  justify-content:center;
+}
+
+/* przy większych labelkach rozciąga się */
+.tab-slot .tab{
+  flex:0 1 auto;
+}
+
+/* same przyciski */
 
 .tab{
   position:relative;
   border:none;
   background:transparent;
-  color:rgba(255,255,255,.65);
+  color:rgba(255,255,255,.60);
   font-size:13px;
-  padding:8px 18px;
+  font-weight:800;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+  padding:10px 22px;
   cursor:pointer;
   white-space:nowrap;
-  transform:translateY(6px); /* lekko w dół względem karty */
+  z-index:3;
+  transform:translateY(6px); /* pasek lekko w dół względem karty */
 }
 
-/* hover na nieaktywnych */
-
+/* hover nieaktywnych */
 .tab:not(.active):hover{
-  color:#fff;
+  color:rgba(255,255,255,.95);
 }
 
-/* „wypustka” aktywnej karty */
-
+/* stan aktywny: wyraźny tekst */
 .tab.active{
   color:#111;
 }
 
-/* kształt wypustki jako pseudo-element,
-   scala się optycznie z kartą niżej */
+/* WYPUSTKA: aktywna zakładka – prostokąt + kliny
+   prostokąt jako pseudo-element kwaśno-symetryczny
+*/
 
 .tab.active::before{
   content:"";
   position:absolute;
   left:0;
   right:0;
-  bottom:-6px; /* sięga do karty */
+  bottom:-6px;
   height: calc(100% + 6px);
   background: var(--card);
   border-radius: var(--builder-radius) var(--builder-radius) 0 0;
@@ -107,25 +127,76 @@ body.builder-body{
   z-index:-1;
 }
 
-/* dekoracyjne „klinowe” wyoblenia po bokach aktywnej */
+/* Kliny: kontenery */
 
-.tab.active::after{
+.tab-corner{
+  position:absolute;
+  bottom:0;
+  width:var(--builder-radius);
+  height:var(--builder-radius);
+  overflow:hidden;
+  background-color:transparent;
+  z-index:1;
+  pointer-events:none;
+}
+
+/* wypełnienie klina: wycięcie */
+.tab-corner-left{
+  left:0;
+  transform:translateX(calc(-100% + 1px)); /* 1px przybliżenia do tab */
+  background-image: radial-gradient(
+    circle at 0% 0%,
+    transparent var(--builder-radius),
+    var(--card) var(--builder-radius)
+  );
+}
+
+.tab-corner-right{
+  right:0;
+  transform:translateX(calc(100% - 1px));
+  background-image: radial-gradient(
+    circle at 100% 0%,
+    transparent var(--builder-radius),
+    var(--card) var(--builder-radius)
+  );
+}
+
+/* obramowanie łukiem: całe kółko, ale widzimy ćwiartkę */
+.tab-corner::before{
   content:"";
   position:absolute;
-  left:-16px;
-  right:-16px;
-  bottom:-6px;
-  height:16px;
-  background:
-    radial-gradient(circle at 0 0,
-      transparent 16px,
-      var(--card) 16px)
-    0 0 / 16px 16px no-repeat,
-    radial-gradient(circle at 100% 0,
-      transparent 16px,
-      var(--card) 16px)
-    100% 0 / 16px 16px no-repeat;
-  z-index:-2;
+  width:calc(2 * var(--builder-radius));
+  height:calc(2 * var(--builder-radius));
+  border-radius:50%;
+  border:1px solid var(--line2);
+  background:transparent;
+}
+
+/* fudge 2px, żeby łuk był na tej samej krawędzi co wypustka/karta */
+.tab-corner-left::before{
+  top:  calc(-1 * var(--builder-radius) - 2px);
+  left: calc(-1 * var(--builder-radius) - 2px);
+}
+.tab-corner-right::before{
+  top:   calc(-1 * var(--builder-radius) - 2px);
+  right: calc(-1 * var(--builder-radius) - 2px);
+}
+
+/* Pokazujemy kliny tylko dla aktywnego taba */
+.tab-slot .tab-corner{ opacity:0; }
+.tab-slot:has(.tab.active) .tab-corner{ opacity:1; }
+
+/* Reguły krawędzi:
+   - jeśli aktywny pierwszy: brak lewego klina, karta bez lewego zaokrąglenia
+   - jeśli aktywny ostatni: brak prawego klina, karta bez prawego zaokrąglenia
+   - środkowy: oba rogi
+*/
+
+.tabs-card:has(#tabPollText.active) .tab-slot--start .tab-corner-left{
+  display:none;
+}
+.tabs-card:has(#tabPrepared.active) .tab-slot--end .tab-corner-right{
+  display:none;
 }
 
 /* ===== Karta pod zakładkami ===== */
@@ -136,12 +207,11 @@ body.builder-body{
   background: var(--card);
   border-radius: var(--builder-radius);
   border:1px solid var(--line2);
-  padding:18px 18px 16px;
-  box-shadow: 0 18px 32px rgba(0,0,0,.28);
+  padding:18px 18px 14px;
+  box-shadow: 0 18px 36px rgba(0,0,0,.35);
 }
 
-/* górna krawędź karty „wchodzi” pod wypustkę aktywnej zakładki */
-
+/* górna krawędź karty – scala się z wypustką */
 .builder-card::before{
   content:"";
   position:absolute;
@@ -154,7 +224,21 @@ body.builder-body{
   background:var(--card);
 }
 
-/* ===== GRID kart gier ===== */
+/* zakrzywienie karty zależne od aktywnej zakładki */
+.tabs-card:has(#tabPollText.active) .builder-card{
+  border-top-left-radius:0;
+  border-top-right-radius:var(--builder-radius);
+}
+.tabs-card:has(#tabPrepared.active) .builder-card{
+  border-top-left-radius:var(--builder-radius);
+  border-top-right-radius:0;
+}
+.tabs-card:has(#tabPollPoints.active) .builder-card{
+  border-top-left-radius:var(--builder-radius);
+  border-top-right-radius:var(--builder-radius);
+}
+
+/* ===== GRID z grami ===== */
 
 .grid{
   display:grid;
@@ -162,13 +246,15 @@ body.builder-body{
   gap:14px;
 }
 
-/* kafelek gry — klasy używane przez JS możesz podczepić do tego wyglądu */
+/* pojedyncza gra – JS nadaje class="card" */
 
-.gridItem{
+.builder-body .grid .card{
   position:relative;
-  background: linear-gradient(135deg, rgba(255,255,255,.10), rgba(0,0,0,.50));
+  background: radial-gradient(circle at 0 0,
+    rgba(255,255,255,.18),
+    rgba(0,0,0,.65));
   border-radius:18px;
-  border:1px solid rgba(255,255,255,.12);
+  border:1px solid rgba(255,255,255,.20);
   padding:14px 14px 12px;
   cursor:pointer;
   transition:
@@ -176,40 +262,64 @@ body.builder-body{
     box-shadow .12s ease-out,
     border-color .12s ease-out,
     background .12s ease-out;
+  overflow:hidden;
 }
 
-.gridItem:hover{
+/* X do usuwania */
+.builder-body .grid .card .x{
+  position:absolute;
+  top:8px;
+  right:10px;
+  font-size:14px;
+  opacity:.7;
+}
+.builder-body .grid .card .x:hover{
+  opacity:1;
+}
+
+/* tytuł gry */
+.builder-body .grid .card .name{
+  font-weight:900;
+  font-size:14px;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+  padding-right:22px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+/* meta (typ + status) */
+.builder-body .grid .card .meta{
+  margin-top:4px;
+  font-size:11px;
+  text-transform:uppercase;
+  letter-spacing:.08em;
+  opacity:.82;
+}
+
+/* hover / select */
+
+.builder-body .grid .card:hover{
   transform: translateY(-2px);
   box-shadow: 0 10px 24px rgba(0,0,0,.45);
   border-color: var(--gold);
+  background: radial-gradient(circle at 0 0,
+    rgba(255,255,255,.22),
+    rgba(0,0,0,.80));
 }
 
-.gridItem.selected{
+.builder-body .grid .card.selected{
   box-shadow: 0 0 0 2px var(--gold);
   border-color: var(--gold);
 }
 
-/* tytuł gry w kafelku */
-
-.gridItem-title{
-  font-weight:800;
-  font-size:14px;
-  letter-spacing:.06em;
-  text-transform:uppercase;
-  margin-bottom:4px;
-}
-
-.gridItem-sub{
-  font-size:12px;
-  opacity:.80;
-}
-
-/* kafelek „+ nowa gra” */
+/* ===== Kafelek +Nowa gra ===== */
 
 .addCard{
   border-radius:18px;
   border:1px dashed rgba(255,234,166,.35);
-  background: rgba(255,234,166,.05);
+  background: rgba(255,234,166,.06);
   padding:14px;
   min-height:120px;
   cursor:pointer;
@@ -249,16 +359,16 @@ body.builder-body{
   line-height:1.35;
 }
 
-/* ===== Dół karty: przyciski import/eksport ===== */
+/* ===== Dół karty: import / eksport ===== */
 
 .builder-bottom{
   margin-top:18px;
+  padding-top:10px;
+  border-top:1px solid rgba(255,255,255,.12);
   display:flex;
   justify-content:space-between;
   align-items:center;
   gap:10px;
-  border-top:1px solid rgba(255,255,255,.10);
-  padding-top:10px;
 }
 
 .builder-bottom-right{
@@ -266,7 +376,7 @@ body.builder-body{
   gap:8px;
 }
 
-/* ===== Import modal – lekkie doprecyzowanie pod tę stronę ===== */
+/* ===== Modal importu ===== */
 
 .importRow{
   display:flex;
@@ -291,4 +401,19 @@ body.builder-body{
 
 .importMsg{
   font-size:12px;
+}
+
+/* ===== Mobile ===== */
+
+@media (max-width: 720px){
+  .bar{
+    align-items:flex-start;
+    flex-direction:column;
+  }
+  .tabs{
+    flex-wrap:wrap;
+  }
+  .tab-slot{
+    min-width:0;
+  }
 }
