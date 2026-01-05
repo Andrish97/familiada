@@ -72,7 +72,6 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
 
         // timeout = pudło + brak możliwości oddania pytania
         r.allowPass = false;
-        ui.setEnabled("Question", false);
         addX(); // async; ignorujemy promisa
 
         return;
@@ -86,21 +85,27 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
   function updatePlayControls() {
     const r = store.state.rounds;
   
+    // "Zakończ rundę" – tylko gdy realnie można zamykać:
+    // PLAY/STEAL/END *i* spełnione warunki z r.canEndRound
     const endAvailable =
-      r.phase === "PLAY" || r.phase === "STEAL" || r.phase === "END";
+      (r.phase === "PLAY" || r.phase === "STEAL" || r.phase === "END") &&
+      !!r.canEndRound;
+    ui.setEnabled("btnGoEndRound", endAvailable);
   
-    ui.setEnabled("btnGoEndRound", !!endAvailable);
-  
-    // Oddanie pytania — tylko przed pierwszą poprawną / X
+    // Oddanie pytania — tylko na początku właściwej gry (PLAY)
     ui.setEnabled("btnPassQuestion", r.phase === "PLAY" && r.allowPass);
   
-    // Timer i X tylko gdy faktycznie gramy
-    const playing = r.phase === "PLAY" || r.phase === "STEAL";
+    // Timer i X:
+    // - w pojedynku: timer + X działają,
+    // - w PLAY: timer + X działają,
+    // - w STEAL: timer + X działają (X = nietrafiona kradzież).
+    const playing =
+      r.phase === "DUEL" || r.phase === "PLAY" || r.phase === "STEAL";
+  
     ui.setEnabled("btnStartTimer3", playing);
     ui.setEnabled("btnAddX", playing);
   }
-
-
+  
   // === PULA PYTAŃ / LOSOWANIE RUND ===
 
   async function pickQuestionsForRounds(gameId) {
@@ -1151,8 +1156,24 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
 
   function bootIfNeeded() {
     ensureRoundsState();
-    ui.setRoundsHud(store.state.rounds);
-    ui.showRoundsStep(store.state.rounds.step || "r_ready");
+    const r = store.state.rounds;
+  
+    ui.setRoundsHud(r);
+    ui.showRoundsStep(r.step || "r_ready");
+  
+    // jeśli po odświeżeniu mamy już pytanie i odpowiedzi → odtwórz widok
+    if (r.question && Array.isArray(r.answers) && r.answers.length > 0) {
+      ui.setRoundQuestion(r.question.text || "—");
+  
+      // U nas jeden grid służy do wszystkiego – klik zawsze leci w revealAnswerByOrd,
+      // a faza (DUEL/PLAY/STEAL/REVEAL) decyduje, co się stanie.
+      if (ui.renderRoundAnswers) {
+        ui.renderRoundAnswers(r.answers, r.revealed);
+      }
+    }
+  
+    // przywróć stany przycisków na podstawie fazy/flag
+    updatePlayControls();
   }
 
   // subskrypcja HUD
