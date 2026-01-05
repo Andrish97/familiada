@@ -321,16 +321,18 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
       console.warn("getSfxDuration(round_transition) error", e);
     }
 
-    const totalMs = typeof dur === "number" && dur > 0 ? dur * 1000 : 3000;
-    const transitionMs = 2000;
+    const totalMs = typeof dur === "number" && dur > 0 ? dur * 1000 : 2000;
+    const transitionAnchorMs = 920; // po ilu ms od startu dźwięku zmieniamy planszę
 
     playSfx("round_transition");
 
+    // po ~920 ms robimy: zniknięcie logo + wejście nowej planszy
     setTimeout(() => {
       const rowsCount = Math.max(1, Math.min(6, r.answers.length || 6));
 
       (async () => {
         try {
+          // pierwsza runda: najpierw schowaj logo, potem plansza
           if (!r._boardShown) {
             if (typeof display.hideLogo === "function") {
               try {
@@ -345,11 +347,13 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
             }
             r._boardShown = true;
           } else if (typeof display.roundsBoardPlaceholdersNewRound === "function") {
+            // kolejne rundy – animacja wymiany planszy
             await display.roundsBoardPlaceholdersNewRound(rowsCount);
           } else if (typeof display.roundsBoardPlaceholders === "function") {
             await display.roundsBoardPlaceholders(rowsCount);
           }
 
+          // reset X-ów, wskaźnika i banku
           await display.roundsSetX("A", 0);
           await display.roundsSetX("B", 0);
           if (display.setIndicator) await display.setIndicator(null);
@@ -364,11 +368,13 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
           console.error("display setup for round (delayed) failed", e);
         }
       })();
-    }, transitionMs);
+    }, transitionAnchorMs);
 
+    // czekamy do końca dźwięku przejścia (żeby nie wchodzić w kolejne akcje)
     if (totalMs > 0) {
       await new Promise((resolve) => setTimeout(resolve, totalMs));
     }
+
 
     // pytanie na HOST
     const qText = (obj.text || "").trim();
@@ -942,7 +948,19 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
 
     ui.setRoundsHud(r);
 
+    // 1) najpierw skok banku + dźwięk "bells"
+    let bellsDur = 0;
     try {
+      bellsDur = await getSfxDuration("bells");
+    } catch (e) {
+      console.warn("getSfxDuration(bells) error", e);
+    }
+
+    // odpalamy dźwięk skoku banku
+    playSfx("bells");
+
+    try {
+      // tu w tym samym czasie "przeskakuje" bank:
       if (display.roundsSetTotals) {
         await display.roundsSetTotals(r.totals);
       }
@@ -956,7 +974,12 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
       console.warn("[rounds] update totals failed", e);
     }
 
-    // dźwięk końca rundy ZAWSZE
+    // jeśli znamy długość "bells" – czekamy do końca dźwięku
+    if (bellsDur > 0) {
+      await new Promise((resolve) => setTimeout(resolve, bellsDur * 1000));
+    }
+
+    // 2) dopiero potem ogólny dźwięk przejścia rundy
     playSfx("round_transition");
 
     ui.setMsg("msgRoundsEnd", `Koniec rundy. Bank ${bank} pkt dla drużyny ${winner}.`);
