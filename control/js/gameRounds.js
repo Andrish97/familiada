@@ -21,9 +21,9 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     if (!r._usedQuestionIds) r._usedQuestionIds = [];
     if (!r.totals) r.totals = { A: 0, B: 0 };
     if (!r.revealed) r.revealed = new Set();
-    if (!r.timer3) r.timer3 = { running: false, endsAt: 0, secLeft: 0 };
-    if (!r.steal) r.steal = { active: false, used: false, won: false };
+    if (typeof r.canEndRound !== "boolean") r.canEndRound = false;
   }
+
 
   function setStep(step) {
     ensureRoundsState();
@@ -72,7 +72,7 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
 
         // timeout = pudło + brak możliwości oddania pytania
         r.allowPass = false;
-        ui.setEnabled("btnPassQuestion", false);
+        ui.setEnabled("Question", false);
         addX(); // async; ignorujemy promisa
 
         return;
@@ -82,6 +82,24 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
 
     timerRAF = requestAnimationFrame(tick);
   }
+
+  function updatePlayControls() {
+    const r = store.state.rounds;
+  
+    const endAvailable =
+      r.phase === "PLAY" || r.phase === "STEAL" || r.phase === "END";
+  
+    ui.setEnabled("btnGoEndRound", !!endAvailable);
+  
+    // Oddanie pytania — tylko przed pierwszą poprawną / X
+    ui.setEnabled("btnPassQuestion", r.phase === "PLAY" && r.allowPass);
+  
+    // Timer i X tylko gdy faktycznie gramy
+    const playing = r.phase === "PLAY" || r.phase === "STEAL";
+    ui.setEnabled("btnStartTimer3", playing);
+    ui.setEnabled("btnAddX", playing);
+  }
+
 
   // === PULA PYTAŃ / LOSOWANIE RUND ===
 
@@ -169,13 +187,8 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
 
     r.phase = "READY";
     setStep("r_ready");
-
-    // przy starcie gry żadne sterowanie rozgrywką nie jest aktywne
-    ui.setEnabled("btnPassQuestion", false);
-    ui.setEnabled("btnStartTimer3", false);
-    ui.setEnabled("btnAddX", false);
-    ui.setEnabled("btnGoSteal", false);
-    ui.setEnabled("btnGoEndRound", false);
+    
+    updatePlayControls();
 
     await display.stateGameReady(teamA, teamB);
 
@@ -245,12 +258,7 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     ui.setMsg("msgRoundsIntro", "Intro zakończone. Możesz rozpocząć rundę.");
     ui.setRoundsHud(r);
 
-    // na starcie pierwszej rundy nadal nic nie jest aktywne poza „Rozpocznij rundę”
-    ui.setEnabled("btnPassQuestion", false);
-    ui.setEnabled("btnStartTimer3", false);
-    ui.setEnabled("btnAddX", false);
-    ui.setEnabled("btnGoSteal", false);
-    ui.setEnabled("btnGoEndRound", false);
+    updatePlayControls();
   }
 
   async function startRound() {
@@ -273,6 +281,8 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     r.passUsed = false;
     r.steal = { active: false, used: false, won: false, team: null };
 
+    r.canEndRound = false;
+    
     r.bankPts = 0;
     r.xA = 0;
     r.xB = 0;
@@ -305,13 +315,8 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     ui.renderRoundAnswers(r.answers, r.revealed);
     ui.setMsg("msgRoundsRoundStart", "Startuję rundę – leci dźwięk przejścia.");
     ui.setRoundsHud(r);
-
-    ui.setEnabled("btnStartRound", false);
-    ui.setEnabled("btnPassQuestion", false);
-    ui.setEnabled("btnStartTimer3", false);
-    ui.setEnabled("btnAddX", false);
-    ui.setEnabled("btnGoSteal", false);
-    ui.setEnabled("btnGoEndRound", false);
+    
+    updatePlayControls();
 
     // dźwięk przejścia rundy
     let dur = 0;
@@ -430,11 +435,7 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     ui.setEnabled("btnBuzzAcceptB", false);
     ui.setEnabled("btnBuzzRetry", false);
 
-    ui.setEnabled("btnPassQuestion", false);
-    ui.setEnabled("btnStartTimer3", false);
-    ui.setEnabled("btnAddX", false);
-    ui.setEnabled("btnGoSteal", false);
-    ui.setEnabled("btnGoEndRound", false);
+    updatePlayControls();
 
     devices.sendBuzzerCmd("ON").catch(() => {});
   }
@@ -456,11 +457,7 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     ui.setEnabled("btnBuzzAcceptB", false);
     ui.setEnabled("btnBuzzRetry", false);
 
-    ui.setEnabled("btnPassQuestion", false);
-    ui.setEnabled("btnStartTimer3", false);
-    ui.setEnabled("btnAddX", false);
-    ui.setEnabled("btnGoSteal", false);
-    ui.setEnabled("btnGoEndRound", false);
+    updatePlayControls();
 
     devices.sendBuzzerCmd("RESET").catch(() => {});
   }
@@ -542,11 +539,7 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
       await display.setIndicator(winner).catch?.(() => {});
     }
 
-    ui.setEnabled("btnPassQuestion", true);
-    ui.setEnabled("btnStartTimer3", true);
-    ui.setEnabled("btnAddX", true);
-    ui.setEnabled("btnGoSteal", false);
-    ui.setEnabled("btnGoEndRound", false);
+    updatePlayControls();
   }
 
   function handleBuzzerClick(team) {
@@ -596,11 +589,7 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
       display.setIndicator(team).catch?.(() => {});
     }
 
-    ui.setEnabled("btnPassQuestion", false); // w pojedynku nie oddajemy pytania
-    ui.setEnabled("btnStartTimer3", true);
-    ui.setEnabled("btnAddX", true);
-    ui.setEnabled("btnGoSteal", false);
-    ui.setEnabled("btnGoEndRound", false);
+    updatePlayControls();
 
     ui.setEnabled("btnBuzzAcceptA", false);
     ui.setEnabled("btnBuzzAcceptB", false);
@@ -634,7 +623,6 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
 
     r.controlTeam = other;
     r.allowPass = false;
-    ui.setEnabled("btnPassQuestion", false);
 
     ui.setMsg("msgRounds", `Pytanie oddane. Teraz odpowiada drużyna ${other}.`);
     ui.setRoundsHud(r);
@@ -642,6 +630,7 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     if (display.setIndicator) {
       display.setIndicator(other).catch?.(() => {});
     }
+    updatePlayControls();
   }
 
   function startTimer3() {
@@ -654,6 +643,10 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     ensureRoundsState();
     const r = store.state.rounds;
 
+    if (r.canEndRound && r.phase !== "REVEAL") {
+      return;
+    }
+    
     clearTimer3();
 
     const ans = (r.answers || []).find((a) => a.ord === ord);
@@ -737,15 +730,13 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
 
     if (r.phase === "PLAY") {
       // pierwsza odpowiedź kończy możliwość oddania pytania
-      r.allowPass = false;
-      ui.setEnabled("btnPassQuestion", false);
+      r.allowPass = false;;
 
       const hasHidden = (r.answers || []).some((a) => !r.revealed?.has(a.ord));
       if (!hasHidden) {
-        // wszystkie odpowiedzi odsłonięte – runda może być zakończona
-        ui.setEnabled("btnGoEndRound", true);
+        r.canEndRound = true;
       }
-      return;
+      updatePlayControls();
     }
 
     if (r.phase === "STEAL") {
@@ -758,7 +749,9 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
 
       ui.setMsg("msgSteal", "Kradzież udana – bank trafi do drużyny kradnącej.");
       ui.setRoundsHud(r);
-      ui.setEnabled("btnGoEndRound", true);
+
+      r.canEndRound = true;
+      updatePlayControls();
 
       if (display.setIndicator) {
         await display.setIndicator(null);
@@ -819,6 +812,7 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     // KRADZIEŻ: X = kradzież nietrafiona
     if (r.phase === "STEAL") {
       await stealMiss();
+      updatePlayControls();
       return;
     }
 
@@ -829,7 +823,7 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     }
 
     r.allowPass = false;
-    ui.setEnabled("btnPassQuestion", false);
+    updatePlayControls();
 
     const key = r.controlTeam === "A" ? "xA" : "xB";
     r[key] = (r[key] || 0) + 1;
@@ -845,7 +839,7 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
 
       if (!hasHidden) {
         // 3X, ale nie ma czego kraść → można zakończyć rundę
-        ui.setEnabled("btnGoEndRound", true);
+        updatePlayControls();
         return;
       }
 
@@ -861,6 +855,7 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
         display.setIndicator(other).catch?.(() => {});
       }
     }
+    updatePlayControls();
   }
 
   // === Kradzież / koniec rundy ===
@@ -906,7 +901,8 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
 
     ui.setMsg("msgSteal", "Kradzież nietrafiona – bank zostaje przy drużynie grającej.");
     ui.setRoundsHud(r);
-    ui.setEnabled("btnGoEndRound", true);
+    r.canEndRound = true;
+    updatePlayControls();
 
     if (display.setIndicator) {
       await display.setIndicator(null);
@@ -925,6 +921,9 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
 
   async function goEndRound() {
     const r = store.state.rounds;
+
+    r.canEndRound = false;
+    updatePlayControls();
 
     const bank = nInt(r.bankPts, 0);
     if (!r.controlTeam) {
@@ -1062,11 +1061,7 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
 
     r.phase = "REVEAL";
 
-    // dezaktywujemy sterowanie rundą – zostają tylko kliknięcia odpowiedzi
-    ui.setEnabled("btnPassQuestion", false);
-    ui.setEnabled("btnStartTimer3", false);
-    ui.setEnabled("btnAddX", false);
-    ui.setEnabled("btnGoEndRound", false);
+    updatePlayControls();
 
     ui.setRoundsHud(r);
     ui.renderRoundAnswers(r.answers, r.revealed);
@@ -1103,6 +1098,8 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
       ui.setMsg("msgRoundsReveal", "Wszystkie odpowiedzi odsłonięte. Koniec rundy.");
       endRound();
     }
+    ui.setRoundsHud(r);
+    updatePlayControls();
   }
 
   function revealDone() {
