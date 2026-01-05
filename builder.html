@@ -30,8 +30,7 @@
       </div>
 
       <div class="actions">
-        <!-- +Nowa usunięte (nowa gra jest kafelkiem w gridzie) -->
-
+        <!-- na górze zostają tylko te 3 przyciski -->
         <button class="btn sm" id="btnEdit" type="button" disabled>
           <span class="only-desktop">Edytuj</span>
           <span class="only-mobile">Edyt.</span>
@@ -46,27 +45,38 @@
           <span class="only-desktop">Sondaż</span>
           <span class="only-mobile">Sondaż</span>
         </button>
-
-        <button class="btn sm" id="btnExport" type="button" disabled>
-          <span class="only-desktop">Eksport</span>
-          <span class="only-mobile">Exp</span>
-        </button>
-
-        <button class="btn sm" id="btnImport" type="button">
-          <span class="only-desktop">Import</span>
-          <span class="only-mobile">Imp</span>
-        </button>
       </div>
     </div>
 
-    <!-- Tabs (teraz nad gridem, w wrapie) -->
-    <nav class="tabs">
-      <button class="tab" id="tabPollText" type="button">Typowy sondaż</button>
-      <button class="tab" id="tabPollPoints" type="button">Punktacja</button>
-      <button class="tab" id="tabPrepared" type="button">Preparowany</button>
-    </nav>
+    <!-- Sekcja kart z nowym kształtem zakładek -->
+    <section class="builder-shell">
+      <!-- zakładki trybu sondażu -->
+      <nav class="tabs">
+        <button class="tab" id="tabPollText" type="button">Typowy sondaż</button>
+        <button class="tab" id="tabPollPoints" type="button">Punktacja</button>
+        <button class="tab" id="tabPrepared" type="button">Preparowany</button>
+      </nav>
 
-    <div class="grid" id="grid"></div>
+      <!-- karta z gridem gier + import/eksport na dole -->
+      <div class="builder-card">
+        <div class="grid" id="grid"></div>
+
+        <div class="builder-bottom">
+          <div class="builder-bottom-left"></div>
+          <div class="builder-bottom-right">
+            <button class="btn sm" id="btnExport" type="button" disabled>
+              <span class="only-desktop">Eksport</span>
+              <span class="only-mobile">Exp</span>
+            </button>
+
+            <button class="btn sm" id="btnImport" type="button">
+              <span class="only-desktop">Import</span>
+              <span class="only-mobile">Imp</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
   </main>
 
   <!-- Modal: import JSON -->
