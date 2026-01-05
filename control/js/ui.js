@@ -454,7 +454,7 @@ function showCard(card) {
     $("btnStartTimer3")?.addEventListener("click", () => emit("rounds.timer3"));
     $("btnAddX")?.addEventListener("click", () => emit("rounds.addX"));
     $("btnGoEndRound")?.addEventListener("click", () => emit("rounds.goEnd"));
-
+    $("btnShowGameEnd")?.addEventListener("click", () => emit("rounds.gameEndShow"));
 
 
     // final (kroki)
