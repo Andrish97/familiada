@@ -30,7 +30,7 @@
       </div>
 
       <div class="actions">
-        <!-- tylko te 3 przyciski na górze -->
+        <!-- góra: tylko te trzy przyciski -->
         <button class="btn sm" id="btnEdit" type="button" disabled>
           <span class="only-desktop">Edytuj</span>
           <span class="only-mobile">Edyt.</span>
@@ -48,33 +48,50 @@
       </div>
     </div>
 
-    <!-- Karty: pasek zakładek + karta z gridem + dół z import/eksport -->
+    <!-- Karty z wypustką (kształt jak w Twoim pliku) -->
     <section class="builder-shell">
-      <div class="tabs-card">
-        <nav class="tabs">
-          <!-- lewa zakładka -->
-          <div class="tab-slot tab-slot--start">
-            <button class="tab" id="tabPollText" type="button">Typowy sondaż</button>
-            <div class="tab-corner tab-corner-left"></div>
-            <div class="tab-corner tab-corner-right"></div>
+      <div class="tabs-card" id="tabs-root">
+        <!-- PASEK ZAKŁADEK -->
+        <div class="tabs-strip">
+          <!-- SLOT 1: typowy sondaż -->
+          <div class="tab-slot slot-pollText">
+            <button class="tab-label" id="tabPollText" type="button">
+              Typowy sondaż
+            </button>
+            <div class="tab-wrapper">
+              <div class="tab-active">Typowy sondaż</div>
+              <div class="tab-corner tab-corner-left"></div>
+              <div class="tab-corner tab-corner-right"></div>
+            </div>
           </div>
 
-          <!-- środkowa zakładka -->
-          <div class="tab-slot tab-slot--middle">
-            <button class="tab" id="tabPollPoints" type="button">Punktacja</button>
-            <div class="tab-corner tab-corner-left"></div>
-            <div class="tab-corner tab-corner-right"></div>
+          <!-- SLOT 2: punktacja -->
+          <div class="tab-slot slot-pollPoints">
+            <button class="tab-label" id="tabPollPoints" type="button">
+              Punktacja
+            </button>
+            <div class="tab-wrapper">
+              <div class="tab-active">Punktacja</div>
+              <div class="tab-corner tab-corner-left"></div>
+              <div class="tab-corner tab-corner-right"></div>
+            </div>
           </div>
 
-          <!-- prawa zakładka -->
-          <div class="tab-slot tab-slot--end">
-            <button class="tab" id="tabPrepared" type="button">Preparowany</button>
-            <div class="tab-corner tab-corner-left"></div>
-            <div class="tab-corner tab-corner-right"></div>
+          <!-- SLOT 3: preparowany -->
+          <div class="tab-slot slot-prepared">
+            <button class="tab-label" id="tabPrepared" type="button">
+              Preparowany
+            </button>
+            <div class="tab-wrapper">
+              <div class="tab-active">Preparowany</div>
+              <div class="tab-corner tab-corner-left"></div>
+              <div class="tab-corner tab-corner-right"></div>
+            </div>
           </div>
-        </nav>
+        </div>
 
-        <div class="builder-card">
+        <!-- KARTA POD WYPUSTKĄ -->
+        <div class="card builder-card">
           <div class="grid" id="grid"></div>
 
           <div class="builder-bottom">
