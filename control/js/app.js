@@ -394,6 +394,16 @@ async function main() {
   ui.on("rounds.addX", () => rounds.addX());
   ui.on("rounds.goEnd", () => rounds.goEndRound());
 
+  ui.on("rounds.goEndRound", () => {
+    rounds.goEndRound().catch((e) => console.error("goEndRound error", e));
+  });
+
+  // NOWE: zakończenie gry (bez finału)
+  ui.on("rounds.gameEndShow", () => {
+    rounds.showGameEnd().catch((e) => console.error("showGameEnd error", e));
+  });
+
+
   // odsłanianie pozostałych odpowiedzi
   ui.on("rounds.showReveal", () => rounds.showRevealLeft());
   ui.on("rounds.revealClick", (ord) => rounds.revealLeftByOrd(ord));
