@@ -13,52 +13,9 @@ export function createDevices({ game, ui, store, chDisplay, chHost, chBuzzer }) 
     if (error) throw error;
   }
 
-  // --- NOWE: sprawdzanie online/offline na podstawie store.flags ---
-
-  function isOnline(kind) {
-    const flags = store.state?.flags || {};
-    if (kind === "display") return !!flags.displayOnline;
-    if (kind === "host") return !!flags.hostOnline;
-    if (kind === "buzzer") return !!flags.buzzerOnline;
-    return false;
-  }
-
-  function ensureOnlineOrWarn(kind) {
-    if (isOnline(kind)) return true;
-
-    const label =
-      kind === "display" ? "Wyświetlacz" :
-      kind === "host" ? "Urządzenie prowadzącego" :
-      "Przycisk";
-
-    // spokojnie: jeśli UI nie ma showAlert, to nic się nie stanie
-    ui?.showAlert?.(`${label} jest offline – komenda nie została wysłana.`);
-    return false;
-  }
-
-  // --- POPRAWIONE WYSYŁACZE KOMEND ---
-
-  // domyślnie zachowuje się tak jak wcześniej (requireOnline = false)
-  async function sendDisplayCmd(line, { requireOnline = false } = {}) {
-    const l = String(line ?? "").trim();
-    if (!l) return;
-    if (requireOnline && !ensureOnlineOrWarn("display")) return;
-    await sendCmd(chDisplay, "DISPLAY_CMD", l);
-  }
-
-  async function sendHostCmd(line, { requireOnline = false } = {}) {
-    const l = String(line ?? "").trim();
-    if (!l) return;
-    if (requireOnline && !ensureOnlineOrWarn("host")) return;
-    await sendCmd(chHost, "HOST_CMD", l);
-  }
-
-  async function sendBuzzerCmd(line, { requireOnline = false } = {}) {
-    const l = String(line ?? "").trim();
-    if (!l) return;
-    if (requireOnline && !ensureOnlineOrWarn("buzzer")) return;
-    await sendCmd(chBuzzer, "BUZZER_CMD", l);
-  }
+  async function sendDisplayCmd(line) { await sendCmd(chDisplay, "DISPLAY_CMD", line); }
+  async function sendHostCmd(line) { await sendCmd(chHost, "HOST_CMD", line); }
+  async function sendBuzzerCmd(line) { await sendCmd(chBuzzer, "BUZZER_CMD", line); }
 
   function qrSrc(url) {
     const u = encodeURIComponent(String(url));
