@@ -30,7 +30,7 @@
       </div>
 
       <div class="actions">
-        <!-- na górze zostają tylko te 3 przyciski -->
+        <!-- tylko te 3 przyciski na górze -->
         <button class="btn sm" id="btnEdit" type="button" disabled>
           <span class="only-desktop">Edytuj</span>
           <span class="only-mobile">Edyt.</span>
@@ -43,36 +43,53 @@
 
         <button class="btn sm gold" id="btnPoll" type="button" disabled>
           <span class="only-desktop">Sondaż</span>
-          <span class="only-mobile">Sondaż</span>
+          <span class="only-mobile">Sond.</span>
         </button>
       </div>
     </div>
 
-    <!-- Sekcja kart z nowym kształtem zakładek -->
+    <!-- Karty: pasek zakładek + karta z gridem + dół z import/eksport -->
     <section class="builder-shell">
-      <!-- zakładki trybu sondażu -->
-      <nav class="tabs">
-        <button class="tab" id="tabPollText" type="button">Typowy sondaż</button>
-        <button class="tab" id="tabPollPoints" type="button">Punktacja</button>
-        <button class="tab" id="tabPrepared" type="button">Preparowany</button>
-      </nav>
+      <div class="tabs-card">
+        <nav class="tabs">
+          <!-- lewa zakładka -->
+          <div class="tab-slot tab-slot--start">
+            <button class="tab" id="tabPollText" type="button">Typowy sondaż</button>
+            <div class="tab-corner tab-corner-left"></div>
+            <div class="tab-corner tab-corner-right"></div>
+          </div>
 
-      <!-- karta z gridem gier + import/eksport na dole -->
-      <div class="builder-card">
-        <div class="grid" id="grid"></div>
+          <!-- środkowa zakładka -->
+          <div class="tab-slot tab-slot--middle">
+            <button class="tab" id="tabPollPoints" type="button">Punktacja</button>
+            <div class="tab-corner tab-corner-left"></div>
+            <div class="tab-corner tab-corner-right"></div>
+          </div>
 
-        <div class="builder-bottom">
-          <div class="builder-bottom-left"></div>
-          <div class="builder-bottom-right">
-            <button class="btn sm" id="btnExport" type="button" disabled>
-              <span class="only-desktop">Eksport</span>
-              <span class="only-mobile">Exp</span>
-            </button>
+          <!-- prawa zakładka -->
+          <div class="tab-slot tab-slot--end">
+            <button class="tab" id="tabPrepared" type="button">Preparowany</button>
+            <div class="tab-corner tab-corner-left"></div>
+            <div class="tab-corner tab-corner-right"></div>
+          </div>
+        </nav>
 
-            <button class="btn sm" id="btnImport" type="button">
-              <span class="only-desktop">Import</span>
-              <span class="only-mobile">Imp</span>
-            </button>
+        <div class="builder-card">
+          <div class="grid" id="grid"></div>
+
+          <div class="builder-bottom">
+            <div class="builder-bottom-left"></div>
+            <div class="builder-bottom-right">
+              <button class="btn sm" id="btnExport" type="button" disabled>
+                <span class="only-desktop">Eksport</span>
+                <span class="only-mobile">Exp</span>
+              </button>
+
+              <button class="btn sm" id="btnImport" type="button">
+                <span class="only-desktop">Import</span>
+                <span class="only-mobile">Imp</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
