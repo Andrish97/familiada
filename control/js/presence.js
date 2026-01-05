@@ -58,10 +58,13 @@ export function createPresence({ game, ui, store, devices }) {
     const hOn = isOnline(h);
     const bOn = isOnline(b);
 
+    // poprzednie flagi (PRZED aktualizacją setOnlineFlags)
+    const prevFlags = { ...(store.state.flags || {}) };
+
     // spadki online -> alert
-    alertIfDropped(store.state.flags.displayOnline, dOn, "Wyświetlacz");
-    alertIfDropped(store.state.flags.hostOnline, hOn, "Prowadzący");
-    alertIfDropped(store.state.flags.buzzerOnline, bOn, "Przycisk");
+    alertIfDropped(prevFlags.displayOnline, dOn, "Wyświetlacz");
+    alertIfDropped(prevFlags.hostOnline, hOn, "Prowadzący");
+    alertIfDropped(prevFlags.buzzerOnline, bOn, "Przycisk");
 
     ui.setDeviceBadges({
       display: { on: dOn, seen: fmtSince(d?.last_seen_at) },
@@ -69,28 +72,48 @@ export function createPresence({ game, ui, store, devices }) {
       buzzer: { on: bOn, seen: fmtSince(b?.last_seen_at) },
     });
 
-    // *** NOWOŚĆ: stan zerowy po świeżym podpięciu ***
+    // *** stan zerowy po świeżym podpięciu (logika jak była) ***
 
-    // Host: SET "" + HIDE
-    if (hOn && !store.state.flags.hostOnline) {
+    // Host: SET "" + HIDE przy przejściu offline -> online
+    if (hOn && !prevFlags.hostOnline) {
       try {
         await devices.sendHostCmd('SET ""');
         await devices.sendHostCmd("HIDE");
       } catch {}
     }
 
-    // Buzzer: OFF
-    if (bOn && !store.state.flags.buzzerOnline) {
+    // Buzzer: OFF przy przejściu offline -> online
+    if (bOn && !prevFlags.buzzerOnline) {
       try {
         await devices.sendBuzzerCmd("OFF");
       } catch {}
     }
 
-    // Display: po pierwszym podpięciu -> APP BLACK (raz)
+    // Display: po pierwszym podpięciu -> APP BLACK (raz w życiu gry)
     if (dOn && !store.state.flags.sentBlackAfterDisplayOnline) {
       try {
         await devices.sendDisplayCmd("APP BLACK");
         store.markSentBlackAfterDisplayOnline();
+      } catch {}
+    }
+
+    // *** NOWOŚĆ: flush kolejek po przejściu offline -> online ***
+
+    if (!prevFlags.displayOnline && dOn) {
+      try {
+        await devices.flushQueued("display");
+      } catch {}
+    }
+
+    if (!prevFlags.hostOnline && hOn) {
+      try {
+        await devices.flushQueued("host");
+      } catch {}
+    }
+
+    if (!prevFlags.buzzerOnline && bOn) {
+      try {
+        await devices.flushQueued("buzzer");
       } catch {}
     }
 
