@@ -85,26 +85,36 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
   function updatePlayControls() {
     const r = store.state.rounds;
   
-    // "Zakończ rundę" – tylko gdy realnie można zamykać:
-    // PLAY/STEAL/END *i* spełnione warunki z r.canEndRound
-    const endAvailable =
-      (r.phase === "PLAY" || r.phase === "STEAL" || r.phase === "END") &&
-      !!r.canEndRound;
+    const inDuel   = r.phase === "DUEL";
+    const inPlay   = r.phase === "PLAY";
+    const inSteal  = r.phase === "STEAL";
+    const inReveal = r.phase === "REVEAL";
+  
+    // --- ZAKOŃCZ RUNDĘ ---
+    // aktywny tylko wtedy, gdy runda jest "domknięta" logicznie (r.canEndRound)
+    // i nie jesteśmy w trybie odsłaniania REVEAL
+    const endAvailable = !inDuel && !inReveal && !!r.canEndRound;
     ui.setEnabled("btnGoEndRound", endAvailable);
   
-    // Oddanie pytania — tylko na początku właściwej gry (PLAY)
-    ui.setEnabled("btnPassQuestion", r.phase === "PLAY" && r.allowPass);
+    // --- ODDAJ PYTANIE ---
+    // tylko na początku właściwej gry (PLAY), przed pierwszą poprawną/X
+    // oraz TYLKO dopóki nie osiągnęliśmy warunków końca rundy
+    const canPass = inPlay && r.allowPass && !r.canEndRound;
+    ui.setEnabled("btnPassQuestion", canPass);
   
-    // Timer i X:
-    // - w pojedynku: timer + X działają,
-    // - w PLAY: timer + X działają,
-    // - w STEAL: timer + X działają (X = nietrafiona kradzież).
-    const playing =
-      r.phase === "DUEL" || r.phase === "PLAY" || r.phase === "STEAL";
+    // --- TIMER + X ---
+    // działają w DUEL / PLAY / STEAL,
+    // ale gdy r.canEndRound === true → wyłączamy,
+    // oraz zawsze wyłączone w REVEAL
+    const playingNow =
+      (inDuel || inPlay || inSteal) &&
+      !r.canEndRound &&
+      !inReveal;
   
-    ui.setEnabled("btnStartTimer3", playing);
-    ui.setEnabled("btnAddX", playing);
+    ui.setEnabled("btnStartTimer3", playingNow);
+    ui.setEnabled("btnAddX", playingNow);
   }
+
   
   // === PULA PYTAŃ / LOSOWANIE RUND ===
 
