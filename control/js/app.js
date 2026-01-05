@@ -392,12 +392,12 @@ async function main() {
   ui.on("rounds.timer3", () => rounds.startTimer3());
   ui.on("rounds.answerClick", (ord) => rounds.revealAnswerByOrd(ord));
   ui.on("rounds.addX", () => rounds.addX());
+  ui.on("rounds.goEnd", () => rounds.goEndRound());
 
   // odsłanianie pozostałych odpowiedzi
   ui.on("rounds.showReveal", () => rounds.showRevealLeft());
   ui.on("rounds.revealClick", (ord) => rounds.revealLeftByOrd(ord));
   ui.on("rounds.revealDone", () => rounds.revealDone());
-
 
   // FINAL (runtime – nie picker)
   final.bootIfNeeded();
