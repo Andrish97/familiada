@@ -42,7 +42,7 @@ body.builder-body{
   flex-wrap:wrap;
 }
 
-/* ===== Parametry geometrii (jak w Twoim pliku) ===== */
+/* ===== Parametry geometrii – jak w Twoim pliku, tylko kolory inne ===== */
 
 :root {
   --radius: 16px;          /* promień dla wszystkiego (wypustka, kliny, karta) */
@@ -54,12 +54,12 @@ body.builder-body{
   --border-fudge: 2px;     /* pozycja łuku obramowania */
 
   --page-bg: var(--bg);
-  --surface: var(--card);
-  --inactive-text: rgba(255,255,255,.75);
+  --surface: #111827;      /* PEŁNY, nieprzezroczysty kolor karty/wypustki */
+  --inactive-text: rgba(255,255,255,.70);
   --border-color: var(--line2);
 }
 
-/* ===== Karty z wypustką – kształt 1:1 ===== */
+/* ===== Karty z wypustką – kształt 1:1 z Twoim demo ===== */
 
 .tabs-card {
   width: 100%;
@@ -107,6 +107,11 @@ body.builder-body{
   justify-content: center;
   padding: 0;
   margin: 0;
+}
+
+/* aktywna (JS dodaje .active) – tekst jaśniejszy */
+.tab-label.active{
+  color:#f9fafb;
 }
 
 /* hover nieaktywnych */
@@ -167,10 +172,10 @@ body.builder-body{
   width: 100%;
   line-height: var(--tab-height); /* tekst trzyma się wizualnej wysokości */
   text-align: center;
-  background: var(--surface);
 
+  background: var(--surface);                 /* PEŁNY kolor */
   border: 1px solid var(--border-color);
-  border-bottom: none; /* dół bez obramowania – zakrywa border karty */
+  border-bottom: none;                        /* dół bez obramowania – zakrywa border karty */
 
   border-top-left-radius: var(--radius);
   border-top-right-radius: var(--radius);
@@ -178,7 +183,7 @@ body.builder-body{
   font-weight: 800;
   letter-spacing:.08em;
   text-transform:uppercase;
-  color: #04060b;
+  color: #f9fafb;                             /* jasny tekst na ciemnym tle */
   position: relative;
   z-index: 2;
   pointer-events: auto;
@@ -197,7 +202,7 @@ body.builder-body{
   pointer-events: none;
 }
 
-/* wypełnienie – luka */
+/* wypełnienie – luka, ale kolor = surface (też nieprzezroczysty) */
 .tab-corner-left {
   left: 0;
   transform: translateX(calc(-100% + var(--corner-shift)));
@@ -239,11 +244,24 @@ body.builder-body{
   right: calc(-1 * var(--radius) - var(--border-fudge));
 }
 
+/* KLIN NA KRAWĘDZI:
+   - przy pierwszej zakładce znika lewy
+   - przy ostatniej zakładce znika prawy
+*/
+
+.tabs-card:has(#tabPollText.active) .slot-pollText .tab-corner-left{
+  display:none;
+}
+
+.tabs-card:has(#tabPrepared.active) .slot-prepared .tab-corner-right{
+  display:none;
+}
+
 /* ===== KARTA – jeden obiekt z obramowaniem ===== */
 
 .builder-card.card {
   margin-top: 0;
-  background: var(--surface);
+  background: var(--surface);           /* ten sam kolor co wypustka */
   border: 1px solid var(--border-color);
   border-radius: var(--radius);
   padding: 18px 18px 14px;
@@ -295,9 +313,9 @@ body.builder-body{
 
 .builder-body .grid .card{
   position:relative;
-  background: rgba(5, 8, 18, 0.96);
+  background:#070b16;
   border-radius:18px;
-  border:1px solid rgba(255,255,255,.18);
+  border:1px solid rgba(255,255,255,.22);
   padding:14px 14px 12px;
   cursor:pointer;
   transition:
@@ -306,6 +324,11 @@ body.builder-body{
     border-color .12s ease-out,
     background .12s ease-out;
   overflow:hidden;
+
+  display:flex;                  /* ujednolicenie wysokości */
+  flex-direction:column;
+  justify-content:space-between;
+  min-height:130px;
 }
 
 /* X do usuwania */
@@ -320,7 +343,8 @@ body.builder-body{
   opacity:1;
 }
 
-/* tytuł gry */
+/* tytuł gry – jaśniejszy, żeby nie był „za ciemny” */
+
 .builder-body .grid .card .name{
   font-weight:900;
   font-size:14px;
@@ -330,15 +354,17 @@ body.builder-body{
   white-space:nowrap;
   overflow:hidden;
   text-overflow:ellipsis;
+  color:#fdfdfd; /* jasno */
 }
 
 /* meta (typ + status) */
+
 .builder-body .grid .card .meta{
-  margin-top:4px;
+  margin-top:6px;
   font-size:11px;
   text-transform:uppercase;
   letter-spacing:.08em;
-  opacity:.82;
+  color:rgba(236,239,244,.9); /* jaśniejsze niż wcześniej */
 }
 
 /* hover / selected */
@@ -347,7 +373,7 @@ body.builder-body{
   transform: translateY(-2px);
   box-shadow: 0 10px 24px rgba(0,0,0,.45);
   border-color: var(--gold);
-  background: rgba(8, 12, 26, 1);
+  background:#0b1020;
 }
 
 .builder-body .grid .card.selected{
@@ -355,14 +381,14 @@ body.builder-body{
   border-color: var(--gold);
 }
 
-/* ===== Kafelek +Nowa gra ===== */
+/* ===== Kafelek +Nowa gra – ta sama wysokość co reszta ===== */
 
 .addCard{
   border-radius:18px;
   border:1px dashed rgba(255,234,166,.35);
   background: rgba(255,234,166,.06);
   padding:14px;
-  min-height:120px;
+  min-height:130px;        /* tyle samo co .card */
   cursor:pointer;
   user-select:none;
   display:flex;
