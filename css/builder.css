@@ -343,7 +343,7 @@ body.builder-body{
   opacity:1;
 }
 
-/* tytuł gry – jaśniejszy, żeby nie był „za ciemny” */
+/* tytuł gry – jaśniejszy */
 
 .builder-body .grid .card .name{
   font-weight:900;
@@ -354,7 +354,7 @@ body.builder-body{
   white-space:nowrap;
   overflow:hidden;
   text-overflow:ellipsis;
-  color:#fdfdfd; /* jasno */
+  color:#fdfdfd;
 }
 
 /* meta (typ + status) */
@@ -364,7 +364,7 @@ body.builder-body{
   font-size:11px;
   text-transform:uppercase;
   letter-spacing:.08em;
-  color:rgba(236,239,244,.9); /* jaśniejsze niż wcześniej */
+  color:rgba(236,239,244,.9);
 }
 
 /* hover / selected */
@@ -470,18 +470,59 @@ body.builder-body{
   font-size:12px;
 }
 
-/* ===== Mobile ===== */
+/* ===== Mobile / telefon ===== */
 
 @media (max-width: 720px){
+
   .bar{
     align-items:flex-start;
     flex-direction:column;
+    gap:8px;
   }
-  .tabs-strip{
+
+  .actions{
+    width:100%;
+    justify-content:flex-start;
     flex-wrap:wrap;
   }
+
+  /* tabs: mniejsza typografia + horyzontalne przewijanie,
+     żeby 3 zakładki dalej były w jednym rzędzie i nie rozbijały kształtu */
+
+  .tabs-strip{
+    overflow-x:auto;
+    -webkit-overflow-scrolling:touch;
+  }
+
   .tab-slot{
     width:auto;
-    flex:1 1 100%;
+    flex:0 0 auto;
+  }
+
+  .tab-label,
+  .tab-active{
+    font-size:11px;
+    letter-spacing:.06em;
+    padding:0 12px;
+  }
+
+  .tab-label{
+    line-height: calc(var(--tab-height) - 4px);
+    height: calc(var(--tab-height) - 4px);
+  }
+
+  .tab-active{
+    height: calc(var(--tab-height) - 4px + var(--tab-extra));
+    line-height: calc(var(--tab-height) - 4px);
+  }
+
+  /* grid: jedna kolumna na małym ekranie */
+
+  .grid{
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .builder-card.card{
+    padding:14px 12px 10px;
   }
 }
