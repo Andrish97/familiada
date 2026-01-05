@@ -159,20 +159,25 @@
   font-weight: 900;
   letter-spacing:.06em;
   text-transform:uppercase;
-  color:#f9fafb;
+  color: transparent;
 
   display:flex;
   align-items:center;
   justify-content:center;
+  position: relative;
 }
 
 .tab-active .ico{
   font-size: 16px;
   margin-right: 6px;
+  display: none;
 }
 .tab-active .navLabel{
   line-height:1;
+  display: none;
 }
+
+
 
 /* KLINY – kształt dokładnie jak w builder-final */
 
