@@ -131,6 +131,11 @@ body.builder-body{
   display: none;
 }
 
+/* separator NIGDY na aktywnej zakładce */
+.tab-label.active::after{
+  display:none !important;
+}
+
 /* podświetlenie nieaktywnych */
 .tab-label::before {
   content: "";
