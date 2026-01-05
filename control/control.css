@@ -174,33 +174,34 @@
   line-height:1;
 }
 
-/* kliny – wycięcie z boku wypustki */
-.tab-corner{
+/* KLINY – kształt dokładnie jak w builder-final */
+
+.tab-corner {
   position: absolute;
-  bottom: var(--corner-bottom);
+  bottom: 0;                         /* kleimy do dolnej krawędzi wypustki */
   width: var(--radius);
   height: var(--radius);
-  overflow: hidden;
+  overflow: hidden;                  /* ucinamy pełne kółko do ćwiartki */
   background-color: transparent;
-  z-index: 1;
+  z-index: 3;
   pointer-events: none;
 }
 
 /* lewy klin – ćwiartka lewo-góra */
-.tab-corner-left{
+.tab-corner-left {
   left: 0;
-  transform: translateX(calc(-100% + var(--corner-shift)));
+  transform: translateX(calc(-100% + 1px));  /* ten 1px to Twój „shift” */
   background-image: radial-gradient(
     circle at 0% 0%,
     transparent var(--radius),
-    var(--surface) var(--radius)    /* ten sam kolor */
+    var(--surface) var(--radius)
   );
 }
 
 /* prawy klin – ćwiartka prawo-góra */
-.tab-corner-right{
+.tab-corner-right {
   right: 0;
-  transform: translateX(calc(100% - var(--corner-shift)));
+  transform: translateX(calc(100% - 1px));
   background-image: radial-gradient(
     circle at 100% 0%,
     transparent var(--radius),
@@ -208,8 +209,9 @@
   );
 }
 
-/* łukowe obramowanie klina */
-.tab-corner::before{
+/* łukowa ramka – pełne kółko wysunięte na zewnątrz o 2 px */
+
+.tab-corner::before {
   content: "";
   position: absolute;
   width: calc(2 * var(--radius));
@@ -219,14 +221,16 @@
   background: transparent;
 }
 
-.tab-corner-left::before{
-  top:  calc(-1 * var(--radius) - var(--border-fudge));
-  left: calc(-1 * var(--radius) - var(--border-fudge));
+/* lewy łuk */
+.tab-corner-left::before {
+  top:  calc(-1 * var(--radius) - 2px);
+  left: calc(-1 * var(--radius) - 2px);
 }
 
-.tab-corner-right::before{
-  top:   calc(-1 * var(--radius) - var(--border-fudge));
-  right: calc(-1 * var(--radius) - var(--border-fudge));
+/* prawy łuk */
+.tab-corner-right::before {
+  top:   calc(-1 * var(--radius) - 2px);
+  right: calc(-1 * var(--radius) - 2px);
 }
 
 /* zanikający klin na krawędzi – jak w builderze */
