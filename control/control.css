@@ -239,8 +239,8 @@
 
 /* podpis pod zakładkami (komunikaty) */
 .tabsFoot{
-  margin-top: 6px;
-  min-height: 18px;
+  margin-top: 0;
+  min-height: 0;
   padding: 0 4px;
 }
 
