@@ -122,6 +122,38 @@ async function main() {
   const store = createStore(game.id);
   store.hydrate();
 
+  // === OSTRZEŻENIE PRZY WYJŚCIU ZE STRONY ===
+  function shouldWarnBeforeUnload() {
+    const s = store.state;
+    const r = s.rounds || {};
+    const totals = r.totals || { A: 0, B: 0 };
+
+    const gameStarted = !!s.locks?.gameStarted;
+    const finalActive = !!s.locks?.finalActive;
+
+    const someRoundProgress =
+      r.phase && r.phase !== "IDLE"; // cokolwiek się dzieje w rundach
+
+    const somePoints =
+      (totals.A || 0) > 0 ||
+      (totals.B || 0) > 0 ||
+      (r.bankPts || 0) > 0;
+
+    // ostrzegamy wtedy, gdy gra już ruszyła i coś się *realnie* dzieje / zadziało
+    return gameStarted && (someRoundProgress || somePoints || finalActive);
+  }
+
+  window.addEventListener("beforeunload", (e) => {
+    if (!shouldWarnBeforeUnload()) return;
+
+    const msg =
+      "Jeśli teraz opuścisz tę stronę, bieżący stan gry zostanie utracony (zostaje tylko zwykłe odświeżenie).";
+    e.preventDefault();
+    e.returnValue = msg;
+    return msg;
+  });
+
+
   // realtime channels
   const chDisplay = rt(`familiada-display:${game.id}`);
   const chHost = rt(`familiada-host:${game.id}`);
@@ -269,7 +301,16 @@ async function main() {
   });
 
   // TOP buttons
-  ui.on("top.back", () => (location.href = "/familiada/builder.html"));
+  ui.on("top.back", () => {
+    if (shouldWarnBeforeUnload()) {
+      const ok = confirm(
+        "Powrót do listy gier spowoduje utratę bieżącego stanu gry. Kontynuować?"
+      );
+      if (!ok) return;
+    }
+    location.href = "/familiada/builder.html";
+  });
+
   ui.on("top.logout", async () => {
     await signOut().catch(() => {});
     location.href = "/familiada/index.html";
