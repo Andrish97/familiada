@@ -1,6 +1,6 @@
 /* /familiada/control/control.css */
 
-/* ========== OGÓLNA SIATKA / TYTUŁ ========== */
+/* ========= OGÓLNA SIATKA / TYTUŁ ========= */
 
 .wrap.wide{
   max-width: 1100px;
@@ -34,89 +34,218 @@
   margin-top: 14px;
 }
 
-/* ========== ZAKŁADKI NA GÓRZE (segregator) ========== */
+/* ========= PARAMETRY KART (jak w Builderze) ========= */
 
+:root{
+  --radius: 16px;
+  --tab-height: 56px;
+  --tab-extra: 2px;
+  --corner-bottom: 0px;
+  --corner-shift: 1px;
+  --border-fudge: 2px;
+
+  --tabs-surface: #050814;
+  --tabs-border: rgba(255,255,255,.16);
+  --tabs-inactive: rgba(255,255,255,.70);
+}
+
+/* ========= KARTA Z ZAKŁADKAMI (wypustka + karta) ========= */
+
+.control-tabs-card{
+  margin-top: 4px;
+}
+
+/* Pasek z zakładkami */
 .tabsBar{
-  margin-bottom: 10px;
+  margin-bottom: 0;
 }
 
-/* pasek zakładek */
-.tabs{
+.tabs-strip{
   display: flex;
-  flex-direction: row;
-  align-items: flex-end;
-  gap: 6px;
-  flex-wrap: wrap;
-  overflow-x: auto;
+  height: var(--tab-height);
+  align-items: stretch;
+  background: var(--bg);
+  position: relative;
+  z-index: 1;
 }
 
-/* pojedyncza zakładka */
-.navItem{
+/* slot na jedną zakładkę */
+.tab-slot{
+  position: relative;
+  width: 220px;
+  flex: 1 1 0;
   display: flex;
+  align-items: stretch;
+  justify-content: center;
+}
+
+/* przycisk logiki (JS), wizualnie to napis w wypustce */
+.navItem.tab-label{
+  position: relative;
+  border: none;
+  background: transparent;
+  color: var(--tabs-inactive);
+  width: 100%;
+  height: var(--tab-height);
+  line-height: var(--tab-height);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  white-space: nowrap;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-
-  padding: 6px 12px;
-  min-height: 34px;
-
-  flex: 0 0 auto;
-  width: auto;
-
-  border-radius: 10px;
-  border: 1px solid rgba(255,255,255,.18);
-  background: rgba(0,0,0,.30);
-  color: #fff;
-  cursor: pointer;
-
-  font-weight: 1000;
-  font-size: 11px;
-  letter-spacing: .04em;
-  text-transform: uppercase;
-  text-align: center;
-
-  white-space: nowrap;
-  box-shadow: 0 10px 25px rgba(0,0,0,.45);
-
-  transition:
-    background .15s ease,
-    border-color .15s ease,
-    transform .05s ease,
-    opacity .15s ease;
+  padding: 0 14px;
+  margin: 0;
+  z-index: 2;
 }
 
-.navItem .ico{
+.navItem.tab-label .ico{
   font-size: 16px;
+  margin-right: 6px;
 }
 
-.navItem .navLabel{
+.navItem.tab-label .navLabel{
   line-height: 1;
 }
 
-.navItem:hover:not(:disabled){
-  background: rgba(255,255,255,.10);
-  border-color: rgba(255,255,255,.30);
-  transform: translateY(-1px);
-}
-
-.navItem:disabled{
+.navItem.tab-label:disabled{
   opacity: .45;
   cursor: not-allowed;
 }
 
-.navItem.active{
-  border-color: rgba(255,234,166,.55);
-  background: rgba(255,234,166,.20);
-  color: var(--gold);
+.navItem.tab-label.active{
+  color: #f9fafb;
+}
+
+/* podświetlenie na hover tylko dla nieaktywnych */
+.navItem.tab-label:not(.active):hover{
+  color:#ffffff;
+}
+
+/* WYPUSTKA pod spodem – shape + kliny */
+
+.tab-wrapper{
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  pointer-events: none;
+  z-index: 1;
+  display: none;
+}
+
+/* pokazujemy tylko dla aktywnej zakładki */
+.tab-slot:has(.navItem.tab-label.active) .tab-wrapper{
+  display:block;
+}
+
+.tab-active{
+  height: calc(var(--tab-height) + var(--tab-extra));
+  width: 100%;
+  background: var(--tabs-surface);
+
+  border: 1px solid var(--tabs-border);
+  border-bottom: none;
+
+  border-top-left-radius: var(--radius);
+  border-top-right-radius: var(--radius);
+
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+  color:#f9fafb;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* tekst w tab-active żeby ładnie skleić z builderem */
+.tab-active .ico{
+  font-size: 16px;
+  margin-right: 6px;
+}
+.tab-active .navLabel{
+  line-height: 1;
+}
+
+/* KLINY po bokach wypustki */
+
+.tab-corner{
+  position: absolute;
+  bottom: var(--corner-bottom);
+  width: var(--radius);
+  height: var(--radius);
+  overflow: hidden;
+  background-color: transparent;
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* wypełnienie – luka, ale kolor = surface */
+.tab-corner-left{
+  left: 0;
+  transform: translateX(calc(-100% + var(--corner-shift)));
+  background-image: radial-gradient(
+    circle at 0% 0%,
+    transparent var(--radius),
+    var(--tabs-surface) var(--radius)
+  );
+}
+
+.tab-corner-right{
+  right: 0;
+  transform: translateX(calc(100% - var(--corner-shift)));
+  background-image: radial-gradient(
+    circle at 100% 0%,
+    transparent var(--radius),
+    var(--tabs-surface) var(--radius)
+  );
+}
+
+/* łukowe obramowanie klina */
+.tab-corner::before{
+  content: "";
+  position: absolute;
+  width: calc(2 * var(--radius));
+  height: calc(2 * var(--radius));
+  border-radius: 50%;
+  border: 1px solid var(--tabs-border);
+  background: transparent;
+}
+
+.tab-corner-left::before{
+  top:  calc(-1 * var(--radius) - var(--border-fudge));
+  left: calc(-1 * var(--radius) - var(--border-fudge));
+}
+
+.tab-corner-right::before{
+  top:   calc(-1 * var(--radius) - var(--border-fudge));
+  right: calc(-1 * var(--radius) - var(--border-fudge));
+}
+
+/* Kliny na skrajach – zanikają na krawędzi karty */
+
+.control-tabs-card:has(#navDevices.active) .slot-devices .tab-corner-left{
+  display:none;
+}
+
+.control-tabs-card:has(#navFinal.active) .slot-final .tab-corner-right{
+  display:none;
 }
 
 /* podpis pod zakładkami (komunikaty) */
 .tabsFoot{
   margin-top: 6px;
   min-height: 18px;
+  padding: 0 4px;
 }
 
-/* ========== GŁÓWNY OBSZAR ========== */
+/* ========= GŁÓWNA KARTA POD ZAKŁADKAMI ========= */
 
 .main{
   border: none;
@@ -125,7 +254,33 @@
   padding: 0;
 }
 
-/* panele kart */
+.control-main-card{
+  margin-top: 0;
+  background: var(--tabs-surface);
+  border: 1px solid var(--tabs-border);
+  border-radius: var(--radius);
+  padding: 18px 14px 16px;
+  position: relative;
+  z-index: 0;
+  box-shadow: 0 18px 45px rgba(0,0,0,.45);
+}
+
+/* krawędzie w zależności od aktywnej zakładki */
+
+.control-tabs-card:has(#navDevices.active) .control-main-card{
+  border-top-left-radius: 0;
+  border-top-right-radius: var(--radius);
+}
+
+.control-tabs-card:has(#navFinal.active) .control-main-card{
+  border-top-left-radius: var(--radius);
+  border-top-right-radius: 0;
+}
+
+/* środkowe zakładki – oba rogi zaokrąglone (domyślne) */
+
+/* ========= PANELE / KROKI ========= */
+
 .cardPanel{
   margin-top: 4px;
 }
@@ -187,7 +342,7 @@
   text-align: right;
 }
 
-/* ========== KARTY / GRIDY / POLA ========== */
+/* ========= KARTY / GRIDY / POLA ========= */
 
 .cards2{
   display: grid;
@@ -277,7 +432,7 @@
   align-items: center;
 }
 
-/* msg wewnątrz rowBtns (np. przy liście finałowej) łamie się w nowej linii */
+/* msg wewnątrz rowBtns łamie się w nowej linii */
 .rowBtns .msg{
   flex: 1 1 100%;
   margin-top: 4px;
@@ -324,7 +479,7 @@
   transform: translateY(1px);
 }
 
-/* ========== STATUS URZĄDZEŃ (kropki) ========== */
+/* ========= STATUS URZĄDZEŃ (kropki) ========= */
 
 .top-status{
   display: flex;
@@ -376,7 +531,7 @@
   box-shadow: 0 0 16px rgba(255,234,166,.10);
 }
 
-/* ========== QR / URZĄDZENIA ========== */
+/* ========= QR / URZĄDZENIA ========= */
 
 .qrRow{
   display: grid;
@@ -422,7 +577,7 @@
   gap: 6px;
 }
 
-/* ========== LISTA PYTAŃ FINAŁU ========== */
+/* ========= LISTA PYTAŃ FINAŁU ========= */
 
 .qList{
   margin-top: 12px;
@@ -498,7 +653,7 @@
   padding: 0;
 }
 
-/* ========== ROUNDS ========== */
+/* ========= ROUNDS ========= */
 
 .roundTopRight{
   display: flex;
@@ -591,7 +746,7 @@
   background: rgba(255,234,166,.08);
 }
 
-/* ========== FINAL ========== */
+/* ========= FINAL ========= */
 
 .finalStatusList{
   margin-top: 10px;
@@ -727,7 +882,7 @@
   color: var(--gold);
 }
 
-/* ========== ALERT BAR ========== */
+/* ========= ALERT BAR ========= */
 
 .alertBar.hidden{
   display: none;
@@ -752,7 +907,7 @@
   letter-spacing: .02em;
 }
 
-/* ========== EXTRA ========== */
+/* ========= EXTRA ========= */
 
 .extra{
   margin-top: 12px;
@@ -762,7 +917,7 @@
   padding: 12px;
 }
 
-/* ========== MODAL QR (TOPBAR) ========== */
+/* ========= MODAL QR (TOPBAR) ========= */
 
 .qrModalOverlay{
   position: fixed;
