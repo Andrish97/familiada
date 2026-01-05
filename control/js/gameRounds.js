@@ -702,8 +702,9 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     playSfx("answer_correct");
 
     if (r.phase === "PLAY") {
-      // pierwsza odpowiedź / X w rozgrywce kończy możliwość oddania pytania
+      // pierwsza odpowiedź kończy możliwość oddania pytania
       r.allowPass = false;
+      ui.setEnabled("btnPassQuestion", false);
 
       const hasHidden = (r.answers || []).some((a) => !r.revealed?.has(a.ord));
       if (!hasHidden) {
@@ -805,8 +806,10 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
 
     // po jakimkolwiek pudle nie można już oddać pytania
     r.allowPass = false;
-
+    ui.setEnabled("btnPassQuestion", false);
+  
     const key = r.controlTeam === "A" ? "xA" : "xB";
+
     r[key] = (r[key] || 0) + 1;
     if (r[key] > 3) r[key] = 3;
 
