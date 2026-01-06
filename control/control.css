@@ -675,8 +675,9 @@
   gap: 6px;
 }
 
-/* ========= LISTA PYTAŃ FINAŁU ========= */
+/* ========= LISTA PYTAŃ (pula + finał) ========= */
 
+/* kontener na listę pytań – używany i w setup, i w rundach */
 .qList{
   margin-top: 12px;
   display: grid;
@@ -686,6 +687,9 @@
   padding-right: 4px;
 }
 
+/* dwie listy obok siebie w kroku FINAŁ:
+   lewa – pytania do rozgrywki
+   prawa – pytania finałowe */
 .finalLists{
   margin-top: 12px;
   display: grid;
@@ -702,37 +706,7 @@
   margin-top: 0;
 }
 
-.qTile{
-  border-radius: 16px;
-  border: 1px solid rgba(255,255,255,.12);
-  background: rgba(0,0,0,.16);
-  padding: 10px;
-  cursor: grab;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-.qTile:active{
-  cursor: grabbing;
-}
-
-.qTile .meta{
-  font-size: 11px;
-  opacity: .75;
-  font-weight: 900;
-  letter-spacing: .06em;
-}
-
-.qTile .txt{
-  font-weight: 900;
-  line-height: 1.25;
-}
-
-.qList.droptarget{
-  outline: 2px dashed rgba(255,234,166,.55);
-  outline-offset: 2px;
-}
-
+/* pojedyncze pytanie na liście (używane też w innych miejscach) */
 .qRow{
   display: flex;
   gap: 10px;
@@ -741,6 +715,7 @@
   border: 1px solid rgba(255,255,255,.12);
   background: rgba(0,0,0,.16);
   padding: 10px;
+  cursor: pointer;             /* w finale klik przerzuca lewo/prawo */
 }
 
 .qRow .meta{
@@ -759,43 +734,6 @@
 
 .qRow input{
   margin-top: 2px;
-}
-
-.pickedPanel{
-  margin-top: 14px;
-  border-radius: 18px;
-  border: 1px solid rgba(255,255,255,.12);
-  background: rgba(0,0,0,.16);
-  padding: 12px;
-}
-
-.picked{
-  margin-top: 10px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.chip{
-  padding: 6px 10px;
-  border-radius: 999px;
-  border: 1px solid rgba(255,234,166,.25);
-  background: rgba(255,234,166,.08);
-  color: var(--gold);
-  font-weight: 1000;
-  font-size: 12px;
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-
-.chip button{
-  border: none;
-  background: transparent;
-  color: var(--gold);
-  cursor: pointer;
-  font-weight: 1000;
-  padding: 0;
 }
 
 /* ========= ROUNDS ========= */
