@@ -683,7 +683,10 @@
   gap: 10px;
   max-height: 460px;
   overflow: auto;
-  padding-right: 4px;
+  padding: 8px 4px 4px;      /* trochę wewnętrznego odstępu */
+  min-height: 80px;          /* KLUCZOWE: strefa drop nawet gdy pusta */
+  border-radius: 16px;
+  background: rgba(255,255,255,.02); /* delikatne tło, żeby było widać obszar */
 }
 
 .finalLists{
