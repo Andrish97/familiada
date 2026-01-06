@@ -625,6 +625,146 @@ async function main() {
     store.setActiveCard("rounds");
   });
 
+    // ROUNDS
+  ui.on("game.ready", async () => {
+    // po "Gra gotowa" blokujemy Urządzenia i Ustawienia
+    store.setGameStarted(true);
+    await rounds.stateGameReady();
+  });
+
+  ui.on("game.startIntro", async () => {
+    await rounds.stateStartGameIntro();
+  });
+
+  ui.on("rounds.start", async () => {
+    await rounds.startRound();
+  });
+
+  // duel
+  ui.on("buzz.enable", () => rounds.enableBuzzerDuel());
+  ui.on("buzz.retry", () => rounds.retryDuel());
+  ui.on("buzz.acceptA", () => rounds.acceptBuzz("A"));
+  ui.on("buzz.acceptB", () => rounds.acceptBuzz("B"));
+
+  // play
+  ui.on("rounds.pass", () => rounds.passQuestion());
+  ui.on("rounds.timer3", () => rounds.startTimer3());
+  ui.on("rounds.answerClick", (ord) => rounds.revealAnswerByOrd(ord));
+  ui.on("rounds.addX", () => rounds.addX());
+  ui.on("rounds.goEnd", () => rounds.goEndRound());
+
+  // odsłanianie pozostałych odpowiedzi
+  ui.on("rounds.showReveal", () => rounds.showRevealLeft());
+  ui.on("rounds.revealClick", (ord) => rounds.revealLeftByOrd(ord));
+  ui.on("rounds.revealDone", () => rounds.revealDone());
+
+  // FINAL (runtime – nie picker)
+  final.bootIfNeeded();
+
+  ui.on("final.start", () => final.startFinal());
+  ui.on("final.back", (card) => store.setActiveCard(card));
+  ui.on("final.backStep", (step) => final.backTo(step));
+
+  ui.on("final.p1.timer", () => final.p1StartTimer());
+  ui.on("final.p1.toQ", (n) => final.toP1MapQ(n));
+  ui.on("final.p1.nextQ", (n) => final.nextFromP1Q(n));
+
+  ui.on("final.p2.start", () => final.startP2Round());
+  ui.on("final.p2.timer", () => final.p2StartTimer());
+  ui.on("final.p2.toQ", (n) => final.toP2MapQ(n));
+  ui.on("final.p2.nextQ", (n) => final.nextFromP2Q(n));
+
+  ui.on("final.finish", () => final.finishFinal());
+
+  // Presence loop
+  await presence.start();
+
+  // render loop
+  const render = () => {
+    ui.showCard(store.state.activeCard);
+    ui.showDevicesStep(store.state.steps.devices);
+    ui.showSetupStep(store.state.steps.setup);
+
+    ui.setNavEnabled({
+      devices: store.canEnterCard("devices"),
+      setup: store.canEnterCard("setup"),
+      rounds: store.canEnterCard("rounds"),
+      final: store.canEnterCard("final"),
+    });
+
+    ui.setEnabled("btnDevicesNext", store.state.flags.displayOnline);
+    ui.setEnabled("btnQrToggle", store.state.flags.displayOnline);
+    ui.setEnabled(
+      "btnDevicesToAudio",
+      store.state.flags.displayOnline && store.state.flags.hostOnline && store.state.flags.buzzerOnline
+    );
+
+    ui.setEnabled(
+      "btnDevicesFinish",
+      store.state.steps.devices === "devices_audio" && store.state.flags.audioUnlocked
+    );
+    ui.setEnabled("btnSetupNext", store.teamsOk());
+    ui.setEnabled("btnSetupFinish", store.canFinishSetup());
+
+    ui.setFinalHasFinal(store.state.hasFinal === true);
+    ui.setFinalConfirmed(store.state.final.confirmed === true);
+
+    ui.setEnabled(
+      "btnConfirmFinal",
+      store.state.hasFinal === true &&
+        store.state.final.confirmed === false &&
+        store.state.final.picked.length === 5
+    );
+    ui.setEnabled(
+      "btnEditFinal",
+      store.state.hasFinal === true && store.state.final.confirmed === true
+    );
+
+    // "Gra gotowa" – tylko gdy wszystko gotowe
+    ui.setEnabled("btnGameReady", store.canStartRounds());
+    
+    // "Rozpocznij grę" – tylko na kroku r_intro i tylko gdy gra gotowa
+    ui.setEnabled(
+      "btnStartShowIntro",
+      store.canStartRounds() && store.state.rounds.step === "r_intro"
+    );
+    
+    // "Rozpocznij rundę" – dopiero po zakończeniu intra (krok r_roundStart)
+    ui.setEnabled(
+      "btnStartRound",
+      store.canStartRounds() && store.state.rounds.step === "r_roundStart"
+    );
+
+    // rounds HUD
+    ui.setRoundsHud(store.state.rounds);
+
+    // final UI – Start finału tylko na kroku f_start
+    ui.setEnabled(
+      "btnFinalStart",
+      store.canEnterCard("final") && store.state.final.step === "f_start"
+    );
+  };
+
+  store.subscribe(render);
+  render();
+
+  ui.setRoundsStep(
+    store.state.rounds.phase === "IDLE" || store.state.rounds.phase === "READY"
+      ? "READY"
+      : store.state.rounds.phase === "INTRO"
+      ? "INTRO"
+      : "ROUND"
+  );
+
+  // boot view state
+  ui.setQrToggleLabel(
+    store.state.flags.qrOnDisplay,
+    store.state.flags.hostOnline && store.state.flags.buzzerOnline
+  );
+
+  // init questions picker for final (setup karta)
+  await finalPickerReload().catch(() => {});
+
 }
 
 main().catch((e) => {
