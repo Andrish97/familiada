@@ -40,16 +40,16 @@
   /* geometria zakładek */
   --radius: 16px;
   --tab-height: 56px;
-  --tab-extra: 3px;      /* trochę większy zwis – na pewno zakryje szew */
+  --tab-extra: 3px;
   --corner-bottom: 0px;
   --corner-shift: 1px;
   --border-fudge: 2px;
 
   /* KOLORY IDENTYCZNE JAK W BUILDERZE */
-  --page-bg: var(--bg);                  /* tło strony z base.css */
-  --surface: #111827;                    /* pełne tło karty + wypustki */
+  --page-bg: var(--bg);
+  --surface: #111827;
   --inactive-text: rgba(255,255,255,.70);
-  --border-color: var(--line2);          /* jak w builderze */
+  --border-color: var(--line2);
 }
 
 /* ========= KARTA Z ZAKŁADKAMI (wypustka + karta) ========= */
@@ -67,7 +67,7 @@
   display: flex;
   height: var(--tab-height);
   align-items: stretch;
-  background: var(--page-bg);   /* jak w builderze */
+  background: var(--page-bg);
   position: relative;
   z-index: 1;
 }
@@ -127,9 +127,8 @@
   color:#ffffff;
 }
 
-/* WYPUSTKA pod spodem – shape + kliny */
+/* WYPUSTKA pod spodem */
 
-/* wypustka – ten „języczek” aktywnej zakładki */
 .tab-wrapper{
   position: absolute;
   top: 0;
@@ -148,54 +147,43 @@
 .tab-active{
   height: calc(var(--tab-height) + var(--tab-extra));
   width: 100%;
-  background: var(--surface);             /* TEN SAM kolor co karta */
-  border: 1px solid var(--border-color);  /* TEN SAM border co karta */
-  border-bottom: none;                    /* dół bez obramowania – wejdzie w kartę */
-
+  background: var(--surface);
+  border: 1px solid var(--border-color);
+  border-bottom: none;
   border-top-left-radius: var(--radius);
   border-top-right-radius: var(--radius);
-
   font-size: 11px;
   font-weight: 900;
   letter-spacing:.06em;
   text-transform:uppercase;
   color: transparent;
-
   display:flex;
   align-items:center;
   justify-content:center;
   position: relative;
 }
 
-.tab-active .ico{
-  font-size: 16px;
-  margin-right: 6px;
-  display: none;
-}
+.tab-active .ico,
 .tab-active .navLabel{
-  line-height:1;
   display: none;
 }
 
-
-
-/* KLINY – kształt dokładnie jak w builder-final */
+/* KLINY */
 
 .tab-corner {
   position: absolute;
-  bottom: 0;                         /* kleimy do dolnej krawędzi wypustki */
+  bottom: 0;
   width: var(--radius);
   height: var(--radius);
-  overflow: hidden;                  /* ucinamy pełne kółko do ćwiartki */
+  overflow: hidden;
   background-color: transparent;
   z-index: 3;
   pointer-events: none;
 }
 
-/* lewy klin – ćwiartka lewo-góra */
 .tab-corner-left {
   left: 0;
-  transform: translateX(calc(-100% + 1px));  /* ten 1px to Twój „shift” */
+  transform: translateX(calc(-100% + 1px));
   background-image: radial-gradient(
     circle at 0% 0%,
     transparent var(--radius),
@@ -203,7 +191,6 @@
   );
 }
 
-/* prawy klin – ćwiartka prawo-góra */
 .tab-corner-right {
   right: 0;
   transform: translateX(calc(100% - 1px));
@@ -213,8 +200,6 @@
     var(--surface) var(--radius)
   );
 }
-
-/* łukowa ramka – pełne kółko wysunięte na zewnątrz o 2 px */
 
 .tab-corner::before {
   content: "";
@@ -226,19 +211,18 @@
   background: transparent;
 }
 
-/* lewy łuk */
 .tab-corner-left::before {
   top:  calc(-1 * var(--radius) - 2px);
   left: calc(-1 * var(--radius) - 2px);
 }
 
-/* prawy łuk */
 .tab-corner-right::before {
   top:   calc(-1 * var(--radius) - 2px);
   right: calc(-1 * var(--radius) - 2px);
 }
 
-/* zanikający klin na krawędzi – jak w builderze */
+/* krawędzie skrajne */
+
 .control-tabs-card:has(#navDevices.active) .slot-devices .tab-corner-left{
   display:none;
 }
@@ -264,14 +248,15 @@
 
 .control-main-card{
   margin-top: 0;
-  background: var(--surface);             /* ten sam co wypustka */
-  border: 1px solid var(--border-color);  /* ten sam co wypustka */
+  background: var(--surface);
+  border: 1px solid var(--border-color);
   border-radius: var(--radius);
   padding: 18px 14px 16px;
   position: relative;
   z-index: 0;
   box-shadow: 0 18px 45px rgba(0,0,0,.45);
 }
+
 /* krawędzie w zależności od aktywnej zakładki */
 
 .control-tabs-card:has(#navDevices.active) .control-main-card{
@@ -283,12 +268,12 @@
   border-top-left-radius: var(--radius);
   border-top-right-radius: 0;
 }
-/* środkowe zakładki – oba rogi zaokrąglone (domyślne) */
 
 /* ========= PANELE / KROKI ========= */
 
 .cardPanel{
   margin-top: 4px;
+  position: relative;
 }
 .cardPanel.hidden{
   display: none;
@@ -298,14 +283,14 @@
   display: none !important;
 }
 
-/* nagłówki / kroki */
+/* nagłówki */
 
 .panelHead{
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   gap: 10px;
-  margin-bottom: 10px;
+  margin-bottom: 4px;
 }
 
 .panelTitle{
@@ -314,41 +299,111 @@
   letter-spacing: .06em;
 }
 
+/* KROK – stała wysokość + centrowanie karty */
+
 .step{
-  margin-top: 4px;
+  margin-top: 8px;
+  position: relative;
+  padding-top: 32px;          /* miejsce na stepTitle */
+  min-height: 420px;          /* stała wysokość „sceny” kroku */
+  display: flex;
+  align-items: center;        /* karta wycentrowana w pionie */
 }
+
 .step.hidden{
   display: none;
 }
 
+/* etykieta kroku przy górnej krawędzi */
+
 .stepTitle{
+  position: absolute;
+  top: 0;
+  left: 0;
   font-weight: 1000;
   letter-spacing: .06em;
-  margin: 6px 0 12px;
-  opacity: .95;
+  margin: 0;
+  font-size: 11px;
+  opacity: .9;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.14);
+  background: rgba(255,255,255,.06);
 }
 
+/* ========= KARTY / GRIDY / POLA ========= */
+
+.card{
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,.14);
+  background: rgba(0,0,0,.18);
+  padding: 14px;
+  box-shadow: 0 18px 45px rgba(0,0,0,.45);
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.card-soft{
+  box-shadow: none;
+  border-color: rgba(255,255,255,.10);
+  background: rgba(0,0,0,.16);
+}
+
+.card-noShadow{
+  box-shadow: none;
+}
+
+/* wnętrze karty – treść */
+
+.cardBody{
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* „podkarty” w środku kroku wyglądają lżej */
+.twoCol > .card{
+  box-shadow: none;
+  border-color: rgba(255,255,255,.10);
+  background: rgba(0,0,0,.16);
+}
+
+/* stopka kroku – oddzielona paskiem, przy dolnej krawędzi karty */
+
 .stepFoot{
-  margin-top: 12px;
+  margin-top: 16px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255,255,255,.10);
   display: flex;
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
 }
 
-.stepFootLeft{
+.stepFootButtons{
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
 }
 
-/* komunikaty w stopce kroku na prawo */
-.stepFoot .msg{
-  margin-left: auto;
-  text-align: right;
+/* wersja wewnątrz kolumny (pytanie) */
+.stepFoot-inner{
+  border-top: 1px dashed rgba(255,255,255,.16);
+  margin-top: 14px;
+  padding-top: 10px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
 }
 
-/* ========= KARTY / GRIDY / POLA ========= */
+/* komunikaty w stopce kroku na prawo (przy standardowych stopkach) */
+.stepFoot .msg{
+  margin-left: auto;
+}
+
+/* siatki */
 
 .cards2{
   display: grid;
@@ -372,21 +427,6 @@
   .twoCol{
     grid-template-columns: 1fr;
   }
-}
-
-.card{
-  border-radius: 18px;
-  border: 1px solid rgba(255,255,255,.14);
-  background: rgba(0,0,0,.18);
-  padding: 14px;
-  box-shadow: 0 18px 45px rgba(0,0,0,.45);
-}
-
-/* „podkarty” w środku kroku wyglądają lżej */
-.twoCol > .card{
-  box-shadow: none;
-  border-color: rgba(255,255,255,.10);
-  background: rgba(0,0,0,.16);
 }
 
 .head{
@@ -430,12 +470,23 @@
   background: rgba(255,120,120,.16);
 }
 
+.badge-soft{
+  background: rgba(255,255,255,.04);
+  border-color: rgba(255,255,255,.16);
+}
+
+/* rząd z meta-informacją (ostatnio widziany itp.) */
+
 .rowBtns{
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
   margin-top: 8px;
   align-items: center;
+}
+
+.rowMeta{
+  margin-top: 4px;
 }
 
 /* msg wewnątrz rowBtns łamie się w nowej linii */
@@ -450,6 +501,10 @@
   min-width: 220px;
 }
 
+.field.sm{
+  min-width: 180px;
+}
+
 .lbl2{
   font-size: 12px;
   opacity: .85;
@@ -457,15 +512,49 @@
   letter-spacing: .06em;
 }
 
+/* OPISY / HINTY */
+
 .hint{
   font-size: 13px;
-  opacity: .85;
+  opacity: .88;
   max-width: 640px;
 }
 
-/* komunikaty globalnie – kolor z base.css, tylko rozmiar */
+.hint-compact{
+  max-width: 520px;
+}
+
+.hint ul{
+  margin-top: 4px;
+  padding-left: 18px;
+}
+
+/* komunikaty globalnie – kapsułki */
+
 .msg{
   font-size: 12px;
+}
+
+.msg-inline{
+  padding: 0;
+  border: none;
+  background: transparent;
+}
+
+.msg-pill{
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(148,163,184,.40);
+  background: rgba(15,23,42,.75);
+  max-width: 360px;
+  min-height: 20px;
+  display: flex;
+  align-items: center;
+}
+
+.msgStack{
+  display: grid;
+  gap: 4px;
 }
 
 /* radio */
@@ -553,7 +642,8 @@
   }
 }
 
-/* lekkie kontenery – bez ramki */
+/* lekkie kontenery */
+
 .qrBox,
 .qrSlim{
   border: none;
@@ -572,8 +662,10 @@
   max-width: 100%;
   border-radius: 16px;
   border: 1px solid rgba(255,255,255,.18);
-  background: #000;
+  background: #fff;
   display: block;
+  padding: 16px;              /* większe białe brzegi */
+  box-sizing: border-box;
 }
 
 /* przyciski pod QR bardziej zbite */
@@ -672,7 +764,7 @@
 /* tekst pytania w rundach / finałach */
 .qPrompt,
 .qText{
-  margin-top: 10px;
+  margin-top: 6px;
   font-weight: 1000;
   line-height: 1.25;
   font-size: 16px;
@@ -703,6 +795,8 @@
 .hList li{
   flex: 1 1 140px;
 }
+
+/* odpowiedzi */
 
 .ansGrid{
   display: grid;
@@ -985,4 +1079,6 @@
   height: auto;
   border-radius: 12px;
   background: #fff;
+  padding: 18px;       /* więcej białego dookoła QR w modalu */
+  box-sizing: border-box;
 }
