@@ -1,3 +1,10 @@
+// ================== KOMUNIKATY ==================
+const DEVICES_MSG = {
+  COPY_OK: "Skopiowano.",
+  COPY_FAIL: "Nie mogę skopiować.",
+};
+// =============== KONIEC KOMUNIKATÓW ===============
+
 export function createDevices({ game, ui, store, chDisplay, chHost, chBuzzer }) {
   // --- NOWE: kolejki komend per urządzenie ---
   const cmdQueues = {
@@ -20,7 +27,6 @@ export function createDevices({ game, ui, store, chDisplay, chHost, chBuzzer }) 
     if (error) throw error;
   }
 
-  // pomocniczo: czy dane urządzenie jest online wg store
   function isOnline(kind) {
     const flags = store.state?.flags || {};
     if (kind === "display") return !!flags.displayOnline;
@@ -35,7 +41,6 @@ export function createDevices({ game, ui, store, chDisplay, chHost, chBuzzer }) 
     cmdQueues[kind].push(l);
   }
 
-  // PUBLICZNE: flush kolejki (wywołane z presence po reconnect)
   async function flushQueued(kind) {
     if (!isOnline(kind)) return;
 
@@ -58,15 +63,11 @@ export function createDevices({ game, ui, store, chDisplay, chHost, chBuzzer }) 
       return;
     }
 
-    // wysyłamy po kolei – urządzenia i tak potrafią zjeść serię komend
     while (q.length) {
       const line = q.shift();
       await sendCmd(channel, event, line);
     }
   }
-
-  // --- ZMODYFIKOWANE WYSYŁACZE KOMEND ---
-  // UWAGA: sygnatury niezmienione: dalej przyjmują TYLKO (line)
 
   async function sendDisplayCmd(line) {
     const l = String(line ?? "").trim();
@@ -75,7 +76,6 @@ export function createDevices({ game, ui, store, chDisplay, chHost, chBuzzer }) 
     if (isOnline("display")) {
       await sendCmd(chDisplay, "DISPLAY_CMD", l);
     } else {
-      // offline → tylko do kolejki, bez błędu
       enqueue("display", l);
     }
   }
@@ -112,7 +112,7 @@ export function createDevices({ game, ui, store, chDisplay, chHost, chBuzzer }) 
   }
 
   let urls = { displayUrl:"", hostUrl:"", buzzerUrl:"" };
-    function getUrls() {
+  function getUrls() {
     return { ...urls };
   }
 
@@ -134,9 +134,32 @@ export function createDevices({ game, ui, store, chDisplay, chHost, chBuzzer }) 
     ui.on("devices.openHost", () => window.open(hostUrl, "_blank"));
     ui.on("devices.openBuzzer", () => window.open(buzzerUrl, "_blank"));
 
-    ui.on("devices.copyDisplay", async () => ui.setMsg("msgDevices", (await copyToClipboard(displayUrl)) ? "Skopiowano." : "Nie mogę skopiować."));
-    ui.on("devices.copyHost", async () => ui.setMsg("msgDevices2", (await copyToClipboard(hostUrl)) ? "Skopiowano." : "Nie mogę skopiować."));
-    ui.on("devices.copyBuzzer", async () => ui.setMsg("msgDevices2", (await copyToClipboard(buzzerUrl)) ? "Skopiowano." : "Nie mogę skopiować."));
+    ui.on(
+      "devices.copyDisplay",
+      async () =>
+        ui.setMsg(
+          "msgDevices",
+          (await copyToClipboard(displayUrl)) ? DEVICES_MSG.COPY_OK : DEVICES_MSG.COPY_FAIL
+        )
+    );
+
+    ui.on(
+      "devices.copyHost",
+      async () =>
+        ui.setMsg(
+          "msgDevices2",
+          (await copyToClipboard(hostUrl)) ? DEVICES_MSG.COPY_OK : DEVICES_MSG.COPY_FAIL
+        )
+    );
+
+    ui.on(
+      "devices.copyBuzzer",
+      async () =>
+        ui.setMsg(
+          "msgDevices2",
+          (await copyToClipboard(buzzerUrl)) ? DEVICES_MSG.COPY_OK : DEVICES_MSG.COPY_FAIL
+        )
+    );
   }
 
   function escQ(raw) {
