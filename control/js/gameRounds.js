@@ -52,6 +52,11 @@ const ROUNDS_MSG = {
   // --- KONIEC RUNDY ---
   ROUND_NO_CONTROL_BANK:
     "Brak drużyny z kontrolą – nie mogę przyznać banku.",
+    // --- KONIEC RUNDY / BANK ---
+  ROUND_BANK: (bank, team) =>
+    `Koniec rundy. Bank ${bank} pkt dla drużyny ${team}.`,
+  ROUND_BANK_MULT: (bank, team, mult, awarded) =>
+    `Koniec rundy. Bank ${bank} pkt dla drużyny ${team} (x${mult} = ${awarded} pkt).`,
   ROUND_TO_FINAL: "Rundy zakończone. Przechodzimy do finału.",
   ROUND_NEXT: "Runda zakończona. Możesz rozpocząć kolejną rundę.",
   ROUND_LAST: "To była ostatnia runda. Przejdź do zakończenia gry.",
@@ -1117,11 +1122,11 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
 
     const msg =
       mult === 1
-        ? `Koniec rundy. Bank ${bank} pkt dla drużyny ${winner}.`
-        : `Koniec rundy. Bank ${bank} pkt dla drużyny ${winner} (x${mult} = ${awarded} pkt).`;
-    
-    setEndMsg(msg);
+        ? ROUNDS_MSG.ROUND_BANK(bank, winner)
+        : ROUNDS_MSG.ROUND_BANK_MULT(bank, winner, mult, awarded);
 
+    setEndMsg(msg);
+    
     // jeśli mamy jeszcze ukryte odpowiedzi – przechodzimy w tryb odsłaniania
     const hasHidden = (r.answers || []).some(
       (a) => !r.revealed?.has(a.ord)
