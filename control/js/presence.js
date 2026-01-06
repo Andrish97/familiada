@@ -22,6 +22,11 @@ function fmtSince(ts) {
 export function createPresence({ game, ui, store, devices }) {
   let timer = null;
 
+  // poprzednie stany TYLKO dla tej sesji presence
+  let lastDisplayOnline = false;
+  let lastHostOnline = false;
+  let lastBuzzerOnline = false;
+
   async function fetchPresenceSafe() {
     const { data, error } = await sb()
       .from("device_presence")
@@ -29,7 +34,7 @@ export function createPresence({ game, ui, store, devices }) {
       .eq("game_id", game.id);
 
     if (error) return { ok: false, rows: [], error };
-    return { ok: true, rows: data || [], error: null };
+    return { ok: true, rows: (data || []), error: null };
   }
 
   function pickNewest(rows, t) {
@@ -68,13 +73,15 @@ export function createPresence({ game, ui, store, devices }) {
     const hOn = isOnline(h);
     const bOn = isOnline(b);
 
-    // poprzednie flagi (PRZED aktualizacją setOnlineFlags)
-    const prevFlags = { ...(store.state.flags || {}) };
+    // poprzednie stany z TEJ sesji
+    const prevDisplay = lastDisplayOnline;
+    const prevHost = lastHostOnline;
+    const prevBuzzer = lastBuzzerOnline;
 
     // spadki online -> alert
-    alertIfDropped(prevFlags.displayOnline, dOn, "Wyświetlacz");
-    alertIfDropped(prevFlags.hostOnline, hOn, "Prowadzący");
-    alertIfDropped(prevFlags.buzzerOnline, bOn, "Przycisk");
+    alertIfDropped(prevDisplay, dOn, "Wyświetlacz");
+    alertIfDropped(prevHost, hOn, "Prowadzący");
+    alertIfDropped(prevBuzzer, bOn, "Przycisk");
 
     ui.setDeviceBadges({
       display: { on: dOn, seen: fmtSince(d?.last_seen_at) },
@@ -82,54 +89,58 @@ export function createPresence({ game, ui, store, devices }) {
       buzzer: { on: bOn, seen: fmtSince(b?.last_seen_at) },
     });
 
-    // *** stan zerowy po świeżym podpięciu (logika jak była) ***
+    // *** stan zerowy po świeżym podpięciu (Twoje wymagania) ***
 
-    // Host: SET "" + HIDE przy przejściu offline -> online
-    if (hOn && !prevFlags.hostOnline) {
+    // Host: przy przejściu OFF -> ON (w tej sesji) wyślij HIDE + SET ""
+    if (hOn && !prevHost) {
       try {
-        await devices.sendHostCmd('SET ""');
         await devices.sendHostCmd("HIDE");
+        await devices.sendHostCmd('SET ""');
       } catch {}
     }
 
-    // Buzzer: OFF przy przejściu offline -> online
-    if (bOn && !prevFlags.buzzerOnline) {
+    // Buzzer: przy przejściu OFF -> ON -> OFF
+    if (bOn && !prevBuzzer) {
       try {
         await devices.sendBuzzerCmd("OFF");
       } catch {}
     }
 
-    // Display: po pierwszym podpięciu -> APP BLACK (raz w życiu gry)
-    if (dOn && !store.state.flags.sentBlackAfterDisplayOnline) {
+    // Display: po pierwszym podpięciu -> APP BLACK (raz na grę)
+    if (dOn && !prevDisplay && !store.state.flags.sentBlackAfterDisplayOnline) {
       try {
         await devices.sendDisplayCmd("APP BLACK");
         store.markSentBlackAfterDisplayOnline();
       } catch {}
     }
 
-    // *** flush kolejek po przejściu offline -> online ***
+    // *** flush kolejek po przejściu OFF -> ON ***
 
-    if (!prevFlags.displayOnline && dOn) {
+    if (!prevDisplay && dOn) {
       try {
         await devices.flushQueued("display");
       } catch {}
     }
 
-    if (!prevFlags.hostOnline && hOn) {
+    if (!prevHost && hOn) {
       try {
         await devices.flushQueued("host");
       } catch {}
     }
 
-    if (!prevFlags.buzzerOnline && bOn) {
+    if (!prevBuzzer && bOn) {
       try {
         await devices.flushQueued("buzzer");
       } catch {}
     }
 
-    // Na końcu aktualizujemy flagi online
-    store.setOnlineFlags({ display: dOn, host: hOn, buzzer: bOn });
+    // aktualizujemy lokalne poprzednie stany
+    lastDisplayOnline = dOn;
+    lastHostOnline = hOn;
+    lastBuzzerOnline = bOn;
 
+    // Na końcu aktualizujemy flagi online w store (dla reszty aplikacji)
+    store.setOnlineFlags({ display: dOn, host: hOn, buzzer: bOn });
   }
 
   async function start() {
