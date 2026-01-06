@@ -28,6 +28,9 @@ const APP_MSG = {
 
   FINAL_CONFIRMED: "Zatwierdzono.",
   
+  FINAL_RELOAD_START: "Odświeżanie listy pytań...",
+  FINAL_RELOAD_DONE: "Lista pytań odświeżona.",
+  
   ADV_SAVED: "Zapisano dodatkowe ustawienia.",
   ADV_RESET: "Przywrócono domyślne ustawienia.",
 };
@@ -401,7 +404,6 @@ async function main() {
   ui.setAudioStatus(store.state.flags.audioUnlocked);
 
   // === GLOBALNE RENDEROWANIE STANU (Opcja B) ===
-  // === GLOBALNE RENDEROWANIE STANU (Opcja B) ===
   function renderFromState(state) {
     // aktywna karta
     ui.showCard(state.activeCard);
@@ -448,7 +450,6 @@ async function main() {
     const teamsOk = teamA.length > 0 || teamB.length > 0;
     ui.setEnabled("btnSetupNext", teamsOk);
 
-    // 2/2 — Finał: logika jak w store.canFinishSetup()
     // 2/2 — Finał: logika jak w store.canFinishSetup()
     const hasFinal = state.hasFinal === true;
     const finalPickedOk =
@@ -604,10 +605,10 @@ async function main() {
 
 
   ui.on("final.reload", async () => {
-    ui.setMsg("msgFinalPick", "Odświeżanie listy pytań...");
+    ui.setMsg("msgFinalPick", APP_MSG.FINAL_RELOAD_START);
     try {
       await finalPickerReload();
-      ui.setMsg("msgFinalPick", "Lista pytań odświeżona.");
+      ui.setMsg("msgFinalPick", APP_MSG.FINAL_RELOAD_DONE);
     } catch (e) {
       ui.setMsg("msgFinalPick", e?.message || String(e));
     }
@@ -689,78 +690,6 @@ async function main() {
 
   ui.on("final.finish", () => final.finishFinal());
 
-  // Presence loop
-  await presence.start();
-
-  // render loop
-  const render = () => {
-    ui.showCard(store.state.activeCard);
-    ui.showDevicesStep(store.state.steps.devices);
-    ui.showSetupStep(store.state.steps.setup);
-
-    ui.setNavEnabled({
-      devices: store.canEnterCard("devices"),
-      setup: store.canEnterCard("setup"),
-      rounds: store.canEnterCard("rounds"),
-      final: store.canEnterCard("final"),
-    });
-
-    ui.setEnabled("btnDevicesNext", store.state.flags.displayOnline);
-    ui.setEnabled("btnQrToggle", store.state.flags.displayOnline);
-    ui.setEnabled(
-      "btnDevicesToAudio",
-      store.state.flags.displayOnline && store.state.flags.hostOnline && store.state.flags.buzzerOnline
-    );
-
-    ui.setEnabled(
-      "btnDevicesFinish",
-      store.state.steps.devices === "devices_audio" && store.state.flags.audioUnlocked
-    );
-    ui.setEnabled("btnSetupNext", store.teamsOk());
-    ui.setEnabled("btnSetupFinish", store.canFinishSetup());
-
-    ui.setFinalHasFinal(store.state.hasFinal === true);
-    ui.setFinalConfirmed(store.state.final.confirmed === true);
-
-    ui.setEnabled(
-      "btnConfirmFinal",
-      store.state.hasFinal === true &&
-        store.state.final.confirmed === false &&
-        store.state.final.picked.length === 5
-    );
-    ui.setEnabled(
-      "btnEditFinal",
-      store.state.hasFinal === true && store.state.final.confirmed === true
-    );
-
-    // "Gra gotowa" – tylko gdy wszystko gotowe
-    ui.setEnabled("btnGameReady", store.canStartRounds());
-    
-    // "Rozpocznij grę" – tylko na kroku r_intro i tylko gdy gra gotowa
-    ui.setEnabled(
-      "btnStartShowIntro",
-      store.canStartRounds() && store.state.rounds.step === "r_intro"
-    );
-    
-    // "Rozpocznij rundę" – dopiero po zakończeniu intra (krok r_roundStart)
-    ui.setEnabled(
-      "btnStartRound",
-      store.canStartRounds() && store.state.rounds.step === "r_roundStart"
-    );
-
-    // rounds HUD
-    ui.setRoundsHud(store.state.rounds);
-
-    // final UI – Start finału tylko na kroku f_start
-    ui.setEnabled(
-      "btnFinalStart",
-      store.canEnterCard("final") && store.state.final.step === "f_start"
-    );
-  };
-
-  store.subscribe(render);
-  render();
-
   ui.setRoundsStep(
     store.state.rounds.phase === "IDLE" || store.state.rounds.phase === "READY"
       ? "READY"
@@ -774,10 +703,6 @@ async function main() {
     store.state.flags.qrOnDisplay,
     store.state.flags.hostOnline && store.state.flags.buzzerOnline
   );
-
-  // init questions picker for final (setup karta)
-  await finalPickerReload().catch(() => {});
-
 }
 
 main().catch((e) => {
