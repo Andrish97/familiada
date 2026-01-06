@@ -221,10 +221,15 @@ async function main() {
     if (cntEl) cntEl.textContent = String(count);
 
     if (btnConfirm) {
+      // można zatwierdzić tylko gdy:
+      // - gramy finał
+      // - nie jest jeszcze potwierdzone
+      // - dokładnie 5 pytań po prawej
       btnConfirm.disabled = !hasFinal || confirmed || count !== 5;
     }
   }
 
+  // strefa zrzutu dla list (lewa/prawa)
   function bindDropZone(root, targetSide) {
     if (!root || root._finalDndBound) return;
     root._finalDndBound = true;
@@ -254,11 +259,11 @@ async function main() {
       if (targetSide === "final") {
         // wrzucamy DO finału
         if (!finalPickerSelected.has(id)) {
-          if (finalPickerSelected.size >= 5) return;
+          if (finalPickerSelected.size >= 5) return; // limit 5
           finalPickerSelected.add(id);
         }
       } else {
-        // wrzucamy z finału z powrotem do puli
+        // wrzucamy Z finału do puli
         finalPickerSelected.delete(id);
       }
 
@@ -267,7 +272,7 @@ async function main() {
       finalPickerRender();
     });
   }
-  
+
   function renderList(root, list, side, confirmed) {
     if (!root) return;
 
@@ -288,19 +293,7 @@ async function main() {
       const id = Number(row.dataset.id || "0");
       if (!id) return;
 
-      // KLIK – szybkie przerzucanie lewo/prawo
-      row.addEventListener("click", () => {
-        if (finalPickerSelected.has(id)) {
-          finalPickerSelected.delete(id);
-        } else {
-          if (finalPickerSelected.size >= 5) return;
-          finalPickerSelected.add(id);
-        }
-        store.state.final.picked = finalPickerGetSelectedIds();
-        finalPickerRender();
-      });
-
-      // DRAGSTART – zaczynamy przeciąganie
+      // TYLKO DRAG&DROP, ŻADNEGO KLIKANIA
       row.addEventListener("dragstart", (e) => {
         if (store.state.final.confirmed) return;
         if (e.dataTransfer) {
@@ -322,11 +315,11 @@ async function main() {
 
     if (!poolRoot || !finalRoot) return;
 
+    const confirmed = store.state.final.confirmed === true;
+
     // podpinamy strefy drop (tylko raz na root)
     bindDropZone(poolRoot, "pool");
     bindDropZone(finalRoot, "final");
-
-    const confirmed = store.state.final.confirmed === true;
 
     const pickedIds = finalPickerSelected;
     const picked = finalPickerAll.filter((q) => pickedIds.has(q.id));
@@ -352,6 +345,7 @@ async function main() {
 
     finalPickerRender();
   }
+
   
   devices.initLinksAndQr();
 
