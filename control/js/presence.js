@@ -129,6 +129,30 @@ export function createPresence({ game, ui, store, devices }) {
 
     // Na końcu aktualizujemy flagi online
     store.setOnlineFlags({ display: dOn, host: hOn, buzzer: bOn });
+
+    // Aktualizacja przycisków w karcie „Urządzenia”
+    try {
+      const step = store.state.steps?.devices;
+      const devicesCardDone = !!store.state.completed?.devices;
+
+      if (step === "devices_display") {
+        // Krok 1: wyświetlacz – można przejść dalej, gdy wyświetlacz jest online
+        // (albo jeśli karta Urządzenia była już kiedyś zaliczona).
+        const canNext = dOn || devicesCardDone;
+        ui.setEnabled?.("btnDevicesNext", canNext);
+      } else if (step === "devices_hostbuzzer") {
+        // Krok 2: prowadzący + przycisk – przejście dalej, gdy oba urządzenia są online
+        // (albo karta była już zaliczona).
+        const canToAudio = (hOn && bOn) || devicesCardDone;
+        ui.setEnabled?.("btnDevicesToAudio", canToAudio);
+      } else if (step === "devices_audio") {
+        // Krok 3: audio – jeśli już tu jesteśmy, pozwalamy zawsze zakończyć kartę.
+        ui.setEnabled?.("btnDevicesFinish", true);
+      }
+    } catch (e) {
+      console.warn("[presence] update device buttons failed", e);
+    }
+
   }
 
   async function start() {
