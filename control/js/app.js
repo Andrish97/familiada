@@ -149,6 +149,17 @@ async function main() {
   const store = createStore(game.id);
   store.hydrate();
 
+  const hasFinalNow = store.state.hasFinal === true;
+  const finalYesRadio = document.getElementById("finalYes");
+  const finalNoRadio = document.getElementById("finalNo");
+
+  if (finalYesRadio && finalNoRadio) {
+    finalYesRadio.checked = hasFinalNow;
+    finalNoRadio.checked = !hasFinalNow;
+  }
+  ui.setFinalHasFinal(hasFinalNow);
+
+
   // === OSTRZEŻENIE PRZY WYJŚCIU ZE STRONY ===
   function shouldWarnBeforeUnload() {
     const s = store.state;
@@ -268,8 +279,7 @@ async function main() {
       e.preventDefault();
       root.classList.remove("droptarget");
 
-      const raw = e.dataTransfer ? e.dataTransfer.getData("text/plain") : "";
-      const id = raw || "";
+      const id = e.dataTransfer ? e.dataTransfer.getData("text/plain") : "";
       if (!id) return;
 
       if (targetSide === "final") {
@@ -347,13 +357,19 @@ async function main() {
   }
 
   async function finalPickerReload() {
-    const raw = sessionStorage.getItem("familiada:questionsCache");
-    finalPickerAll = raw ? JSON.parse(raw) : [];
+    // Pobierz na świeżo pytania z bazy
+    const qsAll = await loadQuestions(game.id);
 
-    // start od tego, co jest zapisane w store (mogło już być zatwierdzone)
+    // Zaktualizuj cache (żeby inne rzeczy też mogły z tego korzystać)
+    sessionStorage.setItem("familiada:questionsCache", JSON.stringify(qsAll));
+    finalPickerAll = qsAll;
+
+    // Startujemy od tego, co jest w store (mogło być już zatwierdzone)
     const existing = Array.isArray(store.state.final?.picked)
       ? store.state.final.picked
       : [];
+
+    // ważne: TRZYMYMY STRINGI
     finalPickerSelected = new Set(
       existing.map((id) => String(id))
     );
