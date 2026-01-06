@@ -1,3 +1,10 @@
+// ================== KOMUNIKATY / TEKSTY WYŚWIETLACZA ==================
+const DISPLAY_MSG = {
+  TEAM_A_DEFAULT: "Drużyna A",
+  TEAM_B_DEFAULT: "Drużyna B",
+};
+// ======================================================================
+
 export function createDisplay({ devices, store }) {
   const ELLIPSIS = "…"; // ważne: znak z fontu
 
@@ -33,8 +40,8 @@ export function createDisplay({ devices, store }) {
   }
 
   async function setTeamsLongs(teamA, teamB) {
-    const a = String(teamA || "Drużyna A");
-    const b = String(teamB || "Drużyna B");
+    const a = String(teamA || DISPLAY_MSG.TEAM_A_DEFAULT);
+    const b = String(teamB || DISPLAY_MSG.TEAM_B_DEFAULT);
 
     // Nowy protokół: dwie osobne komendy LONG1 / LONG2
     await send(`LONG1 "${q(a)}"`);
