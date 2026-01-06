@@ -1,4 +1,35 @@
 // /familiada/js/pages/control/app.js
+
+// ================== KOMUNIKATY ==================
+const APP_MSG = {
+  NO_ID: "Brak ?id w URL.",
+  GAME_NOT_READY: (reason) => `Ta gra nie jest gotowa do PLAY: ${reason}`,
+  DATA_MISMATCH: "Rozjazd danych gry (validate vs games).",
+
+  QR_LABEL: (kind) =>
+    kind === "display" ? "Wyświetlacz" :
+    kind === "host" ? "Prowadzący" :
+    kind === "buzzer" ? "Przycisk" :
+    "Urządzenie",
+
+  QR_COPY_OK: "Skopiowano link do urządzenia.",
+  QR_COPY_FAIL: "Nie udało się skopiować linka.",
+
+  UNLOAD_WARN:
+    "Jeśli teraz opuścisz tę stronę, bieżący stan gry zostanie utracony (zostaje tylko zwykłe odświeżenie).",
+
+  CONFIRM_BACK:
+    "Powrót do listy gier spowoduje utratę bieżącego stanu gry. Kontynuować?",
+
+  AUDIO_OK: "Dźwięk odblokowany.",
+  AUDIO_FAIL: "Nie udało się odblokować dźwięku.",
+
+  TEAMS_SAVED: "Zapisano.",
+
+  FINAL_CONFIRMED: "Zatwierdzono.",
+};
+// ================= KONIEC KOMUNIKATÓW =================
+
 import { requireAuth, signOut } from "/familiada/js/core/auth.js";
 import { sb } from "/familiada/js/core/supabase.js";
 import { rt } from "/familiada/js/core/realtime.js";
@@ -24,12 +55,12 @@ async function ensureAuthOrRedirect() {
 }
 
 async function loadGameOrThrow() {
-  if (!gameId) throw new Error("Brak ?id w URL.");
+  if (!gameId) throw new Error(APP_MSG.NO_ID);
 
   const basic = await loadGameBasic(gameId);
 
   const v = await validateGameReadyToPlay(gameId);
-  if (!v.ok) throw new Error(`Ta gra nie jest gotowa do PLAY: ${v.reason}`);
+  if (!v.ok) throw new Error(APP_MSG.GAME_NOT_READY(v.reason));
 
   const { data, error } = await sb()
     .from("games")
@@ -38,7 +69,7 @@ async function loadGameOrThrow() {
     .single();
 
   if (error) throw error;
-  if (data?.id !== basic.id) throw new Error("Rozjazd danych gry (validate vs games).");
+  if (data?.id !== basic.id) throw new Error(APP_MSG.DATA_MISMATCH);
   return data;
 }
 
@@ -52,7 +83,7 @@ async function main() {
   const ui = createUI();
   ui.setGameHeader(game.name, `${game.type} / ${game.status}`);
 
-    // === Modal QR z auth bar (top-status) ===
+  // === Modal QR z auth bar (top-status) ===
   let currentQrKind = null; // "display" | "host" | "buzzer"
 
   function qrSrc(url) {
@@ -62,7 +93,6 @@ async function main() {
 
   function getDeviceUrl(kind) {
     if (!window || !kind) return null;
-    // devices będzie zdefiniowane niżej, ale w momencie użycia już istnieje
     if (!devices || !devices.getUrls) return null;
     const urls = devices.getUrls();
     if (kind === "display") return urls.displayUrl;
@@ -89,13 +119,7 @@ async function main() {
 
     if (!overlay || !titleEl || !imgEl || !linkEl) return;
 
-    const label =
-      kind === "display" ? "Wyświetlacz" :
-      kind === "host" ? "Prowadzący" :
-      kind === "buzzer" ? "Przycisk" :
-      "Urządzenie";
-
-    titleEl.textContent = label;
+    titleEl.textContent = APP_MSG.QR_LABEL(kind);
     linkEl.value = url;
     imgEl.src = qrSrc(url);
 
@@ -107,9 +131,9 @@ async function main() {
     if (!url) return;
     try {
       await navigator.clipboard.writeText(url);
-      ui.showAlert("Skopiowano link do urządzenia.");
+      ui.showAlert(APP_MSG.QR_COPY_OK);
     } catch {
-      ui.showAlert("Nie udało się skopiować linka.");
+      ui.showAlert(APP_MSG.QR_COPY_FAIL);
     }
   }
 
@@ -132,34 +156,30 @@ async function main() {
     const finalActive = !!s.locks?.finalActive;
 
     const someRoundProgress =
-      r.phase && r.phase !== "IDLE"; // cokolwiek się dzieje w rundach
+      r.phase && r.phase !== "IDLE";
 
     const somePoints =
       (totals.A || 0) > 0 ||
       (totals.B || 0) > 0 ||
       (r.bankPts || 0) > 0;
 
-    // ostrzegamy wtedy, gdy gra już ruszyła i coś się *realnie* dzieje / zadziało
     return gameStarted && (someRoundProgress || somePoints || finalActive);
   }
 
   window.addEventListener("beforeunload", (e) => {
     if (!shouldWarnBeforeUnload()) return;
-
-    const msg =
-      "Jeśli teraz opuścisz tę stronę, bieżący stan gry zostanie utracony (zostaje tylko zwykłe odświeżenie).";
+    const msg = APP_MSG.UNLOAD_WARN;
     e.preventDefault();
     e.returnValue = msg;
     return msg;
   });
-
 
   // realtime channels
   const chDisplay = rt(`familiada-display:${game.id}`);
   const chHost = rt(`familiada-host:${game.id}`);
   const chBuzzer = rt(`familiada-buzzer:${game.id}`);
 
-  const devices = createDevices({ game, ui, store, chDisplay, chHost, chBuzzer, });
+  const devices = createDevices({ game, ui, store, chDisplay, chHost, chBuzzer });
   const presence = createPresence({ game, ui, store, devices });
 
   const display = createDisplay({ devices, store });
@@ -167,12 +187,11 @@ async function main() {
   rounds.bootIfNeeded();
   const final = createFinal({ ui, store, devices, display, loadAnswers });
 
-  // ===== Realtime: odbiór kliknięć z przycisku (BUZZER_EVT) =====
+  // ===== Realtime: BUZZER_EVT =====
   const chControlIn = sb()
     .channel(`familiada-control:${game.id}`)
     .on("broadcast", { event: "BUZZER_EVT" }, (msg) => {
       const line = String(msg?.payload?.line || "").trim().toUpperCase();
-      // spodziewamy się formatu: "CLICK A" / "CLICK B"
       const [cmd, team] = line.split(/\s+/);
       if (cmd === "CLICK" && (team === "A" || team === "B")) {
         rounds.handleBuzzerClick(team);
@@ -180,7 +199,7 @@ async function main() {
     })
     .subscribe();
 
-  // === PICKER PYTAŃ FINAŁU (przeniesiony z dawnego gameFinal) ===
+  // === PICKER PYTAŃ FINAŁU ===
   let finalPickerAll = [];
   let finalPickerSelected = new Set();
 
@@ -215,7 +234,6 @@ async function main() {
     const picked = finalPickerAll.filter((q) => finalPickerSelected.has(q.id));
     cnt.textContent = String(picked.length);
 
-    // chips
     chips.innerHTML = picked
       .map(
         (q) => `
@@ -238,7 +256,6 @@ async function main() {
       });
     }
 
-    // lista pytań
     if (confirmed) {
       root.innerHTML = picked
         .map(
@@ -285,27 +302,20 @@ async function main() {
       });
     });
   }
-  // === KONIEC pickera pytań finału ===
 
-  // init links + QR images
   devices.initLinksAndQr();
 
-  // initial audio
   store.setAudioUnlocked(!!isAudioUnlocked());
   ui.setAudioStatus(store.state.flags.audioUnlocked);
 
-  // navigation
   ui.mountNavigation({
     canEnter: (card) => store.canEnterCard(card),
     onNavigate: (card) => store.setActiveCard(card),
   });
 
-  // TOP buttons
   ui.on("top.back", () => {
     if (shouldWarnBeforeUnload()) {
-      const ok = confirm(
-        "Powrót do listy gier spowoduje utratę bieżącego stanu gry. Kontynuować?"
-      );
+      const ok = confirm(APP_MSG.CONFIRM_BACK);
       if (!ok) return;
     }
     location.href = "/familiada/builder.html";
@@ -316,21 +326,11 @@ async function main() {
     location.href = "/familiada/index.html";
   });
 
-    // auth bar: QR z top bara
-  ui.on("auth.showQr", (kind) => {
-    showQrModal(kind);
-  });
-  ui.on("auth.qr.close", () => {
-    hideQrModal();
-  });
-  ui.on("auth.qr.copy", async () => {
-    await copyQrLink();
-  });
-  ui.on("auth.qr.open", () => {
-    openQrLink();
-  });
+  ui.on("auth.showQr", (kind) => showQrModal(kind));
+  ui.on("auth.qr.close", () => hideQrModal());
+  ui.on("auth.qr.copy", async () => await copyQrLink());
+  ui.on("auth.qr.open", () => openQrLink());
 
-  // DEVICE steps
   ui.on("devices.next", () => store.setDevicesStep("devices_hostbuzzer"));
   ui.on("devices.back", () => store.setDevicesStep("devices_display"));
   ui.on("devices.toAudio", () => store.setDevicesStep("devices_audio"));
@@ -340,7 +340,7 @@ async function main() {
     const ok = unlockAudio();
     store.setAudioUnlocked(!!ok);
     ui.setAudioStatus(!!ok);
-    ui.setMsg("msgAudio", ok ? "Dźwięk odblokowany." : "Nie udało się odblokować dźwięku.");
+    ui.setMsg("msgAudio", ok ? APP_MSG.AUDIO_OK : APP_MSG.AUDIO_FAIL);
     playSfx("answer_correct");
   });
 
@@ -357,7 +357,7 @@ async function main() {
     const now = store.state.flags.qrOnDisplay;
 
     if (!now) {
-      await devices.sendQrToDisplay(); // pokaż QR zawsze (linki są zawsze)
+      await devices.sendQrToDisplay();
       store.setQrOnDisplay(true);
       ui.setQrToggleLabel(true, store.state.flags.hostOnline && store.state.flags.buzzerOnline);
     } else {
@@ -369,9 +369,10 @@ async function main() {
 
   // SETUP
   ui.on("setup.backToDevices", () => store.setActiveCard("devices"));
+
   ui.on("teams.save", () => {
     store.setTeams(ui.getTeamA(), ui.getTeamB());
-    ui.setMsg("msgTeams", "Zapisano.");
+    ui.setMsg("msgTeams", APP_MSG.TEAMS_SAVED);
   });
 
   ui.on("teams.change", ({ teamA, teamB }) => {
@@ -390,7 +391,7 @@ async function main() {
   ui.on("final.confirm", () => {
     store.confirmFinalQuestions(finalPickerGetSelectedIds());
     ui.setFinalConfirmed(true);
-    ui.setMsg("msgFinalPick", "Zatwierdzono.");
+    ui.setMsg("msgFinalPick", APP_MSG.FINAL_CONFIRMED);
     finalPickerRender();
   });
 
@@ -406,156 +407,6 @@ async function main() {
     store.setActiveCard("rounds");
   });
 
-  // ROUNDS
-  // ROUNDS
-  ui.on("game.ready", async () => {
-    // po "Gra gotowa" blokujemy Urządzenia i Ustawienia
-    store.setGameStarted(true);
-    await rounds.stateGameReady();
-  });
-
-  ui.on("game.startIntro", async () => {
-    await rounds.stateStartGameIntro();
-  });
-
-  ui.on("rounds.start", async () => {
-    await rounds.startRound();
-  });
-
-  // duel
-  ui.on("buzz.enable", () => rounds.enableBuzzerDuel());
-  ui.on("buzz.retry", () => rounds.retryDuel());
-  ui.on("buzz.acceptA", () => rounds.acceptBuzz("A"));
-  ui.on("buzz.acceptB", () => rounds.acceptBuzz("B"));
-
-  // play
-  ui.on("rounds.pass", () => rounds.passQuestion());
-  ui.on("rounds.timer3", () => rounds.startTimer3());
-  ui.on("rounds.answerClick", (ord) => rounds.revealAnswerByOrd(ord));
-  ui.on("rounds.addX", () => rounds.addX());
-  ui.on("rounds.goEnd", () => rounds.goEndRound());
-
-  ui.on("rounds.goEndRound", () => {
-    rounds.goEndRound().catch((e) => console.error("goEndRound error", e));
-  });
-
-  // NOWE: zakończenie gry (bez finału)
-  ui.on("rounds.gameEndShow", () => {
-    rounds.showGameEnd().catch((e) => console.error("showGameEnd error", e));
-  });
-
-
-  // odsłanianie pozostałych odpowiedzi
-  ui.on("rounds.showReveal", () => rounds.showRevealLeft());
-  ui.on("rounds.revealClick", (ord) => rounds.revealLeftByOrd(ord));
-  ui.on("rounds.revealDone", () => rounds.revealDone());
-
-  // FINAL (runtime – nie picker)
-  final.bootIfNeeded();
-
-  ui.on("final.start", () => final.startFinal());
-  ui.on("final.back", (card) => store.setActiveCard(card));
-  ui.on("final.backStep", (step) => final.backTo(step));
-
-  ui.on("final.p1.timer", () => final.p1StartTimer());
-  ui.on("final.p1.toQ", (n) => final.toP1MapQ(n));
-  ui.on("final.p1.nextQ", (n) => final.nextFromP1Q(n));
-
-  ui.on("final.p2.start", () => final.startP2Round());
-  ui.on("final.p2.timer", () => final.p2StartTimer());
-  ui.on("final.p2.toQ", (n) => final.toP2MapQ(n));
-  ui.on("final.p2.nextQ", (n) => final.nextFromP2Q(n));
-
-  ui.on("final.finish", () => final.finishFinal());
-
-  // Presence loop
-  await presence.start();
-
-  // render loop
-  const render = () => {
-    ui.showCard(store.state.activeCard);
-    ui.showDevicesStep(store.state.steps.devices);
-    ui.showSetupStep(store.state.steps.setup);
-
-    ui.setNavEnabled({
-      devices: store.canEnterCard("devices"),
-      setup: store.canEnterCard("setup"),
-      rounds: store.canEnterCard("rounds"),
-      final: store.canEnterCard("final"),
-    });
-
-    ui.setEnabled("btnDevicesNext", store.state.flags.displayOnline);
-    ui.setEnabled("btnQrToggle", store.state.flags.displayOnline);
-    ui.setEnabled(
-      "btnDevicesToAudio",
-      store.state.flags.displayOnline && store.state.flags.hostOnline && store.state.flags.buzzerOnline
-    );
-
-    ui.setEnabled(
-      "btnDevicesFinish",
-      store.state.steps.devices === "devices_audio" && store.state.flags.audioUnlocked
-    );
-    ui.setEnabled("btnSetupNext", store.teamsOk());
-    ui.setEnabled("btnSetupFinish", store.canFinishSetup());
-
-    ui.setFinalHasFinal(store.state.hasFinal === true);
-    ui.setFinalConfirmed(store.state.final.confirmed === true);
-
-    ui.setEnabled(
-      "btnConfirmFinal",
-      store.state.hasFinal === true &&
-        store.state.final.confirmed === false &&
-        store.state.final.picked.length === 5
-    );
-    ui.setEnabled(
-      "btnEditFinal",
-      store.state.hasFinal === true && store.state.final.confirmed === true
-    );
-
-    // "Gra gotowa" – tylko gdy wszystko gotowe
-    ui.setEnabled("btnGameReady", store.canStartRounds());
-    
-    // "Rozpocznij grę" – tylko na kroku r_intro i tylko gdy gra gotowa
-    ui.setEnabled(
-      "btnStartShowIntro",
-      store.canStartRounds() && store.state.rounds.step === "r_intro"
-    );
-    
-    // "Rozpocznij rundę" – dopiero po zakończeniu intra (krok r_roundStart)
-    ui.setEnabled(
-      "btnStartRound",
-      store.canStartRounds() && store.state.rounds.step === "r_roundStart"
-    );
-
-    // rounds HUD
-    ui.setRoundsHud(store.state.rounds);
-
-    // final UI – Start finału tylko na kroku f_start
-    ui.setEnabled(
-      "btnFinalStart",
-      store.canEnterCard("final") && store.state.final.step === "f_start"
-    );
-  };
-
-  store.subscribe(render);
-  render();
-
-  ui.setRoundsStep(
-    store.state.rounds.phase === "IDLE" || store.state.rounds.phase === "READY"
-      ? "READY"
-      : store.state.rounds.phase === "INTRO"
-      ? "INTRO"
-      : "ROUND"
-  );
-
-  // boot view state
-  ui.setQrToggleLabel(
-    store.state.flags.qrOnDisplay,
-    store.state.flags.hostOnline && store.state.flags.buzzerOnline
-  );
-
-  // init questions picker for final (setup karta)
-  await finalPickerReload().catch(() => {});
 }
 
 main().catch((e) => {
