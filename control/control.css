@@ -677,7 +677,6 @@
 
 /* ========= LISTA PYTAŃ (pula + finał) ========= */
 
-/* kontener na listę pytań – używany i w setup, i w rundach */
 .qList{
   margin-top: 12px;
   display: grid;
@@ -687,9 +686,6 @@
   padding-right: 4px;
 }
 
-/* dwie listy obok siebie w kroku FINAŁ:
-   lewa – pytania do rozgrywki
-   prawa – pytania finałowe */
 .finalLists{
   margin-top: 12px;
   display: grid;
@@ -706,7 +702,6 @@
   margin-top: 0;
 }
 
-/* pojedyncze pytanie na liście (używane też w innych miejscach) */
 .qRow{
   display: flex;
   gap: 10px;
@@ -723,29 +718,11 @@
   cursor: grabbing;
 }
 
-/* opcjonalnie delikatne podświetlenie miejsca zrzutu */
 .qList.droptarget{
-  outline: 1px dashed rgba(255,255,255,.45);
+  outline: 2px dashed rgba(255,255,255,.45);
   outline-offset: 2px;
 }
 
-.qRow .meta{
-  font-size: 12px;
-  opacity: .75;
-  font-weight: 900;
-  letter-spacing: .06em;
-  white-space: nowrap;
-  padding-top: 2px;
-}
-
-.qRow .txt{
-  font-weight: 900;
-  line-height: 1.25;
-}
-
-.qRow input{
-  margin-top: 2px;
-}
 
 /* ========= ROUNDS ========= */
 
