@@ -12,7 +12,7 @@ const FINAL_MSG = {
   // --- start / dostępność finału ---
   FINAL_DISABLED: "Finał jest wyłączony.",
   FINAL_NEEDS_PICK: "Zatwierdź 5 pytań finału w ustawieniach.",
-  FINAL_NEEDS_300: "Finał dostępny dopiero po osiągnięciu 300 punktów.",
+  FINAL_NEEDS_POINTS: (pts) => `Finał dostępny dopiero po osiągnięciu ${pts} punktów.`,
   FINAL_STARTED: "Finał rozpoczęty.",
   R2_STARTED: "Runda 2 rozpoczęta.",
 
@@ -462,8 +462,12 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     await display.finalSetSuma(rt.sum);
     updateSumUI();
 
-    // przerwij po 200+
-    if (rt.sum >= 200) {
+    // przerwij po osiągnięciu celu (domyślnie 200)
+    const adv = store.state.advanced || {};
+    const target =
+      typeof adv.finalTarget === "number" ? adv.finalTarget : 200;
+
+    if (rt.sum >= target) {
       await gotoEnd(true);
       return true; // ended
     }
@@ -506,11 +510,17 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
       return;
     }
   
-    // sprawdź czy ktoś ma 300+ (dodatkowe zabezpieczenie, poza canEnterCard)
+    // sprawdź czy ktoś ma wystarczająco punktów (dodatkowe zabezpieczenie, poza canEnterCard)
+    const adv = store.state.advanced || {};
+    const threshold =
+      typeof adv.finalMinPoints === "number" ? adv.finalMinPoints : 300;
+  
     const totals = store.state.rounds?.totals || { A: 0, B: 0 };
-    const has300 = (totals.A || 0) >= 300 || (totals.B || 0) >= 300;
-    if (!has300) {
-      ui.setMsg("msgFinal", FINAL_MSG.FINAL_NEEDS_300);
+    const hasEnough =
+      (totals.A || 0) >= threshold || (totals.B || 0) >= threshold;
+  
+    if (!hasEnough) {
+      ui.setMsg("msgFinal", FINAL_MSG.FINAL_NEEDS_POINTS(threshold));
       return;
     }
   
@@ -639,15 +649,19 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     const sum = Number(store.state.final.runtime?.sum || 0);     // S
     const moneyEarned = Number(store.state.moneyEarned || 0);    // M
   
-    const winEnabled = store.state?.advanced?.winEnabled === true;
-    const hit200 = sum >= 200;
+    const adv = store.state.advanced || {};
+    const target =
+      typeof adv.finalTarget === "number" ? adv.finalTarget : 200;
+  
+    const winEnabled = adv.winEnabled === true;
+    const hitTarget = sum >= target;
   
     if (!winEnabled) {
       await display.showLogo();
       return;
     }
   
-    const winAmount = hit200
+    const winAmount = hitTarget
       ? (moneyEarned + 25000)
       : moneyEarned;
   
