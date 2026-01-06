@@ -419,14 +419,14 @@ async function main() {
     if (form.winMode === "points") adv.winEnabled = false; 
 
     store.setAdvanced(adv);
-    ui.setMsg?.("msgAdvanced", APP_MSG.ADV_SAVED");
+    ui.setMsg?.("msgAdvanced", APP_MSG.ADV_SAVED);
   });
 
   ui.on("advanced.reset", () => {
     if (!store.resetAdvanced || !ui.setAdvancedForm) return;
     store.resetAdvanced();
     ui.setAdvancedForm(store.state.advanced);
-    ui.setMsg?.("msgAdvanced", APP_MSG.ADV_RESET");
+    ui.setMsg?.("msgAdvanced", APP_MSG.ADV_RESET);
   });
 
 
