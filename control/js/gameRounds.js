@@ -1100,7 +1100,7 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
       await new Promise((resolve) => setTimeout(resolve, bellsDur * 1000));
     }
 
-    playSfx("round_transition");
+    playSfx("round_transition2");
 
     const msg =
       mult === 1
