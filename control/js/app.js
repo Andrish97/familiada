@@ -204,6 +204,19 @@ async function main() {
   // start presence (online / offline / OSTATNIO)
   presence.start();
 
+  // ===== Realtime: odbiór kliknięć z przycisku (BUZZER_EVT) =====
+  const chControlIn = sb()
+    .channel(`familiada-control:${game.id}`)
+    .on("broadcast", { event: "BUZZER_EVT" }, (msg) => {
+      const line = String(msg?.payload?.line || "").trim().toUpperCase();
+      // spodziewamy się "CLICK A" / "CLICK B"
+      const [cmd, team] = line.split(/\s+/);
+      if (cmd === "CLICK" && (team === "A" || team === "B")) {
+        rounds.handleBuzzerClick(team);
+      }
+    })
+    .subscribe();
+
   // === PICKER PYTAŃ FINAŁU: góra "czy gramy", lewo rozgrywka, prawo finał ===
   let finalPickerAll = [];
   let finalPickerSelected = new Set(); // trzymamy ID jako STRINGI
