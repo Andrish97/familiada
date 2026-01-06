@@ -193,9 +193,13 @@ async function main() {
   // start presence (online / offline / OSTATNIO)
   presence.start();
 
-  // === PICKER PYTAŃ FINAŁU: dwie listy, klik-lewo/prawo ===
+  finalPickerReload().catch((e) => {
+    console.error("[finalPicker] reload error", e);
+  });
+
+  // === PICKER PYTAŃ FINAŁU: góra "czy gramy", lewo rozgrywka, prawo finał ===
   let finalPickerAll = [];
-  let finalPickerSelected = new Set(); // ID jako stringi
+  let finalPickerSelected = new Set(); // trzymamy ID jako liczby
 
   function escapeHtml(s) {
     return String(s ?? "")
@@ -206,90 +210,94 @@ async function main() {
       .replaceAll("'", "&#039;");
   }
 
+  function finalPickerGetSelectedIds() {
+    return Array.from(finalPickerSelected);
+  }
+
+  function finalPickerUpdateButtons() {
+    const cntEl = document.getElementById("pickedCount");
+    const btnConfirm = document.getElementById("btnConfirmFinal");
+
+    const hasFinal = store.state.hasFinal === true;
+    const confirmed = store.state.final.confirmed === true;
+    const count = finalPickerSelected.size;
+
+    if (cntEl) cntEl.textContent = String(count);
+
+    if (btnConfirm) {
+      btnConfirm.disabled = !hasFinal || confirmed || count !== 5;
+    }
+  }
+
+  function renderList(root, list, side, confirmed) {
+    if (!root) return;
+
+    root.innerHTML = list
+      .map(
+        (q) => `
+      <div class="qRow" data-id="${q.id}">
+        <div class="meta">#${q.ord}</div>
+        <div class="txt">${escapeHtml(q.text || "")}</div>
+      </div>
+    `
+      )
+      .join("");
+
+    if (confirmed) return;
+
+    root.querySelectorAll(".qRow").forEach((row) => {
+      row.addEventListener("click", () => {
+        const id = Number(row.dataset.id || "0");
+        if (!id) return;
+
+        if (side === "pool") {
+          // przerzut DO finału
+          if (finalPickerSelected.has(id)) return;
+          if (finalPickerSelected.size >= 5) return;
+          finalPickerSelected.add(id);
+        } else {
+          // przerzut Z finału
+          finalPickerSelected.delete(id);
+        }
+
+        // zapisujemy roboczy stan do store (jeszcze bez "zatwierdź")
+        store.state.final.picked = finalPickerGetSelectedIds();
+        finalPickerRender();
+      });
+    });
+  }
+
+  function finalPickerRender() {
+    const poolRoot = document.getElementById("finalGameList");   // lewo – rozgrywka
+    const finalRoot = document.getElementById("finalFinalList"); // prawo – finał
+
+    if (!poolRoot || !finalRoot) return;
+
+    const confirmed = store.state.final.confirmed === true;
+
+    const pickedIds = finalPickerSelected;
+    const picked = finalPickerAll.filter((q) => pickedIds.has(q.id));
+    const pool = finalPickerAll.filter((q) => !pickedIds.has(q.id));
+
+    renderList(poolRoot, pool, "pool", confirmed);
+    renderList(finalRoot, picked, "final", confirmed);
+
+    finalPickerUpdateButtons();
+  }
+
   async function finalPickerReload() {
     const raw = sessionStorage.getItem("familiada:questionsCache");
     finalPickerAll = raw ? JSON.parse(raw) : [];
 
-    // startowy stan z store (albo pusty)
+    // start od tego, co jest zapisane w store (mogło już być zatwierdzone)
+    const existing = Array.isArray(store.state.final?.picked)
+      ? store.state.final.picked
+      : [];
     finalPickerSelected = new Set(
-      (store.state.final?.picked || []).map((id) => String(id))
+      existing.map((id) => Number(id)).filter((id) => Number.isFinite(id))
     );
 
     finalPickerRender();
-  }
-
-  function finalPickerGetSelectedIds() {
-    // do store trzymamy liczby
-    return Array.from(finalPickerSelected).map((id) => Number(id));
-  }
-
-  function finalPickerRender() {
-    const left = document.getElementById("finalQList");       // lista do gry
-    const right = document.getElementById("finalPickedList"); // lista finału
-    const cnt = document.getElementById("pickedCount");
-    const btnConfirm = document.getElementById("btnConfirmFinal");
-
-    if (!left || !right || !cnt) return;
-
-    const confirmed = store.state.final.confirmed === true;
-    const hasFinal = store.state.hasFinal === true;
-
-    // podział na lewą/prawą listę
-    const picked = [];
-    const pool = [];
-    for (const q of finalPickerAll) {
-      const id = String(q.id);
-      if (finalPickerSelected.has(id)) picked.push(q);
-      else pool.push(q);
-    }
-
-    // licznik 0/5
-    cnt.textContent = String(picked.length);
-
-    // helper do renderu jednej kolumny
-    const renderCol = (root, list, side) => {
-      root.innerHTML = list
-        .map(
-          (q) => `
-        <div class="qTile" data-id="${String(q.id)}">
-          <div class="meta">#${q.ord}</div>
-          <div class="txt">${escapeHtml(q.text || "")}</div>
-        </div>
-      `
-        )
-        .join("");
-
-      if (confirmed) return; // po zatwierdzeniu nie można już klikać
-
-      root.querySelectorAll(".qTile").forEach((tile) => {
-        tile.addEventListener("click", () => {
-          const id = String(tile.dataset.id || "");
-          if (!id) return;
-
-          if (side === "left") {
-            // przenosimy do finału
-            if (finalPickerSelected.has(id)) return;
-            if (finalPickerSelected.size >= 5) return; // limit 5
-            finalPickerSelected.add(id);
-          } else {
-            // przenosimy z powrotem do puli
-            finalPickerSelected.delete(id);
-          }
-
-          // aktualizacja store (żeby finał później mógł to odczytać)
-          store.state.final.picked = finalPickerGetSelectedIds();
-          finalPickerRender();
-        });
-      });
-    };
-
-    renderCol(left, pool, "left");
-    renderCol(right, picked, "right");
-
-    // stan przycisku "Zatwierdź"
-    if (btnConfirm) {
-      btnConfirm.disabled = !hasFinal || confirmed || picked.length !== 5;
-    }
   }
   
   devices.initLinksAndQr();
@@ -490,7 +498,10 @@ async function main() {
   ui.on("setup.next", () => store.setSetupStep("setup_final"));
   ui.on("setup.back", () => store.setSetupStep("setup_names"));
 
-  ui.on("final.toggle", (hasFinal) => store.setHasFinal(hasFinal));
+    ui.on("final.toggle", (hasFinal) => {
+    store.setHasFinal(hasFinal);
+    finalPickerUpdateButtons();
+  });
 
   ui.on("final.reload", () =>
     finalPickerReload().catch((e) => ui.setMsg("msgFinalPick", e?.message || String(e)))
