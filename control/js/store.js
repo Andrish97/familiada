@@ -3,6 +3,17 @@ export function createStore(gameId) {
   const listeners = new Set();
   const FINAL_MIN_POINTS = 300; // domyślny próg do finału
 
+  const DEFAULT_ADVANCED = {
+    // mnożniki dla kolejnych rund; ostatnia wartość powtarza się dla dalszych rund
+    roundMultipliers: [1, 1, 1, 2, 3],
+    // próg wejścia do finału (ktoś musi tyle zdobyć w sumie)
+    finalMinPoints: 300,
+    // cel w finale (domyślne 200)
+    finalTarget: 200,
+    // czy na końcu gry wyświetlamy ekran „wygrana” (true) czy samo logo (false)
+    winEnabled: true,
+  };
+
   const state = {
     gameId,
     activeCard: "devices",
@@ -89,6 +100,7 @@ export function createStore(gameId) {
 
       allowPass: false, // after first correct answer
     },
+    advanced: { ...DEFAULT_ADVANCED },
   };
 
   function emit() {
@@ -146,8 +158,11 @@ export function createStore(gameId) {
 
   function canEnterCard(card) {
     const totals = state.rounds?.totals || { A: 0, B: 0 };
+    const adv = state.advanced || {};
+    const threshold =
+      typeof adv.finalMinPoints === "number" ? adv.finalMinPoints : FINAL_MIN_POINTS;
     const hasFinalPoints =
-      (totals.A || 0) >= FINAL_MIN_POINTS || (totals.B || 0) >= FINAL_MIN_POINTS;
+      (totals.A || 0) >= threshold || (totals.B || 0) >= threshold;
 
     // URZĄDZENIA – dostępne tylko do momentu "Gra gotowa"
     if (card === "devices") {
@@ -392,6 +407,35 @@ export function createStore(gameId) {
           state.rounds._introPlayed = pr._introPlayed;
         }
       }
+
+      if (p?.advanced) {
+        const a = p.advanced;
+        const cur = state.advanced || { ...DEFAULT_ADVANCED };
+
+        if (Array.isArray(a.roundMultipliers)) {
+          cur.roundMultipliers = a.roundMultipliers
+            .map((x) => {
+              const n = Number.parseInt(String(x), 10);
+              return Number.isFinite(n) && n > 0 ? n : 1;
+            });
+          if (!cur.roundMultipliers.length) {
+            cur.roundMultipliers = [...DEFAULT_ADVANCED.roundMultipliers];
+          }
+        }
+
+        if (typeof a.finalMinPoints === "number") {
+          cur.finalMinPoints = a.finalMinPoints;
+        }
+        if (typeof a.finalTarget === "number") {
+          cur.finalTarget = a.finalTarget;
+        }
+        if (typeof a.winEnabled === "boolean") {
+          cur.winEnabled = a.winEnabled;
+        }
+
+        state.advanced = cur;
+      }
+
       
     } catch {
       // przy problemie z JSON-em po prostu startujemy od zera
@@ -409,6 +453,43 @@ export function createStore(gameId) {
 
   // po .hydrate(); – startowo upewnij się, że jesteśmy co najmniej na devices
   if (!canEnterCard(state.activeCard)) setActiveCard("devices");
+
+
+  function setAdvanced(partial) {
+    const cur = state.advanced || { ...DEFAULT_ADVANCED };
+    const next = { ...cur };
+
+    if (partial.roundMultipliers && Array.isArray(partial.roundMultipliers)) {
+      next.roundMultipliers = partial.roundMultipliers
+        .map((x) => {
+          const n = Number.parseInt(String(x), 10);
+          return Number.isFinite(n) && n > 0 ? n : 1;
+        });
+      if (!next.roundMultipliers.length) {
+        next.roundMultipliers = [...DEFAULT_ADVANCED.roundMultipliers];
+      }
+    }
+
+    if (typeof partial.finalMinPoints === "number") {
+      next.finalMinPoints = partial.finalMinPoints;
+    }
+
+    if (typeof partial.finalTarget === "number") {
+      next.finalTarget = partial.finalTarget;
+    }
+
+    if (typeof partial.winEnabled === "boolean") {
+      next.winEnabled = partial.winEnabled;
+    }
+
+    state.advanced = next;
+    emit();
+  }
+
+  function resetAdvanced() {
+    state.advanced = { ...DEFAULT_ADVANCED };
+    emit();
+  }
 
   return {
     state,
@@ -436,5 +517,8 @@ export function createStore(gameId) {
     canFinishSetup,
     canStartRounds,
     canEnterCard,
+
+    setAdvanced,
+    resetAdvanced,
   };
 }
