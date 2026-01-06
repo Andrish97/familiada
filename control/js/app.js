@@ -359,21 +359,25 @@ async function main() {
   async function finalPickerReload() {
     // Pobierz na świeżo pytania z bazy
     const qsAll = await loadQuestions(game.id);
-
-    // Zaktualizuj cache (żeby inne rzeczy też mogły z tego korzystać)
+  
+    // Zaktualizuj cache
     sessionStorage.setItem("familiada:questionsCache", JSON.stringify(qsAll));
     finalPickerAll = qsAll;
-
-    // Startujemy od tego, co jest w store (mogło być już zatwierdzone)
-    const existing = Array.isArray(store.state.final?.picked)
-      ? store.state.final.picked
-      : [];
-
-    // ważne: TRZYMYMY STRINGI
-    finalPickerSelected = new Set(
-      existing.map((id) => String(id))
-    );
-
+  
+    const confirmed = store.state.final.confirmed === true;
+  
+    if (!confirmed) {
+      // NIEzatwierdzony finał: czyścimy wybór
+      finalPickerSelected = new Set();
+      store.state.final.picked = [];
+    } else {
+      // Zatwierdzony finał: zachowujemy wybór ze store
+      const existing = Array.isArray(store.state.final?.picked)
+        ? store.state.final.picked
+        : [];
+      finalPickerSelected = new Set(existing.map((id) => String(id)));
+    }
+  
     finalPickerRender();
   }
 
@@ -586,9 +590,15 @@ async function main() {
   });
 
 
-  ui.on("final.reload", () =>
-    finalPickerReload().catch((e) => ui.setMsg("msgFinalPick", e?.message || String(e)))
-  );
+  ui.on("final.reload", async () => {
+    ui.setMsg("msgFinalPick", "Odświeżanie listy pytań...");
+    try {
+      await finalPickerReload();
+      ui.setMsg("msgFinalPick", "Lista pytań odświeżona.");
+    } catch (e) {
+      ui.setMsg("msgFinalPick", e?.message || String(e));
+    }
+  });
 
     // pierwszy load – żeby lista była gotowa po wejściu w krok 2/2
   finalPickerReload().catch((e) => {
