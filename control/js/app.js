@@ -272,6 +272,7 @@ async function main() {
   ui.setAudioStatus(store.state.flags.audioUnlocked);
 
   // === GLOBALNE RENDEROWANIE STANU (Opcja B) ===
+  // === GLOBALNE RENDEROWANIE STANU (Opcja B) ===
   function renderFromState(state) {
     // aktywna karta
     ui.showCard(state.activeCard);
@@ -290,10 +291,12 @@ async function main() {
 
     const flags = state.flags || {};
 
-    // DEVICES – krok 1: wyświetlacz -> Dalej
+    // ===== DEVICES =====
+
+    // krok 1: wyświetlacz -> Dalej
     ui.setEnabled("btnDevicesNext", !!flags.displayOnline);
 
-    // DEVICES – krok 2: prowadzący + przycisk online
+    // krok 2: prowadzący + przycisk online
     const hostReady = !!flags.hostOnline;
     const buzzerReady = !!flags.buzzerOnline;
     ui.setEnabled("btnDevicesToAudio", hostReady && buzzerReady);
@@ -302,11 +305,35 @@ async function main() {
     const allOnline = flags.displayOnline && hostReady && buzzerReady;
     ui.setEnabled("btnQrToggle", allOnline);
 
-    // DEVICES – krok 3: „Gotowe — przejdź dalej” po odblokowaniu audio
+    // krok 3: „Gotowe — przejdź dalej” po odblokowaniu audio
     ui.setEnabled(
       "btnDevicesFinish",
       allOnline && !!flags.audioUnlocked
     );
+
+    // ===== SETUP =====
+
+    // 1/2 — Nazwy drużyn: przynajmniej jedna nazwa niepusta
+    const teamA = (state.teams.teamA || "").trim();
+    const teamB = (state.teams.teamB || "").trim();
+    const teamsOk = teamA.length > 0 || teamB.length > 0;
+    ui.setEnabled("btnSetupNext", teamsOk);
+
+    // 2/2 — Finał: logika jak w store.canFinishSetup()
+    const hasFinal = state.hasFinal;
+    const finalPickedOk =
+      Array.isArray(state.final?.picked) &&
+      state.final.picked.length === 5 &&
+      state.final.confirmed === true;
+
+    const setupOk =
+      teamsOk &&
+      (
+        hasFinal === false ||                 // finał wyłączony
+        (hasFinal === true && finalPickedOk)  // finał włączony + 5 zatwierdzonych pytań
+      );
+
+    ui.setEnabled("btnSetupFinish", setupOk);
   }
 
   // startowy render + subskrypcja
