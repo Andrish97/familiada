@@ -557,16 +557,19 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     r.duel.secondTeam = null;
     r.duel.currentTeam = null;
     duelResetCycle();
-
+  
+    // nowy system komunikatów
     setDuelMsg(ROUNDS_MSG.DUEL_WAIT);
     ui.setRoundsHud(r);
-
+  
     ui.setEnabled("btnBuzzAcceptA", false);
     ui.setEnabled("btnBuzzAcceptB", false);
     ui.setEnabled("btnBuzzRetry", false);
-
+  
     updatePlayControls();
-
+  
+    // ważne: zawsze czyścimy stan fizycznego przycisku
+    devices.sendBuzzerCmd("RESET").catch(() => {});
     devices.sendBuzzerCmd("ON").catch(() => {});
   }
 
@@ -579,17 +582,20 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     r.duel.secondTeam = null;
     r.duel.currentTeam = null;
     duelResetCycle();
-
+  
+    // nowy system komunikatów
     setDuelMsg(ROUNDS_MSG.DUEL_RETRY);
     ui.setRoundsHud(r);
-
+  
     ui.setEnabled("btnBuzzAcceptA", false);
     ui.setEnabled("btnBuzzAcceptB", false);
     ui.setEnabled("btnBuzzRetry", false);
-
+  
     updatePlayControls();
-
+  
+    // znowu: pełny reset przycisku + uzbrojenie
     devices.sendBuzzerCmd("RESET").catch(() => {});
+    devices.sendBuzzerCmd("ON").catch(() => {});
   }
 
   function duelRegisterResult(team, { pts, isX, isTop }) {
