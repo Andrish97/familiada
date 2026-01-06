@@ -11,7 +11,9 @@ export function createStore(gameId) {
     // cel w finale (domyślne 200)
     finalTarget: 200,
     // czy na końcu gry wyświetlamy ekran „wygrana” (true) czy samo logo (false)
-    winEnabled: true,
+    endScreenMode: "logo", // "logo" | "points" | "money"
+
+    
   };
 
   const state = {
