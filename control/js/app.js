@@ -195,7 +195,7 @@ async function main() {
 
   // === PICKER PYTAŃ FINAŁU: góra "czy gramy", lewo rozgrywka, prawo finał ===
   let finalPickerAll = [];
-  let finalPickerSelected = new Set(); // trzymamy ID jako liczby
+  let finalPickerSelected = new Set(); // trzymamy ID jako STRINGI
 
   function escapeHtml(s) {
     return String(s ?? "")
@@ -221,11 +221,27 @@ async function main() {
     if (cntEl) cntEl.textContent = String(count);
 
     if (btnConfirm) {
-      // można zatwierdzić tylko gdy:
-      // - gramy finał
-      // - nie jest jeszcze potwierdzone
-      // - dokładnie 5 pytań po prawej
       btnConfirm.disabled = !hasFinal || confirmed || count !== 5;
+    }
+
+    // dodatkowo: chowamy/pokazujemy kartę z listami
+    const pickerCard = document.getElementById("finalPickerCard");
+    if (pickerCard) {
+      if (hasFinal) pickerCard.classList.remove("hidden");
+      else pickerCard.classList.add("hidden");
+    }
+
+    // ustawienie stanu radio (wizualnie)
+    const finalYes = document.getElementById("finalYes");
+    const finalNo = document.getElementById("finalNo");
+    if (finalYes && finalNo) {
+      if (hasFinal) {
+        finalYes.checked = true;
+        finalNo.checked = false;
+      } else {
+        finalYes.checked = false;
+        finalNo.checked = true;
+      }
     }
   }
 
@@ -253,7 +269,7 @@ async function main() {
       root.classList.remove("droptarget");
 
       const raw = e.dataTransfer ? e.dataTransfer.getData("text/plain") : "";
-      const id = Number(raw || "0");
+      const id = raw || "";
       if (!id) return;
 
       if (targetSide === "final") {
@@ -279,7 +295,7 @@ async function main() {
     root.innerHTML = list
       .map(
         (q) => `
-      <div class="qRow" data-id="${q.id}" draggable="${confirmed ? "false" : "true"}">
+      <div class="qRow" data-id="${String(q.id)}" draggable="${confirmed ? "false" : "true"}">
         <div class="meta">#${q.ord}</div>
         <div class="txt">${escapeHtml(q.text || "")}</div>
       </div>
@@ -290,14 +306,13 @@ async function main() {
     if (confirmed) return;
 
     root.querySelectorAll(".qRow").forEach((row) => {
-      const id = Number(row.dataset.id || "0");
+      const id = row.dataset.id || "";
       if (!id) return;
 
-      // TYLKO DRAG&DROP, ŻADNEGO KLIKANIA
       row.addEventListener("dragstart", (e) => {
         if (store.state.final.confirmed) return;
         if (e.dataTransfer) {
-          e.dataTransfer.setData("text/plain", String(id));
+          e.dataTransfer.setData("text/plain", id);
           e.dataTransfer.effectAllowed = "move";
         }
         row.classList.add("dragging");
@@ -322,16 +337,8 @@ async function main() {
     bindDropZone(finalRoot, "final");
 
     const pickedIds = finalPickerSelected;
-  
-    const picked = finalPickerAll.filter((q) => {
-      const qId = Number(q.id);
-      return Number.isFinite(qId) && pickedIds.has(qId);
-    });
-  
-    const pool = finalPickerAll.filter((q) => {
-      const qId = Number(q.id);
-      return !(Number.isFinite(qId) && pickedIds.has(qId));
-    });
+    const picked = finalPickerAll.filter((q) => pickedIds.has(String(q.id)));
+    const pool = finalPickerAll.filter((q) => !pickedIds.has(String(q.id)));
 
     renderList(poolRoot, pool, "pool", confirmed);
     renderList(finalRoot, picked, "final", confirmed);
@@ -348,13 +355,12 @@ async function main() {
       ? store.state.final.picked
       : [];
     finalPickerSelected = new Set(
-      existing.map((id) => Number(id)).filter((id) => Number.isFinite(id))
+      existing.map((id) => String(id))
     );
 
     finalPickerRender();
   }
 
-  
   devices.initLinksAndQr();
 
   // audio: stan początkowy
@@ -410,7 +416,8 @@ async function main() {
     ui.setEnabled("btnSetupNext", teamsOk);
 
     // 2/2 — Finał: logika jak w store.canFinishSetup()
-    const hasFinal = state.hasFinal;
+    // 2/2 — Finał: logika jak w store.canFinishSetup()
+    const hasFinal = state.hasFinal === true;
     const finalPickedOk =
       Array.isArray(state.final?.picked) &&
       state.final.picked.length === 5 &&
@@ -419,11 +426,14 @@ async function main() {
     const setupOk =
       teamsOk &&
       (
-        hasFinal === false ||                 // finał wyłączony
-        (hasFinal === true && finalPickedOk)  // finał włączony + 5 zatwierdzonych pytań
+        !hasFinal ||                 // finał wyłączony
+        (hasFinal && finalPickedOk)  // finał włączony + 5 zatwierdzonych pytań
       );
 
     ui.setEnabled("btnSetupFinish", setupOk);
+
+    // od razu zsynchronizuj wizualnie radio + kartę list
+    finalPickerUpdateButtons();
   }
 
   // startowy render + subskrypcja
