@@ -225,13 +225,63 @@ async function main() {
     }
   }
 
+  // proste drag&drop: pamiętamy, co ciągniemy i skąd
+  let finalDndDraggingId = null;      // number | null
+  let finalDndDraggingSide = null;    // "pool" | "final" | null
+
+  function bindDropZone(root, targetSide) {
+    if (!root || root._finalDndBound) return;
+    root._finalDndBound = true;
+
+    root.addEventListener("dragover", (e) => {
+      if (store.state.final.confirmed) return;
+      if (finalDndDraggingId == null) return;
+      e.preventDefault();
+      root.classList.add("droptarget");
+      if (e.dataTransfer) e.dataTransfer.dropEffect = "move";
+    });
+
+    root.addEventListener("dragleave", () => {
+      root.classList.remove("droptarget");
+    });
+
+    root.addEventListener("drop", (e) => {
+      if (store.state.final.confirmed) return;
+      e.preventDefault();
+      root.classList.remove("droptarget");
+
+      const id = finalDndDraggingId;
+      if (id == null) return;
+
+      if (targetSide === "final") {
+        // przenosimy DO finału
+        if (!finalPickerSelected.has(id)) {
+          if (finalPickerSelected.size >= 5) return;
+          finalPickerSelected.add(id);
+        }
+      } else {
+        // przenosimy Z finału do puli
+        finalPickerSelected.delete(id);
+      }
+
+      // roboczy stan do store
+      store.state.final.picked = finalPickerGetSelectedIds();
+
+      // reset drag
+      finalDndDraggingId = null;
+      finalDndDraggingSide = null;
+
+      finalPickerRender();
+    });
+  }
+  
   function renderList(root, list, side, confirmed) {
     if (!root) return;
 
     root.innerHTML = list
       .map(
         (q) => `
-      <div class="qRow" data-id="${q.id}">
+      <div class="qRow" data-id="${q.id}" draggable="${confirmed ? "false" : "true"}">
         <div class="meta">#${q.ord}</div>
         <div class="txt">${escapeHtml(q.text || "")}</div>
       </div>
@@ -242,23 +292,37 @@ async function main() {
     if (confirmed) return;
 
     root.querySelectorAll(".qRow").forEach((row) => {
-      row.addEventListener("click", () => {
-        const id = Number(row.dataset.id || "0");
-        if (!id) return;
+      const id = Number(row.dataset.id || "0");
+      if (!id) return;
 
-        if (side === "pool") {
-          // przerzut DO finału
-          if (finalPickerSelected.has(id)) return;
+      // KLIK – szybkie przerzucanie lewo/prawo
+      row.addEventListener("click", () => {
+        if (finalPickerSelected.has(id)) {
+          finalPickerSelected.delete(id);
+        } else {
           if (finalPickerSelected.size >= 5) return;
           finalPickerSelected.add(id);
-        } else {
-          // przerzut Z finału
-          finalPickerSelected.delete(id);
         }
-
-        // zapisujemy roboczy stan do store (jeszcze bez "zatwierdź")
         store.state.final.picked = finalPickerGetSelectedIds();
         finalPickerRender();
+      });
+
+      // DRAGSTART – zaczynamy przeciąganie
+      row.addEventListener("dragstart", (e) => {
+        if (store.state.final.confirmed) return;
+        finalDndDraggingId = id;
+        finalDndDraggingSide = side;
+        if (e.dataTransfer) {
+          e.dataTransfer.setData("text/plain", String(id));
+          e.dataTransfer.effectAllowed = "move";
+        }
+        row.classList.add("dragging");
+      });
+
+      row.addEventListener("dragend", () => {
+        row.classList.remove("dragging");
+        finalDndDraggingId = null;
+        finalDndDraggingSide = null;
       });
     });
   }
@@ -268,6 +332,10 @@ async function main() {
     const finalRoot = document.getElementById("finalFinalList"); // prawo – finał
 
     if (!poolRoot || !finalRoot) return;
+
+    // podpinamy strefy drop (tylko raz na root)
+    bindDropZone(poolRoot, "pool");
+    bindDropZone(finalRoot, "final");
 
     const confirmed = store.state.final.confirmed === true;
 
