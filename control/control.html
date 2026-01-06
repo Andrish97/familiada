@@ -443,77 +443,76 @@
 
             <div class="step hidden" data-step="setup_final">
               <div class="stepTitle">2/2 — Finał</div>
-
+            
               <div class="card">
                 <div class="cardBody">
-                  <div class="cards2">
-                    <div class="card card-soft">
-                      <div class="name">Czy gramy finał?</div>
-                      <div class="rowBtns">
-                        <label class="radio"><input type="radio" name="hasFinal" value="yes" id="finalYes"/><span>Tak</span></label>
-                        <label class="radio"><input type="radio" name="hasFinal" value="no" id="finalNo"/><span>Nie</span></label>
+                  <div class="name">Finał</div>
+            
+                  <!-- GÓRA: czy gramy finał -->
+                  <div class="rowBtns">
+                    <label class="radio">
+                      <input type="radio" name="hasFinal" value="yes" id="finalYes" />
+                      <span>Tak</span>
+                    </label>
+                    <label class="radio">
+                      <input type="radio" name="hasFinal" value="no" id="finalNo" />
+                      <span>Nie</span>
+                    </label>
+                  </div>
+            
+                  <!-- ŚRODEK: dwie listy lewo/prawo w JEDNEJ karcie -->
+                  <div class="card card-soft" id="finalPickerCard">
+                    <div class="head">
+                      <div class="name">Pytania</div>
+                      <div class="badge">
+                        Finał: <b id="pickedCount">0</b>/5
                       </div>
-
-                      <div class="pickedPanel">
-                        <div class="head">
-                          <div class="name">Wybrane pytania finałowe</div>
-                          <div class="badge">
-                            <b id="pickedCount">0</b>/5
-                          </div>
+                    </div>
+            
+                    <div class="finalLists">
+                      <!-- LEWO: pytania do rozgrywki -->
+                      <div class="finalCol">
+                        <div class="mini">
+                          <div class="hint">Pytania do rozgrywki (pula).</div>
                         </div>
-                        <div class="picked" id="pickedChips"></div>
-
-                        <div class="rowBtns">
-                          <button class="btn gold" id="btnConfirmFinal" type="button" disabled>Zatwierdź</button>
-                          <button class="btn" id="btnEditFinal" type="button" style="display:none;">Edytuj</button>
-                          <div class="msg msg-inline" id="msgFinalPick"></div>
+                        <div class="qList" id="finalGameList"></div>
+                      </div>
+            
+                      <!-- PRAWO: pytania finałowe -->
+                      <div class="finalCol">
+                        <div class="mini">
+                          <div class="hint">Pytania finału (max 5).</div>
+                        </div>
+                        <div class="qList" id="finalFinalList"></div>
+            
+                        <div class="mini" id="finalOnlyView" style="display:none;">
+                          <div class="hint">Zatwierdzone pytania. Kliknij „Edytuj”, aby zmienić.</div>
                         </div>
                       </div>
                     </div>
-
-                    <div class="card card-soft" id="finalPickerCard">
-                      <div class="head">
-                        <div class="name">Pytania do finału</div>
-                        <div class="badge badge-soft">Przeciągaj między listami</div>
-                      </div>
-                    
-                      <div class="rowBtns">
-                        <button class="btn" id="btnReloadQuestions" type="button">Odśwież</button>
-                      </div>
-                    
-                      <div class="finalLists">
-                        <div class="finalCol">
-                          <div class="mini">
-                            <div class="hint">Lewa lista: wszystkie pytania z gry. Przeciągnij kafelki na prawą listę, aby dodać je do finału.</div>
-                          </div>
-                          <div class="qList" id="finalQList"></div>
-                        </div>
-                    
-                        <div class="finalCol">
-                          <div class="mini">
-                            <div class="hint">Prawa lista: pytania finałowe (max 5). Możesz przeciągać także z powrotem w lewo.</div>
-                          </div>
-                          <div class="qList" id="finalPickedList"></div>
-                        </div>
-                      </div>
-                    
-                      <div class="mini" id="finalOnlyView" style="display:none;">
-                        <div class="hint">Zatwierdzone pytania. Kliknij „Edytuj”, aby zmienić.</div>
-                      </div>
+            
+                    <div class="rowBtns">
+                      <button class="btn" id="btnReloadQuestions" type="button">Odśwież</button>
+                      <button class="btn gold" id="btnConfirmFinal" type="button" disabled>Zatwierdź</button>
+                      <button class="btn" id="btnEditFinal" type="button" style="display:none;">Edytuj</button>
+                      <div class="msg msg-inline" id="msgFinalPick"></div>
                     </div>
-
                   </div>
                 </div>
-
+            
                 <div class="stepFoot">
                   <div class="stepFootButtons">
                     <button class="btn" id="btnSetupBack" type="button">Wstecz</button>
-                    <button class="btn gold" id="btnSetupFinish" type="button" disabled>Gotowe — przejdź dalej</button>
+                    <button class="btn gold" id="btnSetupFinish" type="button" disabled>
+                      Gotowe — przejdź dalej
+                    </button>
                   </div>
                   <div class="msg msg-pill" id="msgSetup2"></div>
                 </div>
               </div>
             </div>
+
+
           </section>
 
           <!-- ROUNDS -->
