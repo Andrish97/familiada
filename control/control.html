@@ -473,20 +473,35 @@
 
                     <div class="card card-soft" id="finalPickerCard">
                       <div class="head">
-                        <div class="name">Lista pytań</div>
-                        <div class="badge badge-soft">Kliknij aby wybrać</div>
+                        <div class="name">Pytania do finału</div>
+                        <div class="badge badge-soft">Przeciągaj między listami</div>
                       </div>
-
+                    
                       <div class="rowBtns">
                         <button class="btn" id="btnReloadQuestions" type="button">Odśwież</button>
                       </div>
-
-                      <div class="qList" id="finalQList"></div>
-
+                    
+                      <div class="finalLists">
+                        <div class="finalCol">
+                          <div class="mini">
+                            <div class="hint">Lewa lista: wszystkie pytania z gry. Przeciągnij kafelki na prawą listę, aby dodać je do finału.</div>
+                          </div>
+                          <div class="qList" id="finalQList"></div>
+                        </div>
+                    
+                        <div class="finalCol">
+                          <div class="mini">
+                            <div class="hint">Prawa lista: pytania finałowe (max 5). Możesz przeciągać także z powrotem w lewo.</div>
+                          </div>
+                          <div class="qList" id="finalPickedList"></div>
+                        </div>
+                      </div>
+                    
                       <div class="mini" id="finalOnlyView" style="display:none;">
                         <div class="hint">Zatwierdzone pytania. Kliknij „Edytuj”, aby zmienić.</div>
                       </div>
                     </div>
+
                   </div>
                 </div>
 
