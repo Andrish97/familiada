@@ -308,13 +308,59 @@ async function main() {
 
   devices.initLinksAndQr();
 
+  // stan audio na start
   store.setAudioUnlocked(!!isAudioUnlocked());
   ui.setAudioStatus(store.state.flags.audioUnlocked);
 
+  // --- RENDER ZMIAN STANU DO UI ---
+  function renderFromState(state) {
+    // która zakładka jest widoczna
+    ui.showCard(state.activeCard);
+
+    // który krok w "Urządzeniach"
+    ui.showDevicesStep(state.steps.devices);
+    ui.showSetupStep(state.steps.setup);
+
+    // aktywne / nieaktywne zakładki (wizualnie)
+    ui.setNavEnabled({
+      devices: store.canEnterCard("devices"),
+      setup: store.canEnterCard("setup"),
+      rounds: store.canEnterCard("rounds"),
+      final: store.canEnterCard("final"),
+    });
+
+    // helper do włączania / wyłączania przycisków po id
+    function setEnabled(id, enabled) {
+      const el = document.getElementById(id);
+      if (el) el.disabled = !enabled;
+    }
+
+    // KROK 1: "Dalej" tylko gdy Wyświetlacz online
+    setEnabled("btnDevicesNext", !!state.flags.displayOnline);
+
+    // KROK 2: "Dalej" tylko gdy host & buzzer online
+    const hbOn = !!state.flags.hostOnline && !!state.flags.buzzerOnline;
+    setEnabled("btnDevicesToAudio", hbOn);
+
+    // KROK 3: "Gotowe — przejdź dalej" tylko gdy audio odblokowane
+    setEnabled("btnDevicesFinish", !!state.flags.audioUnlocked);
+
+    // QR na wyświetlaczu: ma sens tylko gdy display online
+    setEnabled("btnQrToggle", !!state.flags.displayOnline);
+  }
+
+  // pierwszy render po starcie
+  renderFromState(store.state);
+
+  // reagujemy na każdą zmianę stanu
+  store.subscribe(renderFromState);
+
+  // --- NAWIGACJA po zakładkach ---
   ui.mountNavigation({
     canEnter: (card) => store.canEnterCard(card),
     onNavigate: (card) => store.setActiveCard(card),
   });
+
 
   ui.on("top.back", () => {
     if (shouldWarnBeforeUnload()) {
