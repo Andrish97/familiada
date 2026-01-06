@@ -715,7 +715,18 @@
   border: 1px solid rgba(255,255,255,.12);
   background: rgba(0,0,0,.16);
   padding: 10px;
-  cursor: pointer;             /* w finale klik przerzuca lewo/prawo */
+  cursor: grab;
+  user-select: none;
+}
+
+.qRow:active{
+  cursor: grabbing;
+}
+
+/* opcjonalnie delikatne podświetlenie miejsca zrzutu */
+.qList.droptarget{
+  outline: 1px dashed rgba(255,255,255,.45);
+  outline-offset: 2px;
 }
 
 .qRow .meta{
