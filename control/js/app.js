@@ -193,10 +193,10 @@ async function main() {
   // start presence (online / offline / OSTATNIO)
   presence.start();
 
-  // === PICKER PYTAŃ FINAŁU (dwie listy + drag&drop) ===
+  // === PICKER PYTAŃ FINAŁU: dwie listy, klik-lewo/prawo ===
   let finalPickerAll = [];
-  let finalPickerSelected = new Set(); // przechowujemy ID jako stringi
-  
+  let finalPickerSelected = new Set(); // ID jako stringi
+
   function escapeHtml(s) {
     return String(s ?? "")
       .replaceAll("&", "&amp;")
@@ -205,36 +205,36 @@ async function main() {
       .replaceAll('"', "&quot;")
       .replaceAll("'", "&#039;");
   }
-  
+
   async function finalPickerReload() {
     const raw = sessionStorage.getItem("familiada:questionsCache");
     finalPickerAll = raw ? JSON.parse(raw) : [];
-  
-    // startowy stan = to, co jest w store (albo pusto)
-    const pickedFromStore = (store.state.final?.picked || []).map(String);
-    finalPickerSelected = new Set(pickedFromStore);
-  
+
+    // startowy stan z store (albo pusty)
+    finalPickerSelected = new Set(
+      (store.state.final?.picked || []).map((id) => String(id))
+    );
+
     finalPickerRender();
   }
-  
+
   function finalPickerGetSelectedIds() {
-    // do store zapisujemy liczby, bo final później szuka po q.id
+    // do store trzymamy liczby
     return Array.from(finalPickerSelected).map((id) => Number(id));
   }
-  
+
   function finalPickerRender() {
-    const poolRoot = document.getElementById("finalQList");
-    const pickedRoot = document.getElementById("finalPickedList");
-    const chips = document.getElementById("pickedChips");
+    const left = document.getElementById("finalQList");       // lista do gry
+    const right = document.getElementById("finalPickedList"); // lista finału
     const cnt = document.getElementById("pickedCount");
     const btnConfirm = document.getElementById("btnConfirmFinal");
-  
-    if (!poolRoot || !pickedRoot || !chips || !cnt) return;
-  
+
+    if (!left || !right || !cnt) return;
+
     const confirmed = store.state.final.confirmed === true;
     const hasFinal = store.state.hasFinal === true;
-  
-    // podział na lewą i prawą listę
+
+    // podział na lewą/prawą listę
     const picked = [];
     const pool = [];
     for (const q of finalPickerAll) {
@@ -242,138 +242,56 @@ async function main() {
       if (finalPickerSelected.has(id)) picked.push(q);
       else pool.push(q);
     }
-  
-    // licznik /5
+
+    // licznik 0/5
     cnt.textContent = String(picked.length);
-  
-    // chips / podsumowanie
-    chips.innerHTML = picked
-      .map(
-        (q) => `
-        <div class="chip">
-          <span>#${q.ord}</span>
-          <span>${escapeHtml(q.text || "")}</span>
-          ${
-            confirmed
-              ? ""
-              : `<button type="button" data-x="${String(q.id)}">✕</button>`
-          }
+
+    // helper do renderu jednej kolumny
+    const renderCol = (root, list, side) => {
+      root.innerHTML = list
+        .map(
+          (q) => `
+        <div class="qTile" data-id="${String(q.id)}">
+          <div class="meta">#${q.ord}</div>
+          <div class="txt">${escapeHtml(q.text || "")}</div>
         </div>
       `
-      )
-      .join("");
-  
-    if (!confirmed) {
-      chips.querySelectorAll("button[data-x]").forEach((b) => {
-        b.addEventListener("click", () => {
-          const id = String(b.dataset.x || "");
+        )
+        .join("");
+
+      if (confirmed) return; // po zatwierdzeniu nie można już klikać
+
+      root.querySelectorAll(".qTile").forEach((tile) => {
+        tile.addEventListener("click", () => {
+          const id = String(tile.dataset.id || "");
           if (!id) return;
-          finalPickerSelected.delete(id);
+
+          if (side === "left") {
+            // przenosimy do finału
+            if (finalPickerSelected.has(id)) return;
+            if (finalPickerSelected.size >= 5) return; // limit 5
+            finalPickerSelected.add(id);
+          } else {
+            // przenosimy z powrotem do puli
+            finalPickerSelected.delete(id);
+          }
+
+          // aktualizacja store (żeby finał później mógł to odczytać)
           store.state.final.picked = finalPickerGetSelectedIds();
           finalPickerRender();
         });
       });
-    }
-  
-    // helper do renderowania kafelków
-    const renderList = (root, list, draggable) => {
-      root.innerHTML = list
-        .map((q) => {
-          const id = String(q.id);
-          return `
-          <div class="qTile" draggable="${draggable ? "true" : "false"}" data-id="${id}">
-            <div class="meta">#${q.ord}</div>
-            <div class="txt">${escapeHtml(q.text || "")}</div>
-          </div>
-        `;
-        })
-        .join("");
     };
-  
-    if (confirmed) {
-      // po zatwierdzeniu – prawa lista pokazuje 5 pytań, bez drag&drop
-      renderList(poolRoot, [], false);
-      renderList(pickedRoot, picked, false);
-    } else {
-      renderList(poolRoot, pool, true);
-      renderList(pickedRoot, picked, true);
-  
-      // kliknięcie kafelka jako alternatywa drag&drop (szybkie przerzucanie)
-      const bindTileClicks = (root, targetSide) => {
-        root.querySelectorAll(".qTile").forEach((tile) => {
-          const id = String(tile.dataset.id || "");
-          tile.addEventListener("click", () => {
-            if (!id) return;
-            if (targetSide === "picked") {
-              if (finalPickerSelected.has(id)) return;
-              if (finalPickerSelected.size >= 5) return;
-              finalPickerSelected.add(id);
-            } else {
-              finalPickerSelected.delete(id);
-            }
-            store.state.final.picked = finalPickerGetSelectedIds();
-            finalPickerRender();
-          });
-        });
-      };
-  
-      bindTileClicks(poolRoot, "picked");
-      bindTileClicks(pickedRoot, "pool");
-  
-      // drag&drop
-      const makeDropTarget = (root, targetSide) => {
-        root.addEventListener("dragover", (e) => {
-          e.preventDefault();
-          root.classList.add("droptarget");
-        });
-        root.addEventListener("dragleave", () => {
-          root.classList.remove("droptarget");
-        });
-        root.addEventListener("drop", (e) => {
-          e.preventDefault();
-          root.classList.remove("droptarget");
-          const id = String(e.dataTransfer?.getData("text/plain") || "");
-          if (!id) return;
-  
-          if (targetSide === "picked") {
-            if (finalPickerSelected.has(id)) return;
-            if (finalPickerSelected.size >= 5) return;
-            finalPickerSelected.add(id);
-          } else {
-            finalPickerSelected.delete(id);
-          }
-          store.state.final.picked = finalPickerGetSelectedIds();
-          finalPickerRender();
-        });
-      };
-  
-      const bindDragStart = (root) => {
-        root.querySelectorAll(".qTile").forEach((tile) => {
-          tile.addEventListener("dragstart", (e) => {
-            const id = String(tile.dataset.id || "");
-            if (!id) return;
-            e.dataTransfer?.setData("text/plain", id);
-            e.dataTransfer && (e.dataTransfer.effectAllowed = "move");
-          });
-        });
-      };
-  
-      makeDropTarget(poolRoot, "pool");
-      makeDropTarget(pickedRoot, "picked");
-      bindDragStart(poolRoot);
-      bindDragStart(pickedRoot);
-    }
-  
-    // stan przycisku „Zatwierdź”:
-    // - musi być włączony finał
-    // - niezatwierdzone jeszcze
-    // - dokładnie 5 pytań po prawej
+
+    renderCol(left, pool, "left");
+    renderCol(right, picked, "right");
+
+    // stan przycisku "Zatwierdź"
     if (btnConfirm) {
       btnConfirm.disabled = !hasFinal || confirmed || picked.length !== 5;
     }
   }
-
-
+  
   devices.initLinksAndQr();
 
   // audio: stan początkowy
