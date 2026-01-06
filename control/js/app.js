@@ -193,10 +193,10 @@ async function main() {
   // start presence (online / offline / OSTATNIO)
   presence.start();
 
-  // === PICKER PYTAŃ FINAŁU ===
+  // === PICKER PYTAŃ FINAŁU (dwie listy + drag&drop) ===
   let finalPickerAll = [];
-  let finalPickerSelected = new Set();
-
+  let finalPickerSelected = new Set(); // przechowujemy ID jako stringi
+  
   function escapeHtml(s) {
     return String(s ?? "")
       .replaceAll("&", "&amp;")
@@ -205,65 +205,174 @@ async function main() {
       .replaceAll('"', "&quot;")
       .replaceAll("'", "&#039;");
   }
-
+  
   async function finalPickerReload() {
     const raw = sessionStorage.getItem("familiada:questionsCache");
     finalPickerAll = raw ? JSON.parse(raw) : [];
-    finalPickerSelected = new Set(store.state.final.picked || []);
+  
+    // startowy stan = to, co jest w store (albo pusto)
+    const pickedFromStore = (store.state.final?.picked || []).map(String);
+    finalPickerSelected = new Set(pickedFromStore);
+  
     finalPickerRender();
   }
-
+  
   function finalPickerGetSelectedIds() {
-    return Array.from(finalPickerSelected);
+    // do store zapisujemy liczby, bo final później szuka po q.id
+    return Array.from(finalPickerSelected).map((id) => Number(id));
   }
-
+  
   function finalPickerRender() {
-    const root = document.getElementById("finalQList");
+    const poolRoot = document.getElementById("finalQList");
+    const pickedRoot = document.getElementById("finalPickedList");
     const chips = document.getElementById("pickedChips");
     const cnt = document.getElementById("pickedCount");
-    if (!root || !chips || !cnt) return;
-
+    const btnConfirm = document.getElementById("btnConfirmFinal");
+  
+    if (!poolRoot || !pickedRoot || !chips || !cnt) return;
+  
     const confirmed = store.state.final.confirmed === true;
-
-    const html = finalPickerAll.map((q) => {
+    const hasFinal = store.state.hasFinal === true;
+  
+    // podział na lewą i prawą listę
+    const picked = [];
+    const pool = [];
+    for (const q of finalPickerAll) {
       const id = String(q.id);
-      const checked = finalPickerSelected.has(id);
-      const disabled = confirmed ? "disabled" : "";
-      return `
-        <label class="finalQItem">
-          <input type="checkbox" data-qid="${id}" ${checked ? "checked" : ""} ${disabled}/>
-          <span class="finalQText">${escapeHtml(q.text)}</span>
-        </label>
-      `;
-    }).join("");
-
-    root.innerHTML = html;
-    chips.innerHTML = Array.from(finalPickerSelected).map((id) => {
-      const q = finalPickerAll.find((x) => String(x.id) === String(id));
-      if (!q) return "";
-      return `<span class="chip">${escapeHtml(q.text)}</span>`;
-    }).join("");
-
-    cnt.textContent = `${finalPickerSelected.size} / 5`;
-
-    root.querySelectorAll("input[data-qid]").forEach((inp) => {
-      inp.addEventListener("change", () => {
-        const id = inp.dataset.qid;
-        if (!id) return;
-        if (inp.checked) {
-          if (finalPickerSelected.size >= 5) {
-            inp.checked = false;
-            return;
+      if (finalPickerSelected.has(id)) picked.push(q);
+      else pool.push(q);
+    }
+  
+    // licznik /5
+    cnt.textContent = String(picked.length);
+  
+    // chips / podsumowanie
+    chips.innerHTML = picked
+      .map(
+        (q) => `
+        <div class="chip">
+          <span>#${q.ord}</span>
+          <span>${escapeHtml(q.text || "")}</span>
+          ${
+            confirmed
+              ? ""
+              : `<button type="button" data-x="${String(q.id)}">✕</button>`
           }
-          finalPickerSelected.add(id);
-        } else {
+        </div>
+      `
+      )
+      .join("");
+  
+    if (!confirmed) {
+      chips.querySelectorAll("button[data-x]").forEach((b) => {
+        b.addEventListener("click", () => {
+          const id = String(b.dataset.x || "");
+          if (!id) return;
           finalPickerSelected.delete(id);
-        }
-        store.state.final.picked = Array.from(finalPickerSelected).slice(0, 5);
-        finalPickerRender();
+          store.state.final.picked = finalPickerGetSelectedIds();
+          finalPickerRender();
+        });
       });
-    });
+    }
+  
+    // helper do renderowania kafelków
+    const renderList = (root, list, draggable) => {
+      root.innerHTML = list
+        .map((q) => {
+          const id = String(q.id);
+          return `
+          <div class="qTile" draggable="${draggable ? "true" : "false"}" data-id="${id}">
+            <div class="meta">#${q.ord}</div>
+            <div class="txt">${escapeHtml(q.text || "")}</div>
+          </div>
+        `;
+        })
+        .join("");
+    };
+  
+    if (confirmed) {
+      // po zatwierdzeniu – prawa lista pokazuje 5 pytań, bez drag&drop
+      renderList(poolRoot, [], false);
+      renderList(pickedRoot, picked, false);
+    } else {
+      renderList(poolRoot, pool, true);
+      renderList(pickedRoot, picked, true);
+  
+      // kliknięcie kafelka jako alternatywa drag&drop (szybkie przerzucanie)
+      const bindTileClicks = (root, targetSide) => {
+        root.querySelectorAll(".qTile").forEach((tile) => {
+          const id = String(tile.dataset.id || "");
+          tile.addEventListener("click", () => {
+            if (!id) return;
+            if (targetSide === "picked") {
+              if (finalPickerSelected.has(id)) return;
+              if (finalPickerSelected.size >= 5) return;
+              finalPickerSelected.add(id);
+            } else {
+              finalPickerSelected.delete(id);
+            }
+            store.state.final.picked = finalPickerGetSelectedIds();
+            finalPickerRender();
+          });
+        });
+      };
+  
+      bindTileClicks(poolRoot, "picked");
+      bindTileClicks(pickedRoot, "pool");
+  
+      // drag&drop
+      const makeDropTarget = (root, targetSide) => {
+        root.addEventListener("dragover", (e) => {
+          e.preventDefault();
+          root.classList.add("droptarget");
+        });
+        root.addEventListener("dragleave", () => {
+          root.classList.remove("droptarget");
+        });
+        root.addEventListener("drop", (e) => {
+          e.preventDefault();
+          root.classList.remove("droptarget");
+          const id = String(e.dataTransfer?.getData("text/plain") || "");
+          if (!id) return;
+  
+          if (targetSide === "picked") {
+            if (finalPickerSelected.has(id)) return;
+            if (finalPickerSelected.size >= 5) return;
+            finalPickerSelected.add(id);
+          } else {
+            finalPickerSelected.delete(id);
+          }
+          store.state.final.picked = finalPickerGetSelectedIds();
+          finalPickerRender();
+        });
+      };
+  
+      const bindDragStart = (root) => {
+        root.querySelectorAll(".qTile").forEach((tile) => {
+          tile.addEventListener("dragstart", (e) => {
+            const id = String(tile.dataset.id || "");
+            if (!id) return;
+            e.dataTransfer?.setData("text/plain", id);
+            e.dataTransfer!.effectAllowed = "move";
+          });
+        });
+      };
+  
+      makeDropTarget(poolRoot, "pool");
+      makeDropTarget(pickedRoot, "picked");
+      bindDragStart(poolRoot);
+      bindDragStart(pickedRoot);
+    }
+  
+    // stan przycisku „Zatwierdź”:
+    // - musi być włączony finał
+    // - niezatwierdzone jeszcze
+    // - dokładnie 5 pytań po prawej
+    if (btnConfirm) {
+      btnConfirm.disabled = !hasFinal || confirmed || picked.length !== 5;
+    }
   }
+
 
   devices.initLinksAndQr();
 
@@ -468,6 +577,12 @@ async function main() {
   ui.on("final.reload", () =>
     finalPickerReload().catch((e) => ui.setMsg("msgFinalPick", e?.message || String(e)))
   );
+
+    // pierwszy load – żeby lista była gotowa po wejściu w krok 2/2
+  finalPickerReload().catch((e) => {
+    console.error(e);
+    ui.setMsg("msgFinalPick", e?.message || String(e));
+  });
 
   ui.on("final.confirm", () => {
     store.confirmFinalQuestions(finalPickerGetSelectedIds());
