@@ -184,7 +184,7 @@ async function main() {
 
   const devices = createDevices({ game, ui, store, chDisplay, chHost, chBuzzer });
   const presence = createPresence({ game, ui, store, devices });
-
+  presence.start(); 
   const display = createDisplay({ devices, store });
   const rounds = createRounds({ ui, store, devices, display, loadQuestions, loadAnswers });
   rounds.bootIfNeeded();
