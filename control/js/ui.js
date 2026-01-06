@@ -221,12 +221,22 @@ export function createUI() {
     const rm = $("roundMultipliers");
     const fm = $("finalMinPoints");
     const ft = $("finalTargetPoints");
+    const winMoney = $("winModeMoney");
+    const winLogo = $("winModeLogo");
+    const winPoints = $("winModePoints");
 
     return {
       roundMultipliersText: rm ? rm.value : "",
       finalMinPointsText: fm ? fm.value : "",
       finalTargetText: ft ? ft.value : "",
-      winMode: "logo" | "points" | "money"
+      winMode:
+        winMoney && winMoney.checked
+          ? "money"
+          : winLogo && winLogo.checked
+          ? "logo"
+          : winPoints&& winPoints.checked
+          ? "points"
+          : null,
     };
   }
 
