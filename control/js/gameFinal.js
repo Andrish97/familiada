@@ -1,4 +1,57 @@
 // /familiada/js/pages/control/gameFinal.js
+
+// ================== KOMUNIKATY (FINAL) ==================
+const FINAL_MSG = {
+  // --- błędy / warunki ---
+  ERR_MISSING_5: "Brakuje 5 pytań finału (zatwierdź w ustawieniach).",
+
+  // --- timer ---
+  TIMER_PLACEHOLDER: "—",
+  TIMER_RUNNING: "Odliczanie trwa…",
+
+  // --- start / dostępność finału ---
+  FINAL_DISABLED: "Finał jest wyłączony.",
+  FINAL_NEEDS_PICK: "Zatwierdź 5 pytań finału w ustawieniach.",
+  FINAL_NEEDS_300: "Finał dostępny dopiero po osiągnięciu 300 punktów.",
+  FINAL_STARTED: "Finał rozpoczęty.",
+  R2_STARTED: "Runda 2 rozpoczęta.",
+
+  // --- zakończenie finału / nagrody ---
+  END_NO_PRIZE: "Finał zakończony. Brak trybu nagrody — wracamy do logo.",
+  END_200_PLUS: (mainPrize) => `200+! ${mainPrize}`,
+  END_BELOW_200: (smallPrize) => `Poniżej 200. ${smallPrize}`,
+
+  DEFAULT_MAIN_PRIZE: "Nagroda główna",
+  DEFAULT_SMALL_PRIZE: "Nagroda",
+
+  // --- etykiety pól / przycisków ---
+  Q_LABEL: (n) => `Pytanie ${n}`,
+  INPUT_PLACEHOLDER: "Wpisz…",
+  BTN_CONFIRMED: "Zatwierdzone",
+  BTN_CONFIRM: "Zatwierdź",
+
+  P2_HINT_P1_PREFIX: "Odpowiedź gracza 1: ",
+
+  P2_BTN_REPEAT_ON: "Powtórzenie ✓",
+  P2_BTN_REPEAT_OFF: "Powtórzenie",
+
+  // --- mapping / podpowiedzi prowadzącego ---
+  MAP_HINT_INPUT_PREFIX: "Wpisano: ",
+  MAP_HINT_NO_INPUT: "Brak wpisu",
+  MAP_HINT_NO_TEXT: "Nie wpisano odpowiedzi — “Dalej” pokaże puste / 0 pkt.",
+  MAP_LIST_TITLE: "Lista odpowiedzi",
+  MAP_LIST_EMPTY: "Brak listy odpowiedzi.",
+  MAP_OWN_TITLE: "Własna / brak",
+  MAP_BTN_SKIP: "Brak odpowiedzi",
+  MAP_BTN_MISS: "Nie ma na liście (0 pkt)",
+  MAP_OUT_HINT: "Tekst do wyświetlenia (gdy “Nie ma na liście”).",
+  MAP_OUT_PLACEHOLDER: "Tekst (0 pkt)",
+
+  // --- fallback tekstu odpowiedzi, gdy naprawdę nic nie ma ---
+  FALLBACK_ANSWER: "—",
+};
+// =========================================================
+
 import { playSfx } from "/familiada/js/core/sfx.js";
 
 function nInt(v, d = 0) {
@@ -61,7 +114,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     rt.timer.phase = null;
     if (raf) cancelAnimationFrame(raf);
     raf = null;
-    ui.setText("finalTimer", "—");
+    ui.setText("finalTimer", FINAL_MSG.TIMER_PLACEHOLDER);
   }
 
   // Zwycięska drużyna (do timera na bocznym tripletcie).
@@ -79,7 +132,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     qPicked = pickedIds.map((id) => all.find((q) => q.id === id)).filter(Boolean);
 
     if (qPicked.length !== 5) {
-      throw new Error("Brakuje 5 pytań finału (zatwierdź w ustawieniach).");
+      throw new Error(FINAL_MSG.ERR_MISSING_5);
     }
 
     answersByQ = new Map();
@@ -101,8 +154,6 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
 
   async function displaySetTimerSeconds(sec) {
     // Timer tylko na bocznym tripletcie finału po stronie zwycięzców.
-    // Zakładam istnienie metody display.finalSetSideTimer(team, text)
-    // Jeśli nie masz, dopisz ją w display.js (checklista niżej).
     const team = getWinnerTeam();
     const txt = String(Math.max(0, sec)); // bez wiodących zer
     ui.setText("finalTimer", txt);
@@ -134,7 +185,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
         rt.timer.running = false;
         ui.setText("finalTimer", "0");
         displaySetTimerSeconds(0).catch(() => {});
-        playSfx("answer_wrong"); // “czas minął” w finale: u Ciebie był osobny, ale ustaliliśmy: poprawna/błędna — tu traktuj jako sygnał końca czasu
+        playSfx("answer_wrong"); // sygnał końca czasu
         // odblokuj “Dalej”
         if (phase === "P1") ui.setEnabled("btnFinalToP1MapQ1", true);
         if (phase === "P2") ui.setEnabled("btnFinalToP2MapQ1", true);
@@ -156,12 +207,12 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
       const entered = rt.p1[i].entered === true;
       return `
         <div class="card" style="margin-bottom:10px;">
-          <div class="name">Pytanie ${i + 1}</div>
+          <div class="name">${escapeHtml(FINAL_MSG.Q_LABEL(i + 1))}</div>
           <div class="qPrompt">${escapeHtml(q.text || "")}</div>
 
           <div class="rowBtns" style="margin-top:10px;">
-            <input class="inp" data-p="1" data-i="${i}" value="${escapeHtml(val)}" placeholder="Wpisz…" autocomplete="off"/>
-            <button class="btn sm gold" type="button" data-enter="1" data-i="${i}">${entered ? "Zatwierdzone" : "Zatwierdź"}</button>
+            <input class="inp" data-p="1" data-i="${i}" value="${escapeHtml(val)}" placeholder="${escapeHtml(FINAL_MSG.INPUT_PLACEHOLDER)}" autocomplete="off"/>
+            <button class="btn sm gold" type="button" data-enter="1" data-i="${i}">${entered ? escapeHtml(FINAL_MSG.BTN_CONFIRMED) : escapeHtml(FINAL_MSG.BTN_CONFIRM)}</button>
           </div>
         </div>
       `;
@@ -210,15 +261,15 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
       const p1 = (rt.p1[i].text || "").trim() || "—";
       return `
         <div class="card" style="margin-bottom:10px;">
-          <div class="name">Pytanie ${i + 1}</div>
+          <div class="name">${escapeHtml(FINAL_MSG.Q_LABEL(i + 1))}</div>
           <div class="qPrompt">${escapeHtml(q.text || "")}</div>
 
-          <div class="mini"><div class="hint">Odpowiedź gracza 1: <b>${escapeHtml(p1)}</b></div></div>
+          <div class="mini"><div class="hint">${escapeHtml(FINAL_MSG.P2_HINT_P1_PREFIX)}<b>${escapeHtml(p1)}</b></div></div>
 
           <div class="rowBtns" style="margin-top:10px;">
-            <input class="inp" data-p="2" data-i="${i}" value="${escapeHtml(v2)}" placeholder="Wpisz…" autocomplete="off"/>
-            <button class="btn sm gold" type="button" data-enter="2" data-i="${i}">${entered ? "Zatwierdzone" : "Zatwierdź"}</button>
-            <button class="btn sm danger" type="button" data-repeat="2" data-i="${i}">${repeat ? "Powtórzenie ✓" : "Powtórzenie"}</button>
+            <input class="inp" data-p="2" data-i="${i}" value="${escapeHtml(v2)}" placeholder="${escapeHtml(FINAL_MSG.INPUT_PLACEHOLDER)}" autocomplete="off"/>
+            <button class="btn sm gold" type="button" data-enter="2" data-i="${i}">${entered ? escapeHtml(FINAL_MSG.BTN_CONFIRMED) : escapeHtml(FINAL_MSG.BTN_CONFIRM)}</button>
+            <button class="btn sm danger" type="button" data-repeat="2" data-i="${i}">${repeat ? escapeHtml(FINAL_MSG.P2_BTN_REPEAT_ON) : escapeHtml(FINAL_MSG.P2_BTN_REPEAT_OFF)}</button>
           </div>
         </div>
       `;
@@ -272,7 +323,9 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     const mapArr = roundNo === 1 ? rt.map1 : rt.map2;
     const row = mapArr[idx];
 
-    const hostHint = input.length ? `Wpisano: <b>${escapeHtml(input)}</b>` : `<i>Brak wpisu</i>`;
+    const hostHint = input.length
+      ? `${escapeHtml(FINAL_MSG.MAP_HINT_INPUT_PREFIX)}<b>${escapeHtml(input)}</b>`
+      : `<i>${escapeHtml(FINAL_MSG.MAP_HINT_NO_INPUT)}</i>`;
 
     const left = aList.map((a) => {
       const active = row.kind === "MATCH" && row.matchId === a.id;
@@ -290,32 +343,32 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     const outVal = escapeHtml(outDefault);
 
     const html = `
-      <div class="name">Pytanie ${idx + 1}</div>
+      <div class="name">${escapeHtml(FINAL_MSG.Q_LABEL(idx + 1))}</div>
       <div class="qPrompt">${escapeHtml(q.text || "")}</div>
       <div class="mini"><div class="hint">${hostHint}</div></div>
 
       ${input.length === 0 ? `
-        <div class="mini"><div class="hint">Nie wpisano odpowiedzi — “Dalej” pokaże puste / 0 pkt.</div></div>
+        <div class="mini"><div class="hint">${escapeHtml(FINAL_MSG.MAP_HINT_NO_TEXT)}</div></div>
       ` : ``}
 
       <div class="cards2" style="margin-top:12px;">
         <div class="card">
-          <div class="name">Lista odpowiedzi</div>
+          <div class="name">${escapeHtml(FINAL_MSG.MAP_LIST_TITLE)}</div>
           <div class="rowBtns" style="flex-wrap:wrap; gap:8px;">
-            ${left || `<div class="hint">Brak listy odpowiedzi.</div>`}
+            ${left || `<div class="hint">${escapeHtml(FINAL_MSG.MAP_LIST_EMPTY)}</div>`}
           </div>
         </div>
 
         <div class="card">
-          <div class="name">Własna / brak</div>
+          <div class="name">${escapeHtml(FINAL_MSG.MAP_OWN_TITLE)}</div>
 
           <div class="rowBtns" style="align-items:flex-start;">
-            <button class="btn sm ${skipActive ? "gold" : ""}" type="button" data-kind="skip">Brak odpowiedzi</button>
-            <button class="btn sm danger ${missActive ? "gold" : ""}" type="button" data-kind="miss">Nie ma na liście (0 pkt)</button>
+            <button class="btn sm ${skipActive ? "gold" : ""}" type="button" data-kind="skip">${escapeHtml(FINAL_MSG.MAP_BTN_SKIP)}</button>
+            <button class="btn sm danger ${missActive ? "gold" : ""}" type="button" data-kind="miss">${escapeHtml(FINAL_MSG.MAP_BTN_MISS)}</button>
           </div>
 
-          <div class="mini"><div class="hint">Tekst do wyświetlenia (gdy “Nie ma na liście”).</div></div>
-          <input class="inp" data-kind="out" value="${outVal}" placeholder="Tekst (0 pkt)"/>
+          <div class="mini"><div class="hint">${escapeHtml(FINAL_MSG.MAP_OUT_HINT)}</div></div>
+          <input class="inp" data-kind="out" value="${outVal}" placeholder="${escapeHtml(FINAL_MSG.MAP_OUT_PLACEHOLDER)}"/>
         </div>
       </div>
     `;
@@ -386,7 +439,9 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
 
     // Ustalenia: jeśli brak pasującej => 0 pkt i wyświetlamy wpisany tekst,
     // a jeśli brak wpisu -> placeholder/puste.
-    const txt = out.trim().length ? out.trim() : display.PLACE?.finalText || "—";
+    const txt = out.trim().length
+      ? out.trim()
+      : display.PLACE?.finalText || FINAL_MSG.FALLBACK_ANSWER;
 
     // pokaż na tablicy:
     // runda 1 -> lewa kolumna + A punkty, runda 2 -> prawa kolumna + B punkty
@@ -423,13 +478,18 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
 
     // tekst końcowy: nagroda / logo / itd.
     const hasPrize = store.state?.final?.hasPrize !== false; // default: true
-    const mainPrize = store.state?.final?.prizeMain || "Nagroda główna";
-    const smallPrize = store.state?.final?.prizeSmall || "Nagroda";
+    const mainPrize = store.state?.final?.prizeMain || FINAL_MSG.DEFAULT_MAIN_PRIZE;
+    const smallPrize = store.state?.final?.prizeSmall || FINAL_MSG.DEFAULT_SMALL_PRIZE;
 
     const hint = document.getElementById("finalEndHint");
     if (hint) {
-      if (!hasPrize) hint.textContent = "Finał zakończony. Brak trybu nagrody — wracamy do logo.";
-      else hint.textContent = hit200 ? `200+! ${mainPrize}` : `Poniżej 200. ${smallPrize}`;
+      if (!hasPrize) {
+        hint.textContent = FINAL_MSG.END_NO_PRIZE;
+      } else {
+        hint.textContent = hit200
+          ? FINAL_MSG.END_200_PLUS(mainPrize)
+          : FINAL_MSG.END_BELOW_200(smallPrize);
+      }
     }
 
     setStep("f_end");
@@ -438,11 +498,11 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
   // ---------- Public actions (hooki pod UI) ----------
   async function startFinal() {
     if (store.state.hasFinal !== true) {
-      ui.setMsg("msgFinal", "Finał jest wyłączony.");
+      ui.setMsg("msgFinal", FINAL_MSG.FINAL_DISABLED);
       return;
     }
     if (!store.state.final.confirmed || (store.state.final.picked || []).length !== 5) {
-      ui.setMsg("msgFinal", "Zatwierdź 5 pytań finału w ustawieniach.");
+      ui.setMsg("msgFinal", FINAL_MSG.FINAL_NEEDS_PICK);
       return;
     }
   
@@ -450,7 +510,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     const totals = store.state.rounds?.totals || { A: 0, B: 0 };
     const has300 = (totals.A || 0) >= 300 || (totals.B || 0) >= 300;
     if (!has300) {
-      ui.setMsg("msgFinal", "Finał dostępny dopiero po osiągnięciu 300 punktów.");
+      ui.setMsg("msgFinal", FINAL_MSG.FINAL_NEEDS_300);
       return;
     }
   
@@ -471,15 +531,15 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     await display.finalSetSuma?.(0);
   
     for (let i = 1; i <= 5; i++) {
-      await display.finalSetLeft?.(i, display.PLACE?.finalText || "—");
-      await display.finalSetRight?.(i, display.PLACE?.finalText || "—");
+      await display.finalSetLeft?.(i, display.PLACE?.finalText || FINAL_MSG.FALLBACK_ANSWER);
+      await display.finalSetRight?.(i, display.PLACE?.finalText || FINAL_MSG.FALLBACK_ANSWER);
       await display.finalSetA?.(i, "00");
       await display.finalSetB?.(i, "00");
     }
   
     await display.finalSetSideTimer?.(getWinnerTeam(), "");
   
-    ui.setMsg("msgFinal", "Finał rozpoczęty.");
+    ui.setMsg("msgFinal", FINAL_MSG.FINAL_STARTED);
     updateSumUI();
     setStep("f_p1_entry");
     renderP1Entry();
@@ -508,13 +568,13 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
   function p1StartTimer() {
     startCountdown(15, "P1");
     ui.setEnabled("btnFinalToP1MapQ1", false);
-    ui.setMsg("msgFinalP1Entry", "Odliczanie trwa…");
+    ui.setMsg("msgFinalP1Entry", FINAL_MSG.TIMER_RUNNING);
   }
 
   function p2StartTimer() {
     startCountdown(20, "P2");
     ui.setEnabled("btnFinalToP2MapQ1", false);
-    ui.setMsg("msgFinalP2Entry", "Odliczanie trwa…");
+    ui.setMsg("msgFinalP2Entry", FINAL_MSG.TIMER_RUNNING);
   }
 
   function toP1MapQ(idx1based) {
@@ -538,7 +598,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     setStep("f_p2_entry");
     renderP2Entry();
     ui.setEnabled("btnFinalToP2MapQ1", false);
-    ui.setMsg("msgFinalP2Start", "Runda 2 rozpoczęta.");
+    ui.setMsg("msgFinalP2Start", FINAL_MSG.R2_STARTED);
   }
 
   async function nextFromP1Q(idx1based) {
