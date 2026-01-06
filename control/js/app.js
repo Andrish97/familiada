@@ -193,10 +193,6 @@ async function main() {
   // start presence (online / offline / OSTATNIO)
   presence.start();
 
-  finalPickerReload().catch((e) => {
-    console.error("[finalPicker] reload error", e);
-  });
-
   // === PICKER PYTAŃ FINAŁU: góra "czy gramy", lewo rozgrywka, prawo finał ===
   let finalPickerAll = [];
   let finalPickerSelected = new Set(); // trzymamy ID jako liczby
@@ -498,7 +494,7 @@ async function main() {
   ui.on("setup.next", () => store.setSetupStep("setup_final"));
   ui.on("setup.back", () => store.setSetupStep("setup_names"));
 
-    ui.on("final.toggle", (hasFinal) => {
+  ui.on("final.toggle", (hasFinal) => {
     store.setHasFinal(hasFinal);
     finalPickerUpdateButtons();
   });
