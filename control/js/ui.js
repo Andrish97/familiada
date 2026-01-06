@@ -1,4 +1,27 @@
 // /familiada/js/pages/control/ui.js
+
+// ================== KOMUNIKATY (UI) ==================
+const UI_MSG = {
+  DEVICE_STATUS_OK: "OK",
+  DEVICE_STATUS_OFFLINE: "OFFLINE",
+  DEVICE_STATUS_NONE: "—",
+  DEVICE_SEEN_NONE: "brak",
+
+  AUDIO_OK: "OK",
+  AUDIO_BLOCKED: "ZABLOKOWANE",
+
+  CONTROL_PREFIX: "Control — ",
+  CONTROL_TITLE: "Control",
+
+  QR_ON_DISPLAY: "QR na wyświetlaczu",
+  QR_HIDE: "Schowaj QR",
+  QR_BLACK_SCREEN: "Czarny ekran",
+
+  DASH: "—",
+  ANSWER_FALLBACK: "—",
+};
+// =====================================================
+
 export function createUI() {
   const $ = (id) => document.getElementById(id);
 
@@ -64,26 +87,26 @@ export function createUI() {
     }
   }
 
-function showCard(card) {
-  // ukryj wszystkie panele kart
-  document
-    .querySelectorAll(".cardPanel[data-card]")
-    .forEach((p) => p.classList.add("hidden"));
+  function showCard(card) {
+    // ukryj wszystkie panele kart
+    document
+      .querySelectorAll(".cardPanel[data-card]")
+      .forEach((p) => p.classList.add("hidden"));
 
-  // pokaż wybraną kartę
-  document
-    .querySelector(`.cardPanel[data-card="${card}"]`)
-    ?.classList.remove("hidden");
+    // pokaż wybraną kartę
+    document
+      .querySelector(`.cardPanel[data-card="${card}"]`)
+      ?.classList.remove("hidden");
 
-  // zaktualizuj aktywną zakładkę
-  document
-    .querySelectorAll(".navItem[data-card]")
-    .forEach((b) => b.classList.remove("active"));
+    // zaktualizuj aktywną zakładkę
+    document
+      .querySelectorAll(".navItem[data-card]")
+      .forEach((b) => b.classList.remove("active"));
 
-  document
-    .querySelector(`.navItem[data-card="${card}"]`)
-    ?.classList.add("active");
-}
+    document
+      .querySelector(`.navItem[data-card="${card}"]`)
+      ?.classList.add("active");
+  }
 
   function mountNavigation({ canEnter, onNavigate }) {
     document.querySelectorAll(".navItem[data-card]").forEach((b) => {
@@ -136,13 +159,25 @@ function showCard(card) {
   }
 
   function setDeviceBadges({ display, host, buzzer }) {
-    badge($("pillDisplay"), display.on ? "ok" : "bad", display.on ? "OK" : "OFFLINE");
-    badge($("pillHost"), host.on ? "ok" : "bad", host.on ? "OK" : "OFFLINE");
-    badge($("pillBuzzer"), buzzer.on ? "ok" : "bad", buzzer.on ? "OK" : "OFFLINE");
+    badge(
+      $("pillDisplay"),
+      display.on ? "ok" : "bad",
+      display.on ? UI_MSG.DEVICE_STATUS_OK : UI_MSG.DEVICE_STATUS_OFFLINE
+    );
+    badge(
+      $("pillHost"),
+      host.on ? "ok" : "bad",
+      host.on ? UI_MSG.DEVICE_STATUS_OK : UI_MSG.DEVICE_STATUS_OFFLINE
+    );
+    badge(
+      $("pillBuzzer"),
+      buzzer.on ? "ok" : "bad",
+      buzzer.on ? UI_MSG.DEVICE_STATUS_OK : UI_MSG.DEVICE_STATUS_OFFLINE
+    );
 
-    if ($("seenDisplay")) $("seenDisplay").textContent = display.seen || "—";
-    if ($("seenHost")) $("seenHost").textContent = host.seen || "—";
-    if ($("seenBuzzer")) $("seenBuzzer").textContent = buzzer.seen || "—";
+    if ($("seenDisplay")) $("seenDisplay").textContent = display.seen || UI_MSG.DEVICE_STATUS_NONE;
+    if ($("seenHost")) $("seenHost").textContent = host.seen || UI_MSG.DEVICE_STATUS_NONE;
+    if ($("seenBuzzer")) $("seenBuzzer").textContent = buzzer.seen || UI_MSG.DEVICE_STATUS_NONE;
 
     dot($("dotDisplay"), display.on ? "ok" : "bad");
     dot($("dotHost"), host.on ? "ok" : "bad");
@@ -150,13 +185,13 @@ function showCard(card) {
   }
 
   function setDeviceBadgesUnavailable() {
-    badge($("pillDisplay"), "mid", "—");
-    badge($("pillHost"), "mid", "—");
-    badge($("pillBuzzer"), "mid", "—");
+    badge($("pillDisplay"), "mid", UI_MSG.DEVICE_STATUS_NONE);
+    badge($("pillHost"), "mid", UI_MSG.DEVICE_STATUS_NONE);
+    badge($("pillBuzzer"), "mid", UI_MSG.DEVICE_STATUS_NONE);
 
-    if ($("seenDisplay")) $("seenDisplay").textContent = "brak";
-    if ($("seenHost")) $("seenHost").textContent = "brak";
-    if ($("seenBuzzer")) $("seenBuzzer").textContent = "brak";
+    if ($("seenDisplay")) $("seenDisplay").textContent = UI_MSG.DEVICE_SEEN_NONE;
+    if ($("seenHost")) $("seenHost").textContent = UI_MSG.DEVICE_SEEN_NONE;
+    if ($("seenBuzzer")) $("seenBuzzer").textContent = UI_MSG.DEVICE_SEEN_NONE;
 
     dot($("dotDisplay"), "mid");
     dot($("dotHost"), "mid");
@@ -176,7 +211,7 @@ function showCard(card) {
     if (!el) return;
     el.classList.remove("ok","bad","mid");
     el.classList.add(unlocked ? "ok" : "bad");
-    el.textContent = unlocked ? "OK" : "ZABLOKOWANE";
+    el.textContent = unlocked ? UI_MSG.AUDIO_OK : UI_MSG.AUDIO_BLOCKED;
   }
 
   function getTeamA() { return String($("teamA")?.value ?? "").trim(); }
@@ -222,28 +257,36 @@ function showCard(card) {
     // - jeśli host i buzzer są już online, sensowniejsze jest "Czarny ekran"
     // - w przeciwnym razie "Schowaj QR"
     if (isOn) {
-      b.textContent = hostAndBuzzerOnline ? "Czarny ekran" : "Schowaj QR";
+      b.textContent = hostAndBuzzerOnline ? UI_MSG.QR_BLACK_SCREEN : UI_MSG.QR_HIDE;
       return;
     }
   
-    b.textContent = "QR na wyświetlaczu";
+    b.textContent = UI_MSG.QR_ON_DISPLAY;
   }
 
   function setRoundsHud(r) {
     setText("roundNo", String(r.roundNo));
-    setText("controlTeam", r.controlTeam ? (r.controlTeam === "A" ? "A" : "B") : "—");
+    setText(
+      "controlTeam",
+      r.controlTeam ? (r.controlTeam === "A" ? "A" : "B") : UI_MSG.DASH
+    );
     setText("bankPts", String(r.bankPts));
     setText("xA", String(r.xA));
     setText("xB", String(r.xB));
-    setText("t3", r.timer3.running ? String(r.timer3.secLeft ?? 3) : "—");
+    setText("t3", r.timer3.running ? String(r.timer3.secLeft ?? 3) : UI_MSG.DASH);
   }
 
   function setGameHeader(name, meta) {
-    setText("gameLabel", name ? `Control — ${name}` : "Control");
+    setText(
+      "gameLabel",
+      name ? `${UI_MSG.CONTROL_PREFIX}${name}` : UI_MSG.CONTROL_TITLE
+    );
     setText("gameMeta", meta || "");
   }
 
-  function setRoundQuestion(text) { setText("roundQuestion", text || "—"); }
+  function setRoundQuestion(text) {
+    setText("roundQuestion", text || UI_MSG.DASH);
+  }
 
   function renderAnswersGeneric(rootId, answers, revealedSet, eventName) {
     const root = $(rootId);
@@ -271,7 +314,7 @@ function showCard(card) {
               <span>${ord}</span>
               <span>${pts}</span>
             </div>
-            <div class="ansText">${escapeHtml(a.text || "—")}</div>
+            <div class="ansText">${escapeHtml(a.text || UI_MSG.ANSWER_FALLBACK)}</div>
           </button>
         `;
       })
@@ -367,7 +410,7 @@ function showCard(card) {
     $("btnLogout")?.addEventListener("click", () => emit("top.logout"));
     $("btnAlertClose")?.addEventListener("click", () => hideAlert());
 
-        // auth bar – kliknięcie w status urządzeń
+    // auth bar – kliknięcie w status urządzeń
     const topDisplayRow = $("dotDisplay")?.parentElement;
     if (topDisplayRow) {
       topDisplayRow.addEventListener("click", () => emit("auth.showQr", "display"));
