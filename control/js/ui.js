@@ -217,6 +217,48 @@ export function createUI() {
   function getTeamA() { return String($("teamA")?.value ?? "").trim(); }
   function getTeamB() { return String($("teamB")?.value ?? "").trim(); }
 
+  function getAdvancedForm() {
+    const rm = $("roundMultipliers");
+    const fm = $("finalMinPoints");
+    const ft = $("finalTargetPoints");
+    const winMoney = $("winModeMoney");
+    const winLogo = $("winModeLogo");
+
+    return {
+      roundMultipliersText: rm ? rm.value : "",
+      finalMinPointsText: fm ? fm.value : "",
+      finalTargetText: ft ? ft.value : "",
+      winMode:
+        winMoney && winMoney.checked
+          ? "money"
+          : winLogo && winLogo.checked
+          ? "logo"
+          : null,
+    };
+  }
+
+  function setAdvancedForm(advanced) {
+    const adv = advanced || {};
+    const rms = Array.isArray(adv.roundMultipliers)
+      ? adv.roundMultipliers.join(", ")
+      : "";
+
+    if ($("roundMultipliers")) $("roundMultipliers").value = rms;
+    if ($("finalMinPoints"))
+      $("finalMinPoints").value =
+        typeof adv.finalMinPoints === "number" ? String(adv.finalMinPoints) : "";
+    if ($("finalTargetPoints"))
+      $("finalTargetPoints").value =
+        typeof adv.finalTarget === "number" ? String(adv.finalTarget) : "";
+
+    const winEnabled =
+      typeof adv.winEnabled === "boolean" ? adv.winEnabled : true;
+
+    if ($("winModeMoney")) $("winModeMoney").checked = !!winEnabled;
+    if ($("winModeLogo")) $("winModeLogo").checked = !winEnabled;
+  }
+
+
   function setFinalHasFinal(on) {
     const card = $("finalPickerCard");
     if (!card) return;
@@ -478,6 +520,32 @@ export function createUI() {
       });
     }
 
+    // --- Dodatkowe ustawienia (mnożniki, progi, tryb końca gry) ---
+    const advInputs = [
+      "roundMultipliers",
+      "finalMinPoints",
+      "finalTargetPoints",
+    ];
+    advInputs.forEach((id) => {
+      const el = $(id);
+      if (el) {
+        el.addEventListener("change", () => emit("advanced.change"));
+      }
+    });
+
+    const winMoney = $("winModeMoney");
+    const winLogo = $("winModeLogo");
+    if (winMoney) {
+      winMoney.addEventListener("change", () => emit("advanced.change"));
+    }
+    if (winLogo) {
+      winLogo.addEventListener("change", () => emit("advanced.change"));
+    }
+
+    $("btnAdvancedReset")?.addEventListener("click", () =>
+      emit("advanced.reset")
+    );
+
     $("finalYes")?.addEventListener("change", () => emit("final.toggle", true));
     $("finalNo")?.addEventListener("change", () => emit("final.toggle", false));
     $("btnReloadQuestions")?.addEventListener("click", () => emit("final.reload"));
@@ -602,6 +670,9 @@ export function createUI() {
 
     setGameHeader,
     setHtml,
+
+    getAdvancedForm,
+    setAdvancedForm,
   };
 }
 
