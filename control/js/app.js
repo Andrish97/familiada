@@ -304,6 +304,7 @@ async function main() {
   }
 
   devices.initLinksAndQr();
+  presence.start();
 
   store.setAudioUnlocked(!!isAudioUnlocked());
   ui.setAudioStatus(store.state.flags.audioUnlocked);
