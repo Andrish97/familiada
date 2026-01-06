@@ -353,7 +353,7 @@ async function main() {
             const id = String(tile.dataset.id || "");
             if (!id) return;
             e.dataTransfer?.setData("text/plain", id);
-            e.dataTransfer!.effectAllowed = "move";
+            e.dataTransfer && (e.dataTransfer.effectAllowed = "move");
           });
         });
       };
