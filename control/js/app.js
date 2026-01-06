@@ -322,8 +322,16 @@ async function main() {
     bindDropZone(finalRoot, "final");
 
     const pickedIds = finalPickerSelected;
-    const picked = finalPickerAll.filter((q) => pickedIds.has(q.id));
-    const pool = finalPickerAll.filter((q) => !pickedIds.has(q.id));
+  
+    const picked = finalPickerAll.filter((q) => {
+      const qId = Number(q.id);
+      return Number.isFinite(qId) && pickedIds.has(qId);
+    });
+  
+    const pool = finalPickerAll.filter((q) => {
+      const qId = Number(q.id);
+      return !(Number.isFinite(qId) && pickedIds.has(qId));
+    });
 
     renderList(poolRoot, pool, "pool", confirmed);
     renderList(finalRoot, picked, "final", confirmed);
@@ -547,8 +555,10 @@ async function main() {
 
   ui.on("final.toggle", (hasFinal) => {
     store.setHasFinal(hasFinal);
+    ui.setFinalHasFinal(hasFinal);   // <-- to chowa/pokazuje #finalPickerCard
     finalPickerUpdateButtons();
   });
+
 
   ui.on("final.reload", () =>
     finalPickerReload().catch((e) => ui.setMsg("msgFinalPick", e?.message || String(e)))
