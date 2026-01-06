@@ -686,6 +686,53 @@
   padding-right: 4px;
 }
 
+.finalLists{
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+@media (max-width: 900px){
+  .finalLists{
+    grid-template-columns: 1fr;
+  }
+}
+
+.finalCol .mini{
+  margin-top: 0;
+}
+
+.qTile{
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(0,0,0,.16);
+  padding: 10px;
+  cursor: grab;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.qTile:active{
+  cursor: grabbing;
+}
+
+.qTile .meta{
+  font-size: 11px;
+  opacity: .75;
+  font-weight: 900;
+  letter-spacing: .06em;
+}
+
+.qTile .txt{
+  font-weight: 900;
+  line-height: 1.25;
+}
+
+.qList.droptarget{
+  outline: 2px dashed rgba(255,234,166,.55);
+  outline-offset: 2px;
+}
+
 .qRow{
   display: flex;
   gap: 10px;
