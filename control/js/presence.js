@@ -1,12 +1,22 @@
 import { sb } from "/familiada/js/core/supabase.js";
 
+// ================== KOMUNIKATY (PRESENCE) ==================
+const PRESENCE_MSG = {
+  SINCE_NONE: "—",
+  SINCE_LABEL: (seconds) => `${seconds}s temu`,
+  ALERT_DROPPED: (label) =>
+    `Uwaga: ${label} rozłączony. Sprawdź połączenie z internetem na urządzeniu.`,
+  NO_TABLE: "Brak tabeli device_presence.",
+};
+// ===========================================================
+
 const ONLINE_MS = 12_000;
 
 function fmtSince(ts) {
-  if (!ts) return "—";
+  if (!ts) return PRESENCE_MSG.SINCE_NONE;
   const ms = Date.now() - new Date(ts).getTime();
   const s = Math.max(0, Math.round(ms / 1000));
-  return `${s}s temu`;
+  return PRESENCE_MSG.SINCE_LABEL(s);
 }
 
 export function createPresence({ game, ui, store, devices }) {
@@ -37,7 +47,7 @@ export function createPresence({ game, ui, store, devices }) {
 
   function alertIfDropped(prevOn, nowOn, label) {
     if (prevOn === true && nowOn === false) {
-      ui.showAlert(`Uwaga: ${label} rozłączony. Sprawdź połączenie z internetem na urządzeniu.`);
+      ui.showAlert(PRESENCE_MSG.ALERT_DROPPED(label));
     }
   }
 
@@ -46,7 +56,7 @@ export function createPresence({ game, ui, store, devices }) {
     if (!res.ok) {
       ui.setDeviceBadgesUnavailable();
       store.setOnlineFlags({ display: false, host: false, buzzer: false });
-      ui.setMsg("msgDevices", "Brak tabeli device_presence.");
+      ui.setMsg("msgDevices", PRESENCE_MSG.NO_TABLE);
       return;
     }
 
@@ -97,7 +107,7 @@ export function createPresence({ game, ui, store, devices }) {
       } catch {}
     }
 
-    // *** NOWOŚĆ: flush kolejek po przejściu offline -> online ***
+    // *** flush kolejek po przejściu offline -> online ***
 
     if (!prevFlags.displayOnline && dOn) {
       try {
