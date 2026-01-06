@@ -404,19 +404,21 @@
                       </div>
                     </div>
                   
-                    <div class="rowBtns">
-                      <div class="field sm">
-                        <div class="lbl2">Ekran końca gry</div>
-                        <div class="rowBtns">
-                          <label class="radio">
-                            <input type="radio" name="winMode" value="money" id="winModeMoney">
-                            <span>Pokaż wynik i kwotę</span>
-                          </label>
-                          <label class="radio">
-                            <input type="radio" name="winMode" value="logo" id="winModeLogo">
-                            <span>Tylko logo</span>
-                          </label>
-                        </div>
+                    <div class="card">
+                      <div class="name">Zakończenie gry</div>
+                      <div class="rowBtns">
+                        <label class="chk">
+                          <input type="radio" name="endMode" value="logo" checked />
+                          <span>Pokaż logo</span>
+                        </label>
+                        <label class="chk">
+                          <input type="radio" name="endMode" value="points" />
+                          <span>Pokaż punkty</span>
+                        </label>
+                        <label class="chk">
+                          <input type="radio" name="endMode" value="money" />
+                          <span>Pokaż kwotę (po finale)</span>
+                        </label>
                       </div>
                     </div>
                   
