@@ -52,8 +52,6 @@ const ROUNDS_MSG = {
   // --- KONIEC RUNDY ---
   ROUND_NO_CONTROL_BANK:
     "Brak drużyny z kontrolą – nie mogę przyznać banku.",
-  ROUND_BANK_RESULT: (bank, team) =>
-    `Koniec rundy. Bank ${bank} pkt dla drużyny ${team}.`,
   ROUND_TO_FINAL: "Rundy zakończone. Przechodzimy do finału.",
   ROUND_NEXT: "Runda zakończona. Możesz rozpocząć kolejną rundę.",
   ROUND_LAST: "To była ostatnia runda. Przejdź do zakończenia gry.",
@@ -84,6 +82,20 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     if (!r.totals) r.totals = { A: 0, B: 0 };
     if (!r.revealed) r.revealed = new Set();
     if (typeof r.canEndRound !== "boolean") r.canEndRound = false;
+  }
+
+  function getRoundMultiplier() {
+    const rn = nInt(store.state.rounds?.roundNo, 1);
+    const adv = store.state.advanced || {};
+    const arr = Array.isArray(adv.roundMultipliers)
+      ? adv.roundMultipliers
+      : [1];
+
+    if (!arr.length) return 1;
+
+    const idx = Math.max(0, Math.min(arr.length - 1, rn - 1));
+    const m = nInt(arr[idx], 1);
+    return m > 0 ? m : 1;
   }
 
   // --- KOMUNIKATY ---
@@ -1058,10 +1070,17 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
 
     // jeśli kradzież była rozstrzygnięta
     if (r.steal && r.steal.used) {
-      winner = r.stealWon ? other : r.controlTeam;
+      if (r.stealWon) {
+        winner = other; // udana kradzież
+      } else {
+        winner = r.controlTeam; // nieudana – bank zostaje
+      }
     }
 
-    r.totals[winner] = nInt(r.totals[winner], 0) + bank;
+    const mult = getRoundMultiplier();
+    const awarded = bank * mult;
+
+    r.totals[winner] = nInt(r.totals[winner], 0) + awarded;
 
     ui.setRoundsHud(r);
 
@@ -1096,7 +1115,12 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     // 2) dopiero potem ogólny dźwięk przejścia rundy
     playSfx("round_transition");
 
-    setEndMsg(ROUNDS_MSG.ROUND_BANK_RESULT(bank, winner));
+    const msg =
+      mult === 1
+        ? `Koniec rundy. Bank ${bank} pkt dla drużyny ${winner}.`
+        : `Koniec rundy. Bank ${bank} pkt dla drużyny ${winner} (x${mult} = ${awarded} pkt).`;
+    
+    setEndMsg(msg);
 
     // jeśli mamy jeszcze ukryte odpowiedzi – przechodzimy w tryb odsłaniania
     const hasHidden = (r.answers || []).some(
