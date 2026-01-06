@@ -184,23 +184,14 @@ async function main() {
 
   const devices = createDevices({ game, ui, store, chDisplay, chHost, chBuzzer });
   const presence = createPresence({ game, ui, store, devices });
-  presence.start(); 
+
   const display = createDisplay({ devices, store });
   const rounds = createRounds({ ui, store, devices, display, loadQuestions, loadAnswers });
   rounds.bootIfNeeded();
   const final = createFinal({ ui, store, devices, display, loadAnswers });
 
-  // ===== Realtime: BUZZER_EVT =====
-  const chControlIn = sb()
-    .channel(`familiada-control:${game.id}`)
-    .on("broadcast", { event: "BUZZER_EVT" }, (msg) => {
-      const line = String(msg?.payload?.line || "").trim().toUpperCase();
-      const [cmd, team] = line.split(/\s+/);
-      if (cmd === "CLICK" && (team === "A" || team === "B")) {
-        rounds.handleBuzzerClick(team);
-      }
-    })
-    .subscribe();
+  // start presence (online / offline / OSTATNIO)
+  presence.start();
 
   // === PICKER PYTAŃ FINAŁU ===
   let finalPickerAll = [];
@@ -234,58 +225,26 @@ async function main() {
 
     const confirmed = store.state.final.confirmed === true;
 
-    const picked = finalPickerAll.filter((q) => finalPickerSelected.has(q.id));
-    cnt.textContent = String(picked.length);
-
-    chips.innerHTML = picked
-      .map(
-        (q) => `
-      <div class="chip">
-        <span>#${q.ord}</span>
-        <span>${escapeHtml(q.text || "")}</span>
-        ${confirmed ? "" : `<button type="button" data-x="${q.id}">✕</button>`}
-      </div>
-    `
-      )
-      .join("");
-
-    if (!confirmed) {
-      chips.querySelectorAll("button[data-x]").forEach((b) => {
-        b.addEventListener("click", () => {
-          finalPickerSelected.delete(b.dataset.x);
-          store.state.final.picked = Array.from(finalPickerSelected).slice(0, 5);
-          finalPickerRender();
-        });
-      });
-    }
-
-    if (confirmed) {
-      root.innerHTML = picked
-        .map(
-          (q) => `
-        <div class="qRow">
-          <div class="meta">#${q.ord}</div>
-          <div class="txt">${escapeHtml(q.text || "")}</div>
-        </div>
-      `
-        )
-        .join("");
-      return;
-    }
-
-    root.innerHTML = finalPickerAll
-      .map((q) => {
-        const checked = finalPickerSelected.has(q.id);
-        const disabled = !checked && finalPickerSelected.size >= 5;
-        return `
-        <label class="qRow">
-          <input type="checkbox" data-qid="${q.id}" ${checked ? "checked" : ""} ${disabled ? "disabled" : ""}/>
-          <div class="meta">#${q.ord}</div>
-          <div class="txt">${escapeHtml(q.text || "")}</div>
+    const html = finalPickerAll.map((q) => {
+      const id = String(q.id);
+      const checked = finalPickerSelected.has(id);
+      const disabled = confirmed ? "disabled" : "";
+      return `
+        <label class="finalQItem">
+          <input type="checkbox" data-qid="${id}" ${checked ? "checked" : ""} ${disabled}/>
+          <span class="finalQText">${escapeHtml(q.text)}</span>
         </label>
       `;
-      })
-      .join("");
+    }).join("");
+
+    root.innerHTML = html;
+    chips.innerHTML = Array.from(finalPickerSelected).map((id) => {
+      const q = finalPickerAll.find((x) => String(x.id) === String(id));
+      if (!q) return "";
+      return `<span class="chip">${escapeHtml(q.text)}</span>`;
+    }).join("");
+
+    cnt.textContent = `${finalPickerSelected.size} / 5`;
 
     root.querySelectorAll("input[data-qid]").forEach((inp) => {
       inp.addEventListener("change", () => {
@@ -308,20 +267,20 @@ async function main() {
 
   devices.initLinksAndQr();
 
-  // stan audio na start
+  // audio: stan początkowy
   store.setAudioUnlocked(!!isAudioUnlocked());
   ui.setAudioStatus(store.state.flags.audioUnlocked);
 
-  // --- RENDER ZMIAN STANU DO UI ---
+  // === GLOBALNE RENDEROWANIE STANU (Opcja B) ===
   function renderFromState(state) {
-    // która zakładka jest widoczna
+    // aktywna karta
     ui.showCard(state.activeCard);
 
-    // który krok w "Urządzeniach"
+    // kroki kart
     ui.showDevicesStep(state.steps.devices);
     ui.showSetupStep(state.steps.setup);
 
-    // aktywne / nieaktywne zakładki (wizualnie)
+    // nav enable/disable wg canEnterCard
     ui.setNavEnabled({
       devices: store.canEnterCard("devices"),
       setup: store.canEnterCard("setup"),
@@ -329,39 +288,38 @@ async function main() {
       final: store.canEnterCard("final"),
     });
 
-    // helper do włączania / wyłączania przycisków po id
-    function setEnabled(id, enabled) {
-      const el = document.getElementById(id);
-      if (el) el.disabled = !enabled;
-    }
+    const flags = state.flags || {};
 
-    // KROK 1: "Dalej" tylko gdy Wyświetlacz online
-    setEnabled("btnDevicesNext", !!state.flags.displayOnline);
+    // DEVICES – krok 1: wyświetlacz -> Dalej
+    ui.setEnabled("btnDevicesNext", !!flags.displayOnline);
 
-    // KROK 2: "Dalej" tylko gdy host & buzzer online
-    const hbOn = !!state.flags.hostOnline && !!state.flags.buzzerOnline;
-    setEnabled("btnDevicesToAudio", hbOn);
+    // DEVICES – krok 2: prowadzący + przycisk online
+    const hostReady = !!flags.hostOnline;
+    const buzzerReady = !!flags.buzzerOnline;
+    ui.setEnabled("btnDevicesToAudio", hostReady && buzzerReady);
 
-    // KROK 3: "Gotowe — przejdź dalej" tylko gdy audio odblokowane
-    setEnabled("btnDevicesFinish", !!state.flags.audioUnlocked);
+    // krok 2: „QR na wyświetlaczu” – tylko gdy wszystkie trzy online
+    const allOnline = flags.displayOnline && hostReady && buzzerReady;
+    ui.setEnabled("btnQrToggle", allOnline);
 
-    // QR na wyświetlaczu: ma sens tylko gdy display online
-    setEnabled("btnQrToggle", !!state.flags.displayOnline);
+    // DEVICES – krok 3: „Gotowe — przejdź dalej” po odblokowaniu audio
+    ui.setEnabled(
+      "btnDevicesFinish",
+      allOnline && !!flags.audioUnlocked
+    );
   }
 
-  // pierwszy render po starcie
+  // startowy render + subskrypcja
   renderFromState(store.state);
-
-  // reagujemy na każdą zmianę stanu
   store.subscribe(renderFromState);
 
-  // --- NAWIGACJA po zakładkach ---
+  // === NAWIGACJA GÓRNA ===
   ui.mountNavigation({
     canEnter: (card) => store.canEnterCard(card),
     onNavigate: (card) => store.setActiveCard(card),
   });
 
-
+  // === Top bar ===
   ui.on("top.back", () => {
     if (shouldWarnBeforeUnload()) {
       const ok = confirm(APP_MSG.CONFIRM_BACK);
@@ -380,6 +338,7 @@ async function main() {
   ui.on("auth.qr.copy", async () => await copyQrLink());
   ui.on("auth.qr.open", () => openQrLink());
 
+  // DEVICES kroki
   ui.on("devices.next", () => store.setDevicesStep("devices_hostbuzzer"));
   ui.on("devices.back", () => store.setDevicesStep("devices_display"));
   ui.on("devices.toAudio", () => store.setDevicesStep("devices_audio"));
@@ -428,7 +387,7 @@ async function main() {
     store.setTeams(teamA, teamB);
   });
 
-    ui.on("advanced.change", () => {
+  ui.on("advanced.change", () => {
     if (!ui.getAdvancedForm || !store.setAdvanced) return;
 
     const form = ui.getAdvancedForm();
@@ -462,7 +421,6 @@ async function main() {
     // tryb ekranu końcowego
     if (form.winMode === "money") adv.winEnabled = true;
     if (form.winMode === "logo") adv.winEnabled = false;
-    if (form.winMode === "points") adv.winEnabled = false; 
 
     store.setAdvanced(adv);
     ui.setMsg?.("msgAdvanced", APP_MSG.ADV_SAVED);
@@ -474,7 +432,6 @@ async function main() {
     ui.setAdvancedForm(store.state.advanced);
     ui.setMsg?.("msgAdvanced", APP_MSG.ADV_RESET);
   });
-
 
   ui.on("setup.next", () => store.setSetupStep("setup_final"));
   ui.on("setup.back", () => store.setSetupStep("setup_names"));
