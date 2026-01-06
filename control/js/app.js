@@ -379,6 +379,53 @@ async function main() {
     store.setTeams(teamA, teamB);
   });
 
+    ui.on("advanced.change", () => {
+    if (!ui.getAdvancedForm || !store.setAdvanced) return;
+
+    const form = ui.getAdvancedForm();
+    const adv = {};
+
+    // mnożniki
+    if (form.roundMultipliersText != null) {
+      const parts = String(form.roundMultipliersText)
+        .split(/[,\s]+/)
+        .filter(Boolean);
+      if (parts.length) {
+        adv.roundMultipliers = parts.map((p) => {
+          const n = Number.parseInt(p, 10);
+          return Number.isFinite(n) && n > 0 ? n : 1;
+        });
+      }
+    }
+
+    // próg do finału
+    if (form.finalMinPointsText != null && form.finalMinPointsText !== "") {
+      const n = Number.parseInt(form.finalMinPointsText, 10);
+      if (Number.isFinite(n) && n >= 0) adv.finalMinPoints = n;
+    }
+
+    // cel finału
+    if (form.finalTargetText != null && form.finalTargetText !== "") {
+      const n = Number.parseInt(form.finalTargetText, 10);
+      if (Number.isFinite(n) && n >= 0) adv.finalTarget = n;
+    }
+
+    // tryb ekranu końcowego
+    if (form.winMode === "money") adv.winEnabled = true;
+    if (form.winMode === "logo") adv.winEnabled = false;
+
+    store.setAdvanced(adv);
+    ui.setMsg?.("msgAdvanced", "Zapisano dodatkowe ustawienia.");
+  });
+
+  ui.on("advanced.reset", () => {
+    if (!store.resetAdvanced || !ui.setAdvancedForm) return;
+    store.resetAdvanced();
+    ui.setAdvancedForm(store.state.advanced);
+    ui.setMsg?.("msgAdvanced", "Przywrócono domyślne ustawienia.");
+  });
+
+
   ui.on("setup.next", () => store.setSetupStep("setup_final"));
   ui.on("setup.back", () => store.setSetupStep("setup_names"));
 
