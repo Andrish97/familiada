@@ -27,6 +27,9 @@ const APP_MSG = {
   TEAMS_SAVED: "Zapisano.",
 
   FINAL_CONFIRMED: "Zatwierdzono.",
+  
+  ADV_SAVED: "Zapisano dodatkowe ustawienia.",
+  ADV_RESET: "Przywrócono domyślne ustawienia.",
 };
 // ================= KONIEC KOMUNIKATÓW =================
 
@@ -304,7 +307,6 @@ async function main() {
   }
 
   devices.initLinksAndQr();
-  presence.start();
 
   store.setAudioUnlocked(!!isAudioUnlocked());
   ui.setAudioStatus(store.state.flags.audioUnlocked);
@@ -414,16 +416,17 @@ async function main() {
     // tryb ekranu końcowego
     if (form.winMode === "money") adv.winEnabled = true;
     if (form.winMode === "logo") adv.winEnabled = false;
+    if (form.winMode === "points") adv.winEnabled = false; 
 
     store.setAdvanced(adv);
-    ui.setMsg?.("msgAdvanced", "Zapisano dodatkowe ustawienia.");
+    ui.setMsg?.("msgAdvanced", APP_MSG.ADV_SAVED");
   });
 
   ui.on("advanced.reset", () => {
     if (!store.resetAdvanced || !ui.setAdvancedForm) return;
     store.resetAdvanced();
     ui.setAdvancedForm(store.state.advanced);
-    ui.setMsg?.("msgAdvanced", "Przywrócono domyślne ustawienia.");
+    ui.setMsg?.("msgAdvanced", APP_MSG.ADV_RESET");
   });
 
 
