@@ -448,31 +448,73 @@ body.builder-body{
   gap:8px;
 }
 
-/* ===== Modal importu ===== */
+/* =========================================================
+   MODAL + IMPORT (jak w editorze)
+   (klasy overlay/modal/importRow/importTa/importMsg/mTitle/mSub)
+========================================================= */
+
+.overlay{
+  position:fixed; inset:0;
+  background: rgba(2,6,23,.82);
+  display:grid;
+  place-items:center;
+  z-index:50;
+}
+
+.modal{
+  width:min(860px,94vw);
+  border-radius:22px;
+  border:1px solid var(--line);
+  background: var(--card);
+  box-shadow:0 30px 90px rgba(0,0,0,.75);
+  padding:18px;
+
+  max-height:92vh;
+  overflow:auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.mTitle{
+  font-weight:1000;
+  font-size:18px;
+  letter-spacing:.06em;
+  color: var(--gold);
+}
+
+.mSub{
+  opacity:.8;
+  font-size:13px;
+  margin-top:6px;
+}
 
 .importRow{
   display:flex;
-  gap:8px;
+  gap:10px;
   align-items:center;
-  margin-top:10px;
+  flex-wrap:wrap;
+  margin-top:12px;
 }
 
 .importTa{
   width:100%;
-  min-height:120px;
-  margin-top:10px;
-  padding:8px;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-  font-size:12px;
-  border-radius:6px;
-  border:1px solid var(--line);
-  background:#000;
+  min-height:220px;
+  margin-top:12px;
+  padding:12px;
+  border-radius:16px;
+  border:1px solid var(--line2);
+  background: rgba(0,0,0,.25);
   color:#fff;
-  resize:vertical;
+  outline:none;
+  resize: vertical;
+  font-weight:800;
 }
 
 .importMsg{
-  font-size:12px;
+  margin-left:auto;
+  opacity:.85;
+  font-weight:900;
+  color: var(--gold);
+  padding:6px 0;
 }
 
 /* ===== Mobile / telefon ===== */
