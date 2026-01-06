@@ -5,13 +5,75 @@ function nInt(v, d = 0) {
   return Number.isFinite(x) ? x : d;
 }
 
+// Wszystkie teksty w jednym miejscu – łatwo edytować
+const ROUNDS_MSG = {
+  // --- STANY OGÓLNE ---
+  GAME_READY: "Gra gotowa. Ekran oczekuje na start.",
+  INTRO_ALREADY: "Intro gry zostało już odegrane.",
+  INTRO_RUNNING: "Intro uruchomione.",
+  INTRO_DONE: "Intro zakończone. Możesz rozpocząć rundę.",
+  NO_MORE_QUESTIONS:
+    "Brak dostępnych pytań dla kolejnych rund (wszystkie zużyte).",
+
+  // --- POJEDYNEK ---
+  DUEL_WAIT: "Pojedynek: czekam na przycisk.",
+  DUEL_RETRY: "Powtórka pojedynku.",
+  DUEL_FIRST_CLICK: (team) =>
+    `Pierwszy klik: drużyna ${team}. Zatwierdź albo powtórz pojedynek.`,
+  DUEL_FIRST_ANSWER: (team) =>
+    `Pojedynek – pierwsza odpowiedź: drużyna ${team}.`,
+  DUEL_NEXT_TEAM: (team) => `Teraz odpowiada drużyna ${team}.`,
+  DUEL_RESET: (team) =>
+    `Obie odpowiedzi pudło – nowy cykl. Zaczyna drużyna ${team}.`,
+  DUEL_RESULT_WIN: (team) => `Pojedynek wygrywa drużyna ${team}.`,
+
+  // --- ROZGRYWKA / KONTROLA ---
+  PLAY_CONTROL: (team) => `Kontrolę ma drużyna ${team}.`,
+  PLAY_NO_CONTROL: "Brak drużyny z kontrolą.",
+  PLAY_PASS_ONLY_DURING: "Pytanie można oddać tylko podczas rozgrywki.",
+  PLAY_NO_MORE_PASS: "Nie możesz już oddać pytania w tej rundzie.",
+  PLAY_PASSED: (team) => `Pytanie oddane. Teraz odpowiada drużyna ${team}.`,
+
+  // --- KRADZIEŻ ---
+  STEAL_NO_CONTROL:
+    "Nie mogę uruchomić kradzieży – brak drużyny grającej pytanie.",
+  STEAL_PROMPT: (team) =>
+    `Kradzież: odpowiada drużyna ${team}. Kliknij odpowiedź kapitana lub „X (pudło)”.`,
+  STEAL_CHANCE: (team) => `Szansa na kradzież. Odpowiada drużyna ${team}.`,
+  STEAL_SUCCESS: "Kradzież udana – bank przechodzi do drużyny kradnącej.",
+  STEAL_FAIL: "Kradzież nietrafiona – bank zostaje przy drużynie grającej.",
+
+  // --- ODSŁANIANIE PO RUNDZIE ---
+  REVEAL_NONE: "Brak odpowiedzi do odsłonięcia.",
+  REVEAL_INFO:
+    "Klikaj brakujące odpowiedzi, żeby pokazać je na wyświetlaczu (bez zmiany punktów).",
+  REVEAL_DONE: "Wszystkie odpowiedzi odsłonięte. Koniec rundy.",
+
+  // --- KONIEC RUNDY ---
+  ROUND_NO_CONTROL_BANK:
+    "Brak drużyny z kontrolą – nie mogę przyznać banku.",
+  ROUND_BANK_RESULT: (bank, team) =>
+    `Koniec rundy. Bank ${bank} pkt dla drużyny ${team}.`,
+  ROUND_TO_FINAL: "Rundy zakończone. Przechodzimy do finału.",
+  ROUND_NEXT: "Runda zakończona. Możesz rozpocząć kolejną rundę.",
+  ROUND_LAST: "To była ostatnia runda. Przejdź do zakończenia gry.",
+
+  // --- TIMER ---
+  TIMER_TIMEOUT_X: "Czas minął – pudło.",
+
+  // --- KONIEC GRY ---
+  GAME_END_DRAW: (a, b) => `Koniec gry. Remis ${a}:${b}.`,
+  GAME_END_WIN: (team, pts) =>
+    `Koniec gry. Wygrywa drużyna ${team} z wynikiem ${pts} pkt.`,
+};
+
 export function createRounds({ ui, store, devices, display, loadQuestions, loadAnswers }) {
   let timerRAF = null;
   const introMixer = createSfxMixer?.();
 
   function emit() {
     try {
-      for (const fn of (store._roundsListeners || [])) fn(store.state.rounds);
+      for (const fn of store._roundsListeners || []) fn(store.state.rounds);
     } catch {}
   }
 
@@ -24,6 +86,58 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     if (typeof r.canEndRound !== "boolean") r.canEndRound = false;
   }
 
+  // --- KOMUNIKATY ---
+
+  function clearPlayMsgs() {
+    ui.setMsg("msgRoundsPlay", "");
+    ui.setMsg("msgSteal", "");
+    ui.setMsg("msgRoundsReveal", "");
+    ui.setMsg("msgRoundsEnd", "");
+  }
+
+  function clearAllRoundMsgs() {
+    ui.setMsg("msgRoundsReady", "");
+    ui.setMsg("msgRoundsIntro", "");
+    ui.setMsg("msgRoundsRoundStart", "");
+    ui.setMsg("msgDuel", "");
+    clearPlayMsgs();
+  }
+
+  function setDuelMsg(text) {
+    ui.setMsg("msgDuel", text || "");
+    // przy nowych komunikatach pojedynku czyścimy resztę "bieżących"
+    clearPlayMsgs();
+  }
+
+  function setPlayMsg(text) {
+    ui.setMsg("msgRoundsPlay", text || "");
+    ui.setMsg("msgSteal", "");
+    ui.setMsg("msgRoundsReveal", "");
+    ui.setMsg("msgRoundsEnd", "");
+  }
+
+  function setStealMsg(text) {
+    ui.setMsg("msgSteal", text || "");
+    ui.setMsg("msgRoundsPlay", "");
+    ui.setMsg("msgRoundsReveal", "");
+    ui.setMsg("msgRoundsEnd", "");
+  }
+
+  function setRevealMsg(text) {
+    ui.setMsg("msgRoundsReveal", text || "");
+    ui.setMsg("msgRoundsPlay", "");
+    ui.setMsg("msgSteal", "");
+    ui.setMsg("msgRoundsEnd", "");
+  }
+
+  function setEndMsg(text) {
+    ui.setMsg("msgRoundsEnd", text || "");
+    ui.setMsg("msgRoundsPlay", "");
+    ui.setMsg("msgSteal", "");
+    ui.setMsg("msgRoundsReveal", "");
+  }
+
+  // --- KROKI WIDOKU ---
 
   function setStep(step) {
     ensureRoundsState();
@@ -38,6 +152,8 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
 
     ui.setEnabled("btnStartRound", canStartRoundNow);
   }
+
+  // --- TIMER 3s ---
 
   function clearTimer3() {
     ensureRoundsState();
@@ -72,8 +188,13 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
 
         // timeout = pudło + brak możliwości oddania pytania
         r.allowPass = false;
-        addX(); // async; ignorujemy promisa
 
+        // komunikat tylko, jeśli jesteśmy w rozgrywce (nie spamujemy w innych fazach)
+        if (r.phase === "PLAY" || r.phase === "STEAL") {
+          setPlayMsg(ROUNDS_MSG.TIMER_TIMEOUT_X);
+        }
+
+        addX(); // async; ignorujemy promisa
         return;
       }
       timerRAF = requestAnimationFrame(tick);
@@ -82,40 +203,34 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     timerRAF = requestAnimationFrame(tick);
   }
 
+  // --- PRZYCISKI "PLAY" (oddaj / X / timer / zakończ rundę) ---
+
   function updatePlayControls() {
     const r = store.state.rounds;
-  
-    const inDuel   = r.phase === "DUEL";
-    const inPlay   = r.phase === "PLAY";
-    const inSteal  = r.phase === "STEAL";
+
+    const inDuel = r.phase === "DUEL";
+    const inPlay = r.phase === "PLAY";
+    const inSteal = r.phase === "STEAL";
     const inReveal = r.phase === "REVEAL";
-  
-    // --- ZAKOŃCZ RUNDĘ ---
-    // aktywny tylko wtedy, gdy runda jest "domknięta" logicznie (r.canEndRound)
-    // i nie jesteśmy w trybie odsłaniania REVEAL
+
+    // Zakończ rundę – tylko gdy runda jest logicznie domknięta
+    // (r.canEndRound) i nie jesteśmy w odsłanianiu
     const endAvailable = !inDuel && !inReveal && !!r.canEndRound;
     ui.setEnabled("btnGoEndRound", endAvailable);
-  
-    // --- ODDAJ PYTANIE ---
-    // tylko na początku właściwej gry (PLAY), przed pierwszą poprawną/X
-    // oraz TYLKO dopóki nie osiągnęliśmy warunków końca rundy
+
+    // Oddaj pytanie – na początku PLAY, przed pierwszą poprawną/X
     const canPass = inPlay && r.allowPass && !r.canEndRound;
     ui.setEnabled("btnPassQuestion", canPass);
-  
-    // --- TIMER + X ---
-    // działają w DUEL / PLAY / STEAL,
-    // ale gdy r.canEndRound === true → wyłączamy,
-    // oraz zawsze wyłączone w REVEAL
+
+    // Timer + X – działają w DUEL / PLAY / STEAL,
+    // ale wyłączone gdy canEndRound === true lub w REVEAL
     const playingNow =
-      (inDuel || inPlay || inSteal) &&
-      !r.canEndRound &&
-      !inReveal;
-  
+      (inDuel || inPlay || inSteal) && !r.canEndRound && !inReveal;
+
     ui.setEnabled("btnStartTimer3", playingNow);
     ui.setEnabled("btnAddX", playingNow);
   }
 
-  
   // === PULA PYTAŃ / LOSOWANIE RUND ===
 
   async function pickQuestionsForRounds(gameId) {
@@ -151,7 +266,9 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     const r = store.state.rounds;
 
     if (!r._questionPool || !r._questionPool.length) {
-      const rounds = await pickQuestionsForRounds(store.state.gameId || store.state.id || "");
+      const rounds = await pickQuestionsForRounds(
+        store.state.gameId || store.state.id || ""
+      );
       r._questionPool = rounds || [];
       r._usedQuestionIds = [];
       r.roundNo = 1;
@@ -200,14 +317,15 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     const r = store.state.rounds;
     const { teamA, teamB } = store.state.teams;
 
+    clearAllRoundMsgs();
+
     r.phase = "READY";
     setStep("r_ready");
-    
     updatePlayControls();
 
     await display.stateGameReady(teamA, teamB);
 
-    ui.setMsg("msgRoundsIntro", "Gra gotowa. Ekran oczekuje na start.");
+    ui.setMsg("msgRoundsIntro", ROUNDS_MSG.GAME_READY);
     ui.setRoundsHud(r);
 
     setStep("r_intro");
@@ -218,8 +336,10 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     const r = store.state.rounds;
     const { teamA, teamB } = store.state.teams;
 
+    clearAllRoundMsgs();
+
     if (r._introPlayed) {
-      ui.setMsg("msgRoundsIntro", "Intro gry zostało już odegrane.");
+      ui.setMsg("msgRoundsIntro", ROUNDS_MSG.INTRO_ALREADY);
       return;
     }
     r._introPlayed = true;
@@ -230,7 +350,7 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     ui.setEnabled("btnStartShowIntro", false);
 
     await display.stateIntroLogo(teamA, teamB);
-    ui.setMsg("msgRoundsIntro", "Intro uruchomione.");
+    ui.setMsg("msgRoundsIntro", ROUNDS_MSG.INTRO_RUNNING);
 
     if (!introMixer) {
       playSfx("show_intro");
@@ -270,7 +390,7 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     }
 
     setStep("r_roundStart");
-    ui.setMsg("msgRoundsIntro", "Intro zakończone. Możesz rozpocząć rundę.");
+    ui.setMsg("msgRoundsIntro", ROUNDS_MSG.INTRO_DONE);
     ui.setRoundsHud(r);
 
     updatePlayControls();
@@ -280,14 +400,13 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     await loadRoundsIfNeeded();
     ensureRoundsState();
 
+    clearAllRoundMsgs();
+
     const r = store.state.rounds;
 
     const obj = pickNextQuestionObj();
     if (!obj) {
-      ui.setMsg(
-        "msgRoundsRoundStart",
-        "Brak dostępnych pytań dla kolejnych rund (wszystkie zużyte)."
-      );
+      ui.setMsg("msgRoundsRoundStart", ROUNDS_MSG.NO_MORE_QUESTIONS);
       return;
     }
 
@@ -297,7 +416,7 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     r.steal = { active: false, used: false, won: false, team: null };
 
     r.canEndRound = false;
-    
+
     r.bankPts = 0;
     r.xA = 0;
     r.xB = 0;
@@ -328,9 +447,9 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     // Control
     ui.setRoundQuestion(obj.text || "—");
     ui.renderRoundAnswers(r.answers, r.revealed);
-    ui.setMsg("msgRoundsRoundStart", "Startuję rundę – leci dźwięk przejścia.");
+    ui.setMsg("msgRoundsRoundStart", ROUNDS_MSG.ROUND_STARTING);
     ui.setRoundsHud(r);
-    
+
     updatePlayControls();
 
     // dźwięk przejścia rundy
@@ -342,17 +461,16 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     }
 
     const totalMs = typeof dur === "number" && dur > 0 ? dur * 1000 : 2000;
-    const transitionAnchorMs = 920; // po ilu ms od startu dźwięku zmieniamy planszę
+    const transitionAnchorMs = 920;
 
     playSfx("round_transition");
 
-    // po ~920 ms robimy: zniknięcie logo + wejście nowej planszy
+    // po ~920 ms: logo → plansza
     setTimeout(() => {
       const rowsCount = Math.max(1, Math.min(6, r.answers.length || 6));
 
       (async () => {
         try {
-          // pierwsza runda: najpierw schowaj logo, potem plansza
           if (!r._boardShown) {
             if (typeof display.hideLogo === "function") {
               try {
@@ -366,14 +484,14 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
               await display.roundsBoardPlaceholders(rowsCount);
             }
             r._boardShown = true;
-          } else if (typeof display.roundsBoardPlaceholdersNewRound === "function") {
-            // kolejne rundy – animacja wymiany planszy
+          } else if (
+            typeof display.roundsBoardPlaceholdersNewRound === "function"
+          ) {
             await display.roundsBoardPlaceholdersNewRound(rowsCount);
           } else if (typeof display.roundsBoardPlaceholders === "function") {
             await display.roundsBoardPlaceholders(rowsCount);
           }
 
-          // reset X-ów, wskaźnika i banku
           await display.roundsSetX("A", 0);
           await display.roundsSetX("B", 0);
           if (display.setIndicator) await display.setIndicator(null);
@@ -390,11 +508,9 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
       })();
     }, transitionAnchorMs);
 
-    // czekamy do końca dźwięku przejścia (żeby nie wchodzić w kolejne akcje)
     if (totalMs > 0) {
       await new Promise((resolve) => setTimeout(resolve, totalMs));
     }
-
 
     // pytanie na HOST
     const qText = (obj.text || "").trim();
@@ -410,7 +526,6 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
 
     // pojedynek
     setStep("r_duel");
-    ui.setMsg("msgRounds", `Runda ${r.roundNo} – pojedynek.`);
     ui.setRoundsHud(r);
 
     enableBuzzerDuel();
@@ -443,7 +558,7 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     r.duel.currentTeam = null;
     duelResetCycle();
 
-    ui.setMsg("msgDuel", "Pojedynek: czekam na przycisk.");
+    setDuelMsg(ROUNDS_MSG.DUEL_WAIT);
     ui.setRoundsHud(r);
 
     ui.setEnabled("btnBuzzAcceptA", false);
@@ -465,7 +580,7 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     r.duel.currentTeam = null;
     duelResetCycle();
 
-    ui.setMsg("msgDuel", "Powtórka pojedynku.");
+    setDuelMsg(ROUNDS_MSG.DUEL_RETRY);
     ui.setRoundsHud(r);
 
     ui.setEnabled("btnBuzzAcceptA", false);
@@ -491,12 +606,10 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
       d.cycleFirstIsX = !!isX;
       r.duel = d;
 
-      // najwyżej punktowana od razu wygrywa
       if (!isX && isTop) {
         return { type: "WIN", winner: team };
       }
 
-      // druga odpowiedź – zawsze druga drużyna
       d.currentTeam = team === firstTeam ? secondTeam : firstTeam;
       r.duel = d;
       return { type: "CONTINUE_SECOND", nextTeam: d.currentTeam };
@@ -512,23 +625,19 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
       const firstPts = d.cycleFirstIsX ? 0 : d.cycleFirstPts;
       const secondPts = d.cycleSecondIsX ? 0 : d.cycleSecondPts;
 
-      // obie pudło → nowy cykl od pierwszej drużyny
       if (firstPts <= 0 && secondPts <= 0) {
         duelResetCycle();
         return { type: "RESET" };
       }
 
-      // tylko pierwsza trafiła
       if (firstPts > 0 && secondPts <= 0) {
         return { type: "WIN", winner: firstTeam };
       }
 
-      // tylko druga trafiła
       if (secondPts > 0 && firstPts <= 0) {
         return { type: "WIN", winner: secondTeam };
       }
 
-      // obie trafiły → wygrywa wyżej punktowana
       if (secondPts > firstPts) {
         return { type: "WIN", winner: secondTeam };
       }
@@ -544,10 +653,10 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
 
     r.phase = "PLAY";
     r.controlTeam = winner;
-    r.allowPass = true; // PRZED pierwszą odpowiedzią / X można oddać pytanie
+    r.allowPass = true;
 
-    ui.setMsg("msgDuel", `Pojedynek rozstrzygnięty. Do rozgrywki przechodzi drużyna ${winner}.`);
-    ui.setMsg("msgRoundsPlay", `Kontrolę ma drużyna ${winner}.`);
+    setDuelMsg(ROUNDS_MSG.DUEL_RESULT_WIN(winner));
+    setPlayMsg(ROUNDS_MSG.PLAY_CONTROL(winner));
     ui.setRoundsHud(r);
 
     if (display.setIndicator) {
@@ -568,10 +677,7 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     if (!r.duel.lastPressed) {
       r.duel.lastPressed = team;
 
-      ui.setMsg(
-        "msgDuel",
-        `Pierwszy klik: drużyna ${team}. Zatwierdź A/B albo powtórz pojedynek.`
-      );
+      setDuelMsg(ROUNDS_MSG.DUEL_FIRST_CLICK(team));
       ui.setRoundsHud(r);
 
       ui.setEnabled("btnBuzzAcceptA", team === "A");
@@ -596,8 +702,9 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     setStep("r_play");
     r.phase = "DUEL";
 
-    ui.setMsg("msgDuel", `Pojedynek – pierwsza odpowiedź: drużyna ${team}.`);
-    ui.setMsg("msgRoundsPlay", "Trwa pojedynek – kontrola zostanie przyznana po rozstrzygnięciu.");
+    setDuelMsg(ROUNDS_MSG.DUEL_FIRST_ANSWER(team));
+    // w tym momencie w głównym boxie nie musimy nic pisać
+    setPlayMsg("");
     ui.setRoundsHud(r);
 
     if (display.setIndicator) {
@@ -618,19 +725,16 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     const r = store.state.rounds;
 
     if (r.phase !== "PLAY") {
-      ui.setMsg("msgRounds", "Pytanie można oddać tylko przed właściwą rozgrywką.");
+      setPlayMsg(ROUNDS_MSG.PLAY_PASS_ONLY_DURING);
       return;
     }
 
     if (!r.allowPass) {
-      ui.setMsg(
-        "msgRounds",
-        "Nie możesz już oddać pytania – decyzja tylko przed pierwszą odpowiedzią lub pudłem."
-      );
+      setPlayMsg(ROUNDS_MSG.PLAY_NO_MORE_PASS);
       return;
     }
     if (!r.controlTeam) {
-      ui.setMsg("msgRounds", "Brak drużyny z kontrolą.");
+      setPlayMsg(ROUNDS_MSG.PLAY_NO_CONTROL);
       return;
     }
 
@@ -639,7 +743,7 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     r.controlTeam = other;
     r.allowPass = false;
 
-    ui.setMsg("msgRounds", `Pytanie oddane. Teraz odpowiada drużyna ${other}.`);
+    setPlayMsg(ROUNDS_MSG.PLAY_PASSED(other));
     ui.setRoundsHud(r);
 
     if (display.setIndicator) {
@@ -658,10 +762,12 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     ensureRoundsState();
     const r = store.state.rounds;
 
+    // jeśli runda jest domknięta i nie jesteśmy w trybie REVEAL,
+    // nie pozwalamy klikać odpowiedzi
     if (r.canEndRound && r.phase !== "REVEAL") {
       return;
     }
-    
+
     clearTimer3();
 
     const ans = (r.answers || []).find((a) => a.ord === ord);
@@ -669,7 +775,7 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
 
     if (!r.revealed) r.revealed = new Set();
 
-    // TRYB ODSŁANIANIA PO ZAKOŃCZENIU RUNDY
+    // tryb odsłaniania po rundzie
     if (r.phase === "REVEAL") {
       return await revealLeftByOrd(ord);
     }
@@ -679,9 +785,7 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
       if (r.revealed.has(ord)) return;
       r.revealed.add(ord);
 
-      if (ui.renderRoundAnswers) {
-        ui.renderRoundAnswers(r.answers, r.revealed);
-      }
+      ui.renderRoundAnswers?.(r.answers, r.revealed);
 
       const pts = nInt(ans.fixed_points ?? ans.points, 0);
       r.bankPts = nInt(r.bankPts, 0) + pts;
@@ -703,16 +807,13 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
       if (result.type === "WIN") {
         await beginPlayAfterDuel(result.winner);
       } else if (result.type === "CONTINUE_SECOND") {
-        ui.setMsg("msgDuel", `Teraz odpowiada drużyna ${result.nextTeam}.`);
+        setDuelMsg(ROUNDS_MSG.DUEL_NEXT_TEAM(result.nextTeam));
         ui.setRoundsHud(r);
         if (display.setIndicator) {
           display.setIndicator(result.nextTeam).catch?.(() => {});
         }
       } else if (result.type === "RESET") {
-        ui.setMsg(
-          "msgDuel",
-          `Obie odpowiedzi pudło – nowy cykl pojedynku. Zaczyna drużyna ${d.firstTeam}.`
-        );
+        setDuelMsg(ROUNDS_MSG.DUEL_RESET(d.firstTeam));
         ui.setRoundsHud(r);
         if (display.setIndicator && d.firstTeam) {
           display.setIndicator(d.firstTeam).catch?.(() => {});
@@ -727,9 +828,7 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     if (r.revealed.has(ord)) return;
     r.revealed.add(ord);
 
-    if (ui.renderRoundAnswers) {
-      ui.renderRoundAnswers(r.answers, r.revealed);
-    }
+    ui.renderRoundAnswers?.(r.answers, r.revealed);
 
     const pts = nInt(ans.fixed_points ?? ans.points, 0);
     r.bankPts = nInt(r.bankPts, 0) + pts;
@@ -745,9 +844,11 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
 
     if (r.phase === "PLAY") {
       // pierwsza odpowiedź kończy możliwość oddania pytania
-      r.allowPass = false;;
+      r.allowPass = false;
 
-      const hasHidden = (r.answers || []).some((a) => !r.revealed?.has(a.ord));
+      const hasHidden = (r.answers || []).some(
+        (a) => !r.revealed?.has(a.ord)
+      );
       if (!hasHidden) {
         r.canEndRound = true;
       }
@@ -759,10 +860,10 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
 
       // udana kradzież
       r.steal.used = true;
-      r.steal.won = true;
+      r.stealWon = true;
       r.steal.active = false;
 
-      ui.setMsg("msgSteal", "Kradzież udana – bank trafi do drużyny kradnącej.");
+      setStealMsg(ROUNDS_MSG.STEAL_SUCCESS);
       ui.setRoundsHud(r);
 
       r.canEndRound = true;
@@ -800,21 +901,22 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
       }
       playSfx("answer_wrong");
 
-      const result = duelRegisterResult(team, { pts: 0, isX: true, isTop: false });
+      const result = duelRegisterResult(team, {
+        pts: 0,
+        isX: true,
+        isTop: false,
+      });
 
       if (result.type === "WIN") {
         await beginPlayAfterDuel(result.winner);
       } else if (result.type === "CONTINUE_SECOND") {
-        ui.setMsg("msgDuel", `Teraz odpowiada drużyna ${result.nextTeam}.`);
+        setDuelMsg(ROUNDS_MSG.DUEL_NEXT_TEAM(result.nextTeam));
         ui.setRoundsHud(r);
         if (display.setIndicator) {
           display.setIndicator(result.nextTeam).catch?.(() => {});
         }
       } else if (result.type === "RESET") {
-        ui.setMsg(
-          "msgDuel",
-          `Obie odpowiedzi pudło – nowy cykl pojedynku. Zaczyna drużyna ${d.firstTeam}.`
-        );
+        setDuelMsg(ROUNDS_MSG.DUEL_RESET(d.firstTeam));
         ui.setRoundsHud(r);
         if (display.setIndicator && d.firstTeam) {
           display.setIndicator(d.firstTeam).catch?.(() => {});
@@ -833,7 +935,7 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
 
     // WŁAŚCIWA ROZGRYWKA
     if (!r.controlTeam) {
-      ui.setMsg("msgRoundsPlay", "Najpierw jakaś drużyna musi mieć kontrolę.");
+      setPlayMsg(ROUNDS_MSG.PLAY_NO_CONTROL);
       return;
     }
 
@@ -850,7 +952,9 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     playSfx("answer_wrong");
 
     if (r[key] >= 3) {
-      const hasHidden = (r.answers || []).some((a) => !r.revealed?.has(a.ord));
+      const hasHidden = (r.answers || []).some(
+        (a) => !r.revealed?.has(a.ord)
+      );
 
       if (!hasHidden) {
         // 3X, ale nie ma czego kraść → można zakończyć rundę
@@ -863,7 +967,7 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
       r.phase = "STEAL";
       r.steal = { active: true, used: false, won: false, team: other };
 
-      ui.setMsg("msgSteal", `Szansa na kradzież. Odpowiada drużyna ${other}.`);
+      setStealMsg(ROUNDS_MSG.STEAL_CHANCE(other));
       ui.setRoundsHud(r);
 
       if (display.setIndicator) {
@@ -879,7 +983,7 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     const r = store.state.rounds;
 
     if (!r.controlTeam) {
-      ui.setMsg("msgSteal", "Brak drużyny, która grała pytanie – nie mogę uruchomić kradzieży.");
+      setStealMsg(ROUNDS_MSG.STEAL_NO_CONTROL);
       return;
     }
 
@@ -895,10 +999,7 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     r.stealWon = false;
     r.steal.team = stealingTeam;
 
-    ui.setMsg(
-      "msgSteal",
-      `Kradzież: odpowiada drużyna ${stealingTeam}. Kliknij odpowiedź kapitana na planszy albo przycisk „X (pudło)”.`
-    );
+    setStealMsg(ROUNDS_MSG.STEAL_PROMPT(stealingTeam));
     ui.setRoundsHud(r);
 
     if (display.setIndicator) {
@@ -914,7 +1015,7 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     r.stealWon = false;
     r.steal.active = false;
 
-    ui.setMsg("msgSteal", "Kradzież nietrafiona – bank zostaje przy drużynie grającej.");
+    setStealMsg(ROUNDS_MSG.STEAL_FAIL);
     ui.setRoundsHud(r);
     r.canEndRound = true;
     updatePlayControls();
@@ -930,7 +1031,7 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     const r = store.state.rounds;
     if (!r.steal || !r.steal.active || r.steal.used) return;
 
-    // logika odsłaniania / punktów / stealWon jest w revealAnswerByOrd (faza STEAL)
+    // logika jest w revealAnswerByOrd (faza STEAL)
     await revealAnswerByOrd(ord);
   }
 
@@ -942,7 +1043,7 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
 
     const bank = nInt(r.bankPts, 0);
     if (!r.controlTeam) {
-      ui.setMsg("msgRoundsEnd", "Brak drużyny z kontrolą – nie mogę przyznać banku.");
+      setEndMsg(ROUNDS_MSG.ROUND_NO_CONTROL_BANK);
       return;
     }
 
@@ -951,11 +1052,7 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
 
     // jeśli kradzież była rozstrzygnięta
     if (r.steal && r.steal.used) {
-      if (r.stealWon) {
-        winner = other; // udana kradzież
-      } else {
-        winner = r.controlTeam; // nieudana – bank zostaje
-      }
+      winner = r.stealWon ? other : r.controlTeam;
     }
 
     r.totals[winner] = nInt(r.totals[winner], 0) + bank;
@@ -970,11 +1067,9 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
       console.warn("getSfxDuration(bells) error", e);
     }
 
-    // odpalamy dźwięk skoku banku
     playSfx("bells");
 
     try {
-      // tu w tym samym czasie "przeskakuje" bank:
       if (display.roundsSetTotals) {
         await display.roundsSetTotals(r.totals);
       }
@@ -988,7 +1083,6 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
       console.warn("[rounds] update totals failed", e);
     }
 
-    // jeśli znamy długość "bells" – czekamy do końca dźwięku
     if (bellsDur > 0) {
       await new Promise((resolve) => setTimeout(resolve, bellsDur * 1000));
     }
@@ -996,11 +1090,12 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     // 2) dopiero potem ogólny dźwięk przejścia rundy
     playSfx("round_transition");
 
-    ui.setMsg("msgRoundsEnd", `Koniec rundy. Bank ${bank} pkt dla drużyny ${winner}.`);
+    setEndMsg(ROUNDS_MSG.ROUND_BANK_RESULT(bank, winner));
 
-    // jeśli mamy jeszcze ukryte odpowiedzi – przechodzimy w tryb odsłaniania,
-    // ale bank i konta drużyn już są rozliczone
-    const hasHidden = (r.answers || []).some((a) => !r.revealed?.has(a.ord));
+    // jeśli mamy jeszcze ukryte odpowiedzi – przechodzimy w tryb odsłaniania
+    const hasHidden = (r.answers || []).some(
+      (a) => !r.revealed?.has(a.ord)
+    );
     if (!hasHidden) {
       endRound();
     } else {
@@ -1033,9 +1128,9 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
 
     const moreQuestions = hasMoreQuestions();
     const canFinal =
-      typeof store.canEnterCard === "function" && store.canEnterCard("final");
+      typeof store.canEnterCard === "function" &&
+      store.canEnterCard("final");
 
-    // 1) jeśli mamy finał gotowy → przechodzimy do finału
     if (canFinal) {
       if (typeof store.setFinalActive === "function") {
         store.setFinalActive(true);
@@ -1049,18 +1144,16 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
       if (typeof ui.showFinalStep === "function") {
         ui.showFinalStep("f_start");
       }
-      ui.setMsg("msgRoundsEnd", "Rundy zakończone. Przechodzimy do finału.");
+      setEndMsg(ROUNDS_MSG.ROUND_TO_FINAL);
       return;
     }
 
-    // 2) brak finału, ale są jeszcze pytania → kolejna runda
     if (moreQuestions) {
       setStep("r_roundStart");
-      ui.setMsg("msgRoundsEnd", "Runda zakończona. Możesz rozpocząć kolejną rundę.");
+      setEndMsg(ROUNDS_MSG.ROUND_NEXT);
     } else {
-      // 3) brak finału i brak pytań → krok „Zakończ grę”
       ui.showRoundsStep?.("r_gameEnd");
-      ui.setMsg("msgRoundsEnd", "To była ostatnia runda. Przejdź do zakończenia gry.");
+      setEndMsg(ROUNDS_MSG.ROUND_LAST);
     }
   }
 
@@ -1068,7 +1161,7 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     const r = store.state.rounds;
 
     if (!r.answers || !r.answers.length) {
-      ui.setMsg("msgRoundsReveal", "Brak odpowiedzi do odsłonięcia.");
+      setRevealMsg(ROUNDS_MSG.REVEAL_NONE);
       return;
     }
 
@@ -1081,10 +1174,7 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     ui.setRoundsHud(r);
     ui.renderRoundAnswers(r.answers, r.revealed);
 
-    ui.setMsg(
-      "msgRoundsReveal",
-      "Klikaj brakujące odpowiedzi, żeby pokazać je na wyświetlaczu (bez zmiany punktów)."
-    );
+    setRevealMsg(ROUNDS_MSG.REVEAL_INFO);
   }
 
   async function revealLeftByOrd(ord) {
@@ -1103,14 +1193,16 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     try {
       const pts = nInt(ans.fixed_points ?? ans.points, 0);
       await display.roundsRevealRow(ord, ans.text, pts);
-      // Uwaga: tu NIE zmieniamy banku ani sum drużyn
+      // tu nie zmieniamy banku ani sum drużyn
     } catch (e) {
       console.warn("[rounds] revealLeftByOrd display error", e);
     }
 
-    const hasHidden = (r.answers || []).some((a) => !r.revealed?.has(a.ord));
+    const hasHidden = (r.answers || []).some(
+      (a) => !r.revealed?.has(a.ord)
+    );
     if (!hasHidden) {
-      ui.setMsg("msgRoundsReveal", "Wszystkie odpowiedzi odsłonięte. Koniec rundy.");
+      setRevealMsg(ROUNDS_MSG.REVEAL_DONE);
       endRound();
     }
     ui.setRoundsHud(r);
@@ -1118,8 +1210,7 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
   }
 
   function revealDone() {
-    // awaryjne domknięcie – gdybyśmy jednak mieli przycisk w HTML
-    ui.setMsg("msgRoundsReveal", "");
+    setRevealMsg("");
     endRound();
   }
 
@@ -1135,7 +1226,7 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     let msg;
 
     if (a === b) {
-      msg = `Koniec gry. Remis ${a}:${b}.`;
+      msg = ROUNDS_MSG.GAME_END_DRAW(a, b);
 
       if (display.showLogo) {
         try {
@@ -1148,7 +1239,7 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
       const winnerTeam = a > b ? "A" : "B";
       const winnerPts = a > b ? a : b;
 
-      msg = `Koniec gry. Wygrywa drużyna ${winnerTeam} z wynikiem ${winnerPts} pkt.`;
+      msg = ROUNDS_MSG.GAME_END_WIN(winnerTeam, winnerPts);
 
       try {
         if (winEnabled && display.showWin) {
@@ -1164,25 +1255,21 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     ui.setMsg("msgGameEnd", msg);
   }
 
+  // === BOOT / ODTWORZENIE STANU ===
+
   function bootIfNeeded() {
     ensureRoundsState();
     const r = store.state.rounds;
-  
+
     ui.setRoundsHud(r);
     ui.showRoundsStep(r.step || "r_ready");
-  
-    // jeśli po odświeżeniu mamy już pytanie i odpowiedzi → odtwórz widok
+
+    // po odświeżeniu, jeśli mamy pytanie i odpowiedzi – odtwórz widok planszy
     if (r.question && Array.isArray(r.answers) && r.answers.length > 0) {
       ui.setRoundQuestion(r.question.text || "—");
-  
-      // U nas jeden grid służy do wszystkiego – klik zawsze leci w revealAnswerByOrd,
-      // a faza (DUEL/PLAY/STEAL/REVEAL) decyduje, co się stanie.
-      if (ui.renderRoundAnswers) {
-        ui.renderRoundAnswers(r.answers, r.revealed);
-      }
+      ui.renderRoundAnswers?.(r.answers, r.revealed);
     }
-  
-    // przywróć stany przycisków na podstawie fazy/flag
+
     updatePlayControls();
   }
 
