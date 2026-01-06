@@ -225,20 +225,17 @@ async function main() {
     }
   }
 
-  // proste drag&drop: pamiętamy, co ciągniemy i skąd
-  let finalDndDraggingId = null;      // number | null
-  let finalDndDraggingSide = null;    // "pool" | "final" | null
-
   function bindDropZone(root, targetSide) {
     if (!root || root._finalDndBound) return;
     root._finalDndBound = true;
 
     root.addEventListener("dragover", (e) => {
       if (store.state.final.confirmed) return;
-      if (finalDndDraggingId == null) return;
       e.preventDefault();
       root.classList.add("droptarget");
-      if (e.dataTransfer) e.dataTransfer.dropEffect = "move";
+      if (e.dataTransfer) {
+        e.dataTransfer.dropEffect = "move";
+      }
     });
 
     root.addEventListener("dragleave", () => {
@@ -250,27 +247,23 @@ async function main() {
       e.preventDefault();
       root.classList.remove("droptarget");
 
-      const id = finalDndDraggingId;
-      if (id == null) return;
+      const raw = e.dataTransfer ? e.dataTransfer.getData("text/plain") : "";
+      const id = Number(raw || "0");
+      if (!id) return;
 
       if (targetSide === "final") {
-        // przenosimy DO finału
+        // wrzucamy DO finału
         if (!finalPickerSelected.has(id)) {
           if (finalPickerSelected.size >= 5) return;
           finalPickerSelected.add(id);
         }
       } else {
-        // przenosimy Z finału do puli
+        // wrzucamy z finału z powrotem do puli
         finalPickerSelected.delete(id);
       }
 
-      // roboczy stan do store
+      // roboczy stan do store (bez Zatwierdź)
       store.state.final.picked = finalPickerGetSelectedIds();
-
-      // reset drag
-      finalDndDraggingId = null;
-      finalDndDraggingSide = null;
-
       finalPickerRender();
     });
   }
@@ -310,8 +303,6 @@ async function main() {
       // DRAGSTART – zaczynamy przeciąganie
       row.addEventListener("dragstart", (e) => {
         if (store.state.final.confirmed) return;
-        finalDndDraggingId = id;
-        finalDndDraggingSide = side;
         if (e.dataTransfer) {
           e.dataTransfer.setData("text/plain", String(id));
           e.dataTransfer.effectAllowed = "move";
@@ -321,8 +312,6 @@ async function main() {
 
       row.addEventListener("dragend", () => {
         row.classList.remove("dragging");
-        finalDndDraggingId = null;
-        finalDndDraggingSide = null;
       });
     });
   }
