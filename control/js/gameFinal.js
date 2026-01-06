@@ -1,5 +1,3 @@
-// /familiada/js/pages/control/gameFinal.js
-
 // ================== KOMUNIKATY (FINAL) ==================
 const FINAL_MSG = {
   // --- błędy / warunki ---
@@ -16,7 +14,7 @@ const FINAL_MSG = {
   FINAL_STARTED: "Finał rozpoczęty.",
   R2_STARTED: "Runda 2 rozpoczęta.",
 
-  // --- zakończenie finału / nagrody ---
+  // --- zakończenie finału / nagrody (host hint) ---
   END_NO_PRIZE: "Finał zakończony. Brak trybu nagrody — wracamy do logo.",
   END_200_PLUS: (mainPrize) => `200+! ${mainPrize}`,
   END_BELOW_200: (smallPrize) => `Poniżej 200. ${smallPrize}`,
@@ -73,6 +71,23 @@ function clip11(s) {
   return t.length > 11 ? t.slice(0, 11) : t;
 }
 
+// Tryb końcówki:
+//  - "logo"   → zawsze pokazujemy logo
+//  - "points" → używamy WIN do pokazania punktów
+//  - "money"  → (tylko po finale) WIN z kwotą
+// Fallback: jeśli brak endScreenMode, używamy starego winEnabled.
+function getEndScreenMode(store) {
+  const adv = store.state?.advanced || {};
+  const mode = adv.endScreenMode;
+
+  if (mode === "logo" || mode === "points" || mode === "money") {
+    return mode;
+  }
+
+  if (adv.winEnabled === true) return "points";
+  return "logo";
+}
+
 export function createFinal({ ui, store, devices, display, loadAnswers }) {
   let qPicked = []; // [{id, text, ord}]
   let answersByQ = new Map(); // qid -> [{id, text, fixed_points, ord}]
@@ -89,20 +104,34 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     if (!f.runtime) f.runtime = {};
     const rt = f.runtime;
 
-    if (!rt.p1) rt.p1 = Array.from({ length: 5 }, () => ({ text: "", entered: false }));
-    if (!rt.p2) rt.p2 = Array.from({ length: 5 }, () => ({ text: "", entered: false, repeat: false }));
+    if (!rt.p1)
+      rt.p1 = Array.from({ length: 5 }, () => ({ text: "", entered: false }));
+    if (!rt.p2)
+      rt.p2 = Array.from({ length: 5 }, () => ({
+        text: "",
+        entered: false,
+        repeat: false,
+      }));
 
-    // mapping decisions per slot (osobno dla r1 i r2)
-    // kind: "MATCH" | "MISS" | "SKIP"
-    // matchId: string|null
-    // outText: string
-    // pts: number
-    if (!rt.map1) rt.map1 = Array.from({ length: 5 }, () => ({ kind: "SKIP", matchId: null, outText: "", pts: 0 }));
-    if (!rt.map2) rt.map2 = Array.from({ length: 5 }, () => ({ kind: "SKIP", matchId: null, outText: "", pts: 0 }));
+    if (!rt.map1)
+      rt.map1 = Array.from({ length: 5 }, () => ({
+        kind: "SKIP",
+        matchId: null,
+        outText: "",
+        pts: 0,
+      }));
+    if (!rt.map2)
+      rt.map2 = Array.from({ length: 5 }, () => ({
+        kind: "SKIP",
+        matchId: null,
+        outText: "",
+        pts: 0,
+      }));
 
     if (!rt.sum) rt.sum = 0;
 
-    if (!rt.timer) rt.timer = { running: false, endsAt: 0, seconds: 0, phase: null }; // phase: "P1"|"P2"|null
+    if (!rt.timer)
+      rt.timer = { running: false, endsAt: 0, seconds: 0, phase: null }; // phase: "P1"|"P2"|null
     if (!rt.done) rt.done = false;
   }
 
@@ -118,18 +147,17 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
   }
 
   // Zwycięska drużyna (do timera na bocznym tripletcie).
-  // U Ciebie to zwykle “drużyna która weszła do finału”.
-  // Jeśli masz to w store, podepnij tu; jeśli nie, fallback: teamA.
   function getWinnerTeam() {
     return store.state?.winnerTeam || store.state?.final?.winnerTeam || "A";
   }
 
   async function loadFinalPicked() {
-    // Zakładam jak wcześniej: `store.state.final.picked` to 5 ID pytań
     const pickedIds = store.state.final.picked || [];
     const raw = sessionStorage.getItem("familiada:questionsCache");
     const all = raw ? JSON.parse(raw) : [];
-    qPicked = pickedIds.map((id) => all.find((q) => q.id === id)).filter(Boolean);
+    qPicked = pickedIds
+      .map((id) => all.find((q) => q.id === id))
+      .filter(Boolean);
 
     if (qPicked.length !== 5) {
       throw new Error(FINAL_MSG.ERR_MISSING_5);
@@ -138,12 +166,15 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     answersByQ = new Map();
     for (const q of qPicked) {
       const a = await loadAnswers(q.id);
-      answersByQ.set(q.id, (a || []).map((x) => ({
-        id: x.id,
-        ord: x.ord,
-        text: x.text,
-        fixed_points: nInt(x.fixed_points, 0),
-      })));
+      answersByQ.set(
+        q.id,
+        (a || []).map((x) => ({
+          id: x.id,
+          ord: x.ord,
+          text: x.text,
+          fixed_points: nInt(x.fixed_points, 0),
+        }))
+      );
     }
   }
 
@@ -153,7 +184,6 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
   }
 
   async function displaySetTimerSeconds(sec) {
-    // Timer tylko na bocznym tripletcie finału po stronie zwycięzców.
     const team = getWinnerTeam();
     const txt = String(Math.max(0, sec)); // bez wiodących zer
     ui.setText("finalTimer", txt);
@@ -170,7 +200,6 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     rt.timer.endsAt = Date.now() + seconds * 1000;
     rt.timer.seconds = seconds;
 
-    // start: pokaż pełny czas
     displaySetTimerSeconds(seconds).catch(() => {});
 
     const tick = () => {
@@ -185,8 +214,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
         rt.timer.running = false;
         ui.setText("finalTimer", "0");
         displaySetTimerSeconds(0).catch(() => {});
-        playSfx("answer_wrong"); // sygnał końca czasu
-        // odblokuj “Dalej”
+        playSfx("answer_wrong"); // koniec czasu
         if (phase === "P1") ui.setEnabled("btnFinalToP1MapQ1", true);
         if (phase === "P2") ui.setEnabled("btnFinalToP2MapQ1", true);
         return;
@@ -202,49 +230,62 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     ensureRuntime();
     const rt = store.state.final.runtime;
 
-    const html = qPicked.map((q, i) => {
-      const val = rt.p1[i].text || "";
-      const entered = rt.p1[i].entered === true;
-      return `
+    const html = qPicked
+      .map((q, i) => {
+        const val = rt.p1[i].text || "";
+        const entered = rt.p1[i].entered === true;
+        return `
         <div class="card" style="margin-bottom:10px;">
           <div class="name">${escapeHtml(FINAL_MSG.Q_LABEL(i + 1))}</div>
           <div class="qPrompt">${escapeHtml(q.text || "")}</div>
 
           <div class="rowBtns" style="margin-top:10px;">
-            <input class="inp" data-p="1" data-i="${i}" value="${escapeHtml(val)}" placeholder="${escapeHtml(FINAL_MSG.INPUT_PLACEHOLDER)}" autocomplete="off"/>
-            <button class="btn sm gold" type="button" data-enter="1" data-i="${i}">${entered ? escapeHtml(FINAL_MSG.BTN_CONFIRMED) : escapeHtml(FINAL_MSG.BTN_CONFIRM)}</button>
+            <input class="inp" data-p="1" data-i="${i}" value="${escapeHtml(
+          val
+        )}" placeholder="${escapeHtml(
+          FINAL_MSG.INPUT_PLACEHOLDER
+        )}" autocomplete="off"/>
+            <button class="btn sm gold" type="button" data-enter="1" data-i="${i}">${
+              entered
+                ? escapeHtml(FINAL_MSG.BTN_CONFIRMED)
+                : escapeHtml(FINAL_MSG.BTN_CONFIRM)
+            }</button>
           </div>
         </div>
       `;
-    }).join("");
+      })
+      .join("");
 
     ui.setHtml("finalP1Inputs", html);
 
-    // input
-    document.querySelectorAll('#finalP1Inputs input[data-p="1"]').forEach((inp) => {
-      inp.addEventListener("input", () => {
-        const i = Number(inp.dataset.i);
-        rt.p1[i].text = String(inp.value ?? "");
+    document
+      .querySelectorAll('#finalP1Inputs input[data-p="1"]')
+      .forEach((inp) => {
+        inp.addEventListener("input", () => {
+          const i = Number(inp.dataset.i);
+          rt.p1[i].text = String(inp.value ?? "");
+        });
+        inp.addEventListener("keydown", (e) => {
+          if (e.key !== "Enter") return;
+          e.preventDefault();
+          const i = Number(inp.dataset.i);
+          const next = document.querySelector(
+            `#finalP1Inputs input[data-p="1"][data-i="${i + 1}"]`
+          );
+          next?.focus();
+        });
       });
-      inp.addEventListener("keydown", (e) => {
-        if (e.key !== "Enter") return;
-        e.preventDefault();
-        // Enter przechodzi do następnego pola (bez zatwierdzania)
-        const i = Number(inp.dataset.i);
-        const next = document.querySelector(`#finalP1Inputs input[data-p="1"][data-i="${i + 1}"]`);
-        next?.focus();
-      });
-    });
 
-    // confirm
-    document.querySelectorAll('#finalP1Inputs button[data-enter="1"]').forEach((b) => {
-      b.addEventListener("click", () => {
-        const i = Number(b.dataset.i);
-        rt.p1[i].entered = true;
-        playSfx("answer_correct"); // sygnał “odpowiedź udzielona”
-        renderP1Entry();
+    document
+      .querySelectorAll('#finalP1Inputs button[data-enter="1"]')
+      .forEach((b) => {
+        b.addEventListener("click", () => {
+          const i = Number(b.dataset.i);
+          rt.p1[i].entered = true;
+          playSfx("answer_correct");
+          renderP1Entry();
+        });
       });
-    });
 
     ui.setEnabled("btnFinalToP1MapQ1", !rt.timer.running);
   }
@@ -254,60 +295,84 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     ensureRuntime();
     const rt = store.state.final.runtime;
 
-    const html = qPicked.map((q, i) => {
-      const v2 = rt.p2[i].text || "";
-      const entered = rt.p2[i].entered === true;
-      const repeat = rt.p2[i].repeat === true;
-      const p1 = (rt.p1[i].text || "").trim() || "—";
-      return `
+    const html = qPicked
+      .map((q, i) => {
+        const v2 = rt.p2[i].text || "";
+        const entered = rt.p2[i].entered === true;
+        const repeat = rt.p2[i].repeat === true;
+        const p1 = (rt.p1[i].text || "").trim() || "—";
+        return `
         <div class="card" style="margin-bottom:10px;">
           <div class="name">${escapeHtml(FINAL_MSG.Q_LABEL(i + 1))}</div>
           <div class="qPrompt">${escapeHtml(q.text || "")}</div>
 
-          <div class="mini"><div class="hint">${escapeHtml(FINAL_MSG.P2_HINT_P1_PREFIX)}<b>${escapeHtml(p1)}</b></div></div>
+          <div class="mini"><div class="hint">${escapeHtml(
+            FINAL_MSG.P2_HINT_P1_PREFIX
+          )}<b>${escapeHtml(p1)}</b></div></div>
 
           <div class="rowBtns" style="margin-top:10px;">
-            <input class="inp" data-p="2" data-i="${i}" value="${escapeHtml(v2)}" placeholder="${escapeHtml(FINAL_MSG.INPUT_PLACEHOLDER)}" autocomplete="off"/>
-            <button class="btn sm gold" type="button" data-enter="2" data-i="${i}">${entered ? escapeHtml(FINAL_MSG.BTN_CONFIRMED) : escapeHtml(FINAL_MSG.BTN_CONFIRM)}</button>
-            <button class="btn sm danger" type="button" data-repeat="2" data-i="${i}">${repeat ? escapeHtml(FINAL_MSG.P2_BTN_REPEAT_ON) : escapeHtml(FINAL_MSG.P2_BTN_REPEAT_OFF)}</button>
+            <input class="inp" data-p="2" data-i="${i}" value="${escapeHtml(
+          v2
+        )}" placeholder="${escapeHtml(
+          FINAL_MSG.INPUT_PLACEHOLDER
+        )}" autocomplete="off"/>
+            <button class="btn sm gold" type="button" data-enter="2" data-i="${i}">${
+              entered
+                ? escapeHtml(FINAL_MSG.BTN_CONFIRMED)
+                : escapeHtml(FINAL_MSG.BTN_CONFIRM)
+            }</button>
+            <button class="btn sm danger" type="button" data-repeat="2" data-i="${i}">${
+              repeat
+                ? escapeHtml(FINAL_MSG.P2_BTN_REPEAT_ON)
+                : escapeHtml(FINAL_MSG.P2_BTN_REPEAT_OFF)
+            }</button>
           </div>
         </div>
       `;
-    }).join("");
+      })
+      .join("");
 
     ui.setHtml("finalP2Inputs", html);
 
-    document.querySelectorAll('#finalP2Inputs input[data-p="2"]').forEach((inp) => {
-      inp.addEventListener("input", () => {
-        const i = Number(inp.dataset.i);
-        rt.p2[i].text = String(inp.value ?? "");
+    document
+      .querySelectorAll('#finalP2Inputs input[data-p="2"]')
+      .forEach((inp) => {
+        inp.addEventListener("input", () => {
+          const i = Number(inp.dataset.i);
+          rt.p2[i].text = String(inp.value ?? "");
+        });
+        inp.addEventListener("keydown", (e) => {
+          if (e.key !== "Enter") return;
+          e.preventDefault();
+          const i = Number(inp.dataset.i);
+          const next = document.querySelector(
+            `#finalP2Inputs input[data-p="2"][data-i="${i + 1}"]`
+          );
+          next?.focus();
+        });
       });
-      inp.addEventListener("keydown", (e) => {
-        if (e.key !== "Enter") return;
-        e.preventDefault();
-        const i = Number(inp.dataset.i);
-        const next = document.querySelector(`#finalP2Inputs input[data-p="2"][data-i="${i + 1}"]`);
-        next?.focus();
-      });
-    });
 
-    document.querySelectorAll('#finalP2Inputs button[data-enter="2"]').forEach((b) => {
-      b.addEventListener("click", () => {
-        const i = Number(b.dataset.i);
-        rt.p2[i].entered = true;
-        playSfx("answer_correct");
-        renderP2Entry();
+    document
+      .querySelectorAll('#finalP2Inputs button[data-enter="2"]')
+      .forEach((b) => {
+        b.addEventListener("click", () => {
+          const i = Number(b.dataset.i);
+          rt.p2[i].entered = true;
+          playSfx("answer_correct");
+          renderP2Entry();
+        });
       });
-    });
 
-    document.querySelectorAll('#finalP2Inputs button[data-repeat="2"]').forEach((b) => {
-      b.addEventListener("click", () => {
-        const i = Number(b.dataset.i);
-        rt.p2[i].repeat = !rt.p2[i].repeat;
-        playSfx("answer_repeat");
-        renderP2Entry();
+    document
+      .querySelectorAll('#finalP2Inputs button[data-repeat="2"]')
+      .forEach((b) => {
+        b.addEventListener("click", () => {
+          const i = Number(b.dataset.i);
+          rt.p2[i].repeat = !rt.p2[i].repeat;
+          playSfx("answer_repeat");
+          renderP2Entry();
+        });
       });
-    });
 
     ui.setEnabled("btnFinalToP2MapQ1", !rt.timer.running);
   }
@@ -324,17 +389,26 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     const row = mapArr[idx];
 
     const hostHint = input.length
-      ? `${escapeHtml(FINAL_MSG.MAP_HINT_INPUT_PREFIX)}<b>${escapeHtml(input)}</b>`
+      ? `${escapeHtml(FINAL_MSG.MAP_HINT_INPUT_PREFIX)}<b>${escapeHtml(
+          input
+        )}</b>`
       : `<i>${escapeHtml(FINAL_MSG.MAP_HINT_NO_INPUT)}</i>`;
 
-    const left = aList.map((a) => {
-      const active = row.kind === "MATCH" && row.matchId === a.id;
-      return `
-        <button class="btn sm ${active ? "gold" : ""}" type="button" data-kind="match" data-id="${a.id}">
-          ${escapeHtml(a.text)} <span style="opacity:.7;">(${nInt(a.fixed_points,0)})</span>
+    const left = aList
+      .map((a) => {
+        const active = row.kind === "MATCH" && row.matchId === a.id;
+        return `
+        <button class="btn sm ${
+          active ? "gold" : ""
+        }" type="button" data-kind="match" data-id="${a.id}">
+          ${escapeHtml(a.text)} <span style="opacity:.7;">(${nInt(
+          a.fixed_points,
+          0
+        )})</span>
         </button>
       `;
-    }).join("");
+      })
+      .join("");
 
     const missActive = row.kind === "MISS";
     const skipActive = row.kind === "SKIP";
@@ -347,15 +421,24 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
       <div class="qPrompt">${escapeHtml(q.text || "")}</div>
       <div class="mini"><div class="hint">${hostHint}</div></div>
 
-      ${input.length === 0 ? `
-        <div class="mini"><div class="hint">${escapeHtml(FINAL_MSG.MAP_HINT_NO_TEXT)}</div></div>
-      ` : ``}
+      ${
+        input.length === 0
+          ? `
+        <div class="mini"><div class="hint">${escapeHtml(
+          FINAL_MSG.MAP_HINT_NO_TEXT
+        )}</div></div>
+      `
+          : ``
+      }
 
       <div class="cards2" style="margin-top:12px;">
         <div class="card">
           <div class="name">${escapeHtml(FINAL_MSG.MAP_LIST_TITLE)}</div>
           <div class="rowBtns" style="flex-wrap:wrap; gap:8px;">
-            ${left || `<div class="hint">${escapeHtml(FINAL_MSG.MAP_LIST_EMPTY)}</div>`}
+            ${
+              left ||
+              `<div class="hint">${escapeHtml(FINAL_MSG.MAP_LIST_EMPTY)}</div>`
+            }
           </div>
         </div>
 
@@ -363,52 +446,69 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
           <div class="name">${escapeHtml(FINAL_MSG.MAP_OWN_TITLE)}</div>
 
           <div class="rowBtns" style="align-items:flex-start;">
-            <button class="btn sm ${skipActive ? "gold" : ""}" type="button" data-kind="skip">${escapeHtml(FINAL_MSG.MAP_BTN_SKIP)}</button>
-            <button class="btn sm danger ${missActive ? "gold" : ""}" type="button" data-kind="miss">${escapeHtml(FINAL_MSG.MAP_BTN_MISS)}</button>
+            <button class="btn sm ${
+              skipActive ? "gold" : ""
+            }" type="button" data-kind="skip">${escapeHtml(
+      FINAL_MSG.MAP_BTN_SKIP
+    )}</button>
+            <button class="btn sm danger ${
+              missActive ? "gold" : ""
+            }" type="button" data-kind="miss">${escapeHtml(
+      FINAL_MSG.MAP_BTN_MISS
+    )}</button>
           </div>
 
-          <div class="mini"><div class="hint">${escapeHtml(FINAL_MSG.MAP_OUT_HINT)}</div></div>
-          <input class="inp" data-kind="out" value="${outVal}" placeholder="${escapeHtml(FINAL_MSG.MAP_OUT_PLACEHOLDER)}"/>
+          <div class="mini"><div class="hint">${escapeHtml(
+            FINAL_MSG.MAP_OUT_HINT
+          )}</div></div>
+          <input class="inp" data-kind="out" value="${outVal}" placeholder="${escapeHtml(
+      FINAL_MSG.MAP_OUT_PLACEHOLDER
+    )}"/>
         </div>
       </div>
     `;
 
-    const rootId = roundNo === 1
-      ? `finalP1MapQ${idx + 1}`
-      : `finalP2MapQ${idx + 1}`;
+    const rootId = roundNo === 1 ? `finalP1MapQ${idx + 1}` : `finalP2MapQ${idx + 1}`;
 
     ui.setHtml(rootId, html);
 
-    // wire buttons
     const root = document.getElementById(rootId);
     if (!root) return;
 
-    root.querySelectorAll('button[data-kind="match"]').forEach((b) => {
-      b.addEventListener("click", () => {
-        row.kind = "MATCH";
-        row.matchId = b.dataset.id || null;
+    root
+      .querySelectorAll('button[data-kind="match"]')
+      .forEach((b) => {
+        b.addEventListener("click", () => {
+          row.kind = "MATCH";
+          row.matchId = b.dataset.id || null;
+          row.outText = "";
+          renderMapOne(roundNo, idx);
+        });
+      });
+
+    root
+      .querySelector('button[data-kind="miss"]')
+      ?.addEventListener("click", () => {
+        row.kind = "MISS";
+        row.matchId = null;
+        if (!row.outText) row.outText = input;
+        renderMapOne(roundNo, idx);
+      });
+
+    root
+      .querySelector('button[data-kind="skip"]')
+      ?.addEventListener("click", () => {
+        row.kind = "SKIP";
+        row.matchId = null;
         row.outText = "";
         renderMapOne(roundNo, idx);
       });
-    });
 
-    root.querySelector('button[data-kind="miss"]')?.addEventListener("click", () => {
-      row.kind = "MISS";
-      row.matchId = null;
-      if (!row.outText) row.outText = input;
-      renderMapOne(roundNo, idx);
-    });
-
-    root.querySelector('button[data-kind="skip"]')?.addEventListener("click", () => {
-      row.kind = "SKIP";
-      row.matchId = null;
-      row.outText = "";
-      renderMapOne(roundNo, idx);
-    });
-
-    root.querySelector('input[data-kind="out"]')?.addEventListener("input", (e) => {
-      row.outText = String(e.target?.value ?? "");
-    });
+    root
+      .querySelector('input[data-kind="out"]')
+      ?.addEventListener("input", (e) => {
+        row.outText = String(e.target?.value ?? "");
+      });
   }
 
   async function commitReveal(roundNo /*1|2*/, idx /*0..4*/) {
@@ -437,22 +537,23 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
 
     row.pts = pts;
 
-    // Ustalenia: jeśli brak pasującej => 0 pkt i wyświetlamy wpisany tekst,
-    // a jeśli brak wpisu -> placeholder/puste.
     const txt = out.trim().length
       ? out.trim()
       : display.PLACE?.finalText || FINAL_MSG.FALLBACK_ANSWER;
 
-    // pokaż na tablicy:
-    // runda 1 -> lewa kolumna + A punkty, runda 2 -> prawa kolumna + B punkty
     if (roundNo === 1) {
       await display.finalSetLeft(idx + 1, clip11(txt));
-      await display.finalSetA(idx + 1, String(pts).padStart(2, "0").slice(-2));
+      await display.finalSetA(
+        idx + 1,
+        String(pts).padStart(2, "0").slice(-2)
+      );
       playSfx(pts > 0 ? "answer_correct" : "answer_wrong");
     } else {
       await display.finalSetRight(idx + 1, clip11(txt));
-      await display.finalSetB(idx + 1, String(pts).padStart(2, "0").slice(-2));
-      // jeśli operator zaznaczył powtórzenie w entry — tylko dźwięk inny, punkty normalnie:
+      await display.finalSetB(
+        idx + 1,
+        String(pts).padStart(2, "0").slice(-2)
+      );
       const rep = rt.p2[idx].repeat === true;
       if (rep) playSfx("answer_repeat");
       else playSfx(pts > 0 ? "answer_correct" : "answer_wrong");
@@ -462,14 +563,13 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     await display.finalSetSuma(rt.sum);
     updateSumUI();
 
-    // przerwij po osiągnięciu celu (domyślnie 200)
     const adv = store.state.advanced || {};
     const target =
       typeof adv.finalTarget === "number" ? adv.finalTarget : 200;
 
     if (rt.sum >= target) {
       await gotoEnd(true);
-      return true; // ended
+      return true;
     }
     return false;
   }
@@ -477,13 +577,14 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
   async function gotoEnd(hit200) {
     ensureRuntime();
     stopTimer();
-    
+
     store.state.final.runtime.hit200 = !!hit200;
 
-    // tekst końcowy: nagroda / logo / itd.
-    const hasPrize = store.state?.final?.hasPrize !== false; // default: true
-    const mainPrize = store.state?.final?.prizeMain || FINAL_MSG.DEFAULT_MAIN_PRIZE;
-    const smallPrize = store.state?.final?.prizeSmall || FINAL_MSG.DEFAULT_SMALL_PRIZE;
+    const hasPrize = store.state?.final?.hasPrize !== false;
+    const mainPrize =
+      store.state?.final?.prizeMain || FINAL_MSG.DEFAULT_MAIN_PRIZE;
+    const smallPrize =
+      store.state?.final?.prizeSmall || FINAL_MSG.DEFAULT_SMALL_PRIZE;
 
     const hint = document.getElementById("finalEndHint");
     if (hint) {
@@ -505,50 +606,57 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
       ui.setMsg("msgFinal", FINAL_MSG.FINAL_DISABLED);
       return;
     }
-    if (!store.state.final.confirmed || (store.state.final.picked || []).length !== 5) {
+    if (
+      !store.state.final.confirmed ||
+      (store.state.final.picked || []).length !== 5
+    ) {
       ui.setMsg("msgFinal", FINAL_MSG.FINAL_NEEDS_PICK);
       return;
     }
-  
-    // sprawdź czy ktoś ma wystarczająco punktów (dodatkowe zabezpieczenie, poza canEnterCard)
+
     const adv = store.state.advanced || {};
     const threshold =
       typeof adv.finalMinPoints === "number" ? adv.finalMinPoints : 300;
-  
+
     const totals = store.state.rounds?.totals || { A: 0, B: 0 };
     const hasEnough =
       (totals.A || 0) >= threshold || (totals.B || 0) >= threshold;
-  
+
     if (!hasEnough) {
       ui.setMsg("msgFinal", FINAL_MSG.FINAL_NEEDS_POINTS(threshold));
       return;
     }
-  
+
     ensureRuntime();
-  
-    // blokada setupu / nawigacji podczas finału
+
     if (typeof store.setFinalActive === "function") {
       store.setFinalActive(true);
     } else {
       store.state.locks.finalActive = true;
     }
-  
+
     await loadFinalPicked();
-  
+
     playSfx("final_theme");
     await display.hideLogo?.();
     await display.finalBoardPlaceholders?.();
     await display.finalSetSuma?.(0);
-  
+
     for (let i = 1; i <= 5; i++) {
-      await display.finalSetLeft?.(i, display.PLACE?.finalText || FINAL_MSG.FALLBACK_ANSWER);
-      await display.finalSetRight?.(i, display.PLACE?.finalText || FINAL_MSG.FALLBACK_ANSWER);
+      await display.finalSetLeft?.(
+        i,
+        display.PLACE?.finalText || FINAL_MSG.FALLBACK_ANSWER
+      );
+      await display.finalSetRight?.(
+        i,
+        display.PLACE?.finalText || FINAL_MSG.FALLBACK_ANSWER
+      );
       await display.finalSetA?.(i, "00");
       await display.finalSetB?.(i, "00");
     }
-  
+
     await display.finalSetSideTimer?.(getWinnerTeam(), "");
-  
+
     ui.setMsg("msgFinal", FINAL_MSG.FINAL_STARTED);
     updateSumUI();
     setStep("f_p1_entry");
@@ -556,15 +664,12 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     ui.setEnabled("btnFinalToP1MapQ1", false);
   }
 
-
   function backTo(step) {
     setStep(step);
 
-    // odśwież widok kroku
     if (step === "f_p1_entry") renderP1Entry();
     if (step === "f_p2_entry") renderP2Entry();
 
-    // mapping kroki
     if (step.startsWith("f_p1_map_q")) {
       const idx = Number(step.slice(-1)) - 1;
       renderMapOne(1, idx);
@@ -600,9 +705,8 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
   }
 
   async function startP2Round() {
-    // schowaj odpowiedzi (zostaje suma) i ustaw timer 20 w tym samym miejscu co 15
     playSfx("round_transition");
-    await display.finalHideAnswersKeepSum?.(); // dopisz w display jeśli nie masz
+    await display.finalHideAnswersKeepSum?.();
     await display.finalSetSideTimer?.(getWinnerTeam(), "20");
 
     setStep("f_p2_entry");
@@ -619,7 +723,6 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     if (idx1based < 5) {
       toP1MapQ(idx1based + 1);
     } else {
-      // koniec r1 -> karta start r2
       setStep("f_p2_start");
     }
   }
@@ -643,29 +746,50 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     }
   }
 
+  // === NOWA LOGIKA KOŃCA FINAŁU (3 tryby) ===
   async function finishFinal() {
     playSfx("final_theme");
-  
-    const sum = Number(store.state.final.runtime?.sum || 0);     // S
-    const moneyEarned = Number(store.state.moneyEarned || 0);    // M
-  
+
+    const rt = store.state.final.runtime || {};
+    const sum = Number(rt.sum || 0); // suma punktów finału
+    const moneyEarned = Number(store.state.moneyEarned || 0);
+
     const adv = store.state.advanced || {};
     const target =
       typeof adv.finalTarget === "number" ? adv.finalTarget : 200;
-  
-    const winEnabled = adv.winEnabled === true;
     const hitTarget = sum >= target;
-  
-    if (!winEnabled) {
-      await display.showLogo();
+
+    const mode = getEndScreenMode(store);
+
+    // 1) Tylko logo
+    if (mode === "logo") {
+      await display.showLogo?.();
       return;
     }
-  
-    const winAmount = hitTarget
-      ? (moneyEarned + 25000)
-      : moneyEarned;
-  
-    await display.showWin(winAmount); // showWin zrobi animację rain right 80
+
+    // 2) Punkty – pokazujemy sumę finału jako "wygraną"
+    if (mode === "points") {
+      if (display.showWin) {
+        await display.showWin(sum);
+      } else {
+        await display.showLogo?.();
+      }
+      return;
+    }
+
+    // 3) Kwota – tylko po finale ma sens
+    if (mode === "money") {
+      const winAmount = hitTarget ? moneyEarned + 25000 : moneyEarned;
+      if (display.showWin) {
+        await display.showWin(winAmount);
+      } else {
+        await display.showLogo?.();
+      }
+      return;
+    }
+
+    // fallback
+    await display.showLogo?.();
   }
 
   function bootIfNeeded() {
