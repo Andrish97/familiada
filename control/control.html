@@ -338,8 +338,70 @@
                 </div>
 
                 <div class="extra hidden" id="teamExtra">
-                  <div class="hint">Tu będą dodatkowe ustawienia nazw drużyn (opcjonalne).</div>
+                  <div class="name">Dodatkowe ustawienia</div>
+                
+                  <div class="rowBtns">
+                    <div class="field sm">
+                      <div class="lbl2">Mnożniki rund</div>
+                      <div class="hint">Podaj po przecinku, np. <b>1,1,1,2,3</b></div>
+                      <input
+                        id="roundMultipliers"
+                        class="inp"
+                        type="text"
+                        autocomplete="off"
+                        inputmode="numeric"
+                      />
+                    </div>
+                  </div>
+                
+                  <div class="rowBtns">
+                    <div class="field sm">
+                      <div class="lbl2">Punkty do finału</div>
+                      <input
+                        id="finalMinPoints"
+                        class="inp"
+                        type="number"
+                        min="0"
+                        step="10"
+                      />
+                    </div>
+                
+                    <div class="field sm">
+                      <div class="lbl2">Cel finału</div>
+                      <input
+                        id="finalTargetPoints"
+                        class="inp"
+                        type="number"
+                        min="0"
+                        step="10"
+                      />
+                    </div>
+                  </div>
+                
+                  <div class="rowBtns">
+                    <div class="field sm">
+                      <div class="lbl2">Ekran końca gry</div>
+                      <div class="rowBtns">
+                        <label class="radio">
+                          <input type="radio" name="winMode" value="money" id="winModeMoney">
+                          <span>Pokaż wynik i kwotę</span>
+                        </label>
+                        <label class="radio">
+                          <input type="radio" name="winMode" value="logo" id="winModeLogo">
+                          <span>Tylko logo</span>
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                
+                  <div class="rowBtns">
+                    <button class="btn" type="button" id="btnAdvancedReset">
+                      Przywróć domyślne
+                    </button>
+                    <div class="msg" id="msgAdvanced"></div>
+                  </div>
                 </div>
+
 
                 <div class="stepFoot">
                   <button class="btn" id="btnBackToDevices" type="button">Wstecz</button>
