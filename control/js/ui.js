@@ -245,7 +245,7 @@ export function createUI() {
     const rms = Array.isArray(adv.roundMultipliers)
       ? adv.roundMultipliers.join(", ")
       : "";
-
+  
     if ($("roundMultipliers")) $("roundMultipliers").value = rms;
     if ($("finalMinPoints"))
       $("finalMinPoints").value =
@@ -253,15 +253,25 @@ export function createUI() {
     if ($("finalTargetPoints"))
       $("finalTargetPoints").value =
         typeof adv.finalTarget === "number" ? String(adv.finalTarget) : "";
-
-    const winEnabled =
-      typeof adv.winEnabled === "boolean" ? adv.winEnabled : true;
-
-    if ($("winModeMoney")) $("winModeMoney").checked = !!winEnabled;
-    if ($("winModeLogo")) $("winModeLogo").checked = !winEnabled;
+  
+    // -------- tryb ekranu końcowego --------
+    // 1) najpierw próbujemy endScreenMode,
+    // 2) jeśli nie ma, robimy fallback z winEnabled (kompatybilność wstecz),
+    // 3) default: "logo".
+    let mode = adv.endScreenMode;
+    if (mode !== "logo" && mode !== "points" && mode !== "money") {
+      if (typeof adv.winEnabled === "boolean") {
+        mode = adv.winEnabled ? "points" : "logo";
+      } else {
+        mode = "logo";
+      }
+    }
+  
+    if ($("winModeMoney")) $("winModeMoney").checked = mode === "money";
+    if ($("winModeLogo")) $("winModeLogo").checked = mode === "logo";
+    if ($("winModePoints")) $("winModePoints").checked = mode === "points";
   }
-
-
+  
   function setFinalHasFinal(on) {
     const card = $("finalPickerCard");
     if (!card) return;
