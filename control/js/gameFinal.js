@@ -927,7 +927,9 @@ async function revealPointsAndScore(roundNo /*1|2*/, idx /*0..4*/) {
     }
 
     await loadFinalPicked();
-  
+    
+    clearFinalMsgs():
+    
     const rt = store.state.final.runtime;
   
     let dur = 0;
@@ -943,8 +945,6 @@ async function revealPointsAndScore(roundNo /*1|2*/, idx /*0..4*/) {
     // Kotwica, w której wjeżdża plansza finału – np. 1000ms po starcie dźwięku
     const transitionAnchorMs = 1000;
 
-    clearFinalMsgs():
-  
     playSfx("final_theme");
   
     setTimeout(() => {
