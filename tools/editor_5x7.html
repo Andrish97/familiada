@@ -153,7 +153,7 @@ textarea{width:100%;resize:vertical;min-height:80px}
 <script>
 /* ====== STAN ====== */
 const W=5,H=7;
-const ctx=c.getContext("2d");
+const ctx = c.getContext("2d", { willReadFrequently: true });
 const stateA={meta:{name:"set-A",width:W,height:H},glyphs:{},aliases:{},categories:{}};
 const stateB={meta:{name:"set-B",width:W,height:H},glyphs:{},aliases:{},categories:{}};
 let selected=null,filter=null,fontName=null,fontBBox=null;
