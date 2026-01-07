@@ -64,7 +64,6 @@ export function createStore(gameId) {
       displayOnline: false,
       hostOnline: false,
       buzzerOnline: false,
-      sentBlackAfterDisplayOnline: false,
       audioUnlocked: false,
       qrOnDisplay: false,
     },
