@@ -50,7 +50,7 @@ const FINAL_MSG = {
 };
 // =========================================================
 
-import { playSfx } from "/familiada/js/core/sfx.js";
+import { playSfx, getSfxDuration } from "/familiada/js/core/sfx.js";
 
 function nInt(v, d = 0) {
   const x = Number.parseInt(String(v ?? ""), 10);
@@ -104,6 +104,13 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     if (!f.runtime) f.runtime = {};
     const rt = f.runtime;
 
+    if (!rt.leftSnapshot) {
+      rt.leftSnapshot = Array.from({ length: 5 }, () => ({
+        text: display.PLACE.finalText,
+        pts: display.PLACE.finalPts,
+      }));
+    }
+    
     if (!rt.p1)
       rt.p1 = Array.from({ length: 5 }, () => ({ text: ""}));
     if (!rt.p2)
@@ -809,42 +816,87 @@ async function revealPointsAndScore(roundNo /*1|2*/, idx /*0..4*/) {
       ui.setMsg("msgFinal", FINAL_MSG.FINAL_NEEDS_PICK);
       return;
     }
-
+  
     const adv = store.state.advanced || {};
     const threshold =
       typeof adv.finalMinPoints === "number" ? adv.finalMinPoints : 300;
-
+  
     const totals = store.state.rounds?.totals || { A: 0, B: 0 };
     const hasEnough =
       (totals.A || 0) >= threshold || (totals.B || 0) >= threshold;
-
+  
     if (!hasEnough) {
       ui.setMsg("msgFinal", FINAL_MSG.FINAL_NEEDS_POINTS(threshold));
       return;
     }
-
+  
     ensureRuntime();
-
+  
     if (typeof store.setFinalActive === "function") {
       store.setFinalActive(true);
     } else {
       store.state.locks.finalActive = true;
     }
-
+  
     await loadFinalPicked();
-
+  
+    clearFinalMsgs(); // jeśli masz coś takiego, jak przy rundach
+  
+    const rt = store.state.final.runtime;
+  
+    let dur = 0;
+    try {
+      dur = await getSfxDuration("final_theme");
+    } catch (e) {
+      console.warn("getSfxDuration(final_theme) error", e);
+    }
+  
+    // Całkowity czas dźwięku
+    const totalMs = typeof dur === "number" && dur > 0 ? dur * 1000 : 4000;
+  
+    // Kotwica, w której wjeżdża plansza finału – np. 1000ms po starcie dźwięku
+    const transitionAnchorMs = 1000;
+  
     playSfx("final_theme");
-    await display.hideLogo?.();
-    await display.finalBoardPlaceholders?.();
-    await display.finalSetSuma?.(0);
-
-    await display.finalSetSideTimer?.(getWinnerTeam(), "");
-
+  
+    setTimeout(() => {
+      (async () => {
+        try {
+          // chowamy logo dopiero w trakcie dźwięku
+          if (typeof display.hideLogo === "function") {
+            try {
+              await display.hideLogo();
+            } catch (e) {
+              console.error("hideLogo error", e);
+            }
+          }
+          if (typeof display.finalBoardPlaceholders === "function") {
+            await display.finalBoardPlaceholders();
+          }
+          // od razu suma = 0 po stronie A
+          if (typeof display.finalSetSuma === "function") {
+            await display.finalSetSuma(0, "A");
+          }
+        } catch (e) {
+          console.error("display setup for final (delayed) failed", e);
+        }
+      })();
+    }, transitionAnchorMs);
+  
+    // po zakończeniu dźwięku – dzwonki "wchodzimy do finału"
+    if (totalMs > 0) {
+      await new Promise((resolve) => setTimeout(resolve, totalMs));
+    }
+    playSfx("bells");
+  
     ui.setMsg("msgFinal", FINAL_MSG.FINAL_STARTED);
     updateSumUI();
     setStep("f_p1_entry");
     renderP1Entry();
     ui.setEnabled("btnFinalToP1MapQ1", false);
+  
+    // wyzeruj timer na tripletach (np. pusty tekst po stronie wygranej drużyny)
+    await display.finalSetSideTimer?.(getWinnerTeam(), "");
   }
 
   function backTo(step) {
