@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
 <meta charset="UTF-8" />
-<title>Edytor 5×7 — Full</title>
+<title>Edytor 5×7 — Full + Konwersje</title>
 <style>
 body{background:#111;color:#eee;font-family:system-ui,sans-serif;margin:0;padding:10px;display:flex;flex-direction:column;gap:10px}
 .panel{background:#191919;border:1px solid #333;border-radius:6px;padding:8px}
@@ -29,7 +29,7 @@ textarea{width:100%;resize:vertical;min-height:80px}
 </head>
 
 <body>
-<h2>Edytor czcionki 5×7 — wersja pełna</h2>
+<h2>Edytor czcionki 5×7 — z konwersją formatu</h2>
 
 <!-- TOOLS -->
 <div class="panel">
@@ -51,7 +51,10 @@ textarea{width:100%;resize:vertical;min-height:80px}
 <div class="row">
   <div><strong>JSON A</strong><br><input id="jsonA" type="file" accept=".json"></div>
   <div><strong>JSON B</strong><br><input id="jsonB" type="file" accept=".json"></div>
-  <button id="exportA">Eksport A</button>
+
+  <button id="exportA">Eksport — rozszerzony</button>
+  <button id="exportFam">Eksport — Familiada</button>
+
   <button id="undoBtn">Cofnij</button>
   <button id="redoBtn">Ponów</button>
 </div>
@@ -182,7 +185,7 @@ function gridToRows(el){
 }
 
 /* ===================================================
-   LISTA
+   LISTA / SELEKCJA
 =================================================== */
 let selection=new Set();
 function renderList(){
@@ -227,7 +230,7 @@ catFilter.onclick=()=>{filter=catSelect.value;renderList()}
 catAll.onclick=()=>{filter=null;renderList()}
 
 /* ===================================================
-   EDYTOR
+   ALIASY / BITMAPY
 =================================================== */
 function isAlias(ch){return stateA.aliases[ch]}
 function sourceRows(ch){
@@ -235,6 +238,9 @@ function sourceRows(ch){
  return stateA.glyphs[ch];
 }
 
+/* ===================================================
+   EDYTOR
+=================================================== */
 function updateEditor(){
  if(!selected){charInfo.textContent="—";return}
  const r=sourceRows(selected)||Array(H).fill(0);
@@ -263,20 +269,21 @@ function renderCharCats(){
  })
 }
 
-/* EDIT EVENTS */
+/* piksele */
 editor.onclick=e=>{
  if(!e.target.classList.contains("pixel")||isAlias(selected))return;
  saveState();
  e.target.classList.toggle("on");
  const r=gridToRows(editor); stateA.glyphs[selected]=r; updateEditor()
 }
+
 rowsApply.onclick=()=>{
  saveState();
  const r=rowsEdit.value.split(",").map(v=>parseInt(v)||0).slice(0,H);
  stateA.glyphs[selected]=r; delete stateA.aliases[selected]; updateEditor()
 }
 
-/* ALIAS */
+/* aliasy */
 makeAlias.onclick=()=>{
  const t=aliasTarget.value.trim(); if(!t||t===selected)return;
  if(!stateA.glyphs[t]&&!stateA.aliases[t])return alert("Brak takiego źródła");
@@ -288,34 +295,94 @@ breakAlias.onclick=()=>{
 }
 
 /* ===================================================
-   JSON
+   JSON — IMPORT
 =================================================== */
 async function loadJSON(file){return JSON.parse(await file.text())}
+
+/* ——— import starego formatu ——— */
+function importFamiliadaFormat(json,target){
+  target.meta=json.meta||target.meta;
+  target.glyphs={}; target.aliases={};
+  target.categories={
+    letters:new Set(),digits:new Set(),
+    punctuation:new Set(),math:new Set(),
+    special:new Set()
+  };
+  function absorb(sec,cat){
+    if(!sec)return;
+    for(const[ch,val] of Object.entries(sec)){
+      if(typeof val==="string" && val.startsWith("@")) target.aliases[ch]=val.slice(1);
+      else if(Array.isArray(val)) target.glyphs[ch]=val.slice(0,7);
+      target.categories[cat].add(ch);
+    }
+  }
+  absorb(json.letters,"letters");
+  absorb(json.digits,"digits");
+  absorb(json.punctuation,"punctuation");
+  absorb(json.math,"math");
+  absorb(json.special,"special");
+}
 
 jsonA.onchange=async()=>{
  const j=await loadJSON(jsonA.files[0]);
  saveState();
- stateA.meta=j.meta||stateA.meta;
- stateA.glyphs=j.glyphs||{};
- stateA.aliases=j.aliases||{};
- stateA.categories={};
- if(j.categories)for(const[k,v]of Object.entries(j.categories))stateA.categories[k]=new Set(v);
+ if(j.glyphs || j.aliases || j.categories) {
+   stateA.meta=j.meta||stateA.meta;
+   stateA.glyphs=j.glyphs||{};
+   stateA.aliases=j.aliases||{};
+   stateA.categories={};
+   if(j.categories)for(const[k,v]of Object.entries(j.categories))stateA.categories[k]=new Set(v);
+ } else {
+   importFamiliadaFormat(j,stateA);
+ }
  renderCatSelect(); renderList(); updateEditor();
 }
+
 jsonB.onchange=async()=>{
  const j=await loadJSON(jsonB.files[0]);
- stateB.meta=j.meta||stateB.meta;
- stateB.glyphs=j.glyphs||{};
- stateB.aliases=j.aliases||{};
+ if(j.glyphs || j.aliases || j.categories){
+   stateB.meta=j.meta||stateB.meta;
+   stateB.glyphs=j.glyphs||{};
+   stateB.aliases=j.aliases||{};
+ } else {
+   importFamiliadaFormat(j,stateB);
+ }
  renderList(); updateEditor();
 }
 
+/* ===================================================
+   JSON — EKSPORT
+=================================================== */
 exportA.onclick=()=>{
- const cats={};for(const[k,v]of Object.entries(stateA.categories))cats[k]=Array.from(v);
+ const cats={}; for(const[k,v] of Object.entries(stateA.categories))cats[k]=Array.from(v);
  const data={meta:stateA.meta,glyphs:stateA.glyphs,aliases:stateA.aliases,categories:cats};
  const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
+ const url=URL.createObjectURL(blob); const a=document.createElement("a");
+ a.href=url; a.download=(stateA.meta.name||"set-A")+".json"; a.click(); URL.revokeObjectURL(url);
+}
+
+/* ——— eksport do stylu „Familiada” ——— */
+function exportFamiliadaFormat(){
+ const out={
+   meta:stateA.meta,
+   letters:{},digits:{},punctuation:{},math:{},special:{}
+ };
+ function push(cat,ch){
+   if(stateA.aliases[ch]) out[cat][ch]="@"+stateA.aliases[ch];
+   else if(stateA.glyphs[ch]) out[cat][ch]=stateA.glyphs[ch];
+ }
+ for(const cat of Object.keys(out)){
+   const set=stateA.categories[cat];
+   if(!set) continue;
+   for(const ch of set) push(cat,ch);
+ }
+ return out;
+}
+exportFam.onclick=()=>{
+ const data=exportFamiliadaFormat();
+ const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
  const url=URL.createObjectURL(blob);const a=document.createElement("a");
- a.href=url;a.download=(stateA.meta.name||"set-A")+".json";a.click();URL.revokeObjectURL(url);
+ a.href=url;a.download=(stateA.meta.name||"familiada")+".json";a.click();URL.revokeObjectURL(url);
 }
 
 /* ===================================================
@@ -325,7 +392,7 @@ undoBtn.onclick=()=>{if(!history.length)return;future.push(JSON.stringify(stateA
 redoBtn.onclick=()=>{if(!future.length)return;history.push(JSON.stringify(stateA));restore(future.pop());renderCatSelect();renderList();updateEditor()}
 
 /* ===================================================
-   COMPARE
+   PORÓWNANIE
 =================================================== */
 function diffText(ch){
  const a=JSON.stringify(sourceRows(ch));
@@ -346,7 +413,7 @@ copyAllDiff.onclick=()=>{
 }
 
 /* ===================================================
-   FONT IMPORT (Canvas)
+   FONT IMPORT
 =================================================== */
 async function loadFont(){
  const f=fontFile.files[0]; if(!f)return;
