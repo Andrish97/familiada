@@ -105,11 +105,10 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     const rt = f.runtime;
 
     if (!rt.p1)
-      rt.p1 = Array.from({ length: 5 }, () => ({ text: "", entered: false }));
+      rt.p1 = Array.from({ length: 5 }, () => ({ text: ""}));
     if (!rt.p2)
       rt.p2 = Array.from({ length: 5 }, () => ({
         text: "",
-        entered: false,
         repeat: false,
       }));
 
@@ -249,11 +248,6 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
         )}" placeholder="${escapeHtml(
           FINAL_MSG.INPUT_PLACEHOLDER
         )}" autocomplete="off"/>
-            <button class="btn sm gold" type="button" data-enter="1" data-i="${i}">${
-              entered
-                ? escapeHtml(FINAL_MSG.BTN_CONFIRMED)
-                : escapeHtml(FINAL_MSG.BTN_CONFIRM)
-            }</button>
           </div>
         </div>
       `;
@@ -320,11 +314,6 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
         )}" placeholder="${escapeHtml(
           FINAL_MSG.INPUT_PLACEHOLDER
         )}" autocomplete="off"/>
-            <button class="btn sm gold" type="button" data-enter="2" data-i="${i}">${
-              entered
-                ? escapeHtml(FINAL_MSG.BTN_CONFIRMED)
-                : escapeHtml(FINAL_MSG.BTN_CONFIRM)
-            }</button>
             <button class="btn sm danger" type="button" data-repeat="2" data-i="${i}">${
               repeat
                 ? escapeHtml(FINAL_MSG.P2_BTN_REPEAT_ON)
@@ -382,138 +371,170 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
   }
 
   // ---------- Render: mapping (one question) ----------
-  function renderMapOne(roundNo /*1|2*/, idx /*0..4*/) {
-    ensureRuntime();
-    const rt = store.state.final.runtime;
-    const q = qPicked[idx];
-    const aList = answersByQ.get(q.id) || [];
+function renderMapOne(roundNo /*1|2*/, idx /*0..4*/) {
+  ensureRuntime();
+  const rt = store.state.final.runtime;
+  const q = qPicked[idx];
+  const aList = answersByQ.get(q.id) || [];
 
-    const input = (roundNo === 1 ? rt.p1[idx].text : rt.p2[idx].text).trim();
-    const mapArr = roundNo === 1 ? rt.map1 : rt.map2;
-    const row = mapArr[idx];
+  const inputP1 = (rt.p1[idx].text || "").trim();
+  const inputP2 = (rt.p2[idx]?.text || "").trim();
+  const input = roundNo === 1 ? inputP1 : inputP2;
 
+  const mapArr = roundNo === 1 ? rt.map1 : rt.map2;
+  const row = mapArr[idx];
+
+  const isRepeat = roundNo === 2 && rt.p2[idx].repeat === true;
+
+  let hostHintHtml = "";
+
+  if (roundNo === 1) {
     const hostHint = input.length
       ? `${escapeHtml(FINAL_MSG.MAP_HINT_INPUT_PREFIX)}<b>${escapeHtml(
           input
         )}</b>`
       : `<i>${escapeHtml(FINAL_MSG.MAP_HINT_NO_INPUT)}</i>`;
 
-    const left = aList
-      .map((a) => {
-        const active = row.kind === "MATCH" && row.matchId === a.id;
-        return `
-        <button class="btn sm ${
-          active ? "gold" : ""
-        }" type="button" data-kind="match" data-id="${a.id}">
-          ${escapeHtml(a.text)} <span style="opacity:.7;">(${nInt(
-          a.fixed_points,
-          0
-        )})</span>
-        </button>
-      `;
-      })
-      .join("");
-
-    const missActive = row.kind === "MISS";
-    const skipActive = row.kind === "SKIP";
-
-    const outDefault = row.outText || input || "";
-    const outVal = escapeHtml(outDefault);
-
-    const html = `
-      <div class="name">${escapeHtml(FINAL_MSG.Q_LABEL(idx + 1))}</div>
-      <div class="qPrompt">${escapeHtml(q.text || "")}</div>
-      <div class="mini"><div class="hint">${hostHint}</div></div>
-
-      ${
-        input.length === 0
-          ? `
-        <div class="mini"><div class="hint">${escapeHtml(
-          FINAL_MSG.MAP_HINT_NO_TEXT
-        )}</div></div>
-      `
-          : ``
-      }
-
-      <div class="cards2" style="margin-top:12px;">
-        <div class="card">
-          <div class="name">${escapeHtml(FINAL_MSG.MAP_LIST_TITLE)}</div>
-          <div class="rowBtns" style="flex-wrap:wrap; gap:8px;">
-            ${
-              left ||
-              `<div class="hint">${escapeHtml(FINAL_MSG.MAP_LIST_EMPTY)}</div>`
-            }
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="name">${escapeHtml(FINAL_MSG.MAP_OWN_TITLE)}</div>
-
-          <div class="rowBtns" style="align-items:flex-start;">
-            <button class="btn sm ${
-              skipActive ? "gold" : ""
-            }" type="button" data-kind="skip">${escapeHtml(
-      FINAL_MSG.MAP_BTN_SKIP
-    )}</button>
-            <button class="btn sm danger ${
-              missActive ? "gold" : ""
-            }" type="button" data-kind="miss">${escapeHtml(
-      FINAL_MSG.MAP_BTN_MISS
-    )}</button>
-          </div>
-
-          <div class="mini"><div class="hint">${escapeHtml(
-            FINAL_MSG.MAP_OUT_HINT
-          )}</div></div>
-          <input class="inp" data-kind="out" value="${outVal}" placeholder="${escapeHtml(
-      FINAL_MSG.MAP_OUT_PLACEHOLDER
-    )}"/>
-        </div>
+    hostHintHtml = `
+      <div class="mini">
+        <div class="hint">${hostHint}</div>
+        ${
+          input.length === 0
+            ? `<div class="hint">${escapeHtml(FINAL_MSG.MAP_HINT_NO_TEXT)}</div>`
+            : ``
+        }
       </div>
     `;
+  } else {
+    // roundNo === 2 – pokazujemy obie odpowiedzi + info o powtórzeniu
+    const p1Txt = inputP1 || "—";
+    const p2Txt = inputP2 || "—";
 
-    const rootId = roundNo === 1 ? `finalP1MapQ${idx + 1}` : `finalP2MapQ${idx + 1}`;
+    hostHintHtml = `
+      <div class="mini">
+        <div class="hint">
+          ${escapeHtml(FINAL_MSG.P2_HINT_P1_PREFIX)}<b>${escapeHtml(
+      p1Txt
+    )}</b>
+        </div>
+        <div class="hint">
+          Odpowiedź gracza 2${
+            isRepeat ? " (powtórzenie)" : ""
+          }: <b>${escapeHtml(p2Txt)}</b>
+        </div>
+        ${
+          inputP2.length === 0
+            ? `<div class="hint">${escapeHtml(FINAL_MSG.MAP_HINT_NO_TEXT)}</div>`
+            : ``
+        }
+      </div>
+    `;
+  }
 
-    ui.setHtml(rootId, html);
+  const aButtons = aList
+    .map((a) => {
+      const active = row.kind === "MATCH" && row.matchId === a.id;
+      return `
+        <button class="btn sm ${active ? "gold" : ""}" type="button"
+                data-kind="match" data-id="${a.id}">
+          ${escapeHtml(a.text)} <span style="opacity:.7;">(${nInt(
+        a.fixed_points,
+        0
+      )})</span>
+        </button>
+      `;
+    })
+    .join("");
 
-    const root = document.getElementById(rootId);
-    if (!root) return;
+  const missActive = row.kind === "MISS";
+  const skipActive = row.kind === "SKIP";
 
-    root
-      .querySelectorAll('button[data-kind="match"]')
-      .forEach((b) => {
-        b.addEventListener("click", () => {
-          row.kind = "MATCH";
-          row.matchId = b.dataset.id || null;
-          row.outText = "";
-          renderMapOne(roundNo, idx);
-        });
-      });
+  const outDefault = row.outText || "";
+  const outVal = escapeHtml(outDefault);
 
-    root
-      .querySelector('button[data-kind="miss"]')
-      ?.addEventListener("click", () => {
-        row.kind = "MISS";
-        row.matchId = null;
-        if (!row.outText) row.outText = input;
-        renderMapOne(roundNo, idx);
-      });
+  const html = `
+    <div class="name">${escapeHtml(FINAL_MSG.Q_LABEL(idx + 1))}</div>
+    <div class="qPrompt">${escapeHtml(q.text || "")}</div>
 
-    root
-      .querySelector('button[data-kind="skip"]')
-      ?.addEventListener("click", () => {
-        row.kind = "SKIP";
-        row.matchId = null;
+    ${hostHintHtml}
+
+    <div class="cards2" style="margin-top:12px;">
+      <div class="card">
+        <div class="name">${escapeHtml(FINAL_MSG.MAP_LIST_TITLE)}</div>
+        <div class="rowBtns" style="flex-wrap:wrap; gap:8px;">
+          ${
+            aButtons ||
+            `<div class="hint">${escapeHtml(FINAL_MSG.MAP_LIST_EMPTY)}</div>`
+          }
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="name">${escapeHtml(FINAL_MSG.MAP_OWN_TITLE)}</div>
+
+        <div class="rowBtns" style="align-items:flex-start;">
+          <button class="btn sm ${skipActive ? "gold" : ""}" type="button" data-kind="skip">
+            ${escapeHtml(FINAL_MSG.MAP_BTN_SKIP)}
+          </button>
+          <button class="btn sm danger ${
+            missActive ? "gold" : ""
+          }" type="button" data-kind="miss">
+            ${escapeHtml(FINAL_MSG.MAP_BTN_MISS)}
+          </button>
+        </div>
+
+        <div class="mini">
+          <div class="hint">${escapeHtml(FINAL_MSG.MAP_OUT_HINT)}</div>
+        </div>
+        <input class="inp" data-kind="out" value="${outVal}"
+               placeholder="${escapeHtml(FINAL_MSG.MAP_OUT_PLACEHOLDER)}"/>
+      </div>
+    </div>
+  `;
+
+  const rootId =
+    roundNo === 1 ? `finalP1MapQ${idx + 1}` : `finalP2MapQ${idx + 1}`;
+
+  ui.setHtml(rootId, html);
+
+  const root = document.getElementById(rootId);
+  if (!root) return;
+
+  root
+    .querySelectorAll('button[data-kind="match"]')
+    .forEach((b) => {
+      b.addEventListener("click", () => {
+        row.kind = "MATCH";
+        row.matchId = b.dataset.id || null;
         row.outText = "";
         renderMapOne(roundNo, idx);
       });
+    });
 
-    root
-      .querySelector('input[data-kind="out"]')
-      ?.addEventListener("input", (e) => {
-        row.outText = String(e.target?.value ?? "");
-      });
-  }
+  root
+    .querySelector('button[data-kind="miss"]')
+    ?.addEventListener("click", () => {
+      row.kind = "MISS";
+      row.matchId = null;
+      if (!row.outText) row.outText = input;
+      renderMapOne(roundNo, idx);
+    });
+
+  root
+    .querySelector('button[data-kind="skip"]')
+    ?.addEventListener("click", () => {
+      row.kind = "SKIP";
+      row.matchId = null;
+      row.outText = "";
+      renderMapOne(roundNo, idx);
+    });
+
+  root
+    .querySelector('input[data-kind="out"]')
+    ?.addEventListener("input", (e) => {
+      row.outText = String(e.target?.value ?? "");
+    });
+}
 
   async function commitReveal(roundNo /*1|2*/, idx /*0..4*/) {
     ensureRuntime();
