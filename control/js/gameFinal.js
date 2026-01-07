@@ -277,7 +277,6 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     const html = qPicked
       .map((q, i) => {
         const val = rt.p1[i].text || "";
-        const entered = rt.p1[i].entered === true;
         return `
         <div class="card" style="margin-bottom:10px;">
           <div class="name">${escapeHtml(FINAL_MSG.Q_LABEL(i + 1))}</div>
@@ -346,7 +345,6 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     const html = qPicked
       .map((q, i) => {
         const v2 = rt.p2[i].text || "";
-        const entered = rt.p2[i].entered === true;
         const repeat = rt.p2[i].repeat === true;
         const p1 = (rt.p1[i].text || "").trim() || "—";
         return `
@@ -1016,6 +1014,20 @@ async function revealPointsAndScore(roundNo /*1|2*/, idx /*0..4*/) {
     setStep(`f_p1_map_q${idx1based}`);
     renderMapOne(1, idx);
   }
+
+  function nextFromP1Q(idx1based) {
+    // idx1based: 1..5 (przycisk "Dalej" dla danego pytania)
+    const n = Number(idx1based) || 1;
+
+    if (n < 5) {
+      // przejście do mapowania kolejnego pytania gracza 1
+      toP1MapQ(n + 1);
+    } else {
+      // po pytaniu 5 przechodzimy do ekranu startu P2
+      toP2Start();
+    }
+  }
+
 
   function toP2Start() {
     stopTimer();
