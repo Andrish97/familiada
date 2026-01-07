@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
 <meta charset="UTF-8" />
-<title>Edytor 5×7 — Full + Konwersje</title>
+<title>Edytor 5×7 — Unicode kategorie + zakres</title>
 <style>
 body{background:#111;color:#eee;font-family:system-ui,sans-serif;margin:0;padding:10px;display:flex;flex-direction:column;gap:10px}
 .panel{background:#191919;border:1px solid #333;border-radius:6px;padding:8px}
@@ -21,7 +21,6 @@ button:hover{background:#333}
 .pixel.on{background:#ffd200;box-shadow:0 0 6px #ffd200}
 .editor-grid .pixel{cursor:pointer;border:1px solid #444}
 .editor-grid .pixel.on{border-color:#ffe680}
-.badge{font-size:10px;padding:1px 3px;border:1px solid #555;border-radius:3px;background:#333}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:6px}
 hr{border:0;border-top:1px solid #333;margin:6px 0}
 textarea{width:100%;resize:vertical;min-height:80px}
@@ -29,19 +28,23 @@ textarea{width:100%;resize:vertical;min-height:80px}
 </head>
 
 <body>
-<h2>Edytor czcionki 5×7 — z konwersją formatu</h2>
+<h2>Edytor czcionki 5×7 — Unicode kategorie + zakres</h2>
 
-<!-- TOOLS -->
 <div class="panel">
 <div class="row">
   <div>
     <strong>Font (.otf/.ttf)</strong><br>
     <input id="fontFile" type="file" accept=".otf,.ttf">
   </div>
-  <div style="flex:1;">
-    <label class="small">Znaki:</label>
-    <input id="fontChars" style="width:100%" value="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyzĄĆĘŁŃÓŚŹŻ0123456789!?.,:;()-→←↑↓" />
-    <button id="importFont">Import z fontu → A</button>
+
+  <div>
+    <label class="small">Zakres Unicode (HEX)</label><br>
+    Od <input id="scanStart" value="0020" size="6">
+    Do <input id="scanEnd" value="2FFF" size="6">
+  </div>
+
+  <div style="flex:1">
+    <button id="importFont">ZAŁADUJ wszystkie glify z fontu → A</button>
     <div id="fontInfo" class="small"></div>
   </div>
 </div>
@@ -62,7 +65,7 @@ textarea{width:100%;resize:vertical;min-height:80px}
 
 <div class="layout">
 
-<!-- LIST -->
+<!-- LISTA -->
 <div class="panel">
 <h3>Zestaw A</h3>
 
@@ -90,14 +93,14 @@ textarea{width:100%;resize:vertical;min-height:80px}
 </div>
 
 <div class="row small">
-  Multi-select: Ctrl (pojedyncze) • Shift (zakres)
+  Multi-select: Ctrl • Shift
 </div>
 
 <div id="glyphList" class="glyph-list"></div>
 <div class="small">Znaków: <span id="countA">0</span></div>
 </div>
 
-<!-- EDITOR -->
+<!-- EDYTOR -->
 <div class="panel">
 <h3>Edytor znaku A</h3>
 <div id="charInfo" class="small">—</div>
@@ -106,10 +109,8 @@ textarea{width:100%;resize:vertical;min-height:80px}
 <div id="charCats" class="row small"></div>
 
 <div class="row">
-  <div>
-    <div id="editor" class="glyph-grid editor-grid"></div>
-  </div>
-  <div style="flex:1;">
+  <div><div id="editor" class="glyph-grid editor-grid"></div></div>
+  <div style="flex:1">
     <label class="small">Bitmapa:</label>
     <div id="rowsView" class="small"></div>
     <input id="rowsEdit">
@@ -150,112 +151,92 @@ textarea{width:100%;resize:vertical;min-height:80px}
 <canvas id="c" width="256" height="256" style="display:none"></canvas>
 
 <script>
-/* ===================================================
-   STAN
-=================================================== */
+/* ====== STAN ====== */
 const W=5,H=7;
 const ctx=c.getContext("2d");
-
 const stateA={meta:{name:"set-A",width:W,height:H},glyphs:{},aliases:{},categories:{}};
 const stateB={meta:{name:"set-B",width:W,height:H},glyphs:{},aliases:{},categories:{}};
-
-let selected=null, filter=null, fontName=null, fontBBox=null;
-let history=[], future=[];
-
-/* ===================================================
-   HELPERS
-=================================================== */
+let selected=null,filter=null,fontName=null,fontBBox=null;
+let history=[],future=[];
 const $=id=>document.getElementById(id);
+
+/* ====== UTILITY ====== */
 function saveState(){history.push(JSON.stringify(stateA));future.length=0}
-function restore(obj){Object.assign(stateA,JSON.parse(obj))}
+function restore(o){Object.assign(stateA,JSON.parse(o))}
 function grid(el){el.innerHTML="";for(let i=0;i<W*H;i++){const d=document.createElement("div");d.className="pixel";el.appendChild(d)}}
 grid(editor);grid(prevA);grid(prevB);
 
-function rowsToGrid(el,rows){
- const p=el.querySelectorAll(".pixel");p.forEach(x=>x.classList.remove("on"));
- if(!rows)return;
- for(let y=0;y<H;y++)for(let x=0;x<W;x++)
-  if(rows[y]&1<<(W-1-x))p[y*W+x].classList.add("on");
-}
-function gridToRows(el){
- const p=el.querySelectorAll(".pixel"),r=[];
- for(let y=0;y<H;y++){let v=0;
-  for(let x=0;x<W;x++)if(p[y*W+x].classList.contains("on"))v|=(1<<(W-1-x));
-  r.push(v)}return r;
-}
+function rowsToGrid(el,rows){const p=el.querySelectorAll(".pixel");p.forEach(x=>x.classList.remove("on"));
+ if(!rows)return;for(let y=0;y<H;y++)for(let x=0;x<W;x++)if(rows[y]&1<<(W-1-x))p[y*W+x].classList.add("on")}
+function gridToRows(el){const p=el.querySelectorAll(".pixel"),r=[];for(let y=0;y<H;y++){let v=0;
+ for(let x=0;x<W;x++)if(p[y*W+x].classList.contains("on"))v|=(1<<(W-1-x));r.push(v)}return r}
 
-/* ===================================================
-   LISTA / SELEKCJA
-=================================================== */
+/* ====== LISTA ====== */
 let selection=new Set();
 function renderList(){
  const all=Object.keys({...stateA.glyphs,...stateA.aliases}).sort((a,b)=>a.codePointAt()-b.codePointAt());
  const list=filter&&stateA.categories[filter]?all.filter(x=>stateA.categories[filter].has(x)):all;
- glyphList.innerHTML=""; countA.textContent=list.length;
- list.forEach(ch=>{
-  const d=document.createElement("div");
-  d.className="glyph-list-item"+(selection.has(ch)?" active":"");
-  d.innerHTML=`<span>${ch===" "?"␣":ch}</span><span class=small>U+${ch.codePointAt().toString(16).toUpperCase()}</span>`;
-  d.onclick=e=>handleSelect(ch,e); glyphList.appendChild(d);
- })
+ glyphList.innerHTML="";countA.textContent=list.length;
+ list.forEach(ch=>{const d=document.createElement("div");
+ d.className="glyph-list-item"+(selection.has(ch)?" active":"");
+ d.innerHTML=`<span>${ch===" "?"␣":ch}</span><span class=small>U+${ch.codePointAt().toString(16).toUpperCase()}</span>`;
+ d.onclick=e=>handleSelect(ch,e);glyphList.appendChild(d)})
 }
 function handleSelect(ch,e){
- if(e.shiftKey){
-   if(selection.size){
-     const all=Object.keys({...stateA.glyphs,...stateA.aliases}).sort((a,b)=>a.codePointAt()-b.codePointAt());
-     const a=[...selection][0];selection=new Set();
-     const s=Math.min(all.indexOf(a),all.indexOf(ch));
-     const t=Math.max(all.indexOf(a),all.indexOf(ch));
-     for(let i=s;i<=t;i++)selection.add(all[i]);
-   }else selection=new Set([ch])
- }else if(e.ctrlKey) selection.has(ch)?selection.delete(ch):selection.add(ch);
+ if(e.shiftKey){if(selection.size){const all=Object.keys({...stateA.glyphs,...stateA.aliases}).sort((a,b)=>a.codePointAt()-b.codePointAt());
+ const a=[...selection][0];selection=new Set();const s=Math.min(all.indexOf(a),all.indexOf(ch));
+ const t=Math.max(all.indexOf(a),all.indexOf(ch));for(let i=s;i<=t;i++)selection.add(all[i])}else selection=new Set([ch])}
+ else if(e.ctrlKey)selection.has(ch)?selection.delete(ch):selection.add(ch);
  else selection=new Set([ch]);
- selected=[...selection][0]; renderList(); updateEditor();
+ selected=[...selection][0];renderList();updateEditor()
 }
 
-/* ===================================================
-   KATEGORIE
-=================================================== */
+/* ====== KATEGORIE WEDŁUG UNICODE ====== */
+function unicodeCategory(ch){
+ if(/\p{Lu}/u.test(ch) || /\p{Ll}/u.test(ch) || /\p{Lt}/u.test(ch)) return "letters";
+ if(/\p{Nd}/u.test(ch)) return "digits";
+ if(/\p{P}/u.test(ch)) return "punctuation";
+ if(/\p{Sm}/u.test(ch)) return "math";
+ if(/\p{Sc}/u.test(ch) || /\p{So}/u.test(ch)) return "symbol";
+ if(/\p{Zs}/u.test(ch)) return "space";
+ return "special";
+}
+
+function ensureCat(name){
+ if(!stateA.categories[name]) stateA.categories[name]=new Set();
+}
+
+/* ====== KATEGORIE UI ====== */
 function renderCatSelect(){
  catSelect.innerHTML="";
  Object.keys(stateA.categories).sort().forEach(n=>{
-  const o=document.createElement("option");o.value=n;o.textContent=`${n} (${stateA.categories[n].size})`;catSelect.appendChild(o);
+  const o=document.createElement("option");
+  o.value=n;o.textContent=`${n} (${stateA.categories[n].size})`;catSelect.appendChild(o)
  })
 }
-catAdd.onclick=()=>{const n=catNew.value.trim();if(!n)return;stateA.categories[n]=stateA.categories[n]||new Set();catNew.value="";renderCatSelect()}
+catAdd.onclick=()=>{const n=catNew.value.trim();if(!n)return;ensureCat(n);catNew.value="";renderCatSelect()}
 catRename.onclick=()=>{const old=catSelect.value;if(!old)return;const n=prompt("Nowa nazwa",old);if(!n||n===old)return;
  stateA.categories[n]=stateA.categories[old];delete stateA.categories[old];if(filter===old)filter=n;renderCatSelect();renderList()}
 catDelete.onclick=()=>{const n=catSelect.value;if(!n)return;delete stateA.categories[n];if(filter===n)filter=null;renderCatSelect();renderList()}
 catFilter.onclick=()=>{filter=catSelect.value;renderList()}
 catAll.onclick=()=>{filter=null;renderList()}
 
-/* ===================================================
-   ALIASY / BITMAPY
-=================================================== */
+/* ====== ALIASY / ROWS ====== */
 function isAlias(ch){return stateA.aliases[ch]}
-function sourceRows(ch){
- if(isAlias(ch))return sourceRows(stateA.aliases[ch]);
- return stateA.glyphs[ch];
-}
+function sourceRows(ch){return isAlias(ch)?sourceRows(stateA.aliases[ch]):stateA.glyphs[ch]}
 
-/* ===================================================
-   EDYTOR
-=================================================== */
+/* ====== EDYTOR ====== */
 function updateEditor(){
  if(!selected){charInfo.textContent="—";return}
  const r=sourceRows(selected)||Array(H).fill(0);
-
  rowsToGrid(editor,r);
  rowsToGrid(prevA,r);
  rowsToGrid(prevB,stateB.glyphs[selected]||null);
-
  rowsView.textContent=r.join(", ");
  rowsEdit.value=r.join(", ");
  snippet.value=isAlias(selected)?`"${selected}":"@${stateA.aliases[selected]}"`:`"${selected}":[${r.join(",")}]`;
  charInfo.textContent=`"${selected}"`;
-
- renderCharCats();
- cmpText.textContent=diffText(selected);
+ renderCharCats();cmpText.textContent=diffText(selected);
 }
 
 function renderCharCats(){
@@ -263,194 +244,141 @@ function renderCharCats(){
  if(!selected)return;
  Object.keys(stateA.categories).sort().forEach(n=>{
   const l=document.createElement("label");l.className="row small";
-  const cb=document.createElement("input");cb.type="checkbox";cb.checked=stateA.categories[n].has(selected);
+  const cb=document.createElement("input");
+  cb.type="checkbox";cb.checked=stateA.categories[n].has(selected);
   cb.onchange=()=>{saveState();cb.checked?stateA.categories[n].add(selected):stateA.categories[n].delete(selected);renderCatSelect();renderList()}
   l.append(cb,document.createTextNode(n));charCats.append(l)
  })
 }
 
-/* piksele */
 editor.onclick=e=>{
  if(!e.target.classList.contains("pixel")||isAlias(selected))return;
- saveState();
- e.target.classList.toggle("on");
- const r=gridToRows(editor); stateA.glyphs[selected]=r; updateEditor()
+ saveState();e.target.classList.toggle("on");
+ stateA.glyphs[selected]=gridToRows(editor);updateEditor()
 }
 
 rowsApply.onclick=()=>{
- saveState();
- const r=rowsEdit.value.split(",").map(v=>parseInt(v)||0).slice(0,H);
- stateA.glyphs[selected]=r; delete stateA.aliases[selected]; updateEditor()
+ saveState();stateA.glyphs[selected]=rowsEdit.value.split(",").map(v=>parseInt(v)||0).slice(0,H);
+ delete stateA.aliases[selected];updateEditor()
 }
 
-/* aliasy */
 makeAlias.onclick=()=>{
- const t=aliasTarget.value.trim(); if(!t||t===selected)return;
- if(!stateA.glyphs[t]&&!stateA.aliases[t])return alert("Brak takiego źródła");
- saveState(); delete stateA.glyphs[selected]; stateA.aliases[selected]=t; updateEditor()
+ const t=aliasTarget.value.trim();if(!t||t===selected)return;
+ if(!stateA.glyphs[t]&&!stateA.aliases[t])return alert("Brak źródła");
+ saveState();delete stateA.glyphs[selected];stateA.aliases[selected]=t;updateEditor()
 }
 breakAlias.onclick=()=>{
  if(!isAlias(selected))return;
- saveState(); stateA.glyphs[selected]=sourceRows(selected).slice(); delete stateA.aliases[selected]; updateEditor()
+ saveState();stateA.glyphs[selected]=sourceRows(selected).slice();delete stateA.aliases[selected];updateEditor()
 }
 
-/* ===================================================
-   JSON — IMPORT
-=================================================== */
+/* ====== IMPORT JSON ====== */
 async function loadJSON(file){return JSON.parse(await file.text())}
 
-/* ——— import starego formatu ——— */
 function importFamiliadaFormat(json,target){
-  target.meta=json.meta||target.meta;
-  target.glyphs={}; target.aliases={};
-  target.categories={
-    letters:new Set(),digits:new Set(),
-    punctuation:new Set(),math:new Set(),
-    special:new Set()
-  };
-  function absorb(sec,cat){
-    if(!sec)return;
-    for(const[ch,val] of Object.entries(sec)){
-      if(typeof val==="string" && val.startsWith("@")) target.aliases[ch]=val.slice(1);
-      else if(Array.isArray(val)) target.glyphs[ch]=val.slice(0,7);
-      target.categories[cat].add(ch);
-    }
-  }
-  absorb(json.letters,"letters");
-  absorb(json.digits,"digits");
-  absorb(json.punctuation,"punctuation");
-  absorb(json.math,"math");
-  absorb(json.special,"special");
+ target.meta=json.meta||target.meta;
+ target.glyphs={};target.aliases={};
+ target.categories={letters:new Set(),digits:new Set(),punctuation:new Set(),math:new Set(),special:new Set(),symbol:new Set(),space:new Set()};
+ function absorb(sec,cat){if(!sec)return;
+  for(const[ch,val]of Object.entries(sec)){if(typeof val==="string"&&val.startsWith("@"))target.aliases[ch]=val.slice(1);
+   else if(Array.isArray(val))target.glyphs[ch]=val.slice(0,7);ensureCat(cat);target.categories[cat].add(ch)}}
+ absorb(json.letters,"letters");absorb(json.digits,"digits");
+ absorb(json.punctuation,"punctuation");absorb(json.math,"math");
+ absorb(json.special,"special")
 }
 
 jsonA.onchange=async()=>{
  const j=await loadJSON(jsonA.files[0]);
  saveState();
- if(j.glyphs || j.aliases || j.categories) {
-   stateA.meta=j.meta||stateA.meta;
-   stateA.glyphs=j.glyphs||{};
-   stateA.aliases=j.aliases||{};
-   stateA.categories={};
-   if(j.categories)for(const[k,v]of Object.entries(j.categories))stateA.categories[k]=new Set(v);
- } else {
-   importFamiliadaFormat(j,stateA);
- }
- renderCatSelect(); renderList(); updateEditor();
+ if(j.glyphs||j.aliases||j.categories){
+  stateA.meta=j.meta||stateA.meta;stateA.glyphs=j.glyphs||{};stateA.aliases=j.aliases||{};stateA.categories={};
+  if(j.categories)for(const[k,v]of Object.entries(j.categories))stateA.categories[k]=new Set(v);
+ } else importFamiliadaFormat(j,stateA);
+ renderCatSelect();renderList();updateEditor()
 }
 
 jsonB.onchange=async()=>{
  const j=await loadJSON(jsonB.files[0]);
- if(j.glyphs || j.aliases || j.categories){
-   stateB.meta=j.meta||stateB.meta;
-   stateB.glyphs=j.glyphs||{};
-   stateB.aliases=j.aliases||{};
- } else {
-   importFamiliadaFormat(j,stateB);
- }
- renderList(); updateEditor();
+ if(j.glyphs||j.aliases||j.categories){stateB.meta=j.meta||stateB.meta;stateB.glyphs=j.glyphs||{};stateB.aliases=j.aliases||{}}
+ else importFamiliadaFormat(j,stateB);
+ renderList();updateEditor()
 }
 
-/* ===================================================
-   JSON — EKSPORT
-=================================================== */
+/* ====== EKSPORT ====== */
 exportA.onclick=()=>{
- const cats={}; for(const[k,v] of Object.entries(stateA.categories))cats[k]=Array.from(v);
+ const cats={};for(const[k,v]of Object.entries(stateA.categories))cats[k]=Array.from(v);
  const data={meta:stateA.meta,glyphs:stateA.glyphs,aliases:stateA.aliases,categories:cats};
  const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
- const url=URL.createObjectURL(blob); const a=document.createElement("a");
- a.href=url; a.download=(stateA.meta.name||"set-A")+".json"; a.click(); URL.revokeObjectURL(url);
+ const url=URL.createObjectURL(blob);const a=document.createElement("a");
+ a.href=url;a.download=(stateA.meta.name||"set-A")+".json";a.click();URL.revokeObjectURL(url)
 }
 
-/* ——— eksport do stylu „Familiada” ——— */
 function exportFamiliadaFormat(){
- const out={
-   meta:stateA.meta,
-   letters:{},digits:{},punctuation:{},math:{},special:{}
- };
- function push(cat,ch){
-   if(stateA.aliases[ch]) out[cat][ch]="@"+stateA.aliases[ch];
-   else if(stateA.glyphs[ch]) out[cat][ch]=stateA.glyphs[ch];
- }
- for(const cat of Object.keys(out)){
-   const set=stateA.categories[cat];
-   if(!set) continue;
-   for(const ch of set) push(cat,ch);
- }
- return out;
+ const out={meta:stateA.meta,letters:{},digits:{},punctuation:{},math:{},special:{}};
+ function push(cat,ch){if(stateA.aliases[ch])out[cat][ch]="@"+stateA.aliases[ch];else if(stateA.glyphs[ch])out[cat][ch]=stateA.glyphs[ch]}
+ for(const cat of Object.keys(out)){const set=stateA.categories[cat];if(!set)continue;for(const ch of set)push(cat,ch)}return out
 }
 exportFam.onclick=()=>{
  const data=exportFamiliadaFormat();
  const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
  const url=URL.createObjectURL(blob);const a=document.createElement("a");
- a.href=url;a.download=(stateA.meta.name||"familiada")+".json";a.click();URL.revokeObjectURL(url);
+ a.href=url;a.download=(stateA.meta.name||"familiada")+".json";a.click();URL.revokeObjectURL(url)
 }
 
-/* ===================================================
-   UNDO
-=================================================== */
+/* ====== UNDO ====== */
 undoBtn.onclick=()=>{if(!history.length)return;future.push(JSON.stringify(stateA));restore(history.pop());renderCatSelect();renderList();updateEditor()}
 redoBtn.onclick=()=>{if(!future.length)return;history.push(JSON.stringify(stateA));restore(future.pop());renderCatSelect();renderList();updateEditor()}
 
-/* ===================================================
-   PORÓWNANIE
-=================================================== */
-function diffText(ch){
- const a=JSON.stringify(sourceRows(ch));
- const b=JSON.stringify(stateB.glyphs[ch]||null);
- if(b==="null")return "Brak w B";
- return a===b?"Identyczne":"Różne";
-}
-copyFromB.onclick=()=>{
- if(!selected||!stateB.glyphs[selected])return;
- saveState(); stateA.glyphs[selected]=stateB.glyphs[selected].slice(); delete stateA.aliases[selected]; updateEditor()
-}
-copyAllDiff.onclick=()=>{
- saveState();
- for(const ch of Object.keys(stateB.glyphs))
-  if(JSON.stringify(sourceRows(ch))!==JSON.stringify(stateB.glyphs[ch]))
-    stateA.glyphs[ch]=stateB.glyphs[ch].slice();
- renderList(); updateEditor()
-}
+/* ====== PORÓWNANIE ====== */
+function diffText(ch){const a=JSON.stringify(sourceRows(ch));const b=JSON.stringify(stateB.glyphs[ch]||null);
+ if(b==="null")return "Brak w B";return a===b?"Identyczne":"Różne"}
+copyFromB.onclick=()=>{if(!selected||!stateB.glyphs[selected])return;
+ saveState();stateA.glyphs[selected]=stateB.glyphs[selected].slice();delete stateA.aliases[selected];updateEditor()}
+copyAllDiff.onclick=()=>{saveState();for(const ch of Object.keys(stateB.glyphs))
+ if(JSON.stringify(sourceRows(ch))!==JSON.stringify(stateB.glyphs[ch]))stateA.glyphs[ch]=stateB.glyphs[ch].slice();
+ renderList();updateEditor()}
 
-/* ===================================================
-   FONT IMPORT
-=================================================== */
+/* ====== FONT IMPORT + SKANER ====== */
 async function loadFont(){
- const f=fontFile.files[0]; if(!f)return;
- const url=URL.createObjectURL(f);
- fontName="F_"+Math.random().toString(36).slice(2);
+ const f=fontFile.files[0];if(!f)return;
+ const url=URL.createObjectURL(f);fontName="F_"+Math.random().toString(36).slice(2);
  const face=new FontFace(fontName,`url(${url})`);await face.load();document.fonts.add(face);
 }
-function bbox(img){const{data,width,height}=img;let minX=width,maxX=-1,minY=height,maxY=-1;
- for(let y=0;y<height;y++)for(let x=0;x<width;x++){const i=(y*width+x)*4;
- if(data[i+3]>10){minX=Math.min(minX,x);maxX=Math.max(maxX,x);minY=Math.min(minY,y);maxY=Math.max(maxY,y)}}
- return maxX<minX?null:{minX,minY,width:maxX-minX+1,height:maxY-minY+1};
-}
 function drawChar(ch){ctx.clearRect(0,0,256,256);ctx.fillStyle="black";ctx.fillRect(0,0,256,256);
- ctx.fillStyle="white";ctx.font=`120px "${fontName}"`;ctx.textBaseline="top";ctx.fillText(ch,10,10);
-}
-function charRows(ch){
- drawChar(ch);const img=ctx.getImageData(0,0,256,256);const b=fontBBox;const rows=[];
+ ctx.fillStyle="white";ctx.font=`120px "${fontName}"`;ctx.textBaseline="top";ctx.fillText(ch,10,10)}
+function bbox(img){const{data,width,height}=img;let minX=width,maxX=-1,minY=height,maxY=-1;
+ for(let y=0;y<height;y++)for(let x=0;x<width;x++){const i=(y*width+x)*4;if(data[i+3]>10){minX=Math.min(minX,x);maxX=Math.max(maxX,x);minY=Math.min(minY,y);maxY=Math.max(maxY,y)}}return maxX<minX?null:{minX,minY,width:maxX-minX+1,height:maxY-minY+1}}
+function charRows(ch){drawChar(ch);const img=ctx.getImageData(0,0,256,256);const b=fontBBox;const rows=[];
  for(let gy=0;gy<H;gy++){let v=0;const sy=Math.floor(b.minY+(gy+0.5)*b.height/H);
   for(let gx=0;gx<W;gx++){const sx=Math.floor(b.minX+(gx+0.5)*b.width/W);
-   const i=(sy*256+sx)*4;if(img.data[i+3]>10)v|=(1<<(W-1-gx))}rows.push(v)}
- return rows;
-}
+   const i=(sy*256+sx)*4;if(img.data[i+3]>10)v|=(1<<(W-1-gx))}rows.push(v)}return rows}
+
 importFont.onclick=async()=>{
  if(!fontName)await loadFont();
  drawChar("A");fontBBox=bbox(ctx.getImageData(0,0,256,256));
- const chars=fontChars.value.split("");let imported=0;
- saveState();
- for(const ch of chars){
-  if(!ch.trim()&&ch!==" ")continue;
-  const r=charRows(ch);
-  if(r.some(x=>x))stateA.glyphs[ch]=r,imported++;
+ saveState();let imported=0;
+
+ const START=parseInt(scanStart.value,16);
+ const END=parseInt(scanEnd.value,16);
+
+ for(let code=START;code<=END;code++){
+   const ch=String.fromCodePoint(code);
+   drawChar(ch);const img=ctx.getImageData(0,0,256,256);
+   let has=false;for(let i=0;i<img.data.length;i+=4){if(img.data[i+3]>10){has=true;break}}
+   if(!has)continue;
+
+   const rows=charRows(ch);
+   if(rows.some(v=>v)){
+     stateA.glyphs[ch]=rows;
+     const cat=unicodeCategory(ch);
+     ensureCat(cat);stateA.categories[cat].add(ch);
+     imported++;
+   }
  }
- fontInfo.textContent=`Zaimportowano ${imported}`;
- renderList();
+ fontInfo.textContent=`Zaimportowano ${imported} glifów`;
+ renderCatSelect();renderList();
 }
 
-/* INIT */
 renderCatSelect();renderList();
 </script>
 </body>
