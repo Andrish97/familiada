@@ -174,11 +174,11 @@ export function createStore(gameId) {
       return state.completed.devices && !state.locks.gameStarted;
     }
 
-    // ROUNDS – dostępne po Urządzeniach, niezależnie od tego,
-    // czy ustawienia są już perfekcyjne i czy jest finał
+    // ROUNDS – dostępne po Urządzeniach, ale tylko dopóki finał się nie zaczął
     if (card === "rounds") {
-      return state.completed.devices;
+      return state.completed.devices && !state.locks.finalActive;
     }
+
 
     // FINAŁ – tylko jeśli:
     // - gra ma finał,
