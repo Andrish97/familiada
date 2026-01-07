@@ -950,26 +950,26 @@ async function revealPointsAndScore(roundNo /*1|2*/, idx /*0..4*/) {
     setTimeout(() => {
       (async () => {
         try {
-          // chowamy logo dopiero w trakcie dźwięku
+          // chowamy planszę rund
           if (typeof display.roundsHideBoard === "function") {
-            await display.roundsHideBoard();
-          } catch (e) {
+            try {
+              await display.roundsHideBoard();
+            } catch (e) {
               console.error("roundsHideBoard error", e);
             }
           }
+    
+          // wjeżdża pusta plansza finału (FBATCH ustawia SUMA A ▒▒)
           if (typeof display.finalBoardPlaceholders === "function") {
             await display.finalBoardPlaceholders();
           }
-          // od razu suma = 0 po stronie A
-          if (typeof display.finalSetSuma === "function") {
-            await display.finalSetSuma(0, "A");
-          }
+    
         } catch (e) {
           console.error("display setup for final (delayed) failed", e);
         }
       })();
     }, transitionAnchorMs);
-  
+
     // po zakończeniu dźwięku – dzwonki "wchodzimy do finału"
     if (totalMs > 0) {
       await new Promise((resolve) => setTimeout(resolve, totalMs));
@@ -1093,15 +1093,15 @@ async function revealPointsAndScore(roundNo /*1|2*/, idx /*0..4*/) {
     renderMapOne(2, idx);
   }
 
-  async function nextFromP2Q(idx1based) {
-    const idx = idx1based - 1;
-    const ended = await commitReveal(2, idx);
-    if (ended) return;
-
-    if (idx1based < 5) {
-      toP2MapQ(idx1based + 1);
+  function nextFromP2Q(idx1based) {
+    const n = Number(idx1based) || 1;
+  
+    if (n < 5) {
+      toP2MapQ(n + 1);
     } else {
-      await gotoEnd(false);
+      // jeśli nie weszło 200+ w revealPointsAndScore,
+      // kończymy finał „poniżej progu”
+      gotoEnd(false);
     }
   }
 
