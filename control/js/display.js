@@ -270,14 +270,16 @@ export function createDisplay({ devices, store }) {
   }
 
   async function finalSetSuma(sum, side = "A") {
-    const p = String(nInt(sum, 0)).padStart(3, "0");
-    const s = side === "B" ? "B" : "A";
+    const sideSafe = side === "B" ? "B" : "A";
   
-    // suma na planszy finału (pod A albo B)
-    await send(`FSUMA ${s} ${p} ANIMIN matrix right 500`);
+    // pod planszą finału: goła liczba, bez zer z przodu
+    const txt = String(nInt(sum, 0));
   
-    // dubel w górnym triplecie
-    await send(`TOP ${p}`);
+    await send(`FSUMA ${sideSafe} ${txt} ANIMIN matrix right 500`);
+  
+    // górny triplet = kopia sumy finału (3 cyfry)
+    const topVal = String(nInt(sum, 0)).padStart(3, "0");
+    await send(`TOP ${topVal}`);
   }
 
   async function finalSetSideTimer(team, text) {
