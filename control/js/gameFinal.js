@@ -103,13 +103,6 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     const f = store.state.final;
     if (!f.runtime) f.runtime = {};
     const rt = f.runtime;
-
-    if (!rt.leftSnapshot) {
-      rt.leftSnapshot = Array.from({ length: 5 }, () => ({
-        text: display.PLACE.finalText,
-        pts: display.PLACE.finalPts,
-      }));
-    }
     
     if (!rt.p1)
       rt.p1 = Array.from({ length: 5 }, () => ({ text: ""}));
