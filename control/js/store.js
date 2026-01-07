@@ -256,11 +256,6 @@ export function createStore(gameId) {
     emit();
   }
 
-  function markSentBlackAfterDisplayOnline() {
-    state.flags.sentBlackAfterDisplayOnline = true;
-    emit();
-  }
-
   function setAudioUnlocked(v) {
     state.flags.audioUnlocked = !!v;
     emit();
@@ -354,7 +349,6 @@ export function createStore(gameId) {
         state.flags.displayOnline = !!p.flags.displayOnline;
         state.flags.hostOnline = !!p.flags.hostOnline;
         state.flags.buzzerOnline = !!p.flags.buzzerOnline;
-        state.flags.sentBlackAfterDisplayOnline = !!p.flags.sentBlackAfterDisplayOnline;
         state.flags.audioUnlocked = !!p.flags.audioUnlocked;
         state.flags.qrOnDisplay = !!p.flags.qrOnDisplay;
       }
@@ -508,7 +502,6 @@ export function createStore(gameId) {
     unconfirmFinalQuestions,
 
     setOnlineFlags,
-    markSentBlackAfterDisplayOnline,
     setAudioUnlocked,
     setQrOnDisplay,
     setFinalActive,
