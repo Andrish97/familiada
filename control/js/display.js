@@ -90,6 +90,10 @@ export function createDisplay({ devices, store }) {
   
     await send(cmd);
   }
+
+  async function roundsHideBoard() {
+    await send("RBATCH ANIMOUT edge down 1000");
+  }
   
   async function roundsBoardPlaceholdersNewRound(count) {
     const line = PLACE.roundsText;
@@ -321,6 +325,7 @@ export function createDisplay({ devices, store }) {
     stateGameReady,
     stateIntroLogo,
 
+    roundsHideBoard,
     roundsBoardPlaceholders,
     roundsBoardPlaceholdersNewRound,
     roundsRevealRow,
