@@ -12,7 +12,6 @@ export function createStore(gameId) {
     finalTarget: 200,
     // czy na końcu gry wyświetlamy ekran „wygrana” (true) czy samo logo (false)
     endScreenMode: "logo", // "logo" | "points" | "money"
-
     
   };
 
@@ -472,11 +471,20 @@ export function createStore(gameId) {
     if (typeof partial.finalTarget === "number") {
       next.finalTarget = partial.finalTarget;
     }
-
+  
+    // nowy klucz: tryb ekranu końcowego
+    if (typeof partial.endScreenMode === "string") {
+      const m = partial.endScreenMode;
+      if (m === "logo" || m === "points" || m === "money") {
+        next.endScreenMode = m;
+      }
+    }
+  
+    // stary klucz (kompatybilność)
     if (typeof partial.winEnabled === "boolean") {
       next.winEnabled = partial.winEnabled;
     }
-
+  
     state.advanced = next;
     emit();
   }
