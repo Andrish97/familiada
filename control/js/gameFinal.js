@@ -213,8 +213,12 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
       if (leftMs <= 0) {
         rt.timer.running = false;
         ui.setText("finalTimer", "0");
-        displaySetTimerSeconds(0).catch(() => {});
-        playSfx("answer_wrong"); // koniec czasu
+      
+        // zamiast "timer na 0" – przywracamy punkty A/B
+        const totals = store.state.rounds?.totals || { A: 0, B: 0 };
+        display.setTotalsTriplets?.(totals).catch(() => {});
+      
+        playSfx("answer_wrong");
         if (phase === "P1") ui.setEnabled("btnFinalToP1MapQ1", true);
         if (phase === "P2") ui.setEnabled("btnFinalToP2MapQ1", true);
         return;
