@@ -4,7 +4,7 @@ const FINAL_MSG = {
   ERR_MISSING_5: "Brakuje 5 pytań finału (zatwierdź w ustawieniach).",
 
   // --- timer ---
-  TIMER_PLACEHOLDER: "—",
+  TIMER_PLACEHOLDER: "—",answer_wrong
   TIMER_RUNNING: "Odliczanie trwa…",
 
   // --- start / dostępność finału ---
@@ -265,7 +265,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
         const totals = store.state.rounds?.totals || { A: 0, B: 0 };
         display.setTotalsTriplets?.(totals).catch(() => {});
       
-        playSfx("answer_wrong");
+        playSfx("time_over");
         if (phase === "P1") ui.setEnabled("btnFinalToP1MapQ1", true);
         if (phase === "P2") ui.setEnabled("btnFinalToP2MapQ1", true);
         return;
