@@ -139,6 +139,42 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     if (!rt.done) rt.done = false;
   }
 
+  function getP1DisplayRow(idx) {
+    ensureRuntime();
+    const rt = store.state.final.runtime;
+    const q = qPicked[idx];
+    const aList = answersByQ.get(q.id) || [];
+    const row = rt.map1[idx];
+  
+    const input = (rt.p1[idx].text || "").trim();
+  
+    // jeśli mapowanie nieustawione – traktuj jak SKIP+placeholder
+    const kind = row.kind || "SKIP";
+  
+    // domyślne wartości (placeholder)
+    let text = "———————————";
+    let pts = "▒▒";
+  
+    if (kind === "MATCH") {
+      const a = aList.find((x) => x.id === row.matchId);
+      if (a) {
+        text = (a.text || "").trim() || "———————————";
+        pts = String(nInt(a.fixed_points, 0)).padStart(2, "0");
+      }
+    } else if (kind === "MISS") {
+      // "Nie ma na liście" → bierzemy outText albo wpis gracza
+      const out = (row.outText || input || "").trim();
+      text = out || "———————————";
+      pts = "00";
+    } else if (kind === "SKIP") {
+      // brak odpowiedzi → zostawiamy kreski + "puste" punkty
+      text = "———————————";
+      pts = "▒▒";
+    }
+  
+    return { text, pts };
+  }
+
   function stopTimer() {
     const rt = store.state.final.runtime;
     rt.timer.running = false;
@@ -933,27 +969,50 @@ async function revealPointsAndScore(roundNo /*1|2*/, idx /*0..4*/) {
   }
 
   async function startP2Round() {
+    ensureRuntime();
+    const rt = store.state.final.runtime;
+  
+    // dźwięk przejścia jak w rundach
+    let dur = 0;
+    try {
+      dur = await getSfxDuration("round_transition");
+    } catch {}
+    const totalMs = dur > 0 ? dur * 1000 : 2000;
+    const anchorMs = 920;
+  
     playSfx("round_transition");
-    await display.finalHideAnswersKeepSum?.();
-    await display.finalSetSideTimer?.(getWinnerTeam(), "20");
-
+  
+    // 1) szybkie zasłonięcie lewej strony "pustym" halfem
+    setTimeout(() => {
+      display.finalHideAnswersKeepSum?.().catch(() => {});
+    }, 200);
+  
+    // 2) w kotwicy – FHALF A z BIEŻĄCEGO stanu map1
+    setTimeout(() => {
+      (async () => {
+        try {
+          const rows = [];
+          for (let i = 0; i < 5; i++) {
+            rows.push(getP1DisplayRow(i));
+          }
+          await display.finalHalfAFromRows?.(rows);
+          await display.finalSetSideTimer?.(getWinnerTeam(), "20");
+        } catch (e) {
+          console.error("finalHalf from state failed", e);
+        }
+      })();
+    }, anchorMs);
+  
+    if (totalMs > 0) {
+      await new Promise((resolve) => setTimeout(resolve, totalMs));
+    }
+  
     setStep("f_p2_entry");
     renderP2Entry();
     ui.setEnabled("btnFinalToP2MapQ1", false);
     ui.setMsg("msgFinalP2Start", FINAL_MSG.R2_STARTED);
   }
 
-  async function nextFromP1Q(idx1based) {
-    const idx = idx1based - 1;
-    const ended = await commitReveal(1, idx);
-    if (ended) return;
-
-    if (idx1based < 5) {
-      toP1MapQ(idx1based + 1);
-    } else {
-      setStep("f_p2_start");
-    }
-  }
 
   function toP2MapQ(idx1based) {
     stopTimer();
