@@ -646,19 +646,6 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     await display.finalBoardPlaceholders?.();
     await display.finalSetSuma?.(0);
 
-    for (let i = 1; i <= 5; i++) {
-      await display.finalSetLeft?.(
-        i,
-        display.PLACE?.finalText || FINAL_MSG.FALLBACK_ANSWER
-      );
-      await display.finalSetRight?.(
-        i,
-        display.PLACE?.finalText || FINAL_MSG.FALLBACK_ANSWER
-      );
-      await display.finalSetA?.(i, "00");
-      await display.finalSetB?.(i, "00");
-    }
-
     await display.finalSetSideTimer?.(getWinnerTeam(), "");
 
     ui.setMsg("msgFinal", FINAL_MSG.FINAL_STARTED);
