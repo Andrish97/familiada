@@ -580,9 +580,15 @@ async function main() {
     }
 
     // tryb ekranu końcowego
-    if (form.winMode === "money") adv.winEnabled = true;
-    if (form.winMode === "logo") adv.winEnabled = false;
-
+    if (form.winMode === "money" || form.winMode === "logo" || form.winMode === "points") {
+      // nowy, docelowy klucz
+      adv.endScreenMode = form.winMode;
+  
+      // winEnabled zostaje tylko jako kompatybilność wstecz:
+      // - wszystko, co nie "logo", traktujemy jak "ekran wygranej"
+      adv.winEnabled = form.winMode === "logo" ? false : true;
+    }
+  
     store.setAdvanced(adv);
     ui.setMsg?.("msgAdvanced", APP_MSG.ADV_SAVED);
   });
