@@ -681,9 +681,7 @@ async function main() {
   // FINAL (runtime – nie picker)
   final.bootIfNeeded();
 
-  ui.on("final.start", () => final.startFinal());
-  ui.on("final.back", (card) => store.setActiveCard(card));
-  ui.on("final.backStep", (step) => final.backTo(step));
+  ui.on("final.start", () => final.startFinal());;
 
   ui.on("final.p1.timer", () => final.p1StartTimer());
   ui.on("final.p1.toQ", (n) => final.toP1MapQ(n));
