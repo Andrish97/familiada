@@ -599,43 +599,27 @@ export function createUI() {
     
     $("btnFinalFinishBack")?.addEventListener("click", () => emit("final.finish.back"));
     $("btnFinalStart")?.addEventListener("click", () => emit("final.start"));
-
-    $("btnFinalBackToRounds")?.addEventListener("click", () => emit("final.back", "rounds"));
     
-    $("btnFinalBackFromP1Entry")?.addEventListener("click", () => emit("final.backStep", "f_start"));
     $("btnFinalP1StartTimer")?.addEventListener("click", () => emit("final.p1.timer"));
     $("btnFinalToP1MapQ1")?.addEventListener("click", () => emit("final.p1.toQ", 1));
     
-    $("btnFinalBackFromP1Q1")?.addEventListener("click", () => emit("final.backStep", "f_p1_entry"));
     $("btnFinalNextFromP1Q1")?.addEventListener("click", () => emit("final.p1.nextQ", 1));
-    $("btnFinalBackFromP1Q2")?.addEventListener("click", () => emit("final.backStep", "f_p1_map_q1"));
     $("btnFinalNextFromP1Q2")?.addEventListener("click", () => emit("final.p1.nextQ", 2));
-    $("btnFinalBackFromP1Q3")?.addEventListener("click", () => emit("final.backStep", "f_p1_map_q2"));
     $("btnFinalNextFromP1Q3")?.addEventListener("click", () => emit("final.p1.nextQ", 3));
-    $("btnFinalBackFromP1Q4")?.addEventListener("click", () => emit("final.backStep", "f_p1_map_q3"));
     $("btnFinalNextFromP1Q4")?.addEventListener("click", () => emit("final.p1.nextQ", 4));
-    $("btnFinalBackFromP1Q5")?.addEventListener("click", () => emit("final.backStep", "f_p1_map_q4"));
     $("btnFinalNextFromP1Q5")?.addEventListener("click", () => emit("final.p1.nextQ", 5));
     
-    $("btnFinalBackFromP2Start")?.addEventListener("click", () => emit("final.backStep", "f_p1_map_q5"));
     $("btnFinalStartP2")?.addEventListener("click", () => emit("final.p2.start"));
     
-    $("btnFinalBackFromP2Entry")?.addEventListener("click", () => emit("final.backStep", "f_p2_start"));
     $("btnFinalP2StartTimer")?.addEventListener("click", () => emit("final.p2.timer"));
     $("btnFinalToP2MapQ1")?.addEventListener("click", () => emit("final.p2.toQ", 1));
     
-    $("btnFinalBackFromP2Q1")?.addEventListener("click", () => emit("final.backStep", "f_p2_entry"));
     $("btnFinalNextFromP2Q1")?.addEventListener("click", () => emit("final.p2.nextQ", 1));
-    $("btnFinalBackFromP2Q2")?.addEventListener("click", () => emit("final.backStep", "f_p2_map_q1"));
     $("btnFinalNextFromP2Q2")?.addEventListener("click", () => emit("final.p2.nextQ", 2));
-    $("btnFinalBackFromP2Q3")?.addEventListener("click", () => emit("final.backStep", "f_p2_map_q2"));
     $("btnFinalNextFromP2Q3")?.addEventListener("click", () => emit("final.p2.nextQ", 3));
-    $("btnFinalBackFromP2Q4")?.addEventListener("click", () => emit("final.backStep", "f_p2_map_q3"));
     $("btnFinalNextFromP2Q4")?.addEventListener("click", () => emit("final.p2.nextQ", 4));
-    $("btnFinalBackFromP2Q5")?.addEventListener("click", () => emit("final.backStep", "f_p2_map_q4"));
     $("btnFinalNextFromP2Q5")?.addEventListener("click", () => emit("final.p2.nextQ", 5));
     
-    $("btnFinalBackFromEnd")?.addEventListener("click", () => emit("final.backStep", "f_p2_map_q5"));
     $("btnFinalFinish")?.addEventListener("click", () => emit("final.finish"));
 
   }
