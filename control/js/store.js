@@ -405,7 +405,7 @@ export function createStore(gameId) {
       if (p?.advanced) {
         const a = p.advanced;
         const cur = state.advanced || { ...DEFAULT_ADVANCED };
-
+      
         if (Array.isArray(a.roundMultipliers)) {
           cur.roundMultipliers = a.roundMultipliers
             .map((x) => {
@@ -416,20 +416,29 @@ export function createStore(gameId) {
             cur.roundMultipliers = [...DEFAULT_ADVANCED.roundMultipliers];
           }
         }
-
+      
         if (typeof a.finalMinPoints === "number") {
           cur.finalMinPoints = a.finalMinPoints;
         }
         if (typeof a.finalTarget === "number") {
           cur.finalTarget = a.finalTarget;
         }
+      
+        // nowy format – zapisany w stanie
+        if (typeof a.endScreenMode === "string") {
+          const m = a.endScreenMode;
+          if (m === "logo" || m === "points" || m === "money") {
+            cur.endScreenMode = m;
+          }
+        }
+      
+        // stary format – tylko fallback
         if (typeof a.winEnabled === "boolean") {
           cur.winEnabled = a.winEnabled;
         }
-
+      
         state.advanced = cur;
       }
-
       
     } catch {
       // przy problemie z JSON-em po prostu startujemy od zera
