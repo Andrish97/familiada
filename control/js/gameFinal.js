@@ -186,6 +186,13 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     ui.setText("finalTimer", FINAL_MSG.TIMER_PLACEHOLDER);
   }
 
+  function clearFinalMsgs() {
+    ui.setMsg("msgFinal", "");
+    ui.setMsg("msgFinalP1Entry", "");
+    ui.setMsg("msgFinalP2Entry", "");
+    ui.setMsg("msgFinalP2Start", "");
+  }
+
   // Zwycięska drużyna (do timera na bocznym tripletcie).
   function getWinnerTeam() {
     return store.state?.winnerTeam || store.state?.final?.winnerTeam || "A";
@@ -903,7 +910,7 @@ async function revealPointsAndScore(roundNo /*1|2*/, idx /*0..4*/) {
       ui.setMsg("msgFinal", FINAL_MSG.FINAL_NEEDS_POINTS(threshold));
       return;
     }
-  
+
     ensureRuntime();
   
     if (typeof store.setFinalActive === "function") {
@@ -929,12 +936,14 @@ async function revealPointsAndScore(roundNo /*1|2*/, idx /*0..4*/) {
     } catch (e) {
       console.warn("getSfxDuration(final_theme) error", e);
     }
-  
+
     // Całkowity czas dźwięku
     const totalMs = typeof dur === "number" && dur > 0 ? dur * 1000 : 4000;
   
     // Kotwica, w której wjeżdża plansza finału – np. 1000ms po starcie dźwięku
     const transitionAnchorMs = 1000;
+
+    clearFinalMsgs():
   
     playSfx("final_theme");
   
