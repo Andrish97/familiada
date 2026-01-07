@@ -4,7 +4,7 @@ const FINAL_MSG = {
   ERR_MISSING_5: "Brakuje 5 pytań finału (zatwierdź w ustawieniach).",
 
   // --- timer ---
-  TIMER_PLACEHOLDER: "—",answer_wrong
+  TIMER_PLACEHOLDER: "—",
   TIMER_RUNNING: "Odliczanie trwa…",
 
   // --- start / dostępność finału ---
