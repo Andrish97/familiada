@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8" />
+<title>Edytor 5×7 — Full</title>
+<style>
+body{background:#111;color:#eee;font-family:system-ui,sans-serif;margin:0;padding:10px;display:flex;flex-direction:column;gap:10px}
+.panel{background:#191919;border:1px solid #333;border-radius:6px;padding:8px}
+.row{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.small{font-size:11px;color:#aaa}
+button,input,select,textarea{font-size:12px;background:#000;color:#eee;border:1px solid #444;border-radius:4px}
+button{background:#222;cursor:pointer;padding:4px 8px}
+button:hover{background:#333}
+.layout{display:grid;grid-template-columns:240px 2fr 2fr;gap:10px}
+.glyph-list{height:420px;overflow:auto;background:#000;border:1px solid #333}
+.glyph-list-item{display:flex;justify-content:space-between;padding:2px 4px;cursor:pointer;font-family:monospace}
+.glyph-list-item.active{background:#444}
+.glyph-list-item:hover{background:#222}
+.glyph-grid{display:grid;grid-template-columns:repeat(5,16px);grid-template-rows:repeat(7,16px);gap:3px}
+.pixel{width:16px;height:16px;background:#222;border-radius:3px}
+.pixel.on{background:#ffd200;box-shadow:0 0 6px #ffd200}
+.editor-grid .pixel{cursor:pointer;border:1px solid #444}
+.editor-grid .pixel.on{border-color:#ffe680}
+.badge{font-size:10px;padding:1px 3px;border:1px solid #555;border-radius:3px;background:#333}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+hr{border:0;border-top:1px solid #333;margin:6px 0}
+textarea{width:100%;resize:vertical;min-height:80px}
+</style>
+</head>
+
+<body>
+<h2>Edytor czcionki 5×7 — wersja pełna</h2>
+
+<!-- TOOLS -->
+<div class="panel">
+<div class="row">
+  <div>
+    <strong>Font (.otf/.ttf)</strong><br>
+    <input id="fontFile" type="file" accept=".otf,.ttf">
+  </div>
+  <div style="flex:1;">
+    <label class="small">Znaki:</label>
+    <input id="fontChars" style="width:100%" value="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyzĄĆĘŁŃÓŚŹŻ0123456789!?.,:;()-→←↑↓" />
+    <button id="importFont">Import z fontu → A</button>
+    <div id="fontInfo" class="small"></div>
+  </div>
+</div>
+
+<hr>
+
+<div class="row">
+  <div><strong>JSON A</strong><br><input id="jsonA" type="file" accept=".json"></div>
+  <div><strong>JSON B</strong><br><input id="jsonB" type="file" accept=".json"></div>
+  <button id="exportA">Eksport A</button>
+  <button id="undoBtn">Cofnij</button>
+  <button id="redoBtn">Ponów</button>
+</div>
+</div>
+
+<div class="layout">
+
+<!-- LIST -->
+<div class="panel">
+<h3>Zestaw A</h3>
+
+<label class="small">Kategorie:</label>
+<div class="row">
+  <select id="catSelect"></select>
+  <button id="catFilter">Filtruj</button>
+  <button id="catAll">Wszystkie</button>
+</div>
+
+<div class="row">
+  <input id="catNew" placeholder="nowa kategoria">
+  <button id="catAdd">Dodaj</button>
+</div>
+
+<div class="row">
+  <button id="catRename">Zmień nazwę</button>
+  <button id="catDelete">Usuń</button>
+</div>
+
+<label class="small">Dodaj znak:</label>
+<div class="row">
+  <input id="charNew" maxlength="1" value="A">
+  <button id="charAdd">Dodaj / wybierz</button>
+</div>
+
+<div class="row small">
+  Multi-select: Ctrl (pojedyncze) • Shift (zakres)
+</div>
+
+<div id="glyphList" class="glyph-list"></div>
+<div class="small">Znaków: <span id="countA">0</span></div>
+</div>
+
+<!-- EDITOR -->
+<div class="panel">
+<h3>Edytor znaku A</h3>
+<div id="charInfo" class="small">—</div>
+
+<label class="small">Kategorie znaku:</label>
+<div id="charCats" class="row small"></div>
+
+<div class="row">
+  <div>
+    <div id="editor" class="glyph-grid editor-grid"></div>
+  </div>
+  <div style="flex:1;">
+    <label class="small">Bitmapa:</label>
+    <div id="rowsView" class="small"></div>
+    <input id="rowsEdit">
+    <button id="rowsApply">Zastosuj</button>
+
+    <label class="small">Alias:</label>
+    <div class="row">
+      <input id="aliasTarget" placeholder="np. A">
+      <button id="makeAlias">Utwórz alias</button>
+      <button id="breakAlias">Rozbij alias</button>
+    </div>
+
+    <label class="small">Fragment JSON:</label>
+    <textarea id="snippet" readonly></textarea>
+  </div>
+</div>
+</div>
+
+<!-- COMPARE -->
+<div class="panel">
+<h3>Porównanie A ↔ B</h3>
+
+<div class="two">
+  <div><div class="small">A</div><div id="prevA" class="glyph-grid"></div></div>
+  <div><div class="small">B</div><div id="prevB" class="glyph-grid"></div></div>
+</div>
+
+<div class="row">
+  <button id="copyFromB">Kopiuj B → A</button>
+  <button id="copyAllDiff">Kopiuj wszystkie różne → A</button>
+</div>
+
+<div id="cmpText" class="small"></div>
+</div>
+
+</div>
+
+<canvas id="c" width="256" height="256" style="display:none"></canvas>
+
+<script>
+/* ===================================================
+   STAN
+=================================================== */
+const W=5,H=7;
+const ctx=c.getContext("2d");
+
+const stateA={meta:{name:"set-A",width:W,height:H},glyphs:{},aliases:{},categories:{}};
+const stateB={meta:{name:"set-B",width:W,height:H},glyphs:{},aliases:{},categories:{}};
+
+let selected=null, filter=null, fontName=null, fontBBox=null;
+let history=[], future=[];
+
+/* ===================================================
+   HELPERS
+=================================================== */
+const $=id=>document.getElementById(id);
+function saveState(){history.push(JSON.stringify(stateA));future.length=0}
+function restore(obj){Object.assign(stateA,JSON.parse(obj))}
+function grid(el){el.innerHTML="";for(let i=0;i<W*H;i++){const d=document.createElement("div");d.className="pixel";el.appendChild(d)}}
+grid(editor);grid(prevA);grid(prevB);
+
+function rowsToGrid(el,rows){
+ const p=el.querySelectorAll(".pixel");p.forEach(x=>x.classList.remove("on"));
+ if(!rows)return;
+ for(let y=0;y<H;y++)for(let x=0;x<W;x++)
+  if(rows[y]&1<<(W-1-x))p[y*W+x].classList.add("on");
+}
+function gridToRows(el){
+ const p=el.querySelectorAll(".pixel"),r=[];
+ for(let y=0;y<H;y++){let v=0;
+  for(let x=0;x<W;x++)if(p[y*W+x].classList.contains("on"))v|=(1<<(W-1-x));
+  r.push(v)}return r;
+}
+
+/* ===================================================
+   LISTA
+=================================================== */
+let selection=new Set();
+function renderList(){
+ const all=Object.keys({...stateA.glyphs,...stateA.aliases}).sort((a,b)=>a.codePointAt()-b.codePointAt());
+ const list=filter&&stateA.categories[filter]?all.filter(x=>stateA.categories[filter].has(x)):all;
+ glyphList.innerHTML=""; countA.textContent=list.length;
+ list.forEach(ch=>{
+  const d=document.createElement("div");
+  d.className="glyph-list-item"+(selection.has(ch)?" active":"");
+  d.innerHTML=`<span>${ch===" "?"␣":ch}</span><span class=small>U+${ch.codePointAt().toString(16).toUpperCase()}</span>`;
+  d.onclick=e=>handleSelect(ch,e); glyphList.appendChild(d);
+ })
+}
+function handleSelect(ch,e){
+ if(e.shiftKey){
+   if(selection.size){
+     const all=Object.keys({...stateA.glyphs,...stateA.aliases}).sort((a,b)=>a.codePointAt()-b.codePointAt());
+     const a=[...selection][0];selection=new Set();
+     const s=Math.min(all.indexOf(a),all.indexOf(ch));
+     const t=Math.max(all.indexOf(a),all.indexOf(ch));
+     for(let i=s;i<=t;i++)selection.add(all[i]);
+   }else selection=new Set([ch])
+ }else if(e.ctrlKey) selection.has(ch)?selection.delete(ch):selection.add(ch);
+ else selection=new Set([ch]);
+ selected=[...selection][0]; renderList(); updateEditor();
+}
+
+/* ===================================================
+   KATEGORIE
+=================================================== */
+function renderCatSelect(){
+ catSelect.innerHTML="";
+ Object.keys(stateA.categories).sort().forEach(n=>{
+  const o=document.createElement("option");o.value=n;o.textContent=`${n} (${stateA.categories[n].size})`;catSelect.appendChild(o);
+ })
+}
+catAdd.onclick=()=>{const n=catNew.value.trim();if(!n)return;stateA.categories[n]=stateA.categories[n]||new Set();catNew.value="";renderCatSelect()}
+catRename.onclick=()=>{const old=catSelect.value;if(!old)return;const n=prompt("Nowa nazwa",old);if(!n||n===old)return;
+ stateA.categories[n]=stateA.categories[old];delete stateA.categories[old];if(filter===old)filter=n;renderCatSelect();renderList()}
+catDelete.onclick=()=>{const n=catSelect.value;if(!n)return;delete stateA.categories[n];if(filter===n)filter=null;renderCatSelect();renderList()}
+catFilter.onclick=()=>{filter=catSelect.value;renderList()}
+catAll.onclick=()=>{filter=null;renderList()}
+
+/* ===================================================
+   EDYTOR
+=================================================== */
+function isAlias(ch){return stateA.aliases[ch]}
+function sourceRows(ch){
+ if(isAlias(ch))return sourceRows(stateA.aliases[ch]);
+ return stateA.glyphs[ch];
+}
+
+function updateEditor(){
+ if(!selected){charInfo.textContent="—";return}
+ const r=sourceRows(selected)||Array(H).fill(0);
+
+ rowsToGrid(editor,r);
+ rowsToGrid(prevA,r);
+ rowsToGrid(prevB,stateB.glyphs[selected]||null);
+
+ rowsView.textContent=r.join(", ");
+ rowsEdit.value=r.join(", ");
+ snippet.value=isAlias(selected)?`"${selected}":"@${stateA.aliases[selected]}"`:`"${selected}":[${r.join(",")}]`;
+ charInfo.textContent=`"${selected}"`;
+
+ renderCharCats();
+ cmpText.textContent=diffText(selected);
+}
+
+function renderCharCats(){
+ charCats.innerHTML="";
+ if(!selected)return;
+ Object.keys(stateA.categories).sort().forEach(n=>{
+  const l=document.createElement("label");l.className="row small";
+  const cb=document.createElement("input");cb.type="checkbox";cb.checked=stateA.categories[n].has(selected);
+  cb.onchange=()=>{saveState();cb.checked?stateA.categories[n].add(selected):stateA.categories[n].delete(selected);renderCatSelect();renderList()}
+  l.append(cb,document.createTextNode(n));charCats.append(l)
+ })
+}
+
+/* EDIT EVENTS */
+editor.onclick=e=>{
+ if(!e.target.classList.contains("pixel")||isAlias(selected))return;
+ saveState();
+ e.target.classList.toggle("on");
+ const r=gridToRows(editor); stateA.glyphs[selected]=r; updateEditor()
+}
+rowsApply.onclick=()=>{
+ saveState();
+ const r=rowsEdit.value.split(",").map(v=>parseInt(v)||0).slice(0,H);
+ stateA.glyphs[selected]=r; delete stateA.aliases[selected]; updateEditor()
+}
+
+/* ALIAS */
+makeAlias.onclick=()=>{
+ const t=aliasTarget.value.trim(); if(!t||t===selected)return;
+ if(!stateA.glyphs[t]&&!stateA.aliases[t])return alert("Brak takiego źródła");
+ saveState(); delete stateA.glyphs[selected]; stateA.aliases[selected]=t; updateEditor()
+}
+breakAlias.onclick=()=>{
+ if(!isAlias(selected))return;
+ saveState(); stateA.glyphs[selected]=sourceRows(selected).slice(); delete stateA.aliases[selected]; updateEditor()
+}
+
+/* ===================================================
+   JSON
+=================================================== */
+async function loadJSON(file){return JSON.parse(await file.text())}
+
+jsonA.onchange=async()=>{
+ const j=await loadJSON(jsonA.files[0]);
+ saveState();
+ stateA.meta=j.meta||stateA.meta;
+ stateA.glyphs=j.glyphs||{};
+ stateA.aliases=j.aliases||{};
+ stateA.categories={};
+ if(j.categories)for(const[k,v]of Object.entries(j.categories))stateA.categories[k]=new Set(v);
+ renderCatSelect(); renderList(); updateEditor();
+}
+jsonB.onchange=async()=>{
+ const j=await loadJSON(jsonB.files[0]);
+ stateB.meta=j.meta||stateB.meta;
+ stateB.glyphs=j.glyphs||{};
+ stateB.aliases=j.aliases||{};
+ renderList(); updateEditor();
+}
+
+exportA.onclick=()=>{
+ const cats={};for(const[k,v]of Object.entries(stateA.categories))cats[k]=Array.from(v);
+ const data={meta:stateA.meta,glyphs:stateA.glyphs,aliases:stateA.aliases,categories:cats};
+ const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
+ const url=URL.createObjectURL(blob);const a=document.createElement("a");
+ a.href=url;a.download=(stateA.meta.name||"set-A")+".json";a.click();URL.revokeObjectURL(url);
+}
+
+/* ===================================================
+   UNDO
+=================================================== */
+undoBtn.onclick=()=>{if(!history.length)return;future.push(JSON.stringify(stateA));restore(history.pop());renderCatSelect();renderList();updateEditor()}
+redoBtn.onclick=()=>{if(!future.length)return;history.push(JSON.stringify(stateA));restore(future.pop());renderCatSelect();renderList();updateEditor()}
+
+/* ===================================================
+   COMPARE
+=================================================== */
+function diffText(ch){
+ const a=JSON.stringify(sourceRows(ch));
+ const b=JSON.stringify(stateB.glyphs[ch]||null);
+ if(b==="null")return "Brak w B";
+ return a===b?"Identyczne":"Różne";
+}
+copyFromB.onclick=()=>{
+ if(!selected||!stateB.glyphs[selected])return;
+ saveState(); stateA.glyphs[selected]=stateB.glyphs[selected].slice(); delete stateA.aliases[selected]; updateEditor()
+}
+copyAllDiff.onclick=()=>{
+ saveState();
+ for(const ch of Object.keys(stateB.glyphs))
+  if(JSON.stringify(sourceRows(ch))!==JSON.stringify(stateB.glyphs[ch]))
+    stateA.glyphs[ch]=stateB.glyphs[ch].slice();
+ renderList(); updateEditor()
+}
+
+/* ===================================================
+   FONT IMPORT (Canvas)
+=================================================== */
+async function loadFont(){
+ const f=fontFile.files[0]; if(!f)return;
+ const url=URL.createObjectURL(f);
+ fontName="F_"+Math.random().toString(36).slice(2);
+ const face=new FontFace(fontName,`url(${url})`);await face.load();document.fonts.add(face);
+}
+function bbox(img){const{data,width,height}=img;let minX=width,maxX=-1,minY=height,maxY=-1;
+ for(let y=0;y<height;y++)for(let x=0;x<width;x++){const i=(y*width+x)*4;
+ if(data[i+3]>10){minX=Math.min(minX,x);maxX=Math.max(maxX,x);minY=Math.min(minY,y);maxY=Math.max(maxY,y)}}
+ return maxX<minX?null:{minX,minY,width:maxX-minX+1,height:maxY-minY+1};
+}
+function drawChar(ch){ctx.clearRect(0,0,256,256);ctx.fillStyle="black";ctx.fillRect(0,0,256,256);
+ ctx.fillStyle="white";ctx.font=`120px "${fontName}"`;ctx.textBaseline="top";ctx.fillText(ch,10,10);
+}
+function charRows(ch){
+ drawChar(ch);const img=ctx.getImageData(0,0,256,256);const b=fontBBox;const rows=[];
+ for(let gy=0;gy<H;gy++){let v=0;const sy=Math.floor(b.minY+(gy+0.5)*b.height/H);
+  for(let gx=0;gx<W;gx++){const sx=Math.floor(b.minX+(gx+0.5)*b.width/W);
+   const i=(sy*256+sx)*4;if(img.data[i+3]>10)v|=(1<<(W-1-gx))}rows.push(v)}
+ return rows;
+}
+importFont.onclick=async()=>{
+ if(!fontName)await loadFont();
+ drawChar("A");fontBBox=bbox(ctx.getImageData(0,0,256,256));
+ const chars=fontChars.value.split("");let imported=0;
+ saveState();
+ for(const ch of chars){
+  if(!ch.trim()&&ch!==" ")continue;
+  const r=charRows(ch);
+  if(r.some(x=>x))stateA.glyphs[ch]=r,imported++;
+ }
+ fontInfo.textContent=`Zaimportowano ${imported}`;
+ renderList();
+}
+
+/* INIT */
+renderCatSelect();renderList();
+</script>
+</body>
+</html>
