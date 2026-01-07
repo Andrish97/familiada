@@ -951,11 +951,10 @@ async function revealPointsAndScore(roundNo /*1|2*/, idx /*0..4*/) {
       (async () => {
         try {
           // chowamy logo dopiero w trakcie dźwięku
-          if (typeof display.hideLogo === "function") {
-            try {
-              await display.hideLogo();
-            } catch (e) {
-              console.error("hideLogo error", e);
+          if (typeof display.roundsHideBoard === "function") {
+            await display.roundsHideBoard();
+          } catch (e) {
+              console.error("roundsHideBoard error", e);
             }
           }
           if (typeof display.finalBoardPlaceholders === "function") {
