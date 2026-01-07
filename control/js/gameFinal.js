@@ -335,17 +335,6 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
         });
       });
 
-    document
-      .querySelectorAll('#finalP1Inputs button[data-enter="1"]')
-      .forEach((b) => {
-        b.addEventListener("click", () => {
-          const i = Number(b.dataset.i);
-          rt.p1[i].entered = true;
-          playSfx("answer_correct");
-          renderP1Entry();
-        });
-      });
-
     ui.setEnabled("btnFinalToP1MapQ1", !rt.timer.running);
   }
 
@@ -445,17 +434,6 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
           }
         });
 
-      });
-
-    document
-      .querySelectorAll('#finalP2Inputs button[data-enter="2"]')
-      .forEach((b) => {
-        b.addEventListener("click", () => {
-          const i = Number(b.dataset.i);
-          rt.p2[i].entered = true;
-          playSfx("answer_correct");
-          renderP2Entry();
-        });
       });
 
       document
@@ -1111,55 +1089,74 @@ async function revealPointsAndScore(roundNo /*1|2*/, idx /*0..4*/) {
 
   // === NOWA LOGIKA KOŃCA FINAŁU (3 tryby) ===
   async function finishFinal() {
+    // fanfara finałowa
     playSfx("final_theme");
-
+  
     const rt = store.state.final.runtime || {};
-    const sum = Number(rt.sum || 0); // suma punktów finału
-    
+    const sum = nInt(rt.sum, 0); // suma punktów finału
+  
     const adv = store.state.advanced || {};
     const target =
       typeof adv.finalTarget === "number" ? adv.finalTarget : 200;
-    const hitTarget = sum >= target;
-    
-    // oficjalna kasa wg regulaminu
+  
+    // punkty z rund
     const totals = store.state.rounds?.totals || { A: 0, B: 0 };
     const winnerTeam = getWinnerTeam();
-    const winnerPtsFromGame =
-      winnerTeam === "B" ? Number(totals.B || 0) : Number(totals.A || 0);
-    // punkty zebrane w grze * 3
-    const baseMoney = winnerPtsFromGame * 3;
-    // 200+ → +25k
-    const winAmount = hitTarget ? baseMoney + 25000 : baseMoney;
-    
-    // PRZESKOK SUMY NA STRONĘ ZWYCIĘZCY (triplet boczny)
+    const roundsA = nInt(totals.A, 0);
+    const roundsB = nInt(totals.B, 0);
+    const winnerRounds = winnerTeam === "B" ? roundsB : roundsA;
+  
+    // suma FINAŁU do progu 200
+    const hitTarget = sum >= target;
+  
+    // wszystkie punkty zwycięzcy po całej grze (rundy + finał)
+    const totalPointsAll = winnerRounds + sum;
+  
+    // kasa: (rundy + finał) * 3 + ewentualne 25k
+    let winAmount = totalPointsAll * 3;
+    if (hitTarget) {
+      winAmount += 25000;
+    }
+  
+    // --- PRZESKOK NA TRIPLET ---
     try {
-      const tripA = winnerTeam === "A" ? sum : Number(totals.A || 0);
-      const tripB = winnerTeam === "B" ? sum : Number(totals.B || 0);
-      await display.setTotalsTriplets?.({ A: tripA, B: tripB });
+      const newTotals = {
+        A: winnerTeam === "A" ? roundsA + sum : roundsA,
+        B: winnerTeam === "B" ? roundsB + sum : roundsB,
+      };
+  
+      // TOP = 0 (przestajemy pokazywać sumę finału)
+      if (typeof display.setBankTriplet === "function") {
+        await display.setBankTriplet(0); // TOP 000
+      } else {
+        // awaryjnie można by tu wysłać TOP ręcznie
+        // await devices.sendDisplayCmd("TOP 000");
+      }
+  
+      await display.setTotalsTriplets?.(newTotals);
     } catch (e) {
       console.warn("setTotalsTriplets after final failed", e);
     }
-    
+  
     const mode = getEndScreenMode(store);
-
-
+  
     // 1) Tylko logo
     if (mode === "logo") {
       await display.showLogo?.();
       return;
     }
-
-    // 2) Punkty – pokazujemy sumę finału jako "wygraną"
+  
+    // 2) Punkty – pokazujemy TOTAL (rundy + finał), tak jak na tripletach
     if (mode === "points") {
       if (display.showWin) {
-        await display.showWin(sum);
+        await display.showWin(totalPointsAll);
       } else {
         await display.showLogo?.();
       }
       return;
     }
-
-    // 3) Kwota – tylko po finale ma sens
+  
+    // 3) Kwota – (rundy + finał) * 3 (+25k jeśli 200+ w finale)
     if (mode === "money") {
       if (display.showWin) {
         await display.showWin(winAmount);
@@ -1168,7 +1165,7 @@ async function revealPointsAndScore(roundNo /*1|2*/, idx /*0..4*/) {
       }
       return;
     }
-
+  
     // fallback
     await display.showLogo?.();
   }
