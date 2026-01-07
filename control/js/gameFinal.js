@@ -57,6 +57,13 @@ function nInt(v, d = 0) {
   return Number.isFinite(x) ? x : d;
 }
 
+function clearFinalMsgs() {
+  ui.setMsg("msgFinal", "");
+  ui.setMsg("msgFinalP1Entry", "");
+  ui.setMsg("msgFinalP2Entry", "");
+  ui.setMsg("msgFinalP2Start", "");
+}
+
 function escapeHtml(s) {
   return String(s ?? "")
     .replaceAll("&", "&amp;")
