@@ -89,28 +89,29 @@ export function createPresence({ game, ui, store, devices }) {
       buzzer: { on: bOn, seen: fmtSince(b?.last_seen_at) },
     });
 
-    // *** stan zerowy po świeżym podpięciu (Twoje wymagania) ***
-
-    // Host: przy przejściu OFF -> ON (w tej sesji) wyślij HIDE + SET ""
+    // *** stan zerowy po świeżym podpięciu (po starcie Controla) ***
+    
+    // Host: przy przejściu OFF -> ON (w TEJ sesji Controla) wyślij HIDE + SET ""
     if (hOn && !prevHost) {
       try {
         await devices.sendHostCmd("HIDE");
         await devices.sendHostCmd('SET ""');
       } catch {}
     }
-
-    // Buzzer: przy przejściu OFF -> ON -> OFF
+    
+    // Buzzer: przy przejściu OFF -> ON w TEJ sesji Controla -> OFF
     if (bOn && !prevBuzzer) {
       try {
         await devices.sendBuzzerCmd("OFF");
       } catch {}
     }
-
-    // Display: po pierwszym podpięciu -> APP BLACK (raz na grę)
-    if (dOn && !prevDisplay && !store.state.flags.sentBlackAfterDisplayOnline) {
+    
+    // Display: ZA KAŻDYM razem, gdy w TEJ sesji Controla przechodzi OFF -> ON,
+    // czyli: start Controla + podpięcie wyświetlacza, albo rozłączenie/podpięcie
+    // w trakcie — czyścimy ekran.
+    if (dOn && !prevDisplay) {
       try {
         await devices.sendDisplayCmd("APP BLACK");
-        store.markSentBlackAfterDisplayOnline();
       } catch {}
     }
 
