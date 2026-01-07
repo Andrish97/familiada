@@ -1609,22 +1609,53 @@ export async function createScene() {
         }
       },
     },
-        // 🔧 NOWE: debug fontu 5x7
     debug: {
-      showFont: () => {
-        const groups = [];
-        if (FONT5.letters)     groups.push(FONT5.letters);
-        if (FONT5.digits)      groups.push(FONT5.digits);
-        if (FONT5.punctuation) groups.push(FONT5.punctuation);
-        if (FONT5.math)        groups.push(FONT5.math);
-        if (FONT5.special)     groups.push(FONT5.special);
+      /**
+       * Podgląd fontu 5x7 na BIG.
+       * opts:
+       *  - kind: "ALL" | "GROUP" | "TEXT"
+       *  - group: nazwa grupy z font_5x7.json (letters, digits, punctuation, math, special, albo nowa)
+       *  - text: ciąg znaków do wyświetlenia
+       */
+      showFont: (opts = {}) => {
+        const kind  = (opts.kind  || "ALL").toUpperCase();
+        const group = (opts.group || "");
+        const text  = (opts.text  || "");
 
-        // płaska lista wszystkich znaków z JSONa
-        const chars = groups.flatMap(obj => Object.keys(obj));
+        // wszystkie grupy z font_5x7.json poza "meta"
+        const groups = Object.keys(FONT5)
+          .filter(k => k !== "meta")
+          .map(name => ({ name: name.toUpperCase(), map: FONT5[name] || {} }));
+
+        const allChars = groups.flatMap(g => Object.keys(g.map));
+        let chars = [];
+
+        if (kind === "ALL") {
+          // wszystko z JSON-a
+          chars = allChars;
+        } else if (kind === "GROUP") {
+          const wanted = group.toUpperCase();
+          const g = groups.find(g => g.name === wanted);
+          if (!g) {
+            console.warn(
+              `DEBUG FONT GROUP: nie ma grupy "${group}". Dostępne: ${groups
+                .map(g => g.name.toLowerCase())
+                .join(", ")}`
+            );
+            return;
+          }
+          chars = Object.keys(g.map);
+        } else if (kind === "TEXT") {
+          chars = Array.from(text);
+        } else {
+          // awaryjnie: traktuj to jako TEXT
+          chars = Array.from(text || kind);
+        }
 
         // czyścimy BIG
         api.big.clear();
 
+        // rysujemy znaki po kolei, wierszami 30x10
         let i = 0;
         for (let row = 1; row <= big.tilesY; row++) {
           for (let col = 1; col <= big.tilesX; col++) {
@@ -1705,10 +1736,38 @@ export async function createScene() {
     const head = (tokens[0] ?? "").toUpperCase();
 
     // 🔧 DEBUG
+    // DEBUG FONT
+    // DEBUG FONT ALL
+    // DEBUG FONT GROUP letters
+    // DEBUG FONT TEXT "ĄĘŻŹ#$%^&*()"
+    // DEBUG FONT "ĄĘŻŹ#$%^&*()"
     if (head === "DEBUG") {
       const op = (tokens[1] ?? "").toUpperCase();
+
       if (op === "FONT") {
-        return api.debug.showFont();
+        const sub = (tokens[2] ?? "").toUpperCase();
+
+        // DEBUG FONT         → wszystkie znaki z JSON-a
+        // DEBUG FONT ALL
+        if (!sub || sub === "ALL") {
+          return api.debug.showFont({ kind: "ALL" });
+        }
+
+        // DEBUG FONT GROUP nazwaGrupy
+        if (sub === "GROUP") {
+          const gName = tokens[3] ?? "";
+          return api.debug.showFont({ kind: "GROUP", group: gName });
+        }
+
+        // DEBUG FONT TEXT "ciąg"
+        if (sub === "TEXT") {
+          const txt = unquote(tokens.slice(3).join(" "));
+          return api.debug.showFont({ kind: "TEXT", text: txt });
+        }
+
+        // fallback: DEBUG FONT cokolwiek → potraktuj resztę jako TEXT
+        const txt = unquote(tokens.slice(2).join(" "));
+        return api.debug.showFont({ kind: "TEXT", text: txt });
       }
     }
 
