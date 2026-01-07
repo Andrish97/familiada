@@ -225,6 +225,26 @@ export function createDisplay({ devices, store }) {
     );
   }
 
+  async function finalHalfAFromRows(rows) {
+    const fallbackText = PLACE.finalText;
+    const fallbackPts = PLACE.finalPts;
+  
+    const safeRows = (rows || []).slice(0, 5);
+    while (safeRows.length < 5) {
+      safeRows.push({ text: fallbackText, pts: fallbackPts });
+    }
+  
+    let cmd = "FHALF A ";
+    for (const row of safeRows) {
+      const txt = q(String(row.text || fallbackText));
+      const p = String(row.pts || fallbackPts);
+      cmd += `"${txt}" ${p} `;
+    }
+    cmd += "ANIMIN edge up 1000";
+  
+    await send(cmd);
+  }
+
   async function finalSetLeft(n, text) {
     const txt = q(String(text || ""));
     await send(`F ${n} L "${txt}" A 00 ANIMIN matrix right 500`);
@@ -245,10 +265,15 @@ export function createDisplay({ devices, store }) {
     await send(`F ${n} R "" B ${p} ANIMIN matrix right 500`);
   }
 
-  async function finalSetSuma(sum) {
+  async function finalSetSuma(sum, side = "A") {
     const p = String(nInt(sum, 0)).padStart(3, "0");
-    // domyślnie pokazujemy sumę pod stroną A (tak jak w przykładzie)
-    await send(`FSUMA A ${p} ANIMIN matrix right 500`);
+    const s = side === "B" ? "B" : "A";
+  
+    // suma na planszy finału (pod A albo B)
+    await send(`FSUMA ${s} ${p} ANIMIN matrix right 500`);
+  
+    // dubel w górnym triplecie
+    await send(`TOP ${p}`);
   }
 
   async function finalSetSideTimer(team, text) {
@@ -315,6 +340,7 @@ export function createDisplay({ devices, store }) {
     finalSetA,
     finalSetB,
     finalSetSideTimer,
+    finalHalfAFromRows,
     finalHideAnswersKeepSum,
 
     showLogo,
