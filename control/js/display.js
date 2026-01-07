@@ -283,13 +283,19 @@ export function createDisplay({ devices, store }) {
   }
 
   async function finalSetSideTimer(team, text) {
-    const t = String(text || "");
-    // Timer na bocznym tripletcie – wykorzystujemy TOP/LEFT/RIGHT,
-    // ale tylko po stronie zwycięskiej drużyny (ty ustalasz w Control).
+    const t = String(text ?? "");
     const sum = store.state.rounds?.totals || { A: 0, B: 0 };
     const a = String(nInt(sum.A, 0)).padStart(3, "0");
     const b = String(nInt(sum.B, 0)).padStart(3, "0");
-
+  
+    // jeśli tekst pusty → po prostu odświeżamy totals po obu stronach
+    if (!t) {
+      await send(`LEFT ${a}`);
+      await send(`RIGHT ${b}`);
+      return;
+    }
+  
+    // jeśli jest timer → jedna strona pokazuje sekundy, druga trzyma total z rund
     if (team === "A") {
       await send(`LEFT ${t}`);
       await send(`RIGHT ${b}`);
@@ -301,6 +307,7 @@ export function createDisplay({ devices, store }) {
       await send(`RIGHT ${b}`);
     }
   }
+
 
   // === Logo / Win ===
 
