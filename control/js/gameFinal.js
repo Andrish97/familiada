@@ -57,13 +57,6 @@ function nInt(v, d = 0) {
   return Number.isFinite(x) ? x : d;
 }
 
-function clearFinalMsgs() {
-  ui.setMsg("msgFinal", "");
-  ui.setMsg("msgFinalP1Entry", "");
-  ui.setMsg("msgFinalP2Entry", "");
-  ui.setMsg("msgFinalP2Start", "");
-}
-
 function escapeHtml(s) {
   return String(s ?? "")
     .replaceAll("&", "&amp;")
@@ -927,8 +920,6 @@ async function revealPointsAndScore(roundNo /*1|2*/, idx /*0..4*/) {
     }
 
     await loadFinalPicked();
-  
-    clearFinalMsgs(); // jeśli masz coś takiego, jak przy rundach
   
     const rt = store.state.final.runtime;
   
