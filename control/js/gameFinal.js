@@ -305,13 +305,33 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
           rt.p1[i].text = String(inp.value ?? "");
         });
         inp.addEventListener("keydown", (e) => {
-          if (e.key !== "Enter") return;
-          e.preventDefault();
           const i = Number(inp.dataset.i);
-          const next = document.querySelector(
-            `#finalP1Inputs input[data-p="1"][data-i="${i + 1}"]`
-          );
-          next?.focus();
+        
+          if (e.key === "ArrowDown") {
+            e.preventDefault();
+            const next = document.querySelector(
+              `#finalP1Inputs input[data-p="1"][data-i="${i + 1}"]`
+            );
+            next?.focus();
+            return;
+          }
+        
+          if (e.key === "ArrowUp") {
+            e.preventDefault();
+            const prev = document.querySelector(
+              `#finalP1Inputs input[data-p="1"][data-i="${i - 1}"]`
+            );
+            prev?.focus();
+            return;
+          }
+        
+          if (e.key === "Enter") {
+            e.preventDefault();
+            const next = document.querySelector(
+              `#finalP1Inputs input[data-p="1"][data-i="${i + 1}"]`
+            );
+            next?.focus();
+          }
         });
       });
 
@@ -373,17 +393,58 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
       .forEach((inp) => {
         inp.addEventListener("input", () => {
           const i = Number(inp.dataset.i);
-          rt.p2[i].text = String(inp.value ?? "");
+          const val = String(inp.value ?? "");
+          rt.p2[i].text = val;
+        
+          // jeśli coś wpisano, zdejmij „Powtórzenie”
+          if (val.trim().length > 0 && rt.p2[i].repeat) {
+            rt.p2[i].repeat = false;
+            renderP2Entry();
+          }
         });
         inp.addEventListener("keydown", (e) => {
-          if (e.key !== "Enter") return;
-          e.preventDefault();
           const i = Number(inp.dataset.i);
-          const next = document.querySelector(
-            `#finalP2Inputs input[data-p="2"][data-i="${i + 1}"]`
-          );
-          next?.focus();
+        
+          // nawigacja strzałkami
+          if (e.key === "ArrowDown") {
+            e.preventDefault();
+            const next = document.querySelector(
+              `#finalP2Inputs input[data-p="2"][data-i="${i + 1}"]`
+            );
+            next?.focus();
+            return;
+          }
+        
+          if (e.key === "ArrowUp") {
+            e.preventDefault();
+            const prev = document.querySelector(
+              `#finalP2Inputs input[data-p="2"][data-i="${i - 1}"]`
+            );
+            prev?.focus();
+            return;
+          }
+        
+          // Shift+Enter w pustym polu → zaznacza Powtórzenie
+          if (e.key === "Enter" && e.shiftKey) {
+            e.preventDefault();
+            const val = String(inp.value ?? "").trim();
+            if (!val) {
+              rt.p2[i].repeat = true;
+              renderP2Entry();
+            }
+            return;
+          }
+        
+          // zwykły Enter → przejście w dół
+          if (e.key === "Enter") {
+            e.preventDefault();
+            const next = document.querySelector(
+              `#finalP2Inputs input[data-p="2"][data-i="${i + 1}"]`
+            );
+            next?.focus();
+          }
         });
+
       });
 
     document
@@ -397,16 +458,25 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
         });
       });
 
-    document
-      .querySelectorAll('#finalP2Inputs button[data-repeat="2"]')
-      .forEach((b) => {
-        b.addEventListener("click", () => {
-          const i = Number(b.dataset.i);
-          rt.p2[i].repeat = !rt.p2[i].repeat;
-          playSfx("answer_repeat");
-          renderP2Entry();
+      document
+        .querySelectorAll('#finalP2Inputs button[data-repeat="2"]')
+        .forEach((b) => {
+          b.addEventListener("click", () => {
+            const i = Number(b.dataset.i);
+            const prev = rt.p2[i].repeat === true;
+            const next = !prev;
+      
+            rt.p2[i].repeat = next;
+      
+            // dźwięk TYLKO przy włączaniu powtórzenia
+            if (!prev && next) {
+              playSfx("answer_repeat");
+            }
+      
+            renderP2Entry();
+          });
         });
-      });
+
 
     ui.setEnabled("btnFinalToP2MapQ1", !rt.timer.running);
   }
@@ -792,7 +862,7 @@ async function revealPointsAndScore(roundNo /*1|2*/, idx /*0..4*/) {
     }
 
     rt.sum = (rt.sum || 0) + pts;
-    await display.finalSetSuma(rt.sum);
+    await display.finalSetSuma(rt.sum, roundNo === 1 ? "A" : "B");
     updateSumUI();
 
     const adv = store.state.advanced || {};
@@ -828,7 +898,6 @@ async function revealPointsAndScore(roundNo /*1|2*/, idx /*0..4*/) {
           : FINAL_MSG.END_BELOW_200(smallPrize);
       }
     }
-
     setStep("f_end");
   }
 
@@ -866,7 +935,14 @@ async function revealPointsAndScore(roundNo /*1|2*/, idx /*0..4*/) {
     } else {
       store.state.locks.finalActive = true;
     }
-  
+
+    // wyłączamy buzzer na czas finału
+    try {
+      await devices.sendBuzzerCmd("OFF");
+    } catch (e) {
+      console.warn("sendBuzzerCmd(OFF) in final failed", e);
+    }
+
     await loadFinalPicked();
   
     clearFinalMsgs(); // jeśli masz coś takiego, jak przy rundach
@@ -1039,14 +1115,33 @@ async function revealPointsAndScore(roundNo /*1|2*/, idx /*0..4*/) {
 
     const rt = store.state.final.runtime || {};
     const sum = Number(rt.sum || 0); // suma punktów finału
-    const moneyEarned = Number(store.state.moneyEarned || 0);
-
+    
     const adv = store.state.advanced || {};
     const target =
       typeof adv.finalTarget === "number" ? adv.finalTarget : 200;
     const hitTarget = sum >= target;
-
+    
+    // oficjalna kasa wg regulaminu
+    const totals = store.state.rounds?.totals || { A: 0, B: 0 };
+    const winnerTeam = getWinnerTeam();
+    const winnerPtsFromGame =
+      winnerTeam === "B" ? Number(totals.B || 0) : Number(totals.A || 0);
+    // punkty zebrane w grze * 3
+    const baseMoney = winnerPtsFromGame * 3;
+    // 200+ → +25k
+    const winAmount = hitTarget ? baseMoney + 25000 : baseMoney;
+    
+    // PRZESKOK SUMY NA STRONĘ ZWYCIĘZCY (triplet boczny)
+    try {
+      const tripA = winnerTeam === "A" ? sum : Number(totals.A || 0);
+      const tripB = winnerTeam === "B" ? sum : Number(totals.B || 0);
+      await display.setTotalsTriplets?.({ A: tripA, B: tripB });
+    } catch (e) {
+      console.warn("setTotalsTriplets after final failed", e);
+    }
+    
     const mode = getEndScreenMode(store);
+
 
     // 1) Tylko logo
     if (mode === "logo") {
@@ -1066,7 +1161,6 @@ async function revealPointsAndScore(roundNo /*1|2*/, idx /*0..4*/) {
 
     // 3) Kwota – tylko po finale ma sens
     if (mode === "money") {
-      const winAmount = hitTarget ? moneyEarned + 25000 : moneyEarned;
       if (display.showWin) {
         await display.showWin(winAmount);
       } else {
