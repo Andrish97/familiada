@@ -928,7 +928,7 @@ async function revealPointsAndScore(roundNo /*1|2*/, idx /*0..4*/) {
 
     await loadFinalPicked();
     
-    clearFinalMsgs():
+    clearFinalMsgs();
     
     const rt = store.state.final.runtime;
   
