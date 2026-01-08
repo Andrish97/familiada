@@ -313,17 +313,18 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
         return `
         <div class="card" style="margin-bottom:10px;">
           <div class="name">${escapeHtml(FINAL_MSG.Q_LABEL(i + 1))}</div>
-          <div class="qPrompt">${escapeHtml(q.text || "")}</div>
-
-          <div class="rowBtns" style="margin-top:10px;">
-            <input class="inp" data-p="1" data-i="${i}" value="${escapeHtml(
-          val
-        )}" placeholder="${escapeHtml(
-          FINAL_MSG.INPUT_PLACEHOLDER
-        )}" autocomplete="off"/>
+        
+          <div class="rowQ">
+            <div class="qPrompt inline">
+              ${escapeHtml(q.text || "")}
+            </div>
+            <input class="inp" data-p="1" data-i="${i}"
+              value="${escapeHtml(val)}"
+              placeholder="${escapeHtml(FINAL_MSG.INPUT_PLACEHOLDER)}"
+              autocomplete="off"/>
           </div>
         </div>
-      `;
+        `;
       })
       .join("");
 
@@ -381,25 +382,23 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
         const repeat = rt.p2[i].repeat === true;
         const p1 = (rt.p1[i].text || "").trim() || "—";
         return `
-        <div class="card" style="margin-bottom:10px;">
-          <div class="name">${escapeHtml(FINAL_MSG.Q_LABEL(i + 1))}</div>
-          <div class="qPrompt">${escapeHtml(q.text || "")}</div>
-
-          <div class="mini"><div class="hint">${escapeHtml(
-            FINAL_MSG.P2_HINT_P1_PREFIX
-          )}<b>${escapeHtml(p1)}</b></div></div>
-
-          <div class="rowBtns" style="margin-top:10px;">
-            <input class="inp" data-p="2" data-i="${i}" value="${escapeHtml(
-          v2
-        )}" placeholder="${escapeHtml(
-          FINAL_MSG.INPUT_PLACEHOLDER
-        )}" autocomplete="off"/>
-            <button class="btn sm danger" type="button" data-repeat="2" data-i="${i}">${
-              repeat
+        <div class="rowQ">
+          <div class="qPrompt inline">
+            ${escapeHtml(q.text || "")}
+          </div>
+        
+          <div class="colRight">
+            <input class="inp" data-p="2" data-i="${i}"
+              value="${escapeHtml(v2)}"
+              placeholder="${escapeHtml(FINAL_MSG.INPUT_PLACEHOLDER)}"
+              autocomplete="off"/>
+        
+            <button class="btn sm danger" type="button"
+              data-repeat="2" data-i="${i}">
+              ${repeat
                 ? escapeHtml(FINAL_MSG.P2_BTN_REPEAT_ON)
-                : escapeHtml(FINAL_MSG.P2_BTN_REPEAT_OFF)
-            }</button>
+                : escapeHtml(FINAL_MSG.P2_BTN_REPEAT_OFF)}
+            </button>
           </div>
         </div>
       `;
