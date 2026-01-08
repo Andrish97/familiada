@@ -577,54 +577,53 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     const html = `
       <div class="name">${escapeHtml(FINAL_MSG.Q_LABEL(idx + 1))}</div>
       <div class="qPrompt">${escapeHtml(q.text || "")}</div>
-  
+    
       ${hostHintHtml}
-  
-      <div class="cards2" style="margin-top:12px;">
-        <div class="card">
-          <div class="name">${escapeHtml(FINAL_MSG.MAP_LIST_TITLE)}</div>
-          <div class="rowBtns" style="flex-wrap:wrap; gap:8px;">
-            ${
-              aButtons ||
-              `<div class="hint">${escapeHtml(FINAL_MSG.MAP_LIST_EMPTY)}</div>`
-            }
-          </div>
+    
+      <!-- 1) Wybór (radio): lista + brak + nie ma na liście -->
+      <div class="card" style="margin-top:12px;">
+        <div class="name">${escapeHtml(FINAL_MSG.MAP_LIST_TITLE)}</div>
+    
+        <div class="rowBtns" style="flex-wrap:wrap; gap:8px;">
+          ${
+            aButtons ||
+            `<div class="hint">${escapeHtml(FINAL_MSG.MAP_LIST_EMPTY)}</div>`
+          }
         </div>
-  
-        <div class="card">
-          <div class="name">${escapeHtml(FINAL_MSG.MAP_OWN_TITLE)}</div>
-  
-            <div class="rowBtns" style="align-items:flex-start; gap:8px; flex-wrap:wrap;">
-              <button class="btn sm" type="button" data-kind="reveal-answer"
-                ${row.revealedAnswer ? "disabled" : ""}>
-                Odsłoń odpowiedź
-              </button>
-              <button class="btn sm" type="button" data-kind="reveal-points"
-                ${!row.revealedAnswer || row.revealedPoints ? "disabled" : ""}>
-                Odsłoń punkty
-              </button>
-            
-              <button class="btn sm ${
-                skipActive ? "gold" : ""
-              }" type="button" data-kind="skip">${escapeHtml(
-                  FINAL_MSG.MAP_BTN_SKIP
-                )}</button>
-              <button class="btn sm danger ${
-                missActive ? "gold" : ""
-              }" type="button" data-kind="miss">${escapeHtml(
-                  FINAL_MSG.MAP_BTN_MISS
-                )}</button>
-            </div>
-            
-          <div class="mini">
-            <div class="hint">${escapeHtml(FINAL_MSG.MAP_OUT_HINT)}</div>
-          </div>
-          <input class="inp" data-kind="out" value="${outVal}"
-                 placeholder="${escapeHtml(FINAL_MSG.MAP_OUT_PLACEHOLDER)}"/>
+    
+        <div class="rowBtns" style="margin-top:10px; gap:8px; flex-wrap:wrap;">
+          <button class="btn sm ${skipActive ? "gold" : ""}" type="button" data-kind="skip">
+            ${escapeHtml(FINAL_MSG.MAP_BTN_SKIP)}
+          </button>
+          <button class="btn sm danger ${missActive ? "gold" : ""}" type="button" data-kind="miss">
+            ${escapeHtml(FINAL_MSG.MAP_BTN_MISS)}
+          </button>
         </div>
       </div>
+    
+      <!-- 2) Odsłanianie osobno -->
+      <div class="card" style="margin-top:12px;">
+        <div class="name">Odsłanianie</div>
+        <div class="rowBtns" style="gap:8px; flex-wrap:wrap;">
+          <button class="btn sm" type="button" data-kind="reveal-answer"
+            ${row.revealedAnswer ? "disabled" : ""}>
+            Odsłoń odpowiedź
+          </button>
+          <button class="btn sm" type="button" data-kind="reveal-points"
+            ${!row.revealedAnswer || row.revealedPoints ? "disabled" : ""}>
+            Odsłoń punkty
+          </button>
+        </div>
+      </div>
+    
+      <!-- 3) Pole tekstowe osobno -->
+      <div class="card" style="margin-top:12px;">
+        <div class="name">${escapeHtml(FINAL_MSG.MAP_OUT_HINT)}</div>
+        <input class="inp" data-kind="out" value="${outVal}"
+               placeholder="${escapeHtml(FINAL_MSG.MAP_OUT_PLACEHOLDER)}"/>
+      </div>
     `;
-  
+      
     const rootId =
       roundNo === 1 ? `finalP1MapQ${idx + 1}` : `finalP2MapQ${idx + 1}`;
   
