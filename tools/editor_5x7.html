@@ -389,7 +389,6 @@ function exportOneBucket18(){
   const inRange = (cp,a,b)=>cp>=a && cp<=b;
 
   const isAsciiDigit = cp => cp>=0x30 && cp<=0x39;
-  const isLatinUpper = ch => { const lo=ch.toLowerCase(), up=ch.toUpperCase(); return lo!==up && ch===up; };
 
   const isCurrency = cp => inRange(cp,0x20A0,0x20CF) || "€$£₴".includes(String.fromCodePoint(cp));
   const isArrows   = cp => inRange(cp,0x2190,0x21FF) || "←→↑↓⇖⇗⇘⇙".includes(String.fromCodePoint(cp));
@@ -402,43 +401,46 @@ function exportOneBucket18(){
   const isAsciiPunct = cp =>
     (cp>=0x21 && cp<=0x2F) || (cp>=0x3A && cp<=0x40) || (cp>=0x5B && cp<=0x60) || (cp>=0x7B && cp<=0x7E);
 
-  const getScriptBucket = ch => {
+  const isLetter = ch => unicodeCategories(ch).includes("grp:Letter");
+
+  const scriptBucket = ch => {
     const cats = unicodeCategories(ch);
-    if (cats.includes("sc:Cyrillic")) return "01 ALFABET • cyrylica";
-    if (cats.includes("sc:Greek"))    return "02 ALFABET • grecki";
-    if (cats.includes("sc:Latin"))    return "03 ALFABET • łaciński";
-    if (cats.includes("sc:Inherited"))return "04 ALFABET • dziedziczony";
-    return "05 ALFABET • wspólny";
+    if (cats.includes("sc:Cyrillic")) return "Cyrillic";
+    if (cats.includes("sc:Greek"))    return "Greek";
+    if (cats.includes("sc:Latin"))    return "Latin";
+    if (cats.includes("sc:Inherited"))return "Inherited";
+    return "Common";
   };
 
   function pickBucket(ch){
     const cp = cpOf(ch);
 
-    // 0) Custom wygrywa (pierwsza kategoria wg nazwy)
+    // custom: jedna sekcja "Custom_<nazwa>" (też bez spacji)
     const customNames = Object.keys(stateA.categories).sort();
     for (const name of customNames) {
       const set = stateA.categories[name];
-      if (set instanceof Set && set.has(ch)) return "00 CUSTOM • " + name;
+      if (set instanceof Set && set.has(ch)) {
+        const slug = String(name).replace(/[^A-Za-z0-9_]+/g, "_").replace(/^_+|_+$/g,"");
+        return slug ? ("Custom_" + slug) : "Custom";
+      }
     }
 
-    if (isSpace(ch))      return "06 SPACJE";
-    if (isCurrency(cp))   return "07 SYMBOLE • waluty";
-    if (isArrows(cp))     return "08 SYMBOLE • strzałki";
-    if (isBox(cp))        return "09 SYMBOLE • ramki";
-    if (isShapes(cp))     return "10 SYMBOLE • kształty";
-    if (isDingbats(cp))   return "11 SYMBOLE • dingbats";
-    if (isMath(cp))       return "12 MATEMATYKA";
+    if (isSpace(ch))      return "Space";
+    if (isCurrency(cp))   return "Currency";
+    if (isArrows(cp))     return "Arrows";
+    if (isBox(cp))        return "Box";
+    if (isShapes(cp))     return "Shapes";
+    if (isDingbats(cp))   return "Dingbats";
+    if (isMath(cp))       return "Math";
 
-    if (isAsciiDigit(cp)) return "13 CYFRY";
-    if (isAsciiPunct(cp)) return "14 INTERPUNKCJA (ASCII)";
+    if (isAsciiDigit(cp)) return "Digits";
+    if (isAsciiPunct(cp)) return "PunctASCII";
 
-    // litery wielkie → skrypt/alfabet
-    if (isLatinUpper(ch)) return getScriptBucket(ch);
+    if (isLetter(ch))     return scriptBucket(ch);
 
-    // reszta
-    if (inRange(cp,0x2000,0x206F)) return "15 INTERPUNKCJA (Unicode)";
-    if (cp<0x20 || cp===0x7F)      return "16 KONTROLNE";
-    return "17 INNE";
+    if (inRange(cp,0x2000,0x206F)) return "PunctUnicode";
+    if (cp<0x20 || cp===0x7F)      return "Control";
+    return "Other";
   }
 
   for (const ch of all) put(pickBucket(ch), ch);
