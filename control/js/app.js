@@ -197,15 +197,11 @@ async function main() {
   const chBuzzer = rt(`familiada-buzzer:${game.id}`);
 
   const devices = createDevices({ game, ui, store, chDisplay, chHost, chBuzzer });
-  const presence = createPresence({ game, ui, store, devices });
 
   const display = createDisplay({ devices, store });
   const rounds = createRounds({ ui, store, devices, display, loadQuestions, loadAnswers });
   rounds.bootIfNeeded();
   const final = createFinal({ ui, store, devices, display, loadAnswers });
-
-  // start presence (online / offline / OSTATNIO)
-  presence.start();
 
   // ===== Realtime: odbiór kliknięć z przycisku (BUZZER_EVT) =====
   const chControlIn = sb()
@@ -701,7 +697,8 @@ async function main() {
       ? "INTRO"
       : "ROUND"
   );
-
+  const presence = createPresence({ game, ui, store, devices, display });
+  presence.start();
   // boot view state
   ui.setQrToggleLabel(
     store.state.flags.qrOnDisplay,
