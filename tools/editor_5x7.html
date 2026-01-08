@@ -42,7 +42,7 @@ textarea{width:100%;resize:vertical;min-height:80px}
     <div><b>JSON A</b><br><input id=jsonA type=file accept=.json></div>
     <div><b>JSON B</b><br><input id=jsonB type=file accept=.json></div>
     <button id=exportA>Eksport — rozszerzony</button>
-    <button id=exportFam>Eksport — Unicode-format</button>
+    <button id=exportFam>Eksport — 18 kubełków</button>
     <button id=undoBtn>Cofnij</button>
     <button id=redoBtn>Ponów</button>
   </div>
@@ -339,14 +339,13 @@ const importFamiliadaLegacy=(json,target)=>{
 
 jsonA.onchange=async()=>{
   const j=await loadJSON(jsonA.files[0]);saveState();
-  if(j.glyphs||j.aliases||j.categories||j.customCategories||j.unicodeCategories){
+  if(j.glyphs||j.aliases||j.categories){
     stateA.meta=j.meta||stateA.meta;
     stateA.glyphs=j.glyphs||{};
     stateA.aliases=j.aliases||{};
     stateA.categories={};
-    const cats=j.categories||j.customCategories;
+    const cats=j.categories;
     if(cats)for(const[k,v]of Object.entries(cats))stateA.categories[k]=new Set(v);
-    // jeśli nie było żadnych kategorii, zostaw domyślne:
     ["letters","digits","punctuation","math","symbol","space","special"].forEach(k=>stateA.categories[k]=stateA.categories[k]||new Set())
   } else importFamiliadaLegacy(j,stateA);
   renderCatSelect();renderListA();renderListB();updateEditor()
@@ -354,12 +353,12 @@ jsonA.onchange=async()=>{
 
 jsonB.onchange=async()=>{
   const j=await loadJSON(jsonB.files[0]);
-  if(j.glyphs||j.aliases||j.categories||j.customCategories||j.unicodeCategories){
+  if(j.glyphs||j.aliases||j.categories){
     stateB.meta=j.meta||stateB.meta;
     stateB.glyphs=j.glyphs||{};
     stateB.aliases=j.aliases||{};
     stateB.categories={};
-    const cats=j.categories||j.customCategories;
+    const cats=j.categories;
     if(cats)for(const[k,v]of Object.entries(cats))stateB.categories[k]=new Set(v);
   } else importFamiliadaLegacy(j,stateB);
   renderListB();updateEditor()
@@ -373,87 +372,84 @@ exportA.onclick=()=>{
   a.href=url;a.download=(stateA.meta.name||"set-A")+".json";a.click();URL.revokeObjectURL(url)
 };
 
-// ===== Unicode-format export: customCategories + unicodeCategories + alphabets (bez letters/digits) =====
-const exportUnicodeFormat=()=>{
-  const out={meta:stateA.meta,glyphs:{...stateA.glyphs},aliases:{...stateA.aliases},customCategories:{},unicodeCategories:{},alphabets:{}};
-  const add=(obj,key,ch)=>{if(!obj[key])obj[key]=[];obj[key].push(ch)};
-  const uniqSort=arr=>Array.from(new Set(arr)).sort((a,b)=>a.codePointAt(0)-b.codePointAt(0));
-  const all=Object.keys({...stateA.glyphs,...stateA.aliases}).sort((a,b)=>a.codePointAt(0)-b.codePointAt(0));
+/* =========================
+   EXPORT: 18 kubełków, 1 glif = 1 kategoria
+   ========================= */
+function exportOneBucket18(){
+  const out = { meta: stateA.meta };
 
-  // custom
-  for(const[k,v]of Object.entries(stateA.categories))out.customCategories[k]=uniqSort(Array.from(v));
+  const all = Object.keys({ ...stateA.glyphs, ...stateA.aliases })
+    .sort((a,b)=>a.codePointAt(0)-b.codePointAt(0));
 
-  // labels
-  const groupLabel={"grp:Letter":"Grupa: Litery (L)","grp:Number":"Grupa: Liczby (N)","grp:Punctuation":"Grupa: Interpunkcja (P)","grp:Symbol":"Grupa: Symbole (S)","grp:Separator":"Grupa: Separatory/odstępy (Z)","grp:Mark":"Grupa: Znaki łączące/diakrytyczne (M)","grp:Other":"Grupa: Inne/kontrolne (C)"};
-  const gcLabel={"gc:Lu":"Wielkie litery (Lu)","gc:Ll":"Małe litery (Ll)","gc:Lt":"Tytułowe litery (Lt)","gc:Lm":"Modyfikatory liter (Lm)","gc:Lo":"Inne litery (Lo)",
-    "gc:Mn":"Znaki łączące: nieodstępowe (Mn)","gc:Mc":"Znaki łączące: odstępowe (Mc)","gc:Me":"Znaki łączące: otaczające (Me)",
-    "gc:Nd":"Cyfry dziesiętne (Nd)","gc:Nl":"Liczby literowe (Nl)","gc:No":"Inne liczby (No)",
-    "gc:Pc":"Interpunkcja: łączniki (Pc)","gc:Pd":"Interpunkcja: dywizy (Pd)","gc:Ps":"Interpunkcja: otwierająca (Ps)","gc:Pe":"Interpunkcja: zamykająca (Pe)","gc:Pi":"Interpunkcja: cudzysłowy otw. (Pi)","gc:Pf":"Interpunkcja: cudzysłowy zam. (Pf)","gc:Po":"Interpunkcja: inne (Po)",
-    "gc:Sm":"Symbole matematyczne (Sm)","gc:Sc":"Symbole walut (Sc)","gc:Sk":"Symbole modyfikujące (Sk)","gc:So":"Symbole inne (So)",
-    "gc:Zs":"Separatory: spacje (Zs)","gc:Zl":"Separatory: linie (Zl)","gc:Zp":"Separatory: akapity (Zp)",
-    "gc:Cc":"Kontrolne (Cc)","gc:Cf":"Formatowanie (Cf)","gc:Co":"Prywatne użycie (Co)","gc:Cs":"Surrogaty (Cs)"};
-  const scriptLabel={"sc:Latin":"łaciński","sc:Cyrillic":"cyrylica","sc:Greek":"grecki","sc:Common":"wspólny","sc:Inherited":"dziedziczony"};
+  const val = ch => stateA.aliases[ch] ? ("@" + stateA.aliases[ch]) : stateA.glyphs[ch];
+  const ensure = name => (out[name] ||= {});
+  const put = (bucket, ch) => { ensure(bucket)[ch] = val(ch); };
 
-  // blocks (zakresy)
-  const blocks=[
-    [0x0000,0x007F,"Blok: Basic Latin"],
-    [0x0080,0x00FF,"Blok: Latin-1 Supplement"],
-    [0x0100,0x017F,"Blok: Latin Extended-A"],
-    [0x0180,0x024F,"Blok: Latin Extended-B"],
-    [0x0250,0x02AF,"Blok: IPA Extensions"],
-    [0x02B0,0x02FF,"Blok: Spacing Modifier Letters"],
-    [0x0300,0x036F,"Blok: Combining Diacritical Marks"],
-    [0x0370,0x03FF,"Blok: Greek and Coptic"],
-    [0x0400,0x04FF,"Blok: Cyrillic"],
-    [0x2000,0x206F,"Blok: General Punctuation"],
-    [0x20A0,0x20CF,"Blok: Currency Symbols"],
-    [0x2190,0x21FF,"Blok: Arrows"],
-    [0x2500,0x257F,"Blok: Box Drawing"],
-    [0x25A0,0x25FF,"Blok: Geometric Shapes"],
-    [0x2600,0x26FF,"Blok: Misc Symbols"],
-    [0x2700,0x27BF,"Blok: Dingbats"]
-  ];
-  const blockName=cp=>{for(const[a,b,n]of blocks)if(cp>=a&&cp<=b)return n;return null};
+  const cpOf = ch => ch.codePointAt(0);
+  const inRange = (cp,a,b)=>cp>=a && cp<=b;
 
-  const mega=cp=>{
-    const r=[];
-    if(cp>=0x20&&cp<=0x7E)r.push("ASCII: drukowalne (0x20–0x7E)");
-    if(cp<0x20||cp===0x7F)r.push("ASCII: kontrolne");
-    if(cp>=0x30&&cp<=0x39)r.push("Cyfry ASCII");
-    if(cp>=0x41&&cp<=0x5A)r.push("Litery ASCII: A–Z");
-    if((cp>=0x21&&cp<=0x2F)||(cp>=0x3A&&cp<=0x40)||(cp>=0x5B&&cp<=0x60)||(cp>=0x7B&&cp<=0x7E))r.push("Interpunkcja ASCII");
-    if(cp>=0x20A0&&cp<=0x20CF)r.push("Symbole: waluty");
-    if(cp>=0x2190&&cp<=0x21FF)r.push("Symbole: strzałki");
-    if(cp>=0x2500&&cp<=0x257F)r.push("Symbole: ramki (box drawing)");
-    return r
+  const isAsciiDigit = cp => cp>=0x30 && cp<=0x39;
+  const isLatinUpper = ch => { const lo=ch.toLowerCase(), up=ch.toUpperCase(); return lo!==up && ch===up; };
+
+  const isCurrency = cp => inRange(cp,0x20A0,0x20CF) || "€$£₴".includes(String.fromCodePoint(cp));
+  const isArrows   = cp => inRange(cp,0x2190,0x21FF) || "←→↑↓⇖⇗⇘⇙".includes(String.fromCodePoint(cp));
+  const isBox      = cp => inRange(cp,0x2500,0x257F);
+  const isShapes   = cp => inRange(cp,0x25A0,0x25FF);
+  const isDingbats = cp => inRange(cp,0x2700,0x27BF) || "✓✗".includes(String.fromCodePoint(cp));
+  const isMath     = cp => inRange(cp,0x2200,0x22FF) || "+-=×÷/*^%".includes(String.fromCodePoint(cp));
+  const isSpace    = ch => ch===" " || cpOf(ch)===0x00A0 || inRange(cpOf(ch),0x2000,0x200A) || cpOf(ch)===0x2007 || cpOf(ch)===0x2009;
+
+  const isAsciiPunct = cp =>
+    (cp>=0x21 && cp<=0x2F) || (cp>=0x3A && cp<=0x40) || (cp>=0x5B && cp<=0x60) || (cp>=0x7B && cp<=0x7E);
+
+  const getScriptBucket = ch => {
+    const cats = unicodeCategories(ch);
+    if (cats.includes("sc:Cyrillic")) return "01 ALFABET • cyrylica";
+    if (cats.includes("sc:Greek"))    return "02 ALFABET • grecki";
+    if (cats.includes("sc:Latin"))    return "03 ALFABET • łaciński";
+    if (cats.includes("sc:Inherited"))return "04 ALFABET • dziedziczony";
+    return "05 ALFABET • wspólny";
   };
 
-  for(const ch of all){
-    const cp=ch.codePointAt(0),cats=unicodeCategories(ch);
+  function pickBucket(ch){
+    const cp = cpOf(ch);
 
-    for(const c of cats){
-      if(groupLabel[c])add(out.unicodeCategories,groupLabel[c],ch);
-      if(gcLabel[c])add(out.unicodeCategories,gcLabel[c],ch);
-      if(scriptLabel[c]){
-        add(out.unicodeCategories,"Alfabet: "+scriptLabel[c],ch);
-        add(out.alphabets,scriptLabel[c],ch);
-      }
+    // 0) Custom wygrywa (pierwsza kategoria wg nazwy)
+    const customNames = Object.keys(stateA.categories).sort();
+    for (const name of customNames) {
+      const set = stateA.categories[name];
+      if (set instanceof Set && set.has(ch)) return "00 CUSTOM • " + name;
     }
 
-    const bn=blockName(cp); if(bn) add(out.unicodeCategories,bn,ch);
-    for(const k of mega(cp)) add(out.unicodeCategories,k,ch);
+    if (isSpace(ch))      return "06 SPACJE";
+    if (isCurrency(cp))   return "07 SYMBOLE • waluty";
+    if (isArrows(cp))     return "08 SYMBOLE • strzałki";
+    if (isBox(cp))        return "09 SYMBOLE • ramki";
+    if (isShapes(cp))     return "10 SYMBOLE • kształty";
+    if (isDingbats(cp))   return "11 SYMBOLE • dingbats";
+    if (isMath(cp))       return "12 MATEMATYKA";
+
+    if (isAsciiDigit(cp)) return "13 CYFRY";
+    if (isAsciiPunct(cp)) return "14 INTERPUNKCJA (ASCII)";
+
+    // litery wielkie → skrypt/alfabet
+    if (isLatinUpper(ch)) return getScriptBucket(ch);
+
+    // reszta
+    if (inRange(cp,0x2000,0x206F)) return "15 INTERPUNKCJA (Unicode)";
+    if (cp<0x20 || cp===0x7F)      return "16 KONTROLNE";
+    return "17 INNE";
   }
 
-  for(const k of Object.keys(out.unicodeCategories)) out.unicodeCategories[k]=uniqSort(out.unicodeCategories[k]);
-  for(const k of Object.keys(out.alphabets)) out.alphabets[k]=uniqSort(out.alphabets[k]);
-  return out
-};
+  for (const ch of all) put(pickBucket(ch), ch);
+  return out;
+}
 
 exportFam.onclick=()=>{
-  const data=exportUnicodeFormat();
+  const data=exportOneBucket18();
   const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
   const url=URL.createObjectURL(blob),a=document.createElement("a");
-  a.href=url;a.download=(stateA.meta.name||"unicode-5x7")+".json";a.click();URL.revokeObjectURL(url)
+  a.href=url;a.download=(stateA.meta.name||"familiada-18")+".json";a.click();URL.revokeObjectURL(url)
 };
 
 // ===== Font raster =====
