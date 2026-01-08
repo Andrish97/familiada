@@ -221,6 +221,50 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     ui.setMsg("msgFinalP2Start", "");
   }
 
+  function lampForEntry(roundNo, i) {
+    ensureRuntime();
+    const rt = store.state.final.runtime;
+  
+    if (roundNo === 1) {
+      return (rt.p1[i].text || "").trim() ? "🟢" : "🔴";
+    }
+  
+    // roundNo === 2
+    if (rt.p2[i].repeat === true) return "🟡";
+    return (rt.p2[i].text || "").trim() ? "🟢" : "🔴";
+  }
+  
+  function buildHostEntryView(roundNo, titleLine) {
+    const lines = [titleLine];
+    for (let i = 0; i < 5; i++) {
+      const lamp = lampForEntry(roundNo, i);
+      const qt = (qPicked[i]?.text || "—").replace(/\s+/g, " ").trim();
+      lines.push(`${lamp} ${i + 1}) ${qt}`);
+    }
+    return lines;
+  }
+  
+  async function hostShowLines(lines) {
+    const txt = lines.filter(Boolean).join("\n").replace(/"/g, '\\"');
+    try {
+      await devices.sendHostCmd("CLEAR");
+      if (txt) await devices.sendHostCmd(`SET "${txt}"`);
+      await devices.sendHostCmd("OPEN");
+    } catch (e) {
+      console.warn("hostShowLines failed", e);
+    }
+  }
+  
+  // tylko odświeżaj hosta, gdy timer chodzi (tak chciałeś)
+  function hostRefreshIfCounting() {
+    const rt = store.state.final.runtime;
+    if (!rt?.timer?.running) return;
+    const phase = rt.timer.phase; // "P1" | "P2"
+    if (phase === "P1") hostShowLines(buildHostEntryView(1, "FINAŁ RUNDA 1 — ODLICZANIE 15s")).catch(()=>{});
+    if (phase === "P2") hostShowLines(buildHostEntryView(2, "FINAŁ RUNDA 2 — ODLICZANIE 20s")).catch(()=>{});
+  }
+
+
   // Zwycięska drużyna (do timera na bocznym tripletcie).
   function getWinnerTeam() {
     return store.state?.winnerTeam || store.state?.final?.winnerTeam || "A";
@@ -276,6 +320,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     rt.timer.seconds = seconds;
 
     displaySetTimerSeconds(seconds).catch(() => {});
+    hostRefreshIfCounting();
 
     const tick = () => {
       if (!rt.timer.running) return;
@@ -283,6 +328,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
       const s = Math.ceil(leftMs / 1000);
       if (s !== rt.timer.seconds) {
         rt.timer.seconds = s;
+        hostRefreshIfCounting();
         displaySetTimerSeconds(s).catch(() => {});
       }
       if (leftMs <= 0) {
@@ -294,6 +340,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
         display.setTotalsTriplets?.(totals).catch(() => {});
       
         playSfx("time_over");
+        hostRefreshIfCounting();
         if (phase === "P1") ui.setEnabled("btnFinalToP1MapQ1", true);
         if (phase === "P2") ui.setEnabled("btnFinalToP2MapQ1", true);
         return;
@@ -338,6 +385,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
         inp.addEventListener("input", () => {
           const i = Number(inp.dataset.i);
           rt.p1[i].text = String(inp.value ?? "");
+          hostRefreshIfCounting();
         });
         inp.addEventListener("keydown", (e) => {
           const i = Number(inp.dataset.i);
@@ -422,6 +470,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
             rt.p2[i].repeat = false;
             renderP2Entry();
           }
+          hostRefreshIfCounting();
         });
         inp.addEventListener("keydown", (e) => {
           const i = Number(inp.dataset.i);
@@ -492,6 +541,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
             }
       
             renderP2Entry();
+            hostRefreshIfCounting();
           });
         });
 
