@@ -7,6 +7,7 @@ const PATH = "../audio/";
 const files = {
   show_intro: "show_intro.mp3",
   round_transition: "round_transition.mp3",
+  round_transition2: "round_transition2.mp3",
   final_theme: "final_theme.mp3",
 
   buzzer_press: "buzzer_press.mp3",
