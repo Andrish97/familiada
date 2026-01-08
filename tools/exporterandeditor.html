@@ -1,0 +1,960 @@
+<!doctype html><html lang="pl"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Edytor 5×7 — Workspace + 1 kategoria/glif + eksport Familiada</title>
+<style>
+:root{--bg:#0b0f14;--panel:#121826;--ink:#e8eefc;--mut:#9bb0d0;--line:#24314a;--acc:#6ea8ff;--bad:#ffb3b3;--ok:#b9ffcf}
+*{box-sizing:border-box} body{margin:0;padding:10px;background:var(--bg);color:var(--ink);font:14px/1.35 system-ui,Segoe UI,Roboto,Arial;display:flex;flex-direction:column;gap:10px}
+h2{margin:0 0 4px 0;font-size:16px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.small{font-size:11px;color:var(--mut)}
+button,input,select,textarea{font-size:12px;background:#0d131d;color:var(--ink);border:1px solid var(--line);border-radius:10px}
+button{background:#121826;cursor:pointer;padding:7px 10px}
+button:hover{border-color:#34507b}
+button.primary{background:linear-gradient(180deg,#1b2a44,#121826);border-color:#3b5d93}
+button.danger{border-color:#7b3434}
+button.good{border-color:#2f7b4b}
+.layout{display:grid;grid-template-columns:300px 1.4fr 1.4fr;gap:10px}
+.glyph-list{height:260px;overflow:auto;background:#0d131d;border:1px solid var(--line);border-radius:12px}
+.item{display:flex;justify-content:space-between;padding:4px 8px;cursor:pointer;font-family:ui-monospace,Menlo,Consolas,monospace;border-bottom:1px solid #111a2a}
+.item:hover{background:#141f33}.item.active{background:#1b2a44}
+.grid{display:grid;grid-template-columns:repeat(5,16px);grid-template-rows:repeat(7,16px);gap:3px}
+.px{width:16px;height:16px;background:#1a2234;border-radius:4px}
+.px.on{background:#e8eefc;box-shadow:0 0 6px rgba(232,238,252,.35)}
+.editor .px{cursor:pointer;border:1px solid #2a3a59}.editor .px.on{border-color:#91b9ff}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+hr{border:0;border-top:1px solid var(--line);margin:8px 0}
+textarea{width:100%;resize:vertical;min-height:90px}
+.bad{color:var(--bad)} .ok{color:var(--ok)}
+.kbd{font:11px ui-monospace,Menlo,Consolas,monospace;color:var(--mut)}
+.pill{display:inline-flex;gap:8px;align-items:center;padding:6px 10px;border:1px solid var(--line);border-radius:999px;background:#0d131d}
+.pill input{margin:0}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.tab{padding:6px 10px;border:1px solid var(--line);border-radius:999px;background:#0d131d;cursor:pointer}
+.tab.active{outline:2px solid var(--acc);border-color:#3b5d93}
+</style>
+</head>
+<body>
+
+<h2>Edytor czcionki 5×7 — workspace + kategorie + eksport Familiada</h2>
+
+<div class="panel">
+  <div class="row" style="justify-content:space-between">
+    <div class="row">
+      <b>Workspace:</b>
+      <div class="tabs" id="setTabs"></div>
+    </div>
+    <div class="row">
+      <button class="primary" id="btnNewSet">+ zestaw</button>
+      <button id="btnDupSet">Duplikuj</button>
+      <button id="btnRenSet">Zmień nazwę</button>
+      <button class="danger" id="btnDelSet">Usuń</button>
+    </div>
+  </div>
+  <hr>
+  <div class="row">
+    <div><b>Font (.otf/.ttf)</b><br><input id="fontFile" type="file" accept=".otf,.ttf"></div>
+    <div><span class="small">Zakres Unicode (HEX)</span><br>Od <input id="scanStart" value="0020" size="6"> Do <input id="scanEnd" value="02FF" size="6"></div>
+    <div><span class="small">Ref (bbox):</span><br><input id="bboxRef" value="0" maxlength="2" size="4"></div>
+    <span class="pill small"><input id="chkSkipLower" type="checkbox" checked>pomijaj małe (import)</span>
+    <div style="flex:1">
+      <button class="primary" id="importFont">Import z fontu → aktywny</button>
+      <div id="fontInfo" class="small"></div>
+    </div>
+  </div>
+  <hr>
+  <div class="row">
+    <div><b>Import JSON → aktywny</b><br><input id="jsonIn" type="file" accept=".json"></div>
+    <button id="btnPaste">Wklej JSON</button>
+    <button class="good" id="exportFam">Eksport Familiada</button>
+    <button id="exportExt">Eksport extended</button>
+    <button id="undoBtn">Cofnij</button>
+    <button id="redoBtn">Ponów</button>
+    <span class="small">Nawigacja: <span class="kbd">↑/↓</span> glify, <span class="kbd">←/→</span> przełącz listę A/B, <span class="kbd">Del</span> usuń</span>
+  </div>
+</div>
+
+<div class="layout">
+  <!-- LEFT: A + kategorie -->
+  <div class="panel">
+    <div class="row" style="justify-content:space-between">
+      <h3 style="margin:0">Zestaw A</h3>
+      <select id="selA"></select>
+    </div>
+    <div class="small">Filtr kategorii (A):</div>
+    <div class="row">
+      <select id="catSelectA"></select>
+      <button id="catAllA">Wszystkie</button>
+    </div>
+    <div class="row">
+      <input id="catNew" placeholder="nowa_kategoria (1 słowo)">
+      <button id="catAdd">Dodaj</button>
+    </div>
+    <div class="row">
+      <button id="catRename">Zmień nazwę</button>
+      <button class="danger" id="catDelete">Usuń</button>
+    </div>
+    <hr>
+    <div class="small">Dodaj znak do A:</div>
+    <div class="row">
+      <input id="charNew" maxlength="2" value="A" style="width:70px">
+      <button id="charAdd">Dodaj / wybierz</button>
+    </div>
+    <div class="small">Lista A</div>
+    <div id="glyphListA" class="glyph-list"></div>
+    <div class="small">Znaków w A: <span id="countA">0</span></div>
+  </div>
+
+  <!-- MIDDLE: editor -->
+  <div class="panel">
+    <h3 style="margin:0 0 6px 0">Edytor znaku (w A)</h3>
+    <div id="charInfo" class="small">—</div>
+    <div class="row">
+      <div>
+        <div class="small">Kategoria (1 na glif):</div>
+        <select id="glyphCat"></select>
+      </div>
+      <div style="flex:1" class="small" id="unicodeInfo"></div>
+    </div>
+    <hr>
+    <div class="row">
+      <div><div id="editor" class="grid editor"></div></div>
+      <div style="flex:1">
+        <div class="small">Bitmapa (7 liczb):</div>
+        <div id="rowsView" class="small"></div>
+        <input id="rowsEdit">
+        <button id="rowsApply">Zastosuj</button>
+        <hr>
+        <div class="small">Alias:</div>
+        <div class="row">
+          <input id="aliasTarget" placeholder="np. A">
+          <button id="makeAlias">Utwórz alias</button>
+          <button id="breakAlias">Rozbij alias</button>
+        </div>
+        <div class="small">Fragment (podgląd):</div>
+        <textarea id="snippet" readonly></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: B + compare -->
+  <div class="panel">
+    <div class="row" style="justify-content:space-between">
+      <h3 style="margin:0">Zestaw B</h3>
+      <select id="selB"></select>
+    </div>
+    <div class="small">Lista B</div>
+    <div id="glyphListB" class="glyph-list"></div>
+    <div class="small">Znaków w B: <span id="countB">0</span></div>
+    <hr>
+    <div class="two">
+      <div><div class="small">A</div><div id="prevA" class="grid"></div></div>
+      <div><div class="small">B</div><div id="prevB" class="grid"></div></div>
+    </div>
+    <div class="row" style="margin-top:8px">
+      <button id="copyFromB">Kopiuj B → A</button>
+      <button id="copyFromA">Kopiuj A → B</button>
+      <button class="danger" id="deleteInA">Usuń w A</button>
+      <button class="danger" id="deleteInB">Usuń w B</button>
+    </div>
+    <div id="cmpText" class="small"></div>
+  </div>
+</div>
+
+<canvas id="c" width="256" height="256" style="display:none"></canvas>
+
+<script>
+/* =========================
+   opentype.js loader (CDN fallback)
+   ========================= */
+const SCRIPT_URLS=[
+  "https://cdnjs.cloudflare.com/ajax/libs/opentype.js/1.3.4/opentype.min.js",
+  "https://cdn.jsdelivr.net/npm/opentype.js@1.3.4/dist/opentype.min.js"
+];
+async function loadOpenType(){
+  if(window.opentype) return true;
+  for(const url of SCRIPT_URLS){
+    try{
+      await new Promise((res,rej)=>{
+        const s=document.createElement("script"); s.src=url; s.onload=res; s.onerror=rej; document.head.appendChild(s);
+      });
+      if(window.opentype) return true;
+    }catch(e){}
+  }
+  return false;
+}
+
+/* =========================
+   Core
+   ========================= */
+const W=5,H=7,$=id=>document.getElementById(id);
+const ctx=$("c").getContext("2d",{willReadFrequently:true});
+
+const STORAGE_KEY="editor5x7_workspace_v2";
+const DEFAULT_CATS=["Latin","LatinExt","Greek","Cyrillic","Digits","PunctASCII","PunctUnicode","Math","Currency","Arrows","Box","Shapes","Dingbats","Marks","Fractions","Space","Other","Control"];
+
+/* Zestaw: 1 glif = 1 kategoria */
+function mkSet(name){
+  return {
+    id: "S"+Math.random().toString(36).slice(2,10),
+    meta:{name, width:W, height:H},
+    glyphs:{},          // ch -> [7]
+    aliases:{},         // ch -> "A"
+    glyphCat:{},        // ch -> "Latin" (1 szt.)
+    catOrder:[...DEFAULT_CATS]
+  };
+}
+
+let WS = { sets:[mkSet("set-1")], activeId:null, A:null, B:null };
+WS.activeId=WS.sets[0].id; WS.A=WS.activeId; WS.B=WS.activeId;
+
+let selected=null, activeList="A";
+let filterCatA=null;
+let history=[], future=[];
+let fontName=null, fontLoaded=false, fontBBox=null;
+
+function activeSet(){ return WS.sets.find(s=>s.id===WS.activeId) }
+function setById(id){ return WS.sets.find(s=>s.id===id) }
+function setA(){ return setById(WS.A) }
+function setB(){ return setById(WS.B) }
+
+function saveWS(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(WS)) }
+function loadWS(){
+  try{
+    const raw=localStorage.getItem(STORAGE_KEY);
+    if(!raw) return;
+    const obj=JSON.parse(raw);
+    if(obj && Array.isArray(obj.sets) && obj.sets.length){
+      WS=obj;
+      // sanity
+      if(!setById(WS.activeId)) WS.activeId=WS.sets[0].id;
+      if(!setById(WS.A)) WS.A=WS.activeId;
+      if(!setById(WS.B)) WS.B=WS.activeId;
+      for(const s of WS.sets){
+        s.meta ||= {name:"set",width:W,height:H};
+        s.glyphs ||= {}; s.aliases ||= {}; s.glyphCat ||= {};
+        s.catOrder ||= [...DEFAULT_CATS];
+        // usuń kategorie nie-1-słowo? zostaw, ale eksport je slug-uje
+      }
+    }
+  }catch(e){}
+}
+loadWS();
+
+/* ====== Unicode property tests (z fallbackiem) ====== */
+let hasUP=false, gcTests=[], groupTests=[], scriptTests=[];
+try{
+  gcTests=[["Lu",/\p{Lu}/u],["Ll",/\p{Ll}/u],["Lt",/\p{Lt}/u],["Lm",/\p{Lm}/u],["Lo",/\p{Lo}/u],
+           ["Mn",/\p{Mn}/u],["Mc",/\p{Mc}/u],["Me",/\p{Me}/u],
+           ["Nd",/\p{Nd}/u],["Nl",/\p{Nl}/u],["No",/\p{No}/u],
+           ["Pc",/\p{Pc}/u],["Pd",/\p{Pd}/u],["Ps",/\p{Ps}/u],["Pe",/\p{Pe}/u],["Pi",/\p{Pi}/u],["Pf",/\p{Pf}/u],["Po",/\p{Po}/u],
+           ["Sm",/\p{Sm}/u],["Sc",/\p{Sc}/u],["Sk",/\p{Sk}/u],["So",/\p{So}/u],
+           ["Zs",/\p{Zs}/u],["Zl",/\p{Zl}/u],["Zp",/\p{Zp}/u],
+           ["Cc",/\p{Cc}/u],["Cf",/\p{Cf}/u],["Co",/\p{Co}/u],["Cs",/\p{Cs}/u]];
+  groupTests=[["L",/\p{L}/u],["N",/\p{N}/u],["P",/\p{P}/u],["S",/\p{S}/u],["Z",/\p{Z}/u],["M",/\p{M}/u],["C",/\p{C}/u]];
+  scriptTests=[["Latin",/\p{Script=Latin}/u],["Cyrillic",/\p{Script=Cyrillic}/u],["Greek",/\p{Script=Greek}/u],["Common",/\p{Script=Common}/u],["Inherited",/\p{Script=Inherited}/u]];
+  hasUP=true;
+}catch(e){hasUP=false}
+
+function unicodeInfo(ch){
+  const cp=ch.codePointAt(0);
+  let gc="?", grp="?", sc="?";
+  if(hasUP){
+    for(const[n,re] of gcTests){ if(re.test(ch)){gc=n;break} }
+    for(const[n,re] of groupTests){ if(re.test(ch)){grp=n;break} }
+    for(const[n,re] of scriptTests){ if(re.test(ch)){sc=n;break} }
+  }
+  return {cp, gc, grp, sc};
+}
+function isLower(ch){ return hasUP ? /\p{Ll}/u.test(ch) : (ch.toLowerCase()===ch && ch.toUpperCase()!==ch); }
+
+/* ====== 18 kubełków (jedno-słowo) ====== */
+function pickCat18(ch){
+  const cp=ch.codePointAt(0);
+  const info=unicodeInfo(ch);
+
+  // Space
+  if(ch===" " || cp===0x00A0 || (cp>=0x2000&&cp<=0x200A) || cp===0x2007 || cp===0x2009) return "Space";
+
+  // Control / format
+  if(info.grp==="C") return "Control";
+
+  // Digits + fractions-ish
+  if(info.gc==="Nd") return "Digits";
+  if(info.gc==="No") return "Fractions";
+
+  // Marks
+  if(info.grp==="M") return "Marks";
+
+  // Currency
+  if(info.gc==="Sc" || (cp>=0x20A0&&cp<=0x20CF)) return "Currency";
+
+  // Arrows
+  if((cp>=0x2190&&cp<=0x21FF) || "←→↑↓⇖⇗⇘⇙".includes(ch)) return "Arrows";
+
+  // Box drawing
+  if(cp>=0x2500&&cp<=0x257F) return "Box";
+
+  // Geometric shapes / blocks
+  if((cp>=0x2580&&cp<=0x259F) || (cp>=0x25A0&&cp<=0x25FF)) return "Shapes";
+
+  // Dingbats / UI marks
+  if((cp>=0x2700&&cp<=0x27BF) || "✓✗⧗".includes(ch)) return "Dingbats";
+
+  // Math
+  if(info.gc==="Sm" || (cp>=0x2200&&cp<=0x22FF) || "+-=×÷/*^%<>≤≥".includes(ch)) return "Math";
+
+  // Punctuation split
+  if(info.grp==="P"){
+    if(cp>=0x20 && cp<=0x7E) return "PunctASCII";
+    return "PunctUnicode";
+  }
+
+  // Letters by script (upper/lower doesn't matter here; lower can be skipped on import)
+  if(info.grp==="L"){
+    if(info.sc==="Latin"){
+      // basic A-Z
+      if(cp>=0x41&&cp<=0x5A) return "Latin";
+      return "LatinExt";
+    }
+    if(info.sc==="Greek") return "Greek";
+    if(info.sc==="Cyrillic") return "Cyrillic";
+    return "Other";
+  }
+
+  // Symbols etc
+  return "Other";
+}
+
+/* ====== Helpers: canvas raster ====== */
+function grid(el){
+  el.innerHTML="";
+  for(let i=0;i<W*H;i++){ const d=document.createElement("div"); d.className="px"; el.appendChild(d); }
+}
+grid($("editor")); grid($("prevA")); grid($("prevB"));
+
+function rowsToGrid(el,rows){
+  const p=el.querySelectorAll(".px");
+  p.forEach(x=>x.classList.remove("on"));
+  if(!rows) return;
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++){
+    if(rows[y]&(1<<(W-1-x))) p[y*W+x].classList.add("on");
+  }
+}
+function gridToRows(el){
+  const p=el.querySelectorAll(".px"), r=[];
+  for(let y=0;y<H;y++){
+    let v=0;
+    for(let x=0;x<W;x++) if(p[y*W+x].classList.contains("on")) v|=(1<<(W-1-x));
+    r.push(v);
+  }
+  return r;
+}
+function computeFontBBox(refCh){
+  ctx.clearRect(0,0,256,256);
+  ctx.fillStyle="#fff"; ctx.font=`140px "${fontName}"`;
+  ctx.textBaseline="middle"; ctx.textAlign="center";
+  ctx.fillText(refCh,128,128);
+  const img=ctx.getImageData(0,0,256,256), d=img.data, w=256, h=256;
+  let minX=w,maxX=-1,minY=h,maxY=-1;
+  for(let y=0;y<h;y++)for(let x=0;x<w;x++){
+    const i=(y*w+x)*4;
+    if(d[i+3]>10){ if(x<minX)minX=x; if(x>maxX)maxX=x; if(y<minY)minY=y; if(y>maxY)maxY=y; }
+  }
+  if(maxX<minX||maxY<minY) return null;
+  return {minX,minY,width:maxX-minX+1,height:maxY-minY+1};
+}
+function charRows(ch){
+  if(!fontBBox){
+    let r=$("bboxRef").value||"0"; if(r.length>2) r=r[0];
+    fontBBox=computeFontBBox(r);
+    if(!fontBBox) return Array(H).fill(0);
+  }
+  ctx.clearRect(0,0,256,256);
+  ctx.fillStyle="#fff"; ctx.font=`140px "${fontName}"`;
+  ctx.textBaseline="middle"; ctx.textAlign="center";
+  ctx.fillText(ch,128,128);
+  const img=ctx.getImageData(0,0,256,256), d=img.data, w=256, b=fontBBox;
+  const rows=[];
+  for(let gy=0;gy<H;gy++){
+    let v=0, sy=Math.floor(b.minY+(gy+0.5)*b.height/H);
+    for(let gx=0;gx<W;gx++){
+      const sx=Math.floor(b.minX+(gx+0.5)*b.width/W);
+      const i=(sy*w+sx)*4;
+      if(d[i+3]>10) v|=(1<<(W-1-gx));
+    }
+    rows.push(v);
+  }
+  return rows;
+}
+
+/* ====== Undo/Redo (tylko aktywny zestaw) ====== */
+function snapActive(){
+  const s=activeSet();
+  return JSON.stringify({glyphs:s.glyphs,aliases:s.aliases,glyphCat:s.glyphCat,meta:s.meta,catOrder:s.catOrder});
+}
+function restoreActive(json){
+  const s=activeSet(); const o=JSON.parse(json);
+  s.glyphs=o.glyphs||{}; s.aliases=o.aliases||{}; s.glyphCat=o.glyphCat||{};
+  s.meta=o.meta||s.meta; s.catOrder=o.catOrder||s.catOrder;
+}
+function saveState(){ history.push(snapActive()); future.length=0; }
+
+/* ====== UI render ====== */
+function slugCat(name){
+  return String(name).trim().replace(/\s+/g,"").replace(/[^A-Za-z0-9_]/g,"_") || "Other";
+}
+function setAllChars(s){
+  const keys = new Set([...Object.keys(s.glyphs), ...Object.keys(s.aliases)]);
+  return [...keys].sort((a,b)=>a.codePointAt(0)-b.codePointAt(0));
+}
+function isAliasIn(s,ch){ return !!s.aliases[ch]; }
+function sourceRowsIn(s,ch){
+  const seen=new Set();
+  while(s.aliases[ch]){
+    if(seen.has(ch)) break;
+    seen.add(ch);
+    ch=s.aliases[ch];
+  }
+  return s.glyphs[ch];
+}
+function ensureCatIn(s,cat){
+  cat=slugCat(cat);
+  if(!s.catOrder.includes(cat)) s.catOrder.push(cat);
+  return cat;
+}
+
+function renderSetTabs(){
+  const wrap=$("setTabs"); wrap.innerHTML="";
+  for(const s of WS.sets){
+    const t=document.createElement("div");
+    t.className="tab"+(s.id===WS.activeId?" active":"");
+    t.textContent=s.meta?.name||s.id;
+    t.onclick=()=>{ WS.activeId=s.id; if(!setById(WS.A)) WS.A=s.id; if(!setById(WS.B)) WS.B=s.id; history=[]; future=[]; selected=null; filterCatA=null; syncAll(); saveWS(); };
+    wrap.appendChild(t);
+  }
+  // selectors A/B
+  const fillSel=(sel,cur)=>{
+    sel.innerHTML="";
+    for(const s of WS.sets){
+      const o=document.createElement("option");
+      o.value=s.id; o.textContent=s.meta?.name||s.id;
+      if(s.id===cur) o.selected=true;
+      sel.appendChild(o);
+    }
+  };
+  fillSel($("selA"),WS.A);
+  fillSel($("selB"),WS.B);
+}
+$("selA").onchange=()=>{ WS.A=$("selA").value; if(activeList==="A") selected=null; syncAll(); saveWS(); };
+$("selB").onchange=()=>{ WS.B=$("selB").value; if(activeList==="B") selected=null; syncAll(); saveWS(); };
+
+function renderCatSelectA(){
+  const s=setA();
+  const sel=$("catSelectA"); sel.innerHTML="";
+  const cats=[...s.catOrder];
+  for(const c of cats){
+    const cnt=setAllChars(s).filter(ch=>s.glyphCat[ch]===c).length;
+    const o=document.createElement("option");
+    o.value=c; o.textContent=`${c} (${cnt})`;
+    if(filterCatA===c) o.selected=true;
+    sel.appendChild(o);
+  }
+}
+
+function renderGlyphList(which){
+  const s = which==="A" ? setA() : setB();
+  const box = which==="A" ? $("glyphListA") : $("glyphListB");
+  const cnt = which==="A" ? $("countA") : $("countB");
+
+  let list=setAllChars(s);
+  if(which==="A" && filterCatA) list=list.filter(ch=>s.glyphCat[ch]===filterCatA);
+
+  box.innerHTML=""; cnt.textContent=list.length;
+  for(const ch of list){
+    const d=document.createElement("div");
+    const active = (selected===ch && activeList===which);
+    d.className="item"+(active?" active":"");
+    const shown = ch===" " ? "␣" : ch;
+    const cp=ch.codePointAt(0).toString(16).toUpperCase().padStart(4,"0");
+    d.innerHTML=`<span>${shown}</span><span class="small">U+${cp}</span>`;
+    d.onclick=()=>{ activeList=which; selected=ch; syncEditor(); renderGlyphList("A"); renderGlyphList("B"); };
+    box.appendChild(d);
+  }
+}
+
+function renderGlyphCatDropdown(){
+  const s=setA();
+  const sel=$("glyphCat"); sel.innerHTML="";
+  for(const c of s.catOrder){
+    const o=document.createElement("option");
+    o.value=c; o.textContent=c;
+    if(selected && s.glyphCat[selected]===c) o.selected=true;
+    sel.appendChild(o);
+  }
+}
+
+function syncEditor(){
+  const sA=setA(), sB=setB();
+  if(!selected){
+    $("charInfo").textContent="—"; $("unicodeInfo").textContent="";
+    $("rowsView").textContent=""; $("rowsEdit").value=""; $("snippet").value="";
+    rowsToGrid($("editor"),null); rowsToGrid($("prevA"),null); rowsToGrid($("prevB"),null);
+    $("cmpText").textContent=""; $("glyphCat").innerHTML="";
+    return;
+  }
+
+  const ch=selected;
+  const rA = sourceRowsIn(sA,ch) || Array(H).fill(0);
+  const rB = sourceRowsIn(sB,ch) || null;
+
+  rowsToGrid($("editor"),rA);
+  rowsToGrid($("prevA"),rA);
+  rowsToGrid($("prevB"),rB);
+
+  $("rowsView").textContent=rA.join(", ");
+  $("rowsEdit").value=rA.join(", ");
+  $("charInfo").textContent=`"${ch}"  |  cat: ${sA.glyphCat[ch]||"(brak)"}`
+
+  const ui=unicodeInfo(ch);
+  $("unicodeInfo").innerHTML=`<span class="small">U+${ui.cp.toString(16).toUpperCase()} | gc:${ui.gc} grp:${ui.grp} sc:${ui.sc}</span>`;
+
+  renderGlyphCatDropdown();
+
+  const isAl = isAliasIn(sA,ch);
+  $("snippet").value = isAl ? `"${ch}":"@${sA.aliases[ch]}"` : `"${ch}":[${rA.join(",")}]`;
+
+  const status = (!rB) ? "Brak w B" : (JSON.stringify(rA)===JSON.stringify(rB) ? "Identyczne" : "Różne");
+  $("cmpText").textContent=status;
+}
+
+/* ====== Category ops (A) ====== */
+$("catAllA").onclick=()=>{ filterCatA=null; renderCatSelectA(); renderGlyphList("A"); };
+$("catSelectA").onchange=()=>{ filterCatA=$("catSelectA").value; renderGlyphList("A"); };
+
+$("catAdd").onclick=()=>{
+  const name=$("catNew").value.trim();
+  if(!name) return;
+  const s=setA(); ensureCatIn(s,name);
+  $("catNew").value="";
+  renderCatSelectA(); renderGlyphCatDropdown(); saveWS();
+};
+$("catRename").onclick=()=>{
+  const s=setA();
+  const old=$("catSelectA").value;
+  if(!old) return;
+  const neu=prompt("Nowa nazwa (1 słowo, bez spacji):", old);
+  if(!neu) return;
+  const n=ensureCatIn(s,neu);
+  // zmień order
+  s.catOrder=s.catOrder.map(x=>x===old?n:x).filter((x,i,a)=>a.indexOf(x)===i);
+  // przemapuj glify
+  for(const ch of Object.keys(s.glyphCat)) if(s.glyphCat[ch]===old) s.glyphCat[ch]=n;
+  if(filterCatA===old) filterCatA=n;
+  renderCatSelectA(); renderGlyphCatDropdown(); renderGlyphList("A"); syncEditor(); saveWS();
+};
+$("catDelete").onclick=()=>{
+  const s=setA();
+  const c=$("catSelectA").value;
+  if(!c) return;
+  if(!confirm(`Usunąć kategorię "${c}"? Glify z tej kategorii wpadną do "Other".`)) return;
+  s.catOrder=s.catOrder.filter(x=>x!==c);
+  for(const ch of Object.keys(s.glyphCat)) if(s.glyphCat[ch]===c) s.glyphCat[ch]="Other";
+  ensureCatIn(s,"Other");
+  if(filterCatA===c) filterCatA=null;
+  renderCatSelectA(); renderGlyphCatDropdown(); renderGlyphList("A"); syncEditor(); saveWS();
+};
+
+/* ====== Glyph ops ====== */
+$("charAdd").onclick=()=>{
+  const s=setA();
+  const raw=$("charNew").value;
+  const ch = raw ? [...raw][0] : " ";
+  if(!s.glyphs[ch] && !s.aliases[ch]){
+    saveState();
+    s.glyphs[ch]=Array(H).fill(0);
+    s.glyphCat[ch]=pickCat18(ch);
+    ensureCatIn(s,s.glyphCat[ch]);
+    saveWS();
+  }
+  activeList="A"; selected=ch;
+  renderCatSelectA(); renderGlyphList("A"); renderGlyphList("B"); syncEditor();
+};
+
+$("glyphCat").onchange=()=>{
+  if(!selected) return;
+  const s=setA(); saveState();
+  const c=ensureCatIn(s,$("glyphCat").value);
+  s.glyphCat[selected]=c;
+  renderCatSelectA(); renderGlyphList("A"); syncEditor(); saveWS();
+};
+
+$("editor").onclick=e=>{
+  const s=setA();
+  if(!selected) return;
+  if(!e.target.classList.contains("px")) return;
+  if(isAliasIn(s,selected)) return; // nie edytuj aliasu
+  saveState();
+  e.target.classList.toggle("on");
+  s.glyphs[selected]=gridToRows($("editor"));
+  saveWS();
+  syncEditor();
+};
+
+$("rowsApply").onclick=()=>{
+  const s=setA();
+  if(!selected) return;
+  if(isAliasIn(s,selected)){
+    if(!confirm("To jest alias. Zastosowanie rozbije alias na bitmapę. Kontynuować?")) return;
+  }
+  saveState();
+  const rows=$("rowsEdit").value.split(",").map(v=>parseInt(v)||0).slice(0,H);
+  s.glyphs[selected]=rows;
+  delete s.aliases[selected];
+  s.glyphCat[selected] ||= ensureCatIn(s,pickCat18(selected));
+  saveWS();
+  syncEditor(); renderGlyphList("A");
+};
+
+$("makeAlias").onclick=()=>{
+  const s=setA();
+  if(!selected) return;
+  const t=$("aliasTarget").value.trim();
+  if(!t || t===selected) return;
+  if(!s.glyphs[t] && !s.aliases[t]) return alert("Brak źródła w A");
+  saveState();
+  delete s.glyphs[selected];
+  s.aliases[selected]=t;
+  s.glyphCat[selected] ||= ensureCatIn(s,pickCat18(selected));
+  saveWS();
+  syncEditor(); renderGlyphList("A");
+};
+
+$("breakAlias").onclick=()=>{
+  const s=setA();
+  if(!selected) return;
+  if(!isAliasIn(s,selected)) return;
+  saveState();
+  const rows=sourceRowsIn(s,selected);
+  s.glyphs[selected]=(rows?rows.slice():Array(H).fill(0));
+  delete s.aliases[selected];
+  s.glyphCat[selected] ||= ensureCatIn(s,pickCat18(selected));
+  saveWS();
+  syncEditor(); renderGlyphList("A");
+};
+
+function deleteGlyphInSet(s,ch){
+  delete s.glyphs[ch];
+  delete s.aliases[ch];
+  delete s.glyphCat[ch];
+}
+$("deleteInA").onclick=()=>{
+  if(!selected) return;
+  const s=setA();
+  if(!s.glyphs[selected] && !s.aliases[selected]) return;
+  saveState();
+  deleteGlyphInSet(s,selected);
+  selected=null;
+  saveWS();
+  renderCatSelectA(); renderGlyphList("A"); syncEditor();
+};
+$("deleteInB").onclick=()=>{
+  if(!selected) return;
+  const s=setB();
+  if(!s.glyphs[selected] && !s.aliases[selected]) return;
+  deleteGlyphInSet(s,selected);
+  selected=null;
+  saveWS();
+  renderGlyphList("B"); syncEditor();
+};
+
+/* ====== Copy A<->B ====== */
+$("copyFromB").onclick=()=>{
+  if(!selected) return;
+  const A=setA(), B=setB();
+  const r=sourceRowsIn(B,selected);
+  if(!r) return;
+  saveState();
+  A.glyphs[selected]=r.slice();
+  delete A.aliases[selected];
+  A.glyphCat[selected]=A.glyphCat[selected]||ensureCatIn(A,pickCat18(selected));
+  saveWS();
+  renderCatSelectA(); renderGlyphList("A"); syncEditor();
+};
+$("copyFromA").onclick=()=>{
+  if(!selected) return;
+  const A=setA(), B=setB();
+  const r=sourceRowsIn(A,selected);
+  if(!r) return;
+  B.glyphs[selected]=r.slice();
+  delete B.aliases[selected];
+  B.glyphCat[selected]=B.glyphCat[selected]||ensureCatIn(B,pickCat18(selected));
+  saveWS();
+  renderGlyphList("B"); syncEditor();
+};
+
+/* ====== Undo/Redo ====== */
+$("undoBtn").onclick=()=>{
+  if(!history.length) return;
+  future.push(snapActive());
+  restoreActive(history.pop());
+  saveWS();
+  renderCatSelectA(); renderGlyphList("A"); renderGlyphList("B"); syncEditor();
+};
+$("redoBtn").onclick=()=>{
+  if(!future.length) return;
+  history.push(snapActive());
+  restoreActive(future.pop());
+  saveWS();
+  renderCatSelectA(); renderGlyphList("A"); renderGlyphList("B"); syncEditor();
+};
+
+/* ====== Workspace ops ====== */
+$("btnNewSet").onclick=()=>{
+  const name=prompt("Nazwa zestawu:", "set-"+(WS.sets.length+1));
+  if(!name) return;
+  WS.sets.push(mkSet(name));
+  WS.activeId=WS.sets[WS.sets.length-1].id;
+  WS.A=WS.activeId; WS.B=WS.activeId;
+  history=[]; future=[]; selected=null; filterCatA=null;
+  saveWS(); syncAll();
+};
+$("btnDupSet").onclick=()=>{
+  const s=activeSet();
+  const name=prompt("Nazwa kopii:", (s.meta.name||"set")+"-copy");
+  if(!name) return;
+  const c=mkSet(name);
+  c.meta=JSON.parse(JSON.stringify(s.meta));
+  c.meta.name=name;
+  c.glyphs=JSON.parse(JSON.stringify(s.glyphs));
+  c.aliases=JSON.parse(JSON.stringify(s.aliases));
+  c.glyphCat=JSON.parse(JSON.stringify(s.glyphCat));
+  c.catOrder=[...s.catOrder];
+  WS.sets.push(c);
+  WS.activeId=c.id;
+  saveWS(); syncAll();
+};
+$("btnRenSet").onclick=()=>{
+  const s=activeSet();
+  const name=prompt("Nowa nazwa:", s.meta.name||"set");
+  if(!name) return;
+  s.meta.name=name;
+  saveWS(); syncAll();
+};
+$("btnDelSet").onclick=()=>{
+  if(WS.sets.length<=1) return alert("Musi zostać przynajmniej 1 zestaw.");
+  const s=activeSet();
+  if(!confirm(`Usunąć zestaw "${s.meta.name}"?`)) return;
+  WS.sets=WS.sets.filter(x=>x.id!==s.id);
+  WS.activeId=WS.sets[0].id;
+  if(!setById(WS.A)) WS.A=WS.activeId;
+  if(!setById(WS.B)) WS.B=WS.activeId;
+  selected=null; filterCatA=null; history=[]; future=[];
+  saveWS(); syncAll();
+};
+
+/* ====== Import JSON ====== */
+function importExtendedInto(s,obj){
+  s.meta=obj.meta||s.meta;
+  s.glyphs=obj.glyphs||{};
+  s.aliases=obj.aliases||{};
+  s.glyphCat={};
+  s.catOrder=[...DEFAULT_CATS];
+
+  // jeżeli są categories jako tablice: weź pierwszą pasującą
+  if(obj.categories && typeof obj.categories==="object"){
+    for(const [cat,arr] of Object.entries(obj.categories)){
+      if(!Array.isArray(arr)) continue;
+      const c=ensureCatIn(s,cat);
+      for(const ch of arr) if(!s.glyphCat[ch]) s.glyphCat[ch]=c;
+    }
+  }
+  // reszta: wylicz
+  for(const ch of setAllChars(s)){
+    s.glyphCat[ch]=ensureCatIn(s, s.glyphCat[ch] || pickCat18(ch));
+  }
+}
+
+function importFamiliadaInto(s,obj){
+  s.meta=obj.meta||s.meta;
+  s.glyphs={}; s.aliases={}; s.glyphCat={};
+  s.catOrder=[...DEFAULT_CATS];
+
+  for(const [catName, bucket] of Object.entries(obj)){
+    if(catName==="meta") continue;
+    if(!bucket || typeof bucket!=="object") continue;
+    const cat=ensureCatIn(s,catName);
+    for(const [ch,val] of Object.entries(bucket)){
+      if(typeof val==="string" && val.startsWith("@")) s.aliases[ch]=val.slice(1);
+      else if(Array.isArray(val)) s.glyphs[ch]=val.slice(0,H).map(x=>x|0);
+      s.glyphCat[ch]=cat;
+    }
+  }
+  for(const ch of setAllChars(s)){
+    s.glyphCat[ch]=ensureCatIn(s, s.glyphCat[ch] || pickCat18(ch));
+  }
+}
+
+async function readFileJSON(file){ return JSON.parse(await file.text()); }
+
+$("jsonIn").onchange=async()=>{
+  const f=$("jsonIn").files[0]; if(!f) return;
+  const obj=await readFileJSON(f);
+  const s=activeSet();
+  saveState();
+  if(obj && (obj.glyphs || obj.aliases || obj.categories)) importExtendedInto(s,obj);
+  else importFamiliadaInto(s,obj);
+  saveWS(); syncAll();
+};
+
+/* ====== Paste JSON ====== */
+$("btnPaste").onclick=async()=>{
+  const txt=prompt("Wklej JSON:");
+  if(!txt) return;
+  let obj;
+  try{ obj=JSON.parse(txt); }catch(e){ return alert("To nie jest poprawny JSON"); }
+  const s=activeSet();
+  saveState();
+  if(obj && (obj.glyphs || obj.aliases || obj.categories)) importExtendedInto(s,obj);
+  else importFamiliadaInto(s,obj);
+  saveWS(); syncAll();
+};
+
+/* ====== Export Familiada ====== */
+function exportFamiliadaOf(s){
+  const out={ meta:s.meta };
+  // init cats
+  const cats=[...s.catOrder];
+  for(const c of cats) out[c]={};
+  const all=setAllChars(s);
+  for(const ch of all){
+    const cat=ensureCatIn(s, s.glyphCat[ch] || pickCat18(ch));
+    if(!out[cat]) out[cat]={};
+    out[cat][ch] = s.aliases[ch] ? ("@"+s.aliases[ch]) : s.glyphs[ch];
+  }
+  // usuń puste
+  for(const k of Object.keys(out)){
+    if(k==="meta") continue;
+    if(Object.keys(out[k]).length===0) delete out[k];
+  }
+  return out;
+}
+function downloadJSON(obj,name){
+  const blob=new Blob([JSON.stringify(obj,null,2)],{type:"application/json"});
+  const url=URL.createObjectURL(blob),a=document.createElement("a");
+  a.href=url; a.download=name; a.click(); URL.revokeObjectURL(url);
+}
+$("exportFam").onclick=()=>{
+  const s=activeSet();
+  downloadJSON(exportFamiliadaOf(s),(s.meta.name||"familiada")+".json");
+};
+$("exportExt").onclick=()=>{
+  const s=activeSet();
+  // categories jako listy (1 glif = 1 kat)
+  const categories={};
+  for(const ch of setAllChars(s)){
+    const c=s.glyphCat[ch]||pickCat18(ch);
+    (categories[c] ||= []).push(ch);
+  }
+  for(const k of Object.keys(categories)) categories[k].sort((a,b)=>a.codePointAt(0)-b.codePointAt(0));
+  const obj={meta:s.meta,glyphs:s.glyphs,aliases:s.aliases,categories};
+  downloadJSON(obj,(s.meta.name||"set")+"_extended.json");
+};
+
+/* ====== Import Font (only existing glyphs in cmap) ====== */
+async function loadFontFace(){
+  const f=$("fontFile").files[0]; if(!f) return false;
+  const url=URL.createObjectURL(f);
+  fontName="F_"+Math.random().toString(36).slice(2);
+  const face=new FontFace(fontName,`url(${url})`);
+  await face.load(); document.fonts.add(face);
+  fontLoaded=true; fontBBox=null;
+  return true;
+}
+
+$("importFont").onclick=async()=>{
+  const f=$("fontFile").files[0];
+  if(!f) return alert("Wybierz plik fontu");
+  const ok = await loadOpenType();
+  if(!ok) return alert("Nie udało się załadować opentype.js (CDN?).");
+  if(!fontLoaded) await loadFontFace(); else fontBBox=null;
+
+  let font;
+  try{ font=opentype.parse(await f.arrayBuffer()); }
+  catch(e){ console.error(e); return alert("Błąd parsowania fontu"); }
+
+  const start=parseInt($("scanStart").value,16);
+  const end=parseInt($("scanEnd").value,16);
+  const skipLower=$("chkSkipLower").checked;
+
+  // cmap: tylko mapowania, które font faktycznie ma
+  const cmap = font.tables && font.tables.cmap && font.tables.cmap.glyphIndexMap
+    ? font.tables.cmap.glyphIndexMap : null;
+
+  if(!cmap) return alert("Brak cmap.glyphIndexMap w tym foncie (dziwne).");
+
+  const s=activeSet();
+  saveState();
+
+  let imported=0, skippedLower=0, skippedEmpty=0, skippedRange=0;
+  for(const [cpStr, glyphIndex] of Object.entries(cmap)){
+    const cp = Number(cpStr);
+    if(cp<start||cp>end){ skippedRange++; continue; }
+    const ch = String.fromCodePoint(cp);
+    if(skipLower && isLower(ch)){ skippedLower++; continue; }
+
+    // raster
+    const rows = charRows(ch);
+    if(!rows.some(v=>v)){ skippedEmpty++; continue; }
+
+    s.glyphs[ch]=rows;
+    delete s.aliases[ch];
+    s.glyphCat[ch]=ensureCatIn(s, pickCat18(ch));
+    imported++;
+  }
+
+  $("fontInfo").innerHTML =
+    `Zaimportowano <span class="ok">${imported}</span>, pominięto: małe <span class="small">${skippedLower}</span>, puste <span class="small">${skippedEmpty}</span>, poza zakresem <span class="small">${skippedRange}</span> (ref="${$("bboxRef").value||"0"}")`;
+
+  saveWS(); syncAll();
+};
+
+/* ====== Keyboard nav ====== */
+document.addEventListener("keydown",e=>{
+  if(e.key==="Delete"){
+    if(activeList==="A") $("deleteInA").click();
+    else $("deleteInB").click();
+  }
+  if(e.key==="ArrowLeft"||e.key==="ArrowRight"){
+    e.preventDefault();
+    activeList = (activeList==="A") ? "B" : "A";
+    renderGlyphList("A"); renderGlyphList("B");
+  }
+  if(e.key==="ArrowUp"||e.key==="ArrowDown"){
+    e.preventDefault();
+    const s = activeList==="A" ? setA() : setB();
+    let list=setAllChars(s);
+    if(activeList==="A" && filterCatA) list=list.filter(ch=>s.glyphCat[ch]===filterCatA);
+    if(!list.length) return;
+
+    let idx=list.indexOf(selected);
+    if(idx===-1) idx = (e.key==="ArrowDown")?0:list.length-1;
+    else idx += (e.key==="ArrowDown"?1:-1);
+    if(idx<0) idx=0; if(idx>=list.length) idx=list.length-1;
+
+    selected=list[idx];
+    syncEditor(); renderGlyphList("A"); renderGlyphList("B");
+  }
+});
+
+/* ====== Sync all ====== */
+function syncAll(){
+  renderSetTabs();
+  renderCatSelectA();
+  renderGlyphList("A");
+  renderGlyphList("B");
+  syncEditor();
+}
+syncAll();
+</script>
+</body></html>
