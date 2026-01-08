@@ -160,8 +160,10 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
 
     if (!rt.sum) rt.sum = 0;
 
-    if (!rt.timer)
-      rt.timer = { running: false, endsAt: 0, seconds: 0, phase: null }; // phase: "P1"|"P2"|null
+    if (!rt.timer) rt.timer = { running:false, endsAt:0, seconds:0, phase:null };
+    if (rt.timer.usedP1 !== true) rt.timer.usedP1 = false;
+    if (rt.timer.usedP2 !== true) rt.timer.usedP2 = false;
+
     if (!rt.done) rt.done = false;
   }
 
@@ -368,7 +370,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
         });
       });
 
-    ui.setEnabled("btnFinalToP1MapQ1", !rt.timer.running);
+    ui.setEnabled("btnFinalToP1MapQ1", !rt.timer.running && rt.timer.usedP1);
   }
 
   // ---------- Render: P2 entry ----------
@@ -446,13 +448,21 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
           // Shift+Enter w pustym polu → zaznacza Powtórzenie
           if (e.key === "Enter" && e.shiftKey) {
             e.preventDefault();
+          
             const val = String(inp.value ?? "").trim();
             if (!val) {
               rt.p2[i].repeat = true;
-              renderP2Entry();
+              renderP2Entry(); // odśwież, żeby pokazać stan powtórzenia
             }
+          
+            // tak samo jak Enter → fokus w dół
+            const next = document.querySelector(
+              `#finalP2Inputs input[data-p="2"][data-i="${i + 1}"]`
+            );
+            next?.focus();
             return;
           }
+
         
           // zwykły Enter → przejście w dół
           if (e.key === "Enter") {
@@ -486,7 +496,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
         });
 
 
-    ui.setEnabled("btnFinalToP2MapQ1", !rt.timer.running);
+    ui.setEnabled("btnFinalToP1MapQ1", !rt.timer.running && rt.timer.usedP1);
   }
 
     // ---------- Render: mapping (one question) ----------
@@ -504,7 +514,11 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     const row = mapArr[idx];
   
     const isRepeat = roundNo === 2 && rt.p2[idx].repeat === true;
-  
+
+    // UWAGA: powtórzenie ma się zachowywać jak brak odpowiedzi
+    const effectiveInput = isRepeat ? "" : input;
+    const hasText = effectiveInput.trim().length > 0;
+
     let hostHintHtml = "";
   
     ensureDefaultMapping(row, { input, isRepeat });
@@ -557,11 +571,9 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
         const active = row.kind === "MATCH" && row.matchId === a.id;
         return `
           <button class="btn sm ${active ? "gold" : ""}" type="button"
-                  data-kind="match" data-id="${a.id}">
-            ${escapeHtml(a.text)} <span style="opacity:.7;">(${nInt(
-          a.fixed_points,
-          0
-        )})</span>
+                  data-kind="match" data-id="${a.id}"
+                  ${!hasText ? "disabled" : ""}>
+            ${escapeHtml(a.text)} <span style="opacity:.7;">(${nInt(a.fixed_points,0)})</span>
           </button>
         `;
       })
@@ -591,10 +603,13 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
         </div>
     
         <div class="rowBtns" style="margin-top:10px; gap:8px; flex-wrap:wrap;">
-          <button class="btn sm ${skipActive ? "gold" : ""}" type="button" data-kind="skip">
+          <button class="btn sm ${skipActive ? "gold" : ""}" type="button" data-kind="skip"
+            ${hasText ? "disabled" : ""}>
             ${escapeHtml(FINAL_MSG.MAP_BTN_SKIP)}
           </button>
-          <button class="btn sm danger ${missActive ? "gold" : ""}" type="button" data-kind="miss">
+          
+          <button class="btn sm danger ${missActive ? "gold" : ""}" type="button" data-kind="miss"
+            ${!hasText ? "disabled" : ""}>
             ${escapeHtml(FINAL_MSG.MAP_BTN_MISS)}
           </button>
         </div>
@@ -633,24 +648,28 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
   
     root.querySelectorAll('button[data-kind="match"]').forEach((b) => {
       b.addEventListener("click", () => {
+        if (!hasText) return; // blokada twarda
         row.kind = "MATCH";
         row.matchId = b.dataset.id || null;
         renderMapOne(roundNo, idx);
       });
     });
-  
+    
+    root.querySelector('button[data-kind="miss"]')?.addEventListener("click", () => {
+      if (!hasText) return;
+      row.kind = "MISS";
+      row.matchId = null;
+      if (!row.outText) row.outText = effectiveInput; // bierzemy effectiveInput
+      renderMapOne(roundNo, idx);
+    });
+    
     root.querySelector('button[data-kind="skip"]')?.addEventListener("click", () => {
+      if (hasText) return;
       row.kind = "SKIP";
       row.matchId = null;
       renderMapOne(roundNo, idx);
     });
-    
-    root.querySelector('button[data-kind="miss"]')?.addEventListener("click", () => {
-      row.kind = "MISS";
-      row.matchId = null;
-      renderMapOne(roundNo, idx);
-    });
-  
+
     root
     .querySelector('button[data-kind="reveal-answer"]')
     ?.addEventListener("click", async () => {
@@ -688,8 +707,29 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     root
       .querySelector('input[data-kind="out"]')
       ?.addEventListener("input", (e) => {
-        row.outText = String(e.target?.value ?? "");
+        const v = String(e.target?.value ?? "");
+        row.outText = v;
+    
+        // Pole odzwierciedla realny stan:
+        // - jeśli wpisujesz cokolwiek, to jest "Nie ma na liście"
+        // - jeśli wyczyścisz, wracamy do "Brak odpowiedzi" (o ile nie masz MATCH)
+        const has = v.trim().length > 0;
+    
+        if (has) {
+          row.kind = "MISS";
+          row.matchId = null;
+        } else {
+          if (row.kind === "MISS") {
+            row.kind = "SKIP";
+          }
+        }
+    
+        renderMapOne(roundNo, idx);
       });
+      const nextBtnId =
+        roundNo === 1 ? `btnFinalP1NextQ${idx + 1}` : `btnFinalP2NextQ${idx + 1}`;
+      
+      ui.setEnabled(nextBtnId, row.revealedAnswer && row.revealedPoints);
   }
   
   async function revealAnswerOnly(roundNo, idx) {
@@ -1008,21 +1048,29 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
   }
 
   function p1StartTimer() {
+    ensureRuntime();
+    const rt = store.state.final.runtime;
+    if (rt.timer.usedP1) return; // tylko raz
+    rt.timer.usedP1 = true;
     startCountdown(15, "P1");
     ui.setEnabled("btnFinalToP1MapQ1", false);
-    ui.setMsg("msgFinalP1Entry", FINAL_MSG.TIMER_RUNNING);
   }
-
+  
   function p2StartTimer() {
+    ensureRuntime();
+    const rt = store.state.final.runtime;
+    if (rt.timer.usedP2) return;
+    rt.timer.usedP2 = true;
     startCountdown(20, "P2");
     ui.setEnabled("btnFinalToP2MapQ1", false);
-    ui.setMsg("msgFinalP2Entry", FINAL_MSG.TIMER_RUNNING);
   }
 
   function toP1MapQ(idx1based) {
     stopTimer();
     const idx = idx1based - 1;
     setStep(`f_p1_map_q${idx1based}`);
+    row.revealedAnswer = false;
+    row.revealedPoints = false;
     renderMapOne(1, idx);
   }
 
@@ -1095,6 +1143,8 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     stopTimer();
     const idx = idx1based - 1;
     setStep(`f_p2_map_q${idx1based}`);
+    row.revealedAnswer = false;
+    row.revealedPoints = false;
     renderMapOne(2, idx);
   }
 
