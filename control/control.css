@@ -726,6 +726,32 @@
   outline-offset: 2px;
 }
 
+.rowQ {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 12px;
+  align-items: center;
+}
+
+.qPrompt.inline {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.3;
+}
+
+.colRight {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+@media (max-width: 900px) {
+  .rowQ {
+    grid-template-columns: 1fr;
+  }
+}
+
+
 
 /* ========= ROUNDS ========= */
 
