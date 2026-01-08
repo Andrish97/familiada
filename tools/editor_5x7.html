@@ -1,10 +1,8 @@
-<!DOCTYPE html>
-<html lang="pl">
-<head>
-<meta charset="UTF-8">
-<title>Edytor 5x7 + opentype + Unicode</title>
+<!doctype html><html lang=pl><meta charset=utf-8>
+<title>Edytor 5x7 (OTF/TTF→bitmap) + Unicode</title>
 <style>
-body{background:#111;color:#eee;font-family:system-ui,sans-serif;margin:0;padding:10px;display:flex;flex-direction:column;gap:10px}
+body{margin:0;padding:10px;background:#111;color:#eee;font:14px system-ui,sans-serif;display:flex;flex-direction:column;gap:10px}
+h2{margin:0 0 4px 0}
 .panel{background:#191919;border:1px solid #333;border-radius:6px;padding:8px}
 .row{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
 .small{font-size:11px;color:#aaa}
@@ -13,246 +11,138 @@ button{background:#222;cursor:pointer;padding:4px 8px}
 button:hover{background:#333}
 .layout{display:grid;grid-template-columns:240px 2fr 2fr;gap:10px}
 .glyph-list{height:180px;overflow:auto;background:#000;border:1px solid #333}
-.glyph-list-item{display:flex;justify-content:space-between;padding:2px 4px;cursor:pointer;font-family:monospace}
-.glyph-list-item.active{background:#444}
-.glyph-list-item:hover{background:#222}
-.glyph-grid{display:grid;grid-template-columns:repeat(5,16px);grid-template-rows:repeat(7,16px);gap:3px}
-.pixel{width:16px;height:16px;background:#222;border-radius:3px}
-.pixel.on{background:#ffd200;box-shadow:0 0 6px #ffd200}
-.editor-grid .pixel{cursor:pointer;border:1px solid #444}
-.editor-grid .pixel.on{border-color:#ffe680}
+.item{display:flex;justify-content:space-between;padding:2px 4px;cursor:pointer;font-family:ui-monospace,Menlo,Consolas,monospace}
+.item:hover{background:#222}.item.active{background:#444}
+.grid{display:grid;grid-template-columns:repeat(5,16px);grid-template-rows:repeat(7,16px);gap:3px}
+.px{width:16px;height:16px;background:#222;border-radius:3px}
+.px.on{background:#ffd200;box-shadow:0 0 6px #ffd200}
+.editor .px{cursor:pointer;border:1px solid #444}.editor .px.on{border-color:#ffe680}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:6px}
 hr{border:0;border-top:1px solid #333;margin:6px 0}
 textarea{width:100%;resize:vertical;min-height:80px}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/opentype.js/1.3.4/opentype.min.js"></script>
-</head>
+
 <body>
 <h2>Edytor czcionki 5×7 (opentype + Unicode)</h2>
 
-<div class="panel">
-  <div class="row">
-    <div>
-      <strong>Font (.otf/.ttf)</strong><br>
-      <input id="fontFile" type="file" accept=".otf,.ttf">
-    </div>
-    <div>
-      <label class="small">Zakres Unicode (HEX)</label><br>
-      Od <input id="scanStart" value="0020" size="6">
-      Do <input id="scanEnd"   value="02FF" size="6">
-    </div>
-    <div>
-      <label class="small">Ref (bbox):</label><br>
-      <input id="bboxRef" value="0" maxlength="2" size="4">
-    </div>
+<div class=panel>
+  <div class=row>
+    <div><b>Font (.otf/.ttf)</b><br><input id=fontFile type=file accept=".otf,.ttf"></div>
+    <div><span class=small>Zakres Unicode (HEX)</span><br>
+      Od <input id=scanStart value=0020 size=6> Do <input id=scanEnd value=02FF size=6></div>
+    <div><span class=small>Ref (bbox):</span><br><input id=bboxRef value=0 maxlength=2 size=4></div>
     <div style="flex:1">
-      <button id="importFont">Import z fontu → A</button>
-      <div id="fontInfo" class="small"></div>
+      <button id=importFont>Import z fontu → A</button>
+      <div id=fontInfo class=small></div>
     </div>
   </div>
   <hr>
-  <div class="row">
-    <div><strong>JSON A</strong><br><input id="jsonA" type="file" accept=".json"></div>
-    <div><strong>JSON B</strong><br><input id="jsonB" type="file" accept=".json"></div>
-    <button id="exportA">Eksport — rozszerzony</button>
-    <button id="exportFam">Eksport — Familiada</button>
-    <button id="undoBtn">Cofnij</button>
-    <button id="redoBtn">Ponów</button>
+  <div class=row>
+    <div><b>JSON A</b><br><input id=jsonA type=file accept=.json></div>
+    <div><b>JSON B</b><br><input id=jsonB type=file accept=.json></div>
+    <button id=exportA>Eksport — rozszerzony</button>
+    <button id=exportFam>Eksport — Unicode-format</button>
+    <button id=undoBtn>Cofnij</button>
+    <button id=redoBtn>Ponów</button>
   </div>
-  <div class="small">Nawigacja: ↑/↓ po liście, ←/→ przełącz listę A/B</div>
+  <div class=small>Nawigacja: ↑/↓ po aktywnej liście, ←/→ przełącz listę A/B</div>
 </div>
 
-<div class="layout">
-  <!-- LEWA: lista A -->
-  <div class="panel">
-    <h3>Zestaw A</h3>
-    <label class="small">Kategorie:</label>
-    <div class="row">
-      <select id="catSelect"></select>
-      <button id="catFilter">Filtruj</button>
-      <button id="catAll">Wszystkie</button>
+<div class=layout>
+  <div class=panel>
+    <h3 style="margin:0 0 6px 0">Zestaw A</h3>
+    <div class=small>Kategorie (custom):</div>
+    <div class=row>
+      <select id=catSelect></select>
+      <button id=catFilter>Filtruj</button>
+      <button id=catAll>Wszystkie</button>
     </div>
-    <div class="row">
-      <input id="catNew" placeholder="nowa kategoria">
-      <button id="catAdd">Dodaj</button>
+    <div class=row>
+      <input id=catNew placeholder="nowa kategoria">
+      <button id=catAdd>Dodaj</button>
     </div>
-    <div class="row">
-      <button id="catRename">Zmień nazwę</button>
-      <button id="catDelete">Usuń</button>
+    <div class=row>
+      <button id=catRename>Zmień nazwę</button>
+      <button id=catDelete>Usuń</button>
     </div>
-    <label class="small">Dodaj znak do A:</label>
-    <div class="row">
-      <input id="charNew" maxlength="1" value="A">
-      <button id="charAdd">Dodaj / wybierz</button>
+    <div class=small>Dodaj znak do A:</div>
+    <div class=row>
+      <input id=charNew maxlength=1 value=A>
+      <button id=charAdd>Dodaj / wybierz</button>
     </div>
-    <div class="row small">Lista A (multi-select: Ctrl/Shift)</div>
-    <div id="glyphListA" class="glyph-list"></div>
-    <div class="small">Znaków w A: <span id="countA">0</span></div>
+    <div class="small">Lista A (Ctrl/Shift zaznaczenie)</div>
+    <div id=glyphListA class=glyph-list></div>
+    <div class=small>Znaków w A: <span id=countA>0</span></div>
   </div>
 
-  <!-- ŚRODEK: edytor -->
-  <div class="panel">
-    <h3>Edytor znaku A</h3>
-    <div id="charInfo" class="small">—</div>
-    <label class="small">Kategorie znaku w A:</label>
-    <div id="charCats" class="row small"></div>
-    <div class="row">
-      <div><div id="editor" class="glyph-grid editor-grid"></div></div>
+  <div class=panel>
+    <h3 style="margin:0 0 6px 0">Edytor znaku A</h3>
+    <div id=charInfo class=small>—</div>
+    <div class=small>Kategorie znaku w A (custom):</div>
+    <div id=charCats class="row small"></div>
+    <div class=row>
+      <div><div id=editor class="grid editor"></div></div>
       <div style="flex:1">
-        <label class="small">Bitmapa:</label>
-        <div id="rowsView" class="small"></div>
-        <input id="rowsEdit">
-        <button id="rowsApply">Zastosuj</button>
-        <label class="small">Alias:</label>
-        <div class="row">
-          <input id="aliasTarget" placeholder="np. A">
-          <button id="makeAlias">Utwórz alias</button>
-          <button id="breakAlias">Rozbij alias</button>
+        <div class=small>Bitmapa:</div>
+        <div id=rowsView class=small></div>
+        <input id=rowsEdit>
+        <button id=rowsApply>Zastosuj</button>
+        <div class=small>Alias:</div>
+        <div class=row>
+          <input id=aliasTarget placeholder="np. A">
+          <button id=makeAlias>Utwórz alias</button>
+          <button id=breakAlias>Rozbij alias</button>
         </div>
-        <label class="small">Fragment JSON:</label>
-        <textarea id="snippet" readonly></textarea>
+        <div class=small>Fragment:</div>
+        <textarea id=snippet readonly></textarea>
       </div>
     </div>
   </div>
 
-  <!-- PRAWA: lista B + porównanie -->
-  <div class="panel">
-    <h3>Zestaw B + porównanie</h3>
-    <div class="row small"><span>Lista B (podgląd)</span></div>
-    <div id="glyphListB" class="glyph-list"></div>
-    <div class="small">Znaków w B: <span id="countB">0</span></div>
+  <div class=panel>
+    <h3 style="margin:0 0 6px 0">Zestaw B + porównanie</h3>
+    <div class=small>Lista B (podgląd)</div>
+    <div id=glyphListB class=glyph-list></div>
+    <div class=small>Znaków w B: <span id=countB>0</span></div>
     <hr>
-    <div class="two">
-      <div><div class="small">A</div><div id="prevA" class="glyph-grid"></div></div>
-      <div><div class="small">B</div><div id="prevB" class="glyph-grid"></div></div>
+    <div class=two>
+      <div><div class=small>A</div><div id=prevA class=grid></div></div>
+      <div><div class=small>B</div><div id=prevB class=grid></div></div>
     </div>
-    <div class="row">
-      <button id="copyFromB">Kopiuj B → A</button>
-      <button id="copyFromA">Kopiuj A → B</button>
-      <button id="copyAllDiff">Kopiuj wszystkie różne → A</button>
-      <button id="deleteInA">Usuń w A</button>
-      <button id="deleteInB">Usuń w B</button>
+    <div class=row style="margin-top:6px">
+      <button id=copyFromB>Kopiuj B → A</button>
+      <button id=copyFromA>Kopiuj A → B</button>
+      <button id=copyAllDiff>Kopiuj różne → A</button>
+      <button id=deleteInA>Usuń w A</button>
+      <button id=deleteInB>Usuń w B</button>
     </div>
-    <div id="cmpText" class="small"></div>
+    <div id=cmpText class=small></div>
   </div>
 </div>
 
-<canvas id="c" width="256" height="256" style="display:none"></canvas>
+<canvas id=c width=256 height=256 style="display:none"></canvas>
 
 <script>
-const W=5,H=7;
-const ctx=c.getContext("2d",{willReadFrequently:true});
-
+const W=5,H=7,$=id=>document.getElementById(id),ctx=c.getContext("2d",{willReadFrequently:true});
 const stateA={meta:{name:"set-A",width:W,height:H},glyphs:{},aliases:{},categories:{}};
 const stateB={meta:{name:"set-B",width:W,height:H},glyphs:{},aliases:{},categories:{}};
+["letters","digits","punctuation","math","symbol","space","special"].forEach(k=>stateA.categories[k]=stateA.categories[k]||new Set());
+let selected=null,filter=null,fontName=null,fontLoaded=false,fontBBox=null,history=[],future=[],activeList="A",selectionA=new Set();
 
-let selected=null,filter=null,fontName=null,fontLoaded=false,fontBBox=null,history=[],future=[];
-let activeList="A"; // "A" lub "B"
-
-const $=id=>document.getElementById(id);
-
-["letters","digits","punctuation","math","symbol","space","special"]
-  .forEach(n=>stateA.categories[n]=stateA.categories[n]||new Set());
-
-/* ===== historia ===== */
-function saveState(){history.push(JSON.stringify(stateA));future.length=0;}
-function restore(snap){Object.assign(stateA,JSON.parse(snap));}
-
-/* ===== siatki ===== */
-function grid(el){el.innerHTML="";for(let i=0;i<W*H;i++){const d=document.createElement("div");d.className="pixel";el.appendChild(d);}}
+const grid=(el)=>{el.innerHTML="";for(let i=0;i<W*H;i++){const d=document.createElement("div");d.className="px";el.appendChild(d)}};
 grid(editor);grid(prevA);grid(prevB);
 
-function rowsToGrid(el,rows){
-  const p=el.querySelectorAll(".pixel");
-  p.forEach(x=>x.classList.remove("on"));
-  if(!rows)return;
-  for(let y=0;y<H;y++)
-    for(let x=0;x<W;x++)
-      if(rows[y]&(1<<(W-1-x)))p[y*W+x].classList.add("on");
-}
-function gridToRows(el){
-  const p=el.querySelectorAll(".pixel"),r=[];
-  for(let y=0;y<H;y++){
-    let v=0;
-    for(let x=0;x<W;x++)
-      if(p[y*W+x].classList.contains("on"))v|=(1<<(W-1-x));
-    r.push(v);
-  }
-  return r;
-}
+const rowsToGrid=(el,rows)=>{const p=el.querySelectorAll(".px");p.forEach(x=>x.classList.remove("on"));if(!rows)return;
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++)if(rows[y]&(1<<(W-1-x)))p[y*W+x].classList.add("on")};
+const gridToRows=(el)=>{const p=el.querySelectorAll(".px"),r=[];for(let y=0;y<H;y++){let v=0;for(let x=0;x<W;x++)if(p[y*W+x].classList.contains("on"))v|=(1<<(W-1-x));r.push(v)}return r};
 
-/* ===== listy A/B ===== */
-let selectionA=new Set();
+const saveState=()=>{history.push(JSON.stringify(stateA));future.length=0};
+const restore=s=>Object.assign(stateA,JSON.parse(s));
 
-function listCharsA(){
-  const all=Object.keys({...stateA.glyphs,...stateA.aliases})
-    .sort((a,b)=>a.codePointAt()-b.codePointAt());
-  if(filter&&stateA.categories[filter])
-    return all.filter(ch=>stateA.categories[filter].has(ch));
-  return all;
-}
-function listCharsB(){
-  return Object.keys({...stateB.glyphs,...stateB.aliases})
-    .sort((a,b)=>a.codePointAt()-b.codePointAt());
-}
+const ensureCat=n=>{if(!stateA.categories[n])stateA.categories[n]=new Set()};
 
-function renderListA(){
-  const list=listCharsA();
-  glyphListA.innerHTML="";
-  $("countA").textContent=list.length;
-  list.forEach(ch=>{
-    const d=document.createElement("div");
-    const active=selectionA.has(ch)||ch===selected;
-    d.className="glyph-list-item"+(active?" active":"");
-    d.innerHTML=`<span>${ch===" "?"␣":ch}</span><span class="small">U+${ch.codePointAt().toString(16).toUpperCase()}</span>`;
-    d.onclick=e=>handleSelectFromA(ch,e);
-    glyphListA.appendChild(d);
-  });
-}
-function renderListB(){
-  const list=listCharsB();
-  glyphListB.innerHTML="";
-  $("countB").textContent=list.length;
-  list.forEach(ch=>{
-    const d=document.createElement("div");
-    const active=ch===selected;
-    d.className="glyph-list-item"+(active?" active":"");
-    d.innerHTML=`<span>${ch===" "?"␣":ch}</span><span class="small">U+${ch.codePointAt().toString(16).toUpperCase()}</span>`;
-    d.onclick=()=>handleSelectFromB(ch);
-    glyphListB.appendChild(d);
-  });
-}
-
-function handleSelectFromA(ch,e){
-  activeList="A";
-  if(e.shiftKey){
-    const list=listCharsA();
-    if(selectionA.size){
-      const first=[...selectionA][0];
-      selectionA=new Set();
-      const s=Math.min(list.indexOf(first),list.indexOf(ch));
-      const t=Math.max(list.indexOf(first),list.indexOf(ch));
-      for(let i=s;i<=t;i++)selectionA.add(list[i]);
-    }else selectionA=new Set([ch]);
-  }else if(e.ctrlKey){
-    selectionA.has(ch)?selectionA.delete(ch):selectionA.add(ch);
-  }else{
-    selectionA=new Set([ch]);
-  }
-  selected=[...selectionA][0];
-  renderListA();renderListB();updateEditor();
-}
-function handleSelectFromB(ch){
-  activeList="B";
-  selected=ch;
-  selectionA=new Set([ch]);
-  renderListA();renderListB();updateEditor();
-}
-
-/* ===== kategorie Unicode ===== */
-function ensureCat(n){if(!stateA.categories[n])stateA.categories[n]=new Set();}
-
-function broadCat(ch){
+const broadCat=ch=>{
   const cp=ch.codePointAt(0);
   if(cp>=0x30&&cp<=0x39)return"digits";
   const lo=ch.toLowerCase(),up=ch.toUpperCase();
@@ -261,188 +151,345 @@ function broadCat(ch){
   if((cp>=0x21&&cp<=0x2F)||(cp>=0x3A&&cp<=0x3F)||(cp>=0x5B&&cp<=0x60)||(cp>=0x7B&&cp<=0x7E))return"punctuation";
   if("+-×÷=/".includes(ch)||(cp>=0x2200&&cp<=0x22FF))return"math";
   if((cp>=0x20A0&&cp<=0x20CF)||(cp>=0x2600&&cp<=0x26FF)||(cp>=0x2700&&cp<=0x27BF))return"symbol";
-  return"special";
-}
+  return"special"
+};
 
 let hasUP=false,gcTests=[],groupTests=[],scriptTests=[];
 try{
-  gcTests=[
-    ["gc:Lu",/\p{Lu}/u],["gc:Ll",/\p{Ll}/u],["gc:Lt",/\p{Lt}/u],
-    ["gc:Lm",/\p{Lm}/u],["gc:Lo",/\p{Lo}/u],
-    ["gc:Mn",/\p{Mn}/u],["gc:Mc",/\p{Mc}/u],["gc:Me",/\p{Me}/u],
-    ["gc:Nd",/\p{Nd}/u],["gc:Nl",/\p{Nl}/u],["gc:No",/\p{No}/u],
-    ["gc:Pc",/\p{Pc}/u],["gc:Pd",/\p{Pd}/u],["gc:Ps",/\p{Ps}/u],
-    ["gc:Pe",/\p{Pe}/u],["gc:Pi",/\p{Pi}/u],["gc:Pf",/\p{Pf}/u],
-    ["gc:Po",/\p{Po}/u],
-    ["gc:Sm",/\p{Sm}/u],["gc:Sc",/\p{Sc}/u],["gc:Sk",/\p{Sk}/u],["gc:So",/\p{So}/u],
-    ["gc:Zs",/\p{Zs}/u],["gc:Zl",/\p{Zl}/u],["gc:Zp",/\p{Zp}/u],
-    ["gc:Cc",/\p{Cc}/u],["gc:Cf",/\p{Cf}/u],["gc:Co",/\p{Co}/u],["gc:Cs",/\p{Cs}/u]
-  ];
-  groupTests=[
-    ["grp:Letter",/\p{L}/u],["grp:Number",/\p{N}/u],["grp:Punctuation",/\p{P}/u],
-    ["grp:Symbol",/\p{S}/u],["grp:Separator",/\p{Z}/u],["grp:Mark",/\p{M}/u],["grp:Other",/\p{C}/u]
-  ];
-  scriptTests=[
-    ["sc:Latin",/\p{Script=Latin}/u],["sc:Cyrillic",/\p{Script=Cyrillic}/u],
-    ["sc:Greek",/\p{Script=Greek}/u],["sc:Common",/\p{Script=Common}/u],["sc:Inherited",/\p{Script=Inherited}/u]
-  ];
-  hasUP=true;
-}catch(e){hasUP=false;}
+  gcTests=[["gc:Lu",/\p{Lu}/u],["gc:Ll",/\p{Ll}/u],["gc:Lt",/\p{Lt}/u],["gc:Lm",/\p{Lm}/u],["gc:Lo",/\p{Lo}/u],
+           ["gc:Mn",/\p{Mn}/u],["gc:Mc",/\p{Mc}/u],["gc:Me",/\p{Me}/u],
+           ["gc:Nd",/\p{Nd}/u],["gc:Nl",/\p{Nl}/u],["gc:No",/\p{No}/u],
+           ["gc:Pc",/\p{Pc}/u],["gc:Pd",/\p{Pd}/u],["gc:Ps",/\p{Ps}/u],["gc:Pe",/\p{Pe}/u],["gc:Pi",/\p{Pi}/u],["gc:Pf",/\p{Pf}/u],["gc:Po",/\p{Po}/u],
+           ["gc:Sm",/\p{Sm}/u],["gc:Sc",/\p{Sc}/u],["gc:Sk",/\p{Sk}/u],["gc:So",/\p{So}/u],
+           ["gc:Zs",/\p{Zs}/u],["gc:Zl",/\p{Zl}/u],["gc:Zp",/\p{Zp}/u],
+           ["gc:Cc",/\p{Cc}/u],["gc:Cf",/\p{Cf}/u],["gc:Co",/\p{Co}/u],["gc:Cs",/\p{Cs}/u]];
+  groupTests=[["grp:Letter",/\p{L}/u],["grp:Number",/\p{N}/u],["grp:Punctuation",/\p{P}/u],["grp:Symbol",/\p{S}/u],["grp:Separator",/\p{Z}/u],["grp:Mark",/\p{M}/u],["grp:Other",/\p{C}/u]];
+  scriptTests=[["sc:Latin",/\p{Script=Latin}/u],["sc:Cyrillic",/\p{Script=Cyrillic}/u],["sc:Greek",/\p{Script=Greek}/u],["sc:Common",/\p{Script=Common}/u],["sc:Inherited",/\p{Script=Inherited}/u]];
+  hasUP=true
+}catch(e){hasUP=false}
 
-function unicodeCategories(ch){
+const unicodeCategories=ch=>{
   const cats=[broadCat(ch)];
   if(hasUP){
-    for(const[n,re]of gcTests){if(re.test(ch)){cats.push(n);break;}}
-    for(const[n,re]of groupTests){if(re.test(ch))cats.push(n);}
-    for(const[n,re]of scriptTests){if(re.test(ch)){cats.push(n);break;}}
+    for(const[n,re]of gcTests)if(re.test(ch)){cats.push(n);break}
+    for(const[n,re]of groupTests)if(re.test(ch))cats.push(n);
+    for(const[n,re]of scriptTests)if(re.test(ch)){cats.push(n);break}
   }
-  return[...new Set(cats)];
-}
+  return [...new Set(cats)]
+};
 
-/* ===== UI kategorii ===== */
-function renderCatSelect(){
+const isAlias=ch=>stateA.aliases[ch];
+const sourceRows=ch=>isAlias(ch)?sourceRows(stateA.aliases[ch]):stateA.glyphs[ch];
+
+const listCharsA=()=>{
+  const all=Object.keys({...stateA.glyphs,...stateA.aliases}).sort((a,b)=>a.codePointAt(0)-b.codePointAt(0));
+  if(filter&&stateA.categories[filter])return all.filter(ch=>stateA.categories[filter].has(ch));
+  return all
+};
+const listCharsB=()=>Object.keys({...stateB.glyphs,...stateB.aliases}).sort((a,b)=>a.codePointAt(0)-b.codePointAt(0));
+
+const renderCatSelect=()=>{
   catSelect.innerHTML="";
   Object.keys(stateA.categories).sort().forEach(n=>{
-    const o=document.createElement("option");
-    o.value=n;
-    o.textContent=`${n} (${stateA.categories[n].size})`;
-    catSelect.appendChild(o);
-  });
-}
-catAdd.onclick=()=>{const n=catNew.value.trim();if(!n)return;ensureCat(n);catNew.value="";renderCatSelect();};
-catRename.onclick=()=>{const old=catSelect.value;if(!old)return;const n=prompt("Nowa nazwa",old);if(!n||n===old)return;stateA.categories[n]=stateA.categories[old];delete stateA.categories[old];if(filter===old)filter=n;renderCatSelect();renderListA();};
-catDelete.onclick=()=>{const n=catSelect.value;if(!n)return;delete stateA.categories[n];if(filter===n)filter=null;renderCatSelect();renderListA();};
-catFilter.onclick=()=>{filter=catSelect.value;renderListA();};
-catAll.onclick=()=>{filter=null;renderListA();};
+    const o=document.createElement("option");o.value=n;o.textContent=`${n} (${stateA.categories[n].size})`;catSelect.appendChild(o)
+  })
+};
 
-/* ===== aliasy / edytor ===== */
-function isAlias(ch){return stateA.aliases[ch];}
-function sourceRows(ch){return isAlias(ch)?sourceRows(stateA.aliases[ch]):stateA.glyphs[ch];}
+const renderListA=()=>{
+  const list=listCharsA();glyphListA.innerHTML="";countA.textContent=list.length;
+  list.forEach(ch=>{
+    const d=document.createElement("div"),active=selectionA.has(ch)||ch===selected;
+    d.className="item"+(active?" active":"");
+    d.innerHTML=`<span>${ch===" "?"␣":ch}</span><span class=small>U+${ch.codePointAt(0).toString(16).toUpperCase()}</span>`;
+    d.onclick=e=>handleSelectFromA(ch,e);
+    glyphListA.appendChild(d)
+  })
+};
+const renderListB=()=>{
+  const list=listCharsB();glyphListB.innerHTML="";countB.textContent=list.length;
+  list.forEach(ch=>{
+    const d=document.createElement("div"),active=ch===selected;
+    d.className="item"+(active?" active":"");
+    d.innerHTML=`<span>${ch===" "?"␣":ch}</span><span class=small>U+${ch.codePointAt(0).toString(16).toUpperCase()}</span>`;
+    d.onclick=()=>handleSelectFromB(ch);
+    glyphListB.appendChild(d)
+  })
+};
 
-function renderCharCats(){
-  charCats.innerHTML="";if(!selected)return;
+const handleSelectFromA=(ch,e)=>{
+  activeList="A";
+  if(e.shiftKey){
+    const list=listCharsA();
+    if(selectionA.size){
+      const first=[...selectionA][0];selectionA=new Set();
+      const s=Math.min(list.indexOf(first),list.indexOf(ch)),t=Math.max(list.indexOf(first),list.indexOf(ch));
+      for(let i=s;i<=t;i++)selectionA.add(list[i])
+    }else selectionA=new Set([ch])
+  }else if(e.ctrlKey){ selectionA.has(ch)?selectionA.delete(ch):selectionA.add(ch) }
+  else selectionA=new Set([ch]);
+  selected=[...selectionA][0];
+  renderListA();renderListB();updateEditor()
+};
+const handleSelectFromB=ch=>{
+  activeList="B";selected=ch;selectionA=new Set([ch]);
+  renderListA();renderListB();updateEditor()
+};
+
+const renderCharCats=()=>{
+  charCats.innerHTML=""; if(!selected) return;
   Object.keys(stateA.categories).sort().forEach(n=>{
     const l=document.createElement("label");l.className="row small";
     const cb=document.createElement("input");cb.type="checkbox";cb.checked=stateA.categories[n].has(selected);
-    cb.onchange=()=>{saveState();cb.checked?stateA.categories[n].add(selected):stateA.categories[n].delete(selected);renderCatSelect();renderListA();};
-    l.append(cb,document.createTextNode(n));charCats.append(l);
-  });
-}
+    cb.onchange=()=>{saveState();cb.checked?stateA.categories[n].add(selected):stateA.categories[n].delete(selected);renderCatSelect();renderListA()};
+    l.append(cb,document.createTextNode(n));charCats.append(l)
+  })
+};
 
-function updateEditor(){
+const diffText=ch=>{
+  const a=JSON.stringify(sourceRows(ch));
+  const b=JSON.stringify(stateB.glyphs[ch]||null);
+  if(b==="null")return"Brak w B";
+  return a===b?"Identyczne":"Różne"
+};
+
+const updateEditor=()=>{
   if(!selected){
-    charInfo.textContent="—";
-    rowsView.textContent="";
-    rowsEdit.value="";
-    snippet.value="";
-    rowsToGrid(editor,null);rowsToGrid(prevA,null);rowsToGrid(prevB,null);
-    cmpText.textContent="";
-    return;
+    charInfo.textContent="—";rowsView.textContent="";rowsEdit.value="";snippet.value="";
+    rowsToGrid(editor,null);rowsToGrid(prevA,null);rowsToGrid(prevB,null);cmpText.textContent="";charCats.innerHTML="";
+    return
   }
   const rA=sourceRows(selected)||Array(H).fill(0);
   const rB=stateB.glyphs[selected]||null;
   rowsToGrid(editor,rA);rowsToGrid(prevA,rA);rowsToGrid(prevB,rB);
-  rowsView.textContent=rA.join(", ");
-  rowsEdit.value=rA.join(", ");
+  rowsView.textContent=rA.join(", ");rowsEdit.value=rA.join(", ");
   snippet.value=isAlias(selected)?`"${selected}":"@${stateA.aliases[selected]}"`:`"${selected}":[${rA.join(",")}]`;
   charInfo.textContent=`"${selected}"`;
-  renderCharCats();
-  cmpText.textContent=diffText(selected);
-}
+  renderCharCats();cmpText.textContent=diffText(selected)
+};
 
-editor.onclick=e=>{if(!e.target.classList.contains("pixel")||isAlias(selected))return;saveState();e.target.classList.toggle("on");stateA.glyphs[selected]=gridToRows(editor);updateEditor();};
-rowsApply.onclick=()=>{if(!selected)return;saveState();stateA.glyphs[selected]=rowsEdit.value.split(",").map(v=>parseInt(v)||0).slice(0,H);delete stateA.aliases[selected];updateEditor();};
-makeAlias.onclick=()=>{if(!selected)return;const t=aliasTarget.value.trim();if(!t||t===selected)return;if(!stateA.glyphs[t]&&!stateA.aliases[t])return alert("Brak źródła");saveState();delete stateA.glyphs[selected];stateA.aliases[selected]=t;updateEditor();};
-breakAlias.onclick=()=>{if(!selected||!isAlias(selected))return;saveState();stateA.glyphs[selected]=sourceRows(selected).slice();delete stateA.aliases[selected];updateEditor();};
-charAdd.onclick=()=>{const ch=charNew.value||" ";selected=ch;selectionA=new Set([ch]);if(!stateA.glyphs[ch]&&!stateA.aliases[ch]){saveState();stateA.glyphs[ch]=Array(H).fill(0);const cats=unicodeCategories(ch);cats.forEach(c=>{ensureCat(c);stateA.categories[c].add(ch);});}renderCatSelect();renderListA();renderListB();updateEditor();};
+editor.onclick=e=>{
+  if(!e.target.classList.contains("px")||isAlias(selected))return;
+  saveState();e.target.classList.toggle("on");stateA.glyphs[selected]=gridToRows(editor);updateEditor()
+};
+rowsApply.onclick=()=>{
+  if(!selected)return;saveState();
+  stateA.glyphs[selected]=rowsEdit.value.split(",").map(v=>parseInt(v)||0).slice(0,H);
+  delete stateA.aliases[selected];updateEditor()
+};
+makeAlias.onclick=()=>{
+  if(!selected)return;
+  const t=aliasTarget.value.trim(); if(!t||t===selected)return;
+  if(!stateA.glyphs[t]&&!stateA.aliases[t])return alert("Brak źródła");
+  saveState();delete stateA.glyphs[selected];stateA.aliases[selected]=t;updateEditor()
+};
+breakAlias.onclick=()=>{
+  if(!selected||!isAlias(selected))return;
+  saveState();stateA.glyphs[selected]=sourceRows(selected).slice();delete stateA.aliases[selected];updateEditor()
+};
+charAdd.onclick=()=>{
+  const ch=charNew.value||" ";selected=ch;selectionA=new Set([ch]);
+  if(!stateA.glyphs[ch]&&!stateA.aliases[ch]){
+    saveState();stateA.glyphs[ch]=Array(H).fill(0);
+    const cats=unicodeCategories(ch);cats.forEach(c=>{ensureCat(c);stateA.categories[c].add(ch)})
+  }
+  renderCatSelect();renderListA();renderListB();updateEditor()
+};
 
-/* ===== JSON import/eksport ===== */
-async function loadJSON(f){return JSON.parse(await f.text());}
-function importFamiliadaFormat(json,target){
-  target.meta=json.meta||target.meta;target.glyphs={};target.aliases={};
-  target.categories={letters:new Set(),digits:new Set(),punctuation:new Set(),math:new Set(),special:new Set()};
-  function absorb(sec,cat){if(!sec)return;for(const[ch,val]of Object.entries(sec)){if(typeof val==="string"&&val.startsWith("@"))target.aliases[ch]=val.slice(1);else if(Array.isArray(val))target.glyphs[ch]=val.slice(0,7);target.categories[cat].add(ch);}}
-  absorb(json.letters,"letters");absorb(json.digits,"digits");absorb(json.punctuation,"punctuation");absorb(json.math,"math");absorb(json.special,"special");
-}
-jsonA.onchange=async()=>{const j=await loadJSON(jsonA.files[0]);saveState();if(j.glyphs||j.aliases||j.categories){stateA.meta=j.meta||stateA.meta;stateA.glyphs=j.glyphs||{};stateA.aliases=j.aliases||{};stateA.categories={};if(j.categories)for(const[k,v]of Object.entries(j.categories))stateA.categories[k]=new Set(v);}else importFamiliadaFormat(j,stateA);renderCatSelect();renderListA();renderListB();updateEditor();};
-jsonB.onchange=async()=>{const j=await loadJSON(jsonB.files[0]);if(j.glyphs||j.aliases||j.categories){stateB.meta=j.meta||stateB.meta;stateB.glyphs=j.glyphs||{};stateB.aliases=j.aliases||{};stateB.categories=j.categories?Object.fromEntries(Object.entries(j.categories).map(([k,v])=>[k,new Set(v)])):{}}else importFamiliadaFormat(j,stateB);renderListB();updateEditor();};
-exportA.onclick=()=>{const cats={};for(const[k,v]of Object.entries(stateA.categories))cats[k]=Array.from(v);const data={meta:stateA.meta,glyphs:stateA.glyphs,aliases:stateA.aliases,categories:cats};const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download=(stateA.meta.name||"set-A")+".json";a.click();URL.revokeObjectURL(url);};
-function exportFamiliadaFormat(){const out={meta:stateA.meta,letters:{},digits:{},punctuation:{},math:{},special:{}};function push(cat,ch){if(stateA.aliases[ch])out[cat][ch]="@"+stateA.aliases[ch];else if(stateA.glyphs[ch])out[cat][ch]=stateA.glyphs[ch];}for(const cat of Object.keys(out)){const set=stateA.categories[cat];if(!set)continue;for(const ch of set)push(cat,ch);}return out;}
-exportFam.onclick=()=>{const data=exportFamiliadaFormat();const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download=(stateA.meta.name||"familiada")+".json";a.click();URL.revokeObjectURL(url);};
+catAdd.onclick=()=>{const n=catNew.value.trim();if(!n)return;ensureCat(n);catNew.value="";renderCatSelect()};
+catRename.onclick=()=>{const old=catSelect.value;if(!old)return;const n=prompt("Nowa nazwa",old);if(!n||n===old)return;
+  stateA.categories[n]=stateA.categories[old];delete stateA.categories[old];if(filter===old)filter=n;renderCatSelect();renderListA();renderCharCats()
+};
+catDelete.onclick=()=>{const n=catSelect.value;if(!n)return;delete stateA.categories[n];if(filter===n)filter=null;renderCatSelect();renderListA();renderCharCats()};
+catFilter.onclick=()=>{filter=catSelect.value;renderListA()};
+catAll.onclick=()=>{filter=null;renderListA()};
 
-/* ===== undo/redo + porównanie ===== */
-undoBtn.onclick=()=>{if(!history.length)return;future.push(JSON.stringify(stateA));restore(history.pop());renderCatSelect();renderListA();renderListB();updateEditor();};
-redoBtn.onclick=()=>{if(!future.length)return;history.push(JSON.stringify(stateA));restore(future.pop());renderCatSelect();renderListA();renderListB();updateEditor();};
-function diffText(ch){const a=JSON.stringify(sourceRows(ch));const b=JSON.stringify(stateB.glyphs[ch]||null);if(b==="null")return"Brak w B";return a===b?"Identyczne":"Różne";}
-copyFromB.onclick=()=>{if(!selected||!stateB.glyphs[selected])return;saveState();stateA.glyphs[selected]=stateB.glyphs[selected].slice();delete stateA.aliases[selected];renderListA();updateEditor();};
-copyFromA.onclick=()=>{if(!selected||!stateA.glyphs[selected])return;stateB.glyphs[selected]=stateA.glyphs[selected].slice();renderListB();updateEditor();};
-copyAllDiff.onclick=()=>{saveState();for(const ch of Object.keys(stateB.glyphs))if(JSON.stringify(sourceRows(ch))!==JSON.stringify(stateB.glyphs[ch]))stateA.glyphs[ch]=stateB.glyphs[ch].slice();renderListA();updateEditor();};
+undoBtn.onclick=()=>{if(!history.length)return;future.push(JSON.stringify(stateA));restore(history.pop());renderCatSelect();renderListA();renderListB();updateEditor()};
+redoBtn.onclick=()=>{if(!future.length)return;history.push(JSON.stringify(stateA));restore(future.pop());renderCatSelect();renderListA();renderListB();updateEditor()};
 
-/* ===== USUWANIE ZNAKÓW ===== */
-deleteInA.onclick=()=>{ 
+copyFromB.onclick=()=>{if(!selected||!stateB.glyphs[selected])return;saveState();stateA.glyphs[selected]=stateB.glyphs[selected].slice();delete stateA.aliases[selected];renderListA();updateEditor()};
+copyFromA.onclick=()=>{if(!selected||!stateA.glyphs[selected])return;stateB.glyphs[selected]=stateA.glyphs[selected].slice();renderListB();updateEditor()};
+copyAllDiff.onclick=()=>{saveState();for(const ch of Object.keys(stateB.glyphs))if(JSON.stringify(sourceRows(ch))!==JSON.stringify(stateB.glyphs[ch]))stateA.glyphs[ch]=stateB.glyphs[ch].slice();renderListA();updateEditor()};
+deleteInA.onclick=()=>{
   if(!selected)return;
   if(!stateA.glyphs[selected]&&!stateA.aliases[selected])return;
-  saveState();
-  delete stateA.glyphs[selected];
-  delete stateA.aliases[selected];
-  for(const set of Object.values(stateA.categories)){
-    set.delete(selected);
-  }
-  selectionA.delete(selected);
-  selected=null;
-  renderCatSelect();renderListA();renderListB();updateEditor();
+  saveState();delete stateA.glyphs[selected];delete stateA.aliases[selected];
+  for(const set of Object.values(stateA.categories))set.delete(selected);
+  selectionA.delete(selected);selected=null;
+  renderCatSelect();renderListA();renderListB();updateEditor()
 };
-deleteInB.onclick=()=>{ 
+deleteInB.onclick=()=>{
   if(!selected)return;
   if(!stateB.glyphs[selected]&&!stateB.aliases[selected])return;
-  delete stateB.glyphs[selected];
-  delete stateB.aliases[selected];
-  if(stateB.categories){
-    for(const set of Object.values(stateB.categories)){
-      set.delete(selected);
-    }
-  }
-  renderListB();updateEditor();
+  delete stateB.glyphs[selected];delete stateB.aliases[selected];
+  if(stateB.categories)for(const set of Object.values(stateB.categories))set.delete(selected);
+  renderListB();updateEditor()
 };
 
-/* ===== font + bbox referencyjny ===== */
-async function loadFontFace(){const f=fontFile.files[0];if(!f)return;const url=URL.createObjectURL(f);fontName="F_"+Math.random().toString(36).slice(2);const face=new FontFace(fontName,`url(${url})`);await face.load();document.fonts.add(face);fontLoaded=true;}
-function computeFontBBox(refCh){
+const loadJSON=async f=>JSON.parse(await f.text());
+const importFamiliadaLegacy=(json,target)=>{
+  target.meta=json.meta||target.meta;target.glyphs={};target.aliases={};
+  target.categories={letters:new Set(),digits:new Set(),punctuation:new Set(),math:new Set(),special:new Set()};
+  const absorb=(sec,cat)=>{if(!sec)return;for(const[ch,val]of Object.entries(sec)){
+    if(typeof val==="string"&&val.startsWith("@"))target.aliases[ch]=val.slice(1);
+    else if(Array.isArray(val))target.glyphs[ch]=val.slice(0,7);
+    target.categories[cat].add(ch)
+  }};
+  absorb(json.letters,"letters");absorb(json.digits,"digits");absorb(json.punctuation,"punctuation");absorb(json.math,"math");absorb(json.special,"special")
+};
+
+jsonA.onchange=async()=>{
+  const j=await loadJSON(jsonA.files[0]);saveState();
+  if(j.glyphs||j.aliases||j.categories||j.customCategories||j.unicodeCategories){
+    stateA.meta=j.meta||stateA.meta;
+    stateA.glyphs=j.glyphs||{};
+    stateA.aliases=j.aliases||{};
+    stateA.categories={};
+    const cats=j.categories||j.customCategories;
+    if(cats)for(const[k,v]of Object.entries(cats))stateA.categories[k]=new Set(v);
+    // jeśli nie było żadnych kategorii, zostaw domyślne:
+    ["letters","digits","punctuation","math","symbol","space","special"].forEach(k=>stateA.categories[k]=stateA.categories[k]||new Set())
+  } else importFamiliadaLegacy(j,stateA);
+  renderCatSelect();renderListA();renderListB();updateEditor()
+};
+
+jsonB.onchange=async()=>{
+  const j=await loadJSON(jsonB.files[0]);
+  if(j.glyphs||j.aliases||j.categories||j.customCategories||j.unicodeCategories){
+    stateB.meta=j.meta||stateB.meta;
+    stateB.glyphs=j.glyphs||{};
+    stateB.aliases=j.aliases||{};
+    stateB.categories={};
+    const cats=j.categories||j.customCategories;
+    if(cats)for(const[k,v]of Object.entries(cats))stateB.categories[k]=new Set(v);
+  } else importFamiliadaLegacy(j,stateB);
+  renderListB();updateEditor()
+};
+
+exportA.onclick=()=>{
+  const cats={};for(const[k,v]of Object.entries(stateA.categories))cats[k]=Array.from(v).sort((a,b)=>a.codePointAt(0)-b.codePointAt(0));
+  const data={meta:stateA.meta,glyphs:stateA.glyphs,aliases:stateA.aliases,categories:cats};
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
+  const url=URL.createObjectURL(blob),a=document.createElement("a");
+  a.href=url;a.download=(stateA.meta.name||"set-A")+".json";a.click();URL.revokeObjectURL(url)
+};
+
+// ===== Unicode-format export: customCategories + unicodeCategories + alphabets (bez letters/digits) =====
+const exportUnicodeFormat=()=>{
+  const out={meta:stateA.meta,glyphs:{...stateA.glyphs},aliases:{...stateA.aliases},customCategories:{},unicodeCategories:{},alphabets:{}};
+  const add=(obj,key,ch)=>{if(!obj[key])obj[key]=[];obj[key].push(ch)};
+  const uniqSort=arr=>Array.from(new Set(arr)).sort((a,b)=>a.codePointAt(0)-b.codePointAt(0));
+  const all=Object.keys({...stateA.glyphs,...stateA.aliases}).sort((a,b)=>a.codePointAt(0)-b.codePointAt(0));
+
+  // custom
+  for(const[k,v]of Object.entries(stateA.categories))out.customCategories[k]=uniqSort(Array.from(v));
+
+  // labels
+  const groupLabel={"grp:Letter":"Grupa: Litery (L)","grp:Number":"Grupa: Liczby (N)","grp:Punctuation":"Grupa: Interpunkcja (P)","grp:Symbol":"Grupa: Symbole (S)","grp:Separator":"Grupa: Separatory/odstępy (Z)","grp:Mark":"Grupa: Znaki łączące/diakrytyczne (M)","grp:Other":"Grupa: Inne/kontrolne (C)"};
+  const gcLabel={"gc:Lu":"Wielkie litery (Lu)","gc:Ll":"Małe litery (Ll)","gc:Lt":"Tytułowe litery (Lt)","gc:Lm":"Modyfikatory liter (Lm)","gc:Lo":"Inne litery (Lo)",
+    "gc:Mn":"Znaki łączące: nieodstępowe (Mn)","gc:Mc":"Znaki łączące: odstępowe (Mc)","gc:Me":"Znaki łączące: otaczające (Me)",
+    "gc:Nd":"Cyfry dziesiętne (Nd)","gc:Nl":"Liczby literowe (Nl)","gc:No":"Inne liczby (No)",
+    "gc:Pc":"Interpunkcja: łączniki (Pc)","gc:Pd":"Interpunkcja: dywizy (Pd)","gc:Ps":"Interpunkcja: otwierająca (Ps)","gc:Pe":"Interpunkcja: zamykająca (Pe)","gc:Pi":"Interpunkcja: cudzysłowy otw. (Pi)","gc:Pf":"Interpunkcja: cudzysłowy zam. (Pf)","gc:Po":"Interpunkcja: inne (Po)",
+    "gc:Sm":"Symbole matematyczne (Sm)","gc:Sc":"Symbole walut (Sc)","gc:Sk":"Symbole modyfikujące (Sk)","gc:So":"Symbole inne (So)",
+    "gc:Zs":"Separatory: spacje (Zs)","gc:Zl":"Separatory: linie (Zl)","gc:Zp":"Separatory: akapity (Zp)",
+    "gc:Cc":"Kontrolne (Cc)","gc:Cf":"Formatowanie (Cf)","gc:Co":"Prywatne użycie (Co)","gc:Cs":"Surrogaty (Cs)"};
+  const scriptLabel={"sc:Latin":"łaciński","sc:Cyrillic":"cyrylica","sc:Greek":"grecki","sc:Common":"wspólny","sc:Inherited":"dziedziczony"};
+
+  // blocks (zakresy)
+  const blocks=[
+    [0x0000,0x007F,"Blok: Basic Latin"],
+    [0x0080,0x00FF,"Blok: Latin-1 Supplement"],
+    [0x0100,0x017F,"Blok: Latin Extended-A"],
+    [0x0180,0x024F,"Blok: Latin Extended-B"],
+    [0x0250,0x02AF,"Blok: IPA Extensions"],
+    [0x02B0,0x02FF,"Blok: Spacing Modifier Letters"],
+    [0x0300,0x036F,"Blok: Combining Diacritical Marks"],
+    [0x0370,0x03FF,"Blok: Greek and Coptic"],
+    [0x0400,0x04FF,"Blok: Cyrillic"],
+    [0x2000,0x206F,"Blok: General Punctuation"],
+    [0x20A0,0x20CF,"Blok: Currency Symbols"],
+    [0x2190,0x21FF,"Blok: Arrows"],
+    [0x2500,0x257F,"Blok: Box Drawing"],
+    [0x25A0,0x25FF,"Blok: Geometric Shapes"],
+    [0x2600,0x26FF,"Blok: Misc Symbols"],
+    [0x2700,0x27BF,"Blok: Dingbats"]
+  ];
+  const blockName=cp=>{for(const[a,b,n]of blocks)if(cp>=a&&cp<=b)return n;return null};
+
+  const mega=cp=>{
+    const r=[];
+    if(cp>=0x20&&cp<=0x7E)r.push("ASCII: drukowalne (0x20–0x7E)");
+    if(cp<0x20||cp===0x7F)r.push("ASCII: kontrolne");
+    if(cp>=0x30&&cp<=0x39)r.push("Cyfry ASCII");
+    if(cp>=0x41&&cp<=0x5A)r.push("Litery ASCII: A–Z");
+    if((cp>=0x21&&cp<=0x2F)||(cp>=0x3A&&cp<=0x40)||(cp>=0x5B&&cp<=0x60)||(cp>=0x7B&&cp<=0x7E))r.push("Interpunkcja ASCII");
+    if(cp>=0x20A0&&cp<=0x20CF)r.push("Symbole: waluty");
+    if(cp>=0x2190&&cp<=0x21FF)r.push("Symbole: strzałki");
+    if(cp>=0x2500&&cp<=0x257F)r.push("Symbole: ramki (box drawing)");
+    return r
+  };
+
+  for(const ch of all){
+    const cp=ch.codePointAt(0),cats=unicodeCategories(ch);
+
+    for(const c of cats){
+      if(groupLabel[c])add(out.unicodeCategories,groupLabel[c],ch);
+      if(gcLabel[c])add(out.unicodeCategories,gcLabel[c],ch);
+      if(scriptLabel[c]){
+        add(out.unicodeCategories,"Alfabet: "+scriptLabel[c],ch);
+        add(out.alphabets,scriptLabel[c],ch);
+      }
+    }
+
+    const bn=blockName(cp); if(bn) add(out.unicodeCategories,bn,ch);
+    for(const k of mega(cp)) add(out.unicodeCategories,k,ch);
+  }
+
+  for(const k of Object.keys(out.unicodeCategories)) out.unicodeCategories[k]=uniqSort(out.unicodeCategories[k]);
+  for(const k of Object.keys(out.alphabets)) out.alphabets[k]=uniqSort(out.alphabets[k]);
+  return out
+};
+
+exportFam.onclick=()=>{
+  const data=exportUnicodeFormat();
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
+  const url=URL.createObjectURL(blob),a=document.createElement("a");
+  a.href=url;a.download=(stateA.meta.name||"unicode-5x7")+".json";a.click();URL.revokeObjectURL(url)
+};
+
+// ===== Font raster =====
+const loadFontFace=async()=>{
+  const f=fontFile.files[0]; if(!f) return;
+  const url=URL.createObjectURL(f);
+  fontName="F_"+Math.random().toString(36).slice(2);
+  const face=new FontFace(fontName,`url(${url})`);
+  await face.load();document.fonts.add(face);fontLoaded=true
+};
+
+const computeFontBBox=refCh=>{
   ctx.clearRect(0,0,256,256);
-  ctx.fillStyle="white";
-  ctx.font=`140px "${fontName}"`;
-  ctx.textBaseline="middle";
-  ctx.textAlign="center";
+  ctx.fillStyle="#fff";ctx.font=`140px "${fontName}"`;
+  ctx.textBaseline="middle";ctx.textAlign="center";
   ctx.fillText(refCh,128,128);
   const img=ctx.getImageData(0,0,256,256),d=img.data,w=256,h=256;
   let minX=w,maxX=-1,minY=h,maxY=-1;
-  for(let y=0;y<h;y++)
-    for(let x=0;x<w;x++){
-      const i=(y*w+x)*4;
-      if(d[i+3]>10){
-        if(x<minX)minX=x;
-        if(x>maxX)maxX=x;
-        if(y<minY)minY=y;
-        if(y>maxY)maxY=y;
-      }
+  for(let y=0;y<h;y++)for(let x=0;x<w;x++){
+    const i=(y*w+x)*4;
+    if(d[i+3]>10){
+      if(x<minX)minX=x;if(x>maxX)maxX=x;if(y<minY)minY=y;if(y>maxY)maxY=y
     }
+  }
   if(maxX<minX||maxY<minY)return null;
-  fontBBox={minX,minY,width:maxX-minX+1,height:maxY-minY+1};
-}
+  fontBBox={minX,minY,width:maxX-minX+1,height:maxY-minY+1}
+};
 
-/* ===== raster 5x7 ze wspólnej ramki ===== */
-function charRows(ch){
+const charRows=ch=>{
   if(!fontBBox){
-    let r=bboxRef.value||"0";
-    if(r.length>2)r=r[0];
-    computeFontBBox(r);
-    if(!fontBBox)return Array(H).fill(0);
+    let r=bboxRef.value||"0"; if(r.length>2)r=r[0];
+    computeFontBBox(r); if(!fontBBox) return Array(H).fill(0)
   }
   ctx.clearRect(0,0,256,256);
-  ctx.fillStyle="white";
-  ctx.font=`140px "${fontName}"`;
-  ctx.textBaseline="middle";
-  ctx.textAlign="center";
+  ctx.fillStyle="#fff";ctx.font=`140px "${fontName}"`;
+  ctx.textBaseline="middle";ctx.textAlign="center";
   ctx.fillText(ch,128,128);
   const img=ctx.getImageData(0,0,256,256),d=img.data,w=256,b=fontBBox;
   const rows=[];
@@ -451,68 +498,54 @@ function charRows(ch){
     for(let gx=0;gx<W;gx++){
       const sx=Math.floor(b.minX+(gx+0.5)*b.width/W);
       const i=(sy*w+sx)*4;
-      if(d[i+3]>10)v|=(1<<(W-1-gx));
+      if(d[i+3]>10) v|=(1<<(W-1-gx));
     }
-    rows.push(v);
+    rows.push(v)
   }
-  return rows;
-}
+  return rows
+};
 
-/* ===== import z opentype (POMIJA wszystkie Lowercase Letters) ===== */
 importFont.onclick=async()=>{
   const file=fontFile.files[0];
-  if(!file){alert("Wybierz plik fontu");return;}
-  if(!fontLoaded){await loadFontFace();fontBBox=null;}
-  const buf=await file.arrayBuffer();let font;
-  try{font=opentype.parse(buf);}catch(e){console.error(e);alert("Błąd parsowania fontu");return;}
+  if(!file) return alert("Wybierz plik fontu");
+  if(!fontLoaded){await loadFontFace();fontBBox=null}
+  let font; try{font=opentype.parse(await file.arrayBuffer())}catch(e){console.error(e);return alert("Błąd parsowania fontu")}
   saveState();
   const start=parseInt(scanStart.value,16),end=parseInt(scanEnd.value,16);
   let count=0,skippedLl=0;
   for(let i=0;i<font.glyphs.length;i++){
-    const g=font.glyphs.get(i);if(!g.unicode)continue;
-    const cp=g.unicode;if(cp<start||cp>end)continue;
+    const g=font.glyphs.get(i); if(!g.unicode) continue;
+    const cp=g.unicode; if(cp<start||cp>end) continue;
     const ch=String.fromCodePoint(cp);
-
     const cats=unicodeCategories(ch);
-    if(cats.includes("gc:Ll")){skippedLl++;continue;} // pomijamy WSZYSTKIE małe
-
+    if(cats.includes("gc:Ll")){skippedLl++;continue} // pomijamy wszystkie małe
     const rows=charRows(ch);
-    if(!rows.some(v=>v))continue;
+    if(!rows.some(v=>v)) continue;
     stateA.glyphs[ch]=rows;
-    cats.forEach(cat=>{ensureCat(cat);stateA.categories[cat].add(ch);});
-    count++;
+    cats.forEach(cat=>{ensureCat(cat);stateA.categories[cat].add(ch)});
+    count++
   }
-  fontInfo.textContent=`Zaimportowano ${count} glifów (bez gc:Ll, ref="${bboxRef.value||"0"}", pominięto małych: ${skippedLl})`;
-  renderCatSelect();renderListA();renderListB();updateEditor();
+  fontInfo.textContent=`Zaimportowano ${count} glifów (pominięto małe gc:Ll: ${skippedLl}, ref="${bboxRef.value||"0"}")`;
+  renderCatSelect();renderListA();renderListB();updateEditor()
 };
 
-/* ===== nawigacja strzałkami ===== */
+// nav strzałkami
 document.addEventListener("keydown",e=>{
   if(e.key==="ArrowUp"||e.key==="ArrowDown"){
     e.preventDefault();
     const list=(activeList==="A")?listCharsA():listCharsB();
     if(!list.length)return;
     let idx=list.indexOf(selected);
-    if(idx===-1){
-      idx=(e.key==="ArrowDown")?0:list.length-1;
-    }else{
-      idx+=(e.key==="ArrowDown"?1:-1);
-      if(idx<0)idx=0;
-      if(idx>=list.length)idx=list.length-1;
-    }
-    selected=list[idx];
-    selectionA=new Set([selected]);
-    renderListA();renderListB();updateEditor();
-  }else if(e.key==="ArrowLeft"||e.key==="ArrowRight"){
-    e.preventDefault();
-    activeList=(activeList==="A")?"B":"A";
+    if(idx===-1) idx=(e.key==="ArrowDown")?0:list.length-1;
+    else { idx += (e.key==="ArrowDown"?1:-1); if(idx<0)idx=0; if(idx>=list.length)idx=list.length-1; }
+    selected=list[idx];selectionA=new Set([selected]);
+    renderListA();renderListB();updateEditor()
+  } else if(e.key==="ArrowLeft"||e.key==="ArrowRight"){
+    e.preventDefault(); activeList = (activeList==="A") ? "B" : "A"
   }
 });
 
-/* ===== init ===== */
-renderCatSelect();
-renderListA();
-renderListB();
+// init
+renderCatSelect();renderListA();renderListB();updateEditor();
 </script>
-</body>
-</html>
+</body></html>
