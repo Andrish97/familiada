@@ -240,7 +240,7 @@ jsonA.onchange=async()=>{const j=await loadJSON(jsonA.files[0]);saveState();if(j
 jsonB.onchange=async()=>{const j=await loadJSON(jsonB.files[0]);if(j.glyphs||j.aliases||j.categories){stateB.meta=j.meta||stateB.meta;stateB.glyphs=j.glyphs||{};stateB.aliases=j.aliases||{}}else importFamiliadaFormat(j,stateB);renderList();updateEditor()};
 exportA.onclick=()=>{const cats={};for(const[k,v]of Object.entries(stateA.categories))cats[k]=Array.from(v);const data={meta:stateA.meta,glyphs:stateA.glyphs,aliases:stateA.aliases,categories:cats};const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download=(stateA.meta.name||"set-A")+".json";a.click();URL.revokeObjectURL(url)};
 function exportFamiliadaFormat(){const out={meta:stateA.meta,letters:{},digits:{},punctuation:{},math:{},special:{}};function push(cat,ch){if(stateA.aliases[ch])out[cat][ch]="@"+stateA.aliases[ch];else if(stateA.glyphs[ch])out[cat][ch]=stateA.glyphs[ch]}for(const cat of Object.keys(out)){const set=stateA.categories[cat];if(!set)continue;for(const ch of set)push(cat,ch)}return out}
-exportFam.onclick=()=>{const data=exportFamiliadaFormat();const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download=(stateA.meta.name||"familiada")+".json";a.click();URL.revokeObjectURL(url)};
+exportFam.onclick=()=>{const data=exportFamiliadaFormat();const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download!(stateA.meta.name||"familiada")+".json";a.click();URL.revokeObjectURL(url)}; // jeśli ! się nie podoba, zamień na normalne przypisanie
 
 /* undo/redo + porównanie */
 undoBtn.onclick=()=>{if(!history.length)return;future.push(JSON.stringify(stateA));restore(history.pop());renderCatSelect();renderList();updateEditor()};
@@ -265,7 +265,7 @@ function computeFontBBox(refCh){
   fontBBox={minX,minY,width:maxX-minX+1,height:maxY-minY+1};
 }
 
-/* raster 5x7 z WSPÓLNEJ ramki */
+/* raster 5x7 ze wspólnej ramki */
 function charRows(ch){
   if(!fontBBox){
     let r=bboxRef.value||"0";
@@ -292,7 +292,7 @@ function charRows(ch){
   return rows;
 }
 
-/* import z opentype */
+/* import z opentype — z pomijaniem małych ASCII */
 importFont.onclick=async()=>{
   const file=fontFile.files[0];if(!file)return alert("Wybierz plik fontu");
   if(!fontLoaded){await loadFontFace();fontBBox=null;}
@@ -304,13 +304,17 @@ importFont.onclick=async()=>{
     const g=font.glyphs.get(i);if(!g.unicode)continue;
     const cp=g.unicode;if(cp<start||cp>end)continue;
     const ch=String.fromCodePoint(cp);
+
+    // POMIŃ małe ASCII (bez Shift/CapsLock)
+    if(ch>='a' && ch<='z') continue;
+
     const rows=charRows(ch);
     if(!rows.some(v=>v))continue;
     stateA.glyphs[ch]=rows;
     const cats=unicodeCategories(ch);cats.forEach(cat=>{ensureCat(cat);stateA.categories[cat].add(ch)});
     count++;
   }
-  fontInfo.textContent=`Zaimportowano ${count} glifów (ref="${bboxRef.value||"0"}")`;
+  fontInfo.textContent=`Zaimportowano ${count} glifów (bez a–z, ref="${bboxRef.value||"0"}")`;
   renderCatSelect();renderList();updateEditor();
 };
 
