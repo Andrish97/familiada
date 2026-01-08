@@ -99,6 +99,32 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     ui.showFinalStep(step);
   }
 
+  function ensureDefaultMapping(row, { input, isRepeat }) {
+    // radio: MATCH / MISS / SKIP
+    // domyślnie:
+    // - repeat => SKIP (nawet jeśli coś wpisano)
+    // - brak inputu => SKIP
+    // - jest input => MISS
+    if (row.kind === "MATCH" || row.kind === "MISS" || row.kind === "SKIP") return;
+  
+    if (isRepeat) {
+      row.kind = "SKIP";
+      row.matchId = null;
+      return;
+    }
+  
+    if ((input || "").trim().length === 0) {
+      row.kind = "SKIP";
+      row.matchId = null;
+    } else {
+      row.kind = "MISS";
+      row.matchId = null;
+      // outText zostawiamy (pole ma pokazywać rzeczywisty input),
+      // ale do wyświetlania MISS weźmiemy input/outText niżej.
+    }
+  }
+
+
   function ensureRuntime() {
     const f = store.state.final;
     if (!f.runtime) f.runtime = {};
@@ -112,25 +138,25 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
         repeat: false,
       }));
 
-    if (!rt.map1)
-      rt.map1 = Array.from({ length: 5 }, () => ({
-        kind: "SKIP",
-        matchId: null,
-        outText: "",
-        pts: 0,
-        revealedAnswer: false,
-        revealedPoints: false,
-      }));
-    if (!rt.map2)
-      rt.map2 = Array.from({ length: 5 }, () => ({
-        kind: "SKIP",
-        matchId: null,
-        outText: "",
-        pts: 0,
-        revealedAnswer: false,
-        revealedPoints: false,
-      }));
-
+      if (!rt.map1)
+        rt.map1 = Array.from({ length: 5 }, () => ({
+          kind: null,        // <- było "SKIP"
+          matchId: null,
+          outText: "",
+          pts: 0,
+          revealedAnswer: false,
+          revealedPoints: false,
+        }));
+      
+      if (!rt.map2)
+        rt.map2 = Array.from({ length: 5 }, () => ({
+          kind: null,        // <- było "SKIP"
+          matchId: null,
+          outText: "",
+          pts: 0,
+          revealedAnswer: false,
+          revealedPoints: false,
+        }));
 
     if (!rt.sum) rt.sum = 0;
 
@@ -464,337 +490,318 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     ui.setEnabled("btnFinalToP2MapQ1", !rt.timer.running);
   }
 
-  // ---------- Render: mapping (one question) ----------
-function renderMapOne(roundNo /*1|2*/, idx /*0..4*/) {
-  ensureRuntime();
-  const rt = store.state.final.runtime;
-  const q = qPicked[idx];
-  const aList = answersByQ.get(q.id) || [];
-
-  const inputP1 = (rt.p1[idx].text || "").trim();
-  const inputP2 = (rt.p2[idx]?.text || "").trim();
-  const input = roundNo === 1 ? inputP1 : inputP2;
-
-  const mapArr = roundNo === 1 ? rt.map1 : rt.map2;
-  const row = mapArr[idx];
-
-  const isRepeat = roundNo === 2 && rt.p2[idx].repeat === true;
-
-  let hostHintHtml = "";
-
-  if (roundNo === 1) {
-    const hostHint = input.length
-      ? `${escapeHtml(FINAL_MSG.MAP_HINT_INPUT_PREFIX)}<b>${escapeHtml(
-          input
-        )}</b>`
-      : `<i>${escapeHtml(FINAL_MSG.MAP_HINT_NO_INPUT)}</i>`;
-
-    hostHintHtml = `
-      <div class="mini">
-        <div class="hint">${hostHint}</div>
-        ${
-          input.length === 0
-            ? `<div class="hint">${escapeHtml(FINAL_MSG.MAP_HINT_NO_TEXT)}</div>`
-            : ``
-        }
-      </div>
-    `;
-  } else {
-    // roundNo === 2 – pokazujemy obie odpowiedzi + info o powtórzeniu
-    const p1Txt = inputP1 || "—";
-    const p2Txt = inputP2 || "—";
-
-    hostHintHtml = `
-      <div class="mini">
-        <div class="hint">
-          ${escapeHtml(FINAL_MSG.P2_HINT_P1_PREFIX)}<b>${escapeHtml(
-      p1Txt
-    )}</b>
-        </div>
-        <div class="hint">
-          Odpowiedź gracza 2${
-            isRepeat ? " (powtórzenie)" : ""
-          }: <b>${escapeHtml(p2Txt)}</b>
-        </div>
-        ${
-          inputP2.length === 0
-            ? `<div class="hint">${escapeHtml(FINAL_MSG.MAP_HINT_NO_TEXT)}</div>`
-            : ``
-        }
-      </div>
-    `;
-  }
-
-  const aButtons = aList
-    .map((a) => {
-      const active = row.kind === "MATCH" && row.matchId === a.id;
-      return `
-        <button class="btn sm ${active ? "gold" : ""}" type="button"
-                data-kind="match" data-id="${a.id}">
-          ${escapeHtml(a.text)} <span style="opacity:.7;">(${nInt(
-        a.fixed_points,
-        0
-      )})</span>
-        </button>
-      `;
-    })
-    .join("");
-
-  const missActive = row.kind === "MISS";
-  const skipActive = row.kind === "SKIP";
-
-  const outDefault = row.outText || "";
-  const outVal = escapeHtml(outDefault);
-
-  const html = `
-    <div class="name">${escapeHtml(FINAL_MSG.Q_LABEL(idx + 1))}</div>
-    <div class="qPrompt">${escapeHtml(q.text || "")}</div>
-
-    ${hostHintHtml}
-
-    <div class="cards2" style="margin-top:12px;">
-      <div class="card">
-        <div class="name">${escapeHtml(FINAL_MSG.MAP_LIST_TITLE)}</div>
-        <div class="rowBtns" style="flex-wrap:wrap; gap:8px;">
+    // ---------- Render: mapping (one question) ----------
+  function renderMapOne(roundNo /*1|2*/, idx /*0..4*/) {
+    ensureRuntime();
+    const rt = store.state.final.runtime;
+    const q = qPicked[idx];
+    const aList = answersByQ.get(q.id) || [];
+  
+    const inputP1 = (rt.p1[idx].text || "").trim();
+    const inputP2 = (rt.p2[idx]?.text || "").trim();
+    const input = roundNo === 1 ? inputP1 : inputP2;
+  
+    const mapArr = roundNo === 1 ? rt.map1 : rt.map2;
+    const row = mapArr[idx];
+  
+    const isRepeat = roundNo === 2 && rt.p2[idx].repeat === true;
+  
+    let hostHintHtml = "";
+  
+    ensureDefaultMapping(row, { input, isRepeat });
+  
+    if (roundNo === 1) {
+      const hostHint = input.length
+        ? `${escapeHtml(FINAL_MSG.MAP_HINT_INPUT_PREFIX)}<b>${escapeHtml(
+            input
+          )}</b>`
+        : `<i>${escapeHtml(FINAL_MSG.MAP_HINT_NO_INPUT)}</i>`;
+  
+      hostHintHtml = `
+        <div class="mini">
+          <div class="hint">${hostHint}</div>
           ${
-            aButtons ||
-            `<div class="hint">${escapeHtml(FINAL_MSG.MAP_LIST_EMPTY)}</div>`
+            input.length === 0
+              ? `<div class="hint">${escapeHtml(FINAL_MSG.MAP_HINT_NO_TEXT)}</div>`
+              : ``
           }
         </div>
-      </div>
-
-      <div class="card">
-        <div class="name">${escapeHtml(FINAL_MSG.MAP_OWN_TITLE)}</div>
-
-          <div class="rowBtns" style="align-items:flex-start; gap:8px; flex-wrap:wrap;">
-            <button class="btn sm" type="button" data-kind="reveal-answer"
-              ${row.revealedAnswer ? "disabled" : ""}>
-              Odsłoń odpowiedź
-            </button>
-            <button class="btn sm" type="button" data-kind="reveal-points"
-              ${!row.revealedAnswer || row.revealedPoints ? "disabled" : ""}>
-              Odsłoń punkty
-            </button>
-          
-            <button class="btn sm ${
-              skipActive ? "gold" : ""
-            }" type="button" data-kind="skip">${escapeHtml(
-                FINAL_MSG.MAP_BTN_SKIP
-              )}</button>
-            <button class="btn sm danger ${
-              missActive ? "gold" : ""
-            }" type="button" data-kind="miss">${escapeHtml(
-                FINAL_MSG.MAP_BTN_MISS
-              )}</button>
-          </div>
-          
+      `;
+    } else {
+      // roundNo === 2 – pokazujemy obie odpowiedzi + info o powtórzeniu
+      const p1Txt = inputP1 || "—";
+      const p2Txt = inputP2 || "—";
+  
+      hostHintHtml = `
         <div class="mini">
-          <div class="hint">${escapeHtml(FINAL_MSG.MAP_OUT_HINT)}</div>
+          <div class="hint">
+            ${escapeHtml(FINAL_MSG.P2_HINT_P1_PREFIX)}<b>${escapeHtml(
+        p1Txt
+      )}</b>
+          </div>
+          <div class="hint">
+            Odpowiedź gracza 2${
+              isRepeat ? " (powtórzenie)" : ""
+            }: <b>${escapeHtml(p2Txt)}</b>
+          </div>
+          ${
+            inputP2.length === 0
+              ? `<div class="hint">${escapeHtml(FINAL_MSG.MAP_HINT_NO_TEXT)}</div>`
+              : ``
+          }
         </div>
-        <input class="inp" data-kind="out" value="${outVal}"
-               placeholder="${escapeHtml(FINAL_MSG.MAP_OUT_PLACEHOLDER)}"/>
+      `;
+    }
+  
+    const aButtons = aList
+      .map((a) => {
+        const active = row.kind === "MATCH" && row.matchId === a.id;
+        return `
+          <button class="btn sm ${active ? "gold" : ""}" type="button"
+                  data-kind="match" data-id="${a.id}">
+            ${escapeHtml(a.text)} <span style="opacity:.7;">(${nInt(
+          a.fixed_points,
+          0
+        )})</span>
+          </button>
+        `;
+      })
+      .join("");
+  
+    const missActive = row.kind === "MISS";
+    const skipActive = row.kind === "SKIP";
+  
+    const outDefault = (row.outText || "").trim().length ? row.outText : input;
+    const outVal = escapeHtml(outDefault);
+    
+    const html = `
+      <div class="name">${escapeHtml(FINAL_MSG.Q_LABEL(idx + 1))}</div>
+      <div class="qPrompt">${escapeHtml(q.text || "")}</div>
+  
+      ${hostHintHtml}
+  
+      <div class="cards2" style="margin-top:12px;">
+        <div class="card">
+          <div class="name">${escapeHtml(FINAL_MSG.MAP_LIST_TITLE)}</div>
+          <div class="rowBtns" style="flex-wrap:wrap; gap:8px;">
+            ${
+              aButtons ||
+              `<div class="hint">${escapeHtml(FINAL_MSG.MAP_LIST_EMPTY)}</div>`
+            }
+          </div>
+        </div>
+  
+        <div class="card">
+          <div class="name">${escapeHtml(FINAL_MSG.MAP_OWN_TITLE)}</div>
+  
+            <div class="rowBtns" style="align-items:flex-start; gap:8px; flex-wrap:wrap;">
+              <button class="btn sm" type="button" data-kind="reveal-answer"
+                ${row.revealedAnswer ? "disabled" : ""}>
+                Odsłoń odpowiedź
+              </button>
+              <button class="btn sm" type="button" data-kind="reveal-points"
+                ${!row.revealedAnswer || row.revealedPoints ? "disabled" : ""}>
+                Odsłoń punkty
+              </button>
+            
+              <button class="btn sm ${
+                skipActive ? "gold" : ""
+              }" type="button" data-kind="skip">${escapeHtml(
+                  FINAL_MSG.MAP_BTN_SKIP
+                )}</button>
+              <button class="btn sm danger ${
+                missActive ? "gold" : ""
+              }" type="button" data-kind="miss">${escapeHtml(
+                  FINAL_MSG.MAP_BTN_MISS
+                )}</button>
+            </div>
+            
+          <div class="mini">
+            <div class="hint">${escapeHtml(FINAL_MSG.MAP_OUT_HINT)}</div>
+          </div>
+          <input class="inp" data-kind="out" value="${outVal}"
+                 placeholder="${escapeHtml(FINAL_MSG.MAP_OUT_PLACEHOLDER)}"/>
+        </div>
       </div>
-    </div>
-  `;
-
-  const rootId =
-    roundNo === 1 ? `finalP1MapQ${idx + 1}` : `finalP2MapQ${idx + 1}`;
-
-  ui.setHtml(rootId, html);
-
-  const root = document.getElementById(rootId);
-  if (!root) return;
-
-  root
-    .querySelectorAll('button[data-kind="match"]')
-    .forEach((b) => {
+    `;
+  
+    const rootId =
+      roundNo === 1 ? `finalP1MapQ${idx + 1}` : `finalP2MapQ${idx + 1}`;
+  
+    ui.setHtml(rootId, html);
+  
+    const root = document.getElementById(rootId);
+    if (!root) return;
+  
+    root.querySelectorAll('button[data-kind="match"]').forEach((b) => {
       b.addEventListener("click", () => {
         row.kind = "MATCH";
         row.matchId = b.dataset.id || null;
-        row.outText = "";
         renderMapOne(roundNo, idx);
       });
     });
-
-  root
-    .querySelector('button[data-kind="miss"]')
-    ?.addEventListener("click", () => {
-      row.kind = "MISS";
-      row.matchId = null;
-      if (!row.outText) row.outText = input;
-      renderMapOne(roundNo, idx);
-    });
-
-  root
-    .querySelector('button[data-kind="skip"]')
-    ?.addEventListener("click", () => {
+  
+    root.querySelector('button[data-kind="skip"]')?.addEventListener("click", () => {
       row.kind = "SKIP";
       row.matchId = null;
-      row.outText = "";
       renderMapOne(roundNo, idx);
     });
-
+    
+    root.querySelector('button[data-kind="miss"]')?.addEventListener("click", () => {
+      row.kind = "MISS";
+      row.matchId = null;
+      renderMapOne(roundNo, idx);
+    });
+  
+    root
+    .querySelector('button[data-kind="reveal-answer"]')
+    ?.addEventListener("click", async () => {
+      const res = await revealAnswerOnly(roundNo, idx);
+  
+      // prze-renderuj widok, żeby przyciski się zaktualizowały
+      renderMapOne(roundNo, idx);
+  
+      // jeżeli nie było odpowiedzi → "Dalej" może się od razu aktywować
+      if (!res || !res.hasAnswer) {
+        if (roundNo === 1) {
+          ui.setEnabled(`btnFinalP1NextQ${idx + 1}`, true);
+        } else {
+          ui.setEnabled(`btnFinalP2NextQ${idx + 1}`, true);
+        }
+      }
+    });
+  
   root
-  .querySelector('button[data-kind="reveal-answer"]')
-  ?.addEventListener("click", async () => {
-    const res = await revealAnswerOnly(roundNo, idx);
-
-    // prze-renderuj widok, żeby przyciski się zaktualizowały
-    renderMapOne(roundNo, idx);
-
-    // jeżeli nie było odpowiedzi → "Dalej" może się od razu aktywować
-    if (!res || !res.hasAnswer) {
+    .querySelector('button[data-kind="reveal-points"]')
+    ?.addEventListener("click", async () => {
+      const ended = await revealPointsAndScore(roundNo, idx);
+      renderMapOne(roundNo, idx);
+  
+      if (ended) return; // gra skończona (200+)
+  
+      // po odsłonięciu punktów "Dalej" się aktywuje
       if (roundNo === 1) {
         ui.setEnabled(`btnFinalP1NextQ${idx + 1}`, true);
       } else {
         ui.setEnabled(`btnFinalP2NextQ${idx + 1}`, true);
       }
-    }
-  });
-
-root
-  .querySelector('button[data-kind="reveal-points"]')
-  ?.addEventListener("click", async () => {
-    const ended = await revealPointsAndScore(roundNo, idx);
-    renderMapOne(roundNo, idx);
-
-    if (ended) return; // gra skończona (200+)
-
-    // po odsłonięciu punktów "Dalej" się aktywuje
-    if (roundNo === 1) {
-      ui.setEnabled(`btnFinalP1NextQ${idx + 1}`, true);
-    } else {
-      ui.setEnabled(`btnFinalP2NextQ${idx + 1}`, true);
-    }
-  });
-
-  root
-    .querySelector('input[data-kind="out"]')
-    ?.addEventListener("input", (e) => {
-      row.outText = String(e.target?.value ?? "");
     });
-}
-
-async function revealAnswerOnly(roundNo /*1|2*/, idx /*0..4*/) {
-  ensureRuntime();
-  const rt = store.state.final.runtime;
-  const q = qPicked[idx];
-  const aList = answersByQ.get(q.id) || [];
-
-  const mapArr = roundNo === 1 ? rt.map1 : rt.map2;
-  const row = mapArr[idx];
-
-  // Domyślne rozstrzygnięcie, jeśli nic nie kliknięte:
-  if (row.kind !== "MATCH" && row.kind !== "MISS" && row.kind !== "SKIP") {
-    const hasOut = (row.outText || "").trim().length > 0;
-    row.kind = hasOut ? "MISS" : "SKIP";
+  
+    root
+      .querySelector('input[data-kind="out"]')
+      ?.addEventListener("input", (e) => {
+        row.outText = String(e.target?.value ?? "");
+      });
   }
-
-  // BRK ODPOWIEDZI – nie odsłaniamy, tylko dźwięk błędu
-  if (row.kind === "SKIP") {
+  
+  async function revealAnswerOnly(roundNo, idx) {
+    ensureRuntime();
+    const rt = store.state.final.runtime;
+    const q = qPicked[idx];
+    const aList = answersByQ.get(q.id) || [];
+  
+    const mapArr = roundNo === 1 ? rt.map1 : rt.map2;
+    const row = mapArr[idx];
+  
+    const inputP1 = (rt.p1[idx].text || "").trim();
+    const inputP2 = (rt.p2[idx]?.text || "").trim();
+    const input = roundNo === 1 ? inputP1 : inputP2;
+  
+    const isRepeat = roundNo === 2 && rt.p2[idx].repeat === true;
+  
+    ensureDefaultMapping(row, { input, isRepeat });
+  
+    // SKIP: nic nie odsłaniaj
+    if (row.kind === "SKIP") {
+      row.revealedAnswer = true;
+      row.revealedPoints = true;
+      playSfx("answer_wrong");
+      return { hasAnswer: false };
+    }
+  
+    let txt = "";
+  
+    if (row.kind === "MATCH") {
+      const a = aList.find((x) => x.id === row.matchId);
+      txt = (a?.text || "").trim();
+    } else if (row.kind === "MISS") {
+      const shown = (row.outText || "").trim().length ? row.outText : input;
+      txt = String(shown || "").trim();
+    }
+  
+    txt = txt.length ? txt : (display.PLACE?.finalText || FINAL_MSG.FALLBACK_ANSWER);
+  
+    if (roundNo === 1) await display.finalRevealLeftAnswer(clip11(txt));
+    else await display.finalRevealRightAnswer(clip11(txt));
+  
     row.revealedAnswer = true;
-    row.revealedPoints = true; // nic już nie będzie odsłaniane
-    const rep = roundNo === 2 && rt.p2[idx].repeat === true;
-    if (rep) playSfx("answer_repeat");
-    else playSfx("answer_wrong");
-    return { hasAnswer: false, pts: 0 };
+  
+    // samo odsłonięcie odpowiedzi = dzwonki (jak ustalaliście wcześniej)
+    playSfx("bells");
+  
+    return { hasAnswer: true };
   }
-
-  let out = "";
-
-  if (row.kind === "MATCH") {
-    const a = aList.find((x) => x.id === row.matchId);
-    out = a?.text || "";
-  } else if (row.kind === "MISS") {
-    out = (row.outText || "").trim();
-  }
-
-  const txt = out.trim().length
-    ? out.trim()
-    : display.PLACE?.finalText || FINAL_MSG.FALLBACK_ANSWER;
-
-  if (roundNo === 1) {
-    await display.finalRevealLeftAnswer(clip11(txt));
-  } else {
-    await display.finalRevealRightAnswer(clip11(txt));
-  }
-
-  row.revealedAnswer = true;
-
-  // dzwonek za odsłonięcie odpowiedzi
-  playSfx("bells");
-
-  return {
-    hasAnswer: true,
-    pts: row.pts || 0, // może być jeszcze 0, ale punkty liczymy przy następnym kroku
-  };
-}
-
-async function revealPointsAndScore(roundNo /*1|2*/, idx /*0..4*/) {
-  ensureRuntime();
-  const rt = store.state.final.runtime;
-  const q = qPicked[idx];
-  const aList = answersByQ.get(q.id) || [];
-
-  const mapArr = roundNo === 1 ? rt.map1 : rt.map2;
-  const row = mapArr[idx];
-
-  // jeśli jeszcze nie mamy kind/pts, policz tak jak dotąd
-  if (row.kind !== "MATCH" && row.kind !== "MISS" && row.kind !== "SKIP") {
-    const hasOut = (row.outText || "").trim().length > 0;
-    row.kind = hasOut ? "MISS" : "SKIP";
-  }
-
-  let pts = 0;
-
-  if (row.kind === "MATCH") {
-    const a = aList.find((x) => x.id === row.matchId);
-    pts = a ? nInt(a.fixed_points, 0) : 0;
-  } else if (row.kind === "MISS") {
-    pts = 0;
-  } else if (row.kind === "SKIP") {
-    // tu nie powinniśmy w ogóle trafiać; SKIP obsługujemy w revealAnswerOnly
+  
+  
+  async function revealPointsAndScore(roundNo, idx) {
+    ensureRuntime();
+    const rt = store.state.final.runtime;
+    const q = qPicked[idx];
+    const aList = answersByQ.get(q.id) || [];
+  
+    const mapArr = roundNo === 1 ? rt.map1 : rt.map2;
+    const row = mapArr[idx];
+  
+    const inputP1 = (rt.p1[idx].text || "").trim();
+    const inputP2 = (rt.p2[idx]?.text || "").trim();
+    const input = roundNo === 1 ? inputP1 : inputP2;
+  
+    const isRepeat = roundNo === 2 && rt.p2[idx].repeat === true;
+    ensureDefaultMapping(row, { input, isRepeat });
+  
+    if (row.kind === "SKIP") {
+      row.revealedPoints = true;
+      return false;
+    }
+  
+    let pts = 0;
+  
+    if (row.kind === "MATCH") {
+      const a = aList.find((x) => x.id === row.matchId);
+      pts = a ? nInt(a.fixed_points, 0) : 0;
+    } else if (row.kind === "MISS") {
+      pts = 0;
+    }
+  
+    row.pts = pts;
     row.revealedPoints = true;
+  
+    rt.sum = (rt.sum || 0) + pts;
+    updateSumUI();
+  
+    const pts2 = String(pts).padStart(2, "0").slice(-2);
+  
+    if (roundNo === 1) {
+      await display.finalRevealLeftPoints(pts2);
+      await display.finalSetSuma(rt.sum, "A");
+    } else {
+      await display.finalRevealRightPoints(pts2);
+      await display.finalSetSuma(rt.sum, "B");
+    }
+  
+    // dźwięk wg zasad:
+    if (row.kind === "MATCH") playSfx("answer_correct");
+    else playSfx("answer_wrong"); // MISS => 0
+  
+    const adv = store.state.advanced || {};
+    const target = typeof adv.finalTarget === "number" ? adv.finalTarget : 200;
+  
+    if (rt.sum >= target) {
+      await gotoEnd(true);
+      return true;
+    }
     return false;
   }
-
-  row.pts = pts;
-  row.revealedPoints = true;
-
-  // odsłaniamy punkty + sumę
-  rt.sum = (rt.sum || 0) + pts;
-
-  const pts2 = String(pts).padStart(2, "0").slice(-2);
-
-  if (roundNo === 1) {
-    await display.finalRevealLeftPoints(pts2);
-    await display.finalSetSuma(rt.sum, "A");
-  } else {
-    await display.finalRevealRightPoints(pts2);
-    await display.finalSetSuma(rt.sum, "B");
-  }
-
-  updateSumUI();
-
-  // dźwięk za punkty
-  const rep = roundNo === 2 && rt.p2[idx].repeat === true;
-  if (rep) {
-    playSfx("answer_repeat");
-  } else {
-    playSfx(pts > 0 ? "answer_correct" : "answer_wrong");
-  }
-
-  // sprawdzenie 200+
-  const adv = store.state.advanced || {};
-  const target =
-    typeof adv.finalTarget === "number" ? adv.finalTarget : 200;
-
-  if (rt.sum >= target) {
-    await gotoEnd(true);
-    return true;
-  }
-  return false;
-}
 
   async function commitReveal(roundNo /*1|2*/, idx /*0..4*/) {
     ensureRuntime();
