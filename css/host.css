@@ -221,3 +221,20 @@ html, body { height: 100%; }
 .calib input[type="range"]{
   width: 120px;
 }
+
+.calibRow{
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+
+.calibVal{
+  min-width: 44px;
+  padding: 2px 6px;
+  border-radius: 8px;
+  background: rgba(0,0,0,.35);
+  color: #fff;
+  font: 12px/1.2 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  text-align: right;
+}
+
