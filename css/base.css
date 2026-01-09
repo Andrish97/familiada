@@ -230,3 +230,16 @@ html.showA2HS .a2hs{ display: grid; }
   width: 100%;
 }
 
+@media (display-mode: standalone) {
+  .a2hs {
+    display: none !important;
+  }
+}
+
+/* starsze iOS webapp */
+@supports (-webkit-touch-callout: none) {
+  html.webapp .fsBtn {
+    display: none !important;
+  }
+}
+
