@@ -91,7 +91,7 @@ html, body { height: 100%; }
 
   /* ↑ większa czcionka w linijkach */
   font-size: clamp(18px, 2.6vmin, 30px);
-  line-height: var(--line);
+  line-height: 1.35;
   color:#111;
 }
 
@@ -102,8 +102,8 @@ html, body { height: 100%; }
   bottom: calc(var(--safe-bottom) + 0px);
 
   font-family: "Comic Sans MS", "Segoe Print", "Bradley Hand", "Segoe Script", cursive;
-  font-size: 24px;
-  line-height: var(--line);
+  font-size: clamp(14px, 2.4vmin, 22px);
+  line-height: 125;
   color: rgba(0,0,0,.55);
 }
 
