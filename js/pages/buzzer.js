@@ -45,7 +45,7 @@ function isIOSSafari() {
 function setFullscreenIcon() {
   if (!fsIco) return;
   const isReal = !!document.fullscreenElement;
-  fsIco.textContent = (isReal || pseudoFS) ? "⧉" : "▢";
+  fsIco.textContent = (isReal || pseudoFS) ? "▢" : "⧉";
 }
 
 function setPseudoFS(on) {
