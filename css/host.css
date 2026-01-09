@@ -104,8 +104,9 @@ html, body { height: 100%; }
   bottom: calc(var(--safe-bottom) + 0px);
 
   font-family: "Comic Sans MS", "Segoe Print", "Bradley Hand", "Segoe Script", cursive;
-  font-size: calc(var(--line) * 0.7);
+  font-size: calc(var(--line) * 0.62);
   line-height: var(--line);
+  padding-top: calc(var(--line) * 0.18);
   color: rgba(0,0,0,.55);
 }
 
