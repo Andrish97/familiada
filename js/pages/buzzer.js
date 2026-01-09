@@ -31,21 +31,48 @@ const STATE = {
 
 let cur = STATE.OFF;
 
-/* ========= FULLSCREEN ========= */
+/* ========= FULLSCREEN (+ iOS fallback) ========= */
+let pseudoFS = false;
+
 function setFullscreenIcon() {
   if (!fsIco) return;
-  fsIco.textContent = document.fullscreenElement ? "▢" : "⧉";
+  const isReal = !!document.fullscreenElement;
+  fsIco.textContent = (isReal || pseudoFS) ? "⧉" : "▢";
+}
+
+function setPseudoFS(on) {
+  pseudoFS = !!on;
+  document.documentElement.classList.toggle("pseudoFS", pseudoFS);
+  // iOS: próba schowania paska adresu
+  setTimeout(() => window.scrollTo(0, 1), 50);
+  setFullscreenIcon();
 }
 
 async function toggleFullscreen() {
   try {
-    if (!document.fullscreenElement) {
-      await document.documentElement.requestFullscreen();
-    } else {
-      await document.exitFullscreen();
+    // wyjście
+    if (document.fullscreenElement) {
+      await document.exitFullscreen?.();
+      setFullscreenIcon();
+      return;
     }
-  } catch {}
-  setFullscreenIcon();
+    if (pseudoFS) {
+      setPseudoFS(false);
+      return;
+    }
+
+    // wejście (spróbuj prawdziwego fullscreen)
+    const el = document.documentElement;
+    const req = el.requestFullscreen || el.webkitRequestFullscreen;
+    if (!req) throw new Error("Fullscreen API not available");
+    await req.call(el, { navigationUI: "hide" });
+
+    setFullscreenIcon();
+  } catch (e) {
+    // iOS / blokady / iframe => pseudo-fullscreen
+    setPseudoFS(true);
+    console.warn("[buzzer] fullscreen fallback:", e);
+  }
 }
 
 /* ========= UI ========= */
