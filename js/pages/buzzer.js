@@ -245,6 +245,10 @@ btnB?.addEventListener("click", (e) => press("B", e));
 document.addEventListener("DOMContentLoaded", async () => {
   setFullscreenIcon();
 
+  if (window.navigator.standalone) {
+    document.documentElement.classList.add("webapp");
+  }
+
   if (!gameId || !key) {
     show(STATE.OFF);
     return;
