@@ -18,6 +18,14 @@
   --bottom-pad: calc(var(--line) * 1.2); /* miejsce na hint */
 }
 
+@font-face{
+  font-family: "FamiHand";
+  src: url("../fami-hand.woff2") format("woff2");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
 /* usuń “mignięcie” highlight na iOS/Android */
 *{ -webkit-tap-highlight-color: transparent; }
 
@@ -90,7 +98,7 @@ html, body { height: 100%; }
   word-break:break-word;
 
   /* dalej “pisana”, ale czytelniejsza */
-  font-family: "Comic Sans MS", "Segoe Print", "Bradley Hand", "Segoe Script", cursive;
+  font-family: "FamiHand", cursive;
 
   /* ↑ większa czcionka w linijkach */
   font-size: calc(var(--line) * var(--font-ratio));
@@ -105,7 +113,7 @@ html, body { height: 100%; }
   right: calc(var(--safe-right) + var(--text-right));
   bottom: calc(var(--safe-bottom) + 0px);
 
-  font-family: "Comic Sans MS", "Segoe Print", "Bradley Hand", "Segoe Script", cursive;
+  font-family: "FamiHand", cursive;
   font-size: calc(var(--line) * 0.62);
   line-height: var(--line);
   padding-top: calc(var(--line) * 0.18);
@@ -163,7 +171,7 @@ html, body { height: 100%; }
 }
 
 .blankSwipe{
-  font-family: "Comic Sans MS", "Segoe Print", "Bradley Hand", "Segoe Script", cursive;
+  font-family: "FamiHand", cursive;
   font-size: calc(var(--line) * 0.8);
   line-height: var(--line);
   max-width: 92vw;
