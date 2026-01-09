@@ -103,7 +103,7 @@ html, body { height: 100%; }
 
   font-family: "Comic Sans MS", "Segoe Print", "Bradley Hand", "Segoe Script", cursive;
   font-size: clamp(14px, 2.4vmin, 22px);
-  line-height: 125;
+  line-height: 1.25;
   color: rgba(0,0,0,.55);
 }
 
@@ -159,8 +159,8 @@ html, body { height: 100%; }
 
 .blankSwipe{
   font-family: "Comic Sans MS", "Segoe Print", "Bradley Hand", "Segoe Script", cursive;
-  font-size: clamp(18px, 3.6vw, 30px);
-  line-height: 1.25;
+  font-size: clamp(14px, 3.6vw, 24px);
+  line-height: 1.2;
   max-width: 92vw;
   margin: 0;
   color: #fc0; /* kolor jak logo */
