@@ -8,10 +8,10 @@
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --safe-left: env(safe-area-inset-left, 0px);
 
-  --margin-x: 64px;     /* czerwony margines */
-  --text-left: 78px;    /* start tekstu po marginesie */
-  --text-right: 48px;   /* prawa “krawędź” */
-  --top-pad: calc(var(--line) * 2);      /* ~3 linijka */
+  --margin-x: 18vmin;     /* czerwony margines */
+  --text-left: 20vmin;    /* start tekstu po marginesie */
+  --text-right: 16vmin;   /* prawa “krawędź” */
+  --top-pad: calc(var(--line));      /* ~3 linijka */
   --bottom-pad: calc(var(--line) * 1.2); /* miejsce na hint */
 }
 
