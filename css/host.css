@@ -128,7 +128,10 @@ html, body { height: 100%; }
   flex-direction:column;
   justify-content:center;
   align-items:center;
-  gap: 18px;
+  /* elastyczny odstęp, żeby całość mieściła się też po wysokości */
+  gap: clamp(10px, 2.2vh, 22px);
+  max-height: 100dvh;
+  overflow: hidden;
   padding:
     calc(var(--safe-top) + 20px)
     calc(var(--safe-right) + 20px)
@@ -138,16 +141,27 @@ html, body { height: 100%; }
 }
 
 .blankLogo{
+  /* dopasuj i do szerokości i do wysokości ekranu */
   width: min(1100px, 96vw);
+  max-width: 96vw;
+  max-height: 58vh;
   height: auto;
   display:block;
   filter: drop-shadow(0 12px 30px rgba(0,0,0,.35));
+
+  /* logo nie może przejmować gestów (żadnego “chwytania” za SVG) */
+  pointer-events: none;
+  -webkit-user-drag: none;
+  user-select: none;
+  touch-action: none;
 }
 
 .blankSwipe{
   font-family: "Comic Sans MS", "Segoe Print", "Bradley Hand", "Segoe Script", cursive;
-  font-size: 30px;
-  line-height: calc(var(--line) * 1.05);
+  font-size: clamp(18px, 3.6vw, 30px);
+  line-height: 1.25;
+  max-width: 92vw;
+  margin: 0;
   color: #fc0; /* kolor jak logo */
   text-shadow: 0 4px 18px rgba(0,0,0,.45);
 }
