@@ -41,6 +41,11 @@ async function toggleFullscreen() {
     }
   } catch (e) {}
   setFullscreenIcon();
+  // iOS fallback – schowaj pasek adresu
+  setTimeout(() => {
+    window.scrollTo(0, 1);
+  }, 50);
+
 }
 
 /* ========= AUDIO =========
