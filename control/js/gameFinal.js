@@ -257,16 +257,16 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
       const s = Math.max(0, Number(rt?.timer?.seconds || 0));
       const counting = rt?.timer?.running && rt?.timer?.phase === "P1";
       return counting
-        ? `FINAŁ RUNDA 1 — WPROWADZANIE — ODLICZANIE ${s}s`
-        : `FINAŁ RUNDA 1 — WPROWADZANIE`;
+        ? `FINAŁ RUNDA 1 — ODLICZANIE ${s}s`
+        : `FINAŁ RUNDA 1`;
     }
   
     if (step === "f_p2_entry") {
       const s = Math.max(0, Number(rt?.timer?.seconds || 0));
       const counting = rt?.timer?.running && rt?.timer?.phase === "P2";
       return counting
-        ? `FINAŁ RUNDA 2 — WPROWADZANIE — ODLICZANIE ${s}s`
-        : `FINAŁ RUNDA 2 — WPROWADZANIE`;
+        ? `FINAŁ RUNDA 2 — ODLICZANIE ${s}s`
+        : `FINAŁ RUNDA 2`;
     }
   
     // MAP: odsłanianie
