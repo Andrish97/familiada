@@ -20,6 +20,18 @@
   <script type="module" src="js/pages/buzzer.js" defer></script>
 </head>
 
+<div class="a2hs" onclick="document.documentElement.classList.remove('showA2HS')">
+  <div class="a2hsCard" onclick="event.stopPropagation()">
+    <h3 class="a2hsTitle">Pełny ekran na iPhone</h3>
+    <p class="a2hsText">
+      W Safari nie da się wymusić prawdziwego pełnego ekranu.
+      Użyj <b>Udostępnij</b> → <b>Do ekranu początkowego</b>.
+    </p>
+    <button class="btn a2hsClose" type="button"
+      onclick="document.documentElement.classList.remove('showA2HS')">OK</button>
+  </div>
+</div>
+
 <body class="buzzer-body">
   <article style="display:none">
     <p>Buzzer</p>
