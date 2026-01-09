@@ -66,7 +66,6 @@ html, body { height: 100%; }
   background-color:#fffdf5;
   background-image: linear-gradient(to bottom, #e7e2d3 1px, transparent 1px);
   background-size: 100% var(--line);
-  background-position-y: calc(var(--line) * var(--baseline-shift));
 
   z-index:10;
 }
