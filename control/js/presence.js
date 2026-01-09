@@ -11,6 +11,7 @@ const PRESENCE_MSG = {
 // ===========================================================
 
 const ONLINE_MS = 12_000;
+const INIT_WINDOW_MS = 20000; // tylko pierwsze 8s od startu presence
 
 function fmtSince(ts) {
   if (!ts) return PRESENCE_MSG.SINCE_NONE;
@@ -26,6 +27,14 @@ export function createPresence({ game, ui, store, devices }) {
   let lastDisplayOnline = false;
   let lastHostOnline = false;
   let lastBuzzerOnline = false;
+
+  let initEndsAt = 0;
+  
+  let initDone = {
+    display: false,
+    host: false,
+    buzzer: false,
+  };
 
   async function fetchPresenceSafe() {
     const { data, error } = await sb()
@@ -89,50 +98,44 @@ export function createPresence({ game, ui, store, devices }) {
       buzzer: { on: bOn, seen: fmtSince(b?.last_seen_at) },
     });
 
-    // *** stan zerowy po świeżym podpięciu (po starcie Controla) ***
+    const inInit = Date.now() < initEndsAt;
     
-    // Host: przy przejściu OFF -> ON (w TEJ sesji Controla) wyślij HIDE + SET ""
-    if (hOn && !prevHost) {
-      try {
-        await devices.sendHostCmd("HIDE");
-        await devices.sendHostCmd('SET ""');
-      } catch {}
-    }
+    // *** stan zerowy TYLKO na starcie Controla (okno INIT_WINDOW_MS) ***
+    // Ważne: działa także gdy urządzenia już były online przy starcie, bo initDone jeszcze false.
+    if (inInit) {
+      if (hOn && !initDone.host) {
+        initDone.host = true;
+        try {
+          await devices.sendHostCmd("HIDE");
+          await devices.sendHostCmd('SET ""');
+        } catch {}
+      }
     
-    // Buzzer: przy przejściu OFF -> ON w TEJ sesji Controla -> OFF
-    if (bOn && !prevBuzzer) {
-      try {
-        await devices.sendBuzzerCmd("OFF");
-      } catch {}
-    }
+      if (bOn && !initDone.buzzer) {
+        initDone.buzzer = true;
+        try {
+          await devices.sendBuzzerCmd("OFF");
+        } catch {}
+      }
     
-    // Display: ZA KAŻDYM razem, gdy w TEJ sesji Controla przechodzi OFF -> ON,
-    // czyli: start Controla + podpięcie wyświetlacza, albo rozłączenie/podpięcie
-    // w trakcie — czyścimy ekran.
-    if (dOn && !prevDisplay) {
-      try {
-        await devices.sendDisplayCmd("APP BLACK");
-      } catch {}
+      if (dOn && !initDone.display) {
+        initDone.display = true;
+        try {
+          await devices.sendDisplayCmd("APP BLACK");
+        } catch {}
+      }
     }
 
     // *** flush kolejek po przejściu OFF -> ON ***
 
     if (!prevDisplay && dOn) {
-      try {
-        await devices.flushQueued("display");
-      } catch {}
+      try { await devices.flushQueued("display"); } catch {}
     }
-
     if (!prevHost && hOn) {
-      try {
-        await devices.flushQueued("host");
-      } catch {}
+      try { await devices.flushQueued("host"); } catch {}
     }
-
     if (!prevBuzzer && bOn) {
-      try {
-        await devices.flushQueued("buzzer");
-      } catch {}
+      try { await devices.flushQueued("buzzer"); } catch {}
     }
 
     // aktualizujemy lokalne poprzednie stany
@@ -145,6 +148,11 @@ export function createPresence({ game, ui, store, devices }) {
   }
 
   async function start() {
+    initEndsAt = Date.now() + INIT_WINDOW_MS;
+  
+    // reset initDone na start tej sesji Controla
+    initDone = { display: false, host: false, buzzer: false };
+  
     await tick();
     timer = setInterval(tick, 1500);
   }
