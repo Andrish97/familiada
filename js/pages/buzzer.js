@@ -189,7 +189,7 @@ async function sendClick(team) {
   try {
     const ctl = sb().channel(`familiada-control:${gameId}`);
     await ctl.subscribe();
-    await ctl.send({
+    await ctl.httpSend({
       type: "broadcast",
       event: "BUZZER_EVT",
       payload: { line: `CLICK ${team}` },
