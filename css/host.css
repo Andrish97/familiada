@@ -91,7 +91,7 @@ html, body { height: 100%; }
   font-family: "Comic Sans MS", "Segoe Print", "Bradley Hand", "Segoe Script", cursive;
 
   /* ↑ większa czcionka w linijkach */
-  font-size: calc(var(--line) * 0.9);
+  font-size: calc(var(--line) * 0.84);
   line-height: var(--line);
   padding-top: calc(var(--line) * 0.18);
   color:#111;
