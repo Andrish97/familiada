@@ -546,7 +546,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
         });
 
 
-    ui.setEnabled("btnFinalToP1MapQ1", !rt.timer.running && rt.timer.usedP1);
+    ui.setEnabled("btnFinalToP2MapQ1", !rt.timer.running && rt.timer.usedP2);
   }
 
     // ---------- Render: mapping (one question) ----------
@@ -1116,11 +1116,17 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
   }
 
   function toP1MapQ(idx1based) {
+    ensureRuntime();
     stopTimer();
     const idx = idx1based - 1;
+  
+    const row = store.state.final.runtime.map1[idx];
+    if (row) {
+      row.revealedAnswer = false;
+      row.revealedPoints = false;
+    }
+  
     setStep(`f_p1_map_q${idx1based}`);
-    row.revealedAnswer = false;
-    row.revealedPoints = false;
     renderMapOne(1, idx);
   }
 
@@ -1190,11 +1196,17 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
 
 
   function toP2MapQ(idx1based) {
+    ensureRuntime();
     stopTimer();
     const idx = idx1based - 1;
+  
+    const row = store.state.final.runtime.map2[idx];
+    if (row) {
+      row.revealedAnswer = false;
+      row.revealedPoints = false;
+    }
+  
     setStep(`f_p2_map_q${idx1based}`);
-    row.revealedAnswer = false;
-    row.revealedPoints = false;
     renderMapOne(2, idx);
   }
 
