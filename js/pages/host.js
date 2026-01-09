@@ -381,6 +381,10 @@ document.addEventListener("fullscreenchange", setFullscreenIcon);
 document.addEventListener("DOMContentLoaded", async () => {
   setFullscreenIcon();
 
+  if (window.navigator.standalone) {
+    document.documentElement.classList.add("webapp");
+  }
+
   // bez parametrów = zasłonięte i puste
   if (!gameId || !key) {
     text = "";
