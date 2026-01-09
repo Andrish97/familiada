@@ -187,3 +187,16 @@ html, body { height: 100%; }
 @media (prefers-reduced-motion: reduce){
   .blank{ transition: none !important; }
 }
+
+/* pseudo-fullscreen: stabilizacja viewportu na iOS */
+.pseudoFS, .pseudoFS body{
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+/* jeśli chcesz, możesz w pseudo ukryć przycisk FS albo zmienić jego wygląd */
+.pseudoFS .fsBtn{
+  opacity: .85;
+}
+
