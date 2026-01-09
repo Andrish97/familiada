@@ -19,16 +19,21 @@
     <span class="ico" id="fsIco" aria-hidden="true">⧉</span>
   </button>
 
-
+<!-- Tymczasowa kalibracja pisma -->
   <div class="calib">
-    <input id="fontKnob" type="range"
-           min="0.5" max="2" step="0.005" value="0.84"
-           title="Font size"/>
+    <div class="calibRow">
+      <input id="fontKnob" type="range"
+             min="0.74" max="0.90" step="0.005" value="0.84" />
+      <span class="calibVal" id="fontVal">0.84</span>
+    </div>
   
-    <input id="baselineKnob" type="range"
-           min="0" max="0.5" step="0.005" value="0.18"
-           title="Baseline"/>
+    <div class="calibRow">
+      <input id="baselineKnob" type="range"
+             min="0.12" max="0.26" step="0.005" value="0.18" />
+      <span class="calibVal" id="baselineVal">0.18</span>
+    </div>
   </div>
+  
 
   <!-- Kartka -->
   <main class="paper" id="paper">
