@@ -39,7 +39,7 @@ function setPseudoFS(on){
 /* ========= FULLSCREEN ========= */
 function setFullscreenIcon() {
   if (!fsIco) return;
-  fsIco.textContent = document.fullscreenElement ? "▢" : "⧉";
+  fsIco.textContent = document.fullscreenElement ? "⧉" : "▢";
 }
 
 async function toggleFullscreen() {
