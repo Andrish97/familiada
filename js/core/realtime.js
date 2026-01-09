@@ -62,26 +62,30 @@ function createManagedChannel(topic) {
   }
 
   async function sendBroadcast(event, payload, opts = {}) {
+    const supa = sb();
+    try { supa.realtime.connect(); } catch {}
+  
     const ok = await whenReady(opts);
     if (!ok) {
-      // spróbuj raz jeszcze po resecie (często pomaga po sleep na telefonie)
       reset();
+      try { supa.realtime.connect(); } catch {}
       const ok2 = await whenReady(opts);
-      if (!ok2) throw new Error(`Realtime not ready for topic ${topic}`);
+      if (!ok2) {
+        // skoro realtime nie gotowe, idź REST-em (jawnie) zamiast liczyć na deprecated fallback
+        const { error } = await ch.httpSend({ type: "broadcast", event, payload });
+        if (error) { reset(); throw error; }
+        return true;
+      }
     }
-
-    const { error } = await ch.send({
-      type: "broadcast",
-      event,
-      payload,
-    });
-
-    if (error) {
-      // jeśli WS padł w locie – reset i rzuć błąd
-      reset();
-      throw error;
-    }
-
+  
+    const wsUp = typeof supa.realtime.isConnected === "function"
+      ? supa.realtime.isConnected()
+      : true;
+  
+    const sender = wsUp ? ch.send.bind(ch) : ch.httpSend.bind(ch);
+    const { error } = await sender({ type: "broadcast", event, payload });
+  
+    if (error) { reset(); throw error; }
     return true;
   }
 
