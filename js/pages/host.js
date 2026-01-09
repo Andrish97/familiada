@@ -26,6 +26,16 @@ let lastRendered = {
   hint: null,
 };
 
+let pseudoFS = false;
+
+function setPseudoFS(on){
+  pseudoFS = !!on;
+  document.documentElement.classList.toggle("pseudoFS", pseudoFS);
+  // iOS: próba schowania paska
+  setTimeout(() => window.scrollTo(0, 1), 50);
+}
+
+
 /* ========= FULLSCREEN ========= */
 function setFullscreenIcon() {
   if (!fsIco) return;
@@ -34,18 +44,25 @@ function setFullscreenIcon() {
 
 async function toggleFullscreen() {
   try {
-    if (!document.fullscreenElement) {
-      await document.documentElement.requestFullscreen?.({ navigationUI: "hide" });
+    if (!document.fullscreenElement && !pseudoFS) {
+      const req = document.documentElement.requestFullscreen || document.documentElement.webkitRequestFullscreen;
+      if (req) {
+        await req.call(document.documentElement, { navigationUI: "hide" });
+      } else {
+        throw new Error("Fullscreen API not available");
+      }
     } else {
-      await document.exitFullscreen?.();
+      if (document.fullscreenElement) {
+        await document.exitFullscreen?.();
+      }
+      setPseudoFS(false);
     }
-  } catch (e) {}
+  } catch (e) {
+    // iOS / blokady => pseudo-fullscreen
+    setPseudoFS(!pseudoFS);
+    console.warn("[FS] fallback to pseudo:", e);
+  }
   setFullscreenIcon();
-  // iOS fallback – schowaj pasek adresu
-  setTimeout(() => {
-    window.scrollTo(0, 1);
-  }, 50);
-
 }
 
 /* ========= AUDIO =========
