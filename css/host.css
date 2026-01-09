@@ -1,6 +1,6 @@
 :root{
   /* stała “linijka” (bez artefaktów gradientu) */
-  --line: clamp(22px, 3.2vmin, 34px);
+  --line: 6.5vmin;
 
   /* bezpieczne marginesy pod notch */
   --safe-top: env(safe-area-inset-top, 0px);
