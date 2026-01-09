@@ -19,8 +19,8 @@
 }
 
 @font-face{
-  font-family: "FamiHand";
-  src: url("../fami-hand.woff2") format("woff2");
+  font-family: "Caveat-Regular";
+  src: url("Caveat-Regular.woff2") format("woff2");
   font-weight: normal;
   font-style: normal;
   font-display: swap;
@@ -98,7 +98,7 @@ html, body { height: 100%; }
   word-break:break-word;
 
   /* dalej “pisana”, ale czytelniejsza */
-  font-family: "FamiHand", cursive;
+  font-family: "Caveat-Regular", cursive;
 
   /* ↑ większa czcionka w linijkach */
   font-size: calc(var(--line) * var(--font-ratio));
@@ -113,7 +113,7 @@ html, body { height: 100%; }
   right: calc(var(--safe-right) + var(--text-right));
   bottom: calc(var(--safe-bottom) + 0px);
 
-  font-family: "FamiHand", cursive;
+  font-family: "Caveat-Regular", cursive;
   font-size: calc(var(--line) * 0.62);
   line-height: var(--line);
   padding-top: calc(var(--line) * 0.18);
@@ -171,7 +171,7 @@ html, body { height: 100%; }
 }
 
 .blankSwipe{
-  font-family: "FamiHand", cursive;
+  font-family: "Caveat-Regular", cursive;
   font-size: calc(var(--line) * 0.8);
   line-height: var(--line);
   max-width: 92vw;
