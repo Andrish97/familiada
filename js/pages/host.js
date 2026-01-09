@@ -385,32 +385,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   ping();
   setInterval(ping, 5000);
 
-  /* ========= TYMCZASOWA KALIBRACJA PISMA ========= */
-  const root = document.documentElement;
-
-  const fontKnob = document.getElementById("fontKnob");
-  const fontVal = document.getElementById("fontVal");
-  if (fontKnob) {
-    const apply = () => {
-      root.style.setProperty("--font-ratio", fontKnob.value);
-      if (fontVal) fontVal.textContent = Number(fontKnob.value).toFixed(3);
-    };
-    fontKnob.addEventListener("input", apply);
-    apply(); // pokaż od razu
-  }
-
-  const baselineKnob = document.getElementById("baselineKnob");
-  const baselineVal = document.getElementById("baselineVal");
-  if (baselineKnob) {
-    const apply = () => {
-      root.style.setProperty("--baseline-shift", baselineKnob.value);
-      if (baselineVal) baselineVal.textContent = Number(baselineKnob.value).toFixed(3);
-    };
-    baselineKnob.addEventListener("input", apply);
-    apply(); // pokaż od razu
-  }
-
-
 });
 
 // debug
