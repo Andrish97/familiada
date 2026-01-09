@@ -384,6 +384,24 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   ping();
   setInterval(ping, 5000);
+
+  /* ========= TYMCZASOWA KALIBRACJA PISMA ========= */
+  const root = document.documentElement;
+
+  const fontKnob = document.getElementById("fontKnob");
+  if (fontKnob) {
+    fontKnob.addEventListener("input", () => {
+      root.style.setProperty("--font-ratio", fontKnob.value);
+    });
+  }
+
+  const baselineKnob = document.getElementById("baselineKnob");
+  if (baselineKnob) {
+    baselineKnob.addEventListener("input", () => {
+      root.style.setProperty("--baseline-shift", baselineKnob.value);
+    });
+  }
+
 });
 
 // debug
