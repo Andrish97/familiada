@@ -114,9 +114,9 @@ html, body { height: 100%; }
   bottom: calc(var(--safe-bottom) + 0px);
 
   font-family: "Caveat-Regular", cursive;
-  font-size: calc(var(--line) * 0.62);
+  font-size: calc(var(--line) * 0.8);
   line-height: var(--line);
-  padding-top: calc(var(--line) * 0.18);
+  padding-top: calc(var(--line) * 0.15);
   color: rgba(0,0,0,.55);
 }
 
