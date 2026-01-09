@@ -73,6 +73,70 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
   let timerRAF = null;
   const introMixer = createSfxMixer?.();
 
+    // ================== HOST (RUNDS) ==================
+  async function hostShowText(txt) {
+    const safe = String(txt ?? "").replace(/"/g, '\\"');
+    try {
+      await devices.sendHostCmd(`SET "${safe}"`);
+      await devices.sendHostCmd("OPEN");
+    } catch {}
+  }
+
+  async function hostBlank() {
+    try {
+      await devices.sendHostCmd('SET ""');
+      // chcesz dodatkowo HIDE — robimy zawsze, bezpiecznie
+      await devices.sendHostCmd("HIDE");
+    } catch {}
+  }
+
+  function hostTitleForRounds() {
+    const r = store.state.rounds || {};
+    const rn = nInt(r.roundNo, 1);
+
+    // “PRZYCISK” – gdy czekamy na przycisk i zanim zatwierdzimy
+    // u Ciebie to jest: DUEL + r.duel.enabled === true
+    if (r.phase === "DUEL" && r.duel?.enabled) return `RUNDA ${rn} — PRZYCISK`;
+
+    // “POJEDYNEK” – gdy jesteśmy w pojedynku po zatwierdzeniu (acceptBuzz)
+    if (r.phase === "DUEL" && !r.duel?.enabled) return `RUNDA ${rn} — POJEDYNEK`;
+
+    if (r.phase === "PLAY") return `RUNDA ${rn} — ROZGRYWKA`;
+    if (r.phase === "STEAL") return `RUNDA ${rn} — KRADZIEŻ`;
+
+    // REVEAL możesz pokazać albo zostawić pusty — wg uznania:
+    if (r.phase === "REVEAL") return `RUNDA ${rn} — ODSŁANIANIE`;
+
+    // READY / INTRO / GAME END – host pusty
+    return "";
+  }
+
+  function hostBodyQuestion() {
+    const q = store.state.rounds?.question?.text || "";
+    return String(q).trim();
+  }
+
+  function hostComposeLines() {
+    const title = hostTitleForRounds();
+    if (!title) return null;
+
+    const q = hostBodyQuestion();
+    // zawsze: nagłówek, pusta linia, pytanie (na dole)
+    // (nie filtrujemy pustych linii)
+    return [title, "", q || "—"].join("\n");
+  }
+
+  function hostUpdate() {
+    const txt = hostComposeLines();
+    if (!txt) {
+      hostBlank().catch(() => {});
+      return;
+    }
+    hostShowText(txt).catch(() => {});
+  }
+  // ==================================================
+
+
   function emit() {
     try {
       for (const fn of store._roundsListeners || []) fn(store.state.rounds);
@@ -182,6 +246,8 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
         : r.step === "r_roundStart";
 
     ui.setEnabled("btnStartRound", canStartRoundNow);
+
+    hostUpdate(); // <- tu
   }
 
   // --- TIMER 3s ---
@@ -531,17 +597,6 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
       await new Promise((resolve) => setTimeout(resolve, totalMs));
     }
 
-    const qText = (obj.text || "").trim();
-    if (qText) {
-      const safe = qText.replace(/"/g, '\\"');
-      try {
-        await devices.sendHostCmd(`SET "${safe}"`);
-        await devices.sendHostCmd("OPEN");
-      } catch (e) {
-        console.error("sendHostCmd error", e);
-      }
-    }
-
     setStep("r_duel");
     ui.setRoundsHud(r);
 
@@ -584,8 +639,9 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
 
     updatePlayControls();
 
-    devices.sendBuzzerCmd("RESET").catch(() => {});
     devices.sendBuzzerCmd("ON").catch(() => {});
+
+    hostUpdate();
   }
 
   function retryDuel() {
@@ -681,6 +737,7 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     }
 
     updatePlayControls();
+    hostUpdate();
   }
 
   function handleBuzzerClick(team) {
@@ -732,6 +789,8 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     ui.setEnabled("btnBuzzAcceptA", false);
     ui.setEnabled("btnBuzzAcceptB", false);
     ui.setEnabled("btnBuzzRetry", false);
+
+    hostUpdate();
   }
 
   // === Gra właściwa w rundzie ===
@@ -941,6 +1000,7 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     if (r.phase === "STEAL") {
       await stealMiss();
       updatePlayControls();
+      hostUpdate();
       return;
     }
 
@@ -1014,6 +1074,7 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     if (display.setIndicator) {
       display.setIndicator(stealingTeam).catch?.(() => {});
     }
+    hostUpdate();
   }
 
   async function stealMiss() {
@@ -1045,7 +1106,8 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
 
   async function goEndRound() {
     const r = store.state.rounds;
-
+    hostBlank().catch(() => {});
+    
     r.canEndRound = false;
     updatePlayControls();
 
