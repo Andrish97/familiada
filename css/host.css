@@ -116,7 +116,7 @@ html, body { height: 100%; }
   font-family: "Caveat-Regular", cursive;
   font-size: calc(var(--line) * 0.8);
   line-height: var(--line);
-  padding-top: calc(var(--line) * 0.15);
+  padding-top: calc(var(--line) * 0.25);
   color: rgba(0,0,0,.55);
 }
 
