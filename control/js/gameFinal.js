@@ -97,6 +97,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
   function setStep(step) {
     store.state.final.step = step;
     ui.showFinalStep(step);
+    hostUpdate(); // <- tu
   }
 
   function ensureDefaultMapping(row, { input, isRepeat }) {
@@ -212,7 +213,10 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     if (raf) cancelAnimationFrame(raf);
     raf = null;
     ui.setText("finalTimer", FINAL_MSG.TIMER_PLACEHOLDER);
+  
+    hostUpdate(); // <- dopnij
   }
+
 
   function clearFinalMsgs() {
     ui.setMsg("msgFinal", "");
@@ -235,7 +239,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
   }
   
   function buildHostEntryView(roundNo, titleLine) {
-    const lines = [titleLine];
+    const lines = [titleLine, ""]; // <-- jedna linijka przerwy
     for (let i = 0; i < 5; i++) {
       const lamp = lampForEntry(roundNo, i);
       const qt = (qPicked[i]?.text || "—").replace(/\s+/g, " ").trim();
@@ -244,26 +248,78 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     return lines;
   }
   
-  async function hostShowLines(lines) {
-    const txt = lines.filter(Boolean).join("\n").replace(/"/g, '\\"');
-    try {
-      await devices.sendHostCmd("CLEAR");
-      if (txt) await devices.sendHostCmd(`SET "${txt}"`);
-      await devices.sendHostCmd("OPEN");
-    } catch (e) {
-      console.warn("hostShowLines failed", e);
+  function hostTitleForStep() {
+    const rt = store.state.final?.runtime;
+    const step = store.state.final?.step || "";
+  
+    // ENTRY: wprowadzanie (+ odliczanie jeśli timer chodzi)
+    if (step === "f_p1_entry") {
+      const s = Math.max(0, Number(rt?.timer?.seconds || 0));
+      const counting = rt?.timer?.running && rt?.timer?.phase === "P1";
+      return counting
+        ? `FINAŁ RUNDA 1 — WPROWADZANIE — ODLICZANIE ${s}s`
+        : `FINAŁ RUNDA 1 — WPROWADZANIE`;
     }
+  
+    if (step === "f_p2_entry") {
+      const s = Math.max(0, Number(rt?.timer?.seconds || 0));
+      const counting = rt?.timer?.running && rt?.timer?.phase === "P2";
+      return counting
+        ? `FINAŁ RUNDA 2 — WPROWADZANIE — ODLICZANIE ${s}s`
+        : `FINAŁ RUNDA 2 — WPROWADZANIE`;
+    }
+  
+    // MAP: odsłanianie
+    if (step.startsWith("f_p1_map_q")) return `FINAŁ RUNDA 1 — ODSŁANIANIE ODPOWIEDZI`;
+    if (step.startsWith("f_p2_map_q")) return `FINAŁ RUNDA 2 — ODSŁANIANIE ODPOWIEDZI`;
+  
+    // wszystko inne: pusty host
+    return "";
   }
   
-  // tylko odświeżaj hosta, gdy timer chodzi (tak chciałeś)
-  function hostRefreshIfCounting() {
-    const rt = store.state.final.runtime;
-    if (!rt?.timer?.running) return;
-    const phase = rt.timer.phase; // "P1" | "P2"
-    if (phase === "P1") hostShowLines(buildHostEntryView(1, "FINAŁ RUNDA 1 — ODLICZANIE 15s")).catch(()=>{});
-    if (phase === "P2") hostShowLines(buildHostEntryView(2, "FINAŁ RUNDA 2 — ODLICZANIE 20s")).catch(()=>{});
+  async function hostShowLines(lines) {
+    // UWAGA: nie filtrujemy pustych linii, bo chcesz 1 linijkę przerwy
+    const txt = lines.join("\n").replace(/"/g, '\\"');
+    try {
+      await devices.sendHostCmd(`SET "${txt}"`);
+      await devices.sendHostCmd("OPEN");
+    } catch {}
   }
-
+  
+  async function hostBlank() {
+    try {
+      await devices.sendHostCmd('SET ""');
+      await devices.sendHostCmd("HIDE");
+    } catch {}
+  }
+  
+  function hostUpdate() {
+    const title = hostTitleForStep();
+    if (!title) {
+      hostBlank().catch(() => {});
+      return;
+    }
+  
+    // Na ekranach wpisywania pokazujemy pytania+lampki, na mapowaniu też możesz je pokazać
+    const step = store.state.final?.step || "";
+    const roundNo =
+      step === "f_p1_entry" || step.startsWith("f_p1_") ? 1 :
+      step === "f_p2_entry" || step.startsWith("f_p2_") ? 2 : 1;
+  
+    const lines = [];
+    lines.push(title);
+    lines.push(""); // <- TA JEDNA LINIJKA PRZERWY
+  
+    // pytania + lampki (wpisywanie: czerw/żół/ ziel ; mapowanie możesz zostawić te same lampki albo dopiąć “poziom” później)
+    for (let i = 0; i < 5; i++) {
+      const lamp = lampForEntry(roundNo, i); // masz już 🔴🟡🟢
+      const qt = (qPicked[i]?.text || "—").replace(/\s+/g, " ").trim();
+      lines.push(`${lamp} ${i + 1}) ${qt}`);
+    }
+  
+    hostShowLines(lines).catch(() => {});
+  }
+  
 
   // Zwycięska drużyna (do timera na bocznym tripletcie).
   function getWinnerTeam() {
@@ -320,7 +376,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     rt.timer.seconds = seconds;
 
     displaySetTimerSeconds(seconds).catch(() => {});
-    hostRefreshIfCounting();
+    hostUpdate();
 
     const tick = () => {
       if (!rt.timer.running) return;
@@ -328,19 +384,20 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
       const s = Math.ceil(leftMs / 1000);
       if (s !== rt.timer.seconds) {
         rt.timer.seconds = s;
-        hostRefreshIfCounting();
+        hostUpdate();
         displaySetTimerSeconds(s).catch(() => {});
       }
       if (leftMs <= 0) {
         rt.timer.running = false;
+        rt.timer.seconds = 0;
         ui.setText("finalTimer", "0");
-      
+        hostUpdate();
+        
         // zamiast "timer na 0" – przywracamy punkty A/B
         const totals = store.state.rounds?.totals || { A: 0, B: 0 };
         display.setTotalsTriplets?.(totals).catch(() => {});
       
         playSfx("time_over");
-        hostRefreshIfCounting();
         if (phase === "P1") ui.setEnabled("btnFinalToP1MapQ1", true);
         if (phase === "P2") ui.setEnabled("btnFinalToP2MapQ1", true);
         return;
@@ -385,7 +442,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
         inp.addEventListener("input", () => {
           const i = Number(inp.dataset.i);
           rt.p1[i].text = String(inp.value ?? "");
-          hostRefreshIfCounting();
+          hostUpdate();
         });
         inp.addEventListener("keydown", (e) => {
           const i = Number(inp.dataset.i);
@@ -470,7 +527,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
             rt.p2[i].repeat = false;
             renderP2Entry();
           }
-          hostRefreshIfCounting();
+          hostUpdate();
         });
         inp.addEventListener("keydown", (e) => {
           const i = Number(inp.dataset.i);
@@ -541,7 +598,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
             }
       
             renderP2Entry();
-            hostRefreshIfCounting();
+            hostUpdate();
           });
         });
 
@@ -958,6 +1015,8 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     ensureRuntime();
     stopTimer();
 
+    await hostBlank().catch(() => {});
+
     store.state.final.runtime.hit200 = !!hit200;
 
     const hasPrize = store.state?.final?.hasPrize !== false;
@@ -1218,6 +1277,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     } else {
       // jeśli nie weszło 200+ w revealPointsAndScore,
       // kończymy finał „poniżej progu”
+      await hostBlank().catch(() => {});
       gotoEnd(false);
     }
   }
