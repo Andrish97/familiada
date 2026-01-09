@@ -197,11 +197,25 @@ async function main() {
   const chBuzzer = rt(`familiada-buzzer:${game.id}`);
 
   const devices = createDevices({ game, ui, store, chDisplay, chHost, chBuzzer });
+  const presence = createPresence({ game, ui, store, devices });
 
   const display = createDisplay({ devices, store });
   const rounds = createRounds({ ui, store, devices, display, loadQuestions, loadAnswers });
   rounds.bootIfNeeded();
   const final = createFinal({ ui, store, devices, display, loadAnswers });
+
+  // start presence (online / offline / OSTATNIO)
+  presence.start();
+
+  // BFCache (powrot wstecz/przod) moze "wznowic" strone bez ponownego startu JS.
+  // Wtedy presence/kanaly moga byc martwe i nic sie nie wysle az do twardego odswiezenia.
+  window.addEventListener("pageshow", (ev) => {
+    if (!ev || ev.persisted !== true) return;
+    try {
+      if (typeof presence.stop === "function") presence.stop();
+      if (typeof presence.start === "function") presence.start();
+    } catch {}
+  });
 
   // ===== Realtime: odbiór kliknięć z przycisku (BUZZER_EVT) =====
   const chControlIn = sb()
@@ -576,15 +590,9 @@ async function main() {
     }
 
     // tryb ekranu końcowego
-    if (form.winMode === "money" || form.winMode === "logo" || form.winMode === "points") {
-      // nowy, docelowy klucz
-      adv.endScreenMode = form.winMode;
-  
-      // winEnabled zostaje tylko jako kompatybilność wstecz:
-      // - wszystko, co nie "logo", traktujemy jak "ekran wygranej"
-      adv.winEnabled = form.winMode === "logo" ? false : true;
-    }
-  
+    if (form.winMode === "money") adv.winEnabled = true;
+    if (form.winMode === "logo") adv.winEnabled = false;
+
     store.setAdvanced(adv);
     ui.setMsg?.("msgAdvanced", APP_MSG.ADV_SAVED);
   });
@@ -677,7 +685,9 @@ async function main() {
   // FINAL (runtime – nie picker)
   final.bootIfNeeded();
 
-  ui.on("final.start", () => final.startFinal());;
+  ui.on("final.start", () => final.startFinal());
+  ui.on("final.back", (card) => store.setActiveCard(card));
+  ui.on("final.backStep", (step) => final.backTo(step));
 
   ui.on("final.p1.timer", () => final.p1StartTimer());
   ui.on("final.p1.toQ", (n) => final.toP1MapQ(n));
@@ -697,8 +707,7 @@ async function main() {
       ? "INTRO"
       : "ROUND"
   );
-  const presence = createPresence({ game, ui, store, devices, display });
-  presence.start();
+
   // boot view state
   ui.setQrToggleLabel(
     store.state.flags.qrOnDisplay,
