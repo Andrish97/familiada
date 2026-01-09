@@ -1277,7 +1277,6 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     } else {
       // jeśli nie weszło 200+ w revealPointsAndScore,
       // kończymy finał „poniżej progu”
-      await hostBlank().catch(() => {});
       gotoEnd(false);
     }
   }
