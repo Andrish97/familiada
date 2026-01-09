@@ -206,3 +206,16 @@ html, body { height: 100%; }
   opacity: .85;
 }
 
+.calib{
+  position: fixed;
+  top: calc(var(--safe-top) + 64px);
+  right: calc(var(--safe-right) + 10px);
+  z-index: 120;
+  opacity: .65;
+}
+
+.calib:hover{ opacity: 1; }
+
+.calib input[type="range"]{
+  width: 120px;
+}
