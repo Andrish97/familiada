@@ -63,7 +63,7 @@ html, body { height: 100%; }
   background-color:#fffdf5;
   background-image: linear-gradient(to bottom, #e7e2d3 1px, transparent 1px);
   background-size: 100% var(--line);
-  background-position: 0 0;
+  background-position-y: calc(var(--line) * 0.18);
 
   z-index:10;
 }
@@ -93,6 +93,7 @@ html, body { height: 100%; }
   /* ↑ większa czcionka w linijkach */
   font-size: calc(var(--line) * 0.9);
   line-height: var(--line);
+  padding-top: calc(var(--line) * 0.18);
   color:#111;
 }
 
