@@ -190,3 +190,43 @@ html.pseudoFS body::before{
   height: 1px;                    /* 1px "treści" => można scrollnąć */
 }
 
+/* iOS Safari: instrukcja "Dodaj do ekranu" */
+.a2hs{
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: none;
+  place-items: center;
+  background: rgba(0,0,0,.55);
+  padding: 18px;
+}
+
+html.showA2HS .a2hs{ display: grid; }
+
+.a2hsCard{
+  width: min(520px, 92vw);
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,.22);
+  background: rgba(0,0,0,.45);
+  backdrop-filter: blur(10px);
+  padding: 16px 16px 14px;
+  color: #fff;
+}
+
+.a2hsTitle{
+  font-weight: 1000;
+  letter-spacing: .04em;
+  margin: 0 0 8px 0;
+}
+
+.a2hsText{
+  margin: 0;
+  opacity: .9;
+  line-height: 1.35;
+}
+
+.a2hsClose{
+  margin-top: 12px;
+  width: 100%;
+}
+
