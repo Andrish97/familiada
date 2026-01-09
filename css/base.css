@@ -176,3 +176,17 @@ body{
   .only-desktop{ display:none; }
   .only-mobile{ display:inline; }
 }
+
+/* iOS: bez choćby minimalnego scrolla Safari często nie chowa pasków */
+html.pseudoFS body{
+  height: 100dvh;
+  overflow: auto;                 /* pozwól na minimalny scroll */
+  -webkit-overflow-scrolling: touch;
+}
+
+html.pseudoFS body::before{
+  content:"";
+  display:block;
+  height: 1px;                    /* 1px "treści" => można scrollnąć */
+}
+
