@@ -179,3 +179,16 @@ button, .arena, .paper, .blank {
    ale jeśli chcesz TYLKO wnętrze, to zostaw to wyłączone:
 .btnRing.dim{ filter:none; opacity:1; }
 */
+
+/* pseudo-fullscreen: fallback gdy iOS blokuje Fullscreen API */
+.pseudoFS,
+.pseudoFS body{
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+/* stabilniejszy viewport na iOS */
+.pseudoFS body{
+  min-height: 100dvh;
+}
