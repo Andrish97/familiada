@@ -1,0 +1,174 @@
+:root{
+  /* stała “linijka” (bez artefaktów gradientu) */
+  --line: 38px;
+
+  /* bezpieczne marginesy pod notch */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+
+  --margin-x: 64px;     /* czerwony margines */
+  --text-left: 78px;    /* start tekstu po marginesie */
+  --text-right: 48px;   /* prawa “krawędź” */
+  --top-pad: calc(var(--line) * 2);      /* ~3 linijka */
+  --bottom-pad: calc(var(--line) * 1.2); /* miejsce na hint */
+}
+
+/* usuń “mignięcie” highlight na iOS/Android */
+*{ -webkit-tap-highlight-color: transparent; }
+
+html, body { height: 100%; }
+
+.host-body{
+  margin:0;
+  background:#0b1220;
+  overflow:hidden;
+  /* ważne: nie none, bo to rozwala gesty i czasem fullscreen */
+  touch-action: pan-y;
+  -webkit-user-select:none;
+  user-select:none;
+}
+
+/* Fullscreen button */
+.fsBtn{
+  position:fixed;
+  top: calc(var(--safe-top) + 10px);
+  right: calc(var(--safe-right) + 10px);
+  z-index: 100;
+
+  width:44px; height:44px;
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,.18);
+  background:rgba(255,255,255,.06);
+  color:#fff;
+  font-weight:900;
+  cursor:pointer;
+}
+.fsBtn:active{ transform: translateY(1px); }
+.fsBtn .ico{ font-size:16px; letter-spacing:-2px; }
+
+/* Kartka pełny ekran */
+.paper{
+  position:fixed;
+  inset:0;
+  padding:
+    var(--safe-top)
+    var(--safe-right)
+    var(--safe-bottom)
+    var(--safe-left);
+
+  background-color:#fffdf5;
+  background-image: linear-gradient(to bottom, #e7e2d3 1px, transparent 1px);
+  background-size: 100% var(--line);
+  background-position: 0 0;
+
+  z-index:10;
+}
+
+.redMargin{
+  position:absolute;
+  top:0; bottom:0;
+  left: calc(var(--safe-left) + var(--margin-x));
+  width:2px;
+  background: rgba(255,80,80,.55);
+}
+
+.text{
+  position:absolute;
+  left: calc(var(--safe-left) + var(--text-left));
+  right: calc(var(--safe-right) + var(--text-right));
+  top: calc(var(--safe-top) + var(--top-pad));
+  bottom: calc(var(--safe-bottom) + var(--bottom-pad));
+  margin:0;
+
+  white-space:pre-wrap;
+  word-break:break-word;
+
+  /* dalej “pisana”, ale czytelniejsza */
+  font-family: "Comic Sans MS", "Segoe Print", "Bradley Hand", "Segoe Script", cursive;
+
+  /* ↑ większa czcionka w linijkach */
+  font-size: 30px;
+  line-height: var(--line);
+  color:#111;
+}
+
+.hint{
+  position:absolute;
+  left: calc(var(--safe-left) + var(--text-left));
+  right: calc(var(--safe-right) + var(--text-right));
+  bottom: calc(var(--safe-bottom) + 0px);
+
+  font-family: "Comic Sans MS", "Segoe Print", "Bradley Hand", "Segoe Script", cursive;
+  font-size: 24px;
+  line-height: var(--line);
+  color: rgba(0,0,0,.55);
+}
+
+/* ========= OKŁADKA (gradient + logo) ========= */
+.blank{
+  position:fixed;
+  inset:0;
+  z-index: 50;
+
+  background: linear-gradient(90deg, #c4002f 0%, #2a62ff 100%);
+
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(var(--blank-tx, 0));
+  transition: transform 180ms ease, opacity 160ms ease;
+  will-change: transform, opacity;
+}
+
+.blankContent{
+  position:absolute;
+  inset:0;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  gap: 18px;
+  padding:
+    calc(var(--safe-top) + 20px)
+    calc(var(--safe-right) + 20px)
+    calc(var(--safe-bottom) + 20px)
+    calc(var(--safe-left) + 20px);
+  text-align:center;
+}
+
+.blankLogo{
+  width: min(1100px, 96vw);
+  height: auto;
+  display:block;
+  filter: drop-shadow(0 12px 30px rgba(0,0,0,.35));
+}
+
+.blankSwipe{
+  font-family: "Comic Sans MS", "Segoe Print", "Bradley Hand", "Segoe Script", cursive;
+  font-size: 30px;
+  line-height: calc(var(--line) * 1.05);
+  color: #fc0; /* kolor jak logo */
+  text-shadow: 0 4px 18px rgba(0,0,0,.45);
+}
+
+/* widoczna okładka */
+.blank.blankOn{
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateX(0);
+}
+
+/* “czeka poza ekranem” */
+.blank.blankOffLeft{ --blank-tx: -120%; }
+.blank.blankOffRight{ --blank-tx: 120%; }
+
+/* wyłącz animację przy starcie/restore */
+.blank.noAnim{ transition: none !important; }
+
+/* stare elementy okładki już nieużywane */
+.blankCard, .blankTitle, .blankHint{ display:none; }
+
+@media (prefers-reduced-motion: reduce){
+  .blank{ transition: none !important; }
+}
