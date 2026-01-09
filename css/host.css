@@ -2,8 +2,8 @@
   /* stała “linijka” (bez artefaktów gradientu) */
   --line: 6.5vmin;
 
-  --font-ratio: 0.84;   /* wielkość liter względem linijki */
-  --baseline-shift: 0.18; /* przesunięcie baseline */
+  --font-ratio: 1.1;   /* wielkość liter względem linijki */
+  --baseline-shift: 0.15; /* przesunięcie baseline */
   
   /* bezpieczne marginesy pod notch */
   --safe-top: env(safe-area-inset-top, 0px);
@@ -212,37 +212,3 @@ html, body { height: 100%; }
 .pseudoFS .fsBtn{
   opacity: .85;
 }
-
-.calib{
-  position: fixed;
-  top: calc(var(--safe-top) + 64px);
-  right: calc(var(--safe-right) + 10px);
-  z-index: 120;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  opacity: .65;
-}
-
-.calib:hover{ opacity: 1; }
-
-.calib input[type="range"]{
-  width: 120px;
-}
-
-.calibRow{
-  display:flex;
-  align-items:center;
-  gap:8px;
-}
-
-.calibVal{
-  min-width: 44px;
-  padding: 2px 6px;
-  border-radius: 8px;
-  background: rgba(0,0,0,.35);
-  color: #fff;
-  font: 12px/1.2 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  text-align: right;
-}
-
