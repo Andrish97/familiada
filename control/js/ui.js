@@ -87,6 +87,14 @@ export function createUI() {
     }
   }
 
+  function setFinalTimerP1(sec) {
+    setText("finalTimerP1", sec ?? UI_MSG.DASH);
+  }
+  
+  function setFinalTimerP2(sec) {
+    setText("finalTimerP2", sec ?? UI_MSG.DASH);
+  }
+
   function showCard(card) {
     // ukryj wszystkie panele kart
     document
@@ -599,8 +607,8 @@ export function createUI() {
     
     $("btnFinalFinishBack")?.addEventListener("click", () => emit("final.finish.back"));
     $("btnFinalStart")?.addEventListener("click", () => emit("final.start"));
+
     
-    $("btnFinalP1StartTimer")?.addEventListener("click", () => emit("final.p1.timer"));
     $("btnFinalToP1MapQ1")?.addEventListener("click", () => emit("final.p1.toQ", 1));
     
     $("btnFinalNextFromP1Q1")?.addEventListener("click", () => emit("final.p1.nextQ", 1));
@@ -611,7 +619,6 @@ export function createUI() {
     
     $("btnFinalStartP2")?.addEventListener("click", () => emit("final.p2.start"));
     
-    $("btnFinalP2StartTimer")?.addEventListener("click", () => emit("final.p2.timer"));
     $("btnFinalToP2MapQ1")?.addEventListener("click", () => emit("final.p2.toQ", 1));
     
     $("btnFinalNextFromP2Q1")?.addEventListener("click", () => emit("final.p2.nextQ", 1));
@@ -630,6 +637,9 @@ export function createUI() {
     on, emit,
 
     setMsg, setText, setValue, setEnabled, setImg,
+
+    setFinalTimerP1,
+    setFinalTimerP2,
 
     showCard,
     mountNavigation,
