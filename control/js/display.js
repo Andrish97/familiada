@@ -251,22 +251,22 @@ export function createDisplay({ devices, store }) {
 
   async function finalSetLeft(n, text) {
     const txt = q(String(text || ""));
-    await send(`F ${n} L "${txt}" A 00 ANIMIN matrix right 500`);
+    await send(`FL "${txt}" A 00 ANIMIN matrix right 500`);
   }
 
   async function finalSetRight(n, text) {
     const txt = q(String(text || ""));
-    await send(`F ${n} R "${txt}" B 00 ANIMIN matrix right 500`);
+    await send(`FR ${n} "${txt}" B 00 ANIMIN matrix right 500`);
   }
 
   async function finalSetA(n, pts) {
     const p = String(nInt(pts, 0)).padStart(2, "0");
-    await send(`F ${n} L "" A ${p} ANIMIN matrix right 500`);
+    await send(`FA ${n} ${p} ANIMIN matrix right 500`);
   }
 
   async function finalSetB(n, pts) {
     const p = String(nInt(pts, 0)).padStart(2, "0");
-    await send(`F ${n} R "" B ${p} ANIMIN matrix right 500`);
+    await send(`FB ${n} ${p} ANIMIN matrix right 500`);
   }
 
   async function finalSetSuma(sum, side = "A") {
