@@ -29,13 +29,6 @@ function createManagedChannel(topic) {
       });
     }).catch(() => false);
 
-    // phoenix low-level events (Supabase v2 channel wrapper)
-    // Nie zawsze są dostępne, ale jak są – to pomagają.
-    try {
-      ch.on("phx_error", () => (status = "ERROR"));
-      ch.on("phx_close", () => (status = "CLOSED"));
-    } catch {}
-
     return ch;
   }
 
