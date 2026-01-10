@@ -60,6 +60,20 @@ async function ensureAuthOrRedirect() {
   return user;
 }
 
+function syncPanelStepPills() {
+  const panel = document.querySelector(".cardPanel:not(.hidden)");
+  if (!panel) return;
+
+  const pill = panel.querySelector("[data-panel-step]");
+  if (!pill) return;
+
+  const step = panel.querySelector(".step:not(.hidden)");
+  if (!step) { pill.textContent = ""; return; }
+
+  const st = step.querySelector(".stepTitle");
+  pill.textContent = (st?.textContent || "").trim();
+}
+
 async function loadGameOrThrow() {
   if (!gameId) throw new Error(APP_MSG.NO_ID);
 
@@ -422,6 +436,7 @@ async function main() {
   function renderFromState(state) {
     // aktywna karta
     ui.showCard(state.activeCard);
+    syncPanelStepPills();
 
     // kroki kart
     ui.showDevicesStep(state.steps.devices);
@@ -483,6 +498,7 @@ async function main() {
 
     // od razu zsynchronizuj wizualnie radio + kartę list
     finalPickerUpdateButtons();
+    syncPanelStepPills();
   }
 
   // startowy render + subskrypcja
