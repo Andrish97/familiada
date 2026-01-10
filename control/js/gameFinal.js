@@ -1011,8 +1011,23 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
 
   function nextFromP1Q(idx1based) {
     const n = Number(idx1based) || 1;
-    if (n < 5) toP1MapQ(n + 1);
-    else toP2Start();
+  
+    if (n < 5) {
+      toP1MapQ(n + 1);
+      return;
+    }
+    
+    const adv = store.state.advanced || {};
+    const target = typeof adv.finalTarget === "number" ? adv.finalTarget : 200;
+    const sumNow = nInt(store.state.final.runtime?.sum, 0);
+    
+    if (sumNow >= target) {
+      // osiągnięto próg po rundzie 1 → kończymy finał, runda 2 się nie odbywa
+      gotoEnd(true);
+      return;
+    }
+    
+    toP2Start();
   }
 
   function toP2Start() {
