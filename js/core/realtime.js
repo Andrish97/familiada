@@ -61,31 +61,37 @@ function createManagedChannel(topic) {
     readyPromise = null;
   }
 
-  async function sendBroadcast(event, payload, opts = {}) {
-    const supa = sb();
-    try { supa.realtime.connect(); } catch {}
+  async function sendBroadcast(event, payload = {}, opts = {}) {
+    const mode = opts.mode || "ws"; // "ws" | "http"
+    ensureChannel();
   
+    // REST: nie zależy od WS; payload musi być obiektem
+    if (mode === "http") {
+      const safe = (payload && typeof payload === "object") ? payload : { value: payload };
+      const { error } = await ch.httpSend(event, safe);
+      if (error) throw error;
+      return true;
+    }
+  
+    // WS: czekamy na SUBSCRIBED
     const ok = await whenReady(opts);
     if (!ok) {
       reset();
-      try { supa.realtime.connect(); } catch {}
       const ok2 = await whenReady(opts);
-      if (!ok2) {
-        // skoro realtime nie gotowe, idź REST-em (jawnie) zamiast liczyć na deprecated fallback
-        const { error } = await ch.httpSend({ type: "broadcast", event, payload });
-        if (error) { reset(); throw error; }
-        return true;
-      }
+      if (!ok2) throw new Error(`Realtime not ready for topic ${topic}`);
     }
   
-    const wsUp = typeof supa.realtime.isConnected === "function"
-      ? supa.realtime.isConnected()
-      : true;
+    const safe = (payload && typeof payload === "object") ? payload : { value: payload };
+    const { error } = await ch.send({
+      type: "broadcast",
+      event,
+      payload: safe,
+    });
   
-    const sender = wsUp ? ch.send.bind(ch) : ch.httpSend.bind(ch);
-    const { error } = await sender({ type: "broadcast", event, payload });
-  
-    if (error) { reset(); throw error; }
+    if (error) {
+      reset();
+      throw error;
+    }
     return true;
   }
 
