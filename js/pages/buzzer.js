@@ -162,24 +162,6 @@ async function restoreState() {
 /* ========= REALTIME ========= */
 let ch = null;
 
-let chControl = null;
-let chControlReady = null;
-
-function ensureControlChannel() {
-  if (chControl) return chControl;
-
-  chControl = sb().channel(`familiada-control:${gameId}`);
-
-  chControlReady = new Promise((resolve) => {
-    chControl.subscribe((st) => {
-      if (st === "SUBSCRIBED") resolve(true);
-      if (st === "TIMED_OUT" || st === "CHANNEL_ERROR" || st === "CLOSED") resolve(false);
-    });
-  });
-
-  return chControl;
-}
-
 function ensureChannel() {
   if (ch) return ch;
 
@@ -206,17 +188,8 @@ function ensureChannel() {
 /* ========= CLICK -> CONTROL ========= */
 async function sendClick(team) {
   try {
-    ensureControlChannel();
-    const ok = await chControlReady;
-    if (!ok) throw new Error("control channel not ready");
-
-    const { error } = await chControl.httpSend({
-      type: "broadcast",
-      event: "BUZZER_EVT",
-      payload: { line: `CLICK ${team}` }, // payload ZAWSZE obecny
-    });
-
-    if (error) throw error;
+    await rt(`familiada-control:${gameId}`)
+      .sendBroadcast("BUZZER_EVT", { line: `CLICK ${team}` }, { mode: "http" });
   } catch (e) {
     console.warn("[buzzer] click failed", e);
   }
@@ -278,7 +251,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   await restoreState();
   ensureChannel();
-  ensureControlChannel();
 
   ping();
   setInterval(ping, 5000);
