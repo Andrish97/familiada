@@ -171,6 +171,7 @@ async function main() {
   function shouldWarnBeforeUnload() {
     if (suppressUnloadWarn) return false;
     const s = store.state;
+    if (s.locks?.gameEnded) return false;
     const r = s.rounds || {};
     const totals = r.totals || { A: 0, B: 0 };
 
@@ -594,10 +595,13 @@ async function main() {
       const n = Number.parseInt(form.finalTargetText, 10);
       if (Number.isFinite(n) && n >= 0) adv.finalTarget = n;
     }
-
-    // tryb ekranu końcowego
+    if (form.winMode === "logo" || form.winMode === "points" || form.winMode === "money") {
+      adv.endScreenMode = form.winMode;
+    }
+    // kompatybilność wstecz:
     if (form.winMode === "money") adv.winEnabled = true;
     if (form.winMode === "logo") adv.winEnabled = false;
+    if (form.winMode === "points") adv.winEnabled = true;
 
     store.setAdvanced(adv);
     ui.setMsg?.("msgAdvanced", APP_MSG.ADV_SAVED);
