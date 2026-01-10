@@ -38,7 +38,7 @@ const APP_MSG = {
 
 import { requireAuth, signOut } from "/familiada/js/core/auth.js";
 import { sb } from "/familiada/js/core/supabase.js";
-import { rt } from "/familiada/js/core/realtime.js";
+import { rt, rtResetAll } from "/familiada/js/core/realtime.js";
 import { validateGameReadyToPlay, loadGameBasic, loadQuestions, loadAnswers } from "/familiada/js/core/game-validate.js";
 import { unlockAudio, isAudioUnlocked, playSfx } from "/familiada/js/core/sfx.js";
 
@@ -212,8 +212,9 @@ async function main() {
   window.addEventListener("pageshow", (ev) => {
     if (!ev || ev.persisted !== true) return;
     try {
-      if (typeof presence.stop === "function") presence.stop();
-      if (typeof presence.start === "function") presence.start();
+      rtResetAll();           // <- to
+      presence.stop?.();
+      presence.start?.();
     } catch {}
   });
 
