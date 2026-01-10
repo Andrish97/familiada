@@ -38,7 +38,7 @@ const APP_MSG = {
 
 import { requireAuth, signOut } from "/familiada/js/core/auth.js";
 import { sb } from "/familiada/js/core/supabase.js";
-import { rt, rtResetAll } from "/familiada/js/core/realtime.js";
+import { rt } from "/familiada/js/core/realtime.js";
 import { validateGameReadyToPlay, loadGameBasic, loadQuestions, loadAnswers } from "/familiada/js/core/game-validate.js";
 import { unlockAudio, isAudioUnlocked, playSfx } from "/familiada/js/core/sfx.js";
 
@@ -164,7 +164,12 @@ async function main() {
 
 
   // === OSTRZEŻENIE PRZY WYJŚCIU ZE STRONY ===
+  // Gdy nawigujemy "świadomie" (przycisk Powrót / wylogowanie),
+  // nie chcemy drugiego alertu z beforeunload.
+  let suppressUnloadWarn = false;
+
   function shouldWarnBeforeUnload() {
+    if (suppressUnloadWarn) return false;
     const s = store.state;
     const r = s.rounds || {};
     const totals = r.totals || { A: 0, B: 0 };
@@ -191,6 +196,15 @@ async function main() {
     return msg;
   });
 
+  // Próba złapania cofania w przeglądarce – ustawiamy flagę, żeby nie
+  // dublować ostrzeżenia (nie zawsze odpali przed beforeunload, ale pomaga).
+  window.addEventListener("popstate", () => {
+    suppressUnloadWarn = true;
+  });
+  window.addEventListener("pagehide", () => {
+    suppressUnloadWarn = true;
+  });
+
   // realtime channels
   const chDisplay = rt(`familiada-display:${game.id}`);
   const chHost = rt(`familiada-host:${game.id}`);
@@ -206,17 +220,6 @@ async function main() {
 
   // start presence (online / offline / OSTATNIO)
   presence.start();
-
-  // BFCache (powrot wstecz/przod) moze "wznowic" strone bez ponownego startu JS.
-  // Wtedy presence/kanaly moga byc martwe i nic sie nie wysle az do twardego odswiezenia.
-  window.addEventListener("pageshow", (ev) => {
-    if (!ev || ev.persisted !== true) return;
-    try {
-      rtResetAll();           // <- to
-      presence.stop?.();
-      presence.start?.();
-    } catch {}
-  });
 
   // ===== Realtime: odbiór kliknięć z przycisku (BUZZER_EVT) =====
   const chControlIn = sb()
@@ -497,11 +500,13 @@ async function main() {
       const ok = confirm(APP_MSG.CONFIRM_BACK);
       if (!ok) return;
     }
+    suppressUnloadWarn = true;
     location.href = "/familiada/builder.html";
   });
 
   ui.on("top.logout", async () => {
     await signOut().catch(() => {});
+    suppressUnloadWarn = true;
     location.href = "/familiada/index.html";
   });
 
