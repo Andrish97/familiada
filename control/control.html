@@ -612,65 +612,52 @@
 
             <!-- STEP R5: PYTANIE / ROZGRYWKA / KRADZIEŻ / KONIEC -->
             <div class="step hidden" data-step="r_play">
-              <div class="stepTitle">Pytanie i rozgrywka</div>
-
-              <div class="card card-noShadow">
+              <div class="stepTitle">Runda</div>
+            
+              <div class="card">
                 <div class="cardBody">
-                  <div class="twoCol">
-                    <!-- LEWA KOLUMNA: pytanie + sterowanie -->
-                    <div class="card card-soft">
-                      <div class="name">Pytanie</div>
-                      <div class="qText" id="roundQuestion">—</div>
-
-                      <div class="rowBtns">
-                        <button class="btn" id="btnPassQuestion" type="button">Oddaj pytanie</button>
-                      </div>
-
-                      <div class="rowBtns">
-                        <button class="btn" id="btnStartTimer3" type="button">Start timera 3 s</button>
-                        <div class="timer3" id="t3">—</div>
-                      </div>
-
-                      <div class="rowBtns">
-                        <button class="btn" id="btnAddX" type="button">X (pudło)</button>
-                      </div>
-
-                      <div class="stepFoot stepFoot-inner">
-                        <div class="stepFootButtons">
-                          <button class="btn gold" id="btnGoEndRound" type="button">Zakończ rundę</button>
-                        </div>
-
-                        <div class="msgStack">
-                          <div class="msg msg-inline" id="msgRoundsPlay"></div>
-                          <div class="msg msg-inline" id="msgSteal"></div>
-                          <div class="msg msg-inline" id="msgRoundsReveal"></div>
-                          <div class="msg msg-inline" id="msgRoundsEnd"></div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <!-- PRAWA KOLUMNA: odpowiedzi -->
-                    <div class="card card-soft">
+                  <!-- GÓRA: pytanie + oddaj pytanie -->
+                  <div class="name">Pytanie</div>
+                  <div class="qText" id="roundQuestion">—</div>
+            
+                  <div class="rowBtns" style="margin-top:10px;">
+                    <button class="btn" id="btnPassQuestion" type="button">Oddaj pytanie</button>
+                  </div>
+            
+                  <!-- ŚRODEK: odpowiedzi (jedna sekcja) -->
+                  <div class="card card-soft" style="margin-top:14px;">
+                    <div class="cardBody">
                       <div class="name">Odpowiedzi</div>
-
-                      <div class="hint hint-compact">
-                        Jak działa kliknięcie odpowiedzi:
-                        <ul>
-                          <li>w pojedynku – odsłania odpowiedź i dodaje punkty do banku duelu,</li>
-                          <li>właściwa rozgrywka – odsłania odpowiedź i dodaje punkty do banku rundy,</li>
-                          <li>kradzież – odsłania odpowiedź, liczymy normalnie punkty, kradnąca drużyna
-                            dostaje bank przy „Zakończ rundę”,</li>
-                          <li>po zakończeniu rundy – tylko pokazuje brakujące odpowiedzi, bez zmiany punktów.</li>
-                        </ul>
-                        Pudło zawsze oznaczamy przyciskiem <b>X (pudło)</b>.
-                      </div>
-
                       <div class="ansGrid" id="roundAnswers"></div>
                     </div>
+                  </div>
+            
+                  <!-- DÓŁ: X + timer 3s obok siebie -->
+                  <div class="rowBtns" style="margin-top:14px; align-items:center;">
+                    <button class="btn" id="btnAddX" type="button">X (pudło)</button>
+            
+                    <button class="btn" id="btnStartTimer3" type="button">Start timera 3 s</button>
+                    <div class="timer3" id="t3">—</div>
+                  </div>
+            
+                  <!-- komunikaty (zostają, ale bez tłumaczeń) -->
+                  <div class="msgStack" style="margin-top:10px;">
+                    <div class="msg msg-inline" id="msgRoundsPlay"></div>
+                    <div class="msg msg-inline" id="msgSteal"></div>
+                    <div class="msg msg-inline" id="msgRoundsReveal"></div>
+                    <div class="msg msg-inline" id="msgRoundsEnd"></div>
+                  </div>
+                </div>
+            
+                <!-- STANDARDOWY FOOT: tu ma być Zakończ rundę -->
+                <div class="stepFoot">
+                  <div class="stepFootButtons">
+                    <button class="btn gold" id="btnGoEndRound" type="button">Zakończ rundę</button>
                   </div>
                 </div>
               </div>
             </div>
+
 
             <!-- STEP R6: ZAKOŃCZ GRĘ (bez finału) -->
             <div class="step hidden" data-step="r_gameEnd">
