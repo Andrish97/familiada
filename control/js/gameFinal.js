@@ -43,6 +43,8 @@ const FINAL_MSG = {
 
   // --- fallback tekstu odpowiedzi, gdy naprawdę nic nie ma ---
   FALLBACK_ANSWER: "—",
+  TOP_MARK: "najwyż. punk.", // dopisek "(MAX)" dla najwyżej punktowanej odpowiedzi
+
 };
 // =========================================================
 
@@ -170,6 +172,35 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     return (rt.p2[i].text || "").trim() ? "🟢" : "🔴";
   }
 
+  function hostTopMarkForQuestion(roundNo, i) {
+    ensureRuntime();
+    const rt = store.state.final.runtime;
+  
+    const q = qPicked[i];
+    if (!q) return "";
+  
+    const aList = answersByQ.get(q.id) || [];
+    if (!aList.length) return "";
+  
+    const row = (roundNo === 1 ? rt.map1 : rt.map2)?.[i];
+    if (!row) return "";
+  
+    // dopiero po odsłonięciu treści
+    if (row.revealedAnswer !== true) return "";
+  
+    // tylko MATCH ma sens do "najwyżej punktowanej"
+    if (row.kind !== "MATCH" || !row.matchId) return "";
+  
+    const chosen = aList.find(x => x.id === row.matchId);
+    if (!chosen) return "";
+  
+    const maxPts = aList.reduce((m, x) => Math.max(m, nInt(x.fixed_points, 0)), 0);
+    const chosenPts = nInt(chosen.fixed_points, 0);
+  
+    return (chosenPts === maxPts) ? "${FINAL_MSG.TOP_MARK}" : "";
+  }
+
+
   function hostTitleForStep() {
     const rt = store.state.final?.runtime;
     const step = store.state.final?.step || "";
@@ -219,11 +250,11 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
       step === "f_p1_entry" || step.startsWith("f_p1_") ? 1 :
       step === "f_p2_entry" || step.startsWith("f_p2_") ? 2 : 1;
 
-    const lines = [title, ""];
     for (let i = 0; i < 5; i++) {
       const lamp = lampForEntry(roundNo, i);
       const qt = (qPicked[i]?.text || "—").replace(/\s+/g, " ").trim();
-      lines.push(`${lamp} ${i + 1}) ${qt}`);
+      const top = hostTopMarkForQuestion(roundNo, i);
+      lines.push(`${lamp} ${i + 1}) ${qt}${top}`);
     }
 
     hostShowLines(lines).catch(() => {});
