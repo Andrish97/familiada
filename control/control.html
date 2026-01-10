@@ -203,21 +203,22 @@
                     <div class="badge mid" id="pillDisplay">—</div>
                     <div class="badge badge-soft lastSeen">Ostatnio: <b id="seenDisplay">—</b></div>
                   </div>
+                  <div class="rowBtns rowActionsTop">
+                    <button class="btn" id="btnDispBlack" type="button">
+                      Czarny ekran
+                    </button>
+                  </div>
 
-                  <div class="qrRow">
-                    <div class="qrBox">
-                      <img id="qrDisplayImg" alt="QR do wyświetlacza"/>
-                    </div>
-
-                    <div class="qrControls">
-                      <div class="qrLinkRow">
-                        <input class="inp" id="displayLink" readonly aria-label="Link do wyświetlacza" />
-                        <button class="btn" id="btnCopyDisplay" type="button">Kopiuj</button>
-                        <button class="btn gold" id="btnOpenDisplay" type="button">Otwórz</button>
-                        <button class="btn" id="btnDispBlack" type="button">Czarny ekran</button>
-                      </div>
+                  <div class="qrBlock">
+                    <img id="qrDisplayImg" alt="QR do wyświetlacza" />
+                  
+                    <div class="qrInline">
+                      <input class="inp" id="displayLink" readonly />
+                      <button class="btn" id="btnCopyDisplay" type="button">Kopiuj</button>
+                      <button class="btn gold" id="btnOpenDisplay" type="button">Otwórz</button>
                     </div>
                   </div>
+
                 </div>
 
                 <div class="stepFoot">
@@ -250,7 +251,7 @@
 
                       <div class="qrSlim">
                         <img id="qrHostImg" alt="QR prowadzącego"/>
-                        <div class="qrLinkRow">
+                        <div class="qrInline">
                           <input class="inp" id="hostLink" readonly aria-label="Link do prowadzącego" />
                           <button class="btn" id="btnCopyHost" type="button">Kopiuj</button>
                           <button class="btn gold" id="btnOpenHost" type="button">Otwórz</button>
@@ -267,7 +268,7 @@
 
                       <div class="qrSlim">
                         <img id="qrBuzzerImg" alt="QR przycisku"/>
-                        <div class="qrLinkRow">
+                        <div class="qrInline">
                           <input class="inp" id="buzzerLink" readonly aria-label="Link do przycisku" />
                           <button class="btn" id="btnCopyBuzzer" type="button">Kopiuj</button>
                           <button class="btn gold" id="btnOpenBuzzer" type="button">Otwórz</button>
@@ -582,10 +583,6 @@
 
                   <div class="rowBtns" style="margin-top:10px;">
                     <button class="btn" id="btnPassQuestion" type="button">Oddaj pytanie</button>
-                  </div>
-
-                  <div class="hint hint-compact">
-                    R5: po pierwszej poprawnej odpowiedzi drużyna może oddać pytanie. Jeśli druga odpowie poprawnie — punkty trafiają do jej banku.
                   </div>
 
                   <div class="card card-soft" style="margin-top:14px;">
