@@ -157,6 +157,27 @@ export function createDisplay({ devices, store }) {
   async function roundsClearAllX() {
     await Promise.all([roundsSetX("A", 0), roundsSetX("B", 0)]);
   }
+
+    // Krótki X dla pojedynku (nie rusza liczników rundy)
+  async function roundsFlashDuelX(team) {
+    const side = team === "A" ? "A" : "B";
+
+    try {
+      // “pojedynekowy” X – np. drugi w kolumnie
+      await send(`RX 2${side} ON`);
+
+      setTimeout(() => {
+        // szybkie zgaszenie – nie czekamy na await
+        try {
+          send(`RX 2${side} OFF`);
+        } catch (e) {
+          console.warn("[display] duel X OFF failed", e);
+        }
+      }, 1000); // ~0.6s – “mignięcie”, nie stały X
+    } catch (e) {
+      console.warn("[display] duel X failed", e);
+    }
+  }
   
   async function roundsSetTotals(totals) {
     const a = String(nInt(totals?.A, 0)).padStart(3, "0");
@@ -341,6 +362,7 @@ export function createDisplay({ devices, store }) {
     roundsSetX,
     roundsSetXOne,
     roundsClearAllX,
+    roundsFlashDuelX,
     
     roundsSetTotals,
     roundsHideBoard,
