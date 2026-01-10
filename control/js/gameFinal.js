@@ -236,20 +236,27 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     hostUpdate();
   }
 
+  function setUiTimerForPhase(phase, value) {
+    if (phase === "P1") ui.setFinalTimerP1(String(value));
+    if (phase === "P2") ui.setFinalTimerP2(String(value));
+  }
+  
   function stopTimer() {
     ensureRuntime();
     const rt = store.state.final.runtime;
-
+  
     rt.timer.running = false;
     rt.timer.endsAt = 0;
     rt.timer.seconds = 0;
     rt.timer.phase = null;
-
+  
     if (raf) cancelAnimationFrame(raf);
     raf = null;
-
-    ui.setText("finalTimer", FINAL_MSG.TIMER_PLACEHOLDER);
-    setTimerProgress(0);
+  
+    // UI: pigułki obok przycisków
+    ui.setFinalTimerP1(FINAL_MSG.TIMER_PLACEHOLDER);
+    ui.setFinalTimerP2(FINAL_MSG.TIMER_PLACEHOLDER);
+  
     hostUpdate();
   }
 
@@ -265,46 +272,14 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
   async function displaySetTimerSeconds(sec) {
     const team = getWinnerTeam();
     const txt = String(Math.max(0, sec)); // bez wiodących zer
-    ui.setText("finalTimer", txt);
+  
+    // UI operatora: tylko aktywna faza (P1/P2) aktualizuje swoją pigułkę
+    const phase = store.state.final?.runtime?.timer?.phase || null;
+    if (phase === "P1") ui.setFinalTimerP1(txt);
+    if (phase === "P2") ui.setFinalTimerP2(txt);
+  
+    // Wyświetlacz: timer tylko po stronie zwycięskiej drużyny
     await display.finalSetSideTimer?.(team, txt);
-  }
-
-  // ---- Prosty pasek postępu timera (inline, bez zależności od CSS) ----
-  function ensureTimerBar() {
-    const holder = document.getElementById("finalTimer");
-    if (!holder) return null;
-    let bar = document.getElementById("finalTimerBar");
-    if (bar) return bar;
-
-    // wstawiamy pod liczbą timera
-    bar = document.createElement("div");
-    bar.id = "finalTimerBar";
-    bar.style.marginTop = "6px";
-    bar.style.height = "6px";
-    bar.style.width = "120px";
-    bar.style.borderRadius = "999px";
-    bar.style.background = "rgba(255,255,255,.25)";
-    bar.style.overflow = "hidden";
-
-    const fill = document.createElement("div");
-    fill.id = "finalTimerBarFill";
-    fill.style.height = "100%";
-    fill.style.width = "0%";
-    fill.style.background = "rgba(255,255,255,.9)";
-    fill.style.transition = "width 120ms linear";
-    bar.appendChild(fill);
-
-    holder.parentElement?.appendChild(bar);
-    return bar;
-  }
-
-  function setTimerProgress(frac01) {
-    const bar = ensureTimerBar();
-    if (!bar) return;
-    const fill = document.getElementById("finalTimerBarFill");
-    if (!fill) return;
-    const f = Math.max(0, Math.min(1, Number(frac01) || 0));
-    fill.style.width = `${Math.round(f * 100)}%`;
   }
 
   function startCountdown(seconds, phase /* "P1"|"P2" */) {
@@ -319,8 +294,6 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     rt.timer.seconds = seconds;
     rt.timer.total = seconds;
 
-    setTimerProgress(1);
-
     displaySetTimerSeconds(seconds).catch(() => {});
     hostUpdate();
 
@@ -329,12 +302,10 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
 
       const leftMs = Math.max(0, rt.timer.endsAt - Date.now());
       const totalMs = Math.max(1, Number(rt.timer.total || 0) * 1000);
-      setTimerProgress(leftMs / totalMs);
       const s = Math.ceil(leftMs / 1000);
 
       // pasek postępu
       const total = Math.max(1, Number(rt.timer.total || seconds) || seconds);
-      setTimerProgress(leftMs / (total * 1000));
 
       if (s !== rt.timer.seconds) {
         rt.timer.seconds = s;
@@ -345,10 +316,9 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
       if (leftMs <= 0) {
         rt.timer.running = false;
         rt.timer.seconds = 0;
-        setTimerProgress(0);
-
-        ui.setText("finalTimer", "0");
-        setTimerProgress(0);
+        
+        // UI: pokaż 0 w tej fazie, która właśnie dobiła do zera
+        setUiTimerForPhase(phase, "0");
         hostUpdate();
 
         // zamiast timera: przywróć triplet A/B
@@ -913,9 +883,11 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     await loadFinalPicked();
 
     ui.setMsg("msgFinal", "");
-    ui.setMsg("msgFinalP1Entry", "");
-    ui.setMsg("msgFinalP2Entry", "");
     ui.setMsg("msgFinalP2Start", "");
+
+    // reset pigułek timera w UI
+    ui.setFinalTimerP1(FINAL_MSG.TIMER_PLACEHOLDER);
+    ui.setFinalTimerP2(FINAL_MSG.TIMER_PLACEHOLDER);
 
     let dur = 0;
     try {
@@ -961,8 +933,14 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
   function backTo(step) {
     setStep(step);
 
-    if (step === "f_p1_entry") renderP1Entry();
-    if (step === "f_p2_entry") renderP2Entry();
+    if (step === "f_p1_entry") {
+      ui.setFinalTimerP1(FINAL_MSG.TIMER_PLACEHOLDER);
+      renderP1Entry();
+    }
+    if (step === "f_p2_entry") {
+      ui.setFinalTimerP2(FINAL_MSG.TIMER_PLACEHOLDER);
+      renderP2Entry();
+    }
 
     if (step.startsWith("f_p1_map_q")) {
       const idx = Number(step.slice(-1)) - 1;
@@ -980,6 +958,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     if (rt.timer.usedP1) return;
 
     rt.timer.usedP1 = true;
+    ui.setFinalTimerP1("15");
     startCountdown(15, "P1");
     ui.setEnabled("btnFinalToP1MapQ1", false);
   }
@@ -990,6 +969,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     if (rt.timer.usedP2) return;
 
     rt.timer.usedP2 = true;
+    ui.setFinalTimerP1("20");
     startCountdown(20, "P2");
     ui.setEnabled("btnFinalToP2MapQ1", false);
   }
