@@ -162,22 +162,6 @@ export function createDevices({ game, ui, store, chDisplay, chHost, chBuzzer }) 
     );
   }
 
-  async function resetDevicesToZero() {
-    // DISPLAY: neutralny ekran (logo / czarny)
-    // (kolejność: najpierw wyczyść app, potem pokaż logo)
-    try { await sendDisplayCmd("APP BLACK"); } catch {}
-
-    // HOST: schowaj i wyczyść
-    try { await sendHostCmd('SET ""'); } catch {}
-    try { await sendHostCmd("HIDE"); } catch {}
-
-    // BUZZER: wyzeruj i wyłącz
-    try { await sendBuzzerCmd("OFF"); } catch {}
-
-    // jeśli QR był na display – to po resecie już NIE
-    // (to tylko komenda do urządzeń; store ogarniesz w app.js)
-  }
-
   function escQ(raw) {
     return String(raw ?? "")
       .replaceAll("\\", "\\\\")
@@ -198,6 +182,5 @@ export function createDevices({ game, ui, store, chDisplay, chHost, chBuzzer }) 
     sendQrToDisplay,
     getUrls,
     flushQueued,
-    resetDevicesToZero,
   };
 }
