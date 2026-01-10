@@ -87,10 +87,9 @@ export function createPresence({ game, ui, store, devices }) {
     const prevHost = lastHostOnline;
     const prevBuzzer = lastBuzzerOnline;
 
-    // spadki online -> alert
-    alertIfDropped(prevDisplay, dOn, "Wyświetlacz");
-    alertIfDropped(prevHost, hOn, "Prowadzący");
-    alertIfDropped(prevBuzzer, bOn, "Przycisk");
+    // >>> KLUCZOWE: ustaw flagi online NATYCHMIAST,
+    // zanim wyślesz INIT albo zrobisz flush kolejek
+    store.setOnlineFlags({ display: dOn, host: hOn, buzzer: bOn });
 
     ui.setDeviceBadges({
       display: { on: dOn, seen: fmtSince(d?.last_seen_at) },
@@ -99,9 +98,7 @@ export function createPresence({ game, ui, store, devices }) {
     });
 
     const inInit = Date.now() < initEndsAt;
-    
-    // *** stan zerowy TYLKO na starcie Controla (okno INIT_WINDOW_MS) ***
-    // Ważne: działa także gdy urządzenia już były online przy starcie, bo initDone jeszcze false.
+
     if (inInit) {
       if (hOn && !initDone.host) {
         initDone.host = true;
@@ -110,14 +107,14 @@ export function createPresence({ game, ui, store, devices }) {
           await devices.sendHostCmd('SET ""');
         } catch {}
       }
-    
+
       if (bOn && !initDone.buzzer) {
         initDone.buzzer = true;
         try {
           await devices.sendBuzzerCmd("OFF");
         } catch {}
       }
-    
+
       if (dOn && !initDone.display) {
         initDone.display = true;
         try {
@@ -126,8 +123,7 @@ export function createPresence({ game, ui, store, devices }) {
       }
     }
 
-    // *** flush kolejek po przejściu OFF -> ON ***
-
+    // flush kolejek po OFF -> ON
     if (!prevDisplay && dOn) {
       try { await devices.flushQueued("display"); } catch {}
     }
@@ -138,13 +134,13 @@ export function createPresence({ game, ui, store, devices }) {
       try { await devices.flushQueued("buzzer"); } catch {}
     }
 
-    // aktualizujemy lokalne poprzednie stany
     lastDisplayOnline = dOn;
     lastHostOnline = hOn;
     lastBuzzerOnline = bOn;
 
-    // Na końcu aktualizujemy flagi online w store (dla reszty aplikacji)
-    store.setOnlineFlags({ display: dOn, host: hOn, buzzer: bOn });
+    // <<< USUŃ / NIE RÓB już store.setOnlineFlags na końcu ticka,
+    // bo robiłeś to wyżej
+
   }
 
   async function start() {
