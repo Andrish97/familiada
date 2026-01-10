@@ -1,5 +1,6 @@
 // js/pages/buzzer.js
 import { sb } from "../core/supabase.js";
+import { rt } from "../core/realtime.js";
 
 const qs = new URLSearchParams(location.search);
 const gameId = qs.get("id");
