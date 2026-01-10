@@ -23,8 +23,9 @@ export function createDevices({ game, ui, store, chDisplay, chHost, chBuzzer }) 
   async function sendCmd(channel, event, line) {
     const l = String(line ?? "").trim();
     if (!l) return;
-    const { error } = await channel.sendBroadcast(event, { line: l });
-    if (error) throw error;
+    // Wysyłamy jawnie przez REST (httpSend), żeby uniknąć ostrzeżeń Supabase
+    // o automatycznym fallbacku send() -> REST.
+    await channel.sendBroadcast(event, { line: l }, { mode: "http" });
   }
 
   function isOnline(kind) {
