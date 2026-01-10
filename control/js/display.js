@@ -113,7 +113,7 @@ export function createDisplay({ devices, store }) {
 
   async function roundsRevealRow(ord, text, pts) {
     const t = q(text || "");
-    const p = String(nInt(pts, 0)).padStart(2, "0");
+    const p = String(nInt(pts, 0));
 
     await send(
       `R ${ord} TXT "${t}" PTS ${p} ANIMIN matrix right 500`
@@ -121,7 +121,7 @@ export function createDisplay({ devices, store }) {
   }
 
   async function roundsSetSum(sum) {
-    const p = String(nInt(sum, 0)).padStart(2, "0");
+    const p = String(nInt(sum, 0));
     await send(`RSUMA ${p} ANIMIN matrix right 500`);
   }
 
@@ -170,6 +170,10 @@ export function createDisplay({ devices, store }) {
     await send(`RIGHT ${b}`);
   }
 
+  async function roundsHideBoard() {
+    await send("RBATCH ANIMOUT edge down 1000");
+  }
+
   // INDICATOR: OFF / ON_A / ON_B
   async function setIndicator(mode) {
     if (!mode || mode === "OFF") {
@@ -215,6 +219,10 @@ export function createDisplay({ devices, store }) {
   async function finalHideAnswersKeepSum() {
     // Zasłaniamy odpowiedzi, suma zostaje
     await finalHalfPlaceholders();
+  }
+
+  async function finalHalfHide() {
+    await send("FHALF A ANIMOUT edge down 1000");
   }
 
   // HALF: zasłony / odsłony lewej połówki (wyniki rundy 1 podczas rundy 2)
@@ -270,19 +278,19 @@ export function createDisplay({ devices, store }) {
   }
 
   async function finalSetA(n, pts) {
-    const p = String(nInt(pts, 0)).padStart(2, "0");
+    const p = String(nInt(pts, 0));
     await send(`FA ${n} ${p} ANIMIN matrix right 500`);
   }
 
   async function finalSetB(n, pts) {
-    const p = String(nInt(pts, 0)).padStart(2, "0");
+    const p = String(nInt(pts, 0));
     await send(`FB ${n} ${p} ANIMIN matrix right 500`);
   }
 
-  async function finalSetSuma(sum) {
-    const p = String(nInt(sum, 0)).padStart(3, "0");
-    // domyślnie pokazujemy sumę pod stroną A (tak jak w przykładzie)
-    await send(`FSUMA A ${p} ANIMIN matrix right 500`);
+  async function finalSetSuma(sum, side = "A") {
+     const p = String(nInt(sum, 0)); // bez wiodących zer
+     const s = side === "B" ? "B" : "A";
+     await send(`FSUMA ${s} ${p} ANIMIN matrix right 500`);
   }
 
   async function finalSetSideTimer(team, text) {
@@ -337,6 +345,7 @@ export function createDisplay({ devices, store }) {
     roundsSetX,
     roundsFlashDuelX,
     roundsSetTotals,
+    roundsHideBoard,
 
     setIndicator,
     setTotalsTriplets,
@@ -352,6 +361,7 @@ export function createDisplay({ devices, store }) {
     finalHideAnswersKeepSum,
     finalHalfPlaceholders,
     finalHalfFromRows,
+    finalHalfHide,
 
     showLogo,
     hideLogo,
