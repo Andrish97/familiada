@@ -90,10 +90,6 @@ export function createDisplay({ devices, store }) {
   
     await send(cmd);
   }
-
-  async function roundsHideBoard() {
-    await send("RBATCH ANIMOUT edge down 1000");
-  }
   
   async function roundsBoardPlaceholdersNewRound(count) {
     const line = PLACE.roundsText;
@@ -218,45 +214,59 @@ export function createDisplay({ devices, store }) {
 
   async function finalHideAnswersKeepSum() {
     // Zasłaniamy odpowiedzi, suma zostaje
+    await finalHalfPlaceholders();
+  }
+
+  // HALF: zasłony / odsłony lewej połówki (wyniki rundy 1 podczas rundy 2)
+  function halfRowText(t) {
+    const s = String(t ?? "").trim();
+    return q(s.length ? s : PLACE.finalText);
+  }
+
+  function halfRowPts(p) {
+    const s = String(p ?? "").trim();
+    // dla zasłon używamy PLACE.finalPts (np. ▒▒); dla realnych punktów "00".."99"
+    if (s === PLACE.finalPts) return PLACE.finalPts;
+    const n = nInt(s, 0);
+    return String(n).padStart(2, "0").slice(-2);
+  }
+
+  async function finalHalfPlaceholders() {
     await send(
       "FHALF A " +
-      `"${PLACE.finalText}" ${PLACE.finalPts} ` +
-      `"${PLACE.finalText}" ${PLACE.finalPts} ` +
-      `"${PLACE.finalText}" ${PLACE.finalPts} ` +
-      `"${PLACE.finalText}" ${PLACE.finalPts} ` +
-      `"${PLACE.finalText}" ${PLACE.finalPts} ` +
+      `"${halfRowText(PLACE.finalText)}" ${PLACE.finalPts} ` +
+      `"${halfRowText(PLACE.finalText)}" ${PLACE.finalPts} ` +
+      `"${halfRowText(PLACE.finalText)}" ${PLACE.finalPts} ` +
+      `"${halfRowText(PLACE.finalText)}" ${PLACE.finalPts} ` +
+      `"${halfRowText(PLACE.finalText)}" ${PLACE.finalPts} ` +
       "ANIMIN matrix down 1000"
     );
   }
 
-  async function finalHalfAFromRows(rows) {
-    const fallbackText = PLACE.finalText;
-    const fallbackPts = PLACE.finalPts;
-  
-    const safeRows = (rows || []).slice(0, 5);
-    while (safeRows.length < 5) {
-      safeRows.push({ text: fallbackText, pts: fallbackPts });
-    }
-  
-    let cmd = "FHALF A ";
-    for (const row of safeRows) {
-      const txt = q(String(row.text || fallbackText));
-      const p = String(row.pts || fallbackPts);
-      cmd += `"${txt}" ${p} `;
-    }
-    cmd += "ANIMIN edge up 1000";
-  
-    await send(cmd);
+  // rows: [{text, pts}] (len 5)
+  async function finalHalfFromRows(rows, { anim = "matrix up 800" } = {}) {
+    const safe = Array.isArray(rows) ? rows : [];
+    const r = (i) => safe[i] || {};
+
+    await send(
+      "FHALF A " +
+      `"${halfRowText(r(0).text)}" ${halfRowPts(r(0).pts)} ` +
+      `"${halfRowText(r(1).text)}" ${halfRowPts(r(1).pts)} ` +
+      `"${halfRowText(r(2).text)}" ${halfRowPts(r(2).pts)} ` +
+      `"${halfRowText(r(3).text)}" ${halfRowPts(r(3).pts)} ` +
+      `"${halfRowText(r(4).text)}" ${halfRowPts(r(4).pts)} ` +
+      `ANIMIN ${anim}`
+    );
   }
 
   async function finalSetLeft(n, text) {
     const txt = q(String(text || ""));
-    await send(`FL "${txt}" A 00 ANIMIN matrix right 500`);
+    await send(`FL ${n} "${txt}" ANIMIN matrix right 500`);
   }
 
   async function finalSetRight(n, text) {
     const txt = q(String(text || ""));
-    await send(`FR ${n} "${txt}" B 00 ANIMIN matrix right 500`);
+    await send(`FR ${n} "${txt}" ANIMIN matrix right 500`);
   }
 
   async function finalSetA(n, pts) {
@@ -269,33 +279,20 @@ export function createDisplay({ devices, store }) {
     await send(`FB ${n} ${p} ANIMIN matrix right 500`);
   }
 
-  async function finalSetSuma(sum, side = "A") {
-    const sideSafe = side === "B" ? "B" : "A";
-  
-    // pod planszą finału: goła liczba, bez zer z przodu
-    const txt = String(nInt(sum, 0));
-  
-    await send(`FSUMA ${sideSafe} ${txt} ANIMIN matrix right 500`);
-  
-    // górny triplet = kopia sumy finału (3 cyfry)
-    const topVal = String(nInt(sum, 0)).padStart(3, "0");
-    await send(`TOP ${topVal}`);
+  async function finalSetSuma(sum) {
+    const p = String(nInt(sum, 0)).padStart(3, "0");
+    // domyślnie pokazujemy sumę pod stroną A (tak jak w przykładzie)
+    await send(`FSUMA A ${p} ANIMIN matrix right 500`);
   }
 
   async function finalSetSideTimer(team, text) {
-    const t = String(text ?? "");
+    const t = String(text || "");
+    // Timer na bocznym tripletcie – wykorzystujemy TOP/LEFT/RIGHT,
+    // ale tylko po stronie zwycięskiej drużyny (ty ustalasz w Control).
     const sum = store.state.rounds?.totals || { A: 0, B: 0 };
     const a = String(nInt(sum.A, 0)).padStart(3, "0");
     const b = String(nInt(sum.B, 0)).padStart(3, "0");
-  
-    // jeśli tekst pusty → po prostu odświeżamy totals po obu stronach
-    if (!t) {
-      await send(`LEFT ${a}`);
-      await send(`RIGHT ${b}`);
-      return;
-    }
-  
-    // jeśli jest timer → jedna strona pokazuje sekundy, druga trzyma total z rund
+
     if (team === "A") {
       await send(`LEFT ${t}`);
       await send(`RIGHT ${b}`);
@@ -307,7 +304,6 @@ export function createDisplay({ devices, store }) {
       await send(`RIGHT ${b}`);
     }
   }
-
 
   // === Logo / Win ===
 
@@ -334,7 +330,6 @@ export function createDisplay({ devices, store }) {
     stateGameReady,
     stateIntroLogo,
 
-    roundsHideBoard,
     roundsBoardPlaceholders,
     roundsBoardPlaceholdersNewRound,
     roundsRevealRow,
@@ -354,8 +349,9 @@ export function createDisplay({ devices, store }) {
     finalSetA,
     finalSetB,
     finalSetSideTimer,
-    finalHalfAFromRows,
     finalHideAnswersKeepSum,
+    finalHalfPlaceholders,
+    finalHalfFromRows,
 
     showLogo,
     hideLogo,
