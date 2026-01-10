@@ -1191,8 +1191,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
       else await display.showLogo?.();
       return;
     }
-
-    await display.showLogo?.();
+    store.state.locks.gameEnded = true;
   }
 
   function bootIfNeeded() {
