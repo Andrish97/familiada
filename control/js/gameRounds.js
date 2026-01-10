@@ -1335,6 +1335,7 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     }
 
     ui.setMsg("msgGameEnd", msg);
+    store.state.locks.gameEnded = true;
   }
 
   // === BOOT / ODTWORZENIE STANU ===
