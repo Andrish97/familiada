@@ -499,6 +499,45 @@
   font-size: 16px;
 }
 
+/* ===== QR – układ centralny ===== */
+
+.qrBlock{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.qrBlock img{
+  width: 220px;
+  height: 220px;
+  border-radius: 16px;
+  background: #fff;
+  padding: 16px;
+  border: 1px solid rgba(255,255,255,.18);
+  box-sizing: border-box;
+}
+
+/* link + kopiuj + otwórz w jednej linii */
+.qrInline{
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  width: 100%;
+  max-width: 520px;
+}
+
+.qrInline .inp{
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* górny rząd akcji (np. Czarny ekran) */
+.rowActionsTop{
+  margin-top: 6px;
+}
+
 .timer3{
   min-width: 40px;
   padding: 6px 10px;
@@ -662,3 +701,42 @@
 }
 
 .qrModalLinkRow .btn{ white-space: nowrap; }
+
+/* ===== QR – układ centralny ===== */
+
+.qrBlock{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.qrBlock img{
+  width: 220px;
+  height: 220px;
+  border-radius: 16px;
+  background: #fff;
+  padding: 16px;
+  border: 1px solid rgba(255,255,255,.18);
+  box-sizing: border-box;
+}
+
+/* link + kopiuj + otwórz w jednej linii */
+.qrInline{
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  width: 100%;
+  max-width: 520px;
+}
+
+.qrInline .inp{
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* górny rząd akcji (np. Czarny ekran) */
+.rowActionsTop{
+  margin-top: 6px;
+}
