@@ -125,20 +125,11 @@ export function createDisplay({ devices, store }) {
     await send(`RSUMA ${p} ANIMIN matrix right 500`);
   }
 
-  async function roundsSetX(team, count) {
-    const c = Math.max(0, Math.min(3, nInt(count, 0)));
-    // RX 2A ON / RX 2B ON itd. – ustawiamy wszystkie X wg count
-    // Najpierw wszystko OFF
-    await send("RX 1A OFF");
-    await send("RX 2A OFF");
-    await send("RX 3A OFF");
-    await send("RX 1B OFF");
-    await send("RX 2B OFF");
-    await send("RX 3B OFF");
-
-    for (let i = 1; i <= c; i++) {
-      await send(`RX ${i}${team} ON`);
-    }
+  async function roundsSetXOne(team, idx /* 1..3 */, on) {
+    const t = team === "B" ? "B" : "A";
+    const i = Math.max(1, Math.min(3, nInt(idx, 1)));
+    const state = on ? "ON" : "OFF";
+    await send(`RX ${i}${t} ${state}`);
   }
 
   // Krótki X dla pojedynku (nie rusza liczników rundy)
