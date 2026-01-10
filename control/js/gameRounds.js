@@ -577,8 +577,8 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
             await display.roundsBoardPlaceholders(rowsCount);
           }
 
-          await display.roundsSetX("A", 0);
-          await display.roundsSetX("B", 0);
+          await display.roundsClearAllX?.();
+
           if (display.setIndicator) await display.setIndicator(null);
 
           if (display.setBankTriplet) {
