@@ -132,27 +132,32 @@ export function createDisplay({ devices, store }) {
     await send(`RX ${i}${t} ${state}`);
   }
 
-  // Krótki X dla pojedynku (nie rusza liczników rundy)
-  async function roundsFlashDuelX(team) {
-    const side = team === "A" ? "A" : "B";
-
-    try {
-      // “pojedynekowy” X – np. drugi w kolumnie
-      await send(`RX 2${side} ON`);
-
-      setTimeout(() => {
-        // szybkie zgaszenie – nie czekamy na await
-        try {
-          send(`RX 2${side} OFF`);
-        } catch (e) {
-          console.warn("[display] duel X OFF failed", e);
-        }
-      }, 1000); // ~0.6s – “mignięcie”, nie stały X
-    } catch (e) {
-      console.warn("[display] duel X failed", e);
+  const _xCache = { A: 0, B: 0 };
+  
+  async function roundsSetX(team, count) {
+    const t = team === "B" ? "B" : "A";
+    const next = Math.max(0, Math.min(3, nInt(count, 0)));
+    const prev = Math.max(0, Math.min(3, nInt(_xCache[t], 0)));
+  
+    if (next === prev) return;
+  
+    if (next > prev) {
+      for (let i = prev + 1; i <= next; i++) {
+        await roundsSetXOne(t, i, true);
+      }
+    } else {
+      for (let i = prev; i > next; i--) {
+        await roundsSetXOne(t, i, false);
+      }
     }
+  
+    _xCache[t] = next;
   }
 
+  async function roundsClearAllX() {
+    await Promise.all([roundsSetX("A", 0), roundsSetX("B", 0)]);
+  }
+  
   async function roundsSetTotals(totals) {
     const a = String(nInt(totals?.A, 0)).padStart(3, "0");
     const b = String(nInt(totals?.B, 0)).padStart(3, "0");
@@ -334,7 +339,9 @@ export function createDisplay({ devices, store }) {
     roundsRevealRow,
     roundsSetSum,
     roundsSetX,
-    roundsFlashDuelX,
+    roundsSetXOne,
+    roundsClearAllX,
+    
     roundsSetTotals,
     roundsHideBoard,
 
