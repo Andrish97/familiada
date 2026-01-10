@@ -191,15 +191,14 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     // tylko MATCH ma sens do "najwyżej punktowanej"
     if (row.kind !== "MATCH" || !row.matchId) return "";
   
-    const chosen = aList.find(x => x.id === row.matchId);
+    const chosen = aList.find((x) => x.id === row.matchId);
     if (!chosen) return "";
   
     const maxPts = aList.reduce((m, x) => Math.max(m, nInt(x.fixed_points, 0)), 0);
     const chosenPts = nInt(chosen.fixed_points, 0);
   
-    return (chosenPts === maxPts) ? "${FINAL_MSG.TOP_MARK}" : "";
+    return chosenPts === maxPts ? ` (${FINAL_MSG.TOP_MARK})` : "";
   }
-
 
   function hostTitleForStep() {
     const rt = store.state.final?.runtime;
@@ -244,19 +243,21 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
       hostBlank().catch(() => {});
       return;
     }
-
+  
     const step = store.state.final?.step || "";
     const roundNo =
       step === "f_p1_entry" || step.startsWith("f_p1_") ? 1 :
       step === "f_p2_entry" || step.startsWith("f_p2_") ? 2 : 1;
-
+  
+    const lines = [title, ""];
+  
     for (let i = 0; i < 5; i++) {
       const lamp = lampForEntry(roundNo, i);
       const qt = (qPicked[i]?.text || "—").replace(/\s+/g, " ").trim();
       const top = hostTopMarkForQuestion(roundNo, i);
       lines.push(`${lamp} ${i + 1}) ${qt}${top}`);
     }
-
+  
     hostShowLines(lines).catch(() => {});
   }
 
@@ -1000,7 +1001,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     if (rt.timer.usedP2) return;
 
     rt.timer.usedP2 = true;
-    ui.setFinalTimerP1("20");
+    ui.setFinalTimerP2("20");
     startCountdown(20, "P2");
     ui.setEnabled("btnFinalToP2MapQ1", false);
   }
