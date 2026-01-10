@@ -62,38 +62,52 @@ function createManagedChannel(topic) {
   }
 
   async function sendBroadcast(event, payload = {}, opts = {}) {
-    const mode = opts.mode || "ws"; // "ws" | "http"
+    const mode = opts.mode || "auto"; // "auto" | "ws" | "http"
     ensureChannel();
-  
-    // REST: nie zależy od WS; payload musi być obiektem
+
+    const safe = (payload && typeof payload === "object") ? payload : { value: payload };
+
+    // jawny REST
     if (mode === "http") {
-      const safe = (payload && typeof payload === "object") ? payload : { value: payload };
       const { error } = await ch.httpSend(event, safe);
       if (error) throw error;
       return true;
     }
-  
-    // WS: czekamy na SUBSCRIBED
+
+    // auto: jeśli nie jesteśmy SUBSCRIBED, nie próbujemy WS → idziemy od razu HTTP
+    if (mode === "auto" && status !== "SUBSCRIBED") {
+      const { error } = await ch.httpSend(event, safe);
+      if (error) throw error;
+      return true;
+    }
+
+    // WS (albo auto + jesteśmy SUBSCRIBED)
     const ok = await whenReady(opts);
     if (!ok) {
-      reset();
-      const ok2 = await whenReady(opts);
-      if (!ok2) throw new Error(`Realtime not ready for topic ${topic}`);
+      if (mode === "ws") {
+        reset();
+        throw new Error(`Realtime not ready for topic ${topic}`);
+      }
+      // auto: jak nie gotowe, lecimy HTTP
+      const { error } = await ch.httpSend(event, safe);
+      if (error) throw error;
+      return true;
     }
-  
-    const safe = (payload && typeof payload === "object") ? payload : { value: payload };
-    const { error } = await ch.send({
-      type: "broadcast",
-      event,
-      payload: safe,
-    });
-  
-    if (error) {
-      reset();
-      throw error;
-    }
+
+    // UWAGA: tu Supabase potrafi robić "silent REST fallback" → unikamy go
+    // przez przechwycenie błędu i w auto robimy jawny httpSend.
+    const { error } = await ch.send({ type: "broadcast", event, payload: safe });
+    if (!error) return true;
+
+    reset();
+    if (mode === "ws") throw error;
+
+    // auto: jawny fallback
+    const { error: e2 } = await ch.httpSend(event, safe);
+    if (e2) throw e2;
     return true;
   }
+
 
   function onBroadcast(event, handler) {
     ensureChannel();
