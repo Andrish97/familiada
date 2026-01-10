@@ -127,6 +127,11 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
   function ensureDefaultMapping(row, { input, isRepeat }) {
     if (row.kind === "MATCH" || row.kind === "MISS" || row.kind === "SKIP") return;
 
+    // Uwaga: te ustawienia są *automatyczne* (wynikają z pustego pola / powtórzenia).
+    // Jeżeli później operator wpisze tekst (np. po zakończeniu odliczania),
+    // chcemy odblokować mapowanie. Dlatego oznaczamy je flagą _auto.
+    row._auto = true;
+
     if (isRepeat) {
       row.kind = "SKIP";
       row.matchId = null;
@@ -140,6 +145,18 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
       row.kind = "MISS";
       row.matchId = null;
     }
+  }
+
+  function clearAutoMappingIfNeeded(mapRow) {
+    if (!mapRow || mapRow._auto !== true) return;
+    // Czyścimy tylko automaty — ręczny wybór (kliknięty MATCH/MISS/SKIP) ma zostać.
+    mapRow.kind = null;
+    mapRow.matchId = null;
+    mapRow.outText = "";
+    mapRow.pts = 0;
+    mapRow.revealedAnswer = false;
+    mapRow.revealedPoints = false;
+    mapRow._auto = false;
   }
 
   // -------- Host view (lampki + pytania) --------
@@ -231,6 +248,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     raf = null;
 
     ui.setText("finalTimer", FINAL_MSG.TIMER_PLACEHOLDER);
+    setTimerProgress(0);
     hostUpdate();
   }
 
@@ -250,6 +268,44 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     await display.finalSetSideTimer?.(team, txt);
   }
 
+  // ---- Prosty pasek postępu timera (inline, bez zależności od CSS) ----
+  function ensureTimerBar() {
+    const holder = document.getElementById("finalTimer");
+    if (!holder) return null;
+    let bar = document.getElementById("finalTimerBar");
+    if (bar) return bar;
+
+    // wstawiamy pod liczbą timera
+    bar = document.createElement("div");
+    bar.id = "finalTimerBar";
+    bar.style.marginTop = "6px";
+    bar.style.height = "6px";
+    bar.style.width = "120px";
+    bar.style.borderRadius = "999px";
+    bar.style.background = "rgba(255,255,255,.25)";
+    bar.style.overflow = "hidden";
+
+    const fill = document.createElement("div");
+    fill.id = "finalTimerBarFill";
+    fill.style.height = "100%";
+    fill.style.width = "0%";
+    fill.style.background = "rgba(255,255,255,.9)";
+    fill.style.transition = "width 120ms linear";
+    bar.appendChild(fill);
+
+    holder.parentElement?.appendChild(bar);
+    return bar;
+  }
+
+  function setTimerProgress(frac01) {
+    const bar = ensureTimerBar();
+    if (!bar) return;
+    const fill = document.getElementById("finalTimerBarFill");
+    if (!fill) return;
+    const f = Math.max(0, Math.min(1, Number(frac01) || 0));
+    fill.style.width = `${Math.round(f * 100)}%`;
+  }
+
   function startCountdown(seconds, phase /* "P1"|"P2" */) {
     ensureRuntime();
     const rt = store.state.final.runtime;
@@ -260,6 +316,9 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     rt.timer.phase = phase;
     rt.timer.endsAt = Date.now() + seconds * 1000;
     rt.timer.seconds = seconds;
+    rt.timer.total = seconds;
+
+    setTimerProgress(1);
 
     displaySetTimerSeconds(seconds).catch(() => {});
     hostUpdate();
@@ -268,7 +327,13 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
       if (!rt.timer.running) return;
 
       const leftMs = Math.max(0, rt.timer.endsAt - Date.now());
+      const totalMs = Math.max(1, Number(rt.timer.total || 0) * 1000);
+      setTimerProgress(leftMs / totalMs);
       const s = Math.ceil(leftMs / 1000);
+
+      // pasek postępu
+      const total = Math.max(1, Number(rt.timer.total || seconds) || seconds);
+      setTimerProgress(leftMs / (total * 1000));
 
       if (s !== rt.timer.seconds) {
         rt.timer.seconds = s;
@@ -279,8 +344,10 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
       if (leftMs <= 0) {
         rt.timer.running = false;
         rt.timer.seconds = 0;
+        setTimerProgress(0);
 
         ui.setText("finalTimer", "0");
+        setTimerProgress(0);
         hostUpdate();
 
         // zamiast timera: przywróć triplet A/B
@@ -355,6 +422,11 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
       inp.addEventListener("input", () => {
         const i = Number(inp.dataset.i);
         rt.p1[i].text = String(inp.value ?? "");
+
+        // Jeśli wcześniej (np. podczas timera) pole było puste i mapowanie
+        // automatycznie ustawiło SKIP, to wpis teraz ma odblokować wybór.
+        clearAutoMappingIfNeeded(rt.map1?.[i]);
+
         hostUpdate();
       });
 
@@ -422,9 +494,13 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
         const val = String(inp.value ?? "");
         rt.p2[i].text = val;
 
+        // jw. — odblokuj mapowanie gdy wpis pojawi się po wcześniejszym auto-SKIP
+        clearAutoMappingIfNeeded(rt.map2?.[i]);
+
         // jeśli coś wpisano, zdejmij „Powtórzenie”
         if (val.trim().length > 0 && rt.p2[i].repeat) {
           rt.p2[i].repeat = false;
+          clearAutoMappingIfNeeded(rt.map2?.[i]);
           renderP2Entry();
         }
 
@@ -617,6 +693,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
       b.addEventListener("click", () => {
         if (!hasText) return;
         row.kind = "MATCH";
+        row._auto = false;
         row.matchId = b.dataset.id || null;
         renderMapOne(roundNo, idx);
       });
@@ -625,6 +702,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     root.querySelector('button[data-kind="miss"]')?.addEventListener("click", () => {
       if (!hasText) return;
       row.kind = "MISS";
+      row._auto = false;
       row.matchId = null;
       if (!row.outText) row.outText = effectiveInput;
       renderMapOne(roundNo, idx);
@@ -633,6 +711,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     root.querySelector('button[data-kind="skip"]')?.addEventListener("click", () => {
       if (hasText) return;
       row.kind = "SKIP";
+      row._auto = false;
       row.matchId = null;
       renderMapOne(roundNo, idx);
     });
@@ -659,9 +738,11 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
       const has = v.trim().length > 0;
       if (has) {
         row.kind = "MISS";
+        row._auto = false;
         row.matchId = null;
       } else if (row.kind === "MISS") {
         row.kind = "SKIP";
+        row._auto = false;
       }
 
       ui.setEnabled(nextBtnId, !!row.revealedAnswer && !!row.revealedPoints);
@@ -983,23 +1064,14 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
 
     playSfx("round_transition");
 
-    // szybkie zasłonięcie lewej strony
-    setTimeout(() => { display.finalHideAnswersKeepSum?.().catch(() => {}); }, 200);
-
-    // w kotwicy: ustaw lewy half z aktualnego stanu map1 (bez nowych funkcji display)
+    // Zakrywamy połówkę (runda 1) placeholderami na starcie rundy 2.
     setTimeout(() => {
-      (async () => {
-        try {
-          for (let i = 0; i < 5; i++) {
-            const r = getP1DisplayRow(i);
-            await display.finalSetLeft(i + 1, clip11(r.text));
-            if (r.pts !== "▒▒") await display.finalSetA(i + 1, r.pts);
-          }
-          await display.finalSetSideTimer?.(getWinnerTeam(), "20");
-        } catch (e) {
-          console.error("finalHalf from state failed", e);
-        }
-      })();
+      display.finalHalfPlaceholders?.().catch(() => {});
+    }, 200);
+
+    // W kotwicy ustawiamy licznik po stronie zwycięskiej drużyny (20s)
+    setTimeout(() => {
+      display.finalSetSideTimer?.(getWinnerTeam(), "20").catch(() => {});
     }, anchorMs);
 
     if (totalMs > 0) await new Promise((resolve) => setTimeout(resolve, totalMs));
@@ -1010,9 +1082,22 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     ui.setMsg("msgFinalP2Start", FINAL_MSG.R2_STARTED);
   }
 
-  function toP2MapQ(idx1based) {
+  async function toP2MapQ(idx1based) {
     ensureRuntime();
     stopTimer();
+
+    // Odkrywamy połówkę z wynikami rundy 1 DOPIERO gdy zaczynamy mapowanie rundy 2.
+    if (Number(idx1based) === 1) {
+      try {
+        const rows = Array.from({ length: 5 }, (_, i) => {
+          const r = getP1DisplayRow(i);
+          return { text: clip11(r.text), pts: r.pts };
+        });
+        await display.finalHalfFromRows?.(rows);
+      } catch (e) {
+        console.warn("finalHalfFromRows failed", e);
+      }
+    }
 
     const idx = idx1based - 1;
     const row = store.state.final.runtime.map2[idx];
@@ -1033,6 +1118,14 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
 
   // -------- Koniec finału (3 tryby) --------
   async function finishFinal() {
+    ensureRuntime();
+    const rtDone = store.state.final.runtime;
+    if (rtDone?.done === true) return;
+    if (rtDone) rtDone.done = true;
+
+    // po kliknięciu „Zakończ finał” blokujemy przycisk
+    ui.setEnabled?.("btnFinalFinish", false);
+
     playSfx("final_theme");
 
     const rt = store.state.final.runtime || {};
@@ -1066,6 +1159,12 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     }
 
     const mode = getEndScreenMode(store);
+
+    // przed wynikiem / logo: animout
+    try {
+      await devices.sendDisplayCmd('FBATCH ANIMOUT edge down 1000');
+      await new Promise((r) => setTimeout(r, 1000));
+    } catch {}
 
     if (mode === "logo") {
       await display.showLogo?.();
