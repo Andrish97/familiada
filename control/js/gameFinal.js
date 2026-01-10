@@ -124,7 +124,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     if (!rt.done) rt.done = false;
   }
 
-  function ensureDefaultMapping(row, { input, isRepeat }) {
+  function ensureDefaultMapping(row, { input, outText, isRepeat }) {
     if (row.kind === "MATCH" || row.kind === "MISS" || row.kind === "SKIP") return;
 
     // Uwaga: te ustawienia są *automatyczne* (wynikają z pustego pola / powtórzenia).
@@ -138,7 +138,8 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
       return;
     }
 
-    if ((input || "").trim().length === 0) {
+    const has = ((input || "").trim().length > 0) || ((outText || "").trim().length > 0);
+    if (!has) {
       row.kind = "SKIP";
       row.matchId = null;
     } else {
@@ -580,9 +581,10 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
 
     // powtórzenie ma się zachowywać jak brak odpowiedzi
     const effectiveInput = isRepeat ? "" : input;
-    const hasText = effectiveInput.trim().length > 0;
+    const outNow = (row.outText || "").trim();
+    const hasText = (effectiveInput.trim().length > 0) || (outNow.length > 0);
 
-    ensureDefaultMapping(row, { input, isRepeat });
+    ensureDefaultMapping(row, { input, outText: row.outText, isRepeat });
 
     let hostHintHtml = "";
 
@@ -764,7 +766,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     const input = roundNo === 1 ? inputP1 : inputP2;
 
     const isRepeat = roundNo === 2 && rt.p2[idx].repeat === true;
-    ensureDefaultMapping(row, { input, isRepeat });
+    ensureDefaultMapping(row, { input, outText: row.outText, isRepeat });
 
     // SKIP: nic nie wysyłamy na display (zostają placeholdery)
     if (row.kind === "SKIP") {
@@ -813,7 +815,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     const input = roundNo === 1 ? inputP1 : inputP2;
 
     const isRepeat = roundNo === 2 && rt.p2[idx].repeat === true;
-    ensureDefaultMapping(row, { input, isRepeat });
+    ensureDefaultMapping(row, { input, outText: row.outText, isRepeat });
 
     // SKIP: nic do odkrycia, ale pozwalamy iść dalej
     if (row.kind === "SKIP") {
@@ -836,7 +838,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     rt.sum = (rt.sum || 0) + pts;
     updateSumUI();
 
-    const pts2 = String(pts).padStart(2, "0").slice(-2);
+    const pts2 = String(pts);
 
     if (roundNo === 1) {
       await display.finalSetA(idx + 1, pts2);
@@ -848,14 +850,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
 
     if (row.kind === "MATCH") playSfx("answer_correct");
     else playSfx("answer_wrong");
-
-    const adv = store.state.advanced || {};
-    const target = typeof adv.finalTarget === "number" ? adv.finalTarget : 200;
-
-    if (rt.sum >= target) {
-      await gotoEnd(true);
-      return true;
-    }
+    
     return false;
   }
 
@@ -1022,6 +1017,13 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
 
   function toP2Start() {
     stopTimer();
+    (async () => {
+      try {
+        await display.finalHalfHide?.();
+        await new Promise((r) => setTimeout(r, 1000));
+        await display.finalHalfPlaceholders?.();
+      } catch {}
+    })();
     setStep("f_p2_start");
   }
 
@@ -1064,11 +1066,6 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
 
     playSfx("round_transition");
 
-    // Zakrywamy połówkę (runda 1) placeholderami na starcie rundy 2.
-    setTimeout(() => {
-      display.finalHalfPlaceholders?.().catch(() => {});
-    }, 200);
-
     // W kotwicy ustawiamy licznik po stronie zwycięskiej drużyny (20s)
     setTimeout(() => {
       display.finalSetSideTimer?.(getWinnerTeam(), "20").catch(() => {});
@@ -1089,11 +1086,18 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     // Odkrywamy połówkę z wynikami rundy 1 DOPIERO gdy zaczynamy mapowanie rundy 2.
     if (Number(idx1based) === 1) {
       try {
+        await display.finalHalfHide?.();
+        await new Promise((r) => setTimeout(r, 1000));
         const rows = Array.from({ length: 5 }, (_, i) => {
           const r = getP1DisplayRow(i);
           return { text: clip11(r.text), pts: r.pts };
         });
-        await display.finalHalfFromRows?.(rows);
+        await display.finalHalfFromRows?.(rows, { anim: "matrix down 1000" });
+        
+        // suma przeskakuje na B na starcie mapowania rundy 2
+        
+        await display.finalSetSuma?.(store.state.final.runtime?.sum || 0, "B");
+        
       } catch (e) {
         console.warn("finalHalfFromRows failed", e);
       }
@@ -1113,7 +1117,12 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
   function nextFromP2Q(idx1based) {
     const n = Number(idx1based) || 1;
     if (n < 5) toP2MapQ(n + 1);
-    else gotoEnd(false);
+    else {
+      const adv = store.state.advanced || {};
+      const target = typeof adv.finalTarget === "number" ? adv.finalTarget : 200;
+      const hit = nInt(store.state.final.runtime?.sum, 0) >= target;
+      gotoEnd(hit);
+    }
   }
 
   // -------- Koniec finału (3 tryby) --------
