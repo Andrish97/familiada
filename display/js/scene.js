@@ -1371,13 +1371,25 @@ export async function createScene() {
       
         const isBig = (cell.kind === "BIG");
       
-        // OFF: czyścimy tylko swoje pole i zapisujemy stan
+        // OFF: ignorowanie wg reguł
         if (!on) {
+          if (side) {
+            if (isBig) {
+              // 4A/4B OFF ignoruj, jeśli świeci jakiekolwiek małe 1-3 tej strony
+              const anySmallOn = smallKeys.some(k => xState[k]);
+              if (anySmallOn) return;
+            } else {
+              // 1-3 OFF ignoruj, jeśli świeci duże 4 tej strony
+              if (bigKey && xState[bigKey]) return;
+            }
+          }
+        
+          // normalny OFF (gdy nie ignorujemy)
           clearArea(big, cell.c1, cell.r1, cell.c2, cell.r2);
           xState[key] = false;
           return;
         }
-      
+        
         // ON: mutual exclusion tylko jeśli faktycznie trzeba
         if (side) {
           if (isBig) {
