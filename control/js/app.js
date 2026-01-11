@@ -715,12 +715,12 @@ async function main() {
   ui.on("final.back", (card) => store.setActiveCard(card));
   ui.on("final.backStep", (step) => final.backTo(step));
 
-  ui.on("final.p1.timer", () => final.p1StartTimer());
+  ui.on("final.p1.timerStart", () => final.p1StartTimer());
   ui.on("final.p1.toQ", (n) => final.toP1MapQ(n));
   ui.on("final.p1.nextQ", (n) => final.nextFromP1Q(n));
 
   ui.on("final.p2.start", () => final.startP2Round());
-  ui.on("final.p2.timer", () => final.p2StartTimer());
+  ui.on("final.p2.timerStart", () => final.p2StartTimer());
   ui.on("final.p2.toQ", (n) => final.toP2MapQ(n));
   ui.on("final.p2.nextQ", (n) => final.nextFromP2Q(n));
 
