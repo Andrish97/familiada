@@ -464,7 +464,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
       .map((q, i) => {
         const val = rt.p1[i].text || "";
         return `
-        <div class="card" style="margin-bottom:10px;">
+        <div class="card finalRowCard" style="margin-bottom:10px;">
           <div class="name">${escapeHtml(FINAL_MSG.Q_LABEL(i + 1))}</div>
 
           <div class="rowQ">
@@ -698,7 +698,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
 
       ${hostHintHtml}
 
-      <div class="card" style="margin-top:12px;">
+      <div class="card finalRowCard" style="margin-top:12px;">
         <div class="name">${escapeHtml(FINAL_MSG.MAP_LIST_TITLE)}</div>
 
         <div class="rowBtns" style="flex-wrap:wrap; gap:8px;">
@@ -718,7 +718,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
         </div>
       </div>
 
-      <div class="card" style="margin-top:12px;">
+      <div class="card finalRowCard" style="margin-top:12px;">
         <div class="name">Odsłanianie</div>
         <div class="rowBtns" style="gap:8px; flex-wrap:wrap;">
           <button class="btn sm" type="button" data-kind="reveal-answer"
@@ -732,7 +732,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
         </div>
       </div>
 
-      <div class="card" style="margin-top:12px;">
+      <div class="card finalRowCard" style="margin-top:12px;">
         <div class="name">${escapeHtml(FINAL_MSG.MAP_OUT_HINT)}</div>
         <input class="inp" data-kind="out" value="${outVal}"
               ${locked ? "disabled" : ""}
