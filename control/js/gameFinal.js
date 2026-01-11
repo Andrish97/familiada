@@ -78,6 +78,8 @@ const HOST_CLR = {
   yellow: "gold",
 };
 
+const FINAL_BLANK = "----";
+
 function hostGreenStrike(text) {
   return hostTag(`${HOST_CLR.green} s`, text);
 }
@@ -188,20 +190,18 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
   }
 
   // -------- Host view --------
-  function lampForEntry(roundNo, i) {
-    // ZAMIANA kontrolek na kolor tekstu (bez emoji)
-    // Zielony = jest wpis, Czerwony = brak, Żółty = powtórzenie (R2).
+  function hostEntryStatus(roundNo, i) {
     ensureRuntime();
     const rt = store.state.final.runtime;
-
+  
     if (roundNo === 1) {
       const ok = (rt.p1[i].text || "").trim().length > 0;
-      return ok ? hostGreen("●") : hostRed("●");
+      return ok ? hostGreenStrike("wpisano") : hostRed("brak");
     }
-
-    if (rt.p2[i].repeat === true) return hostYellowUnderline("●");
+  
+    if (rt.p2[i].repeat === true) return hostYellowUnderline("powtórzenie");
     const ok = (rt.p2[i].text || "").trim().length > 0;
-    return ok ? hostGreen("●") : hostRed("●");
+    return ok ? hostGreenStrike("wpisano") : hostRed("brak");
   }
 
   function hostTitleForStep() {
@@ -220,8 +220,8 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
       return counting ? `FINAŁ RUNDA 2 — ODLICZANIE ${s}s` : `FINAŁ RUNDA 2`;
     }
 
-    if (step.startsWith("f_p1_map_q")) return `FINAŁ RUNDA 1 — MAPOWANIE`;
-    if (step.startsWith("f_p2_map_q")) return `FINAŁ RUNDA 2 — MAPOWANIE`;
+    if (step.startsWith("f_p1_map_q")) return `FINAŁ RUNDA 1 — ODSŁANIANIE`;
+    if (step.startsWith("f_p2_map_q")) return `FINAŁ RUNDA 2 — ODSŁANIANIE`;
 
     return "";
   }
@@ -252,26 +252,24 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
 
     const inputP1 = (rt.p1[idx]?.text || "").trim();
     const inputP2 = (rt.p2[idx]?.text || "").trim();
-    const isRepeat = roundNo === 2 && rt.p2[idx]?.repeat === true;
+    const isRepeat = (roundNo === 2 && rt.p2[idx]?.repeat === true);
     const input = roundNo === 1 ? inputP1 : inputP2;
-
-    // status line wg ustaleń:
-    // - BRAK odpowiedzi = czerwony
-    // - brak na liście = żółty + podkreślenie
-    // - z listy = zielony + zakreślenie
+    
+    const playerLine = `Odpowiedź gracza: ${input ? input : "brak odpowiedzi"}`;
+    
+    // status kolorami (to jest osobna linia!)
     let statusLine = "";
-    if (row.kind === "SKIP" || isRepeat || !input) {
-      statusLine = `${hostRed("BRAK ODPOWIEDZI")}: ${hostRed("———————————")}`;
+    if (isRepeat) {
+      statusLine = hostYellowUnderline("powtórzenie");
+    } else if (!input) {
+      statusLine = hostRed("brak odpowiedzi");
     } else if (row.kind === "MATCH" && row.matchId) {
-      const chosen = aList.find((x) => x.id === row.matchId);
-      const t = (chosen?.text || "?").replace(/\s+/g, " ").trim();
-      statusLine = `${hostGreenStrike(t)}`;
+      statusLine = hostGreenStrike("z listy");
     } else {
-      const shown = (row.outText || input || "").replace(/\s+/g, " ").trim() || "———————————";
-      statusLine = `${hostYellowUnderline(shown)}`;
+      statusLine = hostYellowUnderline("nie ma na liście");
     }
 
-    const title = hostTag("gold b", roundNo === 1 ? "FINAŁ — MAPOWANIE (RUNDA 1)" : "FINAŁ — MAPOWANIE (RUNDA 2)");
+    const title = hostTag("b", roundNo === 1 ? "FINAŁ — ODSŁANIANIE (RUNDA 1)" : "FINAŁ — ODSŁANIANIE (RUNDA 2)");
     const qLine = `${hostTag("u", `Pytanie ${idx + 1}`)}: ${(q?.text || "—").replace(/\s+/g, " ").trim()}`;
 
     const sorted = aList.sort((a, b) => nInt(b.fixed_points, 0) - nInt(a.fixed_points, 0));
@@ -327,9 +325,9 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
 
     const lines = [title, ""];
     for (let i = 0; i < 5; i++) {
-      const lamp = lampForEntry(roundNo, i);
       const qt = (qPicked[i]?.text || "—").replace(/\s+/g, " ").trim();
-      lines.push(`${lamp} ${i + 1}) ${qt}`);
+      const st = hostEntryStatus(roundNo, i);
+      lines.push(`${i + 1}) ${qt} — ${st}`);
     }
     hostShowLines(lines).catch(() => {});
   }
@@ -671,18 +669,22 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
       `;
     }
 
-    const aButtons = aList
-      .map((a) => {
-        const active = row.kind === "MATCH" && row.matchId === a.id;
-        return `
-          <button class="btn sm ${active ? "gold" : ""}" type="button"
-                  data-kind="match" data-id="${a.id}"
-                  ${(!hasText || locked) ? "disabled" : ""}>
-            ${escapeHtml(a.text)} <span style="opacity:.7;">(${nInt(a.fixed_points, 0)})</span>
-          </button>
-        `;
-      })
-      .join("");
+    const p1Row = rt.map1?.[idx];
+    const p1BlockedId = (roundNo === 2 && p1Row?.kind === "MATCH" && p1Row?.matchId) ? p1Row.matchId : null;
+    
+    const aButtons = aList.map((a) => {
+      const active = row.kind === "MATCH" && row.matchId === a.id;
+      const blocked = !!p1BlockedId && a.id === p1BlockedId;
+    
+      return `
+        <button class="btn sm ${active ? "gold" : ""}" type="button"
+                data-kind="match" data-id="${a.id}"
+                ${(blocked || !hasText || locked) ? "disabled" : ""}>
+          ${escapeHtml(a.text)} <span style="opacity:.7;">(${nInt(a.fixed_points, 0)})</span>
+          ${blocked ? `<span style="opacity:.7;"> (zajęte)</span>` : ``}
+        </button>
+      `;
+    }).join("");
 
     const missActive = row.kind === "MISS";
     const skipActive = row.kind === "SKIP";
@@ -705,12 +707,12 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
 
         <div class="rowBtns" style="margin-top:10px; gap:8px; flex-wrap:wrap;">
           <button class="btn sm ${skipActive ? "gold" : ""}" type="button" data-kind="skip"
-            ${(!hasText || locked) ? "disabled" : ""}>
+            ${(hasText || locked) ? "disabled" : ""}>
             ${escapeHtml(FINAL_MSG.MAP_BTN_SKIP)}
           </button>
 
           <button class="btn sm danger ${missActive ? "gold" : ""}" type="button" data-kind="miss"
-            ${(hasText || locked) ? "disabled" : ""}>
+            ${(!hasText || locked) ? "disabled" : ""}>
             ${escapeHtml(FINAL_MSG.MAP_BTN_MISS)}
           </button>
         </div>
@@ -827,9 +829,9 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     ensureDefaultMapping(row, { input, outText: row.outText, isRepeat });
 
     if (row.kind === "SKIP") {
-      const blank = "———————————";
-      if (roundNo === 1) await display.finalSetLeft(idx + 1, clip11(blank));
-      else await display.finalSetRight(idx + 1, clip11(blank));
+      const blank = FINAL_BLANK;
+      if (roundNo === 1) await display.finalSetLeft(idx + 1, blank);
+      else await display.finalSetRight(idx + 1, blank);
 
       row.revealedAnswer = true;
       row.revealedPoints = false;
@@ -1024,7 +1026,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
 
     ui.setEnabled("btnFinalToP1MapQ1", false);
 
-    await display.finalSetSideTimer?.(getWinnerTeam(), "");
+    await display.finalSetSideTimer?.(getWinnerTeam(), "15");
   }
 
   function backTo(step) {
@@ -1146,13 +1148,11 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     const aList = answersByQ.get(q.id) || [];
     const row = rt.map1[idx];
 
-    if (row.kind === "SKIP") {
-      return { text: "———————————", pts: "0" };
-    }
+    if (row.kind === "SKIP") return { text: FINAL_BLANK, pts: "0" };
 
     if (row.kind === "MATCH") {
       const a = aList.find((x) => x.id === row.matchId);
-      return { text: (a?.text || "———————————").trim(), pts: String(nInt(a?.fixed_points, 0)) };
+      return { text: out || FINAL_BLANK, pts: "0" };
     }
 
     const out = (row.outText || rt.p1[idx].text || "").trim();
