@@ -145,6 +145,7 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
 
   function ensureRoundsState() {
     const r = store.state.rounds;
+    if (!r.timer3) r.timer3 = { running: false, endsAt: 0, secLeft: 0 };
     if (!r._questionPool) r._questionPool = [];
     if (!r._usedQuestionIds) r._usedQuestionIds = [];
     if (!r.totals) r.totals = { A: 0, B: 0 };
@@ -239,15 +240,10 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     const r = store.state.rounds;
     r.step = step;
     ui.showRoundsStep(step);
-
-    const canStartRoundNow =
-      (typeof store.canStartRounds === "function"
-        ? store.canStartRounds() && r.step === "r_roundStart"
-        : r.step === "r_roundStart");
-    
-    ui.setEnabled("btnStartRound", canStartRoundNow);
-
-    hostUpdate(); // <- tu
+  
+    ui.setEnabled("btnStartRound", r.step === "r_roundStart");
+  
+    hostUpdate();
   }
 
   // --- TIMER 3s ---
@@ -498,6 +494,7 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     const obj = pickNextQuestionObj();
     if (!obj) {
       ui.setMsg("msgRoundsRoundStart", ROUNDS_MSG.NO_MORE_QUESTIONS);
+      ui.setEnabled("btnStartRound", true); // <- ważne
       return;
     }
     
