@@ -127,7 +127,7 @@ export function createDisplay({ devices, store }) {
 
   async function roundsSetXOne(team, idx /* 1..3 */, on) {
     const t = team === "B" ? "B" : "A";
-    const i = Math.max(1, Math.min(3, nInt(idx, 1)));
+    const i = Math.max(1, Math.min(4, nInt(idx, 1)));
     const state = on ? "ON" : "OFF";
     await send(`RX ${i}${t} ${state}`);
   }
@@ -164,12 +164,12 @@ export function createDisplay({ devices, store }) {
 
     try {
       // “pojedynekowy” X – np. drugi w kolumnie
-      await send(`RX 2${side} ON`);
+      await send(`RX 4${side} ON`);
 
       setTimeout(() => {
         // szybkie zgaszenie – nie czekamy na await
         try {
-          send(`RX 2${side} OFF`);
+          send(`RX 4${side} OFF`);
         } catch (e) {
           console.warn("[display] duel X OFF failed", e);
         }
