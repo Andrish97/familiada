@@ -486,6 +486,33 @@
   user-select: none;
 }
 
+/* ===== FINAL: układ wiersza pytanie + input ===== */
+.rowQ{
+  display: grid;
+  grid-template-columns: minmax(0,1fr) 360px;
+  gap: 12px;
+  align-items: center;
+}
+
+.qPrompt.inline{
+  margin-top: 0;
+}
+
+@media (max-width: 900px){
+  .rowQ{
+    grid-template-columns: 1fr;
+  }
+}
+
+/* runda 2: input + przycisk "powtórzenie" */
+.colRight{
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.colRight .inp{ flex: 1 1 auto; min-width: 0; }
+
+
 .qRow:active{ cursor: grabbing; }
 
 .qList.droptarget{ outline: 2px dashed rgba(255,255,255,.45); outline-offset: 2px; }
