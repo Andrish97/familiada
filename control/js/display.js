@@ -270,7 +270,7 @@ export function createDisplay({ devices, store }) {
   }
   
   // rows: [{text, pts}] (len 5)
-  async function finalHalfFromRows(rows, { anim = "matrix up 800" } = {}) {
+  async function finalHalfFromRows(rows, { anim = "edge up 1500" } = {}) {
     const safe = Array.isArray(rows) ? rows : [];
     const r = (i) => safe[i] || {};
   
