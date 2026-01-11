@@ -93,7 +93,7 @@ html, body { height: 100%; }
   top: calc(var(--safe-top) + var(--top-pad));
   bottom: calc(var(--safe-bottom) + var(--bottom-pad));
   margin:0;
-
+  pointer-events: none;
   white-space:pre-wrap;
   word-break:break-word;
 
@@ -105,6 +105,17 @@ html, body { height: 100%; }
   line-height: var(--line);
   padding-top: calc(var(--line) * var(--baseline-shift));
   color:#111;
+}
+
+/* styled segmenty w tekście */
+.text span{
+  /* dziedziczy linię i font (żeby nie robić mikro-skoku) */
+  font: inherit;
+  line-height: inherit;
+
+  /* gdy underline/strike: stabilniej wygląda na “kartce” */
+  text-decoration-thickness: 0.08em;
+  text-underline-offset: 0.18em;
 }
 
 .hint{
