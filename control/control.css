@@ -358,6 +358,14 @@
   color:#fff;
 }
 
+/* ===== FINAL: karty-wiersze generowane z JS ===== */
+.finalRowCard{
+  min-height: 0;          /* zabija globalne 320px */
+  height: auto;
+  padding: 12px;
+  box-shadow: none;       /* opcjonalnie: żeby nie było "kart w karcie" jak cegły */
+}
+
 .msgStack{ display: grid; gap: 4px; }
 
 .radio{
