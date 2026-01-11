@@ -150,6 +150,12 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     if (!r.totals) r.totals = { A: 0, B: 0 };
     if (!r.revealed) r.revealed = new Set();
     if (typeof r.canEndRound !== "boolean") r.canEndRound = false;
+  
+    // NOWE (ważne)
+    if (typeof r.transitionRunning !== "boolean") r.transitionRunning = false;
+  
+    // NOWE (żeby clearTimer3() nie wywalał appki)
+    if (!r.timer3) r.timer3 = { running: false, endsAt: 0, secLeft: 0 };
   }
 
   function getRoundMultiplier() {
@@ -476,7 +482,7 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
         introMixer.play("show_intro");
       });
     }
-
+    r.transitionRunning = false;
     setStep("r_roundStart");
     ui.setMsg("msgRoundsIntro", ROUNDS_MSG.INTRO_DONE);
     ui.setRoundsHud(r);
@@ -1195,6 +1201,8 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
 
     r.roundNo = nInt(r.roundNo, 1) + 1;
 
+    r.transitionRunning = false;
+    
     r.question = null;
     r.answers = [];
     r.revealed = new Set();
