@@ -402,6 +402,11 @@ export async function createScene() {
     sumaRow: 9, // startowo na dole
   };
 
+  const xState = {
+    "1A": false, "2A": false, "3A": false, "4A": false,
+    "1B": false, "2B": false, "3B": false, "4B": false,
+  };
+  
   const hasVisibleText = (s) => (s ?? "").toString().trim().length > 0;
   const setRoundNumberVisible = (idx1to6, on) => {
     const i = (idx1to6|0) - 1;
@@ -1350,7 +1355,6 @@ export async function createScene() {
         const cell = ROUNDS.xCells[key];
         if (!cell) throw new Error(`Nieznane X: ${name}`);
       
-        // helpers
         const clearKey = (k) => {
           const c = ROUNDS.xCells[k];
           if (!c) return;
@@ -1358,44 +1362,58 @@ export async function createScene() {
         };
       
         const side = key.endsWith("A") ? "A" : key.endsWith("B") ? "B" : null;
-        const isBig = (cell.kind === "BIG");
-      
+        const bigKey = side === "A" ? "4A" : side === "B" ? "4B" : null;
         const smallKeys = side === "A"
           ? ["1A", "2A", "3A"]
           : side === "B"
             ? ["1B", "2B", "3B"]
             : [];
       
-        const bigKey = side === "A" ? "4A" : side === "B" ? "4B" : null;
+        const isBig = (cell.kind === "BIG");
       
-        // OFF: zawsze czyścimy tylko swoje pole
+        // OFF: czyścimy tylko swoje pole i zapisujemy stan
         if (!on) {
           clearArea(big, cell.c1, cell.r1, cell.c2, cell.r2);
+          xState[key] = false;
           return;
         }
       
-        // ON: najpierw wyklucz konkurencję po tej samej stronie
+        // ON: mutual exclusion tylko jeśli faktycznie trzeba
         if (side) {
           if (isBig) {
-            // włączamy 4A/4B → gaś 1/2/3 tej strony
-            for (const k of smallKeys) clearKey(k);
+            // Włączamy 4A/4B -> gaś wszystkie małe tej strony
+            for (const k of smallKeys) {
+              if (xState[k]) clearKey(k);
+              xState[k] = false;
+            }
+            xState[bigKey] = true;
+      
+            // narysuj big X
+            drawRoundsBigX(GLYPHS, big, side, LIT.main);
+            return;
           } else {
-            // włączamy 1/2/3 → gaś 4 tej strony
-            if (bigKey) clearKey(bigKey);
+            // Włączamy małe X -> gaś big tylko jeśli ono było ON
+            if (bigKey && xState[bigKey]) {
+              clearKey(bigKey);       // UWAGA: to kasuje też overlap, ale zaraz narysujemy nasze małe X
+              xState[bigKey] = false;
+            }
+      
+            // włączamy dane małe X (pozostałe małe mogą zostać ON równolegle)
+            xState[key] = true;
+      
+            // narysuj małe 3x3
+            drawBigX_3x3(GLYPHS, big, cell.c1, cell.r1, LIT.main);
+            return;
           }
         }
       
-        // teraz rysujemy docelowe X
-        if (isBig) {
-          drawRoundsBigX(GLYPHS, big, side, LIT.main);
-          return;
-        }
-      
-        // stare 3x3
-        drawBigX_3x3(GLYPHS, big, cell.c1, cell.r1, LIT.main);
+        // fallback (gdyby kiedyś doszły inne)
+        xState[key] = true;
+        if (isBig) drawRoundsBigX(GLYPHS, big, side, LIT.main);
+        else drawBigX_3x3(GLYPHS, big, cell.c1, cell.r1, LIT.main);
       },
 
-
+      
       // ====== NOWE: batch (jedna animacja na całość) ======
       setAll: async ({ rows = [], suma = undefined, animOut = null, animIn = null } = {}) => {
       
