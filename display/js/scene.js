@@ -1,4 +1,4 @@
-// scene.js
+rze// scene.js
 import { loadJson, buildGlyphMap, resolveGlyph } from "./fonts.js";
 import { createAnimator } from "./anim.js";
 
@@ -252,6 +252,36 @@ export async function createScene() {
     putCharAt(GLYPHS, big, col1 + 2, row1 + 2, "⇘", color);
   };
 
+  const drawRoundsBigX = (GLYPHS, big, side, color) => {
+    const s = (side ?? "").toString().toUpperCase(); // "A" lub "B"
+
+    const put = (col1, row1, ch) => putCharAt(GLYPHS, big, col1, row1, ch, color);
+
+    if (s === "A") {
+      // Lewy:
+      // ◣ 1:4, ◢ 3:4, ◥ 1:5, ◤ 3:5, ⧗ 2:6, ◢ 1:7, ◣ 3:7, ◤ 1:8, ◥ 3:8
+      put(1, 4, "◣"); put(3, 4, "◢");
+      put(1, 5, "◥"); put(3, 5, "◤");
+      put(2, 6, "⧗");
+      put(1, 7, "◢"); put(3, 7, "◣");
+      put(1, 8, "◤"); put(3, 8, "◥");
+      return;
+    }
+
+    if (s === "B") {
+      // Prawy:
+      // ◣ 28:4, ◢ 30:4, ◥ 28:5, ◤ 30:5, ⧗ 29:6, ◢ 28:7, ◣ 30:7, ◤ 28:8, ◥ 30:8
+      put(28, 4, "◣"); put(30, 4, "◢");
+      put(28, 5, "◥"); put(30, 5, "◤");
+      put(29, 6, "⧗");
+      put(28, 7, "◢"); put(30, 7, "◣");
+      put(28, 8, "◤"); put(30, 8, "◥");
+      return;
+    }
+
+    throw new Error(`drawRoundsBigX: nieznana strona: ${side}`);
+  };
+
   // ============================================================
   // Fields + layout (ROUNDS + FINAL)
   // ============================================================
@@ -350,10 +380,16 @@ export async function createScene() {
       "1A": { c1: 1,  r1: 8,  c2: 3,  r2: 10 },
       "2A": { c1: 1,  r1: 5,  c2: 3,  r2: 7  },
       "3A": { c1: 1,  r1: 2,  c2: 3,  r2: 4  },
+
+      "4A": { c1: 1,  r1: 4,  c2: 3,  r2: 8,  kind: "BIG" },
+
       "1B": { c1: 28, r1: 8,  c2: 30, r2: 10 },
       "2B": { c1: 28, r1: 5,  c2: 30, r2: 7  },
       "3B": { c1: 28, r1: 2,  c2: 30, r2: 4  },
+
+      "4B": { c1: 28, r1: 4,  c2: 30, r2: 8,  kind: "BIG" },
     };
+
 
     return { rows, roundNums, answers, points, xCells };
   })();
@@ -1313,9 +1349,52 @@ export async function createScene() {
         const key = (name ?? "").toString().toUpperCase();
         const cell = ROUNDS.xCells[key];
         if (!cell) throw new Error(`Nieznane X: ${name}`);
-        if (on) drawBigX_3x3(GLYPHS, big, cell.c1, cell.r1, LIT.main);
-        else clearArea(big, cell.c1, cell.r1, cell.c2, cell.r2);
+      
+        // helpers
+        const clearKey = (k) => {
+          const c = ROUNDS.xCells[k];
+          if (!c) return;
+          clearArea(big, c.c1, c.r1, c.c2, c.r2);
+        };
+      
+        const side = key.endsWith("A") ? "A" : key.endsWith("B") ? "B" : null;
+        const isBig = (cell.kind === "BIG");
+      
+        const smallKeys = side === "A"
+          ? ["1A", "2A", "3A"]
+          : side === "B"
+            ? ["1B", "2B", "3B"]
+            : [];
+      
+        const bigKey = side === "A" ? "4A" : side === "B" ? "4B" : null;
+      
+        // OFF: zawsze czyścimy tylko swoje pole
+        if (!on) {
+          clearArea(big, cell.c1, cell.r1, cell.c2, cell.r2);
+          return;
+        }
+      
+        // ON: najpierw wyklucz konkurencję po tej samej stronie
+        if (side) {
+          if (isBig) {
+            // włączamy 4A/4B → gaś 1/2/3 tej strony
+            for (const k of smallKeys) clearKey(k);
+          } else {
+            // włączamy 1/2/3 → gaś 4 tej strony
+            if (bigKey) clearKey(bigKey);
+          }
+        }
+      
+        // teraz rysujemy docelowe X
+        if (isBig) {
+          drawRoundsBigX(GLYPHS, big, side, LIT.main);
+          return;
+        }
+      
+        // stare 3x3
+        drawBigX_3x3(GLYPHS, big, cell.c1, cell.r1, LIT.main);
       },
+
 
       // ====== NOWE: batch (jedna animacja na całość) ======
       setAll: async ({ rows = [], suma = undefined, animOut = null, animIn = null } = {}) => {
