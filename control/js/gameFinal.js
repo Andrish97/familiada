@@ -99,14 +99,15 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
 
     if (!rt.map1)
       rt.map1 = Array.from({ length: 5 }, () => ({
-        kind: null, // MATCH / MISS / SKIP
+        kind: null,
         matchId: null,
         outText: "",
         pts: 0,
         revealedAnswer: false,
         revealedPoints: false,
+        locked: false, // <-- NOWE
       }));
-
+    
     if (!rt.map2)
       rt.map2 = Array.from({ length: 5 }, () => ({
         kind: null,
@@ -115,8 +116,10 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
         pts: 0,
         revealedAnswer: false,
         revealedPoints: false,
+        locked: false, // <-- NOWE
       }));
 
+    if (rt.halfRevealedP2 !== true) rt.halfRevealedP2 = false;
     if (!rt.sum) rt.sum = 0;
 
     if (!rt.timer) rt.timer = { running: false, endsAt: 0, seconds: 0, phase: null };
@@ -126,40 +129,27 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     if (!rt.done) rt.done = false;
   }
 
-  function ensureDefaultMapping(row, { input, outText, isRepeat }) {
+  function ensureDefaultMapping(row, { input, isRepeat }) {
     if (row.kind === "MATCH" || row.kind === "MISS" || row.kind === "SKIP") return;
-
-    // Uwaga: te ustawienia są *automatyczne* (wynikają z pustego pola / powtórzenia).
-    // Jeżeli później operator wpisze tekst (np. po zakończeniu odliczania),
-    // chcemy odblokować mapowanie. Dlatego oznaczamy je flagą _auto.
-    row._auto = true;
-
-    if (isRepeat) {
+  
+    const hasInput = String(input || "").trim().length > 0;
+  
+    if (isRepeat || !hasInput) {
+      // BRAK = BRAK NA ZAWSZE
       row.kind = "SKIP";
       row.matchId = null;
+      row.outText = "";
+      row.pts = 0;
+      row.locked = true;
       return;
     }
-
-    const has = ((input || "").trim().length > 0) || ((outText || "").trim().length > 0);
-    if (!has) {
-      row.kind = "SKIP";
-      row.matchId = null;
-    } else {
-      row.kind = "MISS";
-      row.matchId = null;
-    }
-  }
-
-  function clearAutoMappingIfNeeded(mapRow) {
-    if (!mapRow || mapRow._auto !== true) return;
-    // Czyścimy tylko automaty — ręczny wybór (kliknięty MATCH/MISS/SKIP) ma zostać.
-    mapRow.kind = null;
-    mapRow.matchId = null;
-    mapRow.outText = "";
-    mapRow.pts = 0;
-    mapRow.revealedAnswer = false;
-    mapRow.revealedPoints = false;
-    mapRow._auto = false;
+  
+    // Jest tekst → domyślnie "nie ma na liście" + outText = input (edytowalne)
+    row.kind = "MISS";
+    row.matchId = null;
+    row.outText = String(input || "");
+    row.pts = 0;
+    row.locked = false;
   }
 
   // -------- Host view (lampki + pytania) --------
@@ -237,27 +227,79 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     } catch {}
   }
 
+  function hostMappingLines(roundNo, idx) {
+    ensureRuntime();
+    const rt = store.state.final.runtime;
+    const q = qPicked[idx];
+    const aList = (answersByQ.get(q?.id) || []).slice();
+  
+    const row = (roundNo === 1 ? rt.map1 : rt.map2)[idx];
+  
+    const inputP1 = (rt.p1[idx]?.text || "").trim();
+    const inputP2 = (rt.p2[idx]?.text || "").trim();
+    const isRepeat = (roundNo === 2 && rt.p2[idx]?.repeat === true);
+  
+    const input = roundNo === 1 ? inputP1 : inputP2;
+  
+    // status gracza / mappingu
+    let statusLine = "";
+    if (row.kind === "SKIP" || isRepeat || !input) {
+      statusLine = `GRACZ: [BRAK] ————`;
+    } else if (row.kind === "MATCH" && row.matchId) {
+      const chosen = aList.find(x => x.id === row.matchId);
+      statusLine = `GRACZ: [LISTA] ${chosen ? chosen.text : "?"}`;
+    } else {
+      const shown = (row.outText || input || "").trim() || "————";
+      statusLine = `GRACZ: [NIE MA] ${shown}`;
+    }
+  
+    // lista odpowiedzi
+    const sorted = aList.sort((a,b)=> nInt(a.fixed_points,0) < nInt(b.fixed_points,0) ? 1 : -1);
+    const listLines = sorted.map((a) => {
+      const mark = (row.kind === "MATCH" && row.matchId === a.id) ? "►" : " ";
+      return `${mark} ${String(a.text || "").slice(0, 24)} (${nInt(a.fixed_points,0)})`;
+    });
+  
+    const title = roundNo === 1 ? "FINAŁ RUNDA 1 — MAPOWANIE" : "FINAŁ RUNDA 2 — MAPOWANIE";
+    const qLine = `P${idx + 1}: ${(q?.text || "—").replace(/\s+/g," ").trim()}`;
+  
+    return [title, "", qLine, statusLine, "", ...listLines];
+  }
+
+
   function hostUpdate() {
+    const step = store.state.final?.step || "";
+  
+    // MAPOWANIE: pokazuj pytanie + lista + wybór
+    if (step.startsWith("f_p1_map_q")) {
+      const idx = Number(step.slice(-1)) - 1;
+      hostShowLines(hostMappingLines(1, idx)).catch(() => {});
+      return;
+    }
+    if (step.startsWith("f_p2_map_q")) {
+      const idx = Number(step.slice(-1)) - 1;
+      hostShowLines(hostMappingLines(2, idx)).catch(() => {});
+      return;
+    }
+  
+    // stara logika (entry + timer)
     const title = hostTitleForStep();
     if (!title) {
       hostBlank().catch(() => {});
       return;
     }
   
-    const step = store.state.final?.step || "";
     const roundNo =
       step === "f_p1_entry" || step.startsWith("f_p1_") ? 1 :
       step === "f_p2_entry" || step.startsWith("f_p2_") ? 2 : 1;
   
     const lines = [title, ""];
-  
     for (let i = 0; i < 5; i++) {
       const lamp = lampForEntry(roundNo, i);
       const qt = (qPicked[i]?.text || "—").replace(/\s+/g, " ").trim();
       const top = hostTopMarkForQuestion(roundNo, i);
       lines.push(`${lamp} ${i + 1}) ${qt}${top}`);
     }
-  
     hostShowLines(lines).catch(() => {});
   }
 
@@ -578,6 +620,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
 
     const mapArr = roundNo === 1 ? rt.map1 : rt.map2;
     const row = mapArr[idx];
+    const locked = row.locked === true;
 
     const isRepeat = roundNo === 2 && rt.p2[idx].repeat === true;
 
@@ -624,7 +667,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
         return `
           <button class="btn sm ${active ? "gold" : ""}" type="button"
                   data-kind="match" data-id="${a.id}"
-                  ${!hasText ? "disabled" : ""}>
+                  ${(!hasText || locked) ? "disabled" : ""}>
             ${escapeHtml(a.text)} <span style="opacity:.7;">(${nInt(a.fixed_points, 0)})</span>
           </button>
         `;
@@ -652,12 +695,12 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
 
         <div class="rowBtns" style="margin-top:10px; gap:8px; flex-wrap:wrap;">
           <button class="btn sm ${skipActive ? "gold" : ""}" type="button" data-kind="skip"
-            ${hasText ? "disabled" : ""}>
+            ${(!hasText || locked) ? "disabled" : ""}>
             ${escapeHtml(FINAL_MSG.MAP_BTN_SKIP)}
           </button>
 
           <button class="btn sm danger ${missActive ? "gold" : ""}" type="button" data-kind="miss"
-            ${!hasText ? "disabled" : ""}>
+            ${(hasText || locked) ? "disabled" : ""}>
             ${escapeHtml(FINAL_MSG.MAP_BTN_MISS)}
           </button>
         </div>
@@ -680,6 +723,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
       <div class="card" style="margin-top:12px;">
         <div class="name">${escapeHtml(FINAL_MSG.MAP_OUT_HINT)}</div>
         <input class="inp" data-kind="out" value="${outVal}"
+              ${locked ? "disabled" : ""}
                placeholder="${escapeHtml(FINAL_MSG.MAP_OUT_PLACEHOLDER)}"/>
       </div>
     `;
@@ -736,9 +780,9 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
 
     // UWAGA: bez renderMapOne() w input, żeby nie zrywać fokusu
     root.querySelector('input[data-kind="out"]')?.addEventListener("input", (e) => {
+      if (locked) return;
       const v = String(e.target?.value ?? "");
       row.outText = v;
-
       const has = v.trim().length > 0;
       if (has) {
         row.kind = "MISS";
@@ -770,10 +814,14 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     const isRepeat = roundNo === 2 && rt.p2[idx].repeat === true;
     ensureDefaultMapping(row, { input, outText: row.outText, isRepeat });
 
-    // SKIP: nic nie wysyłamy na display (zostają placeholdery)
     if (row.kind === "SKIP") {
+      const blank = "————"; // 4 znaki, po clip11 i tak wejdzie
+    
+      if (roundNo === 1) await display.finalSetLeft(idx + 1, clip11(blank));
+      else await display.finalSetRight(idx + 1, clip11(blank));
+    
       row.revealedAnswer = true;
-      row.revealedPoints = true;
+    
       playSfx("answer_wrong");
       return { hasAnswer: false };
     }
@@ -819,9 +867,24 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     const isRepeat = roundNo === 2 && rt.p2[idx].repeat === true;
     ensureDefaultMapping(row, { input, outText: row.outText, isRepeat });
 
-    // SKIP: nic do odkrycia, ale pozwalamy iść dalej
     if (row.kind === "SKIP") {
+      const pts2 = "0";
+    
+      row.pts = 0;
       row.revealedPoints = true;
+    
+      // suma bez zmian (0)
+      updateSumUI();
+    
+      if (roundNo === 1) {
+        await display.finalSetA(idx + 1, pts2);
+        await display.finalSetSuma(store.state.final.runtime.sum || 0, "A");
+      } else {
+        await display.finalSetB(idx + 1, pts2);
+        await display.finalSetSuma(store.state.final.runtime.sum || 0, "B");
+      }
+    
+      playSfx("answer_wrong");
       return false;
     }
 
@@ -999,8 +1062,26 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     ensureRuntime();
     const rt = store.state.final.runtime;
     if (rt.timer.usedP2) return;
-
+  
     rt.timer.usedP2 = true;
+  
+    // ODKRYCIE = pokazujemy wyniki rundy 1 (TYLKO RAZ)
+    (async () => {
+      if (rt.halfRevealedP2) return;
+      rt.halfRevealedP2 = true;
+  
+      try {
+        const rows = Array.from({ length: 5 }, (_, i) => {
+          const r = getP1DisplayRow(i);          // {text, pts}
+          return { text: clip11(r.text), pts: r.pts };
+        });
+  
+        await display.finalHalfFromRows?.(rows, { anim: "matrix down 1000" });
+      } catch (e) {
+        console.warn("finalHalfFromRows failed", e);
+      }
+    })();
+  
     ui.setFinalTimerP2("20");
     startCountdown(20, "P2");
     ui.setEnabled("btnFinalToP2MapQ1", false);
@@ -1044,13 +1125,18 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
 
   function toP2Start() {
     stopTimer();
+  
     (async () => {
       try {
-        await display.finalHalfHide?.();
-        await new Promise((r) => setTimeout(r, 1000));
-        await display.finalHalfPlaceholders?.();
-      } catch {}
+        // UKRYCIE = PLACEHOLDERY
+        await display.finalHalfPlaceholders?.(); 
+        // jeśli chcesz animację “zasłony”, to niech ją robi finalHalfPlaceholders()
+        // (u Ciebie wcześniej było ANIMIN matrix down 1000)
+      } catch (e) {
+        console.warn("finalHalfPlaceholders failed", e);
+      }
     })();
+  
     setStep("f_p2_start");
   }
 
@@ -1060,26 +1146,29 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     const q = qPicked[idx];
     const aList = answersByQ.get(q.id) || [];
     const row = rt.map1[idx];
-
-    const input = (rt.p1[idx].text || "").trim();
-    const kind = row.kind || "SKIP";
-
-    let text = "———————————";
-    let pts = "▒▒";
-
-    if (kind === "MATCH") {
-      const a = aList.find((x) => x.id === row.matchId);
-      if (a) {
-        text = (a.text || "").trim() || "———————————";
-        pts = String(nInt(a.fixed_points, 0)).padStart(2, "0");
-      }
-    } else if (kind === "MISS") {
-      const out = (row.outText || input || "").trim();
-      text = out || "———————————";
-      pts = "00";
+  
+    // brak odpowiedzi = SKIP = 0 punktów
+    if (row.kind === "SKIP") {
+      return {
+        text: "———————————",
+        pts: "0",
+      };
     }
-
-    return { text, pts };
+  
+    if (row.kind === "MATCH") {
+      const a = aList.find(x => x.id === row.matchId);
+      return {
+        text: (a?.text || "———————————").trim(),
+        pts: String(nInt(a?.fixed_points, 0)),
+      };
+    }
+  
+    // MISS (nie ma na liście)
+    const out = (row.outText || rt.p1[idx].text || "").trim();
+    return {
+      text: out || "———————————",
+      pts: "0",
+    };
   }
 
   async function startP2Round() {
@@ -1109,26 +1198,6 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
   async function toP2MapQ(idx1based) {
     ensureRuntime();
     stopTimer();
-
-    // Odkrywamy połówkę z wynikami rundy 1 DOPIERO gdy zaczynamy mapowanie rundy 2.
-    if (Number(idx1based) === 1) {
-      try {
-        await display.finalHalfHide?.();
-        await new Promise((r) => setTimeout(r, 1000));
-        const rows = Array.from({ length: 5 }, (_, i) => {
-          const r = getP1DisplayRow(i);
-          return { text: clip11(r.text), pts: r.pts };
-        });
-        await display.finalHalfFromRows?.(rows, { anim: "matrix down 1000" });
-        
-        // suma przeskakuje na B na starcie mapowania rundy 2
-        
-        await display.finalSetSuma?.(store.state.final.runtime?.sum || 0, "B");
-        
-      } catch (e) {
-        console.warn("finalHalfFromRows failed", e);
-      }
-    }
 
     const idx = idx1based - 1;
     const row = store.state.final.runtime.map2[idx];
