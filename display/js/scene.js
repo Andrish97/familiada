@@ -1,4 +1,4 @@
-rze// scene.js
+// scene.js
 import { loadJson, buildGlyphMap, resolveGlyph } from "./fonts.js";
 import { createAnimator } from "./anim.js";
 
