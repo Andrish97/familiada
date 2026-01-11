@@ -1079,20 +1079,30 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
   async function stealMiss() {
     const r = store.state.rounds;
     if (!r.steal || !r.steal.active || r.steal.used) return;
-
+  
     r.steal.used = true;
     r.stealWon = false;
     r.steal.active = false;
-
+  
     setStealMsg(ROUNDS_MSG.STEAL_FAIL);
     ui.setRoundsHud(r);
     r.canEndRound = true;
     updatePlayControls();
-
+  
     if (display.setIndicator) {
       await display.setIndicator(null);
     }
-
+  
+    // NOWE: duży X (idx 4) po stronie kradnącej
+    try {
+      const stealingTeam = r.steal.team; // "A" albo "B"
+      if (display.roundsSetXOne && stealingTeam) {
+        await display.roundsSetXOne(stealingTeam, 4, true);
+      }
+    } catch (e) {
+      console.warn("[rounds] roundsSetXOne(steal miss) failed", e);
+    }
+  
     playSfx("answer_wrong");
   }
 
