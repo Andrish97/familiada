@@ -43,8 +43,6 @@ const FINAL_MSG = {
 
   // --- fallback tekstu odpowiedzi, gdy naprawdę nic nie ma ---
   FALLBACK_ANSWER: "—",
-  TOP_MARK: "najwyż. punk.", // dopisek "(MAX)" dla najwyżej punktowanej odpowiedzi
-
 };
 // =========================================================
 
@@ -67,6 +65,30 @@ function escapeHtml(s) {
 function clip11(s) {
   const t = String(s ?? "");
   return t.length > 11 ? t.slice(0, 11) : t;
+}
+
+function hostTag(style, text) {
+  // style np: "b", "u", "s", "#ff0000 b u"
+  return `[${style}]${String(text ?? "")}[/]`;
+}
+
+const HOST_CLR = {
+  green: "#2ecc71",
+  red: "#ff3333",
+  yellow: "gold",
+};
+
+function hostGreenStrike(text) {
+  return hostTag(`${HOST_CLR.green} s`, text);
+}
+function hostGreen(text) {
+  return hostTag(`${HOST_CLR.green}`, text);
+}
+function hostRed(text) {
+  return hostTag(`${HOST_CLR.red}`, text);
+}
+function hostYellowUnderline(text) {
+  return hostTag(`${HOST_CLR.yellow} u`, text);
 }
 
 // Tryb końcówki:
@@ -94,20 +116,19 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     const rt = f.runtime;
 
     if (!rt.p1) rt.p1 = Array.from({ length: 5 }, () => ({ text: "" }));
-    if (!rt.p2)
-      rt.p2 = Array.from({ length: 5 }, () => ({ text: "", repeat: false }));
+    if (!rt.p2) rt.p2 = Array.from({ length: 5 }, () => ({ text: "", repeat: false }));
 
     if (!rt.map1)
       rt.map1 = Array.from({ length: 5 }, () => ({
-        kind: null,
+        kind: null, // MATCH | MISS | SKIP
         matchId: null,
         outText: "",
         pts: 0,
         revealedAnswer: false,
         revealedPoints: false,
-        locked: false, // <-- NOWE
+        locked: false,
       }));
-    
+
     if (!rt.map2)
       rt.map2 = Array.from({ length: 5 }, () => ({
         kind: null,
@@ -116,7 +137,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
         pts: 0,
         revealedAnswer: false,
         revealedPoints: false,
-        locked: false, // <-- NOWE
+        locked: false,
       }));
 
     if (rt.halfRevealedP2 !== true) rt.halfRevealedP2 = false;
@@ -129,11 +150,25 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     if (!rt.done) rt.done = false;
   }
 
+  function clearAutoMappingIfNeeded(row) {
+    // Minimalnie: jeśli wcześniej ustawiliśmy SKIP jako auto i użytkownik dopisał tekst,
+    // to nie blokuj na wieki.
+    if (!row) return;
+    if (row.locked === true && row.kind === "SKIP") {
+      // zostawiamy "locked" jako semantykę BRAK=na zawsze tylko wtedy,
+      // gdy to był repeat lub faktycznie brak wpisu w chwili domyślnego mapowania.
+      // Tutaj: odblokowujemy, bo pojawił się tekst.
+      row.locked = false;
+      row.kind = null;
+      row.matchId = null;
+    }
+  }
+
   function ensureDefaultMapping(row, { input, isRepeat }) {
     if (row.kind === "MATCH" || row.kind === "MISS" || row.kind === "SKIP") return;
-  
+
     const hasInput = String(input || "").trim().length > 0;
-  
+
     if (isRepeat || !hasInput) {
       // BRAK = BRAK NA ZAWSZE
       row.kind = "SKIP";
@@ -143,7 +178,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
       row.locked = true;
       return;
     }
-  
+
     // Jest tekst → domyślnie "nie ma na liście" + outText = input (edytowalne)
     row.kind = "MISS";
     row.matchId = null;
@@ -152,42 +187,21 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     row.locked = false;
   }
 
-  // -------- Host view (lampki + pytania) --------
+  // -------- Host view --------
   function lampForEntry(roundNo, i) {
+    // ZAMIANA kontrolek na kolor tekstu (bez emoji)
+    // Zielony = jest wpis, Czerwony = brak, Żółty = powtórzenie (R2).
     ensureRuntime();
     const rt = store.state.final.runtime;
 
-    if (roundNo === 1) return (rt.p1[i].text || "").trim() ? "🟢" : "🔴";
-    if (rt.p2[i].repeat === true) return "🟡";
-    return (rt.p2[i].text || "").trim() ? "🟢" : "🔴";
-  }
+    if (roundNo === 1) {
+      const ok = (rt.p1[i].text || "").trim().length > 0;
+      return ok ? hostGreen("●") : hostRed("●");
+    }
 
-  function hostTopMarkForQuestion(roundNo, i) {
-    ensureRuntime();
-    const rt = store.state.final.runtime;
-  
-    const q = qPicked[i];
-    if (!q) return "";
-  
-    const aList = answersByQ.get(q.id) || [];
-    if (!aList.length) return "";
-  
-    const row = (roundNo === 1 ? rt.map1 : rt.map2)?.[i];
-    if (!row) return "";
-  
-    // dopiero po odsłonięciu treści
-    if (row.revealedAnswer !== true) return "";
-  
-    // tylko MATCH ma sens do "najwyżej punktowanej"
-    if (row.kind !== "MATCH" || !row.matchId) return "";
-  
-    const chosen = aList.find((x) => x.id === row.matchId);
-    if (!chosen) return "";
-  
-    const maxPts = aList.reduce((m, x) => Math.max(m, nInt(x.fixed_points, 0)), 0);
-    const chosenPts = nInt(chosen.fixed_points, 0);
-  
-    return chosenPts === maxPts ? ` (${FINAL_MSG.TOP_MARK})` : "";
+    if (rt.p2[i].repeat === true) return hostYellowUnderline("●");
+    const ok = (rt.p2[i].text || "").trim().length > 0;
+    return ok ? hostGreen("●") : hostRed("●");
   }
 
   function hostTitleForStep() {
@@ -206,8 +220,8 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
       return counting ? `FINAŁ RUNDA 2 — ODLICZANIE ${s}s` : `FINAŁ RUNDA 2`;
     }
 
-    if (step.startsWith("f_p1_map_q")) return `FINAŁ RUNDA 1 — ODSŁANIANIE ODPOWIEDZI`;
-    if (step.startsWith("f_p2_map_q")) return `FINAŁ RUNDA 2 — ODSŁANIANIE ODPOWIEDZI`;
+    if (step.startsWith("f_p1_map_q")) return `FINAŁ RUNDA 1 — MAPOWANIE`;
+    if (step.startsWith("f_p2_map_q")) return `FINAŁ RUNDA 2 — MAPOWANIE`;
 
     return "";
   }
@@ -228,49 +242,64 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
   }
 
   function hostMappingLines(roundNo, idx) {
+    // Wymaganie: host widzi jedno pytanie + pełną listę odpowiedzi z punktami.
+    // Status jest realizowany KOLORAMI i (zakreślenie/podkreślenie) zamiast kontrolek.
     ensureRuntime();
     const rt = store.state.final.runtime;
     const q = qPicked[idx];
     const aList = (answersByQ.get(q?.id) || []).slice();
-  
     const row = (roundNo === 1 ? rt.map1 : rt.map2)[idx];
-  
+
     const inputP1 = (rt.p1[idx]?.text || "").trim();
     const inputP2 = (rt.p2[idx]?.text || "").trim();
-    const isRepeat = (roundNo === 2 && rt.p2[idx]?.repeat === true);
-  
+    const isRepeat = roundNo === 2 && rt.p2[idx]?.repeat === true;
     const input = roundNo === 1 ? inputP1 : inputP2;
-  
-    // status gracza / mappingu
+
+    // status line wg ustaleń:
+    // - BRAK odpowiedzi = czerwony
+    // - brak na liście = żółty + podkreślenie
+    // - z listy = zielony + zakreślenie
     let statusLine = "";
     if (row.kind === "SKIP" || isRepeat || !input) {
-      statusLine = `GRACZ: [BRAK] ————`;
+      statusLine = `${hostRed("BRAK ODPOWIEDZI")}: ${hostRed("———————————")}`;
     } else if (row.kind === "MATCH" && row.matchId) {
-      const chosen = aList.find(x => x.id === row.matchId);
-      statusLine = `GRACZ: [LISTA] ${chosen ? chosen.text : "?"}`;
+      const chosen = aList.find((x) => x.id === row.matchId);
+      const t = (chosen?.text || "?").replace(/\s+/g, " ").trim();
+      statusLine = `${hostGreenStrike(t)}`;
     } else {
-      const shown = (row.outText || input || "").trim() || "————";
-      statusLine = `GRACZ: [NIE MA] ${shown}`;
+      const shown = (row.outText || input || "").replace(/\s+/g, " ").trim() || "———————————";
+      statusLine = `${hostYellowUnderline(shown)}`;
     }
-  
-    // lista odpowiedzi
-    const sorted = aList.sort((a,b)=> nInt(a.fixed_points,0) < nInt(b.fixed_points,0) ? 1 : -1);
-    const listLines = sorted.map((a) => {
-      const mark = (row.kind === "MATCH" && row.matchId === a.id) ? "►" : " ";
-      return `${mark} ${String(a.text || "").slice(0, 24)} (${nInt(a.fixed_points,0)})`;
-    });
-  
-    const title = roundNo === 1 ? "FINAŁ RUNDA 1 — MAPOWANIE" : "FINAŁ RUNDA 2 — MAPOWANIE";
-    const qLine = `P${idx + 1}: ${(q?.text || "—").replace(/\s+/g," ").trim()}`;
-  
-    return [title, "", qLine, statusLine, "", ...listLines];
-  }
 
+    const title = hostTag("gold b", roundNo === 1 ? "FINAŁ — MAPOWANIE (RUNDA 1)" : "FINAŁ — MAPOWANIE (RUNDA 2)");
+    const qLine = `${hostTag("u", `Pytanie ${idx + 1}`)}: ${(q?.text || "—").replace(/\s+/g, " ").trim()}`;
+
+    const sorted = aList.sort((a, b) => nInt(b.fixed_points, 0) - nInt(a.fixed_points, 0));
+    const listHeader = hostTag("u", "Lista odpowiedzi:");
+    const listLines = sorted.map((a) => {
+      const t = String(a.text || "").replace(/\s+/g, " ").trim().slice(0, 30);
+      const p = nInt(a.fixed_points, 0);
+
+      // “Zamiast kontrolek”: aktywne = zielone + zakreślone
+      if (row.kind === "MATCH" && row.matchId === a.id) {
+        return `${hostGreenStrike(t)} ${hostGreenStrike(`(${p})`)}`;
+      }
+      return `${t} (${p})`;
+    });
+
+    // dodatkowy kontekst w R2 (bez ozdobników):
+    const extra =
+      roundNo === 2
+        ? [`${hostTag("u", "Gracz 1")}: ${(inputP1 || "—").replace(/\s+/g, " ").trim()}`]
+        : [];
+
+    return [title, "", qLine, ...extra, "", statusLine, "", listHeader, ...listLines];
+  }
 
   function hostUpdate() {
     const step = store.state.final?.step || "";
-  
-    // MAPOWANIE: pokazuj pytanie + lista + wybór
+
+    // MAPOWANIE: pokazuj pytanie + lista + aktualny status (kolorami)
     if (step.startsWith("f_p1_map_q")) {
       const idx = Number(step.slice(-1)) - 1;
       hostShowLines(hostMappingLines(1, idx)).catch(() => {});
@@ -281,24 +310,26 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
       hostShowLines(hostMappingLines(2, idx)).catch(() => {});
       return;
     }
-  
-    // stara logika (entry + timer)
+
+    // ENTRY/TIMER: lista pytań + kolor "●"
     const title = hostTitleForStep();
     if (!title) {
       hostBlank().catch(() => {});
       return;
     }
-  
+
     const roundNo =
-      step === "f_p1_entry" || step.startsWith("f_p1_") ? 1 :
-      step === "f_p2_entry" || step.startsWith("f_p2_") ? 2 : 1;
-  
+      step === "f_p1_entry" || step.startsWith("f_p1_")
+        ? 1
+        : step === "f_p2_entry" || step.startsWith("f_p2_")
+          ? 2
+          : 1;
+
     const lines = [title, ""];
     for (let i = 0; i < 5; i++) {
       const lamp = lampForEntry(roundNo, i);
       const qt = (qPicked[i]?.text || "—").replace(/\s+/g, " ").trim();
-      const top = hostTopMarkForQuestion(roundNo, i);
-      lines.push(`${lamp} ${i + 1}) ${qt}${top}`);
+      lines.push(`${lamp} ${i + 1}) ${qt}`);
     }
     hostShowLines(lines).catch(() => {});
   }
@@ -314,23 +345,22 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     if (phase === "P1") ui.setFinalTimerP1(String(value));
     if (phase === "P2") ui.setFinalTimerP2(String(value));
   }
-  
+
   function stopTimer() {
     ensureRuntime();
     const rt = store.state.final.runtime;
-  
+
     rt.timer.running = false;
     rt.timer.endsAt = 0;
     rt.timer.seconds = 0;
     rt.timer.phase = null;
-  
+
     if (raf) cancelAnimationFrame(raf);
     raf = null;
-  
-    // UI: pigułki obok przycisków
+
     ui.setFinalTimerP1(FINAL_MSG.TIMER_PLACEHOLDER);
     ui.setFinalTimerP2(FINAL_MSG.TIMER_PLACEHOLDER);
-  
+
     hostUpdate();
   }
 
@@ -346,13 +376,11 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
   async function displaySetTimerSeconds(sec) {
     const team = getWinnerTeam();
     const txt = String(Math.max(0, sec)); // bez wiodących zer
-  
-    // UI operatora: tylko aktywna faza (P1/P2) aktualizuje swoją pigułkę
+
     const phase = store.state.final?.runtime?.timer?.phase || null;
     if (phase === "P1") ui.setFinalTimerP1(txt);
     if (phase === "P2") ui.setFinalTimerP2(txt);
-  
-    // Wyświetlacz: timer tylko po stronie zwycięskiej drużyny
+
     await display.finalSetSideTimer?.(team, txt);
   }
 
@@ -375,11 +403,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
       if (!rt.timer.running) return;
 
       const leftMs = Math.max(0, rt.timer.endsAt - Date.now());
-      const totalMs = Math.max(1, Number(rt.timer.total || 0) * 1000);
       const s = Math.ceil(leftMs / 1000);
-
-      // pasek postępu
-      const total = Math.max(1, Number(rt.timer.total || seconds) || seconds);
 
       if (s !== rt.timer.seconds) {
         rt.timer.seconds = s;
@@ -390,12 +414,10 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
       if (leftMs <= 0) {
         rt.timer.running = false;
         rt.timer.seconds = 0;
-        
-        // UI: pokaż 0 w tej fazie, która właśnie dobiła do zera
+
         setUiTimerForPhase(phase, "0");
         hostUpdate();
 
-        // zamiast timera: przywróć triplet A/B
         const totals = store.state.rounds?.totals || { A: 0, B: 0 };
         display.setTotalsTriplets?.(totals).catch(() => {});
 
@@ -467,11 +489,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
       inp.addEventListener("input", () => {
         const i = Number(inp.dataset.i);
         rt.p1[i].text = String(inp.value ?? "");
-
-        // Jeśli wcześniej (np. podczas timera) pole było puste i mapowanie
-        // automatycznie ustawiło SKIP, to wpis teraz ma odblokować wybór.
         clearAutoMappingIfNeeded(rt.map1?.[i]);
-
         hostUpdate();
       });
 
@@ -483,13 +501,11 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
           document.querySelector(`#finalP1Inputs input[data-p="1"][data-i="${i + 1}"]`)?.focus();
           return;
         }
-
         if (e.key === "ArrowUp") {
           e.preventDefault();
           document.querySelector(`#finalP1Inputs input[data-p="1"][data-i="${i - 1}"]`)?.focus();
           return;
         }
-
         if (e.key === "Enter") {
           e.preventDefault();
           document.querySelector(`#finalP1Inputs input[data-p="1"][data-i="${i + 1}"]`)?.focus();
@@ -539,10 +555,8 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
         const val = String(inp.value ?? "");
         rt.p2[i].text = val;
 
-        // jw. — odblokuj mapowanie gdy wpis pojawi się po wcześniejszym auto-SKIP
         clearAutoMappingIfNeeded(rt.map2?.[i]);
 
-        // jeśli coś wpisano, zdejmij „Powtórzenie”
         if (val.trim().length > 0 && rt.p2[i].repeat) {
           rt.p2[i].repeat = false;
           clearAutoMappingIfNeeded(rt.map2?.[i]);
@@ -560,7 +574,6 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
           document.querySelector(`#finalP2Inputs input[data-p="2"][data-i="${i + 1}"]`)?.focus();
           return;
         }
-
         if (e.key === "ArrowUp") {
           e.preventDefault();
           document.querySelector(`#finalP2Inputs input[data-p="2"][data-i="${i - 1}"]`)?.focus();
@@ -595,8 +608,6 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
         const next = !prev;
 
         rt.p2[i].repeat = next;
-
-        // dźwięk TYLKO przy włączaniu powtórzenia
         if (!prev && next) playSfx("answer_repeat");
 
         renderP2Entry();
@@ -623,11 +634,10 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     const locked = row.locked === true;
 
     const isRepeat = roundNo === 2 && rt.p2[idx].repeat === true;
-
-    // powtórzenie ma się zachowywać jak brak odpowiedzi
     const effectiveInput = isRepeat ? "" : input;
+
     const outNow = (row.outText || "").trim();
-    const hasText = (effectiveInput.trim().length > 0) || (outNow.length > 0);
+    const hasText = effectiveInput.trim().length > 0 || outNow.length > 0;
 
     ensureDefaultMapping(row, { input, outText: row.outText, isRepeat });
 
@@ -737,6 +747,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     const nextBtnId = roundNo === 1 ? `btnFinalNextFromP1Q${idx + 1}` : `btnFinalNextFromP2Q${idx + 1}`;
     ui.setEnabled(nextBtnId, !!row.revealedAnswer && !!row.revealedPoints);
 
+    // KLUCZ: po każdej zmianie mapowania -> hostUpdate()
     root.querySelectorAll('button[data-kind="match"]').forEach((b) => {
       b.addEventListener("click", () => {
         if (!hasText) return;
@@ -744,6 +755,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
         row._auto = false;
         row.matchId = b.dataset.id || null;
         renderMapOne(roundNo, idx);
+        hostUpdate();
       });
     });
 
@@ -754,6 +766,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
       row.matchId = null;
       if (!row.outText) row.outText = effectiveInput;
       renderMapOne(roundNo, idx);
+      hostUpdate();
     });
 
     root.querySelector('button[data-kind="skip"]')?.addEventListener("click", () => {
@@ -762,23 +775,22 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
       row._auto = false;
       row.matchId = null;
       renderMapOne(roundNo, idx);
+      hostUpdate();
     });
 
     root.querySelector('button[data-kind="reveal-answer"]')?.addEventListener("click", async () => {
-      const res = await revealAnswerOnly(roundNo, idx);
+      await revealAnswerOnly(roundNo, idx);
       renderMapOne(roundNo, idx);
-
-      // brak odpowiedzi → można iść dalej od razu
-      if (!res || !res.hasAnswer) ui.setEnabled(nextBtnId, true);
+      hostUpdate();
     });
 
     root.querySelector('button[data-kind="reveal-points"]')?.addEventListener("click", async () => {
       const ended = await revealPointsAndScore(roundNo, idx);
       renderMapOne(roundNo, idx);
       if (!ended) ui.setEnabled(nextBtnId, true);
+      hostUpdate();
     });
 
-    // UWAGA: bez renderMapOne() w input, żeby nie zrywać fokusu
     root.querySelector('input[data-kind="out"]')?.addEventListener("input", (e) => {
       if (locked) return;
       const v = String(e.target?.value ?? "");
@@ -815,19 +827,18 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     ensureDefaultMapping(row, { input, outText: row.outText, isRepeat });
 
     if (row.kind === "SKIP") {
-      const blank = "————"; // 4 znaki, po clip11 i tak wejdzie
-    
+      const blank = "———————————";
       if (roundNo === 1) await display.finalSetLeft(idx + 1, clip11(blank));
       else await display.finalSetRight(idx + 1, clip11(blank));
-    
+
       row.revealedAnswer = true;
-    
-      playSfx("answer_wrong");
-      return { hasAnswer: false };
+      row.revealedPoints = false;
+
+      playSfx("bells");
+      return { hasAnswer: true };
     }
 
     let txt = "";
-
     if (row.kind === "MATCH") {
       const a = aList.find((x) => x.id === row.matchId);
       txt = (a?.text || "").trim();
@@ -838,16 +849,11 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
 
     txt = txt.length ? txt : (display.PLACE?.finalText || FINAL_MSG.FALLBACK_ANSWER);
 
-    // Używamy istniejących funkcji ustawiania:
-    // - pokazujemy tekst z punktami 00 (docelowe punkty odsłonimy osobno)
     if (roundNo === 1) await display.finalSetLeft(idx + 1, clip11(txt));
     else await display.finalSetRight(idx + 1, clip11(txt));
 
     row.revealedAnswer = true;
-
-    // samo odsłonięcie odpowiedzi = dzwonki
     playSfx("bells");
-
     return { hasAnswer: true };
   }
 
@@ -869,13 +875,10 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
 
     if (row.kind === "SKIP") {
       const pts2 = "0";
-    
       row.pts = 0;
       row.revealedPoints = true;
-    
-      // suma bez zmian (0)
+
       updateSumUI();
-    
       if (roundNo === 1) {
         await display.finalSetA(idx + 1, pts2);
         await display.finalSetSuma(store.state.final.runtime.sum || 0, "A");
@@ -883,13 +886,12 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
         await display.finalSetB(idx + 1, pts2);
         await display.finalSetSuma(store.state.final.runtime.sum || 0, "B");
       }
-    
+
       playSfx("answer_wrong");
       return false;
     }
 
     let pts = 0;
-
     if (row.kind === "MATCH") {
       const a = aList.find((x) => x.id === row.matchId);
       pts = a ? nInt(a.fixed_points, 0) : 0;
@@ -915,7 +917,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
 
     if (row.kind === "MATCH") playSfx("answer_correct");
     else playSfx("answer_wrong");
-    
+
     return false;
   }
 
@@ -968,7 +970,6 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     if (typeof store.setFinalActive === "function") store.setFinalActive(true);
     else store.state.locks.finalActive = true;
 
-    // wyłączamy buzzer na czas finału
     try {
       await devices.sendBuzzerCmd("OFF");
     } catch (e) {
@@ -980,7 +981,6 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     ui.setMsg("msgFinal", "");
     ui.setMsg("msgFinalP2Start", "");
 
-    // reset pigułek timera w UI
     ui.setFinalTimerP1(FINAL_MSG.TIMER_PLACEHOLDER);
     ui.setFinalTimerP2(FINAL_MSG.TIMER_PLACEHOLDER);
 
@@ -1000,7 +1000,9 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
       (async () => {
         try {
           if (typeof display.roundsHideBoard === "function") {
-            try { await display.roundsHideBoard(); } catch {}
+            try {
+              await display.roundsHideBoard();
+            } catch {}
           }
           if (typeof display.finalBoardPlaceholders === "function") {
             await display.finalBoardPlaceholders();
@@ -1062,26 +1064,26 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     ensureRuntime();
     const rt = store.state.final.runtime;
     if (rt.timer.usedP2) return;
-  
+
     rt.timer.usedP2 = true;
-  
-    // ODKRYCIE = pokazujemy wyniki rundy 1 (TYLKO RAZ)
+
+    // ODKRYCIE = pokazujemy wyniki rundy 1 (TYLKO RAZ) — przy starcie 20s
     (async () => {
       if (rt.halfRevealedP2) return;
       rt.halfRevealedP2 = true;
-  
+
       try {
         const rows = Array.from({ length: 5 }, (_, i) => {
-          const r = getP1DisplayRow(i);          // {text, pts}
+          const r = getP1DisplayRow(i);
           return { text: clip11(r.text), pts: r.pts };
         });
-  
+
         await display.finalHalfFromRows?.(rows, { anim: "matrix down 1000" });
       } catch (e) {
         console.warn("finalHalfFromRows failed", e);
       }
     })();
-  
+
     ui.setFinalTimerP2("20");
     startCountdown(20, "P2");
     ui.setEnabled("btnFinalToP2MapQ1", false);
@@ -1104,39 +1106,36 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
 
   function nextFromP1Q(idx1based) {
     const n = Number(idx1based) || 1;
-  
+
     if (n < 5) {
       toP1MapQ(n + 1);
       return;
     }
-    
+
     const adv = store.state.advanced || {};
     const target = typeof adv.finalTarget === "number" ? adv.finalTarget : 200;
     const sumNow = nInt(store.state.final.runtime?.sum, 0);
-    
+
     if (sumNow >= target) {
-      // osiągnięto próg po rundzie 1 → kończymy finał, runda 2 się nie odbywa
       gotoEnd(true);
       return;
     }
-    
+
     toP2Start();
   }
 
   function toP2Start() {
     stopTimer();
-  
+
     (async () => {
       try {
-        // UKRYCIE = PLACEHOLDERY
-        await display.finalHalfPlaceholders?.(); 
-        // jeśli chcesz animację “zasłony”, to niech ją robi finalHalfPlaceholders()
-        // (u Ciebie wcześniej było ANIMIN matrix down 1000)
+        // UKRYCIE = PLACEHOLDERY (to jest "zasłonięcie")
+        await display.finalHalfPlaceholders?.();
       } catch (e) {
         console.warn("finalHalfPlaceholders failed", e);
       }
     })();
-  
+
     setStep("f_p2_start");
   }
 
@@ -1146,43 +1145,32 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     const q = qPicked[idx];
     const aList = answersByQ.get(q.id) || [];
     const row = rt.map1[idx];
-  
-    // brak odpowiedzi = SKIP = 0 punktów
+
     if (row.kind === "SKIP") {
-      return {
-        text: "———————————",
-        pts: "0",
-      };
+      return { text: "———————————", pts: "0" };
     }
-  
+
     if (row.kind === "MATCH") {
-      const a = aList.find(x => x.id === row.matchId);
-      return {
-        text: (a?.text || "———————————").trim(),
-        pts: String(nInt(a?.fixed_points, 0)),
-      };
+      const a = aList.find((x) => x.id === row.matchId);
+      return { text: (a?.text || "———————————").trim(), pts: String(nInt(a?.fixed_points, 0)) };
     }
-  
-    // MISS (nie ma na liście)
+
     const out = (row.outText || rt.p1[idx].text || "").trim();
-    return {
-      text: out || "———————————",
-      pts: "0",
-    };
+    return { text: out || "———————————", pts: "0" };
   }
 
   async function startP2Round() {
     ensureRuntime();
-    const rt = store.state.final.runtime;
 
     let dur = 0;
-    try { dur = await getSfxDuration("round_transition"); } catch {}
+    try {
+      dur = await getSfxDuration("round_transition");
+    } catch {}
     const totalMs = dur > 0 ? dur * 1000 : 2000;
     const anchorMs = 920;
 
     playSfx("round_transition");
 
-    // W kotwicy ustawiamy licznik po stronie zwycięskiej drużyny (20s)
     setTimeout(() => {
       display.finalSetSideTimer?.(getWinnerTeam(), "20").catch(() => {});
     }, anchorMs);
@@ -1228,7 +1216,6 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     if (rtDone?.done === true) return;
     if (rtDone) rtDone.done = true;
 
-    // po kliknięciu „Zakończ finał” blokujemy przycisk
     ui.setEnabled?.("btnFinalFinish", false);
 
     playSfx("final_theme");
@@ -1265,7 +1252,6 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
 
     const mode = getEndScreenMode(store);
 
-    // przed wynikiem / logo: animout
     try {
       await devices.sendDisplayCmd('FBATCH ANIMOUT edge down 1000');
       await new Promise((r) => setTimeout(r, 1000));
@@ -1287,6 +1273,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
       else await display.showLogo?.();
       return;
     }
+
     store.state.locks.gameEnded = true;
   }
 
