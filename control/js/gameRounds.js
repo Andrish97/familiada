@@ -241,12 +241,11 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     ui.showRoundsStep(step);
 
     const canStartRoundNow =
-      typeof store.canStartRounds === "function"
+      (typeof store.canStartRounds === "function"
         ? store.canStartRounds() && r.step === "r_roundStart"
-        : r.step === "r_roundStart";
-
+        : r.step === "r_roundStart") && r.transitionRunning !== true;
+    
     ui.setEnabled("btnStartRound", canStartRoundNow);
-
     hostUpdate(); // <- tu
   }
 
@@ -498,11 +497,11 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
       ui.setMsg("msgRoundsRoundStart", ROUNDS_MSG.NO_MORE_QUESTIONS);
       return;
     }
-
+    
     r.phase = "DUEL";
     r.passUsed = false;
     r.steal = { active: false, used: false, won: false, team: null };
-
+    r.transitionRunning = true;
     r.canEndRound = false;
 
     r.bankPts = 0;
@@ -596,7 +595,7 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     if (totalMs > 0) {
       await new Promise((resolve) => setTimeout(resolve, totalMs));
     }
-
+    r.transitionRunning = false;
     setStep("r_duel");
     ui.setRoundsHud(r);
 
