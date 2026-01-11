@@ -243,11 +243,12 @@ export function createDisplay({ devices, store }) {
   }
 
   // HALF: zasłony / odsłony lewej połówki (wyniki rundy 1 podczas rundy 2)
+  
   function halfRowText(t) {
     const s = String(t ?? "").trim();
     return q(s.length ? s : PLACE.finalText);
   }
-
+  
   function halfRowPts(p) {
     const s = String(p ?? "").trim();
     // dla zasłon używamy PLACE.finalPts (np. ▒▒); dla realnych punktów "00".."99"
@@ -255,35 +256,35 @@ export function createDisplay({ devices, store }) {
     const n = nInt(s, 0);
     return String(n).padStart(2, "0").slice(-2);
   }
-
+  
   async function finalHalfPlaceholders() {
     await send(
       "FHALF A " +
-      `"${halfRowText(PLACE.finalText)}" ${PLACE.finalPts} ` +
-      `"${halfRowText(PLACE.finalText)}" ${PLACE.finalPts} ` +
-      `"${halfRowText(PLACE.finalText)}" ${PLACE.finalPts} ` +
-      `"${halfRowText(PLACE.finalText)}" ${PLACE.finalPts} ` +
-      `"${halfRowText(PLACE.finalText)}" ${PLACE.finalPts} ` +
-      "ANIMIN matrix down 1000"
+        `F1 "${halfRowText(PLACE.finalText)}" ${PLACE.finalPts} ` +
+        `F2 "${halfRowText(PLACE.finalText)}" ${PLACE.finalPts} ` +
+        `F3 "${halfRowText(PLACE.finalText)}" ${PLACE.finalPts} ` +
+        `F4 "${halfRowText(PLACE.finalText)}" ${PLACE.finalPts} ` +
+        `F5 "${halfRowText(PLACE.finalText)}" ${PLACE.finalPts} ` +
+        "ANIMIN matrix down 1000"
     );
   }
-
+  
   // rows: [{text, pts}] (len 5)
   async function finalHalfFromRows(rows, { anim = "matrix up 800" } = {}) {
     const safe = Array.isArray(rows) ? rows : [];
     const r = (i) => safe[i] || {};
-
+  
     await send(
       "FHALF A " +
-      `"${halfRowText(r(0).text)}" ${halfRowPts(r(0).pts)} ` +
-      `"${halfRowText(r(1).text)}" ${halfRowPts(r(1).pts)} ` +
-      `"${halfRowText(r(2).text)}" ${halfRowPts(r(2).pts)} ` +
-      `"${halfRowText(r(3).text)}" ${halfRowPts(r(3).pts)} ` +
-      `"${halfRowText(r(4).text)}" ${halfRowPts(r(4).pts)} ` +
-      `ANIMIN ${anim}`
+        `F1 "${halfRowText(r(0).text)}" ${halfRowPts(r(0).pts)} ` +
+        `F2 "${halfRowText(r(1).text)}" ${halfRowPts(r(1).pts)} ` +
+        `F3 "${halfRowText(r(2).text)}" ${halfRowPts(r(2).pts)} ` +
+        `F4 "${halfRowText(r(3).text)}" ${halfRowPts(r(3).pts)} ` +
+        `F5 "${halfRowText(r(4).text)}" ${halfRowPts(r(4).pts)} ` +
+        `ANIMIN ${anim}`
     );
   }
-
+  
   async function finalSetLeft(n, text) {
     const txt = q(String(text || ""));
     await send(`FL ${n} "${txt}" ANIMIN matrix right 500`);
