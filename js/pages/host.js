@@ -12,80 +12,224 @@ const blank = document.getElementById("blank");
 const btnFS = document.getElementById("btnFS");
 const fsIco = document.getElementById("fsIco");
 
-// stabilny device_id dla presence
+/* ========= DEVICE ID (presence) ========= */
 const DEVICE_ID_KEY = "familiada:deviceId:host";
 let deviceId = localStorage.getItem(DEVICE_ID_KEY) || null;
+if (!deviceId) {
+  deviceId = "hst_" + (crypto?.randomUUID?.() || String(Math.random()).slice(2));
+  deviceId = deviceId.replace(/-/g, "").slice(0, 24);
+  localStorage.setItem(DEVICE_ID_KEY, deviceId);
+}
 
-// stan hosta
+/* ========= STATE ========= */
 let hidden = false;
 let text = "";
 
-// cache (żeby nie przepisywać identycznego tekstu = brak migotania)
+/* cache (żeby nie przepisywać identycznego = brak migotania) */
 let lastRendered = {
   paper: null,
   hint: null,
 };
 
+/* ========= iOS / FULLSCREEN ========= */
 let pseudoFS = false;
 
 function isIOSSafari() {
   const ua = navigator.userAgent || "";
-  const iOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  const iOS =
+    /iPad|iPhone|iPod/.test(ua) ||
+    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
   const webkit = /WebKit/.test(ua);
   const notChrome = !/CriOS|FxiOS|EdgiOS/.test(ua);
   return iOS && webkit && notChrome;
 }
 
-function setPseudoFS(on){
+function setPseudoFS(on) {
   pseudoFS = !!on;
   document.documentElement.classList.toggle("pseudoFS", pseudoFS);
-  // iOS: próba schowania paska
   setTimeout(() => window.scrollTo(0, 1), 50);
 }
 
-
-/* ========= FULLSCREEN ========= */
 function setFullscreenIcon() {
   if (!fsIco) return;
-  fsIco.textContent = document.fullscreenElement ? "⧉" : "▢";
+  const isReal = !!document.fullscreenElement;
+  fsIco.textContent = (isReal || pseudoFS) ? "⧉" : "▢";
 }
 
 async function toggleFullscreen() {
-  
   if (isIOSSafari() && !window.navigator.standalone) {
-    // w Safari nie zrobimy prawdziwego FS; pokaż instrukcję webapp
+    // Safari iOS: brak prawdziwego fullscreen w przeglądarce → instrukcja webapp
     document.documentElement.classList.toggle("showA2HS");
     return;
   }
+
   try {
-    if (!document.fullscreenElement && !pseudoFS) {
-      const req = document.documentElement.requestFullscreen || document.documentElement.webkitRequestFullscreen;
-      if (req) {
-        await req.call(document.documentElement, { navigationUI: "hide" });
-      } else {
-        throw new Error("Fullscreen API not available");
-      }
-    } else {
-      if (document.fullscreenElement) {
-        await document.exitFullscreen?.();
-      }
-      setPseudoFS(false);
+    // wyjście
+    if (document.fullscreenElement) {
+      await document.exitFullscreen?.();
+      setFullscreenIcon();
+      return;
     }
+    if (pseudoFS) {
+      setPseudoFS(false);
+      setFullscreenIcon();
+      return;
+    }
+
+    // wejście: spróbuj prawdziwego fullscreen
+    const el = document.documentElement;
+    const req = el.requestFullscreen || el.webkitRequestFullscreen;
+    if (!req) throw new Error("Fullscreen API not available");
+    await req.call(el, { navigationUI: "hide" });
+
+    setFullscreenIcon();
   } catch (e) {
-    // iOS / blokady => pseudo-fullscreen
-    setPseudoFS(!pseudoFS);
-    console.warn("[FS] fallback to pseudo:", e);
+    // fallback: pseudo-fullscreen
+    setPseudoFS(true);
+    console.warn("[host] fullscreen fallback:", e);
+    setFullscreenIcon();
   }
-  setFullscreenIcon();
 }
 
 /* ========= AUDIO =========
-Usunięte: symulacja "szurania kartki" była zbugowana i irytowała.
-Zostawiamy stub, żeby wywołania (jeśli kiedyś wrócą) nie sypały błędów.
+Usunięte: symulacja "szurania kartki" była zbugowana.
 */
 function playRustle() {}
 
-/* ========= UI/ANIM ========= */
+/* ========= STYLED TEXT (segmenty) =========
+Składnia (bez zagnieżdżania, świadomie):
+  [b]tekst[/]
+  [u]tekst[/]
+  [s]tekst[/]
+  [gold b]tekst[/]
+  [#2a62ff u]tekst[/]
+  [rebeccapurple b u]tekst[/]
+Zamykanie zawsze: [/]
+Kolory: dowolny kolor CSS (nazwany / rgb() / hsl() / var(...) / #rrggbb).
+*/
+
+function parseStyleTokens(tokenStr) {
+  const out = { color: null, bold: false, underline: false, strike: false };
+
+  const tokens = String(tokenStr || "")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+
+  for (const tRaw of tokens) {
+    const t = tRaw.toLowerCase();
+
+    if (t === "b") out.bold = true;
+    else if (t === "u") out.underline = true;
+    else if (t === "s") out.strike = true;
+    else {
+      // kolor CSS: pozwalamy na nazwy HTML/CSS i inne formy
+      out.color = tRaw;
+    }
+  }
+
+  return out;
+}
+
+function parseStyledText(input) {
+  const s = String(input ?? "");
+  const segs = [];
+
+  let i = 0;
+  while (i < s.length) {
+    const open = s.indexOf("[", i);
+    if (open === -1) {
+      segs.push({ text: s.slice(i), style: null });
+      break;
+    }
+
+    if (open > i) segs.push({ text: s.slice(i, open), style: null });
+
+    const close = s.indexOf("]", open + 1);
+    if (close === -1) {
+      segs.push({ text: s.slice(open), style: null });
+      break;
+    }
+
+    const tag = s.slice(open + 1, close).trim();
+    if (tag === "/") {
+      // samotne [/] → plain text
+      segs.push({ text: s.slice(open, close + 1), style: null });
+      i = close + 1;
+      continue;
+    }
+
+    const endTag = "[/]";
+    const end = s.indexOf(endTag, close + 1);
+    if (end === -1) {
+      segs.push({ text: s.slice(open), style: null });
+      break;
+    }
+
+    const inner = s.slice(close + 1, end);
+    const style = parseStyleTokens(tag);
+    segs.push({ text: inner, style });
+
+    i = end + endTag.length;
+  }
+
+  // scal plain segments
+  const merged = [];
+  for (const seg of segs) {
+    if (!seg.text) continue;
+    const last = merged[merged.length - 1];
+    if (last && !last.style && !seg.style) last.text += seg.text;
+    else merged.push(seg);
+  }
+  return merged;
+}
+
+function renderStyledInto(el, sourceText) {
+  if (!el) return;
+
+  const src = String(sourceText ?? "");
+
+  // szybka ścieżka: brak znaczników
+  if (!src.includes("[") || !src.includes("]")) {
+    el.textContent = src;
+    return;
+  }
+
+  const segs = parseStyledText(src);
+  const hasStyled = segs.some((x) => x.style);
+
+  if (!hasStyled) {
+    el.textContent = src;
+    return;
+  }
+
+  const frag = document.createDocumentFragment();
+
+  for (const seg of segs) {
+    if (!seg.style) {
+      frag.appendChild(document.createTextNode(seg.text));
+      continue;
+    }
+
+    const span = document.createElement("span");
+    span.textContent = seg.text;
+
+    if (seg.style.color) span.style.color = seg.style.color;
+    if (seg.style.bold) span.style.fontWeight = "900";
+
+    const deco = [];
+    if (seg.style.underline) deco.push("underline");
+    if (seg.style.strike) deco.push("line-through");
+    if (deco.length) span.style.textDecoration = deco.join(" ");
+
+    frag.appendChild(span);
+  }
+
+  // podmiana „na raz” = brak migotania
+  el.replaceChildren(frag);
+}
+
+/* ========= UI/ANIM (blank) ========= */
 function setBlankInstant(on) {
   if (!blank) return;
   blank.classList.add("noAnim");
@@ -137,7 +281,7 @@ function render(opts = {}) {
 
   const nextPaper = hidden ? "" : text;
   if (paperText && lastRendered.paper !== nextPaper) {
-    paperText.textContent = nextPaper;
+    renderStyledInto(paperText, nextPaper);
     lastRendered.paper = nextPaper;
   }
 
@@ -203,7 +347,7 @@ async function restoreState() {
     text = typeof s.text === "string" ? s.text : "";
     hidden = !!s.hidden;
     render({ animate: false });
-  } catch (e) {
+  } catch {
     text = "";
     hidden = false;
     render({ animate: false });
@@ -213,11 +357,11 @@ async function restoreState() {
 /* ========= KOMENDY Z CONTROLA =========
 Obsługujemy:
 - OFF / ON   (OFF=HIDE, ON=OPEN)
-- HIDE / OPEN (dodatkowo, bez szkody)
+- HIDE / OPEN
 - SET "..."
 - APPEND "..."
 - CLEAR
-W SET/APPEND wspieramy \n w stringu.
+W SET/APPEND wspieramy \n \t \"
 */
 function unquotePayload(line, keyword) {
   const re = new RegExp(`^${keyword}\\s+"([\\s\\S]*)"\\s*$`, "i");
@@ -236,7 +380,6 @@ function decodeEscapes(s) {
 async function handleCmd(lineRaw) {
   const line = String(lineRaw ?? "").trim();
   const up = line.toUpperCase();
-
   if (!line) return;
 
   if (up === "OFF" || up === "HIDE") {
@@ -276,12 +419,14 @@ async function handleCmd(lineRaw) {
 let ch = null;
 function ensureChannel() {
   if (ch) return ch;
+
   ch = sb()
     .channel(`familiada-host:${gameId}`)
     .on("broadcast", { event: "HOST_CMD" }, (msg) => {
       handleCmd(msg?.payload?.line);
     })
     .subscribe();
+
   return ch;
 }
 
@@ -351,13 +496,11 @@ async function onPointerUp(ev) {
   if (adx < dy * SWIPE_SLOPE) return;
 
   if (dx > 0) {
-    // swipe w prawo => HIDE
     if (!hidden) {
       setHidden(true, { animate: true });
       await persistState();
     }
   } else {
-    // swipe w lewo => OPEN
     if (hidden) {
       setHidden(false, { animate: true });
       await persistState();
@@ -365,7 +508,7 @@ async function onPointerUp(ev) {
   }
 }
 
-// blokuj ctrl+scroll zoom (desktop)
+/* blokuj ctrl+scroll zoom (desktop) */
 document.addEventListener(
   "wheel",
   (e) => {
@@ -385,7 +528,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.documentElement.classList.add("webapp");
   }
 
-  // bez parametrów = zasłonięte i puste
+  // brak parametrów = zasłonięte i puste
   if (!gameId || !key) {
     text = "";
     hidden = true;
@@ -402,10 +545,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   ping();
   setInterval(ping, 5000);
-
 });
 
-// debug
+/* debug */
 window.__host = {
   setHidden,
   setText,
