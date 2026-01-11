@@ -243,9 +243,10 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     const canStartRoundNow =
       (typeof store.canStartRounds === "function"
         ? store.canStartRounds() && r.step === "r_roundStart"
-        : r.step === "r_roundStart") && r.transitionRunning !== true;
+        : r.step === "r_roundStart");
     
     ui.setEnabled("btnStartRound", canStartRoundNow);
+
     hostUpdate(); // <- tu
   }
 
@@ -487,7 +488,9 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
   async function startRound() {
     await loadRoundsIfNeeded();
     ensureRoundsState();
-
+    
+    ui.setEnabled("btnStartRound", false);
+    
     clearAllRoundMsgs();
 
     const r = store.state.rounds;
@@ -501,7 +504,6 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     r.phase = "DUEL";
     r.passUsed = false;
     r.steal = { active: false, used: false, won: false, team: null };
-    r.transitionRunning = true;
     r.canEndRound = false;
 
     r.bankPts = 0;
@@ -595,7 +597,6 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     if (totalMs > 0) {
       await new Promise((resolve) => setTimeout(resolve, totalMs));
     }
-    r.transitionRunning = false;
     setStep("r_duel");
     ui.setRoundsHud(r);
 
