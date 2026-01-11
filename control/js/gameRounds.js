@@ -73,41 +73,23 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
   let timerRAF = null;
   const introMixer = createSfxMixer?.();
 
-    // ================== HOST (RUNDS) ==================
-  async function hostShowText(txt) {
-    const safe = String(txt ?? "").replace(/"/g, '\\"');
-    try {
-      await devices.sendHostCmd(`SET "${safe}"`);
-      await devices.sendHostCmd("OPEN");
-    } catch {}
-  }
+ 
 
-  async function hostBlank() {
-    try {
-      await devices.sendHostCmd('SET ""');
-      // chcesz dodatkowo HIDE — robimy zawsze, bezpiecznie
-      await devices.sendHostCmd("HIDE");
-    } catch {}
+
+    // ================== HOST (RUNDS) ==================
+  function hostTag(style, text) {
+    return `[${style}]${String(text ?? "")}[/]`;
   }
 
   function hostTitleForRounds() {
     const r = store.state.rounds || {};
     const rn = nInt(r.roundNo, 1);
 
-    // “PRZYCISK” – gdy czekamy na przycisk i zanim zatwierdzimy
-    // u Ciebie to jest: DUEL + r.duel.enabled === true
     if (r.phase === "DUEL" && r.duel?.enabled) return `RUNDA ${rn} — PRZYCISK`;
-
-    // “POJEDYNEK” – gdy jesteśmy w pojedynku po zatwierdzeniu (acceptBuzz)
     if (r.phase === "DUEL" && !r.duel?.enabled) return `RUNDA ${rn} — POJEDYNEK`;
-
     if (r.phase === "PLAY") return `RUNDA ${rn} — ROZGRYWKA`;
     if (r.phase === "STEAL") return `RUNDA ${rn} — KRADZIEŻ`;
-
-    // REVEAL możesz pokazać albo zostawić pusty — wg uznania:
     if (r.phase === "REVEAL") return `RUNDA ${rn} — ODSŁANIANIE`;
-
-    // READY / INTRO / GAME END – host pusty
     return "";
   }
 
@@ -116,14 +98,65 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     return String(q).trim();
   }
 
+  function hostAnswerLines() {
+    const r = store.state.rounds || {};
+    const answers = Array.isArray(r.answers) ? r.answers : [];
+    const revealed = r.revealed instanceof Set ? r.revealed : new Set();
+
+    if (!answers.length) return [];
+
+    // sort po ord (pewnie już jest, ale bezpiecznie)
+    const sorted = answers.slice().sort((a, b) => nInt(a.ord, 0) - nInt(b.ord, 0));
+
+    // format: "1) TEKST (PTS)"
+    // odsłonięte: zielone + zakreślenie
+    return sorted.map((a) => {
+      const ord = nInt(a.ord, 0) || 0;
+      const pts = nInt(a.fixed_points ?? a.points, 0);
+      const txt = String(a.text || "").replace(/\s+/g, " ").trim() || "—";
+
+      const line = `${ord}) ${txt} (${pts})`;
+
+      if (revealed.has(a.ord)) {
+        return hostTag("#00c000 s", line); // zielone + zakreślenie
+      }
+      return line;
+    });
+  }
+
   function hostComposeLines() {
     const title = hostTitleForRounds();
     if (!title) return null;
 
     const q = hostBodyQuestion();
-    // zawsze: nagłówek, pusta linia, pytanie (na dole)
-    // (nie filtrujemy pustych linii)
-    return [title, "", q || "—"].join("\n");
+    const ansLines = hostAnswerLines();
+
+    // układ:
+    // nagłówek
+    // pusta linia
+    // pytanie
+    // pusta linia
+    // odpowiedzi
+    const lines = [title, "", q || "—"];
+
+    if (ansLines.length) {
+      lines.push("", ...ansLines);
+    }
+
+    return lines.join("\n");
+  }
+
+  async function hostShowText(txt) {
+    const safe = String(txt ?? "").replace(/"/g, '\\"');
+    try {
+      await devices.sendHostCmd(`SET "${safe}"`);
+    } catch {}
+  }
+
+  async function hostBlank() {
+    try {
+      await devices.sendHostCmd('SET ""');
+    } catch {}
   }
 
   function hostUpdate() {
