@@ -410,6 +410,19 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     };
   }
 
+  function getFinalMinPoints() {
+    const adv = store.state.advanced || {};
+    return nInt(adv.finalMinPoints, 0);
+  }
+  
+  function isThresholdHit() {
+    const r = store.state.rounds || {};
+    const t = r.totals || { A: 0, B: 0 };
+    const thr = getFinalMinPoints();
+    if (thr <= 0) return false;
+    return nInt(t.A, 0) >= thr || nInt(t.B, 0) >= thr;
+  }
+
   // === Główne stany gry ===
 
   async function stateGameReady() {
@@ -501,7 +514,25 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     ensureRoundsState();
     
     const r = store.state.rounds;
-    // kasowanie starej rundy DOPIERO przy starcie nowej:
+
+    if (isThresholdHit()) {
+      const canFinal =
+        typeof store.canEnterCard === "function" && store.canEnterCard("final");
+    
+      if (canFinal) {
+        store.setFinalActive?.(true);
+        store.setActiveCard?.("final");
+        ui.showCard?.("final");
+        ui.showFinalStep?.("f_start");
+        setEndMsg(ROUNDS_MSG.ROUND_TO_FINAL);
+      } else {
+        ui.showRoundsStep?.("r_gameEnd");
+        ui.setEnabled?.("btnShowGameEnd", true);
+        setEndMsg(ROUNDS_MSG.ROUND_LAST);
+      }
+      return;
+    }
+        
     r.question = null;
     r.answers = [];
     r.revealed = new Set();
@@ -1212,52 +1243,49 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
 
   function endRound() {
     const r = store.state.rounds;
-
+  
     r.roundNo = nInt(r.roundNo, 1) + 1;
-
+  
     r.bankPts = 0;
     r.xA = 0;
     r.xB = 0;
     r.controlTeam = null;
-
+  
     r.steal = { active: false, used: false, team: null };
     r.stealWon = false;
     r.allowPass = false;
-
+  
     r.phase = "READY";
-
+  
     clearTimer3();
     ui.setRoundsHud(r);
-
+  
     const moreQuestions = hasMoreQuestions();
-    const canFinal =
-      typeof store.canEnterCard === "function" &&
-      store.canEnterCard("final");
-
-    if (canFinal) {
-      if (typeof store.setFinalActive === "function") {
-        store.setFinalActive(true);
+    const thresholdHit = isThresholdHit();
+  
+    // jeżeli próg osiągnięty ALBO nie ma pytań -> kończymy flow rund
+    if (thresholdHit || !moreQuestions) {
+      const canFinal =
+        typeof store.canEnterCard === "function" && store.canEnterCard("final");
+  
+      if (canFinal) {
+        store.setFinalActive?.(true);
+        store.setActiveCard?.("final");
+        ui.showCard?.("final");
+        ui.showFinalStep?.("f_start");
+        setEndMsg(ROUNDS_MSG.ROUND_TO_FINAL);
+        return;
       }
-      if (typeof store.setActiveCard === "function") {
-        store.setActiveCard("final");
-      }
-      if (typeof ui.showCard === "function") {
-        ui.showCard("final");
-      }
-      if (typeof ui.showFinalStep === "function") {
-        ui.showFinalStep("f_start");
-      }
-      setEndMsg(ROUNDS_MSG.ROUND_TO_FINAL);
+  
+      ui.showRoundsStep?.("r_gameEnd");
+      ui.setEnabled?.("btnShowGameEnd", true);
+      setEndMsg(ROUNDS_MSG.ROUND_LAST);
       return;
     }
-
-    if (moreQuestions) {
-      setStep("r_roundStart");
-      setEndMsg(ROUNDS_MSG.ROUND_NEXT);
-    } else {
-      ui.showRoundsStep?.("r_gameEnd");
-      setEndMsg(ROUNDS_MSG.ROUND_LAST);
-    }
+  
+    // normalnie: są pytania i próg nie trafiony
+    setStep("r_roundStart");
+    setEndMsg(ROUNDS_MSG.ROUND_NEXT);
   }
 
   function showRevealLeft() {
