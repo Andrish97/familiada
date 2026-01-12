@@ -20,45 +20,45 @@
 
 <body class="host-body">
 
-<div class="a2hs" onclick="document.documentElement.classList.remove('showA2HS')">
-  <div class="a2hsCard" onclick="event.stopPropagation()">
-    <h3 class="a2hsTitle">Pełny ekran na iPhone</h3>
-    <p class="a2hsText">
-      W Safari nie da się wymusić prawdziwego pełnego ekranu.
-      Użyj <b>Udostępnij</b> → <b>Do ekranu początkowego</b>, a potem uruchom jako aplikację.
-    </p>
-    <button class="btn a2hsClose" type="button"
-      onclick="document.documentElement.classList.remove('showA2HS')">OK</button>
+  <div class="a2hs" onclick="document.documentElement.classList.remove('showA2HS')">
+    <div class="a2hsCard" onclick="event.stopPropagation()">
+      <h3 class="a2hsTitle">Pełny ekran na iPhone</h3>
+      <p class="a2hsText">
+        W Safari nie da się wymusić prawdziwego pełnego ekranu.
+        Użyj <b>Udostępnij</b> → <b>Do ekranu początkowego</b>, a potem uruchom jako aplikację.
+      </p>
+      <button class="btn a2hsClose" type="button"
+        onclick="document.documentElement.classList.remove('showA2HS')">OK</button>
+    </div>
   </div>
-</div>
-  
+
   <button class="fsBtn" id="btnFS" type="button" aria-label="Pełny ekran" title="Pełny ekran">
     <span class="ico" id="fsIco" aria-hidden="true">▢</span>
   </button>
-  
-  <!-- Kartka (split) -->
-  <main class="paper split" id="paper">
+
+  <!-- Kartka -->
+  <main class="paper paperSplit" id="paper">
     <i class="redMargin" aria-hidden="true"></i>
 
-    <section class="pane pane1" id="pane1">
-      <pre class="text" id="text1"></pre>
+    <!-- PASMO 1 (zawsze widoczne) -->
+    <section class="pane pane1" aria-label="Tekst 1">
+      <pre class="text" id="paperText1"></pre>
     </section>
 
+    <!-- Linia rozdzielająca (tylko gdy pasmo 2 odsłonięte) -->
     <div class="splitLine" id="splitLine" aria-hidden="true"></div>
 
-    <section class="pane pane2" id="pane2">
-      <pre class="text" id="text2"></pre>
+    <!-- PASMO 2 (zakrywane/odsłaniane) -->
+    <section class="pane pane2" aria-label="Tekst 2">
+      <pre class="text" id="paperText2"></pre>
 
-      <!-- „Zakrywka” tylko na 2. połówkę -->
-      <div class="cover2 coverOn" id="cover2">
-        <div class="cover2Content" aria-hidden="true">
+      <div class="cover2 coverOn" id="cover2" aria-hidden="true">
+        <div class="cover2Content">
           <img class="cover2Logo" src="logo.svg" alt="Familiada" draggable="false"/>
-          <div class="cover2Swipe" id="cover2Swipe"> </div>
+          <div class="cover2Swipe" id="cover2Swipe">—</div>
         </div>
       </div>
     </section>
-
-    <div class="hint" id="hint"> </div>
   </main>
 
 </body>
