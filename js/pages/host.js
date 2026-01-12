@@ -5,18 +5,14 @@ const qs = new URLSearchParams(location.search);
 const gameId = qs.get("id");
 const key = qs.get("key");
 
-const btnFS = document.getElementById("btnFS");
-const fsIco = document.getElementById("fsIco");
-
-const paper = document.getElementById("paper");
-const hint = document.getElementById("hint");
-
-const elText1 = document.getElementById("text1");
-const elText2 = document.getElementById("text2");
-
+const paperText1 = document.getElementById("paperText1");
+const paperText2 = document.getElementById("paperText2");
 const cover2 = document.getElementById("cover2");
 const cover2Swipe = document.getElementById("cover2Swipe");
 const splitLine = document.getElementById("splitLine");
+
+const btnFS = document.getElementById("btnFS");
+const fsIco = document.getElementById("fsIco");
 
 /* ========= DEVICE ID (presence) ========= */
 const DEVICE_ID_KEY = "familiada:deviceId:host";
@@ -27,20 +23,38 @@ if (!deviceId) {
   localStorage.setItem(DEVICE_ID_KEY, deviceId);
 }
 
-/* ========= STATE ========= */
+/* ========= STATE =========
+p2Covered=true => pasmo 2 zasłonięte (overlay ON)
+*/
 let text1 = "";
 let text2 = "";
-let hidden2 = true; // prawa/dolna połówka zakryta
+let p2Covered = true;
 
-let lastRendered = {
+/* cache: żeby nie przebudowywać DOM bez potrzeby */
+const lastRendered = {
   t1: null,
   t2: null,
-  hint: null,
-  hidden2: null,
-  layout: null,
+  p2Covered: null,
+  orientation: null,
 };
 
-/* ========= iOS / FULLSCREEN ========= */
+/* ========= ORIENTACJA ========= */
+function getOrientation() {
+  // portrait jeśli wysokość >= szerokość
+  return (window.innerHeight >= window.innerWidth) ? "portrait" : "landscape";
+}
+
+function applyOrientationClass() {
+  const o = getOrientation();
+  if (lastRendered.orientation === o) return;
+
+  lastRendered.orientation = o;
+  document.documentElement.classList.toggle("portrait", o === "portrait");
+  document.documentElement.classList.toggle("landscape", o === "landscape");
+  updateSwipeHint();
+}
+
+/* ========= FULLSCREEN (+ iOS pseudo) ========= */
 let pseudoFS = false;
 
 function isIOSSafari() {
@@ -96,187 +110,49 @@ async function toggleFullscreen() {
   }
 }
 
-/* ========= STYLED SEGMENTS =========
-Wspieramy wcześniejszy format:
-  [b] [/], [u] [/], [s] [/], [color b u] [/]
-*/
-function parseStyleTokens(tokenStr) {
-  const out = { color: null, bold: false, underline: false, strike: false };
-
-  const tokens = String(tokenStr || "")
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean);
-
-  for (const tRaw of tokens) {
-    const t = tRaw.toLowerCase();
-
-    if (t === "b") out.bold = true;
-    else if (t === "u") out.underline = true;
-    else if (t === "s") out.strike = true;
-    else out.color = tRaw; // dowolny kolor CSS
-  }
-
-  return out;
-}
-
-function parseStyledText(input) {
-  const s = String(input ?? "");
-  const segs = [];
-
-  let i = 0;
-  while (i < s.length) {
-    const open = s.indexOf("[", i);
-    if (open === -1) {
-      segs.push({ text: s.slice(i), style: null });
-      break;
-    }
-
-    if (open > i) segs.push({ text: s.slice(i, open), style: null });
-
-    const close = s.indexOf("]", open + 1);
-    if (close === -1) {
-      segs.push({ text: s.slice(open), style: null });
-      break;
-    }
-
-    const tag = s.slice(open + 1, close).trim();
-    const endTag = "[/]";
-    const end = s.indexOf(endTag, close + 1);
-    if (end === -1) {
-      segs.push({ text: s.slice(open), style: null });
-      break;
-    }
-
-    const inner = s.slice(close + 1, end);
-    const style = tag === "/" ? null : parseStyleTokens(tag);
-    segs.push({ text: inner, style });
-
-    i = end + endTag.length;
-  }
-
-  // merge plain
-  const merged = [];
-  for (const seg of segs) {
-    if (!seg.text) continue;
-    const last = merged[merged.length - 1];
-    if (last && !last.style && !seg.style) last.text += seg.text;
-    else merged.push(seg);
-  }
-  return merged;
-}
-
-function renderStyledInto(el, sourceText) {
-  if (!el) return;
-
-  const src = String(sourceText ?? "");
-  if (!src.includes("[") || !src.includes("]")) {
-    el.textContent = src;
-    return;
-  }
-
-  const segs = parseStyledText(src);
-  const hasStyled = segs.some((x) => x.style);
-  if (!hasStyled) {
-    el.textContent = src;
-    return;
-  }
-
-  const frag = document.createDocumentFragment();
-
-  for (const seg of segs) {
-    if (!seg.style) {
-      frag.appendChild(document.createTextNode(seg.text));
-      continue;
-    }
-
-    const span = document.createElement("span");
-    span.textContent = seg.text;
-
-    if (seg.style.color) span.style.color = seg.style.color;
-    if (seg.style.bold) span.classList.add("b");
-
-    const deco = [];
-    if (seg.style.underline) deco.push("underline");
-    if (seg.style.strike) deco.push("line-through");
-    if (deco.length) span.style.textDecoration = deco.join(" ");
-
-    frag.appendChild(span);
-  }
-
-  el.replaceChildren(frag);
-}
-
-/* ========= LAYOUT (portrait/landscape) ========= */
-function getLayout() {
-  const w = window.innerWidth || 1;
-  const h = window.innerHeight || 1;
-  return h >= w ? "portrait" : "landscape";
-}
-
-function applyLayout() {
-  const layout = getLayout();
-  if (lastRendered.layout === layout) return;
-
-  document.documentElement.classList.toggle("portrait", layout === "portrait");
-  document.documentElement.classList.toggle("landscape", layout === "landscape");
-
-  // instrukcja na cover2
-  if (cover2Swipe) {
-    cover2Swipe.textContent =
-      layout === "portrait"
-        ? "Przesuń w dół, żeby odsłonić"
-        : "Przesuń w prawo, żeby odsłonić";
-  }
-
-  lastRendered.layout = layout;
-}
-
 /* ========= UI ========= */
-function setCover2Hidden(on, { animate = true } = {}) {
-  hidden2 = !!on;
+function updateSwipeHint() {
+  const o = getOrientation();
+  if (!cover2Swipe) return;
 
-  // divider tylko gdy odkryte
-  if (splitLine) splitLine.style.display = hidden2 ? "none" : "block";
-
-  if (!cover2) return;
-
-  if (!animate) cover2.style.transition = "none";
-  cover2.classList.toggle("coverOn", hidden2);
-  cover2.classList.toggle("coverOff", !hidden2);
-
-  if (!animate) {
-    requestAnimationFrame(() => {
-      cover2.style.transition = "";
-    });
+  // pasmo2 zasłonięte => pokaż jak odsłonić
+  // pasmo2 odsłonięte => pokaż jak zasłonić
+  if (o === "portrait") {
+    cover2Swipe.textContent = p2Covered
+      ? "Przesuń w dół, żeby odsłonić"
+      : "Przesuń w górę, żeby zasłonić";
+  } else {
+    cover2Swipe.textContent = p2Covered
+      ? "Przesuń w prawo, żeby odsłonić"
+      : "Przesuń w lewo, żeby zasłonić";
   }
 }
 
 function render() {
-  applyLayout();
-
-  const nextHint = hidden2
-    ? "Odsłoń pasmo gestem"
-    : "Zasłoń pasmo gestem";
-
-  if (hint && lastRendered.hint !== nextHint) {
-    hint.textContent = nextHint;
-    lastRendered.hint = nextHint;
-  }
-
-  if (elText1 && lastRendered.t1 !== text1) {
-    renderStyledInto(elText1, text1);
+  // tekst 1
+  if (paperText1 && lastRendered.t1 !== text1) {
+    paperText1.textContent = text1;
     lastRendered.t1 = text1;
   }
 
-  if (elText2 && lastRendered.t2 !== text2) {
-    renderStyledInto(elText2, text2);
+  // tekst 2
+  if (paperText2 && lastRendered.t2 !== text2) {
+    paperText2.textContent = text2;
     lastRendered.t2 = text2;
   }
 
-  if (lastRendered.hidden2 !== hidden2) {
-    setCover2Hidden(hidden2, { animate: true });
-    lastRendered.hidden2 = hidden2;
+  // overlay pasma 2 + linia
+  if (lastRendered.p2Covered !== p2Covered) {
+    lastRendered.p2Covered = p2Covered;
+
+    // p2Covered=true => overlay ON
+    cover2?.classList.toggle("coverOn", p2Covered);
+    cover2?.classList.toggle("coverOff", !p2Covered);
+
+    // linia widoczna tylko gdy pasmo2 odsłonięte
+    document.documentElement.classList.toggle("p2Open", !p2Covered);
+
+    updateSwipeHint();
   }
 }
 
@@ -285,20 +161,37 @@ function setText1(next) {
   render();
 }
 
-function clearText1() {
-  text1 = "";
+function setText2(next) {
+  text2 = String(next ?? "");
   render();
 }
 
-function setText2Append(line) {
+function append1(line) {
+  const s = String(line ?? "");
+  if (!s) return;
+  text1 = text1 ? (text1 + "\n" + s) : s;
+  render();
+}
+
+function append2(line) {
   const s = String(line ?? "");
   if (!s) return;
   text2 = text2 ? (text2 + "\n" + s) : s;
   render();
 }
 
-function clearText2() {
+function clear1() {
+  text1 = "";
+  render();
+}
+
+function clear2() {
   text2 = "";
+  render();
+}
+
+function coverP2(on) {
+  p2Covered = !!on;
   render();
 }
 
@@ -310,7 +203,7 @@ async function persistState() {
       p_game_id: gameId,
       p_device_type: "host",
       p_key: key,
-      p_patch: { hidden2, text1, text2 },
+      p_patch: { text1, text2, p2Covered },
     });
   } catch (e) {
     console.warn("[host] persist failed", e);
@@ -330,38 +223,34 @@ async function restoreState() {
     const s = data || {};
     text1 = typeof s.text1 === "string" ? s.text1 : "";
     text2 = typeof s.text2 === "string" ? s.text2 : "";
-    hidden2 = (typeof s.hidden2 === "boolean") ? s.hidden2 : true;
+    p2Covered = (typeof s.p2Covered === "boolean") ? s.p2Covered : true;
 
-    applyLayout();
-    // bez animacji na starcie
-    if (splitLine) splitLine.style.display = hidden2 ? "none" : "block";
-    if (cover2) {
-      cover2.style.transition = "none";
-      cover2.classList.toggle("coverOn", hidden2);
-      cover2.classList.toggle("coverOff", !hidden2);
-      requestAnimationFrame(() => (cover2.style.transition = ""));
-    }
-
-    // render tekstów
-    renderStyledInto(elText1, text1);
-    renderStyledInto(elText2, text2);
-    lastRendered.t1 = text1;
-    lastRendered.t2 = text2;
-    lastRendered.hidden2 = hidden2;
+    // pełny render
+    lastRendered.t1 = null;
+    lastRendered.t2 = null;
+    lastRendered.p2Covered = null;
+    render();
   } catch {
     text1 = "";
     text2 = "";
-    hidden2 = true;
+    p2Covered = true;
+    lastRendered.t1 = null;
+    lastRendered.t2 = null;
+    lastRendered.p2Covered = null;
     render();
   }
 }
 
 /* ========= KOMENDY =========
-- SET1 "..."  -> replace text1
-- SET2 "..."  -> append do text2 (pasmo)
-Dodatkowo (żeby życie miało sens):
-- CLEAR / CLEAR1 / CLEAR2
-- OFF / ON   -> OFF zakrywa 2, ON odsłania 2
+SET1 "..."
+SET2 "..."
+APPEND1 "..."
+APPEND2 "..."
+CLEAR1
+CLEAR2
+CLEAR          (opcjonalnie: czyści oba)
+OPEN2 / HIDE2  (opcjonalnie: sterowanie pasmem 2) – możesz wywalić jeśli nie chcesz
+Wspiera \n \t \"
 */
 function unquotePayload(line, keyword) {
   const re = new RegExp(`^${keyword}\\s+"([\\s\\S]*)"\\s*$`, "i");
@@ -379,52 +268,62 @@ function decodeEscapes(s) {
 
 async function handleCmd(lineRaw) {
   const line = String(lineRaw ?? "").trim();
-  const up = line.toUpperCase();
   if (!line) return;
 
-  if (up === "OFF") {
-    setCover2Hidden(true, { animate: true });
-    render();
-    await persistState();
-    return;
-  }
+  const up = line.toUpperCase();
 
-  if (up === "ON") {
-    setCover2Hidden(false, { animate: true });
-    render();
-    await persistState();
-    return;
-  }
-
-  if (up === "CLEAR") {
-    clearText1();
-    clearText2();
-    await persistState();
-    return;
-  }
-
-  if (up === "CLEAR1") {
-    clearText1();
-    await persistState();
-    return;
-  }
-
-  if (up === "CLEAR2") {
-    clearText2();
-    await persistState();
-    return;
-  }
-
+  // === SET1/SET2 ===
   if (/^SET1\b/i.test(line)) {
-    const payload = decodeEscapes(unquotePayload(line, "SET1"));
-    setText1(payload);
+    setText1(decodeEscapes(unquotePayload(line, "SET1")));
+    await persistState();
+    return;
+  }
+  if (/^SET2\b/i.test(line)) {
+    setText2(decodeEscapes(unquotePayload(line, "SET2")));
     await persistState();
     return;
   }
 
-  if (/^SET2\b/i.test(line)) {
-    const payload = decodeEscapes(unquotePayload(line, "SET2"));
-    setText2Append(payload);
+  // === APPEND1/APPEND2 ===
+  if (/^APPEND1\b/i.test(line)) {
+    append1(decodeEscapes(unquotePayload(line, "APPEND1")));
+    await persistState();
+    return;
+  }
+  if (/^APPEND2\b/i.test(line)) {
+    append2(decodeEscapes(unquotePayload(line, "APPEND2")));
+    await persistState();
+    return;
+  }
+
+  // === CLEAR1/CLEAR2 ===
+  if (up === "CLEAR1") {
+    clear1();
+    await persistState();
+    return;
+  }
+  if (up === "CLEAR2") {
+    clear2();
+    await persistState();
+    return;
+  }
+
+  // opcjonalnie (wygodne)
+  if (up === "CLEAR") {
+    clear1();
+    clear2();
+    await persistState();
+    return;
+  }
+
+  // opcjonalnie: zdalne sterowanie pasmem 2 (jeśli nie chcesz – usuń)
+  if (up === "OPEN2") {
+    coverP2(false);
+    await persistState();
+    return;
+  }
+  if (up === "HIDE2") {
+    coverP2(true);
     await persistState();
     return;
   }
@@ -468,15 +367,14 @@ async function ping() {
   }
 }
 
-/* ========= SWIPE =========
-portrait (pion): odsłoń/zahide -> góra/dół
-landscape (poziom): odsłoń/zahide -> lewo/prawo
-Bezpieczne strefy: nie startuj przy krawędziach.
+/* ========= SWIPE (pasmo2) =========
+- portrait:  DOWN = odsłoń, UP = zasłoń
+- landscape: RIGHT = odsłoń, LEFT = zasłoń
+Z bezpiecznymi strefami (nie zaczynaj z krawędzi).
 */
-const EDGE_GUARD = 28;   // px
-const SWIPE_MIN = 70;    // px
+const SWIPE_MIN = 70;
 const SWIPE_SLOPE = 1.25;
-const MAX_TIME = 650;    // ms
+const EDGE_GUARD = 28;
 
 let swDown = false;
 let sx = 0, sy = 0, st = 0;
@@ -485,19 +383,11 @@ function startAllowed(x, y) {
   const w = window.innerWidth || 1;
   const h = window.innerHeight || 1;
 
-  // zawsze unikamy bocznych krawędzi (system back)
+  // nie z krawędzi (systemowe gesty)
   if (x < EDGE_GUARD || x > (w - EDGE_GUARD)) return false;
+  if (y < EDGE_GUARD || y > (h - EDGE_GUARD)) return false;
 
-  const layout = getLayout();
-  if (layout === "portrait") {
-    // gest pionowy: unikaj góry/dół (paski/gesture)
-    if (y < EDGE_GUARD || y > (h - EDGE_GUARD)) return false;
-    return true;
-  } else {
-    // gest poziomy: unikaj góry/dół też trochę (żeby nie łapać przypadkiem)
-    if (y < EDGE_GUARD * 0.6 || y > (h - EDGE_GUARD * 0.6)) return false;
-    return true;
-  }
+  return true;
 }
 
 function onPointerDown(ev) {
@@ -517,57 +407,50 @@ async function onPointerUp(ev) {
   if (!swDown) return;
   swDown = false;
 
-  const dt = Date.now() - st;
-  if (dt > MAX_TIME) return;
+  const dx = (ev.clientX ?? 0) - sx;
+  const dy = (ev.clientY ?? 0) - sy;
 
-  const x = ev.clientX ?? 0;
-  const y = ev.clientY ?? 0;
+  if (Date.now() - st > 650) return;
 
-  const dx = x - sx;
-  const dy = y - sy;
+  const o = getOrientation();
 
-  const adx = Math.abs(dx);
-  const ady = Math.abs(dy);
-
-  const layout = getLayout();
-
-  if (layout === "portrait") {
-    // gest pionowy (góra/dół) – filtr na „pionowość”
+  if (o === "portrait") {
+    // oczekujemy ruchu pionowego
+    const ady = Math.abs(dy);
+    const adx = Math.abs(dx);
     if (ady < SWIPE_MIN) return;
     if (ady < adx * SWIPE_SLOPE) return;
 
     if (dy > 0) {
-      // w dół => odsłoń
-      if (hidden2) {
-        setCover2Hidden(false, { animate: true });
-        render();
+      // DOWN = odsłoń
+      if (p2Covered) {
+        coverP2(false);
         await persistState();
       }
     } else {
-      // w górę => zasłoń
-      if (!hidden2) {
-        setCover2Hidden(true, { animate: true });
-        render();
+      // UP = zasłoń
+      if (!p2Covered) {
+        coverP2(true);
         await persistState();
       }
     }
   } else {
-    // gest poziomy (lewo/prawo)
+    // landscape: oczekujemy ruchu poziomego
+    const adx = Math.abs(dx);
+    const ady = Math.abs(dy);
     if (adx < SWIPE_MIN) return;
     if (adx < ady * SWIPE_SLOPE) return;
 
     if (dx > 0) {
-      // w prawo => odsłoń
-      if (hidden2) {
-        setCover2Hidden(false, { animate: true });
-        render();
+      // RIGHT = odsłoń
+      if (p2Covered) {
+        coverP2(false);
         await persistState();
       }
     } else {
-      // w lewo => zasłoń
-      if (!hidden2) {
-        setCover2Hidden(true, { animate: true });
-        render();
+      // LEFT = zasłoń
+      if (!p2Covered) {
+        coverP2(true);
         await persistState();
       }
     }
@@ -588,23 +471,23 @@ btnFS?.addEventListener("click", toggleFullscreen);
 document.addEventListener("fullscreenchange", setFullscreenIcon);
 
 window.addEventListener("resize", () => {
-  applyLayout();
-  render();
+  applyOrientationClass();
+  updateSwipeHint();
 });
 
 document.addEventListener("DOMContentLoaded", async () => {
+  applyOrientationClass();
   setFullscreenIcon();
-  applyLayout();
 
   if (window.navigator.standalone) {
     document.documentElement.classList.add("webapp");
   }
 
-  // brak parametrów = lokalny podgląd
+  // brak parametrów = tylko lokalnie, ale działa UI i gest
   if (!gameId || !key) {
     text1 = "";
     text2 = "";
-    hidden2 = true;
+    p2Covered = true;
     render();
     return;
   }
@@ -622,9 +505,13 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 /* debug */
 window.__host = {
-  handleCmd,
   setText1,
-  setText2Append,
-  clearText1,
-  clearText2,
+  setText2,
+  append1,
+  append2,
+  clear1,
+  clear2,
+  coverP2,
+  handleCmd,
+  ping,
 };
