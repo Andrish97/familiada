@@ -554,10 +554,6 @@ body.builder-body{
     display:none !important;
   }
 
-  .tab-corner{
-    bottom: 4; /* było -1px -> cofamy */
-  }
-
   /* warstwy jak w control */
   .tab-label{ z-index: 2; }
   .tab-wrapper{ z-index: 1; }
