@@ -331,6 +331,10 @@ export function createDisplay({ devices, store }) {
     }
   }
 
+  async function finalHideBoard() {
+    await send("FBATCH ANIMOUT edge down 1000");
+  }
+
   // === Logo / Win ===
 
   async function showLogo() {
@@ -383,6 +387,7 @@ export function createDisplay({ devices, store }) {
     finalHalfPlaceholders,
     finalHalfFromRows,
     finalHalfHide,
+    finalHideBoard,
 
     showLogo,
     hideLogo,
