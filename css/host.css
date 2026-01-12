@@ -29,7 +29,13 @@
 /* usuń “mignięcie” highlight na iOS/Android */
 *{ -webkit-tap-highlight-color: transparent; }
 
-html, body { height: 100%; }
+html, body{
+  margin:0;
+  padding:0;
+  background:#fffdf5; /* to samo co kartka */
+  height: 100%;
+}
+
 
 .host-body{
   margin:0;
