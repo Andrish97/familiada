@@ -548,6 +548,8 @@ body.builder-body{
   .tab-active{
     height: calc(var(--tab-height) + var(--tab-extra));
     line-height: var(--tab-height);
+    position: relative;
+    top: 1px;  
     color: transparent;  
   }
 
@@ -555,6 +557,10 @@ body.builder-body{
   .tab-label::after,
   .tab-label.active::after{
     display:none !important;
+  }
+
+  .tab-corner{
+    bottom: -1px;
   }
 
   /* opcjonalnie, ale identycznie jak w control: warstwy */
