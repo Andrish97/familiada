@@ -14,8 +14,8 @@
   --margin-x: 18vmin;     /* czerwony margines */
   --text-left: 20vmin;    /* start tekstu po marginesie */
   --text-right: 16vmin;   /* prawa “krawędź” */
-  --top-pad: calc(var(--line));      /* ~3 linijka */
-  --bottom-pad: calc(var(--line) * 1.2); /* miejsce na hint */
+  --top-pad: calc(var(--line));      /* ~2 linijka */
+  --bottom-pad: calc(var(--line) * 2); /* miejsce na hint */
 }
 
 @font-face{
@@ -65,15 +65,12 @@ html, body { height: 100%; }
 .paper{
   position:fixed;
   inset:0;
-  padding:
-    var(--safe-top)
-    var(--safe-right)
-    var(--safe-bottom)
-    var(--safe-left);
 
   background-color:#fffdf5;
   background-image: linear-gradient(to bottom, #e7e2d3 1px, transparent 1px);
   background-size: 100% var(--line);
+
+  background-position: 0 var(--safe-top);
 
   z-index:10;
 }
