@@ -1189,13 +1189,45 @@ export async function createScene() {
     }
   };
 
+  let appMode = "NONE";
 
+  const hardClearAll = () => {
+    clearBig(big);
+    // small + indicator też czyścimy, bo appMode jest globalny
+    api.small.clearAll();
+    api.indicator.set("OFF");
+  
+    // stany logiczne
+    roundsState.text = Array(6).fill("");
+    roundsState.pts  = Array(6).fill("");
+    roundsState.suma = "";
+    roundsState.sumaRow = 9;
+  
+    for (const k of Object.keys(xState)) xState[k] = false;
+  
+    finalState.sumMode = "B";
+    finalState.sumA = "";
+    finalState.sumB = "";
+  };
   
   // ============================================================
   // API
   // ============================================================
   const api = {
 
+    mode: {
+      getApp: () => appMode,
+    
+      setApp: (m) => {
+        const next = (m ?? "").toString().toUpperCase();
+        if (next === appMode) return;
+        appMode = next;
+        hardClearAll();     // <- amnezja przy zmianie APP
+      },
+    
+      hardClearAll,
+    },
+      
     big: {
       // BRAK globalnej prędkości, cały blok speed wyrzucamy
     
