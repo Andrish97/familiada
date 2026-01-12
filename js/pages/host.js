@@ -215,7 +215,7 @@ function renderStyledInto(el, sourceText) {
     span.textContent = seg.text;
 
     if (seg.style.color) span.style.color = seg.style.color;
-    if (seg.style.bold) span.style.fontWeight = "900";
+    if (seg.style.bold) span.classList.add("b");
 
     const deco = [];
     if (seg.style.underline) deco.push("underline");
