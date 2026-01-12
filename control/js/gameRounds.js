@@ -98,52 +98,34 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     return String(q).trim();
   }
 
-  function hostAnswerLines() {
+  function hostAnswersLines() {
     const r = store.state.rounds || {};
     const answers = Array.isArray(r.answers) ? r.answers : [];
     const revealed = r.revealed instanceof Set ? r.revealed : new Set();
-
-    if (!answers.length) return [];
-
-    // sort po ord (pewnie już jest, ale bezpiecznie)
-    const sorted = answers.slice().sort((a, b) => nInt(a.ord, 0) - nInt(b.ord, 0));
-
-    // format: "1) TEKST (PTS)"
-    // odsłonięte: zielone + zakreślenie
-    return sorted.map((a) => {
-      const ord = nInt(a.ord, 0) || 0;
-      const pts = nInt(a.fixed_points ?? a.points, 0);
-      const txt = String(a.text || "").replace(/\s+/g, " ").trim() || "—";
-
-      const line = `${ord}) ${txt} (${pts})`;
-
-      if (revealed.has(a.ord)) {
-        return hostTag("#00c000 s", line); // zielone + zakreślenie
-      }
-      return line;
-    });
+  
+    return answers
+      .slice()
+      .sort((a,b) => nInt(a.ord,0) - nInt(b.ord,0))
+      .map((a) => {
+        const ord = nInt(a.ord, 0);
+        const pts = nInt(a.fixed_points ?? a.points, 0);
+        const txt = String(a.text || "").replace(/\s+/g, " ").trim();
+  
+        const line = `${ord}) ${txt} (${pts})`;
+        return revealed.has(ord) ? hostTag("#00ff00", line) : line;
+      });
   }
 
   function hostComposeLines() {
     const title = hostTitleForRounds();
     if (!title) return null;
-
+  
     const q = hostBodyQuestion();
-    const ansLines = hostAnswerLines();
-
-    // układ:
-    // nagłówek
-    // pusta linia
-    // pytanie
-    // pusta linia
-    // odpowiedzi
-    const lines = [title, "", q || "—"];
-
-    if (ansLines.length) {
-      lines.push("", ...ansLines);
-    }
-
-    return lines.join("\n");
+  
+    // tytuł ZAWSZE bold:
+    const t = hostTag("b", title);
+  
+    return [t, "", q || "—", "", ...hostAnswersLines()].join("\n");
   }
 
   async function hostShowText(txt) {
@@ -517,6 +499,14 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
   async function startRound() {
     await loadRoundsIfNeeded();
     ensureRoundsState();
+
+    // kasowanie starej rundy DOPIERO przy starcie nowej:
+    r.question = null;
+    r.answers = [];
+    r.revealed = new Set();
+    ui.setRoundQuestion("—");
+    ui.renderRoundAnswers?.([], r.revealed);
+    hostUpdate();
     
     ui.setEnabled("btnStartRound", false);
     
@@ -888,6 +878,7 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
       r.revealed.add(ord);
 
       ui.renderRoundAnswers?.(r.answers, r.revealed);
+      hostUpdate();
 
       const pts = nInt(ans.fixed_points ?? ans.points, 0);
       r.bankPts = nInt(r.bankPts, 0) + pts;
@@ -929,9 +920,9 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
 
     if (r.revealed.has(ord)) return;
     r.revealed.add(ord);
-
+    
     ui.renderRoundAnswers?.(r.answers, r.revealed);
-
+    hostUpdate(); 
     const pts = nInt(ans.fixed_points ?? ans.points, 0);
     r.bankPts = nInt(r.bankPts, 0) + pts;
     ui.setRoundsHud(r);
@@ -1146,7 +1137,6 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
 
   async function goEndRound() {
     const r = store.state.rounds;
-    hostBlank().catch(() => {});
     
     r.canEndRound = false;
     updatePlayControls();
@@ -1226,10 +1216,6 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
 
     r.roundNo = nInt(r.roundNo, 1) + 1;
 
-    r.question = null;
-    r.answers = [];
-    r.revealed = new Set();
-
     r.bankPts = 0;
     r.xA = 0;
     r.xB = 0;
@@ -1307,6 +1293,7 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
 
     r.revealed.add(ord);
     ui.renderRoundAnswers(r.answers, r.revealed);
+    hostUpdate();
 
     try {
       const pts = nInt(ans.fixed_points ?? ans.points, 0);
