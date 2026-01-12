@@ -517,7 +517,6 @@ export function createUI() {
 
     // setup
     $("btnBackToDevices")?.addEventListener("click", () => emit("setup.backToDevices"));
-    $("btnSaveTeams")?.addEventListener("click", () => emit("teams.save"));
     $("btnSetupNext")?.addEventListener("click", () => emit("setup.next"));
     $("btnSetupBack")?.addEventListener("click", () => emit("setup.back"));
     $("btnSetupFinish")?.addEventListener("click", () => emit("setup.finish"));
