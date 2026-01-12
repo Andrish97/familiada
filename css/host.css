@@ -1,6 +1,5 @@
 :root{
   --line: 6vmin;
-
   --font-ratio: 1.1;
   --baseline-shift: 0.15;
 
@@ -15,9 +14,14 @@
   --top-pad: calc(var(--line));
   --bottom-pad: calc(var(--line) * 2.2);
 
-  /* divider */
-  --split-line-w: 2px;
-  --split-line: rgba(0,0,0,.18);
+  /* rozmiar pasma 2 */
+  --pane2-size-portrait: 42%;
+  --pane2-size-landscape: 38%;
+
+  /* linia rozdzielająca */
+  --split-line-w: 7px;
+  --split-line: rgba(0,0,0,.10);
+  --split-line-edge: rgba(0,0,0,.22);
 }
 
 @font-face{
@@ -52,7 +56,7 @@ html, body{
   position:fixed;
   top: calc(var(--safe-top) + 10px);
   right: calc(var(--safe-right) + 10px);
-  z-index: 100;
+  z-index: 200;
 
   width:44px; height:44px;
   border-radius:14px;
@@ -70,16 +74,14 @@ html, body{
 .paper{
   position:fixed;
   inset:0;
+  z-index:10;
 
   background-color:#fffdf5;
   background-image: linear-gradient(to bottom, #e7e2d3 1px, transparent 1px);
   background-size: 100% var(--line);
   background-position: 0 var(--safe-top);
-
-  z-index:10;
 }
 
-/* czerwony margines po lewej – globalny */
 .redMargin{
   position:absolute;
   top:0; bottom:0;
@@ -89,18 +91,23 @@ html, body{
   pointer-events:none;
 }
 
-/* === SPLIT LAYOUT === */
-.paper.split{
+/* === PODZIAŁ === */
+.paperSplit{
   display:grid;
-  /* domyślnie portrait: lewo/prawo */
-  grid-template-columns: 1fr 1fr;
-  grid-template-rows: 1fr;
+  width:100%;
+  height:100%;
 }
 
-html.landscape .paper.split{
-  /* landscape: góra/dół */
+/* portrait -> PASMO 2 NA DOLE */
+html.portrait .paperSplit{
   grid-template-columns: 1fr;
-  grid-template-rows: 1fr 1fr;
+  grid-template-rows: 1fr var(--split-line-w) minmax(0, var(--pane2-size-portrait));
+}
+
+/* landscape -> PASMO 2 PO PRAWEJ */
+html.landscape .paperSplit{
+  grid-template-rows: 1fr;
+  grid-template-columns: 1fr var(--split-line-w) minmax(0, var(--pane2-size-landscape));
 }
 
 .pane{
@@ -108,7 +115,36 @@ html.landscape .paper.split{
   overflow:hidden;
 }
 
-/* tekst w każdej połówce */
+.pane1{
+  grid-area: 1 / 1 / 2 / 2;
+}
+
+html.portrait .pane2{ grid-row: 3; grid-column: 1; }
+html.landscape .pane2{ grid-column: 3; grid-row: 1; }
+
+/* Linia (domyślnie ukryta, pokazujemy dopiero gdy pasmo2 odsłonięte) */
+.splitLine{
+  opacity: 0;
+  transition: opacity 140ms ease;
+  pointer-events:none;
+
+  background:
+    linear-gradient(
+      to right,
+      var(--split-line-edge),
+      var(--split-line),
+      var(--split-line-edge)
+    );
+}
+html.portrait .splitLine{ grid-row: 2; grid-column: 1; }
+html.landscape .splitLine{ grid-column: 2; grid-row: 1; }
+
+/* klasa na <html> z JS */
+html.p2Open .splitLine{
+  opacity: 1;
+}
+
+/* Tekst */
 .text{
   position:absolute;
   left: calc(var(--safe-left) + var(--text-left));
@@ -128,70 +164,17 @@ html.landscape .paper.split{
   color:#111;
 }
 
-/* stylowane segmenty */
-.text span{
-  font: inherit;
-  line-height: inherit;
-  text-decoration-thickness: 0.08em;
-  text-underline-offset: 0.18em;
-}
-
-.text .b{
-  font-variation-settings: "wght" 750;
-  font-weight: 750;
-}
-
-/* divider (pokazujemy tylko gdy 2 odkryte) */
-.splitLine{
-  display:none;
-  pointer-events:none;
-}
-
-html.portrait .splitLine{
-  grid-column: 2;
-  grid-row: 1;
-  justify-self: start;
-  width: var(--split-line-w);
-  height: 100%;
-  background: var(--split-line);
-}
-
-html.landscape .splitLine{
-  grid-column: 1;
-  grid-row: 2;
-  align-self: start;
-  height: var(--split-line-w);
-  width: 100%;
-  background: var(--split-line);
-}
-
-/* hint na dole (wspólny) */
-.hint{
-  position:absolute;
-  left: calc(var(--safe-left) + var(--text-left));
-  right: calc(var(--safe-right) + var(--text-right));
-  bottom: calc(var(--safe-bottom) + 0px);
-
-  font-family: "Caveat-Variable", cursive;
-  font-size: calc(var(--line) * 0.8);
-  line-height: var(--line);
-  padding-top: calc(var(--line) * 0.25);
-  color: rgba(0,0,0,.55);
-
-  pointer-events:none;
-}
-
-/* === COVER tylko dla połówki #2 === */
+/* === OVERLAY PASMA 2 (zakrywanie) === */
 .cover2{
   position:absolute;
   inset:0;
-  z-index: 60;
+  z-index: 50;
 
   background: linear-gradient(90deg, #c4002f 0%, #2a62ff 100%);
   opacity: 0;
-  pointer-events: none;
+  pointer-events:none;
 
-  transform: translate3d(var(--c2-tx, 0), var(--c2-ty, 0), 0);
+  transform: translateX(var(--c2-tx, 0)) translateY(var(--c2-ty, 0));
   transition: transform 180ms ease, opacity 160ms ease;
   will-change: transform, opacity;
 }
@@ -204,8 +187,6 @@ html.landscape .splitLine{
   justify-content:center;
   align-items:center;
   gap: clamp(10px, 2.2vh, 22px);
-  max-height: 100dvh;
-  overflow: hidden;
   padding:
     calc(var(--safe-top) + 20px)
     calc(var(--safe-right) + 20px)
@@ -215,13 +196,12 @@ html.landscape .splitLine{
 }
 
 .cover2Logo{
-  width: min(900px, 90%);
-  max-width: 90%;
-  max-height: 52vh;
+  width: min(900px, 92vw);
+  max-width: 92vw;
+  max-height: 50vh;
   height: auto;
   display:block;
   filter: drop-shadow(0 12px 30px rgba(0,0,0,.35));
-
   pointer-events:none;
   -webkit-user-drag:none;
   user-select:none;
@@ -232,37 +212,32 @@ html.landscape .splitLine{
   font-family: "Caveat-Variable", cursive;
   font-size: calc(var(--line) * 0.8);
   line-height: var(--line);
-  max-width: 92%;
+  max-width: 92vw;
   margin: 0;
   color: #fc0;
   text-shadow: 0 4px 18px rgba(0,0,0,.45);
 }
 
-/* zakryta */
+/* widoczne (pasmo 2 zasłonięte) */
 .cover2.coverOn{
   opacity: 1;
-  pointer-events: auto;
-  --c2-tx: 0px;
-  --c2-ty: 0px;
+  pointer-events:auto;
 }
 
-/* odsłonięta: zsuń poza widok po osi gestu */
-html.landscape .cover2.coverOff{
-  opacity: 0;
-  pointer-events: none;
-  --c2-tx: 120%;
-  --c2-ty: 0px;
-}
-
+/* pozycje “poza ekranem” zależnie od orientacji */
 html.portrait .cover2.coverOff{
-  opacity: 0;
-  pointer-events: none;
-  --c2-tx: 0px;
   --c2-ty: 120%;
+  --c2-tx: 0%;
+}
+html.landscape .cover2.coverOff{
+  --c2-tx: 120%;
+  --c2-ty: 0%;
 }
 
-@media (prefers-reduced-motion: reduce){
-  .cover2{ transition:none !important; }
+/* gdy zasłonięte, overlay siedzi na miejscu */
+.cover2.coverOn{
+  --c2-tx: 0%;
+  --c2-ty: 0%;
 }
 
 /* pseudo-fullscreen: stabilizacja viewportu na iOS */
@@ -271,5 +246,11 @@ html.portrait .cover2.coverOff{
   width: 100%;
   overflow: hidden;
 }
+.pseudoFS .fsBtn{
+  opacity: .85;
+}
 
-.pseudoFS .fsBtn{ opacity: .85; }
+@media (prefers-reduced-motion: reduce){
+  .cover2{ transition: none !important; }
+  .splitLine{ transition: none !important; }
+}
