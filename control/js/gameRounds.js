@@ -1333,7 +1333,7 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
 
   // === ZAKOŃCZ GRĘ (bez finału) – 3 tryby końca ===
 
-  async function showGameEnd() {
+  async function gameEndShow() {
     const r = store.state.rounds;
     const totals = r.totals || { A: 0, B: 0 };
     const a = nInt(totals.A, 0);
@@ -1371,7 +1371,7 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
         await display.showWin(winnerPts);
       }
     } catch (e) {
-      console.warn("[rounds] showGameEnd display error", e);
+      console.warn("[rounds] gameEndShow display error", e);
     }
 
     ui.setMsg("msgGameEnd", msg);
@@ -1427,6 +1427,6 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     revealLeftByOrd,
     revealDone,
 
-    showGameEnd,
+    gameEndShow,
   };
 }
