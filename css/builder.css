@@ -518,67 +518,49 @@ body.builder-body{
 }
 
 /* ===== Mobile / telefon ===== */
-
 @media (max-width: 720px){
 
-  .bar{
-    align-items:flex-start;
-    flex-direction:column;
-    gap:8px;
+  /* --- ZAKŁADKI: jak w control --- */
+  :root{
+    --tab-height: 56px;   /* jak w control */
+    --tab-extra: 3px;     /* jak w control */
   }
-
-  .actions{
-    width:100%;
-    justify-content:flex-start;
-    flex-wrap:wrap;
-  }
-
-  /* --- ZAKŁADKI: 3 równe kolumny, bez szczelin i separatorów --- */
 
   .tabs-strip{
     display:grid;
     grid-template-columns: repeat(3, 1fr);
-    gap:0;                 /* absolutnie żadnej przerwy między slotami */
-    overflow:hidden;       /* nic nie wystaje */
+    gap:0;
+    overflow:hidden;
   }
 
   .tab-slot{
     width:100%;
-    flex:none;             /* wyłączamy flex na mobile */
+    flex:none;
     justify-content:center;
   }
 
-  .tab-label,
-  .tab-active{
-    font-size:11px;
-    letter-spacing:.05em;
-    padding:0 8px;
-  }
-
+  /* usuń zmniejszanie wysokości (-6px) */
   .tab-label{
-    height:calc(var(--tab-height) - 6px);
-    line-height:calc(var(--tab-height) - 6px);
+    height: var(--tab-height);
+    line-height: var(--tab-height);
   }
 
   .tab-active{
-    height:calc(var(--tab-height) - 6px + var(--tab-extra));
-    line-height:calc(var(--tab-height) - 6px);
+    height: calc(var(--tab-height) + var(--tab-extra));
+    line-height: var(--tab-height);
   }
 
-  /* na mobile NIGDZIE nie rysujemy pionowych linii */
+  /* na mobile nigdzie nie rysujemy pionowych linii */
   .tab-label::after,
   .tab-label.active::after{
     display:none !important;
   }
 
-  /* --- GRID: jedna kolumna --- */
+  /* opcjonalnie, ale identycznie jak w control: warstwy */
+  .tab-label{ z-index: 2; }
+  .tab-wrapper{ z-index: 1; }
 
-  .grid{
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .builder-card.card{
-    padding:14px 10px 10px;
-  }
+  /* --- reszta Twojego mobile --- */
+  .grid{ grid-template-columns: minmax(0, 1fr); }
+  .builder-card.card{ padding:14px 10px 10px; }
 }
-
