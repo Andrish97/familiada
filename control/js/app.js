@@ -525,7 +525,7 @@ async function sendZeroStatesToDevices() {
     // 1/2 — Nazwy drużyn: przynajmniej jedna nazwa niepusta
     const teamA = (state.teams.teamA || "").trim();
     const teamB = (state.teams.teamB || "").trim();
-    const teamsOk = teamA.length > 0 || teamB.length > 0;
+    const teamsOk = teamA.length > 0 && teamB.length > 0;
     ui.setEnabled("btnSetupNext", teamsOk);
 
     // 2/2 — Finał: logika jak w store.canFinishSetup()
