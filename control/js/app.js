@@ -165,6 +165,8 @@ async function main() {
 
   const store = createStore(game.id);
   store.hydrate();
+  // DEBUG (tymczasowo)
+  window.__fam = { store };
 
   const hasFinalNow = store.state.hasFinal === true;
   const finalYesRadio = document.getElementById("finalYes");
