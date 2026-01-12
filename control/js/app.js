@@ -184,16 +184,30 @@ async function main() {
 
   function shouldWarnBeforeUnload() {
     if (suppressUnloadWarn) return false;
+
     const s = store.state;
+
+    // 1) Jeśli jesteśmy na końcówkach UI, NIE ostrzegamy
+    const activeCard = s.activeCard || "";
+    const rStep = s.steps?.rounds || "";
+    const fStep = s.final?.step || "";
+
+    // ROUNDS: karta "Zakończ grę"
+    if (activeCard === "rounds" && rStep === "r_gameEnd") return false;
+
+    // FINAL: krok "Zakończ finał"
+    if (activeCard === "final" && fStep === "f_end") return false;
+
+    // 2) Jeśli gra już formalnie zakończona
     if (s.locks?.gameEnded) return false;
+
     const r = s.rounds || {};
     const totals = r.totals || { A: 0, B: 0 };
 
     const gameStarted = !!s.locks?.gameStarted;
     const finalActive = !!s.locks?.finalActive;
 
-    const someRoundProgress =
-      r.phase && r.phase !== "IDLE";
+    const someRoundProgress = r.phase && r.phase !== "IDLE";
 
     const somePoints =
       (totals.A || 0) > 0 ||
