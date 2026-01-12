@@ -21,10 +21,11 @@
 @font-face{
   font-family: "Caveat-Variable";
   src: url("Caveat-Variable.woff2") format("woff2");
-  font-weight: normal;
+  font-weight: 100 900; /* kluczowe */
   font-style: normal;
   font-display: swap;
 }
+
 
 /* usuń “mignięcie” highlight na iOS/Android */
 *{ -webkit-tap-highlight-color: transparent; }
