@@ -15,7 +15,7 @@
   --text-left: 20vmin;    /* start tekstu po marginesie */
   --text-right: 16vmin;   /* prawa “krawędź” */
   --top-pad: calc(var(--line));      /* ~2 linijka */
-  --bottom-pad: calc(var(--line) * 2); /* miejsce na hint */
+  --bottom-pad: calc(var(--line) * 2,2); /* miejsce na hint */
 }
 
 @font-face{
