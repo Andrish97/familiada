@@ -24,8 +24,6 @@ const APP_MSG = {
   AUDIO_OK: "Dźwięk odblokowany.",
   AUDIO_FAIL: "Nie udało się odblokować dźwięku.",
 
-  TEAMS_SAVED: "Zapisano.",
-
   FINAL_CONFIRMED: "Zatwierdzono.",
   
   FINAL_RELOAD_START: "Odświeżanie listy pytań...",
@@ -632,11 +630,6 @@ async function sendZeroStatesToDevices() {
 
   // SETUP
   ui.on("setup.backToDevices", () => store.setActiveCard("devices"));
-
-  ui.on("teams.save", () => {
-    store.setTeams(ui.getTeamA(), ui.getTeamB());
-    ui.setMsg("msgTeams", APP_MSG.TEAMS_SAVED);
-  });
 
   ui.on("teams.change", ({ teamA, teamB }) => {
     store.setTeams(teamA, teamB);
