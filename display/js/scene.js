@@ -222,20 +222,38 @@ export async function createScene() {
   const drawWinNumber5 = (GLYPHS, big, WIN_DIGITS, number, color) => {
     let s = (number ?? "").toString().replace(/\D/g, "");
     if (s.length > 5) s = s.slice(-5); // max 5, bez padStart
-
+  
     const rowTop1 = 2; // 2..8
     clearArea(big, 1, rowTop1, 30, rowTop1 + 6);
     if (!s.length) return;
-
-    const gap = 1;
+  
+    const gap = 1;              // zwykła przerwa między cyframi
+    const groupGapExtra = 1;    // +1 tylko między tysiącami a setkami => razem 2
+  
     const widths = s.split("").map(d => (WIN_DIGITS[d] ? measureWinDigit(WIN_DIGITS[d]).w : 0));
-    const totalW = widths.reduce((a, b) => a + b, 0) + gap * (s.length - 1);
+  
+    // policz totalW z uwzględnieniem separatora 3-cyfrowego od prawej
+    let totalW = widths.reduce((a, b) => a + b, 0);
+    if (s.length > 1) totalW += gap * (s.length - 1);
+    if (s.length > 3) totalW += groupGapExtra; // dodatkowa przerwa na granicy tys|set
+  
     const startCol1 = 1 + Math.max(0, Math.floor((30 - totalW) / 2));
-
+  
     let cx = startCol1;
     for (let i = 0; i < s.length; i++) {
       const w = drawWinDigitTight(GLYPHS, big, WIN_DIGITS, cx, rowTop1, s[i], color);
-      cx += w + gap;
+      cx += w;
+  
+      // przerwy po cyfrze (nie po ostatniej)
+      if (i < s.length - 1) {
+        cx += gap;
+  
+        // jeśli następna cyfra zaczyna grupę 3 od prawej, dodaj extra gap
+        // granica jest przed ostatnimi 3 cyframi => po indeksie (s.length - 4)
+        if (s.length > 3 && i === (s.length - 4)) {
+          cx += groupGapExtra; // razem daje 2 kolumny
+        }
+      }
     }
   };
 
