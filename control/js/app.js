@@ -242,7 +242,6 @@ async function sendZeroStatesToDevices() {
   try { await devices.sendHostCmd('SET ""'); } catch {}
   try { await devices.sendHostCmd("HIDE"); } catch {}
   try { await devices.sendBuzzerCmd("OFF"); } catch {}
-  try { await devices.sendBuzzerCmd("RESET"); } catch {}
 }
 
 
