@@ -6,6 +6,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#fffdf5">
   <title>Familiada — prowadzący</title>
 
   <link rel="icon" href="favicon.ico"/>
@@ -15,6 +17,8 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
   <script type="module" src="js/pages/host.js" defer></script>
 </head>
+
+<body class="host-body">
 
 <div class="a2hs" onclick="document.documentElement.classList.remove('showA2HS')">
   <div class="a2hsCard" onclick="event.stopPropagation()">
@@ -27,8 +31,7 @@
       onclick="document.documentElement.classList.remove('showA2HS')">OK</button>
   </div>
 </div>
-
-<body class="host-body">
+  
   <button class="fsBtn" id="btnFS" type="button" aria-label="Pełny ekran" title="Pełny ekran">
     <span class="ico" id="fsIco" aria-hidden="true">▢</span>
   </button>
