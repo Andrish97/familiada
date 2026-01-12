@@ -1,48 +1,46 @@
 :root{
-  /* stała “linijka” (bez artefaktów gradientu) */
   --line: 6vmin;
 
-  --font-ratio: 1.1;   /* wielkość liter względem linijki */
-  --baseline-shift: 0.15; /* przesunięcie baseline */
-  
-  /* bezpieczne marginesy pod notch */
+  --font-ratio: 1.1;
+  --baseline-shift: 0.15;
+
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-right: env(safe-area-inset-right, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --safe-left: env(safe-area-inset-left, 0px);
 
-  --margin-x: 18vmin;     /* czerwony margines */
-  --text-left: 20vmin;    /* start tekstu po marginesie */
-  --text-right: 16vmin;   /* prawa “krawędź” */
-  --top-pad: calc(var(--line));      /* ~2 linijka */
-  --bottom-pad: calc(var(--line) * 2,2); /* miejsce na hint */
+  --margin-x: 18vmin;
+  --text-left: 20vmin;
+  --text-right: 16vmin;
+  --top-pad: calc(var(--line));
+  --bottom-pad: calc(var(--line) * 2.2);
+
+  /* divider */
+  --split-line-w: 2px;
+  --split-line: rgba(0,0,0,.18);
 }
 
 @font-face{
   font-family: "Caveat-Variable";
   src: url("Caveat-Variable.woff2") format("woff2");
-  font-weight: 100 900; /* kluczowe */
+  font-weight: 100 900;
   font-style: normal;
   font-display: swap;
 }
 
-
-/* usuń “mignięcie” highlight na iOS/Android */
 *{ -webkit-tap-highlight-color: transparent; }
 
 html, body{
   margin:0;
   padding:0;
-  background:#fffdf5; /* to samo co kartka */
+  background:#fffdf5;
   height: 100%;
 }
-
 
 .host-body{
   margin:0;
   background:#0b1220;
   overflow:hidden;
-  /* ważne: nie none, bo to rozwala gesty i czasem fullscreen */
   touch-action: pan-y;
   -webkit-user-select:none;
   user-select:none;
@@ -68,7 +66,7 @@ html, body{
 .fsBtn:active{ transform: translateY(1px); }
 .fsBtn .ico{ font-size:16px; letter-spacing:-2px; }
 
-/* Kartka pełny ekran */
+/* Kartka */
 .paper{
   position:fixed;
   inset:0;
@@ -76,20 +74,41 @@ html, body{
   background-color:#fffdf5;
   background-image: linear-gradient(to bottom, #e7e2d3 1px, transparent 1px);
   background-size: 100% var(--line);
-
   background-position: 0 var(--safe-top);
 
   z-index:10;
 }
 
+/* czerwony margines po lewej – globalny */
 .redMargin{
   position:absolute;
   top:0; bottom:0;
   left: calc(var(--safe-left) + var(--margin-x));
   width:2px;
   background: rgba(255,80,80,.55);
+  pointer-events:none;
 }
 
+/* === SPLIT LAYOUT === */
+.paper.split{
+  display:grid;
+  /* domyślnie portrait: lewo/prawo */
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr;
+}
+
+html.landscape .paper.split{
+  /* landscape: góra/dół */
+  grid-template-columns: 1fr;
+  grid-template-rows: 1fr 1fr;
+}
+
+.pane{
+  position:relative;
+  overflow:hidden;
+}
+
+/* tekst w każdej połówce */
 .text{
   position:absolute;
   left: calc(var(--safe-left) + var(--text-left));
@@ -97,27 +116,22 @@ html, body{
   top: calc(var(--safe-top) + var(--top-pad));
   bottom: calc(var(--safe-bottom) + var(--bottom-pad));
   margin:0;
-  pointer-events: none;
+
+  pointer-events:none;
   white-space:pre-wrap;
   word-break:break-word;
 
-  /* dalej “pisana”, ale czytelniejsza */
   font-family: "Caveat-Variable", cursive;
-
-  /* ↑ większa czcionka w linijkach */
   font-size: calc(var(--line) * var(--font-ratio));
   line-height: var(--line);
   padding-top: calc(var(--line) * var(--baseline-shift));
   color:#111;
 }
 
-/* styled segmenty w tekście */
+/* stylowane segmenty */
 .text span{
-  /* dziedziczy linię i font (żeby nie robić mikro-skoku) */
   font: inherit;
   line-height: inherit;
-
-  /* gdy underline/strike: stabilniej wygląda na “kartce” */
   text-decoration-thickness: 0.08em;
   text-underline-offset: 0.18em;
 }
@@ -127,7 +141,31 @@ html, body{
   font-weight: 750;
 }
 
+/* divider (pokazujemy tylko gdy 2 odkryte) */
+.splitLine{
+  display:none;
+  pointer-events:none;
+}
 
+html.portrait .splitLine{
+  grid-column: 2;
+  grid-row: 1;
+  justify-self: start;
+  width: var(--split-line-w);
+  height: 100%;
+  background: var(--split-line);
+}
+
+html.landscape .splitLine{
+  grid-column: 1;
+  grid-row: 2;
+  align-self: start;
+  height: var(--split-line-w);
+  width: 100%;
+  background: var(--split-line);
+}
+
+/* hint na dole (wspólny) */
 .hint{
   position:absolute;
   left: calc(var(--safe-left) + var(--text-left));
@@ -139,31 +177,32 @@ html, body{
   line-height: var(--line);
   padding-top: calc(var(--line) * 0.25);
   color: rgba(0,0,0,.55);
+
+  pointer-events:none;
 }
 
-/* ========= OKŁADKA (gradient + logo) ========= */
-.blank{
-  position:fixed;
+/* === COVER tylko dla połówki #2 === */
+.cover2{
+  position:absolute;
   inset:0;
-  z-index: 50;
+  z-index: 60;
 
   background: linear-gradient(90deg, #c4002f 0%, #2a62ff 100%);
-
   opacity: 0;
   pointer-events: none;
-  transform: translateX(var(--blank-tx, 0));
+
+  transform: translate3d(var(--c2-tx, 0), var(--c2-ty, 0), 0);
   transition: transform 180ms ease, opacity 160ms ease;
   will-change: transform, opacity;
 }
 
-.blankContent{
+.cover2Content{
   position:absolute;
   inset:0;
   display:flex;
   flex-direction:column;
   justify-content:center;
   align-items:center;
-  /* elastyczny odstęp, żeby całość mieściła się też po wysokości */
   gap: clamp(10px, 2.2vh, 22px);
   max-height: 100dvh;
   overflow: hidden;
@@ -175,51 +214,55 @@ html, body{
   text-align:center;
 }
 
-.blankLogo{
-  /* dopasuj i do szerokości i do wysokości ekranu */
-  width: min(1100px, 96vw);
-  max-width: 96vw;
-  max-height: 58vh;
+.cover2Logo{
+  width: min(900px, 90%);
+  max-width: 90%;
+  max-height: 52vh;
   height: auto;
   display:block;
   filter: drop-shadow(0 12px 30px rgba(0,0,0,.35));
 
-  /* logo nie może przejmować gestów (żadnego “chwytania” za SVG) */
-  pointer-events: none;
-  -webkit-user-drag: none;
-  user-select: none;
-  touch-action: none;
+  pointer-events:none;
+  -webkit-user-drag:none;
+  user-select:none;
+  touch-action:none;
 }
 
-.blankSwipe{
+.cover2Swipe{
   font-family: "Caveat-Variable", cursive;
   font-size: calc(var(--line) * 0.8);
   line-height: var(--line);
-  max-width: 92vw;
+  max-width: 92%;
   margin: 0;
-  color: #fc0; /* kolor jak logo */
+  color: #fc0;
   text-shadow: 0 4px 18px rgba(0,0,0,.45);
 }
 
-/* widoczna okładka */
-.blank.blankOn{
+/* zakryta */
+.cover2.coverOn{
   opacity: 1;
   pointer-events: auto;
-  transform: translateX(0);
+  --c2-tx: 0px;
+  --c2-ty: 0px;
 }
 
-/* “czeka poza ekranem” */
-.blank.blankOffLeft{ --blank-tx: -120%; }
-.blank.blankOffRight{ --blank-tx: 120%; }
+/* odsłonięta: zsuń poza widok po osi gestu */
+html.landscape .cover2.coverOff{
+  opacity: 0;
+  pointer-events: none;
+  --c2-tx: 120%;
+  --c2-ty: 0px;
+}
 
-/* wyłącz animację przy starcie/restore */
-.blank.noAnim{ transition: none !important; }
-
-/* stare elementy okładki już nieużywane */
-.blankCard, .blankTitle, .blankHint{ display:none; }
+html.portrait .cover2.coverOff{
+  opacity: 0;
+  pointer-events: none;
+  --c2-tx: 0px;
+  --c2-ty: 120%;
+}
 
 @media (prefers-reduced-motion: reduce){
-  .blank{ transition: none !important; }
+  .cover2{ transition:none !important; }
 }
 
 /* pseudo-fullscreen: stabilizacja viewportu na iOS */
@@ -229,7 +272,4 @@ html, body{
   overflow: hidden;
 }
 
-/* jeśli chcesz, możesz w pseudo ukryć przycisk FS albo zmienić jego wygląd */
-.pseudoFS .fsBtn{
-  opacity: .85;
-}
+.pseudoFS .fsBtn{ opacity: .85; }
