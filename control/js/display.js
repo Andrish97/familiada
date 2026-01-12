@@ -346,9 +346,8 @@ export function createDisplay({ devices, store }) {
   }
 
   async function showWin(amount) {
-    const num = nInt(amount, 0);
-    const txt = String(num).padStart(5, "0");
-    await send(`WIN ${txt} ANIMIN rain right 80`);
+    const num = Math.max(0, nInt(amount, 0));
+    await send(`WIN ${num} ANIMIN edge up 1000`);
   }
 
   function nInt(v, d = 0) {
