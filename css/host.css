@@ -1,29 +1,48 @@
+/* /familiada/css/host.css
+   Host: 2 połówki + zasłaniane pasmo 2
+   - Jeden wspólny procent: --pane2-size (działa w pionie i poziomie)
+   - Suwak na dole (przez <input type="range">) steruje zmienną CSS --pane2-size w locie
+   - Linia podziału jest ZAWSZE (tylko zasłona ją przykrywa, bo jest nad linią)
+*/
+
+/* ========= ZMIENNE ========= */
 :root{
+  /* stała linijka */
   --line: 6vmin;
   --font-ratio: 1.1;
   --baseline-shift: 0.15;
 
+  /* bezpieczne marginesy pod notch */
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-right: env(safe-area-inset-right, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --safe-left: env(safe-area-inset-left, 0px);
 
+  /* margines kartki */
   --margin-x: 18vmin;
   --text-left: 20vmin;
   --text-right: 16vmin;
   --top-pad: calc(var(--line));
   --bottom-pad: calc(var(--line) * 2.2);
 
-  /* rozmiar pasma 2 */
-  --pane2-size-portrait: 42%;
-  --pane2-size-landscape: 38%;
+  /* ========= KLUCZ: JEDEN PROCENT PASMA 2 =========
+     Sterowany z dołu przez suwak (JS: document.documentElement.style.setProperty('--pane2-size', '42%'))
+  */
+  --pane2-size: 42%;
 
   /* linia rozdzielająca */
   --split-line-w: 7px;
   --split-line: rgba(0,0,0,.10);
   --split-line-edge: rgba(0,0,0,.22);
+
+  /* suwak (UI na dole) */
+  --slider-h: 54px;
+  --slider-pad: 10px;
+  --slider-bg: rgba(5,5,10,.40);
+  --slider-bd: rgba(0,0,0,.18);
 }
 
+/* ========= FONT ========= */
 @font-face{
   font-family: "Caveat-Variable";
   src: url("Caveat-Variable.woff2") format("woff2");
@@ -32,33 +51,39 @@
   font-display: swap;
 }
 
+/* usuń “mignięcie” highlight na iOS/Android */
 *{ -webkit-tap-highlight-color: transparent; }
 
 html, body{
   margin:0;
   padding:0;
-  background:#fffdf5;
-  height: 100%;
+  height:100%;
+  background:#fffdf5; /* to samo co kartka */
 }
 
+/* ========= BODY ========= */
 .host-body{
   margin:0;
   background:#0b1220;
   overflow:hidden;
+
+  /* Gesty: w portrait pozwalamy na pion, w landscape na poziom (JS dokleja klasy) */
   touch-action: pan-y;
+
   -webkit-user-select:none;
   user-select:none;
   min-height: 100dvh;
 }
 
-/* Fullscreen button */
+/* ========= FULLSCREEN BUTTON ========= */
 .fsBtn{
   position:fixed;
   top: calc(var(--safe-top) + 10px);
   right: calc(var(--safe-right) + 10px);
-  z-index: 200;
+  z-index: 300;
 
-  width:44px; height:44px;
+  width:44px;
+  height:44px;
   border-radius:14px;
   background: rgba(0,0,0,.35);
   border: 1px solid rgba(255,255,255,.35);
@@ -70,7 +95,7 @@ html, body{
 .fsBtn:active{ transform: translateY(1px); }
 .fsBtn .ico{ font-size:16px; letter-spacing:-2px; }
 
-/* Kartka */
+/* ========= KARTKA ========= */
 .paper{
   position:fixed;
   inset:0;
@@ -82,6 +107,7 @@ html, body{
   background-position: 0 var(--safe-top);
 }
 
+/* czerwony margines */
 .redMargin{
   position:absolute;
   top:0; bottom:0;
@@ -89,44 +115,65 @@ html, body{
   width:2px;
   background: rgba(255,80,80,.55);
   pointer-events:none;
+  z-index: 2;
 }
 
-/* === PODZIAŁ === */
+/* ========= PODZIAŁ NA DWA PANELE =========
+   - Portrait: pasmo2 NA DOLE
+   - Landscape: pasmo2 PO PRAWEJ
+   Linia jest zawsze w gridzie.
+*/
 .paperSplit{
+  position:absolute;
+  inset:0;
   display:grid;
   width:100%;
   height:100%;
+  z-index: 1;
 }
 
-/* portrait -> PASMO 2 NA DOLE */
+/* PORTRAIT: dół */
 html.portrait .paperSplit{
   grid-template-columns: 1fr;
-  grid-template-rows: 1fr var(--split-line-w) minmax(0, var(--pane2-size-portrait));
+  grid-template-rows:
+    1fr
+    var(--split-line-w)
+    minmax(0, var(--pane2-size));
 }
 
-/* landscape -> PASMO 2 PO PRAWEJ */
+/* LANDSCAPE: prawa */
 html.landscape .paperSplit{
   grid-template-rows: 1fr;
-  grid-template-columns: 1fr var(--split-line-w) minmax(0, var(--pane2-size-landscape));
+  grid-template-columns:
+    1fr
+    var(--split-line-w)
+    minmax(0, var(--pane2-size));
 }
 
+/* Pane */
 .pane{
   position:relative;
-  overflow:hidden;
+  overflow:hidden; /* maska dla pasma 2 + jego zasłony */
 }
 
+/* mapowanie grid-area */
 .pane1{
   grid-area: 1 / 1 / 2 / 2;
 }
 
-html.portrait .pane2{ grid-row: 3; grid-column: 1; }
-html.landscape .pane2{ grid-column: 3; grid-row: 1; }
+html.portrait .pane2{
+  grid-row: 3;
+  grid-column: 1;
+}
+html.landscape .pane2{
+  grid-column: 3;
+  grid-row: 1;
+}
 
-/* Linia (domyślnie ukryta, pokazujemy dopiero gdy pasmo2 odsłonięte) */
+/* Linia: zawsze widoczna, ale zasłona (cover2) ją przykrywa, bo jest wyżej z-indexem */
 .splitLine{
-  opacity: 0;
-  transition: opacity 140ms ease;
   pointer-events:none;
+  z-index: 3;
 
   background:
     linear-gradient(
@@ -136,15 +183,16 @@ html.landscape .pane2{ grid-column: 3; grid-row: 1; }
       var(--split-line-edge)
     );
 }
-html.portrait .splitLine{ grid-row: 2; grid-column: 1; }
-html.landscape .splitLine{ grid-column: 2; grid-row: 1; }
-
-/* klasa na <html> z JS */
-html.p2Open .splitLine{
-  opacity: 1;
+html.portrait .splitLine{
+  grid-row: 2;
+  grid-column: 1;
+}
+html.landscape .splitLine{
+  grid-column: 2;
+  grid-row: 1;
 }
 
-/* Tekst */
+/* ========= TEKST ========= */
 .text{
   position:absolute;
   left: calc(var(--safe-left) + var(--text-left));
@@ -164,12 +212,11 @@ html.p2Open .splitLine{
   color:#111;
 }
 
+/* hint na odsłoniętym pasmie 2 */
 .p2Hint{
   position:absolute;
   left: calc(var(--safe-left) + var(--text-left));
   right: calc(var(--safe-right) + var(--text-right));
-
-  /* w portrait pasmo 2 jest na dole — hint przy dolnej krawędzi pasma */
   bottom: calc(var(--safe-bottom) + 6px);
 
   font-family: "Caveat-Variable", cursive;
@@ -177,130 +224,191 @@ html.p2Open .splitLine{
   line-height: 1.15;
   color: rgba(0,0,0,.42);
 
-  opacity: 0;
-  transform: translateY(6px);
-  transition: opacity 140ms ease, transform 140ms ease;
-
+  opacity: 1;
+  transform: translateY(0);
   pointer-events:none;
 }
 
-/* pokazuj hint tylko gdy pasmo2 odsłonięte */
-html.p2Open .p2Hint{
-  opacity: 1;
-  transform: translateY(0);
-}
-
-
-/* === OVERLAY PASMA 2 (zakrywanie) === */
+/* ========= ZASŁONA PASMA 2 =========
+   Zasłona jest wewnątrz .pane2 i ma wyższy z-index niż linia, więc ją przykrywa.
+*/
 .cover2{
   position:absolute;
   inset:0;
   z-index: 50;
 
   background: linear-gradient(90deg, #c4002f 0%, #2a62ff 100%);
-  opacity: 0;
-  pointer-events:none;
 
-  transform: translateX(var(--c2-tx, 0)) translateY(var(--c2-ty, 0));
+  transform: translate(var(--c2-tx, 0%), var(--c2-ty, 0%));
+  opacity: 0;
+  pointer-events: none;
   transition: transform 180ms ease, opacity 160ms ease;
   will-change: transform, opacity;
 }
 
+/* stan: ZASŁONIĘTE */
+.cover2.coverOn{
+  opacity: 1;
+  pointer-events: auto;
+  --c2-tx: 0%;
+  --c2-ty: 0%;
+}
+
+/* stan: ODSŁONIĘTE (wyjazd w zależności od orientacji) */
+html.portrait .cover2.coverOff{
+  opacity: 0;
+  pointer-events: none;
+  --c2-tx: 0%;
+  --c2-ty: 120%;
+}
+html.landscape .cover2.coverOff{
+  opacity: 0;
+  pointer-events: none;
+  --c2-tx: 120%;
+  --c2-ty: 0%;
+}
+
+/* zawartość zasłony */
 .cover2Content{
   position:absolute;
   inset:0;
   display:flex;
   flex-direction:column;
-  justify-content:center;
   align-items:center;
+  justify-content:center;
 
-  /* ważne: niech elementy mogą się zmniejszać */
   min-height: 0;
+  gap: clamp(6px, 1.6vh, 14px);
 
-  gap: clamp(8px, 2vh, 18px);
-
-  /* bezpieczne i bardziej oszczędne paddingi */
   padding:
-    calc(var(--safe-top) + 14px)
-    calc(var(--safe-right) + 14px)
-    calc(var(--safe-bottom) + 14px)
-    calc(var(--safe-left) + 14px);
+    calc(var(--safe-top) + 10px)
+    calc(var(--safe-right) + 10px)
+    calc(var(--safe-bottom) + 10px)
+    calc(var(--safe-left) + 10px);
 
   text-align:center;
-
-  /* pozwól tekstowi się łamać zamiast wylewać */
-  overflow: hidden;
 }
 
+/* logo: liczone od kontenera pasma, więc nie obcina */
 .cover2Logo{
-  /* wąskie ekrany + mała wysokość = logo ma się dostosować */
-  width: min(860px, 88vw);
-  max-width: 88vw;
+  flex: 0 1 auto;
+  width: min(820px, 86%);
+  max-width: 86%;
+  max-height: 62%;
+  height:auto;
 
-  /* klucz: limit wysokości uwzględnia hint + safe-area */
-  max-height: calc(62vh - var(--safe-top) - var(--safe-bottom));
-  height: auto;
-
-  display:block;
   object-fit: contain;
+  display:block;
 
   filter: drop-shadow(0 12px 30px rgba(0,0,0,.35));
   pointer-events:none;
   -webkit-user-drag:none;
   user-select:none;
-  touch-action:none;
 }
 
-
+/* hint na zasłonie */
 .cover2Swipe{
-  font-family: "Caveat-Variable", cursive;
-  font-size: calc(var(--line) * 0.78);
-  line-height: 1.15;
-  max-width: min(92vw, 720px);
-  margin: 0;
+  flex: 0 1 auto;
+  max-width: min(92%, 720px);
   padding: 0 10px;
+
+  font-family: "Caveat-Variable", cursive;
+  font-size: clamp(14px, 4.2vmin, 28px);
+  line-height: 1.15;
 
   color: #fc0;
   text-shadow: 0 4px 18px rgba(0,0,0,.45);
 
-  /* jak jest dłuższe, niech się łamie */
   white-space: normal;
   word-break: break-word;
 }
 
-/* widoczne (pasmo 2 zasłonięte) */
-.cover2.coverOn{
-  opacity: 1;
-  pointer-events:auto;
+/* ========= SUWAK NA DOLE (zmiana procentu) =========
+   Zakładam HTML:
+   <div class="paneSizeBar">
+     <div class="paneSizeRow">
+       <span class="paneSizeLbl">Pasmo</span>
+       <input id="paneSize" type="range" min="20" max="70" value="42">
+       <span class="paneSizeVal" id="paneSizeVal">42%</span>
+     </div>
+   </div>
+*/
+.paneSizeBar{
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 400;
+
+  padding:
+    0
+    calc(var(--safe-right) + var(--slider-pad))
+    calc(var(--safe-bottom) + var(--slider-pad))
+    calc(var(--safe-left) + var(--slider-pad));
+
+  pointer-events: none; /* tylko wnętrze klikalne */
 }
 
-/* pozycje “poza ekranem” zależnie od orientacji */
-html.portrait .cover2.coverOff{
-  --c2-ty: 120%;
-  --c2-tx: 0%;
-}
-html.landscape .cover2.coverOff{
-  --c2-tx: 120%;
-  --c2-ty: 0%;
+.paneSizeRow{
+  pointer-events: auto;
+
+  height: var(--slider-h);
+  display:flex;
+  align-items:center;
+  gap: 10px;
+
+  border-radius: 16px;
+  background: var(--slider-bg);
+  border: 1px solid rgba(255,255,255,.14);
+  box-shadow: 0 10px 28px rgba(0,0,0,.35);
+
+  padding: 10px 12px;
+  backdrop-filter: blur(10px);
 }
 
-/* gdy zasłonięte, overlay siedzi na miejscu */
-.cover2.coverOn{
-  --c2-tx: 0%;
-  --c2-ty: 0%;
+.paneSizeLbl{
+  color: rgba(255,255,255,.85);
+  font-weight: 900;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  font-size: 11px;
+  white-space: nowrap;
 }
 
-/* pseudo-fullscreen: stabilizacja viewportu na iOS */
+.paneSizeVal{
+  color: rgba(255,255,255,.92);
+  font-weight: 900;
+  letter-spacing: .03em;
+  font-size: 12px;
+  min-width: 48px;
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* range */
+.paneSizeRow input[type="range"]{
+  width: 100%;
+  accent-color: #ffd000;
+  height: 22px;
+}
+
+/* żeby tekst nie wchodził pod suwak w dolnej połówce */
+html.hasPaneSizeBar .text{
+  bottom: calc(var(--safe-bottom) + var(--bottom-pad) + var(--slider-h));
+}
+html.hasPaneSizeBar .p2Hint{
+  bottom: calc(var(--safe-bottom) + var(--slider-h) + 6px);
+}
+
+/* ========= PSEUDO FULLSCREEN ========= */
 .pseudoFS, .pseudoFS body{
   height: 100%;
   width: 100%;
   overflow: hidden;
 }
-.pseudoFS .fsBtn{
-  opacity: .85;
-}
+.pseudoFS .fsBtn{ opacity: .85; }
 
+/* ========= REDUCED MOTION ========= */
 @media (prefers-reduced-motion: reduce){
-  .cover2{ transition: none !important; }
-  .splitLine{ transition: none !important; }
+  .cover2{ transition:none !important; }
 }
