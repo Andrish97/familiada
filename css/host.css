@@ -164,6 +164,33 @@ html.p2Open .splitLine{
   color:#111;
 }
 
+.p2Hint{
+  position:absolute;
+  left: calc(var(--safe-left) + var(--text-left));
+  right: calc(var(--safe-right) + var(--text-right));
+
+  /* w portrait pasmo 2 jest na dole — hint przy dolnej krawędzi pasma */
+  bottom: calc(var(--safe-bottom) + 6px);
+
+  font-family: "Caveat-Variable", cursive;
+  font-size: calc(var(--line) * 0.70);
+  line-height: 1.15;
+  color: rgba(0,0,0,.42);
+
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 140ms ease, transform 140ms ease;
+
+  pointer-events:none;
+}
+
+/* pokazuj hint tylko gdy pasmo2 odsłonięte */
+html.p2Open .p2Hint{
+  opacity: 1;
+  transform: translateY(0);
+}
+
+
 /* === OVERLAY PASMA 2 (zakrywanie) === */
 .cover2{
   position:absolute;
@@ -186,21 +213,37 @@ html.p2Open .splitLine{
   flex-direction:column;
   justify-content:center;
   align-items:center;
-  gap: clamp(10px, 2.2vh, 22px);
+
+  /* ważne: niech elementy mogą się zmniejszać */
+  min-height: 0;
+
+  gap: clamp(8px, 2vh, 18px);
+
+  /* bezpieczne i bardziej oszczędne paddingi */
   padding:
-    calc(var(--safe-top) + 20px)
-    calc(var(--safe-right) + 20px)
-    calc(var(--safe-bottom) + 20px)
-    calc(var(--safe-left) + 20px);
+    calc(var(--safe-top) + 14px)
+    calc(var(--safe-right) + 14px)
+    calc(var(--safe-bottom) + 14px)
+    calc(var(--safe-left) + 14px);
+
   text-align:center;
+
+  /* pozwól tekstowi się łamać zamiast wylewać */
+  overflow: hidden;
 }
 
 .cover2Logo{
-  width: min(900px, 92vw);
-  max-width: 92vw;
-  max-height: 50vh;
+  /* wąskie ekrany + mała wysokość = logo ma się dostosować */
+  width: min(860px, 88vw);
+  max-width: 88vw;
+
+  /* klucz: limit wysokości uwzględnia hint + safe-area */
+  max-height: calc(62vh - var(--safe-top) - var(--safe-bottom));
   height: auto;
+
   display:block;
+  object-fit: contain;
+
   filter: drop-shadow(0 12px 30px rgba(0,0,0,.35));
   pointer-events:none;
   -webkit-user-drag:none;
@@ -208,14 +251,21 @@ html.p2Open .splitLine{
   touch-action:none;
 }
 
+
 .cover2Swipe{
   font-family: "Caveat-Variable", cursive;
-  font-size: calc(var(--line) * 0.8);
-  line-height: var(--line);
-  max-width: 92vw;
+  font-size: calc(var(--line) * 0.78);
+  line-height: 1.15;
+  max-width: min(92vw, 720px);
   margin: 0;
+  padding: 0 10px;
+
   color: #fc0;
   text-shadow: 0 4px 18px rgba(0,0,0,.45);
+
+  /* jak jest dłuższe, niech się łamie */
+  white-space: normal;
+  word-break: break-word;
 }
 
 /* widoczne (pasmo 2 zasłonięte) */
