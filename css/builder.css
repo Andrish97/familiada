@@ -555,7 +555,7 @@ body.builder-body{
   }
 
   .tab-corner{
-    bottom: 1; /* było -1px -> cofamy */
+    bottom: 2; /* było -1px -> cofamy */
   }
 
   /* warstwy jak w control */
