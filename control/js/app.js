@@ -707,6 +707,7 @@ async function main() {
   ui.on("rounds.showReveal", () => rounds.showRevealLeft());
   ui.on("rounds.revealClick", (ord) => rounds.revealLeftByOrd(ord));
   ui.on("rounds.revealDone", () => rounds.revealDone());
+  ui.on("rounds.gameEndShow", () => rounds.gameEndShow());
 
   // FINAL (runtime – nie picker)
   final.bootIfNeeded();
