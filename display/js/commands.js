@@ -150,8 +150,23 @@ export const createCommandHandler = (app) => {
       }
 
       app.setMode(m);
+      
+      // amnezja sceny przy każdej zmianie APP
+      try {
+        app.scene?.api?.mode?.setApp?.(m);          // jeśli dodasz to w scene.js
+      } catch (e) {
+        console.warn("[display] scene setApp failed", e);
+      }
+      
+      // dodatkowo: jak wychodzisz z GAME, możesz wyczyścić scenę twardo
+      // (żeby nawet przypadkowo nie została grafika BIG w pamięci SVG)
+      if (m !== "GAME") {
+        try { app.scene?.api?.mode?.hardClearAll?.(); } catch {}
+      }
+      
       saveSnapshot(raw);
       return;
+
     }
 
     // ------------------------------------------------------------------
