@@ -1,3 +1,7 @@
+/* /familiada/css/host.css */
+
+/* =================== ROOT / PARAMETRY =================== */
+
 :root{
   /* linijki */
   --line: 6vmin;
@@ -17,14 +21,20 @@
   --top-pad: calc(var(--line));
   --bottom-pad: calc(var(--line) * 2.2);
 
-  /* === JEDYNY PARAMETR STERUJĄCY === */
+  /* === JEDYNY PARAMETR STERUJĄCY (wysokość/szerokość pasma 2) === */
   --pane2-size: 50%;
 
   /* linia podziału */
-  --split-line-w: 7px;
+  --split-line-w: 5px;
   --split-line: rgba(0,0,0,.12);
   --split-line-edge: rgba(0,0,0,.28);
+
+  /* zasłona */
+  --cover-grad-a: #c4002f;
+  --cover-grad-b: #2a62ff;
 }
+
+/* =================== FONT =================== */
 
 @font-face{
   font-family: "Caveat-Variable";
@@ -34,75 +44,81 @@
   font-display: swap;
 }
 
+/* =================== RESET =================== */
+
 *{ -webkit-tap-highlight-color: transparent; }
 
 html, body{
-  margin:0;
-  padding:0;
-  height:100%;
-  background:#fffdf5;
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background: #fffdf5;
 }
 
 .host-body{
-  overflow:hidden;
-  touch-action: pan-y;
-  user-select:none;
-  min-height:100dvh;
+  margin: 0;
+  overflow: hidden;
+  user-select: none;
+  min-height: 100dvh;
+
+  /* mamy własne gesty (pion/poziom w zależności od orientacji) */
+  touch-action: none;
 }
 
 /* =================== FULLSCREEN =================== */
 
 .fsBtn{
-  position:fixed;
+  position: fixed;
   top: calc(var(--safe-top) + 10px);
   right: calc(var(--safe-right) + 10px);
-  z-index:200;
+  z-index: 200;
 
-  width:44px;
-  height:44px;
-  border-radius:14px;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
 
   background: rgba(0,0,0,.35);
-  border:1px solid rgba(255,255,255,.35);
-  color:#fff;
-  font-weight:900;
-}
+  border: 1px solid rgba(255,255,255,.35);
+  box-shadow: 0 4px 14px rgba(0,0,0,.35);
 
+  color: #fff;
+  font-weight: 900;
+  cursor: pointer;
+}
 .fsBtn:active{ transform: translateY(1px); }
 
 /* =================== KARTKA =================== */
 
 .paper{
-  position:fixed;
-  inset:0;
-  z-index:10;
+  position: fixed;
+  inset: 0;
+  z-index: 10;
 
-  background:#fffdf5;
-  background-image:
-    linear-gradient(to bottom, #e7e2d3 1px, transparent 1px);
-  background-size:100% var(--line);
-  background-position:0 var(--safe-top);
+  background: #fffdf5;
+  background-image: linear-gradient(to bottom, #e7e2d3 1px, transparent 1px);
+  background-size: 100% var(--line);
+  background-position: 0 var(--safe-top);
 }
 
 .redMargin{
-  position:absolute;
-  top:0;
-  bottom:0;
+  position: absolute;
+  top: 0;
+  bottom: 0;
   left: calc(var(--safe-left) + var(--margin-x));
-  width:2px;
+  width: 2px;
   background: rgba(255,80,80,.55);
-  pointer-events:none;
+  pointer-events: none;
 }
 
-/* =================== PODZIAŁ =================== */
+/* =================== PODZIAŁ KARTKI =================== */
 
 .paperSplit{
-  display:grid;
-  width:100%;
-  height:100%;
+  display: grid;
+  width: 100%;
+  height: 100%;
 }
 
-/* PORTRAIT → PASMO 2 NA DOLE */
+/* PORTRAIT → pasmo 2 na dole */
 html.portrait .paperSplit{
   grid-template-columns: 1fr;
   grid-template-rows:
@@ -111,7 +127,7 @@ html.portrait .paperSplit{
     minmax(0, var(--pane2-size));
 }
 
-/* LANDSCAPE → PASMO 2 PO PRAWEJ */
+/* LANDSCAPE → pasmo 2 po prawej */
 html.landscape .paperSplit{
   grid-template-rows: 1fr;
   grid-template-columns:
@@ -121,116 +137,189 @@ html.landscape .paperSplit{
 }
 
 .pane{
-  position:relative;
-  overflow:hidden;
+  position: relative;
+  overflow: hidden;
 }
 
+/* pane1 zawsze w pierwszym polu */
 .pane1{ grid-area: 1 / 1; }
 
-html.portrait .pane2{ grid-row:3; }
-html.landscape .pane2{ grid-column:3; }
+/* pane2 zależnie od orientacji */
+html.portrait  .pane2{ grid-row: 3; grid-column: 1; }
+html.landscape .pane2{ grid-column: 3; grid-row: 1; }
 
-/* =================== LINIA =================== */
+/* =================== LINIA PODZIAŁU =================== */
+/* linia ZAWSZE istnieje; zasłona ją przykrywa, gdy jest na miejscu */
 
 .splitLine{
-  background:
-    linear-gradient(
-      to right,
-      var(--split-line-edge),
-      var(--split-line),
-      var(--split-line-edge)
-    );
-  pointer-events:none;
+  pointer-events: none;
+  background: linear-gradient(
+    to right,
+    var(--split-line-edge),
+    var(--split-line),
+    var(--split-line-edge)
+  );
 }
 
-html.portrait .splitLine{ grid-row:2; }
-html.landscape .splitLine{ grid-column:2; }
+html.portrait  .splitLine{ grid-row: 2; grid-column: 1; }
+html.landscape .splitLine{ grid-column: 2; grid-row: 1; }
 
 /* =================== TEKST =================== */
 
 .text{
-  position:absolute;
-  left: calc(var(--safe-left) + var(--text-left));
-  right: calc(var(--safe-right) + var(--text-right));
-  top: calc(var(--safe-top) + var(--top-pad));
+  position: absolute;
+  left:   calc(var(--safe-left)  + var(--text-left));
+  right:  calc(var(--safe-right) + var(--text-right));
+  top:    calc(var(--safe-top)   + var(--top-pad));
   bottom: calc(var(--safe-bottom) + var(--bottom-pad));
 
-  white-space:pre-wrap;
-  word-break:break-word;
-  pointer-events:none;
+  margin: 0;
+  pointer-events: none;
 
-  font-family:"Caveat-Variable", cursive;
+  white-space: pre-wrap;
+  word-break: break-word;
+
+  font-family: "Caveat-Variable", cursive;
   font-size: calc(var(--line) * var(--font-ratio));
   line-height: var(--line);
   padding-top: calc(var(--line) * var(--baseline-shift));
-  color:#111;
+  color: #111;
 }
 
-/* =================== HINT PASMA 2 =================== */
+/* =================== HINT W PASMIE 2 (gdy odsłonięte) =================== */
 
 .p2Hint{
-  position:absolute;
-  left: calc(var(--safe-left) + var(--text-left));
+  position: absolute;
+  left:  calc(var(--safe-left)  + var(--text-left));
   right: calc(var(--safe-right) + var(--text-right));
   bottom: calc(var(--safe-bottom) + 6px);
 
-  font-family:"Caveat-Variable", cursive;
-  font-size: calc(var(--line) * 0.7);
-  line-height:1.15;
+  font-family: "Caveat-Variable", cursive;
+  font-size: calc(var(--line) * 0.70);
+  line-height: 1.15;
 
   color: rgba(0,0,0,.45);
-  opacity:0;
+
+  opacity: 0;
   transform: translateY(6px);
   transition: opacity 140ms ease, transform 140ms ease;
+
+  pointer-events: none;
 }
 
+/* pokazywane przez JS: html.p2Open */
 html.p2Open .p2Hint{
-  opacity:1;
-  transform:none;
+  opacity: 1;
+  transform: translateY(0);
 }
 
 /* =================== ZASŁONA PASMA 2 =================== */
 
 .cover2{
-  position:absolute;
-  inset:0;
-  z-index:30;
+  position: absolute;
+  inset: 0;
+  z-index: 30;
 
-  background: linear-gradient(90deg, #c4002f 0%, #2a62ff 100%);
+  background: linear-gradient(90deg, var(--cover-grad-a) 0%, var(--cover-grad-b) 100%);
+
+  /* KLUCZ: animacja + kontrola przez coverOn/coverOff */
+  transition: transform 180ms ease, opacity 160ms ease;
+  will-change: transform, opacity;
+}
+
+/* zasłonięte: na miejscu, łapie gest */
+.cover2.coverOn{
+  transform: translate(0, 0);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* odsłonięte: wyjeżdża poza pasmo, nie łapie nic */
+html.portrait .cover2.coverOff{
+  transform: translateY(120%);
+  opacity: 1;
+  pointer-events: none;
+}
+
+html.landscape .cover2.coverOff{
+  transform: translateX(120%);
+  opacity: 1;
+  pointer-events: none;
 }
 
 .cover2Content{
-  position:absolute;
-  inset:0;
-  display:flex;
-  flex-direction:column;
-  justify-content:center;
-  align-items:center;
+  position: absolute;
+  inset: 0;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+
   gap: clamp(6px, 1.6vh, 14px);
-  padding:12px;
+
+  padding:
+    calc(var(--safe-top) + 10px)
+    calc(var(--safe-right) + 10px)
+    calc(var(--safe-bottom) + 10px)
+    calc(var(--safe-left) + 10px);
+
+  text-align: center;
+  min-height: 0;
 }
 
+/* logo: nie może się obcinać */
 .cover2Logo{
-  width:min(820px, 86vw);
-  max-height:55dvh;
-  object-fit:contain;
+  flex: 0 1 auto;
+  width: min(820px, 86vw);
+  max-width: 86vw;
+
+  max-height: 55dvh;
+  height: auto;
+
+  object-fit: contain;
+  display: block;
+
   filter: drop-shadow(0 12px 30px rgba(0,0,0,.35));
+  pointer-events: none;
+  -webkit-user-drag: none;
+  user-select: none;
 }
 
 .cover2Swipe{
-  max-width:min(92vw, 720px);
-  font-family:"Caveat-Variable", cursive;
+  flex: 0 1 auto;
+  max-width: min(92vw, 720px);
+  padding: 0 10px;
+
+  font-family: "Caveat-Variable", cursive;
   font-size: clamp(14px, calc(var(--line) * 0.75), 34px);
-  line-height:1.15;
-  color:#fc0;
-  text-shadow:0 4px 18px rgba(0,0,0,.45);
+  line-height: 1.15;
+
+  color: #fc0;
+  text-shadow: 0 4px 18px rgba(0,0,0,.45);
+
+  white-space: normal;
+  word-break: break-word;
 }
 
 /* =================== PSEUDO FULLSCREEN =================== */
 
 .pseudoFS,
 .pseudoFS body{
-  width:100%;
-  height:100%;
-  overflow:hidden;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.pseudoFS .fsBtn{
+  opacity: .85;
+}
+
+/* =================== REDUCED MOTION =================== */
+
+@media (prefers-reduced-motion: reduce){
+  .cover2,
+  .p2Hint{
+    transition: none !important;
+  }
 }
