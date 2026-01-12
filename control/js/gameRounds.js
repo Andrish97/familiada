@@ -410,29 +410,6 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     };
   }
 
-  function getFinalMinPoints() {
-    const adv = store.state.advanced || {};
-    return nInt(adv.finalMinPoints, 0);
-  }
-  
-  function isThresholdHit() {
-    const r = store.state.rounds || {};
-    const t = r.totals || { A: 0, B: 0 };
-    const thr = getFinalMinPoints();
-    if (thr <= 0) return false;
-    return nInt(t.A, 0) >= thr || nInt(t.B, 0) >= thr;
-  }
-  
-  function shouldEndGameAfterThisRound() {
-    // 1) próg osiągnięty
-    if (isThresholdHit()) return true;
-  
-    // 2) koniec pytań (czyli po tej rundzie nie ma już następnej)
-    if (!hasMoreQuestions()) return true;
-  
-    return false;
-  }
-
   // === Główne stany gry ===
 
   async function stateGameReady() {
@@ -522,8 +499,8 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
   async function startRound() {
     await loadRoundsIfNeeded();
     ensureRoundsState();
-    const r = store.state.rounds;
     
+    const r = store.state.rounds;
     // kasowanie starej rundy DOPIERO przy starcie nowej:
     r.question = null;
     r.answers = [];
@@ -531,12 +508,10 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     ui.setRoundQuestion("—");
     ui.renderRoundAnswers?.([], r.revealed);
     hostUpdate();
-
+    
     ui.setEnabled("btnStartRound", false);
     
     clearAllRoundMsgs();
-
-    const r = store.state.rounds;
 
     const obj = pickNextQuestionObj();
     if (!obj) {
@@ -1186,9 +1161,6 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     const awarded = bank * mult;
 
     r.totals[winner] = nInt(r.totals[winner], 0) + awarded;
-    // NOWE: zapamiętujemy, że po ZAKOŃCZENIU TEJ RUNDY (i ewentualnym reveal)
-    // mamy zakończyć grę / przejść do finału
-    r._pendingGameEnd = shouldEndGameAfterThisRound();
 
     ui.setRoundsHud(r);
 
@@ -1257,41 +1229,33 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     clearTimer3();
     ui.setRoundsHud(r);
 
-    const pendingEnd = !!r._pendingGameEnd;
-    r._pendingGameEnd = false;
-    
+    const moreQuestions = hasMoreQuestions();
     const canFinal =
       typeof store.canEnterCard === "function" &&
       store.canEnterCard("final");
-    
-    const moreQuestions = hasMoreQuestions();
-    
-    if (pendingEnd) {
-      // 1) mamy finał -> finał
-      if (canFinal) {
-        if (typeof store.setFinalActive === "function") store.setFinalActive(true);
-        if (typeof store.setActiveCard === "function") store.setActiveCard("final");
-        if (typeof ui.showCard === "function") ui.showCard("final");
-        if (typeof ui.showFinalStep === "function") ui.showFinalStep("f_start");
-        setEndMsg(ROUNDS_MSG.ROUND_TO_FINAL);
-        return;
+
+    if (canFinal) {
+      if (typeof store.setFinalActive === "function") {
+        store.setFinalActive(true);
       }
-    
-      // 2) nie ma finału -> przechodzimy do “Zakończ grę”
-      ui.showRoundsStep?.("r_gameEnd");
-      ui.setEnabled?.("btnShowGameEnd", true);
-      setEndMsg(ROUNDS_MSG.ROUND_LAST);
+      if (typeof store.setActiveCard === "function") {
+        store.setActiveCard("final");
+      }
+      if (typeof ui.showCard === "function") {
+        ui.showCard("final");
+      }
+      if (typeof ui.showFinalStep === "function") {
+        ui.showFinalStep("f_start");
+      }
+      setEndMsg(ROUNDS_MSG.ROUND_TO_FINAL);
       return;
     }
-    
-    // normalny flow (gra trwa)
+
     if (moreQuestions) {
       setStep("r_roundStart");
       setEndMsg(ROUNDS_MSG.ROUND_NEXT);
     } else {
-      // safety net – teoretycznie tu nie powinniśmy trafić, bo pendingEnd byłby true
       ui.showRoundsStep?.("r_gameEnd");
-      ui.setEnabled?.("btnShowGameEnd", true);
       setEndMsg(ROUNDS_MSG.ROUND_LAST);
     }
   }
@@ -1356,50 +1320,48 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
   // === ZAKOŃCZ GRĘ (bez finału) – 3 tryby końca ===
 
   async function gameEndShow() {
-    // zablokuj od razu (żeby nie dało się klikać kilka razy)
-    ui.setEnabled?.("btnShowGameEnd", false);
-  
-    try {
-      const r = store.state.rounds;
-      const totals = r.totals || { A: 0, B: 0 };
-      const a = nInt(totals.A, 0);
-      const b = nInt(totals.B, 0);
-  
-      const adv = store.state.advanced || {};
-      const threshold = nInt(adv.finalMinPoints, 0);
-  
-      const mode = getEndScreenMode();
-  
-      const aHit = threshold > 0 && a >= threshold;
-      const bHit = threshold > 0 && b >= threshold;
-  
-      let msg = "";
-      let winnerTeam = null;
-      let winnerPts = 0;
-  
-      if (a === b) {
-        msg = ROUNDS_MSG.GAME_END_DRAW(a, b);
-      } else {
-        winnerTeam = a > b ? "A" : "B";
-        winnerPts = a > b ? a : b;
-        msg = ROUNDS_MSG.GAME_END_WIN(winnerTeam, winnerPts);
+    const r = store.state.rounds;
+    const totals = r.totals || { A: 0, B: 0 };
+    const a = nInt(totals.A, 0);
+    const b = nInt(totals.B, 0);
+
+    const mode = getEndScreenMode();
+
+    let msg;
+
+    if (a === b) {
+      msg = ROUNDS_MSG.GAME_END_DRAW(a, b);
+
+      if (display.showLogo) {
+        try {
+          await display.showLogo();
+        } catch (e) {
+          console.warn("[rounds] showLogo (remis) error", e);
+        }
       }
-  
-      // (tu tylko decydujesz co pokazać; reguły już masz wyżej)
-      if (winnerTeam == null) {
+
+      ui.setMsg("msgGameEnd", msg);
+      return;
+    }
+
+    const winnerTeam = a > b ? "A" : "B";
+    const winnerPts = a > b ? a : b;
+
+    msg = ROUNDS_MSG.GAME_END_WIN(winnerTeam, winnerPts);
+
+    try {
+      if (mode === "logo" || !display.showWin) {
         await display.showLogo?.();
       } else {
-        if (mode === "logo" || !display.showWin) await display.showLogo?.();
-        else await display.showWin(winnerPts);
+        // "points" albo "money" – bez finału "money" traktujemy jak "points"
+        await display.showWin(winnerPts);
       }
-  
-      ui.setMsg("msgGameEnd", msg);
-      store.state.locks.gameEnded = true;
     } catch (e) {
-      console.warn("[rounds] gameEndShow error", e);
-      // jak chcesz: odblokuj, żeby można było spróbować jeszcze raz
-      ui.setEnabled?.("btnShowGameEnd", true);
+      console.warn("[rounds] gameEndShow display error", e);
     }
+
+    ui.setMsg("msgGameEnd", msg);
+    store.state.locks.gameEnded = true;
   }
 
   // === BOOT / ODTWORZENIE STANU ===
