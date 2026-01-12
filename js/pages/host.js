@@ -465,9 +465,16 @@ const SWIPE_SLOPE = 1.25;
 let swDown = false;
 let sx = 0, sy = 0, st = 0;
 
+function vminPx(v) {
+  const minSide = Math.min(window.innerWidth, window.innerHeight);
+  return minSide * v / 100;
+}
+
 function startAllowed(x) {
+  const left = vminPx(18);   // --margin-x
+  const right = vminPx(16);  // --text-right
   const w = window.innerWidth || 1;
-  return x > EDGE_GUARD && x < (w - EDGE_GUARD);
+  return x > left && x < (w - right);
 }
 
 function onPointerDown(ev) {
