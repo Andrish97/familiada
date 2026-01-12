@@ -1147,14 +1147,15 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     const q = qPicked[idx];
     const aList = answersByQ.get(q.id) || [];
     const row = rt.map1[idx];
-
+  
     if (row.kind === "SKIP") return { text: FINAL_BLANK, pts: "0" };
-
+  
     if (row.kind === "MATCH") {
       const a = aList.find((x) => x.id === row.matchId);
-      return { text: out || FINAL_BLANK, pts: "0" };
+      const txt = (a?.text || "").trim();
+      return { text: txt || FINAL_BLANK, pts: "0" };
     }
-
+  
     const out = (row.outText || rt.p1[idx].text || "").trim();
     return { text: out || "———————————", pts: "0" };
   }
