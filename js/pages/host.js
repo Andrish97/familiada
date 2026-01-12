@@ -10,6 +10,7 @@ const paperText2 = document.getElementById("paperText2");
 const cover2 = document.getElementById("cover2");
 const cover2Swipe = document.getElementById("cover2Swipe");
 const splitLine = document.getElementById("splitLine");
+const p2Hint = document.getElementById("p2Hint");
 
 const btnFS = document.getElementById("btnFS");
 const fsIco = document.getElementById("fsIco");
@@ -113,18 +114,21 @@ async function toggleFullscreen() {
 /* ========= UI ========= */
 function updateSwipeHint() {
   const o = getOrientation();
-  if (!cover2Swipe) return;
 
-  // pasmo2 zasłonięte => pokaż jak odsłonić
-  // pasmo2 odsłonięte => pokaż jak zasłonić
-  if (o === "portrait") {
-    cover2Swipe.textContent = p2Covered
-      ? "Przesuń w dół, żeby odsłonić"
-      : "Przesuń w górę, żeby zasłonić";
-  } else {
-    cover2Swipe.textContent = p2Covered
-      ? "Przesuń w prawo, żeby odsłonić"
+  const onCover = (o === "portrait")
+    ? (p2Covered ? "Przesuń w dół, żeby odsłonić" : "Przesuń w górę, żeby zasłonić")
+    : (p2Covered ? "Przesuń w prawo, żeby odsłonić" : "Przesuń w lewo, żeby zasłonić");
+
+  // tekst na overlayu (gdy zasłonięte)
+  if (cover2Swipe) cover2Swipe.textContent = onCover;
+
+  // tekst po odsłonięciu (na pasmie 2)
+  // tu pokazujemy tylko komunikat o ZASŁONIĘCIU, bo odsłonięte już jest
+  if (p2Hint) {
+    const openHint = (o === "portrait")
+      ? "Przesuń w górę, żeby zasłonić"
       : "Przesuń w lewo, żeby zasłonić";
+    p2Hint.textContent = openHint;
   }
 }
 
