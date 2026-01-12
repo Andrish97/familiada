@@ -517,20 +517,18 @@ body.builder-body{
   padding:6px 0;
 }
 
-/* ===== Mobile / telefon ===== */
 @media (max-width: 720px){
 
-  /* --- ZAKŁADKI: jak w control --- */
   :root{
-    --tab-height: 56px;   /* jak w control */
-    --tab-extra: 3px;     /* jak w control */
+    --tab-height: 56px;
+    --tab-extra: 3px;
   }
 
   .tabs-strip{
     display:grid;
     grid-template-columns: repeat(3, 1fr);
     gap:0;
-    overflow:hidden;
+    /* overflow:hidden;  <-- USUŃ, bo ucina łuki */
   }
 
   .tab-slot{
@@ -539,7 +537,6 @@ body.builder-body{
     justify-content:center;
   }
 
-  /* usuń zmniejszanie wysokości (-6px) */
   .tab-label{
     height: var(--tab-height);
     line-height: var(--tab-height);
@@ -548,29 +545,27 @@ body.builder-body{
   .tab-active{
     height: calc(var(--tab-height) + var(--tab-extra));
     line-height: var(--tab-height);
-    position: relative;
-    top: 1px;  
-    color: transparent;  
+    color: transparent; /* jak w control: wypustka bez tekstu */
+    /* top: 1px; <-- USUŃ */
   }
 
-  /* na mobile nigdzie nie rysujemy pionowych linii */
   .tab-label::after,
   .tab-label.active::after{
     display:none !important;
   }
 
   .tab-corner{
-    bottom: -1px;
+    bottom: 0; /* było -1px -> cofamy */
   }
 
-  /* opcjonalnie, ale identycznie jak w control: warstwy */
+  /* warstwy jak w control */
   .tab-label{ z-index: 2; }
   .tab-wrapper{ z-index: 1; }
 
-  /* --- reszta Twojego mobile --- */
   .grid{ grid-template-columns: minmax(0, 1fr); }
-  .builder-card.card{ padding:14px 10px 10px; }
+
   .builder-card.card{
-    margin-top: -1px;        /* domyka linię na styku */
+    padding:14px 10px 10px;
+    /* margin-top:-1px; <-- USUŃ, bo zjada górną obwódkę */
   }
 }
