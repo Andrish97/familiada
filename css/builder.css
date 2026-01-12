@@ -548,6 +548,7 @@ body.builder-body{
   .tab-active{
     height: calc(var(--tab-height) + var(--tab-extra));
     line-height: var(--tab-height);
+    color: transparent;  
   }
 
   /* na mobile nigdzie nie rysujemy pionowych linii */
@@ -563,4 +564,7 @@ body.builder-body{
   /* --- reszta Twojego mobile --- */
   .grid{ grid-template-columns: minmax(0, 1fr); }
   .builder-card.card{ padding:14px 10px 10px; }
+  .builder-card.card{
+    margin-top: -1px;        /* domyka linię na styku */
+  }
 }
