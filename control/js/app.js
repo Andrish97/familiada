@@ -219,6 +219,35 @@ async function main() {
     return gameStarted && (someRoundProgress || somePoints || finalActive);
   }
 
+  // === RESET URZĄDZEŃ przy wyjściu PO ZAKOŃCZENIU GRY ===
+function isEndedUiState() {
+  const s = store.state;
+  const activeCard = s.activeCard || "";
+  const rStep = s.steps?.rounds || "";
+  const fStep = s.final?.step || "";
+
+  // ROUNDS: karta "Zakończ grę"
+  if (activeCard === "rounds" && rStep === "r_gameEnd") return true;
+
+  // FINAL: krok "Zakończ finał"
+  if (activeCard === "final" && fStep === "f_end") return true;
+
+  // globalny lock
+  if (s.locks?.gameEnded) return true;
+
+  return false;
+}
+
+async function sendZeroStatesToDevices() {
+  // “zerowy stan” = czarny ekran, host pusty+ukryty, buzzer wyłączony
+  try { await devices.sendDisplayCmd("APP BLACK"); } catch {}
+  try { await devices.sendHostCmd('SET ""'); } catch {}
+  try { await devices.sendHostCmd("HIDE"); } catch {}
+  try { await devices.sendBuzzerCmd("OFF"); } catch {}
+  try { await devices.sendBuzzerCmd("RESET"); } catch {}
+}
+
+
   window.addEventListener("beforeunload", (e) => {
     if (!shouldWarnBeforeUnload()) return;
     const msg = APP_MSG.UNLOAD_WARN;
@@ -234,6 +263,11 @@ async function main() {
   });
   window.addEventListener("pagehide", () => {
     suppressUnloadWarn = true;
+  
+    if (isEndedUiState()) {
+      // bez await – przeglądarka może zabić JS w locie
+      sendZeroStatesToDevices().catch(() => {});
+    }
   });
 
   // realtime channels
@@ -528,16 +562,27 @@ async function main() {
   });
 
   // === Top bar ===
-  ui.on("top.back", () => {
+  ui.on("top.back", async () => {
     if (shouldWarnBeforeUnload()) {
       const ok = confirm(APP_MSG.CONFIRM_BACK);
       if (!ok) return;
     }
+  
+    // jeśli wychodzimy PO zakończeniu – zerujemy urządzenia
+    if (isEndedUiState()) {
+      await sendZeroStatesToDevices().catch(() => {});
+    }
+  
     suppressUnloadWarn = true;
     location.href = "/familiada/builder.html";
   });
-
+  
   ui.on("top.logout", async () => {
+    // jeśli wychodzimy PO zakończeniu – zerujemy urządzenia
+    if (isEndedUiState()) {
+      await sendZeroStatesToDevices().catch(() => {});
+    }
+  
     await signOut().catch(() => {});
     suppressUnloadWarn = true;
     location.href = "/familiada/index.html";
