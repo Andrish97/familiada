@@ -36,19 +36,30 @@
     <span class="ico" id="fsIco" aria-hidden="true">▢</span>
   </button>
   
-  <!-- Kartka -->
-  <main class="paper" id="paper">
+  <!-- Kartka (split) -->
+  <main class="paper split" id="paper">
     <i class="redMargin" aria-hidden="true"></i>
-    <pre class="text" id="paperText"></pre>
+
+    <section class="pane pane1" id="pane1">
+      <pre class="text" id="text1"></pre>
+    </section>
+
+    <div class="splitLine" id="splitLine" aria-hidden="true"></div>
+
+    <section class="pane pane2" id="pane2">
+      <pre class="text" id="text2"></pre>
+
+      <!-- „Zakrywka” tylko na 2. połówkę -->
+      <div class="cover2 coverOn" id="cover2">
+        <div class="cover2Content" aria-hidden="true">
+          <img class="cover2Logo" src="logo.svg" alt="Familiada" draggable="false"/>
+          <div class="cover2Swipe" id="cover2Swipe"> </div>
+        </div>
+      </div>
+    </section>
+
     <div class="hint" id="hint"> </div>
   </main>
 
-  <!-- Okładka (overlay) -->
-  <div class="blank blankOffLeft" id="blank">
-    <div class="blankContent" aria-hidden="true">
-      <img class="blankLogo" src="logo.svg" alt="Familiada" draggable="false"/>
-      <div class="blankSwipe">Przesuń w lewo, żeby odsłonić</div>
-    </div>
-  </div>
 </body>
 </html>
