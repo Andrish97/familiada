@@ -248,58 +248,65 @@ html.landscape .cover2.coverOff{
 }
 
 .cover2Content{
-  position: absolute;
-  inset: 0;
-
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-
+  position:absolute;
+  inset:0;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
   gap: clamp(6px, 1.6vh, 14px);
 
+  /* ważne: bezpieczne paddingi + żeby flex mógł się kurczyć */
   padding:
     calc(var(--safe-top) + 10px)
     calc(var(--safe-right) + 10px)
     calc(var(--safe-bottom) + 10px)
     calc(var(--safe-left) + 10px);
 
-  text-align: center;
-  min-height: 0;
+  min-height: 0;     /* KLUCZ */
+  height: 100%;      /* KLUCZ */
+  box-sizing: border-box;
 }
 
 /* logo: nie może się obcinać */
 .cover2Logo{
-  flex: 0 1 auto;
-  width: min(820px, 86vw);
-  max-width: 86vw;
+  /* logo ma brać dostępną przestrzeń i się kurczyć */
+  flex: 1 1 auto;
+  min-height: 0;                 /* KLUCZ */
+  max-height: 100%;              /* KLUCZ: nie dvh */
 
-  max-height: 55dvh;
+  width: min(820px, 86%);
+  max-width: 86%;
+
   height: auto;
-
   object-fit: contain;
-  display: block;
+  display:block;
 
   filter: drop-shadow(0 12px 30px rgba(0,0,0,.35));
-  pointer-events: none;
-  -webkit-user-drag: none;
-  user-select: none;
+  pointer-events:none;
+  -webkit-user-drag:none;
+  user-select:none;
 }
 
 .cover2Swipe{
-  flex: 0 1 auto;
-  max-width: min(92vw, 720px);
+  /* hint nie może wypchnąć logo */
+  flex: 0 0 auto;
+  max-width: min(92%, 720px);
   padding: 0 10px;
 
-  font-family: "Caveat-Variable", cursive;
-  font-size: clamp(14px, calc(var(--line) * 0.75), 34px);
+  font-family:"Caveat-Variable", cursive;
+  font-size: clamp(14px, calc(var(--line) * 0.72), 30px);
   line-height: 1.15;
 
-  color: #fc0;
-  text-shadow: 0 4px 18px rgba(0,0,0,.45);
+  color:#fc0;
+  text-shadow:0 4px 18px rgba(0,0,0,.45);
 
   white-space: normal;
   word-break: break-word;
+}
+@media (max-height: 420px){
+  .cover2Swipe{ display:none; }
+  .cover2Content{ justify-content:center; }
 }
 
 /* =================== PSEUDO FULLSCREEN =================== */
