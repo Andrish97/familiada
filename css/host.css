@@ -102,7 +102,6 @@ html, body{
 
   /* dalej “pisana”, ale czytelniejsza */
   font-family: "Caveat-Variable", cursive;
-  font-variation-settings: "wght" 600;
 
   /* ↑ większa czcionka w linijkach */
   font-size: calc(var(--line) * var(--font-ratio));
@@ -122,10 +121,11 @@ html, body{
   text-underline-offset: 0.18em;
 }
 
-.text strong,
-.text b{
+.text .b{
   font-variation-settings: "wght" 750;
+  font-weight: 750;
 }
+
 
 .hint{
   position:absolute;
