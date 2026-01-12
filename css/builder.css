@@ -521,7 +521,7 @@ body.builder-body{
 
   :root{
     --tab-height: 56px;
-    --tab-extra: 3px;
+    --tab-extra: 1px;
   }
 
   .tabs-strip{
