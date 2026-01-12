@@ -1,6 +1,6 @@
 :root{
   /* stała “linijka” (bez artefaktów gradientu) */
-  --line: 4vmin;
+  --line: 5vmin;
 
   --font-ratio: 1.1;   /* wielkość liter względem linijki */
   --baseline-shift: 0.15; /* przesunięcie baseline */
