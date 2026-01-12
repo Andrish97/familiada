@@ -1212,70 +1212,101 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
   // -------- Koniec finału (3 tryby) --------
   async function finishFinal() {
     ensureRuntime();
+  
     const rtDone = store.state.final.runtime;
     if (rtDone?.done === true) return;
-    if (rtDone) rtDone.done = true;
-
+    rtDone.done = true;
+  
+    // blokuj od razu (anty-spam)
     ui.setEnabled?.("btnFinalFinish", false);
-
-    playSfx("final_theme");
-
+  
+    // globalny lock końca gry
+    const locks = (store.state.locks = store.state.locks || {});
+    if (locks.gameEnded) return;
+    locks.gameEnded = true;
+  
+    // --- obliczenia (bez zmian) ---
     const rt = store.state.final.runtime || {};
     const sum = nInt(rt.sum, 0);
-
+  
     const adv = store.state.advanced || {};
     const target = typeof adv.finalTarget === "number" ? adv.finalTarget : 200;
-
+  
     const totals = store.state.rounds?.totals || { A: 0, B: 0 };
     const winnerTeam = getWinnerTeam();
     const roundsA = nInt(totals.A, 0);
     const roundsB = nInt(totals.B, 0);
     const winnerRounds = winnerTeam === "B" ? roundsB : roundsA;
-
+  
     const hitTarget = sum >= target;
     const totalPointsAll = winnerRounds + sum;
-
+  
     let winAmount = totalPointsAll * 3;
     if (hitTarget) winAmount += 25000;
-
+  
+    // update totals na tripletach (może być od razu)
     try {
       const newTotals = {
         A: winnerTeam === "A" ? roundsA + sum : roundsA,
         B: winnerTeam === "B" ? roundsB + sum : roundsB,
       };
-
+  
       if (typeof display.setBankTriplet === "function") await display.setBankTriplet(0);
       await display.setTotalsTriplets?.(newTotals);
     } catch (e) {
       console.warn("setTotalsTriplets after final failed", e);
     }
-
+  
     const mode = getEndScreenMode(store);
-
+  
+    // --- NOWE: intro + w 14s hideBoard + logo/win ---
+    const showEndScreen = async () => {
+      try {
+        await display.finalHideBoard?.();
+      } catch (e) {
+        console.warn("[final] finalHideBoard failed", e);
+      }
+  
+      try {
+        if (mode === "logo") {
+          await display.showLogo?.();
+          return;
+        }
+  
+        if (mode === "points") {
+          if (display.showWin) await display.showWin(totalPointsAll);
+          else await display.showLogo?.();
+          return;
+        }
+  
+        if (mode === "money") {
+          if (display.showWin) await display.showWin(winAmount);
+          else await display.showLogo?.();
+          return;
+        }
+  
+        await display.showLogo?.(); // safety
+      } catch (e) {
+        console.warn("[final] show end screen failed", e);
+      }
+    };
+  
+    playSfx("show_intro");
+  
+    // 14s: dopiero teraz chowamy planszę i pokazujemy logo/win
+    setTimeout(() => {
+      showEndScreen().catch(() => {});
+    }, 14000);
+  
+    // poczekaj aż audio się skończy
     try {
-      await devices.sendDisplayCmd('FBATCH ANIMOUT edge down 1000');
-      await new Promise((r) => setTimeout(r, 1000));
+      const dur = await getSfxDuration("show_intro");
+      if (dur > 0) await new Promise((res) => setTimeout(res, dur * 1000));
     } catch {}
-
-    if (mode === "logo") {
-      await display.showLogo?.();
-      return;
-    }
-
-    if (mode === "points") {
-      if (display.showWin) await display.showWin(totalPointsAll);
-      else await display.showLogo?.();
-      return;
-    }
-
-    if (mode === "money") {
-      if (display.showWin) await display.showWin(winAmount);
-      else await display.showLogo?.();
-      return;
-    }
-
+  
     store.state.locks.gameEnded = true;
   }
+
 
   function bootIfNeeded() {
     ensureRuntime();
