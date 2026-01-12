@@ -1348,48 +1348,82 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
   // === ZAKOŃCZ GRĘ (bez finału) – 3 tryby końca ===
 
   async function gameEndShow() {
-    const r = store.state.rounds;
-    const totals = r.totals || { A: 0, B: 0 };
-    const a = nInt(totals.A, 0);
-    const b = nInt(totals.B, 0);
-
-    const mode = getEndScreenMode();
-
-    let msg;
-
-    if (a === b) {
-      msg = ROUNDS_MSG.GAME_END_DRAW(a, b);
-
-      if (display.showLogo) {
-        try {
-          await display.showLogo();
-        } catch (e) {
-          console.warn("[rounds] showLogo (remis) error", e);
-        }
-      }
-
-      ui.setMsg("msgGameEnd", msg);
-      return;
-    }
-
-    const winnerTeam = a > b ? "A" : "B";
-    const winnerPts = a > b ? a : b;
-
-    msg = ROUNDS_MSG.GAME_END_WIN(winnerTeam, winnerPts);
-
+    const locks = (store.state.locks = store.state.locks || {});
+    if (locks.gameEnded) return;
+    locks.gameEnded = true;
+  
+    ui.setEnabled?.("btnShowGameEnd", false);
+  
     try {
-      if (mode === "logo" || !display.showWin) {
-        await display.showLogo?.();
+      const r = store.state.rounds;
+      const totals = r.totals || { A: 0, B: 0 };
+      const a = nInt(totals.A, 0);
+      const b = nInt(totals.B, 0);
+  
+      const mode = getEndScreenMode();
+      const isDraw = a === b;
+      const winnerPts = isDraw ? 0 : Math.max(a, b);
+  
+      const msg = isDraw
+        ? ROUNDS_MSG.GAME_END_DRAW(a, b)
+        : ROUNDS_MSG.GAME_END_WIN(a > b ? "A" : "B", winnerPts);
+  
+      ui.setMsg("msgGameEnd", msg);
+  
+      const showEndScreen = async () => {
+        // TU JEST WŁAŚCIWY MOMENT
+        await display.roundsHideBoard?.();
+  
+        if (isDraw) {
+          await display.showLogo?.();
+        } else if (mode === "logo" || !display.showWin) {
+          await display.showLogo?.();
+        } else {
+          await display.showWin(winnerPts);
+        }
+      };
+  
+      if (!introMixer) {
+        playSfx("show_intro");
+  
+        setTimeout(() => {
+          showEndScreen().catch(() => {});
+        }, 14000);
+  
+        try {
+          const dur = await getSfxDuration("show_intro");
+          if (dur > 0) {
+            await new Promise((res) => setTimeout(res, dur * 1000));
+          }
+        } catch {}
       } else {
-        // "points" albo "money" – bez finału "money" traktujemy jak "points"
-        await display.showWin(winnerPts);
+        introMixer.stop();
+  
+        await new Promise((resolve) => {
+          let shown = false;
+  
+          const off = introMixer.onTime((current, duration) => {
+            const d = duration || 0;
+  
+            if (!shown && current >= 14) {
+              shown = true;
+              showEndScreen().catch(() => {});
+            }
+  
+            if (d > 0 && current >= d - 0.05) {
+              off();
+              resolve();
+            }
+          });
+  
+          introMixer.play("show_intro");
+        });
       }
     } catch (e) {
-      console.warn("[rounds] gameEndShow display error", e);
+      console.warn("[rounds] gameEndShow error", e);
+      store.state.locks.gameEnded = false;
+      ui.setEnabled?.("btnShowGameEnd", true);
     }
-
-    ui.setMsg("msgGameEnd", msg);
-    store.state.locks.gameEnded = true;
   }
 
   // === BOOT / ODTWORZENIE STANU ===
