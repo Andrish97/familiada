@@ -553,14 +553,19 @@ export function createUI() {
         el.addEventListener("change", () => emit("advanced.change"));
       }
     });
-
-    const winMoney = $("winModeMoney");
+    
     const winLogo = $("winModeLogo");
-    if (winMoney) {
-      winMoney.addEventListener("change", () => emit("advanced.change"));
-    }
+    const winPoints = $("winModePoints");
+    const winMoney = $("winModeMoney");
+
     if (winLogo) {
       winLogo.addEventListener("change", () => emit("advanced.change"));
+    }
+    if (winPoints) {
+      winPoints.addEventListener("change", () => emit("advanced.change"));
+    }
+    if (winMoney) {
+      winMoney.addEventListener("change", () => emit("advanced.change"));
     }
 
     $("btnAdvancedReset")?.addEventListener("click", () =>
