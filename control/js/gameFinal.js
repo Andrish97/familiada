@@ -1075,18 +1075,18 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
   // -------- Public actions --------
   async function startFinal() {
     // blokuj od razu (anty-spam)
-    ui.setEnabled?.("btnStartFinal", false);
+    ui.setEnabled?.("btnFinalStart", false);
   
     try {
       if (store.state.hasFinal !== true) {
         ui.setMsg("msgFinal", FINAL_MSG.FINAL_DISABLED);
-        ui.setEnabled?.("btnStartFinal", true);
+        ui.setEnabled?.("btnFinalStart", true);
         return;
       }
   
       if (!store.state.final.confirmed || (store.state.final.picked || []).length !== 5) {
         ui.setMsg("msgFinal", FINAL_MSG.FINAL_NEEDS_PICK);
-        ui.setEnabled?.("btnStartFinal", true);
+        ui.setEnabled?.("btnFinalStart", true);
         return;
       }
   
@@ -1098,7 +1098,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
   
       if (!hasEnough) {
         ui.setMsg("msgFinal", FINAL_MSG.FINAL_NEEDS_POINTS(threshold));
-        ui.setEnabled?.("btnStartFinal", true);
+        ui.setEnabled?.("btnFinalStart", true);
         return;
       }
   
@@ -1153,7 +1153,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     } catch (e) {
       console.warn("[final] startFinal error", e);
       // jeśli start się wysypał, odblokuj
-      ui.setEnabled?.("btnStartFinal", true);
+      ui.setEnabled?.("btnFinalStart", true);
       ui.setMsg("msgFinal", String(e?.message || e || "Błąd startu finału."));
     }
   }
