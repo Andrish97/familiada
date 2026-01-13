@@ -78,7 +78,7 @@ const HOST_CLR = {
   yellow: "gold",
 };
 
-const FINAL_BLANK = "----";
+const FINAL_BLANK = "————";
 
 function hostGreenStrike(text) {
   return hostTag(`${HOST_CLR.green} s`, text);
@@ -226,38 +226,56 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     return "";
   }
 
-  async function hostShowLines(lines) {
+  async function hostSetLeft(lines) {
     const txt = lines.join("\n").replace(/"/g, '\\"');
-    try {
-      await devices.sendHostCmd(`SET "${txt}"`);
-      await devices.sendHostCmd("OPEN");
-    } catch {}
+    try { await devices.sendHostCmd(`SET1 "${txt}"`); } catch {}
+  }
+  
+  async function hostSetRight(lines) {
+    const txt = lines.join("\n").replace(/"/g, '\\"');
+    try { await devices.sendHostCmd(`SET2 "${txt}"`); } catch {}
+  }
+  
+  async function hostClearAll() {
+    try { await devices.sendHostCmd("CLEAR"); } catch {}
+  }
+  
+  async function hostCoverRight() {
+    try { await devices.sendHostCmd("COVER"); } catch {}
   }
 
-  async function hostBlank() {
-    try {
-      await devices.sendHostCmd('SET ""');
-      await devices.sendHostCmd("HIDE");
-    } catch {}
-  }
+  async function hostClearLeft() { try { await devices.sendHostCmd("CLEAR1"); } catch {} }
+  async function hostClearRight() { try { await devices.sendHostCmd("CLEAR2"); } catch {} }
 
-  function hostMappingLines(roundNo, idx) {
-    // Wymaganie: host widzi jedno pytanie + pełną listę odpowiedzi z punktami.
-    // Status jest realizowany KOLORAMI i (zakreślenie/podkreślenie) zamiast kontrolek.
+  
+  // NIE UŻYWAMY UNCOVER tutaj — prowadzący robi to sam
+  
+  function hostMappingLeft(roundNo, idx) {
+    ensureRuntime();
+    const q = qPicked[idx];
+  
+    const title = hostTag("b",
+      roundNo === 1 ? "FINAŁ — ODSŁANIANIE (RUNDA 1)" : "FINAŁ — ODSŁANIANIE (RUNDA 2)"
+    );
+  
+    const qLine = `${hostTag("u", `Pytanie ${idx + 1}`)}: ${(q?.text || "—").replace(/\s+/g, " ").trim()}`;
+  
+    return [title, "", qLine];
+  }
+  
+  function hostMappingRight(roundNo, idx) {
     ensureRuntime();
     const rt = store.state.final.runtime;
     const q = qPicked[idx];
     const aList = (answersByQ.get(q?.id) || []).slice();
     const row = (roundNo === 1 ? rt.map1 : rt.map2)[idx];
-
+  
     const inputP1 = (rt.p1[idx]?.text || "").trim();
     const inputP2 = (rt.p2[idx]?.text || "").trim();
     const isRepeat = (roundNo === 2 && rt.p2[idx]?.repeat === true);
     const input = roundNo === 1 ? inputP1 : inputP2;
-    
-    const playerLine = `Odpowiedź gracza: ${input ? input : "brak odpowiedzi"}`;
-    
-    // status kolorami (to jest osobna linia!)
+  
+    // STATUS (kolorami) – ale zależny od inputu/repeat
     let statusLine = "";
     if (isRepeat) {
       statusLine = hostYellowUnderline("powtórzenie");
@@ -268,68 +286,73 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     } else {
       statusLine = hostYellowUnderline("nie ma na liście");
     }
-
-    const title = hostTag("b", roundNo === 1 ? "FINAŁ — ODSŁANIANIE (RUNDA 1)" : "FINAŁ — ODSŁANIANIE (RUNDA 2)");
-    const qLine = `${hostTag("u", `Pytanie ${idx + 1}`)}: ${(q?.text || "—").replace(/\s+/g, " ").trim()}`;
-
+  
+    // TU JEST ZMIANA: najpierw INPUT, potem STATUS
+    // - jeśli brak odpowiedzi → nie pokazujemy inputu wcale
+    const lines = [];
+  
+    // R2 dodatkowy kontekst: gracz 1 zawsze pokazany (to zostaje jak było)
+    if (roundNo === 2) {
+      lines.push(`${hostTag("u", "Gracz 1")}: ${(inputP1 || "—").replace(/\s+/g, " ").trim()}`);
+      lines.push("");
+    }
+  
+    if (input) {
+      lines.push(`${hostTag("u", "Input")}: ${input.replace(/\s+/g, " ").trim()}`);
+    }
+    lines.push(`${hostTag("u", "Stan")}: ${statusLine}`);
+    lines.push("");
+  
+    // Lista odpowiedzi z punktami
     const sorted = aList.sort((a, b) => nInt(b.fixed_points, 0) - nInt(a.fixed_points, 0));
-    const listHeader = hostTag("u", "Lista odpowiedzi:");
+    lines.push(hostTag("u", "Lista odpowiedzi:"));
+  
     const listLines = sorted.map((a) => {
       const t = String(a.text || "").replace(/\s+/g, " ").trim().slice(0, 30);
       const p = nInt(a.fixed_points, 0);
-
-      // “Zamiast kontrolek”: aktywne = zielone + zakreślone
+  
       if (row.kind === "MATCH" && row.matchId === a.id) {
         return `${hostGreenStrike(t)} ${hostGreenStrike(`(${p})`)}`;
       }
       return `${t} (${p})`;
     });
-
-    // dodatkowy kontekst w R2 (bez ozdobników):
-    const extra =
-      roundNo === 2
-        ? [`${hostTag("u", "Gracz 1")}: ${(inputP1 || "—").replace(/\s+/g, " ").trim()}`]
-        : [];
-
-    return [title, "", qLine, ...extra, "", statusLine, "", listHeader, ...listLines];
+  
+    return [...lines, ...listLines];
   }
+
 
   function hostUpdate() {
     const step = store.state.final?.step || "";
-
-    // MAPOWANIE: pokazuj pytanie + lista + aktualny status (kolorami)
+  
+    // MAPOWANIE
     if (step.startsWith("f_p1_map_q")) {
       const idx = Number(step.slice(-1)) - 1;
-      hostShowLines(hostMappingLines(1, idx)).catch(() => {});
+      hostSetLeft(hostMappingLeft(1, idx));
+      hostSetRight(hostMappingRight(1, idx));
       return;
     }
     if (step.startsWith("f_p2_map_q")) {
       const idx = Number(step.slice(-1)) - 1;
-      hostShowLines(hostMappingLines(2, idx)).catch(() => {});
+      hostSetLeft(hostMappingLeft(2, idx));
+      hostSetRight(hostMappingRight(2, idx));
       return;
     }
-
-    // ENTRY/TIMER: lista pytań + kolor "●"
+  
+    // ENTRY/TIMER: tylko lewa (jak teraz była całość), prawa pusta
     const title = hostTitleForStep();
     if (!title) {
-      hostBlank().catch(() => {});
+      hostClearAll();
       return;
     }
-
-    const roundNo =
-      step === "f_p1_entry" || step.startsWith("f_p1_")
-        ? 1
-        : step === "f_p2_entry" || step.startsWith("f_p2_")
-          ? 2
-          : 1;
-
-    const lines = [title, ""];
+  
+    const linesLeft = [hostTag("b", title), ""];
     for (let i = 0; i < 5; i++) {
       const qt = (qPicked[i]?.text || "—").replace(/\s+/g, " ").trim();
-      const st = hostEntryStatus(roundNo, i);
-      lines.push(`${i + 1}) ${qt} — ${st}`);
+      linesLeft.push(`${i + 1}) ${qt}`);
     }
-    hostShowLines(lines).catch(() => {});
+  
+    hostSetLeft(linesLeft);
+    hostClearRight(); // prawa nic nie pokazuje podczas wpisywania
   }
 
   // -------- Step + timer --------
@@ -381,6 +404,54 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
 
     await display.finalSetSideTimer?.(team, txt);
   }
+
+  function allFilledP1() {
+    ensureRuntime();
+    const rt = store.state.final.runtime;
+    return rt.p1.every((x) => String(x.text || "").trim().length > 0);
+  }
+  
+  function allFilledP2() {
+    ensureRuntime();
+    const rt = store.state.final.runtime;
+    return rt.p2.every((x) => {
+      if (x.repeat) return true; // repeat traktujemy jako “OK”
+      return String(x.text || "").trim().length > 0;
+    });
+  }
+  
+  function setTimerBtnLabel(phase, mode /* "start"|"stop" */) {
+    const id = phase === "P1" ? "btnFinalP1StartTimer" : "btnFinalP2StartTimer";
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.textContent =
+      mode === "stop"
+        ? "Zatrzymaj odliczanie"
+        : (phase === "P1" ? "Rozpocznij odliczanie (15s)" : "Rozpocznij odliczanie (20s)");
+  }
+  
+  function stopTimerEarly(phase) {
+    ensureRuntime();
+    const rt = store.state.final.runtime;
+    if (!rt.timer.running || rt.timer.phase !== phase) return;
+  
+    // zatrzymujemy “cicho”
+    rt.timer.running = false;
+    rt.timer.seconds = 0;
+    rt.timer.phase = null;
+  
+    if (raf) cancelAnimationFrame(raf);
+    raf = null;
+  
+    // od razu pozwól przejść dalej
+    if (phase === "P1") ui.setEnabled("btnFinalToP1MapQ1", true);
+    if (phase === "P2") ui.setEnabled("btnFinalToP2MapQ1", true);
+  
+    // przywróć etykietę przycisku
+    setTimerBtnLabel(phase, "start");
+    hostUpdate();
+  }
+
 
   function startCountdown(seconds, phase /* "P1"|"P2" */) {
     ensureRuntime();
@@ -489,6 +560,11 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
         rt.p1[i].text = String(inp.value ?? "");
         clearAutoMappingIfNeeded(rt.map1?.[i]);
         hostUpdate();
+        // jeśli timer leci i wszystko wpisane -> zmień przycisk na STOP
+        const rt2 = store.state.final.runtime;
+        if (rt2.timer.running && rt2.timer.phase === "P1") {
+          setTimerBtnLabel("P1", allFilledP1() ? "stop" : "start");
+        }
       });
 
       inp.addEventListener("keydown", (e) => {
@@ -919,7 +995,15 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
 
     if (row.kind === "MATCH") playSfx("answer_correct");
     else playSfx("answer_wrong");
-
+    
+    const adv = store.state.advanced || {};
+    const target = typeof adv.finalTarget === "number" ? adv.finalTarget : 200;
+    
+    if (nInt(rt.sum, 0) >= target) {
+      await gotoEnd(true);
+      return true; // sygnał “ended”
+    }
+    
     return false;
   }
 
@@ -927,7 +1011,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     ensureRuntime();
     stopTimer();
 
-    await hostBlank().catch(() => {});
+    await hostClearAll().catch(() => {});
 
     store.state.final.runtime.hit200 = !!hit200;
 
@@ -979,6 +1063,9 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     }
 
     await loadFinalPicked();
+
+    await hostCoverRight().catch(() => {});
+    await hostClearRight().catch(() => {});
 
     ui.setMsg("msgFinal", "");
     ui.setMsg("msgFinalP2Start", "");
@@ -1054,19 +1141,32 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
   function p1StartTimer() {
     ensureRuntime();
     const rt = store.state.final.runtime;
+  
+    // jeśli już leci — pozwól zatrzymać tylko gdy wszystko wpisane
+    if (rt.timer.running && rt.timer.phase === "P1") {
+      if (allFilledP1()) stopTimerEarly("P1");
+      return;
+    }
+  
     if (rt.timer.usedP1) return;
-
     rt.timer.usedP1 = true;
+  
     ui.setFinalTimerP1("15");
     startCountdown(15, "P1");
     ui.setEnabled("btnFinalToP1MapQ1", false);
+    setTimerBtnLabel("P1", "start");
   }
 
   function p2StartTimer() {
     ensureRuntime();
     const rt = store.state.final.runtime;
+  
+    if (rt.timer.running && rt.timer.phase === "P2") {
+      if (allFilledP2()) stopTimerEarly("P2");
+      return;
+    }
+  
     if (rt.timer.usedP2) return;
-
     rt.timer.usedP2 = true;
 
     // ODKRYCIE = pokazujemy wyniki rundy 1 (TYLKO RAZ) — przy starcie 20s
@@ -1089,6 +1189,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     ui.setFinalTimerP2("20");
     startCountdown(20, "P2");
     ui.setEnabled("btnFinalToP2MapQ1", false);
+    setTimerBtnLabel("P2", "start");
   }
 
   function toP1MapQ(idx1based) {
@@ -1148,16 +1249,19 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     const aList = answersByQ.get(q.id) || [];
     const row = rt.map1[idx];
   
-    if (row.kind === "SKIP") return { text: FINAL_BLANK, pts: "0" };
+    const ptsStr =
+      row && row.revealedPoints ? String(nInt(row.pts, 0)) : ""; // albo "—"
+  
+    if (row.kind === "SKIP") return { text: FINAL_BLANK, pts: ptsStr || "0" };
   
     if (row.kind === "MATCH") {
       const a = aList.find((x) => x.id === row.matchId);
       const txt = (a?.text || "").trim();
-      return { text: txt || FINAL_BLANK, pts: "0" };
+      return { text: txt || FINAL_BLANK, pts: ptsStr };
     }
   
     const out = (row.outText || rt.p1[idx].text || "").trim();
-    return { text: out || "———————————", pts: "0" };
+    return { text: out || FINAL_BLANK, pts: ptsStr };
   }
 
   async function startP2Round() {
@@ -1259,51 +1363,29 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     }
   
     const mode = getEndScreenMode(store);
-  
-    // --- NOWE: intro + w 14s hideBoard + logo/win ---
+    
     const showEndScreen = async () => {
+      try { await display.finalHideBoard?.(); } catch {}
       try {
-        await display.finalHideBoard?.();
-      } catch (e) {
-        console.warn("[final] finalHideBoard failed", e);
-      }
-  
-      try {
-        if (mode === "logo") {
-          await display.showLogo?.();
-          return;
-        }
-  
-        if (mode === "points") {
-          if (display.showWin) await display.showWin(totalPointsAll);
-          else await display.showLogo?.();
-          return;
-        }
-  
-        if (mode === "money") {
-          if (display.showWin) await display.showWin(winAmount);
-          else await display.showLogo?.();
-          return;
-        }
-  
-        await display.showLogo?.(); // safety
-      } catch (e) {
-        console.warn("[final] show end screen failed", e);
-      }
+        if (mode === "logo") { await display.showLogo?.(); return; }
+        if (mode === "points") { await display.showWin?.(totalPointsAll); return; }
+        if (mode === "money") { await display.showWin?.(winAmount); return; }
+        await display.showLogo?.();
+      } catch {}
     };
-  
+    
+    // 1) EKRAN NAJPIERW
+    await showEndScreen();
+    
+    // 2) DŹWIĘK POTEM
     playSfx("show_intro");
-  
-    // 14s: dopiero teraz chowamy planszę i pokazujemy logo/win
-    setTimeout(() => {
-      showEndScreen().catch(() => {});
-    }, 14000);
-  
-    // poczekaj aż audio się skończy
+    
+    // 3) opcjonalnie poczekaj aż się skończy
     try {
       const dur = await getSfxDuration("show_intro");
       if (dur > 0) await new Promise((res) => setTimeout(res, dur * 1000));
     } catch {}
+
   
     store.state.locks.gameEnded = true;
   }
