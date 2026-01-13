@@ -4,7 +4,7 @@
 
 :root{
   /* linijki */
-  --line: 6vmin;
+  --line: clamp(18px, 3.2vmin, 34px);
   --font-ratio: 1.1;
   --baseline-shift: 0.15;
 
