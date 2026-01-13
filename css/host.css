@@ -26,14 +26,14 @@
   --cover-grad-b: #2a62ff;
 
   /* ===== marginesy liczone w LINJKACH ===== */
-  --margin-x: 3.0;       /* czerwony margines od lewej (w linijkach) */
-  --text-left-1: 3.4;
-  --text-right-1: 2.8;
+  --margin-x: 2.0;       /* czerwony margines od lewej (w linijkach) */
+  --text-left-1: 2.5;
+  --text-right-1: 1.5;
 
   /* domyślnie możesz ustawić inne dla pane2,
      ale w portrait i tak je zrównamy (poniżej) */
-  --text-left-2: 3.4;
-  --text-right-2: 2.8;
+  --text-left-2: 1.0;
+  --text-right-2: 1.5;
 
   --top-pad: 1.0;
   --bottom-pad: 2.2;
