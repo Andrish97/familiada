@@ -443,6 +443,27 @@ async function handleCmd(lineRaw) {
   if (!line) return;
   const up = line.toUpperCase();
 
+  // ===== NOWE: zasłona pasma 2 =====
+  if (up === "COVER") {
+    coverP2(true);
+    await persistState();
+    return;
+  }
+  if (up === "UNCOVER") {
+    coverP2(false);
+    await persistState();
+    return;
+  }
+
+  // ===== NOWE: ogólny CLEAR (czyści oba) =====
+  if (up === "CLEAR") {
+    clear1();
+    clear2();
+    await persistState();
+    return;
+  }
+
+  // ===== dotychczasowe =====
   if (/^SET1\b/i.test(line)) {
     setText1(decodeEscapes(unquotePayload(line, "SET1")));
     await persistState();
