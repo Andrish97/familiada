@@ -621,7 +621,7 @@ document.addEventListener("fullscreenchange", setFullscreenIcon);
 
 window.addEventListener("resize", () => {
   applyOrientationClass();
-  updateOuterInsets()
+  updateOuterInsets();
   updateLinePx();
   refreshCssMetrics();
   updateSwipeHint();
@@ -630,7 +630,7 @@ window.addEventListener("resize", () => {
 
 document.addEventListener("DOMContentLoaded", async () => {
   applyOrientationClass();
-  updateOuterInsets()
+  updateOuterInsets();
   updateLinePx();
   refreshCssMetrics();
   setFullscreenIcon();
