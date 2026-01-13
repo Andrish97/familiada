@@ -112,6 +112,32 @@ async function toggleFullscreen() {
 }
 
 /* ========= UI ========= */
+
+function pxVar(name) {
+  const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  return parseFloat(v) || 0;
+}
+
+function updateLineSnap() {
+  // --line jest w px po obliczeniu (clamp)
+  const line = pxVar("--line");
+  if (!line) return;
+
+  // safe-area też w px
+  const safeTop = pxVar("--safe-top");
+  const safeBottom = pxVar("--safe-bottom");
+
+  // snap: ile brakuje do następnej wielokrotności line
+  const modTop = safeTop % line;
+  const snapTop = (modTop === 0) ? 0 : (line - modTop);
+
+  const modBottom = safeBottom % line;
+  const snapBottom = (modBottom === 0) ? 0 : (line - modBottom);
+
+  document.documentElement.style.setProperty("--snap-top", `${snapTop}px`);
+  document.documentElement.style.setProperty("--snap-bottom", `${snapBottom}px`);
+}
+
 function updateSwipeHint() {
   const o = getOrientation();
 
@@ -489,12 +515,14 @@ document.addEventListener("fullscreenchange", setFullscreenIcon);
 
 window.addEventListener("resize", () => {
   applyOrientationClass();
+  updateLineSnap();
   refreshCssMetrics();
   updateSwipeHint();
 });
 
 document.addEventListener("DOMContentLoaded", async () => {
   applyOrientationClass();
+  updateLineSnap();
   refreshCssMetrics();
   setFullscreenIcon();
 
