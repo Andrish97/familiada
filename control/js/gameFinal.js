@@ -16,11 +16,11 @@ const FINAL_MSG = {
 
   // --- zakończenie finału / nagrody (host hint) ---
   END_NO_PRIZE: "Finał zakończony. Logo zostanie wyświetlone.",
-  END_200_PLUS: (mainPrize) => `Próg przekroczony, nagroda głowna! ${mainPrize}`,
-  END_BELOW_200: (smallPrize) => `Poniżej progu, nagroda od punktów. ${smallPrize}`,
+  END_200_PLUS: (mainPrize) => `Próg przekroczony! ${mainPrize}`,
+  END_BELOW_200: (smallPrize) => `Poniżej progu. ${smallPrize}`,
 
   DEFAULT_MAIN_PRIZE: "Nagroda główna",
-  DEFAULT_SMALL_PRIZE: "Nagroda",
+  DEFAULT_SMALL_PRIZE: "Nagroda z punktów",
 
   // --- etykiety pól / przycisków ---
   Q_LABEL: (n) => `Pytanie ${n}`,
