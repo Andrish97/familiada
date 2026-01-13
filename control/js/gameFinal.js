@@ -565,22 +565,26 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     await display.finalSetSideTimer?.(getWinnerTeam(), txt);
   }
 
-  function timerStopAndReset() {
+  async function timerStopAndReset() {
     ensureRuntime();
     const rt = store.state.final.runtime;
-
+  
     rt.timer.running = false;
     rt.timer.phase = null;
     rt.timer.endsAt = 0;
     rt.timer.seconds = 0;
     rt.timer.total = 0;
-
+  
     if (raf) cancelAnimationFrame(raf);
     raf = null;
-
+  
     ui.setFinalTimerP1(FINAL_MSG.TIMER_PLACEHOLDER);
     ui.setFinalTimerP2(FINAL_MSG.TIMER_PLACEHOLDER);
-
+  
+    // KLUCZ: zawsze przywróć totals + zdejmij side timer
+    await restoreTotalsTriplets();
+    await clearSideTimer();
+  
     hostUpdate();
   }
 
@@ -626,7 +630,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     const rt = store.state.final.runtime;
 
     // reset poprzedniego timera
-    timerStopAndReset();
+    await timerStopAndReset();
 
     rt.timer.running = true;
     rt.timer.phase = phase;
@@ -651,24 +655,24 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
         displaySetTimerSeconds(s).catch(() => {});
       }
 
-      if (leftMs <= 0) {
+        if (leftMs <= 0) {
         rt.timer.running = false;
         rt.timer.seconds = 0;
-
+      
         setUiTimerForPhase(phase, "0");
         hostUpdate();
-
-        restoreTotalsTriplets().catch(() => {});
-        // side timer zostaje “0” chwilę, ale potem i tak mapowanie zmienia display
+      
+        // zamiast zostawiać timer na display:
+        await restoreTotalsTriplets().catch(() => {});
+        await clearSideTimer().catch(() => {});
+      
         playSfx("time_over");
-
+      
         if (phase === "P1") ui.setEnabled("btnFinalToP1MapQ1", true);
         if (phase === "P2") ui.setEnabled("btnFinalToP2MapQ1", true);
-
-        // timer użyty => przycisk zablokowany
+      
         setTimerBtnLabel(phase, "start");
         setTimerBtnEnabled(phase, false);
-
         return;
       }
 
@@ -857,13 +861,14 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
           return;
         }
 
-        // Shift+Enter w pustym polu → zaznacza Powtórzenie
         if (e.key === "Enter" && e.shiftKey) {
           e.preventDefault();
+        
           const val = String(inp.value ?? "").trim();
           if (!val) {
+            if (!rt.p2[i].repeat) playSfx("answer_repeat"); // <<< DŹWIĘK
             rt.p2[i].repeat = true;
-            // repeat => SKIP locked
+        
             const row = rt.map2?.[i];
             if (row) {
               row.mode = "MANUAL";
@@ -873,9 +878,10 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
               row.outText = "";
               row.pts = 0;
             }
+        
             renderP2Entry();
           }
-
+        
           document.querySelector(`#finalP2Inputs input[data-p="2"][data-i="${i + 1}"]`)?.focus();
           hostUpdate();
           return;
@@ -1195,7 +1201,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
 
   async function gotoEnd(hit200) {
     ensureRuntime();
-    timerStopAndReset();
+    await timerStopAndReset();
 
     await hostClearAll().catch(() => {});
 
@@ -1405,7 +1411,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
 
   function toP1MapQ(idx1based) {
     ensureRuntime();
-    timerStopAndReset();
+    await timerStopAndReset();
 
     const idx = idx1based - 1;
     const row = getRow(1, idx);
@@ -1439,7 +1445,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
   }
 
   function toP2Start() {
-    timerStopAndReset();
+    await timerStopAndReset();
 
     (async () => {
       try {
@@ -1478,7 +1484,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
 
   async function toP2MapQ(idx1based) {
     ensureRuntime();
-    timerStopAndReset();
+    await timerStopAndReset();
 
     const idx = idx1based - 1;
     const row = getRow(2, idx);
@@ -1569,14 +1575,30 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
       } catch {}
     };
 
-    await showEndScreen();
-
+    // 1) Najpierw transition
+    let trDur = 0;
+    try { trDur = await getSfxDuration("round_transition"); } catch {}
+    const trMs = trDur > 0 ? trDur * 1000 : 2000;
+    
+    // start dźwięku przejścia
+    playSfx("round_transition");
+    
+    // 2) W trakcie transition pokaż ekran końcowy (logo/punkty/kwota)
+    setTimeout(() => {
+      showEndScreen().catch(() => {});
+    }, 920); // jak w rundach – “anchor” pod animację
+    
+    // czekamy aż transition dobiegnie końca
+    if (trMs > 0) await new Promise((res) => setTimeout(res, trMs));
+    
+    // 3) Dopiero potem gameintro
     playSfx("show_intro");
-
+    
     try {
       const dur = await getSfxDuration("show_intro");
       if (dur > 0) await new Promise((res) => setTimeout(res, dur * 1000));
     } catch {}
+
 
     store.state.locks.gameEnded = true;
   }
