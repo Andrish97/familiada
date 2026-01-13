@@ -15,20 +15,31 @@
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --safe-left: env(safe-area-inset-left, 0px);
 
-  /* ===== marginesy liczone W LINJKACH (mnożniki) =====
-     Zmieniasz proporcje raz i wszystko trzyma rytm z kartką. */
-  --margin-x: 2.0;      /* czerwony margines */
-  --text-left: 2.3;     /* start tekstu */
-  --text-right: 2.0;    /* prawa krawędź tekstu */
-  --top-pad: 1.0;       /* odstęp od góry */
-  --bottom-pad: 2.0;    /* miejsce na hint */
+  /* ===== marginesy liczone W LINJKACH (mnożniki) ===== */
+  --margin-x: 2.0; /* czerwony margines (w linijkach) */
+
+  /* PANE 1 (lewa / górna) */
+  --text-left-1: 2,5;
+  --text-right-1: 1,5;
+
+  /* PANE 2 (prawa / dolna) */
+  --text-left-2: 1.0;
+  --text-right-2: 1.5;
+
+  --top-pad: 1.0;
+  --bottom-pad: 2.0;
 
   /* ===== wyliczone px ===== */
-  --margin-x-px:  calc(var(--line) * var(--margin-x));
-  --text-left-px: calc(var(--line) * var(--text-left));
-  --text-right-px: calc(var(--line) * var(--text-right));
-  --top-pad-px:   calc(var(--line) * var(--top-pad));
-  --bottom-pad-px:calc(var(--line) * var(--bottom-pad));
+  --margin-x-px:    calc(var(--line) * var(--margin-x));
+
+  --text-left-1-px: calc(var(--line) * var(--text-left-1));
+  --text-right-1-px:calc(var(--line) * var(--text-right-1));
+
+  --text-left-2-px: calc(var(--line) * var(--text-left-2));
+  --text-right-2-px:calc(var(--line) * var(--text-right-2));
+
+  --top-pad-px:     calc(var(--line) * var(--top-pad));
+  --bottom-pad-px:  calc(var(--line) * var(--bottom-pad));
 
   /* ===== JEDYNY PARAMETR STERUJĄCY: rozmiar pasma 2 ===== */
   --pane2-size: 50%;
@@ -176,13 +187,11 @@ html.landscape .splitLine{ grid-column: 2; grid-row: 1; }
 
 /* =================== TEKST =================== */
 
+/* baza wspólna dla obu tekstów */
 .text{
   position: absolute;
-  left:   calc(var(--safe-left)  + var(--text-left-px));
-  right:  calc(var(--safe-right) + var(--text-right-px));
   top:    calc(var(--safe-top)   + var(--top-pad-px));
   bottom: calc(var(--safe-bottom)+ var(--bottom-pad-px));
-
   margin: 0;
   pointer-events: none;
 
@@ -196,12 +205,25 @@ html.landscape .splitLine{ grid-column: 2; grid-row: 1; }
   color: #111;
 }
 
+/* PANE 1: lewa / górna */
+.pane1 .text{
+  left:  calc(var(--safe-left)  + var(--text-left-1-px));
+  right: calc(var(--safe-right) + var(--text-right-1-px));
+}
+
+/* PANE 2: prawa / dolna */
+.pane2 .text{
+  left:  calc(var(--safe-left)  + var(--text-left-2-px));
+  right: calc(var(--safe-right) + var(--text-right-2-px));
+}
+
 /* =================== HINT W PASMIE 2 (gdy odsłonięte) =================== */
 
 .p2Hint{
   position: absolute;
-  left:  calc(var(--safe-left)  + var(--text-left-px));
-  right: calc(var(--safe-right) + var(--text-right-px));
+  left:  calc(var(--safe-left)  + var(--text-left-2-px));
+  right: calc(var(--safe-right) + var(--text-right-2-px));
+
   bottom: calc(var(--safe-bottom) + 6px);
 
   font-family: "Caveat-Variable", cursive;
