@@ -774,6 +774,10 @@ async function sendZeroStatesToDevices() {
   ui.on("final.p1.nextQ", (n) => final.nextFromP1Q(n));
 
   ui.on("final.p2.start", () => final.startP2Round());
+  ui.on("final.repeatTest", () => {
+    playSfx("answer_repeat");
+  });
+
   ui.on("final.p2.timerStart", () => final.p2StartTimer());
   ui.on("final.p2.toQ", (n) => final.toP2MapQ(n));
   ui.on("final.p2.nextQ", (n) => final.nextFromP2Q(n));
