@@ -1,10 +1,12 @@
 // /familiada/js/pages/host.js
 import { sb } from "../core/supabase.js";
 
+/* ========= PARAMS ========= */
 const qs = new URLSearchParams(location.search);
 const gameId = qs.get("id");
 const key = qs.get("key");
 
+/* ========= DOM ========= */
 const paperText1 = document.getElementById("paperText1");
 const paperText2 = document.getElementById("paperText2");
 const cover2 = document.getElementById("cover2");
@@ -13,6 +15,10 @@ const p2Hint = document.getElementById("p2Hint");
 
 const btnFS = document.getElementById("btnFS");
 const fsIco = document.getElementById("fsIco");
+
+// sekcje (nie zmieniamy HTML — bierzemy po klasach)
+const pane1 = document.querySelector(".pane1");
+const pane2 = document.querySelector(".pane2");
 
 /* ========= DEVICE ID (presence) ========= */
 const DEVICE_ID_KEY = "familiada:deviceId:host";
@@ -38,7 +44,7 @@ const lastRendered = {
   orientation: null,
 };
 
-/* ========= ORIENTACJA (bez zmiany HTML poza klasami portrait/landscape) ========= */
+/* ========= ORIENTATION (tylko klasy portrait/landscape na <html>) ========= */
 function getOrientation() {
   return window.innerHeight >= window.innerWidth ? "portrait" : "landscape";
 }
@@ -69,6 +75,7 @@ function isIOSSafari() {
 function setPseudoFS(on) {
   pseudoFS = !!on;
   document.documentElement.classList.toggle("pseudoFS", pseudoFS);
+  // iOS: próba schowania paska
   setTimeout(() => window.scrollTo(0, 1), 50);
 }
 
@@ -80,7 +87,6 @@ function setFullscreenIcon() {
 
 async function toggleFullscreen() {
   if (isIOSSafari() && !window.navigator.standalone) {
-    // A2HS overlay masz w base.css – nie ruszam HTML
     document.documentElement.classList.toggle("showA2HS");
     return;
   }
@@ -91,6 +97,7 @@ async function toggleFullscreen() {
       setFullscreenIcon();
       return;
     }
+
     if (pseudoFS) {
       setPseudoFS(false);
       setFullscreenIcon();
@@ -101,7 +108,6 @@ async function toggleFullscreen() {
     const req = el.requestFullscreen || el.webkitRequestFullscreen;
     if (!req) throw new Error("Fullscreen API not available");
     await req.call(el, { navigationUI: "hide" });
-
     setFullscreenIcon();
   } catch (e) {
     setPseudoFS(true);
@@ -118,38 +124,31 @@ function pxVar(name) {
 }
 
 /*
-  Snapujemy safe-top/bottom do siatki linijek:
-  - linijki są full-bleed (tło idzie od 0)
-  - tekst ma być przesunięty o safe-top, ALE tak żeby dalej trafiał w linie
-  -> dodajemy --snap-top / --snap-bottom (w px) liczone do najbliższej wielokrotności --line
+  Snap per-panel:
+  liczymy od REALNEGO Y panelu (getBoundingClientRect().top),
+  bo panel2 w portrait startuje niżej (grid), więc nie może dzielić snapa z panelem 1.
 */
 function updateLineSnap() {
   const line = pxVar("--line");
   if (!line) return;
 
   const safeTop = pxVar("--safe-top");
-  const safeBottom = pxVar("--safe-bottom");
-
   const topPad1 = pxVar("--top-pad-1");
   const topPad2 = pxVar("--top-pad-2");
 
-  // snap liczony od realnego startu tekstu: safeTop + topPadX
-  const base1 = safeTop + topPad1;
-  const base2 = safeTop + topPad2;
+  const p1Top = pane1?.getBoundingClientRect().top ?? 0;
+  const p2Top = pane2?.getBoundingClientRect().top ?? 0;
 
-  const mod1 = base1 % line;
-  const mod2 = base2 % line;
+  const snapFor = (base) => {
+    const mod = ((base % line) + line) % line;
+    return mod === 0 ? 0 : (line - mod);
+  };
 
-  const snap1 = mod1 === 0 ? 0 : (line - mod1);
-  const snap2 = mod2 === 0 ? 0 : (line - mod2);
+  const base1 = p1Top + safeTop + topPad1;
+  const base2 = p2Top + safeTop + topPad2;
 
-  document.documentElement.style.setProperty("--snap-top-1", `${snap1}px`);
-  document.documentElement.style.setProperty("--snap-top-2", `${snap2}px`);
-
-  // dół zostawiamy “kartkowy” – safeBottom i tak może być dziwny na iOS,
-  // a i tak ważniejszy jest START linii (top).
-  // Jeśli koniecznie chcesz, można dodać analogiczny snap-bottom-1/2,
-  // ale zwykle robi więcej szkody niż pożytku.
+  document.documentElement.style.setProperty("--snap-top-1", `${snapFor(base1)}px`);
+  document.documentElement.style.setProperty("--snap-top-2", `${snapFor(base2)}px`);
 }
 
 /* ========= STYLED TEXT (segmenty) =========
@@ -165,20 +164,15 @@ Kolor: dowolny poprawny CSS color.
 */
 function parseStyleTokens(tokenStr) {
   const out = { color: null, bold: false, underline: false, strike: false };
-
-  const tokens = String(tokenStr || "")
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean);
+  const tokens = String(tokenStr || "").trim().split(/\s+/).filter(Boolean);
 
   for (const tRaw of tokens) {
     const t = tRaw.toLowerCase();
     if (t === "b") out.bold = true;
     else if (t === "u") out.underline = true;
     else if (t === "s") out.strike = true;
-    else out.color = tRaw; // traktujemy jako kolor
+    else out.color = tRaw;
   }
-
   return out;
 }
 
@@ -217,9 +211,7 @@ function parseStyledText(input) {
     }
 
     const inner = s.slice(close + 1, end);
-    const style = parseStyleTokens(tag);
-    segs.push({ text: inner, style });
-
+    segs.push({ text: inner, style: parseStyleTokens(tag) });
     i = end + endTag.length;
   }
 
@@ -236,7 +228,6 @@ function parseStyledText(input) {
 
 function renderStyledInto(el, sourceText) {
   if (!el) return;
-
   const src = String(sourceText ?? "");
 
   // szybka ścieżka: brak znaczników
@@ -282,19 +273,13 @@ function renderStyledInto(el, sourceText) {
 function updateSwipeHint() {
   const o = getOrientation();
 
-  // zasłona (cover) pokazuje oba stany
   const onCover =
     o === "portrait"
-      ? p2Covered
-        ? "Przesuń w dół, żeby odsłonić"
-        : "Przesuń w górę, żeby zasłonić"
-      : p2Covered
-        ? "Przesuń w prawo, żeby odsłonić"
-        : "Przesuń w lewo, żeby zasłonić";
+      ? (p2Covered ? "Przesuń w dół, żeby odsłonić" : "Przesuń w górę, żeby zasłonić")
+      : (p2Covered ? "Przesuń w prawo, żeby odsłonić" : "Przesuń w lewo, żeby zasłonić");
 
   if (cover2Swipe) cover2Swipe.textContent = onCover;
 
-  // hint na odsłoniętym paśmie 2: tylko “jak zasłonić”
   if (p2Hint) {
     p2Hint.textContent =
       o === "portrait" ? "Przesuń w górę, żeby zasłonić" : "Przesuń w lewo, żeby zasłonić";
@@ -319,22 +304,18 @@ function render() {
     cover2?.classList.toggle("coverOn", p2Covered);
     cover2?.classList.toggle("coverOff", !p2Covered);
 
-    // hint na odsłoniętym paśmie 2
     document.documentElement.classList.toggle("p2Open", !p2Covered);
-
     updateSwipeHint();
   }
+
+  // po zmianach UI/layoutu — przelicz snap
+  updateLineSnap();
 }
 
 /* ========= TEXT API ========= */
-function setText1(next) {
-  text1 = String(next ?? "");
-  render();
-}
-function setText2(next) {
-  text2 = String(next ?? "");
-  render();
-}
+function setText1(next) { text1 = String(next ?? ""); render(); }
+function setText2(next) { text2 = String(next ?? ""); render(); }
+
 function append1(line) {
   const s = String(line ?? "");
   if (!s) return;
@@ -347,18 +328,11 @@ function append2(line) {
   text2 = text2 ? `${text2}\n${s}` : s;
   render();
 }
-function clear1() {
-  text1 = "";
-  render();
-}
-function clear2() {
-  text2 = "";
-  render();
-}
-function coverP2(on) {
-  p2Covered = !!on;
-  render();
-}
+
+function clear1() { text1 = ""; render(); }
+function clear2() { text2 = ""; render(); }
+
+function coverP2(on) { p2Covered = !!on; render(); }
 
 /* ========= SNAPSHOT (device_state) ========= */
 async function persistState() {
@@ -393,6 +367,7 @@ async function restoreState() {
     lastRendered.t1 = null;
     lastRendered.t2 = null;
     lastRendered.p2Covered = null;
+
     render();
   } catch {
     text1 = "";
@@ -402,6 +377,7 @@ async function restoreState() {
     lastRendered.t1 = null;
     lastRendered.t2 = null;
     lastRendered.p2Covered = null;
+
     render();
   }
 }
@@ -423,16 +399,12 @@ function unquotePayload(line, keyword) {
 }
 
 function decodeEscapes(s) {
-  return String(s)
-    .replace(/\\n/g, "\n")
-    .replace(/\\t/g, "\t")
-    .replace(/\\"/g, '"');
+  return String(s).replace(/\\n/g, "\n").replace(/\\t/g, "\t").replace(/\\"/g, '"');
 }
 
 async function handleCmd(lineRaw) {
   const line = String(lineRaw ?? "").trim();
   if (!line) return;
-
   const up = line.toUpperCase();
 
   if (/^SET1\b/i.test(line)) {
@@ -531,7 +503,6 @@ function startAllowed(x, y) {
   const h = window.innerHeight || 1;
   const g = swipeGuardPx || 28;
 
-  // nie startuj z krawędzi (systemowe gesty)
   if (x < g || x > w - g) return false;
   if (y < g || y > h - g) return false;
 
@@ -569,13 +540,11 @@ async function onPointerUp(ev) {
     if (ady < adx * SWIPE_SLOPE) return;
 
     if (dy > 0) {
-      // DOWN = odsłoń
       if (p2Covered) {
         coverP2(false);
         await persistState();
       }
     } else {
-      // UP = zasłoń
       if (!p2Covered) {
         coverP2(true);
         await persistState();
@@ -588,13 +557,11 @@ async function onPointerUp(ev) {
     if (adx < ady * SWIPE_SLOPE) return;
 
     if (dx > 0) {
-      // RIGHT = odsłoń
       if (p2Covered) {
         coverP2(false);
         await persistState();
       }
     } else {
-      // LEFT = zasłoń
       if (!p2Covered) {
         coverP2(true);
         await persistState();
@@ -618,16 +585,18 @@ document.addEventListener("fullscreenchange", setFullscreenIcon);
 
 window.addEventListener("resize", () => {
   applyOrientationClass();
-  updateLineSnap();
   refreshCssMetrics();
   updateSwipeHint();
+  updateLineSnap();
 });
 
 document.addEventListener("DOMContentLoaded", async () => {
   applyOrientationClass();
-  updateLineSnap();
   refreshCssMetrics();
   setFullscreenIcon();
+
+  // na start — po pierwszym layoucie
+  requestAnimationFrame(() => updateLineSnap());
 
   if (window.navigator.standalone) {
     document.documentElement.classList.add("webapp");
