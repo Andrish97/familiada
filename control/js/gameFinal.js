@@ -430,28 +430,47 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
         : (phase === "P1" ? "Rozpocznij odliczanie (15s)" : "Rozpocznij odliczanie (20s)");
   }
   
-  function stopTimerEarly(phase) {
+  async function stopTimerEarly(phase) {
     ensureRuntime();
     const rt = store.state.final.runtime;
     if (!rt.timer.running || rt.timer.phase !== phase) return;
   
     // zatrzymujemy “cicho”
     rt.timer.running = false;
+    rt.timer.endsAt = 0;
     rt.timer.seconds = 0;
     rt.timer.phase = null;
   
     if (raf) cancelAnimationFrame(raf);
     raf = null;
   
+    // UI: schowaj timer (żeby nie wisiało np. "7")
+    setUiTimerForPhase(phase, FINAL_MSG.TIMER_PLACEHOLDER);
+  
+    // DISPLAY: przywróć punkty (triplet totals) na miejsce
+    try {
+      const totals = store.state.rounds?.totals || { A: 0, B: 0 };
+      await display.setTotalsTriplets?.(totals);
+    } catch {}
+  
+    // DISPLAY: opcjonalnie zdejmij timer z boku (jeśli masz funkcję)
+    // (jeśli nie masz, usuń ten try/catch)
+    try {
+      await display.finalSetSideTimer?.(getWinnerTeam(), FINAL_MSG.TIMER_PLACEHOLDER);
+    } catch {}
+  
     // od razu pozwól przejść dalej
     if (phase === "P1") ui.setEnabled("btnFinalToP1MapQ1", true);
     if (phase === "P2") ui.setEnabled("btnFinalToP2MapQ1", true);
   
-    // przywróć etykietę przycisku
+    // przycisk odliczania: wróć do startowej etykiety i ZABLOKUJ
     setTimerBtnLabel(phase, "start");
+  
+    const btnId = phase === "P1" ? "btnFinalP1StartTimer" : "btnFinalP2StartTimer";
+    ui.setEnabled?.(btnId, false); // <- to jest ten wymóg
+  
     hostUpdate();
   }
-
 
   function startCountdown(seconds, phase /* "P1"|"P2" */) {
     ensureRuntime();
@@ -1144,7 +1163,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
   
     // jeśli już leci — pozwól zatrzymać tylko gdy wszystko wpisane
     if (rt.timer.running && rt.timer.phase === "P1") {
-      if (allFilledP1()) stopTimerEarly("P1");
+      if (allFilledP1()) stopTimerEarly("P1").catch(()=>{});
       return;
     }
   
@@ -1162,7 +1181,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     const rt = store.state.final.runtime;
   
     if (rt.timer.running && rt.timer.phase === "P2") {
-      if (allFilledP2()) stopTimerEarly("P2");
+      if (allFilledP2()) stopTimerEarly("P2").catch(()=>{});
       return;
     }
   
