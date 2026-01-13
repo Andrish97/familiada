@@ -123,16 +123,27 @@ function pxVar(name) {
   return Number.isFinite(n) ? n : 0;
 }
 
-/*
-  Snap per-panel:
-  liczymy od REALNEGO Y panelu (getBoundingClientRect().top),
-  bo panel2 w portrait startuje niżej (grid), więc nie może dzielić snapa z panelem 1.
-*/
+function updateLinePx() {
+  const root = document.documentElement;
+  const cs = getComputedStyle(root);
+
+  // bierzemy obliczone --line (już po clamp), zamieniamy na px i ZAOKRĄGLAMY
+  const raw = parseFloat(cs.getPropertyValue("--line").trim()) || 0;
+  if (!raw) return;
+
+  // 0.5px też bywa OK, ale najstabilniej jest pełny px
+  const snapped = Math.round(raw);
+
+  root.style.setProperty("--line-px", `${snapped}px`);
+}
+
 function updateLineSnap() {
-  const line = pxVar("--line");
+  const line = pxVar("--line-px");
   if (!line) return;
 
-  const safeTop = pxVar("--safe-top");
+  const vpadTop1 = pxVar("--vpad-top-1");
+  const vpadTop2 = pxVar("--vpad-top-2");
+
   const topPad1 = pxVar("--top-pad-1");
   const topPad2 = pxVar("--top-pad-2");
 
@@ -144,8 +155,9 @@ function updateLineSnap() {
     return mod === 0 ? 0 : (line - mod);
   };
 
-  const base1 = p1Top + safeTop + topPad1;
-  const base2 = p2Top + safeTop + topPad2;
+  // realny start tekstu = top panelu + vpad-top (per panel!) + top-pad
+  const base1 = p1Top + vpadTop1 + topPad1;
+  const base2 = p2Top + vpadTop2 + topPad2;
 
   document.documentElement.style.setProperty("--snap-top-1", `${snapFor(base1)}px`);
   document.documentElement.style.setProperty("--snap-top-2", `${snapFor(base2)}px`);
@@ -585,6 +597,7 @@ document.addEventListener("fullscreenchange", setFullscreenIcon);
 
 window.addEventListener("resize", () => {
   applyOrientationClass();
+  updateLinePx();
   refreshCssMetrics();
   updateSwipeHint();
   updateLineSnap();
@@ -592,10 +605,11 @@ window.addEventListener("resize", () => {
 
 document.addEventListener("DOMContentLoaded", async () => {
   applyOrientationClass();
+  updateLinePx();
   refreshCssMetrics();
   setFullscreenIcon();
 
-  // na start — po pierwszym layoucie
+  // ważne: po pierwszym layoucie (grid/panele) – wtedy rect.top ma sens
   requestAnimationFrame(() => updateLineSnap());
 
   if (window.navigator.standalone) {
