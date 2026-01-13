@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Familiada — Control</title>
+  <title>Familiada — Panel sterowania</title>
 
   <link rel="icon" href="/familiada/favicon.ico"/>
   <link rel="stylesheet" href="/familiada/css/base.css"/>
@@ -39,7 +39,7 @@
   <div class="gameTitleBar">
     <div class="wrap wide">
       <div class="gameTitle">
-        <div class="t1" id="gameLabel">Control</div>
+        <div class="t1" id="gameLabel">Panel sterowania</div>
         <div class="t2" id="gameMeta"></div>
       </div>
     </div>
@@ -194,14 +194,14 @@
 
             <!-- Step 1 -->
             <div class="step" data-step="devices_display">
-              <div class="stepTitle">1/3 — Wyświetlacz</div>
+              <div class="stepTitle">Wyświetlacz</div>
 
               <div class="card">
                 <div class="cardBody">
                   <div class="head headLine">
                     <div class="name">Wyświetlacz</div>
                     <div class="badge mid" id="pillDisplay">—</div>
-                    <div class="badge badge-soft lastSeen">Ostatnio: <b id="seenDisplay">—</b></div>
+                    <div class="badge badge-soft lastSeen">Ostatnio widziano: <b id="seenDisplay">—</b></div>
                   </div>
                   <div class="rowBtns rowActionsTop">
                     <button class="btn" id="btnDispBlack" type="button">
@@ -232,7 +232,7 @@
 
             <!-- Step 2 -->
             <div class="step hidden" data-step="devices_hostbuzzer">
-              <div class="stepTitle">2/3 — Prowadzący i przycisk</div>
+              <div class="stepTitle">Prowadzący i przycisk</div>
 
               <div class="card">
                 <div class="cardBody">
@@ -246,7 +246,7 @@
                       <div class="head headLine">
                         <div class="name">Prowadzący</div>
                         <div class="badge mid" id="pillHost">—</div>
-                        <div class="badge badge-soft lastSeen">Ostatnio: <b id="seenHost">—</b></div>
+                        <div class="badge badge-soft lastSeen">Ostatnio widziano: <b id="seenHost">—</b></div>
                       </div>
 
                       <div class="qrSlim">
@@ -263,7 +263,7 @@
                       <div class="head headLine">
                         <div class="name">Przycisk</div>
                         <div class="badge mid" id="pillBuzzer">—</div>
-                        <div class="badge badge-soft lastSeen">Ostatnio: <b id="seenBuzzer">—</b></div>
+                        <div class="badge badge-soft lastSeen">Ostatnio widziano: <b id="seenBuzzer">—</b></div>
                       </div>
 
                       <div class="qrSlim">
@@ -290,13 +290,13 @@
 
             <!-- Step 3 -->
             <div class="step hidden" data-step="devices_audio">
-              <div class="stepTitle">3/3 — Dźwięk (operator)</div>
+              <div class="stepTitle">Dźwięk</div>
 
               <div class="card">
                 <div class="cardBody">
                   <div class="name">Odblokuj dźwięk</div>
                   <div class="hint">
-                    Kliknij raz przycisk, żeby przeglądarka zezwoliła na dźwięk rund i finału.
+                    Kliknij raz przycisk, żeby przeglądarka zezwoliła na odtwarzanie dźwięków.
                   </div>
                   <div class="rowBtns">
                     <button class="btn gold" id="btnUnlockAudio" type="button">🔊 Odblokuj</button>
@@ -323,7 +323,7 @@
             </div>
 
             <div class="step" data-step="setup_names">
-              <div class="stepTitle">1/2 — Nazwy drużyn</div>
+              <div class="stepTitle">Nazwy drużyn</div>
 
               <div class="card">
                 <div class="cardBody">
@@ -360,7 +360,7 @@
 
                     <div class="rowBtns">
                       <div class="field sm">
-                        <div class="lbl2">Cel podstawowej rozgrywki</div>
+                        <div class="lbl2">Cel rozgrywki</div>
                         <input
                           id="finalMinPoints"
                           class="inp"
@@ -419,11 +419,11 @@
             </div>
 
             <div class="step hidden" data-step="setup_final">
-              <div class="stepTitle">2/2 — Finał</div>
+              <div class="stepTitle">Finał</div>
 
               <div class="card">
                 <div class="cardBody">
-                  <div class="name">Finał</div>
+                  <div class="name">Gramy finał?</div>
 
                   <div class="rowBtns">
                     <label class="radio">
@@ -457,7 +457,7 @@
                         <div class="qList" id="finalFinalList"></div>
 
                         <div class="mini" id="finalOnlyView" style="display:none;">
-                          <div class="hint">Zatwierdzone pytania. Kliknij „Edytuj”, aby zmienić.</div>
+                          <div class="hint">Pytania zatwierdzone. Kliknij „Edytuj”, aby zmienić.</div>
                         </div>
                       </div>
                     </div>
@@ -514,7 +514,7 @@
                 <div class="cardBody">
                   <div class="name">Rozpocznij grę</div>
                   <div class="hint">
-                    Na wyświetlaczu pojawi się intro programu. Po zakończeniu przejdziesz do pierwszej rundy.
+                    Na wyświetlaczu pojawi się logo programu i zostanie otworzone intro. Po zakończeniu przejdziesz do pierwszej rundy.
                   </div>
                 </div>
                 <div class="stepFoot">
@@ -550,8 +550,8 @@
                 <div class="cardBody">
                   <div class="name">Pojedynek przyciskiem</div>
                   <div class="hint hint-compact">
-                    Przycisk jest aktywny. Gdy któraś drużyna naciśnie — wybierz, kogo zatwierdzasz,
-                    albo powtórz pojedynek.
+                    Przycisk jest aktywny. Gdy któraś drużyna naciśnie — wybierz, czy zatwierdzasz,
+                    albo powtórz naciśniecie.
                   </div>
 
                   <ul class="hList">
@@ -562,7 +562,7 @@
                       <button class="btn" id="btnBuzzAcceptB" type="button">Zatwierdź drużynę B</button>
                     </li>
                     <li>
-                      <button class="btn" id="btnBuzzRetry" type="button">Ponów pojedynek</button>
+                      <button class="btn" id="btnBuzzRetry" type="button">Ponów naciśnięcie</button>
                     </li>
                   </ul>
                 </div>
@@ -579,8 +579,13 @@
 
               <div class="card">
                 <div class="cardBody">
-                  <div class="name">Pytanie</div>
+                  <div class="name">Rozgrywka</div>
                   <div class="qText" id="roundQuestion">—</div>
+                    <div class="hint">
+                      Wciskaj odpowiedź jesli poprawna, lub X (pudło), można również uruchonić odicznie 3s, po zakończeniu pudło.
+                      Po zakończeniu pojedynku, można oddać pytanie przeciwnej drużynie.
+                      We właściwej rozgrywce po trzech X uruchomi się kradzież (szansa przeciwnej drużyny).
+                    </div>
 
                   <div class="rowBtns" style="margin-top:10px;">
                     <button class="btn" id="btnPassQuestion" type="button">Oddaj pytanie</button>
@@ -595,7 +600,7 @@
 
                   <div class="rowBtns" style="margin-top:14px; align-items:center;">
                     <button class="btn" id="btnAddX" type="button">X (pudło)</button>
-                    <button class="btn" id="btnStartTimer3" type="button">Start timera 3 s</button>
+                    <button class="btn" id="btnStartTimer3" type="button">Rozpocznij odliczanie 3s</button>
                     <div class="timer3" id="t3">—</div>
                   </div>
 
@@ -616,13 +621,13 @@
             </div>
 
             <div class="step hidden" data-step="r_gameEnd">
-              <div class="stepTitle">Zakończ grę</div>
+              <div class="stepTitle">Koniec gry<</div>
               <div class="card">
                 <div class="cardBody">
-                  <div class="name">Koniec gry</div>
+                  <div class="name">Zakończ grę</div>
                   <div class="hint">
                     To była ostatnia runda. Na wyświetlaczu pokażemy logo programu
-                    albo animację zwycięskiej drużyny (jeśli jest włączona).
+                    albo punkty zwycięskiej drużyny (jeśli są włączone).
                   </div>
                 </div>
 
@@ -647,16 +652,16 @@
               <div class="stepTitle">Start finału</div>
               <div class="card">
                 <div class="cardBody">
-                  <div class="name">Uruchom finał</div>
+                  <div class="name">Rozpocznij finał</div>
                   <div class="hint">
-                    Dźwięk finału, schowanie starej planszy, wjazd planszy finału z placeholderami.
+                    Dźwięk finału, schowanie starej planszy, wjazd planszy finału.
                     Prowadzący dostaje pytania.
                   </div>
                 </div>
 
                 <div class="stepFoot">
                   <div class="stepFootButtons">
-                    <button class="btn gold" id="btnFinalStart" type="button">Start finału</button>
+                    <button class="btn gold" id="btnFinalStart" type="button">Rozpocznij finał</button>
                   </div>
                   <div class="msg msg-pill" id="msgFinal"></div>
                 </div>
@@ -668,7 +673,10 @@
               <div class="card">
                 <div class="cardBody">
                   <div class="name">Odpowiedzi gracza 1 (15s)</div>
-                  <div class="hint">Operator wpisuje odpowiedzi. Timer rusza po wciśnięciu przycisku.</div>
+                  <div class="hint">
+                    Operator wpisuje odpowiedzi gracza. Możesz użyć Enter, żeby przejść do następnego pytania,
+                    lub strzałki góra/dół, żeby szybko przelączać się między pytaniami. Odliczanie rusza po wciśnięciu przycisku.
+                  </div>
 
                   <div class="rowBtns" style="margin-top:10px;">
                     <button class="btn" id="btnFinalP1StartTimer" type="button">Rozpocznij odliczanie (15s)</button>
@@ -689,6 +697,10 @@
             <div class="step hidden" data-step="f_p1_map_q1">
               <div class="stepTitle">Runda 1 — mapowanie (P1)</div>
               <div class="card">
+              <div class="hint">
+                Wybierz odpowiedź z listy, jesli pasuje, jesli nie to odpowiedź gracza za 0 pkt.
+                Jeśli nic nie było wpisane to brak odpowiedzi. Możesz odsłonić odpowiedź i punkty.
+              </div>
                 <div class="cardBody"><div id="finalP1MapQ1"></div></div>
                 <div class="stepFoot">
                   <div class="stepFootButtons"><button class="btn gold" id="btnFinalNextFromP1Q1" type="button">Dalej</button></div>
@@ -700,6 +712,10 @@
             <div class="step hidden" data-step="f_p1_map_q2">
               <div class="stepTitle">Runda 1 — mapowanie (P2)</div>
               <div class="card">
+              <div class="hint">
+                Wybierz odpowiedź z listy, jesli pasuje, jesli nie to odpowiedź gracza za 0 pkt.
+                Jeśli nic nie było wpisane to brak odpowiedzi. Możesz odsłonić odpowiedź i punkty.
+              </div>
                 <div class="cardBody"><div id="finalP1MapQ2"></div></div>
                 <div class="stepFoot">
                   <div class="stepFootButtons"><button class="btn gold" id="btnFinalNextFromP1Q2" type="button">Dalej</button></div>
@@ -711,6 +727,10 @@
             <div class="step hidden" data-step="f_p1_map_q3">
               <div class="stepTitle">Runda 1 — mapowanie (P3)</div>
               <div class="card">
+              <div class="hint">
+                Wybierz odpowiedź z listy, jesli pasuje, jesli nie to odpowiedź gracza za 0 pkt.
+                Jeśli nic nie było wpisane to brak odpowiedzi. Możesz odsłonić odpowiedź i punkty.
+              </div>
                 <div class="cardBody"><div id="finalP1MapQ3"></div></div>
                 <div class="stepFoot">
                   <div class="stepFootButtons"><button class="btn gold" id="btnFinalNextFromP1Q3" type="button">Dalej</button></div>
@@ -722,6 +742,10 @@
             <div class="step hidden" data-step="f_p1_map_q4">
               <div class="stepTitle">Runda 1 — mapowanie (P4)</div>
               <div class="card">
+              <div class="hint">
+                Wybierz odpowiedź z listy, jesli pasuje, jesli nie to odpowiedź gracza za 0 pkt.
+                Jeśli nic nie było wpisane to brak odpowiedzi. Możesz odsłonić odpowiedź i punkty.
+              </div>
                 <div class="cardBody"><div id="finalP1MapQ4"></div></div>
                 <div class="stepFoot">
                   <div class="stepFootButtons"><button class="btn gold" id="btnFinalNextFromP1Q4" type="button">Dalej</button></div>
@@ -733,6 +757,10 @@
             <div class="step hidden" data-step="f_p1_map_q5">
               <div class="stepTitle">Runda 1 — mapowanie (P5)</div>
               <div class="card">
+                <div class="hint">
+                Wybierz odpowiedź z listy, jesli pasuje, jesli nie to odpowiedź gracza za 0 pkt.
+                Jeśli nic nie było wpisane to brak odpowiedzi. Możesz odsłonić odpowiedź i punkty.
+              </div>
                 <div class="cardBody"><div id="finalP1MapQ5"></div></div>
                 <div class="stepFoot">
                   <div class="stepFootButtons"><button class="btn gold" id="btnFinalNextFromP1Q5" type="button">Dalej</button></div>
@@ -746,7 +774,7 @@
               <div class="card">
                 <div class="cardBody">
                   <div class="name">Rozpocznij 2 rundę</div>
-                  <div class="hint">Dźwięk rundy, odpowiedzi się chowają (zostaje suma), timer ustawiony na 20.</div>
+                  <div class="hint">Dźwięk rundy, odpowiedzi gracza 1 zostaną ukryte, tutaj możesz odtworzyć dzwięk powtórzenia.</div>
                 </div>
                 <div class="stepFoot">
                   <div class="stepFootButtons">
@@ -763,7 +791,12 @@
               <div class="card">
                 <div class="cardBody">
                   <div class="name">Odpowiedzi gracza 2 (20s)</div>
-                  <div class="hint">Po lewej widzisz odpowiedź gracza 1. Powtórzenie to tylko dźwięk + status dla prowadzącego.</div>
+                  <div class="hint">
+                    Operator wpisuje odpowiedzi gracza. Możesz użyć Enter, żeby przejść do następnego pytania,
+                    lub strzałki góra/dół, żeby szybko przelączać się między pytaniami. Enter + Shift zaznacza powtórzenie.
+                    Odliczanie rusza po wciśnięciu przycisku. Możesz widzieć odpowiedź gracza 1.
+                    Powtórzenie to tylko dźwięk + status dla prowadzącego.
+                  </div>
 
                   <div class="rowBtns" style="margin-top:10px;">
                     <button class="btn" id="btnFinalP2StartTimer" type="button">Rozpocznij odliczanie (20s)</button>
@@ -782,6 +815,10 @@
             <div class="step hidden" data-step="f_p2_map_q1">
               <div class="stepTitle">Runda 2 — mapowanie (P1)</div>
               <div class="card">
+                <div class="hint">
+                Wybierz odpowiedź z listy, jesli pasuje, jesli nie to odpowiedź gracza za 0 pkt.
+                Jeśli nic nie było wpisane to brak odpowiedzi. Możesz odsłonić odpowiedź i punkty.
+              </div>
                 <div class="cardBody"><div id="finalP2MapQ1"></div></div>
                 <div class="stepFoot">
                   <div class="stepFootButtons"><button class="btn gold" id="btnFinalNextFromP2Q1" type="button">Dalej</button></div>
@@ -793,6 +830,10 @@
             <div class="step hidden" data-step="f_p2_map_q2">
               <div class="stepTitle">Runda 2 — mapowanie (P2)</div>
               <div class="card">
+                <div class="hint">
+                Wybierz odpowiedź z listy, jesli pasuje, jesli nie to odpowiedź gracza za 0 pkt.
+                Jeśli nic nie było wpisane to brak odpowiedzi. Możesz odsłonić odpowiedź i punkty.
+              </div>
                 <div class="cardBody"><div id="finalP2MapQ2"></div></div>
                 <div class="stepFoot">
                   <div class="stepFootButtons"><button class="btn gold" id="btnFinalNextFromP2Q2" type="button">Dalej</button></div>
@@ -804,6 +845,10 @@
             <div class="step hidden" data-step="f_p2_map_q3">
               <div class="stepTitle">Runda 2 — mapowanie (P3)</div>
               <div class="card">
+                <div class="hint">
+                Wybierz odpowiedź z listy, jesli pasuje, jesli nie to odpowiedź gracza za 0 pkt.
+                Jeśli nic nie było wpisane to brak odpowiedzi. Możesz odsłonić odpowiedź i punkty.
+              </div>
                 <div class="cardBody"><div id="finalP2MapQ3"></div></div>
                 <div class="stepFoot">
                   <div class="stepFootButtons"><button class="btn gold" id="btnFinalNextFromP2Q3" type="button">Dalej</button></div>
@@ -815,6 +860,10 @@
             <div class="step hidden" data-step="f_p2_map_q4">
               <div class="stepTitle">Runda 2 — mapowanie (P4)</div>
               <div class="card">
+                <div class="hint">
+                Wybierz odpowiedź z listy, jesli pasuje, jesli nie to odpowiedź gracza za 0 pkt.
+                Jeśli nic nie było wpisane to brak odpowiedzi. Możesz odsłonić odpowiedź i punkty.
+              </div>
                 <div class="cardBody"><div id="finalP2MapQ4"></div></div>
                 <div class="stepFoot">
                   <div class="stepFootButtons"><button class="btn gold" id="btnFinalNextFromP2Q4" type="button">Dalej</button></div>
@@ -826,6 +875,10 @@
             <div class="step hidden" data-step="f_p2_map_q5">
               <div class="stepTitle">Runda 2 — mapowanie (P5)</div>
               <div class="card">
+                <div class="hint">
+                Wybierz odpowiedź z listy, jesli pasuje, jesli nie to odpowiedź gracza za 0 pkt.
+                Jeśli nic nie było wpisane to brak odpowiedzi. Możesz odsłonić odpowiedź i punkty.
+              </div>
                 <div class="cardBody"><div id="finalP2MapQ5"></div></div>
                 <div class="stepFoot">
                   <div class="stepFootButtons"><button class="btn gold" id="btnFinalNextFromP2Q5" type="button">Dalej</button></div>
@@ -839,6 +892,10 @@
               <div class="card">
                 <div class="cardBody">
                   <div class="name">Koniec</div>
+                    <div class="hint">
+                      To konic finału. Na wyświetlaczu pokażemy logo programu,
+                      punkty zwycięskiej drużyny lub kwotę wygranej (w zależności co wybrałeś w ustawiniach).
+                    </div>
                   <div class="hint" id="finalEndHint">—</div>
                 </div>
 
