@@ -3,8 +3,9 @@
 /* =================== ROOT / PARAMETRY =================== */
 
 :root{
-  /* linijki */
-  --line: clamp(18px, 3.2vmin, 34px);
+  /* linia (stabilna na "prawie kwadracie" dzięki clamp zamiast vmin-only) */
+  --line: clamp(20px, 4vmin, 34px);
+
   --font-ratio: 1.1;
   --baseline-shift: 0.15;
 
@@ -14,27 +15,37 @@
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --safe-left: env(safe-area-inset-left, 0px);
 
-  /* margines kartki */
-  --margin-x: 18vmin;
-  --text-left: 20vmin;
-  --text-right: 16vmin;
-  --top-pad: calc(var(--line));
-  --bottom-pad: calc(var(--line) * 2.2);
+  /* ===== marginesy liczone W LINJKACH (mnożniki) =====
+     Zmieniasz proporcje raz i wszystko trzyma rytm z kartką. */
+  --margin-x: 2.0;      /* czerwony margines */
+  --text-left: 2.3;     /* start tekstu */
+  --text-right: 2.0;    /* prawa krawędź tekstu */
+  --top-pad: 1.0;       /* odstęp od góry */
+  --bottom-pad: 2.0;    /* miejsce na hint */
 
-  /* === JEDYNY PARAMETR STERUJĄCY (wysokość/szerokość pasma 2) === */
+  /* ===== wyliczone px ===== */
+  --margin-x-px:  calc(var(--line) * var(--margin-x));
+  --text-left-px: calc(var(--line) * var(--text-left));
+  --text-right-px: calc(var(--line) * var(--text-right));
+  --top-pad-px:   calc(var(--line) * var(--top-pad));
+  --bottom-pad-px:calc(var(--line) * var(--bottom-pad));
+
+  /* ===== JEDYNY PARAMETR STERUJĄCY: rozmiar pasma 2 ===== */
   --pane2-size: 50%;
 
   /* linia podziału */
-  --split-line-w: 5px;
+  --split-line-w: calc(var(--line) * 0.2);
   --split-line: rgba(0,0,0,.12);
   --split-line-edge: rgba(0,0,0,.28);
 
-  /* zasłona */
+  /* swipe-safe-zone: też w linijkach, a JS czyta --swipe-guard-px */
+  --swipe-guard: 1.2;
+  --swipe-guard-px: calc(var(--line) * var(--swipe-guard));
+
+  /* kolory zasłony */
   --cover-grad-a: #c4002f;
   --cover-grad-b: #2a62ff;
 }
-
-/* =================== FONT =================== */
 
 @font-face{
   font-family: "Caveat-Variable";
@@ -61,7 +72,7 @@ html, body{
   user-select: none;
   min-height: 100dvh;
 
-  /* mamy własne gesty (pion/poziom w zależności od orientacji) */
+  /* mamy własne gesty (pion/poziom zależnie od orientacji) */
   touch-action: none;
 }
 
@@ -104,7 +115,7 @@ html, body{
   position: absolute;
   top: 0;
   bottom: 0;
-  left: calc(var(--safe-left) + var(--margin-x));
+  left: calc(var(--safe-left) + var(--margin-x-px));
   width: 2px;
   background: rgba(255,80,80,.55);
   pointer-events: none;
@@ -149,7 +160,7 @@ html.portrait  .pane2{ grid-row: 3; grid-column: 1; }
 html.landscape .pane2{ grid-column: 3; grid-row: 1; }
 
 /* =================== LINIA PODZIAŁU =================== */
-/* linia ZAWSZE istnieje; zasłona ją przykrywa, gdy jest na miejscu */
+/* Linia ZAWSZE istnieje. Zasłona ją przykrywa, bo zasłona jest w pane2. */
 
 .splitLine{
   pointer-events: none;
@@ -160,7 +171,6 @@ html.landscape .pane2{ grid-column: 3; grid-row: 1; }
     var(--split-line-edge)
   );
 }
-
 html.portrait  .splitLine{ grid-row: 2; grid-column: 1; }
 html.landscape .splitLine{ grid-column: 2; grid-row: 1; }
 
@@ -168,10 +178,10 @@ html.landscape .splitLine{ grid-column: 2; grid-row: 1; }
 
 .text{
   position: absolute;
-  left:   calc(var(--safe-left)  + var(--text-left));
-  right:  calc(var(--safe-right) + var(--text-right));
-  top:    calc(var(--safe-top)   + var(--top-pad));
-  bottom: calc(var(--safe-bottom) + var(--bottom-pad));
+  left:   calc(var(--safe-left)  + var(--text-left-px));
+  right:  calc(var(--safe-right) + var(--text-right-px));
+  top:    calc(var(--safe-top)   + var(--top-pad-px));
+  bottom: calc(var(--safe-bottom)+ var(--bottom-pad-px));
 
   margin: 0;
   pointer-events: none;
@@ -190,14 +200,13 @@ html.landscape .splitLine{ grid-column: 2; grid-row: 1; }
 
 .p2Hint{
   position: absolute;
-  left:  calc(var(--safe-left)  + var(--text-left));
-  right: calc(var(--safe-right) + var(--text-right));
+  left:  calc(var(--safe-left)  + var(--text-left-px));
+  right: calc(var(--safe-right) + var(--text-right-px));
   bottom: calc(var(--safe-bottom) + 6px);
 
   font-family: "Caveat-Variable", cursive;
   font-size: calc(var(--line) * 0.70);
   line-height: 1.15;
-
   color: rgba(0,0,0,.45);
 
   opacity: 0;
@@ -207,7 +216,6 @@ html.landscape .splitLine{ grid-column: 2; grid-row: 1; }
   pointer-events: none;
 }
 
-/* pokazywane przez JS: html.p2Open */
 html.p2Open .p2Hint{
   opacity: 1;
   transform: translateY(0);
@@ -222,7 +230,6 @@ html.p2Open .p2Hint{
 
   background: linear-gradient(90deg, var(--cover-grad-a) 0%, var(--cover-grad-b) 100%);
 
-  /* KLUCZ: animacja + kontrola przez coverOn/coverOff */
   transition: transform 180ms ease, opacity 160ms ease;
   will-change: transform, opacity;
 }
@@ -234,63 +241,65 @@ html.p2Open .p2Hint{
   pointer-events: auto;
 }
 
-/* odsłonięte: wyjeżdża poza pasmo, nie łapie nic */
+/* odsłonięte: wyjeżdża poza pasmo */
 html.portrait .cover2.coverOff{
   transform: translateY(120%);
   opacity: 1;
   pointer-events: none;
 }
-
 html.landscape .cover2.coverOff{
   transform: translateX(120%);
   opacity: 1;
   pointer-events: none;
 }
 
+/* content w środku: ważne, żeby logo się NIE OBCINAŁO */
 .cover2Content{
-  position:absolute;
-  inset:0;
-  display:flex;
-  flex-direction:column;
-  justify-content:center;
-  align-items:center;
+  position: absolute;
+  inset: 0;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
   gap: clamp(6px, 1.6vh, 14px);
 
-  /* ważne: bezpieczne paddingi + żeby flex mógł się kurczyć */
   padding:
     calc(var(--safe-top) + 10px)
     calc(var(--safe-right) + 10px)
     calc(var(--safe-bottom) + 10px)
     calc(var(--safe-left) + 10px);
 
-  min-height: 0;     /* KLUCZ */
-  height: 100%;      /* KLUCZ */
+  /* kluczowe dla contain + flex */
   box-sizing: border-box;
+  height: 100%;
+  min-height: 0;
 }
 
-/* logo: nie może się obcinać */
+/* LOGO: żadnego dvh — ma się mieścić w REALNYM kontenerze pasma */
 .cover2Logo{
-  /* logo ma brać dostępną przestrzeń i się kurczyć */
   flex: 1 1 auto;
-  min-height: 0;                 /* KLUCZ */
-  max-height: 100%;              /* KLUCZ: nie dvh */
+  min-height: 0;
+  max-height: 100%;
 
   width: min(820px, 86%);
   max-width: 86%;
 
   height: auto;
+  display: block;
   object-fit: contain;
-  display:block;
 
   filter: drop-shadow(0 12px 30px rgba(0,0,0,.35));
-  pointer-events:none;
-  -webkit-user-drag:none;
-  user-select:none;
+  pointer-events: none;
+  -webkit-user-drag: none;
+  user-select: none;
 }
 
+/* hint na zasłonie: nie wypycha logo, może zniknąć na niskim ekranie */
 .cover2Swipe{
-  /* hint nie może wypchnąć logo */
   flex: 0 0 auto;
+
   max-width: min(92%, 720px);
   padding: 0 10px;
 
@@ -298,15 +307,15 @@ html.landscape .cover2.coverOff{
   font-size: clamp(14px, calc(var(--line) * 0.72), 30px);
   line-height: 1.15;
 
-  color:#fc0;
-  text-shadow:0 4px 18px rgba(0,0,0,.45);
+  color: #fc0;
+  text-shadow: 0 4px 18px rgba(0,0,0,.45);
 
   white-space: normal;
   word-break: break-word;
 }
+
 @media (max-height: 420px){
-  .cover2Swipe{ display:none; }
-  .cover2Content{ justify-content:center; }
+  .cover2Swipe{ display: none; }
 }
 
 /* =================== PSEUDO FULLSCREEN =================== */
