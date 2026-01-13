@@ -631,7 +631,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
 
     // reset poprzedniego timera
     await timerStopAndReset();
-
+    
     rt.timer.running = true;
     rt.timer.phase = phase;
     rt.timer.total = seconds;
