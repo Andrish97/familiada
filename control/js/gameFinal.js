@@ -44,6 +44,7 @@ const FINAL_MSG = {
   // --- fallback tekstu odpowiedzi, gdy naprawdę nic nie ma ---
   FALLBACK_ANSWER: "—",
 };
+
 // =========================================================
 
 import { playSfx, getSfxDuration } from "/familiada/js/core/sfx.js";
@@ -68,7 +69,6 @@ function clip11(s) {
 }
 
 function hostTag(style, text) {
-  // style np: "b", "u", "s", "#ff0000 b u"
   return `[${style}]${String(text ?? "")}[/]`;
 }
 
@@ -127,7 +127,6 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     if (!rt.p1) rt.p1 = Array.from({ length: 5 }, () => ({ text: "" }));
     if (!rt.p2) rt.p2 = Array.from({ length: 5 }, () => ({ text: "", repeat: false }));
 
-    // map rows: mode AUTO/MANUAL + locked dla SKIP “na zawsze”
     const mkRow = () => ({
       mode: "AUTO", // AUTO | MANUAL
       kind: null, // MATCH | MISS | SKIP | null
@@ -137,6 +136,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
       revealedAnswer: false,
       revealedPoints: false,
       locked: false, // true => SKIP “na zawsze”
+      _addedToSum: false,
     });
 
     if (!rt.map1) rt.map1 = Array.from({ length: 5 }, mkRow);
@@ -155,12 +155,12 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
         usedP1: false,
         usedP2: false,
       };
+
     if (rt.timer.usedP1 !== true) rt.timer.usedP1 = false;
     if (rt.timer.usedP2 !== true) rt.timer.usedP2 = false;
 
     if (!rt.done) rt.done = false;
 
-    // lock przycisku start finału (żeby nie wrócił po przypadkowym re-renderze)
     if (rt.lockStartBtn !== true) rt.lockStartBtn = false;
   }
 
@@ -244,7 +244,6 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
   // Resolver: zapewnia kind, jeśli AUTO i jeszcze null
   function ensureDefaultMapping(roundNo, idx) {
     ensureRuntime();
-    const rt = store.state.final.runtime;
     const row = getRow(roundNo, idx);
     if (!row) return;
 
@@ -252,7 +251,6 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     const input = getInput(roundNo, idx);
     const hasInput = input.length > 0;
 
-    // locked => nie ruszamy
     if (row.locked) {
       row.kind = "SKIP";
       row.matchId = null;
@@ -260,7 +258,6 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
       return;
     }
 
-    // repeat => SKIP na zawsze
     if (rep) {
       row.mode = "MANUAL";
       row.locked = true;
@@ -271,14 +268,11 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
       return;
     }
 
-    // MANUAL i ma kind => nie ruszamy
     if (row.mode === "MANUAL" && (row.kind === "MATCH" || row.kind === "MISS" || row.kind === "SKIP")) {
       return;
     }
 
-    // AUTO: ustawiamy domyślne
     if (row.kind === "MATCH" || row.kind === "MISS" || row.kind === "SKIP") {
-      // jeśli AUTO, możemy poprawić przy zmianie inputu:
       if (row.mode === "AUTO") {
         if (!hasInput) {
           row.kind = "SKIP";
@@ -286,7 +280,6 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
           row.outText = "";
           row.pts = 0;
         } else {
-          // jest tekst => MISS z outText=input (edytowalne)
           if (row.kind !== "MATCH") {
             row.kind = "MISS";
             row.matchId = null;
@@ -298,7 +291,6 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
       return;
     }
 
-    // kind == null
     if (!hasInput) {
       row.kind = "SKIP";
       row.matchId = null;
@@ -321,7 +313,6 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     const list = getAnswersForIdx(idx);
 
     if (!row) return FINAL_BLANK;
-
     if (row.kind === "SKIP") return FINAL_BLANK;
 
     if (row.kind === "MATCH") {
@@ -330,7 +321,6 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
       return txt || FINAL_BLANK;
     }
 
-    // MISS
     const shown = String(row.outText || input || "").trim();
     return shown || FINAL_BLANK;
   }
@@ -365,39 +355,29 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     const txt = lines.join("\n").replace(/"/g, '\\"');
     if (txt === hostLastLeft) return;
     hostLastLeft = txt;
-    try {
-      await devices.sendHostCmd(`SET1 "${txt}"`);
-    } catch {}
+    try { await devices.sendHostCmd(`SET1 "${txt}"`); } catch {}
   }
 
   async function hostSetRight(lines) {
     const txt = lines.join("\n").replace(/"/g, '\\"');
     if (txt === hostLastRight) return;
     hostLastRight = txt;
-    try {
-      await devices.sendHostCmd(`SET2 "${txt}"`);
-    } catch {}
+    try { await devices.sendHostCmd(`SET2 "${txt}"`); } catch {}
   }
 
   async function hostClearAll() {
     hostLastLeft = null;
     hostLastRight = null;
-    try {
-      await devices.sendHostCmd("CLEAR");
-    } catch {}
+    try { await devices.sendHostCmd("CLEAR"); } catch {}
   }
 
   async function hostCoverRight() {
-    try {
-      await devices.sendHostCmd("COVER");
-    } catch {}
+    try { await devices.sendHostCmd("COVER"); } catch {}
   }
 
   async function hostClearRight() {
     hostLastRight = null;
-    try {
-      await devices.sendHostCmd("CLEAR2");
-    } catch {}
+    try { await devices.sendHostCmd("CLEAR2"); } catch {}
   }
 
   function hostEntryStatus(roundNo, i) {
@@ -421,9 +401,8 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     if (step === "f_p1_entry") {
       const counting = rt?.timer?.running && rt?.timer?.phase === "P1";
       const s = Math.max(0, Number(rt?.timer?.seconds || 0));
-      // cache sec, żeby nie skakało bez potrzeby
       if (counting) {
-        if (hostLastTitleSecond === s) return null; // sygnał “tytuł bez zmian”
+        if (hostLastTitleSecond === s) return null;
         hostLastTitleSecond = s;
         return `FINAŁ RUNDA 1 — ODLICZANIE ${s}s`;
       }
@@ -532,9 +511,9 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
       return;
     }
 
-    // jeśli title==null => tytuł “ten sam” (sekunda bez zmian),
-    // ale statusy mogły się zmienić przy wpisie: więc i tak robimy pełny render
-    const effectiveTitle = title ?? hostLastLeft?.split("\n")?.[0]?.replace(/^\[b\]|\[\/\]$/g, "") ?? "";
+    const effectiveTitle =
+      title ??
+      (hostLastLeft ? hostLastLeft.split("\n")[0].replace(/^\[b\]|\[\/\]$/g, "") : "");
 
     const roundNo =
       step === "f_p1_entry" || step.startsWith("f_p1_")
@@ -554,9 +533,9 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     hostClearRight();
   }
 
-  // ---------------- TIMER (jedna logika) ----------------
+  // ---------------- TIMER ----------------
   async function displaySetTimerSeconds(sec) {
-    const txt = String(Math.max(0, sec)); // bez wiodących zer
+    const txt = String(Math.max(0, sec));
     const phase = store.state.final?.runtime?.timer?.phase || null;
 
     if (phase === "P1") ui.setFinalTimerP1(txt);
@@ -565,26 +544,26 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     await display.finalSetSideTimer?.(getWinnerTeam(), txt);
   }
 
+  // KLUCZ: timer reset ZAWSZE przywraca totals + czyści side timer
   async function timerStopAndReset() {
     ensureRuntime();
     const rt = store.state.final.runtime;
-  
+
     rt.timer.running = false;
     rt.timer.phase = null;
     rt.timer.endsAt = 0;
     rt.timer.seconds = 0;
     rt.timer.total = 0;
-  
+
     if (raf) cancelAnimationFrame(raf);
     raf = null;
-  
+
     ui.setFinalTimerP1(FINAL_MSG.TIMER_PLACEHOLDER);
     ui.setFinalTimerP2(FINAL_MSG.TIMER_PLACEHOLDER);
-  
-    // KLUCZ: zawsze przywróć totals + zdejmij side timer
+
     await restoreTotalsTriplets();
     await clearSideTimer();
-  
+
     hostUpdate();
   }
 
@@ -597,7 +576,6 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     const ok = phase === "P1" ? allFilledP1() : allFilledP2();
     if (!ok) return;
 
-    // zatrzymujemy “cicho”
     rt.timer.running = false;
     rt.timer.phase = null;
     rt.timer.endsAt = 0;
@@ -607,38 +585,39 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     if (raf) cancelAnimationFrame(raf);
     raf = null;
 
-    // UI: schowaj timer
     setUiTimerForPhase(phase, FINAL_MSG.TIMER_PLACEHOLDER);
 
-    // DISPLAY: przywróć totals (to naprawia “pusty triplet”)
     await restoreTotalsTriplets();
     await clearSideTimer();
 
-    // od razu pozwól przejść dalej
     if (phase === "P1") ui.setEnabled("btnFinalToP1MapQ1", true);
     if (phase === "P2") ui.setEnabled("btnFinalToP2MapQ1", true);
 
-    // przycisk: wróć do startowej etykiety i ZABLOKUJ (timer już użyty)
     setTimerBtnLabel(phase, "start");
     setTimerBtnEnabled(phase, false);
 
     hostUpdate();
   }
 
-  function timerStart(seconds, phase /* "P1"|"P2" */) {
+  function timerStart(seconds, phase) {
     ensureRuntime();
     const rt = store.state.final.runtime;
 
-    // reset poprzedniego timera
-    await timerStopAndReset();
-    
+    // poprzedni timer: tniemy bez await (to tylko UI), ale totals i tak wrócą po zakończeniu
+    rt.timer.running = false;
+    rt.timer.phase = null;
+    rt.timer.endsAt = 0;
+    rt.timer.seconds = 0;
+    rt.timer.total = 0;
+    if (raf) cancelAnimationFrame(raf);
+    raf = null;
+
     rt.timer.running = true;
     rt.timer.phase = phase;
     rt.timer.total = seconds;
     rt.timer.seconds = seconds;
     rt.timer.endsAt = Date.now() + seconds * 1000;
 
-    // UI start
     setUiTimerForPhase(phase, String(seconds));
     displaySetTimerSeconds(seconds).catch(() => {});
     hostUpdate();
@@ -655,22 +634,22 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
         displaySetTimerSeconds(s).catch(() => {});
       }
 
-        if (leftMs <= 0) {
+      if (leftMs <= 0) {
         rt.timer.running = false;
         rt.timer.seconds = 0;
-      
+
         setUiTimerForPhase(phase, "0");
         hostUpdate();
-      
-        // zamiast zostawiać timer na display:
-        await restoreTotalsTriplets().catch(() => {});
-        await clearSideTimer().catch(() => {});
-      
+
+        // KLUCZ: po timeout też wracamy do totals i zdejmujemy timer
+        restoreTotalsTriplets().catch(() => {});
+        clearSideTimer().catch(() => {});
+
         playSfx("time_over");
-      
+
         if (phase === "P1") ui.setEnabled("btnFinalToP1MapQ1", true);
         if (phase === "P2") ui.setEnabled("btnFinalToP2MapQ1", true);
-      
+
         setTimerBtnLabel(phase, "start");
         setTimerBtnEnabled(phase, false);
         return;
@@ -719,9 +698,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
           <div class="name">${escapeHtml(FINAL_MSG.Q_LABEL(i + 1))}</div>
 
           <div class="rowQ">
-            <div class="qPrompt inline">
-              ${escapeHtml(q.text || "")}
-            </div>
+            <div class="qPrompt inline">${escapeHtml(q.text || "")}</div>
             <input class="inp" data-p="1" data-i="${i}"
               value="${escapeHtml(val)}"
               placeholder="${escapeHtml(FINAL_MSG.INPUT_PLACEHOLDER)}"
@@ -739,21 +716,14 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
         const i = Number(inp.dataset.i);
         rt.p1[i].text = String(inp.value ?? "");
 
-        // AUTO mapping reaguje na input
         const row = rt.map1?.[i];
         if (row && row.mode === "AUTO" && !row.locked) {
-          // wymuś przeliczenie domyślne
           row.kind = null;
           row.matchId = null;
           if (!rt.p1[i].text.trim()) row.outText = "";
         }
 
         hostUpdate();
-
-        // jeśli timer leci: STOP dostępny tylko gdy wszystko wpisane
-        if (rt.timer.running && rt.timer.phase === "P1") {
-          setTimerBtnLabel("P1", allFilledP1() ? "stop" : "stop"); // label zostaje “stop”
-        }
       });
 
       inp.addEventListener("keydown", (e) => {
@@ -791,9 +761,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
         const repeat = rt.p2[i].repeat === true;
         return `
         <div class="rowQ">
-          <div class="qPrompt inline">
-            ${escapeHtml(q.text || "")}
-          </div>
+          <div class="qPrompt inline">${escapeHtml(q.text || "")}</div>
 
           <div class="colRight">
             <input class="inp" data-p="2" data-i="${i}"
@@ -801,8 +769,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
               placeholder="${escapeHtml(FINAL_MSG.INPUT_PLACEHOLDER)}"
               autocomplete="off"/>
 
-            <button class="btn sm danger" type="button"
-              data-repeat="2" data-i="${i}">
+            <button class="btn sm danger" type="button" data-repeat="2" data-i="${i}">
               ${repeat ? escapeHtml(FINAL_MSG.P2_BTN_REPEAT_ON) : escapeHtml(FINAL_MSG.P2_BTN_REPEAT_OFF)}
             </button>
           </div>
@@ -819,10 +786,9 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
         const val = String(inp.value ?? "");
         rt.p2[i].text = val;
 
-        // jeśli wpisano tekst, to repeat off
         if (val.trim().length > 0 && rt.p2[i].repeat) {
           rt.p2[i].repeat = false;
-          // unlock mapping (bo repeat robił SKIP locked)
+
           const row = rt.map2?.[i];
           if (row) {
             row.locked = false;
@@ -830,13 +796,14 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
             row.kind = null;
             row.matchId = null;
             row.outText = "";
+            row.pts = 0;
           }
+
           renderP2Entry();
           hostUpdate();
           return;
         }
 
-        // AUTO mapping reaguje na input
         const row = rt.map2?.[i];
         if (row && row.mode === "AUTO" && !row.locked) {
           row.kind = null;
@@ -861,14 +828,15 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
           return;
         }
 
+        // Shift+Enter w pustym polu → zaznacza Powtórzenie + dźwięk
         if (e.key === "Enter" && e.shiftKey) {
           e.preventDefault();
-        
+
           const val = String(inp.value ?? "").trim();
           if (!val) {
-            if (!rt.p2[i].repeat) playSfx("answer_repeat"); // <<< DŹWIĘK
+            if (!rt.p2[i].repeat) playSfx("answer_repeat"); // <<< FIX
             rt.p2[i].repeat = true;
-        
+
             const row = rt.map2?.[i];
             if (row) {
               row.mode = "MANUAL";
@@ -878,10 +846,10 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
               row.outText = "";
               row.pts = 0;
             }
-        
+
             renderP2Entry();
           }
-        
+
           document.querySelector(`#finalP2Inputs input[data-p="2"][data-i="${i + 1}"]`)?.focus();
           hostUpdate();
           return;
@@ -914,7 +882,6 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
             row.pts = 0;
           }
         } else {
-          // odznaczenie repeat: wracamy do AUTO (bez przymusu)
           if (row) {
             row.locked = false;
             row.mode = "AUTO";
@@ -936,7 +903,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
   }
 
   // ---------------- RENDER: MAPPING ----------------
-  function renderMapOne(roundNo /*1|2*/, idx /*0..4*/) {
+  function renderMapOne(roundNo, idx) {
     ensureRuntime();
     const rt = store.state.final.runtime;
     const q = qPicked[idx];
@@ -1068,7 +1035,6 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     const nextBtnId = roundNo === 1 ? `btnFinalNextFromP1Q${idx + 1}` : `btnFinalNextFromP2Q${idx + 1}`;
     ui.setEnabled(nextBtnId, !!row.revealedAnswer && !!row.revealedPoints);
 
-    // MANUAL: każde kliknięcie mapowania zamraża stan
     root.querySelectorAll('button[data-kind="match"]').forEach((b) => {
       b.addEventListener("click", () => {
         if (!hasText || locked) return;
@@ -1118,13 +1084,11 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
       const v = String(e.target?.value ?? "");
       row.outText = v;
 
-      // edycja outText = MANUAL + MISS jeśli jest treść
       row.mode = "MANUAL";
       if (v.trim().length > 0) {
         row.kind = "MISS";
         row.matchId = null;
       } else {
-        // pusty outText: wracamy do AUTO i pozwalamy defaultować wg inputu
         row.mode = "AUTO";
         row.kind = null;
         row.matchId = null;
@@ -1166,8 +1130,6 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     row.pts = pts;
     row.revealedPoints = true;
 
-    // sum liczymy tylko jeśli wcześniej nie odsłonięto punktów (bez podwójnego dodawania)
-    // (Twoja stara logika nie miała zabezpieczenia — tu dodajemy, żeby przypadkiem nie nabić sumy)
     if (!row._addedToSum) {
       rt.sum = (rt.sum || 0) + pts;
       row._addedToSum = true;
@@ -1225,7 +1187,6 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     ensureRuntime();
     const rt = store.state.final.runtime;
 
-    // anty-spam natychmiast
     rt.lockStartBtn = true;
     ui.setEnabled?.("btnFinalStart", false);
 
@@ -1257,13 +1218,10 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
         return;
       }
 
-      // ---- start ----
       if (typeof store.setFinalActive === "function") store.setFinalActive(true);
       else store.state.locks.finalActive = true;
 
-      try {
-        await devices.sendBuzzerCmd("OFF");
-      } catch {}
+      try { await devices.sendBuzzerCmd("OFF"); } catch {}
 
       await loadFinalPicked();
 
@@ -1277,9 +1235,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
       ui.setFinalTimerP2(FINAL_MSG.TIMER_PLACEHOLDER);
 
       let dur = 0;
-      try {
-        dur = await getSfxDuration("final_theme");
-      } catch {}
+      try { dur = await getSfxDuration("final_theme"); } catch {}
       const totalMs = typeof dur === "number" && dur > 0 ? dur * 1000 : 4000;
       const transitionAnchorMs = 1000;
 
@@ -1299,7 +1255,6 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
 
       ui.setMsg("msgFinal", FINAL_MSG.FINAL_STARTED);
 
-      // reset sum i flag dodawania do sumy
       store.state.final.runtime.sum = 0;
       for (const r of store.state.final.runtime.map1) r._addedToSum = false;
       for (const r of store.state.final.runtime.map2) r._addedToSum = false;
@@ -1310,15 +1265,12 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
 
       ui.setEnabled("btnFinalToP1MapQ1", false);
 
-      // side timer jako “15” tylko jako podpowiedź (jak wcześniej)
       await display.finalSetSideTimer?.(getWinnerTeam(), "15");
 
-      // sukces => start button zostaje zablokowany
       rt.lockStartBtn = true;
       ui.setEnabled?.("btnFinalStart", false);
     } catch (e) {
       console.warn("[final] startFinal error", e);
-      // jeśli start się wysypał, odblokuj
       rt.lockStartBtn = false;
       ui.setEnabled?.("btnFinalStart", true);
       ui.setMsg("msgFinal", String(e?.message || e || "Błąd startu finału."));
@@ -1346,7 +1298,6 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
       renderMapOne(2, idx);
     }
 
-    // jeśli runtime mówi “start button locked”, nie przywracaj go
     ensureRuntime();
     if (store.state.final.runtime.lockStartBtn) ui.setEnabled?.("btnFinalStart", false);
   }
@@ -1355,7 +1306,6 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     ensureRuntime();
     const rt = store.state.final.runtime;
 
-    // jeśli leci => stop early tylko gdy wszystkie wpisane
     if (rt.timer.running && rt.timer.phase === "P1") {
       timerStopEarlyIfAllowed("P1").catch(() => {});
       return;
@@ -1383,7 +1333,6 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     if (rt.timer.usedP2) return;
     rt.timer.usedP2 = true;
 
-    // ODKRYCIE = pokazujemy wyniki rundy 1 (TYLKO RAZ) — przy starcie 20s
     (async () => {
       if (rt.halfRevealedP2) return;
       rt.halfRevealedP2 = true;
@@ -1409,7 +1358,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     timerStart(20, "P2");
   }
 
-  function toP1MapQ(idx1based) {
+  async function toP1MapQ(idx1based) {
     ensureRuntime();
     await timerStopAndReset();
 
@@ -1444,13 +1393,11 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     toP2Start();
   }
 
-  function toP2Start() {
+  async function toP2Start() {
     await timerStopAndReset();
 
     (async () => {
-      try {
-        await display.finalHalfPlaceholders?.();
-      } catch (e) {
+      try { await display.finalHalfPlaceholders?.(); } catch (e) {
         console.warn("finalHalfPlaceholders failed", e);
       }
     })();
@@ -1462,9 +1409,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     ensureRuntime();
 
     let dur = 0;
-    try {
-      dur = await getSfxDuration("round_transition");
-    } catch {}
+    try { dur = await getSfxDuration("round_transition"); } catch {}
     const totalMs = dur > 0 ? dur * 1000 : 2000;
     const anchorMs = 920;
 
@@ -1555,50 +1500,33 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     const mode = getEndScreenMode(store);
 
     const showEndScreen = async () => {
+      try { await display.finalHideBoard?.(); } catch {}
       try {
-        await display.finalHideBoard?.();
-      } catch {}
-      try {
-        if (mode === "logo") {
-          await display.showLogo?.();
-          return;
-        }
-        if (mode === "points") {
-          await display.showWin?.(totalPointsAll);
-          return;
-        }
-        if (mode === "money") {
-          await display.showWin?.(winAmount);
-          return;
-        }
+        if (mode === "logo") { await display.showLogo?.(); return; }
+        if (mode === "points") { await display.showWin?.(totalPointsAll); return; }
+        if (mode === "money") { await display.showWin?.(winAmount); return; }
         await display.showLogo?.();
       } catch {}
     };
 
-    // 1) Najpierw transition
+    // FIX: kolejność audio/wideo
     let trDur = 0;
     try { trDur = await getSfxDuration("round_transition"); } catch {}
     const trMs = trDur > 0 ? trDur * 1000 : 2000;
-    
-    // start dźwięku przejścia
+
     playSfx("round_transition");
-    
-    // 2) W trakcie transition pokaż ekran końcowy (logo/punkty/kwota)
+
     setTimeout(() => {
       showEndScreen().catch(() => {});
-    }, 920); // jak w rundach – “anchor” pod animację
-    
-    // czekamy aż transition dobiegnie końca
+    }, 920);
+
     if (trMs > 0) await new Promise((res) => setTimeout(res, trMs));
-    
-    // 3) Dopiero potem gameintro
+
     playSfx("show_intro");
-    
     try {
       const dur = await getSfxDuration("show_intro");
       if (dur > 0) await new Promise((res) => setTimeout(res, dur * 1000));
     } catch {}
-
 
     store.state.locks.gameEnded = true;
   }
@@ -1608,7 +1536,6 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     if (!store.state.final.step) store.state.final.step = "f_start";
     ui.showFinalStep(store.state.final.step);
 
-    // jeśli start button był zablokowany, nie przywracaj
     if (store.state.final.runtime.lockStartBtn) ui.setEnabled?.("btnFinalStart", false);
 
     updateSumUI();
