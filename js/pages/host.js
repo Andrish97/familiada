@@ -123,6 +123,30 @@ function pxVar(name) {
   return Number.isFinite(n) ? n : 0;
 }
 
+function markIOS() {
+  const ua = navigator.userAgent || "";
+  const isIOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  document.documentElement.classList.toggle("ios", isIOS);
+}
+
+
+function updateOuterInsets() {
+  const root = document.documentElement;
+  const cs = getComputedStyle(root);
+  const o = getOrientation();
+
+  const safeL = parseFloat(cs.getPropertyValue("--safe-left")) || 0;
+  const safeR = parseFloat(cs.getPropertyValue("--safe-right")) || 0;
+
+  if (o === "landscape") {
+    root.style.setProperty("--outer-left", `${safeL}px`);
+    root.style.setProperty("--outer-right", `${safeR}px`);
+  } else {
+    root.style.setProperty("--outer-left", `0px`);
+    root.style.setProperty("--outer-right", `0px`);
+  }
+}
+
 function updateLinePx() {
   const root = document.documentElement;
   const cs = getComputedStyle(root);
@@ -597,6 +621,7 @@ document.addEventListener("fullscreenchange", setFullscreenIcon);
 
 window.addEventListener("resize", () => {
   applyOrientationClass();
+  updateOuterInsets()
   updateLinePx();
   refreshCssMetrics();
   updateSwipeHint();
@@ -605,6 +630,7 @@ window.addEventListener("resize", () => {
 
 document.addEventListener("DOMContentLoaded", async () => {
   applyOrientationClass();
+  updateOuterInsets()
   updateLinePx();
   refreshCssMetrics();
   setFullscreenIcon();
