@@ -209,12 +209,6 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     } catch {}
   }
 
-  async function clearSideTimer() {
-    try {
-      await display.finalSetSideTimer?.(getWinnerTeam(), FINAL_MSG.TIMER_PLACEHOLDER);
-    } catch {}
-  }
-
   // ---------------- HELPERS: DATA ----------------
   function getAnswersForIdx(idx) {
     const q = qPicked[idx];
@@ -562,7 +556,6 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     ui.setFinalTimerP2(FINAL_MSG.TIMER_PLACEHOLDER);
 
     await restoreTotalsTriplets();
-    await clearSideTimer();
 
     hostUpdate();
   }
@@ -588,7 +581,6 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     setUiTimerForPhase(phase, FINAL_MSG.TIMER_PLACEHOLDER);
 
     await restoreTotalsTriplets();
-    await clearSideTimer();
 
     if (phase === "P1") ui.setEnabled("btnFinalToP1MapQ1", true);
     if (phase === "P2") ui.setEnabled("btnFinalToP2MapQ1", true);
@@ -643,7 +635,6 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
 
         // KLUCZ: po timeout też wracamy do totals i zdejmujemy timer
         restoreTotalsTriplets().catch(() => {});
-        clearSideTimer().catch(() => {});
 
         playSfx("time_over");
 
