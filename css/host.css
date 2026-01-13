@@ -39,7 +39,7 @@
   --split-line-edge: rgba(0,0,0,.28);
 
   /* swipe-safe-zone: też w linijkach, a JS czyta --swipe-guard-px */
-  --swipe-guard: 1.2;
+  --swipe-guard: 1.5;
   --swipe-guard-px: calc(var(--line) * var(--swipe-guard));
 
   /* kolory zasłony */
