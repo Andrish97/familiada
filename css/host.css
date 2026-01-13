@@ -1,62 +1,67 @@
-/* /familiada/css/host.css */
-
 /* =================== ROOT / PARAMETRY =================== */
 
 :root{
-  /* linia (stabilna na "prawie kwadracie" dzięki clamp zamiast vmin-only) */
-  --line: clamp(20px, 4vmin, 34px);
-
+  /* linijki: stabilne także przy “prawie kwadratowych” ekranach */
+  --line: clamp(18px, 3.2vmin, 34px);
   --font-ratio: 1.1;
   --baseline-shift: 0.15;
 
-  /* safe-area */
+  /* safe-area (notch) */
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-right: env(safe-area-inset-right, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --safe-left: env(safe-area-inset-left, 0px);
 
-  /* ===== marginesy liczone W LINJKACH (mnożniki) ===== */
-  --margin-x: 2.0; /* czerwony margines (w linijkach) */
-
-  /* PANE 1 (lewa / górna) */
-  --text-left-1: 2.5;
-  --text-right-1: 1.5;
-
-  /* PANE 2 (prawa / dolna) */
-  --text-left-2: 1.0;
-  --text-right-2: 1.5;
-
-  --top-pad: 1.0;
-  --bottom-pad: 2.0;
-
-  /* ===== wyliczone px ===== */
-  --margin-x-px:    calc(var(--line) * var(--margin-x));
-
-  --text-left-1-px: calc(var(--line) * var(--text-left-1));
-  --text-right-1-px:calc(var(--line) * var(--text-right-1));
-
-  --text-left-2-px: calc(var(--line) * var(--text-left-2));
-  --text-right-2-px:calc(var(--line) * var(--text-right-2));
-
-  --top-pad-px:     calc(var(--line) * var(--top-pad));
-  --bottom-pad-px:  calc(var(--line) * var(--bottom-pad));
-
-  /* ===== JEDYNY PARAMETR STERUJĄCY: rozmiar pasma 2 ===== */
+  /* === JEDYNY PARAMETR STERUJĄCY === */
+  /* szerokość/wysokość PASMA 2 (ta odsłaniana połówka) */
   --pane2-size: 50%;
 
   /* linia podziału */
-  --split-line-w: calc(var(--line) * 0.2);
+  --split-line-w: clamp(4px, 0.18rem, 7px);
   --split-line: rgba(0,0,0,.12);
   --split-line-edge: rgba(0,0,0,.28);
 
-  /* swipe-safe-zone: też w linijkach, a JS czyta --swipe-guard-px */
-  --swipe-guard: 1.5;
-  --swipe-guard-px: calc(var(--line) * var(--swipe-guard));
-
-  /* kolory zasłony */
+  /* zasłona */
   --cover-grad-a: #c4002f;
   --cover-grad-b: #2a62ff;
+
+  /* ===== marginesy liczone w LINJKACH ===== */
+  --margin-x: 3.0;       /* czerwony margines od lewej (w linijkach) */
+  --text-left-1: 3.4;
+  --text-right-1: 2.8;
+
+  /* domyślnie możesz ustawić inne dla pane2,
+     ale w portrait i tak je zrównamy (poniżej) */
+  --text-left-2: 3.4;
+  --text-right-2: 2.8;
+
+  --top-pad: 1.0;
+  --bottom-pad: 2.2;
+
+  /* wyliczenia px */
+  --margin-x-px:     calc(var(--line) * var(--margin-x));
+
+  --text-left-1-px:  calc(var(--line) * var(--text-left-1));
+  --text-right-1-px: calc(var(--line) * var(--text-right-1));
+
+  --text-left-2-px:  calc(var(--line) * var(--text-left-2));
+  --text-right-2-px: calc(var(--line) * var(--text-right-2));
+
+  --top-pad-px:      calc(var(--line) * var(--top-pad));
+  --bottom-pad-px:   calc(var(--line) * var(--bottom-pad));
+
+  /* swipe guard też w linijkach (JS to czyta) */
+  --swipe-guard: 1.4;
+  --swipe-guard-px: calc(var(--line) * var(--swipe-guard));
 }
+
+/* PORTRAIT: te same marginesy po obu stronach (czerwony margines tylko z lewej) */
+html.portrait{
+  --text-left-2: var(--text-left-1);
+  --text-right-2: var(--text-right-1);
+}
+
+/* =================== FONT =================== */
 
 @font-face{
   font-family: "Caveat-Variable";
@@ -71,19 +76,19 @@
 *{ -webkit-tap-highlight-color: transparent; }
 
 html, body{
-  margin: 0;
-  padding: 0;
-  height: 100%;
-  background: #fffdf5;
+  margin:0;
+  padding:0;
+  height:100%;
+  background:#fffdf5;
 }
 
 .host-body{
-  margin: 0;
-  overflow: hidden;
-  user-select: none;
-  min-height: 100dvh;
+  margin:0;
+  overflow:hidden;
+  user-select:none;
+  min-height:100dvh;
 
-  /* mamy własne gesty (pion/poziom zależnie od orientacji) */
+  /* mamy własne gesty: pion/poziom zależnie od orientacji */
   touch-action: none;
 }
 
@@ -95,47 +100,59 @@ html, body{
   right: calc(var(--safe-right) + 10px);
   z-index: 200;
 
-  width: 44px;
-  height: 44px;
-  border-radius: 14px;
+  width:44px;
+  height:44px;
+  border-radius:14px;
 
   background: rgba(0,0,0,.35);
   border: 1px solid rgba(255,255,255,.35);
   box-shadow: 0 4px 14px rgba(0,0,0,.35);
 
-  color: #fff;
-  font-weight: 900;
-  cursor: pointer;
+  color:#fff;
+  font-weight:900;
+  cursor:pointer;
 }
 .fsBtn:active{ transform: translateY(1px); }
 
 /* =================== KARTKA =================== */
+/* KLUCZ: safe-area jest tutaj, a nie w panelach */
 
 .paper{
   position: fixed;
   inset: 0;
   z-index: 10;
 
-  background: #fffdf5;
+  /* safe-area jako ramka dla całej kartki */
+  padding:
+    var(--safe-top)
+    var(--safe-right)
+    var(--safe-bottom)
+    var(--safe-left);
+  box-sizing: border-box;
+
+  background-color:#fffdf5;
   background-image: linear-gradient(to bottom, #e7e2d3 1px, transparent 1px);
   background-size: 100% var(--line);
-  background-position: 0 var(--safe-top);
+
+  /* po przeniesieniu safe-area do paddingu, tło startuje od 0 */
+  background-position: 0 0;
 }
 
+/* czerwony margines liczony od “wnętrza kartki” (po paddingu) */
 .redMargin{
-  position: absolute;
+  position:absolute;
   top: 0;
   bottom: 0;
-  left: calc(var(--safe-left) + var(--margin-x-px));
-  width: 2px;
+  left: var(--margin-x-px);
+  width:2px;
   background: rgba(255,80,80,.55);
-  pointer-events: none;
+  pointer-events:none;
 }
 
 /* =================== PODZIAŁ KARTKI =================== */
 
 .paperSplit{
-  display: grid;
+  display:grid;
   width: 100%;
   height: 100%;
 }
@@ -163,18 +180,15 @@ html.landscape .paperSplit{
   overflow: hidden;
 }
 
-/* pane1 zawsze w pierwszym polu */
 .pane1{ grid-area: 1 / 1; }
-
-/* pane2 zależnie od orientacji */
 html.portrait  .pane2{ grid-row: 3; grid-column: 1; }
 html.landscape .pane2{ grid-column: 3; grid-row: 1; }
 
 /* =================== LINIA PODZIAŁU =================== */
-/* Linia ZAWSZE istnieje. Zasłona ją przykrywa, bo zasłona jest w pane2. */
+/* ZAWSZE istnieje, ale zasłona ją przykrywa gdy jest ON */
 
 .splitLine{
-  pointer-events: none;
+  pointer-events:none;
   background: linear-gradient(
     to right,
     var(--split-line-edge),
@@ -182,73 +196,74 @@ html.landscape .pane2{ grid-column: 3; grid-row: 1; }
     var(--split-line-edge)
   );
 }
+
 html.portrait  .splitLine{ grid-row: 2; grid-column: 1; }
 html.landscape .splitLine{ grid-column: 2; grid-row: 1; }
 
 /* =================== TEKST =================== */
 
-/* baza wspólna dla obu tekstów */
 .text{
-  position: absolute;
-  top:    calc(var(--safe-top)   + var(--top-pad-px));
-  bottom: calc(var(--safe-bottom)+ var(--bottom-pad-px));
-  margin: 0;
-  pointer-events: none;
+  position:absolute;
+  top: var(--top-pad-px);
+  bottom: var(--bottom-pad-px);
+
+  margin:0;
+  pointer-events:none;
 
   white-space: pre-wrap;
   word-break: break-word;
 
-  font-family: "Caveat-Variable", cursive;
+  font-family:"Caveat-Variable", cursive;
   font-size: calc(var(--line) * var(--font-ratio));
   line-height: var(--line);
   padding-top: calc(var(--line) * var(--baseline-shift));
-  color: #111;
+  color:#111;
 }
 
-/* PANE 1: lewa / górna */
+/* pane1: lewa/góra */
 .pane1 .text{
-  left:  calc(var(--safe-left)  + var(--text-left-1-px));
-  right: calc(var(--safe-right) + var(--text-right-1-px));
+  left:  var(--text-left-1-px);
+  right: var(--text-right-1-px);
 }
 
-/* PANE 2: prawa / dolna */
+/* pane2: prawa/dół */
 .pane2 .text{
-  left:  calc(var(--safe-left)  + var(--text-left-2-px));
-  right: calc(var(--safe-right) + var(--text-right-2-px));
+  left:  var(--text-left-2-px);
+  right: var(--text-right-2-px);
 }
 
-/* =================== HINT W PASMIE 2 (gdy odsłonięte) =================== */
+/* =================== HINT PASMA 2 (gdy odsłonięte) =================== */
 
 .p2Hint{
-  position: absolute;
-  left:  calc(var(--safe-left)  + var(--text-left-2-px));
-  right: calc(var(--safe-right) + var(--text-right-2-px));
+  position:absolute;
+  left:  var(--text-left-2-px);
+  right: var(--text-right-2-px);
+  bottom: 6px;
 
-  bottom: calc(var(--safe-bottom) + 6px);
-
-  font-family: "Caveat-Variable", cursive;
+  font-family:"Caveat-Variable", cursive;
   font-size: calc(var(--line) * 0.70);
   line-height: 1.15;
-  color: rgba(0,0,0,.45);
 
+  color: rgba(0,0,0,.45);
   opacity: 0;
   transform: translateY(6px);
   transition: opacity 140ms ease, transform 140ms ease;
 
-  pointer-events: none;
+  pointer-events:none;
 }
 
+/* pokazywane przez JS: html.p2Open */
 html.p2Open .p2Hint{
-  opacity: 1;
+  opacity:1;
   transform: translateY(0);
 }
 
 /* =================== ZASŁONA PASMA 2 =================== */
 
 .cover2{
-  position: absolute;
-  inset: 0;
-  z-index: 30;
+  position:absolute;
+  inset:0;
+  z-index:30;
 
   background: linear-gradient(90deg, var(--cover-grad-a) 0%, var(--cover-grad-b) 100%);
 
@@ -263,43 +278,36 @@ html.p2Open .p2Hint{
   pointer-events: auto;
 }
 
-/* odsłonięte: wyjeżdża poza pasmo */
+/* odsłonięte: wyjeżdża poza pasmo, nie łapie nic */
 html.portrait .cover2.coverOff{
   transform: translateY(120%);
   opacity: 1;
   pointer-events: none;
 }
+
 html.landscape .cover2.coverOff{
   transform: translateX(120%);
   opacity: 1;
   pointer-events: none;
 }
 
-/* content w środku: ważne, żeby logo się NIE OBCINAŁO */
 .cover2Content{
-  position: absolute;
-  inset: 0;
-
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
+  position:absolute;
+  inset:0;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
 
   gap: clamp(6px, 1.6vh, 14px);
+  padding: 12px;
 
-  padding:
-    calc(var(--safe-top) + 10px)
-    calc(var(--safe-right) + 10px)
-    calc(var(--safe-bottom) + 10px)
-    calc(var(--safe-left) + 10px);
-
-  /* kluczowe dla contain + flex */
-  box-sizing: border-box;
-  height: 100%;
   min-height: 0;
+  height: 100%;
+  box-sizing: border-box;
 }
 
-/* LOGO: żadnego dvh — ma się mieścić w REALNYM kontenerze pasma */
+/* logo: “contain” i żadnego obcinania */
 .cover2Logo{
   flex: 1 1 auto;
   min-height: 0;
@@ -307,21 +315,19 @@ html.landscape .cover2.coverOff{
 
   width: min(820px, 86%);
   max-width: 86%;
-
   height: auto;
-  display: block;
+
   object-fit: contain;
+  display:block;
 
   filter: drop-shadow(0 12px 30px rgba(0,0,0,.35));
-  pointer-events: none;
-  -webkit-user-drag: none;
-  user-select: none;
+  pointer-events:none;
+  -webkit-user-drag:none;
+  user-select:none;
 }
 
-/* hint na zasłonie: nie wypycha logo, może zniknąć na niskim ekranie */
 .cover2Swipe{
   flex: 0 0 auto;
-
   max-width: min(92%, 720px);
   padding: 0 10px;
 
@@ -329,35 +335,33 @@ html.landscape .cover2.coverOff{
   font-size: clamp(14px, calc(var(--line) * 0.72), 30px);
   line-height: 1.15;
 
-  color: #fc0;
-  text-shadow: 0 4px 18px rgba(0,0,0,.45);
+  color:#fc0;
+  text-shadow:0 4px 18px rgba(0,0,0,.45);
 
   white-space: normal;
   word-break: break-word;
 }
 
+/* bardzo niski ekran: chowamy hint, żeby logo miało 100% przestrzeni */
 @media (max-height: 420px){
-  .cover2Swipe{ display: none; }
+  .cover2Swipe{ display:none; }
 }
 
 /* =================== PSEUDO FULLSCREEN =================== */
 
 .pseudoFS,
 .pseudoFS body{
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
+  width:100%;
+  height:100%;
+  overflow:hidden;
 }
-
-.pseudoFS .fsBtn{
-  opacity: .85;
-}
+.pseudoFS .fsBtn{ opacity:.85; }
 
 /* =================== REDUCED MOTION =================== */
 
 @media (prefers-reduced-motion: reduce){
   .cover2,
   .p2Hint{
-    transition: none !important;
+    transition:none !important;
   }
 }
