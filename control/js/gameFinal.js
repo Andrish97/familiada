@@ -338,21 +338,30 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
       return;
     }
   
-    // ENTRY/TIMER: tylko lewa (jak teraz była całość), prawa pusta
+    // ENTRY/TIMER: lewa = nagłówek + lista pytań + "kontrolki", prawa pusta
     const title = hostTitleForStep();
     if (!title) {
       hostClearAll();
       return;
     }
   
+    const roundNo =
+      step === "f_p1_entry" || step.startsWith("f_p1_")
+        ? 1
+        : step === "f_p2_entry" || step.startsWith("f_p2_")
+          ? 2
+          : 1;
+  
     const linesLeft = [hostTag("b", title), ""];
+  
     for (let i = 0; i < 5; i++) {
       const qt = (qPicked[i]?.text || "—").replace(/\s+/g, " ").trim();
-      linesLeft.push(`${i + 1}) ${qt}`);
+      const st = hostEntryStatus(roundNo, i); // <- wracają kontrolki
+      linesLeft.push(`${i + 1}) ${qt} — ${st}`);
     }
   
     hostSetLeft(linesLeft);
-    hostClearRight(); // prawa nic nie pokazuje podczas wpisywania
+    hostClearRight();
   }
 
   // -------- Step + timer --------
@@ -365,6 +374,11 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
   function setUiTimerForPhase(phase, value) {
     if (phase === "P1") ui.setFinalTimerP1(String(value));
     if (phase === "P2") ui.setFinalTimerP2(String(value));
+  }
+
+  function setTimerBtnEnabled(phase, enabled) {
+    const id = phase === "P1" ? "btnFinalP1StartTimer" : "btnFinalP2StartTimer";
+    ui.setEnabled?.(id, !!enabled);
   }
 
   function stopTimer() {
@@ -465,6 +479,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
   
     // przycisk odliczania: wróć do startowej etykiety i ZABLOKUJ
     setTimerBtnLabel(phase, "start");
+    setTimerBtnEnabled(phase, false);
   
     const btnId = phase === "P1" ? "btnFinalP1StartTimer" : "btnFinalP2StartTimer";
     ui.setEnabled?.(btnId, false); // <- to jest ten wymóg
@@ -502,16 +517,21 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
       if (leftMs <= 0) {
         rt.timer.running = false;
         rt.timer.seconds = 0;
-
+      
         setUiTimerForPhase(phase, "0");
         hostUpdate();
-
+      
         const totals = store.state.rounds?.totals || { A: 0, B: 0 };
         display.setTotalsTriplets?.(totals).catch(() => {});
-
+      
         playSfx("time_over");
         if (phase === "P1") ui.setEnabled("btnFinalToP1MapQ1", true);
         if (phase === "P2") ui.setEnabled("btnFinalToP2MapQ1", true);
+      
+        // >>> NOWE: timer użyty = przycisk zablokowany na stałe
+        setTimerBtnLabel(phase, "start");
+        setTimerBtnEnabled(phase, false);
+      
         return;
       }
 
@@ -607,6 +627,9 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     });
 
     ui.setEnabled("btnFinalToP1MapQ1", !rt.timer.running && rt.timer.usedP1);
+    // timer: aktywny tylko jeśli jeszcze nieużyty ALBO aktualnie odlicza (żeby działał jako STOP)
+    setTimerBtnEnabled("P1", !rt.timer.usedP1 || (rt.timer.running && rt.timer.phase === "P1"));
+    setTimerBtnLabel("P1", (rt.timer.running && rt.timer.phase === "P1") ? "stop" : "start");
   }
 
   // -------- Render: P2 entry --------
@@ -709,6 +732,8 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     });
 
     ui.setEnabled("btnFinalToP2MapQ1", !rt.timer.running && rt.timer.usedP2);
+    setTimerBtnEnabled("P2", !rt.timer.usedP2 || (rt.timer.running && rt.timer.phase === "P2"));
+    setTimerBtnLabel("P2", (rt.timer.running && rt.timer.phase === "P2") ? "stop" : "start");
   }
 
   // -------- Mapping view (one question) --------
@@ -1172,6 +1197,8 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
   
     ui.setFinalTimerP1("15");
     startCountdown(15, "P1");
+    setTimerBtnLabel("P1", "stop");
+    setTimerBtnEnabled("P1", true);
     ui.setEnabled("btnFinalToP1MapQ1", false);
     setTimerBtnLabel("P1", "start");
   }
@@ -1207,6 +1234,8 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
 
     ui.setFinalTimerP2("20");
     startCountdown(20, "P2");
+    setTimerBtnLabel("P2", "stop");
+    setTimerBtnEnabled("P2", true);
     ui.setEnabled("btnFinalToP2MapQ1", false);
     setTimerBtnLabel("P2", "start");
   }
