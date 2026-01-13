@@ -371,6 +371,19 @@ async function ping() {
   }
 }
 
+/* ========= CSS -> PX (cache) ========= */
+let swipeGuardPx = 28;
+
+function cssPxVar(name, fallbackPx) {
+  const raw = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  const n = parseFloat(raw);
+  return Number.isFinite(n) ? n : fallbackPx;
+}
+
+function refreshCssMetrics() {
+  swipeGuardPx = cssPxVar("--swipe-guard-px", 28);
+}
+
 /* ========= SWIPE (pasmo2) =========
 - portrait:  DOWN = odsłoń, UP = zasłoń
 - landscape: RIGHT = odsłoń, LEFT = zasłoń
@@ -378,7 +391,6 @@ Z bezpiecznymi strefami (nie zaczynaj z krawędzi).
 */
 const SWIPE_MIN = 70;
 const SWIPE_SLOPE = 1.25;
-const EDGE_GUARD = 28;
 
 let swDown = false;
 let sx = 0, sy = 0, st = 0;
@@ -386,10 +398,11 @@ let sx = 0, sy = 0, st = 0;
 function startAllowed(x, y) {
   const w = window.innerWidth || 1;
   const h = window.innerHeight || 1;
+  const g = swipeGuardPx || 28;
 
-  // nie z krawędzi (systemowe gesty)
-  if (x < EDGE_GUARD || x > (w - EDGE_GUARD)) return false;
-  if (y < EDGE_GUARD || y > (h - EDGE_GUARD)) return false;
+  // nie startuj z krawędzi (systemowe gesty)
+  if (x < g || x > (w - g)) return false;
+  if (y < g || y > (h - g)) return false;
 
   return true;
 }
@@ -476,11 +489,13 @@ document.addEventListener("fullscreenchange", setFullscreenIcon);
 
 window.addEventListener("resize", () => {
   applyOrientationClass();
+  refreshCssMetrics();
   updateSwipeHint();
 });
 
 document.addEventListener("DOMContentLoaded", async () => {
   applyOrientationClass();
+  refreshCssMetrics();
   setFullscreenIcon();
 
   if (window.navigator.standalone) {
