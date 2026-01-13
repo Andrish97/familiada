@@ -239,8 +239,8 @@ function isEndedUiState() {
 async function sendZeroStatesToDevices() {
   // “zerowy stan” = czarny ekran, host pusty+ukryty, buzzer wyłączony
   try { await devices.sendDisplayCmd("APP BLACK"); } catch {}
-  try { await devices.sendHostCmd('SET ""'); } catch {}
-  try { await devices.sendHostCmd("HIDE"); } catch {}
+  try { await devices.sendHostCmd("CLEAR"); } catch {}
+  try { await devices.sendHostCmd("COVER"); } catch {}
   try { await devices.sendBuzzerCmd("OFF"); } catch {}
 }
 
