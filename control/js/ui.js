@@ -2,7 +2,7 @@
 
 // ================== KOMUNIKATY (UI) ==================
 const UI_MSG = {
-  DEVICE_STATUS_OK: "OK",
+  DEVICE_STATUS_OK: "POŁĄCZONO",
   DEVICE_STATUS_OFFLINE: "OFFLINE",
   DEVICE_STATUS_NONE: "—",
   DEVICE_SEEN_NONE: "brak",
@@ -10,8 +10,8 @@ const UI_MSG = {
   AUDIO_OK: "OK",
   AUDIO_BLOCKED: "ZABLOKOWANE",
 
-  CONTROL_PREFIX: "Control — ",
-  CONTROL_TITLE: "Control",
+  CONTROL_PREFIX: "Panel sterowania — ",
+  CONTROL_TITLE: "Panel sterowania",
 
   QR_ON_DISPLAY: "QR na wyświetlaczu",
   QR_HIDE: "Schowaj QR",
