@@ -1,54 +1,63 @@
 /* /familiada/css/host.css */
 
-/* =================== ROOT / PARAMETRY =================== */
-
 :root{
-  /* linijki: clamp, żeby przy “prawie kwadracie” nie robiło grubasów */
+  /* ======= “KARTKOWA” SIATKA ======= */
   --line: clamp(18px, 3.0vmin, 34px);
   --font-ratio: 1.1;
   --baseline-shift: 0.15;
 
-  /* safe-area (zostawiamy jako surowe dane) */
+  /* ======= SAFE AREA (surowe) ======= */
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-right: env(safe-area-inset-right, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --safe-left: env(safe-area-inset-left, 0px);
 
-  /* snap do linijek (ustawia JS) */
-  --snap-top: 0px;
-  --snap-bottom: 0px;
+  /*
+    “Insets” używane tylko tam, gdzie to ma sens:
+    - w landscape: odsuwamy od notcha po bokach (żeby nie ucięło)
+    - w portrait: chcemy stały layout, więc boczne insety zwykle są 0 i nic nie psują
+  */
+  --inset-x-left:  var(--safe-left);
+  --inset-x-right: var(--safe-right);
+  --inset-y-top:   var(--safe-top);
+  --inset-y-bottom:var(--safe-bottom);
 
-  /* === JEDYNY PARAMETR STERUJĄCY WIELKOŚCIĄ PASMA 2 === */
+  /* ======= SNAP do linijek (ustawia JS) ======= */
+  --snap-top-1: 0px;
+  --snap-top-2: 0px;
+
+  /* ======= JEDEN PARAMETR: ROZMIAR PASMA 2 ======= */
   --pane2-size: 50%;
 
-  /* linia podziału */
+  /* ======= LINIA PODZIAŁU ======= */
   --split-line-w: clamp(4px, calc(var(--line) * 0.18), 10px);
   --split-line: rgba(0,0,0,.12);
   --split-line-edge: rgba(0,0,0,.30);
 
-  /* gradient zasłony */
+  /* ======= ZASŁONA ======= */
   --cover-grad-a: #c4002f;
   --cover-grad-b: #2a62ff;
 
-  /* swipe guard dla gestów (JS czyta w px) */
+  /* ======= SWIPE GUARD (JS czyta px) ======= */
   --swipe-guard-px: clamp(22px, calc(var(--line) * 0.85), 40px);
 
-  /* czerwony margines – liczymy względem linijki */
-  --margin-x: calc(var(--line) * 2.0);
+  /* ======= KARTKOWE MARGINESY (względem linijki) ======= */
+  --margin-x: calc(var(--line) * 2.0); /* czerwony margines od lewej */
 
-  /* osobne marginesy tekstu dla każdej połówki */
+  /* Tekst – osobno na każdą połówkę (to są MARGINESY KARTKI, nie notch) */
   --text-left-1:  calc(var(--line) * 2.5);
   --text-right-1: calc(var(--line) * 1.5);
 
   --text-left-2:  calc(var(--line) * 1.5);
   --text-right-2: calc(var(--line) * 1.5);
 
-  /* pionowe pady tekstu */
-  --top-pad:    calc(var(--line) * 1.0);
-  --bottom-pad: calc(var(--line) * 2.2);
-}
+  /* PIONOWE pady – ROZDZIELONE */
+  --top-pad-1:    calc(var(--line) * 1.0);
+  --bottom-pad-1: calc(var(--line) * 2.2);
 
-/* =================== FONT =================== */
+  --top-pad-2:    calc(var(--line) * 1.0);
+  --bottom-pad-2: calc(var(--line) * 2.2);
+}
 
 @font-face{
   font-family: "Caveat-Variable";
@@ -57,8 +66,6 @@
   font-style: normal;
   font-display: swap;
 }
-
-/* =================== RESET =================== */
 
 *{ -webkit-tap-highlight-color: transparent; }
 
@@ -74,8 +81,6 @@ html, body{
   overflow: hidden;
   user-select: none;
   min-height: 100dvh;
-
-  /* gesty obsługuje JS */
   touch-action: none;
 }
 
@@ -108,20 +113,21 @@ html, body{
   inset: 0;
   z-index: 10;
 
-  /* linijki mają iść po całości, także przez safe-area */
   background-color: #fffdf5;
   background-image: linear-gradient(to bottom, #e7e2d3 1px, transparent 1px);
   background-size: 100% var(--line);
   background-position: 0 0;
 }
 
-/* czerwony margines też full-bleed, ale wliczamy safe-left (landscape notch) */
+/* czerwony margines: w landscape notch może zabierać lewo, więc tu inset ma sens */
 .redMargin{
   position: absolute;
   top: 0;
   bottom: 0;
-  left: calc(var(--safe-left) + var(--margin-x));
+
+  left: calc(var(--inset-x-left) + var(--margin-x));
   width: 2px;
+
   background: rgba(255,80,80,.55);
   pointer-events: none;
 }
@@ -209,60 +215,74 @@ html.landscape .splitLine{ grid-column: 2; grid-row: 1; }
 }
 
 /*
-  Poziom:
-  - safe-left/right doliczamy, żeby notch w landscape nie zjadał tekstu
-  Pion:
-  - safe-top/bottom doliczamy, ale snapujemy do siatki linijek (JS ustawia --snap-*)
-  -> dzięki temu tekst “siedzi w linijkach” mimo safe-area.
+  KLUCZ: w landscape odsuwamy od notcha NA ZEWNĘTRZNYCH krawędziach,
+  ale NIE zmieniamy “środka”.
+  Czyli:
+  - pane1: lewa krawędź ma inset-left, prawa NIE ma inset-right (bo to środek)
+  - pane2: prawa krawędź ma inset-right, lewa NIE ma inset-left (bo to środek)
 */
+
+/* ===== pane1 ===== */
 .pane1 .text{
-  left:  calc(var(--safe-left)  + var(--text-left-1));
-  right: calc(var(--safe-right) + var(--text-right-1));
-  top:    calc(var(--safe-top) + var(--top-pad) + var(--snap-top));
-  bottom: calc(var(--safe-bottom) + var(--bottom-pad) + var(--snap-bottom));
+  top:    calc(var(--inset-y-top) + var(--top-pad-1) + var(--snap-top-1));
+  bottom: calc(var(--inset-y-bottom) + var(--bottom-pad-1));
 }
 
-/* pasmo 2: domyślnie inne marginesy */
+/* portrait: traktujemy jak jedna kartka (z czerwonym marginesem po lewej) */
+html.portrait .pane1 .text{
+  left:  calc(var(--text-left-1));
+  right: calc(var(--text-right-1));
+}
+
+/* landscape: notch tylko na zewnętrznej krawędzi (lewej) */
+html.landscape .pane1 .text{
+  left:  calc(var(--inset-x-left) + var(--text-left-1));
+  right: calc(var(--text-right-1));
+}
+
+/* ===== pane2 ===== */
 .pane2 .text{
-  left:  calc(var(--safe-left)  + var(--text-left-2));
-  right: calc(var(--safe-right) + var(--text-right-2));
-  top:    calc(var(--safe-top) + var(--top-pad) + var(--snap-top));
-  bottom: calc(var(--safe-bottom) + var(--bottom-pad) + var(--snap-bottom));
+  top:    calc(var(--inset-y-top) + var(--top-pad-2) + var(--snap-top-2));
+  bottom: calc(var(--inset-y-bottom) + var(--bottom-pad-2));
 }
 
-/*
-  Portrait: chcesz “takie same” odstępy jak w paśmie 1 (jedna kartka z czerwonym marginesem).
-  Zostawiamy to na sztywno w CSS, bez zmian HTML.
-*/
+/* portrait: ma wyglądać identycznie jak pane1 */
 html.portrait .pane2 .text{
-  left:  calc(var(--safe-left)  + var(--text-left-1));
-  right: calc(var(--safe-right) + var(--text-right-1));
+  left:  calc(var(--text-left-1));
+  right: calc(var(--text-right-1));
+}
+
+/* landscape: notch tylko na zewnętrznej krawędzi (prawej) */
+html.landscape .pane2 .text{
+  left:  calc(var(--text-left-2));
+  right: calc(var(--inset-x-right) + var(--text-right-2));
 }
 
 /* =================== HINT W PASMIE 2 (gdy odsłonięte) =================== */
 
 .p2Hint{
   position: absolute;
-  left:  calc(var(--safe-left)  + var(--text-left-2));
-  right: calc(var(--safe-right) + var(--text-right-2));
-  bottom: calc(var(--safe-bottom) + 6px);
+  bottom: calc(var(--inset-y-bottom) + 6px);
 
   font-family: "Caveat-Variable", cursive;
   font-size: calc(var(--line) * 0.70);
   line-height: 1.15;
 
   color: rgba(0,0,0,.45);
-
   opacity: 0;
   transform: translateY(6px);
   transition: opacity 140ms ease, transform 140ms ease;
   pointer-events: none;
 }
 
-/* w portrait pasmo2 ma “ten sam layout” co pasmo1 */
 html.portrait .p2Hint{
-  left:  calc(var(--safe-left)  + var(--text-left-1));
-  right: calc(var(--safe-right) + var(--text-right-1));
+  left:  calc(var(--text-left-1));
+  right: calc(var(--text-right-1));
+}
+
+html.landscape .p2Hint{
+  left:  calc(var(--text-left-2));
+  right: calc(var(--inset-x-right) + var(--text-right-2));
 }
 
 html.p2Open .p2Hint{
@@ -275,21 +295,19 @@ html.p2Open .p2Hint{
 .cover2{
   position: absolute;
   inset: 0;
-  z-index: 30; /* nad splitLine => zasłona przykrywa linię */
+  z-index: 30; /* przykrywa splitLine */
 
   background: linear-gradient(90deg, var(--cover-grad-a) 0%, var(--cover-grad-b) 100%);
   transition: transform 180ms ease, opacity 160ms ease;
   will-change: transform, opacity;
 }
 
-/* zasłonięte */
 .cover2.coverOn{
   transform: translate(0, 0);
   opacity: 1;
   pointer-events: auto;
 }
 
-/* odsłonięte */
 html.portrait .cover2.coverOff{
   transform: translateY(120%);
   opacity: 1;
@@ -311,7 +329,7 @@ html.landscape .cover2.coverOff{
 
   gap: clamp(6px, 1.6vh, 14px);
 
-  /* tu safe-area ma sens (to overlay) i nie rozjeżdża linijek */
+  /* tutaj safe-area ma sens (to overlay), ale nie ma wpływać na kartkę */
   padding:
     calc(var(--safe-top) + 10px)
     calc(var(--safe-right) + 10px)
@@ -323,7 +341,6 @@ html.landscape .cover2.coverOff{
   height: 100%;
 }
 
-/* logo ma się NIE obcinać w “dziwnych” proporcjach */
 .cover2Logo{
   flex: 1 1 auto;
   min-height: 0;
@@ -342,7 +359,6 @@ html.landscape .cover2.coverOff{
   user-select: none;
 }
 
-/* opis gestu: nie wypycha logo */
 .cover2Swipe{
   flex: 0 0 auto;
   max-width: min(92%, 720px);
@@ -359,7 +375,6 @@ html.landscape .cover2.coverOff{
   word-break: break-word;
 }
 
-/* przy bardzo niskim ekranie – logo > hint */
 @media (max-height: 420px){
   .cover2Swipe{ display: none; }
 }
@@ -374,11 +389,7 @@ html.landscape .cover2.coverOff{
 }
 .pseudoFS .fsBtn{ opacity: .85; }
 
-/* =================== REDUCED MOTION =================== */
-
 @media (prefers-reduced-motion: reduce){
   .cover2,
-  .p2Hint{
-    transition: none !important;
-  }
+  .p2Hint{ transition: none !important; }
 }
