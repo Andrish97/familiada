@@ -622,6 +622,7 @@ export function createUI() {
     $("btnFinalNextFromP1Q5")?.addEventListener("click", () => emit("final.p1.nextQ", 5));
     
     $("btnFinalStartP2")?.addEventListener("click", () => emit("final.p2.start"));
+    $("btnRepeatTest")?.addEventListener("click", () => emit("final.repeatTest"));
     
     $("btnFinalToP2MapQ1")?.addEventListener("click", () => emit("final.p2.toQ", 1));
     
