@@ -1074,90 +1074,88 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
 
   // -------- Public actions --------
   async function startFinal() {
-    if (store.state.hasFinal !== true) {
-      ui.setMsg("msgFinal", FINAL_MSG.FINAL_DISABLED);
-      return;
-    }
-
-    if (!store.state.final.confirmed || (store.state.final.picked || []).length !== 5) {
-      ui.setMsg("msgFinal", FINAL_MSG.FINAL_NEEDS_PICK);
-      return;
-    }
-
-    const adv = store.state.advanced || {};
-    const threshold = typeof adv.finalMinPoints === "number" ? adv.finalMinPoints : 300;
-
-    const totals = store.state.rounds?.totals || { A: 0, B: 0 };
-    const hasEnough = (totals.A || 0) >= threshold || (totals.B || 0) >= threshold;
-
-    if (!hasEnough) {
-      ui.setMsg("msgFinal", FINAL_MSG.FINAL_NEEDS_POINTS(threshold));
-      return;
-    }
-
-    ensureRuntime();
-
-    if (typeof store.setFinalActive === "function") store.setFinalActive(true);
-    else store.state.locks.finalActive = true;
-
+    // blokuj od razu (anty-spam)
+    ui.setEnabled?.("btnStartFinal", false);
+  
     try {
-      await devices.sendBuzzerCmd("OFF");
+      if (store.state.hasFinal !== true) {
+        ui.setMsg("msgFinal", FINAL_MSG.FINAL_DISABLED);
+        ui.setEnabled?.("btnStartFinal", true);
+        return;
+      }
+  
+      if (!store.state.final.confirmed || (store.state.final.picked || []).length !== 5) {
+        ui.setMsg("msgFinal", FINAL_MSG.FINAL_NEEDS_PICK);
+        ui.setEnabled?.("btnStartFinal", true);
+        return;
+      }
+  
+      const adv = store.state.advanced || {};
+      const threshold = typeof adv.finalMinPoints === "number" ? adv.finalMinPoints : 300;
+  
+      const totals = store.state.rounds?.totals || { A: 0, B: 0 };
+      const hasEnough = (totals.A || 0) >= threshold || (totals.B || 0) >= threshold;
+  
+      if (!hasEnough) {
+        ui.setMsg("msgFinal", FINAL_MSG.FINAL_NEEDS_POINTS(threshold));
+        ui.setEnabled?.("btnStartFinal", true);
+        return;
+      }
+  
+      // ---- dalej Twoja obecna logika startu finału ----
+      ensureRuntime();
+  
+      if (typeof store.setFinalActive === "function") store.setFinalActive(true);
+      else store.state.locks.finalActive = true;
+  
+      try { await devices.sendBuzzerCmd("OFF"); } catch {}
+  
+      await loadFinalPicked();
+  
+      await hostCoverRight().catch(() => {});
+      await hostClearRight().catch(() => {});
+  
+      ui.setMsg("msgFinal", "");
+      ui.setMsg("msgFinalP2Start", "");
+  
+      ui.setFinalTimerP1(FINAL_MSG.TIMER_PLACEHOLDER);
+      ui.setFinalTimerP2(FINAL_MSG.TIMER_PLACEHOLDER);
+  
+      let dur = 0;
+      try { dur = await getSfxDuration("final_theme"); } catch {}
+      const totalMs = typeof dur === "number" && dur > 0 ? dur * 1000 : 4000;
+      const transitionAnchorMs = 1000;
+  
+      playSfx("final_theme");
+  
+      setTimeout(() => {
+        (async () => {
+          try {
+            await display.roundsHideBoard?.();
+            await display.finalBoardPlaceholders?.();
+          } catch {}
+        })();
+      }, transitionAnchorMs);
+  
+      if (totalMs > 0) await new Promise((resolve) => setTimeout(resolve, totalMs));
+      playSfx("bells");
+  
+      ui.setMsg("msgFinal", FINAL_MSG.FINAL_STARTED);
+      updateSumUI();
+  
+      setStep("f_p1_entry");
+      renderP1Entry();
+  
+      ui.setEnabled("btnFinalToP1MapQ1", false);
+      await display.finalSetSideTimer?.(getWinnerTeam(), "15");
+  
+      // przycisk start finału zostaje zablokowany (bo finał już trwa)
     } catch (e) {
-      console.warn("sendBuzzerCmd(OFF) in final failed", e);
+      console.warn("[final] startFinal error", e);
+      // jeśli start się wysypał, odblokuj
+      ui.setEnabled?.("btnStartFinal", true);
+      ui.setMsg("msgFinal", String(e?.message || e || "Błąd startu finału."));
     }
-
-    await loadFinalPicked();
-
-    await hostCoverRight().catch(() => {});
-    await hostClearRight().catch(() => {});
-
-    ui.setMsg("msgFinal", "");
-    ui.setMsg("msgFinalP2Start", "");
-
-    ui.setFinalTimerP1(FINAL_MSG.TIMER_PLACEHOLDER);
-    ui.setFinalTimerP2(FINAL_MSG.TIMER_PLACEHOLDER);
-
-    let dur = 0;
-    try {
-      dur = await getSfxDuration("final_theme");
-    } catch (e) {
-      console.warn("getSfxDuration(final_theme) error", e);
-    }
-
-    const totalMs = typeof dur === "number" && dur > 0 ? dur * 1000 : 4000;
-    const transitionAnchorMs = 1000;
-
-    playSfx("final_theme");
-
-    setTimeout(() => {
-      (async () => {
-        try {
-          if (typeof display.roundsHideBoard === "function") {
-            try {
-              await display.roundsHideBoard();
-            } catch {}
-          }
-          if (typeof display.finalBoardPlaceholders === "function") {
-            await display.finalBoardPlaceholders();
-          }
-        } catch (e) {
-          console.error("display setup for final (delayed) failed", e);
-        }
-      })();
-    }, transitionAnchorMs);
-
-    if (totalMs > 0) await new Promise((resolve) => setTimeout(resolve, totalMs));
-    playSfx("bells");
-
-    ui.setMsg("msgFinal", FINAL_MSG.FINAL_STARTED);
-    updateSumUI();
-
-    setStep("f_p1_entry");
-    renderP1Entry();
-
-    ui.setEnabled("btnFinalToP1MapQ1", false);
-
-    await display.finalSetSideTimer?.(getWinnerTeam(), "15");
   }
 
   function backTo(step) {
