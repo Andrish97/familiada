@@ -74,82 +74,76 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
   const introMixer = createSfxMixer?.();
 
  
+// ================== HOST (ROUNDS) ==================
+function hostTag(style, text) {
+  return `[${style}]${String(text ?? "")}[/]`;
+}
 
+function hostTitleForRounds() {
+  const r = store.state.rounds || {};
+  const rn = nInt(r.roundNo, 1);
 
-    // ================== HOST (RUNDS) ==================
-  function hostTag(style, text) {
-    return `[${style}]${String(text ?? "")}[/]`;
-  }
+  if (r.phase === "DUEL" && r.duel?.enabled) return `RUNDA ${rn} — PRZYCISK`;
+  if (r.phase === "DUEL" && !r.duel?.enabled) return `RUNDA ${rn} — POJEDYNEK`;
+  if (r.phase === "PLAY") return `RUNDA ${rn} — ROZGRYWKA`;
+  if (r.phase === "STEAL") return `RUNDA ${rn} — KRADZIEŻ`;
+  if (r.phase === "REVEAL") return `RUNDA ${rn} — ODSŁANIANIE`;
+  return `RUNDA ${rn}`;
+}
 
-  function hostTitleForRounds() {
-    const r = store.state.rounds || {};
-    const rn = nInt(r.roundNo, 1);
+function hostBodyQuestion() {
+  const q = store.state.rounds?.question?.text || "";
+  return String(q).replace(/\s+/g, " ").trim();
+}
 
-    if (r.phase === "DUEL" && r.duel?.enabled) return `RUNDA ${rn} — PRZYCISK`;
-    if (r.phase === "DUEL" && !r.duel?.enabled) return `RUNDA ${rn} — POJEDYNEK`;
-    if (r.phase === "PLAY") return `RUNDA ${rn} — ROZGRYWKA`;
-    if (r.phase === "STEAL") return `RUNDA ${rn} — KRADZIEŻ`;
-    if (r.phase === "REVEAL") return `RUNDA ${rn} — ODSŁANIANIE`;
-    return "";
-  }
+function hostAnswersLines() {
+  const r = store.state.rounds || {};
+  const answers = Array.isArray(r.answers) ? r.answers : [];
+  const revealed = r.revealed instanceof Set ? r.revealed : new Set();
 
-  function hostBodyQuestion() {
-    const q = store.state.rounds?.question?.text || "";
-    return String(q).trim();
-  }
+  return answers
+    .slice()
+    .sort((a, b) => nInt(a.ord, 0) - nInt(b.ord, 0))
+    .map((a) => {
+      const ord = nInt(a.ord, 0);
+      const pts = nInt(a.fixed_points ?? a.points, 0);
+      const txt = String(a.text || "").replace(/\s+/g, " ").trim();
 
-  function hostAnswersLines() {
-    const r = store.state.rounds || {};
-    const answers = Array.isArray(r.answers) ? r.answers : [];
-    const revealed = r.revealed instanceof Set ? r.revealed : new Set();
-  
-    return answers
-      .slice()
-      .sort((a,b) => nInt(a.ord,0) - nInt(b.ord,0))
-      .map((a) => {
-        const ord = nInt(a.ord, 0);
-        const pts = nInt(a.fixed_points ?? a.points, 0);
-        const txt = String(a.text || "").replace(/\s+/g, " ").trim();
-  
-        const line = `${ord}) ${txt} (${pts})`;
-        return revealed.has(ord) ? hostTag("#00ff00", line) : line;
-      });
-  }
+      const line = `${ord}) ${txt} (${pts})`;
+      return revealed.has(ord) ? hostTag("#2ecc71", line) : line;
+    });
+}
 
-  function hostComposeLines() {
-    const title = hostTitleForRounds();
-    if (!title) return null;
-  
-    const q = hostBodyQuestion();
-  
-    // tytuł ZAWSZE bold:
-    const t = hostTag("b", title);
-  
-    return [t, "", q || "—", "", ...hostAnswersLines()].join("\n");
-  }
+async function hostSetLeft(lines) {
+  const txt = String((lines || []).join("\n")).replace(/"/g, '\\"');
+  try { await devices.sendHostCmd(`SET1 "${txt}"`); } catch {}
+}
 
-  async function hostShowText(txt) {
-    const safe = String(txt ?? "").replace(/"/g, '\\"');
-    try {
-      await devices.sendHostCmd(`SET "${safe}"`);
-    } catch {}
-  }
+async function hostSetRight(lines) {
+  const txt = String((lines || []).join("\n")).replace(/"/g, '\\"');
+  try { await devices.sendHostCmd(`SET2 "${txt}"`); } catch {}
+}
 
-  async function hostBlank() {
-    try {
-      await devices.sendHostCmd('SET ""');
-    } catch {}
-  }
+async function hostClearAll() {
+  try { await devices.sendHostCmd("CLEAR"); } catch {}
+}
 
-  function hostUpdate() {
-    const txt = hostComposeLines();
-    if (!txt) {
-      hostBlank().catch(() => {});
-      return;
-    }
-    hostShowText(txt).catch(() => {});
-  }
-  // ==================================================
+function hostUpdate() {
+  const title = hostTitleForRounds();
+  const q = hostBodyQuestion();
+
+  // lewa: nagłówek + pytanie
+  const left = [hostTag("b", title), "", q || "—"];
+
+  // prawa: odpowiedzi
+  const right = hostAnswersLines();
+  // jak nie ma odpowiedzi, prawa może być pusta (wpisywanie itp.)
+  // więc nie dokładamy tam nic na siłę
+
+  hostSetLeft(left).catch(() => {});
+  hostSetRight(right).catch(() => {});
+}
+// ==================================================
 
 
   function emit() {
@@ -313,6 +307,15 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
 
   function updatePlayControls() {
     const r = store.state.rounds;
+
+    // HARD LOCK (np. po "Zakończ rundę")
+    if (r.lockPlayControls) {
+      ui.setEnabled("btnStartTimer3", false);
+      ui.setEnabled("btnAddX", false);
+      ui.setEnabled("btnPassQuestion", false);
+      ui.setEnabled("btnGoEndRound", false);
+      return;
+    }
 
     const inDuel = r.phase === "DUEL";
     const inPlay = r.phase === "PLAY";
@@ -1168,7 +1171,11 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
   async function goEndRound() {
     const r = store.state.rounds;
     
-    r.canEndRound = false;
+    // NOWE: blokada + wyłącz wszystko “bojowe”
+    r.lockPlayControls = true;
+    clearTimer3();          // zatrzymaj 3s żeby nie dobił X
+    r.allowPass = false;    // żeby logika nie próbowała włączać "oddaj"
+    r.canEndRound = false;  // już kliknięte — nie ma wracać
     updatePlayControls();
 
     const bank = nInt(r.bankPts, 0);
@@ -1285,6 +1292,7 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
   
     // normalnie: są pytania i próg nie trafiony
     setStep("r_roundStart");
+    r.lockPlayControls = false;
     setEndMsg(ROUNDS_MSG.ROUND_NEXT);
   }
 
@@ -1355,61 +1363,59 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
     ui.setEnabled?.("btnShowGameEnd", false);
   
     try {
-      const r = store.state.rounds;
+      const r = store.state.rounds || {};
       const totals = r.totals || { A: 0, B: 0 };
       const a = nInt(totals.A, 0);
       const b = nInt(totals.B, 0);
   
       const mode = getEndScreenMode();
       const isDraw = a === b;
+      const winnerTeam = isDraw ? null : (a > b ? "A" : "B");
       const winnerPts = isDraw ? 0 : Math.max(a, b);
   
       const msg = isDraw
         ? ROUNDS_MSG.GAME_END_DRAW(a, b)
-        : ROUNDS_MSG.GAME_END_WIN(a > b ? "A" : "B", winnerPts);
+        : ROUNDS_MSG.GAME_END_WIN(winnerTeam, winnerPts);
   
       ui.setMsg("msgGameEnd", msg);
   
+      // 1) EKRAN NAJPIERW (logo / punkty)
       const showEndScreen = async () => {
-        // TU JEST WŁAŚCIWY MOMENT
-        await display.roundsHideBoard?.();
-  
-        if (isDraw) {
-          await display.showLogo?.();
-        } else if (mode === "logo" || !display.showWin) {
-          await display.showLogo?.();
-        } else {
-          await display.showWin(winnerPts);
-        }
-      };
-  
-      if (!introMixer) {
-        playSfx("show_intro");
-  
-        setTimeout(() => {
-          showEndScreen().catch(() => {});
-        }, 14000);
+        try {
+          await display.roundsHideBoard?.();
+        } catch {}
   
         try {
-          const dur = await getSfxDuration("show_intro");
-          if (dur > 0) {
-            await new Promise((res) => setTimeout(res, dur * 1000));
+          if (isDraw) {
+            await display.showLogo?.();
+            return;
           }
+  
+          if (mode === "logo" || !display.showWin) {
+            await display.showLogo?.();
+            return;
+          }
+  
+          // mode: "points" (albo "money" traktujemy jak points bez finału)
+          await display.showWin?.(winnerPts);
+        } catch {}
+      };
+  
+      await showEndScreen();
+  
+      // 2) DŹWIĘK POTEM
+      if (!introMixer) {
+        playSfx("show_intro");
+        try {
+          const dur = await getSfxDuration("show_intro");
+          if (dur > 0) await new Promise((res) => setTimeout(res, dur * 1000));
         } catch {}
       } else {
         introMixer.stop();
   
         await new Promise((resolve) => {
-          let shown = false;
-  
           const off = introMixer.onTime((current, duration) => {
             const d = duration || 0;
-  
-            if (!shown && current >= 14) {
-              shown = true;
-              showEndScreen().catch(() => {});
-            }
-  
             if (d > 0 && current >= d - 0.05) {
               off();
               resolve();
@@ -1425,6 +1431,7 @@ export function createRounds({ ui, store, devices, display, loadQuestions, loadA
       ui.setEnabled?.("btnShowGameEnd", true);
     }
   }
+
 
   // === BOOT / ODTWORZENIE STANU ===
 
