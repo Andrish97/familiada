@@ -19,8 +19,8 @@
   --margin-x: 2.0; /* czerwony margines (w linijkach) */
 
   /* PANE 1 (lewa / górna) */
-  --text-left-1: 2,5;
-  --text-right-1: 1,5;
+  --text-left-1: 2.5;
+  --text-right-1: 1.5;
 
   /* PANE 2 (prawa / dolna) */
   --text-left-2: 1.0;
