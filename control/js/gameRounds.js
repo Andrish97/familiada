@@ -9,36 +9,36 @@ function nInt(v, d = 0) {
 const ROUNDS_MSG = {
   // --- STANY OGÓLNE ---
   GAME_READY: "Gra gotowa. Ekran oczekuje na start.",
-  INTRO_ALREADY: "Intro gry zostało już odegrane.",
+  INTRO_ALREADY: "Intro gry zostało już odtworzone.",
   INTRO_RUNNING: "Intro uruchomione.",
   INTRO_DONE: "Intro zakończone. Możesz rozpocząć rundę.",
   NO_MORE_QUESTIONS:
     "Brak dostępnych pytań dla kolejnych rund (wszystkie zużyte).",
 
   // --- POJEDYNEK ---
-  DUEL_WAIT: "Pojedynek: czekam na przycisk.",
-  DUEL_RETRY: "Powtórka pojedynku.",
+  DUEL_WAIT: "Czekam na przycisk.",
+  DUEL_RETRY: "Powtórzenie naciśnięcia.",
   DUEL_FIRST_CLICK: (team) =>
-    `Pierwszy klik: drużyna ${team}. Zatwierdź albo powtórz pojedynek.`,
+    `Pierwsza: drużyna ${team}. Zatwierdź albo powtórz.`,
   DUEL_FIRST_ANSWER: (team) =>
-    `Pojedynek – pierwsza odpowiedź: drużyna ${team}.`,
+    `Pojedynek – pierwsza odpowiada: drużyna ${team}.`,
   DUEL_NEXT_TEAM: (team) => `Teraz odpowiada drużyna ${team}.`,
   DUEL_RESET: (team) =>
     `Obie odpowiedzi pudło – nowy cykl. Zaczyna drużyna ${team}.`,
   DUEL_RESULT_WIN: (team) => `Pojedynek wygrywa drużyna ${team}.`,
 
   // --- ROZGRYWKA / KONTROLA ---
-  PLAY_CONTROL: (team) => `Kontrolę ma drużyna ${team}.`,
-  PLAY_NO_CONTROL: "Brak drużyny z kontrolą.",
+  PLAY_CONTROL: (team) => `Gra drużyna ${team}.`,
+  PLAY_NO_CONTROL: "Brak drużyny grającej.",
   PLAY_PASS_ONLY_DURING: "Pytanie można oddać tylko podczas rozgrywki.",
   PLAY_NO_MORE_PASS: "Nie możesz już oddać pytania w tej rundzie.",
-  PLAY_PASSED: (team) => `Pytanie oddane. Teraz odpowiada drużyna ${team}.`,
+  PLAY_PASSED: (team) => `Pytanie oddane. Teraz gra drużyna ${team}.`,
 
   // --- KRADZIEŻ ---
   STEAL_NO_CONTROL:
-    "Nie mogę uruchomić kradzieży – brak drużyny grającej pytanie.",
+    "Nie mogę uruchomić kradzieży – brak drużyny grającej.",
   STEAL_PROMPT: (team) =>
-    `Kradzież: odpowiada drużyna ${team}. Kliknij odpowiedź kapitana lub „X (pudło)”.`,
+    `Kradzież: odpowiada drużyna ${team}. Kliknij odpowiedź lub „X (pudło)”.`,
   STEAL_CHANCE: (team) => `Szansa na kradzież. Odpowiada drużyna ${team}.`,
   STEAL_SUCCESS: "Kradzież udana – bank przechodzi do drużyny kradnącej.",
   STEAL_FAIL: "Kradzież nietrafiona – bank zostaje przy drużynie grającej.",
@@ -51,11 +51,11 @@ const ROUNDS_MSG = {
 
   // --- KONIEC RUNDY ---
   ROUND_NO_CONTROL_BANK:
-    "Brak drużyny z kontrolą – nie mogę przyznać banku.",
+    "Brak drużyny grającej – nie mogę przyznać banku.",
   ROUND_BANK: (bank, team) =>
-    `Koniec rundy. Bank ${bank} pkt dla drużyny ${team}.`,
+    `Koniec rundy. ${bank} pkt dla drużyny ${team}.`,
   ROUND_BANK_MULT: (bank, team, mult, awarded) =>
-    `Koniec rundy. Bank ${bank} pkt dla drużyny ${team} (x${mult} = ${awarded} pkt).`,
+    `Koniec rundy. ${bank} pkt dla drużyny ${team} (x${mult} = ${awarded} pkt).`,
   ROUND_TO_FINAL: "Rundy zakończone. Przechodzimy do finału.",
   ROUND_NEXT: "Runda zakończona. Możesz rozpocząć kolejną rundę.",
   ROUND_LAST: "To była ostatnia runda. Przejdź do zakończenia gry.",
