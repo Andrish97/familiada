@@ -298,7 +298,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     }
   
     if (input) {
-      lines.push(`${hostTag("u", "Input")}: ${input.replace(/\s+/g, " ").trim()}`);
+      lines.push(`${hostTag("u", "Wprowadzono")}: ${input.replace(/\s+/g, " ").trim()}`);
     }
     lines.push(`${hostTag("u", "Stan")}: ${statusLine}`);
     lines.push("");
