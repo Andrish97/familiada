@@ -130,14 +130,26 @@ function updateLineSnap() {
   const safeTop = pxVar("--safe-top");
   const safeBottom = pxVar("--safe-bottom");
 
-  const modTop = safeTop % line;
-  const snapTop = modTop === 0 ? 0 : line - modTop;
+  const topPad1 = pxVar("--top-pad-1");
+  const topPad2 = pxVar("--top-pad-2");
 
-  const modBottom = safeBottom % line;
-  const snapBottom = modBottom === 0 ? 0 : line - modBottom;
+  // snap liczony od realnego startu tekstu: safeTop + topPadX
+  const base1 = safeTop + topPad1;
+  const base2 = safeTop + topPad2;
 
-  document.documentElement.style.setProperty("--snap-top", `${snapTop}px`);
-  document.documentElement.style.setProperty("--snap-bottom", `${snapBottom}px`);
+  const mod1 = base1 % line;
+  const mod2 = base2 % line;
+
+  const snap1 = mod1 === 0 ? 0 : (line - mod1);
+  const snap2 = mod2 === 0 ? 0 : (line - mod2);
+
+  document.documentElement.style.setProperty("--snap-top-1", `${snap1}px`);
+  document.documentElement.style.setProperty("--snap-top-2", `${snap2}px`);
+
+  // dół zostawiamy “kartkowy” – safeBottom i tak może być dziwny na iOS,
+  // a i tak ważniejszy jest START linii (top).
+  // Jeśli koniecznie chcesz, można dodać analogiczny snap-bottom-1/2,
+  // ale zwykle robi więcej szkody niż pożytku.
 }
 
 /* ========= STYLED TEXT (segmenty) =========
