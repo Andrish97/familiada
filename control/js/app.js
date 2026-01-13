@@ -3,7 +3,7 @@
 // ================== KOMUNIKATY ==================
 const APP_MSG = {
   NO_ID: "Brak ?id w URL.",
-  GAME_NOT_READY: (reason) => `Ta gra nie jest gotowa do PLAY: ${reason}`,
+  GAME_NOT_READY: (reason) => `Ta gra nie jest gotowa ponieważ: ${reason}`,
   DATA_MISMATCH: "Rozjazd danych gry (validate vs games).",
 
   QR_LABEL: (kind) =>
@@ -13,10 +13,10 @@ const APP_MSG = {
     "Urządzenie",
 
   QR_COPY_OK: "Skopiowano link do urządzenia.",
-  QR_COPY_FAIL: "Nie udało się skopiować linka.",
+  QR_COPY_FAIL: "Nie udało się skopiować linku.",
 
   UNLOAD_WARN:
-    "Jeśli teraz opuścisz tę stronę, bieżący stan gry zostanie utracony (zostaje tylko zwykłe odświeżenie).",
+    "Jeśli teraz opuścisz tę stronę, bieżący stan gry zostanie utracony.",
 
   CONFIRM_BACK:
     "Powrót do listy gier spowoduje utratę bieżącego stanu gry. Kontynuować?",
