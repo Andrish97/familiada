@@ -9,7 +9,6 @@ const paperText1 = document.getElementById("paperText1");
 const paperText2 = document.getElementById("paperText2");
 const cover2 = document.getElementById("cover2");
 const cover2Swipe = document.getElementById("cover2Swipe");
-const splitLine = document.getElementById("splitLine");
 const p2Hint = document.getElementById("p2Hint");
 
 const btnFS = document.getElementById("btnFS");
@@ -39,17 +38,16 @@ const lastRendered = {
   orientation: null,
 };
 
-/* ========= ORIENTACJA ========= */
+/* ========= ORIENTACJA (bez zmiany HTML poza klasami portrait/landscape) ========= */
 function getOrientation() {
-  // portrait jeśli wysokość >= szerokość
-  return (window.innerHeight >= window.innerWidth) ? "portrait" : "landscape";
+  return window.innerHeight >= window.innerWidth ? "portrait" : "landscape";
 }
 
 function applyOrientationClass() {
   const o = getOrientation();
   if (lastRendered.orientation === o) return;
-
   lastRendered.orientation = o;
+
   document.documentElement.classList.toggle("portrait", o === "portrait");
   document.documentElement.classList.toggle("landscape", o === "landscape");
   updateSwipeHint();
@@ -77,11 +75,12 @@ function setPseudoFS(on) {
 function setFullscreenIcon() {
   if (!fsIco) return;
   const isReal = !!document.fullscreenElement;
-  fsIco.textContent = (isReal || pseudoFS) ? "⧉" : "▢";
+  fsIco.textContent = isReal || pseudoFS ? "⧉" : "▢";
 }
 
 async function toggleFullscreen() {
   if (isIOSSafari() && !window.navigator.standalone) {
+    // A2HS overlay masz w base.css – nie ruszam HTML
     document.documentElement.classList.toggle("showA2HS");
     return;
   }
@@ -111,115 +110,239 @@ async function toggleFullscreen() {
   }
 }
 
-/* ========= UI ========= */
-
+/* ========= CSS VARS -> PX ========= */
 function pxVar(name) {
   const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
-  return parseFloat(v) || 0;
+  const n = parseFloat(v);
+  return Number.isFinite(n) ? n : 0;
 }
 
+/*
+  Snapujemy safe-top/bottom do siatki linijek:
+  - linijki są full-bleed (tło idzie od 0)
+  - tekst ma być przesunięty o safe-top, ALE tak żeby dalej trafiał w linie
+  -> dodajemy --snap-top / --snap-bottom (w px) liczone do najbliższej wielokrotności --line
+*/
 function updateLineSnap() {
-  // --line jest w px po obliczeniu (clamp)
   const line = pxVar("--line");
   if (!line) return;
 
-  // safe-area też w px
   const safeTop = pxVar("--safe-top");
   const safeBottom = pxVar("--safe-bottom");
 
-  // snap: ile brakuje do następnej wielokrotności line
   const modTop = safeTop % line;
-  const snapTop = (modTop === 0) ? 0 : (line - modTop);
+  const snapTop = modTop === 0 ? 0 : line - modTop;
 
   const modBottom = safeBottom % line;
-  const snapBottom = (modBottom === 0) ? 0 : (line - modBottom);
+  const snapBottom = modBottom === 0 ? 0 : line - modBottom;
 
   document.documentElement.style.setProperty("--snap-top", `${snapTop}px`);
   document.documentElement.style.setProperty("--snap-bottom", `${snapBottom}px`);
 }
 
+/* ========= STYLED TEXT (segmenty) =========
+Składnia (bez zagnieżdżania):
+  [b]tekst[/]
+  [u]tekst[/]
+  [s]tekst[/]
+  [gold b]tekst[/]
+  [#2a62ff u]tekst[/]
+  [rebeccapurple b u]tekst[/]
+Zamykanie zawsze: [/]
+Kolor: dowolny poprawny CSS color.
+*/
+function parseStyleTokens(tokenStr) {
+  const out = { color: null, bold: false, underline: false, strike: false };
+
+  const tokens = String(tokenStr || "")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+
+  for (const tRaw of tokens) {
+    const t = tRaw.toLowerCase();
+    if (t === "b") out.bold = true;
+    else if (t === "u") out.underline = true;
+    else if (t === "s") out.strike = true;
+    else out.color = tRaw; // traktujemy jako kolor
+  }
+
+  return out;
+}
+
+function parseStyledText(input) {
+  const s = String(input ?? "");
+  const segs = [];
+
+  let i = 0;
+  while (i < s.length) {
+    const open = s.indexOf("[", i);
+    if (open === -1) {
+      segs.push({ text: s.slice(i), style: null });
+      break;
+    }
+
+    if (open > i) segs.push({ text: s.slice(i, open), style: null });
+
+    const close = s.indexOf("]", open + 1);
+    if (close === -1) {
+      segs.push({ text: s.slice(open), style: null });
+      break;
+    }
+
+    const tag = s.slice(open + 1, close).trim();
+    if (tag === "/") {
+      segs.push({ text: s.slice(open, close + 1), style: null });
+      i = close + 1;
+      continue;
+    }
+
+    const endTag = "[/]";
+    const end = s.indexOf(endTag, close + 1);
+    if (end === -1) {
+      segs.push({ text: s.slice(open), style: null });
+      break;
+    }
+
+    const inner = s.slice(close + 1, end);
+    const style = parseStyleTokens(tag);
+    segs.push({ text: inner, style });
+
+    i = end + endTag.length;
+  }
+
+  // scal plain segmenty
+  const merged = [];
+  for (const seg of segs) {
+    if (!seg.text) continue;
+    const last = merged[merged.length - 1];
+    if (last && !last.style && !seg.style) last.text += seg.text;
+    else merged.push(seg);
+  }
+  return merged;
+}
+
+function renderStyledInto(el, sourceText) {
+  if (!el) return;
+
+  const src = String(sourceText ?? "");
+
+  // szybka ścieżka: brak znaczników
+  if (!src.includes("[") || !src.includes("]")) {
+    el.textContent = src;
+    return;
+  }
+
+  const segs = parseStyledText(src);
+  const hasStyled = segs.some((x) => x.style);
+
+  if (!hasStyled) {
+    el.textContent = src;
+    return;
+  }
+
+  const frag = document.createDocumentFragment();
+
+  for (const seg of segs) {
+    if (!seg.style) {
+      frag.appendChild(document.createTextNode(seg.text));
+      continue;
+    }
+
+    const span = document.createElement("span");
+    span.textContent = seg.text;
+
+    if (seg.style.color) span.style.color = seg.style.color;
+    if (seg.style.bold) span.classList.add("b");
+
+    const deco = [];
+    if (seg.style.underline) deco.push("underline");
+    if (seg.style.strike) deco.push("line-through");
+    if (deco.length) span.style.textDecoration = deco.join(" ");
+
+    frag.appendChild(span);
+  }
+
+  el.replaceChildren(frag);
+}
+
+/* ========= UI / HINT ========= */
 function updateSwipeHint() {
   const o = getOrientation();
 
-  const onCover = (o === "portrait")
-    ? (p2Covered ? "Przesuń w dół, żeby odsłonić" : "Przesuń w górę, żeby zasłonić")
-    : (p2Covered ? "Przesuń w prawo, żeby odsłonić" : "Przesuń w lewo, żeby zasłonić");
+  // zasłona (cover) pokazuje oba stany
+  const onCover =
+    o === "portrait"
+      ? p2Covered
+        ? "Przesuń w dół, żeby odsłonić"
+        : "Przesuń w górę, żeby zasłonić"
+      : p2Covered
+        ? "Przesuń w prawo, żeby odsłonić"
+        : "Przesuń w lewo, żeby zasłonić";
 
-  // tekst na overlayu (gdy zasłonięte)
   if (cover2Swipe) cover2Swipe.textContent = onCover;
 
-  // tekst po odsłonięciu (na pasmie 2)
-  // tu pokazujemy tylko komunikat o ZASŁONIĘCIU, bo odsłonięte już jest
+  // hint na odsłoniętym paśmie 2: tylko “jak zasłonić”
   if (p2Hint) {
-    const openHint = (o === "portrait")
-      ? "Przesuń w górę, żeby zasłonić"
-      : "Przesuń w lewo, żeby zasłonić";
-    p2Hint.textContent = openHint;
+    p2Hint.textContent =
+      o === "portrait" ? "Przesuń w górę, żeby zasłonić" : "Przesuń w lewo, żeby zasłonić";
   }
 }
 
+/* ========= RENDER ========= */
 function render() {
-  // tekst 1
   if (paperText1 && lastRendered.t1 !== text1) {
-    paperText1.textContent = text1;
+    renderStyledInto(paperText1, text1);
     lastRendered.t1 = text1;
   }
 
-  // tekst 2
   if (paperText2 && lastRendered.t2 !== text2) {
-    paperText2.textContent = text2;
+    renderStyledInto(paperText2, text2);
     lastRendered.t2 = text2;
   }
 
-  // overlay pasma 2 + linia
   if (lastRendered.p2Covered !== p2Covered) {
     lastRendered.p2Covered = p2Covered;
 
-    // p2Covered=true => overlay ON
     cover2?.classList.toggle("coverOn", p2Covered);
     cover2?.classList.toggle("coverOff", !p2Covered);
 
-    // linia widoczna tylko gdy pasmo2 odsłonięte
+    // hint na odsłoniętym paśmie 2
     document.documentElement.classList.toggle("p2Open", !p2Covered);
 
     updateSwipeHint();
   }
 }
 
+/* ========= TEXT API ========= */
 function setText1(next) {
   text1 = String(next ?? "");
   render();
 }
-
 function setText2(next) {
   text2 = String(next ?? "");
   render();
 }
-
 function append1(line) {
   const s = String(line ?? "");
   if (!s) return;
-  text1 = text1 ? (text1 + "\n" + s) : s;
+  text1 = text1 ? `${text1}\n${s}` : s;
   render();
 }
-
 function append2(line) {
   const s = String(line ?? "");
   if (!s) return;
-  text2 = text2 ? (text2 + "\n" + s) : s;
+  text2 = text2 ? `${text2}\n${s}` : s;
   render();
 }
-
 function clear1() {
   text1 = "";
   render();
 }
-
 function clear2() {
   text2 = "";
   render();
 }
-
 function coverP2(on) {
   p2Covered = !!on;
   render();
@@ -253,9 +376,8 @@ async function restoreState() {
     const s = data || {};
     text1 = typeof s.text1 === "string" ? s.text1 : "";
     text2 = typeof s.text2 === "string" ? s.text2 : "";
-    p2Covered = (typeof s.p2Covered === "boolean") ? s.p2Covered : true;
+    p2Covered = typeof s.p2Covered === "boolean" ? s.p2Covered : true;
 
-    // pełny render
     lastRendered.t1 = null;
     lastRendered.t2 = null;
     lastRendered.p2Covered = null;
@@ -264,6 +386,7 @@ async function restoreState() {
     text1 = "";
     text2 = "";
     p2Covered = true;
+
     lastRendered.t1 = null;
     lastRendered.t2 = null;
     lastRendered.p2Covered = null;
@@ -271,15 +394,13 @@ async function restoreState() {
   }
 }
 
-/* ========= KOMENDY =========
+/* ========= KOMENDY (tylko nowe) =========
 SET1 "..."
 SET2 "..."
 APPEND1 "..."
 APPEND2 "..."
 CLEAR1
 CLEAR2
-CLEAR          (opcjonalnie: czyści oba)
-OPEN2 / HIDE2  (opcjonalnie: sterowanie pasmem 2) – możesz wywalić jeśli nie chcesz
 Wspiera \n \t \"
 */
 function unquotePayload(line, keyword) {
@@ -302,7 +423,6 @@ async function handleCmd(lineRaw) {
 
   const up = line.toUpperCase();
 
-  // === SET1/SET2 ===
   if (/^SET1\b/i.test(line)) {
     setText1(decodeEscapes(unquotePayload(line, "SET1")));
     await persistState();
@@ -313,8 +433,6 @@ async function handleCmd(lineRaw) {
     await persistState();
     return;
   }
-
-  // === APPEND1/APPEND2 ===
   if (/^APPEND1\b/i.test(line)) {
     append1(decodeEscapes(unquotePayload(line, "APPEND1")));
     await persistState();
@@ -325,8 +443,6 @@ async function handleCmd(lineRaw) {
     await persistState();
     return;
   }
-
-  // === CLEAR1/CLEAR2 ===
   if (up === "CLEAR1") {
     clear1();
     await persistState();
@@ -337,40 +453,18 @@ async function handleCmd(lineRaw) {
     await persistState();
     return;
   }
-
-  // opcjonalnie (wygodne)
-  if (up === "CLEAR") {
-    clear1();
-    clear2();
-    await persistState();
-    return;
-  }
-
-  // opcjonalnie: zdalne sterowanie pasmem 2 (jeśli nie chcesz – usuń)
-  if (up === "OPEN2") {
-    coverP2(false);
-    await persistState();
-    return;
-  }
-  if (up === "HIDE2") {
-    coverP2(true);
-    await persistState();
-    return;
-  }
 }
 
 /* ========= REALTIME ========= */
 let ch = null;
 function ensureChannel() {
   if (ch) return ch;
-
   ch = sb()
     .channel(`familiada-host:${gameId}`)
     .on("broadcast", { event: "HOST_CMD" }, (msg) => {
       handleCmd(msg?.payload?.line);
     })
     .subscribe();
-
   return ch;
 }
 
@@ -397,7 +491,7 @@ async function ping() {
   }
 }
 
-/* ========= CSS -> PX (cache) ========= */
+/* ========= SWIPE GUARD (z CSS -> px) ========= */
 let swipeGuardPx = 28;
 
 function cssPxVar(name, fallbackPx) {
@@ -411,9 +505,8 @@ function refreshCssMetrics() {
 }
 
 /* ========= SWIPE (pasmo2) =========
-- portrait:  DOWN = odsłoń, UP = zasłoń
-- landscape: RIGHT = odsłoń, LEFT = zasłoń
-Z bezpiecznymi strefami (nie zaczynaj z krawędzi).
+portrait:  DOWN = odsłoń, UP = zasłoń
+landscape: RIGHT = odsłoń, LEFT = zasłoń
 */
 const SWIPE_MIN = 70;
 const SWIPE_SLOPE = 1.25;
@@ -427,8 +520,8 @@ function startAllowed(x, y) {
   const g = swipeGuardPx || 28;
 
   // nie startuj z krawędzi (systemowe gesty)
-  if (x < g || x > (w - g)) return false;
-  if (y < g || y > (h - g)) return false;
+  if (x < g || x > w - g) return false;
+  if (y < g || y > h - g) return false;
 
   return true;
 }
@@ -458,7 +551,6 @@ async function onPointerUp(ev) {
   const o = getOrientation();
 
   if (o === "portrait") {
-    // oczekujemy ruchu pionowego
     const ady = Math.abs(dy);
     const adx = Math.abs(dx);
     if (ady < SWIPE_MIN) return;
@@ -478,7 +570,6 @@ async function onPointerUp(ev) {
       }
     }
   } else {
-    // landscape: oczekujemy ruchu poziomego
     const adx = Math.abs(dx);
     const ady = Math.abs(dy);
     if (adx < SWIPE_MIN) return;
@@ -530,7 +621,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.documentElement.classList.add("webapp");
   }
 
-  // brak parametrów = tylko lokalnie, ale działa UI i gest
+  // lokalnie też działa UI i gest
   if (!gameId || !key) {
     text1 = "";
     text2 = "";
