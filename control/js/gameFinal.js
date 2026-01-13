@@ -8,16 +8,16 @@ const FINAL_MSG = {
   TIMER_RUNNING: "Odliczanie trwa…",
 
   // --- start / dostępność finału ---
-  FINAL_DISABLED: "Finał jest wyłączony.",
+  FINAL_DISABLED: "Finał nie został włączony.",
   FINAL_NEEDS_PICK: "Zatwierdź 5 pytań finału w ustawieniach.",
   FINAL_NEEDS_POINTS: (pts) => `Finał dostępny dopiero po osiągnięciu ${pts} punktów.`,
   FINAL_STARTED: "Finał rozpoczęty.",
   R2_STARTED: "Runda 2 rozpoczęta.",
 
   // --- zakończenie finału / nagrody (host hint) ---
-  END_NO_PRIZE: "Finał zakończony. Brak trybu nagrody — wracamy do logo.",
-  END_200_PLUS: (mainPrize) => `200+! ${mainPrize}`,
-  END_BELOW_200: (smallPrize) => `Poniżej 200. ${smallPrize}`,
+  END_NO_PRIZE: "Finał zakończony. Logo zostanie wyświetlone.",
+  END_200_PLUS: (mainPrize) => `Próg przekroczony, nagroda głowna! ${mainPrize}`,
+  END_BELOW_200: (smallPrize) => `Poniżej progu, nagroda od punktów. ${smallPrize}`,
 
   DEFAULT_MAIN_PRIZE: "Nagroda główna",
   DEFAULT_SMALL_PRIZE: "Nagroda",
@@ -33,7 +33,7 @@ const FINAL_MSG = {
   // --- mapping / podpowiedzi prowadzącego ---
   MAP_HINT_INPUT_PREFIX: "Wpisano: ",
   MAP_HINT_NO_INPUT: "Brak wpisu",
-  MAP_HINT_NO_TEXT: "Nie wpisano odpowiedzi — “Dalej” pokaże puste / 0 pkt.",
+  MAP_HINT_NO_TEXT: "Nie wpisano odpowiedzi — Puste / 0 pkt.",
   MAP_LIST_TITLE: "Lista odpowiedzi",
   MAP_LIST_EMPTY: "Brak listy odpowiedzi.",
   MAP_BTN_SKIP: "Brak odpowiedzi",
