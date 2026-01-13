@@ -103,8 +103,8 @@ export function createPresence({ game, ui, store, devices }) {
       if (hOn && !initDone.host) {
         initDone.host = true;
         try {
-          await devices.sendHostCmd("HIDE");
-          await devices.sendHostCmd('SET ""');
+          await devices.sendHostCmd("COVER");
+          await devices.sendHostCmd("CLEAR");
         } catch {}
       }
 
