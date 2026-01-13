@@ -23,7 +23,7 @@
      Jeśli iOS jest “stałe X px niżej/wyżej” -> korygujesz tym.
      Dodatnie = tekst w dół, ujemne = w górę.
   */
-  --ios-text-shift: 2px;
+  --ios-text-shift: 0px;
 
   /* ======= SAFE AREA (surowe) ======= */
   --safe-top: env(safe-area-inset-top, 0px);
