@@ -1,89 +1,48 @@
-/* css/manual.css
-   Drobne uzupełnienia dla instrukcji.
-   Bazujemy na css/base.css + css/builder.css (wygląd tabów).
-*/
+/* css/manual.css */
 
-.manual-body{
+.manual-body {
   background: var(--bg);
   color: #fff;
 }
 
-.manual-head{
-  padding: 16px 0 12px;
-}
-
-.manual-card{
-  background: rgba(255,255,255,.06);
-  border: 1px solid var(--line2);
-  border-radius: 18px;
-  padding: 18px;
-  box-shadow: 0 18px 36px rgba(0,0,0,.45);
-}
-
-.tabPage{ display:none; }
-.tabPage.active{ display:block; }
-
-.h1{
-  font-weight: 1000;
-  letter-spacing: .10em;
-  text-transform: uppercase;
-  font-size: 16px;
-  margin: 0 0 10px;
-  color: var(--gold);
-}
-.h2{
-  font-weight: 1000;
+.page-title {
+  margin: 20px 0 12px;
+  font-size: 20px;
+  font-weight: 900;
   letter-spacing: .08em;
   text-transform: uppercase;
-  font-size: 12px;
-  margin: 18px 0 8px;
-  opacity: .95;
-}
-.p{
-  opacity: .92;
-  line-height: 1.45;
-  margin: 8px 0;
-}
-.ul{
-  margin: 8px 0 0 18px;
-  opacity: .92;
-  line-height: 1.45;
 }
 
-.note{
-  margin-top: 10px;
-  padding: 10px 12px;
-  border-radius: 16px;
-  border: 1px solid rgba(255,234,166,.28);
-  background: rgba(255,234,166,.10);
-  color: var(--gold);
-  font-weight: 900;
-  line-height: 1.35;
+.simple-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
 }
 
-.warn{
-  margin-top: 10px;
-  padding: 10px 12px;
-  border-radius: 16px;
-  border: 1px solid rgba(255,120,120,.35);
-  background: rgba(255,120,120,.10);
-  color: #fff;
-  font-weight: 900;
-  line-height: 1.35;
-}
-
-.mini-card{
-  border-radius: 16px;
+.simple-tabs .tab {
+  padding: 8px 14px;
+  border-radius: 12px;
   border: 1px solid var(--line);
-  background: rgba(0,0,0,.18);
-  padding: 12px;
-  margin-top: 10px;
+  background: rgba(255,255,255,.06);
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
 }
-.mini-title{
-  font-weight: 1000;
-  letter-spacing: .08em;
-  text-transform: uppercase;
-  font-size: 12px;
-  color: var(--gold);
-  margin-bottom: 6px;
+
+.simple-tabs .tab.active {
+  background: var(--gold);
+  color: #000;
+}
+
+.tab-page {
+  display: none;
+  min-height: 200px;
+  border-radius: 16px;
+  border: 1px dashed var(--line2);
+  background: rgba(0,0,0,.15);
+}
+
+.tab-page.active {
+  display: block;
 }
