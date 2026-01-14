@@ -303,18 +303,18 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     const row = getRow(roundNo, idx);
     const input = getInput(roundNo, idx);
     const list = getAnswersForIdx(idx);
-
+  
     if (!row) return FINAL_BLANK;
     if (row.kind === "SKIP") return FINAL_BLANK;
-
+  
     if (row.kind === "MATCH") {
       const a = list.find((x) => x.id === row.matchId);
       const txt = String(a?.text || "").trim();
       return txt || FINAL_BLANK;
     }
-
-    const shown = String(row.outText || input || "").trim();
-    return shown || FINAL_BLANK;
+  
+    // MISS => to co wpisane
+    return input.trim() || FINAL_BLANK;
   }
 
   function resolvePoints(roundNo, idx) {
@@ -991,14 +991,16 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     const missActive = row.kind === "MISS";
     const skipActive = row.kind === "SKIP";
 
-    const outDefault = (row.outText || "").trim().length ? row.outText : input;
-    const outVal = escapeHtml(outDefault);
     const p1Shown = resolveP1ShownForUi(idx);
+    
+    const p2IsRepeat = (roundNo === 2 && rt.p2[idx]?.repeat === true);
+    
     const whoLabel = roundNo === 1 ? "Odpowiedź gracza" : "Odpowiedź gracza 2";
-    const shownPlayerAnswer =
-      roundNo === 1
-        ? (getInput(1, idx) || "")
-        : (p2IsRepeat ? "" : (getInput(2, idx) || ""));
+    const playerVal =
+      roundNo === 1 ? (rt.p1[idx]?.text ?? "") : (rt.p2[idx]?.text ?? "");
+    
+    const disablePlayerEdit =
+      row.revealedAnswer === true || (roundNo === 2 && p2IsRepeat);
     
     const html = `
       <div class="finalMapTop">
@@ -1007,7 +1009,11 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
         <div class="finalMapGrid">
           <div class="finalMapLine">
             <div class="lbl">${escapeHtml(whoLabel)}</div>
-            <div class="val">${escapeHtml(shownPlayerAnswer || FINAL_MSG.P1_EMPTY_UI)}</div>
+            <input class="inp" data-kind="player"
+                   value="${escapeHtml(playerVal)}"
+                   ${disablePlayerEdit ? "disabled" : ""}
+                   placeholder="${escapeHtml(FINAL_MSG.INPUT_PLACEHOLDER)}"
+                   autocomplete="off"/>
           </div>
     
           ${roundNo === 2 ? `
@@ -1063,6 +1069,38 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
 
     const nextBtnId = roundNo === 1 ? `btnFinalNextFromP1Q${idx + 1}` : `btnFinalNextFromP2Q${idx + 1}`;
     ui.setEnabled(nextBtnId, !!row.revealedAnswer && !!row.revealedPoints);
+
+    root.querySelector('input[data-kind="player"]')?.addEventListener("input", (e) => {
+      const v = String(e.target?.value ?? "");
+    
+      if (roundNo === 1) rt.p1[idx].text = v;
+      else rt.p2[idx].text = v;
+    
+      // jeśli ktoś zaczyna pisać, a było "powtórzenie" → zdejmujemy powtórzenie
+      if (roundNo === 2 && rt.p2[idx].repeat) {
+        rt.p2[idx].repeat = false;
+    
+        const row2 = rt.map2?.[idx];
+        if (row2) {
+          row2.locked = false;
+          row2.mode = "AUTO";
+          row2.kind = null;
+          row2.matchId = null;
+          row2.pts = 0;
+        }
+      }
+    
+      // AUTO: zmiana treści = kasujemy wybór MATCH/MISS (żeby nie trzymać starej decyzji)
+      if (row.mode === "AUTO" && !row.locked) {
+        row.kind = null;
+        row.matchId = null;
+        row.pts = 0;
+      }
+    
+      renderMapOne(roundNo, idx);
+      hostUpdate();
+    });
+
 
     root.querySelectorAll('button[data-kind="match"]').forEach((b) => {
       b.addEventListener("click", () => {
