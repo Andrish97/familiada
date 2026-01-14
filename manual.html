@@ -296,7 +296,192 @@
   </section>
 
   <section class="tab-page" id="tab-polls" aria-label="Sondaże">
-    <div class="m-doc"></div>
+    <div class="m-doc">
+
+  <p class="m-p">
+    Zakładka „Sondaże” opisuje etap zbierania odpowiedzi
+    od ankietowanych przed właściwą rozgrywką.
+    Sondaż jest mostem pomiędzy przygotowaniem gry
+    a jej rozegraniem na żywo.
+  </p>
+
+  <p class="m-p">
+    Na tym etapie system przestaje być edytorem treści,
+    a zaczyna działać jak narzędzie do zbierania danych.
+    Z tego powodu wiele opcji edycji jest celowo ograniczonych.
+  </p>
+
+  <h3 class="m-h2">Rodzaje sondaży</h3>
+
+  <p class="m-p">
+    W zależności od typu gry sondaż może działać w jednym z dwóch trybów:
+  </p>
+
+  <ul class="m-ul">
+    <li>
+      <span class="m-strong">Typowy sondaż (tekstowy)</span> —
+      ankietowani wpisują własne odpowiedzi tekstowe.
+    </li>
+    <li>
+      <span class="m-strong">Sondaż punktacji</span> —
+      ankietowani wybierają jedną z przygotowanych odpowiedzi.
+    </li>
+  </ul>
+
+  <p class="m-p">
+    Gry preparowane nie posiadają sondażu —
+    odpowiedzi i punkty są w nich ustalane ręcznie.
+  </p>
+
+  <h3 class="m-h2">Uruchamianie sondażu</h3>
+
+  <p class="m-p">
+    Sondaż można uruchomić wyłącznie dla gry
+    znajdującej się w stanie <span class="m-strong">Szkic</span>.
+    Przed uruchomieniem system sprawdza,
+    czy gra spełnia minimalne wymagania.
+  </p>
+
+  <ul class="m-ul">
+    <li>minimalna liczba pytań,</li>
+    <li>w trybie punktacji — odpowiednia liczba odpowiedzi przy każdym pytaniu.</li>
+  </ul>
+
+  <div class="m-note">
+    <b>Dlaczego?</b><br/>
+    Dzięki temu nie da się uruchomić sondażu,
+    który nie może zostać później poprawnie zamknięty
+    i użyty w rozgrywce.
+  </div>
+
+  <h3 class="m-h2">Link i kod QR</h3>
+
+  <p class="m-p">
+    Po uruchomieniu sondażu system generuje
+    unikalny link do głosowania.
+    Link ten można skopiować,
+    otworzyć w nowej karcie
+    lub wyświetlić jako kod QR.
+  </p>
+
+  <p class="m-p">
+    Kod QR jest przeznaczony do wyświetlania
+    na ekranie widocznym dla ankietowanych
+    (telewizor, rzutnik, duży monitor).
+  </p>
+
+  <h3 class="m-h2">Przebieg sondażu</h3>
+
+  <p class="m-p">
+    Ankietowani przechodzą przez pytania po kolei.
+    System pilnuje kolejności
+    i nie pozwala pominąć pytania.
+  </p>
+
+  <p class="m-p">
+    W sondażu tekstowym każda odpowiedź:
+  </p>
+
+  <ul class="m-ul">
+    <li>jest ograniczona do 17 znaków,</li>
+    <li>jest normalizowana (wielkość liter, spacje),</li>
+    <li>zliczana jest jako osobna propozycja.</li>
+  </ul>
+
+  <p class="m-p">
+    W sondażu punktacji ankietowany
+    wybiera jedną z przygotowanych odpowiedzi,
+    a system zapisuje oddany głos.
+  </p>
+
+  <h3 class="m-h2">Zamykanie sondażu</h3>
+
+  <p class="m-p">
+    Zamknięcie sondażu jest osobnym,
+    świadomym etapem pracy.
+    System nie pozwala zamknąć sondażu,
+    jeśli zebrane dane nie spełniają
+    minimalnych warunków jakości.
+  </p>
+
+  <h3 class="m-h3">Sondaż punktacji</h3>
+
+  <p class="m-p">
+    Przy zamykaniu sondażu punktacji
+    system przelicza głosy na punkty
+    i normalizuje je do skali 0–100
+    dla każdego pytania.
+  </p>
+
+  <div class="m-note">
+    <b>Efekt:</b>
+    otrzymujesz gotową listę odpowiedzi z punktami,
+    bez potrzeby ręcznego liczenia.
+  </div>
+
+  <h3 class="m-h3">Sondaż tekstowy</h3>
+
+  <p class="m-p">
+    W sondażu tekstowym (klasycznym) ankietowani wpisują własne odpowiedzi.
+    Po zamknięciu sondażu system przechodzi do etapu porządkowania wyników.
+    Operator może łączyć oczywiście podobne odpowiedzi
+    oraz usuwać literówki lub oczywiste duplikaty.
+  </p>
+  
+  <p class="m-p">
+    Następnie odpowiedzi są normalizowane do skali punktowej.
+    Na tym etapie system stosuje dodatkowe ograniczenia,
+    które mają na celu zachowanie czytelności tablicy
+    i dynamiki rozgrywki.
+  </p>
+  
+  <p class="m-p">
+    Odpowiedzi o bardzo małej liczbie wskazań,
+    które po normalizacji uzyskują
+    <span class="m-strong">mniej niż 8 punktów</span>,
+    są automatycznie odrzucane.
+    Takie odpowiedzi zwykle nie mają znaczenia dla gry
+    i nie byłyby czytelne dla widzów.
+  </p>
+  
+  <p class="m-p">
+    Dla jednego pytania na tablicy
+    może znaleźć się maksymalnie
+    <span class="m-strong">6 odpowiedzi</span>.
+    Jeżeli poprawnych odpowiedzi jest więcej,
+    system wybiera te najlepiej punktowane,
+    a pozostałe są pomijane.
+  </p>
+  
+  <p class="m-p">
+    Z tego powodu suma punktów dla jednego pytania
+    <span class="m-strong">nie zawsze wynosi dokładnie 100</span>.
+    Punkty przypisane są wyłącznie do odpowiedzi,
+    które faktycznie trafiają na tablicę.
+  </p>
+
+  <div class="m-warn">
+    <b>Uwaga:</b>
+    po zamknięciu sondażu
+    nie można już zmieniać jego wyników
+    bez ponownego uruchomienia sondażu.
+  </div>
+
+  <h3 class="m-h2">Ponowne uruchomienie sondażu</h3>
+
+  <p class="m-p">
+    Zamknięty sondaż można uruchomić ponownie,
+    co powoduje usunięcie poprzednich wyników
+    i rozpoczęcie zbierania odpowiedzi od nowa.
+  </p>
+
+  <p class="m-p">
+    Ta opcja jest przydatna,
+    gdy sondaż został uruchomiony testowo
+    lub doszło do błędu organizacyjnego.
+  </p>
+
+</div>
   </section>
 
   <section class="tab-page" id="tab-control" aria-label="Panel sterowania">
