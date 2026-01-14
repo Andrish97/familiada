@@ -508,6 +508,22 @@ export function createStore(gameId) {
     emit();
   }
 
+  function resetProgress({ keepAdvanced = true } = {}) {
+    const adv = keepAdvanced ? structuredClone(state.advanced) : { ...DEFAULT_ADVANCED };
+    const fresh = makeDefaultState();
+    fresh.advanced = adv;
+  
+    // zachowujemy stałe pola
+    fresh.gameId = state.gameId;
+  
+    // podmień stan “w miejscu” (żeby referencje do `state` nie padły)
+    for (const k of Object.keys(state)) delete state[k];
+    Object.assign(state, fresh);
+  
+    emit();
+  }
+
+
   return {
     state,
     hydrate,
@@ -536,5 +552,6 @@ export function createStore(gameId) {
 
     setAdvanced,
     resetAdvanced,
+    resetProgress,
   };
 }
