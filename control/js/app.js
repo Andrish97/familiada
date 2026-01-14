@@ -217,7 +217,6 @@ async function main() {
     return gameStarted && (someRoundProgress || somePoints || finalActive);
   }
 
-  // === RESET URZĄDZEŃ przy wyjściu PO ZAKOŃCZENIU GRY ===
 function isEndedUiState() {
   const s = store.state;
   const activeCard = s.activeCard || "";
@@ -237,7 +236,7 @@ function isEndedUiState() {
 }
 
 async function sendZeroStatesToDevices() {
-  // “zerowy stan” = czarny ekran, host pusty+ukryty, buzzer wyłączony
+  if (!devices) return;
   try { await devices.sendDisplayCmd("APP BLACK"); } catch {}
   try { await devices.sendHostCmd("CLEAR"); } catch {}
   try { await devices.sendHostCmd("COVER"); } catch {}
