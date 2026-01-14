@@ -1,4 +1,6 @@
-/* css/manual.css */
+/* css/manual.css
+   Proste, okrągłe przyciski kart (bez wypustek, bez builderowych tabów)
+*/
 
 .manual-body {
   background: var(--bg);
@@ -13,34 +15,46 @@
   text-transform: uppercase;
 }
 
+/* ===== PROSTE KARTY / ZAKŁADKI ===== */
+
 .simple-tabs {
   display: flex;
-  gap: 8px;
-  margin-bottom: 16px;
+  gap: 10px;
+  margin-bottom: 18px;
   flex-wrap: wrap;
 }
 
 .simple-tabs .tab {
-  padding: 8px 14px;
-  border-radius: 12px;
+  padding: 10px 16px;
+  border-radius: 999px; /* pełne zaokrąglenie */
   border: 1px solid var(--line);
   background: rgba(255,255,255,.06);
   color: #fff;
-  font-weight: 700;
+  font-weight: 800;
+  letter-spacing: .04em;
   cursor: pointer;
+  transition: background .15s ease, color .15s ease, border-color .15s ease;
+}
+
+.simple-tabs .tab:hover {
+  background: rgba(255,255,255,.12);
 }
 
 .simple-tabs .tab.active {
   background: var(--gold);
   color: #000;
+  border-color: var(--gold);
 }
+
+/* ===== TREŚĆ KART ===== */
 
 .tab-page {
   display: none;
-  min-height: 200px;
-  border-radius: 16px;
-  border: 1px dashed var(--line2);
-  background: rgba(0,0,0,.15);
+  min-height: 220px;
+  border-radius: 18px;
+  border: 1px solid var(--line2);
+  background: rgba(0,0,0,.18);
+  padding: 16px;
 }
 
 .tab-page.active {
