@@ -942,6 +942,11 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     const outNow = (row.outText || "").trim();
     const hasText = effectiveInput.trim().length > 0 || outNow.length > 0;
 
+    const hasTyped = effectiveInput.trim().length > 0; // realnie coś wpisane przez gracza (po uwzgl. repeat)
+    const showSkip = !hasTyped;   // Brak odpowiedzi pokazujemy tylko gdy pusto
+    const showMiss = hasTyped;    // Nie ma na liście tylko gdy coś jest wpisane
+    
+
     let hostHintHtml = "";
 
     if (roundNo === 1) {
@@ -983,7 +988,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
         return `
         <button class="btn sm ${active ? "gold" : ""}" type="button"
                 data-kind="match" data-id="${a.id}"
-                ${(blocked || !hasText || locked) ? "disabled" : ""}>
+                ${(blocked || !hasTyped || locked) ? "disabled" : ""}>
           ${escapeHtml(a.text)} <span style="opacity:.7;">(${nInt(a.fixed_points, 0)})</span>
           ${blocked ? `<span style="opacity:.7;"> (zajęte)</span>` : ``}
         </button>
@@ -1002,8 +1007,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     const playerVal =
       roundNo === 1 ? (rt.p1[idx]?.text ?? "") : (rt.p2[idx]?.text ?? "");
     
-    const disablePlayerEdit =
-      row.revealedAnswer === true || (roundNo === 2 && p2IsRepeat);
+    const disablePlayerEdit = row.revealedAnswer === true;
     
     const html = `
       <div class="finalMapTop">
@@ -1032,21 +1036,26 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
         <div class="rowBtns" style="flex-wrap:wrap; gap:8px;">
           ${aButtons || `<div class="hint">${escapeHtml(FINAL_MSG.MAP_LIST_EMPTY)}</div>`}
     
-          <button class="btn sm ${skipActive ? "gold" : ""}" type="button" data-kind="skip"
-            ${(hasText || locked) ? "disabled" : ""}>
-            ${escapeHtml(FINAL_MSG.MAP_BTN_SKIP)}
-          </button>
-    
-          <button class="btn sm danger ${missActive ? "gold" : ""}" type="button" data-kind="miss"
-            ${(!hasText || locked) ? "disabled" : ""}>
-            ${escapeHtml(FINAL_MSG.MAP_BTN_MISS)}
-          </button>
-    
-          ${roundNo === 2 ? `
-            <button class="btn sm danger ${p2IsRepeat ? "gold" : ""}" type="button" data-kind="repeat">
-              ${escapeHtml(p2IsRepeat ? FINAL_MSG.P2_BTN_REPEAT_ON : FINAL_MSG.P2_BTN_REPEAT_OFF)}
-            </button>
-          ` : ``}
+            ${showSkip ? `
+              <button class="btn sm ${skipActive && !p2IsRepeat ? "gold" : ""}" type="button" data-kind="skip"
+                ${(locked || p2IsRepeat) ? "disabled" : ""}>
+                ${escapeHtml(FINAL_MSG.MAP_BTN_SKIP)}
+              </button>
+            ` : ``}
+            
+            ${showMiss ? `
+              <button class="btn sm danger ${missActive && !p2IsRepeat ? "gold" : ""}" type="button" data-kind="miss"
+                ${(locked || p2IsRepeat) ? "disabled" : ""}>
+                ${escapeHtml(FINAL_MSG.MAP_BTN_MISS)}
+              </button>
+            ` : ``}
+            
+            ${roundNo === 2 ? `
+              <button class="btn sm danger ${p2IsRepeat ? "gold" : ""}" type="button" data-kind="repeat"
+                ${locked && !p2IsRepeat ? "disabled" : ""}>
+                ${escapeHtml(p2IsRepeat ? FINAL_MSG.P2_BTN_REPEAT_ON : FINAL_MSG.P2_BTN_REPEAT_OFF)}
+              </button>
+            ` : ``}
         </div>
       </div>
     
@@ -1079,7 +1088,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
       if (roundNo === 1) rt.p1[idx].text = v;
       else rt.p2[idx].text = v;
     
-      // jeśli ktoś zaczyna pisać, a było "powtórzenie" → zdejmujemy powtórzenie
+      // jeśli ktoś zaczyna pisać, a było powtórzenie → zdejmujemy powtórzenie
       if (roundNo === 2 && rt.p2[idx].repeat) {
         rt.p2[idx].repeat = false;
     
@@ -1093,20 +1102,20 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
         }
       }
     
-      // AUTO: zmiana treści = kasujemy wybór MATCH/MISS (żeby nie trzymać starej decyzji)
+      // AUTO: zmiana treści = kasujemy wybór MATCH/MISS
       if (row.mode === "AUTO" && !row.locked) {
         row.kind = null;
         row.matchId = null;
         row.pts = 0;
       }
     
-      renderMapOne(roundNo, idx);
+      // ✅ bez renderMapOne(...) – nie niszczymy DOM / fokusu
       hostUpdate();
     });
 
-
     root.querySelectorAll('button[data-kind="match"]').forEach((b) => {
       b.addEventListener("click", () => {
+        if (roundNo === 2 && rt.p2[idx].repeat) rt.p2[idx].repeat = false;
         if (!hasText || locked) return;
         row.mode = "MANUAL";
         row.kind = "MATCH";
@@ -1117,6 +1126,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     });
 
     root.querySelector('button[data-kind="miss"]')?.addEventListener("click", () => {
+      if (roundNo === 2 && rt.p2[idx].repeat) rt.p2[idx].repeat = false;
       if (!hasText || locked) return;
       row.mode = "MANUAL";
       row.kind = "MISS";
@@ -1144,13 +1154,11 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
       const row2 = rt.map2?.[idx];
       if (row2) {
         if (next) {
-          // jak "Brak odpowiedzi"
           row2.mode = "MANUAL";
           row2.locked = true;
           row2.kind = "SKIP";
           row2.matchId = null;
           row2.pts = 0;
-          // NIE resetuj revealed*, NIE odtwarzaj dźwięku
         } else {
           row2.locked = false;
           row2.mode = "AUTO";
