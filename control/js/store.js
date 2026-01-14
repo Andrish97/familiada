@@ -15,93 +15,98 @@ export function createStore(gameId) {
     
   };
 
-  const state = {
-    gameId,
-    activeCard: "devices",
-
-    steps: {
-      devices: "devices_display",
-      setup: "setup_names",
-    },
-
-    completed: {
-      devices: false,
-      setup: false,
-    },
-
-    locks: {
-      gameStarted: false, // po „Start gry” blokujemy powrót do setup (tak jak ustaliliście)
-      finalActive: false,
-    },
-
-    teams: {
-      teamA: "",
-      teamB: "",
-    },
-
-    hasFinal: null,
-
-    final: {
-      picked: [],
-      confirmed: false,
-      runtime: {
-        phase: "IDLE", // IDLE | P1_ENTRY | P1_MAP | ROUND2_START | P2_ENTRY | P2_MAP | FINISH
-        sum: 0,
-        winSide: "A", // "A"|"B" (strona timera)
-        timer: { running: false, secLeft: 0, phase: "P1" }, // P1=15, P2=20
-        mapIndex: 0, // 0..4
-        p1List: null, // [{text,status}] len 5, status: EMPTY|FILLED
-        p2List: null, // [{text,status}] len 5, status: EMPTY|FILLED|REPEAT
-        mapP1: null, // [{choice, matchId, outText, pts}] len 5
-        mapP2: null, // [{choice, matchId, outText, pts}] len 5
-        reached200: false,
+  function makeDefaultState() {
+    return {
+      gameId,
+      activeCard: "devices",
+  
+      steps: {
+        devices: "devices_display",
+        setup: "setup_names",
       },
-      step: "f_start",
-    },
-
-    flags: {
-      displayOnline: false,
-      hostOnline: false,
-      buzzerOnline: false,
-      audioUnlocked: false,
-      qrOnDisplay: false,
-    },
-
-    rounds: {
-      phase: "IDLE", // IDLE | DUEL | ROUND | STEAL | END
-      roundNo: 1,
-      controlTeam: null, // "A"|"B"
-      bankPts: 0,
-      xA: 0,
-      xB: 0,
-      totals: { A: 0, B: 0 },
-      step: "r_ready",
-      passUsed: false,
-      stealWon: false,
-
-      question: null, // {id, ord, text}
-      answers: [], // [{id, ord, text, fixed_points}]
-      revealed: new Set(), // ord set
-
-      duel: {
-        enabled: false,
-        lastPressed: null, // "A"|"B"
+  
+      completed: {
+        devices: false,
+        setup: false,
       },
-
-      timer3: {
-        running: false,
-        endsAt: 0,
+  
+      locks: {
+        gameStarted: false,
+        finalActive: false,
       },
-
-      steal: {
-        active: false,
-        used: false, // single steal attempt
+  
+      teams: {
+        teamA: "",
+        teamB: "",
       },
-
-      allowPass: false, // after first correct answer
-    },
-    advanced: { ...DEFAULT_ADVANCED },
-  };
+  
+      hasFinal: null,
+  
+      final: {
+        picked: [],
+        confirmed: false,
+        runtime: {
+          phase: "IDLE",
+          sum: 0,
+          winSide: "A",
+          timer: { running: false, secLeft: 0, phase: "P1" },
+          mapIndex: 0,
+          p1List: null,
+          p2List: null,
+          mapP1: null,
+          mapP2: null,
+          reached200: false,
+        },
+        step: "f_start",
+      },
+  
+      flags: {
+        displayOnline: false,
+        hostOnline: false,
+        buzzerOnline: false,
+        audioUnlocked: false,
+        qrOnDisplay: false,
+      },
+  
+      rounds: {
+        phase: "IDLE",
+        roundNo: 1,
+        controlTeam: null,
+        bankPts: 0,
+        xA: 0,
+        xB: 0,
+        totals: { A: 0, B: 0 },
+        step: "r_ready",
+        passUsed: false,
+        stealWon: false,
+  
+        question: null,
+        answers: [],
+        revealed: new Set(),
+  
+        duel: {
+          enabled: false,
+          lastPressed: null,
+        },
+  
+        timer3: {
+          running: false,
+          endsAt: 0,
+        },
+  
+        steal: {
+          active: false,
+          used: false,
+        },
+  
+        allowPass: false,
+      },
+  
+      advanced: { ...DEFAULT_ADVANCED },
+    };
+  }
+  
+  const state = makeDefaultState();
 
   function emit() {
     try {
