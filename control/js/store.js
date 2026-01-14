@@ -136,7 +136,7 @@ export function createStore(gameId) {
   }
 
   function teamsOk() {
-    return state.teams.teamA.trim().length > 0 || state.teams.teamB.trim().length > 0;
+    return state.teams.teamA.trim().length > 0 && state.teams.teamB.trim().length > 0;
   }
 
   function canFinishSetup() {
