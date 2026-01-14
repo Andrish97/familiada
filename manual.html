@@ -119,7 +119,180 @@
 
   <!-- POZOSTAŁE KARTY – NA RAZIE PUSTE -->
   <section class="tab-page" id="tab-edit" aria-label="Dodawanie i edycja gry">
-    <div class="m-doc"></div>
+    <div class="m-doc">
+
+      <p class="m-p">
+        Zakładka „Dodawanie i edycja gry” opisuje etap przygotowania gry
+        przed rozpoczęciem sondażu lub rozgrywki.
+        Na tym etapie tworzysz strukturę gry:
+        pytania, możliwe odpowiedzi oraz sposób ich punktowania.
+      </p>
+    
+      <p class="m-p">
+        Ten etap jest kluczowy, ponieważ decyduje o tym,
+        jak będzie wyglądać cała dalsza praca z grą.
+        System celowo rozdziela przygotowanie treści
+        od późniejszego zbierania odpowiedzi i prowadzenia rozgrywki.
+      </p>
+    
+      <h3 class="m-h2">Lista gier („Moje gry”)</h3>
+    
+      <p class="m-p">
+        Lista gier jest miejscem, w którym zarządzasz wszystkimi grami
+        przypisanymi do Twojego konta.
+        To tutaj możesz tworzyć nowe gry,
+        wybierać istniejące
+        oraz decydować, co chcesz z daną grą zrobić dalej.
+      </p>
+    
+      <p class="m-p">
+        Gry są podzielone na typy.
+        Typ gry określa, w jaki sposób odpowiedzi będą zbierane
+        i jak powstaną punkty widoczne później na tablicy.
+      </p>
+    
+      <ul class="m-ul">
+        <li>
+          <span class="m-strong">Typowy sondaż</span> —
+          odpowiedzi są wpisywane przez ankietowanych,
+          a punkty wynikają z liczby wskazań.
+        </li>
+        <li>
+          <span class="m-strong">Punktacja odpowiedzi</span> —
+          ankietowani wybierają spośród przygotowanych odpowiedzi,
+          a system zlicza głosy.
+        </li>
+        <li>
+          <span class="m-strong">Preparowany</span> —
+          odpowiedzi i punkty są ustalane ręcznie,
+          bez udziału sondażu.
+        </li>
+      </ul>
+    
+      <p class="m-p">
+        Nową grę tworzysz klikając kafelek z symbolem „＋”.
+        Po utworzeniu gra pojawia się na liście
+        i może zostać otwarta w edytorze.
+      </p>
+    
+      <h3 class="m-h2">Edytor gry – co i kiedy można edytować</h3>
+    
+      <p class="m-p">
+        Edytor gry służy do budowania struktury pytań i odpowiedzi.
+        W zależności od typu gry oraz jej stanu
+        dostępne opcje edycji mogą się różnić.
+      </p>
+    
+      <p class="m-p">
+        Jest to działanie celowe.
+        System ogranicza pewne operacje,
+        aby zachować spójność danych
+        i zapobiec sytuacjom,
+        w których rozgrywka lub sondaż
+        przestają odpowiadać przygotowanej treści.
+      </p>
+    
+      <h3 class="m-h3">Dodawanie i edycja pytań</h3>
+    
+      <p class="m-p">
+        Pytania są zawsze podstawowym elementem gry.
+        Na etapie przygotowania możesz:
+        dodawać nowe pytania,
+        zmieniać ich treść
+        oraz usuwać pytania niepotrzebne.
+      </p>
+    
+      <p class="m-p">
+        Zmiana pytania po uruchomieniu sondażu
+        może zostać zablokowana,
+        ponieważ nawet drobna modyfikacja treści
+        wpływa na sens zebranych odpowiedzi.
+      </p>
+    
+      <h3 class="m-h3">Dodawanie i edycja odpowiedzi</h3>
+    
+      <p class="m-p">
+        Możliwość edycji odpowiedzi zależy od typu gry.
+        W grach sondażowych odpowiedzi są efektem ankiety,
+        dlatego przed sondażem możesz jedynie przygotować
+        ich ogólną strukturę lub przykłady.
+      </p>
+    
+      <p class="m-p">
+        Po rozpoczęciu sondażu system może ograniczyć
+        dodawanie lub usuwanie odpowiedzi,
+        aby nie mieszać odpowiedzi ankietowanych
+        z nową treścią.
+      </p>
+    
+      <h3 class="m-h3">Punkty – dlaczego czasem są zablokowane</h3>
+    
+      <p class="m-p">
+        Punkty nie zawsze są edytowalne ręcznie.
+        W grach sondażowych punkty wynikają bezpośrednio
+        z liczby udzielonych odpowiedzi,
+        dlatego ich ręczna edycja nie ma sensu
+        i jest zablokowana.
+      </p>
+    
+      <p class="m-p">
+        Ręczne ustawianie punktów jest możliwe
+        tylko w trybie preparowanym,
+        gdzie system nie korzysta z danych ankietowych.
+      </p>
+    
+      <div class="m-note">
+        <b>Dlaczego tak jest?</b><br/>
+        Dzięki temu to, co widzi widz na tablicy,
+        zawsze odpowiada rzeczywistym wynikom sondażu
+        albo jasno określonej, ręcznej punktacji.
+      </div>
+    
+      <h3 class="m-h2">Ograniczenia długości i formatu</h3>
+    
+      <p class="m-p">
+        Odpowiedzi powinny być krótkie i czytelne.
+        Przy imporcie treści odpowiedzi dłuższe
+        niż <span class="m-strong">17 znaków</span>
+        są automatycznie przycinane.
+      </p>
+    
+      <p class="m-p">
+        To ograniczenie wynika z układu tablicy
+        i ma na celu zachowanie czytelności
+        podczas rozgrywki na żywo.
+      </p>
+    
+      <h3 class="m-h2">Import i eksport gier</h3>
+    
+      <p class="m-p">
+        Builder umożliwia eksport i import gier
+        w postaci plików.
+        Funkcja ta służy do przenoszenia gier
+        pomiędzy kontami lub środowiskami.
+      </p>
+    
+      <p class="m-p">
+        Pliki importu i eksportu są formatem technicznym.
+        Gra nie powinna ingerować w ich zawartość
+        ani próbować edytować ich ręcznie.
+      </p>
+    
+      <div class="m-warn">
+        <b>Uwaga:</b>
+        ręczna modyfikacja plików importu lub eksportu
+        może spowodować, że gry nie będzie się dało zaimportować
+        albo będzie działała nieprawidłowo.
+      </div>
+    
+      <p class="m-p">
+        Po poprawnym imporcie gra pojawia się
+        na liście gier i może być dalej edytowana
+        wyłącznie przy użyciu edytora systemowego.
+      </p>
+    
+
+    </div>
   </section>
 
   <section class="tab-page" id="tab-polls" aria-label="Sondaże">
