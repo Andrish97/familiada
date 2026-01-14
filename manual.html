@@ -1,3 +1,32 @@
+<!-- manual.html -->
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Familiada — instrukcja</title>
+
+  <link rel="icon" href="favicon.ico" />
+  <link rel="stylesheet" href="css/base.css" />
+  <link rel="stylesheet" href="css/manual.css" />
+
+  <!-- supabase-js v2 (często wymagane przez js/core/supabase.js używany w auth) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+
+  <script type="module" src="js/pages/manual.js" defer></script>
+</head>
+
+<body class="manual-body">
+  <!-- Auth bar -->
+  <header class="topbar">
+    <div class="brand">FAMILIADA</div>
+    <div class="right">
+      <button class="btn" id="btnBack" type="button">← Moje gry</button>
+      <span class="who" id="who">—</span>
+      <button class="btn" id="btnLogout" type="button">Wyloguj</button>
+    </div>
+  </header>
+
 <main class="wrap">
   <h1 class="page-title">Instrukcja użytkowania</h1>
 
@@ -101,3 +130,6 @@
     <div class="m-doc"></div>
   </section>
 </main>
+
+</body>
+</html>
