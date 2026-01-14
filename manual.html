@@ -573,16 +573,15 @@
           Operator steruje tym, co pojawia się na tablicy.
         </li>
         <li>
-          <span class="m-strong">Wyświetlacz</span> — widzi „telewizyjną” tablicę: pytanie, odpowiedzi,
-          punkty, bank, X-y, intro i ekrany końcowe. To jest ekran dla widowni i zawodników.
+          <span class="m-strong">Wyświetlacz</span> — pokazuje „telewizyjną” tablicę: odpowiedzi,
+          punkty, bank, X-y, logo i ekrany końcowe. To jest ekran dla widowni i zawodników.
         </li>
         <li>
           <span class="m-strong">Prowadzący</span> — dostaje treści do odczytania i podgląd kontekstu,
           ale nie steruje przebiegiem gry (steruje operator).
         </li>
         <li>
-          <span class="m-strong">Przycisk</span> — służy do sygnału w pojedynku (kto pierwszy)
-          i do sytuacji, w których potrzebny jest „buzzer” jako bodziec/zdarzenie.
+          <span class="m-strong">Przycisk</span> — służy do sygnału w pojedynku (kto pierwszy).
         </li>
       </ul>
     
@@ -670,7 +669,7 @@
         </li>
         <li>
           <span class="m-strong">Cel rozgrywki</span> — próg punktów, po którym gra może przejść do finału
-          (w klasycznej formule często 300). To pozwala dopasować długość materiału.
+          (w klasycznej formule często 300). To pozwala dopasować długość gry.
         </li>
         <li>
           <span class="m-strong">Cel finału</span> — próg punktów w finale (domyślnie 200 w klasycznej formule).
@@ -684,7 +683,7 @@
       <div class="m-note">
         <b>Dlaczego to jest w Panelu sterowania, a nie w edytorze?</b><br/>
         Bo to są ustawienia odcinka (produkcji), a nie treści pytań.
-        Pytania nie powinny się zmieniać w dniu nagrania, ale parametry gry czasem tak.
+        Pytania nie powinny się zmieniać podczas rozgrywki, ale parametry gry czasem tak.
       </div>
     
       <h3 class="m-h3">Finał: włącz i wybierz 5 pytań</h3>
@@ -699,7 +698,7 @@
         <b>Uwaga:</b><br/>
         Finał wymaga zatwierdzonych 5 pytań przed startem rund.
         To celowa blokada — na żywo nie ma czasu na wybieranie pytań „na szybko”.
-        Jeśli musisz zmienić zestaw, używasz trybu <span class="m-strong">Edytuj</span> przy pytaniach finału.
+        Jeśli chcesz zmienić zestaw, używasz trybu <span class="m-strong">Edytuj</span> przy pytaniach finału.
       </div>
     
       <h3 class="m-h2">3) Rundy — przebieg gry krok po kroku</h3>
@@ -744,6 +743,15 @@
         Panel prowadzi operatora przez decyzję kontroli rundy,
         a wyświetlacz pokazuje, która drużyna aktualnie gra (wskaźnik drużyny).
       </p>
+
+      <h3 class="m-h3">Oddanie pytania</h3>
+    
+      <p class="m-p">
+        Zgodnie z ustaleniami rozgrywki, po uzyskaniu kontroli drużyna może też zdecydować,
+        że <span class="m-strong">oddaje pytanie</span> przeciwnikom.
+        Jest to ruch taktyczny: zamiast „dobić” pytanie, drużyna może przekazać szansę rywalom.
+        Panel udostępnia tę opcję tylko w odpowiednim momencie i pilnuje, żeby nie dało się jej nadużywać.
+      </p>
     
       <h3 class="m-h3">Rozgrywka pytania: odsłanianie odpowiedzi i bank</h3>
     
@@ -757,7 +765,7 @@
         Rozgrywka trwa do momentu, gdy:
         wszystkie odpowiedzi zostaną odsłonięte,
         albo drużyna straci trzy „szanse” (trzy X),
-        albo operator zakończy etap i przejdzie do kradzieży (gdy są spełnione warunki).
+        wtedy operator zakończy etap i przejdzie do kradzieży (gdy są spełnione warunki).
       </p>
     
       <h3 class="m-h3">Pudła (X) i limit 3 sekund</h3>
@@ -771,18 +779,9 @@
     
       <div class="m-note">
         <b>Po co timer?</b><br/>
-        To jest „bat na tempo”. W nagraniu cisza boli. Timer pozwala operatorowi szybko zamknąć zawahanie
+        To jest „bat na tempo”. Timer pozwala operatorowi szybko zamknąć zawahanie
         bez dyskusji i utrzymać rytm rozgrywki.
       </div>
-    
-      <h3 class="m-h3">Oddanie pytania</h3>
-    
-      <p class="m-p">
-        Zgodnie z ustaleniami rozgrywki, po uzyskaniu kontroli drużyna może też zdecydować,
-        że <span class="m-strong">oddaje pytanie</span> przeciwnikom.
-        Jest to ruch taktyczny: zamiast „dobić” pytanie, drużyna może przekazać szansę rywalom.
-        Panel udostępnia tę opcję tylko w odpowiednim momencie i pilnuje, żeby nie dało się jej nadużywać.
-      </p>
     
       <h3 class="m-h3">Kradzież banku (jedna odpowiedź)</h3>
     
@@ -810,30 +809,183 @@
         Dzięki temu operator nie skasuje przypadkiem stanu tablicy,
         zanim prowadzący dopowie puentę lub zanim padnie „dziękujemy”.
       </div>
+
+      <h3 class="m-h3">Przejście do finału</h3>
+
+      <p class="m-p">
+        Przejście do finału nie następuje automatycznie po konkretnej rundzie,
+        lecz w momencie spełnienia <span class="m-strong">warunku punktowego</span>
+        ustawionego w „Dodatkowych ustawieniach”.
+        W klasycznej formule jest to osiągnięcie
+        <span class="m-strong">300 punktów</span>
+        przez jedną z drużyn.
+      </p>
+      
+      <p class="m-p">
+        Gdy po zakończeniu rundy jedna z drużyn
+        osiągnie lub przekroczy ustalony próg,
+        panel sterowania informuje operatora,
+        że rozgrywka może przejść do finału.
+        To operator decyduje o momencie faktycznego przejścia,
+        tak aby prowadzący mógł domknąć rundę słownie
+        i przygotować widzów na finał.
+      </p>
+
+      <h3 class="m-h3">Zakończenie gry bez finału</h3>
+
+      <p class="m-p">
+        Nie każda rozgrywka musi kończyć się finałem.
+        Jeśli finał jest wyłączony w ustawieniach,
+        gra kończy się po ostatniej rundzie,
+        w momencie gdy jedna z drużyn osiągnie
+        ustalony <span class="m-strong">cel rozgrywki</span>.
+      </p>
+      
+      <p class="m-p">
+        W takim wariancie panel sterowania
+        po zakończeniu rundy przechodzi bezpośrednio
+        do ekranu zakończenia gry.
+        Na wyświetlaczu mogą zostać pokazane:
+        końcowy wynik punktowy drużyn lub 
+        ekran logo zgodnie z wybranym ustawieniem zakończenia gry.
+      </p>
+      
+      <p class="m-p">
+        Mechanika rund pozostaje bez zmian:
+        banki punktów, mnożniki rund,
+        przejmowanie kontroli i kradzież banku
+        działają dokładnie tak samo,
+        jak w rozgrywce z finałem.
+        Jedyną różnicą jest brak przejścia
+        do osobnego trybu finałowego.
+      </p>
+      
+      <div class="m-note">
+        <b>W praktyce:</b><br/>
+        Zakończenie bez finału jest często wykorzystywane
+        w krótszych grach, wersjach testowych.
+        Dzięki temu ten sam zestaw pytań i zasad
+        może być użyty w różnych wariantach rozgrywki.
+      </div>
+
+      <div class="m-warn">
+        <b>Uwaga:</b><br/>
+        Jeśli w trakcie rozgrywki skończą się pytania,
+        zanim któraś z drużyn osiągnie ustawiony próg punktowy,
+        panel sterowania zakończy grę z powodu braku kolejnych pytań.
+        W zależności od konfiguracji rozgrywka przejdzie wtedy
+        bezpośrednio do finału (jeśli jest włączony)
+        albo do ekranu zakończenia gry.
+      </div>
     
       <h3 class="m-h2">4) Finał</h3>
-    
+
       <p class="m-p">
-        Finał jest osobnym trybem, opartym o pięć pytań i dwie tury odpowiedzi.
-        Pierwszy gracz odpowiada w limicie czasu (standardowo 15 sekund),
-        następnie drugi gracz odpowiada na te same pytania w dłuższym limicie (standardowo 20 sekund),
-        z dodatkową zasadą: jeśli powtórzy odpowiedź pierwszego gracza,
-        musi podać inną odpowiedź.
+        Finał jest osobnym trybem rozgrywki: dwie osoby z drużyny zwycięskiej odpowiadają na te same
+        <span class="m-strong">5 pytań</span>, a ich punkty sumują się. Celem jest osiągnięcie
+        <span class="m-strong">co najmniej 200 punktów</span> (lub innego progu ustawionego w „Dodatkowych ustawieniach”).
       </p>
-    
+      
+      <h3 class="m-h3">Przygotowanie finału przed startem</h3>
+      
       <p class="m-p">
-        Panel finału pomaga operatorowi w dwóch rzeczach:
-        (1) kontroluje tempo (timer i przechodzenie między pytaniami),
-        (2) mapuje wpisane odpowiedzi na listę wyników finału
-        (jeśli odpowiedź nie pasuje do listy — wynik 0 punktów).
+        Zanim wejdziesz w finał, w sekcji „Ustawienia” musisz mieć zatwierdzony zestaw
+        <span class="m-strong">dokładnie pięciu pytań finałowych</span>.
+        To jest celowe zabezpieczenie: w finale nie ma czasu „szukać pytań”.
       </p>
-    
-      <div class="m-warn">
-        <b>Ważne:</b><br/>
-        Finał wymaga krótkich odpowiedzi i czytelnego dopasowania do listy.
-        To dlatego system ma ograniczenia długości oraz mechanizm wyboru „pasującej” odpowiedzi.
-        Dzięki temu tablica wygląda jak teleturniej, a nie jak czat.
+      
+      <div class="m-note">
+        <b>W praktyce:</b><br/>
+        Finał działa jak osobny scenariusz: pytania są stałe, czasy są stałe,
+        a panel prowadzi operatora przez te same kroki zawsze w tej samej kolejności.
       </div>
+      
+      <h3 class="m-h3">Finał – przebieg rozgrywki</h3>
+      
+      <p class="m-p">
+        Finał rozgrywany jest przez dwóch zawodników
+        z drużyny, która wygrała rozgrywkę zasadniczą.
+        Zawodnicy odpowiadają na te same
+        <span class="m-strong">pięć pytań finałowych</span>,
+        a ich punkty sumują się.
+        Celem finału jest osiągnięcie
+        ustalonego <span class="m-strong">progu punktowego</span>
+        (domyślnie 200 punktów).
+      </p>
+      
+      <p class="m-p">
+        Najpierw do finału przystępuje pierwszy zawodnik.
+        Prowadzący czyta kolejno pięć pytań,
+        a zawodnik odpowiada w limicie
+        <span class="m-strong">15 sekund</span>.
+        W tym czasie operator wpisuje odpowiedzi,
+        ale nie są one jeszcze oceniane ani odsłaniane.
+      </p>
+
+      <div class="m-warn">
+        <b>Uwaga:</b><br/>
+        Drugi zawodnik w tym czasie oddala się i zakłada słuchawki z muzyką,
+        żeby nie słyszeć pytań ani odpowiedzi 1 zawodnika.
+      </div>
+      
+      <p class="m-p">
+        Dopiero po zakończeniu odpowiedzi pierwszego zawodnika
+        operator przypisuje jego odpowiedzi
+        do listy punktowanych wyników
+        i <span class="m-strong">odsłania je na tablicy</span>.
+        Widzowie widzą wówczas pełny wynik pierwszego gracza.
+      </p>
+      
+      <p class="m-p">
+        Następnie połowa tablicy z odpowiedziami
+        pierwszego zawodnika zostaje ukryta.
+        Drugi zawodnik nie powinien znać tych odpowiedzi
+        — w praktyce odwraca się,
+        a prowadzący przypomina mu zasady finału.
+      </p>
+      
+      <p class="m-p">
+        Drugi zawodnik odpowiada na te same pięć pytań,
+        ale w dłuższym limicie czasu:
+        <span class="m-strong">20 sekund</span>.
+        Operator ponownie najpierw wpisuje wszystkie odpowiedzi,
+        bez ich oceniania i bez odsłaniania na tablicy.
+      </p>
+      
+      <p class="m-p">
+        Jeżeli odpowiedź drugiego zawodnika
+        powtarza odpowiedź pierwszego,
+        uznawana jest za <span class="m-strong">powtórzoną</span>
+        i zawodnik musi podać inną odpowiedź.
+        Powtórki nie dają punktów.
+      </p>
+      
+      <p class="m-p">
+        Po zakończeniu odpowiedzi drugiego zawodnika
+        operator przypisuje jego odpowiedzi
+        do listy punktowanych wyników
+        i <span class="m-strong">odsłania je po kolei</span>
+        na tablicy.
+        Punkty obu zawodników sumują się.
+      </p>
+      
+      <p class="m-p">
+        Finał kończy się w momencie,
+        gdy łączna liczba punktów
+        osiągnie lub przekroczy ustalony próg.
+        Może się zdarzyć, że próg zostanie osiągnięty
+        już po odpowiedziach pierwszego zawodnika —
+        w takim przypadku drugi zawodnik
+        nie musi już brać udziału w finale.
+      </p>
+      
+      <p class="m-p">
+        Po zakończeniu finału gra przechodzi
+        do ekranu końcowego.
+        W zależności od ustawień może to być:
+        logo programu, końcowy wynik punktowy
+        albo informacja o wygranej kwocie.
+      </p>
     
     </div>
 
