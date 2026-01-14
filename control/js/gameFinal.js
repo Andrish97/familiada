@@ -43,6 +43,7 @@ const FINAL_MSG = {
 
   // --- fallback tekstu odpowiedzi, gdy naprawdę nic nie ma ---
   FALLBACK_ANSWER: "—",
+  P1_EMPTY_UI = "Brak odpowiedzi";
 };
 
 // =========================================================
@@ -332,6 +333,11 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     return 0;
   }
 
+  function resolveP1ShownForUi(idx) {
+    const t = resolveShownText(1, idx);
+    return t === FINAL_BLANK ? FINAL_MSG.P1_EMPTY_UI : t;
+  }
+
   function allFilledP1() {
     ensureRuntime();
     const rt = store.state.final.runtime;
@@ -444,7 +450,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     const row = getRow(roundNo, idx);
     ensureDefaultMapping(roundNo, idx);
 
-    const inputP1 = (rt.p1[idx]?.text || "").trim();
+    const inputP1 = resolveP1ShownForUi(idx).trim(); // to co poszło na tablicę
     const inputP2 = (rt.p2[idx]?.text || "").trim();
     const rep = roundNo === 2 && rt.p2[idx]?.repeat === true;
     const input = roundNo === 1 ? inputP1 : inputP2;
@@ -681,26 +687,36 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     ensureRuntime();
     const rt = store.state.final.runtime;
 
-    const html = qPicked
-      .map((q, i) => {
-        const val = rt.p1[i].text || "";
-        return `
-        <div class="card finalRowCard" style="margin-bottom:10px;">
-          <div class="name">${escapeHtml(FINAL_MSG.Q_LABEL(i + 1))}</div>
-
-          <div class="rowQ">
-            <div class="qPrompt inline">${escapeHtml(q.text || "")}</div>
-            <input class="inp" data-p="1" data-i="${i}"
-              value="${escapeHtml(val)}"
-              placeholder="${escapeHtml(FINAL_MSG.INPUT_PLACEHOLDER)}"
-              autocomplete="off"/>
-          </div>
-        </div>
-        `;
-      })
-      .join("");
-
+    const html = `
+      <div class="finalTableWrap">
+        <table class="finalTable">
+          <thead>
+            <tr>
+              <th>Pytanie</th>
+              <th>Odpowiedź</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${qPicked.map((q, i) => {
+              const val = rt.p1[i].text || "";
+              return `
+                <tr>
+                  <td class="qCell">${escapeHtml(q.text || "")}</td>
+                  <td class="aCell">
+                    <input class="inp" data-p="1" data-i="${i}"
+                      value="${escapeHtml(val)}"
+                      placeholder="${escapeHtml(FINAL_MSG.INPUT_PLACEHOLDER)}"
+                      autocomplete="off"/>
+                  </td>
+                </tr>
+              `;
+            }).join("")}
+          </tbody>
+        </table>
+      </div>
+    `;
     ui.setHtml("finalP1Inputs", html);
+
 
     document.querySelectorAll('#finalP1Inputs input[data-p="1"]').forEach((inp) => {
       inp.addEventListener("input", () => {
@@ -746,29 +762,50 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     ensureRuntime();
     const rt = store.state.final.runtime;
 
-    const html = qPicked
-      .map((q, i) => {
-        const v2 = rt.p2[i].text || "";
-        const repeat = rt.p2[i].repeat === true;
-        return `
-        <div class="rowQ">
-          <div class="qPrompt inline">${escapeHtml(q.text || "")}</div>
-
-          <div class="colRight">
-            <input class="inp" data-p="2" data-i="${i}"
-              value="${escapeHtml(v2)}"
-              placeholder="${escapeHtml(FINAL_MSG.INPUT_PLACEHOLDER)}"
-              autocomplete="off"/>
-
-            <button class="btn sm danger" type="button" data-repeat="2" data-i="${i}">
-              ${repeat ? escapeHtml(FINAL_MSG.P2_BTN_REPEAT_ON) : escapeHtml(FINAL_MSG.P2_BTN_REPEAT_OFF)}
-            </button>
-          </div>
-        </div>
-      `;
-      })
-      .join("");
-
+     const html = `
+      <div class="finalTableWrap">
+        <table class="finalTable">
+          <thead>
+            <tr>
+              <th>Pytanie</th>
+              <th>Odpowiedź gracza 1</th>
+              <th>Odpowiedź</th>
+              <th>Powtórzenie</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${qPicked.map((q, i) => {
+              const v2 = rt.p2[i].text || "";
+              const repeat = rt.p2[i].repeat === true;
+              const p1Shown = resolveP1ShownForUi(i);
+    
+              return `
+                <tr>
+                  <td class="qCell">${escapeHtml(q.text || "")}</td>
+    
+                  <td class="p1Cell">
+                    <input class="inp ro" readonly value="${escapeHtml(p1Shown)}"/>
+                  </td>
+    
+                  <td class="aCell">
+                    <input class="inp" data-p="2" data-i="${i}"
+                      value="${escapeHtml(v2)}"
+                      placeholder="${escapeHtml(FINAL_MSG.INPUT_PLACEHOLDER)}"
+                      autocomplete="off"/>
+                  </td>
+    
+                  <td class="repCell">
+                    <button class="btn sm danger" type="button" data-repeat="2" data-i="${i}">
+                      ${repeat ? escapeHtml(FINAL_MSG.P2_BTN_REPEAT_ON) : escapeHtml(FINAL_MSG.P2_BTN_REPEAT_OFF)}
+                    </button>
+                  </td>
+                </tr>
+              `;
+            }).join("")}
+          </tbody>
+        </table>
+      </div>
+    `;
     ui.setHtml("finalP2Inputs", html);
 
     document.querySelectorAll('#finalP2Inputs input[data-p="2"]').forEach((inp) => {
@@ -776,24 +813,6 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
         const i = Number(inp.dataset.i);
         const val = String(inp.value ?? "");
         rt.p2[i].text = val;
-
-        if (val.trim().length > 0 && rt.p2[i].repeat) {
-          rt.p2[i].repeat = false;
-
-          const row = rt.map2?.[i];
-          if (row) {
-            row.locked = false;
-            row.mode = "AUTO";
-            row.kind = null;
-            row.matchId = null;
-            row.outText = "";
-            row.pts = 0;
-          }
-
-          renderP2Entry();
-          hostUpdate();
-          return;
-        }
 
         const row = rt.map2?.[i];
         if (row && row.mode === "AUTO" && !row.locked) {
@@ -822,13 +841,14 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
         // Shift+Enter w pustym polu → zaznacza Powtórzenie + dźwięk
         if (e.key === "Enter" && e.shiftKey) {
           e.preventDefault();
-
-          const val = String(inp.value ?? "").trim();
-          if (!val) {
-            if (!rt.p2[i].repeat) playSfx("answer_repeat"); // <<< FIX
-            rt.p2[i].repeat = true;
-
-            const row = rt.map2?.[i];
+        
+          const prev = rt.p2[i].repeat === true;
+          const next = !prev;
+          rt.p2[i].repeat = next;
+        
+          const row = rt.map2?.[i];
+          if (next) {
+            if (!prev) playSfx("answer_repeat");
             if (row) {
               row.mode = "MANUAL";
               row.locked = true;
@@ -837,10 +857,18 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
               row.outText = "";
               row.pts = 0;
             }
-
-            renderP2Entry();
+          } else {
+            if (row) {
+              row.locked = false;
+              row.mode = "AUTO";
+              row.kind = null;
+              row.matchId = null;
+              row.outText = "";
+              row.pts = 0;
+            }
           }
-
+        
+          renderP2Entry();
           document.querySelector(`#finalP2Inputs input[data-p="2"][data-i="${i + 1}"]`)?.focus();
           hostUpdate();
           return;
@@ -968,35 +996,58 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
 
     const outDefault = (row.outText || "").trim().length ? row.outText : input;
     const outVal = escapeHtml(outDefault);
-
+    const p1Shown = resolveP1ShownForUi(idx);
+    const p2InputRaw = (rt.p2[idx]?.text || "").trim();
+    const p2IsRepeat = (roundNo === 2 && rt.p2[idx]?.repeat === true);
+    
+    const whoLabel = roundNo === 1 ? "Odpowiedź gracza" : "Odpowiedź gracza 2";
+    const shownPlayerAnswer =
+      roundNo === 1
+        ? (getInput(1, idx) || "")
+        : (p2IsRepeat ? "" : (getInput(2, idx) || ""));
+    
     const html = `
-      <div class="name">${escapeHtml(FINAL_MSG.Q_LABEL(idx + 1))}</div>
-      <div class="qPrompt">${escapeHtml(q.text || "")}</div>
-
-      ${hostHintHtml}
-
+      <div class="finalMapTop">
+        <div class="qPrompt">${escapeHtml(q.text || "")}</div>
+    
+        <div class="finalMapInputs">
+          <div class="finalMapRow">
+            <div class="lbl">${escapeHtml(whoLabel)}</div>
+            <input class="inp ro" readonly value="${escapeHtml(shownPlayerAnswer || "")}"/>
+            ${roundNo === 2 ? `
+              <div class="lbl">Odpowiedź gracza 1</div>
+              <input class="inp ro" readonly value="${escapeHtml(p1Shown)}"/>
+            ` : ``}
+          </div>
+        </div>
+      </div>
+    
       <div class="card finalRowCard" style="margin-top:12px;">
-        <div class="name">${escapeHtml(FINAL_MSG.MAP_LIST_TITLE)}</div>
-
         <div class="rowBtns" style="flex-wrap:wrap; gap:8px;">
           ${aButtons || `<div class="hint">${escapeHtml(FINAL_MSG.MAP_LIST_EMPTY)}</div>`}
         </div>
-
+    
         <div class="rowBtns" style="margin-top:10px; gap:8px; flex-wrap:wrap;">
           <button class="btn sm ${skipActive ? "gold" : ""}" type="button" data-kind="skip"
             ${(hasText || locked) ? "disabled" : ""}>
             ${escapeHtml(FINAL_MSG.MAP_BTN_SKIP)}
           </button>
-
+    
           <button class="btn sm danger ${missActive ? "gold" : ""}" type="button" data-kind="miss"
             ${(!hasText || locked) ? "disabled" : ""}>
             ${escapeHtml(FINAL_MSG.MAP_BTN_MISS)}
           </button>
+    
+          ${roundNo === 2 ? `
+            <button class="btn sm danger ${p2IsRepeat ? "gold" : ""}" type="button" data-kind="repeat"
+              ${locked && !p2IsRepeat ? "disabled" : ""}>
+              ${escapeHtml(p2IsRepeat ? FINAL_MSG.P2_BTN_REPEAT_ON : FINAL_MSG.P2_BTN_REPEAT_OFF)}
+            </button>
+          ` : ``}
         </div>
       </div>
-
+    
       <div class="card finalRowCard" style="margin-top:12px;">
-        <div class="name">Odsłanianie</div>
         <div class="rowBtns" style="gap:8px; flex-wrap:wrap;">
           <button class="btn sm" type="button" data-kind="reveal-answer"
             ${row.revealedAnswer ? "disabled" : ""}>
@@ -1008,7 +1059,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
           </button>
         </div>
       </div>
-
+    
       <div class="card finalRowCard" style="margin-top:12px;">
         <div class="name">${escapeHtml(FINAL_MSG.MAP_OUT_HINT)}</div>
         <input class="inp" data-kind="out" value="${outVal}"
@@ -1056,6 +1107,44 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
       renderMapOne(roundNo, idx);
       hostUpdate();
     });
+
+    root.querySelector('button[data-kind="repeat"]')?.addEventListener("click", () => {
+      if (roundNo !== 2) return;
+    
+      const prev = rt.p2[idx].repeat === true;
+      const next = !prev;
+    
+      rt.p2[idx].repeat = next;
+    
+      const row2 = rt.map2?.[idx];
+      if (next) {
+        if (!prev) playSfx("answer_repeat");
+    
+        // identycznie jak "Brak odpowiedzi": SKIP na zawsze
+        if (row2) {
+          row2.mode = "MANUAL";
+          row2.locked = true;
+          row2.kind = "SKIP";
+          row2.matchId = null;
+          row2.outText = "";
+          row2.pts = 0;
+        }
+      } else {
+        // odblokowanie: wracamy do AUTO i pozwalamy mapować wg wpisu
+        if (row2) {
+          row2.locked = false;
+          row2.mode = "AUTO";
+          row2.kind = null;
+          row2.matchId = null;
+          row2.outText = "";
+          row2.pts = 0;
+        }
+      }
+    
+      renderMapOne(roundNo, idx);
+      hostUpdate();
+    });
+
 
     root.querySelector('button[data-kind="reveal-answer"]')?.addEventListener("click", async () => {
       await revealAnswerOnly(roundNo, idx);
