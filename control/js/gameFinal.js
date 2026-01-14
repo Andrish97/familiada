@@ -41,9 +41,9 @@ const FINAL_MSG = {
   MAP_OUT_HINT: "Tekst do wyświetlenia (gdy “Nie ma na liście”).",
   MAP_OUT_PLACEHOLDER: "Tekst (0 pkt)",
 
-  // --- fallback tekstu odpowiedzi, gdy naprawdę nic nie ma ---
   FALLBACK_ANSWER: "—",
   P1_EMPTY_UI: "Brak odpowiedzi",
+  
 };
 
 // =========================================================
