@@ -38,8 +38,6 @@ const FINAL_MSG = {
   MAP_LIST_EMPTY: "Brak listy odpowiedzi.",
   MAP_BTN_SKIP: "Brak odpowiedzi",
   MAP_BTN_MISS: "Nie ma na liście (0 pkt)",
-  MAP_OUT_HINT: "Tekst do wyświetlenia (gdy “Nie ma na liście”).",
-  MAP_OUT_PLACEHOLDER: "Tekst (0 pkt)",
 
   FALLBACK_ANSWER: "—",
   P1_EMPTY_UI: "Brak odpowiedzi",
@@ -278,7 +276,6 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
           if (row.kind !== "MATCH") {
             row.kind = "MISS";
             row.matchId = null;
-            if (!row.outText) row.outText = input;
             row.pts = 0;
           }
         }
@@ -450,10 +447,20 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     const row = getRow(roundNo, idx);
     ensureDefaultMapping(roundNo, idx);
 
-    const inputP1 = resolveP1ShownForUi(idx).trim(); // to co poszło na tablicę
-    const inputP2 = (rt.p2[idx]?.text || "").trim();
+    const rawP1 = (rt.p1[idx]?.text || "").trim();
+    const shownP1 = resolveP1ShownForUi(idx).trim();
+    const rawP2 = (rt.p2[idx]?.text || "").trim();
+    
     const rep = roundNo === 2 && rt.p2[idx]?.repeat === true;
-    const input = roundNo === 1 ? inputP1 : inputP2;
+    
+    if (roundNo === 2) {
+      lines.push(`${hostTag("u", "Gracz 1")}: ${(shownP1 || "—").replace(/\s+/g, " ").trim()}`);
+      lines.push("");
+    }
+    
+    const input = roundNo === 1 ? rawP1 : rawP2; // <<< TO jest "Wprowadzono"
+    if (input) lines.push(`${hostTag("u", "Wprowadzono")}: ${input.replace(/\s+/g, " ").trim()}`);
+
 
     let statusLine = "";
     if (rep) statusLine = hostYellowUnderline("powtórzenie");
@@ -461,16 +468,6 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     else if (row.kind === "MATCH" && row.matchId) statusLine = hostGreenStrike("z listy");
     else statusLine = hostYellowUnderline("nie ma na liście");
 
-    const lines = [];
-
-    if (roundNo === 2) {
-      lines.push(`${hostTag("u", "Gracz 1")}: ${(inputP1 || "—").replace(/\s+/g, " ").trim()}`);
-      lines.push("");
-    }
-
-    if (input) lines.push(`${hostTag("u", "Wprowadzono")}: ${input.replace(/\s+/g, " ").trim()}`);
-    lines.push(`${hostTag("u", "Stan")}: ${statusLine}`);
-    lines.push("");
 
     const sorted = list.sort((a, b) => nInt(b.fixed_points, 0) - nInt(a.fixed_points, 0));
     lines.push(hostTag("u", "Lista odpowiedzi:"));
@@ -784,7 +781,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
                   <td class="qCell">${escapeHtml(q.text || "")}</td>
     
                   <td class="p1Cell">
-                    <input class="inp ro" readonly value="${escapeHtml(p1Shown)}"/>
+                    <div class="p1Shown">${escapeHtml(p1Shown)}</div>
                   </td>
     
                   <td class="aCell">
@@ -997,9 +994,6 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     const outDefault = (row.outText || "").trim().length ? row.outText : input;
     const outVal = escapeHtml(outDefault);
     const p1Shown = resolveP1ShownForUi(idx);
-    const p2InputRaw = (rt.p2[idx]?.text || "").trim();
-    const p2IsRepeat = (roundNo === 2 && rt.p2[idx]?.repeat === true);
-    
     const whoLabel = roundNo === 1 ? "Odpowiedź gracza" : "Odpowiedź gracza 2";
     const shownPlayerAnswer =
       roundNo === 1
@@ -1010,24 +1004,25 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
       <div class="finalMapTop">
         <div class="qPrompt">${escapeHtml(q.text || "")}</div>
     
-        <div class="finalMapInputs">
-          <div class="finalMapRow">
+        <div class="finalMapGrid">
+          <div class="finalMapLine">
             <div class="lbl">${escapeHtml(whoLabel)}</div>
-            <input class="inp ro" readonly value="${escapeHtml(shownPlayerAnswer || "")}"/>
-            ${roundNo === 2 ? `
-              <div class="lbl">Odpowiedź gracza 1</div>
-              <input class="inp ro" readonly value="${escapeHtml(p1Shown)}"/>
-            ` : ``}
+            <div class="val">${escapeHtml(shownPlayerAnswer || FINAL_MSG.P1_EMPTY_UI)}</div>
           </div>
+    
+          ${roundNo === 2 ? `
+            <div class="finalMapLine">
+              <div class="lbl">Odpowiedź gracza 1</div>
+              <div class="val">${escapeHtml(p1Shown)}</div>
+            </div>
+          ` : ``}
         </div>
       </div>
     
       <div class="card finalRowCard" style="margin-top:12px;">
         <div class="rowBtns" style="flex-wrap:wrap; gap:8px;">
           ${aButtons || `<div class="hint">${escapeHtml(FINAL_MSG.MAP_LIST_EMPTY)}</div>`}
-        </div>
     
-        <div class="rowBtns" style="margin-top:10px; gap:8px; flex-wrap:wrap;">
           <button class="btn sm ${skipActive ? "gold" : ""}" type="button" data-kind="skip"
             ${(hasText || locked) ? "disabled" : ""}>
             ${escapeHtml(FINAL_MSG.MAP_BTN_SKIP)}
@@ -1039,8 +1034,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
           </button>
     
           ${roundNo === 2 ? `
-            <button class="btn sm danger ${p2IsRepeat ? "gold" : ""}" type="button" data-kind="repeat"
-              ${locked && !p2IsRepeat ? "disabled" : ""}>
+            <button class="btn sm danger ${p2IsRepeat ? "gold" : ""}" type="button" data-kind="repeat">
               ${escapeHtml(p2IsRepeat ? FINAL_MSG.P2_BTN_REPEAT_ON : FINAL_MSG.P2_BTN_REPEAT_OFF)}
             </button>
           ` : ``}
@@ -1058,13 +1052,6 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
             Odsłoń punkty
           </button>
         </div>
-      </div>
-    
-      <div class="card finalRowCard" style="margin-top:12px;">
-        <div class="name">${escapeHtml(FINAL_MSG.MAP_OUT_HINT)}</div>
-        <input class="inp" data-kind="out" value="${outVal}"
-              ${locked ? "disabled" : ""}
-               placeholder="${escapeHtml(FINAL_MSG.MAP_OUT_PLACEHOLDER)}"/>
       </div>
     `;
 
@@ -1093,7 +1080,6 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
       row.mode = "MANUAL";
       row.kind = "MISS";
       row.matchId = null;
-      if (!row.outText) row.outText = effectiveInput;
       renderMapOne(roundNo, idx);
       hostUpdate();
     });
@@ -1111,32 +1097,24 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     root.querySelector('button[data-kind="repeat"]')?.addEventListener("click", () => {
       if (roundNo !== 2) return;
     
-      const prev = rt.p2[idx].repeat === true;
-      const next = !prev;
-    
+      const next = !(rt.p2[idx].repeat === true);
       rt.p2[idx].repeat = next;
     
       const row2 = rt.map2?.[idx];
-      if (next) {
-        if (!prev) playSfx("answer_repeat");
-    
-        // identycznie jak "Brak odpowiedzi": SKIP na zawsze
-        if (row2) {
+      if (row2) {
+        if (next) {
+          // jak "Brak odpowiedzi"
           row2.mode = "MANUAL";
           row2.locked = true;
           row2.kind = "SKIP";
           row2.matchId = null;
-          row2.outText = "";
           row2.pts = 0;
-        }
-      } else {
-        // odblokowanie: wracamy do AUTO i pozwalamy mapować wg wpisu
-        if (row2) {
+          // NIE resetuj revealed*, NIE odtwarzaj dźwięku
+        } else {
           row2.locked = false;
           row2.mode = "AUTO";
           row2.kind = null;
           row2.matchId = null;
-          row2.outText = "";
           row2.pts = 0;
         }
       }
@@ -1144,7 +1122,6 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
       renderMapOne(roundNo, idx);
       hostUpdate();
     });
-
 
     root.querySelector('button[data-kind="reveal-answer"]')?.addEventListener("click", async () => {
       await revealAnswerOnly(roundNo, idx);
@@ -1159,24 +1136,6 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
       hostUpdate();
     });
 
-    root.querySelector('input[data-kind="out"]')?.addEventListener("input", (e) => {
-      if (locked) return;
-      const v = String(e.target?.value ?? "");
-      row.outText = v;
-
-      row.mode = "MANUAL";
-      if (v.trim().length > 0) {
-        row.kind = "MISS";
-        row.matchId = null;
-      } else {
-        row.mode = "AUTO";
-        row.kind = null;
-        row.matchId = null;
-      }
-
-      ui.setEnabled(nextBtnId, !!row.revealedAnswer && !!row.revealedPoints);
-      hostUpdate();
-    });
   }
 
   // ---------------- REVEAL ----------------
