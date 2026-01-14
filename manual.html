@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Familiada — instrukcja</title>
+
+  <link rel="icon" href="favicon.ico"/>
+
+  <!-- Styl wspólny projektu (jak w builder/editor) -->
+  <link rel="stylesheet" href="css/base.css"/>
+  <link rel="stylesheet" href="css/builder.css"/>
+  <link rel="stylesheet" href="css/manual.css"/>
+
+  <!-- supabase-js v2 (wymagane przez js/core/supabase.js) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+
+  <!-- logika strony -->
+  <script type="module" src="js/pages/manual.js" defer></script>
+</head>
+
+<body class="manual-body">
+  <!-- Górny panel auth jak w editorze -->
+  <header class="topbar">
+    <div class="brand">FAMILIADA</div>
+    <div class="right">
+      <button class="btn" id="btnBack" type="button">← Moje gry</button>
+      <span class="who" id="who">—</span>
+      <button class="btn" id="btnLogout" type="button">Wyloguj</button>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div class="manual-head">
+      <div class="title">Instrukcja użytkowania</div>
+      <div class="hint">Opis systemu i rozgrywki dla osób nietechnicznych.</div>
+    </div>
+
+    <!-- Zakładki -->
+    <div class="tabs-card" id="tabs">
+      <div class="tabs-strip">
+        <div class="tab-slot">
+          <button class="tab-label active" id="tabOgl" type="button" data-page="pageOgl">Ogólny opis</button>
+          <div class="tab-wrapper">
+            <div class="tab-active">Ogólny opis</div>
+            <div class="tab-corner tab-corner-left"></div>
+            <div class="tab-corner tab-corner-right"></div>
+          </div>
+        </div>
+
+        <div class="tab-slot">
+          <button class="tab-label" id="tabEdit" type="button" data-page="pageEdit">Dodawanie i edycja gry</button>
+          <div class="tab-wrapper">
+            <div class="tab-active">Dodawanie i edycja gry</div>
+            <div class="tab-corner tab-corner-left"></div>
+            <div class="tab-corner tab-corner-right"></div>
+          </div>
+        </div>
+
+        <div class="tab-slot">
+          <button class="tab-label" id="tabPolls" type="button" data-page="pagePolls">Sondaże</button>
+          <div class="tab-wrapper">
+            <div class="tab-active">Sondaże</div>
+            <div class="tab-corner tab-corner-left"></div>
+            <div class="tab-corner tab-corner-right"></div>
+          </div>
+        </div>
+
+        <div class="tab-slot">
+          <button class="tab-label" id="tabControl" type="button" data-page="pageControl">Panel sterowania</button>
+          <div class="tab-wrapper">
+            <div class="tab-active">Panel sterowania</div>
+            <div class="tab-corner tab-corner-left"></div>
+            <div class="tab-corner tab-corner-right"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Treść -->
+      <section class="card manual-card">
+
+        <!-- OGÓLNY OPIS -->
+        <section class="tabPage active" id="pageOgl">
+          <h2 class="h1">Ogólny opis</h2>
+
+          <p class="p">
+            System dzieli pracę na dwa światy: <b>przygotowanie treści</b> (pytania i sondaże) oraz <b>rozgrywkę na żywo</b> (panel sterowania).
+            Dzięki temu w dniu gry operator nie musi nic „konfigurować w danych” — tylko prowadzi kroki.
+          </p>
+
+          <h3 class="h2">Urządzenia (jak to ustawić fizycznie)</h3>
+          <p class="p">
+            Żeby gra była czytelna i wygodna, używa się osobnych urządzeń:
+          </p>
+          <ul class="ul">
+            <li><b>Wyświetlacz dla widzów</b>: telewizor / rzutnik / ekran LED (to, co widać na scenie).</li>
+            <li><b>Urządzenie prowadzącego</b>: tablet/telefon (podgląd treści do odczytania i komunikatów).</li>
+            <li><b>Urządzenie przycisku</b>: tablet/telefon przy pulpicie (dla „głów rodzin”).</li>
+            <li><b>Operator</b>: laptop/PC z <b>Panelem sterowania</b>.</li>
+          </ul>
+
+          <div class="note">
+            To ważne: prowadzący nie klika „sterowania grą”, a operator nie powinien obsługiwać przycisku myszką.
+            Osobne urządzenia stabilizują przebieg i zmniejszają liczbę pomyłek.
+          </div>
+
+          <h3 class="h2">Kolejność pracy</h3>
+          <ol class="ul">
+            <li>Dodaj grę i pytania (moduł: <b>Dodawanie i edycja gry</b>).</li>
+            <li>Jeśli pytania są sondażowe: przeprowadź sondaże i ustaw punkty (moduł: <b>Sondaże</b>).</li>
+            <li>W dniu rozgrywki: podłącz urządzenia i prowadź grę w <b>Panelu sterowania</b>.</li>
+          </ol>
+        </section>
+
+        <!-- DODAWANIE I EDYCJA -->
+        <section class="tabPage" id="pageEdit">
+          <h2 class="h1">Dodawanie i edycja gry</h2>
+
+          <p class="p">
+            Ten moduł służy do przygotowania treści: gier, pytań, odpowiedzi i punktów.
+            Najlepiej zrobić to przed nagraniem, na spokojnie.
+          </p>
+
+          <h3 class="h2">Nowa gra i pytania</h3>
+          <ul class="ul">
+            <li>W „Moje gry” tworzysz nową grę albo otwierasz istniejącą.</li>
+            <li>Dodajesz pytania oraz listy odpowiedzi.</li>
+            <li>Jeśli masz gotową listę, możesz użyć importu (TXT) i dopracować w edytorze.</li>
+          </ul>
+
+          <h3 class="h2">Edycja (korekty i porządkowanie)</h3>
+          <ul class="ul">
+            <li>Edytor jest do poprawek: literówki, kolejność odpowiedzi, doprecyzowanie tekstu.</li>
+            <li>Najpierw dopnij treść, dopiero potem rób sondaże — inaczej łatwo o rozjazdy.</li>
+          </ul>
+
+          <div class="warn">
+            Jeśli zmienisz treść pytania po zrobieniu sondażu, możesz dostać wyniki niepasujące do finalnej wersji pytania.
+          </div>
+        </section>
+
+        <!-- SONDAŻE -->
+        <section class="tabPage" id="pagePolls">
+          <h2 class="h1">Sondaże</h2>
+
+          <p class="p">
+            Sondaże zbierają odpowiedzi od ankietowanych i pozwalają zamienić je na punktację.
+            To dokładnie realizuje punkt regulaminu: <b>„im częściej dana odpowiedź pada w ankiecie, tym więcej punktów ma na tablicy”</b>.
+          </p>
+
+          <h3 class="h2">Typowy przebieg</h3>
+          <ol class="ul">
+            <li>Wybierz pytanie sondażowe.</li>
+            <li>Udostępnij ankietę (najczęściej przez QR).</li>
+            <li>Zbierz odpowiedzi.</li>
+            <li>Połącz podobne odpowiedzi (np. „auto” i „samochód”).</li>
+            <li>Przypisz punkty i zatwierdź.</li>
+          </ol>
+
+          <div class="note">
+            Dobra praktyka: zanim zatwierdzisz punktację, sprawdź czy nie ma dubli w stylu „Kawa” vs „kawa”.
+          </div>
+        </section>
+
+        <!-- CONTROL -->
+        <section class="tabPage" id="pageControl">
+          <h2 class="h1">Panel sterowania</h2>
+
+          <p class="p">
+            Panel sterowania jest dla operatora i służy do przeprowadzenia całej rozgrywki na żywo.
+            Panel działa „po szynach”: kroki odblokowują się kolejno, żeby nie dało się pominąć ważnego etapu.
+          </p>
+
+          <h3 class="h2">Podpinanie urządzeń</h3>
+          <p class="p">
+            W zakładce <b>Urządzenia</b> operator widzi statusy połączeń. Docelowo powinny być podłączone:
+          </p>
+          <ul class="ul">
+            <li><b>Wyświetlacz</b> (TV/rzutnik) – tablica dla widzów.</li>
+            <li><b>Prowadzący</b> (tablet/telefon) – treść do odczytania i komunikaty.</li>
+            <li><b>Przycisk</b> (tablet/telefon) – do pojedynku na początku pytania.</li>
+          </ul>
+
+          <h3 class="h2">Dodatkowe ustawienia (co to zmienia)</h3>
+          <ul class="ul">
+            <li><b>Mnożniki rund</b> – kiedy punkty są normalne/podwójne/potrójne.</li>
+            <li><b>Cel rozgrywki</b> – ile punktów potrzeba, żeby wygrać grę główną (np. 300).</li>
+            <li><b>Cel finału</b> – ile punktów trzeba uzbierać w finale (np. 200).</li>
+            <li><b>Zakończenie gry</b> – co pokazujemy na końcu (logo / punkty / kwota).</li>
+          </ul>
+
+          <div class="mini-card">
+            <div class="mini-title">Przykład mnożników</div>
+            <p class="p" style="margin:0;">
+              Wpis <b>1,1,2,3</b> oznacza: runda 1 i 2 normalnie, runda 3 x2, runda 4 x3.
+            </p>
+          </div>
+
+          <h3 class="h2">Rozgrywka a regulamin (co operator robi)</h3>
+          <ul class="ul">
+            <li><b>Pojedynek</b>: prowadzący decyduje kto był pierwszy, operator zatwierdza drużynę.</li>
+            <li><b>Odpowiedzi</b>: odsłaniasz odpowiedzi i naliczasz punkty do banku.</li>
+            <li><b>X</b>: naliczasz pudło (3 pudła = utrata szansy na pytanie).</li>
+            <li><b>3 sekundy</b>: odpalasz odliczanie, gdy zawodnik się waha — przekroczenie to pudło.</li>
+            <li><b>Oddanie pytania</b>: drużyna może oddać kontrolę przeciwnikom (z bankiem).</li>
+            <li><b>Kradzież</b>: po utracie szans przeciwnicy mają jedną próbę przejęcia banku.</li>
+          </ul>
+
+          <div class="note">
+            Panel nie „ocenia poprawności”. To prowadzący decyduje, a operator tylko odsłania i nalicza zgodnie z decyzją.
+          </div>
+        </section>
+
+      </section>
+    </div>
+  </main>
+</body>
+</html>
