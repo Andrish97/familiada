@@ -1,60 +1,35 @@
 // js/pages/manual.js
 import { requireAuth, signOut } from "../core/auth.js";
 
-function $(id){ return document.getElementById(id); }
+const tabs = document.querySelectorAll(".simple-tabs .tab");
+const pages = {
+  general: document.getElementById("tab-general"),
+  edit: document.getElementById("tab-edit"),
+  polls: document.getElementById("tab-polls"),
+  control: document.getElementById("tab-control"),
+};
 
-const TABS = [
-  { btn: "tabOgl", page: "pageOgl", hash: "#ogolny" },
-  { btn: "tabEdit", page: "pageEdit", hash: "#edycja" },
-  { btn: "tabPolls", page: "pagePolls", hash: "#sondaze" },
-  { btn: "tabControl", page: "pageControl", hash: "#control" },
-];
-
-function setActive(btnId, pushHash=true){
-  for (const t of TABS){
-    const b = $(t.btn);
-    const p = $(t.page);
-    const active = (t.btn === btnId);
-    b?.classList.toggle("active", active);
-    p?.classList.toggle("active", active);
-  }
-  if (pushHash){
-    const t = TABS.find(x => x.btn === btnId);
-    if (t) history.replaceState(null, "", t.hash);
-  }
+function setActive(name) {
+  tabs.forEach(t => t.classList.toggle("active", t.dataset.tab === name));
+  Object.entries(pages).forEach(([key, el]) => {
+    el.classList.toggle("active", key === name);
+  });
 }
 
-function setFromHash(){
-  const h = (location.hash || "").toLowerCase();
-  const t = TABS.find(x => x.hash === h);
-  if (t) setActive(t.btn, false);
-}
-
-async function boot(){
-  // auth/topbar — tak samo jak editor.js
+async function boot() {
   const user = await requireAuth("index.html");
-  const who = $("who");
-  if (who) who.textContent = user?.email || "—";
+  document.getElementById("who").textContent = user?.email || "—";
 
-  $("btnLogout")?.addEventListener("click", async () => {
+  document.getElementById("btnLogout").onclick = async () => {
     await signOut();
     location.href = "index.html";
-  });
+  };
 
-  $("btnBack")?.addEventListener("click", () => {
+  document.getElementById("btnBack").onclick = () => {
     location.href = "builder.html";
+  };
+
+  tabs.forEach(tab => {
+    tab.addEventListener("click", () => setActive(tab.dataset.tab));
   });
-
-  // tabs
-  for (const t of TABS){
-    $(t.btn)?.addEventListener("click", () => setActive(t.btn, true));
-  }
-  window.addEventListener("hashchange", setFromHash);
-
-  setFromHash();
 }
-
-boot().catch(err => {
-  console.error(err);
-  alert(err?.message || String(err));
-});
