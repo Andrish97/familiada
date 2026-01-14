@@ -44,6 +44,7 @@ const FINAL_MSG = {
   // --- fallback tekstu odpowiedzi, gdy naprawdę nic nie ma ---
   FALLBACK_ANSWER: "—",
   P1_EMPTY_UI = "Brak odpowiedzi",
+  
 };
 
 // =========================================================
