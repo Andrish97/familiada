@@ -440,38 +440,41 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
   function hostMappingRight(roundNo, idx) {
     ensureRuntime();
     const rt = store.state.final.runtime;
-
+  
     const q = qPicked[idx];
     const list = (answersByQ.get(q?.id) || []).slice();
-
+  
     const row = getRow(roundNo, idx);
     ensureDefaultMapping(roundNo, idx);
-
+  
     const rawP1 = (rt.p1[idx]?.text || "").trim();
     const shownP1 = resolveP1ShownForUi(idx).trim();
     const rawP2 = (rt.p2[idx]?.text || "").trim();
-    
+  
     const rep = roundNo === 2 && rt.p2[idx]?.repeat === true;
-    
+  
+    const lines = []; // <<< BRAKOWAŁO TEGO
+  
     if (roundNo === 2) {
       lines.push(`${hostTag("u", "Gracz 1")}: ${(shownP1 || "—").replace(/\s+/g, " ").trim()}`);
       lines.push("");
     }
-    
-    const input = roundNo === 1 ? rawP1 : rawP2; // <<< TO jest "Wprowadzono"
+  
+    const input = roundNo === 1 ? rawP1 : (rep ? "" : rawP2); // "Wprowadzono" (dla powtórzenia pusto)
     if (input) lines.push(`${hostTag("u", "Wprowadzono")}: ${input.replace(/\s+/g, " ").trim()}`);
-
-
+  
     let statusLine = "";
     if (rep) statusLine = hostYellowUnderline("powtórzenie");
     else if (!input) statusLine = hostRed("brak odpowiedzi");
     else if (row.kind === "MATCH" && row.matchId) statusLine = hostGreenStrike("z listy");
     else statusLine = hostYellowUnderline("nie ma na liście");
-
-
+  
+    lines.push(`${hostTag("u", "Stan")}: ${statusLine}`);
+    lines.push("");
+  
     const sorted = list.sort((a, b) => nInt(b.fixed_points, 0) - nInt(a.fixed_points, 0));
     lines.push(hostTag("u", "Lista odpowiedzi:"));
-
+  
     const listLines = sorted.map((a) => {
       const t = String(a.text || "").replace(/\s+/g, " ").trim().slice(0, 30);
       const p = nInt(a.fixed_points, 0);
@@ -480,7 +483,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
       }
       return `${t} (${p})`;
     });
-
+  
     return [...lines, ...listLines];
   }
 
