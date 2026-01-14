@@ -1,3 +1,4 @@
+<!-- manual.html -->
 <!DOCTYPE html>
 <html lang="pl">
 <head>
@@ -9,6 +10,9 @@
   <link rel="stylesheet" href="css/base.css" />
   <link rel="stylesheet" href="css/manual.css" />
 
+  <!-- supabase-js v2 (często wymagane przez js/core/supabase.js używany w auth) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+
   <script type="module" src="js/pages/manual.js" defer></script>
 </head>
 
@@ -17,9 +21,9 @@
   <header class="topbar">
     <div class="brand">FAMILIADA</div>
     <div class="right">
-      <button class="btn" id="btnBack">← Moje gry</button>
+      <button class="btn" id="btnBack" type="button">← Moje gry</button>
       <span class="who" id="who">—</span>
-      <button class="btn" id="btnLogout">Wyloguj</button>
+      <button class="btn" id="btnLogout" type="button">Wyloguj</button>
     </div>
   </header>
 
@@ -27,18 +31,18 @@
     <h1 class="page-title">Instrukcja użytkowania</h1>
 
     <!-- Proste karty / zakładki -->
-    <nav class="simple-tabs">
-      <button class="tab active" data-tab="general">Ogólny opis</button>
-      <button class="tab" data-tab="edit">Dodawanie i edycja gry</button>
-      <button class="tab" data-tab="polls">Sondaże</button>
-      <button class="tab" data-tab="control">Panel sterowania</button>
+    <nav class="simple-tabs" aria-label="Zakładki instrukcji">
+      <button class="tab active" type="button" data-tab="general">Ogólny opis</button>
+      <button class="tab" type="button" data-tab="edit">Dodawanie i edycja gry</button>
+      <button class="tab" type="button" data-tab="polls">Sondaże</button>
+      <button class="tab" type="button" data-tab="control">Panel sterowania</button>
     </nav>
 
     <!-- Puste sekcje (na razie bez treści) -->
-    <section class="tab-page active" id="tab-general"></section>
-    <section class="tab-page" id="tab-edit"></section>
-    <section class="tab-page" id="tab-polls"></section>
-    <section class="tab-page" id="tab-control"></section>
+    <section class="tab-page active" id="tab-general" aria-label="Ogólny opis"></section>
+    <section class="tab-page" id="tab-edit" aria-label="Dodawanie i edycja gry"></section>
+    <section class="tab-page" id="tab-polls" aria-label="Sondaże"></section>
+    <section class="tab-page" id="tab-control" aria-label="Panel sterowania"></section>
   </main>
 </body>
 </html>
