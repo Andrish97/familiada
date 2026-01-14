@@ -373,11 +373,9 @@ export function createUI() {
             class="ansBtn ${isRevealed ? "revealed" : ""}"
             data-ord="${ord}"
           >
-            <div class="ansTop">
-              <span>${ord}</span>
-              <span>${pts}</span>
-            </div>
-            <div class="ansText">${escapeHtml(a.text || UI_MSG.ANSWER_FALLBACK)}</div>
+            <span class="ansOrd">${ord})</span>
+            <span class="ansText">${escapeHtml(a.text || UI_MSG.ANSWER_FALLBACK)}</span>
+            <span class="ansPts">(${pts})</span>
           </button>
         `;
       })
