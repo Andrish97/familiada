@@ -834,3 +834,35 @@
   word-break: break-word;
 }
 
+.finalMapTop{ display:grid; gap: 10px; }
+
+.finalMapGrid{
+  display: grid;
+  gap: 8px;
+  max-width: 980px;
+}
+
+.finalMapLine{
+  display: grid;
+  grid-template-columns: 180px minmax(0,1fr);
+  gap: 10px;
+  align-items: center;
+}
+
+.finalMapLine .lbl{
+  font-size: 12px;
+  font-weight: 1000;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  opacity: .85;
+}
+
+.finalMapLine .val{
+  padding: 9px 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.04);
+  font-weight: 900;
+  line-height: 1.2;
+  word-break: break-word;
+}
