@@ -503,17 +503,6 @@ export function createStore(gameId) {
     emit();
   }
 
-    function resetProgress() {
-      state.locks = {};
-      state.rounds = { phase:"IDLE", totals:{A:0,B:0}, bankPts:0, xA:0, xB:0 };
-      state.final = { ...state.final, runtime: null, step: "f_start" };
-      state.activeCard = "devices";
-      state.steps = { devices:"devices_display", setup:"setup_names", rounds:"r_ready" };
-      persist();
-      notify();
-    }
-
-
   return {
     state,
     hydrate,
@@ -542,6 +531,5 @@ export function createStore(gameId) {
 
     setAdvanced,
     resetAdvanced,
-    resetProgress,
   };
 }
