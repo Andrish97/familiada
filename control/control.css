@@ -619,17 +619,36 @@
 
 .ansBtn:active{ transform: translateY(1px); }
 
-.ansTop{
-  display: flex;
-  justify-content: space-between;
-  opacity: .9;
-  font-weight: 1000;
-  letter-spacing: .06em;
-  font-size: 12px;
-}
 
 .ansText{ margin-top: 6px; font-weight: 900; line-height: 1.25; }
 .ansBtn.revealed{ border-color: rgba(255,234,166,.35); background: rgba(255,234,166,.08); }
+
+.ansBtn{
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  /* nr po lewej, punkty po prawej */
+  justify-content: space-between;
+}
+
+.ansBtn .ansOrd{
+  flex: 0 0 auto;
+  min-width: 34px;
+  opacity: .85;
+}
+
+.ansBtn .ansText{
+  flex: 1 1 auto;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ansBtn .ansPts{
+  flex: 0 0 auto;
+  opacity: .75;
+}
 
 /* ========= ALERT BAR ========= */
 .alertBar.hidden{ display: none; }
