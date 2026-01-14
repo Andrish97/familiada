@@ -1,111 +1,103 @@
-<!-- manual.html -->
-<!DOCTYPE html>
-<html lang="pl">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Familiada — instrukcja</title>
+<main class="wrap">
+  <h1 class="page-title">Instrukcja użytkowania</h1>
 
-  <link rel="icon" href="favicon.ico" />
-  <link rel="stylesheet" href="css/base.css" />
-  <link rel="stylesheet" href="css/manual.css" />
+  <!-- Proste karty / zakładki -->
+  <nav class="simple-tabs" aria-label="Zakładki instrukcji">
+    <button class="tab active" type="button" data-tab="general">Ogólny opis</button>
+    <button class="tab" type="button" data-tab="edit">Dodawanie i edycja gry</button>
+    <button class="tab" type="button" data-tab="polls">Sondaże</button>
+    <button class="tab" type="button" data-tab="control">Panel sterowania</button>
+  </nav>
 
-  <!-- supabase-js v2 (często wymagane przez js/core/supabase.js używany w auth) -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <!-- OGÓLNY OPIS -->
+  <section class="tab-page active" id="tab-general" aria-label="Ogólny opis">
+    <div class="m-doc">
 
-  <script type="module" src="js/pages/manual.js" defer></script>
-</head>
-
-<body class="manual-body">
-  <!-- Auth bar -->
-  <header class="topbar">
-    <div class="brand">FAMILIADA</div>
-    <div class="right">
-      <button class="btn" id="btnBack" type="button">← Moje gry</button>
-      <span class="who" id="who">—</span>
-      <button class="btn" id="btnLogout" type="button">Wyloguj</button>
-    </div>
-  </header>
-
-  <main class="wrap">
-    <h1 class="page-title">Instrukcja użytkowania</h1>
-
-    <!-- Proste karty / zakładki -->
-    <nav class="simple-tabs" aria-label="Zakładki instrukcji">
-      <button class="tab active" type="button" data-tab="general">Ogólny opis</button>
-      <button class="tab" type="button" data-tab="edit">Dodawanie i edycja gry</button>
-      <button class="tab" type="button" data-tab="polls">Sondaże</button>
-      <button class="tab" type="button" data-tab="control">Panel sterowania</button>
-    </nav>
-
-    <!-- Puste sekcje (na razie bez treści) -->
-    <section class="tab-page active" id="tab-general" aria-label="Ogólny opis">
-      <p>
-        Ta strona jest instrukcją obsługi systemu do prowadzenia teleturnieju typu „Familiada”.
-        Jej celem jest wyjaśnienie, jak korzystać z całego systemu, nawet jeśli ktoś widzi go
-        pierwszy raz i nie zna go od strony technicznej.
+      <p class="m-p">
+        Ta strona jest instrukcją obsługi systemu do prowadzenia teleturnieju
+        typu „Familiada”. Jej celem jest wyjaśnienie, jak korzystać z całego systemu,
+        nawet jeśli ktoś widzi go pierwszy raz i nie zna go od strony technicznej.
       </p>
-      
-      <p>
-        Instrukcja nie opisuje zasad gry jako teleturnieju. Opisuje natomiast narzędzie,
-        które pozwala taką grę przygotować i bezpiecznie przeprowadzić na żywo,
+
+      <p class="m-p">
+        Instrukcja nie opisuje zasad gry jako teleturnieju.
+        Opisuje natomiast narzędzie, które pozwala taką grę przygotować
+        i bezpiecznie przeprowadzić na żywo,
         z wyraźnym podziałem ról i obowiązków.
       </p>
-      
-      <p>
+
+      <p class="m-p">
         System umożliwia pełne przygotowanie i prowadzenie rozgrywki:
         od tworzenia gier i pytań, przez sondaże i przypisywanie punktów,
         aż po sterowanie rundami, bankiem punktów oraz finałem.
         Wszystkie te elementy są zintegrowane w jednym spójnym środowisku.
       </p>
-      
-      <p>
-        Rozgrywka została zaprojektowana w taki sposób, aby była w bardzo dużym stopniu
-        zgodna z oficjalnym regulaminem gry „Familiada”.
-        Mechanika rund, bank punktów, liczba błędów (X), przejmowanie pytania
-        oraz zasady finału odpowiadają temu, co dzieje się w klasycznej wersji programu.
+
+      <p class="m-p">
+        Rozgrywka została zaprojektowana w taki sposób,
+        aby była w bardzo dużym stopniu zgodna z oficjalnym regulaminem
+        teleturnieju „Familiada”.
+        Mechanika rund, bank punktów, liczba błędów (X),
+        przejmowanie pytania oraz zasady finału
+        odpowiadają klasycznej formule programu.
       </p>
-      
-      <p>
+
+      <p class="m-p">
         Jeśli chcesz zapoznać się z pełnymi zasadami gry,
         <a href="https://s.tvp.pl/repository/attachment/6/8/f/68f09c03ff0781fa510c2fd90c3ba19b1569224834470.pdf"
            target="_blank"
            rel="noopener">
           Regulamin teleturnieju „Familiada”
-        </a>.
+        </a>
+        opisuje je szczegółowo.
       </p>
-      
-      <p>
-        Całość systemu została zaprojektowana tak, aby oddzielić przygotowanie treści
-        od samej rozgrywki. Pytania, odpowiedzi i sondaże przygotowuje się wcześniej,
-        natomiast w trakcie gry operator korzysta wyłącznie z panelu sterowania.
+
+      <p class="m-p">
+        Całość systemu została zaprojektowana tak,
+        aby wyraźnie oddzielić przygotowanie treści
+        od samej rozgrywki.
+        Pytania, odpowiedzi i sondaże przygotowuje się wcześniej,
+        natomiast w trakcie gry operator korzysta wyłącznie
+        z panelu sterowania.
       </p>
-      
-      <p>
-        W praktyce oznacza to, że w dniu nagrania operator nie musi edytować danych,
+
+      <p class="m-p">
+        W praktyce oznacza to, że w dniu nagrania
+        operator nie musi edytować danych,
         prowadzący skupia się na rozmowie z uczestnikami,
         a system pilnuje kolejności etapów i logiki rozgrywki.
         Zmniejsza to ryzyko pomyłek i przyspiesza przebieg gry.
       </p>
-      
-      <p>
+
+      <p class="m-p">
         System najlepiej działa przy użyciu osobnych urządzeń:
         wyświetlacza dla widzów (telewizor lub rzutnik),
         tabletu lub telefonu dla prowadzącego,
         osobnego urządzenia pełniącego rolę przycisku
         oraz komputera operatora z panelem sterowania.
       </p>
-      
-      <p>
-        Instrukcja jest podzielona na kolejne zakładki.
+
+      <p class="m-p">
+        Instrukcja została podzielona na kolejne zakładki.
         Każda z nich opisuje inny etap pracy z systemem:
-        od przygotowania gry, przez sondaże,
+        od przygotowania gry,
+        przez sondaże,
         aż po prowadzenie rozgrywki na żywo.
       </p>
-    </section>
-    <section class="tab-page" id="tab-edit" aria-label="Dodawanie i edycja gry"></section>
-    <section class="tab-page" id="tab-polls" aria-label="Sondaże"></section>
-    <section class="tab-page" id="tab-control" aria-label="Panel sterowania"></section>
-  </main>
-</body>
-</html>
+
+    </div>
+  </section>
+
+  <!-- POZOSTAŁE KARTY – NA RAZIE PUSTE -->
+  <section class="tab-page" id="tab-edit" aria-label="Dodawanie i edycja gry">
+    <div class="m-doc"></div>
+  </section>
+
+  <section class="tab-page" id="tab-polls" aria-label="Sondaże">
+    <div class="m-doc"></div>
+  </section>
+
+  <section class="tab-page" id="tab-control" aria-label="Panel sterowania">
+    <div class="m-doc"></div>
+  </section>
+</main>
