@@ -397,6 +397,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     location.href = "index.html";
   });
 
+  btnManual?.addEventListener("click", async () => {
+    location.href = "manual.html";
+  });
+
   tabPollText?.addEventListener("click", () => setActiveTab(TYPES.POLL_TEXT));
   tabPollPoints?.addEventListener("click", () => setActiveTab(TYPES.POLL_POINTS));
   tabPrepared?.addEventListener("click", () => setActiveTab(TYPES.PREPARED));
