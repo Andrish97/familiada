@@ -1543,19 +1543,8 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
 
   async function startP2Round() {
     ensureRuntime();
-
-    let dur = 0;
-    try { dur = await getSfxDuration("round_transition"); } catch {}
-    const totalMs = dur > 0 ? dur * 1000 : 2000;
-    const anchorMs = 920;
-
-    playSfx("round_transition");
-
-    setTimeout(() => {
-      display.finalSetSideTimer?.(getWinnerTeam(), "20").catch(() => {});
-    }, anchorMs);
-
-    if (totalMs > 0) await new Promise((resolve) => setTimeout(resolve, totalMs));
+    
+    display.finalSetSideTimer?.(getWinnerTeam(), "20").catch(() => {});
 
     setStep("f_p2_entry");
     renderP2Entry();
