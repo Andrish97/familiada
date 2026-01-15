@@ -931,38 +931,43 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     const row = getRow(roundNo, idx);
     ensureDefaultMapping(roundNo, idx);
   
-    const locked = row.locked === true; // UWAGA: to jest "na zawsze", NIE używamy tego dla repeat
+    const isR2 = roundNo === 2;
+    const lockedForever = row.locked === true; // tylko "na zawsze" (SKIP), NIE od repeat
   
-    // --- input steruje stanem (1:1 z Twoją specyfikacją) ---
     const inputP1 = String(rt.p1[idx]?.text ?? "").trim();
     const inputP2 = String(rt.p2[idx]?.text ?? "").trim();
-    const input = roundNo === 1 ? inputP1 : inputP2;
-  
-    const isR2 = roundNo === 2;
-    const rep = isR2 && rt.p2[idx]?.repeat === true;
-  
-    const typed = String(input ?? "").trim();
+    const typed = (roundNo === 1 ? inputP1 : inputP2);
     const hasTyped = typed.length > 0;
   
-    const modeRepeat = rep;
-    const modeEmpty = !modeRepeat && !hasTyped; // pusto => SKIP aktywny, reszta disabled
-    const modeTyped = !modeRepeat && hasTyped;  // wpisane => MATCH/MISS aktywne, SKIP disabled
+    const p2IsRepeat = isR2 && rt.p2[idx]?.repeat === true;
   
-    // --- domyślne "radio" zależne od pola (wyjątek: repeat) ---
-    if (!row.revealedAnswer && !locked) {
-      if (modeRepeat) {
-        // repeat => domyślnie repeat
-        row.mode = "MANUAL";
-        row.kind = "SKIP";
-        row.matchId = null;
-        row.pts = 0;
-      } else if (modeEmpty) {
+    // P2 nie może zająć tej samej pozycji co P1 (MATCH)
+    const p1Row = rt.map1?.[idx];
+    const p1BlockedId =
+      isR2 && p1Row?.kind === "MATCH" && p1Row?.matchId ? p1Row.matchId : null;
+  
+    // --- UI: enable/disable zależne WYŁĄCZNIE od tego, co jest w polu (plus revealed/locked) ---
+    const canEdit = row.revealedAnswer !== true;
+  
+    // Gdy pusto: aktywne tylko SKIP + (w R2 także REPEAT), reszta disabled
+    // Gdy wpisane: aktywne MATCH/MISS + (w R2 także REPEAT), SKIP disabled
+    const allowSkip = !hasTyped && !lockedForever;
+    const allowChoice = hasTyped && !lockedForever; // MATCH/MISS
+    const allowRepeat = isR2; // nigdy disabled
+  
+    // domyślne radio (tylko jeśli nie odsłonięto i nie jest "lockedForever")
+    // - jeśli repeat włączony: UI pokazuje repeat jako aktywne (radio),
+    //   a row.kind może zostać, ale jest "przykryte" przez repeat
+    // - jeśli repeat wyłączony: zależy od pola
+    if (!row.revealedAnswer && !lockedForever && !p2IsRepeat) {
+      // tylko gdy repeat nie jest aktywny
+      if (!hasTyped) {
         if (row.mode === "AUTO") {
           row.kind = "SKIP";
           row.matchId = null;
           row.pts = 0;
         }
-      } else if (modeTyped) {
+      } else {
         if (row.mode === "AUTO") {
           row.kind = "MISS";
           row.matchId = null;
@@ -971,50 +976,15 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
       }
     }
   
-    // --- host hint (zostawiam jak miałeś) ---
-    let hostHintHtml = "";
-    if (roundNo === 1) {
-      const hostHint = typed.length
-        ? `${escapeHtml(FINAL_MSG.MAP_HINT_INPUT_PREFIX)}<b>${escapeHtml(typed)}</b>`
-        : `<i>${escapeHtml(FINAL_MSG.MAP_HINT_NO_INPUT)}</i>`;
-  
-      hostHintHtml = `
-        <div class="mini">
-          <div class="hint">${hostHint}</div>
-          ${typed.length === 0 ? `<div class="hint">${escapeHtml(FINAL_MSG.MAP_HINT_NO_TEXT)}</div>` : ``}
-        </div>
-      `;
-    } else {
-      const p1Txt = inputP1 || "—";
-      const p2Txt = inputP2 || "—";
-  
-      hostHintHtml = `
-        <div class="mini">
-          <div class="hint">
-            ${escapeHtml(FINAL_MSG.P2_HINT_P1_PREFIX)}<b>${escapeHtml(p1Txt)}</b>
-          </div>
-          <div class="hint">
-            Odpowiedź gracza 2${rep ? " (powtórzenie)" : ""}: <b>${escapeHtml(p2Txt || "—")}</b>
-          </div>
-          ${typed.length === 0 ? `<div class="hint">${escapeHtml(FINAL_MSG.MAP_HINT_NO_TEXT)}</div>` : ``}
-        </div>
-      `;
-    }
-  
-    // --- blokada zajętej odpowiedzi (P2 nie może wziąć matchId P1) ---
-    const p1Row = rt.map1?.[idx];
-    const p1BlockedId =
-      roundNo === 2 && p1Row?.kind === "MATCH" && p1Row?.matchId
-        ? p1Row.matchId
-        : null;
-  
-    // --- przyciski MATCH (aktywne tylko gdy wpisane i nie repeat) ---
+    // --- przyciski listy (MATCH) ---
     const aButtons = aList
       .map((a) => {
-        const active = row.kind === "MATCH" && row.matchId === a.id;
+        const active = !p2IsRepeat && row.kind === "MATCH" && row.matchId === a.id;
         const blocked = !!p1BlockedId && a.id === p1BlockedId;
   
-        const disabled = locked || modeRepeat || modeEmpty || blocked;
+        // powtórzenie NIE blokuje, ale gdy pusto – match i tak disabled (bo zależne od pola)
+        const disabled =
+          !allowChoice || row.revealedAnswer === true || blocked || lockedForever;
   
         return `
           <button class="btn sm ${active ? "gold" : ""}" type="button"
@@ -1027,22 +997,14 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
       })
       .join("");
   
-    // --- aktywne stany ---
-    const missActive = row.kind === "MISS";
-    const skipActive = row.kind === "SKIP";
+    const missActive = !p2IsRepeat && row.kind === "MISS";
+    const skipActive = !p2IsRepeat && row.kind === "SKIP";
   
     const p1Shown = resolveP1ShownForUi(idx);
   
     const whoLabel = roundNo === 1 ? "Odpowiedź gracza" : "Odpowiedź gracza 2";
-    const playerVal = roundNo === 1 ? (rt.p1[idx]?.text ?? "") : (rt.p2[idx]?.text ?? "");
-  
-    // edycja pola tylko blokowana przez odsłonięcie odpowiedzi
-    const disablePlayerEdit = row.revealedAnswer === true;
-  
-    // --- enable/disable SKIP/MISS wg trybu ---
-    const skipDisabled = locked || modeRepeat || modeTyped; // tylko w modeEmpty
-    const missDisabled = locked || modeRepeat || modeEmpty; // tylko w modeTyped
-    const repeatDisabled = false; // nigdy wyszarzany
+    const playerVal =
+      roundNo === 1 ? (rt.p1[idx]?.text ?? "") : (rt.p2[idx]?.text ?? "");
   
     const html = `
       <div class="finalMapTop">
@@ -1053,40 +1015,35 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
             <div class="lbl">${escapeHtml(whoLabel)}</div>
             <input class="inp" data-kind="player"
                    value="${escapeHtml(playerVal)}"
-                   ${disablePlayerEdit ? "disabled" : ""}
+                   ${canEdit ? "" : "disabled"}
                    placeholder="${escapeHtml(FINAL_MSG.INPUT_PLACEHOLDER)}"
                    autocomplete="off"/>
           </div>
   
-          ${roundNo === 2 ? `
+          ${isR2 ? `
             <div class="finalMapLine">
               <div class="lbl">Odpowiedź gracza 1</div>
               <div class="val">${escapeHtml(p1Shown)}</div>
             </div>
           ` : ``}
         </div>
-  
-        ${hostHintHtml}
       </div>
   
       <div class="card finalRowCard" style="margin-top:12px;">
         <div class="rowBtns" style="flex-wrap:wrap; gap:8px;">
           ${aButtons || `<div class="hint">${escapeHtml(FINAL_MSG.MAP_LIST_EMPTY)}</div>`}
   
-          <button class="btn sm ${skipActive && modeEmpty ? "gold" : ""}" type="button" data-kind="skip"
-            ${skipDisabled ? "disabled" : ""}>
+          <button class="btn sm ${skipActive ? "gold" : ""}" type="button" data-kind="skip">
             ${escapeHtml(FINAL_MSG.MAP_BTN_SKIP)}
           </button>
   
-          <button class="btn sm danger ${missActive && modeTyped ? "gold" : ""}" type="button" data-kind="miss"
-            ${missDisabled ? "disabled" : ""}>
+          <button class="btn sm danger ${missActive ? "gold" : ""}" type="button" data-kind="miss">
             ${escapeHtml(FINAL_MSG.MAP_BTN_MISS)}
           </button>
   
-          ${roundNo === 2 ? `
-            <button class="btn sm danger ${modeRepeat ? "gold" : ""}" type="button" data-kind="repeat"
-              ${repeatDisabled ? "" : "disabled"}>
-              ${escapeHtml(modeRepeat ? FINAL_MSG.P2_BTN_REPEAT_ON : FINAL_MSG.P2_BTN_REPEAT_OFF)}
+          ${isR2 ? `
+            <button class="btn sm danger ${p2IsRepeat ? "gold" : ""}" type="button" data-kind="repeat">
+              ${escapeHtml(p2IsRepeat ? FINAL_MSG.P2_BTN_REPEAT_ON : FINAL_MSG.P2_BTN_REPEAT_OFF)}
             </button>
           ` : ``}
         </div>
@@ -1115,97 +1072,158 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     const nextBtnId = roundNo === 1 ? `btnFinalNextFromP1Q${idx + 1}` : `btnFinalNextFromP2Q${idx + 1}`;
     ui.setEnabled(nextBtnId, !!row.revealedAnswer && !!row.revealedPoints);
   
-    // --- INPUT: stan ma zależeć od pola -> po zmianie robimy renderMapOne ---
+    // --- helper: przełączanie stanów bez re-rendera (żeby nie tracić fokusu) ---
+    function applyUiState() {
+      const nowVal = String(root.querySelector('input[data-kind="player"]')?.value ?? "").trim();
+      const nowHasTyped = nowVal.length > 0;
+  
+      const nowRepeat = isR2 && rt.p2[idx]?.repeat === true;
+  
+      const allowSkipNow = !nowHasTyped && !lockedForever && row.revealedAnswer !== true;
+      const allowChoiceNow = nowHasTyped && !lockedForever && row.revealedAnswer !== true;
+  
+      // SKIP / MISS
+      const btnSkip = root.querySelector('button[data-kind="skip"]');
+      const btnMiss = root.querySelector('button[data-kind="miss"]');
+  
+      if (btnSkip) btnSkip.disabled = !allowSkipNow;
+      if (btnMiss) btnMiss.disabled = !allowChoiceNow;
+  
+      // MATCH
+      root.querySelectorAll('button[data-kind="match"]').forEach((b) => {
+        // blokada zajętej odp. przez P1
+        const blocked = !!p1BlockedId && b.dataset.id === p1BlockedId;
+        b.disabled = !allowChoiceNow || blocked;
+      });
+  
+      // REPEAT nigdy nie disabled
+      const btnRepeat = root.querySelector('button[data-kind="repeat"]');
+      if (btnRepeat) btnRepeat.disabled = false;
+  
+      // klasy gold: repeat przykrywa resztę (radio)
+      // zdejmij gold wszystkim
+      root.querySelectorAll('button[data-kind]').forEach((b) => b.classList.remove("gold"));
+  
+      if (nowRepeat) {
+        btnRepeat?.classList.add("gold");
+      } else {
+        if (row.kind === "SKIP") btnSkip?.classList.add("gold");
+        if (row.kind === "MISS") btnMiss?.classList.add("gold");
+        if (row.kind === "MATCH" && row.matchId) {
+          root
+            .querySelector(`button[data-kind="match"][data-id="${CSS.escape(row.matchId)}"]`)
+            ?.classList.add("gold");
+        }
+      }
+    }
+  
+    // na start
+    applyUiState();
+  
+    // --- INPUT: nie renderujemy na żywo (żeby nie wywalało z pola) ---
     root.querySelector('input[data-kind="player"]')?.addEventListener("input", (e) => {
-      const v = String(e.target?.value ?? "");
+      const vRaw = String(e.target?.value ?? "");
   
-      if (roundNo === 1) rt.p1[idx].text = v;
-      else rt.p2[idx].text = v;
+      if (roundNo === 1) rt.p1[idx].text = vRaw;
+      else rt.p2[idx].text = vRaw;
   
-      // pisanie wyłącza repeat
-      if (roundNo === 2 && rt.p2[idx].repeat) {
+      // jeśli ktoś pisze w R2 i było repeat -> zdejmujemy repeat
+      if (isR2 && rt.p2[idx].repeat === true) {
         rt.p2[idx].repeat = false;
       }
   
-      // wracamy do AUTO, żeby default wynikał z pola
-      if (!row.revealedAnswer && !locked) {
-        row.mode = "AUTO";
+      // AUTO: zmiana treści = kasujemy wybór, a default wynika z pola
+      if (row.mode === "AUTO" && !lockedForever && row.revealedAnswer !== true) {
         row.kind = null;
         row.matchId = null;
         row.pts = 0;
       }
   
-      renderMapOne(roundNo, idx);
+      ensureDefaultMapping(roundNo, idx);
+      applyUiState();
       hostUpdate();
     });
   
-    // --- MATCH: tylko gdy wpisane (modeTyped) i nie repeat ---
+    // --- MATCH: klik = wybór + zdejmuje repeat (ale nie blokowane przez repeat) ---
     root.querySelectorAll('button[data-kind="match"]').forEach((b) => {
       b.addEventListener("click", () => {
-        if (!modeTyped || locked || modeRepeat) return;
+        if (lockedForever || row.revealedAnswer) return;
   
-        // klik match też zdejmuje repeat (gdyby ktoś go włączył i potem inputem wrócił)
-        if (roundNo === 2 && rt.p2[idx].repeat) rt.p2[idx].repeat = false;
+        // klik w inne radio -> repeat OFF
+        if (isR2 && rt.p2[idx].repeat === true) rt.p2[idx].repeat = false;
+  
+        // musi być wpisane (logika od pola)
+        const nowVal = String(root.querySelector('input[data-kind="player"]')?.value ?? "").trim();
+        if (!nowVal) return;
   
         row.mode = "MANUAL";
         row.kind = "MATCH";
         row.matchId = b.dataset.id || null;
   
-        renderMapOne(roundNo, idx);
+        applyUiState();
         hostUpdate();
       });
     });
   
-    // --- MISS: tylko gdy wpisane (modeTyped) i nie repeat ---
+    // --- MISS: tylko gdy wpisane; klik zdejmuje repeat ---
     root.querySelector('button[data-kind="miss"]')?.addEventListener("click", () => {
-      if (!modeTyped || locked || modeRepeat) return;
+      if (lockedForever || row.revealedAnswer) return;
   
-      if (roundNo === 2 && rt.p2[idx].repeat) rt.p2[idx].repeat = false;
+      if (isR2 && rt.p2[idx].repeat === true) rt.p2[idx].repeat = false;
+  
+      const nowVal = String(root.querySelector('input[data-kind="player"]')?.value ?? "").trim();
+      if (!nowVal) return;
   
       row.mode = "MANUAL";
       row.kind = "MISS";
       row.matchId = null;
   
-      renderMapOne(roundNo, idx);
+      applyUiState();
       hostUpdate();
     });
   
-    // --- SKIP: tylko gdy pusto (modeEmpty) i nie repeat ---
+    // --- SKIP: tylko gdy pusto; klik zdejmuje repeat ---
     root.querySelector('button[data-kind="skip"]')?.addEventListener("click", () => {
-      if (!modeEmpty || locked || modeRepeat) return;
+      if (lockedForever || row.revealedAnswer) return;
+  
+      if (isR2 && rt.p2[idx].repeat === true) rt.p2[idx].repeat = false;
+  
+      const nowVal = String(root.querySelector('input[data-kind="player"]')?.value ?? "").trim();
+      if (nowVal) return;
   
       row.mode = "MANUAL";
       row.kind = "SKIP";
       row.matchId = null;
+      row.outText = "";
   
-      renderMapOne(roundNo, idx);
+      applyUiState();
       hostUpdate();
     });
   
-    // --- REPEAT: nigdy disabled, przełącza na przemian z resztą ---
+    // --- REPEAT: radio na zmianę z resztą (nigdy disabled, nie blokuje innych) ---
     root.querySelector('button[data-kind="repeat"]')?.addEventListener("click", () => {
-      if (roundNo !== 2) return;
+      if (!isR2 || row.revealedAnswer) return;
   
       const next = !(rt.p2[idx].repeat === true);
       rt.p2[idx].repeat = next;
   
-      if (!row.revealedAnswer && !locked) {
-        if (next) {
-          // repeat ON => domyślnie repeat (blokuje resztę przez modeRepeat)
-          row.mode = "MANUAL";
-          row.kind = "SKIP";
-          row.matchId = null;
-          row.pts = 0;
-        } else {
-          // repeat OFF => wróć do AUTO, niech input ustawi default
-          row.mode = "AUTO";
-          row.kind = null;
-          row.matchId = null;
-          row.pts = 0;
-        }
+      // repeat ON: zachowujemy się jak "radio override"
+      // (najprościej: ustawiamy kind=SKIP, ale NIE lockujemy i NIE disable'ujemy innych)
+      if (next) {
+        row.mode = "MANUAL";
+        row.kind = "SKIP";
+        row.matchId = null;
+        row.pts = 0;
+      } else {
+        // repeat OFF: wróć do AUTO, niech stan wynika z pola
+        row.mode = "AUTO";
+        row.kind = null;
+        row.matchId = null;
+        row.pts = 0;
+        ensureDefaultMapping(roundNo, idx);
       }
   
-      renderMapOne(roundNo, idx);
+      applyUiState();
       hostUpdate();
     });
   
@@ -1222,6 +1240,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
       hostUpdate();
     });
   }
+
 
   // ---------------- REVEAL ----------------
   async function revealAnswerOnly(roundNo, idx) {
