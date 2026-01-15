@@ -2,7 +2,7 @@ export const initFullscreenButton = () => {
   const fsBtn = document.getElementById("fsBtn");
   if (!fsBtn) return;
 
-  const ICON_ENTER = "⛶";
+  const ICON_ENTER = "▢";
   const ICON_EXIT  = "⧉";
 
   const sync = () => {
