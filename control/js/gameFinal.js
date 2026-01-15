@@ -252,8 +252,9 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     }
 
     if (rep) {
+      // repeat to tylko domyślny stan — NIE LOCKUJEMY
       row.mode = "MANUAL";
-      row.locked = true;
+      row.locked = false;     // <-- KLUCZ
       row.kind = "SKIP";
       row.matchId = null;
       row.outText = "";
@@ -991,7 +992,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
                   data-kind="match" data-id="${a.id}"
                   ${disabled ? "disabled" : ""}>
             ${escapeHtml(a.text)} <span style="opacity:.7;">(${nInt(a.fixed_points, 0)})</span>
-            ${blocked ? `<span style="opacity:.7;"> (zajęte)</span>` : ``}
+            ${(blocked || !hasTyped || locked || row.revealedAnswer) ? "disabled" : ""}
           </button>
         `;
       })
@@ -1033,18 +1034,20 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
         <div class="rowBtns" style="flex-wrap:wrap; gap:8px;">
           ${aButtons || `<div class="hint">${escapeHtml(FINAL_MSG.MAP_LIST_EMPTY)}</div>`}
   
-          <button class="btn sm ${skipActive ? "gold" : ""}" type="button" data-kind="skip">
+          <button class="btn sm ${skipActive ? "gold" : ""}" type="button" data-kind="skip"
+            ${(locked || row.revealedAnswer) ? "disabled" : ""}>
             ${escapeHtml(FINAL_MSG.MAP_BTN_SKIP)}
           </button>
   
-          <button class="btn sm danger ${missActive ? "gold" : ""}" type="button" data-kind="miss">
+          <button class="btn sm danger ${missActive ? "gold" : ""}" type="button" data-kind="miss"
+            ${(locked || row.revealedAnswer) ? "disabled" : ""}>
             ${escapeHtml(FINAL_MSG.MAP_BTN_MISS)}
           </button>
   
           ${isR2 ? `
-            <button class="btn sm danger ${p2IsRepeat ? "gold" : ""}" type="button" data-kind="repeat">
-              ${escapeHtml(p2IsRepeat ? FINAL_MSG.P2_BTN_REPEAT_ON : FINAL_MSG.P2_BTN_REPEAT_OFF)}
-            </button>
+          <button class="btn sm danger ${p2IsRepeat ? "gold" : ""}" type="button" data-kind="repeat">
+            ${escapeHtml(FINAL_MSG.P2_BTN_REPEAT_OFF)}
+          </button>
           ` : ``}
         </div>
       </div>
@@ -1203,26 +1206,26 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
   
     // REPEAT (jednokierunkowo: tylko WŁĄCZA, wyłącza się przez inne akcje)
     root.querySelector('button[data-kind="repeat"]')?.addEventListener("click", () => {
-      if (!isR2 || row.revealedAnswer) return;
+      if (roundNo !== 2) return;
+      if (row.revealedAnswer) return;
     
-      // jeśli już włączone — nic nie rób (brak "odciskania")
+      // repeat nie ma "odciskania"
       if (rt.p2[idx].repeat === true) {
-        applyUiState();
-        hostUpdate();
+        // nic nie zmieniamy
         return;
       }
     
-      // WŁĄCZ
       rt.p2[idx].repeat = true;
     
-      // repeat = override (bez lock), a dla punktów traktujemy jak SKIP
+      // repeat = domyślne SKIP, ale bez blokowania innych przycisków
       row.mode = "MANUAL";
+      row.locked = false;      // <-- KLUCZ
       row.kind = "SKIP";
       row.matchId = null;
-      row.pts = 0;
       row.outText = "";
+      row.pts = 0;
     
-      applyUiState();
+      renderMapOne(roundNo, idx);
       hostUpdate();
     });
 
