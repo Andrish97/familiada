@@ -266,6 +266,7 @@ function hostUpdate() {
     if (timerRAF) cancelAnimationFrame(timerRAF);
     timerRAF = null;
     ui.setRoundsHud(r);
+    updatePlayControls();
   }
 
   function startTimer3Internal() {
@@ -275,6 +276,7 @@ function hostUpdate() {
 
     r.timer3.running = true;
     r.timer3.endsAt = Date.now() + 3000;
+    updatePlayControls();
 
     const tick = () => {
       if (!r.timer3.running) return;
@@ -285,6 +287,7 @@ function hostUpdate() {
 
       if (left <= 0) {
         r.timer3.running = false;
+        updatePlayControls();
         r.timer3.secLeft = 0;
         ui.setRoundsHud(r);
 
@@ -331,7 +334,7 @@ function hostUpdate() {
     const playingNow =
       (inDuel || inPlay || inSteal) && !r.canEndRound && !inReveal;
 
-    ui.setEnabled("btnStartTimer3", playingNow);
+    ui.setEnabled("btnStartTimer3", playingNow && !r.timer3?.running);
     ui.setEnabled("btnAddX", playingNow);
   }
 
@@ -881,8 +884,11 @@ function hostUpdate() {
   }
 
   function startTimer3() {
+    const r = store.state.rounds;
+    if (r.timer3?.running) return;
     startTimer3Internal();
   }
+
 
   // === Odsłanianie odpowiedzi (pojedunek / gra / kradzież / reveal) ===
 
@@ -1336,6 +1342,8 @@ function hostUpdate() {
     } catch (e) {
       console.warn("[rounds] revealLeftByOrd display error", e);
     }
+
+    playSfx("answer_correct");
 
     const hasHidden = (r.answers || []).some(
       (a) => !r.revealed?.has(a.ord)
