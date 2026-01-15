@@ -1092,7 +1092,9 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
   
       // REPEAT nigdy nie disabled
       const btnRepeat = root.querySelector('button[data-kind="repeat"]');
-      if (btnRepeat) btnRepeat.disabled = false;
+      const frozen = row.revealedAnswer||row.revealedPoints === true;
+
+      if (btnRepeat) btnRepeat.disabled = frozen;  
   
       // klasy gold: repeat przykrywa resztę (radio)
       // zdejmij gold wszystkim
