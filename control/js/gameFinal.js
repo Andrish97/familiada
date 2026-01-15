@@ -852,7 +852,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
             if (!prev) playSfx("answer_repeat");
             if (row) {
               row.mode = "MANUAL";
-              row.locked = true;
+              row.locked = false;
               row.kind = "SKIP";
               row.matchId = null;
               row.outText = "";
@@ -895,7 +895,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
           if (!prev) playSfx("answer_repeat");
           if (row) {
             row.mode = "MANUAL";
-            row.locked = true;
+            row.locked = false;
             row.kind = "SKIP";
             row.matchId = null;
             row.outText = "";
@@ -982,22 +982,21 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
       .map((a) => {
         const active = !p2IsRepeat && row.kind === "MATCH" && row.matchId === a.id;
         const blocked = !!p1BlockedId && a.id === p1BlockedId;
-  
-        // powtórzenie NIE blokuje, ale gdy pusto – match i tak disabled (bo zależne od pola)
+    
         const disabled =
           !allowChoice || row.revealedAnswer === true || blocked || lockedForever;
-  
+    
         return `
           <button class="btn sm ${active ? "gold" : ""}" type="button"
                   data-kind="match" data-id="${a.id}"
                   ${disabled ? "disabled" : ""}>
             ${escapeHtml(a.text)} <span style="opacity:.7;">(${nInt(a.fixed_points, 0)})</span>
-            ${(blocked || !hasTyped || locked || row.revealedAnswer) ? "disabled" : ""}
+            ${blocked ? `<span style="opacity:.7;"> (zajęte)</span>` : ``}
           </button>
         `;
       })
       .join("");
-  
+      
     const missActive = !p2IsRepeat && row.kind === "MISS";
     const skipActive = !p2IsRepeat && row.kind === "SKIP";
   
@@ -1035,12 +1034,12 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
           ${aButtons || `<div class="hint">${escapeHtml(FINAL_MSG.MAP_LIST_EMPTY)}</div>`}
   
           <button class="btn sm ${skipActive ? "gold" : ""}" type="button" data-kind="skip"
-            ${(locked || row.revealedAnswer) ? "disabled" : ""}>
+            ${(lockedForever || row.revealedAnswer) ? "disabled" : ""}>
             ${escapeHtml(FINAL_MSG.MAP_BTN_SKIP)}
           </button>
   
           <button class="btn sm danger ${missActive ? "gold" : ""}" type="button" data-kind="miss"
-            ${(locked || row.revealedAnswer) ? "disabled" : ""}>
+            ${(lockedForever || row.revealedAnswer) ? "disabled" : ""}>
             ${escapeHtml(FINAL_MSG.MAP_BTN_MISS)}
           </button>
   
