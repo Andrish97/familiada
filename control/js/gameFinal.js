@@ -922,6 +922,9 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     ensureDefaultMapping(roundNo, idx);
   
     const isR2 = roundNo === 2;
+    if (roundNo === 2 && rt.p2[idx]?.repeat === true) {
+      row.locked = false; // repeat nie może zostawić kłódki
+    }
     const lockedForever = row.locked === true; // tylko "na zawsze" (SKIP), NIE od repeat
   
     const inputP1 = String(rt.p1[idx]?.text ?? "").trim();
