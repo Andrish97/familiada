@@ -163,6 +163,74 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     if (rt.lockStartBtn !== true) rt.lockStartBtn = false;
   }
 
+    // ---------------- HOTKEY: Ctrl/Cmd + Shift -> start/stop timer ----------------
+  function isMacLike() {
+    // działa też na iPadOS w trybie desktop
+    const p = navigator.platform || "";
+    return /Mac|iPhone|iPad|iPod/i.test(p);
+  }
+
+  function wantsFinalTimerHotkey(e) {
+    if (!e) return false;
+
+    // Ctrl+Shift (Win/Linux) lub Cmd+Shift (macOS)
+    const main = isMacLike() ? e.metaKey : e.ctrlKey;
+    if (!main || !e.shiftKey) return false;
+
+    // nie reaguj na Alt (żeby uniknąć dziwnych układów klawiatury)
+    if (e.altKey) return false;
+
+    // nie spamuj gdy klawisz trzymany
+    if (e.repeat) return false;
+
+    return true;
+  }
+
+  function isTypingTarget(t) {
+    const el = t;
+    if (!el) return false;
+    const tag = (el.tagName || "").toLowerCase();
+    return tag === "input" || tag === "textarea" || el.isContentEditable === true;
+  }
+
+  function handleFinalTimerHotkey(e) {
+    if (!wantsFinalTimerHotkey(e)) return;
+
+    // jeśli ktoś pisze w inpucie, to i tak pozwalamy (bo to skrót specjalny),
+    // ale blokujemy, gdy finał nie jest w trybie entry (żeby nie mieszać w mapowaniu)
+    const step = store.state.final?.step || "";
+    if (step !== "f_p1_entry" && step !== "f_p2_entry") return;
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    ensureRuntime();
+    const rt = store.state.final.runtime;
+
+    // jak timer już leci, to skrót go zatrzyma (bo p1StartTimer/p2StartTimer robi toggle)
+    if (step === "f_p1_entry") {
+      // dodatkowo: jeśli w danym momencie przycisk jest "twardo" wyłączony, nie rób nic
+      // (np. ktoś już zużył timer i nie można startować ponownie)
+      const btn = document.getElementById("btnFinalP1StartTimer");
+      if (btn && btn.disabled && !(rt.timer.running && rt.timer.phase === "P1")) return;
+
+      p1StartTimer();
+      return;
+    }
+
+    if (step === "f_p2_entry") {
+      const btn = document.getElementById("btnFinalP2StartTimer");
+      if (btn && btn.disabled && !(rt.timer.running && rt.timer.phase === "P2")) return;
+
+      p2StartTimer();
+      return;
+    }
+  }
+
+  // podpinamy raz na życie createFinal()
+  document.addEventListener("keydown", handleFinalTimerHotkey, { capture: true });
+
+
   // ---------------- HELPERS: UI ----------------
   function setStep(step) {
     store.state.final.step = step;
