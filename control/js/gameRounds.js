@@ -155,6 +155,7 @@ function hostUpdate() {
   function ensureRoundsState() {
     const r = store.state.rounds;
     if (!r.timer3) r.timer3 = { running: false, endsAt: 0, secLeft: 0 };
+    if (!("resolved" in r.timer3)) r.timer3.resolved = null;
     if (!r._questionPool) r._questionPool = [];
     if (!r._usedQuestionIds) r._usedQuestionIds = [];
     if (!r.totals) r.totals = { A: 0, B: 0 };
@@ -263,6 +264,7 @@ function hostUpdate() {
     r.timer3.running = false;
     r.timer3.endsAt = 0;
     r.timer3.secLeft = 0;
+    r.timer3.resolved = null;
     if (timerRAF) cancelAnimationFrame(timerRAF);
     timerRAF = null;
     ui.setRoundsHud(r);
@@ -273,7 +275,7 @@ function hostUpdate() {
     ensureRoundsState();
     const r = store.state.rounds;
     clearTimer3();
-
+    r.timer3.resolved = null; // <-- upewniamy się
     r.timer3.running = true;
     r.timer3.endsAt = Date.now() + 3000;
     updatePlayControls();
@@ -286,20 +288,24 @@ function hostUpdate() {
       ui.setRoundsHud(r);
 
       if (left <= 0) {
+      
+        if (r.timer3.resolved) return;
+      
+        r.timer3.resolved = "X";
         r.timer3.running = false;
-        updatePlayControls();
         r.timer3.secLeft = 0;
         ui.setRoundsHud(r);
-
+      
         r.allowPass = false;
-
+      
         if (r.phase === "PLAY" || r.phase === "STEAL") {
           setPlayMsg(ROUNDS_MSG.TIMER_TIMEOUT_X);
         }
-
+      
         addX();
         return;
       }
+
       timerRAF = requestAnimationFrame(tick);
     };
 
@@ -894,6 +900,16 @@ function hostUpdate() {
 
   async function revealAnswerByOrd(ord) {
     ensureRoundsState();
+    // jeśli timer w tym cyklu już rozstrzygnięty jako X, to nie odsłaniamy odpowiedzi
+    if (r.timer3 && r.timer3.resolved === "X") {
+      return;
+    }
+    
+    // jeśli timer jeszcze leci, to odpowiedź wygrywa z X (rezerwacja cyklu)
+    if (r.timer3 && r.timer3.running) {
+      r.timer3.resolved = "ANSWER";
+    }
+
     const r = store.state.rounds;
 
     if (r.canEndRound && r.phase !== "REVEAL") {
