@@ -1200,33 +1200,32 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
       hostUpdate();
     });
   
-    // --- REPEAT: radio na zmianę z resztą (nigdy disabled, nie blokuje innych) ---
+  
+    // REPEAT (jednokierunkowo: tylko WŁĄCZA, wyłącza się przez inne akcje)
     root.querySelector('button[data-kind="repeat"]')?.addEventListener("click", () => {
       if (!isR2 || row.revealedAnswer) return;
-  
-      const next = !(rt.p2[idx].repeat === true);
-      rt.p2[idx].repeat = next;
-  
-      // repeat ON: zachowujemy się jak "radio override"
-      // (najprościej: ustawiamy kind=SKIP, ale NIE lockujemy i NIE disable'ujemy innych)
-      if (next) {
-        row.mode = "MANUAL";
-        row.kind = "SKIP";
-        row.matchId = null;
-        row.pts = 0;
-      } else {
-        // repeat OFF: wróć do AUTO, niech stan wynika z pola
-        row.mode = "AUTO";
-        row.kind = null;
-        row.matchId = null;
-        row.pts = 0;
-        ensureDefaultMapping(roundNo, idx);
+    
+      // jeśli już włączone — nic nie rób (brak "odciskania")
+      if (rt.p2[idx].repeat === true) {
+        applyUiState();
+        hostUpdate();
+        return;
       }
-  
+    
+      // WŁĄCZ
+      rt.p2[idx].repeat = true;
+    
+      // repeat = override (bez lock), a dla punktów traktujemy jak SKIP
+      row.mode = "MANUAL";
+      row.kind = "SKIP";
+      row.matchId = null;
+      row.pts = 0;
+      row.outText = "";
+    
       applyUiState();
       hostUpdate();
     });
-  
+
     root.querySelector('button[data-kind="reveal-answer"]')?.addEventListener("click", async () => {
       await revealAnswerOnly(roundNo, idx);
       renderMapOne(roundNo, idx);
