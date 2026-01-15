@@ -251,17 +251,6 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
       return;
     }
 
-    if (rep) {
-      // repeat to tylko domyślny stan — NIE LOCKUJEMY
-      row.mode = "MANUAL";
-      row.locked = false;     // <-- KLUCZ
-      row.kind = "SKIP";
-      row.matchId = null;
-      row.outText = "";
-      row.pts = 0;
-      return;
-    }
-
     if (row.mode === "MANUAL" && (row.kind === "MATCH" || row.kind === "MISS" || row.kind === "SKIP")) {
       return;
     }
