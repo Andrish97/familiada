@@ -346,6 +346,63 @@
       .sideStack{grid-template-rows:auto auto auto}
       .boardViewport{max-height:60vh}
     }
+
+    /* ===== naprawa: prawy panel i jego wnętrza nie mogą wypychać karty ===== */
+    
+    /* karta prawa ma być pojemnikiem z ograniczeniem wysokości */
+    .card {
+      min-height: 0;
+      overflow: hidden; /* ważne: nic nie ma wyciekać poza kartę */
+    }
+    
+    /* prawa kolumna: ten blok MUSI się kurczyć */
+    .rightStack{
+      min-height: 0;
+      height: 100%;
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr); /* auto na nagłówek, reszta się skaluje */
+      gap: var(--gap);
+    }
+    
+    /* sekcja z planszą + panelami: też musi się kurczyć */
+    .boardSection{
+      min-height: 0;
+      height: 100%;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 300px; /* lewa kolumna może się kurczyć */
+      gap: var(--gap);
+    }
+    
+    /* plansza (viewport) — przewijana i ograniczona */
+    .boardViewport{
+      min-height: 0;
+      height: 100%;
+      overflow: auto;
+    }
+    
+    /* prawa kolumna z 3 panelami: każdy panel ma dostać ułamek wysokości */
+    .sideStack{
+      min-height: 0;
+      height: 100%;
+      display: grid;
+      grid-template-rows: minmax(0, 1fr) minmax(0, 1.2fr) minmax(0, 1fr);
+      gap: var(--gap);
+    }
+    
+    /* panel musi pozwolić scrollowi działać wewnątrz */
+    .panel{
+      min-height: 0;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    /* a to jest realnie scrollujące pole */
+    .panel .scroll{
+      min-height: 0;
+      overflow: auto;
+    }
+    
   </style>
 </head>
 
