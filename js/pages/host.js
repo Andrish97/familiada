@@ -44,6 +44,35 @@ const lastRendered = {
   orientation: null,
 };
 
+/* ========= COLORS (A/B) ========= */
+const DEFAULT_A = "#c4002f";
+const DEFAULT_B = "#2a62ff";
+
+let coverA = DEFAULT_A;
+let coverB = DEFAULT_B;
+
+function normColorToken(raw) {
+  return String(raw ?? "").trim();
+}
+
+function cssSupportsColor(value) {
+  if (!value) return false;
+  if (window.CSS?.supports) return CSS.supports("color", value);
+  return true; // fallback
+}
+
+function applyCoverColors() {
+  const root = document.documentElement;
+  root.style.setProperty("--cover-grad-a", coverA);
+  root.style.setProperty("--cover-grad-b", coverB);
+}
+
+function resetCoverColors() {
+  coverA = DEFAULT_A;
+  coverB = DEFAULT_B;
+  applyCoverColors();
+}
+
 /* ========= ORIENTATION (tylko klasy portrait/landscape na <html>) ========= */
 function getOrientation() {
   return window.innerHeight >= window.innerWidth ? "portrait" : "landscape";
@@ -378,7 +407,7 @@ async function persistState() {
       p_game_id: gameId,
       p_device_type: "host",
       p_key: key,
-      p_patch: { text1, text2, p2Covered },
+      p_patch: { text1, text2, p2Covered, coverA, coverB },
     });
   } catch (e) {
     console.warn("[host] persist failed", e);
@@ -396,6 +425,14 @@ async function restoreState() {
     if (error) throw error;
 
     const s = data || {};
+    const a = data?.coverA;
+    const b = data?.coverB;
+    
+    if (typeof a === "string" && cssSupportsColor(a)) coverA = a;
+    if (typeof b === "string" && cssSupportsColor(b)) coverB = b;
+    
+    applyCoverColors();
+    
     text1 = typeof s.text1 === "string" ? s.text1 : "";
     text2 = typeof s.text2 === "string" ? s.text2 : "";
     p2Covered = typeof s.p2Covered === "boolean" ? s.p2Covered : true;
@@ -438,10 +475,39 @@ function decodeEscapes(s) {
   return String(s).replace(/\\n/g, "\n").replace(/\\t/g, "\t").replace(/\\"/g, '"');
 }
 
-async function handleCmd(lineRaw) {
+async function handleCommands(lineRaw) {
   const line = String(lineRaw ?? "").trim();
   if (!line) return;
   const up = line.toUpperCase();
+
+  // COLOR_A <color>
+  if (up.startsWith("COLOR_A")) {
+    const value = normColorToken(line.slice("COLOR_A".length));
+    if (cssSupportsColor(value)) {
+      coverA = value;
+      applyCoverColors();
+      await persistState();
+    }
+    return;
+  }
+  
+  // COLOR_B <color>
+  if (up.startsWith("COLOR_B")) {
+    const value = normColorToken(line.slice("COLOR_B".length));
+    if (cssSupportsColor(value)) {
+      coverB = value;
+      applyCoverColors();
+      await persistState();
+    }
+    return;
+  }
+  
+  // COLOR_RESET
+  if (up === "COLOR_RESET") {
+    resetCoverColors();
+    await persistState();
+    return;
+  }
 
   // ===== NOWE: zasłona pasma 2 =====
   if (up === "COVER") {
@@ -503,7 +569,7 @@ function ensureChannel() {
   ch = sb()
     .channel(`familiada-host:${gameId}`)
     .on("broadcast", { event: "HOST_CMD" }, (msg) => {
-      handleCmd(msg?.payload?.line);
+      handleCommands(msg?.payload?.line);
     })
     .subscribe();
   return ch;
@@ -650,6 +716,7 @@ window.addEventListener("resize", () => {
 });
 
 document.addEventListener("DOMContentLoaded", async () => {
+  applyCoverColors();
   applyOrientationClass();
   updateOuterInsets();
   updateLinePx();
@@ -692,6 +759,6 @@ window.__host = {
   clear1,
   clear2,
   coverP2,
-  handleCmd,
+  handleCommands,
   ping,
 };
