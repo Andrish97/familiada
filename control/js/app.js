@@ -237,10 +237,14 @@ function isEndedUiState() {
 
 async function sendZeroStatesToDevices() {
   if (!devices) return;
+  try { await devices.sendDisplayCmd("APP GAME"); } catch {}
+  try { await devices.sendDisplayCmd("COLOR RESET"); } catch {}
   try { await devices.sendDisplayCmd("APP BLACK"); } catch {}
+  try { await devices.sendHostCmd("COLOR_RESET"); } catch {}
   try { await devices.sendHostCmd("CLEAR"); } catch {}
   try { await devices.sendHostCmd("COVER"); } catch {}
   try { await devices.sendBuzzerCmd("OFF"); } catch {}
+  try { await devices.sendBuzzerCmd("COLOR_RESET"); } catch {}
 }
 
 
