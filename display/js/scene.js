@@ -58,7 +58,7 @@ export async function createScene() {
     base: {
       A:  "#c4002f",
       B:  "#2a62ff",
-      BG: "#0b0b10",
+      BG: "#1b1a2b",
     },
     derived: {
       A_dark: "",
