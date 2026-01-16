@@ -1133,7 +1133,7 @@ export async function createScene() {
   // PIX 150x70: mapowanie 1:1 na doty BIG (30*5, 10*7)
   const base64ToBytes = (b64) => {
     try {
-      const bin = atob(b64 || "");
+      const bin = atob((b64 || "").replace(/\s+/g, "")); // usuń białe znaki
       const out = new Uint8Array(bin.length);
       for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
       return out;
@@ -1142,17 +1142,28 @@ export async function createScene() {
     }
   };
   
-  // MSB-first: bit index -> bytes[i>>3] mask 1<<(7-(i&7))
-  const getBit = (bytes, idx) => {
-    const bi = idx >> 3;
-    if (bi < 0 || bi >= bytes.length) return 0;
-    const mask = 1 << (7 - (idx & 7));
-    return (bytes[bi] & mask) ? 1 : 0;
+  const getBitRowMajor_MSB = (bytes, x, y, w) => {
+    const bytesPerRow = Math.ceil(w / 8);
+    const byteIndex = y * bytesPerRow + (x >> 3);
+    if (byteIndex < 0 || byteIndex >= bytes.length) return 0;
+    const bit = 7 - (x & 7);              // MSB first
+    return (bytes[byteIndex] >> bit) & 1;
   };
   
   const drawLogoPix150x70 = (bitsBase64, colorOn = LIT.main) => {
+    const W = 150, H = 70;
     const bytes = base64ToBytes(bitsBase64);
-    // czyścimy wszystko (logo = cały BIG)
+  
+    const bytesPerRow = Math.ceil(W / 8);      // 19
+    const expected = bytesPerRow * H;          // 1330
+  
+    if (bytes.length !== expected) {
+      console.warn(
+        `[logo pix] bytes len=${bytes.length}, expected=${expected} (W=${W},H=${H},bytesPerRow=${bytesPerRow}). ` +
+        `Jeśli masz generator bez stride, to będzie ${Math.ceil(W * H / 8)}.`
+      );
+    }
+  
     clearArea(big, 1, 1, 30, 10);
   
     for (let ty = 0; ty < 10; ty++) {
@@ -1164,15 +1175,15 @@ export async function createScene() {
           for (let px = 0; px < 5; px++) {
             const x = tx * 5 + px;   // 0..149
             const y = ty * 7 + py;   // 0..69
-            const idx = y * 150 + x;
-            const on = getBit(bytes, idx) === 1;
+  
+            const on = getBitRowMajor_MSB(bytes, x, y, W) === 1;
             tile.dots[py][px].setAttribute("fill", on ? colorOn : COLORS.dotOff);
           }
         }
       }
     }
   };
-  
+    
 
   // ============================================================
   // Duży wyświetlacz nie ma już osobnych trybów LOGO/ROUNDS/FINAL/WIN.
