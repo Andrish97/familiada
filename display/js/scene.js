@@ -1,6 +1,7 @@
 // scene.js
 import { loadJson, buildGlyphMap, resolveGlyph } from "./fonts.js";
 import { createAnimator } from "./anim.js";
+import { sb } from "../../js/core/supabase.js";
 
 export async function createScene() {
   const NS = "http://www.w3.org/2000/svg";
@@ -619,6 +620,26 @@ export async function createScene() {
 
   let LOGO_JSON = null;
   try { LOGO_JSON = await loadJson("./logo_familiada.json"); } catch {}
+  const DEFAULT_LOGO = LOGO_JSON;  // fallback z pliku
+  let ACTIVE_LOGO = null;          // tu będzie { type, payload, name } z bazy albo null
+
+  const loadActiveLogoFromDb = async (gameId, key) => {
+    if (!gameId || !key) return null;
+    try {
+      const { data, error } = await sb().rpc("display_logo_get_public", {
+        p_game_id: gameId,
+        p_key: key,
+      });
+      if (error) {
+        console.warn("[logo] rpc error:", error);
+        return null;
+      }
+      return data || null;
+    } catch (e) {
+      console.warn("[logo] rpc failed:", e);
+      return null;
+    }
+  };
 
   const center  = $("center");
   const panels  = $("panels");
@@ -1056,49 +1077,50 @@ export async function createScene() {
   let indicatorState = "OFF";
   
   // ============================================================
-  // LOGO: wysokość 5, rzędy 3..7
-  // Format logo_familiada.json:
-  // { layers: [{ color:"main", rows:[ "...30..." x5 ]}, ...] }
+  // LOGO – 2 typy:
+  // - GLYPH_30x10: 10 wierszy po 30 znaków
+  // - PIX_150x70: bitmapa 150x70 (pod BIG 30x10 * 5x7)
   // ============================================================
-  const normalizeLogoRow = (s) => {
+  
+  const normalizeLogoRow30 = (s) => {
     const t = (s ?? "").toString();
     if (t.length === 30) return t;
     if (t.length > 30) return t.slice(0, 30);
     return t.padEnd(30, " ");
   };
-
-  const normalizeLogoJson = (logoJson) => {
+  
+  const normalizeLogoJson30x10 = (logoJson) => {
     const layersIn = Array.isArray(logoJson?.layers) ? logoJson.layers : [];
     const layers = layersIn.map((layer) => {
       const rowsIn = Array.isArray(layer?.rows) ? layer.rows : [];
       const rows = [];
-      for (let i = 0; i < 5; i++) rows.push(normalizeLogoRow(rowsIn[i] ?? ""));
+      for (let i = 0; i < 10; i++) rows.push(normalizeLogoRow30(rowsIn[i] ?? ""));
       return { color: layer?.color ?? "main", rows };
     });
     return { layers };
   };
-
-  const drawLogoGrid5 = (logoJsonRaw) => {
-    const logoJson = normalizeLogoJson(logoJsonRaw);
+  
+  const litFromName = (name) => {
+    const n = (name ?? "main").toString().toLowerCase();
+    if (n === "top") return LIT.top;
+    if (n === "left") return LIT.left;
+    if (n === "right") return LIT.right;
+    if (n === "bottom") return LIT.bottom;
+    return LIT.main;
+  };
+  
+  const drawLogoGrid30x10 = (logoJsonRaw) => {
+    const logoJson = normalizeLogoJson30x10(logoJsonRaw);
     const layers = logoJson.layers;
-
-    const rowFrom = 3;
-    const rowTo = 7;
-
-    clearArea(big, 1, rowFrom, 30, rowTo);
-
+  
+    // logo zajmuje CAŁY BIG 30x10
+    clearArea(big, 1, 1, 30, 10);
+  
     for (const layer of layers) {
-      const colorName = (layer?.color ?? "main").toString().toLowerCase();
-      const color =
-        colorName === "top" ? LIT.top :
-        colorName === "left" ? LIT.left :
-        colorName === "right" ? LIT.right :
-        LIT.main;
-
-      const rows = layer.rows;
-      for (let ry = 0; ry < 5; ry++) {
-        const rowStr = rows[ry];
-        const row1 = rowFrom + ry; // 3..7
+      const color = litFromName(layer.color);
+      for (let ry = 0; ry < 10; ry++) {
+        const rowStr = layer.rows[ry] ?? " ".repeat(30);
+        const row1 = 1 + ry; // 1..10
         for (let cx = 0; cx < 30; cx++) {
           const ch = rowStr[cx] ?? " ";
           if (ch === " ") continue;
@@ -1107,6 +1129,50 @@ export async function createScene() {
       }
     }
   };
+  
+  // PIX 150x70: mapowanie 1:1 na doty BIG (30*5, 10*7)
+  const base64ToBytes = (b64) => {
+    try {
+      const bin = atob(b64 || "");
+      const out = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+      return out;
+    } catch {
+      return new Uint8Array(0);
+    }
+  };
+  
+  // MSB-first: bit index -> bytes[i>>3] mask 1<<(7-(i&7))
+  const getBit = (bytes, idx) => {
+    const bi = idx >> 3;
+    if (bi < 0 || bi >= bytes.length) return 0;
+    const mask = 1 << (7 - (idx & 7));
+    return (bytes[bi] & mask) ? 1 : 0;
+  };
+  
+  const drawLogoPix150x70 = (bitsBase64, colorOn = LIT.main) => {
+    const bytes = base64ToBytes(bitsBase64);
+    // czyścimy wszystko (logo = cały BIG)
+    clearArea(big, 1, 1, 30, 10);
+  
+    for (let ty = 0; ty < 10; ty++) {
+      for (let tx = 0; tx < 30; tx++) {
+        const tile = tileAt(big, 1 + tx, 1 + ty);
+        if (!tile) continue;
+  
+        for (let py = 0; py < 7; py++) {
+          for (let px = 0; px < 5; px++) {
+            const x = tx * 5 + px;   // 0..149
+            const y = ty * 7 + py;   // 0..69
+            const idx = y * 150 + x;
+            const on = getBit(bytes, idx) === 1;
+            tile.dots[py][px].setAttribute("fill", on ? colorOn : COLORS.dotOff);
+          }
+        }
+      }
+    }
+  };
+  
 
   // ============================================================
   // Duży wyświetlacz nie ma już osobnych trybów LOGO/ROUNDS/FINAL/WIN.
@@ -1308,29 +1374,70 @@ export async function createScene() {
     restoreSnapshot,
     
     logo: {
-      _json: LOGO_JSON,
-
-      load: async (url = "./logo_familiada.json") => {
-        api.logo._json = await loadJson(url);
-        return api.logo._json;
+      _gameId: null,
+      _key: null,
+    
+      // wywołaj raz po tym, jak znasz gameId (main to ustawi 1 linijką)
+      bindGame: async (gameId) => {
+        const u = new URL(location.href);
+        const key = u.searchParams.get("key") || "";
+        const gid = (gameId ?? "").toString();
+    
+        api.logo._gameId = gid;
+        api.logo._key = key;
+    
+        const dbLogo = await loadActiveLogoFromDb(gid, key);
+        if (dbLogo && dbLogo.type && dbLogo.payload) {
+          ACTIVE_LOGO = dbLogo;
+          console.log("[logo] loaded from DB:", dbLogo.name || dbLogo.type);
+        } else {
+          ACTIVE_LOGO = null;
+          console.log("[logo] no active logo in DB -> fallback to default json");
+        }
       },
-
-      set: (json) => { api.logo._json = json; },
-
+    
+      // aktywne logo (z bazy) albo fallback
+      _getSource: () => {
+        // 1) DB active
+        if (ACTIVE_LOGO?.type === "GLYPH_30x10") {
+          return { type: "GLYPH_30x10", payload: ACTIVE_LOGO.payload };
+        }
+        if (ACTIVE_LOGO?.type === "PIX_150x70") {
+          return { type: "PIX_150x70", payload: ACTIVE_LOGO.payload };
+        }
+        // 2) fallback do pliku (traktujemy jak GLYPH_30x10)
+        return { type: "GLYPH_30x10", payload: DEFAULT_LOGO };
+      },
+    
       draw: () => {
-        if (!api.logo._json) throw new Error("LOGO: brak JSON (logo.load lub logo.set).");
-        drawLogoGrid5(api.logo._json);
+        const src = api.logo._getSource();
+    
+        if (src.type === "GLYPH_30x10") {
+          // payload dla DB: {layers:[{rows:[...10]}]}
+          // payload dla fallback: cały json
+          drawLogoGrid30x10(src.payload);
+          return;
+        }
+    
+        if (src.type === "PIX_150x70") {
+          const bits = src.payload?.bits_base64 || src.payload?.bitsBase64 || "";
+          drawLogoPix150x70(bits, LIT.main);
+          return;
+        }
+    
+        throw new Error("LOGO: nieznany typ logo: " + src.type);
       },
-
+    
       show: async (animIn = { type:"edge", dir:"left", ms:14 }) => {
         api.logo.draw();
-        await api.big.animIn({ ...animIn, area: api.big.areaLogo() });
+        await api.big.animIn({ ...animIn, area: api.big.areaAll() });
       },
-
+    
       hide: async (animOut = { type:"edge", dir:"right", ms:14 }) => {
-        await api.big.animOut({ ...animOut, area: api.big.areaLogo() });
+        await api.big.animOut({ ...animOut, area: api.big.areaAll() });
       },
     },
+
 
     win: {
       set: async (num, { animOut=null, animIn=null } = {}) => {
@@ -1959,10 +2066,10 @@ export async function createScene() {
       const op = (tokens[1] ?? "").toUpperCase();
 
       if (op === "LOAD") {
-        const url = tokens[2] ? unquote(tokens[2]) : "./logo_familiada.json";
-        await api.logo.load(url);
+        console.warn("LOGO LOAD jest wyłączone. Logo ładuje się z bazy (aktywny rekord) albo fallback.");
         return;
       }
+      
       if (op === "DRAW") {
         api.logo.draw();
         return;
