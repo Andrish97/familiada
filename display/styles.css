@@ -5,7 +5,7 @@ html, body { height:100%; margin:0; }
   /* 3 kolory bazowe (domyślne) */
   --teamA: #c4002f;
   --teamB: #2a62ff;
-  --bg:    #0b0b10;
+  --bg:    #1b1a2b;
 
   /* tło wyliczane z BG (+ lekkie akcenty A/B), bez “ciemnego fioletu” */
   --bg-gradient: radial-gradient(1400px 700px at 50% 25%,
