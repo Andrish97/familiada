@@ -882,3 +882,142 @@
   line-height: 1.2;
   word-break: break-word;
 } 
+
+/* ========= KOLORY: swatche + modal ========= */
+
+.inpRow{
+  display:flex;
+  align-items:center;
+  gap: 8px;
+}
+
+.fakeInp{
+  display:flex;
+  align-items:center;
+  min-height: 38px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,.14);
+  background: rgba(0,0,0,.20);
+  color: rgba(255,255,255,.85);
+  font-weight: 900;
+  letter-spacing: .02em;
+}
+
+.colorSwatch{
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,.18);
+  background: rgba(255,255,255,.08);
+  box-shadow: 0 12px 30px rgba(0,0,0,.35);
+  cursor: pointer;
+  flex: 0 0 auto;
+  position: relative;
+}
+
+.colorSwatch::after{
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 12px;
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,.25);
+  pointer-events: none;
+}
+
+.colorSwatch:active{ transform: translateY(1px); }
+
+/* Modal */
+.colorModalOverlay{
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.70);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2200;
+}
+
+.colorModalOverlay.hidden{ display: none; }
+
+.colorModalBox{
+  background: rgba(5,5,10,.98);
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,.16);
+  box-shadow: 0 18px 60px rgba(0,0,0,.85);
+  max-width: 560px;
+  width: calc(100% - 32px);
+  padding: 18px 18px 16px;
+}
+
+.colorModalHead{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.colorModalTitle{
+  font-weight: 1000;
+  letter-spacing: .06em;
+  font-size: 13px;
+  text-transform: uppercase;
+  opacity: .9;
+}
+
+.colorModalBody{ display:flex; flex-direction:column; gap: 12px; }
+
+.colorPreviewRow{
+  display:grid;
+  grid-template-columns: 84px 1fr;
+  gap: 12px;
+  align-items: stretch;
+}
+
+.colorPreview{
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,.16);
+  background: rgba(255,255,255,.06);
+  box-shadow: 0 18px 45px rgba(0,0,0,.40);
+}
+
+.colorPalette{
+  display:grid;
+  grid-template-columns: repeat(10, minmax(0,1fr));
+  gap: 8px;
+}
+
+.colorChip{
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,.18);
+  cursor:pointer;
+  box-shadow: 0 12px 30px rgba(0,0,0,.35);
+  position: relative;
+}
+
+.colorChip::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  border-radius:12px;
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,.28);
+  pointer-events:none;
+}
+
+.colorChip.sel{
+  outline: 2px solid rgba(255,234,166,.55);
+  outline-offset: 2px;
+}
+
+.colorFine{
+  display:grid;
+  gap: 6px;
+}
+
+.colorHue{
+  width: 100%;
+}
