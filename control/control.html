@@ -20,11 +20,7 @@
       message: "Panel sterowania działa tylko na komputerze (min. 980px).",
     });
   
-    // twarda blokada: jak za wąsko, nie ładujemy aplikacji
-    const blocked = window.matchMedia(`(max-width:${minWidth}px)`).matches;
-    if (!blocked) {
-      import("/familiada/control/js/app.js");
-    }
+    import("/familiada/control/js/app.js");
   </script>
 
 </head>
@@ -346,16 +342,39 @@
                  <div class="hint">
                     Tutaj wprowadz nazwy drużyn oraz możesz zmienić dodatkowe ustawienia.
                   </div>
+         
                   <div class="rowBtns">
                     <div class="field">
                       <div class="lbl2">Drużyna A</div>
-                      <input class="inp" id="teamA" autocomplete="off"/>
+                  
+                      <div class="inpRow">
+                        <input class="inp" id="teamA" autocomplete="off"/>
+                        <button class="colorSwatch" id="swatchTeamA" type="button" title="Kolor drużyny A" aria-label="Kolor drużyny A"></button>
+                      </div>
                     </div>
+                  
                     <div class="field">
                       <div class="lbl2">Drużyna B</div>
-                      <input class="inp" id="teamB" autocomplete="off"/>
+                  
+                      <div class="inpRow">
+                        <input class="inp" id="teamB" autocomplete="off"/>
+                        <button class="colorSwatch" id="swatchTeamB" type="button" title="Kolor drużyny B" aria-label="Kolor drużyny B"></button>
+                      </div>
                     </div>
                   </div>
+                  
+                  <div class="rowBtns" style="margin-top:10px;">
+                    <div class="field sm" style="min-width: 320px;">
+                      <div class="lbl2">Kolor tła wyświetlacza</div>
+                      <div class="inpRow">
+                        <div class="inp fakeInp" id="bgColorLabel">—</div>
+                        <button class="colorSwatch" id="swatchBg" type="button" title="Kolor tła wyświetlacza" aria-label="Kolor tła wyświetlacza"></button>
+                      </div>
+                    </div>
+                  
+                    <button class="btn" id="btnColorsReset" type="button">Reset kolorów</button>
+                  </div>
+                  
                   <div class="rowBtns">
                     <button class="btn" id="btnTeamMore" type="button">Dodatkowe ustawienia</button>
                   </div>
@@ -938,5 +957,37 @@
       </div>
     </div>
   </main>
+  <!-- Modal wyboru koloru -->
+  <div class="colorModalOverlay hidden" id="colorModalOverlay" aria-hidden="true">
+    <div class="colorModalBox" role="dialog" aria-modal="true" aria-labelledby="colorModalTitle">
+      <div class="colorModalHead">
+        <div class="colorModalTitle" id="colorModalTitle">Kolor</div>
+        <button class="btn xs" id="colorModalClose" type="button">✕</button>
+      </div>
+  
+      <div class="colorModalBody">
+        <div class="colorPreviewRow">
+          <div class="colorPreview" id="colorPreview"></div>
+          <div class="colorMeta">
+            <div class="lbl2">HEX</div>
+            <input class="inp" id="colorHexInput" autocomplete="off" inputmode="text" spellcheck="false" />
+            <div class="hint" id="colorHint">Wybierz z palety albo dopasuj suwakiem.</div>
+          </div>
+        </div>
+  
+        <div class="colorPalette" id="colorPalette"></div>
+  
+        <div class="colorFine">
+          <div class="lbl2">Hue</div>
+          <input class="colorHue" id="colorHue" type="range" min="0" max="360" value="330" />
+        </div>
+  
+        <div class="rowBtns" style="margin-top:10px;">
+          <button class="btn gold" id="colorApply" type="button">Zamknij</button>
+          <div class="msg msg-inline" id="colorMsg"></div>
+        </div>
+      </div>
+    </div>
+  </div>
 </body>
 </html>
