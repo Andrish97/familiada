@@ -501,6 +501,64 @@ function clearCanvas(canvas) {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 }
 
+function bitsGet150(bits150, x, y) {
+  return !!bits150[y * DOT_W + x];
+}
+
+function drawThumbFlat150x70(canvas, bits150) {
+  const ctx = canvas.getContext("2d");
+  const cw = canvas.width;
+  const ch = canvas.height;
+
+  // całe logo w kadrze (contain)
+  const scale = Math.min(cw / DOT_W, ch / DOT_H);
+  const ox = Math.floor((cw - DOT_W * scale) / 2);
+  const oy = Math.floor((ch - DOT_H * scale) / 2);
+
+  ctx.imageSmoothingEnabled = false;
+
+  // tło czarne
+  ctx.clearRect(0, 0, cw, ch);
+  ctx.fillStyle = "#000";
+  ctx.fillRect(0, 0, cw, ch);
+
+  // piksele białe bez przerw
+  ctx.fillStyle = "#fff";
+  for (let y = 0; y < DOT_H; y++) {
+    const yy = oy + y * scale;
+    for (let x = 0; x < DOT_W; x++) {
+      if (!bitsGet150(bits150, x, y)) continue;
+      ctx.fillRect(ox + x * scale, yy, scale, scale);
+    }
+  }
+}
+
+function rows30x10ToBits150(rows10) {
+  const out = new Uint8Array(DOT_W * DOT_H);
+
+  for (let ty = 0; ty < TILES_Y; ty++) {
+    const rowStr = String(rows10?.[ty] ?? "").padEnd(30, " ").slice(0, 30);
+    for (let tx = 0; tx < TILES_X; tx++) {
+      const ch = rowStr[tx] ?? " ";
+      const glyph = resolve5x7(ch); // masz już tę funkcję
+
+      for (let py = 0; py < 7; py++) {
+        const bits = glyph[py] | 0;
+        for (let px = 0; px < 5; px++) {
+          const on = (bits & (1 << (4 - px))) !== 0;
+          if (!on) continue;
+          const x = tx * 5 + px;
+          const y = ty * 7 + py;
+          out[y * DOT_W + x] = 1;
+        }
+      }
+    }
+  }
+
+  return out;
+}
+
+
 /* =========================================================
    DB
 ========================================================= */
@@ -566,12 +624,14 @@ function buildCardPreviewCanvas(payload) {
   c.width = 460;
   c.height = 200;
 
+  let bits150;
   if (payload.kind === "GLYPH") {
-    renderRows30x10ToBig(payload.rows, c);
+    bits150 = rows30x10ToBits150(payload.rows);
   } else {
-    renderBits150x70ToBig(payload.bits, c);
+    bits150 = payload.bits;
   }
 
+  drawThumbFlat150x70(c, bits150);
   return c;
 }
 
