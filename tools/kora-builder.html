@@ -407,67 +407,36 @@ function isPrintableChar(s){
 }
 
 /* ========= Font 5x7: flatten + alias ========= */
-function buildGlyphMap(font){
-  const buckets = ["letters","digits","punctuation","math","special"];
+function buildGlyphMapAnyGroups(font) {
   const raw = new Map();
 
-  for (const b of buckets){
-    const obj = font[b] || {};
-    for (const [k,v] of Object.entries(obj)){
-      raw.set(k, v);
+  for (const [groupName, group] of Object.entries(font)) {
+    if (groupName === "meta") continue;
+    if (!group || typeof group !== "object") continue;
+
+    for (const [ch, v] of Object.entries(group)) {
+      // v ma być tablicą 7 liczb
+      if (Array.isArray(v) && v.length === 7) {
+        raw.set(ch, v.slice());
+      }
     }
   }
 
-  const resolved = new Map();
-  const resolving = new Set();
+  // gwarantujemy spację
+  if (!raw.has(" ")) raw.set(" ", [0,0,0,0,0,0,0]);
 
-  function resolveChar(ch){
-    if (resolved.has(ch)) return resolved.get(ch);
-    const v = raw.get(ch);
-    if (!v) return null;
-
-    if (typeof v === "string" && v.startsWith("@")){
-      const target = v.slice(1);
-      if (resolving.has(ch)) return null; // cykl
-      resolving.add(ch);
-      const r = resolveChar(target);
-      resolving.delete(ch);
-      if (r) resolved.set(ch, r);
-      return r;
-    }
-
-    if (Array.isArray(v) && v.length === 7){
-      // wiersze 5-bitowe 0..31
-      resolved.set(ch, v.slice());
-      return v;
-    }
-
-    return null;
-  }
-
-  // resolve wszystko co się da
-  for (const ch of raw.keys()){
-    resolveChar(ch);
-  }
-
-  // w praktyce przydaje się spacja zawsze
-  if (!resolved.has(" ")){
-    resolved.set(" ", [0,0,0,0,0,0,0]);
-  }
-
-  // posortuj sensownie: najpierw litery/cyfry, potem reszta
-  const all = Array.from(resolved.keys());
-  all.sort((a,b)=>{
+  // proste sortowanie do palety
+  const order = Array.from(raw.keys()).sort((a,b) => {
     const pa = sortKey(a), pb = sortKey(b);
     return pa === pb ? a.localeCompare(b) : pa - pb;
   });
 
-  return { map: resolved, order: all };
+  return { map: raw, order };
 
   function sortKey(ch){
+    if (ch === " ") return 99;
     if (/^[A-ZĄĆĘŁŃÓŚŹŻ]$/.test(ch)) return 1;
     if (/^[0-9]$/.test(ch)) return 2;
-    if (ch === " ") return 99;
     return 50;
   }
 }
@@ -565,7 +534,7 @@ function loadFontFromText(txt){
 
 function loadFont(obj){
   font57 = obj;
-  const built = buildGlyphMap(font57);
+  const built = buildGlyphMapAnyGroups(font57);
   glyphMap = built.map;
   statusEl.textContent = `Wczytano font 5×7: ${font57.meta?.name ?? "(bez nazwy)"} — glifów: ${built.order.length}`;
   renderPalette(built.order);
