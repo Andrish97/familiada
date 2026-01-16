@@ -997,3 +997,65 @@
   background: transparent;
   padding: 0;
 }
+
+.colorRow{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  align-items:center;
+}
+
+.colorChip{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:10px 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,.14);
+  background: rgba(0,0,0,.18);
+  color:#fff;
+  cursor:pointer;
+  box-shadow: 0 12px 30px rgba(0,0,0,.35);
+  transition: transform .06s ease, border-color .12s ease;
+}
+
+.colorChip:hover{
+  border-color: rgba(255,255,255,.22);
+}
+
+.colorChip:active{
+  transform: translateY(1px);
+}
+
+.dotColor{
+  width:18px;
+  height:18px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.25);
+  background: rgba(255,255,255,.12);
+  box-shadow: 0 0 0 3px rgba(0,0,0,.25) inset;
+}
+
+.lblColor{
+  font-weight: 1000;
+  letter-spacing: .04em;
+  font-size: 12px;
+  text-transform: uppercase;
+  opacity: .9;
+}
+
+.hex{
+  font-weight: 900;
+  opacity: .75;
+  font-variant-numeric: tabular-nums;
+}
+
+.nativeColor{
+  position:absolute;
+  left:-9999px;
+  width:1px;
+  height:1px;
+  opacity:0;
+  pointer-events:none;
+}
+
