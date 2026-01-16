@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Familiada — edytor logo</title>
+
+  <link rel="icon" href="favicon.ico"/>
+  <link rel="stylesheet" href="css/base.css"/>
+  <link rel="stylesheet" href="css/logo-editor.css"/>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <script type="module" src="js/pages/logo-editor.js" defer></script>
+</head>
+
+<body class="logo-editor-body">
+  <header class="topbar">
+    <div class="brand">FAMILIADA</div>
+    <div class="right">
+      <button class="btn" id="btnBack" type="button">← Moje gry</button>
+      <span class="who" id="who">—</span>
+      <button class="btn" id="btnLogout" type="button">Wyloguj</button>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div class="rowTop">
+      <div>
+        <div class="title">Twoje logo</div>
+        <div class="hint">Tworzysz nowe logo, ustawiasz aktywne lub usuwasz. Edycji istniejących nie ma.</div>
+      </div>
+      <div class="rowTopRight">
+        <button class="btn" id="btnClearActive" type="button">Wyłącz aktywne</button>
+      </div>
+    </div>
+
+    <section class="shell">
+      <div class="grid" id="grid"></div>
+    </section>
+
+    <div class="foot">
+      <div id="msg" class="msg"></div>
+    </div>
+  </main>
+
+  <!-- Modal: create -->
+  <div class="overlay" id="createOverlay" style="display:none;">
+    <div class="modal">
+      <div class="mTitle" id="mTitle">Nowe logo</div>
+      <div class="mSub" id="mSub">Wybierz tryb tworzenia.</div>
+
+      <div class="mSection" id="modePick">
+        <div class="mGrid">
+          <button class="mTile" id="pickText" type="button">
+            <div class="mTileTitle">Napis</div>
+            <div class="mTileSub">30×10 znaków</div>
+          </button>
+          <button class="mTile" id="pickDraw" type="button">
+            <div class="mTileTitle">Rysunek</div>
+            <div class="mTileSub">150×70 pikseli</div>
+          </button>
+          <button class="mTile" id="pickImage" type="button">
+            <div class="mTileTitle">Obraz</div>
+            <div class="mTileSub">Upload → 150×70</div>
+          </button>
+        </div>
+      </div>
+
+      <!-- STEP: common -->
+      <div class="mSection" id="stepCommon" style="display:none;">
+        <div class="lbl">Nazwa</div>
+        <input class="inp" id="logoName" placeholder="Np. Moje logo"/>
+
+        <div class="hint" style="margin-top:8px;" id="modeHint">—</div>
+      </div>
+
+      <!-- STEP: text -->
+      <div class="mSection" id="stepText" style="display:none;">
+        <div class="lbl">Tekst</div>
+        <input class="inp" id="textValue" placeholder="Np. FAMILIADA"/>
+        <div class="hint" style="margin-top:8px;">To tworzy proste logo tekstowe (bez edycji po zapisie).</div>
+        <div class="previewRow">
+          <canvas id="prevGlyph" width="300" height="100"></canvas>
+        </div>
+      </div>
+
+      <!-- STEP: draw -->
+      <div class="mSection" id="stepDraw" style="display:none;">
+        <div class="toolRow">
+          <button class="btn sm" id="btnBrush" type="button">Pędzel</button>
+          <button class="btn sm" id="btnEraser" type="button">Gumka</button>
+          <button class="btn sm" id="btnClear" type="button">Wyczyść</button>
+          <div class="spacer"></div>
+          <label class="chk"><input type="checkbox" id="chkPreviewPhysical"/> Podgląd z przerwami</label>
+        </div>
+        <div class="canvasBox">
+          <canvas id="drawCanvas" width="150" height="70"></canvas>
+        </div>
+      </div>
+
+      <!-- STEP: image -->
+      <div class="mSection" id="stepImage" style="display:none;">
+        <div class="toolRow" style="align-items:center;">
+          <input class="inp" id="imgFile" type="file" accept="image/*"/>
+          <label class="chk"><input type="checkbox" id="chkImgContain" checked/> Dopasuj (contain)</label>
+          <label class="chk"><input type="checkbox" id="chkImgDither"/> Dithering</label>
+        </div>
+        <div class="hint" style="margin-top:8px;">Obraz zostanie przeskalowany i sprowadzony do czerni/bieli.</div>
+        <div class="canvasBox">
+          <canvas id="imgCanvas" width="150" height="70"></canvas>
+        </div>
+      </div>
+
+      <div class="importRow" style="margin-top:14px;">
+        <button class="btn sm gold" id="btnCreate" type="button" style="display:none;">Zapisz</button>
+        <button class="btn sm" id="btnCancel" type="button">Zamknij</button>
+        <div class="importMsg" id="mMsg"></div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
