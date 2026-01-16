@@ -15,6 +15,7 @@ const DOT_H = 70;  // 10*7
 
 const FONT_3x10_URL = "./display/font_3x10.json";
 const FONT_5x7_URL  = "./display/font_5x7.json";
+const DEFAULT_LOGO_URL = "./display/logo_familiada.json";
 
 /* =========================================================
    DOM
@@ -30,6 +31,7 @@ const btnClearActive = document.getElementById("btnClearActive");
 // mode pick modal
 const createOverlay = document.getElementById("createOverlay");
 const pickText = document.getElementById("pickText");
+const pickTextPix = document.getElementById("pickTextPix");
 const pickDraw = document.getElementById("pickDraw");
 const pickImage = document.getElementById("pickImage");
 const btnPickCancel = document.getElementById("btnPickCancel");
@@ -48,6 +50,18 @@ const textWarn = document.getElementById("textWarn");
 const textMeasure = document.getElementById("textMeasure");
 const btnCharsToggle = document.getElementById("btnCharsToggle");
 const charsList = document.getElementById("charsList");
+
+const paneTextPix = document.getElementById("paneTextPix");
+const textPixValue = document.getElementById("textPixValue");
+const selPixFont = document.getElementById("selPixFont");
+const chkPixBold = document.getElementById("chkPixBold");
+const chkPixItalic = document.getElementById("chkPixItalic");
+const selPixAlign = document.getElementById("selPixAlign");
+const rngPixSize = document.getElementById("rngPixSize");
+const pixSizeLabel = document.getElementById("pixSizeLabel");
+const rngPixThresh = document.getElementById("rngPixThresh");
+const pixThreshLabel = document.getElementById("pixThreshLabel");
+const pixWarn = document.getElementById("pixWarn");
 
 const paneDraw = document.getElementById("paneDraw");
 const drawCanvas = document.getElementById("drawCanvas");
@@ -76,7 +90,9 @@ const btnPreviewClose = document.getElementById("btnPreviewClose");
    STATE
 ========================================================= */
 let currentUser = null;
+let editorDirty = false;
 let logos = [];
+let defaultLogoRows = Array.from({ length: 10 }, () => " ".repeat(30));
 
 let editorMode = null; // 'TEXT' | 'DRAW' | 'IMAGE' | 'TEXT_PIX'
 let draftRows30x10 = Array.from({ length: 10 }, () => " ".repeat(30));
@@ -110,6 +126,15 @@ function esc(s) {
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
 }
+
+function markDirty() { editorDirty = true; }
+function clearDirty() { editorDirty = false; }
+
+function confirmCloseIfDirty() {
+  if (!editorDirty) return true;
+  return confirm("Jeśli teraz zamkniesz, zmiany nie zostaną zapisane, a logo nie zostanie dodane.");
+}
+
 
 /* =========================================================
    Fetch fonts
@@ -151,6 +176,19 @@ async function loadFonts() {
     console.error(e);
     GLYPH_5x7 = {};
     setEditorMsg("Nie mogę wczytać font_5x7.json — sprawdź ścieżkę w FONT_5x7_URL.");
+  }
+}
+
+async function loadDefaultLogo() {
+  try {
+    const j = await fetchJsonRequired(DEFAULT_LOGO_URL, "Default logo");
+    const rows = j?.layers?.[0]?.rows;
+    if (Array.isArray(rows) && rows.length) {
+      defaultLogoRows = rows.map(r => String(r || "").padEnd(30, " ").slice(0, 30)).slice(0, 10);
+    }
+  } catch (e) {
+    console.warn("[logo-editor] default logo load failed", e);
+    defaultLogoRows = Array.from({ length: 10 }, () => " ".repeat(30));
   }
 }
 
@@ -752,6 +790,40 @@ function looksClipped(box, w, h, pad = 1) {
   return box.minX <= pad || box.minY <= pad || box.maxX >= (w-1-pad) || box.maxY >= (h-1-pad);
 }
 
+function updateTextPixPreview() {
+  if (editorMode !== "TEXT_PIX") return;
+
+  if (pixSizeLabel && rngPixSize) pixSizeLabel.textContent = String(rngPixSize.value);
+  if (pixThreshLabel && rngPixThresh) pixThreshLabel.textContent = String(rngPixThresh.value);
+
+  const text = String(textPixValue?.value || "");
+  const opts = {
+    family: String(selPixFont?.value || "system-ui, sans-serif"),
+    bold: !!chkPixBold?.checked,
+    italic: !!chkPixItalic?.checked,
+    align: String(selPixAlign?.value || "center"),
+    sizePx: Number(rngPixSize?.value || 56),
+    threshold: Number(rngPixThresh?.value || 128),
+  };
+
+  const { bits150 } = compileHtmlTextTo150(text, opts);
+  draftBits150 = bits150;
+
+  // ostrzeżenie, jeśli wygląda na ucięte
+  const box = bitsBoundingBox(bits150, DOT_W, DOT_H);
+  const clipped = looksClipped(box, DOT_W, DOT_H, 0);
+
+  if (pixWarn) {
+    if (clipped) {
+      pixWarn.textContent = "Wygląda na ucięte. Zmniejsz rozmiar albo zmień wyrównanie.";
+      show(pixWarn, true);
+    } else {
+      show(pixWarn, false);
+    }
+  }
+
+  updateBigPreview();
+}
 
 /* =========================================================
    DB
@@ -841,6 +913,64 @@ function openPreviewFullscreen(payload) {
 function renderList() {
   if (!grid) return;
   grid.innerHTML = "";
+
+   const hasActive = logos.some(x => !!x.is_active);
+   const isDefaultActive = !hasActive;
+   
+   // DEFAULT tile
+   {
+     const el = document.createElement("div");
+     el.className = "card default";
+   
+     el.innerHTML = `
+       <div class="cardTop">
+         <div>
+           <div class="name">Domyślne logo</div>
+           <div class="meta">Używane automatycznie, gdy nie wybierzesz innego</div>
+         </div>
+         ${isDefaultActive ? `<div class="badgeActive">Aktywne</div>` : ``}
+       </div>
+       <div class="preview"></div>
+       <div class="actions"></div>
+     `;
+   
+     const payload = { kind: "GLYPH", rows: defaultLogoRows };
+   
+     const prevWrap = el.querySelector(".preview");
+     const prevCanvas = buildCardPreviewCanvas(payload);
+     prevCanvas.style.cursor = "pointer";
+     prevCanvas.addEventListener("click", (ev) => {
+       ev.stopPropagation();
+       openPreviewFullscreen(payload);
+     });
+     prevWrap.appendChild(prevCanvas);
+   
+     const actions = el.querySelector(".actions");
+     const btnAct = document.createElement("button");
+     btnAct.className = "btn sm gold";
+     btnAct.type = "button";
+     btnAct.textContent = isDefaultActive ? "Aktywne" : "Ustaw aktywne";
+     btnAct.disabled = isDefaultActive;
+   
+     btnAct.addEventListener("click", async (ev) => {
+       ev.stopPropagation();
+       setMsg("Ustawiam domyślne…");
+       try {
+         // bez alertu: dokładnie jak stary "Wyłącz aktywne", tylko w kafelku
+         await clearActive();
+         await refresh();
+         setMsg("Ustawiono domyślne logo.");
+       } catch (e) {
+         console.error(e);
+         alert("Nie udało się ustawić domyślnego.\n\n" + (e?.message || e));
+         setMsg("");
+       }
+     });
+   
+     actions.appendChild(btnAct);
+     grid.appendChild(el);
+   }
+
 
   // add tile
   const add = document.createElement("div");
@@ -943,6 +1073,10 @@ function resetEditorState() {
   clearCanvas(imgCanvas);
 
   show(paneText, false);
+  show(paneTextPix, false);
+  if (pixWarn) show(pixWarn, false);
+  if (textPixValue) textPixValue.value = "";
+
   show(paneDraw, false);
   show(paneImage, false);
 
@@ -950,6 +1084,7 @@ function resetEditorState() {
   if (textMeasure) textMeasure.textContent = "—";
 
   setEditorMsg("");
+  clearDirty();
 }
 
 function openEditor(mode) {
@@ -958,23 +1093,35 @@ function openEditor(mode) {
 
   const titleMap = {
     TEXT: "Nowe logo — Napis",
+    TEXT_PIX: "Nowe logo — Tekst",
     DRAW: "Nowe logo — Rysunek",
     IMAGE: "Nowe logo — Obraz",
   };
 
   editorTitle.textContent = titleMap[mode] || "Nowe logo";
-  editorSub.textContent = mode === "TEXT"
-    ? "Piszesz tekst fontem 3×10; system liczy szerokość tight i ostrzega jeśli nie wejdzie."
-    : "Pracujesz w 150×70; podgląd po prawej pokazuje wygląd jak na BIG.";
+  editorSub.textContent =
+    mode === "TEXT" ? "Klasyczny styl jak w logo Familiady."
+  : mode === "TEXT_PIX" ? "Tekst użytkownika z możliwością dopasowania stylu."
+  : mode === "DRAW" ? "Możesz narysować logo dowolnie."
+  : "Zaimportuj obrazek i dopasuj go do logo.";
 
-  if (!logoName.value.trim()) {
-    logoName.value = mode === "TEXT" ? "Napis" : mode === "DRAW" ? "Rysunek" : "Obraz";
-  }
+   if (!logoName.value.trim()) {
+     logoName.value =
+       mode === "TEXT" ? "Napis" :
+       mode === "TEXT_PIX" ? "Tekst" :
+       mode === "DRAW" ? "Rysunek" :
+       "Obrazek";
+   }
 
   show(paneText, mode === "TEXT");
+  show(paneTextPix, mode === "TEXT_PIX");
   show(paneDraw, mode === "DRAW");
   show(paneImage, mode === "IMAGE");
 
+
+  show(document.querySelector(".shell"), false); // chowamy kafelki
+  clearDirty();
+  
   show(editorShell, true);
 
   if (mode === "TEXT") {
@@ -983,6 +1130,11 @@ function openEditor(mode) {
     updateTextWarnings(compiled);
     updateBigPreview();
   }
+
+   if (mode === "TEXT_PIX") {
+     updateTextPixPreview();
+      clearDirty();
+   }
 
   if (mode === "DRAW") {
     drawBitsToCanvasBW(draftBits150, DOT_W, DOT_H, drawCanvas);
@@ -995,8 +1147,10 @@ function openEditor(mode) {
   }
 }
 
-function closeEditor() {
+function closeEditor(force = false) {
+  if (!force && !confirmCloseIfDirty()) return;
   show(editorShell, false);
+  show(document.querySelector(".shell"), true); // przywróć kafelki
   resetEditorState();
 }
 
@@ -1177,12 +1331,13 @@ async function handleCreate() {
       });
 
       setEditorMsg("Zapisano.");
+      clearDirty();
       closeEditor();
       await refresh();
       return;
     }
 
-    if (editorMode === "DRAW" || editorMode === "IMAGE") {
+    if (editorMode === "DRAW" || editorMode === "IMAGE" || editorMode === "TEXT_PIX") {
       const payload = {
         w: DOT_W,
         h: DOT_H,
@@ -1220,6 +1375,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (who) who.textContent = currentUser?.email || "—";
 
   await loadFonts();
+  await loadDefaultLogo();
   renderAllowedCharsList();
 
   btnBack?.addEventListener("click", () => { location.href = "builder.html"; });
@@ -1246,6 +1402,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // pick modal
   pickText?.addEventListener("click", () => { show(createOverlay, false); openEditor("TEXT"); });
+  pickTextPix?.addEventListener("click", () => { show(createOverlay, false); openEditor("TEXT_PIX"); });
   pickDraw?.addEventListener("click", () => { show(createOverlay, false); openEditor("DRAW"); });
   pickImage?.addEventListener("click", () => { show(createOverlay, false); openEditor("IMAGE"); });
 
@@ -1259,6 +1416,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   // text editor
   textValue?.addEventListener("input", () => {
     if (editorMode !== "TEXT") return;
+    markDirty();
     const compiled = compileTextToRows30x10(textValue.value);
     draftRows30x10 = compiled.rows;
     updateTextWarnings(compiled);
@@ -1270,6 +1428,20 @@ document.addEventListener("DOMContentLoaded", async () => {
     show(charsList, on);
     btnCharsToggle.textContent = on ? "Ukryj" : "Pokaż";
   });
+
+   const hookTextPix = () => {
+     if (editorMode !== "TEXT_PIX") return;
+     markDirty();
+     updateTextPixPreview();
+   };
+   
+   textPixValue?.addEventListener("input", hookTextPix);
+   selPixFont?.addEventListener("change", hookTextPix);
+   chkPixBold?.addEventListener("change", hookTextPix);
+   chkPixItalic?.addEventListener("change", hookTextPix);
+   selPixAlign?.addEventListener("change", hookTextPix);
+   rngPixSize?.addEventListener("input", hookTextPix);
+   rngPixThresh?.addEventListener("input", hookTextPix);
 
   // draw editor
   btnBrush?.addEventListener("click", () => {
