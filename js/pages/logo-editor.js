@@ -142,7 +142,7 @@ function esc(s) {
 function markDirty() { editorDirty = true; }
 function clearDirty() { editorDirty = false; }
 
-function () {
+function confirmCloseIfDirty() {
   if (!editorDirty) return true;
   return confirm("Jeśli teraz zamkniesz, zmiany nie zostaną zapisane, a logo nie zostanie dodane.");
 }
