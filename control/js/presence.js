@@ -105,6 +105,7 @@ export function createPresence({ game, ui, store, devices }) {
         try {
           await devices.sendHostCmd("COVER");
           await devices.sendHostCmd("CLEAR");
+          await devices.sendHostCmd("COLOR_RESET");
         } catch {}
       }
 
@@ -112,12 +113,15 @@ export function createPresence({ game, ui, store, devices }) {
         initDone.buzzer = true;
         try {
           await devices.sendBuzzerCmd("OFF");
+          await devices.sendBuzzerCmd("COLOR_RESET");
         } catch {}
       }
 
       if (dOn && !initDone.display) {
         initDone.display = true;
         try {
+          await devices.sendDisplayCmd("APP GAME");
+          await devices.sendDisplayCmd("COLOR RESET");
           await devices.sendDisplayCmd("APP BLACK");
         } catch {}
       }
