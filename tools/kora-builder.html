@@ -402,7 +402,92 @@
       min-height: 0;
       overflow: auto;
     }
+    /* ====== FIX: layout ma się mieścić POD headerem bez zgadywania wysokości ====== */
+    html, body { height: 100%; }
     
+    body{
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+    
+    /* header jest stałą częścią, niech się nie kurczy */
+    header{
+      flex: 0 0 auto;
+    }
+    
+    /* layout zajmuje resztę wysokości okna */
+    .layout{
+      flex: 1 1 auto;
+      min-height: 0;      /* KLUCZ: pozwala potomkom się kurczyć */
+      height: auto;       /* usuwa złe założenia typu 100vh */
+      overflow: hidden;   /* nic nie ma wypływać poza layout */
+    }
+    
+    /* prawa karta i jej wnętrza muszą się kurczyć */
+    .card{
+      min-height: 0;
+      overflow: hidden;
+    }
+    
+    /* prawa karta ma mieć 100% wysokości dostępnej w kolumnie */
+    .card:last-child{ height: 100%; }
+    
+    /* w prawym panelu: auto + reszta jako minmax(0,1fr) */
+    .rightStack{
+      min-height: 0;
+      height: 100%;
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr);
+      gap: var(--gap);
+    }
+    
+    /* plansza + panele: MUSI mieć min-height 0 */
+    .boardSection{
+      min-height: 0;
+      height: 100%;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 300px;
+      gap: var(--gap);
+    }
+    
+    /* viewport planszy ma własny scroll i ograniczenie wysokości */
+    .boardViewport{
+      min-height: 0;
+      height: 100%;
+      overflow: auto;
+    }
+    
+    /* prawa kolumna z panelami: każdy panel dostaje część wysokości */
+    .sideStack{
+      min-height: 0;
+      height: 100%;
+      display: grid;
+      grid-template-rows: minmax(0, 1fr) minmax(0, 1.2fr) minmax(0, 1fr);
+      gap: var(--gap);
+    }
+    
+    /* panele szare: MUSZĄ mieć overflow hidden + min-height 0 */
+    .panel{
+      min-height: 0;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    /* scrollowane wnętrze panelu: MUSI mieć min-height 0 */
+    .panel .scroll{
+      min-height: 0;
+      overflow: auto;
+    }
+    
+    /* dolny hint w prawym panelu nie może wypychać */
+    .rightStack > .hint{
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
   </style>
 </head>
 
