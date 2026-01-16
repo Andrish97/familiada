@@ -114,7 +114,9 @@ export function createPresence({ game, ui, store, devices }) {
         try {
           await devices.sendBuzzerCmd("OFF");
           await devices.sendBuzzerCmd("COLOR_RESET");
-        } catch {}
+        } catch (e) {
+          console.warn("INIT buzzer failed", e);
+        }
       }
 
       if (dOn && !initDone.display) {
