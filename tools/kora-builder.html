@@ -488,14 +488,46 @@
       text-overflow: ellipsis;
       white-space: nowrap;
     }
+
+    .fileBtn{
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 10px;
+      border: 1px solid #2a2f44;
+      background: #121521;
+      color: var(--fg);
+      font-weight: 700;
+      cursor: pointer;
+      user-select: none;
+    }
+    
+    .fileBtn:hover{
+      border-color: #3a4261;
+    }
+    
+    .fileBtn:active{
+      transform: translateY(1px);
+    }
+    
+    .fileBtn input{
+      display: none;
+    }
   </style>
 </head>
 
 <body>
 <header>
   <div class="row">
-    <input id="fontFile" type="file" accept=".json,application/json" />
-    <input id="bigFile" type="file" accept=".json,application/json" title="Wczytaj istniejący JSON 3x10" />
+    <label class="fileBtn">
+      Wybierz plik fontu 5×7
+      <input id="fontFile" type="file" accept=".json,application/json" hidden />
+    </label>
+    <label class="fileBtn">
+      Wczytaj plik 3x10 do edycji
+      <input id="bigFile" type="file" accept=".json,application/json" hidden />
+    </label>
     <span id="status" class="hint">Brak fontu 5×7 — wczytaj JSON.</span>
   </div>
 
