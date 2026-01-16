@@ -3,64 +3,56 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Multi-file patcher (kopiuj/wklej)</title>
+  <title>Wklej plik + patch → wynik</title>
   <style>
     body { font-family: system-ui, Arial, sans-serif; margin: 16px; line-height: 1.3; }
-    textarea { width: 100%; min-height: 220px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
-    .btns { display:flex; gap:8px; flex-wrap:wrap; margin: 10px 0; }
-    button { padding: 10px 12px; cursor:pointer; }
-    .ok { color:#0a0; font-weight:600; }
-    .err { color:#a00; font-weight:600; }
-    .hint { color:#555; font-size: 14px; }
-    code { background: #f3f3f3; padding: 0 4px; border-radius: 4px; }
+    textarea { width: 100%; min-height: 200px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .row { display: grid; grid-template-columns: 1fr; gap: 12px; }
+    .btns { display: flex; gap: 8px; flex-wrap: wrap; }
+    button { padding: 10px 12px; cursor: pointer; }
+    .ok { color: #0a0; font-weight: 600; }
+    .err { color: #a00; font-weight: 600; }
+    details { margin-top: 10px; }
   </style>
 </head>
 <body>
-  <h2>Multi-file patch w przeglądarce (kopiuj/wklej)</h2>
-  <div class="hint">
-    <div><strong>Format plików wejściowych:</strong></div>
-    <div><code>@@@ familiada/display/style.css</code> (linia nagłówka), potem treść, potem kolejny plik znów od <code>@@@</code>.</div>
+  <h2>Patch w przeglądarce (kopiuj/wklej)</h2>
+
+  <div class="row">
+    <label>
+      <div><strong>1) Wklej aktualną treść pliku</strong></div>
+      <textarea id="original" placeholder="Tu wklej zawartość pliku (np. CSS/JS/HTML/JSON)"></textarea>
+    </label>
+
+    <label>
+      <div><strong>2) Wklej patch/diff (unified diff)</strong></div>
+      <textarea id="patch" placeholder="Tu wklej diff zaczynający się np. od --- a/... +++ b/..."></textarea>
+    </label>
+
+    <div class="btns">
+      <button id="applyBtn">Zastosuj patch</button>
+      <button id="copyBtn" disabled>Skopiuj wynik</button>
+      <button id="clearBtn">Wyczyść</button>
+    </div>
+
+    <div id="status"></div>
+
+    <label>
+      <div><strong>3) Wynik (skopiuj i wklej do pliku)</strong></div>
+      <textarea id="result" placeholder="Tu pojawi się wynik..." readonly></textarea>
+    </label>
+
+    <details>
+      <summary>Wskazówki (gdy nie działa)</summary>
+      <ul>
+        <li>Patch musi być „unified diff”: linie <code>@@ ... @@</code> i bloki z <code>+</code>/<code>-</code>.</li>
+        <li>Ten prosty patcher działa najlepiej, gdy diff dotyczy <strong>jednego pliku</strong>.</li>
+        <li>Jeśli w patchu masz <code>--- a/styles.css</code> a plik w repo nazywa się inaczej, to <em>nie szkodzi</em> — tu i tak aplikujemy do wklejonej treści.</li>
+      </ul>
+    </details>
   </div>
 
-  <label>
-    <div><strong>1) Wklej TREŚĆ PLIKÓW (wiele plików)</strong></div>
-    <textarea id="files" placeholder="@@@ familiada/display/style.css
-/* ... */
-@@@ familiada/display/app.js
-console.log('hej');"></textarea>
-  </label>
-
-  <label>
-    <div><strong>2) Wklej PATCH/DIFF (może mieć wiele plików)</strong></div>
-    <textarea id="patch" placeholder="diff --git a/... b/...
---- a/...
-+++ b/...
-@@ ... @@
-..."></textarea>
-  </label>
-
-  <div class="btns">
-    <button id="applyBtn">Zastosuj patch</button>
-    <button id="copyBtn" disabled>Skopiuj wynik</button>
-    <button id="clearBtn">Wyczyść</button>
-  </div>
-
-  <div id="status"></div>
-
-  <label>
-    <div><strong>3) WYNIK (też w formacie @@@ ...)</strong></div>
-    <textarea id="result" readonly placeholder="Tu pojawi się wynik..."></textarea>
-  </label>
-
-  <details style="margin-top:10px">
-    <summary>Najczęstsze problemy</summary>
-    <ul>
-      <li>Jeśli patch nie pasuje: diff jest zrobiony dla innej wersji pliku (kontekst się nie zgadza).</li>
-      <li>Jeśli patch dotyczy pliku, którego nie wkleiłeś w sekcji 1, dostaniesz listę brakujących plików.</li>
-      <li>Patchy binarnych ten prosty patcher nie obsługuje (tylko tekst).</li>
-    </ul>
-  </details>
-
+  <!-- jsdiff (działa z CDN). Jeśli chcesz 100% offline, mogę dać wersję bez CDN. -->
   <script src="https://cdn.jsdelivr.net/npm/diff@5.2.0/dist/diff.min.js"></script>
   <script>
     const $ = (id) => document.getElementById(id);
@@ -72,145 +64,31 @@ console.log('hej');"></textarea>
       statusEl.textContent = msg;
     }
 
-    function normalizeNewlines(s) {
-      return (s ?? "").replace(/\r\n/g, "\n");
-    }
-
-    function stripAB(path) {
-      // patch potrafi mieć "a/foo" "b/foo"
-      return path.replace(/^(a|b)\//, "");
-    }
-
-    function parseFilesInput(text) {
-      // Format:
-      // @@@ path/to/file.ext
-      // <content...>
-      // @@@ next/file.ext
-      // <content...>
-      const s = normalizeNewlines(text);
-      const lines = s.split("\n");
-      const files = new Map();
-
-      let currentPath = null;
-      let buf = [];
-
-      function flush() {
-        if (currentPath !== null) {
-          files.set(currentPath, buf.join("\n"));
-        }
-        buf = [];
-      }
-
-      for (const line of lines) {
-        const m = line.match(/^@@@\s+(.+?)\s*$/);
-        if (m) {
-          flush();
-          currentPath = m[1].trim();
-          continue;
-        }
-        buf.push(line);
-      }
-      flush();
-
-      // usuń ewentualny pusty wpis gdy ktoś wkleił tekst bez @@@
-      if (files.size === 1) {
-        for (const [k,v] of files) {
-          if (!k || k.startsWith("@@@")) files.delete(k);
-        }
-      }
-
-      return files;
-    }
-
-    function buildFilesOutput(filesMap) {
-      // Składamy z powrotem w formacie @@@ path
-      // Zachowujemy kolejność wstawiania (Map ją trzyma).
-      let out = "";
-      for (const [path, content] of filesMap.entries()) {
-        out += `@@@ ${path}\n${content}\n`;
-      }
-      return out.trimEnd() + "\n";
-    }
-
     $("applyBtn").addEventListener("click", () => {
-      const filesText = $("files").value;
-      const patchText = $("patch").value;
+      const original = $("original").value.replace(/\r\n/g, "\n");
+      const patch = $("patch").value.replace(/\r\n/g, "\n");
 
       $("result").value = "";
       copyBtn.disabled = true;
 
-      if (!filesText.trim()) return setStatus("Wklej pliki (sekcja 1).", false);
-      if (!patchText.trim()) return setStatus("Wklej patch (sekcja 2).", false);
+      if (!original.trim()) return setStatus("Wklej treść pliku.", false);
+      if (!patch.trim()) return setStatus("Wklej patch/diff.", false);
 
-      let files;
       try {
-        files = parseFilesInput(filesText);
-      } catch (e) {
-        return setStatus("Nie umiem sparsować plików wejściowych. Sprawdź format @@@.", false);
-      }
+        // applyPatch expects a unified diff for a single file.
+        const out = Diff.applyPatch(original, patch);
 
-      if (files.size === 0) {
-        return setStatus("Nie znaleziono żadnych plików. Użyj nagłówków @@@ ścieżka.", false);
-      }
-
-      const patch = normalizeNewlines(patchText);
-
-      let parsed;
-      try {
-        parsed = Diff.parsePatch(patch);
-      } catch (e) {
-        return setStatus("Patch wygląda na niepoprawny unified diff (nie da się go sparsować).", false);
-      }
-
-      if (!parsed || parsed.length === 0) {
-        return setStatus("Patch nie zawiera żadnych zmian.", false);
-      }
-
-      // Będziemy modyfikować kopię mapy
-      const outFiles = new Map(files);
-
-      const missing = [];
-      const failed = [];
-
-      for (const fp of parsed) {
-        // Wybieramy nazwę docelową pliku:
-        // - jeśli newFileName to nie /dev/null, bierzemy new
-        // - inaczej old
-        const newName = fp.newFileName || "";
-        const oldName = fp.oldFileName || "";
-        const targetRaw = (newName && newName !== "/dev/null") ? newName : oldName;
-        const target = stripAB(targetRaw);
-
-        if (!outFiles.has(target)) {
-          // czasem patch ma tylko nazwę pliku bez folderów, a user wkleił pełną ścieżkę
-          missing.push(target);
-          continue;
+        if (out === false) {
+          setStatus("Nie udało się zastosować patcha (kontekst nie pasuje). Sprawdź czy to diff do tej wersji pliku.", false);
+          return;
         }
 
-        const original = outFiles.get(target);
-        const singlePatchStr = Diff.formatPatch([fp]); // patch string tylko dla tego pliku
-
-        const applied = Diff.applyPatch(original, singlePatchStr);
-        if (applied === false) {
-          failed.push(target);
-          continue;
-        }
-
-        outFiles.set(target, applied);
+        $("result").value = out;
+        copyBtn.disabled = false;
+        setStatus("OK — patch zastosowany. Skopiuj wynik.", true);
+      } catch (e) {
+        setStatus("Błąd: " + (e && e.message ? e.message : String(e)), false);
       }
-
-      if (missing.length || failed.length) {
-        let msg = "";
-        if (missing.length) msg += `Brakujące pliki (wklej je w sekcji 1): ${missing.join(", ")}. `;
-        if (failed.length) msg += `Nie dało się zastosować patcha (kontekst nie pasuje) dla: ${failed.join(", ")}.`;
-        setStatus(msg.trim(), false);
-        // mimo błędów pokażemy to, co się udało
-      } else {
-        setStatus("OK — patch zastosowany do wszystkich plików.", true);
-      }
-
-      $("result").value = buildFilesOutput(outFiles);
-      copyBtn.disabled = false;
     });
 
     copyBtn.addEventListener("click", async () => {
@@ -218,21 +96,22 @@ console.log('hej');"></textarea>
       if (!text) return;
       try {
         await navigator.clipboard.writeText(text);
-        setStatus("Skopiowano wynik do schowka.", true);
+        setStatus("Skopiowano do schowka.", true);
       } catch {
+        // fallback
         $("result").focus();
         $("result").select();
         document.execCommand("copy");
-        setStatus("Skopiowano (tryb awaryjny).", true);
+        setStatus("Skopiowano (fallback).", true);
       }
     });
 
     $("clearBtn").addEventListener("click", () => {
-      $("files").value = "";
+      $("original").value = "";
       $("patch").value = "";
       $("result").value = "";
       copyBtn.disabled = true;
-      statusEl.textContent = "";
+      setStatus("");
       statusEl.className = "";
     });
   </script>
