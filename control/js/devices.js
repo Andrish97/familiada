@@ -23,31 +23,11 @@ export function createDevices({ game, ui, store, chDisplay, chHost, chBuzzer }) 
   async function sendCmd(channel, event, line) {
     const l = String(line ?? "").trim();
     if (!l) return;
-  
-    // Jeśli to RealtimeManager (rt), ma sendBroadcast
-    if (channel && typeof channel.sendBroadcast === "function") {
-      await channel.sendBroadcast(event, { line: l }, { mode: "http" });
-      return;
-    }
-  
-    // Jeśli to surowy RealtimeChannel
-    const msg = { type: "broadcast", event, payload: { line: l } };
-  
-    if (channel && typeof channel.httpSend === "function") {
-      const { error } = await channel.httpSend(msg);
-      if (error) throw error;
-      return;
-    }
-  
-    if (channel && typeof channel.send === "function") {
-      const { error } = await channel.send(msg);
-      if (error) throw error;
-      return;
-    }
-  
-    throw new Error("Unknown channel type (no sendBroadcast/httpSend/send)");
+    // Wysyłamy jawnie przez REST (httpSend), żeby uniknąć ostrzeżeń Supabase
+    // o automatycznym fallbacku send() -> REST.
+    await channel.sendBroadcast(event, { line: l }, { mode: "http" });
   }
-  
+
   function isOnline(kind) {
     const flags = store.state?.flags || {};
     if (kind === "display") return !!flags.displayOnline;
