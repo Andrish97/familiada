@@ -24,6 +24,14 @@ const btnBack = document.getElementById("btnBack");
 const btnLogout = document.getElementById("btnLogout");
 const btnClearActive = document.getElementById("btnClearActive");
 
+// podgląd BIG
+const viewOverlay = document.getElementById("viewOverlay");
+const vTitle = document.getElementById("vTitle");
+const vSub = document.getElementById("vSub");
+const vMsg = document.getElementById("vMsg");
+const viewCanvas = document.getElementById("viewCanvas");
+const btnViewClose = document.getElementById("btnViewClose");
+
 // modal
 const createOverlay = document.getElementById("createOverlay");
 const mTitle = document.getElementById("mTitle");
@@ -52,10 +60,14 @@ const btnEraser = document.getElementById("btnEraser");
 const btnClear = document.getElementById("btnClear");
 const chkPreviewPhysical = document.getElementById("chkPreviewPhysical");
 
+const drawPreview = document.getElementById("drawPreview");
+
 const imgFile = document.getElementById("imgFile");
 const imgCanvas = document.getElementById("imgCanvas");
 const chkImgContain = document.getElementById("chkImgContain");
 const chkImgDither = document.getElementById("chkImgDither");
+
+const imgPreview = document.getElementById("imgPreview");
 
 const btnCreate = document.getElementById("btnCreate");
 const btnCancel = document.getElementById("btnCancel");
@@ -67,6 +79,9 @@ let currentUser = null;
 let logos = [];
 
 let createMode = null; // 'TEXT' | 'DRAW' | 'IMAGE'
+
+// 5x7 font (jak w display)
+let GLYPH_MAP = null; // Map<char, number[7]>
 
 // DRAW buffer
 let drawBits = new Uint8Array(W * H); // 0/1
@@ -100,34 +115,103 @@ function esc(s) {
 }
 
 /* =========================================================
-   BITPACK (MSB-first, row-major)
+   FONT 5x7 (main/display/font_5x7.json)
+   Format: grupy { "A": [..7 liczb..], ... }
 ========================================================= */
-function bitsToB64(bits01, w, h) {
-  const n = w * h;
-  const bytes = new Uint8Array(Math.ceil(n / 8));
-  for (let i = 0; i < n; i++) {
-    if (bits01[i]) {
-      const bi = i >> 3;
-      const b = 7 - (i & 7);
-      bytes[bi] |= (1 << b);
+async function loadFont5x7() {
+  if (GLYPH_MAP) return GLYPH_MAP;
+  const url = "main/display/font_5x7.json";
+  const res = await fetch(url, { cache: "force-cache" });
+  if (!res.ok) throw new Error(`Nie mogę wczytać font_5x7.json: ${res.status}`);
+  const json = await res.json();
+
+  const map = new Map();
+  for (const [groupName, groupVal] of Object.entries(json || {})) {
+    if (!groupVal || typeof groupVal !== "object") continue;
+    if (groupName === "meta") continue;
+    for (const [ch, pat] of Object.entries(groupVal)) {
+      if (!Array.isArray(pat) || pat.length < 7) continue;
+      map.set(ch, pat.slice(0, 7).map(n => (n | 0)));
     }
   }
+  // pewniaki
+  if (!map.has(" ")) map.set(" ", [0,0,0,0,0,0,0]);
+  if (!map.has("?")) map.set("?", [31,17,2,4,4,0,4]);
+
+  GLYPH_MAP = map;
+  return GLYPH_MAP;
+}
+
+function resolveGlyph(ch) {
+  const m = GLYPH_MAP;
+  if (!m) return [0,0,0,0,0,0,0];
+  const s = String(ch ?? " ");
+  if (m.has(s)) return m.get(s);
+  const up = s.toUpperCase();
+  if (m.has(up)) return m.get(up);
+  return m.get("?") || [0,0,0,0,0,0,0];
+}
+
+/* =========================================================
+   BITPACK (jak w scene.js): row-major, MSB-first, STRIDE per-row
+   bytesPerRow = ceil(w/8)
+========================================================= */
+function bitsToB64(bits01, w, h) {
+  const bytesPerRow = Math.ceil(w / 8);
+  const bytes = new Uint8Array(bytesPerRow * h);
+
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      if (!bits01[y * w + x]) continue;
+      const byteIndex = y * bytesPerRow + (x >> 3);
+      const bit = 7 - (x & 7);
+      bytes[byteIndex] |= (1 << bit);
+    }
+  }
+
   let bin = "";
   for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
   return btoa(bin);
 }
 
 function b64ToBits(b64, w, h) {
-  const n = w * h;
-  const bin = atob(String(b64 || ""));
-  const bytes = new Uint8Array(bin.length);
-  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i) & 0xff;
+  const bytesPerRow = Math.ceil(w / 8);
+  const expected = bytesPerRow * h;
 
-  const out = new Uint8Array(n);
-  for (let i = 0; i < n; i++) {
-    const bi = i >> 3;
-    const b = 7 - (i & 7);
-    out[i] = (bytes[bi] >> b) & 1;
+  let bytes = new Uint8Array(0);
+  try {
+    const bin = atob(String(b64 || "").replace(/\s+/g, ""));
+    bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i) & 0xff;
+  } catch {
+    bytes = new Uint8Array(0);
+  }
+
+  // jeśli ktoś wkleił "tight pack" bez stride, spróbujmy to obsłużyć heurystycznie
+  if (bytes.length !== expected && bytes.length === Math.ceil((w * h) / 8)) {
+    const tight = bytes;
+    bytes = new Uint8Array(expected);
+    // przemapuj bity 1:1 do bufora ze stride
+    for (let i = 0; i < w * h; i++) {
+      const bi = i >> 3;
+      const b = 7 - (i & 7);
+      const on = (tight[bi] >> b) & 1;
+      if (!on) continue;
+      const x = i % w;
+      const y = (i / w) | 0;
+      const byteIndex = y * bytesPerRow + (x >> 3);
+      const bit = 7 - (x & 7);
+      bytes[byteIndex] |= (1 << bit);
+    }
+  }
+
+  const out = new Uint8Array(w * h);
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const byteIndex = y * bytesPerRow + (x >> 3);
+      const bit = 7 - (x & 7);
+      out[y * w + x] = (bytes[byteIndex] >> bit) & 1;
+    }
   }
   return out;
 }
@@ -171,26 +255,122 @@ function compressFromPhysical(bits208) {
 }
 
 /* =========================================================
-   CANVAS RENDER
+   GLYPH_30x10 -> bits 150x70 (dokładnie jak BIG)
 ========================================================= */
-function drawBitsToCanvas(bits01, w, h, canvas) {
-  if (!canvas) return;
-  const ctx = canvas.getContext("2d");
-  const img = ctx.createImageData(w, h);
-  for (let i = 0; i < w * h; i++) {
-    const v = bits01[i] ? 255 : 0;
-    img.data[i * 4 + 0] = v;
-    img.data[i * 4 + 1] = v;
-    img.data[i * 4 + 2] = v;
-    img.data[i * 4 + 3] = 255;
+function glyphLogoToBits150(payload) {
+  const bits = new Uint8Array(W * H);
+  const layers = payload?.layers || [];
+  for (const layer of layers) {
+    const rows = layer?.rows || [];
+    for (let ty = 0; ty < 10; ty++) {
+      const line = String(rows[ty] || "").padEnd(30, " ").slice(0, 30);
+      for (let tx = 0; tx < 30; tx++) {
+        const ch = line[tx] || " ";
+        if (ch === " ") continue;
+        const g = resolveGlyph(ch); // [7 liczb], bity MSB-first 5 kolumn
+        for (let py = 0; py < 7; py++) {
+          const rowBits = g[py] | 0;
+          for (let px = 0; px < 5; px++) {
+            const mask = 1 << (4 - px);
+            const on = (rowBits & mask) !== 0;
+            if (!on) continue;
+            const x = tx * 5 + px;
+            const y = ty * 7 + py;
+            bits[y * W + x] = 1;
+          }
+        }
+      }
+    }
   }
-  ctx.putImageData(img, 0, 0);
+  return bits;
 }
 
-function clearCanvas(canvas) {
-  const ctx = canvas.getContext("2d");
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+/* =========================================================
+   RENDER „jak BIG w scene” (kafelki 5x7 z przerwami i kropkami)
+   To jest po prostu canvas — nie SVG, ale geometria jak w scene.js
+========================================================= */
+const DOTS = {
+  d: 4,        // średnica
+  gap: 1,      // odstęp między kropkami wewnątrz kafla
+  tileGap: 8,  // odstęp między kaflami (2*d jak w scene.js)
+};
+
+function sceneBigSize() {
+  const { d, gap, tileGap } = DOTS;
+  const wSmall = 5 * d + (5 + 1) * gap;
+  const hSmall = 7 * d + (7 + 1) * gap;
+  const Wbig = 30 * wSmall + (30 - 1) * tileGap + 2 * gap;
+  const Hbig = 10 * hSmall + (10 - 1) * tileGap + 2 * gap;
+  return { Wbig, Hbig, wSmall, hSmall, r: d / 2, step: d + gap };
 }
+
+function renderBitsAsSceneDots(bits150, canvas, { on = "#d7ff3d", off = "#2e2e32", bg = "#2e2e32", cell = "#000000" } = {}) {
+  if (!canvas) return;
+  const { Wbig, Hbig, wSmall, hSmall, r, step } = sceneBigSize();
+  const { gap, tileGap } = DOTS;
+
+  // rysujemy do offscreen w natywnym rozmiarze, potem skalujemy do canvas
+  const off = document.createElement("canvas");
+  off.width = Wbig;
+  off.height = Hbig;
+  const ctx = off.getContext("2d");
+
+  // tło jak w BIG
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, Wbig, Hbig);
+
+  // czarne pola kafli + kropki
+  for (let ty = 0; ty < 10; ty++) {
+    for (let tx = 0; tx < 30; tx++) {
+      const x0 = gap + tx * (wSmall + tileGap);
+      const y0 = gap + ty * (hSmall + tileGap);
+
+      // cell background
+      ctx.fillStyle = cell;
+      ctx.fillRect(x0, y0, wSmall, hSmall);
+
+      for (let py = 0; py < 7; py++) {
+        for (let px = 0; px < 5; px++) {
+          const x = tx * 5 + px;
+          const y = ty * 7 + py;
+          const isOn = bits150[y * W + x] === 1;
+
+          const cx = x0 + gap + r + px * step;
+          const cy = y0 + gap + r + py * step;
+          ctx.beginPath();
+          ctx.arc(cx, cy, r, 0, Math.PI * 2);
+          ctx.closePath();
+          ctx.fillStyle = isOn ? on : off;
+          ctx.fill();
+        }
+      }
+    }
+  }
+
+  // dopasuj docelowy canvas do proporcji offscreen
+  const targetW = Math.max(1, canvas.clientWidth || canvas.width || 1);
+  const targetH = Math.max(1, Math.round(targetW * (Hbig / Wbig)));
+  canvas.width = targetW;
+  canvas.height = targetH;
+
+  const out = canvas.getContext("2d");
+  out.clearRect(0, 0, canvas.width, canvas.height);
+  out.imageSmoothingEnabled = true;
+  out.drawImage(off, 0, 0, canvas.width, canvas.height);
+}
+
+/* =========================================================
+   PODGLĄD (overlay)
+========================================================= */
+function showView({ title, sub, bits150 }) {
+  if (vTitle) vTitle.textContent = title || "Podgląd";
+  if (vSub) vSub.textContent = sub || "Jak BIG na scenie";
+  if (vMsg) vMsg.textContent = "";
+  renderBitsAsSceneDots(bits150, viewCanvas);
+  show(viewOverlay, true);
+}
+
+function hideView() { show(viewOverlay, false); }
 
 /* =========================================================
    DB
@@ -229,65 +409,27 @@ async function clearActive() {
 ========================================================= */
 function buildPreviewCanvasForLogo(logo) {
   const c = document.createElement("canvas");
-  c.width = 300;
-  c.height = 140;
-  c.style.imageRendering = "pixelated";
+  // sensowny fallback rozmiaru zanim trafi do DOM (clientWidth=0)
+  c.width = 520;
+  c.height = 240;
 
   try {
+    let bits150 = new Uint8Array(W * H);
     if (logo.type === TYPE_GLYPH) {
-      const rows = logo?.payload?.layers?.[0]?.rows || [];
-      const w = 30;
-      const h = 10;
-      const bits = new Uint8Array(w * h);
-      for (let y = 0; y < h; y++) {
-        const line = String(rows[y] || "").padEnd(30, " ").slice(0, 30);
-        for (let x = 0; x < w; x++) {
-          bits[y * w + x] = line[x] !== " " ? 1 : 0;
-        }
-      }
-
-      const tmp = document.createElement("canvas");
-      tmp.width = w;
-      tmp.height = h;
-      drawBitsToCanvas(bits, w, h, tmp);
-
-      const ctx = c.getContext("2d");
-      ctx.imageSmoothingEnabled = false;
-      ctx.clearRect(0, 0, c.width, c.height);
-      ctx.drawImage(tmp, 0, 0, c.width, c.height);
-      return c;
-    }
-
-    if (logo.type === TYPE_PIX) {
+      bits150 = glyphLogoToBits150(logo.payload || {});
+    } else if (logo.type === TYPE_PIX) {
       const p = logo.payload || {};
       const w = Number(p.w) || W;
       const h = Number(p.h) || H;
-      const bits = b64ToBits(p.bits_b64 || "", w, h);
-
-      // rysujemy jako 150x70, ale w preview z opcją przerw (zawsze fizyczny wygląda lepiej)
-      const phys = (w === W && h === H) ? expandToPhysical(bits) : bits;
-      const dw = (w === W && h === H) ? PW : w;
-      const dh = (w === W && h === H) ? PH : h;
-
-      const tmp = document.createElement("canvas");
-      tmp.width = dw;
-      tmp.height = dh;
-      drawBitsToCanvas(phys, dw, dh, tmp);
-
-      const ctx = c.getContext("2d");
-      ctx.imageSmoothingEnabled = false;
-      ctx.clearRect(0, 0, c.width, c.height);
-      ctx.drawImage(tmp, 0, 0, c.width, c.height);
-      return c;
+      if (w === W && h === H) bits150 = b64ToBits(p.bits_b64 || "", W, H);
     }
+    renderBitsAsSceneDots(bits150, c);
   } catch (e) {
     console.warn("[logo-editor] preview error", e);
+    const ctx = c.getContext("2d");
+    ctx.fillStyle = "rgba(255,255,255,.12)";
+    ctx.fillRect(0, 0, c.width, c.height);
   }
-
-  // fallback
-  const ctx = c.getContext("2d");
-  ctx.fillStyle = "rgba(255,255,255,.12)";
-  ctx.fillRect(0, 0, c.width, c.height);
   return c;
 }
 
@@ -324,7 +466,31 @@ function render() {
     `;
 
     const prevWrap = el.querySelector(".preview");
-    prevWrap.appendChild(buildPreviewCanvasForLogo(l));
+    const prevCanvas = buildPreviewCanvasForLogo(l);
+    prevWrap.appendChild(prevCanvas);
+
+    // klik na podgląd -> pełny podgląd (jak BIG)
+    prevWrap.addEventListener("click", async (ev) => {
+      ev.stopPropagation();
+      try {
+        let bits150 = new Uint8Array(W * H);
+        if (l.type === TYPE_GLYPH) bits150 = glyphLogoToBits150(l.payload || {});
+        if (l.type === TYPE_PIX) {
+          const p = l.payload || {};
+          if ((Number(p.w) || W) === W && (Number(p.h) || H) === H) {
+            bits150 = b64ToBits(p.bits_b64 || "", W, H);
+          }
+        }
+        showView({
+          title: l.name || "Podgląd",
+          sub: `${l.type}`,
+          bits150,
+        });
+      } catch (e) {
+        console.error(e);
+        alert("Nie udało się wygenerować podglądu.\n\n" + (e?.message || e));
+      }
+    });
 
     const actions = el.querySelector(".actions");
 
@@ -347,11 +513,11 @@ function render() {
       }
     });
 
-    const btnDel = document.createElement("button");
-    btnDel.className = "btn sm";
-    btnDel.type = "button";
-    btnDel.textContent = "Usuń";
-    btnDel.addEventListener("click", async (ev) => {
+    const btnX = document.createElement("button");
+    btnX.className = "x";
+    btnX.type = "button";
+    btnX.textContent = "✕";
+    btnX.addEventListener("click", async (ev) => {
       ev.stopPropagation();
       const ok = confirm(`Usunąć logo „${l.name || "(bez nazwy)"}”?`);
       if (!ok) return;
@@ -368,7 +534,7 @@ function render() {
     });
 
     actions.appendChild(btnAct);
-    actions.appendChild(btnDel);
+    el.appendChild(btnX);
 
     grid.appendChild(el);
   }
@@ -397,6 +563,8 @@ function openCreateModal() {
   clearCanvas(prevGlyph);
   clearCanvas(drawCanvas);
   clearCanvas(imgCanvas);
+  if (drawPreview) clearCanvas(drawPreview);
+  if (imgPreview) clearCanvas(imgPreview);
 
   show(modePick, true);
   show(stepCommon, false);
@@ -446,10 +614,10 @@ function makeGlyphRowsFromText(t) {
   const x0 = Math.max(0, Math.floor((30 - text.length) / 2));
   const y = 4; // środek
   const line = rows[y].split("");
-  for (let i = 0; i < text.length; i++) line[x0 + i] = text[i] === " " ? " " : "█";
+  for (let i = 0; i < text.length; i++) line[x0 + i] = text[i];
   rows[y] = line.join("");
 
-  // lekka ramka, żeby było "logo-like"
+  // lekka ramka, żeby było "logo-like" (rama jest też glifem 5x7)
   rows[0] = "█".repeat(30);
   rows[9] = "█".repeat(30);
   for (let yy = 1; yy <= 8; yy++) {
@@ -464,24 +632,8 @@ function makeGlyphRowsFromText(t) {
 
 function renderGlyphPreview() {
   const rows = makeGlyphRowsFromText(textValue.value);
-
-  const w = 30;
-  const h = 10;
-  const bits = new Uint8Array(w * h);
-  for (let y = 0; y < h; y++) {
-    const line = rows[y];
-    for (let x = 0; x < w; x++) bits[y * w + x] = line[x] !== " " ? 1 : 0;
-  }
-
-  const tmp = document.createElement("canvas");
-  tmp.width = w;
-  tmp.height = h;
-  drawBitsToCanvas(bits, w, h, tmp);
-
-  const ctx = prevGlyph.getContext("2d");
-  ctx.imageSmoothingEnabled = false;
-  ctx.clearRect(0, 0, prevGlyph.width, prevGlyph.height);
-  ctx.drawImage(tmp, 0, 0, prevGlyph.width, prevGlyph.height);
+  const bits150 = glyphLogoToBits150({ layers: [{ color: "main", rows }] });
+  renderBitsAsSceneDots(bits150, prevGlyph);
 }
 
 /* ===== DRAW (PIX) ===== */
@@ -507,6 +659,11 @@ function renderDrawCanvas() {
   dctx.imageSmoothingEnabled = false;
   dctx.clearRect(0, 0, dw, dh);
   dctx.drawImage(tmp, 0, 0);
+
+  // realistyczny preview jak BIG w scene.js
+  if (drawPreview) {
+    renderBitsAsSceneDots(drawBits, drawPreview);
+  }
 }
 
 function setDrawPixel(x, y, val) {
@@ -575,7 +732,10 @@ function installDrawHandlers() {
 
 /* ===== IMAGE (PIX) ===== */
 function renderImgCanvas() {
-  drawBitsToCanvas(imgBits, W, H, imgCanvas);
+  if (imgCanvas) drawBitsToCanvas(imgBits, W, H, imgCanvas);
+  if (imgPreview) {
+    renderBitsAsSceneDots(imgBits, imgPreview);
+  }
 }
 
 function imageDataToBits(imgData, dither) {
@@ -742,10 +902,19 @@ async function handleCreate() {
    EVENTS
 ========================================================= */
 document.addEventListener("DOMContentLoaded", async () => {
+  // font 5x7 – dokładnie ten sam, co na scenie
+  try { await loadFont5x7(); } catch (e) { console.warn("[logo-editor] nie wczytano font_5x7.json", e); }
+
   currentUser = await requireAuth("index.html");
   who.textContent = currentUser?.email || "—";
 
   btnBack?.addEventListener("click", () => { location.href = "builder.html"; });
+
+  // podgląd
+  btnViewClose?.addEventListener("click", hideView);
+  viewOverlay?.addEventListener("click", (ev) => {
+    if (ev.target === viewOverlay) hideView();
+  });
 
   btnLogout?.addEventListener("click", async () => {
     await signOut();
