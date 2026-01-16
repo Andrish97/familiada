@@ -225,6 +225,53 @@ export function createUI() {
   function getTeamA() { return String($("teamA")?.value ?? "").trim(); }
   function getTeamB() { return String($("teamB")?.value ?? "").trim(); }
 
+  //kolory
+  function setSwatch(el, hex) {
+    if (!el) return;
+    el.style.background = hex || "";
+    el.dataset.hex = hex || "";
+    el.title = hex || "";
+  }
+
+  function setSwatches({ teamA, teamB, bg }) {
+    setSwatch($("swatchTeamA"), teamA);
+    setSwatch($("swatchTeamB"), teamB);
+    setSwatch($("swatchBg"), bg);
+  }
+
+  function openColorModal(title) {
+    if ($("colorModalTitle")) $("colorModalTitle").textContent = title || "Kolor";
+    $("colorModalOverlay")?.classList.remove("hidden");
+  }
+
+  function closeColorModal() {
+    $("colorModalOverlay")?.classList.add("hidden");
+  }
+
+  function setColorPreview(hex) {
+    const p = $("colorPreview");
+    if (p) p.style.background = hex || "";
+  }
+
+  function setColorModalHex(hex) {
+    if ($("colorHex")) $("colorHex").value = hex || "";
+    setColorPreview(hex);
+  }
+
+  function setColorModalRgb({ r, g, b }) {
+    const rr = $("colorR");
+    const gg = $("colorG");
+    const bb = $("colorB");
+
+    if (rr) rr.value = String(r ?? 0);
+    if (gg) gg.value = String(g ?? 0);
+    if (bb) bb.value = String(b ?? 0);
+
+    if ($("colorRVal")) $("colorRVal").textContent = String(r ?? 0);
+    if ($("colorGVal")) $("colorGVal").textContent = String(g ?? 0);
+    if ($("colorBVal")) $("colorBVal").textContent = String(b ?? 0);
+  }
+
   function getAdvancedForm() {
     const rm = $("roundMultipliers");
     const fm = $("finalMinPoints");
@@ -538,6 +585,30 @@ export function createUI() {
       });
     }
 
+        // --- Kolory (kafelki + modal) ---
+    $("swatchTeamA")?.addEventListener("click", () => emit("colors.open", "A"));
+    $("swatchTeamB")?.addEventListener("click", () => emit("colors.open", "B"));
+    $("swatchBg")?.addEventListener("click", () => emit("colors.open", "BACKGROUND"));
+
+    $("btnColorsReset")?.addEventListener("click", () => emit("colors.reset"));
+
+    $("colorModalClose")?.addEventListener("click", () => emit("colors.close"));
+    $("colorModalDone")?.addEventListener("click", () => emit("colors.close"));
+    $("colorModalOverlay")?.addEventListener("click", (ev) => {
+      if (ev.target && ev.target.id === "colorModalOverlay") emit("colors.close");
+    });
+
+    const hex = $("colorHex");
+    const r = $("colorR");
+    const g = $("colorG");
+    const b2 = $("colorB");
+
+    if (hex) hex.addEventListener("input", () => emit("colors.input", { kind: "HEX", value: hex.value }));
+    if (r) r.addEventListener("input", () => emit("colors.input", { kind: "R", value: r.value }));
+    if (g) g.addEventListener("input", () => emit("colors.input", { kind: "G", value: g.value }));
+    if (b2) b2.addEventListener("input", () => emit("colors.input", { kind: "B", value: b2.value }));
+
+
     // --- Dodatkowe ustawienia (mnożniki, progi, tryb końca gry) ---
     const advInputs = [
       "roundMultipliers",
@@ -658,6 +729,15 @@ export function createUI() {
     setAudioStatus,
 
     getTeamA, getTeamB,
+
+    // kolory
+    setSwatches,
+    openColorModal,
+    closeColorModal,
+    setColorModalRgb,
+    setColorModalHex,
+    setColorPreview,
+
 
     setFinalHasFinal,
     setFinalConfirmed,
