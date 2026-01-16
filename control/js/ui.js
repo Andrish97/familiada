@@ -262,15 +262,42 @@ export function createUI() {
     const rr = $("colorR");
     const gg = $("colorG");
     const bb = $("colorB");
-
-    if (rr) rr.value = String(r ?? 0);
-    if (gg) gg.value = String(g ?? 0);
-    if (bb) bb.value = String(b ?? 0);
-
-    if ($("colorRVal")) $("colorRVal").textContent = String(r ?? 0);
-    if ($("colorGVal")) $("colorGVal").textContent = String(g ?? 0);
-    if ($("colorBVal")) $("colorBVal").textContent = String(b ?? 0);
+  
+    const R = clamp255(r ?? 0);
+    const G = clamp255(g ?? 0);
+    const B = clamp255(b ?? 0);
+  
+    if (rr) rr.value = String(R);
+    if (gg) gg.value = String(G);
+    if (bb) bb.value = String(B);
+  
+    if ($("colorRVal")) $("colorRVal").textContent = String(R);
+    if ($("colorGVal")) $("colorGVal").textContent = String(G);
+    if ($("colorBVal")) $("colorBVal").textContent = String(B);
+  
+    // ===== Google-like gradient tracks =====
+    // R: 0..255 przy stałych G,B
+    if (rr) {
+      const left = rgbToHexLocal(0, G, B);
+      const right = rgbToHexLocal(255, G, B);
+      rr.style.setProperty("--track", `linear-gradient(to right, ${left}, ${right})`);
+    }
+  
+    // G: 0..255 przy stałych R,B
+    if (gg) {
+      const left = rgbToHexLocal(R, 0, B);
+      const right = rgbToHexLocal(R, 255, B);
+      gg.style.setProperty("--track", `linear-gradient(to right, ${left}, ${right})`);
+    }
+  
+    // B: 0..255 przy stałych R,G
+    if (bb) {
+      const left = rgbToHexLocal(R, G, 0);
+      const right = rgbToHexLocal(R, G, 255);
+      bb.style.setProperty("--track", `linear-gradient(to right, ${left}, ${right})`);
+    }
   }
+
 
   function getAdvancedForm() {
     const rm = $("roundMultipliers");
@@ -764,6 +791,19 @@ export function createUI() {
     getAdvancedForm,
     setAdvancedForm,
   };
+}
+
+function clamp255(n) {
+  const x = Number(n);
+  if (!Number.isFinite(x)) return 0;
+  return Math.max(0, Math.min(255, Math.round(x)));
+}
+
+function rgbToHexLocal(r, g, b) {
+  const rr = clamp255(r).toString(16).padStart(2, "0");
+  const gg = clamp255(g).toString(16).padStart(2, "0");
+  const bb = clamp255(b).toString(16).padStart(2, "0");
+  return ("#" + rr + gg + bb).toUpperCase();
 }
 
 function escapeHtml(s) {
