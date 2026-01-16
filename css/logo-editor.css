@@ -496,3 +496,12 @@ body.logo-editor-body .wrap{ max-width:1200px; }
   filter: brightness(1.06);
 }
 
+#threshBar{
+  display:flex;
+  gap:10px;
+  align-items:center;
+}
+#threshBar .inp{
+  margin:0;
+}
+
