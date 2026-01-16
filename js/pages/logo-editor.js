@@ -142,7 +142,7 @@ function esc(s) {
 function markDirty() { editorDirty = true; }
 function clearDirty() { editorDirty = false; }
 
-function confirmCloseIfDirty() {
+function () {
   if (!editorDirty) return true;
   return confirm("Jeśli teraz zamkniesz, zmiany nie zostaną zapisane, a logo nie zostanie dodane.");
 }
@@ -739,53 +739,6 @@ async function updateTextPixPreviewAsync() {
   }
 }
 
-
-function renderHtmlTextTo208(text, opts) {
-  const c = document.createElement("canvas");
-  c.width = BIG_W;
-  c.height = BIG_H;
-  const ctx = c.getContext("2d");
-
-  ctx.clearRect(0, 0, BIG_W, BIG_H);
-
-  // tło czarne (łatwiejsza binarizacja: białe litery)
-  ctx.fillStyle = "#000";
-  ctx.fillRect(0, 0, BIG_W, BIG_H);
-
-  const weight = opts.bold ? "700" : "400";
-  const style  = opts.italic ? "italic" : "normal";
-  const sizePx = Math.max(6, Math.min(200, opts.sizePx | 0));
-
-  // UWAGA: font-family jako string z UI, np. "Inter, system-ui"
-  ctx.font = `${style} ${weight} ${sizePx}px ${opts.family}`;
-  ctx.textBaseline = "middle";
-  ctx.textAlign = opts.align || "center"; // 'left' | 'center' | 'right'
-  ctx.fillStyle = "#fff";
-
-  const x =
-    ctx.textAlign === "left" ? 0 :
-    ctx.textAlign === "right" ? BIG_W :
-    Math.floor(BIG_W / 2);
-
-  const y = Math.floor(BIG_H / 2);
-
-  // lekki padding przy left/right
-  const pad = 6;
-  const x2 = (ctx.textAlign === "left") ? pad : (ctx.textAlign === "right" ? BIG_W - pad : x);
-
-  // jedna linia na start (wielolinijkę można dopiąć później)
-  ctx.fillText(String(text || ""), x2, y);
-
-  return c;
-}
-
-function compileHtmlTextTo150(text, opts) {
-  const c208 = renderHtmlTextTo208(text, opts);
-  const bits208 = canvasToBits(c208, opts.threshold ?? 128);
-  const bits150 = compress208x88to150x70(bits208);
-  return { bits150, bits208Canvas: c208 };
-}
-
 /* =========================================================
    CANVAS helpers: mini edit canvases
 ========================================================= */
@@ -909,41 +862,6 @@ function bitsBoundingBox(bits, w, h) {
 function looksClipped(box, w, h, pad = 1) {
   if (!box) return false;
   return box.minX <= pad || box.minY <= pad || box.maxX >= (w-1-pad) || box.maxY >= (h-1-pad);
-}
-
-function updateTextPixPreview() {
-  if (editorMode !== "TEXT_PIX") return;
-
-  if (pixSizeLabel && rngPixSize) pixSizeLabel.textContent = String(rngPixSize.value);
-  if (pixThreshLabel && rngPixThresh) pixThreshLabel.textContent = String(rngPixThresh.value);
-
-  const text = String(textPixValue?.value || "");
-  const opts = {
-    family: String(selPixFont?.value || "system-ui, sans-serif"),
-    bold: !!chkPixBold?.checked,
-    italic: !!chkPixItalic?.checked,
-    align: String(selPixAlign?.value || "center"),
-    sizePx: Number(rngPixSize?.value || 56),
-    threshold: Number(rngPixThresh?.value || 128),
-  };
-
-  const { bits150 } = compileHtmlTextTo150(text, opts);
-  draftBits150 = bits150;
-
-  // ostrzeżenie, jeśli wygląda na ucięte
-  const box = bitsBoundingBox(bits150, DOT_W, DOT_H);
-  const clipped = looksClipped(box, DOT_W, DOT_H, 0);
-
-  if (pixWarn) {
-    if (clipped) {
-      pixWarn.textContent = "Wygląda na ucięte. Zmniejsz rozmiar albo zmień wyrównanie.";
-      show(pixWarn, true);
-    } else {
-      show(pixWarn, false);
-    }
-  }
-
-  updateBigPreview();
 }
 
 /* =========================================================
@@ -1196,7 +1114,7 @@ function resetEditorState() {
   show(paneText, false);
   show(paneTextPix, false);
   if (pixWarn) show(pixWarn, false);
-  if (textPixValue) textPixValue.value = "";
+  if (rtEditor) rtEditor.innerHTML = "";
 
   show(paneDraw, false);
   show(paneImage, false);
@@ -1504,21 +1422,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   btnLogout?.addEventListener("click", async () => {
     await signOut();
     location.href = "index.html";
-  });
-
-  btnClearActive?.addEventListener("click", async () => {
-    const ok = confirm("Wyłączyć aktywne logo? (użytkownik będzie mieć 0 aktywnych)");
-    if (!ok) return;
-    setMsg("Wyłączam…");
-    try {
-      await clearActive();
-      await refresh();
-      setMsg("Aktywne wyłączone.");
-    } catch (e) {
-      console.error(e);
-      alert("Nie udało się.\n\n" + (e?.message || e));
-      setMsg("");
-    }
   });
 
   // pick modal
