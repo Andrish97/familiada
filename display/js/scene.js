@@ -620,7 +620,7 @@ export async function createScene() {
 
   let LOGO_JSON = null;
   try { LOGO_JSON = await loadJson("./logo_familiada.json"); } catch {}
-  const DEFAULT_LOGO = LOGO_JSON;  // fallback z pliku
+  const DEFAULT_LOGO = LOGO_JSON ?? { layers:[{ color:"main", rows:Array(10).fill(" ".repeat(30)) }] }; // fallback z pliku
   let ACTIVE_LOGO = null;          // tu będzie { type, payload, name } z bazy albo null
 
   const loadActiveLogoFromDb = async (gameId, key) => {
@@ -1420,7 +1420,11 @@ export async function createScene() {
         }
     
         if (src.type === "PIX_150x70") {
-          const bits = src.payload?.bits_base64 || src.payload?.bitsBase64 || "";
+          const bits =
+          src.payload?.bits_b64 ||
+          src.payload?.bits_base64 ||
+          src.payload?.bitsBase64 ||
+          "";
           drawLogoPix150x70(bits, LIT.main);
           return;
         }
