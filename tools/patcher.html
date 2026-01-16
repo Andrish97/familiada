@@ -3,117 +3,291 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Wklej plik + patch → wynik</title>
+  <title>Patcher: dopasowanie + raport</title>
   <style>
-    body { font-family: system-ui, Arial, sans-serif; margin: 16px; line-height: 1.3; }
-    textarea { width: 100%; min-height: 200px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
-    .row { display: grid; grid-template-columns: 1fr; gap: 12px; }
-    .btns { display: flex; gap: 8px; flex-wrap: wrap; }
-    button { padding: 10px 12px; cursor: pointer; }
+    body { font-family: system-ui, Arial, sans-serif; margin: 16px; line-height: 1.35; }
+    textarea { width: 100%; min-height: 180px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    button { padding: 10px 12px; cursor: pointer; margin: 8px 8px 8px 0; }
     .ok { color: #0a0; font-weight: 600; }
     .err { color: #a00; font-weight: 600; }
-    details { margin-top: 10px; }
+    .card { border: 1px solid #ddd; border-radius: 8px; padding: 10px; margin: 10px 0; background: #fafafa; }
+    pre { margin: 0; white-space: pre-wrap; word-break: break-word; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
   </style>
 </head>
 <body>
-  <h2>Patch w przeglądarce (kopiuj/wklej)</h2>
+  <h2>Patcher (pasuje +/−/kontekst) + raport niezgodności</h2>
 
-  <div class="row">
-    <label>
-      <div><strong>1) Wklej aktualną treść pliku</strong></div>
-      <textarea id="original" placeholder="Tu wklej zawartość pliku (np. CSS/JS/HTML/JSON)"></textarea>
-    </label>
+  <div><strong>1) Treść pliku</strong></div>
+  <textarea id="original" placeholder="Wklej aktualną zawartość pliku (CSS/JS/HTML/JSON)"></textarea>
 
-    <label>
-      <div><strong>2) Wklej patch/diff (unified diff)</strong></div>
-      <textarea id="patch" placeholder="Tu wklej diff zaczynający się np. od --- a/... +++ b/..."></textarea>
-    </label>
+  <div><strong>2) Patch (unified diff)</strong></div>
+  <textarea id="patch" placeholder="Wklej unified diff z @@ ... @@ i liniami zaczynającymi się od spacji / + / -"></textarea>
 
-    <div class="btns">
-      <button id="applyBtn">Zastosuj patch</button>
-      <button id="copyBtn" disabled>Skopiuj wynik</button>
-      <button id="clearBtn">Wyczyść</button>
-    </div>
-
-    <div id="status"></div>
-
-    <label>
-      <div><strong>3) Wynik (skopiuj i wklej do pliku)</strong></div>
-      <textarea id="result" placeholder="Tu pojawi się wynik..." readonly></textarea>
-    </label>
-
-    <details>
-      <summary>Wskazówki (gdy nie działa)</summary>
-      <ul>
-        <li>Patch musi być „unified diff”: linie <code>@@ ... @@</code> i bloki z <code>+</code>/<code>-</code>.</li>
-        <li>Ten prosty patcher działa najlepiej, gdy diff dotyczy <strong>jednego pliku</strong>.</li>
-        <li>Jeśli w patchu masz <code>--- a/styles.css</code> a plik w repo nazywa się inaczej, to <em>nie szkodzi</em> — tu i tak aplikujemy do wklejonej treści.</li>
-      </ul>
-    </details>
+  <div>
+    <button id="runBtn">Zastosuj</button>
+    <button id="copyBtn" disabled>Skopiuj wynik</button>
+    <button id="clearBtn">Wyczyść</button>
   </div>
 
-  <!-- jsdiff (działa z CDN). Jeśli chcesz 100% offline, mogę dać wersję bez CDN. -->
-  <script src="https://cdn.jsdelivr.net/npm/diff@5.2.0/dist/diff.min.js"></script>
-  <script>
-    const $ = (id) => document.getElementById(id);
-    const statusEl = $("status");
-    const copyBtn = $("copyBtn");
+  <div id="status"></div>
 
-    function setStatus(msg, ok=true) {
-      statusEl.className = ok ? "ok" : "err";
-      statusEl.textContent = msg;
+  <div><strong>3) Wynik</strong></div>
+  <textarea id="result" readonly placeholder="Tu pojawi się wynik..."></textarea>
+
+  <div id="report"></div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+
+function normNL(s){ return s.replace(/\r\n/g, "\n"); }
+function esc(s){ return (s ?? "").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;"); }
+
+function setStatus(msg, ok=true){
+  const el = $("status");
+  el.className = ok ? "ok" : "err";
+  el.textContent = msg;
+}
+
+function parseHunks(patchText){
+  const lines = normNL(patchText).split("\n");
+  const hunks = [];
+  let i = 0;
+
+  // przewiń do pierwszego @@
+  while (i < lines.length && !lines[i].startsWith("@@")) i++;
+
+  while (i < lines.length){
+    if (!lines[i].startsWith("@@")) { i++; continue; }
+    const header = lines[i];
+
+    const m = header.match(/^@@\s+\-(\d+)(?:,(\d+))?\s+\+(\d+)(?:,(\d+))?\s+@@/);
+    if (!m) throw new Error("Nie rozpoznaję nagłówka hunka: " + header);
+
+    const oldStart = parseInt(m[1],10);
+    const oldCount = m[2] ? parseInt(m[2],10) : 1;
+    const newStart = parseInt(m[3],10);
+    const newCount = m[4] ? parseInt(m[4],10) : 1;
+
+    i++;
+    const body = [];
+    while (i < lines.length && !lines[i].startsWith("@@")){
+      const line = lines[i];
+
+      if (line.startsWith("\\ No newline at end of file")) { i++; continue; }
+
+      const ch = line[0];
+      if (ch === " " || ch === "+" || ch === "-"){
+        body.push({type: ch, text: line.slice(1)});
+      } else if (line === "") {
+        // tolerancja: pusta linia bez prefixu traktowana jako kontekst pustej linii
+        body.push({type: " ", text: ""});
+      } else {
+        // inne metadane pomijamy
+      }
+      i++;
     }
 
-    $("applyBtn").addEventListener("click", () => {
-      const original = $("original").value.replace(/\r\n/g, "\n");
-      const patch = $("patch").value.replace(/\r\n/g, "\n");
+    hunks.push({header, oldStart, oldCount, newStart, newCount, body});
+  }
 
-      $("result").value = "";
-      copyBtn.disabled = true;
+  if (!hunks.length) throw new Error("Nie znalazłem żadnych hunków @@ ... @@ w patchu.");
+  return hunks;
+}
 
-      if (!original.trim()) return setStatus("Wklej treść pliku.", false);
-      if (!patch.trim()) return setStatus("Wklej patch/diff.", false);
+// Szukamy miejsca w pliku, gdzie pasuje sekwencja (kontekst + minusy)
+function findMatch(origLines, approxPos, needle, window=400){
+  const start = Math.max(0, approxPos - window);
+  const end = Math.min(origLines.length, approxPos + window);
 
-      try {
-        // applyPatch expects a unified diff for a single file.
-        const out = Diff.applyPatch(original, patch);
+  for (let pos = start; pos <= end - needle.length; pos++){
+    let ok = true;
+    for (let j = 0; j < needle.length; j++){
+      if (origLines[pos + j] !== needle[j]) { ok = false; break; }
+    }
+    if (ok) return pos;
+  }
+  return -1;
+}
 
-        if (out === false) {
-          setStatus("Nie udało się zastosować patcha (kontekst nie pasuje). Sprawdź czy to diff do tej wersji pliku.", false);
-          return;
-        }
+// Aplikujemy hunk na danej pozycji, ale weryfikujemy linia-po-linii i raportujemy pierwszy rozjazd
+function applyHunk(origLines, pos, hunk){
+  const out = [];
+  const issues = [];
+  let idx = pos;
 
-        $("result").value = out;
-        copyBtn.disabled = false;
-        setStatus("OK — patch zastosowany. Skopiuj wynik.", true);
-      } catch (e) {
-        setStatus("Błąd: " + (e && e.message ? e.message : String(e)), false);
+  for (const item of hunk.body){
+    if (item.type === " "){
+      if (origLines[idx] !== item.text){
+        issues.push({
+          kind: "Kontekst nie pasuje",
+          expected: item.text,
+          actual: origLines[idx] ?? "(koniec pliku)",
+          lineIndex: idx
+        });
+        return {ok:false, out:null, consumed:0, issues};
       }
-    });
-
-    copyBtn.addEventListener("click", async () => {
-      const text = $("result").value;
-      if (!text) return;
-      try {
-        await navigator.clipboard.writeText(text);
-        setStatus("Skopiowano do schowka.", true);
-      } catch {
-        // fallback
-        $("result").focus();
-        $("result").select();
-        document.execCommand("copy");
-        setStatus("Skopiowano (fallback).", true);
+      out.push(origLines[idx]);
+      idx++;
+    } else if (item.type === "-"){
+      if (origLines[idx] !== item.text){
+        issues.push({
+          kind: "Linia do usunięcia (-) nie pasuje",
+          expected: item.text,
+          actual: origLines[idx] ?? "(koniec pliku)",
+          lineIndex: idx
+        });
+        return {ok:false, out:null, consumed:0, issues};
       }
-    });
+      // usuwamy: nie dodajemy do out
+      idx++;
+    } else if (item.type === "+"){
+      out.push(item.text);
+    }
+  }
 
-    $("clearBtn").addEventListener("click", () => {
-      $("original").value = "";
-      $("patch").value = "";
-      $("result").value = "";
-      copyBtn.disabled = true;
-      setStatus("");
-      statusEl.className = "";
-    });
-  </script>
+  return {ok:true, out, consumed: (idx - pos), issues:[]};
+}
+
+function makeSnippet(lines, center, radius=4){
+  const a = Math.max(0, center - radius);
+  const b = Math.min(lines.length, center + radius + 1);
+  const chunk = [];
+  for (let i=a; i<b; i++){
+    const n = String(i+1).padStart(5, " ");
+    chunk.push(`${n} | ${lines[i]}`);
+  }
+  return chunk.join("\n");
+}
+
+function renderReport(failures){
+  const host = $("report");
+  host.innerHTML = "";
+  if (!failures.length) return;
+
+  for (const f of failures){
+    const div = document.createElement("div");
+    div.className = "card";
+    div.innerHTML = `
+      <div class="err">❌ Nie zastosowano: <code>${esc(f.header)}</code></div>
+      <div style="margin-top:6px"><strong>Powód:</strong> ${esc(f.reason)}</div>
+      ${f.detail ? `<div class="muted" style="margin-top:4px">${esc(f.detail)}</div>` : ""}
+      <div style="margin-top:8px"><strong>Patch oczekiwał:</strong></div>
+      <pre>${esc(f.expectedBlock)}</pre>
+      <div style="margin-top:8px"><strong>W pliku w okolicy:</strong></div>
+      <pre>${esc(f.actualSnippet)}</pre>
+    `;
+    host.appendChild(div);
+  }
+}
+
+$("runBtn").addEventListener("click", () => {
+  $("result").value = "";
+  $("report").innerHTML = "";
+  $("copyBtn").disabled = true;
+
+  const original = normNL($("original").value);
+  const patch = normNL($("patch").value);
+
+  if (!original.trim()) return setStatus("Wklej treść pliku.", false);
+  if (!patch.trim()) return setStatus("Wklej patch.", false);
+
+  let hunks;
+  try {
+    hunks = parseHunks(patch);
+  } catch (e) {
+    return setStatus("Błąd parsowania patcha: " + (e.message || String(e)), false);
+  }
+
+  let origLines = original.split("\n");
+  const failures = [];
+
+  // bieżąca pozycja wg oldStart (z patcha) to tylko wskazówka
+  // oldStart jest 1-based, więc approxPos = oldStart - 1
+  let shift = 0; // zmiany długości w wyniku poprzednich hunków (heurystyka)
+
+  for (const h of hunks){
+    const approxPos = Math.max(0, (h.oldStart - 1) + shift);
+
+    const needle = h.body
+      .filter(x => x.type === " " || x.type === "-")
+      .map(x => x.text);
+
+    const matchPos = needle.length ? findMatch(origLines, approxPos, needle) : approxPos;
+
+    if (matchPos === -1){
+      // nie znaleźliśmy nawet kontekstu
+      failures.push({
+        header: h.header,
+        reason: "Nie znaleziono miejsca pasującego do kontekstu (spacje) + minusów (-).",
+        detail: "To zwykle znaczy, że plik jest innej wersji niż ta, dla której powstał patch.",
+        expectedBlock: needle.slice(0, 12).join("\n") + (needle.length > 12 ? "\n…" : ""),
+        actualSnippet: makeSnippet(origLines, approxPos, 6)
+      });
+      continue;
+    }
+
+    const applied = applyHunk(origLines, matchPos, h);
+    if (!applied.ok){
+      const issue = applied.issues[0];
+      failures.push({
+        header: h.header,
+        reason: issue.kind,
+        detail: `Rozjazd przy linii ~${issue.lineIndex+1}.`,
+        expectedBlock: h.body.slice(0, 30).map(x => x.type + x.text).join("\n") + (h.body.length > 30 ? "\n…" : ""),
+        actualSnippet: makeSnippet(origLines, issue.lineIndex, 6)
+      });
+      continue;
+    }
+
+    // Składamy nowe origLines: prefix + applied.out + suffix
+    const prefix = origLines.slice(0, matchPos);
+    const suffix = origLines.slice(matchPos + applied.consumed);
+    origLines = prefix.concat(applied.out, suffix);
+
+    // aktualizujemy shift: jak zmieniła się długość w miejscu hunka
+    const oldLen = needle.length;
+    const newLen = h.body.filter(x => x.type === " " || x.type === "+").length;
+    shift += (newLen - oldLen);
+  }
+
+  const result = origLines.join("\n");
+  $("result").value = result;
+
+  if (failures.length === 0){
+    setStatus("OK — wszystkie hunki weszły.", true);
+    $("copyBtn").disabled = false;
+  } else {
+    setStatus(`Częściowo OK — zastosowano, ale ${failures.length} hunk(ów) nie weszło. Zobacz raport.`, false);
+    $("copyBtn").disabled = false; // wynik częściowy nadal się przydaje
+    renderReport(failures);
+  }
+});
+
+$("copyBtn").addEventListener("click", async () => {
+  const text = $("result").value;
+  if (!text) return;
+
+  try {
+    await navigator.clipboard.writeText(text);
+    setStatus("Skopiowano wynik do schowka.", true);
+  } catch {
+    $("result").focus();
+    $("result").select();
+    document.execCommand("copy");
+    setStatus("Skopiowano (fallback).", true);
+  }
+});
+
+$("clearBtn").addEventListener("click", () => {
+  $("original").value = "";
+  $("patch").value = "";
+  $("result").value = "";
+  $("report").innerHTML = "";
+  $("copyBtn").disabled = true;
+  $("status").textContent = "";
+  $("status").className = "";
+});
+</script>
 </body>
 </html>
