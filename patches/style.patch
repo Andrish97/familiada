@@ -1,5 +1,5 @@
 --- a/familiada/display/styles.css
-+++ b/styles.css
++++ b/familiada/display/styles.css
 @@ -1,13 +1,27 @@
  /* ===== GRA: tło + scena (Twoje oryginalne) ===== */
  html, body { height:100%; margin:0; }
