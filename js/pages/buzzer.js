@@ -136,7 +136,7 @@ async function persistState() {
       p_game_id: gameId,
       p_device_type: "buzzer",
       p_key: key,
-      p_patch: { state: cur },
+      p_patch: { state: cur, teamA, teamB },
     });
   } catch (e) {
     console.warn("[buzzer] persist failed", e);
@@ -154,11 +154,138 @@ async function restoreState() {
     if (error) throw error;
 
     const st = String(data?.state || "OFF").toUpperCase();
+
+    const a = data?.teamA;
+    const b = data?.teamB;
+    
+    if (typeof a === "string" && cssSupportsColor(a)) teamA = a;
+    if (typeof b === "string" && cssSupportsColor(b)) teamB = b;
+    
+    applyTeamColors();
+    
     show(STATE[st] ?? STATE.OFF);
   } catch {
     show(STATE.OFF);
   }
 }
+
+/* ========= COLORS (A/B) ========= */
+const DEFAULT_A = "#c4002f";
+const DEFAULT_B = "#2a62ff";
+
+let teamA = DEFAULT_A;
+let teamB = DEFAULT_B;
+
+function normColorToken(raw) {
+  // przyjmujemy: "rebeccapurple" albo "#c4002f"
+  const s = String(raw ?? "").trim();
+  return s;
+}
+
+function cssSupportsColor(value) {
+  if (!value) return false;
+  // CSS.supports jest wspierane w nowoczesnych, a iOS Safari też ogarnia
+  if (window.CSS?.supports) return CSS.supports("color", value);
+  return true; // fallback: dopuść, najwyżej nie zadziała wizualnie
+}
+
+function clamp01(x) {
+  return Math.max(0, Math.min(1, x));
+}
+
+function parseHexToRgb(hex) {
+  let h = String(hex).trim();
+  if (!h.startsWith("#")) return null;
+
+  h = h.slice(1);
+  if (h.length === 3) {
+    const r = parseInt(h[0] + h[0], 16);
+    const g = parseInt(h[1] + h[1], 16);
+    const b = parseInt(h[2] + h[2], 16);
+    return { r, g, b };
+  }
+  if (h.length === 6 || h.length === 8) {
+    const r = parseInt(h.slice(0, 2), 16);
+    const g = parseInt(h.slice(2, 4), 16);
+    const b = parseInt(h.slice(4, 6), 16);
+    return { r, g, b };
+  }
+  return null;
+}
+
+function rgbToHex({ r, g, b }) {
+  const to2 = (n) => n.toString(16).padStart(2, "0");
+  return `#${to2(r)}${to2(g)}${to2(b)}`;
+}
+
+function mixRgb(a, b, t) {
+  t = clamp01(t);
+  const lerp = (x, y) => Math.round(x + (y - x) * t);
+  return {
+    r: lerp(a.r, b.r),
+    g: lerp(a.g, b.g),
+    b: lerp(a.b, b.b),
+  };
+}
+
+function derivePalette(baseColor) {
+  // Jeśli to HEX -> liczymy sensowne hi/lo i glow.
+  // Jeśli nazwa koloru -> też zadziała, ale hi/lo weźmiemy fallbackami.
+  const rgb = parseHexToRgb(baseColor);
+
+  if (!rgb) {
+    // fallback: zostaw “hi/lo” na bazie domyślnych, ale glow ustawimy po prostu na kolor bazowy (o ile wspiera)
+    return {
+      hi: baseColor,
+      lo: baseColor,
+      glow: baseColor, // użyjemy z alpha niżej przez color-mix? nie wszędzie działa, więc damy rgba fallback w apply
+      glowRgba: "rgba(255,255,255,.35)",
+    };
+  }
+
+  const white = { r: 255, g: 255, b: 255 };
+  const black = { r: 0, g: 0, b: 0 };
+
+  const hi = rgbToHex(mixRgb(rgb, white, 0.25)); // jaśniej o ~25%
+  const lo = rgbToHex(mixRgb(rgb, black, 0.45)); // ciemniej o ~45%
+
+  const glowRgba = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, .35)`;
+
+  return { hi, lo, glowRgba };
+}
+
+function applyTeamColors() {
+  const root = document.documentElement;
+
+  root.style.setProperty("--team-a", teamA);
+  root.style.setProperty("--team-b", teamB);
+
+  const pa = derivePalette(teamA);
+  const pb = derivePalette(teamB);
+
+  root.style.setProperty("--team-a-hi", pa.hi);
+  root.style.setProperty("--team-a-lo", pa.lo);
+  root.style.setProperty("--glow-a", pa.glowRgba);
+
+  root.style.setProperty("--team-b-hi", pb.hi);
+  root.style.setProperty("--team-b-lo", pb.lo);
+  root.style.setProperty("--glow-b", pb.glowRgba);
+}
+
+async function persistColorsOnly() {
+  if (!gameId || !key) return;
+  try {
+    await sb().rpc("device_state_set_public", {
+      p_game_id: gameId,
+      p_device_type: "buzzer",
+      p_key: key,
+      p_patch: { teamA, teamB },
+    });
+  } catch (e) {
+    console.warn("[buzzer] persist colors failed", e);
+  }
+}
+
 
 /* ========= REALTIME ========= */
 let ch = null;
@@ -168,21 +295,52 @@ function ensureChannel() {
 
   ch = sb()
     .channel(`familiada-buzzer:${gameId}`)
-    .on("broadcast", { event: "BUZZER_CMD" }, (msg) => {
-      const line = String(msg?.payload?.line || "").toUpperCase().trim();
-
-      if (line === "OFF") return show(STATE.OFF), persistState();
-      if (line === "ON")  return show(STATE.ON),  persistState();
-      if (line === "RESET") return show(STATE.ON), persistState();
-
-      if (line === "PUSHED A" || line === "PUSHED_A")
+    .on("broadcast", { event: "BUZZER_CMD" }, async (msg) => {
+    
+      const raw = String(msg?.payload?.line || "").trim();
+      const up = raw.toUpperCase();
+      
+      // COLOR_RESET
+      if (up === "COLOR_RESET") {
+        teamA = DEFAULT_A;
+        teamB = DEFAULT_B;
+        applyTeamColors();
+        await persistColorsOnly(); // działa niezależnie od stanu
+        return;
+      }
+      
+      // COLOR_A <color>
+      if (up.startsWith("COLOR_A")) {
+        const value = normColorToken(raw.slice("COLOR_A".length));
+        if (cssSupportsColor(value)) {
+          teamA = value;
+          applyTeamColors();
+          await persistColorsOnly();
+        }
+        return;
+      }
+      
+      // COLOR_B <color>
+      if (up.startsWith("COLOR_B")) {
+        const value = normColorToken(raw.slice("COLOR_B".length));
+        if (cssSupportsColor(value)) {
+          teamB = value;
+          applyTeamColors();
+          await persistColorsOnly();
+        }
+        return;
+      }
+      if (up === "OFF") return show(STATE.OFF), persistState();
+      if (up === "ON")  return show(STATE.ON),  persistState();
+      if (up === "RESET") return show(STATE.ON), persistState();
+  
+      if (up === "PUSHED A" || up === "PUSHED_A")
         return show(STATE.PUSHED_A), persistState();
-
-      if (line === "PUSHED B" || line === "PUSHED_B")
-        return show(STATE.PUSHED_B), persistState();
+      
+      if (up === "PUSHED B" || up === "PUSHED_B")
+          return show(STATE.PUSHED_B), persistState();
     })
     .subscribe();
-
   return ch;
 }
 
@@ -240,6 +398,7 @@ btnB?.addEventListener("click", (e) => press("B", e));
 
 document.addEventListener("DOMContentLoaded", async () => {
   setFullscreenIcon();
+  applyTeamColors();
 
   if (window.navigator.standalone) {
     document.documentElement.classList.add("webapp");
