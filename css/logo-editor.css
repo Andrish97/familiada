@@ -94,6 +94,11 @@ body.logo-editor-body .wrap{ max-width:1200px; }
   position:relative;
 }
 
+.card .preview canvas{
+  image-rendering: pixelated;
+  display:block;
+}
+
 .name{
   font-weight:1000;
   font-size:14px;
