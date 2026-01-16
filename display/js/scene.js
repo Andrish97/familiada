@@ -22,7 +22,7 @@ export async function createScene() {
   const DEFAULT_THEME_BASE = {
     A:  "#c4002f",
     B:  "#2a62ff",
-    BG: "#6a4aa7",
+    BG: "#d21180",
   };
 
   // Akceptuje: "#rgb", "#rrggbb", "dodgerblue", "red", itd.
