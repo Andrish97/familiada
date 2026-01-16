@@ -43,6 +43,38 @@ const $ = (id) => document.getElementById(id);
 function normNL(s){ return s.replace(/\r\n/g, "\n"); }
 function esc(s){ return (s ?? "").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;"); }
 
+
+function patchToPlainText(patchText){
+  const lines = normNL(patchText).split("\n");
+  const out = [];
+
+  for (const line of lines){
+    // pomiń metadane unified diff
+    if (line.startsWith("diff --git ")) continue;
+    if (line.startsWith("--- ")) continue;
+    if (line.startsWith("+++ ")) continue;
+    if (line.startsWith("@@")) continue;
+    if (line.startsWith("\\ No newline at end of file")) continue;
+
+    // zdejmij + / - tylko z linii zmian
+    if (line.startsWith("+") || line.startsWith("-")) {
+      out.push(line.slice(1));
+      continue;
+    }
+
+    // linie kontekstu w diffie zaczynają się od spacji
+    if (line.startsWith(" ")) {
+      out.push(line.slice(1));
+      continue;
+    }
+
+    // jeśli ktoś wkleił "gołe" linie (bez prefixu), też je przepuść
+    if (line.length) out.push(line);
+  }
+
+  return out.join("\n");
+}
+  
 function setStatus(msg, ok=true){
   const el = $("status");
   el.className = ok ? "ok" : "err";
@@ -188,6 +220,14 @@ $("runBtn").addEventListener("click", () => {
 
   const original = normNL($("original").value);
   const patch = normNL($("patch").value);
+
+    // TRYB: wklejony tylko patch → zamień na "czysty tekst"
+  if (!original.trim() && patch.trim()) {
+    $("result").value = patchToPlainText(patch);
+    $("copyBtn").disabled = false;
+    setStatus("Brak treści pliku — wyciągnięto tekst z patcha (bez +/-, bez nagłówków).", true);
+    return;
+  }
 
   if (!original.trim()) return setStatus("Wklej treść pliku.", false);
   if (!patch.trim()) return setStatus("Wklej patch.", false);
