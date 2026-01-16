@@ -78,7 +78,7 @@ const btnPreviewClose = document.getElementById("btnPreviewClose");
 let currentUser = null;
 let logos = [];
 
-let editorMode = null; // 'TEXT' | 'DRAW' | 'IMAGE'
+let editorMode = null; // 'TEXT' | 'DRAW' | 'IMAGE' | 'TEXT_PIX'
 let draftRows30x10 = Array.from({ length: 10 }, () => " ".repeat(30));
 let draftBits150 = new Uint8Array(DOT_W * DOT_H); // 0/1
 
@@ -557,6 +557,72 @@ function updateBigPreview() {
   }
 }
 
+function canvasToBits(canvas, threshold = 128) {
+  const ctx = canvas.getContext("2d");
+  const { width: w, height: h } = canvas;
+  const img = ctx.getImageData(0, 0, w, h).data;
+  const out = new Uint8Array(w * h);
+
+  for (let i = 0; i < w * h; i++) {
+    const r = img[i * 4 + 0];
+    const g = img[i * 4 + 1];
+    const b = img[i * 4 + 2];
+    const a = img[i * 4 + 3];
+    if (a < 8) { out[i] = 0; continue; }
+
+    // luminancja
+    const lum = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+    out[i] = lum >= threshold ? 1 : 0;
+  }
+  return out;
+}
+
+function renderHtmlTextTo208(text, opts) {
+  const c = document.createElement("canvas");
+  c.width = BIG_W;
+  c.height = BIG_H;
+  const ctx = c.getContext("2d");
+
+  ctx.clearRect(0, 0, BIG_W, BIG_H);
+
+  // tło czarne (łatwiejsza binarizacja: białe litery)
+  ctx.fillStyle = "#000";
+  ctx.fillRect(0, 0, BIG_W, BIG_H);
+
+  const weight = opts.bold ? "700" : "400";
+  const style  = opts.italic ? "italic" : "normal";
+  const sizePx = Math.max(6, Math.min(200, opts.sizePx | 0));
+
+  // UWAGA: font-family jako string z UI, np. "Inter, system-ui"
+  ctx.font = `${style} ${weight} ${sizePx}px ${opts.family}`;
+  ctx.textBaseline = "middle";
+  ctx.textAlign = opts.align || "center"; // 'left' | 'center' | 'right'
+  ctx.fillStyle = "#fff";
+
+  const x =
+    ctx.textAlign === "left" ? 0 :
+    ctx.textAlign === "right" ? BIG_W :
+    Math.floor(BIG_W / 2);
+
+  const y = Math.floor(BIG_H / 2);
+
+  // lekki padding przy left/right
+  const pad = 6;
+  const x2 = (ctx.textAlign === "left") ? pad : (ctx.textAlign === "right" ? BIG_W - pad : x);
+
+  // jedna linia na start (wielolinijkę można dopiąć później)
+  ctx.fillText(String(text || ""), x2, y);
+
+  return c;
+}
+
+function compileHtmlTextTo150(text, opts) {
+  const c208 = renderHtmlTextTo208(text, opts);
+  const bits208 = canvasToBits(c208, opts.threshold ?? 128);
+  const bits150 = compress208x88to150x70(bits208);
+  return { bits150, bits208Canvas: c208 };
+}
+
 /* =========================================================
    CANVAS helpers: mini edit canvases
 ========================================================= */
@@ -634,6 +700,52 @@ function rows30x10ToBits150(rows10) {
   }
 
   return out;
+}
+
+const BIG_W = 208; // 30*5 + 29*2
+const BIG_H = 88;  // 10*7 + 9*2
+
+function compress208x88to150x70(bits208) {
+  // bits208: Uint8Array(BIG_W*BIG_H) 0/1
+  const out = new Uint8Array(DOT_W * DOT_H);
+
+  let oy = 0;
+  for (let y = 0; y < BIG_H; y++) {
+    // usuń 2 rzędy przerwy co 9: indeksy 7 i 8 w bloku 0..8
+    const my = y % 9;
+    if (my === 7 || my === 8) continue;
+
+    let ox = 0;
+    for (let x = 0; x < BIG_W; x++) {
+      // usuń 2 kolumny przerwy co 7: indeksy 5 i 6 w bloku 0..6
+      const mx = x % 7;
+      if (mx === 5 || mx === 6) continue;
+
+      out[oy * DOT_W + ox] = bits208[y * BIG_W + x] ? 1 : 0;
+      ox++;
+    }
+    oy++;
+  }
+
+  return out;
+}
+
+function bitsBoundingBox(bits, w, h) {
+  let minX = w, minY = h, maxX = -1, maxY = -1;
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    if (!bits[y*w+x]) continue;
+    if (x < minX) minX = x;
+    if (y < minY) minY = y;
+    if (x > maxX) maxX = x;
+    if (y > maxY) maxY = y;
+  }
+  if (maxX < 0) return null;
+  return { minX, minY, maxX, maxY, w: maxX-minX+1, h: maxY-minY+1 };
+}
+
+function looksClipped(box, w, h, pad = 1) {
+  if (!box) return false;
+  return box.minX <= pad || box.minY <= pad || box.maxX >= (w-1-pad) || box.maxY >= (h-1-pad);
 }
 
 
