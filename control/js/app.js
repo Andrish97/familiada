@@ -478,6 +478,201 @@ async function sendZeroStatesToDevices() {
 
   devices.initLinksAndQr();
 
+  // ===== KOLORY (na żywo, bez zapisu) =====
+  const DEFAULT_COLORS = {
+    A: "#c4002f",
+    B: "#2a62ff",
+    BG: "#d21180",
+  };
+  
+  let colorModeActive = false; // czy jesteśmy "chwilowo" w APP GAME + buzzer ON
+  
+  const swatchTeamA = document.getElementById("swatchTeamA");
+  const swatchTeamB = document.getElementById("swatchTeamB");
+  const swatchBg = document.getElementById("swatchBg");
+  const dotTeamA = document.getElementById("dotTeamA");
+  const dotTeamB = document.getElementById("dotTeamB");
+  const dotBg = document.getElementById("dotBg");
+  const bgLabel = document.getElementById("bgColorLabel");
+  
+  const btnColorsReset = document.getElementById("btnColorsReset");
+  
+  // modal
+  const colorModalOverlay = document.getElementById("colorModalOverlay");
+  const colorModalTitle = document.getElementById("colorModalTitle");
+  const colorPalette = document.getElementById("colorPalette");
+  const colorInput = document.getElementById("colorInput");
+  const colorHex = document.getElementById("colorHex");
+  const colorApply = document.getElementById("colorApply");
+  const colorModalClose = document.getElementById("colorModalClose");
+  
+  let colorTarget = null; // "A" | "B" | "BG"
+  
+  function normHex(v) {
+    let s = String(v || "").trim();
+    if (!s) return null;
+    if (!s.startsWith("#")) s = "#" + s;
+    if (!/^#[0-9a-fA-F]{6}$/.test(s)) return null;
+    return s.toLowerCase();
+  }
+  
+  function setSwatchUi() {
+    if (dotTeamA) dotTeamA.style.background = DEFAULT_COLORS.A;
+    if (dotTeamB) dotTeamB.style.background = DEFAULT_COLORS.B;
+    if (dotBg) dotBg.style.background = DEFAULT_COLORS.BG;
+    if (bgLabel) bgLabel.textContent = DEFAULT_COLORS.BG;
+  }
+  
+  setSwatchUi();
+  
+  async function enterColorMode() {
+    if (colorModeActive) return;
+    colorModeActive = true;
+    try { await devices.sendDisplayCmd("APP GAME"); } catch {}
+    try { await devices.sendBuzzerCmd("ON"); } catch {}
+    try { await devices.sendHostCmd("COVER"); } catch {}
+  }
+  
+  async function exitColorMode() {
+    if (!colorModeActive) return;
+    colorModeActive = false;
+    try { await devices.sendDisplayCmd("APP BLACK"); } catch {}
+    try { await devices.sendBuzzerCmd("OFF"); } catch {}
+  }
+  
+  async function sendColorLive(target, hex) {
+    const h = normHex(hex);
+    if (!h) return;
+  
+    if (target === "A") {
+      try { await devices.sendDisplayCmd(`COLOR A ${h}`); } catch {}
+      try { await devices.sendBuzzerCmd(`COLOR_A ${h}`); } catch {}
+      try { await devices.sendHostCmd(`COLOR_A ${h}`); } catch {}
+      if (dotTeamA) dotTeamA.style.background = h;
+    }
+  
+    if (target === "B") {
+      try { await devices.sendDisplayCmd(`COLOR B ${h}`); } catch {}
+      try { await devices.sendBuzzerCmd(`COLOR_B ${h}`); } catch {}
+      try { await devices.sendHostCmd(`COLOR_B ${h}`); } catch {}
+      if (dotTeamB) dotTeamB.style.background = h;
+    }
+  
+    if (target === "BG") {
+      try { await devices.sendDisplayCmd(`COLOR BACKGROUND ${h}`); } catch {}
+      if (dotBg) dotBg.style.background = h;
+      if (bgLabel) bgLabel.textContent = h;
+    }
+  }
+  
+  async function resetColors() {
+    try { await devices.sendDisplayCmd("COLOR RESET"); } catch {}
+    try { await devices.sendBuzzerCmd("COLOR_RESET"); } catch {}
+    try { await devices.sendHostCmd("COLOR_RESET"); } catch {}
+  
+    // UI wraca do domyślnych (wizualnie)
+    setSwatchUi();
+  }
+  
+  function openColorModal(target) {
+    colorTarget = target;
+  
+    const title =
+      target === "A" ? "Kolor drużyny A" :
+      target === "B" ? "Kolor drużyny B" :
+      "Kolor tła wyświetlacza";
+  
+    if (colorModalTitle) colorModalTitle.textContent = title;
+  
+    // ustaw startową wartość w modal
+    const cur =
+      target === "A" ? (dotTeamA?.style.background || DEFAULT_COLORS.A) :
+      target === "B" ? (dotTeamB?.style.background || DEFAULT_COLORS.B) :
+      (dotBg?.style.background || DEFAULT_COLORS.BG);
+  
+    const curHex = normHex(cur) || DEFAULT_COLORS.BG;
+  
+    if (colorInput) colorInput.value = curHex;
+    if (colorHex) colorHex.value = curHex;
+  
+    // paleta
+    const palette = [
+      "#c4002f","#2a62ff","#d21180","#ff3333","#ff9800",
+      "#ffd54f","#00c853","#2ecc71","#00bcd4","#7c4dff",
+      "#111827","#ffffff","#e11d48","#0ea5e9","#22c55e",
+      "#f59e0b","#a855f7","#14b8a6","#94a3b8","#f9fafb",
+    ];
+  
+    if (colorPalette) {
+      colorPalette.innerHTML = palette
+        .map((h) => `<button class="colorChip" type="button" data-hex="${h}" style="background:${h}"></button>`)
+        .join("");
+  
+      colorPalette.querySelectorAll(".colorChip").forEach((b) => {
+        b.addEventListener("click", () => {
+          const h = normHex(b.dataset.hex);
+          if (!h) return;
+          if (colorInput) colorInput.value = h;
+          if (colorHex) colorHex.value = h;
+          // wysyłka live natychmiast
+          sendColorLive(colorTarget, h);
+        });
+      });
+    }
+  
+    if (colorModalOverlay) colorModalOverlay.classList.remove("hidden");
+  }
+  
+  function closeColorModal() {
+    if (colorModalOverlay) colorModalOverlay.classList.add("hidden");
+    colorTarget = null;
+  }
+  
+  colorModalClose?.addEventListener("click", closeColorModal);
+  colorModalOverlay?.addEventListener("click", (e) => {
+    if (e.target === colorModalOverlay) closeColorModal();
+  });
+  
+  colorInput?.addEventListener("input", () => {
+    const h = normHex(colorInput.value);
+    if (!h) return;
+    if (colorHex) colorHex.value = h;
+    sendColorLive(colorTarget, h);
+  });
+  
+  colorHex?.addEventListener("input", () => {
+    const h = normHex(colorHex.value);
+    if (!h) return;
+    if (colorInput) colorInput.value = h;
+    sendColorLive(colorTarget, h);
+  });
+  
+  colorApply?.addEventListener("click", () => {
+    const h = normHex(colorHex?.value || colorInput?.value);
+    if (!h) return;
+    sendColorLive(colorTarget, h);
+    closeColorModal();
+  });
+  
+  swatchTeamA?.addEventListener("click", async () => {
+    await enterColorMode();
+    openColorModal("A");
+  });
+  swatchTeamB?.addEventListener("click", async () => {
+    await enterColorMode();
+    openColorModal("B");
+  });
+  swatchBg?.addEventListener("click", async () => {
+    await enterColorMode();
+    openColorModal("BG");
+  });
+  
+  btnColorsReset?.addEventListener("click", async () => {
+    await enterColorMode();
+    await resetColors();
+  });
+
+
   // audio: stan początkowy
   store.setAudioUnlocked(!!isAudioUnlocked());
   ui.setAudioStatus(store.state.flags.audioUnlocked);
@@ -686,7 +881,11 @@ async function sendZeroStatesToDevices() {
     ui.setMsg?.("msgAdvanced", APP_MSG.ADV_RESET);
   });
 
-  ui.on("setup.next", () => store.setSetupStep("setup_final"));
+  ui.on("setup.next", async () => {
+    await exitColorMode(); // Display: APP BLACK, Buzzer: OFF
+    store.setSetupStep("setup_final");
+  });
+
   ui.on("setup.back", () => store.setSetupStep("setup_names"));
 
   ui.on("final.toggle", (hasFinal) => {
@@ -726,7 +925,8 @@ async function sendZeroStatesToDevices() {
     finalPickerRender();
   });
 
-  ui.on("setup.finish", () => {
+  ui.on("setup.finish", async () => {
+    await exitColorMode();
     store.completeCard("setup");
     store.setActiveCard("rounds");
   });
