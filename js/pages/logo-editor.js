@@ -13,8 +13,8 @@ const TILES_Y = 10;
 const DOT_W = 150; // 30*5
 const DOT_H = 70;  // 10*7
 
-const FONT_3x10_URL = "../../display/font_3x10.json";
-const FONT_5x7_URL  = "../../display/font_5x7.json";
+const FONT_3x10_URL = "./display/font_3x10.json";
+const FONT_5x7_URL  = "./display/font_5x7.json";
 
 /* =========================================================
    DOM
