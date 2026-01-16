@@ -67,58 +67,56 @@
             </div>
           </div>
 
-          <!-- TEXT_PIX (Tekst -> obrazek) -->
+          <!-- TEXT_PIX (Tekst -> screen -> logo) -->
           <div class="pane" id="paneTextPix" style="display:none;">
-            <div class="lbl" style="margin-top:12px;">Tekst</div>
-            <input class="inp" id="textPixValue" placeholder="Np. Familiada"/>
+            <div class="toolRow" style="margin-top:12px; align-items:center;">
+              <button class="btn sm" id="btnRtBold" type="button"><b>B</b></button>
+              <button class="btn sm" id="btnRtItalic" type="button"><i>I</i></button>
+              <button class="btn sm" id="btnRtUnderline" type="button"><u>U</u></button>
           
-            <div class="toolRow" style="margin-top:10px; align-items:center;">
-              <div style="flex:1;">
-                <div class="lbl" style="margin-bottom:6px;">Czcionka</div>
-                <select class="inp" id="selPixFont">
-                  <option value="system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif">Systemowa</option>
-                  <option value="Arial, Helvetica, sans-serif">Arial</option>
-                  <option value="Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif">Impact</option>
-                  <option value="'Trebuchet MS', Trebuchet, sans-serif">Trebuchet</option>
-                  <option value="'Times New Roman', Times, serif">Times</option>
-                  <option value="'Courier New', Courier, monospace">Courier</option>
-                </select>
-              </div>
-            </div>
-          
-            <div class="toolRow" style="margin-top:10px; align-items:center;">
-              <label class="chk"><input type="checkbox" id="chkPixBold"/> Pogrubienie</label>
-              <label class="chk"><input type="checkbox" id="chkPixItalic"/> Kursywa</label>
               <div class="spacer"></div>
-              <div style="min-width:160px;">
-                <div class="lbl" style="margin-bottom:6px;">Wyrównanie</div>
-                <select class="inp" id="selPixAlign">
-                  <option value="center">Środek</option>
-                  <option value="left">Lewo</option>
-                  <option value="right">Prawo</option>
-                </select>
-              </div>
+          
+              <select class="inp" id="selRtFont" style="max-width:260px;">
+                <option value="system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif">Systemowa</option>
+                <option value="Arial, Helvetica, sans-serif">Arial</option>
+                <option value="Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif">Impact</option>
+                <option value="'Trebuchet MS', Trebuchet, sans-serif">Trebuchet</option>
+                <option value="'Times New Roman', Times, serif">Times</option>
+                <option value="'Courier New', Courier, monospace">Courier</option>
+              </select>
+          
+              <button class="btn sm" id="btnRtSizeMinus" type="button">−</button>
+              <input class="inp" id="inpRtSize" type="number" min="10" max="120" value="56" style="width:86px;"/>
+              <button class="btn sm" id="btnRtSizePlus" type="button">+</button>
             </div>
           
             <div class="toolRow" style="margin-top:10px; align-items:center;">
-              <div style="flex:1;">
-                <div class="lbl" style="margin-bottom:6px;">Rozmiar</div>
-                <input class="inp" id="rngPixSize" type="range" min="10" max="120" step="1" value="56"/>
-              </div>
-              <div style="min-width:70px; text-align:right; opacity:.9;" id="pixSizeLabel">56</div>
+              <button class="btn sm" id="btnRtAlignLeft" type="button">⇤</button>
+              <button class="btn sm" id="btnRtAlignCenter" type="button">⇆</button>
+              <button class="btn sm" id="btnRtAlignRight" type="button">⇥</button>
+              <button class="btn sm" id="btnRtList" type="button">•</button>
             </div>
           
-            <div class="toolRow" style="margin-top:10px; align-items:center;">
-              <div style="flex:1;">
-                <div class="lbl" style="margin-bottom:6px;">Czułość</div>
-                <input class="inp" id="rngPixThresh" type="range" min="40" max="220" step="1" value="128"/>
-              </div>
-              <div style="min-width:70px; text-align:right; opacity:.9;" id="pixThreshLabel">128</div>
+            <!-- Duże pole edycji -->
+            <div class="canvasBox" style="margin-top:10px;">
+              <div id="rtEditor"
+                   contenteditable="true"
+                   spellcheck="false"
+                   style="
+                     min-height:240px;
+                     padding:12px;
+                     border-radius:14px;
+                     border:1px solid rgba(255,255,255,.12);
+                     background:rgba(0,0,0,.16);
+                     outline:none;
+                     white-space:pre-wrap;
+                     overflow:auto;
+                   ">Wpisz tekst…</div>
             </div>
           
             <div class="warn" id="pixWarn" style="display:none;"></div>
-            <div class="hint">Dostosuj wygląd tak, żeby tekst był czytelny i nie był ucięty.</div>
           </div>
+          
 
 
           <!-- DRAW -->
@@ -163,6 +161,16 @@
           </div>
           <div class="hint">Kliknij podgląd, żeby otworzyć pełny ekran.</div>
         </div>
+
+        <div class="toolRow" style="margin-top:10px; align-items:center;">
+          <div class="lbl" style="margin:0;">Kontrast</div>
+          <div class="spacer"></div>
+          <button class="btn sm" id="btnThreshMinus" type="button">−</button>
+          <input class="inp" id="inpThresh" type="number" min="40" max="220" value="128" style="width:90px;"/>
+          <button class="btn sm" id="btnThreshPlus" type="button">+</button>
+        </div>
+        <div class="hint" style="margin-top:6px;">Zwiększ, jeśli obraz jest za “jasny”. Zmniejsz, jeśli znika.</div>
+
       </div>
     </section>
 
