@@ -57,25 +57,23 @@ function createManagedChannel(topic) {
   async function sendBroadcast(event, payload = {}, opts = {}) {
     const mode = opts.mode || "auto"; // "auto" | "ws" | "http"
     ensureChannel();
-  
+
     const safe = (payload && typeof payload === "object") ? payload : { value: payload };
-  
-    const http = async () => {
-      const { error } = await ch.httpSend({
-        type: "broadcast",
-        event,
-        payload: safe,
-      });
+
+    // jawny REST
+    if (mode === "http") {
+      const { error } = await ch.httpSend(event, safe);
       if (error) throw error;
       return true;
-    };
-  
-    // jawny REST
-    if (mode === "http") return http();
-  
+    }
+
     // auto: jeśli nie jesteśmy SUBSCRIBED, nie próbujemy WS → idziemy od razu HTTP
-    if (mode === "auto" && status !== "SUBSCRIBED") return http();
-  
+    if (mode === "auto" && status !== "SUBSCRIBED") {
+      const { error } = await ch.httpSend(event, safe);
+      if (error) throw error;
+      return true;
+    }
+
     // WS (albo auto + jesteśmy SUBSCRIBED)
     const ok = await whenReady(opts);
     if (!ok) {
@@ -83,17 +81,26 @@ function createManagedChannel(topic) {
         reset();
         throw new Error(`Realtime not ready for topic ${topic}`);
       }
-      return http(); // auto fallback
+      // auto: jak nie gotowe, lecimy HTTP
+      const { error } = await ch.httpSend(event, safe);
+      if (error) throw error;
+      return true;
     }
-  
+
+    // UWAGA: tu Supabase potrafi robić "silent REST fallback" → unikamy go
+    // przez przechwycenie błędu i w auto robimy jawny httpSend.
     const { error } = await ch.send({ type: "broadcast", event, payload: safe });
     if (!error) return true;
-  
+
     reset();
     if (mode === "ws") throw error;
-  
-    return http(); // auto: jawny fallback
+
+    // auto: jawny fallback
+    const { error: e2 } = await ch.httpSend(event, safe);
+    if (e2) throw e2;
+    return true;
   }
+
 
   function onBroadcast(event, handler) {
     ensureChannel();
