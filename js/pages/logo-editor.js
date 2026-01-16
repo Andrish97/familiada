@@ -253,8 +253,11 @@ function normalizeInputText(raw) {
 }
 
 function glyphEdgeCollides(prev, next) {
-  // prev.rows10: 10 stringów, prev.w szerokość
-  // next.rows10: 10 stringów, next.w szerokość
+  // Sprawdzamy TYLKO styk bez przerwy:
+  // prev: ostatnia kolumna, next: pierwsza kolumna.
+  // Jeśli w JAKIMKOLWIEK rzędzie byłoby lit+lit => powstaje "██" => wymagamy gap=1.
+  // Jeśli w ŻADNYM rzędzie nie ma lit+lit => gap=0 dozwolony.
+
   if (!prev || !next) return false;
   if (prev.w <= 0 || next.w <= 0) return false;
 
@@ -264,10 +267,11 @@ function glyphEdgeCollides(prev, next) {
   for (let y = 0; y < 10; y++) {
     const a = (prev.rows10[y] || "")[px] ?? " ";
     const b = (next.rows10[y] || "")[nx] ?? " ";
-    if (isLitChar(a) && isLitChar(b)) return true; // tu byłoby „██”
+    if (isLitChar(a) && isLitChar(b)) return true;
   }
   return false;
 }
+
 
 function compileTextToRows30x10(raw) {
   const text = normalizeInputText(raw);
