@@ -1,1 +1,814 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Kora — builder 3×10 z kafelków 5×7</title>
+  <style>
+    :root{
+      --dot: 8px;          /* średnica piksela */
+      --dot-gap: 2px;      /* odstęp między pikselami w 5x7 */
+      --tile-gap: 2px;     /* odstęp między wyświetlaczami 5x7 (wymagane 2px) */
+      --panel-gap: 14px;
+      --border: 1px solid #d6d6d6;
+      --bg: #0f1115;
+      --fg: #e8e8e8;
+      --muted: #a7a7a7;
+      --card: #171a21;
+      --card2: #1e2230;
+      --accent: #7aa2ff;
+      --danger: #ff6b6b;
+    }
 
+    html, body {
+      height: 100%;
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--fg);
+    }
+
+    header{
+      padding: 16px 16px 10px;
+      border-bottom: 1px solid #24283a;
+      display:flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    header .left{
+      display:flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .btn{
+      appearance: none;
+      border: 1px solid #2a2f44;
+      background: #121521;
+      color: var(--fg);
+      padding: 8px 10px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .btn:hover{ border-color: #3a4261; }
+    .btn:active{ transform: translateY(1px); }
+    .btn.primary{ border-color: #3553a8; background: #15224b; }
+    .btn.danger{ border-color: #6a2a2a; background: #2a1212; color: #ffd7d7; }
+
+    input[type="file"]{
+      color: var(--muted);
+    }
+    input[type="text"]{
+      background: #0f1220;
+      border: 1px solid #2a2f44;
+      color: var(--fg);
+      border-radius: 10px;
+      padding: 8px 10px;
+      font-weight: 600;
+      width: 120px;
+    }
+
+    .wrap{
+      padding: 16px;
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: var(--panel-gap);
+      align-items: start;
+    }
+
+    .card{
+      background: linear-gradient(180deg, var(--card), #131722);
+      border: var(--border);
+      border-color: #24283a;
+      border-radius: 16px;
+      padding: 14px;
+    }
+
+    .card h2{
+      margin: 0 0 10px;
+      font-size: 14px;
+      letter-spacing: .3px;
+      color: #cfd6ff;
+      display:flex;
+      align-items:center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .row{
+      display:flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .hint{
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    /* === 5x7 mini-render === */
+    .glyph57{
+      display: grid;
+      grid-template-columns: repeat(5, var(--dot));
+      grid-template-rows: repeat(7, var(--dot));
+      gap: var(--dot-gap);
+      padding: 8px;
+      border-radius: 12px;
+      border: 1px solid #2a2f44;
+      background: #0c0e16;
+      user-select: none;
+    }
+
+    .dot{
+      width: var(--dot);
+      height: var(--dot);
+      border-radius: 999px;
+      background: #1f2333;
+    }
+    .dot.on{
+      background: #e9edff;
+      box-shadow: 0 0 0 1px rgba(233,237,255,.05), 0 0 10px rgba(122,162,255,.08);
+    }
+
+    /* === editor 3x10 === */
+    .editorGrid{
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      align-items: start;
+    }
+
+    .cell{
+      background: var(--card2);
+      border: 1px solid #2a2f44;
+      border-radius: 14px;
+      padding: 10px;
+      display:flex;
+      gap: 10px;
+      align-items: center;
+      cursor: pointer;
+      user-select: none;
+    }
+    .cell:hover{ border-color: #3a4261; }
+    .cell .label{
+      min-width: 20px;
+      text-align: center;
+      font-weight: 800;
+      color: #c7cffc;
+      opacity: .95;
+    }
+    .cell .char{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      color: #d7ddff;
+      font-weight: 800;
+      padding: 2px 6px;
+      border-radius: 8px;
+      background: #0d1020;
+      border: 1px solid #2a2f44;
+    }
+
+    /* === preview: 3x10 tiles of 5x7 with gap=2px === */
+    .previewGrid{
+      display: grid;
+      grid-template-columns: repeat(3, auto);
+      gap: var(--tile-gap);
+      align-items: start;
+      justify-content: start;
+      padding: 10px;
+      border-radius: 16px;
+      border: 1px solid #2a2f44;
+      background: #0b0d14;
+      overflow: auto;
+      max-width: 100%;
+    }
+
+    /* tile wrapper (no padding to respect 2px gap between tiles) */
+    .tile{
+      display: grid;
+      grid-template-columns: repeat(5, var(--dot));
+      grid-template-rows: repeat(7, var(--dot));
+      gap: var(--dot-gap);
+      padding: 0;
+      margin: 0;
+      user-select: none;
+    }
+
+    /* palette */
+    .palette{
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(74px, 1fr));
+      gap: 10px;
+    }
+
+    .palItem{
+      border: 1px solid #2a2f44;
+      background: #0c0e16;
+      border-radius: 14px;
+      padding: 8px;
+      cursor: pointer;
+      display:flex;
+      flex-direction: column;
+      gap: 6px;
+      align-items: center;
+      justify-content: center;
+      user-select: none;
+    }
+    .palItem:hover{ border-color: #3a4261; }
+    .palItem.selected{
+      border-color: #3553a8;
+      box-shadow: 0 0 0 1px rgba(122,162,255,.25);
+    }
+    .palItem .k{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-weight: 800;
+      color: #cfd6ff;
+    }
+
+    /* saved 3x10 table */
+    .saved{
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(86px, 1fr));
+      gap: 10px;
+    }
+
+    .savedItem{
+      border: 1px solid #2a2f44;
+      background: #0c0e16;
+      border-radius: 14px;
+      padding: 10px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .savedItem:hover{ border-color: #3a4261; }
+    .savedItem .title{
+      font-weight: 900;
+      color: #cfd6ff;
+      margin-bottom: 8px;
+      display:flex;
+      justify-content: space-between;
+      align-items:center;
+      gap: 10px;
+    }
+    .miniPreview{
+      display: grid;
+      grid-template-columns: repeat(3, auto);
+      gap: 2px;
+      opacity: .9;
+    }
+    .miniTile{
+      display:grid;
+      grid-template-columns: repeat(5, 4px);
+      grid-template-rows: repeat(7, 4px);
+      gap: 1px;
+    }
+    .miniDot{
+      width: 4px; height: 4px;
+      border-radius: 999px;
+      background: #1f2333;
+    }
+    .miniDot.on{ background: #e9edff; }
+
+    textarea{
+      width: 100%;
+      min-height: 140px;
+      background: #0a0c13;
+      border: 1px solid #2a2f44;
+      border-radius: 14px;
+      padding: 10px;
+      color: #d7ddff;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-size: 12px;
+      line-height: 1.4;
+      box-sizing: border-box;
+    }
+
+    .split{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+
+    @media (max-width: 1100px){
+      .wrap{ grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+
+<body>
+<header>
+  <div class="left">
+    <input id="fontFile" type="file" accept=".json,application/json" />
+    <button id="loadDemo" class="btn">Wczytaj demo (z wklejki)</button>
+    <span id="status" class="hint">Brak fontu 5×7 — wczytaj JSON.</span>
+  </div>
+
+  <div class="row">
+    <span class="hint">Pędzel:</span>
+    <span id="brushChar" class="btn" style="cursor:default;">(brak)</span>
+    <button id="eraseBrush" class="btn danger">Gumka (spacja)</button>
+  </div>
+</header>
+
+<div class="wrap">
+  <section class="card">
+    <h2>Edytor 3×10 (30 pól)</h2>
+    <div class="hint" style="margin-bottom:10px;">
+      LPM na polu: wstaw aktualny pędzel. PPM: wyczyść do spacji. Każde pole przechowuje jeden znak z fontu 5×7.
+    </div>
+    <div id="editor" class="editorGrid"></div>
+
+    <div style="height:12px;"></div>
+
+    <h2>Podgląd: 3×10 wyświetlaczy 5×7 (przerwa 2 px)</h2>
+    <div class="hint" style="margin-bottom:10px;">
+      To jest “prawdziwy” render kafelków: 3 kolumny × 10 wierszy, każdy kafelek to 5×7 okrągłych pikseli.
+    </div>
+    <div id="preview" class="previewGrid"></div>
+
+    <div style="height:14px;"></div>
+
+    <h2>Zapis symbolu 3×10</h2>
+    <div class="row" style="margin-bottom:10px;">
+      <input id="symbolInput" type="text" maxlength="2" placeholder="np. A" />
+      <button id="saveSymbol" class="btn primary">Zapisz</button>
+      <button id="clearGrid" class="btn danger">Wyczyść siatkę</button>
+      <button id="exportBtn" class="btn">Eksport JSON</button>
+    </div>
+
+    <div class="hint">
+      Format zapisu: dla każdego symbolu tablica 10 wierszy po 3 znaki. Spacja oznacza pusty kafelek.
+    </div>
+
+    <div style="height:10px;"></div>
+    <textarea id="exportBox" readonly placeholder="Tu pojawi się JSON eksportu..."></textarea>
+  </section>
+
+  <aside class="split">
+    <section class="card">
+      <h2>Paleta glifów 5×7 (klikaj, żeby wstawiać)</h2>
+      <div class="hint" style="margin-bottom:10px;">
+        Lista jest budowana z sekcji: letters, digits, punctuation, math, special. Aliasy typu “@A” są rozwiązywane.
+      </div>
+      <div id="palette" class="palette"></div>
+    </section>
+
+    <section class="card">
+      <h2>Gotowe symbole 3×10</h2>
+      <div class="hint" style="margin-bottom:10px;">
+        Kliknij symbol, żeby wczytać do edytora. Usuń — ikonka ✕.
+      </div>
+      <div id="saved" class="saved"></div>
+    </section>
+  </aside>
+</div>
+
+<script>
+/* ========= Stan ========= */
+const GRID_W = 3;
+const GRID_H = 10;
+
+let font57 = null;          // wczytany font 5x7
+let glyphMap = null;        // znormalizowana mapa: char -> [7 liczb]
+let brush = null;           // aktualny znak (kafelek) do wstawiania
+let grid = makeEmptyGrid(); // 10x3 znaki (spacje)
+
+let savedBig = {};          // symbol -> [10 stringów po 3]
+
+/* ========= Utils ========= */
+function makeEmptyGrid(){
+  return Array.from({length: GRID_H}, () => Array.from({length: GRID_W}, () => " "));
+}
+function cloneGrid(g){
+  return g.map(row => row.slice());
+}
+function gridToRows(g){
+  // zawsze 10 wierszy po 3 znaki
+  return g.map(row => row.join(""));
+}
+function rowsToGrid(rows){
+  const g = makeEmptyGrid();
+  for (let y=0; y<GRID_H; y++){
+    const r = (rows?.[y] ?? "   ");
+    for (let x=0; x<GRID_W; x++){
+      g[y][x] = (r[x] ?? " ");
+    }
+  }
+  return g;
+}
+function isPrintableChar(s){
+  return typeof s === "string" && s.length > 0;
+}
+
+/* ========= Font 5x7: flatten + alias ========= */
+function buildGlyphMap(font){
+  const buckets = ["letters","digits","punctuation","math","special"];
+  const raw = new Map();
+
+  for (const b of buckets){
+    const obj = font[b] || {};
+    for (const [k,v] of Object.entries(obj)){
+      raw.set(k, v);
+    }
+  }
+
+  const resolved = new Map();
+  const resolving = new Set();
+
+  function resolveChar(ch){
+    if (resolved.has(ch)) return resolved.get(ch);
+    const v = raw.get(ch);
+    if (!v) return null;
+
+    if (typeof v === "string" && v.startsWith("@")){
+      const target = v.slice(1);
+      if (resolving.has(ch)) return null; // cykl
+      resolving.add(ch);
+      const r = resolveChar(target);
+      resolving.delete(ch);
+      if (r) resolved.set(ch, r);
+      return r;
+    }
+
+    if (Array.isArray(v) && v.length === 7){
+      // wiersze 5-bitowe 0..31
+      resolved.set(ch, v.slice());
+      return v;
+    }
+
+    return null;
+  }
+
+  // resolve wszystko co się da
+  for (const ch of raw.keys()){
+    resolveChar(ch);
+  }
+
+  // w praktyce przydaje się spacja zawsze
+  if (!resolved.has(" ")){
+    resolved.set(" ", [0,0,0,0,0,0,0]);
+  }
+
+  // posortuj sensownie: najpierw litery/cyfry, potem reszta
+  const all = Array.from(resolved.keys());
+  all.sort((a,b)=>{
+    const pa = sortKey(a), pb = sortKey(b);
+    return pa === pb ? a.localeCompare(b) : pa - pb;
+  });
+
+  return { map: resolved, order: all };
+
+  function sortKey(ch){
+    if (/^[A-ZĄĆĘŁŃÓŚŹŻ]$/.test(ch)) return 1;
+    if (/^[0-9]$/.test(ch)) return 2;
+    if (ch === " ") return 99;
+    return 50;
+  }
+}
+
+/* ========= Render dot-grids ========= */
+function makeDotGrid57(rows7, cls="glyph57"){
+  const el = document.createElement("div");
+  el.className = cls;
+
+  for (let y=0; y<7; y++){
+    const bits = rows7?.[y] ?? 0;
+    for (let x=0; x<5; x++){
+      const d = document.createElement("div");
+      d.className = "dot";
+      const on = (bits >> (4 - x)) & 1;
+      if (on) d.classList.add("on");
+      el.appendChild(d);
+    }
+  }
+  return el;
+}
+
+function makeTile57(rows7){
+  const el = document.createElement("div");
+  el.className = "tile";
+  for (let y=0; y<7; y++){
+    const bits = rows7?.[y] ?? 0;
+    for (let x=0; x<5; x++){
+      const d = document.createElement("div");
+      d.className = "dot";
+      const on = (bits >> (4 - x)) & 1;
+      if (on) d.classList.add("on");
+      el.appendChild(d);
+    }
+  }
+  return el;
+}
+
+/* ========= UI ========= */
+const statusEl = document.getElementById("status");
+const brushCharEl = document.getElementById("brushChar");
+const paletteEl = document.getElementById("palette");
+const editorEl = document.getElementById("editor");
+const previewEl = document.getElementById("preview");
+const symbolInput = document.getElementById("symbolInput");
+const exportBox = document.getElementById("exportBox");
+const savedEl = document.getElementById("saved");
+
+document.getElementById("eraseBrush").addEventListener("click", ()=>{
+  setBrush(" ");
+});
+document.getElementById("clearGrid").addEventListener("click", ()=>{
+  grid = makeEmptyGrid();
+  renderAll();
+});
+document.getElementById("saveSymbol").addEventListener("click", saveCurrentSymbol);
+document.getElementById("exportBtn").addEventListener("click", exportJSON);
+
+document.getElementById("fontFile").addEventListener("change", async (e)=>{
+  const f = e.target.files?.[0];
+  if (!f) return;
+  const txt = await f.text();
+  loadFontFromText(txt);
+});
+
+document.getElementById("loadDemo").addEventListener("click", ()=>{
+  // Demo: minimalny font (tylko parę znaków). W praktyce wczytasz swój pełny JSON.
+  const demo = {
+    meta: { name:"demo-5x7", width:5, height:7 },
+    special: {
+      " ": [0,0,0,0,0,0,0],
+      "█": [31,31,31,31,31,31,31],
+      "◢": [1,3,7,15,31,31,31],
+      "◣": [16,24,28,30,31,31,31],
+      "◤": [31,31,31,30,28,24,16],
+      "◥": [31,31,31,15,7,3,1]
+    },
+    letters: {
+      "A": [14,17,17,31,17,17,17],
+      "B": [30,17,17,30,17,17,30]
+    }
+  };
+  loadFont(demo);
+});
+
+/* ========= Logika ========= */
+function loadFontFromText(txt){
+  try{
+    const obj = JSON.parse(txt);
+    loadFont(obj);
+  }catch(err){
+    alert("Nie mogę wczytać JSON: " + err.message);
+  }
+}
+
+function loadFont(obj){
+  font57 = obj;
+  const built = buildGlyphMap(font57);
+  glyphMap = built.map;
+  statusEl.textContent = `Wczytano font 5×7: ${font57.meta?.name ?? "(bez nazwy)"} — glifów: ${built.order.length}`;
+  renderPalette(built.order);
+  // ustaw pędzel na pierwszy sensowny znak (np. █ jeśli istnieje)
+  if (glyphMap.has("█")) setBrush("█");
+  else setBrush(built.order[0] ?? " ");
+  renderAll();
+}
+
+function setBrush(ch){
+  brush = ch;
+  brushCharEl.textContent = ch === " " ? "(spacja)" : ch;
+  // zaznaczenie w palecie
+  for (const node of paletteEl.querySelectorAll(".palItem")){
+    node.classList.toggle("selected", node.dataset.ch === ch);
+  }
+}
+
+function renderPalette(order){
+  paletteEl.innerHTML = "";
+  for (const ch of order){
+    // Paleta ma sens tylko dla jednoliterowych kafelków
+    if (!isPrintableChar(ch)) continue;
+    if (ch.length !== 1) continue;
+
+    const rows7 = glyphMap.get(ch);
+    if (!rows7) continue;
+
+    const item = document.createElement("div");
+    item.className = "palItem";
+    item.dataset.ch = ch;
+
+    const k = document.createElement("div");
+    k.className = "k";
+    k.textContent = ch === " " ? "␠" : ch;
+
+    item.appendChild(makeDotGrid57(rows7, "glyph57"));
+    item.appendChild(k);
+
+    item.addEventListener("click", ()=> setBrush(ch));
+    paletteEl.appendChild(item);
+  }
+}
+
+function renderEditor(){
+  editorEl.innerHTML = "";
+  // 3 kolumny x 10 wierszy, ale UI ma być wygodne: robimy 10 rzędów po 3 komórki
+  // żeby było czytelnie w pionie.
+  editorEl.style.gridTemplateColumns = `repeat(${GRID_W}, 1fr)`;
+
+  for (let y=0; y<GRID_H; y++){
+    for (let x=0; x<GRID_W; x++){
+      const ch = grid[y][x];
+
+      const cell = document.createElement("div");
+      cell.className = "cell";
+      cell.title = `(${x+1}, ${y+1})`;
+
+      const lab = document.createElement("div");
+      lab.className = "label";
+      lab.textContent = `${x+1}/${y+1}`;
+
+      const charBox = document.createElement("div");
+      charBox.className = "char";
+      charBox.textContent = (ch === " ") ? "␠" : ch;
+
+      const rows7 = glyphMap?.get(ch) ?? glyphMap?.get(" ") ?? [0,0,0,0,0,0,0];
+      const mini = makeDotGrid57(rows7, "glyph57");
+
+      cell.appendChild(lab);
+      cell.appendChild(mini);
+      cell.appendChild(charBox);
+
+      // LPM wstaw
+      cell.addEventListener("click", ()=>{
+        if (!glyphMap) return;
+        const b = brush ?? " ";
+        grid[y][x] = b;
+        renderAll();
+      });
+
+      // PPM wyczyść
+      cell.addEventListener("contextmenu", (ev)=>{
+        ev.preventDefault();
+        grid[y][x] = " ";
+        renderAll();
+      });
+
+      editorEl.appendChild(cell);
+    }
+  }
+}
+
+function renderPreview(){
+  previewEl.innerHTML = "";
+  // 3 kolumny × 10 wierszy kafelków 5×7
+  // Uwaga: CSS gap = 2px (tile-gap) już ustawiony.
+  previewEl.style.gridTemplateColumns = `repeat(${GRID_W}, auto)`;
+
+  for (let y=0; y<GRID_H; y++){
+    for (let x=0; x<GRID_W; x++){
+      const ch = grid[y][x];
+      const rows7 = glyphMap?.get(ch) ?? glyphMap?.get(" ") ?? [0,0,0,0,0,0,0];
+      const tile = makeTile57(rows7);
+      previewEl.appendChild(tile);
+    }
+  }
+}
+
+function renderSaved(){
+  savedEl.innerHTML = "";
+  const keys = Object.keys(savedBig).sort((a,b)=>a.localeCompare(b));
+  for (const sym of keys){
+    const rows = savedBig[sym];
+
+    const box = document.createElement("div");
+    box.className = "savedItem";
+
+    const title = document.createElement("div");
+    title.className = "title";
+    const left = document.createElement("span");
+    left.textContent = sym;
+    const del = document.createElement("button");
+    del.className = "btn danger";
+    del.style.padding = "4px 8px";
+    del.textContent = "✕";
+    del.title = "Usuń symbol";
+    del.addEventListener("click", (ev)=>{
+      ev.stopPropagation();
+      delete savedBig[sym];
+      renderSaved();
+      exportJSON(true);
+    });
+
+    title.appendChild(left);
+    title.appendChild(del);
+
+    const mini = document.createElement("div");
+    mini.className = "miniPreview";
+    mini.style.gridTemplateColumns = "repeat(3, auto)";
+
+    const g = rowsToGrid(rows);
+    for (let y=0; y<GRID_H; y++){
+      for (let x=0; x<GRID_W; x++){
+        const ch = g[y][x];
+        const rows7 = glyphMap?.get(ch) ?? glyphMap?.get(" ") ?? [0,0,0,0,0,0,0];
+
+        const t = document.createElement("div");
+        t.className = "miniTile";
+        for (let yy=0; yy<7; yy++){
+          const bits = rows7[yy] ?? 0;
+          for (let xx=0; xx<5; xx++){
+            const d = document.createElement("div");
+            d.className = "miniDot";
+            if (((bits >> (4-xx)) & 1) === 1) d.classList.add("on");
+            t.appendChild(d);
+          }
+        }
+        mini.appendChild(t);
+      }
+    }
+
+    box.appendChild(title);
+    box.appendChild(mini);
+
+    box.addEventListener("click", ()=>{
+      grid = rowsToGrid(savedBig[sym]);
+      symbolInput.value = sym;
+      renderAll();
+    });
+
+    savedEl.appendChild(box);
+  }
+}
+
+function renderAll(){
+  renderEditor();
+  renderPreview();
+  renderSaved();
+  exportJSON(true);
+}
+
+/* ========= Save / Export ========= */
+function saveCurrentSymbol(){
+  const sym = (symbolInput.value ?? "").trim();
+  if (!sym){
+    alert("Wpisz symbol (np. A).");
+    return;
+  }
+  if (sym.length > 2){
+    alert("Dla prostoty: symbol max 2 znaki.");
+    return;
+  }
+  // walidacja: w grid są znaki z fontu 5x7
+  if (!glyphMap){
+    alert("Najpierw wczytaj font 5×7.");
+    return;
+  }
+  for (let y=0; y<GRID_H; y++){
+    for (let x=0; x<GRID_W; x++){
+      const ch = grid[y][x];
+      if (!glyphMap.has(ch)){
+        alert(`W siatce jest znak „${ch}”, którego nie ma w font 5×7.`);
+        return;
+      }
+    }
+  }
+
+  savedBig[sym] = gridToRows(grid);
+  renderSaved();
+  exportJSON(true);
+}
+
+function exportJSON(silent=false){
+  // eksport: { "A": ["...", ...10], "B": [...] }
+  const out = {};
+  const keys = Object.keys(savedBig).sort((a,b)=>a.localeCompare(b));
+  for (const k of keys){
+    out[k] = savedBig[k].slice(0, GRID_H).map(r => (r ?? "   ").slice(0, GRID_W).padEnd(GRID_W, " "));
+    // twardy format 10×3
+    while (out[k].length < GRID_H) out[k].push("   ");
+    out[k] = out[k].slice(0, GRID_H);
+  }
+
+  const txt = JSON.stringify(out, null, 2);
+  exportBox.value = txt;
+
+  if (!silent){
+    const blob = new Blob([txt], {type:"application/json"});
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "kora-3x10.json";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(a.href);
+  }
+}
+
+/* ========= Start ========= */
+renderAll();
+setBrush(" ");
+statusEl.textContent = "Brak fontu 5×7 — wczytaj JSON.";
+</script>
+</body>
+</html>
