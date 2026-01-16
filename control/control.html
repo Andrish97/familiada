@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="pl">
 <head>
   <meta charset="UTF-8"/>
@@ -344,41 +344,20 @@
               <div class="card">
                 <div class="cardBody">
                  <div class="hint">
-                    Tutaj wprowadź nazwy drużyn, zmień kolory jeśli chcesz i możesz zmienić dodatkowe ustawienia.
+                    Tutaj wprowadz nazwy drużyn oraz możesz zmienić dodatkowe ustawienia.
                   </div>
-                    <div class="rowBtns" style="margin-top:10px;">
-                      <div class="colorRow">
-                    
-                        <button class="colorChip" id="chipColorA" type="button" title="Kolor drużyny A">
-                          <span class="dotColor" id="dotColorA"></span>
-                          <span class="lblColor">Kolor A</span>
-                          <span class="hex" id="hexColorA">#c4002f</span>
-                        </button>
-                    
-                        <button class="colorChip" id="chipColorB" type="button" title="Kolor drużyny B">
-                          <span class="dotColor" id="dotColorB"></span>
-                          <span class="lblColor">Kolor B</span>
-                          <span class="hex" id="hexColorB">#2a62ff</span>
-                        </button>
-                    
-                        <button class="colorChip" id="chipColorBg" type="button" title="Kolor tła wyświetlacza">
-                          <span class="dotColor" id="dotColorBg"></span>
-                          <span class="lblColor">Tło</span>
-                          <span class="hex" id="hexColorBg">#d21180</span>
-                        </button>
-                    
-                        <button class="btn sm" id="btnColorReset" type="button">Reset kolorów</button>
-                    
-                        <!-- ukryte native pickery -->
-                        <input class="nativeColor" id="pickColorA" type="color" value="#c4002f" />
-                        <input class="nativeColor" id="pickColorB" type="color" value="#2a62ff" />
-                        <input class="nativeColor" id="pickColorBg" type="color" value="#d21180" />
-                    
-                      </div>
+                  <div class="rowBtns">
+                    <div class="field">
+                      <div class="lbl2">Drużyna A</div>
+                      <input class="inp" id="teamA" autocomplete="off"/>
                     </div>
+                    <div class="field">
+                      <div class="lbl2">Drużyna B</div>
+                      <input class="inp" id="teamB" autocomplete="off"/>
+                    </div>
+                  </div>
                   <div class="rowBtns">
                     <button class="btn" id="btnTeamMore" type="button">Dodatkowe ustawienia</button>
-                    <button class="btn" id="btnColorsReset" type="button">Reset kolorów</button>
                   </div>
 
                   <div class="extra hidden" id="teamExtra">
@@ -959,28 +938,5 @@
       </div>
     </div>
   </main>
-  <!-- Modal: wybór koloru -->
-  <div class="colorModalOverlay hidden" id="colorModalOverlay">
-    <div class="colorModalBox">
-      <div class="colorModalHead">
-        <div class="colorModalTitle" id="colorModalTitle">Wybierz kolor</div>
-        <button class="btn xs" id="colorModalClose" type="button">✕</button>
-      </div>
-  
-      <div class="colorModalBody">
-        <div class="colorPalette" id="colorPalette"></div>
-  
-        <div class="colorPickRow">
-          <input class="colorInput" id="colorInput" type="color" />
-          <input class="inp" id="colorHex" autocomplete="off" />
-          <button class="btn gold" id="colorApply" type="button">Ustaw</button>
-        </div>
-  
-        <div class="hint" id="colorModalHint" style="max-width:none;">
-          Zmiana wysyłana jest na urządzenia na bieżąco.
-        </div>
-      </div>
-    </div>
-  </div>
 </body>
 </html>
