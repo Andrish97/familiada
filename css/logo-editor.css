@@ -352,7 +352,7 @@ body.logo-editor-body .wrap{ max-width:1200px; }
 .overlay{
   position:fixed;
   inset:0;
-  background:rgba(0,0,0,.55);
+  background:rgba(0,0,0,.82);
   display:grid;
   place-items:center;
   padding:16px;
