@@ -38,29 +38,89 @@
       <div class="grid" id="grid"></div>
     </section>
 
+    <!-- Edytor (na stronie) -->
+    <section class="editorShell" id="editorShell" style="display:none;">
+      <div class="editorHead">
+        <div>
+          <div class="editorTitle" id="editorTitle">Nowe logo</div>
+          <div class="editorSub" id="editorSub">—</div>
+        </div>
+        <div class="editorHeadRight">
+          <button class="btn sm" id="btnEditorClose" type="button">Zamknij</button>
+        </div>
+      </div>
+
+      <div class="editorGrid">
+        <div class="editorLeft">
+          <div class="lbl">Nazwa</div>
+          <input class="inp" id="logoName" placeholder="Np. Moje logo"/>
+
+          <!-- TEXT -->
+          <div class="pane" id="paneText" style="display:none;">
+            <div class="lbl" style="margin-top:12px;">Tekst</div>
+            <input class="inp" id="textValue" placeholder="Np. FAMILIADA"/>
+            <div class="warn" id="textWarn" style="display:none;"></div>
+            <div class="hint" id="textMeasure">—</div>
+            <div class="chars">
+              <div class="charsHead">
+                <div class="lbl">Dozwolone znaki</div>
+                <button class="btn sm" id="btnCharsToggle" type="button">Pokaż</button>
+              </div>
+              <div class="charsList" id="charsList" style="display:none;"></div>
+            </div>
+          </div>
+
+          <!-- DRAW -->
+          <div class="pane" id="paneDraw" style="display:none;">
+            <div class="toolRow" style="margin-top:12px;">
+              <button class="btn sm" id="btnBrush" type="button">Pędzel</button>
+              <button class="btn sm" id="btnEraser" type="button">Gumka</button>
+              <button class="btn sm" id="btnClear" type="button">Wyczyść</button>
+            </div>
+            <div class="canvasBox">
+              <canvas id="drawCanvas" width="150" height="70"></canvas>
+            </div>
+            <div class="hint">Rysujesz w 150×70 (piksele). Podgląd po prawej pokazuje wygląd jak na BIG.</div>
+          </div>
+
+          <!-- IMAGE -->
+          <div class="pane" id="paneImage" style="display:none;">
+            <div class="toolRow" style="margin-top:12px; align-items:center;">
+              <input class="inp" id="imgFile" type="file" accept="image/*"/>
+            </div>
+            <div class="toolRow" style="margin-top:8px; align-items:center;">
+              <label class="chk"><input type="checkbox" id="chkImgContain" checked/> Dopasuj (contain)</label>
+              <label class="chk"><input type="checkbox" id="chkImgDither"/> Dithering</label>
+            </div>
+            <div class="canvasBox">
+              <canvas id="imgCanvas" width="150" height="70"></canvas>
+            </div>
+            <div class="hint">Obraz zostanie przeskalowany i sprowadzony do czerni/bieli.</div>
+          </div>
+
+          <div class="editorActions">
+            <button class="btn sm gold" id="btnCreate" type="button">Zapisz</button>
+            <button class="btn sm" id="btnCancel" type="button">Anuluj</button>
+            <div class="importMsg" id="mMsg"></div>
+          </div>
+        </div>
+
+        <div class="editorRight">
+          <div class="lbl">Podgląd (jak BIG na scenie)</div>
+          <div class="bigPrevWrap">
+            <canvas id="bigPreview" width="900" height="380"></canvas>
+          </div>
+          <div class="hint">Kliknij podgląd, żeby otworzyć pełny ekran.</div>
+        </div>
+      </div>
+    </section>
+
     <div class="foot">
       <div id="msg" class="msg"></div>
     </div>
   </main>
 
-  <!-- Modal: podgląd (jak BIG na scenie) -->
-  <div class="overlay" id="viewOverlay" style="display:none;">
-    <div class="modal viewModal">
-      <div class="mTitle" id="vTitle">Podgląd</div>
-      <div class="mSub" id="vSub">Jak BIG na scenie</div>
-      <div class="mSection">
-        <div class="viewBox">
-          <canvas id="viewCanvas"></canvas>
-        </div>
-      </div>
-      <div class="importRow" style="margin-top:14px;">
-        <button class="btn sm" id="btnViewClose" type="button">Zamknij</button>
-        <div class="importMsg" id="vMsg"></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Modal: create -->
+  <!-- Modal: wybór trybu -->
   <div class="overlay" id="createOverlay" style="display:none;">
     <div class="modal">
       <div class="mTitle" id="mTitle">Nowe logo</div>
@@ -83,63 +143,22 @@
         </div>
       </div>
 
-      <!-- STEP: common -->
-      <div class="mSection" id="stepCommon" style="display:none;">
-        <div class="lbl">Nazwa</div>
-        <input class="inp" id="logoName" placeholder="Np. Moje logo"/>
-
-        <div class="hint" style="margin-top:8px;" id="modeHint">—</div>
-      </div>
-
-      <!-- STEP: text -->
-      <div class="mSection" id="stepText" style="display:none;">
-        <div class="lbl">Tekst</div>
-        <input class="inp" id="textValue" placeholder="Np. FAMILIADA"/>
-        <div class="hint" style="margin-top:8px;">To tworzy proste logo tekstowe (bez edycji po zapisie).</div>
-        <div class="previewRow">
-          <canvas id="prevGlyph" width="300" height="100"></canvas>
-        </div>
-      </div>
-
-      <!-- STEP: draw -->
-      <div class="mSection" id="stepDraw" style="display:none;">
-        <div class="toolRow">
-          <button class="btn sm" id="btnBrush" type="button">Pędzel</button>
-          <button class="btn sm" id="btnEraser" type="button">Gumka</button>
-          <button class="btn sm" id="btnClear" type="button">Wyczyść</button>
-          <div class="spacer"></div>
-          <label class="chk"><input type="checkbox" id="chkPreviewPhysical"/> Podgląd z przerwami</label>
-        </div>
-        <div class="canvasBox">
-          <canvas id="drawCanvas" width="150" height="70"></canvas>
-        </div>
-        <div class="hint" style="margin-top:8px;">Podgląd na kafelkach (jak BIG na scenie):</div>
-        <div class="canvasBox">
-          <canvas id="drawPreview"></canvas>
-        </div>
-      </div>
-
-      <!-- STEP: image -->
-      <div class="mSection" id="stepImage" style="display:none;">
-        <div class="toolRow" style="align-items:center;">
-          <input class="inp" id="imgFile" type="file" accept="image/*"/>
-          <label class="chk"><input type="checkbox" id="chkImgContain" checked/> Dopasuj (contain)</label>
-          <label class="chk"><input type="checkbox" id="chkImgDither"/> Dithering</label>
-        </div>
-        <div class="hint" style="margin-top:8px;">Obraz zostanie przeskalowany i sprowadzony do czerni/bieli.</div>
-        <div class="canvasBox">
-          <canvas id="imgCanvas" width="150" height="70"></canvas>
-        </div>
-        <div class="hint" style="margin-top:8px;">Podgląd na kafelkach (jak BIG na scenie):</div>
-        <div class="canvasBox">
-          <canvas id="imgPreview"></canvas>
-        </div>
-      </div>
-
       <div class="importRow" style="margin-top:14px;">
-        <button class="btn sm gold" id="btnCreate" type="button" style="display:none;">Zapisz</button>
-        <button class="btn sm" id="btnCancel" type="button">Zamknij</button>
-        <div class="importMsg" id="mMsg"></div>
+        <button class="btn sm" id="btnPickCancel" type="button">Zamknij</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Fullscreen preview -->
+  <div class="overlay" id="previewOverlay" style="display:none;">
+    <div class="modal bigModal">
+      <div class="mTitle">Podgląd (jak BIG)</div>
+      <div class="mSub">To jest symulacja dotów 5×7 z przerwami jak na scenie.</div>
+      <div class="bigModalCanvas">
+        <canvas id="bigPreviewFull" width="1600" height="700"></canvas>
+      </div>
+      <div class="importRow" style="margin-top:14px;">
+        <button class="btn sm" id="btnPreviewClose" type="button">Zamknij</button>
       </div>
     </div>
   </div>
