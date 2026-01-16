@@ -19,6 +19,12 @@ export async function createScene() {
   // ============================================================
   const clamp01 = (v) => Math.max(0, Math.min(1, v));
 
+  const DEFAULT_THEME_BASE = {
+    A:  "#c4002f",
+    B:  "#2a62ff",
+    BG: "#6a4aa7",
+  };
+
   // Akceptuje: "#rgb", "#rrggbb", "dodgerblue", "red", itd.
   // Zwraca {r,g,b} albo null
   const cssColorToRgb = (css) => {
@@ -56,10 +62,11 @@ export async function createScene() {
   // 3 bazowe (domyślne)
   const THEME = {
     base: {
-      A:  "#c4002f",
-      B:  "#2a62ff",
-      BG: "#1b1a2b",
+      A:  DEFAULT_THEME_BASE.A,
+      B:  DEFAULT_THEME_BASE.B,
+      BG: DEFAULT_THEME_BASE.BG,
     },
+    
     derived: {
       A_dark: "",
       B_dark: "",
@@ -153,6 +160,21 @@ export async function createScene() {
     else if (w === "BACKGROUND") THEME.base.BG = val;
     else throw new Error(`COLOR: nieznany cel "${which}" (użyj A | B | BACKGROUND)`);
 
+    applyTheme();
+  };
+
+  const setThemeBase = ({ A, B, BG } = {}) => {
+    // ustawiamy hurtowo i robimy applyTheme tylko raz
+    if (A && cssColorToRgb(A)) THEME.base.A = A;
+    if (B && cssColorToRgb(B)) THEME.base.B = B;
+    if (BG && cssColorToRgb(BG)) THEME.base.BG = BG;
+    applyTheme();
+  };
+
+  const resetTheme = () => {
+    THEME.base.A  = DEFAULT_THEME_BASE.A;
+    THEME.base.B  = DEFAULT_THEME_BASE.B;
+    THEME.base.BG = DEFAULT_THEME_BASE.BG;
     applyTheme();
   };
 
@@ -1389,12 +1411,26 @@ export async function createScene() {
       long1: snapDotsGrid(long1),
       long2: snapDotsGrid(long2),
     },
-    indicator: indicatorState,   // <--- DODAJ TO
+    indicator: indicatorState,
+    theme: {
+      A: THEME.base.A,
+      B: THEME.base.B,
+      BG: THEME.base.BG,
+    },
   });
   
   const restoreSnapshot = (S) => {
     if (!S) return;
-  
+    // THEME (najpierw, żeby reszta elementów (lampy/gradienty) była już w dobrych kolorach)
+    // Uwaga: snapshot może być stary i nie mieć theme
+    if (S.theme && (S.theme.A || S.theme.B || S.theme.BG)) {
+      try {
+        setThemeBase({ A: S.theme.A, B: S.theme.B, BG: S.theme.BG });
+      } catch (e) {
+        console.warn("Nie można przywrócić THEME ze snapshotu:", e);
+      }
+    }
+    
     // big
     if (S.big) {
       for (let ty = 0; ty < 10; ty++) for (let tx = 0; tx < 30; tx++) {
@@ -2176,11 +2212,17 @@ export async function createScene() {
     // COLOR A <hex|name>
     // COLOR B <hex|name>
     // COLOR BACKGROUND <hex|name>
+    // COLOR RESET
     // (nazwa może być w cudzysłowie: "light blue")
     // ============================================================
     if (head === "COLOR") {
       const target = (tokens[1] ?? "").toUpperCase();
-      const val = unquote(tokens.slice(2).join(" "));
+      if (target === "RESET") {
+        resetTheme();
+        console.log("[COLOR] RESET");
+        return;
+      }
+      const val = unquote(tokens.slice(2).join(" "))
       try {
         setBaseColor(target, val);
         console.log(`[COLOR] ${target} = ${val}`);
