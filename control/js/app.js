@@ -478,117 +478,6 @@ async function sendZeroStatesToDevices() {
 
   devices.initLinksAndQr();
 
-  bindColorPickers();
-
-  const COLOR_DEFAULTS = {
-    A: "#c4002f",
-    B: "#2a62ff",
-    BG: "#d21180",
-  };
-  
-  function normHex(v){
-    const s = String(v || "").trim();
-    if (!s) return "";
-    return s.startsWith("#") ? s.toLowerCase() : ("#" + s.toLowerCase());
-  }
-
-  function setChipUi(kind, hex){
-    const h = normHex(hex);
-  
-    const dot = document.getElementById(kind === "A" ? "dotColorA" : kind === "B" ? "dotColorB" : "dotColorBg");
-    const txt = document.getElementById(kind === "A" ? "hexColorA" : kind === "B" ? "hexColorB" : "hexColorBg");
-  
-    if (dot) dot.style.background = h;
-    if (txt) txt.textContent = h;
-  }
-
-  async function sendColor(kind, hex){
-    const h = normHex(hex);
-    if (!h) return;
-  
-    if (kind === "A") {
-      await devices.sendDisplayCmd(`COLOR A ${h}`).catch(()=>{});
-      await devices.sendBuzzerCmd(`COLOR_A ${h}`).catch(()=>{});
-      await devices.sendHostCmd(`COLOR_A ${h}`).catch(()=>{});
-      return;
-    }
-  
-    if (kind === "B") {
-      await devices.sendDisplayCmd(`COLOR B ${h}`).catch(()=>{});
-      await devices.sendBuzzerCmd(`COLOR_B ${h}`).catch(()=>{});
-      await devices.sendHostCmd(`COLOR_B ${h}`).catch(()=>{});
-      return;
-    }
-  
-    if (kind === "BG") {
-      await devices.sendDisplayCmd(`COLOR BACKGROUND ${h}`).catch(()=>{});
-    }
-  }
-
-  async function resetColors(){
-    await devices.sendDisplayCmd("COLOR RESET").catch(()=>{});
-    await devices.sendBuzzerCmd("COLOR_RESET").catch(()=>{});
-    await devices.sendHostCmd("COLOR_RESET").catch(()=>{});
-  
-    // UI wraca do domyślnych (tylko wizualnie)
-    const a = COLOR_DEFAULTS.A;
-    const b = COLOR_DEFAULTS.B;
-    const bg = COLOR_DEFAULTS.BG;
-  
-    const pickA = document.getElementById("pickColorA");
-    const pickB = document.getElementById("pickColorB");
-    const pickBg = document.getElementById("pickColorBg");
-  
-    if (pickA) pickA.value = a;
-    if (pickB) pickB.value = b;
-    if (pickBg) pickBg.value = bg;
-  
-    setChipUi("A", a);
-    setChipUi("B", b);
-    setChipUi("BG", bg);
-  }
-
-  function bindColorPickers(){
-    const chipA = document.getElementById("chipColorA");
-    const chipB = document.getElementById("chipColorB");
-    const chipBg = document.getElementById("chipColorBg");
-    const btnReset = document.getElementById("btnColorReset");
-  
-    const pickA = document.getElementById("pickColorA");
-    const pickB = document.getElementById("pickColorB");
-    const pickBg = document.getElementById("pickColorBg");
-  
-    if (!chipA || !chipB || !chipBg || !pickA || !pickB || !pickBg) return;
-  
-    // init UI domyślnych
-    setChipUi("A", pickA.value || COLOR_DEFAULTS.A);
-    setChipUi("B", pickB.value || COLOR_DEFAULTS.B);
-    setChipUi("BG", pickBg.value || COLOR_DEFAULTS.BG);
-  
-    chipA.addEventListener("click", () => pickA.click());
-    chipB.addEventListener("click", () => pickB.click());
-    chipBg.addEventListener("click", () => pickBg.click());
-  
-    pickA.addEventListener("input", async () => {
-      setChipUi("A", pickA.value);
-      await sendColor("A", pickA.value);
-    });
-  
-    pickB.addEventListener("input", async () => {
-      setChipUi("B", pickB.value);
-      await sendColor("B", pickB.value);
-    });
-  
-    pickBg.addEventListener("input", async () => {
-      setChipUi("BG", pickBg.value);
-      await sendColor("BG", pickBg.value);
-    });
-  
-    btnReset?.addEventListener("click", async () => {
-      await resetColors();
-    });
-  }
-  
   // audio: stan początkowy
   store.setAudioUnlocked(!!isAudioUnlocked());
   ui.setAudioStatus(store.state.flags.audioUnlocked);
@@ -797,11 +686,7 @@ async function sendZeroStatesToDevices() {
     ui.setMsg?.("msgAdvanced", APP_MSG.ADV_RESET);
   });
 
-  ui.on("setup.next", async () => {
-    await exitColorMode(); // Display: APP BLACK, Buzzer: OFF
-    store.setSetupStep("setup_final");
-  });
-
+  ui.on("setup.next", () => store.setSetupStep("setup_final"));
   ui.on("setup.back", () => store.setSetupStep("setup_names"));
 
   ui.on("final.toggle", (hasFinal) => {
@@ -841,8 +726,7 @@ async function sendZeroStatesToDevices() {
     finalPickerRender();
   });
 
-  ui.on("setup.finish", async () => {
-    await exitColorMode();
+  ui.on("setup.finish", () => {
     store.completeCard("setup");
     store.setActiveCard("rounds");
   });
@@ -922,4 +806,4 @@ main().catch((e) => {
   console.error(e);
   const el = document.getElementById("msgSide");
   if (el) el.textContent = e?.message || String(e);
-});
+});  
