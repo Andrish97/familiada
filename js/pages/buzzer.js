@@ -349,9 +349,14 @@ function ensureChannel() {
   ch = sb()
     .channel(`familiada-buzzer:${gameId}`)
     .on("broadcast", { event: "BUZZER_CMD" }, (msg) => {
-      handleCommand(msg?.payload?.line);
+      // async nie musi być awaitowane, ale dobrze logować błędy
+      handleCommand(msg?.payload?.line).catch((e) =>
+        console.warn("[buzzer] handleCommand failed", e)
+      );
     })
-    return ch;
+    .subscribe();
+
+  return ch;
 }
 
 /* ========= CLICK -> CONTROL ========= */
