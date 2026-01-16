@@ -478,201 +478,117 @@ async function sendZeroStatesToDevices() {
 
   devices.initLinksAndQr();
 
-  // ===== KOLORY (na żywo, bez zapisu) =====
-  const DEFAULT_COLORS = {
+  bindColorPickers();
+
+  const COLOR_DEFAULTS = {
     A: "#c4002f",
     B: "#2a62ff",
     BG: "#d21180",
   };
   
-  let colorModeActive = false; // czy jesteśmy "chwilowo" w APP GAME + buzzer ON
-  
-  const swatchTeamA = document.getElementById("swatchTeamA");
-  const swatchTeamB = document.getElementById("swatchTeamB");
-  const swatchBg = document.getElementById("swatchBg");
-  const dotTeamA = document.getElementById("dotTeamA");
-  const dotTeamB = document.getElementById("dotTeamB");
-  const dotBg = document.getElementById("dotBg");
-  const bgLabel = document.getElementById("bgColorLabel");
-  
-  const btnColorsReset = document.getElementById("btnColorsReset");
-  
-  // modal
-  const colorModalOverlay = document.getElementById("colorModalOverlay");
-  const colorModalTitle = document.getElementById("colorModalTitle");
-  const colorPalette = document.getElementById("colorPalette");
-  const colorInput = document.getElementById("colorInput");
-  const colorHex = document.getElementById("colorHex");
-  const colorApply = document.getElementById("colorApply");
-  const colorModalClose = document.getElementById("colorModalClose");
-  
-  let colorTarget = null; // "A" | "B" | "BG"
-  
-  function normHex(v) {
-    let s = String(v || "").trim();
-    if (!s) return null;
-    if (!s.startsWith("#")) s = "#" + s;
-    if (!/^#[0-9a-fA-F]{6}$/.test(s)) return null;
-    return s.toLowerCase();
+  function normHex(v){
+    const s = String(v || "").trim();
+    if (!s) return "";
+    return s.startsWith("#") ? s.toLowerCase() : ("#" + s.toLowerCase());
   }
+
+  function setChipUi(kind, hex){
+    const h = normHex(hex);
   
-  function setSwatchUi() {
-    if (dotTeamA) dotTeamA.style.background = DEFAULT_COLORS.A;
-    if (dotTeamB) dotTeamB.style.background = DEFAULT_COLORS.B;
-    if (dotBg) dotBg.style.background = DEFAULT_COLORS.BG;
-    if (bgLabel) bgLabel.textContent = DEFAULT_COLORS.BG;
+    const dot = document.getElementById(kind === "A" ? "dotColorA" : kind === "B" ? "dotColorB" : "dotColorBg");
+    const txt = document.getElementById(kind === "A" ? "hexColorA" : kind === "B" ? "hexColorB" : "hexColorBg");
+  
+    if (dot) dot.style.background = h;
+    if (txt) txt.textContent = h;
   }
-  
-  setSwatchUi();
-  
-  async function enterColorMode() {
-    if (colorModeActive) return;
-    colorModeActive = true;
-    try { await devices.sendDisplayCmd("APP GAME"); } catch {}
-    try { await devices.sendBuzzerCmd("ON"); } catch {}
-    try { await devices.sendHostCmd("COVER"); } catch {}
-  }
-  
-  async function exitColorMode() {
-    if (!colorModeActive) return;
-    colorModeActive = false;
-    try { await devices.sendDisplayCmd("APP BLACK"); } catch {}
-    try { await devices.sendBuzzerCmd("OFF"); } catch {}
-  }
-  
-  async function sendColorLive(target, hex) {
+
+  async function sendColor(kind, hex){
     const h = normHex(hex);
     if (!h) return;
   
-    if (target === "A") {
-      try { await devices.sendDisplayCmd(`COLOR A ${h}`); } catch {}
-      try { await devices.sendBuzzerCmd(`COLOR_A ${h}`); } catch {}
-      try { await devices.sendHostCmd(`COLOR_A ${h}`); } catch {}
-      if (dotTeamA) dotTeamA.style.background = h;
+    if (kind === "A") {
+      await devices.sendDisplayCmd(`COLOR A ${h}`).catch(()=>{});
+      await devices.sendBuzzerCmd(`COLOR_A ${h}`).catch(()=>{});
+      await devices.sendHostCmd(`COLOR_A ${h}`).catch(()=>{});
+      return;
     }
   
-    if (target === "B") {
-      try { await devices.sendDisplayCmd(`COLOR B ${h}`); } catch {}
-      try { await devices.sendBuzzerCmd(`COLOR_B ${h}`); } catch {}
-      try { await devices.sendHostCmd(`COLOR_B ${h}`); } catch {}
-      if (dotTeamB) dotTeamB.style.background = h;
+    if (kind === "B") {
+      await devices.sendDisplayCmd(`COLOR B ${h}`).catch(()=>{});
+      await devices.sendBuzzerCmd(`COLOR_B ${h}`).catch(()=>{});
+      await devices.sendHostCmd(`COLOR_B ${h}`).catch(()=>{});
+      return;
     }
   
-    if (target === "BG") {
-      try { await devices.sendDisplayCmd(`COLOR BACKGROUND ${h}`); } catch {}
-      if (dotBg) dotBg.style.background = h;
-      if (bgLabel) bgLabel.textContent = h;
+    if (kind === "BG") {
+      await devices.sendDisplayCmd(`COLOR BACKGROUND ${h}`).catch(()=>{});
     }
   }
-  
-  async function resetColors() {
-    try { await devices.sendDisplayCmd("COLOR RESET"); } catch {}
-    try { await devices.sendBuzzerCmd("COLOR_RESET"); } catch {}
-    try { await devices.sendHostCmd("COLOR_RESET"); } catch {}
-  
-    // UI wraca do domyślnych (wizualnie)
-    setSwatchUi();
-  }
-  
-  function openColorModal(target) {
-    colorTarget = target;
-  
-    const title =
-      target === "A" ? "Kolor drużyny A" :
-      target === "B" ? "Kolor drużyny B" :
-      "Kolor tła wyświetlacza";
-  
-    if (colorModalTitle) colorModalTitle.textContent = title;
-  
-    // ustaw startową wartość w modal
-    const cur =
-      target === "A" ? (dotTeamA?.style.background || DEFAULT_COLORS.A) :
-      target === "B" ? (dotTeamB?.style.background || DEFAULT_COLORS.B) :
-      (dotBg?.style.background || DEFAULT_COLORS.BG);
-  
-    const curHex = normHex(cur) || DEFAULT_COLORS.BG;
-  
-    if (colorInput) colorInput.value = curHex;
-    if (colorHex) colorHex.value = curHex;
-  
-    // paleta
-    const palette = [
-      "#c4002f","#2a62ff","#d21180","#ff3333","#ff9800",
-      "#ffd54f","#00c853","#2ecc71","#00bcd4","#7c4dff",
-      "#111827","#ffffff","#e11d48","#0ea5e9","#22c55e",
-      "#f59e0b","#a855f7","#14b8a6","#94a3b8","#f9fafb",
-    ];
-  
-    if (colorPalette) {
-      colorPalette.innerHTML = palette
-        .map((h) => `<button class="colorChip" type="button" data-hex="${h}" style="background:${h}"></button>`)
-        .join("");
-  
-      colorPalette.querySelectorAll(".colorChip").forEach((b) => {
-        b.addEventListener("click", () => {
-          const h = normHex(b.dataset.hex);
-          if (!h) return;
-          if (colorInput) colorInput.value = h;
-          if (colorHex) colorHex.value = h;
-          // wysyłka live natychmiast
-          sendColorLive(colorTarget, h);
-        });
-      });
-    }
-  
-    if (colorModalOverlay) colorModalOverlay.classList.remove("hidden");
-  }
-  
-  function closeColorModal() {
-    if (colorModalOverlay) colorModalOverlay.classList.add("hidden");
-    colorTarget = null;
-  }
-  
-  colorModalClose?.addEventListener("click", closeColorModal);
-  colorModalOverlay?.addEventListener("click", (e) => {
-    if (e.target === colorModalOverlay) closeColorModal();
-  });
-  
-  colorInput?.addEventListener("input", () => {
-    const h = normHex(colorInput.value);
-    if (!h) return;
-    if (colorHex) colorHex.value = h;
-    sendColorLive(colorTarget, h);
-  });
-  
-  colorHex?.addEventListener("input", () => {
-    const h = normHex(colorHex.value);
-    if (!h) return;
-    if (colorInput) colorInput.value = h;
-    sendColorLive(colorTarget, h);
-  });
-  
-  colorApply?.addEventListener("click", () => {
-    const h = normHex(colorHex?.value || colorInput?.value);
-    if (!h) return;
-    sendColorLive(colorTarget, h);
-    closeColorModal();
-  });
-  
-  swatchTeamA?.addEventListener("click", async () => {
-    await enterColorMode();
-    openColorModal("A");
-  });
-  swatchTeamB?.addEventListener("click", async () => {
-    await enterColorMode();
-    openColorModal("B");
-  });
-  swatchBg?.addEventListener("click", async () => {
-    await enterColorMode();
-    openColorModal("BG");
-  });
-  
-  btnColorsReset?.addEventListener("click", async () => {
-    await enterColorMode();
-    await resetColors();
-  });
 
+  async function resetColors(){
+    await devices.sendDisplayCmd("COLOR RESET").catch(()=>{});
+    await devices.sendBuzzerCmd("COLOR_RESET").catch(()=>{});
+    await devices.sendHostCmd("COLOR_RESET").catch(()=>{});
+  
+    // UI wraca do domyślnych (tylko wizualnie)
+    const a = COLOR_DEFAULTS.A;
+    const b = COLOR_DEFAULTS.B;
+    const bg = COLOR_DEFAULTS.BG;
+  
+    const pickA = document.getElementById("pickColorA");
+    const pickB = document.getElementById("pickColorB");
+    const pickBg = document.getElementById("pickColorBg");
+  
+    if (pickA) pickA.value = a;
+    if (pickB) pickB.value = b;
+    if (pickBg) pickBg.value = bg;
+  
+    setChipUi("A", a);
+    setChipUi("B", b);
+    setChipUi("BG", bg);
+  }
 
+  function bindColorPickers(){
+    const chipA = document.getElementById("chipColorA");
+    const chipB = document.getElementById("chipColorB");
+    const chipBg = document.getElementById("chipColorBg");
+    const btnReset = document.getElementById("btnColorReset");
+  
+    const pickA = document.getElementById("pickColorA");
+    const pickB = document.getElementById("pickColorB");
+    const pickBg = document.getElementById("pickColorBg");
+  
+    if (!chipA || !chipB || !chipBg || !pickA || !pickB || !pickBg) return;
+  
+    // init UI domyślnych
+    setChipUi("A", pickA.value || COLOR_DEFAULTS.A);
+    setChipUi("B", pickB.value || COLOR_DEFAULTS.B);
+    setChipUi("BG", pickBg.value || COLOR_DEFAULTS.BG);
+  
+    chipA.addEventListener("click", () => pickA.click());
+    chipB.addEventListener("click", () => pickB.click());
+    chipBg.addEventListener("click", () => pickBg.click());
+  
+    pickA.addEventListener("input", async () => {
+      setChipUi("A", pickA.value);
+      await sendColor("A", pickA.value);
+    });
+  
+    pickB.addEventListener("input", async () => {
+      setChipUi("B", pickB.value);
+      await sendColor("B", pickB.value);
+    });
+  
+    pickBg.addEventListener("input", async () => {
+      setChipUi("BG", pickBg.value);
+      await sendColor("BG", pickBg.value);
+    });
+  
+    btnReset?.addEventListener("click", async () => {
+      await resetColors();
+    });
+  }
+  
   // audio: stan początkowy
   store.setAudioUnlocked(!!isAudioUnlocked());
   ui.setAudioStatus(store.state.flags.audioUnlocked);
