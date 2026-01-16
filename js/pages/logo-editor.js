@@ -302,6 +302,8 @@ function normalizeInputText(raw) {
   // najbezpieczniej: tylko string, bez trim — spacje też są częścią układu
   return String(raw ?? "");
 }
+
+
 function compileTextToRows30x10(raw) {
   const text = normalizeInputText(raw);
 
@@ -386,6 +388,59 @@ function compileTextToRows30x10(raw) {
     fit,
     invalid: Array.from(new Set(invalid)),
   };
+  const rows = Array.from({ length: 10 }, () => Array.from({ length: 30 }, () => " "));
+  const invalid = [];
+  const chars = Array.from(text);
+
+  /** @type {Array<{space:true} | {rows10:string[], w:number}>} */
+  const glyphs = [];
+
+  for (const ch0 of chars) {
+    if (ch0 === "\n" || ch0 === "\r" || ch0 === "\t") { invalid.push(ch0); continue; }
+    if (ch0 === " ") { glyphs.push({ space: true }); continue; }
+
+    const glyph = FONT_3x10?.[ch0] ?? FONT_3x10?.[ch0.toUpperCase()] ?? null;
+    if (!glyph) { invalid.push(ch0); continue; }
+
+    const gRows = Array.from({ length: 10 }, (_, i) => String(glyph[i] ?? "").padEnd(3, " ").slice(0, 3));
+    const { left, w } = measureGlyphTight3x10(gRows);
+    const cropped = Array.from({ length: 10 }, (_, i) => gRows[i].slice(left, left + w));
+    glyphs.push({ rows10: cropped, w });
+  }
+
+  // szerokość z regułą: zawsze 1 kolumna przerwy między sąsiadującymi glifami (nie po spacji)
+  let usedW = 0;
+  let prevWasGlyph = false;
+  for (const g of glyphs) {
+    if (g.space) { usedW += 1; prevWasGlyph = false; continue; }
+    if (prevWasGlyph) usedW += 1; // stała przerwa
+    usedW += g.w;
+    prevWasGlyph = true;
+  }
+
+  const fit = usedW <= 30;
+  const startX = fit ? Math.floor((30 - usedW) / 2) : 0;
+
+  let cursor = startX;
+  prevWasGlyph = false;
+  for (const g of glyphs) {
+    if (g.space) { cursor += 1; prevWasGlyph = false; continue; }
+    if (prevWasGlyph) cursor += 1;
+
+    for (let y = 0; y < 10; y++) {
+      const line = g.rows10[y] || "";
+      for (let x = 0; x < g.w; x++) {
+        const outX = cursor + x;
+        if (outX < 0 || outX >= 30) continue;
+        const c = line[x] ?? " ";
+        if (c !== " ") rows[y][outX] = c;
+      }
+    }
+    cursor += g.w;
+    prevWasGlyph = true;
+  }
+
+  return { rows: rows.map(r => r.join("")), usedW, fit, invalid: Array.from(new Set(invalid)) };
 }
 
 function renderAllowedCharsList() {
