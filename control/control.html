@@ -82,6 +82,58 @@
     </div>
   </div>
 
+    <!-- Modal wyboru koloru -->
+  <div class="colorModalOverlay hidden" id="colorModalOverlay">
+    <div class="colorModalBox">
+      <div class="colorModalHead">
+        <div class="colorModalTitle" id="colorModalTitle">Kolor</div>
+        <button class="btn xs" id="colorModalClose" type="button">✕</button>
+      </div>
+
+      <div class="colorModalBody">
+        <div class="colorTopRow">
+          <div class="colorPreview" id="colorPreview" aria-label="Podgląd koloru"></div>
+
+          <div class="field sm" style="min-width:260px;">
+            <div class="lbl2">HEX</div>
+            <input class="inp" id="colorHex" autocomplete="off" spellcheck="false" inputmode="text" />
+            <div class="hint" style="max-width:360px;">
+              Format: <b>#RRGGBB</b>
+            </div>
+          </div>
+        </div>
+
+        <div class="sliders">
+          <div class="sliderRow">
+            <div class="sLbl">R</div>
+            <input class="rng" id="colorR" type="range" min="0" max="255" step="1" />
+            <div class="sVal" id="colorRVal">0</div>
+          </div>
+
+          <div class="sliderRow">
+            <div class="sLbl">G</div>
+            <input class="rng" id="colorG" type="range" min="0" max="255" step="1" />
+            <div class="sVal" id="colorGVal">0</div>
+          </div>
+
+          <div class="sliderRow">
+            <div class="sLbl">B</div>
+            <input class="rng" id="colorB" type="range" min="0" max="255" step="1" />
+            <div class="sVal" id="colorBVal">0</div>
+          </div>
+        </div>
+
+        <div class="colorModalFoot">
+          <div class="hint" style="max-width:520px;">
+            Zmiany wysyłamy na bieżąco, ale z ograniczeniem “spamowania”.
+          </div>
+          <button class="btn gold" id="colorModalDone" type="button">Gotowe</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
   <main class="wrap wide">
     <div class="shell">
 
@@ -342,16 +394,38 @@
                   </div>
                   <div class="rowBtns">
                     <div class="field">
-                      <div class="lbl2">Drużyna A</div>
+                      <div class="lblRow">
+                        <div class="lbl2">Drużyna A</div>
+                        <button class="swatchBtn" id="swatchTeamA" type="button" aria-label="Kolor drużyny A"></button>
+                      </div>
                       <input class="inp" id="teamA" autocomplete="off"/>
                     </div>
+                  
                     <div class="field">
-                      <div class="lbl2">Drużyna B</div>
+                      <div class="lblRow">
+                        <div class="lbl2">Drużyna B</div>
+                        <button class="swatchBtn" id="swatchTeamB" type="button" aria-label="Kolor drużyny B"></button>
+                      </div>
                       <input class="inp" id="teamB" autocomplete="off"/>
                     </div>
                   </div>
+                  
                   <div class="rowBtns">
-                    <button class="btn" id="btnTeamMore" type="button">Dodatkowe ustawienia</button>
+                    <div class="field">
+                      <div class="lblRow">
+                        <div class="lbl2">Kolor tła wyświetlacza</div>
+                        <button class="swatchBtn" id="swatchBg" type="button" aria-label="Kolor tła wyświetlacza"></button>
+                      </div>
+                      <div class="hint" style="max-width:520px;">
+                        Ten kolor dotyczy tylko wyświetlacza (komenda <b>COLOR BACKGROUND</b>).
+                      </div>
+                    </div>
+                  </div>
+  
+                  <div class="rowBtns">
+                    <button class="btn" type="button" id="btnAdvancedReset">Przywróć domyślne</button>
+                    <button class="btn" type="button" id="btnColorsReset">Reset kolorów</button>
+                    <div class="msg msg-inline" id="msgAdvanced"></div>
                   </div>
 
                   <div class="extra hidden" id="teamExtra">
