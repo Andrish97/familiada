@@ -6,287 +6,242 @@
   <title>Kora — 3×10 z kafelków 5×7</title>
   <style>
     :root{
-      --bg: #0f1115;
-      --fg: #e8e8e8;
-      --muted: #a7a7a7;
+      --bg:#0f1115; --fg:#e8e8e8; --muted:#a7a7a7;
+      --card:#171a21; --border:#24283a;
 
-      --card: #171a21;
-      --border: #24283a;
+      --btn:#121521; --btnb:#2a2f44;
+      --accent:#7aa2ff; --danger:#ff6b6b;
 
-      --btn: #121521;
-      --btn-border: #2a2f44;
+      --dot:6px; --dot-gap:2px;
+      --tile-gap:2px;           /* przerwa 2px */
+      --sep:#2a2f44;            /* kolor przerwy */
+      --tile-bg:#0b0d14;
 
-      --dot: 6px;
-      --dot-gap: 2px;
-
-      --tile-gap: 2px;       /* wymagane */
-      --sep: #2a2f44;         /* kolor separatora między kafelkami */
-      --tile-bg: #0b0d14;
-
-      --accent: #7aa2ff;
-      --danger: #ff6b6b;
+      --left:360px;
     }
 
-    html, body { height: 100%; margin: 0; }
+    html,body{height:100%;margin:0}
     body{
-      background: var(--bg);
-      color: var(--fg);
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      overflow: hidden; /* brak scrolla strony */
+      background:var(--bg); color:var(--fg);
+      font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      overflow:hidden; /* brak scrolla strony */
     }
 
     header{
-      padding: 12px 14px;
-      border-bottom: 1px solid var(--border);
-      display:flex;
-      gap: 10px;
-      align-items: center;
-      justify-content: space-between;
-      box-sizing: border-box;
+      padding:12px 14px;
+      border-bottom:1px solid var(--border);
+      display:flex; gap:10px; align-items:center; justify-content:space-between;
+      box-sizing:border-box;
     }
-
-    .leftRow, .rightRow{
-      display:flex;
-      gap: 10px;
-      align-items: center;
-      flex-wrap: wrap;
-    }
-
-    .hint{
-      color: var(--muted);
-      font-size: 12px;
-      line-height: 1.35;
-    }
+    .row{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+    .hint{color:var(--muted); font-size:12px; line-height:1.35}
 
     .btn{
-      appearance: none;
-      border: 1px solid var(--btn-border);
-      background: var(--btn);
-      color: var(--fg);
-      padding: 8px 10px;
-      border-radius: 10px;
-      cursor: pointer;
-      font-weight: 750;
+      appearance:none; border:1px solid var(--btnb); background:var(--btn);
+      color:var(--fg); padding:8px 10px; border-radius:10px;
+      cursor:pointer; font-weight:750;
     }
-    .btn:hover{ border-color: #3a4261; }
-    .btn:active{ transform: translateY(1px); }
-    .btn.primary{ border-color: #3553a8; background: #15224b; }
-    .btn.danger{ border-color: #6a2a2a; background: #2a1212; color: #ffd7d7; }
+    .btn:hover{border-color:#3a4261}
+    .btn:active{transform:translateY(1px)}
+    .btn.primary{border-color:#3553a8;background:#15224b}
+    .btn.danger{border-color:#6a2a2a;background:#2a1212;color:#ffd7d7}
 
-    input[type="file"]{ color: var(--muted); }
+    input[type="file"]{color:var(--muted)}
     input[type="text"]{
-      background: #0f1220;
-      border: 1px solid var(--btn-border);
-      color: var(--fg);
-      border-radius: 10px;
-      padding: 8px 10px;
-      font-weight: 750;
-      width: 120px;
-      box-sizing: border-box;
+      background:#0f1220; border:1px solid var(--btnb); color:var(--fg);
+      border-radius:10px; padding:8px 10px; font-weight:750; width:140px;
+      box-sizing:border-box;
     }
 
     .layout{
-      height: calc(100vh - 0px);
-      display: grid;
-      grid-template-columns: 340px 1fr; /* lewa paleta, prawa plansza */
-      gap: 12px;
-      padding: 12px;
-      box-sizing: border-box;
+      height:calc(100vh - 0px);
+      display:grid;
+      grid-template-columns: var(--left) 1fr;
+      gap:12px;
+      padding:12px;
+      box-sizing:border-box;
     }
 
     .card{
-      background: linear-gradient(180deg, var(--card), #131722);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 12px;
-      box-sizing: border-box;
-      min-height: 0;
+      background:linear-gradient(180deg,var(--card),#131722);
+      border:1px solid var(--border);
+      border-radius:16px;
+      padding:12px;
+      box-sizing:border-box;
+      min-height:0;
     }
-
     .card h2{
-      margin: 0 0 10px;
-      font-size: 14px;
-      letter-spacing: .3px;
-      color: #cfd6ff;
-      display:flex;
-      align-items:center;
-      justify-content: space-between;
-      gap: 10px;
+      margin:0 0 10px; font-size:14px; letter-spacing:.3px;
+      color:#cfd6ff;
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
     }
 
-    /* ===== LEWA: paleta z własnym scrollem ===== */
-    .paletteCard{
-      display:flex;
-      flex-direction: column;
-      min-height: 0;
-    }
-    .paletteTop{
-      display:flex;
-      gap: 10px;
-      align-items: center;
-      flex-wrap: wrap;
-      margin-bottom: 10px;
-    }
-    .paletteScroll{
-      overflow: auto;
-      min-height: 0;
-      padding-right: 6px;
+    /* ===== lewa: paleta ===== */
+    .paletteCard{display:flex;flex-direction:column;min-height:0}
+    .paletteTop{display:flex;flex-direction:column;gap:10px;margin-bottom:10px}
+    .paletteScroll{overflow:auto;min-height:0;padding-right:6px}
+
+    .subbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    .pill{
+      font-size:12px; color:#cfd6ff;
+      border:1px solid var(--btnb); background:#0c0e16;
+      padding:6px 8px; border-radius:999px;
     }
 
     .palette{
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
-      gap: 10px;
+      display:grid;
+      grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
+      gap:10px;
     }
 
     .palItem{
-      border: 1px solid var(--btn-border);
-      background: #0c0e16;
-      border-radius: 14px;
-      padding: 8px;
-      cursor: pointer;
+      border:1px solid var(--btnb);
+      background:#0c0e16;
+      border-radius:14px;
+      padding:8px;
+      cursor:pointer;
       display:flex;
-      flex-direction: column;
-      gap: 6px;
-      align-items: center;
-      justify-content: center;
-      user-select: none;
-      box-sizing: border-box;
-    }
-    .palItem:hover{ border-color: #3a4261; }
-    .palItem.selected{
-      border-color: #3553a8;
-      box-shadow: 0 0 0 1px rgba(122,162,255,.25);
-    }
-    .palItem .k{
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
-      font-weight: 900;
-      color: #cfd6ff;
-    }
-
-    /* ===== 5x7 render (okrągłe piksele) ===== */
-    .glyph57{
-      display: grid;
-      grid-template-columns: repeat(5, var(--dot));
-      grid-template-rows: repeat(7, var(--dot));
-      gap: var(--dot-gap);
-      padding: 8px;
-      border-radius: 12px;
-      border: 1px solid var(--btn-border);
-      background: #0c0e16;
-      user-select: none;
-      box-sizing: border-box;
-    }
-    .dot{
-      width: var(--dot);
-      height: var(--dot);
-      border-radius: 999px;
-      background: #1f2333;
-    }
-    .dot.on{
-      background: #e9edff;
-      box-shadow: 0 0 0 1px rgba(233,237,255,.05), 0 0 10px rgba(122,162,255,.08);
-    }
-
-    /* ===== PRAWA: plansza (podgląd = edycja) ===== */
-    .mainCard{
-      display:flex;
-      flex-direction: column;
-      min-height: 0;
-      gap: 10px;
-    }
-
-    .boardWrap{
-      flex: 1 1 auto;
-      min-height: 0;
-      display: flex;
-      gap: 12px;
-      align-items: stretch;
-    }
-
-    /* Sama plansza 3x10 kafelków */
-    .board{
-      flex: 1 1 auto;
-      min-height: 0;
-      display: grid;
-      grid-template-columns: repeat(3, auto);
-      grid-auto-rows: auto;
-      gap: var(--tile-gap);     /* 2px */
-      background: var(--sep);   /* separator kolor */
-      padding: var(--tile-gap); /* żeby separator był też na obrzeżu */
-      border-radius: 16px;
-      box-sizing: border-box;
-      overflow: hidden;         /* bez scrolla - musi się mieścić */
-    }
-
-    .tile{
-      background: var(--tile-bg);
-      border-radius: 10px;
-      padding: 6px;
-      box-sizing: border-box;
-      cursor: pointer;
-      user-select: none;
-
-      display: grid;
-      grid-template-columns: repeat(5, var(--dot));
-      grid-template-rows: repeat(7, var(--dot));
-      gap: var(--dot-gap);
-      align-content: start;
-      justify-content: start;
-    }
-
-    /* Panel z podglądem struktury (10x3) */
-    .struct{
-      width: 220px;
-      flex: 0 0 220px;
-      display:flex;
-      flex-direction: column;
-      gap: 8px;
-      min-height: 0;
-    }
-
-    .struct pre{
-      flex: 1 1 auto;
-      min-height: 0;
-      margin: 0;
-      padding: 10px;
-      border-radius: 14px;
-      border: 1px solid var(--btn-border);
-      background: #0a0c13;
-      color: #d7ddff;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
-      font-size: 13px;
-      line-height: 1.35;
-      overflow: hidden;
-      white-space: pre;
-    }
-
-    .tools{
-      display:flex;
-      gap: 10px;
+      flex-direction:column;
+      gap:6px;
       align-items:center;
-      flex-wrap: wrap;
+      justify-content:center;
+      user-select:none;
+      box-sizing:border-box;
+      position:relative;
+    }
+    .palItem:hover{border-color:#3a4261}
+    .palItem.selected{
+      border-color:#3553a8;
+      box-shadow:0 0 0 1px rgba(122,162,255,.25);
     }
 
-    /* małe ekrany awaryjnie */
-    @media (max-width: 1050px){
-      body{ overflow:auto; }
-      .layout{ height:auto; grid-template-columns: 1fr; }
-      .boardWrap{ flex-direction: column; }
-      .struct{ width: auto; flex: 0 0 auto; }
-      .board{ overflow: auto; } /* awaryjnie */
+    .star{
+      position:absolute;
+      top:6px; right:6px;
+      width:26px; height:26px;
+      border-radius:10px;
+      border:1px solid var(--btnb);
+      background:#0b0d14;
+      display:flex; align-items:center; justify-content:center;
+      font-size:14px;
+      opacity:.95;
+    }
+    .star.on{ border-color:#6b5a1a; background:#1d1a0b; color:#ffd87a; }
+    .star:active{ transform:translateY(1px); }
+
+    .k{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-weight:900;
+      color:#cfd6ff;
+    }
+
+    /* mini 5x7 w palecie */
+    .glyph57{
+      display:grid;
+      grid-template-columns:repeat(5,var(--dot));
+      grid-template-rows:repeat(7,var(--dot));
+      gap:var(--dot-gap);
+      padding:8px;
+      border-radius:12px;
+      border:1px solid var(--btnb);
+      background:#0c0e16;
+      box-sizing:border-box;
+    }
+    .dot{width:var(--dot);height:var(--dot);border-radius:999px;background:#1f2333}
+    .dot.on{
+      background:#e9edff;
+      box-shadow:0 0 0 1px rgba(233,237,255,.05), 0 0 10px rgba(122,162,255,.08);
+    }
+
+    /* ===== prawa: plansza + struktura ===== */
+    .mainCard{display:flex;flex-direction:column;min-height:0;gap:10px}
+
+    .boardRow{
+      flex:1 1 auto;
+      min-height:0;
+      display:flex;
+      gap:12px;
+      align-items:stretch;
+    }
+
+    /* jedna plansza “łączna”: tło separatora + gap = 2px */
+    .board{
+      flex:1 1 auto;
+      min-height:0;
+      display:grid;
+      grid-template-columns:repeat(3, max-content);
+      gap:var(--tile-gap);
+      background:var(--sep);
+      padding:var(--tile-gap);
+      border-radius:16px;
+      box-sizing:border-box;
+      overflow:hidden; /* ma się mieścić */
+      align-content:start;
+      justify-content:start;
+    }
+
+    /* kafelek jako “wycięcie” z tłem */
+    .tile{
+      background:var(--tile-bg);
+      border-radius:10px;
+      padding:6px;
+      box-sizing:border-box;
+      cursor:pointer;
+      user-select:none;
+      overflow:hidden;
+
+      display:grid;
+      grid-template-columns:repeat(5,var(--dot));
+      grid-template-rows:repeat(7,var(--dot));
+      gap:var(--dot-gap);
+      align-content:start;
+      justify-content:start;
+    }
+
+    .side{
+      width:240px;
+      flex:0 0 240px;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      min-height:0;
+    }
+
+    pre{
+      margin:0;
+      padding:10px;
+      border-radius:14px;
+      border:1px solid var(--btnb);
+      background:#0a0c13;
+      color:#d7ddff;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-size:12px;
+      line-height:1.35;
+      overflow:hidden;
+      white-space:pre;
+      box-sizing:border-box;
+    }
+
+    .tools{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+
+    @media (max-width: 1100px){
+      body{overflow:auto}
+      .layout{height:auto;grid-template-columns:1fr}
+      .boardRow{flex-direction:column}
+      .side{width:auto;flex:0 0 auto}
+      .board{overflow:auto}
     }
   </style>
 </head>
 
 <body>
 <header>
-  <div class="leftRow">
+  <div class="row">
     <input id="fontFile" type="file" accept=".json,application/json" />
     <span id="status" class="hint">Brak fontu 5×7 — wczytaj JSON.</span>
   </div>
 
-  <div class="rightRow">
+  <div class="row">
     <span class="hint">Pędzel:</span>
     <span id="brushChar" class="btn" style="cursor:default;">(brak)</span>
     <button id="eraseBrush" class="btn danger">Gumka</button>
@@ -295,33 +250,41 @@
 </header>
 
 <div class="layout">
-  <!-- LEWA: paleta -->
+  <!-- LEWA: paleta + ulubione -->
   <section class="card paletteCard">
-    <h2>Symbole 5×7</h2>
+    <h2>Paleta pędzli 5×7</h2>
 
     <div class="paletteTop">
-      <input id="filterInput" type="text" placeholder="Filtr (np. █, →, latin_...)" style="width:100%; max-width: 100%;" />
-      <div class="hint">Klik: wybierz pędzel. Alt+klik na kafelku: pipeta.</div>
+      <input id="filterInput" type="text" placeholder="Filtr (np. █, →)" style="width:100%;" />
+      <div class="subbar">
+        <span class="pill">Alt+klik na planszy = pipeta</span>
+        <span class="pill">★ = ulubione</span>
+      </div>
+      <div class="hint">Klik na glif: ustaw pędzel. Gumka to tryb (nie gubi pędzla).</div>
     </div>
 
     <div class="paletteScroll">
+      <h2 style="margin:0 0 10px;">Ulubione</h2>
+      <div id="favPalette" class="palette" style="margin-bottom:14px;"></div>
+
+      <h2 style="margin:0 0 10px;">Wszystkie</h2>
       <div id="palette" class="palette"></div>
     </div>
   </section>
 
-  <!-- PRAWA: plansza -->
+  <!-- PRAWA: jedna plansza + struktura + zapis/eksport -->
   <section class="card mainCard">
-    <h2>Plansza 3×10 (edytujesz bezpośrednio)</h2>
+    <h2>Plansza 3×10 (to jest edycja i podgląd)</h2>
     <div class="hint">
-      LPM: wstaw pędzel (lub kasuj jeśli gumka). PPM: zawsze kasuje. Alt+LPM na kafelku: pobierz znak z kafelka (pipeta).
+      LPM: wstaw pędzel (lub kasuj, jeśli gumka). PPM: zawsze kasuje. Alt+LPM: pipeta (pobierz znak z kafelka).
     </div>
 
-    <div class="boardWrap">
+    <div class="boardRow">
       <div id="board" class="board" aria-label="Plansza 3x10"></div>
 
-      <div class="struct">
-        <h2 style="margin:0; font-size:14px; color:#cfd6ff;">Struktura 10×3</h2>
-        <div class="hint">Spacje pokazuję jako „·” (żeby było widać puste miejsca).</div>
+      <div class="side">
+        <h2 style="margin:0;">Struktura 10×3</h2>
+        <div class="hint">Spacje pokazuję jako „·”, żeby było widać puste miejsca.</div>
         <pre id="structBox">···
 ···
 ···
@@ -338,79 +301,71 @@
           <button id="saveSymbol" class="btn primary" disabled>Zapisz</button>
           <button id="exportBtn" class="btn" disabled>Eksport JSON</button>
         </div>
-
         <div class="hint" id="savedHint">Zapisane: 0</div>
+
+        <pre id="exportBox" style="min-height:120px;">(eksport pojawi się po zapisaniu symboli)</pre>
       </div>
     </div>
-
-    <!-- export (krótkie) -->
-    <pre id="exportBox" style="
-      margin:0;
-      padding:10px;
-      border-radius:14px;
-      border:1px solid var(--btn-border);
-      background:#0a0c13;
-      color:#d7ddff;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace;
-      font-size:12px;
-      line-height:1.35;
-      overflow:hidden;
-      white-space: pre;
-      min-height: 72px;
-    ">(eksport pojawi się po zapisaniu symboli)</pre>
   </section>
 </div>
 
 <script>
-/* ===== Stan ===== */
+/* ====== Stałe ====== */
 const GRID_W = 3;
 const GRID_H = 10;
 
+/* ====== Stan ====== */
 let font57 = null;
-let glyphMap = null;       // Map<char, [7 numbers]>
-let glyphOrder = [];       // kolejność do palety
+let glyphMap = null;            // Map<char, [7 numbers]>
+let glyphOrder = [];            // wszystkie glify (posortowane unicode)
+let favorites = new Set();      // ulubione glify (znaki 1-length)
 
 let grid = makeEmptyGrid();
 
 let brush = " ";
-let lastBrush = "█";       // domyślnie, jeśli font zawiera █
+let lastBrush = "█";
 let eraseMode = false;
 
-let savedBig = {};         // symbol -> [10 stringów po 3]
+let savedBig = {};              // symbol -> [10 strings po 3]
 
-/* ===== DOM ===== */
+/* ====== DOM ====== */
 const statusEl = document.getElementById("status");
-const paletteEl = document.getElementById("palette");
-const boardEl = document.getElementById("board");
 const brushCharEl = document.getElementById("brushChar");
 const eraseBtn = document.getElementById("eraseBrush");
 const filterInput = document.getElementById("filterInput");
 
+const paletteEl = document.getElementById("palette");
+const favPaletteEl = document.getElementById("favPalette");
+
+const boardEl = document.getElementById("board");
 const structBox = document.getElementById("structBox");
-const exportBox = document.getElementById("exportBox");
+
 const symbolInput = document.getElementById("symbolInput");
 const saveBtn = document.getElementById("saveSymbol");
 const exportBtn = document.getElementById("exportBtn");
 const savedHint = document.getElementById("savedHint");
+const exportBox = document.getElementById("exportBox");
 
-/* ===== Utils ===== */
+/* ====== Utils ====== */
 function makeEmptyGrid(){
   return Array.from({length: GRID_H}, () => Array.from({length: GRID_W}, () => " "));
 }
+function gridToRows(g){ return g.map(r => r.join("")); }
 
-function gridToRows(g){
-  return g.map(row => row.join(""));
-}
-
-function rowsToGrid(rows){
-  const g = makeEmptyGrid();
-  for (let y=0; y<GRID_H; y++){
-    const r = (rows?.[y] ?? "   ");
-    for (let x=0; x<GRID_W; x++){
-      g[y][x] = (r[x] ?? " ");
-    }
+function unicodeSort(a,b){
+  // “alfabetycznie / unicode” – najprościej i stabilnie:
+  // porównanie wg kodpointów + fallback locale.
+  const la = Array.from(a);
+  const lb = Array.from(b);
+  const n = Math.min(la.length, lb.length);
+  for (let i=0;i<n;i++){
+    const da = la[i].codePointAt(0);
+    const db = lb[i].codePointAt(0);
+    if (da !== db) return da - db;
   }
-  return g;
+  if (la.length !== lb.length) return la.length - lb.length;
+  // fallback (ładne porównanie)
+  return a.localeCompare(b, "und");
 }
 
 function updateBrushHeader(){
@@ -418,9 +373,7 @@ function updateBrushHeader(){
     brushCharEl.textContent = "(brak)";
     return;
   }
-
   if (eraseMode){
-    // pokazujemy, że gumka aktywna, ale NIE gubimy symbolu
     const base = (brush && brush !== " ") ? brush : (lastBrush ?? " ");
     brushCharEl.textContent = base === " " ? "(gumka)" : `${base} (gumka)`;
   } else {
@@ -442,12 +395,18 @@ function setBrush(ch){
   updateEraserUI();
 
   // zaznaczenie w palecie
-  for (const node of paletteEl.querySelectorAll(".palItem")){
+  for (const node of document.querySelectorAll(".palItem")){
     node.classList.toggle("selected", node.dataset.ch === ch);
   }
 }
 
-/* ===== Font 5x7: Twoje grupy (dowolne klucze poza meta) ===== */
+function toggleFavorite(ch){
+  if (favorites.has(ch)) favorites.delete(ch);
+  else favorites.add(ch);
+  renderPalettes();
+}
+
+/* ====== Font flatten ====== */
 function buildGlyphMapAnyGroups(font) {
   const raw = new Map();
 
@@ -462,22 +421,15 @@ function buildGlyphMapAnyGroups(font) {
 
   if (!raw.has(" ")) raw.set(" ", [0,0,0,0,0,0,0]);
 
-  const order = Array.from(raw.keys()).sort((a,b) => {
-    const pa = sortKey(a), pb = sortKey(b);
-    return pa === pb ? a.localeCompare(b) : pa - pb;
-  });
+  // sort unicode
+  const order = Array.from(raw.keys())
+    .filter(ch => typeof ch === "string" && ch.length === 1)
+    .sort(unicodeSort);
 
   return { map: raw, order };
-
-  function sortKey(ch){
-    if (ch === " ") return 99;
-    if (/^[A-ZĄĆĘŁŃÓŚŹŻ]$/.test(ch)) return 1;
-    if (/^[0-9]$/.test(ch)) return 2;
-    return 50;
-  }
 }
 
-/* ===== Render ===== */
+/* ====== Render dot grid ====== */
 function makeDots(rows7, containerEl){
   for (let y=0; y<7; y++){
     const bits = rows7?.[y] ?? 0;
@@ -490,51 +442,76 @@ function makeDots(rows7, containerEl){
   }
 }
 
-function renderPalette(){
-  paletteEl.innerHTML = "";
+/* ====== Render palety (ulubione + wszystkie) ====== */
+function makePalItem(ch){
+  const rows7 = glyphMap.get(ch);
+
+  const item = document.createElement("div");
+  item.className = "palItem";
+  item.dataset.ch = ch;
+
+  const star = document.createElement("button");
+  star.type = "button";
+  star.className = "star" + (favorites.has(ch) ? " on" : "");
+  star.textContent = favorites.has(ch) ? "★" : "☆";
+  star.title = favorites.has(ch) ? "Usuń z ulubionych" : "Dodaj do ulubionych";
+  star.addEventListener("click", (ev)=>{
+    ev.stopPropagation();
+    toggleFavorite(ch);
+  });
+
+  const mini = document.createElement("div");
+  mini.className = "glyph57";
+  makeDots(rows7, mini);
+
+  const k = document.createElement("div");
+  k.className = "k";
+  k.textContent = (ch === " ") ? "␠" : ch;
+
+  item.appendChild(star);
+  item.appendChild(mini);
+  item.appendChild(k);
+
+  item.addEventListener("click", ()=> setBrush(ch));
+  return item;
+}
+
+function renderPalettes(){
+  // favorites
+  favPaletteEl.innerHTML = "";
   if (!glyphMap){
-    paletteEl.innerHTML = `<div class="hint">Wczytaj font 5×7, żeby zobaczyć paletę.</div>`;
+    favPaletteEl.innerHTML = `<div class="hint">Wczytaj font 5×7.</div>`;
+    paletteEl.innerHTML = "";
     return;
   }
 
+  const favList = Array.from(favorites).sort(unicodeSort);
+  if (favList.length === 0){
+    favPaletteEl.innerHTML = `<div class="hint">Brak ulubionych. Kliknij ☆ przy glifie.</div>`;
+  } else {
+    for (const ch of favList){
+      if (!glyphMap.has(ch)) continue;
+      favPaletteEl.appendChild(makePalItem(ch));
+    }
+  }
+
+  // all + filter
+  paletteEl.innerHTML = "";
   const q = (filterInput.value ?? "").trim();
-  const list = glyphOrder.filter(ch => {
-    if (typeof ch !== "string" || ch.length !== 1) return false;
-    if (!q) return true;
-    // filtr: po znaku (dosłownie) albo po nazwie unicode (tu tylko znak, prosto)
-    return ch.includes(q);
-  });
+  const list = glyphOrder.filter(ch => q ? ch.includes(q) : true);
 
   for (const ch of list){
-    const rows7 = glyphMap.get(ch);
-    if (!rows7) continue;
-
-    const item = document.createElement("div");
-    item.className = "palItem";
-    item.dataset.ch = ch;
-
-    const mini = document.createElement("div");
-    mini.className = "glyph57";
-    makeDots(rows7, mini);
-
-    const k = document.createElement("div");
-    k.className = "k";
-    k.textContent = ch === " " ? "␠" : ch;
-
-    item.appendChild(mini);
-    item.appendChild(k);
-
-    item.addEventListener("click", ()=> setBrush(ch));
-    paletteEl.appendChild(item);
+    paletteEl.appendChild(makePalItem(ch));
   }
 
   // odśwież zaznaczenie
   setBrush(brush ?? lastBrush ?? " ");
 }
 
+/* ====== Render planszy (jedna łączna) ====== */
 function renderBoard(){
   boardEl.innerHTML = "";
-  boardEl.style.gridTemplateColumns = `repeat(${GRID_W}, auto)`;
+  boardEl.style.gridTemplateColumns = `repeat(${GRID_W}, max-content)`;
 
   for (let y=0; y<GRID_H; y++){
     for (let x=0; x<GRID_W; x++){
@@ -547,11 +524,10 @@ function renderBoard(){
 
       makeDots(rows7, tile);
 
-      // LPM: wstaw / kasuj (gumka)
       tile.addEventListener("click", (ev)=>{
         if (!glyphMap) return;
 
-        // pipeta Alt+klik
+        // pipeta: Alt+klik
         if (ev.altKey){
           const picked = grid[y][x];
           if (picked && picked !== " ") setBrush(picked);
@@ -567,7 +543,6 @@ function renderBoard(){
         renderAll();
       });
 
-      // PPM: zawsze kasuje
       tile.addEventListener("contextmenu", (ev)=>{
         ev.preventDefault();
         grid[y][x] = " ";
@@ -581,18 +556,19 @@ function renderBoard(){
 
 function renderStructure(){
   const rows = gridToRows(grid);
-  // pokaż spacje jako kropki
-  const pretty = rows.map(r => r.replace(/ /g, "·")).join("\n");
-  structBox.textContent = pretty;
+  structBox.textContent = rows.map(r => r.replace(/ /g, "·")).join("\n");
 }
 
-function renderExportPreview(){
-  const keys = Object.keys(savedBig).sort((a,b)=>a.localeCompare(b));
+/* ====== Save / Export ====== */
+function exportPreview(){
+  const keys = Object.keys(savedBig).sort(unicodeSort);
   savedHint.textContent = `Zapisane: ${keys.length}`;
+
   if (keys.length === 0){
     exportBox.textContent = "(eksport pojawi się po zapisaniu symboli)";
     return;
   }
+
   const out = {};
   for (const k of keys){
     const rows = savedBig[k].slice(0, GRID_H).map(r => (r ?? "   ").slice(0, GRID_W).padEnd(GRID_W, " "));
@@ -602,14 +578,28 @@ function renderExportPreview(){
   exportBox.textContent = JSON.stringify(out, null, 2);
 }
 
-function renderAll(){
-  renderBoard();
-  renderStructure();
-  renderExportPreview();
-  updateBrushHeader();
+function saveCurrent(){
+  const sym = (symbolInput.value ?? "").trim();
+  if (!sym){ alert("Wpisz symbol (np. A)."); return; }
+  if (sym.length > 2){ alert("Symbol max 2 znaki."); return; }
+  if (!glyphMap){ alert("Najpierw wczytaj font 5×7."); return; }
+
+  // walidacja: wszystko z siatki musi istnieć w font
+  for (let y=0; y<GRID_H; y++){
+    for (let x=0; x<GRID_W; x++){
+      const ch = grid[y][x];
+      if (!glyphMap.has(ch)){
+        alert(`W siatce jest znak „${ch}”, którego nie ma w foncie 5×7.`);
+        return;
+      }
+    }
+  }
+
+  savedBig[sym] = gridToRows(grid);
+  exportPreview();
 }
 
-/* ===== Load font ===== */
+/* ====== Load font ====== */
 document.getElementById("fontFile").addEventListener("change", async (e)=>{
   const f = e.target.files?.[0];
   if (!f) return;
@@ -624,30 +614,31 @@ document.getElementById("fontFile").addEventListener("change", async (e)=>{
 
 function loadFont(obj){
   font57 = obj;
-  const built = buildGlyphMapAnyGroups(font57);
+  const built = buildGlyphMapAnyGroups(obj);
   glyphMap = built.map;
   glyphOrder = built.order;
 
-  statusEl.textContent = `Wczytano font 5×7: ${font57.meta?.name ?? "(bez nazwy)"} — glifów: ${glyphOrder.length}`;
+  statusEl.textContent = `Wczytano font 5×7: ${obj.meta?.name ?? "(bez nazwy)"} — glifów: ${glyphOrder.length}`;
 
-  // ustaw domyślny pędzel
-  if (glyphMap.has("█")) {
-    lastBrush = "█";
-    brush = "█";
+  // domyślny pędzel
+  if (glyphMap.has("█")){
+    brush = "█"; lastBrush = "█";
   } else {
-    brush = glyphOrder.find(ch => ch !== " ") ?? " ";
-    if (brush !== " ") lastBrush = brush;
+    const first = glyphOrder.find(ch => ch !== " ") ?? " ";
+    brush = first;
+    if (first !== " ") lastBrush = first;
   }
 
-  // odblokuj zapisywanie/eksport
   saveBtn.disabled = false;
   exportBtn.disabled = false;
 
-  renderPalette();
+  renderPalettes();
   renderAll();
 }
 
-/* ===== Tools ===== */
+/* ====== Events ====== */
+filterInput.addEventListener("input", renderPalettes);
+
 eraseBtn.addEventListener("click", ()=>{
   eraseMode = !eraseMode;
   updateEraserUI();
@@ -658,37 +649,10 @@ document.getElementById("clearGrid").addEventListener("click", ()=>{
   renderAll();
 });
 
-/* ===== Save / Export ===== */
-saveBtn.addEventListener("click", ()=>{
-  const sym = (symbolInput.value ?? "").trim();
-  if (!sym){
-    alert("Wpisz symbol (np. A).");
-    return;
-  }
-  if (sym.length > 2){
-    alert("Symbol max 2 znaki.");
-    return;
-  }
-  if (!glyphMap){
-    alert("Najpierw wczytaj font 5×7.");
-    return;
-  }
-  // walidacja: wszystko w grid musi istnieć w glyphMap
-  for (let y=0; y<GRID_H; y++){
-    for (let x=0; x<GRID_W; x++){
-      const ch = grid[y][x];
-      if (!glyphMap.has(ch)){
-        alert(`W siatce jest znak „${ch}”, którego nie ma w font 5×7.`);
-        return;
-      }
-    }
-  }
-  savedBig[sym] = gridToRows(grid);
-  renderExportPreview();
-});
+document.getElementById("saveSymbol").addEventListener("click", saveCurrent);
 
-exportBtn.addEventListener("click", ()=>{
-  const keys = Object.keys(savedBig).sort((a,b)=>a.localeCompare(b));
+document.getElementById("exportBtn").addEventListener("click", ()=>{
+  const keys = Object.keys(savedBig).sort(unicodeSort);
   const out = {};
   for (const k of keys){
     const rows = savedBig[k].slice(0, GRID_H).map(r => (r ?? "   ").slice(0, GRID_W).padEnd(GRID_W, " "));
@@ -706,12 +670,15 @@ exportBtn.addEventListener("click", ()=>{
   URL.revokeObjectURL(a.href);
 });
 
-/* ===== Paleta filtr ===== */
-filterInput.addEventListener("input", ()=>{
-  renderPalette();
-});
+/* ====== Render all ====== */
+function renderAll(){
+  renderBoard();
+  renderStructure();
+  exportPreview();
+  updateBrushHeader();
+}
 
-/* ===== Start (Twoje wymagane init) ===== */
+/* ====== Start (Twoje wymagane init) ====== */
 renderAll();
 brush = " ";
 lastBrush = "█";   // lub null
@@ -719,7 +686,7 @@ eraseMode = false;
 updateEraserUI();
 brushCharEl.textContent = "(brak)";
 statusEl.textContent = "Brak fontu 5×7 — wczytaj JSON.";
-renderPalette();
+renderPalettes();
 </script>
 </body>
 </html>
