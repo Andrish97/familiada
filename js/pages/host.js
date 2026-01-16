@@ -475,7 +475,7 @@ function decodeEscapes(s) {
   return String(s).replace(/\\n/g, "\n").replace(/\\t/g, "\t").replace(/\\"/g, '"');
 }
 
-async function handleCommands(lineRaw) {
+async function handleCommand(lineRaw) {
   const line = String(lineRaw ?? "").trim();
   if (!line) return;
   const up = line.toUpperCase();
@@ -569,7 +569,7 @@ function ensureChannel() {
   ch = sb()
     .channel(`familiada-host:${gameId}`)
     .on("broadcast", { event: "HOST_CMD" }, (msg) => {
-      handleCommands(msg?.payload?.line);
+      handleCommand(msg?.payload?.line);
     })
     .subscribe();
   return ch;
@@ -759,6 +759,6 @@ window.__host = {
   clear1,
   clear2,
   coverP2,
-  handleCommands,
+  handleCommand,
   ping,
 };
