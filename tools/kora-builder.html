@@ -3,28 +3,28 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Kora — 3×10 z kafelków 5×7</title>
+  <title>Kora — builder 3×10 z kafelków 5×7</title>
   <style>
     :root{
       --bg:#0f1115; --fg:#e8e8e8; --muted:#a7a7a7;
       --card:#171a21; --border:#24283a;
-
       --btn:#121521; --btnb:#2a2f44;
       --accent:#7aa2ff; --danger:#ff6b6b;
 
       --dot:6px; --dot-gap:2px;
-      --tile-gap:2px;           /* przerwa 2px */
-      --sep:#2a2f44;            /* kolor przerwy */
+      --tile-gap:2px;      /* przerwa 2px między kafelkami */
+      --sep:#2a2f44;       /* kolor przerwy */
       --tile-bg:#0b0d14;
 
-      --left:360px;
+      --left:380px;
+      --gap:12px;
     }
 
     html,body{height:100%;margin:0}
     body{
       background:var(--bg); color:var(--fg);
       font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
-      overflow:hidden; /* brak scrolla strony */
+      overflow:hidden; /* bez scrolla strony */
     }
 
     header{
@@ -33,6 +33,7 @@
       display:flex; gap:10px; align-items:center; justify-content:space-between;
       box-sizing:border-box;
     }
+
     .row{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
     .hint{color:var(--muted); font-size:12px; line-height:1.35}
 
@@ -49,17 +50,18 @@
     input[type="file"]{color:var(--muted)}
     input[type="text"]{
       background:#0f1220; border:1px solid var(--btnb); color:var(--fg);
-      border-radius:10px; padding:8px 10px; font-weight:750; width:140px;
-      box-sizing:border-box;
+      border-radius:10px; padding:8px 10px; font-weight:750;
+      width:160px; box-sizing:border-box;
     }
 
     .layout{
-      height:calc(100vh - 0px);
+      height: calc(100vh - 0px);
       display:grid;
       grid-template-columns: var(--left) 1fr;
-      gap:12px;
-      padding:12px;
+      gap: var(--gap);
+      padding: 12px;
       box-sizing:border-box;
+      min-height:0;
     }
 
     .card{
@@ -68,24 +70,46 @@
       border-radius:16px;
       padding:12px;
       box-sizing:border-box;
-      min-height:0;
+      min-height:0; /* ważne dla scrolli wewnątrz */
+      display:flex;
+      flex-direction:column;
     }
+
     .card h2{
-      margin:0 0 10px; font-size:14px; letter-spacing:.3px;
+      margin:0 0 10px;
+      font-size:14px;
+      letter-spacing:.3px;
       color:#cfd6ff;
       display:flex; align-items:center; justify-content:space-between; gap:10px;
+      flex: 0 0 auto;
     }
 
-    /* ===== lewa: paleta ===== */
-    .paletteCard{display:flex;flex-direction:column;min-height:0}
-    .paletteTop{display:flex;flex-direction:column;gap:10px;margin-bottom:10px}
-    .paletteScroll{overflow:auto;min-height:0;padding-right:6px}
-
-    .subbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
     .pill{
       font-size:12px; color:#cfd6ff;
-      border:1px solid var(--btnb); background:#0c0e16;
-      padding:6px 8px; border-radius:999px;
+      border:1px solid var(--btnb);
+      background:#0c0e16;
+      padding:6px 8px;
+      border-radius:999px;
+      display:inline-flex;
+      gap:6px;
+      align-items:center;
+      white-space:nowrap;
+    }
+
+    /* ===== LEWA: paleta (scroll) ===== */
+    .leftCardTop{
+      flex: 0 0 auto;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      margin-bottom:10px;
+    }
+
+    .paletteScroll{
+      flex: 1 1 auto;
+      min-height:0;
+      overflow:auto;
+      padding-right:6px;
     }
 
     .palette{
@@ -135,7 +159,6 @@
       color:#cfd6ff;
     }
 
-    /* mini 5x7 w palecie */
     .glyph57{
       display:grid;
       grid-template-columns:repeat(5,var(--dot));
@@ -153,21 +176,52 @@
       box-shadow:0 0 0 1px rgba(233,237,255,.05), 0 0 10px rgba(122,162,255,.08);
     }
 
-    /* ===== prawa: plansza + struktura ===== */
-    .mainCard{display:flex;flex-direction:column;min-height:0;gap:10px}
-
-    .boardRow{
-      flex:1 1 auto;
+    /* ===== PRAWA: układ pionowy, każdy blok scrolluje ===== */
+    .rightStack{
+      flex: 1 1 auto;
       min-height:0;
-      display:flex;
-      gap:12px;
-      align-items:stretch;
+      display:grid;
+      grid-template-rows: auto 1fr;
+      gap: var(--gap);
     }
 
-    /* jedna plansza “łączna”: tło separatora + gap = 2px */
-    .board{
+    .topTools{
+      flex:0 0 auto;
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      align-items:center;
+      justify-content:space-between;
+    }
+
+    .boardSection{
       flex:1 1 auto;
       min-height:0;
+      display:grid;
+      grid-template-columns: 1fr 300px;
+      gap: var(--gap);
+    }
+
+    /* Plansza - ma własny scroll */
+    .boardViewport{
+      border:1px solid var(--border);
+      border-radius:16px;
+      background:#0a0c13;
+      padding:10px;
+      box-sizing:border-box;
+      min-height:0;
+      overflow:auto; /* scroll */
+      position:relative;
+    }
+
+    /* Wewnętrzny kontener skalowany (transform) */
+    .boardScale{
+      transform-origin: top left;
+      display:inline-block;
+    }
+
+    /* Jedna plansza “łączna”: tło separatora + gap = 2px */
+    .board{
       display:grid;
       grid-template-columns:repeat(3, max-content);
       gap:var(--tile-gap);
@@ -175,12 +229,11 @@
       padding:var(--tile-gap);
       border-radius:16px;
       box-sizing:border-box;
-      overflow:hidden; /* ma się mieścić */
+      overflow:hidden;
       align-content:start;
       justify-content:start;
     }
 
-    /* kafelek jako “wycięcie” z tłem */
     .tile{
       background:var(--tile-bg);
       border-radius:10px;
@@ -198,38 +251,100 @@
       justify-content:start;
     }
 
-    .side{
-      width:240px;
-      flex:0 0 240px;
-      display:flex;
-      flex-direction:column;
-      gap:10px;
+    /* Panel boczny: struktura, lista symboli, eksport — każdy scroll */
+    .sideStack{
       min-height:0;
+      display:grid;
+      grid-template-rows: 1fr 1.2fr 1fr;
+      gap: var(--gap);
     }
 
-    pre{
-      margin:0;
+    .panel{
+      border:1px solid var(--border);
+      border-radius:16px;
       padding:10px;
-      border-radius:14px;
-      border:1px solid var(--btnb);
       background:#0a0c13;
-      color:#d7ddff;
+      box-sizing:border-box;
+      min-height:0;
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+    }
+    .panel .title{
+      font-size:13px;
+      color:#cfd6ff;
+      font-weight:800;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      flex:0 0 auto;
+    }
+    .panel .scroll{
+      flex:1 1 auto;
+      min-height:0;
+      overflow:auto;
+      border:1px solid var(--btnb);
+      border-radius:14px;
+      background:#070912;
+      padding:10px;
+      box-sizing:border-box;
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
       font-size:12px;
       line-height:1.35;
-      overflow:hidden;
       white-space:pre;
-      box-sizing:border-box;
+      color:#d7ddff;
     }
 
-    .tools{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    .symList{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      white-space:normal;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    }
+    .symRow{
+      display:flex;
+      gap:8px;
+      align-items:center;
+      justify-content:space-between;
+      padding:8px 10px;
+      border:1px solid var(--btnb);
+      border-radius:12px;
+      background:#0c0e16;
+      cursor:pointer;
+      user-select:none;
+    }
+    .symRow:hover{ border-color:#3a4261; }
+    .symRow.active{
+      border-color:#3553a8;
+      box-shadow:0 0 0 1px rgba(122,162,255,.25);
+    }
+    .symName{
+      font-weight:900;
+      color:#cfd6ff;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    }
+    .symMeta{
+      color:var(--muted);
+      font-size:12px;
+    }
 
-    @media (max-width: 1100px){
+    .smallTools{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      align-items:center;
+    }
+
+    .dangerText{ color: #ffd7d7; }
+
+    @media (max-width: 1200px){
       body{overflow:auto}
-      .layout{height:auto;grid-template-columns:1fr}
-      .boardRow{flex-direction:column}
-      .side{width:auto;flex:0 0 auto}
-      .board{overflow:auto}
+      .layout{height:auto; grid-template-columns:1fr}
+      .boardSection{grid-template-columns:1fr}
+      .sideStack{grid-template-rows:auto auto auto}
+      .boardViewport{max-height:60vh}
     }
   </style>
 </head>
@@ -238,6 +353,7 @@
 <header>
   <div class="row">
     <input id="fontFile" type="file" accept=".json,application/json" />
+    <input id="bigFile" type="file" accept=".json,application/json" title="Wczytaj istniejący JSON 3x10" />
     <span id="status" class="hint">Brak fontu 5×7 — wczytaj JSON.</span>
   </div>
 
@@ -250,60 +366,117 @@
 </header>
 
 <div class="layout">
-  <!-- LEWA: paleta + ulubione -->
-  <section class="card paletteCard">
+  <!-- LEWA: Paleta -->
+  <section class="card">
     <h2>Paleta pędzli 5×7</h2>
 
-    <div class="paletteTop">
+    <div class="leftCardTop">
       <input id="filterInput" type="text" placeholder="Filtr (np. █, →)" style="width:100%;" />
-      <div class="subbar">
+      <div class="row">
         <span class="pill">Alt+klik na planszy = pipeta</span>
+        <span class="pill">Ctrl/Alt + kółko = zoom planszy</span>
         <span class="pill">★ = ulubione</span>
       </div>
-      <div class="hint">Klik na glif: ustaw pędzel. Gumka to tryb (nie gubi pędzla).</div>
+      <div class="hint">Paleta ma własny scroll. Gumka to tryb (nie gubi pędzla).</div>
     </div>
 
     <div class="paletteScroll">
-      <h2 style="margin:0 0 10px;">Ulubione</h2>
+      <div style="margin:0 0 10px; color:#cfd6ff; font-weight:900;">Ulubione</div>
       <div id="favPalette" class="palette" style="margin-bottom:14px;"></div>
 
-      <h2 style="margin:0 0 10px;">Wszystkie</h2>
+      <div style="margin:0 0 10px; color:#cfd6ff; font-weight:900;">Wszystkie</div>
       <div id="palette" class="palette"></div>
     </div>
   </section>
 
-  <!-- PRAWA: jedna plansza + struktura + zapis/eksport -->
-  <section class="card mainCard">
-    <h2>Plansza 3×10 (to jest edycja i podgląd)</h2>
-    <div class="hint">
-      LPM: wstaw pędzel (lub kasuj, jeśli gumka). PPM: zawsze kasuje. Alt+LPM: pipeta (pobierz znak z kafelka).
+  <!-- PRAWA: plansza + panele -->
+  <section class="card">
+    <div class="topTools">
+      <div>
+        <h2 style="margin:0;">Plansza 3×10 (edycja = podgląd)</h2>
+        <div class="hint">
+          LPM: wstaw/kasuj (gumka). PPM: zawsze kasuje. Alt+LPM: pipeta. Zoom: Ctrl/Alt + kółko.
+        </div>
+      </div>
+
+      <div class="row">
+        <button id="zoomOut" class="btn">−</button>
+        <button id="zoomReset" class="btn">100%</button>
+        <button id="zoomIn" class="btn">+</button>
+      </div>
     </div>
 
-    <div class="boardRow">
-      <div id="board" class="board" aria-label="Plansza 3x10"></div>
-
-      <div class="side">
-        <h2 style="margin:0;">Struktura 10×3</h2>
-        <div class="hint">Spacje pokazuję jako „·”, żeby było widać puste miejsca.</div>
-        <pre id="structBox">···
-···
-···
-···
-···
-···
-···
-···
-···
-···</pre>
-
-        <div class="tools">
-          <input id="symbolInput" type="text" maxlength="2" placeholder="symbol (np. A)" />
-          <button id="saveSymbol" class="btn primary" disabled>Zapisz</button>
-          <button id="exportBtn" class="btn" disabled>Eksport JSON</button>
+    <div class="rightStack">
+      <div class="boardSection">
+        <!-- Plansza z własnym scrollem + zoom -->
+        <div id="boardViewport" class="boardViewport">
+          <div id="boardScale" class="boardScale">
+            <div id="board" class="board" aria-label="Plansza 3x10"></div>
+          </div>
         </div>
-        <div class="hint" id="savedHint">Zapisane: 0</div>
 
-        <pre id="exportBox" style="min-height:120px;">(eksport pojawi się po zapisaniu symboli)</pre>
+        <!-- Panele boczne, każdy ma własny scroll -->
+        <div class="sideStack">
+          <!-- Struktura -->
+          <div class="panel">
+            <div class="title">
+              <span>Struktura 10×3</span>
+              <span class="hint">spacje = ·</span>
+            </div>
+            <div id="structBox" class="scroll">···
+···
+···
+···
+···
+···
+···
+···
+···
+···</div>
+          </div>
+
+          <!-- Lista symboli 3x10 -->
+          <div class="panel">
+            <div class="title">
+              <span>Symbole 3×10</span>
+              <span id="symCount" class="hint">0</span>
+            </div>
+
+            <div class="smallTools">
+              <input id="symbolInput" type="text" maxlength="2" placeholder="np. A" />
+              <button id="newSymbol" class="btn primary" disabled>Nowy</button>
+              <button id="saveSymbol" class="btn primary" disabled>Zapisz</button>
+              <button id="copySymbol" class="btn" disabled>Kopiuj</button>
+              <button id="deleteSymbol" class="btn danger" disabled>Usuń</button>
+            </div>
+
+            <div id="symList" class="scroll" style="white-space:normal; padding:10px;">
+              <div class="hint">Wczytaj JSON 3×10 albo zacznij od „Nowy”.</div>
+            </div>
+
+            <div class="hint">
+              Klik na symbol: wczytaj do planszy. Sortowanie listy: unicode.
+            </div>
+          </div>
+
+          <!-- Eksport -->
+          <div class="panel">
+            <div class="title">
+              <span>Eksport JSON</span>
+              <span class="hint">unicode</span>
+            </div>
+
+            <div class="smallTools">
+              <button id="exportBtn" class="btn" disabled>Pobierz JSON</button>
+            </div>
+
+            <div id="exportBox" class="scroll">(eksport pojawi się po zapisaniu symboli)</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="hint">
+        Tip: wczytaj font 5×7 → wybierz pędzel → edytuj planszę → „Zapisz”. Możesz wczytać istniejący JSON 3×10 i dopisywać.
       </div>
     </div>
   </section>
@@ -317,8 +490,8 @@ const GRID_H = 10;
 /* ====== Stan ====== */
 let font57 = null;
 let glyphMap = null;            // Map<char, [7 numbers]>
-let glyphOrder = [];            // wszystkie glify (posortowane unicode)
-let favorites = new Set();      // ulubione glify (znaki 1-length)
+let glyphOrder = [];            // wszystkie glify 1-znakowe, unicode sort
+let favorites = new Set();
 
 let grid = makeEmptyGrid();
 
@@ -327,34 +500,56 @@ let lastBrush = "█";
 let eraseMode = false;
 
 let savedBig = {};              // symbol -> [10 strings po 3]
+let currentSymbol = null;       // aktualnie edytowany symbol (klucz w savedBig) lub null
+let boardScale = 1.0;
 
 /* ====== DOM ====== */
 const statusEl = document.getElementById("status");
 const brushCharEl = document.getElementById("brushChar");
 const eraseBtn = document.getElementById("eraseBrush");
-const filterInput = document.getElementById("filterInput");
 
+const filterInput = document.getElementById("filterInput");
 const paletteEl = document.getElementById("palette");
 const favPaletteEl = document.getElementById("favPalette");
 
+const boardViewport = document.getElementById("boardViewport");
+const boardScaleEl = document.getElementById("boardScale");
 const boardEl = document.getElementById("board");
+
 const structBox = document.getElementById("structBox");
 
 const symbolInput = document.getElementById("symbolInput");
+const newBtn = document.getElementById("newSymbol");
 const saveBtn = document.getElementById("saveSymbol");
+const copyBtn = document.getElementById("copySymbol");
+const delBtn = document.getElementById("deleteSymbol");
+const symListEl = document.getElementById("symList");
+const symCountEl = document.getElementById("symCount");
+
 const exportBtn = document.getElementById("exportBtn");
-const savedHint = document.getElementById("savedHint");
 const exportBox = document.getElementById("exportBox");
+
+const zoomOutBtn = document.getElementById("zoomOut");
+const zoomResetBtn = document.getElementById("zoomReset");
+const zoomInBtn = document.getElementById("zoomIn");
 
 /* ====== Utils ====== */
 function makeEmptyGrid(){
   return Array.from({length: GRID_H}, () => Array.from({length: GRID_W}, () => " "));
 }
 function gridToRows(g){ return g.map(r => r.join("")); }
+function rowsToGrid(rows){
+  const g = makeEmptyGrid();
+  for (let y=0; y<GRID_H; y++){
+    const r = (rows?.[y] ?? "   ");
+    for (let x=0; x<GRID_W; x++){
+      g[y][x] = (r[x] ?? " ");
+    }
+  }
+  return g;
+}
 
 function unicodeSort(a,b){
-  // “alfabetycznie / unicode” – najprościej i stabilnie:
-  // porównanie wg kodpointów + fallback locale.
   const la = Array.from(a);
   const lb = Array.from(b);
   const n = Math.min(la.length, lb.length);
@@ -364,9 +559,10 @@ function unicodeSort(a,b){
     if (da !== db) return da - db;
   }
   if (la.length !== lb.length) return la.length - lb.length;
-  // fallback (ładne porównanie)
   return a.localeCompare(b, "und");
 }
+
+function clamp(v, a, b){ return Math.max(a, Math.min(b, v)); }
 
 function updateBrushHeader(){
   if (!glyphMap){
@@ -394,7 +590,6 @@ function setBrush(ch){
   eraseMode = false;
   updateEraserUI();
 
-  // zaznaczenie w palecie
   for (const node of document.querySelectorAll(".palItem")){
     node.classList.toggle("selected", node.dataset.ch === ch);
   }
@@ -421,7 +616,6 @@ function buildGlyphMapAnyGroups(font) {
 
   if (!raw.has(" ")) raw.set(" ", [0,0,0,0,0,0,0]);
 
-  // sort unicode
   const order = Array.from(raw.keys())
     .filter(ch => typeof ch === "string" && ch.length === 1)
     .sort(unicodeSort);
@@ -429,7 +623,7 @@ function buildGlyphMapAnyGroups(font) {
   return { map: raw, order };
 }
 
-/* ====== Render dot grid ====== */
+/* ====== Render dots ====== */
 function makeDots(rows7, containerEl){
   for (let y=0; y<7; y++){
     const bits = rows7?.[y] ?? 0;
@@ -442,7 +636,7 @@ function makeDots(rows7, containerEl){
   }
 }
 
-/* ====== Render palety (ulubione + wszystkie) ====== */
+/* ====== Paleta ====== */
 function makePalItem(ch){
   const rows7 = glyphMap.get(ch);
 
@@ -477,38 +671,51 @@ function makePalItem(ch){
 }
 
 function renderPalettes(){
-  // favorites
   favPaletteEl.innerHTML = "";
+  paletteEl.innerHTML = "";
+
   if (!glyphMap){
     favPaletteEl.innerHTML = `<div class="hint">Wczytaj font 5×7.</div>`;
-    paletteEl.innerHTML = "";
+    paletteEl.innerHTML = `<div class="hint">Wczytaj font 5×7.</div>`;
     return;
   }
 
-  const favList = Array.from(favorites).sort(unicodeSort);
+  const favList = Array.from(favorites).filter(ch => glyphMap.has(ch)).sort(unicodeSort);
   if (favList.length === 0){
-    favPaletteEl.innerHTML = `<div class="hint">Brak ulubionych. Kliknij ☆ przy glifie.</div>`;
+    favPaletteEl.innerHTML = `<div class="hint">Brak ulubionych. Kliknij ☆.</div>`;
   } else {
-    for (const ch of favList){
-      if (!glyphMap.has(ch)) continue;
-      favPaletteEl.appendChild(makePalItem(ch));
-    }
+    for (const ch of favList) favPaletteEl.appendChild(makePalItem(ch));
   }
 
-  // all + filter
-  paletteEl.innerHTML = "";
   const q = (filterInput.value ?? "").trim();
   const list = glyphOrder.filter(ch => q ? ch.includes(q) : true);
 
-  for (const ch of list){
-    paletteEl.appendChild(makePalItem(ch));
-  }
+  for (const ch of list) paletteEl.appendChild(makePalItem(ch));
 
-  // odśwież zaznaczenie
+  // odśwież zaznaczenia
   setBrush(brush ?? lastBrush ?? " ");
 }
 
-/* ====== Render planszy (jedna łączna) ====== */
+/* ====== Plansza ====== */
+function setScale(next, keepCenter=true){
+  const old = boardScale;
+  boardScale = clamp(next, 0.35, 4.0);
+  boardScaleEl.style.transform = `scale(${boardScale})`;
+
+  // opcjonalnie: zachowaj przybliżony środek widoku
+  if (keepCenter){
+    const vx = boardViewport;
+    const cx = vx.scrollLeft + vx.clientWidth/2;
+    const cy = vx.scrollTop + vx.clientHeight/2;
+    const ratio = boardScale / old;
+
+    vx.scrollLeft = (cx * ratio) - vx.clientWidth/2;
+    vx.scrollTop  = (cy * ratio) - vx.clientHeight/2;
+  }
+
+  zoomResetBtn.textContent = `${Math.round(boardScale*100)}%`;
+}
+
 function renderBoard(){
   boardEl.innerHTML = "";
   boardEl.style.gridTemplateColumns = `repeat(${GRID_W}, max-content)`;
@@ -527,7 +734,7 @@ function renderBoard(){
       tile.addEventListener("click", (ev)=>{
         if (!glyphMap) return;
 
-        // pipeta: Alt+klik
+        // pipeta Alt+klik
         if (ev.altKey){
           const picked = grid[y][x];
           if (picked && picked !== " ") setBrush(picked);
@@ -540,13 +747,13 @@ function renderBoard(){
           const b = (brush && brush !== " ") ? brush : (lastBrush ?? " ");
           grid[y][x] = b;
         }
-        renderAll();
+        renderAll(false);
       });
 
       tile.addEventListener("contextmenu", (ev)=>{
         ev.preventDefault();
         grid[y][x] = " ";
-        renderAll();
+        renderAll(false);
       });
 
       boardEl.appendChild(tile);
@@ -559,103 +766,174 @@ function renderStructure(){
   structBox.textContent = rows.map(r => r.replace(/ /g, "·")).join("\n");
 }
 
-/* ====== Save / Export ====== */
-function exportPreview(){
-  const keys = Object.keys(savedBig).sort(unicodeSort);
-  savedHint.textContent = `Zapisane: ${keys.length}`;
+/* ====== Symbole 3×10: lista, load, new, copy, delete, save ====== */
+function renderSymbolList(){
+  symListEl.innerHTML = "";
 
+  const keys = Object.keys(savedBig).sort(unicodeSort);
+  symCountEl.textContent = String(keys.length);
+
+  if (keys.length === 0){
+    symListEl.innerHTML = `<div class="hint">Brak symboli. Kliknij „Nowy”, wpisz nazwę i „Zapisz”.</div>`;
+    return;
+  }
+
+  const wrap = document.createElement("div");
+  wrap.className = "symList";
+
+  for (const k of keys){
+    const row = document.createElement("div");
+    row.className = "symRow" + (currentSymbol === k ? " active" : "");
+    row.title = "Kliknij, aby wczytać na planszę";
+
+    const left = document.createElement("div");
+    const name = document.createElement("div");
+    name.className = "symName";
+    name.textContent = k;
+    const meta = document.createElement("div");
+    meta.className = "symMeta";
+    meta.textContent = "3×10";
+
+    left.appendChild(name);
+    left.appendChild(meta);
+
+    const right = document.createElement("div");
+    right.className = "symMeta";
+    right.textContent = (k === currentSymbol) ? "edytujesz" : "";
+
+    row.appendChild(left);
+    row.appendChild(right);
+
+    row.addEventListener("click", ()=>{
+      loadSymbolToGrid(k);
+    });
+
+    wrap.appendChild(row);
+  }
+
+  symListEl.appendChild(wrap);
+}
+
+function loadSymbolToGrid(sym){
+  const rows = savedBig[sym];
+  if (!rows) return;
+  grid = rowsToGrid(rows);
+  currentSymbol = sym;
+  symbolInput.value = sym;
+  updateSymbolButtons();
+  renderAll(false);
+}
+
+function updateSymbolButtons(){
+  const hasFont = !!glyphMap;
+  const hasAny = Object.keys(savedBig).length > 0;
+  const hasCurrent = !!currentSymbol && !!savedBig[currentSymbol];
+
+  newBtn.disabled = !hasFont;
+  saveBtn.disabled = !hasFont;
+  exportBtn.disabled = !hasAny;
+
+  copyBtn.disabled = !hasCurrent;
+  delBtn.disabled = !hasCurrent;
+}
+
+function saveCurrentToMap(sym){
+  if (!glyphMap){
+    alert("Najpierw wczytaj font 5×7.");
+    return false;
+  }
+  if (!sym){
+    alert("Wpisz nazwę symbolu (np. A).");
+    return false;
+  }
+  if (sym.length > 2){
+    alert("Symbol max 2 znaki.");
+    return false;
+  }
+
+  // walidacja: każdy znak musi istnieć w foncie
+  for (let y=0; y<GRID_H; y++){
+    for (let x=0; x<GRID_W; x++){
+      const ch = grid[y][x];
+      if (!glyphMap.has(ch)){
+        alert(`W siatce jest znak „${ch}”, którego nie ma w foncie 5×7.`);
+        return false;
+      }
+    }
+  }
+
+  savedBig[sym] = gridToRows(grid);
+  currentSymbol = sym;
+  updateSymbolButtons();
+  renderSymbolList();
+  renderExportPreview();
+  return true;
+}
+
+function newSymbol(){
+  currentSymbol = null;
+  symbolInput.value = "";
+  grid = makeEmptyGrid();
+  updateSymbolButtons();
+  renderAll(false);
+  renderSymbolList();
+}
+
+function copySymbol(){
+  if (!currentSymbol || !savedBig[currentSymbol]) return;
+
+  const base = currentSymbol;
+  const suggested = base.length === 1 ? `${base}2` : `${base}_2`;
+
+  const name = prompt("Nazwa kopii:", suggested);
+  if (name === null) return; // anuluj
+
+  const sym = String(name).trim();
+  if (!sym){ alert("Pusta nazwa."); return; }
+  if (sym.length > 2){ alert("Symbol max 2 znaki."); return; }
+
+  // kopiuj dane bieżącego
+  savedBig[sym] = savedBig[currentSymbol].slice();
+  loadSymbolToGrid(sym);
+  renderSymbolList();
+  renderExportPreview();
+}
+
+function deleteSymbol(){
+  if (!currentSymbol || !savedBig[currentSymbol]) return;
+  const ok = confirm(`Usunąć symbol „${currentSymbol}”?`);
+  if (!ok) return;
+
+  delete savedBig[currentSymbol];
+  currentSymbol = null;
+  symbolInput.value = "";
+  updateSymbolButtons();
+  renderSymbolList();
+  renderExportPreview();
+}
+
+/* ====== Eksport ====== */
+function renderExportPreview(){
+  const keys = Object.keys(savedBig).sort(unicodeSort);
   if (keys.length === 0){
     exportBox.textContent = "(eksport pojawi się po zapisaniu symboli)";
     return;
   }
-
   const out = {};
   for (const k of keys){
-    const rows = savedBig[k].slice(0, GRID_H).map(r => (r ?? "   ").slice(0, GRID_W).padEnd(GRID_W, " "));
+    // twardy format 10×3
+    const rows = (savedBig[k] ?? []).slice(0, GRID_H).map(r => (r ?? "   ").slice(0, GRID_W).padEnd(GRID_W, " "));
     while (rows.length < GRID_H) rows.push("   ");
     out[k] = rows;
   }
   exportBox.textContent = JSON.stringify(out, null, 2);
 }
 
-function saveCurrent(){
-  const sym = (symbolInput.value ?? "").trim();
-  if (!sym){ alert("Wpisz symbol (np. A)."); return; }
-  if (sym.length > 2){ alert("Symbol max 2 znaki."); return; }
-  if (!glyphMap){ alert("Najpierw wczytaj font 5×7."); return; }
-
-  // walidacja: wszystko z siatki musi istnieć w font
-  for (let y=0; y<GRID_H; y++){
-    for (let x=0; x<GRID_W; x++){
-      const ch = grid[y][x];
-      if (!glyphMap.has(ch)){
-        alert(`W siatce jest znak „${ch}”, którego nie ma w foncie 5×7.`);
-        return;
-      }
-    }
-  }
-
-  savedBig[sym] = gridToRows(grid);
-  exportPreview();
-}
-
-/* ====== Load font ====== */
-document.getElementById("fontFile").addEventListener("change", async (e)=>{
-  const f = e.target.files?.[0];
-  if (!f) return;
-  try{
-    const txt = await f.text();
-    const obj = JSON.parse(txt);
-    loadFont(obj);
-  }catch(err){
-    alert("Nie mogę wczytać JSON: " + err.message);
-  }
-});
-
-function loadFont(obj){
-  font57 = obj;
-  const built = buildGlyphMapAnyGroups(obj);
-  glyphMap = built.map;
-  glyphOrder = built.order;
-
-  statusEl.textContent = `Wczytano font 5×7: ${obj.meta?.name ?? "(bez nazwy)"} — glifów: ${glyphOrder.length}`;
-
-  // domyślny pędzel
-  if (glyphMap.has("█")){
-    brush = "█"; lastBrush = "█";
-  } else {
-    const first = glyphOrder.find(ch => ch !== " ") ?? " ";
-    brush = first;
-    if (first !== " ") lastBrush = first;
-  }
-
-  saveBtn.disabled = false;
-  exportBtn.disabled = false;
-
-  renderPalettes();
-  renderAll();
-}
-
-/* ====== Events ====== */
-filterInput.addEventListener("input", renderPalettes);
-
-eraseBtn.addEventListener("click", ()=>{
-  eraseMode = !eraseMode;
-  updateEraserUI();
-});
-
-document.getElementById("clearGrid").addEventListener("click", ()=>{
-  grid = makeEmptyGrid();
-  renderAll();
-});
-
-document.getElementById("saveSymbol").addEventListener("click", saveCurrent);
-
-document.getElementById("exportBtn").addEventListener("click", ()=>{
+function downloadExport(){
   const keys = Object.keys(savedBig).sort(unicodeSort);
   const out = {};
   for (const k of keys){
-    const rows = savedBig[k].slice(0, GRID_H).map(r => (r ?? "   ").slice(0, GRID_W).padEnd(GRID_W, " "));
+    const rows = (savedBig[k] ?? []).slice(0, GRID_H).map(r => (r ?? "   ").slice(0, GRID_W).padEnd(GRID_W, " "));
     while (rows.length < GRID_H) rows.push("   ");
     out[k] = rows;
   }
@@ -668,25 +946,153 @@ document.getElementById("exportBtn").addEventListener("click", ()=>{
   a.click();
   a.remove();
   URL.revokeObjectURL(a.href);
-});
-
-/* ====== Render all ====== */
-function renderAll(){
-  renderBoard();
-  renderStructure();
-  exportPreview();
-  updateBrushHeader();
 }
 
-/* ====== Start (Twoje wymagane init) ====== */
-renderAll();
-brush = " ";
-lastBrush = "█";   // lub null
-eraseMode = false;
-updateEraserUI();
-brushCharEl.textContent = "(brak)";
-statusEl.textContent = "Brak fontu 5×7 — wczytaj JSON.";
-renderPalettes();
+/* ====== Render all ====== */
+function renderAll(rerenderList=true){
+  renderBoard();
+  renderStructure();
+  renderExportPreview();
+  updateBrushHeader();
+  if (rerenderList) renderSymbolList();
+}
+
+/* ====== Load font 5×7 ====== */
+document.getElementById("fontFile").addEventListener("change", async (e)=>{
+  const f = e.target.files?.[0];
+  if (!f) return;
+  try{
+    const txt = await f.text();
+    const obj = JSON.parse(txt);
+    loadFont(obj);
+  }catch(err){
+    alert("Nie mogę wczytać fontu 5×7: " + err.message);
+  }
+});
+
+function loadFont(obj){
+  font57 = obj;
+  const built = buildGlyphMapAnyGroups(obj);
+  glyphMap = built.map;
+  glyphOrder = built.order;
+
+  statusEl.textContent = `Wczytano font 5×7: ${obj.meta?.name ?? "(bez nazwy)"} — glifów: ${glyphOrder.length}`;
+
+  // domyślny pędzel
+  if (glyphMap.has("█")) { brush = "█"; lastBrush = "█"; }
+  else {
+    const first = glyphOrder.find(ch => ch !== " ") ?? " ";
+    brush = first;
+    if (first !== " ") lastBrush = first;
+  }
+
+  // odblokuj przyciski symboli
+  updateSymbolButtons();
+
+  renderPalettes();
+  renderAll(true);
+}
+
+/* ====== Load JSON 3×10 ====== */
+document.getElementById("bigFile").addEventListener("change", async (e)=>{
+  const f = e.target.files?.[0];
+  if (!f) return;
+  try{
+    const txt = await f.text();
+    const obj = JSON.parse(txt);
+    loadBigJson(obj);
+  }catch(err){
+    alert("Nie mogę wczytać JSON 3×10: " + err.message);
+  }
+});
+
+function loadBigJson(obj){
+  // oczekiwany format: { "A": ["...", ...10], "B": [...] }
+  if (!obj || typeof obj !== "object" || Array.isArray(obj)){
+    alert("Zły format JSON 3×10 (oczekuję obiektu).");
+    return;
+  }
+
+  // merge: dopisuj/nadpisuj
+  for (const [k, v] of Object.entries(obj)){
+    if (typeof k !== "string") continue;
+    if (!Array.isArray(v)) continue;
+
+    // normalizacja do 10x3
+    const rows = v.slice(0, GRID_H).map(r => String(r ?? "   ").slice(0, GRID_W).padEnd(GRID_W, " "));
+    while (rows.length < GRID_H) rows.push("   ");
+    savedBig[k] = rows;
+  }
+
+  // ustaw aktywny na pierwszy w unicode
+  const keys = Object.keys(savedBig).sort(unicodeSort);
+  if (keys.length > 0){
+    currentSymbol = keys[0];
+    symbolInput.value = currentSymbol;
+    grid = rowsToGrid(savedBig[currentSymbol]);
+  }
+
+  updateSymbolButtons();
+  renderAll(true);
+}
+
+/* ====== UI actions ====== */
+filterInput.addEventListener("input", renderPalettes);
+
+eraseBtn.addEventListener("click", ()=>{
+  eraseMode = !eraseMode;
+  updateEraserUI();
+});
+
+document.getElementById("clearGrid").addEventListener("click", ()=>{
+  grid = makeEmptyGrid();
+  renderAll(false);
+});
+
+newBtn.addEventListener("click", newSymbol);
+
+saveBtn.addEventListener("click", ()=>{
+  const sym = (symbolInput.value ?? "").trim();
+  saveCurrentToMap(sym);
+});
+
+copyBtn.addEventListener("click", copySymbol);
+delBtn.addEventListener("click", deleteSymbol);
+
+exportBtn.addEventListener("click", downloadExport);
+
+/* ====== Zoom (wheel/pinch) ====== */
+function wheelZoomHandler(ev){
+  // Zoom tylko gdy Ctrl (pinch na macu często wysyła ctrlKey) albo Alt
+  if (!(ev.ctrlKey || ev.altKey)) return;
+  ev.preventDefault();
+
+  const delta = ev.deltaY;
+  const factor = (delta > 0) ? 0.92 : 1.08;
+  setScale(boardScale * factor, true);
+}
+boardViewport.addEventListener("wheel", wheelZoomHandler, { passive:false });
+
+zoomOutBtn.addEventListener("click", ()=> setScale(boardScale * 0.9, true));
+zoomInBtn.addEventListener("click", ()=> setScale(boardScale * 1.1, true));
+zoomResetBtn.addEventListener("click", ()=> setScale(1.0, true));
+
+/* ====== Start ====== */
+function init(){
+  // Twoje wymagane init-y (sensowne w stanie bez fontu):
+  brush = " ";
+  lastBrush = "█";
+  eraseMode = false;
+  updateEraserUI();
+  brushCharEl.textContent = "(brak)";
+  statusEl.textContent = "Brak fontu 5×7 — wczytaj JSON.";
+  setScale(1.0, false);
+
+  renderPalettes();
+  updateSymbolButtons();
+  renderAll(true);
+}
+init();
 </script>
 </body>
 </html>
