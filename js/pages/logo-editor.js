@@ -13,6 +13,9 @@ const TILES_Y = 10;
 const DOT_W = 150; // 30*5
 const DOT_H = 70;  // 10*7
 
+const FONT_3x10_URL = "../../display/font_3x10.json";
+const FONT_5x7_URL  = "../../display/font_5x7.json";
+
 /* =========================================================
    DOM
 ========================================================= */
@@ -111,17 +114,10 @@ function esc(s) {
 /* =========================================================
    Fetch fonts
 ========================================================= */
-async function tryFetchJson(urls) {
-  for (const u of urls) {
-    try {
-      const r = await fetch(u, { cache: "no-store" });
-      if (!r.ok) continue;
-      return await r.json();
-    } catch {
-      // ignore
-    }
-  }
-  return null;
+async function fetchJsonRequired(url, label) {
+  const r = await fetch(url, { cache: "no-store" });
+  if (!r.ok) throw new Error(`${label}: HTTP ${r.status} (${url})`);
+  return await r.json();
 }
 
 function buildGlyph5x7Map(fontJson) {
@@ -140,22 +136,22 @@ function buildGlyph5x7Map(fontJson) {
 }
 
 async function loadFonts() {
-  // 3x10 dla napisu
-  FONT_3x10 = await tryFetchJson([
-    "main/display/font_3x10.json",
-    "./main/display/font_3x10.json",
-    "font_3x10.json",
-    "./font_3x10.json",
-  ]);
+  try {
+    FONT_3x10 = await fetchJsonRequired(FONT_3x10_URL, "Font 3x10");
+  } catch (e) {
+    console.error(e);
+    FONT_3x10 = null;
+    setEditorMsg("Nie mogę wczytać font_3x10.json — sprawdź ścieżkę w FONT_3x10_URL.");
+  }
 
-  // 5x7 do renderu "jak BIG" (pojedynczy znak -> 5x7 doty)
-  const f57 = await tryFetchJson([
-    "main/display/font_5x7.json",
-    "./main/display/font_5x7.json",
-    "font_5x7.json",
-    "./font_5x7.json",
-  ]);
-  GLYPH_5x7 = buildGlyph5x7Map(f57);
+  try {
+    const f57 = await fetchJsonRequired(FONT_5x7_URL, "Font 5x7");
+    GLYPH_5x7 = buildGlyph5x7Map(f57);
+  } catch (e) {
+    console.error(e);
+    GLYPH_5x7 = {};
+    setEditorMsg("Nie mogę wczytać font_5x7.json — sprawdź ścieżkę w FONT_5x7_URL.");
+  }
 }
 
 /* =========================================================
