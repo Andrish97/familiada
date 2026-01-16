@@ -252,15 +252,37 @@ function normalizeInputText(raw) {
   return String(raw ?? "");
 }
 
+function glyphEdgeCollides(prev, next) {
+  // prev.rows10: 10 stringów, prev.w szerokość
+  // next.rows10: 10 stringów, next.w szerokość
+  if (!prev || !next) return false;
+  if (prev.w <= 0 || next.w <= 0) return false;
+
+  const px = prev.w - 1;
+  const nx = 0;
+
+  for (let y = 0; y < 10; y++) {
+    const a = (prev.rows10[y] || "")[px] ?? " ";
+    const b = (next.rows10[y] || "")[nx] ?? " ";
+    if (isLitChar(a) && isLitChar(b)) return true; // tu byłoby „██”
+  }
+  return false;
+}
+
 function compileTextToRows30x10(raw) {
   const text = normalizeInputText(raw);
+
+  // docelowe 30x10 (na końcu wypełnimy)
   const rows = Array.from({ length: 10 }, () => Array.from({ length: 30 }, () => " "));
 
   const invalid = [];
-  let cursor = 0;
-  const gap = 1;
-
   const chars = Array.from(text);
+
+  // Najpierw budujemy listę "elementów składu" (glify + spacje),
+  // żeby policzyć realną szerokość (z dynamicznym gap 0/1) i wycentrować.
+  /** @type {Array<{space:true} | {rows10:string[], w:number}>} */
+  const glyphs = [];
+
   for (let idx = 0; idx < chars.length; idx++) {
     const ch0 = chars[idx];
 
@@ -269,9 +291,9 @@ function compileTextToRows30x10(raw) {
       continue;
     }
 
-    // space: zawsze dozwolone, nawet jeśli nie ma w foncie
+    // spacja: zawsze dozwolona, nawet jeśli nie ma w foncie
     if (ch0 === " ") {
-      cursor += 1 + gap;
+      glyphs.push({ space: true });
       continue;
     }
 
@@ -281,40 +303,96 @@ function compileTextToRows30x10(raw) {
       continue;
     }
 
+    // ustandaryzuj do 10 wierszy po 3 znaki (spacje jako tło)
     const gRows = Array.from({ length: 10 }, (_, i) => String(glyph[i] ?? "").padEnd(3, " ").slice(0, 3));
+
+    // tight crop (glif bywa węższy niż 3)
     const { left, w } = measureGlyphTight3x10(gRows);
 
+    // po cropie przechowujemy już "ucięte" rzędy o szerokości w
+    const cropped = Array.from({ length: 10 }, (_, i) => gRows[i].slice(left, left + w));
+
+    glyphs.push({ rows10: cropped, w });
+  }
+
+  // 1) policz szerokość "usedW" z gap = 0 lub 1 między sąsiadującymi glifami,
+  //    zależnie czy na styku powstałoby "██" (czyli lit-lit w tej samej kolumnie).
+  let usedW = 0;
+  let prevGlyph = null;
+
+  for (const g of glyphs) {
+    if (g.space) {
+      // spacja = 1 kolumna odstępu (możesz to podbić do 2, jeśli chcesz "luźniej")
+      usedW += 1;
+      prevGlyph = null; // po spacji nie sprawdzamy sklejeń
+      continue;
+    }
+
+    if (prevGlyph) {
+      // jeśli byłoby sklejenie (lit-lit), daj gap=1, inaczej gap=0
+      const gap = glyphEdgeCollides(prevGlyph, g) ? 1 : 0;
+      usedW += gap;
+    }
+
+    usedW += g.w;
+    prevGlyph = g;
+  }
+
+  const fit = usedW <= 30;
+
+  // 2) centrowanie: jeśli mieści się w 30, startX = floor((30-usedW)/2),
+  //    jeśli nie — start od 0 (i tak będzie obcinane na brzegach).
+  const startX = fit ? Math.floor((30 - usedW) / 2) : 0;
+
+  // 3) render do 30x10 z tym samym dynamicznym gap 0/1
+  let cursor = startX;
+  prevGlyph = null;
+
+  for (const g of glyphs) {
+    if (g.space) {
+      cursor += 1;
+      prevGlyph = null;
+      continue;
+    }
+
+    if (prevGlyph) {
+      const gap = glyphEdgeCollides(prevGlyph, g) ? 1 : 0;
+      cursor += gap;
+    }
+
     for (let y = 0; y < 10; y++) {
-      for (let x = 0; x < w; x++) {
+      const line = g.rows10[y] || "";
+      for (let x = 0; x < g.w; x++) {
         const outX = cursor + x;
         if (outX < 0 || outX >= 30) continue;
-        const c = gRows[y][left + x] ?? " ";
+        const c = line[x] ?? " ";
         if (c === " ") continue;
         rows[y][outX] = c;
       }
     }
 
-    cursor += w;
-    if (idx < chars.length - 1) cursor += gap;
+    cursor += g.w;
+    prevGlyph = g;
   }
-
-  const usedW = Math.max(0, cursor - gap); // bez końcowej przerwy
-  const fit = usedW <= 30;
 
   const outRows = rows.map(r => r.join(""));
 
-  return { rows: outRows, usedW, fit, invalid: Array.from(new Set(invalid)) };
+  return {
+    rows: outRows,
+    usedW,
+    fit,
+    invalid: Array.from(new Set(invalid)),
+  };
 }
 
 function renderAllowedCharsList() {
   if (!charsList) return;
-  const keys = Object.keys(FONT_3x10 || {}).sort((a, b) => a.localeCompare(b, "pl"));
-  const hasSpace = true;
-  const chunks = [];
-  if (hasSpace) chunks.push("␠ (spacja)");
-  chunks.push(keys.join(" "));
-  charsList.textContent = chunks.join("\n\n");
+
+  const keys = Object.keys(FONT_3x10 || {});
+
+  charsList.textContent = "␠" + keys.join("\u2009");
 }
+
 
 function updateTextWarnings(compiled) {
   if (!textWarn || !textMeasure) return;
