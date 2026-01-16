@@ -73,6 +73,7 @@ const pixWarn = document.getElementById("pixWarn");
 const btnThreshMinus = document.getElementById("btnThreshMinus");
 const btnThreshPlus = document.getElementById("btnThreshPlus");
 const inpThresh = document.getElementById("inpThresh");
+const threshBar = document.getElementById("threshBar");
 
 
 const paneDraw = document.getElementById("paneDraw");
@@ -301,25 +302,6 @@ function normalizeInputText(raw) {
   // najbezpieczniej: tylko string, bez trim — spacje też są częścią układu
   return String(raw ?? "");
 }
-
-function glyphEdgeCollides(prev, next) {
-  // Połączenie liczymy TYLKO gdy na styku byłoby dokładnie "█" + "█"
-  // w tym samym wierszu. Inne znaki (np. pół-bloki) nie wymuszają przerwy.
-
-  if (!prev || !next) return false;
-  if (prev.w <= 0 || next.w <= 0) return false;
-
-  const px = prev.w - 1;
-  const nx = 0;
-
-  for (let y = 0; y < 10; y++) {
-    const a = (prev.rows10[y] || "")[px] ?? " ";
-    const b = (next.rows10[y] || "")[nx] ?? " ";
-    if (a === "█" && b === "█") return true;
-  }
-  return false;
-}
-
 function compileTextToRows30x10(raw) {
   const text = normalizeInputText(raw);
 
@@ -366,31 +348,6 @@ function compileTextToRows30x10(raw) {
     glyphs.push({ rows10: cropped, w });
   }
 
-  // 1) policz szerokość "usedW" z gap = 0 lub 1 między sąsiadującymi glifami,
-  //    zależnie czy na styku powstałoby "██" (czyli lit-lit w tej samej kolumnie).
-  let usedW = 0;
-  let prevGlyph = null;
-
-  for (const g of glyphs) {
-    if (g.space) {
-      // spacja = 1 kolumna odstępu (możesz to podbić do 2, jeśli chcesz "luźniej")
-      usedW += 1;
-      prevGlyph = null; // po spacji nie sprawdzamy sklejeń
-      continue;
-    }
-
-    if (prevGlyph) {
-      // jeśli byłoby sklejenie (lit-lit), daj gap=1, inaczej gap=0
-      const gap = glyphEdgeCollides(prevGlyph, g) ? 1 : 0;
-      usedW += gap;
-    }
-
-    usedW += g.w;
-    prevGlyph = g;
-  }
-
-  const fit = usedW <= 30;
-
   // 2) centrowanie: jeśli mieści się w 30, startX = floor((30-usedW)/2),
   //    jeśli nie — start od 0 (i tak będzie obcinane na brzegach).
   const startX = fit ? Math.floor((30 - usedW) / 2) : 0;
@@ -405,12 +362,7 @@ function compileTextToRows30x10(raw) {
       prevGlyph = null;
       continue;
     }
-
-    if (prevGlyph) {
-      const gap = glyphEdgeCollides(prevGlyph, g) ? 1 : 0;
-      cursor += gap;
-    }
-
+     
     for (let y = 0; y < 10; y++) {
       const line = g.rows10[y] || "";
       for (let x = 0; x < g.w; x++) {
@@ -1115,6 +1067,7 @@ function resetEditorState() {
   show(paneTextPix, false);
   if (pixWarn) show(pixWarn, false);
   if (rtEditor) rtEditor.innerHTML = "";
+  show(threshBar, false);
 
   show(paneDraw, false);
   show(paneImage, false);
@@ -1129,6 +1082,7 @@ function resetEditorState() {
 function openEditor(mode) {
   resetEditorState();
   editorMode = mode;
+  show(threshBar, mode === "TEXT_PIX")
 
   const titleMap = {
     TEXT: "Nowe logo — Napis",
@@ -1393,6 +1347,7 @@ async function handleCreate() {
       });
 
       setEditorMsg("Zapisano.");
+      clearDirty();
       closeEditor();
       await refresh();
       return;
@@ -1434,8 +1389,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   createOverlay?.addEventListener("click", (ev) => { if (ev.target === createOverlay) show(createOverlay, false); });
 
   // editor close/cancel
-  btnEditorClose?.addEventListener("click", closeEditor);
-  btnCancel?.addEventListener("click", closeEditor);
+  btnEditorClose?.addEventListener("click", () => closeEditor(false));
+  btnCancel?.addEventListener("click", () => closeEditor(false));
 
   // text editor
   textValue?.addEventListener("input", () => {
