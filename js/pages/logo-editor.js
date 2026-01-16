@@ -308,8 +308,6 @@ function compileTextToRows30x10(raw) {
   const text = normalizeInputText(raw);
 
   // docelowe 30x10 (na końcu wypełnimy)
-  const rows = Array.from({ length: 10 }, () => Array.from({ length: 30 }, () => " "));
-
   const invalid = [];
   const chars = Array.from(text);
 
