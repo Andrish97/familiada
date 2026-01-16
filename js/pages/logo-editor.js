@@ -52,16 +52,28 @@ const btnCharsToggle = document.getElementById("btnCharsToggle");
 const charsList = document.getElementById("charsList");
 
 const paneTextPix = document.getElementById("paneTextPix");
-const textPixValue = document.getElementById("textPixValue");
-const selPixFont = document.getElementById("selPixFont");
-const chkPixBold = document.getElementById("chkPixBold");
-const chkPixItalic = document.getElementById("chkPixItalic");
-const selPixAlign = document.getElementById("selPixAlign");
-const rngPixSize = document.getElementById("rngPixSize");
-const pixSizeLabel = document.getElementById("pixSizeLabel");
-const rngPixThresh = document.getElementById("rngPixThresh");
-const pixThreshLabel = document.getElementById("pixThreshLabel");
+const rtEditor = document.getElementById("rtEditor");
+
+const btnRtBold = document.getElementById("btnRtBold");
+const btnRtItalic = document.getElementById("btnRtItalic");
+const btnRtUnderline = document.getElementById("btnRtUnderline");
+const btnRtAlignLeft = document.getElementById("btnRtAlignLeft");
+const btnRtAlignCenter = document.getElementById("btnRtAlignCenter");
+const btnRtAlignRight = document.getElementById("btnRtAlignRight");
+const btnRtList = document.getElementById("btnRtList");
+
+const selRtFont = document.getElementById("selRtFont");
+const btnRtSizeMinus = document.getElementById("btnRtSizeMinus");
+const btnRtSizePlus = document.getElementById("btnRtSizePlus");
+const inpRtSize = document.getElementById("inpRtSize");
+
 const pixWarn = document.getElementById("pixWarn");
+
+// Kontrast (próg cz/b) pod podglądem
+const btnThreshMinus = document.getElementById("btnThreshMinus");
+const btnThreshPlus = document.getElementById("btnThreshPlus");
+const inpThresh = document.getElementById("inpThresh");
+
 
 const paneDraw = document.getElementById("paneDraw");
 const drawCanvas = document.getElementById("drawCanvas");
@@ -616,6 +628,118 @@ function canvasToBits(canvas, threshold = 128) {
   return out;
 }
 
+function clamp(n, a, b) { return Math.max(a, Math.min(b, n)); }
+
+function makeRichTextSvgDataUrl(html, opts) {
+  // opts: { w, h, fontFamily, fontSizePx }
+  const w = opts.w, h = opts.h;
+  const ff = opts.fontFamily || "system-ui, sans-serif";
+  const fs = opts.fontSizePx || 56;
+
+  // UWAGA: foreignObject wymaga poprawnego XHTML.
+  const xhtml =
+    `<div xmlns="http://www.w3.org/1999/xhtml" ` +
+    `style="` +
+      `width:${w}px;height:${h}px;` +
+      `background:#000;color:#fff;` +
+      `font-family:${ff};font-size:${fs}px;` +
+      `line-height:1.05;` +
+      `padding:10px;` +
+      `box-sizing:border-box;` +
+      `white-space:pre-wrap;` +
+      `overflow:hidden;` +
+    `">` +
+      html +
+    `</div>`;
+
+  const svg =
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}">` +
+      `<foreignObject x="0" y="0" width="${w}" height="${h}">` +
+        xhtml +
+      `</foreignObject>` +
+    `</svg>`;
+
+  return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
+}
+
+async function renderRichTextToCanvas(html, opts) {
+  const c = document.createElement("canvas");
+  c.width = opts.w;
+  c.height = opts.h;
+
+  const ctx = c.getContext("2d");
+  ctx.clearRect(0, 0, c.width, c.height);
+  ctx.fillStyle = "#000";
+  ctx.fillRect(0, 0, c.width, c.height);
+
+  const url = makeRichTextSvgDataUrl(html, opts);
+
+  const img = new Image();
+  await new Promise((resolve, reject) => {
+    img.onload = resolve;
+    img.onerror = () => reject(new Error("Nie udało się wyrenderować tekstu (SVG/foreignObject)."));
+    img.src = url;
+  });
+
+  ctx.drawImage(img, 0, 0);
+  return c;
+}
+
+async function compileRichTextToLogoBits() {
+  // Rozmiar “screena” zostaje wewnętrzny, UI o tym nie wie.
+  // (tu używamy Twojej istniejącej ścieżki: render -> compress -> 150)
+  const W = BIG_W;
+  const H = BIG_H;
+
+  const fontFamily = String(selRtFont?.value || "system-ui, sans-serif");
+  const fontSizePx = clamp(Number(inpRtSize?.value || 56), 10, 120);
+  const threshold = clamp(Number(inpThresh?.value || 128), 40, 220);
+
+  // HTML z edytora:
+  const html = String(rtEditor?.innerHTML || "");
+
+  const canvas = await renderRichTextToCanvas(html, { w: W, h: H, fontFamily, fontSizePx });
+  const bits208 = canvasToBits(canvas, threshold);
+  const bits150 = compress208x88to150x70(bits208);
+
+  return { bits150 };
+}
+
+let _rtRenderToken = 0;
+
+async function updateTextPixPreviewAsync() {
+  if (editorMode !== "TEXT_PIX") return;
+
+  const token = ++_rtRenderToken;
+  try {
+    const { bits150 } = await compileRichTextToLogoBits();
+    if (token !== _rtRenderToken) return; // anuluj stary render
+
+    draftBits150 = bits150;
+
+    const box = bitsBoundingBox(bits150, DOT_W, DOT_H);
+    const clipped = looksClipped(box, DOT_W, DOT_H, 0);
+
+    if (pixWarn) {
+      if (clipped) {
+        pixWarn.textContent = "Wygląda na ucięte. Zmniejsz rozmiar albo skróć tekst.";
+        show(pixWarn, true);
+      } else {
+        show(pixWarn, false);
+      }
+    }
+
+    updateBigPreview();
+  } catch (e) {
+    console.error(e);
+    if (pixWarn) {
+      pixWarn.textContent = "Nie mogę zrobić podglądu tekstu na tym urządzeniu/przeglądarce.";
+      show(pixWarn, true);
+    }
+  }
+}
+
+
 function renderHtmlTextTo208(text, opts) {
   const c = document.createElement("canvas");
   c.width = BIG_W;
@@ -1129,7 +1253,7 @@ function openEditor(mode) {
   }
 
    if (mode === "TEXT_PIX") {
-     updateTextPixPreview();
+     updateTextPixPreviewAsync();
       clearDirty();
    }
 
@@ -1426,19 +1550,67 @@ document.addEventListener("DOMContentLoaded", async () => {
     btnCharsToggle.textContent = on ? "Ukryj" : "Pokaż";
   });
 
-   const hookTextPix = () => {
-     if (editorMode !== "TEXT_PIX") return;
+
+   // Rich-text toolbar (execCommand – oldschool, ale działa i jest szybki)
+   const cmd = (name, val = null) => {
+     try { document.execCommand(name, false, val); } catch {}
+     rtEditor?.focus();
      markDirty();
-     updateTextPixPreview();
+     updateTextPixPreviewAsync();
    };
    
-   textPixValue?.addEventListener("input", hookTextPix);
-   selPixFont?.addEventListener("change", hookTextPix);
-   chkPixBold?.addEventListener("change", hookTextPix);
-   chkPixItalic?.addEventListener("change", hookTextPix);
-   selPixAlign?.addEventListener("change", hookTextPix);
-   rngPixSize?.addEventListener("input", hookTextPix);
-   rngPixThresh?.addEventListener("input", hookTextPix);
+   btnRtBold?.addEventListener("click", () => cmd("bold"));
+   btnRtItalic?.addEventListener("click", () => cmd("italic"));
+   btnRtUnderline?.addEventListener("click", () => cmd("underline"));
+   
+   btnRtAlignLeft?.addEventListener("click", () => cmd("justifyLeft"));
+   btnRtAlignCenter?.addEventListener("click", () => cmd("justifyCenter"));
+   btnRtAlignRight?.addEventListener("click", () => cmd("justifyRight"));
+   btnRtList?.addEventListener("click", () => cmd("insertUnorderedList"));
+   
+   selRtFont?.addEventListener("change", () => {
+     // Ustawiamy font bazowy całego pola (screen), a style wewnątrz zostają
+     markDirty();
+     updateTextPixPreviewAsync();
+   });
+   
+   const stepSize = (delta) => {
+     const v = clamp(Number(inpRtSize?.value || 56) + delta, 10, 120);
+     inpRtSize.value = String(v);
+     markDirty();
+     updateTextPixPreviewAsync();
+   };
+   btnRtSizeMinus?.addEventListener("click", () => stepSize(-2));
+   btnRtSizePlus?.addEventListener("click", () => stepSize(+2));
+   inpRtSize?.addEventListener("change", () => {
+     inpRtSize.value = String(clamp(Number(inpRtSize.value || 56), 10, 120));
+     markDirty();
+     updateTextPixPreviewAsync();
+   });
+   
+   // Kontrast (próg)
+   const stepThresh = (delta) => {
+     const v = clamp(Number(inpThresh?.value || 128) + delta, 40, 220);
+     inpThresh.value = String(v);
+     markDirty();
+     updateTextPixPreviewAsync();
+   };
+   btnThreshMinus?.addEventListener("click", () => stepThresh(-4));
+   btnThreshPlus?.addEventListener("click", () => stepThresh(+4));
+   inpThresh?.addEventListener("change", () => {
+     inpThresh.value = String(clamp(Number(inpThresh.value || 128), 40, 220));
+     markDirty();
+     updateTextPixPreviewAsync();
+   });
+   
+   // Pisanie: nie renderuj co znak natychmiast — debounce
+   let rtDeb = null;
+   rtEditor?.addEventListener("input", () => {
+     markDirty();
+     clearTimeout(rtDeb);
+     rtDeb = setTimeout(() => updateTextPixPreviewAsync(), 120);
+   });
+   
 
   // draw editor
   btnBrush?.addEventListener("click", () => {
