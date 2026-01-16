@@ -419,13 +419,22 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.documentElement.classList.add("webapp");
   }
 
-  if (!gameId || !key) {
+  // tryb totalnie lokalny (bez gameId) – nie ma czego słuchać
+  if (!gameId) {
+    show(STATE.OFF);
+    return;
+  }
+
+  // KLUCZ: odbiór komend działa nawet bez key
+  ensureChannel();
+
+  // bez key nie robimy RPC/presence, ale komendy od operatora mają działać
+  if (!key) {
     show(STATE.OFF);
     return;
   }
 
   await restoreState();
-  ensureChannel();
 
   ping();
   setInterval(ping, 5000);
