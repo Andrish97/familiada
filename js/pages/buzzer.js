@@ -290,58 +290,68 @@ async function persistColorsOnly() {
 /* ========= REALTIME ========= */
 let ch = null;
 
+async function handleCommand(lineRaw) {
+  const raw = String(lineRaw || "").trim();
+  const up = raw.toUpperCase();
+
+  // ===== KOLORY (niezależne od stanu) =====
+  if (up === "COLOR_RESET") {
+    teamA = DEFAULT_A;
+    teamB = DEFAULT_B;
+    applyTeamColors();
+    await persistColorsOnly();
+    return;
+  }
+
+  if (up.startsWith("COLOR_A")) {
+    const value = normColorToken(raw.slice("COLOR_A".length));
+    if (cssSupportsColor(value)) {
+      teamA = value;
+      applyTeamColors();
+      await persistColorsOnly();
+    }
+    return;
+  }
+
+  if (up.startsWith("COLOR_B")) {
+    const value = normColorToken(raw.slice("COLOR_B".length));
+    if (cssSupportsColor(value)) {
+      teamB = value;
+      applyTeamColors();
+      await persistColorsOnly();
+    }
+    return;
+  }
+
+  // ===== STANY =====
+  if (up === "OFF")   { show(STATE.OFF);   await persistState(); return; }
+  if (up === "ON")    { show(STATE.ON);    await persistState(); return; }
+  if (up === "RESET") { show(STATE.ON);    await persistState(); return; }
+
+  if (up === "PUSHED A" || up === "PUSHED_A") {
+    show(STATE.PUSHED_A);
+    await persistState();
+    return;
+  }
+
+  if (up === "PUSHED B" || up === "PUSHED_B") {
+    show(STATE.PUSHED_B);
+    await persistState();
+    return;
+  }
+
+  console.warn("[buzzer] unknown command:", raw);
+}
+
 function ensureChannel() {
   if (ch) return ch;
 
   ch = sb()
     .channel(`familiada-buzzer:${gameId}`)
-    .on("broadcast", { event: "BUZZER_CMD" }, async (msg) => {
-    
-      const raw = String(msg?.payload?.line || "").trim();
-      const up = raw.toUpperCase();
-      
-      // COLOR_RESET
-      if (up === "COLOR_RESET") {
-        teamA = DEFAULT_A;
-        teamB = DEFAULT_B;
-        applyTeamColors();
-        await persistColorsOnly(); // działa niezależnie od stanu
-        return;
-      }
-      
-      // COLOR_A <color>
-      if (up.startsWith("COLOR_A")) {
-        const value = normColorToken(raw.slice("COLOR_A".length));
-        if (cssSupportsColor(value)) {
-          teamA = value;
-          applyTeamColors();
-          await persistColorsOnly();
-        }
-        return;
-      }
-      
-      // COLOR_B <color>
-      if (up.startsWith("COLOR_B")) {
-        const value = normColorToken(raw.slice("COLOR_B".length));
-        if (cssSupportsColor(value)) {
-          teamB = value;
-          applyTeamColors();
-          await persistColorsOnly();
-        }
-        return;
-      }
-      if (up === "OFF") return show(STATE.OFF), persistState();
-      if (up === "ON")  return show(STATE.ON),  persistState();
-      if (up === "RESET") return show(STATE.ON), persistState();
-  
-      if (up === "PUSHED A" || up === "PUSHED_A")
-        return show(STATE.PUSHED_A), persistState();
-      
-      if (up === "PUSHED B" || up === "PUSHED_B")
-          return show(STATE.PUSHED_B), persistState();
+    .on("broadcast", { event: "BUZZER_CMD" }, (msg) => {
+      handleCommand(msg?.payload?.line);
     })
-    .subscribe();
-  return ch;
+    return ch;
 }
 
 /* ========= CLICK -> CONTROL ========= */
@@ -416,4 +426,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   setInterval(ping, 5000);
 });
 
-window.__buzzer = { show, STATE };
+window.__buzzer = {
+  show,
+  STATE,
+  handleCommand,
+};
