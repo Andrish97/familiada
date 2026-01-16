@@ -291,10 +291,8 @@ function normalizeInputText(raw) {
 }
 
 function glyphEdgeCollides(prev, next) {
-  // Sprawdzamy TYLKO styk bez przerwy:
-  // prev: ostatnia kolumna, next: pierwsza kolumna.
-  // Jeśli w JAKIMKOLWIEK rzędzie byłoby lit+lit => powstaje "██" => wymagamy gap=1.
-  // Jeśli w ŻADNYM rzędzie nie ma lit+lit => gap=0 dozwolony.
+  // Połączenie liczymy TYLKO gdy na styku byłoby dokładnie "█" + "█"
+  // w tym samym wierszu. Inne znaki (np. pół-bloki) nie wymuszają przerwy.
 
   if (!prev || !next) return false;
   if (prev.w <= 0 || next.w <= 0) return false;
@@ -305,11 +303,10 @@ function glyphEdgeCollides(prev, next) {
   for (let y = 0; y < 10; y++) {
     const a = (prev.rows10[y] || "")[px] ?? " ";
     const b = (next.rows10[y] || "")[nx] ?? " ";
-    if (isLitChar(a) && isLitChar(b)) return true;
+    if (a === "█" && b === "█") return true;
   }
   return false;
 }
-
 
 function compileTextToRows30x10(raw) {
   const text = normalizeInputText(raw);
