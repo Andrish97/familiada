@@ -23,9 +23,22 @@ export function createDevices({ game, ui, store, chDisplay, chHost, chBuzzer }) 
   async function sendCmd(channel, event, line) {
     const l = String(line ?? "").trim();
     if (!l) return;
-    // Wysyłamy jawnie przez REST (httpSend), żeby uniknąć ostrzeżeń Supabase
-    // o automatycznym fallbacku send() -> REST.
-    await channel.sendBroadcast(event, { line: l }, { mode: "http" });
+  
+    const msg = { type: "broadcast", event, payload: { line: l } };
+  
+    // Supabase: preferuj REST (żeby nie było warningów o fallbacku)
+    if (typeof channel?.httpSend === "function") {
+      await channel.httpSend(msg);
+      return;
+    }
+  
+    // fallback: realtime
+    if (typeof channel?.send === "function") {
+      await channel.send(msg);
+      return;
+    }
+  
+    throw new Error("Channel has no httpSend/send (is it a RealtimeChannel?)");
   }
 
   function isOnline(kind) {
