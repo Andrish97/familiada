@@ -346,41 +346,36 @@
                  <div class="hint">
                     Tutaj wprowadź nazwy drużyn, zmień kolory jeśli chcesz i możesz zmienić dodatkowe ustawienia.
                   </div>
-                    <div class="rowBtns">
-                      <div class="field">
-                        <div class="lbl2">Drużyna A</div>
+                    <div class="rowBtns" style="margin-top:10px;">
+                      <div class="colorRow">
                     
-                        <div class="inpRow">
-                          <input class="inp" id="teamA" autocomplete="off"/>
-                          <button class="colorSwatch" id="swatchTeamA" type="button" title="Kolor drużyny A">
-                            <span class="colorDot" id="dotTeamA"></span>
-                          </button>
-                        </div>
-                      </div>
+                        <button class="colorChip" id="chipColorA" type="button" title="Kolor drużyny A">
+                          <span class="dotColor" id="dotColorA"></span>
+                          <span class="lblColor">Kolor A</span>
+                          <span class="hex" id="hexColorA">#c4002f</span>
+                        </button>
                     
-                      <div class="field">
-                        <div class="lbl2">Drużyna B</div>
+                        <button class="colorChip" id="chipColorB" type="button" title="Kolor drużyny B">
+                          <span class="dotColor" id="dotColorB"></span>
+                          <span class="lblColor">Kolor B</span>
+                          <span class="hex" id="hexColorB">#2a62ff</span>
+                        </button>
                     
-                        <div class="inpRow">
-                          <input class="inp" id="teamB" autocomplete="off"/>
-                          <button class="colorSwatch" id="swatchTeamB" type="button" title="Kolor drużyny B">
-                            <span class="colorDot" id="dotTeamB"></span>
-                          </button>
-                        </div>
-                      </div>
+                        <button class="colorChip" id="chipColorBg" type="button" title="Kolor tła wyświetlacza">
+                          <span class="dotColor" id="dotColorBg"></span>
+                          <span class="lblColor">Tło</span>
+                          <span class="hex" id="hexColorBg">#d21180</span>
+                        </button>
                     
-                      <div class="field">
-                        <div class="lbl2">Kolor tła wyświetlacza</div>
+                        <button class="btn sm" id="btnColorReset" type="button">Reset kolorów</button>
                     
-                        <div class="inpRow">
-                          <div class="inp fakeInp" id="bgColorLabel">—</div>
-                          <button class="colorSwatch" id="swatchBg" type="button" title="Kolor tła wyświetlacza">
-                            <span class="colorDot" id="dotBg"></span>
-                          </button>
-                        </div>
+                        <!-- ukryte native pickery -->
+                        <input class="nativeColor" id="pickColorA" type="color" value="#c4002f" />
+                        <input class="nativeColor" id="pickColorB" type="color" value="#2a62ff" />
+                        <input class="nativeColor" id="pickColorBg" type="color" value="#d21180" />
+                    
                       </div>
                     </div>
-
                   <div class="rowBtns">
                     <button class="btn" id="btnTeamMore" type="button">Dodatkowe ustawienia</button>
                     <button class="btn" id="btnColorsReset" type="button">Reset kolorów</button>
