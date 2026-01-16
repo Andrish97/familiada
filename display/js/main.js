@@ -102,6 +102,7 @@ window.addEventListener("DOMContentLoaded", async () => {
 
     app.game = pres.game;
     app.gameId = pres.game.id;
+    await scene.api.logo.bindGame?.(app.gameId);
     console.log("Display OK:", pres.game.name, pres.game.id);
   } catch (e) {
     showBlack(e?.message || String(e));
