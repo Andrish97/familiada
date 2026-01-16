@@ -5,18 +5,20 @@ html, body { height:100%; margin:0; }
   /* 3 kolory bazowe (domyślne) */
   --teamA: #c4002f;
   --teamB: #2a62ff;
-  --bg:    #1b1a2b;
-
-  /* tło wyliczane z BG (+ lekkie akcenty A/B), bez “ciemnego fioletu” */
-  --bg-gradient: radial-gradient(1400px 700px at 50% 25%,
-    #1a1a22 0%, #111118 60%, #000 100%);
+  --bg: #6a4aa7; /* domyślnie */
 }
 
 body{
+  background: radial-gradient(1400px 700px at 50% 25%,
+    color-mix(in oklab, var(--bg) 30%, white) 0%,
+    var(--bg) 22%,
+    color-mix(in oklab, var(--bg) 85%, #5a2b7a) 45%,
+    color-mix(in oklab, var(--bg) 65%, #2a62ff) 72%,
+    color-mix(in oklab, var(--bg) 70%, #0a0a12) 100%
+  );
   display:grid;
   place-items:center;
   overflow:hidden;
-  background: var(--bg-gradient);
 }
 
 .wrap{
