@@ -650,8 +650,8 @@ function makeRichTextSvgDataUrl(html, opts) {
       `width:${w}px;height:${h}px;` +
       `background:#000;color:#fff;` +
       `font-family:${ff};font-size:${fs}px;` +
-      `line-height:1.05;` +
-      `padding:10px;` +
+     `line-height:${opts.lineHeight ?? 1.0};` +
+     `padding:${opts.paddingPx ?? 8}px;` +
       `box-sizing:border-box;` +
       `white-space:pre-wrap;` +
       `overflow:hidden;` +
@@ -705,7 +705,9 @@ async function compileRichTextToLogoBits() {
   // HTML z edytora:
   const html = String(rtEditor?.innerHTML || "");
 
-  const canvas = await renderRichTextToCanvas(html, { w: W, h: H, fontFamily, fontSizePx });
+  const lineHeight = clamp(Number(window._rtLineHeight ?? 1.0), 0.7, 1.6);
+  const paddingPx = clamp(Number(window._rtPaddingPx ?? 8), 0, 18);
+  const canvas = await renderRichTextToCanvas(html, { w: W, h: H, fontFamily, fontSizePx, lineHeight, paddingPx });
   const bits208 = canvasToBits(canvas, threshold);
   const bits150 = compress208x88to150x70(bits208);
 
