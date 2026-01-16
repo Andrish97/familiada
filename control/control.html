@@ -344,20 +344,46 @@
               <div class="card">
                 <div class="cardBody">
                  <div class="hint">
-                    Tutaj wprowadz nazwy drużyn oraz możesz zmienić dodatkowe ustawienia.
+                    Tutaj wprowadź nazwy drużyn, zmień kolory jeśli chcesz i możesz zmienić dodatkowe ustawienia.
                   </div>
-                  <div class="rowBtns">
-                    <div class="field">
-                      <div class="lbl2">Drużyna A</div>
-                      <input class="inp" id="teamA" autocomplete="off"/>
+                    <div class="rowBtns">
+                      <div class="field">
+                        <div class="lbl2">Drużyna A</div>
+                    
+                        <div class="inpRow">
+                          <input class="inp" id="teamA" autocomplete="off"/>
+                          <button class="colorSwatch" id="swatchTeamA" type="button" title="Kolor drużyny A">
+                            <span class="colorDot" id="dotTeamA"></span>
+                          </button>
+                        </div>
+                      </div>
+                    
+                      <div class="field">
+                        <div class="lbl2">Drużyna B</div>
+                    
+                        <div class="inpRow">
+                          <input class="inp" id="teamB" autocomplete="off"/>
+                          <button class="colorSwatch" id="swatchTeamB" type="button" title="Kolor drużyny B">
+                            <span class="colorDot" id="dotTeamB"></span>
+                          </button>
+                        </div>
+                      </div>
+                    
+                      <div class="field">
+                        <div class="lbl2">Kolor tła wyświetlacza</div>
+                    
+                        <div class="inpRow">
+                          <div class="inp fakeInp" id="bgColorLabel">—</div>
+                          <button class="colorSwatch" id="swatchBg" type="button" title="Kolor tła wyświetlacza">
+                            <span class="colorDot" id="dotBg"></span>
+                          </button>
+                        </div>
+                      </div>
                     </div>
-                    <div class="field">
-                      <div class="lbl2">Drużyna B</div>
-                      <input class="inp" id="teamB" autocomplete="off"/>
-                    </div>
-                  </div>
+
                   <div class="rowBtns">
                     <button class="btn" id="btnTeamMore" type="button">Dodatkowe ustawienia</button>
+                    <button class="btn" id="btnColorsReset" type="button">Reset kolorów</button>
                   </div>
 
                   <div class="extra hidden" id="teamExtra">
@@ -938,5 +964,28 @@
       </div>
     </div>
   </main>
+  <!-- Modal: wybór koloru -->
+  <div class="colorModalOverlay hidden" id="colorModalOverlay">
+    <div class="colorModalBox">
+      <div class="colorModalHead">
+        <div class="colorModalTitle" id="colorModalTitle">Wybierz kolor</div>
+        <button class="btn xs" id="colorModalClose" type="button">✕</button>
+      </div>
+  
+      <div class="colorModalBody">
+        <div class="colorPalette" id="colorPalette"></div>
+  
+        <div class="colorPickRow">
+          <input class="colorInput" id="colorInput" type="color" />
+          <input class="inp" id="colorHex" autocomplete="off" />
+          <button class="btn gold" id="colorApply" type="button">Ustaw</button>
+        </div>
+  
+        <div class="hint" id="colorModalHint" style="max-width:none;">
+          Zmiana wysyłana jest na urządzenia na bieżąco.
+        </div>
+      </div>
+    </div>
+  </div>
 </body>
 </html>
