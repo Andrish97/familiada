@@ -432,3 +432,67 @@ body.logo-editor-body .wrap{ max-width:1200px; }
 .importMsg{ opacity:.85; font-size:13px; }
 
 .foot{ margin-top:12px; }
+
+
+/* ===== Tekst (tryb 2) – drobne dopieszczenie UI ===== */
+
+#paneTextPix .toolRow {
+  align-items: center;
+}
+
+#paneTextPix select.inp,
+#paneTextPix input.inp[type="range"]{
+  width: 100%;
+}
+
+/* Wartości przy suwakach (np. 56, 128) */
+#pixSizeLabel,
+#pixThreshLabel{
+  font-weight: 1000;
+  letter-spacing: .04em;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,.14);
+  background: rgba(0,0,0,.18);
+  padding: 8px 10px;
+  text-align: center;
+  min-width: 64px;
+}
+
+/* Suwak – trochę bardziej “wbudowany” w stylistykę */
+#paneTextPix input[type="range"]{
+  appearance: none;
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.10);
+  border: 1px solid rgba(255,255,255,.12);
+  outline: none;
+}
+
+/* Kciuk suwaka */
+#paneTextPix input[type="range"]::-webkit-slider-thumb{
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.22);
+  background: rgba(255,234,166,.75);
+}
+#paneTextPix input[type="range"]::-moz-range-thumb{
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.22);
+  background: rgba(255,234,166,.75);
+}
+
+/* Checkboxy w trybie tekstu – lepsza klikalność */
+#paneTextPix .chk{
+  padding: 6px 8px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,.10);
+  background: rgba(255,255,255,.04);
+}
+#paneTextPix .chk:hover{
+  filter: brightness(1.06);
+}
+
