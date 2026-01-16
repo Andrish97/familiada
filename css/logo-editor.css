@@ -49,7 +49,23 @@ body.logo-editor-body .wrap{ max-width:1200px; }
   flex-direction:column;
   gap:10px;
   min-height:180px;
+  position:relative;
 }
+
+/* X do usuwania – jak w builderze */
+.logo-editor-body .grid .card .x{
+  position:absolute;
+  top:8px;
+  right:10px;
+  font-size:14px;
+  opacity:.7;
+  background:transparent;
+  border:none;
+  color:#fff;
+  cursor:pointer;
+  padding:2px 4px;
+}
+.logo-editor-body .grid .card .x:hover{ opacity:1; }
 
 .card:hover{ filter:brightness(1.05); }
 
@@ -201,5 +217,20 @@ body.logo-editor-body .wrap{ max-width:1200px; }
 
 .importRow{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
 .importMsg{ opacity:.85; font-size:13px; }
+
+/* Podgląd (jak BIG) */
+.viewModal{ width:min(1100px, 100%); }
+.viewBox{
+  border-radius:16px;
+  border:1px solid rgba(255,255,255,.14);
+  background:rgba(0,0,0,.18);
+  padding:10px;
+}
+.viewBox canvas{
+  width:100%;
+  height:auto;
+  display:block;
+  image-rendering:auto;
+}
 
 .foot{ margin-top:12px; }
