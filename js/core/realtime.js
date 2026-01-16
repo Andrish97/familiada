@@ -59,21 +59,22 @@ function createManagedChannel(topic) {
     ensureChannel();
   
     const safe = (payload && typeof payload === "object") ? payload : { value: payload };
-    const msg = { type: "broadcast", event, payload: safe };
+  
+    const http = async () => {
+      const { error } = await ch.httpSend({
+        type: "broadcast",
+        event,
+        payload: safe,
+      });
+      if (error) throw error;
+      return true;
+    };
   
     // jawny REST
-    if (mode === "http") {
-      const { error } = await ch.httpSend(msg);
-      if (error) throw error;
-      return true;
-    }
+    if (mode === "http") return http();
   
     // auto: jeśli nie jesteśmy SUBSCRIBED, nie próbujemy WS → idziemy od razu HTTP
-    if (mode === "auto" && status !== "SUBSCRIBED") {
-      const { error } = await ch.httpSend(msg);
-      if (error) throw error;
-      return true;
-    }
+    if (mode === "auto" && status !== "SUBSCRIBED") return http();
   
     // WS (albo auto + jesteśmy SUBSCRIBED)
     const ok = await whenReady(opts);
@@ -82,23 +83,16 @@ function createManagedChannel(topic) {
         reset();
         throw new Error(`Realtime not ready for topic ${topic}`);
       }
-      // auto: jak nie gotowe, lecimy HTTP
-      const { error } = await ch.httpSend(msg);
-      if (error) throw error;
-      return true;
+      return http(); // auto fallback
     }
   
-    // WS send
-    const { error } = await ch.send(msg);
+    const { error } = await ch.send({ type: "broadcast", event, payload: safe });
     if (!error) return true;
   
     reset();
     if (mode === "ws") throw error;
   
-    // auto: jawny fallback
-    const { error: e2 } = await ch.httpSend(msg);
-    if (e2) throw e2;
-    return true;
+    return http(); // auto: jawny fallback
   }
 
   function onBroadcast(event, handler) {
