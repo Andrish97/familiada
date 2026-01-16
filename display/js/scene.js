@@ -14,6 +14,148 @@ export async function createScene() {
 
   const VIEW = { W: 1600, H: 900, CX: 800, CY: 450 };
 
+    // ============================================================
+  // THEME: 3 kolory bazowe -> reszta pochodne
+  // ============================================================
+  const clamp01 = (v) => Math.max(0, Math.min(1, v));
+
+  // Akceptuje: "#rgb", "#rrggbb", "dodgerblue", "red", itd.
+  // Zwraca {r,g,b} albo null
+  const cssColorToRgb = (css) => {
+    const s = (css ?? "").toString().trim();
+    if (!s) return null;
+    const tmp = document.createElement("div");
+    tmp.style.color = "";
+    tmp.style.color = s;
+    if (!tmp.style.color) return null; // przeglądarka nie rozpoznała
+    document.body.appendChild(tmp);
+    const rgb = getComputedStyle(tmp).color; // "rgb(r,g,b)" / "rgba"
+    tmp.remove();
+    const m = rgb.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/i);
+    if (!m) return null;
+    return { r: +m[1], g: +m[2], b: +m[3] };
+  };
+
+  const rgbToHex = ({ r, g, b }) => {
+    const h = (n) => (n|0).toString(16).padStart(2, "0");
+    return `#${h(r)}${h(g)}${h(b)}`.toLowerCase();
+  };
+
+  const mix = (c1, c2, t) => {
+    t = clamp01(t);
+    return {
+      r: Math.round(c1.r + (c2.r - c1.r) * t),
+      g: Math.round(c1.g + (c2.g - c1.g) * t),
+      b: Math.round(c1.b + (c2.b - c1.b) * t),
+    };
+  };
+
+  const lighten = (c, t) => mix(c, { r:255, g:255, b:255 }, t);
+  const darken  = (c, t) => mix(c, { r:0,   g:0,   b:0   }, t);
+
+  // 3 bazowe (domyślne)
+  const THEME = {
+    base: {
+      A:  "#c4002f",
+      B:  "#2a62ff",
+      BG: "#0b0b10",
+    },
+    derived: {
+      A_dark: "",
+      B_dark: "",
+      A_lamp: "",
+      B_lamp: "",
+      B_glow: "",
+      bgGradient: "",
+    },
+  };
+
+  const computeDerived = () => {
+    const A = cssColorToRgb(THEME.base.A)  ?? { r:196, g:0,   b:47  };
+    const B = cssColorToRgb(THEME.base.B)  ?? { r:42,  g:98,  b:255 };
+    const G = cssColorToRgb(THEME.base.BG) ?? { r:11,  g:11,  b:16  };
+
+    // pochodne “ciemniejsze” do gradientu obwódki
+    THEME.derived.A_dark = rgbToHex(darken(A, 0.38));
+    THEME.derived.B_dark = rgbToHex(darken(B, 0.35));
+
+    // lampki: jaśniejsze od bazowych
+    THEME.derived.A_lamp = rgbToHex(lighten(A, 0.25));
+    THEME.derived.B_lamp = rgbToHex(lighten(B, 0.18));
+
+    // neon: glow pochodny od B
+    THEME.derived.B_glow = rgbToHex(lighten(B, 0.28));
+
+    // tło: tylko BG + delikatny akcent A/B (bez fioletu)
+    const bg0 = lighten(G, 0.10);
+    const bg1 = mix(G, darken(G, 0.75), 0.55);
+    const aAcc = mix(bg0, A, 0.18);
+    const bAcc = mix(bg0, B, 0.16);
+
+    THEME.derived.bgGradient =
+      `radial-gradient(1400px 700px at 50% 25%, ` +
+      `${rgbToHex(mix(aAcc, bAcc, 0.50))} 0%, ` +
+      `${rgbToHex(bg0)} 30%, ` +
+      `${rgbToHex(bg1)} 70%, ` +
+      `${rgbToHex(darken(G, 0.85))} 100%)`;
+  };
+
+  // Referencje do elementów, które chcemy “tematyzować”
+  let basebarOutlineA = null;
+  let basebarOutlineB = null;
+
+  // Lampy (po utworzeniu)
+  let lampA = null;
+  let lampB = null;
+
+  const applyTheme = () => {
+    computeDerived();
+
+    // CSS vars (tło i ew. użycie później)
+    document.documentElement.style.setProperty("--teamA", THEME.base.A);
+    document.documentElement.style.setProperty("--teamB", THEME.base.B);
+    document.documentElement.style.setProperty("--bg",    THEME.base.BG);
+    document.documentElement.style.setProperty("--bg-gradient", THEME.derived.bgGradient);
+
+    // rim gradient stops
+    const rimA  = $("rimStopA");
+    const rimA2 = $("rimStopA2");
+    const rimB2 = $("rimStopB2");
+    const rimB  = $("rimStopB");
+    if (rimA)  rimA.setAttribute("stop-color", THEME.base.A);
+    if (rimA2) rimA2.setAttribute("stop-color", THEME.derived.A_dark);
+    if (rimB2) rimB2.setAttribute("stop-color", THEME.derived.B_dark);
+    if (rimB)  rimB.setAttribute("stop-color", THEME.base.B);
+
+    // neon filter (glow)
+    const ds1 = $("neonDS1");
+    const ds2 = $("neonDS2");
+    if (ds1) ds1.setAttribute("flood-color", THEME.derived.B_glow);
+    if (ds2) ds2.setAttribute("flood-color", THEME.derived.B_glow);
+
+    // basebar outlines
+    if (basebarOutlineA) basebarOutlineA.setAttribute("stroke", THEME.base.A);
+    if (basebarOutlineB) basebarOutlineB.setAttribute("stroke", THEME.base.B);
+
+    // lamp colors (jeśli już istnieją)
+    if (lampA?.setColor) lampA.setColor(THEME.derived.A_lamp);
+    if (lampB?.setColor) lampB.setColor(THEME.derived.B_lamp);
+  };
+
+  const setBaseColor = (which, value) => {
+    const w = (which ?? "").toString().toUpperCase();
+    const val = (value ?? "").toString().trim();
+    if (!val) throw new Error("COLOR: brak wartości koloru");
+    if (!cssColorToRgb(val)) throw new Error(`COLOR: nieprawidłowy kolor: ${val}`);
+
+    if (w === "A") THEME.base.A = val;
+    else if (w === "B") THEME.base.B = val;
+    else if (w === "BACKGROUND") THEME.base.BG = val;
+    else throw new Error(`COLOR: nieznany cel "${which}" (użyj A | B | BACKGROUND)`);
+
+    applyTheme();
+  };
+
   // Wygląd
   const COLORS = {
     big:    "#2e2e32",
@@ -917,31 +1059,33 @@ export async function createScene() {
   const outlineW = 6;
 
   // LEWA połówka – czerwony, ale spokojniejszy
-  basebar.appendChild(el("rect", {
+  basebarOutlineA = el("rect", {
     x: barX,
     y: barY,
     width: halfW,
     height: barH,
     fill: "none",
-    stroke: "#c4002f",
+    stroke: THEME.base.A,
     "stroke-width": outlineW,
     "stroke-opacity": 0.55,
     "stroke-linejoin": "round",
     // bez filtra neonowego – mniej „wali po oczach”
-  }));
+    });
+  basebar.appendChild(basebarOutlineA);
 
   // PRAWA połówka – niebieski, też spokojniejszy
-  basebar.appendChild(el("rect", {
+  basebarOutlineB = el("rect", {
     x: barX + halfW,
     y: barY,
     width: halfW,
     height: barH,
     fill: "none",
-    stroke: "#2a62ff",
+    stroke: THEME.base.B,
     "stroke-width": outlineW,
     "stroke-opacity": 0.55,
     "stroke-linejoin": "round",
-  }));
+    });
+  basebar.appendChild(basebarOutlineB);
 
   // delikatny wewnętrzny kontur
   basebar.appendChild(el("rect", {
@@ -982,9 +1126,10 @@ export async function createScene() {
       cy: "30%",
       r: "70%"
     });
-    grad.appendChild(el("stop", { offset: "0%",  "stop-color": "#ffffff", "stop-opacity": "0.65" }));
-    grad.appendChild(el("stop", { offset: "25%", "stop-color": colorOn,   "stop-opacity": "1" }));
-    grad.appendChild(el("stop", { offset: "100%","stop-color": "#000000", "stop-opacity": "0.35" }));
+    const stop0 = el("stop", { offset: "0%",   "stop-color": "#ffffff", "stop-opacity": "0.65" });
+    const stop1 = el("stop", { offset: "25%",  "stop-color": colorOn,   "stop-opacity": "1" });
+    const stop2 = el("stop", { offset: "100%", "stop-color": "#000000", "stop-opacity": "0.35" });
+    grad.appendChild(stop0); grad.appendChild(stop1); grad.appendChild(stop2);
     defs.appendChild(grad);
   
     const gLamp = el("g", {});
@@ -1057,8 +1202,13 @@ export async function createScene() {
       // highlight trochę mocniejszy gdy świeci (efekt szkła)
       highlight.setAttribute("opacity", on ? "0.28" : "0.14");
     };
-  
-    return { setOn, node: gLamp };
+    const setColor = (newColor) => {
+      const c = (newColor ?? "").toString().trim();
+      if (!c) return;
+      stop1.setAttribute("stop-color", c);
+      glow.setAttribute("fill", c);
+    };
+    return { setOn, setColor, node: gLamp };
   };
   
   const lampsY = barY + barH / 2;
@@ -1068,14 +1218,20 @@ export async function createScene() {
   const lampAX = barX + padX;        // A po lewej
   const lampBX = barX + barW - padX; // B po prawej
   
-  const lampA = makeLamp(basebar, lampAX, lampsY, lampR, "#ff2e3b");
-  const lampB = makeLamp(basebar, lampBX, lampsY, lampR, "#2a62ff");
+  // Lampy biorą kolor z THEME (pochodne)
+  computeDerived();
+  lampA = makeLamp(basebar, lampAX, lampsY, lampR, THEME.derived.A_lamp);
+  lampB = makeLamp(basebar, lampBX, lampsY, lampR, THEME.derived.B_lamp);
   
   lampA.setOn(false);
   lampB.setOn(false);
   
   let indicatorState = "OFF";
-  
+
+  // Po zbudowaniu kluczowych elementów (basebar/lamps) nakładamy theme na całość
+  // (ustawi rimGrad/neon/tło/obrysy/lampy)
+  applyTheme();
+ 
   // ============================================================
   // LOGO – 2 typy:
   // - GLYPH_30x10: 10 wierszy po 30 znaków
@@ -2015,6 +2171,25 @@ export async function createScene() {
 
     const tokens = tokenize(raw);
     const head = (tokens[0] ?? "").toUpperCase();
+
+    // ============================================================
+    // COLOR A <hex|name>
+    // COLOR B <hex|name>
+    // COLOR BACKGROUND <hex|name>
+    // (nazwa może być w cudzysłowie: "light blue")
+    // ============================================================
+    if (head === "COLOR") {
+      const target = (tokens[1] ?? "").toUpperCase();
+      const val = unquote(tokens.slice(2).join(" "));
+      try {
+        setBaseColor(target, val);
+        console.log(`[COLOR] ${target} = ${val}`);
+      } catch (e) {
+        console.warn(String(e?.message || e));
+      }
+      return;
+    }
+
 
     // 🔧 DEBUG
     // DEBUG FONT
