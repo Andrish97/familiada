@@ -39,6 +39,7 @@ body.logo-editor-body .wrap{ max-width:1200px; }
 }
 
 .card{
+  position:relative;
   border-radius:18px;
   border:1px solid var(--line);
   background:rgba(255,255,255,.05);
@@ -49,23 +50,25 @@ body.logo-editor-body .wrap{ max-width:1200px; }
   flex-direction:column;
   gap:10px;
   min-height:180px;
-  position:relative;
 }
 
-/* X do usuwania – jak w builderze */
-.logo-editor-body .grid .card .x{
+/* X (jak w builderze) */
+.card .x{
   position:absolute;
-  top:8px;
+  top:10px;
   right:10px;
-  font-size:14px;
-  opacity:.7;
-  background:transparent;
-  border:none;
-  color:#fff;
+  width:28px;
+  height:28px;
+  border-radius:10px;
+  border:1px solid rgba(255,255,255,.16);
+  background:rgba(0,0,0,.18);
+  display:grid;
+  place-items:center;
+  font-weight:1000;
   cursor:pointer;
-  padding:2px 4px;
+  user-select:none;
 }
-.logo-editor-body .grid .card .x:hover{ opacity:1; }
+.card .x:hover{ filter:brightness(1.15); }
 
 .card:hover{ filter:brightness(1.05); }
 
@@ -85,6 +88,10 @@ body.logo-editor-body .wrap{ max-width:1200px; }
   justify-content:space-between;
   gap:10px;
   align-items:flex-start;
+}
+
+.card{
+  position:relative;
 }
 
 .name{
@@ -132,6 +139,207 @@ body.logo-editor-body .wrap{ max-width:1200px; }
   gap:10px;
   flex-wrap:wrap;
 }
+
+/* Edytor na stronie */
+.editorShell{
+  margin-top:12px;
+  border-radius:20px;
+  border:1px solid var(--line);
+  background: var(--card);
+  box-shadow:0 24px 60px rgba(0,0,0,.45);
+  padding:14px;
+}
+
+.editorHead{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:12px;
+  flex-wrap:wrap;
+}
+
+.editorTitle{ font-weight:1000; font-size:16px; letter-spacing:.06em; }
+.editorSub{ opacity:.85; font-size:13px; margin-top:4px; }
+
+.editorGrid{
+  margin-top:12px;
+  display:grid;
+  grid-template-columns: 1fr 1.2fr;
+  gap:12px;
+}
+
+@media (max-width: 980px){
+  .editorGrid{ grid-template-columns: 1fr; }
+}
+
+.editorLeft, .editorRight{
+  border-radius:18px;
+  border:1px solid rgba(255,255,255,.10);
+  background:rgba(255,255,255,.04);
+  padding:12px;
+}
+
+.pane{ margin-top:6px; }
+
+.warn{
+  margin-top:8px;
+  border-radius:14px;
+  border:1px solid rgba(255,153,102,.35);
+  background:rgba(255,153,102,.08);
+  padding:10px;
+  font-size:13px;
+  opacity:.95;
+}
+
+.chars{ margin-top:12px; }
+.charsHead{ display:flex; justify-content:space-between; align-items:center; gap:10px; }
+.charsList{
+  margin-top:8px;
+  padding:10px;
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,.14);
+  background:rgba(0,0,0,.18);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size:12px;
+  line-height:1.4;
+  white-space:pre-wrap;
+}
+
+.editorActions{
+  margin-top:12px;
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  align-items:center;
+}
+
+.bigPrevWrap{
+  margin-top:10px;
+  border-radius:16px;
+  border:1px solid rgba(255,255,255,.14);
+  background:rgba(0,0,0,.18);
+  padding:10px;
+}
+
+.bigPrevWrap canvas{
+  width:100%;
+  height:auto;
+  display:block;
+}
+
+.bigModal{ width:min(1700px, 100%); }
+.bigModalCanvas{
+  margin-top:10px;
+  border-radius:16px;
+  border:1px solid rgba(255,255,255,.14);
+  background:rgba(0,0,0,.18);
+  padding:10px;
+}
+.bigModalCanvas canvas{ width:100%; height:auto; display:block; }
+
+/* ================= Editor (na stronie) ================= */
+.editorShell{
+  margin-top:14px;
+  border-radius:22px;
+  border:1px solid var(--line);
+  background:var(--card);
+  box-shadow:0 30px 90px rgba(0,0,0,.55);
+  padding:14px;
+}
+
+.editorHead{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:12px;
+}
+
+.editorTitle{ font-weight:1000; letter-spacing:.06em; font-size:16px; }
+.editorSub{ opacity:.85; font-size:13px; margin-top:4px; }
+
+.editorGrid{
+  margin-top:12px;
+  display:grid;
+  grid-template-columns: 1fr 1.1fr;
+  gap:14px;
+}
+
+@media (max-width: 980px){
+  .editorGrid{ grid-template-columns: 1fr; }
+}
+
+.editorLeft, .editorRight{
+  border-radius:18px;
+  border:1px solid rgba(255,255,255,.12);
+  background:rgba(255,255,255,.04);
+  padding:12px;
+}
+
+.editorActions{
+  margin-top:12px;
+  display:flex;
+  gap:10px;
+  align-items:center;
+  flex-wrap:wrap;
+}
+
+.warn{
+  margin-top:10px;
+  border-radius:14px;
+  border:1px solid rgba(255,117,117,.35);
+  background:rgba(255,117,117,.10);
+  padding:10px;
+  font-size:13px;
+}
+
+.chars{ margin-top:12px; }
+.charsHead{ display:flex; justify-content:space-between; align-items:center; gap:10px; }
+.charsList{
+  margin-top:10px;
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,.12);
+  background:rgba(0,0,0,.16);
+  padding:10px;
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+}
+.charsList .ch{
+  padding:6px 8px;
+  border-radius:10px;
+  border:1px solid rgba(255,255,255,.16);
+  background:rgba(255,255,255,.06);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size:13px;
+  cursor:pointer;
+  user-select:none;
+}
+.charsList .ch:hover{ filter:brightness(1.1); }
+
+.bigPrevWrap{
+  margin-top:10px;
+  border-radius:16px;
+  border:1px solid rgba(255,255,255,.14);
+  background:rgba(0,0,0,.22);
+  padding:10px;
+}
+
+.bigPrevWrap canvas{
+  width:100%;
+  height:auto;
+  display:block;
+}
+
+/* Fullscreen preview */
+.bigModal{ width:min(1720px, 100%); }
+.bigModalCanvas{
+  margin-top:12px;
+  border-radius:16px;
+  border:1px solid rgba(255,255,255,.14);
+  background:rgba(0,0,0,.22);
+  padding:10px;
+}
+.bigModalCanvas canvas{ width:100%; height:auto; display:block; }
 
 .msg{ opacity:.9; font-size:13px; min-height:18px; }
 
@@ -217,20 +425,5 @@ body.logo-editor-body .wrap{ max-width:1200px; }
 
 .importRow{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
 .importMsg{ opacity:.85; font-size:13px; }
-
-/* Podgląd (jak BIG) */
-.viewModal{ width:min(1100px, 100%); }
-.viewBox{
-  border-radius:16px;
-  border:1px solid rgba(255,255,255,.14);
-  background:rgba(0,0,0,.18);
-  padding:10px;
-}
-.viewBox canvas{
-  width:100%;
-  height:auto;
-  display:block;
-  image-rendering:auto;
-}
 
 .foot{ margin-top:12px; }
