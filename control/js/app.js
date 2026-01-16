@@ -51,6 +51,59 @@ import { createFinal } from "./gameFinal.js";
 const qs = new URLSearchParams(location.search);
 const gameId = qs.get("id");
 
+// ================== KOLORY (domyślne) ==================
+const DEFAULT_COLORS = {
+  A: "#c4002f",
+  B: "#2a62ff",
+  BACKGROUND: "#d21180",
+};
+
+function normHex(input) {
+  let s = String(input ?? "").trim();
+  if (!s) return null;
+  if (!s.startsWith("#")) s = "#" + s;
+  s = s.toUpperCase();
+  if (!/^#[0-9A-F]{6}$/.test(s)) return null;
+  return s;
+}
+
+function hexToRgb(hex) {
+  const h = normHex(hex);
+  if (!h) return { r: 0, g: 0, b: 0 };
+  const n = parseInt(h.slice(1), 16);
+  return {
+    r: (n >> 16) & 255,
+    g: (n >> 8) & 255,
+    b: n & 255,
+  };
+}
+
+function rgbToHex(r, g, b) {
+  const rr = Math.max(0, Math.min(255, Number(r) || 0));
+  const gg = Math.max(0, Math.min(255, Number(g) || 0));
+  const bb = Math.max(0, Math.min(255, Number(b) || 0));
+  const n = (rr << 16) | (gg << 8) | bb;
+  return "#" + n.toString(16).padStart(6, "0").toUpperCase();
+}
+
+// prosty throttle (leading+trailing, ale tu wystarczy trailing)
+function throttleMs(ms, fn) {
+  let t = null;
+  let lastArgs = null;
+
+  return (...args) => {
+    lastArgs = args;
+    if (t) return;
+    t = setTimeout(() => {
+      t = null;
+      const a = lastArgs;
+      lastArgs = null;
+      try { fn(...(a || [])); } catch {}
+    }, ms);
+  };
+}
+// ========================================================
+
 async function ensureAuthOrRedirect() {
   const user = await requireAuth("/familiada/index.html");
   const who = document.getElementById("who");
@@ -100,6 +153,75 @@ async function main() {
 
   const ui = createUI();
   ui.setGameHeader(game.name, `${game.type} / ${game.status}`);
+
+  
+  // ===== Kolory: stan UI (lokalny) =====
+  let colors = {
+    A: DEFAULT_COLORS.A,
+    B: DEFAULT_COLORS.B,
+    BACKGROUND: DEFAULT_COLORS.BACKGROUND,
+  };
+
+  // pokaż na start kafelki
+  ui.setSwatches?.({ teamA: colors.A, teamB: colors.B, bg: colors.BACKGROUND });
+
+  // throttlowane wysyłki, żeby nie zabić realtime
+  const sendColorA = throttleMs(120, async (hex) => {
+    if (!devices) return;
+    const h = normHex(hex);
+    if (!h) return;
+    await devices.sendDisplayCmd(`COLOR A ${h}`).catch(() => {});
+    await devices.sendBuzzerCmd(`COLOR_A ${h}`).catch(() => {});
+    await devices.sendHostCmd(`COLOR_A ${h}`).catch(() => {});
+  });
+
+  const sendColorB = throttleMs(120, async (hex) => {
+    if (!devices) return;
+    const h = normHex(hex);
+    if (!h) return;
+    await devices.sendDisplayCmd(`COLOR B ${h}`).catch(() => {});
+    await devices.sendBuzzerCmd(`COLOR_B ${h}`).catch(() => {});
+    await devices.sendHostCmd(`COLOR_B ${h}`).catch(() => {});
+  });
+
+  const sendColorBg = throttleMs(120, async (hex) => {
+    if (!devices) return;
+    const h = normHex(hex);
+    if (!h) return;
+    await devices.sendDisplayCmd(`COLOR BACKGROUND ${h}`).catch(() => {});
+  });
+
+  async function sendColorsReset() {
+    if (!devices) return;
+    await devices.sendDisplayCmd("COLOR RESET").catch(() => {});
+    await devices.sendBuzzerCmd("COLOR_RESET").catch(() => {});
+    await devices.sendHostCmd("COLOR_RESET").catch(() => {});
+  }
+
+  function applyColor(kind, hex) {
+    const h = normHex(hex);
+    if (!h) return;
+
+    if (kind === "A") {
+      colors.A = h;
+      ui.setSwatches?.({ teamA: colors.A, teamB: colors.B, bg: colors.BACKGROUND });
+      sendColorA(h);
+      return;
+    }
+    if (kind === "B") {
+      colors.B = h;
+      ui.setSwatches?.({ teamA: colors.A, teamB: colors.B, bg: colors.BACKGROUND });
+      sendColorB(h);
+      return;
+    }
+    if (kind === "BACKGROUND") {
+      colors.BACKGROUND = h;
+      ui.setSwatches?.({ teamA: colors.A, teamB: colors.B, bg: colors.BACKGROUND });
+      sendColorBg(h);
+      return;
+    }
+  }
+  
 
   // === Modal QR z auth bar (top-status) ===
   let currentQrKind = null; // "display" | "host" | "buzzer"
@@ -277,6 +399,27 @@ async function sendZeroStatesToDevices() {
 
   const devices = createDevices({ game, ui, store, chDisplay, chHost, chBuzzer });
   const presence = createPresence({ game, ui, store, devices });
+
+    // ===== Wejście/wyjście z kroku "Nazwy drużyn" =====
+  let wasInSetupNames = false;
+
+  async function enterSetupNames() {
+    if (!devices) return;
+    await devices.sendDisplayCmd("APP GAME").catch(() => {});
+    await devices.sendBuzzerCmd("ON").catch(() => {});
+    await devices.sendHostCmd("COVER").catch(() => {});
+    // na wejściu od razu pokaż aktualne kolory (bez spamowania: throttlowane)
+    sendColorA(colors.A);
+    sendColorB(colors.B);
+    sendColorBg(colors.BACKGROUND);
+  }
+
+  async function leaveSetupNames() {
+    if (!devices) return;
+    await devices.sendDisplayCmd("APP BLACK").catch(() => {});
+    await devices.sendBuzzerCmd("OFF").catch(() => {});
+  }
+
 
   const display = createDisplay({ devices, store });
   const rounds = createRounds({ ui, store, devices, display, loadQuestions, loadAnswers });
@@ -549,6 +692,19 @@ async function sendZeroStatesToDevices() {
     // od razu zsynchronizuj wizualnie radio + kartę list
     finalPickerUpdateButtons();
     syncPanelStepPills();
+
+    // ===== detekcja wejścia/wyjścia z setup_names =====
+    const inSetupNames =
+      (state.activeCard === "setup" && state.steps?.setup === "setup_names");
+
+    if (inSetupNames && !wasInSetupNames) {
+      enterSetupNames().catch(() => {});
+    }
+    if (!inSetupNames && wasInSetupNames) {
+      leaveSetupNames().catch(() => {});
+    }
+    wasInSetupNames = inSetupNames;
+
   }
 
   // startowy render + subskrypcja
@@ -636,6 +792,93 @@ async function sendZeroStatesToDevices() {
   ui.on("teams.change", ({ teamA, teamB }) => {
     store.setTeams(teamA, teamB);
   });
+
+    // ===== UI: Kolory =====
+  let colorModalTarget = null; // "A" | "B" | "BACKGROUND"
+
+  ui.on("colors.open", (target) => {
+    const t = target === "A" || target === "B" || target === "BACKGROUND" ? target : null;
+    if (!t) return;
+    colorModalTarget = t;
+
+    const hex =
+      t === "A" ? colors.A :
+      t === "B" ? colors.B :
+      colors.BACKGROUND;
+
+    const rgb = hexToRgb(hex);
+
+    ui.openColorModal?.(
+      t === "A" ? "Kolor drużyny A" :
+      t === "B" ? "Kolor drużyny B" :
+      "Kolor tła wyświetlacza"
+    );
+
+    ui.setColorModalRgb?.(rgb);
+    ui.setColorModalHex?.(hex);
+  });
+
+  ui.on("colors.close", () => {
+    colorModalTarget = null;
+    ui.closeColorModal?.();
+  });
+
+  ui.on("colors.reset", async () => {
+    colors = {
+      A: DEFAULT_COLORS.A,
+      B: DEFAULT_COLORS.B,
+      BACKGROUND: DEFAULT_COLORS.BACKGROUND,
+    };
+
+    ui.setSwatches?.({ teamA: colors.A, teamB: colors.B, bg: colors.BACKGROUND });
+
+    // ustaw modal (jeśli otwarty) na domyślne dla aktualnego targetu
+    if (colorModalTarget) {
+      const hex =
+        colorModalTarget === "A" ? colors.A :
+        colorModalTarget === "B" ? colors.B :
+        colors.BACKGROUND;
+      ui.setColorModalHex?.(hex);
+      ui.setColorModalRgb?.(hexToRgb(hex));
+    }
+
+    await sendColorsReset().catch(() => {});
+  });
+
+  ui.on("colors.input", ({ kind, value }) => {
+    if (!colorModalTarget) return;
+
+    // pobierz aktualne rgb z suwaków (źródło prawdy podczas kręcenia)
+    const rEl = document.getElementById("colorR");
+    const gEl = document.getElementById("colorG");
+    const bEl = document.getElementById("colorB");
+
+    let r = Number(rEl?.value ?? 0);
+    let g = Number(gEl?.value ?? 0);
+    let b = Number(bEl?.value ?? 0);
+
+    if (kind === "HEX") {
+      const h = normHex(value);
+      if (!h) return;
+      const rgb = hexToRgb(h);
+      ui.setColorModalRgb?.(rgb);
+      ui.setColorModalHex?.(h);
+      applyColor(colorModalTarget, h);
+      return;
+    }
+
+    if (kind === "R") r = Number(value ?? 0);
+    if (kind === "G") g = Number(value ?? 0);
+    if (kind === "B") b = Number(value ?? 0);
+
+    const hex = rgbToHex(r, g, b);
+
+    ui.setColorModalRgb?.({ r, g, b });
+    ui.setColorModalHex?.(hex);
+
+    applyColor(colorModalTarget, hex);
+  });
+
 
   ui.on("advanced.change", () => {
     if (!ui.getAdvancedForm || !store.setAdvanced) return;
