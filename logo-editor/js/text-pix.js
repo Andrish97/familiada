@@ -592,10 +592,20 @@ export function initTextPixEditor(ctx) {
     box.style.overflow = "hidden";
     box.style.padding = "10px";
     box.style.boxSizing = "border-box";
+    box.style.whiteSpace = "normal";
+    box.style.overflowWrap = "break-word";
+    box.style.wordBreak = "break-word";
+    box.style.maxWidth = `${w}px`;
   
-    // UWAGA: bierzemy HTML z edytora, ale bez caretów itp.
-    const html = String(editor?.getContent?.({ format: "html" }) || "").trim();
+    let html = String(editor?.getContent?.({ format: "html" }) || "").trim();
+    
+    if (html && !/<(p|div|h1|h2|h3|ul|ol|li|table|blockquote)\b/i.test(html)) {
+      // brak bloków -> traktujemy to jak “linijkę tekstu”
+      html = `<p>${html}</p>`;
+    }
+    
     box.innerHTML = html || "";
+
   
     // Minimalne CSS, żeby wyglądało jak u Ciebie
     const style = document.createElement("style");
@@ -732,8 +742,16 @@ export function initTextPixEditor(ctx) {
       skin: false,
       content_css: false,
       content_style: `
-        body{ margin:0; padding:0; background:#000; color:#fff; font-size:50px; }
-        p{ margin:0; line-height:1; }
+        .mce-content-body{
+          margin:0; padding:0;
+          background:#000; color:#fff;
+          font-size:50px;
+          line-height:1;
+          overflow-wrap: break-word;
+          word-break: break-word;
+          white-space: normal;
+        }
+        .mce-content-body p{ margin:0; line-height:1; }
       `,
       font_family_formats: fontFormats,
       setup: (ed) => {
