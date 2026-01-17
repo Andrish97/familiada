@@ -520,3 +520,71 @@ body.logo-editor-body .wrap{ max-width:1200px; }
   box-shadow:0 20px 50px rgba(0,0,0,.55);
 }
 
+/* ===== Layout sterowania: konkretne życzenia ===== */
+
+.ctrlRowFull > .inp,
+.ctrlRowFull > select.inp{
+  width: 100%;
+}
+
+.ctrlRowSize{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+.ctrlRowSize .miniLbl{
+  flex: 1;
+}
+.ctrlRowSize #inpRtSize{
+  width: 110px;
+  margin-left: auto; /* przy prawej krawędzi */
+  text-align: center;
+}
+
+/* Import: przycisk pod spodem po prawej + większy odstęp */
+.ctrlRowRightGap{
+  display:flex;
+  justify-content:flex-end;
+  margin-top: 12px;
+}
+.ctrlRowRightGap .btn{
+  padding-left: 14px;
+  padding-right: 14px;
+}
+
+/* Wyrównanie w "Odstępy" z większym oddechem */
+.ctrlRowAlign{
+  display:flex;
+  align-items:center;
+  margin-top: 12px;
+}
+.ctrlRowAlign .miniLbl{
+  flex:1;
+}
+.ctrlRowAlign #btnRtAlignCycle{
+  margin-left: 18px; /* większy odstęp */
+}
+
+/* Kontrast: pojedyncze pole na środku */
+.ctrlRowCenter{
+  display:flex;
+  justify-content:center;
+}
+.inpCenter{
+  width: 120px;
+  text-align: center;
+}
+
+/* BIU: równomiernie na szerokości i na środku */
+.ctrlRowBiu{
+  display:flex;
+  justify-content:space-evenly;
+  align-items:center;
+  gap:10px;
+  width: 100%;
+}
+.ctrlRowBiu .btn{
+  min-width: 64px;
+}
+
+
