@@ -14,6 +14,15 @@ export function initTextPixEditor(ctx) {
     { label: "Courier", value: "'Courier New', Courier, monospace" },
     { label: "Consolas", value: "Consolas, 'Courier New', monospace" },
     { label: "Impact", value: "Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif" },
+    { label: "Segoe UI", value: "Segoe UI, system-ui, sans-serif" },
+    { label: "Roboto", value: "Roboto, system-ui, sans-serif" },
+    { label: "Calibri", value: "Calibri, Segoe UI, sans-serif" },
+    { label: "Cambria", value: "Cambria, 'Times New Roman', serif" },
+    { label: "Garamond", value: "Garamond, 'Times New Roman', serif" },
+    { label: "Tahoma", value: "Tahoma, Verdana, sans-serif" },
+    { label: "Franklin Gothic", value: "'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif" },
+    { label: "Comic Sans", value: "'Comic Sans MS', 'Comic Sans', cursive" },
+
   ];
 
 
@@ -113,6 +122,7 @@ export function initTextPixEditor(ctx) {
       const opt = document.createElement("option");
       opt.value = f.value;
       opt.textContent = f.label;
+      opt.style.fontFamily = f.value;
       selRtFont.appendChild(opt);
     }
   }
@@ -301,7 +311,7 @@ export function initTextPixEditor(ctx) {
       } else {
         const raw = String(lh.value || "").trim();
         if (!raw || raw === "normal") {
-          inpRtLine.value = ""; // jak Word: pusto
+          inpRtLine.value = "1";
         } else if (/px$/.test(raw)) {
           // px -> przelicz na ratio względem font-size akapitu
           const p = getCurrentParagraph();
@@ -614,7 +624,7 @@ export function initTextPixEditor(ctx) {
     const out = document.createElement("canvas");
     out.width = BIG_W;
     out.height = BIG_H;
-    const g = out.getContext("2d");
+    const g = out.getContext("2d", { willReadFrequently: true });
     g.imageSmoothingEnabled = true;
     g.fillStyle = "#000";
     g.fillRect(0, 0, BIG_W, BIG_H);
@@ -706,8 +716,8 @@ export function initTextPixEditor(ctx) {
       skin: false,
       content_css: false,
       content_style: `
-        body{ margin:0; padding:0; background:#000; color:#fff; }
-        p{ margin:0; }
+        body{ margin:0; padding:0; background:#000; color:#fff; font-size:50px; }
+        p{ margin:0; line-height:1; }
       `,
       font_family_formats: fontFormats.join(";"),
       setup: (ed) => {
@@ -818,6 +828,9 @@ export function initTextPixEditor(ctx) {
 
       // reset edytora na start sesji
       editor.setContent("");
+      editor.setContent("<p>\u200b</p>");
+      editor.focus();
+      applyPendingInlineStyle({ fontSize: "50px" });
       currentAlign = "center";
       if (btnRtAlignCycle) {
         btnRtAlignCycle.textContent = "⇆";
@@ -828,7 +841,7 @@ export function initTextPixEditor(ctx) {
       if (selRtFont) selRtFont.value = "";
       if (inpRtSize) inpRtSize.value = "";
       if (inpRtLetter) inpRtLetter.value = "";
-      if (inpRtLine) inpRtLine.value = String(inpRtLine.value || "1.05");
+      if (inpRtLine) inpRtLine.value = "1";
       if (inpRtPadTop) inpRtPadTop.value = String(inpRtPadTop.value || "8");
       if (inpRtPadBot) inpRtPadBot.value = String(inpRtPadBot.value || "8");
 
