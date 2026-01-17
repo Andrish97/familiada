@@ -785,11 +785,9 @@ async function handleCreate(){
     };
 
     if (!sessionSavedLogoId) {
-      // 1. zapis w tej sesji = INSERT (zwraca id)
       sessionSavedLogoId = await createLogo(patch);
       setEditorMsg("Zapisano.");
     } else {
-      // kolejne zapisy w tej sesji = UPDATE (bez konfliktu unique name)
       await updateLogo(sessionSavedLogoId, {
         name: patch.name,
         type: patch.type,
@@ -800,8 +798,10 @@ async function handleCreate(){
 
     clearDirty();
     await refresh();
-    return;
-
+  } catch (e){
+    console.error(e);
+    alert("Nie udało się zapisać.\n\n" + (e?.message || e));
+    setEditorMsg("Błąd zapisu.");
   }
 }
 
@@ -844,6 +844,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     // rozmiary
     DOT_W,
     DOT_H,
+
+    // threshold (na razie stały, bo usuwamy UI Kontrastu)
+    getThreshold: () => 128,
+    getDither: () => false,
+
   };
 
   textEditor = initTextEditor(editorCtx);
