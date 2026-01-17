@@ -91,7 +91,7 @@ export function initTextPixEditor(ctx) {
     if (SYSTEM_FONTS.length) return SYSTEM_FONTS;
   
     try {
-      const res = await fetch("fonts.json", { cache: "no-store" });
+      const res = await fetch("./js/fonts.json", { cache: "no-store" });
       if (!res.ok) throw new Error("Nie mogę wczytać fonts.json");
       const data = await res.json();
   
