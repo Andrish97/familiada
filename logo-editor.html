@@ -75,8 +75,16 @@
 
         <!-- TEXT_PIX (Tekst) -->
         <div class="pane" id="paneTextPix" style="display:none;">
-        
-
+          <!-- Sekcja 1: Edytor -->
+          <div class="paneSec">
+            <div class="paneSecTitle">Tekst</div>
+            <div class="paneSecBody">
+              <div class="warn" id="pixWarn" style="display:none;"></div>
+              <div class="rtStage" style="margin-top:5px;">
+                <div id="rtEditor" class="rtEditor" contenteditable="true" spellcheck="false"></div>
+              </div>
+            </div>
+          </div>
         
           <!-- Sekcja 2: Sterowanie -->
           <div class="paneSec">
@@ -170,16 +178,6 @@
                   </div>
                 </div>
               </div>
-            </div>
-          </div>
-        <!-- Sekcja 1: Edytor -->
-          <div class="paneSec">
-            <div class="paneSecTitle">Tekst</div>
-            <div class="paneSecBody">
-              <div class="canvasBox">
-                <div id="rtEditor" class="rtEditor" contenteditable="true" spellcheck="false"></div>
-              </div>
-              <div class="warn" id="pixWarn" style="display:none;"></div>
             </div>
           </div>
         </div>
