@@ -82,8 +82,6 @@ export function initTextPixEditor(ctx) {
   
       if (t.closest?.("input,select,button,textarea,label")) {
         uiLock();
-        // kluczowe: NIE preventDefault (bo select ma się otworzyć)
-        ev.stopPropagation();
       }
     }, true);
   
@@ -352,40 +350,52 @@ export function initTextPixEditor(ctx) {
   //  B) Apply formatting (TinyMCE)
   // ==========================================
   function applyFont(fontValue) {
-    if (isCollapsed()) {
-      // tylko “następny znak”
-      applyPendingInlineStyle({ fontFamily: fontValue });
-      ctx.markDirty?.(); schedulePreview(120); syncUiFromSelection();
-      return;
-    }
-
     if (!editor) return;
     const v = String(fontValue || "").trim();
     if (!v) return;
+  
+    // collapsed => tylko “następny znak”
+    if (isCollapsed()) {
+      applyPendingInlineStyle({ fontFamily: v });
+      ctx.markDirty?.();
+      schedulePreview(120);
+      syncUiFromSelection();
+      return;
+    }
+  
     if (!isUiBusy()) editor.focus();
-    // TinyMCE: execCommand FontName działa na selection + przyszłe znaki
-    const head = fontHead(v);
-    if (!head) return;
-    editor.execCommand("FontName", false, head);
+  
+    editor.formatter.register("fontfamily_stack", {
+      inline: "span",
+      styles: { "font-family": v },
+      remove_similar: true,
+    });
+    editor.formatter.apply("fontfamily_stack");
+  
     ctx.markDirty?.();
     schedulePreview(120);
     syncUiFromSelection();
   }
 
   function applyFontSize(px) {
-    if (isCollapsed()) {
-      applyPendingInlineStyle({ fontSize: v });
-      ...
-      return;
-    }
     if (!editor) return;
+  
     const n = Number(px);
     if (!Number.isFinite(n)) return;
     const v = `${clamp(n, 10, 140)}px`;
   
+    // collapsed => ustaw tylko “następny znak”
+    if (isCollapsed()) {
+      applyPendingInlineStyle({ fontSize: v });
+      ctx.markDirty?.();
+      schedulePreview(120);
+      syncUiFromSelection();
+      return;
+    }
+  
     if (!isUiBusy()) editor.focus();
   
-    // formatter: stabilnie działa i na selection i jako "pending"
+    // selection => działa na zaznaczenie
     editor.formatter.register("fontsize_px", {
       inline: "span",
       styles: { "font-size": v },
@@ -398,26 +408,32 @@ export function initTextPixEditor(ctx) {
     syncUiFromSelection();
   }
 
+
   function applyLetterSpacing(px) {
-    if (isCollapsed()) {
-      applyPendingInlineStyle({ letterSpacing: v });
-      ...
-      return;
-    }
     if (!editor) return;
+  
     const n = Number(px);
     if (!Number.isFinite(n)) return;
     const v = `${clamp(n, 0, 20)}px`;
+  
+    // collapsed => tylko “następny znak”
+    if (isCollapsed()) {
+      applyPendingInlineStyle({ letterSpacing: v });
+      ctx.markDirty?.();
+      schedulePreview(120);
+      syncUiFromSelection();
+      return;
+    }
+  
     if (!isUiBusy()) editor.focus();
-
-    // najstabilniej: formatter z inline span style
-    editor.formatter.register("letterspacing", {
+  
+    editor.formatter.register("letterspacing_px", {
       inline: "span",
       styles: { "letter-spacing": v },
-      remove_similar: true
+      remove_similar: true,
     });
-    editor.formatter.apply("letterspacing");
-
+    editor.formatter.apply("letterspacing_px");
+  
     ctx.markDirty?.();
     schedulePreview(120);
     syncUiFromSelection();
