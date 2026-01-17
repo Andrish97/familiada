@@ -728,7 +728,6 @@ async function handleCreate(){
 
     setEditorMsg("Zapisano.");
     clearDirty();
-    closeEditor(true);
     await refresh();
   } catch (e){
     console.error(e);
@@ -815,9 +814,20 @@ document.addEventListener("DOMContentLoaded", async () => {
   btnPickCancel?.addEventListener("click", () => show(createOverlay, false));
   createOverlay?.addEventListener("click", (ev) => { if (ev.target === createOverlay) show(createOverlay, false); });
 
-  // editor close/cancel
-  btnEditorClose?.addEventListener("click", () => closeEditor(false));
-  btnCancel?.addEventListener("click", () => closeEditor(false));
+   // X w prawym górnym rogu — pyta, jeśli są zmiany
+   btnEditorClose?.addEventListener("click", () => closeEditor(false));
+   
+   // ANULUJ — świadoma rezygnacja, ZAWSZE bez alertu
+   btnCancel?.addEventListener("click", () => {
+     // reset bieżącego edytora bez zamykania
+     if (editorMode === "TEXT") textEditor.open();
+     if (editorMode === "TEXT_PIX") textPixEditor.open();
+     if (editorMode === "DRAW") drawEditor.open();
+     if (editorMode === "IMAGE") imageEditor.open();
+     clearDirty();
+     setEditorMsg("Wyczyszczono.");
+   });
+
 
   // save
   btnCreate?.addEventListener("click", handleCreate);
