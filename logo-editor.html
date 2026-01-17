@@ -97,8 +97,9 @@
                 <!-- 1) Czcionka i rozmiar -->
                 <div class="ctrlBlock" id="blkFont" data-tip="Czcionka bazowa i rozmiar dla trybu Tekst.">
                   <div class="ctrlTitle">Czcionka</div>
-        
-                  <div class="ctrlRow">
+                  
+                  <!-- 1) Systemowa: prawie cała szerokość -->
+                  <div class="ctrlRow ctrlRowFull">
                     <select class="inp" id="selRtFont">
                       <option value="system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif">Systemowa</option>
                       <option value="Arial, Helvetica, sans-serif">Arial</option>
@@ -108,18 +109,20 @@
                       <option value="'Courier New', Courier, monospace">Courier</option>
                     </select>
                   </div>
-
-                   <div class="ctrlRow">
-                    <label class="miniLbl" for="inpRtSize">Rozmiar</label>
+                  
+                  <!-- 2) Rozmiar: podpis lewo, pole przy prawej krawędzi -->
+                  <div class="ctrlRow ctrlRowSize">
+                    <div class="miniLbl">Rozmiar</div>
                     <input class="inp" id="inpRtSize" type="number" min="10" max="120" value="56"/>
                   </div>
-        
-                  <div class="ctrlRow">
+                  
+                  <!-- 3) Import: pole na całą szerokość, przycisk pod spodem po prawej z większym odstępem -->
+                  <div class="ctrlRow ctrlRowFull">
                     <input class="inp" id="inpRtGoogle" placeholder="Google Font (np. Inter)"/>
+                  </div>
+                  <div class="ctrlRow ctrlRowRightGap">
                     <button class="btn sm" id="btnRtGoogle" type="button">Wczytaj</button>
                   </div>
-        
-     
                 </div>
         
                 <!-- 2) Odstępy i wyrównanie -->
@@ -144,8 +147,7 @@
                       <input class="inp" id="inpRtPadBot" type="number" step="1" min="0" max="40" value="10"/>
                     </label>
                   </div>
-        
-                  <div class="ctrlRow" style="justify-content:space-between;">
+                  <div class="ctrlRow ctrlRowAlign">
                     <div class="miniLbl" style="opacity:.85;">Wyrównanie</div>
                     <button class="btn sm" id="btnRtAlignCycle" type="button" data-tip="Klikaj: lewo → środek → prawo">⇆</button>
                   </div>
@@ -154,29 +156,29 @@
                 <!-- 3) Styl BIU -->
                 <div class="ctrlBlock" id="blkStyle" data-tip="Pogrubienie / kursywa / podkreślenie.">
                   <div class="ctrlTitle">Styl</div>
-                  <div class="ctrlRow">
-                    <button class="btn sm" id="btnRtBold" type="button"><b>B</b></button>
-                    <button class="btn sm" id="btnRtItalic" type="button"><i>I</i></button>
-                    <button class="btn sm" id="btnRtUnderline" type="button"><u>U</u></button>
-                  </div>
+                    <div class="ctrlTitle">Styl</div>
+                    <div class="ctrlRow ctrlRowBiu">
+                      <button class="btn sm" id="btnRtBold" type="button"><b>B</b></button>
+                      <button class="btn sm" id="btnRtItalic" type="button"><i>I</i></button>
+                      <button class="btn sm" id="btnRtUnderline" type="button"><u>U</u></button>
+                    </div>
                 </div>
         
                 <!-- 4) Kontrast -->
                 <div class="ctrlBlock" id="blkThresh" data-tip="Próg czerni/bieli. Działa dla Tekstu i Obrazka.">
                   <div class="ctrlTitle">Kontrast</div>
-                  <div class="ctrlRow">
-                    <button class="btn sm" id="btnThreshMinus" type="button">−</button>
-                    <input class="inp" id="inpThresh" type="number" min="40" max="220" value="128"/>
-                    <button class="btn sm" id="btnThreshPlus" type="button">+</button>
+                  
+                  <div class="ctrlRow ctrlRowCenter">
+                    <input class="inp inpCenter" id="inpThresh" type="number" min="40" max="220" value="128"/>
                   </div>
-                  <div id="rowRtDither" style="margin-top:6px;">
+                  
+                  <div id="rowRtDither" style="margin-top:10px;">
                     <label class="chk">
                       <input type="checkbox" id="chkRtDither" checked/>
-                      Dithering (gładsze krawędzie)
+                      Dithering
                     </label>
                   </div>
                 </div>
-        
               </div>
             </div>
           </div>
