@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Familiada — edytor logo</title>
+
+  <link rel="icon" href="../favicon.ico"/>
+  <link rel="stylesheet" href="../css/base.css"/>
+  <link rel="stylesheet" href="css/logo-editor.css"/>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <script type="module" src="js/main.js" defer></script>
+</head>
+
+<body class="logo-editor-body">
+  <header class="topbar">
+    <div class="brand">FAMILIADA</div>
+    <div class="right">
+      <button class="btn" id="btnBack" type="button">← Moje gry</button>
+      <span class="who" id="who">—</span>
+      <button class="btn" id="btnLogout" type="button">Wyloguj</button>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div class="rowTop">
+      <div>
+        <div class="title">Twoje logo</div>
+        <div class="hint">Tworzysz nowe logo, ustawiasz aktywne lub usuwasz. Edycji istniejących nie ma.</div>
+      </div>
+
+      <div class="rowTopActions">
+        <button class="btn sm" id="btnClearActive" type="button" data-tip="Wyłącza wybrane aktywne logo (wraca do domyślnego).">Wyłącz aktywne</button>
+      </div>
+    </div>
+
+    <section class="shell" id="listShell">
+      <div class="grid" id="grid"></div>
+    </section>
+
+    <!-- Edytor (na stronie) -->
+    <section class="editorShell" id="editorShell" style="display:none;">
+      <div class="editorHead">
+        <div>
+          <div class="editorTitle" id="editorTitle">Nowe logo</div>
+          <div class="editorSub" id="editorSub">—</div>
+        </div>
+        <div class="editorHeadRight">
+          <button class="btn sm" id="btnEditorClose" type="button">✕</button>
+        </div>
+      </div>
+
+      <div class="editorGrid">
+        <div class="editorLeft">
+          <div class="lbl">Nazwa</div>
+          <input class="inp" id="logoName" placeholder="Np. Moje logo"/>
+
+          <!-- TEXT (font_3x10) -->
+          <div class="pane" id="paneText" style="display:none;">
+            <div class="lbl" style="margin-top:12px;">Tekst</div>
+            <input class="inp" id="textValue" placeholder="Np. FAMILIADA"/>
+            <div class="warn" id="textWarn" style="display:none;"></div>
+            <div class="hint" id="textMeasure">—</div>
+            <div class="chars">
+              <div class="charsHead">
+                <div class="lbl">Dozwolone znaki</div>
+                <button class="btn sm" id="btnCharsToggle" type="button">Pokaż</button>
+              </div>
+              <div class="charsList" id="charsList" style="display:none;"></div>
+            </div>
+          </div>
+
+          <!-- TEXT_PIX (WYSIWYG -> "screenshot" na wyświetlacz) -->
+          <div class="pane" id="paneTextPix" style="display:none;">
+            <div class="paneSec">
+              <div class="paneSecTitle">Tekst</div>
+              <div class="paneSecBody">
+                <div class="warn" id="pixWarn" style="display:none;"></div>
+                <div class="rtStage">
+                  <div id="rtEditor" class="rtEditor" contenteditable="true" spellcheck="false" data-placeholder="Wpisz tekst…"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="paneSec">
+              <div class="paneSecTitle">Ustawienia</div>
+              <div class="paneSecBody">
+
+                <!-- 2×2 bloki, równo -->
+                <div class="ctrlGrid" id="ctrlGrid">
+
+                  <div class="ctrlBlock" id="blkFont" data-tip="Czcionka i rozmiar: działają na zaznaczony tekst (albo na nowe znaki, jeśli nie masz zaznaczenia).">
+                    <div class="ctrlTitle">Czcionka</div>
+
+                    <div class="ctrlRow ctrlRowFull">
+                      <select class="inp" id="selRtFont"></select>
+                    </div>
+
+                    <div class="ctrlRow ctrlRowSize">
+                      <div class="miniLbl">Rozmiar</div>
+                      <input class="inp" id="inpRtSize" type="number" min="10" max="140" value="56"/>
+                    </div>
+                  </div>
+
+                  <div class="ctrlBlock" id="blkSpacing" data-tip="Odstępy i wyrównanie: działają na akapit (linijkę/paragraph), w którym stoi kursor.">
+                    <div class="ctrlTitle">Odstępy</div>
+
+                    <div class="ctrlGrid2">
+                      <label class="field">
+                        <span>Linia</span>
+                        <input class="inp" id="inpRtLine" type="number" step="0.05" min="0.70" max="1.80" value="1.05"/>
+                      </label>
+                      <label class="field">
+                        <span>Litery</span>
+                        <input class="inp" id="inpRtLetter" type="number" step="0.1" min="0" max="6" value="0"/>
+                      </label>
+                      <label class="field">
+                        <span>Przed akap.</span>
+                        <input class="inp" id="inpRtPadTop" type="number" step="1" min="0" max="60" value="8"/>
+                      </label>
+                      <label class="field">
+                        <span>Po akap.</span>
+                        <input class="inp" id="inpRtPadBot" type="number" step="1" min="0" max="60" value="8"/>
+                      </label>
+                    </div>
+
+                    <div class="ctrlRow ctrlRowAlign">
+                      <div class="miniLbl" style="opacity:.85;">Wyrównanie</div>
+                      <button class="btn sm" id="btnRtAlignCycle" type="button" data-tip="Klikaj: lewo → środek → prawo">⇆</button>
+                    </div>
+                  </div>
+
+                  <div class="ctrlBlock" id="blkStyle" data-tip="BIU działa na zaznaczony tekst (albo na nowe znaki, jeśli nie masz zaznaczenia).">
+                    <div class="ctrlTitle">Styl</div>
+                    <div class="ctrlRow ctrlRowBiu">
+                      <button class="btn sm" id="btnRtBold" type="button" aria-pressed="false"><b>B</b></button>
+                      <button class="btn sm" id="btnRtItalic" type="button" aria-pressed="false"><i>I</i></button>
+                      <button class="btn sm" id="btnRtUnderline" type="button" aria-pressed="false"><u>U</u></button>
+                    </div>
+                  </div>
+
+                  <div class="ctrlBlock" id="blkThresh" data-tip="Próg czerni/bieli. Działa w Tekst (WYSIWYG) i Obrazek.">
+                    <div class="ctrlTitle">Kontrast</div>
+                    <div class="ctrlRow ctrlRowCenter">
+                      <input class="inp inpCenter" id="inpThresh" type="number" min="40" max="220" value="128"/>
+                    </div>
+                    <div class="ctrlRow" style="margin-top:10px;">
+                      <label class="chk">
+                        <input type="checkbox" id="chkRtDither"/>
+                        Dithering
+                      </label>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- DRAW -->
+          <div class="pane" id="paneDraw" style="display:none;">
+            <div class="toolRow" style="margin-top:12px;">
+              <button class="btn sm" id="btnBrush" type="button">Pędzel</button>
+              <button class="btn sm" id="btnEraser" type="button">Gumka</button>
+              <button class="btn sm" id="btnClear" type="button">Wyczyść</button>
+            </div>
+            <div class="canvasBox">
+              <canvas id="drawCanvas" width="150" height="70"></canvas>
+            </div>
+          </div>
+
+          <!-- IMAGE -->
+          <div class="pane" id="paneImage" style="display:none;">
+            <div class="toolRow" style="margin-top:12px; align-items:center;">
+              <input class="inp" id="imgFile" type="file" accept="image/*"/>
+            </div>
+            <div class="toolRow" style="margin-top:8px; align-items:center;">
+              <label class="chk"><input type="checkbox" id="chkImgContain" checked/> Dopasuj (contain)</label>
+              <label class="chk"><input type="checkbox" id="chkImgDither"/> Dithering</label>
+            </div>
+            <div class="canvasBox">
+              <canvas id="imgCanvas" width="150" height="70"></canvas>
+            </div>
+          </div>
+
+          <div class="editorActions">
+            <button class="btn sm gold" id="btnCreate" type="button">Zapisz</button>
+            <button class="btn sm" id="btnCancel" type="button">Anuluj</button>
+            <div class="importMsg" id="mMsg"></div>
+          </div>
+        </div>
+
+        <div class="editorRight">
+          <div class="lbl">Podgląd jak na wyświetlaczu</div>
+          <div class="bigPrevWrap">
+            <canvas id="bigPreview" width="900" height="380"></canvas>
+          </div>
+          <div class="hint" style="margin-top:8px;">Kliknij podgląd, żeby otworzyć pełny ekran.</div>
+        </div>
+      </div>
+    </section>
+
+    <div class="foot">
+      <div id="msg" class="msg"></div>
+    </div>
+  </main>
+
+  <!-- Modal: wybór trybu -->
+  <div class="overlay" id="createOverlay" style="display:none;">
+    <div class="modal">
+      <div class="mTitle">Nowe logo</div>
+      <div class="mSub">Wybierz tryb tworzenia.</div>
+
+      <div class="mSection" id="modePick">
+        <div class="mGrid">
+          <button class="mTile" id="pickText" type="button">
+            <div class="mTileTitle">Napis</div>
+            <div class="mTileSub">Font jak w klasycznym logo Familiady</div>
+          </button>
+
+          <button class="mTile" id="pickTextPix" type="button">
+            <div class="mTileTitle">Tekst</div>
+            <div class="mTileSub">Edytor "word" → screen → logo</div>
+          </button>
+
+          <button class="mTile" id="pickDraw" type="button">
+            <div class="mTileTitle">Rysunek</div>
+            <div class="mTileSub">Można rysować dowolnie</div>
+          </button>
+
+          <button class="mTile" id="pickImage" type="button">
+            <div class="mTileTitle">Obrazek</div>
+            <div class="mTileSub">Import obrazków użytkownika</div>
+          </button>
+        </div>
+      </div>
+
+      <div class="importRow" style="margin-top:14px;">
+        <button class="btn sm" id="btnPickCancel" type="button">Zamknij</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Fullscreen preview -->
+  <div class="overlay" id="previewOverlay" style="display:none;">
+    <div class="modal bigModal">
+      <div class="mTitle">Podgląd</div>
+      <div class="mSub">Tak będzie wyglądać logo na wyświetlaczu</div>
+      <div class="bigModalCanvas">
+        <canvas id="bigPreviewFull" width="1600" height="700"></canvas>
+      </div>
+      <div class="importRow" style="margin-top:14px;">
+        <button class="btn sm" id="btnPreviewClose" type="button">Zamknij</button>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
