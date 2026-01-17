@@ -4,27 +4,7 @@
 export function initTextPixEditor(ctx) {
   const TYPE_PIX = "PIX_150x70";
 
-  const SYSTEM_FONTS = [
-    { label: "Systemowa", value: "system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif" },
-    { label: "Arial", value: "Arial, Helvetica, sans-serif" },
-    { label: "Verdana", value: "Verdana, Geneva, sans-serif" },
-    { label: "Trebuchet", value: "'Trebuchet MS', Trebuchet, sans-serif" },
-    { label: "Times", value: "'Times New Roman', Times, serif" },
-    { label: "Georgia", value: "Georgia, serif" },
-    { label: "Courier", value: "'Courier New', Courier, monospace" },
-    { label: "Consolas", value: "Consolas, 'Courier New', monospace" },
-    { label: "Impact", value: "Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif" },
-    { label: "Segoe UI", value: "Segoe UI, system-ui, sans-serif" },
-    { label: "Roboto", value: "Roboto, system-ui, sans-serif" },
-    { label: "Calibri", value: "Calibri, Segoe UI, sans-serif" },
-    { label: "Cambria", value: "Cambria, 'Times New Roman', serif" },
-    { label: "Garamond", value: "Garamond, 'Times New Roman', serif" },
-    { label: "Tahoma", value: "Tahoma, Verdana, sans-serif" },
-    { label: "Franklin Gothic", value: "'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif" },
-    { label: "Comic Sans", value: "'Comic Sans MS', 'Comic Sans', cursive" },
-
-  ];
-
+  let SYSTEM_FONTS = [];
 
   // DOM
   const paneTextPix = document.getElementById("paneTextPix");
@@ -107,25 +87,55 @@ export function initTextPixEditor(ctx) {
     return s.split(",")[0].trim().replace(/["']/g, "");
   }
 
-  function fillFontSelectOnce() {
+  async function loadSystemFonts() {
+    if (SYSTEM_FONTS.length) return SYSTEM_FONTS;
+  
+    try {
+      const res = await fetch("./fonts/system-fonts.json", { cache: "no-store" });
+      if (!res.ok) throw new Error("Nie mogę wczytać fonts.json");
+      const data = await res.json();
+  
+      if (!Array.isArray(data)) {
+        throw new Error("fonts.json nie jest tablicą");
+      }
+  
+      SYSTEM_FONTS = data;
+      return SYSTEM_FONTS;
+    } catch (err) {
+      console.error("Błąd ładowania fontów:", err);
+      SYSTEM_FONTS = [];
+      return SYSTEM_FONTS;
+    }
+  }
+
+  async function fillFontSelectOnce() {
     if (!selRtFont) return;
-    if (selRtFont.options && selRtFont.options.length > 0) return;
+  
+    const fonts = await loadSystemFonts();
+    if (!fonts.length) return;
   
     selRtFont.innerHTML = "";
-    // opcja “mixed/auto” jak Word
+  
+    // jak Word: puste = mixed / auto
     const optEmpty = document.createElement("option");
     optEmpty.value = "";
     optEmpty.textContent = "—";
     selRtFont.appendChild(optEmpty);
   
-    for (const f of SYSTEM_FONTS) {
+    for (const f of fonts) {
+      if (!f || !f.label || !f.value) continue;
+  
       const opt = document.createElement("option");
       opt.value = f.value;
       opt.textContent = f.label;
+  
+      // ✨ sample wizualny (bardzo ważne dla UX)
       opt.style.fontFamily = f.value;
+  
       selRtFont.appendChild(opt);
     }
   }
+
 
   function isCollapsed() {
     try { return !!editor?.selection?.getRng?.()?.collapsed; } catch { return false; }
@@ -692,7 +702,11 @@ export function initTextPixEditor(ctx) {
     if (!window.tinymce) throw new Error("Brak TinyMCE (script nie wczytany).");
 
     // fonty z selecta -> w formacie TinyMCE "Name=css-stack"
-    const fontFormats = [];
+    const fontFormats = SYSTEM_FONTS
+      .filter(f => f.label && f.value)
+      .map(f => `${f.label}=${f.value}`)
+      .join(";");
+    
     if (selRtFont) {
       for (const opt of Array.from(selRtFont.options || [])) {
         const v = String(opt.value || "").trim();
@@ -701,6 +715,8 @@ export function initTextPixEditor(ctx) {
         fontFormats.push(`${name}=${v}`);
       }
     }
+    
+    await fillFontSelectOnce();
 
     // init inline
     await window.tinymce.init({
@@ -719,7 +735,7 @@ export function initTextPixEditor(ctx) {
         body{ margin:0; padding:0; background:#000; color:#fff; font-size:50px; }
         p{ margin:0; line-height:1; }
       `,
-      font_family_formats: fontFormats.join(";"),
+      font_family_formats: fontFormats,
       setup: (ed) => {
         editor = ed;
 
