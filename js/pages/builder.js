@@ -406,7 +406,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
   btnLogoEditor?.addEventListener("click", async () => {
-    location.href = "logo-editor.html";
+    location.href = "./logo-editor/logo-editor.html";
   });
 
   tabPollText?.addEventListener("click", () => setActiveTab(TYPES.POLL_TEXT));
