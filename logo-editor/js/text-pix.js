@@ -50,6 +50,43 @@ export function initTextPixEditor(ctx) {
   let _deb = null;
   let _token = 0;
 
+  let uiBusy = 0;
+  const uiLock = () => { uiBusy++; };
+  const uiUnlock = () => { uiBusy = Math.max(0, uiBusy - 1); };
+  const isUiBusy = () => uiBusy > 0;
+
+  // ==========================================
+  //  UI-BUSY: gdy klikamy po kontrolkach, NIE wolno "kradać fokusu"
+  // ==========================================
+  function installUiBusyGuards() {
+    const controlsRoot = document.getElementById("ctrlGrid") || paneTextPix;
+    if (!controlsRoot) return;
+  
+    // Gdy user klika po input/select/button, blokujemy sync i focus w edytor
+    controlsRoot.addEventListener("pointerdown", (ev) => {
+      const t = ev.target;
+      if (!t) return;
+  
+      if (t.closest?.("input,select,button,textarea,label")) {
+        uiLock();
+        // kluczowe: NIE preventDefault (bo select ma się otworzyć)
+        ev.stopPropagation();
+      }
+    }, true);
+  
+    const unlock = () => uiUnlock();
+    controlsRoot.addEventListener("pointerup", unlock, true);
+    controlsRoot.addEventListener("pointercancel", unlock, true);
+    controlsRoot.addEventListener("click", unlock, true);
+    window.addEventListener("blur", unlock);
+  }
+
+  function fontHead(fontStack) {
+    const s = String(fontStack || "").trim();
+    if (!s) return "";
+    return s.split(",")[0].trim().replace(/["']/g, "");
+  }
+
   // ==========================================
   //  A) Style detect (Word-like)
   // ==========================================
@@ -172,6 +209,7 @@ export function initTextPixEditor(ctx) {
 
   function syncUiFromSelection() {
     if (!editor) return;
+    if (isUiBusy()) return;
 
     // BIU
     try {
@@ -201,9 +239,33 @@ export function initTextPixEditor(ctx) {
     // PARAGRAPH per akapit
     {
       const lh = readMixedParagraphStyle("line-height");
-      // line-height bywa liczbą bez px
-      if (inpRtLine) inpRtLine.value = lh.mixed ? "" : (lh.value ? String(lh.value).replace("px", "") : "");
+      if (!inpRtLine) { /* nic */ }
+      else if (lh.mixed) {
+        inpRtLine.value = "";
+      } else {
+        const raw = String(lh.value || "").trim();
+        if (!raw || raw === "normal") {
+          inpRtLine.value = ""; // jak Word: pusto
+        } else if (/px$/.test(raw)) {
+          // px -> przelicz na ratio względem font-size akapitu
+          const p = getCurrentParagraph();
+          const cs = p ? elementStyle(p) : null;
+          const fs = cs ? String(cs.getPropertyValue("font-size") || "").trim() : "";
+          const lhPx = Number(raw.replace("px",""));
+          const fsPx = Number(String(fs).replace("px",""));
+          if (Number.isFinite(lhPx) && Number.isFinite(fsPx) && fsPx > 0) {
+            inpRtLine.value = String(Math.round((lhPx / fsPx) * 100) / 100);
+          } else {
+            inpRtLine.value = "";
+          }
+        } else {
+          // liczba typu "1.05"
+          const num = Number(raw);
+          inpRtLine.value = Number.isFinite(num) ? String(num) : "";
+        }
+      }
     }
+
 
     {
       const mt = readMixedParagraphStyle("margin-top");
@@ -235,9 +297,11 @@ export function initTextPixEditor(ctx) {
     if (!editor) return;
     const v = String(fontValue || "").trim();
     if (!v) return;
-    editor.focus();
+    if (!isUiBusy()) editor.focus();
     // TinyMCE: execCommand FontName działa na selection + przyszłe znaki
-    editor.execCommand("FontName", false, v);
+    const head = fontHead(v);
+    if (!head) return;
+    editor.execCommand("FontName", false, head);
     ctx.markDirty?.();
     schedulePreview(120);
     syncUiFromSelection();
@@ -248,8 +312,17 @@ export function initTextPixEditor(ctx) {
     const n = Number(px);
     if (!Number.isFinite(n)) return;
     const v = `${clamp(n, 10, 140)}px`;
-    editor.focus();
-    editor.execCommand("FontSize", false, v);
+  
+    if (!isUiBusy()) editor.focus();
+  
+    // formatter: stabilnie działa i na selection i jako "pending"
+    editor.formatter.register("fontsize_px", {
+      inline: "span",
+      styles: { "font-size": v },
+      remove_similar: true,
+    });
+    editor.formatter.apply("fontsize_px");
+  
     ctx.markDirty?.();
     schedulePreview(120);
     syncUiFromSelection();
@@ -260,7 +333,7 @@ export function initTextPixEditor(ctx) {
     const n = Number(px);
     if (!Number.isFinite(n)) return;
     const v = `${clamp(n, 0, 20)}px`;
-    editor.focus();
+    if (!isUiBusy()) editor.focus();
 
     // najstabilniej: formatter z inline span style
     editor.formatter.register("letterspacing", {
@@ -291,7 +364,7 @@ export function initTextPixEditor(ctx) {
 
   function cmdToggle(name) {
     if (!editor) return;
-    editor.focus();
+    if (!isUiBusy()) editor.focus();
     editor.execCommand(name);
     ctx.markDirty?.();
     schedulePreview(80);
@@ -517,7 +590,10 @@ export function initTextPixEditor(ctx) {
         });
 
         // sync UI
-        ed.on("NodeChange SelectionChange KeyUp MouseUp", () => syncUiFromSelection());
+        ed.on("NodeChange SelectionChange KeyUp MouseUp", () => {
+          if (isUiBusy()) return;
+          syncUiFromSelection();
+        });
 
         // preview debounce on edits
         ed.on("input Undo Redo SetContent", () => {
@@ -604,6 +680,7 @@ export function initTextPixEditor(ctx) {
       if (!_uiBound) { bindUiOnce(); _uiBound = true; }
 
       await ensureEditor();
+      installUiBusyGuards();
 
       // reset edytora na start sesji
       editor.setContent("");
