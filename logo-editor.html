@@ -76,16 +76,7 @@
         <!-- TEXT_PIX (Tekst) -->
         <div class="pane" id="paneTextPix" style="display:none;">
         
-          <!-- Sekcja 1: Edytor -->
-          <div class="paneSec">
-            <div class="paneSecTitle">Tekst</div>
-            <div class="paneSecBody">
-              <div class="canvasBox">
-                <div id="rtEditor" class="rtEditor" contenteditable="true" spellcheck="false"></div>
-              </div>
-              <div class="warn" id="pixWarn" style="display:none;"></div>
-            </div>
-          </div>
+
         
           <!-- Sekcja 2: Sterowanie -->
           <div class="paneSec">
@@ -126,7 +117,7 @@
                 </div>
         
                 <!-- 2) Odstępy i wyrównanie -->
-                <div class="ctrlBlock" id="blkSpacing" data-tip="Linia i litery wpływają na to, ile tekstu zmieści się w 150×70.">
+                <div class="ctrlBlock" id="blkSpacing" data-tip="Linia i litery wpływają na to, ile tekstu się zmieści.">
                   <div class="ctrlTitle">Odstępy</div>
         
                   <div class="ctrlGrid2">
@@ -164,7 +155,7 @@
                 </div>
         
                 <!-- 4) Kontrast -->
-                <div class="ctrlBlock" id="blkThresh" data-tip="Próg czerni/bieli. Działa dla Tekstu i Obrazka.">
+                <div class="ctrlBlock" id="blkThresh" data-tip="Próg czerni/bieli.">
                   <div class="ctrlTitle">Kontrast</div>
                   
                   <div class="ctrlRow ctrlRowCenter">
@@ -179,6 +170,16 @@
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
+        <!-- Sekcja 1: Edytor -->
+          <div class="paneSec">
+            <div class="paneSecTitle">Tekst</div>
+            <div class="paneSecBody">
+              <div class="canvasBox">
+                <div id="rtEditor" class="rtEditor" contenteditable="true" spellcheck="false"></div>
+              </div>
+              <div class="warn" id="pixWarn" style="display:none;"></div>
             </div>
           </div>
         </div>
