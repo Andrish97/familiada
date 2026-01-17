@@ -4,6 +4,19 @@
 export function initTextPixEditor(ctx) {
   const TYPE_PIX = "PIX_150x70";
 
+  const SYSTEM_FONTS = [
+    { label: "Systemowa", value: "system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif" },
+    { label: "Arial", value: "Arial, Helvetica, sans-serif" },
+    { label: "Verdana", value: "Verdana, Geneva, sans-serif" },
+    { label: "Trebuchet", value: "'Trebuchet MS', Trebuchet, sans-serif" },
+    { label: "Times", value: "'Times New Roman', Times, serif" },
+    { label: "Georgia", value: "Georgia, serif" },
+    { label: "Courier", value: "'Courier New', Courier, monospace" },
+    { label: "Consolas", value: "Consolas, 'Courier New', monospace" },
+    { label: "Impact", value: "Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif" },
+  ];
+
+
   // DOM
   const paneTextPix = document.getElementById("paneTextPix");
   const rtEditorEl = document.getElementById("rtEditor");
@@ -86,6 +99,51 @@ export function initTextPixEditor(ctx) {
     if (!s) return "";
     return s.split(",")[0].trim().replace(/["']/g, "");
   }
+
+  function fillFontSelectOnce() {
+    if (!selRtFont) return;
+    if (selRtFont.options && selRtFont.options.length > 0) return;
+  
+    selRtFont.innerHTML = "";
+    // opcja “mixed/auto” jak Word
+    const optEmpty = document.createElement("option");
+    optEmpty.value = "";
+    optEmpty.textContent = "—";
+    selRtFont.appendChild(optEmpty);
+  
+    for (const f of SYSTEM_FONTS) {
+      const opt = document.createElement("option");
+      opt.value = f.value;
+      opt.textContent = f.label;
+      selRtFont.appendChild(opt);
+    }
+  }
+
+  function isCollapsed() {
+    try { return !!editor?.selection?.getRng?.()?.collapsed; } catch { return false; }
+  }
+  
+  function applyPendingInlineStyle(styleObj) {
+    if (!editor) return;
+    const rng = editor.selection.getRng();
+    if (!rng || !rng.collapsed) return false;
+  
+    // wstaw span ze ZWSP jako “nośnik stylu”
+    const span = editor.getDoc().createElement("span");
+    for (const [k,v] of Object.entries(styleObj)) span.style[k] = v;
+    span.appendChild(editor.getDoc().createTextNode("\u200b"));
+  
+    rng.insertNode(span);
+  
+    // ustaw kursor ZA ZWSP
+    const nr = editor.getDoc().createRange();
+    nr.setStart(span.firstChild, 1);
+    nr.setEnd(span.firstChild, 1);
+    editor.selection.setRng(nr);
+    return true;
+  }
+
+
 
   // ==========================================
   //  A) Style detect (Word-like)
@@ -294,6 +352,13 @@ export function initTextPixEditor(ctx) {
   //  B) Apply formatting (TinyMCE)
   // ==========================================
   function applyFont(fontValue) {
+    if (isCollapsed()) {
+      // tylko “następny znak”
+      applyPendingInlineStyle({ fontFamily: fontValue });
+      ctx.markDirty?.(); schedulePreview(120); syncUiFromSelection();
+      return;
+    }
+
     if (!editor) return;
     const v = String(fontValue || "").trim();
     if (!v) return;
@@ -308,6 +373,11 @@ export function initTextPixEditor(ctx) {
   }
 
   function applyFontSize(px) {
+    if (isCollapsed()) {
+      applyPendingInlineStyle({ fontSize: v });
+      ...
+      return;
+    }
     if (!editor) return;
     const n = Number(px);
     if (!Number.isFinite(n)) return;
@@ -329,6 +399,11 @@ export function initTextPixEditor(ctx) {
   }
 
   function applyLetterSpacing(px) {
+    if (isCollapsed()) {
+      applyPendingInlineStyle({ letterSpacing: v });
+      ...
+      return;
+    }
     if (!editor) return;
     const n = Number(px);
     if (!Number.isFinite(n)) return;
@@ -375,7 +450,7 @@ export function initTextPixEditor(ctx) {
   //  C) Screenshot -> bits
   // ==========================================
   function canvasToBits208(canvas, threshold, dither) {
-    const g = canvas.getContext("2d");
+    const g = canvas.getContext("2d", { willReadFrequently: true });
     const { data } = g.getImageData(0, 0, canvas.width, canvas.height);
 
     const w = BIG_W, h = BIG_H;
@@ -451,42 +526,84 @@ export function initTextPixEditor(ctx) {
     return box.minX <= pad || box.minY <= pad || box.maxX >= (w - 1 - pad) || box.maxY >= (h - 1 - pad);
   }
 
+  let _shotHost = null;
+
+  function ensureShotHost() {
+    if (_shotHost) return _shotHost;
+    _shotHost = document.createElement("div");
+    _shotHost.style.position = "fixed";
+    _shotHost.style.left = "-99999px";
+    _shotHost.style.top = "0";
+    _shotHost.style.width = "1px";
+    _shotHost.style.height = "1px";
+    _shotHost.style.overflow = "hidden";
+    _shotHost.style.pointerEvents = "none";
+    _shotHost.style.opacity = "0";
+    document.body.appendChild(_shotHost);
+    return _shotHost;
+  }
+  
+  function buildSnapshotNode(w, h) {
+    // Bierzemy content z TinyMCE (stabilny HTML), bez jego “żywych” elementów
+    const host = ensureShotHost();
+    host.innerHTML = "";
+  
+    const box = document.createElement("div");
+    box.style.width = `${w}px`;
+    box.style.height = `${h}px`;
+    box.style.background = "#000";
+    box.style.color = "#fff";
+    box.style.overflow = "hidden";
+    box.style.padding = "10px";
+    box.style.boxSizing = "border-box";
+  
+    // UWAGA: bierzemy HTML z edytora, ale bez caretów itp.
+    const html = String(editor?.getContent?.({ format: "html" }) || "").trim();
+    box.innerHTML = html || "";
+  
+    // Minimalne CSS, żeby wyglądało jak u Ciebie
+    const style = document.createElement("style");
+    style.textContent = `
+      *{ box-sizing:border-box; }
+      p{ margin:0; }
+      body{ margin:0; }
+      span{ white-space:inherit; }
+    `;
+    box.prepend(style);
+  
+    host.appendChild(box);
+    return box;
+  }
+
+
   async function captureTopTo208x88Canvas() {
     if (!window.html2canvas) throw new Error("Brak html2canvas (script nie wczytany).");
-
-    // szerokość edytora = to co widzisz
+  
     const w = Math.max(1, Math.floor(rtEditorEl.clientWidth));
     const h = Math.max(1, Math.floor(w * (BIG_H / BIG_W)));
-
-    // zawsze capture z góry (plansza widzi górę)
-    const prevScrollTop = rtEditorEl.scrollTop;
-    rtEditorEl.scrollTop = 0;
-
-    try {
-      const shot = await window.html2canvas(rtEditorEl, {
-        backgroundColor: "#000",
-        scale: 1,
-        width: w,
-        height: h,
-        // html2canvas robi render wg okna, więc stabilizujemy:
-        scrollX: 0,
-        scrollY: 0,
-        useCORS: true
-      });
-
-      // przeskaluj do dokładnie 208x88
-      const out = document.createElement("canvas");
-      out.width = BIG_W;
-      out.height = BIG_H;
-      const g = out.getContext("2d");
-      g.imageSmoothingEnabled = true;
-      g.fillStyle = "#000";
-      g.fillRect(0, 0, BIG_W, BIG_H);
-      g.drawImage(shot, 0, 0, BIG_W, BIG_H);
-      return out;
-    } finally {
-      rtEditorEl.scrollTop = prevScrollTop;
-    }
+  
+    // snapshot node (bez TinyMCE)
+    const node = buildSnapshotNode(w, h);
+  
+    const shot = await window.html2canvas(node, {
+      backgroundColor: "#000",
+      scale: 1,
+      width: w,
+      height: h,
+      scrollX: 0,
+      scrollY: 0,
+      useCORS: true
+    });
+  
+    const out = document.createElement("canvas");
+    out.width = BIG_W;
+    out.height = BIG_H;
+    const g = out.getContext("2d");
+    g.imageSmoothingEnabled = true;
+    g.fillStyle = "#000";
+    g.fillRect(0, 0, BIG_W, BIG_H);
+    g.drawImage(shot, 0, 0, BIG_W, BIG_H);
+    return out;
   }
 
   async function compileToBits150() {
@@ -678,7 +795,8 @@ export function initTextPixEditor(ctx) {
       show(paneTextPix, true);
 
       if (!_uiBound) { bindUiOnce(); _uiBound = true; }
-
+      
+      fillFontSelectOnce();
       await ensureEditor();
       installUiBusyGuards();
 
