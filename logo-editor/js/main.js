@@ -83,6 +83,10 @@ let editorDirty = false;
 let FONT_3x10 = null; // char -> [10 strings]
 let GLYPH_5x7 = null; // char -> [7 ints]
 
+let sessionSavedLogoId = null; // id logo zapisanego w tej sesji edytora (do UPDATE/DELETE)
+let sessionSavedMode = null;   // żeby Anuluj wiedział co resetować
+
+
 /* =========================================================
    UI helpers
 ========================================================= */
@@ -355,7 +359,21 @@ async function listLogos(){
 }
 
 async function createLogo(row){
-  const { error } = await sb().from("user_logos").insert(row);
+  const { data, error } = await sb()
+    .from("user_logos")
+    .insert(row)
+    .select("id")
+    .single();
+
+  if (error) throw error;
+  return data.id;
+}
+
+async function updateLogo(id, patch){
+  const { error } = await sb()
+    .from("user_logos")
+    .update(patch)
+    .eq("id", id);
   if (error) throw error;
 }
 
@@ -621,9 +639,13 @@ function setEditorShellMode(mode){
 }
 
 function openEditor(mode){
-  hideAllPanes();
+   hideAllPanes();
   setEditorShellMode(mode);
   editorMode = mode;
+
+   sessionSavedLogoId = null;
+   sessionSavedMode = mode;
+   
   clearDirty();
   setEditorMsg("");
 
@@ -690,6 +712,42 @@ function closeEditor(force = false){
   clearDirty();
 }
 
+async function cancelSessionSavedLogo(){
+  // 1) jeśli nic nie zapisano w tej sesji -> tylko reset UI
+  if (!sessionSavedLogoId) {
+    setEditorMsg("Anulowano (nic nie zapisano).");
+    // reset bieżącego edytora bez zamykania
+    if (editorMode === "TEXT") textEditor.open();
+    if (editorMode === "TEXT_PIX") textPixEditor.open();
+    if (editorMode === "DRAW") drawEditor.open();
+    if (editorMode === "IMAGE") imageEditor.open();
+    clearDirty();
+    return;
+  }
+
+  // 2) jeśli zapisano -> usuń rekord i wyczyść sesję
+  try {
+    setEditorMsg("Usuwam zapis z tej sesji…");
+    await deleteLogo(sessionSavedLogoId);
+    sessionSavedLogoId = null;
+
+    await refresh();
+
+    setEditorMsg("Anulowano — zapis usunięty.");
+    // reset bieżącego edytora bez zamykania
+    if (editorMode === "TEXT") textEditor.open();
+    if (editorMode === "TEXT_PIX") textPixEditor.open();
+    if (editorMode === "DRAW") drawEditor.open();
+    if (editorMode === "IMAGE") imageEditor.open();
+
+    clearDirty();
+  } catch (e) {
+    console.error(e);
+    alert("Nie udało się usunąć zapisu z tej sesji.\n\n" + (e?.message || e));
+  }
+}
+
+
 function updateBigPreviewFromPayload(payload){
   if (!payload) return;
   if (payload.kind === "GLYPH") renderRows30x10ToBig(payload.rows, bigPreview);
@@ -718,21 +776,32 @@ async function handleCreate(){
       return;
     }
 
-    await createLogo({
+    const patch = {
       user_id: currentUser.id,
       name,
       type: res.type,
-      is_active: false,
       payload: res.payload,
-    });
+      is_active: false,
+    };
 
-    setEditorMsg("Zapisano.");
+    if (!sessionSavedLogoId) {
+      // 1. zapis w tej sesji = INSERT (zwraca id)
+      sessionSavedLogoId = await createLogo(patch);
+      setEditorMsg("Zapisano.");
+    } else {
+      // kolejne zapisy w tej sesji = UPDATE (bez konfliktu unique name)
+      await updateLogo(sessionSavedLogoId, {
+        name: patch.name,
+        type: patch.type,
+        payload: patch.payload,
+      });
+      setEditorMsg("Zaktualizowano zapis.");
+    }
+
     clearDirty();
     await refresh();
-  } catch (e){
-    console.error(e);
-    setEditorMsg("Błąd: " + (e?.message || e));
-    alert("Nie udało się zapisać.\n\n" + (e?.message || e));
+    return;
+
   }
 }
 
@@ -817,17 +886,7 @@ document.addEventListener("DOMContentLoaded", async () => {
    // X w prawym górnym rogu — pyta, jeśli są zmiany
    btnEditorClose?.addEventListener("click", () => closeEditor(false));
    
-   // ANULUJ — świadoma rezygnacja, ZAWSZE bez alertu
-   btnCancel?.addEventListener("click", () => {
-     // reset bieżącego edytora bez zamykania
-     if (editorMode === "TEXT") textEditor.open();
-     if (editorMode === "TEXT_PIX") textPixEditor.open();
-     if (editorMode === "DRAW") drawEditor.open();
-     if (editorMode === "IMAGE") imageEditor.open();
-     clearDirty();
-     setEditorMsg("Wyczyszczono.");
-   });
-
+   btnCancel?.addEventListener("click", () => cancelSessionSavedLogo());
 
   // save
   btnCreate?.addEventListener("click", handleCreate);
