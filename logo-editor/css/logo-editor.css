@@ -372,6 +372,20 @@ body.logo-editor-body .wrap{ max-width:1200px; }
 .editorShell[data-mode="TEXT_PIX"] #blkThresh{ display:block; }
 .editorShell[data-mode="IMAGE"] #blkThresh{ display:block; }
 
+/* TEXT_PIX: Odstępy zajmują miejsce po usuniętym Kontraście */
+.editorShell[data-mode="TEXT_PIX"] #ctrlGrid{
+  grid-template-columns: 1fr 1fr;
+}
+
+.editorShell[data-mode="TEXT_PIX"] #blkSpacing{
+  grid-row: span 2;     /* prawa kolumna na 2 wiersze */
+  align-self: stretch;
+}
+
+.editorShell[data-mode="TEXT_PIX"] #blkStyle{
+  align-self: start;    /* żeby styl nie rozciągał się bez sensu */
+}
+
 /* ==========================================================
    Rysunek / Obraz
 ========================================================== */
