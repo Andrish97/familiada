@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>TinyMCE — sandbox</title>
+
+  <!-- TinyMCE z CDN -->
+  <script src="https://cdn.tiny.cloud/1/no-api-key/tinymce/7/tinymce.min.js" referrerpolicy="origin"></script>
+
+  <style>
+    :root{
+      --bg:#0f0f12;
+      --card:rgba(255,255,255,.06);
+      --line:rgba(255,255,255,.14);
+      --gold:#ffeaA6;
+      --txt:#fff;
+    }
+    body{
+      margin:0;
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif;
+      background:var(--bg);
+      color:var(--txt);
+    }
+    .wrap{
+      max-width:1100px;
+      margin:0 auto;
+      padding:18px;
+      display:grid;
+      gap:14px;
+    }
+    .top{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      flex-wrap:wrap;
+    }
+    .title{
+      font-weight:1000;
+      letter-spacing:.06em;
+      text-transform:uppercase;
+      font-size:14px;
+      opacity:.95;
+    }
+    .hint{ opacity:.8; font-size:13px; }
+    .card{
+      border-radius:18px;
+      border:1px solid var(--line);
+      background:var(--card);
+      padding:14px;
+      box-shadow:0 24px 60px rgba(0,0,0,.45);
+    }
+
+    /* “Stage” jak u Ciebie: trzymamy proporcje 208/88 */
+    .stage{
+      border-radius:16px;
+      border:1px solid rgba(255,255,255,.14);
+      background:#000;
+      overflow:hidden;
+      aspect-ratio:208/88;
+      position:relative;
+    }
+
+    /* TinyMCE w środku stage */
+    textarea#editor { visibility:hidden; } /* TinyMCE podmieni */
+
+    /* lekki “podgląd stylu strony” dla iframe edytora */
+    .row{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+      margin-top:10px;
+    }
+    .btn{
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,.16);
+      background:rgba(255,255,255,.05);
+      color:#fff;
+      padding:8px 12px;
+      cursor:pointer;
+      font-weight:900;
+      font-size:13px;
+    }
+    .btn:hover{ filter:brightness(1.08); }
+    .btn.gold{
+      border-color:rgba(255,234,166,.35);
+      background:rgba(255,234,166,.10);
+      color:var(--gold);
+    }
+    .out{
+      font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;
+      font-size:12px;
+      white-space:pre-wrap;
+      word-break:break-word;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.10);
+      background:rgba(0,0,0,.25);
+      padding:10px;
+      max-height:220px;
+      overflow:auto;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <div class="top">
+      <div>
+        <div class="title">TinyMCE sandbox</div>
+        <div class="hint">To jest “goły” edytor do przeklikania. Zero logiki 150×70 — tylko wpisywanie i formatowanie.</div>
+      </div>
+      <div class="row">
+        <button class="btn" id="btnGetHtml" type="button">Pokaż HTML</button>
+        <button class="btn" id="btnGetText" type="button">Pokaż tekst</button>
+        <button class="btn gold" id="btnReset" type="button">Wyczyść</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="stage">
+        <textarea id="editor">
+<p><strong>FAMILIADA</strong></p>
+<p>Druga linia…</p>
+        </textarea>
+      </div>
+
+      <div class="row">
+        <div class="hint">Wyjście (debug):</div>
+      </div>
+      <div class="out" id="out">—</div>
+    </div>
+  </div>
+
+  <script>
+    // Init TinyMCE
+    tinymce.init({
+      selector: '#editor',
+      height: '100%',
+      width: '100%',
+
+      // Żeby pasowało do “stage”
+      inline: false,
+      menubar: true,
+      statusbar: true,
+
+      // Ustawienia edycji
+      language: 'pl',
+      branding: false,
+
+      plugins: [
+        'lists', 'link', 'paste', 'autolink', 'charmap', 'code', 'visualblocks'
+      ],
+
+      toolbar: [
+        'undo redo | blocks | fontfamily fontsize | bold italic underline | alignleft aligncenter alignright',
+        'bullist numlist | outdent indent | removeformat | code'
+      ].join(' | '),
+
+      // Fonty i rozmiary (na start)
+      font_family_formats: [
+        'System=system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif',
+        'Monospace=ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace',
+        'Arial=Arial,Helvetica,sans-serif',
+        'Georgia=Georgia,serif',
+        'Impact=Impact,sans-serif'
+      ].join(';'),
+
+      fontsize_formats: '10px 12px 14px 16px 18px 24px 32px 40px 56px 72px',
+
+      // Styl “ciemny ekran”
+      content_style: `
+        html,body{margin:0;padding:0;background:#000;color:#fff;}
+        body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif;
+             font-size:56px; line-height:1.05; padding:10px;}
+        p{margin:0;}
+      `,
+
+      setup(editor){
+        // szybki podgląd, że działa
+        editor.on('init', () => {
+          document.getElementById('out').textContent = 'TinyMCE gotowy.';
+        });
+      }
+    });
+
+    // Debug przyciski
+    const out = document.getElementById('out');
+
+    document.getElementById('btnGetHtml').addEventListener('click', () => {
+      const ed = tinymce.get('editor');
+      out.textContent = ed ? ed.getContent({ format: 'html' }) : '(brak edytora)';
+    });
+
+    document.getElementById('btnGetText').addEventListener('click', () => {
+      const ed = tinymce.get('editor');
+      out.textContent = ed ? ed.getContent({ format: 'text' }) : '(brak edytora)';
+    });
+
+    document.getElementById('btnReset').addEventListener('click', () => {
+      const ed = tinymce.get('editor');
+      if (ed) ed.setContent('');
+      out.textContent = 'Wyczyszczono.';
+    });
+  </script>
+</body>
+</html>
