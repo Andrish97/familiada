@@ -381,6 +381,20 @@ body.logo-editor-body .wrap{ max-width:1200px; }
   align-self: start;    /* żeby styl nie rozciągał się bez sensu */
 }
 
+/* TinyMCE inline: niech nie dokłada własnych ramek */
+#paneTextPix .tox-tinymce,
+#paneTextPix .tox-editor-container,
+#paneTextPix .tox-edit-area,
+#paneTextPix .tox-edit-area__iframe {
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+/* Zaznaczenie ma być widoczne na czarnym tle */
+#paneTextPix ::selection{
+  background: rgba(255,234,166,.35);
+}
+
 /* ==========================================================
    Rysunek / Obraz
 ========================================================== */
