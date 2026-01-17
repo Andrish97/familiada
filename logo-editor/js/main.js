@@ -753,36 +753,39 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   await loadDefaultLogo();
 
-  // init modulow
-  textEditor = initTextEditor({
-    FONT_3x10,
-    onDirty: markDirty,
-    onPreview: updateBigPreviewFromPayload,
-  });
+  const editorCtx = {
+    // stan
+    getMode: () => editorMode,
 
+    // dirty
+    markDirty,
+    clearDirty,
+
+    // komunikat w edytorze
+    setEditorMsg,
+
+    // preview -> main canvas
+    onPreview: updateBigPreviewFromPayload,
+
+    // font
+    getFont3x10: () => FONT_3x10,
+
+    // bitpack
+    packBitsRowMajorMSB,
+
+    // rozmiary
+    DOT_W,
+    DOT_H,
+  };
+
+  textEditor = initTextEditor(editorCtx);
   textPixEditor = initTextPixEditor({
-    onDirty: markDirty,
-    onPreview: updateBigPreviewFromPayload,
-    packBitsRowMajorMSB,
-    DOT_W,
-    DOT_H,
+    ...editorCtx,
+    BIG_W: 208,
+    BIG_H: 88,
   });
-
-  drawEditor = initDrawEditor({
-    onDirty: markDirty,
-    onPreview: updateBigPreviewFromPayload,
-    packBitsRowMajorMSB,
-    DOT_W,
-    DOT_H,
-  });
-
-  imageEditor = initImageEditor({
-    onDirty: markDirty,
-    onPreview: updateBigPreviewFromPayload,
-    packBitsRowMajorMSB,
-    DOT_W,
-    DOT_H,
-  });
+  drawEditor = initDrawEditor(editorCtx);
+  imageEditor = initImageEditor(editorCtx);
 
   // topbar
   btnBack?.addEventListener("click", () => { location.href = "../builder.html"; });
