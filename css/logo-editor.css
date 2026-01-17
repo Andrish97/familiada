@@ -598,7 +598,7 @@ body.logo-editor-body .wrap{ max-width:1200px; }
 #blkFont{
   display: flex;
   flex-direction: column;
-  gap: 18px; /* ⬅️ główny rytm sekcji */
+  gap: 5px; /* ⬅️ główny rytm sekcji */
 }
 
 
