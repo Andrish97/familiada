@@ -130,6 +130,7 @@ let FONT_3x10 = null; // char -> [10 strings length<=3]
 let GLYPH_5x7 = null; // char -> [7 ints]
 
 let rtAlign = "center"; // left|center|right
+let rtDeb = null; // debounce timer dla renderu TEXT_PIX
 
 /* =========================================================
    UI helpers
@@ -883,7 +884,7 @@ function renderPlainTextFallback(text, opts) {
 
   // prosty wrap
   const padX = 10;
-  const yStart = opts.padTopPx || 0;
+  const yStart = opts.beforePx || 0;
   const maxW = c.width - padX * 2;
   const x0 = ctx.textAlign === "left" ? padX : ctx.textAlign === "right" ? c.width - padX : Math.floor(c.width / 2);
 
@@ -909,7 +910,7 @@ function renderPlainTextFallback(text, opts) {
   for (const ln of lines) {
     ctx.fillText(ln, x0, y);
     y += lhPx;
-    if (y > c.height - (opts.padBotPx || 0)) break;
+    if (y > c.height - (opts.afterPx || 0)) break;
   }
 
   return c;
@@ -1673,13 +1674,16 @@ document.addEventListener("DOMContentLoaded", async () => {
        updateTextPixPreviewAsync();
      });
    
-     el?.addEventListener("input", () => {
-       // natychmiast WYSIWYG w edytorze
-       markDirty();
-       rtApplyUiToEditor();
+   el?.addEventListener("input", () => {
+     // natychmiast WYSIWYG w edytorze
+     markDirty();
+     rtApplyUiToEditor();
    
-       // render debounce (jak było)
-     });
+     // debounce renderu podglądu
+     clearTimeout(rtDeb);
+     rtDeb = setTimeout(() => updateTextPixPreviewAsync(), 120);
+   });
+
    };
 
   bindNum(inpRtSize, 56, 10, 140);
