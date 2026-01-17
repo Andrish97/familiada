@@ -118,100 +118,6 @@ function confirmCloseIfDirty(){
   return confirm("Jeśli teraz zamkniesz, zmiany nie zostaną zapisane.");
 }
 
-
-// --- ctx: wspólny “kontrakt” dla wszystkich modułów
-const ctx = {
-  // helpers
-  show,
-  setMsg,
-  setEditorMsg,
-  markDirty,
-  clearDirty,
-  clamp,
-
-  // tryb i podgląd
-  getMode: () => editorMode,
-  setBits150: (bits) => { draftBits150 = bits; },
-  getBits150: () => draftBits150,
-  setRows30x10: (rows) => { draftRows30x10 = rows; },
-  getRows30x10: () => draftRows30x10,
-  updateBigPreview,
-
-  // elementy potrzebne modułom (to MUSI być)
-  el: {
-    paneText,
-    paneTextPix,
-    paneDraw,
-    paneImage,
-
-    textValue,
-    textWarn,
-    textMeasure,
-    btnCharsToggle,
-    charsList,
-
-    rtEditor,
-    btnRtBold,
-    btnRtItalic,
-    btnRtUnderline,
-    btnRtAlignCycle,
-    selRtFont,
-    inpRtSize,
-    inpRtLine,
-    inpRtLetter,
-    inpRtPadTop,
-    inpRtPadBot,
-    pixWarn,
-    chkRtDither,
-
-    inpThresh,
-    btnThreshMinus,
-    btnThreshPlus,
-
-    drawCanvas,
-    btnBrush,
-    btnEraser,
-    btnClear,
-
-    imgFile,
-    imgCanvas,
-    chkImgContain,
-    chkImgDither,
-
-    bigPreview,
-    bigPreviewFull,
-  },
-
-  // stałe i fonty (żeby moduły nie duplikowały)
-  consts: {
-    TILES_X, TILES_Y, DOT_W, DOT_H, BIG_W, BIG_H,
-    TYPE_GLYPH, TYPE_PIX,
-  },
-  fonts: {
-    get3x10: () => FONT_3x10,
-    get5x7: () => GLYPH_5x7,
-  },
-
-  // narzędzia bitpack / render (jeśli moduły z tego korzystają)
-  util: {
-    packBitsRowMajorMSB,
-    unpackBitsRowMajorMSB,
-    renderRows30x10ToBig,
-    renderBits150x70ToBig,
-    drawBitsToCanvasBW,
-    rows30x10ToBits150,
-    imageDataToBits,
-    loadImageFile, // jeśli masz w main, jeśli nie – usuń z ctx.util
-  }
-};
-
-// --- tworzymy edytory jako OBIEKTY z open/close
-const textEditor    = createTextEditor(ctx);
-const textPixEditor = createTextPixEditor(ctx);
-const drawEditor    = createDrawEditor(ctx);
-const imageEditor   = createImageEditor(ctx);
-
-
 /* =========================================================
    Fetch helpers
 ========================================================= */
@@ -746,18 +652,25 @@ function openEditor(mode){
   show(document.querySelector(".shell"), false);
   show(editorShell, true);
 
-   if (mode === "TEXT") {
-     textEditor.open();
-   }
-   if (mode === "TEXT_PIX") {
-     textPixEditor.open();
-   }
-   if (mode === "DRAW") {
-     drawEditor.open();
-   }
-   if (mode === "IMAGE") {
-     imageEditor.open();
-   }
+  if (mode === "TEXT"){
+    show(paneText, true);
+    textEditor.open();
+  }
+
+  if (mode === "TEXT_PIX"){
+    show(paneTextPix, true);
+    textPixEditor.open();
+  }
+
+  if (mode === "DRAW"){
+    show(paneDraw, true);
+    drawEditor.open();
+  }
+
+  if (mode === "IMAGE"){
+    show(paneImage, true);
+    imageEditor.open();
+  }
 }
 
 function closeEditor(force = false){
