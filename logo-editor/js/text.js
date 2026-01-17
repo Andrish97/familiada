@@ -5,6 +5,46 @@
 // - centrowanie
 // - zawsze 1 kolumna przerwy miedzy glifami (zgodnie z Twoja decyzja)
 
+export function createTextEditor(ctx) {
+  const { show, markDirty } = ctx;
+  const { paneText, textValue, textWarn, textMeasure, btnCharsToggle, charsList } = ctx.el;
+
+  function open() {
+    show(paneText, true);
+
+    // podpięcie input
+    textValue?.addEventListener("input", onInput);
+    btnCharsToggle?.addEventListener("click", onToggleChars);
+
+    // start
+    onInput();
+  }
+
+  function close() {
+    textValue?.removeEventListener("input", onInput);
+    btnCharsToggle?.removeEventListener("click", onToggleChars);
+    show(paneText, false);
+  }
+
+  function onToggleChars() {
+    const on = charsList && (charsList.style.display === "none" || charsList.style.display === "");
+    show(charsList, on);
+    if (btnCharsToggle) btnCharsToggle.textContent = on ? "Ukryj" : "Pokaż";
+  }
+
+  function onInput() {
+    if (ctx.getMode() !== "TEXT") return;
+    markDirty();
+
+    // UWAGA: tu wołasz funkcje kompilacji z main, albo masz lokalne.
+    // Najprościej: jeśli w text.js masz własne compileTextToRows30x10, zostaw.
+    // Jeśli nie – musisz ją importować albo przekazać w ctx.util.
+  }
+
+  return { open, close };
+}
+
+
 export function initTextEditor(ctx) {
   const {
     TYPE_GLYPH,
