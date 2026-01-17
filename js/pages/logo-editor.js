@@ -203,7 +203,7 @@ function rtSelectionIsInsideEditor() {
 
   let node = sel.anchorNode;
   if (!node) return false;
-  if (node.nodeType === 3) node = node.parentNode; // text -> element
+  if (node.nodeType === 3) node = node.parentNode;
 
   return !!(node && (node === rtEditor || node.closest?.("#rtEditor")));
 }
@@ -214,7 +214,8 @@ function rtGetSelectionElement() {
 
   let node = sel.anchorNode;
   if (!node) return null;
-  if (node.nodeType === 3) node = node.parentNode; // text -> element
+  if (node.nodeType === 3) node = node.parentNode;
+
   return node;
 }
 
@@ -224,15 +225,6 @@ function rtGetCurrentParagraph() {
   return el.closest ? el.closest("p") : null;
 }
 
-
-function rtGetCurrentParagraph() {
-  const sel = window.getSelection?.();
-  if (!sel || sel.rangeCount === 0) return null;
-  let n = sel.anchorNode;
-  if (!n) return null;
-  if (n.nodeType === 3) n = n.parentNode; // text -> element
-  return n?.closest ? n.closest("p") : null;
-}
 
 function rtEnsureParagraphStyle(p) {
   if (!p) return;
@@ -1671,6 +1663,48 @@ async function handleCreate() {
   }
 }
 
+const RT_FONT_PRESETS = [
+  ["Systemowa (uniwersalna)", "system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, Arial, sans-serif"],
+  ["Interfejs Windows", "\"Segoe UI\", Tahoma, Arial, sans-serif"],
+  ["Interfejs macOS", "-apple-system, BlinkMacSystemFont, \"Helvetica Neue\", Helvetica, Arial, sans-serif"],
+  ["Android/ChromeOS", "Roboto, \"Noto Sans\", Arial, sans-serif"],
+  ["Ubuntu", "Ubuntu, Cantarell, \"Noto Sans\", Arial, sans-serif"],
+  ["Linux (ogólna)", "\"Noto Sans\", \"DejaVu Sans\", Arial, sans-serif"],
+
+  ["Arial", "Arial, Helvetica, sans-serif"],
+  ["Verdana", "Verdana, Geneva, sans-serif"],
+  ["Trebuchet", "\"Trebuchet MS\", Trebuchet, Arial, sans-serif"],
+  ["Tahoma", "Tahoma, Arial, sans-serif"],
+
+  ["Georgia", "Georgia, \"Times New Roman\", Times, serif"],
+  ["Times", "\"Times New Roman\", Times, serif"],
+
+  ["Courier", "\"Courier New\", Courier, monospace"],
+  ["Consolas", "Consolas, \"Courier New\", monospace"],
+
+  ["Impact", "Impact, Haettenschweiler, \"Arial Narrow Bold\", sans-serif"],
+];
+
+function rtPopulateFontSelect() {
+  if (!selRtFont) return;
+
+  const prev = selRtFont.value;
+  selRtFont.innerHTML = "";
+
+  for (const [label, value] of RT_FONT_PRESETS) {
+    const opt = document.createElement("option");
+    opt.value = value;
+    opt.textContent = label;
+    selRtFont.appendChild(opt);
+  }
+
+  // spróbuj zachować poprzedni wybór
+  if (prev) {
+    const found = Array.from(selRtFont.options).some(o => o.value === prev);
+    if (found) selRtFont.value = prev;
+  }
+}
+
 /* =========================================================
    EVENTS
 ========================================================= */
@@ -1681,6 +1715,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   await loadFonts();
   await loadDefaultLogo();
   renderAllowedCharsList();
+   rtPopulateFontSelect();
 
   btnBack?.addEventListener("click", () => { location.href = "builder.html"; });
 
