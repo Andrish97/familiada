@@ -197,6 +197,34 @@ function rtNormalizeParagraphs() {
   rtEditor.innerHTML = lines.map(s => `<p>${esc(s)}</p>`).join("");
 }
 
+function rtSelectionIsInsideEditor() {
+  const sel = window.getSelection?.();
+  if (!sel || sel.rangeCount === 0) return false;
+
+  let node = sel.anchorNode;
+  if (!node) return false;
+  if (node.nodeType === 3) node = node.parentNode; // text -> element
+
+  return !!(node && (node === rtEditor || node.closest?.("#rtEditor")));
+}
+
+function rtGetSelectionElement() {
+  const sel = window.getSelection?.();
+  if (!sel || sel.rangeCount === 0) return null;
+
+  let node = sel.anchorNode;
+  if (!node) return null;
+  if (node.nodeType === 3) node = node.parentNode; // text -> element
+  return node;
+}
+
+function rtGetCurrentParagraph() {
+  const el = rtGetSelectionElement();
+  if (!el) return null;
+  return el.closest ? el.closest("p") : null;
+}
+
+
 function rtGetCurrentParagraph() {
   const sel = window.getSelection?.();
   if (!sel || sel.rangeCount === 0) return null;
@@ -221,10 +249,6 @@ function rtEnsureParagraphStyle(p) {
 function rtApplyInputsToParagraph(p) {
   if (!p) return;
 
-  // Czcionka (bazowa dla akapitu)
-  const baseFont = String(selRtFont?.value || "system-ui, sans-serif");
-  p.style.fontFamily = baseFont;
-
   // Rozmiar
   const sizePx = clamp(Number(inpRtSize?.value || 56), 10, 140);
   p.style.fontSize = `${sizePx}px`;
@@ -247,6 +271,23 @@ function rtApplyInputsToParagraph(p) {
   p.style.textAlign = rtAlign || "center";
 }
 
+function rtApplyFontToSelection(fontFamily) {
+  if (!rtEditor) return;
+  if (!rtSelectionIsInsideEditor()) return;
+
+  try {
+    // execCommand działa na zaznaczeniu / pozycji kursora
+    document.execCommand("fontName", false, fontFamily);
+  } catch {}
+
+  // Dodatkowo: jeśli kursor stoi w <p>, ustaw też bazę akapitu,
+  // żeby nowe znaki “dziedziczyły” font.
+  const p = rtGetCurrentParagraph();
+  if (p && !p.style.fontFamily) {
+    p.style.fontFamily = fontFamily;
+  }
+}
+
 
 function setBtnOn(btn, on) {
   if (!btn) return;
@@ -256,35 +297,42 @@ function setBtnOn(btn, on) {
 
 function rtSyncToolbarStateFromSelection() {
   if (editorMode !== "TEXT_PIX") return;
+  if (!rtSelectionIsInsideEditor()) return;
 
+  // BIU (per zaznaczenie/kursor)
   try {
     setBtnOn(btnRtBold, !!document.queryCommandState("bold"));
     setBtnOn(btnRtItalic, !!document.queryCommandState("italic"));
     setBtnOn(btnRtUnderline, !!document.queryCommandState("underline"));
-  } catch {
-    // niektóre przeglądarki potrafią rzucić wyjątkiem
-  }
+  } catch {}
 
-  // Dodatkowo: zaktualizuj inputy (rozmiar/line/margins/align) z bieżącego akapitu:
+  // Akapit (per <p>)
   const p = rtGetCurrentParagraph();
   if (p) {
     const cs = getComputedStyle(p);
 
-    // font-size: "56px" -> 56
     const fs = Math.round(parseFloat(cs.fontSize) || 56);
-    const lh = parseFloat(cs.lineHeight) / (parseFloat(cs.fontSize) || 1); // bywa "normal" -> wtedy NaN
-    const ls = Math.round(parseFloat(cs.letterSpacing) || 0);
+    const ls = parseFloat(cs.letterSpacing);
     const mt = Math.round(parseFloat(cs.marginTop) || 0);
     const mb = Math.round(parseFloat(cs.marginBottom) || 0);
 
     if (inpRtSize) inpRtSize.value = String(clamp(fs, 10, 140));
-    if (inpRtLetter) inpRtLetter.value = String(clamp(ls, 0, 4));
     if (inpRtPadTop) inpRtPadTop.value = String(clamp(mt, 0, 40));
     if (inpRtPadBot) inpRtPadBot.value = String(clamp(mb, 0, 40));
 
-    // line-height bywa "normal" → wtedy nie nadpisuj
-    if (Number.isFinite(lh) && inpRtLine) {
-      inpRtLine.value = String(clamp(Math.round(lh * 100) / 100, 0.6, 1.8));
+    // line-height bywa "normal"
+    const lh = parseFloat(cs.lineHeight);
+    if (Number.isFinite(lh) && Number.isFinite(fs) && fs > 0) {
+      const rel = lh / fs;
+      if (inpRtLine && Number.isFinite(rel)) {
+        inpRtLine.value = String(clamp(Math.round(rel * 100) / 100, 0.6, 1.8));
+      }
+    }
+
+    if (Number.isFinite(ls)) {
+      if (inpRtLetter) inpRtLetter.value = String(clamp(Math.round(ls), 0, 4));
+    } else {
+      if (inpRtLetter) inpRtLetter.value = "0";
     }
 
     const a = (p.style.textAlign || cs.textAlign || "center");
@@ -293,9 +341,21 @@ function rtSyncToolbarStateFromSelection() {
       btnRtAlignCycle.textContent = rtAlign === "left" ? "⇤" : rtAlign === "right" ? "⇥" : "⇆";
       btnRtAlignCycle.dataset.state = rtAlign;
     }
+
+    // Czcionka (dla akapitu) – ustaw select na najbliższą pasującą opcję
+    const ff = (p.style.fontFamily || cs.fontFamily || "").toLowerCase();
+    if (selRtFont) {
+      let best = selRtFont.value;
+      for (const opt of Array.from(selRtFont.options)) {
+        const ov = String(opt.value || "").toLowerCase();
+        // proste dopasowanie: jeśli pierwszy człon font-family występuje w computed
+        const head = ov.split(",")[0]?.trim().replace(/['"]/g, "");
+        if (head && ff.includes(head)) { best = opt.value; break; }
+      }
+      selRtFont.value = best;
+    }
   }
 }
-
 
 /* =========================================================
    Fetch fonts
@@ -1674,12 +1734,19 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
   // Rich-text toolbar
-  const cmd = (name, val = null) => {
-    try { document.execCommand(name, false, val); } catch {}
+const cmd = (name, val = null) => {
+  if (editorMode !== "TEXT_PIX") return;
+  if (!rtSelectionIsInsideEditor()) {
     rtEditor?.focus();
-    markDirty();
-    updateTextPixPreviewAsync();
-  };
+  }
+
+  try { document.execCommand(name, false, val); } catch {}
+
+  markDirty();
+  updateTextPixPreviewAsync();
+  rtSyncToolbarStateFromSelection();
+};
+
 
   btnRtBold?.addEventListener("click", () => cmd("bold"));
   btnRtItalic?.addEventListener("click", () => cmd("italic"));
@@ -1687,21 +1754,27 @@ document.addEventListener("DOMContentLoaded", async () => {
 
    document.addEventListener("selectionchange", () => {
      if (editorMode !== "TEXT_PIX") return;
-     // ważne: reaguj tylko jeśli zaznaczenie jest w rtEditor
-     const sel = window.getSelection?.();
-     const n = sel?.anchorNode;
-     const inside = n && (n === rtEditor || (n.nodeType === 3 ? n.parentNode : n).closest?.("#rtEditor"));
-     if (!inside) return;
+     if (!rtSelectionIsInsideEditor()) return;
+     rtSyncToolbarStateFromSelection();
+   });
    
+   // dla pewności: po kliknięciu w edytor / puszczeniu klawisza
+   rtEditor?.addEventListener("mouseup", () => {
+     if (editorMode !== "TEXT_PIX") return;
+     rtSyncToolbarStateFromSelection();
+   });
+   rtEditor?.addEventListener("keyup", () => {
+     if (editorMode !== "TEXT_PIX") return;
      rtSyncToolbarStateFromSelection();
    });
 
    const setAlign = (v) => {
      rtAlign = v;
    
-     // ustaw wyrównanie tylko dla akapitu z kursorem
      const p = rtGetCurrentParagraph();
-     if (p) p.style.textAlign = v;
+     if (p) {
+       p.style.textAlign = v;
+     }
    
      if (btnRtAlignCycle) {
        btnRtAlignCycle.textContent = v === "left" ? "⇤" : v === "right" ? "⇥" : "⇆";
@@ -1712,23 +1785,27 @@ document.addEventListener("DOMContentLoaded", async () => {
      updateTextPixPreviewAsync();
    };
 
-
   btnRtAlignCycle?.addEventListener("click", () => {
     const nxt = rtAlign === "left" ? "center" : rtAlign === "center" ? "right" : "left";
     setAlign(nxt);
   });
   setAlign(rtAlign);
 
-  selRtFont?.addEventListener("change", () => {
+   selRtFont?.addEventListener("change", () => {
+     if (editorMode !== "TEXT_PIX") return;
+   
+     const ff = String(selRtFont.value || "system-ui, sans-serif");
+     rtApplyFontToSelection(ff);
+   
      markDirty();
-     rtApplyUiToEditor();
      updateTextPixPreviewAsync();
+     rtSyncToolbarStateFromSelection();
    });
 
    const bindNum = (el, def, min, max) => {
      el?.addEventListener("change", () => {
        el.value = String(clamp(Number(el.value || def), min, max));
-   
+        if (!rtSelectionIsInsideEditor()) return;
        // zastosuj ustawienia tylko do akapitu z kursorem
        const p = rtGetCurrentParagraph();
        rtApplyInputsToParagraph(p);
@@ -1738,6 +1815,8 @@ document.addEventListener("DOMContentLoaded", async () => {
      });
    
      el?.addEventListener("input", () => {
+       if (editorMode !== "TEXT_PIX") return;
+        if (!rtSelectionIsInsideEditor()) return;
        // na żywo: zmieniaj tylko bieżący akapit
        const p = rtGetCurrentParagraph();
        rtApplyInputsToParagraph(p);
