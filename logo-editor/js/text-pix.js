@@ -1,61 +1,57 @@
 // familiada/logo-editor/js/text-pix.js
-// Tryb: TEXT_PIX (contenteditable -> "screen" screenshot z gory -> 208x88 -> 150x70 bits)
-//
-// ZAŁOŻENIA (zgodnie z ustaleniami):
-// - Edytor działa "jak Word": BIU/font/rozmiar per znak (zaznaczenie albo kursor), a linia/odstępy/wyrównanie per akapit.
-// - UI ma być aktualizowane na bieżąco z kursora/zaznaczenia.
-// - Render: bierzemy SZEROKOŚĆ edytora (rtStage / rtEditor), wyliczamy WYSOKOŚĆ tak, by proporcja była 208x88,
-//   robimy "screenshot" od GÓRY (bez scrollowania do góry na siłę), zamieniamy na 208x88, potem kompres 208x88 -> 150x70.
-// - Kontrastu/progu NIE MA w UI (możesz później dodać inne "ustawienia screena").
-// - Brak zewnętrznych bibliotek: używamy SVG foreignObject jako "screen".
+// Tryb: TEXT_PIX
+// - contenteditable działa jak Word
+// - per-symbol: czcionka, rozmiar, odstęp liter, BIU
+// - per-akapit: wyrównanie, interlinia, odstępy przed/po
+// - podgląd/zapis: bierzemy SZEROKOŚĆ edytora, liczymy wysokość do proporcji 208:88,
+//   robimy “screenshot” od góry (crop) i przeliczamy na 150x70 bits.
 
 export function initTextPixEditor(ctx) {
   const TYPE_PIX = "PIX_150x70";
 
-  // DOM
+  // ---- DOM
   const paneTextPix = document.getElementById("paneTextPix");
   const rtEditor = document.getElementById("rtEditor");
   const pixWarn = document.getElementById("pixWarn");
 
+  // per-symbol
   const selRtFont = document.getElementById("selRtFont");
   const inpRtSize = document.getElementById("inpRtSize");
-  const inpRtLine = document.getElementById("inpRtLine");
   const inpRtLetter = document.getElementById("inpRtLetter");
-  const inpRtPadTop = document.getElementById("inpRtPadTop");
-  const inpRtPadBot = document.getElementById("inpRtPadBot");
 
   const btnRtBold = document.getElementById("btnRtBold");
   const btnRtItalic = document.getElementById("btnRtItalic");
   const btnRtUnderline = document.getElementById("btnRtUnderline");
+
+  // per-paragraph
+  const inpRtLine = document.getElementById("inpRtLine");
+  const inpRtPadTop = document.getElementById("inpRtPadTop");
+  const inpRtPadBot = document.getElementById("inpRtPadBot");
   const btnRtAlignCycle = document.getElementById("btnRtAlignCycle");
 
-  // wymiary docelowe (logo)
-  const DOT_W = ctx.DOT_W; // 150
-  const DOT_H = ctx.DOT_H; // 70
-  const BIG_W = 208;
-  const BIG_H = 88;
+  // (opcjonalne – może zniknąć z UI)
+  const inpThresh = document.getElementById("inpThresh");
+  const chkRtDither = document.getElementById("chkRtDither");
 
-  // helpers
-  const show = (el, on) => { if (el) el.style.display = on ? "" : "none"; };
+  // ---- CONSTS
+  const DOT_W = ctx.DOT_W;
+  const DOT_H = ctx.DOT_H;
+  const BIG_W = ctx.BIG_W || 208;
+  const BIG_H = ctx.BIG_H || 88;
+
+  const show = (el, on) => { if (!el) return; el.style.display = on ? "" : "none"; };
   const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
 
-  function setBtnOn(btn, on) {
-    if (!btn) return;
-    btn.classList.toggle("on", !!on);
-    btn.setAttribute("aria-pressed", on ? "true" : "false");
-  }
-
-  // state
+  // ---- STATE
   let currentAlign = "center";
   let cachedBits150 = new Uint8Array(DOT_W * DOT_H);
 
   let _deb = null;
   let _token = 0;
-  let _bound = false;
 
-  // =============================
-  // Selection utilities (Word-ish)
-  // =============================
+  // =========================================================
+  // 1) SELEKCJA / POMOCNICZE
+  // =========================================================
   function selectionInside() {
     const sel = window.getSelection?.();
     if (!sel || sel.rangeCount === 0) return false;
@@ -71,25 +67,28 @@ export function initTextPixEditor(ctx) {
     return sel.getRangeAt(0);
   }
 
-  function getSelectionElement() {
+  function getCurrentP() {
     const sel = window.getSelection?.();
     if (!sel || sel.rangeCount === 0) return null;
     let node = sel.anchorNode;
     if (!node) return null;
     if (node.nodeType === 3) node = node.parentNode;
-    return node;
+    return node?.closest ? node.closest("p") : null;
   }
 
-  function getCurrentParagraph() {
-    const el = getSelectionElement();
-    if (!el) return null;
-    // akapit = najbliższy <p> (albo wymuszony kontener w normalize)
-    return el.closest ? el.closest("p") : null;
+  function isCollapsedSelection() {
+    const sel = window.getSelection?.();
+    if (!sel || sel.rangeCount === 0) return true;
+    return !!sel.getRangeAt(0).collapsed;
   }
 
-  // =============================
-  // DOM normalization (akapit jako <p>)
-  // =============================
+  function setBtnState(btn, state /* "on" | "off" | "mixed" */) {
+    if (!btn) return;
+    btn.classList.toggle("on", state === "on");
+    btn.classList.toggle("mixed", state === "mixed"); // jeśli nie masz stylu w CSS – nic nie popsuje
+    btn.setAttribute("aria-pressed", state === "on" ? "true" : "false");
+  }
+
   function esc(s) {
     return String(s ?? "")
       .replaceAll("&", "&amp;")
@@ -99,132 +98,73 @@ export function initTextPixEditor(ctx) {
       .replaceAll("'", "&#039;");
   }
 
+  // =========================================================
+  // 2) NORMALIZACJA PARAGRAFÓW (żeby Enter = nowy <p>)
+  // =========================================================
   function removeZWSP(root) {
     if (!root) return;
     const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
-    const toFix = [];
+    const list = [];
     while (walker.nextNode()) {
       const t = walker.currentNode;
-      if (t.nodeValue && t.nodeValue.includes("\u200b")) toFix.push(t);
+      if (t.nodeValue && t.nodeValue.includes("\u200b")) list.push(t);
     }
-    for (const t of toFix) t.nodeValue = t.nodeValue.replaceAll("\u200b", "");
+    for (const t of list) t.nodeValue = t.nodeValue.replaceAll("\u200b", "");
   }
 
-  // Zamieniamy top-level dzieci na <p>, a <div> też na <p>.
-  // Nie robimy tu "magii" ze stylami – style są inline na elementach, więc przetrwają.
   function normalizeParagraphs() {
     if (!rtEditor) return;
 
     removeZWSP(rtEditor);
 
-    // jeśli pusto -> zostaw pusto
     const plain = String(rtEditor.textContent || "").replace(/\u00a0/g, " ").trim();
     if (!plain) { rtEditor.innerHTML = ""; return; }
 
-    // Jeśli już są <p> jako dzieci, to tylko popraw <div> w środku.
-    // Jeśli nie ma żadnego <p>, to owijamy linie w <p>.
-    const hasP = /<\s*p[\s>]/i.test(rtEditor.innerHTML);
-    if (!hasP) {
-      const lines = plain.split(/\n+/).map(s => s.trim()).filter(Boolean);
-      rtEditor.innerHTML = lines.map(s => `<p>${esc(s)}</p>`).join("");
-      return;
-    }
+    // jeśli są już <p> – zostaw
+    if (/<\s*p[\s>]/i.test(rtEditor.innerHTML)) return;
 
-    // Konwersja: <div> top-level -> <p>
-    const kids = Array.from(rtEditor.childNodes);
-    for (const n of kids) {
-      if (n.nodeType === 1) {
-        const tag = n.tagName?.toLowerCase();
-        if (tag === "div") {
-          const p = document.createElement("p");
-          // przenieś atrybuty stylu (inline)
-          if (n.getAttribute("style")) p.setAttribute("style", n.getAttribute("style"));
-          while (n.firstChild) p.appendChild(n.firstChild);
-          rtEditor.replaceChild(p, n);
-        }
-      } else if (n.nodeType === 3) {
-        // text node na top-level -> wrap w <p>
-        const p = document.createElement("p");
-        p.textContent = n.nodeValue || "";
-        rtEditor.replaceChild(p, n);
-      }
-    }
+    // jeśli przeglądarka robi <div> i <br> – zamieniamy na <p>
+    const lines = plain.split(/\n+/).map(s => s.trim()).filter(Boolean);
+    rtEditor.innerHTML = lines.map(s => `<p>${esc(s)}</p>`).join("");
   }
 
-  // =============================
-  // Inline style (per-znak) – bez google, bez "zgadywania"
-  // =============================
-  function applyInlineStyle(styleObj) {
-    if (!rtEditor) return;
-    if (!selectionInside()) rtEditor.focus();
-
-    const r = getRange();
-    if (!r) return;
-
-    // jeśli zakres pusty (kursor) -> wstawiamy "caret span" z ZWSP,
-    // żeby nowe znaki dziedziczyły styl
-    if (r.collapsed) {
-      const span = document.createElement("span");
-      for (const [k, v] of Object.entries(styleObj)) span.style[k] = v;
-      span.textContent = "\u200b";
-      r.insertNode(span);
-
-      // ustaw kursor ZA ZWSP wewnątrz spana
-      const sel = window.getSelection();
-      const nr = document.createRange();
-      nr.setStart(span.firstChild, 1);
-      nr.setEnd(span.firstChild, 1);
-      sel.removeAllRanges();
-      sel.addRange(nr);
-      return;
-    }
-
-    // zakres zaznaczenia -> wrap w span
-    const span = document.createElement("span");
-    for (const [k, v] of Object.entries(styleObj)) span.style[k] = v;
-
-    const frag = r.extractContents();
-    span.appendChild(frag);
-    r.insertNode(span);
-
-    // zostaw zaznaczenie na tym spanie
-    const sel = window.getSelection();
-    const nr = document.createRange();
-    nr.selectNodeContents(span);
-    sel.removeAllRanges();
-    sel.addRange(nr);
-  }
-
-  function applyFontToSelection(fontFamily) {
-    applyInlineStyle({ fontFamily });
-  }
-
-  function applySizeToSelection(px) {
-    applyInlineStyle({ fontSize: `${px}px` });
-  }
-
-  // =============================
-  // Paragraph style (per-akapit)
-  // =============================
+  // =========================================================
+  // 3) PER-AKAPIT: domyślne i aplikacja wartości z UI
+  // =========================================================
   function ensurePDefaults(p) {
     if (!p) return;
 
-    // UWAGA: tu nie narzucamy font/size – to jest per znak.
-    if (!p.style.lineHeight) p.style.lineHeight = String(clamp(Number(inpRtLine?.value || 1.05), 0.6, 2.0));
-    if (!p.style.letterSpacing) p.style.letterSpacing = `${clamp(Number(inpRtLetter?.value || 0), 0, 10)}px`;
     if (!p.style.textAlign) p.style.textAlign = currentAlign;
-    if (!p.style.marginTop) p.style.marginTop = `${clamp(Number(inpRtPadTop?.value || 8), 0, 80)}px`;
-    if (!p.style.marginBottom) p.style.marginBottom = `${clamp(Number(inpRtPadBot?.value || 8), 0, 80)}px`;
+
+    // interlinia
+    if (!p.style.lineHeight) {
+      const lh = clamp(Number(inpRtLine?.value || 1.05), 0.6, 2.0);
+      p.style.lineHeight = String(lh);
+    }
+
+    // odstępy przed/po
+    if (!p.style.marginTop) {
+      const v = clamp(Number(inpRtPadTop?.value || 0), 0, 200);
+      p.style.marginTop = `${v}px`;
+    }
+    if (!p.style.marginBottom) {
+      const v = clamp(Number(inpRtPadBot?.value || 0), 0, 200);
+      p.style.marginBottom = `${v}px`;
+    }
   }
 
-  function applyInputsToParagraph(p) {
+  function applyParaFromInputs(p) {
     if (!p) return;
     ensurePDefaults(p);
 
-    p.style.lineHeight = String(clamp(Number(inpRtLine?.value || 1.05), 0.6, 2.0));
-    p.style.letterSpacing = `${clamp(Number(inpRtLetter?.value || 0), 0, 10)}px`;
-    p.style.marginTop = `${clamp(Number(inpRtPadTop?.value || 8), 0, 80)}px`;
-    p.style.marginBottom = `${clamp(Number(inpRtPadBot?.value || 8), 0, 80)}px`;
+    const lh = clamp(Number(inpRtLine?.value || 1.05), 0.6, 2.0);
+    p.style.lineHeight = String(lh);
+
+    const mt = clamp(Number(inpRtPadTop?.value || 0), 0, 200);
+    const mb = clamp(Number(inpRtPadBot?.value || 0), 0, 200);
+    p.style.marginTop = `${mt}px`;
+    p.style.marginBottom = `${mb}px`;
+
     p.style.textAlign = currentAlign;
   }
 
@@ -232,239 +172,430 @@ export function initTextPixEditor(ctx) {
     if (!btnRtAlignCycle) return;
     btnRtAlignCycle.textContent =
       currentAlign === "left" ? "⇤" :
-      currentAlign === "right" ? "⇥" : "⇆";
+      currentAlign === "right" ? "⇥" :
+      "⇆";
     btnRtAlignCycle.dataset.state = currentAlign;
   }
 
-  // =============================
-  // Toolbar sync (kursor/zaznaczenie -> UI)
-  // =============================
-  function pickBestSelectFontFromComputed(fontFamilyComputed) {
+  // =========================================================
+  // 4) PER-SYMBOL: nakładanie stylu na zaznaczenie / kursor
+  //    - font + BIU: execCommand
+  //    - size: execCommand(fontSize 1..7) + zamiana <font> na <span style=px>
+  //    - letterSpacing(px): wrap w span (bo execCommand nie ma)
+  // =========================================================
+  function cmd(name, value = null) {
+    if (!rtEditor) return;
+    if (!selectionInside()) rtEditor.focus();
+    try { document.execCommand(name, false, value); } catch {}
+  }
+
+  function pxToFontSizeLevel(px) {
+    // najstabilniejsza mapka dla execCommand("fontSize")
+    const map = [10, 13, 16, 18, 24, 32, 48];
+    let best = 3, bestDiff = Infinity;
+    for (let i = 0; i < map.length; i++) {
+      const d = Math.abs(px - map[i]);
+      if (d < bestDiff) { bestDiff = d; best = i + 1; }
+    }
+    return best; // 1..7
+  }
+
+  function replaceFontTagsWithSpans(root, px) {
+    if (!root) return;
+    const fonts = root.querySelectorAll("font[size]");
+    for (const f of fonts) {
+      const span = document.createElement("span");
+      span.style.fontSize = `${px}px`;
+      while (f.firstChild) span.appendChild(f.firstChild);
+      f.parentNode.replaceChild(span, f);
+    }
+  }
+
+  function applyInlineSpanStyle(styleObj) {
+    if (!rtEditor) return;
+    if (!selectionInside()) rtEditor.focus();
+
+    const r = getRange();
+    if (!r) return;
+
+    // zaznaczenie
+    if (!r.collapsed) {
+      const span = document.createElement("span");
+      for (const [k, v] of Object.entries(styleObj)) span.style[k] = v;
+
+      const frag = r.extractContents();
+      span.appendChild(frag);
+      r.insertNode(span);
+
+      const sel = window.getSelection();
+      const nr = document.createRange();
+      nr.selectNodeContents(span);
+      sel.removeAllRanges();
+      sel.addRange(nr);
+      return;
+    }
+
+    // kursor: wstawiamy “typing span” z ZWSP i ustawiamy kursor za nim
+    const span = document.createElement("span");
+    for (const [k, v] of Object.entries(styleObj)) span.style[k] = v;
+    span.textContent = "\u200b";
+    r.insertNode(span);
+
+    const sel = window.getSelection();
+    const nr = document.createRange();
+    nr.setStart(span.firstChild, 1);
+    nr.setEnd(span.firstChild, 1);
+    sel.removeAllRanges();
+    sel.addRange(nr);
+  }
+
+  function applyFontToSelection(fontValueFromSelect) {
+    // select może mieć fallbacki "A, B, C" – execCommand lubi pierwszy
+    const primary = String(fontValueFromSelect || "system-ui").split(",")[0].trim().replace(/^["']|["']$/g, "");
+    cmd("fontName", primary);
+  }
+
+  function applySizeToSelection(px) {
+    const level = pxToFontSizeLevel(px);
+    cmd("fontSize", String(level));
+    replaceFontTagsWithSpans(rtEditor, px);
+  }
+
+  function applyLetterSpacingToSelection(px) {
+    applyInlineSpanStyle({ letterSpacing: `${px}px` });
+  }
+
+  // =========================================================
+  // 5) “WORD”: wykrywanie stylu z kursora / zaznaczenia
+  //    - jeśli miks -> pole puste
+  // =========================================================
+  function getSelectionTextNodesInEditor() {
+    const sel = window.getSelection?.();
+    if (!sel || sel.rangeCount === 0) return [];
+    const r = sel.getRangeAt(0);
+    if (r.collapsed) return [];
+    if (!selectionInside()) return [];
+
+    const nodes = [];
+    const walker = document.createTreeWalker(rtEditor, NodeFilter.SHOW_TEXT);
+    while (walker.nextNode()) {
+      const n = walker.currentNode;
+      if (!n.nodeValue || !n.nodeValue.trim()) continue;
+
+      // czy ten text-node nachodzi na range?
+      const nr = document.createRange();
+      nr.selectNodeContents(n);
+
+      const endsBefore = nr.compareBoundaryPoints(Range.END_TO_START, r) <= 0;
+      const startsAfter = nr.compareBoundaryPoints(Range.START_TO_END, r) >= 0;
+      if (!endsBefore && !startsAfter) nodes.push(n);
+    }
+    return nodes;
+  }
+
+  function uniformComputed(nodes, prop) {
+    if (!nodes.length) return { uniform: true, value: null };
+    let first = null;
+    for (const n of nodes) {
+      const el = n.parentElement || n.parentNode;
+      if (!el || el.nodeType !== 1) continue;
+      const v = getComputedStyle(el)[prop];
+      if (first === null) first = v;
+      else if (v !== first) return { uniform: false, value: null };
+    }
+    return { uniform: true, value: first };
+  }
+
+  function uniformFlag(nodes, fn) {
+    if (!nodes.length) return { uniform: true, value: null };
+    let first = null;
+    for (const n of nodes) {
+      const el = n.parentElement || n.parentNode;
+      if (!el || el.nodeType !== 1) continue;
+      const v = !!fn(getComputedStyle(el), el);
+      if (first === null) first = v;
+      else if (v !== first) return { uniform: false, value: null };
+    }
+    return { uniform: true, value: first };
+  }
+
+  function pickBestSelectFontFromComputed(computedFontFamily) {
     if (!selRtFont) return;
-    const ff = String(fontFamilyComputed || "").toLowerCase();
+    const ff = String(computedFontFamily || "").toLowerCase();
+
     let best = selRtFont.value || "";
     for (const opt of Array.from(selRtFont.options)) {
-      const ov = String(opt.value || "").toLowerCase();
-      const head = ov.split(",")[0]?.trim().replace(/['"]/g, "");
+      const raw = String(opt.value || "").toLowerCase();
+      if (!raw) continue;
+      const head = raw.split(",")[0].trim().replace(/["']/g, "");
       if (head && ff.includes(head)) { best = opt.value; break; }
     }
-    if (best) selRtFont.value = best;
+    selRtFont.value = best;
   }
 
   function syncUiFromSelection() {
     if (!selectionInside()) return;
 
-    // BIU
-    try {
-      setBtnOn(btnRtBold, !!document.queryCommandState("bold"));
-      setBtnOn(btnRtItalic, !!document.queryCommandState("italic"));
-      setBtnOn(btnRtUnderline, !!document.queryCommandState("underline"));
-    } catch {
-      // execCommand bywa kapryśny w niektórych webview – wtedy zostawiamy.
+    const sel = window.getSelection?.();
+    const hasRange = !!(sel && sel.rangeCount > 0);
+    const range = hasRange ? sel.getRangeAt(0) : null;
+    const isMixedSelection = !!(range && !range.collapsed);
+
+    // --- BIU (per-symbol)
+    if (isMixedSelection) {
+      const nodes = getSelectionTextNodesInEditor();
+
+      const ub = uniformFlag(nodes, (cs) => (parseInt(cs.fontWeight, 10) || 400) >= 600 || cs.fontWeight === "bold");
+      const ui = uniformFlag(nodes, (cs) => cs.fontStyle === "italic");
+      const uu = uniformFlag(nodes, (cs) => String(cs.textDecorationLine || "").includes("underline"));
+
+      setBtnState(btnRtBold, ub.uniform ? (ub.value ? "on" : "off") : "mixed");
+      setBtnState(btnRtItalic, ui.uniform ? (ui.value ? "on" : "off") : "mixed");
+      setBtnState(btnRtUnderline, uu.uniform ? (uu.value ? "on" : "off") : "mixed");
+
+      // --- font / size / letterSpacing: puste jeśli miks
+      const uf = uniformComputed(nodes, "fontFamily");
+      const us = uniformComputed(nodes, "fontSize");
+      const ul = uniformComputed(nodes, "letterSpacing");
+
+      if (selRtFont) {
+        if (!uf.uniform) selRtFont.value = "";
+        else pickBestSelectFontFromComputed(uf.value);
+      }
+
+      if (inpRtSize) {
+        if (!us.uniform) inpRtSize.value = "";
+        else {
+          const px = Math.round(parseFloat(us.value) || 56);
+          inpRtSize.value = String(clamp(px, 10, 140));
+        }
+      }
+
+      if (inpRtLetter) {
+        if (!ul.uniform) inpRtLetter.value = "";
+        else {
+          const px = Math.round(parseFloat(ul.value) || 0);
+          inpRtLetter.value = String(clamp(px, 0, 40));
+        }
+      }
+    } else {
+      // kursor: bierzemy computed z miejsca kursora
+      let node = sel?.anchorNode || null;
+      if (node && node.nodeType === 3) node = node.parentNode;
+      const el = node && node.nodeType === 1 ? node : rtEditor;
+
+      const cs = el ? getComputedStyle(el) : null;
+
+      // BIU – queryCommandState działa najlepiej dla kursora
+      try {
+        setBtnState(btnRtBold, document.queryCommandState("bold") ? "on" : "off");
+        setBtnState(btnRtItalic, document.queryCommandState("italic") ? "on" : "off");
+        setBtnState(btnRtUnderline, document.queryCommandState("underline") ? "on" : "off");
+      } catch {
+        // fallback
+        if (cs) {
+          const b = (parseInt(cs.fontWeight, 10) || 400) >= 600 || cs.fontWeight === "bold";
+          const i = cs.fontStyle === "italic";
+          const u = String(cs.textDecorationLine || "").includes("underline");
+          setBtnState(btnRtBold, b ? "on" : "off");
+          setBtnState(btnRtItalic, i ? "on" : "off");
+          setBtnState(btnRtUnderline, u ? "on" : "off");
+        }
+      }
+
+      if (cs) {
+        if (selRtFont) pickBestSelectFontFromComputed(cs.fontFamily);
+
+        if (inpRtSize) {
+          const px = Math.round(parseFloat(cs.fontSize) || 56);
+          inpRtSize.value = String(clamp(px, 10, 140));
+        }
+
+        if (inpRtLetter) {
+          const px = Math.round(parseFloat(cs.letterSpacing) || 0);
+          inpRtLetter.value = String(clamp(px, 0, 40));
+        }
+      }
     }
 
-    // Rozmiar / font per znak: bierzemy computed z elementu przy kursorze
-    const el = getSelectionElement();
-    if (el) {
-      const cs = getComputedStyle(el);
-      const fs = Math.round(parseFloat(cs.fontSize) || 56);
-      if (inpRtSize) inpRtSize.value = String(clamp(fs, 10, 140));
-      pickBestSelectFontFromComputed(cs.fontFamily);
-    }
-
-    // Akapit
-    const p = getCurrentParagraph();
+    // --- per-paragraph: z aktualnego <p>
+    const p = getCurrentP();
     if (p) {
       ensurePDefaults(p);
-      const cs = getComputedStyle(p);
+      const csP = getComputedStyle(p);
 
-      // align
-      const a = (p.style.textAlign || cs.textAlign || "center");
+      const a = (p.style.textAlign || csP.textAlign || "center");
       currentAlign = (a === "left" || a === "right") ? a : "center";
       updateAlignButton();
 
-      // line-height: może być "normal"
-      const lhPx = parseFloat(cs.lineHeight);
-      const fsPx = parseFloat(cs.fontSize) || 56;
-      if (Number.isFinite(lhPx) && Number.isFinite(fsPx) && fsPx > 0) {
-        const rel = lhPx / fsPx;
-        if (inpRtLine) inpRtLine.value = String(clamp(Math.round(rel * 100) / 100, 0.6, 2.0));
+      if (inpRtLine) {
+        const lh = parseFloat(p.style.lineHeight || csP.lineHeight || "1.05");
+        if (Number.isFinite(lh)) inpRtLine.value = String(clamp(lh, 0.6, 2.0));
       }
-
-      const ls = parseFloat(cs.letterSpacing);
-      if (Number.isFinite(ls)) {
-        if (inpRtLetter) inpRtLetter.value = String(clamp(Math.round(ls), 0, 10));
+      if (inpRtPadTop) {
+        const mt = parseFloat(p.style.marginTop || csP.marginTop || "0");
+        if (Number.isFinite(mt)) inpRtPadTop.value = String(clamp(mt, 0, 200));
       }
-
-      const mt = Math.round(parseFloat(cs.marginTop) || 0);
-      const mb = Math.round(parseFloat(cs.marginBottom) || 0);
-      if (inpRtPadTop) inpRtPadTop.value = String(clamp(mt, 0, 80));
-      if (inpRtPadBot) inpRtPadBot.value = String(clamp(mb, 0, 80));
+      if (inpRtPadBot) {
+        const mb = parseFloat(p.style.marginBottom || csP.marginBottom || "0");
+        if (Number.isFinite(mb)) inpRtPadBot.value = String(clamp(mb, 0, 200));
+      }
     }
   }
 
-  // =============================
-  // SCREENSHOT pipeline: editor -> 208x88 -> bits -> compress -> 150x70
-  // =============================
-
+  // =========================================================
+  // 6) “SCREENSHOT”: edytor -> (208x88) -> bits -> 150x70
+  // =========================================================
   function sanitizeHtmlForForeignObject(html) {
     let s = String(html || "");
     s = s.replace(/<br\s*>/gi, "<br />");
     s = s.replace(/<hr\s*>/gi, "<hr />");
-    // listy wycinamy – nie mamy UI do list (a i tak robią miny)
+    // listy wycinamy (bez UI)
     s = s.replace(/<\/?(ul|ol)\b[^>]*>/gi, "");
     s = s.replace(/<li\b[^>]*>/gi, "<div>");
     s = s.replace(/<\/li>/gi, "</div>");
     return s;
   }
 
-  function makeSvgDataUrlForScreen(htmlInner, w, h, scrollTopPx) {
-    // "screen" = viewport o wysokości h, od góry (scrollTop)
-    // Robimy wrapper z transform: translateY(-scrollTop), overflow hidden.
-    // UWAGA: większość stylu jest inline w DOM (span/p), a resztę dopinamy minimalnym CSS resetem.
-    const style =
-      `<style xmlns="http://www.w3.org/1999/xhtml">` +
-        `*{box-sizing:border-box;}` +
-        `html,body{margin:0;padding:0;}` +
-        `p{margin:0;}` +
-        `div{margin:0;padding:0;}` +
-      `</style>`;
+  function getStageWidthPx() {
+    // Najważniejsze: “edytor ma jakąś szerokość” -> bierzemy rzeczywistą szerokość renderu.
+    // rtEditor jest absolutem w rtStage, więc bierzemy jego parent.
+    const stage = rtEditor?.parentElement;
+    const w = stage?.clientWidth || rtEditor?.clientWidth || 520;
+    return Math.max(120, Math.floor(w));
+  }
 
-    const xhtml =
+  function makeSvgDataUrlFromEditor(html, stageW, cropH, outW, outH) {
+    // Skala: “screenshot” ma brać stageW i cropH (proporcja 208/88),
+    // a my renderujemy do outW/outH.
+    const scale = outW / stageW;
+
+    // WAŻNE: overflow hidden -> “od góry” i obcięcie do cropH
+    const wrapper =
       `<div xmlns="http://www.w3.org/1999/xhtml" style="` +
-        `width:${w}px;height:${h}px;` +
+        `width:${stageW}px;height:${cropH}px;` +
         `background:#000;color:#fff;` +
+        `margin:0;padding:0;` +
         `overflow:hidden;` +
+        `transform:scale(${scale});transform-origin:0 0;` +
       `">` +
-        style +
-        `<div style="` +
-          `transform:translateY(${-scrollTopPx}px);` +
-          `padding:10px;` +               // to samo co w CSS edytora
-          `white-space:pre-wrap;` +
-          `word-break:break-word;` +
-        `">` +
-          htmlInner +
-        `</div>` +
+        `<style xmlns="http://www.w3.org/1999/xhtml">` +
+          `*{box-sizing:border-box;}` +
+          `html,body{margin:0;padding:0;}` +
+          // PARAGRAFY
+          `p{margin:0;}` +
+          // UWAGA: contenteditable ma padding w CSS; tu tego nie narzucamy.
+          // Jeśli chcesz “safe margin”, ustawiasz to w CSS rtEditor.
+        `</style>` +
+        html +
       `</div>`;
 
     const svg =
-      `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}">` +
-        `<foreignObject x="0" y="0" width="${w}" height="${h}">` +
-          xhtml +
+      `<svg xmlns="http://www.w3.org/2000/svg" width="${outW}" height="${outH}">` +
+        `<foreignObject x="0" y="0" width="${outW}" height="${outH}">` +
+          wrapper +
         `</foreignObject>` +
       `</svg>`;
 
     return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
   }
 
-  async function renderScreenToCanvas(htmlInner, w, h, scrollTopPx) {
-    const canvas = document.createElement("canvas");
-    canvas.width = w;
-    canvas.height = h;
+  async function renderEditorScreenshotToCanvas(outW, outH) {
+    const c = document.createElement("canvas");
+    c.width = outW;
+    c.height = outH;
+    const g = c.getContext("2d");
 
-    const g = canvas.getContext("2d");
     g.fillStyle = "#000";
-    g.fillRect(0, 0, w, h);
+    g.fillRect(0, 0, outW, outH);
 
-    const url = makeSvgDataUrlForScreen(htmlInner, w, h, scrollTopPx);
+    const stageW = getStageWidthPx();
+    const cropH = Math.max(40, Math.round(stageW * (BIG_H / BIG_W))); // proporcja 208:88
+
+    const html = sanitizeHtmlForForeignObject(String(rtEditor?.innerHTML || ""));
+    const url = makeSvgDataUrlFromEditor(html, stageW, cropH, outW, outH);
 
     const img = new Image();
     await new Promise((resolve, reject) => {
       img.onload = resolve;
-      img.onerror = () => reject(new Error("Nie mogę zrobić screena (foreignObject)."));
+      img.onerror = () => reject(new Error("Nie udało się zrobić screena (foreignObject)."));
       img.src = url;
     });
 
     g.drawImage(img, 0, 0);
-    return canvas;
-  }
-
-  function drawScaledToBig(srcCanvas) {
-    // Skaluje screenshot (w x h) do 208x88.
-    // Celowo bez smoothing off: text jest antyaliasowany, potem i tak zrobimy binarkę.
-    const c = document.createElement("canvas");
-    c.width = BIG_W;
-    c.height = BIG_H;
-    const g = c.getContext("2d");
-    g.fillStyle = "#000";
-    g.fillRect(0, 0, BIG_W, BIG_H);
-    g.drawImage(srcCanvas, 0, 0, BIG_W, BIG_H);
     return c;
   }
 
-  // Otsu (auto próg) na 0..255
-  function otsuThresholdFromLuma(lum) {
-    const hist = new Uint32Array(256);
-    for (let i = 0; i < lum.length; i++) {
-      const v = lum[i] | 0;
-      hist[v < 0 ? 0 : v > 255 ? 255 : v] += 1;
-    }
+  function downsample2xToLum(srcCanvas) {
+    const sw = srcCanvas.width;
+    const sh = srcCanvas.height;
+    const tw = Math.floor(sw / 2);
+    const th = Math.floor(sh / 2);
 
-    const total = lum.length;
-    let sum = 0;
-    for (let t = 0; t < 256; t++) sum += t * hist[t];
+    const sctx = srcCanvas.getContext("2d");
+    const img = sctx.getImageData(0, 0, sw, sh).data;
 
-    let sumB = 0;
-    let wB = 0;
-    let wF = 0;
-
-    let varMax = -1;
-    let threshold = 128;
-
-    for (let t = 0; t < 256; t++) {
-      wB += hist[t];
-      if (wB === 0) continue;
-      wF = total - wB;
-      if (wF === 0) break;
-
-      sumB += t * hist[t];
-      const mB = sumB / wB;
-      const mF = (sum - sumB) / wF;
-
-      const between = wB * wF * (mB - mF) * (mB - mF);
-      if (between > varMax) {
-        varMax = between;
-        threshold = t;
+    const lum = new Float32Array(tw * th);
+    for (let y = 0; y < th; y++) {
+      for (let x = 0; x < tw; x++) {
+        let acc = 0;
+        for (let dy = 0; dy < 2; dy++) {
+          for (let dx = 0; dx < 2; dx++) {
+            const sx = x * 2 + dx;
+            const sy = y * 2 + dy;
+            const i = (sy * sw + sx) * 4;
+            const r = img[i + 0], gg = img[i + 1], b = img[i + 2];
+            acc += 0.2126 * r + 0.7152 * gg + 0.0722 * b;
+          }
+        }
+        lum[y * tw + x] = acc / 4;
       }
     }
-    // dla białego tekstu na czarnym tle Otsu bywa zbyt nisko – podbijamy minimalnie
-    return clamp(threshold + 10, 40, 220);
+    return { lum, w: tw, h: th };
   }
 
-  function canvasToBits208(canvas208) {
-    const g = canvas208.getContext("2d");
-    const { data } = g.getImageData(0, 0, BIG_W, BIG_H);
+  function lumToBits(lum, w, h, threshold, dither) {
+    const out = new Uint8Array(w * h);
 
-    const lum = new Uint8Array(BIG_W * BIG_H);
-    for (let i = 0; i < BIG_W * BIG_H; i++) {
-      const r = data[i * 4 + 0];
-      const gg = data[i * 4 + 1];
-      const b = data[i * 4 + 2];
-      lum[i] = (0.2126 * r + 0.7152 * gg + 0.0722 * b) | 0;
+    if (!dither) {
+      for (let i = 0; i < w * h; i++) out[i] = lum[i] >= threshold ? 1 : 0;
+      return out;
     }
 
-    const thr = otsuThresholdFromLuma(lum);
+    // Floyd–Steinberg na jasności 0..255
+    const buf = new Float32Array(lum);
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        const i = y * w + x;
+        const oldv = buf[i];
+        const newv = oldv >= threshold ? 255 : 0;
+        out[i] = newv ? 1 : 0;
+        const err = oldv - newv;
 
-    const out = new Uint8Array(BIG_W * BIG_H);
-    for (let i = 0; i < out.length; i++) {
-      // białe znaki => "1"
-      out[i] = lum[i] >= thr ? 1 : 0;
+        if (x + 1 < w) buf[i + 1] += err * (7 / 16);
+        if (y + 1 < h) {
+          if (x > 0) buf[i + w - 1] += err * (3 / 16);
+          buf[i + w] += err * (5 / 16);
+          if (x + 1 < w) buf[i + w + 1] += err * (1 / 16);
+        }
+      }
     }
     return out;
   }
 
   function compress208x88to150x70(bits208) {
-    // to jest 1:1 jak w Twoich wcześniejszych wersjach
     const out = new Uint8Array(DOT_W * DOT_H);
+
     let oy = 0;
     for (let y = 0; y < BIG_H; y++) {
       const my = y % 9;
-      if (my === 7 || my === 8) continue; // wyrzucamy 2 rzędy "przerwy" na tile
+      if (my === 7 || my === 8) continue;
 
       let ox = 0;
       for (let x = 0; x < BIG_W; x++) {
         const mx = x % 7;
-        if (mx === 5 || mx === 6) continue; // wyrzucamy 2 kolumny przerwy na tile
+        if (mx === 5 || mx === 6) continue;
+
         out[oy * DOT_W + ox] = bits208[y * BIG_W + x] ? 1 : 0;
         ox++;
       }
@@ -491,40 +622,25 @@ export function initTextPixEditor(ctx) {
     return box.minX <= pad || box.minY <= pad || box.maxX >= (w - 1 - pad) || box.maxY >= (h - 1 - pad);
   }
 
-  function getEditorScreenSize() {
-    // bierzemy szerokość "ekranu" (rtStage) jeśli jest, inaczej samego edytora
-    const stage = rtEditor?.closest?.(".rtStage");
-    const w = Math.max(1, Math.floor((stage?.clientWidth || rtEditor?.clientWidth || 1)));
-    const h = Math.max(1, Math.floor(w * (BIG_H / BIG_W)));
-    return { w, h };
-  }
-
   async function compileToBits150() {
     normalizeParagraphs();
 
     const plain = String(rtEditor?.textContent || "").replace(/\u00a0/g, " ").trim();
-    if (!plain) return { bits150: new Uint8Array(DOT_W * DOT_H), clipped: false, empty: true };
+    if (!plain) return { bits150: new Uint8Array(DOT_W * DOT_H), clipped: false };
 
-    const html = sanitizeHtmlForForeignObject(String(rtEditor?.innerHTML || ""));
+    const threshold = clamp(Number(inpThresh?.value || 128), 40, 220);
+    const dither = !!chkRtDither?.checked;
 
-    // "screen" = od góry, tak jak użytkownik widzi (rtEditor.scrollTop)
-    const { w, h } = getEditorScreenSize();
-    const scrollTop = rtEditor ? (rtEditor.scrollTop || 0) : 0;
-
-    // Dla lepszej jakości: renderujemy w 2x i potem skalujemy do 208x88
-    // (to zastępuje dithering/threshold slider – efekt jest stabilniejszy)
-    const hiW = w * 2;
-    const hiH = h * 2;
-
-    let screenCanvas;
+    // render 2x, potem downsample -> BIG_W x BIG_H
+    let hi;
     try {
-      screenCanvas = await renderScreenToCanvas(html, hiW, hiH, scrollTop * 2);
-    } catch (e) {
-      return { bits150: new Uint8Array(DOT_W * DOT_H), clipped: false, failed: true, err: e };
+      hi = await renderEditorScreenshotToCanvas(BIG_W * 2, BIG_H * 2);
+    } catch {
+      return { bits150: new Uint8Array(DOT_W * DOT_H), clipped: false, failed: true };
     }
 
-    const scaled = drawScaledToBig(screenCanvas);
-    const bits208 = canvasToBits208(scaled);
+    const { lum, w, h } = downsample2xToLum(hi); // -> BIG_W x BIG_H
+    const bits208 = lumToBits(lum, w, h, threshold, dither);
     const bits150 = compress208x88to150x70(bits208);
 
     const box = bitsBoundingBox(bits150, DOT_W, DOT_H);
@@ -541,10 +657,8 @@ export function initTextPixEditor(ctx) {
     if (res.failed) {
       cachedBits150 = new Uint8Array(DOT_W * DOT_H);
       ctx.onPreview?.({ kind: "PIX", bits: cachedBits150 });
-
       if (pixWarn) {
-        pixWarn.textContent =
-          "Nie mogę zrobić screena tekstu w tej przeglądarce (foreignObject).";
+        pixWarn.textContent = "Nie mogę zrobić screena tekstu w tej przeglądarce (foreignObject).";
         show(pixWarn, true);
       }
       return;
@@ -555,8 +669,7 @@ export function initTextPixEditor(ctx) {
 
     if (pixWarn) {
       if (res.clipped) {
-        pixWarn.textContent =
-          "Wygląda na ucięte u góry/dole lub po bokach. Zmniejsz rozmiar albo skróć tekst (albo przewiń w edytorze).";
+        pixWarn.textContent = "Wygląda na ucięte — zmniejsz rozmiar albo skróć tekst.";
         show(pixWarn, true);
       } else {
         show(pixWarn, false);
@@ -569,70 +682,103 @@ export function initTextPixEditor(ctx) {
     _deb = setTimeout(() => updatePreviewAsync(), ms);
   }
 
-  // =============================
-  // Binding (raz)
-  // =============================
+  // =========================================================
+  // 7) BIND EVENTY (raz)
+  // =========================================================
   function bindOnce() {
-    if (_bound) return;
-    _bound = true;
-
-    // BIU: klasycznie execCommand (działa na zaznaczenie/kursor)
-    const cmd = (name) => {
+    // BIU
+    btnRtBold?.addEventListener("click", () => {
       if (!rtEditor) return;
       if (!selectionInside()) rtEditor.focus();
-      try { document.execCommand(name, false, null); } catch {}
-      ctx.markDirty?.();
-      schedulePreview(80);
-      syncUiFromSelection();
-    };
-
-    btnRtBold?.addEventListener("click", () => cmd("bold"));
-    btnRtItalic?.addEventListener("click", () => cmd("italic"));
-    btnRtUnderline?.addEventListener("click", () => cmd("underline"));
-
-    // Align per akapit
-    btnRtAlignCycle?.addEventListener("click", () => {
-      currentAlign =
-        currentAlign === "left" ? "center" :
-        currentAlign === "center" ? "right" : "left";
-      updateAlignButton();
-
-      const p = getCurrentParagraph();
-      if (p) p.style.textAlign = currentAlign;
-
+      cmd("bold");
       ctx.markDirty?.();
       schedulePreview(80);
       syncUiFromSelection();
     });
 
-    // Font per zaznaczenie/kursor
+    btnRtItalic?.addEventListener("click", () => {
+      if (!rtEditor) return;
+      if (!selectionInside()) rtEditor.focus();
+      cmd("italic");
+      ctx.markDirty?.();
+      schedulePreview(80);
+      syncUiFromSelection();
+    });
+
+    btnRtUnderline?.addEventListener("click", () => {
+      if (!rtEditor) return;
+      if (!selectionInside()) rtEditor.focus();
+      cmd("underline");
+      ctx.markDirty?.();
+      schedulePreview(80);
+      syncUiFromSelection();
+    });
+
+    // ALIGN (per akapit)
+    btnRtAlignCycle?.addEventListener("click", () => {
+      currentAlign = currentAlign === "left" ? "center" : currentAlign === "center" ? "right" : "left";
+      updateAlignButton();
+
+      const p = getCurrentP();
+      if (p) {
+        p.style.textAlign = currentAlign;
+        ensurePDefaults(p);
+      }
+
+      ctx.markDirty?.();
+      schedulePreview(90);
+      syncUiFromSelection();
+    });
+    updateAlignButton();
+
+    // FONT (per symbol)
     selRtFont?.addEventListener("change", () => {
-      const ff = String(selRtFont.value || "system-ui, sans-serif");
-      applyFontToSelection(ff);
+      const v = String(selRtFont.value || "");
+      if (!v) return; // wartość pusta = “mixed” -> nie aplikujemy
+      applyFontToSelection(v);
       ctx.markDirty?.();
       schedulePreview(120);
       syncUiFromSelection();
     });
 
-    // Size per zaznaczenie/kursor
+    // SIZE (per symbol)
     inpRtSize?.addEventListener("input", () => {
-      const px = clamp(Number(inpRtSize.value || 56), 10, 140);
+      const raw = String(inpRtSize.value || "").trim();
+      if (!raw) return; // mixed: pusto
+      const px = clamp(Number(raw), 10, 140);
       inpRtSize.value = String(px);
       if (!selectionInside()) return;
       applySizeToSelection(px);
       ctx.markDirty?.();
-      schedulePreview(120);
+      schedulePreview(140);
       syncUiFromSelection();
     });
 
-    // Per paragraph inputs
+    // LETTER SPACING (per symbol)
+    inpRtLetter?.addEventListener("input", () => {
+      const raw = String(inpRtLetter.value || "").trim();
+      if (!raw) return; // mixed: pusto
+      const px = clamp(Number(raw), 0, 40);
+      inpRtLetter.value = String(px);
+      if (!selectionInside()) return;
+      applyLetterSpacingToSelection(px);
+      ctx.markDirty?.();
+      schedulePreview(140);
+      syncUiFromSelection();
+    });
+
+    // PARA INPUTS (per akapit)
     const bindPara = (el, min, max) => {
       el?.addEventListener("input", () => {
-        const v = clamp(Number(el.value || 0), min, max);
+        const raw = String(el.value || "").trim();
+        if (!raw) return;
+        const v = clamp(Number(raw), min, max);
         el.value = String(v);
         if (!selectionInside()) return;
-        const p = getCurrentParagraph();
-        if (p) applyInputsToParagraph(p);
+
+        const p = getCurrentP();
+        if (p) applyParaFromInputs(p);
+
         ctx.markDirty?.();
         schedulePreview(140);
         syncUiFromSelection();
@@ -640,53 +786,65 @@ export function initTextPixEditor(ctx) {
     };
 
     bindPara(inpRtLine, 0.6, 2.0);
-    bindPara(inpRtLetter, 0, 10);
-    bindPara(inpRtPadTop, 0, 80);
-    bindPara(inpRtPadBot, 0, 80);
+    bindPara(inpRtPadTop, 0, 200);
+    bindPara(inpRtPadBot, 0, 200);
 
-    // Edycja treści -> normalizacja -> dopnij style do bieżącego akapitu
+    // threshold/dither (opcjonalne)
+    inpThresh?.addEventListener("input", () => {
+      inpThresh.value = String(clamp(Number(inpThresh.value || 128), 40, 220));
+      ctx.markDirty?.();
+      schedulePreview(90);
+    });
+
+    chkRtDither?.addEventListener("change", () => {
+      ctx.markDirty?.();
+      schedulePreview(90);
+    });
+
+    // wpisywanie w edytorze
     rtEditor?.addEventListener("input", () => {
       ctx.markDirty?.();
       normalizeParagraphs();
-      const p = getCurrentParagraph();
-      if (p) applyInputsToParagraph(p);
-      schedulePreview(120);
+
+      const p = getCurrentP();
+      if (p) ensurePDefaults(p);
+
+      schedulePreview(140);
+      // sync po input (kursor może “wskoczyć” w nowe miejsce)
       syncUiFromSelection();
     });
 
-    // "Word": UI śledzi selekcję/kursor
+    // Enter -> wymuś <p> (żeby nie robił <div>)
+    rtEditor?.addEventListener("keydown", (ev) => {
+      if (ev.key !== "Enter") return;
+      // Nie blokujemy Enter – tylko po fakcie normalize zrobi <p>,
+      // ale tutaj zabezpieczamy się przed dziwnymi <div><br>.
+      // Dodatkowo: Shift+Enter zostawiamy jako zwykłe złamanie (użytkownik może chcieć).
+      if (ev.shiftKey) return;
+      // nic więcej – input handler i normalize ogarną resztę
+    });
+
+    // “Word”: odczyt stylu z selekcji/kursora
     document.addEventListener("selectionchange", () => {
       if (!selectionInside()) return;
       syncUiFromSelection();
     });
+
     rtEditor?.addEventListener("mouseup", syncUiFromSelection);
     rtEditor?.addEventListener("keyup", syncUiFromSelection);
     rtEditor?.addEventListener("focus", syncUiFromSelection);
-
-    // Scroll w edytorze wpływa na "screenshot od góry" (viewport)
-    rtEditor?.addEventListener("scroll", () => {
-      // nie markDirty, bo scroll nie zmienia treści — ale zmienia screen
-      schedulePreview(60);
-    });
-
-    // Start align button
-    updateAlignButton();
   }
 
   bindOnce();
 
-  // =============================
-  // Public API
-  // =============================
+  // =========================================================
+  // 8) API
+  // =========================================================
   return {
     open() {
       show(paneTextPix, true);
 
-      if (rtEditor) {
-        rtEditor.innerHTML = "";
-        rtEditor.scrollTop = 0;
-      }
-
+      if (rtEditor) rtEditor.innerHTML = "";
       currentAlign = "center";
       updateAlignButton();
 
@@ -694,18 +852,18 @@ export function initTextPixEditor(ctx) {
 
       cachedBits150 = new Uint8Array(DOT_W * DOT_H);
       ctx.onPreview?.({ kind: "PIX", bits: cachedBits150 });
+
       show(pixWarn, false);
 
-      // reset BIU UI
-      setBtnOn(btnRtBold, false);
-      setBtnOn(btnRtItalic, false);
-      setBtnOn(btnRtUnderline, false);
+      // UI startowo: “brak zaznaczenia, brak stylu”
+      setBtnState(btnRtBold, "off");
+      setBtnState(btnRtItalic, "off");
+      setBtnState(btnRtUnderline, "off");
 
-      // pierwszy sync (na wypadek gdy focus już jest)
-      syncUiFromSelection();
-
-      // od razu podgląd pustego/początkowego
-      schedulePreview(0);
+      // UWAGA: wartości font/size/letter ustawiamy dopiero po focus/selection.
+      if (selRtFont) selRtFont.value = "";
+      if (inpRtSize) inpRtSize.value = "56";
+      if (inpRtLetter) inpRtLetter.value = "0";
     },
 
     close() {
