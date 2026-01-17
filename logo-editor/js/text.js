@@ -1,43 +1,26 @@
+// familiada/logo-editor/js/text.js
+// Tryb: TEXT (font_3x10) -> zapis GLYPH_30x10
+// Stała 1 kolumna przerwy miedzy glifami.
 
 export function initTextEditor(ctx) {
-  const {
-    TYPE_GLYPH,
-    paneText,
-    textValue,
-    textWarn,
-    textMeasure,
-    btnCharsToggle,
-    charsList,
-    markDirty,
-    clearDirty,
-    setEditorMsg,
-    show,
-    updatePreviewRows30x10,
-    clamp,
-    getFont3x10,
-  } = ctx;
+  const paneText = document.getElementById("paneText");
+  const textValue = document.getElementById("textValue");
+  const textWarn = document.getElementById("textWarn");
+  const textMeasure = document.getElementById("textMeasure");
+  const btnCharsToggle = document.getElementById("btnCharsToggle");
+  const charsList = document.getElementById("charsList");
+
+  const TYPE_GLYPH = "GLYPH_30x10";
+
+  const show = (el, on) => { if (!el) return; el.style.display = on ? "" : "none"; };
 
   let lastCompiled = null;
-
-  function esc(s){
-    return String(s ?? "")
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;")
-      .replaceAll("'", "&#039;");
-  }
-
-  function normalizeInputText(raw) {
-    return String(raw ?? "");
-  }
 
   function isLitChar(ch) {
     return ch !== " " && ch !== "\u00A0";
   }
 
   function measureGlyphTight3x10(rows10) {
-    // rows10: 10 wierszy, kazdy dlugosci 3
     const W = 3;
     let left = W;
     let right = -1;
@@ -55,17 +38,23 @@ export function initTextEditor(ctx) {
     }
 
     if (right < left) return { left: 0, w: 0 };
-    return { left, w: right - left + 1 };
+    return suggestedWidthFix(left, right);
+
+    function suggestedWidthFix(l, r){
+      return { left: l, w: r - l + 1 };
+    }
+  }
+
+  function normalizeInputText(raw) {
+    return String(raw ?? "");
   }
 
   function compileTextToRows30x10(raw) {
-    const FONT_3x10 = getFont3x10();
+    const FONT_3x10 = ctx.getFont3x10?.() || null;
     const text = normalizeInputText(raw);
 
-    // docelowe 30x10
     const rows = Array.from({ length: 10 }, () => Array.from({ length: 30 }, () => " "));
     const invalid = [];
-
     const chars = Array.from(text);
 
     /** @type {Array<{space:true} | {rows10:string[], w:number}>} */
@@ -84,12 +73,11 @@ export function initTextEditor(ctx) {
       glyphs.push({ rows10: cropped, w });
     }
 
-    // szerokosc: spacja=1; miedzy glifami zawsze +1 (gdy glif obok glifu)
     let usedW = 0;
     let prevWasGlyph = false;
     for (const g of glyphs) {
       if (g.space) { usedW += 1; prevWasGlyph = false; continue; }
-      if (prevWasGlyph) usedW += 1;
+      if (prevWasGlyph) usedW += 1; // stała przerwa 1
       usedW += g.w;
       prevWasGlyph = true;
     }
@@ -126,11 +114,11 @@ export function initTextEditor(ctx) {
     };
   }
 
-  function updateAllowedCharsList() {
-    const FONT_3x10 = getFont3x10();
+  function renderAllowedCharsList() {
+    const FONT_3x10 = ctx.getFont3x10?.() || {};
     if (!charsList) return;
     const keys = Object.keys(FONT_3x10 || {});
-    charsList.innerHTML = esc("␠" + keys.join("\u2009"));
+    charsList.textContent = "␠" + keys.join("\u2009");
   }
 
   function updateWarnings(compiled) {
@@ -151,62 +139,22 @@ export function initTextEditor(ctx) {
       show(textWarn, false);
     }
 
-    const okStr = compiled.fit ? "mieści się" : "nie mieści się";
-    textMeasure.textContent = `Szerokość: ${compiled.usedW}/30 (${okStr}).`;
+    textMeasure.textContent = `Szerokość: ${compiled.usedW}/30 (${compiled.fit ? "mieści się" : "nie mieści się"}).`;
   }
 
-  function recompileFromInput() {
-    setEditorMsg("");
+  function recompile() {
+    ctx.setEditorMsg?.("");
     const compiled = compileTextToRows30x10(textValue?.value || "");
     lastCompiled = compiled;
     updateWarnings(compiled);
-    updatePreviewRows30x10(compiled.rows);
+    ctx.onPreview?.({ kind: "GLYPH", rows: compiled.rows });
   }
 
-  // ===== public API dla main.js =====
-  const api = {
-    mode: "TEXT",
-    open() {
-      show(paneText, true);
-      updateAllowedCharsList();
-      show(textWarn, false);
-      if (textMeasure) textMeasure.textContent = "—";
-      if (textValue) textValue.value = "";
-      lastCompiled = null;
-      clearDirty();
-      recompileFromInput();
-    },
-    close() {
-      show(paneText, false);
-    },
-    isDirty() {
-      return ctx.isDirty();
-    },
-    getCreatePayload() {
-      const compiled = lastCompiled || compileTextToRows30x10(textValue?.value || "");
-      lastCompiled = compiled;
-      updateWarnings(compiled);
-
-      if (compiled.invalid.length) {
-        return { ok: false, msg: "Popraw niedozwolone znaki." };
-      }
-      if (!compiled.fit) {
-        return { ok: false, msg: "Napis się nie mieści — skróć tekst." };
-      }
-
-      return {
-        ok: true,
-        type: TYPE_GLYPH,
-        payload: { layers: [{ color: "main", rows: compiled.rows }] },
-      };
-    },
-  };
-
-  // ===== events =====
+  // EVENTS
   textValue?.addEventListener("input", () => {
-    if (ctx.getMode() !== "TEXT") return;
-    markDirty();
-    recompileFromInput();
+    if (ctx.getMode?.() !== "TEXT") return;
+    ctx.markDirty?.();
+    recompile();
   });
 
   btnCharsToggle?.addEventListener("click", () => {
@@ -215,5 +163,39 @@ export function initTextEditor(ctx) {
     if (btnCharsToggle) btnCharsToggle.textContent = on ? "Ukryj" : "Pokaż";
   });
 
-  return api;
+  // API
+  return {
+    open() {
+      show(paneText, true);
+      if (textValue) textValue.value = "";
+      if (textMeasure) textMeasure.textContent = "—";
+      show(textWarn, false);
+      renderAllowedCharsList();
+      show(charsList, false);
+      if (btnCharsToggle) btnCharsToggle.textContent = "Pokaż";
+
+      lastCompiled = null;
+      ctx.clearDirty?.();
+      recompile();
+    },
+
+    close() {
+      show(paneText, false);
+    },
+
+    getCreatePayload() {
+      const compiled = lastCompiled || compileTextToRows30x10(textValue?.value || "");
+      lastCompiled = compiled;
+      updateWarnings(compiled);
+
+      if (compiled.invalid.length) return { ok: false, msg: "Popraw niedozwolone znaki." };
+      if (!compiled.fit) return { ok: false, msg: "Napis się nie mieści — skróć tekst." };
+
+      return {
+        ok: true,
+        type: TYPE_GLYPH,
+        payload: { layers: [{ color: "main", rows: compiled.rows }] },
+      };
+    },
+  };
 }
