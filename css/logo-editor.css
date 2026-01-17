@@ -601,4 +601,65 @@ body.logo-editor-body .wrap{ max-width:1200px; }
   gap: 5px; /* ⬅️ główny rytm sekcji */
 }
 
+/* ===== TEXT_PIX: edytor = plansza (208×88) ===== */
+
+:root{
+  --rt-font: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  --rt-size: 56px;
+  --rt-line: 1.05;
+  --rt-letter: 0px;
+  --rt-before: 10px; /* przed akapitem */
+  --rt-after: 10px;  /* po akapicie */
+  --rt-align: center;
+}
+
+/* “Plansza” o proporcjach 208×88. To jest WIDOK, nie render. */
+#paneTextPix .rtStage{
+  width: 100%;
+  aspect-ratio: 208 / 88;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,.14);
+  background: rgba(0,0,0,.18);
+  overflow: hidden;
+  position: relative;
+}
+
+/* Edytor w środku: ma scroll, ale plansza zawsze pokazuje górę */
+#paneTextPix .rtEditor{
+  position: absolute;
+  inset: 0;
+  overflow: auto;
+  padding: 10px; /* stały “safe margin” po bokach */
+  outline: none;
+  color: #fff;
+  background: #000; /* realnie jak plansza */
+  white-space: pre-wrap;
+  word-break: break-word;
+
+  font-family: var(--rt-font);
+  font-size: var(--rt-size);
+  line-height: var(--rt-line);
+  letter-spacing: var(--rt-letter);
+  text-align: var(--rt-align);
+}
+
+/* Akapity: odstęp PRZED/PO akapicie (to Twoje “góra/dół”) */
+#paneTextPix .rtEditor p{
+  margin: 0;
+}
+#paneTextPix .rtEditor p + p{
+  margin-top: var(--rt-before);
+}
+#paneTextPix .rtEditor p{
+  margin-bottom: var(--rt-after);
+}
+#paneTextPix .rtEditor p:last-child{
+  margin-bottom: 0;
+}
+
+/* (opcjonalnie) delikatny “placeholder” bez psucia HTML */
+#paneTextPix .rtEditor:empty::before{
+  content: "Wpisz tekst…";
+  opacity: .45;
+}
 
