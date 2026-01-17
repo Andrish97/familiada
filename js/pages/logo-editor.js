@@ -218,6 +218,36 @@ function rtEnsureParagraphStyle(p) {
   if (!p.style.marginBottom) p.style.marginBottom = `${clamp(Number(inpRtPadBot?.value || 8), 0, 40)}px`;
 }
 
+function rtApplyInputsToParagraph(p) {
+  if (!p) return;
+
+  // Czcionka (bazowa dla akapitu)
+  const baseFont = String(selRtFont?.value || "system-ui, sans-serif");
+  p.style.fontFamily = baseFont;
+
+  // Rozmiar
+  const sizePx = clamp(Number(inpRtSize?.value || 56), 10, 140);
+  p.style.fontSize = `${sizePx}px`;
+
+  // Interlinia
+  const line = clamp(Number(inpRtLine?.value || 1.05), 0.6, 1.8);
+  p.style.lineHeight = String(line);
+
+  // Odstęp między literami
+  const letterPx = clamp(Number(inpRtLetter?.value || 0), 0, 4);
+  p.style.letterSpacing = `${letterPx}px`;
+
+  // Odstępy akapitu (góra/dół)
+  const beforePx = clamp(Number(inpRtPadTop?.value || 8), 0, 40);
+  const afterPx  = clamp(Number(inpRtPadBot?.value || 8), 0, 40);
+  p.style.marginTop = `${beforePx}px`;
+  p.style.marginBottom = `${afterPx}px`;
+
+  // Wyrównanie
+  p.style.textAlign = rtAlign || "center";
+}
+
+
 function setBtnOn(btn, on) {
   if (!btn) return;
   btn.classList.toggle("on", !!on);
@@ -677,16 +707,13 @@ function makeRichTextSvgDataUrl(html, opts) {
   const afterPx  = Number(opts.afterPx || 0);
 
   // Reset marginesów + definicja akapitów (ważne dla “pustych pasów”)
-  const style =
-    `<style xmlns="http://www.w3.org/1999/xhtml">` +
-      `*{box-sizing:border-box;}` +
-      `html,body{margin:0;padding:0;}` +
-      `div,p{margin:0;padding:0;}` +
-      `p{margin:0;}` +
-      `p+p{margin-top:${beforePx}px;}` +
-      `p{margin-bottom:${afterPx}px;}` +
-      `p:last-child{margin-bottom:0;}` +
-    `</style>`;
+const style =
+  `<style xmlns="http://www.w3.org/1999/xhtml">` +
+    `*{box-sizing:border-box;}` +
+    `html,body{margin:0;padding:0;}` +
+    `div,p{padding:0;}` +
+    `p{margin:0;}` +
+  `</style>`;
 
 const xhtml =
   `<div xmlns="http://www.w3.org/1999/xhtml" style="` +
