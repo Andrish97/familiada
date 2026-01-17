@@ -71,8 +71,6 @@ const btnRtUnderline = document.getElementById("btnRtUnderline");
 const btnRtAlignCycle = document.getElementById("btnRtAlignCycle");
 
 const selRtFont = document.getElementById("selRtFont");
-const inpRtGoogle = document.getElementById("inpRtGoogle");
-const btnRtGoogle = document.getElementById("btnRtGoogle");
 
 const inpRtSize = document.getElementById("inpRtSize");
 const inpRtLine = document.getElementById("inpRtLine");
@@ -171,8 +169,6 @@ function rtApplyUiToEditor() {
   if (!rtEditor) return;
 
   const baseFont = String(selRtFont?.value || "system-ui, sans-serif");
-  const googleFont = ensureGoogleFont(inpRtGoogle?.value);
-  const ff = googleFont ? `'${googleFont}', ${baseFont}` : baseFont;
 
   const sizePx = clamp(Number(inpRtSize?.value || 56), 10, 140);
   const line = clamp(Number(inpRtLine?.value || 1.05), 0.6, 1.8);
@@ -182,13 +178,7 @@ function rtApplyUiToEditor() {
   const beforePx = clamp(Number(inpRtPadTop?.value || 10), 0, 80);
   const afterPx  = clamp(Number(inpRtPadBot?.value || 10), 0, 80);
 
-  rtEditor.style.setProperty("--rt-font", ff);
-  rtEditor.style.setProperty("--rt-size", `${sizePx}px`);
-  rtEditor.style.setProperty("--rt-line", String(line));
-  rtEditor.style.setProperty("--rt-letter", `${letterPx}px`);
-  rtEditor.style.setProperty("--rt-before", `${beforePx}px`);
-  rtEditor.style.setProperty("--rt-after", `${afterPx}px`);
-  rtEditor.style.setProperty("--rt-align", rtAlign);
+  rtEditor.style.setProperty("--rt-font", baseFont);
 }
 
 /* Contenteditable lubi robić <div> i <br>. My chcemy akapity jako <p>. */
@@ -207,29 +197,75 @@ function rtNormalizeParagraphs() {
   rtEditor.innerHTML = lines.map(s => `<p>${esc(s)}</p>`).join("");
 }
 
-
-/* =========================================================
-   Google Fonts (opcjonalnie)
-========================================================= */
-function ensureGoogleFont(name) {
-  const raw = String(name || "").trim();
-  if (!raw) return null;
-
-  // id po to, żeby nie dublować linków
-  const id = "gf-" + raw.toLowerCase().replace(/[^a-z0-9]+/g, "-");
-  if (document.getElementById(id)) return raw;
-
-  const q = encodeURIComponent(raw).replace(/%20/g, "+");
-  const href = `https://fonts.googleapis.com/css2?family=${q}:wght@400;700&display=swap`;
-
-  const link = document.createElement("link");
-  link.id = id;
-  link.rel = "stylesheet";
-  link.href = href;
-  document.head.appendChild(link);
-
-  return raw;
+function rtGetCurrentParagraph() {
+  const sel = window.getSelection?.();
+  if (!sel || sel.rangeCount === 0) return null;
+  let n = sel.anchorNode;
+  if (!n) return null;
+  if (n.nodeType === 3) n = n.parentNode; // text -> element
+  return n?.closest ? n.closest("p") : null;
 }
+
+function rtEnsureParagraphStyle(p) {
+  if (!p) return;
+  // jeśli paragraf nie ma ustawień, nadaj mu “bazę” z aktualnych inputów
+  if (!p.style.fontSize) p.style.fontSize = `${clamp(Number(inpRtSize?.value || 56), 10, 140)}px`;
+  if (!p.style.lineHeight) p.style.lineHeight = String(clamp(Number(inpRtLine?.value || 1.05), 0.6, 1.8));
+  if (!p.style.letterSpacing) p.style.letterSpacing = `${clamp(Number(inpRtLetter?.value || 0), 0, 4)}px`;
+  if (!p.style.textAlign) p.style.textAlign = (rtAlign || "center");
+  // odstępy akapitu (góra/dół) zrobimy jako margin:
+  if (!p.style.marginTop) p.style.marginTop = `${clamp(Number(inpRtPadTop?.value || 8), 0, 40)}px`;
+  if (!p.style.marginBottom) p.style.marginBottom = `${clamp(Number(inpRtPadBot?.value || 8), 0, 40)}px`;
+}
+
+function setBtnOn(btn, on) {
+  if (!btn) return;
+  btn.classList.toggle("on", !!on);
+  btn.setAttribute("aria-pressed", on ? "true" : "false");
+}
+
+function rtSyncToolbarStateFromSelection() {
+  if (editorMode !== "TEXT_PIX") return;
+
+  try {
+    setBtnOn(btnRtBold, !!document.queryCommandState("bold"));
+    setBtnOn(btnRtItalic, !!document.queryCommandState("italic"));
+    setBtnOn(btnRtUnderline, !!document.queryCommandState("underline"));
+  } catch {
+    // niektóre przeglądarki potrafią rzucić wyjątkiem
+  }
+
+  // Dodatkowo: zaktualizuj inputy (rozmiar/line/margins/align) z bieżącego akapitu:
+  const p = rtGetCurrentParagraph();
+  if (p) {
+    const cs = getComputedStyle(p);
+
+    // font-size: "56px" -> 56
+    const fs = Math.round(parseFloat(cs.fontSize) || 56);
+    const lh = parseFloat(cs.lineHeight) / (parseFloat(cs.fontSize) || 1); // bywa "normal" -> wtedy NaN
+    const ls = Math.round(parseFloat(cs.letterSpacing) || 0);
+    const mt = Math.round(parseFloat(cs.marginTop) || 0);
+    const mb = Math.round(parseFloat(cs.marginBottom) || 0);
+
+    if (inpRtSize) inpRtSize.value = String(clamp(fs, 10, 140));
+    if (inpRtLetter) inpRtLetter.value = String(clamp(ls, 0, 4));
+    if (inpRtPadTop) inpRtPadTop.value = String(clamp(mt, 0, 40));
+    if (inpRtPadBot) inpRtPadBot.value = String(clamp(mb, 0, 40));
+
+    // line-height bywa "normal" → wtedy nie nadpisuj
+    if (Number.isFinite(lh) && inpRtLine) {
+      inpRtLine.value = String(clamp(Math.round(lh * 100) / 100, 0.6, 1.8));
+    }
+
+    const a = (p.style.textAlign || cs.textAlign || "center");
+    rtAlign = (a === "left" || a === "right") ? a : "center";
+    if (btnRtAlignCycle) {
+      btnRtAlignCycle.textContent = rtAlign === "left" ? "⇤" : rtAlign === "right" ? "⇥" : "⇆";
+      btnRtAlignCycle.dataset.state = rtAlign;
+    }
+  }
+}
+
 
 /* =========================================================
    Fetch fonts
@@ -652,23 +688,19 @@ function makeRichTextSvgDataUrl(html, opts) {
       `p:last-child{margin-bottom:0;}` +
     `</style>`;
 
-  const xhtml =
-    `<div xmlns="http://www.w3.org/1999/xhtml" style="` +
-      `width:${w}px;height:${h}px;` +
-      `background:#000;color:#fff;` +
-      `font-family:${ff};font-size:${fs}px;` +
-      `line-height:${lh};` +
-      `letter-spacing:${ls}px;` +
-      `padding:0;` +                 // <- zero paddingu góra/dół, bo to akapity kontrolują
-      `padding-left:10px;` +         // <- stały “safe margin”
-      `padding-right:10px;` +
-      `text-align:${ta};` +
-      `white-space:pre-wrap;` +
-      `overflow:hidden;` +           // <- plansza zawsze widzi górę
-    `">` +
-      style +
-      html +
-    `</div>`;
+const xhtml =
+  `<div xmlns="http://www.w3.org/1999/xhtml" style="` +
+    `width:${w}px;height:${h}px;` +
+    `background:#000;color:#fff;` +
+    `padding:0;` +
+    `padding-left:10px;` +
+    `padding-right:10px;` +
+    `white-space:pre-wrap;` +
+    `overflow:hidden;` +
+  `">` +
+    style +
+    html +
+  `</div>`;
 
   const svg =
     `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}">` +
@@ -815,8 +847,7 @@ async function compileRichTextToLogoBits() {
   }
 
   const baseFont = String(selRtFont?.value || "system-ui, sans-serif");
-  const googleFont = ensureGoogleFont(inpRtGoogle?.value);
-  const fontFamily = googleFont ? `'${googleFont}', ${baseFont}` : baseFont;
+  const fontFamily = baseFont;
 
   const fontSizePx = clamp(Number(inpRtSize?.value || 56), 10, 140);
   const lineHeight = clamp(Number(inpRtLine?.value || 1.05), 0.6, 1.8);
@@ -1627,16 +1658,33 @@ document.addEventListener("DOMContentLoaded", async () => {
   btnRtItalic?.addEventListener("click", () => cmd("italic"));
   btnRtUnderline?.addEventListener("click", () => cmd("underline"));
 
-  const setAlign = (v) => {
-    rtAlign = v;
-    if (btnRtAlignCycle) {
-      btnRtAlignCycle.textContent = v === "left" ? "⇤" : v === "right" ? "⇥" : "⇆";
-      btnRtAlignCycle.dataset.state = v;
-    }
-    markDirty();
-    rtApplyUiToEditor();
-    updateTextPixPreviewAsync();
-  };
+   document.addEventListener("selectionchange", () => {
+     if (editorMode !== "TEXT_PIX") return;
+     // ważne: reaguj tylko jeśli zaznaczenie jest w rtEditor
+     const sel = window.getSelection?.();
+     const n = sel?.anchorNode;
+     const inside = n && (n === rtEditor || (n.nodeType === 3 ? n.parentNode : n).closest?.("#rtEditor"));
+     if (!inside) return;
+   
+     rtSyncToolbarStateFromSelection();
+   });
+
+   const setAlign = (v) => {
+     rtAlign = v;
+   
+     // ustaw wyrównanie tylko dla akapitu z kursorem
+     const p = rtGetCurrentParagraph();
+     if (p) p.style.textAlign = v;
+   
+     if (btnRtAlignCycle) {
+       btnRtAlignCycle.textContent = v === "left" ? "⇤" : v === "right" ? "⇥" : "⇆";
+       btnRtAlignCycle.dataset.state = v;
+     }
+   
+     markDirty();
+     updateTextPixPreviewAsync();
+   };
+
 
   btnRtAlignCycle?.addEventListener("click", () => {
     const nxt = rtAlign === "left" ? "center" : rtAlign === "center" ? "right" : "left";
@@ -1650,40 +1698,29 @@ document.addEventListener("DOMContentLoaded", async () => {
      updateTextPixPreviewAsync();
    });
 
-   btnRtGoogle?.addEventListener("click", () => {
-     ensureGoogleFont(inpRtGoogle?.value);
-     markDirty();
-     rtApplyUiToEditor();
-     updateTextPixPreviewAsync();
-   });
-   
-   inpRtGoogle?.addEventListener("keydown", (ev) => {
-     if (ev.key !== "Enter") return;
-     ev.preventDefault();
-     ensureGoogleFont(inpRtGoogle?.value);
-     markDirty();
-     rtApplyUiToEditor();
-     updateTextPixPreviewAsync();
-   });
-
    const bindNum = (el, def, min, max) => {
      el?.addEventListener("change", () => {
        el.value = String(clamp(Number(el.value || def), min, max));
+   
+       // zastosuj ustawienia tylko do akapitu z kursorem
+       const p = rtGetCurrentParagraph();
+       rtApplyInputsToParagraph(p);
+   
        markDirty();
-       rtApplyUiToEditor();
        updateTextPixPreviewAsync();
      });
    
-   el?.addEventListener("input", () => {
-     // natychmiast WYSIWYG w edytorze
-     markDirty();
-     rtApplyUiToEditor();
+     el?.addEventListener("input", () => {
+       // na żywo: zmieniaj tylko bieżący akapit
+       const p = rtGetCurrentParagraph();
+       rtApplyInputsToParagraph(p);
    
-     // debounce renderu podglądu
-     clearTimeout(rtDeb);
-     rtDeb = setTimeout(() => updateTextPixPreviewAsync(), 120);
-   });
-
+       markDirty();
+   
+       // debounce renderu podglądu
+       clearTimeout(rtDeb);
+       rtDeb = setTimeout(() => updateTextPixPreviewAsync(), 120);
+     });
    };
 
   bindNum(inpRtSize, 56, 10, 140);
@@ -1717,12 +1754,15 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   chkRtDither?.addEventListener("change", () => { markDirty(); updateTextPixPreviewAsync(); });
 
-  // Pisanie: debounce
    rtEditor?.addEventListener("input", () => {
      if (editorMode !== "TEXT_PIX") return;
+   
      markDirty();
      rtNormalizeParagraphs();
-     rtApplyUiToEditor();
+   
+     // dopnij style do akapitu z kursorem
+     const p = rtGetCurrentParagraph();
+     rtApplyInputsToParagraph(p);
    
      clearTimeout(rtDeb);
      rtDeb = setTimeout(() => updateTextPixPreviewAsync(), 120);
