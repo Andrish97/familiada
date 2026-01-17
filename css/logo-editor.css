@@ -530,7 +530,7 @@ body.logo-editor-body .wrap{ max-width:1200px; }
 .ctrlRowSize{
   display:flex;
   align-items:center;
-  gap:10px;
+  gap:5px;
 }
 .ctrlRowSize .miniLbl{
   flex: 1;
@@ -545,24 +545,24 @@ body.logo-editor-body .wrap{ max-width:1200px; }
 .ctrlRowRightGap{
   display:flex;
   justify-content:flex-end;
-  margin-top: 12px;
+  margin-top: 5px;
 }
 .ctrlRowRightGap .btn{
-  padding-left: 14px;
-  padding-right: 14px;
+  padding-left: 5px;
+  padding-right: 5px;
 }
 
 /* Wyrównanie w "Odstępy" z większym oddechem */
 .ctrlRowAlign{
   display:flex;
   align-items:center;
-  margin-top: 12px;
+  margin-top: 5px;
 }
 .ctrlRowAlign .miniLbl{
   flex:1;
 }
 .ctrlRowAlign #btnRtAlignCycle{
-  margin-left: 18px; /* większy odstęp */
+  margin-left: 5px; /* większy odstęp */
 }
 
 /* Kontrast: pojedyncze pole na środku */
@@ -582,7 +582,7 @@ body.logo-editor-body .wrap{ max-width:1200px; }
   flex-direction: row;        /* ⬅️ wymuszenie jednej linii */
   justify-content: space-around;
   align-items: center;
-  gap: 12px;
+  gap: 5px;
   width: 100%;
 }
 
