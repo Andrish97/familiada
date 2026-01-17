@@ -576,15 +576,22 @@ body.logo-editor-body .wrap{ max-width:1200px; }
 }
 
 /* BIU: równomiernie na szerokości i na środku */
+
 .ctrlRowBiu{
-  display:flex;
-  justify-content:space-evenly;
-  align-items:center;
-  gap:10px;
+  display: flex;
+  flex-direction: row;        /* ⬅️ wymuszenie jednej linii */
+  justify-content: space-around;
+  align-items: center;
+  gap: 12px;
   width: 100%;
 }
+
 .ctrlRowBiu .btn{
-  min-width: 64px;
+  display: inline-flex;       /* ⬅️ NIE block */
+  align-items: center;
+  justify-content: center;
+  min-width: 56px;
 }
+
 
 
