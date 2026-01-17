@@ -384,3 +384,139 @@ body.logo-editor-body .wrap{ max-width:1200px; }
   gap:10px;
   align-items:flex-end;
 }
+
+/* MINIATURY: maksymalnie duży "ekran", minimum ramek */
+.preview{
+  padding:0;                 /* było 10px */
+  border:0;                  /* usuń ramkę wrappera */
+  background:transparent;    /* usuń tło wrappera */
+}
+
+.preview canvas{
+  width:100%;
+  height:auto;
+  display:block;
+  image-rendering: pixelated;
+
+  /* jedna, cienka ramka bez "podwójnych ramek" */
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,.12);
+  background:#000;
+}
+
+
+/* ===== Matrioszka: spójne sekcje w każdym pane ===== */
+.paneSec{
+  margin-top:12px;
+  border-radius:16px;
+  border:1px solid rgba(255,255,255,.10);
+  background:rgba(0,0,0,.10);
+  padding:10px;
+}
+
+.paneSecTitle{
+  font-weight:1000;
+  font-size:12px;
+  letter-spacing:.10em;
+  text-transform:uppercase;
+  opacity:.9;
+  margin-bottom:8px;
+}
+
+.paneSecBody{
+  display:block;
+}
+
+/* Edytor RT – żeby wyglądał jak “pole”, a nie przypadkowy div */
+.rtEditor{
+  min-height:220px;
+  padding:12px;
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,.12);
+  background:rgba(0,0,0,.16);
+  outline:none;
+  white-space:pre-wrap;
+  overflow:auto;
+}
+
+/* ===== Sterowanie: równa siatka kafelków ===== */
+.ctrlGrid{
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap:10px;
+}
+
+@media (max-width: 760px){
+  .ctrlGrid{ grid-template-columns: 1fr; }
+}
+
+.ctrlBlock{
+  border-radius:16px;
+  border:1px solid rgba(255,255,255,.10);
+  background:rgba(255,255,255,.04);
+  padding:10px;
+}
+
+.ctrlTitle{
+  font-weight:1000;
+  font-size:12px;
+  letter-spacing:.10em;
+  text-transform:uppercase;
+  opacity:.9;
+  margin-bottom:8px;
+}
+
+.ctrlRow{
+  display:flex;
+  gap:8px;
+  align-items:center;
+  flex-wrap:wrap;
+}
+
+.ctrlGrid2{
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap:8px;
+  margin-top:6px;
+}
+
+.field{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+
+.field > span{
+  font-size:12px;
+  opacity:.8;
+  font-weight:800;
+}
+
+.miniLbl{
+  font-size:12px;
+  opacity:.85;
+  font-weight:900;
+}
+
+/* Tooltips bez zajmowania miejsca */
+[data-tip]{
+  position:relative;
+}
+[data-tip]:hover::after{
+  content: attr(data-tip);
+  position:absolute;
+  left:0;
+  top:100%;
+  margin-top:8px;
+  z-index:60;
+  max-width:280px;
+  padding:10px 12px;
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,.14);
+  background:rgba(0,0,0,.88);
+  color:#fff;
+  font-size:12px;
+  line-height:1.35;
+  box-shadow:0 20px 50px rgba(0,0,0,.55);
+}
+
