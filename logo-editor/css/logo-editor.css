@@ -367,11 +367,6 @@ body.logo-editor-body .wrap{ max-width:1200px; }
 /* Wieksze odstepy w sekcji Czcionka */
 #blkFont{ display:flex; flex-direction:column; gap:12px; }
 
-/* Kontrast: domyslnie ukryty, wlaczamy per tryb */
-#blkThresh{ display:none; }
-.editorShell[data-mode="TEXT_PIX"] #blkThresh{ display:block; }
-.editorShell[data-mode="IMAGE"] #blkThresh{ display:block; }
-
 /* TEXT_PIX: Odstępy zajmują miejsce po usuniętym Kontraście */
 .editorShell[data-mode="TEXT_PIX"] #ctrlGrid{
   grid-template-columns: 1fr 1fr;
