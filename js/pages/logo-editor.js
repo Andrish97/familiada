@@ -165,6 +165,48 @@ function confirmCloseIfDirty() {
 
 function clamp(n, a, b) { return Math.max(a, Math.min(b, n)); }
 
+
+function rtApplyUiToEditor() {
+  if (!rtEditor) return;
+
+  const baseFont = String(selRtFont?.value || "system-ui, sans-serif");
+  const googleFont = ensureGoogleFont(inpRtGoogle?.value);
+  const ff = googleFont ? `'${googleFont}', ${baseFont}` : baseFont;
+
+  const sizePx = clamp(Number(inpRtSize?.value || 56), 10, 140);
+  const line = clamp(Number(inpRtLine?.value || 1.05), 0.6, 1.8);
+  const letterPx = clamp(Number(inpRtLetter?.value || 0), 0, 6);
+
+  // “góra/dół” = przed/po akapicie
+  const beforePx = clamp(Number(inpRtPadTop?.value || 10), 0, 80);
+  const afterPx  = clamp(Number(inpRtPadBot?.value || 10), 0, 80);
+
+  rtEditor.style.setProperty("--rt-font", ff);
+  rtEditor.style.setProperty("--rt-size", `${sizePx}px`);
+  rtEditor.style.setProperty("--rt-line", String(line));
+  rtEditor.style.setProperty("--rt-letter", `${letterPx}px`);
+  rtEditor.style.setProperty("--rt-before", `${beforePx}px`);
+  rtEditor.style.setProperty("--rt-after", `${afterPx}px`);
+  rtEditor.style.setProperty("--rt-align", rtAlign);
+}
+
+/* Contenteditable lubi robić <div> i <br>. My chcemy akapity jako <p>. */
+function rtNormalizeParagraphs() {
+  if (!rtEditor) return;
+
+  // jeśli jest pusto -> zostaw pusto (żadnych błędów renderu)
+  const plain = String(rtEditor.textContent || "").replace(/\u00a0/g, " ").trim();
+  if (!plain) { rtEditor.innerHTML = ""; return; }
+
+  // Jeśli nie ma <p>, owijamy linie w <p>
+  const hasP = /<\s*p[\s>]/i.test(rtEditor.innerHTML);
+  if (hasP) return;
+
+  const lines = plain.split(/\n+/).map(s => s.trim()).filter(Boolean);
+  rtEditor.innerHTML = lines.map(s => `<p>${esc(s)}</p>`).join("");
+}
+
+
 /* =========================================================
    Google Fonts (opcjonalnie)
 ========================================================= */
@@ -591,16 +633,22 @@ function makeRichTextSvgDataUrl(html, opts) {
   const fs = opts.fontSizePx || 56;
   const lh = opts.lineHeight || 1.05;
   const ls = opts.letterSpacingPx || 0;
-  const pt = opts.padTopPx || 10;
-  const pb = opts.padBotPx || 10;
   const ta = opts.textAlign || "center";
 
-  // Styl resetuje marginesy (to właśnie zwykle robi "puste" górne pasy)
+  // odstępy akapitów (PRZED/PO) – to jest Twoje “góra/dół”
+  const beforePx = Number(opts.beforePx || 0);
+  const afterPx  = Number(opts.afterPx || 0);
+
+  // Reset marginesów + definicja akapitów (ważne dla “pustych pasów”)
   const style =
     `<style xmlns="http://www.w3.org/1999/xhtml">` +
       `*{box-sizing:border-box;}` +
       `html,body{margin:0;padding:0;}` +
       `div,p{margin:0;padding:0;}` +
+      `p{margin:0;}` +
+      `p+p{margin-top:${beforePx}px;}` +
+      `p{margin-bottom:${afterPx}px;}` +
+      `p:last-child{margin-bottom:0;}` +
     `</style>`;
 
   const xhtml =
@@ -610,12 +658,12 @@ function makeRichTextSvgDataUrl(html, opts) {
       `font-family:${ff};font-size:${fs}px;` +
       `line-height:${lh};` +
       `letter-spacing:${ls}px;` +
-      `padding-top:${pt}px;` +
-      `padding-bottom:${pb}px;` +
-      `padding-left:10px;padding-right:10px;` +
+      `padding:0;` +                 // <- zero paddingu góra/dół, bo to akapity kontrolują
+      `padding-left:10px;` +         // <- stały “safe margin”
+      `padding-right:10px;` +
       `text-align:${ta};` +
       `white-space:pre-wrap;` +
-      `overflow:hidden;` +
+      `overflow:hidden;` +           // <- plansza zawsze widzi górę
     `">` +
       style +
       html +
@@ -757,6 +805,8 @@ function looksClipped(box, w, h, pad = 1) {
 }
 
 async function compileRichTextToLogoBits() {
+  rtNormalizeParagraphs();
+  rtApplyUiToEditor();
   const textPlain = String(rtEditor?.textContent || "").replace(/\u00a0/g, " ").trim();
   if (!textPlain) {
     // brak tekstu => brak błędu, po prostu puste logo
@@ -779,30 +829,33 @@ async function compileRichTextToLogoBits() {
   const html = sanitizeHtmlForForeignObject(String(rtEditor?.innerHTML || ""));
 
   // render w 2x dla "płynniejszych" krawędzi
-  const hi = await renderRichTextToCanvas(html, {
-    w: BIG_W * 2,
-    h: BIG_H * 2,
-    fontFamily,
-    fontSizePx: fontSizePx * 2,
-    lineHeight,
-    letterSpacingPx: letterSpacingPx * 2,
-    padTopPx: padTopPx * 2,
-    padBotPx: padBotPx * 2,
-    textAlign: rtAlign,
-  }).catch((e) => {
+   const hi = await renderRichTextToCanvas(html, {
+     w: BIG_W * 2,
+     h: BIG_H * 2,
+     fontFamily,
+     fontSizePx: fontSizePx * 2,
+     lineHeight,
+     letterSpacingPx: letterSpacingPx * 2,
+     textAlign: rtAlign,
+   
+     // odstępy PRZED/PO akapicie (2x bo renderujemy w 2x)
+     beforePx: padTopPx * 2,
+     afterPx: padBotPx * 2,
+   })
+      .catch((e) => {
     // fallback: jeśli foreignObject nie działa (Safari/tryb prywatny), ratujemy się canvas.fillText
     console.warn("[logo-editor] foreignObject failed, falling back", e);
     return renderPlainTextFallback(textPlain, {
-      w: BIG_W * 2,
-      h: BIG_H * 2,
-      fontFamily,
-      fontSizePx: fontSizePx * 2,
-      lineHeight,
-      letterSpacingPx: letterSpacingPx * 2,
-      padTopPx: padTopPx * 2,
-      padBotPx: padBotPx * 2,
-      textAlign: rtAlign,
-    });
+     w: BIG_W * 2,
+     h: BIG_H * 2,
+     fontFamily,
+     fontSizePx: fontSizePx * 2,
+     lineHeight,
+     letterSpacingPx: letterSpacingPx * 2,
+     textAlign: rtAlign,
+     beforePx: padTopPx * 2,
+     afterPx: padBotPx * 2,
+   });
   });
 
   const { lum, w, h } = downsample2xToLum(hi); // -> BIG_W x BIG_H
@@ -1418,11 +1471,14 @@ function openEditor(mode) {
     updateBigPreview();
   }
 
-  if (mode === "TEXT_PIX") {
-    // podgląd bez brudzenia (dopiero po pierwszym input)
-    updateTextPixPreviewAsync();
-    clearDirty();
-  }
+   if (mode === "TEXT_PIX") {
+     // ustaw WYSIWYG zanim cokolwiek renderujemy
+     rtNormalizeParagraphs();
+     rtApplyUiToEditor();
+   
+     updateTextPixPreviewAsync();
+     clearDirty();
+   }
 
   if (mode === "DRAW") {
     drawBitsToCanvasBW(draftBits150, DOT_W, DOT_H, drawCanvas);
@@ -1577,6 +1633,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       btnRtAlignCycle.dataset.state = v;
     }
     markDirty();
+    rtApplyUiToEditor();
     updateTextPixPreviewAsync();
   };
 
@@ -1586,32 +1643,44 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
   setAlign(rtAlign);
 
-  selRtFont?.addEventListener("change", () => { markDirty(); updateTextPixPreviewAsync(); });
+  selRtFont?.addEventListener("change", () => {
+     markDirty();
+     rtApplyUiToEditor();
+     updateTextPixPreviewAsync();
+   });
 
-  btnRtGoogle?.addEventListener("click", () => {
-    ensureGoogleFont(inpRtGoogle?.value);
-    markDirty();
-    updateTextPixPreviewAsync();
-  });
-  inpRtGoogle?.addEventListener("keydown", (ev) => {
-    if (ev.key !== "Enter") return;
-    ev.preventDefault();
-    ensureGoogleFont(inpRtGoogle?.value);
-    markDirty();
-    updateTextPixPreviewAsync();
-  });
+   btnRtGoogle?.addEventListener("click", () => {
+     ensureGoogleFont(inpRtGoogle?.value);
+     markDirty();
+     rtApplyUiToEditor();
+     updateTextPixPreviewAsync();
+   });
+   
+   inpRtGoogle?.addEventListener("keydown", (ev) => {
+     if (ev.key !== "Enter") return;
+     ev.preventDefault();
+     ensureGoogleFont(inpRtGoogle?.value);
+     markDirty();
+     rtApplyUiToEditor();
+     updateTextPixPreviewAsync();
+   });
 
-  const bindNum = (el, def, min, max) => {
-    el?.addEventListener("change", () => {
-      el.value = String(clamp(Number(el.value || def), min, max));
-      markDirty();
-      updateTextPixPreviewAsync();
-    });
-    el?.addEventListener("input", () => {
-      markDirty();
-      // nie spamuj renderem, debounce z inputa poniżej
-    });
-  };
+   const bindNum = (el, def, min, max) => {
+     el?.addEventListener("change", () => {
+       el.value = String(clamp(Number(el.value || def), min, max));
+       markDirty();
+       rtApplyUiToEditor();
+       updateTextPixPreviewAsync();
+     });
+   
+     el?.addEventListener("input", () => {
+       // natychmiast WYSIWYG w edytorze
+       markDirty();
+       rtApplyUiToEditor();
+   
+       // render debounce (jak było)
+     });
+   };
 
   bindNum(inpRtSize, 56, 10, 140);
   bindNum(inpRtLine, 1.05, 0.6, 1.8);
@@ -1645,13 +1714,15 @@ document.addEventListener("DOMContentLoaded", async () => {
   chkRtDither?.addEventListener("change", () => { markDirty(); updateTextPixPreviewAsync(); });
 
   // Pisanie: debounce
-  let rtDeb = null;
-  rtEditor?.addEventListener("input", () => {
-    if (editorMode !== "TEXT_PIX") return;
-    markDirty();
-    clearTimeout(rtDeb);
-    rtDeb = setTimeout(() => updateTextPixPreviewAsync(), 120);
-  });
+   rtEditor?.addEventListener("input", () => {
+     if (editorMode !== "TEXT_PIX") return;
+     markDirty();
+     rtNormalizeParagraphs();
+     rtApplyUiToEditor();
+   
+     clearTimeout(rtDeb);
+     rtDeb = setTimeout(() => updateTextPixPreviewAsync(), 120);
+   });
 
   // draw editor
   btnBrush?.addEventListener("click", () => {
@@ -1704,7 +1775,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   };
   bigPreview?.addEventListener("click", openPreview);
   btnPreviewClose?.addEventListener("click", () => show(previewOverlay, false));
-  previewOverlay?.addEventListener("click", (ev) => { if (ev.target === previewOverlay) show(previewOverlay, false); });
+  previewOverlay?.addEventListener("click", (ev) => { if (ev.target === previewOverlay) show(previewOverlay, false);});
 
   await refresh();
 });
