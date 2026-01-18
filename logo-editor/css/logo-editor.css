@@ -541,6 +541,140 @@ body.logo-editor-body .wrap{ max-width:1200px; }
 }
 .bigModalCanvas canvas{ width:100%; height:auto; display:block; }
 
+/* ===== DRAW: pełna szerokość, bez prawej kolumny (big preview) ===== */
+.editorShell[data-mode="DRAW"] .editorGrid{
+  grid-template-columns: 1fr;
+}
+.editorShell[data-mode="DRAW"] .editorRight{
+  display:none;
+}
+
+/* ===== DRAW layout: lewy toolbar + prawa scena ===== */
+#paneDraw .drawLayout{
+  margin-top:12px;
+  display:grid;
+  grid-template-columns: 96px 1fr; /* toolbar wąski */
+  gap:12px;
+  align-items:stretch;
+}
+
+/* ===== toolbar po lewej ===== */
+#paneDraw .drawBar{
+  border-radius:16px;
+  border:1px solid rgba(255,255,255,.10);
+  background:rgba(255,255,255,.04);
+  padding:10px;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+/* grupy narzędzi: mała “tabelka” 2 kolumny */
+#paneDraw .drawGrp{
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap:8px;
+}
+
+/* małe odstępy między blokami */
+#paneDraw .drawSep{
+  height:1px;
+  background:rgba(255,255,255,.10);
+  margin:2px 0;
+}
+
+/* przyciski-ikonki: małe, równe */
+#paneDraw .tool{
+  height:40px;
+  width:100%;
+  padding:0;
+  display:grid;
+  place-items:center;
+  font-size:18px;
+}
+
+/* aktywny tool */
+#paneDraw .tool.on{
+  border-color: rgba(255,234,166,.50);
+  background: rgba(255,234,166,.10);
+  color: var(--gold);
+}
+
+/* ===== prawa strona: scena ma być WYSOKA ===== */
+#paneDraw .drawMain{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  min-height: 420px;
+}
+
+/* scena rośnie na wysokość */
+#paneDraw .drawStage{
+  flex:1;
+  border-radius:16px;
+  border:1px solid rgba(255,255,255,.14);
+  background:#000;
+  overflow:hidden;
+  padding:10px;
+  display:flex;
+}
+
+/* canvas rozciągamy do maksymalnej wysokości i szerokości,
+   zachowując proporcje 150/70 (to załatwia “niski pasek” problem) */
+#paneDraw .drawStage canvas{
+  width:100%;
+  height:100%;
+  display:block;
+  background:#000;
+  image-rendering: pixelated;
+  touch-action:none;
+  border-radius:12px;
+  object-fit: contain;
+}
+
+/* mini podgląd */
+#paneDraw .drawMiniRow{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+
+#paneDraw .drawMiniLbl{
+  font-weight:1000;
+  font-size:12px;
+  letter-spacing:.10em;
+  text-transform:uppercase;
+  opacity:.85;
+  min-width:72px;
+}
+
+#drawMiniPreview{
+  width:160px;
+  height:auto;
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,.12);
+  background:#000;
+  image-rendering: pixelated;
+}
+
+/* responsywność: na wąskich ekranach toolbar na górę */
+@media (max-width: 720px){
+  #paneDraw .drawLayout{
+    grid-template-columns: 1fr;
+  }
+  #paneDraw .drawBar{
+    flex-direction:row;
+    flex-wrap:wrap;
+  }
+  #paneDraw .drawGrp{
+    grid-template-columns: repeat(4, 1fr);
+  }
+  #paneDraw .drawSep{
+    width:100%;
+  }
+}
+
+
 /* ==========================================================
    Tooltipy jako chmurki (bez zajmowania miejsca)
 ========================================================== */
