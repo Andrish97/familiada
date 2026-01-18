@@ -416,6 +416,26 @@ body.logo-editor-body .wrap{ max-width:1200px; }
   display:block;
 }
 
+/* DRAW: większy panel rysowania */
+#paneDraw .canvasBox{
+  padding: 10px;
+}
+
+/* duży “podglądowy” canvas do rysowania */
+#paneDraw #drawCanvas{
+  width: 100%;
+  height: auto;
+  aspect-ratio: 150 / 70;   /* zawsze te same proporcje */
+  min-height: 220px;        /* żeby nie był “znaczkiem” */
+  max-height: 420px;        /* żeby nie zdominował całego lewego panelu */
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,.12);
+  background: #000;
+  display: block;
+  touch-action: none;
+}
+
+
 /* ==========================================================
    Modale
 ========================================================== */
