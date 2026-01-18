@@ -1,4 +1,401 @@
 /* ==========================================================
+   Familiada — Logo editor (porzadek + "matrioszka")
+   - tylko style dla tej strony
+   - podzial na: Lista / Edytor / Pane / TEXT_PIX / Modale
+========================================================== */
+
+body.logo-editor-body{
+  min-height:100vh;
+  background: var(--bg);
+  color:#fff;
+}
+body.logo-editor-body .wrap{ max-width:1200px; }
+
+/* ==========================================================
+   Naglowek listy
+========================================================== */
+.rowTop{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-end;
+  gap:14px;
+  flex-wrap:wrap;
+}
+
+.title{
+  font-weight:1000;
+  font-size:18px;
+  margin:10px 0;
+  letter-spacing:.06em;
+}
+
+.rowTopActions{ display:flex; gap:10px; align-items:flex-end; }
+
+/* ==========================================================
+   Lista kafelkow
+========================================================== */
+.shell{
+  margin-top:12px;
+  border-radius:20px;
+  border:1px solid var(--line);
+  background: var(--card);
+  box-shadow:0 24px 60px rgba(0,0,0,.45);
+  padding:14px;
+}
+
+.grid{
+  display:grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap:12px;
+}
+
+.card{
+  position:relative;
+  border-radius:18px;
+  border:1px solid var(--line);
+  background:rgba(255,255,255,.05);
+  padding:12px;
+  overflow:hidden;
+  cursor:pointer;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  min-height:180px;
+}
+
+.card:hover{ filter:brightness(1.05); }
+
+.card.add{
+  display:grid;
+  place-items:center;
+  font-weight:1000;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--gold);
+  background:rgba(255,234,166,.06);
+  border-color:rgba(255,234,166,.25);
+}
+
+/* X */
+.card .x{
+  position:absolute;
+  top:10px;
+  right:10px;
+  width:28px;
+  height:28px;
+  border-radius:10px;
+  border:1px solid rgba(255,255,255,.16);
+  background:rgba(0,0,0,.18);
+  display:grid;
+  place-items:center;
+  font-weight:1000;
+  cursor:pointer;
+  user-select:none;
+}
+.card .x:hover{ filter:brightness(1.15); }
+
+.cardTop{
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  align-items:flex-start;
+}
+
+.name{ font-weight:1000; font-size:14px; line-height:1.15; }
+.meta{ opacity:.75; font-size:12px; margin-top:2px; }
+
+.badgeActive{
+  padding:6px 8px;
+  border-radius:999px;
+  font-weight:1000;
+  font-size:11px;
+  letter-spacing:.10em;
+  text-transform:uppercase;
+  border:1px solid rgba(255,234,166,.35);
+  background:rgba(255,234,166,.10);
+  color:var(--gold);
+  white-space:nowrap;
+}
+
+/* MINIATURA: maksymalnie duzy "ekran", minimum ramek */
+.preview{
+  padding:0;
+  border:0;
+  background:transparent;
+  display:grid;
+  place-items:center;
+}
+
+.preview canvas{
+  width:100%;
+  height:auto;
+  display:block;
+  image-rendering: pixelated;
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,.12);
+  background:#000;
+}
+
+.actions{ display:flex; gap:10px; flex-wrap:wrap; }
+
+/* ==========================================================
+   Edytor (na stronie)
+========================================================== */
+.editorShell{
+  margin-top:12px;
+  border-radius:20px;
+  border:1px solid var(--line);
+  background: var(--card);
+  box-shadow:0 24px 60px rgba(0,0,0,.45);
+  padding:14px;
+}
+
+.editorHead{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:12px;
+  flex-wrap:wrap;
+}
+
+.editorTitle{ font-weight:1000; font-size:16px; letter-spacing:.06em; }
+.editorSub{ opacity:.85; font-size:13px; margin-top:4px; }
+
+.editorGrid{
+  margin-top:12px;
+  display:grid;
+  grid-template-columns: 1fr 1.15fr;
+  gap:12px;
+}
+
+@media (max-width: 980px){
+  .editorGrid{ grid-template-columns: 1fr; }
+}
+
+.editorLeft, .editorRight{
+  border-radius:18px;
+  border:1px solid rgba(255,255,255,.10);
+  background:rgba(255,255,255,.04);
+  padding:12px;
+}
+
+.lbl{ font-weight:1000; font-size:12px; letter-spacing:.10em; text-transform:uppercase; opacity:.9; }
+.pane{ margin-top:6px; }
+
+.warn{
+  margin-top:8px;
+  border-radius:14px;
+  border:1px solid rgba(255,117,117,.35);
+  background:rgba(255,117,117,.10);
+  padding:10px;
+  font-size:13px;
+  opacity:.95;
+  white-space:pre-wrap;
+}
+
+.hint{ opacity:.85; font-size:13px; }
+
+.chars{ margin-top:12px; }
+.charsHead{ display:flex; justify-content:space-between; align-items:center; gap:10px; }
+.charsList{
+  margin-top:8px;
+  padding:10px;
+  border-radius:14px;
+  background:rgba(0,0,0,.18);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size:12px;
+  line-height:1.4;
+  white-space:pre-wrap;
+  word-break:break-word;
+}
+
+.editorActions{
+  margin-top:12px;
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  align-items:center;
+}
+
+.bigPrevWrap{
+  margin-top:10px;
+  border-radius:16px;
+  background:rgba(0,0,0,.18);
+  padding:8px;
+}
+
+.bigPrevWrap canvas{ width:100%; height:auto; display:block; }
+
+.msg{ opacity:.9; font-size:13px; min-height:18px; }
+.foot{ margin-top:12px; }
+
+/* ==========================================================
+   Matrioszka: spójne sekcje wewnatrz pane
+========================================================== */
+.paneSec{
+  margin-top:12px;
+  border-radius:16px;
+  border:1px solid rgba(255,255,255,.10);
+  background:rgba(0,0,0,.10);
+  padding:10px;
+}
+
+.paneSecTitle{
+  font-weight:1000;
+  font-size:12px;
+  letter-spacing:.10em;
+  text-transform:uppercase;
+  opacity:.9;
+  margin-bottom:8px;
+}
+
+.paneSecBody{ display:block; }
+
+/* ==========================================================
+   TEXT_PIX (Word-ish)
+========================================================== */
+
+/* Plansza 208x88 (proporcje) */
+#paneTextPix .rtStage{
+  width:100%;
+  aspect-ratio: 208 / 88;
+  border-radius:16px;
+  border:1px solid rgba(255,255,255,.14);
+  background:#000;
+  overflow:hidden;
+  position:relative;
+}
+
+#rtEditor.rtEditor{
+  position:absolute;
+  inset:0;
+  overflow:auto;
+  padding:10px;
+  outline:none;
+  color:#fff;
+  background:#000;
+  white-space:pre-wrap;
+  word-break: break-word;
+}
+
+#rtEditor.rtEditor:empty::before{
+  content: attr(data-placeholder);
+  opacity:.45;
+}
+
+/* BIU jako toggle (on/off) */
+.btn.on{
+  border-color: rgba(255,234,166,.50);
+  background: rgba(255,234,166,.10);
+  color: var(--gold);
+}
+
+/* Ustawienia: 2x2 bloki */
+.ctrlGrid{
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap:10px;
+}
+@media (max-width: 760px){
+  .ctrlGrid{ grid-template-columns: 1fr; }
+}
+
+.ctrlBlock{
+  border-radius:16px;
+  border:1px solid rgba(255,255,255,.10);
+  background:rgba(255,255,255,.04);
+  padding:10px;
+}
+
+.ctrlTitle{
+  font-weight:1000;
+  font-size:12px;
+  letter-spacing:.10em;
+  text-transform:uppercase;
+  opacity:.9;
+  margin-bottom:8px;
+}
+
+.ctrlRow{
+  display:flex;
+  gap:8px;
+  align-items:center;
+  flex-wrap:wrap;
+}
+
+.ctrlGrid2{
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap:8px;
+  margin-top:6px;
+}
+
+.field{ display:flex; flex-direction:column; gap:6px; }
+.field > span{ font-size:12px; opacity:.8; font-weight:900; }
+.miniLbl{ font-size:12px; opacity:.85; font-weight:900; }
+
+/* Twoje wymagania layoutu */
+.ctrlRowFull > .inp,
+.ctrlRowFull > select.inp{ width:100%; }
+
+.ctrlRowSize{ align-items:center; }
+.ctrlRowSize .miniLbl{ flex:1; }
+.ctrlRowSize input{ width:110px; margin-left:auto; text-align:center; }
+
+.ctrlRowAlign{ margin-top:6px; }
+.ctrlRowAlign .miniLbl{ flex:1; }
+.ctrlRowAlign button{ margin-left:14px; }
+
+.ctrlRowCenter{ justify-content:center; }
+.ctrlRowCenter input{ width:120px; text-align:center; }
+
+.ctrlRowBiu{
+  display:flex;
+  flex-direction:row;
+  justify-content:space-evenly;
+  align-items:center;
+  width:100%;
+  gap:10px;
+}
+.ctrlRowBiu .btn{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-width:56px;
+}
+
+/* Wieksze odstepy w sekcji Czcionka */
+#blkFont{ display:flex; flex-direction:column; gap:12px; }
+
+/* TEXT_PIX: Odstępy zajmują miejsce po usuniętym Kontraście */
+.editorShell[data-mode="TEXT_PIX"] #ctrlGrid{
+  grid-template-columns: 1fr 1fr;
+}
+
+.editorShell[data-mode="TEXT_PIX"] #blkSpacing{
+  grid-row: span 2;     /* prawa kolumna na 2 wiersze */
+  align-self: stretch;
+}
+
+.editorShell[data-mode="TEXT_PIX"] #blkStyle{
+  align-self: start;    /* żeby styl nie rozciągał się bez sensu */
+}
+
+/* TinyMCE inline: niech nie dokłada własnych ramek */
+#paneTextPix .tox-tinymce,
+#paneTextPix .tox-editor-container,
+#paneTextPix .tox-edit-area,
+#paneTextPix .tox-edit-area__iframe {
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+/* Zaznaczenie ma być widoczne na czarnym tle */
+#paneTextPix ::selection{
+  background: rgba(255,234,166,.35);
+}
+
+/* ==========================================================
    DRAW (Fabric) — JEDYNA wersja, bez dubli
    - pełna szerokość (bez prawego bigPreview)
    - toolbar po lewej: 2 kolumny ikon + małe separatory
@@ -188,3 +585,224 @@
     min-height: 420px;
   }
 }
+
+/* ==========================================================
+   Modale
+========================================================== */
+.overlay{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.82);
+  display:grid;
+  place-items:center;
+  padding:16px;
+  z-index:50;
+}
+
+.modal{
+  width:min(920px, 100%);
+  border-radius:22px;
+  border:1px solid var(--line);
+  background:var(--card);
+  box-shadow:0 30px 90px rgba(0,0,0,.65);
+  padding:16px;
+}
+
+.mTitle{ font-weight:1000; letter-spacing:.06em; font-size:16px; }
+.mSub{ opacity:.85; font-size:13px; margin-top:6px; }
+
+.mSection{ margin-top:14px; }
+
+.mGrid{
+  display:grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap:10px;
+}
+
+.mTile{
+  border-radius:18px;
+  border:1px solid var(--line);
+  background:rgba(255,255,255,.05);
+  padding:14px;
+  text-align:left;
+  color:#fff;
+  cursor:pointer;
+}
+.mTile:hover{ filter:brightness(1.06); }
+
+.mTileTitle{ font-weight:1000; }
+.mTileSub{ opacity:.75; font-size:12px; margin-top:4px; }
+
+.importRow{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+.importMsg{ opacity:.85; font-size:13px; }
+
+/* Fullscreen preview */
+.bigModal{ width:min(1700px, 100%); }
+.bigModalCanvas{
+  margin-top:10px;
+  border-radius:16px;
+  background:rgba(0,0,0,.18);
+  padding:10px;
+}
+.bigModalCanvas canvas{ width:100%; height:auto; display:block; }
+
+/* ===== DRAW: pełna szerokość, bez prawej kolumny (big preview) ===== */
+.editorShell[data-mode="DRAW"] .editorGrid{
+  grid-template-columns: 1fr;
+}
+.editorShell[data-mode="DRAW"] .editorRight{
+  display:none;
+}
+
+/* ===== DRAW layout: lewy toolbar + prawa scena ===== */
+#paneDraw .drawLayout{
+  margin-top:12px;
+  display:grid;
+  grid-template-columns: 96px 1fr; /* toolbar wąski */
+  gap:12px;
+  align-items:stretch;
+}
+
+/* ===== toolbar po lewej ===== */
+#paneDraw .drawBar{
+  border-radius:16px;
+  border:1px solid rgba(255,255,255,.10);
+  background:rgba(255,255,255,.04);
+  padding:10px;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+/* grupy narzędzi: mała “tabelka” 2 kolumny */
+#paneDraw .drawGrp{
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap:8px;
+}
+
+/* małe odstępy między blokami */
+#paneDraw .drawSep{
+  height:1px;
+  background:rgba(255,255,255,.10);
+  margin:2px 0;
+}
+
+/* przyciski-ikonki: małe, równe */
+#paneDraw .tool{
+  height:40px;
+  width:100%;
+  padding:0;
+  display:grid;
+  place-items:center;
+  font-size:18px;
+}
+
+/* aktywny tool */
+#paneDraw .tool.on{
+  border-color: rgba(255,234,166,.50);
+  background: rgba(255,234,166,.10);
+  color: var(--gold);
+}
+
+/* ===== prawa strona: scena ma być WYSOKA ===== */
+#paneDraw .drawMain{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  min-height: 420px;
+}
+
+/* scena rośnie na wysokość */
+#paneDraw .drawStage{
+  flex:1;
+  border-radius:16px;
+  border:1px solid rgba(255,255,255,.14);
+  background:#000;
+  overflow:hidden;
+  padding:10px;
+  display:flex;
+}
+
+/* canvas rozciągamy do maksymalnej wysokości i szerokości,
+   zachowując proporcje 150/70 (to załatwia “niski pasek” problem) */
+#paneDraw .drawStage canvas{
+  width:100%;
+  height:100%;
+  display:block;
+  background:#000;
+  image-rendering: pixelated;
+  touch-action:none;
+  border-radius:12px;
+  object-fit: contain;
+}
+
+/* mini podgląd */
+#paneDraw .drawMiniRow{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+
+#paneDraw .drawMiniLbl{
+  font-weight:1000;
+  font-size:12px;
+  letter-spacing:.10em;
+  text-transform:uppercase;
+  opacity:.85;
+  min-width:72px;
+}
+
+#drawMiniPreview{
+  width:160px;
+  height:auto;
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,.12);
+  background:#000;
+  image-rendering: pixelated;
+}
+
+/* responsywność: na wąskich ekranach toolbar na górę */
+@media (max-width: 720px){
+  #paneDraw .drawLayout{
+    grid-template-columns: 1fr;
+  }
+  #paneDraw .drawBar{
+    flex-direction:row;
+    flex-wrap:wrap;
+  }
+  #paneDraw .drawGrp{
+    grid-template-columns: repeat(4, 1fr);
+  }
+  #paneDraw .drawSep{
+    width:100%;
+  }
+}
+
+
+/* ==========================================================
+   Tooltipy jako chmurki (bez zajmowania miejsca)
+========================================================== */
+[data-tip]{ position:relative; }
+[data-tip]::after{
+  content: attr(data-tip);
+  position:absolute;
+  left:0;
+  top:100%;
+  margin-top:8px;
+  min-width: 180px;
+  max-width: 280px;
+  padding:10px 12px;
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,.14);
+  background:rgba(0,0,0,.92);
+  box-shadow:0 16px 50px rgba(0,0,0,.65);
+  font-size:12px;
+  line-height:1.35;
+  opacity:0;
+  transform: translateY(-4px);
+  pointer-events:none;
+  transition: opacity .12s ease, transform .12s ease;
+  z-index:60;
+}
+[data-tip]:hover::after{ opacity:1; transform: translateY(0); }
