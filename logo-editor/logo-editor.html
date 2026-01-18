@@ -66,10 +66,14 @@
 
       <div class="editorGrid">
         <div class="editorLeft">
+          
           <div class="lbl">Nazwa</div>
-          <input class="inp" id="logoName" placeholder="Np. Moje logo"/>
-          <!-- IMAGE: wybór pliku obok nazwy (ukrywany w innych trybach przez CSS) -->
-          <input class="inp" id="imgFile" type="file" accept="image/*"/>
+          <div class="imgNameRow">
+            <input class="inp" id="logoName" placeholder="Np. Moje logo"/>
+          
+            <label class="fileBtn"><input type="file" id="imgFile" accept="image/*" hidden/>📁</label>
+          </div>
+
 
           <!-- TEXT (font_3x10) -->
           <div class="pane" id="paneText" style="display:none;">
