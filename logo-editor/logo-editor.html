@@ -157,39 +157,66 @@
 
                   <!-- DRAW -->
           <div class="pane" id="paneDraw" style="display:none;">
-            <div class="drawTools" id="drawTools">
-              <button class="btn sm tool" id="btnSel" type="button" title="Wskaźnik (Select/Move)">🖱️</button>
-              <button class="btn sm tool" id="btnPan" type="button" title="Ręka (Pan)">✋</button>
           
-              <button class="btn sm tool" id="btnZoomIn" type="button" title="Zoom +">🔍➕</button>
-              <button class="btn sm tool" id="btnZoomOut" type="button" title="Zoom -">🔍➖</button>
-              <button class="btn sm tool" id="btnZoom100" type="button" title="100%">💯</button>
-              <button class="btn sm tool" id="btnZoomFit" type="button" title="Dopasuj">🧲</button>
+            <div class="drawLayout">
+              <!-- LEWY PANEL: narzędzia -->
+              <div class="drawBar" id="drawTools">
           
-              <button class="btn sm tool" id="btnBrush" type="button" title="Ołówek / Pędzel (biały)">✏️</button>
-              <button class="btn sm tool" id="btnEraser" type="button" title="Gumka (wektorowa)">🧽</button>
+                <div class="drawGrp">
+                  <button class="btn sm tool" id="btnSel" type="button" title="Wskaźnik (Select/Move)">🖱️</button>
+                  <button class="btn sm tool" id="btnPan" type="button" title="Ręka (Pan)">✋</button>
+                </div>
           
-              <button class="btn sm tool" id="btnLine" type="button" title="Linia">📏</button>
-              <button class="btn sm tool" id="btnRect" type="button" title="Prostokąt">▭</button>
-              <button class="btn sm tool" id="btnEllipse" type="button" title="Elipsa">⬭</button>
-              <button class="btn sm tool" id="btnPoly" type="button" title="Wielokąt (klikaj punkty)">🔺</button>
+                <div class="drawSep"></div>
           
-              <button class="btn sm tool" id="btnUndo" type="button" title="Cofnij">↶</button>
-              <button class="btn sm tool" id="btnRedo" type="button" title="Ponów">↷</button>
-              <button class="btn sm tool" id="btnClear" type="button" title="Wyczyść">🗑️</button>
+                <div class="drawGrp">
+                  <button class="btn sm tool" id="btnZoomIn" type="button" title="Zoom +">🔍➕</button>
+                  <button class="btn sm tool" id="btnZoomOut" type="button" title="Zoom -">🔍➖</button>
+                  <button class="btn sm tool" id="btnZoom100" type="button" title="100%">💯</button>
+                  <button class="btn sm tool" id="btnZoomFit" type="button" title="Dopasuj">🧲</button>
+                </div>
+          
+                <div class="drawSep"></div>
+          
+                <div class="drawGrp">
+                  <button class="btn sm tool" id="btnBrush" type="button" title="Pędzel (biały)">✏️</button>
+                  <button class="btn sm tool" id="btnEraser" type="button" title="Gumka">🧽</button>
+                </div>
+          
+                <div class="drawSep"></div>
+          
+                <div class="drawGrp">
+                  <button class="btn sm tool" id="btnLine" type="button" title="Linia">📏</button>
+                  <button class="btn sm tool" id="btnRect" type="button" title="Prostokąt">▭</button>
+                  <button class="btn sm tool" id="btnEllipse" type="button" title="Elipsa">⬭</button>
+                  <button class="btn sm tool" id="btnPoly" type="button" title="Wielokąt">🔺</button>
+                </div>
+          
+                <div class="drawSep"></div>
+          
+                <div class="drawGrp">
+                  <button class="btn sm tool" id="btnUndo" type="button" title="Cofnij">↶</button>
+                  <button class="btn sm tool" id="btnRedo" type="button" title="Ponów">↷</button>
+                  <button class="btn sm tool" id="btnClear" type="button" title="Wyczyść">🗑️</button>
+                </div>
+          
+              </div>
+          
+              <!-- PRAWA CZĘŚĆ: scena + mini podgląd -->
+              <div class="drawMain">
+                <div class="drawStage">
+                  <canvas id="drawCanvas" width="150" height="70"></canvas>
+                </div>
+          
+                <div class="drawMiniRow">
+                  <div class="drawMiniLbl">Podgląd</div>
+                  <canvas id="drawMiniPreview" width="300" height="140"></canvas>
+                </div>
+              </div>
             </div>
           
-            <div class="drawStage">
-              <!-- UWAGA: to jest “scena” robocza, będzie skalowana CSS-em -->
-              <canvas id="drawCanvas" width="150" height="70"></canvas>
-            </div>
-          
-            <div class="drawMiniRow">
-              <div class="drawMiniLbl">Podgląd</div>
-              <canvas id="drawMiniPreview" width="300" height="140" aria-label="Mini podgląd"></canvas>
-            </div>
           </div>
-
+          
 
           <!-- IMAGE -->
           <div class="pane" id="paneImage" style="display:none;">
