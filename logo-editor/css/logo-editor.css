@@ -1,14 +1,8 @@
 /* ==========================================================
    Familiada — Logo editor (spójny, bez duplikatów)
+   - Lista / Edytor / TEXT_PIX / DRAW / IMAGE / Modale
 ========================================================== */
 
-:root{
-  /* zakładam, że base.css daje Ci --bg --card --line --gold itd */
-}
-
-/* ==========================================================
-   Bazowe
-========================================================== */
 body.logo-editor-body{
   min-height:100vh;
   background: var(--bg);
@@ -104,7 +98,6 @@ body.logo-editor-body .wrap{
   cursor:pointer;
   user-select:none;
 }
-
 .card .x:hover{ filter:brightness(1.15); }
 
 .cardTop{
@@ -116,6 +109,19 @@ body.logo-editor-body .wrap{
 
 .name{ font-weight:1000; font-size:14px; line-height:1.15; }
 .meta{ opacity:.75; font-size:12px; margin-top:2px; }
+
+.badgeActive{
+  padding:6px 8px;
+  border-radius:999px;
+  font-weight:1000;
+  font-size:11px;
+  letter-spacing:.10em;
+  text-transform:uppercase;
+  border:1px solid rgba(255,234,166,.35);
+  background:rgba(255,234,166,.10);
+  color:var(--gold);
+  white-space:nowrap;
+}
 
 .preview{
   padding:0;
@@ -215,14 +221,13 @@ body.logo-editor-body .wrap{
   background:rgba(0,0,0,.18);
   padding:8px;
 }
-
 .bigPrevWrap canvas{ width:100%; height:auto; display:block; }
 
 .msg{ opacity:.9; font-size:13px; min-height:18px; }
 .foot{ margin-top:12px; }
 
 /* ==========================================================
-   Nazwa + plik obok (Twoje wymaganie)
+   Nazwa + plik obok
 ========================================================== */
 .nameFileRow{
   display:flex;
@@ -236,8 +241,8 @@ body.logo-editor-body .wrap{
   min-width:0;
 }
 
+/* przycisk wyboru pliku (kafelek) */
 .fileBtn{
-  width:40px;
   height:40px;
   border-radius:12px;
   border:1px solid rgba(255,255,255,.14);
@@ -245,14 +250,20 @@ body.logo-editor-body .wrap{
   display:grid;
   place-items:center;
   cursor:pointer;
-  font-size:18px;
   user-select:none;
+  padding:0 12px;
+  white-space:nowrap;
+}
+.fileBtn:hover{ filter:brightness(1.12); }
+
+/* TYLKO w IMAGE ma być widoczny */
+.fileBtnImageOnly{ display:none !important; }
+.editorShell[data-mode="IMAGE"] .fileBtnImageOnly{
+  display:grid !important;
 }
 
-.fileBtn:hover{ filter:brightness(1.15); }
-
 /* ==========================================================
-   TEXT_PIX (zostawiamy Twoją strukturę, tylko porządek)
+   TEXT_PIX
 ========================================================== */
 .paneSec{
   margin-top:12px;
@@ -290,7 +301,7 @@ body.logo-editor-body .wrap{
   color:#fff;
   background:#000;
   white-space:pre-wrap;
-  word-break: break-word;
+  word-break:break-word;
 }
 
 #rtEditor.rtEditor:empty::before{
@@ -309,7 +320,6 @@ body.logo-editor-body .wrap{
   grid-template-columns: 1fr 1fr;
   gap:10px;
 }
-
 @media (max-width: 760px){
   .ctrlGrid{ grid-template-columns: 1fr; }
 }
@@ -350,6 +360,8 @@ body.logo-editor-body .wrap{
 .field{ display:flex; flex-direction:column; gap:6px; }
 .field > span{ font-size:12px; opacity:.8; font-weight:900; }
 
+.miniLbl{ font-size:12px; opacity:.85; font-weight:900; }
+
 .ctrlRowBiu{
   display:flex;
   justify-content:space-evenly;
@@ -357,7 +369,6 @@ body.logo-editor-body .wrap{
   width:100%;
   gap:10px;
 }
-
 .ctrlRowBiu .btn{
   display:inline-flex;
   align-items:center;
@@ -368,26 +379,186 @@ body.logo-editor-body .wrap{
 #paneTextPix ::selection{ background: rgba(255,234,166,.35); }
 
 /* ==========================================================
-   DRAW (podgląd ukryty w trybie DRAW)
+   DRAW — najważniejsze: panel narzędzi + DUŻA scena 26:11
 ========================================================== */
-.editorShell[data-mode="DRAW"] .editorGrid{
-  grid-template-columns: 1fr;
-}
-.editorShell[data-mode="DRAW"] .editorRight{
-  display:none;
+
+/* W trybie DRAW ukrywamy prawą kolumnę “bigPreview” */
+.editorShell[data-mode="DRAW"] .editorGrid{ grid-template-columns: 1fr; }
+.editorShell[data-mode="DRAW"] .editorRight{ display:none; }
+
+/* Layout w paneDraw: lewy toolbar + prawa scena */
+#paneDraw .drawWrap{
+  margin-top:12px;
+  display:grid;
+  grid-template-columns: 200px 1fr; /* panel wąski */
+  gap:12px;
+  align-items:stretch;
+  width:100%;
 }
 
-/* (Twoje draw CSS zostawiam, ale UWAGA: usuń duplikat paneDraw w HTML) */
+/* Panel narzędzi */
+#paneDraw .drawTools{
+  position:relative;
+  border-radius:18px;
+  border:1px solid rgba(255,255,255,.10);
+  background:rgba(255,255,255,.04);
+  padding:10px;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+/* grupy ikon: 2 kolumny */
+#paneDraw .toolGrid{
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap:6px;
+}
+
+/* przyciski ikon */
+#paneDraw .tbtn{
+  height:36px;
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,.14);
+  background:rgba(0,0,0,.18);
+  color:#fff;
+  font-size:17px;
+  display:grid;
+  place-items:center;
+  cursor:pointer;
+  user-select:none;
+  padding:0;
+  transition: filter .12s ease, transform .05s ease, border-color .12s ease;
+}
+#paneDraw .tbtn:hover{ filter:brightness(1.08); }
+#paneDraw .tbtn:active{ transform: translateY(1px); }
+
+#paneDraw .tbtn.on{
+  border-color: rgba(255,234,166,.55);
+  background: rgba(255,234,166,.12);
+  color: var(--gold);
+}
+
+#paneDraw .tbtn:disabled{
+  opacity:.45;
+  cursor:default;
+  filter:none;
+  transform:none;
+}
+
+#paneDraw .tbtn.danger{
+  border-color: rgba(255,117,117,.40);
+}
+
+/* separatory między blokami */
+#paneDraw .toolSep{
+  height:1px;
+  background: rgba(255,255,255,.10);
+  margin:4px 0;
+}
+
+/* Prawa strona: kontener sceny */
+#paneDraw .drawStageBox{
+  border-radius:18px;
+  border:1px solid rgba(255,255,255,.10);
+  background:rgba(0,0,0,.10);
+  padding:12px;
+  width:100%;
+  overflow:hidden; /* NIE wypycha w prawo */
+}
+
+/* Ratio 26:11 — TO jest “prawdziwa scena” */
+#paneDraw .drawStageRatio{
+  width:100%;
+  aspect-ratio: 26 / 11;
+  border-radius:16px;
+  background:#0b0b0b;
+  overflow:hidden;
+  position:relative;
+  border:1px solid rgba(255,255,255,.12);
+}
+
+/* canvas fabric zawsze wypełnia ratio box */
+#paneDraw #drawStage{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  display:block;
+  background:#000;
+  touch-action:none;
+}
+
+/* Popover ustawień narzędzia */
+#paneDraw .drawPop{
+  position:absolute;
+  left:10px;
+  right:10px;
+  top:10px;
+  border-radius:16px;
+  border:1px solid rgba(255,255,255,.14);
+  background:rgba(0,0,0,.92);
+  box-shadow:0 24px 80px rgba(0,0,0,.65);
+  padding:10px;
+  z-index:30;
+}
+
+#paneDraw .drawPopHead{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+  margin-bottom:8px;
+}
+
+#paneDraw .drawPopTitle{
+  font-weight:1000;
+  letter-spacing:.06em;
+  font-size:13px;
+  opacity:.95;
+}
+
+#paneDraw .drawPopBody{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+
+#paneDraw .popRow{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:8px;
+  font-size:12.5px;
+  opacity:.95;
+}
+
+#paneDraw .popRow > span{
+  font-weight:900;
+  opacity:.85;
+}
+
+#paneDraw .popRow .inp{
+  width:92px;
+  height:34px;
+  padding:6px 8px;
+  text-align:center;
+}
+
+/* responsywność: toolbar nad scenę */
+@media (max-width: 980px){
+  #paneDraw .drawWrap{ grid-template-columns: 1fr; }
+  #paneDraw .toolGrid{ grid-template-columns: repeat(4, 1fr); }
+}
 
 /* ==========================================================
-   IMAGE — najważniejsze: cały obraz widoczny (contain)
+   IMAGE — cały obraz widoczny (contain) + ramka 26:11
 ========================================================== */
-.editorShell[data-mode="IMAGE"] .editorGrid{
-  grid-template-columns: 1fr;
-}
-.editorShell[data-mode="IMAGE"] .editorRight{
-  display:none;
-}
+
+/* W trybie IMAGE ukrywamy prawą kolumnę “bigPreview”,
+   bo podgląd jest w paneImage po prawej */
+.editorShell[data-mode="IMAGE"] .editorGrid{ grid-template-columns: 1fr; }
+.editorShell[data-mode="IMAGE"] .editorRight{ display:none; }
 
 #paneImage .imgLayout{
   margin-top:12px;
@@ -396,6 +567,7 @@ body.logo-editor-body .wrap{
   gap:12px;
 }
 
+/* góra: lewo obraz / prawo podgląd */
 #paneImage .imgTopGrid{
   display:grid;
   grid-template-columns: 1.15fr 1fr;
@@ -407,6 +579,7 @@ body.logo-editor-body .wrap{
   #paneImage .imgTopGrid{ grid-template-columns: 1fr; }
 }
 
+/* karty */
 #paneImage .imgCard{
   border-radius:18px;
   border:1px solid rgba(255,255,255,.10);
@@ -426,7 +599,7 @@ body.logo-editor-body .wrap{
   opacity:.9;
 }
 
-/* Szara ramka — obraz ma ją WYPEŁNIĆ (ale bez obcinania) */
+/* stage na obraz: ważne, żeby nie obcinał — obraz ma być cały */
 #paneImage .imgStage{
   position:relative;
   border-radius:14px;
@@ -434,7 +607,7 @@ body.logo-editor-body .wrap{
   background:rgba(0,0,0,.10);
   overflow:hidden;
 
-  /* żeby całość mieściła się bez scrolla */
+  /* żeby wszystko mieściło się bez scrolla */
   height: clamp(240px, 34vh, 430px);
 
   display:flex;
@@ -442,7 +615,7 @@ body.logo-editor-body .wrap{
   justify-content:center;
 }
 
-/* KLUCZ: CAŁY obraz widoczny — contain, nie cover */
+/* obraz: CAŁY widoczny (contain) */
 #paneImage #imgPreview{
   display:block;
   max-width:100%;
@@ -454,22 +627,17 @@ body.logo-editor-body .wrap{
   -webkit-user-drag:none;
 }
 
-/* Ramka kadru 26:11 */
+/* ramka kadru 26:11 + maska */
 #paneImage .cropFrame{
   position:absolute;
-  /* początkowo sensowny rozmiar (JS i tak ustawi) */
-  width: 60%;
-  aspect-ratio: 26 / 11;
-
   border:2px solid rgba(255,234,166,.95);
   border-radius:12px;
   cursor:move;
   touch-action:none;
-
-  /* lekka maska, żeby było widać co jest poza */
   box-shadow:0 0 0 9999px rgba(0,0,0,.18);
 }
 
+/* podpis w ramce */
 #paneImage .cropCaption{
   position:absolute;
   left:10px;
@@ -496,7 +664,7 @@ body.logo-editor-body .wrap{
 #paneImage .cropHandle.bl{ left:-8px; bottom:-8px; cursor:nesw-resize; }
 #paneImage .cropHandle.br{ right:-8px; bottom:-8px; cursor:nwse-resize; }
 
-/* Prawy preview */
+/* prawy preview */
 #paneImage .imgPrevWrap{
   border-radius:14px;
   border:1px solid rgba(255,255,255,.14);
@@ -517,9 +685,7 @@ body.logo-editor-body .wrap{
   font-size:13px;
 }
 
-/* Dół: 2 kolumny kontrolek, niskie */
-#paneImage .imgControlsCard{ padding:10px; }
-
+/* dół: kontrolki w 2 kolumnach */
 #paneImage .imgCtrlGrid{
   display:grid;
   grid-template-columns: 1fr 1fr;
@@ -539,10 +705,6 @@ body.logo-editor-body .wrap{
   display:flex;
   flex-direction:column;
   gap:6px;
-}
-
-#paneImage .imgCtrlHalf{
-  /* “pół kafelka” zostaje, bo grid ma 2 kolumny */
 }
 
 #paneImage .imgCtrlHead{
@@ -566,7 +728,7 @@ body.logo-editor-body .wrap{
   opacity:.95;
 }
 
-/* suwaki jeszcze niższe */
+/* suwaki niższe */
 #paneImage .rng{
   width:100%;
   height:18px;
@@ -588,7 +750,7 @@ body.logo-editor-body .wrap{
 }
 
 /* ==========================================================
-   Modale + tooltipy (porządek)
+   Modale
 ========================================================== */
 .overlay{
   position:fixed;
@@ -611,6 +773,8 @@ body.logo-editor-body .wrap{
 
 .mTitle{ font-weight:1000; letter-spacing:.06em; font-size:16px; }
 .mSub{ opacity:.85; font-size:13px; margin-top:6px; }
+
+.mSection{ margin-top:14px; }
 
 .mGrid{
   display:grid;
@@ -635,6 +799,7 @@ body.logo-editor-body .wrap{
 .importRow{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
 .importMsg{ opacity:.85; font-size:13px; }
 
+/* Fullscreen preview */
 .bigModal{ width:min(1700px, 100%); }
 .bigModalCanvas{
   margin-top:10px;
@@ -644,6 +809,9 @@ body.logo-editor-body .wrap{
 }
 .bigModalCanvas canvas{ width:100%; height:auto; display:block; }
 
+/* ==========================================================
+   Tooltipy
+========================================================== */
 [data-tip]{ position:relative; }
 [data-tip]::after{
   content: attr(data-tip);
@@ -667,40 +835,3 @@ body.logo-editor-body .wrap{
   z-index:60;
 }
 [data-tip]:hover::after{ opacity:1; transform: translateY(0); }
-/* ==========================================================
-   IMAGE: przycisk wyboru pliku widoczny tylko w trybie IMAGE
-========================================================== */
-
-/* domyślnie ukryty wszędzie */
-.fileBtnImageOnly{
-  display:none !important;
-}
-
-/* pokazujemy dopiero, gdy shell jest w trybie IMAGE */
-.editorShell[data-mode="IMAGE"] .fileBtnImageOnly{
-  display:grid !important;     /* pasuje do Twojego stylu fileBtn */
-  align-items:center;
-}
-
-/* jeśli chcesz, żeby był mniej “kafelkowy” i nie rozpychał wiersza */
-.editorShell[data-mode="IMAGE"] .fileBtnImageOnly{
-  white-space:nowrap;
-  padding:0 12px;
-  height:40px;
-}
-
-.editorShell[data-mode="IMAGE"] .nameFileRow{
-  display:flex;
-  gap:10px;
-  align-items:center;
-}
-
-.editorShell[data-mode="IMAGE"] .nameFileRow #logoName{
-  flex:1;
-  min-width:0;
-}
-
-.editorShell[data-mode="IMAGE"] .fileBtnImageOnly{
-  width:170px;
-  justify-content:center;
-}
