@@ -1,544 +1,651 @@
 // familiada/logo-editor/js/draw.js
-// Tryb: DRAW (Fabric.js) -> eksport do PIX_150x70 (bits)
+// Tryb: DRAW -> PIX_150x70 (Fabric.js "paint" 1-kolor + narzędzia)
 
 export function initDrawEditor(ctx) {
   const TYPE_PIX = "PIX_150x70";
 
-  const DOT_W = ctx.DOT_W;
-  const DOT_H = ctx.DOT_H;
-
   // DOM
   const paneDraw = document.getElementById("paneDraw");
   const drawCanvasEl = document.getElementById("drawCanvas");
-  const miniEl = document.getElementById("drawMini");
+  const miniPrevEl = document.getElementById("drawMiniPreview");
 
-  const btnToolSelect = document.getElementById("btnToolSelect");
-  const btnToolPan = document.getElementById("btnToolPan");
-  const btnToolPencil = document.getElementById("btnToolPencil");
-  const btnToolEraser = document.getElementById("btnToolEraser");
-  const btnToolLine = document.getElementById("btnToolLine");
-  const btnToolRect = document.getElementById("btnToolRect");
-  const btnToolEllipse = document.getElementById("btnToolEllipse");
-  const btnToolPoly = document.getElementById("btnToolPoly");
+  const btnSel = document.getElementById("btnSel");
+  const btnPan = document.getElementById("btnPan");
+
+  const btnZoomIn = document.getElementById("btnZoomIn");
+  const btnZoomOut = document.getElementById("btnZoomOut");
+  const btnZoom100 = document.getElementById("btnZoom100");
+  const btnZoomFit = document.getElementById("btnZoomFit");
+
+  const btnBrush = document.getElementById("btnBrush");
+  const btnEraser = document.getElementById("btnEraser");
+  const btnLine = document.getElementById("btnLine");
+  const btnRect = document.getElementById("btnRect");
+  const btnEllipse = document.getElementById("btnEllipse");
+  const btnPoly = document.getElementById("btnPoly");
 
   const btnUndo = document.getElementById("btnUndo");
   const btnRedo = document.getElementById("btnRedo");
   const btnClear = document.getElementById("btnClear");
 
-  const btnZoomOut = document.getElementById("btnZoomOut");
-  const btnZoomIn = document.getElementById("btnZoomIn");
-  const btnZoom100 = document.getElementById("btnZoom100");
-  const btnZoomFit = document.getElementById("btnZoomFit");
+  const DOT_W = ctx.DOT_W;
+  const DOT_H = ctx.DOT_H;
 
   const show = (el, on) => { if (!el) return; el.style.display = on ? "" : "none"; };
 
   // Fabric state
-  let fcanvas = null;
-  let tool = "SELECT"; // SELECT | PAN | PENCIL | ERASER | LINE | RECT | ELLIPSE | POLY
-  let zoom = 1;
+  let fabricCanvas = null;
+  let tool = "BRUSH";
 
-  // shape temp state
-  let isDown = false;
-  let start = { x: 0, y: 0 };
+  // pan/zoom state
+  let isPanning = false;
+  let panLast = { x: 0, y: 0 };
+
+  // shape drawing temp
   let tempObj = null;
+  let startPt = null;
 
-  // polygon temp
+  // polygon tool state
   let polyPoints = [];
-  let tempPoly = null;
+  let polyPreview = null;
 
   // undo/redo
-  let history = [];
-  let histIndex = -1;
-  let isRestoring = false;
-  let pushTimer = null;
-
-  function setBtnOn(btn, on) {
-    if (!btn) return;
-    btn.classList.toggle("on", !!on);
-    btn.setAttribute("aria-pressed", on ? "true" : "false");
-  }
-
-  function syncToolButtons() {
-    setBtnOn(btnToolSelect, tool === "SELECT");
-    setBtnOn(btnToolPan, tool === "PAN");
-    setBtnOn(btnToolPencil, tool === "PENCIL");
-    setBtnOn(btnToolEraser, tool === "ERASER");
-    setBtnOn(btnToolLine, tool === "LINE");
-    setBtnOn(btnToolRect, tool === "RECT");
-    setBtnOn(btnToolEllipse, tool === "ELLIPSE");
-    setBtnOn(btnToolPoly, tool === "POLY");
-  }
+  const undoStack = [];
+  const redoStack = [];
+  let snapshotDeb = null;
+  let snapshotLock = 0;
 
   function requireFabric() {
     if (!window.fabric) throw new Error("Brak Fabric.js (script nie wczytany).");
     return window.fabric;
   }
 
-  function installFabricOnce() {
-    if (fcanvas) return;
-
-    const fabric = requireFabric();
-    if (!drawCanvasEl) throw new Error("Brak #drawCanvas");
-
-    fcanvas = new fabric.Canvas(drawCanvasEl, {
-      backgroundColor: "#000",
-      selection: true,
-      preserveObjectStacking: true,
-      stopContextMenu: true,
-      enableRetinaScaling: false, // ważne dla 150x70
-    });
-
-    // twarde wymiary robocze
-    fcanvas.setWidth(DOT_W);
-    fcanvas.setHeight(DOT_H);
-
-    // domyślnie: białe obrysy
-    fcanvas.freeDrawingBrush = new fabric.PencilBrush(fcanvas);
-    fcanvas.freeDrawingBrush.width = 6;
-    fcanvas.freeDrawingBrush.color = "#fff";
-
-    // events -> history + preview
-    const onChange = () => {
-      if (isRestoring) return;
-      ctx.markDirty?.();
-      scheduleHistoryPush();
-      schedulePreview();
-    };
-
-    fcanvas.on("object:added", onChange);
-    fcanvas.on("object:modified", onChange);
-    fcanvas.on("object:removed", onChange);
-    fcanvas.on("path:created", onChange);
-
-    // start state
-    resetView();
-    pushHistoryNow();
-    schedulePreview();
+  function setToolButtonOn(btn, on) {
+    if (!btn) return;
+    btn.classList.toggle("on", !!on);
+    btn.classList.toggle("gold", !!on); // jeśli używasz .gold w UI
   }
 
-  function resetView() {
-    if (!fcanvas) return;
-    zoom = 1;
-    fcanvas.setViewportTransform([1, 0, 0, 1, 0, 0]);
-    fcanvas.requestRenderAll();
+  function syncToolUI() {
+    setToolButtonOn(btnSel, tool === "SELECT");
+    setToolButtonOn(btnPan, tool === "PAN");
+    setToolButtonOn(btnBrush, tool === "BRUSH");
+    setToolButtonOn(btnEraser, tool === "ERASER");
+    setToolButtonOn(btnLine, tool === "LINE");
+    setToolButtonOn(btnRect, tool === "RECT");
+    setToolButtonOn(btnEllipse, tool === "ELLIPSE");
+    setToolButtonOn(btnPoly, tool === "POLY");
   }
 
-  function zoomAtCenter(factor) {
-    if (!fcanvas) return;
-    const nz = Math.max(0.25, Math.min(20, zoom * factor));
-    const center = fcanvas.getCenter();
-    fcanvas.zoomToPoint(new window.fabric.Point(center.left, center.top), nz);
-    zoom = nz;
-    fcanvas.requestRenderAll();
-  }
-
-  function zoomTo100() {
-    if (!fcanvas) return;
-    resetView();
-  }
-
-  function zoomFit() {
-    if (!fcanvas) return;
-    // dopasuj widok do kontenera (drawCanvasEl jest skalowany CSS)
-    // tu “fit” sensownie znaczy: reset (bo płótno ma stałe 150x70),
-    // a realne dopasowanie robi CSS.
-    resetView();
-  }
-
-  function setTool(next) {
-    tool = next;
-    syncToolButtons();
-
-    if (!fcanvas) return;
-
-    // zakończ wielokąt jeśli przełączamy narzędzie
-    cancelPolygon();
-
-    // tryby interakcji
-    fcanvas.isDrawingMode = false;
-    fcanvas.selection = true;
-    fcanvas.defaultCursor = "default";
-
-    // obiekty selectable tylko w SELECT
-    const selectable = (tool === "SELECT");
-    fcanvas.forEachObject((o) => { o.selectable = selectable; o.evented = selectable; });
-
-    if (tool === "PAN") {
-      fcanvas.selection = false;
-      fcanvas.defaultCursor = "grab";
+  function clearTempShape() {
+    if (!fabricCanvas) return;
+    if (tempObj) {
+      fabricCanvas.remove(tempObj);
+      tempObj = null;
     }
+    startPt = null;
+  }
 
-    if (tool === "PENCIL") {
-      fcanvas.isDrawingMode = true;
-      fcanvas.freeDrawingBrush = new window.fabric.PencilBrush(fcanvas);
-      fcanvas.freeDrawingBrush.width = 6;
-      fcanvas.freeDrawingBrush.color = "#fff";
+  function clearPolyPreview() {
+    if (!fabricCanvas) return;
+    if (polyPreview) {
+      fabricCanvas.remove(polyPreview);
+      polyPreview = null;
     }
-
-    if (tool === "ERASER") {
-      // jeśli jest EraserBrush – użyj, jak nie ma -> “rysuj czarnym”
-      if (window.fabric.EraserBrush) {
-        fcanvas.isDrawingMode = true;
-        fcanvas.freeDrawingBrush = new window.fabric.EraserBrush(fcanvas);
-        fcanvas.freeDrawingBrush.width = 10;
-      } else {
-        fcanvas.isDrawingMode = true;
-        fcanvas.freeDrawingBrush = new window.fabric.PencilBrush(fcanvas);
-        fcanvas.freeDrawingBrush.width = 10;
-        fcanvas.freeDrawingBrush.color = "#000";
-      }
-    }
-
-    fcanvas.discardActiveObject();
-    fcanvas.requestRenderAll();
-  }
-
-  function scheduleHistoryPush() {
-    clearTimeout(pushTimer);
-    pushTimer = setTimeout(() => pushHistoryNow(), 120);
-  }
-
-  function pushHistoryNow() {
-    if (!fcanvas || isRestoring) return;
-    const json = JSON.stringify(fcanvas.toDatalessJSON());
-    // nie dubluj identycznych stanów
-    if (histIndex >= 0 && history[histIndex] === json) return;
-
-    // utnij redo
-    history = history.slice(0, histIndex + 1);
-    history.push(json);
-    histIndex = history.length - 1;
-  }
-
-  async function restoreHistory(index) {
-    if (!fcanvas) return;
-    if (index < 0 || index >= history.length) return;
-
-    isRestoring = true;
-    const json = history[index];
-    await new Promise((resolve) => {
-      fcanvas.loadFromJSON(json, () => {
-        fcanvas.setBackgroundColor("#000", () => {});
-        fcanvas.renderAll();
-        resolve();
-      });
-    });
-    histIndex = index;
-    isRestoring = false;
-
-    ctx.markDirty?.();
-    schedulePreview();
-  }
-
-  function undo() {
-    if (histIndex <= 0) return;
-    restoreHistory(histIndex - 1);
-  }
-
-  function redo() {
-    if (histIndex >= history.length - 1) return;
-    restoreHistory(histIndex + 1);
-  }
-
-  function clearAll() {
-    if (!fcanvas) return;
-    fcanvas.getObjects().forEach(o => fcanvas.remove(o));
-    fcanvas.setBackgroundColor("#000", () => {});
-    fcanvas.discardActiveObject();
-    fcanvas.requestRenderAll();
-    ctx.markDirty?.();
-    pushHistoryNow();
-    schedulePreview();
-  }
-
-  function cancelPolygon() {
     polyPoints = [];
-    if (tempPoly && fcanvas) {
-      fcanvas.remove(tempPoly);
-      tempPoly = null;
-      fcanvas.requestRenderAll();
-    }
   }
 
-  function finishPolygon() {
-    if (!fcanvas) return;
-    if (polyPoints.length < 3) {
-      cancelPolygon();
+  function hardResetInteractions() {
+    isPanning = false;
+    clearTempShape();
+    clearPolyPreview();
+  }
+
+  function setCanvasModeForTool() {
+    if (!fabricCanvas) return;
+    const fabric = requireFabric();
+
+    hardResetInteractions();
+
+    // default interactivity
+    fabricCanvas.isDrawingMode = false;
+    fabricCanvas.selection = true;
+    fabricCanvas.defaultCursor = "default";
+    fabricCanvas.hoverCursor = "move";
+
+    // enable object selection by default
+    fabricCanvas.forEachObject(obj => {
+      obj.selectable = true;
+      obj.evented = true;
+    });
+
+    // brush settings
+    const WHITE = "#ffffff";
+
+    if (tool === "SELECT") {
+      fabricCanvas.defaultCursor = "default";
       return;
     }
 
-    // usuń temp
-    if (tempPoly) {
-      fcanvas.remove(tempPoly);
-      tempPoly = null;
+    if (tool === "PAN") {
+      fabricCanvas.defaultCursor = "grab";
+      // selection off while panning
+      fabricCanvas.discardActiveObject();
+      fabricCanvas.selection = false;
+      fabricCanvas.forEachObject(obj => { obj.selectable = false; obj.evented = false; });
+      return;
     }
 
-    const poly = new window.fabric.Polygon(polyPoints, {
-      fill: "rgba(0,0,0,0)",
-      stroke: "#fff",
-      strokeWidth: 2,
-      objectCaching: false,
-      selectable: (tool === "SELECT"),
-      evented: (tool === "SELECT"),
-    });
+    if (tool === "BRUSH") {
+      fabricCanvas.isDrawingMode = true;
+      const b = new fabric.PencilBrush(fabricCanvas);
+      b.color = WHITE;
+      b.width = 3; // “paint” feel; możesz dać slider później
+      b.decimate = 0; // stabilniej
+      fabricCanvas.freeDrawingBrush = b;
+      fabricCanvas.selection = false;
+      return;
+    }
 
-    fcanvas.add(poly);
-    polyPoints = [];
-    fcanvas.requestRenderAll();
+    if (tool === "ERASER") {
+      fabricCanvas.isDrawingMode = true;
+
+      // Fabric 5.x często ma EraserBrush; jeśli nie ma — fallback: rysuj czarnym
+      if (fabric.EraserBrush) {
+        const eb = new fabric.EraserBrush(fabricCanvas);
+        eb.width = 10;
+        fabricCanvas.freeDrawingBrush = eb;
+      } else {
+        const b = new fabric.PencilBrush(fabricCanvas);
+        b.color = "#000000";
+        b.width = 10;
+        fabricCanvas.freeDrawingBrush = b;
+      }
+
+      fabricCanvas.selection = false;
+      return;
+    }
+
+    // shape tools (no drawingMode)
+    if (tool === "LINE" || tool === "RECT" || tool === "ELLIPSE" || tool === "POLY") {
+      fabricCanvas.selection = false;
+      fabricCanvas.discardActiveObject();
+      fabricCanvas.forEachObject(obj => { obj.selectable = false; obj.evented = false; });
+      fabricCanvas.defaultCursor = "crosshair";
+    }
   }
 
-  function installPointerHandlers() {
-    if (!fcanvas) return;
+  // ===== snapshots (undo/redo) =====
+  function takeSnapshot(reason = "") {
+    if (!fabricCanvas) return;
+    if (snapshotLock) return;
 
-    // pan
-    let panning = false;
-    let lastPos = null;
+    const json = fabricCanvas.toDatalessJSON(["erasable", "selectable", "evented"]);
+    undoStack.push(json);
+    if (undoStack.length > 60) undoStack.shift();
+    redoStack.length = 0;
+    btnUndo && (btnUndo.disabled = undoStack.length <= 1);
+    btnRedo && (btnRedo.disabled = redoStack.length === 0);
+  }
 
-    fcanvas.on("mouse:down", (opt) => {
-      if (ctx.getMode?.() !== "DRAW") return;
-      const e = opt.e;
+  function scheduleSnapshot(reason = "") {
+    clearTimeout(snapshotDeb);
+    snapshotDeb = setTimeout(() => takeSnapshot(reason), 120);
+  }
 
-      if (tool === "PAN") {
-        panning = true;
-        fcanvas.defaultCursor = "grabbing";
-        lastPos = { x: e.clientX, y: e.clientY };
-        return;
-      }
-
-      if (tool === "LINE" || tool === "RECT" || tool === "ELLIPSE") {
-        isDown = true;
-        const p = fcanvas.getPointer(e);
-        start = { x: p.x, y: p.y };
-
-        if (tool === "LINE") {
-          tempObj = new window.fabric.Line([start.x, start.y, start.x, start.y], {
-            stroke: "#fff",
-            strokeWidth: 2,
-            selectable: false,
-            evented: false,
-            objectCaching: false,
-          });
-          fcanvas.add(tempObj);
-        }
-
-        if (tool === "RECT") {
-          tempObj = new window.fabric.Rect({
-            left: start.x,
-            top: start.y,
-            width: 1,
-            height: 1,
-            fill: "rgba(0,0,0,0)",
-            stroke: "#fff",
-            strokeWidth: 2,
-            selectable: false,
-            evented: false,
-            objectCaching: false,
-          });
-          fcanvas.add(tempObj);
-        }
-
-        if (tool === "ELLIPSE") {
-          tempObj = new window.fabric.Ellipse({
-            left: start.x,
-            top: start.y,
-            rx: 1,
-            ry: 1,
-            fill: "rgba(0,0,0,0)",
-            stroke: "#fff",
-            strokeWidth: 2,
-            selectable: false,
-            evented: false,
-            originX: "left",
-            originY: "top",
-            objectCaching: false,
-          });
-          fcanvas.add(tempObj);
-        }
-
-        fcanvas.requestRenderAll();
-        return;
-      }
-
-      if (tool === "POLY") {
-        const p = fcanvas.getPointer(e);
-        polyPoints.push({ x: p.x, y: p.y });
-
-        // podgląd poligonu jako polyline
-        if (tempPoly) fcanvas.remove(tempPoly);
-        tempPoly = new window.fabric.Polyline(polyPoints, {
-          fill: "rgba(0,0,0,0)",
-          stroke: "#fff",
-          strokeWidth: 2,
-          selectable: false,
-          evented: false,
-          objectCaching: false,
-        });
-        fcanvas.add(tempPoly);
-        fcanvas.requestRenderAll();
-
-        ctx.markDirty?.();
-        scheduleHistoryPush();
-        schedulePreview();
-      }
-    });
-
-    fcanvas.on("mouse:move", (opt) => {
-      if (ctx.getMode?.() !== "DRAW") return;
-      const e = opt.e;
-
-      if (tool === "PAN" && panning) {
-        const dx = e.clientX - lastPos.x;
-        const dy = e.clientY - lastPos.y;
-        lastPos = { x: e.clientX, y: e.clientY };
-        fcanvas.relativePan(new window.fabric.Point(dx, dy));
-        return;
-      }
-
-      if (!isDown || !tempObj) return;
-
-      const p = fcanvas.getPointer(e);
-
-      if (tool === "LINE") {
-        tempObj.set({ x2: p.x, y2: p.y });
-      }
-
-      if (tool === "RECT") {
-        const left = Math.min(start.x, p.x);
-        const top = Math.min(start.y, p.y);
-        const w = Math.abs(p.x - start.x);
-        const h = Math.abs(p.y - start.y);
-        tempObj.set({ left, top, width: w, height: h });
-      }
-
-      if (tool === "ELLIPSE") {
-        const left = Math.min(start.x, p.x);
-        const top = Math.min(start.y, p.y);
-        const rx = Math.abs(p.x - start.x) / 2;
-        const ry = Math.abs(p.y - start.y) / 2;
-        tempObj.set({
-          left,
-          top,
-          rx,
-          ry,
-          originX: "left",
-          originY: "top",
-        });
-      }
-
-      fcanvas.requestRenderAll();
-    });
-
-    fcanvas.on("mouse:up", () => {
-      if (ctx.getMode?.() !== "DRAW") return;
-
-      if (tool === "PAN") {
-        panning = false;
-        fcanvas.defaultCursor = "grab";
-        return;
-      }
-
-      if (tool === "LINE" || tool === "RECT" || tool === "ELLIPSE") {
-        isDown = false;
-        if (tempObj) {
-          // final obiekt: włącz selectable tylko gdy SELECT
-          tempObj.set({ selectable: (tool === "SELECT"), evented: (tool === "SELECT") });
-          tempObj = null;
-          ctx.markDirty?.();
-          pushHistoryNow();
-          schedulePreview();
-        }
-      }
-    });
-
-    // klawisze dla poligonu
-    window.addEventListener("keydown", (ev) => {
-      if (ctx.getMode?.() !== "DRAW") return;
-      if (tool !== "POLY") return;
-
-      if (ev.key === "Escape") {
-        ev.preventDefault();
-        cancelPolygon();
-        schedulePreview();
-      }
-
-      if (ev.key === "Enter") {
-        ev.preventDefault();
-        finishPolygon();
-        pushHistoryNow();
-        schedulePreview();
-      }
+  function applySnapshot(json) {
+    if (!fabricCanvas) return;
+    snapshotLock++;
+    fabricCanvas.loadFromJSON(json, () => {
+      fabricCanvas.renderAll();
+      snapshotLock = Math.max(0, snapshotLock - 1);
+      // po loadFromJSON wracamy do aktualnego tool-a
+      setCanvasModeForTool();
+      syncToolUI();
+      pushPreviewNow();
     });
   }
 
-  // export -> bits (150x70)
-  function renderToBits150() {
-    if (!fcanvas) return new Uint8Array(DOT_W * DOT_H);
+  function undo() {
+    if (undoStack.length <= 1) return;
+    const cur = undoStack.pop();
+    redoStack.push(cur);
+    const prev = undoStack[undoStack.length - 1];
+    applySnapshot(prev);
 
-    // render na offscreen 150x70
-    const el = fcanvas.toCanvasElement({
-      width: DOT_W,
-      height: DOT_H,
-      enableRetinaScaling: false,
-    });
+    btnUndo && (btnUndo.disabled = undoStack.length <= 1);
+    btnRedo && (btnRedo.disabled = redoStack.length === 0);
+  }
 
-    const g = el.getContext("2d", { willReadFrequently: true });
+  function redo() {
+    if (!redoStack.length) return;
+    const next = redoStack.pop();
+    undoStack.push(next);
+    applySnapshot(next);
+
+    btnUndo && (btnUndo.disabled = undoStack.length <= 1);
+    btnRedo && (btnRedo.disabled = redoStack.length === 0);
+  }
+
+  // ===== zoom helpers =====
+  function clamp(n, a, b) { return Math.max(a, Math.min(b, n)); }
+
+  function getStageClientSize() {
+    // canvas jest skalowany CSS-em; bierzemy jego bbox
+    const rect = drawCanvasEl.getBoundingClientRect();
+    return { w: rect.width || 1, h: rect.height || 1 };
+  }
+
+  function setZoom(z) {
+    if (!fabricCanvas) return;
+    const zoom = clamp(z, 0.5, 40);
+
+    const center = fabricCanvas.getCenter();
+    fabricCanvas.zoomToPoint(new (requireFabric()).Point(center.left, center.top), zoom);
+    fabricCanvas.requestRenderAll();
+  }
+
+  function zoomIn() { if (!fabricCanvas) return; setZoom(fabricCanvas.getZoom() * 1.15); }
+  function zoomOut() { if (!fabricCanvas) return; setZoom(fabricCanvas.getZoom() / 1.15); }
+  function zoom100() { if (!fabricCanvas) return; setZoom(1); }
+
+  function zoomFit() {
+    if (!fabricCanvas) return;
+    const { w, h } = getStageClientSize();
+    // dopasuj 150x70 do widocznego obszaru, z małym marginesem
+    const zx = (w - 20) / DOT_W;
+    const zy = (h - 20) / DOT_H;
+    const z = clamp(Math.min(zx, zy), 0.5, 40);
+    setZoom(z);
+
+    // wycentruj viewport
+    const vt = fabricCanvas.viewportTransform;
+    if (vt) {
+      vt[4] = 10; // translateX
+      vt[5] = 10; // translateY
+      fabricCanvas.requestRenderAll();
+    }
+  }
+
+  // ===== export -> bits150 =====
+  function canvasToBits150() {
+    if (!fabricCanvas) return new Uint8Array(DOT_W * DOT_H);
+
+    // render do offscreen 150x70
+    const off = document.createElement("canvas");
+    off.width = DOT_W;
+    off.height = DOT_H;
+    const g = off.getContext("2d", { willReadFrequently: true });
+
+    g.clearRect(0, 0, DOT_W, DOT_H);
+    g.fillStyle = "#000";
+    g.fillRect(0, 0, DOT_W, DOT_H);
+
+    // zrzut sceny bez zoom/pan: użyj toCanvasElement z viewportem
+    const el = fabricCanvas.toCanvasElement(1, { withoutTransform: true, withoutShadow: true });
+    g.drawImage(el, 0, 0, DOT_W, DOT_H);
+
     const img = g.getImageData(0, 0, DOT_W, DOT_H).data;
-
     const out = new Uint8Array(DOT_W * DOT_H);
-    for (let i = 0; i < DOT_W * DOT_H; i++) {
-      const r = img[i * 4 + 0];
-      const gg = img[i * 4 + 1];
-      const b = img[i * 4 + 2];
-      // jasność: białe=1, czarne=0
-      const lum = 0.2126 * r + 0.7152 * gg + 0.0722 * b;
-      out[i] = lum >= 128 ? 1 : 0;
+
+    for (let y = 0; y < DOT_H; y++) {
+      for (let x = 0; x < DOT_W; x++) {
+        const i = (y * DOT_W + x) * 4;
+        // bierzemy jasność; biały = on
+        const r = img[i], gg = img[i + 1], b = img[i + 2];
+        const lum = 0.2126 * r + 0.7152 * gg + 0.0722 * b;
+        out[y * DOT_W + x] = lum >= 128 ? 1 : 0;
+      }
     }
     return out;
   }
 
-  let prevDeb = null;
-  function schedulePreview() {
-    clearTimeout(prevDeb);
-    prevDeb = setTimeout(() => {
-      const bits = renderToBits150();
-      ctx.onPreview?.({ kind: "PIX", bits });
-      drawMini(bits);
-    }, 60);
-  }
+  function drawMiniPreview(bits) {
+    if (!miniPrevEl) return;
+    const g = miniPrevEl.getContext("2d");
+    const cw = miniPrevEl.width, ch = miniPrevEl.height;
 
-  function drawMini(bits150) {
-    if (!miniEl) return;
-    const g = miniEl.getContext("2d", { willReadFrequently: true });
-    const img = g.createImageData(DOT_W, DOT_H);
-    for (let i = 0; i < DOT_W * DOT_H; i++) {
-      const v = bits150[i] ? 255 : 0;
-      img.data[i * 4 + 0] = v;
-      img.data[i * 4 + 1] = v;
-      img.data[i * 4 + 2] = v;
-      img.data[i * 4 + 3] = 255;
+    g.imageSmoothingEnabled = false;
+    g.clearRect(0, 0, cw, ch);
+    g.fillStyle = "#000";
+    g.fillRect(0, 0, cw, ch);
+
+    const scale = Math.min(cw / DOT_W, ch / DOT_H);
+    const ox = Math.floor((cw - DOT_W * scale) / 2);
+    const oy = Math.floor((ch - DOT_H * scale) / 2);
+
+    g.fillStyle = "#fff";
+    for (let y = 0; y < DOT_H; y++) {
+      for (let x = 0; x < DOT_W; x++) {
+        if (!bits[y * DOT_W + x]) continue;
+        g.fillRect(ox + x * scale, oy + y * scale, scale, scale);
+      }
     }
-    g.putImageData(img, 0, 0);
   }
 
-  // UI bind
-  function bindUiOnce() {
-    btnToolSelect?.addEventListener("click", () => setTool("SELECT"));
-    btnToolPan?.addEventListener("click", () => setTool("PAN"));
-    btnToolPencil?.addEventListener("click", () => setTool("PENCIL"));
-    btnToolEraser?.addEventListener("click", () => setTool("ERASER"));
-    btnToolLine?.addEventListener("click", () => setTool("LINE"));
-    btnToolRect?.addEventListener("click", () => setTool("RECT"));
-    btnToolEllipse?.addEventListener("click", () => setTool("ELLIPSE"));
-    btnToolPoly?.addEventListener("click", () => setTool("POLY"));
+  function pushPreviewNow() {
+    const bits = canvasToBits150();
+    ctx.onPreview?.({ kind: "PIX", bits });
+    drawMiniPreview(bits);
+  }
 
-    btnUndo?.addEventListener("click", undo);
-    btnRedo?.addEventListener("click", redo);
-    btnClear?.addEventListener("click", clearAll);
+  // ===== tool logic =====
+  function setTool(t) {
+    tool = t;
+    syncToolUI();
+    setCanvasModeForTool();
+  }
 
-    btnZoomIn?.addEventListener("click", () => zoomAtCenter(1.25));
-    btnZoomOut?.addEventListener("click", () => zoomAtCenter(1 / 1.25));
-    btnZoom100?.addEventListener("click", zoomTo100);
+  function getPointerOnScene(opt) {
+    // opt is fabric event; use absolute pointer in canvas coords
+    return fabricCanvas.getPointer(opt.e, true);
+  }
+
+  function startShape(opt) {
+    const fabric = requireFabric();
+    const p = getPointerOnScene(opt);
+    startPt = { x: p.x, y: p.y };
+
+    const common = {
+      left: p.x,
+      top: p.y,
+      fill: "rgba(0,0,0,0)",
+      stroke: "#ffffff",
+      strokeWidth: 2,
+      selectable: false,
+      evented: false,
+      objectCaching: false,
+    };
+
+    if (tool === "LINE") {
+      tempObj = new fabric.Line([p.x, p.y, p.x, p.y], common);
+      fabricCanvas.add(tempObj);
+      return;
+    }
+
+    if (tool === "RECT") {
+      tempObj = new fabric.Rect({ ...common, width: 1, height: 1 });
+      fabricCanvas.add(tempObj);
+      return;
+    }
+
+    if (tool === "ELLIPSE") {
+      tempObj = new fabric.Ellipse({ ...common, rx: 1, ry: 1, originX: "left", originY: "top" });
+      fabricCanvas.add(tempObj);
+      return;
+    }
+  }
+
+  function moveShape(opt) {
+    if (!tempObj || !startPt) return;
+    const p = getPointerOnScene(opt);
+
+    if (tool === "LINE") {
+      tempObj.set({ x2: p.x, y2: p.y });
+      fabricCanvas.requestRenderAll();
+      return;
+    }
+
+    const x = Math.min(startPt.x, p.x);
+    const y = Math.min(startPt.y, p.y);
+    const w = Math.abs(p.x - startPt.x);
+    const h = Math.abs(p.y - startPt.y);
+
+    if (tool === "RECT") {
+      tempObj.set({ left: x, top: y, width: w, height: h });
+      fabricCanvas.requestRenderAll();
+      return;
+    }
+
+    if (tool === "ELLIPSE") {
+      tempObj.set({ left: x, top: y, rx: w / 2, ry: h / 2 });
+      fabricCanvas.requestRenderAll();
+      return;
+    }
+  }
+
+  function endShape() {
+    if (!tempObj) return;
+    // final: make selectable only in select mode
+    tempObj.set({ selectable: false, evented: false });
+    tempObj = null;
+    startPt = null;
+
+    ctx.markDirty?.();
+    scheduleSnapshot("shape");
+    pushPreviewNow();
+  }
+
+  function polyAddPoint(opt) {
+    if (!fabricCanvas) return;
+    const fabric = requireFabric();
+    const p = getPointerOnScene(opt);
+
+    polyPoints.push({ x: p.x, y: p.y });
+
+    // preview polyline
+    if (polyPreview) fabricCanvas.remove(polyPreview);
+
+    polyPreview = new fabric.Polyline(polyPoints, {
+      fill: "rgba(0,0,0,0)",
+      stroke: "#ffffff",
+      strokeWidth: 2,
+      selectable: false,
+      evented: false,
+      objectCaching: false,
+    });
+
+    fabricCanvas.add(polyPreview);
+    fabricCanvas.requestRenderAll();
+  }
+
+  function polyCommit() {
+    if (!fabricCanvas) return;
+    const fabric = requireFabric();
+    if (polyPoints.length < 3) {
+      clearPolyPreview();
+      fabricCanvas.requestRenderAll();
+      return;
+    }
+
+    if (polyPreview) fabricCanvas.remove(polyPreview);
+
+    const poly = new fabric.Polygon(polyPoints, {
+      fill: "rgba(0,0,0,0)",
+      stroke: "#ffffff",
+      strokeWidth: 2,
+      selectable: false,
+      evented: false,
+      objectCaching: false,
+    });
+
+    fabricCanvas.add(poly);
+    clearPolyPreview();
+
+    ctx.markDirty?.();
+    scheduleSnapshot("poly");
+    pushPreviewNow();
+  }
+
+  function polyCancel() {
+    clearPolyPreview();
+    fabricCanvas.requestRenderAll();
+  }
+
+  // ===== install Fabric =====
+  let installed = false;
+
+  function installFabricOnce() {
+    if (installed) return;
+    installed = true;
+
+    const fabric = requireFabric();
+    if (!drawCanvasEl) throw new Error("Brak #drawCanvas w HTML.");
+
+    fabricCanvas = new fabric.Canvas(drawCanvasEl, {
+      backgroundColor: "#000000",
+      selection: true,
+      preserveObjectStacking: true,
+      renderOnAddRemove: true,
+      fireRightClick: true,
+      stopContextMenu: true,
+    });
+
+    // Ustaw rozmiar „świata” na 150x70 (canvas ma taki rozmiar w atrybutach)
+    fabricCanvas.setWidth(DOT_W);
+    fabricCanvas.setHeight(DOT_H);
+
+    // event: free drawing changes => snapshot + preview
+    fabricCanvas.on("path:created", () => {
+      ctx.markDirty?.();
+      scheduleSnapshot("draw");
+      pushPreviewNow();
+    });
+
+    fabricCanvas.on("object:modified", () => {
+      ctx.markDirty?.();
+      scheduleSnapshot("modify");
+      pushPreviewNow();
+    });
+
+    fabricCanvas.on("object:added", (e) => {
+      if (snapshotLock) return;
+      // object:added leci także podczas loadFromJSON — lock to blokuje
+      if (e?.target && e.target !== polyPreview) {
+        ctx.markDirty?.();
+        scheduleSnapshot("add");
+        pushPreviewNow();
+      }
+    });
+
+    fabricCanvas.on("object:removed", () => {
+      if (snapshotLock) return;
+      ctx.markDirty?.();
+      scheduleSnapshot("remove");
+      pushPreviewNow();
+    });
+
+    // PAN tool: mouse handling
+    fabricCanvas.on("mouse:down", (opt) => {
+      if (ctx.getMode?.() !== "DRAW") return;
+
+      if (tool === "PAN") {
+        isPanning = true;
+        fabricCanvas.defaultCursor = "grabbing";
+        const e = opt.e;
+        panLast = { x: e.clientX, y: e.clientY };
+        return;
+      }
+
+      if (tool === "LINE" || tool === "RECT" || tool === "ELLIPSE") {
+        startShape(opt);
+        return;
+      }
+
+      if (tool === "POLY") {
+        polyAddPoint(opt);
+        return;
+      }
+    });
+
+    fabricCanvas.on("mouse:move", (opt) => {
+      if (ctx.getMode?.() !== "DRAW") return;
+
+      if (tool === "PAN" && isPanning) {
+        const e = opt.e;
+        const dx = e.clientX - panLast.x;
+        const dy = e.clientY - panLast.y;
+        panLast = { x: e.clientX, y: e.clientY };
+
+        const vt = fabricCanvas.viewportTransform;
+        if (vt) {
+          vt[4] += dx;
+          vt[5] += dy;
+          fabricCanvas.requestRenderAll();
+        }
+        return;
+      }
+
+      if ((tool === "LINE" || tool === "RECT" || tool === "ELLIPSE") && tempObj) {
+        moveShape(opt);
+      }
+    });
+
+    fabricCanvas.on("mouse:up", () => {
+      if (ctx.getMode?.() !== "DRAW") return;
+
+      if (tool === "PAN") {
+        isPanning = false;
+        fabricCanvas.defaultCursor = "grab";
+        return;
+      }
+
+      if (tool === "LINE" || tool === "RECT" || tool === "ELLIPSE") {
+        endShape();
+      }
+    });
+
+    // keyboard for polygon
+    window.addEventListener("keydown", (ev) => {
+      if (ctx.getMode?.() !== "DRAW") return;
+      if (tool !== "POLY") return;
+
+      if (ev.key === "Enter") {
+        ev.preventDefault();
+        polyCommit();
+      }
+      if (ev.key === "Escape") {
+        ev.preventDefault();
+        polyCancel();
+      }
+    });
+
+    // initial snapshot
+    takeSnapshot("init");
+
+    // start mode
+    setTool("BRUSH");
+    zoomFit();
+    pushPreviewNow();
+  }
+
+  // ===== bind UI =====
+  function bindUi() {
+    btnSel?.addEventListener("click", () => setTool("SELECT"));
+    btnPan?.addEventListener("click", () => setTool("PAN"));
+
+    btnZoomIn?.addEventListener("click", zoomIn);
+    btnZoomOut?.addEventListener("click", zoomOut);
+    btnZoom100?.addEventListener("click", zoom100);
     btnZoomFit?.addEventListener("click", zoomFit);
+
+    btnBrush?.addEventListener("click", () => setTool("BRUSH"));
+    btnEraser?.addEventListener("click", () => setTool("ERASER"));
+
+    btnLine?.addEventListener("click", () => setTool("LINE"));
+    btnRect?.addEventListener("click", () => setTool("RECT"));
+    btnEllipse?.addEventListener("click", () => setTool("ELLIPSE"));
+    btnPoly?.addEventListener("click", () => setTool("POLY"));
+
+    btnUndo?.addEventListener("click", () => undo());
+    btnRedo?.addEventListener("click", () => redo());
+
+    btnClear?.addEventListener("click", () => {
+      if (ctx.getMode?.() !== "DRAW") return;
+      if (!fabricCanvas) return;
+
+      hardResetInteractions();
+
+      snapshotLock++;
+      fabricCanvas.getObjects().slice().forEach(obj => fabricCanvas.remove(obj));
+      fabricCanvas.discardActiveObject();
+      fabricCanvas.requestRenderAll();
+      snapshotLock = Math.max(0, snapshotLock - 1);
+
+      ctx.markDirty?.();
+      takeSnapshot("clear");
+      pushPreviewNow();
+    });
   }
 
   let uiBound = false;
@@ -547,30 +654,42 @@ export function initDrawEditor(ctx) {
     open() {
       show(paneDraw, true);
 
+      if (!uiBound) { bindUi(); uiBound = true; }
+
       installFabricOnce();
-      if (!uiBound) { bindUiOnce(); uiBound = true; }
 
-      // reset dokumentu (nowa sesja)
-      clearAll();
-      resetView();
-      setTool("PENCIL");
-      syncToolButtons();
+      // reset sesji draw: czyścimy obiekty, ale nie niszczymy canvasa (stabilniej)
+      if (fabricCanvas) {
+        hardResetInteractions();
 
-      // start preview
-      schedulePreview();
+        snapshotLock++;
+        fabricCanvas.getObjects().slice().forEach(obj => fabricCanvas.remove(obj));
+        fabricCanvas.setBackgroundColor("#000", fabricCanvas.renderAll.bind(fabricCanvas));
+        fabricCanvas.setViewportTransform([1, 0, 0, 1, 0, 0]);
+        snapshotLock = Math.max(0, snapshotLock - 1);
+
+        undoStack.length = 0;
+        redoStack.length = 0;
+        takeSnapshot("open-reset");
+
+        setTool("BRUSH");
+        zoomFit();
+        pushPreviewNow();
+
+        btnUndo && (btnUndo.disabled = undoStack.length <= 1);
+        btnRedo && (btnRedo.disabled = redoStack.length === 0);
+      }
+
       ctx.clearDirty?.();
-
-      // pointer handlers (raz)
-      installPointerHandlers();
     },
 
     close() {
       show(paneDraw, false);
-      // nie niszczymy fcanvas (szybciej); jeśli kiedyś trzeba, można dodać dispose()
+      // nie niszczymy fabricCanvas — zostaje
     },
 
     getCreatePayload() {
-      const bits = renderToBits150();
+      const bits = canvasToBits150();
       return {
         ok: true,
         type: TYPE_PIX,
