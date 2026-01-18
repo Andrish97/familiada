@@ -593,7 +593,7 @@ export function initTextPixEditor(ctx) {
     box.style.padding = "10px";
     box.style.boxSizing = "border-box";
     box.style.whiteSpace = "normal";
-    box.style.overflowWrap = "break-word";
+    box.style.overflowWrap = "anywhere";
     box.style.wordBreak = "break-word";
     box.style.maxWidth = `${w}px`;
   
@@ -737,11 +737,26 @@ export function initTextPixEditor(ctx) {
       skin: false,
       content_css: false,
   
-      // DOMYŚLNY wygląd edytora (tylko wewnątrz TinyMCE)
       content_style: `
-        body{ margin:0; padding:0; background:#000; color:#fff; font-size:50px; }
-        p{ margin:0; line-height:1; }
+        /* TinyMCE inline: nie stylujemy body, bo to psuje całą stronę */
+        #rtEditor.mce-content-body{
+          margin:0;
+          padding:0;
+          background:#000;
+          color:#fff;
+          font-size:50px;
+          line-height:1;
+          white-space:normal;
+          overflow-wrap:anywhere;
+          word-break:break-word;
+        }
+      
+        #rtEditor.mce-content-body p{
+          margin:0;
+          line-height:1;
+        }
       `,
+
   
       // !!! tu był babol: to MA BYĆ STRING, nie tablica
       font_family_formats: fontFormatsStr,
@@ -846,7 +861,11 @@ export function initTextPixEditor(ctx) {
 
       if (!_uiBound) { bindUiOnce(); _uiBound = true; }
       
-      fillFontSelectOnce();
+      await fillFontSelectOnce();
+      
+      rtEditorEl.style.fontSize = "50px";
+      rtEditorEl.style.lineHeight = "1";
+      
       await ensureEditor();
       installUiBusyGuards();
 
