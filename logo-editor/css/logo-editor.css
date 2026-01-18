@@ -396,13 +396,10 @@ body.logo-editor-body .wrap{ max-width:1200px; }
 }
 
 /* ==========================================================
-   DRAW (Fabric) — JEDYNA wersja, bez dubli
-   - pełna szerokość (bez prawego bigPreview)
-   - toolbar po lewej: 2 kolumny ikon + małe separatory
-   - scena: zawsze 26:11 i jest DUŻA
+   DRAW (Fabric) — wąski toolbar + duża scena 26:11
 ========================================================== */
 
-/* DRAW: pełna szerokość, bez prawej kolumny */
+/* DRAW: bez prawej kolumny (bigPreview) */
 .editorShell[data-mode="DRAW"] .editorGrid{
   grid-template-columns: 1fr;
 }
@@ -410,17 +407,19 @@ body.logo-editor-body .wrap{ max-width:1200px; }
   display:none;
 }
 
-/* Layout: lewy panel + scena */
+/* Layout */
 #paneDraw .drawWrap{
   margin-top:12px;
   display:grid;
-  grid-template-columns: 270px 1fr;
+  grid-template-columns: 220px 1fr; /* węższy panel */
   gap:12px;
   align-items:stretch;
+  width:100%;
 }
 
 /* Lewy panel */
 #paneDraw .drawTools{
+  position:relative;
   border-radius:18px;
   border:1px solid rgba(255,255,255,.10);
   background:rgba(255,255,255,.04);
@@ -428,19 +427,19 @@ body.logo-editor-body .wrap{ max-width:1200px; }
   display:flex;
   flex-direction:column;
   gap:10px;
-  min-height: 520px; /* żeby nie wyglądało jak pasek */
+  overflow:visible;
 }
 
-/* “tabelka” 2 kolumny */
+/* 2 kolumny ikon (tabelka) */
 #paneDraw .toolGrid{
   display:grid;
   grid-template-columns: 1fr 1fr;
   gap:8px;
 }
 
-/* Ikonki: małe, równe, “klikne” */
+/* Ikonki */
 #paneDraw .tbtn{
-  height:44px;
+  height:42px;
   border-radius:14px;
   border:1px solid rgba(255,255,255,.14);
   background:rgba(0,0,0,.18);
@@ -450,9 +449,9 @@ body.logo-editor-body .wrap{ max-width:1200px; }
   place-items:center;
   cursor:pointer;
   user-select:none;
-  transition: transform .05s ease, filter .12s ease, border-color .12s ease;
+  padding:0;
+  transition: filter .12s ease, transform .05s ease, border-color .12s ease;
 }
-
 #paneDraw .tbtn:hover{ filter:brightness(1.08); }
 #paneDraw .tbtn:active{ transform: translateY(1px); }
 
@@ -462,80 +461,36 @@ body.logo-editor-body .wrap{ max-width:1200px; }
   color: var(--gold);
 }
 
+#paneDraw .tbtn:disabled{
+  opacity:.45;
+  cursor:default;
+  filter:none;
+  transform:none;
+}
+
 #paneDraw .tbtn.danger{
   border-color: rgba(255,117,117,.40);
 }
 
-/* Małe separatory między blokami przycisków / opcji */
+/* Separatory bloków */
 #paneDraw .toolSep{
   height:1px;
   background: rgba(255,255,255,.10);
-  margin:8px 0;
+  margin:6px 0;
 }
 
-/* Opcje: schludnie, jak w Paint */
-#paneDraw .toolOpts{
-  display:flex;
-  flex-direction:column;
-  gap:10px;
-}
-
-#paneDraw .optRow{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:10px;
-  font-size:13px;
-  opacity:.95;
-}
-
-#paneDraw .optRow > span{
-  font-weight:900;
-  opacity:.85;
-}
-
-/* input w panelu — spójny */
-#paneDraw .toolOpts .inp{
-  width:110px;
-  text-align:center;
-}
-
-/* Mini podgląd: klikalny “kafelek” */
-#paneDraw .thumbBtn{
-  margin-top:auto; /* spycha miniaturę na dół panelu */
-  width:100%;
-  border-radius:18px;
-  border:1px solid rgba(255,255,255,.14);
-  background:rgba(0,0,0,.18);
-  padding:10px;
-  cursor:pointer;
-  transition: filter .12s ease, transform .05s ease;
-}
-#paneDraw .thumbBtn:hover{ filter:brightness(1.08); }
-#paneDraw .thumbBtn:active{ transform: translateY(1px); }
-
-#paneDraw #drawThumb{
-  width:100%;
-  height:auto;
-  display:block;
-  image-rendering: pixelated;
-  background:#000;
-  border-radius:14px;
-  border:1px solid rgba(255,255,255,.10);
-}
-
-/* Prawa strona: duża scena */
+/* Scena (prawa strona) */
 #paneDraw .drawStageBox{
   border-radius:18px;
   border:1px solid rgba(255,255,255,.10);
   background:rgba(0,0,0,.10);
   padding:12px;
-  display:flex;
-  flex-direction:column;
   min-height: 520px;
+  width:100%;
+  overflow:hidden; /* żeby NIC nie wypychało w prawo */
 }
 
-/* Kontener z ratio 26:11 — to jest klucz */
+/* Ratio 26:11 */
 #paneDraw .drawStageRatio{
   width:100%;
   aspect-ratio: 26 / 11;
@@ -546,7 +501,7 @@ body.logo-editor-body .wrap{ max-width:1200px; }
   border:1px solid rgba(255,255,255,.12);
 }
 
-/* Canvas wypełnia CAŁOŚĆ ratio boxa */
+/* Canvas wypełnia ratio box — bez “uciekania” */
 #paneDraw #drawStage{
   position:absolute;
   inset:0;
@@ -557,30 +512,68 @@ body.logo-editor-body .wrap{ max-width:1200px; }
   touch-action:none;
 }
 
-/* ====== Popup ustawień (JS tworzy .drawPop) ====== */
-.drawPop .btn{
-  white-space:nowrap;
+/* ===== Modal ustawień (mały popover) ===== */
+#paneDraw .drawPop{
+  position:absolute;
+  left:12px;
+  right:12px;
+  top:12px;
+  border-radius:18px;
+  border:1px solid rgba(255,255,255,.14);
+  background:rgba(0,0,0,.92);
+  box-shadow:0 24px 80px rgba(0,0,0,.65);
+  padding:12px;
+  z-index:30;
 }
 
-/* Responsywność: na wąskich ekranach toolbar idzie na górę */
+#paneDraw .drawPopHead{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+  margin-bottom:10px;
+}
+
+#paneDraw .drawPopTitle{
+  font-weight:1000;
+  letter-spacing:.06em;
+  font-size:13px;
+  opacity:.95;
+}
+
+#paneDraw .drawPopBody{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+#paneDraw .popRow{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+  font-size:13px;
+  opacity:.95;
+}
+
+#paneDraw .popRow > span{
+  font-weight:900;
+  opacity:.85;
+}
+
+#paneDraw .popRow .inp{
+  width:110px;
+  text-align:center;
+}
+
+/* Responsywność: toolbar idzie nad scenę */
 @media (max-width: 980px){
   #paneDraw .drawWrap{
     grid-template-columns: 1fr;
   }
-
-  #paneDraw .drawTools{
-    min-height: auto;
-  }
-
-  /* 4 kolumny ikon na mobilu, bo 2 robią wieżowiec */
   #paneDraw .toolGrid{
     grid-template-columns: repeat(4, 1fr);
   }
-
-  #paneDraw .thumbBtn{
-    margin-top:10px;
-  }
-
   #paneDraw .drawStageBox{
     min-height: 420px;
   }
