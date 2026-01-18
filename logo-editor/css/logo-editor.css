@@ -984,6 +984,84 @@ body.logo-editor-body .wrap{ max-width:1200px; }
   #paneImage .imgCtrl.span2{ grid-column: auto; }
 }
 
+/* ====== Nazwa + plik w jednym rzędzie ====== */
+.nameRow{
+  display:flex;
+  gap:10px;
+  align-items:center;
+}
+
+/* Domyślnie ukryj wybór pliku (poza IMAGE) */
+#imgFile{ display:none; }
+
+/* W IMAGE pokaż obok nazwy i zrób węższy */
+.editorShell[data-mode="IMAGE"] #imgFile{
+  display:block;
+  max-width: 320px;
+}
+
+/* Na małych ekranach: zawijaj */
+@media (max-width: 760px){
+  .nameRow{ flex-wrap:wrap; }
+  .editorShell[data-mode="IMAGE"] #imgFile{ max-width: 100%; }
+}
+
+/* ====== Obraz ma WYPEŁNIAĆ ramkę (szarą kartę) ====== */
+#paneImage #imgLarge{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  object-fit: cover;   /* klucz: wypełnia ramkę */
+  object-position: center;
+  user-select:none;
+  -webkit-user-drag:none;
+}
+
+/* stage musi być pozycjonowany pod absolutny img */
+#paneImage .imgStage{
+  position:relative;
+}
+
+/* ====== Kontrolki: jeszcze niższe + label i wartość w jednej linii ====== */
+#paneImage .imgCtrl{
+  padding:6px;                 /* niżej */
+  gap:6px;
+}
+
+#paneImage .imgCtrlHead{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+}
+
+#paneImage .imgCtrlLbl{
+  font-size:11px;
+  line-height:1.1;
+}
+
+#paneImage .imgCtrlVal{
+  font-size:11px;
+  line-height:1.1;
+  font-weight:1000;
+  opacity:.9;
+}
+
+/* Suwaki: niższe (realnie) */
+#paneImage .imgCtrl input[type="range"].inp{
+  height:18px;
+  padding:0;
+  margin:0;
+}
+
+/* Checkbox bardziej “ciasny” */
+#paneImage .imgCtrl .chk{
+  margin:0;
+  padding:0;
+}
+
+
 /* ==========================================================
    Modale
 ========================================================== */
