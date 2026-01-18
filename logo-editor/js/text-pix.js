@@ -605,8 +605,6 @@ export function initTextPixEditor(ctx) {
     box.style.wordBreak = "break-word";
     box.style.maxWidth = `${w}px`;
 
-    const edCs = window.getComputedStyle(rtEditorEl);
-
     // font i podstawowe typograficzne rzeczy 1:1 z edytora
     box.style.fontFamily = edCs.fontFamily;
     box.style.fontSize = edCs.fontSize;
