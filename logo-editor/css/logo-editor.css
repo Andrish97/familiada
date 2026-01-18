@@ -1125,6 +1125,38 @@ body.logo-editor-body .wrap{ max-width:1200px; }
   .imgCtrlGrid{ grid-template-columns: 1fr; }
 }
 
+/* wiersz: nazwa + wybór pliku */
+.imgNameRow{
+  display:flex;
+  gap:8px;
+  align-items:center;
+}
+
+/* nazwa logo ma brać całą dostępną szerokość */
+.imgNameRow .inp{
+  flex:1;
+  min-width:0; /* bardzo ważne przy flex */
+}
+
+/* przycisk wyboru pliku */
+.fileBtn{
+  width:40px;
+  height:40px;
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,.14);
+  background:rgba(0,0,0,.18);
+  display:grid;
+  place-items:center;
+  cursor:pointer;
+  font-size:18px;
+  user-select:none;
+}
+
+.fileBtn:hover{
+  filter:brightness(1.15);
+}
+
+
 
 /* ==========================================================
    Modale
