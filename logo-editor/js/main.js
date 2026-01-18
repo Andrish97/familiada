@@ -868,39 +868,6 @@ function closeEditor(force = false){
   clearDirty();
 }
 
-  // 2) jeśli zapisano -> usuń rekord i wyczyść sesję
-  try {
-    setEditorMsg("Usuwam zapis z tej sesji…");
-    await deleteLogo(sessionSavedLogoId);
-    sessionSavedLogoId = null;
-
-    await refresh();
-
-    setEditorMsg("Anulowano — zapis usunięty.");
-    // reset bieżącego edytora bez zamykania
-    if (editorMode === "TEXT") textEditor.open();
-    if (editorMode === "TEXT_PIX") textPixEditor.open();
-    if (editorMode === "DRAW") drawEditor.open();
-    if (editorMode === "IMAGE") imageEditor.open();
-
-    clearDirty();
-  } catch (e) {
-    console.error(e);
-    alert("Nie udało się usunąć zapisu z tej sesji.\n\n" + (e?.message || e));
-  }
-}
-
-
-let lastPreviewPayload = null;
-
-function updateBigPreviewFromPayload(payload){
-  if (!payload) return;
-  lastPreviewPayload = payload;
-
-  if (payload.kind === "GLYPH") renderRows30x10ToBig(payload.rows, bigPreview);
-  else renderBits150x70ToBig(payload.bits, bigPreview);
-}
-
 /* =========================================================
    SAVE
 ========================================================= */
