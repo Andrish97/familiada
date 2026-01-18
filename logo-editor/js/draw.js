@@ -104,7 +104,7 @@ export function initDrawEditor(ctx) {
   // Per-tool settings
   const toolSettings = {
     [TOOL.BRUSH]:   { stroke: 6 },
-    [TOOL.ERASER]:  { stroke: 10 },
+    [TOOL.ERASER]:  { stroke: 10, mode: "BLACK" },
     [TOOL.LINE]:    { stroke: 6 },
     [TOOL.RECT]:    { stroke: 6, fill: false },
     [TOOL.ELLIPSE]: { stroke: 6, fill: false },
@@ -118,6 +118,11 @@ export function initDrawEditor(ctx) {
 
   function getFill() {
     return !!toolSettings[tool]?.fill;
+  }
+
+  function getEraserMode() {
+    const m = toolSettings[TOOL.ERASER]?.mode;
+    return (m === "OBJECT") ? "OBJECT" : "BLACK";
   }
 
   // =========================================================
@@ -297,7 +302,8 @@ export function initDrawEditor(ctx) {
       fabricCanvas.freeDrawingBrush = new f.PencilBrush(fabricCanvas);
     }
     fabricCanvas.freeDrawingBrush.width = getStroke();
-    fabricCanvas.freeDrawingBrush.color = (tool === TOOL.ERASER) ? "#000" : "#fff";
+    const isEraserBlack = (tool === TOOL.ERASER && getEraserMode() === "BLACK");
+    fabricCanvas.freeDrawingBrush.color = isEraserBlack ? "#000" : "#fff";
     fabricCanvas.freeDrawingBrush.decimate = 0;
   }
 
@@ -335,13 +341,39 @@ export function initDrawEditor(ctx) {
       fabricCanvas.discardActiveObject();
       fabricCanvas.forEachObject(o => { o.selectable = false; o.evented = false; });
       clearPolyDraft();
-    } else if (tool === TOOL.BRUSH || tool === TOOL.ERASER) {
+    } else if (tool === TOOL.BRUSH) {
       fabricCanvas.isDrawingMode = true;
       fabricCanvas.selection = false;
       fabricCanvas.discardActiveObject();
       fabricCanvas.forEachObject(o => { o.selectable = false; o.evented = false; });
       clearPolyDraft();
       applyBrushStyle();
+    
+    } else if (tool === TOOL.ERASER) {
+      const mode = getEraserMode();
+    
+      // TRYB 1: malowanie czarnym (jak "gumka pikselowa")
+      if (mode === "BLACK") {
+        fabricCanvas.isDrawingMode = true;
+        fabricCanvas.selection = false;
+        fabricCanvas.discardActiveObject();
+        fabricCanvas.forEachObject(o => { o.selectable = false; o.evented = false; });
+        clearPolyDraft();
+        applyBrushStyle();
+      }
+    
+      // TRYB 2: usuwanie obiektów (klik usuwa)
+      else {
+        fabricCanvas.isDrawingMode = false;
+        fabricCanvas.selection = false;
+        fabricCanvas.discardActiveObject();
+    
+        // obiekty nie są "selectable", ale MUSZĄ być "evented",
+        // żeby Fabric umiał je "trafić" pod kursorem (findTarget)
+        fabricCanvas.forEachObject(o => { o.selectable = false; o.evented = true; });
+    
+        clearPolyDraft();
+      }
     } else {
       // figury i POLY
       fabricCanvas.isDrawingMode = false;
@@ -765,7 +797,35 @@ export function initDrawEditor(ctx) {
 
     const st = toolSettings[tool] || {};
 
-    {
+    // ===== ERASER: tryb gumki (BLACK / OBJECT) =====
+    if (tool === TOOL.ERASER) {
+      const mode = getEraserMode();
+    
+      const row = document.createElement("label");
+      row.className = "popRow";
+      row.innerHTML = `
+        <span>Tryb</span>
+        <select class="inp" id="popEraserMode">
+          <option value="BLACK" ${mode === "BLACK" ? "selected" : ""}>Maluj czarnym</option>
+          <option value="OBJECT" ${mode === "OBJECT" ? "selected" : ""}>Usuń obiekty</option>
+        </select>
+      `;
+      drawPopBody.appendChild(row);
+    
+      // Grubość tylko dla trybu BLACK
+      if (mode === "BLACK") {
+        const row2 = document.createElement("label");
+        row2.className = "popRow";
+        row2.innerHTML = `
+          <span>Grubość</span>
+          <input class="inp" id="popStroke" type="number" min="1" max="80" step="1" value="${Number(st.stroke || 10)}">
+        `;
+        drawPopBody.appendChild(row2);
+      }
+    }
+    
+    // ===== Pozostałe narzędzia: Grubość normalnie =====
+    else {
       const row = document.createElement("label");
       row.className = "popRow";
       row.innerHTML = `
@@ -774,6 +834,7 @@ export function initDrawEditor(ctx) {
       `;
       drawPopBody.appendChild(row);
     }
+
 
     const fillAllowed = (tool === TOOL.RECT || tool === TOOL.ELLIPSE || tool === TOOL.POLY);
     if (fillAllowed) {
@@ -788,17 +849,35 @@ export function initDrawEditor(ctx) {
 
     const popStroke = drawPopBody.querySelector("#popStroke");
     const popFill = drawPopBody.querySelector("#popFill");
-
-    popStroke?.addEventListener("input", () => {
-      toolSettings[tool] = { ...(toolSettings[tool] || {}), stroke: clamp(Number(popStroke.value || 6), 1, 80) };
-      if (tool === TOOL.BRUSH || tool === TOOL.ERASER) applyBrushStyle();
+    const popEraserMode = drawPopBody.querySelector("#popEraserMode");
+    
+    // zmiana trybu gumki => zapis + natychmiastowe przełączenie zachowania narzędzia
+    popEraserMode?.addEventListener("change", () => {
+      toolSettings[TOOL.ERASER] = {
+        ...(toolSettings[TOOL.ERASER] || {}),
+        mode: popEraserMode.value === "OBJECT" ? "OBJECT" : "BLACK",
+      };
+    
+      // odśwież UI modala (pokaże/ukryje grubość)
+      renderSettingsModal();
+    
+      // przełącz zachowanie bieżącego narzędzia
+      if (tool === TOOL.ERASER) setTool(TOOL.ERASER);
+    
       schedulePreview(80);
     });
-
+    
+    popStroke?.addEventListener("input", () => {
+      toolSettings[tool] = { ...(toolSettings[tool] || {}), stroke: clamp(Number(popStroke.value || 6), 1, 80) };
+      if (tool === TOOL.BRUSH || (tool === TOOL.ERASER && getEraserMode() === "BLACK")) applyBrushStyle();
+      schedulePreview(80);
+    });
+    
     popFill?.addEventListener("change", () => {
       toolSettings[tool] = { ...(toolSettings[tool] || {}), fill: !!popFill.checked };
       schedulePreview(80);
     });
+
   }
 
   function openSettingsModal() {
@@ -888,6 +967,21 @@ export function initDrawEditor(ctx) {
         panDown = true;
         panStart = { x: ev.clientX, y: ev.clientY };
         vptStart = fabricCanvas.viewportTransform ? fabricCanvas.viewportTransform.slice() : null;
+        return;
+      }
+
+        // ERASER: tryb OBJECT => klik usuwa obiekt
+      if (tool === TOOL.ERASER && getEraserMode() === "OBJECT") {
+        // opt.target to obiekt trafiony przez Fabric (jeśli jest)
+        const target = opt.target;
+    
+        if (target && fabricCanvas) {
+          fabricCanvas.remove(target);
+          fabricCanvas.requestRenderAll();
+          pushUndo();
+          ctx.markDirty?.();
+          schedulePreview(80);
+        }
         return;
       }
 
