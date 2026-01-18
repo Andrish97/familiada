@@ -40,9 +40,14 @@
         <div class="title">Twoje logo</div>
         <div class="hint">Tworzysz nowe logo, ustawiasz aktywne lub usuwasz. Brak możliwości edycji.</div>
       </div>
-      <div class="rowTopActions">
-        <button class="btn sm" id="btnClearActive" type="button" data-tip="Wyłącza wybrane aktywne logo (wraca do domyślnego).">Wyłącz aktywne</button>
-      </div>
+        <div class="rowTopActions">
+          <button class="btn sm" id="btnImportLogo" type="button">Import</button>
+          <button class="btn sm" id="btnExportLogo" type="button" data-tip="Eksportuje aktywne logo (albo poprosi, jeśli brak).">Export</button>
+          <button class="btn sm" id="btnClearActive" type="button" data-tip="Wyłącza wybrane aktywne logo (wraca do domyślnego).">Wyłącz aktywne</button>
+        
+          <!-- ukryty input do importu -->
+          <input id="inpImportLogoFile" type="file" accept="application/json,.json" style="display:none;" />
+        </div>
     </div>
 
     <section class="shell" id="listShell">
@@ -308,7 +313,6 @@
 
           <div class="editorActions">
             <button class="btn sm gold" id="btnCreate" type="button">Zapisz</button>
-            <button class="btn sm" id="btnCancel" type="button">Anuluj</button>
             <div class="importMsg" id="mMsg"></div>
           </div>
         </div>
