@@ -1,5 +1,6 @@
 // familiada/logo-editor/js/image.js
-// Tryb: IMAGE -> duży obraz + kadr 26:11 -> przetwarzanie -> PIX_150x70
+// Tryb: IMAGE -> duży obraz + kadr 26:11 -> przetwarzanie -> PIX 150x70
+// Podgląd po prawej renderujemy lokalnie (jak bigPreview w main), a klik wysyła event do fullscreena.
 
 export function initImageEditor(ctx) {
   const TYPE_PIX = "PIX_150x70";
@@ -11,9 +12,11 @@ export function initImageEditor(ctx) {
 
   const imgFile   = document.getElementById("imgFile");
   const imgLarge  = document.getElementById("imgLarge");
-
   const imgStage  = document.getElementById("imgStage");
   const cropBox   = document.getElementById("cropBox");
+
+  const imgBigPreview = document.getElementById("imgBigPreview"); // prawy podgląd (dot-matrix)
+  const imgCanvas = document.getElementById("imgCanvas");         // mini 150x70 (debug)
 
   const chkInvert = document.getElementById("chkImgInvert");
 
@@ -23,8 +26,8 @@ export function initImageEditor(ctx) {
   const rngBlack    = document.getElementById("rngImgBlack");
   const rngWhite    = document.getElementById("rngImgWhite");
 
-  const selMode     = document.getElementById("selImgDitherMode");
-  const rngDither   = document.getElementById("rngImgDither");
+  const selMode   = document.getElementById("selImgDitherMode");
+  const rngDither = document.getElementById("rngImgDither");
 
   const valBright   = document.getElementById("valImgBright");
   const valContrast = document.getElementById("valImgContrast");
@@ -33,15 +36,11 @@ export function initImageEditor(ctx) {
   const valWhite    = document.getElementById("valImgWhite");
   const valDither   = document.getElementById("valImgDither");
 
-  const imgCanvas = document.getElementById("imgCanvas"); // techniczny 150x70
-
   // =========================================================
   // Const
   // =========================================================
-  const DOT_W = ctx.DOT_W;
-  const DOT_H = ctx.DOT_H;
-
-  // proporcja kadru = 26:11 (jak ekran)
+  const DOT_W = ctx.DOT_W; // 150
+  const DOT_H = ctx.DOT_H; // 70
   const ASPECT = 26 / 11;
 
   const show = (el, on) => { if (!el) return; el.style.display = on ? "" : "none"; };
@@ -52,33 +51,124 @@ export function initImageEditor(ctx) {
   // =========================================================
   let bits = new Uint8Array(DOT_W * DOT_H);
 
-  let imgObj = null; // Image() z naturą
+  let imgObj = null;
   let imgUrl = null;
 
   let initialized = false;
 
-  // ramka w px względem imgStage (NIE naturalnych)
+  // crop w px względem imgStage
   let crop = { x: 40, y: 40, w: 260, h: Math.round(260 / ASPECT) };
 
   let drag = null; // { kind: "move"|"tl"|"tr"|"bl"|"br", sx, sy, startCrop }
-
   let _deb = null;
 
   // =========================================================
-  // UI: wartości suwaków
+  // Preview renderer (kopiowane z main, żeby wyglądało identycznie)
   // =========================================================
-  function readSettings() {
-    const bright = Number(rngBright?.value ?? 0);     // -100..100
-    const contrast = Number(rngContrast?.value ?? 0); // -100..100
-    const gamma = (Number(rngGamma?.value ?? 100) / 100); // 0.5..2.5
-    const black = Number(rngBlack?.value ?? 0);       // 0..120
-    const white = Number(rngWhite?.value ?? 255);     // 135..255
-    const mode = String(selMode?.value || "THRESH");
-    const ditherStrength = Number(rngDither?.value ?? 80); // 0..100
-    const invert = !!chkInvert?.checked; // DOMYŚLNIE true
-    return { bright, contrast, gamma, black, white, mode, ditherStrength, invert };
+  const TILES_X = 30;
+  const TILES_Y = 10;
+
+  const BIG_COLORS = {
+    bg: "#1f1f23",
+    cell: "#000000",
+    dotOff: "#1f1f23",
+    dotOn: "#d7ff3d",
+  };
+
+  function calcBigLayout(canvas){
+    const cw = canvas.width;
+    const ch = canvas.height;
+
+    for (let d = 16; d >= 2; d--){
+      const gap = Math.max(1, Math.round(d / 4));
+      const tileGap = 2 * d;
+      const tileW = 5 * d + 6 * gap;
+      const tileH = 7 * d + 8 * gap;
+      const panelW = TILES_X * tileW + (TILES_X - 1) * tileGap;
+      const panelH = TILES_Y * tileH + (TILES_Y - 1) * tileGap;
+
+      if (panelW <= cw - 20 && panelH <= ch - 20){
+        return { d, gap, tileGap, tileW, tileH, panelW, panelH };
+      }
+    }
+
+    const d = 2, gap = 1, tileGap = 4;
+    const tileW = 5 * d + 6 * gap;
+    const tileH = 7 * d + 8 * gap;
+    return {
+      d, gap, tileGap, tileW, tileH,
+      panelW: TILES_X * tileW + (TILES_X - 1) * tileGap,
+      panelH: TILES_Y * tileH + (TILES_Y - 1) * tileGap,
+    };
   }
 
+  function clearBigCanvas(canvas){
+    const g = canvas.getContext("2d");
+    g.clearRect(0, 0, canvas.width, canvas.height);
+    g.fillStyle = BIG_COLORS.bg;
+    g.fillRect(0, 0, canvas.width, canvas.height);
+  }
+
+  function drawDot(g, cx, cy, r, on){
+    g.beginPath();
+    g.arc(cx, cy, r, 0, Math.PI * 2);
+    g.fillStyle = on ? BIG_COLORS.dotOn : BIG_COLORS.dotOff;
+    g.fill();
+  }
+
+  function renderBits150x70ToBig(bits150, canvas){
+    if (!canvas) return;
+    const g = canvas.getContext("2d");
+    const L = calcBigLayout(canvas);
+    clearBigCanvas(canvas);
+
+    const x0 = Math.floor((canvas.width - L.panelW) / 2);
+    const y0 = Math.floor((canvas.height - L.panelH) / 2);
+    const r = L.d / 2;
+    const step = L.d + L.gap;
+
+    for (let ty = 0; ty < TILES_Y; ty++){
+      for (let tx = 0; tx < TILES_X; tx++){
+        const tileX = x0 + tx * (L.tileW + L.tileGap);
+        const tileY = y0 + ty * (L.tileH + L.tileGap);
+
+        g.fillStyle = BIG_COLORS.cell;
+        g.fillRect(tileX, tileY, L.tileW, L.tileH);
+
+        for (let py = 0; py < 7; py++){
+          for (let px = 0; px < 5; px++){
+            const x = tx * 5 + px;
+            const y = ty * 7 + py;
+            const on = !!bits150[y * DOT_W + x];
+            const cx = tileX + L.gap + r + px * step;
+            const cy = tileY + L.gap + r + py * step;
+            drawDot(g, cx, cy, r, on);
+          }
+        }
+      }
+    }
+  }
+
+  // =========================================================
+  // Mini debug 150x70
+  // =========================================================
+  function drawBitsToMini(bits01) {
+    if (!imgCanvas) return;
+    const g = imgCanvas.getContext("2d");
+    const img = g.createImageData(DOT_W, DOT_H);
+    for (let i = 0; i < DOT_W * DOT_H; i++) {
+      const v = bits01[i] ? 255 : 0;
+      img.data[i*4+0] = v;
+      img.data[i*4+1] = v;
+      img.data[i*4+2] = v;
+      img.data[i*4+3] = 255;
+    }
+    g.putImageData(img, 0, 0);
+  }
+
+  // =========================================================
+  // Settings
+  // =========================================================
   function syncLabels() {
     if (valBright) valBright.textContent = String(rngBright?.value ?? "0");
     if (valContrast) valContrast.textContent = String(rngContrast?.value ?? "0");
@@ -91,15 +181,26 @@ export function initImageEditor(ctx) {
     if (valDither) valDither.textContent = String(rngDither?.value ?? "80");
   }
 
+  function readSettings() {
+    const bright = Number(rngBright?.value ?? 0);       // -100..100
+    const contrast = Number(rngContrast?.value ?? 0);   // -100..100
+    const gamma = (Number(rngGamma?.value ?? 100) / 100); // 0.5..2.5
+    const black = Number(rngBlack?.value ?? 0);         // 0..120
+    const white = Number(rngWhite?.value ?? 255);       // 135..255
+    const mode = String(selMode?.value || "FS");
+    const ditherStrength = Number(rngDither?.value ?? 80); // 0..100
+    const invert = !!chkInvert?.checked; // DOMYŚLNIE true
+    return { bright, contrast, gamma, black, white, mode, ditherStrength, invert };
+  }
+
   // =========================================================
-  // Crop: narzędzia
+  // Crop helpers
   // =========================================================
   function getStageRect() {
     return imgStage?.getBoundingClientRect() || { left:0, top:0, width:1, height:1 };
   }
 
   function getImgRect() {
-    // obraz jest wewnątrz imgStage, wyśrodkowany; potrzebujemy realnego recta IMG na ekranie
     const r = imgLarge?.getBoundingClientRect();
     if (!r || r.width <= 0 || r.height <= 0) return null;
     return r;
@@ -110,26 +211,21 @@ export function initImageEditor(ctx) {
     const stageR = getStageRect();
     if (!imgR) return next;
 
-    // obszar obrazu w układzie stage (px)
     const imgX = imgR.left - stageR.left;
     const imgY = imgR.top  - stageR.top;
     const imgW = imgR.width;
     const imgH = imgR.height;
 
     const minW = 60;
+
     let w = Math.max(minW, next.w);
     let h = Math.max(1, Math.round(w / ASPECT));
 
-    // nie pozwól być większym niż obraz
     if (w > imgW) { w = imgW; h = Math.round(w / ASPECT); }
     if (h > imgH) { h = imgH; w = Math.round(h * ASPECT); }
 
-    // clamp pozycję
-    let x = next.x;
-    let y = next.y;
-
-    x = clamp(x, imgX, imgX + imgW - w);
-    y = clamp(y, imgY, imgY + imgH - h);
+    let x = clamp(next.x, imgX, imgX + imgW - w);
+    let y = clamp(next.y, imgY, imgY + imgH - h);
 
     return { x, y, w, h };
   }
@@ -153,58 +249,33 @@ export function initImageEditor(ctx) {
     const imgW = imgR.width;
     const imgH = imgR.height;
 
-    // start: ~70% szerokości obrazu, dopasowane do ratio
     let w = imgW * 0.72;
     let h = w / ASPECT;
     if (h > imgH * 0.9) { h = imgH * 0.9; w = h * ASPECT; }
 
     const x = imgX + (imgW - w) / 2;
     const y = imgY + (imgH - h) / 2;
+
     crop = clampCropToImg({ x, y, w, h });
     applyCropToDom();
   }
 
   // =========================================================
-  // Render: bits -> mini canvas 150x70 (dla debug)
-  // =========================================================
-  function drawBitsToMini(bits01) {
-    if (!imgCanvas) return;
-    const g = imgCanvas.getContext("2d");
-    const img = g.createImageData(DOT_W, DOT_H);
-    for (let i = 0; i < DOT_W * DOT_H; i++) {
-      const v = bits01[i] ? 255 : 0;
-      img.data[i*4+0] = v;
-      img.data[i*4+1] = v;
-      img.data[i*4+2] = v;
-      img.data[i*4+3] = 255;
-    }
-    g.putImageData(img, 0, 0);
-  }
-
-  // =========================================================
-  // Image processing helpers
+  // Image processing
   // =========================================================
   function lumFromRGB(r,g,b) {
     return 0.2126*r + 0.7152*g + 0.0722*b;
   }
 
   function applyBCGamma(v, bright, contrast, gamma) {
-    // v 0..255
-    let x = v;
+    let x = v + bright;
 
-    // brightness
-    x = x + bright;
-
-    // contrast (standard-ish)
-    // contrast -100..100 -> factor 0..2
     const c = clamp(contrast, -100, 100);
     const factor = (259 * (c + 255)) / (255 * (259 - c));
     x = factor * (x - 128) + 128;
 
-    // clamp
     x = clamp(x, 0, 255);
 
-    // gamma
     const g = clamp(gamma, 0.05, 10);
     x = 255 * Math.pow(x / 255, 1 / g);
 
@@ -212,25 +283,18 @@ export function initImageEditor(ctx) {
   }
 
   function applyLevels(v, black, white) {
-    // black: 0..120, white: 135..255
     const b = clamp(black, 0, 200);
     const w = clamp(white, 1, 255);
     if (w <= b + 1) return v;
-
     let x = (v - b) * (255 / (w - b));
-    x = clamp(x, 0, 255);
-    return x;
+    return clamp(x, 0, 255);
   }
 
   function thresholdBits(lum, threshold, invert) {
-    // lum 0..255 ; threshold 0..255
-    // klasycznie: jaśniejsze => 1
-    // invert=true: odwróć (ciemniejsze => 1)
     const on = lum >= threshold ? 1 : 0;
     return invert ? (on ? 0 : 1) : on;
   }
 
-  // Bayer 8x8 (0..63)
   const BAYER8 = [
     [ 0,48,12,60, 3,51,15,63],
     [32,16,44,28,35,19,47,31],
@@ -244,14 +308,13 @@ export function initImageEditor(ctx) {
 
   function ditherOrderedBayer(lums, w, h, threshold, strength, invert) {
     const out = new Uint8Array(w*h);
-    const amp = (strength / 100) * 64; // 0..64
+    const amp = (strength / 100) * 64;
 
     for (let y=0; y<h; y++){
       for (let x=0; x<w; x++){
         const i = y*w + x;
-        const t = BAYER8[y & 7][x & 7]; // 0..63
-        // przesunięcie progu: (t-31.5) -> -31.5..31.5
-        const dt = ((t - 31.5) / 63) * amp * 2; // ok -64..64 przy strength=100
+        const t = BAYER8[y & 7][x & 7];
+        const dt = ((t - 31.5) / 63) * amp * 2;
         const th = clamp(threshold + dt, 0, 255);
         out[i] = thresholdBits(lums[i], th, invert);
       }
@@ -260,7 +323,6 @@ export function initImageEditor(ctx) {
   }
 
   function ditherFloydSteinberg(lums, w, h, threshold, strength, invert) {
-    // strength 0..100: 0 = progowanie, 100 = pełne FS
     const s = clamp(strength / 100, 0, 1);
     if (s <= 0.001) {
       const out = new Uint8Array(w*h);
@@ -268,7 +330,7 @@ export function initImageEditor(ctx) {
       return out;
     }
 
-    const buf = new Float32Array(lums); // copy
+    const buf = new Float32Array(lums);
     const out = new Uint8Array(w*h);
 
     for (let y=0; y<h; y++){
@@ -279,7 +341,6 @@ export function initImageEditor(ctx) {
         const newv = oldv >= threshold ? 255 : 0;
         out[i] = thresholdBits(oldv, threshold, invert);
 
-        // error diffusion (skalowane siłą)
         const err = (oldv - newv) * s;
 
         if (x+1 < w) buf[i+1] += err * (7/16);
@@ -294,58 +355,44 @@ export function initImageEditor(ctx) {
   }
 
   // =========================================================
-  // Compile: crop -> 150x70 -> bits
+  // Crop -> natural rect
   // =========================================================
   function cropToNaturalRect() {
     const imgR = getImgRect();
     const stageR = getStageRect();
     if (!imgR || !imgObj) return null;
 
-    // crop w px względem stage -> na px względem IMG
     const imgX = imgR.left - stageR.left;
     const imgY = imgR.top  - stageR.top;
 
     const cx = crop.x - imgX;
     const cy = crop.y - imgY;
-    const cw = crop.w;
-    const ch = crop.h;
 
-    // map display -> natural
     const sx = imgObj.naturalWidth / imgR.width;
     const sy = imgObj.naturalHeight / imgR.height;
 
     const nx = clamp(cx * sx, 0, imgObj.naturalWidth  - 1);
     const ny = clamp(cy * sy, 0, imgObj.naturalHeight - 1);
-    const nw = clamp(cw * sx, 1, imgObj.naturalWidth  - nx);
-    const nh = clamp(ch * sy, 1, imgObj.naturalHeight - ny);
+    const nw = clamp(crop.w * sx, 1, imgObj.naturalWidth  - nx);
+    const nh = clamp(crop.h * sy, 1, imgObj.naturalHeight - ny);
 
     return { nx, ny, nw, nh };
   }
 
   function compileBits150() {
-    if (!imgObj) {
-      bits = new Uint8Array(DOT_W * DOT_H);
-      return bits;
-    }
+    if (!imgObj) return new Uint8Array(DOT_W * DOT_H);
 
     const rect = cropToNaturalRect();
-    if (!rect) {
-      bits = new Uint8Array(DOT_W * DOT_H);
-      return bits;
-    }
+    if (!rect) return new Uint8Array(DOT_W * DOT_H);
 
     const { bright, contrast, gamma, black, white, mode, ditherStrength, invert } = readSettings();
 
-    // 1) crop -> 150x70
     const tmp = document.createElement("canvas");
     tmp.width = DOT_W;
     tmp.height = DOT_H;
     const g = tmp.getContext("2d", { willReadFrequently: true });
 
-    // rysuj czarne tło i crop
-    g.fillStyle = "#000";
-    g.fillRect(0, 0, DOT_W, DOT_H);
-
+    g.clearRect(0, 0, DOT_W, DOT_H);
     g.imageSmoothingEnabled = true;
     g.drawImage(
       imgObj,
@@ -353,45 +400,39 @@ export function initImageEditor(ctx) {
       0, 0, DOT_W, DOT_H
     );
 
-    // 2) lum + preprocessing
     const imgData = g.getImageData(0, 0, DOT_W, DOT_H);
     const data = imgData.data;
 
     const lums = new Float32Array(DOT_W * DOT_H);
-
-    for (let i = 0; i < DOT_W * DOT_H; i++) {
+    for (let i=0;i<lums.length;i++){
       const r = data[i*4+0];
       const gg = data[i*4+1];
-      const b  = data[i*4+2];
+      const b = data[i*4+2];
 
       let v = lumFromRGB(r, gg, b);
       v = applyBCGamma(v, bright, contrast, gamma);
       v = applyLevels(v, black, white);
-
       lums[i] = v;
     }
 
-    // 3) rasteryzacja do bits
-    const threshold = 128; // bazowy – teraz sterujesz raczej levels/kontrastem/gammą i ditheringiem
+    const threshold = 128;
 
-    let out = null;
-    if (mode === "FS") {
-      out = ditherFloydSteinberg(lums, DOT_W, DOT_H, threshold, ditherStrength, invert);
-    } else if (mode === "BAYER8") {
-      out = ditherOrderedBayer(lums, DOT_W, DOT_H, threshold, ditherStrength, invert);
-    } else {
+    let out;
+    if (mode === "FS") out = ditherFloydSteinberg(lums, DOT_W, DOT_H, threshold, ditherStrength, invert);
+    else if (mode === "BAYER8") out = ditherOrderedBayer(lums, DOT_W, DOT_H, threshold, ditherStrength, invert);
+    else {
       out = new Uint8Array(DOT_W * DOT_H);
       for (let i=0;i<out.length;i++) out[i] = thresholdBits(lums[i], threshold, invert);
     }
 
-    bits = out;
-    return bits;
+    return out;
   }
 
   function pushPreviewNow() {
-    const b = compileBits150();
-    drawBitsToMini(b);
-    ctx.onPreview?.({ kind: "PIX", bits: b });
+    bits = compileBits150();
+    drawBitsToMini(bits);
+    renderBits150x70ToBig(bits, imgBigPreview);
+    ctx.onPreview?.({ kind: "PIX", bits }); // nadal aktualizuje "główne" preview (jeśli gdzieś jest)
   }
 
   function schedulePreview(ms = 50) {
@@ -408,7 +449,6 @@ export function initImageEditor(ctx) {
   async function loadImageFile(file) {
     if (!file) return;
 
-    // czyść poprzedni URL
     if (imgUrl) {
       try { URL.revokeObjectURL(imgUrl); } catch {}
       imgUrl = null;
@@ -427,12 +467,8 @@ export function initImageEditor(ctx) {
 
     imgObj = img;
 
-    // ustaw <img> w UI (to jest renderowany obraz, na nim siedzi crop)
-    if (imgLarge) {
-      imgLarge.src = imgUrl;
-    }
+    if (imgLarge) imgLarge.src = imgUrl;
 
-    // poczekaj aż przeglądarka przeliczy layout i recty IMG
     requestAnimationFrame(() => {
       initCropToCenter();
       schedulePreview(10);
@@ -448,8 +484,6 @@ export function initImageEditor(ctx) {
 
     const t = ev.target;
     const handle = t?.closest?.(".cropHandle")?.dataset?.h || null;
-
-    // klik w cropBox (move) lub w handle (resize)
     const kind = handle || "move";
 
     drag = {
@@ -468,53 +502,29 @@ export function initImageEditor(ctx) {
     if (!imgObj) return;
 
     const dx = ev.clientX - drag.sx;
-    const dy = ev.clientY - drag.sy;
-
     const s = drag.startCrop;
 
     if (drag.kind === "move") {
-      crop = clampCropToImg({
-        x: s.x + dx,
-        y: s.y + dy,
-        w: s.w,
-        h: s.h
-      });
+      crop = clampCropToImg({ x: s.x + dx, y: s.y + (ev.clientY - drag.sy), w: s.w, h: s.h });
       applyCropToDom();
       schedulePreview(30);
       return;
     }
 
-    // resize: trzymamy ratio 26:11 zawsze
-    // upraszczamy: liczymy zmianę po X (dominująco), a Y wynika z ratio
-    // a pozycję dopasowujemy zależnie od rogu.
-    const d = dx; // bazowo po X
     let newW = s.w;
-    if (drag.kind === "br" || drag.kind === "tr") newW = s.w + d;
-    if (drag.kind === "bl" || drag.kind === "tl") newW = s.w - d;
+    if (drag.kind === "br" || drag.kind === "tr") newW = s.w + dx;
+    if (drag.kind === "bl" || drag.kind === "tl") newW = s.w - dx;
 
     newW = Math.max(60, newW);
     let newH = Math.round(newW / ASPECT);
 
-    // wylicz x,y zależnie od rogu
     let newX = s.x;
     let newY = s.y;
 
-    if (drag.kind === "tl") {
-      newX = s.x + (s.w - newW);
-      newY = s.y + (s.h - newH);
-    }
-    if (drag.kind === "tr") {
-      newX = s.x;
-      newY = s.y + (s.h - newH);
-    }
-    if (drag.kind === "bl") {
-      newX = s.x + (s.w - newW);
-      newY = s.y;
-    }
-    if (drag.kind === "br") {
-      newX = s.x;
-      newY = s.y;
-    }
+    if (drag.kind === "tl") { newX = s.x + (s.w - newW); newY = s.y + (s.h - newH); }
+    if (drag.kind === "tr") { newX = s.x;               newY = s.y + (s.h - newH); }
+    if (drag.kind === "bl") { newX = s.x + (s.w - newW); newY = s.y; }
+    if (drag.kind === "br") { newX = s.x;               newY = s.y; }
 
     crop = clampCropToImg({ x: newX, y: newY, w: newW, h: newH });
     applyCropToDom();
@@ -527,11 +537,9 @@ export function initImageEditor(ctx) {
     schedulePreview(10);
   }
 
-  // gdy zmienia się layout (np. resize okna), trzeba przeliczyć crop do nowej geometrii
   function onLayoutChange() {
     if (ctx.getMode?.() !== "IMAGE") return;
     if (!imgObj) return;
-    // najprościej: ustaw crop na centrum ponownie (stabilne i przewidywalne)
     initCropToCenter();
     schedulePreview(20);
   }
@@ -551,13 +559,18 @@ export function initImageEditor(ctx) {
       await loadImageFile(f);
     });
 
-    // crop pointer
     cropBox?.addEventListener("pointerdown", onPointerDown);
     window.addEventListener("pointermove", onPointerMove);
     window.addEventListener("pointerup", onPointerUp);
     window.addEventListener("pointercancel", onPointerUp);
 
-    // suwaki
+    // klik podglądu -> fullscreen przez main (już masz listener na logoeditor:openPreview)
+    imgBigPreview?.addEventListener("click", () => {
+      window.dispatchEvent(new CustomEvent("logoeditor:openPreview", {
+        detail: { kind: "PIX", bits }
+      }));
+    });
+
     const onAnyChange = () => {
       if (ctx.getMode?.() !== "IMAGE") return;
       syncLabels();
@@ -567,17 +580,14 @@ export function initImageEditor(ctx) {
     };
 
     chkInvert?.addEventListener("change", onAnyChange);
-
     rngBright?.addEventListener("input", onAnyChange);
     rngContrast?.addEventListener("input", onAnyChange);
     rngGamma?.addEventListener("input", onAnyChange);
     rngBlack?.addEventListener("input", onAnyChange);
     rngWhite?.addEventListener("input", onAnyChange);
-
     selMode?.addEventListener("change", onAnyChange);
     rngDither?.addEventListener("input", onAnyChange);
 
-    // resize
     window.addEventListener("resize", () => {
       clearTimeout(_deb);
       _deb = setTimeout(onLayoutChange, 80);
@@ -593,11 +603,10 @@ export function initImageEditor(ctx) {
     open() {
       show(paneImage, true);
 
-      // reset UI
       if (imgFile) imgFile.value = "";
 
-      // suwaki default
-      if (chkInvert) chkInvert.checked = true; // DOMYŚLNIE odwrócone
+      // default settings
+      if (chkInvert) chkInvert.checked = true;
       if (rngBright) rngBright.value = "0";
       if (rngContrast) rngContrast.value = "0";
       if (rngGamma) rngGamma.value = "100";
@@ -607,14 +616,14 @@ export function initImageEditor(ctx) {
       if (rngDither) rngDither.value = "80";
       syncLabels();
 
-      // reset image
       imgObj = null;
       if (imgLarge) imgLarge.removeAttribute("src");
+
       bits = new Uint8Array(DOT_W * DOT_H);
       drawBitsToMini(bits);
+      renderBits150x70ToBig(bits, imgBigPreview);
       ctx.onPreview?.({ kind: "PIX", bits });
 
-      // reset crop
       crop = { x: 40, y: 40, w: 260, h: Math.round(260 / ASPECT) };
       applyCropToDom();
 
@@ -626,11 +635,7 @@ export function initImageEditor(ctx) {
     },
 
     getCreatePayload() {
-      // upewnij się, że bity są aktualne
-      if (imgObj) {
-        bits = compileBits150();
-      }
-
+      if (imgObj) bits = compileBits150();
       return {
         ok: true,
         type: TYPE_PIX,
