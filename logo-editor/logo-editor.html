@@ -296,92 +296,107 @@
             </div>
           </div>
 
-          <!-- IMAGE -->
+          
+         <!-- IMAGE -->
           <div class="pane" id="paneImage" style="display:none;">
-            <div class="imgPane">
+            <div class="imgLayout">
           
-              <!-- góra: wybór pliku -->
-              <div class="toolRow imgTopRow">
-                <input class="inp" id="imgFile" type="file" accept="image/*"/>
-                <div class="imgTopHint">Wybierz obraz. Przesuń i skaluj ramkę 26:11 — z niej robimy „zrzut” na wyświetlacz.</div>
-              </div>
+              <!-- TOP: dwie karty (lewo / prawo) -->
+              <div class="imgTopGrid">
           
-              <!-- duży podgląd obrazu + ramka -->
-              <div class="imgWork" id="imgWork">
-                <div class="imgStage" id="imgStage">
-                  <img id="imgLarge" alt="" />
-                  <div class="cropBox" id="cropBox" role="group" aria-label="Kadr">
-                    <div class="cropHandle tl" data-h="tl"></div>
-                    <div class="cropHandle tr" data-h="tr"></div>
-                    <div class="cropHandle bl" data-h="bl"></div>
-                    <div class="cropHandle br" data-h="br"></div>
+                <!-- LEWO: obraz + ramka -->
+                <div class="imgCard">
+                  <div class="imgCardHead">
+                    <input class="inp" id="imgFile" type="file" accept="image/*"/>
+                  </div>
+          
+                  <div class="imgStage" id="imgStage">
+                    <img id="imgLarge" alt="" />
+                    <div class="cropBox" id="cropBox" role="group" aria-label="Obszar wyświetlacza">
+                      <div class="cropHandle tl" data-h="tl"></div>
+                      <div class="cropHandle tr" data-h="tr"></div>
+                      <div class="cropHandle bl" data-h="bl"></div>
+                      <div class="cropHandle br" data-h="br"></div>
+                    </div>
                   </div>
                 </div>
+          
+                <!-- PRAWO: podgląd jak na wyświetlaczu -->
+                <div class="imgCard">
+                  <div class="imgCardTitle">Podgląd jak na wyświetlaczu</div>
+                  <div class="imgPrevWrap">
+                    <canvas id="imgBigPreview" width="900" height="380"></canvas>
+                  </div>
+                  <div class="imgPrevHint">Kliknij podgląd, żeby otworzyć pełny ekran.</div>
+                </div>
+          
               </div>
           
-              <!-- suwaki -->
-              <div class="imgControls">
-                <div class="imgCtrl">
-                  <div class="imgCtrlLbl">Odwróć kolory</div>
-                  <label class="chk">
-                    <input type="checkbox" id="chkImgInvert" checked />
-                    Domyślnie: ciemne = aktywne. Wyłącz, aby wrócić do „jasne = aktywne”.
-                  </label>
-                </div>
+              <!-- DÓŁ: kontrolki (2 kolumny) -->
+              <div class="imgCard imgBottom">
+                <div class="imgCardTitle">Ustawienia</div>
           
-                <div class="imgCtrl">
-                  <div class="imgCtrlLbl">Jasność</div>
-                  <input class="inp" id="rngImgBright" type="range" min="-100" max="100" step="1" value="0"/>
-                  <div class="imgCtrlVal" id="valImgBright">0</div>
-                </div>
+                <div class="imgControlsGrid">
           
-                <div class="imgCtrl">
-                  <div class="imgCtrlLbl">Kontrast</div>
-                  <input class="inp" id="rngImgContrast" type="range" min="-100" max="100" step="1" value="0"/>
-                  <div class="imgCtrlVal" id="valImgContrast">0</div>
-                </div>
+                  <div class="imgCtrl span2">
+                    <div class="imgCtrlLbl">Odwróć kolory</div>
+                    <label class="chk">
+                      <input type="checkbox" id="chkImgInvert" checked />
+                      Domyślnie: ciemne = aktywne (zalecane). Wyłącz → jasne = aktywne.
+                    </label>
+                  </div>
           
-                <div class="imgCtrl">
-                  <div class="imgCtrlLbl">Gamma</div>
-                  <input class="inp" id="rngImgGamma" type="range" min="50" max="250" step="1" value="100"/>
-                  <div class="imgCtrlVal" id="valImgGamma">1.00</div>
-                </div>
+                  <div class="imgCtrl">
+                    <div class="imgCtrlLbl">Jasność</div>
+                    <input class="inp" id="rngImgBright" type="range" min="-100" max="100" step="1" value="0"/>
+                    <div class="imgCtrlVal" id="valImgBright">0</div>
+                  </div>
           
-                <div class="imgCtrl">
-                  <div class="imgCtrlLbl">Poziom czerni</div>
-                  <input class="inp" id="rngImgBlack" type="range" min="0" max="120" step="1" value="0"/>
-                  <div class="imgCtrlVal" id="valImgBlack">0</div>
-                </div>
+                  <div class="imgCtrl">
+                    <div class="imgCtrlLbl">Kontrast</div>
+                    <input class="inp" id="rngImgContrast" type="range" min="-100" max="100" step="1" value="0"/>
+                    <div class="imgCtrlVal" id="valImgContrast">0</div>
+                  </div>
           
-                <div class="imgCtrl">
-                  <div class="imgCtrlLbl">Poziom bieli</div>
-                  <input class="inp" id="rngImgWhite" type="range" min="135" max="255" step="1" value="255"/>
-                  <div class="imgCtrlVal" id="valImgWhite">255</div>
-                </div>
+                  <div class="imgCtrl">
+                    <div class="imgCtrlLbl">Gamma</div>
+                    <input class="inp" id="rngImgGamma" type="range" min="50" max="250" step="1" value="100"/>
+                    <div class="imgCtrlVal" id="valImgGamma">1.00</div>
+                  </div>
           
-                <div class="imgCtrl">
-                  <div class="imgCtrlLbl">Tryb rasteryzacji</div>
-                  <select class="inp" id="selImgDitherMode">
-                    <option value="THRESH">Progowanie (twardo)</option>
-                    <option value="FS">Floyd–Steinberg (drukarkowo)</option>
-                    <option value="BAYER8">Raster (Bayer 8×8)</option>
-                  </select>
-                </div>
+                  <div class="imgCtrl">
+                    <div class="imgCtrlLbl">Tryb kropek</div>
+                    <select class="inp" id="selImgDitherMode">
+                      <option value="THRESH">Progowanie</option>
+                      <option value="FS">Floyd–Steinberg</option>
+                      <option value="BAYER8">Bayer 8×8</option>
+                    </select>
+                  </div>
           
-                <div class="imgCtrl">
-                  <div class="imgCtrlLbl">Siła kropek</div>
-                  <input class="inp" id="rngImgDither" type="range" min="0" max="100" step="1" value="80"/>
-                  <div class="imgCtrlVal" id="valImgDither">80</div>
-                </div>
+                  <div class="imgCtrl">
+                    <div class="imgCtrlLbl">Poziom czerni</div>
+                    <input class="inp" id="rngImgBlack" type="range" min="0" max="120" step="1" value="0"/>
+                    <div class="imgCtrlVal" id="valImgBlack">0</div>
+                  </div>
           
-                <!-- techniczny podgląd 150×70 (opcjonalny, ale fajny do debug) -->
-                <div class="imgCtrl imgCtrlMini">
-                  <div class="imgCtrlLbl">Podgląd 150×70 (techniczny)</div>
-                  <canvas id="imgCanvas" width="150" height="70"></canvas>
+                  <div class="imgCtrl">
+                    <div class="imgCtrlLbl">Poziom bieli</div>
+                    <input class="inp" id="rngImgWhite" type="range" min="135" max="255" step="1" value="255"/>
+                    <div class="imgCtrlVal" id="valImgWhite">255</div>
+                  </div>
+          
+                  <div class="imgCtrl">
+                    <div class="imgCtrlLbl">Siła kropek</div>
+                    <input class="inp" id="rngImgDither" type="range" min="0" max="100" step="1" value="80"/>
+                    <div class="imgCtrlVal" id="valImgDither">80</div>
+                  </div>
+          
                 </div>
               </div>
+          
             </div>
           </div>
+
 
 
           <div class="editorActions">
