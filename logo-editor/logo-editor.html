@@ -16,7 +16,7 @@
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 
   <!-- Fabric.js (global: window.fabric) -->
-  <script src="https://cdn.jsdelivr.net/npm/fabric@6.0.0/dist/fabric.min.js"></script>
+  <script src="https://unpkg.com/fabric@6.9.0/dist/fabric.min.js"></script>
 
   <script type="module" src="js/main.js" defer></script>
 </head>
@@ -154,15 +154,62 @@
 
           <!-- DRAW -->
           <div class="pane" id="paneDraw" style="display:none;">
-            <div class="toolRow" style="margin-top:12px;">
-              <button class="btn sm" id="btnBrush" type="button">Pędzel</button>
-              <button class="btn sm" id="btnEraser" type="button">Gumka</button>
-              <button class="btn sm" id="btnClear" type="button">Wyczyść</button>
-            </div>
-            <div class="canvasBox">
-              <canvas id="drawCanvas" width="150" height="70"></canvas>
+            <div class="drawLayout">
+          
+              <!-- LEWA: narzędzia -->
+              <div class="drawTools">
+                <div class="lbl" style="margin-top:2px;">Narzędzia</div>
+          
+                <div class="toolGrid" id="drawToolGrid">
+                  <button class="btn sm tool" id="btnToolSelect" type="button" title="Wskaźnik (zaznaczanie)">🖱️</button>
+                  <button class="btn sm tool" id="btnToolPan" type="button" title="Ręka (przesuw)">✋</button>
+          
+                  <button class="btn sm tool" id="btnToolPencil" type="button" title="Ołówek / pędzel">✏️</button>
+                  <button class="btn sm tool" id="btnToolEraser" type="button" title="Gumka">🧽</button>
+          
+                  <button class="btn sm tool" id="btnToolLine" type="button" title="Linia">📏</button>
+                  <button class="btn sm tool" id="btnToolRect" type="button" title="Prostokąt">▭</button>
+          
+                  <button class="btn sm tool" id="btnToolEllipse" type="button" title="Elipsa">⬭</button>
+                  <button class="btn sm tool" id="btnToolPoly" type="button" title="Wielokąt (klikaj punkty, Enter kończy)">🔺</button>
+                </div>
+          
+                <div class="toolRow" style="margin-top:10px;">
+                  <button class="btn sm" id="btnUndo" type="button" title="Cofnij">↶</button>
+                  <button class="btn sm" id="btnRedo" type="button" title="Ponów">↷</button>
+                  <button class="btn sm" id="btnClear" type="button" title="Wyczyść">🗑️</button>
+                </div>
+          
+                <div class="toolRow" style="margin-top:10px; align-items:center;">
+                  <button class="btn sm" id="btnZoomOut" type="button" title="Zoom -">➖</button>
+                  <button class="btn sm" id="btnZoomIn" type="button" title="Zoom +">➕</button>
+                  <button class="btn sm" id="btnZoom100" type="button" title="100%">💯</button>
+                  <button class="btn sm" id="btnZoomFit" type="button" title="Dopasuj">🧩</button>
+                </div>
+          
+                <div class="hint" style="margin-top:10px;">
+                  • Wielokąt: klikaj punkty, <b>Enter</b> kończy, <b>Esc</b> anuluje.<br/>
+                  • Pan: przeciągaj, Zoom działa na widok.
+                </div>
+          
+                <div class="drawMiniWrap" title="Podgląd (150×70)">
+                  <canvas id="drawMini" width="150" height="70"></canvas>
+                </div>
+              </div>
+          
+              <!-- PRAWA: duża scena rysowania -->
+              <div class="drawStage">
+                <div class="canvasBox drawCanvasBox">
+                  <canvas id="drawCanvas" width="150" height="70"></canvas>
+                </div>
+                <div class="hint" style="margin-top:8px;">
+                  Rysujesz wektorowo, zapis kończy jako 150×70 cz/b.
+                </div>
+              </div>
+          
             </div>
           </div>
+
 
           <!-- IMAGE -->
           <div class="pane" id="paneImage" style="display:none;">
