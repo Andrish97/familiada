@@ -970,6 +970,14 @@ document.addEventListener("DOMContentLoaded", async () => {
      const p = lastPreviewPayload || { kind: "GLYPH", rows: defaultLogoRows };
      openPreviewFullscreen(p);
    });
+
+   // DRAW: 👁️ z draw.js wysyła event z payloadem (PIX bits)
+   window.addEventListener("logoeditor:openPreview", (ev) => {
+     const payload = ev?.detail;
+     if (!payload) return;
+     openPreviewFullscreen(payload);
+   });
+
   btnPreviewClose?.addEventListener("click", () => show(previewOverlay, false));
   previewOverlay?.addEventListener("click", (ev) => { if (ev.target === previewOverlay) show(previewOverlay, false); });
 
