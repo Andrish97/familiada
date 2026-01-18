@@ -512,6 +512,116 @@ body.logo-editor-body .wrap{ max-width:1200px; }
   pointer-events:auto;
 }
 
+/* DRAW layout: narzędzia z lewej, scena obok; scena 26:11 */
+#paneDraw .drawWrap{
+  display:grid;
+  grid-template-columns: 260px 1fr;
+  gap:12px;
+  margin-top:12px;
+  align-items:start;
+}
+
+#paneDraw .drawTools{
+  border-radius:16px;
+  border:1px solid rgba(255,255,255,.10);
+  background:rgba(255,255,255,.04);
+  padding:10px;
+}
+
+#paneDraw .toolGrid{
+  display:grid;
+  grid-template-columns: repeat(2, 1fr); /* panel boczny w dwa rzędy (2 kolumny) */
+  gap:8px;
+}
+
+#paneDraw .tbtn{
+  height:44px;
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,.14);
+  background:rgba(0,0,0,.18);
+  color:#fff;
+  font-size:18px;
+  display:grid;
+  place-items:center;
+  cursor:pointer;
+  user-select:none;
+}
+#paneDraw .tbtn.on{
+  border-color: rgba(255,234,166,.50);
+  background: rgba(255,234,166,.10);
+  color: var(--gold);
+}
+#paneDraw .tbtn.danger{ border-color: rgba(255,117,117,.35); }
+
+#paneDraw .toolSep{
+  height:1px;
+  background: rgba(255,255,255,.10);
+  margin:10px 0;
+}
+
+#paneDraw .toolOpts{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+#paneDraw .optRow{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+  font-size:13px;
+  opacity:.95;
+}
+#paneDraw .optRow > span{ font-weight:900; opacity:.85; }
+
+#paneDraw .thumbBtn{
+  width:100%;
+  border-radius:16px;
+  border:1px solid rgba(255,255,255,.14);
+  background:rgba(0,0,0,.18);
+  padding:8px;
+  cursor:pointer;
+}
+#paneDraw #drawThumb{
+  width:100%;
+  height:auto;
+  display:block;
+  image-rendering: pixelated;
+  background:#000;
+  border-radius:12px;
+}
+
+/* Scena 26:11 */
+#paneDraw .drawStageBox{
+  border-radius:16px;
+  border:1px solid rgba(255,255,255,.10);
+  background:rgba(0,0,0,.10);
+  padding:10px;
+}
+
+#paneDraw .drawStageRatio{
+  width:100%;
+  aspect-ratio: 26 / 11;
+  border-radius:14px;
+  background:#0b0b0b;
+  overflow:hidden;
+  position:relative;
+}
+
+#paneDraw #drawStage{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  display:block;
+}
+
+/* na małych ekranach: narzędzia nad sceną */
+@media (max-width: 980px){
+  #paneDraw .drawWrap{ grid-template-columns: 1fr; }
+  #paneDraw .toolGrid{ grid-template-columns: repeat(4, 1fr); }
+}
+
 
 
 /* ==========================================================
