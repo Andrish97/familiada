@@ -1,5 +1,11 @@
 // familiada/logo-editor/js/draw.js
 // Tryb: DRAW -> Fabric.js (wektor) -> raster 150x70 bits (PIX_150x70)
+//
+// ZAŁOŻENIE (Twoje):
+// - WORLD = SCENA (rozmiar świata = rozmiar canvasa; granice świata = granice sceny)
+// - można przybliżać (zoom in), ale oddalać tylko do granic świata (min zoom = 1)
+// - nie można rysować / przesuwać obiektów poza granice świata
+// - pan tylko wtedy, gdy zoom > 1 i zawsze ograniczony (bez pokazywania "poza")
 
 export function initDrawEditor(ctx) {
   const TYPE_PIX = "PIX_150x70";
@@ -48,6 +54,15 @@ export function initDrawEditor(ctx) {
   const DOT_H = ctx.DOT_H; // 70
   const ASPECT = 26 / 11;
 
+  // WORLD = SCENA:
+  // worldW/worldH = aktualny rozmiar canvasa w px
+  let worldW = 0;
+  let worldH = 0;
+
+  // zoom:
+  const MIN_ZOOM = 1.0;     // nie oddalamy poniżej granic świata
+  const MAX_ZOOM = 12.0;
+
   const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
   const show = (el, on) => { if (!el) return; el.style.display = on ? "" : "none"; };
 
@@ -61,6 +76,13 @@ export function initDrawEditor(ctx) {
     const f = window.fabric;
     if (!f) throw new Error("Brak Fabric.js (script nie wczytany).");
     return f;
+  }
+
+  function clampWorldPoint(p) {
+    return {
+      x: clamp(p.x, 0, worldW),
+      y: clamp(p.y, 0, worldH),
+    };
   }
 
   // =========================================================
@@ -79,7 +101,7 @@ export function initDrawEditor(ctx) {
 
   let tool = TOOL.SELECT;
 
-  // Per-tool settings (pamiętane w sesji)
+  // Per-tool settings
   const toolSettings = {
     [TOOL.BRUSH]:   { stroke: 6 },
     [TOOL.ERASER]:  { stroke: 10 },
@@ -124,9 +146,10 @@ export function initDrawEditor(ctx) {
   // Preview bits
   let bits150 = new Uint8Array(DOT_W * DOT_H);
   let _deb = null;
+  let _previewSeq = 0;
 
   // =========================================================
-  // Scene sizing (fix “wypycha w prawo”)
+  // Scene sizing (WORLD = SCENA)
   // =========================================================
   function getStageSize() {
     const host = drawStageHost || drawCanvasEl?.parentElement;
@@ -135,7 +158,6 @@ export function initDrawEditor(ctx) {
     let w = Math.max(320, Math.floor(rect.width));
     let h = Math.floor(w / ASPECT);
 
-    // jeśli jest limit wysokości, dopasuj
     if (rect.height > 0 && h > rect.height) {
       h = Math.max(180, Math.floor(rect.height));
       w = Math.floor(h * ASPECT);
@@ -144,60 +166,114 @@ export function initDrawEditor(ctx) {
     return { w, h };
   }
 
+  function updateWorldSize(w, h) {
+    worldW = Math.max(1, Math.floor(w));
+    worldH = Math.max(1, Math.floor(h));
+  }
+
+  // ClipPath: twarda "ramka świata" (widoczność)
+  function updateClipPath() {
+    if (!fabricCanvas) return;
+    const f = requireFabric();
+
+    // clip w układzie świata (absolutePositioned)
+    const clip = new f.Rect({
+      left: 0,
+      top: 0,
+      width: worldW,
+      height: worldH,
+      absolutePositioned: true,
+    });
+
+    fabricCanvas.clipPath = clip;
+  }
+
+  function resetView() {
+    if (!fabricCanvas) return;
+    // WORLD = SCENA, więc "fit" i "100%" to to samo:
+    // zoom=1 i brak przesunięcia.
+    fabricCanvas.setViewportTransform([1, 0, 0, 1, 0, 0]);
+    fabricCanvas.requestRenderAll();
+  }
+
+  function clampViewport() {
+    if (!fabricCanvas) return;
+
+    const cw = fabricCanvas.getWidth();
+    const ch = fabricCanvas.getHeight();
+    const z = fabricCanvas.getZoom();
+
+    // min zoom pilnujemy osobno, ale tu zakładamy z>=MIN_ZOOM
+    const v = fabricCanvas.viewportTransform ? fabricCanvas.viewportTransform.slice() : [z,0,0,z,0,0];
+
+    // world bounds w pikselach canvasa:
+    // x in [e .. e + worldW*z]
+    // y in [f .. f + worldH*z]
+    const minE = cw - worldW * z;
+    const maxE = 0;
+    const minF = ch - worldH * z;
+    const maxF = 0;
+
+    v[4] = clamp(v[4], minE, maxE);
+    v[5] = clamp(v[5], minF, maxF);
+
+    fabricCanvas.setViewportTransform(v);
+  }
+
   function resizeScene() {
     if (!fabricCanvas || !drawCanvasEl) return;
     const { w, h } = getStageSize();
 
-    // ważne: ustawiamy realne wymiary bufora canvasa,
-    // a CSS i tak robi width/height:100% w ratio boxie
     fabricCanvas.setWidth(w);
     fabricCanvas.setHeight(h);
     fabricCanvas.calcOffset();
 
-    zoomFit(false);
-    schedulePreview(40);
+    // WORLD = SCENA:
+    updateWorldSize(w, h);
+    updateClipPath();
+
+    // po zmianie rozmiaru – bezpiecznie wracamy do "granicy świata"
+    // (nie zostawiamy starych pan/zoom, które mogłyby pokazać "poza")
+    resetView();
+    clampViewport();
+
+    schedulePreview(60);
   }
 
   // =========================================================
-  // Zoom / viewport
+  // Zoom / viewport (min zoom = 1, max = 12)
   // =========================================================
-  function zoomFit(render = true) {
+  function setZoomClamped(nextZoom, center = null) {
     if (!fabricCanvas) return;
+    const f = requireFabric();
 
-    const WORLD_W = 2600;
-    const WORLD_H = 1100;
+    const z = clamp(nextZoom, MIN_ZOOM, MAX_ZOOM);
+    const pt = center || new f.Point(fabricCanvas.getWidth() / 2, fabricCanvas.getHeight() / 2);
+    fabricCanvas.zoomToPoint(pt, z);
 
-    const cw = fabricCanvas.getWidth();
-    const ch = fabricCanvas.getHeight();
-
-    const s = Math.min(cw / WORLD_W, ch / WORLD_H);
-    const tx = (cw - WORLD_W * s) / 2;
-    const ty = (ch - WORLD_H * s) / 2;
-
-    fabricCanvas.setViewportTransform([s, 0, 0, s, tx, ty]);
-    if (render) fabricCanvas.requestRenderAll();
-  }
-
-  function zoomTo100() {
-    if (!fabricCanvas) return;
-    const WORLD_W = 2600;
-    const WORLD_H = 1100;
-    const cw = fabricCanvas.getWidth();
-    const ch = fabricCanvas.getHeight();
-    const s = 1.0;
-    const tx = (cw - WORLD_W * s) / 2;
-    const ty = (ch - WORLD_H * s) / 2;
-    fabricCanvas.setViewportTransform([s, 0, 0, s, tx, ty]);
+    clampViewport();
     fabricCanvas.requestRenderAll();
   }
 
   function zoomBy(factor, center = null) {
     if (!fabricCanvas) return;
-    const f = requireFabric();
-    const pt = center || new f.Point(fabricCanvas.getWidth()/2, fabricCanvas.getHeight()/2);
-    const next = clamp(fabricCanvas.getZoom() * factor, 0.05, 12);
-    fabricCanvas.zoomToPoint(pt, next);
-    fabricCanvas.requestRenderAll();
+    const next = fabricCanvas.getZoom() * factor;
+    setZoomClamped(next, center);
+  }
+
+  function zoomTo100() {
+    // w tym modelu: 100% == granice świata
+    setZoomClamped(1.0, null);
+    // przy zoom=1 pan ma być 0,0
+    if (fabricCanvas) {
+      fabricCanvas.setViewportTransform([1, 0, 0, 1, 0, 0]);
+      fabricCanvas.requestRenderAll();
+    }
+  }
+
+  function zoomFit() {
+    // world==scene -> to samo co 100%
+    zoomTo100();
   }
 
   // =========================================================
@@ -211,17 +287,6 @@ export function initDrawEditor(ctx) {
       strokeLineCap: "round",
       strokeLineJoin: "round",
       fill: getFill() ? "#fff" : "rgba(0,0,0,0)",
-    };
-  }
-
-  function makeEraserStyle() {
-    const w = getStroke();
-    return {
-      stroke: "#000",
-      strokeWidth: w,
-      strokeLineCap: "round",
-      strokeLineJoin: "round",
-      fill: "rgba(0,0,0,0)",
     };
   }
 
@@ -250,7 +315,6 @@ export function initDrawEditor(ctx) {
     setBtnOn(tEllipse, tool === TOOL.ELLIPSE);
     setBtnOn(tPoly, tool === TOOL.POLY);
 
-    // Poly done dostępne tylko w POLY i min. 3 punkty
     if (tPolyDone) tPolyDone.disabled = !(tool === TOOL.POLY && polyPoints.length >= 3);
   }
 
@@ -260,7 +324,6 @@ export function initDrawEditor(ctx) {
 
     if (!fabricCanvas) return;
 
-    // tryby zachowania
     if (tool === TOOL.SELECT) {
       fabricCanvas.isDrawingMode = false;
       fabricCanvas.selection = true;
@@ -288,7 +351,6 @@ export function initDrawEditor(ctx) {
       if (tool !== TOOL.POLY) clearPolyDraft();
     }
 
-    // ustawienia nie zmieniają “wstecz” obiektów – tylko następne akcje (jak Paint)
     schedulePreview(60);
   }
 
@@ -370,18 +432,25 @@ export function initDrawEditor(ctx) {
     const rect = drawCanvasEl.getBoundingClientRect();
     const canvasPt = new f.Point(ev.clientX - rect.left, ev.clientY - rect.top);
     const inv = f.util.invertTransform(fabricCanvas.viewportTransform);
-    return f.util.transformPoint(canvasPt, inv);
+
+    // punkt w świecie (world coords)
+    const wp = f.util.transformPoint(canvasPt, inv);
+
+    // klucz: clamp do granic świata
+    return clampWorldPoint({ x: wp.x, y: wp.y });
   }
 
   function addPolyPoint(worldPt) {
-    polyPoints.push({ x: worldPt.x, y: worldPt.y });
+    const p = clampWorldPoint(worldPt);
+    polyPoints.push({ x: p.x, y: p.y });
+
     const f = requireFabric();
     const style = makeStrokeFillStyle();
 
     if (!polyPreview) {
       polyPreview = new f.Polyline(polyPoints, {
         ...style,
-        fill: "rgba(0,0,0,0)", // w trakcie tylko kontur
+        fill: "rgba(0,0,0,0)",
         selectable: false,
         evented: false,
         objectCaching: false,
@@ -424,12 +493,12 @@ export function initDrawEditor(ctx) {
   }
 
   // =========================================================
-  // Shapes (line/rect/ellipse)
+  // Shapes (line/rect/ellipse) — clamp do świata
   // =========================================================
   function startFigure(ev) {
     if (!fabricCanvas) return;
     const f = requireFabric();
-    const p0 = getWorldPointFromMouse(ev);
+    const p0 = getWorldPointFromMouse(ev); // już clamp
     const style = makeStrokeFillStyle();
 
     if (tool === TOOL.LINE) {
@@ -481,7 +550,7 @@ export function initDrawEditor(ctx) {
 
   function updateFigure(ev) {
     if (!fabricCanvas || !drawingObj) return;
-    const p = getWorldPointFromMouse(ev);
+    const p = getWorldPointFromMouse(ev); // clamp
 
     if (tool === TOOL.LINE && drawingObj.type === "line") {
       drawingObj.set({ x2: p.x, y2: p.y });
@@ -492,15 +561,24 @@ export function initDrawEditor(ctx) {
     if (tool === TOOL.RECT && drawingObj.type === "rect") {
       const x0 = drawingObj.left;
       const y0 = drawingObj.top;
+
       const w = p.x - x0;
       const h = p.y - y0;
 
+      const left = w >= 0 ? x0 : p.x;
+      const top  = h >= 0 ? y0 : p.y;
+
+      // dodatkowe bezpieczeństwo: clamp lewego/górnego
+      const pLT = clampWorldPoint({ x: left, y: top });
+      const pRB = clampWorldPoint({ x: left + Math.abs(w), y: top + Math.abs(h) });
+
       drawingObj.set({
-        width: Math.abs(w),
-        height: Math.abs(h),
-        left: w >= 0 ? x0 : p.x,
-        top: h >= 0 ? y0 : p.y,
+        left: pLT.x,
+        top: pLT.y,
+        width: Math.max(1, pRB.x - pLT.x),
+        height: Math.max(1, pRB.y - pLT.y),
       });
+
       fabricCanvas.requestRenderAll();
       return;
     }
@@ -508,17 +586,21 @@ export function initDrawEditor(ctx) {
     if (tool === TOOL.ELLIPSE && drawingObj.type === "ellipse") {
       const x0 = drawingObj.left;
       const y0 = drawingObj.top;
+
       const w = p.x - x0;
       const h = p.y - y0;
 
       const left = w >= 0 ? x0 : p.x;
-      const top = h >= 0 ? y0 : p.y;
+      const top  = h >= 0 ? y0 : p.y;
+
+      const pLT = clampWorldPoint({ x: left, y: top });
+      const pRB = clampWorldPoint({ x: left + Math.abs(w), y: top + Math.abs(h) });
 
       drawingObj.set({
-        left,
-        top,
-        rx: Math.max(1, Math.abs(w) / 2),
-        ry: Math.max(1, Math.abs(h) / 2),
+        left: pLT.x,
+        top: pLT.y,
+        rx: Math.max(1, (pRB.x - pLT.x) / 2),
+        ry: Math.max(1, (pRB.y - pLT.y) / 2),
       });
 
       fabricCanvas.requestRenderAll();
@@ -536,25 +618,79 @@ export function initDrawEditor(ctx) {
   }
 
   // =========================================================
-  // Raster -> bits 150x70 (preview do bigPreview)
+  // Clamp obiektów w SELECT (przesuwanie/skalowanie)
   // =========================================================
-  function renderTo150x70Canvas() {
+  function clampObjectToWorld(obj) {
+    if (!fabricCanvas || !obj) return;
+    const f = requireFabric();
+
+    // bounding rect w coords canvasa (po viewport)
+    const br = obj.getBoundingRect(true, true);
+
+    const inv = f.util.invertTransform(fabricCanvas.viewportTransform);
+
+    const tlCanvas = new f.Point(br.left, br.top);
+    const brCanvas = new f.Point(br.left + br.width, br.top + br.height);
+
+    const tlWorld = f.util.transformPoint(tlCanvas, inv);
+    const brWorld = f.util.transformPoint(brCanvas, inv);
+
+    let dx = 0;
+    let dy = 0;
+
+    if (tlWorld.x < 0) dx = -tlWorld.x;
+    if (tlWorld.y < 0) dy = -tlWorld.y;
+
+    if (brWorld.x > worldW) dx = dx + (worldW - brWorld.x);
+    if (brWorld.y > worldH) dy = dy + (worldH - brWorld.y);
+
+    if (dx !== 0 || dy !== 0) {
+      obj.left = (obj.left || 0) + dx;
+      obj.top  = (obj.top  || 0) + dy;
+      obj.setCoords();
+    }
+  }
+
+  // =========================================================
+  // Preview/export: stabilne (nie zależy od zoom/pan)
+  // Render offscreen: świat -> DOT (150x70) stałą skalą
+  // =========================================================
+  async function renderWorldTo150x70CanvasStable() {
     if (!fabricCanvas) return null;
-    const src = fabricCanvas.lowerCanvasEl;
-    if (!src) return null;
+    const f = requireFabric();
 
-    const out = document.createElement("canvas");
-    out.width = DOT_W;
-    out.height = DOT_H;
+    const json = snapshotJSON();
+    if (!json) return null;
 
-    const g = out.getContext("2d", { willReadFrequently: true });
-    g.imageSmoothingEnabled = true;
+    // offscreen canvas DOT size
+    const el = f.util.createCanvasElement();
+    el.width = DOT_W;
+    el.height = DOT_H;
 
-    g.fillStyle = "#000";
-    g.fillRect(0, 0, DOT_W, DOT_H);
-    g.drawImage(src, 0, 0, DOT_W, DOT_H);
+    const sc = new f.StaticCanvas(el, {
+      backgroundColor: "#000",
+      renderOnAddRemove: false,
+    });
 
-    return out;
+    // Skala: świat (worldW x worldH) -> DOT (150 x 70)
+    // (aspekt jest stały 26:11, więc to jest spójne)
+    const sx = DOT_W / Math.max(1, worldW);
+    const sy = DOT_H / Math.max(1, worldH);
+    const s = Math.min(sx, sy); // powinno wyjść równe, ale bierzemy bezpiecznie
+
+    sc.setViewportTransform([s, 0, 0, s, 0, 0]);
+
+    await new Promise((res) => {
+      sc.loadFromJSON(json, () => {
+        sc.renderAll();
+        res();
+      });
+    });
+
+    // StaticCanvas ma swoje eventy itd., ale to offscreen — czyścimy po sobie
+    sc.dispose?.();
+
+    return el;
   }
 
   function canvasToBits150(c) {
@@ -572,24 +708,32 @@ export function initDrawEditor(ctx) {
 
   function schedulePreview(ms = 60) {
     clearTimeout(_deb);
-    _deb = setTimeout(() => {
-      const c = renderTo150x70Canvas();
+
+    const mySeq = ++_previewSeq;
+
+    _deb = setTimeout(async () => {
+      // jeśli w międzyczasie była kolejna prośba o preview, pomiń tę
+      if (mySeq !== _previewSeq) return;
+
+      const c = await renderWorldTo150x70CanvasStable();
       if (!c) return;
+
+      // znów sprawdzamy, czy to nadal aktualne
+      if (mySeq !== _previewSeq) return;
+
       bits150 = canvasToBits150(c);
       ctx.onPreview?.({ kind: "PIX", bits: bits150 });
     }, ms);
   }
 
   function openEyePreview() {
-    // nie mamy dostępu do funkcji z main.js, więc wysyłamy event
-    // main.js ma nasłuch i otwiera overlay
     window.dispatchEvent(new CustomEvent("logoeditor:openPreview", {
       detail: { kind: "PIX", bits: bits150 }
     }));
   }
 
   // =========================================================
-  // Settings modal (tylko te, które dotyczą narzędzia)
+  // Settings modal
   // =========================================================
   function toolHasSettings(t) {
     return t === TOOL.BRUSH || t === TOOL.ERASER || t === TOOL.LINE || t === TOOL.RECT || t === TOOL.ELLIPSE || t === TOOL.POLY;
@@ -608,7 +752,6 @@ export function initDrawEditor(ctx) {
   function renderSettingsModal() {
     if (!drawPopBody) return;
 
-    // wyczyść
     drawPopBody.innerHTML = "";
 
     if (!toolHasSettings(tool)) {
@@ -622,7 +765,6 @@ export function initDrawEditor(ctx) {
 
     const st = toolSettings[tool] || {};
 
-    // Grubość: zawsze dla narzędzi rysujących
     {
       const row = document.createElement("label");
       row.className = "popRow";
@@ -633,7 +775,6 @@ export function initDrawEditor(ctx) {
       drawPopBody.appendChild(row);
     }
 
-    // Wypełnij: tylko dla figur i POLY (nie dla linii, nie dla pędzla/gumki)
     const fillAllowed = (tool === TOOL.RECT || tool === TOOL.ELLIPSE || tool === TOOL.POLY);
     if (fillAllowed) {
       const row = document.createElement("label");
@@ -645,19 +786,18 @@ export function initDrawEditor(ctx) {
       drawPopBody.appendChild(row);
     }
 
-    // bind
     const popStroke = drawPopBody.querySelector("#popStroke");
     const popFill = drawPopBody.querySelector("#popFill");
 
     popStroke?.addEventListener("input", () => {
       toolSettings[tool] = { ...(toolSettings[tool] || {}), stroke: clamp(Number(popStroke.value || 6), 1, 80) };
       if (tool === TOOL.BRUSH || tool === TOOL.ERASER) applyBrushStyle();
-      schedulePreview(60);
+      schedulePreview(80);
     });
 
     popFill?.addEventListener("change", () => {
       toolSettings[tool] = { ...(toolSettings[tool] || {}), fill: !!popFill.checked };
-      schedulePreview(60);
+      schedulePreview(80);
     });
   }
 
@@ -690,7 +830,7 @@ export function initDrawEditor(ctx) {
       fireRightClick: true,
     });
 
-    // rozmiar
+    // rozmiar + world
     resizeScene();
 
     // undo start
@@ -703,20 +843,38 @@ export function initDrawEditor(ctx) {
     fabricCanvas.on("path:created", () => {
       pushUndo();
       ctx.markDirty?.();
-      schedulePreview(60);
+      schedulePreview(80);
     });
 
-    fabricCanvas.on("object:modified", () => {
+    fabricCanvas.on("object:modified", (e) => {
+      // clamp po modyfikacji (select)
+      if (tool === TOOL.SELECT && e?.target) {
+        clampObjectToWorld(e.target);
+      }
+
       pushUndo();
       ctx.markDirty?.();
-      schedulePreview(60);
+      schedulePreview(80);
     });
 
     fabricCanvas.on("object:removed", () => {
       if (undoBusy) return;
       pushUndo();
       ctx.markDirty?.();
-      schedulePreview(60);
+      schedulePreview(80);
+    });
+
+    // clamp na żywo przy przesuwaniu/skalowaniu (tylko SELECT)
+    fabricCanvas.on("object:moving", (e) => {
+      if (tool !== TOOL.SELECT) return;
+      if (!e?.target) return;
+      clampObjectToWorld(e.target);
+    });
+
+    fabricCanvas.on("object:scaling", (e) => {
+      if (tool !== TOOL.SELECT) return;
+      if (!e?.target) return;
+      clampObjectToWorld(e.target);
     });
 
     // Mouse handlers
@@ -724,6 +882,9 @@ export function initDrawEditor(ctx) {
       const ev = opt.e;
 
       if (tool === TOOL.PAN) {
+        // pan ma sens tylko przy zoom>1
+        if (fabricCanvas.getZoom() <= MIN_ZOOM + 1e-6) return;
+
         panDown = true;
         panStart = { x: ev.clientX, y: ev.clientY };
         vptStart = fabricCanvas.viewportTransform ? fabricCanvas.viewportTransform.slice() : null;
@@ -746,12 +907,14 @@ export function initDrawEditor(ctx) {
       const ev = opt.e;
 
       if (tool === TOOL.PAN && panDown && vptStart) {
+        // pan ograniczony clampem
         const dx = ev.clientX - panStart.x;
         const dy = ev.clientY - panStart.y;
         const v = vptStart.slice();
         v[4] += dx;
         v[5] += dy;
         fabricCanvas.setViewportTransform(v);
+        clampViewport();
         fabricCanvas.requestRenderAll();
         return;
       }
@@ -776,17 +939,18 @@ export function initDrawEditor(ctx) {
       finalizePolygon();
     });
 
-    // Wheel zoom (tylko select/pan)
+    // Wheel zoom (tylko select/pan) + min zoom = 1
     drawCanvasEl.addEventListener("wheel", (ev) => {
       if (ctx.getMode?.() !== "DRAW") return;
       if (!(tool === TOOL.PAN || tool === TOOL.SELECT)) return;
 
       ev.preventDefault();
+
       const rect = drawCanvasEl.getBoundingClientRect();
-      const f = requireFabric();
       const pt = new f.Point(ev.clientX - rect.left, ev.clientY - rect.top);
       zoomBy(ev.deltaY < 0 ? 1.1 : 0.9, pt);
-      schedulePreview(80);
+
+      schedulePreview(100);
     }, { passive: false });
 
     // Keyboard: Esc anuluje poly, Enter kończy poly
@@ -816,8 +980,8 @@ export function initDrawEditor(ctx) {
 
     // Start
     setTool(TOOL.SELECT);
-    zoomFit();
-    schedulePreview(30);
+    zoomFit();           // = reset do granic świata
+    schedulePreview(60);
   }
 
   // =========================================================
@@ -829,10 +993,10 @@ export function initDrawEditor(ctx) {
     tSelect?.addEventListener("click", () => setTool(TOOL.SELECT));
     tPan?.addEventListener("click", () => setTool(TOOL.PAN));
 
-    tZoomIn?.addEventListener("click", () => { zoomBy(1.15); schedulePreview(80); });
-    tZoomOut?.addEventListener("click", () => { zoomBy(0.87); schedulePreview(80); });
-    tZoom100?.addEventListener("click", () => { zoomTo100(); schedulePreview(80); });
-    tZoomFit?.addEventListener("click", () => { zoomFit(); schedulePreview(80); });
+    tZoomIn?.addEventListener("click", () => { zoomBy(1.15); schedulePreview(120); });
+    tZoomOut?.addEventListener("click", () => { zoomBy(0.87); schedulePreview(120); });
+    tZoom100?.addEventListener("click", () => { zoomTo100(); schedulePreview(120); });
+    tZoomFit?.addEventListener("click", () => { zoomFit(); schedulePreview(120); });
 
     tBrush?.addEventListener("click", () => { setTool(TOOL.BRUSH); applyBrushStyle(); });
     tEraser?.addEventListener("click", () => { setTool(TOOL.ERASER); applyBrushStyle(); });
@@ -857,7 +1021,7 @@ export function initDrawEditor(ctx) {
 
       pushUndo();
       ctx.markDirty?.();
-      schedulePreview(30);
+      schedulePreview(80);
     });
 
     tEye?.addEventListener("click", () => openEyePreview());
@@ -865,7 +1029,6 @@ export function initDrawEditor(ctx) {
     tSettings?.addEventListener("click", () => openSettingsModal());
     drawPopClose?.addEventListener("click", () => closeSettingsModal());
 
-    // klik poza modalem zamyka (tylko gdy klik w panelu)
     paneDraw?.addEventListener("pointerdown", (ev) => {
       if (!drawPop || drawPop.style.display === "none") return;
       const t = ev.target;
@@ -890,12 +1053,19 @@ export function initDrawEditor(ctx) {
       if (!uiBound) { bindUiOnce(); uiBound = true; }
       installFabricOnce();
 
-      // reset sesji rysunku (ale ustawienia narzędzi zostają w pamięci sesji)
+      // reset sesji rysunku (ustawienia narzędzi zostają)
       if (fabricCanvas) {
         closeSettingsModal();
         clearPolyDraft();
+
+        // czyścimy obiekty
         fabricCanvas.getObjects().forEach(o => fabricCanvas.remove(o));
         fabricCanvas.backgroundColor = "#000";
+
+        // world/clip + reset widoku do granic świata
+        resizeScene();
+        zoomFit();
+
         fabricCanvas.requestRenderAll();
 
         undoStack = [];
@@ -904,9 +1074,8 @@ export function initDrawEditor(ctx) {
         updateUndoRedoButtons();
 
         setTool(TOOL.SELECT);
-        zoomFit();
         ctx.clearDirty?.();
-        schedulePreview(30);
+        schedulePreview(60);
       }
     },
 
@@ -916,7 +1085,7 @@ export function initDrawEditor(ctx) {
     },
 
     async getCreatePayload() {
-      // odśwież bity
+      // odśwież bity (stabilne, niezależne od zoom/pan)
       schedulePreview(0);
 
       return {
