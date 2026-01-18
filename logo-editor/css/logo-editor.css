@@ -1175,6 +1175,15 @@ body.logo-editor-body .wrap{ max-width:1200px; }
   display:block;
 }
 
+.cropFrame{
+  position:absolute;
+  aspect-ratio:26 / 11;
+  border:2px dashed rgba(255,234,166,.9);
+  box-shadow:0 0 0 9999px rgba(0,0,0,.35);
+  cursor:move;
+}
+
+
 /* ==========================================================
    Modale
 ========================================================== */
