@@ -122,6 +122,32 @@ function confirmCloseIfDirty(){
   return confirm("Jeśli teraz zamkniesz, zmiany nie zostaną zapisane.");
 }
 
+function makeUniqueName(baseName, excludeId = null){
+  const base = String(baseName || "").trim() || "Logo";
+  const used = new Set(
+    (logos || [])
+      .filter(l => !excludeId || l.id !== excludeId)
+      .map(l => String(l?.name || "").trim().toLowerCase())
+      .filter(Boolean)
+  );
+
+  if (!used.has(base.toLowerCase())) return base;
+
+  let i = 2;
+  while (i < 9999){
+    const cand = `${base} (${i})`;
+    if (!used.has(cand.toLowerCase())) return cand;
+    i++;
+  }
+  return `${base} (${Date.now()})`;
+}
+
+function isUniqueViolation(e){
+  // Supabase/Postgres: 23505 = unique violation
+  return e?.code === "23505" || /duplicate key value/i.test(String(e?.message || ""));
+}
+
+
 /* =========================================================
    Fetch helpers
 ========================================================= */
@@ -649,6 +675,11 @@ function openEditor(mode){
   clearDirty();
   setEditorMsg("");
 
+   // Start edytora = start preview (żeby nie został obrazek z listy)
+   lastPreviewPayload = { kind: "GLYPH", rows: Array.from({ length: 10 }, () => " ".repeat(30)) };
+   updateBigPreviewFromPayload(lastPreviewPayload);
+
+
   const titleMap = {
     TEXT: "Nowe logo — Napis",
     TEXT_PIX: "Nowe logo — Tekst",
@@ -748,8 +779,12 @@ async function cancelSessionSavedLogo(){
 }
 
 
+let lastPreviewPayload = null;
+
 function updateBigPreviewFromPayload(payload){
   if (!payload) return;
+  lastPreviewPayload = payload;
+
   if (payload.kind === "GLYPH") renderRows30x10ToBig(payload.rows, bigPreview);
   else renderBits150x70ToBig(payload.bits, bigPreview);
 }
@@ -758,7 +793,7 @@ function updateBigPreviewFromPayload(payload){
    SAVE
 ========================================================= */
 async function handleCreate(){
-  const name = String(logoName.value || "").trim() || "Logo";
+  let name = String(logoName.value || "").trim() || "Logo";
   setEditorMsg("");
 
   try{
@@ -775,6 +810,23 @@ async function handleCreate(){
       setEditorMsg(res?.msg || "Nie mogę zapisać.");
       return;
     }
+
+     // Jeśli to pierwszy zapis w tej sesji, a nazwa już istnieje -> automatycznie dopnij (2), (3)...
+      if (!sessionSavedLogoId){
+        const unique = makeUniqueName(name);
+        if (unique !== name){
+          name = unique;
+          logoName.value = unique; // pokaż userowi realną nazwę, która się zapisze
+        }
+      } else {
+        // Jeśli robimy UPDATE i user zmienił nazwę na istniejącą (innego logo) -> też dopnij
+        const unique = makeUniqueName(name, sessionSavedLogoId);
+        if (unique !== name){
+          name = unique;
+          logoName.value = unique;
+        }
+      }
+
 
     const patch = {
       user_id: currentUser.id,
@@ -800,6 +852,22 @@ async function handleCreate(){
     await refresh();
   } catch (e){
     console.error(e);
+
+    // Jeśli ktoś/refresh jeszcze nie zdążył, a w DB jednak kolizja -> dopnij unikalną i spróbuj raz jeszcze
+    if (isUniqueViolation(e)){
+      try{
+        const fallback = makeUniqueName(logoName.value || "Logo", sessionSavedLogoId);
+        logoName.value = fallback;
+
+        // powtórka (jednorazowa)
+        setEditorMsg("Poprawiam nazwę i zapisuję ponownie…");
+        await handleCreate(); // UWAGA: to wywołanie rekurencyjne jest OK, bo tylko raz wchodzi w tę gałąź
+        return;
+      } catch (e2){
+        console.error(e2);
+      }
+    }
+
     alert("Nie udało się zapisać.\n\n" + (e?.message || e));
     setEditorMsg("Błąd zapisu.");
   }
@@ -897,12 +965,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   btnCreate?.addEventListener("click", handleCreate);
 
   // fullscreen preview
-  bigPreview?.addEventListener("click", () => {
-    // w pelnym ekranie pokazujemy to, co aktualnie jest w podgladzie
-    // (czyli: najnowszy payload wyslany przez edytor)
-    // - najprosciej: popros o odswiezenie przez editor (ale tu unikamy). Zostaje stan canvasa.
-    show(previewOverlay, true);
-  });
+   bigPreview?.addEventListener("click", () => {
+     // fullscreen pokazuje DOKŁADNIE to, co ostatnio narysowaliśmy (z edytora albo z listy)
+     const p = lastPreviewPayload || { kind: "GLYPH", rows: defaultLogoRows };
+     openPreviewFullscreen(p);
+   });
   btnPreviewClose?.addEventListener("click", () => show(previewOverlay, false));
   previewOverlay?.addEventListener("click", (ev) => { if (ev.target === previewOverlay) show(previewOverlay, false); });
 
