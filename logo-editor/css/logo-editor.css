@@ -480,6 +480,39 @@ body.logo-editor-body .wrap{ max-width:1200px; }
   image-rendering: pixelated;
 }
 
+/* scena ma ZAWSZE proporcję 26:11 */
+#paneDraw .drawStage{
+  flex:1;
+  aspect-ratio: 26 / 11;
+  border-radius:16px;
+  border:1px solid rgba(255,255,255,.14);
+  background:#000;
+  overflow:hidden;
+  position:relative;
+  padding:0;            /* ważne: padding psuje ratio */
+  display:block;
+  min-height: 360px;    /* żeby nie była “niziutka” */
+}
+
+/* wewnętrzny kontener na canvas (pełne pole) */
+#paneDraw .drawStageInner{
+  position:absolute;
+  inset:0;
+  display:flex;
+}
+
+/* canvas ma wypełniać scenę, ma łapać pointery */
+#paneDraw .drawStageInner canvas{
+  width:100%;
+  height:100%;
+  display:block;
+  background:#000;
+  image-rendering:pixelated;
+  touch-action:none;
+  pointer-events:auto;
+}
+
+
 
 /* ==========================================================
    Modale
