@@ -646,54 +646,82 @@ body.logo-editor-body .wrap{ max-width:1200px; }
 }
 
 /* ==========================================================
-   IMAGE: duży obraz + kadr 26:11 + suwaki
+   IMAGE: 3 karty (lewo/prawo/dół) bez przewijania
 ========================================================== */
 
-#paneImage .imgPane{
+/* IMAGE: przejmujemy layout (jak DRAW) -> editorRight ukrywamy,
+   bo preview jest już w paneImage po prawej */
+.editorShell[data-mode="IMAGE"] .editorGrid{
+  grid-template-columns: 1fr;
+}
+.editorShell[data-mode="IMAGE"] .editorRight{
+  display:none;
+}
+
+/* całość ma się mieścić: ograniczamy wysokość "góry" */
+#paneImage .imgLayout{
   margin-top:12px;
   display:flex;
   flex-direction:column;
   gap:12px;
 }
 
-/* górny rząd: input + opis */
-#paneImage .imgTopRow{
+/* TOP: lewo/prawo */
+#paneImage .imgTopGrid{
+  display:grid;
+  grid-template-columns: 1.15fr 1fr;
+  gap:12px;
+  align-items:stretch;
+}
+
+/* karta */
+#paneImage .imgCard{
+  border-radius:18px;
+  border:1px solid rgba(255,255,255,.10);
+  background:rgba(255,255,255,.04);
+  padding:10px;
+  overflow:hidden;
   display:flex;
   flex-direction:column;
-  gap:8px;
-}
-#paneImage .imgTopHint{
-  opacity:.85;
-  font-size:13px;
-  line-height:1.35;
+  gap:10px;
 }
 
-/* obszar roboczy obrazu */
-#paneImage .imgWork{
-  border-radius:16px;
-  border:1px solid rgba(255,255,255,.10);
-  background:rgba(0,0,0,.10);
-  padding:10px;
+#paneImage .imgCardTitle{
+  font-weight:1000;
+  font-size:12px;
+  letter-spacing:.10em;
+  text-transform:uppercase;
+  opacity:.9;
 }
 
+/* input pliku u góry */
+#paneImage .imgCardHead{
+  display:flex;
+  gap:10px;
+}
+
+/* STAGE: bez czarnego tła, po prostu karta */
 #paneImage .imgStage{
   position:relative;
   width:100%;
-  min-height:260px;
   border-radius:14px;
   border:1px solid rgba(255,255,255,.14);
-  background:#0b0b0b;
+  background:transparent;           /* ważne */
   overflow:hidden;
 
   display:flex;
   align-items:center;
   justify-content:center;
+
+  /* klucz do "bez przewijania": stage nie rośnie w nieskończoność */
+  height: clamp(220px, 34vh, 420px);
 }
 
+/* obraz skaluje się do stage */
 #paneImage #imgLarge{
   display:block;
   max-width:100%;
-  max-height:520px;
+  max-height:100%;
   width:auto;
   height:auto;
   user-select:none;
@@ -705,59 +733,86 @@ body.logo-editor-body .wrap{ max-width:1200px; }
   position:absolute;
   border:2px solid rgba(255,234,166,.95);
   border-radius:12px;
-  box-shadow:0 0 0 9999px rgba(0,0,0,.45);
   cursor:move;
   touch-action:none;
+
+  /* delikatny "cień" zamiast czarnej maski */
+  box-shadow:0 0 0 9999px rgba(0,0,0,.10);
 }
 
 #paneImage .cropBox::after{
-  content:"26:11";
+  content:"Obszar wyświetlacza";
   position:absolute;
   left:10px;
   top:10px;
   font-weight:1000;
   font-size:12px;
-  letter-spacing:.08em;
-  color:rgba(255,234,166,.95);
-  text-shadow:0 2px 10px rgba(0,0,0,.7);
-  opacity:.95;
+  letter-spacing:.06em;
+  color:rgba(255,234,166,.98);
+  text-shadow:0 2px 10px rgba(0,0,0,.35);
+  opacity:.98;
 }
 
-/* uchwyty w rogach */
+/* uchwyty */
 #paneImage .cropHandle{
   position:absolute;
-  width:18px;
-  height:18px;
+  width:16px;
+  height:16px;
   border-radius:6px;
   background:rgba(255,234,166,.95);
-  box-shadow:0 8px 22px rgba(0,0,0,.45);
+  box-shadow:0 8px 22px rgba(0,0,0,.30);
+}
+#paneImage .cropHandle.tl{ left:-8px; top:-8px; cursor:nwse-resize; }
+#paneImage .cropHandle.tr{ right:-8px; top:-8px; cursor:nesw-resize; }
+#paneImage .cropHandle.bl{ left:-8px; bottom:-8px; cursor:nesw-resize; }
+#paneImage .cropHandle.br{ right:-8px; bottom:-8px; cursor:nwse-resize; }
+
+/* PRAWO: preview */
+#paneImage .imgPrevWrap{
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,.14);
+  background:rgba(0,0,0,.12);
+  padding:8px;
+  flex:1;
+  display:flex;
+}
+#paneImage #imgBigPreview{
+  width:100%;
+  height:100%;
+  display:block;
+}
+#paneImage .imgPrevHint{
+  opacity:.85;
+  font-size:13px;
 }
 
-#paneImage .cropHandle.tl{ left:-9px; top:-9px; cursor:nwse-resize; }
-#paneImage .cropHandle.tr{ right:-9px; top:-9px; cursor:nesw-resize; }
-#paneImage .cropHandle.bl{ left:-9px; bottom:-9px; cursor:nesw-resize; }
-#paneImage .cropHandle.br{ right:-9px; bottom:-9px; cursor:nwse-resize; }
+/* DÓŁ: kontrolki w 2 kolumnach, niższe */
+#paneImage .imgBottom{
+  padding:10px;
+}
 
-/* kontrolki */
-#paneImage .imgControls{
-  display:flex;
-  flex-direction:column;
-  gap:10px;
+#paneImage .imgControlsGrid{
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap:8px 10px;
+  align-items:start;
 }
 
 #paneImage .imgCtrl{
-  border-radius:16px;
+  border-radius:14px;
   border:1px solid rgba(255,255,255,.10);
-  background:rgba(255,255,255,.04);
-  padding:10px;
+  background:rgba(0,0,0,.10);
+  padding:8px;                 /* niższe */
   display:grid;
   grid-template-columns: 1fr;
-  gap:8px;
+  gap:6px;
 }
+
+#paneImage .imgCtrl.span2{ grid-column: 1 / -1; }
 
 #paneImage .imgCtrlLbl{
   font-weight:1000;
-  font-size:12px;
+  font-size:11px;              /* mniejsze */
   letter-spacing:.10em;
   text-transform:uppercase;
   opacity:.9;
@@ -766,14 +821,17 @@ body.logo-editor-body .wrap{ max-width:1200px; }
 #paneImage .imgCtrlVal{
   text-align:right;
   opacity:.85;
-  font-size:13px;
+  font-size:12px;
   font-weight:900;
 }
 
 #paneImage .imgCtrl input[type="range"].inp{
   width:100%;
+  height:26px;                 /* niższe */
+  padding:0;
 }
 
+/* mini debug */
 #paneImage .imgCtrlMini canvas{
   width:100%;
   height:auto;
@@ -781,7 +839,15 @@ body.logo-editor-body .wrap{ max-width:1200px; }
   background:#000;
   border-radius:12px;
   border:1px solid rgba(255,255,255,.12);
-  image-rendering: pixelated;
+  image-rendering:pixelated;
+}
+
+/* responsywność */
+@media (max-width: 980px){
+  #paneImage .imgTopGrid{ grid-template-columns: 1fr; }
+  #paneImage .imgStage{ height: clamp(220px, 30vh, 380px); }
+  #paneImage .imgControlsGrid{ grid-template-columns: 1fr; }
+  #paneImage .imgCtrl.span2{ grid-column: auto; }
 }
 
 /* ==========================================================
