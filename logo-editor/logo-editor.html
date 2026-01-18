@@ -155,70 +155,65 @@
             </div>
           </div>
 
-                  <!-- DRAW -->
+          <!-- DRAW -->
           <div class="pane" id="paneDraw" style="display:none;">
+            <div class="drawWrap">
+              <!-- lewy panel narzędzi -->
+              <div class="drawTools" id="drawTools">
+                <div class="toolGrid">
+                  <button class="tbtn" id="tSelect" title="Wskaźnik">🖱️</button>
+                  <button class="tbtn" id="tPan" title="Ręka">✋</button>
           
-            <div class="drawLayout">
-              <!-- LEWY PANEL: narzędzia -->
-              <div class="drawBar" id="drawTools">
+                  <button class="tbtn" id="tZoomIn" title="Zoom +">➕</button>
+                  <button class="tbtn" id="tZoomOut" title="Zoom -">➖</button>
           
-                <div class="drawGrp">
-                  <button class="btn sm tool" id="btnSel" type="button" title="Wskaźnik (Select/Move)">🖱️</button>
-                  <button class="btn sm tool" id="btnPan" type="button" title="Ręka (Pan)">✋</button>
+                  <button class="tbtn" id="tBrush" title="Pędzel">✏️</button>
+                  <button class="tbtn" id="tEraser" title="Gumka">🧽</button>
+          
+                  <button class="tbtn" id="tLine" title="Linia">📏</button>
+                  <button class="tbtn" id="tRect" title="Prostokąt">▭</button>
+          
+                  <button class="tbtn" id="tEllipse" title="Elipsa">⬭</button>
+                  <button class="tbtn" id="tPoly" title="Wielokąt">🔺</button>
+          
+                  <button class="tbtn" id="tUndo" title="Cofnij">↶</button>
+                  <button class="tbtn" id="tRedo" title="Ponów">↷</button>
+          
+                  <button class="tbtn danger" id="tClear" title="Wyczyść">🗑️</button>
                 </div>
           
-                <div class="drawSep"></div>
+                <div class="toolSep"></div>
           
-                <div class="drawGrp">
-                  <button class="btn sm tool" id="btnZoomIn" type="button" title="Zoom +">🔍➕</button>
-                  <button class="btn sm tool" id="btnZoomOut" type="button" title="Zoom -">🔍➖</button>
-                  <button class="btn sm tool" id="btnZoom100" type="button" title="100%">💯</button>
-                  <button class="btn sm tool" id="btnZoomFit" type="button" title="Dopasuj">🧲</button>
+                <!-- ustawienia jak w Paint -->
+                <div class="toolOpts">
+                  <label class="optRow">
+                    <span>Grubość</span>
+                    <input class="inp" id="optStroke" type="number" min="1" max="30" step="1" value="6">
+                  </label>
+          
+                  <label class="optRow">
+                    <span>Wypełnij</span>
+                    <input id="optFill" type="checkbox">
+                  </label>
                 </div>
           
-                <div class="drawSep"></div>
+                <div class="toolSep"></div>
           
-                <div class="drawGrp">
-                  <button class="btn sm tool" id="btnBrush" type="button" title="Pędzel (biały)">✏️</button>
-                  <button class="btn sm tool" id="btnEraser" type="button" title="Gumka">🧽</button>
-                </div>
-          
-                <div class="drawSep"></div>
-          
-                <div class="drawGrp">
-                  <button class="btn sm tool" id="btnLine" type="button" title="Linia">📏</button>
-                  <button class="btn sm tool" id="btnRect" type="button" title="Prostokąt">▭</button>
-                  <button class="btn sm tool" id="btnEllipse" type="button" title="Elipsa">⬭</button>
-                  <button class="btn sm tool" id="btnPoly" type="button" title="Wielokąt">🔺</button>
-                </div>
-          
-                <div class="drawSep"></div>
-          
-                <div class="drawGrp">
-                  <button class="btn sm tool" id="btnUndo" type="button" title="Cofnij">↶</button>
-                  <button class="btn sm tool" id="btnRedo" type="button" title="Ponów">↷</button>
-                  <button class="btn sm tool" id="btnClear" type="button" title="Wyczyść">🗑️</button>
-                </div>
-          
+                <!-- mini podgląd klikalny -->
+                <button class="thumbBtn" id="drawThumbBtn" type="button" title="Kliknij: pełny podgląd">
+                  <canvas id="drawThumb" width="150" height="70"></canvas>
+                </button>
               </div>
           
-              <!-- PRAWA CZĘŚĆ: scena + mini podgląd -->
-            <div class="drawMain">
-              <div class="drawStage" id="drawStage">
-                <div class="drawStageInner">
-                  <canvas id="drawCanvas" width="150" height="70"></canvas>
+              <!-- scena: zawsze proporcja 26:11 -->
+              <div class="drawStageBox">
+                <div class="drawStageRatio">
+                  <canvas id="drawStage" width="1300" height="550"></canvas>
                 </div>
-              </div>
-            
-              <div class="drawMiniRow">
-                <div class="drawMiniLbl">Podgląd</div>
-                <canvas id="drawMiniPreview" width="312" height="132"></canvas>
               </div>
             </div>
-
-          
           </div>
-          
+
 
           <!-- IMAGE -->
           <div class="pane" id="paneImage" style="display:none;">
@@ -230,7 +225,7 @@
               <label class="chk"><input type="checkbox" id="chkImgDither"/> Dithering</label>
             </div>
             <div class="canvasBox">
-              <canvas id="imgCanvas" width="150" height="70"></canvas>
+              <canvas id="imgCanvas" width="208" height="88"></canvas>
             </div>
           </div>
 
