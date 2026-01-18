@@ -395,114 +395,90 @@ body.logo-editor-body .wrap{ max-width:1200px; }
   background: rgba(255,234,166,.35);
 }
 
-/* ==========================================================
-   Rysunek / Obraz
-========================================================== */
-.toolRow{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
-.chk{ display:flex; align-items:center; gap:8px; font-size:13px; opacity:.9; }
-
-.canvasBox{
-  margin-top:10px;
-  border-radius:16px;
-  background:rgba(0,0,0,.18);
-  padding:8px;
+/* ===== DRAW: pełna szerokość, bez prawej kolumny ===== */
+.editorShell[data-mode="DRAW"] .editorGrid{
+  grid-template-columns: 1fr;
 }
-
-.canvasBox canvas{
-  width:100%;
-  height:auto;
-  image-rendering:pixelated;
-  touch-action:none;
-  display:block;
-}
-
-/* ==========================================================
-   DRAW (Fabric) — duży obszar + boczny panel w 2 kolumnach
-========================================================== */
 
 .editorShell[data-mode="DRAW"] .editorRight{
-  display:none; /* w DRAW podgląd ma być tylko małą ikonką */
+  display:none;
 }
 
-#paneDraw .drawLayout{
-  display:grid;
-  grid-template-columns: 260px 1fr;
-  gap:12px;
-  align-items:start;
-}
-
-@media (max-width: 980px){
-  #paneDraw .drawLayout{
-    grid-template-columns: 1fr;
-  }
-}
-
+/* ===== DRAW: toolbar 2 rzędy (grid), ikonki ===== */
 #paneDraw .drawTools{
-  border-radius:16px;
-  border:1px solid rgba(255,255,255,.10);
-  background:rgba(255,255,255,.04);
-  padding:10px;
-}
-
-#paneDraw .toolGrid{
-  margin-top:10px;
+  margin-top:12px;
   display:grid;
-  grid-template-columns: 1fr 1fr; /* dwa rzędy/kolumny ikon */
+  grid-template-columns: repeat(8, minmax(44px, 1fr));
   gap:8px;
 }
 
-#paneDraw .toolGrid .tool{
-  min-width:0;
-  width:100%;
-  height:42px;
-  display:grid;
-  place-items:center;
-  font-size:18px;
+@media (max-width: 520px){
+  #paneDraw .drawTools{
+    grid-template-columns: repeat(6, minmax(44px, 1fr));
+  }
 }
 
-#paneDraw .toolGrid .tool.on{
+#paneDraw .tool{
+  display:grid;
+  place-items:center;
+  height:44px;
+  font-size:18px;
+  padding:0;
+}
+
+/* aktywny tool */
+#paneDraw .tool.on{
   border-color: rgba(255,234,166,.50);
   background: rgba(255,234,166,.10);
   color: var(--gold);
 }
 
+/* ===== DRAW: duża scena robocza ===== */
 #paneDraw .drawStage{
+  margin-top:10px;
   border-radius:16px;
-  border:1px solid rgba(255,255,255,.10);
-  background:rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.14);
+  background:#000;
+  overflow:hidden;
   padding:10px;
 }
 
-#paneDraw .drawCanvasBox{
-  padding:10px;
-}
-
-/* większy “ekran” roboczy (canvas nadal 150×70, ale wyświetlany duży) */
-#paneDraw .drawCanvasBox canvas{
+/* Canvas: rozciągamy do szerokości, zachowujemy proporcje 150/70 */
+#paneDraw .drawStage canvas{
   width:100%;
   height:auto;
+  display:block;
   image-rendering: pixelated;
   touch-action:none;
-  display:block;
+  background:#000;
+  border-radius:12px;
 }
 
-/* mały podgląd ikonka */
-#paneDraw .drawMiniWrap{
-  margin-top:12px;
-  border-radius:14px;
+/* ===== DRAW: mini podgląd jako “ikonka” ===== */
+#paneDraw .drawMiniRow{
+  margin-top:10px;
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+
+#paneDraw .drawMiniLbl{
+  font-weight:1000;
+  font-size:12px;
+  letter-spacing:.10em;
+  text-transform:uppercase;
+  opacity:.85;
+  min-width:72px;
+}
+
+#drawMiniPreview{
+  width:160px;
+  height:auto;
+  border-radius:12px;
   border:1px solid rgba(255,255,255,.12);
   background:#000;
-  padding:8px;
-  width: 100%;
-}
-
-#paneDraw #drawMini{
-  width:100%;
-  height:auto;
-  display:block;
   image-rendering: pixelated;
 }
-
 
 
 /* ==========================================================
