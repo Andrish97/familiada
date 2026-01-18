@@ -35,7 +35,6 @@ const grid = document.getElementById("grid");
 
 const btnBack = document.getElementById("btnBack");
 const btnLogout = document.getElementById("btnLogout");
-const btnClearActive = document.getElementById("btnClearActive");
 
 // modal wyboru trybu
 const createOverlay = document.getElementById("createOverlay");
@@ -638,7 +637,6 @@ function renderList(){
           <div class="name">Domyślne logo</div>
           <div class="meta">Używane automatycznie, gdy nie wybierzesz innego</div>
         </div>
-        ${isDefaultActive ? `<div class="badgeActive">Aktywne</div>` : ``}
       </div>
       <div class="preview"></div>
       <div class="actions"></div>
@@ -700,7 +698,6 @@ function renderList(){
           <div class="name">${esc(l.name || "(bez nazwy)")}</div>
             <div class="meta">${esc(fmtDate(l.updated_at) || "")}</div>
          </div>
-        ${l.is_active ? `<div class="badgeActive">Aktywne</div>` : ``}
       </div>
       <div class="preview"></div>
       <div class="actions"></div>
@@ -1017,21 +1014,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   btnBack?.addEventListener("click", () => { location.href = "../builder.html"; });
   btnLogout?.addEventListener("click", async () => { await signOut(); location.href = "../index.html"; });
 
-  btnClearActive?.addEventListener("click", async () => {
-    const ok = confirm("Wyłączyć aktywne logo (wrócić do domyślnego)?");
-    if (!ok) return;
-    setMsg("Wyłączam aktywne…");
-    try{
-      await clearActive();
-      await refresh();
-      setMsg("Ustawiono domyślne.");
-    } catch (e){
-      console.error(e);
-      alert("Nie udało się.\n\n" + (e?.message || e));
-      setMsg("");
-    }
-  });
-
      // IMPORT
   btnImportLogo?.addEventListener("click", () => {
     inpImportLogoFile?.click();
@@ -1054,23 +1036,35 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   });
 
-  // EXPORT (aktywnie ustawione logo)
-  btnExportLogo?.addEventListener("click", () => {
-    try{
-      const active = (logos || []).find(l => !!l.is_active) || null;
-      if (!active){
-        alert("Nie masz aktywnego logo do eksportu.\n\nUstaw najpierw jakieś logo jako aktywne.");
-        return;
-      }
-      const exp = buildExportObjectFromLogo(active);
-      const safeName = String(exp.name || "logo").replace(/[^\p{L}\p{N}\-_ ]/gu, "").trim() || "logo";
-      downloadJson(`logo_${safeName}.json`, exp);
-      setMsg("Wyeksportowano logo.");
-    } catch (e){
-      console.error(e);
-      alert("Nie udało się wyeksportować.\n\n" + (e?.message || e));
-    }
-  });
+   btnExportLogo?.addEventListener("click", () => {
+     try{
+       const active = (logos || []).find(l => !!l.is_active) || null;
+       if (!active){
+         alert("Nie masz aktywnego logo do eksportu.\n\nUstaw najpierw jakieś logo jako aktywne.");
+         return;
+       }
+   
+       // info dla usera (jasno, co eksportujemy)
+       const activeName = String(active.name || "(bez nazwy)");
+       setMsg(`Eksportuję aktywne logo: ${activeName}`);
+   
+       const exp = buildExportObjectFromLogo(active);
+   
+       const safeName = String(exp.name || "logo")
+         .replace(/[^\p{L}\p{N}\-_ ]/gu, "")
+         .trim() || "logo";
+   
+       // dodatkowe potwierdzenie „co leci”
+       alert(`Eksportuję AKTYWNE logo:\n\n${activeName}\n\nZapiszę plik JSON.`);
+   
+       downloadJson(`logo_${safeName}.json`, exp);
+       setMsg(`Wyeksportowano aktywne logo: ${activeName}`);
+     } catch (e){
+       console.error(e);
+       alert("Nie udało się wyeksportować.\n\n" + (e?.message || e));
+     }
+   });
+   
 
 
   // modal wyboru trybu
