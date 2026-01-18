@@ -68,12 +68,15 @@
         <div class="editorLeft">
           
           <div class="lbl">Nazwa</div>
-          <div class="imgNameRow">
+          <div class="nameFileRow">
             <input class="inp" id="logoName" placeholder="Np. Moje logo"/>
           
-            <label class="fileBtn"><input type="file" id="imgFile" accept="image/*" hidden/>📁</label>
+            <!-- Ten przycisk jest zawsze widoczny, ale sens ma głównie w IMAGE -->
+            <label class="fileBtn" title="Wybierz obraz">
+              <input type="file" id="imgFile" accept="image/*" hidden />
+              📁
+            </label>
           </div>
-
 
           <!-- TEXT (font_3x10) -->
           <div class="pane" id="paneText" style="display:none;">
@@ -302,117 +305,129 @@
             </div>
           </div>
 
-          
-         <!-- IMAGE -->
+                    
+          <!-- IMAGE -->
           <div class="pane" id="paneImage" style="display:none;">
             <div class="imgLayout">
           
-              <!-- TOP: dwie karty (lewo / prawo) -->
+              <!-- GÓRA: lewo (obraz+ramka) / prawo (podgląd) -->
               <div class="imgTopGrid">
           
-                <!-- LEWO: obraz + ramka -->
+                <!-- LEWO -->
                 <div class="imgCard">
-                  <div class="imgStage">
-                    <img id="imgPreview" />
-                    <div class="cropFrame"></div>
+                  <div class="imgCardTitle">Obszar wyświetlacza</div>
+          
+                  <div class="imgStage" id="imgStage">
+                    <img id="imgPreview" alt="" />
+          
+                    <!-- Ramka 26:11 -->
+                    <div class="cropFrame" id="cropFrame">
+                      <div class="cropCaption">Obszar wyświetlacza</div>
+          
+                      <!-- uchwyty do skalowania -->
+                      <div class="cropHandle tl" data-h="tl"></div>
+                      <div class="cropHandle tr" data-h="tr"></div>
+                      <div class="cropHandle bl" data-h="bl"></div>
+                      <div class="cropHandle br" data-h="br"></div>
+                    </div>
                   </div>
                 </div>
           
-                <!-- PRAWO: podgląd jak na wyświetlaczu -->
+                <!-- PRAWO -->
                 <div class="imgCard">
                   <div class="imgCardTitle">Podgląd jak na wyświetlaczu</div>
+          
                   <div class="imgPrevWrap">
                     <canvas id="imgBigPreview" width="900" height="380"></canvas>
                   </div>
+          
                   <div class="imgPrevHint">Kliknij podgląd, żeby otworzyć pełny ekran.</div>
                 </div>
           
               </div>
           
-              <!-- DÓŁ: kontrolki (2 kolumny), niskie -->
-              <div class="imgCard imgCardControls">
+              <!-- DÓŁ: kontrolki w 2 kolumnach -->
+              <div class="imgCard imgControlsCard">
                 <div class="imgCardTitle">Ustawienia</div>
-              
+          
                 <div class="imgCtrlGrid">
-                  <!-- Jasność -->
+          
                   <div class="imgCtrl">
                     <div class="imgCtrlHead">
                       <div class="imgCtrlLbl">Jasność</div>
                       <div class="imgCtrlVal" id="valImgBright">0</div>
                     </div>
-                    <input class="inp" id="rngImgBright" type="range" min="-100" max="100" step="1" value="0"/>
+                    <input class="rng" id="rngImgBright" type="range" min="-100" max="100" step="1" value="0"/>
                   </div>
-              
-                  <!-- Kontrast -->
+          
                   <div class="imgCtrl">
                     <div class="imgCtrlHead">
                       <div class="imgCtrlLbl">Kontrast</div>
                       <div class="imgCtrlVal" id="valImgContrast">0</div>
                     </div>
-                    <input class="inp" id="rngImgContrast" type="range" min="-100" max="100" step="1" value="0"/>
+                    <input class="rng" id="rngImgContrast" type="range" min="-100" max="100" step="1" value="0"/>
                   </div>
-              
-                  <!-- Gamma -->
+          
                   <div class="imgCtrl">
                     <div class="imgCtrlHead">
                       <div class="imgCtrlLbl">Gamma</div>
                       <div class="imgCtrlVal" id="valImgGamma">1.00</div>
                     </div>
-                    <input class="inp" id="rngImgGamma" type="range" min="0.40" max="2.60" step="0.01" value="1.00"/>
+                    <input class="rng" id="rngImgGamma" type="range" min="0.40" max="2.60" step="0.01" value="1.00"/>
                   </div>
-              
-                  <!-- Siła kropek (dithering “gęstość”) -->
+          
                   <div class="imgCtrl">
                     <div class="imgCtrlHead">
                       <div class="imgCtrlLbl">Siła kropek</div>
                       <div class="imgCtrlVal" id="valImgDitherAmt">0.80</div>
                     </div>
-                    <input class="inp" id="rngImgDitherAmt" type="range" min="0.00" max="1.50" step="0.01" value="0.80"/>
+                    <input class="rng" id="rngImgDitherAmt" type="range" min="0.00" max="1.50" step="0.01" value="0.80"/>
                   </div>
-              
-                  <!-- Poziom czerni -->
+          
                   <div class="imgCtrl">
                     <div class="imgCtrlHead">
                       <div class="imgCtrlLbl">Poziom czerni</div>
                       <div class="imgCtrlVal" id="valImgBlack">0</div>
                     </div>
-                    <input class="inp" id="rngImgBlack" type="range" min="0" max="100" step="1" value="0"/>
+                    <input class="rng" id="rngImgBlack" type="range" min="0" max="100" step="1" value="0"/>
                   </div>
-              
-                  <!-- Poziom bieli -->
+          
                   <div class="imgCtrl">
                     <div class="imgCtrlHead">
                       <div class="imgCtrlLbl">Poziom bieli</div>
                       <div class="imgCtrlVal" id="valImgWhite">100</div>
                     </div>
-                    <input class="inp" id="rngImgWhite" type="range" min="0" max="100" step="1" value="100"/>
+                    <input class="rng" id="rngImgWhite" type="range" min="0" max="100" step="1" value="100"/>
                   </div>
-              
-                  <!-- Odwróć kolory (pół kafelka, bez opisu) -->
-                  <div class="imgCtrl">
+          
+                  <!-- Odwróć kolory: bez opisu, pół kafelka -->
+                  <div class="imgCtrl imgCtrlHalf">
                     <div class="imgCtrlHead">
-                      <div class="imgCtrlLbl">Odwróć kolory</div>
+                      <div class="imgCtrlLbl">Odwróć</div>
                     </div>
-                    <label class="chk" style="margin-top:-2px;">
+                    <label class="chk">
                       <input type="checkbox" id="chkImgInvert" checked />
+                      <span></span>
                     </label>
                   </div>
-              
-                  <!-- Dopasuj (contain/cover) – opcjonalnie: jeśli chcesz zostawić jako przełącznik -->
-                  <div class="imgCtrl">
+          
+                  <!-- contain: pół kafelka -->
+                  <div class="imgCtrl imgCtrlHalf">
                     <div class="imgCtrlHead">
-                      <div class="imgCtrlLbl">Dopasuj (contain)</div>
+                      <div class="imgCtrlLbl">Cały obraz</div>
                     </div>
-                    <label class="chk" style="margin-top:-2px;">
+                    <label class="chk">
                       <input type="checkbox" id="chkImgContain" checked />
+                      <span></span>
                     </label>
                   </div>
+          
                 </div>
               </div>
+          
             </div>
           </div>
 
-          
 
           <div class="editorActions">
             <button class="btn sm gold" id="btnCreate" type="button">Zapisz</button>
