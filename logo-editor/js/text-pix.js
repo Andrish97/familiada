@@ -707,28 +707,22 @@ export function initTextPixEditor(ctx) {
   // ==========================================
   //  D) TinyMCE init + bind UI
   // ==========================================
-  async function ensureEditor() {
+
+    async function ensureEditor() {
     if (editor) return editor;
     if (!window.tinymce) throw new Error("Brak TinyMCE (script nie wczytany).");
-
-    // fonty z selecta -> w formacie TinyMCE "Name=css-stack"
-    const fontFormats = SYSTEM_FONTS
-      .filter(f => f.label && f.value)
-      .map(f => `${f.label}=${f.value}`)
-      .join(";");
-    
-    if (selRtFont) {
-      for (const opt of Array.from(selRtFont.options || [])) {
-        const v = String(opt.value || "").trim();
-        const name = String(opt.textContent || opt.value || "").trim();
-        if (!v) continue;
-        fontFormats.push(`${name}=${v}`);
-      }
-    }
-    
+  
+    // 1) Najpierw wczytaj fonty + wypełnij select (żeby SYSTEM_FONTS było gotowe)
     await fillFontSelectOnce();
-
-    // init inline
+  
+    // 2) Zbuduj font_family_formats jako STRING (TinyMCE tego oczekuje)
+    // format: "Label=css-stack;Label2=css-stack2"
+    const fontFormatsStr = (SYSTEM_FONTS || [])
+      .filter(f => f && f.label && f.value)
+      .map(f => `${String(f.label).trim()}=${String(f.value).trim()}`)
+      .join(";");
+  
+    // 3) Init inline
     await window.tinymce.init({
       target: rtEditorEl,
       inline: true,
@@ -738,50 +732,46 @@ export function initTextPixEditor(ctx) {
       plugins: [],
       forced_root_block: "p",
       forced_root_block_attrs: {},
-      // bardzo ważne: niech TinyMCE nie próbuje robić własnych styli poza tym, co już masz
+  
+      // niech TinyMCE nie dokleja swojego UI
       skin: false,
       content_css: false,
+  
+      // DOMYŚLNY wygląd edytora (tylko wewnątrz TinyMCE)
       content_style: `
-        .mce-content-body{
-          margin:0; padding:0;
-          background:#000; color:#fff;
-          font-size:50px;
-          line-height:1;
-          overflow-wrap: break-word;
-          word-break: break-word;
-          white-space: normal;
-        }
-        .mce-content-body p{ margin:0; line-height:1; }
+        body{ margin:0; padding:0; background:#000; color:#fff; font-size:50px; }
+        p{ margin:0; line-height:1; }
       `,
-      font_family_formats: fontFormats,
+  
+      // !!! tu był babol: to MA BYĆ STRING, nie tablica
+      font_family_formats: fontFormatsStr,
+  
       setup: (ed) => {
         editor = ed;
-
+  
         ed.on("init", () => {
-          // start state
           show(pixWarn, false);
           cachedBits150 = new Uint8Array(DOT_W * DOT_H);
           ctx.onPreview?.({ kind: "PIX", bits: cachedBits150 });
           syncUiFromSelection();
           schedulePreview(60);
         });
-
-        // sync UI
+  
         ed.on("NodeChange SelectionChange KeyUp MouseUp", () => {
           if (isUiBusy()) return;
           syncUiFromSelection();
         });
-
-        // preview debounce on edits
+  
         ed.on("input Undo Redo SetContent", () => {
           ctx.markDirty?.();
           schedulePreview(120);
         });
       }
     });
-
+  
     return editor;
   }
+  
 
   function bindUiOnce() {
     // BIU
