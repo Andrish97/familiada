@@ -579,6 +579,73 @@ body.logo-editor-body .wrap{ max-width:1200px; }
   }
 }
 
+/* === DRAW: węższy panel ustawień + węższe przyciski === */
+
+/* przyciski ikonki: mniejsze */
+#paneDraw .tbtn{
+  height:36px;
+  border-radius:12px;
+  font-size:17px;
+}
+
+/* mniejsze odstępy w siatce */
+#paneDraw .toolGrid{
+  gap:6px;
+}
+
+/* panel narzędzi odrobinę węższy */
+#paneDraw .drawWrap{
+  grid-template-columns: 200px 1fr;
+}
+
+/* mniejsze paddingi w panelu */
+#paneDraw .drawTools{
+  padding:10px;
+  border-radius:16px;
+}
+
+/* separatory trochę ciaśniejsze */
+#paneDraw .toolSep{
+  margin:4px 0;
+}
+
+/* popover (modal ustawień) węższy i bardziej “zwarty” */
+#paneDraw .drawPop{
+  left:10px;
+  right:10px;
+  padding:10px;
+  border-radius:16px;
+}
+
+/* ciaśniejsze nagłówki w popoverze */
+#paneDraw .drawPopHead{
+  margin-bottom:8px;
+}
+
+/* ciaśniejsze wiersze ustawień */
+#paneDraw .drawPopBody{
+  gap:8px;
+}
+
+#paneDraw .popRow{
+  gap:8px;
+  font-size:12.5px;
+}
+
+/* pole liczby węższe */
+#paneDraw .popRow .inp{
+  width:92px;
+  height:34px;
+  padding:6px 8px;
+}
+
+/* przycisk X w popoverze trochę mniejszy (u Ciebie .btn.sm) */
+#paneDraw #drawPopClose.btn.sm{
+  padding:6px 10px;
+  min-height:32px;
+}
+
+
 /* ==========================================================
    Modale
 ========================================================== */
