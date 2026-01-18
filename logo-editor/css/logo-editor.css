@@ -1061,6 +1061,70 @@ body.logo-editor-body .wrap{ max-width:1200px; }
   padding:0;
 }
 
+/* IMAGE: karta z kontrolkami */
+.imgCard{
+  border-radius:16px;
+  border:1px solid rgba(255,255,255,.10);
+  background:rgba(255,255,255,.04);
+  padding:10px;
+}
+
+.imgCardTitle{
+  font-weight:1000;
+  font-size:12px;
+  letter-spacing:.10em;
+  text-transform:uppercase;
+  opacity:.9;
+  margin-bottom:8px;
+}
+
+/* DÓŁ: 2 kolumny kontrolek */
+.imgCtrlGrid{
+  display:grid;
+  grid-template-columns: 1fr 1fr;   /* <-- to robi 2 kolumny */
+  gap:10px;
+  align-items:start;
+}
+
+/* pojedyncza kontrolka (kafelek) */
+.imgCtrl{
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,.10);
+  background:rgba(0,0,0,.12);
+  padding:8px;
+}
+
+.imgCtrlHead{
+  display:flex;
+  justify-content:space-between;   /* nazwa po lewej, wartość po prawej */
+  align-items:baseline;
+  gap:8px;
+  margin-bottom:6px;
+}
+
+.imgCtrlLbl{
+  font-size:12px;
+  font-weight:900;
+  opacity:.85;
+}
+
+.imgCtrlVal{
+  font-size:12px;
+  font-weight:1000;
+  opacity:.95;
+}
+
+/* suwaki niższe */
+.imgCtrl input[type="range"].inp{
+  height:22px;
+  padding:0;
+}
+
+/* na wąskich ekranach spadamy do 1 kolumny, żeby się zmieściło */
+@media (max-width: 900px){
+  .imgCtrlGrid{ grid-template-columns: 1fr; }
+}
+
 
 /* ==========================================================
    Modale
