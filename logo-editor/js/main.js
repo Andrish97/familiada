@@ -37,6 +37,11 @@ const btnBack = document.getElementById("btnBack");
 const btnLogout = document.getElementById("btnLogout");
 const btnClearActive = document.getElementById("btnClearActive");
 
+const btnImportLogo = document.getElementById("btnImportLogo");
+const btnExportLogo = document.getElementById("btnExportLogo");
+const inpImportLogoFile = document.getElementById("inpImportLogoFile");
+
+
 // modal wyboru trybu
 const createOverlay = document.getElementById("createOverlay");
 const pickText = document.getElementById("pickText");
@@ -61,7 +66,6 @@ const paneImage = document.getElementById("paneImage");
 
 // actions
 const btnCreate = document.getElementById("btnCreate");
-const btnCancel = document.getElementById("btnCancel");
 const mMsg = document.getElementById("mMsg");
 
 // preview
@@ -147,6 +151,127 @@ function isUniqueViolation(e){
   return e?.code === "23505" || /duplicate key value/i.test(String(e?.message || ""));
 }
 
+/* =========================================================
+   IMPORT / EXPORT (bez ID, bez usera)
+   - eksportuje aktywne logo (kind GLYPH/PIX)
+   - import tworzy NOWY rekord w DB (dopisuje nowe id)
+========================================================= */
+
+function downloadJson(filename, obj){
+  const txt = JSON.stringify(obj, null, 2);
+  const blob = new Blob([txt], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+function cleanRows30x10(rows){
+  const out = Array.from({ length: 10 }, (_, i) => {
+    const r = String(rows?.[i] ?? "");
+    return r.padEnd(30, " ").slice(0, 30);
+  });
+  return out;
+}
+
+function buildExportObjectFromLogo(logo){
+  const name = String(logo?.name || "Logo").trim() || "Logo";
+
+  // GLYPH
+  if (logo?.type === TYPE_GLYPH){
+    const rows = cleanRows30x10(logo?.payload?.layers?.[0]?.rows || defaultLogoRows);
+    return {
+      v: 1,
+      kind: "GLYPH",
+      name,
+      payload: { rows },
+    };
+  }
+
+  // PIX
+  if (logo?.type === TYPE_PIX){
+    const p = logo?.payload || {};
+    const w = Number(p.w) || DOT_W;
+    const h = Number(p.h) || DOT_H;
+    const bits_b64 = String(p.bits_b64 || p.bits_base64 || p.bitsBase64 || "");
+    return {
+      v: 1,
+      kind: "PIX",
+      name,
+      payload: {
+        w, h,
+        format: "BITPACK_MSB_FIRST_ROW_MAJOR",
+        bits_b64,
+      },
+    };
+  }
+
+  throw new Error("Nieznany typ logo.");
+}
+
+function parseImportJson(text){
+  let obj = null;
+  try { obj = JSON.parse(text); } catch { throw new Error("To nie jest poprawny JSON."); }
+
+  const kind = String(obj?.kind || "").toUpperCase();
+  const name = String(obj?.name || "Logo").trim() || "Logo";
+
+  if (kind === "GLYPH"){
+    const rows = cleanRows30x10(obj?.payload?.rows);
+    return { kind: "GLYPH", name, rows };
+  }
+
+  if (kind === "PIX"){
+    const p = obj?.payload || {};
+    const w = Number(p.w) || DOT_W;
+    const h = Number(p.h) || DOT_H;
+    if (w !== DOT_W || h !== DOT_H) {
+      throw new Error(`Zły rozmiar PIX. Oczekuję ${DOT_W}×${DOT_H}, a jest ${w}×${h}.`);
+    }
+    const bits_b64 = String(p.bits_b64 || "");
+    if (!bits_b64) throw new Error("Brak bits_b64 w imporcie.");
+    return { kind: "PIX", name, pixPayload: { w, h, format: "BITPACK_MSB_FIRST_ROW_MAJOR", bits_b64 } };
+  }
+
+  throw new Error("Nieznany format importu. Oczekuję kind=GLYPH albo kind=PIX.");
+}
+
+async function importLogoFromFile(file){
+  const txt = await file.text();
+  const parsed = parseImportJson(txt);
+
+  let name = makeUniqueName(parsed.name);
+
+  let row = null;
+
+  if (parsed.kind === "GLYPH"){
+    row = {
+      user_id: currentUser.id,
+      name,
+      type: TYPE_GLYPH,
+      is_active: false,
+      payload: {
+        layers: [
+          { rows: parsed.rows }
+        ]
+      }
+    };
+  } else {
+    row = {
+      user_id: currentUser.id,
+      name,
+      type: TYPE_PIX,
+      is_active: false,
+      payload: parsed.pixPayload
+    };
+  }
+
+  await createLogo(row);
+}
 
 /* =========================================================
    Fetch helpers
@@ -577,7 +702,7 @@ function renderList(){
       <div class="cardTop">
         <div>
           <div class="name">${esc(l.name || "(bez nazwy)")}</div>
-          <div class="meta">${esc(l.type)} · ${esc(fmtDate(l.updated_at) || "")}</div>
+         <div class="meta">${esc(l.type)} · ${esc(fmtDate(l.updated_at) || "")}</div>
         </div>
         ${l.is_active ? `<div class="badgeActive">Aktywne</div>` : ``}
       </div>
@@ -742,19 +867,6 @@ function closeEditor(force = false){
   hideAllPanes();
   clearDirty();
 }
-
-async function cancelSessionSavedLogo(){
-  // 1) jeśli nic nie zapisano w tej sesji -> tylko reset UI
-  if (!sessionSavedLogoId) {
-    setEditorMsg("Anulowano (nic nie zapisano).");
-    // reset bieżącego edytora bez zamykania
-    if (editorMode === "TEXT") textEditor.open();
-    if (editorMode === "TEXT_PIX") textPixEditor.open();
-    if (editorMode === "DRAW") drawEditor.open();
-    if (editorMode === "IMAGE") imageEditor.open();
-    clearDirty();
-    return;
-  }
 
   // 2) jeśli zapisano -> usuń rekord i wyczyść sesję
   try {
@@ -947,6 +1059,47 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   });
 
+     // IMPORT
+  btnImportLogo?.addEventListener("click", () => {
+    inpImportLogoFile?.click();
+  });
+
+  inpImportLogoFile?.addEventListener("change", async () => {
+    const f = inpImportLogoFile.files?.[0];
+    inpImportLogoFile.value = ""; // reset, żeby drugi raz można było wybrać to samo
+    if (!f) return;
+
+    setMsg("Importuję…");
+    try{
+      await importLogoFromFile(f);
+      await refresh();
+      setMsg("Zaimportowano logo.");
+    } catch (e){
+      console.error(e);
+      alert("Nie udało się zaimportować.\n\n" + (e?.message || e));
+      setMsg("");
+    }
+  });
+
+  // EXPORT (aktywnie ustawione logo)
+  btnExportLogo?.addEventListener("click", () => {
+    try{
+      const active = (logos || []).find(l => !!l.is_active) || null;
+      if (!active){
+        alert("Nie masz aktywnego logo do eksportu.\n\nUstaw najpierw jakieś logo jako aktywne.");
+        return;
+      }
+      const exp = buildExportObjectFromLogo(active);
+      const safeName = String(exp.name || "logo").replace(/[^\p{L}\p{N}\-_ ]/gu, "").trim() || "logo";
+      downloadJson(`logo_${safeName}.json`, exp);
+      setMsg("Wyeksportowano logo.");
+    } catch (e){
+      console.error(e);
+      alert("Nie udało się wyeksportować.\n\n" + (e?.message || e));
+    }
+  });
+
+
   // modal wyboru trybu
   pickText?.addEventListener("click", () => { show(createOverlay, false); openEditor("TEXT"); });
   pickTextPix?.addEventListener("click", () => { show(createOverlay, false); openEditor("TEXT_PIX"); });
@@ -958,8 +1111,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
    // X w prawym górnym rogu — pyta, jeśli są zmiany
    btnEditorClose?.addEventListener("click", () => closeEditor(false));
-   
-   btnCancel?.addEventListener("click", () => cancelSessionSavedLogo());
 
   // save
   btnCreate?.addEventListener("click", handleCreate);
