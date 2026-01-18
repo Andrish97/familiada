@@ -667,3 +667,40 @@ body.logo-editor-body .wrap{
   z-index:60;
 }
 [data-tip]:hover::after{ opacity:1; transform: translateY(0); }
+/* ==========================================================
+   IMAGE: przycisk wyboru pliku widoczny tylko w trybie IMAGE
+========================================================== */
+
+/* domyślnie ukryty wszędzie */
+.fileBtnImageOnly{
+  display:none !important;
+}
+
+/* pokazujemy dopiero, gdy shell jest w trybie IMAGE */
+.editorShell[data-mode="IMAGE"] .fileBtnImageOnly{
+  display:grid !important;     /* pasuje do Twojego stylu fileBtn */
+  align-items:center;
+}
+
+/* jeśli chcesz, żeby był mniej “kafelkowy” i nie rozpychał wiersza */
+.editorShell[data-mode="IMAGE"] .fileBtnImageOnly{
+  white-space:nowrap;
+  padding:0 12px;
+  height:40px;
+}
+
+.editorShell[data-mode="IMAGE"] .nameFileRow{
+  display:flex;
+  gap:10px;
+  align-items:center;
+}
+
+.editorShell[data-mode="IMAGE"] .nameFileRow #logoName{
+  flex:1;
+  min-width:0;
+}
+
+.editorShell[data-mode="IMAGE"] .fileBtnImageOnly{
+  width:170px;
+  justify-content:center;
+}
