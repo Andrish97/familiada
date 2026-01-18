@@ -1,45 +1,43 @@
 // familiada/logo-editor/js/draw.js
-// Tryb: DRAW -> Fabric.js (wektor) -> raster 150x70 bits (PIX_150x70)
+// DRAW -> Fabric.js -> raster 150x70 bits (PIX_150x70)
 
 export function initDrawEditor(ctx) {
   const TYPE_PIX = "PIX_150x70";
 
   // =========================================================
-  // DOM (WYMAGANE ID w HTML)
+  // DOM (DOPASOWANE DO TWOJEGO HTML)
   // =========================================================
   const paneDraw = document.getElementById("paneDraw");
 
-  // Kontener sceny (powinien mieć aspect-ratio: 26/11 w CSS)
-  // Jeśli nie masz: dodaj div np. <div class="drawStage" id="drawStage"> <canvas id="drawCanvas"></canvas></div>
-  const drawStage = document.getElementById("drawStage") || paneDraw;
+  // Fabric canvas (u Ciebie to jest #drawStage)
+  const stageCanvasEl = document.getElementById("drawStage");
 
-  // Canvas dla Fabric (UWAGA: to NIE jest 150x70 – to jest “scena” do rysowania)
-  const drawCanvasEl = document.getElementById("drawCanvas");
+  // Tool buttons (u Ciebie: t*)
+  const btnSel     = document.getElementById("tSelect");   // 🖱️
+  const btnPan     = document.getElementById("tPan");      // ✋
+  const btnZoomIn  = document.getElementById("tZoomIn");   // ➕
+  const btnZoomOut = document.getElementById("tZoomOut");  // ➖
 
-  // Przyciski narzędzi (emoji jako ikonki)
-  const btnSel     = document.getElementById("btnSel");      // 🖱️
-  const btnPan     = document.getElementById("btnPan");      // ✋
-  const btnZoomIn  = document.getElementById("btnZoomIn");   // ➕
-  const btnZoomOut = document.getElementById("btnZoomOut");  // ➖
-  const btnZoom100 = document.getElementById("btnZoom100");  // 💯
-  const btnZoomFit = document.getElementById("btnZoomFit");  // 🧲 (fit)
+  const btnBrush   = document.getElementById("tBrush");    // ✏️
+  const btnEraser  = document.getElementById("tEraser");   // 🧽
+  const btnLine    = document.getElementById("tLine");     // 📏
+  const btnRect    = document.getElementById("tRect");     // ▭
+  const btnEllipse = document.getElementById("tEllipse");  // ⬭
+  const btnPoly    = document.getElementById("tPoly");     // 🔺
 
-  const btnBrush   = document.getElementById("btnBrush");    // ✏️
-  const btnEraser  = document.getElementById("btnEraser");   // 🧽
-  const btnLine    = document.getElementById("btnLine");     // ／
-  const btnRect    = document.getElementById("btnRect");     // ▭
-  const btnEllipse = document.getElementById("btnEllipse");  // ◯
-  const btnPoly    = document.getElementById("btnPoly");     // ⬠
+  const btnUndo    = document.getElementById("tUndo");     // ↶
+  const btnRedo    = document.getElementById("tRedo");     // ↷
+  const btnClear   = document.getElementById("tClear");    // 🗑️
 
-  const btnUndo    = document.getElementById("btnUndo");     // ↶
-  const btnRedo    = document.getElementById("btnRedo");     // ↷
-  const btnClear   = document.getElementById("btnClear");    // 🗑️
+  // Options
+  const inpStroke  = document.getElementById("optStroke"); // number
+  const chkFill    = document.getElementById("optFill");   // checkbox
 
-  // Ustawienia (TYLKO TE)
-  const inpStroke  = document.getElementById("inpStroke");   // grubość (number/range)
-  const chkFill    = document.getElementById("chkFill");     // wypełnij (checkbox)
+  // Thumb
+  const thumbBtn   = document.getElementById("drawThumbBtn");
+  const thumbCanvas= document.getElementById("drawThumb");
 
-  // (opcjonalnie) mały komunikat w paneDraw – możesz to pominąć
+  // (opcjonalne)
   const drawWarn   = document.getElementById("drawWarn");
 
   // =========================================================
@@ -47,18 +45,10 @@ export function initDrawEditor(ctx) {
   // =========================================================
   const DOT_W = ctx.DOT_W; // 150
   const DOT_H = ctx.DOT_H; // 70
-  const ASPECT = 26 / 11;  // scena MA BYĆ zawsze w tych proporcjach
+  const ASPECT = 26 / 11;
 
   const show = (el, on) => { if (!el) return; el.style.display = on ? "" : "none"; };
   const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
-  const px = (n) => `${Math.round(n)}px`;
-
-  function setBtnOn(btn, on) {
-    if (!btn) return;
-    btn.classList.toggle("gold", !!on);
-    btn.classList.toggle("on", !!on);
-    btn.setAttribute("aria-pressed", on ? "true" : "false");
-  }
 
   function warn(msg) {
     if (!drawWarn) return;
@@ -66,8 +56,15 @@ export function initDrawEditor(ctx) {
     show(drawWarn, !!msg);
   }
 
+  function setBtnOn(btn, on) {
+    if (!btn) return;
+    btn.classList.toggle("on", !!on);
+    btn.classList.toggle("gold", !!on);
+    btn.setAttribute("aria-pressed", on ? "true" : "false");
+  }
+
   // =========================================================
-  // Fabric (lazy init)
+  // Fabric require
   // =========================================================
   function requireFabric() {
     const f = window.fabric;
@@ -75,10 +72,15 @@ export function initDrawEditor(ctx) {
     return f;
   }
 
+  if (!paneDraw) throw new Error("Brak #paneDraw w HTML.");
+  if (!stageCanvasEl) throw new Error("Brak #drawStage w HTML (to ma być <canvas>).");
+
+  // =========================================================
+  // State
+  // =========================================================
   let fabricCanvas = null;
   let initialized = false;
 
-  // Narzędzia
   const TOOL = {
     SELECT: "SELECT",
     PAN: "PAN",
@@ -91,104 +93,181 @@ export function initDrawEditor(ctx) {
   };
   let tool = TOOL.SELECT;
 
-  // Stan narzędzi
+  // pan
   let panDown = false;
   let panStart = { x: 0, y: 0 };
   let vptStart = null;
 
-  let drawingObj = null; // line/rect/ellipse podczas przeciągania
+  // figure drawing
+  let drawingObj = null;
 
-  // Polygon: klik-kliki + doubleclick kończy
+  // polygon
   let polyPoints = [];
   let polyPreview = null;
 
-  // Undo/Redo
+  // undo/redo
   let undoStack = [];
   let redoStack = [];
   let undoBusy = false;
 
-  // Preview bits (to idzie do main)
+  // preview bits
   let bits150 = new Uint8Array(DOT_W * DOT_H);
 
   // =========================================================
-  // Scena: rozmiar + zoom-fit
+  // POPUP (mały modal na ustawienia)
   // =========================================================
-  function getStageSize() {
-    const host = drawStage || paneDraw;
-    const rect = host.getBoundingClientRect();
-    const w = Math.max(260, Math.floor(rect.width)); // minimalnie, żeby się nie zerwało
-    let h = Math.floor(w / ASPECT);
+  let pop = null;
+  let popOpen = false;
 
-    // jeśli host jest niski, dopasuj w dół po wysokości
-    if (rect.height > 0 && h > rect.height) {
-      h = Math.floor(rect.height);
+  function ensurePop() {
+    if (pop) return pop;
+    pop = document.createElement("div");
+    pop.className = "drawPop";
+    pop.style.position = "fixed";
+    pop.style.zIndex = "9999";
+    pop.style.display = "none";
+    pop.style.minWidth = "220px";
+    pop.style.borderRadius = "16px";
+    pop.style.border = "1px solid rgba(255,255,255,.14)";
+    pop.style.background = "rgba(0,0,0,.92)";
+    pop.style.boxShadow = "0 16px 50px rgba(0,0,0,.65)";
+    pop.style.padding = "12px";
+
+    pop.innerHTML = `
+      <div style="font-weight:1000; letter-spacing:.08em; text-transform:uppercase; font-size:12px; opacity:.9; margin-bottom:10px;">
+        Ustawienia
+      </div>
+      <div style="display:flex; flex-direction:column; gap:10px;">
+        <label style="display:flex; justify-content:space-between; align-items:center; gap:10px; font-size:13px;">
+          <span style="font-weight:900; opacity:.85;">Grubość</span>
+          <input id="__popStroke" class="inp" type="number" min="1" max="60" step="1" style="width:110px; text-align:center;">
+        </label>
+
+        <label style="display:flex; justify-content:space-between; align-items:center; gap:10px; font-size:13px;">
+          <span style="font-weight:900; opacity:.85;">Wypełnij</span>
+          <input id="__popFill" type="checkbox">
+        </label>
+
+        <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:6px;">
+          <button id="__popClose" class="btn sm" type="button">Zamknij</button>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(pop);
+
+    const popStroke = pop.querySelector("#__popStroke");
+    const popFill = pop.querySelector("#__popFill");
+    const popClose = pop.querySelector("#__popClose");
+
+    // sync IN -> UI
+    function syncIn() {
+      if (popStroke) popStroke.value = String(getStrokeWidth());
+      if (popFill) popFill.checked = !!isFillOn();
     }
 
-    // i jeszcze raz licz szerokość z h, żeby trzymać ratio
-    const w2 = Math.floor(h * ASPECT);
-    return { w: Math.max(260, w2), h: Math.max(120, h) };
+    // sync UI -> OUT
+    popStroke?.addEventListener("input", () => {
+      if (inpStroke) inpStroke.value = popStroke.value;
+      applyBrushStyle();
+      schedulePreview(40);
+    });
+
+    popFill?.addEventListener("change", () => {
+      if (chkFill) chkFill.checked = !!popFill.checked;
+      schedulePreview(40);
+    });
+
+    popClose?.addEventListener("click", () => closePop());
+
+    // klik poza
+    document.addEventListener("pointerdown", (ev) => {
+      if (!popOpen) return;
+      const t = ev.target;
+      if (pop.contains(t)) return;
+      // pozwól kliknąć w przycisk narzędzia bez natychmiastowego zamknięcia (zamknie się po zmianie tool)
+      closePop();
+    }, true);
+
+    // ESC
+    document.addEventListener("keydown", (ev) => {
+      if (!popOpen) return;
+      if (ev.key === "Escape") closePop();
+    });
+
+    // expose helper
+    pop._syncIn = syncIn;
+    return pop;
   }
 
+  function openPopNear(el) {
+    const p = ensurePop();
+    p._syncIn?.();
+    const r = el?.getBoundingClientRect?.() || { left: 20, top: 20, right: 20, bottom: 20 };
+
+    // ustaw obok toolbara, nie pod kursorem
+    const left = Math.min(window.innerWidth - 240, Math.max(12, r.right + 10));
+    const top  = Math.min(window.innerHeight - 200, Math.max(12, r.top));
+
+    p.style.left = `${left}px`;
+    p.style.top = `${top}px`;
+    p.style.display = "block";
+    popOpen = true;
+  }
+
+  function closePop() {
+    if (!pop) return;
+    pop.style.display = "none";
+    popOpen = false;
+  }
+
+  // =========================================================
+  // Scene sizing: canvas wypełnia ratio-box
+  // =========================================================
   function resizeScene() {
-    if (!fabricCanvas || !drawCanvasEl) return;
+    if (!fabricCanvas) return;
 
-    const { w, h } = getStageSize();
+    // ratio-box już ma aspect-ratio w CSS
+    const rect = stageCanvasEl.getBoundingClientRect();
+    const w = Math.max(200, Math.floor(rect.width));
+    const h = Math.max(120, Math.floor(rect.height));
 
-    // ustaw rozmiar elementu canvas (CSS) + rozmiar bufora
-    drawCanvasEl.style.width = px(w);
-    drawCanvasEl.style.height = px(h);
+    // Ustaw realny buffer canvas
+    stageCanvasEl.width = w;
+    stageCanvasEl.height = h;
 
     fabricCanvas.setWidth(w);
     fabricCanvas.setHeight(h);
     fabricCanvas.calcOffset();
 
-    zoomFit(); // po resize trzymamy “dopasuj”
+    zoomFit();
     schedulePreview(40);
   }
 
   function zoomFit() {
     if (!fabricCanvas) return;
 
-    // bazowy “świat” sceny: przyjmujemy wirtualne 2600×1100 (bo 26:11),
-    // a potem dopasowujemy viewport, żeby to wypełniło canvas.
+    // “świat” 2600×1100 – spójne ratio 26:11
     const WORLD_W = 2600;
     const WORLD_H = 1100;
 
     const cw = fabricCanvas.getWidth();
     const ch = fabricCanvas.getHeight();
-
     const s = Math.min(cw / WORLD_W, ch / WORLD_H);
 
-    // wycentruj
     const tx = (cw - WORLD_W * s) / 2;
     const ty = (ch - WORLD_H * s) / 2;
 
     fabricCanvas.setViewportTransform([s, 0, 0, s, tx, ty]);
     fabricCanvas.requestRenderAll();
-    syncToolStates();
-  }
-
-  function zoomTo100() {
-    if (!fabricCanvas) return;
-    // 100% = 1:1 w przestrzeni “świata” (czyli 1px świata = 1px ekranu),
-    // ale to może być “za duże”, więc ustawiamy sensownie: skala 1.0 i centrujemy świat.
-    const WORLD_W = 2600;
-    const WORLD_H = 1100;
-    const cw = fabricCanvas.getWidth();
-    const ch = fabricCanvas.getHeight();
-    const s = 1.0;
-    const tx = (cw - WORLD_W * s) / 2;
-    const ty = (ch - WORLD_H * s) / 2;
-    fabricCanvas.setViewportTransform([s, 0, 0, s, tx, ty]);
-    fabricCanvas.requestRenderAll();
-    syncToolStates();
   }
 
   function zoomBy(factor, center = null) {
     if (!fabricCanvas) return;
     const f = clamp(Number(factor) || 1, 0.1, 10);
 
-    const pt = center || new window.fabric.Point(
+    const Fabric = requireFabric();
+    const pt = center || new Fabric.Point(
       fabricCanvas.getWidth() / 2,
       fabricCanvas.getHeight() / 2
     );
@@ -198,24 +277,18 @@ export function initDrawEditor(ctx) {
 
     fabricCanvas.zoomToPoint(pt, next);
     fabricCanvas.requestRenderAll();
-    syncToolStates();
+    schedulePreview(60);
   }
 
   // =========================================================
-  // Ustawienia (grubość + fill)
+  // Options
   // =========================================================
   function getStrokeWidth() {
-    const raw = inpStroke ? Number(inpStroke.value) : 10;
-    return clamp(raw || 10, 1, 160);
+    const raw = inpStroke ? Number(inpStroke.value) : 6;
+    return clamp(raw || 6, 1, 60);
   }
+  function isFillOn() { return !!chkFill?.checked; }
 
-  function isFillOn() {
-    return !!chkFill?.checked;
-  }
-
-  // =========================================================
-  // Obiekty: style “jednokolorowe”
-  // =========================================================
   function makeStrokeFillStyle() {
     const w = getStrokeWidth();
     return {
@@ -227,30 +300,17 @@ export function initDrawEditor(ctx) {
     };
   }
 
-  function makeEraserStyle() {
-    const w = getStrokeWidth();
-    return {
-      stroke: "#000",
-      strokeWidth: w,
-      strokeLineCap: "round",
-      strokeLineJoin: "round",
-      fill: "rgba(0,0,0,0)",
-    };
-  }
-
   function applyBrushStyle() {
     if (!fabricCanvas) return;
-    const f = requireFabric();
+    const Fabric = requireFabric();
 
     const w = getStrokeWidth();
-
-    // free drawing brush
     if (!fabricCanvas.freeDrawingBrush) {
-      fabricCanvas.freeDrawingBrush = new f.PencilBrush(fabricCanvas);
+      fabricCanvas.freeDrawingBrush = new Fabric.PencilBrush(fabricCanvas);
     }
     fabricCanvas.freeDrawingBrush.width = w;
     fabricCanvas.freeDrawingBrush.color = (tool === TOOL.ERASER) ? "#000" : "#fff";
-    fabricCanvas.freeDrawingBrush.decimate = 0; // bardziej “gładko”
+    fabricCanvas.freeDrawingBrush.decimate = 0;
   }
 
   // =========================================================
@@ -270,7 +330,6 @@ export function initDrawEditor(ctx) {
 
     if (!fabricCanvas) return;
 
-    // select vs draw
     if (tool === TOOL.SELECT) {
       fabricCanvas.isDrawingMode = false;
       fabricCanvas.selection = true;
@@ -287,48 +346,30 @@ export function initDrawEditor(ctx) {
       fabricCanvas.isDrawingMode = true;
       applyBrushStyle();
     } else {
-      // figury: rysujemy myszą, nie trybem freeDrawing
+      // figury
       fabricCanvas.isDrawingMode = false;
       fabricCanvas.selection = false;
       fabricCanvas.discardActiveObject();
       fabricCanvas.forEachObject(o => { o.selectable = false; o.evented = false; });
-    }
-
-    // polygon: wyczyść stan klikania
-    if (tool !== TOOL.POLY) {
       clearPolyDraft();
     }
 
     warn("");
   }
 
-  function syncToolStates() {
-    // na razie tylko: nic. (miejsce na przyszłość)
-  }
-
   // =========================================================
-  // Undo / Redo
+  // Undo/Redo (JSON snapshot)
   // =========================================================
   function snapshotJSON() {
     if (!fabricCanvas) return null;
-    // zapisujemy bez “śmieci” runtime’owych
-    return fabricCanvas.toDatalessJSON([
-      "selectable",
-      "evented",
-      "stroke",
-      "strokeWidth",
-      "strokeLineCap",
-      "strokeLineJoin",
-      "fill",
-    ]);
+    return fabricCanvas.toDatalessJSON(["stroke","strokeWidth","strokeLineCap","strokeLineJoin","fill"]);
   }
 
-  function pushUndo(tag = "") {
+  function pushUndo() {
     if (!fabricCanvas || undoBusy) return;
     const j = snapshotJSON();
     if (!j) return;
 
-    // unikaj spamowania identycznymi stanami
     const last = undoStack.length ? undoStack[undoStack.length - 1] : null;
     const sj = JSON.stringify(j);
     const sl = last ? JSON.stringify(last) : "";
@@ -337,7 +378,6 @@ export function initDrawEditor(ctx) {
     undoStack.push(j);
     if (undoStack.length > 60) undoStack.shift();
     redoStack.length = 0;
-
     updateUndoRedoButtons();
   }
 
@@ -348,18 +388,16 @@ export function initDrawEditor(ctx) {
       undoBusy = false;
       fabricCanvas.requestRenderAll();
       ctx.markDirty?.();
-      schedulePreview(60);
+      schedulePreview(40);
     });
   }
 
   function undo() {
     if (!fabricCanvas) return;
-    if (undoStack.length < 2) return; // musi być cofnąć do poprzedniego
+    if (undoStack.length < 2) return;
     const current = undoStack.pop();
     redoStack.push(current);
-
-    const prev = undoStack[undoStack.length - 1];
-    restoreFrom(prev);
+    restoreFrom(undoStack[undoStack.length - 1]);
     updateUndoRedoButtons();
   }
 
@@ -392,18 +430,13 @@ export function initDrawEditor(ctx) {
   function addPolyPoint(worldPt) {
     polyPoints.push({ x: worldPt.x, y: worldPt.y });
 
-    // preview
-    if (!fabricCanvas) return;
-    const f = requireFabric();
+    const Fabric = requireFabric();
     const style = makeStrokeFillStyle();
 
     if (!polyPreview) {
-      polyPreview = new f.Polyline(polyPoints, {
-        left: 0, top: 0,
-        originX: "left",
-        originY: "top",
+      polyPreview = new Fabric.Polyline(polyPoints, {
         ...style,
-        fill: "rgba(0,0,0,0)", // podczas rysowania tylko kontur
+        fill: "rgba(0,0,0,0)",
         objectCaching: false,
         selectable: false,
         evented: false,
@@ -417,21 +450,20 @@ export function initDrawEditor(ctx) {
 
   function finalizePolygon() {
     if (!fabricCanvas) return;
-    const f = requireFabric();
     if (polyPoints.length < 3) {
       warn("Wielokąt: kliknij co najmniej 3 punkty, potem dwuklik żeby zakończyć.");
       return;
     }
 
+    const Fabric = requireFabric();
     const style = makeStrokeFillStyle();
 
-    // usuń preview
     if (polyPreview) {
       fabricCanvas.remove(polyPreview);
       polyPreview = null;
     }
 
-    const poly = new f.Polygon(polyPoints, {
+    const poly = new Fabric.Polygon(polyPoints, {
       ...style,
       objectCaching: false,
       selectable: false,
@@ -442,42 +474,16 @@ export function initDrawEditor(ctx) {
     fabricCanvas.requestRenderAll();
 
     clearPolyDraft();
-    pushUndo("poly");
+    pushUndo();
     ctx.markDirty?.();
-    schedulePreview(60);
+    schedulePreview(40);
   }
 
   // =========================================================
-  // Raster -> bits 150x70 (podgląd + zapis)
+  // Raster -> bits150 + thumb
   // =========================================================
-  function canvasToBits150(sourceCanvas, w, h) {
-    // sourceCanvas = normalny canvas (pixele)
-    const g = sourceCanvas.getContext("2d", { willReadFrequently: true });
-    const img = g.getImageData(0, 0, w, h);
-    const data = img.data;
-
-    const out = new Uint8Array(DOT_W * DOT_H);
-
-    // prosto: threshold na luminancji, bo jest tylko biel/czerń
-    for (let y = 0; y < DOT_H; y++) {
-      for (let x = 0; x < DOT_W; x++) {
-        const i = (y * DOT_W + x) * 4;
-        const r = data[i + 0];
-        const gg = data[i + 1];
-        const b = data[i + 2];
-        // lum 0..255
-        const lum = 0.2126 * r + 0.7152 * gg + 0.0722 * b;
-        out[y * DOT_W + x] = lum >= 128 ? 1 : 0;
-      }
-    }
-    return out;
-  }
-
   function renderTo150x70Canvas() {
     if (!fabricCanvas) return null;
-
-    // Fabric renderuje na swoim lowerCanvasEl, ale w rozmiarze sceny.
-    // My robimy downscale do 150x70.
     const src = fabricCanvas.lowerCanvasEl;
     if (!src) return null;
 
@@ -488,51 +494,81 @@ export function initDrawEditor(ctx) {
     const g = out.getContext("2d", { willReadFrequently: true });
     g.imageSmoothingEnabled = true;
 
-    // tło czarne
     g.fillStyle = "#000";
     g.fillRect(0, 0, DOT_W, DOT_H);
-
-    // downscale (cała scena -> 150x70)
     g.drawImage(src, 0, 0, DOT_W, DOT_H);
 
     return out;
   }
 
+  function canvasToBits150(c) {
+    const g = c.getContext("2d", { willReadFrequently: true });
+    const img = g.getImageData(0, 0, DOT_W, DOT_H);
+    const d = img.data;
+    const out = new Uint8Array(DOT_W * DOT_H);
+
+    for (let i = 0; i < DOT_W * DOT_H; i++) {
+      const r = d[i * 4 + 0];
+      const gg= d[i * 4 + 1];
+      const b = d[i * 4 + 2];
+      const lum = 0.2126 * r + 0.7152 * gg + 0.0722 * b;
+      out[i] = lum >= 128 ? 1 : 0;
+    }
+    return out;
+  }
+
+  function drawThumb(bits) {
+    if (!thumbCanvas) return;
+    const g = thumbCanvas.getContext("2d", { willReadFrequently: true });
+    g.imageSmoothingEnabled = false;
+
+    const img = g.createImageData(DOT_W, DOT_H);
+    for (let i = 0; i < DOT_W * DOT_H; i++) {
+      const v = bits[i] ? 255 : 0;
+      img.data[i*4+0] = v;
+      img.data[i*4+1] = v;
+      img.data[i*4+2] = v;
+      img.data[i*4+3] = 255;
+    }
+    g.putImageData(img, 0, 0);
+  }
+
   let _deb = null;
-  function schedulePreview(ms = 60) {
+  function schedulePreview(ms = 50) {
     clearTimeout(_deb);
     _deb = setTimeout(() => {
       const c = renderTo150x70Canvas();
       if (!c) return;
-      bits150 = canvasToBits150(c, DOT_W, DOT_H);
+      bits150 = canvasToBits150(c);
+
+      // main: “podgląd jak na wyświetlaczu”
       ctx.onPreview?.({ kind: "PIX", bits: bits150 });
+
+      // mini ikona
+      drawThumb(bits150);
     }, ms);
   }
 
   // =========================================================
-  // Pointer logic: pan/zoom/figures/polygon
+  // Pointer/world helpers
   // =========================================================
   function getWorldPoint(ev) {
-    const f = requireFabric();
-    const p = new f.Point(ev.clientX, ev.clientY);
-    const rect = drawCanvasEl.getBoundingClientRect();
-    const canvasPt = new f.Point(p.x - rect.left, p.y - rect.top);
+    const Fabric = requireFabric();
+    const rect = stageCanvasEl.getBoundingClientRect();
+    const canvasPt = new Fabric.Point(ev.clientX - rect.left, ev.clientY - rect.top);
 
     const vpt = fabricCanvas.viewportTransform;
-    const inv = f.util.invertTransform(vpt);
-    const world = f.util.transformPoint(canvasPt, inv);
-    return world;
+    const inv = Fabric.util.invertTransform(vpt);
+    return Fabric.util.transformPoint(canvasPt, inv);
   }
 
   function startFigure(ev) {
-    if (!fabricCanvas) return;
-    const f = requireFabric();
+    const Fabric = requireFabric();
     const p0 = getWorldPoint(ev);
-
-    const style = (tool === TOOL.ERASER) ? makeEraserStyle() : makeStrokeFillStyle();
+    const style = makeStrokeFillStyle();
 
     if (tool === TOOL.LINE) {
-      drawingObj = new f.Line([p0.x, p0.y, p0.x, p0.y], {
+      drawingObj = new Fabric.Line([p0.x, p0.y, p0.x, p0.y], {
         ...style,
         fill: "rgba(0,0,0,0)",
         objectCaching: false,
@@ -544,13 +580,10 @@ export function initDrawEditor(ctx) {
     }
 
     if (tool === TOOL.RECT) {
-      drawingObj = new f.Rect({
-        left: p0.x,
-        top: p0.y,
-        width: 1,
-        height: 1,
-        originX: "left",
-        originY: "top",
+      drawingObj = new Fabric.Rect({
+        left: p0.x, top: p0.y,
+        width: 1, height: 1,
+        originX: "left", originY: "top",
         ...style,
         objectCaching: false,
         selectable: false,
@@ -561,13 +594,10 @@ export function initDrawEditor(ctx) {
     }
 
     if (tool === TOOL.ELLIPSE) {
-      drawingObj = new f.Ellipse({
-        left: p0.x,
-        top: p0.y,
-        rx: 1,
-        ry: 1,
-        originX: "left",
-        originY: "top",
+      drawingObj = new Fabric.Ellipse({
+        left: p0.x, top: p0.y,
+        rx: 1, ry: 1,
+        originX: "left", originY: "top",
         ...style,
         objectCaching: false,
         selectable: false,
@@ -579,7 +609,7 @@ export function initDrawEditor(ctx) {
   }
 
   function updateFigure(ev) {
-    if (!fabricCanvas || !drawingObj) return;
+    if (!drawingObj) return;
     const p = getWorldPoint(ev);
 
     if (tool === TOOL.LINE && drawingObj.type === "line") {
@@ -593,12 +623,11 @@ export function initDrawEditor(ctx) {
       const y0 = drawingObj.top;
       const w = p.x - x0;
       const h = p.y - y0;
-
       drawingObj.set({
         width: Math.abs(w),
         height: Math.abs(h),
         left: w >= 0 ? x0 : p.x,
-        top: h >= 0 ? y0 : p.y,
+        top:  h >= 0 ? y0 : p.y,
       });
       fabricCanvas.requestRenderAll();
       return;
@@ -611,7 +640,7 @@ export function initDrawEditor(ctx) {
       const h = p.y - y0;
 
       const left = w >= 0 ? x0 : p.x;
-      const top = h >= 0 ? y0 : p.y;
+      const top  = h >= 0 ? y0 : p.y;
 
       drawingObj.set({
         left,
@@ -619,82 +648,51 @@ export function initDrawEditor(ctx) {
         rx: Math.max(1, Math.abs(w) / 2),
         ry: Math.max(1, Math.abs(h) / 2),
       });
-
-      // ellipse w fabric ma center zależny od origin; upraszczamy: origin left/top i rx/ry
       fabricCanvas.requestRenderAll();
-      return;
     }
   }
 
   function finishFigure() {
-    if (!fabricCanvas || !drawingObj) return;
+    if (!drawingObj) return;
     drawingObj = null;
     fabricCanvas.requestRenderAll();
-    pushUndo("figure");
+    pushUndo();
     ctx.markDirty?.();
-    schedulePreview(60);
+    schedulePreview(40);
   }
 
   // =========================================================
-  // Fabric init
+  // Install Fabric
   // =========================================================
   function installFabricOnce() {
     if (initialized) return;
     initialized = true;
 
-    const f = requireFabric();
-    if (!drawCanvasEl) throw new Error("Brak #drawCanvas w HTML.");
+    const Fabric = requireFabric();
 
-    fabricCanvas = new f.Canvas(drawCanvasEl, {
+    fabricCanvas = new Fabric.Canvas(stageCanvasEl, {
       backgroundColor: "#000",
       selection: true,
       preserveObjectStacking: true,
       stopContextMenu: true,
-      fireRightClick: true,
     });
 
-    // Start: dopasuj scenę do kontenera
+    // initial sizing + fit
     resizeScene();
-
-    // styl pędzla na start
     applyBrushStyle();
 
-    // Undo: stan początkowy
+    // undo init
     undoStack = [];
     redoStack = [];
-    pushUndo("init");
+    pushUndo();
     updateUndoRedoButtons();
 
-    // “Zmiany” -> preview i undo snapshot
-    const afterChange = () => {
-      if (undoBusy) return;
-      ctx.markDirty?.();
-      schedulePreview(60);
-    };
+    // changes -> preview
+    fabricCanvas.on("path:created", () => { pushUndo(); ctx.markDirty?.(); schedulePreview(40); });
+    fabricCanvas.on("object:modified", () => { pushUndo(); ctx.markDirty?.(); schedulePreview(40); });
+    fabricCanvas.on("object:removed", () => { if (!undoBusy) { pushUndo(); ctx.markDirty?.(); schedulePreview(40); } });
 
-    fabricCanvas.on("path:created", () => {
-      pushUndo("path");
-      afterChange();
-    });
-
-    fabricCanvas.on("object:modified", () => {
-      pushUndo("modify");
-      afterChange();
-    });
-
-    fabricCanvas.on("object:added", (e) => {
-      // przy init/restore nie spamuj
-      if (undoBusy) return;
-      // dodania z figur robimy ręcznie na koniec (pushUndo), więc tu nie robimy nic
-    });
-
-    fabricCanvas.on("object:removed", () => {
-      if (undoBusy) return;
-      pushUndo("remove");
-      afterChange();
-    });
-
-    // Pointer events
+    // fabric mouse
     fabricCanvas.on("mouse:down", (opt) => {
       const ev = opt.e;
 
@@ -706,8 +704,7 @@ export function initDrawEditor(ctx) {
       }
 
       if (tool === TOOL.POLY) {
-        const wp = getWorldPoint(ev);
-        addPolyPoint(wp);
+        addPolyPoint(getWorldPoint(ev));
         return;
       }
 
@@ -724,16 +721,14 @@ export function initDrawEditor(ctx) {
         const dx = ev.clientX - panStart.x;
         const dy = ev.clientY - panStart.y;
         const v = vptStart.slice();
-        v[4] += dx;
-        v[5] += dy;
+        v[4] += dx; v[5] += dy;
         fabricCanvas.setViewportTransform(v);
         fabricCanvas.requestRenderAll();
+        schedulePreview(80);
         return;
       }
 
-      if (drawingObj) {
-        updateFigure(ev);
-      }
+      if (drawingObj) updateFigure(ev);
     });
 
     fabricCanvas.on("mouse:up", () => {
@@ -742,75 +737,75 @@ export function initDrawEditor(ctx) {
         vptStart = null;
         return;
       }
-      if (drawingObj) {
-        finishFigure();
-      }
+      if (drawingObj) finishFigure();
     });
 
-    // Double click kończy polygon
-    drawCanvasEl.addEventListener("dblclick", (ev) => {
+    // polygon finish: dblclick on canvas
+    stageCanvasEl.addEventListener("dblclick", (ev) => {
       if (ctx.getMode?.() !== "DRAW") return;
       if (tool !== TOOL.POLY) return;
       ev.preventDefault();
       finalizePolygon();
     });
 
-    // Wheel zoom (tylko w PAN lub SELECT, żeby nie przeszkadzać rysowaniu)
-    drawCanvasEl.addEventListener("wheel", (ev) => {
+    // wheel zoom (w select/pan)
+    stageCanvasEl.addEventListener("wheel", (ev) => {
       if (ctx.getMode?.() !== "DRAW") return;
-      if (!(tool === TOOL.PAN || tool === TOOL.SELECT)) return;
-
+      if (!(tool === TOOL.SELECT || tool === TOOL.PAN)) return;
       ev.preventDefault();
-      const factor = ev.deltaY < 0 ? 1.1 : 0.9;
 
-      const rect = drawCanvasEl.getBoundingClientRect();
-      const f = requireFabric();
-      const pt = new f.Point(ev.clientX - rect.left, ev.clientY - rect.top);
+      const factor = ev.deltaY < 0 ? 1.1 : 0.9;
+      const rect = stageCanvasEl.getBoundingClientRect();
+      const Fabric = requireFabric();
+      const pt = new Fabric.Point(ev.clientX - rect.left, ev.clientY - rect.top);
       zoomBy(factor, pt);
-      schedulePreview(80);
     }, { passive: false });
 
-    // Resize observer
+    // resize observe
     const ro = new ResizeObserver(() => {
       if (ctx.getMode?.() !== "DRAW") return;
       resizeScene();
     });
-    if (drawStage) ro.observe(drawStage);
-    else if (paneDraw) ro.observe(paneDraw);
+    ro.observe(paneDraw);
 
-    // Start tool
+    // start tool
     setTool(TOOL.SELECT);
-
-    // Start preview
     schedulePreview(10);
   }
 
   // =========================================================
   // UI bind
   // =========================================================
+  let uiBound = false;
+
   function bindUiOnce() {
-    btnSel?.addEventListener("click", () => setTool(TOOL.SELECT));
-    btnPan?.addEventListener("click", () => setTool(TOOL.PAN));
+    // tools
+    btnSel?.addEventListener("click", () => { closePop(); setTool(TOOL.SELECT); });
+    btnPan?.addEventListener("click", () => { closePop(); setTool(TOOL.PAN); });
 
-    btnZoomIn?.addEventListener("click", () => { zoomBy(1.15); schedulePreview(80); });
-    btnZoomOut?.addEventListener("click", () => { zoomBy(0.87); schedulePreview(80); });
-    btnZoom100?.addEventListener("click", () => { zoomTo100(); schedulePreview(80); });
-    btnZoomFit?.addEventListener("click", () => { zoomFit(); schedulePreview(80); });
+    btnBrush?.addEventListener("click", (e) => { setTool(TOOL.BRUSH); openPopNear(e.currentTarget); });
+    btnEraser?.addEventListener("click", (e) => { setTool(TOOL.ERASER); openPopNear(e.currentTarget); });
 
-    btnBrush?.addEventListener("click", () => setTool(TOOL.BRUSH));
-    btnEraser?.addEventListener("click", () => setTool(TOOL.ERASER));
-    btnLine?.addEventListener("click", () => setTool(TOOL.LINE));
-    btnRect?.addEventListener("click", () => setTool(TOOL.RECT));
-    btnEllipse?.addEventListener("click", () => setTool(TOOL.ELLIPSE));
-    btnPoly?.addEventListener("click", () => {
-      warn("Wielokąt: klikaj punkty. Dwuklik kończy.");
+    btnLine?.addEventListener("click", (e) => { setTool(TOOL.LINE); openPopNear(e.currentTarget); });
+    btnRect?.addEventListener("click", (e) => { setTool(TOOL.RECT); openPopNear(e.currentTarget); });
+    btnEllipse?.addEventListener("click", (e) => { setTool(TOOL.ELLIPSE); openPopNear(e.currentTarget); });
+
+    btnPoly?.addEventListener("click", (e) => {
       setTool(TOOL.POLY);
+      warn("Wielokąt: klikaj punkty. Dwuklik kończy.");
+      openPopNear(e.currentTarget);
     });
 
-    btnUndo?.addEventListener("click", () => undo());
-    btnRedo?.addEventListener("click", () => redo());
+    // zoom
+    btnZoomIn?.addEventListener("click", () => zoomBy(1.15));
+    btnZoomOut?.addEventListener("click", () => zoomBy(0.87));
+
+    // undo/redo/clear
+    btnUndo?.addEventListener("click", () => { closePop(); undo(); });
+    btnRedo?.addEventListener("click", () => { closePop(); redo(); });
 
     btnClear?.addEventListener("click", () => {
+      closePop();
       if (ctx.getMode?.() !== "DRAW") return;
       if (!fabricCanvas) return;
 
@@ -821,25 +816,21 @@ export function initDrawEditor(ctx) {
       fabricCanvas.getObjects().forEach(o => fabricCanvas.remove(o));
       fabricCanvas.requestRenderAll();
 
-      pushUndo("clear");
+      pushUndo();
       ctx.markDirty?.();
-      schedulePreview(30);
+      schedulePreview(20);
     });
 
-    inpStroke?.addEventListener("input", () => {
-      applyBrushStyle();
-      // nie zmieniamy już istniejących obiektów (Paint też nie zmienia wstecz),
-      // więc tylko preview i “ready for next”.
-      schedulePreview(60);
-    });
+    // raw options still work (jak ktoś nie chce popupu)
+    inpStroke?.addEventListener("input", () => { applyBrushStyle(); schedulePreview(40); });
+    chkFill?.addEventListener("change", () => { schedulePreview(40); });
 
-    chkFill?.addEventListener("change", () => {
-      // fill dotyczy NOWYCH figur (Paint też tak działa)
-      schedulePreview(60);
+    // thumb click -> otwórz fullscreen preview z main.js
+    thumbBtn?.addEventListener("click", () => {
+      // main.js ma handler na bigPreview click -> otwiera overlay
+      document.getElementById("bigPreview")?.click?.();
     });
   }
-
-  let uiBound = false;
 
   // =========================================================
   // API
@@ -847,41 +838,46 @@ export function initDrawEditor(ctx) {
   return {
     open() {
       show(paneDraw, true);
-      if (!uiBound) { bindUiOnce(); uiBound = true; }
+      warn("");
 
+      if (!uiBound) { bindUiOnce(); uiBound = true; }
       installFabricOnce();
 
-      // reset na start sesji
+      // reset sesji: czyścimy płótno, ale Fabric zostaje
       if (fabricCanvas) {
+        closePop();
         clearPolyDraft();
+
         fabricCanvas.getObjects().forEach(o => fabricCanvas.remove(o));
         fabricCanvas.backgroundColor = "#000";
         fabricCanvas.requestRenderAll();
 
-        // reset stacks
         undoStack = [];
         redoStack = [];
-        pushUndo("init");
+        pushUndo();
         updateUndoRedoButtons();
 
-        // start tool
         setTool(TOOL.SELECT);
         zoomFit();
 
         ctx.clearDirty?.();
-        warn("");
-        schedulePreview(20);
+        schedulePreview(10);
       }
     },
 
     close() {
+      closePop();
       show(paneDraw, false);
-      // nie niszczymy Fabric — szybciej przy kolejnych wejściach
     },
 
-    async getCreatePayload() {
-      // upewnij się, że mamy świeże bity
-      schedulePreview(0);
+    getCreatePayload() {
+      // odśwież natychmiast (bez debounca)
+      const c = renderTo150x70Canvas();
+      if (c) {
+        bits150 = canvasToBits150(c);
+        ctx.onPreview?.({ kind: "PIX", bits: bits150 });
+        drawThumb(bits150);
+      }
 
       return {
         ok: true,
@@ -896,18 +892,3 @@ export function initDrawEditor(ctx) {
     },
   };
 }
-
-/*
-WYMAGANE ID w HTML (przykład):
-- #drawStage (kontener sceny, z aspect-ratio: 26/11)
-- #drawCanvas (canvas dla Fabric)
-- przyciski:
-  btnSel btnPan btnZoomIn btnZoomOut btnZoom100 btnZoomFit
-  btnBrush btnEraser btnLine btnRect btnEllipse btnPoly
-  btnUndo btnRedo btnClear
-- ustawienia:
-  inpStroke (number/range)
-  chkFill (checkbox)
-Opcjonalnie:
-  drawWarn (div na komunikaty)
-*/
