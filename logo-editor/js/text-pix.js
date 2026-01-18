@@ -590,13 +590,32 @@ export function initTextPixEditor(ctx) {
     box.style.background = "#000";
     box.style.color = "#fff";
     box.style.overflow = "hidden";
-    box.style.padding = "10px";
+    box.style.boxSizing = "border-box";
+
+    // skopiuj padding z edytora (żeby screenshot był 1:1)
+    const edCs = window.getComputedStyle(rtEditorEl);
+    box.style.paddingTop = edCs.paddingTop;
+    box.style.paddingRight = edCs.paddingRight;
+    box.style.paddingBottom = edCs.paddingBottom;
+    box.style.paddingLeft = edCs.paddingLeft;
+
     box.style.boxSizing = "border-box";
     box.style.whiteSpace = "normal";
     box.style.overflowWrap = "anywhere";
     box.style.wordBreak = "break-word";
     box.style.maxWidth = `${w}px`;
-  
+
+    const edCs = window.getComputedStyle(rtEditorEl);
+
+    // font i podstawowe typograficzne rzeczy 1:1 z edytora
+    box.style.fontFamily = edCs.fontFamily;
+    box.style.fontSize = edCs.fontSize;
+    box.style.fontWeight = edCs.fontWeight;
+    box.style.fontStyle = edCs.fontStyle;
+    box.style.letterSpacing = edCs.letterSpacing;
+    box.style.lineHeight = edCs.lineHeight;
+    box.style.textAlign = edCs.textAlign;
+
     let html = String(editor?.getContent?.({ format: "html" }) || "").trim();
     
     if (html && !/<(p|div|h1|h2|h3|ul|ol|li|table|blockquote)\b/i.test(html)) {
@@ -867,6 +886,14 @@ export function initTextPixEditor(ctx) {
       rtEditorEl.style.lineHeight = "1";
       
       await ensureEditor();
+
+      // upewnij się, że edytor ma od razu 50px zanim zrobimy pierwszy screenshot
+      rtEditorEl.style.fontSize = "50px";
+      rtEditorEl.style.lineHeight = "1";
+      
+      // pierwszy preview dopiero po tym, jak przeglądarka przeliczy layout
+      setTimeout(() => schedulePreview(0), 0);
+
       installUiBusyGuards();
 
       // reset edytora na start sesji
