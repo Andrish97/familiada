@@ -68,6 +68,8 @@
         <div class="editorLeft">
           <div class="lbl">Nazwa</div>
           <input class="inp" id="logoName" placeholder="Np. Moje logo"/>
+          <!-- IMAGE: wybór pliku obok nazwy (ukrywany w innych trybach przez CSS) -->
+          <input class="inp" id="imgFile" type="file" accept="image/*"/>
 
           <!-- TEXT (font_3x10) -->
           <div class="pane" id="paneText" style="display:none;">
@@ -306,10 +308,6 @@
           
                 <!-- LEWO: obraz + ramka -->
                 <div class="imgCard">
-                  <div class="imgCardHead">
-                    <input class="inp" id="imgFile" type="file" accept="image/*"/>
-                  </div>
-          
                   <div class="imgStage" id="imgStage">
                     <img id="imgLarge" alt="" />
                     <div class="cropBox" id="cropBox" role="group" aria-label="Obszar wyświetlacza">
@@ -332,72 +330,90 @@
           
               </div>
           
-              <!-- DÓŁ: kontrolki (2 kolumny) -->
-              <div class="imgCard imgBottom">
+              <!-- DÓŁ: kontrolki (2 kolumny), niskie -->
+              <div class="imgCard imgCardControls">
                 <div class="imgCardTitle">Ustawienia</div>
-          
-                <div class="imgControlsGrid">
-          
-                  <div class="imgCtrl span2">
-                    <div class="imgCtrlLbl">Odwróć kolory</div>
-                    <label class="chk">
+              
+                <div class="imgCtrlGrid">
+                  <!-- Jasność -->
+                  <div class="imgCtrl">
+                    <div class="imgCtrlHead">
+                      <div class="imgCtrlLbl">Jasność</div>
+                      <div class="imgCtrlVal" id="valImgBright">0</div>
+                    </div>
+                    <input class="inp" id="rngImgBright" type="range" min="-100" max="100" step="1" value="0"/>
+                  </div>
+              
+                  <!-- Kontrast -->
+                  <div class="imgCtrl">
+                    <div class="imgCtrlHead">
+                      <div class="imgCtrlLbl">Kontrast</div>
+                      <div class="imgCtrlVal" id="valImgContrast">0</div>
+                    </div>
+                    <input class="inp" id="rngImgContrast" type="range" min="-100" max="100" step="1" value="0"/>
+                  </div>
+              
+                  <!-- Gamma -->
+                  <div class="imgCtrl">
+                    <div class="imgCtrlHead">
+                      <div class="imgCtrlLbl">Gamma</div>
+                      <div class="imgCtrlVal" id="valImgGamma">1.00</div>
+                    </div>
+                    <input class="inp" id="rngImgGamma" type="range" min="0.40" max="2.60" step="0.01" value="1.00"/>
+                  </div>
+              
+                  <!-- Siła kropek (dithering “gęstość”) -->
+                  <div class="imgCtrl">
+                    <div class="imgCtrlHead">
+                      <div class="imgCtrlLbl">Siła kropek</div>
+                      <div class="imgCtrlVal" id="valImgDitherAmt">0.80</div>
+                    </div>
+                    <input class="inp" id="rngImgDitherAmt" type="range" min="0.00" max="1.50" step="0.01" value="0.80"/>
+                  </div>
+              
+                  <!-- Poziom czerni -->
+                  <div class="imgCtrl">
+                    <div class="imgCtrlHead">
+                      <div class="imgCtrlLbl">Poziom czerni</div>
+                      <div class="imgCtrlVal" id="valImgBlack">0</div>
+                    </div>
+                    <input class="inp" id="rngImgBlack" type="range" min="0" max="100" step="1" value="0"/>
+                  </div>
+              
+                  <!-- Poziom bieli -->
+                  <div class="imgCtrl">
+                    <div class="imgCtrlHead">
+                      <div class="imgCtrlLbl">Poziom bieli</div>
+                      <div class="imgCtrlVal" id="valImgWhite">100</div>
+                    </div>
+                    <input class="inp" id="rngImgWhite" type="range" min="0" max="100" step="1" value="100"/>
+                  </div>
+              
+                  <!-- Odwróć kolory (pół kafelka, bez opisu) -->
+                  <div class="imgCtrl">
+                    <div class="imgCtrlHead">
+                      <div class="imgCtrlLbl">Odwróć kolory</div>
+                    </div>
+                    <label class="chk" style="margin-top:-2px;">
                       <input type="checkbox" id="chkImgInvert" checked />
-                      Domyślnie: ciemne = aktywne (zalecane). Wyłącz → jasne = aktywne.
                     </label>
                   </div>
-          
+              
+                  <!-- Dopasuj (contain/cover) – opcjonalnie: jeśli chcesz zostawić jako przełącznik -->
                   <div class="imgCtrl">
-                    <div class="imgCtrlLbl">Jasność</div>
-                    <input class="inp" id="rngImgBright" type="range" min="-100" max="100" step="1" value="0"/>
-                    <div class="imgCtrlVal" id="valImgBright">0</div>
+                    <div class="imgCtrlHead">
+                      <div class="imgCtrlLbl">Dopasuj (contain)</div>
+                    </div>
+                    <label class="chk" style="margin-top:-2px;">
+                      <input type="checkbox" id="chkImgContain" checked />
+                    </label>
                   </div>
-          
-                  <div class="imgCtrl">
-                    <div class="imgCtrlLbl">Kontrast</div>
-                    <input class="inp" id="rngImgContrast" type="range" min="-100" max="100" step="1" value="0"/>
-                    <div class="imgCtrlVal" id="valImgContrast">0</div>
-                  </div>
-          
-                  <div class="imgCtrl">
-                    <div class="imgCtrlLbl">Gamma</div>
-                    <input class="inp" id="rngImgGamma" type="range" min="50" max="250" step="1" value="100"/>
-                    <div class="imgCtrlVal" id="valImgGamma">1.00</div>
-                  </div>
-          
-                  <div class="imgCtrl">
-                    <div class="imgCtrlLbl">Tryb kropek</div>
-                    <select class="inp" id="selImgDitherMode">
-                      <option value="THRESH">Progowanie</option>
-                      <option value="FS">Floyd–Steinberg</option>
-                      <option value="BAYER8">Bayer 8×8</option>
-                    </select>
-                  </div>
-          
-                  <div class="imgCtrl">
-                    <div class="imgCtrlLbl">Poziom czerni</div>
-                    <input class="inp" id="rngImgBlack" type="range" min="0" max="120" step="1" value="0"/>
-                    <div class="imgCtrlVal" id="valImgBlack">0</div>
-                  </div>
-          
-                  <div class="imgCtrl">
-                    <div class="imgCtrlLbl">Poziom bieli</div>
-                    <input class="inp" id="rngImgWhite" type="range" min="135" max="255" step="1" value="255"/>
-                    <div class="imgCtrlVal" id="valImgWhite">255</div>
-                  </div>
-          
-                  <div class="imgCtrl">
-                    <div class="imgCtrlLbl">Siła kropek</div>
-                    <input class="inp" id="rngImgDither" type="range" min="0" max="100" step="1" value="80"/>
-                    <div class="imgCtrlVal" id="valImgDither">80</div>
-                  </div>
-          
                 </div>
               </div>
-          
             </div>
           </div>
 
-
+          
 
           <div class="editorActions">
             <button class="btn sm gold" id="btnCreate" type="button">Zapisz</button>
