@@ -17,7 +17,7 @@
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
   
   <!-- Fabric.js (global: window.fabric) -->
-  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script> <!-- :contentReference[oaicite:0]{index=0} -->
+  <script src="https://cdn.jsdelivr.net/npm/fabric@6.0.0/dist/fabric.min.js"></script>
   
   <!-- Twoje moduły -->
   <script type="module" src="js/main.js" defer></script>
@@ -203,17 +203,19 @@
               </div>
           
               <!-- PRAWA CZĘŚĆ: scena + mini podgląd -->
-              <div class="drawMain">
-                <div class="drawStage">
+            <div class="drawMain">
+              <div class="drawStage" id="drawStage">
+                <div class="drawStageInner">
                   <canvas id="drawCanvas" width="150" height="70"></canvas>
                 </div>
-          
-                <div class="drawMiniRow">
-                  <div class="drawMiniLbl">Podgląd</div>
-                  <canvas id="drawMiniPreview" width="300" height="140"></canvas>
-                </div>
+              </div>
+            
+              <div class="drawMiniRow">
+                <div class="drawMiniLbl">Podgląd</div>
+                <canvas id="drawMiniPreview" width="312" height="132"></canvas>
               </div>
             </div>
+
           
           </div>
           
