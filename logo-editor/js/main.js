@@ -808,9 +808,9 @@ function openEditor(mode){
   editorTitle.textContent = titleMap[mode] || "Nowe logo";
   editorSub.textContent =
     mode === "TEXT" ? "Klasyczny styl jak w logo Familiady." :
-    mode === "TEXT_PIX" ? "Edytor tekstu (jak w Wordzie) → robimy z tego 'screena' na wyświetlacz." :
-    mode === "DRAW" ? "Rysujesz w siatce 150×70." :
-    "Importujesz obrazek i dopasowujesz do 150×70.";
+    mode === "TEXT_PIX" ? "Edytujesz tekst i wyświetlasz." :
+    mode === "DRAW" ? "Rysujesz w siatce wyświetlazca." :
+    "Importujesz obrazek i dopasowujesz.";
 
   if (!logoName.value.trim()){
     logoName.value =
