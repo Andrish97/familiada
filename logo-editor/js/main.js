@@ -1040,11 +1040,10 @@ document.addEventListener("DOMContentLoaded", async () => {
      try{
        const active = (logos || []).find(l => !!l.is_active) || null;
        if (!active){
-         alert("Nie masz aktywnego logo do eksportu.\n\nUstaw najpierw jakieś logo jako aktywne.");
+         setMsg("Brak aktywnego logo do eksportu.");
          return;
        }
    
-       // info dla usera (jasno, co eksportujemy)
        const activeName = String(active.name || "(bez nazwy)");
        setMsg(`Eksportuję aktywne logo: ${activeName}`);
    
@@ -1054,19 +1053,15 @@ document.addEventListener("DOMContentLoaded", async () => {
          .replace(/[^\p{L}\p{N}\-_ ]/gu, "")
          .trim() || "logo";
    
-       // dodatkowe potwierdzenie „co leci”
-       alert(`Eksportuję AKTYWNE logo:\n\n${activeName}\n\nZapiszę plik JSON.`);
-   
        downloadJson(`logo_${safeName}.json`, exp);
+   
        setMsg(`Wyeksportowano aktywne logo: ${activeName}`);
      } catch (e){
        console.error(e);
-       alert("Nie udało się wyeksportować.\n\n" + (e?.message || e));
+       setMsg("Błąd eksportu aktywnego logo.");
      }
    });
    
-
-
   // modal wyboru trybu
   pickText?.addEventListener("click", () => { show(createOverlay, false); openEditor("TEXT"); });
   pickTextPix?.addEventListener("click", () => { show(createOverlay, false); openEditor("TEXT_PIX"); });
