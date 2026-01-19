@@ -23,6 +23,8 @@ export function initTextPixEditor(ctx) {
   const btnRtUnderline = document.getElementById("btnRtUnderline");
   const btnRtAlignCycle = document.getElementById("btnRtAlignCycle");
 
+  const chkInvert = document.getElementById("chkInvert");
+
   // jeśli zostawiasz "Kontrast" w UI na razie:
   const inpThresh = document.getElementById("inpThresh");
   const chkRtDither = document.getElementById("chkRtDither");
@@ -38,6 +40,28 @@ export function initTextPixEditor(ctx) {
   const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
   const toPx = (v) => (v == null || v === "" ? "" : `${Number(v)}px`);
 
+  function getTheme() {
+    // invert=true => białe tło, czarny tekst
+    return invert
+      ? { bg: "#fff", fg: "#000" }
+      : { bg: "#000", fg: "#fff" };
+  }
+  
+  function applyInvertTheme() {
+    const { bg, fg } = getTheme();
+  
+    // Edytor inline (to co widzisz na stronie)
+    if (rtEditorEl) {
+      rtEditorEl.style.backgroundColor = bg;
+      rtEditorEl.style.color = fg;
+    }
+  
+    // Jeśli chcesz, żeby rama/stage też zmieniała tło:
+    const stage = paneTextPix?.querySelector?.(".rtStage");
+    if (stage) stage.style.backgroundColor = bg;
+  }
+
+
   function setBtnOn(btn, on) {
     if (!btn) return;
     btn.classList.toggle("on", !!on);
@@ -48,6 +72,8 @@ export function initTextPixEditor(ctx) {
   let editor = null;
   let currentAlign = "center"; // left|center|right
   let cachedBits150 = new Uint8Array(DOT_W * DOT_H);
+
+  let invert = false; // false = klasycznie: czarne tło / biały tekst
 
   let _deb = null;
   let _token = 0;
@@ -583,12 +609,12 @@ export function initTextPixEditor(ctx) {
     // Bierzemy content z TinyMCE (stabilny HTML), bez jego “żywych” elementów
     const host = ensureShotHost();
     host.innerHTML = "";
-  
     const box = document.createElement("div");
     box.style.width = `${w}px`;
     box.style.height = `${h}px`;
-    box.style.background = "#000";
-    box.style.color = "#fff";
+    const { bg, fg } = getTheme();
+    box.style.background = bg;
+    box.style.color = fg;
     box.style.overflow = "hidden";
     box.style.boxSizing = "border-box";
 
@@ -649,7 +675,7 @@ export function initTextPixEditor(ctx) {
     const node = buildSnapshotNode(w, h);
   
     const shot = await window.html2canvas(node, {
-      backgroundColor: "#000",
+      backgroundColor: getTheme().bg,
       scale: 1,
       width: w,
       height: h,
@@ -663,7 +689,7 @@ export function initTextPixEditor(ctx) {
     out.height = BIG_H;
     const g = out.getContext("2d", { willReadFrequently: true });
     g.imageSmoothingEnabled = true;
-    g.fillStyle = "#000";
+    g.fillStyle = getTheme().bg;
     g.fillRect(0, 0, BIG_W, BIG_H);
     g.drawImage(shot, 0, 0, BIG_W, BIG_H);
     return out;
@@ -855,6 +881,13 @@ export function initTextPixEditor(ctx) {
       applyParagraphStyles({ marginBottom: clamp(Number(v), 0, 80) });
     });
 
+    chkInvert?.addEventListener("change", () => {
+      invert = !!chkInvert.checked;
+      applyInvertTheme();
+      ctx.markDirty?.();
+      schedulePreview(80);
+    });
+
     // screenshot appearance controls (jeśli zostają)
     inpThresh?.addEventListener("input", () => {
       ctx.markDirty?.();
@@ -875,6 +908,8 @@ export function initTextPixEditor(ctx) {
   return {
     async open() {
       show(paneTextPix, true);
+      if (chkInvert) chkInvert.checked = invert;
+      applyInvertTheme();
 
       if (!_uiBound) { bindUiOnce(); _uiBound = true; }
       
