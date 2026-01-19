@@ -401,58 +401,101 @@ export function initDrawEditor(ctx) {
 
   function setCanvasCursor(css) {
     if (!drawCanvasEl) return;
-    drawCanvasEl.style.cursor = css || "";
+    // UWAGA: w SELECT chcemy dać Fabric kontrolę, więc ustawiamy "" (nie "default")
+    drawCanvasEl.style.cursor = (css == null) ? "" : css;
   }
-
+  
   function hideOverlayCursor() {
     if (!cursorDot) return;
     cursorDot.style.transform = "translate(-9999px, -9999px)";
   }
-
+  
+  function showOverlayCursor() {
+    if (!cursorDot) return;
+    // pozycję i tak ustawiamy w placeOverlayAt()
+    // tu tylko upewniamy się, że element ma sensowne wymiary
+  }
+  
   function updateCursorVisual() {
     if (!fabricCanvas) return;
     ensureCursorOverlay();
-
-    // Domyślnie: overlay ukryty, kursor normalny
-    let showOverlay = false;
-
-    // Styl overlay
+  
+    // Domyślnie overlay schowany
+    hideOverlayCursor();
+  
+    // 1) SELECT: strzałka (Fabric ma prawo zmienić na move na hover!)
+    if (tool === TOOL.SELECT) {
+      setCanvasCursor(""); // oddaj kontrolę Fabricowi
+      fabricCanvas.defaultCursor = "default";
+      fabricCanvas.hoverCursor = "move";
+      fabricCanvas.moveCursor = "move";
+      return;
+    }
+  
+    // 2) PAN: ręka (grab / grabbing)
+    if (tool === TOOL.PAN) {
+      setCanvasCursor(panDown ? "grabbing" : "grab");
+      return;
+    }
+  
+    // 3) BRUSH: samo kółko, bez krzyżyka
     if (tool === TOOL.BRUSH) {
-      showOverlay = true;
-      setCanvasCursor("none");
+      setCanvasCursor("none"); // żadnej strzałki ani krzyżyka
       const z = fabricCanvas.getZoom();
-      const d = Math.max(6, Math.round(getStroke() * z)); // ekranowy rozmiar
+      const d = Math.max(6, Math.round(getStroke() * z));
+  
       cursorDot.style.width = `${d}px`;
       cursorDot.style.height = `${d}px`;
       cursorDot.style.borderRadius = "999px";
-      cursorDot.style.border = "1px solid rgba(255,255,255,.85)";
+      cursorDot.style.border = "1px solid rgba(255,255,255,.9)";
       cursorDot.style.background = "transparent";
-    } else if (tool === TOOL.ERASER) {
-      showOverlay = true;
+      cursorDot.style.boxShadow = "0 0 0 1px rgba(0,0,0,.35)";
+  
+      showOverlayCursor();
+      placeOverlayAt(lastPointer.x, lastPointer.y);
+      return;
+    }
+  
+    // 4) ERASER: sam kwadracik, bez strzałki
+    if (tool === TOOL.ERASER) {
       setCanvasCursor("none");
-      const d = 10; // mały kwadrat – stały (czytelny)
+      const d = 10; // stały, czytelny
+  
       cursorDot.style.width = `${d}px`;
       cursorDot.style.height = `${d}px`;
       cursorDot.style.borderRadius = "2px";
-      cursorDot.style.border = "1px solid rgba(255,255,255,.85)";
+      cursorDot.style.border = "1px solid rgba(255,255,255,.9)";
       cursorDot.style.background = "transparent";
-    } else if (tool === TOOL.PAN) {
-      setCanvasCursor("grab");
-    } else if (tool === TOOL.SELECT) {
-      setCanvasCursor("default");
-    } else {
-      // figury + POLY: crosshair (jak pro appki)
-      setCanvasCursor("crosshair");
-    }
-
-    // pokaż/ukryj
-    if (!showOverlay) {
-      hideOverlayCursor();
-    } else {
-      // odśwież pozycję (ostatni pointer)
+      cursorDot.style.boxShadow = "0 0 0 1px rgba(0,0,0,.35)";
+  
+      showOverlayCursor();
       placeOverlayAt(lastPointer.x, lastPointer.y);
+      return;
     }
+  
+    // 5) SHAPES + POLY: krzyżyk (bez kółka/kwadratu)
+    setCanvasCursor("crosshair");
   }
+  
+  function placeOverlayAt(clientX, clientY) {
+    if (!cursorDot || !drawCanvasEl) return;
+  
+    const rect = drawCanvasEl.getBoundingClientRect();
+    const x = Math.round(clientX - rect.left);
+    const y = Math.round(clientY - rect.top);
+  
+    // ważne: gdy kursor jest poza canvasem – chowamy overlay
+    if (x < 0 || y < 0 || x > rect.width || y > rect.height) {
+      hideOverlayCursor();
+      return;
+    }
+  
+    // center
+    const w = cursorDot.offsetWidth || 0;
+    const h = cursorDot.offsetHeight || 0;
+    cursorDot.style.transform = `translate(${x - w/2}px, ${y - h/2}px)`;
+  }
+  
 
   function placeOverlayAt(clientX, clientY) {
     if (!cursorDot || !drawCanvasEl) return;
@@ -1172,6 +1215,11 @@ export function initDrawEditor(ctx) {
       fireRightClick: true,
     });
 
+    fabricCanvas.defaultCursor = "default";
+    fabricCanvas.hoverCursor = "move";
+    fabricCanvas.moveCursor = "move";
+
+
     ensureCursorOverlay();
 
     // rozmiar + world
@@ -1228,6 +1276,7 @@ export function initDrawEditor(ctx) {
       if (tool === TOOL.PAN) {
         if (fabricCanvas.getZoom() <= MIN_ZOOM + 1e-6) return; // pan nie ma sensu przy z=1
         panDown = true;
+        updateCursorVisual();
         panStart = { x: ev.clientX, y: ev.clientY };
         vptStart = fabricCanvas.viewportTransform ? fabricCanvas.viewportTransform.slice() : null;
         return;
@@ -1296,6 +1345,7 @@ export function initDrawEditor(ctx) {
     fabricCanvas.on("mouse:up", () => {
       if (tool === TOOL.PAN) {
         panDown = false;
+        updateCursorVisual();
         vptStart = null;
         return;
       }
@@ -1611,6 +1661,10 @@ export function initDrawEditor(ctx) {
     drawCanvasEl?.addEventListener("pointermove", (ev) => {
       lastPointer = { x: ev.clientX, y: ev.clientY };
       placeOverlayAt(ev.clientX, ev.clientY);
+    });
+
+    drawCanvasEl?.addEventListener("pointerleave", () => {
+      hideOverlayCursor();
     });
 
     // Keyboard
