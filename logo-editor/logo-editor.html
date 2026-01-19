@@ -21,17 +21,16 @@
 
  
 <script type="module">
+  console.log("guard start");
+  window.addEventListener("error", e => console.error("window error", e.error || e.message));
+
   import { guardDesktopOnly } from "../js/core/device-guard.js";
 
-  const minWidth = 980;
-
-  guardDesktopOnly({
-    minWidth,
-    message: "Edytor logo działa tylko na komputerze (min. 980px).",
-  });
+  guardDesktopOnly({ minWidth: 980, message: "Edytor logo działa tylko na komputerze (min. 980px)." });
 
   import("./js/main.js");
 </script>
+
 
 </head>
 
