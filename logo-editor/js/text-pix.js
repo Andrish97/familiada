@@ -695,6 +695,16 @@ export function initTextPixEditor(ctx) {
     return out;
   }
 
+  function makeInkBits(bits150) {
+    // "ink" = to, co jest treścią (litery/kształt), a nie tło.
+    // Przy invert (białe tło, czarny tekst) ink to zera.
+    if (!invert) return bits150;
+  
+    const out = new Uint8Array(bits150.length);
+    for (let i = 0; i < bits150.length; i++) out[i] = bits150[i] ? 0 : 1;
+    return out;
+  }
+
   async function compileToBits150() {
     const plain = String(editor?.getContent?.({ format: "text" }) || "").replace(/\u00a0/g, " ").trim();
     if (!plain) return { bits150: new Uint8Array(DOT_W * DOT_H), clipped: false };
@@ -706,7 +716,8 @@ export function initTextPixEditor(ctx) {
     const bits208 = canvasToBits208(c208, threshold, dither);
     const bits150 = compress208x88to150x70(bits208);
 
-    const box = bitsBoundingBox(bits150, DOT_W, DOT_H);
+    const ink = makeInkBits(bits150); // <-- klucz
+    const box = bitsBoundingBox(ink, DOT_W, DOT_H);
     const clipped = looksClipped(box, DOT_W, DOT_H, 0);
 
     return { bits150, clipped };
