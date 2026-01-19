@@ -96,15 +96,160 @@
       </div>
     </div>
 
-    <!-- TEXT_PIX -->
-    <div class="pane" id="paneTextPix" style="display:none;">
-      <!-- ... tu zostawiasz swój kod TEXT_PIX bez zmian ... -->
-    </div>
+       <!-- TEXT_PIX (WYSIWYG -> "screenshot" na wyświetlacz) -->
+          <div class="pane" id="paneTextPix" style="display:none;">
+            <div class="paneSec">
+              <div class="paneSecTitle">Tekst</div>
+              <div class="paneSecBody">
+                <div class="warn" id="pixWarn" style="display:none;"></div>
+                <div class="rtStage">
+                  <div id="rtEditor" class="rtEditor" contenteditable="true" spellcheck="false" data-placeholder="Wpisz tekst…"></div>
+                </div>
+              </div>
+            </div>
 
-    <!-- DRAW -->
-    <div class="pane" id="paneDraw" style="display:none;">
-      <!-- ... tu zostawiasz swój kod DRAW bez zmian ... -->
-    </div>
+            <div class="paneSec">
+              <div class="paneSecTitle">Ustawienia</div>
+              <div class="paneSecBody">
+
+                <!-- 2×2 bloki, równo -->
+                <div class="ctrlGrid" id="ctrlGrid">
+
+                  <div class="ctrlBlock blkFont" id="blkFont" data-tip="Czcionka i rozmiar: działają na zaznaczony tekst (albo na nowe znaki, jeśli nie masz zaznaczenia).">
+                    <div class="ctrlTitle">Czcionka</div>
+
+                    <div class="ctrlRow ctrlRowFull">
+                      <select class="inp" id="selRtFont"></select>
+                    </div>
+
+                    <div class="ctrlRow ctrlRowSize">
+                      <div class="miniLbl">Rozmiar</div>
+                      <input class="inp" id="inpRtSize" type="number" min="10" max="140" value="56"/>
+                    </div>
+                  </div>
+
+                  <div class="ctrlBlock" id="blkSpacing" data-tip="Odstępy i wyrównanie: działają na akapit (linijkę/paragraph), w którym stoi kursor.">
+                    <div class="ctrlTitle">Odstępy</div>
+
+                    <div class="ctrlGrid2">
+                      <label class="field">
+                        <span>Linia</span>
+                        <input class="inp" id="inpRtLine" type="number" step="0.05" min="0.70" max="1.80" value="1.05"/>
+                      </label>
+                      <label class="field">
+                        <span>Litery</span>
+                        <input class="inp" id="inpRtLetter" type="number" step="0.1" min="0" max="6" value="0"/>
+                      </label>
+                      <label class="field">
+                        <span>Przed akap.</span>
+                        <input class="inp" id="inpRtPadTop" type="number" step="1" min="0" max="60" value="8"/>
+                      </label>
+                      <label class="field">
+                        <span>Po akap.</span>
+                        <input class="inp" id="inpRtPadBot" type="number" step="1" min="0" max="60" value="8"/>
+                      </label>
+                    </div>
+
+                    <div class="ctrlRow ctrlRowAlign">
+                      <div class="miniLbl" style="opacity:.85;">Wyrównanie</div>
+                      <button class="btn sm" id="btnRtAlignCycle" type="button" data-tip="Klikaj: lewo → środek → prawo">⇆</button>
+                    </div>
+                  </div>
+
+                  <div class="ctrlBlock" id="blkStyle" data-tip="BIU działa na zaznaczony tekst (albo na nowe znaki, jeśli nie masz zaznaczenia).">
+                    <div class="ctrlTitle">Styl</div>
+                    <div class="ctrlRow ctrlRowBiu">
+                      <button class="btn sm" id="btnRtBold" type="button" aria-pressed="false"><b>B</b></button>
+                      <button class="btn sm" id="btnRtItalic" type="button" aria-pressed="false"><i>I</i></button>
+                      <button class="btn sm" id="btnRtUnderline" type="button" aria-pressed="false"><u>U</u></button>
+                    </div>
+                  </div>
+
+                  <div class="ctrlBlock" id="blkInvert" data-tip="Odwraca kolory planszy i tekstu">
+                    <div class="ctrlTitle">Odwróć kolory</div>
+                    <div class="ctrlRow ctrlRowInvert">
+                    <label class="chk">
+                      <input type="checkbox" id="chkInvert"/>
+                      <span></span>
+                    </label>
+                    </div>
+                  </div>
+                  
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- DRAW -->
+          <div class="pane" id="paneDraw" style="display:none;">
+            <div class="drawWrap">
+              <!-- lewy panel narzędzi -->
+              <div class="drawTools">
+          
+                <!-- blok: nawigacja -->
+                <div class="toolGrid">
+                  <button class="tbtn" id="tSelect" type="button" title="Wskaźnik (Select/Move)">🖱️</button>
+                  <button class="tbtn" id="tPan" type="button" title="Ręka (Pan)">✋</button>
+          
+                  <button class="tbtn" id="tZoomIn" type="button" title="Zoom +">➕</button>
+                  <button class="tbtn" id="tZoomOut" type="button" title="Zoom -">➖</button>
+          
+                  <button class="tbtn" id="tColor" type="button" title="Kolor obramowania narzędzia">⬜️</button>
+                  <button class="tbtn" id="tBg" type="button" title="Tło sceny (czarne/białe)">🖼️</button>
+
+                </div>
+          
+                <div class="toolSep"></div>
+          
+                <!-- blok: rysowanie -->
+                <div class="toolGrid">
+                  <button class="tbtn" id="tBrush" type="button" title="Ołówek / Pędzel">✏️</button>
+                  <button class="tbtn" id="tEraser" type="button" title="Gumka">🧽</button>
+          
+                  <button class="tbtn" id="tLine" type="button" title="Linia">📏</button>
+                  <button class="tbtn" id="tRect" type="button" title="Prostokąt">▭</button>
+          
+                  <button class="tbtn" id="tEllipse" type="button" title="Elipsa">⬭</button>
+                  <button class="tbtn" id="tPoly" type="button" title="Wielokąt">🔺</button>
+                </div>
+          
+                <div class="toolSep"></div>
+          
+                <!-- blok: historia + akcje -->
+                <div class="toolGrid">
+                  <button class="tbtn" id="tUndo" type="button" title="Cofnij">↶</button>
+                  <button class="tbtn" id="tRedo" type="button" title="Ponów">↷</button>
+          
+                  <button class="tbtn" id="tSettings" type="button" title="Ustawienia narzędzia">⚙️</button>
+                  <button class="tbtn" id="tPolyDone" type="button" title="Zakończ wielokąt (Enter / dwuklik)" disabled>✅</button>
+          
+                  <button class="tbtn danger" id="tClear" type="button" title="Wyczyść">🗑️</button>
+                  <button class="tbtn" id="tEye" type="button" title="Podgląd (pełny ekran)">👁️</button>
+                </div>
+          
+                <!-- modal ustawień -->
+                <div class="drawPop" id="drawPop" style="display:none;">
+                  <div class="drawPopHead">
+                    <div class="drawPopTitle" id="drawPopTitle">Ustawienia</div>
+                    <button class="btn sm" id="drawPopClose" type="button">✕</button>
+                  </div>
+          
+                  <div class="drawPopBody" id="drawPopBody">
+                    <!-- JS wstawia właściwe pola zależnie od narzędzia -->
+                  </div>
+                </div>
+          
+              </div>
+          
+              <!-- scena: zawsze proporcja 26:11 -->
+              <div class="drawStageBox">
+                <div class="drawStageRatio" id="drawStageHost">
+                  <!-- UWAGA: ID musi być drawStage (fabric canvas) -->
+                  <canvas id="drawStage" width="1" height="1"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
 
     <!-- IMAGE -->
     <div class="pane" id="paneImage" style="display:none;">
