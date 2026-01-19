@@ -1343,6 +1343,36 @@ export function initDrawEditor(ctx) {
     });
 
     window.__drawFabric = fabricCanvas;
+    window.__drawDbg = {
+      c: fabricCanvas,
+      info() {
+        const c = fabricCanvas;
+        const up = c.upperCanvasEl;
+        const low = c.lowerCanvasEl;
+        console.log("zoom:", c.getZoom(), "vpt:", c.viewportTransform);
+        console.log("canvas size:", c.getWidth(), c.getHeight());
+        console.log("upper attr:", up.width, up.height, "lower attr:", low.width, low.height);
+        console.log("upper rect:", up.getBoundingClientRect());
+        console.log("lower rect:", low.getBoundingClientRect());
+        console.log("offset:", c._offset);
+      },
+      calcOffset() {
+        fabricCanvas.calcOffset();
+        console.log("calcOffset =>", fabricCanvas._offset);
+      },
+      list() {
+        const objs = fabricCanvas.getObjects();
+        console.table(objs.map((o,i)=>({
+          i,
+          type:o.type,
+          selectable:o.selectable,
+          evented:o.evented,
+          stroke:o.stroke,
+          fill:o.fill
+        })));
+      }
+    };
+
 
     ensureCursorOverlay();
 
