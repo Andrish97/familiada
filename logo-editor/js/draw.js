@@ -399,65 +399,46 @@ export function initDrawEditor(ctx) {
     drawStageHost.appendChild(cursorLayer);
   }
 
-  function setCanvasCursor(css) {
-    // css:
-    // - null => NIE ustawiaj style.cursor (oddaj Fabricowi)
-    // - string => wymuś
-  
-    const apply = (el) => {
-      if (!el) return;
-      if (css == null) el.style.cursor = "";
-      else el.style.cursor = css;
-    };
-  
-    if (fabricCanvas) {
-      apply(fabricCanvas.upperCanvasEl);
-      apply(fabricCanvas.lowerCanvasEl);
-    }
-    apply(drawCanvasEl);
-  }
-  
-  function hideOverlayCursor() {
-    if (!cursorDot) return;
-    cursorDot.style.transform = "translate(-9999px, -9999px)";
-  }
-  
-  function showOverlayCursor() {
-    if (!cursorDot) return;
-    // pozycję i tak ustawiamy w placeOverlayAt()
-    // tu tylko upewniamy się, że element ma sensowne wymiary
-  }
-  
   function updateCursorVisual() {
     if (!fabricCanvas) return;
     ensureCursorOverlay();
   
-    // Domyślnie overlay schowany
+    // helper do ustawiania Fabric-cursorów konsekwentnie
+    const setFabricCursors = (def, hov, mov) => {
+      fabricCanvas.defaultCursor = def;
+      fabricCanvas.hoverCursor = hov;
+      fabricCanvas.moveCursor = mov;
+    };
+  
+    // 0) zawsze chowamy overlay na start
     hideOverlayCursor();
   
-    // 1) SELECT: strzałka (Fabric ma prawo zmienić na move na hover!)
+    // 1) SELECT: strzałka / move na obiekcie
     if (tool === TOOL.SELECT) {
-      hideOverlayCursor();
-    
-      // oddaj Fabricowi (move na hover)
+      // pozwól Fabricowi sterować (bo on ma "move" na hover)
       setCanvasCursor(null);
-      fabricCanvas.defaultCursor = "default";
-      fabricCanvas.hoverCursor = "move";
-      fabricCanvas.moveCursor = "move";
+      setFabricCursors("default", "move", "move");
       return;
     }
-
   
-    // 2) PAN: ręka (grab / grabbing)
+    // 2) PAN: ręka (grab / grabbing), bez overlay
     if (tool === TOOL.PAN) {
-      hideOverlayCursor();
+      // tu nie chcemy "move" na hover obiektu — zawsze ręka
+      setCanvasCursor(null);
+      setFabricCursors(panDown ? "grabbing" : "grab", panDown ? "grabbing" : "grab", panDown ? "grabbing" : "grab");
+  
+      // dodatkowo wymuś na canvasach (czasem przeglądarka/OS robi swoje)
       setCanvasCursor(panDown ? "grabbing" : "grab");
       return;
     }
   
-    // 3) BRUSH: samo kółko, bez krzyżyka
+    // 3) BRUSH: tylko kółko, bez krzyżyka i bez strzałki
     if (tool === TOOL.BRUSH) {
-      setCanvasCursor("none"); // żadnej strzałki ani krzyżyka
+      // Fabric ma nie wtrącać kursora
+      setFabricCursors("none", "none", "none");
+      // i twardo ukryj systemowy kursor
+      setCanvasCursor("none");
+  
       const z = fabricCanvas.getZoom();
       const d = Math.max(6, Math.round(getStroke() * z));
   
@@ -468,16 +449,16 @@ export function initDrawEditor(ctx) {
       cursorDot.style.background = "transparent";
       cursorDot.style.boxShadow = "0 0 0 1px rgba(0,0,0,.35)";
   
-      showOverlayCursor();
       placeOverlayAt(lastPointer.x, lastPointer.y);
       return;
     }
   
-    // 4) ERASER: sam kwadracik, bez strzałki
+    // 4) ERASER: tylko kwadracik, bez strzałki
     if (tool === TOOL.ERASER) {
+      setFabricCursors("none", "none", "none");
       setCanvasCursor("none");
-      const d = 10; // stały, czytelny
   
+      const d = 10;
       cursorDot.style.width = `${d}px`;
       cursorDot.style.height = `${d}px`;
       cursorDot.style.borderRadius = "2px";
@@ -485,14 +466,19 @@ export function initDrawEditor(ctx) {
       cursorDot.style.background = "transparent";
       cursorDot.style.boxShadow = "0 0 0 1px rgba(0,0,0,.35)";
   
-      showOverlayCursor();
       placeOverlayAt(lastPointer.x, lastPointer.y);
       return;
     }
   
     // 5) SHAPES + POLY: krzyżyk (bez kółka/kwadratu)
+    // Tu też NIE pozwalamy Fabricowi zmienić na "move" na hover obiektu.
+    setCanvasCursor(null);
+    setFabricCursors("crosshair", "crosshair", "crosshair");
+  
+    // i na wszelki wypadek (bo Fabric czasem przestawia), wymuś inline:
     setCanvasCursor("crosshair");
   }
+
   
   function placeOverlayAt(clientX, clientY) {
     if (!cursorDot || !fabricCanvas) return;
@@ -1227,11 +1213,6 @@ export function initDrawEditor(ctx) {
       fireRightClick: true,
     });
 
-    fabricCanvas.defaultCursor = "default";
-    fabricCanvas.hoverCursor = "move";
-    fabricCanvas.moveCursor = "move";
-
-
     ensureCursorOverlay();
 
     // Cursor overlay follow — MUSI być na upperCanvasEl (Fabric)
@@ -1379,6 +1360,10 @@ export function initDrawEditor(ctx) {
       }
       if (drawingObj) finishFigure();
     });
+
+    fabricCanvas.on("mouse:over", () => updateCursorVisual());
+    fabricCanvas.on("mouse:out",  () => updateCursorVisual());
+
 
     // Dwuklik kończy polygon
     drawCanvasEl.addEventListener("dblclick", (ev) => {
