@@ -498,76 +498,113 @@ async function sendZeroStatesToDevices() {
   function bindDropZone(root, targetSide) {
     if (!root || root._finalDndBound) return;
     root._finalDndBound = true;
-
+  
     root.addEventListener("dragover", (e) => {
       if (store.state.final.confirmed) return;
       e.preventDefault();
+  
       root.classList.add("droptarget");
-      if (e.dataTransfer) {
-        e.dataTransfer.dropEffect = "move";
-      }
+      finalDnd.overSide = targetSide;
+  
+      if (e.dataTransfer) e.dataTransfer.dropEffect = "move";
+  
+      const poolRoot = document.getElementById("finalGameList");
+      const finalRoot = document.getElementById("finalFinalList");
+      syncFinalPickerSlotsHeight(poolRoot, finalRoot);
     });
-
+  
     root.addEventListener("dragleave", () => {
       root.classList.remove("droptarget");
+  
+      // tylko jeśli to był aktualny hover
+      if (finalDnd.overSide === targetSide) finalDnd.overSide = null;
+  
+      const poolRoot = document.getElementById("finalGameList");
+      const finalRoot = document.getElementById("finalFinalList");
+      syncFinalPickerSlotsHeight(poolRoot, finalRoot);
     });
-
+  
     root.addEventListener("drop", (e) => {
       if (store.state.final.confirmed) return;
       e.preventDefault();
+  
       root.classList.remove("droptarget");
-
+      finalDnd.overSide = null;
+  
       const id = e.dataTransfer ? e.dataTransfer.getData("text/plain") : "";
       if (!id) return;
-
+  
       if (targetSide === "final") {
-        // wrzucamy DO finału
         if (!finalPickerSelected.has(id)) {
           if (finalPickerSelected.size >= 5) return; // limit 5
           finalPickerSelected.add(id);
         }
       } else {
-        // wrzucamy Z finału do puli
         finalPickerSelected.delete(id);
       }
-
-      // roboczy stan do store (bez Zatwierdź)
+  
       store.state.final.picked = finalPickerGetSelectedIds();
       finalPickerRender();
+  
+      const poolRoot = document.getElementById("finalGameList");
+      const finalRoot = document.getElementById("finalFinalList");
+      syncFinalPickerSlotsHeight(poolRoot, finalRoot);
     });
   }
 
   function renderList(root, list, side, confirmed) {
     if (!root) return;
-
+  
     root.innerHTML = list
       .map(
         (q) => `
-      <div class="qRow" data-id="${String(q.id)}" draggable="${confirmed ? "false" : "true"}">
-        <div class="meta">#${q.ord}</div>
-        <div class="txt">${escapeHtml(q.text || "")}</div>
-      </div>
-    `
+        <div class="qRow" data-id="${String(q.id)}" draggable="${confirmed ? "false" : "true"}">
+          <div class="meta">#${q.ord}</div>
+          <div class="txt">${escapeHtml(q.text || "")}</div>
+        </div>
+      `
       )
       .join("");
-
+  
     if (confirmed) return;
-
+  
     root.querySelectorAll(".qRow").forEach((row) => {
       const id = row.dataset.id || "";
       if (!id) return;
-
+  
       row.addEventListener("dragstart", (e) => {
         if (store.state.final.confirmed) return;
+  
+        finalDnd.draggingId = id;
+        finalDnd.fromSide = side;     // "pool" albo "final"
+        finalDnd.overSide = null;
+  
         if (e.dataTransfer) {
           e.dataTransfer.setData("text/plain", id);
           e.dataTransfer.effectAllowed = "move";
         }
         row.classList.add("dragging");
+  
+        // live sync od razu po złapaniu
+        const poolRoot = document.getElementById("finalGameList");
+        const finalRoot = document.getElementById("finalFinalList");
+        syncFinalPickerSlotsHeight(poolRoot, finalRoot);
       });
-
+  
       row.addEventListener("dragend", () => {
         row.classList.remove("dragging");
+  
+        // sprzątamy stan DND
+        finalDnd.draggingId = null;
+        finalDnd.fromSide = null;
+        finalDnd.overSide = null;
+  
+        const poolRoot = document.getElementById("finalGameList");
+        const finalRoot = document.getElementById("finalFinalList");
+        if (poolRoot) poolRoot.classList.remove("droptarget");
+        if (finalRoot) finalRoot.classList.remove("droptarget");
+  
+        syncFinalPickerSlotsHeight(poolRoot, finalRoot);
       });
     });
   }
@@ -592,6 +629,7 @@ async function sendZeroStatesToDevices() {
     renderList(finalRoot, picked, "final", confirmed);
 
     finalPickerUpdateButtons();
+    syncFinalPickerSlotsHeight(poolRoot, finalRoot);
   }
 
   async function finalPickerReload() {
