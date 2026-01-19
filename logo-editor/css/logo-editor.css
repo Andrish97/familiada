@@ -391,6 +391,15 @@ body.logo-editor-body .wrap{
 
 #paneTextPix ::selection{ background: rgba(255,234,166,.35); }
 
+#paneTextPix .imgPrevWrap{
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,.14);
+  background:rgba(0,0,0,.12);
+  padding:8px;
+  display: flex;
+  flex: 1;
+}
+
 /* ==========================================================
    DRAW — najważniejsze: panel narzędzi + DUŻA scena 26:11
 ========================================================== */
@@ -596,14 +605,6 @@ body.logo-editor-body .wrap{
 #drawStageHost.cur-none    canvas,
 #drawStageHost.cur-none    #drawStage{ cursor: none !important; }
 
-#paneDraw .imgPrevWrap{
-  border-radius:14px;
-  border:1px solid rgba(255,255,255,.14);
-  background:rgba(0,0,0,.12);
-  padding:8px;
-  display: flex;
-  flex: 1;
-}
 /* ==========================================================
    IMAGE — cały obraz widoczny (contain) + ramka 26:11
 ========================================================== */
