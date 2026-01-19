@@ -562,7 +562,7 @@ export function initDrawEditor(ctx) {
   
       // lepsze trafianie cienkich obiektów
       fabricCanvas.perPixelTargetFind = true;
-      fabricCanvas.targetFindTolerance = 6;
+      fabricCanvas.targetFindTolerance = 10;
   
       clearPolyDraft();
     }
@@ -1343,6 +1343,14 @@ export function initDrawEditor(ctx) {
       fireRightClick: true,
     });
 
+    let _needOffsetKick = true;
+
+    const kickOffsetIfNeeded = () => {
+      if (!_needOffsetKick) return;
+      _needOffsetKick = false;
+      fabricCanvas.calcOffset();
+    };
+
     window.__drawFabric = fabricCanvas;
     window.__drawDbg = {
       c: fabricCanvas,
@@ -1379,8 +1387,13 @@ export function initDrawEditor(ctx) {
 
     // Cursor overlay follow — MUSI być na upperCanvasEl (Fabric)
     const cursorEl = fabricCanvas.upperCanvasEl; // TO JEST WAŻNE
+
+    cursorEl.addEventListener("pointerdown", () => {
+      kickOffsetIfNeeded();
+    }, { passive: true });
     
     cursorEl.addEventListener("pointermove", (ev) => {
+      kickOffsetIfNeeded();
       lastPointer = { x: ev.clientX, y: ev.clientY };
       if (tool === TOOL.BRUSH || tool === TOOL.ERASER) placeOverlayAt(ev.clientX, ev.clientY);
     }, { passive: true });
@@ -1462,9 +1475,20 @@ export function initDrawEditor(ctx) {
       }
 
       if (tool === TOOL.ERASER) {
-        // usuwanie obiektu dotykiem:
-        // - na down usuń to, co jest pod kursorem
-        const target = opt.target;
+        kickOffsetIfNeeded(); // ważne, żeby nie było przesunięcia
+        
+        // tymczasowo podbij tolerancję dla pewności
+        const oldTol = fabricCanvas.targetFindTolerance;
+        const oldPx  = fabricCanvas.perPixelTargetFind;
+        
+        fabricCanvas.perPixelTargetFind = true;
+        fabricCanvas.targetFindTolerance = 12;
+        
+        const target = fabricCanvas.findTarget(opt.e);
+        
+        fabricCanvas.perPixelTargetFind = oldPx;
+        fabricCanvas.targetFindTolerance = oldTol;
+        
         if (target) {
           fabricCanvas.remove(target);
           fabricCanvas.requestRenderAll();
@@ -1510,7 +1534,19 @@ export function initDrawEditor(ctx) {
 
       // Gumka: usuwa obiekty, które dotyka (ciągły erase)
       if (tool === TOOL.ERASER && pointerDown) {
-        const target = opt.target;
+        kickOffsetIfNeeded();
+      
+        const oldTol = fabricCanvas.targetFindTolerance;
+        const oldPx  = fabricCanvas.perPixelTargetFind;
+      
+        fabricCanvas.perPixelTargetFind = true;
+        fabricCanvas.targetFindTolerance = 12;
+      
+        const target = fabricCanvas.findTarget(opt.e);
+      
+        fabricCanvas.perPixelTargetFind = oldPx;
+        fabricCanvas.targetFindTolerance = oldTol;
+      
         if (target) {
           fabricCanvas.remove(target);
           fabricCanvas.requestRenderAll();
@@ -1868,6 +1904,11 @@ export function initDrawEditor(ctx) {
         fabricCanvas.backgroundColor = bgColor();
 
         resizeScene();
+        _needOffsetKick = true;
+        requestAnimationFrame(() => {
+          if (!fabricCanvas) return;
+          fabricCanvas.calcOffset();
+        });
         zoomTo100();
 
         fabricCanvas.requestRenderAll();
