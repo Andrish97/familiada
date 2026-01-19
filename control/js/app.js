@@ -446,6 +446,53 @@ async function sendZeroStatesToDevices() {
   let finalPickerAll = [];
   let finalPickerSelected = new Set(); // trzymamy ID jako STRINGI
 
+  // ===== FINAL PICKER: stała wysokość kafelków + synchronizacja slotów =====
+  // Uwaga: te stałe powinny odpowiadać CSS (.qRow height i .qList gap/padding)
+  const FINAL_TILE_H = 56;  // wysokość kafelka (ustawimy też w CSS)
+  const FINAL_GAP = 10;     // gap w .qList
+  const FINAL_PAD = 20;     // padding góra+dół w .qList (10+10)
+  
+  const finalDnd = {
+    draggingId: null, // string
+    fromSide: null,   // "pool" | "final"
+    overSide: null,   // "pool" | "final"
+  };
+  
+  function countRows(root) {
+    return root ? root.querySelectorAll(".qRow").length : 0;
+  }
+  
+  function computeVirtualCounts(poolRoot, finalRoot) {
+    let poolN = countRows(poolRoot);
+    let finalN = countRows(finalRoot);
+  
+    // klocek "w ręku" = znika ze źródła
+    if (finalDnd.draggingId && finalDnd.fromSide) {
+      if (finalDnd.fromSide === "pool") poolN = Math.max(0, poolN - 1);
+      if (finalDnd.fromSide === "final") finalN = Math.max(0, finalN - 1);
+    }
+  
+    // klocek "nad pudełkiem" = jakby już tam wpadł
+    if (finalDnd.draggingId && finalDnd.overSide) {
+      if (finalDnd.overSide === "pool") poolN = poolN + 1;
+      if (finalDnd.overSide === "final") finalN = finalN + 1;
+    }
+  
+    return { poolN, finalN };
+  }
+  
+  function syncFinalPickerSlotsHeight(poolRoot, finalRoot) {
+    if (!poolRoot || !finalRoot) return;
+  
+    const { poolN, finalN } = computeVirtualCounts(poolRoot, finalRoot);
+    const maxCount = Math.max(poolN, finalN, 1);
+  
+    const h = maxCount * FINAL_TILE_H + (maxCount - 1) * FINAL_GAP + FINAL_PAD;
+  
+    poolRoot.style.minHeight = `${h}px`;
+    finalRoot.style.minHeight = `${h}px`;
+  }
+
   function escapeHtml(s) {
     return String(s ?? "")
       .replaceAll("&", "&amp;")
