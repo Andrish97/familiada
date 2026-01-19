@@ -374,6 +374,16 @@ export function initDrawEditor(ctx) {
   // =========================================================
   // Cursor overlay (metoda 2)
   // =========================================================
+
+  function hideOverlayCursor() {
+    if (!cursorDot) return;
+    cursorDot.style.transform = "translate(-9999px, -9999px)";
+  }
+  
+  function showOverlayCursor() {
+    // tu nic nie musimy robić – pokazanie to po prostu ustawienie transform w placeOverlayAt()
+    // ale zostawiamy funkcję, bo czasem chcesz ją wołać dla czytelności
+  }
   
   function setCursorClass(mode, isDown = false) {
     if (!drawStageHost) return;
@@ -686,7 +696,7 @@ export function initDrawEditor(ctx) {
 
   function getWorldPointFromMouse(ev) {
     const f = requireFabric();
-    const rect = drawCanvasEl.getBoundingClientRect();
+    const rect = (fabricCanvas?.upperCanvasEl || drawCanvasEl).getBoundingClientRect();
     const canvasPt = new f.Point(ev.clientX - rect.left, ev.clientY - rect.top);
     const inv = f.util.invertTransform(fabricCanvas.viewportTransform);
     const wp = f.util.transformPoint(canvasPt, inv);
@@ -974,8 +984,6 @@ export function initDrawEditor(ctx) {
         res();
       });
     });
-
-    sc.dispose?.();
     return el;
   }
 
@@ -1005,6 +1013,13 @@ export function initDrawEditor(ctx) {
       bits150 = canvasToBits150(c);
       ctx.onPreview?.({ kind: "PIX", bits: bits150 });
     }, ms);
+  }
+
+  async function refreshPreviewNow() {
+    const c = await renderWorldTo150x70CanvasStable();
+    if (!c) return;
+    bits150 = canvasToBits150(c);
+    ctx.onPreview?.({ kind: "PIX", bits: bits150 });
   }
 
   function openEyePreview() {
@@ -1724,7 +1739,7 @@ export function initDrawEditor(ctx) {
 
     async getCreatePayload() {
       // odśwież bity stabilnie
-      schedulePreview(0);
+      await refreshPreviewNow();
 
       return {
         ok: true,
