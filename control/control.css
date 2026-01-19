@@ -459,15 +459,23 @@
 
 /* ========= LISTA PYTAŃ (pula + finał) ========= */
 .qList{
-  margin-top: 12px;
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 10px;
-  max-height: 460px;
-  overflow: auto;
-  padding: 8px 4px 4px;
-  min-height: 80px;
+
+  /* kluczowe */
+  align-items: stretch;
+  justify-content: flex-start;
+
+  /* to już masz – zostaje */
   border-radius: 16px;
+  border: 1px solid rgba(255,255,255,.12);
   background: rgba(255,255,255,.02);
+
+  padding: 10px;
+
+  /* 👇 DODAJ TYLKO TO */
+  min-height: 56px; /* wysokość jednego kafelka */
 }
 
 .finalLists{
@@ -1366,15 +1374,21 @@
 .finalCol .mini{ margin-top: 0; }
 
 .qRow{
+  height: 56px;
+  min-height: 56px;
+
   display: flex;
-  gap: 10px;
-  align-items: flex-start;
-  border-radius: 16px;
-  border: 1px solid rgba(255,255,255,.12);
-  background: rgba(0,0,0,.16);
-  padding: 10px;
-  cursor: grab;
-  user-select: none;
+  align-items: center;
+
+  /* reszta bez zmian */
+}
+
+.qRow .qPrompt,
+.qRow .qText{
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
 }
 
 /* ===== FINAL: układ wiersza pytanie + input ===== */
