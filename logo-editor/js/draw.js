@@ -400,9 +400,21 @@ export function initDrawEditor(ctx) {
   }
 
   function setCanvasCursor(css) {
-    if (!drawCanvasEl) return;
-    // UWAGA: w SELECT chcemy dać Fabric kontrolę, więc ustawiamy "" (nie "default")
-    drawCanvasEl.style.cursor = (css == null) ? "" : css;
+    // css:
+    // - null => NIE ustawiaj style.cursor (oddaj Fabricowi)
+    // - string => wymuś
+  
+    const apply = (el) => {
+      if (!el) return;
+      if (css == null) el.style.cursor = "";
+      else el.style.cursor = css;
+    };
+  
+    if (fabricCanvas) {
+      apply(fabricCanvas.upperCanvasEl);
+      apply(fabricCanvas.lowerCanvasEl);
+    }
+    apply(drawCanvasEl);
   }
   
   function hideOverlayCursor() {
@@ -425,15 +437,20 @@ export function initDrawEditor(ctx) {
   
     // 1) SELECT: strzałka (Fabric ma prawo zmienić na move na hover!)
     if (tool === TOOL.SELECT) {
-      setCanvasCursor(""); // oddaj kontrolę Fabricowi
+      hideOverlayCursor();
+    
+      // oddaj Fabricowi (move na hover)
+      setCanvasCursor(null);
       fabricCanvas.defaultCursor = "default";
       fabricCanvas.hoverCursor = "move";
       fabricCanvas.moveCursor = "move";
       return;
     }
+
   
     // 2) PAN: ręka (grab / grabbing)
     if (tool === TOOL.PAN) {
+      hideOverlayCursor();
       setCanvasCursor(panDown ? "grabbing" : "grab");
       return;
     }
@@ -478,31 +495,26 @@ export function initDrawEditor(ctx) {
   }
   
   function placeOverlayAt(clientX, clientY) {
-    if (!cursorDot || !drawCanvasEl) return;
+    if (!cursorDot || !fabricCanvas) return;
   
-    const rect = drawCanvasEl.getBoundingClientRect();
+    // FABRIC: realne eventy/cursor są na upperCanvasEl
+    const el = fabricCanvas.upperCanvasEl || drawCanvasEl;
+    if (!el) return;
+  
+    const rect = el.getBoundingClientRect();
     const x = Math.round(clientX - rect.left);
     const y = Math.round(clientY - rect.top);
   
-    // ważne: gdy kursor jest poza canvasem – chowamy overlay
+    // poza obszarem => chowamy overlay
     if (x < 0 || y < 0 || x > rect.width || y > rect.height) {
       hideOverlayCursor();
       return;
     }
   
-    // center
+    // center overlay
     const w = cursorDot.offsetWidth || 0;
     const h = cursorDot.offsetHeight || 0;
-    cursorDot.style.transform = `translate(${x - w/2}px, ${y - h/2}px)`;
-  }
-  
-
-  function placeOverlayAt(clientX, clientY) {
-    if (!cursorDot || !drawCanvasEl) return;
-    const rect = drawCanvasEl.getBoundingClientRect();
-    const x = Math.round(clientX - rect.left);
-    const y = Math.round(clientY - rect.top);
-    cursorDot.style.transform = `translate(${x - cursorDot.offsetWidth/2}px, ${y - cursorDot.offsetHeight/2}px)`;
+    cursorDot.style.transform = `translate(${x - w / 2}px, ${y - h / 2}px)`;
   }
 
   // =========================================================
@@ -1222,6 +1234,22 @@ export function initDrawEditor(ctx) {
 
     ensureCursorOverlay();
 
+    // Cursor overlay follow — MUSI być na upperCanvasEl (Fabric)
+    const cursorEl = fabricCanvas.upperCanvasEl || drawCanvasEl;
+    
+    cursorEl?.addEventListener("pointermove", (ev) => {
+      lastPointer = { x: ev.clientX, y: ev.clientY };
+      // overlay tylko dla brush/eraser, ale placeOverlayAt samo umie schować poza
+      if (tool === TOOL.BRUSH || tool === TOOL.ERASER) {
+        placeOverlayAt(ev.clientX, ev.clientY);
+      }
+    }, { passive: true });
+    
+    cursorEl?.addEventListener("pointerleave", () => {
+      hideOverlayCursor();
+    }, { passive: true });
+
+
     // rozmiar + world
     resizeScene();
     updateZoomButtons();
@@ -1656,16 +1684,6 @@ export function initDrawEditor(ctx) {
       if (tSettings && (t === tSettings || tSettings.contains(t))) return;
       closeSettingsModal();
     }, true);
-
-    // Cursor overlay follow
-    drawCanvasEl?.addEventListener("pointermove", (ev) => {
-      lastPointer = { x: ev.clientX, y: ev.clientY };
-      placeOverlayAt(ev.clientX, ev.clientY);
-    });
-
-    drawCanvasEl?.addEventListener("pointerleave", () => {
-      hideOverlayCursor();
-    });
 
     // Keyboard
     window.addEventListener("keydown", onKeyDown);
