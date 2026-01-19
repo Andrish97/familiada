@@ -956,7 +956,7 @@ async function handleCreate(){
 /* =========================================================
    START
 ========================================================= */
-document.addEventListener("DOMContentLoaded", async () => {
+async function boot(){
   currentUser = await requireAuth("../index.html");
   if (who) who.textContent = currentUser?.email || "—";
 
@@ -970,41 +970,21 @@ document.addEventListener("DOMContentLoaded", async () => {
   await loadDefaultLogo();
 
   const editorCtx = {
-    // stan
     getMode: () => editorMode,
-
-    // dirty
     markDirty,
     clearDirty,
-
-    // komunikat w edytorze
     setEditorMsg,
-
-    // preview -> main canvas
     onPreview: updateBigPreviewFromPayload,
-
-    // font
     getFont3x10: () => FONT_3x10,
-
-    // bitpack
     packBitsRowMajorMSB,
-
-    // rozmiary
     DOT_W,
     DOT_H,
-
-    // threshold (na razie stały, bo usuwamy UI Kontrastu)
     getThreshold: () => 128,
     getDither: () => false,
-
   };
 
   textEditor = initTextEditor(editorCtx);
-  textPixEditor = initTextPixEditor({
-    ...editorCtx,
-    BIG_W: 208,
-    BIG_H: 88,
-  });
+  textPixEditor = initTextPixEditor({ ...editorCtx, BIG_W: 208, BIG_H: 88 });
   drawEditor = initDrawEditor(editorCtx);
   imageEditor = initImageEditor(editorCtx);
 
@@ -1012,14 +992,16 @@ document.addEventListener("DOMContentLoaded", async () => {
   btnBack?.addEventListener("click", () => { location.href = "../builder.html"; });
   btnLogout?.addEventListener("click", async () => { await signOut(); location.href = "../index.html"; });
 
-     // IMPORT
-  btnImportLogo?.addEventListener("click", () => {
-    inpImportLogoFile?.click();
-  });
+  // IMPORT/EXPORT — UWAGA: upewnij się, że masz te DOM-y:
+  const btnImportLogo = document.getElementById("btnImportLogo");
+  const btnExportLogo = document.getElementById("btnExportLogo");
+  const inpImportLogoFile = document.getElementById("inpImportLogoFile");
+
+  btnImportLogo?.addEventListener("click", () => inpImportLogoFile?.click());
 
   inpImportLogoFile?.addEventListener("change", async () => {
     const f = inpImportLogoFile.files?.[0];
-    inpImportLogoFile.value = ""; // reset, żeby drugi raz można było wybrać to samo
+    inpImportLogoFile.value = "";
     if (!f) return;
 
     setMsg("Importuję…");
@@ -1034,32 +1016,31 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   });
 
-   btnExportLogo?.addEventListener("click", () => {
-     try{
-       const active = (logos || []).find(l => !!l.is_active) || null;
-       if (!active){
-         setMsg("Brak aktywnego logo do eksportu.");
-         return;
-       }
-   
-       const activeName = String(active.name || "(bez nazwy)");
-       setMsg(`Eksportuję aktywne logo: ${activeName}`);
-   
-       const exp = buildExportObjectFromLogo(active);
-   
-       const safeName = String(exp.name || "logo")
-         .replace(/[^\p{L}\p{N}\-_ ]/gu, "")
-         .trim() || "logo";
-   
-       downloadJson(`logo_${safeName}.json`, exp);
-   
-       setMsg(`Wyeksportowano aktywne logo: ${activeName}`);
-     } catch (e){
-       console.error(e);
-       setMsg("Błąd eksportu aktywnego logo.");
-     }
-   });
-   
+  btnExportLogo?.addEventListener("click", () => {
+    try{
+      const active = (logos || []).find(l => !!l.is_active) || null;
+      if (!active){
+        setMsg("Brak aktywnego logo do eksportu.");
+        return;
+      }
+
+      const activeName = String(active.name || "(bez nazwy)");
+      setMsg(`Eksportuję aktywne logo: ${activeName}`);
+
+      const exp = buildExportObjectFromLogo(active);
+
+      const safeName = String(exp.name || "logo")
+        .replace(/[^\p{L}\p{N}\-_ ]/gu, "")
+        .trim() || "logo";
+
+      downloadJson(`logo_${safeName}.json`, exp);
+      setMsg(`Wyeksportowano aktywne logo: ${activeName}`);
+    } catch (e){
+      console.error(e);
+      setMsg("Błąd eksportu aktywnego logo.");
+    }
+  });
+
   // modal wyboru trybu
   pickText?.addEventListener("click", () => { show(createOverlay, false); openEditor("TEXT"); });
   pickTextPix?.addEventListener("click", () => { show(createOverlay, false); openEditor("TEXT_PIX"); });
@@ -1069,28 +1050,31 @@ document.addEventListener("DOMContentLoaded", async () => {
   btnPickCancel?.addEventListener("click", () => show(createOverlay, false));
   createOverlay?.addEventListener("click", (ev) => { if (ev.target === createOverlay) show(createOverlay, false); });
 
-   // X w prawym górnym rogu — pyta, jeśli są zmiany
-   btnEditorClose?.addEventListener("click", () => closeEditor(false));
+  btnEditorClose?.addEventListener("click", () => closeEditor(false));
 
-  // save
   btnCreate?.addEventListener("click", handleCreate);
 
   // fullscreen preview
-   bigPreview?.addEventListener("click", () => {
-     // fullscreen pokazuje DOKŁADNIE to, co ostatnio narysowaliśmy (z edytora albo z listy)
-     const p = lastPreviewPayload || { kind: "GLYPH", rows: defaultLogoRows };
-     openPreviewFullscreen(p);
-   });
+  bigPreview?.addEventListener("click", () => {
+    const p = lastPreviewPayload || { kind: "GLYPH", rows: defaultLogoRows };
+    openPreviewFullscreen(p);
+  });
 
-   // DRAW: 👁️ z draw.js wysyła event z payloadem (PIX bits)
-   window.addEventListener("logoeditor:openPreview", (ev) => {
-     const payload = ev?.detail;
-     if (!payload) return;
-     openPreviewFullscreen(payload);
-   });
+  window.addEventListener("logoeditor:openPreview", (ev) => {
+    const payload = ev?.detail;
+    if (!payload) return;
+    openPreviewFullscreen(payload);
+  });
 
   btnPreviewClose?.addEventListener("click", () => show(previewOverlay, false));
   previewOverlay?.addEventListener("click", (ev) => { if (ev.target === previewOverlay) show(previewOverlay, false); });
 
   await refresh();
-});
+}
+
+// kuloodporne uruchomienie (działa też przy dynamicznym import())
+if (document.readyState === "loading"){
+  document.addEventListener("DOMContentLoaded", boot, { once: true });
+} else {
+  boot();
+}
