@@ -785,8 +785,8 @@ export function initTextPixEditor(ctx) {
         #rtEditor.mce-content-body{
           margin:0;
           padding:0;
-          background:#000;
-          color:#fff;
+          background:transparent;
+          color:inherit;
           font-size:50px;
           line-height:1;
           white-space:normal;
