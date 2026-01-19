@@ -1342,6 +1342,8 @@ export function initDrawEditor(ctx) {
       fireRightClick: true,
     });
 
+    window.__drawFabric = fabricCanvas;
+
     ensureCursorOverlay();
 
     // Cursor overlay follow — MUSI być na upperCanvasEl (Fabric)
