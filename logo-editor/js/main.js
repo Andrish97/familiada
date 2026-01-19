@@ -812,13 +812,15 @@ function openEditor(mode){
     mode === "DRAW" ? "Rysujesz w siatce wyświetlazca." :
     "Importujesz obrazek i dopasowujesz.";
 
-  if (!logoName.value.trim()){
-    logoName.value =
-      mode === "TEXT" ? "Napis" :
-      mode === "TEXT_PIX" ? "Tekst" :
-      mode === "DRAW" ? "Rysunek" :
-      "Obraz";
-  }
+   // Domyślna nazwa dla NOWEGO logo – zawsze wg trybu
+   // (żeby nie "dziedziczyć" nazwy z poprzedniego trybu)
+   if (!sessionSavedLogoId){
+     logoName.value =
+       mode === "TEXT" ? "Napis" :
+       mode === "TEXT_PIX" ? "Tekst" :
+       mode === "DRAW" ? "Rysunek" :
+       "Obraz";
+   }
 
   show(document.querySelector(".shell"), false);
   show(editorShell, true);
