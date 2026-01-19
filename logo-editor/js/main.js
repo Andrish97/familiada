@@ -150,6 +150,91 @@ function isUniqueViolation(e){
 }
 
 /* =========================================================
+   NAV GUARD — ochrona przed: zamknięciem/odświeżeniem/cofaniem/nawigacją
+   - działa tylko gdy edytor jest otwarty i są niezapisane zmiany
+========================================================= */
+
+let _navGuardArmed = false;
+let _navGuardHistoryArmed = false;
+let _navGuardIgnorePop = false;
+
+function isEditing(){
+  return !!editorMode; // edytor otwarty
+}
+
+function shouldBlockNav(){
+  // blokujemy tylko gdy są niezapisane zmiany
+  // jeśli chcesz blokować ZAWSZE w edytorze, zmień na: return isEditing();
+  return isEditing();
+}
+
+function armNavGuard(){
+  if (_navGuardArmed) return;
+  _navGuardArmed = true;
+
+  // 1) Zamknięcie/odświeżenie/nawigacja poza SPA
+  window.addEventListener("beforeunload", (e) => {
+    if (!shouldBlockNav()) return;
+    e.preventDefault();
+    // Chrome wymaga ustawienia returnValue (treść ignorowana)
+    e.returnValue = "";
+  });
+
+  // 2) Cofanie w historii (Back) — wymaga “kotwicy” w historii
+  armHistoryTrap();
+}
+
+function armHistoryTrap(){
+  if (_navGuardHistoryArmed) return;
+  _navGuardHistoryArmed = true;
+
+  // wpychamy stan, żeby "Back" nie wyrzucał od razu z podstrony
+  // i żeby popstate w ogóle się odpalił u nas.
+  try{
+    history.replaceState({ __logoEditor: "root" }, "", location.href);
+    history.pushState({ __logoEditor: "guard" }, "", location.href);
+  } catch {}
+
+  window.addEventListener("popstate", async () => {
+    if (_navGuardIgnorePop) return;
+
+    // jeśli nie blokujemy, pozwalamy normalnie i nie walczymy z historią
+    if (!shouldBlockNav()){
+      // nic nie robimy: użytkownik cofa jak chce
+      return;
+    }
+
+    // gdy mamy zmiany — cofanie przechwytujemy
+    const ok = confirm("Masz niezapisane zmiany. Cofnąć i je utracić?");
+    if (ok){
+      // pozwól cofnąć: najprościej zrobić przejście wstecz jeszcze raz,
+      // ale popstate już zaszło. Żeby nie robić pętli, ignorujemy kolejny pop.
+      _navGuardIgnorePop = true;
+      setTimeout(() => { _navGuardIgnorePop = false; }, 0);
+
+      // tutaj możesz zachować się jak “zamknij edytor i wróć do listy”
+      // zamiast cofać w historię:
+      closeEditor(true);
+
+      // po zamknięciu edytora “odbuduj” kotwicę historii, żeby nie było dziwnych backów
+      try{
+        history.replaceState({ __logoEditor: "root" }, "", location.href);
+        history.pushState({ __logoEditor: "guard" }, "", location.href);
+      } catch {}
+      return;
+    }
+
+    // anulowane: odbijamy cofanie (wracamy do naszego guard state)
+    try{
+      _navGuardIgnorePop = true;
+      history.pushState({ __logoEditor: "guard" }, "", location.href);
+      setTimeout(() => { _navGuardIgnorePop = false; }, 0);
+    } catch {}
+  });
+}
+
+
+/* =========================================================
    IMPORT / EXPORT (bez ID, bez usera)
    - eksportuje aktywne logo (kind GLYPH/PIX)
    - import tworzy NOWY rekord w DB (dopisuje nowe id)
@@ -992,9 +1077,25 @@ async function boot(){
   drawEditor = initDrawEditor(editorCtx);
   imageEditor = initImageEditor(editorCtx);
 
+   armNavGuard();
+
   // topbar
-  btnBack?.addEventListener("click", () => { location.href = "../builder.html"; });
-  btnLogout?.addEventListener("click", async () => { await signOut(); location.href = "../index.html"; });
+   btnBack?.addEventListener("click", () => {
+     if (shouldBlockNav()){
+       const ok = confirm("Masz niezapisane zmiany. Wyjść do „Moje gry” i je utracić?");
+       if (!ok) return;
+     }
+     location.href = "../builder.html";
+   });
+
+   btnLogout?.addEventListener("click", async () => {
+     if (shouldBlockNav()){
+       const ok = confirm("Masz niezapisane zmiany. Wylogować i je utracić?");
+       if (!ok) return;
+     }
+     await signOut();
+     location.href = "../index.html";
+   });
 
   btnImportLogo?.addEventListener("click", () => inpImportLogoFile?.click());
 
