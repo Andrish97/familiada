@@ -447,10 +447,6 @@ async function sendZeroStatesToDevices() {
   let finalPickerSelected = new Set(); // trzymamy ID jako STRINGI
 
   // ===== FINAL PICKER: stała wysokość kafelków + synchronizacja slotów =====
-  // Uwaga: te stałe powinny odpowiadać CSS (.qRow height i .qList gap/padding)
-  const FINAL_TILE_H = 56;  // wysokość kafelka (ustawimy też w CSS)
-  const FINAL_GAP = 10;     // gap w .qList
-  const FINAL_PAD = 20;     // padding góra+dół w .qList (10+10)
   
   const finalDnd = {
     draggingId: null, // string
