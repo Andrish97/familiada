@@ -36,6 +36,10 @@ const grid = document.getElementById("grid");
 const btnBack = document.getElementById("btnBack");
 const btnLogout = document.getElementById("btnLogout");
 
+const btnImportLogo = document.getElementById("btnImportLogo");
+const btnExportLogo = document.getElementById("btnExportLogo");
+const inpImportLogoFile = document.getElementById("inpImportLogoFile");
+
 // modal wyboru trybu
 const createOverlay = document.getElementById("createOverlay");
 const pickText = document.getElementById("pickText");
@@ -991,11 +995,6 @@ async function boot(){
   // topbar
   btnBack?.addEventListener("click", () => { location.href = "../builder.html"; });
   btnLogout?.addEventListener("click", async () => { await signOut(); location.href = "../index.html"; });
-
-  // IMPORT/EXPORT — UWAGA: upewnij się, że masz te DOM-y:
-  const btnImportLogo = document.getElementById("btnImportLogo");
-  const btnExportLogo = document.getElementById("btnExportLogo");
-  const inpImportLogoFile = document.getElementById("inpImportLogoFile");
 
   btnImportLogo?.addEventListener("click", () => inpImportLogoFile?.click());
 
