@@ -717,6 +717,7 @@ body.logo-editor-body .wrap{
   background:rgba(0,0,0,.12);
   padding:8px;
   display: flex;
+  flex: 1;
 }
 
 #paneImage #imgBigPreview{
