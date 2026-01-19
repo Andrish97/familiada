@@ -461,21 +461,55 @@
 .qList{
   display: flex;
   flex-direction: column;
-  gap: 10px;
-
-  /* kluczowe */
-  align-items: stretch;
   justify-content: flex-start;
 
-  /* to już masz – zostaje */
+  gap: 10px;
+
+  padding: 10px;              /* pudełko ma “ścianki” */
+  box-sizing: border-box;
+  width: 100%;
+
   border-radius: 16px;
   border: 1px solid rgba(255,255,255,.12);
-  background: rgba(255,255,255,.02);
+  background: rgba(0,0,0,.14);
+}
 
-  padding: 10px;
+.qList.droptarget{ outline: 2px dashed rgba(255,255,255,.45); outline-offset: 2px; }
 
-  /* 👇 DODAJ TYLKO TO */
-  min-height: 56px; /* wysokość jednego kafelka */
+.qRow{
+  display: grid;
+  grid-template-columns: 64px 1fr; /* numer | tekst */
+  align-items: center;
+
+  height: 56px;                  /* stała wysokość kafelka */
+  box-sizing: border-box;
+  width: 100%;
+
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(0,0,0,.16);
+  padding: 10px 12px;
+
+  cursor: grab;
+  user-select: none;
+  overflow: hidden;
+}
+.qRow:active{ cursor: grabbing; }
+
+.qRow .meta{
+  font-weight: 1000;
+  opacity: .85;
+  white-space: nowrap;
+}
+
+.qRow .txt{
+  font-weight: 900;
+  line-height: 1.15;
+
+  /* 1 linia + … */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .finalLists{
@@ -489,28 +523,6 @@
 }
 
 .finalCol .mini{ margin-top: 0; }
-
-.qRow{
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  align-items: center;
-  border-radius: 16px;
-  border: 1px solid rgba(255,255,255,.12);
-  background: rgba(0,0,0,.16);
-  padding: 10px;
-  cursor: grab;
-  user-select: none;
-  height: 56px; 
-  overflow: hidden;
-}
-}
-.qRow .txt{
-  display: -webkit-box;
-  -webkit-line-clamp: 2; /* jak tekst długi, to … */
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
 
 /* ===== FINAL: układ wiersza pytanie + input ===== */
 .rowQ{
@@ -538,10 +550,6 @@
 }
 .colRight .inp{ flex: 1 1 auto; min-width: 0; }
 
-
-.qRow:active{ cursor: grabbing; }
-
-.qList.droptarget{ outline: 2px dashed rgba(255,255,255,.45); outline-offset: 2px; }
 
 /* ========= ROUNDS ========= */
 .qPrompt,
@@ -1383,23 +1391,6 @@
 
 .finalCol .mini{ margin-top: 0; }
 
-.qRow{
-  height: 56px;
-  min-height: 56px;
-
-  display: flex;
-  align-items: center;
-
-  /* reszta bez zmian */
-}
-
-.qRow .qPrompt,
-.qRow .qText{
-  overflow: hidden;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-}
 
 /* ===== FINAL: układ wiersza pytanie + input ===== */
 .rowQ{
@@ -1427,8 +1418,6 @@
 }
 .colRight .inp{ flex: 1 1 auto; min-width: 0; }
 
-
-.qRow:active{ cursor: grabbing; }
 
 .qList.droptarget{ outline: 2px dashed rgba(255,255,255,.45); outline-offset: 2px; }
 
