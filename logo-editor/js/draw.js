@@ -60,6 +60,9 @@ export function initDrawEditor(ctx) {
   const DOT_H = ctx.DOT_H; // 70
   const ASPECT = 26 / 11;
 
+  const RAST_W = 208;
+  const RAST_H = 88;
+
   // WORLD = SCENA:
   let worldW = 1;
   let worldH = 1;
@@ -970,37 +973,96 @@ export function initDrawEditor(ctx) {
   // =========================================================
   // Preview/export (stabilne, niezależne od zoom/pan)
   // =========================================================
-  async function renderWorldTo150x70CanvasStable() {
+  async function renderWorldTo208x88CanvasStable() {
     if (!fabricCanvas) return null;
     const f = requireFabric();
-
+  
     const json = snapshotJSON();
     if (!json) return null;
-
+  
     const el = f.util.createCanvasElement();
-    el.width = DOT_W;
-    el.height = DOT_H;
-
+    el.width = RAST_W;
+    el.height = RAST_H;
+  
     const sc = new f.StaticCanvas(el, {
       backgroundColor: bgColor(),
       renderOnAddRemove: false,
     });
-
-    // WORLD -> DOT (stała skala)
-    const sx = DOT_W / Math.max(1, worldW);
-    const sy = DOT_H / Math.max(1, worldH);
+  
+    // świat (worldW/worldH) ma proporcję 26:11 tak jak 208/88,
+    // więc skala powinna wejść 1:1 bez letterboxa
+    const sx = RAST_W / Math.max(1, worldW);
+    const sy = RAST_H / Math.max(1, worldH);
     const s = Math.min(sx, sy);
-
+  
     sc.setViewportTransform([s, 0, 0, s, 0, 0]);
-
+  
     await new Promise((res) => {
       sc.loadFromJSON(json, () => {
         sc.renderAll();
         res();
       });
     });
+  
     return el;
   }
+
+  function decimate208x88To150x70(srcCanvas) {
+    const src = srcCanvas.getContext("2d", { willReadFrequently: true });
+    const srcImg = src.getImageData(0, 0, RAST_W, RAST_H).data;
+  
+    // docelowy canvas 150x70
+    const dst = document.createElement("canvas");
+    dst.width = DOT_W;
+    dst.height = DOT_H;
+    const g = dst.getContext("2d", { willReadFrequently: true });
+    const out = g.createImageData(DOT_W, DOT_H);
+  
+    // Reguła:
+    // X: bloki 7 kolumn -> bierz 5, wytnij 2 (czyli pomijaj x%7==5,6) dla x<203
+    // Y: bloki 9 wierszy -> bierz 7, wytnij 2 (czyli pomijaj y%9==7,8) dla y<81
+    //
+    // Resztówki:
+    // - x >= 203 (ostatnie 5 kolumn) bierz wszystkie
+    // - y >= 81  (ostatnie 7 wierszy) bierz wszystkie
+  
+    let dy = 0;
+    for (let y = 0; y < RAST_H; y++) {
+      const inMainBlockY = y < 81;
+      if (inMainBlockY) {
+        const my = y % 9;
+        if (my === 7 || my === 8) continue; // wycinamy 2 wiersze
+      }
+  
+      let dx = 0;
+      for (let x = 0; x < RAST_W; x++) {
+        const inMainBlockX = x < 203;
+        if (inMainBlockX) {
+          const mx = x % 7;
+          if (mx === 5 || mx === 6) continue; // wycinamy 2 kolumny
+        }
+  
+        const si = (y * RAST_W + x) * 4;
+        const di = (dy * DOT_W + dx) * 4;
+  
+        out.data[di + 0] = srcImg[si + 0];
+        out.data[di + 1] = srcImg[si + 1];
+        out.data[di + 2] = srcImg[si + 2];
+        out.data[di + 3] = 255;
+  
+        dx++;
+        // bezpieczeństwo (nie powinno się zdarzyć przy poprawnej regule)
+        if (dx >= DOT_W) break;
+      }
+  
+      dy++;
+      if (dy >= DOT_H) break;
+    }
+  
+    g.putImageData(out, 0, 0);
+    return dst;
+  }
+  
 
   function canvasToBits150(c) {
     const g = c.getContext("2d", { willReadFrequently: true });
@@ -1018,22 +1080,28 @@ export function initDrawEditor(ctx) {
   function schedulePreview(ms = 80) {
     clearTimeout(_deb);
     const mySeq = ++_previewSeq;
-
+  
     _deb = setTimeout(async () => {
       if (mySeq !== _previewSeq) return;
-      const c = await renderWorldTo150x70CanvasStable();
-      if (!c) return;
+  
+      const c208 = await renderWorldTo208x88CanvasStable();
+      if (!c208) return;
       if (mySeq !== _previewSeq) return;
-
-      bits150 = canvasToBits150(c);
+  
+      const c150 = decimate208x88To150x70(c208);
+      bits150 = canvasToBits150(c150);
+  
       ctx.onPreview?.({ kind: "PIX", bits: bits150 });
     }, ms);
   }
 
   async function refreshPreviewNow() {
-    const c = await renderWorldTo150x70CanvasStable();
-    if (!c) return;
-    bits150 = canvasToBits150(c);
+    const c208 = await renderWorldTo208x88CanvasStable();
+    if (!c208) return;
+  
+    const c150 = decimate208x88To150x70(c208);
+    bits150 = canvasToBits150(c150);
+  
     ctx.onPreview?.({ kind: "PIX", bits: bits150 });
   }
 
