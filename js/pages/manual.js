@@ -10,6 +10,7 @@ const pages = {
   general: byId("tab-general"),
   edit: byId("tab-edit"),
   polls: byId("tab-polls"),
+  logo: byId("tab-logo"),
   control: byId("tab-control"),
 };
 
@@ -18,6 +19,7 @@ function setActive(name) {
   Object.entries(pages).forEach(([key, el]) => {
     el?.classList.toggle("active", key === name);
   });
+  location.hash = name;
 }
 
 function wireTabs() {
@@ -25,6 +27,10 @@ function wireTabs() {
     tab.addEventListener("click", () => setActive(tab.dataset.tab));
   });
 }
+
+const initial = (location.hash || "").replace("#", "");
+if (initial && pages[initial]) setActive(initial);
+
 
 function wireFallbackNav() {
   // fallback, gdyby auth nie zadziałał
