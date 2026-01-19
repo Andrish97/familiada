@@ -20,17 +20,17 @@
   <script src="https://cdn.jsdelivr.net/npm/fabric@5.3.0/dist/fabric.min.js"></script>
 
  
-  <script type="module">
-  import { guardDesktopOnly } from "/familiada/js/core/device-guard.js";
+<script type="module">
+  import { guardDesktopOnly } from "../js/core/device-guard.js";
 
   const minWidth = 980;
 
   guardDesktopOnly({
     minWidth,
-    message: "Ta strona działa tylko na komputerze (min. 980px).",
+    message: "Edytor logo działa tylko na komputerze (min. 980px).",
   });
 
-  import("/familiada/logo-editor/js/main.js");
+  import("./js/main.js");
 </script>
 
 </head>
