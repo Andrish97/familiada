@@ -159,6 +159,8 @@ export function initDrawEditor(ctx) {
   let fabricCanvas = null;
   let initialized = false;
 
+  let _needOffsetKick = true;
+
   // Pan
   let panDown = false;
   let panStart = { x: 0, y: 0 };
@@ -1342,8 +1344,6 @@ export function initDrawEditor(ctx) {
       stopContextMenu: true,
       fireRightClick: true,
     });
-
-    let _needOffsetKick = true;
 
     const kickOffsetIfNeeded = () => {
       if (!_needOffsetKick) return;
