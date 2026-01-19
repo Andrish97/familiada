@@ -189,6 +189,8 @@ export function initDrawEditor(ctx) {
   let cursorDot = null;  // div we draw as circle/square via CSS
   let lastPointer = { x: 0, y: 0 };
 
+  let pointerDown = false;
+
   // =========================================================
   // Sizing: WORLD = SCENA
   // =========================================================
@@ -438,13 +440,16 @@ export function initDrawEditor(ctx) {
       fabricCanvas.moveCursor = mov;
     };
   
-    // SELECT: strzałka (Fabric może dać move na obiekcie)
     if (tool === TOOL.SELECT) {
       setCursorClass("select", false);
+      // default: normalna strzałka
+      // hover na obiekcie: move
+      // przeciąganie: move
       setFabricCursors("default", "move", "move");
+      hideOverlayCursor();
       return;
     }
-  
+    
     // PAN: ręka (zależnie od panDown)
     if (tool === TOOL.PAN) {
       setCursorClass("pan", !!panDown);
@@ -543,18 +548,24 @@ export function initDrawEditor(ctx) {
       fabricCanvas.isDrawingMode = false;
       fabricCanvas.selection = true;
       fabricCanvas.forEachObject(o => { o.selectable = true; o.evented = true; });
+      fabricCanvas.perPixelTargetFind = false;
+      fabricCanvas.targetFindTolerance = 0;
       clearPolyDraft();
     } else if (tool === TOOL.PAN) {
       fabricCanvas.isDrawingMode = false;
       fabricCanvas.selection = false;
       fabricCanvas.discardActiveObject();
       fabricCanvas.forEachObject(o => { o.selectable = false; o.evented = false; });
+      fabricCanvas.perPixelTargetFind = false;
+      fabricCanvas.targetFindTolerance = 0;
       clearPolyDraft();
     } else if (tool === TOOL.BRUSH) {
       fabricCanvas.isDrawingMode = true;
       fabricCanvas.selection = false;
       fabricCanvas.discardActiveObject();
       fabricCanvas.forEachObject(o => { o.selectable = false; o.evented = false; });
+      fabricCanvas.perPixelTargetFind = false;
+      fabricCanvas.targetFindTolerance = 0;
       clearPolyDraft();
       applyBrushStyle();
     } else if (tool === TOOL.ERASER) {
@@ -565,6 +576,8 @@ export function initDrawEditor(ctx) {
       fabricCanvas.selection = false;
       fabricCanvas.discardActiveObject();
       fabricCanvas.forEachObject(o => { o.selectable = false; o.evented = true; });
+      fabricCanvas.perPixelTargetFind = true;      // trafia po pikselach
+      fabricCanvas.targetFindTolerance = 8;        // tolerancja w px
       clearPolyDraft();
     } else {
       // figury + POLY
@@ -572,6 +585,8 @@ export function initDrawEditor(ctx) {
       fabricCanvas.selection = false;
       fabricCanvas.discardActiveObject();
       fabricCanvas.forEachObject(o => { o.selectable = false; o.evented = false; });
+      fabricCanvas.perPixelTargetFind = false;
+      fabricCanvas.targetFindTolerance = 0;
       if (tool !== TOOL.POLY) clearPolyDraft();
     }
 
@@ -1292,11 +1307,17 @@ export function initDrawEditor(ctx) {
 
     // Mouse handlers
     fabricCanvas.on("mouse:down", (opt) => {
+      pointerDown = true;
       const ev = opt.e;
 
       // aktualizacja overlay kursora
+      // w mouse:down
       lastPointer = { x: ev.clientX, y: ev.clientY };
-      placeOverlayAt(ev.clientX, ev.clientY);
+      if (tool === TOOL.BRUSH || tool === TOOL.ERASER) {
+        placeOverlayAt(ev.clientX, ev.clientY);
+      } else {
+        hideOverlayCursor();
+      }
 
       if (tool === TOOL.PAN) {
         if (fabricCanvas.getZoom() <= MIN_ZOOM + 1e-6) return; // pan nie ma sensu przy z=1
@@ -1336,8 +1357,11 @@ export function initDrawEditor(ctx) {
     fabricCanvas.on("mouse:move", (opt) => {
       const ev = opt.e;
       lastPointer = { x: ev.clientX, y: ev.clientY };
-      placeOverlayAt(ev.clientX, ev.clientY);
-
+      if (tool === TOOL.BRUSH || tool === TOOL.ERASER) {
+        placeOverlayAt(ev.clientX, ev.clientY);
+      } else {
+        hideOverlayCursor();
+      }
       if (tool === TOOL.PAN && panDown && vptStart) {
         const dx = ev.clientX - panStart.x;
         const dy = ev.clientY - panStart.y;
@@ -1352,7 +1376,7 @@ export function initDrawEditor(ctx) {
       }
 
       // Gumka: usuwa obiekty, które dotyka (ciągły erase)
-      if (tool === TOOL.ERASER) {
+      if (tool === TOOL.ERASER && pointerDown) {
         const target = opt.target;
         if (target) {
           fabricCanvas.remove(target);
@@ -1368,6 +1392,7 @@ export function initDrawEditor(ctx) {
     });
 
     fabricCanvas.on("mouse:up", () => {
+      pointerDown = false;
       if (tool === TOOL.PAN) {
         panDown = false;
         updateCursorVisual();
