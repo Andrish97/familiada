@@ -369,12 +369,25 @@ body.logo-editor-body .wrap{
   width:100%;
   gap:10px;
 }
+
+.ctrlRowSize {
+  width:100%;
+  gap:10px;
+}
+
+.ctrlRowInvert{
+  display:flex;
+  align-items:center;
+  width:100%;
+}
+
 .ctrlRowBiu .btn{
   display:inline-flex;
   align-items:center;
   justify-content:center;
   min-width:56px;
 }
+
 
 #paneTextPix ::selection{ background: rgba(255,234,166,.35); }
 
