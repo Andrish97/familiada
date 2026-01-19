@@ -374,6 +374,20 @@ export function initDrawEditor(ctx) {
   // =========================================================
   // Cursor overlay (metoda 2)
   // =========================================================
+  
+  function setCursorClass(mode, isDown = false) {
+    if (!drawStageHost) return;
+  
+    drawStageHost.classList.remove("cur-select","cur-pan","cur-cross","cur-none","down");
+  
+    if (mode === "select") drawStageHost.classList.add("cur-select");
+    else if (mode === "pan") drawStageHost.classList.add("cur-pan");
+    else if (mode === "cross") drawStageHost.classList.add("cur-cross");
+    else if (mode === "none") drawStageHost.classList.add("cur-none");
+  
+    if (isDown) drawStageHost.classList.add("down");
+  }
+  
   function ensureCursorOverlay() {
     if (!drawStageHost) return;
     if (cursorLayer) return;
@@ -403,41 +417,36 @@ export function initDrawEditor(ctx) {
     if (!fabricCanvas) return;
     ensureCursorOverlay();
   
-    // helper do ustawiania Fabric-cursorów konsekwentnie
+    // reset overlay
+    hideOverlayCursor();
+  
+    // Uwaga: Fabric czasem zmienia hoverCursor na "move".
+    // My to wyłączamy wszędzie poza SELECT.
     const setFabricCursors = (def, hov, mov) => {
       fabricCanvas.defaultCursor = def;
       fabricCanvas.hoverCursor = hov;
       fabricCanvas.moveCursor = mov;
     };
   
-    // 0) zawsze chowamy overlay na start
-    hideOverlayCursor();
-  
-    // 1) SELECT: strzałka / move na obiekcie
+    // SELECT: strzałka (Fabric może dać move na obiekcie)
     if (tool === TOOL.SELECT) {
-      // pozwól Fabricowi sterować (bo on ma "move" na hover)
-      setCanvasCursor(null);
+      setCursorClass("select", false);
       setFabricCursors("default", "move", "move");
       return;
     }
   
-    // 2) PAN: ręka (grab / grabbing), bez overlay
+    // PAN: ręka (zależnie od panDown)
     if (tool === TOOL.PAN) {
-      // tu nie chcemy "move" na hover obiektu — zawsze ręka
-      setCanvasCursor(null);
+      setCursorClass("pan", !!panDown);
+      // zablokuj "move" od Fabric
       setFabricCursors(panDown ? "grabbing" : "grab", panDown ? "grabbing" : "grab", panDown ? "grabbing" : "grab");
-  
-      // dodatkowo wymuś na canvasach (czasem przeglądarka/OS robi swoje)
-      setCanvasCursor(panDown ? "grabbing" : "grab");
       return;
     }
   
-    // 3) BRUSH: tylko kółko, bez krzyżyka i bez strzałki
+    // BRUSH: tylko kółko overlay, bez strzałki/krzyżyka
     if (tool === TOOL.BRUSH) {
-      // Fabric ma nie wtrącać kursora
+      setCursorClass("none", false);
       setFabricCursors("none", "none", "none");
-      // i twardo ukryj systemowy kursor
-      setCanvasCursor("none");
   
       const z = fabricCanvas.getZoom();
       const d = Math.max(6, Math.round(getStroke() * z));
@@ -453,10 +462,10 @@ export function initDrawEditor(ctx) {
       return;
     }
   
-    // 4) ERASER: tylko kwadracik, bez strzałki
+    // ERASER: kwadrat overlay, bez strzałki
     if (tool === TOOL.ERASER) {
+      setCursorClass("none", false);
       setFabricCursors("none", "none", "none");
-      setCanvasCursor("none");
   
       const d = 10;
       cursorDot.style.width = `${d}px`;
@@ -470,16 +479,11 @@ export function initDrawEditor(ctx) {
       return;
     }
   
-    // 5) SHAPES + POLY: krzyżyk (bez kółka/kwadratu)
-    // Tu też NIE pozwalamy Fabricowi zmienić na "move" na hover obiektu.
-    setCanvasCursor(null);
+    // SHAPES + POLY: krzyżyk
+    setCursorClass("cross", false);
     setFabricCursors("crosshair", "crosshair", "crosshair");
-  
-    // i na wszelki wypadek (bo Fabric czasem przestawia), wymuś inline:
-    setCanvasCursor("crosshair");
   }
 
-  
   function placeOverlayAt(clientX, clientY) {
     if (!cursorDot || !fabricCanvas) return;
   
@@ -1216,17 +1220,14 @@ export function initDrawEditor(ctx) {
     ensureCursorOverlay();
 
     // Cursor overlay follow — MUSI być na upperCanvasEl (Fabric)
-    const cursorEl = fabricCanvas.upperCanvasEl || drawCanvasEl;
+    const cursorEl = fabricCanvas.upperCanvasEl; // TO JEST WAŻNE
     
-    cursorEl?.addEventListener("pointermove", (ev) => {
+    cursorEl.addEventListener("pointermove", (ev) => {
       lastPointer = { x: ev.clientX, y: ev.clientY };
-      // overlay tylko dla brush/eraser, ale placeOverlayAt samo umie schować poza
-      if (tool === TOOL.BRUSH || tool === TOOL.ERASER) {
-        placeOverlayAt(ev.clientX, ev.clientY);
-      }
+      if (tool === TOOL.BRUSH || tool === TOOL.ERASER) placeOverlayAt(ev.clientX, ev.clientY);
     }, { passive: true });
     
-    cursorEl?.addEventListener("pointerleave", () => {
+    cursorEl.addEventListener("pointerleave", () => {
       hideOverlayCursor();
     }, { passive: true });
 
