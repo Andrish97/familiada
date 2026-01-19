@@ -481,13 +481,41 @@ async function sendZeroStatesToDevices() {
     return { poolN, finalN };
   }
   
+  function readGapPx(el) {
+    if (!el) return 0;
+    const cs = getComputedStyle(el);
+    // dla flex: gap
+    const g = parseFloat(cs.gap || "0");
+    return Number.isFinite(g) ? g : 0;
+  }
+  
+  function readPadPx(el) {
+    if (!el) return 0;
+    const cs = getComputedStyle(el);
+    const pt = parseFloat(cs.paddingTop || "0") || 0;
+    const pb = parseFloat(cs.paddingBottom || "0") || 0;
+    return pt + pb;
+  }
+  
+  function readTileHeightPx(poolRoot, finalRoot) {
+    const tile =
+      poolRoot?.querySelector(".qRow") ||
+      finalRoot?.querySelector(".qRow");
+    if (!tile) return 56;
+    return Math.round(tile.getBoundingClientRect().height);
+  }
+  
   function syncFinalPickerSlotsHeight(poolRoot, finalRoot) {
     if (!poolRoot || !finalRoot) return;
   
     const { poolN, finalN } = computeVirtualCounts(poolRoot, finalRoot);
     const maxCount = Math.max(poolN, finalN, 1);
   
-    const h = maxCount * FINAL_TILE_H + (maxCount - 1) * FINAL_GAP + FINAL_PAD;
+    const tileH = readTileHeightPx(poolRoot, finalRoot);
+    const gap = readGapPx(poolRoot);      // oba mają ten sam CSS
+    const pad = readPadPx(poolRoot);      // padding slotu
+  
+    const h = maxCount * tileH + (maxCount - 1) * gap + pad;
   
     poolRoot.style.minHeight = `${h}px`;
     finalRoot.style.minHeight = `${h}px`;
