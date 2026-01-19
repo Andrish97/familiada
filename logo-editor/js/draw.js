@@ -546,53 +546,80 @@ export function initDrawEditor(ctx) {
 
   function applyToolBehavior() {
     if (!fabricCanvas) return;
-
+  
+    const makeAll = ({ selectable, evented }) => {
+      fabricCanvas.forEachObject(o => {
+        o.selectable = !!selectable;
+        o.evented = !!evented;
+      });
+    };
+  
     if (tool === TOOL.SELECT) {
       fabricCanvas.isDrawingMode = false;
       fabricCanvas.selection = true;
-      fabricCanvas.forEachObject(o => { o.selectable = true; o.evented = true; });
-      fabricCanvas.perPixelTargetFind = false;
-      fabricCanvas.targetFindTolerance = 0;
+      makeAll({ selectable: true, evented: true });
+  
+      // lepsze trafianie cienkich linii
+      fabricCanvas.perPixelTargetFind = true;
+      fabricCanvas.targetFindTolerance = 6;
+  
       clearPolyDraft();
-    } else if (tool === TOOL.PAN) {
+    }
+    else if (tool === TOOL.PAN) {
       fabricCanvas.isDrawingMode = false;
       fabricCanvas.selection = false;
       fabricCanvas.discardActiveObject();
-      fabricCanvas.forEachObject(o => { o.selectable = false; o.evented = false; });
+  
+      // nie zaznaczamy, ale dalej "widać" obiekty pod kursorem (debug/hover)
+      makeAll({ selectable: false, evented: true });
+  
       fabricCanvas.perPixelTargetFind = false;
       fabricCanvas.targetFindTolerance = 0;
+  
       clearPolyDraft();
-    } else if (tool === TOOL.BRUSH) {
+    }
+    else if (tool === TOOL.BRUSH) {
       fabricCanvas.isDrawingMode = true;
       fabricCanvas.selection = false;
       fabricCanvas.discardActiveObject();
-      fabricCanvas.forEachObject(o => { o.selectable = false; o.evented = false; });
+  
+      // nic nie zaznaczamy podczas rysowania, ale obiekty dalej są evented
+      makeAll({ selectable: false, evented: true });
+  
       fabricCanvas.perPixelTargetFind = false;
       fabricCanvas.targetFindTolerance = 0;
+  
       clearPolyDraft();
       applyBrushStyle();
-    } else if (tool === TOOL.ERASER) {
-      // gumka: tylko obiektowa, więc:
-      // - nie rysujemy
-      // - obiekty evented=true, żeby opt.target działał
+    }
+    else if (tool === TOOL.ERASER) {
       fabricCanvas.isDrawingMode = false;
       fabricCanvas.selection = false;
       fabricCanvas.discardActiveObject();
-      fabricCanvas.forEachObject(o => { o.selectable = false; o.evented = true; });
-      fabricCanvas.perPixelTargetFind = true;      // trafia po pikselach
-      fabricCanvas.targetFindTolerance = 8;        // tolerancja w px
+  
+      // gumka MUSI móc trafić target
+      makeAll({ selectable: false, evented: true });
+  
+      fabricCanvas.perPixelTargetFind = true;
+      fabricCanvas.targetFindTolerance = 10;
+  
       clearPolyDraft();
-    } else {
-      // figury + POLY
+    }
+    else {
+      // figury + poly
       fabricCanvas.isDrawingMode = false;
       fabricCanvas.selection = false;
       fabricCanvas.discardActiveObject();
-      fabricCanvas.forEachObject(o => { o.selectable = false; o.evented = false; });
+  
+      // nie zaznaczamy, ale evented zostaje true (ważne!)
+      makeAll({ selectable: false, evented: true });
+  
       fabricCanvas.perPixelTargetFind = false;
       fabricCanvas.targetFindTolerance = 0;
+  
       if (tool !== TOOL.POLY) clearPolyDraft();
     }
-
+  
     syncToolButtons();
     updateCursorVisual();
     schedulePreview(80);
@@ -733,7 +760,7 @@ export function initDrawEditor(ctx) {
         ...style,
         fill: "rgba(0,0,0,0)",
         selectable: false,
-        evented: false,
+        evented: true,
         objectCaching: false,
       });
       fabricCanvas.add(polyPreview);
@@ -760,7 +787,7 @@ export function initDrawEditor(ctx) {
     const poly = new f.Polygon(polyPoints, {
       ...style,
       selectable: false,
-      evented: false,
+      evented: true,
       objectCaching: false,
     });
 
@@ -794,7 +821,7 @@ export function initDrawEditor(ctx) {
         ...style,
         fill: "rgba(0,0,0,0)",
         selectable: false,
-        evented: false,
+        evented: true,
         objectCaching: false,
       });
       fabricCanvas.add(drawingObj);
@@ -1341,7 +1368,12 @@ export function initDrawEditor(ctx) {
     updateUndoRedoButtons();
 
     // Zmiany -> preview
-    fabricCanvas.on("path:created", () => {
+    fabricCanvas.on("path:created", (e) => {
+      // upewniamy się, że path jest "trafialny" (dla gumki/klików)
+      if (e?.path) {
+        e.path.evented = true;
+        e.path.selectable = false; // bo zwykle nie chcesz od razu zaznaczać po narysowaniu
+      }
       pushUndo();
       ctx.markDirty?.();
       schedulePreview(80);
