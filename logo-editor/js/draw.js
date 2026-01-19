@@ -27,10 +27,6 @@ export function initDrawEditor(ctx) {
   const tPan      = document.getElementById("tPan");
   const tZoomIn   = document.getElementById("tZoomIn");
   const tZoomOut  = document.getElementById("tZoomOut");
-  const tZoom100  = document.getElementById("tZoom100");
-
-  // "magnes" usuwamy -> ten przycisk ma być placeholder (w JS ustawiamy mu disabled + tytuł)
-  const tZoomFit  = document.getElementById("tZoomFit");
 
   const tBrush    = document.getElementById("tBrush");
   const tEraser   = document.getElementById("tEraser");
@@ -1182,14 +1178,6 @@ export function initDrawEditor(ctx) {
     resizeScene();
     updateZoomButtons();
 
-    // Placeholder zamiast magnesu
-    if (tZoomFit) {
-      tZoomFit.disabled = true;
-      tZoomFit.title = "Wkrótce";
-      // możesz też zmienić ikonę w locie:
-      // tZoomFit.textContent = "…";
-    }
-
     // undo start
     undoStack = [];
     redoStack = [];
@@ -1563,10 +1551,6 @@ export function initDrawEditor(ctx) {
     // Zoom buttons
     tZoomIn?.addEventListener("click", () => { zoomBy(1.15); schedulePreview(120); });
     tZoomOut?.addEventListener("click", () => { zoomBy(0.87); schedulePreview(120); });
-    tZoom100?.addEventListener("click", () => { zoomTo100(); schedulePreview(120); });
-
-    // Placeholder (magnes) — nic nie robi
-    tZoomFit?.addEventListener("click", () => {});
 
     // History
     tUndo?.addEventListener("click", () => undo());
