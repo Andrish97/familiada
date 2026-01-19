@@ -566,6 +566,39 @@ body.logo-editor-body .wrap{
 }
 
 /* ==========================================================
+   DRAW — kursor: twarde reguły (JS przełącza klasy na #drawStageHost)
+   Dopisz NA KOŃCU pliku CSS
+========================================================== */
+
+/* Nie pozwól, żeby wrappery narzucały cursor canvasowi przez dziedziczenie */
+#paneDraw .drawStageRatio,
+#paneDraw .drawStageRatio *{
+  cursor: unset;
+}
+
+/* Domyślnie: select (strzałka) */
+#paneDraw #drawStage,
+#paneDraw .drawStageRatio canvas{
+  cursor: default !important;
+}
+
+/* KLASOWE wymuszenia (JS dodaje klasę na #drawStageHost albo .drawStageRatio) */
+#drawStageHost.cur-select  canvas,
+#drawStageHost.cur-select  #drawStage{ cursor: default !important; }
+
+#drawStageHost.cur-pan     canvas,
+#drawStageHost.cur-pan     #drawStage{ cursor: grab !important; }
+#drawStageHost.cur-pan.down canvas,
+#drawStageHost.cur-pan.down #drawStage{ cursor: grabbing !important; }
+
+#drawStageHost.cur-cross   canvas,
+#drawStageHost.cur-cross   #drawStage{ cursor: crosshair !important; }
+
+#drawStageHost.cur-none    canvas,
+#drawStageHost.cur-none    #drawStage{ cursor: none !important; }
+
+
+/* ==========================================================
    IMAGE — cały obraz widoczny (contain) + ramka 26:11
 ========================================================== */
 
