@@ -259,6 +259,13 @@ body.logo-editor-body .wrap{
   display:grid !important;
 }
 
+.charsList{
+  margin-top:6px;
+  padding:8px;
+  border:1px solid var(--line);
+  border-radius:12px;
+}
+
 /* ==========================================================
    TEXT_PIX
 ========================================================== */
