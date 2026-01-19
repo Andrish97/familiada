@@ -492,14 +492,24 @@
 
 .qRow{
   display: flex;
+  flex-direction: column;
   gap: 10px;
-  align-items: flex-start;
+  align-items: center;
   border-radius: 16px;
   border: 1px solid rgba(255,255,255,.12);
   background: rgba(0,0,0,.16);
   padding: 10px;
   cursor: grab;
   user-select: none;
+  height: 56px; 
+  overflow: hidden;
+}
+}
+.qRow .txt{
+  display: -webkit-box;
+  -webkit-line-clamp: 2; /* jak tekst długi, to … */
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 /* ===== FINAL: układ wiersza pytanie + input ===== */
