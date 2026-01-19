@@ -575,13 +575,8 @@ async function sendZeroStatesToDevices() {
       e.preventDefault();
   
       root.classList.add("droptarget");
-      finalDnd.overSide = targetSide;
   
       if (e.dataTransfer) e.dataTransfer.dropEffect = "move";
-  
-      const poolRoot = document.getElementById("finalGameList");
-      const finalRoot = document.getElementById("finalFinalList");
-      syncFinalPickerSlotsHeight(poolRoot, finalRoot);
     });
   
     root.addEventListener("dragleave", () => {
@@ -589,10 +584,6 @@ async function sendZeroStatesToDevices() {
   
       // tylko jeśli to był aktualny hover
       if (finalDnd.overSide === targetSide) finalDnd.overSide = null;
-  
-      const poolRoot = document.getElementById("finalGameList");
-      const finalRoot = document.getElementById("finalFinalList");
-      syncFinalPickerSlotsHeight(poolRoot, finalRoot);
     });
   
     root.addEventListener("drop", (e) => {
@@ -655,11 +646,6 @@ async function sendZeroStatesToDevices() {
           e.dataTransfer.effectAllowed = "move";
         }
         row.classList.add("dragging");
-  
-        // live sync od razu po złapaniu
-        const poolRoot = document.getElementById("finalGameList");
-        const finalRoot = document.getElementById("finalFinalList");
-        syncFinalPickerSlotsHeight(poolRoot, finalRoot);
       });
   
       row.addEventListener("dragend", () => {
