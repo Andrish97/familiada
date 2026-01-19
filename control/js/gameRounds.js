@@ -900,58 +900,58 @@ function hostUpdate() {
 
   async function revealAnswerByOrd(ord) {
     ensureRoundsState();
+    const r = store.state.rounds;
+  
     // jeśli timer w tym cyklu już rozstrzygnięty jako X, to nie odsłaniamy odpowiedzi
     if (r.timer3 && r.timer3.resolved === "X") {
       return;
     }
-    
+  
     // jeśli timer jeszcze leci, to odpowiedź wygrywa z X (rezerwacja cyklu)
     if (r.timer3 && r.timer3.running) {
       r.timer3.resolved = "ANSWER";
     }
-
-    const r = store.state.rounds;
-
+  
     if (r.canEndRound && r.phase !== "REVEAL") {
       return;
     }
-
+  
     clearTimer3();
-
+  
     const ans = (r.answers || []).find((a) => a.ord === ord);
     if (!ans) return;
-
+  
     if (!r.revealed) r.revealed = new Set();
-
+  
     if (r.phase === "REVEAL") {
       return await revealLeftByOrd(ord);
     }
-
+  
     // --- DUEL ---
     if (r.phase === "DUEL") {
       if (r.revealed.has(ord)) return;
       r.revealed.add(ord);
-
+  
       ui.renderRoundAnswers?.(r.answers, r.revealed);
       hostUpdate();
-
+  
       const pts = nInt(ans.fixed_points ?? ans.points, 0);
       r.bankPts = nInt(r.bankPts, 0) + pts;
       ui.setRoundsHud(r);
-
+  
       await display.roundsRevealRow(ord, ans.text, pts);
       await display.roundsSetSum(r.bankPts);
       if (display.setBankTriplet) {
         await display.setBankTriplet(r.bankPts);
       }
-
+  
       playSfx("answer_correct");
-
+  
       const d = r.duel || {};
       const team = d.currentTeam || d.firstTeam || d.lastPressed || "A";
       const isTop = nInt(ans.ord, 0) === 1;
       const result = duelRegisterResult(team, { pts, isX: false, isTop });
-
+  
       if (result.type === "WIN") {
         await beginPlayAfterDuel(result.winner);
       } else if (result.type === "CONTINUE_SECOND") {
@@ -967,59 +967,54 @@ function hostUpdate() {
           display.setIndicator(d.firstTeam).catch?.(() => {});
         }
       }
-
+  
       return;
     }
-
+  
     // --- PLAY / STEAL ---
-
     if (r.revealed.has(ord)) return;
     r.revealed.add(ord);
-    
+  
     ui.renderRoundAnswers?.(r.answers, r.revealed);
-    hostUpdate(); 
+    hostUpdate();
+  
     const pts = nInt(ans.fixed_points ?? ans.points, 0);
     r.bankPts = nInt(r.bankPts, 0) + pts;
     ui.setRoundsHud(r);
-
+  
     await display.roundsRevealRow(ord, ans.text, pts);
     await display.roundsSetSum(r.bankPts);
     if (display.setBankTriplet) {
       await display.setBankTriplet(r.bankPts);
     }
-
+  
     playSfx("answer_correct");
-
+  
     if (r.phase === "PLAY") {
       r.allowPass = false;
-
-      const hasHidden = (r.answers || []).some(
-        (a) => !r.revealed?.has(a.ord)
-      );
-      if (!hasHidden) {
-        r.canEndRound = true;
-      }
+  
+      const hasHidden = (r.answers || []).some((a) => !r.revealed?.has(a.ord));
+      if (!hasHidden) r.canEndRound = true;
+  
       updatePlayControls();
     }
-
+  
     if (r.phase === "STEAL") {
       if (!r.steal || !r.steal.active || r.steal.used) return;
-
+  
       r.steal.used = true;
       r.stealWon = true;
       r.steal.active = false;
-
+  
       setStealMsg(ROUNDS_MSG.STEAL_SUCCESS);
       ui.setRoundsHud(r);
-
+  
       r.canEndRound = true;
       updatePlayControls();
-
+  
       if (display.setIndicator) {
         await display.setIndicator(null);
       }
-
-      return;
     }
   }
 
