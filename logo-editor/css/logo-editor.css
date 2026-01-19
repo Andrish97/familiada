@@ -220,6 +220,8 @@ body.logo-editor-body .wrap{
   border-radius:16px;
   background:rgba(0,0,0,.18);
   padding:8px;
+  flex:1;
+  display:flex;
 }
 .bigPrevWrap canvas{ width:100%; height:auto; display:block; }
 
@@ -390,15 +392,6 @@ body.logo-editor-body .wrap{
 
 
 #paneTextPix ::selection{ background: rgba(255,234,166,.35); }
-
-#paneTextPix .imgPrevWrap{
-  border-radius:14px;
-  border:1px solid rgba(255,255,255,.14);
-  background:rgba(0,0,0,.12);
-  padding:8px;
-  display: flex;
-  flex: 1;
-}
 
 /* ==========================================================
    DRAW — najważniejsze: panel narzędzi + DUŻA scena 26:11
