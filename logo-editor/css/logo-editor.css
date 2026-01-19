@@ -795,6 +795,42 @@ body.logo-editor-body .wrap{
   height:18px;
 }
 
+/* ===== IMAGE preview: stałe proporcje 150x70 (15:7) ===== */
+
+/* imgPrevWrap niech nie wymusza "dziwnej" wysokości przez flex */
+#paneImage .imgPrevWrap{
+  display:block;          /* zamiast flex */
+  padding:8px;
+}
+
+/* Nowy ratio-box dla preview */
+#paneImage .imgPrevRatio{
+  width:100%;
+  aspect-ratio:  26 / 11; /* dokładnie proporcja podglądu */
+  border-radius:14px;
+  overflow:hidden;
+  background:#000;
+  border:1px solid rgba(255,255,255,.12);
+  position:relative;
+}
+
+/* Canvas wypełnia ratio-box, bez rozciągania */
+#paneImage #imgBigPreview{
+  position:absolute;
+  inset:0;
+  width:100% !important;
+  height:100% !important;
+  display:block;
+  image-rendering: pixelated;
+}
+
+/* Jeśli masz jeszcze mały preview-canvas w IMAGE (np imgCanvas), to też go zabezpiecz */
+#paneImage canvas{
+  max-width:100%;
+  height:auto;
+}
+
+
 /* ==========================================================
    Modale
 ========================================================== */
