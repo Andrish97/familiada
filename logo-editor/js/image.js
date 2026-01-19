@@ -17,7 +17,6 @@ export function initImageEditor(ctx) {
   const imgBigPreview = document.getElementById("imgBigPreview"); // prawa karta: dot matrix
 
   const chkInvert = document.getElementById("chkImgInvert");
-  const chkContain = document.getElementById("chkImgContain");
 
   const rngBright = document.getElementById("rngImgBright");
   const rngContrast = document.getElementById("rngImgContrast");
@@ -33,6 +32,8 @@ export function initImageEditor(ctx) {
   const valBlack = document.getElementById("valImgBlack");
   const valWhite = document.getElementById("valImgWhite");
 
+  const btnImgResetDefault = document.getElementById("btnImgResetDefault");
+
   // =========================================================
   // Const / helpers
   // =========================================================
@@ -42,6 +43,17 @@ export function initImageEditor(ctx) {
 
   const show = (el, on) => { if (!el) return; el.style.display = on ? "" : "none"; };
   const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
+
+  const DEFAULTS = {
+    invert: true,
+    contain: true,
+    bright: 0,
+    contrast: 0,
+    gamma: 1.0,
+    ditherAmt: 0.80,
+    black: 0,
+    white: 100,
+  };
 
   // =========================================================
   // State
@@ -169,13 +181,48 @@ export function initImageEditor(ctx) {
     };
   }
 
+
+  function resetToDefaults({ resetCrop = true } = {}) {
+    // checkboxy
+    if (chkInvert) chkInvert.checked = !!DEFAULTS.invert;
+
+    // suwaki (jako stringi, bo input.value jest stringiem)
+    if (rngBright) rngBright.value = String(DEFAULTS.bright);
+    if (rngContrast) rngContrast.value = String(DEFAULTS.contrast);
+    if (rngGamma) rngGamma.value = DEFAULTS.gamma.toFixed(2);
+    if (rngDitherAmt) rngDitherAmt.value = DEFAULTS.ditherAmt.toFixed(2);
+    if (rngBlack) rngBlack.value = String(DEFAULTS.black);
+    if (rngWhite) rngWhite.value = String(DEFAULTS.white);
+
+    syncLabels();
+    applyContainMode();
+
+    // Kadr: domyślnie też wraca do „dużego centralnego”
+    // UWAGA: to zależy od layoutu (object-fit), więc robimy to po layout/reflow.
+    if (resetCrop) {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          if (imgObj) initCropToCenterBig();
+          else {
+            crop = { x: 40, y: 40, w: 280, h: Math.round(280 / ASPECT) };
+            applyCropToDom();
+          }
+          schedulePreview(10);
+        });
+      });
+    } else {
+      schedulePreview(10);
+    }
+
+    ctx.markDirty?.();
+  }
+
   // =========================================================
   // Obraz: contain vs cover (ty chcesz contain = cały widoczny)
   // =========================================================
   function applyContainMode(){
     if (!imgPreview) return;
-    const contain = !!chkContain?.checked;
-    imgPreview.style.objectFit = contain ? "contain" : "cover";
+    imgPreview.style.objectFit = true;
   }
 
   // =========================================================
@@ -533,14 +580,6 @@ export function initImageEditor(ctx) {
     };
 
     chkInvert?.addEventListener("change", onAnyChange);
-    chkContain?.addEventListener("change", () => {
-      // po zmianie contain/cover ramka musi się przeliczyć
-      onAnyChange();
-      requestAnimationFrame(() => {
-        initCropToCenterBig();
-        schedulePreview(10);
-      });
-    });
 
     rngBright?.addEventListener("input", onAnyChange);
     rngContrast?.addEventListener("input", onAnyChange);
@@ -548,6 +587,13 @@ export function initImageEditor(ctx) {
     rngDitherAmt?.addEventListener("input", onAnyChange);
     rngBlack?.addEventListener("input", onAnyChange);
     rngWhite?.addEventListener("input", onAnyChange);
+
+    btnImgResetDefault?.addEventListener("click", () => {
+      if (ctx.getMode?.() !== "IMAGE") return;
+
+      // Reset ustawień + (domyślnie) kadr do centrum
+      resetToDefaults({ resetCrop: true });
+    });
 
     window.addEventListener("resize", () => {
       clearTimeout(deb);
@@ -569,21 +615,7 @@ export function initImageEditor(ctx) {
     open(){
       show(paneImage, true);
 
-      // reset input (żeby ten sam plik można było wybrać ponownie)
-      if (imgFile) imgFile.value = "";
-
-      // defaulty
-      if (chkInvert) chkInvert.checked = true;
-      if (chkContain) chkContain.checked = true;
-
-      if (rngBright) rngBright.value = "0";
-      if (rngContrast) rngContrast.value = "0";
-      if (rngGamma) rngGamma.value = "1.00";
-      if (rngDitherAmt) rngDitherAmt.value = "0.80";
-      if (rngBlack) rngBlack.value = "0";
-      if (rngWhite) rngWhite.value = "100";
-      syncLabels();
-      applyContainMode();
+      resetToDefaults({ resetCrop: false });
 
       // UI reset
       imgObj = null;
