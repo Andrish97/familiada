@@ -547,19 +547,20 @@ export function initDrawEditor(ctx) {
   function applyToolBehavior() {
     if (!fabricCanvas) return;
   
-    const makeAll = ({ selectable, evented }) => {
+    const setAll = ({ selectable, evented }) => {
       fabricCanvas.forEachObject(o => {
         o.selectable = !!selectable;
-        o.evented = !!evented;
+        o.evented = !!evented; // <-- KLUCZ
       });
     };
   
     if (tool === TOOL.SELECT) {
       fabricCanvas.isDrawingMode = false;
       fabricCanvas.selection = true;
-      makeAll({ selectable: true, evented: true });
   
-      // lepsze trafianie cienkich linii
+      setAll({ selectable: true, evented: true });
+  
+      // lepsze trafianie cienkich obiektów
       fabricCanvas.perPixelTargetFind = true;
       fabricCanvas.targetFindTolerance = 6;
   
@@ -570,8 +571,8 @@ export function initDrawEditor(ctx) {
       fabricCanvas.selection = false;
       fabricCanvas.discardActiveObject();
   
-      // nie zaznaczamy, ale dalej "widać" obiekty pod kursorem (debug/hover)
-      makeAll({ selectable: false, evented: true });
+      // NIE zaznaczamy, ale eventy mają działać (hover/target)
+      setAll({ selectable: false, evented: true });
   
       fabricCanvas.perPixelTargetFind = false;
       fabricCanvas.targetFindTolerance = 0;
@@ -583,8 +584,8 @@ export function initDrawEditor(ctx) {
       fabricCanvas.selection = false;
       fabricCanvas.discardActiveObject();
   
-      // nic nie zaznaczamy podczas rysowania, ale obiekty dalej są evented
-      makeAll({ selectable: false, evented: true });
+      // ważne: evented=true zostaje, selectable=false
+      setAll({ selectable: false, evented: true });
   
       fabricCanvas.perPixelTargetFind = false;
       fabricCanvas.targetFindTolerance = 0;
@@ -597,8 +598,8 @@ export function initDrawEditor(ctx) {
       fabricCanvas.selection = false;
       fabricCanvas.discardActiveObject();
   
-      // gumka MUSI móc trafić target
-      makeAll({ selectable: false, evented: true });
+      // gumka MUSI mieć targetowanie
+      setAll({ selectable: false, evented: true });
   
       fabricCanvas.perPixelTargetFind = true;
       fabricCanvas.targetFindTolerance = 10;
@@ -606,13 +607,13 @@ export function initDrawEditor(ctx) {
       clearPolyDraft();
     }
     else {
-      // figury + poly
+      // figury + POLY
       fabricCanvas.isDrawingMode = false;
       fabricCanvas.selection = false;
       fabricCanvas.discardActiveObject();
   
-      // nie zaznaczamy, ale evented zostaje true (ważne!)
-      makeAll({ selectable: false, evented: true });
+      // evented=true musi zostać, żeby gumka działała zawsze
+      setAll({ selectable: false, evented: true });
   
       fabricCanvas.perPixelTargetFind = false;
       fabricCanvas.targetFindTolerance = 0;
@@ -838,7 +839,7 @@ export function initDrawEditor(ctx) {
         originY: "top",
         ...style,
         selectable: false,
-        evented: false,
+        evented: true,
         objectCaching: false,
       });
       fabricCanvas.add(drawingObj);
@@ -855,7 +856,7 @@ export function initDrawEditor(ctx) {
         originY: "top",
         ...style,
         selectable: false,
-        evented: false,
+        evented: true,
         objectCaching: false,
       });
       fabricCanvas.add(drawingObj);
