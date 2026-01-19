@@ -958,6 +958,7 @@ export function initDrawEditor(ctx) {
 
   function finishFigure() {
     if (!fabricCanvas || !drawingObj) return;
+    drawingObj.setCoords();
     drawingObj = null;
     drawingStart = null;
     fabricCanvas.requestRenderAll();
@@ -1459,6 +1460,7 @@ export function initDrawEditor(ctx) {
       // aktualizacja overlay kursora
       // w mouse:down
       lastPointer = { x: ev.clientX, y: ev.clientY };
+      
       if (tool === TOOL.BRUSH || tool === TOOL.ERASER) {
         placeOverlayAt(ev.clientX, ev.clientY);
       } else {
@@ -1484,7 +1486,7 @@ export function initDrawEditor(ctx) {
         fabricCanvas.perPixelTargetFind = true;
         fabricCanvas.targetFindTolerance = 12;
         
-        const target = fabricCanvas.findTarget(opt.e);
+        const target = opt.target || fabricCanvas.findTarget(opt.e);
         
         fabricCanvas.perPixelTargetFind = oldPx;
         fabricCanvas.targetFindTolerance = oldTol;
