@@ -704,7 +704,17 @@ async function sendZeroStatesToDevices() {
     renderList(finalRoot, picked, "final", confirmed);
 
     finalPickerUpdateButtons();
-    syncFinalPickerSlotsHeight(poolRoot, finalRoot);
+    
+    // 1) ustaw na start minimalną, żeby nie było “0”
+    poolRoot.style.minHeight = "120px";
+    finalRoot.style.minHeight = "120px";
+    
+    // 2) synchronizacja po layout (2 klatki)
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        syncFinalPickerSlotsHeight(poolRoot, finalRoot);
+      });
+    });
   }
 
   async function finalPickerReload() {
