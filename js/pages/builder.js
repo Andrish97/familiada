@@ -696,6 +696,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   });
 
+  exportBaseOverlay?.addEventListener("click", (e) => {
+    if (e.target !== exportBaseOverlay) return;
+    closeExportBaseModal();
+  });
+
 
   // IMPORT (modal)
   btnImport?.addEventListener("click", openImportModal);
