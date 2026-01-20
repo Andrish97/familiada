@@ -94,11 +94,11 @@ btnLogout?.addEventListener("click", async () => {
     // brak dostępu – wracamy do baz
     if (e?.code === "NO_ACCESS") {
       alert("Brak dostępu do tej bazy.");
-      location.href = "../bases.html";
+      //location.href = "../bases.html";
       return;
     }
 
     alert("Nie udało się wczytać bazy (sprawdź konsolę).");
-    location.href = "../bases.html";
+    //location.href = "../bases.html";
   }
 })();
