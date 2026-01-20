@@ -117,3 +117,8 @@
 .is-dragging {
   opacity: 0.6;
 }
+
+/* Żeby Shift/Ctrl zaznaczał elementy, a nie tekst */
+.row {
+  user-select: none;
+}
