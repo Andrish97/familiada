@@ -117,6 +117,33 @@
   text-align: right;
 }
 
+.list-head .h-num,
+.list-head .h-main {
+  cursor: pointer;
+}
+
+.list-head .active {
+  color: rgba(255,255,255,.80);
+}
+
+.list-head .h-num::after,
+.list-head .h-main::after {
+  content: "";
+  display: inline-block;
+  margin-left: 6px;
+  opacity: .65;
+}
+
+.list-head .h-num.active[data-dir="asc"]::after,
+.list-head .h-main.active[data-dir="asc"]::after {
+  content: "▲";
+}
+
+.list-head .h-num.active[data-dir="desc"]::after,
+.list-head .h-main.active[data-dir="desc"]::after {
+  content: "▼";
+}
+
 /* ===== Kontekst menu ===== */
 .context-menu {
   position: fixed;
