@@ -149,6 +149,29 @@ async function listSharedBases() {
 
 async function refreshBases() {
   const owned = await listOwnedBases();
+  // policz udostępnienia dla moich baz
+  const ownedIds = owned.map(b => b.id);
+  let shareCountByBase = new Map();
+  
+  if (ownedIds.length) {
+    const { data: shares, error } = await sb()
+      .from("question_base_shares")
+      .select("base_id")
+      .in("base_id", ownedIds);
+  
+    if (error) throw error;
+  
+    for (const s of (shares || [])) {
+      shareCountByBase.set(s.base_id, (shareCountByBase.get(s.base_id) || 0) + 1);
+    }
+  }
+  
+  // dopisz shareCount do owned
+  const ownedWithStats = owned.map(b => ({
+    ...b,
+    shareCount: shareCountByBase.get(b.id) || 0,
+  }));
+  
   const shared = await listSharedBases();
 
   ownedBases = (owned || []).slice().sort((a, b) =>
@@ -524,9 +547,25 @@ function render() {
     tile.className = "card";
     if (b.id === selectedId) tile.classList.add("selected");
 
-  const badge = b.sharedRole
-    ? `UDOSTĘPNIONA • ${roleLabel(b.sharedRole)} • Właściciel: ${b.ownerEmail || "—"}`
-    : `WŁASNA`;
+  let badgeText = "";
+  let badgeTitle = "";
+  
+  if (b.sharedRole) {
+    // baza udostępniona MI
+    const isEdit = b.sharedRole === "editor";
+    badgeText = isEdit ? `✎ ${roleLabel(b.sharedRole)}` : `👁 ${roleLabel(b.sharedRole)}`;
+    badgeTitle = isEdit ? "Masz dostęp z edycją do tej bazy" : "Masz dostęp tylko do odczytu tej bazy";
+  } else {
+    // MOJA baza
+    const n = Number(b.shareCount || 0);
+    if (n > 0) {
+      badgeText = `👥 ${n}`;
+      badgeTitle = `Ta baza jest udostępniona innym (${n})`;
+    } else {
+      badgeText = "";       // nic nie pokazujemy, bo nie ma po co
+      badgeTitle = "";
+    }
+  }
 
     const canDelete = isOwner(b);
     const deleteBtn = canDelete
@@ -537,7 +576,9 @@ function render() {
       ${deleteBtn}
       <div>
         <div class="name">${escapeHtml(b.name || "Baza")}</div>
-        <div class="meta">${escapeHtml(badge)}</div>
+        <div class="meta">
+          ${badgeText ? `<span class="badge" title="${escapeHtml(badgeTitle)}">${escapeHtml(badgeText)}</span>` : ``}
+        </div>
       </div>
     `;
 
