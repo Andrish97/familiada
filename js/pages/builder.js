@@ -27,6 +27,7 @@ const btnPoll = document.getElementById("btnPoll");
 
 const btnManual = document.getElementById("btnManual");
 const btnLogoEditor = document.getElementById("btnLogoEditor");
+const btnBases = document.getElementById("btnBases");
 
 const btnExport = document.getElementById("btnExport");
 const btnImport = document.getElementById("btnImport");
@@ -407,6 +408,10 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   btnLogoEditor?.addEventListener("click", async () => {
     location.href = "./logo-editor/logo-editor.html";
+  });
+  
+  btnBases?.addEventListener("click", async () => {
+    location.href = "bases.html";
   });
 
   tabPollText?.addEventListener("click", () => setActiveTab(TYPES.POLL_TEXT));
