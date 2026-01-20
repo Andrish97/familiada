@@ -145,25 +145,30 @@ export function wireActions({ state }) {
     }
   });
 
-  // --- Klik w folder po lewej: przejście do widoku folderu ---
+
   treeEl?.addEventListener("click", async (e) => {
-    const row = e.target?.closest?.(".row[data-kind='cat'][data-id]");
-    if (!row) return;
+  const row = e.target?.closest?.(".row[data-kind][data-id]");
+  if (!row) return;
 
-    const catId = row.dataset.id;
+  const kind = row.dataset.kind;
+  const id = row.dataset.id;
 
-    setViewFolder(state, catId);
+  if (kind === "cat") {
+    setViewFolder(state, id);
     selectionClear(state);
     await refreshList(state);
-   
-    if (kind === "root") {
-      setViewAll(state);
-      selectionClear(state);
-      state._rootQuestions = null;
-      await refreshList(state);
-      return;
-    }
-  });
+    return;
+  }
+    
+  if (kind === "root") {
+    setViewAll(state);
+    selectionClear(state);
+    state._rootQuestions = null;
+    await refreshList(state);
+    return;
+  }
+    
+});
 
   // --- Klik w listę: selekcja Windows (single / ctrl / shift) ---
   listEl?.addEventListener("click", (e) => {
