@@ -205,13 +205,7 @@ input, textarea { user-select: text; }
 .row .col-main .title {
   white-space: nowrap;
   overflow: hidden;
-  text-overflow: ellipsis;
-  font-weight: 400;          /* normal, nie bold */
-  color: rgba(255,255,255,.88);
-}
-
-.row[data-kind="cat"] .title {
-  font-weight: 500;          /* lekko, NIE bold */
+  text-overflow: ellipsis;;
 }
 
 .row .col-meta {
@@ -220,6 +214,16 @@ input, textarea { user-select: text; }
   text-align: right;
   white-space: nowrap;
 }
+
+.row .title {
+  font-weight: 400;          /* normal, nie bold */
+  color: rgba(255,255,255,.88);
+}
+
+.row[data-kind="cat"] .title {
+  font-weight: 500;          /* lekko, NIE bold */
+}
+
 .cm-item.danger{
   color: #ffb3b3;
 }
