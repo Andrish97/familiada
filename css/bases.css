@@ -80,3 +80,15 @@
 .grid .card .x:hover {
   background: rgba(0,0,0,.55);
 }
+
+.badge{
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.16);
+  background: rgba(0,0,0,.25);
+  font-size: 12px;
+  opacity: .9;
+}
