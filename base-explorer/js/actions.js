@@ -127,9 +127,11 @@ export function wireActions({ state }) {
     if (!el) return;
   
     const kind = el.dataset.kind;
+  
     if (kind === "root") {
       setViewAll(state); // root-folder
       selectionClear(state);
+      state._rootQuestions = null;
       await refreshList(state);
       return;
     }
