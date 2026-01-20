@@ -55,3 +55,28 @@
   border:1px solid rgba(255,255,255,.16);
   background:rgba(255,255,255,.06);
 }
+
+/* Fallback: styl przycisku ✕ na kafelku (gdy builder.css nie łapie selektora) */
+.grid .card {
+  position: relative;
+}
+
+.grid .card .x {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 28px;
+  height: 28px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,.18);
+  background: rgba(0,0,0,.35);
+  color: rgba(255,255,255,.9);
+  cursor: pointer;
+  line-height: 26px;
+  font-size: 18px;
+  padding: 0;
+}
+
+.grid .card .x:hover {
+  background: rgba(0,0,0,.55);
+}
