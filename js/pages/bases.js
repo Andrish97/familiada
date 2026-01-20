@@ -829,8 +829,11 @@ shareEmail?.addEventListener("keydown", (e) => {
   currentUser = await requireAuth("index.html");
   if (who) who.textContent = currentUser?.email || "—";
 
-  setHint("Kliknij kafelek, żeby go zaznaczyć. Dwuklik zmienia nazwę (tylko właściciel).\n");
-
+  setHint(
+    "Kliknij kafelek, żeby go zaznaczyć. Dwuklik zmienia nazwę (tylko właściciel).\n" +
+    "Ikonki: 👥 — Twoja baza jest udostępniona innym. ✎ — masz edycję. 👁 — masz odczyt."
+  );
+    
   await refreshBases();
   render();
   setButtonsState();
