@@ -124,13 +124,24 @@ export function renderBreadcrumbs(state) {
 export function renderList(state) {
   if (!elList) return;
 
-  const items = Array.isArray(state.questions) ? state.questions : [];
-  if (!items.length) {
+  const folders = Array.isArray(state.folders) ? state.folders : [];
+  const questions = Array.isArray(state.questions) ? state.questions : [];
+
+  if (!folders.length && !questions.length) {
     elList.innerHTML = `<div style="opacity:.75">Brak elementów.</div>`;
     return;
   }
 
-  const rows = items.map((q, idx) => {
+  const folderRows = folders.map((c) => {
+    const key = `c:${c.id}`;
+    const sel = isSelected(state, key) ? "font-weight:700;" : "";
+    return `<div class="row" data-kind="cat" data-id="${esc(c.id)}" style="padding:8px 10px; cursor:pointer; ${sel}">
+      <div>📁 ${esc(c.name || "Folder")}</div>
+      <div style="opacity:.65; font-size:12px;">folder</div>
+    </div>`;
+  }).join("");
+
+  const qRows = questions.map((q, idx) => {
     const key = `q:${q.id}`;
     const sel = isSelected(state, key) ? "font-weight:700;" : "";
     const text = q?.payload?.text ?? q?.text ?? "";
@@ -140,5 +151,5 @@ export function renderList(state) {
     </div>`;
   }).join("");
 
-  elList.innerHTML = rows;
+  elList.innerHTML = folderRows + qRows;
 }
