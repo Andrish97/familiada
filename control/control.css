@@ -2107,4 +2107,32 @@
   outline: 3px solid rgba(255,234,166,.35);
   outline-offset: 2px;
 }
+/* ===== FINAL MAP: stały grid 3x3 dla przycisków ===== */
+.mapBtnsGrid{
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-auto-rows: 44px;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.mapBtnsGrid .btn{
+  width: 100%;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 0 10px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* pusty slot w gridzie */
+.mapBtnsGrid .mapSlot{
+  border-radius: 16px;
+  border: 1px dashed rgba(255,255,255,.10);
+  background: rgba(255,255,255,.02);
+}
 
