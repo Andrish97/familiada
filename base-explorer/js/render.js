@@ -112,8 +112,10 @@ export function renderTags(state) {
 export function renderBreadcrumbs(state) {
   if (!elBreadcrumbs) return;
 
-  let label = "Wszystkie pytania";
+  let label = "Katalog gówny";
   if (state.view === VIEW.FOLDER) label = "Folder";
+  if (state.view === VIEW.TAG) label = "Tagi";
+  elBreadcrumbs.textContent = label;
   if (state.view === VIEW.TAG) label = "Tagi";
 
   elBreadcrumbs.textContent = label;
