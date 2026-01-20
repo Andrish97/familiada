@@ -18,7 +18,7 @@ function getBaseIdFromUrl() {
 /* ================= Events ================= */
 btnBack?.addEventListener("click", () => {
   // powrót do listy baz (warstwa 1)
-  location.href = "../../bases.html";
+  location.href = "../bases.html";
 });
 
 btnLogout?.addEventListener("click", async () => {
@@ -36,7 +36,7 @@ btnLogout?.addEventListener("click", async () => {
   const baseId = getBaseIdFromUrl();
   if (!baseId) {
     alert("Brak identyfikatora bazy.");
-    location.href = "../../bases.html";
+    location.href = "../bases.html";
     return;
   }
 
