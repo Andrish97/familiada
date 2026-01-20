@@ -488,6 +488,12 @@ async function shareAdd() {
     return;
   }
 
+  // właściciel próbuje udostępnić samemu sobie
+  if (email.toLowerCase() === String(currentUser?.email || "").toLowerCase()) {
+    setMsg(shareMsg, "Jesteś właścicielem tej bazy");
+    return;
+  }
+
   const { data: ok, error } = await sb().rpc("share_base_by_email", {
     p_base_id: b.id,
     p_email: email,
