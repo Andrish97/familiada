@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Familiada — bazy pytań</title>
+
+  <link rel="icon" href="favicon.ico"/>
+  <link rel="stylesheet" href="css/base.css"/>
+  <!-- Reużywamy stylu buildera, żeby było spójnie -->
+  <link rel="stylesheet" href="css/builder.css"/>
+  <link rel="stylesheet" href="css/bases.css"/>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <script type="module" src="js/pages/bases.js" defer></script>
+</head>
+
+<body class="builder-body">
+  <header class="topbar">
+    <div class="brand">FAMILIADA</div>
+    <div class="right">
+      <button class="btn" id="btnBack" type="button">← Moje gry</button>
+      <span class="who" id="who">—</span>
+      <button class="btn sm" id="btnLogout" type="button">Wyloguj</button>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div class="bar">
+      <div>
+        <div class="title">Twoje bazy pytań</div>
+        <div class="hint" id="hint">Kliknij kafelek, żeby go zaznaczyć.</div>
+      </div>
+
+      <div class="actions">
+        <button class="btn sm gold" id="btnBrowse" type="button" disabled>
+          <span class="only-desktop">Przeglądaj</span>
+          <span class="only-mobile">Przegl.</span>
+        </button>
+
+        <button class="btn sm" id="btnShare" type="button" disabled>
+          <span class="only-desktop">Udostępnij</span>
+          <span class="only-mobile">Udos.</span>
+        </button>
+      </div>
+    </div>
+
+    <section class="builder-shell">
+      <div class="card builder-card">
+        <div class="grid" id="grid"></div>
+
+        <div class="builder-bottom">
+          <div class="builder-bottom-left"></div>
+          <div class="builder-bottom-right">
+            <button class="btn sm" id="btnExport" type="button" disabled>
+              <span class="only-desktop">Eksport</span>
+              <span class="only-mobile">Exp</span>
+            </button>
+
+            <button class="btn sm" id="btnImport" type="button">
+              <span class="only-desktop">Import</span>
+              <span class="only-mobile">Imp</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Modal: nowa baza / zmiana nazwy -->
+  <div class="overlay" id="nameOverlay" style="display:none;">
+    <div class="modal">
+      <div class="mTitle" id="nameTitle">Nowa baza</div>
+      <div class="mSub" id="nameSub">Podaj nazwę bazy.</div>
+
+      <div class="importRow">
+        <input id="nameInp" class="inp" type="text" maxlength="80" placeholder="Nazwa..."/>
+      </div>
+
+      <div class="importRow">
+        <button class="btn sm gold" id="btnNameOk" type="button">Zapisz</button>
+        <button class="btn sm" id="btnNameCancel" type="button">Anuluj</button>
+        <div class="importMsg" id="nameMsg"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: import JSON -->
+  <div class="overlay" id="importOverlay" style="display:none;">
+    <div class="modal">
+      <div class="mTitle">Import</div>
+      <div class="mSub">Wybierz plik JSON lub wklej JSON poniżej.</div>
+
+      <div class="importRow">
+        <input id="importFile" class="inp" type="file" accept="application/json">
+        <button class="btn sm" id="btnImportFile" type="button">Wczytaj plik</button>
+      </div>
+
+      <textarea id="importTa" class="importTa" spellcheck="false" placeholder="Wklej JSON tutaj..."></textarea>
+
+      <div class="importRow">
+        <button class="btn sm gold" id="btnImportJson" type="button">Importuj</button>
+        <button class="btn sm" id="btnCancelImport" type="button">Zamknij</button>
+        <div class="importMsg" id="importMsg"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: udostępnienia -->
+  <div class="overlay" id="shareOverlay" style="display:none;">
+    <div class="modal">
+      <div class="mTitle">Udostępnij bazę</div>
+      <div class="mSub">Dodajesz użytkowników po e-mailu. Jeśli się nie uda, pokażemy „Nie udało się”.</div>
+
+      <div class="shareList" id="shareList"></div>
+
+      <div class="shareAdd">
+        <div class="importRow">
+          <input id="shareEmail" class="inp" type="email" placeholder="E-mail użytkownika..."/>
+          <select id="shareRole" class="inp">
+            <option value="editor">Edycja</option>
+            <option value="viewer">Przeglądanie</option>
+          </select>
+          <button class="btn sm gold" id="btnShareAdd" type="button">Dodaj</button>
+        </div>
+        <div class="importRow">
+          <button class="btn sm" id="btnShareClose" type="button">Zamknij</button>
+          <div class="importMsg" id="shareMsg"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
