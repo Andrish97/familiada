@@ -169,12 +169,24 @@ export function wireActions({ state }) {
   });
 
   // --- Dblclick na pytanie: (na razie placeholder) ---
-  listEl?.addEventListener("dblclick", (e) => {
-    const row = e.target?.closest?.(".row[data-kind='q'][data-id]");
+  listEl?.addEventListener("dblclick", async (e) => {
+    const row = e.target?.closest?.(".row[data-kind][data-id]");
     if (!row) return;
-
-    // Edytor pytania dojdzie później (modal), tu zostawiamy zaczep.
-    // Na tym etapie brak akcji.
+  
+    const kind = row.dataset.kind;
+    const id = row.dataset.id;
+  
+    if (kind === "cat") {
+      setViewFolder(state, id);
+      selectionClear(state);
+      await refreshList(state);
+      return;
+    }
+  
+    if (kind === "q") {
+      // Edytor pytania w modalu będzie później
+      return;
+    }
   });
 
   // pierwsze „odśwież” listy po podpięciu akcji
