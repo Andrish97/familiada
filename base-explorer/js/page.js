@@ -1,7 +1,7 @@
 // base-explorer/js/page.js
 // Init strony menadżera bazy (warstwa 2)
 
-import { requireAuth, signOut } from "/familiada/js/core/auth.js";
+import { requireAuth, signOut } from "../js/core/auth.js";
 
 /* ================= DOM ================= */
 const btnBack = document.getElementById("btnBack");
@@ -18,25 +18,25 @@ function getBaseIdFromUrl() {
 /* ================= Events ================= */
 btnBack?.addEventListener("click", () => {
   // powrót do listy baz (warstwa 1)
-  location.href = "familiada/bases.html";
+  location.href = "../bases.html";
 });
 
 btnLogout?.addEventListener("click", async () => {
   await signOut();
-  location.href = "familiada/index.html";
+  location.href = "../index.html";
 });
 
 /* ================= Init ================= */
 (async function init() {
   // auth
-  const user = await requireAuth("familiada/index.html");
+  const user = await requireAuth("../index.html");
   if (who) who.textContent = user?.email || "—";
 
   // base id z URL
   const baseId = getBaseIdFromUrl();
   if (!baseId) {
     alert("Brak identyfikatora bazy.");
-    location.href = "familiada/bases.html";
+    location.href = "../bases.html";
     return;
   }
 
