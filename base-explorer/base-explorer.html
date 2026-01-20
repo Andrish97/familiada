@@ -1,1 +1,71 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8" />
+  <title>Menadżer bazy pytań</title>
 
+  <!-- wspólne style aplikacji (jak w builder/manual) -->
+  <link rel="stylesheet" href="../builder.css" />
+  <link rel="stylesheet" href="./base-explorer.css" />
+</head>
+
+<body>
+
+  <!-- TOPBAR – identyczny wzorzec jak w manualu/builderze -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <button id="btnBack" class="btn ghost">← Powrót</button>
+      <div class="topbar-title">
+        <div class="title">Menadżer bazy pytań</div>
+        <div id="baseName" class="subtitle">—</div>
+      </div>
+    </div>
+
+    <div class="topbar-right">
+      <div id="who" class="who">—</div>
+      <button id="btnLogout" class="btn ghost">Wyloguj</button>
+    </div>
+  </header>
+
+  <!-- TOOLBAR -->
+  <section id="toolbar" class="toolbar">
+    <!-- wypełniane dynamicznie w JS -->
+  </section>
+
+  <!-- GŁÓWNY LAYOUT: drzewo + zawartość -->
+  <main class="explorer">
+
+    <!-- LEWY PANEL: foldery + tagi -->
+    <aside class="explorer-left">
+      <div id="tree" class="tree">
+        <!-- drzewo kategorii -->
+      </div>
+
+      <div id="tags" class="tags">
+        <!-- tagi Finder-style -->
+      </div>
+    </aside>
+
+    <!-- PRAWY PANEL: lista -->
+    <section class="explorer-right">
+      <div id="breadcrumbs" class="breadcrumbs">
+        <!-- ścieżka / aktualny kontekst -->
+      </div>
+
+      <div id="list" class="list">
+        <!-- foldery i pytania -->
+      </div>
+    </section>
+
+  </main>
+
+  <!-- KONTEKST MENU (prawy klik) -->
+  <div id="contextMenu" class="context-menu" hidden></div>
+
+  <!-- MODALE (wstrzykiwane JS-em) -->
+  <div id="modalRoot"></div>
+
+  <!-- JS -->
+  <script type="module" src="./js/page.js"></script>
+</body>
+</html>
