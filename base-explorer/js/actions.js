@@ -122,11 +122,25 @@ export function wireActions({ state }) {
     renderList(state); // nie ruszamy toolbar, więc focus zostaje w inpucie
   });
 
-  // --- Breadcrumbs: klik = wróć do "Wszystkie" (na start) ---
-  breadcrumbsEl?.addEventListener("click", async () => {
-    setViewAll(state);
-    selectionClear(state);
-    await refreshList(state);
+  breadcrumbsEl?.addEventListener("click", async (e) => {
+    const el = e.target?.closest?.(".crumb");
+    if (!el) return;
+  
+    const kind = el.dataset.kind;
+    if (kind === "root") {
+      setViewAll(state); // root-folder
+      selectionClear(state);
+      await refreshList(state);
+      return;
+    }
+  
+    if (kind === "crumb") {
+      const id = el.dataset.id;
+      if (!id) return;
+      setViewFolder(state, id);
+      selectionClear(state);
+      await refreshList(state);
+    }
   });
 
   // --- Klik w folder po lewej: przejście do widoku folderu ---
@@ -139,6 +153,14 @@ export function wireActions({ state }) {
     setViewFolder(state, catId);
     selectionClear(state);
     await refreshList(state);
+   
+    if (kind === "root") {
+      setViewAll(state);
+      selectionClear(state);
+      state._rootQuestions = null;
+      await refreshList(state);
+      return;
+    }
   });
 
   // --- Klik w listę: selekcja Windows (single / ctrl / shift) ---
