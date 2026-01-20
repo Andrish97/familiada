@@ -1037,28 +1037,56 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
       }
     }
   
-    // --- przyciski listy (MATCH) ---
-    const aButtons = aList
-      .map((a) => {
-        const active = !p2IsRepeat && row.kind === "MATCH" && row.matchId === a.id;
-        const blocked = !!p1BlockedId && a.id === p1BlockedId;
-    
-        const disabled =
-          !allowChoice || row.revealedAnswer === true || blocked || lockedForever;
-    
-        return `
-          <button class="btn sm ${active ? "gold" : ""}" type="button"
-                  data-kind="match" data-id="${a.id}"
-                  ${disabled ? "disabled" : ""}>
-            ${escapeHtml(a.text)} <span style="opacity:.7;">(${nInt(a.fixed_points, 0)})</span>
-            ${blocked ? `<span style="opacity:.7;"> (zajęte)</span>` : ``}
-          </button>
-        `;
-      })
-      .join("");
-      
+    // --- przyciski listy (MATCH) + akcje w stałym gridzie 3x3 ---
+    const matchTiles = aList.map((a) => {
+      const active = !p2IsRepeat && row.kind === "MATCH" && row.matchId === a.id;
+      const blocked = !!p1BlockedId && a.id === p1BlockedId;
+  
+      const disabled =
+        !allowChoice || row.revealedAnswer === true || blocked || lockedForever;
+  
+      return `
+        <button class="btn sm ${active ? "gold" : ""}" type="button"
+                data-kind="match" data-id="${a.id}"
+                ${disabled ? "disabled" : ""}>
+          ${escapeHtml(a.text)} <span style="opacity:.7;">(${nInt(a.fixed_points, 0)})</span>
+          ${blocked ? `<span style="opacity:.7;"> (zajęte)</span>` : ``}
+        </button>
+      `;
+    });
+  
     const missActive = !p2IsRepeat && row.kind === "MISS";
     const skipActive = !p2IsRepeat && row.kind === "SKIP";
+  
+    const actionTiles = [];
+  
+    // akcje zawsze "po odpowiedziach"
+    actionTiles.push(`
+      <button class="btn sm danger ${missActive ? "gold" : ""}" type="button" data-kind="miss"
+        ${(lockedForever || row.revealedAnswer) ? "disabled" : ""}>
+        ${escapeHtml(FINAL_MSG.MAP_BTN_MISS)}
+      </button>
+    `);
+  
+    actionTiles.push(`
+      <button class="btn sm ${skipActive ? "gold" : ""}" type="button" data-kind="skip"
+        ${(lockedForever || row.revealedAnswer) ? "disabled" : ""}>
+        ${escapeHtml(FINAL_MSG.MAP_BTN_SKIP)}
+      </button>
+    `);
+  
+    if (isR2) {
+      actionTiles.push(`
+        <button class="btn sm danger ${p2IsRepeat ? "gold" : ""}" type="button" data-kind="repeat"
+          ${(row.revealedAnswer || row.revealedPoints) ? "disabled" : ""}>
+          ${escapeHtml(FINAL_MSG.P2_BTN_REPEAT_OFF)}
+        </button>
+      `);
+    }
+  
+    // 3x3 zawsze: najpierw odpowiedzi, potem akcje, reszta puste sloty
+    const tiles = [...matchTiles, ...actionTiles].slice(0, 9);
+    while (tiles.length < 9) tiles.push(`<div class="mapSlot"></div>`);
   
     const p1Shown = resolveP1ShownForUi(idx);
   
@@ -1090,24 +1118,8 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
       </div>
   
       <div class="card finalRowCard" style="margin-top:12px;">
-        <div class="rowBtns" style="flex-wrap:wrap; gap:8px;">
-          ${aButtons || `<div class="hint">${escapeHtml(FINAL_MSG.MAP_LIST_EMPTY)}</div>`}
-  
-          <button class="btn sm ${skipActive ? "gold" : ""}" type="button" data-kind="skip"
-            ${(lockedForever || row.revealedAnswer) ? "disabled" : ""}>
-            ${escapeHtml(FINAL_MSG.MAP_BTN_SKIP)}
-          </button>
-  
-          <button class="btn sm danger ${missActive ? "gold" : ""}" type="button" data-kind="miss"
-            ${(lockedForever || row.revealedAnswer) ? "disabled" : ""}>
-            ${escapeHtml(FINAL_MSG.MAP_BTN_MISS)}
-          </button>
-  
-          ${isR2 ? `
-          <button class="btn sm danger ${p2IsRepeat ? "gold" : ""}" type="button" data-kind="repeat">
-            ${escapeHtml(FINAL_MSG.P2_BTN_REPEAT_OFF)}
-          </button>
-          ` : ``}
+        <div class="mapBtnsGrid">
+          ${tiles.join("")}
         </div>
       </div>
   
@@ -1125,6 +1137,63 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
       </div>
     `;
   
+    const rootId = roundNo === 1 ? `finalP1MapQ${idx + 1}` : `finalP2MapQ${idx + 1}`;
+    ui.setHtml(rootId, html);
+  
+    const root = document.getElementById(rootId);
+    if (!root) return;
+  
+    const nextBtnId = roundNo === 1 ? `btnFinalNextFromP1Q${idx + 1}` : `btnFinalNextFromP2Q${idx + 1}`;
+    ui.setEnabled(nextBtnId, !!row.revealedAnswer && !!row.revealedPoints);
+  
+    // --- helper: przełączanie stanów bez re-rendera (żeby nie tracić fokusu) ---
+    function applyUiState() {
+      const nowVal = String(root.querySelector('input[data-kind="player"]')?.value ?? "").trim();
+      const nowHasTyped = nowVal.length > 0;
+  
+      const nowRepeat = isR2 && rt.p2[idx]?.repeat === true;
+  
+      const allowSkipNow = !nowHasTyped && !lockedForever && row.revealedAnswer !== true;
+      const allowChoiceNow = nowHasTyped && !lockedForever && row.revealedAnswer !== true;
+  
+      // SKIP / MISS
+      const btnSkip = root.querySelector('button[data-kind="skip"]');
+      const btnMiss = root.querySelector('button[data-kind="miss"]');
+  
+      if (btnSkip) btnSkip.disabled = !allowSkipNow;
+      if (btnMiss) btnMiss.disabled = !allowChoiceNow;
+  
+      // MATCH
+      root.querySelectorAll('button[data-kind="match"]').forEach((b) => {
+        const blocked = !!p1BlockedId && b.dataset.id === p1BlockedId;
+        b.disabled = !allowChoiceNow || blocked;
+      });
+  
+      // REPEAT
+      const btnRepeat = root.querySelector('button[data-kind="repeat"]');
+      const frozen = (row.revealedAnswer === true) || (row.revealedPoints === true);
+      if (btnRepeat) btnRepeat.disabled = frozen;
+  
+      // gold: zdejmij wszystkim, potem ustaw właściwy
+      root.querySelectorAll('button[data-kind]').forEach((b) => b.classList.remove("gold"));
+  
+      if (nowRepeat) {
+        btnRepeat?.classList.add("gold");
+      } else {
+        if (row.kind === "SKIP") btnSkip?.classList.add("gold");
+        if (row.kind === "MISS") btnMiss?.classList.add("gold");
+        if (row.kind === "MATCH" && row.matchId) {
+          root
+            .querySelector(`button[data-kind="match"][data-id="${CSS.escape(row.matchId)}"]`)
+            ?.classList.add("gold");
+        }
+      }
+    }
+  
+    // na start
+    applyUiState();
+  
+    
     const rootId = roundNo === 1 ? `finalP1MapQ${idx + 1}` : `finalP2MapQ${idx + 1}`;
     ui.setHtml(rootId, html);
   
