@@ -4,6 +4,7 @@
 import { VIEW, setViewAll, setViewFolder, selectionClear, selectionSetSingle, selectionToggle } from "./state.js";
 import { renderAll, renderList } from "./render.js";
 import { listQuestionsByCategory, listAllQuestions } from "./repo.js";
+import { showContextMenu, hideContextMenu } from "./context-menu.js";
 
 /* ================= Utils ================= */
 function keyFromRow(row) {
@@ -235,7 +236,41 @@ export function wireActions({ state }) {
 
   // pierwsze „odśwież” listy po podpięciu akcji
   // (żeby działało też po przełączeniu view/search)
-  return {
+  const api = {
     refreshList: () => refreshList(state),
   };
+
+  // udostępniamy do context-menu (żeby mogło odświeżyć widok po delete)
+  state._api = api;
+
+  // PPM na liście (foldery/pytania/puste tło)
+  listEl?.addEventListener("contextmenu", async (e) => {
+    e.preventDefault();
+
+    const row = e.target?.closest?.(".row[data-kind][data-id]");
+    if (row) {
+      const kind = row.dataset.kind; // 'cat' | 'q'
+      const id = row.dataset.id;
+      await showContextMenu({ state, x: e.clientX, y: e.clientY, target: { kind, id } });
+      return;
+    }
+
+    // puste tło listy = root (bez specjalnych akcji na razie)
+    await showContextMenu({ state, x: e.clientX, y: e.clientY, target: { kind: "root", id: null } });
+  });
+
+  // Klik poza menu zamyka
+  document.addEventListener("mousedown", (e) => {
+    const cm = document.getElementById("contextMenu");
+    if (!cm || cm.hidden) return;
+    if (e.target === cm || cm.contains(e.target)) return;
+    hideContextMenu();
+  });
+
+  // Esc zamyka menu (nie kłóci się z Twoim Esc od selekcji)
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") hideContextMenu();
+  });
+
+  return api;
 }
