@@ -112,13 +112,35 @@ export function renderTags(state) {
 export function renderBreadcrumbs(state) {
   if (!elBreadcrumbs) return;
 
-  let label = "Katalog gówny";
-  if (state.view === VIEW.FOLDER) label = "Folder";
-  if (state.view === VIEW.TAG) label = "Tagi";
-  elBreadcrumbs.textContent = label;
-  if (state.view === VIEW.TAG) label = "Tagi";
+  const byId = new Map((state.categories || []).map(c => [c.id, c]));
+  const parts = [];
 
-  elBreadcrumbs.textContent = label;
+  // Root zawsze istnieje
+  parts.push({ id: null, name: "Root" });
+
+  if (state.view === VIEW.FOLDER && state.folderId) {
+    // zbuduj ścieżkę od folderId do root
+    let cur = byId.get(state.folderId);
+    const chain = [];
+    let guard = 0;
+
+    while (cur && guard++ < 20) {
+      chain.push({ id: cur.id, name: cur.name || "Folder" });
+      const pid = cur.parent_id || null;
+      cur = pid ? byId.get(pid) : null;
+    }
+
+    chain.reverse();
+    for (const x of chain) parts.push(x);
+  }
+
+  // render jako klikalne segmenty (na razie tylko root + foldery)
+  elBreadcrumbs.innerHTML = parts.map((p, i) => {
+    const sep = i ? `<span style="opacity:.5; padding:0 6px;">/</span>` : ``;
+    const idAttr = (p.id === null) ? "" : `data-id="${esc(p.id)}"`;
+    const kind = (p.id === null) ? `data-kind="root"` : `data-kind="crumb"`;
+    return `${sep}<span class="crumb" ${kind} ${idAttr} style="cursor:pointer;">${esc(p.name)}</span>`;
+  }).join("");
 }
 
 export function renderList(state) {
