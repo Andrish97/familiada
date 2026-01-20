@@ -123,3 +123,39 @@
 
 /* Ale pola formularzy nadal mają działać normalnie */
 input, textarea { user-select: text; }
+
+/* ===== Menu kontekstowe ===== */
+.context-menu{
+  position: fixed;
+  z-index: 9999;
+  min-width: 220px;
+  padding: 6px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,.14);
+  background: rgba(20,20,20,.96);
+  box-shadow: 0 12px 30px rgba(0,0,0,.45);
+}
+
+.cm-item{
+  width: 100%;
+  text-align: left;
+  padding: 10px 10px;
+  border-radius: 10px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.cm-item:hover{
+  background: rgba(255,255,255,.08);
+}
+
+.cm-item.disabled{
+  opacity: .45;
+  cursor: default;
+}
+
+.cm-item.danger{
+  color: #ffb3b3;
+}
