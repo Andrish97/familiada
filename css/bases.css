@@ -33,13 +33,25 @@
   margin-top: 10px;
 }
 
-/* kafelek "udostępniona" */
-.tile .sub.badge {
-  display: inline-block;
-  padding: 4px 8px;
-  border-radius: 999px;
-  border: 1px solid rgba(255,255,255,.16);
-  background: rgba(255,255,255,.06);
-  font-size: 11px;
-  letter-spacing: .06em;
+.emptyNote {
+  opacity: .75;
+  padding: 10px 4px;
+}
+
+/* nagłówki sekcji (Moje bazy / Udostępnione) */
+.sectionTitle{
+  grid-column: 1 / -1;
+  margin: 18px 4px 6px;
+  font-weight: 700;
+  opacity: .9;
+}
+
+/* delikatna "pigułka" na meta statusu bazy */
+.builder-body .grid .card .meta{
+  display:inline-block;
+  width:fit-content;
+  padding:4px 8px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,.16);
+  background:rgba(255,255,255,.06);
 }
