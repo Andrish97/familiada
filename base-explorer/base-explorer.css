@@ -118,7 +118,8 @@
   opacity: 0.6;
 }
 
-/* Żeby Shift/Ctrl zaznaczał elementy, a nie tekst */
-.row {
-  user-select: none;
-}
+/* Explorer: selekcja ma zaznaczać elementy, nie tekst */
+.row { user-select: none; }
+
+/* Ale pola formularzy nadal mają działać normalnie */
+input, textarea { user-select: text; }
