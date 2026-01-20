@@ -780,7 +780,7 @@ btnBrowse?.addEventListener("click", () => {
   const b = selectedBase();
   if (!b) return;
   // warstwa 2 będzie później – na razie przekierowanie na placeholder
-  location.href = `base-explorer.html?base=${encodeURIComponent(b.id)}`;
+  location.href = `base-explorer/base-explorer.html?base=${encodeURIComponent(b.id)}`;
 });
 
 btnShare?.addEventListener("click", async () => {
