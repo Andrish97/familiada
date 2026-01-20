@@ -11,6 +11,7 @@ import {
   listTags,
   listAllQuestions,
 } from "./repo.js";
+import { wireActions } from "./actions.js";
 
 /* ================= DOM ================= */
 const btnBack = document.getElementById("btnBack");
@@ -73,16 +74,17 @@ btnLogout?.addEventListener("click", async () => {
     state.tags = tags;
     state.questions = qs;
 
-    // ===== render =====
     renderAll(state);
 
-    // ===== minimalne eventy (na razie tylko search wpis – bez filtrowania jeszcze) =====
-    const searchInp = document.getElementById("searchInp");
-    searchInp?.addEventListener("input", () => {
-      state.searchQuery = String(searchInp.value || "");
-      // filtr zrobimy w następnym kroku w render/actions
-      // na razie tylko trzymamy stan, żeby nie zgubić wpisu
-    });
+    // ===== akcje UI (klik folder, search, selekcja) =====
+    const api = wireActions({ state });
+
+    // ustaw cache all-questions dla widoku ALL
+    state._allQuestions = qs;
+    state._viewQuestions = qs;
+
+    // refresh (żeby search/filter działały od razu spójnie)
+    await api.refreshList();
 
   } catch (e) {
     console.error(e);
