@@ -156,6 +156,64 @@ input, textarea { user-select: text; }
   cursor: default;
 }
 
+/* ===== Layout: separator lewo/prawo ===== */
+.explorer {
+  gap: 0; /* żeby separator był "na styk" */
+}
+
+.explorer-left {
+  border-right: 1px solid rgba(255,255,255,.12);
+}
+
+.explorer-right {
+  padding-left: 0;
+}
+
+/* ===== Lista: wygląd jak tabelka ===== */
+.list {
+  border-top: 1px solid rgba(255,255,255,.10);
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 64px 1fr 120px; /* nr / nazwa / meta */
+  align-items: center;
+  gap: 10px;
+
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(255,255,255,.10);
+}
+
+.row:hover {
+  background: rgba(255,255,255,.05);
+}
+
+.row.selected {
+  background: rgba(255,255,255,.10);
+}
+
+/* kolumny */
+.row .col-num {
+  opacity: .7;
+  font-variant-numeric: tabular-nums; /* równy "grid" cyfr */
+}
+
+.row .col-main {
+  min-width: 0; /* żeby ellipsis działało */
+}
+
+.row .col-main .title {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.row .col-meta {
+  opacity: .65;
+  font-size: 12px;
+  text-align: right;
+  white-space: nowrap;
+}
 .cm-item.danger{
   color: #ffb3b3;
 }
