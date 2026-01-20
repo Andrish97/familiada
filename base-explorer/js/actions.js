@@ -110,6 +110,30 @@ export function wireActions({ state }) {
   const breadcrumbsEl = document.getElementById("breadcrumbs");
   const toolbarEl = document.getElementById("toolbar");
 
+  const foldersRaw = Array.isArray(state.folders) ? state.folders : [];
+  const questionsRaw = Array.isArray(state.questions) ? state.questions : [];
+  
+  const sortKey = state?.sort?.key || "ord";
+  const sortDir = state?.sort?.dir || "asc";
+  const mul = sortDir === "desc" ? -1 : 1;
+  
+  const byName = (a, b) => String(a || "").localeCompare(String(b || ""), "pl", { sensitivity: "base" }) * mul;
+  const byOrd = (a, b) => ((Number(a) || 0) - (Number(b) || 0)) * mul;
+  
+  const folders = foldersRaw.slice().sort((a, b) => {
+    if (sortKey === "name") return byName(a.name, b.name);
+    return byOrd(a.ord, b.ord);
+  });
+  
+  const questions = questionsRaw.slice().sort((a, b) => {
+    if (sortKey === "name") {
+      const ta = String(a?.payload?.text ?? a?.text ?? "");
+      const tb = String(b?.payload?.text ?? b?.text ?? "");
+      return byName(ta, tb);
+    }
+    return byOrd(a.ord, b.ord);
+  });
+
   let clickRenderTimer = null;
 
   function scheduleRenderList() {
