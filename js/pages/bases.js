@@ -555,30 +555,31 @@ function render() {
 
     // badges: tablica { text, title }
     const badges = [];
-    
+
     if (b.sharedRole) {
-      // UDOSTĘPNIONE MI: najpierw "Od: mail", potem ikonka roli
-      const ownerMail = String(b.ownerEmail || "").trim();
-      if (ownerMail) {
-        badges.push({
-          text: `Od: ${ownerMail}`,
-          title: "Baza udostępniona Tobie",
-        });
-      }
+      // 1) Badge "Od: ..."
+      const ownerMail = String(b.ownerEmail || "").trim() || "—";
+      badges.push({
+        text: `Od: ${ownerMail}`,
+        title: ownerMail !== "—" ? ownerMail : "Nieznany właściciel",
+        kind: "from", // do stylowania (elipsa)
+      });
     
+      // 2) Badge roli: tylko ikonka
       const isEdit = b.sharedRole === "editor";
       badges.push({
         text: isEdit ? "✎" : "👁",
         title: isEdit ? "Masz dostęp z edycją" : "Masz dostęp tylko do odczytu",
+        kind: "role",
       });
     } else {
-      // MOJE: 👤 gdy brak udostępnień, 👥 + liczba gdy są
+      // Moje: zawsze 1 badge
       const n = Number(b.shareCount || 0);
-      if (n > 0) {
-        badges.push({ text: `👥 ${n}`, title: `Udostępnione innym (${n})` });
-      } else {
-        badges.push({ text: "👤", title: "Nieudostępnione" });
-      }
+      badges.push(
+        n > 0
+          ? { text: `👥 ${n}`, title: `Udostępnione innym (${n})`, kind: "mine" }
+          : { text: "👤", title: "Nieudostępnione", kind: "mine" }
+      );
     }
 
     const canDelete = isOwner(b);
@@ -587,15 +588,17 @@ function render() {
       : ``;
 
     const badgesHtml = badges.length
-    ? `<div class="meta">
-        ${badges
-          .map(
-            (x) =>
-              `<span class="badge" title="${escapeHtml(x.title || "")}">${escapeHtml(x.text || "")}</span>`
-          )
-          .join("")}
-       </div>`
-    : "";
+      ? `<div class="meta">
+          ${badges
+            .map(
+              (x) =>
+                `<span class="badge" data-kind="${escapeHtml(x.kind)}" title="${escapeHtml(
+                  x.title || ""
+                )}">${escapeHtml(x.text || "")}</span>`
+            )
+            .join("")}
+         </div>`
+      : "";
 
     tile.innerHTML = `
       ${deleteBtn}
