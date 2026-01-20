@@ -176,7 +176,7 @@ input, textarea { user-select: text; }
 
 .row {
   display: grid;
-  grid-template-columns: 64px 1fr 120px; /* nr / nazwa / meta */
+  grid-template-columns: 44px 1fr 96px;
   align-items: center;
   gap: 10px;
 
