@@ -31,6 +31,14 @@ const btnBases = document.getElementById("btnBases");
 
 const btnExport = document.getElementById("btnExport");
 const btnImport = document.getElementById("btnImport");
+const btnExportBase = document.getElementById("btnExportBase");
+
+// Modal eksportu do bazy
+const exportBaseOverlay = document.getElementById("exportBaseOverlay");
+const basePickList = document.getElementById("basePickList");
+const btnExportBaseDo = document.getElementById("btnExportBaseDo");
+const btnExportBaseCancel = document.getElementById("btnExportBaseCancel");
+const exportBaseMsg = document.getElementById("exportBaseMsg");
 
 // Tabs
 const tabPollText = document.getElementById("tabPollText");
@@ -78,6 +86,148 @@ function openImportModal() {
 }
 function closeImportModal() { show(importOverlay, false); }
 
+function setExportBaseMsg(t) {
+  if (!exportBaseMsg) return;
+  exportBaseMsg.textContent = t || "";
+}
+
+function openExportBaseModal() {
+  setExportBaseMsg("");
+  show(exportBaseOverlay, true);
+}
+
+function closeExportBaseModal() {
+  show(exportBaseOverlay, false);
+}
+
+function escapeHtml(s) {
+  return String(s ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/\"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+/**
+ * Bazy do eksportu:
+ * - moje (owner)
+ * - udostępnione z rolą editor (bo eksport = zapis do bazy)
+ */
+async function listExportableBases() {
+  const ownedP = sb()
+    .from("question_bases")
+    .select("id,name,owner_id,updated_at,created_at")
+    .eq("owner_id", currentUser.id)
+    .order("updated_at", { ascending: false });
+
+  const sharedP = sb()
+    .from("question_base_shares")
+    .select("role, base_id, question_bases(id,name,owner_id,updated_at,created_at)")
+    .eq("user_id", currentUser.id)
+    .eq("role", "editor")
+    .order("created_at", { ascending: false });
+
+  const [{ data: owned, error: e1 }, { data: shared, error: e2 }] = await Promise.all([ownedP, sharedP]);
+  if (e1) throw e1;
+  if (e2) throw e2;
+
+  const out = [];
+
+  for (const b of (owned || [])) {
+    out.push({ id: b.id, name: b.name, kind: "owned" });
+  }
+
+  for (const row of (shared || [])) {
+    const b = row.question_bases;
+    if (!b) continue;
+    out.push({ id: b.id, name: b.name, kind: "shared_editor" });
+  }
+
+  // usuń duplikaty, gdyby kiedyś coś się nałożyło
+  const seen = new Set();
+  return out.filter((b) => (seen.has(b.id) ? false : (seen.add(b.id), true)));
+}
+
+function renderBasePickList(bases) {
+  if (!basePickList) return;
+
+  if (!bases.length) {
+    basePickList.innerHTML = `<div style="opacity:.75; padding:6px 8px;">Brak baz do zapisu (tylko Twoje i udostępnione z edycją).</div>`;
+    return;
+  }
+
+  basePickList.innerHTML = bases
+    .map((b, i) => {
+      const meta = b.kind === "owned" ? "MOJA" : "UDOSTĘPNIONA • EDYCJA";
+      return `
+        <label class="basePickItem">
+          <input type="radio" name="pickBase" value="${escapeHtml(b.id)}" ${i === 0 ? "checked" : ""}>
+          <div class="nm" title="${escapeHtml(b.name || "Baza")}">${escapeHtml(b.name || "Baza")}</div>
+          <div class="meta">${meta}</div>
+        </label>
+      `;
+    })
+    .join("");
+}
+
+function pickedBaseId() {
+  const el = document.querySelector('input[name="pickBase"]:checked');
+  return el ? el.value : null;
+}
+
+async function exportSelectedGameToBase(baseId) {
+  if (!selectedId) return;
+
+  // 1) Pobierz payload gry (już masz działające)
+  const obj = await exportGame(selectedId);
+  const gameName = String(obj?.game?.name || "Gra").trim() || "Gra";
+
+  // 2) Utwórz folder w root o nazwie gry
+  // Ustal ord = max(root.ord)+1 (opcjonalnie, ale stabilnie)
+  const { data: lastRoot, error: eLast } = await sb()
+    .from("qb_categories")
+    .select("ord")
+    .eq("base_id", baseId)
+    .is("parent_id", null)
+    .order("ord", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (eLast) throw eLast;
+
+  const nextOrd = (Number(lastRoot?.ord) || 0) + 1;
+
+  const { data: folder, error: eCat } = await sb()
+    .from("qb_categories")
+    .insert(
+      { base_id: baseId, parent_id: null, name: gameName.slice(0, 80), ord: nextOrd },
+      { defaultToNull: false }
+    )
+    .select("id")
+    .single();
+  if (eCat) throw eCat;
+
+  // 3) Zapisz pytania do tego folderu
+  const qs = Array.isArray(obj?.questions) ? obj.questions : [];
+  const rows = qs.map((q, i) => ({
+    base_id: baseId,
+    category_id: folder.id,
+    ord: i + 1,
+    payload: {
+      text: q?.text || "",
+      answers: Array.isArray(q?.answers) ? q.answers.map((a) => ({
+        text: a?.text || "",
+        fixed_points: Number(a?.fixed_points) || 0,
+      })) : [],
+    },
+  }));
+
+  if (rows.length) {
+    const { error: eQ } = await sb().from("qb_questions").insert(rows, { defaultToNull: false });
+    if (eQ) throw eQ;
+  }
+}
+
 function safeDownloadName(name) {
   const base = String(name || "familiada")
     .replace(/[^\w\d\- ]+/g, "")
@@ -124,8 +274,9 @@ function setButtonsState({ hasSel, canEdit, canPlay, canPoll, canExport }) {
   if (btnPlay) btnPlay.disabled = !hasSel || !canPlay;
   if (btnPoll) btnPoll.disabled = !hasSel || !canPoll;
   if (btnExport) btnExport.disabled = !hasSel || !canExport;
+  if (btnExportBase) btnExportBase.disabled = !hasSel || !canExport;
+  
 }
-
 /* ================= Tabs ================= */
 function setActiveTab(type) {
   activeTab = type;
@@ -509,6 +660,42 @@ document.addEventListener("DOMContentLoaded", async () => {
       alert("Eksport nie powiódł się (sprawdź konsolę).");
     }
   });
+
+  btnExportBase?.addEventListener("click", async () => {
+    if (!selectedId) return;
+  
+    try {
+      setExportBaseMsg("");
+      openExportBaseModal();
+  
+      const bases = await listExportableBases();
+      renderBasePickList(bases);
+    } catch (e) {
+      console.error(e);
+      setExportBaseMsg("Nie udało się wczytać baz.");
+    }
+  });
+  
+  btnExportBaseCancel?.addEventListener("click", () => closeExportBaseModal());
+  
+  btnExportBaseDo?.addEventListener("click", async () => {
+    const baseId = pickedBaseId();
+    if (!baseId) {
+      setExportBaseMsg("Wybierz bazę.");
+      return;
+    }
+  
+    try {
+      setExportBaseMsg("");
+      await exportSelectedGameToBase(baseId);
+      closeExportBaseModal();
+      alert("Wyeksportowano do bazy.");
+    } catch (e) {
+      console.error(e);
+      setExportBaseMsg("Nie udało się wyeksportować do bazy.");
+    }
+  });
+
 
   // IMPORT (modal)
   btnImport?.addEventListener("click", openImportModal);
