@@ -197,6 +197,14 @@ export function wireActions({ state }) {
     renderList(state);
   });
 
+  listEl?.addEventListener("click", (e) => {
+    // jeśli kliknięto bezpośrednio w kontener listy (nie w .row)
+    if (e.target === listEl) {
+      selectionClear(state);
+      renderList(state);
+    }
+  });
+
   // --- Dblclick na pytanie: (na razie placeholder) ---
   listEl?.addEventListener("dblclick", async (e) => {
     const row = e.target?.closest?.(".row[data-kind][data-id]");
@@ -215,6 +223,13 @@ export function wireActions({ state }) {
     if (kind === "q") {
       // Edytor pytania w modalu będzie później
       return;
+    }
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+      selectionClear(state);
+      renderList(state);
     }
   });
 
