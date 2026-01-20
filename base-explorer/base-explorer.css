@@ -190,6 +190,11 @@ input, textarea { user-select: text; }
 
 .row.selected {
   background: rgba(255,255,255,.10);
+  
+}
+
+.row.selected .title {
+  font-weight: inherit;
 }
 
 /* kolumny */
