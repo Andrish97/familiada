@@ -1,7 +1,7 @@
 // base-explorer/js/page.js
 // Init strony menadżera bazy (warstwa 2)
 
-import { requireAuth, signOut } from "../js/core/auth.js";
+import { requireAuth, signOut } from "../../js/core/auth.js";
 
 /* ================= DOM ================= */
 const btnBack = document.getElementById("btnBack");
