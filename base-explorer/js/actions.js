@@ -2,7 +2,7 @@
 // Obsługa zdarzeń i akcji UI (klik, selection, search, folder view)
 
 import { VIEW, setViewAll, setViewFolder, selectionClear, selectionSetSingle, selectionToggle } from "./state.js";
-import { renderAll } from "./render.js";
+import { renderAll, renderList } from "./render.js";
 import { listQuestionsByCategory, listAllQuestions } from "./repo.js";
 
 /* ================= Utils ================= */
@@ -107,7 +107,7 @@ export function wireActions({ state }) {
     // filtr lokalny bez DB
     const base = Array.isArray(state._viewQuestions) ? state._viewQuestions : Array.isArray(state.questions) ? state.questions : [];
     state.questions = applySearchFilterToQuestions(base, state.searchQuery);
-    renderAll(state);
+    renderList(state); // nie ruszamy toolbar, więc focus zostaje w inpucie
   });
 
   // --- Breadcrumbs: klik = wróć do "Wszystkie" (na start) ---
