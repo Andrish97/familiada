@@ -18,25 +18,25 @@ function getBaseIdFromUrl() {
 /* ================= Events ================= */
 btnBack?.addEventListener("click", () => {
   // powrót do listy baz (warstwa 1)
-  location.href = "../bases.html";
+  location.href = "../../bases.html";
 });
 
 btnLogout?.addEventListener("click", async () => {
   await signOut();
-  location.href = "../index.html";
+  location.href = "../../index.html";
 });
 
 /* ================= Init ================= */
 (async function init() {
   // auth
-  const user = await requireAuth("../index.html");
+  const user = await requireAuth("../../index.html");
   if (who) who.textContent = user?.email || "—";
 
   // base id z URL
   const baseId = getBaseIdFromUrl();
   if (!baseId) {
     alert("Brak identyfikatora bazy.");
-    location.href = "../bases.html";
+    location.href = "../../bases.html";
     return;
   }
 
