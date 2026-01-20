@@ -176,12 +176,41 @@ function pickedBaseId() {
   return el ? el.value : null;
 }
 
+async function pickUniqueRootFolderName(baseId, desiredName) {
+  const base = String(desiredName || "Gra").trim() || "Gra";
+  const base80 = base.slice(0, 80);
+
+  // pobierz nazwy root-folderów z tej bazy
+  const { data, error } = await sb()
+    .from("qb_categories")
+    .select("name")
+    .eq("base_id", baseId)
+    .is("parent_id", null);
+
+  if (error) throw error;
+
+  const used = new Set((data || []).map(r => String(r.name || "").trim()));
+
+  if (!used.has(base80)) return base80;
+
+  // Dodawaj (2), (3)... pilnując limitu 80 znaków
+  for (let n = 2; n < 1000; n++) {
+    const suffix = ` (${n})`;
+    const candidate = base80.slice(0, Math.max(1, 80 - suffix.length)) + suffix;
+    if (!used.has(candidate)) return candidate;
+  }
+
+  // awaryjnie (nie powinno się zdarzyć)
+  return (base80.slice(0, 70) + " (999)").slice(0, 80);
+}
+
 async function exportSelectedGameToBase(baseId) {
   if (!selectedId) return;
 
   // 1) Pobierz payload gry (już masz działające)
   const obj = await exportGame(selectedId);
-  const gameName = String(obj?.game?.name || "Gra").trim() || "Gra";
+  const gameNameRaw = String(obj?.game?.name || "Gra").trim() || "Gra";
+  const gameName = await pickUniqueRootFolderName(baseId, gameNameRaw);
 
   // 2) Utwórz folder w root o nazwie gry
   // Ustal ord = max(root.ord)+1 (opcjonalnie, ale stabilnie)
