@@ -588,8 +588,7 @@ function render() {
       : ``;
 
     const badgesHtml = badges.length
-      ? `<div class="meta">
-          ${badges
+      ? ` ${badges
             .map(
               (x) =>
                 `<span class="badge" data-kind="${escapeHtml(x.kind)}" title="${escapeHtml(
@@ -597,7 +596,7 @@ function render() {
                 )}">${escapeHtml(x.text || "")}</span>`
             )
             .join("")}
-         </div>`
+            `
       : "";
 
     tile.innerHTML = `
