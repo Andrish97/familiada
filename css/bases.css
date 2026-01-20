@@ -92,3 +92,5 @@
   font-size: 12px;
   opacity: .9;
 }
+.badge{ opacity: .8; }
+.card.selected .badge{ opacity: 1; }
