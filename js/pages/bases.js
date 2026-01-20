@@ -133,23 +133,18 @@ async function listOwnedBases() {
 }
 
 async function listSharedBases() {
-  const { data, error } = await sb()
-    .from("question_base_shares")
-    .select("role, base_id, question_bases(id,name,owner_id,created_at,updated_at)")
-    .eq("user_id", currentUser.id)
-    .order("created_at", { ascending: false });
-
+  const { data, error } = await sb().rpc("list_shared_bases");
   if (error) throw error;
-  const out = [];
-  for (const row of (data || [])) {
-    const b = row.question_bases;
-    if (!b) continue;
-    out.push({
-      ...b,
-      sharedRole: row.role,
-    });
-  }
-  return out;
+
+  return (data || []).map((r) => ({
+    id: r.id,
+    name: r.name,
+    owner_id: r.owner_id,
+    ownerEmail: r.owner_email,     // <- NOWE
+    created_at: r.created_at,
+    updated_at: r.updated_at,
+    sharedRole: r.shared_role,     // <- rola z RPC
+  }));
 }
 
 async function refreshBases() {
@@ -529,9 +524,9 @@ function render() {
     tile.className = "card";
     if (b.id === selectedId) tile.classList.add("selected");
 
-    const badge = b.sharedRole
-      ? `UDOSTĘPNIONA • ${roleLabel(b.sharedRole)}`
-      : `WŁASNA`;
+  const badge = b.sharedRole
+    ? `UDOSTĘPNIONA • ${roleLabel(b.sharedRole)} • Właściciel: ${b.ownerEmail || "—"}`
+    : `WŁASNA`;
 
     const canDelete = isOwner(b);
     const deleteBtn = canDelete
