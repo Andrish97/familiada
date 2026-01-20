@@ -85,7 +85,7 @@
   display: flex;
   gap: 6px;
   margin-top: 6px;
-  flex-wrap: wrap;
+  align-items: center;
 }
 
 .badge{
@@ -96,5 +96,21 @@
   background: rgba(0,0,0,.25);
   font-size: 12px;
   opacity: .9;
-  border: none; /* brak podwójnej ramki */
+  border: none;
+}
+
+/* Badge "Od: mail" ma elipsę */
+.badge[data-kind="from"]{
+  max-width: 220px;          /* możesz zmienić na 200/240 wg wyglądu */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: inline-block;     /* potrzebne, żeby text-overflow działało pewnie */
+}
+
+/* Badge roli (ikonka) niech będzie zwarte */
+.badge[data-kind="role"]{
+  padding: 3px 8px;
+  min-width: 26px;
+  justify-content: center;
 }
