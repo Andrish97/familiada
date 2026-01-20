@@ -113,10 +113,13 @@
             <div class="builder-bottom-left"></div>
             <div class="builder-bottom-right">
               <button class="btn sm" id="btnExport" type="button" disabled>
-                <span class="only-desktop">Eksport</span>
-                <span class="only-mobile">Exp</span>
+                <span class="only-desktop">Eksportuj do pliku</span>
+                <span class="only-mobile">Exp.plk</span>
               </button>
-
+              <button class="btn sm" id="btnExportBase" type="button" disabled>
+                <span class="only-desktop">Eksportuj do bazy</span>
+                <span class="only-mobile">Exp.bz</span>
+              </button>
               <button class="btn sm" id="btnImport" type="button">
                 <span class="only-desktop">Import</span>
                 <span class="only-mobile">Imp</span>
@@ -145,6 +148,23 @@
         <button class="btn sm gold" id="btnImportJson" type="button">Importuj</button>
         <button class="btn sm" id="btnCancelImport" type="button">Zamknij</button>
         <div class="importMsg" id="importMsg"></div>
+      </div>
+    </div>
+  </div>
+  <!-- Modal: eksport do bazy pytań -->
+  <div class="overlay" id="exportBaseOverlay" style="display:none;">
+    <div class="modal">
+      <div class="mTitle">Eksport do bazy</div>
+      <div class="mSub">
+        Wybierz bazę pytań. Zostanie utworzony folder w głównym katalogu o nazwie jak gra.
+      </div>
+  
+      <div class="basePickList" id="basePickList"></div>
+  
+      <div class="importRow" style="margin-top:10px;">
+        <button class="btn sm gold" id="btnExportBaseDo" type="button">Eksportuj</button>
+        <button class="btn sm" id="btnExportBaseCancel" type="button">Zamknij</button>
+        <div class="importMsg" id="exportBaseMsg"></div>
       </div>
     </div>
   </div>
