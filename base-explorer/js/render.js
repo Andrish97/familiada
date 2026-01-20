@@ -71,8 +71,10 @@ export function renderTree(state) {
     .map((c) => {
       const key = `c:${c.id}`;
       const sel = isSelected(state, key) ? "font-weight:700;" : "";
-      return `<div class="row" data-kind="cat" data-id="${esc(c.id)}" style="padding:6px 8px; cursor:pointer; ${sel}">
-        📁 ${esc(c.name || "Folder")}
+      return `<div class="row" data-kind="cat" data-id="${esc(c.id)}" style="cursor:pointer;">
+        <div class="col-num">—</div>
+        <div class="col-main"><div class="title">📁 ${esc(c.name || "Folder")}</div></div>
+        <div class="col-meta">folder</div>
       </div>`;
     })
     .join("");
@@ -167,9 +169,10 @@ export function renderList(state) {
     const key = `q:${q.id}`;
     const sel = isSelected(state, key) ? "font-weight:700;" : "";
     const text = q?.payload?.text ?? q?.text ?? "";
-    return `<div class="row" data-kind="q" data-id="${esc(q.id)}" style="padding:8px 10px; cursor:pointer; ${sel}">
-      <div>${esc(text || "Pytanie")}</div>
-      <div style="opacity:.65; font-size:12px;">#${esc(q.ord ?? (idx + 1))}</div>
+    return `<div class="row" data-kind="q" data-id="${esc(q.id)}" style="cursor:pointer;">
+      <div class="col-num">${esc(q.ord ?? (idx + 1))}</div>
+      <div class="col-main"><div class="title">${esc(text || "Pytanie")}</div></div>
+      <div class="col-meta">pytanie</div>
     </div>`;
   }).join("");
 
