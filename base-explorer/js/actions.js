@@ -69,10 +69,11 @@ async function loadQuestionsForCurrentView(state) {
   // - TAG: później
 
   if (state.view === VIEW.ALL) {
-    if (!state._allQuestions) {
-      state._allQuestions = await listAllQuestions(state.baseId);
+    // root-folder = pytania bez category_id
+    if (!state._rootQuestions) {
+      state._rootQuestions = await listQuestionsByCategory(state.baseId, null);
     }
-    return state._allQuestions;
+    return state._rootQuestions;
   }
 
   if (state.view === VIEW.FOLDER) {
@@ -84,9 +85,20 @@ async function loadQuestionsForCurrentView(state) {
 }
 
 async function refreshList(state) {
-  const all = await loadQuestionsForCurrentView(state);
-  state._viewQuestions = all; // cache surowego zestawu dla widoku
-  state.questions = applySearchFilterToQuestions(all, state.searchQuery);
+  const allQ = await loadQuestionsForCurrentView(state);
+  state._viewQuestions = allQ;
+  
+  const parentId = (state.view === VIEW.ALL) ? null : state.folderId;
+  const foldersHere = (state.categories || [])
+    .filter(c => (c.parent_id || null) === (parentId || null))
+    .slice()
+    .sort((a,b) => (Number(a.ord)||0) - (Number(b.ord)||0));
+  
+  state.folders = foldersHere;
+  
+  // filtr wyszukiwania stosujemy tylko do pytań (na razie)
+  state.questions = applySearchFilterToQuestions(allQ, state.searchQuery);
+  
   renderAll(state);
 }
 
