@@ -46,7 +46,8 @@ const shareMsg = document.getElementById("shareMsg");
 
 /* ================= STATE ================= */
 let currentUser = null;
-let bases = []; // { id, name, owner_id, created_at, updated_at, sharedRole?: 'viewer'|'editor' }
+let ownedBases = []; // { id, name, owner_id, created_at, updated_at }
+let sharedBases = []; // { id, name, owner_id, created_at, updated_at, sharedRole: 'viewer'|'editor' }
 let selectedId = null;
 
 // modal nazwy – tryb
@@ -97,7 +98,11 @@ function isOwner(b) {
 }
 
 function selectedBase() {
-  return bases.find((b) => b.id === selectedId) || null;
+  return (
+    ownedBases.find((b) => b.id === selectedId) ||
+    sharedBases.find((b) => b.id === selectedId) ||
+    null
+  );
 }
 
 function setButtonsState() {
@@ -151,17 +156,22 @@ async function refreshBases() {
   const owned = await listOwnedBases();
   const shared = await listSharedBases();
 
-  // merge, ale bez duplikatów
-  const map = new Map();
-  for (const b of owned) map.set(b.id, b);
-  for (const b of shared) {
-    if (!map.has(b.id)) map.set(b.id, b);
-  }
-  bases = Array.from(map.values())
+  ownedBases = (owned || []).slice().sort((a, b) =>
+    String(b.updated_at || b.created_at).localeCompare(String(a.updated_at || a.created_at))
+  );
+
+  // Z ostrożności usuń duplikaty (gdyby kiedyś owner mógł mieć też share)
+  const ownedIds = new Set(ownedBases.map((b) => b.id));
+  sharedBases = (shared || [])
+    .filter((b) => !ownedIds.has(b.id))
+    .slice()
     .sort((a, b) => String(b.updated_at || b.created_at).localeCompare(String(a.updated_at || a.created_at)));
 
   // jeśli zaznaczona baza zniknęła
-  if (selectedId && !bases.some((b) => b.id === selectedId)) selectedId = null;
+  const stillExists =
+    ownedBases.some((b) => b.id === selectedId) ||
+    sharedBases.some((b) => b.id === selectedId);
+  if (selectedId && !stillExists) selectedId = null;
 }
 
 /* ================= DB: CRUD baz ================= */
@@ -501,27 +511,21 @@ function render() {
   if (!grid) return;
   grid.innerHTML = "";
 
-  // Kafelek: nowa baza
-  const tNew = document.createElement("div");
-  tNew.className = "tile tile-new";
-  tNew.innerHTML = `
-    <div class="tileInner">
-      <div class="plus">＋</div>
-      <div class="name">Nowa baza</div>
-      <div class="sub">Utwórz nową bazę pytań</div>
-    </div>
-  `;
-  tNew.addEventListener("click", () => openNameModalCreate());
-  grid.appendChild(tNew);
+  const mkTitle = (txt) => {
+    const d = document.createElement("div");
+    d.className = "sectionTitle";
+    d.textContent = txt;
+    return d;
+  };
 
-  for (const b of bases) {
+  const renderTile = (b) => {
     const tile = document.createElement("div");
-    tile.className = "tile";
-    if (b.id === selectedId) tile.classList.add("sel");
+    tile.className = "card";
+    if (b.id === selectedId) tile.classList.add("selected");
 
     const badge = b.sharedRole
-      ? `<span class="sub badge">UDOSTĘPNIONA • ${roleLabel(b.sharedRole)}</span>`
-      : `<span class="sub badge">WŁASNA</span>`;
+      ? `UDOSTĘPNIONA • ${roleLabel(b.sharedRole)}`
+      : `WŁASNA`;
 
     const canDelete = isOwner(b);
     const deleteBtn = canDelete
@@ -530,21 +534,19 @@ function render() {
 
     tile.innerHTML = `
       ${deleteBtn}
-      <div class="tileInner">
+      <div>
         <div class="name">${escapeHtml(b.name || "Baza")}</div>
-        <div class="sub">${badge}</div>
+        <div class="meta">${escapeHtml(badge)}</div>
       </div>
     `;
 
     tile.addEventListener("click", (e) => {
-      // klik w ✕ nie ma zaznaczać
       if (e.target?.classList?.contains("x")) return;
-      selectedId = (selectedId === b.id) ? null : b.id;
+      selectedId = selectedId === b.id ? null : b.id;
       setButtonsState();
       render();
     });
 
-    // usuń
     const x = tile.querySelector(".x");
     if (x) {
       x.addEventListener("click", async (e) => {
@@ -556,7 +558,6 @@ function render() {
       });
     }
 
-    // rename na dwuklik (owner)
     tile.addEventListener("dblclick", (e) => {
       if (!isOwner(b)) return;
       if (e.target?.classList?.contains("x")) return;
@@ -567,6 +568,33 @@ function render() {
     });
 
     grid.appendChild(tile);
+  };
+
+  // ===== SEKCJA: Moje bazy =====
+  grid.appendChild(mkTitle("Moje bazy"));
+
+  const tNew = document.createElement("div");
+  tNew.className = "addCard";
+  tNew.innerHTML = `
+    <div class="plus">＋</div>
+    <div class="name">Nowa baza</div>
+    <div class="meta">Utwórz nową bazę pytań</div>
+  `;
+  tNew.addEventListener("click", () => openNameModalCreate());
+  grid.appendChild(tNew);
+
+  for (const b of ownedBases) renderTile(b);
+
+  // ===== SEKCJA: Udostępnione =====
+  grid.appendChild(mkTitle("Udostępnione"));
+  
+  if (!sharedBases.length) {
+    const empty = document.createElement("div");
+    empty.className = "emptyNote";
+    empty.textContent = "Brak udostępnionych baz.";
+    grid.appendChild(empty);
+  } else {
+    for (const b of sharedBases) renderTile(b);
   }
 }
 
