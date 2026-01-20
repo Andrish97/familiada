@@ -1,0 +1,119 @@
+/* base-explorer/base-explorer.css */
+/* Layout menadżera bazy (warstwa 2). */
+
+/* ===== Topbar – opieramy się o builder.css, tu tylko drobne dopasowania ===== */
+.topbar .topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.topbar .topbar-title .title {
+  font-weight: 700;
+}
+
+.topbar .topbar-title .subtitle {
+  opacity: 0.75;
+  font-size: 12px;
+  margin-top: 2px;
+}
+
+.topbar .topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* ===== Toolbar ===== */
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+}
+
+/* ===== Główny split view ===== */
+.explorer {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 12px;
+  padding: 0 12px 12px;
+  min-height: calc(100vh - 120px); /* bezpieczny zapas na topbar+toolbar */
+}
+
+.explorer-left,
+.explorer-right {
+  min-height: 0; /* ważne dla scrolla w grid */
+}
+
+/* ===== Lewy panel ===== */
+.explorer-left {
+  display: grid;
+  grid-template-rows: 1fr auto;
+  gap: 12px;
+  min-width: 0;
+}
+
+.tree,
+.tags {
+  border-radius: 12px;
+  padding: 10px;
+  min-height: 120px;
+  overflow: auto;
+}
+
+/* ===== Prawy panel ===== */
+.explorer-right {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  gap: 12px;
+  min-width: 0;
+}
+
+.breadcrumbs {
+  border-radius: 12px;
+  padding: 10px 12px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.list {
+  border-radius: 12px;
+  padding: 10px;
+  overflow: auto;
+}
+
+/* ===== Kontekst menu ===== */
+.context-menu {
+  position: fixed;
+  z-index: 9999;
+  min-width: 220px;
+  border-radius: 12px;
+  padding: 6px;
+  background: rgba(20, 20, 20, 0.98);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 10px 35px rgba(0, 0, 0, 0.35);
+}
+
+/* ===== Stany przyszłe (etap 3) ===== */
+.is-disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.is-selected {
+  outline: 2px solid rgba(255, 255, 255, 0.25);
+}
+
+.is-drop-target {
+  outline: 2px dashed rgba(255, 255, 255, 0.35);
+}
+
+.is-dragging {
+  opacity: 0.6;
+}
