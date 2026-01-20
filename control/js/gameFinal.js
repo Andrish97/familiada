@@ -1123,17 +1123,24 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
         </div>
       </div>
   
-      <div class="card finalRowCard" style="margin-top:12px;">
-        <div class="rowBtns" style="gap:8px; flex-wrap:wrap;">
-          <button class="btn sm" type="button" data-kind="reveal-answer"
-            ${row.revealedAnswer ? "disabled" : ""}>
-            Odsłoń odpowiedź
-          </button>
-          <button class="btn sm" type="button" data-kind="reveal-points"
-            ${!row.revealedAnswer || row.revealedPoints ? "disabled" : ""}>
-            Odsłoń punkty
-          </button>
-        </div>
+      <div class="finalRevealActions">
+        <button
+          class="btn finalRevealBtn answer"
+          type="button"
+          data-kind="reveal-answer"
+          ${row.revealedAnswer ? "disabled" : ""}
+        >
+          Odsłoń odpowiedź
+        </button>
+      
+        <button
+          class="btn finalRevealBtn points"
+          type="button"
+          data-kind="reveal-points"
+          ${!row.revealedAnswer || row.revealedPoints ? "disabled" : ""}
+        >
+          Odsłoń punkty
+        </button>
       </div>
     `;
   
