@@ -1,0 +1,45 @@
+/* css/bases.css
+   Drobne dodatki pod builder baz (reszta jest w builder.css) */
+
+.shareList {
+  display: grid;
+  gap: 8px;
+  margin: 10px 0 14px;
+}
+
+.shareRow {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 8px;
+  align-items: center;
+  padding: 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.04);
+}
+
+.shareEmail {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  opacity: .95;
+}
+
+.shareRow .inp {
+  padding: 10px 12px;
+}
+
+.shareAdd {
+  margin-top: 10px;
+}
+
+/* kafelek "udostępniona" */
+.tile .sub.badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.16);
+  background: rgba(255,255,255,.06);
+  font-size: 11px;
+  letter-spacing: .06em;
+}
