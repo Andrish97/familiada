@@ -2,6 +2,15 @@
 // Init strony menadżera bazy (warstwa 2)
 
 import { requireAuth, signOut } from "../../js/core/auth.js";
+import { createState, setRole } from "./state.js";
+import { renderAll } from "./render.js";
+import {
+  getBaseMeta,
+  getBaseRole,
+  listCategories,
+  listTags,
+  listAllQuestions,
+} from "./repo.js";
 
 /* ================= DOM ================= */
 const btnBack = document.getElementById("btnBack");
@@ -43,9 +52,49 @@ btnLogout?.addEventListener("click", async () => {
   // na razie tylko placeholder – właściwe dane w kolejnym etapie
   if (baseNameEl) baseNameEl.textContent = "Baza pytań";
 
-  // TODO (kolejne pliki):
-  // - załadować meta bazy (repo)
-  // - ustawić rolę (owner/editor/viewer)
-  // - zainicjalizować state
-  // - wywołać pierwszy render
+  // ===== state =====
+  const state = createState({ baseId, role: "viewer" });
+
+  try {
+    // ===== meta + rola =====
+    state.baseMeta = await getBaseMeta(baseId);
+
+    const r = await getBaseRole(baseId, user.id);
+    setRole(state, r.role);
+
+    // ===== dane do renderu (etap 1: prosto, wszystko) =====
+    const [cats, tags, qs] = await Promise.all([
+      listCategories(baseId),
+      listTags(baseId),
+      listAllQuestions(baseId),
+    ]);
+
+    state.categories = cats;
+    state.tags = tags;
+    state.questions = qs;
+
+    // ===== render =====
+    renderAll(state);
+
+    // ===== minimalne eventy (na razie tylko search wpis – bez filtrowania jeszcze) =====
+    const searchInp = document.getElementById("searchInp");
+    searchInp?.addEventListener("input", () => {
+      state.searchQuery = String(searchInp.value || "");
+      // filtr zrobimy w następnym kroku w render/actions
+      // na razie tylko trzymamy stan, żeby nie zgubić wpisu
+    });
+
+  } catch (e) {
+    console.error(e);
+
+    // brak dostępu – wracamy do baz
+    if (e?.code === "NO_ACCESS") {
+      alert("Brak dostępu do tej bazy.");
+      location.href = "../bases.html";
+      return;
+    }
+
+    alert("Nie udało się wczytać bazy (sprawdź konsolę).");
+    location.href = "../bases.html";
+  }
 })();
