@@ -553,38 +553,55 @@ function render() {
     tile.className = "card";
     if (b.id === selectedId) tile.classList.add("selected");
 
-  let badgeText = "";
-  let badgeTitle = "";
-  
-  if (b.sharedRole) {
-    // baza udostępniona MI
-    const isEdit = b.sharedRole === "editor";
-    badgeText = isEdit ? `✎ ${roleLabel(b.sharedRole)}` : `👁 ${roleLabel(b.sharedRole)}`;
-    badgeTitle = isEdit ? "Masz dostęp z edycją do tej bazy" : "Masz dostęp tylko do odczytu tej bazy";
-  } else {
-    // MOJA baza
-    const n = Number(b.shareCount || 0);
-    if (n > 0) {
-      badgeText = `👥 ${n}`;
-      badgeTitle = `Ta baza jest udostępniona innym (${n})`;
+    // badges: tablica { text, title }
+    const badges = [];
+    
+    if (b.sharedRole) {
+      // UDOSTĘPNIONE MI: najpierw "Od: mail", potem ikonka roli
+      const ownerMail = String(b.ownerEmail || "").trim();
+      if (ownerMail) {
+        badges.push({
+          text: `Od: ${ownerMail}`,
+          title: "Baza udostępniona Tobie",
+        });
+      }
+    
+      const isEdit = b.sharedRole === "editor";
+      badges.push({
+        text: isEdit ? "✎" : "👁",
+        title: isEdit ? "Masz dostęp z edycją" : "Masz dostęp tylko do odczytu",
+      });
     } else {
-      badgeText = "";       // nic nie pokazujemy, bo nie ma po co
-      badgeTitle = "";
+      // MOJE: 👤 gdy brak udostępnień, 👥 + liczba gdy są
+      const n = Number(b.shareCount || 0);
+      if (n > 0) {
+        badges.push({ text: `👥 ${n}`, title: `Udostępnione innym (${n})` });
+      } else {
+        badges.push({ text: "👤", title: "Nieudostępnione" });
+      }
     }
-  }
 
     const canDelete = isOwner(b);
     const deleteBtn = canDelete
       ? `<button class="x" type="button" title="Usuń">✕</button>`
       : ``;
 
+    const badgesHtml = badges.length
+    ? `<div class="meta">
+        ${badges
+          .map(
+            (x) =>
+              `<span class="badge" title="${escapeHtml(x.title || "")}">${escapeHtml(x.text || "")}</span>`
+          )
+          .join("")}
+       </div>`
+    : "";
+
     tile.innerHTML = `
       ${deleteBtn}
       <div>
         <div class="name">${escapeHtml(b.name || "Baza")}</div>
-        <div class="meta">
-          ${badgeText ? `<span class="badge" title="${escapeHtml(badgeTitle)}">${escapeHtml(badgeText)}</span>` : ``}
-        </div>
+        ${badgesHtml}
       </div>
     `;
 
@@ -834,11 +851,6 @@ shareEmail?.addEventListener("keydown", (e) => {
 (async function init() {
   currentUser = await requireAuth("index.html");
   if (who) who.textContent = currentUser?.email || "—";
-
-  setHint(
-    "Kliknij kafelek, żeby go zaznaczyć. Dwuklik zmienia nazwę (tylko właściciel).\n" +
-    "Ikonki: 👥 — Twoja baza jest udostępniona innym. ✎ — masz edycję. 👁 — masz odczyt."
-  );
     
   await refreshBases();
   render();
