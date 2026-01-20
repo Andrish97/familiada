@@ -206,6 +206,8 @@ input, textarea { user-select: text; }
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  font-weight: 400;          /* normal, nie bold */
+  color: rgba(255,255,255,.88);
 }
 
 .row .col-meta {
