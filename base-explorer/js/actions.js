@@ -153,7 +153,7 @@ export function wireActions({ state }) {
       selectionSetSingle(state, key);
     }
 
-    renderAll(state);
+    renderList(state);
   });
 
   // --- Dblclick na pytanie: (na razie placeholder) ---
