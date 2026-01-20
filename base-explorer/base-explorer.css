@@ -210,6 +210,10 @@ input, textarea { user-select: text; }
   color: rgba(255,255,255,.88);
 }
 
+.row[data-kind="cat"] .title {
+  font-weight: 500;          /* lekko, NIE bold */
+}
+
 .row .col-meta {
   opacity: .65;
   font-size: 12px;
