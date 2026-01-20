@@ -149,46 +149,52 @@ async function listSharedBases() {
 
 async function refreshBases() {
   const owned = await listOwnedBases();
+
   // policz udostępnienia dla moich baz
-  const ownedIds = owned.map(b => b.id);
-  let shareCountByBase = new Map();
-  
-  if (ownedIds.length) {
+  const ownedBaseIds = owned.map((b) => b.id);
+  const shareCountByBase = new Map();
+
+  if (ownedBaseIds.length) {
     const { data: shares, error } = await sb()
       .from("question_base_shares")
       .select("base_id")
-      .in("base_id", ownedIds);
-  
+      .in("base_id", ownedBaseIds);
+
     if (error) throw error;
-  
-    for (const s of (shares || [])) {
+
+    for (const s of shares || []) {
       shareCountByBase.set(s.base_id, (shareCountByBase.get(s.base_id) || 0) + 1);
     }
   }
-  
+
   // dopisz shareCount do owned
-  const ownedWithStats = owned.map(b => ({
+  const ownedWithStats = owned.map((b) => ({
     ...b,
     shareCount: shareCountByBase.get(b.id) || 0,
   }));
-  
+
   const shared = await listSharedBases();
 
-  ownedBases = (owned || []).slice().sort((a, b) =>
-    String(b.updated_at || b.created_at).localeCompare(String(a.updated_at || a.created_at))
-  );
+  ownedBases = ownedWithStats
+    .slice()
+    .sort((a, b) =>
+      String(b.updated_at || b.created_at).localeCompare(String(a.updated_at || a.created_at))
+    );
 
   // Z ostrożności usuń duplikaty (gdyby kiedyś owner mógł mieć też share)
-  const ownedIds = new Set(ownedBases.map((b) => b.id));
+  const ownedIdSet = new Set(ownedBases.map((b) => b.id));
   sharedBases = (shared || [])
-    .filter((b) => !ownedIds.has(b.id))
+    .filter((b) => !ownedIdSet.has(b.id))
     .slice()
-    .sort((a, b) => String(b.updated_at || b.created_at).localeCompare(String(a.updated_at || a.created_at)));
+    .sort((a, b) =>
+      String(b.updated_at || b.created_at).localeCompare(String(a.updated_at || a.created_at))
+    );
 
   // jeśli zaznaczona baza zniknęła
   const stillExists =
     ownedBases.some((b) => b.id === selectedId) ||
     sharedBases.some((b) => b.id === selectedId);
+
   if (selectedId && !stillExists) selectedId = null;
 }
 
