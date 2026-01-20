@@ -110,6 +110,16 @@ export function wireActions({ state }) {
   const breadcrumbsEl = document.getElementById("breadcrumbs");
   const toolbarEl = document.getElementById("toolbar");
 
+  let clickRenderTimer = null;
+
+  function scheduleRenderList() {
+    if (clickRenderTimer) clearTimeout(clickRenderTimer);
+    clickRenderTimer = setTimeout(() => {
+      clickRenderTimer = null;
+      renderList(state);
+    }, 180); // krótko: pozwala na dblclick
+  }
+
   // --- Search (delegacja: input jest renderowany dynamicznie) ---
   toolbarEl?.addEventListener("input", async (e) => {
     const t = e.target;
@@ -195,7 +205,7 @@ export function wireActions({ state }) {
       selectionSetSingle(state, key);
     }
 
-    renderList(state);
+    scheduleRenderList();
   });
 
   listEl?.addEventListener("click", (e) => {
@@ -208,6 +218,11 @@ export function wireActions({ state }) {
 
   // --- Dblclick na pytanie: (na razie placeholder) ---
   listEl?.addEventListener("dblclick", async (e) => {
+    if (clickRenderTimer) {
+      clearTimeout(clickRenderTimer);
+      clickRenderTimer = null;
+    }
+  
     const row = e.target?.closest?.(".row[data-kind][data-id]");
     if (!row) return;
   
@@ -222,8 +237,7 @@ export function wireActions({ state }) {
     }
   
     if (kind === "q") {
-      // Edytor pytania w modalu będzie później
-      return;
+      return; // edytor pytania później
     }
   });
 
