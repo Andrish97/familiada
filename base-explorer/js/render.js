@@ -179,21 +179,29 @@ export function renderList(state) {
 
   const folderRows = folders.map((c) => {
     const key = `c:${c.id}`;
-    const sel = isSelected(state, key) ? "font-weight:700;" : "";
-    return `<div class="row" data-kind="cat" data-id="${esc(c.id)}" style="padding:8px 10px; cursor:pointer; ${sel}">
-      <div>📁 ${esc(c.name || "Folder")}</div>
-      <div style="opacity:.65; font-size:12px;">folder</div>
+    const isSel = isSelected(state, key);
+    return `<div class="row${isSel ? " selected" : ""}" data-kind="cat" data-id="${esc(c.id)}" style="cursor:pointer;">
+      <div class="col-num"></div>
+      <div class="col-main"><div class="title">📁 ${esc(c.name || "Folder")}</div></div>
+      <div class="col-meta"></div>
     </div>`;
   }).join("");
 
   const qRows = questions.map((q, idx) => {
     const key = `q:${q.id}`;
-    const sel = isSelected(state, key) ? "font-weight:700;" : "";
+    const isSel = isSelected(state, key);
+
     const text = q?.payload?.text ?? q?.text ?? "";
-    return `<div class="row" data-kind="q" data-id="${esc(q.id)}" style="cursor:pointer;">
-      <div class="col-num"></div>
-      <div class="col-main"><div class="title">📁 ${esc(c.name || "Folder")}</div></div>
-      <div class="col-meta"></div>
+    const ord = (q?.ord ?? (idx + 1));
+
+    // meta na razie proste, później: "6 odp. • Σ 100" / tagi / ostrzeżenia
+    const answersCount = Array.isArray(q?.payload?.answers) ? q.payload.answers.length : 0;
+    const meta = answersCount ? `${answersCount} odp.` : "";
+
+    return `<div class="row${isSel ? " selected" : ""}" data-kind="q" data-id="${esc(q.id)}" style="cursor:pointer;">
+      <div class="col-num">${esc(ord)}</div>
+      <div class="col-main"><div class="title">${esc(text || "Pytanie")}</div></div>
+      <div class="col-meta">${esc(meta)}</div>
     </div>`;
   }).join("");
 
