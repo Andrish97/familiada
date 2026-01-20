@@ -170,9 +170,9 @@ export function renderList(state) {
     const sel = isSelected(state, key) ? "font-weight:700;" : "";
     const text = q?.payload?.text ?? q?.text ?? "";
     return `<div class="row" data-kind="q" data-id="${esc(q.id)}" style="cursor:pointer;">
-      <div class="col-num">${esc(q.ord ?? (idx + 1))}</div>
-      <div class="col-main"><div class="title">${esc(text || "Pytanie")}</div></div>
-      <div class="col-meta">pytanie</div>
+      <div class="col-num"></div>
+      <div class="col-main"><div class="title">📁 ${esc(c.name || "Folder")}</div></div>
+      <div class="col-meta"></div>
     </div>`;
   }).join("");
 
