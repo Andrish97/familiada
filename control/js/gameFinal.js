@@ -1193,65 +1193,6 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     // na start
     applyUiState();
   
-    
-    const rootId = roundNo === 1 ? `finalP1MapQ${idx + 1}` : `finalP2MapQ${idx + 1}`;
-    ui.setHtml(rootId, html);
-  
-    const root = document.getElementById(rootId);
-    if (!root) return;
-  
-    const nextBtnId = roundNo === 1 ? `btnFinalNextFromP1Q${idx + 1}` : `btnFinalNextFromP2Q${idx + 1}`;
-    ui.setEnabled(nextBtnId, !!row.revealedAnswer && !!row.revealedPoints);
-  
-    // --- helper: przełączanie stanów bez re-rendera (żeby nie tracić fokusu) ---
-    function applyUiState() {
-      const nowVal = String(root.querySelector('input[data-kind="player"]')?.value ?? "").trim();
-      const nowHasTyped = nowVal.length > 0;
-  
-      const nowRepeat = isR2 && rt.p2[idx]?.repeat === true;
-  
-      const allowSkipNow = !nowHasTyped && !lockedForever && row.revealedAnswer !== true;
-      const allowChoiceNow = nowHasTyped && !lockedForever && row.revealedAnswer !== true;
-  
-      // SKIP / MISS
-      const btnSkip = root.querySelector('button[data-kind="skip"]');
-      const btnMiss = root.querySelector('button[data-kind="miss"]');
-  
-      if (btnSkip) btnSkip.disabled = !allowSkipNow;
-      if (btnMiss) btnMiss.disabled = !allowChoiceNow;
-  
-      // MATCH
-      root.querySelectorAll('button[data-kind="match"]').forEach((b) => {
-        // blokada zajętej odp. przez P1
-        const blocked = !!p1BlockedId && b.dataset.id === p1BlockedId;
-        b.disabled = !allowChoiceNow || blocked;
-      });
-  
-      // REPEAT nigdy nie disabled
-      const btnRepeat = root.querySelector('button[data-kind="repeat"]');
-      const frozen = row.revealedAnswer||row.revealedPoints === true;
-
-      if (btnRepeat) btnRepeat.disabled = frozen;  
-  
-      // klasy gold: repeat przykrywa resztę (radio)
-      // zdejmij gold wszystkim
-      root.querySelectorAll('button[data-kind]').forEach((b) => b.classList.remove("gold"));
-  
-      if (nowRepeat) {
-        btnRepeat?.classList.add("gold");
-      } else {
-        if (row.kind === "SKIP") btnSkip?.classList.add("gold");
-        if (row.kind === "MISS") btnMiss?.classList.add("gold");
-        if (row.kind === "MATCH" && row.matchId) {
-          root
-            .querySelector(`button[data-kind="match"][data-id="${CSS.escape(row.matchId)}"]`)
-            ?.classList.add("gold");
-        }
-      }
-    }
-  
-    // na start
-    applyUiState();
   
     // --- INPUT: nie renderujemy na żywo (żeby nie wywalało z pola) ---
     root.querySelector('input[data-kind="player"]')?.addEventListener("input", (e) => {
