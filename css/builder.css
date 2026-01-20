@@ -466,7 +466,7 @@ body.builder-body{
   border-radius:22px;
   border:1px solid var(--line);
   background: var(--card);
-  box-shadow:0 30px 90px rgba(0,0,0,.75);
+  box-shadow:0 30px 90px rgba(0,0,0,.85);
   padding:18px;
 
   max-height:92vh;
