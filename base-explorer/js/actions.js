@@ -427,6 +427,8 @@ export function wireActions({ state }) {
   // zainicjuj UI nagłówka
   updateSortHeaderUI();
 
+  state._drag = { keys: null, overKey: null }; // keys = Set('q:..'/'c:..'), overKey = 'c:folderId' lub null(root)
+
   let clickRenderTimer = null;
 
   function scheduleRenderList() {
@@ -435,6 +437,111 @@ export function wireActions({ state }) {
       clickRenderTimer = null;
       renderList(state);
     }, 180); // krótko: pozwala na dblclick
+  }
+
+  function canDnD() {
+    return canWrite(state);
+  }
+  
+  function keyFromKindId(kind, id) {
+    if (kind === "q") return `q:${id}`;
+    if (kind === "cat") return `c:${id}`;
+    return null;
+  }
+  
+  function clearDropTarget() {
+    const prev = state._drag?.overKey;
+    if (!prev) return;
+    const [k, id] = prev.split(":");
+    const kind = (k === "c") ? "cat" : null;
+    if (!kind) return;
+  
+    const el = document.querySelector(`.row[data-kind="${kind}"][data-id="${CSS.escape(id)}"]`);
+    el?.classList?.remove("is-drop-target");
+    state._drag.overKey = null;
+  }
+  
+  function setDropTarget(folderIdOrNull) {
+    clearDropTarget();
+    if (!folderIdOrNull) {
+      state._drag.overKey = null; // root
+      return;
+    }
+    const el = document.querySelector(`.row[data-kind="cat"][data-id="${CSS.escape(folderIdOrNull)}"]`);
+    el?.classList?.add("is-drop-target");
+    state._drag.overKey = `c:${folderIdOrNull}`;
+  }
+  
+  function isFolderDescendant(folderId, maybeParentId) {
+    // zwraca true, jeśli maybeParentId leży w poddrzewie folderId (czyli nie wolno tam wrzucić folderuId)
+    const byId = new Map((state.categories || []).map(c => [c.id, c]));
+    let cur = byId.get(maybeParentId);
+    let guard = 0;
+    while (cur && guard++ < 50) {
+      if (cur.id === folderId) return true;
+      const pid = cur.parent_id || null;
+      cur = pid ? byId.get(pid) : null;
+    }
+    return false;
+  }
+  
+  async function moveItemsTo(state, targetFolderIdOrNull) {
+    if (!canWrite(state)) return;
+  
+    const keys = state._drag?.keys;
+    if (!keys || !keys.size) return;
+  
+    const qIds = [];
+    const cIds = [];
+    for (const k of keys) {
+      if (k.startsWith("q:")) qIds.push(k.slice(2));
+      if (k.startsWith("c:")) cIds.push(k.slice(2));
+    }
+  
+    // folder do siebie / do potomka = zakazane
+    if (cIds.length && targetFolderIdOrNull) {
+      for (const fid of cIds) {
+        if (fid === targetFolderIdOrNull) {
+          alert("Nie można przenieść folderu do niego samego.");
+          return;
+        }
+        if (isFolderDescendant(fid, targetFolderIdOrNull)) {
+          alert("Nie można przenieść folderu do jego podfolderu.");
+          return;
+        }
+      }
+    }
+  
+    // pytania -> zmiana category_id
+    if (qIds.length) {
+      const upd = { category_id: targetFolderIdOrNull };
+      if (state.user?.id) upd.updated_by = state.user.id;
+  
+      const { error } = await sb()
+        .from("qb_questions")
+        .update(upd)
+        .in("id", qIds);
+  
+      if (error) throw error;
+  
+      state._rootQuestions = null;
+    }
+  
+    // foldery -> zmiana parent_id
+    if (cIds.length) {
+      const { error } = await sb()
+        .from("qb_categories")
+        .update({ parent_id: targetFolderIdOrNull })
+        .in("id", cIds);
+  
+      if (error) throw error;
+  
+      // odśwież cache kategorii
+      if (state._api?.refreshCategories) await state._api.refreshCategories();
+    }
+  
+    // odśwież widok i zostaw zaznaczenie jak jest
+    await state._api?.refreshList?.();
   }
 
   // --- Search (delegacja: input jest renderowany dynamicznie) ---
@@ -495,28 +602,28 @@ export function wireActions({ state }) {
   });
 
   treeEl?.addEventListener("click", async (e) => {
-  const row = e.target?.closest?.(".row[data-kind][data-id]");
-  if (!row) return;
-
-  const kind = row.dataset.kind;
-  const id = row.dataset.id;
-
-  if (kind === "cat") {
-    setViewFolder(state, id);
-    selectionClear(state);
-    await refreshList(state);
-    return;
-  }
-    
-  if (kind === "root") {
-    setViewAll(state);
-    selectionClear(state);
-    state._rootQuestions = null;
-    await refreshList(state);
-    return;
-  }
-    
-});
+    const row = e.target?.closest?.(".row[data-kind][data-id]");
+    if (!row) return;
+  
+    const kind = row.dataset.kind;
+    const id = row.dataset.id;
+  
+    if (kind === "cat") {
+      setViewFolder(state, id);
+      selectionClear(state);
+      await refreshList(state);
+      return;
+    }
+      
+    if (kind === "root") {
+      setViewAll(state);
+      selectionClear(state);
+      state._rootQuestions = null;
+      await refreshList(state);
+      return;
+    }
+      
+  });
 
   // --- Klik w listę: selekcja Windows (single / ctrl / shift) ---
   listEl?.addEventListener("click", (e) => {
@@ -575,6 +682,72 @@ export function wireActions({ state }) {
     if (kind === "q") {
       return; // edytor pytania później
     }
+  });
+
+  listEl?.addEventListener("dragstart", (e) => {
+    if (!canDnD()) return;
+  
+    const row = e.target?.closest?.('.row[data-kind][data-id]');
+    if (!row) return;
+  
+    const kind = row.dataset.kind;   // 'q' | 'cat'
+    const id = row.dataset.id;
+    const key = keyFromKindId(kind === "cat" ? "cat" : kind, id) || (kind === "cat" ? `c:${id}` : `q:${id}`);
+  
+    // jeśli start drag na niezaznaczonym -> single select
+    if (!state.selection?.keys?.has?.(key)) {
+      selectionSetSingle(state, key);
+      renderList(state);
+    }
+  
+    // przenosimy całe zaznaczenie
+    state._drag.keys = new Set(state.selection.keys);
+  
+    // wymagane przez przeglądarki
+    try { e.dataTransfer.setData("text/plain", "move"); } catch {}
+    e.dataTransfer.effectAllowed = "move";
+  });
+  
+  listEl?.addEventListener("dragover", (e) => {
+    if (!canDnD()) return;
+    e.preventDefault(); // pozwala na drop
+    e.dataTransfer.dropEffect = "move";
+  
+    const row = e.target?.closest?.('.row[data-kind="cat"][data-id]');
+    if (row) {
+      setDropTarget(row.dataset.id); // folder jako cel
+    } else {
+      setDropTarget(null); // puste tło -> root
+    }
+  });
+  
+  listEl?.addEventListener("dragleave", (e) => {
+    // jeśli wychodzimy poza listę, zdejmij podświetlenie (nie zawsze odpali idealnie, ale pomaga)
+    if (!listEl.contains(e.relatedTarget)) clearDropTarget();
+  });
+  
+  listEl?.addEventListener("drop", async (e) => {
+    if (!canDnD()) return;
+    e.preventDefault();
+  
+    const row = e.target?.closest?.('.row[data-kind="cat"][data-id]');
+    const targetFolderId = row ? row.dataset.id : null;
+  
+    clearDropTarget();
+  
+    try {
+      await moveItemsTo(state, targetFolderId);
+    } catch (err) {
+      console.error(err);
+      alert("Nie udało się przenieść.");
+    } finally {
+      state._drag.keys = null;
+    }
+  });
+  
+  listEl?.addEventListener("dragend", () => {
+    clearDropTarget();
+    state._drag.keys = null;
   });
 
   document.addEventListener("keydown", (e) => {
