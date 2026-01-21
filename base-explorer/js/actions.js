@@ -453,8 +453,7 @@ export async function pasteClipboardHere(state) {
     if (!canWrite(state)) return false;
 
     state._drag = state._drag || {};
-    state._drag.keys = new Set(keys);
-    await moveItemsTo(state, targetFolderIdOrNull, { mode: "move" });
+    await copyQuestionsTo(state, qKeys.map(k => k.slice(2)), targetFolderIdOrNull);
 
     // po udanym "wytnij->wklej" czyścimy schowek
     clipboardClear(state);
@@ -464,95 +463,238 @@ export async function pasteClipboardHere(state) {
   return false;
 }
 
+/* ================= DnD / Clipboard helpers (MUSZĄ być poza wireActions) ================= */
+
+function isFolderDescendant(state, folderId, maybeParentId) {
+  // true, jeśli maybeParentId leży w poddrzewie folderId
+  const byId = new Map((state.categories || []).map(c => [c.id, c]));
+  let cur = byId.get(maybeParentId);
+  let guard = 0;
+  while (cur && guard++ < 80) {
+    if (cur.id === folderId) return true;
+    const pid = cur.parent_id || null;
+    cur = pid ? byId.get(pid) : null;
+  }
+  return false;
+}
+
+function buildChildrenIndex(categories) {
+  const byParent = new Map();
+  for (const c of (categories || [])) {
+    const pid = c.parent_id || null;
+    if (!byParent.has(pid)) byParent.set(pid, []);
+    byParent.get(pid).push(c);
+  }
+  for (const arr of byParent.values()) {
+    arr.sort((a, b) => (Number(a.ord) || 0) - (Number(b.ord) || 0));
+  }
+  return byParent;
+}
+
+function collectSubtreeIds(categories, rootId) {
+  const byParent = buildChildrenIndex(categories);
+  const out = [];
+  const stack = [rootId];
+  const seen = new Set();
+
+  while (stack.length) {
+    const id = stack.pop();
+    if (!id || seen.has(id)) continue;
+    seen.add(id);
+    out.push(id);
+
+    const kids = byParent.get(id) || [];
+    for (let i = kids.length - 1; i >= 0; i--) stack.push(kids[i].id);
+  }
+  return out;
+}
+
+function uniqueNameInSiblings(categories, parentIdOrNull, baseName) {
+  const siblings = (categories || []).filter(c => (c.parent_id || null) === (parentIdOrNull || null));
+  const names = new Set(siblings.map(s => String(s.name || "").toLowerCase()));
+
+  const base = String(baseName || "Folder").slice(0, 80);
+  if (!names.has(base.toLowerCase())) return base;
+
+  const stem = `${base} (kopia)`;
+  if (!names.has(stem.toLowerCase())) return stem;
+
+  let n = 2;
+  while (n < 9999) {
+    const cand = `${base} (kopia ${n})`;
+    if (!names.has(cand.toLowerCase())) return cand;
+    n++;
+  }
+  return stem;
+}
+
+async function copyQuestionsTo(state, qIds, targetFolderIdOrNull) {
+  if (!qIds || !qIds.length) return;
+
+  // pobierz źródłowe pytania (minimalnie)
+  const { data: src, error: e1 } = await sb()
+    .from("qb_questions")
+    .select("id,payload")
+    .in("id", qIds);
+
+  if (e1) throw e1;
+
+  // ord startowy w folderze docelowym
+  const ordStart = await nextOrdForQuestion(state, targetFolderIdOrNull);
+
+  const rows = (src || []).map((q, i) => {
+    const row = {
+      base_id: state.baseId,
+      category_id: targetFolderIdOrNull,
+      ord: ordStart + i,
+      payload: (q?.payload && typeof q.payload === "object") ? q.payload : { text: "", answers: [] },
+    };
+    if (state.user?.id) row.updated_by = state.user.id;
+    return row;
+  });
+
+  const { error: e2 } = await sb().from("qb_questions").insert(rows, { defaultToNull: false });
+  if (e2) throw e2;
+
+  state._rootQuestions = null;
+}
+
+async function copyFolderSubtree(state, sourceFolderId, targetParentIdOrNull) {
+  // 1) zbierz foldery w poddrzewie
+  const ids = collectSubtreeIds(state.categories || [], sourceFolderId);
+  if (!ids.length) return;
+
+  const cats = state.categories || [];
+  const byId = new Map(cats.map(c => [c.id, c]));
+
+  // 2) pobierz pytania z tych folderów
+  const { data: qs, error: eQ } = await sb()
+    .from("qb_questions")
+    .select("id,category_id,ord,payload")
+    .eq("base_id", state.baseId)
+    .in("category_id", ids);
+  if (eQ) throw eQ;
+
+  // 3) nowy root kopiowanego drzewa
+  const srcRoot = byId.get(sourceFolderId);
+  const rootName = uniqueNameInSiblings(cats, targetParentIdOrNull, String(srcRoot?.name || "Folder"));
+  const ord = await nextOrdForFolder(state, targetParentIdOrNull);
+
+  const { data: newRoot, error: eInsRoot } = await sb()
+    .from("qb_categories")
+    .insert({
+      base_id: state.baseId,
+      parent_id: targetParentIdOrNull,
+      name: rootName,
+      ord,
+    }, { defaultToNull: false })
+    .select("id")
+    .single();
+
+  if (eInsRoot) throw eInsRoot;
+
+  // 4) mapowanie stary->nowy
+  const mapOldToNew = new Map();
+  mapOldToNew.set(sourceFolderId, newRoot.id);
+
+  for (const oldId of ids) {
+    if (oldId === sourceFolderId) continue;
+
+    const old = byId.get(oldId);
+    if (!old) continue;
+
+    const oldParent = old.parent_id || null;
+    const newParent = oldParent ? mapOldToNew.get(oldParent) : null;
+
+    const { data: inserted, error } = await sb()
+      .from("qb_categories")
+      .insert({
+        base_id: state.baseId,
+        parent_id: newParent,
+        name: String(old.name || "Folder").slice(0, 80),
+        ord: Number(old.ord) || 0,
+      }, { defaultToNull: false })
+      .select("id")
+      .single();
+
+    if (error) throw error;
+    mapOldToNew.set(oldId, inserted.id);
+  }
+
+  // 5) wstaw pytania (kopie)
+  const rows = (qs || []).map((q) => ({
+    base_id: state.baseId,
+    category_id: mapOldToNew.get(q.category_id) || newRoot.id,
+    ord: Number(q.ord) || 0,
+    payload: (q.payload && typeof q.payload === "object") ? q.payload : {},
+    ...(state.user?.id ? { updated_by: state.user.id } : {}),
+  }));
+
+  if (rows.length) {
+    const { error } = await sb().from("qb_questions").insert(rows, { defaultToNull: false });
+    if (error) throw error;
+  }
+
+  if (state._api?.refreshCategories) await state._api.refreshCategories();
+  state._rootQuestions = null;
+}
+
 async function moveItemsTo(state, targetFolderIdOrNull, { mode = "move" } = {}) {
-  if (!canWrite(state)) return;
+  if (!canWrite(state)) return false;
 
   const keys = state._drag?.keys;
-  if (!keys || !keys.size) return;
+  if (!keys || !keys.size) return false;
 
+  // 1) najpierw rozbij na ids (to MUSI być przed jakimikolwiek ifami)
   const qIds = [];
   const cIds = [];
-
-  const isCopy = mode === "copy";
-
-  if (isCopy && cIds.length) {
-    alert("Kopiowanie folderów będzie w następnym etapie (na razie kopiują się tylko pytania).");
-    return;
-  }
-
-  if (isCopy) {
-    // COPY: tworzymy nowe pytania w docelowym folderze (ord na końcu)
-    await copyQuestionsTo(state, qIds, targetFolderIdOrNull);
-    await state._api?.refreshList?.();
-    return;
-  }
-  
   for (const k of keys) {
     if (k.startsWith("q:")) qIds.push(k.slice(2));
     if (k.startsWith("c:")) cIds.push(k.slice(2));
   }
 
-  // folder do siebie / do potomka = zakazane
+  // 2) COPY: kopiujemy tylko pytania tutaj (foldery kopiujesz osobno w pasteClipboardHere)
+  if (mode === "copy") {
+    if (cIds.length) {
+      // foldery kopiujemy w pasteClipboardHere -> copyFolderSubtree
+      // tu nic nie rób
+    }
+    if (qIds.length) {
+      await copyQuestionsTo(state, qIds, targetFolderIdOrNull);
+    }
+    await state._api?.refreshList?.();
+    return true;
+  }
+
+  // 3) MOVE: walidacje folderów
   if (cIds.length && targetFolderIdOrNull) {
     for (const fid of cIds) {
       if (fid === targetFolderIdOrNull) {
         alert("Nie można przenieść folderu do niego samego.");
-        return;
+        return false;
       }
-      if (isFolderDescendant(fid, targetFolderIdOrNull)) {
+      if (isFolderDescendant(state, fid, targetFolderIdOrNull)) {
         alert("Nie można przenieść folderu do jego podfolderu.");
-        return;
+        return false;
       }
     }
   }
 
-  // pytania: MOVE = update category_id, COPY = duplikuj rekordy
+  // 4) MOVE pytania
   if (qIds.length) {
-    if (mode === "copy") {
-      // weź źródłowe pytania z cache widoku (fallback: dociągnij z DB)
-      const cache = Array.isArray(state._viewQuestions) ? state._viewQuestions : [];
-      const byId = new Map(cache.map(q => [q.id, q]));
-  
-      // jeśli czegoś nie ma w cache, dociągniemy minimalnie z DB
-      const missing = qIds.filter(id => !byId.has(id));
-      if (missing.length) {
-        const { data, error } = await sb()
-          .from("qb_questions")
-          .select("id,ord,payload,category_id")
-          .in("id", missing);
-        if (error) throw error;
-        for (const q of (data || [])) byId.set(q.id, q);
-      }
-  
-      const rows = qIds.map((id) => {
-        const src = byId.get(id);
-        return {
-          base_id: state.baseId,
-          category_id: targetFolderIdOrNull,
-          ord: Number(src?.ord) || 0,
-          payload: (src?.payload && typeof src.payload === "object") ? src.payload : {},
-          ...(state.user?.id ? { updated_by: state.user.id } : {}),
-        };
-      });
-  
-      const { error } = await sb().from("qb_questions").insert(rows, { defaultToNull: false });
-        if (error) throw error;
-      } else {
-        // move
-        const upd = { category_id: targetFolderIdOrNull };
-        if (state.user?.id) upd.updated_by = state.user.id;
-    
-        const { error } = await sb()
-          .from("qb_questions")
-          .update(upd)
-          .in("id", qIds);
-    
-        if (error) throw error;
-      }
+    const upd = { category_id: targetFolderIdOrNull };
+    if (state.user?.id) upd.updated_by = state.user.id;
+
+    const { error } = await sb()
+      .from("qb_questions")
+      .update(upd)
+      .in("id", qIds);
+
+    if (error) throw error;
     state._rootQuestions = null;
   }
 
-  // foldery -> zmiana parent_id
+  // 5) MOVE foldery
   if (cIds.length) {
     const { error } = await sb()
       .from("qb_categories")
@@ -561,12 +703,11 @@ async function moveItemsTo(state, targetFolderIdOrNull, { mode = "move" } = {}) 
 
     if (error) throw error;
 
-    // odśwież cache kategorii
     if (state._api?.refreshCategories) await state._api.refreshCategories();
   }
 
-  // odśwież widok i zostaw zaznaczenie jak jest
   await state._api?.refreshList?.();
+  return true;
 }
 
 /* ================= Wire ================= */
@@ -650,184 +791,6 @@ export function wireActions({ state }) {
     const el = document.querySelector(`.row[data-kind="cat"][data-id="${CSS.escape(folderIdOrNull)}"]`);
     el?.classList?.add("is-drop-target");
     state._drag.overKey = `c:${folderIdOrNull}`;
-  }
-  
-  function isFolderDescendant(folderId, maybeParentId) {
-    // zwraca true, jeśli maybeParentId leży w poddrzewie folderId (czyli nie wolno tam wrzucić folderuId)
-    const byId = new Map((state.categories || []).map(c => [c.id, c]));
-    let cur = byId.get(maybeParentId);
-    let guard = 0;
-    while (cur && guard++ < 50) {
-      if (cur.id === folderId) return true;
-      const pid = cur.parent_id || null;
-      cur = pid ? byId.get(pid) : null;
-    }
-    return false;
-  }
-
-  async function copyQuestionsTo(state, qIds, targetFolderIdOrNull) {
-    if (!qIds.length) return;
-  
-    // pobierz źródłowe pytania
-    const { data: src, error: e1 } = await sb()
-      .from("qb_questions")
-      .select("id,payload")
-      .in("id", qIds);
-  
-    if (e1) throw e1;
-  
-    // ustal ord startowy w folderze docelowym
-    const ordStart = await nextOrdForQuestion(state, targetFolderIdOrNull);
-  
-    const rows = (src || []).map((q, i) => {
-      const row = {
-        base_id: state.baseId,
-        category_id: targetFolderIdOrNull,
-        ord: ordStart + i,
-        payload: (q?.payload && typeof q.payload === "object") ? q.payload : { text: "", answers: [] },
-      };
-      if (state.user?.id) row.updated_by = state.user.id;
-      return row;
-    });
-  
-    const { error: e2 } = await sb().from("qb_questions").insert(rows, { defaultToNull: false });
-    if (e2) throw e2;
-  
-    state._rootQuestions = null;
-  }
-
-  function buildChildrenIndex(categories) {
-    const byParent = new Map();
-    for (const c of (categories || [])) {
-      const pid = c.parent_id || null;
-      if (!byParent.has(pid)) byParent.set(pid, []);
-      byParent.get(pid).push(c);
-    }
-    for (const arr of byParent.values()) {
-      arr.sort((a, b) => (Number(a.ord) || 0) - (Number(b.ord) || 0));
-    }
-    return byParent;
-  }
-  
-  function collectSubtreeIds(categories, rootId) {
-    const byParent = buildChildrenIndex(categories);
-    const out = [];
-    const stack = [rootId];
-    const seen = new Set();
-  
-    while (stack.length) {
-      const id = stack.pop();
-      if (!id || seen.has(id)) continue;
-      seen.add(id);
-      out.push(id);
-  
-      const kids = byParent.get(id) || [];
-      for (let i = kids.length - 1; i >= 0; i--) stack.push(kids[i].id);
-    }
-    return out;
-  }
-  
-  function uniqueNameInSiblings(categories, parentIdOrNull, baseName) {
-    const siblings = (categories || []).filter(c => (c.parent_id || null) === (parentIdOrNull || null));
-    const names = new Set(siblings.map(s => String(s.name || "").toLowerCase()));
-  
-    if (!names.has(String(baseName).toLowerCase())) return baseName;
-  
-    // dodajemy (kopia), (kopia 2), ...
-    const stem = `${baseName} (kopia)`;
-    if (!names.has(stem.toLowerCase())) return stem;
-  
-    let n = 2;
-    while (n < 9999) {
-      const cand = `${baseName} (kopia ${n})`;
-      if (!names.has(cand.toLowerCase())) return cand;
-      n++;
-    }
-    return `${baseName} (kopia)`;
-  }
-  
-  async function copyFolderSubtree(state, sourceFolderId, targetParentIdOrNull) {
-    // 1) zbierz wszystkie foldery w poddrzewie
-    const ids = collectSubtreeIds(state.categories || [], sourceFolderId);
-    if (!ids.length) return;
-  
-    const cats = state.categories || [];
-    const byId = new Map(cats.map(c => [c.id, c]));
-  
-    // 2) pobierz pytania z tych folderów
-    const { data: qs, error: eQ } = await sb()
-      .from("qb_questions")
-      .select("id,category_id,ord,payload")
-      .eq("base_id", state.baseId)
-      .in("category_id", ids);
-    if (eQ) throw eQ;
-  
-    // 3) wstaw nowy “root” kopiowanego drzewa jako dziecko targetParent
-    const srcRoot = byId.get(sourceFolderId);
-    const rootName = uniqueNameInSiblings(cats, targetParentIdOrNull, String(srcRoot?.name || "Folder").slice(0, 80));
-  
-    // ord na końcu w targetParent
-    const ord = await nextOrdForFolder(state, targetParentIdOrNull);
-  
-    const { data: newRoot, error: eInsRoot } = await sb()
-      .from("qb_categories")
-      .insert({
-        base_id: state.baseId,
-        parent_id: targetParentIdOrNull,
-        name: rootName,
-        ord,
-      }, { defaultToNull: false })
-      .select("id")
-      .single();
-    if (eInsRoot) throw eInsRoot;
-  
-    // 4) mapowanie id: staryRoot -> nowyRoot, reszta w kolejności topologicznej
-    const mapOldToNew = new Map();
-    mapOldToNew.set(sourceFolderId, newRoot.id);
-  
-    // posortuj ids tak, żeby rodzic był przed dziećmi:
-    // ids zwraca DFS od root w dół — to nam wystarczy
-    for (const oldId of ids) {
-      if (oldId === sourceFolderId) continue;
-  
-      const old = byId.get(oldId);
-      if (!old) continue;
-  
-      const oldParent = old.parent_id || null;
-      const newParent = oldParent ? mapOldToNew.get(oldParent) : null;
-  
-      const { data: inserted, error } = await sb()
-        .from("qb_categories")
-        .insert({
-          base_id: state.baseId,
-          parent_id: newParent,
-          name: String(old.name || "Folder").slice(0, 80),
-          ord: Number(old.ord) || 0,
-        }, { defaultToNull: false })
-        .select("id")
-        .single();
-  
-      if (error) throw error;
-      mapOldToNew.set(oldId, inserted.id);
-    }
-  
-    // 5) wstaw pytania (duplikaty) do odpowiadających folderów
-    const rows = (qs || []).map((q) => ({
-      base_id: state.baseId,
-      category_id: mapOldToNew.get(q.category_id) || newRoot.id,
-      ord: Number(q.ord) || 0,
-      payload: (q.payload && typeof q.payload === "object") ? q.payload : {},
-      ...(state.user?.id ? { updated_by: state.user.id } : {}),
-    }));
-  
-    if (rows.length) {
-      const { error } = await sb().from("qb_questions").insert(rows, { defaultToNull: false });
-      if (error) throw error;
-    }
-  
-    // odśwież cache kategorii (bo doszło dużo folderów)
-    if (state._api?.refreshCategories) await state._api.refreshCategories();
-    state._rootQuestions = null;
   }
 
   // --- Search (delegacja: input jest renderowany dynamicznie) ---
