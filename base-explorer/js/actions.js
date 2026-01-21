@@ -112,6 +112,95 @@ async function refreshList(state) {
   document.getElementById("btnNewQuestion")?.toggleAttribute("disabled", !writable);
 }
 
+function currentParentId(state) {
+  // Root = parent_id null
+  return (state.view === VIEW.FOLDER && state.folderId) ? state.folderId : null;
+}
+
+function currentCategoryId(state) {
+  // Root = category_id null
+  return (state.view === VIEW.FOLDER && state.folderId) ? state.folderId : null;
+}
+
+async function nextOrdForFolder(state, parentId) {
+  const baseQ = sb()
+    .from("qb_categories")
+    .select("ord")
+    .eq("base_id", state.baseId);
+
+  const q = (parentId === null)
+    ? baseQ.is("parent_id", null)
+    : baseQ.eq("parent_id", parentId);
+
+  const { data: last, error } = await q
+    .order("ord", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) throw error;
+  return (Number(last?.ord) || 0) + 1;
+}
+
+async function nextOrdForQuestion(state, categoryId) {
+  const baseQ = sb()
+    .from("qb_questions")
+    .select("ord")
+    .eq("base_id", state.baseId);
+
+  const q = (categoryId === null)
+    ? baseQ.is("category_id", null)
+    : baseQ.eq("category_id", categoryId);
+
+  const { data: last, error } = await q
+    .order("ord", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) throw error;
+  return (Number(last?.ord) || 0) + 1;
+}
+
+export async function createFolderHere(state, { parentId = null } = {}) {
+  if (!canWrite(state)) return false;
+
+  const ord = await nextOrdForFolder(state, parentId);
+
+  const { error } = await sb()
+    .from("qb_categories")
+    .insert(
+      { base_id: state.baseId, parent_id: parentId, name: "Nowy folder", ord },
+      { defaultToNull: false }
+    );
+
+  if (error) throw error;
+
+  // odśwież listę i cache root
+  state._rootQuestions = null;
+  await state._api?.refreshList?.();
+  return true;
+}
+
+export async function createQuestionHere(state, { categoryId = null } = {}) {
+  if (!canWrite(state)) return false;
+
+  const ord = await nextOrdForQuestion(state, categoryId);
+
+  const row = {
+    base_id: state.baseId,
+    category_id: categoryId,
+    ord,
+    payload: { text: "Nowe pytanie", answers: [] },
+  };
+  if (state.user?.id) row.updated_by = state.user.id;
+
+  const { error } = await sb().from("qb_questions").insert(row, { defaultToNull: false });
+  if (error) throw error;
+
+  state._rootQuestions = null;
+  await state._api?.refreshList?.();
+  return true;
+}
+
 /* ================= Wire ================= */
 export function wireActions({ state }) {
   const treeEl = document.getElementById("tree");
@@ -174,74 +263,23 @@ export function wireActions({ state }) {
     
   });
 
-    toolbarEl?.addEventListener("click", async (e) => {
+  toolbarEl?.addEventListener("click", async (e) => {
     const t = e.target;
     if (!t) return;
   
-    if (t.id === "btnNewFolder") {
-      if (!canWrite(state)) return;
-  
-      try {
-        const parentId = (state.view === VIEW.FOLDER && state.folderId) ? state.folderId : null;
-  
-        const { data: last, error: eLast } = await sb()
-          .from("qb_categories")
-          .select("ord")
-          .eq("base_id", state.baseId)
-          .is("parent_id", parentId)
-          .order("ord", { ascending: false })
-          .limit(1)
-          .maybeSingle();
-        if (eLast) throw eLast;
-  
-        const ord = (Number(last?.ord) || 0) + 1;
-  
-        const { error } = await sb()
-          .from("qb_categories")
-          .insert({ base_id: state.baseId, parent_id: parentId, name: "Nowy folder", ord }, { defaultToNull: false });
-        if (error) throw error;
-  
-        await state._api?.refreshList?.();
-      } catch (err) {
-        console.error(err);
-        alert("Nie udało się utworzyć folderu.");
+    try {
+      if (t.id === "btnNewFolder") {
+        const parentId = currentParentId(state);
+        await createFolderHere(state, { parentId });
       }
-    }
   
-    if (t.id === "btnNewQuestion") {
-      if (!canWrite(state)) return;
-  
-      try {
-        const categoryId = (state.view === VIEW.FOLDER && state.folderId) ? state.folderId : null;
-  
-        const q = sb().from("qb_questions").select("ord").eq("base_id", state.baseId);
-        const q2 = (categoryId === null) ? q.is("category_id", null) : q.eq("category_id", categoryId);
-  
-        const { data: last, error: eLast } = await q2
-          .order("ord", { ascending: false })
-          .limit(1)
-          .maybeSingle();
-        if (eLast) throw eLast;
-  
-        const ord = (Number(last?.ord) || 0) + 1;
-  
-        const row = {
-          base_id: state.baseId,
-          category_id: categoryId,
-          ord,
-          payload: { text: "Nowe pytanie", answers: [] },
-        };
-        if (state.user?.id) row.updated_by = state.user.id;
-  
-        const { error } = await sb().from("qb_questions").insert(row, { defaultToNull: false });
-        if (error) throw error;
-  
-        state._rootQuestions = null;
-        await state._api?.refreshList?.();
-      } catch (err) {
-        console.error(err);
-        alert("Nie udało się utworzyć pytania.");
+      if (t.id === "btnNewQuestion") {
+        const categoryId = currentCategoryId(state);
+        await createQuestionHere(state, { categoryId });
       }
+    } catch (err) {
+      console.error(err);
+      alert("Nie udało się wykonać akcji.");
     }
   });
 
