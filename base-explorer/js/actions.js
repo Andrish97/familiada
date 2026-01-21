@@ -1128,6 +1128,8 @@ export function wireActions({ state }) {
     // --- Zaznaczanie "od pustego" (marquee) ---
   let marquee = null;
   let marqueeStart = null;
+  let marqueeAdd = false;       // ctrl/meta => dodawanie do selekcji
+  let marqueeBaseKeys = null;   // snapshot selekcji startowej (dla add)
 
   function listLocalPoint(ev) {
     const r = listEl.getBoundingClientRect();
@@ -1159,9 +1161,7 @@ export function wireActions({ state }) {
 
   function updateMarqueeSelection(box) {
     const rows = Array.from(listEl.querySelectorAll('.row[data-kind][data-id]'));
-  
-    // nie podmieniamy Set-a, tylko czyścimy i wypełniamy (ważne!)
-    state.selection.keys.clear();
+    const hit = new Set();
   
     for (const row of rows) {
       const kind = row.dataset.kind;
@@ -1172,7 +1172,17 @@ export function wireActions({ state }) {
       if (!key) continue;
   
       const r = rowRectInList(row);
-      if (intersects(box, r)) state.selection.keys.add(key);
+      if (intersects(box, r)) hit.add(key);
+    }
+  
+    // nie podmieniamy Set-a; modyfikujemy istniejący
+    state.selection.keys.clear();
+  
+    if (marqueeAdd && marqueeBaseKeys) {
+      for (const k of marqueeBaseKeys) state.selection.keys.add(k);
+      for (const k of hit) state.selection.keys.add(k);
+    } else {
+      for (const k of hit) state.selection.keys.add(k);
     }
   
     state.selection.anchorKey = null;
@@ -1194,8 +1204,14 @@ export function wireActions({ state }) {
 
     // start marquee
     marqueeStart = listLocalPoint(e);
-    selectionClear(state);
-    renderList(state);
+    
+    marqueeAdd = e.ctrlKey || e.metaKey;
+    marqueeBaseKeys = marqueeAdd ? new Set(state.selection.keys) : null;
+    
+    if (!marqueeAdd) {
+      selectionClear(state);
+      renderList(state);
+    }
 
     marquee = document.createElement("div");
     marquee.className = "marquee";
