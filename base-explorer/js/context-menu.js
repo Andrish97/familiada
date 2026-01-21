@@ -1,8 +1,6 @@
 // base-explorer/js/context-menu.js
-import { sb } from "../../js/core/supabase.js";
-import { confirmModal } from "../../js/core/modal.js";
-import { VIEW, setViewFolder, setViewAll } from "./state.js";
-import { renderList } from "./render.js";
+import { VIEW, setViewFolder, selectionSetSingle } from "./state.js";
+import { deleteSelected } from "./actions.js";
 
 function clamp(n, a, b) {
   return Math.max(a, Math.min(b, n));
@@ -56,28 +54,18 @@ export async function showContextMenu({ state, x, y, target }) {
   if (target.kind === "q") {
     items.push({ label: "Edytuj", disabled: true }); // modal edycji dojdzie później
     items.push({ label: "Usuń", danger: true, disabled: !editor, action: async () => {
-      const ok = await confirmModal({
-        title: "Usuń pytanie",
-        text: "Na pewno usunąć to pytanie? Tego nie da się cofnąć.",
-        okText: "Usuń",
-        cancelText: "Anuluj",
-      });
-      if (!ok) return;
-
-      const { error } = await sb()
-        .from("qb_questions")
-        .delete()
-        .eq("id", target.id);
-
-      if (error) {
-        console.error(error);
-        alert("Nie udało się usunąć.");
-        return;
+      // jeśli element pod PPM nie jest zaznaczony – zaznacz go (Explorer-style)
+      const key = `q:${target.id}`;
+      if (!state.selection?.keys?.has?.(key)) {
+        selectionSetSingle(state, key);
       }
-
-      // odśwież dane widoku
-      if (state.view === VIEW.ALL) state._rootQuestions = null;
-      await state._api?.refreshList?.();
+    
+      try {
+        await deleteSelected(state);
+      } catch (e) {
+        console.error(e);
+        alert("Nie udało się usunąć.");
+      }
     }});
   }
 
