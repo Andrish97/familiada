@@ -345,7 +345,7 @@ export async function renameSelectedPrompt(state) {
     current = String(q?.payload?.text ?? q?.text ?? "");
   }
 
-  const label = isFolder ? "Zmień nazwę folderu:" : "Zmień treść pytania:";
+  const label = isFolder ? "Zmień nazwę folderu:" : "Zmień nazwę pytania:";
   const next = prompt(label, current);
   if (next === null) return false; // anulowano
 
