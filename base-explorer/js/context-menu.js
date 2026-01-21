@@ -1,4 +1,5 @@
 // base-explorer/js/context-menu.js
+import { VIEW, setViewFolder } from "./state.js";
 import { createFolderHere, createQuestionHere, deleteSelected } from "./actions.js";
 
 function clamp(n, a, b) {
