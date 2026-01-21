@@ -1007,17 +1007,23 @@ export function wireActions({ state }) {
   
   listEl?.addEventListener("dragover", (e) => {
     if (!canDnD()) return;
-    e.preventDefault();
+    e.preventDefault(); // kluczowe: pozwala drop
   
+    // Ctrl/Meta przełącza tryb W TRAKCIE przeciągania
     const isCopy = e.ctrlKey || e.metaKey;
     state._drag.mode = isCopy ? "copy" : "move";
-    e.dataTransfer.dropEffect = state._drag.mode;
   
+    // pokazuje + / move
+    try {
+      e.dataTransfer.dropEffect = state._drag.mode;
+    } catch {}
+  
+    // cel dropu: folder lub root
     const row = e.target?.closest?.('.row[data-kind="cat"][data-id]');
     if (row) setDropTarget(row.dataset.id);
     else setDropTarget(null);
   });
-  
+    
   listEl?.addEventListener("dragleave", (e) => {
     // jeśli wychodzimy poza listę, zdejmij podświetlenie (nie zawsze odpali idealnie, ale pomaga)
     if (!listEl.contains(e.relatedTarget)) clearDropTarget();
