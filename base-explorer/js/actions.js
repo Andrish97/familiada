@@ -5,6 +5,7 @@ import { VIEW, setViewAll, setViewFolder, selectionClear, selectionSetSingle, se
 import { renderAll, renderList } from "./render.js";
 import { listQuestionsByCategory, listAllQuestions } from "./repo.js";
 import { showContextMenu, hideContextMenu } from "./context-menu.js";
+import { sb } from "../../js/core/supabase.js";
 
 /* ================= Utils ================= */
 function canWrite(state) {
@@ -105,6 +106,10 @@ async function refreshList(state) {
   state.questions = applySearchFilterToQuestions(allQ, state.searchQuery);
   
   renderAll(state);
+
+  const writable = canWrite(state);
+  document.getElementById("btnNewFolder")?.toggleAttribute("disabled", !writable);
+  document.getElementById("btnNewQuestion")?.toggleAttribute("disabled", !writable);
 }
 
 /* ================= Wire ================= */
@@ -166,124 +171,78 @@ export function wireActions({ state }) {
     const base = Array.isArray(state._viewQuestions) ? state._viewQuestions : Array.isArray(state.questions) ? state.questions : [];
     state.questions = applySearchFilterToQuestions(base, state.searchQuery);
     renderList(state); // nie ruszamy toolbar, więc focus zostaje w inpucie
+    
+  });
 
-
-   // Toolbar buttons
-    const btnNewFolder = document.getElementById("btnNewFolder");
-    const btnNewQuestion = document.getElementById("btnNewQuestion");
+    toolbarEl?.addEventListener("click", async (e) => {
+    const t = e.target;
+    if (!t) return;
   
-    const writable = canWrite(state);
-    if (btnNewFolder) btnNewFolder.disabled = !writable;
-    if (btnNewQuestion) btnNewQuestion.disabled = !writable;
-    
-    function currentParentId() {
-      // Root ma parent_id = null
-      return (state.view === "folder" && state.folderId) ? state.folderId : null;
-    }
-    function currentCategoryId() {
-      // Pytanie w root => category_id = null
-      return (state.view === "folder" && state.folderId) ? state.folderId : null;
-    }
-    
-    async function nextOrdForFolder(parentId) {
-      const { data, error } = await sb()
-        .from("qb_categories")
-        .select("ord")
-        .eq("base_id", state.baseId)
-        .is("parent_id", parentId)
-        .order("ord", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-    
-      if (error) throw error;
-      return (Number(data?.ord) || 0) + 1;
-    }
-    
-    async function nextOrdForQuestion(categoryId) {
-      const q = sb()
-        .from("qb_questions")
-        .select("ord")
-        .eq("base_id", state.baseId);
-    
-      // root = category_id is null
-      const q2 = (categoryId === null) ? q.is("category_id", null) : q.eq("category_id", categoryId);
-    
-      const { data, error } = await q2.order("ord", { ascending: false }).limit(1).maybeSingle();
-      if (error) throw error;
-      return (Number(data?.ord) || 0) + 1;
-    }
-    
-    async function createFolderHere() {
+    if (t.id === "btnNewFolder") {
       if (!canWrite(state)) return;
-    
-      const parentId = currentParentId();
-      const ord = await nextOrdForFolder(parentId);
-    
-      const { error } = await sb()
-        .from("qb_categories")
-        .insert(
-          {
-            base_id: state.baseId,
-            parent_id: parentId,
-            name: "Nowy folder",
-            ord,
-          },
-          { defaultToNull: false }
-        );
-    
-      if (error) throw error;
-    
-      await state._api?.refreshList?.();
-    }
-    
-    async function createQuestionHere() {
-      if (!canWrite(state)) return;
-    
-      const categoryId = currentCategoryId();
-      const ord = await nextOrdForQuestion(categoryId);
-    
-      const payload = { text: "Nowe pytanie", answers: [] };
-    
-      const row = {
-        base_id: state.baseId,
-        category_id: categoryId,
-        ord,
-        payload,
-      };
-    
-      // jeśli masz kolumnę updated_by, to ją ustawiamy (bezpiecznie)
-      if (state.user?.id) row.updated_by = state.user.id;
-    
-      const { error } = await sb()
-        .from("qb_questions")
-        .insert(row, { defaultToNull: false });
-    
-      if (error) throw error;
-    
-      // root cache do odświeżenia (jeśli używasz)
-      state._rootQuestions = null;
-    
-      await state._api?.refreshList?.();
-    }
-    
-    btnNewFolder?.addEventListener("click", async () => {
+  
       try {
-        await createFolderHere();
-      } catch (e) {
-        console.error(e);
+        const parentId = (state.view === VIEW.FOLDER && state.folderId) ? state.folderId : null;
+  
+        const { data: last, error: eLast } = await sb()
+          .from("qb_categories")
+          .select("ord")
+          .eq("base_id", state.baseId)
+          .is("parent_id", parentId)
+          .order("ord", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (eLast) throw eLast;
+  
+        const ord = (Number(last?.ord) || 0) + 1;
+  
+        const { error } = await sb()
+          .from("qb_categories")
+          .insert({ base_id: state.baseId, parent_id: parentId, name: "Nowy folder", ord }, { defaultToNull: false });
+        if (error) throw error;
+  
+        await state._api?.refreshList?.();
+      } catch (err) {
+        console.error(err);
         alert("Nie udało się utworzyć folderu.");
       }
-    });
-    
-    btnNewQuestion?.addEventListener("click", async () => {
+    }
+  
+    if (t.id === "btnNewQuestion") {
+      if (!canWrite(state)) return;
+  
       try {
-        await createQuestionHere();
-      } catch (e) {
-        console.error(e);
+        const categoryId = (state.view === VIEW.FOLDER && state.folderId) ? state.folderId : null;
+  
+        const q = sb().from("qb_questions").select("ord").eq("base_id", state.baseId);
+        const q2 = (categoryId === null) ? q.is("category_id", null) : q.eq("category_id", categoryId);
+  
+        const { data: last, error: eLast } = await q2
+          .order("ord", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (eLast) throw eLast;
+  
+        const ord = (Number(last?.ord) || 0) + 1;
+  
+        const row = {
+          base_id: state.baseId,
+          category_id: categoryId,
+          ord,
+          payload: { text: "Nowe pytanie", answers: [] },
+        };
+        if (state.user?.id) row.updated_by = state.user.id;
+  
+        const { error } = await sb().from("qb_questions").insert(row, { defaultToNull: false });
+        if (error) throw error;
+  
+        state._rootQuestions = null;
+        await state._api?.refreshList?.();
+      } catch (err) {
+        console.error(err);
         alert("Nie udało się utworzyć pytania.");
       }
-    });
-    
+    }
   });
 
   breadcrumbsEl?.addEventListener("click", async (e) => {
@@ -308,7 +267,6 @@ export function wireActions({ state }) {
       await refreshList(state);
     }
   });
-
 
   treeEl?.addEventListener("click", async (e) => {
   const row = e.target?.closest?.(".row[data-kind][data-id]");
@@ -336,6 +294,13 @@ export function wireActions({ state }) {
 
   // --- Klik w listę: selekcja Windows (single / ctrl / shift) ---
   listEl?.addEventListener("click", (e) => {
+
+    if (e.target === listEl) {
+      selectionClear(state);
+      renderList(state);
+      return
+    }
+    
     const row = e.target?.closest?.(".row[data-kind][data-id]");
     if (!row) return;
 
@@ -359,14 +324,6 @@ export function wireActions({ state }) {
     }
 
     scheduleRenderList();
-  });
-
-  listEl?.addEventListener("click", (e) => {
-    // jeśli kliknięto bezpośrednio w kontener listy (nie w .row)
-    if (e.target === listEl) {
-      selectionClear(state);
-      renderList(state);
-    }
   });
 
   // --- Dblclick na pytanie: (na razie placeholder) ---
