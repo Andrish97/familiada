@@ -188,8 +188,7 @@ export function renderList(state) {
     const key = `c:${c.id}`;
     const isSel = isSelected(state, key);
     const draggable = (state.role === "owner" || state.role === "editor") ? `draggable="true"` : ``; 
-    const cls = `row${isSel ? " selected" : ""}`;
-    return `<div class="${cls}" ${draggable} data-kind="cat" data-id="${esc(c.id)}" style="cursor:pointer;">
+    return `<div class="row ${isSel ? "is-selected" : ""}" ${draggable} data-kind="cat" data-id="${esc(c.id)}" style="cursor:pointer;">
       <div class="col-num"></div>
       <div class="col-main"><div class="title">📁 ${esc(c.name || "Folder")}</div></div>
       <div class="col-meta"></div>
@@ -207,8 +206,7 @@ export function renderList(state) {
     const answersCount = Array.isArray(q?.payload?.answers) ? q.payload.answers.length : 0;
     const meta = answersCount ? `${answersCount} odp.` : "";
     const draggable = (state.role === "owner" || state.role === "editor") ? `draggable="true"` : ``; 
-    const cls = `row${isSel ? " selected" : ""}`;
-    return `<div class="${cls}" ${draggable} data-kind="q" data-id="${esc(q.id)}" style="cursor:pointer;">
+    return `<div class="row ${isSel ? "is-selected" : ""}" ${draggable} data-kind="cat" data-id="${esc(c.id)}" style="cursor:pointer;">
       <div class="col-num">${esc(ord)}</div>
       <div class="col-main"><div class="title">${esc(text || "Pytanie")}</div></div>
       <div class="col-meta">${esc(meta)}</div>
