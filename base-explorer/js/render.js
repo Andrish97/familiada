@@ -47,7 +47,12 @@ export function renderToolbar(state) {
   // (eventy dojdą później w page.js/actions.js)
   elToolbar.innerHTML = `
     <input id="searchInp" class="inp" placeholder="Szukaj..." value="${esc(state.searchQuery || "")}" />
+  
     <div style="flex:1"></div>
+  
+    <button id="btnNewFolder" class="btn ghost">Nowy folder</button>
+    <button id="btnNewQuestion" class="btn ghost">Nowe pytanie</button>
+  
     <button id="btnCreateGame" class="btn">Utwórz grę</button>
   `;
 
