@@ -34,13 +34,10 @@ function applySearchFilterToQuestions(all, query) {
 }
 
 function currentRowKeys(container) {
-  // kolejność kluczy na ekranie (dla shift)
-  const rows = Array.from(container?.querySelectorAll?.(".row[data-kind][data-id]") || []);
+  const rows = Array.from(container?.querySelectorAll?.('.row[data-kind="q"][data-id]') || []);
   return rows
-    .map(keyFromRow)
-    .filter(Boolean)
-    // shift zaznaczanie robimy tylko dla pytań (q:...), foldery zostawmy na później
-    .filter((k) => k.startsWith("q:"));
+    .map((row) => `q:${row.dataset.id}`)
+    .filter(Boolean);
 }
 
 function selectRange(state, listEl, clickedKey) {
@@ -656,7 +653,11 @@ export function wireActions({ state }) {
       selectionSetSingle(state, key);
     }
 
-    scheduleRenderList();
+    if (isShift) {
+      renderList(state);
+    } else {
+      scheduleRenderList();
+    }
   });
 
   // --- Dblclick na pytanie: (na razie placeholder) ---
