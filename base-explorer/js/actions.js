@@ -654,18 +654,22 @@ async function moveItemsTo(state, targetFolderIdOrNull, { mode = "move" } = {}) 
 
   const isCopy = mode === "copy";
 
-  // 2) COPY — na razie wspieramy tylko pytania (foldery później)
+  // 2) COPY — foldery (całe poddrzewo + pytania) + pytania luzem
   if (isCopy) {
-    if (cIds.length) {
-      alert("Kopiowanie folderów jeszcze nie jest podpięte pod Ctrl+DnD (zrobimy w następnym kroku).");
-      return;
+    // 1) foldery: kopiujemy każde drzewo jako nowy root w docelowym parent
+    for (const fid of cIds) {
+      await copyFolderSubtree(state, fid, targetFolderIdOrNull);
     }
+
+    // 2) pytania: kopiujemy do docelowego folderu
     if (qIds.length) {
       await copyQuestionsTo(state, qIds, targetFolderIdOrNull);
-      await state._api?.refreshList?.();
     }
+
+    await state._api?.refreshList?.();
     return;
   }
+
 
   // 3) MOVE — walidacje folderów
   if (cIds.length && targetFolderIdOrNull) {
@@ -874,7 +878,7 @@ export function wireActions({ state }) {
       
   });
 
-    // --- DnD na drzewie: drop na folder ---
+  // --- DnD na drzewie: drop na folder ---
   treeEl?.addEventListener("dragover", (e) => {
     if (!canDnD()) return;
     e.preventDefault();
@@ -886,6 +890,7 @@ export function wireActions({ state }) {
     if (row) {
       // podświetlenie celu (użyj tej samej klasy co lista)
       row.classList.add("is-drop-target");
+      treeEl.querySelectorAll(".row.is-drop-target").forEach(el => el.classList.remove("is-drop-target"));
     }
   });
 
@@ -897,17 +902,16 @@ export function wireActions({ state }) {
   treeEl?.addEventListener("drop", async (e) => {
     if (!canDnD()) return;
     e.preventDefault();
-
+  
     const row = e.target?.closest?.('.row[data-kind="cat"][data-id]');
     const targetFolderId = row ? row.dataset.id : null;
-
+  
     row?.classList?.remove("is-drop-target");
-
+  
     try {
-      // przenosimy to, co było przeciągane z listy
       if (state._drag?.keys?.size) {
-      const isCopy = e.ctrlKey || e.metaKey;
-      await moveItemsTo(state, targetFolderId, { mode: isCopy ? "copy" : "move" });
+        const mode = (e.ctrlKey || e.metaKey) ? "copy" : "move";
+        await moveItemsTo(state, targetFolderId, { mode });
       }
     } catch (err) {
       console.error(err);
@@ -1007,18 +1011,12 @@ export function wireActions({ state }) {
   
   listEl?.addEventListener("dragover", (e) => {
     if (!canDnD()) return;
-    e.preventDefault(); // kluczowe: pozwala drop
+    e.preventDefault();
   
-    // Ctrl/Meta przełącza tryb W TRAKCIE przeciągania
     const isCopy = e.ctrlKey || e.metaKey;
     state._drag.mode = isCopy ? "copy" : "move";
+    e.dataTransfer.dropEffect = state._drag.mode;
   
-    // pokazuje + / move
-    try {
-      e.dataTransfer.dropEffect = state._drag.mode;
-    } catch {}
-  
-    // cel dropu: folder lub root
     const row = e.target?.closest?.('.row[data-kind="cat"][data-id]');
     if (row) setDropTarget(row.dataset.id);
     else setDropTarget(null);
@@ -1039,8 +1037,8 @@ export function wireActions({ state }) {
     clearDropTarget();
   
     try {
-      const isCopy = e.ctrlKey || e.metaKey;
-      await moveItemsTo(state, targetFolderId, { mode: isCopy ? "copy" : "move" });
+      const mode = (e.ctrlKey || e.metaKey) ? "copy" : "move";
+      await moveItemsTo(state, targetFolderId, { mode });
     } catch (err) {
       console.error(err);
       alert("Nie udało się przenieść.");
@@ -1260,6 +1258,19 @@ export function wireActions({ state }) {
         } catch (err) {
           console.error(err);
           alert("Nie udało się wkleić.");
+        }
+        return;
+      }
+
+    // Ctrl+N / Cmd+N = nowy folder (w bieżącym folderze / root)
+      if (mod && (e.key === "n" || e.key === "N")) {
+        e.preventDefault();
+        try {
+          const parentId = currentParentId(state);
+          await createFolderHere(state, { parentId });
+        } catch (err) {
+          console.error(err);
+          alert("Nie udało się utworzyć folderu.");
         }
         return;
       }
