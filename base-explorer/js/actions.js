@@ -764,6 +764,36 @@ export function wireActions({ state }) {
     }, 180); // krótko: pozwala na dblclick
   }
 
+  function currentTreeKeys() {
+    const rows = Array.from(treeEl?.querySelectorAll?.('.row[data-kind="cat"][data-id]') || []);
+    return rows.map(r => `c:${r.dataset.id}`).filter(Boolean);
+  }
+  
+  function selectTreeRange(clickedKey) {
+    const keys = currentTreeKeys();
+    if (!keys.length) return;
+  
+    const a = state.selection.anchorKey;
+    if (!a || !a.startsWith("c:")) {
+      selectionSetSingle(state, clickedKey);
+      state.selection.anchorKey = clickedKey;
+      return;
+    }
+  
+    const i1 = keys.indexOf(a);
+    const i2 = keys.indexOf(clickedKey);
+    if (i1 === -1 || i2 === -1) {
+      selectionSetSingle(state, clickedKey);
+      state.selection.anchorKey = clickedKey;
+      return;
+    }
+  
+    const [from, to] = i1 < i2 ? [i1, i2] : [i2, i1];
+    state.selection.keys.clear();
+    for (let i = from; i <= to; i++) state.selection.keys.add(keys[i]);
+    state.selection.anchorKey = clickedKey;
+  }
+
   function canDnD() {
     return canWrite(state);
   }
@@ -854,29 +884,45 @@ export function wireActions({ state }) {
     }
   });
 
-  treeEl?.addEventListener("click", async (e) => {
+  treeEl?.addEventListener("click", (e) => {
     const row = e.target?.closest?.(".row[data-kind][data-id]");
     if (!row) return;
   
     const kind = row.dataset.kind;
     const id = row.dataset.id;
+    if (kind !== "cat") return;
   
-    if (kind === "cat") {
-      setViewFolder(state, id);
-      selectionClear(state);
-      await refreshList(state);
-      return;
+    const key = `c:${id}`;
+    const isCtrl = e.ctrlKey || e.metaKey;
+    const isShift = e.shiftKey;
+  
+    if (isShift) {
+      selectTreeRange(key);
+    } else if (isCtrl) {
+      selectionToggle(state, key);
+      state.selection.anchorKey = key;
+    } else {
+      selectionSetSingle(state, key);
+      state.selection.anchorKey = key;
     }
-      
-    if (kind === "root") {
-      setViewAll(state);
-      selectionClear(state);
-      state._rootQuestions = null;
-      await refreshList(state);
-      return;
-    }
-      
+  
+    // drzewo się renderuje w renderAll, ale zaznaczenie widać też w liście (to samo state)
+    renderAll(state);
   });
+
+  treeEl?.addEventListener("dblclick", async (e) => {
+    const row = e.target?.closest?.(".row[data-kind][data-id]");
+    if (!row) return;
+  
+    const kind = row.dataset.kind;
+    const id = row.dataset.id;
+    if (kind !== "cat") return;
+  
+    setViewFolder(state, id);
+    selectionClear(state);
+    await refreshList(state);
+  });
+  
     // --- Drag start z drzewa (folder jako źródło) ---
   treeEl?.addEventListener("dragstart", (e) => {
     if (!canDnD()) return;
@@ -1113,23 +1159,23 @@ export function wireActions({ state }) {
 
   function updateMarqueeSelection(box) {
     const rows = Array.from(listEl.querySelectorAll('.row[data-kind][data-id]'));
-    const keys = new Set();
-
+  
+    // nie podmieniamy Set-a, tylko czyścimy i wypełniamy (ważne!)
+    state.selection.keys.clear();
+  
     for (const row of rows) {
       const kind = row.dataset.kind;
       const id = row.dataset.id;
       if (!kind || !id) continue;
-
-      // na razie: zaznaczamy i foldery, i pytania (jak w explorerze)
+  
       const key = (kind === "q") ? `q:${id}` : (kind === "cat") ? `c:${id}` : null;
       if (!key) continue;
-
+  
       const r = rowRectInList(row);
-      if (intersects(box, r)) keys.add(key);
+      if (intersects(box, r)) state.selection.keys.add(key);
     }
-
-    state.selection.keys = keys;          // podmień zestaw
-    state.selection.anchorKey = null;     // przy marquee nie trzymamy anchor
+  
+    state.selection.anchorKey = null;
     renderList(state);
   }
 
@@ -1140,6 +1186,7 @@ export function wireActions({ state }) {
     // nie startuj marquee, jeśli kliknięto w wiersz (to obsługuje normalna selekcja)
     const row = e.target?.closest?.('.row[data-kind][data-id]');
     if (row) return;
+    if (e.target !== listEl) return; // marquee tylko z pustego tła listy
 
     // nie startuj, jeśli user kliknął w input/textarea
     const tag = String(e.target?.tagName || "").toLowerCase();
