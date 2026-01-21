@@ -110,29 +110,36 @@ export function wireActions({ state }) {
   const breadcrumbsEl = document.getElementById("breadcrumbs");
   const toolbarEl = document.getElementById("toolbar");
 
-  const foldersRaw = Array.isArray(state.folders) ? state.folders : [];
-  const questionsRaw = Array.isArray(state.questions) ? state.questions : [];
-  
-  const sortKey = state?.sort?.key || "ord";
-  const sortDir = state?.sort?.dir || "asc";
-  const mul = sortDir === "desc" ? -1 : 1;
-  
-  const byName = (a, b) => String(a || "").localeCompare(String(b || ""), "pl", { sensitivity: "base" }) * mul;
-  const byOrd = (a, b) => ((Number(a) || 0) - (Number(b) || 0)) * mul;
-  
-  const folders = foldersRaw.slice().sort((a, b) => {
-    if (sortKey === "name") return byName(a.name, b.name);
-    return byOrd(a.ord, b.ord);
-  });
-  
-  const questions = questionsRaw.slice().sort((a, b) => {
-    if (sortKey === "name") {
-      const ta = String(a?.payload?.text ?? a?.text ?? "");
-      const tb = String(b?.payload?.text ?? b?.text ?? "");
-      return byName(ta, tb);
+  const headNum = document.querySelector(".list-head .h-num");
+  const headMain = document.querySelector(".list-head .h-main");
+
+  function toggleSort(key) {
+    const s = state.sort || (state.sort = { key: "ord", dir: "asc" });
+
+    if (s.key === key) {
+      s.dir = (s.dir === "asc") ? "desc" : "asc";
+    } else {
+      s.key = key;
+      s.dir = "asc";
     }
-    return byOrd(a.ord, b.ord);
-  });
+
+    renderList(state);
+    updateSortHeaderUI();
+  }
+
+  function updateSortHeaderUI() {
+    if (headNum) headNum.classList.toggle("active", state.sort?.key === "ord");
+    if (headMain) headMain.classList.toggle("active", state.sort?.key === "name");
+
+    if (headNum) headNum.dataset.dir = state.sort?.key === "ord" ? state.sort?.dir : "";
+    if (headMain) headMain.dataset.dir = state.sort?.key === "name" ? state.sort?.dir : "";
+  }
+
+  headNum?.addEventListener("click", () => toggleSort("ord"));
+  headMain?.addEventListener("click", () => toggleSort("name"));
+
+  // zainicjuj UI nagłówka
+  updateSortHeaderUI();
 
   let clickRenderTimer = null;
 
