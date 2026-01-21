@@ -251,6 +251,113 @@ export async function deleteSelected(state) {
   return await deleteItems(state, keys);
 }
 
+function singleSelectedKey(state) {
+  const keys = state?.selection?.keys;
+  if (!keys || keys.size !== 1) return null;
+  return Array.from(keys)[0] || null;
+}
+
+function safeName80(s) {
+  return String(s ?? "").trim().slice(0, 80);
+}
+
+function safeQuestionText(s) {
+  return String(s ?? "").trim().slice(0, 200); // na razie limit UI, potem możemy zmienić
+}
+
+export async function renameByKey(state, key, newValueRaw) {
+  if (!canWrite(state)) return false;
+  if (!key) return false;
+
+  const val = key.startsWith("c:") ? safeName80(newValueRaw) : safeQuestionText(newValueRaw);
+  if (!val) return false;
+
+  if (key.startsWith("c:")) {
+    const id = key.slice(2);
+    const { error } = await sb()
+      .from("qb_categories")
+      .update({ name: val })
+      .eq("id", id);
+    if (error) throw error;
+
+    // odśwież cache kategorii (bo lista folderów jest z state.categories)
+    if (state._api?.refreshCategories) await state._api.refreshCategories();
+    await state._api?.refreshList?.();
+    return true;
+  }
+
+  if (key.startsWith("q:")) {
+    const id = key.slice(2);
+
+    // bierzemy istniejący payload z cache widoku jeśli jest
+    const q =
+      (Array.isArray(state.questions) ? state.questions : []).find(x => x.id === id) ||
+      (Array.isArray(state._viewQuestions) ? state._viewQuestions : []).find(x => x.id === id) ||
+      null;
+
+    const payload = (q && q.payload && typeof q.payload === "object") ? { ...q.payload } : {};
+    payload.text = val;
+
+    const upd = { payload };
+    if (state.user?.id) upd.updated_by = state.user.id;
+
+    const { error } = await sb()
+      .from("qb_questions")
+      .update(upd)
+      .eq("id", id);
+    if (error) throw error;
+
+    // root cache może się zmienić
+    state._rootQuestions = null;
+    await state._api?.refreshList?.();
+    return true;
+  }
+
+  return false;
+}
+
+export async function renameSelectedPrompt(state) {
+  if (!canWrite(state)) return false;
+
+  const key = singleSelectedKey(state);
+  if (!key) {
+    alert("Zaznacz jeden element.");
+    return false;
+  }
+
+  const isFolder = key.startsWith("c:");
+  const isQuestion = key.startsWith("q:");
+
+  let current = "";
+
+  if (isFolder) {
+    const id = key.slice(2);
+    const c = (Array.isArray(state.categories) ? state.categories : []).find(x => x.id === id);
+    current = c?.name || "";
+  }
+
+  if (isQuestion) {
+    const id = key.slice(2);
+    const q =
+      (Array.isArray(state.questions) ? state.questions : []).find(x => x.id === id) ||
+      (Array.isArray(state._viewQuestions) ? state._viewQuestions : []).find(x => x.id === id) ||
+      null;
+    current = String(q?.payload?.text ?? q?.text ?? "");
+  }
+
+  const label = isFolder ? "Zmień nazwę folderu:" : "Zmień treść pytania:";
+  const next = prompt(label, current);
+  if (next === null) return false; // anulowano
+
+  try {
+    return await renameByKey(state, key, next);
+  } catch (e) {
+    console.error(e);
+    alert("Nie udało się zmienić.");
+    return false;
+  }
+}
+
 /* ================= Wire ================= */
 export function wireActions({ state }) {
   const treeEl = document.getElementById("tree");
@@ -506,6 +613,14 @@ export function wireActions({ state }) {
         alert("Nie udało się usunąć.");
       }
     }
+
+      if (e.key === "F2") {
+        // nie rename'uj kiedy user pisze w inpucie/textarea
+        const tag = String(document.activeElement?.tagName || "").toLowerCase();
+        if (tag === "input" || tag === "textarea") return;
+    
+        await renameSelectedPrompt(state);
+      }
   });
 
   return api;
