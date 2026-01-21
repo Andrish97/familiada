@@ -1046,6 +1046,109 @@ export function wireActions({ state }) {
     state._drag.keys = null;
   });
 
+    // --- Zaznaczanie "od pustego" (marquee) ---
+  let marquee = null;
+  let marqueeStart = null;
+
+  function listLocalPoint(ev) {
+    const r = listEl.getBoundingClientRect();
+    // uwzględnij scroll listy
+    const x = ev.clientX - r.left + listEl.scrollLeft;
+    const y = ev.clientY - r.top + listEl.scrollTop;
+    return { x, y };
+  }
+
+  function rectNorm(a, b) {
+    const left = Math.min(a.x, b.x);
+    const top = Math.min(a.y, b.y);
+    const right = Math.max(a.x, b.x);
+    const bottom = Math.max(a.y, b.y);
+    return { left, top, right, bottom, width: right - left, height: bottom - top };
+  }
+
+  function rowRectInList(row) {
+    const rr = row.getBoundingClientRect();
+    const lr = listEl.getBoundingClientRect();
+    const left = rr.left - lr.left + listEl.scrollLeft;
+    const top = rr.top - lr.top + listEl.scrollTop;
+    return { left, top, right: left + rr.width, bottom: top + rr.height };
+  }
+
+  function intersects(a, b) {
+    return !(b.left > a.right || b.right < a.left || b.top > a.bottom || b.bottom < a.top);
+  }
+
+  function updateMarqueeSelection(box) {
+    const rows = Array.from(listEl.querySelectorAll('.row[data-kind][data-id]'));
+    const keys = new Set();
+
+    for (const row of rows) {
+      const kind = row.dataset.kind;
+      const id = row.dataset.id;
+      if (!kind || !id) continue;
+
+      // na razie: zaznaczamy i foldery, i pytania (jak w explorerze)
+      const key = (kind === "q") ? `q:${id}` : (kind === "cat") ? `c:${id}` : null;
+      if (!key) continue;
+
+      const r = rowRectInList(row);
+      if (intersects(box, r)) keys.add(key);
+    }
+
+    state.selection.keys = keys;          // podmień zestaw
+    state.selection.anchorKey = null;     // przy marquee nie trzymamy anchor
+    renderList(state);
+  }
+
+  listEl.addEventListener("mousedown", (e) => {
+    // tylko lewy przycisk
+    if (e.button !== 0) return;
+
+    // nie startuj marquee, jeśli kliknięto w wiersz (to obsługuje normalna selekcja)
+    const row = e.target?.closest?.('.row[data-kind][data-id]');
+    if (row) return;
+
+    // nie startuj, jeśli user kliknął w input/textarea
+    const tag = String(e.target?.tagName || "").toLowerCase();
+    if (tag === "input" || tag === "textarea") return;
+
+    // start marquee
+    marqueeStart = listLocalPoint(e);
+    selectionClear(state);
+    renderList(state);
+
+    marquee = document.createElement("div");
+    marquee.className = "marquee";
+    marquee.style.left = `${marqueeStart.x}px`;
+    marquee.style.top = `${marqueeStart.y}px`;
+    marquee.style.width = "0px";
+    marquee.style.height = "0px";
+    listEl.appendChild(marquee);
+
+    e.preventDefault(); // ważne: nie zaznaczaj tekstu
+  });
+
+  document.addEventListener("mousemove", (e) => {
+    if (!marquee || !marqueeStart) return;
+
+    const cur = listLocalPoint(e);
+    const box = rectNorm(marqueeStart, cur);
+
+    marquee.style.left = `${box.left}px`;
+    marquee.style.top = `${box.top}px`;
+    marquee.style.width = `${box.width}px`;
+    marquee.style.height = `${box.height}px`;
+
+    updateMarqueeSelection(box);
+  });
+
+  document.addEventListener("mouseup", () => {
+    if (!marquee) return;
+    marquee.remove();
+    marquee = null;
+    marqueeStart = null;
+  });
+
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") {
       selectionClear(state);
