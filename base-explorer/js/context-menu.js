@@ -1,6 +1,6 @@
 // base-explorer/js/context-menu.js
-import { VIEW, setViewFolder } from "./state.js";
-import { createFolderHere, createQuestionHere, selectionSetSingle, } from "./actions.js";
+import { VIEW, setViewFolder, selectionSetSingle } from "./state.js";
+import { createFolderHere, createQuestionHere, deleteSelected, renameSelectedPrompt } from "./actions.js";
 
 function clamp(n, a, b) {
   return Math.max(a, Math.min(b, n));
@@ -66,6 +66,14 @@ export async function showContextMenu({ state, x, y, target }) {
     items.push({ label: "Nowe pytanie w tym folderze", disabled: !editor, action: async () => {
       await createQuestionHere(state, { categoryId: target.id });
     }});
+
+    items.push({ label: "Zmień nazwę", disabled: !editor, action: async () => {
+      const key = `c:${target.id}`;
+      if (!state.selection?.keys?.has?.(key)) {
+        selectionSetSingle(state, key);
+      }
+      await renameSelectedPrompt(state);
+    }});
   
     items.push({ label: "Usuń", danger: true, disabled: !editor, action: async () => {
       // Explorer-style: PPM na folderze -> jeśli nie zaznaczony, zaznacz go
@@ -86,6 +94,13 @@ export async function showContextMenu({ state, x, y, target }) {
   // Pytanie
   if (target.kind === "q") {
     items.push({ label: "Edytuj", disabled: true }); // modal edycji dojdzie później
+    items.push({ label: "Zmień nazwę", disabled: !editor, action: async () => {
+      const key = `q:${target.id}`;
+      if (!state.selection?.keys?.has?.(key)) {
+        selectionSetSingle(state, key);
+      }
+      await renameSelectedPrompt(state);
+    }});
     items.push({ label: "Usuń", danger: true, disabled: !editor, action: async () => {
       // jeśli element pod PPM nie jest zaznaczony – zaznacz go (Explorer-style)
       const key = `q:${target.id}`;
