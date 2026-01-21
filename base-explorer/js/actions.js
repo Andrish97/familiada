@@ -674,7 +674,7 @@ async function moveItemsTo(state, targetFolderIdOrNull, { mode = "move" } = {}) 
         alert("Nie można przenieść folderu do niego samego.");
         return;
       }
-      if (isFolderDescendant(fid, targetFolderIdOrNull)) {
+      if (isFolderDescendant(state, fid, targetFolderIdOrNull)) {
         alert("Nie można przenieść folderu do jego podfolderu.");
         return;
       }
@@ -906,8 +906,8 @@ export function wireActions({ state }) {
     try {
       // przenosimy to, co było przeciągane z listy
       if (state._drag?.keys?.size) {
-        const mode = state._drag?.mode || "move";
-        await moveItemsTo(state, targetFolderId, { mode });
+      const isCopy = e.ctrlKey || e.metaKey;
+      await moveItemsTo(state, targetFolderId, { mode: isCopy ? "copy" : "move" });
       }
     } catch (err) {
       console.error(err);
@@ -1039,8 +1039,8 @@ export function wireActions({ state }) {
     clearDropTarget();
   
     try {
-    const mode = state._drag?.mode || "move";
-    await moveItemsTo(state, targetFolderId, { mode });
+      const isCopy = e.ctrlKey || e.metaKey;
+      await moveItemsTo(state, targetFolderId, { mode: isCopy ? "copy" : "move" });
     } catch (err) {
       console.error(err);
       alert("Nie udało się przenieść.");
