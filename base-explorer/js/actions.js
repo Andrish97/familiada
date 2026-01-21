@@ -877,26 +877,53 @@ export function wireActions({ state }) {
     }
       
   });
-
-  // --- DnD na drzewie: drop na folder ---
-  treeEl?.addEventListener("dragover", (e) => {
+    // --- Drag start z drzewa (folder jako źródło) ---
+  treeEl?.addEventListener("dragstart", (e) => {
     if (!canDnD()) return;
-    e.preventDefault();
-    const isCopy = e.ctrlKey || e.metaKey;
-    state._drag.mode = isCopy ? "copy" : "move";
-    e.dataTransfer.dropEffect = state._drag.mode;
 
     const row = e.target?.closest?.('.row[data-kind="cat"][data-id]');
-    if (row) {
-      // podświetlenie celu (użyj tej samej klasy co lista)
-      row.classList.add("is-drop-target");
-      treeEl.querySelectorAll(".row.is-drop-target").forEach(el => el.classList.remove("is-drop-target"));
+    if (!row) return;
+
+    const id = row.dataset.id;
+    const key = `c:${id}`;
+
+    // jeśli start drag na niezaznaczonym -> single select
+    if (!state.selection?.keys?.has?.(key)) {
+      selectionSetSingle(state, key);
+      renderList(state);
+    }
+
+    state._drag.keys = new Set(state.selection.keys);
+
+    try { e.dataTransfer.setData("text/plain", "move"); } catch {}
+    e.dataTransfer.effectAllowed = "copyMove";
+  });
+
+  // --- DnD na drzewie: drop na folder ---
+  treeEl?.addEventListener("drop", async (e) => {
+    if (!canDnD()) return;
+    e.preventDefault();
+
+    const row = e.target?.closest?.('.row[data-kind="cat"][data-id]');
+    const targetFolderId = row ? row.dataset.id : null; // null = Root
+
+    clearDropTarget();
+
+    try {
+      if (state._drag?.keys?.size) {
+        const mode = (e.ctrlKey || e.metaKey) ? "copy" : "move";
+        await moveItemsTo(state, targetFolderId, { mode });
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Nie udało się przenieść.");
+    } finally {
+      state._drag.keys = null;
     }
   });
 
   treeEl?.addEventListener("dragleave", (e) => {
-    const row = e.target?.closest?.('.row[data-kind="cat"][data-id]');
-    row?.classList?.remove("is-drop-target");
+    if (!treeEl.contains(e.relatedTarget)) clearDropTarget();
   });
 
   treeEl?.addEventListener("drop", async (e) => {
