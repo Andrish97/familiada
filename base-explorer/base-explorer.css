@@ -241,3 +241,15 @@ input, textarea{ user-select:text; }
 .is-selected{ outline:2px solid rgba(255,255,255,.25); }
 .is-drop-target{ outline:2px dashed rgba(255,255,255,.35); }
 .is-dragging{ opacity:.6; }
+
+/* żeby dało się pozycjonować prostokąt zaznaczania wewnątrz listy */
+.list { position: relative; }
+
+/* prostokąt zaznaczania jak w eksploratorze */
+.marquee {
+  position: absolute;
+  pointer-events: none;
+  border: 1px solid rgba(255,255,255,.35);
+  background: rgba(255,255,255,.08);
+  border-radius: 6px;
+}
