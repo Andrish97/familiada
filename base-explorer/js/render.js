@@ -64,31 +64,98 @@ export function renderTree(state) {
   if (!elTree) return;
 
   const cats = Array.isArray(state.categories) ? state.categories : [];
-  if (!cats.length) {
-    elTree.innerHTML = `<div style="opacity:.75">Brak folderów.</div>`;
-    return;
+  const byParent = new Map();
+
+  for (const c of cats) {
+    const pid = c.parent_id || null;
+    if (!byParent.has(pid)) byParent.set(pid, []);
+    byParent.get(pid).push(c);
+  }
+  for (const arr of byParent.values()) {
+    arr.sort((a, b) => (Number(a.ord) || 0) - (Number(b.ord) || 0));
   }
 
-  // Etap 1: prosta lista (drzewo zrobimy w następnym kroku)
-  const rows = cats
-    .slice()
-    .sort((a, b) => (Number(a.ord) || 0) - (Number(b.ord) || 0))
-    .map((c) => {
-      const key = `c:${c.id}`;
-      const writable = (state.role === "owner" || state.role === "editor");
-      const draggable = writable ? `draggable="true"` : ``;
+  const open = state.treeOpen instanceof Set ? state.treeOpen : new Set();
+  const maxDepth = 6;
 
-      return `<div class="row" ${draggable} data-kind="cat" data-id="${esc(c.id)}" style="cursor:pointer;">
+  function hasChildren(id) {
+    const kids = byParent.get(id) || [];
+    return kids.length > 0;
+  }
+
+  function rowHtml({ kind, id, depth, label, isOpen, canToggle, isActive }) {
+    const pad = 8 + depth * 14;
+    const toggle = canToggle
+      ? `<button type="button" class="tree-toggle" data-id="${esc(id)}" aria-label="Zwiń/rozwiń" style="width:18px; height:18px; display:inline-flex; align-items:center; justify-content:center; border:0; background:transparent; cursor:pointer; opacity:.9;">
+           ${isOpen ? "▼" : "▶"}
+         </button>`
+      : `<span style="display:inline-block; width:18px;"></span>`;
+
+    const activeStyle = isActive ? "font-weight:700;" : "";
+
+    // UWAGA: data-kind i data-id są na .row (żeby działał obecny handler w actions.js)
+    return `
+      <div class="row" data-kind="${kind}" data-id="${id ? esc(id) : ""}" style="cursor:pointer;">
         <div class="col-num">—</div>
-        <div class="col-main"><div class="title">📁 ${esc(c.name || "Folder")}</div></div>
-        <div class="col-meta">folder</div>
-      </div>`;
-    })
-    .join("");
+        <div class="col-main" style="padding-left:${pad}px; display:flex; align-items:center; gap:6px; ${activeStyle}">
+          ${toggle}
+          <div class="title">📁 ${esc(label || "Folder")}</div>
+        </div>
+        <div class="col-meta"></div>
+      </div>
+    `;
+  }
+
+  function renderSubtree(parentIdOrNull, depth) {
+    if (depth >= maxDepth) return "";
+    const kids = byParent.get(parentIdOrNull) || [];
+    if (!kids.length) return "";
+
+    let out = "";
+    for (const c of kids) {
+      const id = c.id;
+      const canToggle = hasChildren(id);
+      const isOpen = canToggle ? open.has(id) : false;
+      const isActive = (state.view === VIEW.FOLDER && state.folderId === id);
+
+      out += rowHtml({
+        kind: "cat",
+        id,
+        depth,
+        label: c.name || "Folder",
+        isOpen,
+        canToggle,
+        isActive,
+      });
+
+      if (canToggle && isOpen) {
+        out += renderSubtree(id, depth + 1);
+      }
+    }
+    return out;
+  }
+
+  // Root jako osobny wiersz
+  const rootActive = (state.view === VIEW.ALL);
+  const rootHtml = `
+    <div class="row" data-kind="root" data-id="" style="cursor:pointer;">
+      <div class="col-num">—</div>
+      <div class="col-main" style="padding-left:8px; display:flex; align-items:center; gap:6px; ${rootActive ? "font-weight:700;" : ""}">
+        <span style="display:inline-block; width:18px;"></span>
+        <div class="title">🏠 Root</div>
+      </div>
+      <div class="col-meta"></div>
+    </div>
+  `;
+
+  const treeRows = renderSubtree(null, 0);
 
   elTree.innerHTML = `
     <div style="opacity:.75; margin-bottom:6px;">Foldery</div>
-    <div class="treeList">${rows}</div>
+    <div class="treeList">
+      ${rootHtml}
+      ${treeRows || `<div style="opacity:.75; padding:6px 8px;">Brak folderów.</div>`}
+    </div>
   `;
 }
 
