@@ -693,7 +693,8 @@ export function wireActions({ state }) {
   
     const kind = row.dataset.kind;   // 'q' | 'cat'
     const id = row.dataset.id;
-    const key = keyFromKindId(kind === "cat" ? "cat" : kind, id) || (kind === "cat" ? `c:${id}` : `q:${id}`);
+    const key = (kind === "cat") ? `c:${id}` : (kind === "q" ? `q:${id}` : null);
+    if (!key) return;
   
     // jeśli start drag na niezaznaczonym -> single select
     if (!state.selection?.keys?.has?.(key)) {
