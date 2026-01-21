@@ -386,6 +386,75 @@ async function goUp(state) {
   }
 }
 
+function clipboardSet(state, mode, keys) {
+  state.clipboard = state.clipboard || { mode: null, keys: new Set() };
+  state.clipboard.mode = mode;
+  state.clipboard.keys = new Set(Array.from(keys || []).filter(Boolean));
+}
+
+function clipboardClear(state) {
+  if (!state.clipboard) state.clipboard = { mode: null, keys: new Set() };
+  state.clipboard.mode = null;
+  state.clipboard.keys.clear();
+}
+
+function clipboardHas(state) {
+  return !!state?.clipboard?.mode && state?.clipboard?.keys?.size > 0;
+}
+
+export function copySelectedToClipboard(state) {
+  const keys = state?.selection?.keys;
+  if (!keys || !keys.size) return false;
+  clipboardSet(state, "copy", keys);
+  return true;
+}
+
+export function cutSelectedToClipboard(state) {
+  if (!canWrite(state)) return false;
+  const keys = state?.selection?.keys;
+  if (!keys || !keys.size) return false;
+  clipboardSet(state, "cut", keys);
+  return true;
+}
+
+export async function pasteClipboardHere(state) {
+  if (!clipboardHas(state)) return false;
+
+  const targetFolderIdOrNull = (state.view === VIEW.FOLDER && state.folderId) ? state.folderId : null;
+  const mode = state.clipboard.mode;
+  const keys = state.clipboard.keys;
+
+  // COPY: na razie tylko pytania
+  if (mode === "copy") {
+    const qKeys = Array.from(keys).filter(k => k.startsWith("q:"));
+    const hasFolders = Array.from(keys).some(k => k.startsWith("c:"));
+    if (hasFolders) {
+      alert("Kopiowanie folderów będzie w następnym etapie. Na razie kopiują się tylko pytania.");
+    }
+    if (!qKeys.length) return false;
+
+    state._drag = state._drag || {};
+    state._drag.keys = new Set(qKeys);
+    await moveItemsTo(state, targetFolderIdOrNull, { mode: "copy" });
+    return true;
+  }
+
+  // CUT: przenieś pytania + foldery
+  if (mode === "cut") {
+    if (!canWrite(state)) return false;
+
+    state._drag = state._drag || {};
+    state._drag.keys = new Set(keys);
+    await moveItemsTo(state, targetFolderIdOrNull, { mode: "move" });
+
+    // po udanym "wytnij->wklej" czyścimy schowek
+    clipboardClear(state);
+    return true;
+  }
+
+  return false;
+}
+
 /* ================= Wire ================= */
 export function wireActions({ state }) {
   const treeEl = document.getElementById("tree");
@@ -879,6 +948,37 @@ export function wireActions({ state }) {
       // nie rób skrótów, gdy user pisze w inpucie/textarea
       const tag = String(document.activeElement?.tagName || "").toLowerCase();
       const typing = (tag === "input" || tag === "textarea");
+
+      const isMac = navigator.platform.toLowerCase().includes("mac");
+      const mod = isMac ? e.metaKey : e.ctrlKey;
+  
+      // nie rób skrótów, gdy user pisze w inpucie/textarea
+      const tag = String(document.activeElement?.tagName || "").toLowerCase();
+      const typing = (tag === "input" || tag === "textarea");
+      if (typing) return;
+  
+      if (mod && (e.key === "c" || e.key === "C")) {
+        e.preventDefault();
+        copySelectedToClipboard(state);
+        return;
+      }
+  
+      if (mod && (e.key === "x" || e.key === "X")) {
+        e.preventDefault();
+        cutSelectedToClipboard(state);
+        return;
+      }
+  
+      if (mod && (e.key === "v" || e.key === "V")) {
+        e.preventDefault();
+        try {
+          await pasteClipboardHere(state);
+        } catch (err) {
+          console.error(err);
+          alert("Nie udało się wkleić.");
+        }
+        return;
+      }
     
       if (!typing && e.key === "Enter") {
         const key = onlyOneSelectedKey(state);
