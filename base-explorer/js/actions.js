@@ -654,18 +654,20 @@ async function moveItemsTo(state, targetFolderIdOrNull, { mode = "move" } = {}) 
 
   const isCopy = mode === "copy";
 
-  // 2) COPY — foldery (całe poddrzewo + pytania) + pytania luzem
+  // 2) COPY — pytania + foldery (foldery kopiujemy z poddrzewem i pytaniami)
   if (isCopy) {
-    // 1) foldery: kopiujemy każde drzewo jako nowy root w docelowym parent
-    for (const fid of cIds) {
-      await copyFolderSubtree(state, fid, targetFolderIdOrNull);
+    // 1) foldery (każdy jako osobne drzewo w miejscu docelowym)
+    if (cIds.length) {
+      for (const fid of cIds) {
+        await copyFolderSubtree(state, fid, targetFolderIdOrNull);
+      }
     }
-
-    // 2) pytania: kopiujemy do docelowego folderu
+  
+    // 2) pytania
     if (qIds.length) {
       await copyQuestionsTo(state, qIds, targetFolderIdOrNull);
     }
-
+  
     await state._api?.refreshList?.();
     return;
   }
@@ -1243,6 +1245,8 @@ export function wireActions({ state }) {
     marquee.remove();
     marquee = null;
     marqueeStart = null;
+    marqueeAdd = false;
+    marqueeBaseKeys = null;
   });
 
   document.addEventListener("keydown", (e) => {
