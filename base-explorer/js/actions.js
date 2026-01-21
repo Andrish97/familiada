@@ -944,11 +944,7 @@ export function wireActions({ state }) {
     
         await renameSelectedPrompt(state);
       }
-
-      // nie rób skrótów, gdy user pisze w inpucie/textarea
-      const tag = String(document.activeElement?.tagName || "").toLowerCase();
-      const typing = (tag === "input" || tag === "textarea");
-
+    
       const isMac = navigator.platform.toLowerCase().includes("mac");
       const mod = isMac ? e.metaKey : e.ctrlKey;
   
