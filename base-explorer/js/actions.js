@@ -640,12 +640,12 @@ async function copyFolderSubtree(state, sourceFolderId, targetParentIdOrNull) {
 }
 
 async function moveItemsTo(state, targetFolderIdOrNull, { mode = "move" } = {}) {
-  if (!canWrite(state)) return false;
+  if (!canWrite(state)) return;
 
   const keys = state._drag?.keys;
-  if (!keys || !keys.size) return false;
+  if (!keys || !keys.size) return;
 
-  // 1) najpierw rozbij na ids (to MUSI być przed jakimikolwiek ifami)
+  // 1) najpierw rozbij na typy
   const qIds = [];
   const cIds = [];
   for (const k of keys) {
@@ -653,34 +653,36 @@ async function moveItemsTo(state, targetFolderIdOrNull, { mode = "move" } = {}) 
     if (k.startsWith("c:")) cIds.push(k.slice(2));
   }
 
-  // 2) COPY: kopiujemy tylko pytania tutaj (foldery kopiujesz osobno w pasteClipboardHere)
-  if (mode === "copy") {
+  const isCopy = mode === "copy";
+
+  // 2) COPY — na razie wspieramy tylko pytania (foldery później)
+  if (isCopy) {
     if (cIds.length) {
-      // foldery kopiujemy w pasteClipboardHere -> copyFolderSubtree
-      // tu nic nie rób
+      alert("Kopiowanie folderów jeszcze nie jest podpięte pod Ctrl+DnD (zrobimy w następnym kroku).");
+      return;
     }
     if (qIds.length) {
       await copyQuestionsTo(state, qIds, targetFolderIdOrNull);
+      await state._api?.refreshList?.();
     }
-    await state._api?.refreshList?.();
-    return true;
+    return;
   }
 
-  // 3) MOVE: walidacje folderów
+  // 3) MOVE — walidacje folderów
   if (cIds.length && targetFolderIdOrNull) {
     for (const fid of cIds) {
       if (fid === targetFolderIdOrNull) {
         alert("Nie można przenieść folderu do niego samego.");
-        return false;
+        return;
       }
-      if (isFolderDescendant(state, fid, targetFolderIdOrNull)) {
+      if (isFolderDescendant(fid, targetFolderIdOrNull)) {
         alert("Nie można przenieść folderu do jego podfolderu.");
-        return false;
+        return;
       }
     }
   }
 
-  // 4) MOVE pytania
+  // 4) MOVE — pytania
   if (qIds.length) {
     const upd = { category_id: targetFolderIdOrNull };
     if (state.user?.id) upd.updated_by = state.user.id;
@@ -694,7 +696,7 @@ async function moveItemsTo(state, targetFolderIdOrNull, { mode = "move" } = {}) 
     state._rootQuestions = null;
   }
 
-  // 5) MOVE foldery
+  // 5) MOVE — foldery
   if (cIds.length) {
     const { error } = await sb()
       .from("qb_categories")
@@ -707,7 +709,6 @@ async function moveItemsTo(state, targetFolderIdOrNull, { mode = "move" } = {}) 
   }
 
   await state._api?.refreshList?.();
-  return true;
 }
 
 /* ================= Wire ================= */
@@ -878,7 +879,7 @@ export function wireActions({ state }) {
   treeEl?.addEventListener("dragover", (e) => {
     if (!canDnD()) return;
     e.preventDefault();
-    e.dataTransfer.dropEffect = "move";
+    e.dataTransfer.dropEffect = (e.ctrlKey || e.metaKey) ? "copy" : "move";
 
     const row = e.target?.closest?.('.row[data-kind="cat"][data-id]');
     if (row) {
@@ -904,7 +905,8 @@ export function wireActions({ state }) {
     try {
       // przenosimy to, co było przeciągane z listy
       if (state._drag?.keys?.size) {
-        await moveItemsTo(state, targetFolderId, { mode: "move" });
+        const isCopy = e.ctrlKey || e.metaKey;
+        await moveItemsTo(state, targetFolderId, { mode: isCopy ? "copy" : "move" });
       }
     } catch (err) {
       console.error(err);
