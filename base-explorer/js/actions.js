@@ -88,6 +88,21 @@ async function loadQuestionsForCurrentView(state) {
 }
 
 async function refreshList(state) {
+
+    // --- Drzewo: init + auto-otwórz ścieżkę do aktualnego folderu ---
+  if (!(state.treeOpen instanceof Set)) state.treeOpen = new Set();
+
+  if (state.view === VIEW.FOLDER && state.folderId) {
+    const byId = new Map((state.categories || []).map(c => [c.id, c]));
+    let cur = byId.get(state.folderId);
+    let guard = 0;
+    while (cur && guard++ < 20) {
+      state.treeOpen.add(cur.id); // otwórz każdy element na ścieżce
+      const pid = cur.parent_id || null;
+      cur = pid ? byId.get(pid) : null;
+    }
+  }
+  
   const allQ = await loadQuestionsForCurrentView(state);
   state._viewQuestions = allQ;
   
@@ -738,6 +753,8 @@ export function wireActions({ state }) {
 
     renderList(state);
     updateSortHeaderUI();
+      // drzewo: pamiętanie rozwinięć
+    if (!(state.treeOpen instanceof Set)) state.treeOpen = new Set();
   }
 
   function updateSortHeaderUI() {
@@ -753,8 +770,10 @@ export function wireActions({ state }) {
 
   // zainicjuj UI nagłówka
   updateSortHeaderUI();
+    // drzewo: pamiętanie rozwinięć
+  if (!(state.treeOpen instanceof Set)) state.treeOpen = new Set();
 
- state._drag = { keys: null, overKey: null, mode: "move" }; // mode: 'move'|'copy'
+  state._drag = { keys: null, overKey: null, mode: "move" }; // mode: 'move'|'copy'
 
   let clickRenderTimer = null;
 
@@ -886,30 +905,46 @@ export function wireActions({ state }) {
     }
   });
 
-  treeEl?.addEventListener("click", (e) => {
-    const row = e.target?.closest?.(".row[data-kind][data-id]");
-    if (!row) return;
-  
-    const kind = row.dataset.kind;
-    const id = row.dataset.id;
-    if (kind !== "cat") return;
-  
-    const key = `c:${id}`;
-    const isCtrl = e.ctrlKey || e.metaKey;
-    const isShift = e.shiftKey;
-  
-    if (isShift) {
-      selectTreeRange(key);
-    } else if (isCtrl) {
-      selectionToggle(state, key);
-      state.selection.anchorKey = key;
-    } else {
-      selectionSetSingle(state, key);
-      state.selection.anchorKey = key;
+  treeEl?.addEventListener("click", async (e) => {
+    // 1) klik w chevron = tylko zwijanie/rozwijanie (bez wchodzenia do folderu)
+    const tog = e.target?.closest?.(".tree-toggle[data-id]");
+    if (tog) {
+      e.preventDefault();
+      e.stopPropagation();
+      const id = tog.dataset.id;
+      if (!id) return;
+
+      if (!(state.treeOpen instanceof Set)) state.treeOpen = new Set();
+      if (state.treeOpen.has(id)) state.treeOpen.delete(id);
+      else state.treeOpen.add(id);
+
+      // samo drzewo się przerysuje przy najbliższym renderAll,
+      // ale tu od razu odświeżamy listę+drzewo, żeby UI było natychmiastowe:
+      renderAll(state);
+      return;
     }
-  
-    // drzewo się renderuje w renderAll, ale zaznaczenie widać też w liście (to samo state)
-    renderAll(state);
+
+    // 2) klik w wiersz = wejście do folderu / root
+    const row = e.target?.closest?.(".row[data-kind]");
+    if (!row) return;
+
+    const kind = row.dataset.kind;
+    const id = row.dataset.id || null;
+
+    if (kind === "cat" && id) {
+      setViewFolder(state, id);
+      selectionClear(state);
+      await refreshList(state);
+      return;
+    }
+
+    if (kind === "root") {
+      setViewAll(state);
+      selectionClear(state);
+      state._rootQuestions = null;
+      await refreshList(state);
+      return;
+    }
   });
 
   treeEl?.addEventListener("dblclick", async (e) => {
