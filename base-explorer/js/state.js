@@ -45,8 +45,8 @@ export function createState({ baseId, role = "viewer" }) {
 
     // clipboard wewnętrzny (etap 3)
     clipboard: {
-      mode: null, // "copy" | "cut"
-      keys: [],   // snapshot zaznaczenia
+      mode: null,      // 'copy' | 'cut' | null
+      keys: new Set(), // Set('q:..' / 'c:..')
     },
 
     // UI status
