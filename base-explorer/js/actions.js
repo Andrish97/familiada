@@ -423,11 +423,10 @@ export async function pasteClipboardHere(state) {
   const targetFolderIdOrNull = (state.view === VIEW.FOLDER && state.folderId) ? state.folderId : null;
   const mode = state.clipboard.mode;
   const keys = state.clipboard.keys;
-
+  const qKeys = Array.from(keys).filter(k => k.startsWith("q:"));
+  const cKeys = Array.from(keys).filter(k => k.startsWith("c:"));
   // COPY: na razie tylko pytania
   if (mode === "copy") {
-    const qKeys = Array.from(keys).filter(k => k.startsWith("q:"));
-    const cKeys = Array.from(keys).filter(k => k.startsWith("c:"));
 
     // 1) kopiuj foldery (każdy jako osobne drzewo)
     if (cKeys.length) {
@@ -749,7 +748,7 @@ export function wireActions({ state }) {
   // zainicjuj UI nagłówka
   updateSortHeaderUI();
 
-  state._drag = { keys: null, overKey: null }; // keys = Set('q:..'/'c:..'), overKey = 'c:folderId' lub null(root)
+ state._drag = { keys: null, overKey: null, mode: "move" }; // mode: 'move'|'copy'
 
   let clickRenderTimer = null;
 
@@ -879,7 +878,9 @@ export function wireActions({ state }) {
   treeEl?.addEventListener("dragover", (e) => {
     if (!canDnD()) return;
     e.preventDefault();
-    e.dataTransfer.dropEffect = (e.ctrlKey || e.metaKey) ? "copy" : "move";
+    const isCopy = e.ctrlKey || e.metaKey;
+    state._drag.mode = isCopy ? "copy" : "move";
+    e.dataTransfer.dropEffect = state._drag.mode;
 
     const row = e.target?.closest?.('.row[data-kind="cat"][data-id]');
     if (row) {
@@ -905,8 +906,8 @@ export function wireActions({ state }) {
     try {
       // przenosimy to, co było przeciągane z listy
       if (state._drag?.keys?.size) {
-        const isCopy = e.ctrlKey || e.metaKey;
-        await moveItemsTo(state, targetFolderId, { mode: isCopy ? "copy" : "move" });
+        const mode = state._drag?.mode || "move";
+        await moveItemsTo(state, targetFolderId, { mode });
       }
     } catch (err) {
       console.error(err);
@@ -1006,16 +1007,15 @@ export function wireActions({ state }) {
   
   listEl?.addEventListener("dragover", (e) => {
     if (!canDnD()) return;
-    e.preventDefault(); // pozwala na drop
+    e.preventDefault();
+  
     const isCopy = e.ctrlKey || e.metaKey;
-    e.dataTransfer.dropEffect = isCopy ? "copy" : "move";
+    await moveItemsTo(state, targetFolderId, { mode: isCopy ? "copy" : "move" }); // <- kluczowe
+    e.dataTransfer.dropEffect = state._drag.mode;
   
     const row = e.target?.closest?.('.row[data-kind="cat"][data-id]');
-    if (row) {
-      setDropTarget(row.dataset.id); // folder jako cel
-    } else {
-      setDropTarget(null); // puste tło -> root
-    }
+    if (row) setDropTarget(row.dataset.id);
+    else setDropTarget(null);
   });
   
   listEl?.addEventListener("dragleave", (e) => {
@@ -1033,8 +1033,8 @@ export function wireActions({ state }) {
     clearDropTarget();
   
     try {
-      const isCopy = e.ctrlKey || e.metaKey;
-      await moveItemsTo(state, targetFolderId, { mode: isCopy ? "copy" : "move" });
+    const mode = state._drag?.mode || "move";
+    await moveItemsTo(state, targetFolderId, { mode });
     } catch (err) {
       console.error(err);
       alert("Nie udało się przenieść.");
