@@ -450,11 +450,11 @@ export async function pasteClipboardHere(state) {
   // CUT: przenieś pytania + foldery
   if (mode === "cut") {
     if (!canWrite(state)) return false;
-
+  
     state._drag = state._drag || {};
-    await copyQuestionsTo(state, qKeys.map(k => k.slice(2)), targetFolderIdOrNull);
-
-    // po udanym "wytnij->wklej" czyścimy schowek
+    state._drag.keys = new Set(keys);
+    await moveItemsTo(state, targetFolderIdOrNull, { mode: "move" });
+  
     clipboardClear(state);
     return true;
   }
@@ -1010,7 +1010,7 @@ export function wireActions({ state }) {
     e.preventDefault();
   
     const isCopy = e.ctrlKey || e.metaKey;
-    await moveItemsTo(state, targetFolderId, { mode: isCopy ? "copy" : "move" }); // <- kluczowe
+    state._drag.mode = isCopy ? "copy" : "move";
     e.dataTransfer.dropEffect = state._drag.mode;
   
     const row = e.target?.closest?.('.row[data-kind="cat"][data-id]');
