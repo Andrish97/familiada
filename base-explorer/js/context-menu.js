@@ -1,6 +1,5 @@
 // base-explorer/js/context-menu.js
 import { createFolderHere, createQuestionHere, deleteSelected } from "./actions.js";
-import { deleteSelected } from "./actions.js";
 
 function clamp(n, a, b) {
   return Math.max(a, Math.min(b, n));
