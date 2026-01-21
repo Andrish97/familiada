@@ -243,13 +243,22 @@ input, textarea{ user-select:text; }
 .is-dragging{ opacity:.6; }
 
 /* żeby dało się pozycjonować prostokąt zaznaczania wewnątrz listy */
-.list { position: relative; }
+/* zaznaczenie wiersza */
+.row.is-selected {
+  outline: 2px solid rgba(100, 160, 255, 0.9);
+  outline-offset: -2px;
+  background: rgba(100, 160, 255, 0.15);
+}
 
-/* prostokąt zaznaczania jak w eksploratorze */
+/* marquee (prostokąt zaznaczania) */
+#list {
+  position: relative; /* potrzebne, żeby marquee było “w liście” */
+}
+
 .marquee {
   position: absolute;
+  border: 1px dashed rgba(100, 160, 255, 0.9);
+  background: rgba(100, 160, 255, 0.12);
   pointer-events: none;
-  border: 1px solid rgba(255,255,255,.35);
-  background: rgba(255,255,255,.08);
-  border-radius: 6px;
-}
+  z-index: 10;
+} 
