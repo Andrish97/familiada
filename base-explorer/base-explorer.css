@@ -69,8 +69,9 @@
 /* ===== Prawy panel ===== */
 .explorer-right{
   display:grid;
-  grid-template-rows:auto 1fr; /* breadcrumbs + panel listy */
+  grid-template-rows: auto auto 1fr; /* breadcrumbs / nagłówek / lista */
   gap:12px;
+  min-width:0;
 }
 
 .breadcrumbs{
@@ -149,6 +150,7 @@
   overflow:auto;
   border-top:0;                     /* nagłówek ma swoją linię */
 }
+.list{ min-height: 0; }
 
 /* Explorer: selekcja ma zaznaczać elementy, nie tekst */
 .row{ user-select:none; }
