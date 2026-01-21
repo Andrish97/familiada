@@ -1,6 +1,14 @@
 // base-explorer/js/context-menu.js
 import { VIEW, setViewFolder, selectionSetSingle } from "./state.js";
-import { createFolderHere, createQuestionHere, deleteSelected, renameSelectedPrompt } from "./actions.js";
+import {
+  createFolderHere,
+  createQuestionHere,
+  deleteSelected,
+  renameSelectedPrompt,
+  copySelectedToClipboard,
+  cutSelectedToClipboard,
+  pasteClipboardHere
+} from "./actions.js";
 
 function clamp(n, a, b) {
   return Math.max(a, Math.min(b, n));
@@ -50,6 +58,21 @@ export async function showContextMenu({ state, x, y, target }) {
   
     items.push({ label: "—", disabled: true }); // separator „na biedno” (na razie)
   }
+
+  if (target.kind === "cat" || target.kind === "q") {
+    items.push({ label: "Kopiuj", action: async () => {
+      // jeśli kliknięto nie-zaznaczone, ustaw single select (opcjonalnie, jeśli chcesz)
+      copySelectedToClipboard(state);
+    }});
+    items.push({ label: "Wytnij", disabled: !editor, action: async () => {
+      cutSelectedToClipboard(state);
+    }});
+  }
+
+  const canPaste = !!state?.clipboard?.mode && state?.clipboard?.keys?.size > 0;
+  items.push({ label: "Wklej", disabled: !canPaste || (!editor && state.clipboard?.mode === "cut"), action: async () => {
+    await pasteClipboardHere(state);
+  }});
 
   // Folder
   if (target.kind === "cat") {
