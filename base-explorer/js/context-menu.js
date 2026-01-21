@@ -94,7 +94,7 @@ export async function showContextMenu({ state, x, y, target }) {
   // Pytanie
   if (target.kind === "q") {
     items.push({ label: "Edytuj", disabled: true }); // modal edycji dojdzie później
-    items.push({ label: "Zmień nazwę", disabled: !editor, action: async () => {
+    items.push({ label: "Zmień nazwę (treść)", disabled: !editor, action: async () => {
       const key = `q:${target.id}`;
       if (!state.selection?.keys?.has?.(key)) {
         selectionSetSingle(state, key);
