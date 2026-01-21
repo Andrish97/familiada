@@ -3,7 +3,7 @@
 
 import { VIEW, setViewAll, setViewFolder, selectionClear, selectionSetSingle, selectionToggle } from "./state.js";
 import { renderAll, renderList } from "./render.js";
-import { listQuestionsByCategory, listAllQuestions } from "./repo.js";
+import { listQuestionsByCategory, listAllQuestions, listCategories } from "./repo.js";
 import { showContextMenu, hideContextMenu } from "./context-menu.js";
 import { sb } from "../../js/core/supabase.js";
 
@@ -173,6 +173,8 @@ export async function createFolderHere(state, { parentId = null } = {}) {
     );
 
   if (error) throw error;
+
+  state.categories = await listCategories(state.baseId);
 
   // odśwież listę i cache root
   state._rootQuestions = null;
