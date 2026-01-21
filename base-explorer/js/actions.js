@@ -464,6 +464,111 @@ export async function pasteClipboardHere(state) {
   return false;
 }
 
+async function moveItemsTo(state, targetFolderIdOrNull, { mode = "move" } = {}) {
+  if (!canWrite(state)) return;
+
+  const keys = state._drag?.keys;
+  if (!keys || !keys.size) return;
+
+  const qIds = [];
+  const cIds = [];
+
+  const isCopy = mode === "copy";
+
+  if (isCopy && cIds.length) {
+    alert("Kopiowanie folderów będzie w następnym etapie (na razie kopiują się tylko pytania).");
+    return;
+  }
+
+  if (isCopy) {
+    // COPY: tworzymy nowe pytania w docelowym folderze (ord na końcu)
+    await copyQuestionsTo(state, qIds, targetFolderIdOrNull);
+    await state._api?.refreshList?.();
+    return;
+  }
+  
+  for (const k of keys) {
+    if (k.startsWith("q:")) qIds.push(k.slice(2));
+    if (k.startsWith("c:")) cIds.push(k.slice(2));
+  }
+
+  // folder do siebie / do potomka = zakazane
+  if (cIds.length && targetFolderIdOrNull) {
+    for (const fid of cIds) {
+      if (fid === targetFolderIdOrNull) {
+        alert("Nie można przenieść folderu do niego samego.");
+        return;
+      }
+      if (isFolderDescendant(fid, targetFolderIdOrNull)) {
+        alert("Nie można przenieść folderu do jego podfolderu.");
+        return;
+      }
+    }
+  }
+
+  // pytania: MOVE = update category_id, COPY = duplikuj rekordy
+  if (qIds.length) {
+    if (mode === "copy") {
+      // weź źródłowe pytania z cache widoku (fallback: dociągnij z DB)
+      const cache = Array.isArray(state._viewQuestions) ? state._viewQuestions : [];
+      const byId = new Map(cache.map(q => [q.id, q]));
+  
+      // jeśli czegoś nie ma w cache, dociągniemy minimalnie z DB
+      const missing = qIds.filter(id => !byId.has(id));
+      if (missing.length) {
+        const { data, error } = await sb()
+          .from("qb_questions")
+          .select("id,ord,payload,category_id")
+          .in("id", missing);
+        if (error) throw error;
+        for (const q of (data || [])) byId.set(q.id, q);
+      }
+  
+      const rows = qIds.map((id) => {
+        const src = byId.get(id);
+        return {
+          base_id: state.baseId,
+          category_id: targetFolderIdOrNull,
+          ord: Number(src?.ord) || 0,
+          payload: (src?.payload && typeof src.payload === "object") ? src.payload : {},
+          ...(state.user?.id ? { updated_by: state.user.id } : {}),
+        };
+      });
+  
+      const { error } = await sb().from("qb_questions").insert(rows, { defaultToNull: false });
+        if (error) throw error;
+      } else {
+        // move
+        const upd = { category_id: targetFolderIdOrNull };
+        if (state.user?.id) upd.updated_by = state.user.id;
+    
+        const { error } = await sb()
+          .from("qb_questions")
+          .update(upd)
+          .in("id", qIds);
+    
+        if (error) throw error;
+      }
+    state._rootQuestions = null;
+  }
+
+  // foldery -> zmiana parent_id
+  if (cIds.length) {
+    const { error } = await sb()
+      .from("qb_categories")
+      .update({ parent_id: targetFolderIdOrNull })
+      .in("id", cIds);
+
+    if (error) throw error;
+
+    // odśwież cache kategorii
+    if (state._api?.refreshCategories) await state._api.refreshCategories();
+  }
+
+  // odśwież widok i zostaw zaznaczenie jak jest
+  await state._api?.refreshList?.();
+}
+
 /* ================= Wire ================= */
 export function wireActions({ state }) {
   const treeEl = document.getElementById("tree");
@@ -723,111 +828,6 @@ export function wireActions({ state }) {
     // odśwież cache kategorii (bo doszło dużo folderów)
     if (state._api?.refreshCategories) await state._api.refreshCategories();
     state._rootQuestions = null;
-  }
-  
-  async function moveItemsTo(state, targetFolderIdOrNull, { mode = "move" } = {}) {
-    if (!canWrite(state)) return;
-  
-    const keys = state._drag?.keys;
-    if (!keys || !keys.size) return;
-  
-    const qIds = [];
-    const cIds = [];
-
-    const isCopy = mode === "copy";
-
-    if (isCopy && cIds.length) {
-      alert("Kopiowanie folderów będzie w następnym etapie (na razie kopiują się tylko pytania).");
-      return;
-    }
-  
-    if (isCopy) {
-      // COPY: tworzymy nowe pytania w docelowym folderze (ord na końcu)
-      await copyQuestionsTo(state, qIds, targetFolderIdOrNull);
-      await state._api?.refreshList?.();
-      return;
-    }
-    
-    for (const k of keys) {
-      if (k.startsWith("q:")) qIds.push(k.slice(2));
-      if (k.startsWith("c:")) cIds.push(k.slice(2));
-    }
-  
-    // folder do siebie / do potomka = zakazane
-    if (cIds.length && targetFolderIdOrNull) {
-      for (const fid of cIds) {
-        if (fid === targetFolderIdOrNull) {
-          alert("Nie można przenieść folderu do niego samego.");
-          return;
-        }
-        if (isFolderDescendant(fid, targetFolderIdOrNull)) {
-          alert("Nie można przenieść folderu do jego podfolderu.");
-          return;
-        }
-      }
-    }
-  
-    // pytania: MOVE = update category_id, COPY = duplikuj rekordy
-    if (qIds.length) {
-      if (mode === "copy") {
-        // weź źródłowe pytania z cache widoku (fallback: dociągnij z DB)
-        const cache = Array.isArray(state._viewQuestions) ? state._viewQuestions : [];
-        const byId = new Map(cache.map(q => [q.id, q]));
-    
-        // jeśli czegoś nie ma w cache, dociągniemy minimalnie z DB
-        const missing = qIds.filter(id => !byId.has(id));
-        if (missing.length) {
-          const { data, error } = await sb()
-            .from("qb_questions")
-            .select("id,ord,payload,category_id")
-            .in("id", missing);
-          if (error) throw error;
-          for (const q of (data || [])) byId.set(q.id, q);
-        }
-    
-        const rows = qIds.map((id) => {
-          const src = byId.get(id);
-          return {
-            base_id: state.baseId,
-            category_id: targetFolderIdOrNull,
-            ord: Number(src?.ord) || 0,
-            payload: (src?.payload && typeof src.payload === "object") ? src.payload : {},
-            ...(state.user?.id ? { updated_by: state.user.id } : {}),
-          };
-        });
-    
-        const { error } = await sb().from("qb_questions").insert(rows, { defaultToNull: false });
-          if (error) throw error;
-        } else {
-          // move
-          const upd = { category_id: targetFolderIdOrNull };
-          if (state.user?.id) upd.updated_by = state.user.id;
-      
-          const { error } = await sb()
-            .from("qb_questions")
-            .update(upd)
-            .in("id", qIds);
-      
-          if (error) throw error;
-        }
-      state._rootQuestions = null;
-    }
-  
-    // foldery -> zmiana parent_id
-    if (cIds.length) {
-      const { error } = await sb()
-        .from("qb_categories")
-        .update({ parent_id: targetFolderIdOrNull })
-        .in("id", cIds);
-  
-      if (error) throw error;
-  
-      // odśwież cache kategorii
-      if (state._api?.refreshCategories) await state._api.refreshCategories();
-    }
-  
-    // odśwież widok i zostaw zaznaczenie jak jest
-    await state._api?.refreshList?.();
   }
 
   // --- Search (delegacja: input jest renderowany dynamicznie) ---
