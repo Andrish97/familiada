@@ -203,7 +203,7 @@ export function renderList(state) {
     // meta na razie proste, później: "6 odp. • Σ 100" / tagi / ostrzeżenia
     const answersCount = Array.isArray(q?.payload?.answers) ? q.payload.answers.length : 0;
     const meta = answersCount ? `${answersCount} odp.` : "";
-
+    const draggable = (state.role === "owner" || state.role === "editor") ? `draggable="true"` : ``; 
     return `<div class="row" ${draggable} data-kind="q" data-id="${esc(q.id)}" style="cursor:pointer; ${sel}">
       <div class="col-num">${esc(ord)}</div>
       <div class="col-main"><div class="title">${esc(text || "Pytanie")}</div></div>
