@@ -1,5 +1,5 @@
 // base-explorer/js/context-menu.js
-import { VIEW, setViewFolder, selectionSetSingle } from "./state.js";
+import { createFolderHere, createQuestionHere, deleteSelected } from "./actions.js";
 import { deleteSelected } from "./actions.js";
 
 function clamp(n, a, b) {
@@ -35,9 +35,20 @@ export async function showContextMenu({ state, x, y, target }) {
 
   const items = [];
 
-  // Root (puste miejsce listy) – na razie tylko "Root" (bez akcji)
+  // Root / puste tło listy: akcje w aktualnym miejscu (root lub aktualny folder)
   if (target.kind === "root") {
-    items.push({ label: "Root", disabled: true });
+    const parentId = (state.view === VIEW.FOLDER && state.folderId) ? state.folderId : null;
+    const categoryId = parentId;
+  
+    items.push({ label: "Nowy folder", disabled: !editor, action: async () => {
+      await createFolderHere(state, { parentId });
+    }});
+  
+    items.push({ label: "Nowe pytanie", disabled: !editor, action: async () => {
+      await createQuestionHere(state, { categoryId });
+    }});
+  
+    items.push({ label: "—", disabled: true }); // separator „na biedno” (na razie)
   }
 
   // Folder
@@ -47,7 +58,29 @@ export async function showContextMenu({ state, x, y, target }) {
       state.selection?.keys?.clear?.();
       await state._api?.refreshList?.();
     }});
-    // Akcje typu "Nowy folder/Nowe pytanie/Rename/Delete" dodamy w następnym etapie.
+  
+    items.push({ label: "Nowy podfolder", disabled: !editor, action: async () => {
+      await createFolderHere(state, { parentId: target.id });
+    }});
+  
+    items.push({ label: "Nowe pytanie w tym folderze", disabled: !editor, action: async () => {
+      await createQuestionHere(state, { categoryId: target.id });
+    }});
+  
+    items.push({ label: "Usuń", danger: true, disabled: !editor, action: async () => {
+      // Explorer-style: PPM na folderze -> jeśli nie zaznaczony, zaznacz go
+      const key = `c:${target.id}`;
+      if (!state.selection?.keys?.has?.(key)) {
+        selectionSetSingle(state, key);
+      }
+  
+      try {
+        await deleteSelected(state);
+      } catch (e) {
+        console.error(e);
+        alert("Nie udało się usunąć.");
+      }
+    }});
   }
 
   // Pytanie
