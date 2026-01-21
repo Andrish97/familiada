@@ -1,287 +1,241 @@
 /* base-explorer/base-explorer.css */
-/* Layout menadżera bazy (warstwa 2). */
+/* Layout menadżera bazy (warstwa 2) */
 
 /* ===== Topbar – opieramy się o builder.css, tu tylko drobne dopasowania ===== */
-.topbar .topbar-left {
-  display: flex;
-  align-items: center;
-  gap: 12px;
+.topbar .topbar-left{
+  display:flex;
+  align-items:center;
+  gap:12px;
 }
-
-.topbar .topbar-title .title {
-  font-weight: 700;
+.topbar .topbar-title .title{ font-weight:700; }
+.topbar .topbar-title .subtitle{
+  opacity:.75;
+  font-size:12px;
+  margin-top:2px;
 }
-
-.topbar .topbar-title .subtitle {
-  opacity: 0.75;
-  font-size: 12px;
-  margin-top: 2px;
-}
-
-.topbar .topbar-right {
-  display: flex;
-  align-items: center;
-  gap: 10px;
+.topbar .topbar-right{
+  display:flex;
+  align-items:center;
+  gap:10px;
 }
 
 /* ===== Toolbar ===== */
-.toolbar {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
+.toolbar{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:10px 12px;
 }
 
 /* ===== Główny split view ===== */
-.explorer {
-  display: grid;
-  grid-template-columns: 320px 1fr;
-  gap: 12px;
-  padding: 0 12px 12px;
-  min-height: calc(100vh - 120px); /* bezpieczny zapas na topbar+toolbar */
+.explorer{
+  display:grid;
+  grid-template-columns:320px 1fr;
+  gap:0;                      /* separator na styk */
+  padding:0 12px 12px;
+  min-height:calc(100vh - 120px);
 }
 
 .explorer-left,
-.explorer-right {
-  min-height: 0; /* ważne dla scrolla w grid */
+.explorer-right{
+  min-height:0;               /* ważne dla scrolla w grid */
+  min-width:0;
+}
+
+/* separator między panelami */
+.explorer-left{
+  border-right:1px solid rgba(255,255,255,.12);
+  padding-right:12px;
+}
+.explorer-right{
+  padding-left:12px;
 }
 
 /* ===== Lewy panel ===== */
-.explorer-left {
-  display: grid;
-  grid-template-rows: 1fr auto;
-  gap: 12px;
-  min-width: 0;
+.explorer-left{
+  display:grid;
+  grid-template-rows:1fr auto;
+  gap:12px;
 }
 
 .tree,
-.tags {
-  border-radius: 12px;
-  padding: 10px;
-  min-height: 120px;
-  overflow: auto;
+.tags{
+  border-radius:12px;
+  padding:10px;
+  min-height:120px;
+  overflow:auto;
 }
 
 /* ===== Prawy panel ===== */
-.explorer-right {
-  display: grid;
-  grid-template-rows: auto 1fr;
-  gap: 12px;
-  min-width: 0;
+.explorer-right{
+  display:grid;
+  grid-template-rows:auto 1fr; /* breadcrumbs + panel listy */
+  gap:12px;
 }
 
-.breadcrumbs {
-  border-radius: 12px;
-  padding: 10px 12px;
-  min-height: 44px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
+.breadcrumbs{
+  border-radius:12px;
+  padding:10px 12px;
+  min-height:44px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  overflow:hidden;
+  white-space:nowrap;
+  text-overflow:ellipsis;
 }
 
-.list {
-  border-radius: 12px;
-  padding: 10px;
-  overflow: auto;
+/* ===== Panel listy (nagłówek + lista w jednym "pudełku") ===== */
+/* Uwaga: list-head siedzi nad #list, więc stylujemy je tak, by wyglądały jak jeden panel */
+.list-head,
+.list{
+  background:transparent; /* builder.css zwykle i tak daje tło kartom; nie narzucamy koloru */
+}
+
+/* Zamiast border-radius na .list (który robił łuki przy borderach),
+   robimy radius na "pierwszym i ostatnim" w zestawie: */
+.list-head{
+  border-radius:12px 12px 0 0;
+}
+.list{
+  border-radius:0 0 12px 12px;
 }
 
 /* ===== Nagłówek tabeli ===== */
-.list-head {
-  display: grid;
-  grid-template-columns: 44px 1fr 96px;
-  gap: 10px;
+.list-head{
+  display:grid;
+  grid-template-columns:44px 1fr 96px;
+  gap:10px;
 
-  padding: 6px 12px;
-  border-bottom: 1px solid rgba(255,255,255,.18);
+  padding:6px 12px;                 /* nisko, nie „wysoko” */
+  min-height:0;
+  line-height:1.2;
 
-  font-size: 12px;
-  text-transform: uppercase;
-  letter-spacing: .04em;
-  color: rgba(255,255,255,.55);
+  border-bottom:1px solid rgba(255,255,255,.18);
 
-  user-select: none;
+  font-size:12px;
+  text-transform:uppercase;
+  letter-spacing:.04em;
+  color:rgba(255,255,255,.55);
+  user-select:none;
 }
 
-.list-head > div {
-  white-space: nowrap;
-}
-
-.list-head .h-num {
-  text-align: left;
-}
-
-.list-head .h-meta {
-  text-align: right;
-}
+.list-head > div{ white-space:nowrap; }
+.list-head .h-num{ text-align:left; }
+.list-head .h-meta{ text-align:right; }
 
 .list-head .h-num,
-.list-head .h-main {
-  cursor: pointer;
-}
+.list-head .h-main{ cursor:pointer; }
 
-.list-head .active {
-  color: rgba(255,255,255,.80);
-}
+.list-head .active{ color:rgba(255,255,255,.80); }
 
 .list-head .h-num::after,
-.list-head .h-main::after {
-  content: "";
-  display: inline-block;
-  margin-left: 6px;
-  opacity: .65;
+.list-head .h-main::after{
+  content:"";
+  display:inline-block;
+  margin-left:6px;
+  opacity:.65;
 }
 
 .list-head .h-num.active[data-dir="asc"]::after,
-.list-head .h-main.active[data-dir="asc"]::after {
-  content: "▲";
-}
+.list-head .h-main.active[data-dir="asc"]::after{ content:"▲"; }
 
 .list-head .h-num.active[data-dir="desc"]::after,
-.list-head .h-main.active[data-dir="desc"]::after {
-  content: "▼";
-}
+.list-head .h-main.active[data-dir="desc"]::after{ content:"▼"; }
 
-/* ===== Kontekst menu ===== */
-.context-menu {
-  position: fixed;
-  z-index: 9999;
-  min-width: 220px;
-  border-radius: 12px;
-  padding: 6px;
-  background: rgba(20, 20, 20, 0.98);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  box-shadow: 0 10px 35px rgba(0, 0, 0, 0.35);
-}
-
-/* ===== Stany przyszłe (etap 3) ===== */
-.is-disabled {
-  opacity: 0.5;
-  pointer-events: none;
-}
-
-.is-selected {
-  outline: 2px solid rgba(255, 255, 255, 0.25);
-}
-
-.is-drop-target {
-  outline: 2px dashed rgba(255, 255, 255, 0.35);
-}
-
-.is-dragging {
-  opacity: 0.6;
+/* ===== Lista ===== */
+.list{
+  padding:6px 0;                    /* mniej “poduszki” */
+  overflow:auto;
+  border-top:0;                     /* nagłówek ma swoją linię */
 }
 
 /* Explorer: selekcja ma zaznaczać elementy, nie tekst */
-.row { user-select: none; }
-
+.row{ user-select:none; }
 /* Ale pola formularzy nadal mają działać normalnie */
-input, textarea { user-select: text; }
+input, textarea{ user-select:text; }
 
-/* ===== Menu kontekstowe ===== */
+/* ===== Wiersz tabeli ===== */
+.row{
+  display:grid;
+  grid-template-columns:44px 1fr 96px;
+  align-items:center;
+  gap:10px;
+
+  padding:10px 12px;
+  border-bottom:1px solid rgba(255,255,255,.10);
+}
+
+.row:hover{ background:rgba(255,255,255,.05); }
+
+.row.selected{
+  background:rgba(255,255,255,.10);
+}
+.row.selected .title{ font-weight:inherit; }
+
+/* kolumny */
+.row .col-num{
+  opacity:.7;
+  font-variant-numeric:tabular-nums;
+}
+
+.row .col-main{ min-width:0; }
+.row .col-main .title{
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+
+  font-weight:400;
+  color:rgba(255,255,255,.88);
+}
+
+.row .col-meta{
+  opacity:.65;
+  font-size:12px;
+  text-align:right;
+  white-space:nowrap;
+}
+
+/* Folder może być lekko “cięższy” (subtelnie) */
+.row[data-kind="cat"] .col-main .title{
+  font-weight:500;
+}
+
+/* ===== Kontekst menu ===== */
 .context-menu{
-  position: fixed;
-  z-index: 9999;
-  min-width: 220px;
-  padding: 6px;
-  border-radius: 12px;
-  border: 1px solid rgba(255,255,255,.14);
-  background: rgba(20,20,20,.96);
-  box-shadow: 0 12px 30px rgba(0,0,0,.45);
+  position:fixed;
+  z-index:9999;
+  min-width:220px;
+  padding:6px;
+  border-radius:12px;
+
+  background:rgba(20,20,20,.96);
+  border:1px solid rgba(255,255,255,.14);
+  box-shadow:0 12px 30px rgba(0,0,0,.45);
 }
 
 .cm-item{
-  width: 100%;
-  text-align: left;
-  padding: 10px 10px;
-  border-radius: 10px;
-  border: 0;
-  background: transparent;
-  color: inherit;
-  cursor: pointer;
+  width:100%;
+  text-align:left;
+  padding:10px 10px;
+  border-radius:10px;
+  border:0;
+  background:transparent;
+  color:inherit;
+  cursor:pointer;
 }
 
-.cm-item:hover{
-  background: rgba(255,255,255,.08);
-}
+.cm-item:hover{ background:rgba(255,255,255,.08); }
 
 .cm-item.disabled{
-  opacity: .45;
-  cursor: default;
+  opacity:.45;
+  cursor:default;
 }
 
-/* ===== Layout: separator lewo/prawo ===== */
-.explorer {
-  gap: 0; /* żeby separator był "na styk" */
-}
+.cm-item.danger{ color:#ffb3b3; }
 
-.explorer-left {
-  border-right: 1px solid rgba(255,255,255,.12);
-}
-
-.explorer-right {
-  padding-left: 0;
-}
-
-/* ===== Lista: wygląd jak tabelka ===== */
-.list {
-  border-top: 1px solid rgba(255,255,255,.10);
-}
-
-.row {
-  display: grid;
-  grid-template-columns: 44px 1fr 96px;
-  align-items: center;
-  gap: 10px;
-
-  padding: 10px 12px;
-  border-bottom: 1px solid rgba(255,255,255,.10);
-}
-
-.row:hover {
-  background: rgba(255,255,255,.05);
-}
-
-.row.selected {
-  background: rgba(255,255,255,.10);
-  
-}
-
-.row.selected .title {
-  font-weight: inherit;
-}
-
-/* kolumny */
-.row .col-num {
-  opacity: .7;
-  font-variant-numeric: tabular-nums; /* równy "grid" cyfr */
-}
-
-.row .col-main {
-  min-width: 0; /* żeby ellipsis działało */
-}
-
-.row .col-main .title {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  font-weight: 400;          /* normal, nie bold */
-  color: rgba(255,255,255,.88);
-}
-
-.row .col-meta {
-  opacity: .65;
-  font-size: 12px;
-  text-align: right;
-  white-space: nowrap;
-}
-
-.row .col-main[data-kind="cat"] .title {
-  font-weight: 500;          /* lekko, NIE bold */
-}
-
-.cm-item.danger{
-  color: #ffb3b3;
-}
+/* ===== Stany przyszłe (etap 3) ===== */
+.is-disabled{ opacity:.5; pointer-events:none; }
+.is-selected{ outline:2px solid rgba(255,255,255,.25); }
+.is-drop-target{ outline:2px dashed rgba(255,255,255,.35); }
+.is-dragging{ opacity:.6; }
