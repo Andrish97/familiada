@@ -203,6 +203,54 @@ export async function createQuestionHere(state, { categoryId = null } = {}) {
   return true;
 }
 
+export async function deleteItems(state, keys) {
+  if (!canWrite(state)) return false;
+
+  const list = Array.from(keys || []).filter(Boolean);
+  if (!list.length) return false;
+
+  // rozbij na foldery i pytania
+  const qIds = [];
+  const cIds = [];
+
+  for (const k of list) {
+    if (k.startsWith("q:")) qIds.push(k.slice(2));
+    if (k.startsWith("c:")) cIds.push(k.slice(2));
+  }
+
+  // Uwaga: foldery mają dzieci/pytania -> DB ma FK? jeśli masz ON DELETE CASCADE to ok.
+  // Jeśli nie masz cascade, to najpierw trzeba usunąć pytania w folderach albo blokować usuwanie niepustych.
+  // Na tym etapie robimy najprościej: spróbuj usunąć, a w razie błędu pokaż komunikat.
+  if (qIds.length) {
+    const { error } = await sb().from("qb_questions").delete().in("id", qIds);
+    if (error) throw error;
+  }
+
+  if (cIds.length) {
+    const { error } = await sb().from("qb_categories").delete().in("id", cIds);
+    if (error) throw error;
+  }
+
+  // cache root + odśwież
+  state._rootQuestions = null;
+  // foldery odświeżamy, bo state.categories jest cachem
+  if (state._api?.refreshCategories) await state._api.refreshCategories();
+  await state._api?.refreshList?.();
+
+  return true;
+}
+
+export async function deleteSelected(state) {
+  const keys = state?.selection?.keys;
+  if (!keys || !keys.size) return false;
+
+  const label = (keys.size === 1) ? "ten element" : `te elementy (${keys.size})`;
+  const ok = confirm(`Usunąć ${label}? Tego nie da się cofnąć.`);
+  if (!ok) return false;
+
+  return await deleteItems(state, keys);
+}
+
 /* ================= Wire ================= */
 export function wireActions({ state }) {
   const treeEl = document.getElementById("tree");
@@ -401,6 +449,19 @@ export function wireActions({ state }) {
   // (żeby działało też po przełączeniu view/search)
   const api = {
     refreshList: () => refreshList(state),
+    refreshCategories: async () => {
+      // jeśli masz listCategories w repo.js, użyj jej:
+      // state.categories = await listCategories(state.baseId);
+  
+      // jeśli jeszcze nie masz, to na razie zrób minimalny fetch tu:
+      const { data, error } = await sb()
+        .from("qb_categories")
+        .select("id,base_id,parent_id,name,ord")
+        .eq("base_id", state.baseId)
+        .order("ord", { ascending: true });
+      if (error) throw error;
+      state.categories = data || [];
+    },
   };
 
   // udostępniamy do context-menu (żeby mogło odświeżyć widok po delete)
@@ -430,9 +491,21 @@ export function wireActions({ state }) {
     hideContextMenu();
   });
 
-  // Esc zamyka menu (nie kłóci się z Twoim Esc od selekcji)
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") hideContextMenu();
+  document.addEventListener("keydown", async (e) => {
+    if (e.key === "Escape") {
+      selectionClear(state);
+      renderList(state);
+      return;
+    }
+  
+    if (e.key === "Delete") {
+      try {
+        await deleteSelected(state);
+      } catch (err) {
+        console.error(err);
+        alert("Nie udało się usunąć.");
+      }
+    }
   });
 
   return api;
