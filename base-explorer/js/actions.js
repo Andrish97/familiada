@@ -358,6 +358,37 @@ export async function renameSelectedPrompt(state) {
   }
 }
 
+function onlyOneSelectedKey(state) {
+  const keys = state?.selection?.keys;
+  if (!keys || keys.size !== 1) return null;
+  return Array.from(keys)[0] || null;
+}
+
+function parentFolderId(state) {
+  if (state.view !== VIEW.FOLDER || !state.folderId) return null;
+  const cur = (state.categories || []).find(c => c.id === state.folderId);
+  return cur ? (cur.parent_id || null) : null;
+}
+
+async function openFolderById(state, folderId) {
+  setViewFolder(state, folderId);
+  selectionClear(state);
+  await state._api?.refreshList?.();
+}
+
+async function goUp(state) {
+  const pid = parentFolderId(state);
+  if (pid) {
+    await openFolderById(state, pid);
+  } else {
+    // jeśli jesteś w folderze najwyższego poziomu -> root
+    setViewAll(state);
+    selectionClear(state);
+    state._rootQuestions = null;
+    await state._api?.refreshList?.();
+  }
+}
+
 /* ================= Wire ================= */
 export function wireActions({ state }) {
   const treeEl = document.getElementById("tree");
@@ -620,6 +651,29 @@ export function wireActions({ state }) {
         if (tag === "input" || tag === "textarea") return;
     
         await renameSelectedPrompt(state);
+      }
+
+      // nie rób skrótów, gdy user pisze w inpucie/textarea
+      const tag = String(document.activeElement?.tagName || "").toLowerCase();
+      const typing = (tag === "input" || tag === "textarea");
+    
+      if (!typing && e.key === "Enter") {
+        const key = onlyOneSelectedKey(state);
+        if (key && key.startsWith("c:")) {
+          e.preventDefault();
+          const folderId = key.slice(2);
+          await openFolderById(state, folderId);
+          return;
+        }
+      }
+    
+      if (!typing && e.key === "Backspace") {
+        // Backspace w eksploratorze: w górę
+        if (state.view === VIEW.FOLDER) {
+          e.preventDefault();
+          await goUp(state);
+          return;
+        }
       }
   });
 
