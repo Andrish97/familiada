@@ -481,8 +481,39 @@ export function wireActions({ state }) {
     }
     return false;
   }
+
+  async function copyQuestionsTo(state, qIds, targetFolderIdOrNull) {
+    if (!qIds.length) return;
   
-  async function moveItemsTo(state, targetFolderIdOrNull) {
+    // pobierz źródłowe pytania
+    const { data: src, error: e1 } = await sb()
+      .from("qb_questions")
+      .select("id,payload")
+      .in("id", qIds);
+  
+    if (e1) throw e1;
+  
+    // ustal ord startowy w folderze docelowym
+    const ordStart = await nextOrdForQuestion(state, targetFolderIdOrNull);
+  
+    const rows = (src || []).map((q, i) => {
+      const row = {
+        base_id: state.baseId,
+        category_id: targetFolderIdOrNull,
+        ord: ordStart + i,
+        payload: (q?.payload && typeof q.payload === "object") ? q.payload : { text: "", answers: [] },
+      };
+      if (state.user?.id) row.updated_by = state.user.id;
+      return row;
+    });
+  
+    const { error: e2 } = await sb().from("qb_questions").insert(rows, { defaultToNull: false });
+    if (e2) throw e2;
+  
+    state._rootQuestions = null;
+  }
+  
+  async function moveItemsTo(state, targetFolderIdOrNull, { mode = "move" } = {}) {
     if (!canWrite(state)) return;
   
     const keys = state._drag?.keys;
@@ -490,6 +521,21 @@ export function wireActions({ state }) {
   
     const qIds = [];
     const cIds = [];
+
+    const isCopy = mode === "copy";
+
+    if (isCopy && cIds.length) {
+      alert("Kopiowanie folderów będzie w następnym etapie (na razie kopiują się tylko pytania).");
+      return;
+    }
+  
+    if (isCopy) {
+      // COPY: tworzymy nowe pytania w docelowym folderze (ord na końcu)
+      await copyQuestionsTo(state, qIds, targetFolderIdOrNull);
+      await state._api?.refreshList?.();
+      return;
+    }
+    
     for (const k of keys) {
       if (k.startsWith("q:")) qIds.push(k.slice(2));
       if (k.startsWith("c:")) cIds.push(k.slice(2));
@@ -707,13 +753,14 @@ export function wireActions({ state }) {
   
     // wymagane przez przeglądarki
     try { e.dataTransfer.setData("text/plain", "move"); } catch {}
-    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.effectAllowed = "copyMove";
   });
   
   listEl?.addEventListener("dragover", (e) => {
     if (!canDnD()) return;
     e.preventDefault(); // pozwala na drop
-    e.dataTransfer.dropEffect = "move";
+    const isCopy = e.ctrlKey || e.metaKey;
+    e.dataTransfer.dropEffect = isCopy ? "copy" : "move";
   
     const row = e.target?.closest?.('.row[data-kind="cat"][data-id]');
     if (row) {
@@ -738,7 +785,8 @@ export function wireActions({ state }) {
     clearDropTarget();
   
     try {
-      await moveItemsTo(state, targetFolderId);
+      const isCopy = e.ctrlKey || e.metaKey;
+      await moveItemsTo(state, targetFolderId, { mode: isCopy ? "copy" : "move" });
     } catch (err) {
       console.error(err);
       alert("Nie udało się przenieść.");
