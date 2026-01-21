@@ -75,9 +75,10 @@ export function renderTree(state) {
     .sort((a, b) => (Number(a.ord) || 0) - (Number(b.ord) || 0))
     .map((c) => {
       const key = `c:${c.id}`;
-      const isSel = isSelected(state, key);
-      const cls = `row${isSel ? " selected" : ""}`;
-      return `<div class="${cls}" data-kind="cat" data-id="${esc(c.id)}" style="cursor:pointer;">
+      const writable = (state.role === "owner" || state.role === "editor");
+      const draggable = writable ? `draggable="true"` : ``;
+
+      return `<div class="row" ${draggable} data-kind="cat" data-id="${esc(c.id)}" style="cursor:pointer;">
         <div class="col-num">—</div>
         <div class="col-main"><div class="title">📁 ${esc(c.name || "Folder")}</div></div>
         <div class="col-meta">folder</div>
