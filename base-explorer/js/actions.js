@@ -494,6 +494,8 @@ export async function deleteItems(state, keys) {
     if (k.startsWith("q:")) qIds.push(k.slice(2));
     if (k.startsWith("c:")) cIds.push(k.slice(2));
   }
+  // jeśli w zaznaczeniu nie ma realnych elementów (np. tylko "root") — nic nie rób
+  if (!qIds.length && !cIds.length) return false;
 
   // Uwaga: foldery mają dzieci/pytania -> DB ma FK? jeśli masz ON DELETE CASCADE to ok.
   // Jeśli nie masz cascade, to najpierw trzeba usunąć pytania w folderach albo blokować usuwanie niepustych.
@@ -669,7 +671,12 @@ async function goUp(state) {
 function clipboardSet(state, mode, keys) {
   state.clipboard = state.clipboard || { mode: null, keys: new Set() };
   state.clipboard.mode = mode;
-  state.clipboard.keys = new Set(Array.from(keys || []).filter(Boolean));
+
+  const onlyReal = Array.from(keys || []).filter(k =>
+    typeof k === "string" && (k.startsWith("q:") || k.startsWith("c:"))
+  );
+
+  state.clipboard.keys = new Set(onlyReal);
 }
 
 function clipboardClear(state) {
@@ -1767,27 +1774,18 @@ export function wireActions({ state }) {
     return;
   });
 
-    // PPM na tagach (tag/puste tło)
+  // PPM na tagach (tag + puste tło)
   tagsEl?.addEventListener("contextmenu", async (e) => {
     e.preventDefault();
 
     const row = e.target?.closest?.('.row[data-kind="tag"][data-id]');
     if (row) {
       const id = row.dataset.id;
-
-      // Explorer-style: PPM na niezaznaczonym -> single select
-      if (!state.tagSelection) state.tagSelection = { ids: new Set(), anchorId: null };
-      if (!state.tagSelection.ids.has(id)) {
-        state.tagSelection.ids.clear();
-        state.tagSelection.ids.add(id);
-        state.tagSelection.anchorId = id;
-        renderAll(state); // tylko UI selekcji po lewej
-      }
-
       await showContextMenu({ state, x: e.clientX, y: e.clientY, target: { kind: "tag", id } });
       return;
     }
 
+    // puste tło tags
     await showContextMenu({ state, x: e.clientX, y: e.clientY, target: { kind: "tags-bg", id: null } });
   });
 
@@ -1836,7 +1834,7 @@ export function wireActions({ state }) {
     if (kind === "root") {
       selectionSetSingle(state, "root");
       state.selection.anchorKey = "root";
-      renderAll(state);
+      scheduleRenderTree();
       return;
     }
   
@@ -1887,7 +1885,7 @@ export function wireActions({ state }) {
     }
   });
 
-    // PPM na drzewie (foldery/puste tło)
+  // PPM na drzewie (foldery + puste tło)
   treeEl?.addEventListener("contextmenu", async (e) => {
     e.preventDefault();
 
@@ -1896,21 +1894,18 @@ export function wireActions({ state }) {
       const kind = row.dataset.kind; // 'cat' | 'root'
       const id = row.dataset.id || null;
 
-      // Explorer-style: PPM na niezaznaczonym -> single select
-      if (kind === "cat" && id) {
-        const key = `c:${id}`;
-        if (!state.selection?.keys?.has?.(key)) selectionSetSingle(state, key);
+      if (kind === "cat") {
+        await showContextMenu({ state, x: e.clientX, y: e.clientY, target: { kind: "cat", id } });
+        return;
       }
       if (kind === "root") {
-        if (!state.selection?.keys?.has?.("root")) selectionSetSingle(state, "root");
+        await showContextMenu({ state, x: e.clientX, y: e.clientY, target: { kind: "root", id: null } });
+        return;
       }
-
-      await showContextMenu({ state, x: e.clientX, y: e.clientY, target: { kind, id } });
-      return;
     }
 
-    // puste tło tree
-    await showContextMenu({ state, x: e.clientX, y: e.clientY, target: { kind: "tree-bg", id: null } });
+    // puste tło drzewa = root (akcje w bieżącym miejscu, bo showContextMenu używa state.view)
+    await showContextMenu({ state, x: e.clientX, y: e.clientY, target: { kind: "root", id: null, scope: "tree" } });
   });
     
     // --- Drag start z drzewa (folder jako źródło) ---
@@ -2539,14 +2534,22 @@ export function wireActions({ state }) {
       state.categories = data || [];
     },
     openAssignTagsModal: () => openAssignTagsModal(state),
-    openTagModal: async ({ mode = "create", tagId = null } = {}) => {
-      if (!canWrite(state)) return false;
-      const saved = await openTagModal(state, { mode, tagId });
-      if (saved) {
-        await refreshTags(state);
-        await state._api?.refreshList?.();
-      }
-      return saved;
+    
+    refreshTags: async () => refreshTags(state),
+
+    openTagModal: async (opts) => openTagModal(state, opts),
+
+    openTagView: async (tagIds) => {
+      const ids = Array.isArray(tagIds) ? tagIds.filter(Boolean) : [];
+      if (!ids.length) return false;
+
+      rememberBrowseLocation(state);
+      state.tagIds = ids;
+      state.view = VIEW.TAG;
+
+      selectionClear(state);
+      await refreshList(state);
+      return true;
     },
   };
 
