@@ -64,7 +64,7 @@ export async function showContextMenu({ state, x, y, target }) {
   }
 
   if (target.kind === "cat" || target.kind === "q") {
-    items.push({ label: "Kopiuj", action: async () => {
+    items.push({ label: "Kopiuj", disabled: !editor, action: async () => {
       // jeśli kliknięto nie-zaznaczone, ustaw single select (opcjonalnie, jeśli chcesz)
       copySelectedToClipboard(state);
     }});
@@ -97,15 +97,15 @@ export async function showContextMenu({ state, x, y, target }) {
       await state._api?.refreshList?.();
     }});
   
-    items.push({ label: "Nowy podfolder", disabled: !editor, action: async () => {
+    items.push({ label: "Nowy folder", disabled: !editor || readOnlyView, action: async () => {
       await createFolderHere(state, { parentId: target.id });
     }});
   
-    items.push({ label: "Nowe pytanie w tym folderze", disabled: !editor, action: async () => {
+    items.push({ label: "Nowe pytanie w tym folderze", disabled: !editor || readOnlyView, action: async () => {
       await createQuestionHere(state, { categoryId: target.id });
     }});
 
-    items.push({ label: "Zmień nazwę", disabled: !editor, action: async () => {
+    items.push({ label: "Zmień nazwę", disabled: !editor || readOnlyView, action: async () => {
       const key = `c:${target.id}`;
       if (!state.selection?.keys?.has?.(key)) {
         selectionSetSingle(state, key);
@@ -113,7 +113,7 @@ export async function showContextMenu({ state, x, y, target }) {
       await renameSelectedPrompt(state);
     }});
   
-    items.push({ label: "Usuń", danger: true, disabled: !editor, action: async () => {
+    items.push({ label: "Usuń", danger: true, disabled: !editor || readOnlyView, action: async () => {
       // Explorer-style: PPM na folderze -> jeśli nie zaznaczony, zaznacz go
       const key = `c:${target.id}`;
       if (!state.selection?.keys?.has?.(key)) {
@@ -132,14 +132,14 @@ export async function showContextMenu({ state, x, y, target }) {
   // Pytanie
   if (target.kind === "q") {
     items.push({ label: "Edytuj", disabled: true }); // modal edycji dojdzie później
-    items.push({ label: "Zmień nazwę (treść)", disabled: !editor, action: async () => {
+    items.push({ label: "Zmień nazwę (treść)", disabled: !editor || readOnlyView, action: async () => {
       const key = `q:${target.id}`;
       if (!state.selection?.keys?.has?.(key)) {
         selectionSetSingle(state, key);
       }
       await renameSelectedPrompt(state);
     }});
-    items.push({ label: "Usuń", danger: true, disabled: !editor, action: async () => {
+    items.push({ label: "Usuń", danger: true, disabled: !editor || readOnlyView, action: async () => {
       // jeśli element pod PPM nie jest zaznaczony – zaznacz go (Explorer-style)
       const key = `q:${target.id}`;
       if (!state.selection?.keys?.has?.(key)) {
@@ -154,8 +154,6 @@ export async function showContextMenu({ state, x, y, target }) {
       }
     }});
   }
-
-  items.push({ label: "Anuluj", action: () => hideContextMenu() });
 
   cm.innerHTML = items.map(itemHtml).join("");
 
