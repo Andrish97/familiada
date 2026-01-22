@@ -9,6 +9,8 @@ import {
   cutSelectedToClipboard,
   pasteClipboardHere
 } from "./actions.js";
+  // dopisz do importu
+  // (to są funkcje, które zaraz udostępnimy w state._api w actions.js)
 
 function clamp(n, a, b) {
   return Math.max(a, Math.min(b, n));
@@ -46,6 +48,64 @@ export async function showContextMenu({ state, x, y, target }) {
     state.view === VIEW.TAG; // jeśli VIEW.TAG jeszcze nie ma, daj guard jak niżej
 
   const items = [];
+
+  if (target.kind === "tree-bg") {
+    const parentId = (state.view === VIEW.FOLDER && state.folderId) ? state.folderId : null;
+    const categoryId = parentId;
+
+    items.push({ label: "Nowy folder", disabled: !editor || readOnlyView, action: async () => {
+      await createFolderHere(state, { parentId });
+    }});
+
+    items.push({ label: "Nowe pytanie", disabled: !editor || readOnlyView, action: async () => {
+      await createQuestionHere(state, { categoryId });
+    }});
+
+    items.push({ label: "—", disabled: true });
+  }
+
+  if (target.kind === "tags-bg") {
+    items.push({
+      label: "Dodaj tag…",
+      disabled: !editor,
+      action: async () => {
+        // otwórz “modal taga” (na razie ten prosty; docelowo będzie 3-warstwowy)
+        await state._api?.openTagModal?.({ mode: "create" });
+      }
+    });
+
+    // (później dojdzie: usuń tagi jako byty, ale teraz jeszcze nie)
+    items.push({ label: "—", disabled: true });
+  }
+
+  if (target.kind === "tag" && target.id) {
+    const ids = Array.from(state?.tagSelection?.ids || []);
+    const one = ids.length === 1 ? ids[0] : null;
+
+    items.push({
+      label: "Pokaż",
+      disabled: false,
+      action: async () => {
+        // wejście w VIEW.TAG robi już click, ale PPM też ma to umieć
+        state.view = VIEW.TAG;
+        state.tagIds = ids.length ? ids : [target.id];
+        state.selection?.keys?.clear?.();
+        await state._api?.refreshList?.();
+      }
+    });
+
+    items.push({ label: "—", disabled: true });
+
+    items.push({
+      label: "Edytuj tag…",
+      disabled: !editor || !one,
+      action: async () => {
+        await state._api?.openTagModal?.({ mode: "edit", tagId: one });
+      }
+    });
+
+    items.push({ label: "—", disabled: true });
+  }
 
   // Root / puste tło listy: akcje w aktualnym miejscu (root lub aktualny folder)
   if (target.kind === "root") {
