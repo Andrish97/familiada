@@ -2296,10 +2296,16 @@ export function wireActions({ state }) {
 
   function pulseEl(el) {
     if (!el) return;
-    el.classList.remove("drop-pulse");      // restart animacji
-    void el.offsetWidth;                    // reflow trick
+    el.classList.remove("drop-pulse"); // restart animacji
+    void el.offsetWidth;               // reflow
     el.classList.add("drop-pulse");
     setTimeout(() => el.classList.remove("drop-pulse"), 460);
+  }
+  
+  function pulseDropTargetIn(containerEl, selector, fallbackEl) {
+    // selector ma wskazywać KONKRETNY wiersz, nie kontener
+    const el = containerEl?.querySelector?.(selector) || null;
+    pulseEl(el || fallbackEl || null);
   }
 
   toolbarEl?.addEventListener("input", async (e) => {
@@ -2611,10 +2617,15 @@ export function wireActions({ state }) {
     try {
       const keys = state._drag?.keys;
       if (!keys || !keys.size) return;
-  
+
       await applyTagToDraggedItems(state, tagId, keys);
 
-      pulseEl(tagsEl);
+      // pulsuj KONKRETNY tag-row
+      pulseDropTargetIn(
+        tagsEl,
+        `.row[data-kind="tag"][data-id="${CSS.escape(tagId)}"]`,
+        null
+      );
       
     } catch (err) {
       console.error(err);
@@ -2830,7 +2841,11 @@ export function wireActions({ state }) {
       // COPY: zostawiamy stare zachowanie (kopiowanie folderów już masz)
       if (moveMode === "copy") {
         await moveItemsTo(state, targetId, { mode: "copy" }); 
-        pulseEl(treeEl);
+        pulseDropTargetIn(
+          treeEl,
+          `.row[data-kind="root"][data-id]`,
+          null
+        );
         return;
       }
   
@@ -2838,21 +2853,33 @@ export function wireActions({ state }) {
       // - jeśli drop na tło => normalny move do root
       if (modeKey === "root" || !targetId) {
         await moveItemsTo(state, null, { mode: "move" });
-        pulseEl(treeEl);
+        pulseDropTargetIn(
+          treeEl,
+          `.row[data-kind="root"][data-id]`,
+          null
+        );
         return;
       }
   
       // - jeśli drop "into" => move do środka folderu (parent = targetId)
       if (modeKey === "into") {
         await moveItemsTo(state, targetId, { mode: "move" });
-        pulseEl(treeEl);
+        pulseDropTargetIn(
+          treeEl,
+          `.row[data-kind="cat"][data-id="${CSS.escape(targetId)}"]`,
+          null
+        );
         return;
       }
   
       // - jeśli drop before/after => reorder w rodzeństwie targetu (z ewentualnym przeniesieniem parenta)
       if (cIds.length) {
         await reorderFoldersByDrop(state, cIds, targetId, modeKey);
-        pulseEl(treeEl);// before/after
+        pulseDropTargetIn(
+          treeEl,
+          `.row[data-kind="cat"][data-id="${CSS.escape(targetId)}"]`,
+          null
+        );
         return;
       }
   
@@ -2987,6 +3014,22 @@ export function wireActions({ state }) {
     try {
       const mode = isCopyDragModifier(e) ? "copy" : "move";
       await moveItemsTo(state, targetFolderId, { mode });
+
+      // pulsuj target: folder-row albo root (tło)
+      if (targetFolderId) {
+        pulseDropTargetIn(
+          listEl,
+          `.row[data-kind="cat"][data-id="${CSS.escape(targetFolderId)}"]`,
+          null
+        );
+      } else {
+        // brak folderu => drop na root
+        pulseDropTargetIn(
+          document, // root jest w tree, nie w liście
+          `.row[data-kind="root"][data-id]`,
+          null
+        );
+      }
       pulseEl(listEl);
     } catch (err) {
       console.error(err);
