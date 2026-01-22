@@ -195,6 +195,46 @@ async function loadQuestionsForCurrentView(state) {
   return [];
 }
 
+async function ensureTagMapsForUI(state) {
+  // potrzebujemy listy tagów do tooltipów
+  if (!Array.isArray(state.tags)) {
+    try { await refreshTags(state); } catch {}
+  }
+
+  // 1) CATEGORY TAG MAP — najlepiej cache dla CAŁEGO drzewa (folderów)
+  //    bo tree renderuje wszystkie kategorie.
+  if (!state._allCategoryTagMap) {
+    const foldersAll = Array.isArray(state.categories) ? state.categories : [];
+    const cIdsAll = foldersAll.map(c => c.id).filter(Boolean);
+
+    if (cIdsAll.length) {
+      const linksC = await listCategoryTags(cIdsAll);
+      const mC = new Map();
+      for (const l of (linksC || [])) {
+        if (!mC.has(l.category_id)) mC.set(l.category_id, new Set());
+        mC.get(l.category_id).add(l.tag_id);
+      }
+      state._allCategoryTagMap = mC;
+    } else {
+      state._allCategoryTagMap = new Map();
+    }
+  }
+
+  // 2) QUESTION TAG MAP — tylko dla pytań aktualnie wyświetlanych (lista po prawej)
+  const qShown = Array.isArray(state.questions) ? state.questions : [];
+  const qIds = qShown.map(q => q.id).filter(Boolean);
+
+  const mQ = new Map();
+  if (qIds.length) {
+    const linksQ = await listQuestionTags(qIds);
+    for (const l of (linksQ || [])) {
+      if (!mQ.has(l.question_id)) mQ.set(l.question_id, new Set());
+      mQ.get(l.question_id).add(l.tag_id);
+    }
+  }
+  state._viewQuestionTagMap = mQ;
+}
+
 async function refreshList(state) {
 
   // --- Drzewo: init + auto-otwórz ścieżkę do aktualnego folderu ---
@@ -329,7 +369,7 @@ async function refreshList(state) {
 
     state.folders = fs;
     state.questions = qs;
-
+    await ensureTagMapsForUI(state);
     renderAll(state);
 
     const writable = canWrite(state);
@@ -351,6 +391,7 @@ async function refreshList(state) {
     if (!tagIds.length) {
       state.folders = foldersAll;
       state.questions = [];
+      await ensureTagMapsForUI(state);
       renderAll(state);
       return;
     }
@@ -384,6 +425,8 @@ async function refreshList(state) {
     // Pytania: globalnie po tagach
     state.questions = qAll.filter(qHasAnyTag);
 
+    await ensureTagMapsForUI(state);
+
     renderAll(state);
 
     const writable = canWrite(state);
@@ -402,7 +445,7 @@ async function refreshList(state) {
   
   // filtr wyszukiwania stosujemy tylko do pytań (na razie)
   state.questions = applySearchFilterToQuestions(allQ, state.searchQuery);
-  
+
   renderAll(state);
 
   const mutable = canMutateHere(state);
