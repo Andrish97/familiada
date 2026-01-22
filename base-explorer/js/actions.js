@@ -2622,6 +2622,7 @@ export function wireActions({ state }) {
       selectionClear(state);
       await refreshList(state);
     },
+    untagSelectedInTagView: () => untagSelectedInTagView(state),
   };
 
   // udostępniamy do context-menu (żeby mogło odświeżyć widok po delete)
@@ -2719,10 +2720,23 @@ export function wireActions({ state }) {
       }
   
       if (mod && (e.key === "v" || e.key === "V")) {
+        // C: w SEARCH/TAG wklejanie zablokowane
+        if (state.view === VIEW.SEARCH) {
+          e.preventDefault();
+          alert("W widoku wyszukiwania nie można wklejać.");
+          return;
+        }
+        if (state.view === VIEW.TAG) {
+          e.preventDefault();
+          alert("W widoku tagów nie można wklejać.");
+          return;
+        }
+      
         if (!canMutateHere(state)) {
           e.preventDefault();
           return;
         }
+      
         e.preventDefault();
         try {
           await pasteClipboardHere(state);
