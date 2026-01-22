@@ -171,6 +171,46 @@ async function refreshList(state) {
     document.getElementById("btnNewQuestion")?.toggleAttribute("disabled", !writable);
     return; // ważne: nie lecimy dalej normalnym torem
   }
+
+    // === TAG: „wirtualny widok wyników” po CAŁOŚCI (jak SEARCH, tylko filtr tagów) ===
+  if (state.view === VIEW.TAG) {
+    if (!state._allQuestions) {
+      state._allQuestions = await listAllQuestions(state.baseId);
+    }
+
+    const qAll = state._allQuestions;
+    const foldersAll = Array.isArray(state.categories) ? state.categories : [];
+
+    // TODO: na etapie tagów dopniemy dokładny model danych.
+    // Na razie robimy filtr odporny na różne pola (payload.tags / tag_ids / tags).
+    const wanted = new Set((state.tagIds || []).filter(Boolean));
+
+    const qHasAnyTag = (q) => {
+      const p = q?.payload && typeof q.payload === "object" ? q.payload : {};
+      const a =
+        Array.isArray(p.tags) ? p.tags :
+        Array.isArray(q?.tags) ? q.tags :
+        Array.isArray(q?.tag_ids) ? q.tag_ids :
+        [];
+      for (const id of a) if (wanted.has(id)) return true;
+      return false;
+    };
+
+    // Foldery w TAG: na tym etapie najprościej pokazujemy WSZYSTKIE foldery,
+    // a dopiero w etapie tagów dopniemy “foldery, które mają dopasowane pytania”
+    // (da się zrobić, ale wymaga ustalenia modelu tagowania).
+    state.folders = foldersAll;
+
+    // Pytania: globalnie po tagach
+    state.questions = qAll.filter(qHasAnyTag);
+
+    renderAll(state);
+
+    const writable = canWrite(state);
+    document.getElementById("btnNewFolder")?.toggleAttribute("disabled", !writable);
+    document.getElementById("btnNewQuestion")?.toggleAttribute("disabled", !writable);
+    return;
+  }
   
   const parentId = (state.view === VIEW.ALL) ? null : state.folderId;
   const foldersHere = (state.categories || [])
@@ -895,6 +935,7 @@ async function reorderFoldersByDrop(state, movedFolderIds, targetId, mode) {
 export function wireActions({ state }) {
   const treeEl = document.getElementById("tree");
   const listEl = document.getElementById("list");
+  const tagsEl = document.getElementById("tags");
   const breadcrumbsEl = document.getElementById("breadcrumbs");
   const toolbarEl = document.getElementById("toolbar");
 
@@ -1114,6 +1155,25 @@ export function wireActions({ state }) {
       selectionClear(state);
       await refreshList(state);
     }
+  });
+
+    // --- Tagi: klik = wejście w VIEW.TAG (wirtualne wyniki jak SEARCH) ---
+  tagsEl?.addEventListener("click", async (e) => {
+    const row = e.target?.closest?.('.row[data-kind="tag"][data-id]');
+    if (!row) return;
+
+    const tagId = row.dataset.id;
+    if (!tagId) return;
+
+    // zapamiętaj skąd user przyszedł (root/folder)
+    rememberBrowseLocation(state);
+
+    // na razie single-tag; multi wybór zrobimy w etapie tagów (Finder-style)
+    state.tagIds = [tagId];
+    state.view = VIEW.TAG;
+
+    selectionClear(state);
+    await refreshList(state);
   });
 
 
