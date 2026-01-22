@@ -77,31 +77,34 @@ export function renderTree(state) {
 
   const open = state.treeOpen instanceof Set ? state.treeOpen : new Set();
   const maxDepth = 6;
+  const ROOT_ID = "__root__";
+  const rootHasChildren = (byParent.get(null) || []).length > 0;
+  const rootOpen = rootHasChildren ? open.has(ROOT_ID) : true; // jak są dzieci, to root steruje
 
   function hasChildren(id) {
     const kids = byParent.get(id) || [];
     return kids.length > 0;
   }
 
-  function rowHtml({ kind, id, depth, label, isOpen, canToggle, isActive }) {
-    const pad = 8 + depth * 14;
+  function rowHtml({ kind, id, depth, label, isOpen, canToggle, isActive, icon = "📁" }) {
+    const pad = 6 + depth * 12;
+
     const toggle = canToggle
-      ? `<button type="button" class="tree-toggle" data-id="${esc(id)}" aria-label="Zwiń/rozwiń" style="width:18px; height:18px; display:inline-flex; align-items:center; justify-content:center; border:0; background:transparent; cursor:pointer; opacity:.9;">
+      ? `<button type="button" class="tree-toggle" data-id="${esc(id)}"
+            aria-label="Zwiń/rozwiń"
+            style="width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;border:0;background:transparent;cursor:pointer;opacity:.9;">
            ${isOpen ? "▼" : "▶"}
          </button>`
-      : `<span style="display:inline-block; width:18px;"></span>`;
+      : `<span style="display:inline-block;width:18px;"></span>`;
 
     const activeStyle = isActive ? "font-weight:700;" : "";
 
-    // UWAGA: data-kind i data-id są na .row (żeby działał obecny handler w actions.js)
     return `
-      <div class="row" data-kind="${kind}" data-id="${id ? esc(id) : ""}" style="cursor:pointer;">
-        <div class="col-num"></div>
+      <div class="row tree-row" data-kind="${kind}" data-id="${id ? esc(id) : ""}" style="cursor:pointer;">
         <div class="col-main" style="padding-left:${pad}px; display:flex; align-items:center; gap:6px; ${activeStyle}">
           ${toggle}
-          <div class="title">📁 ${esc(label || "Folder")}</div>
+          <div class="title">${icon} ${esc(label || "Folder")}</div>
         </div>
-        <div class="col-meta"></div>
       </div>
     `;
   }
@@ -137,18 +140,19 @@ export function renderTree(state) {
 
   // Root jako osobny wiersz
   const rootActive = (state.view === VIEW.ALL);
-  const rootHtml = `
-    <div class="row" data-kind="root" data-id="" style="cursor:pointer;">
-      <div class="col-num">—</div>
-      <div class="col-main" style="padding-left:8px; display:flex; align-items:center; gap:6px; ${rootActive ? "font-weight:700;" : ""}">
-        <span style="display:inline-block; width:18px;"></span>
-        <div class="title">🏠 Root</div>
-      </div>
-      <div class="col-meta"></div>
-    </div>
-  `;
 
-  const treeRows = renderSubtree(null, 0);
+  const rootHtml = rowHtml({
+    kind: "root",
+    id: ROOT_ID,
+    depth: 0,
+    label: "Root",
+    icon: "🏠",
+    canToggle: rootHasChildren,
+    isOpen: rootHasChildren ? rootOpen : true,
+    isActive: rootActive,
+  });
+
+  const treeRows = rootOpen ? renderSubtree(null, 1) : "";
 
   elTree.innerHTML = `
     <div style="opacity:.75; margin-bottom:6px;">Foldery</div>
