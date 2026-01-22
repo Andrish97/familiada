@@ -160,6 +160,13 @@ function resolveTagIdsByNames(state, tagNames) {
   return Array.from(new Set(tagIds));
 }
 
+function selectionSplitIds(state) {
+  const keys = Array.from(state?.selection?.keys || []);
+  const qIds = keys.filter(k => k.startsWith("q:")).map(k => k.slice(2));
+  const cIds = keys.filter(k => k.startsWith("c:")).map(k => k.slice(2));
+  return { qIds, cIds };
+}
+
 /* ================= Data loading by view ================= */
 async function loadQuestionsForCurrentView(state) {
   // Etap 1:
@@ -1198,6 +1205,225 @@ async function openTagModal(state, { mode = "create", tagId = null } = {}) {
   });
 }
 
+async function openAssignTagsModal(state) {
+  const { qIds, cIds } = selectionSplitIds(state);
+  if (!qIds.length && !cIds.length) {
+    alert("Zaznacz foldery lub pytania.");
+    return false;
+  }
+
+  const modal = document.getElementById("assignTagsModal");
+  if (!modal) return false;
+
+  const titleEl = document.getElementById("assignTagsTitle");
+  const infoEl = document.getElementById("assignTagsInfo");
+  const listEl = document.getElementById("assignTagsList");
+  const errEl = document.getElementById("assignTagsErr");
+
+  const btnClose = document.getElementById("assignTagsClose");
+  const btnCancel = document.getElementById("assignTagsCancel");
+  const btnSave = document.getElementById("assignTagsSave");
+
+  const hideErr = () => { if (errEl) { errEl.hidden = true; errEl.textContent = ""; } };
+  const showErr = (msg) => { if (errEl) { errEl.hidden = false; errEl.textContent = String(msg || ""); } };
+
+  hideErr();
+
+  const editor = canWrite(state);
+  if (titleEl) titleEl.textContent = "Przypisz tagi";
+  if (infoEl) {
+    const parts = [];
+    if (qIds.length) parts.push(`${qIds.length} pyt.`);
+    if (cIds.length) parts.push(`${cIds.length} folder(ów)`);
+    infoEl.textContent = `Zaznaczenie: ${parts.join(" + ")}.`;
+  }
+
+  // upewnij się, że tagi są załadowane
+  if (!Array.isArray(state.tags) || !state.tags.length) {
+    // minimalny fetch (jak w refreshTags)
+    const { data, error } = await sb()
+      .from("qb_tags")
+      .select("id,base_id,name,color,ord")
+      .eq("base_id", state.baseId)
+      .order("ord", { ascending: true });
+    if (error) throw error;
+    state.tags = data || [];
+  }
+
+  // pobierz aktualne tagi zaznaczenia:
+  // strategia: pokazujemy checkboxy jako:
+  // - checked, jeśli WSZYSTKIE elementy zaznaczenia mają ten tag
+  // - indeterminate, jeśli TYLKO część ma
+  // (to jest “profesjonalne” zachowanie)
+  const tagIdsAll = (state.tags || []).map(t => t.id);
+
+  // mapy: element -> set(tag_id)
+  const qMap = new Map();
+  const cMap = new Map();
+
+  if (qIds.length) {
+    const links = await listQuestionTags(qIds);
+    for (const l of (links || [])) {
+      if (!qMap.has(l.question_id)) qMap.set(l.question_id, new Set());
+      qMap.get(l.question_id).add(l.tag_id);
+    }
+  }
+
+  if (cIds.length) {
+    const links = await (await import("./repo.js")).listCategoryTags(cIds); // bezpieczne, bo masz importy u góry? Patrz uwaga niżej.
+    // UWAGA: jeśli wolisz bez dynamic import, dodaj listCategoryTags do importów na górze actions.js
+    for (const l of (links || [])) {
+      if (!cMap.has(l.category_id)) cMap.set(l.category_id, new Set());
+      cMap.get(l.category_id).add(l.tag_id);
+    }
+  }
+
+  function countHasTagInSet(map, ids, tagId) {
+    let has = 0;
+    for (const id of ids) {
+      const set = map.get(id);
+      if (set && set.has(tagId)) has++;
+    }
+    return has;
+  }
+
+  // render checklist
+  if (listEl) {
+    listEl.innerHTML = (state.tags || [])
+      .slice()
+      .sort((a,b) => (Number(a.ord)||0)-(Number(b.ord)||0))
+      .map((t) => {
+        const color = t.color || "#777";
+        const name = String(t.name || "");
+        const id = t.id;
+
+        const qHas = qIds.length ? countHasTagInSet(qMap, qIds, id) : 0;
+        const cHas = cIds.length ? countHasTagInSet(cMap, cIds, id) : 0;
+
+        const total = (qIds.length + cIds.length);
+        const hasTotal = qHas + cHas;
+
+        const checked = total > 0 && hasTotal === total;
+        const ind = total > 0 && hasTotal > 0 && hasTotal < total;
+
+        return `
+          <label class="cm-tag-row" style="display:flex; align-items:center; gap:10px; cursor:${editor ? "pointer":"default"}; opacity:${editor ? "1":"0.75"};">
+            <input type="checkbox" data-tag-id="${id}" ${checked ? "checked":""} ${editor ? "" : "disabled"} />
+            <span class="tag-dot" style="background:${color}"></span>
+            <span class="m-p">#${name}</span>
+            ${ind ? `<span class="m-note" style="margin-left:auto;">częściowo</span>` : `<span style="margin-left:auto;"></span>`}
+          </label>
+        `;
+      }).join("");
+
+    // ustaw indeterminate po renderze
+    const boxes = Array.from(listEl.querySelectorAll('input[type="checkbox"][data-tag-id]'));
+    for (const box of boxes) {
+      const tid = box.dataset.tagId;
+      const qHas = qIds.length ? countHasTagInSet(qMap, qIds, tid) : 0;
+      const cHas = cIds.length ? countHasTagInSet(cMap, cIds, tid) : 0;
+      const total = qIds.length + cIds.length;
+      const hasTotal = qHas + cHas;
+      box.indeterminate = (total > 0 && hasTotal > 0 && hasTotal < total);
+    }
+  }
+
+  modal.hidden = false;
+
+  return await new Promise((resolve) => {
+    const cleanup = () => {
+      modal.hidden = true;
+      modal.removeEventListener("click", onBackdrop);
+      document.removeEventListener("keydown", onKey);
+      btnClose?.removeEventListener("click", onCancel);
+      btnCancel?.removeEventListener("click", onCancel);
+      btnSave?.removeEventListener("click", onSave);
+      resolve(false);
+    };
+
+    const closeOk = () => {
+      modal.hidden = true;
+      modal.removeEventListener("click", onBackdrop);
+      document.removeEventListener("keydown", onKey);
+      btnClose?.removeEventListener("click", onCancel);
+      btnCancel?.removeEventListener("click", onCancel);
+      btnSave?.removeEventListener("click", onSave);
+      resolve(true);
+    };
+
+    const onBackdrop = (e) => {
+      if (e.target?.dataset?.close === "1") cleanup();
+    };
+
+    const onKey = (e) => {
+      if (e.key === "Escape") cleanup();
+      if (e.key === "Enter") onSave();
+    };
+
+    const onCancel = () => cleanup();
+
+    const onSave = async () => {
+      try {
+        hideErr();
+        if (!canWrite(state)) { cleanup(); return; }
+
+        const boxes = Array.from(listEl.querySelectorAll('input[type="checkbox"][data-tag-id]'));
+        const picked = boxes.filter(b => b.checked).map(b => b.dataset.tagId).filter(Boolean);
+
+        // Najprościej i stabilnie:
+        // 1) usuń wszystkie linki tagów dla zaznaczenia
+        // 2) wstaw nowe dla "picked"
+
+        if (qIds.length) {
+          const { error: d1 } = await sb()
+            .from("qb_question_tags")
+            .delete()
+            .in("question_id", qIds);
+          if (d1) throw d1;
+
+          if (picked.length) {
+            const rows = [];
+            for (const qid of qIds) for (const tid of picked) rows.push({ question_id: qid, tag_id: tid });
+            const { error: i1 } = await sb().from("qb_question_tags").insert(rows, { defaultToNull: false });
+            if (i1) throw i1;
+          }
+        }
+
+        if (cIds.length) {
+          const { error: d2 } = await sb()
+            .from("qb_category_tags")
+            .delete()
+            .in("category_id", cIds);
+          if (d2) throw d2;
+
+          if (picked.length) {
+            const rows = [];
+            for (const cid of cIds) for (const tid of picked) rows.push({ category_id: cid, tag_id: tid });
+            const { error: i2 } = await sb().from("qb_category_tags").insert(rows, { defaultToNull: false });
+            if (i2) throw i2;
+          }
+        }
+
+        // Po zmianie tagów: wywal cache map tagów, bo SEARCH/TAG ich używa
+        state._allQuestionTagMap = null;
+        state._allCategoryTagMap = null;
+
+        await refreshList(state);
+        closeOk();
+      } catch (err) {
+        console.error(err);
+        showErr("Nie udało się zapisać tagów.");
+      }
+    };
+
+    modal.addEventListener("click", onBackdrop);
+    document.addEventListener("keydown", onKey);
+    btnClose?.addEventListener("click", onCancel);
+    btnCancel?.addEventListener("click", onCancel);
+    btnSave?.addEventListener("click", onSave);
+  });
+}
+
 /* ================= Wire ================= */
 export function wireActions({ state }) {
   const treeEl = document.getElementById("tree");
@@ -1281,6 +1507,57 @@ export function wireActions({ state }) {
     state.selection.keys.clear();
     for (let i = from; i <= to; i++) state.selection.keys.add(keys[i]);
     state.selection.anchorKey = clickedKey;
+  }
+
+  function tagOrder(state) {
+    return (state.tags || []).slice().sort((a,b) => (Number(a.ord)||0) - (Number(b.ord)||0));
+  }
+  
+  function tagSelectSingle(state, tagId) {
+    if (!state.tagSelection) state.tagSelection = { ids: new Set(), anchorId: null };
+    state.tagSelection.ids.clear();
+    if (tagId) state.tagSelection.ids.add(tagId);
+    state.tagSelection.anchorId = tagId || null;
+  }
+  
+  function tagToggle(state, tagId) {
+    if (!state.tagSelection) state.tagSelection = { ids: new Set(), anchorId: null };
+    if (!tagId) return;
+  
+    if (state.tagSelection.ids.has(tagId)) state.tagSelection.ids.delete(tagId);
+    else state.tagSelection.ids.add(tagId);
+  
+    state.tagSelection.anchorId = tagId;
+  }
+  
+  function tagSelectRange(state, clickedId) {
+    if (!state.tagSelection) state.tagSelection = { ids: new Set(), anchorId: null };
+  
+    const ordered = tagOrder(state).map(t => t.id);
+    if (!ordered.length) return;
+  
+    const a = state.tagSelection.anchorId;
+    if (!a || ordered.indexOf(a) === -1) {
+      tagSelectSingle(state, clickedId);
+      return;
+    }
+  
+    const i1 = ordered.indexOf(a);
+    const i2 = ordered.indexOf(clickedId);
+    if (i1 === -1 || i2 === -1) {
+      tagSelectSingle(state, clickedId);
+      return;
+    }
+  
+    const [from, to] = i1 < i2 ? [i1, i2] : [i2, i1];
+    state.tagSelection.ids.clear();
+    for (let i = from; i <= to; i++) state.tagSelection.ids.add(ordered[i]);
+    state.tagSelection.anchorId = clickedId;
+  }
+  
+  function tagSelectionToIds(state) {
+    const ids = Array.from(state?.tagSelection?.ids || []);
+    return ids.filter(Boolean);
   }
 
   function canDnD() {
@@ -1431,7 +1708,7 @@ export function wireActions({ state }) {
     }
   });
 
-  // --- Tagi: klik = zaznacz, dblclick = otwórz (VIEW.TAG) ---
+  // --- Tagi: klik = zaznacz (ctrl/shift), dblclick = otwórz VIEW.TAG ---
   tagsEl?.addEventListener("click", (e) => {
     const row = e.target?.closest?.('.row[data-kind="tag"][data-id]');
     if (!row) return;
@@ -1439,9 +1716,14 @@ export function wireActions({ state }) {
     const tagId = row.dataset.id;
     if (!tagId) return;
 
-    // Trzymamy selekcję taga osobno (na razie prosto)
-    state._tagSel = tagId;
-    // Minimalnie: rerender lewego panelu żeby było widać zaznaczenie (jeśli dodasz klasę w renderze)
+    const isCtrl = e.ctrlKey || e.metaKey;
+    const isShift = e.shiftKey;
+
+    if (isShift) tagSelectRange(state, tagId);
+    else if (isCtrl) tagToggle(state, tagId);
+    else tagSelectSingle(state, tagId);
+
+    // tylko odśwież lewy panel / całość (łatwo i stabilnie)
     renderAll(state);
   });
 
@@ -1449,13 +1731,12 @@ export function wireActions({ state }) {
     const row = e.target?.closest?.('.row[data-kind="tag"][data-id]');
     if (!row) return;
 
-    const tagId = row.dataset.id;
-    if (!tagId) return;
+    // Otwieramy widok na podstawie aktualnej selekcji (multi)
+    const ids = tagSelectionToIds(state);
+    if (!ids.length) return;
 
     rememberBrowseLocation(state);
-
-    // single-tag na start
-    state.tagIds = [tagId];
+    state.tagIds = ids;          // multi-tag
     state.view = VIEW.TAG;
 
     selectionClear(state);
