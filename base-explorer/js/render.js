@@ -281,7 +281,7 @@ export function renderTags(state) {
       return `
         <div class="row${selClass}" data-kind="tag" data-id="${esc(t.id)}" style="padding:6px 8px; cursor:pointer; display:flex; align-items:center; gap:8px;">
           ${dot}
-          <div class="title">#${esc(t.name || "Tag")}</div>
+          <div class="title-text">#${esc(t.name || "Tag")}</div>
         </div>`;
     })
     .join("");
