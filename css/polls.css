@@ -1,176 +1,193 @@
 /* css/polls.css */
 
-body.polls-body{
-  min-height:100vh;
-  background: var(--bg);
-  color:#fff;
+body.polls-body {
+    min-height: 100vh;
+    background: var(--bg);
+    color: #fff
 }
 
-.title{
-  font-weight:1000;
-  font-size:18px;
-  margin:10px 0 6px;
-  letter-spacing:.06em;
+.title {
+    font-weight: 1000;
+    font-size: 18px;
+    margin: 10px 0 6px;
+    letter-spacing: .06em
 }
 
-.rowTop{
-  display:flex;
-  justify-content:space-between;
-  align-items:flex-start;
-  gap:12px;
-  flex-wrap:wrap;
+.rowTop,.statusBox {
+    display: flex;
+    flex-wrap: wrap
 }
 
-.statusBox{
-  display:flex;
-  gap:10px;
-  align-items:center;
-  flex-wrap:wrap;
-  margin-top:10px;
+.rowTop {
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px
 }
 
-.chip{
-  padding:8px 10px;
-  border-radius:999px;
-  border:1px solid rgba(255,255,255,.16);
-  background: var(--card2);
-  font-weight:1000;
-  letter-spacing:.12em;
-  text-transform:uppercase;
-  font-size:11px;
-  color: var(--gold);
-}
-.chip.status{ color:#fff; letter-spacing:.10em; }
-
-.chip.ok{
-  border-color: rgba(120,255,160,.28);
-  background: rgba(120,255,160,.10);
-}
-.chip.warn{
-  border-color: rgba(255,234,166,.30);
-  background: rgba(255,234,166,.10);
-}
-.chip.bad{
-  border-color: rgba(255,120,120,.35);
-  background: rgba(255,120,120,.12);
+.statusBox {
+    gap: 10px;
+    align-items: center;
+    margin-top: 10px
 }
 
-.card{
-  border-radius:20px;
-  border:1px solid var(--line);
-  background: var(--card);
-  padding:14px;
-  box-shadow:0 24px 60px rgba(0,0,0,.45);
+.chip {
+    padding: 8px 10px;
+    border-radius: 999px;
+    border: 1px solid rgba(255,255,255,.16);
+    background: var(--card2);
+    font-weight: 1000;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    font-size: 11px;
+    color: var(--gold)
 }
 
-.name{ font-weight:1000; font-size:16px; letter-spacing:.04em; }
-.meta{ opacity:.75; font-size:12px; margin-top:6px; line-height:1.35; }
-
-.resultQ{
-  border:1px solid var(--line);
-  background: var(--card2);
-  border-radius:18px;
-  padding:12px;
+.chip.status {
+    color: #fff;
+    letter-spacing: .1em
 }
 
-.resultQ .qTitle{
-  font-weight:1000;
-  margin-bottom:8px;
-  line-height:1.25;
+.chip.ok {
+    border-color: rgba(120,255,160,.28);
+    background: rgba(120,255,160,.1)
 }
 
-.resultQ .aRow{
-  display:flex;
-  justify-content:space-between;
-  gap:10px;
-  padding:8px 10px;
-  border-radius:14px;
-  border:1px solid rgba(255,255,255,.10);
-  background: rgba(255,255,255,.05);
-  margin-top:8px;
+.chip.warn {
+    border-color: rgba(255,234,166,.3);
+    background: rgba(255,234,166,.1)
 }
 
-.resultQ .aTxt{
-  font-weight:900;
-  overflow:hidden;
-  text-overflow:ellipsis;
-  white-space:nowrap;
+.chip.bad {
+    border-color: rgba(255,120,120,.35);
+    background: rgba(255,120,120,.12)
 }
 
-.resultQ .aVal{
-  opacity:.95;
-  font-weight:1000;
-  color: var(--gold);
-  flex: 0 0 auto;
+.card {
+    border-radius: 20px;
+    border: 1px solid var(--line);
+    background: var(--card);
+    padding: 14px;
+    box-shadow: 0 24px 60px rgba(0,0,0,.45)
 }
 
-/* poll_text close panel */
-.tcQ{
-  border:1px solid var(--line);
-  background: var(--card2);
-  border-radius:18px;
-  padding:12px;
+.name {
+    font-weight: 1000;
+    font-size: 16px;
+    letter-spacing: .04em
 }
 
-.tcQ .head{
-  display:flex;
-  justify-content:space-between;
-  gap:10px;
-  align-items:flex-start;
+.meta {
+    opacity: .75;
+    font-size: 12px;
+    margin-top: 6px;
+    line-height: 1.35
 }
 
-.tcQ .qTitle{
-  font-weight:1000;
-  line-height:1.25;
+.resultQ,.tcQ {
+    border: 1px solid var(--line);
+    background: var(--card2);
+    border-radius: 18px;
+    padding: 12px
 }
 
-.tcQ .qHint{
-  opacity:.75;
-  font-size:12px;
-  margin-top:6px;
+.resultQ .qTitle {
+    font-weight: 1000;
+    margin-bottom: 8px;
+    line-height: 1.25
 }
 
-.tcList{
-  margin-top:10px;
-  display:grid;
-  gap:8px;
+.resultQ .aRow {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: 14px;
+    border: 1px solid rgba(255,255,255,.1);
+    background: rgba(255,255,255,.05);
+    margin-top: 8px
 }
 
-.tcItem{
-  display:flex;
-  gap:10px;
-  align-items:center;
-  padding:10px;
-  border-radius:14px;
-  border:1px solid rgba(255,255,255,.10);
-  background: rgba(255,255,255,.05);
+.resultQ .aTxt {
+    font-weight: 900;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap
 }
 
-.tcItem.dragging{ opacity:.65; transform: scale(.99); }
-
-.tcTxt{
-  font-weight:900;
-  overflow:hidden;
-  white-space:nowrap;
-  text-overflow:ellipsis;
-  flex: 1 1 auto;
+.resultQ .aVal {
+    opacity: .95;
+    font-weight: 1000;
+    color: var(--gold);
+    flex: 0 0 auto
 }
 
-.tcCnt{
-  font-weight:1000;
-  color: var(--gold);
-  flex: 0 0 auto;
+.tcQ .head {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    align-items: flex-start
 }
 
-.tcDel{
-  width:40px;height:40px;
-  border-radius:14px;
-  border:1px solid rgba(255,120,120,.35);
-  background: rgba(255,120,120,.12);
-  color:#fff;
-  font-weight:1000;
-  cursor:pointer;
-  flex:0 0 auto;
+.tcQ .qTitle {
+    font-weight: 1000;
+    line-height: 1.25
 }
 
-#resultsList { display:grid; gap:12px; }
+.tcQ .qHint {
+    opacity: .75;
+    font-size: 12px;
+    margin-top: 6px
+}
+
+.tcList {
+    margin-top: 10px;
+    display: grid;
+    gap: 8px
+}
+
+.tcItem {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    padding: 10px;
+    border-radius: 14px;
+    border: 1px solid rgba(255,255,255,.1);
+    background: rgba(255,255,255,.05)
+}
+
+.tcItem.dragging {
+    opacity: .65;
+    transform: scale(.99)
+}
+
+.tcTxt {
+    font-weight: 900;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    flex: 1 1 auto
+}
+
+.tcCnt,.tcDel {
+    font-weight: 1000;
+    flex: 0 0 auto
+}
+
+.tcCnt {
+    color: var(--gold)
+}
+
+.tcDel {
+    width: 40px;
+    height: 40px;
+    border-radius: 14px;
+    border: 1px solid rgba(255,120,120,.35);
+    background: rgba(255,120,120,.12);
+    color: #fff;
+    cursor: pointer
+}
+
+#resultsList {
+    display: grid;
+    gap: 12px
+}
