@@ -662,4 +662,15 @@ input, textarea{ user-select:text; }
   border-top:1px solid rgba(255,255,255,.1);
 }
 
+/* === DnD feedback: drop-pulse === */
+@keyframes dropPulse {
+  0%   { box-shadow: 0 0 0 0 rgba(120, 180, 255, 0.0); }
+  20%  { box-shadow: 0 0 0 3px rgba(120, 180, 255, 0.45); }
+  60%  { box-shadow: 0 0 0 6px rgba(120, 180, 255, 0.18); }
+  100% { box-shadow: 0 0 0 10px rgba(120, 180, 255, 0.0); }
+}
 
+.drop-pulse {
+  animation: dropPulse 420ms ease-out;
+  border-radius: 10px; /* dopasuj do Twoich row */
+}
