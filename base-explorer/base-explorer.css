@@ -206,6 +206,13 @@ input,textarea {
     box-shadow: 0 12px 30px rgba(0,0,0,.45)
 }
 
+.cm-sep{
+  height:1px;
+  margin:6px 6px;                 /* prawie na całą szerokość */
+  background: rgba(255,255,255,.10);
+  border-radius: 999px;
+}
+
 .cm-item {
     width: 100%;
     text-align: left;
