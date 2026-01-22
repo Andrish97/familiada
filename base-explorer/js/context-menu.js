@@ -41,6 +41,10 @@ export async function showContextMenu({ state, x, y, target }) {
   // target: { kind: 'cat'|'q'|'root', id: string|null }
   const editor = isEditor(state);
 
+  const readOnlyView =
+    state.view === VIEW.SEARCH ||
+    state.view === VIEW.TAG; // jeśli VIEW.TAG jeszcze nie ma, daj guard jak niżej
+
   const items = [];
 
   // Root / puste tło listy: akcje w aktualnym miejscu (root lub aktualny folder)
@@ -48,11 +52,11 @@ export async function showContextMenu({ state, x, y, target }) {
     const parentId = (state.view === VIEW.FOLDER && state.folderId) ? state.folderId : null;
     const categoryId = parentId;
   
-    items.push({ label: "Nowy folder", disabled: !editor, action: async () => {
+    items.push({ label: "Nowy folder", disabled: !editor || readOnlyView, action: async () => {
       await createFolderHere(state, { parentId });
     }});
-  
-    items.push({ label: "Nowe pytanie", disabled: !editor, action: async () => {
+
+    items.push({ label: "Nowe pytanie", disabled: !editor || readOnlyView, action: async () => {
       await createQuestionHere(state, { categoryId });
     }});
   
@@ -70,9 +74,20 @@ export async function showContextMenu({ state, x, y, target }) {
   }
 
   const canPaste = !!state?.clipboard?.mode && state?.clipboard?.keys?.size > 0;
-  items.push({ label: "Wklej", disabled: !canPaste || (!editor && state.clipboard?.mode === "cut"), action: async () => {
-    await pasteClipboardHere(state);
-  }});
+
+  const pasteDisabled =
+    readOnlyView ||
+    !canPaste ||
+    (!editor && state.clipboard?.mode === "cut");
+
+  items.push({
+    label: "Wklej",
+    disabled: pasteDisabled,
+    action: async () => {
+      if (readOnlyView) return; // twarda blokada (na wszelki wypadek)
+      await pasteClipboardHere(state);
+    }
+  });
 
   // Folder
   if (target.kind === "cat") {
