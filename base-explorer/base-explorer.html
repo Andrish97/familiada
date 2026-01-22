@@ -79,54 +79,104 @@
   <!-- MODALE (wstrzykiwane JS-em) -->
   <div id="modalRoot"></div>
 
-  <!-- Tag modal -->
-  <div id="tagModal" class="m-modal" hidden>
-    <div class="m-modal__backdrop" data-close="1"></div>
-    <div class="m-modal__card" role="dialog" aria-modal="true" aria-labelledby="tagModalTitle">
-      <div class="m-modal__head">
-        <div id="tagModalTitle" class="m-h3">Tag</div>
-        <button type="button" class="btn ghost" id="tagModalClose" title="Zamknij">✕</button>
+  <!-- TAGS MODAL (3 warstwy) -->
+  <div id="tagsModal" class="m-modal" hidden>
+    <div class="m-modal-backdrop" data-close="1"></div>
+  
+    <div class="m-modal-card" role="dialog" aria-modal="true" aria-labelledby="tagsModalTitle">
+      <div class="m-modal-head">
+        <div class="m-h3" id="tagsModalTitle">Tagi</div>
+        <button id="tagsModalClose" class="m-btn m-btn-ghost" type="button" title="Zamknij">✕</button>
       </div>
   
-      <div class="m-modal__body">
-        <label class="m-p" style="display:block; margin-bottom:6px;">Nazwa</label>
-        <input id="tagNameInp" class="inp" placeholder="np. pieski" maxlength="40" />
+      <div class="m-modal-body">
+        <!-- WARSTWA 1: przypisz tagi (tri-state) -->
+        <section id="tagsLayerAssign" class="tags-layer">
+          <div class="m-note" id="tagsAssignInfo"></div>
+          <div id="tagsAssignList" class="tags-list"></div>
   
-        <div style="height:12px;"></div>
+          <div class="tags-actions">
+            <button id="tagsAssignAddBtn" class="m-btn" type="button">Dodaj tag…</button>
+            <div class="tags-actions-spacer"></div>
+            <button id="tagsAssignCancel" class="m-btn m-btn-ghost" type="button">Anuluj</button>
+            <button id="tagsAssignSave" class="m-btn m-btn-primary" type="button">Zapisz</button>
+          </div>
   
-        <label class="m-p" style="display:block; margin-bottom:6px;">Kolor</label>
-        <input id="tagColorInp" class="inp" type="color" value="#4da3ff" style="height:44px; padding:6px;" />
+          <div id="tagsAssignErr" class="m-warn" hidden></div>
+        </section>
   
-        <div id="tagModalErr" class="m-warn" hidden style="margin-top:12px;"></div>
-      </div>
+        <!-- WARSTWA 2: dodaj/edytuj tag -->
+        <section id="tagsLayerEdit" class="tags-layer" hidden>
+          <div class="m-p" id="tagsEditHelp"></div>
   
-      <div class="m-modal__foot">
-        <button type="button" class="btn ghost" id="tagModalCancel">Anuluj</button>
-        <button type="button" class="btn" id="tagModalSave">Zapisz</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Assign tags modal -->
-  <div id="assignTagsModal" class="m-modal" hidden>
-    <div class="m-modal__backdrop" data-close="1"></div>
-    <div class="m-modal__card" role="dialog" aria-modal="true" aria-labelledby="assignTagsTitle">
-      <div class="m-modal__head">
-        <div id="assignTagsTitle" class="m-h3">Przypisz tagi</div>
-        <button type="button" class="btn ghost" id="assignTagsClose" title="Zamknij">✕</button>
-      </div>
+          <label class="m-p">
+            Nazwa taga
+            <input id="tagsEditName" class="m-inp" type="text" maxlength="40" autocomplete="off" />
+          </label>
   
-      <div class="m-modal__body">
-        <div class="m-p" id="assignTagsInfo" style="opacity:.85; margin-bottom:10px;"></div>
+          <div class="tags-color-row">
+            <span class="m-p">Kolor</span>
+            <button id="tagsEditColorBtn" class="tag-color-btn" type="button" aria-label="Wybierz kolor">
+              <span id="tagsEditColorDot" class="tag-dot"></span>
+            </button>
+          </div>
   
-        <div id="assignTagsList" style="display:flex; flex-direction:column; gap:8px; max-height:45vh; overflow:auto; padding-right:6px;"></div>
+          <div class="tags-actions">
+            <button id="tagsEditCancel" class="m-btn m-btn-ghost" type="button">Wstecz</button>
+            <div class="tags-actions-spacer"></div>
+            <button id="tagsEditSave" class="m-btn m-btn-primary" type="button">OK</button>
+          </div>
   
-        <div id="assignTagsErr" class="m-warn" hidden style="margin-top:12px;"></div>
-      </div>
+          <div id="tagsEditErr" class="m-warn" hidden></div>
+        </section>
   
-      <div class="m-modal__foot">
-        <button type="button" class="btn ghost" id="assignTagsCancel">Anuluj</button>
-        <button type="button" class="btn" id="assignTagsSave">Zapisz</button>
+        <!-- WARSTWA 3: picker koloru -->
+        <section id="tagsLayerColor" class="tags-layer" hidden>
+          <div class="colorModalBox" style="max-width:560px; width:100%; padding:0; border:none; box-shadow:none; background:transparent;">
+            <div class="colorModalHead">
+              <div class="colorModalTitle" id="tagsColorTitle">Kolor</div>
+              <button class="m-btn m-btn-ghost" id="tagsColorClose" type="button">✕</button>
+            </div>
+        
+            <div class="colorModalBody">
+              <div class="colorTopRow">
+                <div class="colorPreview" id="tagsColorPreview" aria-label="Podgląd koloru"></div>
+        
+                <div class="field sm" style="min-width:260px;">
+                  <div class="lbl2">HEX</div>
+                  <input class="inp" id="tagsColorHex" autocomplete="off" spellcheck="false" inputmode="text" />
+                  <div class="hint" style="max-width:360px;">
+                    Format: <b>#RRGGBB</b>
+                  </div>
+                </div>
+              </div>
+        
+              <div class="sliders">
+                <div class="sliderRow">
+                  <div class="sLbl">R</div>
+                  <input class="rng" id="tagsColorR" type="range" min="0" max="255" step="1" />
+                  <div class="sVal" id="tagsColorRVal">0</div>
+                </div>
+        
+                <div class="sliderRow">
+                  <div class="sLbl">G</div>
+                  <input class="rng" id="tagsColorG" type="range" min="0" max="255" step="1" />
+                  <div class="sVal" id="tagsColorGVal">0</div>
+                </div>
+        
+                <div class="sliderRow">
+                  <div class="sLbl">B</div>
+                  <input class="rng" id="tagsColorB" type="range" min="0" max="255" step="1" />
+                  <div class="sVal" id="tagsColorBVal">0</div>
+                </div>
+              </div>
+        
+              <div class="colorModalFoot">
+                <button class="m-btn m-btn-primary" id="tagsColorDone" type="button">Gotowe</button>
+              </div>
+            </div>
+          </div>
+        </section>
       </div>
     </div>
   </div>
