@@ -393,3 +393,46 @@ input, textarea{ user-select:text; }
   background: var(--chip, rgba(255,255,255,.35));
   display:inline-block;
 }
+/* ===== Modal (prosty, własny) ===== */
+.m-modal{
+  position:fixed;
+  inset:0;
+  z-index:9999;
+}
+
+.m-modal__backdrop{
+  position:absolute;
+  inset:0;
+  background: rgba(0,0,0,.55);
+}
+
+.m-modal__card{
+  position:relative;
+  width:min(520px, calc(100vw - 24px));
+  margin: 10vh auto 0 auto;
+  background: rgba(20,20,24,.98);
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 14px;
+  overflow:hidden;
+  box-shadow: 0 18px 70px rgba(0,0,0,.45);
+}
+
+.m-modal__head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding: 14px 14px;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+}
+
+.m-modal__body{
+  padding: 14px;
+}
+
+.m-modal__foot{
+  display:flex;
+  justify-content:flex-end;
+  gap: 10px;
+  padding: 14px;
+  border-top: 1px solid rgba(255,255,255,.08);
+}
