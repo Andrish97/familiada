@@ -1270,7 +1270,7 @@ async function openAssignTagsModal(state) {
   }
 
   if (cIds.length) {
-    const links = await (await import("./repo.js")).listCategoryTags(cIds); // bezpieczne, bo masz importy u góry? Patrz uwaga niżej.
+    const links = await listCategoryTags(cIds);
     // UWAGA: jeśli wolisz bez dynamic import, dodaj listCategoryTags do importów na górze actions.js
     for (const l of (links || [])) {
       if (!cMap.has(l.category_id)) cMap.set(l.category_id, new Set());
@@ -2252,6 +2252,7 @@ export function wireActions({ state }) {
       if (error) throw error;
       state.categories = data || [];
     },
+    openAssignTagsModal: () => openAssignTagsModal(state),
   };
 
   // udostępniamy do context-menu (żeby mogło odświeżyć widok po delete)
@@ -2353,6 +2354,13 @@ export function wireActions({ state }) {
           console.error(err);
           alert("Nie udało się utworzyć folderu.");
         }
+        return;
+      }
+
+      if (mod && (e.key === "t" || e.key === "T")) {
+        e.preventDefault();
+        if (!canWrite(state)) return;
+        await openAssignTagsModal(state);
         return;
       }
     
