@@ -1,450 +1,432 @@
 /* base-explorer/base-explorer.css */
-/* Layout menadżera bazy (warstwa 2) */
-
-/* ===== Topbar – opieramy się o builder.css, tu tylko drobne dopasowania ===== */
-.topbar .topbar-left{
-  display:flex;
-  align-items:center;
-  gap:12px;
-}
-.topbar .topbar-title .title{ font-weight:700; }
-.topbar .topbar-title .subtitle{
-  opacity:.75;
-  font-size:12px;
-  margin-top:2px;
-}
-.topbar .topbar-right{
-  display:flex;
-  align-items:center;
-  gap:10px;
+.topbar .topbar-left,.topbar .topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 12px
 }
 
-/* ===== Toolbar ===== */
-.toolbar{
-  display:flex;
-  align-items:center;
-  gap:10px;
-  padding:10px 12px;
+.topbar .topbar-title .title {
+    font-weight: 700
 }
 
-/* ===== Główny split view ===== */
-.explorer{
-  display:grid;
-  grid-template-columns:320px 1fr;
-  gap:0;                      /* separator na styk */
-  padding:0 12px 12px;
-  min-height:calc(100vh - 120px);
-  aling-items:stretch;
+.topbar .topbar-title .subtitle {
+    opacity: .75;
+    font-size: 12px;
+    margin-top: 2px
 }
 
-/* ===== Lewy panel ===== */
-.explorer-left{
-  border-right:1px solid rgba(255,255,255,.12);
-  padding-right:12px;
-
-  display:flex;
-  flex-direction:column;
-  gap:12px;
-
-  min-height:0;    /* kluczowe dla scrolli */
+.topbar .topbar-right {
+    gap: 10px
 }
 
-/* Tree: rośnie tylko do limitu, potem ma scroll.
-   Dzięki temu Tagi są ZARAZ pod tree, a nie “na dole panelu”. */
-.tree{
-  flex: 0 0 auto;
-  max-height: 55vh;
-  overflow:auto;
-
-  border-radius:12px;
-  padding:10px;
-  min-height:120px;
+.toolbar {
+    display: flex;
+    gap: 10px;
+    padding: 10px 12px
 }
 
-/* Tagi biorą resztę wysokości panelu */
-.tags{
-  flex: 1 1 auto;
-  overflow:auto;
-
-  border-radius:12px;
-  padding:10px;
-  min-height:120px;
+.explorer {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: 0;
+    padding: 0 12px 12px;
+    min-height: calc(100vh - 120px);
+    aling-items: stretch
 }
 
-/* ===== Prawy panel ===== */
-.explorer-right{
-  display:grid;
-  grid-template-rows: auto auto 1fr; /* breadcrumbs / nagłówek / lista */
-  gap:12px;
-  min-width:0;
-  padding-left:12px;
-  min-height:0;               /* ważne dla scrolla w grid */
+.explorer-left {
+    border-right: 1px solid rgba(255,255,255,.12);
+    padding-right: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-height: 0
 }
 
-.breadcrumbs{
-  border-radius:12px;
-  padding:10px 12px;
-  min-height:44px;
-  display:flex;
-  align-items:center;
-  gap:8px;
-  overflow:hidden;
-  white-space:nowrap;
-  text-overflow:ellipsis;
+.tags,.tree {
+    overflow: auto;
+    border-radius: 12px;
+    padding: 10px;
+    min-height: 120px
 }
 
-/* ===== Panel listy (nagłówek + lista w jednym "pudełku") ===== */
-/* Uwaga: list-head siedzi nad #list, więc stylujemy je tak, by wyglądały jak jeden panel */
-.list-head,
-.list{
-  background:transparent; /* builder.css zwykle i tak daje tło kartom; nie narzucamy koloru */
+.tree {
+    flex: 0 0 auto;
+    max-height: 55vh
 }
 
-/* Zamiast border-radius na .list (który robił łuki przy borderach),
-   robimy radius na "pierwszym i ostatnim" w zestawie: */
-.list-head{
-  border-radius:12px 12px 0 0;
-}
-.list{
-  border-radius:0 0 12px 12px;
+.tags {
+    flex: 1 1 auto
 }
 
-/* ===== Nagłówek tabeli ===== */
-.list-head{
-  display:grid;
-  grid-template-columns:44px 1fr 96px;
-  gap:10px;
-
-  padding:6px 12px;                 /* nisko, nie „wysoko” */
-  min-height:0;
-  line-height:1.2;
-
-  border-bottom:1px solid rgba(255,255,255,.18);
-
-  font-size:12px;
-  text-transform:uppercase;
-  letter-spacing:.04em;
-  color:rgba(255,255,255,.55);
-  user-select:none;
+.explorer-right {
+    display: grid;
+    grid-template-rows: auto auto 1fr;
+    gap: 12px;
+    min-width: 0;
+    padding-left: 12px;
+    min-height: 0
 }
 
-.list-head > div{ white-space:nowrap; }
-.list-head .h-num{ text-align:left; }
-.list-head .h-meta{ text-align:right; }
-
-.list-head .h-num,
-.list-head .h-main{ cursor:pointer; }
-
-.list-head .active{ color:rgba(255,255,255,.80); }
-
-.list-head .h-num::after,
-.list-head .h-main::after{
-  content:"";
-  display:inline-block;
-  margin-left:6px;
-  opacity:.65;
+.breadcrumbs,.row .col-main .title {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis
 }
 
-.list-head .h-num.active[data-dir="asc"]::after,
-.list-head .h-main.active[data-dir="asc"]::after{ content:"▲"; }
-
-.list-head .h-num.active[data-dir="desc"]::after,
-.list-head .h-main.active[data-dir="desc"]::after{ content:"▼"; }
-
-/* ===== Lista ===== */
-.list{
-  padding:6px 0;                    /* mniej “poduszki” */
-  overflow:auto;
-  border-top:0;                     /* nagłówek ma swoją linię */
-}
-.list{ min-height: 0; }
-
-/* Explorer: selekcja ma zaznaczać elementy, nie tekst */
-.row{ user-select:none; }
-/* Ale pola formularzy nadal mają działać normalnie */
-input, textarea{ user-select:text; }
-
-/* ===== Wiersz tabeli ===== */
-.row{
-  display:grid;
-  grid-template-columns:44px 1fr 96px;
-  align-items:center;
-  gap:10px;
-
-  padding:10px 12px;
-  border-bottom:1px solid rgba(255,255,255,.10);
+.breadcrumbs {
+    border-radius: 12px;
+    padding: 10px 12px;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    gap: 8px
 }
 
-.row:hover{ background:rgba(255,255,255,.05); }
-
-/* kolumny */
-.row .col-num{
-  opacity:.7;
-  font-variant-numeric:tabular-nums;
+.list,.list-head {
+    background: 0 0
 }
 
-.row .col-main{ min-width:0; }
-.row .col-main .title{
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
-
-  font-weight:400;
-  color:rgba(255,255,255,.88);
+.list-head {
+    border-radius: 12px 12px 0 0
 }
 
-.row .col-meta{
-  opacity:.65;
-  font-size:12px;
-  text-align:right;
-  white-space:nowrap;
+.list {
+    border-radius: 0 0 12px 12px
 }
 
-/* Folder może być lekko “cięższy” (subtelnie) */
-.row[data-kind="cat"] .col-main .title{
-  font-weight:500;
+.list-head {
+    display: grid;
+    grid-template-columns: 44px 1fr 96px;
+    gap: 10px;
+    padding: 6px 12px;
+    min-height: 0;
+    line-height: 1.2;
+    border-bottom: 1px solid rgba(255,255,255,.18);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    color: rgba(255,255,255,.55);
+    user-select: none
 }
 
-/* ===== Kontekst menu ===== */
-.context-menu{
-  position:fixed;
-  z-index:9999;
-  min-width:220px;
-  padding:6px;
-  border-radius:12px;
-
-  background:rgba(20,20,20,.96);
-  border:1px solid rgba(255,255,255,.14);
-  box-shadow:0 12px 30px rgba(0,0,0,.45);
+.list-head>div {
+    white-space: nowrap
 }
 
-.cm-item{
-  width:100%;
-  text-align:left;
-  padding:10px 10px;
-  border-radius:10px;
-  border:0;
-  background:transparent;
-  color:inherit;
-  cursor:pointer;
+.list-head .h-num {
+    text-align: left
 }
 
-.cm-item:hover{ background:rgba(255,255,255,.08); }
-
-.cm-item.disabled{
-  opacity:.45;
-  cursor:default;
+.list-head .h-meta {
+    text-align: right
 }
 
-.cm-item.danger{ color:#ffb3b3; }
-
-/* ===== Stany przyszłe (etap 3) ===== */
-.is-disabled{ opacity:.5; pointer-events:none; }
-.is-selected{ outline:2px solid rgba(255,255,255,.25); }
-.is-drop-target{ outline:2px dashed rgba(255,255,255,.35); }
-.is-dragging{ opacity:.6; }
-
-/* list container musi być "pozycjonowany", żeby marquee było w środku */
-#list { position: relative; }
-
-/* prostokąt zaznaczania */
-.marquee{
-  position:absolute;
-  border:1px dashed rgba(120, 160, 255, .9);
-  background: rgba(120, 160, 255, .18);
-  pointer-events:none;
-  z-index: 50;
+.list-head .h-main,.list-head .h-num {
+    cursor: pointer
 }
 
-/* zaznaczenie wiersza */
-.row.is-selected{
-  outline: 2px solid rgba(120, 160, 255, .55);
-  outline-offset: -2px;
-  background: rgba(120, 160, 255, .10);
+.list-head .active {
+    color: rgba(255,255,255,.8)
+}
+
+.list-head .h-main::after,.list-head .h-num::after {
+    content: "";
+    display: inline-block;
+    margin-left: 6px;
+    opacity: .65
+}
+
+.list-head .h-main.active[data-dir=asc]::after,.list-head .h-num.active[data-dir=asc]::after {
+    content: "▲"
+}
+
+.list-head .h-main.active[data-dir=desc]::after,.list-head .h-num.active[data-dir=desc]::after {
+    content: "▼"
+}
+
+.list {
+    padding: 6px 0;
+    overflow: auto;
+    border-top: 0;
+    min-height: 0
+}
+
+.row {
+    user-select: none;
+    display: grid;
+    grid-template-columns: 44px 1fr 96px;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-bottom: 1px solid rgba(255,255,255,.1)
+}
+
+input,textarea {
+    user-select: text
+}
+
+.row:hover {
+    background: rgba(255,255,255,.05)
+}
+
+.row .col-num {
+    opacity: .7;
+    font-variant-numeric: tabular-nums
+}
+
+.row .col-main {
+    min-width: 0
+}
+
+.row .col-main .title {
+    font-weight: 400;
+    color: rgba(255,255,255,.88)
+}
+
+.row .col-meta {
+    opacity: .65;
+    font-size: 12px;
+    text-align: right;
+    white-space: nowrap
+}
+
+.row[data-kind=cat] .col-main .title {
+    font-weight: 500
+}
+
+.context-menu {
+    position: fixed;
+    z-index: 9999;
+    min-width: 220px;
+    padding: 6px;
+    border-radius: 12px;
+    background: rgba(20,20,20,.96);
+    border: 1px solid rgba(255,255,255,.14);
+    box-shadow: 0 12px 30px rgba(0,0,0,.45)
+}
+
+.cm-item {
+    width: 100%;
+    text-align: left;
+    padding: 10px;
+    border-radius: 10px;
+    border: 0;
+    background: 0 0;
+    color: inherit;
+    cursor: pointer
+}
+
+.cm-item:hover {
+    background: rgba(255,255,255,.08)
+}
+
+.cm-item.disabled {
+    opacity: .45;
+    cursor: default
+}
+
+.cm-item.danger {
+    color: #ffb3b3
+}
+
+.is-disabled {
+    opacity: .5;
+    pointer-events: none
+}
+
+.is-selected {
+    outline: 2px solid rgba(255,255,255,.25)
+}
+
+.is-drop-target {
+    outline: 2px dashed rgba(255,255,255,.35)
+}
+
+.is-dragging {
+    opacity: .6
 }
 
 #list {
-  position: relative;        /* REQUIRED dla marquee */
-  padding: 12px 16px;        /* ← to jest klucz */
-  box-sizing: border-box;
-  min-height: 100%;
+    position: relative;
+    padding: 12px 16px;
+    box-sizing: border-box;
+    min-height: 100%
+}
+
+.marquee {
+    position: absolute;
+    border: 1px dashed rgba(120,160,255,.9);
+    background: rgba(120,160,255,.18);
+    pointer-events: none;
+    z-index: 50
+}
+
+.row.is-selected {
+    outline: 2px solid rgba(120,160,255,.55);
+    outline-offset: -2px;
+    background: rgba(120,160,255,.1)
 }
 
 #list .row:first-child {
-  margin-top: 6px;
+    margin-top: 6px
 }
 
-/* Drzewo nie jest tabelą jak lista */
 #tree .row.tree-row {
-  display: block;           /* zamiast grid/kolumn */
+    display: block
 }
 
 #tree .row.tree-row .col-main {
-  width: 100%;
+    width: 100%
 }
 
-/* Na wszelki wypadek, jeśli globalnie .row to grid */
-#tree .row.tree-row .col-num,
-#tree .row.tree-row .col-meta {
-  display: none !important;
-}
-/* ===== Drzewo: trójkąty (toggle) dziedziczą kolor tekstu ===== */
-#tree .tree-toggle{
-  color: inherit;        /* kluczowe */
-  fill: currentColor;    /* na przyszłość (gdyby były SVG) */
+#tree .row.tree-row .col-meta,#tree .row.tree-row .col-num {
+    display: none!important
 }
 
-#tree .tree-toggle:hover{
-  opacity: .75;
+#tree .tree-toggle {
+    color: inherit;
+    fill: currentColor;
+    flex: 0 0 18px
 }
 
-/* Tree/List: drop preview */
-.is-drop-into{
-  outline:2px dashed rgba(255,255,255,.35);
-  outline-offset:-2px;
+#tree .tree-toggle:hover {
+    opacity: .75
 }
 
-.is-drop-before{
-  position:relative;
-}
-.is-drop-before::before{
-  content:"";
-  position:absolute;
-  left:8px;
-  right:8px;
-  top:0;
-  height:2px;
-  background:rgba(255,255,255,.55);
+.is-drop-into {
+    outline: 2px dashed rgba(255,255,255,.35);
+    outline-offset: -2px
 }
 
-.is-drop-after{
-  position:relative;
-}
-.is-drop-after::after{
-  content:"";
-  position:absolute;
-  left:8px;
-  right:8px;
-  bottom:0;
-  height:2px;
-  background:rgba(255,255,255,.55);
-}
-/* ===== Drzewo: odchudzamy padding z globalnego .row ===== */
-#tree .row.tree-row{
-  padding: 6px 8px;     /* mniej poduszki niż lista */
-  border-bottom: 1px solid rgba(255,255,255,.08);
+#tags,#tree,.is-drop-after,.is-drop-before {
+    position: relative
 }
 
-#tree .row.tree-row:hover{
-  background: rgba(255,255,255,.04);
+.is-drop-after::after,.is-drop-before::before {
+    content: "";
+    position: absolute;
+    left: 8px;
+    right: 8px;
+    height: 2px;
+    background: rgba(255,255,255,.55)
 }
 
-/* Kolumna "main" w drzewie ma być ciasna i równa */
-#tree .row.tree-row .col-main{
-  gap: 6px;
+.is-drop-before::before {
+    top: 0
 }
 
-/* Toggle ma zawsze stałą szerokość, bez dodatkowego “wrażenia marginesu” */
-#tree .tree-toggle{
-  flex: 0 0 18px;
+.is-drop-after::after {
+    bottom: 0
 }
 
-/* ===== Searchbox: szerokość lewego panelu + wrap w dół ===== */
-.toolbar{
-  align-items:flex-start; /* żeby search mógł rosnąć w dół */
+#tree .row.tree-row {
+    padding: 6px 8px;
+    border-bottom: 1px solid rgba(255,255,255,.08)
 }
 
-.searchbox{
-  width: 320px;              /* tyle co lewy panel */
-  display:flex;
-  flex-wrap:wrap;            /* chipsy + input zawijają się */
-  align-items:center;
-  gap:6px;
+#tree .row.tree-row:hover {
+    background: rgba(255,255,255,.04)
 }
 
-.searchchips{
-  display:flex;
-  flex-wrap:wrap;
-  gap:6px;
-  width:100%;
+#tree .row.tree-row .col-main {
+    gap: 6px
 }
 
-.searchinp{
-  flex: 1 1 180px;          /* rośnie w bok, a jak brak miejsca to w dół */
-  min-width: 140px;
+.toolbar {
+    align-items: flex-start
 }
 
-.chip{
-  display:inline-flex;
-  align-items:center;
-  gap:6px;
-  padding:6px 10px;
-  border-radius:999px;
-  border:1px solid rgba(255,255,255,.14);
-  background: rgba(255,255,255,.06);
-  position:relative;
-  user-select:none;
-  white-space:nowrap;
+.searchbox,.searchchips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px
 }
 
-.chip::before{
-  content:"";
-  width:10px;
-  height:10px;
-  border-radius:999px;
-  background: var(--chip, rgba(255,255,255,.35));
-  display:inline-block;
-}
-/* ===== Modal (prosty, własny) ===== */
-.m-modal{
-  position:fixed;
-  inset:0;
-  z-index:9999;
+.searchbox {
+    width: 320px;
+    align-items: center
 }
 
-.m-modal__backdrop{
-  position:absolute;
-  inset:0;
-  background: rgba(0,0,0,.55);
+.searchchips {
+    width: 100%
 }
 
-.m-modal__card{
-  position:relative;
-  width:min(520px, calc(100vw - 24px));
-  margin: 10vh auto 0 auto;
-  background: rgba(20,20,24,.98);
-  border: 1px solid rgba(255,255,255,.12);
-  border-radius: 14px;
-  overflow:hidden;
-  box-shadow: 0 18px 70px rgba(0,0,0,.45);
+.searchinp {
+    flex: 1 1 180px;
+    min-width: 140px
 }
 
-.m-modal__head{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  padding: 14px 14px;
-  border-bottom: 1px solid rgba(255,255,255,.08);
+.chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    border: 1px solid rgba(255,255,255,.14);
+    background: rgba(255,255,255,.06);
+    position: relative;
+    user-select: none;
+    white-space: nowrap
 }
 
-.m-modal__body{
-  padding: 14px;
+.chip::before {
+    content: "";
+    width: 10px;
+    height: 10px;
+    border-radius: 999px;
+    background: var(--chip, rgba(255,255,255,.35));
+    display: inline-block
 }
 
-.m-modal__foot{
-  display:flex;
-  justify-content:flex-end;
-  gap: 10px;
-  padding: 14px;
-  border-top: 1px solid rgba(255,255,255,.08);
-}
-.tag-dot{
-  width:10px;
-  height:10px;
-  border-radius:999px;
-  background: rgba(255,255,255,.25);
-  box-shadow: 0 0 0 1px rgba(255,255,255,.12) inset;
-  flex: 0 0 auto;
+.m-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 9999
 }
 
-#tree, #tags { position: relative; }
+.m-modal__backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,.55)
+}
+
+.m-modal__card {
+    position: relative;
+    width: min(520px,calc(100vw - 24px));
+    margin: 10vh auto 0;
+    background: rgba(20,20,24,.98);
+    border: 1px solid rgba(255,255,255,.12);
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 18px 70px rgba(0,0,0,.45)
+}
+
+.m-modal__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px;
+    border-bottom: 1px solid rgba(255,255,255,.08)
+}
+
+.m-modal__body {
+    padding: 14px
+}
+
+.m-modal__foot {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 14px;
+    border-top: 1px solid rgba(255,255,255,.08)
+}
+
+.tag-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 999px;
+    background: rgba(255,255,255,.25);
+    box-shadow: 0 0 0 1px rgba(255,255,255,.12) inset;
+    flex: 0 0 auto
+}
