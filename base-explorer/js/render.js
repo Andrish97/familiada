@@ -196,7 +196,6 @@ export function renderTree(state) {
           </div>
         </div>
       </div>
-      <div class="left-sep" aria-hidden="true"></div>
     `;
   }
 
