@@ -96,7 +96,7 @@ export function renderTree(state) {
     // UWAGA: data-kind i data-id są na .row (żeby działał obecny handler w actions.js)
     return `
       <div class="row" data-kind="${kind}" data-id="${id ? esc(id) : ""}" style="cursor:pointer;">
-        <div class="col-num">—</div>
+        <div class="col-num"></div>
         <div class="col-main" style="padding-left:${pad}px; display:flex; align-items:center; gap:6px; ${activeStyle}">
           ${toggle}
           <div class="title">📁 ${esc(label || "Folder")}</div>
