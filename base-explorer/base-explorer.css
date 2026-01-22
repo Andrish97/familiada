@@ -1,798 +1,672 @@
 /* base-explorer/base-explorer.css */
-.topbar .topbar-left,.topbar .topbar-right {
-    display: flex;
-    align-items: center;
-    gap: 12px
-}
-
-.topbar .topbar-right {
-    gap: 10px
-}
-
-.topbar .topbar-title .title {
-    font-weight: 700
-}
-
-.topbar .topbar-title .subtitle {
-    opacity: .75;
-    font-size: 12px;
-    margin-top: 2px
-}
-
-.toolbar {
-    display: flex;
-    gap: 10px;
-    padding: 10px 12px
-}
-
-.explorer {
-    display: grid;
-    grid-template-columns: 320px 1fr;
-    gap: 0;
-    padding: 0 12px 12px;
-    min-height: calc(100vh - 120px);
-    align-items: stretch
-}
-
-.explorer-left {
-    border-right: 1px solid rgba(255,255,255,.12);
-    padding-right: 12px;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    min-height: 0
-}
-
-.tags,.tree {
-    overflow: auto;
-    border-radius: 12px;
-    padding: 10px;
-    min-height: 120px
-}
-
-.tree {
-    flex: 0 0 auto;
-    max-height: 55vh
-}
-
-.tags {
-    flex: 1 1 auto
-}
-
-.explorer-right {
-    display: grid;
-    grid-template-rows: auto auto 1fr;
-    gap: 12px;
-    min-width: 0;
-    padding-left: 12px;
-    min-height: 0
-}
-
-.breadcrumbs,.row .col-main .title {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis
-}
-
-.breadcrumbs {
-    border-radius: 12px;
-    padding: 10px 12px;
-    min-height: 44px;
-    display: flex;
-    align-items: center;
-    gap: 8px
-}
-
-.list,.list-head {
-    background: 0 0
-}
-
-.list-head {
-    border-radius: 12px 12px 0 0
-}
-
-.list {
-    border-radius: 0 0 12px 12px
-}
-
-.list-head {
-    display: grid;
-    grid-template-columns: 44px 1fr 96px;
-    gap: 10px;
-    padding: 6px 12px;
-    min-height: 0;
-    line-height: 1.2;
-    border-bottom: 1px solid rgba(255,255,255,.18);
-    font-size: 12px;
-    text-transform: uppercase;
-    letter-spacing: .04em;
-    color: rgba(255,255,255,.55);
-    user-select: none
-}
-
-.list-head>div {
-    white-space: nowrap
-}
-
-.list-head .h-num {
-    text-align: left
-}
-
-.list-head .h-meta {
-    text-align: right
-}
-
-.list-head .h-main,.list-head .h-num {
-    cursor: pointer
-}
-
-.list-head .active {
-    color: rgba(255,255,255,.8)
-}
-
-.list-head .h-main::after,.list-head .h-num::after {
-    content: "";
-    display: inline-block;
-    margin-left: 6px;
-    opacity: .65
-}
-
-.list-head .h-main.active[data-dir=asc]::after,.list-head .h-num.active[data-dir=asc]::after {
-    content: "▲"
-}
-
-.list-head .h-main.active[data-dir=desc]::after,.list-head .h-num.active[data-dir=desc]::after {
-    content: "▼"
-}
-
-.list {
-    padding: 6px 0;
-    overflow: auto;
-    border-top: 0;
-    min-height: 0
-}
-
-.row {
-    user-select: none;
-    display: grid;
-    grid-template-columns: 44px 1fr 96px;
-    align-items: center;
-    gap: 10px;
-    padding: 10px 12px;
-    border-bottom: 1px solid rgba(255,255,255,.1)
-}
-
-input,textarea {
-    user-select: text
-}
-
-.row:hover {
-    background: rgba(255,255,255,.05)
-}
-
-.row .col-num {
-    opacity: .7;
-    font-variant-numeric: tabular-nums
-}
-
-.row .col-main {
-    min-width: 0
-}
-
-.row .col-main .title {
-    font-weight: 400;
-    color: rgba(255,255,255,.88)
-}
-
-.row .col-meta {
-    opacity: .65;
-    font-size: 12px;
-    text-align: right;
-    white-space: nowrap
-}
-
-.row[data-kind=cat] .col-main .title {
-    font-weight: 500
-}
-
-.context-menu {
-    position: fixed;
-    z-index: 9999;
-    min-width: 220px;
-    padding: 6px;
-    border-radius: 12px;
-    background: rgba(20,20,20,.96);
-    border: 1px solid rgba(255,255,255,.14);
-    box-shadow: 0 12px 30px rgba(0,0,0,.45)
-}
-
-.cm-sep {
-    height: 1px;
-    margin: 6px;
-    background: rgba(255,255,255,.1);
-    border-radius: 999px
-}
-
-.cm-item {
-    width: 100%;
-    text-align: left;
-    padding: 10px;
-    border-radius: 10px;
-    border: 0;
-    background: 0 0;
-    color: inherit;
-    cursor: pointer
-}
-
-.cm-item:hover {
-    background: rgba(255,255,255,.08)
-}
-
-.cm-item.disabled {
-    opacity: .45;
-    cursor: default
-}
-
-.cm-item.danger {
-    color: #ffb3b3
-}
-
-.is-disabled {
-    opacity: .5;
-    pointer-events: none
-}
-
-.is-selected {
-    outline: 2px solid rgba(255,255,255,.25)
-}
-
-.is-drop-target {
-    outline: 2px dashed rgba(255,255,255,.35)
-}
-
-.is-dragging {
-    opacity: .6
-}
-
-#list {
-    position: relative;
-    padding: 12px 16px;
-    box-sizing: border-box;
-    min-height: 100%
-}
-
-.marquee {
-    position: absolute;
-    border: 1px dashed rgba(120,160,255,.9);
-    background: rgba(120,160,255,.18);
-    pointer-events: none;
-    z-index: 50
-}
-
-.row.is-selected {
-    outline: 2px solid rgba(120,160,255,.55);
-    outline-offset: -2px;
-    background: rgba(120,160,255,.1)
-}
-
-#list .row:first-child {
-    margin-top: 6px
-}
-
-#tree .row.tree-row {
-    display: block
-}
-
-/* (3b) Oddech pod listą folderów (nie między wierszami) */
-#tree .treeList {
-  padding-bottom: 30px;
-  scroll-padding-bottom: 30px;
-}
-
-#tree .row.tree-row .col-main {
-    width: 100%
-}
-
-#tree .row.tree-row .col-meta,#tree .row.tree-row .col-num {
-    display: none!important
-}
-
-#tree .tree-toggle {
-    color: inherit;
-    fill: currentColor;
-    flex: 0 0 18px
-}
-
-#tree .tree-toggle:hover {
-    opacity: .75
-}
-
-.is-drop-into {
-    outline: 2px dashed rgba(255,255,255,.35);
-    outline-offset: -2px
-}
-
-#tags,#tree,.is-drop-after,.is-drop-before {
-    position: relative
-}
-
-.is-drop-after::after,.is-drop-before::before {
-    content: "";
-    position: absolute;
-    left: 8px;
-    right: 8px;
-    height: 2px;
-    background: rgba(255,255,255,.55)
-}
-
-.is-drop-before::before {
-    top: 0
-}
-
-.is-drop-after::after {
-    bottom: 0
-}
-
-#tree .row.tree-row {
-    padding: 6px 8px;
-    border-bottom: 1px solid rgba(255,255,255,.08)
-}
-
-#tree .row.tree-row:hover,.tags-row:hover {
-    background: rgba(255,255,255,.04)
-}
-
-#tree .row.tree-row .col-main {
-    gap: 6px
-}
-
-.toolbar {
-    align-items: flex-start
-}
-
-.searchbox,.searchchips {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px
-}
-
-.searchbox {
-    width: 320px;
-    align-items: center
-}
-
-.searchchips {
-    width: 100%
-}
-
-.searchinp {
-    flex: 1 1 180px;
-    min-width: 140px
-}
-
-.chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 6px 10px;
-    border-radius: 999px;
-    border: 1px solid rgba(255,255,255,.14);
-    background: rgba(255,255,255,.06);
-    position: relative;
-    user-select: none;
-    white-space: nowrap
-}
-
-.chip::before {
-    content: "";
-    width: 10px;
-    height: 10px;
-    border-radius: 999px;
-    background: var(--chip, rgba(255,255,255,.35));
-    display: inline-block
-}
-
-.m-modal {
-    position: fixed;
-    inset: 0;
-    z-index: 9999
-}
-
-.m-modal__backdrop {
-    position: absolute;
-    inset: 0;
-    background: rgba(0,0,0,.55)
-}
-
-.m-modal__card {
-    position: relative;
-    width: min(520px,calc(100vw - 24px));
-    margin: 10vh auto 0;
-    background: rgba(20,20,24,.98);
-    border: 1px solid rgba(255,255,255,.12);
-    border-radius: 14px;
-    overflow: hidden;
-    box-shadow: 0 18px 70px rgba(0,0,0,.45)
-}
-
-.m-modal__head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 14px;
-    border-bottom: 1px solid rgba(255,255,255,.08)
-}
-
-.m-modal__body {
-    padding: 14px
-}
-
-.m-modal__foot {
-    display: flex;
-    justify-content: flex-end;
-    gap: 10px;
-    padding: 14px;
-    border-top: 1px solid rgba(255,255,255,.08)
-}
-
-.tag-dot {
-    background: rgba(255,255,255,.25);
-    box-shadow: 0 0 0 1px rgba(255,255,255,.12) inset;
-    flex: 0 0 auto
-}
-
-.tags-layer {
-    display: block
-}
-
-.tags-actions {
-    display: flex;
-    gap: 10px;
-    align-items: center;
-    margin-top: 14px
-}
-
-.tags-actions-spacer {
-    flex: 1
-}
-
-.tags-list {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    margin-top: 10px
-}
-
-.tags-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 8px 10px;
-    border-radius: 10px
-}
-
-.tags-row .m-note {
-    margin-left: auto
-}
-
-.tag-dot {
-    width: 10px;
-    height: 10px;
-    border-radius: 999px;
-    display: inline-block
-}
-
-.tag-color-btn,.tag-color-row {
-    display: flex;
-    align-items: center
-}
-
-.tag-color-row {
-    gap: 10px;
-    margin: 10px 0 6px
-}
-
-.tag-color-btn {
-    width: 42px;
-    height: 32px;
-    border-radius: 10px;
-    justify-content: center
-}
-
-.tags-color-grid {
-    display: grid;
-    grid-template-columns: repeat(10,1fr);
-    gap: 8px;
-    margin: 12px 0
-}
-
-.tags-color-cell {
-    height: 26px;
-    border-radius: 8px;
-    border: 1px solid rgba(255,255,255,.12)
-}
-
-.tags-color-cell.is-picked {
-    outline: 2px solid rgba(255,255,255,.55);
-    outline-offset: 2px
-}
-
-.colorModalBox {
-    background: rgba(5,5,10,.98);
-    border-radius: 18px;
-    border: 1px solid rgba(255,255,255,.16);
-    box-shadow: 0 18px 60px rgba(0,0,0,.85);
-    max-width: 560px;
-    width: calc(100% - 0px);
-    padding: 18px 18px 16px
-}
-
-.colorModalHead {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-    margin-bottom: 10px
-}
-
-.colorModalTitle {
-    font-weight: 1000;
-    letter-spacing: .06em;
-    font-size: 13px;
-    text-transform: uppercase;
-    opacity: .9
-}
-
-.colorModalBody {
-    display: flex;
-    flex-direction: column;
-    gap: 12px
-}
-
-.colorTopRow {
-    display: flex;
-    gap: 12px;
-    align-items: center;
-    flex-wrap: wrap
-}
-
-.colorPreview {
-    width: 92px;
-    height: 92px;
-    border-radius: 16px;
-    border: 1px solid rgba(255,255,255,.18);
-    background: rgba(255,255,255,.1);
-    box-shadow: 0 18px 45px rgba(0,0,0,.55)
-}
-
-.sliderRow,.sliders {
-    display: grid;
-    gap: 10px
-}
-
-.sliders {
-    padding: 10px 12px;
-    border-radius: 16px;
-    border: 1px solid rgba(255,255,255,.12);
-    background: rgba(0,0,0,.14)
-}
-
-.sliderRow {
-    grid-template-columns: 18px minmax(0,1fr) 44px;
-    align-items: center
-}
-
-.sLbl {
-    font-weight: 1000;
-    letter-spacing: .06em;
-    opacity: .9
-}
-
-.sVal {
-    text-align: right;
-    font-weight: 900;
-    opacity: .9;
-    font-variant-numeric: tabular-nums
-}
-
-.rng {
-    accent-color: #f5d26b
-}
-
-.colorModalFoot,.searchBox {
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap
-}
-
-.colorModalFoot {
-    justify-content: space-between;
-    gap: 10px;
-    padding-top: 8px;
-    border-top: 1px solid rgba(255,255,255,.1)
-}
-
-.searchBox {
-    width: 320px;
-    gap: 6px;
-    padding: 6px 8px;
-    border-radius: 12px;
-    border: 1px solid rgba(255,255,255,.14);
-    background: rgba(255,255,255,.04)
-}
-
-.searchBox:focus-within {
-    border-color: rgba(120,160,255,.55);
-    box-shadow: 0 0 0 2px rgba(120,160,255,.18)
-}
-
-.searchChips {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    align-items: center
-}
-
-.searchText {
-    flex: 1 1 140px;
-    min-width: 140px;
-    border: 0;
-    outline: 0;
-    background: 0 0;
-    color: inherit;
-    padding: 6px 4px
-}
-
-.searchText::placeholder {
-    opacity: .65
-}
-
-.searchBox #searchClearBtn {
-    flex: 0 0 auto
-}
-
-.searchBox .chip {
-    padding: 5px 10px
-}
-
-.title-line {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    min-width: 0
-}
-
-.title-text {
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap
-}
-
-.tag-dots {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    flex: 0 0 auto
-}
-
-.tag-more {
-    font-size: 11px;
-    opacity: .7;
-    font-variant-numeric: tabular-nums
-}
-
-.tag-dot {
-    position: relative
-}
-
-.tag-dot[data-tip]:hover::after,.tag-dot[data-tip]:hover::before {
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
-    background: rgba(10,10,12,.95)
-}
-
-.tag-dot[data-tip]:hover::after {
-    content: attr(data-tip);
-    bottom: calc(100% + 8px);
-    white-space: nowrap;
-    padding: 6px 8px;
-    border-radius: 10px;
-    border: 1px solid rgba(255,255,255,.14);
-    box-shadow: 0 12px 28px rgba(0,0,0,.55);
-    font-size: 12px;
-    z-index: 50
-}
-
-.tag-dot[data-tip]:hover::before {
-    content: "";
-    bottom: calc(100% + 3px);
-    width: 10px;
-    height: 10px;
-    border-left: 1px solid rgba(255,255,255,.14);
-    border-bottom: 1px solid rgba(255,255,255,.14);
-    transform: translateX(-50%) rotate(45deg);
-    z-index: 49
-}
-
+/* =========================================================
+   0) ZASADA KRYTYCZNA: hidden musi zawsze wygrywać
+   (bo .tags-layer ma display ustawione w CSS)
+   ========================================================= */
+[hidden] { display: none !important; }
+
+/* =========================================================
+   1) TOPBAR / TOOLBAR / LAYOUT
+   ========================================================= */
+.topbar .topbar-left,
+.topbar .topbar-right{
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+
+.topbar .topbar-right{ gap:10px; }
+
+.topbar .topbar-title .title{ font-weight:700; }
+.topbar .topbar-title .subtitle{
+  opacity:.75;
+  font-size:12px;
+  margin-top:2px;
+}
+
+.toolbar{
+  display:flex;
+  gap:10px;
+  padding:10px 12px;
+  align-items:flex-start;
+}
+
+.explorer{
+  display:grid;
+  grid-template-columns: 320px 1fr;
+  gap:0;
+  padding:0 12px 12px;
+  min-height: calc(100vh - 120px);
+  align-items:stretch;
+}
+
+.explorer-left{
+  border-right: 1px solid rgba(255,255,255,.12);
+  padding-right:12px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  min-height:0;
+}
+
+.explorer-right{
+  display:grid;
+  grid-template-rows:auto auto 1fr;
+  gap:12px;
+  min-width:0;
+  padding-left:12px;
+  min-height:0;
+}
+
+/* separator między drzewem a tagami */
 .left-sep{
   height:1px;
   background: rgba(255,255,255,.12);
-  border-radius: 999px;
-  margin: 6px 2px 10px;
+  border-radius:999px;
+  margin:6px 2px 10px;
 }
 
-/* ===== Modal: aliasy klas (HTML używa myślników, CSS miał podkreślniki) ===== */
-.m-modal-backdrop { /* alias dla .m-modal__backdrop */
-  position: absolute;
-  inset: 0;
-  background: rgba(0,0,0,.55);
+/* panele lewe */
+.tree,
+.tags{
+  overflow:auto;
+  border-radius:12px;
+  padding:10px;
+  min-height:120px;
+  position:relative; /* pod marquee + drop-linie */
 }
 
-.m-modal-card {     /* alias dla .m-modal__card */
-  position: relative;
-  width: min(560px, calc(100vw - 24px));
-  margin: 10vh auto 0;
-  background: rgba(20,20,24,.98);
-  border: 1px solid rgba(255,255,255,.12);
-  border-radius: 14px;
-  overflow: hidden;
-  box-shadow: 0 18px 70px rgba(0,0,0,.45);
+.tree{
+  flex:0 0 auto;
+  max-height:55vh;
 }
 
-.m-modal-head {     /* alias dla .m-modal__head */
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  padding: 14px;
+.tags{
+  flex:1 1 auto;
+}
+
+/* =========================================================
+   2) BREADCRUMBS + LISTA
+   ========================================================= */
+.breadcrumbs{
+  border-radius:12px;
+  padding:10px 12px;
+  min-height:44px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.list-head{
+  display:grid;
+  grid-template-columns:44px 1fr 96px;
+  gap:10px;
+  padding:6px 12px;
+  line-height:1.2;
+  border-bottom: 1px solid rgba(255,255,255,.18);
+  font-size:12px;
+  text-transform:uppercase;
+  letter-spacing:.04em;
+  color: rgba(255,255,255,.55);
+  user-select:none;
+  background:transparent;
+  border-radius:12px 12px 0 0;
+}
+.list-head > div{ white-space:nowrap; }
+.list-head .h-num{ text-align:left; }
+.list-head .h-meta{ text-align:right; }
+.list-head .h-main,
+.list-head .h-num{ cursor:pointer; }
+.list-head .active{ color: rgba(255,255,255,.8); }
+
+.list-head .h-main::after,
+.list-head .h-num::after{
+  content:"";
+  display:inline-block;
+  margin-left:6px;
+  opacity:.65;
+}
+.list-head .h-main.active[data-dir="asc"]::after,
+.list-head .h-num.active[data-dir="asc"]::after{ content:"▲"; }
+.list-head .h-main.active[data-dir="desc"]::after,
+.list-head .h-num.active[data-dir="desc"]::after{ content:"▼"; }
+
+.list{
+  padding:6px 0;
+  overflow:auto;
+  min-height:0;
+  background:transparent;
+  border-radius:0 0 12px 12px;
+  position:relative; /* marquee */
+  padding:12px 16px;
+  box-sizing:border-box;
+  min-height:100%;
+}
+
+#list .row:first-child{ margin-top:6px; }
+
+/* =========================================================
+   3) WIERSZE (lista prawa)
+   ========================================================= */
+.row{
+  user-select:none;
+  display:grid;
+  grid-template-columns:44px 1fr 96px;
+  align-items:center;
+  gap:10px;
+  padding:10px 12px;
+  border-bottom: 1px solid rgba(255,255,255,.1);
+}
+
+input, textarea{ user-select:text; }
+
+.row:hover{ background: rgba(255,255,255,.05); }
+
+.row .col-num{
+  opacity:.7;
+  font-variant-numeric: tabular-nums;
+}
+
+.row .col-main{ min-width:0; }
+.row .col-meta{
+  opacity:.65;
+  font-size:12px;
+  text-align:right;
+  white-space:nowrap;
+}
+
+.title-line{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  min-width:0;
+}
+
+.title-text{
+  min-width:0;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+.row[data-kind="cat"] .title-text{ font-weight:500; }
+.row[data-kind="q"] .title-text{ font-weight:400; color: rgba(255,255,255,.88); }
+
+/* zaznaczenie */
+.is-selected{ outline:2px solid rgba(255,255,255,.25); }
+.row.is-selected{
+  outline:2px solid rgba(120,160,255,.55);
+  outline-offset:-2px;
+  background: rgba(120,160,255,.1);
+}
+
+/* =========================================================
+   4) DRZEWO (lewo)
+   ========================================================= */
+#tree .row.tree-row{
+  /* Drzewo ma być “Explorer-style” */
+  display:flex;
+  align-items:center;
+  padding:6px 8px;
+  min-height:32px;
   border-bottom: 1px solid rgba(255,255,255,.08);
 }
 
-.m-modal-body {     /* alias dla .m-modal__body */
-  padding: 14px;
+#tree .row.tree-row:hover{ background: rgba(255,255,255,.04); }
+
+#tree .row.tree-row .col-num,
+#tree .row.tree-row .col-meta{
+  display:none !important;
 }
 
-/* Opcjonalnie: gdybyś kiedyś dodał stopkę w tym modalu */
-.m-modal-foot {     /* alias dla .m-modal__foot */
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  padding: 14px;
-  border-top: 1px solid rgba(255,255,255,.08);
+#tree .row.tree-row .col-main{
+  width:100%;
+  display:flex;
+  align-items:center;
+  gap:6px;
 }
 
-/* ===== Modal: warstwy (żeby nie "skakały" i miały sensowny układ) ===== */
-#tagsModal .tags-layer {
-  min-height: 280px; /* delikatna stabilizacja wysokości */
+/* toggle w drzewie */
+#tree .tree-toggle{
+  color:inherit;
+  fill:currentColor;
+  flex:0 0 18px;
+}
+#tree .tree-toggle:hover{ opacity:.75; }
+
+/* (3b) Oddech pod listą folderów – POD listą, nie między wierszami */
+#tree .treeList{
+  padding-bottom:30px;
+  scroll-padding-bottom:30px;
 }
 
-#tagsModal .tags-actions {
-  margin-top: 14px;
+/* =========================================================
+   5) TAGI (lewo) — wysokość jak TREE + gap=8
+   ========================================================= */
+#tags .row[data-kind="tag"]{
+  display:flex;
+  align-items:center;
+  padding:6px 8px;     /* jak tree */
+  min-height:32px;     /* jak tree */
+  gap:8px;             /* Twoje “Gap 8?” */
+  border-radius:10px;
 }
 
-/* ===== Picker koloru (warstwa 3): przyciski jak w control ===== */
-#tagsModal .colorModalFoot {
-  justify-content: flex-end; /* masz inline, ale tu wymuszamy spójność */
-  gap: 10px;
+#tags .row[data-kind="tag"]:hover{ background: rgba(255,255,255,.04); }
+
+/* =========================================================
+   6) CHIPY W SEARCH BOX
+   ========================================================= */
+.searchBox{
+  width:320px;
+  display:flex;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:6px;
+  padding:6px 8px;
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,.14);
+  background: rgba(255,255,255,.04);
 }
 
-/* ===== Ujednolicenie wysokości wierszy: TAGS = TREE ===== */
-
-/* Tree (punkt odniesienia) */
-#tree .row.tree-row {
-  padding: 6px 8px;
-  min-height: 32px;
-  display: flex;
-  align-items: center;
+.searchBox:focus-within{
+  border-color: rgba(120,160,255,.55);
+  box-shadow: 0 0 0 2px rgba(120,160,255,.18);
 }
 
-/* Tags – dokładnie to samo */
-#tags .row[data-kind="tag"] {
-  padding: 6px 8px;
-  min-height: 32px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
+.searchChips{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+  align-items:center;
+}
+
+.searchText{
+  flex:1 1 140px;
+  min-width:140px;
+  border:0;
+  outline:0;
+  background:transparent;
+  color:inherit;
+  padding:6px 4px;
+}
+
+.searchText::placeholder{ opacity:.65; }
+
+.chip{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:5px 10px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,.14);
+  background: rgba(255,255,255,.06);
+  user-select:none;
+  white-space:nowrap;
+}
+.chip::before{
+  content:"";
+  width:10px;
+  height:10px;
+  border-radius:999px;
+  background: var(--chip, rgba(255,255,255,.35));
+  display:inline-block;
+}
+
+/* =========================================================
+   7) KROPKI TAGÓW + TOOLTIP
+   ========================================================= */
+.tag-dots{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  flex:0 0 auto;
+}
+.tag-more{
+  font-size:11px;
+  opacity:.7;
+  font-variant-numeric: tabular-nums;
+}
+.tag-dot{
+  width:10px;
+  height:10px;
+  border-radius:999px;
+  display:inline-block;
+  background: rgba(255,255,255,.25);
+  box-shadow: 0 0 0 1px rgba(255,255,255,.12) inset;
+  flex:0 0 auto;
+  position:relative;
+}
+
+/* tooltip na kropkach w list/tree */
+.tag-dot[data-tip]:hover::after,
+.tag-dot[data-tip]:hover::before{
+  position:absolute;
+  left:50%;
+  transform: translateX(-50%);
+  background: rgba(10,10,12,.95);
+}
+.tag-dot[data-tip]:hover::after{
+  content: attr(data-tip);
+  bottom: calc(100% + 8px);
+  white-space:nowrap;
+  padding:6px 8px;
+  border-radius:10px;
+  border:1px solid rgba(255,255,255,.14);
+  box-shadow: 0 12px 28px rgba(0,0,0,.55);
+  font-size:12px;
+  z-index:50;
+}
+.tag-dot[data-tip]:hover::before{
+  content:"";
+  bottom: calc(100% + 3px);
+  width:10px;
+  height:10px;
+  border-left:1px solid rgba(255,255,255,.14);
+  border-bottom:1px solid rgba(255,255,255,.14);
+  transform: translateX(-50%) rotate(45deg);
+  z-index:49;
+}
+
+/* =========================================================
+   8) MARQUEE
+   ========================================================= */
+.marquee{
+  position:absolute;
+  border:1px dashed rgba(120,160,255,.9);
+  background: rgba(120,160,255,.18);
+  pointer-events:none;
+  z-index:50;
+}
+
+/* =========================================================
+   9) DRAG&DROP PODGLĄD
+   ========================================================= */
+.is-drop-target{ outline:2px dashed rgba(255,255,255,.35); }
+.is-drop-into{
+  outline:2px dashed rgba(255,255,255,.35);
+  outline-offset:-2px;
+}
+
+.is-dragging{ opacity:.6; }
+
+.is-drop-before::before,
+.is-drop-after::after{
+  content:"";
+  position:absolute;
+  left:8px;
+  right:8px;
+  height:2px;
+  background: rgba(255,255,255,.55);
+}
+.is-drop-before::before{ top:0; }
+.is-drop-after::after{ bottom:0; }
+
+/* =========================================================
+   10) CONTEXT MENU
+   ========================================================= */
+.context-menu{
+  position:fixed;
+  z-index:9999;
+  min-width:220px;
+  padding:6px;
+  border-radius:12px;
+  background: rgba(20,20,20,.96);
+  border:1px solid rgba(255,255,255,.14);
+  box-shadow: 0 12px 30px rgba(0,0,0,.45);
+}
+
+.cm-sep{
+  height:1px;
+  margin:6px;
+  background: rgba(255,255,255,.1);
+  border-radius:999px;
+}
+
+.cm-item{
+  width:100%;
+  text-align:left;
+  padding:10px;
+  border-radius:10px;
+  border:0;
+  background:transparent;
+  color:inherit;
+  cursor:pointer;
+}
+.cm-item:hover{ background: rgba(255,255,255,.08); }
+.cm-item.disabled{ opacity:.45; cursor:default; }
+.cm-item.danger{ color:#ffb3b3; }
+
+.is-disabled{
+  opacity:.5;
+  pointer-events:none;
+}
+
+/* =========================================================
+   11) MODAL (zgodny z HTML: m-modal-backdrop / m-modal-card / ...)
+   ========================================================= */
+.m-modal{
+  position:fixed;
+  inset:0;
+  z-index:9999;
+}
+
+.m-modal-backdrop{
+  position:absolute;
+  inset:0;
+  background: rgba(0,0,0,.55);
+}
+
+.m-modal-card{
+  position:relative;
+  width: min(560px, calc(100vw - 24px));
+  margin: 10vh auto 0;
+  background: rgba(20,20,24,.98);
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:14px;
+  overflow:hidden;
+  box-shadow: 0 18px 70px rgba(0,0,0,.45);
+}
+
+.m-modal-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  padding:14px;
+  border-bottom:1px solid rgba(255,255,255,.08);
+}
+
+.m-modal-body{ padding:14px; }
+
+/* Warstwy w modalu */
+#tagsModal .tags-layer{
+  display:block;        /* ale hidden wygrywa dzięki [hidden]{display:none!important} */
+  min-height: 280px;    /* stabilizacja wysokości */
+}
+
+/* listy / wiersze w assign */
+#tagsModal .tags-list{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  margin-top:10px;
+}
+
+#tagsModal .tags-row{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:6px 8px;
+  min-height:32px;     /* spójnie z tree/tags */
+  border-radius:10px;
+}
+#tagsModal .tags-row:hover{ background: rgba(255,255,255,.04); }
+
+#tagsModal .tags-row .m-note{ margin-left:auto; opacity:.75; }
+
+/* akcje w modalu */
+#tagsModal .tags-actions{
+  display:flex;
+  gap:10px;
+  align-items:center;
+  margin-top:14px;
+}
+#tagsModal .tags-actions-spacer{ flex:1; }
+
+/* =========================================================
+   12) MODAL KOLORU (warstwa 3) + gradienty suwaków
+   ========================================================= */
+.colorModalBox{
+  background: rgba(5,5,10,.98);
+  border-radius:18px;
+  border:1px solid rgba(255,255,255,.16);
+  box-shadow: 0 18px 60px rgba(0,0,0,.85);
+  max-width:560px;
+  width: calc(100% - 0px);
+  padding:18px 18px 16px;
+}
+
+.colorModalHead{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  margin-bottom:10px;
+}
+.colorModalTitle{
+  font-weight:1000;
+  letter-spacing:.06em;
+  font-size:13px;
+  text-transform:uppercase;
+  opacity:.9;
+}
+
+.colorModalBody{
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+
+.colorTopRow{
+  display:flex;
+  gap:12px;
+  align-items:center;
+  flex-wrap:wrap;
+}
+
+.colorPreview{
+  width:92px;
+  height:92px;
+  border-radius:16px;
+  border:1px solid rgba(255,255,255,.18);
+  background: rgba(255,255,255,.1);
+  box-shadow: 0 18px 45px rgba(0,0,0,.55);
+}
+
+.sliders{
+  display:grid;
+  gap:10px;
+  padding:10px 12px;
+  border-radius:16px;
+  border:1px solid rgba(255,255,255,.12);
+  background: rgba(0,0,0,.14);
+}
+
+.sliderRow{
+  display:grid;
+  gap:10px;
+  grid-template-columns:18px minmax(0,1fr) 44px;
+  align-items:center;
+}
+
+.sLbl{
+  font-weight:1000;
+  letter-spacing:.06em;
+  opacity:.9;
+}
+
+.sVal{
+  text-align:right;
+  font-weight:900;
+  opacity:.9;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Suwaki (track + thumb) – gradient jak w control */
+.rng{
+  -webkit-appearance:none;
+  appearance:none;
+  width:100%;
+  height:14px;
+  background: transparent;
+  cursor:pointer;
+}
+
+/* TRACK (WebKit) */
+.rng::-webkit-slider-runnable-track{
+  height:10px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.06);
+}
+#tagsColorR.rng::-webkit-slider-runnable-track{
+  background: linear-gradient(90deg, rgb(0,0,0), rgb(255,0,0));
+}
+#tagsColorG.rng::-webkit-slider-runnable-track{
+  background: linear-gradient(90deg, rgb(0,0,0), rgb(0,255,0));
+}
+#tagsColorB.rng::-webkit-slider-runnable-track{
+  background: linear-gradient(90deg, rgb(0,0,0), rgb(0,0,255));
+}
+
+/* THUMB (WebKit) */
+.rng::-webkit-slider-thumb{
+  -webkit-appearance:none;
+  appearance:none;
+  width:18px;
+  height:18px;
+  border-radius:999px;
+  background: rgba(245,210,107,.95);
+  border:1px solid rgba(0,0,0,.35);
+  box-shadow: 0 6px 16px rgba(0,0,0,.35);
+  margin-top:-5px; /* centrowanie względem tracka */
+}
+
+/* TRACK (Firefox) */
+.rng::-moz-range-track{
+  height:10px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.06);
+}
+#tagsColorR.rng::-moz-range-track{
+  background: linear-gradient(90deg, rgb(0,0,0), rgb(255,0,0));
+}
+#tagsColorG.rng::-moz-range-track{
+  background: linear-gradient(90deg, rgb(0,0,0), rgb(0,255,0));
+}
+#tagsColorB.rng::-moz-range-track{
+  background: linear-gradient(90deg, rgb(0,0,0), rgb(0,0,255));
+}
+.rng::-moz-range-thumb{
+  width:18px;
+  height:18px;
+  border-radius:999px;
+  background: rgba(245,210,107,.95);
+  border:1px solid rgba(0,0,0,.35);
+  box-shadow: 0 6px 16px rgba(0,0,0,.35);
+}
+
+/* stopka pickera */
+.colorModalFoot{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:10px;
+  padding-top:8px;
+  border-top:1px solid rgba(255,255,255,.1);
 }
