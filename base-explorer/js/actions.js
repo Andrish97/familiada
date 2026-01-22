@@ -13,7 +13,13 @@ import {
   restoreBrowseLocation,
 } from "./state.js";
 import { renderAll, renderList } from "./render.js";
-import { listQuestionsByCategory, listAllQuestions, listCategories } from "./repo.js";
+import {
+  listQuestionsByCategory,
+  listAllQuestions,
+  listCategories,
+  listQuestionTags,
+  listCategoryTags
+} from "./repo.js";
 import { showContextMenu, hideContextMenu } from "./context-menu.js";
 import { sb } from "../../js/core/supabase.js";
 
@@ -109,6 +115,51 @@ function selectRange(state, listEl, clickedKey) {
   state.selection.anchorKey = clickedKey;
 }
 
+function uniqLower(arr) {
+  const out = [];
+  const seen = new Set();
+  for (const x of (arr || [])) {
+    const v = String(x || "").trim();
+    if (!v) continue;
+    const k = v.toLowerCase();
+    if (seen.has(k)) continue;
+    seen.add(k);
+    out.push(v);
+  }
+  return out;
+}
+
+// Wydobądź #tagi z wpisu, np. "#pieski, #kotki hello" => { tagNames:["pieski","kotki"], text:"hello" }
+function parseSearchInputToTokens(raw) {
+  const s = String(raw || "");
+
+  // łapiemy #... do pierwszej spacji/przecinka
+  const matches = s.match(/#[^\s,#]+/g) || [];
+  const tagNames = uniqLower(matches.map(m => m.replace(/^#/, "").trim()).filter(Boolean));
+
+  // usuń fragmenty #tagów z tekstu
+  let text = s;
+  for (const m of matches) {
+    // usuń też ewentualne przecinki/odstępy obok
+    text = text.replace(m, " ");
+  }
+  text = text.replace(/[,]+/g, " ");
+  text = text.replace(/\s+/g, " ").trim();
+
+  return { text, tagNames };
+}
+
+function resolveTagIdsByNames(state, tagNames) {
+  const byName = new Map((state.tags || []).map(t => [String(t.name || "").toLowerCase(), t.id]));
+  const tagIds = [];
+  for (const n of (tagNames || [])) {
+    const id = byName.get(String(n || "").toLowerCase());
+    if (id) tagIds.push(id);
+  }
+  // uniq
+  return Array.from(new Set(tagIds));
+}
+
 /* ================= Data loading by view ================= */
 async function loadQuestionsForCurrentView(state) {
   // Etap 1:
@@ -153,23 +204,124 @@ async function refreshList(state) {
 
   // === SEARCH: „wirtualny widok wyników” po CAŁOŚCI ===
   if (state.view === VIEW.SEARCH) {
-    // pytania globalnie (nie tylko z folderu)
+    // pytania globalnie
     if (!state._allQuestions) {
       state._allQuestions = await listAllQuestions(state.baseId);
     }
-  
-    const qAll = state._allQuestions;
+
     const foldersAll = Array.isArray(state.categories) ? state.categories : [];
-  
-    state.folders = applySearchFilterToFolders(foldersAll, state.searchQuery);
-    state.questions = applySearchFilterToQuestions(qAll, state.searchQuery);
-  
+    const qAll = state._allQuestions;
+
+    const tokens = state.searchTokens || { text: state.searchQuery || "", tagIds: [], tagNames: [] };
+    const textQ = String(tokens.text || "").trim();
+
+    // 1) filtr po tagach (OR): pytanie przechodzi jeśli ma którykolwiek tag z tagIds
+    let qs = qAll;
+
+    const tagIds = Array.isArray(tokens.tagIds) ? tokens.tagIds.filter(Boolean) : [];
+    if (tagIds.length) {
+      // cache mapy question_id -> Set(tag_id) (dla wszystkich pytań)
+      if (!state._allQuestionTagMap) {
+        const ids = (qAll || []).map(x => x.id).filter(Boolean);
+        const links = await listQuestionTags(ids);
+        const m = new Map();
+        for (const l of (links || [])) {
+          if (!m.has(l.question_id)) m.set(l.question_id, new Set());
+          m.get(l.question_id).add(l.tag_id);
+        }
+        state._allQuestionTagMap = m;
+      }
+
+      const m = state._allQuestionTagMap;
+      qs = (qs || []).filter(q => {
+        const set = m.get(q.id);
+        if (!set) return false;
+        for (const tid of tagIds) if (set.has(tid)) return true;
+        return false;
+      });
+
+      // + foldery otagowane bezpośrednio (qb_category_tags)
+      if (!state._allCategoryTagMap) {
+        const cIdsAll = foldersAll.map(c => c.id).filter(Boolean);
+        const linksC = await listCategoryTags(cIdsAll);
+        const mC = new Map();
+        for (const l of (linksC || [])) {
+          if (!mC.has(l.category_id)) mC.set(l.category_id, new Set());
+          mC.get(l.category_id).add(l.tag_id);
+        }
+        state._allCategoryTagMap = mC;
+      }
+
+      const mC = state._allCategoryTagMap;
+      for (const c of foldersAll) {
+        const set = mC.get(c.id);
+        if (!set) continue;
+        for (const tid of tagIds) {
+          if (set.has(tid)) {
+            add.add(c.id);
+
+            // dodaj rodziców też (żeby ścieżka była widoczna)
+            let cur = byId.get(c.id);
+            let guard2 = 0;
+            while (cur && guard2++ < 20) {
+              const pid = cur.parent_id || null;
+              if (!pid) break;
+              add.add(pid);
+              cur = byId.get(pid);
+            }
+
+            break;
+          }
+        }
+      }
+    }
+
+    // 2) filtr tekstowy na pytania (AND z tagami)
+    qs = applySearchFilterToQuestions(qs, textQ);
+
+    // 3) foldery:
+    // - jeśli jest tekst: foldery po nazwie
+    // - jeśli są tagi: foldery, które zawierają wyniki (category_id) + ich rodzice (żeby “dało się wejść”)
+    let fs = applySearchFilterToFolders(foldersAll, textQ);
+
+    if (tagIds.length) {
+      const byId = new Map(foldersAll.map(c => [c.id, c]));
+      const add = new Set();
+
+      // foldery bezpośrednie wyników
+      for (const q of (qs || [])) {
+        const cid = q.category_id || null;
+        if (!cid) continue;
+        add.add(cid);
+
+        // dodaj rodziców (breadcrumb w lewym panelu ma sens)
+        let cur = byId.get(cid);
+        let guard = 0;
+        while (cur && guard++ < 20) {
+          const pid = cur.parent_id || null;
+          if (!pid) break;
+          add.add(pid);
+          cur = byId.get(pid);
+        }
+      }
+
+      const extra = foldersAll.filter(c => add.has(c.id));
+      // merge uniq
+      const merged = new Map();
+      for (const c of fs) merged.set(c.id, c);
+      for (const c of extra) merged.set(c.id, c);
+      fs = Array.from(merged.values());
+    }
+
+    state.folders = fs;
+    state.questions = qs;
+
     renderAll(state);
-  
+
     const writable = canWrite(state);
     document.getElementById("btnNewFolder")?.toggleAttribute("disabled", !writable);
     document.getElementById("btnNewQuestion")?.toggleAttribute("disabled", !writable);
-    return; // ważne: nie lecimy dalej normalnym torem
+    return;
   }
 
     // === TAG: „wirtualny widok wyników” po CAŁOŚCI (jak SEARCH, tylko filtr tagów) ===
@@ -931,6 +1083,121 @@ async function reorderFoldersByDrop(state, movedFolderIds, targetId, mode) {
   await applyCategoryOrder(state, parentIdOrNull, finalIds);
 }
 
+async function refreshTags(state) {
+  const { data, error } = await sb()
+    .from("qb_tags")
+    .select("id,base_id,name,color,ord")
+    .eq("base_id", state.baseId)
+    .order("ord", { ascending: true });
+
+  if (error) throw error;
+  state.tags = data || [];
+}
+
+async function openTagModal(state, { mode = "create", tagId = null } = {}) {
+  const modal = document.getElementById("tagModal");
+  if (!modal) return false;
+
+  const titleEl = document.getElementById("tagModalTitle");
+  const nameInp = document.getElementById("tagNameInp");
+  const colorInp = document.getElementById("tagColorInp");
+  const errEl = document.getElementById("tagModalErr");
+
+  const btnClose = document.getElementById("tagModalClose");
+  const btnCancel = document.getElementById("tagModalCancel");
+  const btnSave = document.getElementById("tagModalSave");
+
+  const hideErr = () => { if (errEl) { errEl.hidden = true; errEl.textContent = ""; } };
+  const showErr = (msg) => { if (errEl) { errEl.hidden = false; errEl.textContent = String(msg || ""); } };
+
+  // init
+  hideErr();
+  let current = null;
+  if (mode === "edit" && tagId) {
+    current = (state.tags || []).find(t => t.id === tagId) || null;
+  }
+
+  if (titleEl) titleEl.textContent = (mode === "edit") ? "Edytuj tag" : "Dodaj tag";
+  if (nameInp) nameInp.value = (current?.name || "");
+  if (colorInp) colorInp.value = (current?.color || "#4da3ff");
+
+  // open
+  modal.hidden = false;
+  nameInp?.focus?.();
+
+  // promise/cleanup
+  return await new Promise((resolve) => {
+    const cleanup = () => {
+      modal.hidden = true;
+      modal.removeEventListener("click", onBackdrop);
+      document.removeEventListener("keydown", onKey);
+      btnClose?.removeEventListener("click", onCancel);
+      btnCancel?.removeEventListener("click", onCancel);
+      btnSave?.removeEventListener("click", onSave);
+      resolve(false);
+    };
+
+    const closeOk = () => {
+      modal.hidden = true;
+      modal.removeEventListener("click", onBackdrop);
+      document.removeEventListener("keydown", onKey);
+      btnClose?.removeEventListener("click", onCancel);
+      btnCancel?.removeEventListener("click", onCancel);
+      btnSave?.removeEventListener("click", onSave);
+      resolve(true);
+    };
+
+    const onBackdrop = (e) => {
+      if (e.target?.dataset?.close === "1") cleanup();
+    };
+
+    const onKey = (e) => {
+      if (e.key === "Escape") cleanup();
+      if (e.key === "Enter") onSave();
+    };
+
+    const onCancel = () => cleanup();
+
+    const onSave = async () => {
+      try {
+        hideErr();
+
+        const name = String(nameInp?.value || "").trim().replace(/^#/, "").slice(0, 40);
+        const color = String(colorInp?.value || "#4da3ff").trim();
+
+        if (!name) { showErr("Podaj nazwę."); return; }
+
+        if (mode === "edit" && tagId) {
+          const { error } = await sb()
+            .from("qb_tags")
+            .update({ name, color })
+            .eq("id", tagId);
+          if (error) throw error;
+        } else {
+          const { error } = await sb()
+            .from("qb_tags")
+            .insert({ base_id: state.baseId, name, color, ord: 9999 }, { defaultToNull: false });
+          if (error) throw error;
+        }
+
+        // odśwież tagi (żeby chipsy/kolory działały)
+        await refreshTags(state);
+
+        closeOk();
+      } catch (err) {
+        console.error(err);
+        showErr("Nie udało się zapisać taga.");
+      }
+    };
+
+    modal.addEventListener("click", onBackdrop);
+    document.addEventListener("keydown", onKey);
+    btnClose?.addEventListener("click", onCancel);
+    btnCancel?.addEventListener("click", onCancel);
+    btnSave?.addEventListener("click", onSave);
+  });
+}
+
 /* ================= Wire ================= */
 export function wireActions({ state }) {
   const treeEl = document.getElementById("tree");
@@ -1065,37 +1332,40 @@ export function wireActions({ state }) {
     state._drag.overKey = `c:${targetFolderIdOrNull}`;
   }
 
-  // --- Search (delegacja: input jest renderowany dynamicznie) ---
   toolbarEl?.addEventListener("input", async (e) => {
     const t = e.target;
     if (!t || t.id !== "searchInp") return;
-  
-    const q = String(t.value || "");
-    state.searchQuery = q;
-  
-    // jeśli pole puste: wyjście z SEARCH i powrót do ostatniego folderu/root
-    if (!q.trim()) {
+
+    const raw = String(t.value || "");
+    const { text, tagNames } = parseSearchInputToTokens(raw);
+    const tagIds = resolveTagIdsByNames(state, tagNames);
+
+    // ustaw tokeny (to też zaktualizuje state.searchQuery "ładnie")
+    state.searchTokens = { text, tagNames, tagIds };
+
+    // jeśli wszystko puste: wyjście z SEARCH i powrót do ostatniego folderu/root
+    const isEmpty = (!text.trim() && !(tagNames && tagNames.length));
+    if (isEmpty) {
       if (state.view === VIEW.SEARCH) {
         restoreBrowseLocation(state);
         selectionClear(state);
         await refreshList(state);
       } else {
-        // zwykłe przeglądanie: po prostu odśwież listę bez filtra
         await refreshList(state);
       }
       return;
     }
-  
+
     // jeśli zaczynamy pisać i nie jesteśmy w SEARCH: zapamiętaj skąd przyszliśmy
     if (state.view !== VIEW.SEARCH) {
       rememberBrowseLocation(state);
-      setViewSearch(state, q);
+      setViewSearch(state, ""); // query trzymamy w tokens, nie w view
       selectionClear(state);
       await refreshList(state);
       return;
     }
-  
-    // już jesteśmy w SEARCH: tylko odśwież wyniki
+
+    // już w SEARCH: odśwież wyniki
     await refreshList(state);
   });
 
@@ -1112,10 +1382,14 @@ export function wireActions({ state }) {
       if (t.id === "searchClearBtn") {
         const inp = document.getElementById("searchInp");
         if (inp) inp.value = "";
+        state.searchTokens = { text: "", tagNames: [], tagIds: [] };
         state.searchQuery = "";
+
         if (state.view === VIEW.SEARCH) restoreBrowseLocation(state);
         selectionClear(state);
         await refreshList(state);
+
+        document.getElementById("searchInp")?.focus();
         return;
       }
       
@@ -1157,23 +1431,50 @@ export function wireActions({ state }) {
     }
   });
 
-    // --- Tagi: klik = wejście w VIEW.TAG (wirtualne wyniki jak SEARCH) ---
-  tagsEl?.addEventListener("click", async (e) => {
+  // --- Tagi: klik = zaznacz, dblclick = otwórz (VIEW.TAG) ---
+  tagsEl?.addEventListener("click", (e) => {
     const row = e.target?.closest?.('.row[data-kind="tag"][data-id]');
     if (!row) return;
 
     const tagId = row.dataset.id;
     if (!tagId) return;
 
-    // zapamiętaj skąd user przyszedł (root/folder)
+    // Trzymamy selekcję taga osobno (na razie prosto)
+    state._tagSel = tagId;
+    // Minimalnie: rerender lewego panelu żeby było widać zaznaczenie (jeśli dodasz klasę w renderze)
+    renderAll(state);
+  });
+
+  tagsEl?.addEventListener("dblclick", async (e) => {
+    const row = e.target?.closest?.('.row[data-kind="tag"][data-id]');
+    if (!row) return;
+
+    const tagId = row.dataset.id;
+    if (!tagId) return;
+
     rememberBrowseLocation(state);
 
-    // na razie single-tag; multi wybór zrobimy w etapie tagów (Finder-style)
+    // single-tag na start
     state.tagIds = [tagId];
     state.view = VIEW.TAG;
 
     selectionClear(state);
     await refreshList(state);
+  });
+
+  tagsEl?.addEventListener("click", async (e) => {
+    const btn = e.target?.closest?.("#btnAddTag");
+    if (!btn) return;
+
+    if (!canWrite(state)) return;
+
+    // modal (poniżej) – otwieramy jako "create"
+    const saved = await openTagModal(state, { mode: "create" });
+    if (saved) {
+      // odśwież tagi w state + rerender
+      await refreshTags(state);
+      renderAll(state);
+    }
   });
 
 
