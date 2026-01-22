@@ -253,9 +253,9 @@ export function renderList(state) {
 
   const folderRows = folders.map((c) => {
     const key = `c:${c.id}`;
-    const isSel = isSelected(state, key);
+    const selClass = isSelected(state, key) ? " is-selected" : "";
     const draggable = (state.role === "owner" || state.role === "editor") ? `draggable="true"` : ``; 
-    return `<div class="row ${isSel ? "is-selected" : ""}" ${draggable} data-kind="cat" data-id="${esc(c.id)}" style="cursor:pointer;">
+    return `<div class="row${selClass}" ${draggable} data-kind="cat" data-id="${esc(c.id)}" style="cursor:pointer;">
       <div class="col-num"></div>
       <div class="col-main"><div class="title">📁 ${esc(c.name || "Folder")}</div></div>
       <div class="col-meta"></div>
@@ -264,16 +264,15 @@ export function renderList(state) {
 
   const qRows = questions.map((q, idx) => {
     const key = `q:${q.id}`;
-    const isSel = isSelected(state, key);
+    const selClass = isSelected(state, key) ? " is-selected" : "";
 
     const text = q?.payload?.text ?? q?.text ?? "";
     const ord = (q?.ord ?? (idx + 1));
 
-    // meta na razie proste, później: "6 odp. • Σ 100" / tagi / ostrzeżenia
     const answersCount = Array.isArray(q?.payload?.answers) ? q.payload.answers.length : 0;
     const meta = answersCount ? `${answersCount} odp.` : "";
     const draggable = (state.role === "owner" || state.role === "editor") ? `draggable="true"` : ``; 
-    return `<div class="row ${isSel ? "is-selected" : ""}" ${draggable} data-kind="cat" data-id="${esc(q.id)}" style="cursor:pointer;">
+    return `<div class="row${selClass}" ${draggable} data-kind="q" data-id="${esc(q.id)}" style="cursor:pointer;">
       <div class="col-num">${esc(ord)}</div>
       <div class="col-main"><div class="title">${esc(text || "Pytanie")}</div></div>
       <div class="col-meta">${esc(meta)}</div>
