@@ -975,10 +975,9 @@ export function wireActions({ state }) {
   
     // root: single select (opcjonalnie) + przejście do root dopiero na dblclick
     if (kind === "root") {
-      selectionClear(state);
-      state.selection.keys.add("root"); // jeśli nie chcesz zaznaczać root — usuń te 2 linie
+      selectionSetSingle(state, "root");
       state.selection.anchorKey = "root";
-      scheduleRenderTree();
+      renderAll(state);
       return;
     }
   
@@ -1002,19 +1001,12 @@ export function wireActions({ state }) {
   });
 
   treeEl?.addEventListener("dblclick", async (e) => {
-    // jeśli masz timer jak na liście, to tu go czyść (opcjonalnie)
-    if (typeof treeClickRenderTimer !== "undefined" && treeClickRenderTimer) {
-      clearTimeout(treeClickRenderTimer);
-      treeClickRenderTimer = null;
-    }
-  
     const row = e.target?.closest?.('.row[data-kind]');
     if (!row) return;
   
     const kind = row.dataset.kind;
     const id = row.dataset.id || null;
   
-    // dblclick na ROOT -> przejdź do root
     if (kind === "root") {
       setViewAll(state);
       selectionSetSingle(state, "root");
@@ -1024,11 +1016,10 @@ export function wireActions({ state }) {
       return;
     }
   
-    // dblclick na folder -> przejdź do folderu
     if (kind === "cat" && id) {
       setViewFolder(state, id);
   
-      // to jest klucz: po wejściu folder ma być widocznie "wskazany" w drzewie
+      // po wejściu folder ma być zaznaczony w drzewie
       const key = `c:${id}`;
       selectionSetSingle(state, key);
       state.selection.anchorKey = key;
@@ -1036,7 +1027,7 @@ export function wireActions({ state }) {
       await refreshList(state);
     }
   });
-  
+    
     // --- Drag start z drzewa (folder jako źródło) ---
   treeEl?.addEventListener("dragstart", (e) => {
     if (!canDnD()) return;
