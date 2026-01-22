@@ -88,6 +88,12 @@ export function renderTree(state) {
 
   function rowHtml({ kind, id, depth, label, isOpen, canToggle, isActive, icon = "📁" }) {
     const pad = 6 + depth * 12;
+    const selKey =
+      (kind === "cat" && id) ? `c:${id}` :
+      (kind === "root") ? "root" :
+      null;
+
+    const selClass = (selKey && isSelected(state, selKey)) ? " is-selected" : "";
 
     const toggle = canToggle
       ? `<button type="button" class="tree-toggle" data-id="${esc(id)}"
@@ -101,7 +107,7 @@ export function renderTree(state) {
     const draggable = (state.role === "owner" || state.role === "editor") ? `draggable="true"` : ``;
     
     return `
-      <div class="row tree-row" ${draggable} data-kind="${kind}" data-id="${id ? esc(id) : ""}" style="cursor:pointer;">
+        <div class="row tree-row${selClass}" ${draggable} data-kind="${kind}" data-id="${id ? esc(id) : ""}" style="cursor:pointer;">
         <div class="col-main" style="padding-left:${pad}px; display:flex; align-items:center; gap:6px; ${activeStyle}">
           ${toggle}
           <div class="title">${icon} ${esc(label || "Folder")}</div>
