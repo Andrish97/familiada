@@ -43,24 +43,63 @@ export function renderHeader(state) {
 export function renderToolbar(state) {
   if (!elToolbar) return;
 
-  // Etap 1: minimalnie – search i przycisk "Utwórz grę"
-  // (eventy dojdą później w page.js/actions.js)
-  elToolbar.innerHTML = `
-    <div class="searchbox" style="display:flex; align-items:center; gap:6px;">
-      <input id="searchInp" class="inp" placeholder="Szukaj..." value="${esc(state.searchQuery || "")}" />
-      <button id="searchClearBtn" class="btn ghost" type="button" title="Wyczyść">✕</button>
-    </div>
-  
-    <div style="flex:1"></div>
-  
-    <button id="btnNewFolder" class="btn ghost">Nowy folder</button>
-    <button id="btnNewQuestion" class="btn ghost">Nowe pytanie</button>
-  
-    <button id="btnCreateGame" class="btn">Utwórz grę</button>
-  `;
+  // Renderuj "szkielet" TYLKO raz, potem aktualizuj wnętrze (żeby nie tracić fokusu w input)
+  if (elToolbar.dataset.ready !== "1") {
+    elToolbar.innerHTML = `
+      <div class="searchbox">
+        <div id="searchChips" class="searchchips"></div>
+        <input id="searchInp" class="inp searchinp" placeholder="Szukaj... (np. #pieski, #kotki)" />
+        <button id="searchClearBtn" class="btn ghost" type="button" title="Wyczyść">✕</button>
+      </div>
 
-  // w viewer później i tak będzie mógł tworzyć grę
-  // inne przyciski dojdą etapami
+      <div style="flex:1"></div>
+
+      <button id="btnNewFolder" class="btn ghost">Nowy folder</button>
+      <button id="btnNewQuestion" class="btn ghost">Nowe pytanie</button>
+
+      <button id="btnCreateGame" class="btn">Utwórz grę</button>
+    `;
+    elToolbar.dataset.ready = "1";
+  }
+
+  const inp = document.getElementById("searchInp");
+  const chipsEl = document.getElementById("searchChips");
+
+  const tokens = state.searchTokens || { text: state.searchQuery || "", tagNames: [], tagIds: [] };
+
+  // 1) Aktualizuj chipsy (kolor z qb_tags.color)
+  if (chipsEl) {
+    const byId = new Map((state.tags || []).map(t => [t.id, t]));
+    const byName = new Map((state.tags || []).map(t => [String(t.name || "").toLowerCase(), t]));
+
+    const chipHtml = (tokens.tagNames || []).map((name) => {
+      const t = byName.get(String(name || "").toLowerCase());
+      const color = t?.color || "rgba(255,255,255,.35)";
+      const label = t?.name || name;
+      // chip "klikany" — na przyszłość: usuwanie chipu krzyżykiem
+      return `
+        <span class="chip" title="#${esc(label)}" style="--chip:${esc(color)}">
+          #${esc(label)}
+        </span>
+      `;
+    }).join("");
+
+    chipsEl.innerHTML = chipHtml;
+  }
+
+  // 2) Aktualizuj wartość inputa, ale nie wybijaj kursora gdy user pisze
+  if (inp) {
+    const active = (document.activeElement === inp);
+    const nextVal = String(tokens.text ?? "");
+    if (!active || inp.value !== nextVal) {
+      inp.value = nextVal;
+    }
+  }
+
+  // 3) Disable przycisków tworzenia w viewer + w trybach read-only (SEARCH/TAG blokują "wklej", ale tworzenie też wolisz blokować)
+  const writable = (state.role === "owner" || state.role === "editor");
+  document.getElementById("btnNewFolder")?.toggleAttribute("disabled", !writable);
+  document.getElementById("btnNewQuestion")?.toggleAttribute("disabled", !writable);
 }
 
 export function renderTree(state) {
