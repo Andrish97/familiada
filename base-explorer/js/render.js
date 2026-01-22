@@ -238,6 +238,10 @@ export function renderTags(state) {
   elTags.innerHTML = `
     <div style="opacity:.75; margin-bottom:6px;">Tagi</div>
     <div class="tagList">${rows}</div>
+
+    <button id="btnAddTag" class="btn ghost" type="button" style="width:100%; margin-top:10px;">
+      + Dodaj tag
+    </button>
   `;
 }
 
