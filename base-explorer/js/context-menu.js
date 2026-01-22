@@ -49,62 +49,89 @@ export async function showContextMenu({ state, x, y, target }) {
 
   const items = [];
 
-  if (target.kind === "tree-bg") {
-    const parentId = (state.view === VIEW.FOLDER && state.folderId) ? state.folderId : null;
-    const categoryId = parentId;
+  // ===== TAGS (lewy panel) =====
+  if (target.kind === "tags-bg" || target.kind === "tag") {
+    const editor = isEditor(state);
 
-    items.push({ label: "Nowy folder", disabled: !editor || readOnlyView, action: async () => {
-      await createFolderHere(state, { parentId });
-    }});
+    // Explorer-style: PPM na niezaznaczonym tagu => single-select
+    if (target.kind === "tag" && target.id) {
+      const tid = target.id;
+      if (!state?.tagSelection?.ids?.has?.(tid)) {
+        if (!state.tagSelection) state.tagSelection = { ids: new Set(), anchorId: null };
+        state.tagSelection.ids.clear();
+        state.tagSelection.ids.add(tid);
+        state.tagSelection.anchorId = tid;
+      }
+    }
 
-    items.push({ label: "Nowe pytanie", disabled: !editor || readOnlyView, action: async () => {
-      await createQuestionHere(state, { categoryId });
-    }});
+    const selectedTagIds = Array.from(state?.tagSelection?.ids || []).filter(Boolean);
+
+    items.push({
+      label: "Pokaż",
+      disabled: !selectedTagIds.length,
+      action: async () => {
+        await state._api?.openTagView?.(selectedTagIds);
+      }
+    });
 
     items.push({ label: "—", disabled: true });
-  }
 
-  if (target.kind === "tags-bg") {
     items.push({
       label: "Dodaj tag…",
       disabled: !editor,
       action: async () => {
-        // otwórz “modal taga” (na razie ten prosty; docelowo będzie 3-warstwowy)
-        await state._api?.openTagModal?.({ mode: "create" });
+        const ok = await state._api?.openTagModal?.({ mode: "create" });
+        if (ok) {
+          await state._api?.refreshTags?.();
+          await state._api?.refreshList?.();
+        }
       }
     });
-
-    // (później dojdzie: usuń tagi jako byty, ale teraz jeszcze nie)
-    items.push({ label: "—", disabled: true });
-  }
-
-  if (target.kind === "tag" && target.id) {
-    const ids = Array.from(state?.tagSelection?.ids || []);
-    const one = ids.length === 1 ? ids[0] : null;
-
-    items.push({
-      label: "Pokaż",
-      disabled: false,
-      action: async () => {
-        // wejście w VIEW.TAG robi już click, ale PPM też ma to umieć
-        state.view = VIEW.TAG;
-        state.tagIds = ids.length ? ids : [target.id];
-        state.selection?.keys?.clear?.();
-        await state._api?.refreshList?.();
-      }
-    });
-
-    items.push({ label: "—", disabled: true });
 
     items.push({
       label: "Edytuj tag…",
-      disabled: !editor || !one,
+      disabled: !editor || selectedTagIds.length !== 1,
       action: async () => {
-        await state._api?.openTagModal?.({ mode: "edit", tagId: one });
+        const tagId = selectedTagIds[0];
+        const ok = await state._api?.openTagModal?.({ mode: "edit", tagId });
+        if (ok) {
+          await state._api?.refreshTags?.();
+          await state._api?.refreshList?.();
+        }
       }
     });
 
-    items.push({ label: "—", disabled: true });
+    // (później) Usuń tag jako byt / multi-PPM na tagach
+    // items.push({ label:"Usuń tag(i)", ... })
+
+    // Tag-menu już zbudowane — renderujemy i kończymy (żeby nie mieszać z menu listy)
+    cm.innerHTML = items.map(itemHtml).join("");
+
+    const btns = Array.from(cm.querySelectorAll(".cm-item"));
+    btns.forEach((btn, i) => {
+      const it = items[i];
+      if (!it || it.disabled || !it.action) return;
+      btn.addEventListener("click", async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        hideContextMenu();
+        await it.action();
+      });
+    });
+
+    cm.hidden = false;
+
+    const pad = 8;
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const rect = cm.getBoundingClientRect();
+
+    const left = clamp(x, pad, vw - rect.width - pad);
+    const top  = clamp(y, pad, vh - rect.height - pad);
+
+    cm.style.left = `${left}px`;
+    cm.style.top = `${top}px`;
+    return;
   }
 
   // Root / puste tło listy: akcje w aktualnym miejscu (root lub aktualny folder)
