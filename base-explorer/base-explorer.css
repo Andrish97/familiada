@@ -286,3 +286,12 @@ input, textarea{ user-select:text; }
 #tree .row.tree-row .col-meta {
   display: none !important;
 }
+/* ===== Drzewo: trójkąty (toggle) dziedziczą kolor tekstu ===== */
+#tree .tree-toggle{
+  color: inherit;        /* kluczowe */
+  fill: currentColor;    /* na przyszłość (gdyby były SVG) */
+}
+
+#tree .tree-toggle:hover{
+  opacity: .75;
+}
