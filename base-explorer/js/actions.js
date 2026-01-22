@@ -486,6 +486,9 @@ export function cutSelectedToClipboard(state) {
 
 export async function pasteClipboardHere(state) {
   if (!clipboardHas(state)) return false;
+  if (state.view === VIEW.SEARCH || state.view === VIEW.TAG) {
+    return false;
+  }
 
   const targetFolderIdOrNull = (state.view === VIEW.FOLDER && state.folderId) ? state.folderId : null;
   const mode = state.clipboard.mode;
