@@ -25,6 +25,41 @@ function isSelected(state, key) {
   return state.selection?.keys?.has(key);
 }
 
+function tagDotsHtml(state, id, kind /* "q" | "c" */) {
+  const tags = Array.isArray(state.tags) ? state.tags : [];
+  if (!tags.length) return "";
+
+  const byId = new Map(tags.map(t => [t.id, t]));
+
+  // mapy: pytania = view map, foldery = all map (drzewo/lista)
+  const map =
+    (kind === "q")
+      ? (state._viewQuestionTagMap || null)
+      : (state._allCategoryTagMap || null);
+
+  if (!map) return "";
+
+  const set = map.get(id);
+  if (!set || !set.size) return "";
+
+  // pokaż max 3 kropki + "+N"
+  const all = Array.from(set);
+  const max = 3;
+  const shown = all.slice(0, max);
+  const rest = all.length - shown.length;
+
+  const dots = shown.map((tid) => {
+    const t = byId.get(tid);
+    const color = t?.color || "rgba(255,255,255,.25)";
+    const label = t?.name || "tag";
+    return `<span class="tag-dot" style="background:${esc(color)}" data-tip="#${esc(label)}"></span>`;
+  }).join("");
+
+  const more = rest > 0 ? `<span class="tag-more">+${rest}</span>` : "";
+
+  return `<span class="tag-dots">${dots}${more}</span>`;
+}
+
 /* ================= Render parts ================= */
 export function renderAll(state) {
   renderHeader(state);
@@ -155,7 +190,10 @@ export function renderTree(state) {
         <div class="row tree-row${selClass}" ${draggable} data-kind="${kind}" data-id="${id ? esc(id) : ""}" style="cursor:pointer;">
         <div class="col-main" style="padding-left:${pad}px; display:flex; align-items:center; gap:6px; ${activeStyle}">
           ${toggle}
-          <div class="title">${icon} ${esc(label || "Folder")}</div>
+          <div class="title-line">
+            <span class="title-text">${icon} ${esc(label || "Folder")}</span>
+            ${kind === "cat" && id ? tagDotsHtml(state, id, "c") : ""}
+          </div>
         </div>
       </div>
     `;
@@ -327,7 +365,12 @@ export function renderList(state) {
     const draggable = (state.role === "owner" || state.role === "editor") ? `draggable="true"` : ``; 
     return `<div class="row${selClass}" ${draggable} data-kind="cat" data-id="${esc(c.id)}" style="cursor:pointer;">
       <div class="col-num"></div>
-      <div class="col-main"><div class="title">📁 ${esc(c.name || "Folder")}</div></div>
+      <div class="col-main">
+        <div class="title-line">
+          <span class="title-text">📁 ${esc(c.name || "Folder")}</span>
+          ${tagDotsHtml(state, c.id, "c")}
+        </div>
+      </div>
       <div class="col-meta"></div>
     </div>`;
   }).join("");
@@ -344,7 +387,12 @@ export function renderList(state) {
     const draggable = (state.role === "owner" || state.role === "editor") ? `draggable="true"` : ``; 
     return `<div class="row${selClass}" ${draggable} data-kind="q" data-id="${esc(q.id)}" style="cursor:pointer;">
       <div class="col-num">${esc(ord)}</div>
-      <div class="col-main"><div class="title">${esc(text || "Pytanie")}</div></div>
+      <div class="col-main">
+        <div class="title-line">
+          <span class="title-text">${esc(text || "Pytanie")}</span>
+          ${tagDotsHtml(state, q.id, "q")}
+        </div>
+      </div>
       <div class="col-meta">${esc(meta)}</div>
     </div>`;
   }).join("");
