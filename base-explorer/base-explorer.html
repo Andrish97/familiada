@@ -79,5 +79,33 @@
   <!-- MODALE (wstrzykiwane JS-em) -->
   <div id="modalRoot"></div>
 
+  <!-- Tag modal -->
+  <div id="tagModal" class="m-modal" hidden>
+    <div class="m-modal__backdrop" data-close="1"></div>
+    <div class="m-modal__card" role="dialog" aria-modal="true" aria-labelledby="tagModalTitle">
+      <div class="m-modal__head">
+        <div id="tagModalTitle" class="m-h3">Tag</div>
+        <button type="button" class="btn ghost" id="tagModalClose" title="Zamknij">✕</button>
+      </div>
+  
+      <div class="m-modal__body">
+        <label class="m-p" style="display:block; margin-bottom:6px;">Nazwa</label>
+        <input id="tagNameInp" class="inp" placeholder="np. pieski" maxlength="40" />
+  
+        <div style="height:12px;"></div>
+  
+        <label class="m-p" style="display:block; margin-bottom:6px;">Kolor</label>
+        <input id="tagColorInp" class="inp" type="color" value="#4da3ff" style="height:44px; padding:6px;" />
+  
+        <div id="tagModalErr" class="m-warn" hidden style="margin-top:12px;"></div>
+      </div>
+  
+      <div class="m-modal__foot">
+        <button type="button" class="btn ghost" id="tagModalCancel">Anuluj</button>
+        <button type="button" class="btn" id="tagModalSave">Zapisz</button>
+      </div>
+    </div>
+  </div>
+
 </body>
 </html>
