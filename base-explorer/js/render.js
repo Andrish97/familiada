@@ -219,8 +219,16 @@ export function renderTags(state) {
   if (!elTags) return;
 
   const tags = Array.isArray(state.tags) ? state.tags : [];
+
+  const header = `<div style="opacity:.75; margin-bottom:6px;">Tagi</div>`;
+  const addBtn = `
+    <button id="btnAddTag" class="btn ghost" type="button" style="width:100%; margin-top:10px;">
+      + Dodaj tag
+    </button>
+  `;
+
   if (!tags.length) {
-    elTags.innerHTML = `<div style="opacity:.75">Brak tagów.</div>`;
+    elTags.innerHTML = `${header}<div style="opacity:.75; padding:6px 8px;">Brak tagów.</div>${addBtn}`;
     return;
   }
 
@@ -243,10 +251,7 @@ export function renderTags(state) {
   elTags.innerHTML = `
     <div style="opacity:.75; margin-bottom:6px;">Tagi</div>
     <div class="tagList">${rows}</div>
-
-    <button id="btnAddTag" class="btn ghost" type="button" style="width:100%; margin-top:10px;">
-      + Dodaj tag
-    </button>
+    ${addBtn}
   `;
 }
 
