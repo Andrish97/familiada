@@ -46,23 +46,23 @@ export function renderToolbar(state) {
   // Renderuj "szkielet" TYLKO raz, potem aktualizuj wnętrze (żeby nie tracić fokusu w input)
   if (elToolbar.dataset.ready !== "1") {
     elToolbar.innerHTML = `
-      <div class="searchbox">
-        <div id="searchChips" class="searchchips"></div>
-        <input id="searchInp" class="inp" placeholder="Szukaj..." value="${esc(state.searchRaw || "")}" /> 
+      <div class="searchBox" id="searchBox">
+        <div id="searchChips" class="searchChips"></div>
+        <input id="searchText" class="searchText" placeholder="Szukaj..." />
         <button id="searchClearBtn" class="btn ghost" type="button" title="Wyczyść">✕</button>
       </div>
-
+    
       <div style="flex:1"></div>
-
+    
       <button id="btnNewFolder" class="btn ghost">Nowy folder</button>
       <button id="btnNewQuestion" class="btn ghost">Nowe pytanie</button>
-
+    
       <button id="btnCreateGame" class="btn">Utwórz grę</button>
     `;
     elToolbar.dataset.ready = "1";
   }
 
-  const inp = document.getElementById("searchInp");
+  const inp = document.getElementById("searchText");
   const chipsEl = document.getElementById("searchChips");
 
   const tokens = state.searchTokens || { text: state.searchQuery || "", tagNames: [], tagIds: [] };
@@ -70,27 +70,27 @@ export function renderToolbar(state) {
   // 1) Aktualizuj chipsy (kolor z qb_tags.color)
   if (chipsEl) {
     const byId = new Map((state.tags || []).map(t => [t.id, t]));
-    const byName = new Map((state.tags || []).map(t => [String(t.name || "").toLowerCase(), t]));
-
-    const chipHtml = (tokens.tagNames || []).map((name) => {
-      const t = byName.get(String(name || "").toLowerCase());
-      const color = t?.color || "rgba(255,255,255,.35)";
-      const label = t?.name || name;
-      // chip "klikany" — na przyszłość: usuwanie chipu krzyżykiem
-      return `
-        <span class="chip" title="#${esc(label)}" style="--chip:${esc(color)}">
-          #${esc(label)}
-        </span>
-      `;
-    }).join("");
-
+  
+    const chipHtml = (tokens.tagIds || [])
+      .map((id) => byId.get(id))
+      .filter(Boolean)
+      .map((t) => {
+        const color = t?.color || "rgba(255,255,255,.35)";
+        const label = t?.name || "";
+        return `
+          <span class="chip" data-tag-id="${esc(t.id)}" title="#${esc(label)}" style="--chip:${esc(color)}">
+            #${esc(label)}
+          </span>
+        `;
+      }).join("");
+  
     chipsEl.innerHTML = chipHtml;
   }
   // 2) Aktualizuj wartość inputa, ale nie wybijaj kursora gdy user pisze
   // UWAGA: input pokazuje RAW (z #tagami), bo to jest prawdziwy "tekst pola"
   if (inp) {
     const active = (document.activeElement === inp);
-    const nextVal = String(state.searchRaw ?? "");
+    const nextVal = String(tokens.text ?? "");
     if (!active && inp.value !== nextVal) {
       inp.value = nextVal;
     }
