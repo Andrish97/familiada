@@ -203,7 +203,7 @@ export function renderBreadcrumbs(state) {
   const parts = [];
 
   // Root zawsze istnieje
-  parts.push({ id: null, name: "Root" });
+  parts.push({ id: null, name: "Folder główny" });
 
   if (state.view === VIEW.FOLDER && state.folderId) {
     // zbuduj ścieżkę od folderId do root
