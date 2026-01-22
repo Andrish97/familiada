@@ -1,649 +1,546 @@
 /* css/editor.css */
 
-/* =========================================================
-   EDITOR – BASE
-========================================================= */
-
-body.editor-body{
-  min-height:100vh;
-  background: var(--bg);
-  color:#fff;
+body.editor-body {
+    min-height: 100vh;
+    background: var(--bg);
+    color: #fff
 }
 
-/* editor ma szerszy kontener niż base */
-body.editor-body .wrap{
-  max-width:1200px;
+body.editor-body .wrap {
+    max-width: 1200px
 }
 
-/* =========================================================
-   TOP ROW
-========================================================= */
-
-.rowTop{
-  display:flex;
-  justify-content:space-between;
-  align-items:flex-end;
-  gap:14px;
-  flex-wrap:wrap;
+.rowTop {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 14px;
+    flex-wrap: wrap
 }
 
-.title{
-  font-weight:1000;
-  font-size:18px;
-  margin:10px 0;
-  letter-spacing:.06em;
+.title {
+    font-weight: 1000;
+    font-size: 18px;
+    margin: 10px 0;
+    letter-spacing: .06em
 }
 
-.namebar{
-  display:flex;
-  gap:10px;
-  align-items:center;
-  width:100%;
+.namebar {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    width: 100%
 }
 
-/* szerokie pole nazwy gry */
-#gameName{
-  flex:1;
-  max-width:680px;
-  font-size:16px;
-  font-weight:900;
+#gameName {
+    flex: 1;
+    max-width: 680px;
+    font-size: 16px;
+    font-weight: 900
 }
 
-/* =========================================================
-   LAYOUT
-========================================================= */
-
-.layout{
-  display:grid;
-  grid-template-columns: 360px minmax(0,1fr);
-  gap:14px;
-  margin-top:12px;
+.layout {
+    display: grid;
+    grid-template-columns: 360px minmax(0,1fr);
+    gap: 14px;
+    margin-top: 12px
 }
 
-@media (max-width:1100px){
-  .layout{
-    grid-template-columns:1fr;
-  }
+@media (max-width:1100px) {
+    .layout {
+        grid-template-columns: 1fr
+    }
 }
 
-/* =========================================================
-   PANELS
-========================================================= */
-
-.left,
-.rightPanel{
-  border-radius:20px;
-  border:1px solid var(--line);
-  background: var(--card);
-  box-shadow:0 24px 60px rgba(0,0,0,.45);
-  padding:14px;
+.left,.rightPanel {
+    border-radius: 20px;
+    border: 1px solid var(--line);
+    background: var(--card);
+    box-shadow: 0 24px 60px rgba(0,0,0,.45);
+    padding: 14px
 }
 
-.left{
-  width:360px;
-  min-width:360px;
+.left {
+    width: 360px;
+    min-width: 360px
 }
 
-@media (max-width:1100px){
-  .left{
-    width:auto;
-    min-width:0;
-  }
+@media (max-width:1100px) {
+    .left {
+        width: auto;
+        min-width: 0
+    }
 }
 
-/* =========================================================
-   PANEL HEAD
-========================================================= */
-
-.panelHead{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
+.panelHead {
+    display: flex;
+    justify-content: space-between;
+    align-items: center
 }
 
-.panelTitle{
-  font-weight:1000;
-  letter-spacing:.12em;
-  text-transform:uppercase;
-  color:var(--gold);
-  font-size:12px;
+.panelTitle {
+    font-weight: 1000;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--gold);
+    font-size: 12px
 }
 
-/* =========================================================
-   QUESTIONS LIST
-========================================================= */
-
-.list{
-  margin-top:10px;
-  display:grid;
-  gap:10px;
-  max-height:520px;
-  overflow:auto;
-  padding-right:6px;
-  padding-bottom:12px;
-  scrollbar-gutter:stable;
+.list {
+    margin-top: 10px;
+    display: grid;
+    gap: 10px;
+    max-height: 520px;
+    overflow: auto;
+    padding-right: 6px;
+    padding-bottom: 12px;
+    scrollbar-gutter: stable
 }
 
-/* =========================================================
-   QUESTION CARD
-========================================================= */
-
-.qcard{
-  position:relative;
-  border-radius:18px;
-  border:1px solid var(--line);
-  background:rgba(255,255,255,.05);
-  padding:12px;
-  cursor:pointer;
-  overflow:hidden;
+.qcard {
+    position: relative;
+    border-radius: 18px;
+    border: 1px solid var(--line);
+    background: rgba(255,255,255,.05);
+    padding: 12px;
+    cursor: pointer;
+    overflow: hidden
 }
 
-.qcard:hover{
-  filter:brightness(1.06);
+.qcard .x:hover,.qcard:hover {
+    filter: brightness(1.06)
 }
 
-.qcard.active{
-  border-color:rgba(255,234,166,.35);
-  background:rgba(255,234,166,.08);
+.qcard.active {
+    border-color: rgba(255,234,166,.35);
+    background: rgba(255,234,166,.08)
 }
 
-/* numer pytania */
-.qord{
-  opacity:.75;
-  font-size:12px;
+.qord {
+    opacity: .75;
+    font-size: 12px
 }
 
-/* treść pytania – ELLIPSIS */
-.qprev{
-  display:block;
-  margin-top:6px;
-  font-weight:1000;
-  font-size:14px;
-
-  width:100%;
-  max-width:100%;
-  min-width:0;
-
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
+.qprev {
+    display: block;
+    margin-top: 6px;
+    font-weight: 1000;
+    font-size: 14px;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis
 }
 
-/* meta (np. 3/6 odpowiedzi) */
-.qmeta{
-  margin-top:6px;
-  opacity:.75;
-  font-size:12px;
+.qmeta {
+    margin-top: 6px;
+    opacity: .75;
+    font-size: 12px
 }
 
-/* =========================================================
-   DELETE X ON QUESTION
-========================================================= */
-
-.qcard .x{
-  position:absolute;
-  top:10px;
-  right:10px;
-  width:34px;
-  height:34px;
-  border-radius:12px;
-  border:1px solid rgba(255,120,120,.35);
-  background:rgba(255,120,120,.12);
-  color:#fff;
-  font-weight:1000;
-  display:grid;
-  place-items:center;
-  cursor:pointer;
+.qcard .x {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 34px;
+    height: 34px;
+    border-radius: 12px;
+    border: 1px solid rgba(255,120,120,.35);
+    background: rgba(255,120,120,.12);
+    color: #fff;
+    font-weight: 1000;
+    display: grid;
+    place-items: center;
+    cursor: pointer
 }
 
-.qcard .x:hover{
-  filter:brightness(1.06);
+.empty {
+    opacity: .8;
+    font-size: 13px;
+    padding: 16px
 }
 
-/* =========================================================
-   EMPTY STATE
-========================================================= */
-
-.empty{
-  opacity:.8;
-  font-size:13px;
-  padding:16px;
+.rightPanel.hasQ .editorBox {
+    display: block
 }
 
-/* =========================================================
-   RIGHT EDITOR VISIBILITY
-========================================================= */
-
-.editorBox{
-  display:none;
+.editorBox,.rightPanel.hasQ .empty {
+    display: none
 }
 
-.rightPanel.hasQ .editorBox{
-  display:block;
+.badgeRow {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 10px
 }
 
-.rightPanel.hasQ .empty{
-  display:none;
+.badge,.lock {
+    padding: 8px 10px;
+    border-radius: 999px;
+    font-weight: 1000;
+    font-size: 11px
 }
 
-/* =========================================================
-   BADGES
-========================================================= */
-
-.badgeRow{
-  display:flex;
-  gap:10px;
-  flex-wrap:wrap;
-  margin-bottom:10px;
+.badge {
+    border: 1px solid rgba(255,255,255,.16);
+    background: var(--card2);
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--gold)
 }
 
-.badge{
-  padding:8px 10px;
-  border-radius:999px;
-  border:1px solid rgba(255,255,255,.16);
-  background:var(--card2);
-  font-weight:1000;
-  letter-spacing:.12em;
-  text-transform:uppercase;
-  font-size:11px;
-  color:var(--gold);
+.lock {
+    border: 1px solid rgba(255,120,120,.35);
+    background: rgba(255,120,120,.1)
 }
 
-.lock{
-  padding:8px 10px;
-  border-radius:999px;
-  border:1px solid rgba(255,120,120,.35);
-  background:rgba(255,120,120,.10);
-  font-weight:1000;
-  font-size:11px;
+.block {
+    margin-bottom: 12px
 }
 
-/* =========================================================
-   QUESTION TEXT
-========================================================= */
-
-.block{
-  margin-bottom:12px;
+.lbl {
+    opacity: .8;
+    font-size: 12px;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    margin-bottom: 8px
 }
 
-.lbl{
-  opacity:.8;
-  font-size:12px;
-  letter-spacing:.12em;
-  text-transform:uppercase;
-  margin-bottom:8px;
+.ta {
+    width: 100%;
+    min-height: 90px;
+    padding: 10px 12px;
+    border-radius: 16px;
+    border: 1px solid var(--line2);
+    background: rgba(0,0,0,.25);
+    color: #fff;
+    outline: 0;
+    resize: vertical;
+    font-weight: 700
 }
 
-.ta{
-  width:100%;
-  min-height:90px;
-  padding:10px 12px;
-  border-radius:16px;
-  border:1px solid var(--line2);
-  background:rgba(0,0,0,.25);
-  color:#fff;
-  outline:none;
-  resize:vertical;
-  font-weight:700;
+.aPts:focus,.aText:focus,.ta:focus {
+    border-color: rgba(255,234,166,.35)
 }
 
-.ta:focus{
-  border-color:rgba(255,234,166,.35);
+.answersBlock {
+    margin-top: 10px
 }
 
-/* =========================================================
-   ANSWERS
-========================================================= */
-
-.answersBlock{
-  margin-top:10px;
+.ahead {
+    grid-template-columns: minmax(0,1fr) 110px 40px;
+    font-size: 11px;
+    opacity: .75;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    padding: 0 6px
 }
 
-.ahead{
-  display:grid;
-  grid-template-columns: minmax(0,1fr) 110px 40px;
-  gap:10px;
-  font-size:11px;
-  opacity:.75;
-  letter-spacing:.12em;
-  text-transform:uppercase;
-  padding:0 6px;
+.ahead,.alist,.arow {
+    display: grid;
+    gap: 10px
 }
 
-.alist{
-  display:grid;
-  gap:10px;
-  margin-top:10px;
-  max-height:360px;
-  overflow:auto;
-  padding-right:6px;
-  padding-bottom:12px;
-  scrollbar-gutter:stable;
+.alist {
+    margin-top: 10px;
+    max-height: 360px;
+    overflow: auto;
+    padding-right: 6px;
+    padding-bottom: 12px;
+    scrollbar-gutter: stable
 }
 
-.arow{
-  display:grid;
-  grid-template-columns: minmax(0,1fr) 110px 40px;
-  gap:10px;
-  align-items:center;
-  border-radius:18px;
-  border:1px solid var(--line);
-  background:var(--card2);
-  padding:10px;
+.arow {
+    grid-template-columns: minmax(0,1fr) 110px 40px;
+    align-items: center;
+    border-radius: 18px;
+    border: 1px solid var(--line);
+    background: var(--card2);
+    padding: 10px
 }
 
-/* WAŻNE: pozwala elementom w gridzie się zwężać */
-.arow > *{ min-width:0; }
-
-.aText,
-.aPts{
-  width:100%;
-  min-width:0;
-  padding:10px 12px;
-  border-radius:14px;
-  border:1px solid var(--line2);
-  background:rgba(255,255,255,.06);
-  color:#fff;
-  outline:none;
-  font-weight:900;
+.arow>* {
+    min-width: 0
 }
 
-.aText:focus,
-.aPts:focus{
-  border-color:rgba(255,234,166,.35);
+.aPts,.aText {
+    width: 100%;
+    min-width: 0;
+    padding: 10px 12px;
+    border-radius: 14px;
+    border: 1px solid var(--line2);
+    background: rgba(255,255,255,.06);
+    color: #fff;
+    outline: 0;
+    font-weight: 900
 }
 
-.aPts{
-  text-align:center;
+.aPts {
+    text-align: center
 }
 
-.aDel{
-  width:40px;
-  height:40px;
-  border-radius:14px;
-  border:1px solid rgba(255,120,120,.35);
-  background:rgba(255,120,120,.12);
-  color:#fff;
-  font-weight:1000;
-  cursor:pointer;
+.aDel {
+    width: 40px;
+    height: 40px;
+    border-radius: 14px;
+    border: 1px solid rgba(255,120,120,.35);
+    background: rgba(255,120,120,.12);
+    color: #fff;
+    font-weight: 1000;
+    cursor: pointer
 }
 
-/* =========================================================
-   MODES
-========================================================= */
-
-.editor.no-points .ahead,
-.editor.no-points .arow{
-  grid-template-columns: minmax(0,1fr) 40px;
+.editor.no-points .ahead,.editor.no-points .arow {
+    grid-template-columns: minmax(0,1fr) 40px
 }
 
-.editor.no-points .aPts{
-  display:none;
+.editor.no-points .aPts {
+    display: none
 }
 
-.editor.only-questions .answersBlock{
-  display:none !important;
+.editor.only-questions .answersBlock {
+    display: none!important
 }
 
-/* =========================================================
-   REMAIN COUNTER (PREPARED)
-========================================================= */
-
-.remainBox{
-  display:flex;
-  gap:10px;
-  align-items:baseline;
-  padding:10px 12px;
-  border-radius:999px;
-  border:1px solid rgba(255,234,166,.28);
-  background:rgba(255,234,166,.10);
-  color:var(--gold);
-  font-weight:1000;
-  letter-spacing:.12em;
-  text-transform:uppercase;
+.addTile,.remainBox {
+    display: flex;
+    gap: 10px
 }
 
-.remainBox.ok{
-  border-color:rgba(120,255,120,.35);
-  background:rgba(120,255,120,.10);
+.remainBox {
+    align-items: baseline;
+    padding: 10px 12px;
+    border-radius: 999px;
+    border: 1px solid rgba(255,234,166,.28);
+    background: rgba(255,234,166,.1);
+    color: var(--gold);
+    font-weight: 1000;
+    letter-spacing: .12em;
+    text-transform: uppercase
 }
 
-.remainBox.over{
-  border-color:rgba(255,120,120,.40);
-  background:rgba(255,120,120,.10);
+.remainBox.ok {
+    border-color: rgba(120,255,120,.35);
+    background: rgba(120,255,120,.1)
 }
 
-/* =========================================================
-   ADD TILES
-========================================================= */
-
-.addTile{
-  border-radius:18px;
-  border:1px dashed rgba(255,255,255,.20);
-  background:rgba(255,255,255,.04);
-  padding:12px;
-  display:flex;
-  gap:10px;
-  align-items:center;
-  cursor:pointer;
+.remainBox.over {
+    border-color: rgba(255,120,120,.4);
+    background: rgba(255,120,120,.1)
 }
 
-.addTile:hover{
-  filter:brightness(1.08);
+.addTile {
+    border-radius: 18px;
+    border: 1px dashed rgba(255,255,255,.2);
+    background: rgba(255,255,255,.04);
+    padding: 12px;
+    align-items: center;
+    cursor: pointer
 }
 
-.addTile .plus{
-  width:34px;
-  height:34px;
-  border-radius:14px;
-  border:1px solid rgba(255,234,166,.28);
-  background:rgba(255,234,166,.10);
-  color:var(--gold);
-  display:grid;
-  place-items:center;
-  font-weight:1000;
+.addTile:hover {
+    filter: brightness(1.08)
 }
 
-.addTile .txt{
-  font-weight:1000;
+.addTile .plus {
+    width: 34px;
+    height: 34px;
+    border-radius: 14px;
+    border: 1px solid rgba(255,234,166,.28);
+    background: rgba(255,234,166,.1);
+    color: var(--gold);
+    display: grid;
+    place-items: center
 }
 
-.addTile .sub{
-  opacity:.75;
-  font-size:12px;
-  font-weight:800;
+.addTile .plus,.addTile .txt {
+    font-weight: 1000
 }
 
-/* =========================================================
-   QUESTION CARD STATUS (good / bad)
-   (musi być na końcu pliku, żeby przebiło .qcard.active)
-========================================================= */
-
-/* tylko zwykłe kafelki pytań – nie dotykamy addTile */
-.qcard:not(.addTile).good{
-  border-color: rgba(120,255,120,.45);
-  background: rgba(120,255,120,.10);
+.addTile .sub {
+    opacity: .75;
+    font-size: 12px;
+    font-weight: 800
 }
 
-.qcard:not(.addTile).bad{
-  border-color: rgba(255,120,120,.45);
-  background: rgba(255,120,120,.10);
+.qcard:not(.addTile).good {
+    border-color: rgba(120,255,120,.45);
+    background: rgba(120,255,120,.1)
 }
 
-/* aktywny kafelek nadal “aktywny”, ale pokazuje status */
-.qcard.active.good{
-  border-color: rgba(120,255,120,.55);
-  background: rgba(120,255,120,.14);
-  box-shadow:
-    0 24px 60px rgba(0,0,0,.45),
-    0 0 0 2px rgba(120,255,120,.14);
+.qcard:not(.addTile).bad {
+    border-color: rgba(255,120,120,.45);
+    background: rgba(255,120,120,.1)
 }
 
-.qcard.active.bad{
-  border-color: rgba(255,120,120,.55);
-  background: rgba(255,120,120,.14);
-  box-shadow:
-    0 24px 60px rgba(0,0,0,.45),
-    0 0 0 2px rgba(255,120,120,.14);
+.qcard.active.good {
+    border-color: rgba(120,255,120,.55);
+    background: rgba(120,255,120,.14);
+    box-shadow: 0 24px 60px rgba(0,0,0,.45),0 0 0 2px rgba(120,255,120,.14)
 }
 
-/* =========================================================
-   MODAL + IMPORT (jak w builderze) – editor
-   (klasy overlay/modal/importRow/importTa/importMsg/mTitle/mSub)
-========================================================= */
-
-.overlay{
-  position:fixed; inset:0;
-  background: rgba(2,6,23,.82);
-  display:grid;
-  place-items:center;
-  z-index:50;
+.qcard.active.bad {
+    border-color: rgba(255,120,120,.55);
+    background: rgba(255,120,120,.14);
+    box-shadow: 0 24px 60px rgba(0,0,0,.45),0 0 0 2px rgba(255,120,120,.14)
 }
 
-.modal{
-  width:min(860px,94vw);
-  border-radius:22px;
-  border:1px solid var(--line);
-  background: var(--card);
-  box-shadow:0 30px 90px rgba(0,0,0,.75);
-  padding:18px;
-
-  max-height:92vh;
-  overflow:auto;
-  -webkit-overflow-scrolling: touch;
+.overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(2,6,23,.82);
+    display: grid;
+    place-items: center;
+    z-index: 50
 }
 
-.mTitle{
-  font-weight:1000;
-  font-size:18px;
-  letter-spacing:.06em;
-  color: var(--gold);
-}
-.mSub{
-  opacity:.8;
-  font-size:13px;
-  margin-top:6px;
-}
-
-.importRow{
-  display:flex;
-  gap:10px;
-  align-items:center;
-  flex-wrap:wrap;
-  margin-top:12px;
+.modal {
+    width: min(860px,94vw);
+    border-radius: 22px;
+    border: 1px solid var(--line);
+    background: var(--card);
+    box-shadow: 0 30px 90px rgba(0,0,0,.75);
+    padding: 18px;
+    max-height: 92vh;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch
 }
 
-.importTa{
-  width:100%;
-  min-height:220px;
-  margin-top:12px;
-  padding:12px;
-  border-radius:16px;
-  border:1px solid var(--line2);
-  background: rgba(0,0,0,.25);
-  color:#fff;
-  outline:none;
-  resize: vertical;
-  font-weight:800;
+.mTitle {
+    font-weight: 1000;
+    font-size: 18px;
+    letter-spacing: .06em;
+    color: var(--gold)
 }
 
-.importMsg{
-  margin-left:auto;
-  opacity:.85;
-  font-weight:900;
-  color: var(--gold);
-  padding:6px 0;
+.mSub {
+    opacity: .8;
+    font-size: 13px;
+    margin-top: 6px
 }
 
-/* =========================================================
-   MOBILE TWEAKS – mniejsze kafelki pytań + ciaśniejsze odpowiedzi
-========================================================= */
+.importRow {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-top: 12px
+}
 
-@media (max-width: 720px){
+.importTa {
+    width: 100%;
+    min-height: 220px;
+    margin-top: 12px;
+    padding: 12px;
+    border-radius: 16px;
+    border: 1px solid var(--line2);
+    background: rgba(0,0,0,.25);
+    color: #fff;
+    outline: 0;
+    resize: vertical;
+    font-weight: 800
+}
 
-  .left,
-  .rightPanel{
-    padding:12px;
-    border-radius:18px;
-  }
+.importMsg {
+    margin-left: auto;
+    opacity: .85;
+    font-weight: 900;
+    color: var(--gold);
+    padding: 6px 0
+}
 
-  /* lista pytań: 2 kolumny na telefonie (mniejsze kafelki) */
-  .list{
-    grid-template-columns: 1fr 1fr;
-    gap:8px;
+@media (max-width:720px) {
+    .left,.rightPanel {
+        padding: 12px;
+        border-radius: 18px
+    }
 
-    max-height:none;
-    overflow:visible;
-    padding-right:0;
-    padding-bottom:6px;
-  }
+    .list {
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        max-height: none;
+        overflow: visible;
+        padding-right: 0;
+        padding-bottom: 6px
+    }@    media (max-width:380px) {
+        .list{grid-template-columns: 1fr
+    }
+}
 
-  @media (max-width: 380px){
-    .list{ grid-template-columns: 1fr; }
-  }
+.qcard {
+    padding: 10px;
+    border-radius: 16px
+}
 
-  .qcard{
-    padding:10px;
-    border-radius:16px;
-  }
-  .qord{ font-size:11px; }
-  .qprev{ font-size:13px; margin-top:4px; }
-  .qmeta{ font-size:11px; margin-top:4px; }
+.qord {
+    font-size: 11px
+}
 
-  .qcard .x{
-    top:8px; right:8px;
-    width:28px; height:28px;
-    border-radius:10px;
-  }
+.qmeta,.qprev {
+    font-size: 13px;
+    margin-top: 4px
+}
 
-  .addTile{
-    padding:10px;
-    border-radius:16px;
-  }
-  .addTile .plus{
-    width:30px; height:30px;
-    border-radius:12px;
-  }
+.qmeta {
+    font-size: 11px
+}
 
-  /* odpowiedzi: ciaśniej na telefonie */
-  .ahead{
+.qcard .x {
+    top: 8px;
+    right: 8px;
+    width: 28px;
+    height: 28px;
+    border-radius: 10px
+}
+
+.addTile {
+    padding: 10px;
+    border-radius: 16px
+}
+
+.addTile .plus {
+    width: 30px;
+    height: 30px;
+    border-radius: 12px
+}
+
+.ahead,.arow {
     grid-template-columns: minmax(0,1fr) 72px 36px;
-    gap:8px;
-    padding:0 4px;
-  }
-
-  .arow{
-    grid-template-columns: minmax(0,1fr) 72px 36px;
-    gap:8px;
-    padding:8px;
-    border-radius:16px;
-  }
-
-  .aText,
-  .aPts{
-    padding:8px 10px;
-    border-radius:12px;
-  }
-
-  .aDel{
-    width:36px;
-    height:36px;
-    border-radius:12px;
-  }
-
-  /* tryb bez punktów na telefonie też musi być minmax(0,1fr) */
-  .editor.no-points .ahead,
-  .editor.no-points .arow{
-    grid-template-columns: minmax(0,1fr) 36px;
-  }
+    gap: 8px;
+    padding: 0 4px
 }
 
-/* jeszcze ciaśniej na bardzo wąskich ekranach */
-@media (max-width: 420px){
-  .ahead,
-  .arow{
-    grid-template-columns: minmax(0,1fr) 64px 34px;
-    gap:7px;
-  }
-  .aDel{ width:34px; height:34px; }
+.arow {
+    padding: 8px;
+    border-radius: 16px
+}
+
+.aPts,.aText {
+    padding: 8px 10px;
+    border-radius: 12px
+}
+
+.aDel {
+    width: 36px;
+    height: 36px;
+    border-radius: 12px
+}
+
+.editor.no-points .ahead,.editor.no-points .arow {
+    grid-template-columns: minmax(0,1fr) 36px
+}}
+
+@media (max-width:420px) {
+    .ahead,.arow {
+        grid-template-columns: minmax(0,1fr) 64px 34px;
+        gap: 7px
+    }
+
+    .aDel {
+        width: 34px;
+        height: 34px
+    }
 }
