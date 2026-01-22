@@ -346,3 +346,50 @@ input, textarea{ user-select:text; }
 #tree .tree-toggle{
   flex: 0 0 18px;
 }
+
+/* ===== Searchbox: szerokość lewego panelu + wrap w dół ===== */
+.toolbar{
+  align-items:flex-start; /* żeby search mógł rosnąć w dół */
+}
+
+.searchbox{
+  width: 320px;              /* tyle co lewy panel */
+  display:flex;
+  flex-wrap:wrap;            /* chipsy + input zawijają się */
+  align-items:center;
+  gap:6px;
+}
+
+.searchchips{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+  width:100%;
+}
+
+.searchinp{
+  flex: 1 1 180px;          /* rośnie w bok, a jak brak miejsca to w dół */
+  min-width: 140px;
+}
+
+.chip{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:6px 10px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,.14);
+  background: rgba(255,255,255,.06);
+  position:relative;
+  user-select:none;
+  white-space:nowrap;
+}
+
+.chip::before{
+  content:"";
+  width:10px;
+  height:10px;
+  border-radius:999px;
+  background: var(--chip, rgba(255,255,255,.35));
+  display:inline-block;
+}
