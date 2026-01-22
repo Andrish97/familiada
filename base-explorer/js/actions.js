@@ -1,7 +1,17 @@
 // base-explorer/js/actions.js
 // Obsługa zdarzeń i akcji UI (klik, selection, search, folder view)
 
-import { VIEW, setViewAll, setViewFolder, selectionClear, selectionSetSingle, selectionToggle } from "./state.js";
+import {
+  VIEW,
+  setViewAll,
+  setViewFolder,
+  selectionClear,
+  selectionSetSingle,
+  selectionToggle,
+  setViewSearch,
+  rememberBrowseLocation,
+  restoreBrowseLocation,
+} from "./state.js";
 import { renderAll, renderList } from "./render.js";
 import { listQuestionsByCategory, listAllQuestions, listCategories } from "./repo.js";
 import { showContextMenu, hideContextMenu } from "./context-menu.js";
@@ -31,6 +41,16 @@ function applySearchFilterToQuestions(all, query) {
   if (!q) return all;
 
   return (all || []).filter((item) => textOfQuestion(item).toLowerCase().includes(q));
+}
+
+function textOfFolder(c) {
+  return String(c?.name ?? "").trim();
+}
+
+function applySearchFilterToFolders(allFolders, query) {
+  const q = String(query || "").trim().toLowerCase();
+  if (!q) return allFolders || [];
+  return (allFolders || []).filter((c) => textOfFolder(c).toLowerCase().includes(q));
 }
 
 function currentRowKeys(container) {
@@ -116,6 +136,27 @@ async function refreshList(state) {
   
   const allQ = await loadQuestionsForCurrentView(state);
   state._viewQuestions = allQ;
+
+  // === SEARCH: „wirtualny widok wyników” po CAŁOŚCI ===
+  if (state.view === VIEW.SEARCH) {
+    // pytania globalnie (nie tylko z folderu)
+    if (!state._allQuestions) {
+      state._allQuestions = await listAllQuestions(state.baseId);
+    }
+  
+    const qAll = state._allQuestions;
+    const foldersAll = Array.isArray(state.categories) ? state.categories : [];
+  
+    state.folders = applySearchFilterToFolders(foldersAll, state.searchQuery);
+    state.questions = applySearchFilterToQuestions(qAll, state.searchQuery);
+  
+    renderAll(state);
+  
+    const writable = canWrite(state);
+    document.getElementById("btnNewFolder")?.toggleAttribute("disabled", !writable);
+    document.getElementById("btnNewQuestion")?.toggleAttribute("disabled", !writable);
+    return; // ważne: nie lecimy dalej normalnym torem
+  }
   
   const parentId = (state.view === VIEW.ALL) ? null : state.folderId;
   const foldersHere = (state.categories || [])
@@ -972,14 +1013,34 @@ export function wireActions({ state }) {
   toolbarEl?.addEventListener("input", async (e) => {
     const t = e.target;
     if (!t || t.id !== "searchInp") return;
-
-    state.searchQuery = String(t.value || "");
-
-    // filtr lokalny bez DB
-    const base = Array.isArray(state._viewQuestions) ? state._viewQuestions : Array.isArray(state.questions) ? state.questions : [];
-    state.questions = applySearchFilterToQuestions(base, state.searchQuery);
-    renderList(state); // nie ruszamy toolbar, więc focus zostaje w inpucie
-    
+  
+    const q = String(t.value || "");
+    state.searchQuery = q;
+  
+    // jeśli pole puste: wyjście z SEARCH i powrót do ostatniego folderu/root
+    if (!q.trim()) {
+      if (state.view === VIEW.SEARCH) {
+        restoreBrowseLocation(state);
+        selectionClear(state);
+        await refreshList(state);
+      } else {
+        // zwykłe przeglądanie: po prostu odśwież listę bez filtra
+        await refreshList(state);
+      }
+      return;
+    }
+  
+    // jeśli zaczynamy pisać i nie jesteśmy w SEARCH: zapamiętaj skąd przyszliśmy
+    if (state.view !== VIEW.SEARCH) {
+      rememberBrowseLocation(state);
+      setViewSearch(state, q);
+      selectionClear(state);
+      await refreshList(state);
+      return;
+    }
+  
+    // już jesteśmy w SEARCH: tylko odśwież wyniki
+    await refreshList(state);
   });
 
   toolbarEl?.addEventListener("click", async (e) => {
@@ -987,6 +1048,17 @@ export function wireActions({ state }) {
     if (!t) return;
   
     try {
+
+      if (t.id === "searchClearBtn") {
+        const inp = document.getElementById("searchInp");
+        if (inp) inp.value = "";
+        state.searchQuery = "";
+        if (state.view === VIEW.SEARCH) restoreBrowseLocation(state);
+        selectionClear(state);
+        await refreshList(state);
+        return;
+      }
+      
       if (t.id === "btnNewFolder") {
         const parentId = currentParentId(state);
         await createFolderHere(state, { parentId });
@@ -1599,6 +1671,12 @@ export function wireActions({ state }) {
       }
   
       if (mod && (e.key === "v" || e.key === "V")) {
+        if (state.view === VIEW.SEARCH) {
+          e.preventDefault();
+          // opcjonalnie: krótki komunikat
+          // alert("W trybie wyszukiwania nie można wklejać. Wyczyść wyszukiwanie, aby wrócić do folderu.");
+          return;
+        }
         e.preventDefault();
         try {
           await pasteClipboardHere(state);
