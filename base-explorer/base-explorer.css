@@ -271,3 +271,18 @@ input, textarea{ user-select:text; }
 #list .row:first-child {
   margin-top: 6px;
 }
+
+/* Drzewo nie jest tabelą jak lista */
+#tree .row.tree-row {
+  display: block;           /* zamiast grid/kolumn */
+}
+
+#tree .row.tree-row .col-main {
+  width: 100%;
+}
+
+/* Na wszelki wypadek, jeśli globalnie .row to grid */
+#tree .row.tree-row .col-num,
+#tree .row.tree-row .col-meta {
+  display: none !important;
+}
