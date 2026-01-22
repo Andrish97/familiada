@@ -1194,6 +1194,78 @@ async function moveItemsTo(state, targetFolderIdOrNull, { mode = "move" } = {}) 
   await state._api?.refreshList?.();
 }
 
+async function applyTagToDraggedItems(state, tagId, draggedKeys) {
+  if (!canWrite(state)) return false;
+  if (!tagId) return false;
+
+  // Blokada Etap C/G: w SEARCH nie tagujemy niczego
+  if (state.view === VIEW.SEARCH) {
+    alert("W widoku wyszukiwania nie można przypisywać tagów.");
+    return false;
+  }
+
+  const keys = Array.from(draggedKeys || []).filter(Boolean);
+  if (!keys.length) return false;
+
+  const qIds = [];
+  const cIds = [];
+
+  for (const k of keys) {
+    if (k.startsWith("q:")) qIds.push(k.slice(2));
+    if (k.startsWith("c:")) cIds.push(k.slice(2));
+  }
+
+  // Folder -> pytania w poddrzewie
+  let qFromFolders = [];
+  if (cIds.length) {
+    await ensureDerivedFolderMaps(state);
+    const folderDesc = state._folderDescQIds || new Map();
+    const out = new Set();
+    for (const cid of cIds) {
+      const set = folderDesc.get(cid);
+      if (!set) continue;
+      for (const qid of set) out.add(qid);
+    }
+    qFromFolders = Array.from(out);
+  }
+
+  const allQIds = Array.from(new Set([...qIds, ...qFromFolders])).filter(Boolean);
+  if (!allQIds.length) return false;
+
+  // Pobierz istniejące linki (żeby nie robić duplikatów)
+  const { data: existing, error: e0 } = await sb()
+    .from("qb_question_tags")
+    .select("question_id,tag_id")
+    .in("question_id", allQIds)
+    .eq("tag_id", tagId);
+
+  if (e0) throw e0;
+
+  const have = new Set((existing || []).map(x => x.question_id));
+  const inserts = [];
+
+  for (const qid of allQIds) {
+    if (have.has(qid)) continue;
+    inserts.push({ question_id: qid, tag_id: tagId });
+  }
+
+  if (inserts.length) {
+    const { error: e1 } = await sb()
+      .from("qb_question_tags")
+      .insert(inserts, { defaultToNull: false });
+    if (e1) throw e1;
+  }
+
+  // Unieważnij cache tagów / derived folder tags
+  state._allQuestionTagMap = null;
+  state._derivedCategoryTagMap = null;
+  state._folderDescQIds = null;
+  state._allCategoryTagMap = null;
+
+  await state._api?.refreshList?.();
+  return true;
+}
+
 /* ================= Reorder folders in tree ================= */
 
 function catById(state, id) {
@@ -2090,6 +2162,12 @@ export function wireActions({ state }) {
     return ids.filter(Boolean);
   }
 
+  function isCopyDragModifier(ev) {
+    const isMac = navigator.platform.toLowerCase().includes("mac");
+    // Etap G/TODO: na macOS kopia to Option/Alt (nie Ctrl)
+    return isMac ? !!ev.altKey : (!!ev.ctrlKey || !!ev.metaKey);
+  }
+
   function canDnD() {
     return canMutateHere(state);
   }
@@ -2137,6 +2215,14 @@ export function wireActions({ state }) {
   
     el?.classList?.add("is-drop-target");
     state._drag.overKey = `c:${targetFolderIdOrNull}`;
+  }
+
+  function pulseEl(el) {
+    if (!el) return;
+    el.classList.remove("drop-pulse");      // restart animacji
+    void el.offsetWidth;                    // reflow trick
+    el.classList.add("drop-pulse");
+    setTimeout(() => el.classList.remove("drop-pulse"), 460);
   }
 
   toolbarEl?.addEventListener("input", async (e) => {
@@ -2335,10 +2421,18 @@ export function wireActions({ state }) {
     // 1) klik w tag-row = selekcja (ctrl/shift)
     const row = e.target?.closest?.('.row[data-kind="tag"][data-id]');
     if (!row) {
-      // klik w puste tło tagów = czyść zaznaczenie tagów
+      // klik w puste tło tagów = czyść zaznaczenie tagów + wyjście z VIEW.TAG
       if (!state.tagSelection) state.tagSelection = { ids: new Set(), anchorId: null };
       state.tagSelection.ids.clear();
       state.tagSelection.anchorId = null;
+    
+      if (state.view === VIEW.TAG) {
+        restoreBrowseLocation(state);   // wróć do ostatniego folderu/root
+        selectionClear(state);
+        await refreshList(state);
+        return;
+      }
+    
       renderAll(state);
       return;
     }
@@ -2346,7 +2440,7 @@ export function wireActions({ state }) {
     const tagId = row.dataset.id;
     if (!tagId) return;
   
-    const isCtrl = e.ctrlKey || e.metaKey;
+    const isCtrl = isCopyDragModifier(e);
     const isShift = e.shiftKey;
   
     if (isShift) tagSelectRange(state, tagId);
@@ -2389,6 +2483,68 @@ export function wireActions({ state }) {
 
     // puste tło tags
     await showContextMenu({ state, x: e.clientX, y: e.clientY, target: { kind: "tags-bg", id: null } });
+  });
+
+  function canTagDnD() {
+    // Tagowanie to mutacja, ale Etap G mówi: blokujemy tylko SEARCH.
+    return canWrite(state) && state.view !== VIEW.SEARCH;
+  }
+  
+  function clearTagDropPreview() {
+    const rows = Array.from(tagsEl?.querySelectorAll?.('.row[data-kind="tag"].is-drop-target') || []);
+    for (const r of rows) r.classList.remove("is-drop-target");
+    if (state._drag) state._drag.tagDrop = null;
+  }
+  
+  // Drag over tag row => pokaż podświetlenie
+  tagsEl?.addEventListener("dragover", (e) => {
+    if (!canTagDnD()) return;
+    e.preventDefault();
+  
+    // tu NIE ma copy/move – to zawsze “dodaj tag”,
+    // ale trzymamy to w logice dla spójności z UI (i ewentualnych badge’y)
+    const isCopy = isCopyDragModifier(e);
+    e.dataTransfer.dropEffect = isCopy ? "copy" : "copy"; // zawsze copy-semantyka
+  
+    const row = e.target?.closest?.('.row[data-kind="tag"][data-id]');
+    if (!row) {
+      clearTagDropPreview();
+      return;
+    }
+  
+    clearTagDropPreview();
+    row.classList.add("is-drop-target");
+    state._drag = state._drag || {};
+    state._drag.tagDrop = { tagId: row.dataset.id };
+  });
+  
+  tagsEl?.addEventListener("dragleave", (e) => {
+    if (!tagsEl.contains(e.relatedTarget)) clearTagDropPreview();
+  });
+  
+  tagsEl?.addEventListener("drop", async (e) => {
+    if (!canTagDnD()) return;
+    e.preventDefault();
+  
+    const row = e.target?.closest?.('.row[data-kind="tag"][data-id]');
+    const tagId = row?.dataset?.id || state._drag?.tagDrop?.tagId || null;
+  
+    clearTagDropPreview();
+  
+    try {
+      const keys = state._drag?.keys;
+      if (!keys || !keys.size) return;
+  
+      await applyTagToDraggedItems(state, tagId, keys);
+
+      pulseEl(tagsEl);
+      
+    } catch (err) {
+      console.error(err);
+      alert("Nie udało się przypisać taga.");
+    } finally {
+      if (state._drag) state._drag.tagDrop = null;
+    }
   });
 
   let treeClickRenderTimer = null;
@@ -2443,7 +2599,7 @@ export function wireActions({ state }) {
     if (kind !== "cat" || !id) return;
   
     const key = `c:${id}`;
-    const isCtrl = e.ctrlKey || e.metaKey;
+    const isCtrl = isCopyDragModifier(e);
     const isShift = e.shiftKey;
   
     if (isShift) {
@@ -2537,7 +2693,7 @@ export function wireActions({ state }) {
     if (!canDnD()) return;
     e.preventDefault();
   
-    const isCopy = e.ctrlKey || e.metaKey;
+    const isCopy = isCopyDragModifier(e);
     state._drag.mode = isCopy ? "copy" : "move";
     e.dataTransfer.dropEffect = state._drag.mode;
   
@@ -2592,11 +2748,12 @@ export function wireActions({ state }) {
     state._drag.treeDrop = null;
   
     try {
-      const moveMode = (e.ctrlKey || e.metaKey) ? "copy" : "move";
+      const moveMode = isCopyDragModifier(e) ? "copy" : "move";
   
       // COPY: zostawiamy stare zachowanie (kopiowanie folderów już masz)
       if (moveMode === "copy") {
-        await moveItemsTo(state, targetId, { mode: "copy" }); // targetId null => root
+        await moveItemsTo(state, targetId, { mode: "copy" }); 
+        pulseEl(treeEl);
         return;
       }
   
@@ -2604,23 +2761,28 @@ export function wireActions({ state }) {
       // - jeśli drop na tło => normalny move do root
       if (modeKey === "root" || !targetId) {
         await moveItemsTo(state, null, { mode: "move" });
+        pulseEl(treeEl);
         return;
       }
   
       // - jeśli drop "into" => move do środka folderu (parent = targetId)
       if (modeKey === "into") {
         await moveItemsTo(state, targetId, { mode: "move" });
+        pulseEl(treeEl);
         return;
       }
   
       // - jeśli drop before/after => reorder w rodzeństwie targetu (z ewentualnym przeniesieniem parenta)
       if (cIds.length) {
-        await reorderFoldersByDrop(state, cIds, targetId, modeKey); // before/after
+        await reorderFoldersByDrop(state, cIds, targetId, modeKey);
+        pulseEl(treeEl);// before/after
         return;
       }
   
       // jeśli user przeciąga same pytania na drzewo “między” — traktujemy jak “do folderu”
       await moveItemsTo(state, targetId, { mode: "move" });
+
+      pulseEl(treeEl);
     } catch (err) {
       console.error(err);
       alert("Nie udało się przenieść.");
@@ -2648,7 +2810,7 @@ export function wireActions({ state }) {
     const key = kind === "q" ? `q:${id}` : kind === "cat" ? `c:${id}` : null;
     if (!key) return;
 
-    const isCtrl = e.ctrlKey || e.metaKey;
+    const isCtrl = isCopyDragModifier(e);
     const isShift = e.shiftKey;
 
     if (isShift) {
@@ -2722,7 +2884,7 @@ export function wireActions({ state }) {
     if (!canDnD()) return;
     e.preventDefault();
   
-    const isCopy = e.ctrlKey || e.metaKey;
+    const isCopy = isCopyDragModifier(e);
     state._drag.mode = isCopy ? "copy" : "move";
     e.dataTransfer.dropEffect = state._drag.mode;
   
@@ -2746,8 +2908,9 @@ export function wireActions({ state }) {
     clearDropTarget();
   
     try {
-      const mode = (e.ctrlKey || e.metaKey) ? "copy" : "move";
+      const mode = isCopyDragModifier(e) ? "copy" : "move";
       await moveItemsTo(state, targetFolderId, { mode });
+      pulseEl(listEl);
     } catch (err) {
       console.error(err);
       alert("Nie udało się przenieść.");
@@ -2846,7 +3009,7 @@ export function wireActions({ state }) {
     // start marquee
     marqueeStart = listLocalPoint(e);
     
-    marqueeAdd = e.ctrlKey || e.metaKey;
+    marqueeAdd = isCopyDragModifier(e);
     marqueeBaseKeys = marqueeAdd ? new Set(state.selection.keys) : null;
     
     if (!marqueeAdd) {
@@ -2959,7 +3122,7 @@ export function wireActions({ state }) {
 
     treeMarqueeStart = treeLocalPoint(e);
 
-    treeMarqueeAdd = e.ctrlKey || e.metaKey;
+    treeMarqueeAdd = isCopyDragModifier(e);
     treeMarqueeBase = treeMarqueeAdd ? new Set(state.selection.keys) : null;
 
     if (!treeMarqueeAdd) {
@@ -3070,7 +3233,7 @@ export function wireActions({ state }) {
 
     tagsMarqueeStart = tagsLocalPoint(e);
 
-    tagsMarqueeAdd = e.ctrlKey || e.metaKey;
+    tagsMarqueeAdd = isCopyDragModifier(e);
     if (!state.tagSelection) state.tagSelection = { ids: new Set(), anchorId: null };
     tagsMarqueeBase = tagsMarqueeAdd ? new Set(state.tagSelection.ids) : null;
 
