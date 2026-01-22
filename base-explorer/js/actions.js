@@ -176,7 +176,7 @@ function uniqIds(arr) {
   return Array.from(new Set((arr || []).filter(Boolean)));
 }
 
-function buildChildrenIndex(categories) {
+function buildChildrenIdIndex(categories) {
   const byParent = new Map();
   for (const c of (categories || [])) {
     const pid = c.parent_id || null;
@@ -187,7 +187,7 @@ function buildChildrenIndex(categories) {
 }
 
 function collectDescendantFolderIds(categories, rootFolderId) {
-  const byParent = buildChildrenIndex(categories);
+  const byParent = buildChildrenIdIndex(categories);
   const out = [];
   const stack = [rootFolderId];
   const seen = new Set();
@@ -230,7 +230,7 @@ async function ensureDerivedFolderMaps(state) {
   }
 
   const cats = Array.isArray(state.categories) ? state.categories : [];
-  const byParent = buildChildrenIndex(cats);
+  const byParent = buildChildrenIdIndex(cats);
 
   // folder -> pytania bezpośrednie
   const directQByFolder = new Map(); // folderId -> [qId...]
@@ -408,41 +408,6 @@ async function refreshList(state) {
         for (const tid of tagIds) if (set.has(tid)) return true;
         return false;
       });
-
-      // + foldery otagowane bezpośrednio (qb_category_tags)
-      if (!state._allCategoryTagMap) {
-        const cIdsAll = foldersAll.map(c => c.id).filter(Boolean);
-        const linksC = await listCategoryTags(cIdsAll);
-        const mC = new Map();
-        for (const l of (linksC || [])) {
-          if (!mC.has(l.category_id)) mC.set(l.category_id, new Set());
-          mC.get(l.category_id).add(l.tag_id);
-        }
-        state._allCategoryTagMap = mC;
-      }
-
-      const mC = state._allCategoryTagMap;
-      for (const c of foldersAll) {
-        const set = mC.get(c.id);
-        if (!set) continue;
-      
-        for (const tid of tagIds) {
-          if (!set.has(tid)) continue;
-      
-          // dodaj folder i jego rodziców
-          foldersFromTags.add(c.id);
-      
-          let cur = byIdAll.get(c.id);
-          let guard2 = 0;
-          while (cur && guard2++ < 20) {
-            const pid = cur.parent_id || null;
-            if (!pid) break;
-            foldersFromTags.add(pid);
-            cur = byIdAll.get(pid);
-          }
-          break;
-        }
-      }
     }
 
     // 2) filtr tekstowy na pytania (AND z tagami)
