@@ -267,7 +267,11 @@ export function renderTags(state) {
   `;
 
   if (!tags.length) {
-    elTags.innerHTML = `${header}<div style="opacity:.75; padding:6px 8px;">Brak tagów.</div>${addBtn}`;
+    elTags.innerHTML =`
+      ${header}
+      ${addBtn}
+      <div style="opacity:.75; padding:6px 8px;">Brak tagów.</div>
+      `;
     return;
   }
 
@@ -288,13 +292,21 @@ export function renderTags(state) {
     .join("");
 
   elTags.innerHTML = `
-    <div style="opacity:.75; margin-bottom:6px;">Tagi</div>
-    <div class="tagList">${rows}</div>
+    ${header}
     ${addBtn}
+    <div class="tagList">${rows}</div>
   `;
 }
 
 export function renderBreadcrumbs(state) {
+
+  if (state.view === VIEW.SEARCH || state.view === VIEW.TAG) {
+    elBreadcrumbs.hidden = true;
+    elBreadcrumbs.innerHTML = "";
+    return;
+  }
+  elBreadcrumbs.hidden = false;
+  
   if (!elBreadcrumbs) return;
 
   const byId = new Map((state.categories || []).map(c => [c.id, c]));
@@ -360,12 +372,14 @@ export function renderList(state) {
     return;
   }
 
+  let n = 1;
+
   const folderRows = folders.map((c) => {
     const key = `c:${c.id}`;
     const selClass = isSelected(state, key) ? " is-selected" : "";
     const draggable = (state.role === "owner" || state.role === "editor") ? `draggable="true"` : ``; 
     return `<div class="row${selClass}" ${draggable} data-kind="cat" data-id="${esc(c.id)}" style="cursor:pointer;">
-      <div class="col-num"></div>
+      <div class="col-num">${n++}</div>
       <div class="col-main">
         <div class="title-line">
           <span class="title-text">📁 ${esc(c.name || "Folder")}</span>
@@ -381,13 +395,12 @@ export function renderList(state) {
     const selClass = isSelected(state, key) ? " is-selected" : "";
 
     const text = q?.payload?.text ?? q?.text ?? "";
-    const ord = (q?.ord ?? (idx + 1));
 
     const answersCount = Array.isArray(q?.payload?.answers) ? q.payload.answers.length : 0;
     const meta = answersCount ? `${answersCount} odp.` : "";
     const draggable = (state.role === "owner" || state.role === "editor") ? `draggable="true"` : ``; 
     return `<div class="row${selClass}" ${draggable} data-kind="q" data-id="${esc(q.id)}" style="cursor:pointer;">
-      <div class="col-num">${esc(ord)}</div>
+      <div class="col-num">${n++}</div>
       <div class="col-main">
         <div class="title-line">
           <span class="title-text">${esc(text || "Pytanie")}</span>
