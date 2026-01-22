@@ -839,22 +839,37 @@ export function wireActions({ state }) {
   function clearDropTarget() {
     const prev = state._drag?.overKey;
     if (!prev) return;
-    const [k, id] = prev.split(":");
-    const kind = (k === "c") ? "cat" : null;
-    if (!kind) return;
   
-    const el = document.querySelector(`.row[data-kind="${kind}"][data-id="${CSS.escape(id)}"]`);
-    el?.classList?.remove("is-drop-target");
+    const [k, id] = prev.split(":");
+    if (k !== "c" || !id) return;
+  
+    // usuń klasę z obu miejsc (drzewo + lista), bo nie wiemy gdzie była
+    const sel = `.row[data-kind="cat"][data-id="${CSS.escape(id)}"]`;
+    treeEl?.querySelector?.(sel)?.classList?.remove("is-drop-target");
+    listEl?.querySelector?.(sel)?.classList?.remove("is-drop-target");
+  
     state._drag.overKey = null;
   }
   
-  function setDropTarget(folderIdOrNull) {
+  function setDropTarget(folderIdOrNull, scopeEl) {
     clearDropTarget();
+  
     if (!folderIdOrNull) {
       state._drag.overKey = null; // root
       return;
     }
-    const el = document.querySelector(`.row[data-kind="cat"][data-id="${CSS.escape(folderIdOrNull)}"]`);
+  
+    const sel = `.row[data-kind="cat"][data-id="${CSS.escape(folderIdOrNull)}"]`;
+  
+    // 1) preferuj scope (tam gdzie jest kursor)
+    let el = scopeEl?.querySelector?.(sel) || null;
+  
+    // 2) fallback: jeśli nie znaleziono w scope, spróbuj w drugim panelu
+    if (!el) el = treeEl?.querySelector?.(sel) || listEl?.querySelector?.(sel) || null;
+  
+    // 3) ostateczny fallback
+    if (!el) el = document.querySelector(sel);
+  
     el?.classList?.add("is-drop-target");
     state._drag.overKey = `c:${folderIdOrNull}`;
   }
@@ -917,39 +932,52 @@ export function wireActions({ state }) {
   });
 
   treeEl?.addEventListener("click", async (e) => {
-    // 1) klik w chevron = tylko zwijanie/rozwijanie (bez wchodzenia do folderu)
+    // 0) klik w puste tło drzewa = czyść selekcję
+    if (e.target === treeEl || e.target?.closest?.(".treeList") === null) {
+      selectionClear(state);
+      renderAll(state);
+      return;
+    }
+  
+    // 1) klik w chevron = tylko zwijanie/rozwijanie
     const tog = e.target?.closest?.(".tree-toggle[data-id]");
     if (tog) {
       e.preventDefault();
       e.stopPropagation();
       const id = tog.dataset.id;
       if (!id) return;
-
+  
       if (!(state.treeOpen instanceof Set)) state.treeOpen = new Set();
       if (state.treeOpen.has(id)) state.treeOpen.delete(id);
       else state.treeOpen.add(id);
-
-      // samo drzewo się przerysuje przy najbliższym renderAll,
-      // ale tu od razu odświeżamy listę+drzewo, żeby UI było natychmiastowe:
+  
       renderAll(state);
       return;
     }
-
-    // 2) klik w wiersz = SELEKCJA (jak Explorer)
-    const row = e.target?.closest?.(".row[data-kind]");
+  
+    // 2) klik w wiersz
+    const row = e.target?.closest?.('.row[data-kind][data-id]');
     if (!row) return;
-    
+  
     const kind = row.dataset.kind;
     const id = row.dataset.id || null;
-    
+  
+    // root: single select (opcjonalnie) + przejście do root dopiero na dblclick
+    if (kind === "root") {
+      selectionClear(state);
+      state.selection.keys.add("root"); // jeśli nie chcesz zaznaczać root — usuń te 2 linie
+      state.selection.anchorKey = "root";
+      renderAll(state);
+      return;
+    }
+  
     if (kind !== "cat" || !id) return;
-    
+  
     const key = `c:${id}`;
     const isCtrl = e.ctrlKey || e.metaKey;
     const isShift = e.shiftKey;
-    
+  
     if (isShift) {
-      // shift-range w drzewie (masz już selectTreeRange)
       selectTreeRange(key);
     } else if (isCtrl) {
       selectionToggle(state, key);
@@ -958,10 +986,8 @@ export function wireActions({ state }) {
       selectionSetSingle(state, key);
       state.selection.anchorKey = key;
     }
-    
-    // drzewo i lista powinny odświeżyć zaznaczenie
+  
     renderAll(state);
-    
   });
 
   treeEl?.addEventListener("dblclick", async (e) => {
@@ -990,7 +1016,7 @@ export function wireActions({ state }) {
     // jeśli start drag na niezaznaczonym -> single select
     if (!state.selection?.keys?.has?.(key)) {
       selectionSetSingle(state, key);
-      renderList(state);
+      renderAll(state);
     }
 
     state._drag.keys = new Set(state.selection.keys);
@@ -999,47 +1025,36 @@ export function wireActions({ state }) {
     e.dataTransfer.effectAllowed = "copyMove";
   });
 
-  // --- DnD na drzewie: drop na folder ---
-  treeEl?.addEventListener("drop", async (e) => {
+  // --- DnD na drzewie: dragover / drop (cel: folder w drzewie albo root) ---
+  treeEl?.addEventListener("dragover", (e) => {
     if (!canDnD()) return;
     e.preventDefault();
-
+  
+    const isCopy = e.ctrlKey || e.metaKey;
+    state._drag.mode = isCopy ? "copy" : "move";
+    e.dataTransfer.dropEffect = state._drag.mode;
+  
     const row = e.target?.closest?.('.row[data-kind="cat"][data-id]');
-    const targetFolderId = row ? row.dataset.id : null; // null = Root
-
-    clearDropTarget();
-
-    try {
-      if (state._drag?.keys?.size) {
-        const mode = (e.ctrlKey || e.metaKey) ? "copy" : "move";
-        await moveItemsTo(state, targetFolderId, { mode });
-      }
-    } catch (err) {
-      console.error(err);
-      alert("Nie udało się przenieść.");
-    } finally {
-      state._drag.keys = null;
-    }
+    if (row) setDropTarget(row.dataset.id, treeEl);
+    else setDropTarget(null, treeEl);
   });
-
+  
   treeEl?.addEventListener("dragleave", (e) => {
     if (!treeEl.contains(e.relatedTarget)) clearDropTarget();
   });
-
+  
   treeEl?.addEventListener("drop", async (e) => {
     if (!canDnD()) return;
     e.preventDefault();
   
     const row = e.target?.closest?.('.row[data-kind="cat"][data-id]');
-    const targetFolderId = row ? row.dataset.id : null;
+    const targetFolderId = row ? row.dataset.id : null; // null = Root
   
-    row?.classList?.remove("is-drop-target");
+    clearDropTarget();
   
     try {
-      if (state._drag?.keys?.size) {
-        const mode = (e.ctrlKey || e.metaKey) ? "copy" : "move";
-        await moveItemsTo(state, targetFolderId, { mode });
-      }
+      const mode = (e.ctrlKey || e.metaKey) ? "copy" : "move";
+      await moveItemsTo(state, targetFolderId, { mode });
     } catch (err) {
       console.error(err);
       alert("Nie udało się przenieść.");
@@ -1146,8 +1161,8 @@ export function wireActions({ state }) {
     e.dataTransfer.dropEffect = state._drag.mode;
   
     const row = e.target?.closest?.('.row[data-kind="cat"][data-id]');
-    if (row) setDropTarget(row.dataset.id);
-    else setDropTarget(null);
+    if (row) setDropTarget(row.dataset.id, listEl);
+    else setDropTarget(null, listEl);
   });
     
   listEl?.addEventListener("dragleave", (e) => {
