@@ -22,6 +22,20 @@ function canWrite(state) {
   return state?.role === "owner" || state?.role === "editor";
 }
 
+function isVirtualView(state) {
+  return state?.view === VIEW.SEARCH || state?.view === VIEW.TAG;
+}
+
+function canMutateHere(state) {
+  // mutacje bazy: create/rename/delete/paste/dnd
+  return canWrite(state) && !isVirtualView(state);
+}
+
+function canPasteHere(state) {
+  // paste dodatkowo wymaga schowka
+  return canMutateHere(state) && !!state?.clipboard?.mode && !!state?.clipboard?.keys?.size;
+}
+
 function keyFromRow(row) {
   const kind = row?.dataset?.kind;
   const id = row?.dataset?.id;
@@ -120,7 +134,7 @@ async function loadQuestionsForCurrentView(state) {
 
 async function refreshList(state) {
 
-    // --- Drzewo: init + auto-otwórz ścieżkę do aktualnego folderu ---
+  // --- Drzewo: init + auto-otwórz ścieżkę do aktualnego folderu ---
   if (!(state.treeOpen instanceof Set)) state.treeOpen = new Set();
 
   if (state.view === VIEW.FOLDER && state.folderId) {
@@ -171,9 +185,9 @@ async function refreshList(state) {
   
   renderAll(state);
 
-  const writable = canWrite(state);
-  document.getElementById("btnNewFolder")?.toggleAttribute("disabled", !writable);
-  document.getElementById("btnNewQuestion")?.toggleAttribute("disabled", !writable);
+  const mutable = canMutateHere(state);
+  document.getElementById("btnNewFolder")?.toggleAttribute("disabled", !mutable);
+  document.getElementById("btnNewQuestion")?.toggleAttribute("disabled", !mutable);
 }
 
 function currentParentId(state) {
@@ -486,9 +500,7 @@ export function cutSelectedToClipboard(state) {
 
 export async function pasteClipboardHere(state) {
   if (!clipboardHas(state)) return false;
-  if (state.view === VIEW.SEARCH || state.view === VIEW.TAG) {
-    return false;
-  }
+  if (!canMutateHere(state)) return false;
 
   const targetFolderIdOrNull = (state.view === VIEW.FOLDER && state.folderId) ? state.folderId : null;
   const mode = state.clipboard.mode;
@@ -964,7 +976,7 @@ export function wireActions({ state }) {
   }
 
   function canDnD() {
-    return canWrite(state);
+    return canMutateHere(state);
   }
   
   function keyFromKindId(kind, id) {
@@ -1051,6 +1063,10 @@ export function wireActions({ state }) {
     if (!t) return;
   
     try {
+
+      if (t.id === "btnNewFolder" || t.id === "btnNewQuestion") {
+        if (!canMutateHere(state)) return;
+      }
 
       if (t.id === "searchClearBtn") {
         const inp = document.getElementById("searchInp");
@@ -1577,12 +1593,6 @@ export function wireActions({ state }) {
     renderList(state); // wyrównaj po zakończeniu
   });
 
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") {
-      selectionClear(state);
-      renderList(state);
-    }
-  });
   // pierwsze „odśwież” listy po podpięciu akcji
   // (żeby działało też po przełączeniu view/search)
   const api = {
@@ -1637,6 +1647,7 @@ export function wireActions({ state }) {
     }
   
     if (e.key === "Delete") {
+      if (!canMutateHere(state)) return;
       try {
         await deleteSelected(state);
       } catch (err) {
@@ -1646,6 +1657,7 @@ export function wireActions({ state }) {
     }
 
       if (e.key === "F2") {
+        if (!canMutateHere(state)) return;
         // nie rename'uj kiedy user pisze w inpucie/textarea
         const tag = String(document.activeElement?.tagName || "").toLowerCase();
         if (tag === "input" || tag === "textarea") return;
@@ -1674,10 +1686,8 @@ export function wireActions({ state }) {
       }
   
       if (mod && (e.key === "v" || e.key === "V")) {
-        if (state.view === VIEW.SEARCH) {
+        if (!canMutateHere(state)) {
           e.preventDefault();
-          // opcjonalnie: krótki komunikat
-          // alert("W trybie wyszukiwania nie można wklejać. Wyczyść wyszukiwanie, aby wrócić do folderu.");
           return;
         }
         e.preventDefault();
@@ -1692,6 +1702,7 @@ export function wireActions({ state }) {
 
     // Ctrl+N / Cmd+N = nowy folder (w bieżącym folderze / root)
       if (mod && (e.key === "n" || e.key === "N")) {
+        if (!canMutateHere(state)) return;
         e.preventDefault();
         try {
           const parentId = currentParentId(state);
