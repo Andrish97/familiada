@@ -107,5 +107,29 @@
     </div>
   </div>
 
+  <!-- Assign tags modal -->
+  <div id="assignTagsModal" class="m-modal" hidden>
+    <div class="m-modal__backdrop" data-close="1"></div>
+    <div class="m-modal__card" role="dialog" aria-modal="true" aria-labelledby="assignTagsTitle">
+      <div class="m-modal__head">
+        <div id="assignTagsTitle" class="m-h3">Przypisz tagi</div>
+        <button type="button" class="btn ghost" id="assignTagsClose" title="Zamknij">✕</button>
+      </div>
+  
+      <div class="m-modal__body">
+        <div class="m-p" id="assignTagsInfo" style="opacity:.85; margin-bottom:10px;"></div>
+  
+        <div id="assignTagsList" style="display:flex; flex-direction:column; gap:8px; max-height:45vh; overflow:auto; padding-right:6px;"></div>
+  
+        <div id="assignTagsErr" class="m-warn" hidden style="margin-top:12px;"></div>
+      </div>
+  
+      <div class="m-modal__foot">
+        <button type="button" class="btn ghost" id="assignTagsCancel">Anuluj</button>
+        <button type="button" class="btn" id="assignTagsSave">Zapisz</button>
+      </div>
+    </div>
+  </div>
+  
 </body>
 </html>
