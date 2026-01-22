@@ -48,7 +48,7 @@ export function renderToolbar(state) {
     elToolbar.innerHTML = `
       <div class="searchbox">
         <div id="searchChips" class="searchchips"></div>
-        <input id="searchInp" class="inp searchinp" placeholder="Szukaj... (np. #pieski, #kotki)" />
+        <input id="searchInp" class="inp" placeholder="Szukaj..." value="${esc(state.searchRaw || "")}" /> 
         <button id="searchClearBtn" class="btn ghost" type="button" title="Wyczyść">✕</button>
       </div>
 
