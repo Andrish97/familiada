@@ -1,4 +1,5 @@
 // base-explorer/js/context-menu.js
+
 import { VIEW, setViewFolder, selectionSetSingle } from "./state.js";
 import {
   createFolderHere,
@@ -9,8 +10,6 @@ import {
   cutSelectedToClipboard,
   pasteClipboardHere
 } from "./actions.js";
-  // dopisz do importu
-  // (to są funkcje, które zaraz udostępnimy w state._api w actions.js)
 
 function clamp(n, a, b) {
   return Math.max(a, Math.min(b, n));
@@ -27,7 +26,17 @@ function isEditor(state) {
   return state?.role === "owner" || state?.role === "editor";
 }
 
-function itemHtml(item) {
+function isReadOnlyView(state) {
+  return state?.view === VIEW.SEARCH || state?.view === VIEW.TAG;
+}
+
+function pushSep(items) {
+  if (!items.length) return;
+  if (items[items.length - 1]?.sep) return;
+  items.push({ sep: true });
+}
+
+function itemHtml(item, idx) {
   if (item?.sep) {
     return `<div class="cm-sep" role="separator" aria-hidden="true"></div>`;
   }
@@ -40,27 +49,62 @@ function itemHtml(item) {
     danger ? "danger" : "",
   ].filter(Boolean).join(" ");
 
-  return `<button type="button" class="${cls}" ${disabled ? "disabled" : ""}>${label}</button>`;
+  // data-idx => pewne mapowanie (separatory nie psują indeksów)
+  return `<button type="button" class="${cls}" data-idx="${idx}" ${disabled ? "disabled" : ""}>${label}</button>`;
+}
+
+function renderMenu(cm, items) {
+  cm.innerHTML = items.map((it, i) => itemHtml(it, i)).join("");
+
+  // bind po data-idx
+  const btns = Array.from(cm.querySelectorAll(".cm-item[data-idx]"));
+  for (const btn of btns) {
+    const idx = Number(btn.dataset.idx);
+    const it = items[idx];
+    if (!it || it.disabled || !it.action) continue;
+
+    btn.addEventListener("click", async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      hideContextMenu();
+      await it.action();
+    });
+  }
+}
+
+function positionMenu(cm, x, y) {
+  cm.hidden = false;
+
+  const pad = 8;
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  const rect = cm.getBoundingClientRect();
+
+  const left = clamp(x, pad, vw - rect.width - pad);
+  const top = clamp(y, pad, vh - rect.height - pad);
+
+  cm.style.left = `${left}px`;
+  cm.style.top = `${top}px`;
 }
 
 export async function showContextMenu({ state, x, y, target }) {
   const cm = document.getElementById("contextMenu");
   if (!cm) return;
 
-  // target: { kind: 'cat'|'q'|'root', id: string|null }
   const editor = isEditor(state);
-
-  const readOnlyView =
-    state.view === VIEW.SEARCH ||
-    state.view === VIEW.TAG; // jeśli VIEW.TAG jeszcze nie ma, daj guard jak niżej
+  const readOnlyView = isReadOnlyView(state);
 
   const items = [];
 
-  // ===== TAGS (lewy panel) =====
+  /* =========================================================
+     TAGI (lewy panel): target.kind = "tags-bg" | "tag"
+     Grupy:
+       - Widok
+       - Zarządzanie tagami
+       - (placeholder) operacje niszczące
+  ========================================================= */
   if (target.kind === "tags-bg" || target.kind === "tag") {
-    const editor = isEditor(state);
-
-    // Explorer-style: PPM na niezaznaczonym tagu => single-select
+    // Explorer-style: PPM na niezaznaczonym tagu => najpierw single-select
     if (target.kind === "tag" && target.id) {
       const tid = target.id;
       if (!state?.tagSelection?.ids?.has?.(tid)) {
@@ -73,16 +117,18 @@ export async function showContextMenu({ state, x, y, target }) {
 
     const selectedTagIds = Array.from(state?.tagSelection?.ids || []).filter(Boolean);
 
+    // --- Widok ---
     items.push({
       label: "Pokaż",
-      disabled: !selectedTagIds.length,
+      disabled: selectedTagIds.length === 0,
       action: async () => {
         await state._api?.openTagView?.(selectedTagIds);
       }
     });
 
-    items.push({ sep: true });
+    pushSep(items);
 
+    // --- Zarządzanie tagami ---
     items.push({
       label: "Dodaj tag…",
       disabled: !editor,
@@ -108,194 +154,177 @@ export async function showContextMenu({ state, x, y, target }) {
       }
     });
 
-    // (później) Usuń tag jako byt / multi-PPM na tagach
-    // items.push({ label:"Usuń tag(i)", ... })
+    // placeholdery na przyszłość (PPM tagów)
+    pushSep(items);
+    items.push({ label: "Usuń tag(i) (wkrótce)", disabled: true, danger: true });
 
-    // Tag-menu już zbudowane — renderujemy i kończymy (żeby nie mieszać z menu listy)
-    cm.innerHTML = items.map(itemHtml).join("");
-
-    const nodes = Array.from(cm.children);
-    let idx = -1;
-    
-    for (const node of nodes) {
-      // separator nie jest akcją
-      if (node.classList.contains("cm-sep")) continue;
-    
-      idx++;
-      const it = items[idx];
-      if (!it || it.disabled || !it.action) continue;
-    
-      node.addEventListener("click", async (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        hideContextMenu();
-        await it.action();
-      });
-    }
-
-    cm.hidden = false;
-
-    const pad = 8;
-    const vw = window.innerWidth;
-    const vh = window.innerHeight;
-    const rect = cm.getBoundingClientRect();
-
-    const left = clamp(x, pad, vw - rect.width - pad);
-    const top  = clamp(y, pad, vh - rect.height - pad);
-
-    cm.style.left = `${left}px`;
-    cm.style.top = `${top}px`;
+    renderMenu(cm, items);
+    positionMenu(cm, x, y);
     return;
   }
 
-  // Root / puste tło listy: akcje w aktualnym miejscu (root lub aktualny folder)
+  /* =========================================================
+     LISTA / DRZEWO: target.kind = "root" | "cat" | "q"
+     Grupy:
+       - Tworzenie (dla root)
+       - Schowek
+       - Tagi
+       - Nawigacja / tworzenie w folderze (dla cat)
+       - Edycja
+       - Niebezpieczne
+  ========================================================= */
+
+  // ROOT (puste tło listy itp.)
   if (target.kind === "root") {
     const parentId = (state.view === VIEW.FOLDER && state.folderId) ? state.folderId : null;
     const categoryId = parentId;
-  
-    items.push({ label: "Nowy folder", disabled: !editor || readOnlyView, action: async () => {
-      await createFolderHere(state, { parentId });
-    }});
 
-    items.push({ label: "Nowe pytanie", disabled: !editor || readOnlyView, action: async () => {
-      await createQuestionHere(state, { categoryId });
-    }});
-  
-    items.push({ sep: true }); // separator „na biedno” (na razie)
+    // --- Tworzenie ---
+    items.push({
+      label: "Nowy folder",
+      disabled: !editor || readOnlyView,
+      action: async () => {
+        await createFolderHere(state, { parentId });
+      }
+    });
+
+    items.push({
+      label: "Nowe pytanie",
+      disabled: !editor || readOnlyView,
+      action: async () => {
+        await createQuestionHere(state, { categoryId });
+      }
+    });
+
+    pushSep(items);
   }
 
+  // SCHOWEK (dla cat/q/root)
+  const canPaste = !!state?.clipboard?.mode && !!state?.clipboard?.keys?.size;
+  const pasteDisabled = readOnlyView || !canPaste || (!editor && state.clipboard?.mode === "cut");
+
+  // Schowek ma sens dla cat/q, dla root też (bo wklejasz “tu”)
+  items.push({
+    label: "Kopiuj",
+    disabled: !editor || target.kind === "root", // root nie jest elementem do kopiowania
+    action: async () => { copySelectedToClipboard(state); }
+  });
+
+  items.push({
+    label: "Wytnij",
+    disabled: !editor || readOnlyView || target.kind === "root",
+    action: async () => { cutSelectedToClipboard(state); }
+  });
+
+  items.push({
+    label: "Wklej",
+    disabled: pasteDisabled || !editor, // na razie tylko editor; jeśli chcesz, viewer może wklejać COPY lokalnie -> zmienimy
+    action: async () => {
+      if (readOnlyView) return;
+      await pasteClipboardHere(state);
+    }
+  });
+
+  // placeholder (na przyszłość)
+  items.push({ label: "Duplikuj (wkrótce)", disabled: true });
+
+  // jeśli jesteśmy na elemencie cat/q, dokładamy grupę TAGI
   if (target.kind === "cat" || target.kind === "q") {
-    items.push({ label: "Kopiuj", disabled: !editor, action: async () => {
-      // jeśli kliknięto nie-zaznaczone, ustaw single select (opcjonalnie, jeśli chcesz)
-      copySelectedToClipboard(state);
-    }});
-    items.push({ label: "Wytnij", disabled: !editor, action: async () => {
-      cutSelectedToClipboard(state);
-    }});
+    pushSep(items);
 
     items.push({
       label: "Tagi…",
-      disabled: !editor, // viewer tylko ogląda
+      disabled: !editor, // viewer ogląda
       action: async () => {
-        // jeśli element pod PPM nie jest zaznaczony – zaznacz go (Explorer-style)
         const key = (target.kind === "cat") ? `c:${target.id}` : `q:${target.id}`;
         if (!state.selection?.keys?.has?.(key)) {
           selectionSetSingle(state, key);
         }
-        // otwórz modal (funkcja z actions.js musi być dostępna — patrz niżej)
         await state._api?.openAssignTagsModal?.();
       }
     });
   }
 
-  const canPaste = !!state?.clipboard?.mode && state?.clipboard?.keys?.size > 0;
-
-  const pasteDisabled =
-    readOnlyView ||
-    !canPaste ||
-    (!editor && state.clipboard?.mode === "cut");
-
-  items.push({
-    label: "Wklej",
-    disabled: pasteDisabled,
-    action: async () => {
-      if (readOnlyView) return; // twarda blokada (na wszelki wypadek)
-      await pasteClipboardHere(state);
-    }
-  });
-
-  // Folder
+  // FOLDER (cat): nawigacja + tworzenie w środku
   if (target.kind === "cat") {
-    items.push({ label: "Otwórz folder", action: async () => {
-      setViewFolder(state, target.id);
-      state.selection?.keys?.clear?.();
-      await state._api?.refreshList?.();
-    }});
-  
-    items.push({ label: "Nowy folder", disabled: !editor || readOnlyView, action: async () => {
-      await createFolderHere(state, { parentId: target.id });
-    }});
-  
-    items.push({ label: "Nowe pytanie w tym folderze", disabled: !editor || readOnlyView, action: async () => {
-      await createQuestionHere(state, { categoryId: target.id });
-    }});
+    pushSep(items);
 
-    items.push({ label: "Zmień nazwę", disabled: !editor || readOnlyView, action: async () => {
-      const key = `c:${target.id}`;
-      if (!state.selection?.keys?.has?.(key)) {
-        selectionSetSingle(state, key);
+    // --- Nawigacja ---
+    items.push({
+      label: "Otwórz folder",
+      disabled: false,
+      action: async () => {
+        setViewFolder(state, target.id);
+        state.selection?.keys?.clear?.();
+        await state._api?.refreshList?.();
       }
-      await renameSelectedPrompt(state);
-    }});
-  
-    items.push({ label: "Usuń", danger: true, disabled: !editor || readOnlyView, action: async () => {
-      // Explorer-style: PPM na folderze -> jeśli nie zaznaczony, zaznacz go
-      const key = `c:${target.id}`;
-      if (!state.selection?.keys?.has?.(key)) {
-        selectionSetSingle(state, key);
-      }
-  
-      try {
-        await deleteSelected(state);
-      } catch (e) {
-        console.error(e);
-        alert("Nie udało się usunąć.");
-      }
-    }});
-  }
-
-  // Pytanie
-  if (target.kind === "q") {
-    items.push({ label: "Edytuj", disabled: true }); // modal edycji dojdzie później
-    items.push({ label: "Zmień nazwę (treść)", disabled: !editor || readOnlyView, action: async () => {
-      const key = `q:${target.id}`;
-      if (!state.selection?.keys?.has?.(key)) {
-        selectionSetSingle(state, key);
-      }
-      await renameSelectedPrompt(state);
-    }});
-    items.push({ label: "Usuń", danger: true, disabled: !editor || readOnlyView, action: async () => {
-      // jeśli element pod PPM nie jest zaznaczony – zaznacz go (Explorer-style)
-      const key = `q:${target.id}`;
-      if (!state.selection?.keys?.has?.(key)) {
-        selectionSetSingle(state, key);
-      }
-    
-      try {
-        await deleteSelected(state);
-      } catch (e) {
-        console.error(e);
-        alert("Nie udało się usunąć.");
-      }
-    }});
-  }
-
-  cm.innerHTML = items.map(itemHtml).join("");
-
-  // Podpinamy akcje w kolejności
-  const btns = Array.from(cm.querySelectorAll(".cm-item"));
-  btns.forEach((btn, i) => {
-    const it = items[i];
-    if (!it || it.disabled || !it.action) return;
-    btn.addEventListener("click", async (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      hideContextMenu();
-      await it.action();
     });
-  });
 
-  // Pozycjonowanie (żeby nie wychodziło poza ekran)
-  cm.hidden = false;
+    pushSep(items);
 
-  const pad = 8;
-  const vw = window.innerWidth;
-  const vh = window.innerHeight;
-  const rect = cm.getBoundingClientRect();
+    // --- Tworzenie w folderze ---
+    items.push({
+      label: "Nowy folder w tym folderze",
+      disabled: !editor || readOnlyView,
+      action: async () => {
+        await createFolderHere(state, { parentId: target.id });
+      }
+    });
 
-  const left = clamp(x, pad, vw - rect.width - pad);
-  const top  = clamp(y, pad, vh - rect.height - pad);
+    items.push({
+      label: "Nowe pytanie w tym folderze",
+      disabled: !editor || readOnlyView,
+      action: async () => {
+        await createQuestionHere(state, { categoryId: target.id });
+      }
+    });
+  }
 
-  cm.style.left = `${left}px`;
-  cm.style.top = `${top}px`;
+  // EDYCJA (cat/q)
+  if (target.kind === "cat" || target.kind === "q") {
+    pushSep(items);
+
+    if (target.kind === "q") {
+      items.push({ label: "Edytuj (wkrótce)", disabled: true });
+    }
+
+    items.push({
+      label: target.kind === "cat" ? "Zmień nazwę" : "Zmień nazwę (treść)",
+      disabled: !editor || readOnlyView,
+      action: async () => {
+        const key = (target.kind === "cat") ? `c:${target.id}` : `q:${target.id}`;
+        if (!state.selection?.keys?.has?.(key)) {
+          selectionSetSingle(state, key);
+        }
+        await renameSelectedPrompt(state);
+      }
+    });
+
+    // NIEBEZPIECZNE
+    pushSep(items);
+
+    items.push({
+      label: "Usuń",
+      danger: true,
+      disabled: !editor || readOnlyView,
+      action: async () => {
+        const key = (target.kind === "cat") ? `c:${target.id}` : `q:${target.id}`;
+        if (!state.selection?.keys?.has?.(key)) {
+          selectionSetSingle(state, key);
+        }
+        try {
+          await deleteSelected(state);
+        } catch (e) {
+          console.error(e);
+          alert("Nie udało się usunąć.");
+        }
+      }
+    });
+  }
+
+  // sprzątanie: nie zostaw separatora na końcu
+  while (items.length && items[items.length - 1]?.sep) items.pop();
+
+  renderMenu(cm, items);
+  positionMenu(cm, x, y);
 }
