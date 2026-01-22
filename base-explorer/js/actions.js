@@ -1744,7 +1744,14 @@ export function wireActions({ state }) {
   
     // 1) klik w tag-row = selekcja (ctrl/shift)
     const row = e.target?.closest?.('.row[data-kind="tag"][data-id]');
-    if (!row) return;
+    if (!row) {
+      // klik w puste tło tagów = czyść zaznaczenie tagów
+      if (!state.tagSelection) state.tagSelection = { ids: new Set(), anchorId: null };
+      state.tagSelection.ids.clear();
+      state.tagSelection.anchorId = null;
+      renderAll(state);
+      return;
+    }
   
     const tagId = row.dataset.id;
     if (!tagId) return;
@@ -2234,6 +2241,234 @@ export function wireActions({ state }) {
     marqueeBaseKeys = null;
   
     renderList(state); // wyrównaj po zakończeniu
+  });
+
+    /* ================= Marquee: TREE ================= */
+  let treeMarquee = null;
+  let treeMarqueeStart = null;
+  let treeMarqueeAdd = false;
+  let treeMarqueeBase = null;
+
+  function treeLocalPoint(ev) {
+    const r = treeEl.getBoundingClientRect();
+    const x = ev.clientX - r.left + treeEl.scrollLeft;
+    const y = ev.clientY - r.top + treeEl.scrollTop;
+    return { x, y };
+  }
+
+  function rowRectInTree(row) {
+    const rr = row.getBoundingClientRect();
+    const tr = treeEl.getBoundingClientRect();
+    const left = rr.left - tr.left + treeEl.scrollLeft;
+    const top = rr.top - tr.top + treeEl.scrollTop;
+    return { left, top, right: left + rr.width, bottom: top + rr.height };
+  }
+
+  function updateTreeMarqueeSelection(box) {
+    // zaznaczamy tylko foldery (cat). Root pomijamy w marquee.
+    const rows = Array.from(treeEl.querySelectorAll('.row[data-kind="cat"][data-id]'));
+    const hit = new Set();
+
+    for (const row of rows) {
+      const id = row.dataset.id;
+      if (!id) continue;
+      const key = `c:${id}`;
+      const r = rowRectInTree(row);
+      if (intersects(box, r)) hit.add(key);
+    }
+
+    const out = treeMarqueeAdd && treeMarqueeBase ? new Set(treeMarqueeBase) : new Set();
+    for (const k of hit) out.add(k);
+
+    state.selection.keys = out;
+    state.selection.anchorKey = null;
+
+    // podświetlenie bez przebudowy DOM
+    for (const row of rows) {
+      const id = row.dataset.id;
+      const key = id ? `c:${id}` : null;
+      if (!key) continue;
+      row.classList.toggle("is-selected", out.has(key));
+    }
+  }
+
+  // TREE musi być pozycjonowany dla marquee
+  if (treeEl && getComputedStyle(treeEl).position === "static") {
+    treeEl.style.position = "relative";
+  }
+
+  treeEl?.addEventListener("mousedown", (e) => {
+    if (e.button !== 0) return; // tylko lewy
+
+    // start tylko na "pustym tle": nie w row, nie w toggle, nie w kontrolki
+    const onRow = e.target?.closest?.('.row[data-kind][data-id]');
+    if (onRow) return;
+
+    const onToggle = e.target?.closest?.('.tree-toggle');
+    if (onToggle) return;
+
+    const interactive = e.target?.closest?.('button,a,input,textarea,select,label');
+    if (interactive) return;
+
+    treeMarqueeStart = treeLocalPoint(e);
+
+    treeMarqueeAdd = e.ctrlKey || e.metaKey;
+    treeMarqueeBase = treeMarqueeAdd ? new Set(state.selection.keys) : null;
+
+    if (!treeMarqueeAdd) {
+      selectionClear(state);
+      // nie renderAll — tylko zdejmujemy klasy z tree (szybko)
+      const rows = Array.from(treeEl.querySelectorAll('.row.is-selected'));
+      for (const r of rows) r.classList.remove("is-selected");
+    }
+
+    treeMarquee = document.createElement("div");
+    treeMarquee.className = "marquee";
+    treeMarquee.style.left = `${treeMarqueeStart.x}px`;
+    treeMarquee.style.top = `${treeMarqueeStart.y}px`;
+    treeMarquee.style.width = "0px";
+    treeMarquee.style.height = "0px";
+    treeEl.appendChild(treeMarquee);
+
+    e.preventDefault();
+  });
+
+  document.addEventListener("mousemove", (e) => {
+    if (!treeMarquee || !treeMarqueeStart) return;
+    const cur = treeLocalPoint(e);
+    const box = rectNorm(treeMarqueeStart, cur);
+
+    treeMarquee.style.left = `${box.left}px`;
+    treeMarquee.style.top = `${box.top}px`;
+    treeMarquee.style.width = `${box.width}px`;
+    treeMarquee.style.height = `${box.height}px`;
+
+    updateTreeMarqueeSelection(box);
+  });
+
+  document.addEventListener("mouseup", () => {
+    if (!treeMarquee) return;
+    treeMarquee.remove();
+    treeMarquee = null;
+    treeMarqueeStart = null;
+    treeMarqueeAdd = false;
+    treeMarqueeBase = null;
+
+    // wyrównanie (tylko tree/lista się odświeżą klasami)
+    renderAll(state);
+  });
+
+    /* ================= Marquee: TAGS ================= */
+  let tagsMarquee = null;
+  let tagsMarqueeStart = null;
+  let tagsMarqueeAdd = false;
+  let tagsMarqueeBase = null;
+
+  function tagsLocalPoint(ev) {
+    const r = tagsEl.getBoundingClientRect();
+    const x = ev.clientX - r.left + tagsEl.scrollLeft;
+    const y = ev.clientY - r.top + tagsEl.scrollTop;
+    return { x, y };
+  }
+
+  function rowRectInTags(row) {
+    const rr = row.getBoundingClientRect();
+    const tr = tagsEl.getBoundingClientRect();
+    const left = rr.left - tr.left + tagsEl.scrollLeft;
+    const top = rr.top - tr.top + tagsEl.scrollTop;
+    return { left, top, right: left + rr.width, bottom: top + rr.height };
+  }
+
+  function updateTagsMarqueeSelection(box) {
+    const rows = Array.from(tagsEl.querySelectorAll('.row[data-kind="tag"][data-id]'));
+    const hit = new Set();
+
+    for (const row of rows) {
+      const id = row.dataset.id;
+      if (!id) continue;
+      const r = rowRectInTags(row);
+      if (intersects(box, r)) hit.add(id);
+    }
+
+    if (!state.tagSelection) state.tagSelection = { ids: new Set(), anchorId: null };
+
+    const out = tagsMarqueeAdd && tagsMarqueeBase ? new Set(tagsMarqueeBase) : new Set();
+    for (const id of hit) out.add(id);
+
+    state.tagSelection.ids = out;
+    state.tagSelection.anchorId = null;
+
+    for (const row of rows) {
+      const id = row.dataset.id;
+      row.classList.toggle("is-selected", out.has(id));
+    }
+  }
+
+  // TAGS musi być pozycjonowany dla marquee
+  if (tagsEl && getComputedStyle(tagsEl).position === "static") {
+    tagsEl.style.position = "relative";
+  }
+
+  tagsEl?.addEventListener("mousedown", (e) => {
+    if (e.button !== 0) return;
+
+    // klik w "Dodaj tag" nie startuje marquee
+    if (e.target?.closest?.("#btnAddTag")) return;
+
+    const onRow = e.target?.closest?.('.row[data-kind="tag"][data-id]');
+    if (onRow) return;
+
+    const interactive = e.target?.closest?.('button,a,input,textarea,select,label');
+    if (interactive) return;
+
+    tagsMarqueeStart = tagsLocalPoint(e);
+
+    tagsMarqueeAdd = e.ctrlKey || e.metaKey;
+    if (!state.tagSelection) state.tagSelection = { ids: new Set(), anchorId: null };
+    tagsMarqueeBase = tagsMarqueeAdd ? new Set(state.tagSelection.ids) : null;
+
+    if (!tagsMarqueeAdd) {
+      state.tagSelection.ids.clear();
+      state.tagSelection.anchorId = null;
+      // zdejmij klasy szybko
+      const rows = Array.from(tagsEl.querySelectorAll('.row.is-selected'));
+      for (const r of rows) r.classList.remove("is-selected");
+    }
+
+    tagsMarquee = document.createElement("div");
+    tagsMarquee.className = "marquee";
+    tagsMarquee.style.left = `${tagsMarqueeStart.x}px`;
+    tagsMarquee.style.top = `${tagsMarqueeStart.y}px`;
+    tagsMarquee.style.width = "0px";
+    tagsMarquee.style.height = "0px";
+    tagsEl.appendChild(tagsMarquee);
+
+    e.preventDefault();
+  });
+
+  document.addEventListener("mousemove", (e) => {
+    if (!tagsMarquee || !tagsMarqueeStart) return;
+
+    const cur = tagsLocalPoint(e);
+    const box = rectNorm(tagsMarqueeStart, cur);
+
+    tagsMarquee.style.left = `${box.left}px`;
+    tagsMarquee.style.top = `${box.top}px`;
+    tagsMarquee.style.width = `${box.width}px`;
+    tagsMarquee.style.height = `${box.height}px`;
+
+    updateTagsMarqueeSelection(box);
+  });
+
+  document.addEventListener("mouseup", () => {
+    if (!tagsMarquee) return;
+    tagsMarquee.remove();
+    tagsMarquee = null;
+    tagsMarqueeStart = null;
+    tagsMarqueeAdd = false;
+    tagsMarqueeBase = null;
+
+    renderAll(state);
   });
 
   // pierwsze „odśwież” listy po podpięciu akcji
