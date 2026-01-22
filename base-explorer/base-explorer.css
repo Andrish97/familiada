@@ -242,23 +242,21 @@ input, textarea{ user-select:text; }
 .is-drop-target{ outline:2px dashed rgba(255,255,255,.35); }
 .is-dragging{ opacity:.6; }
 
-/* żeby dało się pozycjonować prostokąt zaznaczania wewnątrz listy */
+/* list container musi być "pozycjonowany", żeby marquee było w środku */
+#list { position: relative; }
+
+/* prostokąt zaznaczania */
+.marquee{
+  position:absolute;
+  border:1px dashed rgba(120, 160, 255, .9);
+  background: rgba(120, 160, 255, .18);
+  pointer-events:none;
+  z-index: 50;
+}
+
 /* zaznaczenie wiersza */
-.row.is-selected {
-  outline: 2px solid rgba(100, 160, 255, 0.9);
+.row.is-selected{
+  outline: 2px solid rgba(120, 160, 255, .55);
   outline-offset: -2px;
-  background: rgba(100, 160, 255, 0.15);
+  background: rgba(120, 160, 255, .10);
 }
-
-/* marquee (prostokąt zaznaczania) */
-#list {
-  position: relative; /* potrzebne, żeby marquee było “w liście” */
-}
-
-.marquee {
-  position: absolute;
-  border: 1px dashed rgba(100, 160, 255, 0.9);
-  background: rgba(100, 160, 255, 0.12);
-  pointer-events: none;
-  z-index: 10;
-} 
