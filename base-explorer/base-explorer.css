@@ -5,6 +5,10 @@
     gap: 12px
 }
 
+.topbar .topbar-right {
+    gap: 10px
+}
+
 .topbar .topbar-title .title {
     font-weight: 700
 }
@@ -13,10 +17,6 @@
     opacity: .75;
     font-size: 12px;
     margin-top: 2px
-}
-
-.topbar .topbar-right {
-    gap: 10px
 }
 
 .toolbar {
@@ -31,7 +31,7 @@
     gap: 0;
     padding: 0 12px 12px;
     min-height: calc(100vh - 120px);
-    aling-items: stretch
+    align-items: stretch
 }
 
 .explorer-left {
@@ -206,11 +206,11 @@ input,textarea {
     box-shadow: 0 12px 30px rgba(0,0,0,.45)
 }
 
-.cm-sep{
-  height:1px;
-  margin:6px 6px;                 /* prawie na całą szerokość */
-  background: rgba(255,255,255,.10);
-  border-radius: 999px;
+.cm-sep {
+    height: 1px;
+    margin: 6px;
+    background: rgba(255,255,255,.1);
+    border-radius: 999px
 }
 
 .cm-item {
@@ -332,7 +332,7 @@ input,textarea {
     border-bottom: 1px solid rgba(255,255,255,.08)
 }
 
-#tree .row.tree-row:hover {
+#tree .row.tree-row:hover,.tags-row:hover {
     background: rgba(255,255,255,.04)
 }
 
@@ -430,138 +430,221 @@ input,textarea {
 }
 
 .tag-dot {
-    width: 10px;
-    height: 10px;
-    border-radius: 999px;
     background: rgba(255,255,255,.25);
     box-shadow: 0 0 0 1px rgba(255,255,255,.12) inset;
     flex: 0 0 auto
 }
 
-/* ===== Tags modal layers ===== */
-.tags-layer { display: block; }
-.tags-actions { display:flex; gap:10px; align-items:center; margin-top:14px; }
-.tags-actions-spacer { flex:1; }
-
-.tags-list { display:flex; flex-direction:column; gap:6px; margin-top:10px; }
-.tags-row {
-  display:flex; align-items:center; gap:10px;
-  padding:8px 10px; border-radius:10px;
+.tags-layer {
+    display: block
 }
-.tags-row:hover { background: rgba(255,255,255,0.04); }
-.tags-row .m-note { margin-left:auto; }
+
+.tags-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-top: 14px
+}
+
+.tags-actions-spacer {
+    flex: 1
+}
+
+.tags-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 10px
+}
+
+.tags-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: 10px
+}
+
+.tags-row .m-note {
+    margin-left: auto
+}
 
 .tag-dot {
-  width: 10px; height: 10px; border-radius: 999px;
-  display:inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 999px;
+    display: inline-block
 }
 
-.tag-color-row { display:flex; align-items:center; gap:10px; margin: 10px 0 6px; }
+.tag-color-btn,.tag-color-row {
+    display: flex;
+    align-items: center
+}
+
+.tag-color-row {
+    gap: 10px;
+    margin: 10px 0 6px
+}
+
 .tag-color-btn {
-  width: 42px; height: 32px; border-radius: 10px;
-  display:flex; align-items:center; justify-content:center;
+    width: 42px;
+    height: 32px;
+    border-radius: 10px;
+    justify-content: center
 }
 
 .tags-color-grid {
-  display:grid;
-  grid-template-columns: repeat(10, 1fr);
-  gap: 8px;
-  margin: 12px 0;
-}
-.tags-color-cell{
-  height: 26px; border-radius: 8px;
-  border: 1px solid rgba(255,255,255,0.12);
-}
-.tags-color-cell.is-picked{
-  outline: 2px solid rgba(255,255,255,0.55);
-  outline-offset: 2px;
+    display: grid;
+    grid-template-columns: repeat(10,1fr);
+    gap: 8px;
+    margin: 12px 0
 }
 
-/* ===== Color picker (Layer 3 inside tags modal) ===== */
+.tags-color-cell {
+    height: 26px;
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,.12)
+}
+
+.tags-color-cell.is-picked {
+    outline: 2px solid rgba(255,255,255,.55);
+    outline-offset: 2px
+}
 
 .colorModalBox {
-  background: rgba(5,5,10,.98);
-  border-radius: 18px;
-  border: 1px solid rgba(255,255,255,.16);
-  box-shadow: 0 18px 60px rgba(0,0,0,.85);
-  max-width: 560px;
-  width: calc(100% - 0px);
-  padding: 18px 18px 16px;
+    background: rgba(5,5,10,.98);
+    border-radius: 18px;
+    border: 1px solid rgba(255,255,255,.16);
+    box-shadow: 0 18px 60px rgba(0,0,0,.85);
+    max-width: 560px;
+    width: calc(100% - 0px);
+    padding: 18px 18px 16px
 }
 
 .colorModalHead {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 10px
 }
 
 .colorModalTitle {
-  font-weight: 1000;
-  letter-spacing: .06em;
-  font-size: 13px;
-  text-transform: uppercase;
-  opacity: .9;
+    font-weight: 1000;
+    letter-spacing: .06em;
+    font-size: 13px;
+    text-transform: uppercase;
+    opacity: .9
 }
 
 .colorModalBody {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px
 }
 
 .colorTopRow {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  flex-wrap: wrap;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap
 }
 
 .colorPreview {
-  width: 92px;
-  height: 92px;
-  border-radius: 16px;
-  border: 1px solid rgba(255,255,255,.18);
-  background: rgba(255,255,255,.1);
-  box-shadow: 0 18px 45px rgba(0,0,0,.55);
+    width: 92px;
+    height: 92px;
+    border-radius: 16px;
+    border: 1px solid rgba(255,255,255,.18);
+    background: rgba(255,255,255,.1);
+    box-shadow: 0 18px 45px rgba(0,0,0,.55)
 }
 
-.sliderRow, .sliders { display: grid; gap: 10px; }
+.sliderRow,.sliders {
+    display: grid;
+    gap: 10px
+}
 
 .sliders {
-  padding: 10px 12px;
-  border-radius: 16px;
-  border: 1px solid rgba(255,255,255,.12);
-  background: rgba(0,0,0,.14);
+    padding: 10px 12px;
+    border-radius: 16px;
+    border: 1px solid rgba(255,255,255,.12);
+    background: rgba(0,0,0,.14)
 }
 
 .sliderRow {
-  grid-template-columns: 18px minmax(0,1fr) 44px;
-  align-items: center;
+    grid-template-columns: 18px minmax(0,1fr) 44px;
+    align-items: center
 }
 
 .sLbl {
-  font-weight: 1000;
-  letter-spacing: .06em;
-  opacity: .9;
+    font-weight: 1000;
+    letter-spacing: .06em;
+    opacity: .9
 }
 
 .sVal {
-  text-align: right;
-  font-weight: 900;
-  opacity: .9;
-  font-variant-numeric: tabular-nums;
+    text-align: right;
+    font-weight: 900;
+    opacity: .9;
+    font-variant-numeric: tabular-nums
 }
 
-.rng { accent-color: #f5d26b; }
+.rng {
+    accent-color: #f5d26b
+}
+
+.colorModalFoot,.searchBox {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap
+}
 
 .colorModalFoot {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  flex-wrap: wrap;
-  padding-top: 8px;
-  border-top: 1px solid rgba(255,255,255,.1);
+    justify-content: space-between;
+    gap: 10px;
+    padding-top: 8px;
+    border-top: 1px solid rgba(255,255,255,.1)
+}
+
+.searchBox {
+    width: 320px;
+    gap: 6px;
+    padding: 6px 8px;
+    border-radius: 12px;
+    border: 1px solid rgba(255,255,255,.14);
+    background: rgba(255,255,255,.04)
+}
+
+.searchBox:focus-within {
+    border-color: rgba(120,160,255,.55);
+    box-shadow: 0 0 0 2px rgba(120,160,255,.18)
+}
+
+.searchChips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center
+}
+
+.searchText {
+    flex: 1 1 140px;
+    min-width: 140px;
+    border: 0;
+    outline: 0;
+    background: 0 0;
+    color: inherit;
+    padding: 6px 4px
+}
+
+.searchText::placeholder {
+    opacity: .65
+}
+
+.searchBox #searchClearBtn {
+    flex: 0 0 auto
+}
+
+.searchBox .chip {
+    padding: 5px 10px
 }
