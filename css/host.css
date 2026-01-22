@@ -1,458 +1,332 @@
 /* /familiada/css/host.css */
 
-/* =================== ROOT / PARAMETRY =================== */
-
-:root{
-  /* ======= LINIJKA (tło) ======= */
-  /* clamp, żeby prawie-kwadrat nie robił gigantów */
-  --line: clamp(25px, 4.0vmin, 36px);
-
-  /* JS ustawia --line-px na podstawie zmierzonego line-height */
-  --line-px: 24;
-
-  /* proporcje fontu */
-  --font-ratio: 1.1;
-
-  /*
-    baseline-shift jest “estetyczny”, ale na iOS potrafi ujawniać różnice font-metrics.
-    Zostawiamy, ale kontrolujemy dodatkowym offsetem.
-  */
-  --baseline-shift: 0.12;
-
-  /* ======= STAŁE PRZESUNIĘCIE TEKSTU (faza) =======
-     Jeśli iOS jest “stałe X px niżej/wyżej” -> korygujesz tym.
-     Dodatnie = tekst w dół, ujemne = w górę.
-  */
-  --ios-text-shift: 0px;
-
-  /* ======= SAFE AREA (surowe) ======= */
-  --safe-top: env(safe-area-inset-top, 0px);
-  --safe-right: env(safe-area-inset-right, 0px);
-  --safe-bottom: env(safe-area-inset-bottom, 0px);
-  --safe-left: env(safe-area-inset-left, 0px);
-
-  /* ======= “NOTCH” MA NIE RUSZAĆ ŚRODKA =======
-     - portrait: nie dokładamy bocznych insetów do tekstu (stała kartka)
-     - landscape: odsuwamy TYLKO zewnętrzne krawędzie
-  */
-  --outer-left: 0px;
-  --outer-right: 0px;
-
-  /* ======= SNAP DO LINII (dla startu tekstu) =======
-     ustawia JS: --snap-top-1 / --snap-top-2
-  */
-  --snap-top-1: 0px;
-  --snap-top-2: 0px;
-
-  /* ======= JEDEN PARAMETR: ROZMIAR PASMA 2 ======= */
-  --pane2-size: 50%;
-  /* JS ustawia px: --pane2-size-snap: 480px; */
-  --pane2-size-snap: 50%;
-
-  /* ======= LINIA PODZIAŁU ======= */
-  --split-line-w: clamp(4px, calc(var(--line) * 0.18), 10px);
-  --split-line: rgba(0,0,0,.12);
-  --split-line-edge: rgba(0,0,0,.30);
-
-  /* ======= SWIPE GUARD (JS czyta px) ======= */
-  --swipe-guard-px: clamp(22px, calc(var(--line) * 0.85), 40px);
-
-  /* ======= KARTKOWE MARGINESY (od linijki) ======= */
-  --margin-x: calc(var(--line) * 2.0);
-
-  /* osobne marginesy tekstu dla obu połówek */
-  --text-left-1:  calc(var(--line) * 2.5);
-  --text-right-1: calc(var(--line) * 1.5);
-
-  --text-left-2:  calc(var(--line) * 1.5);
-  --text-right-2: calc(var(--line) * 1.5);
-
-  /* osobne pady pionowe dla obu połówek (kartkowe, nie notchowe) */
-  --top-pad-1:    calc(var(--line) * 1.0);
-  --bottom-pad-1: calc(var(--line) * 2.2);
-
-  --top-pad-2:    calc(var(--line) * 1.0);
-  --bottom-pad-2: calc(var(--line) * 2.2);
-
-  /* ======= ZASŁONA ======= */
-  --cover-grad-a: #c4002f;
-  --cover-grad-b: #2a62ff;
+:root {
+    --line: clamp(25px, 4.0vmin, 36px);
+    --line-px: 24;
+    --font-ratio: 1.1;
+    --baseline-shift: 0.12;
+    --ios-text-shift: 0px;
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-right: env(safe-area-inset-right, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-left: env(safe-area-inset-left, 0px);
+    --outer-left: 0px;
+    --outer-right: 0px;
+    --snap-top-1: 0px;
+    --snap-top-2: 0px;
+    --pane2-size: 50%;
+    --pane2-size-snap: 50%;
+    --split-line-w: clamp(4px, calc(var(--line) * 0.18), 10px);
+    --split-line: rgba(0,0,0,.12);
+    --split-line-edge: rgba(0,0,0,.30);
+    --swipe-guard-px: clamp(22px, calc(var(--line) * 0.85), 40px);
+    --margin-x: calc(var(--line) * 2.0);
+    --text-left-1: calc(var(--line) * 2.5);
+    --text-right-1: calc(var(--line) * 1.5);
+    --text-left-2: calc(var(--line) * 1.5);
+    --text-right-2: calc(var(--line) * 1.5);
+    --top-pad-1: calc(var(--line) * 1.0);
+    --bottom-pad-1: calc(var(--line) * 2.2);
+    --top-pad-2: calc(var(--line) * 1.0);
+    --bottom-pad-2: calc(var(--line) * 2.2);
+    --cover-grad-a: #c4002f;
+    --cover-grad-b: #2a62ff
 }
 
-/* jeśli JS doda klasę .ios na <html>, możemy tu ustawić domyślną korektę */
-html.ios{
-  /* przykładowo: jeśli iOS jest stale “za nisko” o ~2px */
-  /* --ios-text-shift: -2px; */
+@font-face {
+    font-family:"Caveat-Variable";src:url(Caveat-Variable.woff2)format("woff2");font-weight:100 900;font-style:normal;font-display:swap
 }
 
-/* =================== FONT =================== */
-
-@font-face{
-  font-family: "Caveat-Variable";
-  src: url("Caveat-Variable.woff2") format("woff2");
-  font-weight: 100 900;
-  font-style: normal;
-  font-display: swap;
+* {
+    -webkit-tap-highlight-color: transparent
 }
 
-/* =================== RESET =================== */
-
-*{ -webkit-tap-highlight-color: transparent; }
-
-html, body{
-  margin: 0;
-  padding: 0;
-  height: 100%;
-  background: #fffdf5;
+body,html {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    background: #fffdf5
 }
 
-.host-body{
-  margin: 0;
-  overflow: hidden;
-  user-select: none;
-  min-height: 100dvh;
-  touch-action: none; /* mamy własne gesty */
+.host-body {
+    margin: 0;
+    overflow: hidden;
+    user-select: none;
+    min-height: 100dvh;
+    touch-action: none
 }
 
-/* =================== FULLSCREEN =================== */
-
-.fsBtn{
-  position: fixed;
-  top: calc(var(--safe-top) + 10px);
-  right: calc(var(--safe-right) + 10px);
-  z-index: 200;
-
-  width: 44px;
-  height: 44px;
-  border-radius: 14px;
-
-  background: rgba(0,0,0,.35);
-  border: 1px solid rgba(255,255,255,.35);
-  box-shadow: 0 4px 14px rgba(0,0,0,.35);
-
-  color: #fff;
-  font-weight: 900;
-  cursor: pointer;
-}
-.fsBtn:active{ transform: translateY(1px); }
-
-/* =================== KARTKA (linijki full-bleed) =================== */
-
-.paper{
-  position: fixed;
-  inset: 0;
-  z-index: 10;
-
-  /* tło i linijki idą po całości, także w safe-area */
-  background-color: #fffdf5;
-  background-image: linear-gradient(to bottom, #e7e2d3 1px, transparent 1px);
-  background-size: 100% var(--line);
-  background-position: 0 0;
+.fsBtn {
+    position: fixed;
+    top: calc(var(--safe-top) + 10px);
+    right: calc(var(--safe-right) + 10px);
+    z-index: 200;
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+    background: rgba(0,0,0,.35);
+    border: 1px solid rgba(255,255,255,.35);
+    box-shadow: 0 4px 14px rgba(0,0,0,.35);
+    color: #fff;
+    font-weight: 900;
+    cursor: pointer
 }
 
-/* czerwony margines ma się przesuwać w landscape o notch (zewnętrzna krawędź) */
-.redMargin{
-  position: absolute;
-  top: 0;
-  bottom: 0;
-
-  left: calc(var(--outer-left) + var(--margin-x));
-  width: 2px;
-
-  background: rgba(255,80,80,.55);
-  pointer-events: none;
+.fsBtn:active {
+    transform: translateY(1px)
 }
 
-/* =================== PODZIAŁ (bez tracka na linię) =================== */
-
-.paperSplit{
-  display: grid;
-  width: 100%;
-  height: 100%;
+.paper {
+    position: fixed;
+    inset: 0;
+    z-index: 10;
+    background-color: #fffdf5;
+    background-image: linear-gradient(to bottom,#e7e2d3 1px,transparent 1px);
+    background-size: 100% var(--line);
+    background-position: 0 0
 }
 
-/* PORTRAIT: pane1 + pane2 (pane2 ma snap px z JS) */
-html.portrait .paperSplit{
-  grid-template-columns: 1fr;
-  grid-template-rows:
-    1fr
-    var(--pane2-size-snap);
+.redMargin {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: calc(var(--outer-left) + var(--margin-x));
+    width: 2px;
+    background: rgba(255,80,80,.55);
+    pointer-events: none
 }
 
-/* LANDSCAPE: pane1 + pane2 */
-html.landscape .paperSplit{
-  grid-template-rows: 1fr;
-  grid-template-columns:
-    1fr
-    var(--pane2-size-snap);
+.paperSplit {
+    display: grid;
+    width: 100%;
+    height: 100%
 }
 
-.pane{
-  position: relative;
-  overflow: hidden;
+html.portrait .paperSplit {
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr var(--pane2-size-snap)
 }
 
-html.portrait  .pane1{ grid-row: 1; grid-column: 1; }
-html.portrait  .pane2{ grid-row: 2; grid-column: 1; }
-
-html.landscape .pane1{ grid-row: 1; grid-column: 1; }
-html.landscape .pane2{ grid-row: 1; grid-column: 2; }
-
-/* element #splitLine zostaje w HTML, ale niech nie miesza */
-.splitLine{ display: none !important; }
-
-/* =================== LINIA PODZIAŁU (rysowana w pane2) =================== */
-/* zasłona cover2 ją przykryje, bo ma wyższy z-index */
-
-.pane2::before{
-  content:"";
-  position:absolute;
-  pointer-events:none;
-  z-index: 5;
-
-  background: linear-gradient(
-    to right,
-    var(--split-line-edge),
-    var(--split-line),
-    var(--split-line-edge)
-  );
+html.landscape .paperSplit {
+    grid-template-rows: 1fr;
+    grid-template-columns: 1fr var(--pane2-size-snap)
 }
 
-html.portrait .pane2::before{
-  left: 0;
-  right: 0;
-  top: 0;
-  height: var(--split-line-w);
+.pane {
+    position: relative;
+    overflow: hidden
 }
 
-html.landscape .pane2::before{
-  top: 0;
-  bottom: 0;
-  left: 0;
-  width: var(--split-line-w);
-
-  background: linear-gradient(
-    to bottom,
-    var(--split-line-edge),
-    var(--split-line),
-    var(--split-line-edge)
-  );
+html.portrait .pane1 {
+    grid-row: 1;
+    grid-column: 1
 }
 
-/* =================== TEKST =================== */
-
-.text{
-  position: absolute;
-  margin: 0;
-  pointer-events: none;
-
-  white-space: pre-wrap;
-  word-break: break-word;
-
-  font-family: "Caveat-Variable", cursive;
-  font-size: calc(var(--line) * var(--font-ratio));
-  line-height: var(--line);
-
-  /* “kartkowe” baseline */
-  padding-top: calc(var(--line) * var(--baseline-shift));
-
-  /* stały offset do korekty iOS */
-  transform: translateY(var(--ios-text-shift));
-
-  color: #111;
+html.portrait .pane2 {
+    grid-row: 2;
+    grid-column: 1
 }
 
-/* style segmentów */
-.text span{
-  font: inherit;
-  line-height: inherit;
-  text-decoration-thickness: 0.08em;
-  text-underline-offset: 0.18em;
-}
-.text .b{
-  font-variation-settings: "wght" 750;
-  font-weight: 750;
+html.landscape .pane1 {
+    grid-row: 1;
+    grid-column: 1
 }
 
-/* ======= ZASADA NOTCHA (bez psucia środka) =======
-   - portrait: brak outer insetów w poziomie (stała kartka)
-   - landscape: outer-left i outer-right ustawiamy (JS albo CSS) na safe-left/right
-*/
-
-/* ===== pane1 (lewa / górna) ===== */
-.pane1 .text{
-  top: calc(var(--safe-top) + var(--top-pad-1) + var(--snap-top-1));
-  bottom: calc(var(--safe-bottom) + var(--bottom-pad-1));
+html.landscape .pane2 {
+    grid-row: 1;
+    grid-column: 2
 }
 
-/* portrait: “jedna kartka” */
-html.portrait .pane1 .text{
-  left:  var(--text-left-1);
-  right: var(--text-right-1);
+.splitLine {
+    display: none!important
 }
 
-/* landscape: tylko zewnętrzna krawędź (lewa) dostaje notch */
-html.landscape .pane1 .text{
-  left:  calc(var(--outer-left) + var(--text-left-1));
-  right: var(--text-right-1);
+.p2Hint,.pane2::before,.text {
+    position: absolute;
+    pointer-events: none
 }
 
-/* ===== pane2 (prawa / dolna) ===== */
-.pane2 .text{
-  top: calc(var(--safe-top) + var(--top-pad-2) + var(--snap-top-2));
-  bottom: calc(var(--safe-bottom) + var(--bottom-pad-2));
+.pane2::before {
+    content: "";
+    z-index: 5;
+    background: linear-gradient(to right,var(--split-line-edge),var(--split-line),var(--split-line-edge))
 }
 
-/* portrait: ma wyglądać tak samo jak pane1 (czerwony margines tylko z lewej) */
-html.portrait .pane2 .text{
-  left:  var(--text-left-1);
-  right: var(--text-right-1);
+html.portrait .pane2::before {
+    left: 0;
+    right: 0;
+    top: 0;
+    height: var(--split-line-w)
 }
 
-/* landscape: tylko zewnętrzna krawędź (prawa) dostaje notch */
-html.landscape .pane2 .text{
-  left:  var(--text-left-2);
-  right: calc(var(--outer-right) + var(--text-right-2));
+html.landscape .pane2::before {
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: var(--split-line-w);
+    background: linear-gradient(to bottom,var(--split-line-edge),var(--split-line),var(--split-line-edge))
 }
 
-/* =================== HINT W PASMIE 2 =================== */
-
-.p2Hint{
-  position: absolute;
-  bottom: calc(var(--safe-bottom) + 6px);
-
-  font-family: "Caveat-Variable", cursive;
-  font-size: calc(var(--line) * 0.70);
-  line-height: 1.15;
-
-  color: rgba(0,0,0,.45);
-  opacity: 0;
-  transform: translateY(6px);
-  transition: opacity 140ms ease, transform 140ms ease;
-  pointer-events: none;
+.p2Hint,.text {
+    font-family: "Caveat-Variable",cursive
 }
 
-/* portrait: identycznie jak tekst */
-html.portrait .p2Hint{
-  left:  var(--text-left-1);
-  right: var(--text-right-1);
+.text {
+    margin: 0;
+    white-space: pre-wrap;
+    word-break: break-word;
+    font-size: calc(var(--line)*var(--font-ratio));
+    line-height: var(--line);
+    padding-top: calc(var(--line)*var(--baseline-shift));
+    transform: translateY(var(--ios-text-shift));
+    color: #111
 }
 
-/* landscape: prawa krawędź z notchem */
-html.landscape .p2Hint{
-  left:  var(--text-left-2);
-  right: calc(var(--outer-right) + var(--text-right-2));
+.text span {
+    font: inherit;
+    line-height: inherit;
+    text-decoration-thickness: .08em;
+    text-underline-offset: .18em
 }
 
-html.p2Open .p2Hint{
-  opacity: 1;
-  transform: translateY(0);
+.text .b {
+    font-variation-settings: "wght"750;
+    font-weight: 750
 }
 
-/* =================== ZASŁONA PASMA 2 =================== */
-
-.cover2{
-  position: absolute;
-  inset: 0;
-  z-index: 30; /* przykrywa linię (pane2::before) */
-
-  background: linear-gradient(90deg, var(--cover-grad-a) 0%, var(--cover-grad-b) 100%);
-  transition: transform 180ms ease, opacity 160ms ease;
-  will-change: transform, opacity;
+.pane1 .text {
+    top: calc(var(--safe-top) + var(--top-pad-1) + var(--snap-top-1));
+    bottom: calc(var(--safe-bottom) + var(--bottom-pad-1))
 }
 
-.cover2.coverOn{
-  transform: translate(0, 0);
-  opacity: 1;
-  pointer-events: auto;
+html.portrait .pane1 .text {
+    left: var(--text-left-1);
+    right: var(--text-right-1)
 }
 
-html.portrait .cover2.coverOff{
-  transform: translateY(120%);
-  opacity: 1;
-  pointer-events: none;
-}
-html.landscape .cover2.coverOff{
-  transform: translateX(120%);
-  opacity: 1;
-  pointer-events: none;
+html.landscape .pane1 .text {
+    left: calc(var(--outer-left) + var(--text-left-1));
+    right: var(--text-right-1)
 }
 
-.cover2Content{
-  position: absolute;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-
-  gap: clamp(6px, 1.6vh, 14px);
-
-  /* overlay: tu safe-area ma sens */
-  padding:
-    calc(var(--safe-top) + 10px)
-    calc(var(--safe-right) + 10px)
-    calc(var(--safe-bottom) + 10px)
-    calc(var(--safe-left) + 10px);
-
-  box-sizing: border-box;
-  min-height: 0;
-  height: 100%;
+.pane2 .text {
+    top: calc(var(--safe-top) + var(--top-pad-2) + var(--snap-top-2));
+    bottom: calc(var(--safe-bottom) + var(--bottom-pad-2))
 }
 
-.cover2Logo{
-  flex: 1 1 auto;
-  min-height: 0;
-  max-height: 100%;
-
-  width: min(820px, 86%);
-  max-width: 86%;
-  height: auto;
-
-  object-fit: contain;
-  display: block;
-
-  filter: drop-shadow(0 12px 30px rgba(0,0,0,.35));
-  pointer-events: none;
-  -webkit-user-drag: none;
-  user-select: none;
+html.portrait .p2Hint,html.portrait .pane2 .text {
+    left: var(--text-left-1);
+    right: var(--text-right-1)
 }
 
-.cover2Swipe{
-  flex: 0 0 auto;
-  max-width: min(92%, 720px);
-  padding: 0 10px;
-
-  font-family: "Caveat-Variable", cursive;
-  font-size: clamp(14px, calc(var(--line) * 0.72), 30px);
-  line-height: 1.15;
-
-  color: #fc0;
-  text-shadow: 0 4px 18px rgba(0,0,0,.45);
-
-  white-space: normal;
-  word-break: break-word;
+html.landscape .p2Hint,html.landscape .pane2 .text {
+    left: var(--text-left-2);
+    right: calc(var(--outer-right) + var(--text-right-2))
 }
 
-@media (max-height: 420px){
-  .cover2Swipe{ display: none; }
+.p2Hint {
+    bottom: calc(var(--safe-bottom) + 6px);
+    font-size: calc(var(--line)*.7);
+    line-height: 1.15;
+    color: rgba(0,0,0,.45);
+    opacity: 0;
+    transform: translateY(6px);
+    transition: opacity 140ms ease,transform 140ms ease
 }
 
-/* =================== PSEUDO FULLSCREEN =================== */
-
-.pseudoFS,
-.pseudoFS body{
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
+html.p2Open .p2Hint {
+    opacity: 1;
+    transform: translateY(0)
 }
-.pseudoFS .fsBtn{ opacity: .85; }
 
-/* =================== REDUCED MOTION =================== */
+.cover2,.cover2Content {
+    position: absolute;
+    inset: 0
+}
 
-@media (prefers-reduced-motion: reduce){
-  .cover2,
-  .p2Hint{
-    transition: none !important;
-  }
+.cover2 {
+    z-index: 30;
+    background: linear-gradient(90deg,var(--cover-grad-a) 0%,var(--cover-grad-b) 100%);
+    transition: transform 180ms ease,opacity 160ms ease;
+    will-change: transform,opacity
+}
+
+.cover2.coverOn {
+    transform: translate(0,0);
+    opacity: 1;
+    pointer-events: auto
+}
+
+html.portrait .cover2.coverOff {
+    transform: translateY(120%);
+    opacity: 1;
+    pointer-events: none
+}
+
+html.landscape .cover2.coverOff {
+    transform: translateX(120%);
+    opacity: 1;
+    pointer-events: none
+}
+
+.cover2Content {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: clamp(6px,1.6vh,14px);
+    padding: calc(var(--safe-top) + 10px) calc(var(--safe-right) + 10px) calc(var(--safe-bottom) + 10px) calc(var(--safe-left) + 10px);
+    box-sizing: border-box;
+    min-height: 0;
+    height: 100%
+}
+
+.cover2Logo {
+    flex: 1 1 auto;
+    min-height: 0;
+    max-height: 100%;
+    width: min(820px,86%);
+    max-width: 86%;
+    height: auto;
+    object-fit: contain;
+    display: block;
+    filter: drop-shadow(0 12px 30px rgba(0,0,0,.35));
+    pointer-events: none;
+    -webkit-user-drag: none;
+    user-select: none
+}
+
+.cover2Swipe {
+    flex: 0 0 auto;
+    max-width: min(92%,720px);
+    padding: 0 10px;
+    font-family: "Caveat-Variable",cursive;
+    font-size: clamp(14px,calc(var(--line)*.72),30px);
+    line-height: 1.15;
+    color: #fc0;
+    text-shadow: 0 4px 18px rgba(0,0,0,.45);
+    white-space: normal;
+    word-break: break-word
+}
+
+@media (max-height:420px) {
+    .cover2Swipe {
+        display: none
+    }
+}
+
+.pseudoFS,.pseudoFS body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden
+}
+
+.pseudoFS .fsBtn {
+    opacity: .85
+}
+
+@media (prefers-reduced-motion:reduce) {
+    .cover2,.p2Hint {
+        transition: none!important
+    }
 }
