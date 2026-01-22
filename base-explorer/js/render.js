@@ -98,9 +98,10 @@ export function renderTree(state) {
       : `<span style="display:inline-block;width:18px;"></span>`;
 
     const activeStyle = isActive ? "font-weight:700;" : "";
-
+    const draggable = (state.role === "owner" || state.role === "editor") ? `draggable="true"` : ``;
+    
     return `
-      <div class="row tree-row" data-kind="${kind}" data-id="${id ? esc(id) : ""}" style="cursor:pointer;">
+      <div class="row tree-row" ${draggable} data-kind="${kind}" data-id="${id ? esc(id) : ""}" style="cursor:pointer;">
         <div class="col-main" style="padding-left:${pad}px; display:flex; align-items:center; gap:6px; ${activeStyle}">
           ${toggle}
           <div class="title">${icon} ${esc(label || "Folder")}</div>
