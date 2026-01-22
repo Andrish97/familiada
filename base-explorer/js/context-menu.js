@@ -302,21 +302,26 @@ export async function showContextMenu({ state, x, y, target }) {
 
     // NIEBEZPIECZNE
     pushSep(items);
-
+    
     items.push({
-      label: "Usuń",
+      label: (state.view === VIEW.TAG) ? "Usuń tagi" : "Usuń",
       danger: true,
-      disabled: !editor || readOnlyView,
+      disabled: !editor || (state.view === VIEW.SEARCH),
       action: async () => {
         const key = (target.kind === "cat") ? `c:${target.id}` : `q:${target.id}`;
         if (!state.selection?.keys?.has?.(key)) {
           selectionSetSingle(state, key);
         }
+    
         try {
-          await deleteSelected(state);
+          if (state.view === VIEW.TAG) {
+            await state._api?.untagSelectedInTagView?.();
+          } else {
+            await deleteSelected(state);
+          }
         } catch (e) {
           console.error(e);
-          alert("Nie udało się usunąć.");
+          alert("Nie udało się wykonać operacji.");
         }
       }
     });
