@@ -35,6 +35,8 @@ export function createState({ baseId, role = "viewer" }) {
     tagIds: [],            // dla VIEW.TAG (multi)
     searchQuery: "",
         // search jako "tokeny" (jak iOS: tagi jako elementy + zwykły tekst)
+    searchRaw: "",         // dokładnie to co user wpisał w input (z #tagami, przecinkami itd.)
+    searchTokens: null,    // { text, tagNames, tagIds } – już używasz
     searchTokens: {
       text: "",       // zwykły tekst (bez #tagów)
       tagNames: [],   // np. ["pieski","kotki"] (bez #)
