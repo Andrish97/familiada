@@ -5,6 +5,7 @@ export const VIEW = {
   ALL: "all",       // wszystkie pytania (w ramach bazy)
   FOLDER: "folder", // konkretna kategoria (folder)
   TAG: "tag",       // filtr tagów (wirtualny widok)
+  SEARCH: "search",
 };
 
 export const SORT = {
@@ -99,6 +100,29 @@ export function setSearch(state, q) {
 
 export function setSort(state, sortMode) {
   state.sortMode = sortMode || SORT.UPDATED_DESC;
+}
+
+export function setViewSearch(state, query) {
+  state.view = VIEW.SEARCH;
+  state.searchQuery = String(query || "");
+}
+
+export function rememberBrowseLocation(state) {
+  // zapamiętujemy tylko, gdy jesteśmy w „normalnym” przeglądaniu
+  if (state.view === VIEW.ALL || state.view === VIEW.FOLDER) {
+    state._browse = { view: state.view, folderId: state.folderId || null };
+  }
+}
+
+export function restoreBrowseLocation(state) {
+  const b = state._browse;
+  if (b?.view === VIEW.FOLDER && b.folderId) {
+    state.view = VIEW.FOLDER;
+    state.folderId = b.folderId;
+    return;
+  }
+  state.view = VIEW.ALL;
+  state.folderId = null;
 }
 
 /* ===== Selekcja ===== */
