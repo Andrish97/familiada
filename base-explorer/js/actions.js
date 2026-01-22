@@ -422,11 +422,7 @@ async function refreshList(state) {
     // foldery: na tym etapie możesz zostawić "wszystkie"
     // albo skopiować mechanikę z SEARCH (foldery od wyników + rodzice).
     state.folders = foldersAll;
-    // Pytania: globalnie po tagach
-    state.questions = qAll.filter(qHasAnyTag);
-
     await ensureTagMapsForUI(state);
-
     renderAll(state);
 
     const writable = canWrite(state);
@@ -2117,7 +2113,7 @@ export function wireActions({ state }) {
     const btn = e.target?.closest?.("#btnAddTag");
     if (btn) {
       if (!canWrite(state)) return;
-      const saved = await openTagModal(state, { mode: "create" });
+      const saved = await openTagsModal(state, { mode: "create" });
       if (saved) {
         await refreshTags(state);
         renderAll(state);
