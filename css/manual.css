@@ -2,199 +2,171 @@
    Instrukcja (manual) – proste zakładki + czytelna typografia.
    Cel: brak „ramek jak w aplikacji”, dużo czytelności jak w dokumentacji.
 */
-
-.manual-body{
-  background: var(--bg);
-  color:#fff;
+.manual-body {
+    background: var(--bg);
+    color: #fff
 }
 
-.page-title{
-  margin: 20px 0 12px;
-  font-size: 20px;
-  font-weight: 900;
-  letter-spacing: .08em;
-  text-transform: uppercase;
+.page-title {
+    margin: 20px 0 12px;
+    font-size: 20px;
+    font-weight: 900;
+    letter-spacing: .08em;
+    text-transform: uppercase
 }
 
-/* =========================
-   ZAKŁADKI (proste „pigułki”)
-   ========================= */
-
-.simple-tabs{
-  display:flex;
-  gap:10px;
-  flex-wrap:wrap;
-  margin: 0 0 18px;
+.simple-tabs {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin: 0 0 18px
 }
 
-.simple-tabs .tab{
-  padding: 10px 16px;
-  border-radius: 999px;
-  border: 1px solid var(--line);
-  background: rgba(255,255,255,.06);
-  color:#fff;
-  font-weight: 900;
-  letter-spacing: .04em;
-  cursor:pointer;
-  transition: background .15s ease, color .15s ease, border-color .15s ease, transform .05s ease;
+.simple-tabs .tab {
+    padding: 10px 16px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: rgba(255,255,255,.06);
+    color: #fff;
+    font-weight: 900;
+    letter-spacing: .04em;
+    cursor: pointer;
+    transition: background .15s ease,color .15s ease,border-color .15s ease,transform .05s ease
 }
 
-.simple-tabs .tab:hover{
-  background: rgba(255,255,255,.12);
+.simple-tabs .tab:hover {
+    background: rgba(255,255,255,.12)
 }
 
-.simple-tabs .tab:active{
-  transform: translateY(1px);
+.simple-tabs .tab:active {
+    transform: translateY(1px)
 }
 
-.simple-tabs .tab.active{
-  background: var(--gold);
-  color:#000;
-  border-color: var(--gold);
+.simple-tabs .tab.active {
+    background: var(--gold);
+    color: #000;
+    border-color: var(--gold)
 }
 
-/* =========================
-   STRONY ZAKŁADEK (bez ramek)
-   ========================= */
-
-.tab-page{
-  display:none;
-  padding: 0;              /* brak „karty” */
-  border: none;
-  background: transparent;
-  min-height: 0;
+.tab-page {
+    display: none;
+    padding: 0;
+    border: 0;
+    background: 0 0;
+    min-height: 0
 }
 
-.tab-page.active{
-  display:block;
+.tab-page.active {
+    display: block
 }
 
-/* =========================
-   TYPOGRAFIA MANUALA
-   (używaj klas: .m-* w HTML)
-   ========================= */
-
-/* kontener tekstu – ogranicza szerokość czytania */
-.m-doc{
-  max-width: 82ch;
+.m-doc {
+    max-width: 82ch
 }
 
-/* akapity */
-.m-p{
-  margin: 0 0 14px;
-  line-height: 1.65;
-  font-size: 16px;
-  color: rgba(255,255,255,.92);
+.m-p {
+    margin: 0 0 14px;
+    line-height: 1.65;
+    font-size: 16px;
+    color: rgba(255,255,255,.92)
 }
 
-/* nagłówki sekcji wewnątrz manuala (nie mylić z page-title) */
-.m-h2{
-  margin: 18px 0 8px;
-  font-size: 13px;
-  font-weight: 1000;
-  letter-spacing: .08em;
-  text-transform: uppercase;
-  color: var(--gold);
+.m-h2,.m-h3 {
+    font-weight: 1000;
+    text-transform: uppercase
 }
 
-.m-h3{
-  margin: 14px 0 6px;
-  font-size: 12px;
-  font-weight: 1000;
-  letter-spacing: .06em;
-  text-transform: uppercase;
-  opacity: .95;
+.m-h2 {
+    margin: 18px 0 8px;
+    font-size: 13px;
+    letter-spacing: .08em;
+    color: var(--gold)
 }
 
-/* listy */
-.m-ul, .m-ol{
-  margin: 0 0 14px 18px;
-  line-height: 1.6;
-  color: rgba(255,255,255,.92);
+.m-h3 {
+    margin: 14px 0 6px;
+    font-size: 12px;
+    letter-spacing: .06em;
+    opacity: .95
 }
 
-.m-ul li, .m-ol li{
-  margin: 6px 0;
+.m-ol,.m-ul {
+    margin: 0 0 14px 18px;
+    line-height: 1.6;
+    color: rgba(255,255,255,.92)
 }
 
-/* linki w tekście */
-.tab-page a{
-  color: var(--gold);
-  text-decoration: underline;
-  text-underline-offset: 3px;
+.m-ol li,.m-ul li {
+    margin: 6px 0
 }
 
-/* małe wyróżnienia */
-.m-strong{
-  font-weight: 1000;
-  color:#fff;
+.tab-page a {
+    text-decoration: underline;
+    text-underline-offset: 3px
 }
 
-.m-muted{
-  color: rgba(255,255,255,.75);
+.m-strong {
+    font-weight: 1000;
+    color: #fff
 }
 
-/* „notka” / „uwaga” – do przyszłych sekcji */
-.m-note{
-  margin: 14px 0;
-  padding: 12px 14px;
-  border-radius: 16px;
-  border: 1px solid rgba(255,234,166,.28);
-  background: rgba(255,234,166,.10);
-  color: rgba(255,255,255,.95);
+.m-muted {
+    color: rgba(255,255,255,.75)
 }
 
-.m-note b{
-  color: var(--gold);
+.m-note,.m-warn {
+    margin: 14px 0;
+    padding: 12px 14px;
+    border-radius: 16px;
+    color: rgba(255,255,255,.95)
 }
 
-/* „ostrzeżenie” */
-.m-warn{
-  margin: 14px 0;
-  padding: 12px 14px;
-  border-radius: 16px;
-  border: 1px solid rgba(255,120,120,.35);
-  background: rgba(255,120,120,.10);
-  color: rgba(255,255,255,.95);
+.m-note {
+    border: 1px solid rgba(255,234,166,.28);
+    background: rgba(255,234,166,.1)
 }
 
-/* „kafelek” na przykłady / formaty / krótkie reguły */
-.m-box{
-  margin: 14px 0;
-  padding: 12px 14px;
-  border-radius: 16px;
-  border: 1px solid var(--line2);
-  background: rgba(0,0,0,.18);
-  color: rgba(255,255,255,.92);
+.m-note b,.tab-page a {
+    color: var(--gold)
 }
 
-/* kod inline i bloki */
-.m-code{
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-  font-size: 13px;
-  padding: 2px 6px;
-  border-radius: 8px;
-  border: 1px solid var(--line2);
-  background: rgba(0,0,0,.22);
+.m-warn {
+    border: 1px solid rgba(255,120,120,.35);
+    background: rgba(255,120,120,.1)
 }
 
-.m-pre{
-  margin: 14px 0;
-  padding: 12px 14px;
-  border-radius: 16px;
-  border: 1px solid var(--line2);
-  background: rgba(0,0,0,.22);
-  overflow: auto;
-  line-height: 1.55;
-  color: rgba(255,255,255,.92);
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-  font-size: 13px;
+.m-box,.m-code,.m-pre {
+    border: 1px solid var(--line2)
 }
 
-/* responsywność */
-@media (max-width: 600px){
-  .m-p{
-    font-size: 15px;
-    line-height: 1.7;
-  }
+.m-box {
+    margin: 14px 0;
+    padding: 12px 14px;
+    border-radius: 16px;
+    background: rgba(0,0,0,.18);
+    color: rgba(255,255,255,.92)
+}
+
+.m-code,.m-pre {
+    font-family: ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;
+    font-size: 13px;
+    padding: 2px 6px;
+    border-radius: 8px;
+    background: rgba(0,0,0,.22)
+}
+
+.m-pre {
+    margin: 14px 0;
+    padding: 12px 14px;
+    border-radius: 16px;
+    overflow: auto;
+    line-height: 1.55;
+    color: rgba(255,255,255,.92)
+}
+
+@media (max-width:600px) {
+    .m-p {
+        font-size: 15px;
+        line-height: 1.7
+    }
 }
