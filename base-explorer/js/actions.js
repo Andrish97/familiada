@@ -1614,6 +1614,7 @@ export function wireActions({ state }) {
     if (!t || t.id !== "searchInp") return;
 
     const raw = String(t.value || "");
+    state.searchRaw = raw;
     const { text, tagNames } = parseSearchInputToTokens(raw);
     const tagIds = resolveTagIdsByNames(state, tagNames);
 
@@ -1661,6 +1662,7 @@ export function wireActions({ state }) {
         if (inp) inp.value = "";
         state.searchTokens = { text: "", tagNames: [], tagIds: [] };
         state.searchQuery = "";
+        state.searchRaw = "";
 
         if (state.view === VIEW.SEARCH) restoreBrowseLocation(state);
         selectionClear(state);
