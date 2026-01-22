@@ -794,5 +794,5 @@ input,textarea {
   min-height: 32px;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
 }
