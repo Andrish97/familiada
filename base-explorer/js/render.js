@@ -106,20 +106,37 @@ export function renderToolbar(state) {
   if (chipsEl) {
     const byId = new Map((state.tags || []).map(t => [t.id, t]));
   
-    const chipHtml = (tokens.tagIds || [])
+    // poprzednie ids (żeby animować tylko nowo dodane)
+    const prevIds = new Set(
+      String(chipsEl.dataset.ids || "")
+        .split(",")
+        .map(s => s.trim())
+        .filter(Boolean)
+    );
+  
+    const nextIds = (tokens.tagIds || []).map(String).filter(Boolean);
+    chipsEl.dataset.ids = nextIds.join(",");
+  
+    const chipHtml = nextIds
       .map((id) => byId.get(id))
       .filter(Boolean)
       .map((t) => {
         const color = t?.color || "rgba(255,255,255,.35)";
         const label = t?.name || "";
+        const isNew = !prevIds.has(String(t.id));
         return `
-          <span class="chip" data-tag-id="${esc(t.id)}" title="#${esc(label)}" style="--chip:${esc(color)}">
+          <span class="chip ${isNew ? "chip--enter" : ""}" data-tag-id="${esc(t.id)}" title="#${esc(label)}" style="--chip:${esc(color)}">
             #${esc(label)}
           </span>
         `;
       }).join("");
   
     chipsEl.innerHTML = chipHtml;
+  
+    // zdejmij klasę wejścia w następnej klatce -> płynna animacja
+    requestAnimationFrame(() => {
+      chipsEl.querySelectorAll(".chip--enter").forEach(el => el.classList.remove("chip--enter"));
+    });
   }
   // 2) Aktualizuj wartość inputa, ale nie wybijaj kursora gdy user pisze
   // UWAGA: input pokazuje RAW (z #tagami), bo to jest prawdziwy "tekst pola"
