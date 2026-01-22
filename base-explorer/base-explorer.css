@@ -596,69 +596,60 @@ input, textarea{ user-select:text; }
   font-variant-numeric: tabular-nums;
 }
 
-/* Suwaki (track + thumb) – gradient jak w control */
+/* ===== Range (minimal: track from --track, like control) ===== */
+
 .rng{
-  -webkit-appearance:none;
-  appearance:none;
-  width:100%;
-  height:14px;
+  --track: linear-gradient(to right, #000, #fff);
+  appearance: none;
+  -webkit-appearance: none;
+  width: 100%;
+  height: 20px;           /* „strefa” pod palec/kursor */
   background: transparent;
-  cursor:pointer;
+  padding: 0;
+  margin: 0;
 }
 
-/* TRACK (WebKit) */
+/* Track: Chrome/Safari/Edge */
 .rng::-webkit-slider-runnable-track{
-  height:10px;
-  border-radius:999px;
-  border:1px solid rgba(255,255,255,.12);
-  background: transparent;
-}
-#tagsColorR.rng::-webkit-slider-runnable-track{
-  background: linear-gradient(90deg, rgb(0,0,0), rgb(255,0,0));
-}
-#tagsColorG.rng::-webkit-slider-runnable-track{
-  background: linear-gradient(90deg, rgb(0,0,0), rgb(0,255,0));
-}
-#tagsColorB.rng::-webkit-slider-runnable-track{
-  background: linear-gradient(90deg, rgb(0,0,0), rgb(0,0,255));
+  height: 6px;
+  border-radius: 999px;
+  background: var(--track);
+  box-shadow: 0 0 0 1px rgba(255,255,255,.12) inset;
 }
 
-/* THUMB (WebKit) */
+/* Thumb: Chrome/Safari/Edge */
 .rng::-webkit-slider-thumb{
-  -webkit-appearance:none;
-  appearance:none;
-  width:18px;
-  height:18px;
-  border-radius:999px;
-  background: rgba(245,210,107,.95);
-  border:1px solid rgba(0,0,0,.35);
-  box-shadow: 0 6px 16px rgba(0,0,0,.35);
-  margin-top:-5px; /* centrowanie względem tracka */
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  background: #f5d26b;
+  margin-top: -5px;       /* 16px thumb na 6px track */
+  box-shadow: 0 0 0 2px rgba(0,0,0,.35);
 }
 
-/* TRACK (Firefox) */
+/* Track: Firefox */
 .rng::-moz-range-track{
-  height:10px;
-  border-radius:999px;
-  border:1px solid rgba(255,255,255,.12);
-  background: transparent;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--track);
+  box-shadow: 0 0 0 1px rgba(255,255,255,.12) inset;
 }
-#tagsColorR.rng::-moz-range-track{
-  background: linear-gradient(90deg, rgb(0,0,0), rgb(255,0,0));
-}
-#tagsColorG.rng::-moz-range-track{
-  background: linear-gradient(90deg, rgb(0,0,0), rgb(0,255,0));
-}
-#tagsColorB.rng::-moz-range-track{
-  background: linear-gradient(90deg, rgb(0,0,0), rgb(0,0,255));
-}
+
+/* Thumb: Firefox */
 .rng::-moz-range-thumb{
-  width:18px;
-  height:18px;
-  border-radius:999px;
-  background: rgba(245,210,107,.95);
-  border:1px solid rgba(0,0,0,.35);
-  box-shadow: 0 6px 16px rgba(0,0,0,.35);
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  background: #f5d26b;
+  border: 0;
+  box-shadow: 0 0 0 2px rgba(0,0,0,.35);
+}
+
+/* Firefox: usuń domyślne tło „toru” */
+.rng::-moz-range-progress{
+  background: transparent;
 }
 
 /* stopka pickera */
@@ -671,45 +662,4 @@ input, textarea{ user-select:text; }
   border-top:1px solid rgba(255,255,255,.1);
 }
 
-/* ===== Range (jak w control) ===== */
 
-.rng {
-  --track: linear-gradient(to right, #000, #fff);
-  appearance: none;
-  -webkit-appearance: none;
-  width: 100%;
-  height: 20px;
-  background: transparent;
-}
-
-/* Chrome / Safari */
-.rng::-webkit-slider-runnable-track {
-  height: 6px;
-  border-radius: 999px;
-  background: var(--track);
-}
-
-.rng::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: #f5d26b;
-  margin-top: -5px;
-  box-shadow: 0 0 0 2px rgba(0,0,0,.4);
-}
-
-/* Firefox */
-.rng::-moz-range-track {
-  height: 6px;
-  border-radius: 999px;
-  background: var(--track);
-}
-
-.rng::-moz-range-thumb {
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: #f5d26b;
-  border: none;
-}
