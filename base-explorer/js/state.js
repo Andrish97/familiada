@@ -50,6 +50,11 @@ export function createState({ baseId, role = "viewer" }) {
       // anchor do shift-zaznaczania (ostatni kliknięty)
       anchorKey: null,
     },
+        // selekcja tagów (lewy panel)
+    tagSelection: {
+      ids: new Set(),     // Set(tagId)
+      anchorId: null,     // do shift-range
+    },
 
     // clipboard wewnętrzny (etap 3)
     clipboard: {
