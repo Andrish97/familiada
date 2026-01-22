@@ -170,11 +170,6 @@ input, textarea{ user-select:text; }
 
 .row:hover{ background:rgba(255,255,255,.05); }
 
-.row.selected{
-  background:rgba(255,255,255,.10);
-}
-.row.selected .title{ font-weight:inherit; }
-
 /* kolumny */
 .row .col-num{
   opacity:.7;
