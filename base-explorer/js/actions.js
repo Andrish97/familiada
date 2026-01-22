@@ -39,6 +39,7 @@ function currentRowKeys(container) {
     .map((row) => {
       const kind = row.dataset.kind;
       const id = row.dataset.id;
+      if (!kind || !id) return null;
       if (kind === "q") return `q:${id}`;
       if (kind === "cat") return `c:${id}`;
       return null;
@@ -51,7 +52,9 @@ function selectRange(state, listEl, clickedKey) {
   if (!keys.length) return;
 
   const a = state.selection.anchorKey;
-  if (!a) {
+
+  // jeśli nie ma anchor albo anchor nie jest na liście -> single
+  if (!a || keys.indexOf(a) === -1) {
     selectionSetSingle(state, clickedKey);
     state.selection.anchorKey = clickedKey;
     return;
@@ -66,6 +69,7 @@ function selectRange(state, listEl, clickedKey) {
   }
 
   const [from, to] = i1 < i2 ? [i1, i2] : [i2, i1];
+
   state.selection.keys.clear();
   for (let i = from; i <= to; i++) state.selection.keys.add(keys[i]);
   state.selection.anchorKey = clickedKey;
