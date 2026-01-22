@@ -8,7 +8,9 @@ import {
   renameSelectedPrompt,
   copySelectedToClipboard,
   cutSelectedToClipboard,
-  pasteClipboardHere
+  pasteClipboardHere,
+  deleteTags,
+  duplicateSelected,
 } from "./actions.js";
 
 function clamp(n, a, b) {
@@ -156,7 +158,20 @@ export async function showContextMenu({ state, x, y, target }) {
 
     // placeholdery na przyszłość (PPM tagów)
     pushSep(items);
-    items.push({ label: "Usuń tag(i) (wkrótce)", disabled: true, danger: true });
+    
+    items.push({
+      label: (selectedTagIds.length === 1) ? "Usuń tag" : "Usuń tagi",
+      disabled: !editor || selectedTagIds.length === 0,
+      danger: true,
+      action: async () => {
+        try {
+          await deleteTags(state, selectedTagIds);
+        } catch (e) {
+          console.error(e);
+          alert("Nie udało się usunąć tagów.");
+        }
+      }
+    });
 
     renderMenu(cm, items);
     positionMenu(cm, x, y);
@@ -226,7 +241,18 @@ export async function showContextMenu({ state, x, y, target }) {
   });
 
   // placeholder (na przyszłość)
-  items.push({ label: "Duplikuj (wkrótce)", disabled: true });
+  items.push({
+    label: "Duplikuj",
+    disabled: !editor || readOnlyView || target.kind === "root",
+    action: async () => {
+      try {
+        await duplicateSelected(state);
+      } catch (e) {
+        console.error(e);
+        alert("Nie udało się zduplikować.");
+      }
+    }
+  });
 
   // jeśli jesteśmy na elemencie cat/q, dokładamy grupę TAGI
   if (target.kind === "cat" || target.kind === "q") {
