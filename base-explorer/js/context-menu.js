@@ -71,6 +71,20 @@ export async function showContextMenu({ state, x, y, target }) {
     items.push({ label: "Wytnij", disabled: !editor, action: async () => {
       cutSelectedToClipboard(state);
     }});
+
+    items.push({
+      label: "Tagi…",
+      disabled: !editor, // viewer tylko ogląda
+      action: async () => {
+        // jeśli element pod PPM nie jest zaznaczony – zaznacz go (Explorer-style)
+        const key = (target.kind === "cat") ? `c:${target.id}` : `q:${target.id}`;
+        if (!state.selection?.keys?.has?.(key)) {
+          selectionSetSingle(state, key);
+        }
+        // otwórz modal (funkcja z actions.js musi być dostępna — patrz niżej)
+        await state._api?.openAssignTagsModal?.();
+      }
+    });
   }
 
   const canPaste = !!state?.clipboard?.mode && state?.clipboard?.keys?.size > 0;
