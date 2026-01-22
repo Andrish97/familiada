@@ -34,9 +34,15 @@ function applySearchFilterToQuestions(all, query) {
 }
 
 function currentRowKeys(container) {
-  const rows = Array.from(container?.querySelectorAll?.('.row[data-kind="q"][data-id]') || []);
+  const rows = Array.from(container?.querySelectorAll?.('.row[data-kind][data-id]') || []);
   return rows
-    .map((row) => `q:${row.dataset.id}`)
+    .map((row) => {
+      const kind = row.dataset.kind;
+      const id = row.dataset.id;
+      if (kind === "q") return `q:${id}`;
+      if (kind === "cat") return `c:${id}`;
+      return null;
+    })
     .filter(Boolean);
 }
 
@@ -45,9 +51,9 @@ function selectRange(state, listEl, clickedKey) {
   if (!keys.length) return;
 
   const a = state.selection.anchorKey;
-  if (!a || !a.startsWith("q:")) {
-    // brak anchor -> zachowaj się jak single
+  if (!a) {
     selectionSetSingle(state, clickedKey);
+    state.selection.anchorKey = clickedKey;
     return;
   }
 
@@ -55,6 +61,7 @@ function selectRange(state, listEl, clickedKey) {
   const i2 = keys.indexOf(clickedKey);
   if (i1 === -1 || i2 === -1) {
     selectionSetSingle(state, clickedKey);
+    state.selection.anchorKey = clickedKey;
     return;
   }
 
@@ -1053,13 +1060,14 @@ export function wireActions({ state }) {
     const isCtrl = e.ctrlKey || e.metaKey;
     const isShift = e.shiftKey;
 
-    if (isShift && key.startsWith("q:")) {
-      // range dla pytań
+    if (isShift) {
       selectRange(state, listEl, key);
     } else if (isCtrl) {
       selectionToggle(state, key);
+      state.selection.anchorKey = key; // ważne: Ctrl ustawia anchor jak w Windows
     } else {
       selectionSetSingle(state, key);
+      state.selection.anchorKey = key;
     }
 
     if (isShift) {
@@ -1198,31 +1206,32 @@ export function wireActions({ state }) {
 
   function updateMarqueeSelection(box) {
     const rows = Array.from(listEl.querySelectorAll('.row[data-kind][data-id]'));
-    const keys = new Set();
-
+    const hit = new Set();
+  
     for (const row of rows) {
       const kind = row.dataset.kind;
       const id = row.dataset.id;
-      if (!kind || !id) continue;
-
       const key = (kind === "q") ? `q:${id}` : (kind === "cat") ? `c:${id}` : null;
       if (!key) continue;
-
+  
       const r = rowRectInList(row);
-      if (intersects(box, r)) keys.add(key);
+      if (intersects(box, r)) hit.add(key);
     }
-
-    // zapisz stan
-    state.selection.keys = keys;
+  
+    // ctrl/meta = dodaj do bazowej selekcji
+    const out = marqueeAdd && marqueeBaseKeys ? new Set(marqueeBaseKeys) : new Set();
+    for (const k of hit) out.add(k);
+  
+    state.selection.keys = out;
     state.selection.anchorKey = null;
-
-    // NAJWAŻNIEJSZE: nie renderujemy listy, tylko aktualizujemy klasy na żywym DOM
+  
+    // aktualizuj TYLKO klasy (bez przebudowy DOM)
     for (const row of rows) {
       const kind = row.dataset.kind;
       const id = row.dataset.id;
       const key = (kind === "q") ? `q:${id}` : (kind === "cat") ? `c:${id}` : null;
       if (!key) continue;
-      row.classList.toggle("is-selected", keys.has(key));
+      row.classList.toggle("is-selected", out.has(key));
     }
   }
 
@@ -1233,7 +1242,11 @@ export function wireActions({ state }) {
     // nie startuj marquee, jeśli kliknięto w wiersz (to obsługuje normalna selekcja)
     const row = e.target?.closest?.('.row[data-kind][data-id]');
     if (row) return;
-    if (e.target !== listEl) return; // marquee tylko z pustego tła listy
+    
+    // marquee startuje tylko jeśli klik jest "w listę", ale nie w kontrolki UI
+    // (np. gdybyś kiedyś dodał jakieś przyciski w tle listy)
+    const interactive = e.target?.closest?.('button,a,input,textarea,select,label');
+    if (interactive) return;
 
     // nie startuj, jeśli user kliknął w input/textarea
     const tag = String(e.target?.tagName || "").toLowerCase();
@@ -1282,6 +1295,8 @@ export function wireActions({ state }) {
     marqueeStart = null;
     marqueeAdd = false;
     marqueeBaseKeys = null;
+  
+    renderList(state); // wyrównaj po zakończeniu
   });
 
   document.addEventListener("keydown", (e) => {
