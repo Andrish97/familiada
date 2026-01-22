@@ -34,49 +34,41 @@
   gap:0;                      /* separator na styk */
   padding:0 12px 12px;
   min-height:calc(100vh - 120px);
-}
-
-.explorer-left,
-.explorer-right{
-  min-height:0;               /* ważne dla scrolla w grid */
-  min-width:0;
-}
-
-/* separator między panelami */
-.explorer-left{
-  border-right:1px solid rgba(255,255,255,.12);
-  padding-right:12px;
-}
-.explorer-right{
-  padding-left:12px;
+  aling-items:stretch;
 }
 
 /* ===== Lewy panel ===== */
 .explorer-left{
-  display:grid;
-  grid-template-rows:auto minmax(120px, 1fr); /* TREE rośnie, TAGI biorą resztę */
+  border-right:1px solid rgba(255,255,255,.12);
+  padding-right:12px;
+
+  display:flex;
+  flex-direction:column;
   gap:12px;
-  min-height:0;
+
+  min-height:0;    /* kluczowe dla scrolli */
 }
 
-/* TREE może rosnąć, ale jak zacznie brakować miejsca, to się przewija */
+/* Tree: rośnie tylko do limitu, potem ma scroll.
+   Dzięki temu Tagi są ZARAZ pod tree, a nie “na dole panelu”. */
 .tree{
+  flex: 0 0 auto;
+  max-height: 55vh;
   overflow:auto;
-  max-height:55vh; /* prosto i stabilnie: TAGI nie znikają pod spodem */
-}
 
-/* TAGI zawsze pod TREE i zawsze mają scroll, gdy brakuje miejsca */
-.tags{
-  overflow:auto;
-  min-height:120px;
-}
-
-.tree,
-.tags{
   border-radius:12px;
   padding:10px;
   min-height:120px;
+}
+
+/* Tagi biorą resztę wysokości panelu */
+.tags{
+  flex: 1 1 auto;
   overflow:auto;
+
+  border-radius:12px;
+  padding:10px;
+  min-height:120px;
 }
 
 /* ===== Prawy panel ===== */
@@ -85,6 +77,8 @@
   grid-template-rows: auto auto 1fr; /* breadcrumbs / nagłówek / lista */
   gap:12px;
   min-width:0;
+  padding-left:12px;
+  min-height:0;               /* ważne dla scrolla w grid */
 }
 
 .breadcrumbs{
