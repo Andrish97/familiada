@@ -295,3 +295,35 @@ input, textarea{ user-select:text; }
 #tree .tree-toggle:hover{
   opacity: .75;
 }
+
+/* Tree/List: drop preview */
+.is-drop-into{
+  outline:2px dashed rgba(255,255,255,.35);
+  outline-offset:-2px;
+}
+
+.is-drop-before{
+  position:relative;
+}
+.is-drop-before::before{
+  content:"";
+  position:absolute;
+  left:8px;
+  right:8px;
+  top:0;
+  height:2px;
+  background:rgba(255,255,255,.55);
+}
+
+.is-drop-after{
+  position:relative;
+}
+.is-drop-after::after{
+  content:"";
+  position:absolute;
+  left:8px;
+  right:8px;
+  bottom:0;
+  height:2px;
+  background:rgba(255,255,255,.55);
+}
