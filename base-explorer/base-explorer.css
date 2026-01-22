@@ -439,3 +439,5 @@ input, textarea{ user-select:text; }
   box-shadow: 0 0 0 1px rgba(255,255,255,.12) inset;
   flex: 0 0 auto;
 }
+
+#tree, #tags { position: relative; }
