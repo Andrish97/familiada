@@ -778,6 +778,16 @@ input,textarea {
   gap: 10px;
 }
 
+/* ===== Ujednolicenie wysokości wierszy: TAGS = TREE ===== */
+
+/* Tree (punkt odniesienia) */
+#tree .row.tree-row {
+  padding: 6px 8px;
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+}
+
 /* Tags – dokładnie to samo */
 #tags .row[data-kind="tag"] {
   padding: 6px 8px;
