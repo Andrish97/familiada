@@ -2539,6 +2539,15 @@ export function wireActions({ state }) {
       state.categories = data || [];
     },
     openAssignTagsModal: () => openAssignTagsModal(state),
+    openTagModal: async ({ mode = "create", tagId = null } = {}) => {
+      if (!canWrite(state)) return false;
+      const saved = await openTagModal(state, { mode, tagId });
+      if (saved) {
+        await refreshTags(state);
+        await state._api?.refreshList?.();
+      }
+      return saved;
+    },
   };
 
   // udostępniamy do context-menu (żeby mogło odświeżyć widok po delete)
