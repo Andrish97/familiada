@@ -436,3 +436,11 @@ input, textarea{ user-select:text; }
   padding: 14px;
   border-top: 1px solid rgba(255,255,255,.08);
 }
+.tag-dot{
+  width:10px;
+  height:10px;
+  border-radius:999px;
+  background: rgba(255,255,255,.25);
+  box-shadow: 0 0 0 1px rgba(255,255,255,.12) inset;
+  flex: 0 0 auto;
+}
