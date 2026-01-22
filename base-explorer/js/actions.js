@@ -1002,31 +1002,37 @@ export function wireActions({ state }) {
   });
 
   treeEl?.addEventListener("dblclick", async (e) => {
-    if (treeClickRenderTimer) {
+    // jeśli masz timer jak na liście, to tu go czyść (opcjonalnie)
+    if (typeof treeClickRenderTimer !== "undefined" && treeClickRenderTimer) {
       clearTimeout(treeClickRenderTimer);
       treeClickRenderTimer = null;
     }
-    // łap każdy .row z data-kind, nie wymagaj data-id w selektorze
+  
     const row = e.target?.closest?.('.row[data-kind]');
     if (!row) return;
-  
-    // jeśli dblclick w toggle/chevron – ignoruj (toggle to nie "open folder")
-    if (e.target?.closest?.('.tree-toggle')) return;
   
     const kind = row.dataset.kind;
     const id = row.dataset.id || null;
   
+    // dblclick na ROOT -> przejdź do root
     if (kind === "root") {
       setViewAll(state);
-      selectionClear(state);
+      selectionSetSingle(state, "root");
+      state.selection.anchorKey = "root";
       state._rootQuestions = null;
       await refreshList(state);
       return;
     }
   
+    // dblclick na folder -> przejdź do folderu
     if (kind === "cat" && id) {
       setViewFolder(state, id);
-      selectionClear(state);
+  
+      // to jest klucz: po wejściu folder ma być widocznie "wskazany" w drzewie
+      const key = `c:${id}`;
+      selectionSetSingle(state, key);
+      state.selection.anchorKey = key;
+  
       await refreshList(state);
     }
   });
