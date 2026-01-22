@@ -219,6 +219,10 @@ async function refreshList(state) {
     const foldersAll = Array.isArray(state.categories) ? state.categories : [];
     const qAll = state._allQuestions;
 
+    // pomocnicze struktury dla SEARCH (tagi + rodzice)
+    const byIdAll = new Map(foldersAll.map(c => [c.id, c]));
+    const foldersFromTags = new Set(); // foldery "wynikowe" przez tagi (kategorie otagowane + rodzice)
+
     const tokens = state.searchTokens || { text: state.searchQuery || "", tagIds: [], tagNames: [] };
     const textQ = String(tokens.text || "").trim();
 
@@ -263,22 +267,22 @@ async function refreshList(state) {
       for (const c of foldersAll) {
         const set = mC.get(c.id);
         if (!set) continue;
+      
         for (const tid of tagIds) {
-          if (set.has(tid)) {
-            add.add(c.id);
-
-            // dodaj rodziców też (żeby ścieżka była widoczna)
-            let cur = byId.get(c.id);
-            let guard2 = 0;
-            while (cur && guard2++ < 20) {
-              const pid = cur.parent_id || null;
-              if (!pid) break;
-              add.add(pid);
-              cur = byId.get(pid);
-            }
-
-            break;
+          if (!set.has(tid)) continue;
+      
+          // dodaj folder i jego rodziców
+          foldersFromTags.add(c.id);
+      
+          let cur = byIdAll.get(c.id);
+          let guard2 = 0;
+          while (cur && guard2++ < 20) {
+            const pid = cur.parent_id || null;
+            if (!pid) break;
+            foldersFromTags.add(pid);
+            cur = byIdAll.get(pid);
           }
+          break;
         }
       }
     }
@@ -292,27 +296,25 @@ async function refreshList(state) {
     let fs = applySearchFilterToFolders(foldersAll, textQ);
 
     if (tagIds.length) {
-      const byId = new Map(foldersAll.map(c => [c.id, c]));
-      const add = new Set();
-
-      // foldery bezpośrednie wyników
+      // foldery bezpośrednie wyników (z pytań) + ich rodzice
       for (const q of (qs || [])) {
         const cid = q.category_id || null;
         if (!cid) continue;
-        add.add(cid);
-
-        // dodaj rodziców (breadcrumb w lewym panelu ma sens)
-        let cur = byId.get(cid);
+    
+        foldersFromTags.add(cid);
+    
+        let cur = byIdAll.get(cid);
         let guard = 0;
         while (cur && guard++ < 20) {
           const pid = cur.parent_id || null;
           if (!pid) break;
-          add.add(pid);
-          cur = byId.get(pid);
+          foldersFromTags.add(pid);
+          cur = byIdAll.get(pid);
         }
       }
-
-      const extra = foldersAll.filter(c => add.has(c.id));
+    
+      const extra = foldersAll.filter(c => foldersFromTags.has(c.id));
+    
       // merge uniq
       const merged = new Map();
       for (const c of fs) merged.set(c.id, c);
@@ -340,26 +342,40 @@ async function refreshList(state) {
     const qAll = state._allQuestions;
     const foldersAll = Array.isArray(state.categories) ? state.categories : [];
 
-    // TODO: na etapie tagów dopniemy dokładny model danych.
-    // Na razie robimy filtr odporny na różne pola (payload.tags / tag_ids / tags).
-    const wanted = new Set((state.tagIds || []).filter(Boolean));
-
-    const qHasAnyTag = (q) => {
-      const p = q?.payload && typeof q.payload === "object" ? q.payload : {};
-      const a =
-        Array.isArray(p.tags) ? p.tags :
-        Array.isArray(q?.tags) ? q.tags :
-        Array.isArray(q?.tag_ids) ? q.tag_ids :
-        [];
-      for (const id of a) if (wanted.has(id)) return true;
+    const tagIds = Array.isArray(state.tagIds) ? state.tagIds.filter(Boolean) : [];
+    if (!tagIds.length) {
+      state.folders = foldersAll;
+      state.questions = [];
+      renderAll(state);
+      return;
+    }
+    
+    // zapewnij mapę question_id -> Set(tag_id) dla wszystkich pytań (jak w SEARCH)
+    if (!state._allQuestionTagMap) {
+      const ids = (qAll || []).map(x => x.id).filter(Boolean);
+      const links = await listQuestionTags(ids);
+      const m = new Map();
+      for (const l of (links || [])) {
+        if (!m.has(l.question_id)) m.set(l.question_id, new Set());
+        m.get(l.question_id).add(l.tag_id);
+      }
+      state._allQuestionTagMap = m;
+    }
+    
+    const qm = state._allQuestionTagMap;
+    const wanted = new Set(tagIds);
+    
+    // pytania: OR po tagach
+    state.questions = (qAll || []).filter(q => {
+      const set = qm.get(q.id);
+      if (!set) return false;
+      for (const tid of wanted) if (set.has(tid)) return true;
       return false;
-    };
-
-    // Foldery w TAG: na tym etapie najprościej pokazujemy WSZYSTKIE foldery,
-    // a dopiero w etapie tagów dopniemy “foldery, które mają dopasowane pytania”
-    // (da się zrobić, ale wymaga ustalenia modelu tagowania).
+    });
+    
+    // foldery: na tym etapie możesz zostawić "wszystkie"
+    // albo skopiować mechanikę z SEARCH (foldery od wyników + rodzice).
     state.folders = foldersAll;
-
     // Pytania: globalnie po tagach
     state.questions = qAll.filter(qHasAnyTag);
 
@@ -1138,6 +1154,9 @@ async function openTagsModal(state, opts = {}) {
     tri: new Map(), // tagId -> "all" | "none" | "some"
     // L2/L3:
     edit: { mode: "create", tagId: null, name: "", color: "#4da3ff" },
+
+    colorBase: null,
+    
     pickedColor: null,
   };
 
@@ -1156,8 +1175,14 @@ async function openTagsModal(state, opts = {}) {
     el.editSave?.removeEventListener("click", onEditSave);
     el.editColorBtn?.removeEventListener("click", onEditColor);
 
+    el.colorClose?.removeEventListener("click", onColorClose);
     el.colorCancel?.removeEventListener("click", onColorCancel);
-    el.colorOk?.removeEventListener("click", onColorOk);
+    el.colorDone?.removeEventListener("click", onColorDone);
+    
+    el.colorR?.removeEventListener("input", onSliderInput);
+    el.colorG?.removeEventListener("input", onSliderInput);
+    el.colorB?.removeEventListener("input", onSliderInput);
+    el.colorHex?.removeEventListener("input", onHexInput);
 
     resolvePromise(result);
   }
@@ -1320,25 +1345,6 @@ async function openTagsModal(state, opts = {}) {
     el.editName?.focus?.();
   }
 
-  function renderColorGrid() {
-    if (!el.colorGrid) return;
-    const cur = m.pickedColor || m.edit.color;
-
-    el.colorGrid.innerHTML = TAG_COLORS.map((c) => {
-      const picked = (String(cur).toLowerCase() === String(c).toLowerCase());
-      return `<button type="button" class="tags-color-cell ${picked ? "is-picked":""}" data-color="${c}" style="background:${c}"></button>`;
-    }).join("");
-
-    const cells = Array.from(el.colorGrid.querySelectorAll(".tags-color-cell[data-color]"));
-    for (const cell of cells) {
-      cell.addEventListener("click", (e) => {
-        e.preventDefault();
-        const c = cell.dataset.color;
-        m.pickedColor = c;
-        renderColorGrid();
-      });
-    }
-  }
 
   async function saveAssignTriToDb() {
     if (!editor) return false;
@@ -1441,16 +1447,93 @@ async function openTagsModal(state, opts = {}) {
     catch (err) { console.error(err); showErrBox(el.editErr, "Nie udało się zapisać taga."); }
   }
   function onEditColor() {
-    renderColorGrid();
+    showPickerLayer();
+  }
+
+  function clamp255(n) {
+    n = Number(n);
+    if (!Number.isFinite(n)) return 0;
+    return Math.max(0, Math.min(255, Math.round(n)));
+  }
+  
+  function rgbToHex(r,g,b) {
+    const to2 = (x) => x.toString(16).padStart(2, "0");
+    return "#" + to2(clamp255(r)) + to2(clamp255(g)) + to2(clamp255(b));
+  }
+  
+  function hexToRgb(hex) {
+    const s = String(hex || "").trim();
+    const m = s.match(/^#?([0-9a-fA-F]{6})$/);
+    if (!m) return null;
+    const h = m[1];
+    const r = parseInt(h.slice(0,2), 16);
+    const g = parseInt(h.slice(2,4), 16);
+    const b = parseInt(h.slice(4,6), 16);
+    return { r, g, b };
+  }
+  
+  function setPickerUI({ r, g, b }, { silent = false } = {}) {
+    r = clamp255(r); g = clamp255(g); b = clamp255(b);
+  
+    if (el.colorR) el.colorR.value = String(r);
+    if (el.colorG) el.colorG.value = String(g);
+    if (el.colorB) el.colorB.value = String(b);
+  
+    if (el.colorRVal) el.colorRVal.textContent = String(r);
+    if (el.colorGVal) el.colorGVal.textContent = String(g);
+    if (el.colorBVal) el.colorBVal.textContent = String(b);
+  
+    const hex = rgbToHex(r,g,b);
+    if (el.colorHex && !silent) el.colorHex.value = hex;
+  
+    if (el.colorPreview) el.colorPreview.style.background = hex;
+  
+    // klucz: w warstwie 3 zmiany lecą "na bieżąco" do warstwy 2
+    m.pickedColor = hex;
+    m.edit.color = hex;
+    if (el.editColorDot) el.editColorDot.style.background = hex;
+  }
+  
+  function initPickerFromColor(hex) {
+    const rgb = hexToRgb(hex) || { r: 77, g: 163, b: 255 }; // fallback
+    // silent: żeby nie walczyć z inputem w trakcie inicjalizacji
+    setPickerUI(rgb, { silent: false });
+  }
+  
+  function showPickerLayer() {
+    // baza do "Anuluj"
+    m.colorBase = String(m.pickedColor || m.edit.color || "#4da3ff");
+  
+    initPickerFromColor(m.colorBase);
     goLayer(3);
   }
 
-  function onColorCancel() { goLayer(2); }
-  function onColorOk() {
-    const c = String(m.pickedColor || m.edit.color || "#4da3ff");
-    m.edit.color = c;
-    if (el.editColorDot) el.editColorDot.style.background = c;
+  function onColorClose() { stepBackOrClose(); }
+
+  function onColorCancel() {
+    const rgb = hexToRgb(m.colorBase || m.edit.color || "#4da3ff");
+    if (rgb) setPickerUI(rgb, { silent: false });
     goLayer(2);
+  }
+  
+  function onColorDone() { goLayer(2); }
+  
+  function onSliderInput() {
+    const r = clamp255(el.colorR?.value);
+    const g = clamp255(el.colorG?.value);
+    const b = clamp255(el.colorB?.value);
+    setPickerUI({ r, g, b }, { silent: false });
+  }
+  
+  function onHexInput() {
+    const v = String(el.colorHex?.value || "").trim();
+    const rgb = hexToRgb(v);
+    if (!rgb) {
+      // nie krzyczymy alertem przy każdym znaku; tylko podgląd zostaje ostatni poprawny
+      return;
+    }
+    // silent: true => nie przepisuj hex w trakcie wpisu (tu akurat jest poprawny, ale zostawmy userowi kontrolę)
+    setPickerUI(rgb, { silent: true });
   }
 
   // open
@@ -1471,8 +1554,14 @@ async function openTagsModal(state, opts = {}) {
   el.editSave?.addEventListener("click", onEditSave);
   el.editColorBtn?.addEventListener("click", onEditColor);
 
+  el.colorClose?.addEventListener("click", onColorClose);
   el.colorCancel?.addEventListener("click", onColorCancel);
-  el.colorOk?.addEventListener("click", onColorOk);
+  el.colorDone?.addEventListener("click", onColorDone);
+  
+  el.colorR?.addEventListener("input", onSliderInput);
+  el.colorG?.addEventListener("input", onSliderInput);
+  el.colorB?.addEventListener("input", onSliderInput);
+  el.colorHex?.addEventListener("input", onHexInput);
 
   // init L1
   renderAssignInfo();
@@ -1583,11 +1672,20 @@ function tagsModalEls() {
     editErr: document.getElementById("tagsEditErr"),
     editCancel: document.getElementById("tagsEditCancel"),
     editSave: document.getElementById("tagsEditSave"),
-
-    // L3 color
-    colorGrid: document.getElementById("tagsColorGrid"),
+    
+    // L3 color (RGB/HEX)
+    colorTitle: document.getElementById("tagsColorTitle"),
+    colorClose: document.getElementById("tagsColorClose"),
+    colorPreview: document.getElementById("tagsColorPreview"),
+    colorHex: document.getElementById("tagsColorHex"),
+    colorR: document.getElementById("tagsColorR"),
+    colorG: document.getElementById("tagsColorG"),
+    colorB: document.getElementById("tagsColorB"),
+    colorRVal: document.getElementById("tagsColorRVal"),
+    colorGVal: document.getElementById("tagsColorGVal"),
+    colorBVal: document.getElementById("tagsColorBVal"),
+    colorDone: document.getElementById("tagsColorDone"),
     colorCancel: document.getElementById("tagsColorCancel"),
-    colorOk: document.getElementById("tagsColorOk"),
   };
   return el;
 }
@@ -1600,13 +1698,6 @@ function showLayer(el, which) {
 
 function hideErrBox(box) { if (box) { box.hidden = true; box.textContent = ""; } }
 function showErrBox(box, msg) { if (box) { box.hidden = false; box.textContent = String(msg || ""); } }
-
-const TAG_COLORS = [
-  "#ff5a5f","#ff8c00","#ffd400","#7bdc4a","#00c853",
-  "#00bcd4","#1e88e5","#5e35b1","#b00020","#ff4f9a",
-  "#8d6e63","#9e9e9e","#607d8b","#00a8ff","#2ecc71",
-  "#f1c40f","#e67e22","#e74c3c","#9b59b6","#34495e",
-];
 
 /* ================= Wire ================= */
 export function wireActions({ state }) {
