@@ -931,27 +931,33 @@ export function wireActions({ state }) {
       return;
     }
 
-    // 2) klik w wiersz = wejście do folderu / root
+    // 2) klik w wiersz = SELEKCJA (jak Explorer)
     const row = e.target?.closest?.(".row[data-kind]");
     if (!row) return;
-
+    
     const kind = row.dataset.kind;
     const id = row.dataset.id || null;
-
-    if (kind === "cat" && id) {
-      setViewFolder(state, id);
-      selectionClear(state);
-      await refreshList(state);
-      return;
+    
+    if (kind !== "cat" || !id) return;
+    
+    const key = `c:${id}`;
+    const isCtrl = e.ctrlKey || e.metaKey;
+    const isShift = e.shiftKey;
+    
+    if (isShift) {
+      // shift-range w drzewie (masz już selectTreeRange)
+      selectTreeRange(key);
+    } else if (isCtrl) {
+      selectionToggle(state, key);
+      state.selection.anchorKey = key;
+    } else {
+      selectionSetSingle(state, key);
+      state.selection.anchorKey = key;
     }
-
-    if (kind === "root") {
-      setViewAll(state);
-      selectionClear(state);
-      state._rootQuestions = null;
-      await refreshList(state);
-      return;
-    }
+    
+    // drzewo i lista powinny odświeżyć zaznaczenie
+    renderAll(state);
+    
   });
 
   treeEl?.addEventListener("dblclick", async (e) => {
