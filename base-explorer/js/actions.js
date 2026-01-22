@@ -441,12 +441,12 @@ async function refreshList(state) {
     .slice()
     .sort((a,b) => (Number(a.ord)||0) - (Number(b.ord)||0));
   
-  state.folders = foldersHere;
+    state.folders = foldersHere;
+    state.questions = applySearchFilterToQuestions(allQ, state.searchQuery);
   
-  // filtr wyszukiwania stosujemy tylko do pytań (na razie)
-  state.questions = applySearchFilterToQuestions(allQ, state.searchQuery);
-
-  renderAll(state);
+    await ensureTagMapsForUI(state);
+    
+    renderAll(state);
 
   const mutable = canMutateHere(state);
   document.getElementById("btnNewFolder")?.toggleAttribute("disabled", !mutable);
@@ -1938,25 +1938,28 @@ export function wireActions({ state }) {
   
     const raw = String(t.value || "");
   
-    // 1) wyciągnij #tagi z inputa
     const parsed = parseSearchInputToTokens(raw);
-  
-    // 2) tylko tagi, które istnieją w state.tags
+    
+    // tylko tagi które istnieją
     const existingNames = filterExistingTagNames(state, parsed.tagNames);
     const resolvedIds = resolveTagIdsByNames(state, existingNames);
-  
-    // 3) merge: dopinamy nowe tagi do już wybranych (uniq)
-    const prevIds = Array.isArray(state.searchTokens?.tagIds) ? state.searchTokens.tagIds : [];
-    const mergedIds = Array.from(new Set(prevIds.concat(resolvedIds)));
-  
-    // 4) tekst w input = bez #tagów
-    const nextText = String(parsed.text || "");
-  
-    // jeśli parser usunął #tagi, to przepisz input na "czysty" tekst (kursor na koniec)
-    if (t.value !== nextText) {
+    
+    // tekst: usuń z raw TYLKO istniejące tagi (a nie wszystkie match’e)
+    let nextText = raw;
+    for (const name of existingNames) {
+      const re = new RegExp(`#${name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?=\\s|,|$)`, "gi");
+      nextText = nextText.replace(re, " ");
+    }
+    nextText = nextText.replace(/[,]+/g, " ").replace(/\s+/g, " ").trim();
+    
+    // przepisuj input tylko jeśli coś realnie wyczyściliśmy (czyli jeśli istniejące tagi były w raw)
+    if (existingNames.length && t.value !== nextText) {
       t.value = nextText;
       try { t.setSelectionRange(nextText.length, nextText.length); } catch {}
     }
+    
+    const prevIds = Array.isArray(state.searchTokens?.tagIds) ? state.searchTokens.tagIds : [];
+    const mergedIds = Array.from(new Set(prevIds.concat(resolvedIds)));
   
     state.searchTokens = { text: nextText, tagIds: mergedIds };
   
@@ -2024,6 +2027,14 @@ export function wireActions({ state }) {
       }
 
       if (t.id === "searchClearBtn") {
+
+        const alreadyEmpty =
+          !String(state.searchTokens?.text || "").trim() &&
+          !(Array.isArray(state.searchTokens?.tagIds) && state.searchTokens.tagIds.length) &&
+          !String(document.getElementById("searchText")?.value || "").trim();
+        
+        if (alreadyEmpty && state.view !== VIEW.SEARCH) return;
+        
         const inp = document.getElementById("searchText");
         if (inp) inp.value = "";
         state.searchTokens = { text: "", tagIds: [] };
