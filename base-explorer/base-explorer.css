@@ -54,8 +54,21 @@
 /* ===== Lewy panel ===== */
 .explorer-left{
   display:grid;
-  grid-template-rows:1fr auto;
+  grid-template-rows:auto minmax(120px, 1fr); /* TREE rośnie, TAGI biorą resztę */
   gap:12px;
+  min-height:0;
+}
+
+/* TREE może rosnąć, ale jak zacznie brakować miejsca, to się przewija */
+.tree{
+  overflow:auto;
+  max-height:55vh; /* prosto i stabilnie: TAGI nie znikają pod spodem */
+}
+
+/* TAGI zawsze pod TREE i zawsze mają scroll, gdy brakuje miejsca */
+.tags{
+  overflow:auto;
+  min-height:120px;
 }
 
 .tree,
