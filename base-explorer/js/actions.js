@@ -160,6 +160,11 @@ function resolveTagIdsByNames(state, tagNames) {
   return Array.from(new Set(tagIds));
 }
 
+function filterExistingTagNames(state, tagNames) {
+  const byName = new Set((state.tags || []).map(t => String(t.name || "").toLowerCase()));
+  return (tagNames || []).filter(n => byName.has(String(n || "").toLowerCase()));
+}
+
 function selectionSplitIds(state) {
   const keys = Array.from(state?.selection?.keys || []);
   const qIds = keys.filter(k => k.startsWith("q:")).map(k => k.slice(2));
@@ -1886,39 +1891,50 @@ export function wireActions({ state }) {
 
   toolbarEl?.addEventListener("input", async (e) => {
     const t = e.target;
-    if (!t || t.id !== "searchInp") return;
-
+    if (!t || t.id !== "searchText") return;
+  
     const raw = String(t.value || "");
-    state.searchRaw = raw;
-    const { text, tagNames } = parseSearchInputToTokens(raw);
-    const tagIds = resolveTagIdsByNames(state, tagNames);
-
-    // ustaw tokeny (to też zaktualizuje state.searchQuery "ładnie")
-    state.searchTokens = { text, tagNames, tagIds };
-
-    // jeśli wszystko puste: wyjście z SEARCH i powrót do ostatniego folderu/root
-    const isEmpty = (!text.trim() && !(tagNames && tagNames.length));
-    if (isEmpty) {
-      if (state.view === VIEW.SEARCH) {
-        restoreBrowseLocation(state);
-        selectionClear(state);
-        await refreshList(state);
-      } else {
-        await refreshList(state);
-      }
-      return;
+  
+    // 1) wyciągnij #tagi z inputa
+    const parsed = parseSearchInputToTokens(raw);
+  
+    // 2) tylko tagi, które istnieją w state.tags
+    const existingNames = filterExistingTagNames(state, parsed.tagNames);
+    const resolvedIds = resolveTagIdsByNames(state, existingNames);
+  
+    // 3) merge: dopinamy nowe tagi do już wybranych (uniq)
+    const prevIds = Array.isArray(state.searchTokens?.tagIds) ? state.searchTokens.tagIds : [];
+    const mergedIds = Array.from(new Set(prevIds.concat(resolvedIds)));
+  
+    // 4) tekst w input = bez #tagów
+    const nextText = String(parsed.text || "");
+  
+    // jeśli parser usunął #tagi, to przepisz input na "czysty" tekst (kursor na koniec)
+    if (t.value !== nextText) {
+      t.value = nextText;
+      try { t.setSelectionRange(nextText.length, nextText.length); } catch {}
     }
-
-    // jeśli zaczynamy pisać i nie jesteśmy w SEARCH: zapamiętaj skąd przyszliśmy
-    if (state.view !== VIEW.SEARCH) {
-      rememberBrowseLocation(state);
-      setViewSearch(state, ""); // query trzymamy w tokens, nie w view
+  
+    state.searchTokens = { text: nextText, tagIds: mergedIds };
+  
+    // jeśli wszystko puste: wyjście z SEARCH i powrót do ostatniego folderu/root
+    const isEmpty = (!nextText.trim() && !mergedIds.length);
+    if (isEmpty) {
+      if (state.view === VIEW.SEARCH) restoreBrowseLocation(state);
       selectionClear(state);
       await refreshList(state);
       return;
     }
-
-    // już w SEARCH: odśwież wyniki
+  
+    // jeśli zaczynamy pisać i nie jesteśmy w SEARCH: zapamiętaj skąd przyszliśmy
+    if (state.view !== VIEW.SEARCH) {
+      rememberBrowseLocation(state);
+      setViewSearch(state, ""); // query trzymamy w tokens
+      selectionClear(state);
+      await refreshList(state);
+      return;
+    }
+  
     await refreshList(state);
   });
 
@@ -1928,22 +1944,53 @@ export function wireActions({ state }) {
   
     try {
 
+      // E+ klik w chip usuwa taga
+      const chip = t.closest?.('.chip[data-tag-id]');
+      if (chip) {
+        const tagId = chip.dataset.tagId;
+        if (!tagId) return;
+      
+        const prev = Array.isArray(state.searchTokens?.tagIds) ? state.searchTokens.tagIds : [];
+        const next = prev.filter(id => id !== tagId);
+      
+        const text = String(state.searchTokens?.text || "");
+      
+        state.searchTokens = { text, tagIds: next };
+      
+        // jeżeli po usunięciu chipów nie ma już nic — wyjdź z SEARCH
+        const isEmpty = (!text.trim() && !next.length);
+        if (isEmpty && state.view === VIEW.SEARCH) {
+          restoreBrowseLocation(state);
+        }
+      
+        selectionClear(state);
+        await refreshList(state);
+      
+        // UX: po kliknięciu chipu wróć fokusem do inputa
+        document.getElementById("searchText")?.focus();
+      
+        return;
+      }
+
+      if (t.id === "searchBox" || t.closest?.("#searchBox")) {
+        document.getElementById("searchText")?.focus();
+      }
+
       if (t.id === "btnNewFolder" || t.id === "btnNewQuestion") {
         if (!canMutateHere(state)) return;
       }
 
       if (t.id === "searchClearBtn") {
-        const inp = document.getElementById("searchInp");
+        const inp = document.getElementById("searchText");
         if (inp) inp.value = "";
-        state.searchTokens = { text: "", tagNames: [], tagIds: [] };
+        state.searchTokens = { text: "", tagIds: [] };
         state.searchQuery = "";
-        state.searchRaw = "";
-
+        
         if (state.view === VIEW.SEARCH) restoreBrowseLocation(state);
         selectionClear(state);
         await refreshList(state);
-
-        document.getElementById("searchInp")?.focus();
+        
+        document.getElementById("searchText")?.focus();
         return;
       }
       
@@ -1959,6 +2006,32 @@ export function wireActions({ state }) {
     } catch (err) {
       console.error(err);
       alert("Nie udało się wykonać akcji.");
+    }
+  });
+
+  toolbarEl?.addEventListener("keydown", async (e) => {
+    const t = e.target;
+    if (!t || t.id !== "searchText") return;
+  
+    // Backspace na pustym polu usuwa ostatni chip
+    if (e.key === "Backspace") {
+      const val = String(t.value || "");
+      const caretAtStart = (t.selectionStart === 0 && t.selectionEnd === 0);
+  
+      const ids = Array.isArray(state.searchTokens?.tagIds) ? state.searchTokens.tagIds : [];
+      if (!val && caretAtStart && ids.length) {
+        e.preventDefault();
+        const next = ids.slice(0, -1);
+        state.searchTokens = { text: "", tagIds: next };
+  
+        // jeśli już nic nie ma: wyjdź z SEARCH
+        if (!next.length) {
+          if (state.view === VIEW.SEARCH) restoreBrowseLocation(state);
+        }
+  
+        selectionClear(state);
+        await refreshList(state);
+      }
     }
   });
 
