@@ -172,6 +172,130 @@ function selectionSplitIds(state) {
   return { qIds, cIds };
 }
 
+function uniqIds(arr) {
+  return Array.from(new Set((arr || []).filter(Boolean)));
+}
+
+function buildChildrenIndex(categories) {
+  const byParent = new Map();
+  for (const c of (categories || [])) {
+    const pid = c.parent_id || null;
+    if (!byParent.has(pid)) byParent.set(pid, []);
+    byParent.get(pid).push(c.id);
+  }
+  return byParent;
+}
+
+function collectDescendantFolderIds(categories, rootFolderId) {
+  const byParent = buildChildrenIndex(categories);
+  const out = [];
+  const stack = [rootFolderId];
+  const seen = new Set();
+
+  while (stack.length) {
+    const id = stack.pop();
+    if (!id || seen.has(id)) continue;
+    seen.add(id);
+    out.push(id);
+
+    const kids = byParent.get(id) || [];
+    for (let i = kids.length - 1; i >= 0; i--) stack.push(kids[i]);
+  }
+  return out;
+}
+
+/**
+ * Buduje:
+ *  - state._folderDescQIds: Map(folderId -> Set(questionId)) (rekurencyjnie)
+ *  - state._derivedCategoryTagMap: Map(folderId -> Set(tagId)) = tagi które mają WSZYSTKIE pytania w folderze (rekurencyjnie)
+ *
+ * Źródło prawdy: qb_question_tags + qb_questions.category_id. Nie używamy qb_category_tags.
+ */
+async function ensureDerivedFolderMaps(state) {
+  // Potrzebujemy wszystkich pytań (żeby policzyć rekurencję dla każdego folderu)
+  if (!state._allQuestions) {
+    state._allQuestions = await listAllQuestions(state.baseId);
+  }
+
+  // Mapa tagów dla wszystkich pytań
+  if (!state._allQuestionTagMap) {
+    const ids = (state._allQuestions || []).map(q => q.id).filter(Boolean);
+    const links = ids.length ? await listQuestionTags(ids) : [];
+    const m = new Map();
+    for (const l of (links || [])) {
+      if (!m.has(l.question_id)) m.set(l.question_id, new Set());
+      m.get(l.question_id).add(l.tag_id);
+    }
+    state._allQuestionTagMap = m;
+  }
+
+  const cats = Array.isArray(state.categories) ? state.categories : [];
+  const byParent = buildChildrenIndex(cats);
+
+  // folder -> pytania bezpośrednie
+  const directQByFolder = new Map(); // folderId -> [qId...]
+  for (const q of (state._allQuestions || [])) {
+    const cid = q.category_id || null;
+    if (!cid) continue; // root (pytania w folderze głównym) nie przypisujemy do folderId
+    if (!directQByFolder.has(cid)) directQByFolder.set(cid, []);
+    directQByFolder.get(cid).push(q.id);
+  }
+
+  // folder -> descendant question ids (rekurencyjnie)
+  const descQ = new Map(); // folderId -> Set(qid)
+
+  function computeDescQ(folderId) {
+    if (descQ.has(folderId)) return descQ.get(folderId);
+
+    const set = new Set();
+    const direct = directQByFolder.get(folderId) || [];
+    for (const qid of direct) set.add(qid);
+
+    const childFolders = byParent.get(folderId) || [];
+    for (const childId of childFolders) {
+      const childSet = computeDescQ(childId);
+      for (const qid of childSet) set.add(qid);
+    }
+
+    descQ.set(folderId, set);
+    return set;
+  }
+
+  for (const c of cats) {
+    computeDescQ(c.id);
+  }
+  state._folderDescQIds = descQ;
+
+  // folder -> tagIds które mają wszystkie pytania w folderze (rekurencyjnie)
+  const derived = new Map();
+  const qTagMap = state._allQuestionTagMap;
+
+  for (const c of cats) {
+    const qids = descQ.get(c.id);
+    if (!qids || qids.size === 0) {
+      derived.set(c.id, new Set());
+      continue;
+    }
+
+    let intersection = null; // Set(tagId) lub null
+    for (const qid of qids) {
+      const tags = qTagMap.get(qid) || new Set();
+      if (intersection === null) {
+        intersection = new Set(tags);
+      } else {
+        for (const tid of Array.from(intersection)) {
+          if (!tags.has(tid)) intersection.delete(tid);
+        }
+      }
+      if (intersection.size === 0) break;
+    }
+
+    derived.set(c.id, intersection || new Set());
+  }
+
+  state._derivedCategoryTagMap = derived;
+}
+
 /* ================= Data loading by view ================= */
 async function loadQuestionsForCurrentView(state) {
   // Etap 1:
@@ -202,23 +326,12 @@ async function ensureTagMapsForUI(state) {
   }
 
   // 1) CATEGORY TAG MAP — najlepiej cache dla CAŁEGO drzewa (folderów)
-  //    bo tree renderuje wszystkie kategorie.
-  if (!state._allCategoryTagMap) {
-    const foldersAll = Array.isArray(state.categories) ? state.categories : [];
-    const cIdsAll = foldersAll.map(c => c.id).filter(Boolean);
+  // ZAMIANA: nie bierzemy tagów folderów z qb_category_tags.
+  // Folder ma “tag” tylko jeśli 100% pytań w jego poddrzewie ma ten tag.
+  await ensureDerivedFolderMaps(state);
 
-    if (cIdsAll.length) {
-      const linksC = await listCategoryTags(cIdsAll);
-      const mC = new Map();
-      for (const l of (linksC || [])) {
-        if (!mC.has(l.category_id)) mC.set(l.category_id, new Set());
-        mC.get(l.category_id).add(l.tag_id);
-      }
-      state._allCategoryTagMap = mC;
-    } else {
-      state._allCategoryTagMap = new Map();
-    }
-  }
+  // dla zgodności z resztą kodu:
+  state._allCategoryTagMap = state._derivedCategoryTagMap || new Map();
 
   // 2) QUESTION TAG MAP — tylko dla pytań aktualnie wyświetlanych (lista po prawej)
   const qShown = Array.isArray(state.questions) ? state.questions : [];
@@ -378,50 +491,97 @@ async function refreshList(state) {
     return;
   }
 
-    // === TAG: „wirtualny widok wyników” po CAŁOŚCI (jak SEARCH, tylko filtr tagów) ===
+  // === TAG: „wirtualny widok wyników” po CAŁOŚCI (jak SEARCH, tylko filtr tagów) ===
   if (state.view === VIEW.TAG) {
-    if (!state._allQuestions) {
-      state._allQuestions = await listAllQuestions(state.baseId);
-    }
-
-    const qAll = state._allQuestions;
-    const foldersAll = Array.isArray(state.categories) ? state.categories : [];
-
+    // tagIds = zaznaczone po lewej (multi)
     const tagIds = Array.isArray(state.tagIds) ? state.tagIds.filter(Boolean) : [];
     if (!tagIds.length) {
-      state.folders = foldersAll;
-      state.questions = [];
-      await ensureTagMapsForUI(state);
-      renderAll(state);
+      // brak filtra = wróć do normalnego przeglądania
+      restoreBrowseLocation(state);
+      selectionClear(state);
+      await refreshList(state);
       return;
     }
-    
-    // zapewnij mapę question_id -> Set(tag_id) dla wszystkich pytań (jak w SEARCH)
-    if (!state._allQuestionTagMap) {
-      const ids = (qAll || []).map(x => x.id).filter(Boolean);
-      const links = await listQuestionTags(ids);
-      const m = new Map();
-      for (const l of (links || [])) {
-        if (!m.has(l.question_id)) m.set(l.question_id, new Set());
-        m.get(l.question_id).add(l.tag_id);
-      }
-      state._allQuestionTagMap = m;
-    }
-    
-    const qm = state._allQuestionTagMap;
+
+    // indeksy (wszystkie pytania + tagi pytań + folder->descQ + derived folder tags)
+    await ensureDerivedFolderMaps(state);
+
+    const qAll = state._allQuestions || [];
+    const qm = state._allQuestionTagMap || new Map();
+    const folderDesc = state._folderDescQIds || new Map();
+
     const wanted = new Set(tagIds);
-    
-    // pytania: OR po tagach
-    state.questions = (qAll || []).filter(q => {
-      const set = qm.get(q.id);
+
+    // helper: pytanie ma wszystkie tagi?
+    function questionHasAll(qid) {
+      const set = qm.get(qid);
       if (!set) return false;
-      for (const tid of wanted) if (set.has(tid)) return true;
+      for (const tid of wanted) if (!set.has(tid)) return false;
+      return true;
+    }
+
+    // 1) pasujące foldery = 100% pytań w poddrzewie ma wszystkie tagi
+    const cats = Array.isArray(state.categories) ? state.categories : [];
+    const matchingFolderIds = new Set();
+
+    for (const c of cats) {
+      const qids = folderDesc.get(c.id);
+      if (!qids || qids.size === 0) continue;
+
+      let ok = true;
+      for (const qid of qids) {
+        if (!questionHasAll(qid)) { ok = false; break; }
+      }
+      if (ok) matchingFolderIds.add(c.id);
+    }
+
+    // 2) jeżeli folder pasuje, to jego PODFOLDERY i tak “zawierają się” w nim.
+    // Żeby UI było czytelne: pokażemy tylko NAJWYŻSZE pasujące (bez przodków w matching).
+    // (Opcjonalne, ale bardzo pomaga: nie masz 20 folderów zduplikowanych w górę/dół.)
+    const byId = new Map(cats.map(c => [c.id, c]));
+    function hasMatchingAncestor(folderId) {
+      let cur = byId.get(folderId);
+      let guard = 0;
+      while (cur && guard++ < 50) {
+        const pid = cur.parent_id || null;
+        if (!pid) return false;
+        if (matchingFolderIds.has(pid)) return true;
+        cur = byId.get(pid);
+      }
       return false;
-    });
-    
-    // foldery: na tym etapie możesz zostawić "wszystkie"
-    // albo skopiować mechanikę z SEARCH (foldery od wyników + rodzice).
-    state.folders = foldersAll;
+    }
+
+    const topFolders = cats.filter(c => matchingFolderIds.has(c.id) && !hasMatchingAncestor(c.id));
+
+    // 3) pasujące pytania (ale nie pokazuj, jeśli są w folderze, który już pokazujemy – lub w jego poddrzewie)
+    // czyli: jeśli pytanie należy do folderu, który jest “wewnątrz” topFolders, to ukryj je.
+    const topFolderIds = new Set(topFolders.map(f => f.id));
+
+    function isInsideTopFolder(categoryId) {
+      if (!categoryId) return false;
+      let cur = byId.get(categoryId);
+      let guard = 0;
+      while (cur && guard++ < 50) {
+        if (topFolderIds.has(cur.id)) return true;
+        const pid = cur.parent_id || null;
+        cur = pid ? byId.get(pid) : null;
+      }
+      return false;
+    }
+
+    const matchingQuestions = [];
+    for (const q of qAll) {
+      if (!questionHasAll(q.id)) continue;
+      if (isInsideTopFolder(q.category_id || null)) continue; // już “jest” w pokazanym folderze
+      matchingQuestions.push(q);
+    }
+
+    // Ustaw stan widoku
+    state.folders = topFolders;
+    state.questions = matchingQuestions;
+
+    // mapy do kropek: dla pytań w bieżącej liście potrzebujemy _viewQuestionTagMap
+    // (folderowe kropki mamy globalnie z derived)
     await ensureTagMapsForUI(state);
     renderAll(state);
 
@@ -1204,6 +1364,25 @@ async function openTagsModal(state, opts = {}) {
     pickedColor: null,
   };
 
+  m.dirty = new Set(); // tagIds, które user faktycznie zmienił
+
+  async function expandFoldersToQuestionIds(folderIds) {
+    const cIds = uniqIds(folderIds || []);
+    if (!cIds.length) return [];
+
+    // potrzebujemy indeksów z całej bazy
+    await ensureDerivedFolderMaps(state);
+
+    const folderDesc = state._folderDescQIds || new Map();
+    const out = new Set();
+    for (const cid of cIds) {
+      const set = folderDesc.get(cid);
+      if (!set) continue;
+      for (const qid of set) out.add(qid);
+    }
+    return Array.from(out);
+  }
+
   function close(result) {
     el.modal.hidden = true;
     el.modal.removeEventListener("click", onBackdrop);
@@ -1260,42 +1439,27 @@ async function openTagsModal(state, opts = {}) {
 
     const tagIdsAll = (state.tags || []).map(t => t.id).filter(Boolean);
 
-    // mapy element->set(tagId)
-    const qMap = new Map();
-    const cMap = new Map();
+    // ZAMIANA: foldery rozwijamy do listy pytań (rekurencyjnie)
+    const qFromFolders = await expandFoldersToQuestionIds(cIds);
+    const allQIds = uniqIds([...(qIds || []), ...(qFromFolders || [])]);
 
-    if (qIds.length) {
-      const links = await listQuestionTags(qIds);
+    const qMap = new Map();
+    if (allQIds.length) {
+      const links = await listQuestionTags(allQIds);
       for (const l of (links || [])) {
         if (!qMap.has(l.question_id)) qMap.set(l.question_id, new Set());
         qMap.get(l.question_id).add(l.tag_id);
       }
     }
 
-    if (cIds.length) {
-      const links = await listCategoryTags(cIds);
-      for (const l of (links || [])) {
-        if (!cMap.has(l.category_id)) cMap.set(l.category_id, new Set());
-        cMap.get(l.category_id).add(l.tag_id);
-      }
-    }
-
-    const total = qIds.length + cIds.length;
+    const total = allQIds.length;
 
     for (const tid of tagIdsAll) {
-      if (total === 0) {
-        m.tri.set(tid, "none");
-        continue;
-      }
+      if (total === 0) { m.tri.set(tid, "none"); continue; }
 
       let has = 0;
-
-      for (const qid of qIds) {
+      for (const qid of allQIds) {
         const set = qMap.get(qid);
-        if (set && set.has(tid)) has++;
-      }
-      for (const cid of cIds) {
-        const set = cMap.get(cid);
         if (set && set.has(tid)) has++;
       }
 
@@ -1328,6 +1492,7 @@ async function openTagsModal(state, opts = {}) {
     }
     if (cur === "all") { m.tri.set(tagId, "none"); return; }
     m.tri.set(tagId, "all");
+    m.dirty.add(tagId);
   }
 
   function renderAssignList() {
@@ -1393,45 +1558,76 @@ async function openTagsModal(state, opts = {}) {
   async function saveAssignTriToDb() {
     if (!editor) return false;
 
-    const total = qIds.length + cIds.length;
-    if (!total) {
-      close(true); // nic do zapisania
+    // target = pytania zaznaczone + pytania w poddrzewie folderów
+    const qFromFolders = await expandFoldersToQuestionIds(cIds);
+    const allQIds = uniqIds([...(qIds || []), ...(qFromFolders || [])]);
+
+    if (!allQIds.length) {
+      close(true);
       return true;
     }
 
-    // picked = tagi ustawione na "all"
-    const picked = [];
-    for (const [tid, tri] of m.tri.entries()) {
-      if (tri === "all") picked.push(tid);
+    const dirtyTagIds = Array.from(m.dirty || []).filter(Boolean);
+    if (!dirtyTagIds.length) {
+      // nic nie zmienione
+      close(true);
+      return true;
     }
 
-    // strategia prosta i stabilna: usuń wszystkie linki i wstaw tylko picked
-    if (qIds.length) {
-      const { error: d1 } = await sb().from("qb_question_tags").delete().in("question_id", qIds);
-      if (d1) throw d1;
+    // Pobierz istniejące linki dla (allQIds x dirtyTagIds)
+    const { data: existing, error: e0 } = await sb()
+      .from("qb_question_tags")
+      .select("question_id,tag_id")
+      .in("question_id", allQIds)
+      .in("tag_id", dirtyTagIds);
+    if (e0) throw e0;
 
-      if (picked.length) {
-        const rows = [];
-        for (const qid of qIds) for (const tid of picked) rows.push({ question_id: qid, tag_id: tid });
-        const { error: i1 } = await sb().from("qb_question_tags").insert(rows, { defaultToNull: false });
-        if (i1) throw i1;
+    const have = new Set((existing || []).map(x => `${x.question_id}::${x.tag_id}`));
+
+    // Zbuduj operacje per tag
+    const inserts = [];
+    const deletesByTag = []; // { tagId, qIdsToDelete }
+
+    for (const tid of dirtyTagIds) {
+      const tri = m.tri.get(tid) || "none";
+
+      if (tri === "all") {
+        for (const qid of allQIds) {
+          const k = `${qid}::${tid}`;
+          if (!have.has(k)) inserts.push({ question_id: qid, tag_id: tid });
+        }
       }
-    }
 
-    if (cIds.length) {
-      const { error: d2 } = await sb().from("qb_category_tags").delete().in("category_id", cIds);
-      if (d2) throw d2;
-
-      if (picked.length) {
-        const rows = [];
-        for (const cid of cIds) for (const tid of picked) rows.push({ category_id: cid, tag_id: tid });
-        const { error: i2 } = await sb().from("qb_category_tags").insert(rows, { defaultToNull: false });
-        if (i2) throw i2;
+      if (tri === "none") {
+        deletesByTag.push({ tagId: tid, qIds: allQIds });
       }
+
+      // tri === "some" (np. user kliknął “some” -> alert -> “all” i dirty),
+      // jeśli jakimś cudem został "some", to nie robimy nic.
     }
 
-    // cache map do SEARCH/TAG
+    // DELETE (per tag) – prosty i czytelny
+    for (const d of deletesByTag) {
+      const { error } = await sb()
+        .from("qb_question_tags")
+        .delete()
+        .in("question_id", d.qIds)
+        .eq("tag_id", d.tagId);
+      if (error) throw error;
+    }
+
+    // INSERT brakujących
+    if (inserts.length) {
+      const { error } = await sb()
+        .from("qb_question_tags")
+        .insert(inserts, { defaultToNull: false });
+      if (error) throw error;
+    }
+
+    // unieważnij cache
     state._allQuestionTagMap = null;
+    state._derivedCategoryTagMap = null;
+    state._folderDescQIds = null;
     state._allCategoryTagMap = null;
 
     await refreshList(state);
