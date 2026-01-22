@@ -1113,327 +1113,379 @@ async function refreshTags(state) {
   state.tags = data || [];
 }
 
-async function openTagModal(state, { mode = "create", tagId = null } = {}) {
-  const modal = document.getElementById("tagModal");
-  if (!modal) return false;
-
-  const titleEl = document.getElementById("tagModalTitle");
-  const nameInp = document.getElementById("tagNameInp");
-  const colorInp = document.getElementById("tagColorInp");
-  const errEl = document.getElementById("tagModalErr");
-
-  const btnClose = document.getElementById("tagModalClose");
-  const btnCancel = document.getElementById("tagModalCancel");
-  const btnSave = document.getElementById("tagModalSave");
-
-  const hideErr = () => { if (errEl) { errEl.hidden = true; errEl.textContent = ""; } };
-  const showErr = (msg) => { if (errEl) { errEl.hidden = false; errEl.textContent = String(msg || ""); } };
-
-  // init
-  hideErr();
-  let current = null;
-  if (mode === "edit" && tagId) {
-    current = (state.tags || []).find(t => t.id === tagId) || null;
-  }
-
-  if (titleEl) titleEl.textContent = (mode === "edit") ? "Edytuj tag" : "Dodaj tag";
-  if (nameInp) nameInp.value = (current?.name || "");
-  if (colorInp) colorInp.value = (current?.color || "#4da3ff");
-
-  // open
-  modal.hidden = false;
-  nameInp?.focus?.();
-
-  // promise/cleanup
-  return await new Promise((resolve) => {
-    const cleanup = () => {
-      modal.hidden = true;
-      modal.removeEventListener("click", onBackdrop);
-      document.removeEventListener("keydown", onKey);
-      btnClose?.removeEventListener("click", onCancel);
-      btnCancel?.removeEventListener("click", onCancel);
-      btnSave?.removeEventListener("click", onSave);
-      resolve(false);
-    };
-
-    const closeOk = () => {
-      modal.hidden = true;
-      modal.removeEventListener("click", onBackdrop);
-      document.removeEventListener("keydown", onKey);
-      btnClose?.removeEventListener("click", onCancel);
-      btnCancel?.removeEventListener("click", onCancel);
-      btnSave?.removeEventListener("click", onSave);
-      resolve(true);
-    };
-
-    const onBackdrop = (e) => {
-      if (e.target?.dataset?.close === "1") cleanup();
-    };
-
-    const onKey = (e) => {
-      if (e.key === "Escape") cleanup();
-      if (e.key === "Enter") onSave();
-    };
-
-    const onCancel = () => cleanup();
-
-    const onSave = async () => {
-      try {
-        hideErr();
-
-        const name = String(nameInp?.value || "").trim().replace(/^#/, "").slice(0, 40);
-        const color = String(colorInp?.value || "#4da3ff").trim();
-
-        if (!name) { showErr("Podaj nazwę."); return; }
-
-        if (mode === "edit" && tagId) {
-          const { error } = await sb()
-            .from("qb_tags")
-            .update({ name, color })
-            .eq("id", tagId);
-          if (error) throw error;
-        } else {
-          const { error } = await sb()
-            .from("qb_tags")
-            .insert({ base_id: state.baseId, name, color, ord: 9999 }, { defaultToNull: false });
-          if (error) throw error;
-        }
-
-        // odśwież tagi (żeby chipsy/kolory działały)
-        await refreshTags(state);
-
-        closeOk();
-      } catch (err) {
-        console.error(err);
-        showErr("Nie udało się zapisać taga.");
-      }
-    };
-
-    modal.addEventListener("click", onBackdrop);
-    document.addEventListener("keydown", onKey);
-    btnClose?.addEventListener("click", onCancel);
-    btnCancel?.addEventListener("click", onCancel);
-    btnSave?.addEventListener("click", onSave);
-  });
-}
-
-async function openAssignTagsModal(state) {
-  const { qIds, cIds } = selectionSplitIds(state);
-  if (!qIds.length && !cIds.length) {
-    alert("Zaznacz foldery lub pytania.");
-    return false;
-  }
-
-  const modal = document.getElementById("assignTagsModal");
-  if (!modal) return false;
-
-  const titleEl = document.getElementById("assignTagsTitle");
-  const infoEl = document.getElementById("assignTagsInfo");
-  const listEl = document.getElementById("assignTagsList");
-  const errEl = document.getElementById("assignTagsErr");
-
-  const btnClose = document.getElementById("assignTagsClose");
-  const btnCancel = document.getElementById("assignTagsCancel");
-  const btnSave = document.getElementById("assignTagsSave");
-
-  const hideErr = () => { if (errEl) { errEl.hidden = true; errEl.textContent = ""; } };
-  const showErr = (msg) => { if (errEl) { errEl.hidden = false; errEl.textContent = String(msg || ""); } };
-
-  hideErr();
+async function openTagsModal(state, opts = {}) {
+  const el = tagsModalEls();
+  if (!el) return false;
 
   const editor = canWrite(state);
-  if (titleEl) titleEl.textContent = "Przypisz tagi";
-  if (infoEl) {
+
+  // opts:
+  // - mode: "assign" | "create" | "edit"
+  // - tagId (dla edit)
+  // - selection: { qIds, cIds } opcjonalnie (domyślnie z current selection)
+  const mode = opts.mode || "assign";
+  const editTagId = opts.tagId || null;
+
+  // snapshot selection do L1
+  const sel = opts.selection || selectionSplitIds(state);
+  const qIds = sel.qIds || [];
+  const cIds = sel.cIds || [];
+
+  // stan modalowy (lokalny)
+  const m = {
+    layer: 1,
+    // L1: tri-state per tag
+    tri: new Map(), // tagId -> "all" | "none" | "some"
+    // L2/L3:
+    edit: { mode: "create", tagId: null, name: "", color: "#4da3ff" },
+    pickedColor: null,
+  };
+
+  function close(result) {
+    el.modal.hidden = true;
+    el.modal.removeEventListener("click", onBackdrop);
+    document.removeEventListener("keydown", onKey);
+
+    el.close?.removeEventListener("click", onClose);
+
+    el.assignAddBtn?.removeEventListener("click", onAssignAdd);
+    el.assignCancel?.removeEventListener("click", onAssignCancel);
+    el.assignSave?.removeEventListener("click", onAssignSave);
+
+    el.editCancel?.removeEventListener("click", onEditCancel);
+    el.editSave?.removeEventListener("click", onEditSave);
+    el.editColorBtn?.removeEventListener("click", onEditColor);
+
+    el.colorCancel?.removeEventListener("click", onColorCancel);
+    el.colorOk?.removeEventListener("click", onColorOk);
+
+    resolvePromise(result);
+  }
+
+  function goLayer(n) {
+    m.layer = n;
+    showLayer(el, n);
+    hideErrBox(el.assignErr);
+    hideErrBox(el.editErr);
+  }
+
+  function stepBackOrClose() {
+    if (m.layer === 3) return goLayer(2);
+    if (m.layer === 2) return goLayer(1);
+    return close(false);
+  }
+
+  function renderAssignInfo() {
+    if (!el.assignInfo) return;
     const parts = [];
     if (qIds.length) parts.push(`${qIds.length} pyt.`);
     if (cIds.length) parts.push(`${cIds.length} folder(ów)`);
-    infoEl.textContent = `Zaznaczenie: ${parts.join(" + ")}.`;
+    el.assignInfo.textContent = parts.length ? `Zaznaczenie: ${parts.join(" + ")}.` : "Brak zaznaczenia.";
   }
 
-  // upewnij się, że tagi są załadowane
-  if (!Array.isArray(state.tags) || !state.tags.length) {
-    // minimalny fetch (jak w refreshTags)
-    const { data, error } = await sb()
-      .from("qb_tags")
-      .select("id,base_id,name,color,ord")
-      .eq("base_id", state.baseId)
-      .order("ord", { ascending: true });
-    if (error) throw error;
-    state.tags = data || [];
-  }
+  // policz tri-state na starcie
+  async function initAssignTriState() {
+    if (!Array.isArray(state.tags) || !state.tags.length) {
+      await refreshTags(state);
+    }
 
-  // pobierz aktualne tagi zaznaczenia:
-  // strategia: pokazujemy checkboxy jako:
-  // - checked, jeśli WSZYSTKIE elementy zaznaczenia mają ten tag
-  // - indeterminate, jeśli TYLKO część ma
-  // (to jest “profesjonalne” zachowanie)
-  const tagIdsAll = (state.tags || []).map(t => t.id);
+    const tagIdsAll = (state.tags || []).map(t => t.id).filter(Boolean);
 
-  // mapy: element -> set(tag_id)
-  const qMap = new Map();
-  const cMap = new Map();
+    // mapy element->set(tagId)
+    const qMap = new Map();
+    const cMap = new Map();
 
-  if (qIds.length) {
-    const links = await listQuestionTags(qIds);
-    for (const l of (links || [])) {
-      if (!qMap.has(l.question_id)) qMap.set(l.question_id, new Set());
-      qMap.get(l.question_id).add(l.tag_id);
+    if (qIds.length) {
+      const links = await listQuestionTags(qIds);
+      for (const l of (links || [])) {
+        if (!qMap.has(l.question_id)) qMap.set(l.question_id, new Set());
+        qMap.get(l.question_id).add(l.tag_id);
+      }
+    }
+
+    if (cIds.length) {
+      const links = await listCategoryTags(cIds);
+      for (const l of (links || [])) {
+        if (!cMap.has(l.category_id)) cMap.set(l.category_id, new Set());
+        cMap.get(l.category_id).add(l.tag_id);
+      }
+    }
+
+    const total = qIds.length + cIds.length;
+
+    for (const tid of tagIdsAll) {
+      if (total === 0) {
+        m.tri.set(tid, "none");
+        continue;
+      }
+
+      let has = 0;
+
+      for (const qid of qIds) {
+        const set = qMap.get(qid);
+        if (set && set.has(tid)) has++;
+      }
+      for (const cid of cIds) {
+        const set = cMap.get(cid);
+        if (set && set.has(tid)) has++;
+      }
+
+      if (has === 0) m.tri.set(tid, "none");
+      else if (has === total) m.tri.set(tid, "all");
+      else m.tri.set(tid, "some");
     }
   }
 
-  if (cIds.length) {
-    const links = await listCategoryTags(cIds);
-    // UWAGA: jeśli wolisz bez dynamic import, dodaj listCategoryTags do importów na górze actions.js
-    for (const l of (links || [])) {
-      if (!cMap.has(l.category_id)) cMap.set(l.category_id, new Set());
-      cMap.get(l.category_id).add(l.tag_id);
-    }
+  function triToUiState(tri) {
+    // checkbox:
+    // all -> checked
+    // none -> unchecked
+    // some -> indeterminate + unchecked
+    return {
+      checked: tri === "all",
+      indeterminate: tri === "some",
+    };
   }
 
-  function countHasTagInSet(map, ids, tagId) {
-    let has = 0;
-    for (const id of ids) {
-      const set = map.get(id);
-      if (set && set.has(tagId)) has++;
+  function cycleTri(tagId) {
+    const cur = m.tri.get(tagId) || "none";
+
+    // ustalenie: cyklicznie wszyscy <-> nikt
+    // częściowo: ostrzeżenie i przejście do "wszyscy"
+    if (cur === "some") {
+      alert("Tag jest przypisany częściowo. Kliknięcie ustawi: wszyscy.");
+      m.tri.set(tagId, "all");
+      return;
     }
-    return has;
+    if (cur === "all") { m.tri.set(tagId, "none"); return; }
+    m.tri.set(tagId, "all");
   }
 
-  // render checklist
-  if (listEl) {
-    listEl.innerHTML = (state.tags || [])
-      .slice()
-      .sort((a,b) => (Number(a.ord)||0)-(Number(b.ord)||0))
-      .map((t) => {
-        const color = t.color || "#777";
-        const name = String(t.name || "");
-        const id = t.id;
+  function renderAssignList() {
+    if (!el.assignList) return;
 
-        const qHas = qIds.length ? countHasTagInSet(qMap, qIds, id) : 0;
-        const cHas = cIds.length ? countHasTagInSet(cMap, cIds, id) : 0;
+    const tags = (state.tags || []).slice().sort((a,b) => (Number(a.ord)||0)-(Number(b.ord)||0));
 
-        const total = (qIds.length + cIds.length);
-        const hasTotal = qHas + cHas;
+    el.assignList.innerHTML = tags.map((t) => {
+      const tri = m.tri.get(t.id) || "none";
+      const ui = triToUiState(tri);
 
-        const checked = total > 0 && hasTotal === total;
-        const ind = total > 0 && hasTotal > 0 && hasTotal < total;
+      return `
+        <label class="tags-row" data-tag-id="${t.id}" style="opacity:${editor ? "1":"0.75"}; cursor:${editor ? "pointer":"default"};">
+          <input type="checkbox" data-tag-id="${t.id}" ${ui.checked ? "checked":""} ${editor ? "" : "disabled"} />
+          <span class="tag-dot" style="background:${t.color || "#777"}"></span>
+          <span class="m-p">#${String(t.name||"")}</span>
+          ${tri === "some" ? `<span class="m-note">częściowo</span>` : `<span class="m-note" style="visibility:hidden;">.</span>`}
+        </label>
+      `;
+    }).join("");
 
-        return `
-          <label class="cm-tag-row" style="display:flex; align-items:center; gap:10px; cursor:${editor ? "pointer":"default"}; opacity:${editor ? "1":"0.75"};">
-            <input type="checkbox" data-tag-id="${id}" ${checked ? "checked":""} ${editor ? "" : "disabled"} />
-            <span class="tag-dot" style="background:${color}"></span>
-            <span class="m-p">#${name}</span>
-            ${ind ? `<span class="m-note" style="margin-left:auto;">częściowo</span>` : `<span style="margin-left:auto;"></span>`}
-          </label>
-        `;
-      }).join("");
-
-    // ustaw indeterminate po renderze
-    const boxes = Array.from(listEl.querySelectorAll('input[type="checkbox"][data-tag-id]'));
+    // ustaw indeterminate + bind klik (dla editor)
+    const boxes = Array.from(el.assignList.querySelectorAll('input[type="checkbox"][data-tag-id]'));
     for (const box of boxes) {
       const tid = box.dataset.tagId;
-      const qHas = qIds.length ? countHasTagInSet(qMap, qIds, tid) : 0;
-      const cHas = cIds.length ? countHasTagInSet(cMap, cIds, tid) : 0;
-      const total = qIds.length + cIds.length;
-      const hasTotal = qHas + cHas;
-      box.indeterminate = (total > 0 && hasTotal > 0 && hasTotal < total);
+      const tri = m.tri.get(tid) || "none";
+      box.indeterminate = (tri === "some");
+      box.addEventListener("click", (e) => {
+        // checkbox click sam zmienia stan — my go kontrolujemy, więc blokujemy domyślny
+        e.preventDefault();
+        e.stopPropagation();
+        if (!editor) return;
+
+        cycleTri(tid);
+        renderAssignList();
+      });
     }
   }
 
-  modal.hidden = false;
+  function enterEditLayer(editMode, tagId) {
+    m.edit.mode = editMode;
+    m.edit.tagId = tagId || null;
 
-  return await new Promise((resolve) => {
-    const cleanup = () => {
-      modal.hidden = true;
-      modal.removeEventListener("click", onBackdrop);
-      document.removeEventListener("keydown", onKey);
-      btnClose?.removeEventListener("click", onCancel);
-      btnCancel?.removeEventListener("click", onCancel);
-      btnSave?.removeEventListener("click", onSave);
-      resolve(false);
-    };
+    const current = (editMode === "edit" && tagId)
+      ? (state.tags || []).find(t => t.id === tagId) || null
+      : null;
 
-    const closeOk = () => {
-      modal.hidden = true;
-      modal.removeEventListener("click", onBackdrop);
-      document.removeEventListener("keydown", onKey);
-      btnClose?.removeEventListener("click", onCancel);
-      btnCancel?.removeEventListener("click", onCancel);
-      btnSave?.removeEventListener("click", onSave);
-      resolve(true);
-    };
+    m.edit.name = String(current?.name || "");
+    m.edit.color = String(current?.color || "#4da3ff");
+    m.pickedColor = m.edit.color;
 
-    const onBackdrop = (e) => {
-      if (e.target?.dataset?.close === "1") cleanup();
-    };
+    if (el.editHelp) {
+      el.editHelp.textContent = (editMode === "edit") ? "Zmień nazwę i kolor taga. Zmieni się wszędzie." : "Dodaj nowy tag.";
+    }
+    if (el.editName) el.editName.value = m.edit.name;
+    if (el.editColorDot) el.editColorDot.style.background = m.edit.color;
 
-    const onKey = (e) => {
-      if (e.key === "Escape") cleanup();
-      if (e.key === "Enter") onSave();
-    };
+    goLayer(2);
+    el.editName?.focus?.();
+  }
 
-    const onCancel = () => cleanup();
+  function renderColorGrid() {
+    if (!el.colorGrid) return;
+    const cur = m.pickedColor || m.edit.color;
 
-    const onSave = async () => {
-      try {
-        hideErr();
-        if (!canWrite(state)) { cleanup(); return; }
+    el.colorGrid.innerHTML = TAG_COLORS.map((c) => {
+      const picked = (String(cur).toLowerCase() === String(c).toLowerCase());
+      return `<button type="button" class="tags-color-cell ${picked ? "is-picked":""}" data-color="${c}" style="background:${c}"></button>`;
+    }).join("");
 
-        const boxes = Array.from(listEl.querySelectorAll('input[type="checkbox"][data-tag-id]'));
-        const picked = boxes.filter(b => b.checked).map(b => b.dataset.tagId).filter(Boolean);
+    const cells = Array.from(el.colorGrid.querySelectorAll(".tags-color-cell[data-color]"));
+    for (const cell of cells) {
+      cell.addEventListener("click", (e) => {
+        e.preventDefault();
+        const c = cell.dataset.color;
+        m.pickedColor = c;
+        renderColorGrid();
+      });
+    }
+  }
 
-        // Najprościej i stabilnie:
-        // 1) usuń wszystkie linki tagów dla zaznaczenia
-        // 2) wstaw nowe dla "picked"
+  async function saveAssignTriToDb() {
+    if (!editor) return false;
 
-        if (qIds.length) {
-          const { error: d1 } = await sb()
-            .from("qb_question_tags")
-            .delete()
-            .in("question_id", qIds);
-          if (d1) throw d1;
+    const total = qIds.length + cIds.length;
+    if (!total) {
+      close(true); // nic do zapisania
+      return true;
+    }
 
-          if (picked.length) {
-            const rows = [];
-            for (const qid of qIds) for (const tid of picked) rows.push({ question_id: qid, tag_id: tid });
-            const { error: i1 } = await sb().from("qb_question_tags").insert(rows, { defaultToNull: false });
-            if (i1) throw i1;
-          }
-        }
+    // picked = tagi ustawione na "all"
+    const picked = [];
+    for (const [tid, tri] of m.tri.entries()) {
+      if (tri === "all") picked.push(tid);
+    }
 
-        if (cIds.length) {
-          const { error: d2 } = await sb()
-            .from("qb_category_tags")
-            .delete()
-            .in("category_id", cIds);
-          if (d2) throw d2;
+    // strategia prosta i stabilna: usuń wszystkie linki i wstaw tylko picked
+    if (qIds.length) {
+      const { error: d1 } = await sb().from("qb_question_tags").delete().in("question_id", qIds);
+      if (d1) throw d1;
 
-          if (picked.length) {
-            const rows = [];
-            for (const cid of cIds) for (const tid of picked) rows.push({ category_id: cid, tag_id: tid });
-            const { error: i2 } = await sb().from("qb_category_tags").insert(rows, { defaultToNull: false });
-            if (i2) throw i2;
-          }
-        }
-
-        // Po zmianie tagów: wywal cache map tagów, bo SEARCH/TAG ich używa
-        state._allQuestionTagMap = null;
-        state._allCategoryTagMap = null;
-
-        await refreshList(state);
-        closeOk();
-      } catch (err) {
-        console.error(err);
-        showErr("Nie udało się zapisać tagów.");
+      if (picked.length) {
+        const rows = [];
+        for (const qid of qIds) for (const tid of picked) rows.push({ question_id: qid, tag_id: tid });
+        const { error: i1 } = await sb().from("qb_question_tags").insert(rows, { defaultToNull: false });
+        if (i1) throw i1;
       }
-    };
+    }
 
-    modal.addEventListener("click", onBackdrop);
-    document.addEventListener("keydown", onKey);
-    btnClose?.addEventListener("click", onCancel);
-    btnCancel?.addEventListener("click", onCancel);
-    btnSave?.addEventListener("click", onSave);
-  });
+    if (cIds.length) {
+      const { error: d2 } = await sb().from("qb_category_tags").delete().in("category_id", cIds);
+      if (d2) throw d2;
+
+      if (picked.length) {
+        const rows = [];
+        for (const cid of cIds) for (const tid of picked) rows.push({ category_id: cid, tag_id: tid });
+        const { error: i2 } = await sb().from("qb_category_tags").insert(rows, { defaultToNull: false });
+        if (i2) throw i2;
+      }
+    }
+
+    // cache map do SEARCH/TAG
+    state._allQuestionTagMap = null;
+    state._allCategoryTagMap = null;
+
+    await refreshList(state);
+    close(true);
+    return true;
+  }
+
+  async function saveTagEditToDb() {
+    if (!editor) return false;
+
+    const nameRaw = String(el.editName?.value || "").trim().replace(/^#/, "").slice(0, 40);
+    if (!nameRaw) { showErrBox(el.editErr, "Podaj nazwę."); return false; }
+
+    const color = String(m.pickedColor || m.edit.color || "#4da3ff").trim();
+
+    if (m.edit.mode === "edit" && m.edit.tagId) {
+      const { error } = await sb().from("qb_tags").update({ name: nameRaw, color }).eq("id", m.edit.tagId);
+      if (error) throw error;
+    } else {
+      const { error } = await sb()
+        .from("qb_tags")
+        .insert({ base_id: state.baseId, name: nameRaw, color, ord: 9999 }, { defaultToNull: false });
+      if (error) throw error;
+    }
+
+    await refreshTags(state);
+    await refreshList(state);
+
+    // po dodaniu/edycji: wróć do L1 i odśwież tri-state (NOWY tag ma start: "nikt")
+    await initAssignTriState();
+    renderAssignList();
+    goLayer(1);
+    return true;
+  }
+
+  // events
+  function onBackdrop(e) {
+    if (e.target?.dataset?.close === "1") stepBackOrClose();
+  }
+  function onKey(e) {
+    if (e.key === "Escape") { e.preventDefault(); stepBackOrClose(); }
+  }
+  function onClose() { stepBackOrClose(); }
+
+  async function onAssignAdd() {
+    enterEditLayer("create", null);
+  }
+  function onAssignCancel() { close(false); }
+  async function onAssignSave() {
+    try { hideErrBox(el.assignErr); await saveAssignTriToDb(); }
+    catch (err) { console.error(err); showErrBox(el.assignErr, "Nie udało się zapisać tagów."); }
+  }
+
+  function onEditCancel() { goLayer(1); }
+  async function onEditSave() {
+    try { hideErrBox(el.editErr); await saveTagEditToDb(); }
+    catch (err) { console.error(err); showErrBox(el.editErr, "Nie udało się zapisać taga."); }
+  }
+  function onEditColor() {
+    renderColorGrid();
+    goLayer(3);
+  }
+
+  function onColorCancel() { goLayer(2); }
+  function onColorOk() {
+    const c = String(m.pickedColor || m.edit.color || "#4da3ff");
+    m.edit.color = c;
+    if (el.editColorDot) el.editColorDot.style.background = c;
+    goLayer(2);
+  }
+
+  // open
+  el.modal.hidden = false;
+  goLayer(1);
+  hideErrBox(el.assignErr);
+  hideErrBox(el.editErr);
+
+  el.modal.addEventListener("click", onBackdrop);
+  document.addEventListener("keydown", onKey);
+  el.close?.addEventListener("click", onClose);
+
+  el.assignAddBtn?.addEventListener("click", onAssignAdd);
+  el.assignCancel?.addEventListener("click", onAssignCancel);
+  el.assignSave?.addEventListener("click", onAssignSave);
+
+  el.editCancel?.addEventListener("click", onEditCancel);
+  el.editSave?.addEventListener("click", onEditSave);
+  el.editColorBtn?.addEventListener("click", onEditColor);
+
+  el.colorCancel?.addEventListener("click", onColorCancel);
+  el.colorOk?.addEventListener("click", onColorOk);
+
+  // init L1
+  renderAssignInfo();
+  await initAssignTriState();
+  renderAssignList();
+
+  // wejścia skrótowe:
+  if (mode === "create") enterEditLayer("create", null);
+  if (mode === "edit") enterEditLayer("edit", editTagId);
+
+  // promise
+  let resolvePromise = null;
+  return await new Promise((resolve) => { resolvePromise = resolve; });
 }
 
 async function untagSelectedInTagView(state) {
@@ -1502,6 +1554,59 @@ async function untagSelectedInTagView(state) {
   await state._api?.refreshList?.();
   return true;
 }
+
+function tagsModalEls() {
+  const modal = document.getElementById("tagsModal");
+  if (!modal) return null;
+
+  const el = {
+    modal,
+    close: document.getElementById("tagsModalClose"),
+    // layers
+    L1: document.getElementById("tagsLayerAssign"),
+    L2: document.getElementById("tagsLayerEdit"),
+    L3: document.getElementById("tagsLayerColor"),
+
+    // L1 assign
+    assignInfo: document.getElementById("tagsAssignInfo"),
+    assignList: document.getElementById("tagsAssignList"),
+    assignErr: document.getElementById("tagsAssignErr"),
+    assignAddBtn: document.getElementById("tagsAssignAddBtn"),
+    assignCancel: document.getElementById("tagsAssignCancel"),
+    assignSave: document.getElementById("tagsAssignSave"),
+
+    // L2 edit
+    editHelp: document.getElementById("tagsEditHelp"),
+    editName: document.getElementById("tagsEditName"),
+    editColorBtn: document.getElementById("tagsEditColorBtn"),
+    editColorDot: document.getElementById("tagsEditColorDot"),
+    editErr: document.getElementById("tagsEditErr"),
+    editCancel: document.getElementById("tagsEditCancel"),
+    editSave: document.getElementById("tagsEditSave"),
+
+    // L3 color
+    colorGrid: document.getElementById("tagsColorGrid"),
+    colorCancel: document.getElementById("tagsColorCancel"),
+    colorOk: document.getElementById("tagsColorOk"),
+  };
+  return el;
+}
+
+function showLayer(el, which) {
+  el.L1.hidden = which !== 1;
+  el.L2.hidden = which !== 2;
+  el.L3.hidden = which !== 3;
+}
+
+function hideErrBox(box) { if (box) { box.hidden = true; box.textContent = ""; } }
+function showErrBox(box, msg) { if (box) { box.hidden = false; box.textContent = String(msg || ""); } }
+
+const TAG_COLORS = [
+  "#ff5a5f","#ff8c00","#ffd400","#7bdc4a","#00c853",
+  "#00bcd4","#1e88e5","#5e35b1","#b00020","#ff4f9a",
+  "#8d6e63","#9e9e9e","#607d8b","#00a8ff","#2ecc71",
+  "#f1c40f","#e67e22","#e74c3c","#9b59b6","#34495e",
+];
 
 /* ================= Wire ================= */
 export function wireActions({ state }) {
@@ -2605,11 +2710,16 @@ export function wireActions({ state }) {
       if (error) throw error;
       state.categories = data || [];
     },
-    openAssignTagsModal: () => openAssignTagsModal(state),
+    
+    openAssignTagsModal: () => openTagsModal(state, { mode: "assign" }),
+    
+    openTagModal: async (opts) => {
+      const mode = (opts && opts.mode) || "create";
+      const tagId = (opts && opts.tagId) || null;
+      return await openTagsModal(state, { mode, tagId });
+    },
     
     refreshTags: async () => refreshTags(state),
-
-    openTagModal: async (opts) => openTagModal(state, opts),
 
     openTagView: async (tagIds) => {
       const ids = Array.isArray(tagIds) ? tagIds.filter(Boolean) : [];
@@ -2764,7 +2874,7 @@ export function wireActions({ state }) {
       if (mod && (e.key === "t" || e.key === "T")) {
         e.preventDefault();
         if (!canWrite(state)) return;
-        await openAssignTagsModal(state);
+        await openTagsModal(state, { mode: "assign" });
         return;
       }
     
