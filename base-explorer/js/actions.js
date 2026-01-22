@@ -523,6 +523,11 @@ export async function deleteSelected(state) {
   const keys = state?.selection?.keys;
   if (!keys || !keys.size) return false;
 
+  if (keys.has("root")) {
+    alert("Folder główny nie może być usuwany.");
+    return false;
+  }
+
   const label = (keys.size === 1) ? "ten element" : `te elementy (${keys.size})`;
   const ok = confirm(`Usunąć ${label}? Tego nie da się cofnąć.`);
   if (!ok) return false;
@@ -1429,6 +1434,73 @@ async function openAssignTagsModal(state) {
     btnCancel?.addEventListener("click", onCancel);
     btnSave?.addEventListener("click", onSave);
   });
+}
+
+async function untagSelectedInTagView(state) {
+  if (!canWrite(state)) return false;
+
+  // W TAG zdejmiemy TAGI z zaznaczonych elementów (foldery/pytania),
+  // a NIE usuwamy tych elementów.
+  const keys = state?.selection?.keys;
+  if (!keys || !keys.size) {
+    alert("Zaznacz foldery lub pytania po prawej.");
+    return false;
+  }
+
+  // tagi aktywnego widoku TAG (OR)
+  const tagIds = Array.isArray(state.tagIds) ? state.tagIds.filter(Boolean) : [];
+  if (!tagIds.length) {
+    alert("Brak wybranych tagów.");
+    return false;
+  }
+
+  // Roota nie tagujemy/nie ruszamy
+  if (keys.has("root")) {
+    alert("Folder główny nie może brać udziału w tej operacji.");
+    return false;
+  }
+
+  const label = (keys.size === 1) ? "tym elemencie" : `tych elementach (${keys.size})`;
+  const ok = confirm(
+    `Jesteś w widoku tagów.\n\nUsuwamy tagi (bez kasowania elementów) na ${label}.\n\nKontynuować?`
+  );
+  if (!ok) return false;
+
+  const qIds = [];
+  const cIds = [];
+
+  for (const k of keys) {
+    if (k.startsWith("q:")) qIds.push(k.slice(2));
+    if (k.startsWith("c:")) cIds.push(k.slice(2));
+  }
+
+  // zdejmujemy tylko wybrane tagIds
+  if (qIds.length) {
+    const { error } = await sb()
+      .from("qb_question_tags")
+      .delete()
+      .in("question_id", qIds)
+      .in("tag_id", tagIds);
+
+    if (error) throw error;
+  }
+
+  if (cIds.length) {
+    const { error } = await sb()
+      .from("qb_category_tags")
+      .delete()
+      .in("category_id", cIds)
+      .in("tag_id", tagIds);
+
+    if (error) throw error;
+  }
+
+  // odśwież cache map tagów (SEARCH/TAG)
+  state._allQuestionTagMap = null;
+  state._allCategoryTagMap = null;
+
+  await state._api?.refreshList?.();
+  return true;
 }
 
 /* ================= Wire ================= */
@@ -2541,15 +2613,14 @@ export function wireActions({ state }) {
 
     openTagView: async (tagIds) => {
       const ids = Array.isArray(tagIds) ? tagIds.filter(Boolean) : [];
-      if (!ids.length) return false;
-
+      if (!ids.length) return;
+    
       rememberBrowseLocation(state);
       state.tagIds = ids;
       state.view = VIEW.TAG;
-
+    
       selectionClear(state);
       await refreshList(state);
-      return true;
     },
   };
 
@@ -2588,7 +2659,28 @@ export function wireActions({ state }) {
     }
   
     if (e.key === "Delete") {
+      // C: SEARCH – blokada
+      if (state.view === VIEW.SEARCH) {
+        e.preventDefault();
+        alert("W widoku wyszukiwania nie można usuwać.");
+        return;
+      }
+    
+      // C: TAG – zdejmowanie tagów (z ostrzeżeniem)
+      if (state.view === VIEW.TAG) {
+        e.preventDefault();
+        try {
+          await untagSelectedInTagView(state);
+        } catch (err) {
+          console.error(err);
+          alert("Nie udało się zdjąć tagów.");
+        }
+        return;
+      }
+    
+      // normalnie (FOLDER/ALL)
       if (!canMutateHere(state)) return;
+    
       try {
         await deleteSelected(state);
       } catch (err) {
