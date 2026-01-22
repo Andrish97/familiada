@@ -2239,10 +2239,41 @@ export function wireActions({ state }) {
     return ids.filter(Boolean);
   }
 
+  async function applyTagSelectionView(state) {
+    const ids = tagSelectionToIds(state);
+  
+    // brak zaznaczenia => wyjście z VIEW.TAG i powrót do ostatniego folderu/root
+    if (!ids.length) {
+      if (state.view === VIEW.TAG) {
+        restoreBrowseLocation(state);
+      }
+      state.tagIds = [];
+      selectionClear(state);
+      await refreshList(state);
+      return;
+    }
+  
+    // jest zaznaczenie => wejdź/odśwież VIEW.TAG (OR)
+    if (state.view !== VIEW.TAG) rememberBrowseLocation(state);
+    state.view = VIEW.TAG;
+    state.tagIds = ids;
+  
+    selectionClear(state);
+    await refreshList(state);
+  }
+
   function isCopyDragModifier(ev) {
     const isMac = navigator.platform.toLowerCase().includes("mac");
     // Etap G/TODO: na macOS kopia to Option/Alt (nie Ctrl)
     return isMac ? !!ev.altKey : (!!ev.ctrlKey || !!ev.metaKey);
+  }
+
+  function isMultiSelectModifier(ev) {
+    const isMac = navigator.platform.toLowerCase().includes("mac");
+    // wieloselekcja jak w Explorerze:
+    // Mac: Cmd (Meta)
+    // Win/Linux: Ctrl
+    return isMac ? !!ev.metaKey : !!ev.ctrlKey;
   }
 
   function canDnD() {
@@ -2504,52 +2535,21 @@ export function wireActions({ state }) {
     // 1) klik w tag-row = selekcja (ctrl/shift)
     const row = e.target?.closest?.('.row[data-kind="tag"][data-id]');
     if (!row) {
-      // klik w puste tło tagów = czyść zaznaczenie tagów + wyjście z VIEW.TAG
-      if (!state.tagSelection) state.tagSelection = { ids: new Set(), anchorId: null };
-      state.tagSelection.ids.clear();
-      state.tagSelection.anchorId = null;
-    
-      if (state.view === VIEW.TAG) {
-        restoreBrowseLocation(state);   // wróć do ostatniego folderu/root
-        selectionClear(state);
-        await refreshList(state);
-        return;
-      }
-    
-      renderAll(state);
+      await applyTagSelectionView(state);
       return;
     }
   
     const tagId = row.dataset.id;
     if (!tagId) return;
   
-    const isCtrl = isCopyDragModifier(e);
+    const isCtrl = isMultiSelectModifier(e);
     const isShift = e.shiftKey;
   
     if (isShift) tagSelectRange(state, tagId);
     else if (isCtrl) tagToggle(state, tagId);
     else tagSelectSingle(state, tagId);
-  
-        // po kliknięciu: pokazujemy zawartość tagów (VIEW.TAG), multi = OR
-    const ids = tagSelectionToIds(state);
 
-    if (!ids.length) {
-      // nic nie zaznaczone — wracamy do ostatniego folderu/root
-      if (state.view === VIEW.TAG) {
-        restoreBrowseLocation(state);
-      }
-      selectionClear(state);
-      await refreshList(state);
-      return;
-    }
-
-    // wchodzimy w TAG jak w "wyniki"
-    if (state.view !== VIEW.TAG) rememberBrowseLocation(state);
-    state.view = VIEW.TAG;
-    state.tagIds = ids;
-
-    selectionClear(state);
-    await refreshList(state);
+    await applyTagSelectionView(state);
     return;
   });
 
@@ -2687,7 +2687,7 @@ export function wireActions({ state }) {
     if (kind !== "cat" || !id) return;
   
     const key = `c:${id}`;
-    const isCtrl = isCopyDragModifier(e);
+    const isCtrl = isMultiSelectModifier(e);
     const isShift = e.shiftKey;
   
     if (isShift) {
@@ -2914,7 +2914,7 @@ export function wireActions({ state }) {
     const key = kind === "q" ? `q:${id}` : kind === "cat" ? `c:${id}` : null;
     if (!key) return;
 
-    const isCtrl = isCopyDragModifier(e);
+    const isCtrl = isMultiSelectModifier(e);
     const isShift = e.shiftKey;
 
     if (isShift) {
@@ -3129,7 +3129,7 @@ export function wireActions({ state }) {
     // start marquee
     marqueeStart = listLocalPoint(e);
     
-    marqueeAdd = isCopyDragModifier(e);
+    marqueeAdd = isMultiSelectModifier(e);
     marqueeBaseKeys = marqueeAdd ? new Set(state.selection.keys) : null;
     
     if (!marqueeAdd) {
@@ -3242,7 +3242,7 @@ export function wireActions({ state }) {
 
     treeMarqueeStart = treeLocalPoint(e);
 
-    treeMarqueeAdd = isCopyDragModifier(e);
+    treeMarqueeAdd = isMultiSelectModifier(e);
     treeMarqueeBase = treeMarqueeAdd ? new Set(state.selection.keys) : null;
 
     if (!treeMarqueeAdd) {
@@ -3276,16 +3276,15 @@ export function wireActions({ state }) {
     updateTreeMarqueeSelection(box);
   });
 
-  document.addEventListener("mouseup", () => {
-    if (!treeMarquee) return;
-    treeMarquee.remove();
-    treeMarquee = null;
-    treeMarqueeStart = null;
-    treeMarqueeAdd = false;
-    treeMarqueeBase = null;
-
-    // wyrównanie (tylko tree/lista się odświeżą klasami)
-    renderAll(state);
+  document.addEventListener("mouseup", async () => {
+    if (!tagsMarquee) return;
+    tagsMarquee.remove();
+    tagsMarquee = null;
+    tagsMarqueeStart = null;
+    tagsMarqueeAdd = false;
+    tagsMarqueeBase = null;
+  
+    await applyTagSelectionView(state);
   });
 
     /* ================= Marquee: TAGS ================= */
@@ -3353,7 +3352,7 @@ export function wireActions({ state }) {
 
     tagsMarqueeStart = tagsLocalPoint(e);
 
-    tagsMarqueeAdd = isCopyDragModifier(e);
+    tagsMarqueeAdd = isMultiSelectModifier(e);
     if (!state.tagSelection) state.tagSelection = { ids: new Set(), anchorId: null };
     tagsMarqueeBase = tagsMarqueeAdd ? new Set(state.tagSelection.ids) : null;
 
