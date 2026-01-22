@@ -327,3 +327,22 @@ input, textarea{ user-select:text; }
   height:2px;
   background:rgba(255,255,255,.55);
 }
+/* ===== Drzewo: odchudzamy padding z globalnego .row ===== */
+#tree .row.tree-row{
+  padding: 6px 8px;     /* mniej poduszki niż lista */
+  border-bottom: 1px solid rgba(255,255,255,.08);
+}
+
+#tree .row.tree-row:hover{
+  background: rgba(255,255,255,.04);
+}
+
+/* Kolumna "main" w drzewie ma być ciasna i równa */
+#tree .row.tree-row .col-main{
+  gap: 6px;
+}
+
+/* Toggle ma zawsze stałą szerokość, bez dodatkowego “wrażenia marginesu” */
+#tree .tree-toggle{
+  flex: 0 0 18px;
+}
