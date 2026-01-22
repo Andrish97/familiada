@@ -1710,25 +1710,6 @@ export function wireActions({ state }) {
     }
   });
 
-  tagsEl?.addEventListener("dblclick", async (e) => {
-    const row = e.target?.closest?.('.row[data-kind="tag"][data-id]');
-    if (!row) return;
-
-    // Otwieramy widok na podstawie aktualnej selekcji (multi)
-    const ids = tagSelectionToIds(state);
-    if (!ids.length) return;
-
-    rememberBrowseLocation(state);
-    state.tagIds = ids;          // multi-tag
-    if (!state.tagSelection) state.tagSelection = { ids: new Set(), anchorId: null };
-    state.tagSelection.ids = new Set(ids);
-    state.tagSelection.anchorId = ids[ids.length - 1] || null;
-    state.view = VIEW.TAG;
-
-    selectionClear(state);
-    await refreshList(state);
-  });
-
   tagsEl?.addEventListener("click", async (e) => {
     // 0) klik w "Dodaj tag"
     const btn = e.target?.closest?.("#btnAddTag");
@@ -1763,9 +1744,52 @@ export function wireActions({ state }) {
     else if (isCtrl) tagToggle(state, tagId);
     else tagSelectSingle(state, tagId);
   
-    renderAll(state);
+        // po kliknięciu: pokazujemy zawartość tagów (VIEW.TAG), multi = OR
+    const ids = tagSelectionToIds(state);
+
+    if (!ids.length) {
+      // nic nie zaznaczone — wracamy do ostatniego folderu/root
+      if (state.view === VIEW.TAG) {
+        restoreBrowseLocation(state);
+      }
+      selectionClear(state);
+      await refreshList(state);
+      return;
+    }
+
+    // wchodzimy w TAG jak w "wyniki"
+    if (state.view !== VIEW.TAG) rememberBrowseLocation(state);
+    state.view = VIEW.TAG;
+    state.tagIds = ids;
+
+    selectionClear(state);
+    await refreshList(state);
+    return;
   });
 
+    // PPM na tagach (tag/puste tło)
+  tagsEl?.addEventListener("contextmenu", async (e) => {
+    e.preventDefault();
+
+    const row = e.target?.closest?.('.row[data-kind="tag"][data-id]');
+    if (row) {
+      const id = row.dataset.id;
+
+      // Explorer-style: PPM na niezaznaczonym -> single select
+      if (!state.tagSelection) state.tagSelection = { ids: new Set(), anchorId: null };
+      if (!state.tagSelection.ids.has(id)) {
+        state.tagSelection.ids.clear();
+        state.tagSelection.ids.add(id);
+        state.tagSelection.anchorId = id;
+        renderAll(state); // tylko UI selekcji po lewej
+      }
+
+      await showContextMenu({ state, x: e.clientX, y: e.clientY, target: { kind: "tag", id } });
+      return;
+    }
+
+    await showContextMenu({ state, x: e.clientX, y: e.clientY, target: { kind: "tags-bg", id: null } });
+  });
 
   let treeClickRenderTimer = null;
 
@@ -1861,6 +1885,32 @@ export function wireActions({ state }) {
   
       await refreshList(state);
     }
+  });
+
+    // PPM na drzewie (foldery/puste tło)
+  treeEl?.addEventListener("contextmenu", async (e) => {
+    e.preventDefault();
+
+    const row = e.target?.closest?.('.row[data-kind][data-id]');
+    if (row) {
+      const kind = row.dataset.kind; // 'cat' | 'root'
+      const id = row.dataset.id || null;
+
+      // Explorer-style: PPM na niezaznaczonym -> single select
+      if (kind === "cat" && id) {
+        const key = `c:${id}`;
+        if (!state.selection?.keys?.has?.(key)) selectionSetSingle(state, key);
+      }
+      if (kind === "root") {
+        if (!state.selection?.keys?.has?.("root")) selectionSetSingle(state, "root");
+      }
+
+      await showContextMenu({ state, x: e.clientX, y: e.clientY, target: { kind, id } });
+      return;
+    }
+
+    // puste tło tree
+    await showContextMenu({ state, x: e.clientX, y: e.clientY, target: { kind: "tree-bg", id: null } });
   });
     
     // --- Drag start z drzewa (folder jako źródło) ---
