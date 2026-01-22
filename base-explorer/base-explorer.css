@@ -648,3 +648,64 @@ input,textarea {
 .searchBox .chip {
     padding: 5px 10px
 }
+
+.title-line {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0
+}
+
+.title-text {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap
+}
+
+.tag-dots {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex: 0 0 auto
+}
+
+.tag-more {
+    font-size: 11px;
+    opacity: .7;
+    font-variant-numeric: tabular-nums
+}
+
+.tag-dot {
+    position: relative
+}
+
+.tag-dot[data-tip]:hover::after,.tag-dot[data-tip]:hover::before {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(10,10,12,.95)
+}
+
+.tag-dot[data-tip]:hover::after {
+    content: attr(data-tip);
+    bottom: calc(100% + 8px);
+    white-space: nowrap;
+    padding: 6px 8px;
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,.14);
+    box-shadow: 0 12px 28px rgba(0,0,0,.55);
+    font-size: 12px;
+    z-index: 50
+}
+
+.tag-dot[data-tip]:hover::before {
+    content: "";
+    bottom: calc(100% + 3px);
+    width: 10px;
+    height: 10px;
+    border-left: 1px solid rgba(255,255,255,.14);
+    border-bottom: 1px solid rgba(255,255,255,.14);
+    transform: translateX(-50%) rotate(45deg);
+    z-index: 49
+}
