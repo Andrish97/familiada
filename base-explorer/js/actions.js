@@ -1710,25 +1710,6 @@ export function wireActions({ state }) {
     }
   });
 
-  // --- Tagi: klik = zaznacz (ctrl/shift), dblclick = otwórz VIEW.TAG ---
-  tagsEl?.addEventListener("click", (e) => {
-    const row = e.target?.closest?.('.row[data-kind="tag"][data-id]');
-    if (!row) return;
-
-    const tagId = row.dataset.id;
-    if (!tagId) return;
-
-    const isCtrl = e.ctrlKey || e.metaKey;
-    const isShift = e.shiftKey;
-
-    if (isShift) tagSelectRange(state, tagId);
-    else if (isCtrl) tagToggle(state, tagId);
-    else tagSelectSingle(state, tagId);
-
-    // tylko odśwież lewy panel / całość (łatwo i stabilnie)
-    renderAll(state);
-  });
-
   tagsEl?.addEventListener("dblclick", async (e) => {
     const row = e.target?.closest?.('.row[data-kind="tag"][data-id]');
     if (!row) return;
@@ -1746,18 +1727,33 @@ export function wireActions({ state }) {
   });
 
   tagsEl?.addEventListener("click", async (e) => {
+    // 0) klik w "Dodaj tag"
     const btn = e.target?.closest?.("#btnAddTag");
-    if (!btn) return;
-
-    if (!canWrite(state)) return;
-
-    // modal (poniżej) – otwieramy jako "create"
-    const saved = await openTagModal(state, { mode: "create" });
-    if (saved) {
-      // odśwież tagi w state + rerender
-      await refreshTags(state);
-      renderAll(state);
+    if (btn) {
+      if (!canWrite(state)) return;
+      const saved = await openTagModal(state, { mode: "create" });
+      if (saved) {
+        await refreshTags(state);
+        renderAll(state);
+      }
+      return;
     }
+  
+    // 1) klik w tag-row = selekcja (ctrl/shift)
+    const row = e.target?.closest?.('.row[data-kind="tag"][data-id]');
+    if (!row) return;
+  
+    const tagId = row.dataset.id;
+    if (!tagId) return;
+  
+    const isCtrl = e.ctrlKey || e.metaKey;
+    const isShift = e.shiftKey;
+  
+    if (isShift) tagSelectRange(state, tagId);
+    else if (isCtrl) tagToggle(state, tagId);
+    else tagSelectSingle(state, tagId);
+  
+    renderAll(state);
   });
 
 
