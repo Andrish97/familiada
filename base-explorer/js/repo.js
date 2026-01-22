@@ -164,3 +164,46 @@ export async function listQuestionsByTag(baseId, tagId) {
   if (qErr) throw qErr;
   return qs || [];
 }
+
+/**
+ * Powiązania tagów dla zestawu folderów.
+ * Zwraca listę: [{ category_id, tag_id }]
+ */
+export async function listCategoryTags(categoryIds) {
+  const ids = Array.isArray(categoryIds) ? categoryIds.filter(Boolean) : [];
+  if (!ids.length) return [];
+
+  const { data, error } = await sb()
+    .from("qb_category_tags")
+    .select("category_id,tag_id")
+    .in("category_id", ids);
+
+  if (error) throw error;
+  return data || [];
+}
+
+/**
+ * Foldery z danym tagiem.
+ * (prosto: linki, potem foldery)
+ */
+export async function listCategoriesByTag(baseId, tagId) {
+  const { data: links, error: lErr } = await sb()
+    .from("qb_category_tags")
+    .select("category_id")
+    .eq("tag_id", tagId);
+
+  if (lErr) throw lErr;
+
+  const cIds = (links || []).map(x => x.category_id).filter(Boolean);
+  if (!cIds.length) return [];
+
+  const { data: cats, error: cErr } = await sb()
+    .from("qb_categories")
+    .select("id,base_id,parent_id,name,ord")
+    .eq("base_id", baseId)
+    .in("id", cIds)
+    .order("ord", { ascending: true });
+
+  if (cErr) throw cErr;
+  return cats || [];
+}
