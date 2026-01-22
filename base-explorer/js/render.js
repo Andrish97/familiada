@@ -87,7 +87,10 @@ export function renderTree(state) {
   }
 
   function rowHtml({ kind, id, depth, label, isOpen, canToggle, isActive, icon = "📁" }) {
-    const pad = 6 + depth * 12;
+    // wcięcia: bardziej "Explorer", mniej pustego powietrza
+    const BASE_PAD = 6;      // minimalny margines z lewej
+    const INDENT = 10;       // skok na poziom
+    const pad = BASE_PAD + depth * INDENT;
     const selKey =
       (kind === "cat" && id) ? `c:${id}` :
       (kind === "root") ? "root" :
@@ -159,13 +162,13 @@ export function renderTree(state) {
     isActive: rootActive,
   });
 
-  const treeRows = rootOpen ? renderSubtree(null, 1) : "";
+  const treeRows = rootOpen ? renderSubtree(null, 0) : "";
 
   elTree.innerHTML = `
     <div style="opacity:.75; margin-bottom:6px;">Foldery</div>
     <div class="treeList">
       ${rootHtml}
-      ${treeRows || `<div style="opacity:.75; padding:6px 8px;">Brak folderów.</div>`}
+      ${(rootHasChildren ? (treeRows || "") : `<div style="opacity:.75; padding:6px 8px;">Brak folderów.</div>`)}
     </div>
   `;
 }
