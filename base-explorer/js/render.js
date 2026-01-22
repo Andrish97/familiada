@@ -86,12 +86,12 @@ export function renderToolbar(state) {
 
     chipsEl.innerHTML = chipHtml;
   }
-
   // 2) Aktualizuj wartość inputa, ale nie wybijaj kursora gdy user pisze
+  // UWAGA: input pokazuje RAW (z #tagami), bo to jest prawdziwy "tekst pola"
   if (inp) {
     const active = (document.activeElement === inp);
-    const nextVal = String(tokens.text ?? "");
-    if (!active || inp.value !== nextVal) {
+    const nextVal = String(state.searchRaw ?? "");
+    if (!active && inp.value !== nextVal) {
       inp.value = nextVal;
     }
   }
