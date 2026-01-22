@@ -152,7 +152,7 @@ export function renderTree(state) {
     kind: "root",
     id: ROOT_ID,
     depth: 0,
-    label: "Root",
+    label: "Folder główny",
     icon: "🏠",
     canToggle: rootHasChildren,
     isOpen: rootHasChildren ? rootOpen : true,
