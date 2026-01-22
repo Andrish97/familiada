@@ -1439,11 +1439,41 @@ async function openTagsModal(state, opts = {}) {
     return true;
   }
 
+  function normTagName(s) {
+    return String(s || "")
+      .trim()
+      .replace(/^#/, "")
+      .replace(/\s+/g, " ")
+      .toLowerCase();
+  }
+  
+  function isDuplicateTagName(state, nameRaw, { allowId = null } = {}) {
+    const wanted = normTagName(nameRaw);
+    if (!wanted) return false;
+  
+    const tags = Array.isArray(state.tags) ? state.tags : [];
+    return tags.some(t => {
+      if (!t) return false;
+      if (allowId && t.id === allowId) return false; // edycja: pozwól na własną nazwę
+      return normTagName(t.name) === wanted;
+    });
+  }
+
   async function saveTagEditToDb() {
     if (!editor) return false;
 
     const nameRaw = String(el.editName?.value || "").trim().replace(/^#/, "").slice(0, 40);
     if (!nameRaw) { showErrBox(el.editErr, "Podaj nazwę."); return false; }
+    
+    // upewnij się, że mamy aktualną listę tagów
+    if (!Array.isArray(state.tags)) await refreshTags(state);
+    
+    // blokada duplikatu (case-insensitive)
+    const allowId = (m.edit.mode === "edit") ? (m.edit.tagId || null) : null;
+    if (isDuplicateTagName(state, nameRaw, { allowId })) {
+      showErrBox(el.editErr, "Taki tag już istnieje. Wybierz inną nazwę.");
+      return false;
+    }
 
     const color = String(m.pickedColor || m.edit.color || "#4da3ff").trim();
 
@@ -1528,6 +1558,26 @@ async function openTagsModal(state, opts = {}) {
     if (el.colorBVal) el.colorBVal.textContent = String(b);
   
     const hex = rgbToHex(r,g,b);
+
+    // ===== Control-like gradient tracks (CSS var --track) =====
+    if (el.colorR) {
+      const left = rgbToHex(0, g, b);
+      const right = rgbToHex(255, g, b);
+      el.colorR.style.setProperty("--track", `linear-gradient(to right, ${left}, ${right})`);
+    }
+    
+    if (el.colorG) {
+      const left = rgbToHex(r, 0, b);
+      const right = rgbToHex(r, 255, b);
+      el.colorG.style.setProperty("--track", `linear-gradient(to right, ${left}, ${right})`);
+    }
+    
+    if (el.colorB) {
+      const left = rgbToHex(r, g, 0);
+      const right = rgbToHex(r, g, 255);
+      el.colorB.style.setProperty("--track", `linear-gradient(to right, ${left}, ${right})`);
+    }
+    
     if (el.colorHex && !silent) el.colorHex.value = hex;
   
     if (el.colorPreview) el.colorPreview.style.background = hex;
