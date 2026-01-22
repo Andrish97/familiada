@@ -931,11 +931,22 @@ export function wireActions({ state }) {
     }
   });
 
+
+  let treeClickRenderTimer = null;
+
+  function scheduleRenderTree() {
+    if (treeClickRenderTimer) clearTimeout(treeClickRenderTimer);
+    treeClickRenderTimer = setTimeout(() => {
+      treeClickRenderTimer = null;
+      renderAll(state);
+    }, 180);
+  }
+
   treeEl?.addEventListener("click", async (e) => {
     // 0) klik w puste tło drzewa = czyść selekcję
     if (e.target === treeEl || e.target?.closest?.(".treeList") === null) {
       selectionClear(state);
-      renderAll(state);
+      scheduleRenderTree();
       return;
     }
   
@@ -951,7 +962,7 @@ export function wireActions({ state }) {
       if (state.treeOpen.has(id)) state.treeOpen.delete(id);
       else state.treeOpen.add(id);
   
-      renderAll(state);
+      scheduleRenderTree();
       return;
     }
   
@@ -967,7 +978,7 @@ export function wireActions({ state }) {
       selectionClear(state);
       state.selection.keys.add("root"); // jeśli nie chcesz zaznaczać root — usuń te 2 linie
       state.selection.anchorKey = "root";
-      renderAll(state);
+      scheduleRenderTree();
       return;
     }
   
@@ -987,20 +998,37 @@ export function wireActions({ state }) {
       state.selection.anchorKey = key;
     }
   
-    renderAll(state);
+    scheduleRenderTree();
   });
 
   treeEl?.addEventListener("dblclick", async (e) => {
-    const row = e.target?.closest?.(".row[data-kind][data-id]");
+    if (treeClickRenderTimer) {
+      clearTimeout(treeClickRenderTimer);
+      treeClickRenderTimer = null;
+    }
+    // łap każdy .row z data-kind, nie wymagaj data-id w selektorze
+    const row = e.target?.closest?.('.row[data-kind]');
     if (!row) return;
   
-    const kind = row.dataset.kind;
-    const id = row.dataset.id;
-    if (kind !== "cat") return;
+    // jeśli dblclick w toggle/chevron – ignoruj (toggle to nie "open folder")
+    if (e.target?.closest?.('.tree-toggle')) return;
   
-    setViewFolder(state, id);
-    selectionClear(state);
-    await refreshList(state);
+    const kind = row.dataset.kind;
+    const id = row.dataset.id || null;
+  
+    if (kind === "root") {
+      setViewAll(state);
+      selectionClear(state);
+      state._rootQuestions = null;
+      await refreshList(state);
+      return;
+    }
+  
+    if (kind === "cat" && id) {
+      setViewFolder(state, id);
+      selectionClear(state);
+      await refreshList(state);
+    }
   });
   
     // --- Drag start z drzewa (folder jako źródło) ---
