@@ -228,10 +228,15 @@ export function renderTags(state) {
     .slice()
     .sort((a, b) => (Number(a.ord) || 0) - (Number(b.ord) || 0))
     .map((t) => {
-      // Etap 1: tylko lista. Finder-style (kropki/kolory) dojdzie później.
-      return `<div class="row" data-kind="tag" data-id="${esc(t.id)}" style="padding:6px 8px; cursor:pointer;">
-        🏷 ${esc(t.name || "Tag")}
-      </div>`;
+      const isSel = !!state?.tagSelection?.ids?.has?.(t.id);
+      const selClass = isSel ? " is-selected" : "";
+      const dot = t.color ? `<span class="tag-dot" style="background:${esc(t.color)}"></span>` : `<span class="tag-dot"></span>`;
+
+      return `
+        <div class="row${selClass}" data-kind="tag" data-id="${esc(t.id)}" style="padding:6px 8px; cursor:pointer; display:flex; align-items:center; gap:8px;">
+          ${dot}
+          <div class="title">#${esc(t.name || "Tag")}</div>
+        </div>`;
     })
     .join("");
 
