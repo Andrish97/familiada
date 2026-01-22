@@ -27,12 +27,19 @@ function isEditor(state) {
   return state?.role === "owner" || state?.role === "editor";
 }
 
-function itemHtml({ label, disabled, danger }) {
+function itemHtml(item) {
+  if (item?.sep) {
+    return `<div class="cm-sep" role="separator" aria-hidden="true"></div>`;
+  }
+
+  const { label, disabled, danger } = item;
+
   const cls = [
     "cm-item",
     disabled ? "disabled" : "",
     danger ? "danger" : "",
   ].filter(Boolean).join(" ");
+
   return `<button type="button" class="${cls}" ${disabled ? "disabled" : ""}>${label}</button>`;
 }
 
@@ -74,7 +81,7 @@ export async function showContextMenu({ state, x, y, target }) {
       }
     });
 
-    items.push({ label: "—", disabled: true });
+    items.push({ sep: true });
 
     items.push({
       label: "Dodaj tag…",
@@ -107,17 +114,24 @@ export async function showContextMenu({ state, x, y, target }) {
     // Tag-menu już zbudowane — renderujemy i kończymy (żeby nie mieszać z menu listy)
     cm.innerHTML = items.map(itemHtml).join("");
 
-    const btns = Array.from(cm.querySelectorAll(".cm-item"));
-    btns.forEach((btn, i) => {
-      const it = items[i];
-      if (!it || it.disabled || !it.action) return;
-      btn.addEventListener("click", async (e) => {
+    const nodes = Array.from(cm.children);
+    let idx = -1;
+    
+    for (const node of nodes) {
+      // separator nie jest akcją
+      if (node.classList.contains("cm-sep")) continue;
+    
+      idx++;
+      const it = items[idx];
+      if (!it || it.disabled || !it.action) continue;
+    
+      node.addEventListener("click", async (e) => {
         e.preventDefault();
         e.stopPropagation();
         hideContextMenu();
         await it.action();
       });
-    });
+    }
 
     cm.hidden = false;
 
@@ -147,7 +161,7 @@ export async function showContextMenu({ state, x, y, target }) {
       await createQuestionHere(state, { categoryId });
     }});
   
-    items.push({ label: "—", disabled: true }); // separator „na biedno” (na razie)
+    items.push({ sep: true }); // separator „na biedno” (na razie)
   }
 
   if (target.kind === "cat" || target.kind === "q") {
