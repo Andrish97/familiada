@@ -1198,32 +1198,32 @@ export function wireActions({ state }) {
 
   function updateMarqueeSelection(box) {
     const rows = Array.from(listEl.querySelectorAll('.row[data-kind][data-id]'));
-    const hit = new Set();
-  
+    const keys = new Set();
+
     for (const row of rows) {
       const kind = row.dataset.kind;
       const id = row.dataset.id;
       if (!kind || !id) continue;
-  
+
       const key = (kind === "q") ? `q:${id}` : (kind === "cat") ? `c:${id}` : null;
       if (!key) continue;
-  
+
       const r = rowRectInList(row);
-      if (intersects(box, r)) hit.add(key);
+      if (intersects(box, r)) keys.add(key);
     }
-  
-    // nie podmieniamy Set-a; modyfikujemy istniejący
-    state.selection.keys.clear();
-  
-    if (marqueeAdd && marqueeBaseKeys) {
-      for (const k of marqueeBaseKeys) state.selection.keys.add(k);
-      for (const k of hit) state.selection.keys.add(k);
-    } else {
-      for (const k of hit) state.selection.keys.add(k);
-    }
-  
+
+    // zapisz stan
+    state.selection.keys = keys;
     state.selection.anchorKey = null;
-    renderList(state);
+
+    // NAJWAŻNIEJSZE: nie renderujemy listy, tylko aktualizujemy klasy na żywym DOM
+    for (const row of rows) {
+      const kind = row.dataset.kind;
+      const id = row.dataset.id;
+      const key = (kind === "q") ? `q:${id}` : (kind === "cat") ? `c:${id}` : null;
+      if (!key) continue;
+      row.classList.toggle("is-selected", keys.has(key));
+    }
   }
 
   listEl.addEventListener("mousedown", (e) => {
