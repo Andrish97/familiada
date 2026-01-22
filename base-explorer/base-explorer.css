@@ -283,6 +283,12 @@ input,textarea {
     display: block
 }
 
+/* (3b) Oddech pod listą folderów (nie między wierszami) */
+#tree .treeList {
+  padding-bottom: 30px;
+  scroll-padding-bottom: 30px;
+}
+
 #tree .row.tree-row .col-main {
     width: 100%
 }
