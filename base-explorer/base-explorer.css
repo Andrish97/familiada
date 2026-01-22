@@ -722,3 +722,67 @@ input,textarea {
   border-radius: 999px;
   margin: 6px 2px 10px;
 }
+
+/* ===== Modal: aliasy klas (HTML używa myślników, CSS miał podkreślniki) ===== */
+.m-modal-backdrop { /* alias dla .m-modal__backdrop */
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,.55);
+}
+
+.m-modal-card {     /* alias dla .m-modal__card */
+  position: relative;
+  width: min(560px, calc(100vw - 24px));
+  margin: 10vh auto 0;
+  background: rgba(20,20,24,.98);
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 18px 70px rgba(0,0,0,.45);
+}
+
+.m-modal-head {     /* alias dla .m-modal__head */
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 14px;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+}
+
+.m-modal-body {     /* alias dla .m-modal__body */
+  padding: 14px;
+}
+
+/* Opcjonalnie: gdybyś kiedyś dodał stopkę w tym modalu */
+.m-modal-foot {     /* alias dla .m-modal__foot */
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 14px;
+  border-top: 1px solid rgba(255,255,255,.08);
+}
+
+/* ===== Modal: warstwy (żeby nie "skakały" i miały sensowny układ) ===== */
+#tagsModal .tags-layer {
+  min-height: 280px; /* delikatna stabilizacja wysokości */
+}
+
+#tagsModal .tags-actions {
+  margin-top: 14px;
+}
+
+/* ===== Picker koloru (warstwa 3): przyciski jak w control ===== */
+#tagsModal .colorModalFoot {
+  justify-content: flex-end; /* masz inline, ale tu wymuszamy spójność */
+  gap: 10px;
+}
+
+/* Tags – dokładnie to samo */
+#tags .row[data-kind="tag"] {
+  padding: 6px 8px;
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
