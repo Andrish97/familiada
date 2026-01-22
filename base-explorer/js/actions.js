@@ -827,6 +827,83 @@ export async function renameSelectedPrompt(state) {
   }
 }
 
+// Usuń tagi jako byty (qb_tags) + ich przypisania
+export async function deleteTags(state, tagIds) {
+  if (!canWrite(state)) return false;
+
+  const ids = Array.from(new Set((tagIds || []).filter(Boolean)));
+  if (!ids.length) return false;
+
+  const label = (ids.length === 1) ? "ten tag" : `te tagi (${ids.length})`;
+  const ok = confirm(`Usunąć ${label}?\n\nTo usunie też przypisania tagów do pytań (i ewentualnie folderów).`);
+  if (!ok) return false;
+
+  // 1) usuń przypisania do pytań
+  {
+    const { error } = await sb()
+      .from("qb_question_tags")
+      .delete()
+      .in("tag_id", ids);
+    if (error) throw error;
+  }
+
+  // 2) usuń przypisania do folderów (jeśli tabela jeszcze istnieje/używana)
+  // Jeśli nie istnieje/RLS blokuje — ignorujemy.
+  try {
+    const { error } = await sb()
+      .from("qb_category_tags")
+      .delete()
+      .in("tag_id", ids);
+    if (error) throw error;
+  } catch {}
+
+  // 3) usuń same tagi
+  {
+    const { error } = await sb()
+      .from("qb_tags")
+      .delete()
+      .in("id", ids);
+    if (error) throw error;
+  }
+
+  // 4) lokalnie wyczyść selekcję usuniętych tagów
+  if (!state.tagSelection) state.tagSelection = { ids: new Set(), anchorId: null };
+  for (const id of ids) state.tagSelection.ids.delete(id);
+  if (!state.tagSelection.ids.size) state.tagSelection.anchorId = null;
+
+  // 5) odśwież tagi i widok
+  await state._api?.refreshTags?.();
+
+  // jeśli jesteśmy w VIEW.TAG i usunęliśmy wszystko z selekcji -> wyjdź do ostatniego browse
+  const remaining = Array.from(state.tagSelection.ids || []);
+  if (state.view === VIEW.TAG) {
+    if (!remaining.length) {
+      restoreBrowseLocation(state);
+      state.tagIds = [];
+    } else {
+      state.tagIds = remaining;
+    }
+  }
+
+  selectionClear(state);
+  await state._api?.refreshList?.();
+  return true;
+}
+
+// Duplikuj zaznaczone elementy w bieżącym miejscu (jak Explorer: copy+paste)
+export async function duplicateSelected(state) {
+  if (!canMutateHere(state)) return false;
+
+  const keys = state?.selection?.keys;
+  if (!keys || !keys.size) return false;
+
+  // root nie jest elementem do duplikowania
+  if (keys.size === 1 && keys.has("root")) return false;
+
+  copySelectedToClipboard(state);
+  return await pasteClipboardHere(state);
+}
+
 function onlyOneSelectedKey(state) {
   const keys = state?.selection?.keys;
   if (!keys || keys.size !== 1) return null;
