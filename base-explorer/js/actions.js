@@ -742,6 +742,99 @@ async function moveItemsTo(state, targetFolderIdOrNull, { mode = "move" } = {}) 
   await state._api?.refreshList?.();
 }
 
+/* ================= Reorder folders in tree ================= */
+
+function catById(state, id) {
+  return (state.categories || []).find(c => c.id === id) || null;
+}
+
+function sortByOrd(a, b) {
+  return (Number(a?.ord) || 0) - (Number(b?.ord) || 0);
+}
+
+function uniq(arr) {
+  return Array.from(new Set((arr || []).filter(Boolean)));
+}
+
+async function applyCategoryOrder(state, parentIdOrNull, orderedIds) {
+  const ids = uniq(orderedIds);
+  if (!ids.length) return;
+
+  // ustawiamy ord 1..N (prosto i stabilnie)
+  // + parent_id (bo reorder może też oznaczać przeniesienie między rodzicami)
+  const updates = ids.map((id, i) => ({
+    id,
+    parent_id: parentIdOrNull,
+    ord: i + 1,
+  }));
+
+  // Supabase: najprościej i najczytelniej: pojedyncze update per element (ok dla małych list)
+  // Jeśli kiedyś będzie tego tysiące, zrobimy RPC/batch.
+  for (const u of updates) {
+    const { error } = await sb()
+      .from("qb_categories")
+      .update({ parent_id: u.parent_id, ord: u.ord })
+      .eq("id", u.id);
+    if (error) throw error;
+  }
+
+  // odśwież cache kategorii i UI
+  if (state._api?.refreshCategories) await state._api.refreshCategories();
+  await state._api?.refreshList?.();
+}
+
+/**
+ * Reorder / move folders among siblings of a parent.
+ * mode:
+ *  - "into": move into targetId (as parent), append at end
+ *  - "before"/"after": ensure same parent as target, then insert before/after target among its siblings
+ */
+async function reorderFoldersByDrop(state, movedFolderIds, targetId, mode) {
+  const moved = uniq(movedFolderIds);
+  if (!moved.length) return;
+
+  const target = catById(state, targetId);
+  if (!target) return;
+
+  // "into" => parent = targetId
+  if (mode === "into") {
+    // weź rodzeństwo w folderze docelowym
+    const siblings = (state.categories || [])
+      .filter(c => (c.parent_id || null) === (targetId || null))
+      .slice()
+      .sort(sortByOrd);
+
+    const sibIds = siblings.map(c => c.id).filter(id => !moved.includes(id));
+    const finalIds = sibIds.concat(moved); // na koniec
+    await applyCategoryOrder(state, targetId, finalIds);
+    return;
+  }
+
+  // before/after => parent = parent targetu
+  const parentIdOrNull = target.parent_id || null;
+
+  // pobierz rodzeństwo targetu (w tym target) i usuń z niego moved (żeby nie dublować)
+  const siblings = (state.categories || [])
+    .filter(c => (c.parent_id || null) === (parentIdOrNull || null))
+    .slice()
+    .sort(sortByOrd);
+
+  const baseIds = siblings.map(c => c.id).filter(id => !moved.includes(id));
+
+  const idx = baseIds.indexOf(targetId);
+  if (idx === -1) {
+    // fallback: jeśli coś jest niespójne w cache
+    const finalIds = baseIds.concat(moved);
+    await applyCategoryOrder(state, parentIdOrNull, finalIds);
+    return;
+  }
+
+  const insertAt = (mode === "before") ? idx : (idx + 1);
+  const finalIds = baseIds.slice(0, insertAt).concat(moved, baseIds.slice(insertAt));
+
+  await applyCategoryOrder(state, parentIdOrNull, finalIds);
+}
+
 /* ================= Wire ================= */
 export function wireActions({ state }) {
   const treeEl = document.getElementById("tree");
@@ -837,32 +930,14 @@ export function wireActions({ state }) {
   }
   
   function clearDropTarget() {
-    const prev = state._drag?.overKey;
-    if (!prev) return;
-  
-    // zdejmij klasę z root (jeśli była)
-    const rootSel = `.row[data-kind="root"][data-id]`;
-    treeEl?.querySelector?.(rootSel)?.classList?.remove("is-drop-target");
-    listEl?.querySelector?.(rootSel)?.classList?.remove("is-drop-target");
-  
-    // zdejmij klasę z folderu (jeśli była)
-    if (prev.startsWith("c:")) {
-      const id = prev.slice(2);
-      const sel = `.row[data-kind="cat"][data-id="${CSS.escape(id)}"]`;
-      treeEl?.querySelector?.(sel)?.classList?.remove("is-drop-target");
-      listEl?.querySelector?.(sel)?.classList?.remove("is-drop-target");
+    // zdejmujemy podgląd dropa z obu paneli (drzewo+lista), bo selektory są te same
+    const els = document.querySelectorAll(".is-drop-target, .is-drop-before, .is-drop-after, .is-drop-into");
+    for (const el of els) {
+      el.classList.remove("is-drop-target", "is-drop-before", "is-drop-after", "is-drop-into");
     }
-  
-    state._drag.overKey = null;
+    if (state._drag) state._drag.overKey = null;
   }
   
-  /**
-   * target:
-   * - null => "root" jako miejsce docelowe (parent/category null)
-   * - "<folderId>" => folder docelowy
-   *
-   * scopeEl: element panelu (treeEl albo listEl), gdzie jest kursor
-   */
   function setDropTarget(targetFolderIdOrNull, scopeEl) {
     clearDropTarget();
   
@@ -1078,53 +1153,86 @@ export function wireActions({ state }) {
     state._drag.mode = isCopy ? "copy" : "move";
     e.dataTransfer.dropEffect = state._drag.mode;
   
-    const anyRow = e.target?.closest?.('.row[data-kind]');
-    if (!anyRow) {
-      setDropTarget(null, treeEl); // poza wierszami = root
+    const row = e.target?.closest?.('.row[data-kind="cat"][data-id]');
+    if (!row) {
+      // upuszczenie na tło drzewa = root
+      state._drag.treeDrop = { mode: "root", targetId: null };
+      clearDropTarget();
       return;
     }
   
-    const kind = anyRow.dataset.kind;
-    const id = anyRow.dataset.id || null;
+    const targetId = row.dataset.id;
+    const r = row.getBoundingClientRect();
+    const y = e.clientY - r.top;
   
-    if (kind === "root") {
-      setDropTarget(null, treeEl); // root jako target => null
-      return;
-    }
+    // strefy: góra 25%, dół 25%, środek 50%
+    let dropMode = "into";
+    if (y < r.height * 0.25) dropMode = "before";
+    else if (y > r.height * 0.75) dropMode = "after";
   
-    if (kind === "cat" && id) {
-      setDropTarget(id, treeEl);
-      return;
-    }
+    state._drag.treeDrop = { mode: dropMode, targetId };
   
-    // inne rzeczy w drzewie => root
-    setDropTarget(null, treeEl);
+    // podgląd drop targetu
+    clearDropTarget();
+    row.classList.add(
+      dropMode === "before" ? "is-drop-before" :
+      dropMode === "after" ? "is-drop-after" :
+      "is-drop-into"
+    );
   });
   
   treeEl?.addEventListener("dragleave", (e) => {
-    if (!treeEl.contains(e.relatedTarget)) clearDropTarget();
+    if (!treeEl.contains(e.relatedTarget)) {
+      clearDropTarget();
+      state._drag.treeDrop = null;
+    }
   });
   
   treeEl?.addEventListener("drop", async (e) => {
     if (!canDnD()) return;
     e.preventDefault();
   
-    const anyRow = e.target?.closest?.('.row[data-kind]');
-    let targetFolderId = null;
+    const payload = state._drag.treeDrop || { mode: "root", targetId: null };
+    const modeKey = payload.mode;
+    const targetId = payload.targetId;
   
-    if (anyRow) {
-      const kind = anyRow.dataset.kind;
-      const id = anyRow.dataset.id || null;
-  
-      if (kind === "cat" && id) targetFolderId = id;
-      if (kind === "root") targetFolderId = null;
-    }
+    // przygotuj listę folderów z zaznaczenia (DnD w drzewie dotyczy folderów)
+    const keys = state._drag?.keys;
+    const cIds = keys ? Array.from(keys).filter(k => k.startsWith("c:")).map(k => k.slice(2)) : [];
   
     clearDropTarget();
+    state._drag.treeDrop = null;
   
     try {
-      const mode = (e.ctrlKey || e.metaKey) ? "copy" : "move";
-      await moveItemsTo(state, targetFolderId, { mode });
+      const moveMode = (e.ctrlKey || e.metaKey) ? "copy" : "move";
+  
+      // COPY: zostawiamy stare zachowanie (kopiowanie folderów już masz)
+      if (moveMode === "copy") {
+        await moveItemsTo(state, targetId, { mode: "copy" }); // targetId null => root
+        return;
+      }
+  
+      // MOVE:
+      // - jeśli drop na tło => normalny move do root
+      if (modeKey === "root" || !targetId) {
+        await moveItemsTo(state, null, { mode: "move" });
+        return;
+      }
+  
+      // - jeśli drop "into" => move do środka folderu (parent = targetId)
+      if (modeKey === "into") {
+        await moveItemsTo(state, targetId, { mode: "move" });
+        return;
+      }
+  
+      // - jeśli drop before/after => reorder w rodzeństwie targetu (z ewentualnym przeniesieniem parenta)
+      if (cIds.length) {
+        await reorderFoldersByDrop(state, cIds, targetId, modeKey); // before/after
+        return;
+      }
+  
+      // jeśli user przeciąga same pytania na drzewo “między” — traktujemy jak “do folderu”
+      await moveItemsTo(state, targetId, { mode: "move" });
     } catch (err) {
       console.error(err);
       alert("Nie udało się przenieść.");
