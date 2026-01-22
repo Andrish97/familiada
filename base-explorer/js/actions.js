@@ -1720,6 +1720,9 @@ export function wireActions({ state }) {
 
     rememberBrowseLocation(state);
     state.tagIds = ids;          // multi-tag
+    if (!state.tagSelection) state.tagSelection = { ids: new Set(), anchorId: null };
+    state.tagSelection.ids = new Set(ids);
+    state.tagSelection.anchorId = ids[ids.length - 1] || null;
     state.view = VIEW.TAG;
 
     selectionClear(state);
