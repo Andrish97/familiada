@@ -840,38 +840,57 @@ export function wireActions({ state }) {
     const prev = state._drag?.overKey;
     if (!prev) return;
   
-    const [k, id] = prev.split(":");
-    if (k !== "c" || !id) return;
+    // zdejmij klasę z root (jeśli była)
+    const rootSel = `.row[data-kind="root"][data-id]`;
+    treeEl?.querySelector?.(rootSel)?.classList?.remove("is-drop-target");
+    listEl?.querySelector?.(rootSel)?.classList?.remove("is-drop-target");
   
-    // usuń klasę z obu miejsc (drzewo + lista), bo nie wiemy gdzie była
-    const sel = `.row[data-kind="cat"][data-id="${CSS.escape(id)}"]`;
-    treeEl?.querySelector?.(sel)?.classList?.remove("is-drop-target");
-    listEl?.querySelector?.(sel)?.classList?.remove("is-drop-target");
+    // zdejmij klasę z folderu (jeśli była)
+    if (prev.startsWith("c:")) {
+      const id = prev.slice(2);
+      const sel = `.row[data-kind="cat"][data-id="${CSS.escape(id)}"]`;
+      treeEl?.querySelector?.(sel)?.classList?.remove("is-drop-target");
+      listEl?.querySelector?.(sel)?.classList?.remove("is-drop-target");
+    }
   
     state._drag.overKey = null;
   }
   
-  function setDropTarget(folderIdOrNull, scopeEl) {
+  /**
+   * target:
+   * - null => "root" jako miejsce docelowe (parent/category null)
+   * - "<folderId>" => folder docelowy
+   *
+   * scopeEl: element panelu (treeEl albo listEl), gdzie jest kursor
+   */
+  function setDropTarget(targetFolderIdOrNull, scopeEl) {
     clearDropTarget();
   
-    if (!folderIdOrNull) {
-      state._drag.overKey = null; // root
+    // ROOT jako cel drop = null, ale highlight robimy na wierszu root (jeśli istnieje)
+    if (!targetFolderIdOrNull) {
+      const rootSel = `.row[data-kind="root"][data-id]`;
+      const rootEl =
+        scopeEl?.querySelector?.(rootSel) ||
+        treeEl?.querySelector?.(rootSel) ||
+        listEl?.querySelector?.(rootSel) ||
+        null;
+  
+      rootEl?.classList?.add("is-drop-target");
+      state._drag.overKey = "root";
       return;
     }
   
-    const sel = `.row[data-kind="cat"][data-id="${CSS.escape(folderIdOrNull)}"]`;
+    // FOLDER jako cel drop
+    const sel = `.row[data-kind="cat"][data-id="${CSS.escape(targetFolderIdOrNull)}"]`;
   
-    // 1) preferuj scope (tam gdzie jest kursor)
-    let el = scopeEl?.querySelector?.(sel) || null;
-  
-    // 2) fallback: jeśli nie znaleziono w scope, spróbuj w drugim panelu
-    if (!el) el = treeEl?.querySelector?.(sel) || listEl?.querySelector?.(sel) || null;
-  
-    // 3) ostateczny fallback
-    if (!el) el = document.querySelector(sel);
+    let el =
+      scopeEl?.querySelector?.(sel) ||
+      treeEl?.querySelector?.(sel) ||
+      listEl?.querySelector?.(sel) ||
+      document.querySelector(sel);
   
     el?.classList?.add("is-drop-target");
-    state._drag.overKey = `c:${folderIdOrNull}`;
+    state._drag.overKey = `c:${targetFolderIdOrNull}`;
   }
 
   // --- Search (delegacja: input jest renderowany dynamicznie) ---
@@ -1059,9 +1078,27 @@ export function wireActions({ state }) {
     state._drag.mode = isCopy ? "copy" : "move";
     e.dataTransfer.dropEffect = state._drag.mode;
   
-    const row = e.target?.closest?.('.row[data-kind="cat"][data-id]');
-    if (row) setDropTarget(row.dataset.id, treeEl);
-    else setDropTarget(null, treeEl);
+    const anyRow = e.target?.closest?.('.row[data-kind]');
+    if (!anyRow) {
+      setDropTarget(null, treeEl); // poza wierszami = root
+      return;
+    }
+  
+    const kind = anyRow.dataset.kind;
+    const id = anyRow.dataset.id || null;
+  
+    if (kind === "root") {
+      setDropTarget(null, treeEl); // root jako target => null
+      return;
+    }
+  
+    if (kind === "cat" && id) {
+      setDropTarget(id, treeEl);
+      return;
+    }
+  
+    // inne rzeczy w drzewie => root
+    setDropTarget(null, treeEl);
   });
   
   treeEl?.addEventListener("dragleave", (e) => {
@@ -1072,8 +1109,16 @@ export function wireActions({ state }) {
     if (!canDnD()) return;
     e.preventDefault();
   
-    const row = e.target?.closest?.('.row[data-kind="cat"][data-id]');
-    const targetFolderId = row ? row.dataset.id : null; // null = Root
+    const anyRow = e.target?.closest?.('.row[data-kind]');
+    let targetFolderId = null;
+  
+    if (anyRow) {
+      const kind = anyRow.dataset.kind;
+      const id = anyRow.dataset.id || null;
+  
+      if (kind === "cat" && id) targetFolderId = id;
+      if (kind === "root") targetFolderId = null;
+    }
   
     clearDropTarget();
   
