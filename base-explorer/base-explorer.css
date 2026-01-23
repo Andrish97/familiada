@@ -797,99 +797,6 @@ input, textarea{ user-select:text; }
   color: rgba(255,255,255,100);
 }
 
-/* ===== Modal (rename) ===== */
-.m-modal[hidden] { display: none !important; }
-
-.m-modal {
-  position: fixed;
-  inset: 0;
-  z-index: 9999;
-}
-
-.m-modal__backdrop {
-  position: absolute;
-  inset: 0;
-  background: rgba(0,0,0,.45);
-}
-
-.m-modal__panel {
-  position: relative;
-  width: min(520px, calc(100vw - 24px));
-  margin: 10vh auto 0;
-  background: #111;
-  border: 1px solid rgba(255,255,255,.14);
-  border-radius: 12px;
-  box-shadow: 0 18px 60px rgba(0,0,0,.5);
-  overflow: hidden;
-}
-
-.m-modal__head,
-.m-modal__foot {
-  padding: 12px 14px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.m-modal__head {
-  justify-content: space-between;
-  border-bottom: 1px solid rgba(255,255,255,.10);
-}
-
-.m-modal__title {
-  font-weight: 700;
-}
-
-.m-modal__body {
-  padding: 14px;
-}
-
-.m-input {
-  width: 100%;
-  padding: 10px 12px;
-  border-radius: 10px;
-  border: 1px solid rgba(255,255,255,.14);
-  background: rgba(255,255,255,.04);
-  color: inherit;
-  outline: none;
-}
-
-.m-input:focus {
-  border-color: rgba(255,255,255,.28);
-}
-
-.m-modal__foot {
-  justify-content: flex-end;
-  border-top: 1px solid rgba(255,255,255,.10);
-}
-
-.m-btn {
-  padding: 10px 14px;
-  border-radius: 10px;
-  border: 1px solid rgba(255,255,255,.14);
-  background: rgba(255,255,255,.08);
-  color: inherit;
-  cursor: pointer;
-}
-
-.m-btn:hover {
-  background: rgba(255,255,255,.12);
-}
-
-.m-icon-btn {
-  width: 34px;
-  height: 34px;
-  border-radius: 10px;
-  border: 1px solid rgba(255,255,255,.12);
-  background: rgba(255,255,255,.06);
-  color: inherit;
-  cursor: pointer;
-}
-
-.m-icon-btn:hover {
-  background: rgba(255,255,255,.10);
-}
-
 /* systemowe meta-tagi – klikane, ale “nie do ruszania” */
 .is-system-tag{
   opacity:.92;
@@ -916,4 +823,30 @@ input, textarea{ user-select:text; }
   border-radius: 999px;
   background: rgba(255,255,255,.25);
   display: inline-block;
+}
+
+/* =========================================================
+   RENAME MODAL — identyczny wzorzec jak TAGS (overlay + modal)
+   ========================================================= */
+
+/* hidden zawsze wygrywa — masz to już na górze, więc tylko doprecyzowanie */
+#renameModal[hidden]{ display:none !important; }
+
+/* rename korzysta z tych samych klocków co tags:
+   .overlay / .modal / .tagsHead / .tagsFoot / .mTitle / .mSub / .btn / .inp
+   Poniżej tylko drobne dostrojenie. */
+
+.rename-modal{
+  width: min(560px, 94vw);   /* węższy niż tags, ale stylistycznie ten sam */
+}
+
+.renameBody{
+  margin-top: 12px;
+}
+
+.renameInput{
+  width: 100%;
+  text-align: center;
+  font-weight: 500;
+  letter-spacing: .04em;
 }
