@@ -260,7 +260,7 @@ export async function showContextMenu({ state, x, y, target }) {
       }
     });
   
-      pushSep(items);
+    pushSep(items);
   }
   
     // SCHOWEK
@@ -317,8 +317,11 @@ export async function showContextMenu({ state, x, y, target }) {
         }
       });
     }
+    
+  // FOLDER (cat)
+  if (target.kind === "cat") {
+    pushSep(items);
   
-    // FOLDER (cat)
     items.push({
       label: "Otwórz folder",
       disabled: false,
@@ -326,20 +329,20 @@ export async function showContextMenu({ state, x, y, target }) {
         // Reguła nadrzędna: wirtualne tryby nie trzymają nawigacji
         if (state.mode === MODE.SEARCH) exitSearchToBrowse(state);
         if (state.mode === MODE.FILTER) exitFilterToBrowse(state);
-    
+  
         // Wejście do folderu w BROWSE
         setBrowseFolder(state, target.id);
-    
+  
         // Czyścimy selekcję po prawej (Explorer-style)
         state.selection?.keys?.clear?.();
         state.selection.anchorKey = null;
-    
+  
         await state._api?.refreshList?.();
       }
     });
-
+  
     pushSep(items);
-
+  
     items.push({
       label: "Nowy folder w tym folderze",
       disabled: !editor || isVirtual,
@@ -347,7 +350,7 @@ export async function showContextMenu({ state, x, y, target }) {
         await createFolderHere(state, { parentId: target.id });
       }
     });
-
+  
     items.push({
       label: "Nowe pytanie w tym folderze",
       disabled: !editor || isVirtual,
