@@ -342,14 +342,14 @@ input, textarea{ user-select:text; }
 }
 
 /* tooltip na kropkach w list/tree */
-.tag-dot[data-tip]:hover::after,
-.tag-dot[data-tip]:hover::before{
+.tag-dot,.meta-dot[data-tip]:hover::after,
+.tag-dot,.meta-dot[data-tip]:hover::before{
   position:absolute;
   left:50%;
   transform: translateX(-50%);
   background: rgba(10,10,12,.95);
 }
-.tag-dot[data-tip]:hover::after{
+.tag-dot,.meta-dot[data-tip]:hover::after{
   content: attr(data-tip);
   bottom: calc(100% + 8px);
   white-space:nowrap;
@@ -360,7 +360,7 @@ input, textarea{ user-select:text; }
   font-size:12px;
   z-index:50;
 }
-.tag-dot[data-tip]:hover::before{
+.tag-dot,.meta-dot[data-tip]:hover::before{
   content:"";
   bottom: calc(100% + 3px);
   width:10px;
