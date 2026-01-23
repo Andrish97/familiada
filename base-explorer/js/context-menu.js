@@ -1,6 +1,14 @@
 // base-explorer/js/context-menu.js
 
-import { VIEW, MODE, setViewFolder, selectionSetSingle, rememberBrowseLocation } from "./state.js";
+import {
+  MODE,
+  setViewFolder,
+  selectionSetSingle,
+  exitSearchToBrowse,
+  exitFilterToBrowse,
+  enterFilterModeFromLeft,
+} from "./state.js";
+
 import {
   createFolderHere,
   createQuestionHere,
@@ -11,6 +19,7 @@ import {
   pasteClipboardHere,
   deleteTags,
   duplicateSelected,
+  untagSelectedByTagIds,
 } from "./actions.js";
 
 function clamp(n, a, b) {
@@ -28,8 +37,8 @@ function isEditor(state) {
   return state?.role === "owner" || state?.role === "editor";
 }
 
-function isReadOnlyView(state) {
-  return state?.view === VIEW.SEARCH || state?.view === VIEW.TAG;
+function isVirtualMode(state) {
+  return state?.mode === MODE.SEARCH || state?.mode === MODE.FILTER;
 }
 
 function countRealSelected(state) {
@@ -56,14 +65,12 @@ function itemHtml(item, idx) {
     danger ? "danger" : "",
   ].filter(Boolean).join(" ");
 
-  // data-idx => pewne mapowanie (separatory nie psują indeksów)
   return `<button type="button" class="${cls}" data-idx="${idx}" ${disabled ? "disabled" : ""}>${label}</button>`;
 }
 
 function renderMenu(cm, items) {
   cm.innerHTML = items.map((it, i) => itemHtml(it, i)).join("");
 
-  // bind po data-idx
   const btns = Array.from(cm.querySelectorAll(".cm-item[data-idx]"));
   for (const btn of btns) {
     const idx = Number(btn.dataset.idx);
@@ -99,22 +106,23 @@ export async function showContextMenu({ state, x, y, target }) {
   if (!cm) return;
 
   const editor = isEditor(state);
-  const readOnlyView = isReadOnlyView(state);
 
-  const lockedByMode = (state.mode === MODE.SEARCH || state.mode === MODE.FILTER);
+  const isSearchMode = (state.mode === MODE.SEARCH);
+  const isFilterMode = (state.mode === MODE.FILTER);
+  const isVirtual = isVirtualMode(state);
+
+  const filterTagIds = Array.from(state.filter?.tagIds || []).filter(Boolean);
+  const filterMetaIds = Array.from(state.filter?.metaIds || []).filter(Boolean);
 
   const items = [];
 
   /* =========================================================
-     TAGI (lewy panel): target.kind = "tags-bg" | "tag"
-     Grupy:
-       - Widok
-       - Zarządzanie tagami
-       - (placeholder) operacje niszczące
+     LEWY PANEL: TAGI / META
+     target.kind = "tags-bg" | "tag" | "meta"
   ========================================================= */
   if (target.kind === "tags-bg" || target.kind === "tag" || target.kind === "meta") {
-  
-    // Explorer-style: PPM na niezaznaczonym elemencie lewego panelu => najpierw single-select
+
+    // Explorer-style: PPM na niezaznaczonym elemencie => single-select
     if (target.id) {
       if (target.kind === "tag") {
         const tid = target.id;
@@ -125,7 +133,7 @@ export async function showContextMenu({ state, x, y, target }) {
           state.tagSelection.anchorId = tid;
         }
       }
-  
+
       if (target.kind === "meta") {
         const mid = target.id;
         if (!state?.metaSelection?.ids?.has?.(mid)) {
@@ -136,46 +144,36 @@ export async function showContextMenu({ state, x, y, target }) {
         }
       }
     }
-  
+
     const selectedTagIds = Array.from(state?.tagSelection?.ids || []).filter(Boolean);
     const selectedMetaIds = Array.from(state?.metaSelection?.ids || []).filter(Boolean);
-  
-    // META (stałe): tylko “Pokaż”, reszta wyszarzona
-    if (target.kind === "meta") {
-      items.push({
-        label: "Pokaż",
-        disabled: selectedMetaIds.length === 0,
-        action: async () => {
-          // wejście w VIEW.META (zachowaj browse location jak przy TAG)
-          if (state.view !== VIEW.META) rememberBrowseLocation(state);
-  
-          state.view = VIEW.META;
-  
-          // META view u Ciebie dopuszcza dodatkowy filtr tagami (state.tagIds)
-          state.tagIds = selectedTagIds;
-  
-          await state._api?.refreshList?.();
-        }
-      });
-  
-      pushSep(items);
-  
-      items.push({ label: "Dodaj tag…", disabled: true });
-      items.push({ label: "Edytuj tag…", disabled: true });
-      pushSep(items);
-      items.push({ label: "Usuń", disabled: true, danger: true });
-  
-      renderMenu(cm, items);
-      positionMenu(cm, x, y);
-      return;
-    }
 
-    // --- Widok ---
+    // --- Widok: Pokaż (TAG lub META) => zawsze FILTER przez bramkę ---
     items.push({
       label: "Pokaż",
-      disabled: selectedTagIds.length === 0,
+      disabled: (target.kind === "meta")
+        ? (selectedMetaIds.length === 0)
+        : (selectedTagIds.length === 0),
       action: async () => {
-        await state._api?.openTagView?.(selectedTagIds);
+        // FILTER jest rozłączny z SEARCH — bramka w state.js też to pilnuje,
+        // ale robimy twardo, żeby menu było przewidywalne.
+        if (state.mode === MODE.SEARCH) exitSearchToBrowse(state);
+
+        // Ustaw spójne selekcje (bo FILTER bierze z lewej selekcji)
+        if (!state.tagSelection) state.tagSelection = { ids: new Set(), anchorId: null };
+        if (!state.metaSelection) state.metaSelection = { ids: new Set(), anchorId: null };
+
+        // nic nie “zgadujemy”: bierzemy dokładnie to co zaznaczone
+        state.tagSelection.ids = new Set(selectedTagIds);
+        state.tagSelection.anchorId = selectedTagIds[selectedTagIds.length - 1] || null;
+
+        state.metaSelection.ids = new Set(selectedMetaIds);
+        state.metaSelection.anchorId = selectedMetaIds[selectedMetaIds.length - 1] || null;
+
+        // Wejście w FILTER (ustawi state.mode i wewnętrznie przygotuje to, co potrzebne refreshList)
+        enterFilterModeFromLeft(state);
+
+        await state._api?.refreshList?.();
       }
     });
 
@@ -207,16 +205,21 @@ export async function showContextMenu({ state, x, y, target }) {
       }
     });
 
-    // placeholdery na przyszłość (PPM tagów)
-    pushSep(items);
-    
     items.push({
-      label: (selectedTagIds.length === 1) ? "Usuń tag" : "Usuń tagi",
-      disabled: !editor || selectedTagIds.length === 0,
+      label: "Usuń tag…",
       danger: true,
+      disabled: !editor || selectedTagIds.length === 0,
       action: async () => {
+        // usuwanie tagów to operacja “globalna”
+        // dla porządku: nie rób jej w SEARCH — wyjdź do BROWSE
+        if (state.mode === MODE.SEARCH) exitSearchToBrowse(state);
+
         try {
-          await deleteTags(state, selectedTagIds);
+          const ok = await deleteTags(state, selectedTagIds);
+          if (ok) {
+            await state._api?.refreshTags?.();
+            await state._api?.refreshList?.();
+          }
         } catch (e) {
           console.error(e);
           alert("Nie udało się usunąć tagów.");
@@ -231,27 +234,19 @@ export async function showContextMenu({ state, x, y, target }) {
 
   /* =========================================================
      LISTA / DRZEWO: target.kind = "root" | "cat" | "q"
-     Grupy:
-       - Tworzenie (dla root)
-       - Schowek
-       - Tagi
-       - Nawigacja / tworzenie w folderze (dla cat)
-       - Edycja
-       - Niebezpieczne
   ========================================================= */
 
-  // ile realnie zaznaczono (bez "root")
   const selectedRealCount = countRealSelected(state);
-  
-  // ROOT (puste tło listy itp.)
+
+  // ROOT (puste tło listy)
   if (target.kind === "root") {
-    const parentId = (state.view === VIEW.FOLDER && state.folderId) ? state.folderId : null;
+    // Tworzenie ma sens tylko w BROWSE (w SEARCH/FILTER i tak jest zablokowane)
+    const parentId = (state.mode === MODE.BROWSE && state.folderId) ? state.folderId : null;
     const categoryId = parentId;
 
-    // --- Tworzenie ---
     items.push({
       label: "Nowy folder",
-      disabled: !editor || readOnlyView,
+      disabled: !editor || isVirtual,
       action: async () => {
         await createFolderHere(state, { parentId });
       }
@@ -259,7 +254,7 @@ export async function showContextMenu({ state, x, y, target }) {
 
     items.push({
       label: "Nowe pytanie",
-      disabled: !editor || readOnlyView,
+      disabled: !editor || isVirtual,
       action: async () => {
         await createQuestionHere(state, { categoryId });
       }
@@ -268,36 +263,34 @@ export async function showContextMenu({ state, x, y, target }) {
     pushSep(items);
   }
 
-  // SCHOWEK (dla cat/q/root)
+  // SCHOWEK
   const canPaste = !!state?.clipboard?.mode && !!state?.clipboard?.keys?.size;
-  const pasteDisabled = readOnlyView || !canPaste || (!editor && state.clipboard?.mode === "cut");
+  const pasteDisabled = isVirtual || !canPaste || (!editor && state.clipboard?.mode === "cut");
 
-  // Schowek ma sens dla cat/q, dla root też (bo wklejasz “tu”)
   items.push({
     label: "Kopiuj",
-    disabled: !editor || target.kind === "root", // root nie jest elementem do kopiowania
+    disabled: !editor || isVirtual || target.kind === "root",
     action: async () => { copySelectedToClipboard(state); }
   });
 
   items.push({
     label: "Wytnij",
-    disabled: !editor || readOnlyView || target.kind === "root",
+    disabled: !editor || isVirtual || target.kind === "root",
     action: async () => { cutSelectedToClipboard(state); }
   });
 
   items.push({
     label: "Wklej",
-    disabled: lockedByMode || pasteDisabled || !editor,
+    disabled: pasteDisabled || !editor,
     action: async () => {
-      if (readOnlyView) return;
+      if (isVirtual) return;
       await pasteClipboardHere(state);
     }
   });
 
-  // placeholder (na przyszłość)
   items.push({
     label: "Duplikuj",
-    disabled: !editor || readOnlyView || target.kind === "root",
+    disabled: !editor || isVirtual || target.kind === "root",
     action: async () => {
       try {
         await duplicateSelected(state);
@@ -308,13 +301,13 @@ export async function showContextMenu({ state, x, y, target }) {
     }
   });
 
-  // jeśli jesteśmy na elemencie cat/q, dokładamy grupę TAGI
+  // TAGI… (dla cat/q)
   if (target.kind === "cat" || target.kind === "q") {
     pushSep(items);
 
     items.push({
       label: "Tagi…",
-      disabled: !editor, // viewer ogląda
+      disabled: !editor,
       action: async () => {
         const key = (target.kind === "cat") ? `c:${target.id}` : `q:${target.id}`;
         if (!state.selection?.keys?.has?.(key)) {
@@ -325,15 +318,17 @@ export async function showContextMenu({ state, x, y, target }) {
     });
   }
 
-  // FOLDER (cat): nawigacja + tworzenie w środku
+  // FOLDER (cat)
   if (target.kind === "cat") {
     pushSep(items);
 
-    // --- Nawigacja ---
     items.push({
       label: "Otwórz folder",
       disabled: false,
       action: async () => {
+        if (state.mode === MODE.SEARCH) exitSearchToBrowse(state);
+        if (state.mode === MODE.FILTER) exitFilterToBrowse(state);
+
         setViewFolder(state, target.id);
         state.selection?.keys?.clear?.();
         await state._api?.refreshList?.();
@@ -342,10 +337,9 @@ export async function showContextMenu({ state, x, y, target }) {
 
     pushSep(items);
 
-    // --- Tworzenie w folderze ---
     items.push({
       label: "Nowy folder w tym folderze",
-      disabled: !editor || readOnlyView,
+      disabled: !editor || isVirtual,
       action: async () => {
         await createFolderHere(state, { parentId: target.id });
       }
@@ -353,7 +347,7 @@ export async function showContextMenu({ state, x, y, target }) {
 
     items.push({
       label: "Nowe pytanie w tym folderze",
-      disabled: !editor || readOnlyView,
+      disabled: !editor || isVirtual,
       action: async () => {
         await createQuestionHere(state, { categoryId: target.id });
       }
@@ -370,7 +364,7 @@ export async function showContextMenu({ state, x, y, target }) {
 
     items.push({
       label: target.kind === "cat" ? "Zmień nazwę" : "Zmień nazwę (treść)",
-      disabled: !editor || readOnlyView || selectedRealCount !== 1,
+      disabled: !editor || isVirtual || selectedRealCount !== 1,
       action: async () => {
         const key = (target.kind === "cat") ? `c:${target.id}` : `q:${target.id}`;
         if (!state.selection?.keys?.has?.(key)) {
@@ -380,22 +374,25 @@ export async function showContextMenu({ state, x, y, target }) {
       }
     });
 
-    // NIEBEZPIECZNE
     pushSep(items);
-    
+
+    // USUŃ: wg MODE
     items.push({
-      label: (state.view === VIEW.TAG) ? "Usuń tagi" : "Usuń",
+      label: (isFilterMode && filterTagIds.length) ? "Usuń tagi" : "Usuń",
       danger: true,
-      disabled: lockedByMode || !editor,
+      disabled:
+        !editor ||
+        isSearchMode ||
+        (isFilterMode && (filterMetaIds.length > 0 || filterTagIds.length === 0)),
       action: async () => {
         const key = (target.kind === "cat") ? `c:${target.id}` : `q:${target.id}`;
         if (!state.selection?.keys?.has?.(key)) {
           selectionSetSingle(state, key);
         }
-    
+
         try {
-          if (state.view === VIEW.TAG) {
-            await state._api?.untagSelectedInTagView?.();
+          if (isFilterMode) {
+            await untagSelectedByTagIds(state, filterTagIds, "Tryb FILTRU");
           } else {
             await deleteSelected(state);
           }
@@ -407,7 +404,6 @@ export async function showContextMenu({ state, x, y, target }) {
     });
   }
 
-  // sprzątanie: nie zostaw separatora na końcu
   while (items.length && items[items.length - 1]?.sep) items.pop();
 
   renderMenu(cm, items);
