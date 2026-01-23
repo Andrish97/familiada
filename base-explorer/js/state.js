@@ -9,6 +9,12 @@ export const VIEW = {
   META: "meta",     // filtr “meta” (wirtualny widok)
 };
 
+export const MODE = {
+  BROWSE: "browse",
+  SEARCH: "search",
+  FILTER: "filter",
+};
+
 export const SORT = {
   UPDATED_DESC: "updated_desc",
   NAME_ASC: "name_asc",
@@ -40,6 +46,19 @@ export function createState({ baseId, role = "viewer" }) {
     // opcjonalnie później: mapy pomocnicze (byId, childrenByParent) – tworzone w renderze lub osobno
 
     // widok
+
+        // TRYB (rozłączny): BROWSE / SEARCH / FILTER
+    mode: MODE.BROWSE,
+
+    // powrót do ostatniego BROWSE
+    lastBrowse: { view: VIEW.ALL, folderId: null },
+
+    // FILTER: spójny filtr (tagi + meta)
+    filter: {
+      tagIds: new Set(),
+      metaIds: new Set(),
+    },
+    
     view: VIEW.ALL,
     folderId: null,        // dla VIEW.FOLDER
     tagIds: [],            // dla VIEW.TAG (multi)
@@ -153,18 +172,20 @@ export function clearSearchTokens(state) {
 }
 
 export function rememberBrowseLocation(state) {
-  // zapamiętujemy tylko, gdy jesteśmy w „normalnym” przeglądaniu
+  // zapamiętujemy tylko BROWSE (ALL/FOLDER)
   if (state.view === VIEW.ALL || state.view === VIEW.FOLDER) {
-    state._browse = { view: state.view, folderId: state.folderId || null };
+    const b = { view: state.view, folderId: state.folderId || null };
+    state.lastBrowse = b;
+    state._browse = b; // kompatybilność wstecz (będzie do usunięcia później)
   }
 }
 
 export function restoreBrowseLocation(state) {
   // wyjście z widoków wirtualnych zawsze czyści ich parametry
   state.tagIds = [];
-  // nie ruszam searchTokens (SEARCH ma swój przycisk X), ale jeśli chcesz, też można tu wyczyścić
 
-  const b = state._browse;
+  const b = state.lastBrowse || state._browse;
+
   if (b?.view === VIEW.FOLDER && b.folderId) {
     state.view = VIEW.FOLDER;
     state.folderId = b.folderId;
@@ -173,6 +194,60 @@ export function restoreBrowseLocation(state) {
 
   state.view = VIEW.ALL;
   state.folderId = null;
+}
+
+/* ===== MODE (bramki przejść) ===== */
+
+export function enterSearchMode(state) {
+  // do SEARCH wchodzimy tylko “logicznie” z BROWSE:
+  // jeśli byliśmy w FILTER, najpierw go zamykamy
+  if (state.mode === MODE.FILTER) exitFilterToBrowse(state);
+
+  rememberBrowseLocation(state);
+  state.mode = MODE.SEARCH;
+  state.view = VIEW.SEARCH;
+}
+
+export function exitSearchToBrowse(state) {
+  state.mode = MODE.BROWSE;
+  restoreBrowseLocation(state);
+}
+
+export function enterFilterModeFromLeft(state) {
+  // FILTER jest rozłączny z SEARCH
+  if (state.mode === MODE.SEARCH) exitSearchToBrowse(state);
+
+  rememberBrowseLocation(state);
+  state.mode = MODE.FILTER;
+
+  const tagIds = new Set(Array.from(state.tagSelection?.ids || []).filter(Boolean));
+  const metaIds = new Set(Array.from(state.metaSelection?.ids || []).filter(Boolean));
+
+  state.filter = state.filter || { tagIds: new Set(), metaIds: new Set() };
+  state.filter.tagIds = tagIds;
+  state.filter.metaIds = metaIds;
+
+  // kompatybilność z obecną logiką refreshList:
+  // - jeśli meta niepuste => VIEW.META
+  // - inaczej => VIEW.TAG
+  state.tagIds = Array.from(tagIds);
+  if (metaIds.size) state.view = VIEW.META;
+  else state.view = VIEW.TAG;
+}
+
+export function exitFilterToBrowse(state) {
+  state.mode = MODE.BROWSE;
+
+  // czyścimy filtr
+  if (state.filter?.tagIds) state.filter.tagIds.clear();
+  if (state.filter?.metaIds) state.filter.metaIds.clear();
+  state.tagIds = [];
+
+  // czyścimy selekcje po lewej (bo to one tworzą FILTER)
+  if (state.tagSelection?.ids) state.tagSelection.ids.clear();
+  if (state.metaSelection?.ids) state.metaSelection.ids.clear();
+
+  restoreBrowseLocation(state);
 }
 
 /* ===== Selekcja ===== */
