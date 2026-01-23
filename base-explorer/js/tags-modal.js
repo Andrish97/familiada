@@ -59,7 +59,7 @@ function normTagName(s) {
   return String(s || "")
     .trim()
     .replace(/^#/, "")
-    .replace(/\s+/g, " ")
+    .replace(/\s+/g, "")
     .toLowerCase();
 }
 
@@ -533,8 +533,13 @@ export async function openTagsModal(state, opts = {}) {
       .replace(/^#/, "")
       .slice(0, 40);
 
-    if (!nameRaw) {
-      showErr(E.editErr, "Podaj nazwę.");
+    // Bez spacji: tylko litery/cyfry i "_"
+    if (/\s/.test(nameRaw)) {
+      showErr(E.editErr, "Nazwa nie może zawierać spacji. Użyj _ zamiast spacji.");
+      return false;
+    }
+    if (!/^[a-zA-Z0-9_]+$/.test(nameRaw)) {
+      showErr(E.editErr, "Dozwolone znaki: litery, cyfry i _");
       return false;
     }
 
