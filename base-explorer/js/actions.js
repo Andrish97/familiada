@@ -214,36 +214,34 @@ function collectDescendantFolderIds(categories, rootFolderId) {
 
 /* ================= META (stałe “tagi” bez DB) ================= */
 
-// ZASADA: meta jest rozłączne (jedno na pytanie), priorytet:
-// prepared > poll_points > poll_text
 function metaForQuestionPayload(payload) {
   const p = (payload && typeof payload === "object") ? payload : {};
   const answers = Array.isArray(p.answers) ? p.answers : [];
   const n = answers.length;
 
-  // poll_text: brak odpowiedzi
-  if (n === 0) return "poll_text";
+  const out = new Set();
 
-  // wspólne: 3–6 odpowiedzi (dla punktowych trybów)
+  // poll_text: traktujemy jako "kompatybilne zawsze"
+  out.add("poll_text");
+
+  // poll_points: 3–6 odpowiedzi
   const inRange = (n >= 3 && n <= 6);
-  if (!inRange) return "poll_text"; // poza zakresem traktujemy jako tekstowe
+  if (!inRange) return out;
 
-  // prepared: wszystkie mają fixed_points (liczbowe), suma <= 100, każde <=100, brak ujemnych
+  out.add("poll_points");
+
+  // prepared: wszystkie fixed_points liczbowe, 0..100, suma <= 100
   let sum = 0;
-  let okPrepared = true;
-
   for (const a of answers) {
     const v = a?.fixed_points;
-    if (!Number.isFinite(v)) { okPrepared = false; break; }
-    if (v < 0 || v > 100) { okPrepared = false; break; }
+    if (!Number.isFinite(v)) return out;
+    if (v < 0 || v > 100) return out;
     sum += v;
-    if (sum > 100) { okPrepared = false; break; }
+    if (sum > 100) return out;
   }
 
-  if (okPrepared) return "prepared";
-
-  // poll_points: 3–6 odpowiedzi (punkty mogą być lub nie)
-  return "poll_points";
+  out.add("prepared");
+  return out;
 }
 
 /**
@@ -262,8 +260,8 @@ async function ensureMetaMapsForUI(state) {
   if (!state._allQuestionMetaMap) {
     const m = new Map();
     for (const q of (state._allQuestions || [])) {
-      const metaId = metaForQuestionPayload(q?.payload);
-      m.set(q.id, metaId);
+    const metaSet = metaForQuestionPayload(q?.payload);
+    m.set(q.id, metaSet);
     }
     state._allQuestionMetaMap = m;
   }
@@ -273,8 +271,8 @@ async function ensureMetaMapsForUI(state) {
     const mView = new Map();
     const shown = Array.isArray(state.questions) ? state.questions : [];
     for (const q of shown) {
-      const metaId = state._allQuestionMetaMap.get(q.id) || metaForQuestionPayload(q?.payload);
-      mView.set(q.id, metaId);
+    const metaSet = state._allQuestionMetaMap.get(q.id) || metaForQuestionPayload(q?.payload);
+    mView.set(q.id, metaSet);
     }
     state._viewQuestionMetaMap = mView;
   }
@@ -295,17 +293,21 @@ async function ensureMetaMapsForUI(state) {
       continue;
     }
 
-    // jeśli choć jedno pytanie ma inny meta -> wynik pusty (brak “wspólnego”)
-    let first = null;
-    let ok = true;
+    let intersection = null; // Set(metaId) albo null
 
     for (const qid of qids) {
-      const metaId = state._allQuestionMetaMap.get(qid) || "poll_text";
-      if (first === null) first = metaId;
-      else if (metaId !== first) { ok = false; break; }
+      const set = state._allQuestionMetaMap.get(qid) || new Set(["poll_text"]);
+      if (intersection === null) {
+        intersection = new Set(set);
+      } else {
+        for (const mid of Array.from(intersection)) {
+          if (!set.has(mid)) intersection.delete(mid);
+        }
+      }
+      if (intersection.size === 0) break;
     }
-
-    derived.set(c.id, (ok && first) ? new Set([first]) : new Set());
+    
+    derived.set(c.id, intersection || new Set());
   }
 
   state._allCategoryMetaMap = derived;
@@ -587,7 +589,40 @@ async function refreshList(state) {
     const wanted = new Set(ids);
 
     // pytania pasujące (OR)
-    const qs = (state._allQuestions || []).filter(q => wanted.has(state._allQuestionMetaMap.get(q.id)));
+    const tagIds = Array.isArray(state.tagIds) ? state.tagIds.filter(Boolean) : [];
+    const wantedTags = new Set(tagIds);
+    
+    // zapewnij mapę tagów wszystkich pytań jeśli potrzebna
+    if (tagIds.length && !state._allQuestionTagMap) {
+      const idsAll = (state._allQuestions || []).map(x => x.id).filter(Boolean);
+      const links = await listQuestionTags(idsAll);
+      const m = new Map();
+      for (const l of (links || [])) {
+        if (!m.has(l.question_id)) m.set(l.question_id, new Set());
+        m.get(l.question_id).add(l.tag_id);
+      }
+      state._allQuestionTagMap = m;
+    }
+    
+    function questionPassesTags(qid) {
+      if (!tagIds.length) return true;
+      const set = state._allQuestionTagMap.get(qid);
+      if (!set) return false;
+      // TAG view u Ciebie działa jako AND (wszystkie) — więc tu też AND
+      for (const tid of wantedTags) if (!set.has(tid)) return false;
+      return true;
+    }
+    
+    const qs = (state._allQuestions || []).filter(q => {
+      const metaSet = state._allQuestionMetaMap.get(q.id) || new Set(["poll_text"]);
+      // meta OR: jeśli wybrano kilka meta, pytanie pasuje gdy ma którekolwiek
+      let okMeta = false;
+      for (const mid of wanted) {
+        if (metaSet.has(mid)) { okMeta = true; break; }
+      }
+      if (!okMeta) return false;
+      return questionPassesTags(q.id);
+    });
 
     // folder pasuje, jeśli 100% pytań w poddrzewie ma meta, które mieści się w wanted
     await ensureDerivedFolderMaps(state);
@@ -601,8 +636,10 @@ async function refreshList(state) {
       const qids = folderDesc.get(folderId);
       if (!qids || qids.size === 0) return false;
       for (const qid of qids) {
-        const m = state._allQuestionMetaMap.get(qid) || "poll_text";
-        if (!wanted.has(m)) return false;
+        const m = state._allQuestionMetaMap.get(qid) || new Set(["poll_text"]);
+        let ok = false;
+        for (const mid of wanted) if (m.has(mid)) { ok = true; break; }
+        if (!ok) return false;
       }
       return true;
     }
@@ -656,6 +693,15 @@ async function refreshList(state) {
 
   // === TAG: „wirtualny widok wyników” po CAŁOŚCI (jak SEARCH, tylko filtr tagów) ===
   if (state.view === VIEW.TAG) {
+    const metaIds = Array.from(state?.metaSelection?.ids || []).filter(Boolean);
+    const wantedMeta = new Set(metaIds);
+    
+    function questionPassesMeta(qid) {
+      if (!wantedMeta.size) return true;
+      const set = state._allQuestionMetaMap?.get?.(qid) || new Set(["poll_text"]);
+      for (const mid of wantedMeta) if (set.has(mid)) return true; // OR po meta
+      return false;
+    }
     // tagIds = zaznaczone po lewej (multi)
     const tagIds = Array.isArray(state.tagIds) ? state.tagIds.filter(Boolean) : [];
     if (!tagIds.length) {
@@ -677,6 +723,7 @@ async function refreshList(state) {
 
     // helper: pytanie ma wszystkie tagi?
     function questionHasAll(qid) {
+      if (!questionPassesMeta(qid)) return false;
       const set = qm.get(qid);
       if (!set) return false;
       for (const tid of wanted) if (!set.has(tid)) return false;
@@ -734,6 +781,7 @@ async function refreshList(state) {
 
     const matchingQuestions = [];
     for (const q of qAll) {
+      if (!questionPassesMeta(q.id)) continue;
       if (!questionHasAll(q.id)) continue;
       if (isInsideTopFolder(q.category_id || null)) continue; // już “jest” w pokazanym folderze
       matchingQuestions.push(q);
@@ -2084,31 +2132,48 @@ export function wireActions({ state }) {
       t.value = nextText;
       try { t.setSelectionRange(nextText.length, nextText.length); } catch {}
     }
+
+    // tagIds = dokładnie to, co istnieje i co user wpisał (bez merge)
+    const tagIds = resolvedIds;
     
-    const prevIds = Array.isArray(state.searchTokens?.tagIds) ? state.searchTokens.tagIds : [];
-    const mergedIds = Array.from(new Set(prevIds.concat(resolvedIds)));
-  
-    state.searchTokens = { text: nextText, tagIds: mergedIds };
-  
-    // jeśli wszystko puste: wyjście z SEARCH i powrót do ostatniego folderu/root
-    const isEmpty = (!nextText.trim() && !mergedIds.length);
+    // Ustaw lewą selekcję tagów TAK SAMO jak klik (żeby UI było spójne)
+    if (!state.tagSelection) state.tagSelection = { ids: new Set(), anchorId: null };
+    state.tagSelection.ids = new Set(tagIds);
+    state.tagSelection.anchorId = tagIds.length ? tagIds[tagIds.length - 1] : null;
+    
+    // SearchTokens tylko do chipsów + tekstu
+    state.searchTokens = { text: nextText, tagIds };
+    
+    // Widok:
+    // - tekst => SEARCH (bo łączy tekst+tagi)
+    // - brak tekstu, są tagi => TAG (jak zaznaczenie)
+    // - pusto => wyjście do browse
+    const isEmpty = (!nextText.trim() && !tagIds.length);
+    
     if (isEmpty) {
-      if (state.view === VIEW.SEARCH) restoreBrowseLocation(state);
+      if (state.view === VIEW.SEARCH || state.view === VIEW.TAG) restoreBrowseLocation(state);
       selectionClear(state);
       await refreshList(state);
       return;
     }
-  
-    // jeśli zaczynamy pisać i nie jesteśmy w SEARCH: zapamiętaj skąd przyszliśmy
-    if (state.view !== VIEW.SEARCH) {
-      rememberBrowseLocation(state);
+    
+    if (nextText.trim()) {
+      // SEARCH
+      if (state.view !== VIEW.SEARCH) rememberBrowseLocation(state);
       setViewSearch(state, ""); // query trzymamy w tokens
       selectionClear(state);
       await refreshList(state);
       return;
     }
-  
+    
+    // tylko tagi => TAG jak zaznaczenie
+    if (state.view !== VIEW.TAG) rememberBrowseLocation(state);
+    state.view = VIEW.TAG;
+    state.tagIds = tagIds;
+    
+    selectionClear(state);
     await refreshList(state);
+    return;
   });
 
   toolbarEl?.addEventListener("click", async (e) => {
@@ -2295,10 +2360,22 @@ export function wireActions({ state }) {
         return;
       }
 
-      if (state.view !== VIEW.META) rememberBrowseLocation(state);
-      state.view = VIEW.META;
-
-      // czyść normalną selekcję po prawej
+      // Ustal widok na podstawie aktywnych filtrów:
+      // - jeśli jest meta => META
+      // - jeśli nie ma meta, ale są tagi => TAG
+      const hasMeta = state.metaSelection?.ids?.size > 0;
+      const hasTags = state.tagSelection?.ids?.size > 0;
+      
+      if (hasMeta) {
+        if (state.view !== VIEW.META) rememberBrowseLocation(state);
+        state.view = VIEW.META;
+      } else if (hasTags) {
+        if (state.view !== VIEW.TAG) rememberBrowseLocation(state);
+        state.view = VIEW.TAG;
+      } else {
+        restoreBrowseLocation(state);
+      }
+      
       selectionClear(state);
       await refreshList(state);
       return;
@@ -2306,12 +2383,20 @@ export function wireActions({ state }) {
 
     // 2) klik w tag-row = selekcja tagów (stare)
     const row = e.target?.closest?.('.row[data-kind="tag"][data-id]');
-    if (!row) {
+    if (!row && !metaRow) {
+      // Klik w tło panelu tagów: czyść ZARÓWNO tagi jak i meta
       tagSelectionClear(state);
-      await applyTagSelectionView(state);
+      metaSelectionClear(state);
+    
+      // jeśli byliśmy w wirtualnych widokach, wracamy do browse
+      if (state.view === VIEW.TAG || state.view === VIEW.META) {
+        restoreBrowseLocation(state);
+      }
+      selectionClear(state);
+      await refreshList(state);
       return;
     }
-  
+    
     const tagId = row.dataset.id;
     if (!tagId) return;
   
@@ -2322,7 +2407,26 @@ export function wireActions({ state }) {
     else if (isCtrl) tagToggle(state, tagId);
     else tagSelectSingle(state, tagId);
 
-    await applyTagSelectionView(state);
+    // Zamiast applyTagSelectionView — bo to nie zna meta
+    const hasMeta = state.metaSelection?.ids?.size > 0;
+    const ids = tagSelectionToIds(state);
+    if (!ids.length && !hasMeta) {
+      if (state.view === VIEW.TAG || state.view === VIEW.META) restoreBrowseLocation(state);
+      state.tagIds = [];
+      selectionClear(state);
+      await refreshList(state);
+      return;
+    }
+    if (hasMeta) {
+      if (state.view !== VIEW.META) rememberBrowseLocation(state);
+      state.view = VIEW.META;
+    } else {
+      if (state.view !== VIEW.TAG) rememberBrowseLocation(state);
+      state.view = VIEW.TAG;
+      state.tagIds = ids;
+    }
+    selectionClear(state);
+    await refreshList(state);
     return;
   });
 
