@@ -136,12 +136,6 @@ export function renderToolbar(state) {
   }
 
   const inp = document.getElementById("searchText");
-  // blokada wyszukiwarki w trybie FILTER
-  if (inp) {
-    const locked = state?.mode === "FILTER";
-    inp.toggleAttribute("disabled", locked);
-    inp.toggleAttribute("aria-disabled", locked);
-  }
   const chipsEl = document.getElementById("searchChips");
 
   const tokens = state.searchTokens || { text: state.searchQuery || "", tagNames: [], tagIds: [] };
@@ -200,8 +194,6 @@ export function renderToolbar(state) {
 
 export function renderTree(state) {
   if (!elTree) return;
-  // TREE jest zablokowane w SEARCH i FILTER
-  treeEl?.classList?.toggle("is-locked", state?.mode === "SEARCH" || state?.mode === "FILTER");
 
   const cats = Array.isArray(state.categories) ? state.categories : [];
   const byParent = new Map();
@@ -319,8 +311,6 @@ export function renderTree(state) {
 
 export function renderTags(state) {
   if (!elTags) return;
-  // TAGS/META panel zablokowany tylko w SEARCH
-  tagsEl?.classList?.toggle("is-locked", state?.mode === "SEARCH");
 
   const tags = Array.isArray(state.tags) ? state.tags : [];
 
