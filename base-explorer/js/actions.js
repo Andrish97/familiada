@@ -2537,6 +2537,7 @@ export function wireActions({ state }) {
     if (!row) {
       tagSelectionClear(state);
       await applyTagSelectionView(state);
+      return;
     }
   
     const tagId = row.dataset.id;
@@ -3275,16 +3276,17 @@ export function wireActions({ state }) {
 
     updateTreeMarqueeSelection(box);
   });
-
-  document.addEventListener("mouseup", async () => {
-    if (!tagsMarquee) return;
-    tagsMarquee.remove();
-    tagsMarquee = null;
-    tagsMarqueeStart = null;
-    tagsMarqueeAdd = false;
-    tagsMarqueeBase = null;
   
-    await applyTagSelectionView(state);
+  document.addEventListener("mouseup", () => {
+    if (!treeMarquee) return;
+    treeMarquee.remove();
+    treeMarquee = null;
+    treeMarqueeStart = null;
+    treeMarqueeAdd = false;
+    treeMarqueeBase = null;
+  
+    // wyrównaj UI po marquee w drzewie
+    renderAll(state);
   });
 
     /* ================= Marquee: TAGS ================= */
@@ -3389,15 +3391,15 @@ export function wireActions({ state }) {
     updateTagsMarqueeSelection(box);
   });
 
-  document.addEventListener("mouseup", () => {
+  document.addEventListener("mouseup", async () => {
     if (!tagsMarquee) return;
     tagsMarquee.remove();
     tagsMarquee = null;
     tagsMarqueeStart = null;
     tagsMarqueeAdd = false;
     tagsMarqueeBase = null;
-
-    renderAll(state);
+  
+    await applyTagSelectionView(state); // <<< to robi właściwe “odświeżenie widoku”
   });
 
   // pierwsze „odśwież” listy po podpięciu akcji
