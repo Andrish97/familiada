@@ -92,7 +92,7 @@ function metaDotsHtml(state, id, kind /* "q" | "c" */) {
     const d = defs[mid];
     const color = d?.color || "rgba(255,255,255,.25)";
     const label = d?.name || mid;
-    return `<span class="tag-dot" style="background:${esc(color)}" data-tip="${esc(label)}"></span>`;
+    return `<span class="meta-dot" style="--c:${esc(color)}" data-tip="${esc(label)}"></span>`;
   }).join("");
 
   return `<span class="tag-dots">${dots}</span>`;
@@ -321,7 +321,7 @@ export function renderTags(state) {
     const d = metaDefs[id] || { name: id, color: "rgba(255,255,255,.25)" };
     const isSel = !!state?.metaSelection?.ids?.has?.(id);
     const selClass = isSel ? " is-selected" : "";
-    const dot = `<span class="tag-dot" style="background:${esc(d.color)}"></span>`;
+    const dot = `<span class="meta-dot" style="--c:${esc(d.color)}"></span>`;
     return `
       <div class="row${selClass}" data-kind="meta" data-id="${esc(id)}"
            style="padding:6px 8px; cursor:pointer; display:flex; align-items:center; gap:8px; opacity:.85;">
