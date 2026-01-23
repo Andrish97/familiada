@@ -2006,26 +2006,37 @@ export function wireActions({ state }) {
     const ids = Array.from(state?.tagSelection?.ids || []);
     return ids.filter(Boolean);
   }
-
-  async function applyTagSelectionView(state) {
-    const ids = tagSelectionToIds(state);
   
-    // brak zaznaczenia => wyjście z VIEW.TAG i powrót do ostatniego folderu/root
-    if (!ids.length) {
-      if (state.view === VIEW.TAG) {
-        restoreBrowseLocation(state);
-      }
+  async function applyLeftFiltersView() {
+    const hasMeta = !!state?.metaSelection?.ids?.size;
+    const tagIds = Array.isArray(state.tagSelection?.ids ? Array.from(state.tagSelection.ids) : []) 
+      ? Array.from(state.tagSelection.ids)
+      : [];
+  
+    const hasTags = tagIds.length > 0;
+  
+    if (!hasMeta && !hasTags) {
+      if (state.view === VIEW.TAG || state.view === VIEW.META) restoreBrowseLocation(state);
       state.tagIds = [];
       selectionClear(state);
       await refreshList(state);
       return;
     }
   
-    // jest zaznaczenie => wejdź/odśwież VIEW.TAG (OR)
+    if (hasMeta) {
+      if (state.view !== VIEW.META) rememberBrowseLocation(state);
+      state.view = VIEW.META;
+      // tagi w META biorą się z state.tagIds (u Ciebie META filtruje też tagami)
+      state.tagIds = tagIds;
+      selectionClear(state);
+      await refreshList(state);
+      return;
+    }
+  
+    // tylko tagi
     if (state.view !== VIEW.TAG) rememberBrowseLocation(state);
     state.view = VIEW.TAG;
-    state.tagIds = ids;
-  
+    state.tagIds = tagIds;
     selectionClear(state);
     await refreshList(state);
   }
@@ -2407,7 +2418,6 @@ export function wireActions({ state }) {
     else if (isCtrl) tagToggle(state, tagId);
     else tagSelectSingle(state, tagId);
 
-    // Zamiast applyTagSelectionView — bo to nie zna meta
     const hasMeta = state.metaSelection?.ids?.size > 0;
     const ids = tagSelectionToIds(state);
     if (!ids.length && !hasMeta) {
@@ -3188,27 +3198,47 @@ export function wireActions({ state }) {
   }
 
   function updateTagsMarqueeSelection(box) {
-    const rows = Array.from(tagsEl.querySelectorAll('.row[data-kind="tag"][data-id]'));
-    const hit = new Set();
-
+    const rows = Array.from(tagsEl.querySelectorAll('.row[data-kind][data-id]')); // meta + tag
+    const hitMeta = new Set();
+    const hitTags = new Set();
+  
     for (const row of rows) {
+      const kind = row.dataset.kind; // "meta" | "tag"
       const id = row.dataset.id;
-      if (!id) continue;
+      if (!kind || !id) continue;
+  
       const r = rowRectInTags(row);
-      if (intersects(box, r)) hit.add(id);
+      if (!intersects(box, r)) continue;
+  
+      if (kind === "meta") hitMeta.add(id);
+      if (kind === "tag") hitTags.add(id);
     }
-
+  
+    // zapewnij oba stany
     if (!state.tagSelection) state.tagSelection = { ids: new Set(), anchorId: null };
-
-    const out = tagsMarqueeAdd && tagsMarqueeBase ? new Set(tagsMarqueeBase) : new Set();
-    for (const id of hit) out.add(id);
-
-    state.tagSelection.ids = out;
+    if (!state.metaSelection) state.metaSelection = { ids: new Set(), anchorId: null };
+  
+    // ctrl/meta = dodawanie do bazowej selekcji
+    const outTags = tagsMarqueeAdd && tagsMarqueeBase ? new Set(tagsMarqueeBase.tags) : new Set();
+    const outMeta = tagsMarqueeAdd && tagsMarqueeBase ? new Set(tagsMarqueeBase.meta) : new Set();
+  
+    for (const id of hitTags) outTags.add(id);
+    for (const id of hitMeta) outMeta.add(id);
+  
+    state.tagSelection.ids = outTags;
     state.tagSelection.anchorId = null;
-
+  
+    state.metaSelection.ids = outMeta;
+    state.metaSelection.anchorId = null;
+  
+    // klasy bez przebudowy DOM
     for (const row of rows) {
+      const kind = row.dataset.kind;
       const id = row.dataset.id;
-      row.classList.toggle("is-selected", out.has(id));
+      const sel =
+        (kind === "tag" && outTags.has(id)) ||
+        (kind === "meta" && outMeta.has(id));
+      row.classList.toggle("is-selected", sel);
     }
   }
 
@@ -3233,12 +3263,19 @@ export function wireActions({ state }) {
 
     tagsMarqueeAdd = isMultiSelectModifier(e);
     if (!state.tagSelection) state.tagSelection = { ids: new Set(), anchorId: null };
-    tagsMarqueeBase = tagsMarqueeAdd ? new Set(state.tagSelection.ids) : null;
+    tagsMarqueeBase = tagsMarqueeAdd ? {
+      tags: new Set(state.tagSelection.ids),
+      meta: new Set(state.metaSelection?.ids || []),
+    } : null;
 
     if (!tagsMarqueeAdd) {
       state.tagSelection.ids.clear();
       state.tagSelection.anchorId = null;
-      // zdejmij klasy szybko
+    
+      if (!state.metaSelection) state.metaSelection = { ids: new Set(), anchorId: null };
+      state.metaSelection.ids.clear();
+      state.metaSelection.anchorId = null;
+    
       const rows = Array.from(tagsEl.querySelectorAll('.row.is-selected'));
       for (const r of rows) r.classList.remove("is-selected");
     }
@@ -3276,7 +3313,7 @@ export function wireActions({ state }) {
     tagsMarqueeAdd = false;
     tagsMarqueeBase = null;
   
-    await applyTagSelectionView(state); // <<< to robi właściwe “odświeżenie widoku”
+    await applyLeftFiltersView(); // <<< to robi właściwe “odświeżenie widoku”
   });
 
   // pierwsze „odśwież” listy po podpięciu akcji
