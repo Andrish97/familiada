@@ -11,6 +11,7 @@ import {
   setViewSearch,
   rememberBrowseLocation,
   restoreBrowseLocation,
+  tagSelectionClear,
 } from "./state.js";
 import { renderAll, renderList } from "./render.js";
 import {
