@@ -2180,50 +2180,30 @@ export function wireActions({ state }) {
     if (state.mode === MODE.FILTER) return;
   
     const raw = String(t.value || "");
+
+    // w FILTER wyszukiwarka jest zablokowana – ignoruj zdarzenia
+    if (state.mode === MODE.FILTER) return;
   
-    const parsed = parseSearchInputToTokens(raw);
-    
-    // tylko tagi które istnieją
-    const existingNames = filterExistingTagNames(state, parsed.tagNames);
-    const resolvedIds = resolveTagIdsByNames(state, existingNames);
-    
-    // tekst: usuń z raw TYLKO istniejące tagi (a nie wszystkie match’e)
-    let nextText = raw;
-    for (const name of existingNames) {
-      const re = new RegExp(`#${name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?=\\s|,|$)`, "gi");
-      nextText = nextText.replace(re, " ");
-    }
-    nextText = nextText.replace(/[,]+/g, " ").replace(/\s+/g, " ").trim();
-    
-    // przepisuj input tylko jeśli coś realnie wyczyściliśmy (czyli jeśli istniejące tagi były w raw)
-    if (existingNames.length && t.value !== nextText) {
-      t.value = nextText;
-      try { t.setSelectionRange(nextText.length, nextText.length); } catch {}
-    }
-
-    // tagIds = dokładnie to, co istnieje i co user wpisał (bez merge)
-    const tagIds = resolvedIds;
-    
-    // SearchTokens tylko do chipsów + tekstu
+    // NIE tokenizujemy agresywnie podczas pisania.
+    // Trzymamy dokładnie to, co user widzi w polu jako tekst.
+    const tagIds = Array.isArray(state.searchTokens?.tagIds) ? state.searchTokens.tagIds : [];
+    const nextText = raw;
+  
     state.searchTokens = { text: nextText, tagIds };
-
+  
     const isEmpty = (!nextText.trim() && !tagIds.length);
-
+  
     if (isEmpty) {
-      // wyjście z SEARCH do lastBrowse
       if (state.mode === MODE.SEARCH) exitSearchToBrowse(state);
       selectionClear(state);
       await refreshList(state);
       return;
     }
-
-    // wejście do SEARCH (zawsze) — SEARCH = (tekst lub #tagi)
+  
     if (state.mode !== MODE.SEARCH) enterSearchMode(state);
-
+  
     selectionClear(state);
     await refreshList(state);
-    return;
-    
   });
 
   toolbarEl?.addEventListener("click", async (e) => {
