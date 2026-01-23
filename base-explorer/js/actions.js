@@ -1516,6 +1516,42 @@ async function untagSelectedInTagView(state) {
   return true;
 }
 
+async function afterTagsModalClose(state, result) {
+  const changed = (result === true) || (result && result.saved);
+  if (!changed) {
+    // nic nie zapisano – tylko odrysuj
+    renderAll(state);
+    return false;
+  }
+
+  // ZAPAMIĘTAJ selekcję, bo refreshList może ją po drodze “zgubić” w UI
+  const selKeys = new Set(state?.selection?.keys || []);
+  const selAnchor = state?.selection?.anchorKey || null;
+
+  // 1) świeże tagi (nazwy/kolory/ord)
+  await state._api?.refreshTags?.();
+
+  // 2) unieważnij cache map tagów, żeby prawa strona na pewno wzięła nowe przypisania
+  //    (bez tego czasem zobaczysz stare kropki/tooltipy)
+  state._viewQuestionTagMap = null;
+  state._allQuestionTagMap = null;
+  state._derivedCategoryTagMap = null;
+  state._folderDescQIds = null;
+  state._allCategoryTagMap = null;
+
+  // 3) odśwież bieżący widok (przeliczy mapy i wyrenderuje prawą stronę)
+  await state._api?.refreshList?.();
+
+  // 4) przywróć selekcję i wyrenderuj jeszcze raz (żeby klasy is-selected wróciły)
+  if (state.selection) {
+    state.selection.keys = selKeys;
+    state.selection.anchorKey = selAnchor;
+  }
+  renderAll(state);
+
+  return true;
+}
+
 /* ================= Wire ================= */
 export function wireActions({ state }) {
   const treeEl = document.getElementById("tree");
@@ -1937,11 +1973,8 @@ export function wireActions({ state }) {
     const btn = e.target?.closest?.("#btnAddTag");
     if (btn) {
       if (!canWrite(state)) return;
-      const saved = await openTagsModal(state, { mode: "create" });
-      if (saved) {
-        await refreshTags(state);
-        renderAll(state);
-      }
+      const res = await openTagsModal(state, { mode: "create" });
+      await afterTagsModalClose(state, res);
       return;
     }
   
@@ -2834,24 +2867,17 @@ export function wireActions({ state }) {
     },
     
     openAssignTagsModal: async () => {
-      // 1) potrzebujemy map folder->pytania (żeby foldery w selekcji działały)
-      await ensureDerivedFolderMaps(state);
-    
-      // 2) rozbij selekcję na pytania/foldery
-      const { qIds, cIds } = selectionSplitIds(state);
-    
-      // 3) odpal modal z kompletem danych
-      return await openTagsModal(state, {
-        mode: "assign",
-        selection: { qIds, cIds },
-        folderDescQIds: state._folderDescQIds,
-      });
+      const res = await openTagsModal(state, { mode: "assign" });
+      await afterTagsModalClose(state, res);
+      return res;
     },
     
     openTagModal: async (opts) => {
       const mode = (opts && opts.mode) || "create";
       const tagId = (opts && opts.tagId) || null;
-      return await openTagsModal(state, { mode, tagId });
+      const res = await openTagsModal(state, { mode, tagId });
+      await afterTagsModalClose(state, res);
+      return res;
     },
     
     refreshTags: async () => refreshTags(state),
@@ -3013,12 +3039,8 @@ export function wireActions({ state }) {
         await ensureDerivedFolderMaps(state);
         const { qIds, cIds } = selectionSplitIds(state);
       
-        await openTagsModal(state, {
-          mode: "assign",
-          selection: { qIds, cIds },
-          folderDescQIds: state._folderDescQIds,
-        });
-      
+        const res = await openTagsModal(state, { mode: "assign" });
+        await afterTagsModalClose(state, res);
         return;
       }
     
