@@ -9,12 +9,6 @@ export const VIEW = {
   META: "meta",     // filtr “meta” (wirtualny widok)
 };
 
-export const MODE = {
-  BROWSE: "BROWSE", // normalne przeglądanie
-  SEARCH: "SEARCH", // własny widok wyszukiwania (blokuje lewy panel)
-  FILTER: "FILTER", // tag+meta (blokuje drzewo i wyszukiwarkę)
-};
-
 export const SORT = {
   UPDATED_DESC: "updated_desc",
   NAME_ASC: "name_asc",
@@ -33,7 +27,7 @@ export const META_ORDER = ["prepared", "poll_points", "poll_text"];
 
 export function createState({ baseId, role = "viewer" }) {
   return {
-    // kontekst    
+    // kontekst
     baseId,
     role,                  // "owner" | "editor" | "viewer"
     canEdit: role !== "viewer",
@@ -46,10 +40,8 @@ export function createState({ baseId, role = "viewer" }) {
     // opcjonalnie później: mapy pomocnicze (byId, childrenByParent) – tworzone w renderze lub osobno
 
     // widok
-    mode: MODE.BROWSE,
-    
     view: VIEW.ALL,
-    folderId: null,       // dla VIEW.FOLDER
+    folderId: null,        // dla VIEW.FOLDER
     tagIds: [],            // dla VIEW.TAG (multi)
     searchQuery: "",
         // search jako "tokeny" (jak iOS: tagi jako elementy + zwykły tekst)
@@ -161,25 +153,26 @@ export function clearSearchTokens(state) {
 }
 
 export function rememberBrowseLocation(state) {
-  // zapamiętujemy tylko wtedy, gdy realnie jesteśmy w BROWSE,
-  // bo SEARCH/FILTER mają własne zasady wyjścia
-  if (!state) return;
-  if (state.mode && state.mode !== MODE.BROWSE) return;
-
-  state._browse = {
-    view: state.view,
-    folderId: state.folderId || null,
-  };
+  // zapamiętujemy tylko, gdy jesteśmy w „normalnym” przeglądaniu
+  if (state.view === VIEW.ALL || state.view === VIEW.FOLDER) {
+    state._browse = { view: state.view, folderId: state.folderId || null };
+  }
 }
 
 export function restoreBrowseLocation(state) {
-  if (!state) return;
+  // wyjście z widoków wirtualnych zawsze czyści ich parametry
+  state.tagIds = [];
+  // nie ruszam searchTokens (SEARCH ma swój przycisk X), ale jeśli chcesz, też można tu wyczyścić
 
-  const b = state._browse || { view: VIEW.ALL, folderId: null };
+  const b = state._browse;
+  if (b?.view === VIEW.FOLDER && b.folderId) {
+    state.view = VIEW.FOLDER;
+    state.folderId = b.folderId;
+    return;
+  }
 
-  state.mode = MODE.BROWSE;
-  state.view = b.view || VIEW.ALL;
-  state.folderId = b.folderId || null;
+  state.view = VIEW.ALL;
+  state.folderId = null;
 }
 
 /* ===== Selekcja ===== */
