@@ -74,9 +74,11 @@ function metaDotsHtml(state, id, kind /* "q" | "c" */) {
   let metaIds = [];
 
   if (kind === "q") {
-    const metaId = map.get(id);
-    if (!metaId) return "";
-    metaIds = [metaId];
+    const v = map.get(id);
+    if (!v) return "";
+    // v może być Setem (zgodnie z ensureMetaMapsForUI)
+    if (v instanceof Set) metaIds = Array.from(v);
+    else metaIds = [v];
   } else {
     const set = map.get(id);
     if (!set || !set.size) return "";
