@@ -138,6 +138,17 @@ export function renderToolbar(state) {
   const inp = document.getElementById("searchText");
   const chipsEl = document.getElementById("searchChips");
 
+  // FILTER blokuje wyszukiwarkę
+  if (inp) {
+    const locked = (state.mode === "filter"); // MODE.FILTER
+    inp.toggleAttribute("disabled", locked);
+    inp.toggleAttribute("readonly", locked);
+  }
+  const clearBtn = document.getElementById("searchClearBtn");
+  if (clearBtn) {
+    clearBtn.toggleAttribute("disabled", state.mode === "filter");
+  }
+
   const tokens = state.searchTokens || { text: state.searchQuery || "", tagNames: [], tagIds: [] };
 
   // 1) Aktualizuj chipsy (kolor z qb_tags.color)
