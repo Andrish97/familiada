@@ -1777,6 +1777,79 @@ async function refreshTags(state) {
   state.tags = data || [];
 }
 
+// Zdejmij podane tagi z zaznaczonych elementów (foldery/pytania) – bez kasowania elementów.
+// Używane w trybie FILTER (i docelowo wszędzie, zamiast logiki zależnej od VIEW).
+export async function untagSelectedByTagIds(state, tagIds, confirmTitle = "Tryb filtru") {
+  if (!canWrite(state)) return false;
+
+  const keys = state?.selection?.keys;
+  if (!keys || !keys.size) {
+    alert("Zaznacz foldery lub pytania po prawej.");
+    return false;
+  }
+
+  const ids = Array.from(new Set((tagIds || []).filter(Boolean)));
+  if (!ids.length) {
+    alert("Brak wybranych tagów.");
+    return false;
+  }
+
+  // Roota nie ruszamy
+  if (keys.has("root")) {
+    alert("Folder główny nie może brać udziału w tej operacji.");
+    return false;
+  }
+
+  const label = (keys.size === 1) ? "tym elemencie" : `tych elementach (${keys.size})`;
+  const ok = confirm(
+    `${confirmTitle}\n\nZdejmujemy tagi (bez kasowania elementów) na ${label}.\n\nKontynuować?`
+  );
+  if (!ok) return false;
+
+  const qIds = [];
+  const cIds = [];
+
+  for (const k of keys) {
+    if (typeof k !== "string") continue;
+    if (k.startsWith("q:")) qIds.push(k.slice(2));
+    if (k.startsWith("c:")) cIds.push(k.slice(2));
+  }
+
+  // zdejmujemy tylko podane tagIds
+  try {
+    if (qIds.length) {
+      const { error } = await sb()
+        .from("qb_question_tags")
+        .delete()
+        .in("question_id", qIds)
+        .in("tag_id", ids);
+
+      if (error) throw error;
+    }
+
+    if (cIds.length) {
+      const { error } = await sb()
+        .from("qb_category_tags")
+        .delete()
+        .in("category_id", cIds)
+        .in("tag_id", ids);
+
+      if (error) throw error;
+    }
+  } catch (e) {
+    console.error(e);
+    alert("Nie udało się wykonać operacji.");
+    return false;
+  }
+
+  // odśwież cache map tagów (SEARCH/TAG)
+  state._allQuestionTagMap = null;
+  state._allCategoryTagMap = null;
+
+  await state._api?.refreshList?.();
+  return true;
+}
+
 async function untagSelectedInTagView(state) {
   if (!canWrite(state)) return false;
 
@@ -3437,28 +3510,29 @@ export function wireActions({ state }) {
     }
   
     if (e.key === "Delete") {
-      // w SEARCH/FILTER Delete zablokowane (żeby nie usuwać wyników wirtualnych)
-      if (state.mode === MODE.SEARCH || state.mode === MODE.FILTER) {
+      // ===== Delete wg MODE =====
+      if (state.mode === MODE.SEARCH) {
         e.preventDefault();
         return;
       }
-      // C: SEARCH – blokada
-      if (state.view === VIEW.SEARCH) {
+
+      if (state.mode === MODE.FILTER) {
         e.preventDefault();
-        alert("W widoku wyszukiwania nie można usuwać.");
-        return;
-      }
-    
-      // C: TAG – zdejmowanie tagów (z ostrzeżeniem)
-      if (state.view === VIEW.TAG) {
-        e.preventDefault();
-        try {
-          await untagSelectedInTagView(state);
-        } catch (err) {
-          console.error(err);
-          alert("Nie udało się zdjąć tagów.");
+
+        const tagIds = Array.from(state.filter?.tagIds || []);
+        const metaIds = Array.from(state.filter?.metaIds || []);
+
+        // Meta nie jest “zdejmowalne” jak tag – na razie blokada
+        if (metaIds.length) {
+          alert("W trybie FILTRU z meta operacja „Usuń” jest zablokowana.");
+          return;
         }
+
+        if (!tagIds.length) return;
+
+        await untagSelectedByTagIds(state, tagIds, "Tryb FILTRU");
         return;
+    
       }
     
       // normalnie (FOLDER/ALL)
