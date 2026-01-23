@@ -3,7 +3,6 @@
 
 import {
   VIEW,
-  MODE,
   setViewAll,
   setViewFolder,
   selectionClear,
