@@ -136,6 +136,12 @@ export function renderToolbar(state) {
   }
 
   const inp = document.getElementById("searchText");
+  // blokada wyszukiwarki w trybie FILTER
+  if (inp) {
+    const locked = state?.mode === "FILTER";
+    inp.toggleAttribute("disabled", locked);
+    inp.toggleAttribute("aria-disabled", locked);
+  }
   const chipsEl = document.getElementById("searchChips");
 
   const tokens = state.searchTokens || { text: state.searchQuery || "", tagNames: [], tagIds: [] };
