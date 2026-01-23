@@ -9,6 +9,12 @@ export const VIEW = {
   META: "meta",     // filtr “meta” (wirtualny widok)
 };
 
+export const MODE = {
+  BROWSE: "browse",
+  SEARCH: "search",
+  FILTER: "filter",
+};
+
 export const SORT = {
   UPDATED_DESC: "updated_desc",
   NAME_ASC: "name_asc",
@@ -39,6 +45,22 @@ export function createState({ baseId, role = "viewer" }) {
     questions: [],         // aktualnie załadowane do widoku (zależnie od view)
     // opcjonalnie później: mapy pomocnicze (byId, childrenByParent) – tworzone w renderze lub osobno
 
+    // TRYB (rozłączny): BROWSE / SEARCH / FILTER
+    mode: MODE.BROWSE,
+
+    // powrót do ostatniego BROWSE
+    lastBrowse: { view: VIEW.ALL, folderId: null },
+
+    // SEARCH: tokeny (tagi + tekst)
+    // (na razie używamy istniejących searchTokens; to jest przygotowanie pod „commit” tagów)
+    // search: { text: "", tagIds: [] }  // docelowo — później
+
+    // FILTER: tagi + meta jako jeden filtr
+    filter: {
+      tagIds: new Set(),
+      metaIds: new Set(),
+    },
+    
     // widok
     view: VIEW.ALL,
     folderId: null,        // dla VIEW.FOLDER
@@ -173,6 +195,102 @@ export function restoreBrowseLocation(state) {
 
   state.view = VIEW.ALL;
   state.folderId = null;
+}
+
+export function rememberLastBrowse(state) {
+  // zapamiętujemy tylko realny browse
+  if (state.view === VIEW.ALL || state.view === VIEW.FOLDER) {
+    state.lastBrowse = { view: state.view, folderId: state.folderId || null };
+  }
+}
+
+export function restoreLastBrowse(state) {
+  const b = state.lastBrowse || { view: VIEW.ALL, folderId: null };
+  if (b.view === VIEW.FOLDER && b.folderId) {
+    state.view = VIEW.FOLDER;
+    state.folderId = b.folderId;
+  } else {
+    state.view = VIEW.ALL;
+    state.folderId = null;
+  }
+}
+
+// ===== MODE gates =====
+
+export function enterSearch(state) {
+  // wejście tylko „logicznie” z BROWSE, ale jeśli ktoś wywoła z innego — wymuś porządek
+  if (state.mode !== MODE.BROWSE) exitToBrowse(state);
+
+  rememberLastBrowse(state);
+  state.mode = MODE.SEARCH;
+
+  // SEARCH używa istniejącego VIEW.SEARCH (detal kompatybilności)
+  state.view = VIEW.SEARCH;
+
+  // SEARCH nie miesza się z filtrem
+  if (state.filter?.tagIds) state.filter.tagIds.clear();
+  if (state.filter?.metaIds) state.filter.metaIds.clear();
+
+  // w SEARCH lewy panel ma być „zamrożony”, ale nie czyścimy selekcji automatycznie
+  // (czyścisz tylko, gdy UX tego wymaga)
+}
+
+export function exitSearchToBrowse(state) {
+  // wyjście z SEARCH => powrót do lastBrowse
+  state.mode = MODE.BROWSE;
+
+  // czyścimy search UI (na razie tokeny; to odpowiada X w toolbarze)
+  // jeśli wolisz: rób to tylko przy X — wtedy usuń dwie linie niżej
+  // clearSearchTokens(state);
+
+  restoreLastBrowse(state);
+}
+
+export function enterFilterFromLeftSelections(state) {
+  // FILTER ma być rozłączny z SEARCH
+  if (state.mode === MODE.SEARCH) exitSearchToBrowse(state);
+  if (state.mode !== MODE.BROWSE) exitToBrowse(state);
+
+  rememberLastBrowse(state);
+  state.mode = MODE.FILTER;
+
+  const tagIds = new Set(Array.from(state.tagSelection?.ids || []).filter(Boolean));
+  const metaIds = new Set(Array.from(state.metaSelection?.ids || []).filter(Boolean));
+
+  state.filter = state.filter || { tagIds: new Set(), metaIds: new Set() };
+  state.filter.tagIds = tagIds;
+  state.filter.metaIds = metaIds;
+
+  // Kompatybilność z obecną architekturą:
+  // - jeśli jest meta => jedziemy przez VIEW.META
+  // - inaczej przez VIEW.TAG
+  state.tagIds = Array.from(tagIds); // bo META branch używa state.tagIds jako dodatkowego AND  [oai_citation:4‡context-menu.js](sediment://file_00000000209c71f4a5d8b7f883347e04)
+
+  if (metaIds.size) state.view = VIEW.META;
+  else state.view = VIEW.TAG;
+}
+
+export function exitFilterToBrowse(state) {
+  state.mode = MODE.BROWSE;
+
+  // czyścimy filtr i selekcje po lewej (to jest „clear filter”)
+  if (state.filter?.tagIds) state.filter.tagIds.clear();
+  if (state.filter?.metaIds) state.filter.metaIds.clear();
+
+  // lewa selekcja wraca do pustej, bo filtr jest wyłączony
+  if (state.tagSelection?.ids) state.tagSelection.ids.clear();
+  if (state.metaSelection?.ids) state.metaSelection.ids.clear();
+
+  restoreLastBrowse(state);
+}
+
+export function exitToBrowse(state) {
+  // twardy „reset trybu” bez zgadywania
+  if (state.mode === MODE.SEARCH) return exitSearchToBrowse(state);
+  if (state.mode === MODE.FILTER) return exitFilterToBrowse(state);
+
+  state.mode = MODE.BROWSE;
+  // view zostaje (ALL/FOLDER)
 }
 
 /* ===== Selekcja ===== */
