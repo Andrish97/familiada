@@ -180,23 +180,28 @@
     </div>
   </div>
   
-  <!-- Rename modal -->
-  <div id="renameModal" class="m-modal" hidden>
-    <div class="m-modal__backdrop" data-close></div>
+  <!-- Rename modal (spójny z tagsOverlay: overlay + modal) -->
+  <div class="overlay" id="renameModal" hidden>
+    <div class="modal tags-modal rename-modal" role="dialog" aria-modal="true" aria-labelledby="renameModalTitle">
   
-    <div class="m-modal__panel" role="dialog" aria-modal="true" aria-labelledby="renameModalTitle">
-      <div class="m-modal__head">
-        <div id="renameModalTitle" class="m-modal__title">Zmień nazwę</div>
-        <button type="button" class="m-icon-btn" id="renameModalClose" aria-label="Zamknij">✕</button>
+      <div class="tagsHead">
+        <div class="mTitle" id="renameModalTitle">Zmień nazwę</div>
+        <button class="btn sm" id="renameModalClose" type="button" aria-label="Zamknij">✕</button>
       </div>
   
-      <div class="m-modal__body">
-        <input id="renameModalInput" class="m-input" type="text" autocomplete="off" />
+      <div class="mSub" id="renameModalHelp">Wpisz nową nazwę i zapisz.</div>
+  
+      <div class="renameBody">
+        <input id="renameModalInput" class="inp renameInput" type="text" autocomplete="off" />
       </div>
   
-      <div class="m-modal__foot">
-        <button type="button" class="m-btn" id="renameModalSave">Zapisz</button>
+      <div class="tagsFoot">
+        <div class="tagsFootSpacer"></div>
+        <button class="btn sm gold" id="renameModalSave" type="button">Zapisz</button>
       </div>
+  
+      <div id="renameModalErr" class="importMsg" style="display:none;"></div>
+  
     </div>
   </div>
   
