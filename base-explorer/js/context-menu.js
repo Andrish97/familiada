@@ -263,9 +263,12 @@ export async function showContextMenu({ state, x, y, target }) {
     pushSep(items);
   }
   
-    // SCHOWEK
+    // SCHOWEK — wspólne flagi (jedno źródło prawdy)
     const canPaste = !!state?.clipboard?.mode && !!state?.clipboard?.keys?.size;
-    const pasteDisabled = isVirtual || !canPaste || (!editor && state.clipboard?.mode === "cut");
+    const pasteDisabled =
+      isVirtual ||                 // SEARCH/FILTER: twarda blokada
+      !canPaste ||                 // nic nie ma w schowku
+      (!editor && state.clipboard?.mode === "cut"); // cut wymaga uprawnień do modyfikacji
   
     items.push({
       label: "Kopiuj",
@@ -283,7 +286,7 @@ export async function showContextMenu({ state, x, y, target }) {
       label: "Wklej",
       disabled: pasteDisabled || !editor,
       action: async () => {
-        if (isVirtual) return;
+        if (pasteDisabled || !editor) return;
         await pasteClipboardHere(state);
       }
     });
