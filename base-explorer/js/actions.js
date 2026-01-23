@@ -787,14 +787,87 @@ export async function renameByKey(state, key, newValueRaw) {
   return false;
 }
 
+function openRenameModal({ title = "Zmień nazwę", value = "", maxLen = 80 } = {}) {
+  const modal = document.getElementById("renameModal");
+  const input = document.getElementById("renameModalInput");
+  const btnSave = document.getElementById("renameModalSave");
+  const btnClose = document.getElementById("renameModalClose");
+  const titleEl = document.getElementById("renameModalTitle");
+
+  if (!modal || !input || !btnSave || !btnClose || !titleEl) {
+    // jeśli ktoś zapomni wkleić HTML: po prostu anuluj
+    return Promise.resolve(null);
+  }
+
+  // jednorazowe bindowanie (żeby nie dokładać listenerów przy każdym otwarciu)
+  if (!modal._wired) {
+    modal._wired = true;
+
+    modal.addEventListener("click", (e) => {
+      // klik w tło zamyka
+      if (e.target && e.target.matches?.("[data-close]")) {
+        modal._resolver?.(null);
+      }
+    });
+
+    btnClose.addEventListener("click", () => {
+      modal._resolver?.(null);
+    });
+
+    // ESC zamyka
+    document.addEventListener("keydown", (e) => {
+      if (modal.hidden) return;
+      if (e.key === "Escape") {
+        e.preventDefault();
+        modal._resolver?.(null);
+      }
+    });
+
+    // Enter = zapisz
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        btnSave.click();
+      }
+    });
+
+    btnSave.addEventListener("click", () => {
+      const v = String(input.value || "").trim();
+      modal._resolver?.(v || null);
+    });
+  }
+
+  titleEl.textContent = title;
+  input.value = String(value || "");
+  input.maxLength = Number(maxLen) || 80;
+
+  modal.hidden = false;
+
+  // focus + zaznacz tekst
+  setTimeout(() => {
+    try {
+      input.focus();
+      input.setSelectionRange(0, input.value.length);
+    } catch {}
+  }, 0);
+
+  return new Promise((resolve) => {
+    modal._resolver = (result) => {
+      modal.hidden = true;
+      modal._resolver = null;
+      resolve(result);
+    };
+  });
+}
+
 export async function renameSelectedPrompt(state) {
   if (!canWrite(state)) return false;
 
   const key = singleSelectedKey(state);
-  if (!key) {
-    alert("Zaznacz jeden element.");
-    return false;
-  }
+
+  // ZASADA: zmiana nazwy tylko gdy zaznaczony jest 1 element.
+  // Bez alertu — po prostu nic nie rób.
+  if (!key) return false;
 
   const isFolder = key.startsWith("c:");
   const isQuestion = key.startsWith("q:");
@@ -816,9 +889,11 @@ export async function renameSelectedPrompt(state) {
     current = String(q?.payload?.text ?? q?.text ?? "");
   }
 
-  const label = isFolder ? "Zmień nazwę folderu:" : "Zmień nazwę (treść) pytania:";
-  const next = prompt(label, current);
-  if (next === null) return false; // anulowano
+  const title = isFolder ? "Zmień nazwę folderu" : "Zmień treść pytania";
+  const maxLen = isFolder ? 80 : 200;
+
+  const next = await openRenameModal({ title, value: current, maxLen });
+  if (next === null) return false; // anulowano (X / ESC / tło)
 
   try {
     return await renameByKey(state, key, next);
