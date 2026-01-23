@@ -10,9 +10,9 @@ export const VIEW = {
 };
 
 export const MODE = {
-  BROWSE: "browse",
-  SEARCH: "search",
-  FILTER: "filter",
+  BROWSE: "BROWSE", // normalne przeglądanie
+  SEARCH: "SEARCH", // własny widok wyszukiwania (blokuje lewy panel)
+  FILTER: "FILTER", // tag+meta (blokuje drzewo i wyszukiwarkę)
 };
 
 export const SORT = {
@@ -33,12 +33,7 @@ export const META_ORDER = ["prepared", "poll_points", "poll_text"];
 
 export function createState({ baseId, role = "viewer" }) {
   return {
-    // kontekst
-    mode: MODE.BROWSE,
-
-    // zapamiętane „miejsce” do powrotu po SEARCH/FILTER
-    _browse: { view: VIEW.ALL, folderId: null },
-    
+    // kontekst    
     baseId,
     role,                  // "owner" | "editor" | "viewer"
     canEdit: role !== "viewer",
@@ -51,8 +46,10 @@ export function createState({ baseId, role = "viewer" }) {
     // opcjonalnie później: mapy pomocnicze (byId, childrenByParent) – tworzone w renderze lub osobno
 
     // widok
+    mode: MODE.BROWSE,
+    
     view: VIEW.ALL,
-    folderId: null,        // dla VIEW.FOLDER
+    folderId: null,       // dla VIEW.FOLDER
     tagIds: [],            // dla VIEW.TAG (multi)
     searchQuery: "",
         // search jako "tokeny" (jak iOS: tagi jako elementy + zwykły tekst)
