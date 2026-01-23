@@ -2,16 +2,16 @@
 // Obsługa zdarzeń i akcji UI (klik, selection, search, folder view)
 
 import {
-  VIEW,
+  VIEW, // tylko ROOT/FOLDER (użyjemy do breadcrumbs jeśli chcesz, ale nie musisz)
   MODE,
 
-  setViewAll,
-  setViewFolder,
+  setBrowseRoot,
+  setBrowseFolder,
+
   selectionClear,
   selectionSetSingle,
   selectionToggle,
 
-  setViewSearch, // zostaje chwilowo (kompatybilność)
   rememberBrowseLocation,
   restoreBrowseLocation,
 
@@ -22,8 +22,6 @@ import {
   enterFilterModeFromLeft,
   exitFilterToBrowse,
 
-  tagSelectionClear,
-  metaSelectionClear,
 } from "./state.js";
 
 import { renderAll, renderList } from "./render.js";
@@ -46,7 +44,7 @@ function canWrite(state) {
 }
 
 function isVirtualView(state) {
-  return state?.view === VIEW.SEARCH || state?.view === VIEW.TAG || state?.view === VIEW.META;
+  return state?.mode === MODE.SEARCH || state?.mode === MODE.FILTER;
 }
 
 function canMutateHere(state) {
@@ -418,26 +416,19 @@ async function ensureDerivedFolderMaps(state) {
 }
 
 /* ================= Data loading by view ================= */
-async function loadQuestionsForCurrentView(state) {
-  // Etap 1:
-  // - ALL: trzymamy cache w state._allQuestions (żeby nie pytać DB co klik)
-  // - FOLDER: pobieramy pytania folderu (może być dużo mniej)
-  // - TAG: później
+async function loadQuestionsForBrowse(state) {
+  // BROWSE: root (folderId=null) albo konkretny folder (folderId!=null)
+  const folderId = state.folderId || null;
 
-  if (state.view === VIEW.ALL) {
-    // root-folder = pytania bez category_id
+  // cache root
+  if (!folderId) {
     if (!state._rootQuestions) {
       state._rootQuestions = await listQuestionsByCategory(state.baseId, null);
     }
     return state._rootQuestions;
   }
 
-  if (state.view === VIEW.FOLDER) {
-    return await listQuestionsByCategory(state.baseId, state.folderId);
-  }
-
-  // VIEW.TAG – na razie brak (dojdzie później)
-  return [];
+  return await listQuestionsByCategory(state.baseId, folderId);
 }
 
 async function ensureTagMapsForUI(state) {
@@ -487,11 +478,11 @@ async function refreshList(state) {
     }
   }
   
-  const allQ = await loadQuestionsForCurrentView(state);
-  state._viewQuestions = allQ;
+    // =========================
+  // MODE: SEARCH (wirtualny)
+  // =========================
+  if (state.mode === MODE.SEARCH) {
 
-  // === SEARCH: „wirtualny widok wyników” po CAŁOŚCI ===
-  if (state.view === VIEW.SEARCH) {
     // pytania globalnie
     if (!state._allQuestions) {
       state._allQuestions = await listAllQuestions(state.baseId);
@@ -500,19 +491,17 @@ async function refreshList(state) {
     const foldersAll = Array.isArray(state.categories) ? state.categories : [];
     const qAll = state._allQuestions;
 
-    // pomocnicze struktury dla SEARCH (tagi + rodzice)
     const byIdAll = new Map(foldersAll.map(c => [c.id, c]));
-    const foldersFromTags = new Set(); // foldery "wynikowe" przez tagi (kategorie otagowane + rodzice)
+    const foldersFromTags = new Set();
 
-    const tokens = state.searchTokens || { text: state.searchQuery || "", tagIds: [], tagNames: [] };
+    const tokens = state.searchTokens || { text: "", tagIds: [] };
     const textQ = String(tokens.text || "").trim();
+    const tagIds = Array.isArray(tokens.tagIds) ? tokens.tagIds.filter(Boolean) : [];
 
-    // 1) filtr po tagach (OR): pytanie przechodzi jeśli ma którykolwiek tag z tagIds
+    // 1) filtr po tagach (OR)
     let qs = qAll;
 
-    const tagIds = Array.isArray(tokens.tagIds) ? tokens.tagIds.filter(Boolean) : [];
     if (tagIds.length) {
-      // cache mapy question_id -> Set(tag_id) (dla wszystkich pytań)
       if (!state._allQuestionTagMap) {
         const ids = (qAll || []).map(x => x.id).filter(Boolean);
         const links = await listQuestionTags(ids);
@@ -533,22 +522,19 @@ async function refreshList(state) {
       });
     }
 
-    // 2) filtr tekstowy na pytania (AND z tagami)
+    // 2) filtr tekstowy (AND)
     qs = applySearchFilterToQuestions(qs, textQ);
 
-    // 3) foldery:
-    // - jeśli jest tekst: foldery po nazwie
-    // - jeśli są tagi: foldery, które zawierają wyniki (category_id) + ich rodzice (żeby “dało się wejść”)
+    // 3) foldery: nazwa + foldery wyników (z pytań) + rodzice
     let fs = applySearchFilterToFolders(foldersAll, textQ);
 
     if (tagIds.length) {
-      // foldery bezpośrednie wyników (z pytań) + ich rodzice
       for (const q of (qs || [])) {
         const cid = q.category_id || null;
         if (!cid) continue;
-    
+
         foldersFromTags.add(cid);
-    
+
         let cur = byIdAll.get(cid);
         let guard = 0;
         while (cur && guard++ < 20) {
@@ -558,18 +544,19 @@ async function refreshList(state) {
           cur = byIdAll.get(pid);
         }
       }
-    
+
       const extra = foldersAll.filter(c => foldersFromTags.has(c.id));
-    
-      // merge uniq
+
       const merged = new Map();
       for (const c of fs) merged.set(c.id, c);
       for (const c of extra) merged.set(c.id, c);
       fs = Array.from(merged.values());
     }
 
+    state._viewQuestions = qs;
     state.folders = fs;
     state.questions = qs;
+
     await ensureTagMapsForUI(state);
     renderAll(state);
 
@@ -579,11 +566,16 @@ async function refreshList(state) {
     return;
   }
 
-    // === META: wirtualny widok wyników po meta (stałe “tagi”) ===
-  if (state.view === VIEW.META) {
-    const ids = Array.from(state?.metaSelection?.ids || []).filter(Boolean);
-    if (!ids.length) {
-      restoreBrowseLocation(state);
+  // =========================
+  // MODE: FILTER (wirtualny)
+  // =========================
+  if (state.mode === MODE.FILTER) {
+    const tagIdsArr = Array.from(state.filter?.tagIds || []);
+    const metaIdsArr = Array.from(state.filter?.metaIds || []);
+
+    // brak filtrów = wróć do browse
+    if (!tagIdsArr.length && !metaIdsArr.length) {
+      exitFilterToBrowse(state);
       selectionClear(state);
       await refreshList(state);
       return;
@@ -593,17 +585,16 @@ async function refreshList(state) {
       state._allQuestions = await listAllQuestions(state.baseId);
     }
 
+    await ensureDerivedFolderMaps(state);
     await ensureMetaMapsForUI(state);
 
-    const wanted = new Set(ids);
+    const qAll = state._allQuestions || [];
+    const cats = Array.isArray(state.categories) ? state.categories : [];
+    const byId = new Map(cats.map(c => [c.id, c]));
 
-    // pytania pasujące (OR)
-    const tagIds = Array.isArray(state.tagIds) ? state.tagIds.filter(Boolean) : [];
-    const wantedTags = new Set(tagIds);
-    
-    // zapewnij mapę tagów wszystkich pytań jeśli potrzebna
-    if (tagIds.length && !state._allQuestionTagMap) {
-      const idsAll = (state._allQuestions || []).map(x => x.id).filter(Boolean);
+    // tag map dla wszystkich pytań jeśli potrzebna
+    if (tagIdsArr.length && !state._allQuestionTagMap) {
+      const idsAll = (qAll || []).map(x => x.id).filter(Boolean);
       const links = await listQuestionTags(idsAll);
       const m = new Map();
       for (const l of (links || [])) {
@@ -612,135 +603,31 @@ async function refreshList(state) {
       }
       state._allQuestionTagMap = m;
     }
-    
+
+    const wantedTags = new Set(tagIdsArr);
+    const wantedMeta = new Set(metaIdsArr);
+
     function questionPassesTags(qid) {
-      if (!tagIds.length) return true;
+      if (!wantedTags.size) return true;
       const set = state._allQuestionTagMap.get(qid);
       if (!set) return false;
-      // TAG view u Ciebie działa jako AND (wszystkie) — więc tu też AND
+      // TAG w FILTER: AND (wszystkie zaznaczone)
       for (const tid of wantedTags) if (!set.has(tid)) return false;
       return true;
     }
-    
-    const qs = (state._allQuestions || []).filter(q => {
-      const metaSet = state._allQuestionMetaMap.get(q.id) || new Set(["poll_text"]);
-      // meta OR: jeśli wybrano kilka meta, pytanie pasuje gdy ma którekolwiek
-      let okMeta = false;
-      for (const mid of wanted) {
-        if (metaSet.has(mid)) { okMeta = true; break; }
-      }
-      if (!okMeta) return false;
-      return questionPassesTags(q.id);
-    });
 
-    // folder pasuje, jeśli 100% pytań w poddrzewie ma meta, które mieści się w wanted
-    await ensureDerivedFolderMaps(state);
-
-    const cats = Array.isArray(state.categories) ? state.categories : [];
-    const byId = new Map(cats.map(c => [c.id, c]));
-    const folderDesc = state._folderDescQIds || new Map();
-    const matchingFolderIds = new Set();
-
-    function folderAllInsideWanted(folderId) {
-      const qids = folderDesc.get(folderId);
-      if (!qids || qids.size === 0) return false;
-      for (const qid of qids) {
-        const m = state._allQuestionMetaMap.get(qid) || new Set(["poll_text"]);
-        let ok = false;
-        for (const mid of wanted) if (m.has(mid)) { ok = true; break; }
-        if (!ok) return false;
-      }
-      return true;
-    }
-
-    for (const c of cats) {
-      if (folderAllInsideWanted(c.id)) matchingFolderIds.add(c.id);
-    }
-
-    function hasMatchingAncestor(folderId) {
-      let cur = byId.get(folderId);
-      let guard = 0;
-      while (cur && guard++ < 50) {
-        const pid = cur.parent_id || null;
-        if (!pid) return false;
-        if (matchingFolderIds.has(pid)) return true;
-        cur = byId.get(pid);
-      }
-      return false;
-    }
-
-    const topFolders = cats.filter(c => matchingFolderIds.has(c.id) && !hasMatchingAncestor(c.id));
-
-    // ukryj pytania będące “wewnątrz” topFolders (tak jak w TAG)
-    const topFolderIds = new Set(topFolders.map(f => f.id));
-
-    function isInsideTopFolder(categoryId) {
-      if (!categoryId) return false;
-      let cur = byId.get(categoryId);
-      let guard = 0;
-      while (cur && guard++ < 50) {
-        if (topFolderIds.has(cur.id)) return true;
-        const pid = cur.parent_id || null;
-        cur = pid ? byId.get(pid) : null;
-      }
-      return false;
-    }
-
-    const outQ = qs.filter(q => !isInsideTopFolder(q.category_id || null));
-
-    state.folders = topFolders;
-    state.questions = outQ;
-
-    await ensureTagMapsForUI(state); // też policzy meta
-    renderAll(state);
-
-    const writable = canWrite(state);
-    document.getElementById("btnNewFolder")?.toggleAttribute("disabled", !writable);
-    document.getElementById("btnNewQuestion")?.toggleAttribute("disabled", !writable);
-    return;
-  }
-
-  // === TAG: „wirtualny widok wyników” po CAŁOŚCI (jak SEARCH, tylko filtr tagów) ===
-  if (state.view === VIEW.TAG) {
-    const metaIds = Array.from(state?.metaSelection?.ids || []).filter(Boolean);
-    const wantedMeta = new Set(metaIds);
-    
     function questionPassesMeta(qid) {
       if (!wantedMeta.size) return true;
-      const set = state._allQuestionMetaMap?.get?.(qid) || new Set(["poll_text"]);
-      for (const mid of wantedMeta) if (set.has(mid)) return true; // OR po meta
+      const set = state._allQuestionMetaMap.get(qid) || new Set(["poll_text"]);
+      // META w FILTER: OR (którekolwiek)
+      for (const mid of wantedMeta) if (set.has(mid)) return true;
       return false;
     }
-    // tagIds = zaznaczone po lewej (multi)
-    const tagIds = Array.isArray(state.tagIds) ? state.tagIds.filter(Boolean) : [];
-    if (!tagIds.length) {
-      // brak filtra = wróć do normalnego przeglądania
-      restoreBrowseLocation(state);
-      selectionClear(state);
-      await refreshList(state);
-      return;
-    }
 
-    // indeksy (wszystkie pytania + tagi pytań + folder->descQ + derived folder tags)
-    await ensureDerivedFolderMaps(state);
+    const qsAll = (qAll || []).filter(q => questionPassesTags(q.id) && questionPassesMeta(q.id));
 
-    const qAll = state._allQuestions || [];
-    const qm = state._allQuestionTagMap || new Map();
+    // folder pasuje gdy 100% pytań w poddrzewie spełnia filtry
     const folderDesc = state._folderDescQIds || new Map();
-
-    const wanted = new Set(tagIds);
-
-    // helper: pytanie ma wszystkie tagi?
-    function questionHasAll(qid) {
-      if (!questionPassesMeta(qid)) return false;
-      const set = qm.get(qid);
-      if (!set) return false;
-      for (const tid of wanted) if (!set.has(tid)) return false;
-      return true;
-    }
-
-    // 1) pasujące foldery = 100% pytań w poddrzewie ma wszystkie tagi
-    const cats = Array.isArray(state.categories) ? state.categories : [];
     const matchingFolderIds = new Set();
 
     for (const c of cats) {
@@ -749,15 +636,11 @@ async function refreshList(state) {
 
       let ok = true;
       for (const qid of qids) {
-        if (!questionHasAll(qid)) { ok = false; break; }
+        if (!questionPassesTags(qid) || !questionPassesMeta(qid)) { ok = false; break; }
       }
       if (ok) matchingFolderIds.add(c.id);
     }
 
-    // 2) jeżeli folder pasuje, to jego PODFOLDERY i tak “zawierają się” w nim.
-    // Żeby UI było czytelne: pokażemy tylko NAJWYŻSZE pasujące (bez przodków w matching).
-    // (Opcjonalne, ale bardzo pomaga: nie masz 20 folderów zduplikowanych w górę/dół.)
-    const byId = new Map(cats.map(c => [c.id, c]));
     function hasMatchingAncestor(folderId) {
       let cur = byId.get(folderId);
       let guard = 0;
@@ -771,9 +654,6 @@ async function refreshList(state) {
     }
 
     const topFolders = cats.filter(c => matchingFolderIds.has(c.id) && !hasMatchingAncestor(c.id));
-
-    // 3) pasujące pytania (ale nie pokazuj, jeśli są w folderze, który już pokazujemy – lub w jego poddrzewie)
-    // czyli: jeśli pytanie należy do folderu, który jest “wewnątrz” topFolders, to ukryj je.
     const topFolderIds = new Set(topFolders.map(f => f.id));
 
     function isInsideTopFolder(categoryId) {
@@ -788,20 +668,12 @@ async function refreshList(state) {
       return false;
     }
 
-    const matchingQuestions = [];
-    for (const q of qAll) {
-      if (!questionPassesMeta(q.id)) continue;
-      if (!questionHasAll(q.id)) continue;
-      if (isInsideTopFolder(q.category_id || null)) continue; // już “jest” w pokazanym folderze
-      matchingQuestions.push(q);
-    }
+    const outQ = qsAll.filter(q => !isInsideTopFolder(q.category_id || null));
 
-    // Ustaw stan widoku
+    state._viewQuestions = outQ;
     state.folders = topFolders;
-    state.questions = matchingQuestions;
+    state.questions = outQ;
 
-    // mapy do kropek: dla pytań w bieżącej liście potrzebujemy _viewQuestionTagMap
-    // (folderowe kropki mamy globalnie z derived)
     await ensureTagMapsForUI(state);
     renderAll(state);
 
@@ -810,19 +682,25 @@ async function refreshList(state) {
     document.getElementById("btnNewQuestion")?.toggleAttribute("disabled", !writable);
     return;
   }
-  
-  const parentId = (state.view === VIEW.ALL) ? null : state.folderId;
+
+  // =========================
+  // MODE: BROWSE (normalny)
+  // =========================
+  const allQ = await loadQuestionsForBrowse(state);
+  state._viewQuestions = allQ;
+
+  const parentId = state.folderId || null;
+
   const foldersHere = (state.categories || [])
     .filter(c => (c.parent_id || null) === (parentId || null))
     .slice()
     .sort((a,b) => (Number(a.ord)||0) - (Number(b.ord)||0));
-  
-    state.folders = foldersHere;
-    state.questions = applySearchFilterToQuestions(allQ, state.searchQuery);
-  
-    await ensureTagMapsForUI(state);
-    
-    renderAll(state);
+
+  state.folders = foldersHere;
+  state.questions = applySearchFilterToQuestions(allQ, ""); // w BROWSE nie filtrujemy tekstem
+
+  await ensureTagMapsForUI(state);
+  renderAll(state);
 
   const mutable = canMutateHere(state);
   document.getElementById("btnNewFolder")?.toggleAttribute("disabled", !mutable);
@@ -2677,16 +2555,24 @@ export function wireActions({ state }) {
       await refreshList(state);
       return;
     }
-  
-    if (kind === "cat" && id) {
+    
+    if (kind === "cat") {
+      // W SEARCH/FILTER: najpierw wyjście do BROWSE (reguła nadrzędna)
+      if (state.mode === MODE.SEARCH) exitSearchToBrowse(state);
+      if (state.mode === MODE.FILTER) exitFilterToBrowse(state);
+
+      // Otwórz folder i wyczyść selekcje (lewo/prawo)
       setViewFolder(state, id);
-  
-      // po wejściu folder ma być zaznaczony w drzewie
-      const key = `c:${id}`;
-      selectionSetSingle(state, key);
-      state.selection.anchorKey = key;
-  
+
+      // po wejściu: czyścimy selekcję listy
+      selectionClear(state);
+
+      // (opcjonalnie, ale praktyczne): zaznacz folder w drzewie
+      selectionSetSingle(state, `c:${id}`);
+      state.selection.anchorKey = `c:${id}`;
+
       await refreshList(state);
+      return;
     }
   });
 
@@ -3294,29 +3180,27 @@ export function wireActions({ state }) {
       if (key) hitKeys.add(key);
     }
   
-    tagsMarqueeBase = tagsMarqueeAdd
+    const base = tagsMarqueeAdd && tagsMarqueeBase
       ? new Set([
-          ...Array.from(state.metaSelection?.ids || []).map(id => `m:${id}`),
-          ...Array.from(state.tagSelection?.ids || []).map(id => `t:${id}`),
+          ...Array.from(tagsMarqueeBase.meta || []).map(id => `m:${id}`),
+          ...Array.from(tagsMarqueeBase.tags || []).map(id => `t:${id}`),
         ])
-      : null;
-  
+      : new Set();
+
     for (const k of hitKeys) base.add(k);
-  
-    // Przepisz do state (meta/tag)
+
     state.tagSelection.ids.clear();
     state.metaSelection.ids.clear();
-  
+
     for (const k of base) {
       if (k.startsWith("t:")) state.tagSelection.ids.add(k.slice(2));
       if (k.startsWith("m:")) state.metaSelection.ids.add(k.slice(2));
     }
-  
+
     state.tagSelection.anchorId = null;
     state.metaSelection.anchorId = null;
     state._leftAnchorKey = null;
-  
-    // klasy bez przebudowy DOM
+
     for (const row of rows) {
       const key = leftKeyFromRow(row);
       row.classList.toggle("is-selected", !!key && base.has(key));
@@ -3544,25 +3428,6 @@ export function wireActions({ state }) {
         console.error(err);
         alert("Nie udało się usunąć.");
       }
-    }
-
-    if (kind === "cat") {
-      // W SEARCH/FILTER: najpierw wyjście do BROWSE (reguła nadrzędna)
-      if (state.mode === MODE.SEARCH) exitSearchToBrowse(state);
-      if (state.mode === MODE.FILTER) exitFilterToBrowse(state);
-
-      // Otwórz folder i wyczyść selekcje (lewo/prawo)
-      setViewFolder(state, id);
-
-      // po wejściu: czyścimy selekcję listy
-      selectionClear(state);
-
-      // (opcjonalnie, ale praktyczne): zaznacz folder w drzewie
-      selectionSetSingle(state, `c:${id}`);
-      state.selection.anchorKey = `c:${id}`;
-
-      await refreshList(state);
-      return;
     }
 
     if (e.key === "F2") {
