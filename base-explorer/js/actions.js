@@ -2241,7 +2241,15 @@ export function wireActions({ state }) {
       }
 
       if (t.id === "searchBox" || t.closest?.("#searchBox")) {
+        // jeśli jesteśmy w FILTER: wyjdź do BROWSE (czyści filtr + selekcje)
+        if (state.mode === MODE.FILTER) {
+          exitFilterToBrowse(state);
+          selectionClear(state);
+          await refreshList(state);
+        }
+
         document.getElementById("searchText")?.focus();
+        return;
       }
 
       if (t.id === "btnNewFolder" || t.id === "btnNewQuestion") {
@@ -2826,8 +2834,20 @@ export function wireActions({ state }) {
     const id = row.dataset.id;
   
     if (kind === "cat") {
+      // W SEARCH/FILTER: najpierw wyjście do BROWSE (reguła nadrzędna)
+      if (state.mode === MODE.SEARCH) exitSearchToBrowse(state);
+      if (state.mode === MODE.FILTER) exitFilterToBrowse(state);
+
+      // Otwórz folder i wyczyść selekcje (lewo/prawo)
       setViewFolder(state, id);
+
+      // po wejściu: czyścimy selekcję listy
       selectionClear(state);
+
+      // (opcjonalnie, ale praktyczne): zaznacz folder w drzewie
+      selectionSetSingle(state, `c:${id}`);
+      state.selection.anchorKey = `c:${id}`;
+
       await refreshList(state);
       return;
     }
@@ -3393,6 +3413,23 @@ export function wireActions({ state }) {
   });
 
   document.addEventListener("keydown", async (e) => {
+
+    // ===== twarde blokady wg MODE (SEARCH/FILTER) =====
+
+    // nie blokuj skrótów gdy user pisze w polu
+    const tn = String(document.activeElement?.tagName || "").toUpperCase();
+    const isTyping = (tn === "INPUT" || tn === "TEXTAREA" || document.activeElement?.isContentEditable);
+
+    const isPaste = ((e.ctrlKey || e.metaKey) && (e.key === "v" || e.key === "V"));
+
+    if (!isTyping && isPaste) {
+      // w SEARCH i FILTER wklejanie ma być zablokowane
+      if (state.mode === MODE.SEARCH || state.mode === MODE.FILTER) {
+        e.preventDefault();
+        return;
+      }
+    }
+    
     if (e.key === "Escape") {
       selectionClear(state);
       renderList(state);
@@ -3400,6 +3437,11 @@ export function wireActions({ state }) {
     }
   
     if (e.key === "Delete") {
+      // w SEARCH/FILTER Delete zablokowane (żeby nie usuwać wyników wirtualnych)
+      if (state.mode === MODE.SEARCH || state.mode === MODE.FILTER) {
+        e.preventDefault();
+        return;
+      }
       // C: SEARCH – blokada
       if (state.view === VIEW.SEARCH) {
         e.preventDefault();
@@ -3430,107 +3472,126 @@ export function wireActions({ state }) {
       }
     }
 
-      if (e.key === "F2") {
-        if (!canMutateHere(state)) return;
-        // nie rename'uj kiedy user pisze w inpucie/textarea
-        const tag = String(document.activeElement?.tagName || "").toLowerCase();
-        if (tag === "input" || tag === "textarea") return;
-    
-        await renameSelectedPrompt(state);
-      }
-    
-      const isMac = navigator.platform.toLowerCase().includes("mac");
-      const mod = isMac ? e.metaKey : e.ctrlKey;
-  
-      // nie rób skrótów, gdy user pisze w inpucie/textarea
+    if (kind === "cat") {
+      // W SEARCH/FILTER: najpierw wyjście do BROWSE (reguła nadrzędna)
+      if (state.mode === MODE.SEARCH) exitSearchToBrowse(state);
+      if (state.mode === MODE.FILTER) exitFilterToBrowse(state);
+
+      // Otwórz folder i wyczyść selekcje (lewo/prawo)
+      setViewFolder(state, id);
+
+      // po wejściu: czyścimy selekcję listy
+      selectionClear(state);
+
+      // (opcjonalnie, ale praktyczne): zaznacz folder w drzewie
+      selectionSetSingle(state, `c:${id}`);
+      state.selection.anchorKey = `c:${id}`;
+
+      await refreshList(state);
+      return;
+    }
+
+    if (e.key === "F2") {
+      if (!canMutateHere(state)) return;
+      // nie rename'uj kiedy user pisze w inpucie/textarea
       const tag = String(document.activeElement?.tagName || "").toLowerCase();
-      const typing = (tag === "input" || tag === "textarea");
-      if (typing) return;
+      if (tag === "input" || tag === "textarea") return;
   
-      if (mod && (e.key === "c" || e.key === "C")) {
+      await renameSelectedPrompt(state);
+    }
+    
+    const isMac = navigator.platform.toLowerCase().includes("mac");
+    const mod = isMac ? e.metaKey : e.ctrlKey;
+
+    // nie rób skrótów, gdy user pisze w inpucie/textarea
+    const tag = String(document.activeElement?.tagName || "").toLowerCase();
+    const typing = (tag === "input" || tag === "textarea");
+    if (typing) return;
+
+    if (mod && (e.key === "c" || e.key === "C")) {
+      e.preventDefault();
+      copySelectedToClipboard(state);
+      return;
+    }
+
+    if (mod && (e.key === "x" || e.key === "X")) {
+      e.preventDefault();
+      cutSelectedToClipboard(state);
+      return;
+    }
+
+    if (mod && (e.key === "v" || e.key === "V")) {
+      // C: w SEARCH/TAG wklejanie zablokowane
+      if (state.view === VIEW.SEARCH) {
         e.preventDefault();
-        copySelectedToClipboard(state);
+        alert("W widoku wyszukiwania nie można wklejać.");
         return;
       }
-  
-      if (mod && (e.key === "x" || e.key === "X")) {
+      if (state.view === VIEW.TAG) {
         e.preventDefault();
-        cutSelectedToClipboard(state);
+        alert("W widoku tagów nie można wklejać.");
         return;
       }
-  
-      if (mod && (e.key === "v" || e.key === "V")) {
-        // C: w SEARCH/TAG wklejanie zablokowane
-        if (state.view === VIEW.SEARCH) {
-          e.preventDefault();
-          alert("W widoku wyszukiwania nie można wklejać.");
-          return;
-        }
-        if (state.view === VIEW.TAG) {
-          e.preventDefault();
-          alert("W widoku tagów nie można wklejać.");
-          return;
-        }
-      
-        if (!canMutateHere(state)) {
-          e.preventDefault();
-          return;
-        }
-      
+    
+      if (!canMutateHere(state)) {
         e.preventDefault();
-        try {
-          await pasteClipboardHere(state);
-        } catch (err) {
-          console.error(err);
-          alert("Nie udało się wkleić.");
-        }
         return;
       }
+    
+      e.preventDefault();
+      try {
+        await pasteClipboardHere(state);
+      } catch (err) {
+        console.error(err);
+        alert("Nie udało się wkleić.");
+      }
+      return;
+    }
 
     // Ctrl+N / Cmd+N = nowy folder (w bieżącym folderze / root)
-      if (mod && (e.key === "n" || e.key === "N")) {
-        if (!canMutateHere(state)) return;
-        e.preventDefault();
-        try {
-          const parentId = currentParentId(state);
-          await createFolderHere(state, { parentId });
-        } catch (err) {
-          console.error(err);
-          alert("Nie udało się utworzyć folderu.");
-        }
-        return;
+    if (mod && (e.key === "n" || e.key === "N")) {
+      if (!canMutateHere(state)) return;
+      e.preventDefault();
+      try {
+        const parentId = currentParentId(state);
+        await createFolderHere(state, { parentId });
+      } catch (err) {
+        console.error(err);
+        alert("Nie udało się utworzyć folderu.");
       }
+      return;
+    }
 
-      if (mod && (e.key === "t" || e.key === "T")) {
+    if (mod && (e.key === "t" || e.key === "T")) {
+      e.preventDefault();
+      if (!canWrite(state)) return;
+    
+      await ensureDerivedFolderMaps(state);
+      const { qIds, cIds } = selectionSplitIds(state);
+    
+      const res = await openTagsModal(state, { mode: "assign" });
+      await afterTagsModalClose(state, res);
+      return;
+    }
+  
+    if (!typing && e.key === "Enter") {
+      const key = onlyOneSelectedKey(state);
+      if (key && key.startsWith("c:")) {
         e.preventDefault();
-        if (!canWrite(state)) return;
-      
-        await ensureDerivedFolderMaps(state);
-        const { qIds, cIds } = selectionSplitIds(state);
-      
-        const res = await openTagsModal(state, { mode: "assign" });
-        await afterTagsModalClose(state, res);
+        const folderId = key.slice(2);
+        await openFolderById(state, folderId);
         return;
       }
-    
-      if (!typing && e.key === "Enter") {
-        const key = onlyOneSelectedKey(state);
-        if (key && key.startsWith("c:")) {
-          e.preventDefault();
-          const folderId = key.slice(2);
-          await openFolderById(state, folderId);
-          return;
-        }
+    }
+  
+    if (!typing && e.key === "Backspace") {
+      // Backspace w eksploratorze: w górę
+      if (state.view === VIEW.FOLDER) {
+        e.preventDefault();
+        await goUp(state);
+        return;
       }
-    
-      if (!typing && e.key === "Backspace") {
-        // Backspace w eksploratorze: w górę
-        if (state.view === VIEW.FOLDER) {
-          e.preventDefault();
-          await goUp(state);
-          return;
-        }
-      }
+    }
   });
 
   return api;
