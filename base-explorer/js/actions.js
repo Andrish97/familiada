@@ -2942,7 +2942,19 @@ export function wireActions({ state }) {
     },
     
     openAssignTagsModal: async () => {
-      const res = await openTagsModal(state, { mode: "assign" });
+      // 1) co jest zaznaczone
+      const { qIds, cIds } = selectionSplitIds(state);
+    
+      // 2) jeśli zaznaczone są foldery, modal musi umieć je rozwinąć do pytań
+      //    (u Ciebie tags-modal ma na to "folderDescQIds")
+      await ensureDerivedFolderMaps(state);
+    
+      const res = await openTagsModal(state, {
+        mode: "assign",
+        selection: { qIds, cIds },
+        folderDescQIds: state._folderDescQIds,
+      });
+    
       await afterTagsModalClose(state, res);
       return res;
     },
