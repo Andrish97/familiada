@@ -60,6 +60,42 @@ function tagDotsHtml(state, id, kind /* "q" | "c" */) {
   return `<span class="tag-dots">${dots}${more}</span>`;
 }
 
+function metaDotsHtml(state, id, kind /* "q" | "c" */) {
+  // meta-sety: pytania = view map, foldery = all map
+  const map =
+    (kind === "q")
+      ? (state._viewQuestionMetaSetMap || null)
+      : (state._allCategoryMetaSetMap || null);
+
+  if (!map) return "";
+
+  const set = map.get(id);
+  if (!set || !set.size) return "";
+
+  // kolejność stała + kolory spójne z “system tagami”
+  const ORDER = ["prepared", "poll_points", "poll_text"];
+  const COLORS = {
+    prepared: "rgba(245,210,107,.95)",
+    poll_points: "rgba(120,160,255,.90)",
+    poll_text: "rgba(255,255,255,.35)",
+  };
+
+  const shown = ORDER.filter(k => set.has(k));
+  if (!shown.length) return "";
+
+  const dots = shown.map((k) => {
+    const color = COLORS[k] || "rgba(255,255,255,.25)";
+    // tooltip jak przy tagach, tylko bez #
+    const label =
+      (k === "prepared") ? "prepared" :
+      (k === "poll_points") ? "poll points" :
+      "poll text";
+    return `<span class="tag-dot" style="background:${esc(color)}" data-tip="${esc(label)}"></span>`;
+  }).join("");
+
+  return `<span class="tag-dots">${dots}</span>`;
+}
+
 /* ================= Render parts ================= */
 export function renderAll(state) {
   renderHeader(state);
@@ -208,8 +244,9 @@ export function renderTree(state) {
         <div class="col-main" style="padding-left:${pad}px; display:flex; align-items:center; gap:6px; ${activeStyle}">
           ${toggle}
           <div class="title-line">
-            <span class="title-text">${icon} ${esc(label || "Folder")}</span>
-            ${kind === "cat" && id ? tagDotsHtml(state, id, "c") : ""}
+          <span class="title-text">${icon} ${esc(label || "Folder")}</span>
+          ${kind === "cat" && id ? tagDotsHtml(state, id, "c") : ""}
+          ${kind === "cat" && id ? metaDotsHtml(state, id, "c") : ""}
           </div>
         </div>
       </div>
@@ -275,6 +312,13 @@ export function renderTags(state) {
 
   const tags = Array.isArray(state.tags) ? state.tags : [];
 
+  // ===== SYSTEM META TAGS (na górze, bez edycji) =====
+  const metaTags = [
+    { id: "__meta_prepared",    name: "preparowane",    color: "rgba(245,210,107,.95)" },
+    { id: "__meta_poll_points", name: "punktacja", color: "rgba(120,160,255,.90)" },
+    { id: "__meta_poll_text",   name: "klasycze",   color: "rgba(255,255,255,.35)" },
+  ];
+
   const header = `<div style="opacity:.75; margin-bottom:6px;">Tagi</div>`;
   const addBtn = `
     <button id="btnAddTag" class="btn ghost" type="button" style="width:100%; margin-top:10px;">
@@ -282,16 +326,28 @@ export function renderTags(state) {
     </button>
   `;
 
-  if (!tags.length) {
-    elTags.innerHTML =`
-      ${header}
-      ${addBtn}
-      <div style="opacity:.75; padding:6px 8px;">Brak tagów.</div>
-      `;
-    return;
-  }
+  const metaHeader = `
+    <div style="opacity:.65; margin:10px 0 6px; font-size:12px; text-transform:uppercase; letter-spacing:.06em;">
+      Meta
+    </div>
+  `;
 
-  const rows = tags
+  const metaRows = metaTags.map((t) => {
+    const isSel = !!state?.tagSelection?.ids?.has?.(t.id);
+    const selClass = isSel ? " is-selected" : "";
+    const dot = `<span class="tag-dot" style="background:${esc(t.color)}"></span>`;
+
+    // data-system="1" + specjalny kind -> łatwo blokować edycję/PPM w actions
+    return `
+      <div class="row${selClass} is-system-tag" data-kind="tag" data-id="${esc(t.id)}" data-system="1"
+           style="padding:6px 8px; cursor:pointer; display:flex; align-items:center; gap:8px;">
+        ${dot}
+        <div class="title-text">#${esc(t.name)}</div>
+        <div style="margin-left:auto; opacity:.55; font-size:11px; letter-spacing:.06em; text-transform:uppercase;">system</div>
+      </div>`;
+  }).join("");
+
+  const userRows = tags
     .slice()
     .sort((a, b) => (Number(a.ord) || 0) - (Number(b.ord) || 0))
     .map((t) => {
@@ -300,17 +356,38 @@ export function renderTags(state) {
       const dot = t.color ? `<span class="tag-dot" style="background:${esc(t.color)}"></span>` : `<span class="tag-dot"></span>`;
 
       return `
-        <div class="row${selClass}" data-kind="tag" data-id="${esc(t.id)}" style="padding:6px 8px; cursor:pointer; display:flex; align-items:center; gap:8px;">
+        <div class="row${selClass}" data-kind="tag" data-id="${esc(t.id)}"
+             style="padding:6px 8px; cursor:pointer; display:flex; align-items:center; gap:8px;">
           ${dot}
           <div class="title-text">#${esc(t.name || "Tag")}</div>
         </div>`;
     })
     .join("");
 
+  // UI: meta zawsze na górze, potem normalne tagi
+  if (!tags.length) {
+    elTags.innerHTML =`
+      ${header}
+      ${metaHeader}
+      <div class="tagList">${metaRows}</div>
+      ${addBtn}
+      <div style="opacity:.75; padding:6px 8px;">Brak własnych tagów.</div>
+    `;
+    return;
+  }
+
   elTags.innerHTML = `
     ${header}
+    ${metaHeader}
+    <div class="tagList">${metaRows}</div>
+
+    <div class="left-sep" style="margin:10px 2px 10px;"></div>
+
+    <div style="opacity:.65; margin-bottom:6px; font-size:12px; text-transform:uppercase; letter-spacing:.06em;">
+      Tagi
+    </div>
     ${addBtn}
-    <div class="tagList">${rows}</div>
+    <div class="tagList">${userRows}</div>
   `;
 }
 
@@ -393,7 +470,8 @@ export function renderList(state) {
   const folderRows = folders.map((c) => {
     const key = `c:${c.id}`;
     const selClass = isSelected(state, key) ? " is-selected" : "";
-    const draggable = (state.role === "owner" || state.role === "editor") ? `draggable="true"` : ``; 
+    const draggable = (state.role === "owner" || state.role === "editor") ? `draggable="true"` : ``;
+
     return `<div class="row${selClass}" ${draggable} data-kind="cat" data-id="${esc(c.id)}" style="cursor:pointer;">
       <div class="col-num">${n++}</div>
       <div class="col-main">
@@ -402,7 +480,9 @@ export function renderList(state) {
           ${tagDotsHtml(state, c.id, "c")}
         </div>
       </div>
-      <div class="col-meta"></div>
+      <div class="col-meta">
+        ${metaDotsHtml(state, c.id, "c")}
+      </div>
     </div>`;
   }).join("");
 
@@ -412,8 +492,7 @@ export function renderList(state) {
 
     const text = q?.payload?.text ?? q?.text ?? "";
 
-    const answersCount = Array.isArray(q?.payload?.answers) ? q.payload.answers.length : 0;
-    const meta = answersCount ? `${answersCount} odp.` : "";
+    // “meta” pokażemy kropkami (prepared/poll_points/poll_text)
     const draggable = (state.role === "owner" || state.role === "editor") ? `draggable="true"` : ``; 
     return `<div class="row${selClass}" ${draggable} data-kind="q" data-id="${esc(q.id)}" style="cursor:pointer;">
       <div class="col-num">${n++}</div>
@@ -423,7 +502,7 @@ export function renderList(state) {
           ${tagDotsHtml(state, q.id, "q")}
         </div>
       </div>
-      <div class="col-meta">${esc(meta)}</div>
+      <div class="col-meta">${metaDotsHtml(state, q.id, "q")}</div>
     </div>`;
   }).join("");
 
