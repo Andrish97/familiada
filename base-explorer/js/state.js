@@ -6,6 +6,7 @@ export const VIEW = {
   FOLDER: "folder", // konkretna kategoria (folder)
   TAG: "tag",       // filtr tagów (wirtualny widok)
   SEARCH: "search",
+  META: "meta",     // filtr “meta” (wirtualny widok)
 };
 
 export const SORT = {
@@ -14,6 +15,15 @@ export const SORT = {
   NAME_DESC: "name_desc",
   ORD_ASC: "ord_asc",
 };
+
+export const META = {
+  prepared:    { id: "prepared",    name: "preparowane",    color: "rgba(77, 163, 255, .95)" },
+  poll_points: { id: "poll_points", name: "punktowane", color: "rgba(255, 200, 77, .95)" },
+  poll_text:   { id: "poll_text",   name: "typowe",   color: "rgba(160, 160, 160, .95)" },
+};
+
+// kolejność wyświetlania
+export const META_ORDER = ["prepared", "poll_points", "poll_text"];
 
 export function createState({ baseId, role = "viewer" }) {
   return {
@@ -51,10 +61,16 @@ export function createState({ baseId, role = "viewer" }) {
       // anchor do shift-zaznaczania (ostatni kliknięty)
       anchorKey: null,
     },
-        // selekcja tagów (lewy panel)
+    // selekcja tagów (lewy panel)
     tagSelection: {
       ids: new Set(),     // Set(tagId)
       anchorId: null,     // do shift-range
+    },
+
+    // selekcja meta (stałe “tagi”)
+    metaSelection: {
+      ids: new Set(),   // Set(metaId)
+      anchorId: null,
     },
 
     // clipboard wewnętrzny (etap 3)
@@ -221,4 +237,10 @@ export function tagSelectionClear(state) {
   if (!state.tagSelection) state.tagSelection = { ids: new Set(), anchorId: null };
   state.tagSelection.ids.clear();
   state.tagSelection.anchorId = null;
+}
+
+export function metaSelectionClear(state) {
+  if (!state.metaSelection) state.metaSelection = { ids: new Set(), anchorId: null };
+  state.metaSelection.ids.clear();
+  state.metaSelection.anchorId = null;
 }
