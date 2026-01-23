@@ -12,8 +12,13 @@ import {
   rememberBrowseLocation,
   restoreBrowseLocation,
   tagSelectionClear,
+  META,
+  META_ORDER,
+  metaSelectionClear,
 } from "./state.js";
+
 import { renderAll, renderList } from "./render.js";
+
 import {
   listQuestionsByCategory,
   listAllQuestions,
@@ -21,6 +26,7 @@ import {
   listQuestionTags,
   listCategoryTags
 } from "./repo.js";
+
 import { showContextMenu, hideContextMenu } from "./context-menu.js";
 import { openTagsModal } from "./tags-modal.js";
 import { sb } from "../../js/core/supabase.js";
@@ -206,6 +212,108 @@ function collectDescendantFolderIds(categories, rootFolderId) {
   return out;
 }
 
+/* ================= META (stałe “tagi” bez DB) ================= */
+
+// ZASADA: meta jest rozłączne (jedno na pytanie), priorytet:
+// prepared > poll_points > poll_text
+function metaForQuestionPayload(payload) {
+  const p = (payload && typeof payload === "object") ? payload : {};
+  const answers = Array.isArray(p.answers) ? p.answers : [];
+  const n = answers.length;
+
+  // poll_text: brak odpowiedzi
+  if (n === 0) return "poll_text";
+
+  // wspólne: 3–6 odpowiedzi (dla punktowych trybów)
+  const inRange = (n >= 3 && n <= 6);
+  if (!inRange) return "poll_text"; // poza zakresem traktujemy jako tekstowe
+
+  // prepared: wszystkie mają fixed_points (liczbowe), suma <= 100, każde <=100, brak ujemnych
+  let sum = 0;
+  let okPrepared = true;
+
+  for (const a of answers) {
+    const v = a?.fixed_points;
+    if (!Number.isFinite(v)) { okPrepared = false; break; }
+    if (v < 0 || v > 100) { okPrepared = false; break; }
+    sum += v;
+    if (sum > 100) { okPrepared = false; break; }
+  }
+
+  if (okPrepared) return "prepared";
+
+  // poll_points: 3–6 odpowiedzi (punkty mogą być lub nie)
+  return "poll_points";
+}
+
+/**
+ * Buduje:
+ *  - state._allQuestionMetaMap: Map(questionId -> metaId)
+ *  - state._viewQuestionMetaMap: Map(questionId -> metaId) dla aktualnie wyświetlanych
+ *  - state._allCategoryMetaMap: Map(folderId -> Set(metaId)) = meta, które ma 100% pytań w poddrzewie
+ */
+async function ensureMetaMapsForUI(state) {
+  // allQuestions potrzebne do folderów (rekurencja)
+  if (!state._allQuestions) {
+    state._allQuestions = await listAllQuestions(state.baseId);
+  }
+
+  // questionId -> metaId (CACHE globalny)
+  if (!state._allQuestionMetaMap) {
+    const m = new Map();
+    for (const q of (state._allQuestions || [])) {
+      const metaId = metaForQuestionPayload(q?.payload);
+      m.set(q.id, metaId);
+    }
+    state._allQuestionMetaMap = m;
+  }
+
+  // view map: dla pytań w bieżącej liście po prawej
+  {
+    const mView = new Map();
+    const shown = Array.isArray(state.questions) ? state.questions : [];
+    for (const q of shown) {
+      const metaId = state._allQuestionMetaMap.get(q.id) || metaForQuestionPayload(q?.payload);
+      mView.set(q.id, metaId);
+    }
+    state._viewQuestionMetaMap = mView;
+  }
+
+  // folder meta = przecięcie (100% pytań w poddrzewie mają ten sam meta)
+  // Używamy już istniejącego folderDesc (z ensureDerivedFolderMaps)
+  await ensureDerivedFolderMaps(state);
+
+  const cats = Array.isArray(state.categories) ? state.categories : [];
+  const descQ = state._folderDescQIds || new Map();
+
+  const derived = new Map(); // folderId -> Set(metaId)
+
+  for (const c of cats) {
+    const qids = descQ.get(c.id);
+    if (!qids || qids.size === 0) {
+      derived.set(c.id, new Set());
+      continue;
+    }
+
+    // jeśli choć jedno pytanie ma inny meta -> wynik pusty (brak “wspólnego”)
+    let first = null;
+    let ok = true;
+
+    for (const qid of qids) {
+      const metaId = state._allQuestionMetaMap.get(qid) || "poll_text";
+      if (first === null) first = metaId;
+      else if (metaId !== first) { ok = false; break; }
+    }
+
+    derived.set(c.id, (ok && first) ? new Set([first]) : new Set());
+  }
+
+  state._allCategoryMetaMap = derived;
+}
+
+
+
+
 /**
  * Buduje:
  *  - state._folderDescQIds: Map(folderId -> Set(questionId)) (rekurencyjnie)
@@ -348,6 +456,8 @@ async function ensureTagMapsForUI(state) {
     }
   }
   state._viewQuestionTagMap = mQ;
+    // 3) META MAPS (stałe “tagi”)
+  await ensureMetaMapsForUI(state);
 }
 
 async function refreshList(state) {
@@ -450,6 +560,92 @@ async function refreshList(state) {
     state.folders = fs;
     state.questions = qs;
     await ensureTagMapsForUI(state);
+    renderAll(state);
+
+    const writable = canWrite(state);
+    document.getElementById("btnNewFolder")?.toggleAttribute("disabled", !writable);
+    document.getElementById("btnNewQuestion")?.toggleAttribute("disabled", !writable);
+    return;
+  }
+
+    // === META: wirtualny widok wyników po meta (stałe “tagi”) ===
+  if (state.view === VIEW.META) {
+    const ids = Array.from(state?.metaSelection?.ids || []).filter(Boolean);
+    if (!ids.length) {
+      restoreBrowseLocation(state);
+      selectionClear(state);
+      await refreshList(state);
+      return;
+    }
+
+    if (!state._allQuestions) {
+      state._allQuestions = await listAllQuestions(state.baseId);
+    }
+
+    await ensureMetaMapsForUI(state);
+
+    const wanted = new Set(ids);
+
+    // pytania pasujące (OR)
+    const qs = (state._allQuestions || []).filter(q => wanted.has(state._allQuestionMetaMap.get(q.id)));
+
+    // folder pasuje, jeśli 100% pytań w poddrzewie ma meta, które mieści się w wanted
+    await ensureDerivedFolderMaps(state);
+
+    const cats = Array.isArray(state.categories) ? state.categories : [];
+    const byId = new Map(cats.map(c => [c.id, c]));
+    const folderDesc = state._folderDescQIds || new Map();
+    const matchingFolderIds = new Set();
+
+    function folderAllInsideWanted(folderId) {
+      const qids = folderDesc.get(folderId);
+      if (!qids || qids.size === 0) return false;
+      for (const qid of qids) {
+        const m = state._allQuestionMetaMap.get(qid) || "poll_text";
+        if (!wanted.has(m)) return false;
+      }
+      return true;
+    }
+
+    for (const c of cats) {
+      if (folderAllInsideWanted(c.id)) matchingFolderIds.add(c.id);
+    }
+
+    function hasMatchingAncestor(folderId) {
+      let cur = byId.get(folderId);
+      let guard = 0;
+      while (cur && guard++ < 50) {
+        const pid = cur.parent_id || null;
+        if (!pid) return false;
+        if (matchingFolderIds.has(pid)) return true;
+        cur = byId.get(pid);
+      }
+      return false;
+    }
+
+    const topFolders = cats.filter(c => matchingFolderIds.has(c.id) && !hasMatchingAncestor(c.id));
+
+    // ukryj pytania będące “wewnątrz” topFolders (tak jak w TAG)
+    const topFolderIds = new Set(topFolders.map(f => f.id));
+
+    function isInsideTopFolder(categoryId) {
+      if (!categoryId) return false;
+      let cur = byId.get(categoryId);
+      let guard = 0;
+      while (cur && guard++ < 50) {
+        if (topFolderIds.has(cur.id)) return true;
+        const pid = cur.parent_id || null;
+        cur = pid ? byId.get(pid) : null;
+      }
+      return false;
+    }
+
+    const outQ = qs.filter(q => !isInsideTopFolder(q.category_id || null));
+
+    state.folders = topFolders;
+    state.questions = outQ;
+
+    await ensureTagMapsForUI(state); // też policzy meta
     renderAll(state);
 
     const writable = canWrite(state);
@@ -2053,7 +2249,62 @@ export function wireActions({ state }) {
       return;
     }
   
-    // 1) klik w tag-row = selekcja (ctrl/shift)
+    // 1) klik w meta-row (stałe) = selekcja meta i VIEW.META
+    const metaRow = e.target?.closest?.('.row[data-kind="meta"][data-id]');
+    if (metaRow) {
+      const metaId = metaRow.dataset.id;
+      if (!metaId) return;
+
+      if (!state.metaSelection) state.metaSelection = { ids: new Set(), anchorId: null };
+
+      const isCtrl = isMultiSelectModifier(e);
+      const isShift = e.shiftKey;
+
+      // prosto: SHIFT działa jak range wg META_ORDER, CTRL dodaje, bez męczenia
+      if (!isCtrl && !isShift) {
+        state.metaSelection.ids.clear();
+        state.metaSelection.ids.add(metaId);
+        state.metaSelection.anchorId = metaId;
+      } else if (isCtrl) {
+        if (state.metaSelection.ids.has(metaId)) state.metaSelection.ids.delete(metaId);
+        else state.metaSelection.ids.add(metaId);
+        state.metaSelection.anchorId = metaId;
+      } else if (isShift) {
+        const ordered = (META_ORDER || []).slice();
+        const a = state.metaSelection.anchorId;
+        if (!a || ordered.indexOf(a) === -1) {
+          state.metaSelection.ids.clear();
+          state.metaSelection.ids.add(metaId);
+          state.metaSelection.anchorId = metaId;
+        } else {
+          const i1 = ordered.indexOf(a);
+          const i2 = ordered.indexOf(metaId);
+          const [from, to] = i1 < i2 ? [i1, i2] : [i2, i1];
+          state.metaSelection.ids.clear();
+          for (let i = from; i <= to; i++) state.metaSelection.ids.add(ordered[i]);
+          state.metaSelection.anchorId = metaId;
+        }
+      }
+
+      // jeżeli nic nie zaznaczone -> wyjście do browse
+      const ids = Array.from(state.metaSelection.ids || []);
+      if (!ids.length) {
+        if (state.view === VIEW.META) restoreBrowseLocation(state);
+        selectionClear(state);
+        await refreshList(state);
+        return;
+      }
+
+      if (state.view !== VIEW.META) rememberBrowseLocation(state);
+      state.view = VIEW.META;
+
+      // czyść normalną selekcję po prawej
+      selectionClear(state);
+      await refreshList(state);
+      return;
+    }
+
+    // 2) klik w tag-row = selekcja tagów (stare)
     const row = e.target?.closest?.('.row[data-kind="tag"][data-id]');
     if (!row) {
       tagSelectionClear(state);
@@ -2079,10 +2330,11 @@ export function wireActions({ state }) {
   tagsEl?.addEventListener("contextmenu", async (e) => {
     e.preventDefault();
 
-    const row = e.target?.closest?.('.row[data-kind="tag"][data-id]');
+    const row = e.target?.closest?.('.row[data-kind][data-id]');
     if (row) {
+      const kind = row.dataset.kind; // "tag" | "meta"
       const id = row.dataset.id;
-      await showContextMenu({ state, x: e.clientX, y: e.clientY, target: { kind: "tag", id } });
+      await showContextMenu({ state, x: e.clientX, y: e.clientY, target: { kind, id } });
       return;
     }
 
