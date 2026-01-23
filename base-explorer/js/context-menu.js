@@ -1,6 +1,6 @@
 // base-explorer/js/context-menu.js
 
-import { VIEW, setViewFolder, selectionSetSingle, rememberBrowseLocation } from "./state.js";
+import { VIEW, MODE, setViewFolder, selectionSetSingle, rememberBrowseLocation } from "./state.js";
 import {
   createFolderHere,
   createQuestionHere,
@@ -100,6 +100,8 @@ export async function showContextMenu({ state, x, y, target }) {
 
   const editor = isEditor(state);
   const readOnlyView = isReadOnlyView(state);
+
+  const lockedByMode = (state.mode === MODE.SEARCH || state.mode === MODE.FILTER);
 
   const items = [];
 
@@ -285,7 +287,7 @@ export async function showContextMenu({ state, x, y, target }) {
 
   items.push({
     label: "Wklej",
-    disabled: pasteDisabled || !editor, // na razie tylko editor; jeśli chcesz, viewer może wklejać COPY lokalnie -> zmienimy
+    disabled: lockedByMode || pasteDisabled || !editor,
     action: async () => {
       if (readOnlyView) return;
       await pasteClipboardHere(state);
@@ -384,7 +386,7 @@ export async function showContextMenu({ state, x, y, target }) {
     items.push({
       label: (state.view === VIEW.TAG) ? "Usuń tagi" : "Usuń",
       danger: true,
-      disabled: !editor || (state.view === VIEW.SEARCH),
+      disabled: lockedByMode || !editor,
       action: async () => {
         const key = (target.kind === "cat") ? `c:${target.id}` : `q:${target.id}`;
         if (!state.selection?.keys?.has?.(key)) {
