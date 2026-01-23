@@ -781,8 +781,9 @@ input, textarea{ user-select:text; }
 }
 
 .tagsColorDot{
-  width: 22px;
-  height: 22px;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
   /*border-radius: 999px;
   border: 1px solid rgba(255,255,255,.18);*/
   box-shadow: 0 0 0 2px rgba(0,0,0,.25) inset;
@@ -793,7 +794,7 @@ input, textarea{ user-select:text; }
   letter-spacing:.06em;
   text-transform: uppercase;
   opacity: .9;
-  rgba(255,255,255,100);
+  color: rgba(255,255,255,100);
 }
 
 /* ===== Modal (rename) ===== */
