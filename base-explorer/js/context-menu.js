@@ -110,7 +110,7 @@ export async function showContextMenu({ state, x, y, target }) {
        - Zarządzanie tagami
        - (placeholder) operacje niszczące
   ========================================================= */
-  if (target.kind === "tags-bg" || target.kind === "tag") {
+  if (target.kind === "tags-bg" || target.kind === "tag" || target.kind === "meta") {
     // Explorer-style: PPM na niezaznaczonym tagu => najpierw single-select
     if (target.kind === "tag" && target.id) {
       const tid = target.id;
@@ -123,6 +123,37 @@ export async function showContextMenu({ state, x, y, target }) {
     }
 
     const selectedTagIds = Array.from(state?.tagSelection?.ids || []).filter(Boolean);
+
+        // META (stałe): tylko “Pokaż”, reszta wyszarzona
+    if (target.kind === "meta") {
+      items.push({
+        label: "Pokaż",
+        disabled: false,
+        action: async () => {
+          // klik meta w PPM ma robić to samo co klik w wiersz (VIEW.META)
+          if (!state.metaSelection) state.metaSelection = { ids: new Set(), anchorId: null };
+          state.metaSelection.ids.clear();
+          if (target.id) state.metaSelection.ids.add(target.id);
+          state.metaSelection.anchorId = target.id || null;
+
+          // wejście w VIEW.META
+          if (state.view !== VIEW.META) state._browse && (state._browse = state._browse);
+          state.view = VIEW.META;
+          await state._api?.refreshList?.();
+        }
+      });
+
+      pushSep(items);
+
+      items.push({ label: "Dodaj tag…", disabled: true });
+      items.push({ label: "Edytuj tag…", disabled: true });
+      pushSep(items);
+      items.push({ label: "Usuń", disabled: true, danger: true });
+
+      renderMenu(cm, items);
+      positionMenu(cm, x, y);
+      return;
+    }
 
     // --- Widok ---
     items.push({
