@@ -456,8 +456,11 @@ export async function openTagsModal(state, opts = {}) {
   }
 
   async function saveL1Assign() {
-    if (!editor) return true;
-
+    if (!editor) {
+      close(false);
+      return false;
+    }
+    
     // target pytania
     const qFromFolders = await expandFoldersToQuestionIds(state, sel.cIds || [], opts);
     const allQIds = uniqIds([...(sel.qIds || []), ...(qFromFolders || [])]);
@@ -518,7 +521,10 @@ export async function openTagsModal(state, opts = {}) {
   }
 
   async function saveL2Tag() {
-    if (!editor) return true;
+    if (!editor) {
+      close(false);
+      return false;
+    }
 
     hideErr(E.editErr);
 
