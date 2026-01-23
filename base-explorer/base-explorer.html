@@ -176,7 +176,27 @@
           <button class="btn sm gold" id="tagsL3Save" type="button">Zapisz</button>
         </div>
       </section>
+      
+    </div>
+  </div>
   
+  <!-- Rename modal -->
+  <div id="renameModal" class="m-modal" hidden>
+    <div class="m-modal__backdrop" data-close></div>
+  
+    <div class="m-modal__panel" role="dialog" aria-modal="true" aria-labelledby="renameModalTitle">
+      <div class="m-modal__head">
+        <div id="renameModalTitle" class="m-modal__title">Zmień nazwę</div>
+        <button type="button" class="m-icon-btn" id="renameModalClose" aria-label="Zamknij">✕</button>
+      </div>
+  
+      <div class="m-modal__body">
+        <input id="renameModalInput" class="m-input" type="text" autocomplete="off" />
+      </div>
+  
+      <div class="m-modal__foot">
+        <button type="button" class="m-btn" id="renameModalSave">Zapisz</button>
+      </div>
     </div>
   </div>
   
