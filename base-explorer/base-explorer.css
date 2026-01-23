@@ -897,3 +897,23 @@ input, textarea{ user-select:text; }
 .is-system-tag:hover{
   background: rgba(255,255,255,.04);
 }
+
+/* meta = puste kółka */
+.meta-dot{
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  border: 2px solid var(--c, rgba(255,255,255,.35));
+  background: transparent;
+  display: inline-block;
+  box-sizing: border-box;
+}
+
+/* tag-dot zostaje pełny (jeśli już masz) */
+.tag-dot{
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.25);
+  display: inline-block;
+}
