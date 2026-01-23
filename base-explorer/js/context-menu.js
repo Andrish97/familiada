@@ -1,6 +1,6 @@
 // base-explorer/js/context-menu.js
 
-import { VIEW, setViewFolder, selectionSetSingle } from "./state.js";
+import { VIEW, setViewFolder, selectionSetSingle, rememberBrowseLocation } from "./state.js";
 import {
   createFolderHere,
   createQuestionHere,
@@ -111,45 +111,58 @@ export async function showContextMenu({ state, x, y, target }) {
        - (placeholder) operacje niszczące
   ========================================================= */
   if (target.kind === "tags-bg" || target.kind === "tag" || target.kind === "meta") {
-    // Explorer-style: PPM na niezaznaczonym tagu => najpierw single-select
-    if (target.kind === "tag" && target.id) {
-      const tid = target.id;
-      if (!state?.tagSelection?.ids?.has?.(tid)) {
-        if (!state.tagSelection) state.tagSelection = { ids: new Set(), anchorId: null };
-        state.tagSelection.ids.clear();
-        state.tagSelection.ids.add(tid);
-        state.tagSelection.anchorId = tid;
+  
+    // Explorer-style: PPM na niezaznaczonym elemencie lewego panelu => najpierw single-select
+    if (target.id) {
+      if (target.kind === "tag") {
+        const tid = target.id;
+        if (!state?.tagSelection?.ids?.has?.(tid)) {
+          if (!state.tagSelection) state.tagSelection = { ids: new Set(), anchorId: null };
+          state.tagSelection.ids.clear();
+          state.tagSelection.ids.add(tid);
+          state.tagSelection.anchorId = tid;
+        }
+      }
+  
+      if (target.kind === "meta") {
+        const mid = target.id;
+        if (!state?.metaSelection?.ids?.has?.(mid)) {
+          if (!state.metaSelection) state.metaSelection = { ids: new Set(), anchorId: null };
+          state.metaSelection.ids.clear();
+          state.metaSelection.ids.add(mid);
+          state.metaSelection.anchorId = mid;
+        }
       }
     }
-
+  
     const selectedTagIds = Array.from(state?.tagSelection?.ids || []).filter(Boolean);
-
-        // META (stałe): tylko “Pokaż”, reszta wyszarzona
+    const selectedMetaIds = Array.from(state?.metaSelection?.ids || []).filter(Boolean);
+  
+    // META (stałe): tylko “Pokaż”, reszta wyszarzona
     if (target.kind === "meta") {
       items.push({
         label: "Pokaż",
-        disabled: false,
+        disabled: selectedMetaIds.length === 0,
         action: async () => {
-          // klik meta w PPM ma robić to samo co klik w wiersz (VIEW.META)
-          if (!state.metaSelection) state.metaSelection = { ids: new Set(), anchorId: null };
-          state.metaSelection.ids.clear();
-          if (target.id) state.metaSelection.ids.add(target.id);
-          state.metaSelection.anchorId = target.id || null;
-
-          // wejście w VIEW.META
-          if (state.view !== VIEW.META) state._browse && (state._browse = state._browse);
+          // wejście w VIEW.META (zachowaj browse location jak przy TAG)
+          if (state.view !== VIEW.META) rememberBrowseLocation(state);
+  
           state.view = VIEW.META;
+  
+          // META view u Ciebie dopuszcza dodatkowy filtr tagami (state.tagIds)
+          state.tagIds = selectedTagIds;
+  
           await state._api?.refreshList?.();
         }
       });
-
+  
       pushSep(items);
-
+  
       items.push({ label: "Dodaj tag…", disabled: true });
       items.push({ label: "Edytuj tag…", disabled: true });
       pushSep(items);
       items.push({ label: "Usuń", disabled: true, danger: true });
-
+  
       renderMenu(cm, items);
       positionMenu(cm, x, y);
       return;
