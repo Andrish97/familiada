@@ -144,12 +144,17 @@ export function rememberBrowseLocation(state) {
 }
 
 export function restoreBrowseLocation(state) {
+  // wyjście z widoków wirtualnych zawsze czyści ich parametry
+  state.tagIds = [];
+  // nie ruszam searchTokens (SEARCH ma swój przycisk X), ale jeśli chcesz, też można tu wyczyścić
+
   const b = state._browse;
   if (b?.view === VIEW.FOLDER && b.folderId) {
     state.view = VIEW.FOLDER;
     state.folderId = b.folderId;
     return;
   }
+
   state.view = VIEW.ALL;
   state.folderId = null;
 }
@@ -202,10 +207,18 @@ export function selectionSnapshot(state) {
 
 export function clipboardSet(state, mode, keys) {
   state.clipboard.mode = mode; // "copy" | "cut"
-  state.clipboard.keys = Array.isArray(keys) ? keys.slice() : [];
+  // keys może przyjść jako Set albo Array
+  const arr = (keys instanceof Set) ? Array.from(keys) : (Array.isArray(keys) ? keys : []);
+  state.clipboard.keys = new Set(arr.filter(Boolean));
 }
 
 export function clipboardClear(state) {
   state.clipboard.mode = null;
-  state.clipboard.keys = [];
+  state.clipboard.keys = new Set();
+}
+
+export function tagSelectionClear(state) {
+  if (!state.tagSelection) state.tagSelection = { ids: new Set(), anchorId: null };
+  state.tagSelection.ids.clear();
+  state.tagSelection.anchorId = null;
 }
