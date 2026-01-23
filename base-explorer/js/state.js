@@ -9,6 +9,12 @@ export const VIEW = {
   META: "meta",     // filtr “meta” (wirtualny widok)
 };
 
+export const MODE = {
+  BROWSE: "browse",
+  SEARCH: "search",
+  FILTER: "filter",
+};
+
 export const SORT = {
   UPDATED_DESC: "updated_desc",
   NAME_ASC: "name_asc",
@@ -28,6 +34,11 @@ export const META_ORDER = ["prepared", "poll_points", "poll_text"];
 export function createState({ baseId, role = "viewer" }) {
   return {
     // kontekst
+    mode: MODE.BROWSE,
+
+    // zapamiętane „miejsce” do powrotu po SEARCH/FILTER
+    _browse: { view: VIEW.ALL, folderId: null },
+    
     baseId,
     role,                  // "owner" | "editor" | "viewer"
     canEdit: role !== "viewer",
@@ -153,26 +164,25 @@ export function clearSearchTokens(state) {
 }
 
 export function rememberBrowseLocation(state) {
-  // zapamiętujemy tylko, gdy jesteśmy w „normalnym” przeglądaniu
-  if (state.view === VIEW.ALL || state.view === VIEW.FOLDER) {
-    state._browse = { view: state.view, folderId: state.folderId || null };
-  }
+  // zapamiętujemy tylko wtedy, gdy realnie jesteśmy w BROWSE,
+  // bo SEARCH/FILTER mają własne zasady wyjścia
+  if (!state) return;
+  if (state.mode && state.mode !== MODE.BROWSE) return;
+
+  state._browse = {
+    view: state.view,
+    folderId: state.folderId || null,
+  };
 }
 
 export function restoreBrowseLocation(state) {
-  // wyjście z widoków wirtualnych zawsze czyści ich parametry
-  state.tagIds = [];
-  // nie ruszam searchTokens (SEARCH ma swój przycisk X), ale jeśli chcesz, też można tu wyczyścić
+  if (!state) return;
 
-  const b = state._browse;
-  if (b?.view === VIEW.FOLDER && b.folderId) {
-    state.view = VIEW.FOLDER;
-    state.folderId = b.folderId;
-    return;
-  }
+  const b = state._browse || { view: VIEW.ALL, folderId: null };
 
-  state.view = VIEW.ALL;
-  state.folderId = null;
+  state.mode = MODE.BROWSE;
+  state.view = b.view || VIEW.ALL;
+  state.folderId = b.folderId || null;
 }
 
 /* ===== Selekcja ===== */
