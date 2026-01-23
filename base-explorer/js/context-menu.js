@@ -32,6 +32,11 @@ function isReadOnlyView(state) {
   return state?.view === VIEW.SEARCH || state?.view === VIEW.TAG;
 }
 
+function countRealSelected(state) {
+  const keys = Array.from(state?.selection?.keys || []);
+  return keys.filter(k => typeof k === "string" && (k.startsWith("c:") || k.startsWith("q:"))).length;
+}
+
 function pushSep(items) {
   if (!items.length) return;
   if (items[items.length - 1]?.sep) return;
@@ -189,6 +194,9 @@ export async function showContextMenu({ state, x, y, target }) {
        - Niebezpieczne
   ========================================================= */
 
+  // ile realnie zaznaczono (bez "root")
+  const selectedRealCount = countRealSelected(state);
+  
   // ROOT (puste tło listy itp.)
   if (target.kind === "root") {
     const parentId = (state.view === VIEW.FOLDER && state.folderId) ? state.folderId : null;
@@ -316,7 +324,7 @@ export async function showContextMenu({ state, x, y, target }) {
 
     items.push({
       label: target.kind === "cat" ? "Zmień nazwę" : "Zmień nazwę (treść)",
-      disabled: !editor || readOnlyView,
+      disabled: !editor || readOnlyView || selectedRealCount !== 1,
       action: async () => {
         const key = (target.kind === "cat") ? `c:${target.id}` : `q:${target.id}`;
         if (!state.selection?.keys?.has?.(key)) {
