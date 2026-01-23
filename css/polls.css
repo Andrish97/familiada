@@ -191,3 +191,12 @@ body.polls-body {
     display: grid;
     gap: 12px
 }
+
+.qrBox img {
+    width: 220px;
+    height: 220px;
+    max-width: 100%;
+    border-radius: 16px;
+    display: block;
+    padding: 16px
+}
