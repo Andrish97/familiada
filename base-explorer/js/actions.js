@@ -12,8 +12,6 @@ import {
   rememberBrowseLocation,
   restoreBrowseLocation,
   tagSelectionClear,
-  META,
-  META_ORDER,
   metaSelectionClear,
 } from "./state.js";
 
@@ -37,7 +35,7 @@ function canWrite(state) {
 }
 
 function isVirtualView(state) {
-  return state?.view === VIEW.SEARCH || state?.view === VIEW.TAG;
+  return state?.view === VIEW.SEARCH || state?.view === VIEW.TAG || state?.view === VIEW.META;
 }
 
 function canMutateHere(state) {
@@ -1956,55 +1954,145 @@ export function wireActions({ state }) {
     state.selection.anchorKey = clickedKey;
   }
 
-  function tagOrder(state) {
-    return (state.tags || []).slice().sort((a,b) => (Number(a.ord)||0) - (Number(b.ord)||0));
+  /* ================= Left list (META + TAGS) unified selection ================= */
+
+  function ensureLeftSelections(state) {
+    if (!state.tagSelection) state.tagSelection = { ids: new Set(), anchorId: null };
+    if (!state.metaSelection) state.metaSelection = { ids: new Set(), anchorId: null };
+    if (!("_leftAnchorKey" in state)) state._leftAnchorKey = null;
   }
   
-  function tagSelectSingle(state, tagId) {
-    if (!state.tagSelection) state.tagSelection = { ids: new Set(), anchorId: null };
+  // Jedna kolejność jak w UI: META (META_ORDER) potem TAGI (ord)
+  function leftItemsOrdered(state) {
+    const items = [];
+  
+    const metaOrder = Array.isArray(META_ORDER) ? META_ORDER : [];
+    for (const mid of metaOrder) items.push(`m:${mid}`);
+  
+    const orderedTags = (state.tags || [])
+      .slice()
+      .sort((a, b) => (Number(a.ord) || 0) - (Number(b.ord) || 0));
+  
+    for (const t of orderedTags) items.push(`t:${t.id}`);
+  
+    return items;
+  }
+  
+  function leftKeyFromRow(row) {
+    const kind = row?.dataset?.kind;
+    const id = row?.dataset?.id;
+    if (!kind || !id) return null;
+    if (kind === "meta") return `m:${id}`;
+    if (kind === "tag") return `t:${id}`;
+    return null;
+  }
+  
+  function leftIsSelected(state, key) {
+    ensureLeftSelections(state);
+    if (!key) return false;
+    if (key.startsWith("m:")) return state.metaSelection.ids.has(key.slice(2));
+    if (key.startsWith("t:")) return state.tagSelection.ids.has(key.slice(2));
+    return false;
+  }
+  
+  function leftClear(state) {
+    ensureLeftSelections(state);
     state.tagSelection.ids.clear();
-    if (tagId) state.tagSelection.ids.add(tagId);
-    state.tagSelection.anchorId = tagId || null;
+    state.tagSelection.anchorId = null;
+    state.metaSelection.ids.clear();
+    state.metaSelection.anchorId = null;
+    state._leftAnchorKey = null;
   }
   
-  function tagToggle(state, tagId) {
-    if (!state.tagSelection) state.tagSelection = { ids: new Set(), anchorId: null };
-    if (!tagId) return;
-  
-    if (state.tagSelection.ids.has(tagId)) state.tagSelection.ids.delete(tagId);
-    else state.tagSelection.ids.add(tagId);
-  
-    state.tagSelection.anchorId = tagId;
+  function leftSelectSingle(state, key) {
+    ensureLeftSelections(state);
+    leftClear(state);
+    leftSetSelected(state, key, true);
+    leftSetAnchor(state, key);
   }
   
-  function tagSelectRange(state, clickedId) {
-    if (!state.tagSelection) state.tagSelection = { ids: new Set(), anchorId: null };
+  function leftToggle(state, key) {
+    ensureLeftSelections(state);
+    const now = leftIsSelected(state, key);
+    leftSetSelected(state, key, !now);
+    leftSetAnchor(state, key);
+  }
   
-    const ordered = tagOrder(state).map(t => t.id);
-    if (!ordered.length) return;
-  
-    const a = state.tagSelection.anchorId;
-    if (!a || ordered.indexOf(a) === -1) {
-      tagSelectSingle(state, clickedId);
+  function leftSetSelected(state, key, on) {
+    ensureLeftSelections(state);
+    if (!key) return;
+    if (key.startsWith("m:")) {
+      const id = key.slice(2);
+      if (on) state.metaSelection.ids.add(id);
+      else state.metaSelection.ids.delete(id);
       return;
     }
+    if (key.startsWith("t:")) {
+      const id = key.slice(2);
+      if (on) state.tagSelection.ids.add(id);
+      else state.tagSelection.ids.delete(id);
+      return;
+    }
+  }
+  
+  function leftSetAnchor(state, key) {
+    state._leftAnchorKey = key || null;
+    if (key?.startsWith("m:")) state.metaSelection.anchorId = key.slice(2);
+    if (key?.startsWith("t:")) state.tagSelection.anchorId = key.slice(2);
+  }
+  
+  function leftSelectRange(state, clickedKey) {
+    ensureLeftSelections(state);
+    const ordered = leftItemsOrdered(state);
+    if (!ordered.length) { leftSelectSingle(state, clickedKey); return; }
+  
+    const a = state._leftAnchorKey;
+    if (!a || ordered.indexOf(a) === -1) { leftSelectSingle(state, clickedKey); return; }
   
     const i1 = ordered.indexOf(a);
-    const i2 = ordered.indexOf(clickedId);
-    if (i1 === -1 || i2 === -1) {
-      tagSelectSingle(state, clickedId);
+    const i2 = ordered.indexOf(clickedKey);
+    if (i1 === -1 || i2 === -1) { leftSelectSingle(state, clickedKey); return; }
+  
+    const [from, to] = i1 < i2 ? [i1, i2] : [i2, i1];
+  
+    leftClear(state);
+    for (let i = from; i <= to; i++) leftSetSelected(state, ordered[i], true);
+    leftSetAnchor(state, clickedKey);
+  }
+  
+  // Jedno źródło prawdy: z selekcji po lewej budujemy view + filtry
+  async function applyLeftFiltersView() {
+    ensureLeftSelections(state);
+  
+    const metaIds = Array.from(state.metaSelection.ids || []).filter(Boolean);
+    const tagIds = Array.from(state.tagSelection.ids || []).filter(Boolean);
+  
+    const hasMeta = metaIds.length > 0;
+    const hasTags = tagIds.length > 0;
+  
+    // Zawsze trzymaj state.tagIds spójne z tagSelection
+    state.tagIds = tagIds;
+  
+    if (!hasMeta && !hasTags) {
+      if (state.view === VIEW.TAG || state.view === VIEW.META) restoreBrowseLocation(state);
+      selectionClear(state);
+      await refreshList(state);
       return;
     }
   
-    const [from, to] = i1 < i2 ? [i1, i2] : [i2, i1];
-    state.tagSelection.ids.clear();
-    for (let i = from; i <= to; i++) state.tagSelection.ids.add(ordered[i]);
-    state.tagSelection.anchorId = clickedId;
-  }
+    if (hasMeta) {
+      if (state.view !== VIEW.META) rememberBrowseLocation(state);
+      state.view = VIEW.META;
+      selectionClear(state);
+      await refreshList(state);
+      return;
+    }
   
-  function tagSelectionToIds(state) {
-    const ids = Array.from(state?.tagSelection?.ids || []);
-    return ids.filter(Boolean);
+    // tylko tagi
+    if (state.view !== VIEW.TAG) rememberBrowseLocation(state);
+    state.view = VIEW.TAG;
+    selectionClear(state);
+    await refreshList(state);
   }
   
   async function applyLeftFiltersView() {
@@ -2325,81 +2413,12 @@ export function wireActions({ state }) {
       return;
     }
   
-    // 1) klik w meta-row (stałe) = selekcja meta i VIEW.META
-    const metaRow = e.target?.closest?.('.row[data-kind="meta"][data-id]');
-    if (metaRow) {
-      const metaId = metaRow.dataset.id;
-      if (!metaId) return;
-
-      if (!state.metaSelection) state.metaSelection = { ids: new Set(), anchorId: null };
-
-      const isCtrl = isMultiSelectModifier(e);
-      const isShift = e.shiftKey;
-
-      // prosto: SHIFT działa jak range wg META_ORDER, CTRL dodaje, bez męczenia
-      if (!isCtrl && !isShift) {
-        state.metaSelection.ids.clear();
-        state.metaSelection.ids.add(metaId);
-        state.metaSelection.anchorId = metaId;
-      } else if (isCtrl) {
-        if (state.metaSelection.ids.has(metaId)) state.metaSelection.ids.delete(metaId);
-        else state.metaSelection.ids.add(metaId);
-        state.metaSelection.anchorId = metaId;
-      } else if (isShift) {
-        const ordered = (META_ORDER || []).slice();
-        const a = state.metaSelection.anchorId;
-        if (!a || ordered.indexOf(a) === -1) {
-          state.metaSelection.ids.clear();
-          state.metaSelection.ids.add(metaId);
-          state.metaSelection.anchorId = metaId;
-        } else {
-          const i1 = ordered.indexOf(a);
-          const i2 = ordered.indexOf(metaId);
-          const [from, to] = i1 < i2 ? [i1, i2] : [i2, i1];
-          state.metaSelection.ids.clear();
-          for (let i = from; i <= to; i++) state.metaSelection.ids.add(ordered[i]);
-          state.metaSelection.anchorId = metaId;
-        }
-      }
-
-      // jeżeli nic nie zaznaczone -> wyjście do browse
-      const ids = Array.from(state.metaSelection.ids || []);
-      if (!ids.length) {
-        if (state.view === VIEW.META) restoreBrowseLocation(state);
-        selectionClear(state);
-        await refreshList(state);
-        return;
-      }
-
-      // Ustal widok na podstawie aktywnych filtrów:
-      // - jeśli jest meta => META
-      // - jeśli nie ma meta, ale są tagi => TAG
-      const hasMeta = state.metaSelection?.ids?.size > 0;
-      const hasTags = state.tagSelection?.ids?.size > 0;
-      
-      if (hasMeta) {
-        if (state.view !== VIEW.META) rememberBrowseLocation(state);
-        state.view = VIEW.META;
-      } else if (hasTags) {
-        if (state.view !== VIEW.TAG) rememberBrowseLocation(state);
-        state.view = VIEW.TAG;
-      } else {
-        restoreBrowseLocation(state);
-      }
-      
-      selectionClear(state);
-      await refreshList(state);
-      return;
-    }
-
-    // 2) klik w tag-row = selekcja tagów (stare)
-    const row = e.target?.closest?.('.row[data-kind="tag"][data-id]');
-    if (!row && !metaRow) {
-      // Klik w tło panelu tagów: czyść ZARÓWNO tagi jak i meta
-      tagSelectionClear(state);
-      metaSelectionClear(state);
-    
-      // jeśli byliśmy w wirtualnych widokach, wracamy do browse
+    const row = e.target?.closest?.('.row[data-kind][data-id]');
+  
+    // 1) klik w tło panelu (czyść CAŁĄ lewą selekcję)
+    if (!row) {
+      leftClear(state);
+  
       if (state.view === VIEW.TAG || state.view === VIEW.META) {
         restoreBrowseLocation(state);
       }
@@ -2407,65 +2426,44 @@ export function wireActions({ state }) {
       await refreshList(state);
       return;
     }
-    
-    const tagId = row.dataset.id;
-    if (!tagId) return;
+  
+    // 2) klik w element (meta/tag) – jedna logika
+    const key = leftKeyFromRow(row);
+    if (!key) return;
   
     const isCtrl = isMultiSelectModifier(e);
     const isShift = e.shiftKey;
   
-    if (isShift) tagSelectRange(state, tagId);
-    else if (isCtrl) tagToggle(state, tagId);
-    else tagSelectSingle(state, tagId);
-
-    const hasMeta = state.metaSelection?.ids?.size > 0;
-    const ids = tagSelectionToIds(state);
-    if (!ids.length && !hasMeta) {
-      if (state.view === VIEW.TAG || state.view === VIEW.META) restoreBrowseLocation(state);
-      state.tagIds = [];
-      selectionClear(state);
-      await refreshList(state);
-      return;
-    }
-    if (hasMeta) {
-      if (state.view !== VIEW.META) rememberBrowseLocation(state);
-      state.view = VIEW.META;
-    } else {
-      if (state.view !== VIEW.TAG) rememberBrowseLocation(state);
-      state.view = VIEW.TAG;
-      state.tagIds = ids;
-    }
-    selectionClear(state);
-    await refreshList(state);
-    return;
+    if (isShift) leftSelectRange(state, key);
+    else if (isCtrl) leftToggle(state, key);
+    else leftSelectSingle(state, key);
+  
+    // 3) odśwież view wynikający z lewego filtra
+    await applyLeftFiltersView();
   });
 
   // PPM na tagach (tag + puste tło)
   tagsEl?.addEventListener("contextmenu", async (e) => {
     e.preventDefault();
-
+  
     const row = e.target?.closest?.('.row[data-kind][data-id]');
     if (row) {
+      const key = leftKeyFromRow(row);
+      if (key && !leftIsSelected(state, key)) {
+        leftSelectSingle(state, key);
+        // nie odpalamy applyLeftFiltersView() tutaj automatycznie,
+        // bo PPM ma tylko ustawić selekcję – view zmieni się, jeśli user kliknie "Pokaż"
+        renderAll(state);
+      }
+  
       const kind = row.dataset.kind; // "tag" | "meta"
       const id = row.dataset.id;
       await showContextMenu({ state, x: e.clientX, y: e.clientY, target: { kind, id } });
       return;
     }
-
-    // puste tło tags
+  
     await showContextMenu({ state, x: e.clientX, y: e.clientY, target: { kind: "tags-bg", id: null } });
   });
-
-  function canTagDnD() {
-    // Tagowanie to mutacja, ale Etap G mówi: blokujemy tylko SEARCH.
-    return canWrite(state) && state.view !== VIEW.SEARCH;
-  }
-  
-  function clearTagDropPreview() {
-    const rows = Array.from(tagsEl?.querySelectorAll?.('.row[data-kind="tag"].is-drop-target') || []);
-    for (const r of rows) r.classList.remove("is-drop-target");
-    if (state._drag) state._drag.tagDrop = null;
-  }
   
   // Drag over tag row => pokaż podświetlenie
   tagsEl?.addEventListener("dragover", (e) => {
@@ -3198,47 +3196,45 @@ export function wireActions({ state }) {
   }
 
   function updateTagsMarqueeSelection(box) {
+    ensureLeftSelections(state);
+  
     const rows = Array.from(tagsEl.querySelectorAll('.row[data-kind][data-id]')); // meta + tag
-    const hitMeta = new Set();
-    const hitTags = new Set();
+    const hitKeys = new Set();
   
     for (const row of rows) {
-      const kind = row.dataset.kind; // "meta" | "tag"
-      const id = row.dataset.id;
-      if (!kind || !id) continue;
-  
       const r = rowRectInTags(row);
       if (!intersects(box, r)) continue;
   
-      if (kind === "meta") hitMeta.add(id);
-      if (kind === "tag") hitTags.add(id);
+      const key = leftKeyFromRow(row);
+      if (key) hitKeys.add(key);
     }
   
-    // zapewnij oba stany
-    if (!state.tagSelection) state.tagSelection = { ids: new Set(), anchorId: null };
-    if (!state.metaSelection) state.metaSelection = { ids: new Set(), anchorId: null };
+    tagsMarqueeBase = tagsMarqueeAdd
+      ? new Set([
+          ...Array.from(state.metaSelection?.ids || []).map(id => `m:${id}`),
+          ...Array.from(state.tagSelection?.ids || []).map(id => `t:${id}`),
+        ])
+      : null;
   
-    // ctrl/meta = dodawanie do bazowej selekcji
-    const outTags = tagsMarqueeAdd && tagsMarqueeBase ? new Set(tagsMarqueeBase.tags) : new Set();
-    const outMeta = tagsMarqueeAdd && tagsMarqueeBase ? new Set(tagsMarqueeBase.meta) : new Set();
+    for (const k of hitKeys) base.add(k);
   
-    for (const id of hitTags) outTags.add(id);
-    for (const id of hitMeta) outMeta.add(id);
+    // Przepisz do state (meta/tag)
+    state.tagSelection.ids.clear();
+    state.metaSelection.ids.clear();
   
-    state.tagSelection.ids = outTags;
+    for (const k of base) {
+      if (k.startsWith("t:")) state.tagSelection.ids.add(k.slice(2));
+      if (k.startsWith("m:")) state.metaSelection.ids.add(k.slice(2));
+    }
+  
     state.tagSelection.anchorId = null;
-  
-    state.metaSelection.ids = outMeta;
     state.metaSelection.anchorId = null;
+    state._leftAnchorKey = null;
   
     // klasy bez przebudowy DOM
     for (const row of rows) {
-      const kind = row.dataset.kind;
-      const id = row.dataset.id;
-      const sel =
-        (kind === "tag" && outTags.has(id)) ||
-        (kind === "meta" && outMeta.has(id));
-      row.classList.toggle("is-selected", sel);
+      const key = leftKeyFromRow(row);
+      row.classList.toggle("is-selected", !!key && base.has(key));
     }
   }
 
