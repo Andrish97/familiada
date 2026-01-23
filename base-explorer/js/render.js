@@ -339,16 +339,20 @@ export function renderTags(state) {
   `;
 
   if (!tags.length) {
-    elTags.innerHTML =`
-      ${metaHeader}
-      <div class="tagList">${metaRows}</div>
-
-      <div style="height:10px;"></div>
-
-      ${header}
-      ${addBtn}
-      <div style="opacity:.75; padding:6px 8px;">Brak tagów.</div>
-      `;
+    elTags.innerHTML = `
+      <div style="opacity:.75; margin-bottom:6px;">Filtry</div>
+  
+      <div class="tagList">
+        ${metaHeader}
+        ${metaRows}
+  
+        <div style="height:10px;"></div>
+  
+        ${header}
+        ${addBtn}
+        <div style="opacity:.75; padding:6px 8px;">Brak tagów.</div>
+      </div>
+    `;
     return;
   }
 
@@ -368,16 +372,20 @@ export function renderTags(state) {
     })
     .join("");
 
-  elTags.innerHTML = `
+elTags.innerHTML = `
+  <div style="opacity:.75; margin-bottom:6px;">Filtry</div>
+
+  <div class="tagList">
     ${metaHeader}
-    <div class="tagList">${metaRows}</div>
+    ${metaRows}
 
     <div style="height:10px;"></div>
 
     ${header}
     ${addBtn}
-    <div class="tagList">${rows}</div>
-  `;
+    ${rows}
+  </div>
+`;
 }
 
 export function renderBreadcrumbs(state) {
