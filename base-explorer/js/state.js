@@ -1,12 +1,10 @@
 // base-explorer/js/state.js
 // Stan eksploratora bazy pytań (warstwa 2)
 
+// W BROWSE rozróżniamy tylko: root (folderId=null) i folder (folderId!=null).
 export const VIEW = {
-  ALL: "all",       // wszystkie pytania (w ramach bazy)
-  FOLDER: "folder", // konkretna kategoria (folder)
-  TAG: "tag",       // filtr tagów (wirtualny widok)
-  SEARCH: "search",
-  META: "meta",     // filtr “meta” (wirtualny widok)
+  ROOT: "root",
+  FOLDER: "folder",
 };
 
 export const MODE = {
@@ -44,31 +42,27 @@ export function createState({ baseId, role = "viewer" }) {
     tags: [],              // [{id,name,color,ord}]
     questions: [],         // aktualnie załadowane do widoku (zależnie od view)
     // opcjonalnie później: mapy pomocnicze (byId, childrenByParent) – tworzone w renderze lub osobno
-
-    // widok
-
-        // TRYB (rozłączny): BROWSE / SEARCH / FILTER
+    
     mode: MODE.BROWSE,
-
-    // powrót do ostatniego BROWSE
-    lastBrowse: { view: VIEW.ALL, folderId: null },
-
+    
+    // powrót do ostatniego BROWSE (root/folder)
+    lastBrowse: { folderId: null },
+    
     // FILTER: spójny filtr (tagi + meta)
     filter: {
       tagIds: new Set(),
       metaIds: new Set(),
     },
     
-    view: VIEW.ALL,
-    folderId: null,        // dla VIEW.FOLDER
-    tagIds: [],            // dla VIEW.TAG (multi)
-    searchQuery: "",
-        // search jako "tokeny" (jak iOS: tagi jako elementy + zwykły tekst)
-    searchRaw: "",         // dokładnie to co user wpisał w input (z #tagami, przecinkami itd.)
+    // BROWSE: null = root, string = folder
+    folderId: null,
+    
+    // SEARCH: tokeny
+    searchRaw: "",
     searchTokens: {
-      text: "",       // zwykły tekst (bez #tagów)
-      tagNames: [],   // np. ["pieski","kotki"] (bez #)
-      tagIds: [],     // resolved do state.tags (jeśli istnieją)
+      text: "",
+      tagNames: [],
+      tagIds: [],
     },
     
     sortMode: SORT.UPDATED_DESC,
@@ -123,89 +117,35 @@ export function setLoading(state, on) {
   state.ui.loading = !!on;
 }
 
-/* ===== Widok ===== */
-export function setViewAll(state) {
-  state.view = VIEW.ALL;
+
+/* ===== BROWSE (root/folder) ===== */
+export function setBrowseRoot(state) {
   state.folderId = null;
-  state.tagIds = [];
 }
 
-export function setViewFolder(state, folderId) {
-  state.view = VIEW.FOLDER;
+export function setBrowseFolder(state, folderId) {
   state.folderId = folderId || null;
-  state.tagIds = [];
-}
-
-export function setViewTags(state, tagIds) {
-  state.view = VIEW.TAG;
-  state.folderId = null;
-  state.tagIds = Array.isArray(tagIds) ? tagIds.filter(Boolean) : [];
-}
-
-export function setSearch(state, q) {
-  state.searchQuery = String(q || "").trim();
-}
-
-export function setSort(state, sortMode) {
-  state.sortMode = sortMode || SORT.UPDATED_DESC;
-}
-
-export function setViewSearch(state, query) {
-  state.view = VIEW.SEARCH;
-  state.searchQuery = String(query || "");
-}
-
-export function setSearchTokens(state, { text = "", tagNames = [], tagIds = [] } = {}) {
-  state.searchTokens = state.searchTokens || { text: "", tagNames: [], tagIds: [] };
-  state.searchTokens.text = String(text || "");
-  state.searchTokens.tagNames = Array.isArray(tagNames) ? tagNames.slice() : [];
-  state.searchTokens.tagIds = Array.isArray(tagIds) ? tagIds.slice() : [];
-
-  // dla kompatybilności: searchQuery to "widoczny" string (tu tekst + #tagi)
-  const tags = state.searchTokens.tagNames.map(n => `#${n}`).join(", ");
-  const t = String(state.searchTokens.text || "").trim();
-  state.searchQuery = [tags, t].filter(Boolean).join(tags && t ? " " : "");
-}
-
-export function clearSearchTokens(state) {
-  setSearchTokens(state, { text: "", tagNames: [], tagIds: [] });
 }
 
 export function rememberBrowseLocation(state) {
-  // zapamiętujemy tylko BROWSE (ALL/FOLDER)
-  if (state.view === VIEW.ALL || state.view === VIEW.FOLDER) {
-    const b = { view: state.view, folderId: state.folderId || null };
-    state.lastBrowse = b;
-    state._browse = b; // kompatybilność wstecz (będzie do usunięcia później)
+  // zapamiętujemy tylko BROWSE
+  if (state.mode === MODE.BROWSE) {
+    state.lastBrowse = { folderId: state.folderId || null };
   }
 }
 
 export function restoreBrowseLocation(state) {
-  // wyjście z widoków wirtualnych zawsze czyści ich parametry
-  state.tagIds = [];
-
-  const b = state.lastBrowse || state._browse;
-
-  if (b?.view === VIEW.FOLDER && b.folderId) {
-    state.view = VIEW.FOLDER;
-    state.folderId = b.folderId;
-    return;
-  }
-
-  state.view = VIEW.ALL;
-  state.folderId = null;
+  const b = state.lastBrowse || { folderId: null };
+  state.folderId = b.folderId || null;
 }
 
 /* ===== MODE (bramki przejść) ===== */
 
 export function enterSearchMode(state) {
-  // do SEARCH wchodzimy tylko “logicznie” z BROWSE:
-  // jeśli byliśmy w FILTER, najpierw go zamykamy
   if (state.mode === MODE.FILTER) exitFilterToBrowse(state);
-
-  rememberBrowseLocation(state);
+  // zapamiętaj BROWSE zanim wejdziesz w SEARCH
+  if (state.mode === MODE.BROWSE) rememberBrowseLocation(state);
   state.mode = MODE.SEARCH;
-  state.view = VIEW.SEARCH;
 }
 
 export function exitSearchToBrowse(state) {
@@ -214,10 +154,9 @@ export function exitSearchToBrowse(state) {
 }
 
 export function enterFilterModeFromLeft(state) {
-  // FILTER jest rozłączny z SEARCH
   if (state.mode === MODE.SEARCH) exitSearchToBrowse(state);
+  if (state.mode === MODE.BROWSE) rememberBrowseLocation(state);
 
-  rememberBrowseLocation(state);
   state.mode = MODE.FILTER;
 
   const tagIds = new Set(Array.from(state.tagSelection?.ids || []).filter(Boolean));
@@ -226,28 +165,30 @@ export function enterFilterModeFromLeft(state) {
   state.filter = state.filter || { tagIds: new Set(), metaIds: new Set() };
   state.filter.tagIds = tagIds;
   state.filter.metaIds = metaIds;
-
-  // kompatybilność z obecną logiką refreshList:
-  // - jeśli meta niepuste => VIEW.META
-  // - inaczej => VIEW.TAG
-  state.tagIds = Array.from(tagIds);
-  if (metaIds.size) state.view = VIEW.META;
-  else state.view = VIEW.TAG;
 }
 
 export function exitFilterToBrowse(state) {
   state.mode = MODE.BROWSE;
 
-  // czyścimy filtr
   if (state.filter?.tagIds) state.filter.tagIds.clear();
   if (state.filter?.metaIds) state.filter.metaIds.clear();
-  state.tagIds = [];
 
-  // czyścimy selekcje po lewej (bo to one tworzą FILTER)
   if (state.tagSelection?.ids) state.tagSelection.ids.clear();
   if (state.metaSelection?.ids) state.metaSelection.ids.clear();
 
   restoreBrowseLocation(state);
+}
+
+
+export function setSearchTokens(state, { text = "", tagNames = [], tagIds = [] } = {}) {
+  state.searchTokens = state.searchTokens || { text: "", tagNames: [], tagIds: [] };
+  state.searchTokens.text = String(text || "");
+  state.searchTokens.tagNames = Array.isArray(tagNames) ? tagNames.slice() : [];
+  state.searchTokens.tagIds = Array.isArray(tagIds) ? tagIds.slice() : [];
+}
+
+export function clearSearchTokens(state) {
+  setSearchTokens(state, { text: "", tagNames: [], tagIds: [] });
 }
 
 /* ===== Selekcja ===== */
