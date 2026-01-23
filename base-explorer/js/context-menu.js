@@ -2,7 +2,7 @@
 
 import {
   MODE,
-  setViewFolder,
+  setBrowseFolder,
   selectionSetSingle,
   exitSearchToBrowse,
   exitFilterToBrowse,
@@ -259,78 +259,81 @@ export async function showContextMenu({ state, x, y, target }) {
         await createQuestionHere(state, { categoryId });
       }
     });
-
-    pushSep(items);
+  
+      pushSep(items);
   }
-
-  // SCHOWEK
-  const canPaste = !!state?.clipboard?.mode && !!state?.clipboard?.keys?.size;
-  const pasteDisabled = isVirtual || !canPaste || (!editor && state.clipboard?.mode === "cut");
-
-  items.push({
-    label: "Kopiuj",
-    disabled: !editor || isVirtual || target.kind === "root",
-    action: async () => { copySelectedToClipboard(state); }
-  });
-
-  items.push({
-    label: "Wytnij",
-    disabled: !editor || isVirtual || target.kind === "root",
-    action: async () => { cutSelectedToClipboard(state); }
-  });
-
-  items.push({
-    label: "Wklej",
-    disabled: pasteDisabled || !editor,
-    action: async () => {
-      if (isVirtual) return;
-      await pasteClipboardHere(state);
-    }
-  });
-
-  items.push({
-    label: "Duplikuj",
-    disabled: !editor || isVirtual || target.kind === "root",
-    action: async () => {
-      try {
-        await duplicateSelected(state);
-      } catch (e) {
-        console.error(e);
-        alert("Nie udało się zduplikować.");
-      }
-    }
-  });
-
-  // TAGI… (dla cat/q)
-  if (target.kind === "cat" || target.kind === "q") {
-    pushSep(items);
-
+  
+    // SCHOWEK
+    const canPaste = !!state?.clipboard?.mode && !!state?.clipboard?.keys?.size;
+    const pasteDisabled = isVirtual || !canPaste || (!editor && state.clipboard?.mode === "cut");
+  
     items.push({
-      label: "Tagi…",
-      disabled: !editor,
+      label: "Kopiuj",
+      disabled: !editor || isVirtual || target.kind === "root",
+      action: async () => { copySelectedToClipboard(state); }
+    });
+  
+    items.push({
+      label: "Wytnij",
+      disabled: !editor || isVirtual || target.kind === "root",
+      action: async () => { cutSelectedToClipboard(state); }
+    });
+  
+    items.push({
+      label: "Wklej",
+      disabled: pasteDisabled || !editor,
       action: async () => {
-        const key = (target.kind === "cat") ? `c:${target.id}` : `q:${target.id}`;
-        if (!state.selection?.keys?.has?.(key)) {
-          selectionSetSingle(state, key);
-        }
-        await state._api?.openAssignTagsModal?.();
+        if (isVirtual) return;
+        await pasteClipboardHere(state);
       }
     });
-  }
-
-  // FOLDER (cat)
-  if (target.kind === "cat") {
-    pushSep(items);
-
+  
+    items.push({
+      label: "Duplikuj",
+      disabled: !editor || isVirtual || target.kind === "root",
+      action: async () => {
+        try {
+          await duplicateSelected(state);
+        } catch (e) {
+          console.error(e);
+          alert("Nie udało się zduplikować.");
+        }
+      }
+    });
+  
+    // TAGI… (dla cat/q)
+    if (target.kind === "cat" || target.kind === "q") {
+      pushSep(items);
+  
+      items.push({
+        label: "Tagi…",
+        disabled: !editor,
+        action: async () => {
+          const key = (target.kind === "cat") ? `c:${target.id}` : `q:${target.id}`;
+          if (!state.selection?.keys?.has?.(key)) {
+            selectionSetSingle(state, key);
+          }
+          await state._api?.openAssignTagsModal?.();
+        }
+      });
+    }
+  
+    // FOLDER (cat)
     items.push({
       label: "Otwórz folder",
       disabled: false,
       action: async () => {
+        // Reguła nadrzędna: wirtualne tryby nie trzymają nawigacji
         if (state.mode === MODE.SEARCH) exitSearchToBrowse(state);
         if (state.mode === MODE.FILTER) exitFilterToBrowse(state);
-
-        setViewFolder(state, target.id);
+    
+        // Wejście do folderu w BROWSE
+        setBrowseFolder(state, target.id);
+    
+        // Czyścimy selekcję po prawej (Explorer-style)
         state.selection?.keys?.clear?.();
+        state.selection.anchorKey = null;
+    
         await state._api?.refreshList?.();
       }
     });
