@@ -1,7 +1,7 @@
 // base-explorer/js/render.js
 // Renderowanie UI eksploratora na podstawie state (bez DB, bez akcji).
 
-import { VIEW, META, META_ORDER } from "./state.js";
+import { META, META_ORDER, MODE } from "./state.js";
 
 /* ================= DOM ================= */
 const elBaseName = document.getElementById("baseName");
@@ -140,13 +140,13 @@ export function renderToolbar(state) {
 
   // FILTER blokuje wyszukiwarkę
   if (inp) {
-    const locked = (state.mode === "filter"); // MODE.FILTER
+    const locked = (state.mode === MODE.FILTER);// MODE.FILTER
     inp.toggleAttribute("disabled", locked);
     inp.toggleAttribute("readonly", locked);
   }
   const clearBtn = document.getElementById("searchClearBtn");
   if (clearBtn) {
-    clearBtn.toggleAttribute("disabled", state.mode === "filter");
+    clearBtn.toggleAttribute("disabled", state.mode === MODE.FILTER);
   }
 
   const tokens = state.searchTokens || { text: state.searchQuery || "", tagNames: [], tagIds: [] };
@@ -276,7 +276,7 @@ export function renderTree(state) {
       const id = c.id;
       const canToggle = hasChildren(id);
       const isOpen = canToggle ? open.has(id) : false;
-      const isActive = (state.view === VIEW.FOLDER && state.folderId === id);
+      const isActive = (state.mode === MODE.BROWSE && state.folderId === id);
 
       out += rowHtml({
         kind: "cat",
@@ -296,7 +296,7 @@ export function renderTree(state) {
   }
 
   // Root jako osobny wiersz
-  const rootActive = (state.view === VIEW.ALL);
+  const rootActive = (state.mode === MODE.BROWSE && !state.folderId);
 
   const rootHtml = rowHtml({
     kind: "root",
@@ -400,15 +400,16 @@ elTags.innerHTML = `
 }
 
 export function renderBreadcrumbs(state) {
+  if (!elBreadcrumbs) return;
 
-  if (state.view === VIEW.SEARCH || state.view === VIEW.TAG) {
+  // W trybach wirtualnych (SEARCH/FILTER) breadcrumbs ukrywamy
+  if (state.mode === MODE.SEARCH || state.mode === MODE.FILTER) {
     elBreadcrumbs.hidden = true;
     elBreadcrumbs.innerHTML = "";
     return;
   }
+
   elBreadcrumbs.hidden = false;
-  
-  if (!elBreadcrumbs) return;
 
   const byId = new Map((state.categories || []).map(c => [c.id, c]));
   const parts = [];
@@ -416,8 +417,8 @@ export function renderBreadcrumbs(state) {
   // Root zawsze istnieje
   parts.push({ id: null, name: "Folder główny" });
 
-  if (state.view === VIEW.FOLDER && state.folderId) {
-    // zbuduj ścieżkę od folderId do root
+  // W BROWSE: jeśli mamy folderId, budujemy ścieżkę
+  if (state.mode === MODE.BROWSE && state.folderId) {
     let cur = byId.get(state.folderId);
     const chain = [];
     let guard = 0;
@@ -432,7 +433,6 @@ export function renderBreadcrumbs(state) {
     for (const x of chain) parts.push(x);
   }
 
-  // render jako klikalne segmenty (na razie tylko root + foldery)
   elBreadcrumbs.innerHTML = parts.map((p, i) => {
     const sep = i ? `<span style="opacity:.5; padding:0 6px;">/</span>` : ``;
     const idAttr = (p.id === null) ? "" : `data-id="${esc(p.id)}"`;
