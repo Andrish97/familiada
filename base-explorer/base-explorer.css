@@ -683,3 +683,115 @@ input, textarea{ user-select:text; }
   opacity: 0;
   transform: translateY(-2px) scale(0.98);
 }
+
+/* ===== Tags modal (overlay/modal jak bases) ===== */
+.tags-modal{
+  width: min(720px, 94vw);
+}
+
+.tags-layer{
+  display:block;
+}
+
+.tagsHead{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  margin-bottom:10px;
+}
+
+.tagsFoot{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  margin-top:14px;
+  padding-top:12px;
+  border-top: 1px solid rgba(255,255,255,.12);
+}
+.tagsFootSpacer{ flex:1; }
+
+.tagsPickList{
+  margin-top: 10px;
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 12px;
+  padding: 8px;
+  max-height: 320px;
+  overflow: auto;
+}
+
+.tagsPickItem{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding: 10px 10px;
+  border-radius: 10px;
+  cursor:pointer;
+  user-select:none;
+}
+.tagsPickItem:hover{ background: rgba(255,255,255,.06); }
+
+.tagsPickItem .nm{
+  font-weight: 900;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex:1;
+}
+.tagsPickItem .meta{
+  opacity:.75;
+  font-size: 11px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.tagsPickItem input{
+  transform: scale(1.05);
+}
+
+.tagsEditGrid{
+  display:grid;
+  gap:12px;
+  margin-top: 12px;
+}
+
+.tagsNameCenter{
+  text-align:center;
+  font-weight: 1000;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.tagsColorTile{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:12px;
+  width: 100%;
+  min-height: 92px;
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,.22);
+  background: rgba(255,255,255,.04);
+  cursor:pointer;
+}
+.tagsColorTile:hover{
+  background: rgba(255,255,255,.06);
+  border-color: rgba(255,234,166,.55);
+}
+
+.tagsColorDot{
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.18);
+  box-shadow: 0 0 0 2px rgba(0,0,0,.25) inset;
+}
+
+.tagsColorLbl{
+  font-weight:1000;
+  letter-spacing:.06em;
+  text-transform: uppercase;
+  opacity: .9;
+}
