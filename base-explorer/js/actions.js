@@ -2290,6 +2290,61 @@ export function wireActions({ state }) {
   toolbarEl?.addEventListener("keydown", async (e) => {
     const t = e.target;
     if (!t || t.id !== "searchText") return;
+
+    // w FILTER wyszukiwarka jest zablokowana
+    if (state.mode === MODE.FILTER) return;
+  
+    // COMMIT #tag tylko na: spacja / przecinek / Enter
+    if (e.key === " " || e.key === "," || e.key === "Enter") {
+      const val = String(t.value || "");
+      const caret = (typeof t.selectionStart === "number") ? t.selectionStart : val.length;
+  
+      // patrzymy tylko na fragment DO kursora
+      const left = val.slice(0, caret);
+  
+      // szukamy #tag na końcu (tuż przed commit znakiem)
+      // dopuszczamy np. "abc #tag" albo "#tag"
+      const m = left.match(/(^|\s)#([^\s,#]+)$/);
+      if (m && m[2]) {
+        const name = String(m[2]).trim();
+        const existing = filterExistingTagNames(state, [name]); // zwróci [name] jeśli istnieje
+        if (existing.length) {
+          const id = resolveTagIdsByNames(state, existing)[0];
+          if (id) {
+            e.preventDefault();
+  
+            // dodaj tag do chipów (bez duplikatów)
+            const prevIds = Array.isArray(state.searchTokens?.tagIds) ? state.searchTokens.tagIds : [];
+            const nextIds = Array.from(new Set([...prevIds, id]));
+  
+            // usuń z inputa fragment "#tag" (zostaw 1 spację w miejscu, żeby nie sklejać słów)
+            const hashStart = left.lastIndexOf("#");
+            const before = val.slice(0, hashStart);
+            const after = val.slice(caret);
+  
+            // porządkujemy spacje: dokładnie jedna spacja na końcu "before"
+            const beforeNorm = (before.replace(/\s+$/g, "") + " ");
+  
+            const nextVal = (beforeNorm + after).replace(/\s+/g, " ").replace(/^\s+/g, "");
+            t.value = nextVal;
+  
+            // ustaw kursor na końcu "beforeNorm"
+            const nextCaret = Math.min(beforeNorm.length, t.value.length);
+            try { t.setSelectionRange(nextCaret, nextCaret); } catch {}
+  
+            // zaktualizuj searchTokens: tekst = to co w input, tagIds = nextIds
+            state.searchTokens = { text: String(t.value || ""), tagIds: nextIds };
+  
+            // jeśli nie byliśmy w SEARCH – wejdź
+            if (state.mode !== MODE.SEARCH) enterSearchMode(state);
+  
+            selectionClear(state);
+            await refreshList(state);
+            return;
+          }
+        }
+      }
+    }
   
     // Backspace na pustym polu usuwa ostatni chip
     if (e.key === "Backspace") {
