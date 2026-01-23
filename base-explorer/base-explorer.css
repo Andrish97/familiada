@@ -889,3 +889,11 @@ input, textarea{ user-select:text; }
 .m-icon-btn:hover {
   background: rgba(255,255,255,.10);
 }
+
+/* systemowe meta-tagi – klikane, ale “nie do ruszania” */
+.is-system-tag{
+  opacity:.92;
+}
+.is-system-tag:hover{
+  background: rgba(255,255,255,.04);
+}
