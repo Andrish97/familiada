@@ -3,14 +3,25 @@
 
 import {
   VIEW,
+  MODE,
+
   setViewAll,
   setViewFolder,
   selectionClear,
   selectionSetSingle,
   selectionToggle,
-  setViewSearch,
+
+  setViewSearch, // zostaje chwilowo (kompatybilność)
   rememberBrowseLocation,
   restoreBrowseLocation,
+
+  clearSearchTokens,
+
+  enterSearchMode,
+  exitSearchToBrowse,
+  enterFilterModeFromLeft,
+  exitFilterToBrowse,
+
   tagSelectionClear,
   metaSelectionClear,
 } from "./state.js";
@@ -2061,70 +2072,25 @@ export function wireActions({ state }) {
   }
   
   // Jedno źródło prawdy: z selekcji po lewej budujemy view + filtry
-  async function applyLeftFiltersView() {
+   async function applyLeftFiltersView() {
     ensureLeftSelections(state);
-  
-    const metaIds = Array.from(state.metaSelection.ids || []).filter(Boolean);
-    const tagIds = Array.from(state.tagSelection.ids || []).filter(Boolean);
-  
-    const hasMeta = metaIds.length > 0;
-    const hasTags = tagIds.length > 0;
-  
-    // Zawsze trzymaj state.tagIds spójne z tagSelection
-    state.tagIds = tagIds;
-  
-    if (!hasMeta && !hasTags) {
-      if (state.view === VIEW.TAG || state.view === VIEW.META) restoreBrowseLocation(state);
-      selectionClear(state);
-      await refreshList(state);
-      return;
-    }
-  
-    if (hasMeta) {
-      if (state.view !== VIEW.META) rememberBrowseLocation(state);
-      state.view = VIEW.META;
-      selectionClear(state);
-      await refreshList(state);
-      return;
-    }
-  
-    // tylko tagi
-    if (state.view !== VIEW.TAG) rememberBrowseLocation(state);
-    state.view = VIEW.TAG;
-    selectionClear(state);
-    await refreshList(state);
-  }
-  
-  async function applyLeftFiltersView() {
+
     const hasMeta = !!state?.metaSelection?.ids?.size;
-    const tagIds = Array.isArray(state.tagSelection?.ids ? Array.from(state.tagSelection.ids) : []) 
-      ? Array.from(state.tagSelection.ids)
-      : [];
-  
-    const hasTags = tagIds.length > 0;
-  
+    const hasTags = !!state?.tagSelection?.ids?.size;
+
+    // jeśli nic nie wybrane, a byliśmy w FILTER -> wyjdź do BROWSE
     if (!hasMeta && !hasTags) {
-      if (state.view === VIEW.TAG || state.view === VIEW.META) restoreBrowseLocation(state);
-      state.tagIds = [];
-      selectionClear(state);
-      await refreshList(state);
+      if (state.mode === MODE.FILTER) {
+        exitFilterToBrowse(state);
+        selectionClear(state);
+        await refreshList(state);
+      }
       return;
     }
-  
-    if (hasMeta) {
-      if (state.view !== VIEW.META) rememberBrowseLocation(state);
-      state.view = VIEW.META;
-      // tagi w META biorą się z state.tagIds (u Ciebie META filtruje też tagami)
-      state.tagIds = tagIds;
-      selectionClear(state);
-      await refreshList(state);
-      return;
-    }
-  
-    // tylko tagi
-    if (state.view !== VIEW.TAG) rememberBrowseLocation(state);
-    state.view = VIEW.TAG;
-    state.tagIds = tagIds;
+
+    // wejście do FILTER (zawsze) na podstawie selekcji po lewej
+    enterFilterModeFromLeft(state);
+
     selectionClear(state);
     await refreshList(state);
   }
@@ -2209,6 +2175,9 @@ export function wireActions({ state }) {
   toolbarEl?.addEventListener("input", async (e) => {
     const t = e.target;
     if (!t || t.id !== "searchText") return;
+
+    // W FILTER wyszukiwarka jest zablokowana – ignoruj zdarzenia na wszelki wypadek
+    if (state.mode === MODE.FILTER) return;
   
     const raw = String(t.value || "");
   
@@ -2235,44 +2204,26 @@ export function wireActions({ state }) {
     // tagIds = dokładnie to, co istnieje i co user wpisał (bez merge)
     const tagIds = resolvedIds;
     
-    // Ustaw lewą selekcję tagów TAK SAMO jak klik (żeby UI było spójne)
-    if (!state.tagSelection) state.tagSelection = { ids: new Set(), anchorId: null };
-    state.tagSelection.ids = new Set(tagIds);
-    state.tagSelection.anchorId = tagIds.length ? tagIds[tagIds.length - 1] : null;
-    
     // SearchTokens tylko do chipsów + tekstu
     state.searchTokens = { text: nextText, tagIds };
-    
-    // Widok:
-    // - tekst => SEARCH (bo łączy tekst+tagi)
-    // - brak tekstu, są tagi => TAG (jak zaznaczenie)
-    // - pusto => wyjście do browse
+
     const isEmpty = (!nextText.trim() && !tagIds.length);
-    
+
     if (isEmpty) {
-      if (state.view === VIEW.SEARCH || state.view === VIEW.TAG) restoreBrowseLocation(state);
+      // wyjście z SEARCH do lastBrowse
+      if (state.mode === MODE.SEARCH) exitSearchToBrowse(state);
       selectionClear(state);
       await refreshList(state);
       return;
     }
-    
-    if (nextText.trim()) {
-      // SEARCH
-      if (state.view !== VIEW.SEARCH) rememberBrowseLocation(state);
-      setViewSearch(state, ""); // query trzymamy w tokens
-      selectionClear(state);
-      await refreshList(state);
-      return;
-    }
-    
-    // tylko tagi => TAG jak zaznaczenie
-    if (state.view !== VIEW.TAG) rememberBrowseLocation(state);
-    state.view = VIEW.TAG;
-    state.tagIds = tagIds;
-    
+
+    // wejście do SEARCH (zawsze) — SEARCH = (tekst lub #tagi)
+    if (state.mode !== MODE.SEARCH) enterSearchMode(state);
+
     selectionClear(state);
     await refreshList(state);
     return;
+    
   });
 
   toolbarEl?.addEventListener("click", async (e) => {
@@ -2328,11 +2279,13 @@ export function wireActions({ state }) {
         
         const inp = document.getElementById("searchText");
         if (inp) inp.value = "";
-        state.searchTokens = { text: "", tagIds: [] };
-        state.searchQuery = "";
-        
-        if (state.view === VIEW.SEARCH) restoreBrowseLocation(state);
+
+        clearSearchTokens(state);
+
+        if (state.mode === MODE.SEARCH) exitSearchToBrowse(state);
+
         selectionClear(state);
+        await refreshList(state);
         await refreshList(state);
         
         document.getElementById("searchText")?.focus();
@@ -2371,7 +2324,7 @@ export function wireActions({ state }) {
   
         // jeśli już nic nie ma: wyjdź z SEARCH
         if (!next.length) {
-          if (state.view === VIEW.SEARCH) restoreBrowseLocation(state);
+          if (state.mode === MODE.SEARCH) exitSearchToBrowse(state);
         }
   
         selectionClear(state);
@@ -2404,6 +2357,7 @@ export function wireActions({ state }) {
   });
 
   tagsEl?.addEventListener("click", async (e) => {
+    if (state.mode === MODE.SEARCH) return;
     // 0) klik w "Dodaj tag"
     const btn = e.target?.closest?.("#btnAddTag");
     if (btn) {
@@ -2444,6 +2398,7 @@ export function wireActions({ state }) {
 
   // PPM na tagach (tag + puste tło)
   tagsEl?.addEventListener("contextmenu", async (e) => {
+    if (state.mode === MODE.SEARCH) return;
     e.preventDefault();
   
     const row = e.target?.closest?.('.row[data-kind][data-id]');
@@ -2532,6 +2487,8 @@ export function wireActions({ state }) {
   }
 
   treeEl?.addEventListener("click", async (e) => {
+
+    if (state.mode !== MODE.BROWSE) return;
     // 0) klik w puste tło drzewa = czyść selekcję
     if (e.target === treeEl || e.target?.closest?.(".treeList") === null) {
       selectionClear(state);
@@ -3245,6 +3202,7 @@ export function wireActions({ state }) {
 
   tagsEl?.addEventListener("mousedown", (e) => {
     if (e.button !== 0) return;
+    if (state.mode === MODE.SEARCH) return;
 
     // klik w "Dodaj tag" nie startuje marquee
     if (e.target?.closest?.("#btnAddTag")) return;
