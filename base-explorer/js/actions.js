@@ -2535,8 +2535,8 @@ export function wireActions({ state }) {
     // 1) klik w tag-row = selekcja (ctrl/shift)
     const row = e.target?.closest?.('.row[data-kind="tag"][data-id]');
     if (!row) {
+      tagSelectionClear(state);
       await applyTagSelectionView(state);
-      return;
     }
   
     const tagId = row.dataset.id;
