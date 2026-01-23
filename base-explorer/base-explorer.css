@@ -759,9 +759,8 @@ input, textarea{ user-select:text; }
 
 .tagsNameCenter{
   text-align:center;
-  font-weight: 1000;
+  font-weight: 500;
   letter-spacing: .06em;
-  text-transform: uppercase;
 }
 
 .tagsColorTile{
