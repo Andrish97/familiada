@@ -1217,3 +1217,63 @@ input, textarea{ user-select:text; }
 
 .list-head .active[data-dir="asc"]::after{ content:"▲"; }
 .list-head .active[data-dir="desc"]::after{ content:"▼"; }
+
+/* ===== Toolbar (ikonowy) ===== */
+.toolbar{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:10px 12px;
+}
+
+.tbGroup{
+  display:flex;
+  gap:6px;
+  align-items:center;
+}
+
+.tbSep{
+  width:1px;
+  height:28px;
+  background: rgba(255,255,255,.14);
+  border-radius:999px;
+}
+
+.tbBtn{
+  width:38px;
+  height:38px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,.14);
+  background: rgba(255,255,255,.04);
+  color: rgba(255,255,255,.85);
+  cursor:pointer;
+  user-select:none;
+}
+.tbBtn:hover{ background: rgba(255,255,255,.07); }
+.tbBtn:active{ transform: translateY(1px); }
+
+.tbBtn.primary{
+  background: rgba(120,160,255,.16);
+  border-color: rgba(120,160,255,.35);
+}
+.tbBtn.danger{
+  background: rgba(255,120,120,.10);
+  border-color: rgba(255,120,120,.25);
+  color: rgba(255,200,200,.92);
+}
+
+.tbBtn[disabled]{
+  opacity:.45;
+  cursor:default;
+  transform:none;
+}
+
+.tbIco{
+  width:18px;
+  height:18px;
+  fill: currentColor;
+  display:block;
+}
