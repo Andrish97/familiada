@@ -52,6 +52,8 @@ export function createState({ baseId, role = "viewer" }) {
       tagIds: [],     // resolved do state.tags (jeśli istnieją)
     },
     
+    sort: { key: "name", dir: "asc" },
+    
     sortMode: SORT.UPDATED_DESC,
 
     // selekcja (jak w explorerze)
