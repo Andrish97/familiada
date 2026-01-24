@@ -25,6 +25,49 @@ function isSelected(state, key) {
   return state.selection?.keys?.has(key);
 }
 
+function toTime(v) {
+  // obsługa: ISO string / timestamp / null
+  const t = (v ? Date.parse(String(v)) : NaN);
+  return Number.isFinite(t) ? t : 0;
+}
+
+function fmtDate(v) {
+  const t = toTime(v);
+  if (!t) return "—";
+  const d = new Date(t);
+  // prosto i czytelnie: YYYY-MM-DD HH:MM (lokalnie)
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function getFolderMetaRank(state, folderId) {
+  // sort "Typ" wg meta folderu: prepared -> poll_points -> poll_text -> brak
+  const order = Array.isArray(META_ORDER) ? META_ORDER : [];
+  const map = state._allCategoryMetaMap || null; // Map(cid -> Set(metaId))
+  if (!map) return 999;
+
+  const set = map.get(folderId);
+  if (!set || !set.size) return 999;
+
+  // bierzemy "najwyższy" priorytet wg META_ORDER
+  let best = 999;
+  for (const id of set) {
+    const idx = order.indexOf(id);
+    if (idx !== -1 && idx < best) best = idx;
+  }
+  return best;
+}
+
+function getItemTypeSortKey(item, state) {
+  // najpierw wg meta-ranku folderu, potem folder/pytanie
+  if (item.kind === "cat") {
+    const r = getFolderMetaRank(state, item.id);
+    // foldery bez meta na końcu wśród folderów
+    return `0:${String(r).padStart(3, "0")}:folder`;
+  }
+  return `1:999:question`;
+}
+
 function tagDotsHtml(state, id, kind /* "q" | "c" */) {
   const tags = Array.isArray(state.tags) ? state.tags : [];
   if (!tags.length) return "";
@@ -436,74 +479,150 @@ export function renderList(state) {
 
   const foldersRaw = Array.isArray(state.folders) ? state.folders : [];
   const questionsRaw = Array.isArray(state.questions) ? state.questions : [];
-  
-  const sortKey = state?.sort?.key || "ord";
-  const sortDir = state?.sort?.dir || "asc";
-  const mul = sortDir === "desc" ? -1 : 1;
-  
-  const byName = (a, b) => String(a || "").localeCompare(String(b || ""), "pl", { sensitivity: "base" }) * mul;
-  const byOrd = (a, b) => ((Number(a) || 0) - (Number(b) || 0)) * mul;
-  
-  const folders = foldersRaw.slice().sort((a, b) => {
-    if (sortKey === "name") return byName(a.name, b.name);
-    return byOrd(a.ord, b.ord);
-  });
-  
-  const questions = questionsRaw.slice().sort((a, b) => {
-    if (sortKey === "name") {
-      const ta = String(a?.payload?.text ?? a?.text ?? "");
-      const tb = String(b?.payload?.text ?? b?.text ?? "");
-      return byName(ta, tb);
-    }
-    return byOrd(a.ord, b.ord);
-  });
 
-  if (!folders.length && !questions.length) {
+  const sortKey = state?.sort?.key || "name";    // "name" | "type" | "date"
+  const sortDir = state?.sort?.dir || "asc";     // "asc" | "desc"
+  const mul = (sortDir === "desc") ? -1 : 1;
+
+  const byNamePL = (a, b) =>
+    String(a || "").localeCompare(String(b || ""), "pl", { sensitivity: "base" }) * mul;
+
+  const items = [];
+
+  for (const c of foldersRaw) {
+    items.push({
+      kind: "cat",
+      id: c.id,
+      name: c.name || "Folder",
+      date: toTime(c.updated_at || c.created_at),
+      raw: c,
+    });
+  }
+
+  for (const q of questionsRaw) {
+    const text = q?.payload?.text ?? q?.text ?? "Pytanie";
+    items.push({
+      kind: "q",
+      id: q.id,
+      name: text,
+      date: toTime(q.updated_at || q.created_at),
+      raw: q,
+    });
+  }
+
+  if (!items.length) {
     elList.innerHTML = `<div style="opacity:.75">Brak elementów.</div>`;
     return;
   }
 
+  function cmp(a, b) {
+    if (sortKey === "name") {
+      const r = byNamePL(a.name, b.name);
+      if (r) return r;
+      // stabilizuj po typie i dacie
+      const t = getItemTypeSortKey(a, state).localeCompare(getItemTypeSortKey(b, state)) * mul;
+      if (t) return t;
+      return (a.date - b.date) * mul;
+    }
+
+    if (sortKey === "type") {
+      const ta = getItemTypeSortKey(a, state);
+      const tb = getItemTypeSortKey(b, state);
+      const r = ta.localeCompare(tb) * mul;
+      if (r) return r;
+      return byNamePL(a.name, b.name);
+    }
+
+    if (sortKey === "date") {
+      const r = ((a.date || 0) - (b.date || 0)) * mul;
+      if (r) return r;
+      return byNamePL(a.name, b.name);
+    }
+
+    // fallback: name
+    return byNamePL(a.name, b.name);
+  }
+
+  items.sort(cmp);
+
+  // ===== HEAD (Nr | Nazwa | Typ | Data | Meta) =====
+  const head = `
+    <div class="list-head">
+      <div class="h-num">Nr</div>
+      <div class="h-main ${sortKey === "name" ? "active" : ""}" data-sort-key="name" data-dir="${esc(sortDir)}">Nazwa</div>
+      <div class="h-type ${sortKey === "type" ? "active" : ""}" data-sort-key="type" data-dir="${esc(sortDir)}">Typ</div>
+      <div class="h-date ${sortKey === "date" ? "active" : ""}" data-sort-key="date" data-dir="${esc(sortDir)}">Data</div>
+      <div class="h-meta">Meta</div>
+    </div>
+  `;
+
+  // ===== ROWS =====
   let n = 1;
 
-  const folderRows = folders.map((c) => {
-    const key = `c:${c.id}`;
+  const rows = items.map((it) => {
+    const key = (it.kind === "cat") ? `c:${it.id}` : `q:${it.id}`;
     const selClass = isSelected(state, key) ? " is-selected" : "";
-    const draggable = (state.role === "owner" || state.role === "editor") ? `draggable="true"` : ``; 
-    return `<div class="row${selClass}" ${draggable} data-kind="cat" data-id="${esc(c.id)}" style="cursor:pointer;">
-      <div class="col-num">${n++}</div>
-      <div class="col-main">
-        <div class="title-line">
-          <span class="title-text">📁 ${esc(c.name || "Folder")}</span>
-          ${tagDotsHtml(state, c.id, "c")}
+    const draggable = (state.role === "owner" || state.role === "editor") ? `draggable="true"` : ``;
+
+    if (it.kind === "cat") {
+      const c = it.raw;
+
+      // Typ: Folder + kropki meta (kategorie)
+      const typeHtml = `
+        <span style="opacity:.85;">Folder</span>
+        <span style="margin-left:8px;">${metaDotsHtml(state, c.id, "c")}</span>
+      `;
+
+      // Meta: liczba elementów folderu – BEST EFFORT
+      // (jeśli masz kiedyś mapę, podepnij ją tu; na razie pokazuję "—")
+      const metaTxt = "—";
+
+      return `
+        <div class="row${selClass}" ${draggable} data-kind="cat" data-id="${esc(c.id)}" style="cursor:pointer;">
+          <div class="col-num">${n++}</div>
+
+          <div class="col-main">
+            <div class="title-line">
+              <span class="title-text">📁 ${esc(c.name || "Folder")}</span>
+              ${tagDotsHtml(state, c.id, "c")}
+            </div>
+          </div>
+
+          <div class="col-type">${typeHtml}</div>
+          <div class="col-date">${esc(fmtDate(c.updated_at || c.created_at))}</div>
+          <div class="col-meta">${esc(metaTxt)}</div>
         </div>
-      </div>
-      <div class="col-meta">${metaDotsHtml(state, c.id, "c")}</div>
-    </div>`;
+      `;
+    } else {
+      const q = it.raw;
+      const text = q?.payload?.text ?? q?.text ?? "";
+
+      const answersCount = Array.isArray(q?.payload?.answers) ? q.payload.answers.length : 0;
+      const metaTxt = answersCount ? `${answersCount} odp.` : "—";
+
+      const typeHtml = `
+        <span style="opacity:.85;">Pytanie</span>
+        <span style="margin-left:8px;">${metaDotsHtml(state, q.id, "q")}</span>
+      `;
+
+      return `
+        <div class="row${selClass}" ${draggable} data-kind="q" data-id="${esc(q.id)}" style="cursor:pointer;">
+          <div class="col-num">${n++}</div>
+
+          <div class="col-main">
+            <div class="title-line">
+              <span class="title-text">${esc(text || "Pytanie")}</span>
+              ${tagDotsHtml(state, q.id, "q")}
+            </div>
+          </div>
+
+          <div class="col-type">${typeHtml}</div>
+          <div class="col-date">${esc(fmtDate(q.updated_at || q.created_at))}</div>
+          <div class="col-meta">${esc(metaTxt)}</div>
+        </div>
+      `;
+    }
   }).join("");
 
-  const qRows = questions.map((q, idx) => {
-    const key = `q:${q.id}`;
-    const selClass = isSelected(state, key) ? " is-selected" : "";
-
-    const text = q?.payload?.text ?? q?.text ?? "";
-
-    const answersCount = Array.isArray(q?.payload?.answers) ? q.payload.answers.length : 0;
-    const meta = answersCount ? `${answersCount} odp.` : "";
-    const draggable = (state.role === "owner" || state.role === "editor") ? `draggable="true"` : ``; 
-    return `<div class="row${selClass}" ${draggable} data-kind="q" data-id="${esc(q.id)}" style="cursor:pointer;">
-      <div class="col-num">${n++}</div>
-      <div class="col-main">
-        <div class="title-line">
-          <span class="title-text">${esc(text || "Pytanie")}</span>
-          ${tagDotsHtml(state, q.id, "q")}
-        </div>
-      </div>
-      <div class="col-meta">
-        ${metaDotsHtml(state, q.id, "q")}
-        ${meta ? `<span style="margin-left:8px; opacity:.75;">${esc(meta)}</span>` : ""}
-      </div>
-    </div>`;
-  }).join("");
-
-  elList.innerHTML = folderRows + qRows;
+  elList.innerHTML = head + rows;
 }
