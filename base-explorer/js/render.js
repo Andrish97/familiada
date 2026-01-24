@@ -288,57 +288,98 @@ export function renderToolbar(state) {
     }
   }
 
-  // 3) Disable przycisków toolbar – spójnie z actions/context-menu
+  // 3) Disable przycisków toolbar – spójnie z actions/context-menu + reguły selekcji (0/1/wiele)
   const editor = (state.role === "owner" || state.role === "editor");
   
+  // Tylko realne elementy listy (foldery/pytania). Root/tag/meta nie liczą się do selekcji toolbara.
   const realKeys = Array.from(state.selection?.keys || []).filter((k) => {
     if (!k) return false;
-    if (k === "root") return false;
     const s = String(k);
     return s.startsWith("c:") || s.startsWith("q:");
   });
-  const oneSelected = realKeys.length === 1;
-  const oneIsQuestion = oneSelected && String(realKeys[0]).startsWith("q:");
+  
+  const selCount = realKeys.length;
+  const hasSel = selCount > 0;
+  const oneSel = selCount === 1;
+  const manySel = selCount > 1;
   
   const hasClipboard = !!state?.clipboard?.mode && !!state?.clipboard?.keys?.size;
   
+  // Twoje “poprzednie narzucone reguły” (role + widoki) zostają:
+  const canMutate = editor && (state.view !== VIEW.SEARCH && state.view !== VIEW.TAG && state.view !== VIEW.META);
+  const canDelete = editor && (state.view !== VIEW.META);
+  const canCut = editor && (state.view !== VIEW.SEARCH && state.view !== VIEW.TAG && state.view !== VIEW.META);
+  const canCopy = editor; // copy nie było blokowane view’ami, tylko rolą
+  const canEditTags = editor; // view dopuszczasz (w Twoim opisie: “jeśli jest selekcja”)
+  const canCreateGame = editor; // placeholder, ale blokuj viewer
+  const canEditQuestion = editor; // placeholder, ale blokuj viewer
+  const canRename = canMutate; // rename = mutacja
+  
   const dis = new Map();
   
-  // tworzenie: tylko editor i nie w widokach wirtualnych (SEARCH/TAG/META)
-  const canMutate = editor && (state.view !== VIEW.SEARCH && state.view !== VIEW.TAG && state.view !== VIEW.META);
-  dis.set("newFolder", !canMutate);
-  dis.set("newQuestion", !canMutate);
+  // === TWORZENIE ===
+  // NOWY WARUNEK: “Nowy folder / Nowe pytanie – zawsze aktywne”
+  // ale tylko jeśli user ma prawo pisać i nie łamiemy wcześniejszych blokad widoków
+  dis.set("newFolder", !canMutate ? true : false);
+  dis.set("newQuestion", !canMutate ? true : false);
   
-  // gra: placeholder, ale blokuj dla viewer
-  dis.set("createGame", !editor);
+  // === PASTE ===
+  // “Wklej zależne od schowka i dobrze” + wcześniejsze blokady
+  dis.set("paste", !(canMutate && hasClipboard));
   
-  // edycja pytania: placeholder (tylko 1 pytanie)
-  dis.set("editQuestion", !editor || !oneIsQuestion);
+  // === SELEKCJA: 0 / 1 / wiele ===
   
-  // tagi: tylko editor i musi być selekcja (w każdym widoku)
-  dis.set("editTags", !editor || realKeys.length === 0);
+  // 0 zaznaczenia:
+  // wyszarzone: editQuestion, editTags, rename, delete, copy, cut, duplicate, createGame
+  if (!hasSel) {
+    dis.set("editQuestion", true);
+    dis.set("editTags", true);
+    dis.set("rename", true);
+    dis.set("delete", true);
   
-  // rename: tylko mutacje + 1 element
-  dis.set("rename", !canMutate || !oneSelected);
+    dis.set("copy", true);
+    dis.set("cut", true);
+    dis.set("duplicate", true);
   
-  // delete: blokada w META + dla viewer + gdy brak selekcji
-  const canDelete = editor && (state.view !== VIEW.META);
-  dis.set("delete", !canDelete || realKeys.length === 0);
+    dis.set("createGame", true);
+  }
   
-  // schowek
-  dis.set("copy", !editor || realKeys.length === 0);
-  dis.set("cut", !editor || (state.view === VIEW.SEARCH || state.view === VIEW.TAG || state.view === VIEW.META) || realKeys.length === 0);
-  dis.set("paste", !(editor && (state.view !== VIEW.SEARCH && state.view !== VIEW.TAG && state.view !== VIEW.META) && hasClipboard));
-  dis.set("duplicate", !canMutate || realKeys.length === 0);
+  // 1 zaznaczenie:
+  // “wszystkie aktywne” (z zachowaniem wcześniejszych blokad roli/widoków)
+  if (oneSel) {
+    dis.set("editQuestion", !canEditQuestion);
+    dis.set("editTags", !canEditTags);
+    dis.set("rename", !canRename);
+    dis.set("delete", !canDelete);
+  
+    dis.set("copy", !canCopy);
+    dis.set("cut", !canCut);
+    dis.set("duplicate", !canMutate);
+  
+    dis.set("createGame", !canCreateGame);
+  }
+  
+  // >1 zaznaczenie:
+  // wyszarzone: editQuestion, editTags, rename
+  // aktywne: delete, copy, cut, duplicate, createGame (z wcześniejszymi blokadami)
+  if (manySel) {
+    dis.set("editQuestion", true);
+    dis.set("editTags", true);
+    dis.set("rename", true);
+  
+    dis.set("delete", !canDelete);
+    dis.set("copy", !canCopy);
+    dis.set("cut", !canCut);
+    dis.set("duplicate", !canMutate);
+    dis.set("createGame", !canCreateGame);
+  }
   
   // zastosuj do DOM
-  if (elToolbar) {
-    elToolbar.querySelectorAll('button[data-act]').forEach((b) => {
-      const act = b.dataset.act;
-      if (!act) return;
-      if (dis.has(act)) b.disabled = !!dis.get(act);
-    });
-  }
+  elToolbar.querySelectorAll('button[data-act]').forEach((b) => {
+    const act = b.dataset.act;
+    if (!act) return;
+    if (dis.has(act)) b.disabled = !!dis.get(act);
+  });
 }
 
 export function renderTree(state) {
