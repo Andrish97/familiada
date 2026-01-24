@@ -1426,6 +1426,36 @@ function uniqueNameInSiblings(categories, parentIdOrNull, baseName) {
   return stem;
 }
 
+async function getQuestionTagIdsMap(questionIds) {
+  const ids = Array.from(new Set((questionIds || []).filter(Boolean)));
+  const map = new Map();
+  for (const id of ids) map.set(id, []);
+
+  if (!ids.length) return map;
+
+  const { data, error } = await sb()
+    .from("qb_question_tags")
+    .select("question_id,tag_id")
+    .in("question_id", ids);
+
+  if (error) throw error;
+
+  for (const row of (data || [])) {
+    const qid = row.question_id;
+    const tid = row.tag_id;
+    if (!qid || !tid) continue;
+    if (!map.has(qid)) map.set(qid, []);
+    map.get(qid).push(tid);
+  }
+
+  // uniq per pytanie
+  for (const [qid, arr] of map.entries()) {
+    map.set(qid, Array.from(new Set(arr)));
+  }
+
+  return map;
+}
+
 async function copyQuestionsTo(state, qIds, targetFolderIdOrNull) {
   if (!qIds || !qIds.length) return;
 
@@ -1437,24 +1467,73 @@ async function copyQuestionsTo(state, qIds, targetFolderIdOrNull) {
 
   if (e1) throw e1;
 
+  // ===== 6A) Copy: dołóż tagIds do payload (lokalnie, do operacji) =====
+  const tagMap = await getQuestionTagIdsMap((src || []).map(q => q.id).filter(Boolean));
+
+  const payload = {
+    questions: (src || []).map((q) => ({
+      payload: (q?.payload && typeof q.payload === "object") ? q.payload : { text: "", answers: [] },
+      tagIds: Array.isArray(tagMap.get(q.id)) ? tagMap.get(q.id) : [],
+    })),
+  };
+
   // ord startowy w folderze docelowym
   const ordStart = await nextOrdForQuestion(state, targetFolderIdOrNull);
 
-  const rows = (src || []).map((q, i) => {
+  // ===== Insert pytań + zbieranie created[] z nowymi id (po kolei, żeby mieć mapowanie 1:1) =====
+  const created = []; // [{ id }]
+  for (let i = 0; i < payload.questions.length; i++) {
+    const item = payload.questions[i];
+
     const row = {
       base_id: state.baseId,
       category_id: targetFolderIdOrNull,
       ord: ordStart + i,
-      payload: (q?.payload && typeof q.payload === "object") ? q.payload : { text: "", answers: [] },
+      payload: item.payload,
     };
     if (state.user?.id) row.updated_by = state.user.id;
-    return row;
-  });
 
-  const { error: e2 } = await sb().from("qb_questions").insert(rows, { defaultToNull: false });
-  if (e2) throw e2;
+    const { data: inserted, error: e2 } = await sb()
+      .from("qb_questions")
+      .insert(row, { defaultToNull: false })
+      .select("id")
+      .single();
 
+    if (e2) throw e2;
+    created.push({ id: inserted.id });
+  }
+
+  // ===== 6B) Paste: po insercie pytań przypnij tagi =====
+  // Założenie jak w Twoim opisie:
+  // created[i].id = nowy id
+  // payload.questions[i].tagIds = tagi źródłowe
+  const tagLinks = [];
+  for (let i = 0; i < created.length; i++) {
+    const newId = created[i]?.id;
+    const tagIds = payload.questions[i]?.tagIds || [];
+    if (!newId || !tagIds.length) continue;
+
+    for (const tid of tagIds) {
+      tagLinks.push({ question_id: newId, tag_id: tid });
+    }
+  }
+
+  if (tagLinks.length) {
+    const { error: e3 } = await sb()
+      .from("qb_question_tags")
+      .insert(tagLinks, { defaultToNull: false });
+    if (e3) throw e3;
+  }
+
+  // cache / UI
   state._rootQuestions = null;
+
+  // unieważnij cache tagów/derived (żeby kropki/tooltipy od razu były poprawne)
+  state._viewQuestionTagMap = null;
+  state._allQuestionTagMap = null;
+  state._derivedCategoryTagMap = null;
+  state._folderDescQIds = null;
+  state._allCategoryTagMap = null;
 }
 
 async function copyFolderSubtree(state, sourceFolderId, targetParentIdOrNull) {
@@ -1472,6 +1551,8 @@ async function copyFolderSubtree(state, sourceFolderId, targetParentIdOrNull) {
     .eq("base_id", state.baseId)
     .in("category_id", ids);
   if (eQ) throw eQ;
+
+  const qTagMap = await getQuestionTagIdsMap((qs || []).map(q => q.id).filter(Boolean));
 
   // 3) nowy root kopiowanego drzewa
   const srcRoot = byId.get(sourceFolderId);
@@ -1519,17 +1600,40 @@ async function copyFolderSubtree(state, sourceFolderId, targetParentIdOrNull) {
     mapOldToNew.set(oldId, inserted.id);
   }
 
-  // 5) wstaw pytania (kopie)
-  const rows = (qs || []).map((q) => ({
-    base_id: state.baseId,
-    category_id: mapOldToNew.get(q.category_id) || newRoot.id,
-    ord: Number(q.ord) || 0,
-    payload: (q.payload && typeof q.payload === "object") ? q.payload : {},
-    ...(state.user?.id ? { updated_by: state.user.id } : {}),
-  }));
+  // 5) wstaw pytania (kopie) + tagi
+  const createdPairs = []; // [{ newId, tagIds: [] }]
 
-  if (rows.length) {
-    const { error } = await sb().from("qb_questions").insert(rows, { defaultToNull: false });
+  for (const q of (qs || [])) {
+    const row = {
+      base_id: state.baseId,
+      category_id: mapOldToNew.get(q.category_id) || newRoot.id,
+      ord: Number(q.ord) || 0,
+      payload: (q.payload && typeof q.payload === "object") ? q.payload : {},
+      ...(state.user?.id ? { updated_by: state.user.id } : {}),
+    };
+
+    const { data: inserted, error } = await sb()
+      .from("qb_questions")
+      .insert(row, { defaultToNull: false })
+      .select("id")
+      .single();
+
+    if (error) throw error;
+
+    const tagIds = Array.isArray(qTagMap.get(q.id)) ? qTagMap.get(q.id) : [];
+    createdPairs.push({ newId: inserted.id, tagIds });
+  }
+
+  const links = [];
+  for (const p of createdPairs) {
+    if (!p.newId || !p.tagIds?.length) continue;
+    for (const tid of p.tagIds) links.push({ question_id: p.newId, tag_id: tid });
+  }
+
+  if (links.length) {
+    const { error } = await sb()
+      .from("qb_question_tags")
+      .insert(links, { defaultToNull: false });
     if (error) throw error;
   }
 
