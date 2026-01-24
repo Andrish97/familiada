@@ -14,7 +14,7 @@ import {
   restoreBrowseLocation,
 } from "./state.js";
 
-import { renderAll, renderList, renderTree } from "./render.js";
+import { renderAll, renderList, renderTree, renderTags } from "./render.js";
 
 import {
   listQuestionsByCategory,
