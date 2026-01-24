@@ -2700,20 +2700,29 @@ export function wireActions({ state }) {
               if (!canMutateHere(state)) return;
               await createQuestionHere(state, { categoryId });
               return;
-      
-            // --- Edycja / placeholdery ---
-            case "editQuestion":
-              // placeholder jak “wkrótce” w PPM
+    
+            case "editQuestion": {
               if (!canWrite(state)) return;
-              if (!oneIsQuestion) return; // toolbar ma sens tylko dla 1 pytania
-              alert("Edytor pytania — wkrótce.");
+            
+              // tylko 1 pytanie
+              if (!oneIsQuestion) return;
+            
+              const qid = String(realKeys[0]).slice(2); // "q:<id>"
+              await openQuestionModal({ state, questionId: qid });
               return;
-      
-            case "createGame":
-              // placeholder jak prosisz
+            }
+            
+            case "createGame": {
               if (!canWrite(state)) return;
-              alert("Tworzenie gry — wkrótce.");
+            
+              // pozwalamy na multi, ale tylko z pytań
+              const qIds = realKeys.map(k => String(k).slice(2));
+            
+              if (!qIds.length) return;
+            
+              await openCreateGameModal({ state, questionIds: qIds });
               return;
+            }
       
             case "editTags":
               if (!canWrite(state)) return;
