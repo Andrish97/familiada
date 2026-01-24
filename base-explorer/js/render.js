@@ -182,12 +182,53 @@ export function renderToolbar(state) {
         <button id="searchClearBtn" class="btn ghost" type="button" title="Wyczyść">✕</button>
       </div>
     
-      <div style="flex:1"></div>
-    
-      <button id="btnNewFolder" class="btn ghost">Nowy folder</button>
-      <button id="btnNewQuestion" class="btn ghost">Nowe pytanie</button>
-    
-      <button id="btnCreateGame" class="btn">Utwórz grę</button>
+      <div class="tbGroup" role="group" aria-label="Tworzenie">
+        <button class="tbBtn" type="button" data-act="newFolder" title="Nowy folder">
+          ${svgFolderPlus()}
+        </button>
+        <button class="tbBtn" type="button" data-act="newQuestion" title="Nowe pytanie">
+          ${svgFilePlus()}
+        </button>
+      </div>
+      
+      <div class="tbSep" aria-hidden="true"></div>
+      
+      <div class="tbGroup" role="group" aria-label="Edycja">
+        <button class="tbBtn" type="button" data-act="editQuestion" title="Edytuj pytanie">
+          ${svgEdit()}
+        </button>
+        <button class="tbBtn" type="button" data-act="rename" title="Zmień nazwę">
+          ${svgPencil()}
+        </button>
+        <button class="tbBtn danger" type="button" data-act="delete" title="Usuń">
+          ${svgTrash()}
+        </button>
+      </div>
+      
+      <div class="tbSep" aria-hidden="true"></div>
+      
+      <div class="tbGroup" role="group" aria-label="Schowek">
+        <button class="tbBtn" type="button" data-act="copy" title="Kopiuj">
+          ${svgCopy()}
+        </button>
+        <button class="tbBtn" type="button" data-act="cut" title="Wytnij">
+          ${svgCut()}
+        </button>
+        <button class="tbBtn" type="button" data-act="paste" title="Wklej">
+          ${svgPaste()}
+        </button>
+        <button class="tbBtn" type="button" data-act="duplicate" title="Duplikuj">
+          ${svgDuplicate()}
+        </button>
+      </div>
+      
+      <div class="tbSep" aria-hidden="true"></div>
+      
+      <div class="tbGroup" role="group" aria-label="Gra">
+        <button class="tbBtn primary" type="button" data-act="createGame" title="Utwórz grę">
+          ${svgPlay()}
+        </button>
+      </div>
     `;
     elToolbar.dataset.ready = "1";
   }
@@ -884,3 +925,21 @@ export function renderList(state) {
   // po wyrenderowaniu head + rows
   initColumnResizers();
 }
+
+function svgBase(pathD){
+  return `
+  <svg class="tbIco" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+    <path d="${pathD}"></path>
+  </svg>`;
+}
+
+function svgFolderPlus(){ return svgBase("M10 4l2 2h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h6zm2 7h-2v2H8v2h2v2h2v-2h2v-2h-2v-2z"); }
+function svgFilePlus(){ return svgBase("M6 2h9l5 5v15a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm8 1v5h5M12 11h-2v2H8v2h2v2h2v-2h2v-2h-2v-2z"); }
+function svgEdit(){ return svgBase("M3 17.25V21h3.75L19.81 7.94l-3.75-3.75L3 17.25zm2.92 2.83H5v-.92l10.06-10.06.92.92L5.92 20.08zM20.71 6.04a1 1 0 0 0 0-1.41l-1.34-1.34a1 1 0 0 0-1.41 0l-1.13 1.13 2.75 2.75 1.13-1.13z"); }
+function svgPencil(){ return svgBase("M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zm18-11.5a1 1 0 0 0 0-1.41l-1.59-1.59a1 1 0 0 0-1.41 0l-1.13 1.13 3.75 3.75L21 5.75z"); }
+function svgTrash(){ return svgBase("M6 7h12l-1 14H7L6 7zm3-3h6l1 2H8l1-2z"); }
+function svgCopy(){ return svgBase("M16 1H4a2 2 0 0 0-2 2v12h2V3h12V1zm4 4H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm0 16H8V7h12v14z"); }
+function svgCut(){ return svgBase("M9.64 7.64L12 10l2.36-2.36a3 3 0 1 1 1.41 1.41L13.41 11l2.36 2.36a3 3 0 1 1-1.41 1.41L12 12.41l-2.36 2.36a3 3 0 1 1-1.41-1.41L10.59 11 8.23 8.64a3 3 0 1 1 1.41-1.41z"); }
+function svgPaste(){ return svgBase("M19 4h-3.18A3 3 0 0 0 13 2h-2a3 3 0 0 0-2.82 2H5a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2zm-8-1h2a1 1 0 0 1 1 1v1H10V4a1 1 0 0 1 1-1zm8 19H5V6h2v2h10V6h2v16z"); }
+function svgDuplicate(){ return svgBase("M7 7h12v14H7V7zm-2 2H3V3h14v2H5v4z"); }
+function svgPlay(){ return svgBase("M8 5v14l11-7L8 5z"); }
