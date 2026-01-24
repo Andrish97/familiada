@@ -288,9 +288,52 @@ export function renderToolbar(state) {
     }
   }
 
-  // 3) Disable przycisków tworzenia w viewer + w trybach read-only (SEARCH/TAG blokują "wklej", ale tworzenie też wolisz blokować)
-  const writable = (state.role === "owner" || state.role === "editor")
-  && (state.view !== VIEW.SEARCH && state.view !== VIEW.TAG);;
+  // 3) Disable przycisków toolbar – spójnie z actions/context-menu
+  const editor = (state.role === "owner" || state.role === "editor");
+  
+  const realKeys = Array.from(state.selection?.keys || []).filter(k => k && k !== "root");
+  const oneSelected = realKeys.length === 1;
+  const oneIsQuestion = oneSelected && String(realKeys[0]).startsWith("q:");
+  
+  const hasClipboard = !!state?.clipboard?.mode && !!state?.clipboard?.keys?.size;
+  
+  const dis = new Map();
+  
+  // tworzenie: tylko editor i nie w widokach wirtualnych (SEARCH/TAG/META)
+  const canMutate = editor && (state.view !== VIEW.SEARCH && state.view !== VIEW.TAG && state.view !== VIEW.META);
+  dis.set("newFolder", !canMutate);
+  dis.set("newQuestion", !canMutate);
+  
+  // gra: placeholder, ale blokuj dla viewer
+  dis.set("createGame", !editor);
+  
+  // edycja pytania: placeholder (tylko 1 pytanie)
+  dis.set("editQuestion", !editor || !oneIsQuestion);
+  
+  // tagi: tylko editor i musi być selekcja (w każdym widoku)
+  dis.set("editTags", !editor || realKeys.length === 0);
+  
+  // rename: tylko mutacje + 1 element
+  dis.set("rename", !canMutate || !oneSelected);
+  
+  // delete: blokada w META + dla viewer + gdy brak selekcji
+  const canDelete = editor && (state.view !== VIEW.META);
+  dis.set("delete", !canDelete || realKeys.length === 0);
+  
+  // schowek
+  dis.set("copy", !editor || realKeys.length === 0);
+  dis.set("cut", !editor || (state.view === VIEW.SEARCH || state.view === VIEW.TAG || state.view === VIEW.META) || realKeys.length === 0);
+  dis.set("paste", !(editor && (state.view !== VIEW.SEARCH && state.view !== VIEW.TAG && state.view !== VIEW.META) && hasClipboard));
+  dis.set("duplicate", !canMutate || realKeys.length === 0);
+  
+  // zastosuj do DOM
+  if (elToolbar) {
+    elToolbar.querySelectorAll('button[data-act]').forEach((b) => {
+      const act = b.dataset.act;
+      if (!act) return;
+      if (dis.has(act)) b.disabled = !!dis.get(act);
+    });
+  }
 }
 
 export function renderTree(state) {
