@@ -1,211 +1,176 @@
-// base-explorer/js/question-modal.js
-import { sb } from "../../js/core/supabase.js";
+// /base-explorer/js/question-modal.js
+// Minimalny “silnik” modala pytania: otwiera, edytuje w pamięci i zwraca wynik.
 
-/**
- * Otwiera modal edycji pytania i zapisuje do qb_questions.payload.
- * Wymaga, żeby HTML modala był już w DOM (Twoje modals.html wklejone do strony).
- */
-export async function openQuestionModal({ state, questionId }) {
-  const overlay = document.getElementById("questionOverlay");
-  if (!overlay) {
-    alert("Brak #questionOverlay w DOM (wklej modals.html).");
-    return;
+const $ = (id) => document.getElementById(id);
+
+function show(el, on) {
+  if (!el) return;
+  el.style.display = on ? "grid" : "none";
+}
+
+function setErr(msg) {
+  const el = $("qErr");
+  if (!el) return;
+  if (!msg) {
+    el.style.display = "none";
+    el.textContent = "";
+  } else {
+    el.style.display = "block";
+    el.textContent = msg;
+  }
+}
+
+function n(v) {
+  if (v === "" || v === null || v === undefined) return null;
+  const x = Number(v);
+  return Number.isFinite(x) ? x : null;
+}
+
+export function initQuestionModal(state, { onSaved } = {}) {
+  const overlay = $("questionOverlay");
+  if (!overlay) return;
+
+  const qClose = $("qClose");
+  const qSave = $("qSave");
+  const qText = $("qText");
+  const qAnswers = $("qAnswers");
+  const qAdd = $("qAdd");
+  const qSumVal = $("qSumVal");
+  const qSumPill = $("qSumPill");
+
+  let current = null; // {id,text,answers[]}
+
+  function calcSum() {
+    let s = 0;
+    for (const a of (current?.answers || [])) {
+      const pts = Number(a.fixed_points);
+      if (Number.isFinite(pts)) s += pts;
+    }
+    return s;
   }
 
-  const els = {
-    title: overlay.querySelector("[data-qm-title]") || overlay.querySelector(".modalTitle"),
-    qText: overlay.querySelector("#qmQuestionText"),
-    answersWrap: overlay.querySelector("#qmAnswers"),
-    btnCancel: overlay.querySelector("[data-qm-cancel]") || overlay.querySelector("#qmCancelBtn"),
-    btnSave: overlay.querySelector("[data-qm-save]") || overlay.querySelector("#qmSaveBtn"),
-    btnAdd: overlay.querySelector("[data-qm-add]") || overlay.querySelector("#qmAddAnswerBtn"),
-  };
-
-  if (!els.qText || !els.answersWrap || !els.btnCancel || !els.btnSave) {
-    alert("Modal pytania: brakuje wymaganych elementów (sprawdź ID/data-* w modals.html).");
-    return;
+  function updateSumUI() {
+    const s = calcSum();
+    if (qSumVal) qSumVal.textContent = `${s}/100`;
+    if (qSumPill) qSumPill.classList.toggle("over", s > 100);
   }
 
-  // --- load payload ---
-  const { data, error } = await sb()
-    .from("qb_questions")
-    .select("id,payload")
-    .eq("id", questionId)
-    .single();
+  function renderAnswers() {
+    if (!qAnswers) return;
+    qAnswers.innerHTML = "";
 
-  if (error || !data) {
-    console.error(error);
-    alert("Nie udało się wczytać pytania.");
-    return;
+    const ans = current?.answers || [];
+    for (let i = 0; i < ans.length; i++) {
+      const a = ans[i];
+
+      const row = document.createElement("div");
+      row.className = "qRow";
+      row.innerHTML = `
+        <input class="inp qAnsText" type="text" maxlength="80" autocomplete="off" value="${escapeAttr(a.text || "")}" placeholder="Odpowiedź…"/>
+        <input class="inp qAnsPts" type="text" inputmode="numeric" autocomplete="off" value="${a.fixed_points ?? ""}" placeholder="(opcjonalnie)"/>
+        <button class="qDel" type="button" title="Usuń">✕</button>
+      `;
+
+      const inpText = row.querySelector(".qAnsText");
+      const inpPts = row.querySelector(".qAnsPts");
+      const btnDel = row.querySelector(".qDel");
+
+      inpText.addEventListener("input", () => {
+        a.text = inpText.value;
+      });
+
+      inpPts.addEventListener("input", () => {
+        const v = inpPts.value.trim();
+        if (v === "") {
+          delete a.fixed_points;
+        } else {
+          const pts = n(v);
+          a.fixed_points = pts === null ? 0 : pts;
+        }
+        updateSumUI();
+      });
+
+      btnDel.addEventListener("click", () => {
+        ans.splice(i, 1);
+        renderAnswers();
+        updateSumUI();
+      });
+
+      qAnswers.appendChild(row);
+    }
   }
 
-  const payload = normalizeQuestionPayload(data.payload);
+  function open(question) {
+    setErr("");
+    current = {
+      id: question?.id ?? null,
+      text: String(question?.text || ""),
+      answers: Array.isArray(question?.answers) ? question.answers.map((a, idx) => ({
+        ord: a.ord ?? (idx + 1),
+        text: String(a.text || ""),
+        ...(a.fixed_points === undefined ? {} : { fixed_points: Number(a.fixed_points) }),
+      })) : [],
+    };
 
-  // --- render ---
-  if (els.title) els.title.textContent = "Edytuj pytanie";
-  els.qText.value = payload.text || "";
-  renderAnswers(els.answersWrap, payload.answers);
+    if (qText) qText.value = current.text;
 
-  // --- open ---
-  showOverlay(overlay);
-
-  // UX: focus
-  setTimeout(() => els.qText.focus(), 0);
-
-  // --- handlers (bind once per open, via AbortController) ---
-  const ac = new AbortController();
-  const { signal } = ac;
+    renderAnswers();
+    updateSumUI();
+    show(overlay, true);
+    setTimeout(() => qText?.focus(), 0);
+  }
 
   function close() {
-    ac.abort();
-    hideOverlay(overlay);
+    show(overlay, false);
+    setErr("");
+    current = null;
   }
 
-  overlay.addEventListener(
-    "click",
-    (e) => {
-      if (e.target === overlay) close(); // klik w tło
-    },
-    { signal }
-  );
-
-  document.addEventListener(
-    "keydown",
-    (e) => {
-      if (e.key === "Escape") close();
-    },
-    { signal }
-  );
-
-  els.btnCancel.addEventListener("click", close, { signal });
-
-  els.btnAdd?.addEventListener(
-    "click",
-    () => {
-      const nextOrd = (readAnswersFromDOM(els.answersWrap).reduce((m, a) => Math.max(m, a.ord || 0), 0) || 0) + 1;
-      addAnswerRow(els.answersWrap, { ord: nextOrd, text: "", fixed_points: 0 });
-      const last = els.answersWrap.querySelector(".qmAnswerRow:last-child input[type='text']");
-      last?.focus?.();
-    },
-    { signal }
-  );
-
-  els.btnSave.addEventListener(
-    "click",
-    async () => {
-      const out = {
-        text: String(els.qText.value || "").trim(),
-        answers: readAnswersFromDOM(els.answersWrap),
-      };
-
-      // prosta normalizacja (bez “walidacji gry” – to robisz później)
-      out.answers = out.answers
-        .filter((a) => String(a.text || "").trim().length > 0)
-        .map((a, i) => ({
-          ord: Number.isFinite(a.ord) ? a.ord : i + 1,
-          text: String(a.text || "").trim(),
-          fixed_points: Number.isFinite(a.fixed_points) ? a.fixed_points : 0,
-        }));
-
-      try {
-        const { error: updErr } = await sb()
-          .from("qb_questions")
-          .update({ payload: out })
-          .eq("id", questionId);
-
-        if (updErr) throw updErr;
-
-        close();
-        await state?._api?.refreshList?.();
-      } catch (e) {
-        console.error(e);
-        alert("Nie udało się zapisać pytania.");
-      }
-    },
-    { signal }
-  );
-}
-
-/* ========================= helpers ========================= */
-
-function normalizeQuestionPayload(p) {
-  const text = String(p?.text || "");
-  const answers = Array.isArray(p?.answers) ? p.answers : [];
-  return {
-    text,
-    answers: answers.map((a, i) => ({
-      ord: Number(a?.ord ?? i + 1),
-      text: String(a?.text || ""),
-      fixed_points: Number(a?.fixed_points ?? 0),
-    })),
-  };
-}
-
-function showOverlay(overlay) {
-  overlay.hidden = false;
-  overlay.classList.add("is-open");
-  document.documentElement.classList.add("modal-open");
-}
-
-function hideOverlay(overlay) {
-  overlay.classList.remove("is-open");
-  overlay.hidden = true;
-  document.documentElement.classList.remove("modal-open");
-}
-
-function renderAnswers(wrap, answers) {
-  wrap.innerHTML = "";
-  const list = Array.isArray(answers) ? answers : [];
-  for (const a of list) addAnswerRow(wrap, a);
-  if (!list.length) addAnswerRow(wrap, { ord: 1, text: "", fixed_points: 0 });
-}
-
-function addAnswerRow(wrap, a) {
-  const row = document.createElement("div");
-  row.className = "qmAnswerRow";
-
-  // ord
-  const ord = document.createElement("input");
-  ord.type = "number";
-  ord.min = "1";
-  ord.step = "1";
-  ord.value = String(Number(a?.ord || 1));
-  ord.className = "qmOrd";
-
-  // text
-  const txt = document.createElement("input");
-  txt.type = "text";
-  txt.value = String(a?.text || "");
-  txt.className = "qmText";
-
-  // points (opcjonalne)
-  const pts = document.createElement("input");
-  pts.type = "number";
-  pts.min = "0";
-  pts.step = "1";
-  pts.value = String(Number(a?.fixed_points || 0));
-  pts.className = "qmPts";
-
-  const del = document.createElement("button");
-  del.type = "button";
-  del.className = "btn danger qmDel";
-  del.textContent = "Usuń";
-  del.addEventListener("click", () => row.remove());
-
-  row.appendChild(ord);
-  row.appendChild(txt);
-  row.appendChild(pts);
-  row.appendChild(del);
-
-  wrap.appendChild(row);
-}
-
-function readAnswersFromDOM(wrap) {
-  const rows = Array.from(wrap.querySelectorAll(".qmAnswerRow"));
-  return rows.map((r, idx) => {
-    const ord = Number(r.querySelector(".qmOrd")?.value || idx + 1);
-    const text = String(r.querySelector(".qmText")?.value || "");
-    const fixed_points = Number(r.querySelector(".qmPts")?.value || 0);
-    return { ord, text, fixed_points };
+  qClose?.addEventListener("click", close);
+  overlay.addEventListener("mousedown", (e) => {
+    if (e.target === overlay) close();
   });
+
+  qAdd?.addEventListener("click", () => {
+    if (!current) return;
+    if ((current.answers || []).length >= 6) return setErr("Max 6 odpowiedzi.");
+    current.answers.push({ ord: (current.answers.length + 1), text: "" });
+    renderAnswers();
+    updateSumUI();
+  });
+
+  qText?.addEventListener("input", () => {
+    if (!current) return;
+    current.text = qText.value;
+  });
+
+  qSave?.addEventListener("click", () => {
+    setErr("");
+    if (!current) return;
+
+    const sum = calcSum();
+    // walidacja lokalna: <=100 i żadna odp > 100
+    for (const a of (current.answers || [])) {
+      if (a.fixed_points !== undefined) {
+        const pts = Number(a.fixed_points);
+        if (!Number.isFinite(pts) || pts < 0 || pts > 100) {
+          return setErr("Punkty muszą być w zakresie 0–100 (jeśli wpisane).");
+        }
+      }
+    }
+    if (sum > 100) return setErr("Suma punktów nie może przekroczyć 100.");
+
+    onSaved?.(structuredClone(current));
+    close();
+  });
+
+  return { open, close };
+}
+
+function escapeAttr(s) {
+  return String(s)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;");
 }
