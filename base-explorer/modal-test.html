@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Test — Modal pytania (styl jak TAGI)</title>
+
+  <!-- Twoje realne style (jak w base-explorer) -->
+  <link rel="stylesheet" href="../css/base.css" />
+  <link rel="stylesheet" href="../css/builder.css" />
+  <link rel="stylesheet" href="./base-explorer.css" />
+
+  <link rel="icon" href="../favicon.ico"/>
+
+  <style>
+    /* =========================================================
+       DODATKI: tylko układ edytora pytania w modalu
+       (overlay/modal/head/foot biorą się z Twoich CSS)
+       ========================================================= */
+
+    /* Węższy modal pytania (podobnie jak rename) */
+    .question-modal{
+      width: min(720px, 94vw);
+    }
+
+    .qBody{
+      margin-top: 10px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .qBlock .lbl2{
+      margin-bottom: 6px;
+    }
+
+    /* Treść pytania – dopasowana do inp/textarea w Twoim stylu */
+    .qText{
+      width: 100%;
+      min-height: 92px;
+      resize: vertical;
+      box-sizing: border-box;
+      font-weight: 800;
+      line-height: 1.35;
+    }
+
+    /* Nagłówek tabelki odpowiedzi (lekki) */
+    .qAnswersHead{
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 120px 44px;
+      gap: 10px;
+      padding: 0 4px;
+      opacity: .75;
+      font-size: 11px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      user-select: none;
+    }
+    .qAnswersHead .c2{ text-align: center; }
+
+    /* Lista odpowiedzi jak “picklist”, ale z własnym układem */
+    .qAnswers{
+      margin-top: 8px;
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 12px;
+      padding: 8px;
+      max-height: 320px;
+      overflow: auto;
+      display: grid;
+      gap: 8px;
+    }
+
+    .qRow{
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 120px 44px;
+      gap: 10px;
+      align-items: center;
+      padding: 10px 10px;
+      border-radius: 10px;
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.12);
+    }
+
+    .qRow:hover{
+      background: rgba(255,255,255,.06);
+    }
+
+    .qAnsText{
+      width: 100%;
+      box-sizing: border-box;
+      font-weight: 900;
+    }
+
+    /* Punkty: number ze strzałeczkami, max 100 */
+    .qAnsPts{
+      width: 100%;
+      box-sizing: border-box;
+      text-align: center;
+      font-weight: 900;
+    }
+
+    .qDel{
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,120,120,.35);
+      background: rgba(255,120,120,.12);
+      color: #fff;
+      font-weight: 1000;
+      cursor: pointer;
+    }
+    .qDel:hover{ background: rgba(255,120,120,.18); }
+
+    /* Pasek pod listą: +Odpowiedź + suma */
+    .qBar{
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 10px;
+      flex-wrap: wrap;
+    }
+
+    .qSum{
+      margin-left: auto;
+      display: inline-flex;
+      align-items: baseline;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,234,166,.28);
+      background: rgba(255,234,166,.10);
+      color: rgba(255,234,166,.95);
+      font-weight: 1000;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      user-select: none;
+    }
+
+    .qSum.over{
+      border-color: rgba(255,120,120,.40);
+      background: rgba(255,120,120,.10);
+      color: rgba(255,180,180,.95);
+    }
+  </style>
+</head>
+
+<body style="padding:12px;">
+
+  <!-- PROSTY “TEST HARNESS” -->
+  <section class="toolbar" style="padding:0; margin-bottom:12px;">
+    <button class="btn sm gold" id="btnOpen" type="button">Otwórz modal pytania</button>
+  </section>
+
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; min-height: calc(100vh - 72px);">
+    <div style="min-width:0; display:flex; flex-direction:column; gap:8px;">
+      <div class="mSub" style="margin-top:0;">INPUT</div>
+      <textarea id="inputTa" class="inp" style="min-height: 200px; height:100%; resize:none; font-family: ui-monospace, Menlo, Consolas, monospace; font-weight:800; padding:12px; border-radius:12px;">
+{
+  "text": "Co można zamówić w pizzerii?",
+  "answers": [
+    { "ord": 1, "text": "Margherita", "fixed_points": 0 },
+    { "ord": 2, "text": "Pepperoni", "fixed_points": 0 },
+    { "ord": 3, "text": "Capricciosa", "fixed_points": 0 },
+    { "ord": 4, "text": "Hawajska", "fixed_points": 0 }
+  ]
+}
+      </textarea>
+    </div>
+
+    <div style="min-width:0; display:flex; flex-direction:column; gap:8px;">
+      <div class="mSub" style="margin-top:0;">OUTPUT</div>
+      <textarea id="outputTa" class="inp" readonly style="min-height: 200px; height:100%; resize:none; font-family: ui-monospace, Menlo, Consolas, monospace; font-weight:800; padding:12px; border-radius:12px;"></textarea>
+    </div>
+  </div>
+
+  <!-- =======================================================
+       MODAL: PYTANIE — dokładnie ten sam wzorzec co TAGI
+       overlay + modal + tagsHead + tagsFoot + importMsg
+       ======================================================= -->
+  <div class="overlay" id="questionOverlay" style="display:none;">
+    <div class="modal tags-modal question-modal" role="dialog" aria-modal="true" aria-labelledby="qTitle">
+
+      <div class="tagsHead">
+        <div class="mTitle" id="qTitle">Pytanie</div>
+        <button class="btn sm" id="qClose" type="button" aria-label="Zamknij">✕</button>
+      </div>
+
+      <div class="mSub">
+        Edycja pojedynczego pytania. Max 6 odpowiedzi. Punkty opcjonalne. Jeśli wpisane: 0–100, suma ≤ 100.
+      </div>
+
+      <div class="qBody">
+
+        <div class="qBlock">
+          <div class="lbl2">Treść pytania</div>
+          <textarea id="qText" class="inp qText" spellcheck="false" placeholder="Wpisz treść pytania…"></textarea>
+        </div>
+
+        <div class="qBlock">
+          <div class="qAnswersHead">
+            <div>Odpowiedź</div>
+            <div class="c2">Punkty</div>
+            <div></div>
+          </div>
+
+          <div id="qAnswers" class="qAnswers"></div>
+
+          <div class="qBar">
+            <button class="btn sm" id="qAdd" type="button">+ Odpowiedź</button>
+
+            <div class="qSum" id="qSumPill" title="Suma punktów (max 100)">
+              <span>SUMA</span>
+              <b id="qSumVal">0/100</b>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="tagsFoot">
+        <div class="tagsFootSpacer"></div>
+
+        <!-- komunikat jak w TAGACH (importMsg) -->
+        <div id="qErr" class="importMsg" style="display:none;"></div>
+
+        <button class="btn sm gold" id="qSave" type="button">Zapisz</button>
+      </div>
+
+    </div>
+  </div>
+
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+
+  const MAX_ANS = 6;
+  const PTS_MAX = 100;
+  const SUM_MAX = 100;
+
+  const inputTa = $("inputTa");
+  const outputTa = $("outputTa");
+
+  const overlay = $("questionOverlay");
+  const qText = $("qText");
+  const qAnswers = $("qAnswers");
+  const qAdd = $("qAdd");
+  const qSave = $("qSave");
+  const qClose = $("qClose");
+  const qErr = $("qErr");
+  const qSumVal = $("qSumVal");
+  const qSumPill = $("qSumPill");
+
+  let draft = { text:"", answers:[] };
+  let dirty = false;
+
+  function showErr(msg){
+    if (!msg){
+      qErr.style.display = "none";
+      qErr.textContent = "";
+      return;
+    }
+    qErr.style.display = "block";
+    qErr.textContent = msg;
+  }
+
+  function markDirty(){ dirty = true; }
+
+  function canClose(){
+    if (!dirty) return true;
+    return confirm("Masz niezapisane zmiany. Zamknąć bez zapisu?");
+  }
+
+  function closeModal(){
+    if (!canClose()) return;
+    overlay.style.display = "none";
+    showErr("");
+    dirty = false;
+  }
+
+  function openModal(){
+    overlay.style.display = "grid";
+    setTimeout(() => qText.focus(), 0);
+  }
+
+  function clampInt(n, lo, hi){
+    n = Math.floor(Number(n));
+    if (!Number.isFinite(n)) return null;
+    if (n < lo) return lo;
+    if (n > hi) return hi;
+    return n;
+  }
+
+  function parsePtsOptional(val){
+    const s = String(val ?? "").trim();
+    if (!s) return null;
+    return clampInt(s, 0, PTS_MAX);
+  }
+
+  function calcSum(){
+    let sum = 0;
+    for (const a of draft.answers){
+      const p = parsePtsOptional(a.pts);
+      if (p != null) sum += p;
+    }
+    return sum;
+  }
+
+  function updateSumUI(){
+    const sum = calcSum();
+    qSumVal.textContent = `${sum}/${SUM_MAX}`;
+    qSumPill.classList.toggle("over", sum > SUM_MAX);
+  }
+
+  function normalizeQuestion(q){
+    const text = String(q?.text ?? "");
+    const answersIn = Array.isArray(q?.answers) ? q.answers : [];
+    const answers = answersIn.slice(0, MAX_ANS).map(a => ({
+      text: String(a?.text ?? ""),
+      pts: (a?.fixed_points === null || a?.fixed_points === undefined || a?.fixed_points === "")
+        ? ""
+        : String(clampInt(a.fixed_points, 0, PTS_MAX) ?? "")
+    }));
+    return { text, answers };
+  }
+
+  function renderAnswers(){
+    qAnswers.innerHTML = "";
+
+    draft.answers.forEach((a, idx) => {
+      const row = document.createElement("div");
+      row.className = "qRow";
+      row.innerHTML = `
+        <input class="inp qAnsText" type="text" maxlength="200" placeholder="Odpowiedź ${idx+1}">
+        <input class="inp qAnsPts" type="number" min="0" max="${PTS_MAX}" step="1" inputmode="numeric" placeholder="—">
+        <button class="qDel" type="button" aria-label="Usuń">✕</button>
+      `;
+
+      const iText = row.querySelector(".qAnsText");
+      const iPts  = row.querySelector(".qAnsPts");
+      const bDel  = row.querySelector(".qDel");
+
+      iText.value = a.text ?? "";
+      iPts.value  = a.pts ?? "";
+
+      iText.addEventListener("input", () => {
+        a.text = iText.value;
+        markDirty();
+      });
+      iText.addEventListener("blur", () => {
+        a.text = String(iText.value ?? "").trim();
+        markDirty();
+      });
+
+      // blokada liter + clamp bez “resetowania” pola przy każdej cyfrze
+      iPts.addEventListener("keydown", (e) => {
+        const ok = ["Backspace","Delete","Tab","Enter","ArrowLeft","ArrowRight","ArrowUp","ArrowDown","Home","End"];
+        if (ok.includes(e.key)) return;
+        if (e.ctrlKey || e.metaKey) return;
+        if (/^\d$/.test(e.key)) return;
+        e.preventDefault();
+      });
+
+      iPts.addEventListener("input", () => {
+        const raw = String(iPts.value ?? "");
+        const cleaned = raw.replace(/[^\d]/g, "");
+        if (raw !== cleaned) iPts.value = cleaned;
+
+        // przechowuj jako string, clamp dopiero na blur (żeby nie wybijało kursora)
+        a.pts = iPts.value;
+        markDirty();
+        updateSumUI();
+      });
+
+      iPts.addEventListener("blur", () => {
+        const p = parsePtsOptional(iPts.value);
+        if (p == null){
+          iPts.value = "";
+          a.pts = "";
+        }else{
+          iPts.value = String(p);
+          a.pts = String(p);
+        }
+        markDirty();
+        updateSumUI();
+      });
+
+      bDel.addEventListener("click", () => {
+        draft.answers.splice(idx, 1);
+        markDirty();
+        renderAnswers();
+        updateSumUI();
+        showErr("");
+      });
+
+      qAnswers.appendChild(row);
+    });
+
+    qAdd.disabled = draft.answers.length >= MAX_ANS; // wyszarz po 6
+  }
+
+  function validate(){
+    const qt = String(draft.text ?? "").trim();
+    if (!qt) return "Wpisz treść pytania.";
+
+    if (draft.answers.length > MAX_ANS) return `Za dużo odpowiedzi (max ${MAX_ANS}).`;
+
+    let sum = 0;
+    for (const a of draft.answers){
+      const t = String(a.text ?? "").trim();
+      if (!t) return "Usuń pustą odpowiedź albo wpisz jej treść.";
+
+      const p = parsePtsOptional(a.pts);
+      if (p != null){
+        if (p > PTS_MAX) return "Punkty w jednej odpowiedzi nie mogą przekroczyć 100.";
+        sum += p;
+      }
+    }
+    if (sum > SUM_MAX) return "Suma punktów nie może przekroczyć 100.";
+
+    return "";
+  }
+
+  function buildOutput(){
+    const out = { text: String(draft.text ?? "").trim() };
+    const answers = [];
+
+    for (let i=0; i<draft.answers.length; i++){
+      const a = draft.answers[i];
+      const o = { ord: i+1, text: String(a.text ?? "").trim() };
+      const p = parsePtsOptional(a.pts);
+      if (p != null) o.fixed_points = p;
+      answers.push(o);
+    }
+    if (answers.length) out.answers = answers;
+    return out;
+  }
+
+  // ---------- UI events ----------
+  $("btnOpen").addEventListener("click", () => {
+    try{
+      const q = JSON.parse(inputTa.value);
+      draft = normalizeQuestion(q);
+    }catch{
+      draft = { text:"", answers:[] };
+    }
+
+    qText.value = draft.text;
+    renderAnswers();
+    updateSumUI();
+    showErr("");
+    dirty = false;
+    openModal();
+  });
+
+  qText.addEventListener("input", () => {
+    draft.text = qText.value;
+    markDirty();
+  });
+
+  qAdd.addEventListener("click", () => {
+    if (draft.answers.length >= MAX_ANS) return;
+    draft.answers.push({ text:"", pts:"" });
+    markDirty();
+    renderAnswers();
+    updateSumUI();
+  });
+
+  qSave.addEventListener("click", () => {
+    draft.text = qText.value;
+
+    const err = validate();
+    if (err){
+      showErr(err);
+      return;
+    }
+
+    const out = buildOutput();
+    outputTa.value = JSON.stringify(out, null, 2);
+    dirty = false;
+    closeModal();
+  });
+
+  qClose.addEventListener("click", () => closeModal());
+
+  // klik w tło
+  overlay.addEventListener("click", (e) => {
+    if (e.target === overlay) closeModal();
+  });
+
+  // ESC
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && overlay.style.display !== "none") closeModal();
+  });
+})();
+</script>
+
+</body>
+</html>
