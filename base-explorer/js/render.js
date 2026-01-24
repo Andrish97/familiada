@@ -254,7 +254,7 @@ export function renderTree(state) {
 
   const open = state.treeOpen instanceof Set ? state.treeOpen : new Set();
   const maxDepth = 6;
-  const ROOT_ID = "__root__";
+  const ROOT_ID = "root";
   const rootHasChildren = (byParent.get(null) || []).length > 0;
   const rootOpen = rootHasChildren ? open.has(ROOT_ID) : true; // jak są dzieci, to root steruje
 
@@ -566,7 +566,7 @@ export function renderList(state) {
       <div class="h-main ${sortKey === "name" ? "active" : ""}" data-sort-key="name" data-dir="${esc(sortDir)}">Nazwa</div>
       <div class="h-type ${sortKey === "type" ? "active" : ""}" data-sort-key="type" data-dir="${esc(sortDir)}">Typ</div>
       <div class="h-date ${sortKey === "date" ? "active" : ""}" data-sort-key="date" data-dir="${esc(sortDir)}">Data</div>
-      <div class="h-meta">Meta</div>
+      <div class="h-meta">Info</div>
     </div>
   `;
 
