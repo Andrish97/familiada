@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Test — Modal eksportu (styl jak TAGI)</title>
+
+  <!-- Jak w base-explorer -->
+  <link rel="stylesheet" href="../css/base.css" />
+  <link rel="stylesheet" href="../css/builder.css" />
+  <link rel="stylesheet" href="./base-explorer.css" />
+  <link rel="icon" href="../favicon.ico"/>
+
+  <style>
+    /* =========================================================
+       DODATKI: tylko wnętrze modalu (rama bierze się z Twoich CSS)
+       ========================================================= */
+
+    .export-modal{
+      width: min(860px, 94vw);
+    }
+
+    .xBody{
+      margin-top: 10px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .xGrid2{
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      align-items: start;
+    }
+
+    .xField .lbl2{
+      margin-bottom: 6px;
+    }
+
+    .xName{
+      width: 100%;
+      box-sizing: border-box;
+      text-align: center;
+      font-weight: 900;
+      letter-spacing: .06em;
+    }
+
+    /* lista pytań: korzystamy z klocków jak tagsPickList */
+    .xPickList{
+      margin-top: 6px;
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 12px;
+      padding: 8px;
+      max-height: 340px;
+      overflow: auto;
+      display: grid;
+      gap: 8px;
+    }
+
+    .xPickItem{
+      display: grid;
+      grid-template-columns: 24px 1fr auto;
+      gap: 10px;
+      align-items: center;
+      padding: 10px 10px;
+      border-radius: 10px;
+      cursor: pointer;
+      user-select: none;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.04);
+    }
+    .xPickItem:hover{ background: rgba(255,255,255,.06); }
+
+    .xPickItem input{ transform: scale(1.05); }
+
+    .xNm{
+      font-weight: 900;
+      letter-spacing: .03em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .xMeta{
+      opacity: .80;
+      font-size: 11px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    /* status: zielone/czerwone tło ramki */
+    .xPickItem.ok{
+      border-color: rgba(120, 255, 170, .35);
+      background: rgba(120, 255, 170, .08);
+    }
+    .xPickItem.bad{
+      border-color: rgba(255, 120, 120, .35);
+      background: rgba(255, 120, 120, .08);
+    }
+
+    /* suwak 3 pozycyjny */
+    .xTypeBox{
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 12px;
+      padding: 12px;
+      background: rgba(255,255,255,.03);
+    }
+
+    .xTypeTop{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      flex-wrap:wrap;
+    }
+
+    .xTypeTitle{
+      font-weight: 1000;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      opacity: .92;
+      font-size: 12px;
+    }
+
+    .xTypeHint{
+      opacity: .75;
+      font-size: 12px;
+    }
+
+    .xRange{
+      width: 100%;
+      margin-top: 10px;
+    }
+
+    /* używamy Twojego stylu .rng (jest w base-explorer.css) */
+    .xRange .rng{
+      width: 100%;
+    }
+
+    .xTypeLabels{
+      margin-top: 10px;
+      display:grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px;
+      font-size: 12px;
+      opacity: .88;
+    }
+
+    .xTypeLbl{
+      padding: 8px 10px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.03);
+      text-align:center;
+      user-select:none;
+      cursor:pointer;
+    }
+    .xTypeLbl b{
+      display:block;
+      font-weight:1000;
+      letter-spacing:.06em;
+      text-transform:uppercase;
+      margin-bottom: 4px;
+      font-size: 11px;
+    }
+    .xTypeLbl.active{
+      border-color: rgba(255,234,166,.40);
+      background: rgba(255,234,166,.10);
+      color: rgba(255,234,166,.95);
+    }
+
+    /* licznik wybranych */
+    .xCountPill{
+      display:inline-flex;
+      align-items: baseline;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,234,166,.28);
+      background: rgba(255,234,166,.10);
+      color: rgba(255,234,166,.95);
+      font-weight: 1000;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      user-select:none;
+    }
+    .xCountPill.bad{
+      border-color: rgba(255,120,120,.40);
+      background: rgba(255,120,120,.10);
+      color: rgba(255,180,180,.95);
+    }
+
+    /* test harness layout */
+    .harness{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      min-height: calc(100vh - 96px);
+    }
+    .hcol{ min-width:0; display:flex; flex-direction:column; gap:8px; }
+    .monoTa{
+      min-height: 200px;
+      height: 100%;
+      resize: none;
+      font-family: ui-monospace, Menlo, Consolas, monospace;
+      font-weight: 800;
+      padding: 12px;
+      border-radius: 12px;
+      box-sizing: border-box;
+      white-space: pre;
+    }
+  </style>
+</head>
+
+<body style="padding:12px;">
+
+  <section class="toolbar" style="padding:0; margin-bottom:12px;">
+    <button class="btn sm gold" id="btnOpenExport" type="button">Otwórz modal eksportu</button>
+  </section>
+
+  <div class="harness">
+    <div class="hcol">
+      <div class="mSub" style="margin-top:0;">INPUT (lista pytań)</div>
+      <textarea id="inputTa" class="inp monoTa" spellcheck="false">[
+  {
+    "text": "Co można zamówić w pizzerii?",
+    "answers": [
+      { "ord": 1, "text": "Margherita", "fixed_points": 0 },
+      { "ord": 2, "text": "Pepperoni", "fixed_points": 0 },
+      { "ord": 3, "text": "Capricciosa", "fixed_points": 0 },
+      { "ord": 4, "text": "Hawajska", "fixed_points": 0 }
+    ]
+  }
+]</textarea>
+    </div>
+
+    <div class="hcol">
+      <div class="mSub" style="margin-top:0;">OUTPUT (game + questions)</div>
+      <textarea id="outputTa" class="inp monoTa" readonly></textarea>
+    </div>
+  </div>
+
+  <!-- =======================================================
+       MODAL: EKSPORT — rama identyczna jak TAGI (overlay + modal)
+       ======================================================= -->
+  <div class="overlay" id="exportOverlay" style="display:none;">
+    <div class="modal tags-modal export-modal" role="dialog" aria-modal="true" aria-labelledby="xTitle">
+
+      <div class="tagsHead">
+        <div class="mTitle" id="xTitle">Eksport gry</div>
+        <button class="btn sm" id="xClose" type="button" aria-label="Zamknij">✕</button>
+      </div>
+
+      <div class="mSub" id="xSub">
+        Wybierz co najmniej 10 pytań. Czerwone nie spełniają warunków wybranego typu — odhacz je albo popraw dane.
+      </div>
+
+      <div class="xBody">
+        <div class="xField">
+          <div class="lbl2">Nazwa gry</div>
+          <input id="xName" class="inp xName" type="text" maxlength="60" autocomplete="off" value="gra" />
+        </div>
+
+        <div class="xGrid2">
+          <!-- LEWO: lista pytań -->
+          <div class="xField">
+            <div class="lbl2">Pytania</div>
+            <div id="xList" class="xPickList"></div>
+          </div>
+
+          <!-- PRAWO: typ gry + warunki -->
+          <div class="xField">
+            <div class="xTypeBox">
+              <div class="xTypeTop">
+                <div class="xTypeTitle">Typ gry</div>
+                <div class="xTypeHint" id="xTypeHint">—</div>
+              </div>
+
+              <div class="xRange">
+                <input id="xTypeRange" class="rng" type="range" min="0" max="2" step="1" value="2" />
+              </div>
+
+              <div class="xTypeLabels">
+                <div class="xTypeLbl" id="lbl0" data-v="0">
+                  <b>Typowy sondaż</b>
+                  <span>poll_text</span>
+                </div>
+                <div class="xTypeLbl" id="lbl1" data-v="1">
+                  <b>Punktacja</b>
+                  <span>poll_points</span>
+                </div>
+                <div class="xTypeLbl" id="lbl2" data-v="2">
+                  <b>Preparowany</b>
+                  <span>prepared</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tagsFoot">
+        <div class="xCountPill" id="xCountPill" title="Zaznaczone (min 10)">
+          <span>WYBRANE</span>
+          <b id="xCountVal">0/10</b>
+        </div>
+
+        <div class="tagsFootSpacer"></div>
+
+        <!-- komunikat w stopce (jak importMsg w Twoim stylu) -->
+        <div id="xErr" class="importMsg" style="display:none;"></div>
+
+        <button class="btn sm gold" id="xSave" type="button" disabled>Zapisz</button>
+      </div>
+
+    </div>
+  </div>
+
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+
+  // zgodnie z RULES z game-validate.js
+  const RULES = {
+    QN_MIN: 10,
+    AN_MIN: 3,
+    AN_MAX: 6,
+    SUM_PREPARED: 100,
+  };
+
+  const TYPES = {
+    POLL_TEXT: "poll_text",
+    POLL_POINTS: "poll_points",
+    PREPARED: "prepared",
+  };
+
+  const inputTa = $("inputTa");
+  const outputTa = $("outputTa");
+
+  const overlay = $("exportOverlay");
+  const xClose = $("xClose");
+  const xSave = $("xSave");
+  const xErr = $("xErr");
+
+  const xName = $("xName");
+  const xList = $("xList");
+
+  const xTypeRange = $("xTypeRange");
+  const xTypeHint = $("xTypeHint");
+  const xCountPill = $("xCountPill");
+  const xCountVal = $("xCountVal");
+
+  const lbl0 = $("lbl0");
+  const lbl1 = $("lbl1");
+  const lbl2 = $("lbl2");
+
+  let dirty = false;
+
+  // model w modalu
+  let allQuestions = [];      // z input
+  let selected = [];          // boolean per question
+  let mode = 2;               // 0..2, domyślnie prepared jak w przykładzie
+  let lastSavedSnapshot = ""; // do brudzenia
+
+  function showErr(msg){
+    if (!msg){
+      xErr.style.display = "none";
+      xErr.textContent = "";
+      return;
+    }
+    xErr.style.display = "block";
+    xErr.textContent = msg;
+  }
+
+  function markDirty(){
+    dirty = true;
+  }
+
+  function canClose(){
+    if (!dirty) return true;
+    return confirm("Masz niezapisane zmiany. Zamknąć bez zapisu?");
+  }
+
+  function closeModal(){
+    if (!canClose()) return;
+    overlay.style.display = "none";
+    showErr("");
+    dirty = false;
+  }
+
+  function openModal(){
+    overlay.style.display = "grid";
+    setTimeout(() => xName.focus(), 0);
+  }
+
+  function n(v){
+    const x = Number(v);
+    return Number.isFinite(x) ? x : 0;
+  }
+
+  function normQuestion(q){
+    const out = { text: String(q?.text ?? "") };
+    if (Array.isArray(q?.answers)){
+      out.answers = q.answers.map(a => ({
+        // ord w wejściu jest ok, ale w wyjściu go nie chcemy
+        text: String(a?.text ?? ""),
+        fixed_points: (a?.fixed_points === undefined || a?.fixed_points === null || a?.fixed_points === "")
+          ? undefined
+          : n(a.fixed_points),
+      }));
+    }
+    return out;
+  }
+
+  function parseInputToQuestions(){
+    const raw = String(inputTa.value ?? "").trim();
+    if (!raw) return [];
+    let v;
+    try{
+      v = JSON.parse(raw);
+    }catch{
+      throw new Error("Niepoprawny JSON w INPUT.");
+    }
+
+    // akceptujemy: [..] albo pojedynczy obiekt
+    let arr = [];
+    if (Array.isArray(v)) arr = v;
+    else if (v && typeof v === "object") arr = [v];
+    else arr = [];
+
+    // filtr minimalny: pytanie ma text
+    const qs = arr
+      .map(normQuestion)
+      .filter(q => String(q.text ?? "").trim().length > 0);
+
+    return qs;
+  }
+
+  function getType(){
+    if (mode === 0) return TYPES.POLL_TEXT;
+    if (mode === 1) return TYPES.POLL_POINTS;
+    return TYPES.PREPARED;
+  }
+
+  function typeHint(){
+    if (mode === 0) return "Warunek: min 10 pytań. (Odpowiedzi mogą być puste – na tym etapie nie blokujemy.)";
+    if (mode === 1) return "Warunek: min 10 pytań i każde wybrane pytanie ma 3–6 odpowiedzi.";
+    return "Warunek: min 10 pytań, 3–6 odpowiedzi, punkty: każda ≤100, suma w pytaniu ≤100 (brak = 0).";
+  }
+
+  function isAnswersCountOk(q){
+    const cnt = Array.isArray(q.answers) ? q.answers.length : 0;
+    return cnt >= RULES.AN_MIN && cnt <= RULES.AN_MAX;
+  }
+
+  function preparedPointsOk(q){
+    const ans = Array.isArray(q.answers) ? q.answers : [];
+    if (!ans.length) return false;
+  
+    // prepared: punkty są WYMAGANE i muszą być >= 1
+    const pts = ans.map(a => {
+      const v = a?.fixed_points;
+      // brak / null / "" => traktujemy jako brak punktów
+      if (v === undefined || v === null || v === "") return NaN;
+      return n(v);
+    });
+  
+    // brak punktów albo nieliczba => fail
+    if (pts.some(p => !Number.isFinite(p))) return false;
+  
+    // 0 zabronione
+    if (pts.some(p => p <= 0)) return false;
+  
+    // nadal trzymamy limity
+    if (pts.some(p => p > 100)) return false;
+  
+    const sum = pts.reduce((s,x) => s + x, 0);
+    return sum <= RULES.SUM_PREPARED;
+  }
+
+  function questionOkForType(q){
+    // poll_text: nie blokujemy po odpowiedziach (zgodnie z Twoją walidacją exportu: min 10)
+    if (mode === 0) return true;
+
+    // poll_points: 3..6 odpowiedzi
+    if (mode === 1) return isAnswersCountOk(q);
+
+    // prepared: 3..6 odpowiedzi + punkty <=100 i suma <=100 (brak pkt liczymy jako 0)
+    return isAnswersCountOk(q) && preparedPointsOk(q);
+  }
+
+  function questionMeta(q){
+    const cnt = Array.isArray(q.answers) ? q.answers.length : 0;
+
+    if (mode === 0){
+      // pokazuj tylko liczbę odpowiedzi informacyjnie
+      return `${cnt} odp.`;
+    }
+
+    if (mode === 1){
+      return `${cnt} odp. (wymagane 3–6)`;
+    }
+
+    // prepared: pokaż sumę punktów
+    const ans = Array.isArray(q.answers) ? q.answers : [];
+    const sum = ans.map(a => n(a.fixed_points)).reduce((s,x)=>s+x,0);
+    return `${cnt} odp. • suma ${sum}/100`;
+  }
+
+  function setActiveTypeUI(){
+    const v = String(mode);
+    [lbl0,lbl1,lbl2].forEach(el => el.classList.toggle("active", el.dataset.v === v));
+    xTypeHint.textContent = typeHint();
+
+    // delikatny track suwaka (nie ustawiamy kolorów globalnie, tylko tu)
+    // 3 pozycje: lewo->prawo
+    xTypeRange.style.setProperty("--track", "linear-gradient(to right, rgba(255,255,255,.25), rgba(255,255,255,.65))");
+  }
+
+  function selectedCount(){
+    return selected.filter(Boolean).length;
+  }
+
+  function anySelectedBad(){
+    for (let i=0; i<allQuestions.length; i++){
+      if (!selected[i]) continue;
+      if (!questionOkForType(allQuestions[i])) return true;
+    }
+    return false;
+  }
+
+  function updateFooterState(){
+    const cnt = selectedCount();
+    const bad = anySelectedBad();
+
+    xCountVal.textContent = `${cnt}/${RULES.QN_MIN}`;
+    xCountPill.classList.toggle("bad", cnt < RULES.QN_MIN || bad);
+
+    // blokady zapisu
+    const can = (cnt >= RULES.QN_MIN) && !bad;
+
+    xSave.disabled = !can;
+
+    // komunikat
+    if (cnt < RULES.QN_MIN){
+      showErr(`Za mało zaznaczonych pytań (min ${RULES.QN_MIN}).`);
+    } else if (bad){
+      showErr("Masz zaznaczone pytania, które nie spełniają warunków typu gry. Odznacz czerwone lub popraw dane.");
+    } else {
+      showErr("");
+    }
+  }
+
+  function renderList(){
+    xList.innerHTML = "";
+
+    allQuestions.forEach((q, idx) => {
+      const ok = questionOkForType(q);
+      const row = document.createElement("div");
+      row.className = `xPickItem ${ok ? "ok" : "bad"}`;
+
+      const title = String(q.text ?? "").trim() || `Pytanie ${idx+1}`;
+      const meta = questionMeta(q);
+
+      row.innerHTML = `
+        <input type="checkbox" ${selected[idx] ? "checked" : ""} aria-label="Zaznacz pytanie">
+        <div class="xNm" title="${escapeHtml(title)}">${escapeHtml(title)}</div>
+        <div class="xMeta">${escapeHtml(meta)}</div>
+      `;
+
+      const cb = row.querySelector("input[type=checkbox]");
+
+      // klik w cały wiersz przełącza checkbox (jak listy w Explorerze)
+      row.addEventListener("click", (e) => {
+        if (e.target === cb) return;
+        cb.checked = !cb.checked;
+        cb.dispatchEvent(new Event("change", { bubbles: true }));
+      });
+
+      cb.addEventListener("change", () => {
+        selected[idx] = cb.checked;
+        markDirty();
+        updateFooterState();
+      });
+
+      xList.appendChild(row);
+    });
+
+    updateFooterState();
+  }
+
+  function escapeHtml(s){
+    return String(s)
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;");
+  }
+
+  function buildOutput(){
+    const type = getType();
+    const name = String(xName.value ?? "").trim() || "gra";
+
+    const qs = [];
+    for (let i=0; i<allQuestions.length; i++){
+      if (!selected[i]) continue;
+
+      const q = allQuestions[i];
+      const outQ = { text: String(q.text ?? "").trim() };
+
+      if (Array.isArray(q.answers) && q.answers.length){
+        outQ.answers = q.answers.map(a => {
+          const o = { text: String(a.text ?? "").trim() };
+      
+          // prepared: fixed_points jest obowiązkowe i >= 1
+          if (getType() === TYPES.PREPARED) {
+            o.fixed_points = n(a?.fixed_points);
+          } else {
+            // inne typy: może nie mieć punktów
+            if (a?.fixed_points !== undefined && a?.fixed_points !== null && a?.fixed_points !== "") {
+              o.fixed_points = n(a.fixed_points);
+            }
+          }
+          return o;
+        });
+      }
+
+      qs.push(outQ);
+    }
+
+    return {
+      game: { name, type },
+      questions: qs,
+    };
+  }
+
+  function snapshot(){
+    // minimalna migawka do dirty: name + type + selected
+    return JSON.stringify({
+      name: String(xName.value ?? ""),
+      mode,
+      selected: selected.slice(),
+    });
+  }
+
+  function setDirtyFromSnapshot(){
+    const now = snapshot();
+    dirty = (now !== lastSavedSnapshot);
+  }
+
+  // ---------- otwieranie ----------
+  $("btnOpenExport").addEventListener("click", () => {
+    let qs;
+    try{
+      qs = parseInputToQuestions();
+    }catch(e){
+      alert(String(e?.message || e));
+      return;
+    }
+
+    if (qs.length < RULES.QN_MIN){
+      alert(`Za mało pytań w INPUT (min ${RULES.QN_MIN}). Masz: ${qs.length}.`);
+      return;
+    }
+
+    allQuestions = qs;
+    selected = qs.map(() => true);
+
+    // domyślnie: prepared (jak w Twoim przykładzie wyjściowym)
+    mode = 2;
+    xTypeRange.value = "2";
+    setActiveTypeUI();
+
+    // domyślna nazwa
+    if (!String(xName.value ?? "").trim()) xName.value = "gra";
+
+    renderList();
+    openModal();
+
+    lastSavedSnapshot = snapshot();
+    dirty = false;
+  });
+
+  // ---------- typ gry (suwak + klik etykiet) ----------
+  xTypeRange.addEventListener("input", () => {
+    mode = Number(xTypeRange.value) || 0;
+    setActiveTypeUI();
+    renderList(); // przelicza ok/bad + meta
+    markDirty();
+    setDirtyFromSnapshot();
+  });
+
+  [lbl0,lbl1,lbl2].forEach(el => {
+    el.addEventListener("click", () => {
+      mode = Number(el.dataset.v) || 0;
+      xTypeRange.value = String(mode);
+      setActiveTypeUI();
+      renderList();
+      markDirty();
+      setDirtyFromSnapshot();
+    });
+  });
+
+  // ---------- nazwa gry ----------
+  xName.addEventListener("input", () => {
+    markDirty();
+    setDirtyFromSnapshot();
+  });
+
+  // ---------- zapis ----------
+  xSave.addEventListener("click", () => {
+    // finalna blokada (na wypadek)
+    const cnt = selectedCount();
+    if (cnt < RULES.QN_MIN){
+      showErr(`Za mało zaznaczonych pytań (min ${RULES.QN_MIN}).`);
+      return;
+    }
+    if (anySelectedBad()){
+      showErr("Masz zaznaczone pytania, które nie spełniają warunków typu gry.");
+      return;
+    }
+
+    const out = buildOutput();
+    outputTa.value = JSON.stringify(out, null, 2);
+
+    lastSavedSnapshot = snapshot();
+    dirty = false;
+
+    closeModal();
+  });
+
+  // ---------- zamykanie ----------
+  xClose.addEventListener("click", closeModal);
+
+  overlay.addEventListener("click", (e) => {
+    if (e.target === overlay) closeModal();
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && overlay.style.display !== "none") closeModal();
+  });
+
+})();
+</script>
+
+</body>
+</html>
