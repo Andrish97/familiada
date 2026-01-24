@@ -1,102 +1,78 @@
-/* base-explorer/base-explorer.css */
-/* =========================================================
-   0) ZASADA KRYTYCZNA: hidden musi zawsze wygrywać
-   (bo .tags-layer ma display ustawione w CSS)
-   ========================================================= */
-[hidden] { display: none !important; }
+/* /familiada/base-explorer/base-explorer.css
+   Uspójnione: jedna siatka kolumn, sticky header, separatory kolumn,
+   bez duplikatów padding/min-height w .list, poprawione wiersze w .explorer-right.
+*/
+
+/* ========= HARD OVERRIDES ========= */
+[hidden]{ display:none !important; }
 
 /* =========================================================
-   1) TOPBAR / TOOLBAR / LAYOUT
+   0) TOPBAR / TOOLBAR (bazuje na ../css/base.css + ../css/builder.css)
    ========================================================= */
+
 .topbar .topbar-left,
 .topbar .topbar-right{
   display:flex;
-  align-items:center;
-  gap:10px;
+  gap:12px;
+  align-items:flex-start;
 }
 
-/* shell */
-.explorer-shell{
+/* =========================================================
+   1) GŁÓWNY LAYOUT
+   ========================================================= */
+
+.explorer{
   display:grid;
-  grid-template-columns: 330px 1fr;
-  gap: 12px;
-  padding: 12px;
-  min-height: calc(100vh - 62px);
+  grid-template-columns: 320px 1fr;
+  gap:0;
+  padding:0 12px 12px;
+  /* topbar + toolbar zajmują resztę; to ma domknąć wysokość */
+  min-height: calc(100vh - 120px);
+  align-items:stretch;
 }
 
-/* left/right panes */
 .explorer-left{
-  min-width:0;
+  border-right: 1px solid rgba(255,255,255,.12);
+  padding-right:12px;
   display:flex;
   flex-direction:column;
   gap:12px;
   min-height:0;
 }
 
+/* U Ciebie w HTML są TYLKO 2 elementy: breadcrumbs + list.
+   Trzecie "auto" powoduje puste miejsce i wrażenie rozjazdu. */
 .explorer-right{
   display:grid;
-  grid-template-rows:auto 1fr; /* breadcrumbs + list (TYLKO 2 elementy w HTML) */
+  grid-template-rows:auto 1fr;
   gap:12px;
   min-width:0;
   padding-left:12px;
   min-height:0;
 }
 
-/* =========================================================
-   2) PANELE LEWE: DRZEWO + TAGI + META
-   ========================================================= */
-.panel{
-  border: 1px solid rgba(255,255,255,.10);
-  border-radius: 14px;
-  background: rgba(0,0,0,.12);
-  backdrop-filter: blur(10px);
-  overflow:hidden;
-  display:flex;
-  flex-direction:column;
-  min-height:0;
+/* separator między drzewem a tagami */
+.left-sep{
+  height:1px;
+  background: rgba(255,255,255,.12);
+  border-radius:999px;
+  margin:6px 2px 10px;
 }
 
-.panelHead{
-  padding: 10px 12px;
-  border-bottom: 1px solid rgba(255,255,255,.10);
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:10px;
-}
-
-.panelTitle{
-  font-weight: 800;
-  letter-spacing: .05em;
-  font-size: 12px;
-  text-transform: uppercase;
-  color: rgba(255,255,255,.75);
-}
-
-.panelBody{
-  padding: 10px 12px;
-  min-height:0;
-  overflow:auto;
-}
-
-/* tree + tags wrapper heights */
-.tree{
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow:auto;
-  max-height:55vh;
-}
-
+/* panele lewe */
+.tree,
 .tags{
-  flex:1 1 auto;
-  min-height:0;
   overflow:auto;
-  max-height:55vh;
+  border-radius:12px;
+  padding:10px;
+  min-height:120px;
+  position:relative; /* pod marquee + drop-linie */
 }
 
 /* =========================================================
-   3) BREADCRUMBS + LISTA (PRAWY PANEL)
+   2) BREADCRUMBS + LISTA (prawy panel)
    ========================================================= */
+
 .breadcrumbs{
   border-radius:12px;
   padding:10px 12px;
@@ -107,68 +83,89 @@
   white-space:nowrap;
   overflow:hidden;
   text-overflow:ellipsis;
-  border: 1px solid rgba(255,255,255,.10);
-  background: rgba(0,0,0,.10);
 }
 
-/* Lista jest scrollowalna i ma w środku sticky nagłówek */
 .list{
-  overflow:auto;
+  /* lista ma wypełnić dostępne 1fr w .explorer-right */
   min-height:0;
   height:100%;
+  overflow:auto;
+
   background:transparent;
   border-radius:12px;
   position:relative; /* marquee */
-  padding:0;         /* padding jest na .list-head/.row dla spójnego liczenia kolumn */
+
+  /* krytyczne: brak paddingu na kontenerze scrollującym,
+     żeby header i wiersze liczyły się identycznie */
+  padding:0;
   box-sizing:border-box;
 }
 
 /* =========================================================
-   4) NAGŁÓWEK LISTY (renderowany wewnątrz #list)
+   3) LIST HEAD (nagłówek w środku #list)
    ========================================================= */
+
 .list-head{
   display:grid;
+  /* siatkę definiujemy WYŁĄCZNIE przez zmienne (na dole) */
+  padding:10px 16px;
   line-height:1.2;
+
   border-bottom: 1px solid rgba(255,255,255,.18);
   font-size:12px;
   text-transform:uppercase;
   letter-spacing:.04em;
   color: rgba(255,255,255,.55);
   user-select:none;
+
+  /* sticky: nagłówek „jest częścią listy”, a nie osobno */
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: rgba(0,0,0,.22);
+  backdrop-filter: blur(10px);
+
   border-radius:12px 12px 0 0;
 }
+
 .list-head > div{ white-space:nowrap; }
 
 .list-head .h-num{ text-align:left; cursor:default; }
 .list-head .h-main{ cursor:pointer; }
 .list-head .h-type{ cursor:pointer; }
 .list-head .h-date{ cursor:pointer; }
-.list-head .h-meta{ text-align:right; cursor:pointer; }
+.list-head .h-meta{ text-align:right; cursor:default; }
 
-/* wskaźnik sortowania (render.js dodaje .active + data-dir) */
-.list-head .active::after{
+.list-head .active{ color: rgba(255,255,255,.8); }
+
+/* strzałki sortowania */
+.list-head .h-main::after,
+.list-head .h-type::after,
+.list-head .h-date::after{
+  content:"";
   display:inline-block;
   margin-left:6px;
-  opacity:.85;
-  font-size:11px;
-  position:relative;
-  top:-1px;
+  opacity:.65;
 }
 .list-head .active[data-dir="asc"]::after{ content:"▲"; }
 .list-head .active[data-dir="desc"]::after{ content:"▼"; }
 
 /* =========================================================
-   5) WIERSZE (lista prawa)
+   4) WIERSZE (lista prawa)
    ========================================================= */
+
 .row{
   user-select:none;
   display:grid;
+  /* siatkę definiujemy WYŁĄCZNIE przez zmienne (na dole) */
   align-items:center;
-  padding:10px 12px;
-  border-bottom: 1px solid rgba(255,255,255,.08);
-  border-radius:10px;
-  background: transparent;
+
+  padding:10px 16px;
+
+  border-bottom: 1px solid rgba(255,255,255,.1);
 }
+
+#list .row:first-child{ margin-top:6px; }
 
 .row:hover{
   background: rgba(255,255,255,.04);
@@ -180,6 +177,7 @@
   background: rgba(106,190,255,.08);
 }
 
+/* komórki */
 .row .c-num{
   opacity:.65;
   font-variant-numeric: tabular-nums;
@@ -204,8 +202,9 @@
 }
 
 /* =========================================================
-   6) MARQUEE (zaznaczanie prostokątem)
+   5) MARQUEE (zaznaczanie prostokątem)
    ========================================================= */
+
 .marquee{
   position:absolute;
   border: 1px dashed rgba(106,190,255,.9);
@@ -216,8 +215,9 @@
 }
 
 /* =========================================================
-   7) DRAG & DROP (wskazania)
+   6) DRAG & DROP (wskazania)
    ========================================================= */
+
 .is-drop-before,
 .is-drop-after{
   position:relative;
@@ -238,8 +238,9 @@
 .is-drop-after::after{ bottom:0; }
 
 /* =========================================================
-   8) CONTEXT MENU
+   7) CONTEXT MENU
    ========================================================= */
+
 .context-menu{
   position:fixed;
   z-index:9999;
@@ -278,68 +279,9 @@
 }
 
 /* =========================================================
-   9) MODAL (zgodny z HTML: m-modal-backdrop / m-modal-card / ...)
+   8) Overlay/Modal (tags-modal.js)
    ========================================================= */
-.m-modal{
-  position:fixed;
-  inset:0;
-  z-index:9999;
-}
 
-.m-modal-backdrop{
-  position:absolute;
-  inset:0;
-  background: rgba(0,0,0,.55);
-}
-
-.m-modal-card{
-  position:relative;
-  width: min(560px, calc(100vw - 24px));
-  margin: 10vh auto 0;
-  background: rgba(20,20,24,.98);
-  border:1px solid rgba(255,255,255,.12);
-  border-radius:14px;
-  overflow:hidden;
-  box-shadow: 0 18px 70px rgba(0,0,0,.45);
-}
-
-.m-modal-head{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:10px;
-  padding:14px;
-  border-bottom: 1px solid rgba(255,255,255,.10);
-}
-
-.m-modal-title{
-  font-weight:800;
-  letter-spacing:.05em;
-  text-transform:uppercase;
-  font-size:12px;
-  opacity:.85;
-}
-
-.m-modal-body{
-  padding:14px;
-}
-
-.m-modal-foot{
-  padding:14px;
-  display:flex;
-  justify-content:flex-end;
-  gap:10px;
-  border-top: 1px solid rgba(255,255,255,.10);
-}
-
-.m-modal-actions{
-  display:flex;
-  gap:10px;
-}
-
-/* =========================================================
-   10) Overlay/Modal (tags-modal.js używa overlay/modal z HTML)
-   ========================================================= */
 .overlay{
   position:fixed;
   inset:0;
@@ -364,9 +306,7 @@
   width: min(760px, calc(100vw - 24px));
 }
 
-.tags-layer{
-  display:block;
-}
+.tags-layer{ display:block; }
 
 .tagsHead{
   display:flex;
@@ -391,9 +331,7 @@
   opacity:.65;
 }
 
-.tagsBody{
-  padding:14px;
-}
+.tagsBody{ padding:14px; }
 
 .tagsFoot{
   padding:14px;
@@ -412,9 +350,7 @@
   cursor:pointer;
 }
 
-.btn:hover{
-  background: rgba(255,255,255,.10);
-}
+.btn:hover{ background: rgba(255,255,255,.10); }
 
 .btn.primary{
   background: rgba(106,190,255,.16);
@@ -441,25 +377,9 @@
   box-shadow: 0 0 0 3px rgba(106,190,255,.12);
 }
 
-/* rename modal — dopasowanie rozmiaru */
-.rename-modal{
-  width: min(560px, 94vw);
-}
-
-.renameBody{
-  margin-top: 12px;
-}
-
-.renameInput{
-  width: 100%;
-  text-align: center;
-  font-weight: 500;
-  letter-spacing: .04em;
-}
-
-/* ================================
-   11) LIST GRID: kolumny sterowane zmiennymi + resizer + separatory
-   ================================ */
+/* =========================================================
+   9) LIST GRID: kolumny sterowane zmiennymi + resizer + separatory
+   ========================================================= */
 
 /* domyślne szerokości */
 :root{
@@ -476,26 +396,16 @@
 .row{
   grid-template-columns: var(--col-num) var(--col-name) var(--col-type) var(--col-date) var(--col-meta);
   gap: var(--col-gap);
-  padding:10px 16px;
-  box-sizing:border-box;
 }
 
-/* Sticky header wewnątrz scrolla listy */
-.list-head{
-  position: sticky;
-  top: 0;
-  z-index: 5;
-  background: rgba(0,0,0,.22);
-  backdrop-filter: blur(10px);
-}
-
-/* Separatory między kolumnami (w połowie przerwy) */
+/* Komórki jako punkt odniesienia dla separatorów i resizerów */
 .list-head > div,
 .row > div{
   position: relative;
   min-width: 0;
 }
 
+/* Separatory pomiędzy kolumnami (w połowie przerwy) */
 .list-head > div:not(:last-child)::after,
 .row > div:not(:last-child)::after{
   content:"";
@@ -519,7 +429,8 @@
   touch-action: none;
 }
 
-.col-resizer::before{
+/* subtelny „marker” */
+.col-resizer::after{
   content:"";
   position:absolute;
   top: 6px;
@@ -531,7 +442,7 @@
   border-radius:999px;
 }
 
-.col-resizer:hover::before{
+.col-resizer:hover::after{
   background: rgba(106,190,255,.45);
 }
 
@@ -541,13 +452,20 @@
 }
 
 /* =========================================================
-   12) RESPONSIVE
+   10) RESPONSIVE
    ========================================================= */
+
 @media (max-width: 980px){
-  .explorer-shell{
+  .explorer{
     grid-template-columns: 1fr;
   }
+  .explorer-left{
+    border-right:0;
+    padding-right:0;
+    padding-bottom:12px;
+    border-bottom: 1px solid rgba(255,255,255,.12);
+  }
   .explorer-right{
-    padding-left: 0;
+    padding-left:0;
   }
 }
