@@ -5,6 +5,10 @@
    ========================================================= */
 [hidden] { display: none !important; }
 
+html, body{
+  height:100%;
+}
+
 /* =========================================================
    1) TOPBAR / TOOLBAR / LAYOUT
    ========================================================= */
@@ -1012,8 +1016,11 @@ input, textarea{ user-select:text; }
 .list{
   max-width:100%;
   overflow-x:hidden;
+  min-height:0;
+  height:100%;
 }
 
 .explorer-right{
-  min-width:0;
+  grid-template-rows: auto 1fr;
+  min-height:0;
 }
