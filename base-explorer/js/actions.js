@@ -11,8 +11,6 @@ import {
   setViewSearch,
   rememberBrowseLocation,
   restoreBrowseLocation,
-  tagSelectionClear,
-  metaSelectionClear,
 } from "./state.js";
 
 import { renderAll, renderList } from "./render.js";
@@ -2060,41 +2058,6 @@ export function wireActions({ state }) {
     leftSetAnchor(state, clickedKey);
   }
   
-  // Jedno źródło prawdy: z selekcji po lewej budujemy view + filtry
-  async function applyLeftFiltersView() {
-    ensureLeftSelections(state);
-  
-    const metaIds = Array.from(state.metaSelection.ids || []).filter(Boolean);
-    const tagIds = Array.from(state.tagSelection.ids || []).filter(Boolean);
-  
-    const hasMeta = metaIds.length > 0;
-    const hasTags = tagIds.length > 0;
-  
-    // Zawsze trzymaj state.tagIds spójne z tagSelection
-    state.tagIds = tagIds;
-  
-    if (!hasMeta && !hasTags) {
-      if (state.view === VIEW.TAG || state.view === VIEW.META) restoreBrowseLocation(state);
-      selectionClear(state);
-      await refreshList(state);
-      return;
-    }
-  
-    if (hasMeta) {
-      if (state.view !== VIEW.META) rememberBrowseLocation(state);
-      state.view = VIEW.META;
-      selectionClear(state);
-      await refreshList(state);
-      return;
-    }
-  
-    // tylko tagi
-    if (state.view !== VIEW.TAG) rememberBrowseLocation(state);
-    state.view = VIEW.TAG;
-    selectionClear(state);
-    await refreshList(state);
-  }
-  
   async function applyLeftFiltersView() {
     const hasMeta = !!state?.metaSelection?.ids?.size;
     const tagIds = Array.isArray(state.tagSelection?.ids ? Array.from(state.tagSelection.ids) : []) 
@@ -3209,12 +3172,9 @@ export function wireActions({ state }) {
       if (key) hitKeys.add(key);
     }
   
-    tagsMarqueeBase = tagsMarqueeAdd
-      ? new Set([
-          ...Array.from(state.metaSelection?.ids || []).map(id => `m:${id}`),
-          ...Array.from(state.tagSelection?.ids || []).map(id => `t:${id}`),
-        ])
-      : null;
+    const base = (tagsMarqueeAdd && tagsMarqueeBase)
+      ? new Set(tagsMarqueeBase)
+      : new Set();
   
     for (const k of hitKeys) base.add(k);
   
@@ -3259,10 +3219,12 @@ export function wireActions({ state }) {
 
     tagsMarqueeAdd = isMultiSelectModifier(e);
     if (!state.tagSelection) state.tagSelection = { ids: new Set(), anchorId: null };
-    tagsMarqueeBase = tagsMarqueeAdd ? {
-      tags: new Set(state.tagSelection.ids),
-      meta: new Set(state.metaSelection?.ids || []),
-    } : null;
+    tagsMarqueeBase = tagsMarqueeAdd
+      ? new Set([
+          ...Array.from(state.metaSelection?.ids || []).map(id => `m:${id}`),
+          ...Array.from(state.tagSelection?.ids || []).map(id => `t:${id}`),
+        ])
+      : null;
 
     if (!tagsMarqueeAdd) {
       state.tagSelection.ids.clear();
