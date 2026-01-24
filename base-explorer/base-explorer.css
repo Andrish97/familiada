@@ -117,7 +117,7 @@ html, body{
 
   position: sticky;
   top: 0;
-  z-index: 5;
+  z-index: 3;
   background: rgba(0,0,0,.22);
   backdrop-filter: blur(10px);
 
@@ -1156,7 +1156,7 @@ input, textarea{ user-select:text; }
 
 /* 8) Tooltipy: wyniesione ponad sticky head */
 .row{ position: relative; z-index: 1; }
-.row:hover{ z-index: 5; }                /* hover/tooltip wyżej */
+.row:hover{ z-index: 6; }                /* hover/tooltip wyżej */
 
 .tag-dot,
 .meta-dot{
