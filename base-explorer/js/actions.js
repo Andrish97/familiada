@@ -14,7 +14,7 @@ import {
   restoreBrowseLocation,
 } from "./state.js";
 
-import { renderAll, renderList, renderTree, renderTags } from "./render.js";
+import { renderAll, renderToolbar, renderList, renderTree, renderTags } from "./render.js";
 
 import {
   listQuestionsByCategory,
@@ -2320,6 +2320,7 @@ export function wireActions({ state }) {
     if (clickRenderTimer) clearTimeout(clickRenderTimer);
     clickRenderTimer = setTimeout(() => {
       clickRenderTimer = null;
+      renderToolbar(state); // <-- kluczowe: aktualizuje disabled
       renderList(state);
     }, 180); // krótko: pozwala na dblclick
   }
