@@ -545,13 +545,22 @@ async function refreshList(state) {
     return true;
   }
 
-  function questionPassesMeta_OR(qid, metaIds) {
+  function questionPassesMeta_AND(qid, metaIds) {
     if (!metaIds.length) return true;
-    const metaSet = state._allQuestionMetaMap?.get?.(qid) || new Set(["poll_text"]);
-    for (const mid of metaIds) if (metaSet.has(mid)) return true;
-    return false;
+  
+    const metaSet =
+      state._allQuestionMetaMap?.get?.(qid) ||
+      metaForQuestionPayload(
+        (state._allQuestions || []).find(x => x.id === qid)?.payload
+      ) ||
+      new Set(["poll_text"]);
+  
+    for (const mid of metaIds) {
+      if (!metaSet.has(mid)) return false;
+    }
+    return true;
   }
-
+  
   // ====== WIDOKI WIRTUALNE ======
   // SEARCH / TAG / META korzystają z jednej ścieżki: filtrujemy pytania globalnie,
   // potem budujemy foldery wynikowe analogicznie do SEARCH (foldery z wyników + rodzice),
@@ -567,9 +576,9 @@ async function refreshList(state) {
     // tag mapy globalnie tylko jeśli tagi są użyte
     if (tagIds.length) await ensureAllQuestionTagMap();
 
-    // 1) pytania: TAG(AND) + META(OR) + TEXT(AND)
+   // 1) META: AND wewnątrz metaSelection
     let qs = qAll.filter(q => {
-      if (!questionPassesMeta_OR(q.id, metaIds)) return false;
+      if (!questionPassesMeta_AND(q.id, metaIds)) return false;
       if (!questionPassesTags_AND(q.id, tagIds)) return false;
       return true;
     });
