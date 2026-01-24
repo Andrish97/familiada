@@ -498,6 +498,7 @@ export function renderList(state) {
   for (const c of foldersRaw) {
     items.push({
       kind: "cat",
+      ord: Number(c.ord) || 0,
       id: c.id,
       name: c.name || "Folder",
       date: toTime(c.updated_at || c.created_at),
@@ -509,6 +510,7 @@ export function renderList(state) {
     const text = q?.payload?.text ?? q?.text ?? "Pytanie";
     items.push({
       kind: "q",
+      ord: Number(q.ord) || 0,
       id: q.id,
       name: text,
       date: toTime(q.updated_at || q.created_at),
@@ -541,6 +543,12 @@ export function renderList(state) {
 
     if (sortKey === "date") {
       const r = ((a.date || 0) - (b.date || 0)) * mul;
+      if (r) return r;
+      return byNamePL(a.name, b.name);
+    }
+
+    if (sortKey === "ord") {
+      const r = ((a.ord || 0) - (b.ord || 0)) * mul;
       if (r) return r;
       return byNamePL(a.name, b.name);
     }
