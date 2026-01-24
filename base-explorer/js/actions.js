@@ -197,7 +197,7 @@ async function ensureQuestionIndexForCounts(state) {
 }
 
 // Buduje mapę: folderId -> liczba (direct subfolders + direct questions)
-// Root liczymy osobno jako "__root__"
+// Root liczymy osobno jako "root"
 async function buildDirectChildrenCountMap(state) {
   await ensureQuestionIndexForCounts(state);
 
@@ -208,7 +208,7 @@ async function buildDirectChildrenCountMap(state) {
   const subfolderCount = new Map(); // folderId -> number
   for (const c of cats) {
     const pid = c.parent_id || null;
-    const key = pid || "__root__";
+    const key = pid || "root";
     subfolderCount.set(key, (subfolderCount.get(key) || 0) + 1);
   }
 
@@ -216,12 +216,12 @@ async function buildDirectChildrenCountMap(state) {
   const questionCount = new Map(); // folderId -> number
   for (const q of qs) {
     const cid = q.category_id || null;
-    const key = cid || "__root__";
+    const key = cid || "root";
     questionCount.set(key, (questionCount.get(key) || 0) + 1);
   }
 
   // 3) merged
-  const out = new Map(); // folderId or "__root__" -> number
+  const out = new Map(); // folderId or "root" -> number
   const allKeys = new Set([
     ...Array.from(subfolderCount.keys()),
     ...Array.from(questionCount.keys()),
@@ -1664,6 +1664,10 @@ async function applyTagToDraggedItems(state, tagId, draggedKeys) {
   state._allCategoryTagMap = null;
 
   await state._api?.refreshList?.();
+  await rebuildStatusMaps(state);
+  renderTree(state);
+  renderTags(state);
+  renderList(state);
   return true;
 }
 
@@ -2391,7 +2395,6 @@ export function wireActions({ state }) {
         selectionClear(state);
         await refreshList(state);
         
-        document.getElementById("searchText")?.focus();
         return;
       }
       
@@ -2846,11 +2849,8 @@ export function wireActions({ state }) {
     state._drag.mode = isCopy ? "copy" : "move";
     e.dataTransfer.dropEffect = state._drag.mode;
   
-    const row = e.target?.closest?.('.row[data-kind="cat"][data-id]');
+    const row = e.target?.closest?.('.row[data-id]');
     if (!row) {
-      // upuszczenie na tło drzewa = root
-      state._drag.treeDrop = { mode: "root", targetId: null };
-      clearDropTarget();
       return;
     }
   
@@ -2891,7 +2891,7 @@ export function wireActions({ state }) {
     if (!canDnD()) return;
     e.preventDefault();
   
-    const payload = state._drag.treeDrop || { mode: "root", targetId: null };
+    const payload = state._drag.treeDrop;
     const modeKey = payload.mode;
     const targetId = payload.targetId;
   
@@ -3072,6 +3072,7 @@ export function wireActions({ state }) {
   
   listEl?.addEventListener("dragover", (e) => {
     if (!canDnD()) return;
+    if (e.target.closest(".list-head")) return; // NIE ustawiaj drop-target na header
     e.preventDefault();
   
     const isCopy = isCopyDragModifier(e);
