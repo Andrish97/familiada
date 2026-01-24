@@ -1570,12 +1570,6 @@ async function applyTagToDraggedItems(state, tagId, draggedKeys) {
   if (!canWrite(state)) return false;
   if (!tagId) return false;
 
-  // Blokada Etap C/G: w SEARCH nie tagujemy niczego
-  if (state.view === VIEW.SEARCH) {
-    alert("W widoku wyszukiwania nie można przypisywać tagów.");
-    return false;
-  }
-
   const keys = Array.from(draggedKeys || []).filter(Boolean);
   if (!keys.length) return false;
 
@@ -2563,6 +2557,17 @@ export function wireActions({ state }) {
   
     await showContextMenu({ state, x: e.clientX, y: e.clientY, target: { kind: "tags-bg", id: null } });
   });
+
+  function canTagDnD() {
+    // Tagowanie działa wszędzie (także w SEARCH), byle user miał prawa i coś przeciągał
+    return canWrite(state);
+  }
+  
+  function clearTagDropPreview() {
+    const rows = tagsEl?.querySelectorAll?.('.row.is-drop-target') || [];
+    rows.forEach(r => r.classList.remove("is-drop-target"));
+    if (state._drag) state._drag.tagDrop = null;
+  }
   
   // Drag over tag row => pokaż podświetlenie
   tagsEl?.addEventListener("dragover", (e) => {
@@ -2764,7 +2769,7 @@ export function wireActions({ state }) {
       return;
     }
 
-    if (!canDnD()) return;
+    if (!canWrite(state)) return;
 
     const row = e.target?.closest?.('.row[data-kind="cat"][data-id]');
     if (!row) return;
@@ -2999,7 +3004,7 @@ export function wireActions({ state }) {
   });
 
   listEl?.addEventListener("dragstart", (e) => {
-    if (!canDnD()) return;
+    if (!canWrite(state)) return; // pozwól przeciągać także w SEARCH/TAG/META (do tagowania)
   
     const row = e.target?.closest?.('.row[data-kind][data-id]');
     if (!row) return;
