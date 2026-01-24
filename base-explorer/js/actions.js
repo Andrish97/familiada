@@ -1244,7 +1244,7 @@ export async function duplicateSelected(state) {
   // root nie jest elementem do duplikowania
   if (keys.size === 1 && keys.has("root")) return false;
 
-  copySelectedToClipboard(state);
+  await copySelectedToClipboard(state);
   return await pasteClipboardHere(state);
 }
 
@@ -1280,7 +1280,8 @@ async function goUp(state) {
 }
 
 function clipboardSet(state, mode, keys) {
-  state.clipboard = state.clipboard || { mode: null, keys: new Set() };
+  // payload: dane do wklejenia (np. pytania + tagIds)
+  state.clipboard = state.clipboard || { mode: null, keys: new Set(), payload: null };
   state.clipboard.mode = mode;
 
   const onlyReal = Array.from(keys || []).filter(k =>
@@ -1288,22 +1289,85 @@ function clipboardSet(state, mode, keys) {
   );
 
   state.clipboard.keys = new Set(onlyReal);
+
+  // reset payload – będzie wypełniany przy COPY/CUT
+  state.clipboard.payload = null;
 }
 
 function clipboardClear(state) {
-  if (!state.clipboard) state.clipboard = { mode: null, keys: new Set() };
+  if (!state.clipboard) state.clipboard = { mode: null, keys: new Set(), payload: null };
   state.clipboard.mode = null;
   state.clipboard.keys.clear();
+  state.clipboard.payload = null;
 }
 
 function clipboardHas(state) {
   return !!state?.clipboard?.mode && state?.clipboard?.keys?.size > 0;
 }
 
-export function copySelectedToClipboard(state) {
+async function buildClipboardQuestionsPayload(state, qIdsInOrder) {
+  const ids = (qIdsInOrder || []).filter(Boolean);
+  if (!ids.length) return { questions: [] };
+
+  // 1) pytania (payload)
+  const { data: qs, error: eQ } = await sb()
+    .from("qb_questions")
+    .select("id,payload")
+    .in("id", ids);
+
+  if (eQ) throw eQ;
+
+  const byId = new Map((qs || []).map(q => [q.id, q]));
+
+  // 2) tagi pytań
+  const { data: links, error: eT } = await sb()
+    .from("qb_question_tags")
+    .select("question_id,tag_id")
+    .in("question_id", ids);
+
+  if (eT) throw eT;
+
+  const tagMap = new Map(); // qid -> [tagId...]
+  for (const l of (links || [])) {
+    if (!tagMap.has(l.question_id)) tagMap.set(l.question_id, []);
+    tagMap.get(l.question_id).push(l.tag_id);
+  }
+
+  // 3) payload.questions w KOLEJNOŚCI zaznaczenia (ważne dla created[i])
+  const questions = ids.map((id) => {
+    const q = byId.get(id) || {};
+    const payload = (q.payload && typeof q.payload === "object")
+      ? q.payload
+      : { text: "", answers: [] };
+
+    return {
+      payload,
+      tagIds: Array.from(new Set(tagMap.get(id) || [])).filter(Boolean),
+    };
+  });
+
+  return { questions };
+}
+
+export async function copySelectedToClipboard(state) {
   const keys = state?.selection?.keys;
   if (!keys || !keys.size) return false;
+
   clipboardSet(state, "copy", keys);
+
+  // 6A) dołóż tagIds do payload (dla pytań)
+  const qIdsInOrder = Array.from(state.clipboard.keys)
+    .filter(k => k.startsWith("q:"))
+    .map(k => k.slice(2));
+
+  try {
+    state.clipboard.payload = await buildClipboardQuestionsPayload(state, qIdsInOrder);
+  } catch (e) {
+    console.warn("Clipboard payload build failed:", e);
+    // payload może pozostać null; paste zrobi fallback
+    state.clipboard.payload = { questions: [] };
+  }
+
   return true;
 }
 
@@ -1313,6 +1377,81 @@ export function cutSelectedToClipboard(state) {
   if (!keys || !keys.size) return false;
   clipboardSet(state, "cut", keys);
   return true;
+}
+
+async function pasteIntoFolder(state, targetFolderIdOrNull) {
+  // payload musi być w formacie:
+  // payload.questions[i].payload
+  // payload.questions[i].tagIds
+
+  // Fallback: jeśli payload jest pusty/null (np. copy się nie udało),
+  // budujemy payload na podstawie keys (COPY pytań).
+  if (!state?.clipboard?.payload || !Array.isArray(state.clipboard.payload.questions)) {
+    const qIdsInOrder = Array.from(state.clipboard.keys || [])
+      .filter(k => k.startsWith("q:"))
+      .map(k => k.slice(2));
+    state.clipboard.payload = await buildClipboardQuestionsPayload(state, qIdsInOrder);
+  }
+
+  const payload = state.clipboard.payload || {};
+  const qItems = Array.isArray(payload.questions) ? payload.questions : [];
+  if (!qItems.length) return;
+
+  // ord startowy w folderze docelowym
+  const ordStart = await nextOrdForQuestion(state, targetFolderIdOrNull);
+
+  // 1) insert pytań (bez tagIds w payload DB)
+  const rows = qItems.map((item, i) => {
+    const p = (item?.payload && typeof item.payload === "object")
+      ? item.payload
+      : { text: "", answers: [] };
+
+    return {
+      base_id: state.baseId,
+      category_id: targetFolderIdOrNull,
+      ord: ordStart + i,
+      payload: p,
+      ...(state.user?.id ? { updated_by: state.user.id } : {}),
+    };
+  });
+
+  // potrzebujemy nowych id → select("id")
+  const { data: created, error: eIns } = await sb()
+    .from("qb_questions")
+    .insert(rows, { defaultToNull: false })
+    .select("id");
+
+  if (eIns) throw eIns;
+
+  // 2) 6B) po insercie przypnij tagi
+  // created[i].id = nowy id
+  // payload.questions[i].tagIds = tagi źródłowe
+  const linkRows = [];
+  for (let i = 0; i < (created || []).length; i++) {
+    const newId = created[i]?.id;
+    const tagIds = Array.isArray(qItems[i]?.tagIds) ? qItems[i].tagIds : [];
+    if (!newId || !tagIds.length) continue;
+
+    for (const tid of tagIds) {
+      if (!tid) continue;
+      linkRows.push({ question_id: newId, tag_id: tid });
+    }
+  }
+
+  if (linkRows.length) {
+    const { error: eLinks } = await sb()
+      .from("qb_question_tags")
+      .insert(linkRows, { defaultToNull: false });
+    if (eLinks) throw eLinks;
+  }
+
+  // cache invalidacje
+  state._rootQuestions = null;
+  state._viewQuestionTagMap = null;
+  state._allQuestionTagMap = null;
+  state._derivedCategoryTagMap = null;
+  state._folderDescQIds = null;
+  state._allCategoryTagMap = null;
 }
 
 export async function pasteClipboardHere(state) {
@@ -1335,11 +1474,9 @@ export async function pasteClipboardHere(state) {
       }
     }
 
-    // 2) kopiuj pytania (już działa)
+    // 2) kopiuj pytania (z tagami)
     if (qKeys.length) {
-      state._drag = state._drag || {};
-      state._drag.keys = new Set(qKeys);
-      await moveItemsTo(state, targetFolderIdOrNull, { mode: "copy" });
+      await pasteIntoFolder(state, targetFolderIdOrNull);
     }
 
     await state._api?.refreshList?.();
@@ -2102,24 +2239,6 @@ export function wireActions({ state }) {
       warnSearchLockedByLeft(state);
     });
   }
-
-  // ===== Sort header: delegacja (bo renderList podmienia DOM) =====
-  function toggleSort(key) {
-    const s = state.sort || (state.sort = { key: "name", dir: "asc" });
-  
-    if (s.key === key) s.dir = (s.dir === "asc") ? "desc" : "asc";
-    else { s.key = key; s.dir = "asc"; }
-  
-    renderList(state);
-  }
-  
-  listEl?.addEventListener("click", (e) => {
-    const h = e.target?.closest?.(".list-head [data-sort-key]");
-    if (!h) return;
-    const key = h.dataset.sortKey;
-    if (!key) return;
-    toggleSort(key);
-  });
 
   function toggleSort(key) {
     const s = state.sort || (state.sort = { key: "ord", dir: "asc" });
