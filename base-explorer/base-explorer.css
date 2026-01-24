@@ -1073,3 +1073,100 @@ input, textarea{ user-select:text; }
 [data-tip]:hover::before{
   z-index: 10000;
 }
+
+/* =========================================================
+   HOTFIX: LISTA nie ucieka w prawo, nagłówek klikalny,
+   kolumny dociskają się, tooltipy nad sticky head
+   ========================================================= */
+
+/* 1) Prawy panel nigdy nie może rozpychać siatki */
+.explorer-right{
+  min-width: 0;
+  overflow: hidden; /* jeśli coś ma overflow, to ma je mieć .list */
+}
+
+/* 2) Jeśli gdziekolwiek masz min-width na head/row — zabijamy to */
+.list-head,
+.row{
+  min-width: 0 !important;
+}
+
+/* 3) Sticky nagłówek (i poprawne warstwy) */
+.list-head{
+  position: sticky;
+  top: 0;
+  z-index: 30;
+}
+
+/* 4) Scroll i overflow tylko w liście (a nie w całej stronie) */
+.list{
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow: auto;      /* tu ma być scroll (X/Y) */
+}
+
+/* 5) Grid kolumn: NAME jest sprężyste i może się ścisnąć do 0 */
+:root{
+  --col-num: 44px;
+  --col-name: minmax(0, 1fr);     /* KLUCZ: docisk do ekranu */
+  --col-type: max-content;
+  --col-date: max-content;
+  --col-meta: max-content;
+  --col-gap: 10px;
+}
+
+.list-head,
+.row{
+  display: grid; /* pewność */
+  grid-template-columns: var(--col-num) var(--col-name) var(--col-type) var(--col-date) var(--col-meta);
+  gap: var(--col-gap);
+}
+
+/* 6) Żeby dzieci grida nie wypychały 1fr */
+.list-head > div,
+.row > div{
+  min-width: 0;
+}
+
+/* 7) Resizer: tylko 10–12px przy krawędzi, nie przykrywa nagłówka */
+.list-head > div{
+  position: relative;
+}
+
+.col-resizer{
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 12px;
+  height: calc(100% + 12px);
+  cursor: col-resize;
+  touch-action: none;
+  z-index: 2;              /* nad tłem, ale mały obszar */
+}
+
+/* Klik w nagłówek ma działać — resizer nie może przejmować pointerów poza swoim paskiem */
+.list-head > div{ pointer-events: auto; }
+
+/* Separatory kolumn nie mogą blokować klików */
+.list-head > div:not(:last-child)::after,
+.row > div:not(:last-child)::after{
+  pointer-events: none;
+}
+
+/* 8) Tooltipy: wyniesione ponad sticky head */
+.row{ position: relative; z-index: 1; }
+.row:hover{ z-index: 5; }                /* hover/tooltip wyżej */
+
+.tag-dot,
+.meta-dot{
+  position: relative;
+  z-index: 5;
+}
+
+.tag-dot[data-tip]:hover::after,
+.tag-dot[data-tip]:hover::before,
+.meta-dot[data-tip]:hover::after,
+.meta-dot[data-tip]:hover::before{
+  z-index: 9999;
+}
