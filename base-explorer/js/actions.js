@@ -513,6 +513,13 @@ async function ensureTagMapsForUI(state) {
 }
 
 async function refreshList(state) {
+
+  // ===== Refresh guard (eliminuje race-condition) =====
+  state._refreshSeq = (state._refreshSeq || 0) + 1;
+  const _seq = state._refreshSeq;
+  const isStale = () => _seq !== state._refreshSeq;
+  // ===================================================
+
   // --- Drzewo: init + auto-otwórz ścieżkę do aktualnego folderu ---
   if (!(state.treeOpen instanceof Set)) state.treeOpen = new Set();
 
@@ -548,15 +555,8 @@ async function refreshList(state) {
   }
 
   async function rebuildStatusMaps(state) {
-    // 1) tagi pytan
-    try {
-      await buildAllQuestionTagMap(state); // jeśli masz inną nazwę – podmień na realną
-    } catch (e) {
-      console.warn("buildAllQuestionTagMap failed:", e);
-      state._allQuestionTagMap = new Map();
-    }
-  
-    // 2) meta folderów (liczniki dzieci itp.)
+    // _allQuestionTagMap buduje ensureDerivedFolderMaps/ensureAllQuestionTagMap.
+    // Nie ustawiamy tu pustej Map(), bo to psuje filtry tagów.
     try {
       await buildDirectChildrenCountMap(state);
     } catch (e) {
@@ -597,14 +597,22 @@ async function refreshList(state) {
 
   async function ensureAllQuestionTagMap() {
     if (state._allQuestionTagMap) return;
+
     const qAll = state._allQuestions || [];
     const idsAll = qAll.map(x => x.id).filter(Boolean);
-    const links = idsAll.length ? await listQuestionTags(idsAll) : [];
+
+    // Każde pytanie ma wpis (nawet jeśli nie ma tagów)
     const m = new Map();
-    for (const l of (links || [])) {
-      if (!m.has(l.question_id)) m.set(l.question_id, new Set());
-      m.get(l.question_id).add(l.tag_id);
+    for (const id of idsAll) m.set(id, new Set());
+
+    if (idsAll.length) {
+      const links = await listQuestionTags(idsAll);
+      for (const l of (links || [])) {
+        if (!m.has(l.question_id)) m.set(l.question_id, new Set());
+        m.get(l.question_id).add(l.tag_id);
+      }
     }
+
     state._allQuestionTagMap = m;
   }
 
@@ -719,9 +727,10 @@ async function refreshList(state) {
     const metaIds = []; // SEARCH nie bierze meta z lewego panelu (meta to osobny filtr)
     const textQ = getActiveTextQuery();
 
-    const { folders, questions } = await buildVirtualViewResults({ tagIds, metaIds, textQ });
+    const { folders, questions } = await buildVirtualViewResults({ tagIds, metaIds, textQ });  
     state.folders = folders;
     state.questions = questions;
+    if (isStale()) return;
 
     // ====== Liczniki folderów (pytania + foldery, tylko bezpośrednio) ======
     try {
@@ -732,6 +741,7 @@ async function refreshList(state) {
     }
 
     await ensureMapsForCurrentRightList();
+    if (isStale()) return;
     renderAll(state);
 
     const writable = canWrite(state);
@@ -756,8 +766,10 @@ async function refreshList(state) {
     const { folders, questions } = await buildVirtualViewResults({ tagIds, metaIds, textQ });
     state.folders = folders;
     state.questions = questions;
-
+    if (isStale()) return;
+    
     await ensureMapsForCurrentRightList();
+    if (isStale()) return;
     renderAll(state);
 
     const writable = canWrite(state);
@@ -783,8 +795,10 @@ async function refreshList(state) {
     const { folders, questions } = await buildVirtualViewResults({ tagIds, metaIds, textQ });
     state.folders = folders;
     state.questions = questions;
+    if (isStale()) return;
 
     await ensureMapsForCurrentRightList();
+    if (isStale()) return;
     renderAll(state);
 
     const writable = canWrite(state);
@@ -805,7 +819,9 @@ async function refreshList(state) {
   state.questions = applySearchFilterToQuestions(browseQuestions, getActiveTextQuery());
 
   await ensureMapsForCurrentRightList();
+  if (isStale()) return;
   await rebuildStatusMaps(state);
+  if (isStale()) return;
   renderAll(state);
 
   const mutable = canMutateHere(state);
