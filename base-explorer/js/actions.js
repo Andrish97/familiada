@@ -14,7 +14,7 @@ import {
   restoreBrowseLocation,
 } from "./state.js";
 
-import { renderAll, renderList } from "./render.js";
+import { renderAll, renderList, renderTree } from "./render.js";
 
 import {
   listQuestionsByCategory,
@@ -2298,6 +2298,14 @@ export function wireActions({ state }) {
 
   headNum?.addEventListener("click", () => toggleSort("ord"));
   headMain?.addEventListener("click", () => toggleSort("name"));
+  // Delegacja – nagłówek listy jest przebudowywany w renderList(), więc bez tego klik "znika"
+  listEl?.addEventListener("click", (e) => {
+    const h = e.target?.closest?.(".list-head .h-num, .list-head .h-main");
+    if (!h) return;
+  
+    if (h.classList.contains("h-num")) toggleSort("ord");
+    if (h.classList.contains("h-main")) toggleSort("name");
+  });
 
   // zainicjuj UI nagłówka
   updateSortHeaderUI();
