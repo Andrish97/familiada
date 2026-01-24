@@ -1008,10 +1008,6 @@ input, textarea{ user-select:text; }
 .list{
   overflow:auto;            /* już masz */
 }
-.list-head,
-.row{
-  min-width: 740px;         /* praktyczny bezpiecznik; możesz podnieść/obniżyć */
-}
 
 .list{
   max-width:100%;
@@ -1023,4 +1019,41 @@ input, textarea{ user-select:text; }
 .explorer-right{
   grid-template-rows: auto 1fr;
   min-height:0;
+}
+
+/* Nie pozwalaj prawemu panelowi rozszerzać layoutu poza ekran */
+.explorer-right{ min-width:0; overflow:hidden; }
+
+/* Lista ma się mieścić w panelu; ewentualny overflow ma być w samej liście */
+.list{
+  width:100%;
+  max-width:100%;
+  overflow-x:auto;   /* jeśli kolumny szersze, to przewija się lista, nie cała strona */
+}
+
+/* Gridowe dzieci MUSZĄ mieć min-width:0, inaczej 1fr potrafi wypychać */
+.list-head > div,
+.row > div{ min-width:0; }
+
+.meta-dot::after{ z-index: 1000; }
+.list-head{ z-index: 5; } /* jeśli masz inaczej, zostaw nisko */
+
+/* Prawy panel jako kolumna i pełna wysokość dostępna dla listy */
+.explorer-right{
+  display:flex;
+  flex-direction:column;
+  min-height:0;
+}
+
+/* Wrapper listy ma brać resztę wysokości */
+.list-wrap{
+  flex:1 1 auto;
+  min-height:0;
+}
+
+/* Sama lista – scroll wewnątrz, ale wysokość pełna */
+.list{
+  flex:1 1 auto;
+  min-height:0;
+  overflow:auto;
 }
