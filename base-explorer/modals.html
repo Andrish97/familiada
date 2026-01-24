@@ -481,14 +481,14 @@
       <div class="tagsFoot">
         <div class="xCountPill" id="xCountPill" title="Zaznaczone (min 10)">
           <span>WYBRANE</span>
-          <b id="xCountVal">0/10</b>
+          <b id="xCountVal">0</b>
         </div>
 
         <div class="tagsFootSpacer"></div>
 
         <div id="xErr" class="importMsg" style="display:none;"></div>
 
-        <button class="btn sm gold" id="xSave" type="button" disabled>Zapisz</button>
+        <button class="btn sm gold" id="xCreate" type="button" disabled>Utwórz</button>
       </div>
 
     </div>
@@ -588,7 +588,7 @@
       // modal nodes
       const overlay = $("exportOverlay");
       const xClose = $("xClose");
-      const xSave = $("xSave");
+      const xCreate = $("xCreate");
       const xErr = $("xErr");
       const xName = $("xName");
       const xList = $("xList");
@@ -675,7 +675,7 @@
       function typeHint(){
         if (mode === 0) return "Warunek: min 10 pytań.";
         if (mode === 1) return "Warunek: min 10 pytań i każde wybrane pytanie ma 3–6 odpowiedzi.";
-        return "Warunek: min 10 pytań, 3–6 odpowiedzi, punkty: każda ≤100, suma ≤100, oraz 0 punktów zabronione (prepared).";
+        return "Warunek: min 10 pytań, 3–6 odpowiedzi, punkty: 0 ≥ każda ≤100 oraz suma ≤100 punktów .";
       }
 
       function isAnswersCountOk(q){
@@ -740,11 +740,11 @@
         const cnt = selectedCount();
         const bad = anySelectedBad();
 
-        xCountVal.textContent = `${cnt}/${RULES.QN_MIN}`;
+        xCountVal.textContent = `${cnt}`;
         xCountPill.classList.toggle("bad", cnt < RULES.QN_MIN || bad);
 
         const can = (cnt >= RULES.QN_MIN) && !bad;
-        xSave.disabled = !can;
+        xCreate.disabled = !can;
 
         if (cnt < RULES.QN_MIN){
           showErr(`Za mało zaznaczonych pytań (min ${RULES.QN_MIN}).`);
@@ -897,7 +897,7 @@
         setDirtyFromSnapshot();
       });
 
-      xSave.addEventListener("click", () => {
+      xCreate.addEventListener("click", () => {
         const cnt = selectedCount();
         if (cnt < RULES.QN_MIN){ showErr(`Za mało zaznaczonych pytań (min ${RULES.QN_MIN}).`); return; }
         if (anySelectedBad()){ showErr("Masz zaznaczone pytania, które nie spełniają warunków typu gry."); return; }
