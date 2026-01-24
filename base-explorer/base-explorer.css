@@ -1,0 +1,587 @@
+/* /base-explorer.css
+   Menadżer bazy pytań — spójny arkusz (bez duplikatów)
+   Zasada: jedna definicja każdego elementu, a szerokości kolumn idą WYŁĄCZNIE z CSS variables.
+*/
+
+/* =========================
+   Bazowe pomocnicze
+   ========================= */
+
+:root{
+  /* kolumny listy (JS może nadpisywać inline / przez style.setProperty) */
+  --col-ord: 44px;
+  --col-name: 1fr;
+  --col-info: 220px;
+  --col-date: 170px;
+
+  /* odstępy wewnątrz komórek listy */
+  --cell-pad-x: 12px;
+  --cell-pad-y: 8px;
+
+  /* obramowania / separatory */
+  --line: rgba(255,255,255,.10);
+  --line-strong: rgba(255,255,255,.16);
+
+  /* tła */
+  --pane-bg: rgba(0,0,0,.16);
+  --card-bg: rgba(0,0,0,.22);
+
+  /* akcenty */
+  --sel-bg: rgba(120,170,255,.16);
+  --sel-br: rgba(120,170,255,.55);
+  --hover-bg: rgba(255,255,255,.06);
+
+  /* wysokości */
+  --toolbar-h: 56px;
+}
+
+[hidden]{ display:none !important; }
+
+/* =========================
+   Układ strony
+   ========================= */
+
+body{
+  min-height: 100vh;
+}
+
+main{
+  min-height: 0;
+}
+
+.toolbar{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:10px 12px;
+  border-bottom:1px solid var(--line);
+  background: rgba(0,0,0,.18);
+  backdrop-filter: blur(10px);
+}
+
+.explorer{
+  display:grid;
+  grid-template-columns: 340px 1fr;
+  gap: 12px;
+  padding: 12px;
+  min-height: 0;
+  height: calc(100vh - 56px - var(--toolbar-h)); /* topbar ~56px */
+}
+
+.explorer-left,
+.explorer-right{
+  min-height: 0;
+}
+
+.breadcrumbs{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--pane-bg);
+  user-select:none;
+  overflow:hidden;
+}
+.breadcrumbItem{
+  opacity:.88;
+  white-space:nowrap;
+}
+.breadcrumbSep{
+  opacity:.55;
+}
+
+
+.explorer-left{
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+
+.explorer-right{
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+
+/* =========================
+   Panele (lewa strona)
+   ========================= */
+
+.panel{
+  background: var(--pane-bg);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+  min-height: 0;
+}
+
+.panelHead{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:10px 12px;
+  border-bottom:1px solid var(--line);
+  background: rgba(0,0,0,.18);
+}
+
+.panelHead .ttl{
+  font-weight:900;
+  letter-spacing:.02em;
+}
+
+.panelBody{
+  padding:10px 8px;
+  overflow:auto;
+  min-height: 0;
+}
+
+/* Drzewo folderów */
+.tree{
+  display:flex;
+  flex-direction:column;
+  gap:2px;
+}
+
+.treeItem{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:6px 8px;
+  border-radius:10px;
+  cursor:pointer;
+  user-select:none;
+}
+
+.treeItem:hover{ background: var(--hover-bg); }
+
+.treeItem.is-selected{
+  background: var(--sel-bg);
+  outline: 1px solid var(--sel-br);
+}
+
+/* sekcja tagów */
+.tagsList{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+
+.tagItem{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:6px 8px;
+  border-radius:10px;
+  cursor:pointer;
+  user-select:none;
+}
+
+.tagItem:hover{ background: var(--hover-bg); }
+
+.tagItem.is-selected{
+  background: var(--sel-bg);
+  outline: 1px solid var(--sel-br);
+}
+
+.tagDot{
+  width:10px;
+  height:10px;
+  border-radius:999px;
+  box-shadow: 0 0 0 1px rgba(255,255,255,.18) inset;
+}
+
+/* =========================
+   Prawa strona: nagłówek + lista
+   ========================= */
+
+.rightTop{
+  background: var(--pane-bg);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  overflow:hidden;
+}
+
+.rightTopHead{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  padding:10px 12px;
+  border-bottom:1px solid var(--line);
+  background: rgba(0,0,0,.18);
+}
+
+.rightTopBody{
+  padding:10px 12px;
+}
+
+/* kontener listy */
+.listPane{
+  background: var(--pane-bg);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  overflow:hidden;
+  min-height: 0;
+  display:flex;
+  flex-direction:column;
+}
+
+.list{
+  background: var(--pane-bg);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 0; /* nagłówek i wiersze mają własne paddingi */
+  overflow: auto;
+  min-height: 0;
+  flex: 1;
+}
+
+/* wspólna siatka dla nagłówka i wierszy */
+.list-row{
+  display:grid;
+  grid-template-columns: var(--col-ord) var(--col-name) var(--col-info) var(--col-date);
+  align-items:center;
+  gap:0; /* separatory są borderami, nie gapem */
+}
+
+/* nagłówek */
+.list-head{
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: rgba(0,0,0,.28);
+  border-bottom: 1px solid var(--line-strong);
+}
+
+.list-head > div{
+  padding: 10px var(--cell-pad-x);
+  font-weight: 900;
+  letter-spacing: .02em;
+  user-select:none;
+  white-space:nowrap;
+}
+
+.list-head > div:not(:first-child){
+  border-left:1px solid var(--line);
+}
+
+/* wiersze */
+.listItem{
+  border-bottom: 1px solid var(--line);
+}
+
+.listItem:last-child{
+  border-bottom: 0;
+}
+
+.listItem > div{
+  padding: var(--cell-pad-y) var(--cell-pad-x);
+  min-width: 0;
+}
+
+.listItem > div:not(:first-child){
+  border-left:1px solid var(--line);
+}
+
+/* komórki */
+.list-col-ord{
+  opacity:.80;
+  text-align:right;
+  font-variant-numeric: tabular-nums;
+}
+
+.list-col-name{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  min-width:0;
+}
+
+.listName{
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+.listInfo,
+.listDate{
+  opacity:.90;
+  font-variant-numeric: tabular-nums;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+/* zaznaczenia */
+.listItem.is-selected{
+  background: var(--sel-bg);
+  outline: 1px solid var(--sel-br);
+  outline-offset: -1px;
+}
+
+.listItem:hover{
+  background: var(--hover-bg);
+}
+
+/* sortowanie */
+.sortable{
+  cursor:pointer;
+  position:relative;
+}
+
+.sortable::after{
+  content:"";
+  display:inline-block;
+  margin-left:8px;
+  opacity:.75;
+}
+
+.sortable.sort-asc::after{ content:"▲"; }
+.sortable.sort-desc::after{ content:"▼"; }
+
+.sortable.is-disabled{
+  opacity:.45;
+  cursor:default;
+}
+
+/* =========================
+   Drag & drop + pulse (mruganie)
+   ========================= */
+
+.drop-hint{
+  outline: 2px dashed rgba(140,190,255,.55);
+  outline-offset: -3px;
+  border-radius: 12px;
+}
+
+.drop-pulse{
+  animation: dropPulse .9s ease-in-out 2;
+}
+
+@keyframes dropPulse{
+  0%   { box-shadow: 0 0 0 0 rgba(120,170,255,.00); }
+  40%  { box-shadow: 0 0 0 4px rgba(120,170,255,.35); }
+  100% { box-shadow: 0 0 0 0 rgba(120,170,255,.00); }
+}
+
+/* =========================
+   Marquee (zaznaczanie prostokątem)
+   ========================= */
+
+.marquee{
+  position: fixed;
+  left:0; top:0;
+  width:0; height:0;
+  border: 1px solid rgba(120,170,255,.70);
+  background: rgba(120,170,255,.16);
+  pointer-events:none;
+  z-index: 9999;
+}
+
+/* =========================
+   Modal tagów (3 warstwy)
+   ========================= */
+
+.tags-overlay{
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.60);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  z-index: 2000;
+}
+
+.tags-overlay.is-open{ display:flex; }
+
+.tags-modal{
+  width: min(860px, calc(100vw - 24px));
+  max-height: min(760px, calc(100vh - 24px));
+  background: rgba(20,20,20,.94);
+  border: 1px solid rgba(255,255,255,.16);
+  border-radius: 16px;
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+}
+
+.tags-layer{
+  display:flex;
+  flex-direction:column;
+  min-height:0;
+}
+
+.tagsHead{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:10px 12px;
+  border-bottom:1px solid var(--line);
+  background: rgba(0,0,0,.20);
+}
+
+.tagsBody{
+  padding:12px;
+  overflow:auto;
+  min-height:0;
+}
+
+.tagsFoot{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:10px 12px;
+  border-top:1px solid var(--line);
+  background: rgba(0,0,0,.20);
+}
+
+.tagsFootSpacer{ flex:1; }
+
+.tagsGrid{
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap:12px;
+  min-height:0;
+}
+
+.tagsBox{
+  border:1px solid var(--line);
+  border-radius:14px;
+  background: rgba(0,0,0,.18);
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+  min-height:0;
+}
+
+.tagsBoxHead{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  padding:10px 12px;
+  border-bottom:1px solid var(--line);
+}
+
+.tagsBoxBody{
+  padding:10px 12px;
+  overflow:auto;
+  min-height:0;
+}
+
+.tagsRow{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  padding:8px 10px;
+  border-radius:12px;
+  cursor:pointer;
+  user-select:none;
+}
+
+.tagsRow:hover{ background: var(--hover-bg); }
+
+.tagsRow.is-selected{
+  background: var(--sel-bg);
+  outline: 1px solid var(--sel-br);
+}
+
+.tagsRowLeft{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  min-width:0;
+}
+
+.tagsRowName{
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+.tagsRowDot{
+  width:12px;
+  height:12px;
+  border-radius:999px;
+  box-shadow: 0 0 0 1px rgba(255,255,255,.18) inset;
+}
+
+/* tri-state (warstwa 1) */
+.triBtn{
+  min-width: 84px;
+  justify-content:center;
+}
+
+/* edycja (warstwa 2) */
+.tagsEditRow{
+  display:flex;
+  gap:12px;
+  align-items:flex-end;
+  flex-wrap:wrap;
+}
+
+.tagsColorBtn{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+
+/* picker koloru (warstwa 3) */
+.colorModalBody{
+  padding: 12px;
+  overflow:auto;
+  min-height:0;
+}
+
+.colorTopRow{
+  display:flex;
+  gap:12px;
+  align-items:flex-start;
+  flex-wrap:wrap;
+}
+
+.colorPreview{
+  width:72px;
+  height:72px;
+  border-radius:14px;
+  border:1px solid var(--line);
+  background: #000;
+}
+
+.sliders{
+  margin-top: 12px;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+.sliderRow{
+  display:grid;
+  grid-template-columns: 28px 1fr 56px;
+  align-items:center;
+  gap:10px;
+}
+
+.sliderRow .sLbl{ opacity:.85; }
+.sliderRow .sVal{
+  text-align:right;
+  font-variant-numeric: tabular-nums;
+  opacity:.90;
+}
+
+/* =========================
+   Responsywność
+   ========================= */
+
+@media (max-width: 980px){
+  .explorer{
+    grid-template-columns: 1fr;
+    height: auto;
+    min-height: 0;
+  }
+}
