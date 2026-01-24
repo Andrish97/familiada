@@ -644,15 +644,60 @@ function initColumnResizers() {
         const availInner = getHeadInnerWidth();
         const availNoGaps = Math.max(0, availInner - gap * (COL_COUNT - 1));
       
-        // suma pozostałych kolumn (bez tej przeciąganej)
-        const widths = Array.from(head.children).map((el) => el.getBoundingClientRect().width);
-        const others = widths.reduce((sum, w, i) => (i === r.idx ? sum : sum + w), 0);
+        // aktualne szerokości kolumn (px) z DOM — działają dobrze przy max-content
+        const w = Array.from(head.children).map((el) => el.getBoundingClientRect().width);
       
-        const maxAllowed = Math.max(r.min, Math.floor(availNoGaps - others));
-        const unclamped = Math.round(startW + dx);
-        const next = Math.min(maxAllowed, Math.max(r.min, unclamped));
+        // docelowa szerokość przeciąganej kolumny
+        let target = Math.max(r.min, Math.round(startW + dx));
       
-        document.documentElement.style.setProperty(r.cssVar, `${next}px`);
+        // ustawiamy ją "w pamięci"
+        w[r.idx] = target;
+      
+        // minimalne szerokości dla indeksów (0 = Nr nie ruszamy)
+        const MIN = {
+          1: 220, // name
+          2: 120, // type
+          3: 140, // date
+          4: 120, // meta
+        };
+      
+        // kolejność "dawców" miejsca (kogo ściskamy),
+        // czyli: najpierw te NA PRAWO (to jest to „poprzednia przyciska następną”),
+        // potem ewentualnie na lewo (gdy prawa strona już na minimach)
+        const donors = [];
+        for (let i = r.idx + 1; i <= 4; i++) donors.push(i);
+        for (let i = r.idx - 1; i >= 1; i--) donors.push(i);
+      
+        // ile przekraczamy dostępne miejsce
+        let overflow = w.reduce((a, b) => a + b, 0) - availNoGaps;
+      
+        // jeśli przekraczamy — ściskamy kolejne kolumny do ich minimów
+        if (overflow > 0) {
+          for (const di of donors) {
+            if (overflow <= 0) break;
+            const cur = w[di];
+            const min = MIN[di] ?? 0;
+            const canCut = Math.max(0, cur - min);
+            const cut = Math.min(canCut, overflow);
+            if (cut > 0) {
+              w[di] = cur - cut;
+              overflow -= cut;
+            }
+          }
+        }
+      
+        // jeśli dalej overflow>0, to znaczy, że już wszystko na minimach —
+        // wtedy musimy też ograniczyć przeciąganą kolumnę.
+        if (overflow > 0) {
+          w[r.idx] = Math.max(r.min, w[r.idx] - overflow);
+        }
+      
+        // Teraz zapisujemy szerokości do CSS vars (dla resizable kolumn)
+        // idx: 1=name,2=type,3=date,4=meta
+        document.documentElement.style.setProperty("--col-name", `${Math.round(w[1])}px`);
+        document.documentElement.style.setProperty("--col-type", `${Math.round(w[2])}px`);
+        document.documentElement.style.setProperty("--col-date", `${Math.round(w[3])}px`);
+        document.documentElement.style.setProperty("--col-meta", `${Math.round(w[4])}px`);
       };
 
       const onUp = (e) => {
@@ -661,9 +706,11 @@ function initColumnResizers() {
         window.removeEventListener("pointerup", onUp, true);
 
         // zapisz aktualną wartość var (już w px)
-        const v = getComputedStyle(document.documentElement).getPropertyValue(r.cssVar).trim();
         const nextCols = loadCols();
-        nextCols[r.key] = v;
+        nextCols.name = getComputedStyle(document.documentElement).getPropertyValue("--col-name").trim();
+        nextCols.type = getComputedStyle(document.documentElement).getPropertyValue("--col-type").trim();
+        nextCols.date = getComputedStyle(document.documentElement).getPropertyValue("--col-date").trim();
+        nextCols.meta = getComputedStyle(document.documentElement).getPropertyValue("--col-meta").trim();
         saveCols(nextCols);
       };
 
