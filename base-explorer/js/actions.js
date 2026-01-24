@@ -1792,6 +1792,98 @@ export function wireActions({ state }) {
   const breadcrumbsEl = document.getElementById("breadcrumbs");
   const toolbarEl = document.getElementById("toolbar");
 
+    /* ================= Interaction locks (bez MODE) ================= */
+
+  // Throttle ostrzeżeń (żeby nie wyskakiwało 20 alertów przy drag/move)
+  let _lockWarnAt = 0;
+  function warnLocked(msg) {
+    const now = Date.now();
+    if (now - _lockWarnAt < 700) return; // 0.7s
+    _lockWarnAt = now;
+    alert(msg);
+  }
+
+  function isSearchFocus() {
+    return document.activeElement?.id === "searchText";
+  }
+
+  function ensureLeftSelectionsForLock(state) {
+    if (!state.tagSelection) state.tagSelection = { ids: new Set(), anchorId: null };
+    if (!state.metaSelection) state.metaSelection = { ids: new Set(), anchorId: null };
+  }
+
+  function hasLeftSelection(state) {
+    ensureLeftSelectionsForLock(state);
+    return !!state.tagSelection.ids.size || !!state.metaSelection.ids.size;
+  }
+
+  // Tree blokujemy, gdy:
+  // - focus w search (SEARCH)
+  // - lub aktywne Tagi/Kategorie po lewej (FILTER)
+  function isTreeLocked(state) {
+    return isSearchFocus() || hasLeftSelection(state);
+  }
+
+  // Tags/meta blokujemy tylko, gdy focus w search (SEARCH).
+  // (W FILTER muszą działać, bo to właśnie tam wybierasz Tagi/Kategorie.)
+  function isLeftPanelLockedBySearch() {
+    return isSearchFocus();
+  }
+
+  // Search blokujemy, gdy aktywne Tagi/Kategorie (FILTER)
+  function isSearchLockedByLeftSelection(state) {
+    return hasLeftSelection(state);
+  }
+
+  // Komunikaty blokad (klik w zablokowany panel)
+  function warnTreeLocked(state) {
+    if (isSearchFocus()) {
+      warnLocked("W trakcie wyszukiwania drzewo jest zablokowane. Kliknij ✕ aby wyczyścić, albo kliknij poza pole wyszukiwania.");
+      return;
+    }
+    if (hasLeftSelection(state)) {
+      warnLocked("Masz zaznaczone Tagi/Kategorie. Wyczyść zaznaczenie po lewej (klik w tło panelu), aby używać drzewa.");
+      return;
+    }
+  }
+
+  function warnLeftLockedBySearch() {
+    warnLocked("W trakcie wyszukiwania panel Tagi/Kategorie jest zablokowany. Kliknij ✕ aby wyczyścić, albo kliknij poza pole wyszukiwania.");
+  }
+
+  function warnSearchLockedByLeft(state) {
+    if (hasLeftSelection(state)) {
+      warnLocked("Masz zaznaczone Tagi/Kategorie — wyszukiwarka jest zablokowana. Wyczyść zaznaczenie po lewej (klik w tło panelu), aby szukać.");
+    }
+  }
+
+  // Blokada fokusa w search, gdy mamy aktywne Tagi/Kategorie (FILTER)
+  const searchInput = document.getElementById("searchText");
+  if (searchInput) {
+    searchInput.addEventListener("mousedown", (e) => {
+      if (!isSearchLockedByLeftSelection(state)) return;
+      e.preventDefault();
+      e.stopPropagation();
+      warnSearchLockedByLeft(state);
+    });
+    searchInput.addEventListener("focus", () => {
+      if (!isSearchLockedByLeftSelection(state)) return;
+      try { searchInput.blur(); } catch {}
+      warnSearchLockedByLeft(state);
+    });
+  }
+
+  // (opcjonalne, ale przydatne) klik w cały searchBox też ma ostrzec, gdy zablokowane
+  const searchBox = document.getElementById("searchBox");
+  if (searchBox) {
+    searchBox.addEventListener("mousedown", (e) => {
+      if (!isSearchLockedByLeftSelection(state)) return;
+      e.preventDefault();
+      e.stopPropagation();
+      warnSearchLockedByLeft(state);
+    });
+  }
+
   const headNum = document.querySelector(".list-head .h-num");
   const headMain = document.querySelector(".list-head .h-main");
 
@@ -2327,6 +2419,10 @@ export function wireActions({ state }) {
   });
 
   tagsEl?.addEventListener("click", async (e) => {
+    if (isLeftPanelLockedBySearch()) {
+      warnLeftLockedBySearch();
+      return;
+    }
     if (suppressNextTagsClick) return;
     // 0) klik w "Dodaj tag"
     const btn = e.target?.closest?.("#btnAddTag");
@@ -2369,7 +2465,10 @@ export function wireActions({ state }) {
   // PPM na tagach (tag + puste tło)
   tagsEl?.addEventListener("contextmenu", async (e) => {
     e.preventDefault();
-  
+    if (isLeftPanelLockedBySearch()) {
+      warnLeftLockedBySearch();
+      return;
+    }
     const row = e.target?.closest?.('.row[data-kind][data-id]');
     if (row) {
       const key = leftKeyFromRow(row);
@@ -2456,6 +2555,12 @@ export function wireActions({ state }) {
   }
 
   treeEl?.addEventListener("click", async (e) => {
+  
+    if (isTreeLocked(state)) {
+      warnTreeLocked(state);
+      return;
+    }
+
     // 0) klik w puste tło drzewa = czyść selekcję
     if (e.target === treeEl || e.target?.closest?.(".treeList") === null) {
       selectionClear(state);
@@ -2514,6 +2619,12 @@ export function wireActions({ state }) {
   });
 
   treeEl?.addEventListener("dblclick", async (e) => {
+    
+    if (isTreeLocked(state)) {
+      warnTreeLocked(state);
+      return;
+    }
+
     const row = e.target?.closest?.('.row[data-kind]');
     if (!row) return;
   
@@ -2545,6 +2656,11 @@ export function wireActions({ state }) {
   treeEl?.addEventListener("contextmenu", async (e) => {
     e.preventDefault();
 
+    if (isTreeLocked(state)) {
+      warnTreeLocked(state);
+      return;
+    }
+
     const row = e.target?.closest?.('.row[data-kind][data-id]');
     if (row) {
       const kind = row.dataset.kind; // 'cat' | 'root'
@@ -2566,6 +2682,12 @@ export function wireActions({ state }) {
     
     // --- Drag start z drzewa (folder jako źródło) ---
   treeEl?.addEventListener("dragstart", (e) => {
+    
+    if (isTreeLocked(state)) {
+      warnTreeLocked(state);
+      return;
+    }
+
     if (!canDnD()) return;
 
     const row = e.target?.closest?.('.row[data-kind="cat"][data-id]');
@@ -2588,6 +2710,12 @@ export function wireActions({ state }) {
 
   // --- DnD na drzewie: dragover / drop (cel: folder w drzewie albo root) ---
   treeEl?.addEventListener("dragover", (e) => {
+    
+    if (isTreeLocked(state)) {
+      // przy dragover nie spamuj alertem (i tak leci non-stop)
+      return;
+    }
+
     if (!canDnD()) return;
     e.preventDefault();
   
@@ -2631,6 +2759,12 @@ export function wireActions({ state }) {
   });
   
   treeEl?.addEventListener("drop", async (e) => {
+
+    if (isTreeLocked(state)) {
+      warnTreeLocked(state);
+      return;
+    }
+
     if (!canDnD()) return;
     e.preventDefault();
   
@@ -2758,6 +2892,25 @@ export function wireActions({ state }) {
     const id = row.dataset.id;
   
     if (kind === "cat") {
+      // Jeśli user jest w "SEARCH-focus" lub ma aktywne Tagi/Meta po lewej:
+      // wychodzimy z tego stanu i dopiero otwieramy folder
+      const needExit = isSearchFocus() || hasLeftSelection(state) ||
+        state.view === VIEW.SEARCH || state.view === VIEW.TAG || state.view === VIEW.META;
+
+      if (needExit) {
+        // wyczyść search (input + tokens)
+        const inp = document.getElementById("searchText");
+        if (inp) inp.value = "";
+        state.searchTokens = { text: "", tagIds: [] };
+        state.searchQuery = "";
+
+        // wyczyść selekcję lewą (tag/meta)
+        leftClear(state);
+
+        // wróć do browse (ostatni folder), ale zaraz i tak wejdziemy do id
+        restoreBrowseLocation(state);
+      }
+
       setViewFolder(state, id);
       selectionClear(state);
       await refreshList(state);
@@ -3040,6 +3193,11 @@ export function wireActions({ state }) {
   treeEl?.addEventListener("mousedown", (e) => {
     if (e.button !== 0) return; // tylko lewy
 
+    if (isTreeLocked(state)) {
+      warnTreeLocked(state);
+      return;
+    }
+
     // start tylko na "pustym tle": nie w row, nie w toggle, nie w kontrolki
     const onRow = e.target?.closest?.('.row[data-kind][data-id]');
     if (onRow) return;
@@ -3167,6 +3325,11 @@ export function wireActions({ state }) {
 
   tagsEl?.addEventListener("mousedown", (e) => {
     if (e.button !== 0) return;
+        
+    if (isLeftPanelLockedBySearch()) {
+      warnLeftLockedBySearch();
+      return;
+    }
 
     // klik w "Dodaj tag" nie startuje marquee
     if (e.target?.closest?.("#btnAddTag")) return;
