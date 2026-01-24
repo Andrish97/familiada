@@ -197,6 +197,9 @@ export function renderToolbar(state) {
         <button class="tbBtn" type="button" data-act="editQuestion" title="Edytuj pytanie">
           ${svgEdit()}
         </button>
+        <button class="tbBtn" type="button" data-act="editTags" title="Edytuj tagi">
+          ${svgTag()}
+        </button>
         <button class="tbBtn" type="button" data-act="rename" title="Zmień nazwę">
           ${svgPencil()}
         </button>
@@ -287,9 +290,7 @@ export function renderToolbar(state) {
 
   // 3) Disable przycisków tworzenia w viewer + w trybach read-only (SEARCH/TAG blokują "wklej", ale tworzenie też wolisz blokować)
   const writable = (state.role === "owner" || state.role === "editor")
-  && (state.view !== VIEW.SEARCH && state.view !== VIEW.TAG);
-  document.getElementById("btnNewFolder")?.toggleAttribute("disabled", !writable);
-  document.getElementById("btnNewQuestion")?.toggleAttribute("disabled", !writable);
+  && (state.view !== VIEW.SEARCH && state.view !== VIEW.TAG);;
 }
 
 export function renderTree(state) {
@@ -936,6 +937,7 @@ function svgBase(pathD){
 function svgFolderPlus(){ return svgBase("M10 4l2 2h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h6zm2 7h-2v2H8v2h2v2h2v-2h2v-2h-2v-2z"); }
 function svgFilePlus(){ return svgBase("M6 2h9l5 5v15a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm8 1v5h5M12 11h-2v2H8v2h2v2h2v-2h2v-2h-2v-2z"); }
 function svgEdit(){ return svgBase("M3 17.25V21h3.75L19.81 7.94l-3.75-3.75L3 17.25zm2.92 2.83H5v-.92l10.06-10.06.92.92L5.92 20.08zM20.71 6.04a1 1 0 0 0 0-1.41l-1.34-1.34a1 1 0 0 0-1.41 0l-1.13 1.13 2.75 2.75 1.13-1.13z"); }
+function svgTag(){return svgBase("M20.59 13.41L11 3.83A2 2 0 0 0 9.59 3H4a2 2 0 0 0-2 2v5.59A2 2 0 0 0 2.83 12l9.59 9.59a2 2 0 0 0 2.83 0l5.34-5.34a2 2 0 0 0 0-2.83zM6.5 8A1.5 1.5 0 1 1 8 6.5 1.5 1.5 0 0 1 6.5 8z"); }
 function svgPencil(){ return svgBase("M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zm18-11.5a1 1 0 0 0 0-1.41l-1.59-1.59a1 1 0 0 0-1.41 0l-1.13 1.13 3.75 3.75L21 5.75z"); }
 function svgTrash(){ return svgBase("M6 7h12l-1 14H7L6 7zm3-3h6l1 2H8l1-2z"); }
 function svgCopy(){ return svgBase("M16 1H4a2 2 0 0 0-2 2v12h2V3h12V1zm4 4H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm0 16H8V7h12v14z"); }
