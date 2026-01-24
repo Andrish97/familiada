@@ -827,7 +827,6 @@ async function refreshList(state) {
   const foldersHere = (foldersAll || [])
     .filter(c => (c.parent_id || null) === (parentId || null))
     .slice()
-    .sort((a, b) => (Number(a.ord) || 0) - (Number(b.ord) || 0));
 
   state.folders = foldersHere;
   state.questions = applySearchFilterToQuestions(browseQuestions, getActiveTextQuery());
