@@ -47,6 +47,20 @@ function canPasteHere(state) {
   return canMutateHere(state) && !!state?.clipboard?.mode && !!state?.clipboard?.keys?.size;
 }
 
+function isMetaView(state) {
+  return state.view === VIEW.META;
+}
+
+function canDeleteHere(state) {
+  if (!canWrite(state)) return false;
+  if (isMetaView(state)) return false;   // META: blokada
+  return true;                           // SEARCH/FOLDER/ALL/TAG: dozwolone
+}
+
+function canCutHere(state) {
+  return canDeleteHere(state); // wycinanie = usuń + clipboard, więc te same reguły
+}
+
 function keyFromRow(row) {
   const kind = row?.dataset?.kind;
   const id = row?.dataset?.id;
@@ -3622,8 +3636,7 @@ export function wireActions({ state }) {
   
     if (e.key === "Delete") {
       // C: SEARCH – blokada
-      if (state.view === VIEW.SEARCH) {
-        e.preventDefault();
+      if (!canDeleteHere(state)) {
         alert("W widoku wyszukiwania nie można usuwać.");
         return;
       }
