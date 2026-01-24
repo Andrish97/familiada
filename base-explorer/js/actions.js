@@ -747,8 +747,6 @@ async function refreshList(state) {
     renderAll(state);
 
     const writable = canWrite(state);
-    document.getElementById("btnNewFolder")?.toggleAttribute("disabled", !writable);
-    document.getElementById("btnNewQuestion")?.toggleAttribute("disabled", !writable);
     return;
   }
 
@@ -775,8 +773,6 @@ async function refreshList(state) {
     renderAll(state);
 
     const writable = canWrite(state);
-    document.getElementById("btnNewFolder")?.toggleAttribute("disabled", !writable);
-    document.getElementById("btnNewQuestion")?.toggleAttribute("disabled", !writable);
     return;
   }
 
@@ -804,8 +800,6 @@ async function refreshList(state) {
     renderAll(state);
 
     const writable = canWrite(state);
-    document.getElementById("btnNewFolder")?.toggleAttribute("disabled", !writable);
-    document.getElementById("btnNewQuestion")?.toggleAttribute("disabled", !writable);
     return;
   }
 
@@ -826,8 +820,6 @@ async function refreshList(state) {
   renderAll(state);
 
   const mutable = canMutateHere(state);
-  document.getElementById("btnNewFolder")?.toggleAttribute("disabled", !mutable);
-  document.getElementById("btnNewQuestion")?.toggleAttribute("disabled", !mutable);
 }
 
 function currentParentId(state) {
@@ -2658,10 +2650,6 @@ export function wireActions({ state }) {
         document.getElementById("searchText")?.focus();
       }
 
-      if (t.id === "btnNewFolder" || t.id === "btnNewQuestion") {
-        if (!canMutateHere(state)) return;
-      }
-
       if (t.id === "searchClearBtn") {
 
         const alreadyEmpty =
@@ -2683,15 +2671,98 @@ export function wireActions({ state }) {
         return;
       }
       
-      if (t.id === "btnNewFolder") {
-        const parentId = currentParentId(state);
-        await createFolderHere(state, { parentId });
+      // NOWE — toolbar działa jak context-menu: data-act
+      const btn = e.target?.closest?.('button[data-act]');
+      if (btn && toolbarEl?.contains?.(btn)) {
+        if (btn.disabled) return;
+      
+        const act = btn.dataset.act;
+      
+        // kontekst jak w context-menu dla ROOT:
+        const parentId = (state.view === VIEW.FOLDER && state.folderId) ? state.folderId : null;
+        const categoryId = parentId;
+      
+        // pomocnicze: zaznaczenie “real” (bez root)
+        const realKeys = Array.from(state.selection?.keys || []).filter(k => k && k !== "root");
+        const oneSelected = realKeys.length === 1;
+        const oneIsQuestion = oneSelected && String(realKeys[0]).startsWith("q:");
+      
+        try {
+          switch (act) {
+            // --- Tworzenie ---
+            case "newFolder":
+              if (!canMutateHere(state)) return;
+              await createFolderHere(state, { parentId });
+              return;
+      
+            case "newQuestion":
+              if (!canMutateHere(state)) return;
+              await createQuestionHere(state, { categoryId });
+              return;
+      
+            // --- Edycja / placeholdery ---
+            case "editQuestion":
+              // placeholder jak “wkrótce” w PPM
+              if (!canWrite(state)) return;
+              if (!oneIsQuestion) return; // toolbar ma sens tylko dla 1 pytania
+              alert("Edytor pytania — wkrótce.");
+              return;
+      
+            case "createGame":
+              // placeholder jak prosisz
+              if (!canWrite(state)) return;
+              alert("Tworzenie gry — wkrótce.");
+              return;
+      
+            case "editTags":
+              if (!canWrite(state)) return;
+              if (!realKeys.length) return;
+              await state._api?.openAssignTagsModal?.();
+              return;
+      
+            case "rename":
+              if (!canMutateHere(state)) return;
+              if (!oneSelected) return;
+              await renameSelectedPrompt(state);
+              return;
+      
+            case "delete":
+              if (!canDeleteHere(state)) return;
+              if (!realKeys.length) return;
+              await deleteSelected(state);
+              return;
+      
+            // --- Schowek ---
+            case "copy":
+              if (!canWrite(state)) return;
+              if (!realKeys.length) return;
+              copySelectedToClipboard(state);
+              return;
+      
+            case "cut":
+              if (!canCutHere(state)) return;
+              if (!realKeys.length) return;
+              cutSelectedToClipboard(state);
+              return;
+      
+            case "paste":
+              if (!canPasteHere(state)) return;
+              await pasteClipboardHere(state);
+              return;
+      
+            case "duplicate":
+              // w context-menu “Duplikuj” jest placeholderem, ale u Ciebie funkcja istnieje – zostawiam realne wywołanie
+              if (!canMutateHere(state)) return;
+              if (!realKeys.length) return;
+              await duplicateSelected(state);
+              return;
+          }
+        } catch (err) {
+          console.error(err);
+          alert("Nie udało się wykonać akcji.");
+        }
       }
-  
-      if (t.id === "btnNewQuestion") {
-        const categoryId = currentCategoryId(state);
-        await createQuestionHere(state, { categoryId });
-      }
+      
     } catch (err) {
       console.error(err);
       alert("Nie udało się wykonać akcji.");
