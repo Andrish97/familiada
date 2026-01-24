@@ -567,18 +567,6 @@ async function refreshList(state) {
   async function ensureMapsForCurrentRightList() {
     await ensureTagMapsForUI(state);
   }
-
-  async function rebuildStatusMaps(state) {
-    // _allQuestionTagMap buduje ensureDerivedFolderMaps/ensureAllQuestionTagMap.
-    // Nie ustawiamy tu pustej Map(), bo to psuje filtry tagów.
-    try {
-      await buildDirectChildrenCountMap(state);
-    } catch (e) {
-      console.warn("buildDirectChildrenCountMap failed:", e);
-      state._directChildrenCount = new Map();
-    }
-  }
-
   // ====== SILNIK FILTRÓW ======
   // 1) META: OR wewnątrz metaSelection
   // 2) TAG: AND (wszystkie zaznaczone tagi muszą być na pytaniu)
@@ -850,6 +838,20 @@ function currentParentId(state) {
 function currentCategoryId(state) {
   // Root = category_id null
   return (state.view === VIEW.FOLDER && state.folderId) ? state.folderId : null;
+}
+
+// ================== STATUS MAPS (global) ==================
+// Uwaga: ta funkcja MUSI być w zasięgu applyTagToDraggedItems() (czyli na poziomie modułu),
+// bo jest wołana także poza refreshList().
+async function rebuildStatusMaps(state) {
+// _allQuestionTagMap buduje ensureDerivedFolderMaps/ensureAllQuestionTagMap.
+// Nie ustawiamy tu pustej Map(), bo to psuje filtry tagów.
+  try {
+    await buildDirectChildrenCountMap(state);
+  } catch (e) {
+    console.warn("buildDirectChildrenCountMap failed:", e);
+    state._directChildrenCount = new Map();
+  }
 }
 
 async function nextOrdForFolder(state, parentId) {
@@ -1499,6 +1501,27 @@ export async function pasteClipboardHere(state) {
 
 /* ================= DnD / Clipboard helpers (MUSZĄ być poza wireActions) ================= */
 
+function invalidateDerivedCaches(state) {
+  // pytania
+  state._allQuestions = null;
+  state._viewQuestions = null;
+  state._rootQuestions = null;
+
+  // tagi
+  state._viewQuestionTagMap = null;
+  state._allQuestionTagMap = null;
+  state._allCategoryTagMap = null;
+  state._derivedCategoryTagMap = null;
+  state._folderDescQIds = null;
+
+  // meta
+  state._allQuestionMetaMap = null;
+  state._allCategoryMetaMap = null;
+  state._viewQuestionMetaMap = null;
+
+  // jeśli masz jeszcze inne indeksy pochodne (np. liczniki dzieci) – też je tu dopisz
+}
+
 function isFolderDescendant(state, folderId, maybeParentId) {
   // true, jeśli maybeParentId leży w poddrzewie folderId
   const byId = new Map((state.categories || []).map(c => [c.id, c]));
@@ -1781,6 +1804,8 @@ async function copyFolderSubtree(state, sourceFolderId, targetParentIdOrNull) {
   state._derivedCategoryTagMap = null;
   state._folderDescQIds = null;
   state._allCategoryTagMap = null;
+
+  invalidateDerivedCaches(state);
 
   await state._api?.refreshList?.();
 }
@@ -3361,7 +3386,6 @@ export function wireActions({ state }) {
           null
         );
       }
-      pulseEl(listEl);
     } catch (err) {
       console.error(err);
       alert("Nie udało się przenieść.");
