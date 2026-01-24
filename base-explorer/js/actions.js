@@ -2172,13 +2172,58 @@ export function wireActions({ state }) {
   const tagsEl = document.getElementById("tags");
   const breadcrumbsEl = document.getElementById("breadcrumbs");
   const toolbarEl = document.getElementById("toolbar");
-  const head = document.querySelector(".list-head");
-  if (!head) return;
+
+  /* ================= Sort (TYLKO 3 kolumny: Nazwa/Typ/Data) ================= */
+
+  const SORT_KEYS = new Set(["name", "type", "date"]);
   
-  const headNum  = head.querySelector(".h-num");
-  const headMain = head.querySelector(".h-main");
-  const headType = head.querySelector(".h-type");
-  const headDate = head.querySelector(".h-date");
+  function toggleSort(key) {
+    if (!SORT_KEYS.has(key)) return;
+  
+    const s = state.sort || (state.sort = { key: "name", dir: "asc" });
+  
+    if (s.key === key) {
+      s.dir = (s.dir === "asc") ? "desc" : "asc";
+    } else {
+      s.key = key;
+      s.dir = "asc";
+    }
+  
+    renderList(state);
+    updateSortHeaderUI();
+  }
+  
+  function updateSortHeaderUI() {
+    // nagłówek jest przebudowywany w renderList(), więc zawsze bierzemy świeże elementy
+    const head = listEl?.querySelector?.(".list-head");
+    if (!head) return;
+  
+    const elName = head.querySelector(".h-main");
+    const elType = head.querySelector(".h-type");
+    const elDate = head.querySelector(".h-date");
+  
+    if (elName) elName.classList.toggle("active", state.sort?.key === "name");
+    if (elType) elType.classList.toggle("active", state.sort?.key === "type");
+    if (elDate) elDate.classList.toggle("active", state.sort?.key === "date");
+  
+    if (elName) elName.dataset.dir = (state.sort?.key === "name") ? (state.sort?.dir || "") : "";
+    if (elType) elType.dataset.dir = (state.sort?.key === "type") ? (state.sort?.dir || "") : "";
+    if (elDate) elDate.dataset.dir = (state.sort?.key === "date") ? (state.sort?.dir || "") : "";
+  }
+  
+  // Delegacja kliknięcia: działa mimo re-renderów nagłówka
+  listEl?.addEventListener("click", (e) => {
+    const el = e.target?.closest?.(".list-head .h-main, .list-head .h-type, .list-head .h-date");
+    if (!el) return;
+  
+    if (el.classList.contains("h-main")) return toggleSort("name");
+    if (el.classList.contains("h-type")) return toggleSort("type");
+    if (el.classList.contains("h-date")) return toggleSort("date");
+  });
+  
+  // inicjalizacja (jeśli ktoś miał ord, przestawiamy na name)
+  if (!SORT_KEYS.has(state.sort?.key)) state.sort = { key: "name", dir: "asc" };
+  updateSortHeaderUI();
 
     /* ================= Interaction locks (bez MODE) ================= */
 
@@ -2272,43 +2317,6 @@ export function wireActions({ state }) {
     });
   }
 
-  function toggleSort(key) {
-    const s = state.sort || (state.sort = { key: "ord", dir: "asc" });
-
-    if (s.key === key) {
-      s.dir = (s.dir === "asc") ? "desc" : "asc";
-    } else {
-      s.key = key;
-      s.dir = "asc";
-    }
-
-    renderList(state);
-    updateSortHeaderUI();
-      // drzewo: pamiętanie rozwinięć
-    if (!(state.treeOpen instanceof Set)) state.treeOpen = new Set();
-  }
-
-  function updateSortHeaderUI() {
-    if (headNum) headNum.classList.toggle("active", state.sort?.key === "ord");
-    if (headMain) headMain.classList.toggle("active", state.sort?.key === "name");
-
-    if (headNum) headNum.dataset.dir = state.sort?.key === "ord" ? state.sort?.dir : "";
-    if (headMain) headMain.dataset.dir = state.sort?.key === "name" ? state.sort?.dir : "";
-  }
-
-  headNum?.addEventListener("click", () => toggleSort("ord"));
-  headMain?.addEventListener("click", () => toggleSort("name"));
-  // Delegacja – nagłówek listy jest przebudowywany w renderList(), więc bez tego klik "znika"
-  listEl?.addEventListener("click", (e) => {
-    const h = e.target?.closest?.(".list-head .h-num, .list-head .h-main");
-    if (!h) return;
-  
-    if (h.classList.contains("h-num")) toggleSort("ord");
-    if (h.classList.contains("h-main")) toggleSort("name");
-  });
-
-  // zainicjuj UI nagłówka
-  updateSortHeaderUI();
     // drzewo: pamiętanie rozwinięć
   if (!(state.treeOpen instanceof Set)) state.treeOpen = new Set();
 
