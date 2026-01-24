@@ -181,6 +181,59 @@ function uniqIds(arr) {
   return Array.from(new Set((arr || []).filter(Boolean)));
 }
 
+/* ====== Folder counters (direct children only) ====== */
+
+// Minimalny indeks pytań do liczenia: id + category_id (bez payloadów)
+async function ensureQuestionIndexForCounts(state) {
+  if (Array.isArray(state._qIndex)) return;
+
+  const { data, error } = await sb()
+    .from("qb_questions")
+    .select("id,category_id")
+    .eq("base_id", state.baseId);
+
+  if (error) throw error;
+  state._qIndex = data || [];
+}
+
+// Buduje mapę: folderId -> liczba (direct subfolders + direct questions)
+// Root liczymy osobno jako "__root__"
+async function buildDirectChildrenCountMap(state) {
+  await ensureQuestionIndexForCounts(state);
+
+  const cats = Array.isArray(state.categories) ? state.categories : [];
+  const qs = Array.isArray(state._qIndex) ? state._qIndex : [];
+
+  // 1) direct subfolders count
+  const subfolderCount = new Map(); // folderId -> number
+  for (const c of cats) {
+    const pid = c.parent_id || null;
+    const key = pid || "__root__";
+    subfolderCount.set(key, (subfolderCount.get(key) || 0) + 1);
+  }
+
+  // 2) direct questions count
+  const questionCount = new Map(); // folderId -> number
+  for (const q of qs) {
+    const cid = q.category_id || null;
+    const key = cid || "__root__";
+    questionCount.set(key, (questionCount.get(key) || 0) + 1);
+  }
+
+  // 3) merged
+  const out = new Map(); // folderId or "__root__" -> number
+  const allKeys = new Set([
+    ...Array.from(subfolderCount.keys()),
+    ...Array.from(questionCount.keys()),
+  ]);
+
+  for (const k of allKeys) {
+    out.set(k, (subfolderCount.get(k) || 0) + (questionCount.get(k) || 0));
+  }
+
+  state._directChildrenCount = out;
+}
+
 function buildChildrenIdIndex(categories) {
   const byParent = new Map();
   for (const c of (categories || [])) {
@@ -651,6 +704,14 @@ async function refreshList(state) {
     const { folders, questions } = await buildVirtualViewResults({ tagIds, metaIds, textQ });
     state.folders = folders;
     state.questions = questions;
+
+    // ====== Liczniki folderów (pytania + foldery, tylko bezpośrednio) ======
+    try {
+      await buildDirectChildrenCountMap(state);
+    } catch (e) {
+      console.warn("Direct folder counts failed:", e);
+      state._directChildrenCount = new Map();
+    }
 
     await ensureMapsForCurrentRightList();
     renderAll(state);
