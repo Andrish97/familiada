@@ -60,7 +60,7 @@ export async function getBaseRole(baseId, userId) {
 export async function listCategories(baseId) {
   const { data, error } = await sb()
     .from("qb_categories")
-    .select("id,base_id,parent_id,name,ord")
+    .select("id,base_id,parent_id,name,ord, created_at,updated_at")
     .eq("base_id", baseId)
     .order("ord", { ascending: true });
 
