@@ -291,7 +291,12 @@ export function renderToolbar(state) {
   // 3) Disable przycisków toolbar – spójnie z actions/context-menu
   const editor = (state.role === "owner" || state.role === "editor");
   
-  const realKeys = Array.from(state.selection?.keys || []).filter(k => k && k !== "root");
+  const realKeys = Array.from(state.selection?.keys || []).filter((k) => {
+    if (!k) return false;
+    if (k === "root") return false;
+    const s = String(k);
+    return s.startsWith("c:") || s.startsWith("q:");
+  });
   const oneSelected = realKeys.length === 1;
   const oneIsQuestion = oneSelected && String(realKeys[0]).startsWith("q:");
   
