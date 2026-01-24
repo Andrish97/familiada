@@ -588,8 +588,8 @@ export function renderList(state) {
       `;
 
       // Meta: liczba elementów folderu – BEST EFFORT
-      // (jeśli masz kiedyś mapę, podepnij ją tu; na razie pokazuję "—")
-      const metaTxt = "—";
+      const count = state._directChildrenCount?.get?.(c.id) ?? null;
+      const metaTxt = (count === null) ? "—" : `${count} elem.`;
 
       return `
         <div class="row${selClass}" ${draggable} data-kind="cat" data-id="${esc(c.id)}" style="cursor:pointer;">
