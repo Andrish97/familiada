@@ -198,6 +198,132 @@
   
     </div>
   </div>
+
+    <!-- =======================================================
+       [MODAL: EKSPORT] — overlay + modal (wzorzec jak TAGI)
+       ======================================================= -->
+  <div class="overlay" id="exportOverlay" style="display:none;">
+    <div class="modal tags-modal export-modal" role="dialog" aria-modal="true" aria-labelledby="xTitle">
+
+      <div class="tagsHead">
+        <div class="mTitle" id="xTitle">Eksport gry</div>
+        <button class="btn sm" id="xClose" type="button" aria-label="Zamknij">✕</button>
+      </div>
+
+      <div class="mSub" id="xSub">
+        Wybierz co najmniej 10 pytań. Czerwone nie spełniają warunków wybranego typu — odhacz je albo popraw dane.
+      </div>
+
+      <div class="xBody">
+        <div class="xField">
+          <div class="lbl2">Nazwa gry</div>
+          <input id="xName" class="inp xName" type="text" maxlength="60" autocomplete="off" value="gra" />
+        </div>
+
+        <div class="xGrid2">
+          <div class="xField">
+            <div class="lbl2">Pytania</div>
+            <div id="xList" class="xPickList"></div>
+          </div>
+
+          <div class="xField">
+            <div class="xTypeBox">
+              <div class="xTypeTop">
+                <div class="xTypeTitle">Typ gry</div>
+                <div class="xTypeHint" id="xTypeHint">—</div>
+              </div>
+
+              <div class="xRange">
+                <input id="xTypeRange" class="rng" type="range" min="0" max="2" step="1" value="2" />
+              </div>
+
+              <div class="xTypeLabels">
+                <div class="xTypeLbl" id="lbl0" data-v="0">
+                  <b>Typowy sondaż</b>
+                  <span>poll_text</span>
+                </div>
+                <div class="xTypeLbl" id="lbl1" data-v="1">
+                  <b>Punktacja</b>
+                  <span>poll_points</span>
+                </div>
+                <div class="xTypeLbl" id="lbl2" data-v="2">
+                  <b>Preparowany</b>
+                  <span>prepared</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tagsFoot">
+        <div class="xCountPill" id="xCountPill" title="Zaznaczone (min 10)">
+          <span>WYBRANE</span>
+          <b id="xCountVal">0</b>
+        </div>
+
+        <div class="tagsFootSpacer"></div>
+
+        <div id="xErr" class="importMsg" style="display:none;"></div>
+
+        <button class="btn sm gold" id="xCreate" type="button" disabled>Utwórz</button>
+      </div>
+
+    </div>
+  </div>
+
+    <!-- =======================================================
+       [MODAL: PYTANIE] — overlay + modal (wzorzec jak TAGI)
+       ======================================================= -->
+  <div class="overlay" id="questionOverlay" style="display:none;">
+    <div class="modal tags-modal question-modal" role="dialog" aria-modal="true" aria-labelledby="qTitle">
+
+      <div class="tagsHead">
+        <div class="mTitle" id="qTitle">Pytanie</div>
+        <button class="btn sm" id="qClose" type="button" aria-label="Zamknij">✕</button>
+      </div>
+
+      <div class="mSub">
+        Edycja pojedynczego pytania. Max 6 odpowiedzi. Punkty opcjonalne.
+        Jeśli wpisane: 0–100, suma ≤ 100.
+      </div>
+
+      <div class="qBody">
+        <div class="qBlock">
+          <div class="lbl2">Treść pytania</div>
+          <textarea id="qText" class="inp qText" spellcheck="false" placeholder="Wpisz treść pytania…"></textarea>
+        </div>
+
+        <div class="qBlock">
+          <div class="qAnswersHead">
+            <div>Odpowiedź</div>
+            <div class="c2">Punkty</div>
+            <div></div>
+          </div>
+
+          <div id="qAnswers" class="qAnswers"></div>
+
+          <div class="qBar">
+            <button class="btn sm" id="qAdd" type="button">+ Odpowiedź</button>
+
+            <div class="qSum" id="qSumPill" title="Suma punktów (max 100)">
+              <span>SUMA</span>
+              <b id="qSumVal">0/100</b>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tagsFoot">
+        <div class="tagsFootSpacer"></div>
+
+        <div id="qErr" class="importMsg" style="display:none;"></div>
+
+        <button class="btn sm gold" id="qSave" type="button">Zapisz</button>
+      </div>
+
+    </div>
+  </div>
   
 </body>
 </html>
