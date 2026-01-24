@@ -1057,3 +1057,14 @@ input, textarea{ user-select:text; }
   min-height:0;
   overflow:auto;
 }
+
+.list-head .h-main,
+.list-head .h-type,
+.list-head .h-date{
+  cursor:pointer;
+}
+
+.list-head .h-num,
+.list-head .h-meta{
+  cursor:default;
+}
