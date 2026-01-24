@@ -3483,6 +3483,14 @@ export function wireActions({ state }) {
   listEl.addEventListener("mousedown", (e) => {
     // tylko lewy przycisk
     if (e.button !== 0) return;
+    
+    // NIE startuj marquee na nagłówku listy (to ma być klik do sortowania)
+    const head = e.target?.closest?.(".list-head");
+    if (head) return;
+  
+    // NIE startuj marquee na uchwycie do resize kolumn
+    const rz = e.target?.closest?.(".col-resizer");
+    if (rz) return;
 
     // nie startuj marquee, jeśli kliknięto w wiersz (to obsługuje normalna selekcja)
     const row = e.target?.closest?.('.row[data-kind][data-id]');
