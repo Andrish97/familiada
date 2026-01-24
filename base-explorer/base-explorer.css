@@ -926,13 +926,6 @@ input, textarea{ user-select:text; }
   gap: var(--col-gap);
 }
 
-
-/* Header: umożliwiamy „uchwyt” do zmiany szerokości */
-.list-head > div{
-  position: relative;
-  min-width: 0;
-}
-
 /* Separatory kolumn (w połowie przerwy) – nie wpływają na szerokości */
 .list-head > div,
 .row > div{
@@ -944,12 +937,12 @@ input, textarea{ user-select:text; }
 .row > div:not(:last-child)::after{
   content:"";
   position:absolute;
-  top: 6px;
-  bottom: 6px;
+  top:6px;
+  bottom:6px;
   right: calc(var(--col-gap) / -2);
-  width: 1px;
+  width:1px;
   background: rgba(255,255,255,.10);
-  pointer-events:none;
+  pointer-events:none; /* ← KLUCZOWE */
 }
 
 /* Uchwyt-resizer (wstawiany przez JS) */
@@ -1014,4 +1007,13 @@ input, textarea{ user-select:text; }
 .list-head,
 .row{
   min-width: 740px;         /* praktyczny bezpiecznik; możesz podnieść/obniżyć */
+}
+
+.list{
+  max-width:100%;
+  overflow-x:hidden;
+}
+
+.explorer-right{
+  min-width:0;
 }
