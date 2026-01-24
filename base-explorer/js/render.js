@@ -95,7 +95,7 @@ function metaDotsHtml(state, id, kind /* "q" | "c" */) {
     return `<span class="meta-dot" style="--c:${esc(color)}" data-tip="${esc(label)}"></span>`;
   }).join("");
 
-  return `<span class="tag-dots">${dots}</span>`;
+  return `<span class="meta-dots">${dots}</span>`;
 }
 
 /* ================= Render parts ================= */
