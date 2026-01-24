@@ -585,54 +585,46 @@ async function refreshList(state) {
 
     qs = applySearchFilterToQuestions(qs, textQ);
 
-    // 2) foldery wynikowe:
-    // - jeśli textQ: foldery po nazwie (jak SEARCH)
-    // - jeśli tag/meta: foldery z pytań wynikowych + ich rodzice (żeby dało się wejść)
-    let fs = applySearchFilterToFolders(foldersAll, textQ);
+    // 2) foldery wynikowe — WYŁĄCZNIE „100% dzieci pasujących”
+    // Folder pokazujemy tylko wtedy, gdy wszystkie pytania w jego poddrzewie spełniają predykat (tag/meta/text).
+    // Jeśli folder jest pokazany, to pytań spod niego NIE pokazujemy w wynikach.
+    const matchedQIds = new Set((qs || []).map(q => q.id).filter(Boolean));
 
-    if (tagIds.length || metaIds.length) {
-      const foldersFromResults = new Set();
-      for (const q of (qs || [])) {
-        const cid = q.category_id || null;
-        if (!cid) continue;
+    const folderDesc = state._folderDescQIds || new Map();
 
-        foldersFromResults.add(cid);
+    const fullFolders = [];           // foldery które mają 100% dopasowanych pytań w poddrzewie
+    const fullFolderIdSet = new Set();
 
-        let cur = byIdAll.get(cid);
-        let guard = 0;
-        while (cur && guard++ < 20) {
-          const pid = cur.parent_id || null;
-          if (!pid) break;
-          foldersFromResults.add(pid);
-          cur = byIdAll.get(pid);
-        }
+    for (const c of (foldersAll || [])) {
+      const qids = folderDesc.get(c.id);
+      if (!qids || qids.size === 0) continue;
+
+      let ok = true;
+      for (const qid of qids) {
+        if (!matchedQIds.has(qid)) { ok = false; break; }
       }
+      if (!ok) continue;
 
-      const extra = foldersAll.filter(c => foldersFromResults.has(c.id));
-      const merged = new Map();
-      for (const c of fs) merged.set(c.id, c);
-      for (const c of extra) merged.set(c.id, c);
-      fs = Array.from(merged.values());
+      fullFolders.push(c);
+      fullFolderIdSet.add(c.id);
     }
 
-    // 3) topFolders: usuń foldery, które mają przodka w fs (żeby nie dublować)
-    // Tu używamy tylko tego, co realnie ma być “top” w panelu wyników.
-    const fsIdSet = new Set(fs.map(x => x.id));
-    function hasAncestorInSet(folderId) {
+    // topFolders = tylko te „pełne” foldery, które nie mają przodka też „pełnego”
+    function hasFullAncestor(folderId) {
       let cur = byIdAll.get(folderId);
       let guard = 0;
       while (cur && guard++ < 50) {
         const pid = cur.parent_id || null;
         if (!pid) return false;
-        if (fsIdSet.has(pid)) return true;
+        if (fullFolderIdSet.has(pid)) return true;
         cur = byIdAll.get(pid);
       }
       return false;
     }
-    const topFolders = fs.filter(f => !hasAncestorInSet(f.id));
 
-    // 4) ukryj pytania, które są “wewnątrz” topFolders
+    const topFolders = fullFolders.filter(f => !hasFullAncestor(f.id));
     const topFolderIds = new Set(topFolders.map(f => f.id));
+    
     function isInsideTopFolder(categoryId) {
       if (!categoryId) return false;
       let cur = byIdAll.get(categoryId);
