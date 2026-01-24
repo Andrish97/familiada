@@ -1068,3 +1068,8 @@ input, textarea{ user-select:text; }
 .list-head .h-meta{
   cursor:default;
 }
+
+[data-tip]:hover::after,
+[data-tip]:hover::before{
+  z-index: 10000;
+}
