@@ -1183,3 +1183,11 @@ input, textarea{ user-select:text; }
 .list-head .active::after{
   display:inline-block;  /* pokazuj tylko dla aktywnej kolumny */
 }
+.list-head > div{
+  overflow: hidden;          /* nie pozwól treści wejść w następną kolumnę */
+  text-overflow: ellipsis;   /* dla bezpieczeństwa (nagłówki i tak krótkie) */
+}
+
+.list-head .h-main,
+.list-head .h-type,
+.list-head .h-date{ padding-right: 10px; }
