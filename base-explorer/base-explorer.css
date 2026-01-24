@@ -1197,3 +1197,23 @@ input, textarea{ user-select:text; }
   display:block;
   height:20px;
 }
+
+/* strzałki sortowania — widoczne tylko na aktywnej kolumnie */
+.list-head .h-main::after,
+.list-head .h-type::after,
+.list-head .h-date::after{
+  content:"";
+  display:inline-block;
+  width: 14px;        /* stałe miejsce, nie przesuwa tekstu */
+  text-align:center;
+  margin-left:6px;
+  opacity:.65;
+  visibility:hidden;  /* domyślnie ukryte */
+}
+
+.list-head .active::after{
+  visibility:visible; /* pokazuj tylko na aktywnej kolumnie */
+}
+
+.list-head .active[data-dir="asc"]::after{ content:"▲"; }
+.list-head .active[data-dir="desc"]::after{ content:"▼"; }
