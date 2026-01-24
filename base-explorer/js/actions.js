@@ -1945,8 +1945,23 @@ export function wireActions({ state }) {
     });
   }
 
-  const headNum = document.querySelector(".list-head .h-num");
-  const headMain = document.querySelector(".list-head .h-main");
+  // ===== Sort header: delegacja (bo renderList podmienia DOM) =====
+  function toggleSort(key) {
+    const s = state.sort || (state.sort = { key: "name", dir: "asc" });
+  
+    if (s.key === key) s.dir = (s.dir === "asc") ? "desc" : "asc";
+    else { s.key = key; s.dir = "asc"; }
+  
+    renderList(state);
+  }
+  
+  listEl?.addEventListener("click", (e) => {
+    const h = e.target?.closest?.(".list-head [data-sort-key]");
+    if (!h) return;
+    const key = h.dataset.sortKey;
+    if (!key) return;
+    toggleSort(key);
+  });
 
   function toggleSort(key) {
     const s = state.sort || (state.sort = { key: "ord", dir: "asc" });
