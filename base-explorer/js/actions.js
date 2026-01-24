@@ -2327,6 +2327,7 @@ export function wireActions({ state }) {
   });
 
   tagsEl?.addEventListener("click", async (e) => {
+    if (suppressNextTagsClick) return;
     // 0) klik w "Dodaj tag"
     const btn = e.target?.closest?.("#btnAddTag");
     if (btn) {
@@ -3099,6 +3100,7 @@ export function wireActions({ state }) {
 
     /* ================= Marquee: TAGS ================= */
   let tagsMarquee = null;
+  let suppressNextTagsClick = false;
   let tagsMarqueeStart = null;
   let tagsMarqueeAdd = false;
   let tagsMarqueeBase = null;
@@ -3230,6 +3232,9 @@ export function wireActions({ state }) {
     tagsMarqueeStart = null;
     tagsMarqueeAdd = false;
     tagsMarqueeBase = null;
+
+    suppressNextTagsClick = true;
+    setTimeout(() => { suppressNextTagsClick = false; }, 0);
   
     await applyLeftFiltersView(); // <<< to robi właściwe “odświeżenie widoku”
   });
