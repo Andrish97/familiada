@@ -1191,3 +1191,9 @@ input, textarea{ user-select:text; }
 .list-head .h-main,
 .list-head .h-type,
 .list-head .h-date{ padding-right: 10px; }
+
+#list::before{
+  content:"";
+  display:block;
+  height:20px;
+}
