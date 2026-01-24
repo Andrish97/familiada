@@ -543,6 +543,81 @@ function initColumnResizers() {
     { idx: 4, key: "meta", cssVar: "--col-meta", min: 120 },
   ];
 
+    const COL_COUNT = 5; // Nr + Nazwa + Typ + Data + Info
+
+  const parsePx = (v) => {
+    const n = parseFloat(String(v || "").replace(",", "."));
+    return Number.isFinite(n) ? n : 0;
+  };
+
+  const getHeadInnerWidth = () => {
+    const cs = getComputedStyle(head);
+    const pl = parsePx(cs.paddingLeft);
+    const pr = parsePx(cs.paddingRight);
+    return Math.max(0, head.getBoundingClientRect().width - pl - pr);
+  };
+
+  const getGap = () => {
+    const cs = getComputedStyle(head);
+    // gap może być "10px" albo "10px 10px"
+    const g = String(cs.gap || cs.columnGap || "0").split(" ")[0];
+    return parsePx(g);
+  };
+
+  const clampAllToViewport = () => {
+    const gap = getGap();
+    const availInner = getHeadInnerWidth();
+    const availNoGaps = Math.max(0, availInner - gap * (COL_COUNT - 1));
+
+    // bierzemy aktualne szerokości nagłówka (oddają stan po varach i po max-content)
+    const w = Array.from(head.children).map((el) => el.getBoundingClientRect().width);
+    const sumNoGaps = w.reduce((a, b) => a + b, 0);
+
+    if (sumNoGaps <= availNoGaps) return;
+
+    // redukujemy w kolejności: name -> meta -> date -> type (Nr zostaje)
+    const order = [
+      { idx: 1, cssVar: "--col-name", min: 220 },
+      { idx: 4, cssVar: "--col-meta", min: 120 },
+      { idx: 3, cssVar: "--col-date", min: 140 },
+      { idx: 2, cssVar: "--col-type", min: 120 },
+    ];
+
+    let overflow = sumNoGaps - availNoGaps;
+
+    for (const o of order) {
+      if (overflow <= 0) break;
+
+      const cur = w[o.idx];
+      const canCut = Math.max(0, cur - o.min);
+      const cut = Math.min(canCut, overflow);
+
+      if (cut > 0) {
+        const next = Math.round(cur - cut);
+        document.documentElement.style.setProperty(o.cssVar, `${next}px`);
+        overflow -= cut;
+        w[o.idx] = next;
+      }
+    }
+
+    // zapisujemy po clampie, żeby przy kolejnym wejściu nie wracało „za szeroko”
+    const nextCols = loadCols();
+    for (const r of resizable) {
+      const v = getComputedStyle(document.documentElement).getPropertyValue(r.cssVar).trim();
+      if (v) nextCols[r.key] = v;
+    }
+    saveCols(nextCols);
+  };
+
+  // po załadowaniu zapisanych kolumn – natychmiast dociśnij do viewportu
+  clampAllToViewport();
+
+  // i dociśnij przy zmianie okna (to rozwiązuje: "zmniejszam okno, a list się nie zmniejsza")
+  if (!head.dataset.resizeClamp) {
+    head.dataset.resizeClamp = "1";
+    window.addEventListener("resize", () => clampAllToViewport(), { passive: true });
+  }
+
   for (const r of resizable) {
     const cell = head.children?.[r.idx];
     if (!cell) continue;
@@ -564,8 +639,19 @@ function initColumnResizers() {
 
       const onMove = (e) => {
         const dx = e.clientX - startX;
-        const next = Math.max(r.min, Math.round(startW + dx));
-        // ustawiamy px, ale zostawiamy elastyczność tylko gdy user nie resize’ował:
+      
+        const gap = getGap();
+        const availInner = getHeadInnerWidth();
+        const availNoGaps = Math.max(0, availInner - gap * (COL_COUNT - 1));
+      
+        // suma pozostałych kolumn (bez tej przeciąganej)
+        const widths = Array.from(head.children).map((el) => el.getBoundingClientRect().width);
+        const others = widths.reduce((sum, w, i) => (i === r.idx ? sum : sum + w), 0);
+      
+        const maxAllowed = Math.max(r.min, Math.floor(availNoGaps - others));
+        const unclamped = Math.round(startW + dx);
+        const next = Math.min(maxAllowed, Math.max(r.min, unclamped));
+      
         document.documentElement.style.setProperty(r.cssVar, `${next}px`);
       };
 
