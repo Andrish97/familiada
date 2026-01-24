@@ -1170,3 +1170,16 @@ input, textarea{ user-select:text; }
 .meta-dot[data-tip]:hover::before{
   z-index: 9999;
 }
+
+.list-head .h-main::after,
+.list-head .h-type::after,
+.list-head .h-date::after{
+  content:"";
+  display:none;          /* domyślnie ukryte */
+  margin-left:6px;
+  opacity:.65;
+}
+
+.list-head .active::after{
+  display:inline-block;  /* pokazuj tylko dla aktywnej kolumny */
+}
