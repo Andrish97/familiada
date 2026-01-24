@@ -540,6 +540,7 @@ function initColumnResizers() {
 
   const cols = loadCols();
   applyColsToRoot(cols);
+  document.documentElement.classList.add("cols-ready");
 
   // indeksy komórek w headerze: 0 Nr, 1 Nazwa, 2 Typ, 3 Data, 4 Info
   const resizable = [
