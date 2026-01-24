@@ -56,8 +56,6 @@ btnLogout?.addEventListener("click", async () => {
   // ===== state =====
   const state = createState({ baseId, role: "viewer" });
 
-  state.sort = { key: "ord", dir: "asc" };
-
   try {
     // ===== meta + rola =====
     state.baseMeta = await getBaseMeta(baseId);
