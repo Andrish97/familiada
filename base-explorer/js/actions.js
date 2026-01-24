@@ -26,6 +26,8 @@ import {
 
 import { showContextMenu, hideContextMenu } from "./context-menu.js";
 import { openTagsModal } from "./tags-modal.js";
+import { openQuestionModal } from "./question-modal.js";
+import { openCreateGameModal } from "./create-game-modal.js";
 import { sb } from "../../js/core/supabase.js";
 
 /* ================= Utils ================= */
