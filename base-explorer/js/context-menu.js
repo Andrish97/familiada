@@ -362,9 +362,28 @@ export async function showContextMenu({ state, x, y, target }) {
   if (target.kind === "cat" || target.kind === "q") {
     pushSep(items);
 
-    if (target.kind === "q") {
-      items.push({ label: "Edytuj (wkrótce)", disabled: true });
-    }
+    // --- Edytuj pytanie ---
+    items.push({
+      label: "Edytuj pytanie…",
+      disabled: !editor || readOnlyView || selectedRealCount !== 1 || target.kind !== "q",
+      action: async () => {
+        // upewnij selekcję na tym pytaniu
+        const key = `q:${target.id}`;
+        if (!state.selection?.keys?.has?.(key)) selectionSetSingle(state, key);
+    
+        // wywołaj tak jak toolbar
+        // (bo toolbar ma całą logikę w actions.js)
+        const toolbarEl = document.getElementById("toolbar");
+        const fakeBtn = toolbarEl?.querySelector('button[data-act="editQuestion"]');
+        if (fakeBtn?.disabled) return;
+    
+        // prościej: zawołaj bezpośrednio akcję z actions.js, jeśli masz export "runToolbarAction"
+        // a jeśli nie masz – najszybciej: importuj openQuestionModal i wołaj ją tu.
+        // Minimalnie-inwazyjnie:
+        const { openQuestionModal } = await import("./question-modal.js");
+        await openQuestionModal({ state, questionId: target.id });
+      }
+    });
 
     items.push({
       label: target.kind === "cat" ? "Zmień nazwę" : "Zmień nazwę (treść)",
@@ -375,6 +394,22 @@ export async function showContextMenu({ state, x, y, target }) {
           selectionSetSingle(state, key);
         }
         await renameSelectedPrompt(state);
+      }
+    });
+
+    pushSep(items);
+
+    // --- Utwórz grę ---
+    items.push({
+      label: "Utwórz grę…",
+      disabled: !editor || readOnlyView || !Array.from(state.selection?.keys || []).some(k => String(k).startsWith("q:")),
+      action: async () => {
+        const qIds = Array.from(state.selection?.keys || [])
+          .filter(k => String(k).startsWith("q:"))
+          .map(k => String(k).slice(2));
+    
+        const { openCreateGameModal } = await import("./create-game-modal.js");
+        await openCreateGameModal({ state, questionIds: qIds });
       }
     });
 
