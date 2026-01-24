@@ -1,0 +1,1172 @@
+<!--
+  test-modals.html
+  Jedna strona testowa zawierająca:
+  (A) TEST HARNESS (pola INPUT/OUTPUT) – osobny kod
+  (B) MODAL EKSPORTU – osobny CSS/JS
+  (C) MODAL PYTANIA – osobny CSS/JS
+
+  Cel: „na pierwszy rzut oka” widać co jest:
+  - wspólne (linki do base/builder/base-explorer.css)
+  - dodatki harness
+  - dodatki modali
+  - logika modali
+-->
+
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Test — Modale (Eksport + Pytanie) + INPUT/OUTPUT</title>
+
+  <!-- =======================================================
+       [WSPÓLNE STYLE APLIKACJI] — jak w base-explorer
+       ======================================================= -->
+  <link rel="stylesheet" href="../css/base.css" />
+  <link rel="stylesheet" href="../css/builder.css" />
+  <link rel="stylesheet" href="./base-explorer.css" />
+  <link rel="icon" href="../favicon.ico"/>
+
+  <!-- =======================================================
+       [CSS: TEST HARNESS] — tylko layout pól INPUT/OUTPUT + drobne helpery
+       ======================================================= -->
+  <style id="css-harness">
+    body{ padding:12px; }
+
+    .toolbarRow{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+      margin-bottom:12px;
+    }
+
+    .hWrap{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:12px;
+      min-height: calc(100vh - 88px);
+    }
+
+    .hCol{
+      min-width:0;
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+    }
+
+    .monoTa{
+      min-height: 200px;
+      height: 100%;
+      resize: none;
+      font-family: ui-monospace, Menlo, Consolas, monospace;
+      font-weight: 800;
+      padding: 12px;
+      border-radius: 12px;
+      box-sizing: border-box;
+      white-space: pre;
+    }
+
+    .hSep{
+      height:1px;
+      background: rgba(255,255,255,.12);
+      border-radius:999px;
+      margin: 8px 0;
+    }
+
+    .hSectionTitle{
+      font-weight:1000;
+      letter-spacing:.06em;
+      text-transform: uppercase;
+      opacity:.88;
+      font-size: 12px;
+      margin-top: 4px;
+    }
+  </style>
+
+  <!-- =======================================================
+       [CSS: MODAL EKSPORTU] — tylko dodatki wnętrza eksportu
+       (overlay/modal/head/foot biorą się z Twoich CSS)
+       ======================================================= -->
+  <style id="css-export-modal">
+    .export-modal{ width: min(860px, 94vw); }
+
+    .xBody{ margin-top: 10px; display: grid; gap: 12px; }
+
+    .xGrid2{
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      align-items: start;
+    }
+
+    .xField .lbl2{ margin-bottom: 6px; }
+
+    .xName{
+      width: 100%;
+      box-sizing: border-box;
+      text-align: center;
+      font-weight: 900;
+      letter-spacing: .06em;
+    }
+
+    .xPickList{
+      margin-top: 6px;
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 12px;
+      padding: 8px;
+      max-height: 340px;
+      overflow: auto;
+      display: grid;
+      gap: 8px;
+    }
+
+    .xPickItem{
+      display: grid;
+      grid-template-columns: 24px 1fr auto;
+      gap: 10px;
+      align-items: center;
+      padding: 10px 10px;
+      border-radius: 10px;
+      cursor: pointer;
+      user-select: none;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.04);
+    }
+    .xPickItem:hover{ background: rgba(255,255,255,.06); }
+
+    .xPickItem input{ transform: scale(1.05); }
+
+    .xNm{
+      font-weight: 900;
+      letter-spacing: .03em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .xMeta{
+      opacity: .80;
+      font-size: 11px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .xPickItem.ok{
+      border-color: rgba(120, 255, 170, .35);
+      background: rgba(120, 255, 170, .08);
+    }
+    .xPickItem.bad{
+      border-color: rgba(255, 120, 120, .35);
+      background: rgba(255, 120, 120, .08);
+    }
+
+    .xTypeBox{
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 12px;
+      padding: 12px;
+      background: rgba(255,255,255,.03);
+    }
+
+    .xTypeTop{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      flex-wrap:wrap;
+    }
+
+    .xTypeTitle{
+      font-weight: 1000;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      opacity: .92;
+      font-size: 12px;
+    }
+
+    .xTypeHint{
+      opacity: .75;
+      font-size: 12px;
+    }
+
+    .xRange{ width: 100%; margin-top: 10px; }
+    .xRange .rng{ width: 100%; } /* styl .rng jest w base-explorer.css */
+
+    .xTypeLabels{
+      margin-top: 10px;
+      display:grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px;
+      font-size: 12px;
+      opacity: .88;
+    }
+
+    .xTypeLbl{
+      padding: 8px 10px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.03);
+      text-align:center;
+      user-select:none;
+      cursor:pointer;
+    }
+
+    .xTypeLbl b{
+      display:block;
+      font-weight:1000;
+      letter-spacing:.06em;
+      text-transform:uppercase;
+      margin-bottom: 4px;
+      font-size: 11px;
+    }
+
+    .xTypeLbl.active{
+      border-color: rgba(255,234,166,.40);
+      background: rgba(255,234,166,.10);
+      color: rgba(255,234,166,.95);
+    }
+
+    .xCountPill{
+      display:inline-flex;
+      align-items: baseline;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,234,166,.28);
+      background: rgba(255,234,166,.10);
+      color: rgba(255,234,166,.95);
+      font-weight: 1000;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      user-select:none;
+    }
+    .xCountPill.bad{
+      border-color: rgba(255,120,120,.40);
+      background: rgba(255,120,120,.10);
+      color: rgba(255,180,180,.95);
+    }
+  </style>
+
+  <!-- =======================================================
+       [CSS: MODAL PYTANIA] — tylko dodatki wnętrza edytora pytania
+       ======================================================= -->
+  <style id="css-question-modal">
+    .question-modal{ width: min(720px, 94vw); }
+
+    .qBody{ margin-top: 10px; display: grid; gap: 12px; }
+
+    .qBlock .lbl2{ margin-bottom: 6px; }
+
+    .qText{
+      width: 100%;
+      min-height: 92px;
+      resize: vertical;
+      box-sizing: border-box;
+      font-weight: 800;
+      line-height: 1.35;
+    }
+
+    .qAnswersHead{
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 120px 44px;
+      gap: 10px;
+      padding: 0 4px;
+      opacity: .75;
+      font-size: 11px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      user-select: none;
+    }
+    .qAnswersHead .c2{ text-align: center; }
+
+    .qAnswers{
+      margin-top: 8px;
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 12px;
+      padding: 8px;
+      max-height: 320px;
+      overflow: auto;
+      display: grid;
+      gap: 8px;
+    }
+
+    .qRow{
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 120px 44px;
+      gap: 10px;
+      align-items: center;
+      padding: 10px 10px;
+      border-radius: 10px;
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.12);
+    }
+    .qRow:hover{ background: rgba(255,255,255,.06); }
+
+    .qAnsText{
+      width: 100%;
+      box-sizing: border-box;
+      font-weight: 900;
+    }
+
+    .qAnsPts{
+      width: 100%;
+      box-sizing: border-box;
+      text-align: center;
+      font-weight: 900;
+    }
+
+    .qDel{
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,120,120,.35);
+      background: rgba(255,120,120,.12);
+      color: #fff;
+      font-weight: 1000;
+      cursor: pointer;
+    }
+    .qDel:hover{ background: rgba(255,120,120,.18); }
+
+    .qBar{
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 10px;
+      flex-wrap: wrap;
+    }
+
+    .qSum{
+      margin-left: auto;
+      display: inline-flex;
+      align-items: baseline;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,234,166,.28);
+      background: rgba(255,234,166,.10);
+      color: rgba(255,234,166,.95);
+      font-weight: 1000;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      user-select: none;
+    }
+    .qSum.over{
+      border-color: rgba(255,120,120,.40);
+      background: rgba(255,120,120,.10);
+      color: rgba(255,180,180,.95);
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- =======================================================
+       [TEST HARNESS: TOOLBAR] — przyciski do otwierania modali
+       ======================================================= -->
+  <section class="toolbarRow">
+    <button class="btn sm gold" id="btnOpenExport" type="button">Otwórz modal eksportu</button>
+    <button class="btn sm gold" id="btnOpenQuestion" type="button">Otwórz modal pytania</button>
+  </section>
+
+  <!-- =======================================================
+       [TEST HARNESS: POLA] — 2 kolumny:
+       LEWO: INPUTY
+       PRAWO: OUTPUTY
+       W środku rozdzielone sekcjami (Eksport / Pytanie)
+       ======================================================= -->
+  <div class="hWrap">
+
+    <!-- ================== LEWA KOLUMNA: INPUTY ================== -->
+    <div class="hCol">
+      <div class="hSectionTitle">INPUT — Eksport (lista pytań)</div>
+      <textarea id="exportInputTa" class="inp monoTa" spellcheck="false">[
+  { "text": "P1" },
+  { "text": "P2" },
+  { "text": "P3" },
+  { "text": "P4" },
+  { "text": "P5" },
+  { "text": "P6" },
+  { "text": "P7" },
+  { "text": "P8" },
+  { "text": "P9" },
+  { "text": "P10" },
+  { "text": "P11" }
+]</textarea>
+
+      <div class="hSep" aria-hidden="true"></div>
+
+      <div class="hSectionTitle">INPUT — Pytanie (pojedynczy obiekt)</div>
+      <textarea id="questionInputTa" class="inp monoTa" spellcheck="false">{
+  "text": "Co można zamówić w pizzerii?",
+  "answers": [
+    { "ord": 1, "text": "Margherita", "fixed_points": 0 },
+    { "ord": 2, "text": "Pepperoni", "fixed_points": 0 },
+    { "ord": 3, "text": "Capricciosa", "fixed_points": 0 },
+    { "ord": 4, "text": "Hawajska", "fixed_points": 0 }
+  ]
+}</textarea>
+    </div>
+
+    <!-- ================== PRAWA KOLUMNA: OUTPUTY ================== -->
+    <div class="hCol">
+      <div class="hSectionTitle">OUTPUT — Eksport (game + questions)</div>
+      <textarea id="exportOutputTa" class="inp monoTa" readonly></textarea>
+
+      <div class="hSep" aria-hidden="true"></div>
+
+      <div class="hSectionTitle">OUTPUT — Pytanie (pojedynczy obiekt)</div>
+      <textarea id="questionOutputTa" class="inp monoTa" readonly></textarea>
+    </div>
+
+  </div>
+
+  <!-- =======================================================
+       [MODAL: EKSPORT] — overlay + modal (wzorzec jak TAGI)
+       ======================================================= -->
+  <div class="overlay" id="exportOverlay" style="display:none;">
+    <div class="modal tags-modal export-modal" role="dialog" aria-modal="true" aria-labelledby="xTitle">
+
+      <div class="tagsHead">
+        <div class="mTitle" id="xTitle">Eksport gry</div>
+        <button class="btn sm" id="xClose" type="button" aria-label="Zamknij">✕</button>
+      </div>
+
+      <div class="mSub" id="xSub">
+        Wybierz co najmniej 10 pytań. Czerwone nie spełniają warunków wybranego typu — odhacz je albo popraw dane.
+      </div>
+
+      <div class="xBody">
+        <div class="xField">
+          <div class="lbl2">Nazwa gry</div>
+          <input id="xName" class="inp xName" type="text" maxlength="60" autocomplete="off" value="gra" />
+        </div>
+
+        <div class="xGrid2">
+          <div class="xField">
+            <div class="lbl2">Pytania</div>
+            <div id="xList" class="xPickList"></div>
+          </div>
+
+          <div class="xField">
+            <div class="xTypeBox">
+              <div class="xTypeTop">
+                <div class="xTypeTitle">Typ gry</div>
+                <div class="xTypeHint" id="xTypeHint">—</div>
+              </div>
+
+              <div class="xRange">
+                <input id="xTypeRange" class="rng" type="range" min="0" max="2" step="1" value="2" />
+              </div>
+
+              <div class="xTypeLabels">
+                <div class="xTypeLbl" id="lbl0" data-v="0">
+                  <b>Typowy sondaż</b>
+                  <span>poll_text</span>
+                </div>
+                <div class="xTypeLbl" id="lbl1" data-v="1">
+                  <b>Punktacja</b>
+                  <span>poll_points</span>
+                </div>
+                <div class="xTypeLbl" id="lbl2" data-v="2">
+                  <b>Preparowany</b>
+                  <span>prepared</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tagsFoot">
+        <div class="xCountPill" id="xCountPill" title="Zaznaczone (min 10)">
+          <span>WYBRANE</span>
+          <b id="xCountVal">0/10</b>
+        </div>
+
+        <div class="tagsFootSpacer"></div>
+
+        <div id="xErr" class="importMsg" style="display:none;"></div>
+
+        <button class="btn sm gold" id="xSave" type="button" disabled>Zapisz</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- =======================================================
+       [MODAL: PYTANIE] — overlay + modal (wzorzec jak TAGI)
+       ======================================================= -->
+  <div class="overlay" id="questionOverlay" style="display:none;">
+    <div class="modal tags-modal question-modal" role="dialog" aria-modal="true" aria-labelledby="qTitle">
+
+      <div class="tagsHead">
+        <div class="mTitle" id="qTitle">Pytanie</div>
+        <button class="btn sm" id="qClose" type="button" aria-label="Zamknij">✕</button>
+      </div>
+
+      <div class="mSub">
+        Edycja pojedynczego pytania. Max 6 odpowiedzi. Punkty opcjonalne.
+        Jeśli wpisane: 0–100, suma ≤ 100.
+      </div>
+
+      <div class="qBody">
+        <div class="qBlock">
+          <div class="lbl2">Treść pytania</div>
+          <textarea id="qText" class="inp qText" spellcheck="false" placeholder="Wpisz treść pytania…"></textarea>
+        </div>
+
+        <div class="qBlock">
+          <div class="qAnswersHead">
+            <div>Odpowiedź</div>
+            <div class="c2">Punkty</div>
+            <div></div>
+          </div>
+
+          <div id="qAnswers" class="qAnswers"></div>
+
+          <div class="qBar">
+            <button class="btn sm" id="qAdd" type="button">+ Odpowiedź</button>
+
+            <div class="qSum" id="qSumPill" title="Suma punktów (max 100)">
+              <span>SUMA</span>
+              <b id="qSumVal">0/100</b>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tagsFoot">
+        <div class="tagsFootSpacer"></div>
+
+        <div id="qErr" class="importMsg" style="display:none;"></div>
+
+        <button class="btn sm gold" id="qSave" type="button">Zapisz</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- =======================================================
+       [JS: HARNESS] — tylko spina przyciski i textarea
+       (Modale mają swój JS w osobnych blokach niżej)
+       ======================================================= -->
+  <script id="js-harness">
+    // helper DOM
+    const $ = (id) => document.getElementById(id);
+
+    // harness textareas
+    const exportInputTa = $("exportInputTa");
+    const exportOutputTa = $("exportOutputTa");
+    const questionInputTa = $("questionInputTa");
+    const questionOutputTa = $("questionOutputTa");
+
+    // buttons
+    const btnOpenExport = $("btnOpenExport");
+    const btnOpenQuestion = $("btnOpenQuestion");
+  </script>
+
+  <!-- =======================================================
+       [JS: MODAL EKSPORTU] — cała logika eksportu w jednym miejscu
+       Uwaga: NIE walidujemy poprawności INPUT „przed”, tylko:
+       - liczymy w środku
+       - wyjątek: JSON musi się parsować + min 10 pytań (żeby w ogóle otworzyć)
+       ======================================================= -->
+  <script id="js-export-modal">
+    (() => {
+      const $ = (id) => document.getElementById(id);
+
+      // zgodnie z RULES z game-validate.js
+      const RULES = { QN_MIN: 10, AN_MIN: 3, AN_MAX: 6, SUM_PREPARED: 100 };
+
+      const TYPES = { POLL_TEXT: "poll_text", POLL_POINTS: "poll_points", PREPARED: "prepared" };
+
+      // harness I/O
+      const inputTa = $("exportInputTa");
+      const outputTa = $("exportOutputTa");
+
+      // modal nodes
+      const overlay = $("exportOverlay");
+      const xClose = $("xClose");
+      const xSave = $("xSave");
+      const xErr = $("xErr");
+      const xName = $("xName");
+      const xList = $("xList");
+      const xTypeRange = $("xTypeRange");
+      const xTypeHint = $("xTypeHint");
+      const xCountPill = $("xCountPill");
+      const xCountVal = $("xCountVal");
+      const lbl0 = $("lbl0");
+      const lbl1 = $("lbl1");
+      const lbl2 = $("lbl2");
+
+      // state
+      let dirty = false;
+      let allQuestions = [];
+      let selected = [];
+      let mode = 2; // 0..2
+      let lastSavedSnapshot = "";
+
+      function showErr(msg){
+        if (!msg){ xErr.style.display = "none"; xErr.textContent = ""; return; }
+        xErr.style.display = "block";
+        xErr.textContent = msg;
+      }
+
+      function markDirty(){ dirty = true; }
+
+      function canClose(){
+        if (!dirty) return true;
+        return confirm("Masz niezapisane zmiany. Zamknąć bez zapisu?");
+      }
+
+      function closeModal(){
+        if (!canClose()) return;
+        overlay.style.display = "none";
+        showErr("");
+        dirty = false;
+      }
+
+      function openModal(){
+        overlay.style.display = "grid";
+        setTimeout(() => xName.focus(), 0);
+      }
+
+      function n(v){
+        const x = Number(v);
+        return Number.isFinite(x) ? x : 0;
+      }
+
+      function normQuestion(q){
+        const out = { text: String(q?.text ?? "") };
+        if (Array.isArray(q?.answers)){
+          out.answers = q.answers.map(a => ({
+            text: String(a?.text ?? ""),
+            fixed_points: (a?.fixed_points === undefined || a?.fixed_points === null || a?.fixed_points === "")
+              ? undefined
+              : n(a.fixed_points),
+          }));
+        }
+        return out;
+      }
+
+      function parseInputToQuestions(){
+        const raw = String(inputTa.value ?? "").trim();
+        if (!raw) return [];
+        let v;
+        try{ v = JSON.parse(raw); }
+        catch{ throw new Error("Niepoprawny JSON w INPUT (eksport)."); }
+
+        let arr = [];
+        if (Array.isArray(v)) arr = v;
+        else if (v && typeof v === "object") arr = [v];
+
+        return arr
+          .map(normQuestion)
+          .filter(q => String(q.text ?? "").trim().length > 0);
+      }
+
+      function getType(){
+        if (mode === 0) return TYPES.POLL_TEXT;
+        if (mode === 1) return TYPES.POLL_POINTS;
+        return TYPES.PREPARED;
+      }
+
+      function typeHint(){
+        if (mode === 0) return "Warunek: min 10 pytań.";
+        if (mode === 1) return "Warunek: min 10 pytań i każde wybrane pytanie ma 3–6 odpowiedzi.";
+        return "Warunek: min 10 pytań, 3–6 odpowiedzi, punkty: każda ≤100, suma ≤100, oraz 0 punktów zabronione (prepared).";
+      }
+
+      function isAnswersCountOk(q){
+        const cnt = Array.isArray(q.answers) ? q.answers.length : 0;
+        return cnt >= RULES.AN_MIN && cnt <= RULES.AN_MAX;
+      }
+
+      // IMPORTANT: prepared => 0 zabronione + punkty wymagane
+      function preparedPointsOk(q){
+        const ans = Array.isArray(q.answers) ? q.answers : [];
+        if (!ans.length) return false;
+
+        const pts = ans.map(a => {
+          const v = a?.fixed_points;
+          if (v === undefined || v === null || v === "") return NaN;
+          return n(v);
+        });
+
+        if (pts.some(p => !Number.isFinite(p))) return false;
+        if (pts.some(p => p <= 0)) return false; // 0 zabronione
+        if (pts.some(p => p > 100)) return false;
+
+        const sum = pts.reduce((s,x) => s + x, 0);
+        return sum <= RULES.SUM_PREPARED;
+      }
+
+      function questionOkForType(q){
+        if (mode === 0) return true;
+        if (mode === 1) return isAnswersCountOk(q);
+        return isAnswersCountOk(q) && preparedPointsOk(q);
+      }
+
+      function questionMeta(q){
+        const cnt = Array.isArray(q.answers) ? q.answers.length : 0;
+
+        if (mode === 0) return `${cnt} odp.`;
+        if (mode === 1) return `${cnt} odp. (wymagane 3–6)`;
+
+        const ans = Array.isArray(q.answers) ? q.answers : [];
+        const sum = ans.map(a => n(a.fixed_points)).reduce((s,x)=>s+x,0);
+        return `${cnt} odp. • suma ${sum}/100`;
+      }
+
+      function setActiveTypeUI(){
+        const v = String(mode);
+        [lbl0,lbl1,lbl2].forEach(el => el.classList.toggle("active", el.dataset.v === v));
+        xTypeHint.textContent = typeHint();
+        xTypeRange.style.setProperty("--track", "linear-gradient(to right, rgba(255,255,255,.25), rgba(255,255,255,.65))");
+      }
+
+      function selectedCount(){ return selected.filter(Boolean).length; }
+
+      function anySelectedBad(){
+        for (let i=0; i<allQuestions.length; i++){
+          if (!selected[i]) continue;
+          if (!questionOkForType(allQuestions[i])) return true;
+        }
+        return false;
+      }
+
+      function updateFooterState(){
+        const cnt = selectedCount();
+        const bad = anySelectedBad();
+
+        xCountVal.textContent = `${cnt}/${RULES.QN_MIN}`;
+        xCountPill.classList.toggle("bad", cnt < RULES.QN_MIN || bad);
+
+        const can = (cnt >= RULES.QN_MIN) && !bad;
+        xSave.disabled = !can;
+
+        if (cnt < RULES.QN_MIN){
+          showErr(`Za mało zaznaczonych pytań (min ${RULES.QN_MIN}).`);
+        } else if (bad){
+          showErr("Masz zaznaczone pytania, które nie spełniają warunków typu gry. Odznacz czerwone lub popraw dane.");
+        } else {
+          showErr("");
+        }
+      }
+
+      function escapeHtml(s){
+        return String(s)
+          .replaceAll("&","&amp;")
+          .replaceAll("<","&lt;")
+          .replaceAll(">","&gt;")
+          .replaceAll('"',"&quot;");
+      }
+
+      function renderList(){
+        xList.innerHTML = "";
+
+        allQuestions.forEach((q, idx) => {
+          const ok = questionOkForType(q);
+          const row = document.createElement("div");
+          row.className = `xPickItem ${ok ? "ok" : "bad"}`;
+
+          const title = String(q.text ?? "").trim() || `Pytanie ${idx+1}`;
+          const meta = questionMeta(q);
+
+          row.innerHTML = `
+            <input type="checkbox" ${selected[idx] ? "checked" : ""} aria-label="Zaznacz pytanie">
+            <div class="xNm" title="${escapeHtml(title)}">${escapeHtml(title)}</div>
+            <div class="xMeta">${escapeHtml(meta)}</div>
+          `;
+
+          const cb = row.querySelector('input[type="checkbox"]');
+
+          row.addEventListener("click", (e) => {
+            if (e.target === cb) return;
+            cb.checked = !cb.checked;
+            cb.dispatchEvent(new Event("change", { bubbles: true }));
+          });
+
+          cb.addEventListener("change", () => {
+            selected[idx] = cb.checked;
+            markDirty();
+            updateFooterState();
+          });
+
+          xList.appendChild(row);
+        });
+
+        updateFooterState();
+      }
+
+      function buildOutput(){
+        const type = getType();
+        const name = String(xName.value ?? "").trim() || "gra";
+
+        const qs = [];
+        for (let i=0; i<allQuestions.length; i++){
+          if (!selected[i]) continue;
+
+          const q = allQuestions[i];
+          const outQ = { text: String(q.text ?? "").trim() };
+
+          if (Array.isArray(q.answers) && q.answers.length){
+            outQ.answers = q.answers.map(a => {
+              const o = { text: String(a.text ?? "").trim() };
+
+              if (type === TYPES.PREPARED){
+                o.fixed_points = n(a?.fixed_points);
+              } else {
+                if (a?.fixed_points !== undefined && a?.fixed_points !== null && a?.fixed_points !== ""){
+                  o.fixed_points = n(a.fixed_points);
+                }
+              }
+              return o;
+            });
+          }
+
+          qs.push(outQ);
+        }
+
+        return { game: { name, type }, questions: qs };
+      }
+
+      function snapshot(){
+        return JSON.stringify({
+          name: String(xName.value ?? ""),
+          mode,
+          selected: selected.slice(),
+        });
+      }
+
+      function setDirtyFromSnapshot(){
+        const now = snapshot();
+        dirty = (now !== lastSavedSnapshot);
+      }
+
+      // ====== public open (from harness) ======
+      btnOpenExport.addEventListener("click", () => {
+        let qs;
+        try{ qs = parseInputToQuestions(); }
+        catch(e){ alert(String(e?.message || e)); return; }
+
+        if (qs.length < RULES.QN_MIN){
+          alert(`Za mało pytań w INPUT (min ${RULES.QN_MIN}). Masz: ${qs.length}.`);
+          return;
+        }
+
+        allQuestions = qs;
+        selected = qs.map(() => true);
+
+        mode = 2;
+        xTypeRange.value = "2";
+        setActiveTypeUI();
+
+        if (!String(xName.value ?? "").trim()) xName.value = "gra";
+
+        renderList();
+        openModal();
+
+        lastSavedSnapshot = snapshot();
+        dirty = false;
+      });
+
+      // type change
+      xTypeRange.addEventListener("input", () => {
+        mode = Number(xTypeRange.value) || 0;
+        setActiveTypeUI();
+        renderList();
+        markDirty();
+        setDirtyFromSnapshot();
+      });
+
+      [lbl0,lbl1,lbl2].forEach(el => {
+        el.addEventListener("click", () => {
+          mode = Number(el.dataset.v) || 0;
+          xTypeRange.value = String(mode);
+          setActiveTypeUI();
+          renderList();
+          markDirty();
+          setDirtyFromSnapshot();
+        });
+      });
+
+      xName.addEventListener("input", () => {
+        markDirty();
+        setDirtyFromSnapshot();
+      });
+
+      xSave.addEventListener("click", () => {
+        const cnt = selectedCount();
+        if (cnt < RULES.QN_MIN){ showErr(`Za mało zaznaczonych pytań (min ${RULES.QN_MIN}).`); return; }
+        if (anySelectedBad()){ showErr("Masz zaznaczone pytania, które nie spełniają warunków typu gry."); return; }
+
+        const out = buildOutput();
+        outputTa.value = JSON.stringify(out, null, 2);
+
+        lastSavedSnapshot = snapshot();
+        dirty = false;
+        closeModal();
+      });
+
+      xClose.addEventListener("click", closeModal);
+
+      overlay.addEventListener("click", (e) => {
+        if (e.target === overlay) closeModal();
+      });
+
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && overlay.style.display !== "none") closeModal();
+      });
+    })();
+  </script>
+
+  <!-- =======================================================
+       [JS: MODAL PYTANIA] — cała logika edycji 1 pytania
+       ======================================================= -->
+  <script id="js-question-modal">
+    (() => {
+      const $ = (id) => document.getElementById(id);
+
+      const MAX_ANS = 6;
+      const PTS_MAX = 100;
+      const SUM_MAX = 100;
+
+      // harness I/O
+      const inputTa = $("questionInputTa");
+      const outputTa = $("questionOutputTa");
+
+      // modal nodes
+      const overlay = $("questionOverlay");
+      const qText = $("qText");
+      const qAnswers = $("qAnswers");
+      const qAdd = $("qAdd");
+      const qSave = $("qSave");
+      const qClose = $("qClose");
+      const qErr = $("qErr");
+      const qSumVal = $("qSumVal");
+      const qSumPill = $("qSumPill");
+
+      // state
+      let draft = { text:"", answers:[] };
+      let dirty = false;
+
+      function showErr(msg){
+        if (!msg){ qErr.style.display = "none"; qErr.textContent = ""; return; }
+        qErr.style.display = "block";
+        qErr.textContent = msg;
+      }
+
+      function markDirty(){ dirty = true; }
+
+      function canClose(){
+        if (!dirty) return true;
+        return confirm("Masz niezapisane zmiany. Zamknąć bez zapisu?");
+      }
+
+      function closeModal(){
+        if (!canClose()) return;
+        overlay.style.display = "none";
+        showErr("");
+        dirty = false;
+      }
+
+      function openModal(){
+        overlay.style.display = "grid";
+        setTimeout(() => qText.focus(), 0);
+      }
+
+      function clampInt(n, lo, hi){
+        n = Math.floor(Number(n));
+        if (!Number.isFinite(n)) return null;
+        if (n < lo) return lo;
+        if (n > hi) return hi;
+        return n;
+      }
+
+      function parsePtsOptional(val){
+        const s = String(val ?? "").trim();
+        if (!s) return null;
+        return clampInt(s, 0, PTS_MAX);
+      }
+
+      function calcSum(){
+        let sum = 0;
+        for (const a of draft.answers){
+          const p = parsePtsOptional(a.pts);
+          if (p != null) sum += p;
+        }
+        return sum;
+      }
+
+      function updateSumUI(){
+        const sum = calcSum();
+        qSumVal.textContent = `${sum}/${SUM_MAX}`;
+        qSumPill.classList.toggle("over", sum > SUM_MAX);
+      }
+
+      function normalizeQuestion(q){
+        const text = String(q?.text ?? "");
+        const answersIn = Array.isArray(q?.answers) ? q.answers : [];
+        const answers = answersIn.slice(0, MAX_ANS).map(a => ({
+          text: String(a?.text ?? ""),
+          pts: (a?.fixed_points === null || a?.fixed_points === undefined || a?.fixed_points === "")
+            ? ""
+            : String(clampInt(a.fixed_points, 0, PTS_MAX) ?? "")
+        }));
+        return { text, answers };
+      }
+
+      function renderAnswers(){
+        qAnswers.innerHTML = "";
+
+        draft.answers.forEach((a, idx) => {
+          const row = document.createElement("div");
+          row.className = "qRow";
+          row.innerHTML = `
+            <input class="inp qAnsText" type="text" maxlength="200" placeholder="Odpowiedź ${idx+1}">
+            <input class="inp qAnsPts" type="number" min="0" max="${PTS_MAX}" step="1" inputmode="numeric" placeholder="—">
+            <button class="qDel" type="button" aria-label="Usuń">✕</button>
+          `;
+
+          const iText = row.querySelector(".qAnsText");
+          const iPts  = row.querySelector(".qAnsPts");
+          const bDel  = row.querySelector(".qDel");
+
+          iText.value = a.text ?? "";
+          iPts.value  = a.pts ?? "";
+
+          iText.addEventListener("input", () => { a.text = iText.value; markDirty(); });
+          iText.addEventListener("blur",  () => { a.text = String(iText.value ?? "").trim(); markDirty(); });
+
+          // nie pozwalaj na litery; nie "wybijaj" pola przy każdej cyfrze
+          iPts.addEventListener("keydown", (e) => {
+            const ok = ["Backspace","Delete","Tab","Enter","ArrowLeft","ArrowRight","ArrowUp","ArrowDown","Home","End"];
+            if (ok.includes(e.key)) return;
+            if (e.ctrlKey || e.metaKey) return;
+            if (/^\d$/.test(e.key)) return;
+            e.preventDefault();
+          });
+
+          iPts.addEventListener("input", () => {
+            const raw = String(iPts.value ?? "");
+            const cleaned = raw.replace(/[^\d]/g, "");
+            if (raw !== cleaned) iPts.value = cleaned;
+
+            a.pts = iPts.value;       // przechowuj jako string
+            markDirty();
+            updateSumUI();
+          });
+
+          iPts.addEventListener("blur", () => {
+            const p = parsePtsOptional(iPts.value);
+            if (p == null){ iPts.value = ""; a.pts = ""; }
+            else { iPts.value = String(p); a.pts = String(p); }
+            markDirty();
+            updateSumUI();
+          });
+
+          bDel.addEventListener("click", () => {
+            draft.answers.splice(idx, 1);
+            markDirty();
+            renderAnswers();
+            updateSumUI();
+            showErr("");
+          });
+
+          qAnswers.appendChild(row);
+        });
+
+        qAdd.disabled = draft.answers.length >= MAX_ANS; // wyszarz po 6
+      }
+
+      function validate(){
+        const qt = String(draft.text ?? "").trim();
+        if (!qt) return "Wpisz treść pytania.";
+        if (draft.answers.length > MAX_ANS) return `Za dużo odpowiedzi (max ${MAX_ANS}).`;
+
+        let sum = 0;
+        for (const a of draft.answers){
+          const t = String(a.text ?? "").trim();
+          if (!t) return "Usuń pustą odpowiedź albo wpisz jej treść.";
+
+          const p = parsePtsOptional(a.pts);
+          if (p != null){
+            if (p > PTS_MAX) return "Punkty w jednej odpowiedzi nie mogą przekroczyć 100.";
+            sum += p;
+          }
+        }
+        if (sum > SUM_MAX) return "Suma punktów nie może przekroczyć 100.";
+        return "";
+      }
+
+      function buildOutput(){
+        const out = { text: String(draft.text ?? "").trim() };
+        const answers = [];
+
+        for (let i=0; i<draft.answers.length; i++){
+          const a = draft.answers[i];
+          const o = { ord: i+1, text: String(a.text ?? "").trim() };
+          const p = parsePtsOptional(a.pts);
+          if (p != null) o.fixed_points = p;
+          answers.push(o);
+        }
+        if (answers.length) out.answers = answers;
+        return out;
+      }
+
+      // ====== public open (from harness) ======
+      btnOpenQuestion.addEventListener("click", () => {
+        try{
+          const q = JSON.parse(inputTa.value);
+          draft = normalizeQuestion(q);
+        }catch{
+          draft = { text:"", answers:[] };
+        }
+
+        qText.value = draft.text;
+        renderAnswers();
+        updateSumUI();
+        showErr("");
+        dirty = false;
+        openModal();
+      });
+
+      qText.addEventListener("input", () => { draft.text = qText.value; markDirty(); });
+
+      qAdd.addEventListener("click", () => {
+        if (draft.answers.length >= MAX_ANS) return;
+        draft.answers.push({ text:"", pts:"" });
+        markDirty();
+        renderAnswers();
+        updateSumUI();
+      });
+
+      qSave.addEventListener("click", () => {
+        draft.text = qText.value;
+
+        const err = validate();
+        if (err){ showErr(err); return; }
+
+        const out = buildOutput();
+        outputTa.value = JSON.stringify(out, null, 2);
+
+        dirty = false;
+        closeModal();
+      });
+
+      qClose.addEventListener("click", closeModal);
+
+      overlay.addEventListener("click", (e) => {
+        if (e.target === overlay) closeModal();
+      });
+
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && overlay.style.display !== "none") closeModal();
+      });
+    })();
+  </script>
+
+</body>
+</html>
