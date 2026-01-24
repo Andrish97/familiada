@@ -547,6 +547,24 @@ async function refreshList(state) {
     await ensureTagMapsForUI(state);
   }
 
+  async function rebuildStatusMaps(state) {
+    // 1) tagi pytan
+    try {
+      await buildAllQuestionTagMap(state); // jeśli masz inną nazwę – podmień na realną
+    } catch (e) {
+      console.warn("buildAllQuestionTagMap failed:", e);
+      state._allQuestionTagMap = new Map();
+    }
+  
+    // 2) meta folderów (liczniki dzieci itp.)
+    try {
+      await buildDirectChildrenCountMap(state);
+    } catch (e) {
+      console.warn("buildDirectChildrenCountMap failed:", e);
+      state._directChildrenCount = new Map();
+    }
+  }
+
   // ====== SILNIK FILTRÓW ======
   // 1) META: OR wewnątrz metaSelection
   // 2) TAG: AND (wszystkie zaznaczone tagi muszą być na pytaniu)
@@ -787,6 +805,7 @@ async function refreshList(state) {
   state.questions = applySearchFilterToQuestions(browseQuestions, getActiveTextQuery());
 
   await ensureMapsForCurrentRightList();
+  await rebuildStatusMaps(state);
   renderAll(state);
 
   const mutable = canMutateHere(state);
@@ -1846,6 +1865,13 @@ export function wireActions({ state }) {
   const tagsEl = document.getElementById("tags");
   const breadcrumbsEl = document.getElementById("breadcrumbs");
   const toolbarEl = document.getElementById("toolbar");
+  const head = document.querySelector(".list-head");
+  if (!head) return;
+  
+  const headNum  = head.querySelector(".h-num");
+  const headMain = head.querySelector(".h-main");
+  const headType = head.querySelector(".h-type");
+  const headDate = head.querySelector(".h-date");
 
     /* ================= Interaction locks (bez MODE) ================= */
 
