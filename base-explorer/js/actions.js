@@ -1400,41 +1400,41 @@ async function pasteIntoFolder(state, targetFolderIdOrNull) {
   // ord startowy w folderze docelowym
   const ordStart = await nextOrdForQuestion(state, targetFolderIdOrNull);
 
-  // 1) insert pytań (bez tagIds w payload DB)
-  const rows = qItems.map((item, i) => {
+  // Insert po kolei => pewne mapowanie 1:1 dla tagów
+  const createdPairs = []; // [{ newId, tagIds: [] }]
+
+  for (let i = 0; i < qItems.length; i++) {
+    const item = qItems[i] || {};
     const p = (item?.payload && typeof item.payload === "object")
       ? item.payload
       : { text: "", answers: [] };
 
-    return {
+    const row = {
       base_id: state.baseId,
       category_id: targetFolderIdOrNull,
       ord: ordStart + i,
       payload: p,
       ...(state.user?.id ? { updated_by: state.user.id } : {}),
     };
-  });
 
-  // potrzebujemy nowych id → select("id")
-  const { data: created, error: eIns } = await sb()
-    .from("qb_questions")
-    .insert(rows, { defaultToNull: false })
-    .select("id");
+    const { data: inserted, error: eIns } = await sb()
+      .from("qb_questions")
+      .insert(row, { defaultToNull: false })
+      .select("id")
+      .single();
 
-  if (eIns) throw eIns;
+    if (eIns) throw eIns;
 
-  // 2) 6B) po insercie przypnij tagi
-  // created[i].id = nowy id
-  // payload.questions[i].tagIds = tagi źródłowe
+    const tagIds = Array.isArray(item.tagIds) ? item.tagIds.filter(Boolean) : [];
+    createdPairs.push({ newId: inserted.id, tagIds });
+  }
+
+  // 6B) dopnij tagi
   const linkRows = [];
-  for (let i = 0; i < (created || []).length; i++) {
-    const newId = created[i]?.id;
-    const tagIds = Array.isArray(qItems[i]?.tagIds) ? qItems[i].tagIds : [];
-    if (!newId || !tagIds.length) continue;
-
-    for (const tid of tagIds) {
-      if (!tid) continue;
-      linkRows.push({ question_id: newId, tag_id: tid });
+  for (const p of createdPairs) {
+    if (!p.newId || !p.tagIds.length) continue;
+    for (const tid of p.tagIds) {
+      linkRows.push({ question_id: p.newId, tag_id: tid });
     }
   }
 
@@ -1445,7 +1445,7 @@ async function pasteIntoFolder(state, targetFolderIdOrNull) {
     if (eLinks) throw eLinks;
   }
 
-  // cache invalidacje
+  // cache invalidacje (tak jak u Ciebie)
   state._rootQuestions = null;
   state._viewQuestionTagMap = null;
   state._allQuestionTagMap = null;
@@ -1776,6 +1776,14 @@ async function copyFolderSubtree(state, sourceFolderId, targetParentIdOrNull) {
 
   if (state._api?.refreshCategories) await state._api.refreshCategories();
   state._rootQuestions = null;
+    // Unieważnij cache tagów/derived (żeby kropki/tooltipy były od razu poprawne)
+  state._viewQuestionTagMap = null;
+  state._allQuestionTagMap = null;
+  state._derivedCategoryTagMap = null;
+  state._folderDescQIds = null;
+  state._allCategoryTagMap = null;
+
+  await state._api?.refreshList?.();
 }
 
 async function moveItemsTo(state, targetFolderIdOrNull, { mode = "move" } = {}) {
