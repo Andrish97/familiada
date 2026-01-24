@@ -456,12 +456,29 @@
 
   function preparedPointsOk(q){
     const ans = Array.isArray(q.answers) ? q.answers : [];
-    const pts = ans.map(a => n(a.fixed_points));
-    if (pts.some(p => p < 0)) return false;
+    if (!ans.length) return false;
+  
+    // prepared: punkty są WYMAGANE i muszą być >= 1
+    const pts = ans.map(a => {
+      const v = a?.fixed_points;
+      // brak / null / "" => traktujemy jako brak punktów
+      if (v === undefined || v === null || v === "") return NaN;
+      return n(v);
+    });
+  
+    // brak punktów albo nieliczba => fail
+    if (pts.some(p => !Number.isFinite(p))) return false;
+  
+    // 0 zabronione
+    if (pts.some(p => p <= 0)) return false;
+  
+    // nadal trzymamy limity
     if (pts.some(p => p > 100)) return false;
+  
     const sum = pts.reduce((s,x) => s + x, 0);
     return sum <= RULES.SUM_PREPARED;
   }
+
 
   function questionOkForType(q){
     // poll_text: nie blokujemy po odpowiedziach (zgodnie z Twoją walidacją exportu: min 10)
@@ -596,9 +613,15 @@
       if (Array.isArray(q.answers) && q.answers.length){
         outQ.answers = q.answers.map(a => {
           const o = { text: String(a.text ?? "").trim() };
-          // w wyjściu zachowujemy fixed_points tylko jeśli jest liczbą (albo jeśli prepared/poll_points – ale trzymamy się Twojej zasady: może nie mieć punktów)
-          if (a.fixed_points !== undefined){
-            o.fixed_points = n(a.fixed_points);
+      
+          // prepared: fixed_points jest obowiązkowe i >= 1
+          if (getType() === TYPES.PREPARED) {
+            o.fixed_points = n(a?.fixed_points);
+          } else {
+            // inne typy: może nie mieć punktów
+            if (a?.fixed_points !== undefined && a?.fixed_points !== null && a?.fixed_points !== "") {
+              o.fixed_points = n(a.fixed_points);
+            }
           }
           return o;
         });
