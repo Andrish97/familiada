@@ -177,7 +177,8 @@ export function renderToolbar(state) {
     });
   }
   // 2) Aktualizuj wartość inputa, ale nie wybijaj kursora gdy user pisze
-  // UWAGA: input pokazuje RAW (z #tagami), bo to jest prawdziwy "tekst pola"
+  // UWAGA: input pokazuje tylko zwykły tekst (bez #tagów).
+  // #tagi są reprezentowane jako chipsy w #searchChips.
   if (inp) {
     const active = (document.activeElement === inp);
     const nextVal = String(tokens.text ?? "");
