@@ -433,7 +433,9 @@ elTags.innerHTML = `
 }
 
 export function renderBreadcrumbs(state) {
-
+  
+  if (!elBreadcrumbs) return;
+  
   if (state.view === VIEW.SEARCH || state.view === VIEW.TAG) {
     elBreadcrumbs.hidden = true;
     elBreadcrumbs.innerHTML = "";
