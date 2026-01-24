@@ -384,7 +384,7 @@ export async function showContextMenu({ state, x, y, target }) {
     items.push({
       label: (state.view === VIEW.TAG) ? "Usuń tagi" : "Usuń",
       danger: true,
-      disabled: !editor || (state.view === VIEW.SEARCH),
+      disabled: !editor,
       action: async () => {
         const key = (target.kind === "cat") ? `c:${target.id}` : `q:${target.id}`;
         if (!state.selection?.keys?.has?.(key)) {
