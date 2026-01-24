@@ -231,7 +231,8 @@ export function renderToolbar(state) {
   }
 
   // 3) Disable przycisków tworzenia w viewer + w trybach read-only (SEARCH/TAG blokują "wklej", ale tworzenie też wolisz blokować)
-  const writable = (state.role === "owner" || state.role === "editor");
+  const writable = (state.role === "owner" || state.role === "editor")
+  && (state.view !== VIEW.SEARCH && state.view !== VIEW.TAG);
   document.getElementById("btnNewFolder")?.toggleAttribute("disabled", !writable);
   document.getElementById("btnNewQuestion")?.toggleAttribute("disabled", !writable);
 }
@@ -283,7 +284,10 @@ export function renderTree(state) {
       : `<span style="display:inline-block;width:18px;"></span>`;
 
     const activeStyle = isActive ? "font-weight:700;" : "";
-    const draggable = (state.role === "owner" || state.role === "editor") ? `draggable="true"` : ``;
+    const draggable =
+      (kind === "cat" && (state.role === "owner" || state.role === "editor"))
+        ? `draggable="true"`
+        : ``;
     
     return `
         <div class="row tree-row${selClass}" ${draggable} data-kind="${kind}" data-id="${id ? esc(id) : ""}" style="cursor:pointer;">
