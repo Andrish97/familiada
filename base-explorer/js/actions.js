@@ -837,7 +837,9 @@ async function refreshList(state) {
 
   await ensureMapsForCurrentRightList();
   if (isStale()) return;
-  await rebuildStatusMaps(state);
+  if (typeof rebuildStatusMaps === "function") {
+    await rebuildStatusMaps(state);
+  }
   if (isStale()) return;
   renderAll(state);
 
@@ -3393,8 +3395,7 @@ export function wireActions({ state }) {
           null
         );
       }
-      pulseEl(listEl);
-    } catch (err) {
+      } catch (err) {
       console.error(err);
       alert("Nie udało się przenieść.");
     } finally {
