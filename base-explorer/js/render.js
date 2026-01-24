@@ -40,6 +40,20 @@ function fmtDate(v) {
   return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
+function pickDate(raw) {
+  // Fallback dla różnych schematów (foldery często mają inne pola)
+  return (
+    raw?.updated_at ??
+    raw?.modified_at ??
+    raw?.changed_at ??
+    raw?.created_at ??
+    raw?.inserted_at ??
+    raw?.created ??
+    raw?.updated ??
+    null
+  );
+}
+
 function getFolderMetaRank(state, folderId) {
   // sort "Typ" wg meta folderu: prepared -> poll_points -> poll_text -> brak
   const order = Array.isArray(META_ORDER) ? META_ORDER : [];
@@ -480,6 +494,99 @@ export function renderBreadcrumbs(state) {
   }).join("");
 }
 
+const COLS_KEY = "base-explorer:cols:v1";
+
+function loadCols() {
+  try {
+    const o = JSON.parse(localStorage.getItem(COLS_KEY) || "{}");
+    return (o && typeof o === "object") ? o : {};
+  } catch {
+    return {};
+  }
+}
+
+function saveCols(cols) {
+  try { localStorage.setItem(COLS_KEY, JSON.stringify(cols || {})); } catch {}
+}
+
+function applyColsToRoot(cols) {
+  // ustawiamy na :root (wystarczy, bo list-head/row korzystają z varów)
+  const root = document.documentElement;
+  const map = {
+    num: "--col-num",
+    name: "--col-name",
+    type: "--col-type",
+    date: "--col-date",
+    meta: "--col-meta",
+  };
+  for (const k of Object.keys(map)) {
+    const v = cols?.[k];
+    if (typeof v === "string" && v.trim()) root.style.setProperty(map[k], v);
+  }
+}
+
+// tylko px-resize dla kolumn 2..5 (name/type/date/meta). Num zostawiamy stałe.
+function initColumnResizers() {
+  const head = elList?.querySelector?.(".list-head");
+  if (!head) return;
+  if (head.dataset.resizers === "1") return;
+  head.dataset.resizers = "1";
+
+  const cols = loadCols();
+  applyColsToRoot(cols);
+
+  // indeksy komórek w headerze: 0 Nr, 1 Nazwa, 2 Typ, 3 Data, 4 Info
+  const resizable = [
+    { idx: 1, key: "name", cssVar: "--col-name", min: 220 },
+    { idx: 2, key: "type", cssVar: "--col-type", min: 120 },
+    { idx: 3, key: "date", cssVar: "--col-date", min: 140 },
+    { idx: 4, key: "meta", cssVar: "--col-meta", min: 120 },
+  ];
+
+  for (const r of resizable) {
+    const cell = head.children?.[r.idx];
+    if (!cell) continue;
+
+    const h = document.createElement("div");
+    h.className = "col-resizer";
+    h.title = "Przeciągnij, aby zmienić szerokość kolumny";
+    cell.appendChild(h);
+
+    h.addEventListener("pointerdown", (ev) => {
+      ev.preventDefault();
+      ev.stopPropagation();
+      h.setPointerCapture(ev.pointerId);
+
+      const startX = ev.clientX;
+
+      // aktualna szerokość komórki (px)
+      const startW = cell.getBoundingClientRect().width;
+
+      const onMove = (e) => {
+        const dx = e.clientX - startX;
+        const next = Math.max(r.min, Math.round(startW + dx));
+        // ustawiamy px, ale zostawiamy elastyczność tylko gdy user nie resize’ował:
+        document.documentElement.style.setProperty(r.cssVar, `${next}px`);
+      };
+
+      const onUp = (e) => {
+        h.releasePointerCapture(ev.pointerId);
+        window.removeEventListener("pointermove", onMove, true);
+        window.removeEventListener("pointerup", onUp, true);
+
+        // zapisz aktualną wartość var (już w px)
+        const v = getComputedStyle(document.documentElement).getPropertyValue(r.cssVar).trim();
+        const nextCols = loadCols();
+        nextCols[r.key] = v;
+        saveCols(nextCols);
+      };
+
+      window.addEventListener("pointermove", onMove, true);
+      window.addEventListener("pointerup", onUp, true);
+    });
+  }
+}
+
 export function renderList(state) {
   if (!elList) return;
 
@@ -501,7 +608,7 @@ export function renderList(state) {
       ord: Number(c.ord) || 0,
       id: c.id,
       name: c.name || "Folder",
-      date: toTime(c.updated_at || c.created_at),
+      date: toTime(pickDate(c)),
       raw: c,
     });
   }
@@ -513,7 +620,7 @@ export function renderList(state) {
       ord: Number(q.ord) || 0,
       id: q.id,
       name: text,
-      date: toTime(q.updated_at || q.created_at),
+      date: toTime(pickDate(q)),
       raw: q,
     });
   }
@@ -560,12 +667,14 @@ export function renderList(state) {
   items.sort(cmp);
 
   // ===== HEAD (Nr | Nazwa | Typ | Data | Meta) =====
+  const dirFor = (k) => (k === sortKey ? sortDir : "asc");
+
   const head = `
     <div class="list-head">
       <div class="h-num">Nr</div>
-      <div class="h-main ${sortKey === "name" ? "active" : ""}" data-sort-key="name" data-dir="${esc(sortDir)}">Nazwa</div>
-      <div class="h-type ${sortKey === "type" ? "active" : ""}" data-sort-key="type" data-dir="${esc(sortDir)}">Typ</div>
-      <div class="h-date ${sortKey === "date" ? "active" : ""}" data-sort-key="date" data-dir="${esc(sortDir)}">Data</div>
+      <div class="h-main ${sortKey === "name" ? "active" : ""}" data-sort-key="name" data-dir="${esc(dirFor("name"))}">Nazwa</div>
+      <div class="h-type ${sortKey === "type" ? "active" : ""}" data-sort-key="type" data-dir="${esc(dirFor("type"))}">Typ</div>
+      <div class="h-date ${sortKey === "date" ? "active" : ""}" data-sort-key="date" data-dir="${esc(dirFor("date"))}">Data</div>
       <div class="h-meta">Info</div>
     </div>
   `;
@@ -603,7 +712,7 @@ export function renderList(state) {
           </div>
 
           <div class="col-type">${typeHtml}</div>
-          <div class="col-date">${esc(fmtDate(c.updated_at || c.created_at))}</div>
+          <div class="col-date">${esc(fmtDate(pickDate(c)))}</div>
           <div class="col-meta">${esc(metaTxt)}</div>
         </div>
       `;
@@ -612,7 +721,7 @@ export function renderList(state) {
       const text = q?.payload?.text ?? q?.text ?? "";
 
       const answersCount = Array.isArray(q?.payload?.answers) ? q.payload.answers.length : 0;
-      const metaTxt = answersCount ? `${answersCount} odp.` : "—";
+      const metaTxt = `${answersCount} odp.`;
 
       const typeHtml = `
         <span style="opacity:.85;">Pytanie</span>
@@ -631,7 +740,7 @@ export function renderList(state) {
           </div>
 
           <div class="col-type">${typeHtml}</div>
-          <div class="col-date">${esc(fmtDate(q.updated_at || q.created_at))}</div>
+          <div class="col-date">${esc(fmtDate(pickDate(q)))}</div>
           <div class="col-meta">${esc(metaTxt)}</div>
         </div>
       `;
@@ -639,4 +748,6 @@ export function renderList(state) {
   }).join("");
 
   elList.innerHTML = head + rows;
+  // po wyrenderowaniu head + rows
+  initColumnResizers();
 }
