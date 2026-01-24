@@ -199,7 +199,7 @@ export async function listCategoriesByTag(baseId, tagId) {
 
   const { data: cats, error: cErr } = await sb()
     .from("qb_categories")
-    .select("id,base_id,parent_id,name,ord")
+    .select("id,base_id,parent_id,name,ord,created_at,updated_at")
     .eq("base_id", baseId)
     .in("id", cIds)
     .order("ord", { ascending: true });
