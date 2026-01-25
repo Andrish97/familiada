@@ -318,7 +318,7 @@ export function renderToolbar(state) {
   const canCut = editor && (state.view !== VIEW.SEARCH && state.view !== VIEW.TAG && state.view !== VIEW.META);
   const canCopy = editor; // copy nie było blokowane view’ami, tylko rolą
   const canEditTags = editor; // view dopuszczasz (w Twoim opisie: “jeśli jest selekcja”)
-  const canCreateGame = true; // placeholder, ale blokuj viewer
+  const canCreateGame = false; // placeholder, ale blokuj viewer
   const canEditQuestion = editor; // placeholder, ale blokuj viewer
   const canRename = canMutate; // rename = mutacja
   
@@ -334,7 +334,7 @@ export function renderToolbar(state) {
   // “Wklej zależne od schowka i dobrze” + wcześniejsze blokady
   dis.set("paste", !(canMutate && hasClipboard));
 
-  dis.set("refreshView", true);
+  dis.set("refreshView", false);
   
   // === SELEKCJA: 0 / 1 / wiele ===
   
