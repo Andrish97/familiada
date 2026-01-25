@@ -2736,7 +2736,7 @@ export function wireActions({ state }) {
               if (!oneIsQuestion) return;
             
               const qid = String(realKeys[0]).slice(2); // "q:<id>"
-              await openQuestionModal({ state, questionId: qid });
+              state._api?.openQuestionModal?.(qid);
               return;
             }
             
@@ -3937,7 +3937,7 @@ export function wireActions({ state }) {
       // alert(`Utworzono grę. ID: ${gameId}`);
   
       // Opcja 2 (najczęstszy wzorzec): przejdź do buildera
-      location.href = `../../builder.html`;
+      location.href = `../builder.html`;
     },
   });
 
