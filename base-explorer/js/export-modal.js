@@ -157,7 +157,7 @@ export function initExportModal(state, { onCreated } = {}) {
     return `${an} odp. • suma ${s}`;
   }
 
-  function open() {
+  function open(opts = {}) {
     setErr("");
     // Oczekuję, że masz state.questions jako tablicę pytań z {id,text,answers}
     allQuestions = Array.isArray(state.questions) ? state.questions.slice() : [];
@@ -165,10 +165,22 @@ export function initExportModal(state, { onCreated } = {}) {
       setErr(`Potrzebujesz co najmniej ${RULES.QN_MIN} pytań w bazie, żeby zrobić eksport.`);
       return;
     }
-
-    selectedIds = new Set(allQuestions.slice(0, RULES.QN_MIN).map((q) => q.id)); // start: pierwsze 10 zaznaczone
+  
+    const pre = Array.isArray(opts.preselectIds) ? opts.preselectIds.filter(Boolean) : [];
+    if (pre.length) {
+      selectedIds = new Set(pre);
+      // jeśli preselect < 10, dociągnij pierwszymi z listy
+      for (const q of allQuestions) {
+        if (selectedIds.size >= RULES.QN_MIN) break;
+        selectedIds.add(q.id);
+      }
+    } else {
+      // start: pierwsze 10 zaznaczone
+      selectedIds = new Set(allQuestions.slice(0, RULES.QN_MIN).map((q) => q.id));
+    }
+  
     typeIndex = Number(xTypeRange?.value ?? 2) || 2;
-
+  
     renderList();
     updateTypeUI();
     show(overlay, true);
@@ -195,28 +207,34 @@ export function initExportModal(state, { onCreated } = {}) {
   lbl1?.addEventListener("click", () => { typeIndex = 1; if (xTypeRange) xTypeRange.value = "1"; updateTypeUI(); });
   lbl2?.addEventListener("click", () => { typeIndex = 2; if (xTypeRange) xTypeRange.value = "2"; updateTypeUI(); });
 
-  xCreate?.addEventListener("click", () => {
+  xCreate?.addEventListener("click", async () => {
     setErr("");
     const picked = allQuestions.filter((q) => selectedIds.has(q.id));
     if (picked.length < RULES.QN_MIN) {
       setErr(`Zaznacz co najmniej ${RULES.QN_MIN} pytań.`);
       return;
     }
-
+  
     const payload = buildExportPayload({
       name: String(xName?.value || "gra"),
       type: TYPES[typeIndex] || "prepared",
       questions: picked,
     });
-
-    // oddaj wynik do appki
-    onCreated?.(payload);
-
-    close();
+  
+    try {
+      xCreate.disabled = true;
+      await onCreated?.(payload);
+      close();
+    } catch (e) {
+      console.error(e);
+      setErr(String(e?.message || e || "Nie udało się utworzyć gry."));
+    } finally {
+      updateCountUI(); // przywróci disabled/enabled wg zaznaczenia
+    }
   });
 
   // Upubliczniamy funkcję otwarcia w state._api (ustawimy to w actions.js)
-  return { open, close \u200b};
+  return { open, close };
 }
 
 function escapeHtml(s) {
