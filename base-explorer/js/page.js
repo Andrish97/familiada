@@ -55,6 +55,7 @@ btnLogout?.addEventListener("click", async () => {
 
   // ===== state =====
   const state = createState({ baseId, role: "viewer" });
+  state.userId = user.id;
 
   try {
     // ===== meta + rola =====
