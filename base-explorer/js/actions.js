@@ -2725,12 +2725,10 @@ export function wireActions({ state }) {
     
             case "editQuestion": {
               if (!canWrite(state)) return;
-            
-              // tylko 1 pytanie
               if (!oneIsQuestion) return;
             
               const qid = String(realKeys[0]).slice(2); // "q:<id>"
-              state._api?.openQuestionModal?.(qid);
+              await state._api?.openQuestionModal?.(qid);
               return;
             }
             
@@ -2740,8 +2738,7 @@ export function wireActions({ state }) {
               const qIds = await selectionToQuestionIds(state);
               if (!qIds.length) return;
             
-              // docelowo: otwieramy export modal z preselectem
-              state._api?.openExportModal?.({ preselectIds: qIds });
+              await state._api?.openExportModal?.({ preselectIds: qIds });
               return;
             }
       
@@ -3985,12 +3982,12 @@ export function wireActions({ state }) {
   };
 
   // udostępniamy do context-menu (żeby mogło odświeżyć widok po delete)
-  state._api = api;
+  state._api = state._api || {};
+  Object.assign(state._api, api);
   
-    // ================== Modals: init + API bridge ==================
-  // Uwaga: w tym pliku akcje wołają state._api.openQuestionModal/openExportModal,
-
-  // helper: zawsze pobierz świeże pytanie z DB (żeby nie edytować "starego cache")
+  // ================== Modals: init + API bridge ==================
+  
+  // helper: zawsze pobierz świeże pytanie z DB
   async function fetchQuestionById(qid) {
     const { data, error } = await sb()
       .from("qb_questions")
@@ -4000,48 +3997,60 @@ export function wireActions({ state }) {
     if (error) throw error;
     return data;
   }
-
+  
   // ---------- Question modal ----------
   if (!questionModal) {
-    // initQuestionModal może zwracać obiekt albo funkcję; wspieramy oba warianty.
     questionModal = initQuestionModal({ state });
   }
-
+  
   state._api.openQuestionModal = async (qid) => {
     if (!qid) return false;
+  
     try {
-      const q = await fetchQuestionById(qid);
-
-      // obsłuż różne API implementacji question-modal.js
+      const row = await fetchQuestionById(qid);
+  
+      const input = {
+        id: row.id,
+        payload: (row.payload && typeof row.payload === "object") ? row.payload : { text: "", answers: [] },
+      };
+  
+      let res = null;
       if (typeof questionModal === "function") {
-        await questionModal(q);
+        res = await questionModal(input);
       } else if (questionModal?.open) {
-        await questionModal.open(q);
+        res = await questionModal.open(input);
       } else if (questionModal?.show) {
-        await questionModal.show(q);
+        res = await questionModal.show(input);
       } else {
         console.warn("Question modal has no open/show function. Check initQuestionModal() return value.");
         return false;
       }
+  
+      if (!res || !res.ok) return false;
+  
+      const { error } = await sb()
+        .from("qb_questions")
+        .update({ payload: res.payload })
+        .eq("id", qid);
+  
+      if (error) throw error;
+  
+      await refreshList(state);
       return true;
     } catch (e) {
       console.error(e);
-      alert("Nie udało się otworzyć edycji pytania.");
+      alert("Nie udało się otworzyć/zapisać pytania.");
       return false;
     }
   };
-
+  
   // ---------- Export modal ----------
   if (!exportModal) {
     exportModal = initExportModal({ state });
   }
-
+  
   state._api.openExportModal = async (opts = {}) => {
     try {
-      // kompatybilność: jeśli modal oczekuje innej nazwy pola
-      if (opts?.preselectIds && !opts?.questionIds) {
-        opts.questionIds = opts.preselectIds;
-      }
       if (typeof exportModal === "function") {
         await exportModal(opts);
       } else if (exportModal?.open) {
