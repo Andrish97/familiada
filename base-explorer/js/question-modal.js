@@ -67,9 +67,10 @@ export function initQuestionModal({ state } = {}) {
       const row = document.createElement("div");
       row.className = "qRow";
       row.innerHTML = `
-        <input class="inp qAnsText" type="text" maxlength="80" autocomplete="off"
+        <input class="inp qAnsText" type="text" maxlength="17" autocomplete="off"
           value="${escapeAttr(a.text || "")}" placeholder="Odpowiedź…"/>
-        <input class="inp qAnsPts" type="number" type="number" min="0" max="100" step="1" oninput="if (this.value > this.max) this.value = this.max; if (this.value < this.min) this.value = this.min;" autocomplete="off"
+        <input class="inp qAnsPts" type="number" min="0" max="100" step="1"
+          inputmode="numeric" autocomplete="off"
           value="${a.fixed_points ?? ""}" placeholder="(opcjonalnie)"/>
         <button class="qDel" type="button" title="Usuń">✕</button>
       `;
@@ -79,17 +80,43 @@ export function initQuestionModal({ state } = {}) {
       const btnDel = row.querySelector(".qDel");
 
       inpText.addEventListener("input", () => {
-        a.text = inpText.value;
+        const v = inpText.value.slice(0, 17);
+        if (inpText.value !== v) inpText.value = v;
+        a.text = v;
       });
-
+      
+      // twardy limit: 0–100 (również przy wklejaniu)
       inpPts.addEventListener("input", () => {
-        const v = inpPts.value.trim();
-        if (v === "") {
+        const raw = String(inpPts.value ?? "").trim();
+      
+        // puste = brak punktów
+        if (raw === "") {
           delete a.fixed_points;
-        } else {
-          const pts = n(v);
-          a.fixed_points = pts === null ? 0 : pts;
+          updateSumUI();
+          return;
         }
+      
+        // usuń wszystko poza cyframi i minusem (na wszelki wypadek)
+        // (type=number i tak filtruje, ale różne przeglądarki różnie przy wklejaniu)
+        let cleaned = raw.replace(/[^\d-]/g, "");
+      
+        // ogranicz długość wpisu (np. max 3 znaki: 100)
+        if (cleaned.length > 3) cleaned = cleaned.slice(0, 3);
+      
+        // parsowanie
+        let pts = Number(cleaned);
+      
+        // jeśli nadal nie liczba → ustaw 0
+        if (!Number.isFinite(pts)) pts = 0;
+      
+        // clamp 0–100
+        if (pts < 0) pts = 0;
+        if (pts > 100) pts = 100;
+      
+        // zsynchronizuj input (ważne: pokazuje użytkownikowi poprawioną wartość)
+        inpPts.value = String(pts);
+      
+        a.fixed_points = pts;
         updateSumUI();
       });
 
