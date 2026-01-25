@@ -64,20 +64,43 @@ function validateForType(q, type) {
 }
 
 function buildExportPayload({ name, type, questions }) {
+  const normQText = (q) => String(q?.text ?? q?.payload?.text ?? "").trim();
+  const normAns = (q) => {
+    const a = q?.answers ?? q?.payload?.answers;
+    return Array.isArray(a) ? a : [];
+  };
+
   return {
     game: { name: name || "gra", type },
-    questions: questions.map((q, qi) => {
-      const qt = qText(q);
-      const ans = qAnswers(q);
+    questions: (questions || []).map((q) => {
+      const text = normQText(q);
 
-      return {
-        text: String(qt || ""),
-        answers: ans.map((a, i) => ({
-          ord: n(a.ord) || (i + 1),
-          text: String(a.text || ""),
-          ...(a.fixed_points === undefined ? {} : { fixed_points: n(a.fixed_points) }),
-        })),
-      };
+      // 1) poll_text: obcinamy do gołych pytań
+      if (type === "poll_text") {
+        return { text, answers: [] };
+      }
+
+      // 2) poll_points: zostawiamy odpowiedzi, ale punkty zawsze 0
+      if (type === "poll_points") {
+        const answers = normAns(q).map((a) => ({
+          text: String(a?.text ?? "").trim(),
+          fixed_points: 0,
+        }));
+        return { text, answers };
+      }
+
+      // 3) prepared: zostawiamy wszystko (tekst + punkty)
+      //    (z zachowaniem Twojego formatu: text + answers[])
+      const answers = normAns(q).map((a) => {
+        const out = { text: String(a?.text ?? "").trim() };
+        if (a && Object.prototype.hasOwnProperty.call(a, "fixed_points")) {
+          // zachowujemy wartości z bazy (mogą być liczbą lub 0)
+          out.fixed_points = n(a.fixed_points);
+        }
+        return out;
+      });
+
+      return { text, answers };
     }),
   };
 }
