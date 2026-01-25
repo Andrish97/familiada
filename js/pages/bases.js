@@ -645,7 +645,6 @@ function render() {
   tNew.innerHTML = `
     <div class="plus">＋</div>
     <div class="name">Nowa baza</div>
-    <div class="meta">Utwórz nową bazę pytań</div>
   `;
   tNew.addEventListener("click", () => openNameModalCreate());
   grid.appendChild(tNew);
