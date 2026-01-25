@@ -2786,7 +2786,7 @@ export function wireActions({ state }) {
               return;
 
             case "refreshView":
-              renderAll(state);
+              await refreshList(state);
               return;
           }
         } catch (err) {
