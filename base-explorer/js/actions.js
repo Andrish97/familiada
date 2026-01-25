@@ -4051,20 +4051,44 @@ export function wireActions({ state }) {
   
   state._api.openExportModal = async (opts = {}) => {
     try {
-      if (typeof exportModal === "function") {
-        await exportModal(opts);
-      } else if (exportModal?.open) {
-        await exportModal.open(opts);
-      } else if (exportModal?.show) {
-        await exportModal.show(opts);
-      } else {
+      // 1) ownerId musi istnieć
+      const ownerId = state.userId;
+      if (!ownerId) {
+        alert("Brak userId (ownerId) — nie można utworzyć gry.");
+        return false;
+      }
+  
+      // 2) otwórz modal i poczekaj na wynik
+      let res = null;
+      if (typeof exportModal === "function") res = await exportModal(opts);
+      else if (exportModal?.open) res = await exportModal.open(opts);
+      else if (exportModal?.show) res = await exportModal.show(opts);
+      else {
         console.warn("Export modal has no open/show function. Check initExportModal() return value.");
         return false;
       }
+  
+      if (!res || !res.ok) return false;
+  
+      const payload = res.payload;
+      if (!payload?.game || !Array.isArray(payload?.questions)) {
+        alert("Błąd: modal zwrócił niepoprawny payload.");
+        return false;
+      }
+  
+      // 3) zapis gry WYŁĄCZNIE przez importGame (jak wymaga import do bazy gier)
+      const gameId = await importGame(payload, ownerId);
+  
+      // 4) dalej: przejście do buildera nowej gry (dopasuj URL do Twojej nawigacji)
+      // Najczęściej:
+      // location.href = `../builder.html?id=${encodeURIComponent(gameId)}`;
+  
+      console.log("[EXPORT->IMPORT] created game:", gameId);
+      alert("Utworzono nową grę.");
       return true;
     } catch (e) {
       console.error(e);
-      alert("Nie udało się otworzyć eksportu.");
+      alert("Nie udało się utworzyć gry z eksportu.");
       return false;
     }
   };
