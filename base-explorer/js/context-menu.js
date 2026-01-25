@@ -367,11 +367,7 @@ export async function showContextMenu({ state, x, y, target }) {
       label: "Edytuj pytanie…",
       disabled: !editor || readOnlyView || selectedRealCount !== 1 || target.kind !== "q",
       action: async () => {
-        // upewnij selekcję na tym pytaniu
-        const key = `q:${target.id}`;
-        if (!state.selection?.keys?.has?.(key)) selectionSetSingle(state, key);
-            
-        const qid = String(key[0]).slice(2); // "q:<id>"
+        const qid = target.id;
         await openQuestionModal({ state, questionId: qid });
       }
     });
@@ -393,11 +389,12 @@ export async function showContextMenu({ state, x, y, target }) {
     // --- Utwórz grę ---
     items.push({
       label: "Utwórz grę…",
-      disabled: !editor || readOnlyView || !Array.from(state.selection?.keys || []).some(k => String(k).startsWith("q:")),
+      disabled: !editor || readOnlyView || !Array.from(state.selection?.keys || []).some(k => String(k).startsWith("q:") || String(k).startsWith("c:")),
       action: async () => {
-        const qIds = Array.from(state.selection?.keys || [])
-          .filter(k => String(k).startsWith("q:"))
-          .map(k => String(k).slice(2));
+        // najprościej: użyj tego samego API co toolbar
+        // (żeby nie dublować logiki rozwijania folderów w dwóch miejscach)
+        const qIds = await state._api?.selectionToQuestionIds?.();
+        if (!qIds?.length) return;
       
         state._api?.openExportModal?.({ preselectIds: qIds });
       }
