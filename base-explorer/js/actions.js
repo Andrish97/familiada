@@ -2737,8 +2737,8 @@ export function wireActions({ state }) {
             
               const qIds = await selectionToQuestionIds(state);
               if (!qIds.length) return;
-            
-              await state._api?.openExportModal?.(qIds);
+
+              await state._api?.openExportModal?.();
               return;
             }
       
@@ -4050,6 +4050,7 @@ export function wireActions({ state }) {
   }
   
   state._api.openExportModal = async (opts = {}) => {
+    if (Array.isArray(opts)) opts = { questionIds: opts };
     try {
       const ownerId = state.user?.id || state.userId; // FIX: spójnie z resztą kodu
       if (!ownerId) {
