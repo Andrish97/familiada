@@ -32,6 +32,10 @@ import { initExportModal } from "./export-modal.js";
 import { initQuestionModal } from "./question-modal.js";
 import { sb } from "../../js/core/supabase.js";
 
+let exportModal = null;
+
+let questionModal = null;
+
 /* ================= Utils ================= */
 function canWrite(state) {
   return state?.role === "owner" || state?.role === "editor";
@@ -3922,7 +3926,7 @@ export function wireActions({ state }) {
     await applyLeftFiltersView(); // <<< to robi właściwe “odświeżenie widoku”
   });
 
-    // ===== Modale: eksport i pytanie =====
+  // ===== Modale: eksport i pytanie =====
   exportModal = initExportModal(state, {
     onCreated: async (payload) => {
       if (!state?.userId) throw new Error("Brak userId (auth).");
@@ -3937,7 +3941,7 @@ export function wireActions({ state }) {
     },
   });
 
-  const questionModal = initQuestionModal(state, {
+  questionModal = initQuestionModal(state, {
     onSaved: (q) => {
       // na razie: tylko update w pamięci (bez DB), żeby było widać efekt
       console.log("[QUESTION] saved:", q);
