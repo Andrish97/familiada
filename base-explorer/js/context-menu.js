@@ -368,7 +368,7 @@ export async function showContextMenu({ state, x, y, target }) {
       disabled: !editor || readOnlyView || selectedRealCount !== 1 || target.kind !== "q",
       action: async () => {
         const qid = target.id;
-        await openQuestionModal({ state, questionId: qid });
+        await state._api?.openQuestionModal?.(qid);
       }
     });
 
