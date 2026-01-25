@@ -14,6 +14,8 @@ import {
   restoreBrowseLocation,
 } from "./state.js";
 
+import { importGame } from "../../js/pages/builder-import-export.js";
+
 import { renderAll, renderToolbar, renderList, renderTree, renderTags } from "./render.js";
 
 import {
@@ -2716,13 +2718,11 @@ export function wireActions({ state }) {
             
             case "createGame": {
               if (!canWrite(state)) return;
+              const qIds = Array.from(state?.selection?.keys || [])
+                .filter((k) => String(k).startsWith("q:"))
+                .map((k) => String(k).slice(2));
             
-              // pozwalamy na multi, ale tylko z pytań
-              const qIds = realKeys.map(k => String(k).slice(2));
-            
-              if (!qIds.length) return;
-            
-              await openCreateGameModal({ state, questionIds: qIds });
+              state._api?.openExportModal?.({ preselectIds: qIds });
               return;
             }
       
@@ -3902,18 +3902,17 @@ export function wireActions({ state }) {
   });
 
     // ===== Modale: eksport i pytanie =====
-  const exportModal = initExportModal(state, {
-    onCreated: (payload) => {
-      // na razie: pokaż w konsoli (żeby było widać, że działa)
-      console.log("[EXPORT] payload:", payload);
-
-      // jeśli chcesz natychmiast pobrać plik:
-      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(blob);
-      a.download = `${(payload.game?.name || "gra").replace(/[^\w\- ]+/g, "").trim() || "gra"}.json`;
-      a.click();
-      setTimeout(() => URL.revokeObjectURL(a.href), 500);
+  exportModal = initExportModal(state, {
+    onCreated: async (payload) => {
+      if (!state?.userId) throw new Error("Brak userId (auth).");
+  
+      const gameId = await importGame(payload, state.userId);
+  
+      // Opcja 1 (bez zgadywania routingu): pokaż info
+      // alert(`Utworzono grę. ID: ${gameId}`);
+  
+      // Opcja 2 (najczęstszy wzorzec): przejdź do buildera
+      location.href = `../../builder.html`;
     },
   });
 
