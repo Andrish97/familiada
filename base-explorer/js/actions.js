@@ -4051,7 +4051,7 @@ export function wireActions({ state }) {
   
   state._api.openExportModal = async (opts = {}) => {
     try {
-      const ownerId = state.userId;
+      const ownerId = state.user?.id || state.userId; // FIX: spójnie z resztą kodu
       if (!ownerId) {
         alert("Brak userId — nie można utworzyć gry.");
         return false;
@@ -4063,19 +4063,64 @@ export function wireActions({ state }) {
         return false;
       }
   
-      // 1) otwórz modal i poczekaj na wynik
+      // === 1) Źródło pytań: preferuj zaznaczenie (pytania + foldery + podfoldery) ===
+      let qids = [];
+      try {
+        qids = await selectionToQuestionIds(state); // rozwija foldery do pytań
+      } catch (e) {
+        console.warn("selectionToQuestionIds failed:", e);
+        qids = [];
+      }
+  
+      // Jeśli nie ma zaznaczenia, pozwól nadal użyć opts.questions albo state.questions (fallback)
+      let questionsForModal = null;
+  
+      if (qids.length) {
+        // potrzebujemy payloadów => bierzemy pełne allQuestions (cache) i filtrujemy po id
+        if (!state._allQuestions) {
+          state._allQuestions = await listAllQuestions(state.baseId);
+        }
+  
+        const byId = new Map((state._allQuestions || []).map(q => [q.id, q]));
+        const rows = qids.map(id => byId.get(id)).filter(Boolean);
+  
+        // Normalizacja do formy, którą modal „łyka” zawsze:
+        // - id musi być na top-level
+        // - text/answers mogą być na top-level albo w payload (modal już jest odporny, ale tu też porządkujemy)
+        questionsForModal = rows.map(r => ({
+          id: r.id,
+          payload: (r.payload && typeof r.payload === "object") ? r.payload : { text: "", answers: [] },
+          text: r.payload?.text ?? r.text ?? "",
+          answers: Array.isArray(r.payload?.answers) ? r.payload.answers : (Array.isArray(r.answers) ? r.answers : []),
+        }));
+  
+        // jeśli ktoś zaznaczył mniej niż QN_MIN, modal i tak może się otworzyć (będzie blokada create)
+        opts = {
+          ...opts,
+          questions: questionsForModal,
+          preselectIds: questionsForModal.map(q => q.id),
+        };
+      } else {
+        // fallback: jeśli caller nie podał questions, a selection pusta — daj state.questions
+        if (!Array.isArray(opts.questions) && Array.isArray(state.questions)) {
+          opts = { ...opts, questions: state.questions.slice() };
+        }
+      }
+  
+      // === 2) Otwórz modal i poczekaj na wynik ===
       const res = await exportModal.open(opts);
       if (!res?.ok) return false;
   
       const payload = res.payload;
   
-      // 2) zapisz grę importerem (wymóg Twojego systemu)
+      // === 3) Utwórz grę przez importer (osobna baza "games") ===
       const gameId = await importGame(payload, ownerId);
   
-      // 3) nawigacja do buildera (dopasuj ścieżkę)
+      console.log("[createGame] imported gameId:", gameId);
+  
+      // (opcjonalnie) nawigacja do buildera:
       // location.href = `../builder.html?id=${encodeURIComponent(gameId)}`;
   
-      console.log("[createGame] imported gameId:", gameId);
       return true;
     } catch (e) {
       console.error(e);
