@@ -34,34 +34,51 @@ function sumPoints(answers) {
   return s;
 }
 
+function qText(q) {
+  return String(q?.text ?? q?.payload?.text ?? "").trim();
+}
+
+function qAnswers(q) {
+  const a = (q && typeof q === "object") ? (q.answers ?? q.payload?.answers) : null;
+  return Array.isArray(a) ? a : [];
+}
+
 function validateForType(q, type) {
+  const answers = qAnswers(q);
+
   if (type === "poll_text") return true;
+
   if (type === "poll_points") {
-    const an = (q.answers || []).length;
+    const an = answers.length;
     return an >= RULES.AN_MIN && an <= RULES.AN_MAX;
   }
+
   if (type === "prepared") {
-    const an = (q.answers || []).length;
+    const an = answers.length;
     if (!(an >= RULES.AN_MIN && an <= RULES.AN_MAX)) return false;
-    const s = sumPoints(q.answers || []);
+    const s = sumPoints(answers);
     return s <= RULES.SUM_PREPARED;
   }
+
   return true;
 }
 
 function buildExportPayload({ name, type, questions }) {
   return {
     game: { name: name || "gra", type },
-    questions: questions.map((q) => ({
-      text: String(q.text || ""),
-      answers: Array.isArray(q.answers)
-        ? q.answers.map((a, i) => ({
-            ord: n(a.ord) || (i + 1),
-            text: String(a.text || ""),
-            ...(a.fixed_points === undefined ? {} : { fixed_points: n(a.fixed_points) }),
-          }))
-        : [],
-    })),
+    questions: questions.map((q, qi) => {
+      const qt = qText(q);
+      const ans = qAnswers(q);
+
+      return {
+        text: String(qt || ""),
+        answers: ans.map((a, i) => ({
+          ord: n(a.ord) || (i + 1),
+          text: String(a.text || ""),
+          ...(a.fixed_points === undefined ? {} : { fixed_points: n(a.fixed_points) }),
+        })),
+      };
+    }),
   };
 }
 
@@ -109,10 +126,13 @@ export function initExportModal({ state } = {}) {
   }
 
   function metaText(q, type) {
-    const an = (q.answers || []).length;
+    const answers = qAnswers(q);
+    const an = answers.length;
+  
     if (type === "poll_text") return an ? `${an} odp.` : "bez odp.";
     if (type === "poll_points") return `${an} odp.`;
-    const s = sumPoints(q.answers || []);
+  
+    const s = sumPoints(answers);
     return `${an} odp. • suma ${s}`;
   }
 
@@ -123,7 +143,9 @@ export function initExportModal({ state } = {}) {
     const type = TYPES[typeIndex] || "prepared";
 
     for (const q of allQuestions) {
+      
       const ok = validateForType(q, type);
+      const label = qText(q) || "—";
       const checked = selectedIds.has(q.id);
 
       const row = document.createElement("label");
@@ -132,7 +154,7 @@ export function initExportModal({ state } = {}) {
 
       row.innerHTML = `
         <input type="checkbox" ${checked ? "checked" : ""}/>
-        <div class="xNm">${escapeHtml(q.text || "—")}</div>
+        <div class="xNm">${escapeHtml(label)}</div>
         <div class="xMeta">${metaText(q, type)}</div>
       `;
 
