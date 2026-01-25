@@ -418,6 +418,18 @@ async function openShareModal() {
 
 function closeShareModal() {
   show(shareOverlay, false);
+
+  // Odśwież status kafelków po zamknięciu modala (shareCount / udostępnione listy).
+  // Fire-and-forget: UI wraca natychmiast, a odświeżenie dociągnie dane w tle.
+  (async () => {
+    try {
+      await refreshBases();
+      render();
+      setButtonsState();
+    } catch (e) {
+      console.warn("[bases] refresh after share close failed:", e);
+    }
+  })();
 }
 
 async function renderShareList() {
