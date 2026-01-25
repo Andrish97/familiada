@@ -207,21 +207,3 @@ export async function listCategoriesByTag(baseId, tagId) {
   if (cErr) throw cErr;
   return cats || [];
 }
-
-export async function listQuestionsByIds(baseId, ids) {
-  const list = Array.from(new Set((ids || []).filter(Boolean)));
-  if (!list.length) return [];
-
-  const { data, error } = await sb()
-    .from("qb_questions")
-    .select("id,base_id,category_id,ord,payload,updated_at")
-    .eq("base_id", baseId)
-    .in("id", list);
-
-  if (error) throw error;
-
-  // UWAGA: .in() nie gwarantuje kolejności jak wejście.
-  // Jeśli kolejność jest ważna, ustawiamy ją wg wejściowej listy ids.
-  const byId = new Map((data || []).map(r => [r.id, r]));
-  return list.map(id => byId.get(id)).filter(Boolean);
-}
