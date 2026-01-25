@@ -927,9 +927,8 @@ export async function createFolderHere(state, { parentId = null } = {}) {
   if (error) throw error;
 
   state.categories = await listCategories(state.baseId);
-
-  // odśwież listę i cache root
-  state._rootQuestions = null;
+  
+  invalidateDerivedCaches(state);
   await state._api?.refreshList?.();
   return true;
 }
@@ -950,7 +949,7 @@ export async function createQuestionHere(state, { categoryId = null } = {}) {
   const { error } = await sb().from("qb_questions").insert(row, { defaultToNull: false });
   if (error) throw error;
 
-  state._rootQuestions = null;
+  invalidateDerivedCaches(state);
   await state._api?.refreshList?.();
   return true;
 }
@@ -986,8 +985,7 @@ export async function deleteItems(state, keys) {
   }
 
   // cache root + odśwież
-  state._rootQuestions = null;
-  // foldery odświeżamy, bo state.categories jest cachem
+  invalidateDerivedCaches(state);
   if (state._api?.refreshCategories) await state._api.refreshCategories();
   await state._api?.refreshList?.();
 
@@ -1466,13 +1464,7 @@ async function pasteIntoFolder(state, targetFolderIdOrNull) {
     if (eLinks) throw eLinks;
   }
 
-  // cache invalidacje (tak jak u Ciebie)
-  state._rootQuestions = null;
-  state._viewQuestionTagMap = null;
-  state._allQuestionTagMap = null;
-  state._derivedCategoryTagMap = null;
-  state._folderDescQIds = null;
-  state._allCategoryTagMap = null;
+  invalidateDerivedCaches(state);
 }
 
 export async function pasteClipboardHere(state) {
@@ -1539,7 +1531,9 @@ function invalidateDerivedCaches(state) {
   state._allCategoryMetaMap = null;
   state._viewQuestionMetaMap = null;
 
-  // jeśli masz jeszcze inne indeksy pochodne (np. liczniki dzieci) – też je tu dopisz
+  // folder counters / indeksy do liczników (KLUCZOWE dla "wrzucam pytania do środka")
+  state._qIndex = null;
+  state._directChildrenCount = null;
 }
 
 function isFolderDescendant(state, folderId, maybeParentId) {
@@ -1904,7 +1898,7 @@ async function moveItemsTo(state, targetFolderIdOrNull, { mode = "move" } = {}) 
 
     if (state._api?.refreshCategories) await state._api.refreshCategories();
   }
-
+  invalidateDerivedCaches(state);
   await state._api?.refreshList?.();
 }
 
@@ -3434,7 +3428,11 @@ export function wireActions({ state }) {
     }
   
     if (kind === "q") {
-      return; // edytor pytania później
+      if (!canWrite(state)) return;
+
+      // jeśli user dwukliknął pytanie, otwieramy edycję zawsze
+      await state._api?.openQuestionModal?.(id);
+      return;
     }
   });
 
@@ -3926,45 +3924,6 @@ export function wireActions({ state }) {
     await applyLeftFiltersView(); // <<< to robi właściwe “odświeżenie widoku”
   });
 
-  // ===== Modale: eksport i pytanie =====
-  exportModal = initExportModal(state, {
-    onCreated: async (payload) => {
-      if (!state?.userId) throw new Error("Brak userId (auth).");
-  
-      const gameId = await importGame(payload, state.userId);
-  
-      // Opcja 1 (bez zgadywania routingu): pokaż info
-      // alert(`Utworzono grę. ID: ${gameId}`);
-  
-      // Opcja 2 (najczęstszy wzorzec): przejdź do buildera
-      location.href = `../builder.html`;
-    },
-  });
-
-  questionModal = initQuestionModal(state, {
-    onSaved: (q) => {
-      // na razie: tylko update w pamięci (bez DB), żeby było widać efekt
-      console.log("[QUESTION] saved:", q);
-
-      // update lokalnej listy (jeśli masz state.questions)
-      const arr = Array.isArray(state.questions) ? state.questions : (state.questions = []);
-      if (q.id) {
-        const i = arr.findIndex(x => x.id === q.id);
-        if (i >= 0) arr[i] = { ...arr[i], ...q };
-      } else {
-        // jeśli “nowe” bez id — dodaj tymczasowe id
-        q.id = "tmp_" + Math.random().toString(16).slice(2);
-        arr.unshift(q);
-      }
-
-      // odrysuj (zakładam że masz renderAll / renderList)
-      try { renderAll(state); } catch {}
-      try { renderList(state); } catch {}
-    },
-  });
-
-  // pierwsze „odśwież” listy po podpięciu akcji
-  // (żeby działało też po przełączeniu view/search)
   const api = {
     refreshList: () => refreshList(state),
     refreshCategories: async () => {
@@ -4006,14 +3965,6 @@ export function wireActions({ state }) {
       await afterTagsModalClose(state, res);
       return res;
     },
-
-    openExportModal: () => exportModal?.open?.(),
-
-    openQuestionModal: (questionId) => {
-      // znajdź pytanie po id i otwórz
-      const q = (state.questions || []).find(x => String(x.id) === String(questionId));
-      questionModal?.open?.(q || { id: null, text: "", answers: [] });
-    },
     
     refreshTags: async () => refreshTags(state),
 
@@ -4035,6 +3986,80 @@ export function wireActions({ state }) {
 
   // udostępniamy do context-menu (żeby mogło odświeżyć widok po delete)
   state._api = api;
+  
+    // ================== Modals: init + API bridge ==================
+  // Uwaga: w tym pliku akcje wołają state._api.openQuestionModal/openExportModal,
+
+  // helper: zawsze pobierz świeże pytanie z DB (żeby nie edytować "starego cache")
+  async function fetchQuestionById(qid) {
+    const { data, error } = await sb()
+      .from("qb_questions")
+      .select("id, base_id, category_id, ord, payload, updated_at")
+      .eq("id", qid)
+      .single();
+    if (error) throw error;
+    return data;
+  }
+
+  // ---------- Question modal ----------
+  if (!questionModal) {
+    // initQuestionModal może zwracać obiekt albo funkcję; wspieramy oba warianty.
+    questionModal = initQuestionModal({ state });
+  }
+
+  state._api.openQuestionModal = async (qid) => {
+    if (!qid) return false;
+    try {
+      const q = await fetchQuestionById(qid);
+
+      // obsłuż różne API implementacji question-modal.js
+      if (typeof questionModal === "function") {
+        await questionModal(q);
+      } else if (questionModal?.open) {
+        await questionModal.open(q);
+      } else if (questionModal?.show) {
+        await questionModal.show(q);
+      } else {
+        console.warn("Question modal has no open/show function. Check initQuestionModal() return value.");
+        return false;
+      }
+      return true;
+    } catch (e) {
+      console.error(e);
+      alert("Nie udało się otworzyć edycji pytania.");
+      return false;
+    }
+  };
+
+  // ---------- Export modal ----------
+  if (!exportModal) {
+    exportModal = initExportModal({ state });
+  }
+
+  state._api.openExportModal = async (opts = {}) => {
+    try {
+      // kompatybilność: jeśli modal oczekuje innej nazwy pola
+      if (opts?.preselectIds && !opts?.questionIds) {
+        opts.questionIds = opts.preselectIds;
+      }
+      if (typeof exportModal === "function") {
+        await exportModal(opts);
+      } else if (exportModal?.open) {
+        await exportModal.open(opts);
+      } else if (exportModal?.show) {
+        await exportModal.show(opts);
+      } else {
+        console.warn("Export modal has no open/show function. Check initExportModal() return value.");
+        return false;
+      }
+      return true;
+    } catch (e) {
+      console.error(e);
+      alert("Nie udało się otworzyć eksportu.");
+      return false;
+    }
+  };
+  // ===============================================================
 
   // PPM na liście (foldery/pytania/puste tło)
   listEl?.addEventListener("contextmenu", async (e) => {
