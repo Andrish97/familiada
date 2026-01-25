@@ -1,8 +1,8 @@
 // /base-explorer/js/export-modal.js
-// Minimalny “silnik” modala eksportu: otwiera, listuje pytania, buduje JSON i zwraca wynik.
+// Modal eksportu: open() zwraca Promise z wynikiem {ok, payload}
 
 const RULES = { QN_MIN: 10, AN_MIN: 3, AN_MAX: 6, SUM_PREPARED: 100 };
-const TYPES = ["poll_text", "poll_points", "prepared"]; // 0..2 slider
+const TYPES = ["poll_text", "poll_points", "prepared"];
 
 const $ = (id) => document.getElementById(id);
 
@@ -35,9 +35,7 @@ function sumPoints(answers) {
 }
 
 function validateForType(q, type) {
-  // UWAGA: zgodnie z Twoją zasadą: “nie sprawdzamy inputu na poprawność, liczymy w środku”.
-  // Tu tylko klasyfikujemy “czy pytanie przechodzi warunki typu”, żeby je podświetlić.
-  if (type === "poll_text") return true; // tylko min 10 pytań globalnie
+  if (type === "poll_text") return true;
   if (type === "poll_points") {
     const an = (q.answers || []).length;
     return an >= RULES.AN_MIN && an <= RULES.AN_MAX;
@@ -45,7 +43,6 @@ function validateForType(q, type) {
   if (type === "prepared") {
     const an = (q.answers || []).length;
     if (!(an >= RULES.AN_MIN && an <= RULES.AN_MAX)) return false;
-    // w prepared sens ma punktacja (nie musi być “pełna”, ale liczymy)
     const s = sumPoints(q.answers || []);
     return s <= RULES.SUM_PREPARED;
   }
@@ -61,7 +58,6 @@ function buildExportPayload({ name, type, questions }) {
         ? q.answers.map((a, i) => ({
             ord: n(a.ord) || (i + 1),
             text: String(a.text || ""),
-            // fixed_points opcjonalne; jeśli brak → nie dodajemy
             ...(a.fixed_points === undefined ? {} : { fixed_points: n(a.fixed_points) }),
           }))
         : [],
@@ -69,9 +65,9 @@ function buildExportPayload({ name, type, questions }) {
   };
 }
 
-export function initExportModal(state, { onCreated } = {}) {
+export function initExportModal({ state } = {}) {
   const overlay = $("exportOverlay");
-  if (!overlay) return;
+  if (!overlay) return null;
 
   const xClose = $("xClose");
   const xCreate = $("xCreate");
@@ -87,8 +83,10 @@ export function initExportModal(state, { onCreated } = {}) {
   const lbl2 = $("lbl2");
 
   let selectedIds = new Set();
-  let typeIndex = 2; // default prepared (jak u Ciebie w HTML)
+  let typeIndex = 2;
   let allQuestions = [];
+
+  let resolveClose = null;
 
   function updateTypeUI() {
     const type = TYPES[typeIndex] || "prepared";
@@ -108,6 +106,14 @@ export function initExportModal(state, { onCreated } = {}) {
     const ok = c >= RULES.QN_MIN;
     if (xCountPill) xCountPill.classList.toggle("bad", !ok);
     if (xCreate) xCreate.disabled = !ok;
+  }
+
+  function metaText(q, type) {
+    const an = (q.answers || []).length;
+    if (type === "poll_text") return an ? `${an} odp.` : "bez odp.";
+    if (type === "poll_points") return `${an} odp.`;
+    const s = sumPoints(q.answers || []);
+    return `${an} odp. • suma ${s}`;
   }
 
   function renderList() {
@@ -130,16 +136,12 @@ export function initExportModal(state, { onCreated } = {}) {
         <div class="xMeta">${metaText(q, type)}</div>
       `;
 
-      row.addEventListener("click", (e) => {
-        // klik w label przełącza checkbox; kontrolujemy Set
+      row.addEventListener("click", () => {
         const cb = row.querySelector("input");
         const will = !(cb?.checked);
-        // (bo click event leci przed zmianą? w label bywa różnie)
-        // wymuszamy stan:
         if (cb) cb.checked = will;
         if (will) selectedIds.add(q.id);
         else selectedIds.delete(q.id);
-
         updateCountUI();
       });
 
@@ -149,53 +151,68 @@ export function initExportModal(state, { onCreated } = {}) {
     updateCountUI();
   }
 
-  function metaText(q, type) {
-    const an = (q.answers || []).length;
-    if (type === "poll_text") return an ? `${an} odp.` : "bez odp.";
-    if (type === "poll_points") return `${an} odp.`;
-    const s = sumPoints(q.answers || []);
-    return `${an} odp. • suma ${s}`;
+  function close(result = { ok: false }) {
+    show(overlay, false);
+    setErr("");
+
+    const r = resolveClose;
+    resolveClose = null;
+
+    if (typeof r === "function") r(result);
   }
 
   function open(opts = {}) {
     setErr("");
-    // Oczekuję, że masz state.questions jako tablicę pytań z {id,text,answers}
-    allQuestions = Array.isArray(state.questions) ? state.questions.slice() : [];
+
+    // Źródło danych:
+    // 1) opts.questions (jeśli podane) ma pierwszeństwo
+    // 2) fallback: state.questions
+    const src = Array.isArray(opts.questions) ? opts.questions
+              : Array.isArray(state?.questions) ? state.questions
+              : [];
+
+    allQuestions = src.slice();
+
     if (allQuestions.length < RULES.QN_MIN) {
-      setErr(`Potrzebujesz co najmniej ${RULES.QN_MIN} pytań w bazie, żeby zrobić eksport.`);
-      return;
+      setErr(`Potrzebujesz co najmniej ${RULES.QN_MIN} pytań, żeby zrobić eksport.`);
+      // nadal otwieramy, ale przycisk będzie zablokowany
     }
-  
+
     const pre = Array.isArray(opts.preselectIds) ? opts.preselectIds.filter(Boolean) : [];
     if (pre.length) {
       selectedIds = new Set(pre);
-      // jeśli preselect < 10, dociągnij pierwszymi z listy
       for (const q of allQuestions) {
         if (selectedIds.size >= RULES.QN_MIN) break;
         selectedIds.add(q.id);
       }
     } else {
-      // start: pierwsze 10 zaznaczone
       selectedIds = new Set(allQuestions.slice(0, RULES.QN_MIN).map((q) => q.id));
     }
-  
+
+    // typ startowy z UI (range), ale możesz nadpisać przez opts.type
     typeIndex = Number(xTypeRange?.value ?? 2) || 2;
-  
+    if (opts.type) {
+      const idx = TYPES.indexOf(opts.type);
+      if (idx >= 0) {
+        typeIndex = idx;
+        if (xTypeRange) xTypeRange.value = String(idx);
+      }
+    }
+
     renderList();
     updateTypeUI();
+
     show(overlay, true);
     setTimeout(() => xName?.focus(), 0);
+
+    return new Promise((resolve) => {
+      resolveClose = resolve;
+    });
   }
 
-  function close() {
-    show(overlay, false);
-    setErr("");
-  }
-
-  xClose?.addEventListener("click", close);
+  xClose?.addEventListener("click", () => close({ ok: false }));
   overlay.addEventListener("mousedown", (e) => {
-    // klik w tło overlay zamyka
-    if (e.target === overlay) close();
+    if (e.target === overlay) close({ ok: false });
   });
 
   xTypeRange?.addEventListener("input", () => {
@@ -207,33 +224,24 @@ export function initExportModal(state, { onCreated } = {}) {
   lbl1?.addEventListener("click", () => { typeIndex = 1; if (xTypeRange) xTypeRange.value = "1"; updateTypeUI(); });
   lbl2?.addEventListener("click", () => { typeIndex = 2; if (xTypeRange) xTypeRange.value = "2"; updateTypeUI(); });
 
-  xCreate?.addEventListener("click", async () => {
+  xCreate?.addEventListener("click", () => {
     setErr("");
+
     const picked = allQuestions.filter((q) => selectedIds.has(q.id));
     if (picked.length < RULES.QN_MIN) {
       setErr(`Zaznacz co najmniej ${RULES.QN_MIN} pytań.`);
       return;
     }
-  
+
     const payload = buildExportPayload({
       name: String(xName?.value || "gra"),
       type: TYPES[typeIndex] || "prepared",
       questions: picked,
     });
-  
-    try {
-      xCreate.disabled = true;
-      await onCreated?.(payload);
-      close();
-    } catch (e) {
-      console.error(e);
-      setErr(String(e?.message || e || "Nie udało się utworzyć gry."));
-    } finally {
-      updateCountUI(); // przywróci disabled/enabled wg zaznaczenia
-    }
+
+    close({ ok: true, payload });
   });
 
-  // Upubliczniamy funkcję otwarcia w state._api (ustawimy to w actions.js)
   return { open, close };
 }
 
