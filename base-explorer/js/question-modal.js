@@ -1,5 +1,5 @@
 // /base-explorer/js/question-modal.js
-// Minimalny “silnik” modala pytania: otwiera, edytuje w pamięci i zwraca wynik.
+// Modal pytania: open() zwraca Promise z wynikiem {ok,...}
 
 const $ = (id) => document.getElementById(id);
 
@@ -26,9 +26,9 @@ function n(v) {
   return Number.isFinite(x) ? x : null;
 }
 
-export function initQuestionModal(state, { onSaved } = {}) {
+export function initQuestionModal({ state } = {}) {
   const overlay = $("questionOverlay");
-  if (!overlay) return;
+  if (!overlay) return null;
 
   const qClose = $("qClose");
   const qSave = $("qSave");
@@ -38,11 +38,12 @@ export function initQuestionModal(state, { onSaved } = {}) {
   const qSumVal = $("qSumVal");
   const qSumPill = $("qSumPill");
 
-  let current = null; // {id,text,answers[]}
+  let current = null;      // {id, payload:{text,answers}}
+  let resolveClose = null; // fn(result)
 
   function calcSum() {
     let s = 0;
-    for (const a of (current?.answers || [])) {
+    for (const a of (current?.payload?.answers || [])) {
       const pts = Number(a.fixed_points);
       if (Number.isFinite(pts)) s += pts;
     }
@@ -59,15 +60,17 @@ export function initQuestionModal(state, { onSaved } = {}) {
     if (!qAnswers) return;
     qAnswers.innerHTML = "";
 
-    const ans = current?.answers || [];
+    const ans = current?.payload?.answers || [];
     for (let i = 0; i < ans.length; i++) {
       const a = ans[i];
 
       const row = document.createElement("div");
       row.className = "qRow";
       row.innerHTML = `
-        <input class="inp qAnsText" type="text" maxlength="80" autocomplete="off" value="${escapeAttr(a.text || "")}" placeholder="Odpowiedź…"/>
-        <input class="inp qAnsPts" type="text" inputmode="numeric" autocomplete="off" value="${a.fixed_points ?? ""}" placeholder="(opcjonalnie)"/>
+        <input class="inp qAnsText" type="text" maxlength="80" autocomplete="off"
+          value="${escapeAttr(a.text || "")}" placeholder="Odpowiedź…"/>
+        <input class="inp qAnsPts" type="text" inputmode="numeric" autocomplete="off"
+          value="${a.fixed_points ?? ""}" placeholder="(opcjonalnie)"/>
         <button class="qDel" type="button" title="Usuń">✕</button>
       `;
 
@@ -100,48 +103,73 @@ export function initQuestionModal(state, { onSaved } = {}) {
     }
   }
 
-  function open(question) {
+  function open(questionRowOrInput) {
     setErr("");
+
+    // bridge przekaże: { id, payload:{text,answers} }
+    // ale wspieramy też: { id, text, answers }
+    const id = questionRowOrInput?.id ?? null;
+    const payload = (questionRowOrInput?.payload && typeof questionRowOrInput.payload === "object")
+      ? questionRowOrInput.payload
+      : {
+          text: String(questionRowOrInput?.text || ""),
+          answers: Array.isArray(questionRowOrInput?.answers) ? questionRowOrInput.answers : [],
+        };
+
     current = {
-      id: question?.id ?? null,
-      text: String(question?.text || ""),
-      answers: Array.isArray(question?.answers) ? question.answers.map((a, idx) => ({
-        ord: a.ord ?? (idx + 1),
-        text: String(a.text || ""),
-        ...(a.fixed_points === undefined ? {} : { fixed_points: Number(a.fixed_points) }),
-      })) : [],
+      id,
+      payload: {
+        text: String(payload?.text || ""),
+        answers: Array.isArray(payload?.answers)
+          ? payload.answers.map((a, idx) => ({
+              ord: a.ord ?? (idx + 1),
+              text: String(a.text || ""),
+              ...(a.fixed_points === undefined ? {} : { fixed_points: Number(a.fixed_points) }),
+            }))
+          : [],
+      },
     };
 
-    if (qText) qText.value = current.text;
+    if (qText) qText.value = current.payload.text;
 
     renderAnswers();
     updateSumUI();
     show(overlay, true);
     setTimeout(() => qText?.focus(), 0);
+
+    return new Promise((resolve) => {
+      resolveClose = resolve;
+    });
   }
 
-  function close() {
+  function close(result = { ok: false }) {
     show(overlay, false);
     setErr("");
+
+    const r = resolveClose;
+    resolveClose = null;
     current = null;
+
+    if (typeof r === "function") r(result);
   }
 
-  qClose?.addEventListener("click", close);
+  qClose?.addEventListener("click", () => close({ ok: false }));
   overlay.addEventListener("mousedown", (e) => {
-    if (e.target === overlay) close();
+    if (e.target === overlay) close({ ok: false });
   });
 
   qAdd?.addEventListener("click", () => {
     if (!current) return;
-    if ((current.answers || []).length >= 6) return setErr("Max 6 odpowiedzi.");
-    current.answers.push({ ord: (current.answers.length + 1), text: "" });
+    const ans = current.payload.answers || [];
+    if (ans.length >= 6) return setErr("Max 6 odpowiedzi.");
+    ans.push({ ord: (ans.length + 1), text: "" });
     renderAnswers();
     updateSumUI();
   });
 
   qText?.addEventListener("input", () => {
     if (!current) return;
-    current.text = qText.value;
+    current.payload.text = qText.value;
   });
 
   qSave?.addEventListener("click", () => {
@@ -149,8 +177,8 @@ export function initQuestionModal(state, { onSaved } = {}) {
     if (!current) return;
 
     const sum = calcSum();
-    // walidacja lokalna: <=100 i żadna odp > 100
-    for (const a of (current.answers || [])) {
+
+    for (const a of (current.payload.answers || [])) {
       if (a.fixed_points !== undefined) {
         const pts = Number(a.fixed_points);
         if (!Number.isFinite(pts) || pts < 0 || pts > 100) {
@@ -160,8 +188,18 @@ export function initQuestionModal(state, { onSaved } = {}) {
     }
     if (sum > 100) return setErr("Suma punktów nie może przekroczyć 100.");
 
-    onSaved?.(structuredClone(current));
-    close();
+    close({
+      ok: true,
+      id: current.id,
+      payload: {
+        text: String(current.payload.text || ""),
+        answers: (current.payload.answers || []).map((a, idx) => ({
+          ord: a.ord ?? (idx + 1),
+          text: String(a.text || ""),
+          ...(a.fixed_points === undefined ? {} : { fixed_points: Number(a.fixed_points) }),
+        })),
+      },
+    });
   });
 
   return { open, close };
