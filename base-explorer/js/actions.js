@@ -2739,6 +2739,7 @@ export function wireActions({ state }) {
               if (!qIds.length) return;
             
               await state._api?.openExportModal?.({ preselectIds: qIds });
+              console.log("[createGame] baseId:", state.baseId, "qIds:", qIds.length);
               return;
             }
       
