@@ -232,6 +232,13 @@ export function renderToolbar(state) {
           ${svgPlay()}
         </button>
       </div>
+      
+      <div class="tbSep" aria-hidden="true"></div>
+      <div class="tbGroup" role="group" aria-label="Widok">
+        <button class="tbBtn" type="button" data-act="refreshView" title="Odśwież widok">
+          ${svgRefresh()}
+        </button>
+      </div>
     `;
     elToolbar.dataset.ready = "1";
   }
@@ -311,7 +318,7 @@ export function renderToolbar(state) {
   const canCut = editor && (state.view !== VIEW.SEARCH && state.view !== VIEW.TAG && state.view !== VIEW.META);
   const canCopy = editor; // copy nie było blokowane view’ami, tylko rolą
   const canEditTags = editor; // view dopuszczasz (w Twoim opisie: “jeśli jest selekcja”)
-  const canCreateGame = editor; // placeholder, ale blokuj viewer
+  const canCreateGame = true; // placeholder, ale blokuj viewer
   const canEditQuestion = editor; // placeholder, ale blokuj viewer
   const canRename = canMutate; // rename = mutacja
   
@@ -326,6 +333,8 @@ export function renderToolbar(state) {
   // === PASTE ===
   // “Wklej zależne od schowka i dobrze” + wcześniejsze blokady
   dis.set("paste", !(canMutate && hasClipboard));
+
+  dis.set("refreshView", true);
   
   // === SELEKCJA: 0 / 1 / wiele ===
   
@@ -1034,3 +1043,4 @@ function svgCut(){ return svgBase("M9.64 7.64L12 10l2.36-2.36a3 3 0 1 1 1.41 1.4
 function svgPaste(){ return svgBase("M19 4h-3.18A3 3 0 0 0 13 2h-2a3 3 0 0 0-2.82 2H5a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2zm-8-1h2a1 1 0 0 1 1 1v1H10V4a1 1 0 0 1 1-1zm8 19H5V6h2v2h10V6h2v16z"); }
 function svgDuplicate(){ return svgBase("M7 7h12v14H7V7zm-2 2H3V3h14v2H5v4z"); }
 function svgPlay(){ return svgBase("M8 5v14l11-7L8 5z"); }
+function svgRefresh(){ return svgBase("M17.65 6.35A7.95 7.95 0 0 0 12 4V1L7 6l5 5V7a5 5 0 1 1-5 5H5a7 7 0 1 0 12.65-5.65z"); }
