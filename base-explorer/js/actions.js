@@ -2784,6 +2784,10 @@ export function wireActions({ state }) {
               if (!realKeys.length) return;
               await duplicateSelected(state);
               return;
+
+            case "refreshView":
+              renderAll(state);
+              return;
           }
         } catch (err) {
           console.error(err);
