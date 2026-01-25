@@ -370,18 +370,9 @@ export async function showContextMenu({ state, x, y, target }) {
         // upewnij selekcję na tym pytaniu
         const key = `q:${target.id}`;
         if (!state.selection?.keys?.has?.(key)) selectionSetSingle(state, key);
-    
-        // wywołaj tak jak toolbar
-        // (bo toolbar ma całą logikę w actions.js)
-        const toolbarEl = document.getElementById("toolbar");
-        const fakeBtn = toolbarEl?.querySelector('button[data-act="editQuestion"]');
-        if (fakeBtn?.disabled) return;
-    
-        // prościej: zawołaj bezpośrednio akcję z actions.js, jeśli masz export "runToolbarAction"
-        // a jeśli nie masz – najszybciej: importuj openQuestionModal i wołaj ją tu.
-        // Minimalnie-inwazyjnie:
-        const { openQuestionModal } = await import("./question-modal.js");
-        await openQuestionModal({ state, questionId: target.id });
+            
+        const qid = String(key[0]).slice(2); // "q:<id>"
+        await openQuestionModal({ state, questionId: qid });
       }
     });
 
@@ -407,9 +398,8 @@ export async function showContextMenu({ state, x, y, target }) {
         const qIds = Array.from(state.selection?.keys || [])
           .filter(k => String(k).startsWith("q:"))
           .map(k => String(k).slice(2));
-    
-        const { openCreateGameModal } = await import("./create-game-modal.js");
-        await openCreateGameModal({ state, questionIds: qIds });
+      
+        state._api?.openExportModal?.({ preselectIds: qIds });
       }
     });
 
