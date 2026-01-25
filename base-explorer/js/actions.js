@@ -4120,7 +4120,7 @@ export function wireActions({ state }) {
       console.log("[createGame] imported gameId:", gameId);
   
       // (opcjonalnie) nawigacja do buildera:
-      // location.href = `../builder.html?id=${encodeURIComponent(gameId)}`;
+      location.href = `../builder.html`;
   
       return true;
     } catch (e) {
