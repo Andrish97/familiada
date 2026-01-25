@@ -26,8 +26,8 @@ import {
 
 import { showContextMenu, hideContextMenu } from "./context-menu.js";
 import { openTagsModal } from "./tags-modal.js";
-import { openQuestionModal } from "./question-modal.js";
-import { openCreateGameModal } from "./create-game-modal.js";
+import { initExportModal } from "./export-modal.js";
+import { initQuestionModal } from "./question-modal.js";
 import { sb } from "../../js/core/supabase.js";
 
 /* ================= Utils ================= */
@@ -3901,6 +3901,44 @@ export function wireActions({ state }) {
     await applyLeftFiltersView(); // <<< to robi właściwe “odświeżenie widoku”
   });
 
+    // ===== Modale: eksport i pytanie =====
+  const exportModal = initExportModal(state, {
+    onCreated: (payload) => {
+      // na razie: pokaż w konsoli (żeby było widać, że działa)
+      console.log("[EXPORT] payload:", payload);
+
+      // jeśli chcesz natychmiast pobrać plik:
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `${(payload.game?.name || "gra").replace(/[^\w\- ]+/g, "").trim() || "gra"}.json`;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 500);
+    },
+  });
+
+  const questionModal = initQuestionModal(state, {
+    onSaved: (q) => {
+      // na razie: tylko update w pamięci (bez DB), żeby było widać efekt
+      console.log("[QUESTION] saved:", q);
+
+      // update lokalnej listy (jeśli masz state.questions)
+      const arr = Array.isArray(state.questions) ? state.questions : (state.questions = []);
+      if (q.id) {
+        const i = arr.findIndex(x => x.id === q.id);
+        if (i >= 0) arr[i] = { ...arr[i], ...q };
+      } else {
+        // jeśli “nowe” bez id — dodaj tymczasowe id
+        q.id = "tmp_" + Math.random().toString(16).slice(2);
+        arr.unshift(q);
+      }
+
+      // odrysuj (zakładam że masz renderAll / renderList)
+      try { renderAll(state); } catch {}
+      try { renderList(state); } catch {}
+    },
+  });
+
   // pierwsze „odśwież” listy po podpięciu akcji
   // (żeby działało też po przełączeniu view/search)
   const api = {
@@ -3943,6 +3981,14 @@ export function wireActions({ state }) {
       const res = await openTagsModal(state, { mode, tagId });
       await afterTagsModalClose(state, res);
       return res;
+    },
+
+    openExportModal: () => exportModal?.open?.(),
+
+    openQuestionModal: (questionId) => {
+      // znajdź pytanie po id i otwórz
+      const q = (state.questions || []).find(x => String(x.id) === String(questionId));
+      questionModal?.open?.(q || { id: null, text: "", answers: [] });
     },
     
     refreshTags: async () => refreshTags(state),
