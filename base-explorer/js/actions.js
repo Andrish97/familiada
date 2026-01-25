@@ -476,6 +476,26 @@ async function ensureDerivedFolderMaps(state) {
   state._derivedCategoryTagMap = derived;
 }
 
+async function selectionToQuestionIds(state) {
+  const { qIds, cIds } = selectionSplitIds(state);
+
+  // foldery -> pytania (w poddrzewie)
+  if (cIds.length) {
+    await ensureDerivedFolderMaps(state); // przygotuje state._folderDescQIds
+    const map = state._folderDescQIds;    // Map(folderId -> Set(questionId))
+
+    const out = new Set(qIds);
+    for (const cid of cIds) {
+      const set = map?.get?.(cid);
+      if (!set) continue;
+      for (const qid of set) out.add(qid);
+    }
+    return Array.from(out);
+  }
+
+  return qIds;
+}
+
 /* ================= Data loading by view ================= */
 async function loadQuestionsForCurrentView(state) {
   // Etap 1:
@@ -2718,10 +2738,11 @@ export function wireActions({ state }) {
             
             case "createGame": {
               if (!canWrite(state)) return;
-              const qIds = Array.from(state?.selection?.keys || [])
-                .filter((k) => String(k).startsWith("q:"))
-                .map((k) => String(k).slice(2));
             
+              const qIds = await selectionToQuestionIds(state);
+              if (!qIds.length) return;
+            
+              // docelowo: otwieramy export modal z preselectem
               state._api?.openExportModal?.({ preselectIds: qIds });
               return;
             }
@@ -4004,6 +4025,8 @@ export function wireActions({ state }) {
       await refreshList(state);
     },
     untagSelectedInTagView: () => untagSelectedInTagView(state),
+
+    selectionToQuestionIds: () => selectionToQuestionIds(state),
   };
 
   // udostępniamy do context-menu (żeby mogło odświeżyć widok po delete)
