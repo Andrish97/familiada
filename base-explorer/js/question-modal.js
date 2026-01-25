@@ -69,7 +69,7 @@ export function initQuestionModal({ state } = {}) {
       row.innerHTML = `
         <input class="inp qAnsText" type="text" maxlength="80" autocomplete="off"
           value="${escapeAttr(a.text || "")}" placeholder="Odpowiedź…"/>
-        <input class="inp qAnsPts" type="text" inputmode="numeric" autocomplete="off"
+        <input class="inp qAnsPts" type="number" type="number" min="0" max="100" step="1" autocomplete="off"
           value="${a.fixed_points ?? ""}" placeholder="(opcjonalnie)"/>
         <button class="qDel" type="button" title="Usuń">✕</button>
       `;
