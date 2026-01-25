@@ -4051,44 +4051,35 @@ export function wireActions({ state }) {
   
   state._api.openExportModal = async (opts = {}) => {
     try {
-      // 1) ownerId musi istnieć
       const ownerId = state.userId;
       if (!ownerId) {
-        alert("Brak userId (ownerId) — nie można utworzyć gry.");
+        alert("Brak userId — nie można utworzyć gry.");
         return false;
       }
   
-      // 2) otwórz modal i poczekaj na wynik
-      let res = null;
-      if (typeof exportModal === "function") res = await exportModal(opts);
-      else if (exportModal?.open) res = await exportModal.open(opts);
-      else if (exportModal?.show) res = await exportModal.show(opts);
-      else {
-        console.warn("Export modal has no open/show function. Check initExportModal() return value.");
+      if (!exportModal?.open) {
+        console.warn("exportModal.open missing");
+        alert("Błąd: exportModal nie jest zainicjalizowany.");
         return false;
       }
   
-      if (!res || !res.ok) return false;
+      // 1) otwórz modal i poczekaj na wynik
+      const res = await exportModal.open(opts);
+      if (!res?.ok) return false;
   
       const payload = res.payload;
-      if (!payload?.game || !Array.isArray(payload?.questions)) {
-        alert("Błąd: modal zwrócił niepoprawny payload.");
-        return false;
-      }
   
-      // 3) zapis gry WYŁĄCZNIE przez importGame (jak wymaga import do bazy gier)
+      // 2) zapisz grę importerem (wymóg Twojego systemu)
       const gameId = await importGame(payload, ownerId);
   
-      // 4) dalej: przejście do buildera nowej gry (dopasuj URL do Twojej nawigacji)
-      // Najczęściej:
+      // 3) nawigacja do buildera (dopasuj ścieżkę)
       // location.href = `../builder.html?id=${encodeURIComponent(gameId)}`;
   
-      console.log("[EXPORT->IMPORT] created game:", gameId);
-      alert("Utworzono nową grę.");
+      console.log("[createGame] imported gameId:", gameId);
       return true;
     } catch (e) {
       console.error(e);
-      alert("Nie udało się utworzyć gry z eksportu.");
+      alert("Nie udało się utworzyć gry.");
       return false;
     }
   };
