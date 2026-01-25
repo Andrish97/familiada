@@ -2738,7 +2738,7 @@ export function wireActions({ state }) {
               const qIds = await selectionToQuestionIds(state);
               if (!qIds.length) return;
             
-              await state._api?.openExportModal?.({ baseId: state.baseId, preselectIds: qIds });
+              await state._api?.openExportModal?.(qIds);
               return;
             }
       
