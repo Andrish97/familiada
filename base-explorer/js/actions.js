@@ -4284,6 +4284,30 @@ export function wireActions({ state }) {
         return;
       }
 
+      // Ctrl+A / Cmd+A = zaznacz wszystko w aktualnej liście
+      if (mod && (e.key === "a" || e.key === "A")) {
+        e.preventDefault();
+      
+        const listEl = document.getElementById("list");
+        if (!listEl) return;
+      
+        const rows = listEl.querySelectorAll(".row[data-key]");
+        if (!rows.length) return;
+      
+        if (!state.selection?.keys) state.selection = { ...(state.selection || {}), keys: new Set() };
+      
+        // 1) ustaw selekcję w stanie
+        state.selection.keys.clear();
+        rows.forEach(row => {
+          const key = row.dataset.key;
+          if (key) state.selection.keys.add(key);
+        });
+      
+        // 2) odśwież listę (ona sama nada klasy)
+        renderList(state);
+        return;
+      }
+
           // Ctrl+E / Cmd+E = Edytuj pytanie (jak kliknięcie toolbar: editQuestion)
       if (mod && (e.key === "e" || e.key === "E")) {
         e.preventDefault();
