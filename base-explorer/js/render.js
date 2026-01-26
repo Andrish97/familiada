@@ -318,7 +318,6 @@ export function renderToolbar(state) {
   const canCut = editor && (state.view !== VIEW.SEARCH && state.view !== VIEW.TAG && state.view !== VIEW.META);
   const canCopy = editor; // copy nie było blokowane view’ami, tylko rolą
   const canEditTags = editor; // view dopuszczasz (w Twoim opisie: “jeśli jest selekcja”)
-  const canCreateGame = false; // placeholder, ale blokuj viewer
   const canEditQuestion = editor; // placeholder, ale blokuj viewer
   const canRename = canMutate; // rename = mutacja
   
@@ -365,7 +364,7 @@ export function renderToolbar(state) {
     dis.set("cut", !canCut);
     dis.set("duplicate", !canMutate);
   
-    dis.set("createGame", !canCreateGame);
+    dis.set("createGame", true);
   }
   
   // >1 zaznaczenie:
@@ -380,7 +379,7 @@ export function renderToolbar(state) {
     dis.set("copy", !canCopy);
     dis.set("cut", !canCut);
     dis.set("duplicate", !canMutate);
-    dis.set("createGame", !canCreateGame);
+    dis.set("createGame", true);
   }
   
   // zastosuj do DOM
