@@ -49,8 +49,12 @@ function kbd(win, mac) {
 function setToolbarTip(act, label, win, mac) {
   const btn = elToolbar?.querySelector?.(`button[data-act="${act}"]`);
   if (!btn) return;
+
   const combo = kbd(win, mac);
-  btn.title = combo ? `${label} (${combo})` : label;
+  const txt = combo ? `${label} (${combo})` : label;
+
+  btn.setAttribute("data-tip", txt);
+  btn.removeAttribute("title"); // wyłącz natywny tooltip
 }
 
 function pickDate(raw) {
