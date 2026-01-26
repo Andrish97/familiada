@@ -214,6 +214,93 @@ async function listAnswersFinalForQuestion(qid) {
   return data || [];
 }
 
+function enforceDistinctTo100TopN(rows, { topN = 6, minPoint = 3 } = {}) {
+  // rows: [{id, ord, fixed_points}]
+  const arr = (rows || []).map((r) => ({
+    id: r.id,
+    ord: Number(r.ord) || 0,
+    points: Math.max(0, Number(r.fixed_points) || 0),
+  }));
+
+  // kandydaci do TOP: tylko te z punktami > 0 (reszta i tak 0)
+  let top = arr.filter((x) => x.points > 0);
+  if (!top.length) return { updates: [], zeros: arr.map((x) => x.id) };
+
+  // sort: najpierw punkty malejąco, potem ord rosnąco (deterministycznie)
+  top.sort((a, b) => (b.points - a.points) || (a.ord - b.ord));
+
+  // TOP N
+  top = top.slice(0, Math.min(topN, top.length));
+
+  // 1) wymuś ściśle malejące (min 1 różnicy), dół minPoint
+  for (let i = 1; i < top.length; i++) {
+    let p = top[i].points;
+    if (p >= top[i - 1].points) p = top[i - 1].points - 1;
+    if (p < minPoint) p = minPoint;
+    top[i].points = p;
+  }
+
+  // 2) dopasuj sumę do 100 (korekta na TOP), pilnując malejącości
+  let sum = top.reduce((s, x) => s + x.points, 0);
+  let diff = 100 - sum;
+
+  if (diff > 0) {
+    top[0].points += diff;
+  } else if (diff < 0) {
+    diff = -diff;
+    let i = 0;
+    while (diff > 0 && i < top.length) {
+      const next = i + 1 < top.length ? top[i + 1].points : minPoint;
+      const minAllowed = i + 1 < top.length ? next + 1 : minPoint;
+      const canTake = Math.max(0, top[i].points - minAllowed);
+      if (canTake > 0) {
+        const take = Math.min(canTake, diff);
+        top[i].points -= take;
+        diff -= take;
+      } else {
+        i++;
+      }
+    }
+  }
+
+  // 3) sanity: jeszcze raz dopnij malejącość
+  for (let i = 1; i < top.length; i++) {
+    if (top[i].points >= top[i - 1].points) {
+      top[i].points = Math.max(minPoint, top[i - 1].points - 1);
+    }
+  }
+
+  // final: updates dla TOP; reszta => 0
+  const topIds = new Set(top.map((x) => x.id));
+  const updates = top.map((x) => ({ id: x.id, fixed_points: x.points }));
+  const zeros = arr.filter((x) => !topIds.has(x.id)).map((x) => x.id);
+
+  return { updates, zeros };
+}
+
+async function applyPollPointsUniqueFixedPoints() {
+  const qsList = await listQuestionsBasic();
+
+  // UWAGA: tu robimy wiele UPDATE — lepiej sekwencyjnie (bez zalewania API)
+  for (const q of qsList) {
+    const ans = await listAnswersFinalForQuestion(q.id);
+
+    const { updates, zeros } = enforceDistinctTo100TopN(ans, { topN: 6, minPoint: 3 });
+
+    // najpierw ustaw TOP z unikatowymi punktami
+    for (const u of updates) {
+      const { error } = await sb().from("answers").update({ fixed_points: u.fixed_points }).eq("id", u.id);
+      if (error) throw error;
+    }
+
+    // potem reszta na 0
+    for (const id of zeros) {
+      const { error } = await sb().from("answers").update({ fixed_points: 0 }).eq("id", id);
+      if (error) throw error;
+    }
+  }
+}
+
 async function countAnswersForQuestion(qid) {
   const { count, error } = await sb()
     .from("answers")
@@ -385,7 +472,7 @@ async function previewResults() {
         box.className = "resultQ";
         box.innerHTML = `<div class="qTitle">P${q.ord}: ${q.text}</div>`;
 
-        for (const a of ans || []) {
+        for (const a of (ans || []).filter((x) => Number(x.fixed_points) > 0)) {
           const row = document.createElement("div");
           row.className = "aRow";
           row.innerHTML = `<div class="aTxt"></div><div class="aVal"></div>`;
@@ -550,20 +637,116 @@ function normalizeCountsTo100(items) {
   return raw.map((x) => ({ ...x, points: x.floor }));
 }
 
-// klasyczny sondaż: normalizacja + odrzucenie <3 + max 6 bez dalszej normalizacji
+// klasyczny sondaż: normalizacja + odrzucenie <3 + max 6 + UNIKALNE PUNKTY
 function normalizeTo100Int(items) {
   const normalized = normalizeCountsTo100(items);
   if (!normalized.length) return [];
 
   let filtered = normalized.filter((x) => x.points >= 3);
-
   filtered.sort((a, b) => b.points - a.points);
 
-  if (filtered.length > 6) {
-    filtered = filtered.slice(0, 6);
+  if (filtered.length > 6) filtered = filtered.slice(0, 6);
+
+  // Zwracamy {text, points}
+  const base = filtered.map((x) => ({ text: x.text, points: x.points }));
+
+  // NOWE: wymuś unikalność punktów + suma=100
+  const distinct = forceDistinctPointsTo100(base);
+
+  // (opcjonalnie) jeszcze raz sort malejąco (dla pewności UI)
+  distinct.sort((a, b) => b.points - a.points);
+
+  return distinct;
+}
+
+// Wymusza punkty łącznie = 100, unikalne i ściśle malejące (różnica min 1).
+// Działa na elementach { text, points }, zakłada sortowanie malejąco wg points.
+function forceDistinctPointsTo100(items) {
+  const arr = (items || []).map((x) => ({
+    text: x.text,
+    points: Math.max(0, Number(x.points) || 0),
+  }));
+
+  if (!arr.length) return [];
+
+  // 1) sort: malejąco po punktach (dla stabilności)
+  arr.sort((a, b) => b.points - a.points);
+
+  // 2) wymuszenie ściśle malejące (min 1 różnicy), z dołem min 3
+  for (let i = 1; i < arr.length; i++) {
+    const prev = arr[i - 1].points;
+    let p = arr[i].points;
+
+    // jeśli remis lub rośnie -> zetnij do prev-1
+    if (p >= prev) p = prev - 1;
+
+    // minimalny próg (w Twojej logice i tak filtrujesz >=3)
+    if (p < 3) p = 3;
+
+    arr[i].points = p;
   }
 
-  return filtered.map((x) => ({ text: x.text, points: x.points }));
+  // 3) dopasuj sumę do 100 (dodaj/odejmij od TOP, zachowując malejącość)
+  let sum = arr.reduce((s, x) => s + x.points, 0);
+  let diff = 100 - sum;
+
+  if (diff > 0) {
+    // dodaj brakujące punkty na TOP
+    arr[0].points += diff;
+  } else if (diff < 0) {
+    // odejmij nadmiar z góry, ale nie wolno spaść do <= drugiego + 0
+    diff = -diff;
+    let i = 0;
+
+    // próbuj odejmować najpierw z TOP, potem z kolejnych, ale pilnuj:
+    // arr[i].points >= arr[i+1].points + 1 (dla i < last)
+    while (diff > 0 && i < arr.length) {
+      const next = i + 1 < arr.length ? arr[i + 1].points : 3;
+      const minAllowed = i + 1 < arr.length ? next + 1 : 3;
+      const canTake = Math.max(0, arr[i].points - minAllowed);
+
+      if (canTake > 0) {
+        const take = Math.min(canTake, diff);
+        arr[i].points -= take;
+        diff -= take;
+      } else {
+        i++;
+      }
+    }
+  }
+
+  // 4) ostatnia sanity: wymuś jeszcze raz malejącość (po korekcie sumy)
+  for (let i = 1; i < arr.length; i++) {
+    if (arr[i].points >= arr[i - 1].points) {
+      arr[i].points = Math.max(3, arr[i - 1].points - 1);
+    }
+  }
+
+  return arr;
+}
+
+function normKey(s) {
+  return String(s ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, " ");
+}
+
+function mergeDuplicatesInPlace(items) {
+  // scala po normKey(text), sumuje count, zachowuje "najładniejszy" tekst (pierwszy napotkany)
+  const map = new Map(); // key -> { text, count }
+  for (const it of items || []) {
+    const key = normKey(it.text);
+    const cnt = Math.max(0, Number(it.count) || 0);
+    if (!key || cnt <= 0) continue;
+
+    if (!map.has(key)) {
+      map.set(key, { text: String(it.text ?? "").trim(), count: cnt });
+    } else {
+      map.get(key).count += cnt;
+    }
+  }
+  return [...map.values()].sort((a, b) => b.count - a.count);
 }
 
 async function buildTextClosePanel() {
@@ -611,13 +794,22 @@ async function buildTextClosePanel() {
       <div class="head">
         <div>
           <div class="qTitle">P${q.ord}: ${q.text}</div>
-          <div class="qHint">Przeciągnij, żeby połączyć • final max 17 znaków</div>
+          <div class="qHint">Przeciągnij, żeby połączyć • edytuj literówki • final max 17 znaków</div>
+        </div>
+        <div class="tcTools">
+          <button class="tcMergeDup" type="button" title="Scal identyczne (trim+lowercase+spacje)">Scal identyczne</button>
         </div>
       </div>
       <div class="tcList"></div>
     `;
 
     const list = box.querySelector(".tcList");
+
+    const btnDup = box.querySelector(".tcMergeDup");
+    btnDup?.addEventListener("click", () => {
+      q.items = mergeDuplicatesInPlace(q.items);
+      rerender();
+    });
 
     const rerender = () => {
       list.innerHTML = "";
@@ -630,11 +822,30 @@ async function buildTextClosePanel() {
         row.draggable = true;
 
         row.innerHTML = `
-          <div class="tcTxt"></div>
+          <input class="tcTxtInp" type="text" />
           <div class="tcCnt"></div>
           <button class="tcDel" type="button" title="Usuń">✕</button>
         `;
-        row.querySelector(".tcTxt").textContent = it.text;
+        
+        const inp = row.querySelector(".tcTxtInp");
+        inp.value = it.text;
+        
+        // edycja literówek -> od razu w modelu
+        inp.addEventListener("input", () => {
+          it.text = inp.value; // zapis w modelu
+        });
+
+        inp.addEventListener("blur", () => {
+          // po edycji tekstu: znormalizuj model przez scalenie duplikatów
+          q.items = mergeDuplicatesInPlace(q.items);
+          rerender();
+        });
+        
+        // żeby edycja nie “łapała” drag & drop
+        inp.addEventListener("mousedown", (e) => e.stopPropagation());
+        inp.addEventListener("pointerdown", (e) => e.stopPropagation());
+        inp.addEventListener("dragstart", (e) => e.preventDefault());
+        
         row.querySelector(".tcCnt").textContent = String(it.count);
 
         row.querySelector(".tcDel").addEventListener("click", () => {
@@ -854,10 +1065,14 @@ document.addEventListener("DOMContentLoaded", async () => {
             p_key: game.share_key_poll,
           });
           if (error) throw error;
-
-          setMsg("Sondaż zamknięty. Gra gotowa.");
+        
+          // NOWE: po RPC wymuś unikatowe punkty w TOP 6 i wyzeruj resztę
+          await applyPollPointsUniqueFixedPoints();
+        
+          setMsg("Sondaż zamknięty. Gra gotowa (unikatowe punkty).");
           await refresh();
         } catch (e) {
+        }
           console.error("[polls] close points error:", e);
           alert(`Nie udało się zamknąć sondażu.\n\n${e?.message || e}`);
         }
