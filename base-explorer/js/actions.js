@@ -2674,29 +2674,35 @@ export function wireActions({ state }) {
         return;
       }
 
-      if (t.id === "searchBox" || t.closest?.("#searchBox")) {
-        document.getElementById("searchText")?.focus();
-      }
-
+      // 1) Najpierw X (bo jest wewnątrz #searchBox)
       if (t.id === "searchClearBtn") {
-
+        e.preventDefault?.();
+        e.stopPropagation?.();
+      
         const alreadyEmpty =
           !String(state.searchTokens?.text || "").trim() &&
           !(Array.isArray(state.searchTokens?.tagIds) && state.searchTokens.tagIds.length) &&
           !String(document.getElementById("searchText")?.value || "").trim();
-        
+      
         if (alreadyEmpty && state.view !== VIEW.SEARCH) return;
-        
+      
         const inp = document.getElementById("searchText");
         if (inp) inp.value = "";
+      
         state.searchTokens = { text: "", tagIds: [] };
         state.searchQuery = "";
-        
+      
         if (state.view === VIEW.SEARCH) restoreBrowseLocation(state);
         selectionClear(state);
         await refreshList(state);
-        
+      
         return;
+      }
+      
+      // 2) Dopiero potem klik w searchBox -> focus
+      if (t.id === "searchBox" || t.closest?.("#searchBox")) {
+        document.getElementById("searchText")?.focus();
+        return; // opcjonalnie: żeby nie leciało dalej w handlerze
       }
       
       // NOWE — toolbar działa jak context-menu: data-act
