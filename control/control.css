@@ -414,7 +414,10 @@
     width: 100%;
     display: flex;
     flex-direction: column;
-    min-height: 320px
+    min-height: 320px;
+    /* display: grid; */
+    /* grid-template-columns: repeat(3, 1fr); */ /* Kontener ma 3 kolumny */
+    /* gap: 10px; */
 }
 
 .card-soft,.twoCol>.card {
@@ -430,7 +433,7 @@
 .cardBody {
     display: flex;
     flex-direction: column;
-    gap: 10px
+    gap: 10px;
 }
 
 .stepFoot {
@@ -496,15 +499,16 @@
 .badge,.name {
     font-weight: 1000;
     font-size: 15px;
-    letter-spacing: .04em
+    letter-spacing: .04em;
+    grid-column: span 2; /;
 }
 
 .badge {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 4px 10px;
-    border-radius: 999px;
+    padding: 10px 15px;
+    border-radius: 14px;
     border: 1px solid rgba(255,255,255,.2);
     background: rgba(255,255,255,.08);
     font-size: 11px;
@@ -534,7 +538,7 @@
     gap: 8px;
     flex-wrap: wrap;
     margin-top: 8px;
-    align-items: center
+    align-items: center;
 }
 
 .rowBtns .msg {
@@ -549,7 +553,7 @@
 }
 
 .field.sm {
-    min-width: 180px
+    /* min-width: 180px; */
 }
 
 .lbl2 {
@@ -882,6 +886,9 @@
 }
 
 .extra {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* Two equal columns */
+    gap: 12px;
     margin-top: 12px;
     margin-bottom: 12px;
     border-radius: 16px;
