@@ -870,15 +870,17 @@ input,textarea {
     position: relative
 }
 
-.list-head>div:not(:last-child)::after,.row>div:not(:last-child)::after {
-    content: "";
-    position: absolute;
-    top: 6px;
-    bottom: 6px;
-    right: calc(var(--col-gap)/-2);
-    width: 1px;
-    background: rgba(255,255,255,.1);
-    pointer-events: none
+/* Separatory kolumn – używamy ::before, żeby nie kolidowało ze strzałkami sortowania (::after) */
+.list-head>div:not(:last-child)::before,
+.row>div:not(:last-child)::before{
+  content:"";
+  position:absolute;
+  top:6px;
+  bottom:6px;
+  right: calc(var(--col-gap)/-2);
+  width:1px;
+  background: rgba(255,255,255,.1);
+  pointer-events:none;
 }
 
 .col-resizer::after {
