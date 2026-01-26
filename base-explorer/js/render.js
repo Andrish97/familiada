@@ -364,7 +364,7 @@ export function renderToolbar(state) {
     dis.set("cut", !canCut);
     dis.set("duplicate", !canMutate);
   
-    dis.set("createGame", true);
+    dis.set("createGame", false);
   }
   
   // >1 zaznaczenie:
@@ -379,7 +379,7 @@ export function renderToolbar(state) {
     dis.set("copy", !canCopy);
     dis.set("cut", !canCut);
     dis.set("duplicate", !canMutate);
-    dis.set("createGame", true);
+    dis.set("createGame", false);
   }
   
   // zastosuj do DOM
