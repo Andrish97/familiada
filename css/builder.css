@@ -486,6 +486,10 @@ body.builder-body {
     .builder-card.card {
         padding: 14px 10px 10px
     }
+
+    .bar {
+        display: contents;
+    }
 }
 
 .basePickList {
