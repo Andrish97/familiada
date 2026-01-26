@@ -1433,3 +1433,9 @@ input,textarea {
     background: rgba(255,120,120,.1);
     color: rgba(255,180,180,.95)
 }
+
+/* Tooltipy kropek: gdy hover na kropce, podnieś wiersz ponad sticky header */
+.row:has(.meta-dot[data-tip]:hover),
+.row:has(.tag-dot[data-tip]:hover){
+  z-index: 10;
+}
