@@ -16,9 +16,14 @@ async function render(u){
   if(!u){ qr.textContent = "Brak URL"; return; }
 
   try{
+    const wrap = document.createElement("div");
+    wrap.className = "qrFrame";
+    
     const canvas = document.createElement("canvas");
     await QRCode.toCanvas(canvas, u, { width: 420, margin: 1 });
-    qr.appendChild(canvas);
+    
+    wrap.appendChild(canvas);
+    qr.appendChild(wrap);
   }catch(e){
     console.error("[poll-qr] QR error:", e);
     qr.textContent = "Nie udało się wygenerować QR";
