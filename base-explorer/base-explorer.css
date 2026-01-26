@@ -1558,3 +1558,7 @@ input,textarea {
 .tbBtn[disabled][data-tip]::before{
   display: none;
 }
+#btnAddTag{
+    margin-bottom: 12px;
+    margin-top: 12px;
+}
