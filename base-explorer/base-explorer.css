@@ -1495,3 +1495,56 @@ input,textarea {
     0 0 0 1px rgba(120,160,255,.35) inset,
     0 10px 24px rgba(120,160,255,.35);
 }
+
+/* ========= GLOBAL TOOLTIP (ładny + nad sticky header) ========= */
+
+.uiTip{
+  position: fixed;
+  z-index: 20000;
+  max-width: min(360px, calc(100vw - 24px));
+  padding: 8px 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,.14);
+  background: rgba(10,10,12,.92);
+  box-shadow: 0 16px 38px rgba(0,0,0,.55);
+  backdrop-filter: blur(10px);
+
+  color: rgba(255,255,255,.92);
+  font-size: 12px;
+  line-height: 1.25;
+  letter-spacing: .02em;
+  pointer-events: none;
+
+  opacity: 0;
+  transform: translateY(2px) scale(.98);
+  transition: opacity 110ms ease, transform 110ms ease;
+}
+
+.uiTip.on{
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.uiTip .t1{
+  font-weight: 800;
+}
+
+.uiTip .t2{
+  margin-top: 4px;
+  opacity: .82;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+/* mały “dzióbek” */
+.uiTip::after{
+  content:"";
+  position:absolute;
+  width:10px;
+  height:10px;
+  background: rgba(10,10,12,.92);
+  border-left: 1px solid rgba(255,255,255,.14);
+  border-bottom: 1px solid rgba(255,255,255,.14);
+  transform: rotate(45deg);
+}
