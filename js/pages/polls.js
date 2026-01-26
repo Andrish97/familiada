@@ -118,9 +118,14 @@ async function renderSmallQr(link) {
   if (!link) return;
 
   try {
+    const wrap = document.createElement("div");
+    wrap.className = "qrFrameSmall";
+    
     const canvas = document.createElement("canvas");
     await QRCode.toCanvas(canvas, link, { width: 260, margin: 1 });
-    qrBox.appendChild(canvas);
+    
+    wrap.appendChild(canvas);
+    qrBox.appendChild(wrap);
   } catch (e) {
     console.error("[polls] QR error:", e);
     qrBox.textContent = "QR nie działa.";
