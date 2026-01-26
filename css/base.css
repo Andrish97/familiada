@@ -100,7 +100,7 @@ body {
 .btn.sm {
     padding: 7px 10px;
     border-radius: 12px;
-    font-size: 12px;
+    font-size: 13px;
     letter-spacing: .04em
 }
 
@@ -135,6 +135,7 @@ body {
     color: #fff;
     font-weight: 900;
     outline: 0;
+    font-size: 16px;
     max-width: 100%
 }
 
