@@ -272,7 +272,6 @@ input,textarea {
     padding: 6px 8px;
     border-radius: 12px;
     border: 1px solid rgba(255,255,255,.14)
-    margin-right: 10px;
 }
 
 .searchBox:focus-within {
@@ -1444,4 +1443,8 @@ input,textarea {
 .explorer .explorer-left .left-sep{
  position:relative;
  top:25px;
+}
+
+.searchBox {
+    margin-right: 10px;
 }
