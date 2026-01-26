@@ -1496,55 +1496,65 @@ input,textarea {
     0 10px 24px rgba(120,160,255,.35);
 }
 
-/* ========= GLOBAL TOOLTIP (ładny + nad sticky header) ========= */
+/* === TOOLTIP (toolbar) === */
+.tbBtn{
+  position: relative; /* kotwica dla tooltipa */
+}
 
-.uiTip{
-  position: fixed;
+.tbBtn[data-tip]::after,
+.tbBtn[data-tip]::before{
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 120ms ease, transform 120ms ease;
   z-index: 20000;
-  max-width: min(360px, calc(100vw - 24px));
-  padding: 8px 10px;
-  border-radius: 12px;
-  border: 1px solid rgba(255,255,255,.14);
-  background: rgba(10,10,12,.92);
-  box-shadow: 0 16px 38px rgba(0,0,0,.55);
-  backdrop-filter: blur(10px);
+}
 
+/* dymek */
+.tbBtn[data-tip]::after{
+  content: attr(data-tip);
+  bottom: calc(100% + 10px);
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,.14);
+  background: rgba(10,10,12,.96);
+  box-shadow: 0 14px 34px rgba(0,0,0,.55);
   color: rgba(255,255,255,.92);
   font-size: 12px;
-  line-height: 1.25;
   letter-spacing: .02em;
-  pointer-events: none;
-
-  opacity: 0;
-  transform: translateY(2px) scale(.98);
-  transition: opacity 110ms ease, transform 110ms ease;
+  white-space: nowrap;
 }
 
-.uiTip.on{
-  opacity: 1;
-  transform: translateY(0) scale(1);
-}
-
-.uiTip .t1{
-  font-weight: 800;
-}
-
-.uiTip .t2{
-  margin-top: 4px;
-  opacity: .82;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: .06em;
-  text-transform: uppercase;
-}
-
-/* mały “dzióbek” */
-.uiTip::after{
-  content:"";
-  position:absolute;
-  width:10px;
-  height:10px;
-  background: rgba(10,10,12,.92);
+/* strzałka */
+.tbBtn[data-tip]::before{
+  content: "";
+  bottom: calc(100% + 4px);
+  width: 10px;
+  height: 10px;
   border-left: 1px solid rgba(255,255,255,.14);
   border-bottom: 1px solid rgba(255,255,255,.14);
-  transform: rotate(45deg);
+  background: rgba(10,10,12,.96);
+  transform: translateX(-50%) rotate(45deg);
+}
+
+/* pokazuj */
+.tbBtn[data-tip]:hover::after,
+.tbBtn[data-tip]:hover::before{
+  opacity: 1;
+  transform: translateX(-50%) translateY(-2px);
+}
+
+/* dostępność: focus z klawiatury też pokazuje */
+.tbBtn[data-tip]:focus-visible::after,
+.tbBtn[data-tip]:focus-visible::before{
+  opacity: 1;
+  transform: translateX(-50%) translateY(-2px);
+}
+
+/* nie pokazuj gdy disabled */
+.tbBtn[disabled][data-tip]::after,
+.tbBtn[disabled][data-tip]::before{
+  display: none;
 }
