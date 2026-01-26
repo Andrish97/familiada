@@ -540,9 +540,7 @@ export function renderTags(state) {
   `;
 
   if (!tags.length) {
-    elTags.innerHTML = `
-      <div style="opacity:.75; margin-bottom:6px;">Filtry</div>
-  
+    elTags.innerHTML = `  
       <div class="tagList">
         ${metaHeader}
         ${metaRows}
