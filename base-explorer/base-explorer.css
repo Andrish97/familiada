@@ -1448,3 +1448,17 @@ input,textarea {
 .searchBox {
     margin-right: 10px;
 }
+
+.cm-item{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+}
+.cm-kbd{
+  opacity:.65;
+  font-size:12px;
+  letter-spacing:.06em;
+  font-variant-numeric: tabular-nums;
+  white-space:nowrap;
+}
