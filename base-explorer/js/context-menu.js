@@ -13,6 +13,18 @@ import {
   duplicateSelected,
 } from "./actions.js";
 
+
+const IS_MAC = navigator.platform.toLowerCase().includes("mac");
+function kbd(win, mac) {
+  return IS_MAC ? mac : win;
+}
+function fmtShortcut(sc) {
+  if (!sc) return "";
+  if (typeof sc === "string") return sc;
+  if (typeof sc === "object") return kbd(sc.win || "", sc.mac || "");
+  return "";
+}
+
 function clamp(n, a, b) {
   return Math.max(a, Math.min(b, n));
 }
@@ -48,7 +60,7 @@ function itemHtml(item, idx) {
     return `<div class="cm-sep" role="separator" aria-hidden="true"></div>`;
   }
 
-  const { label, disabled, danger } = item;
+  const { label, disabled, danger, shortcut } = item;
 
   const cls = [
     "cm-item",
@@ -56,8 +68,13 @@ function itemHtml(item, idx) {
     danger ? "danger" : "",
   ].filter(Boolean).join(" ");
 
-  // data-idx => pewne mapowanie (separatory nie psują indeksów)
-  return `<button type="button" class="${cls}" data-idx="${idx}" ${disabled ? "disabled" : ""}>${label}</button>`;
+  const right = fmtShortcut(shortcut);
+  const rightHtml = right ? `<span class="cm-kbd">${right}</span>` : "";
+  
+  return `<button type="button" class="${cls}" data-idx="${idx}" ${disabled ? "disabled" : ""}>
+    <span>${label}</span>
+    ${rightHtml}
+  </button>`;
 }
 
 function renderMenu(cm, items) {
@@ -249,6 +266,7 @@ export async function showContextMenu({ state, x, y, target }) {
     // --- Tworzenie ---
     items.push({
       label: "Nowy folder",
+      shortcut: { win: "Ctrl+Shift+N", mac: "⌘⇧N" },
       disabled: !editor || readOnlyView,
       action: async () => {
         await createFolderHere(state, { parentId });
@@ -257,6 +275,7 @@ export async function showContextMenu({ state, x, y, target }) {
 
     items.push({
       label: "Nowe pytanie",
+      shortcut: { win: "Ctrl+N", mac: "⌘N" },
       disabled: !editor || readOnlyView,
       action: async () => {
         await createQuestionHere(state, { categoryId });
@@ -273,18 +292,21 @@ export async function showContextMenu({ state, x, y, target }) {
   // Schowek ma sens dla cat/q, dla root też (bo wklejasz “tu”)
   items.push({
     label: "Kopiuj",
+    shortcut: { win: "Ctrl+C", mac: "⌘C" },
     disabled: !editor || target.kind === "root", // root nie jest elementem do kopiowania
     action: async () => { copySelectedToClipboard(state); }
   });
 
   items.push({
     label: "Wytnij",
+    shortcut: { win:"Ctrl+X", mac:"⌘X" },
     disabled: !editor || readOnlyView || target.kind === "root",
     action: async () => { cutSelectedToClipboard(state); }
   });
 
   items.push({
     label: "Wklej",
+    shortcut: { win:"Ctrl+V", mac:"⌘V" },
     disabled: pasteDisabled || !editor, // na razie tylko editor; jeśli chcesz, viewer może wklejać COPY lokalnie -> zmienimy
     action: async () => {
       if (readOnlyView) return;
@@ -295,6 +317,7 @@ export async function showContextMenu({ state, x, y, target }) {
   // placeholder (na przyszłość)
   items.push({
     label: "Duplikuj",
+    shortcut: { win:"Ctrl+D", mac:"⌘D" },
     disabled: !editor || readOnlyView || target.kind === "root",
     action: async () => {
       try {
@@ -312,6 +335,7 @@ export async function showContextMenu({ state, x, y, target }) {
 
     items.push({
       label: "Tagi…",
+      shortcut: { win:"Ctrl+T", mac:"⌘T" },
       disabled: !editor, // viewer ogląda
       action: async () => {
         const key = (target.kind === "cat") ? `c:${target.id}` : `q:${target.id}`;
@@ -330,6 +354,7 @@ export async function showContextMenu({ state, x, y, target }) {
     // --- Nawigacja ---
     items.push({
       label: "Otwórz folder",
+      shortcut: { win: "Enter", mac: "⏎" },
       disabled: false,
       action: async () => {
         setViewFolder(state, target.id);
@@ -365,6 +390,7 @@ export async function showContextMenu({ state, x, y, target }) {
     // --- Edytuj pytanie ---
     items.push({
       label: "Edytuj pytanie…",
+      shortcut: { win:"Ctrl+E", mac:"⌘E" },
       disabled: !editor || readOnlyView || selectedRealCount !== 1 || target.kind !== "q",
       action: async () => {
         const qid = target.id;
@@ -374,6 +400,7 @@ export async function showContextMenu({ state, x, y, target }) {
 
     items.push({
       label: target.kind === "cat" ? "Zmień nazwę" : "Zmień nazwę (treść)",
+      shortcut: { win:"F2", mac:"F2" },
       disabled: !editor || readOnlyView || selectedRealCount !== 1,
       action: async () => {
         const key = (target.kind === "cat") ? `c:${target.id}` : `q:${target.id}`;
@@ -389,6 +416,7 @@ export async function showContextMenu({ state, x, y, target }) {
     // --- Utwórz grę ---
     items.push({
       label: "Utwórz grę…",
+      shortcut: { win:"Ctrl+G", mac:"⌘G" },
       disabled: !editor || readOnlyView || !Array.from(state.selection?.keys || []).some(k => String(k).startsWith("q:") || String(k).startsWith("c:")),
       action: async () => {
         // najprościej: użyj tego samego API co toolbar
@@ -405,6 +433,7 @@ export async function showContextMenu({ state, x, y, target }) {
     
     items.push({
       label: (state.view === VIEW.TAG) ? "Usuń tagi" : "Usuń",
+      shortcut: { win:"Delete", mac:"Fn⌫" },
       danger: true,
       disabled: !editor,
       action: async () => {
