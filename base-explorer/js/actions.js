@@ -4283,6 +4283,37 @@ export function wireActions({ state }) {
         await afterTagsModalClose(state, res);
         return;
       }
+
+          // Ctrl+E / Cmd+E = Edytuj pytanie (jak kliknięcie toolbar: editQuestion)
+      if (mod && (e.key === "e" || e.key === "E")) {
+        e.preventDefault();
+        const tb = (typeof toolbarEl !== "undefined" && toolbarEl) || document.getElementById("toolbar");
+        const btn = tb?.querySelector?.('button[data-act="editQuestion"]');
+        if (btn && !btn.disabled) btn.click();
+        return;
+      }
+
+      // Ctrl+G / Cmd+G = Utwórz grę (jak kliknięcie toolbar: createGame)
+      if (mod && (e.key === "g" || e.key === "G")) {
+        e.preventDefault();
+        const tb = (typeof toolbarEl !== "undefined" && toolbarEl) || document.getElementById("toolbar");
+        const btn = tb?.querySelector?.('button[data-act="createGame"]');
+        if (btn && !btn.disabled) btn.click();
+        return;
+      }
+
+      // Ctrl+D / Cmd+D = Duplikuj zaznaczenie
+      if (mod && (e.key === "d" || e.key === "D")) {
+        e.preventDefault();
+      
+        const tb = (typeof toolbarEl !== "undefined" && toolbarEl) 
+                 || document.getElementById("toolbar");
+      
+        const btn = tb?.querySelector?.('button[data-act="duplicate"]');
+        if (btn && !btn.disabled) btn.click();
+      
+        return;
+      }
     
       if (!typing && e.key === "Enter") {
         const key = onlyOneSelectedKey(state);
