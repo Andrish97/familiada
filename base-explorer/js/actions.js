@@ -4284,8 +4284,23 @@ export function wireActions({ state }) {
         return;
       }
 
-      // Ctrl+N / Cmd+N = nowy folder (w bieżącym folderze / root)
+      // Ctrl+N / Cmd+N = nowe pytanie
       if (mod && (e.key === "n" || e.key === "N")) {
+
+        if (!canMutateHere(state)) return;
+        e.preventDefault();
+        try {
+          const categoryId = currentParentId(state);
+          await createQuestionHere(state, { categoryId });
+        } catch (err) {
+          console.error(err);
+          alert("Nie udało się utworzyć pytania.");
+        }
+        return;
+      }
+
+      // Ctrl+Shift+N / Cmd+Shift+N = nowy folder (w bieżącym folderze / root)
+      if (mod && e.shiftKey && (e.key === "n" || e.key === "N")) {
         if (!canMutateHere(state)) return;
         e.preventDefault();
         try {
