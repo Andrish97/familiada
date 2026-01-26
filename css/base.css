@@ -177,7 +177,9 @@ body {
 
 .row {
     align-items: center;
-    flex-wrap: wrap
+    flex-wrap: wrap;
+    margin-top: 10px;
+    margin-bottom: 10px;
 }
 
 .stack {
