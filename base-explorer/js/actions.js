@@ -4319,6 +4319,19 @@ export function wireActions({ state }) {
         return;
       }
 
+      // Ctrl+Alt+R / Cmd+Option+R = odśwież widok (soft refresh)
+      if (mod && e.altKey && (e.key === "r" || e.key === "R")) {
+        e.preventDefault();
+      
+        const tb = (typeof toolbarEl !== "undefined" && toolbarEl) 
+                 || document.getElementById("toolbar");
+      
+        const btn = tb?.querySelector?.('button[data-act="refreshView"]');
+        if (btn && !btn.disabled) btn.click();
+      
+        return;
+      }
+
       if (mod && (e.key === "t" || e.key === "T")) {
         e.preventDefault();
         if (!canWrite(state)) return;
