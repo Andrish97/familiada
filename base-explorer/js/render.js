@@ -210,7 +210,7 @@ export function renderToolbar(state) {
         <button class="tbBtn" type="button" data-act="editQuestion" title="Edytuj pytanie">
           ${svgEdit()}
         </button>
-        <button class="tbBtn" type="button" data-act="editTags" title="Edytuj tagi">
+        <button class="tbBtn" type="button" data-act="editTags" title="Tagi">
           ${svgTag()}
         </button>
         <button class="tbBtn" type="button" data-act="rename" title="Zmień nazwę">
@@ -256,17 +256,17 @@ export function renderToolbar(state) {
     elToolbar.dataset.ready = "1";
   }
     // Tooltips z automatycznym formatowaniem skrótów (Windows/Linux vs macOS)
-  setToolbarTip("newFolder",   "Nowy folder",     "Ctrl+N", "⌘N");
-  // newQuestion – brak skrótu (na razie)
-  setToolbarTip("editQuestion","Edytuj pytanie",  "Ctrl+E", "⌘E");
-  // editTags – nie dodajemy Ctrl+T, bo Ctrl+T u Ciebie to przypisywanie tagów, a ten przycisk jest „Edycja tagów”
-  setToolbarTip("rename",      "Zmień nazwę",     "F2",     "F2");
-  setToolbarTip("delete",      "Usuń",            "Delete", "Delete");
-  setToolbarTip("copy",        "Kopiuj",          "Ctrl+C", "⌘C");
-  setToolbarTip("cut",         "Wytnij",          "Ctrl+X", "⌘X");
-  setToolbarTip("paste",       "Wklej",           "Ctrl+V", "⌘V");
-  setToolbarTip("duplicate",   "Duplikuj",        "Ctrl+D", "⌘D");
-  setToolbarTip("createGame",  "Utwórz grę",      "Ctrl+G", "⌘G");
+  setToolbarTip("newFolder",   "Nowy folder",     "Ctrl+Shift+N", "⌘⇧N");
+  setToolbarTip("newQuestion", "Nowe pytanie",    "Ctrl+N",       "⌘N");
+  setToolbarTip("editQuestion","Edytuj pytanie",  "Ctrl+E",       "⌘E");
+  setToolbarTip("editTags",    "Tagi",            "Ctrl+T",       "⌘T");
+  setToolbarTip("rename",      "Zmień nazwę",     "F2",           "F2");
+  setToolbarTip("delete",      "Usuń",            "Delete",       "Fn⌫");
+  setToolbarTip("copy",        "Kopiuj",          "Ctrl+C",       "⌘C");
+  setToolbarTip("cut",         "Wytnij",          "Ctrl+X",       "⌘X");
+  setToolbarTip("paste",       "Wklej",           "Ctrl+V",       "⌘V");
+  setToolbarTip("duplicate",   "Duplikuj",        "Ctrl+D",       "⌘D");
+  setToolbarTip("createGame",  "Utwórz grę",      "Ctrl+G",       "⌘G");
   // refreshView – brak skrótu (na razie)
 
   const inp = document.getElementById("searchText");
