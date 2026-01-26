@@ -453,7 +453,8 @@
 .cards2 {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 14px
+    gap: 14px;
+    margin-bottom: 10px;
 }
 
 @media (max-width:1100px) {
@@ -561,7 +562,7 @@
 .hint {
     font-size: 13px;
     opacity: .88;
-    max-width: 640px
+    /* max-width: 640px; */
 }
 
 .hint-compact {
@@ -882,6 +883,7 @@
 
 .extra {
     margin-top: 12px;
+    margin-bottom: 12px;
     border-radius: 16px;
     border: 1px solid rgba(255,255,255,.12);
     background: rgba(0,0,0,.14);
@@ -984,7 +986,8 @@
 .qrBlock {
     flex-direction: column;
     gap: 12px;
-    margin-top: 12px
+    margin-top: 12px;
+    margin-bottom: 12px;
 }
 
 .qrBlock img {
@@ -1013,7 +1016,8 @@
 .finalTableWrap {
     display: flex;
     justify-content: center;
-    width: 100%
+    width: 100%;
+    margin-bottom: 12px;
 }
 
 .finalTable,.p1Shown {
@@ -1417,12 +1421,12 @@
     display: flex;
     gap: 14px;
     margin-top: 16px;
-    align-items: stretch
+    align-items: stretch;
+    margin-bottom: 12px;
 }
 
 .finalRevealBtn {
-    flex: 1 1 0;
-    height: 64px;
+    height: 40px;
     font-size: 15px;
     font-weight: 1000;
     letter-spacing: .06em;
