@@ -572,8 +572,6 @@ export function renderTags(state) {
     .join("");
 
 elTags.innerHTML = `
-  <div style="opacity:.75; margin-bottom:6px;">Filtry</div>
-
   <div class="tagList">
     ${metaHeader}
     ${metaRows}
