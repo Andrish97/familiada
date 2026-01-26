@@ -192,14 +192,11 @@ body.polls-body {
     gap: 12px
 }
 
-.qrBox{
-    margin: 12px;
-}
-
 .qrFrameSmall{
   padding: 12px;
   background: #fff;
   border-radius: 14px;
   box-shadow: 0 6px 18px rgba(0,0,0,.22);
   display: inline-block;
+  margin: 12px;
 }
