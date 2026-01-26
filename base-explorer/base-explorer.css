@@ -256,7 +256,7 @@ input,textarea {
     padding: 6px 8px;
     min-height: 32px;
     gap: 8px;
-    border-radius: 10px
+    border-radius: 0px
 }
 
 #tags .row[data-kind=tag]:hover,#tagsModal .tags-row:hover,.searchBox {
@@ -264,7 +264,7 @@ input,textarea {
 }
 
 .searchBox {
-    width: 320px;
+    width: 300px;
     display: flex;
     align-items: center;
     flex-wrap: wrap;
