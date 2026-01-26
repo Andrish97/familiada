@@ -204,6 +204,16 @@ async function listQuestionsBasic() {
   return data || [];
 }
 
+async function listAnswersFinalForQuestion(qid) {
+  const { data, error } = await sb()
+    .from("answers")
+    .select("id,ord,text,fixed_points")
+    .eq("question_id", qid)
+    .order("ord", { ascending: true });
+  if (error) throw error;
+  return data || [];
+}
+
 async function countAnswersForQuestion(qid) {
   const { count, error } = await sb()
     .from("answers")
@@ -326,14 +336,75 @@ async function validateCanClose(g) {
 
 async function previewResults() {
   showPreview();
+  if (!resultsList || !resultsMeta || !resultsCard) return;
+
   resultsList.style.display = "grid";
   if (!game) return;
+
   resultsCard.style.display = "";
   resultsList.innerHTML = "";
   resultsMeta.textContent = "Ładuję…";
 
+  const st = game.status || STATUS.DRAFT;
   const qsList = await listQuestionsBasic();
 
+  // ==========================
+  // FINAL (po zamknięciu)
+  // ==========================
+  if (st === STATUS.READY) {
+    if (game.type === TYPES.POLL_POINTS) {
+      for (const q of qsList) {
+        const ans = await listAnswersFinalForQuestion(q.id);
+
+        const box = document.createElement("div");
+        box.className = "resultQ";
+        box.innerHTML = `<div class="qTitle">P${q.ord}: ${q.text}</div>`;
+
+        for (const a of ans || []) {
+          const row = document.createElement("div");
+          row.className = "aRow";
+          row.innerHTML = `<div class="aTxt"></div><div class="aVal"></div>`;
+          row.querySelector(".aTxt").textContent = a.text;
+          row.querySelector(".aVal").textContent = String(Number(a.fixed_points) || 0);
+          box.appendChild(row);
+        }
+
+        resultsList.appendChild(box);
+      }
+
+      resultsMeta.textContent = "Wynik FINAL: zapisane fixed_points (po zamknięciu sondażu).";
+      return;
+    }
+
+    if (game.type === TYPES.POLL_TEXT) {
+      for (const q of qsList) {
+        const ans = await listAnswersFinalForQuestion(q.id);
+
+        // tylko te, które realnie istnieją po zamknięciu (czyli w answers)
+        const box = document.createElement("div");
+        box.className = "resultQ";
+        box.innerHTML = `<div class="qTitle">P${q.ord}: ${q.text}</div>`;
+
+        for (const a of ans || []) {
+          const row = document.createElement("div");
+          row.className = "aRow";
+          row.innerHTML = `<div class="aTxt"></div><div class="aVal"></div>`;
+          row.querySelector(".aTxt").textContent = a.text;
+          row.querySelector(".aVal").textContent = String(Number(a.fixed_points) || 0);
+          box.appendChild(row);
+        }
+
+        resultsList.appendChild(box);
+      }
+
+      resultsMeta.textContent = "Wynik FINAL: odpowiedzi po merge/delete + TOP 6 + fixed_points zapisane przy zamknięciu.";
+      return;
+    }
+  }
+
+  // ==========================
+  // LIVE (przed zamknięciem)
+  // ==========================
   if (game.type === TYPES.POLL_POINTS) {
     for (const q of qsList) {
       const sid = await getLastSessionIdForQuestion(q.id);
@@ -356,7 +427,10 @@ async function previewResults() {
           .eq("question_id", q.id);
         if (vErr) throw vErr;
 
-        for (const v of votes || []) counts.set(v.answer_id, (counts.get(v.answer_id) || 0) + 1);
+        for (const v of votes || []) {
+          if (!v.answer_id) continue;
+          counts.set(v.answer_id, (counts.get(v.answer_id) || 0) + 1);
+        }
       }
 
       const box = document.createElement("div");
@@ -375,11 +449,11 @@ async function previewResults() {
       resultsList.appendChild(box);
     }
 
-    resultsMeta.textContent = "Podgląd: liczba głosów w ostatniej sesji (na pytanie).";
+    resultsMeta.textContent = "Podgląd LIVE: liczba głosów w ostatniej sesji (na pytanie).";
     return;
   }
 
-  // poll_text
+  // poll_text LIVE
   for (const q of qsList) {
     const sid = await getLastSessionIdForQuestion(q.id);
     const map = new Map();
@@ -420,7 +494,8 @@ async function previewResults() {
     resultsList.appendChild(box);
   }
 
-  resultsMeta.textContent = "Podgląd: agregacja odpowiedzi (lowercase + trim + wielokrotne spacje => jedna) w ostatniej sesji.";
+  resultsMeta.textContent =
+    "Podgląd LIVE: agregacja odpowiedzi (lowercase + trim + wielokrotne spacje => jedna) w ostatniej sesji.";
 }
 
 /* =======================
@@ -625,7 +700,7 @@ async function refresh() {
     if (game.type === TYPES.POLL_TEXT) {
       gMeta.textContent = `Tryb: typowy sondaż (tekst). Start: ≥ ${RULES.QN_MIN} pytań. Zamknięcie: w każdym pytaniu ≥ 3 różne odpowiedzi.`;
     } else if (game.type === TYPES.POLL_POINTS) {
-      gMeta.textContent = `Tryb: punktacja. Start: ≥ ${RULES.QN_MIN} pytań i każde pytanie ma ${RULES.AN_MIN}–${RULES.AN_MAX} odpowiedzi. Zamknięcie: w każdym pytaniu ≥ 2 odpowiedzi mają głosy > 0.`;
+      gMeta.textContent = `Tryb: punktacja. Start: ≥ ${RULES.QN_MIN} pytań i każde pytanie ma ${RULES.AN_MIN}–${RULES.AN_MAX} odpowiedzi. Zamknięcie: w każdym pytaniu co najmniej 3 odpowiedzi muszą mieć ≥ 3 pkt po przeliczeniu do 100.`;
     } else {
       gMeta.textContent = "Gra preparowana nie ma sondażu.";
     }
