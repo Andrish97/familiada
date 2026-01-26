@@ -200,6 +200,7 @@ body.polls-body {
     border: 20px solid white; /* grubość | styl | kolor */
     display: block;
     padding: 16px
+    margin: 12px;
 }
 
 .qrFrameSmall{
