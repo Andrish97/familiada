@@ -40,6 +40,19 @@ function fmtDate(v) {
   return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
+const IS_MAC = navigator.platform.toLowerCase().includes("mac");
+
+function kbd(win, mac) {
+  return IS_MAC ? mac : win;
+}
+
+function setToolbarTip(act, label, win, mac) {
+  const btn = elToolbar?.querySelector?.(`button[data-act="${act}"]`);
+  if (!btn) return;
+  const combo = kbd(win, mac);
+  btn.title = combo ? `${label} (${combo})` : label;
+}
+
 function pickDate(raw) {
   // Fallback dla różnych schematów (foldery często mają inne pola)
   return (
@@ -242,6 +255,19 @@ export function renderToolbar(state) {
     `;
     elToolbar.dataset.ready = "1";
   }
+    // Tooltips z automatycznym formatowaniem skrótów (Windows/Linux vs macOS)
+  setToolbarTip("newFolder",   "Nowy folder",     "Ctrl+N", "⌘N");
+  // newQuestion – brak skrótu (na razie)
+  setToolbarTip("editQuestion","Edytuj pytanie",  "Ctrl+E", "⌘E");
+  // editTags – nie dodajemy Ctrl+T, bo Ctrl+T u Ciebie to przypisywanie tagów, a ten przycisk jest „Edycja tagów”
+  setToolbarTip("rename",      "Zmień nazwę",     "F2",     "F2");
+  setToolbarTip("delete",      "Usuń",            "Delete", "Delete");
+  setToolbarTip("copy",        "Kopiuj",          "Ctrl+C", "⌘C");
+  setToolbarTip("cut",         "Wytnij",          "Ctrl+X", "⌘X");
+  setToolbarTip("paste",       "Wklej",           "Ctrl+V", "⌘V");
+  setToolbarTip("duplicate",   "Duplikuj",        "Ctrl+D", "⌘D");
+  setToolbarTip("createGame",  "Utwórz grę",      "Ctrl+G", "⌘G");
+  // refreshView – brak skrótu (na razie)
 
   const inp = document.getElementById("searchText");
   const chipsEl = document.getElementById("searchChips");
