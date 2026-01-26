@@ -2225,9 +2225,14 @@ export function wireActions({ state }) {
     if (elDate) elDate.dataset.dir = (state.sort?.key === "date") ? (state.sort?.dir || "") : "";
   }
   
-  // Delegacja kliknięcia: działa mimo re-renderów nagłówka
   listEl?.addEventListener("click", (e) => {
-    const el = e.target?.closest?.(".list-head .h-main, .list-head .h-type, .list-head .h-date");
+    // 1) jeśli klik był na resizerze (albo w jego obrębie) -> nie sortuj
+    // (po drag-resize często i tak wpada click)
+    const t = (e.target && e.target.nodeType === 3) ? e.target.parentElement : e.target; // TextNode-safe
+    if (t?.closest?.(".col-resizer")) return;
+  
+    // 2) normalna delegacja
+    const el = t?.closest?.(".list-head .h-main, .list-head .h-type, .list-head .h-date");
     if (!el) return;
   
     if (el.classList.contains("h-main")) return toggleSort("name");
