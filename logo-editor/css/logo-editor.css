@@ -186,6 +186,7 @@ body.logo-editor-body .wrap{
   letter-spacing:.10em;
   text-transform:uppercase;
   opacity:.9;
+  padding: 8px;
 }
 
 .pane{ margin-top:6px; }
@@ -349,6 +350,7 @@ body.logo-editor-body .wrap{
   gap:8px;
   align-items:center;
   flex-wrap:wrap;
+  padding-top: 10px;
 }
 
 .ctrlRowFull > .inp,
