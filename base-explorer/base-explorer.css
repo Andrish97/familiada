@@ -1462,3 +1462,36 @@ input,textarea {
   font-variant-numeric: tabular-nums;
   white-space:nowrap;
 }
+
+.tbBtn{
+  transition:
+    background 140ms ease,
+    border-color 140ms ease,
+    box-shadow 140ms ease,
+    transform 90ms ease;
+}
+
+/* Hover – miękki glow + podbicie tła */
+.tbBtn:hover{
+  background: rgba(255,255,255,.10);
+  border-color: rgba(120,160,255,.45);
+  box-shadow:
+    0 0 0 1px rgba(120,160,255,.18) inset,
+    0 6px 18px rgba(120,160,255,.18);
+}
+
+/* Active – delikatne „wciśnięcie” */
+.tbBtn:active{
+  transform: translateY(1px) scale(.98);
+  box-shadow:
+    0 0 0 1px rgba(120,160,255,.28) inset,
+    0 2px 8px rgba(0,0,0,.45);
+}
+
+.tbBtn.primary:hover{
+  background: rgba(120,160,255,.28);
+  border-color: rgba(120,160,255,.75);
+  box-shadow:
+    0 0 0 1px rgba(120,160,255,.35) inset,
+    0 10px 24px rgba(120,160,255,.35);
+}
