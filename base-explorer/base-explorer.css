@@ -967,7 +967,7 @@ input,textarea {
 .list-head {
     position: sticky;
     top: 0;
-    z-index: 30
+    z-index: 3
 }
 
 .list {
@@ -1016,7 +1016,7 @@ input,textarea {
 }
 
 .row:hover {
-    z-index: 6
+    z-index: 2
 }
 
 .meta-dot,.tag-dot {
