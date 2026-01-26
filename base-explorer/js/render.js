@@ -271,7 +271,7 @@ export function renderToolbar(state) {
   setToolbarTip("paste",       "Wklej",           "Ctrl+V",       "⌘V");
   setToolbarTip("duplicate",   "Duplikuj",        "Ctrl+D",       "⌘D");
   setToolbarTip("createGame",  "Utwórz grę",      "Ctrl+G",       "⌘G");
-  setToolbarTip("refreshView", "Odśwież widok",   "",             "");
+  setToolbarTip("refreshView", "Odśwież widok",   "Ctrl+Alt+R",   "⌘⌥R");
 
   const inp = document.getElementById("searchText");
   const chipsEl = document.getElementById("searchChips");
