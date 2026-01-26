@@ -4212,7 +4212,7 @@ export function wireActions({ state }) {
     
       const isMac = navigator.platform.toLowerCase().includes("mac");
       const mod = isMac ? e.metaKey : e.ctrlKey;
-  
+    
       // nie rób skrótów, gdy user pisze w inpucie/textarea
       const tag = String(document.activeElement?.tagName || "").toLowerCase();
       const typing = (tag === "input" || tag === "textarea");
@@ -4258,7 +4258,33 @@ export function wireActions({ state }) {
         return;
       }
 
-    // Ctrl+N / Cmd+N = nowy folder (w bieżącym folderze / root)
+      // Ctrl+A / Cmd+A = (jak w eksploratorze)
+      // - gdy fokus w input/textarea: zostaw domyślne zaznaczanie tekstu
+      // - w innym przypadku: zaznacz wszystko w liście
+      if (mod && (e.key === "a" || e.key === "A")) {
+      
+        e.preventDefault();
+      
+        const listEl = document.getElementById("list");
+        if (!listEl) return;
+      
+        const rows = listEl.querySelectorAll(".row[data-key]");
+        if (!rows.length) return;
+      
+        if (!state.selection) state.selection = {};
+        if (!(state.selection.keys instanceof Set)) state.selection.keys = new Set();
+      
+        state.selection.keys.clear();
+        rows.forEach((row) => {
+          const key = row.dataset.key;
+          if (key) state.selection.keys.add(key);
+        });
+      
+        renderList(state);
+        return;
+      }
+
+      // Ctrl+N / Cmd+N = nowy folder (w bieżącym folderze / root)
       if (mod && (e.key === "n" || e.key === "N")) {
         if (!canMutateHere(state)) return;
         e.preventDefault();
@@ -4281,30 +4307,6 @@ export function wireActions({ state }) {
       
         const res = await openTagsModal(state, { mode: "assign" });
         await afterTagsModalClose(state, res);
-        return;
-      }
-
-      // Ctrl+A / Cmd+A = zaznacz wszystko w aktualnej liście
-      if (mod && (e.key === "a" || e.key === "A")) {
-        e.preventDefault();
-      
-        const listEl = document.getElementById("list");
-        if (!listEl) return;
-      
-        const rows = listEl.querySelectorAll(".row[data-key]");
-        if (!rows.length) return;
-      
-        if (!state.selection?.keys) state.selection = { ...(state.selection || {}), keys: new Set() };
-      
-        // 1) ustaw selekcję w stanie
-        state.selection.keys.clear();
-        rows.forEach(row => {
-          const key = row.dataset.key;
-          if (key) state.selection.keys.add(key);
-        });
-      
-        // 2) odśwież listę (ona sama nada klasy)
-        renderList(state);
         return;
       }
 
