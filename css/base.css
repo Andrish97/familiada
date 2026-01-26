@@ -136,7 +136,7 @@ body {
     font-weight: 900;
     outline: 0;
     font-size: 16px;
-    max-width: 100%;
+    max-width: 100%
 }
 
 .inp:focus {
@@ -177,7 +177,9 @@ body {
 
 .row {
     align-items: center;
-    flex-wrap: wrap
+    flex-wrap: wrap;
+    margin-top: 12px;
+    margin-bottom: 12px;
 }
 
 .stack {
