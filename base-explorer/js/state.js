@@ -9,7 +9,7 @@ export const VIEW = {
   META: "meta",     // filtr “meta” (wirtualny widok)
 };
 
-// Kosz: ukryty folder w root (bez zmian DB).
+// Kosz: ukryty folder w root  (bez zmian DB).
 export const TRASH = {
   NAME: "__trash__", // nazwa techniczna w DB (nie pokazujemy jej użytkownikowi)
   LABEL: "Kosz",     // etykieta w UI
