@@ -12,6 +12,10 @@ export function initTextPixEditor(ctx) {
   const pixWarn = document.getElementById("pixWarn");
 
   const selRtFont = document.getElementById("selRtFont");
+  const fontPick = document.getElementById("fontPick");
+  const fontPickBtn = document.getElementById("fontPickBtn");
+  const fontPickText = document.getElementById("fontPickText");
+  const fontPickPop = document.getElementById("fontPickPop");
   const inpRtSize = document.getElementById("inpRtSize");
   const inpRtLine = document.getElementById("inpRtLine");
   const inpRtLetter = document.getElementById("inpRtLetter");
@@ -160,8 +164,114 @@ export function initTextPixEditor(ctx) {
   
       selRtFont.appendChild(opt);
     }
+      // zbuduj custom dropdown z tego selecta
+      rebuildFontPickFromSelect();
   }
 
+  let fontPickOpen = false;
+  let fontPickIndex = 0; // nawigacja strzałkami
+  
+  function closeFontPick() {
+    if (!fontPickPop || !fontPickBtn) return;
+    fontPickOpen = false;
+    fontPickPop.hidden = true;
+    fontPickBtn.setAttribute("aria-expanded", "false");
+  }
+  
+  function openFontPick() {
+    if (!fontPickPop || !fontPickBtn) return;
+    fontPickOpen = true;
+    fontPickPop.hidden = false;
+    fontPickBtn.setAttribute("aria-expanded", "true");
+  
+    // ustaw index na aktualnie zaznaczony
+    const items = Array.from(fontPickPop.querySelectorAll(".fontPickItem"));
+    const cur = items.findIndex(it => it.classList.contains("on"));
+    fontPickIndex = cur >= 0 ? cur : 0;
+    focusFontPickIndex();
+  }
+  
+  function toggleFontPick() {
+    if (fontPickOpen) closeFontPick();
+    else openFontPick();
+  }
+  
+  function focusFontPickIndex() {
+    if (!fontPickPop) return;
+    const items = Array.from(fontPickPop.querySelectorAll(".fontPickItem"));
+    if (!items.length) return;
+  
+    fontPickIndex = Math.max(0, Math.min(items.length - 1, fontPickIndex));
+    const it = items[fontPickIndex];
+  
+    // przewiń, żeby było widać
+    it.scrollIntoView({ block: "nearest" });
+  }
+  
+  function setFontPickLabelFromSelect() {
+    if (!selRtFont || !fontPickText) return;
+    const opt = selRtFont.selectedOptions?.[0];
+    fontPickText.textContent = opt?.textContent?.trim() || "—";
+  
+    // próbka fontu w labelu (ładny UX)
+    const ff = String(selRtFont.value || "").trim();
+    fontPickText.style.fontFamily = ff ? ff : "";
+  }
+  
+  function rebuildFontPickFromSelect() {
+    if (!selRtFont || !fontPickPop) return;
+  
+    fontPickPop.innerHTML = "";
+  
+    const opts = Array.from(selRtFont.options || []);
+    for (let i = 0; i < opts.length; i++) {
+      const o = opts[i];
+      const value = String(o.value || "");
+      const label = String(o.textContent || "").trim();
+  
+      const item = document.createElement("div");
+      item.className = "fontPickItem";
+      item.dataset.value = value;
+      item.dataset.index = String(i);
+  
+      const sample = document.createElement("div");
+      sample.className = "sample";
+      sample.textContent = label || "—";
+      if (value) sample.style.fontFamily = value;
+  
+      const meta = document.createElement("div");
+      meta.className = "meta";
+      meta.textContent = value ? "" : "auto";
+  
+      item.appendChild(sample);
+      item.appendChild(meta);
+  
+      item.addEventListener("pointerdown", () => { uiLock(); }, true);
+      item.addEventListener("pointerup",   () => { uiUnlock(); }, true);
+  
+      item.addEventListener("click", () => {
+        // ustawiamy select i puszczamy jego "change"
+        selRtFont.value = value;
+        selRtFont.dispatchEvent(new Event("change", { bubbles: true }));
+        setFontPickLabelFromSelect();
+        syncFontPickOnState();
+        closeFontPick();
+      });
+  
+      fontPickPop.appendChild(item);
+    }
+  
+    syncFontPickOnState();
+    setFontPickLabelFromSelect();
+  }
+  
+  function syncFontPickOnState() {
+    if (!selRtFont || !fontPickPop) return;
+    const cur = String(selRtFont.value || "");
+    for (const it of Array.from(fontPickPop.querySelectorAll(".fontPickItem"))) {
+      it.classList.toggle("on", String(it.dataset.value || "") === cur);
+    }
+  }
 
   function isCollapsed() {
     try { return !!editor?.selection?.getRng?.()?.collapsed; } catch { return false; }
@@ -186,8 +296,6 @@ export function initTextPixEditor(ctx) {
     editor.selection.setRng(nr);
     return true;
   }
-
-
 
   // ==========================================
   //  A) Style detect (Word-like)
@@ -324,6 +432,10 @@ export function initTextPixEditor(ctx) {
     {
       const ff = readMixedStyle("font-family");
       if (selRtFont) selRtFont.value = ff.mixed ? "" : (normalizeFontValueForSelect(ff.value) || "");
+      if (fontPickText) {
+        setFontPickLabelFromSelect();
+        syncFontPickOnState();
+      }
     }
 
     {
@@ -857,6 +969,43 @@ export function initTextPixEditor(ctx) {
 
     // font (per symbol)
     selRtFont?.addEventListener("change", () => applyFont(selRtFont.value));
+
+        // custom dropdown: open/close
+    fontPickBtn?.addEventListener("click", () => toggleFontPick());
+
+    // wheel scroll w liście
+    fontPickPop?.addEventListener("wheel", (e) => {
+      // na Windows potrafi scrollować “stronicami” — wymuszamy naturalny scroll
+      e.preventDefault();
+      fontPickPop.scrollTop += e.deltaY;
+    }, { passive: false });
+
+    // klik poza — zamknij
+    document.addEventListener("pointerdown", (e) => {
+      if (!fontPickOpen) return;
+      const t = e.target;
+      if (t && (t === fontPickBtn || t.closest?.("#fontPick"))) return;
+      closeFontPick();
+    });
+
+    // klawiatura: strzałki / Enter / Esc
+    document.addEventListener("keydown", (e) => {
+      if (!fontPickOpen) return;
+
+      if (e.key === "Escape") { e.preventDefault(); closeFontPick(); return; }
+
+      const items = Array.from(fontPickPop?.querySelectorAll?.(".fontPickItem") || []);
+      if (!items.length) return;
+
+      if (e.key === "ArrowDown") { e.preventDefault(); fontPickIndex++; focusFontPickIndex(); return; }
+      if (e.key === "ArrowUp")   { e.preventDefault(); fontPickIndex--; focusFontPickIndex(); return; }
+
+      if (e.key === "Enter") {
+        e.preventDefault();
+        fontPickIndex = Math.max(0, Math.min(items.length - 1, fontPickIndex));
+        items[fontPickIndex].click();
+      }
+    });
 
     // size (per symbol)
     inpRtSize?.addEventListener("input", () => {
