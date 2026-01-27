@@ -277,8 +277,8 @@
     
       <p class="m-p">
         Builder umożliwia eksport i import gier
-        w postaci plików.
-        Funkcja ta służy do przenoszenia gier
+        w postaci plików oraz bezpośrednio do bazy pytań.
+        Funkcja ta służy do przenoszenia gier i pytań
         pomiędzy kontami lub środowiskami.
       </p>
     
@@ -300,7 +300,295 @@
         na liście gier i może być dalej edytowana
         wyłącznie przy użyciu edytora systemowego.
       </p>
+      
+      <p class="m-p">
+        Podczas eksportu gry do bazy:
+      </p>
+      
+      <ul class="m-ul">
+        <li>w katalogu głównym bazy tworzony jest nowy folder</li>
+        <li>folder otrzymuje nazwę gry</li>
+        <li>w folderze zapisywane są wszystkie pytania należące do gry</li>
+      </ul>
+
+      <p class="m-note">
+        Eksportować możesz tylko do swojej własnej bazy lub do udostępnionej bazy której jesteś edytorem.
+        Jeśli nie aktualnie żadnych baz nie będziesz mógł eksportować.
+      </p>
+      
+      <p class="m-p">
+        Dzięki temu każda gra może zostać zamieniona w zestaw pytań do dalszej edycji,
+        organizowania w folderach, oznaczania tagami oraz ponownego wykorzystania
+        w kolejnych grach.
+      </p>
+      
+      <p class="m-note">
+        Eksport do bazy nie usuwa gry — tworzy jedynie jej kopię w postaci struktury pytań.
+      </p>
+      
     </div>
+  </section>
+
+  <section class="tab-page" id="tab-bases" aria-label="Bazy pytań">
+
+    <div class="m-doc">
+  
+      <h2 class="m-h2">Bazy pytań — organizacja i współpraca</h2>
+  
+      <p class="m-p">
+        Bazy pytań to centralne miejsce przechowywania wszystkich pytań używanych w grach.
+        Dzięki nim możesz porządkować pytania w folderach, oznaczać je tagami, przypisywać do kategorii
+        oraz współdzielić całe bazy z innymi użytkownikami.
+      </p>
+      <p class="m-p">
+        Do baz pytań przechodzisz z górnego panelu strony „Moje gry”
+        za pomocą przycisku <span class="m-code">Bazy pytań 🗃️</span>.
+      </p>
+  
+      <p class="m-p">
+        Jedna baza może zawierać setki lub tysiące pytań uporządkowanych w strukturze podobnej
+        do klasycznego menadżera plików na komputerze.
+      </p>
+  
+      <h3 class="m-h3">➕ Dodawanie nowej bazy</h3>
+  
+      <p class="m-p">
+        W widoku „Bazy pytań” kliknij kafelek <span class="m-strong">Nowa baza</span>.
+        Otworzy się okno, w którym podajesz nazwę bazy.
+      </p>
+  
+      <p class="m-p">
+        Po zapisaniu nowa baza pojawi się na liście i od razu możesz ją przeglądać lub udostępniać.
+      </p>
+  
+      <h3 class="m-h3">🤝 Udostępnianie bazy</h3>
+  
+      <p class="m-p">
+        Każdą bazę możesz udostępnić innym użytkownikom poprzez podanie ich adresu e-mail.
+        Dostępne są dwa tryby:
+      </p>
+  
+      <ul class="m-ul">
+        <li><span class="m-strong">Edycja</span> — użytkownik może dodawać, usuwać i modyfikować pytania, foldery, tagi, tworzyć gry z pytań i eksportować pytania do bazy</li>
+        <li><span class="m-strong">Przeglądanie</span> — użytkownik może tylko przeglądać zawartość bazy i tworzyć gry z dostępnych pytań</li>
+      </ul>
+  
+      <p class="m-p">
+        Tylko właściciel bazy może zarządzać udostępnieniami.
+      </p>
+  
+      <h3 class="m-h3">📂 Przechodzenie do menadżera bazy</h3>
+  
+      <p class="m-p">
+        Aby wejść do zawartości bazy, zaznacz ją na liście i kliknij przycisk <span class="m-code">Przeglądaj</span>.
+      </p>
+  
+      <p class="m-p">
+        Otworzy się Base Explorer — zaawansowany menadżer pytań działający jak klasyczny eksplorator plików.
+      </p>
+  
+      <h2 class="m-h2">Base Explorer — menadżer pytań</h2>
+  
+      <p class="m-p">
+        Base Explorer pozwala zarządzać pytaniami w sposób znany z systemowych menadżerów plików:
+        foldery, przenoszenie metodą „przeciągnij i upuść”, kopiowanie, wycinanie i szybka selekcja.
+      </p>
+  
+      <p class="m-p">
+        Każdy „plik” w tym menadżerze jest pojedynczym pytaniem.
+        Foldery służą do grupowania pytań tematycznie lub logicznie.
+      </p>
+  
+      <p class="m-p">
+        Możesz:
+      </p>
+  
+      <ul class="m-ul">
+        <li>tworzyć dowolnie zagnieżdżone foldery</li>
+        <li>przenosić pytania i foldery między sobą</li>
+        <li>kopiować i duplikować elementy</li>
+        <li>usuwać zaznaczone pozycje</li>
+        <li>wyszukiwać po nazwie i tagach</li>
+      </ul>
+  
+      <p class="m-note">
+        Interfejs i skróty klawiszowe działają podobnie jak w klasycznych menadżerach plików
+        (Explorer, Finder, Total Commander).
+      </p>
+  
+      <h2 class="m-h2">Tagi i kategorie</h2>
+  
+      <h3 class="m-h3">🏷️ Tagi</h3>
+  
+      <p class="m-p">
+        Każde pytanie może mieć dowolną liczbę tagów.
+        Tagi służą do tematycznego oznaczania pytań — np. „historia”, „sport”, „łatwe”, „dla dzieci”.
+      </p>
+  
+      <p class="m-p">
+        Możesz:
+      </p>
+  
+      <ul class="m-ul">
+        <li>tworzyć własne tagi z kolorami</li>
+        <li>przypisywać wiele tagów do jednego pytania</li>
+        <li>filtrować widok po wybranych tagach</li>
+      </ul>
+
+      <p class="m-p">
+        Przypisywanie tagów odbywa się w specjalnym oknie, które można otworzyć z paska narzędzi
+        lub z menu kontekstowego.
+      </p>
+      
+      <p class="m-p">
+        W oknie przypisywania tagów widoczna jest lista wszystkich dostępnych tagów wraz z ich stanem:
+      </p>
+      
+      <ul class="m-ul">
+        <li>zaznaczony — tag jest przypisany do wszystkich wybranych elementów</li>
+        <li>niezaznaczony — tag nie jest przypisany do żadnego z nich</li>
+        <li>częściowy — tylko część zaznaczenia posiada dany tag</li>
+      </ul>
+      
+      <p class="m-p">
+        Kliknięcie w tag przełącza jego stan cyklicznie, umożliwiając szybkie dodawanie i usuwanie tagów
+        dla wielu pytań lub folderów jednocześnie. To okno umożliwia tworzenie nowych tagów.
+      </p>
+      
+      <p class="m-p">
+        Tagi mogą być również używane jako filtry — kliknięcie taga po lewej stronie ogranicza widok
+        do elementów oznaczonych wybranym tagiem lub zestawem tagów.
+      </p>
+  
+      <p class="m-note">
+        Folder pokazuje znaczniki tagów wtedy, gdy wszystkie znajdujące się w nim pytania
+        (oraz podfoldery) posiadają ten sam tag.
+      </p>
+  
+      <h3 class="m-h3">📌 Kategorie</h3>
+  
+      <p class="m-p">
+        Kategorie to specjalne oznaczenia systemowe określające,
+        do jakiego typu gry dane pytanie pasuje. Co odpowiada typom gier w widoku <span class="m-strong">Moje gry</span></li>
+      </p>
+  
+      <p class="m-p">
+        Przykładowo:
+      </p>
+  
+      <ul class="m-ul">
+        <li>pytania z odpowiedziami i punktami trafiają do kategorii <span class="m-strong">preperowane</span></li>
+        <li>pytania z odpowiedziami bez sumy punktów do <span class="m-strong">punktacja</span></li>
+        <li>pytania tekstowe bez punktów do <span class="m-strong">typowe</span></li>
+      </ul>
+  
+      <p class="m-p">
+        Kategorie są przypisywane automatycznie na podstawie struktury pytania,
+        a nie ręcznie przez użytkownika.
+      </p>
+  
+      <p class="m-note">
+        Dzięki temu od razu wiesz, które pytania nadają się do konkretnego typu gry.
+      </p>
+  
+      <h2 class="m-h2">Edytor pytań</h2>
+  
+      <p class="m-p">
+        Każde pytanie możesz otworzyć w edytorze.
+        Edytor pozwala zmieniać treść pytania, odpowiedzi oraz punkty (jeśli występują).
+      </p>
+  
+      <p class="m-p">
+        System pilnuje podstawowych zasad, takich jak:
+      </p>
+  
+      <ul class="m-ul">
+        <li>maksymalna liczba punktów dla jednej odpowiedzi</li>
+        <li>łączna suma punktów w pytaniu</li>
+      </ul>
+  
+      <p class="m-p">
+        Dzięki temu baza zawsze pozostaje spójna i gotowa do użycia w grach.
+      </p>
+  
+      <h2 class="m-h2">Tworzenie gry z pytań</h2>
+  
+      <p class="m-p">
+        W Menadżerze bazy możesz zaznaczyć dowolne pytania oraz foldery (wraz z podfolderami),
+        a następnie utworzyć z nich nową grę.
+      </p>
+  
+      <p class="m-p">
+        System zbiera wszystkie pytania z zaznaczenia, pozwala je przejrzeć
+        i wybrać typ gry.
+      </p>
+
+      <p class="m-note">
+        To umożliwia szybkie budowanie gier z gotowych zestawów pytań bez ręcznego przepisywania.
+      </p>
+
+      <p class="m-warn">
+        Po pomyślnym utworzeniu gry zostaniesz przekierowany do widoku <span class="m-strong">Moje gry</span></li>
+      </p>
+  
+      <h2 class="m-h2">⌨️ Skróty klawiszowe — Menadżer bazy</h2>
+  
+      <h3 class="m-h3">📁 Tworzenie</h3>
+  
+      <table class="m-table">
+        <tr><th>Akcja</th><th>Windows / Linux</th><th>macOS</th></tr>
+        <tr><td>Nowe pytanie</td><td>Ctrl + N</td><td>⌘ N</td></tr>
+        <tr><td>Nowy folder</td><td>Ctrl + Shift + N</td><td>⌘ ⇧ N</td></tr>
+      </table>
+  
+      <h3 class="m-h3">✏️ Edycja</h3>
+  
+      <table class="m-table">
+        <tr><th>Akcja</th><th>Windows / Linux</th><th>macOS</th></tr>
+        <tr><td>Edytuj pytanie</td><td>Ctrl + E</td><td>⌘ E</td></tr>
+        <tr><td>Zmień nazwę</td><td>F2</td><td>F2</td></tr>
+        <tr><td>Usuń</td><td>Delete</td><td>Fn + ⌫</td></tr>
+      </table>
+  
+      <h3 class="m-h3">📋 Schowek</h3>
+  
+      <table class="m-table">
+        <tr><th>Akcja</th><th>Windows / Linux</th><th>macOS</th></tr>
+        <tr><td>Kopiuj</td><td>Ctrl + C</td><td>⌘ C</td></tr>
+        <tr><td>Wytnij</td><td>Ctrl + X</td><td>⌘ X</td></tr>
+        <tr><td>Wklej</td><td>Ctrl + V</td><td>⌘ V</td></tr>
+        <tr><td>Duplikuj</td><td>Ctrl + D</td><td>⌘ D</td></tr>
+      </table>
+  
+      <h3 class="m-h3">🎮 Gra</h3>
+  
+      <table class="m-table">
+        <tr><th>Akcja</th><th>Windows / Linux</th><th>macOS</th></tr>
+        <tr><td>Utwórz grę</td><td>Ctrl + G</td><td>⌘ G</td></tr>
+      </table>
+  
+      <h3 class="m-h3">🔄 Widok</h3>
+  
+      <table class="m-table">
+        <tr><th>Akcja</th><th>Windows / Linux</th><th>macOS</th></tr>
+        <tr><td>Odśwież widok</td><td>Ctrl + Alt + R</td><td>⌘ ⌥ R</td></tr>
+      </table>
+  
+      <h3 class="m-h3">📌 Nawigacja</h3>
+  
+      <table class="m-table">
+        <tr><th>Akcja</th><th>Windows / Linux</th><th>macOS</th></tr>
+        <tr><td>Zaznacz wszystko</td><td>Ctrl + A</td><td>⌘ A</td></tr>
+        <tr><td>Otwórz folder</td><td>Enter</td><td>⏎</td></tr>
+        <tr><td>Folder nadrzędny</td><td>Backspace</td><td>⌫</td></tr>
+      </table>
+  
+      <p class="m-note">
+        Skróty nie działają podczas wpisywania tekstu w polach edycyjnych.
+      </p>
+  
+    </div>
+  
   </section>
 
   <section class="tab-page" id="tab-polls" aria-label="Sondaże">
@@ -509,12 +797,12 @@
     </div>
   </section>
 
-    <section class="tab-page" id="tab-logo" aria-label="Tworzenie logo">
+<section class="tab-page" id="tab-logo" aria-label="Tworzenie logo">
   <div class="m-doc">
 
     <p class="m-p">
       System pozwala ustawić własne logo, które pojawia się na wyświetlaczu
-      (np. na ekranie startowym lub zakończenia). Do tworzenia logo przechodzisz z gornego panelu strony „Moje gry”
+      (np. na ekranie startowym lub zakończenia). Do tworzenia logo przechodzisz z górnego panelu strony „Moje gry”
         za pomocą przycisku <span class="m-code">Logo🖥️</span>.
     </p>
 
