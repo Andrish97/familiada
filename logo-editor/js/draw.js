@@ -51,7 +51,7 @@ export function initDrawEditor(ctx) {
   // Ikony dynamiczne: FG (kolor narzędzia) i BG (tło sceny)
   // =========================================================
 
-const ICON_BG = {
+  const ICON_BG = {
 
     // BIAŁE TŁO — pełny prostokąt
     WHITE: `
