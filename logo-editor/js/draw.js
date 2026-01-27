@@ -71,25 +71,24 @@ const ICON_FG = {
     `,
   };
 
-  const ICON_BG = {
+  const ICON_FG = {
   
-    // BIAŁE TŁO — pełny prostokąt
+    // BIAŁE — puste kółko
     WHITE: `
       <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-        <rect class="fill"
-              x="4" y="5" width="16" height="14" rx="2"></rect>
+        <circle cx="12" cy="12" r="7"
+                stroke-width="2"></circle>
       </svg>
     `,
   
-    // CZARNE TŁO — pusty prostokąt z cienkim obramowaniem
+    // CZARNE — pełne kółko
     BLACK: `
       <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-        <rect x="4.5" y="5.5" width="15" height="13" rx="2"
-              stroke-width="1"></rect>
+        <circle class="fill" cx="12" cy="12" r="7"></circle>
       </svg>
     `,
   };
-
+  
   function syncDynamicIcons() {
     // fg / tColor
     if (tColor) {
@@ -293,7 +292,7 @@ const ICON_FG = {
   setTip(tZoomOut, tip2("Pomniejsz", "Ctrl + -", "⌘-"));
 
   // Kolor / tło
-  setTip(tColor, "Kolor narzędzia");
+  setTip(tColor, "Kolor narzędzia (obramowania)");
   setTip(tBg,    "Tło sceny (czarne/białe)");
 
   // Narzędzia
