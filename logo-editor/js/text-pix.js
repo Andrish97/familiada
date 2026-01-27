@@ -16,6 +16,10 @@ export function initTextPixEditor(ctx) {
   const fontPickBtn = document.getElementById("fontPickBtn");
   const fontPickText = document.getElementById("fontPickText");
   const fontPickPop = document.getElementById("fontPickPop");
+  const fontPickSearchInp = document.getElementById("fontPickSearchInp");
+  const fontPickSearchClear = document.getElementById("fontPickSearchClear");
+  const fontPickList = document.getElementById("fontPickList");
+  const fontPickEmpty = document.getElementById("fontPickEmpty");
   const inpRtSize = document.getElementById("inpRtSize");
   const inpRtLine = document.getElementById("inpRtLine");
   const inpRtLetter = document.getElementById("inpRtLetter");
@@ -184,8 +188,12 @@ export function initTextPixEditor(ctx) {
     fontPickPop.hidden = false;
     fontPickBtn.setAttribute("aria-expanded", "true");
   
-    // ustaw index na aktualnie zaznaczony
-    const items = Array.from(fontPickPop.querySelectorAll(".fontPickItem"));
+    // focus na wyszukiwarkę
+    setTimeout(() => fontPickSearchInp?.focus?.(), 0);
+  
+    // ustaw index na aktualnie zaznaczony (po filtrze)
+    const root = fontPickList || fontPickPop;
+    const items = Array.from(root.querySelectorAll(".fontPickItem"));
     const cur = items.findIndex(it => it.classList.contains("on"));
     fontPickIndex = cur >= 0 ? cur : 0;
     focusFontPickIndex();
@@ -197,15 +205,14 @@ export function initTextPixEditor(ctx) {
   }
   
   function focusFontPickIndex() {
-    if (!fontPickPop) return;
-    const items = Array.from(fontPickPop.querySelectorAll(".fontPickItem"));
+    const root = fontPickList || fontPickPop;
+    if (!root) return;
+  
+    const items = Array.from(root.querySelectorAll(".fontPickItem"));
     if (!items.length) return;
   
     fontPickIndex = Math.max(0, Math.min(items.length - 1, fontPickIndex));
-    const it = items[fontPickIndex];
-  
-    // przewiń, żeby było widać
-    it.scrollIntoView({ block: "nearest" });
+    items[fontPickIndex].scrollIntoView({ block: "nearest" });
   }
   
   function setFontPickLabelFromSelect() {
@@ -218,30 +225,49 @@ export function initTextPixEditor(ctx) {
     fontPickText.style.fontFamily = ff ? ff : "";
   }
   
-  function rebuildFontPickFromSelect() {
-    if (!selRtFont || !fontPickPop) return;
+  let fontAll = [];      // [{value,label}]
+  let fontFiltered = []; // j.w.
   
-    fontPickPop.innerHTML = "";
+  function norm(s){
+    return String(s || "")
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, ""); // usuń akcenty
+  }
   
-    const opts = Array.from(selRtFont.options || []);
-    for (let i = 0; i < opts.length; i++) {
-      const o = opts[i];
-      const value = String(o.value || "");
-      const label = String(o.textContent || "").trim();
+  function getFilterText(){
+    return norm(fontPickSearchInp?.value || "");
+  }
+  
+  function applyFontFilter(){
+    const q = getFilterText();
+  
+    fontFiltered = !q
+      ? fontAll.slice()
+      : fontAll.filter(f => norm(f.label).includes(q) || norm(f.value).includes(q));
+  
+    // render listy
+    if (fontPickList) fontPickList.innerHTML = "";
+    if (fontPickEmpty) fontPickEmpty.hidden = fontFiltered.length > 0;
+  
+    if (!fontPickList) return;
+  
+    for (let i = 0; i < fontFiltered.length; i++){
+      const f = fontFiltered[i];
   
       const item = document.createElement("div");
       item.className = "fontPickItem";
-      item.dataset.value = value;
+      item.dataset.value = f.value;
       item.dataset.index = String(i);
   
       const sample = document.createElement("div");
       sample.className = "sample";
-      sample.textContent = label || "—";
-      if (value) sample.style.fontFamily = value;
+      sample.textContent = f.label || "—";
+      if (f.value) sample.style.fontFamily = f.value;
   
       const meta = document.createElement("div");
       meta.className = "meta";
-      meta.textContent = value ? "" : "auto";
+      meta.textContent = f.value ? "" : "auto";
   
       item.appendChild(sample);
       item.appendChild(meta);
@@ -250,25 +276,45 @@ export function initTextPixEditor(ctx) {
       item.addEventListener("pointerup",   () => { uiUnlock(); }, true);
   
       item.addEventListener("click", () => {
-        // ustawiamy select i puszczamy jego "change"
-        selRtFont.value = value;
+        selRtFont.value = f.value;
         selRtFont.dispatchEvent(new Event("change", { bubbles: true }));
         setFontPickLabelFromSelect();
         syncFontPickOnState();
         closeFontPick();
       });
   
-      fontPickPop.appendChild(item);
+      fontPickList.appendChild(item);
     }
   
+    // index nawigacji
+    fontPickIndex = 0;
+    // podświetlenie aktualnego wyboru
     syncFontPickOnState();
+    // przewiń do aktywnego jeśli jest
+    const on = fontPickList.querySelector?.(".fontPickItem.on");
+    on?.scrollIntoView?.({ block:"nearest" });
+  }
+  
+  function rebuildFontPickFromSelect() {
+    if (!selRtFont) return;
+  
+    // zbuduj fontAll z <select>
+    const opts = Array.from(selRtFont.options || []);
+    fontAll = opts.map(o => ({
+      value: String(o.value || ""),
+      label: String(o.textContent || "").trim(),
+    }));
+  
+    // filter/render
+    applyFontFilter();
     setFontPickLabelFromSelect();
   }
   
   function syncFontPickOnState() {
-    if (!selRtFont || !fontPickPop) return;
+    const root = fontPickList || fontPickPop;
+    if (!selRtFont || !root) return;
     const cur = String(selRtFont.value || "");
-    for (const it of Array.from(fontPickPop.querySelectorAll(".fontPickItem"))) {
+    for (const it of Array.from(root.querySelectorAll(".fontPickItem"))) {
       it.classList.toggle("on", String(it.dataset.value || "") === cur);
     }
   }
@@ -980,6 +1026,17 @@ export function initTextPixEditor(ctx) {
       fontPickPop.scrollTop += e.deltaY;
     }, { passive: false });
 
+        // search input
+    fontPickSearchInp?.addEventListener("input", () => {
+      applyFontFilter();
+    });
+
+    fontPickSearchClear?.addEventListener("click", () => {
+      if (fontPickSearchInp) fontPickSearchInp.value = "";
+      applyFontFilter();
+      fontPickSearchInp?.focus?.();
+    });
+
     // klik poza — zamknij
     document.addEventListener("pointerdown", (e) => {
       if (!fontPickOpen) return;
@@ -990,7 +1047,43 @@ export function initTextPixEditor(ctx) {
 
     // klawiatura: strzałki / Enter / Esc
     document.addEventListener("keydown", (e) => {
+      // jeśli focus jest w wyszukiwaniu, nie przechwytuj zwykłych znaków
+      const inSearch = document.activeElement === fontPickSearchInp;
+
+      if (inSearch && e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        return; // user wpisuje tekst
+      }
       if (!fontPickOpen) return;
+
+      // ============================
+      // Type-to-filter (jak w pro UI)
+      // ============================
+
+      const isChar =
+        e.key.length === 1 &&
+        !e.ctrlKey &&
+        !e.metaKey &&
+        !e.altKey;
+
+      // jeśli user zaczyna pisać poza inputem -> przerzuć focus do search
+      if (isChar && document.activeElement !== fontPickSearchInp) {
+        e.preventDefault();
+
+        fontPickSearchInp?.focus?.();
+
+        // dopisz znak ręcznie (żeby nie zginął)
+        const start = fontPickSearchInp.selectionStart ?? fontPickSearchInp.value.length;
+        const end   = fontPickSearchInp.selectionEnd   ?? fontPickSearchInp.value.length;
+
+        const v = fontPickSearchInp.value;
+        fontPickSearchInp.value =
+          v.slice(0, start) + e.key + v.slice(end);
+
+        fontPickSearchInp.setSelectionRange(start + 1, start + 1);
+
+        applyFontFilter();
+        return;
+      }
 
       if (e.key === "Escape") { e.preventDefault(); closeFontPick(); return; }
 
@@ -999,7 +1092,7 @@ export function initTextPixEditor(ctx) {
 
       if (e.key === "ArrowDown") { e.preventDefault(); fontPickIndex++; focusFontPickIndex(); return; }
       if (e.key === "ArrowUp")   { e.preventDefault(); fontPickIndex--; focusFontPickIndex(); return; }
-
+      
       if (e.key === "Enter") {
         e.preventDefault();
         fontPickIndex = Math.max(0, Math.min(items.length - 1, fontPickIndex));
