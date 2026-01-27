@@ -51,39 +51,49 @@ export function initDrawEditor(ctx) {
   // Ikony dynamiczne: FG (kolor narzędzia) i BG (tło sceny)
   // =========================================================
 
-  const ICON_FG = {
-    BLACK: `
-      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-        <!-- ramka -->
-        <rect x="5" y="5" width="14" height="14" rx="3"></rect>
-        <!-- kropka = czarny -->
-        <circle class="fill" cx="16.2" cy="7.8" r="2.2"></circle>
-      </svg>
-    `,
+const ICON_FG = {
+
+    // BIAŁE — jedno grube, czyste obramowanie
     WHITE: `
       <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-        <rect x="5" y="5" width="14" height="14" rx="3"></rect>
-        <!-- kropka = białe: rysujemy obrys + mała "gwiazdka" -->
-        <circle cx="16.2" cy="7.8" r="2.2"></circle>
-        <path d="M16.2 5.4v4.8M13.8 7.8h4.8"></path>
+        <rect x="5" y="5" width="14" height="14" rx="3"
+              stroke-width="3"></rect>
+      </svg>
+    `,
+  
+    // CZARNE — potrójna linia (cienka + przerwa + cienka + przerwa + cienka)
+    BLACK: `
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <!-- zewnętrzna cienka -->
+        <rect x="4.5" y="4.5" width="15" height="15" rx="3.5"
+              stroke-width="1"></rect>
+  
+        <!-- środkowa cienka -->
+        <rect x="6.5" y="6.5" width="11" height="11" rx="2.5"
+              stroke-width="1"></rect>
+  
+        <!-- wewnętrzna cienka -->
+        <rect x="8.5" y="8.5" width="7" height="7" rx="1.8"
+              stroke-width="1"></rect>
       </svg>
     `,
   };
 
   const ICON_BG = {
-    BLACK: `
-      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-        <rect x="4" y="5" width="16" height="14" rx="2"></rect>
-        <!-- pół na pół: lewe ciemne -->
-        <path class="fill" d="M6 7h6v10H6z"></path>
-      </svg>
-    `,
+  
+    // BIAŁE TŁO — pełny prostokąt
     WHITE: `
       <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-        <rect x="4" y="5" width="16" height="14" rx="2"></rect>
-        <!-- pół na pół: prawe jasne (robimy obrys + "shine") -->
-        <path d="M12 7h6v10h-6z"></path>
-        <path d="M15 8l1 1M14 10l2 2"></path>
+        <rect class="fill"
+              x="4" y="5" width="16" height="14" rx="2"></rect>
+      </svg>
+    `,
+  
+    // CZARNE TŁO — pusty prostokąt z cienkim obramowaniem
+    BLACK: `
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <rect x="4.5" y="5.5" width="15" height="13" rx="2"
+              stroke-width="1"></rect>
       </svg>
     `,
   };
@@ -150,19 +160,19 @@ export function initDrawEditor(ctx) {
     `,
 
     // 7) BRUSH
+    tBrush: `
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path d="M4 20l4-1 11-11-3-3L5 16l-1 4z"></path>
+        <path d="M14 6l3 3"></path>
+      </svg>
+    `,
+    
+    // 8) ERASER
     tEraser: `
       <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
         <path d="M7 16l8.5-8.5a1.8 1.8 0 0 1 2.5 0l1 1a1.8 1.8 0 0 1 0 2.5L11 19H7l-2-2 2-1z"></path>
         <path d="M11 19h10"></path>
         <path d="M9.2 14.8l4 4"></path>
-      </svg>
-    `,
-
-    // 8) ERASER
-    tEraser: `
-      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-        <path d="M7 16l7-7 4 4-7 7H7z"></path>
-        <path d="M11 20h9"></path>
       </svg>
     `,
 
