@@ -6,7 +6,7 @@ import { createState, setRole } from "./state.js";
 import { renderAll } from "./render.js";
 
 import {
-  getBase,
+  getBaseMeta,
   getBaseRole,
   listCategories,
   listAllTags,
@@ -23,7 +23,7 @@ const who = document.getElementById("who");
 const baseNameEl = document.getElementById("baseName");
 
 /* ================= Helpers ================= */
-function getBaseIdFromUrl() {
+function IdFromUrl() {
   const params = new URLSearchParams(location.search);
   return params.get("base");
 }
