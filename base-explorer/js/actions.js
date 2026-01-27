@@ -1085,11 +1085,11 @@ export async function deleteSelected(state) {
     const catIds = collectCategoryDescendants(state?.categories, trashId);
 
     // pytania w koszu (bezpośrednio + w podfolderach kosza)
-    await sb.from("qb_questions").delete().eq("base_id", state.baseId).in("category_id", [trashId, ...catIds]);
+    await sb().from("qb_questions").delete().eq("base_id", state.baseId).in("category_id", [trashId, ...catIds]);
 
     // foldery w koszu (tylko potomkowie; sam folder-kosz zostaje)
     if (catIds.length) {
-      await sb.from("qb_categories").delete().eq("base_id", state.baseId).in("id", catIds);
+      await sb().from("qb_categories").delete().eq("base_id", state.baseId).in("id", catIds);
     }
 
     await refreshAll(state);
@@ -1138,8 +1138,8 @@ export async function deleteSelected(state) {
     if (k.startsWith("c:")) idsC.push(k.slice(2));
   }
 
-  if (idsQ.length) await sb.from("qb_questions").delete().in("id", idsQ);
-  if (idsC.length) await sb.from("qb_categories").delete().in("id", idsC);
+  if (idsQ.length) await sb().from("qb_questions").delete().in("id", idsQ);
+  if (idsC.length) await sb().from("qb_categories").delete().in("id", idsC);
 
   selectionClear(state);
   clearTrashOriginsAll(state);
@@ -1182,12 +1182,12 @@ async function restoreSelected(state) {
 
   // 1) Foldery
   for (const it of cRestores) {
-    await sb.from("qb_categories").update({ parent_id: it.parent_id }).eq("id", it.id);
+    await sb().from("qb_categories").update({ parent_id: it.parent_id }).eq("id", it.id);
   }
 
   // 2) Pytania
   for (const it of qRestores) {
-    await sb.from("qb_questions").update({ category_id: it.category_id }).eq("id", it.id);
+    await sb().from("qb_questions").update({ category_id: it.category_id }).eq("id", it.id);
   }
 
   // origin już niepotrzebny po restore
