@@ -37,7 +37,8 @@ body.builder-body {
 .actions {
     display: flex;
     gap: 8px;
-    flex-wrap: wrap
+    flex-wrap: wrap;
+    margin: 10px;
 }
 
 :root {
