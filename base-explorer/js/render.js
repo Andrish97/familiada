@@ -190,6 +190,9 @@ export function renderHeader(state) {
 export function renderToolbar(state) {
   if (!elToolbar) return;
 
+  const trashId = getTrashId(state?.categories);
+  const inTrash = !!trashId && state?.view === VIEW.FOLDER && state?.folderId === trashId;
+
   // Renderuj "szkielet" TYLKO raz, potem aktualizuj wnętrze (żeby nie tracić fokusu w input)
   if (elToolbar.dataset.ready !== "1") {
     elToolbar.innerHTML = `
@@ -223,6 +226,11 @@ export function renderToolbar(state) {
         <button class="tbBtn danger" type="button" data-act="delete" title="Usuń">
           ${svgTrash()}
         </button>
+
+        ${inTrash ? `
+        <button class="tbBtn" data-act="restore" type="button" title="Przywróć z kosza">♻️
+        </button>
+        ` : ""}
       </div>
       
       <div class="tbSep" aria-hidden="true"></div>
@@ -266,6 +274,7 @@ export function renderToolbar(state) {
   setToolbarTip("editTags",    "Tagi",            "Ctrl+T",       "⌘T");
   setToolbarTip("rename",      "Zmień nazwę",     "F2",           "F2");
   setToolbarTip("delete",      "Usuń",            "Delete",       "Fn⌫");
+  setToolbarTip("restore",     "Przywróć z kosza","",             "");
   setToolbarTip("copy",        "Kopiuj",          "Ctrl+C",       "⌘C");
   setToolbarTip("cut",         "Wytnij",          "Ctrl+X",       "⌘X");
   setToolbarTip("paste",       "Wklej",           "Ctrl+V",       "⌘V");
