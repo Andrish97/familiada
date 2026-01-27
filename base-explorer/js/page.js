@@ -46,7 +46,7 @@ btnLogout?.addEventListener("click", async () => {
   if (who) who.textContent = user?.email || "—";
 
   // base id z URL
-  const baseId = getBaseIdFromUrl();
+  const baseId = IdFromUrl(();
   if (!baseId) {
     alert("Brak identyfikatora bazy.");
     location.href = "../bases.html";
