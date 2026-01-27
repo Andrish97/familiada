@@ -258,3 +258,33 @@ export function metaSelectionClear(state) {
   state.metaSelection.ids.clear();
   state.metaSelection.anchorId = null;
 }
+
+// Lokalna pamięć: skąd element trafił do kosza (do restore).
+// Klucze jak w selection: "q:<id>" / "c:<id>"
+export function ensureTrashOrigins(state) {
+  if (!state) return;
+  if (!state.trashOrigins || typeof state.trashOrigins !== "object") {
+    state.trashOrigins = {}; // { [key]: { kind:"q"|"c", fromCategoryId?, fromParentId? } }
+  }
+}
+
+export function setTrashOrigin(state, key, origin) {
+  ensureTrashOrigins(state);
+  if (!key) return;
+  state.trashOrigins[key] = origin || null;
+}
+
+export function getTrashOrigin(state, key) {
+  ensureTrashOrigins(state);
+  return state.trashOrigins[key] || null;
+}
+
+export function clearTrashOrigin(state, key) {
+  ensureTrashOrigins(state);
+  delete state.trashOrigins[key];
+}
+
+export function clearTrashOriginsAll(state) {
+  ensureTrashOrigins(state);
+  state.trashOrigins = {};
+}
