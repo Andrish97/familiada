@@ -4,13 +4,16 @@
 import { requireAuth, signOut } from "../../js/core/auth.js";
 import { createState, setRole } from "./state.js";
 import { renderAll } from "./render.js";
+
 import {
-  getBaseMeta,
+  getBase,
   getBaseRole,
   listCategories,
-  listTags,
+  listAllTags,
   listAllQuestions,
+  ensureTrashCategory,
 } from "./repo.js";
+
 import { wireActions } from "./actions.js";
 
 /* ================= DOM ================= */
@@ -63,6 +66,8 @@ btnLogout?.addEventListener("click", async () => {
 
     const r = await getBaseRole(baseId, user.id);
     setRole(state, r.role);
+    // Kosz (ukryty folder w root) – tworzymy, jeśli brakuje.
+    await ensureTrashCategory({ baseId });
 
     // ===== dane do renderu (etap 1: prosto, wszystko) =====
     const [cats, tags, qs] = await Promise.all([
