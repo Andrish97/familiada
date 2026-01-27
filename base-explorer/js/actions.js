@@ -2953,6 +2953,12 @@ export function wireActions({ state }) {
               if (!oneSelected) return;
               await renameSelectedPrompt(state);
               return;
+
+            case "restore":
+              if (!canWrite(state)) return;
+              if (!realKeys.length) return;
+              await restoreSelected(state);
+              return;
       
             case "delete":
               if (!canDeleteHere(state)) return;
