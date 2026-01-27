@@ -139,7 +139,7 @@ function startLiveLoop() {
     } finally {
       liveBusy = false;
     }
-  }, 2000); // 2s: sensowny kompromis
+  }, 5000); // 2s: sensowny kompromis
 }
 
 function stopLiveLoop() {
