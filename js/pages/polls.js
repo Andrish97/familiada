@@ -51,6 +51,19 @@ let liveBusy = false;
 
 let uiTextCloseOpen = false;
 
+// ===== Live diff cache (żeby nie mrugało) =====
+let liveSig_game = "";      // sygnatura stanu gry (status + poll_opened_at/poll_closed_at)
+let liveSig_results = "";   // sygnatura wyników (zmiana głosów / wpisów)
+
+// ===== Preview DOM cache (poll_points) =====
+let ppCache = null;
+// ppCache = {
+//   qsKey: "qid1,qid2,...",
+//   ansKey: "qid:aid1|aid2,...;...",
+//   valByAnswerId: Map(answerId -> HTMLElement),
+//   builtAt: number
+// }
+
 function setTextCloseUi(open) {
   uiTextCloseOpen = !!open;
 
@@ -65,6 +78,7 @@ function setTextCloseUi(open) {
   if (open) {
     if (resultsCard) resultsCard.style.display = "none";
     hidePreview();
+    resetPreviewDomCache();
     stopLiveLoop();
   } else {
     if ((game?.status || STATUS.DRAFT) === STATUS.POLL_OPEN && isPreviewOpen()) startLiveLoop();
@@ -113,33 +127,164 @@ function isPreviewOpen() {
   return !!(resultsCard && resultsCard.style.display !== "none");
 }
 
+function resetPreviewDomCache() {
+  ppCache = null;
+}
+
+function makeQsKey(qsList) {
+  return (qsList || []).map(q => q.id).join(",");
+}
+
+function makeAnsKey(ansByQ) {
+  // ansByQ: Map(qid -> answers[])
+  const parts = [];
+  for (const [qid, arr] of ansByQ.entries()) {
+    const aids = (arr || []).map(a => a.id).join("|");
+    parts.push(`${qid}:${aids}`);
+  }
+  return parts.join(";");
+}
+
+async function loadAnswersForQuestions(qsList) {
+  // Ładujemy answers dla wszystkich pytań; używamy "in(question_id)"
+  const qids = (qsList || []).map(q => q.id).filter(Boolean);
+  if (!qids.length) return new Map();
+
+  const { data, error } = await sb()
+    .from("answers")
+    .select("id,ord,text,question_id,fixed_points")
+    .in("question_id", qids)
+    .order("ord", { ascending: true });
+
+  if (error) throw error;
+
+  const map = new Map(); // qid -> answers[]
+  for (const qid of qids) map.set(qid, []);
+  for (const a of data || []) {
+    const arr = map.get(a.question_id);
+    if (arr) arr.push(a);
+  }
+  return map;
+}
+
+function buildPollPointsPreviewSkeleton(qsList, ansByQ) {
+  if (!resultsList) return;
+
+  resultsList.innerHTML = ""; // tylko przy budowie szkieletu!
+  const valByAnswerId = new Map();
+
+  for (const q of qsList || []) {
+    const box = document.createElement("div");
+    box.className = "resultQ";
+    box.innerHTML = `<div class="qTitle">P${q.ord}: ${q.text}</div>`;
+
+    const ans = ansByQ.get(q.id) || [];
+    for (const a of ans) {
+      const row = document.createElement("div");
+      row.className = "aRow";
+      row.innerHTML = `<div class="aTxt"></div><div class="aVal"></div>`;
+      row.querySelector(".aTxt").textContent = a.text;
+
+      const valEl = row.querySelector(".aVal");
+      valEl.textContent = "0"; // start
+      valByAnswerId.set(a.id, valEl);
+
+      box.appendChild(row);
+    }
+
+    resultsList.appendChild(box);
+  }
+
+  ppCache = {
+    qsKey: makeQsKey(qsList),
+    ansKey: makeAnsKey(ansByQ),
+    valByAnswerId,
+    builtAt: Date.now(),
+  };
+}
+
+async function ensurePollPointsPreviewSkeleton(qsList) {
+  // 1) answers (dla szkieletu) pobieramy tylko gdy trzeba przebudować
+  const qsKey = makeQsKey(qsList);
+
+  if (ppCache && ppCache.qsKey === qsKey) {
+    // nadal może zmienić się lista odpowiedzi (np. edycja gry) — wtedy przebudujemy niżej
+    // ale bez fetchu nie wiemy, więc robimy "rzadki" check tylko gdy brak sig z live
+    return;
+  }
+
+  const ansByQ = await loadAnswersForQuestions(qsList);
+  buildPollPointsPreviewSkeleton(qsList, ansByQ);
+}
+
+async function ensurePollPointsPreviewSkeletonWithAnswers(qsList, ansByQ) {
+  // wersja gdy już masz answers pobrane (żeby nie dublować fetchy)
+  const qsKey = makeQsKey(qsList);
+  const ansKey = makeAnsKey(ansByQ);
+
+  if (ppCache && ppCache.qsKey === qsKey && ppCache.ansKey === ansKey) return;
+  buildPollPointsPreviewSkeleton(qsList, ansByQ);
+}
+
+function updatePollPointsPreviewValues(valuesByAnswerId) {
+  // valuesByAnswerId: Map(answerId -> number)
+  if (!ppCache?.valByAnswerId) return;
+
+  for (const [aid, valEl] of ppCache.valByAnswerId.entries()) {
+    const v = valuesByAnswerId.get(aid) || 0;
+    // tylko jeśli różnica, żeby nie “migało” przez reflow
+    const next = String(v);
+    if (valEl.textContent !== next) valEl.textContent = next;
+  }
+}
+
 function startLiveLoop() {
   stopLiveLoop();
 
-  // odświeżaj tylko gdy to ma sens (sondaż otwarty / podgląd widoczny)
   liveTimer = setInterval(async () => {
     if (!gameId) return;
     if (document.hidden) return;
     if (liveBusy) return;
 
-    // jeśli sondaż nie jest otwarty i podgląd nie jest otwarty -> nie męcz DB
     const st = game?.status || STATUS.DRAFT;
     const should = (st === STATUS.POLL_OPEN) && isPreviewOpen() && !uiTextCloseOpen;
-
     if (!should) return;
 
     liveBusy = true;
     try {
-      // 1) odśwież status gry i stan przycisków
-      await refresh();
-      if (!isPreviewOpen()) return; // user zamknął w międzyczasie
-      await previewResults();
+      // 0) najpierw lekki fetch gry (bez ruszania UI)
+      const fresh = await loadGame();
+      const sigG = sigGameRow(fresh);
+
+      // jeśli zmienił się status/czas -> dopiero wtedy refresh UI (chipy, przyciski)
+      let gameChanged = (sigG !== liveSig_game);
+      if (gameChanged) {
+        game = fresh;
+        liveSig_game = sigG;
+        await refresh(); // to i tak przeliczy przyciski itd.
+      } else {
+        // utrzymaj "game" aktualne (żeby previewResults miało sens), ale bez refresh UI
+        game = fresh;
+      }
+
+      // 1) jeśli user zdążył zamknąć preview
+      if (!isPreviewOpen()) return;
+
+      // 2) sprawdź sygnaturę wyników (tania)
+      const sigR = await fetchResultsSignature();
+
+      // tylko jeśli wyniki się zmieniły -> przebuduj listę wyników
+      if (sigR && sigR !== liveSig_results) {
+        liveSig_results = sigR;
+        await previewResults();
+      }
+
     } catch (e) {
       console.warn("[polls] live loop error:", e);
     } finally {
       liveBusy = false;
     }
-  }, 5000); // 2s: sensowny kompromis
+  }, 5000);
 }
 
 function stopLiveLoop() {
@@ -253,13 +398,14 @@ function hidePreview() {
   if (resultsMeta) resultsMeta.textContent = "";
   if (resultsList) {
     resultsList.innerHTML = "";
-    resultsList.style.display = "none"; // <- zabija inline display:grid
+    resultsList.style.display = ""; // nie wpychaj inline none, bo potem "mruga"
   }
+  resetPreviewDomCache();
 }
 
 function showPreview() {
   if (resultsCard) resultsCard.style.display = "";
-  if (resultsList) resultsList.style.display = "grid"; // albo "" jeśli przeniesiesz do CSS
+  if (resultsList) resultsList.style.display = "";
 }
 
 function updatePreviewButtonState() {
@@ -422,6 +568,81 @@ async function getLastSessionIdForQuestion(questionId) {
     .maybeSingle();
   if (error) throw error;
   return data?.id || null;
+}
+
+function sigGameRow(g) {
+  if (!g) return "";
+  return [
+    g.id,
+    g.status || "",
+    g.poll_opened_at || "",
+    g.poll_closed_at || "",
+  ].join("|");
+}
+
+
+async function fetchResultsSignature() {
+  // jeśli nie ma gry albo to nie sondaż -> brak
+  if (!game || game.type === TYPES.PREPARED) return "";
+
+  const qsList = await listQuestionsBasic();
+  if (!qsList.length) return "";
+
+  // Jeśli sondaż ZAMKNIĘTY -> wyniki są w answers.fixed_points
+  if ((game.status || STATUS.DRAFT) === STATUS.READY) {
+    // bierzemy "ostatnia modyfikacja" odpowiedzi w tej grze: max(updated_at)
+    // UWAGA: jeśli nie masz updated_at w answers, to daj sumę fixed_points jako sygnaturę.
+    const { data, error } = await sb()
+      .from("answers")
+      .select("question_id,fixed_points")
+      .in("question_id", qsList.map(q => q.id));
+    if (error) throw error;
+
+    // sygnatura = suma fixed_points + liczność
+    let sum = 0, n = 0;
+    for (const r of data || []) { sum += (Number(r.fixed_points) || 0); n++; }
+    return `READY|${n}|${sum}`;
+  }
+
+  // LIVE: zależnie od typu
+  if (game.type === TYPES.POLL_POINTS) {
+    // sygnatura: suma głosów per pytanie (count)
+    // robimy count(*) per question_id w poll_votes dla ostatniej sesji danego pytania
+    const parts = [];
+    for (const q of qsList) {
+      const sid = await getLastSessionIdForQuestion(q.id);
+      if (!sid) { parts.push(`Q${q.id}:0`); continue; }
+
+      const { count, error } = await sb()
+        .from("poll_votes")
+        .select("id", { count: "exact", head: true })
+        .eq("poll_session_id", sid)
+        .eq("question_id", q.id);
+      if (error) throw error;
+
+      parts.push(`Q${q.id}:${count || 0}`);
+    }
+    return `LIVE_POINTS|${parts.join(",")}`;
+  }
+
+  // poll_text LIVE
+  {
+    const parts = [];
+    for (const q of qsList) {
+      const sid = await getLastSessionIdForQuestion(q.id);
+      if (!sid) { parts.push(`Q${q.id}:0`); continue; }
+
+      const { count, error } = await sb()
+        .from("poll_text_entries")
+        .select("id", { count: "exact", head: true })
+        .eq("poll_session_id", sid)
+        .eq("question_id", q.id);
+      if (error) throw error;
+
+      parts.push(`Q${q.id}:${count || 0}`);
+    }
+    return `LIVE_TEXT|${parts.join(",")}`;
+  }
 }
 
 /* =======================
@@ -591,52 +812,52 @@ async function previewResults() {
   }
 
   // ==========================
-  // LIVE (przed zamknięciem)
+  // POLL_POINTS (READY + LIVE) — cache DOM, aktualizujemy tylko liczby
   // ==========================
   if (game.type === TYPES.POLL_POINTS) {
-    for (const q of qsList) {
-      const sid = await getLastSessionIdForQuestion(q.id);
-
-      const { data: ans, error: aErr } = await sb()
-        .from("answers")
-        .select("id,ord,text")
-        .eq("question_id", q.id)
-        .order("ord", { ascending: true });
-      if (aErr) throw aErr;
-
-      const counts = new Map();
-      (ans || []).forEach((a) => counts.set(a.id, 0));
-
-      if (sid) {
-        const { data: votes, error: vErr } = await sb()
-          .from("poll_votes")
-          .select("answer_id")
-          .eq("poll_session_id", sid)
-          .eq("question_id", q.id);
-        if (vErr) throw vErr;
-
-        for (const v of votes || []) {
-          if (!v.answer_id) continue;
-          counts.set(v.answer_id, (counts.get(v.answer_id) || 0) + 1);
+    // 1) answers potrzebne do szkieletu (i do READY fixed_points)
+    const ansByQ = await loadAnswersForQuestions(qsList);
+    await ensurePollPointsPreviewSkeletonWithAnswers(qsList, ansByQ);
+  
+    const values = new Map(); // answer_id -> value
+  
+    if ((game.status || STATUS.DRAFT) === STATUS.READY) {
+      // READY: wartości bierzemy z fixed_points
+      for (const [qid, ans] of ansByQ.entries()) {
+        for (const a of ans || []) {
+          values.set(a.id, Number(a.fixed_points) || 0);
         }
       }
-
-      const box = document.createElement("div");
-      box.className = "resultQ";
-      box.innerHTML = `<div class="qTitle">P${q.ord}: ${q.text}</div>`;
-
-      for (const a of ans || []) {
-        const row = document.createElement("div");
-        row.className = "aRow";
-        row.innerHTML = `<div class="aTxt"></div><div class="aVal"></div>`;
-        row.querySelector(".aTxt").textContent = a.text;
-        row.querySelector(".aVal").textContent = String(counts.get(a.id) || 0);
-        box.appendChild(row);
-      }
-
-      resultsList.appendChild(box);
+  
+      updatePollPointsPreviewValues(values);
+      resultsMeta.textContent = "Wynik:";
+      return;
     }
-
+  
+    // LIVE: wartości bierzemy z liczby głosów
+    for (const q of qsList) {
+      const ans = ansByQ.get(q.id) || [];
+  
+      // wyzeruj wszystkie odpowiedzi dla pytania
+      for (const a of ans) values.set(a.id, 0);
+  
+      const sid = await getLastSessionIdForQuestion(q.id);
+      if (!sid) continue;
+  
+      const { data: votes, error: vErr } = await sb()
+        .from("poll_votes")
+        .select("answer_id")
+        .eq("poll_session_id", sid)
+        .eq("question_id", q.id);
+      if (vErr) throw vErr;
+  
+      for (const v of votes || []) {
+        if (!v.answer_id) continue;
+        values.set(v.answer_id, (values.get(v.answer_id) || 0) + 1);
+      }
+    }
+  
+    updatePollPointsPreviewValues(values);
     resultsMeta.textContent = "Podgląd na żywo:";
     return;
   }
