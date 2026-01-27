@@ -14,6 +14,11 @@ import {
   setViewSearch,
   rememberBrowseLocation,
   restoreBrowseLocation,
+  ensureTrashOrigins,
+  setTrashOrigin,
+  getTrashOrigin,
+  clearTrashOrigin,
+  clearTrashOriginsAll,
 } from "./state.js";
 
 import { importGame } from "../../js/pages/builder-import-export.js";
@@ -50,6 +55,44 @@ function isVirtualView(state) {
 function isTrashView(state) {
   const trashId = getTrashId(state?.categories);
   return !!trashId && state?.view === VIEW.FOLDER && state?.folderId === trashId;
+}
+
+function rememberOriginsForSelection(state) {
+  ensureTrashOrigins(state);
+
+  const keys = Array.isArray(state?.selection?.keys)
+    ? state.selection.keys
+    : Array.from(state?.selection?.keys || []);
+
+  const cats = Array.isArray(state?.categories) ? state.categories : [];
+  const qs = Array.isArray(state?.questions) ? state.questions : [];
+
+  const catById = new Map(cats.map((c) => [c.id, c]));
+  const qById = new Map(qs.map((q) => [q.id, q]));
+
+  for (const k of keys) {
+    if (typeof k !== "string") continue;
+
+    if (k.startsWith("q:")) {
+      const id = k.slice(2);
+      const q = qById.get(id);
+      // pytanie: zapamiętaj folder (category_id)
+      setTrashOrigin(state, k, {
+        kind: "q",
+        fromCategoryId: q?.category_id ?? null,
+      });
+    }
+
+    if (k.startsWith("c:")) {
+      const id = k.slice(2);
+      const c = catById.get(id);
+      // folder: zapamiętaj parent_id (po restore wróci w drzewo)
+      setTrashOrigin(state, k, {
+        kind: "c",
+        fromParentId: c?.parent_id ?? null,
+      });
+    }
+  }
 }
 
 function collectCategoryDescendants(categories, parentId) {
@@ -1072,6 +1115,7 @@ export async function deleteSelected(state) {
     });
     if (!ok) return;
 
+    rememberOriginsForSelection(state);
     await moveItemsTo(state, trashId);
     selectionClear(state);
     await refreshAll(state);
@@ -1096,6 +1140,58 @@ export async function deleteSelected(state) {
 
   if (idsQ.length) await sb.from("qb_questions").delete().in("id", idsQ);
   if (idsC.length) await sb.from("qb_categories").delete().in("id", idsC);
+
+  selectionClear(state);
+  clearTrashOriginsAll(state);
+  await refreshAll(state);
+}
+
+
+async function restoreSelected(state) {
+  const trashId = getTrashId(state?.categories);
+  const inTrash = !!trashId && state?.view === VIEW.FOLDER && state?.folderId === trashId;
+  if (!inTrash) return;
+
+  const keys = Array.isArray(state?.selection?.keys)
+    ? state.selection.keys
+    : Array.from(state?.selection?.keys || []);
+
+  if (!keys.length) return;
+
+  // Przywracamy "tam, skąd przyszło". Jeśli origin nie istnieje -> root (null).
+  const qRestores = []; // {id, category_id}
+  const cRestores = []; // {id, parent_id}
+
+  for (const k of keys) {
+    if (typeof k !== "string") continue;
+
+    const origin = getTrashOrigin(state, k);
+
+    if (k.startsWith("q:")) {
+      const id = k.slice(2);
+      const toCategoryId = origin?.kind === "q" ? (origin.fromCategoryId ?? null) : null;
+      qRestores.push({ id, category_id: toCategoryId });
+    }
+
+    if (k.startsWith("c:")) {
+      const id = k.slice(2);
+      const toParentId = origin?.kind === "c" ? (origin.fromParentId ?? null) : null;
+      cRestores.push({ id, parent_id: toParentId });
+    }
+  }
+
+  // 1) Foldery
+  for (const it of cRestores) {
+    await sb.from("qb_categories").update({ parent_id: it.parent_id }).eq("id", it.id);
+  }
+
+  // 2) Pytania
+  for (const it of qRestores) {
+    await sb.from("qb_questions").update({ category_id: it.category_id }).eq("id", it.id);
+  }
+
+  // origin już niepotrzebny po restore
+  for (const k of keys) clearTrashOrigin(state, k);
 
   selectionClear(state);
   await refreshAll(state);
