@@ -132,9 +132,6 @@ function startLiveLoop() {
     try {
       // 1) odśwież status gry i stan przycisków
       await refresh();
-
-      // 2) jeśli podgląd otwarty -> przelicz wyniki jeszcze raz
-      await refresh();
       if (!isPreviewOpen()) return; // user zamknął w międzyczasie
       await previewResults();
     } catch (e) {
