@@ -1066,3 +1066,26 @@ body.logo-editor-body .wrap{
   opacity: .75;
   font-size: 13px;
 }
+
+/* DRAW: ikonki SVG w przyciskach */
+#paneDraw .tbtn{
+  font-size:0; /* wyłącza “tekstowy” layout po emoji */
+}
+
+#paneDraw .tbtn svg{
+  width:18px;
+  height:18px;
+  display:block;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: .92;
+}
+
+#paneDraw .tbtn .fill{
+  fill: currentColor;
+  stroke: none;
+  opacity: .92;
+}
