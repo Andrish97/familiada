@@ -1,7 +1,7 @@
 // base-explorer/js/render.js
 // Renderowanie UI eksploratora na podstawie state (bez DB, bez akcji).
 
-import { VIEW, META, META_ORDER } from "./state.js";
+import { VIEW, META, META_ORDER, TRASH, getTrashId } from "./state.js";
 
 /* ================= DOM ================= */
 const elBaseName = document.getElementById("baseName");
@@ -424,9 +424,13 @@ export function renderTree(state) {
   if (!elTree) return;
 
   const cats = Array.isArray(state.categories) ? state.categories : [];
+
+  const trashId = getTrashId(cats);
+  const catsVisible = cats.filter((c) => c && c.name !== TRASH.NAME);
+  
   const byParent = new Map();
 
-  for (const c of cats) {
+  for (const c of catsVisible) {
     const pid = c.parent_id || null;
     if (!byParent.has(pid)) byParent.set(pid, []);
     byParent.get(pid).push(c);
@@ -530,12 +534,27 @@ export function renderTree(state) {
   });
 
   const treeRows = rootOpen ? renderSubtree(null, 0) : "";
-
   elTree.innerHTML = `
     <div style="opacity:.75; margin-bottom:6px;">Foldery</div>
-    <div class="treeList">
-      ${rootHtml}
-      ${(rootHasChildren ? (treeRows || "") : `<div style="opacity:.75; padding:6px 8px;">Brak folderów.</div>`)}
+  
+    <div class="treeWrap">
+      <div class="treeList treeScroll">
+        ${rootHtml}
+        ${(rootHasChildren ? (treeRows || "") : `<div style="opacity:.75; padding:6px 8px;">Brak folderów.</div>`)}
+      </div>
+  
+      <div class="treeBottom">
+        ${trashId ? rowHtml({
+          kind: "trash",
+          id: trashId,
+          depth: 0,
+          label: TRASH.LABEL,
+          icon: "🗑️",
+          canToggle: false,
+          isOpen: true,
+          isActive: state.view === VIEW.FOLDER && state.folderId === trashId,
+        }) : ""}
+      </div>
     </div>
   `;
 }
