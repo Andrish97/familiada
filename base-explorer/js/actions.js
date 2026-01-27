@@ -4,6 +4,8 @@
 import {
   VIEW,
   META_ORDER,
+  TRASH,
+  getTrashId,
   setViewAll,
   setViewFolder,
   selectionClear,
@@ -43,6 +45,33 @@ function canWrite(state) {
 
 function isVirtualView(state) {
   return state?.view === VIEW.SEARCH || state?.view === VIEW.TAG || state?.view === VIEW.META;
+}
+
+function isTrashView(state) {
+  const trashId = getTrashId(state?.categories);
+  return !!trashId && state?.view === VIEW.FOLDER && state?.folderId === trashId;
+}
+
+function collectCategoryDescendants(categories, parentId) {
+  const arr = Array.isArray(categories) ? categories : [];
+  const byParent = new Map();
+  for (const c of arr) {
+    const pid = c?.parent_id ?? null;
+    if (!byParent.has(pid)) byParent.set(pid, []);
+    byParent.get(pid).push(c);
+  }
+  const out = [];
+  const stack = [parentId];
+  while (stack.length) {
+    const pid = stack.pop();
+    const kids = byParent.get(pid) || [];
+    for (const k of kids) {
+      if (!k?.id) continue;
+      out.push(k.id);
+      stack.push(k.id);
+    }
+  }
+  return out;
 }
 
 function canMutateHere(state) {
@@ -992,20 +1021,84 @@ export async function deleteItems(state, keys) {
   return true;
 }
 
-export async function deleteSelected(state) {
-  const keys = state?.selection?.keys;
-  if (!keys || !keys.size) return false;
+async function deleteSelected(state) {
+  const keys = Array.isArray(state?.selection?.keys) ? state.selection.keys : Array.from(state?.selection?.keys || []);
+  const hasSel = keys.length > 0;
 
-  if (keys.has("root")) {
-    alert("Folder główny nie może być usuwany.");
-    return false;
+  const trashId = getTrashId(state?.categories);
+  const inTrash = !!trashId && state?.view === VIEW.FOLDER && state?.folderId === trashId;
+
+  // 1) Brak zaznaczenia: w koszu = opróżnij kosz
+  if (!hasSel) {
+    if (!inTrash) return;
+
+    const ok = await confirmModal({
+      title: "Opróżnić kosz?",
+      text: "To trwale usunie wszystkie elementy znajdujące się w koszu. Tego działania nie da się cofnąć.",
+      okText: "Opróżnij kosz",
+    });
+    if (!ok) return;
+
+    const catIds = collectCategoryDescendants(state?.categories, trashId);
+
+    // pytania w koszu (bezpośrednio + w podfolderach kosza)
+    await sb.from("qb_questions").delete().eq("base_id", state.baseId).in("category_id", [trashId, ...catIds]);
+
+    // foldery w koszu (tylko potomkowie; sam folder-kosz zostaje)
+    if (catIds.length) {
+      await sb.from("qb_categories").delete().eq("base_id", state.baseId).in("id", catIds);
+    }
+
+    await refreshAll(state);
+    return;
   }
 
-  const label = (keys.size === 1) ? "ten element" : `te elementy (${keys.size})`;
-  const ok = confirm(`Usunąć ${label}? Tego nie da się cofnąć.`);
-  if (!ok) return false;
+  // 2) Z zaznaczeniem: poza koszem = soft delete (przenieś do kosza)
+  if (!inTrash) {
+    if (!trashId) {
+      await confirmModal({
+        title: "Brak kosza",
+        text: "Nie znaleziono folderu-kosza. Odśwież stronę. (Nie wykonano usuwania.)",
+        okText: "OK",
+        cancelText: null,
+      });
+      return;
+    }
 
-  return await deleteItems(state, keys);
+    const ok = await confirmModal({
+      title: "Przenieść do kosza?",
+      text: "Elementy trafią do kosza i będzie można je przywrócić (dopóki kosz nie zostanie opróżniony).",
+      okText: "Przenieś do kosza",
+    });
+    if (!ok) return;
+
+    await moveItemsTo(state, trashId);
+    selectionClear(state);
+    await refreshAll(state);
+    return;
+  }
+
+  // 3) W koszu = hard delete zaznaczenia
+  const ok = await confirmModal({
+    title: "Usunąć trwale?",
+    text: "Tego działania nie da się cofnąć.",
+    okText: "Usuń trwale",
+  });
+  if (!ok) return;
+
+  const idsQ = [];
+  const idsC = [];
+  for (const k of keys) {
+    if (typeof k !== "string") continue;
+    if (k.startsWith("q:")) idsQ.push(k.slice(2));
+    if (k.startsWith("c:")) idsC.push(k.slice(2));
+  }
+
+  if (idsQ.length) await sb.from("qb_questions").delete().in("id", idsQ);
+  if (idsC.length) await sb.from("qb_categories").delete().in("id", idsC);
+
+  selectionClear(state);
+  await refreshAll(state);
 }
 
 function singleSelectedKey(state) {
