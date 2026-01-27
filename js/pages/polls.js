@@ -1279,57 +1279,63 @@ document.addEventListener("DOMContentLoaded", async () => {
     setMsg("Anulowano zamykanie (sondaż dalej otwarty).");
   });
   
-  btnFinishTextClose?.addEventListener("click", async () => {
-    btnFinishTextClose.disabled = true;
-    btnCancelTextClose.disabled = true;
+   btnFinishTextClose?.addEventListener("click", async () => {
     if (!game || game.type !== TYPES.POLL_TEXT) return;
     if (!textCloseModel) return;
 
-    const payloadItems = [];
+    btnFinishTextClose.disabled = true;
+    btnCancelTextClose.disabled = true;
 
-    for (const q of textCloseModel) {
-      const cleaned = q.items
-        .map((x) => ({ text: clip17Final(x.text), count: Number(x.count) || 0 }))
-        .filter((x) => x.text && x.count > 0);
+    try {
+      const payloadItems = [];
 
-      const final = normalizeTo100Int(cleaned)
-        .map((x) => ({ text: clip17Final(x.text), points: Number(x.points) || 0 }))
-        .filter((x) => x.text);
+      for (const q of textCloseModel) {
+        const cleaned = q.items
+          .map((x) => ({ text: clip17Final(x.text), count: Number(x.count) || 0 }))
+          .filter((x) => x.text && x.count > 0);
 
-      if (final.length < 3) {
-        alert(`Pytanie ${q.ord}: po edycji zostało mniej niż 3 odpowiedzi. Dodaj/połącz inaczej.`);
-        return;
+        const final = normalizeTo100Int(cleaned)
+          .map((x) => ({ text: clip17Final(x.text), points: Number(x.points) || 0 }))
+          .filter((x) => x.text);
+
+        if (final.length < 3) {
+          alert(`Pytanie ${q.ord}: po edycji zostało mniej niż 3 odpowiedzi. Dodaj/połącz inaczej.`);
+          return;
+        }
+
+        payloadItems.push({ question_id: q.question_id, answers: final });
       }
 
-      payloadItems.push({ question_id: q.question_id, answers: final });
+      const ok = await confirmModal({
+        title: "Zamknąć sondaż?",
+        text: "Zamknąć sondaż, wybrać TOP 6 i zapisać punkty do 100 dla każdego pytania?",
+        okText: "Zamknij",
+        cancelText: "Anuluj",
+      });
+      if (!ok) return;
+
+      const { error } = await sb().rpc("poll_text_close_apply", {
+        p_game_id: gameId,
+        p_key: game.share_key_poll,
+        p_payload: { items: payloadItems },
+      });
+      if (error) throw error;
+
+      setMsg("Sondaż zamknięty. Gra gotowa.");
+      setTextCloseUi(false);
+
+      await refresh();
+      // po zamknięciu: live tylko jeśli user ma otwarty preview i status OPEN (tu już raczej READY, więc i tak stop)
+      stopLiveLoop();
+    } catch (e) {
+      console.error("[polls] close text error:", e);
+      alert(`Nie udało się zamknąć sondażu.\n\n${e?.message || e}`);
+    } finally {
+      btnFinishTextClose.disabled = false;
+      btnCancelTextClose.disabled = false;
     }
+  });
 
-    const ok = await confirmModal({
-      title: "Zamknąć sondaż?",
-      text: "Zamknąć sondaż, wybrać TOP 6 i zapisać punkty do 100 dla każdego pytania?",
-      okText: "Zamknij",
-      cancelText: "Anuluj",
-    });
-    if (!ok) return;
-
-  try {
-    const { error } = await sb().rpc("poll_text_close_apply", {
-      p_game_id: gameId,
-      p_key: game.share_key_poll,
-      p_payload: { items: payloadItems },
-    });
-    if (error) throw error;
-  
-    setMsg("Sondaż zamknięty. Gra gotowa.");
-    setTextCloseUi(false);
-    await refresh();
-  } catch (e) {
-    console.error("[polls] close text error:", e);
-    alert(`Nie udało się zamknąć sondażu.\n\n${e?.message || e}`);
-  } finally {
-    btnFinishTextClose.disabled = false;
-    btnCancelTextClose.disabled = false;
-  }
   await refresh();
   installTextCloseLeaveGuard();
   stopLiveLoop();
