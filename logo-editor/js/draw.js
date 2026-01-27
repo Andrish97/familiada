@@ -82,8 +82,8 @@ export function initDrawEditor(ctx) {
   setTip(tPan,    "Ręka (przesuwanie)\nSpace (przytrzymaj)");
 
   // Zoom
-  setTip(tZoomIn,  tip2("Powiększ", "Ctrl + +", "⌘ + +"));
-  setTip(tZoomOut, tip2("Pomniejsz", "Ctrl + -", "⌘ + -"));
+  setTip(tZoomIn,  tip2("Powiększ", "Ctrl + +", "⌘+"));
+  setTip(tZoomOut, tip2("Pomniejsz", "Ctrl + -", "⌘-"));
 
   // Kolor / tło
   setTip(tColor, "Kolor obramowania narzędzia");
@@ -99,7 +99,7 @@ export function initDrawEditor(ctx) {
 
   // Historia
   setTip(tUndo, tip2("Cofnij", "Ctrl+Z", "⌘Z"));
-  setTip(tRedo, tip2("Ponów", "Ctrl+Shift+Z (lub Ctrl+Y)", "⌘Shift+Z"));
+  setTip(tRedo, tip2("Ponów", "Ctrl+Shift+Z (lub Ctrl+Y)", "⌘⇧Z"));
 
   // Akcje
   setTip(tSettings, "Ustawienia narzędzia");
