@@ -519,7 +519,7 @@ body.logo-editor-body .wrap{
   background:rgba(0,0,0,.92);
   box-shadow:0 24px 80px rgba(0,0,0,.65);
   padding:10px;
-  z-index:30;
+  z-index:1000;
 }
 
 #paneDraw .drawPopHead{
