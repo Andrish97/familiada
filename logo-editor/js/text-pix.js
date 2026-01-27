@@ -37,6 +37,33 @@ export function initTextPixEditor(ctx) {
   const inpThresh = document.getElementById("inpThresh");
   const chkRtDither = document.getElementById("chkRtDither");
 
+
+  // =========================================================
+  // Tooltipy (Win/Mac) — TEXT_PIX
+  // =========================================================
+  const isMac = /Mac|iPhone|iPad|iPod/.test(navigator.platform) || /Mac OS X/.test(navigator.userAgent);
+
+  function tip2(action, win, mac, extra = "") {
+    const line2 = `Win: ${win} • Mac: ${mac}`;
+    return extra ? `${action}\n${line2}\n${extra}` : `${action}\n${line2}`;
+  }
+
+  function setTip(el, txt) {
+    if (!el) return;
+    el.setAttribute("data-tip", txt);
+  }
+
+  // BIU (TinyMCE standard)
+  setTip(btnRtBold,      tip2("Pogrubienie",   "Ctrl+B", "⌘B"));
+  setTip(btnRtItalic,    tip2("Kursywa",       "Ctrl+I", "⌘I"));
+  setTip(btnRtUnderline, tip2("Podkreślenie",  "Ctrl+U", "⌘U"));
+
+  // Align (u Ciebie: klik cyklicznie)
+  setTip(btnRtAlignCycle,
+    tip2("Wyrównanie (cyklicznie)", "Ctrl+Shift+E", "⌘⇧E",
+      "Klikaj: lewo → środek → prawo")
+  );
+
   // Rozmiary
   const DOT_W = ctx.DOT_W;
   const DOT_H = ctx.DOT_H;
