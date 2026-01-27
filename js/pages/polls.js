@@ -796,7 +796,7 @@ async function buildTextClosePanel() {
           <div class="qHint">Przeciągnij, żeby połączyć • edytuj literówki • final max 17 znaków</div>
         </div>
         <div class="tcTools">
-          <button class="tcMergeDup" type="button" title="Scal identyczne (trim+lowercase+spacje)">Scal identyczne</button>
+          <button class="btn sm tcMergeDup" type="button" title="Scal identyczne">Scal identyczne</button>
         </div>
       </div>
       <div class="tcList"></div>
