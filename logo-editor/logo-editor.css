@@ -602,6 +602,41 @@ body.logo-editor-body .wrap{
 #drawStageHost.cur-none    canvas,
 #drawStageHost.cur-none    #drawStage{ cursor: none !important; }
 
+
+/* ==========================================================
+   DRAW — ikonki SVG w tbtn (wstrzykiwane z JS)
+========================================================== */
+
+#paneDraw .tbtn{
+  display:grid;
+  place-items:center;
+  font-size:0;           /* nie pokazuj tekstu (emoji/znaki) */
+}
+
+#paneDraw .tbtn svg{
+  width:18px;
+  height:18px;
+  display:block;
+
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+
+  opacity: .92;
+}
+
+#paneDraw .tbtn svg .fill{
+  fill: currentColor;
+  stroke: none;
+  opacity: .92;
+}
+
+#paneDraw .tbtn:disabled svg{
+  opacity: .45;
+}
+
 /* ==========================================================
    IMAGE — cały obraz widoczny (contain) + ramka 26:11
 ========================================================== */
