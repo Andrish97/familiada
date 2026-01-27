@@ -1021,7 +1021,7 @@ export async function deleteItems(state, keys) {
   return true;
 }
 
-async function deleteSelected(state) {
+export async function deleteSelected(state) {
   const keys = Array.isArray(state?.selection?.keys) ? state.selection.keys : Array.from(state?.selection?.keys || []);
   const hasSel = keys.length > 0;
 
