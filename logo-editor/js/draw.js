@@ -53,6 +53,60 @@ export function initDrawEditor(ctx) {
   const drawPopBody = document.getElementById("drawPopBody");
   const drawPopClose = document.getElementById("drawPopClose");
 
+    // =========================================================
+  // Tooltipy (Win/Mac)
+  // =========================================================
+  const isMac = /Mac|iPhone|iPad|iPod/.test(navigator.platform) || /Mac OS X/.test(navigator.userAgent);
+
+  const K = {
+    MOD: isMac ? "⌘" : "Ctrl",
+    ALT: isMac ? "⌥" : "Alt",
+    SHIFT: isMac ? "⇧" : "Shift",
+  };
+
+  function tip2(action, win, mac, extra = "") {
+    // format:
+    // Akcja
+    // Win: ... • Mac: ...
+    const line2 = `Win: ${win} • Mac: ${mac}`;
+    return extra ? `${action}\n${line2}\n${extra}` : `${action}\n${line2}`;
+  }
+
+  function setTip(el, txt) {
+    if (!el) return;
+    el.setAttribute("data-tip", txt);
+  }
+
+  // Select / Pan
+  setTip(tSelect, tip2("Wskaźnik (zaznacz / przesuń)", "Ctrl (przytrzymaj)", "⌘ (przytrzymaj)"));
+  setTip(tPan,    "Ręka (przesuwanie)\nSpace (przytrzymaj)");
+
+  // Zoom
+  setTip(tZoomIn,  tip2("Powiększ", "Ctrl + +", "⌘ + +"));
+  setTip(tZoomOut, tip2("Pomniejsz", "Ctrl + -", "⌘ + -"));
+
+  // Kolor / tło
+  setTip(tColor, "Kolor obramowania narzędzia");
+  setTip(tBg,    "Tło sceny (czarne/białe)");
+
+  // Narzędzia
+  setTip(tBrush,   "Pędzel\nB");
+  setTip(tEraser,  "Gumka\nE");
+  setTip(tLine,    "Linia\nL");
+  setTip(tRect,    "Prostokąt\nR");
+  setTip(tEllipse, "Elipsa\nO");
+  setTip(tPoly,    "Wielokąt\nP");
+
+  // Historia
+  setTip(tUndo, tip2("Cofnij", "Ctrl+Z", "⌘Z"));
+  setTip(tRedo, tip2("Ponów", "Ctrl+Shift+Z (lub Ctrl+Y)", "⌘Shift+Z"));
+
+  // Akcje
+  setTip(tSettings, "Ustawienia narzędzia");
+  setTip(tPolyDone, "Zakończ wielokąt\nEnter / dwuklik");
+  setTip(tClear,    "Wyczyść\nDel");
+  setTip(tEye,      "Podgląd (pełny ekran)\nH");
+
   // =========================================================
   // Consts / helpers
   // =========================================================
