@@ -54,6 +54,175 @@ export function initDrawEditor(ctx) {
   const drawPopClose = document.getElementById("drawPopClose");
 
     // =========================================================
+  // Ikony SVG (jako zmienne) + wstrzyknięcie do przycisków
+  // =========================================================
+
+  const ICONS = {
+    // 1) SELECT — (na razie prosta strzałka; będziemy ją “upiększać” jako pierwszą)
+    tSelect: `
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path d="M5 3l6 14 2-6 6-2L5 3z"></path>
+      </svg>
+    `,
+
+    // 2) PAN
+    tPan: `
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path d="M8 12V6a1 1 0 0 1 2 0v6"></path>
+        <path d="M10 12V5a1 1 0 0 1 2 0v7"></path>
+        <path d="M12 12V6a1 1 0 0 1 2 0v6"></path>
+        <path d="M14 12V7a1 1 0 0 1 2 0v8"></path>
+        <path d="M8 12c0 6 2 8 6 8 3 0 5-2 5-5v-2"></path>
+      </svg>
+    `,
+
+    // 3) ZOOM IN
+    tZoomIn: `
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <circle cx="10" cy="10" r="6"></circle>
+        <path d="M21 21l-5.2-5.2"></path>
+        <path d="M10 7v6"></path>
+        <path d="M7 10h6"></path>
+      </svg>
+    `,
+
+    // 4) ZOOM OUT
+    tZoomOut: `
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <circle cx="10" cy="10" r="6"></circle>
+        <path d="M21 21l-5.2-5.2"></path>
+        <path d="M7 10h6"></path>
+      </svg>
+    `,
+
+    // 5) COLOR (fg)
+    tColor: `
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <rect x="6" y="6" width="12" height="12" rx="2"></rect>
+      </svg>
+    `,
+
+    // 6) BG
+    tBg: `
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <rect x="4" y="5" width="16" height="14" rx="2"></rect>
+        <path d="M8 13l2-2 3 3 2-2 3 3"></path>
+        <circle class="fill" cx="9" cy="9" r="1.2"></circle>
+      </svg>
+    `,
+
+    // 7) BRUSH
+    tBrush: `
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path d="M4 20l4-1 11-11-3-3L5 16l-1 4z"></path>
+        <path d="M14 6l3 3"></path>
+      </svg>
+    `,
+
+    // 8) ERASER
+    tEraser: `
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path d="M7 16l7-7 4 4-7 7H7z"></path>
+        <path d="M11 20h9"></path>
+      </svg>
+    `,
+
+    // 9) LINE
+    tLine: `
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path d="M6 18L18 6"></path>
+        <circle class="fill" cx="6" cy="18" r="1.2"></circle>
+        <circle class="fill" cx="18" cy="6" r="1.2"></circle>
+      </svg>
+    `,
+
+    // 10) RECT
+    tRect: `
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <rect x="6" y="7" width="12" height="10" rx="2"></rect>
+      </svg>
+    `,
+
+    // 11) ELLIPSE
+    tEllipse: `
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <ellipse cx="12" cy="12" rx="7" ry="5"></ellipse>
+      </svg>
+    `,
+
+    // 12) POLY
+    tPoly: `
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path d="M12 6l7 14H5L12 6z"></path>
+      </svg>
+    `,
+
+    // 13) UNDO
+    tUndo: `
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path d="M9 7H5v4"></path>
+        <path d="M5 11c2-4 6-6 10-4 2 1 4 3 4 6"></path>
+      </svg>
+    `,
+
+    // 14) REDO
+    tRedo: `
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path d="M15 7h4v4"></path>
+        <path d="M19 11c-2-4-6-6-10-4-2 1-4 3-4 6"></path>
+      </svg>
+    `,
+
+    // 15) SETTINGS
+    tSettings: `
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <circle cx="12" cy="12" r="3.2"></circle>
+        <path d="M12 2v2"></path><path d="M12 20v2"></path>
+        <path d="M2 12h2"></path><path d="M20 12h2"></path>
+        <path d="M4.6 4.6l1.4 1.4"></path><path d="M18 18l1.4 1.4"></path>
+        <path d="M18 6l1.4-1.4"></path><path d="M4.6 19.4L6 18"></path>
+      </svg>
+    `,
+
+    // 16) POLY DONE
+    tPolyDone: `
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path d="M5 13l4 4L19 7"></path>
+      </svg>
+    `,
+
+    // 17) CLEAR
+    tClear: `
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path d="M6 7h12"></path>
+        <path d="M9 7V5h6v2"></path>
+        <path d="M8 7l1 14h6l1-14"></path>
+      </svg>
+    `,
+
+    // 18) EYE
+    tEye: `
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"></path>
+        <circle class="fill" cx="12" cy="12" r="2"></circle>
+      </svg>
+    `,
+  };
+
+  function injectIcon(id, html){
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.innerHTML = html || "";
+    // a11y: jeśli button nie ma aria-label, dodaj prosty fallback
+    if (!el.getAttribute("aria-label")) el.setAttribute("aria-label", id);
+  }
+
+  // Wstrzyknij wszystkie ikonki
+  for (const [id, svg] of Object.entries(ICONS)) {
+    injectIcon(id, svg);
+  }
+
+    // =========================================================
   // Tooltipy (Win/Mac)
   // =========================================================
   const isMac = /Mac|iPhone|iPad|iPod/.test(navigator.platform) || /Mac OS X/.test(navigator.userAgent);
