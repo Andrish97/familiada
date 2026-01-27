@@ -293,7 +293,7 @@ const ICON_FG = {
   setTip(tZoomOut, tip2("Pomniejsz", "Ctrl + -", "⌘-"));
 
   // Kolor / tło
-  setTip(tColor, "Kolor obramowania narzędzia");
+  setTip(tColor, "Kolor narzędzia");
   setTip(tBg,    "Tło sceny (czarne/białe)");
 
   // Narzędzia
