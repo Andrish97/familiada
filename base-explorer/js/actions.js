@@ -985,6 +985,10 @@ async function nextOrdForQuestion(state, categoryId) {
 }
 
 export async function createFolderHere(state, { parentId = null } = {}) {
+  if (isTrashView(state)) {
+    alert("W Koszu nie można tworzyć folderów. Przywróć elementy lub przejdź do innego folderu.");
+    return;
+  }
   if (!canWrite(state)) return false;
 
   const ord = await nextOrdForFolder(state, parentId);
@@ -1006,6 +1010,10 @@ export async function createFolderHere(state, { parentId = null } = {}) {
 }
 
 export async function createQuestionHere(state, { categoryId = null } = {}) {
+  if (isTrashView(state)) {
+    alert("W Koszu nie można tworzyć pytań. Przywróć elementy lub przejdź do innego folderu.");
+    return;
+  }
   if (!canWrite(state)) return false;
 
   const ord = await nextOrdForQuestion(state, categoryId);
