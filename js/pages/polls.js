@@ -49,6 +49,65 @@ let textCloseModel = null;
 let liveTimer = null;
 let liveBusy = false;
 
+let uiTextCloseOpen = false;
+
+function setTextCloseUi(open) {
+  uiTextCloseOpen = !!open;
+
+  // panel łączenia
+  if (textCloseCard) textCloseCard.style.display = open ? "" : "none";
+
+  // ukryj przyciski główne gdy panel otwarty
+  if (btnPollAction) btnPollAction.style.display = open ? "none" : "";
+  if (btnPreview) btnPreview.style.display = open ? "none" : "";
+
+  // dla porządku: podgląd wyników też schowaj, żeby nie mieszać ekranów
+  if (open) {
+    if (resultsCard) resultsCard.style.display = "none";
+    hidePreview();
+    stopLiveLoop();
+  } else {
+    if ((game?.status || STATUS.DRAFT) === STATUS.POLL_OPEN && isPreviewOpen()) startLiveLoop();
+  }
+}
+
+function installTextCloseLeaveGuard() {
+  // 1) twardy alert przeglądarki (reload/close)
+  window.addEventListener("beforeunload", (e) => {
+    if (!uiTextCloseOpen) return;
+    e.preventDefault();
+    e.returnValue = ""; // wymagane, żeby przeglądarka pokazała swój dialog
+    return "";
+  });
+
+  // 2) Back/Forward w historii (miękkie – nie zawsze 100% pewne na mobile)
+  window.addEventListener("popstate", async (e) => {
+    if (!uiTextCloseOpen) return;
+
+    // Zatrzymaj na miejscu i zapytaj
+    history.pushState({ __stay: true }, "");
+
+    const ok = await confirmModal({
+      title: "Masz otwarte łączenie",
+      text: "Jeśli wyjdziesz teraz, stracisz niezapisane zmiany. Wyjść mimo to?",
+      okText: "Wyjdź",
+      cancelText: "Zostań",
+    });
+
+    if (ok) {
+      // zamknij UI (opcjonalnie), żeby stan był spójny
+      setTextCloseUi(false);
+
+      // spróbuj wrócić „wstecz” jeszcze raz (już bez blokady)
+      // (na wszelki wypadek odłóż na tick)
+      setTimeout(() => history.back(), 0);
+    }
+  });
+
+  // 3) żeby popstate guard miał na czym „zatrzymać” (1 stan w historii)
+  history.pushState({ __stay: true }, "");
+}
+
 function isPreviewOpen() {
   // jeśli podgląd jest widoczny
   return !!(resultsCard && resultsCard.style.display !== "none");
@@ -65,8 +124,7 @@ function startLiveLoop() {
 
     // jeśli sondaż nie jest otwarty i podgląd nie jest otwarty -> nie męcz DB
     const st = game?.status || STATUS.DRAFT;
-    const should =
-      st === STATUS.POLL_OPEN || isPreviewOpen();
+    const should = (st === STATUS.POLL_OPEN) && isPreviewOpen() && !uiTextCloseOpen;
 
     if (!should) return;
 
@@ -76,9 +134,9 @@ function startLiveLoop() {
       await refresh();
 
       // 2) jeśli podgląd otwarty -> przelicz wyniki jeszcze raz
-      if (isPreviewOpen()) {
-        await previewResults();
-      }
+      await refresh();
+      if (!isPreviewOpen()) return; // user zamknął w międzyczasie
+      await previewResults();
     } catch (e) {
       console.warn("[polls] live loop error:", e);
     } finally {
@@ -795,8 +853,7 @@ function mergeDuplicatesInPlace(items) {
 }
 
 async function buildTextClosePanel() {
-  textCloseCard.style.display = "";
-  resultsCard.style.display = "none";
+  setTextCloseUi(true);
   textCloseList.innerHTML = "";
   textCloseMeta.textContent = "Ładuję odpowiedzi z ostatniej sesji…";
 
@@ -966,9 +1023,19 @@ async function refresh() {
   setLinkUiVisible(false);
   clearQr();
 
-  textCloseCard && (textCloseCard.style.display = "none");
-  resultsCard && (resultsCard.style.display = "none");
-  hidePreview();
+  // NIE niszcz podglądu jeśli użytkownik go ma otwartego
+  const wasPreviewOpen = isPreviewOpen();
+  
+  // Ukryj panele tylko jeśli NIE oglądamy podglądu i NIE jesteśmy w łączeniu
+  if (!uiTextCloseOpen) {
+    textCloseCard && (textCloseCard.style.display = "none");
+  }
+  
+  if (!wasPreviewOpen && !uiTextCloseOpen) {
+    // tylko wtedy wolno czyścić podgląd
+    resultsCard && (resultsCard.style.display = "none");
+    hidePreview();
+  }
 
   const st = game.status || STATUS.DRAFT;
 
@@ -1019,8 +1086,46 @@ document.addEventListener("DOMContentLoaded", async () => {
   const u = await requireAuth("index.html");
   if (who) who.textContent = u?.email || "—";
 
-  btnBack?.addEventListener("click", () => (location.href = "builder.html"));
+
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) stopLiveLoop();
+    else {
+      if ((game?.status || STATUS.DRAFT) === STATUS.POLL_OPEN && isPreviewOpen() && !uiTextCloseOpen) startLiveLoop();
+    }
+  });
+  
+  window.addEventListener("focus", () => {
+    if ((game?.status || STATUS.DRAFT) === STATUS.POLL_OPEN && isPreviewOpen() && !uiTextCloseOpen) startLiveLoop();
+  });
+  
+  window.addEventListener("blur", stopLiveLoop);
+  
+
+  btnBack?.addEventListener("click", async () => {
+    if (uiTextCloseOpen) {
+      const ok = await confirmModal({
+        title: "Masz otwarte sprawdzanie odpowiedzi",
+        text: "Wyjście spowoduje utratę niezapisanych zmian. Wyjść?",
+        okText: "Wyjdź",
+        cancelText: "Zostań",
+      });
+      if (!ok) return;
+      setTextCloseUi(false);
+    }
+    location.href = "builder.html";
+  });
+  
   btnLogout?.addEventListener("click", async () => {
+    if (uiTextCloseOpen) {
+      const ok = await confirmModal({
+        title: "Masz otwarte sprawdzanie odpowiedzi",
+        text: "Wylogowanie spowoduje utratę niezapisanych zmian. Wylogować?",
+        okText: "Wyloguj",
+        cancelText: "Zostań",
+      });
+      if (!ok) return;
+      setTextCloseUi(false);
+    }
     await signOut();
     location.href = "index.html";
   });
@@ -1050,14 +1155,22 @@ document.addEventListener("DOMContentLoaded", async () => {
   btnPreview?.addEventListener("click", async () => {
     if (!game || btnPreview.disabled) return;
   
-    const isOpen = resultsCard && resultsCard.style.display !== "none";
-    if (isOpen) {
+    const open = isPreviewOpen();
+    if (open) {
       hidePreview();
+      stopLiveLoop(); // <- ważne
       return;
     }
   
     showPreview();
     await previewResults();
+  
+    // live tylko gdy status OTWARTY
+    if ((game?.status || STATUS.DRAFT) === STATUS.POLL_OPEN && !uiTextCloseOpen) {
+      startLiveLoop();
+    } else {
+      stopLiveLoop();
+    }
   });
 
   btnPollAction?.addEventListener("click", async () => {
@@ -1162,11 +1275,13 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
   btnCancelTextClose?.addEventListener("click", () => {
-    textCloseCard.style.display = "none";
+    setTextCloseUi(false);
     setMsg("Anulowano zamykanie (sondaż dalej otwarty).");
   });
-
+  
   btnFinishTextClose?.addEventListener("click", async () => {
+    btnFinishTextClose.disabled = true;
+    btnCancelTextClose.disabled = true;
     if (!game || game.type !== TYPES.POLL_TEXT) return;
     if (!textCloseModel) return;
 
@@ -1197,29 +1312,25 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
     if (!ok) return;
 
-    try {
-      const { error } = await sb().rpc("poll_text_close_apply", {
-        p_game_id: gameId,
-        p_key: game.share_key_poll,
-        p_payload: { items: payloadItems },
-      });
-      if (error) throw error;
-
-      setMsg("Sondaż zamknięty. Gra gotowa.");
-      textCloseCard.style.display = "none";
-      await refresh();
-    } catch (e) {
-      console.error("[polls] close text error:", e);
-      alert(`Nie udało się zamknąć sondażu.\n\n${e?.message || e}`);
-    }
-  });
-
-  document.addEventListener("visibilitychange", () => {
-    if (document.hidden) stopLiveLoop();
-    else startLiveLoop();
-  });
-  window.addEventListener("focus", startLiveLoop);
-  window.addEventListener("blur", stopLiveLoop);
+  try {
+    const { error } = await sb().rpc("poll_text_close_apply", {
+      p_game_id: gameId,
+      p_key: game.share_key_poll,
+      p_payload: { items: payloadItems },
+    });
+    if (error) throw error;
+  
+    setMsg("Sondaż zamknięty. Gra gotowa.");
+    setTextCloseUi(false);
+    await refresh();
+  } catch (e) {
+    console.error("[polls] close text error:", e);
+    alert(`Nie udało się zamknąć sondażu.\n\n${e?.message || e}`);
+  } finally {
+    btnFinishTextClose.disabled = false;
+    btnCancelTextClose.disabled = false;
+  }
   await refresh();
-  startLiveLoop();
+  installTextCloseLeaveGuard();
+  stopLiveLoop();
 });
