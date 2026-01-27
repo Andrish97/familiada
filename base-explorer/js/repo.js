@@ -2,6 +2,7 @@
 // Repozytorium danych (Supabase) dla menadżera bazy pytań.
 
 import { sb } from "../../js/core/supabase.js";
+import { TRASH } from "./state.js";
 
 /**
  * Pobiera metadane bazy.
@@ -66,6 +67,38 @@ export async function listCategories(baseId) {
 
   if (error) throw error;
   return data || [];
+}
+
+// Upewnia się, że istnieje ukryty folder-kosz w root tej bazy (bez zmian schematu DB).
+// Zwraca id kosza (string) albo null (gdy błąd).
+export async function ensureTrashCategory({ baseId } = {}) {
+  if (!baseId) return null;
+
+  // 1) spróbuj znaleźć po stronie DB
+  {
+    const { data, error } = await sb
+      .from("qb_categories")
+      .select("id,parent_id,name")
+      .eq("base_id", baseId)
+      .eq("name", TRASH.NAME)
+      .is("parent_id", null)
+      .limit(1);
+
+    if (!error && data && data[0]?.id) return data[0].id;
+  }
+
+  // 2) jeśli nie ma – utwórz
+  {
+    const { data, error } = await sb
+      .from("qb_categories")
+      .insert({ base_id: baseId, parent_id: null, name: TRASH.NAME, ord: 999999999 })
+      .select("id")
+      .single();
+
+    if (!error && data?.id) return data.id;
+  }
+
+  return null;
 }
 
 /**
