@@ -18,7 +18,8 @@ body.builder-body {
     gap: 16px;
     padding-top: 20px;
     padding-bottom: 14px;
-    border-bottom: 1px solid var(--line2)
+    border-bottom: 1px solid var(--line2);
+    margin-bottom: 12px;
 }
 
 .title {
