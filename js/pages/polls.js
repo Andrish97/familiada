@@ -459,7 +459,7 @@ async function previewResults() {
         resultsList.appendChild(box);
       }
 
-      resultsMeta.textContent = "Wynik FINAL: zapisane fixed_points (po zamknięciu sondażu).";
+      resultsMeta.textContent = "Wynik:.";
       return;
     }
 
@@ -484,7 +484,7 @@ async function previewResults() {
         resultsList.appendChild(box);
       }
 
-      resultsMeta.textContent = "Wynik FINAL: odpowiedzi po merge/delete + TOP 6 + fixed_points zapisane przy zamknięciu.";
+      resultsMeta.textContent = "Wynik:";
       return;
     }
   }
@@ -536,7 +536,7 @@ async function previewResults() {
       resultsList.appendChild(box);
     }
 
-    resultsMeta.textContent = "Podgląd LIVE: liczba głosów w ostatniej sesji (na pytanie).";
+    resultsMeta.textContent = "Podgląd na żywo:";
     return;
   }
 
@@ -581,8 +581,7 @@ async function previewResults() {
     resultsList.appendChild(box);
   }
 
-  resultsMeta.textContent =
-    "Podgląd LIVE: agregacja odpowiedzi (lowercase + trim + wielokrotne spacje => jedna) w ostatniej sesji.";
+  resultsMeta.textContent = "Podgląd na żywo:";
 }
 
 /* =======================
