@@ -9,6 +9,18 @@ export const VIEW = {
   META: "meta",     // filtr “meta” (wirtualny widok)
 };
 
+// Kosz: ukryty folder w root (bez zmian DB).
+export const TRASH = {
+  NAME: "__trash__", // nazwa techniczna w DB (nie pokazujemy jej użytkownikowi)
+  LABEL: "Kosz",     // etykieta w UI
+};
+
+export function getTrashId(categories) {
+  const arr = Array.isArray(categories) ? categories : [];
+  const x = arr.find((c) => c && c.name === TRASH.NAME && (c.parent_id ?? null) === null);
+  return x?.id || null;
+}
+
 export const SORT = {
   UPDATED_DESC: "updated_desc",
   NAME_ASC: "name_asc",
