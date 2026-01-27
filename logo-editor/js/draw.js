@@ -51,22 +51,21 @@ export function initDrawEditor(ctx) {
   // Ikony dynamiczne: FG (kolor narzędzia) i BG (tło sceny)
   // =========================================================
 
-const ICON_FG = {
+const ICON_BG = {
 
-    // BIAŁE — jedno grube, czyste obramowanie
+    // BIAŁE TŁO — pełny prostokąt
     WHITE: `
       <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-        <rect x="5" y="5" width="14" height="14" rx="3"
-              stroke-width="3"></rect>
+        <rect class="fill"
+              x="4" y="5" width="16" height="14" rx="2"></rect>
       </svg>
     `,
   
-    // CZARNE — potrójna linia (cienka + przerwa + cienka + przerwa + cienka)
+    // CZARNE TŁO — pusty prostokąt z cienkim obramowaniem
     BLACK: `
       <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-        <rect x="5" y="5" width="14" height="14" rx="3"
-              stroke-width="2"
-              stroke-dasharray="2 1"></rect>
+        <rect x="4.5" y="5.5" width="15" height="13" rx="2"
+              stroke-width="1"></rect>
       </svg>
     `,
   };
@@ -76,15 +75,15 @@ const ICON_FG = {
     // BIAŁE — puste kółko
     WHITE: `
       <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-        <circle cx="12" cy="12" r="7"
-                stroke-width="2"></circle>
+        <circle class="fill" cx="12" cy="12" r="7"></circle>
       </svg>
     `,
   
     // CZARNE — pełne kółko
     BLACK: `
       <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-        <circle class="fill" cx="12" cy="12" r="7"></circle>
+        <circle cx="12" cy="12" r="7"
+                stroke-width="2"></circle>
       </svg>
     `,
   };
