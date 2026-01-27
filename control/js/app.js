@@ -755,14 +755,15 @@ async function sendZeroStatesToDevices() {
     // krok 1: wyświetlacz -> Dalej
     ui.setEnabled("btnDevicesNext", !!flags.displayOnline);
 
+    // krok 2: „QR na wyświetlaczu”
+    
+    ui.setEnabled("btnQrToggle", flags.displayOnline);
+    
     // krok 2: prowadzący + przycisk online
     const hostReady = !!flags.hostOnline;
     const buzzerReady = !!flags.buzzerOnline;
-    ui.setEnabled("btnDevicesToAudio", hostReady && buzzerReady);
-
-    // krok 2: „QR na wyświetlaczu” – tylko gdy wszystkie trzy online
     const allOnline = flags.displayOnline && hostReady && buzzerReady;
-    ui.setEnabled("btnQrToggle", allOnline);
+    ui.setEnabled("btnDevicesToAudio", allOnline);
 
     // krok 3: „Gotowe — przejdź dalej” po odblokowaniu audio
     ui.setEnabled(
