@@ -47,6 +47,60 @@ export function initDrawEditor(ctx) {
   const tColor    = document.getElementById("tColor");  // ⬛️/⬜️ (kolor obramowania)
   const tBg       = document.getElementById("tBg");     // 🖼️ (tło)
 
+    // =========================================================
+  // Ikony dynamiczne: FG (kolor narzędzia) i BG (tło sceny)
+  // =========================================================
+
+  const ICON_FG = {
+    BLACK: `
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <!-- ramka -->
+        <rect x="5" y="5" width="14" height="14" rx="3"></rect>
+        <!-- kropka = czarny -->
+        <circle class="fill" cx="16.2" cy="7.8" r="2.2"></circle>
+      </svg>
+    `,
+    WHITE: `
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <rect x="5" y="5" width="14" height="14" rx="3"></rect>
+        <!-- kropka = białe: rysujemy obrys + mała "gwiazdka" -->
+        <circle cx="16.2" cy="7.8" r="2.2"></circle>
+        <path d="M16.2 5.4v4.8M13.8 7.8h4.8"></path>
+      </svg>
+    `,
+  };
+
+  const ICON_BG = {
+    BLACK: `
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <rect x="4" y="5" width="16" height="14" rx="2"></rect>
+        <!-- pół na pół: lewe ciemne -->
+        <path class="fill" d="M6 7h6v10H6z"></path>
+      </svg>
+    `,
+    WHITE: `
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <rect x="4" y="5" width="16" height="14" rx="2"></rect>
+        <!-- pół na pół: prawe jasne (robimy obrys + "shine") -->
+        <path d="M12 7h6v10h-6z"></path>
+        <path d="M15 8l1 1M14 10l2 2"></path>
+      </svg>
+    `,
+  };
+
+  function syncDynamicIcons() {
+    // fg / tColor
+    if (tColor) {
+      tColor.innerHTML = ICON_FG[fg] || ICON_FG.BLACK;
+      tColor.setAttribute("aria-label", `Kolor obramowania: ${fg === "BLACK" ? "czarny" : "biały"}`);
+    }
+    // bg / tBg
+    if (tBg) {
+      tBg.innerHTML = ICON_BG[bg] || ICON_BG.BLACK;
+      tBg.setAttribute("aria-label", `Tło sceny: ${bg === "BLACK" ? "czarne" : "białe"}`);
+    }
+  }
+
   // Settings popover
   const drawPop = document.getElementById("drawPop");
   const drawPopTitle = document.getElementById("drawPopTitle");
@@ -68,11 +122,11 @@ export function initDrawEditor(ctx) {
     // 2) PAN
     tPan: `
       <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-        <path d="M8 12V6a1 1 0 0 1 2 0v6"></path>
-        <path d="M10 12V5a1 1 0 0 1 2 0v7"></path>
-        <path d="M12 12V6a1 1 0 0 1 2 0v6"></path>
-        <path d="M14 12V7a1 1 0 0 1 2 0v8"></path>
-        <path d="M8 12c0 6 2 8 6 8 3 0 5-2 5-5v-2"></path>
+        <path d="M8 12V7.2a1.2 1.2 0 0 1 2.4 0V12"></path>
+        <path d="M10.4 12V6.4a1.2 1.2 0 0 1 2.4 0V12"></path>
+        <path d="M12.8 12V7.8a1.2 1.2 0 0 1 2.4 0V12"></path>
+        <path d="M15.2 12V9.2a1.2 1.2 0 0 1 2.4 0V14.2"></path>
+        <path d="M8 12c0 6 2.6 8 6.6 8 3.1 0 5.4-2 5.4-5.1v-.7"></path>
       </svg>
     `,
 
@@ -95,27 +149,12 @@ export function initDrawEditor(ctx) {
       </svg>
     `,
 
-    // 5) COLOR (fg)
-    tColor: `
-      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-        <rect x="6" y="6" width="12" height="12" rx="2"></rect>
-      </svg>
-    `,
-
-    // 6) BG
-    tBg: `
-      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-        <rect x="4" y="5" width="16" height="14" rx="2"></rect>
-        <path d="M8 13l2-2 3 3 2-2 3 3"></path>
-        <circle class="fill" cx="9" cy="9" r="1.2"></circle>
-      </svg>
-    `,
-
     // 7) BRUSH
-    tBrush: `
+    tEraser: `
       <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-        <path d="M4 20l4-1 11-11-3-3L5 16l-1 4z"></path>
-        <path d="M14 6l3 3"></path>
+        <path d="M7 16l8.5-8.5a1.8 1.8 0 0 1 2.5 0l1 1a1.8 1.8 0 0 1 0 2.5L11 19H7l-2-2 2-1z"></path>
+        <path d="M11 19h10"></path>
+        <path d="M9.2 14.8l4 4"></path>
       </svg>
     `,
 
@@ -176,11 +215,8 @@ export function initDrawEditor(ctx) {
     // 15) SETTINGS
     tSettings: `
       <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-        <circle cx="12" cy="12" r="3.2"></circle>
-        <path d="M12 2v2"></path><path d="M12 20v2"></path>
-        <path d="M2 12h2"></path><path d="M20 12h2"></path>
-        <path d="M4.6 4.6l1.4 1.4"></path><path d="M18 18l1.4 1.4"></path>
-        <path d="M18 6l1.4-1.4"></path><path d="M4.6 19.4L6 18"></path>
+        <path d="M12 2.8l1 2.2 2.4.6 1.6-1.6 2 2-1.6 1.6.6 2.4 2.2 1v2.8l-2.2 1-.6 2.4 1.6 1.6-2 2-1.6-1.6-2.4.6-1 2.2H9.2l-1-2.2-2.4-.6-1.6 1.6-2-2 1.6-1.6-.6-2.4-2.2-1V11.2l2.2-1 .6-2.4L2.2 6.2l2-2 1.6 1.6 2.4-.6 1-2.2H12z"></path>
+        <circle cx="12" cy="12" r="2.6"></circle>
       </svg>
     `,
 
@@ -348,6 +384,8 @@ export function initDrawEditor(ctx) {
   // Tło sceny — 🖼️
   let bg = "BLACK"; // BLACK | WHITE
   function bgColor() { return bg === "WHITE" ? "#fff" : "#000"; }
+
+  syncDynamicIcons();
 
   // Ustawienia narzędzi:
   // - brush: stroke
@@ -765,8 +803,6 @@ export function initDrawEditor(ctx) {
     setBtnOn(tPoly, tool === TOOL.POLY);
 
     if (tPolyDone) tPolyDone.disabled = !(tool === TOOL.POLY && polyPoints.length >= 3);
-
-    if (tColor) tColor.textContent = fgLabel();
   }
 
   function applyToolBehavior() {
@@ -1852,9 +1888,9 @@ export function initDrawEditor(ctx) {
 
   function toggleFg() {
     fg = (fg === "BLACK") ? "WHITE" : "BLACK";
-    if (tColor) tColor.textContent = fgLabel();
     if (tool === TOOL.BRUSH) applyBrushStyle();
     schedulePreview(80);
+    syncDynamicIcons();
   }
 
   function toggleBg() {
@@ -1863,6 +1899,7 @@ export function initDrawEditor(ctx) {
       fabricCanvas.backgroundColor = bgColor();
       fabricCanvas.requestRenderAll();
       schedulePreview(80);
+      syncDynamicIcons();
     }
   }
 
