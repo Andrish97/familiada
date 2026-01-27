@@ -1053,7 +1053,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (game.type === TYPES.POLL_POINTS) {
         const ok = await confirmModal({
           title: "Zakończyć sondaż?",
-          text: "Zamknąć sondaż i przeliczyć punkty do 100 (0 głosów => 1 pkt)?",
+          text: "Zamknąć sondaż i przeliczyć punkty do 100?",
           okText: "Zakończ",
           cancelText: "Anuluj",
         });
