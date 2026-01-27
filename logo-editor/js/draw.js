@@ -64,17 +64,9 @@ const ICON_FG = {
     // CZARNE — potrójna linia (cienka + przerwa + cienka + przerwa + cienka)
     BLACK: `
       <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-        <!-- zewnętrzna cienka -->
-        <rect x="4.5" y="4.5" width="15" height="15" rx="3.5"
-              stroke-width="1"></rect>
-  
-        <!-- środkowa cienka -->
-        <rect x="6.5" y="6.5" width="11" height="11" rx="2.5"
-              stroke-width="1"></rect>
-  
-        <!-- wewnętrzna cienka -->
-        <rect x="8.5" y="8.5" width="7" height="7" rx="1.8"
-              stroke-width="1"></rect>
+        <rect x="5" y="5" width="14" height="14" rx="3"
+              stroke-width="2"
+              stroke-dasharray="2 1"></rect>
       </svg>
     `,
   };
