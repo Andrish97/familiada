@@ -15,7 +15,8 @@ body.polls-body {
 
 .rowTop,.statusBox {
     display: flex;
-    flex-wrap: wrap
+    flex-wrap: wrap;
+    margin-bottom: 10px;
 }
 
 .rowTop {
