@@ -436,7 +436,7 @@ export function renderTree(state) {
   }
 
   const open = state.treeOpen instanceof Set ? state.treeOpen : new Set();
-  const maxDepth = 6;
+  const maxDepth = 8;
   const ROOT_ID = "root";
   const rootHasChildren = (byParent.get(null) || []).length > 0;
   const rootOpen = rootHasChildren ? open.has(ROOT_ID) : true; // jak są dzieci, to root steruje
