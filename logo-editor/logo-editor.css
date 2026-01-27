@@ -971,3 +971,40 @@ body.logo-editor-body .wrap{
   opacity:.55;
   font-size:12px;
 }
+
+.fontPickSearch{
+  display:flex;
+  gap:8px;
+  align-items:center;
+  padding: 6px;
+  position: sticky;
+  top: 0;
+  background: rgba(0,0,0,.92);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(255,255,255,.10);
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+}
+
+.fontPickSearchInp{
+  flex:1;
+  min-width:0;
+}
+
+.fontPickSearchClear{
+  width:40px;
+  height:40px;
+  display:grid;
+  place-items:center;
+  border-radius:12px;
+}
+
+.fontPickList{
+  padding: 6px;
+}
+
+.fontPickEmpty{
+  padding: 10px 12px 12px;
+  opacity: .75;
+  font-size: 13px;
+}
