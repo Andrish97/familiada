@@ -273,8 +273,8 @@ export function initDrawEditor(ctx) {
   // Akcje
   setTip(tSettings, "Ustawienia narzędzia");
   setTip(tPolyDone, "Zakończ wielokąt\nEnter / dwuklik");
-  setTip(tClear,    "Wyczyść\nDel");
-  setTip(tEye,      "Podgląd (pełny ekran)\nH");
+  setTip(tClear,    "Wyczyść");
+  setTip(tEye,      "Podgląd (pełny ekran)");
 
   // =========================================================
   // Consts / helpers
