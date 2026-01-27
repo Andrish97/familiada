@@ -9,6 +9,7 @@ const tabs = qsa(".simple-tabs .tab");
 const pages = {
   general: byId("tab-general"),
   edit: byId("tab-edit"),
+  bases: byId("tab-bases"),
   polls: byId("tab-polls"),
   logo: byId("tab-logo"),
   control: byId("tab-control"),
