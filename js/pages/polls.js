@@ -46,6 +46,52 @@ const btnFinishTextClose = $("btnFinishTextClose");
 let game = null;
 let textCloseModel = null;
 
+let liveTimer = null;
+let liveBusy = false;
+
+function isPreviewOpen() {
+  // jeśli podgląd jest widoczny
+  return !!(resultsCard && resultsCard.style.display !== "none");
+}
+
+function startLiveLoop() {
+  stopLiveLoop();
+
+  // odświeżaj tylko gdy to ma sens (sondaż otwarty / podgląd widoczny)
+  liveTimer = setInterval(async () => {
+    if (!gameId) return;
+    if (document.hidden) return;
+    if (liveBusy) return;
+
+    // jeśli sondaż nie jest otwarty i podgląd nie jest otwarty -> nie męcz DB
+    const st = game?.status || STATUS.DRAFT;
+    const should =
+      st === STATUS.POLL_OPEN || isPreviewOpen();
+
+    if (!should) return;
+
+    liveBusy = true;
+    try {
+      // 1) odśwież status gry i stan przycisków
+      await refresh();
+
+      // 2) jeśli podgląd otwarty -> przelicz wyniki jeszcze raz
+      if (isPreviewOpen()) {
+        await previewResults();
+      }
+    } catch (e) {
+      console.warn("[polls] live loop error:", e);
+    } finally {
+      liveBusy = false;
+    }
+  }, 2000); // 2s: sensowny kompromis
+}
+
+function stopLiveLoop() {
+  if (liveTimer) clearInterval(liveTimer);
+  liveTimer = null;
+}
+
 const TYPES = {
   POLL_TEXT: "poll_text",
   POLL_POINTS: "poll_points",
@@ -1168,5 +1214,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   });
 
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) stopLiveLoop();
+    else startLiveLoop();
+  });
+  window.addEventListener("focus", startLiveLoop);
+  window.addEventListener("blur", stopLiveLoop);
   await refresh();
+  startLiveLoop();
 });
