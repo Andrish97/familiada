@@ -7,7 +7,7 @@
 
   <link rel="icon" href="../favicon.ico"/>
   <link rel="stylesheet" href="../css/base.css"/>
-  <link rel="stylesheet" href="css/logo-editor.css"/>
+  <link rel="stylesheet" href="logo-editor.css"/>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
   
   <!-- TinyMCE -->
@@ -130,7 +130,18 @@
                     <div class="ctrlTitle">Czcionka</div>
 
                     <div class="ctrlRow ctrlRowFull">
-                      <select class="inp" id="selRtFont"></select>
+                      <!-- Custom dropdown (Windows-friendly) -->
+                      <div class="fontPick" id="fontPick">
+                        <button type="button" class="inp fontPickBtn" id="fontPickBtn" aria-haspopup="listbox" aria-expanded="false">
+                          <span class="fontPickText" id="fontPickText">—</span>
+                          <span class="fontPickArrow" aria-hidden="true">▾</span>
+                        </button>
+                      
+                        <div class="fontPickPop" id="fontPickPop" role="listbox" tabindex="-1" hidden></div>
+                      </div>
+                      
+                      <!-- Natywny select zostaje tylko jako “model” dla istniejącej logiki -->
+                      <select class="inp" id="selRtFont" style="display:none;"></select>
                     </div>
 
                     <div class="ctrlRow ctrlRowSize">
