@@ -76,7 +76,7 @@ export async function ensureTrashCategory({ baseId } = {}) {
 
   // 1) spróbuj znaleźć po stronie DB
   {
-    const { data, error } = await sb
+    const { data, error } = await sb()
       .from("qb_categories")
       .select("id,parent_id,name")
       .eq("base_id", baseId)
@@ -89,7 +89,7 @@ export async function ensureTrashCategory({ baseId } = {}) {
 
   // 2) jeśli nie ma – utwórz
   {
-    const { data, error } = await sb
+    const { data, error } = await sb()
       .from("qb_categories")
       .insert({ base_id: baseId, parent_id: null, name: TRASH.NAME, ord: 999999999 })
       .select("id")
