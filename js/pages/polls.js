@@ -1072,7 +1072,6 @@ document.addEventListener("DOMContentLoaded", async () => {
           setMsg("Sondaż zamknięty. Gra gotowa (unikatowe punkty).");
           await refresh();
         } catch (e) {
-        }
           console.error("[polls] close points error:", e);
           alert(`Nie udało się zamknąć sondażu.\n\n${e?.message || e}`);
         }
