@@ -9,7 +9,7 @@ import {
   getBaseMeta,
   getBaseRole,
   listCategories,
-  listAllTags,
+  listTags,
   listAllQuestions,
   ensureTrashCategory,
 } from "./repo.js";
