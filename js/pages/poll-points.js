@@ -18,10 +18,31 @@ const closed = $("closed");
 
 let finished = false;
 
+function doneKey() {
+  return `fam_poll_done_${gameId}_${key}`;
+}
+
+function hasDone() {
+  return localStorage.getItem(doneKey()) === "1";
+}
+
+function markDone() {
+  localStorage.setItem(doneKey(), "1");
+}
+
+// token tylko “na czas życia strony” (refresh/close = reset)
+let voterToken = null;
+function getVoterToken() {
+  if (voterToken) return voterToken;
+  voterToken = (crypto?.randomUUID?.() || `${Date.now()}_${Math.random().toString(16).slice(2)}`);
+  return voterToken;
+}
+
 function showFinished() {
   if (finished) return;
   finished = true;
 
+  markDone();
   const sub = document.getElementById("sub");
   const qbox = document.getElementById("qbox");
   const closed = document.getElementById("closed");
@@ -39,16 +60,6 @@ function setSub(t) {
 function showClosed(on) {
   if (closed) closed.style.display = on ? "" : "none";
   if (qbox) qbox.style.display = on ? "none" : "";
-}
-
-function getVoterToken() {
-  const k = `fam_voter_${gameId}_${key}`;
-  let t = localStorage.getItem(k);
-  if (!t) {
-    t = (crypto?.randomUUID?.() || `${Date.now()}_${Math.random().toString(16).slice(2)}`);
-    localStorage.setItem(k, t);
-  }
-  return t;
 }
 
 async function withTimeout(promiseLike, ms, errMsg) {
@@ -152,6 +163,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (!gameId || !key) {
       setSub("Brak parametru id lub key.");
       showClosed(true);
+      return;
+    }
+
+    if (hasDone()) {
+      showClosed(true);
+      setSub("Już wziąłeś udział w sondażu.");
       return;
     }
 
