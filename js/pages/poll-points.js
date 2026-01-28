@@ -17,25 +17,20 @@ const prog = $("prog");
 const closed = $("closed");
 
 let finished = false;
+let submitting = false;
 
+// lokalny bufor głosów (wysyłka dopiero na końcu)
+let outbox = [];
+
+/* ====== "już brałeś udział" ====== */
 function doneKey() {
   return `fam_poll_done_${gameId}_${key}`;
 }
-
 function hasDone() {
   return localStorage.getItem(doneKey()) === "1";
 }
-
 function markDone() {
   localStorage.setItem(doneKey(), "1");
-}
-
-// token tylko “na czas życia strony” (refresh/close = reset)
-let voterToken = null;
-function getVoterToken() {
-  if (voterToken) return voterToken;
-  voterToken = (crypto?.randomUUID?.() || `${Date.now()}_${Math.random().toString(16).slice(2)}`);
-  return voterToken;
 }
 
 function showFinished() {
@@ -43,6 +38,7 @@ function showFinished() {
   finished = true;
 
   markDone();
+
   const sub = document.getElementById("sub");
   const qbox = document.getElementById("qbox");
   const closed = document.getElementById("closed");
@@ -52,7 +48,6 @@ function showFinished() {
   if (sub) sub.textContent = "Dziękujemy za udział!";
 }
 
-
 function setSub(t) {
   if (subEl) subEl.textContent = t || "";
 }
@@ -60,6 +55,16 @@ function setSub(t) {
 function showClosed(on) {
   if (closed) closed.style.display = on ? "" : "none";
   if (qbox) qbox.style.display = on ? "none" : "";
+}
+
+function getVoterToken() {
+  const k = `fam_voter_${gameId}_${key}`;
+  let t = localStorage.getItem(k);
+  if (!t) {
+    t = (crypto?.randomUUID?.() || `${Date.now()}_${Math.random().toString(16).slice(2)}`);
+    localStorage.setItem(k, t);
+  }
+  return t;
 }
 
 async function withTimeout(promiseLike, ms, errMsg) {
@@ -84,18 +89,27 @@ async function loadPayload() {
   return data;
 }
 
-async function vote(questionId, answerId) {
+async function submitBatch(items) {
   const voter = getVoterToken();
 
-  const { error } = await sb().rpc("poll_points_vote", {
+  const { error } = await sb().rpc("poll_points_vote_batch", {
     p_game_id: gameId,
     p_key: key,
-    p_question_id: questionId,
-    p_answer_id: answerId,
     p_voter_token: voter,
+    p_items: items, // [{question_id, answer_id}, ...]
   });
 
   if (error) throw error;
+}
+
+function setupBeforeUnloadWarn() {
+  window.addEventListener("beforeunload", (e) => {
+    if (finished) return;
+    if (!outbox.length) return;
+    e.preventDefault();
+    e.returnValue = "Udzielone odpowiedzi nie zostaną uznane.";
+    return e.returnValue;
+  });
 }
 
 let payload = null;
@@ -117,7 +131,24 @@ function render() {
   showClosed(false);
 
   if (!q) {
-    showFinished();
+    // koniec pytań: wysyłka jednorazowa
+    if (submitting || finished) return;
+
+    submitting = true;
+    setSub("Wysyłam…");
+
+    // zablokuj UI listy
+    if (alist) [...alist.querySelectorAll("button")].forEach(x => (x.disabled = true));
+
+    submitBatch(outbox)
+      .then(() => showFinished())
+      .catch((e) => {
+        console.error("[poll-points] submit_batch error:", e);
+        setSub(`Błąd: ${e?.message || e}`);
+        submitting = false;
+        // pozwól spróbować jeszcze raz (użytkownik kliknie back/refresh - ale alert go ostrzeże)
+      });
+
     return;
   }
 
@@ -132,25 +163,21 @@ function render() {
     for (const a of answers) {
       const b = document.createElement("button");
       b.type = "button";
-      b.className = "btn full"; // dostosuj do CSS jeśli masz inną klasę
+      b.className = "btn full";
       b.textContent = a.text || `ODP ${a.ord}`;
 
-      b.addEventListener("click", async () => {
-        try {
-          // zablokuj cały panel na czas zapisu
-          [...alist.querySelectorAll("button")].forEach(x => (x.disabled = true));
-          setSub("Zapisuję głos…");
+      b.addEventListener("click", () => {
+        if (finished || submitting) return;
 
-          await vote(q.id, a.id);
+        // zapamiętaj wybór (bez wysyłki)
+        const packed = { question_id: q.id, answer_id: a.id };
+        const i = outbox.findIndex(x => x.question_id === packed.question_id);
+        if (i >= 0) outbox[i] = packed;
+        else outbox.push(packed);
 
-          idx++;
-          render();
-        } catch (e) {
-          console.error("[poll-points] vote error:", e);
-          setSub(`Błąd: ${e?.message || e}`);
-          // odblokuj
-          [...alist.querySelectorAll("button")].forEach(x => (x.disabled = false));
-        }
+        // przejście do następnego pytania
+        idx++;
+        render();
       });
 
       alist.appendChild(b);
@@ -172,6 +199,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       return;
     }
 
+    setupBeforeUnloadWarn();
+
     setSub("Ładuję…");
     showClosed(false);
 
@@ -184,6 +213,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     idx = 0;
+    outbox = [];
     render();
   } catch (e) {
     console.error("[poll-points] init error:", e);
@@ -191,4 +221,3 @@ document.addEventListener("DOMContentLoaded", async () => {
     showClosed(true);
   }
 });
-
