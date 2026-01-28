@@ -21,9 +21,33 @@ const countEl = $("count");
 
 let finished = false;
 
+let submitting = false;
+
+function doneKey() {
+  return `fam_poll_done_${gameId}_${key}`;
+}
+
+function hasDone() {
+  return localStorage.getItem(doneKey()) === "1";
+}
+
+function markDone() {
+  localStorage.setItem(doneKey(), "1");
+}
+
+// token tylko “na czas życia strony” (refresh/close = reset)
+let voterToken = null;
+function getVoterToken() {
+  if (voterToken) return voterToken;
+  voterToken = (crypto?.randomUUID?.() || `${Date.now()}_${Math.random().toString(16).slice(2)}`);
+  return voterToken;
+}
+
 function showFinished() {
   if (finished) return;
   finished = true;
+
+  markDone();
 
   const sub = document.getElementById("sub");
   const qbox = document.getElementById("qbox");
@@ -46,16 +70,6 @@ function setSub(t) {
 function showClosed(on) {
   if (closed) closed.style.display = on ? "" : "none";
   if (qbox) qbox.style.display = on ? "none" : "";
-}
-
-function getVoterToken() {
-  const k = `fam_voter_${gameId}_${key}`;
-  let t = localStorage.getItem(k);
-  if (!t) {
-    t = (crypto?.randomUUID?.() || `${Date.now()}_${Math.random().toString(16).slice(2)}`);
-    localStorage.setItem(k, t);
-  }
-  return t;
 }
 
 // trim + lowercase + wiele spacji => jedna (ale spacje "w środku" zostają jako pojedyncze)
@@ -162,6 +176,12 @@ document.addEventListener("DOMContentLoaded", async () => {
       return;
     }
 
+    if (hasDone()) {
+      showClosed(true);
+      setSub("Już wziąłeś udział w sondażu.");
+      return;
+    }
+
     setSub("Ładuję…");
     showClosed(false);
 
@@ -190,21 +210,30 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
 
     btnSend?.addEventListener("click", async () => {
+      if (finished || submitting) return;
+    
       const q = (payload?.questions || [])[idx];
       if (!q) return;
-
+    
+      submitting = true;
+      if (btnSend) btnSend.disabled = true;
+    
       try {
-        btnSend.disabled = true;
         setSub("Wysyłam…");
-
+    
         await submit(q.id, answerInput?.value || "");
-
+    
         idx++;
-        render();
+        render(); // render() i tak ustawi disabled=false na kolejne pytanie
       } catch (e) {
         console.error("[poll-text] submit error:", e);
         setSub(`Błąd: ${e?.message || e}`);
-        btnSend.disabled = false;
+      } finally {
+        submitting = false;
+    
+        // jeśli nie przeszliśmy dalej (np. błąd), pozwól próbować ponownie
+        const hasNext = (payload?.questions || [])[idx];
+        if (!finished && hasNext && btnSend) btnSend.disabled = false;
       }
     });
   } catch (e) {
