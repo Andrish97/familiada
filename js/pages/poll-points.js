@@ -57,6 +57,10 @@ function showClosed(on) {
   if (qbox) qbox.style.display = on ? "none" : "";
 }
 
+function setClosedMsg(msg) {
+  if (closed) closed.textContent = msg || "";
+}
+
 function getVoterToken() {
   const k = `fam_voter_${gameId}_${key}`;
   let t = localStorage.getItem(k);
@@ -121,10 +125,11 @@ function render() {
   const q = questions[idx];
 
   if (titleEl) titleEl.textContent = game.name || "Sondaż";
-
+  
   if (game.status !== "poll_open") {
     showClosed(true);
-    setSub("Sondaż jest zamknięty.");
+    setSub("");
+    setClosedMsg("Sondaż jest zamknięty. Dziękujemy!");
     return;
   }
 
@@ -192,10 +197,11 @@ document.addEventListener("DOMContentLoaded", async () => {
       showClosed(true);
       return;
     }
-
+    
     if (hasDone()) {
       showClosed(true);
-      setSub("Już wziąłeś udział w sondażu.");
+      setSub("");
+      setClosedMsg("Już wziąłeś udział w sondażu.");
       return;
     }
 
