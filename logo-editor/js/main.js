@@ -30,15 +30,23 @@ const DEFAULT_LOGO_URL = "../display/logo_familiada.json";
    DOM
 ========================================================= */
 const who = document.getElementById("who");
-const msg = document.getElementById("msg");
-const grid = document.getElementById("grid");
 
 const btnBack = document.getElementById("btnBack");
 const btnLogout = document.getElementById("btnLogout");
 
-const btnImportLogo = document.getElementById("btnImportLogo");
-const btnExportLogo = document.getElementById("btnExportLogo");
+const brandTitle = document.getElementById("brandTitle");
+
+const hint = document.getElementById("hint");
+const msg = document.getElementById("msg");
+const grid = document.getElementById("grid");
+
+const btnPreview = document.getElementById("btnPreview");
+const btnActivate = document.getElementById("btnActivate");
+
+const btnImport = document.getElementById("btnImport");
+const btnExport = document.getElementById("btnExport");
 const inpImportLogoFile = document.getElementById("inpImportLogoFile");
+
 
 // modal wyboru trybu
 const createOverlay = document.getElementById("createOverlay");
@@ -77,6 +85,7 @@ const btnPreviewClose = document.getElementById("btnPreviewClose");
 ========================================================= */
 let currentUser = null;
 let logos = [];
+let selectedKey = null; // "default" albo uuid logo
 let defaultLogoRows = Array.from({ length: 10 }, () => " ".repeat(30));
 
 let editorMode = null; // TEXT | TEXT_PIX | DRAW | IMAGE
@@ -261,40 +270,23 @@ function cleanRows30x10(rows){
   return out;
 }
 
-function buildExportObjectFromLogo(logo){
-  const name = String(logo?.name || "Logo").trim() || "Logo";
+function exportLogoToFile(l){
+  const payload = {
+    name: l.name || "Logo",
+    type: l.type,
+    payload: l.payload
+  };
 
-  // GLYPH
-  if (logo?.type === TYPE_GLYPH){
-    const rows = cleanRows30x10(logo?.payload?.layers?.[0]?.rows || defaultLogoRows);
-    return {
-      v: 1,
-      kind: "GLYPH",
-      name,
-      payload: { rows },
-    };
-  }
-
-  // PIX
-  if (logo?.type === TYPE_PIX){
-    const p = logo?.payload || {};
-    const w = Number(p.w) || DOT_W;
-    const h = Number(p.h) || DOT_H;
-    const bits_b64 = String(p.bits_b64 || p.bits_base64 || p.bitsBase64 || "");
-    return {
-      v: 1,
-      kind: "PIX",
-      name,
-      payload: {
-        w, h,
-        format: "BITPACK_MSB_FIRST_ROW_MAJOR",
-        bits_b64,
-      },
-    };
-  }
-
-  throw new Error("Nieznany typ logo.");
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `${(l.name || "logo").replace(/[^\w\d\- ]+/g,"").trim() || "logo"}.json`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(a.href);
 }
+
 
 function parseImportJson(text){
   let obj = null;
@@ -709,142 +701,131 @@ function buildCardPreviewCanvas(payload){
 }
 
 function renderList(){
-  if (!grid) return;
   grid.innerHTML = "";
 
-  const hasActive = logos.some(x => !!x.is_active);
-  const isDefaultActive = !hasActive;
+  const active = (logos || []).find(l => !!l.is_active) || null;
+  const activeKey = active ? active.id : "default";
 
-  // 1) Domyslne logo
-  {
+  // helper: wybierz
+  function select(key){
+    selectedKey = key;
+    updateListButtons(activeKey);
+    // zaznaczenie wizualne
+    for (const el of grid.querySelectorAll(".logoTile")){
+      el.classList.toggle("is-selected", el.dataset.key === String(selectedKey || ""));
+    }
+  }
+
+  // helper: budowa kafla
+  function makeTile({ key, name, meta, payload, isActive, canDelete }){
     const el = document.createElement("div");
-    el.className = "card default";
+    el.className = "logoTile";
+    el.dataset.key = String(key);
+
+    if (isActive) el.classList.add("is-active");
+    if (String(selectedKey || "") === String(key)) el.classList.add("is-selected");
 
     el.innerHTML = `
-      <div class="cardTop">
-        <div>
-          <div class="name">Domyślne logo</div>
-          <div class="meta">Używane automatycznie, gdy nie wybierzesz innego</div>
+      <div class="logoTileTop">
+        <div style="min-width:0">
+          <div class="logoName">${esc(name)}</div>
+          <div class="logoMeta">${esc(meta || "")}</div>
         </div>
+        <div class="logoX ${canDelete ? "" : "is-disabled"}" title="${canDelete ? "Usuń" : "Nie można usunąć"}">✕</div>
       </div>
-      <div class="preview"></div>
-      <div class="actions"></div>
+      <div class="logoPrev"></div>
+      <div class="logoLamp" aria-label="Aktywne"></div>
     `;
 
-    const payload = { kind: "GLYPH", rows: defaultLogoRows };
+    el.addEventListener("click", () => select(key));
 
-    const prevWrap = el.querySelector(".preview");
-    const prevCanvas = buildCardPreviewCanvas(payload);
-    prevCanvas.style.cursor = "pointer";
-    prevCanvas.addEventListener("click", (ev) => {
+    // delete
+    el.querySelector(".logoX").addEventListener("click", async (ev) => {
       ev.stopPropagation();
-      openPreviewFullscreen(payload);
-    });
-    prevWrap.appendChild(prevCanvas);
-
-    const actions = el.querySelector(".actions");
-    const btnAct = document.createElement("button");
-    btnAct.className = "btn sm gold";
-    btnAct.type = "button";
-    btnAct.textContent = isDefaultActive ? "Aktywne" : "Ustaw aktywne";
-    btnAct.disabled = isDefaultActive;
-    btnAct.addEventListener("click", async (ev) => {
-      ev.stopPropagation();
-      setMsg("Ustawiam domyślne…");
-      try{
-        await clearActive();
-        await refresh();
-        setMsg("Ustawiono domyślne logo.");
-      } catch (e){
-        console.error(e);
-        alert("Nie udało się ustawić domyślnego.\n\n" + (e?.message || e));
-        setMsg("");
-      }
-    });
-
-    actions.appendChild(btnAct);
-    grid.appendChild(el);
-  }
-
-  // 2) Dodaj nowe
-  {
-    const add = document.createElement("div");
-    add.className = "card add";
-    add.textContent = "＋ Nowe logo";
-    add.addEventListener("click", () => show(createOverlay, true));
-    grid.appendChild(add);
-  }
-
-  // 3) Twoje loga
-  for (const l of logos){
-    const el = document.createElement("div");
-    el.className = "card";
-
-    el.innerHTML = `
-      <div class="x" title="Usuń">✕</div>
-      <div class="cardTop">
-        <div>
-          <div class="name">${esc(l.name || "(bez nazwy)")}</div>
-            <div class="meta">${esc(fmtDate(l.updated_at) || "")}</div>
-         </div>
-      </div>
-      <div class="preview"></div>
-      <div class="actions"></div>
-    `;
-
-    const payload = logoToPreviewPayload(l);
-
-    const prevWrap = el.querySelector(".preview");
-    const prevCanvas = buildCardPreviewCanvas(payload);
-    prevCanvas.style.cursor = "pointer";
-    prevCanvas.addEventListener("click", (ev) => {
-      ev.stopPropagation();
-      openPreviewFullscreen(payload);
-    });
-    prevWrap.appendChild(prevCanvas);
-
-    const actions = el.querySelector(".actions");
-
-    const btnAct = document.createElement("button");
-    btnAct.className = "btn sm gold";
-    btnAct.type = "button";
-    btnAct.textContent = l.is_active ? "Aktywne" : "Ustaw aktywne";
-    btnAct.disabled = !!l.is_active;
-    btnAct.addEventListener("click", async (ev) => {
-      ev.stopPropagation();
-      setMsg("Przełączam aktywne…");
-      try{
-        await setActive(l.id);
-        await refresh();
-        setMsg("Aktywne logo ustawione.");
-      } catch (e){
-        console.error(e);
-        alert("Nie udało się ustawić aktywnego.\n\n" + (e?.message || e));
-        setMsg("");
-      }
-    });
-
-    actions.appendChild(btnAct);
-
-    // usun
-    el.querySelector(".x").addEventListener("click", async (ev) => {
-      ev.stopPropagation();
-      const ok = confirm(`Usunąć logo „${l.name || "(bez nazwy)"}“?`);
+      if (!canDelete) return;
+      const ok = confirm(`Usunąć logo „${name}“?`);
       if (!ok) return;
+
       setMsg("Usuwam…");
       try{
-        await deleteLogo(l.id);
+        await deleteLogo(key);
+
+        // jeśli usunięto aktywne -> aktywne przechodzi na default (czyli clearActive)
         await refresh();
         setMsg("Usunięto.");
-      } catch (e){
+      }catch(e){
         console.error(e);
         alert("Nie udało się usunąć.\n\n" + (e?.message || e));
         setMsg("");
       }
     });
 
+    const prevWrap = el.querySelector(".logoPrev");
+    const prevCanvas = buildCardPreviewCanvas(payload);
+    prevCanvas.style.cursor = "default";
+    prevWrap.appendChild(prevCanvas);
+
+    return el;
+  }
+
+  // 1) DEFAULT (zawsze)
+  {
+    const payload = { kind: "GLYPH", rows: defaultLogoRows };
+    const el = makeTile({
+      key: "default",
+      name: "Domyślne logo",
+      meta: "",
+      payload,
+      isActive: activeKey === "default",
+      canDelete: false
+    });
     grid.appendChild(el);
   }
+
+  // 2) LOGA USERA
+  for (const l of logos){
+    const payload = logoToPreviewPayload(l);
+    const el = makeTile({
+      key: l.id,
+      name: l.name || "(bez nazwy)",
+      meta: fmtDate(l.updated_at) || "",
+      payload,
+      isActive: activeKey === l.id,
+      canDelete: true
+    });
+    grid.appendChild(el);
+  }
+
+  // 3) PLUS (jak w builder)
+  {
+    const add = document.createElement("div");
+    add.className = "logoTile logoTileAdd";
+    add.innerHTML = `<span class="plus">＋</span> <span>Nowe logo</span>`;
+    add.addEventListener("click", () => show(createOverlay, true));
+    grid.appendChild(add);
+  }
+
+  // jeśli zaznaczenie wskazuje na nieistniejące -> czyść
+  if (selectedKey && selectedKey !== "default"){
+    const exists = logos.some(l => l.id === selectedKey);
+    if (!exists) selectedKey = null;
+  }
+
+  updateListButtons(activeKey);
+}
+
+function updateListButtons(activeKey){
+  const hasSel = !!selectedKey;
+  const isPlus = selectedKey === "__add__"; // u nas nie używamy, ale zostawiamy defensywnie
+
+  // PODGLĄD = zaznaczone
+  btnPreview.disabled = !hasSel || isPlus;
+
+  // AKTYWUJ = zaznaczone != aktywne
+  btnActivate.disabled = !hasSel || isPlus || (String(selectedKey) === String(activeKey));
+
+  // EXPORT = tylko gdy coś zaznaczone i nie default
+  btnExport.disabled = !hasSel || isPlus || (selectedKey === "default");
 }
 
 async function refresh(){
@@ -875,6 +856,19 @@ function openEditor(mode){
    hideAllPanes();
   setEditorShellMode(mode);
   editorMode = mode;
+
+   document.body.classList.add("is-editor");
+   btnBack.textContent = "✕";
+   btnBack.classList.add("sm"); // opcjonalnie
+   
+   // brand jedna linia, nie złota
+   const label = (mode === "TEXT") ? "Napis"
+     : (mode === "TEXT_PIX") ? "Tekst"
+     : (mode === "DRAW") ? "Rysunek"
+     : "Obraz";
+   
+   brandTitle.innerHTML = `<span class="bMain">Nowe logo — </span><span class="bMode">${label}</span>`;
+   
 
   logoName.value =
     mode === "TEXT" ? "Napis" :
@@ -946,6 +940,9 @@ function closeEditor(force = false){
   show(document.querySelector(".shell"), true);
   hideAllPanes();
   clearDirty();
+   document.body.classList.remove("is-editor");
+   btnBack.textContent = "← Moje gry";
+   brandTitle.textContent = "FAMILIADA";
 }
 
 let lastPreviewPayload = null;
@@ -1046,8 +1043,8 @@ async function handleCreate(){
    START
 ========================================================= */
 async function boot(){
-  currentUser = await requireAuth("../index.html");
-  if (who) who.textContent = currentUser?.email || "—";
+   currentUser = await requireAuth("../index.html");
+   if (who) who.textContent = currentUser?.email || "—";
 
   try{
     await loadFonts();
@@ -1055,10 +1052,9 @@ async function boot(){
     console.error(e);
     alert("Nie mogę wczytać fontów. Sprawdź ścieżki display/font_*.json.");
   }
-
-  await loadDefaultLogo();
-
-  const editorCtx = {
+   
+   await loadDefaultLogo();
+   const editorCtx = {
     getMode: () => editorMode,
     markDirty,
     clearDirty,
@@ -1072,15 +1068,28 @@ async function boot(){
     getDither: () => false,
   };
 
-  textEditor = initTextEditor(editorCtx);
-  textPixEditor = initTextPixEditor({ ...editorCtx, BIG_W: 208, BIG_H: 88 });
-  drawEditor = initDrawEditor(editorCtx);
-  imageEditor = initImageEditor(editorCtx);
+   textEditor = initTextEditor(editorCtx);
+   textPixEditor = initTextPixEditor({ ...editorCtx, BIG_W: 208, BIG_H: 88 });
+   drawEditor = initDrawEditor(editorCtx);
+   imageEditor = initImageEditor(editorCtx);
 
    armNavGuard();
 
   // topbar
    btnBack?.addEventListener("click", () => {
+     const inEditor = editorShell && editorShell.style.display !== "none";
+   
+     if (inEditor){
+       // X zamyka edytor
+       if (shouldBlockNav()){
+         const ok = confirm("Masz niezapisane zmiany. Zamknąć edytor i je utracić?");
+         if (!ok) return;
+       }
+       closeEditor(false);
+       return;
+     }
+   
+     // list -> normalnie wróć do builder
      if (shouldBlockNav()){
        const ok = confirm("Masz niezapisane zmiany. Wyjść do „Moje gry” i je utracić?");
        if (!ok) return;
@@ -1096,8 +1105,6 @@ async function boot(){
      await signOut();
      location.href = "../index.html";
    });
-
-  btnImportLogo?.addEventListener("click", () => inpImportLogoFile?.click());
 
   inpImportLogoFile?.addEventListener("change", async () => {
     const f = inpImportLogoFile.files?.[0];
@@ -1116,30 +1123,49 @@ async function boot(){
     }
   });
 
-  btnExportLogo?.addEventListener("click", () => {
-    try{
-      const active = (logos || []).find(l => !!l.is_active) || null;
-      if (!active){
-        setMsg("Brak aktywnego logo do eksportu.");
-        return;
-      }
+   btnImport?.addEventListener("click", () => inpImportLogoFile?.click());
+   
+   btnExport?.addEventListener("click", async () => {
+     if (!selectedKey || selectedKey === "default") return;
+     const l = (logos || []).find(x => x.id === selectedKey);
+     if (!l) return;
+     exportLogoToFile(l); // podmień funkcję exportu na "zaznaczone"
+   });
 
-      const activeName = String(active.name || "(bez nazwy)");
-      setMsg(`Eksportuję aktywne logo: ${activeName}`);
+   btnPreview?.addEventListener("click", () => {
+     if (!selectedKey) return;
+     let payload = null;
+   
+     if (selectedKey === "default"){
+       payload = { kind: "GLYPH", rows: defaultLogoRows };
+     } else {
+       const l = (logos || []).find(x => x.id === selectedKey);
+       if (!l) return;
+       payload = logoToPreviewPayload(l);
+     }
+   
+     openPreviewFullscreen(payload);
+   });
+   
+   btnActivate?.addEventListener("click", async () => {
+     if (!selectedKey) return;
+   
+     setMsg("Ustawiam aktywne…");
+     try{
+       if (selectedKey === "default"){
+         await clearActive(); // default = aktywne gdy w DB nic nie jest aktywne
+       } else {
+         await setActive(selectedKey);
+       }
+       await refresh();
+       setMsg("Aktywne ustawione.");
+     }catch(e){
+       console.error(e);
+       alert("Nie udało się ustawić aktywnego.\n\n" + (e?.message || e));
+       setMsg("");
+     }
+   });
 
-      const exp = buildExportObjectFromLogo(active);
-
-      const safeName = String(exp.name || "logo")
-        .replace(/[^\p{L}\p{N}\-_ ]/gu, "")
-        .trim() || "logo";
-
-      downloadJson(`logo_${safeName}.json`, exp);
-      setMsg(`Wyeksportowano aktywne logo: ${activeName}`);
-    } catch (e){
-      console.error(e);
-      setMsg("Błąd eksportu aktywnego logo.");
-    }
-  });
 
   // modal wyboru trybu
   pickText?.addEventListener("click", () => { show(createOverlay, false); openEditor("TEXT"); });
@@ -1153,12 +1179,19 @@ async function boot(){
   btnEditorClose?.addEventListener("click", () => closeEditor(false));
 
   btnCreate?.addEventListener("click", handleCreate);
+   
+   bigPreview?.addEventListener("click", () => {
+     // TEXT: brak modala
+     if (editorMode === "TEXT") return;
+     const p = lastPreviewPayload || { kind: "GLYPH", rows: defaultLogoRows };
+     openPreviewFullscreen(p);
+   });
 
-  // fullscreen preview
-  bigPreview?.addEventListener("click", () => {
-    const p = lastPreviewPayload || { kind: "GLYPH", rows: defaultLogoRows };
-    openPreviewFullscreen(p);
-  });
+   document.getElementById("btnPixPreview")?.addEventListener("click", () => {
+     const p = lastPreviewPayload || null;
+     if (!p) return;
+     openPreviewFullscreen(p);
+   });
 
   window.addEventListener("logoeditor:openPreview", (ev) => {
     const payload = ev?.detail;
