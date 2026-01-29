@@ -89,6 +89,8 @@ let currentUser = null;
 let logos = [];
 let selectedKey = null; // "default" albo uuid logo
 let defaultLogoRows = Array.from({ length: 10 }, () => " ".repeat(30));
+let suppressDirty = false;
+
 
 let editorMode = null; // TEXT | TEXT_PIX | DRAW | IMAGE
 let editorDirty = false;
@@ -110,7 +112,10 @@ function show(el, on){
 }
 function setMsg(t){ if (msg) msg.textContent = t || ""; }
 function setEditorMsg(t){ if (mMsg) mMsg.textContent = t || ""; }
-function markDirty(){ editorDirty = true; }
+function markDirty(){
+   if (suppressDirty) return;
+   editorDirty = true;
+}
 function clearDirty(){ editorDirty = false; }
 
 function fmtDate(iso){
@@ -162,6 +167,26 @@ function isUniqueViolation(e){
   // Supabase/Postgres: 23505 = unique violation
   return e?.code === "23505" || /duplicate key value/i.test(String(e?.message || ""));
 }
+
+function showToolsForMode(mode){
+  const tText = document.getElementById("toolsText");
+  const tPix  = document.getElementById("toolsTextPix");
+  const tDraw = document.getElementById("toolsDraw");
+  const tImg  = document.getElementById("toolsImage");
+  const imgPanels = document.getElementById("imgPanels");
+
+  // schowaj wszystko
+  for (const el of [tText, tPix, tDraw, tImg, imgPanels]){
+    if (el) el.style.display = "none";
+  }
+
+  // pokaż właściwe
+  if (mode === "TEXT" && tText) tText.style.display = "flex";
+  if (mode === "TEXT_PIX" && tPix) tPix.style.display = "flex";
+  if (mode === "DRAW" && tDraw) tDraw.style.display = "flex";
+  if (mode === "IMAGE" && tImg) tImg.style.display = "flex";
+}
+
 
 /* =========================================================
    NAV GUARD — ochrona przed: zamknięciem/odświeżeniem/cofaniem/nawigacją
@@ -862,6 +887,7 @@ function openEditor(mode){
   hideAllPanes();
   setEditorShellMode(mode);
   editorMode = mode;
+   showToolsForMode(mode);
 
   // ===== tryb edytora UI =====
   document.body.classList.add("is-editor");
@@ -879,6 +905,7 @@ function openEditor(mode){
   brandTitle.innerHTML =
     `<span class="bMain">Nowe logo — </span><span class="bMode">${modeLabel}</span>`;
 
+   suppressDirty = true;
   // ===== domyślna nazwa nowego logo =====
   logoName.value = modeLabel;
 
@@ -887,6 +914,7 @@ function openEditor(mode){
   sessionSavedMode = mode;
 
   clearDirty();
+   suppressDirty = false;
   setEditorMsg("");
 
   // ===== startowy pusty preview =====
@@ -926,7 +954,6 @@ function openEditor(mode){
 function closeEditor(force = false){
   if (!force && !confirmCloseIfDirty()) return;
 
-  // close active editor (sprzatanie listenerow specyficznych, jesli trzeba)
   if (editorMode === "TEXT") textEditor.close();
   if (editorMode === "TEXT_PIX") textPixEditor.close();
   if (editorMode === "DRAW") drawEditor.close();
@@ -934,13 +961,16 @@ function closeEditor(force = false){
 
   editorMode = null;
   setEditorShellMode("");
-  show(editorShell, false);
-  show(document.querySelector(".shell"), true);
   hideAllPanes();
+
+  show(editorShell, false);
+  if (listShell) show(listShell, true);
+
   clearDirty();
-   document.body.classList.remove("is-editor");
-   btnBack.textContent = "← Moje gry";
-   brandTitle.textContent = "FAMILIADA";
+
+  document.body.classList.remove("is-editor");
+  btnBack.textContent = "← Moje gry";
+  brandTitle.textContent = "FAMILIADA";
 }
 
 let lastPreviewPayload = null;
