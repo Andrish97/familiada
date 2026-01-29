@@ -56,6 +56,10 @@ function showFinished() {
   if (sub) sub.textContent = "Dziękujemy za udział!";
 }
 
+function setClosedMsg(msg) {
+  if (closed) closed.textContent = msg || "";
+}
+
 function setSub(t) {
   if (subEl) subEl.textContent = t || "";
 }
@@ -145,7 +149,8 @@ function render() {
   // status
   if (game.status !== "poll_open") {
     showClosed(true);
-    setSub("Sondaż jest zamknięty.");
+    setSub("");
+    setClosedMsg("Sondaż jest zamknięty. Dziękujemy!");
     return;
   }
 
@@ -211,7 +216,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       showClosed(true);
       return;
     }
-
     if (hasDone()) {
       showClosed(true);
       setSub("Już wziąłeś udział w sondażu.");
