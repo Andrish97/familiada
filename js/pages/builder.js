@@ -548,6 +548,8 @@ async function fetchActionState(gameId, revHint) {
     rev: String(data?.rev || "")
   };
 
+  console.log("[RPC game_action_state]", gameId, data);
+
   actionStateCache.set(gameId, { rev: res.rev, res });
   return res;
 }
