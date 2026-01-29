@@ -80,15 +80,18 @@
   <!-- LEWA KOLUMNA -->
   <div class="editorLeft">
 
-    <div class="lbl">Nazwa</div>
-    <div class="nameFileRow">
-      <input class="inp" id="logoName" placeholder="Np. Moje logo"/>
-
-      <!-- TYLKO w IMAGE -->
-      <label class="fileBtn fileBtnImageOnly" id="btnImgPick" title="Wybierz obraz">
-        <input type="file" id="imgFile" accept="image/*" hidden />
-        Wybierz obraz 📁
-      </label>
+    <!-- NAZWA (full-width) -->
+    <div class="editorNameRow" id="editorNameRow">
+      <div class="lbl">Nazwa</div>
+      <div class="nameFileRow">
+        <input class="inp" id="logoName" placeholder="Np. Moje logo"/>
+  
+        <!-- TYLKO w IMAGE -->
+        <label class="fileBtn fileBtnImageOnly" id="btnImgPick" title="Wybierz obraz">
+          <input type="file" id="imgFile" accept="image/*" hidden />
+          Wybierz obraz 📁
+        </label>
+      </div>
     </div>
 
     <!-- TEXT -->
@@ -109,7 +112,7 @@
 
        <!-- TEXT_PIX (WYSIWYG -> "screenshot" na wyświetlacz) -->
           <div class="pane" id="paneTextPix" style="display:none;">
-            <div class="paneSec">
+            <div class="paneSec" id="tpTextSec">
               <div class="paneSecTitle">Tekst</div>
               <div class="paneSecBody">
                 <div class="warn" id="pixWarn" style="display:none;"></div>
@@ -119,7 +122,7 @@
               </div>
             </div>
 
-            <div class="paneSec">
+            <div class="paneSec" id="tpSettingsSec">
               <div class="paneSecTitle">Ustawienia</div>
               <div class="paneSecBody">
 
