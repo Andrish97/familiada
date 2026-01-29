@@ -397,6 +397,60 @@ body.logo-editor-body .wrap{
 
 #paneTextPix ::selection{ background: rgba(255,234,166,.35); }
 
+
+/* ==========================================================
+   TEXT_PIX — naturalny GRID:
+   [name full-width]
+   [text spans 2 cols]
+   [settings | preview]
+   [actions full-width]
+========================================================== */
+
+.editorShell[data-mode="TEXT_PIX"] .editorGrid{
+  grid-template-columns: 1fr 1fr;
+  grid-template-areas:
+    "name     name"
+    "tpText   tpText"
+    "tpSet    preview"
+    "actions  actions";
+}
+
+/* Nazwa na całą szerokość */
+.editorShell[data-mode="TEXT_PIX"] .editorNameRow{
+  grid-area: name;
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,.10);
+  background: rgba(255,255,255,.04);
+  padding: 12px;
+}
+
+/* W TEXT_PIX: zdejmujemy “kolumnę lewą” z layoutu,
+   żeby jej dzieci mogły wejść bezpośrednio w grid */
+.editorShell[data-mode="TEXT_PIX"] .editorLeft{
+  display: contents;
+}
+
+/* Z paneTextPix robimy “przezroczysty” wrapper,
+   żeby jego sekcje (Tekst/Ustawienia) były grid-itemami */
+.editorShell[data-mode="TEXT_PIX"] #paneTextPix{
+  display: contents;
+}
+
+/* Sekcje TEXT_PIX jako elementy grida */
+.editorShell[data-mode="TEXT_PIX"] #tpTextSec{ grid-area: tpText; }
+.editorShell[data-mode="TEXT_PIX"] #tpSettingsSec{ grid-area: tpSet; }
+
+/* Podgląd i akcje */
+.editorShell[data-mode="TEXT_PIX"] .editorRight{ grid-area: preview; }
+.editorShell[data-mode="TEXT_PIX"] .editorActions{ grid-area: actions; }
+
+/* (opcjonalnie) wyrównanie odstępów */
+.editorShell[data-mode="TEXT_PIX"] #tpTextSec,
+.editorShell[data-mode="TEXT_PIX"] #tpSettingsSec{
+  margin-top: 0; /* bo paneSec ma domyślnie margin-top:12px */
+}
+
+
 /* ==========================================================
    DRAW — najważniejsze: panel narzędzi + DUŻA scena 26:11
 ========================================================== */
