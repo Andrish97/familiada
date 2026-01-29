@@ -4,7 +4,7 @@
 ========================================================== */
 
 body.logo-editor-body{
-  min-height:100vh;
+  min-height: 100vh;
   background: var(--bg);
   color:#fff;
 }
@@ -463,7 +463,7 @@ body.logo-editor-body .wrap{
 #paneDraw .drawWrap{
   margin-top:12px;
   display:grid;
-  grid-template-columns: 200px 1fr; /* panel wąski */
+  grid-template-columns: 100px 1fr; /* panel wąski */
   gap:12px;
   align-items:stretch;
   width:100%;
@@ -476,9 +476,10 @@ body.logo-editor-body .wrap{
   border:1px solid rgba(255,255,255,.10);
   background:rgba(255,255,255,.04);
   padding:10px;
-  display:flex;
+  /* display:flex; */
   flex-direction:column;
   gap:10px;
+  max-width: 100px;
 }
 
 /* grupy ikon: 2 kolumny */
@@ -491,6 +492,7 @@ body.logo-editor-body .wrap{
 /* przyciski ikon */
 #paneDraw .tbtn{
   height:36px;
+  width: 36px;
   border-radius:12px;
   border:1px solid rgba(255,255,255,.14);
   background:rgba(0,0,0,.18);
