@@ -854,68 +854,46 @@ function setEditorShellMode(mode){
   editorShell.dataset.mode = mode || "";
 }
 
+
 function openEditor(mode){
-   hideAllPanes();
+  hideAllPanes();
   setEditorShellMode(mode);
   editorMode = mode;
 
-   document.body.classList.add("is-editor");
-   btnBack.textContent = "✕";
-   btnBack.classList.add("sm"); // opcjonalnie
-   
-   // brand jedna linia, nie złota
-   const label = (mode === "TEXT") ? "Napis"
-     : (mode === "TEXT_PIX") ? "Tekst"
-     : (mode === "DRAW") ? "Rysunek"
-     : "Obraz";
-   
-   brandTitle.innerHTML = `<span class="bMain">Nowe logo — </span><span class="bMode">${label}</span>`;
-   
+  // ===== tryb edytora UI =====
+  document.body.classList.add("is-editor");
+  btnBack.textContent = "✕";
+  btnBack.classList.add("sm");
 
-  logoName.value =
+  // ===== label trybu =====
+  const modeLabel =
     mode === "TEXT" ? "Napis" :
     mode === "TEXT_PIX" ? "Tekst" :
     mode === "DRAW" ? "Rysunek" :
     "Obraz";
 
+  // ===== tytuł w topbarze (1 linia) =====
+  brandTitle.innerHTML =
+    `<span class="bMain">Nowe logo — </span><span class="bMode">${modeLabel}</span>`;
+
+  // ===== domyślna nazwa nowego logo =====
+  logoName.value = modeLabel;
+
+  // ===== reset sesji zapisu =====
   sessionSavedLogoId = null;
   sessionSavedMode = mode;
-   
+
   clearDirty();
   setEditorMsg("");
 
-   // Start edytora = start preview (żeby nie został obrazek z listy)
-   lastPreviewPayload = { kind: "GLYPH", rows: Array.from({ length: 10 }, () => " ".repeat(30)) };
-   updateBigPreviewFromPayload(lastPreviewPayload);
-
-
-  const titleMap = {
-    TEXT: "Nowe logo — Napis",
-    TEXT_PIX: "Nowe logo — Tekst",
-    DRAW: "Nowe logo — Rysunek",
-    IMAGE: "Nowe logo — Obraz",
+  // ===== startowy pusty preview =====
+  lastPreviewPayload = {
+    kind: "GLYPH",
+    rows: Array.from({ length: 10 }, () => " ".repeat(30))
   };
+  updateBigPreviewFromPayload(lastPreviewPayload);
 
-   // brand w topbarze ma być 1 linia, nie złota
-   const label =
-     mode === "TEXT" ? "Napis" :
-     mode === "TEXT_PIX" ? "Tekst" :
-     mode === "DRAW" ? "Rysunek" :
-     "Obraz";
-   
-   // jeśli editorTitle jest brandTitle, to ustawiamy ładne spany (1 linia)
-   if (editorTitle === brandTitle) {
-     brandTitle.innerHTML = `<span class="bMain">Nowe logo — </span><span class="bMode">${label}</span>`;
-   } else {
-     editorTitle.textContent = `Nowe logo — ${label}`;
-   }
-   
-   // editorSub może nie istnieć (w Twoim nowym układzie)
-   if (editorSub) {
-     editorSub.textContent = "Klasyczny styl jak w logo Familiady.";
-   }
-
-
+  // ===== pokaż widoki =====
   show(document.querySelector(".shell"), false);
   show(editorShell, true);
 
@@ -939,6 +917,7 @@ function openEditor(mode){
     imageEditor.open();
   }
 }
+
 
 function closeEditor(force = false){
   if (!force && !confirmCloseIfDirty()) return;
