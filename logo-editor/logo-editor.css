@@ -515,8 +515,8 @@
 .rng.v{
   width: 28px;
   height: 170px;
-  writing-mode: bt-lr;
-  -webkit-appearance: slider-vertical;
+  writing-mode: vertical-lr;
+  direction: rtl;
 }
 
 /* file button */
