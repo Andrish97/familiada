@@ -536,3 +536,94 @@
   border-color: rgba(255,255,255,.22);
   background: rgba(0,0,0,.16);
 }
+
+/* =========================================
+   FIX: Modale (wybór typu + podgląd)
+   ========================================= */
+
+/* 1) Overlay zawsze na wierzchu i klikalny */
+.overlay{
+  z-index: 9999;          /* builder ma 50 → to bywa za mało */
+  pointer-events: auto;
+}
+
+/* 2) Modal wyboru typu: styl kafelków + klik */
+#modesPick, #modePick { /* defensywnie – u Ciebie jest #modePick */
+  width: 100%;
+}
+
+.mGrid{
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+@media (max-width: 820px){
+  .mGrid{ grid-template-columns: 1fr; }
+}
+
+.mTile{
+  appearance: none;
+  -webkit-appearance: none;
+  border: 1px solid rgba(255,255,255,.14);
+  background: rgba(0,0,0,.12);
+  border-radius: 18px;
+  padding: 14px;
+  color: #fff;
+  text-align: left;
+  cursor: pointer;
+  display: grid;
+  gap: 6px;
+  box-shadow: 0 10px 30px rgba(0,0,0,.30);
+  pointer-events: auto;   /* ważne */
+}
+
+.mTile:hover{
+  border-color: rgba(255,255,255,.26);
+  background: rgba(0,0,0,.18);
+  transform: translateY(-1px);
+}
+
+.mTile:active{
+  transform: translateY(0);
+}
+
+.mTileTitle{
+  font-weight: 900;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  font-size: 14px;
+}
+
+.mTileSub{
+  opacity: .78;
+  font-size: 12px;
+  line-height: 1.25;
+}
+
+/* 3) Modal podglądu: bez poziomego scrolla, canvas dopasowany */
+.modal.bigModal{
+  width: min(1100px, 96vw);
+  max-height: 92vh;
+  overflow: hidden; /* <-- klucz: blokuje poziomy scroll z builder.css */
+}
+
+.bigModalCanvas{
+  width: 100%;
+  height: min(70vh, 720px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden; /* brak h-scroll */
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,.10);
+  background: rgba(0,0,0,.10);
+  padding: 10px;
+}
+
+.bigModalCanvas canvas{
+  width: 100%;
+  height: auto;
+  max-height: 100%;
+  image-rendering: pixelated;
+}
