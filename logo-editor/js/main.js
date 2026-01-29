@@ -57,10 +57,6 @@ const pickImage = document.getElementById("pickImage");
 const btnPickCancel = document.getElementById("btnPickCancel");
 
 // edytor
-// topbar title (w nowym HTML to jest zawsze)
-const brandTitle = document.getElementById("brandTitle");
-
-// edytor
 const editorShell = document.getElementById("editorShell");
 
 // w nowym układzie nie ma editorTitle/editorSub – fallback na brandTitle
