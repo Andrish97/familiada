@@ -1,3 +1,9 @@
+
+:root{
+  --lamp-active: #ffeb3b;
+  --lamp-glow: rgba(255,235,59,.7);
+}
+
 /* ========= BASICS ========= */
 .logo-editor-body{
   /* builder-body daje większość stylistyki */
@@ -121,8 +127,8 @@
   width: 10px;
   height: 10px;
   border-radius: 999px;
-  background: #33ff88;
-  box-shadow: 0 0 12px rgba(51,255,136,.65);
+  background: var(--lamp-active);
+  box-shadow: 0 0 14px var(--lamp-glow);
   opacity: 0;
   transform: scale(.85);
   transition: opacity .12s ease, transform .12s ease;
