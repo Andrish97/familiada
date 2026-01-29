@@ -519,6 +519,12 @@ function render() {
 
 /* ================= Button logic ================= */
 
+function normalizeGameForValidate(g) {
+  if (!g) return g;
+  const type = uiTypeFromRow(g); // mapuje fixed->prepared, poll->poll_text/poll_points
+  return { ...g, type };
+}
+
 async function fetchActionState(gameId, revHint) {
   // Cache hit tylko gdy znamy rev i się zgadza
   if (revHint) {
@@ -557,9 +563,13 @@ async function updateActionState() {
   const revHint = sel.updated_at ? String(sel.updated_at) : "";
   const cached = actionStateCache.get(sel.id);
   if (cached && revHint && String(cached.rev) === revHint) {
+    
+    const edit = canEnterEdit(normalizeGameForValidate(sel));
+    const canEdit = !!edit.ok;
+    
     setButtonsState({
       hasSel: true,
-      canEdit: true,
+      canEdit,
       canPlay: !!cached.res.canPlay,
       canPoll: !!cached.res.canPoll,
       canExport: true
@@ -572,7 +582,7 @@ async function updateActionState() {
     const st = await fetchActionState(sel.id, revHint);
 
     // canEdit zostaje wg Twojej logiki JS (bo masz dokładniejsze komunikaty / warningi)
-    const edit = canEnterEdit(sel);
+    const edit = canEnterEdit(normalizeGameForValidate(sel));
     const canEdit = !!edit.ok;
 
     setButtonsState({
@@ -640,8 +650,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     const g = gamesAll.find(x => x.id === selectedId);
     if (!g) return;
-
-    const info = canEnterEdit(g);
+    
+    const info = canEnterEdit(normalizeGameForValidate(g));
     if (!info.ok) {
       alert(info.reason);
       return;
