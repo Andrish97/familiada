@@ -40,6 +40,9 @@ const hint = document.getElementById("hint");
 const msg = document.getElementById("msg");
 const grid = document.getElementById("grid");
 
+const listShell = document.getElementById("listShell"); // lista kafelków
+const editorShell = document.getElementById("editorShell"); // edytor (już masz pewnie)
+
 const btnPreview = document.getElementById("btnPreview");
 const btnActivate = document.getElementById("btnActivate");
 
@@ -55,9 +58,6 @@ const pickTextPix = document.getElementById("pickTextPix");
 const pickDraw = document.getElementById("pickDraw");
 const pickImage = document.getElementById("pickImage");
 const btnPickCancel = document.getElementById("btnPickCancel");
-
-// edytor
-const editorShell = document.getElementById("editorShell");
 
 // w nowym układzie nie ma editorTitle/editorSub – fallback na brandTitle
 const editorTitle = document.getElementById("editorTitle") || brandTitle;
@@ -104,7 +104,10 @@ let sessionSavedMode = null;   // żeby Anuluj wiedział co resetować
    UI helpers
 ========================================================= */
 function $(id){ return document.getElementById(id); }
-function show(el, on){ if (!el) return; el.style.display = on ? "" : "none"; }
+function show(el, on){
+  if (!el) return;
+  el.style.display = on ? "" : "none"; // "" wraca do CSS
+}
 function setMsg(t){ if (msg) msg.textContent = t || ""; }
 function setEditorMsg(t){ if (mMsg) mMsg.textContent = t || ""; }
 function markDirty(){ editorDirty = true; }
@@ -893,9 +896,10 @@ function openEditor(mode){
   };
   updateBigPreviewFromPayload(lastPreviewPayload);
 
-  // ===== pokaż widoki =====
-  show(document.querySelector(".shell"), false);
-  show(editorShell, true);
+   // Ukryj listę kafelków, pokaż edytor
+   if (listShell) show(listShell, false);
+   show(editorShell, true);
+
 
   if (mode === "TEXT"){
     show(paneText, true);
