@@ -321,7 +321,7 @@ body.logo-editor-body .wrap{
 }
 
 .ctrlGrid{
-  display:grid;
+  display: flex;
   grid-template-columns: 1fr 1fr;
   gap:10px;
 }
