@@ -270,6 +270,16 @@ body.logo-editor-body .wrap{
 /* ==========================================================
    TEXT_PIX
 ========================================================== */
+.editorShell[data-mode="TEXT_PIX"] .editorGrid{
+   grid-template-columns: 1fr 1fr;
+   grid-template-rows: 1fr 1fr;
+}
+.editorShell[data-mode="TEXT_PIX"] .editorRight{
+   grid-column: 2 / 2;
+   grid-row: 2 / 2;
+}
+
+
 .paneSec{
   margin-top:12px;
   border-radius:16px;
