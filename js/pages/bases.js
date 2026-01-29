@@ -394,7 +394,37 @@ async function importBase(payload) {
     if (error) throw error;
   }
 
+    // 5) Powiązania tagów kategorii (folderów)
+  const ctags = Array.isArray(payload.category_tags) ? payload.category_tags : [];
+  const crows = [];
+  for (const r of ctags) {
+    const nc = oldToNewCat.get(r.category_id);
+    const nt = oldToNewTag.get(r.tag_id);
+    if (!nc || !nt) continue;
+    crows.push({ category_id: nc, tag_id: nt });
+  }
+  if (crows.length) {
+    const { error } = await sb().from("qb_category_tags").insert(crows);
+    if (error) throw error;
+  }
+
   return base.id;
+}
+
+// Import demo bazy z pliku JSON w Twoim repo (np. /demo/przykladowa-baza.json)
+// Zawsze tworzy bazę o nazwie: "Przykładowa baza pytań"
+export async function importDemoBaseFromUrl(url = "../demo/przykladowa-baza.json") {
+  await requireAuth();
+
+  const res = await fetch(url, { cache: "no-store" });
+  if (!res.ok) throw new Error(`Nie mogę wczytać demo JSON (${res.status}). Sprawdź ścieżkę: ${url}`);
+
+  const payload = await res.json();
+  payload.base = payload.base || {};
+  payload.base.name = "Przykładowa baza pytań";
+
+  const baseId = await importBase(payload);
+  return baseId;
 }
 
 /* ================= Share modal ================= */
