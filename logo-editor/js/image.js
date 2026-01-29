@@ -608,6 +608,32 @@ export function initImageEditor(ctx) {
 
   bindOnce();
 
+  // Accordion: tylko jedno ustawienie naraz
+  const panelsWrap = document.getElementById("imgPanels");
+  const btns = Array.from(document.querySelectorAll(".imgSetBtn"));
+  
+  let openPanel = null;
+  
+  function setOpen(panel){
+    openPanel = panel;
+    if (panelsWrap) panelsWrap.style.display = openPanel ? "flex" : "none";
+    for (const p of Array.from(document.querySelectorAll(".imgPanel"))){
+      p.classList.toggle("is-open", p.dataset.panel === openPanel);
+    }
+  }
+  
+  for (const b of btns){
+    b.addEventListener("click", () => {
+      const panel = b.getAttribute("data-panel");
+      if (!panel) return;
+      setOpen(openPanel === panel ? null : panel);
+    });
+  }
+  
+  // start: nic nieotwarte
+  setOpen(null);
+
+
   // =========================================================
   // API
   // =========================================================
