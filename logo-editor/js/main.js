@@ -57,10 +57,16 @@ const pickImage = document.getElementById("pickImage");
 const btnPickCancel = document.getElementById("btnPickCancel");
 
 // edytor
+// topbar title (w nowym HTML to jest zawsze)
+const brandTitle = document.getElementById("brandTitle");
+
+// edytor
 const editorShell = document.getElementById("editorShell");
-const editorTitle = document.getElementById("editorTitle");
-const editorSub = document.getElementById("editorSub");
-const btnEditorClose = document.getElementById("btnEditorClose");
+
+// w nowym układzie nie ma editorTitle/editorSub – fallback na brandTitle
+const editorTitle = document.getElementById("editorTitle") || brandTitle;
+const editorSub = document.getElementById("editorSub"); // może być null (i to OK)
+const btnEditorClose = document.getElementById("btnEditorClose"); // może być null (i to OK)
 
 const logoName = document.getElementById("logoName");
 
@@ -894,12 +900,25 @@ function openEditor(mode){
     IMAGE: "Nowe logo — Obraz",
   };
 
-  editorTitle.textContent = titleMap[mode] || "Nowe logo";
-  editorSub.textContent =
-    mode === "TEXT" ? "Klasyczny styl jak w logo Familiady." :
-    mode === "TEXT_PIX" ? "Edytujesz tekst i wyświetlasz." :
-    mode === "DRAW" ? "Rysujesz w siatce wyświetlazca." :
-    "Importujesz obrazek i dopasowujesz.";
+   // brand w topbarze ma być 1 linia, nie złota
+   const label =
+     mode === "TEXT" ? "Napis" :
+     mode === "TEXT_PIX" ? "Tekst" :
+     mode === "DRAW" ? "Rysunek" :
+     "Obraz";
+   
+   // jeśli editorTitle jest brandTitle, to ustawiamy ładne spany (1 linia)
+   if (editorTitle === brandTitle) {
+     brandTitle.innerHTML = `<span class="bMain">Nowe logo — </span><span class="bMode">${label}</span>`;
+   } else {
+     editorTitle.textContent = `Nowe logo — ${label}`;
+   }
+   
+   // editorSub może nie istnieć (w Twoim nowym układzie)
+   if (editorSub) {
+     editorSub.textContent = "Klasyczny styl jak w logo Familiady.";
+   }
+
 
   show(document.querySelector(".shell"), false);
   show(editorShell, true);
@@ -1176,7 +1195,7 @@ async function boot(){
   btnPickCancel?.addEventListener("click", () => show(createOverlay, false));
   createOverlay?.addEventListener("click", (ev) => { if (ev.target === createOverlay) show(createOverlay, false); });
 
-  btnEditorClose?.addEventListener("click", () => closeEditor(false));
+ btnEditorClose?.addEventListener("click", () => closeEditor(false));
 
   btnCreate?.addEventListener("click", handleCreate);
    
