@@ -62,6 +62,9 @@ let selectedId = null;
 // DOMYŚLNIE: PREPAROWANY
 let activeTab = TYPES.PREPARED;
 
+const actionStateCache = new Map(); 
+// gameId -> { rev: string, res: { canEdit, canPlay, canPoll, canExport, needsResetWarning } }
+
 /* ================= UI helpers ================= */
 function show(el, on) {
   if (!el) return;
@@ -326,7 +329,7 @@ function setActiveTab(type) {
 async function listGames() {
   const { data, error } = await sb()
     .from("games")
-    .select("id,name,created_at,type,status")
+    .select("id,name,created_at,updated_at,type,status")
     .order("created_at", { ascending: false });
 
   if (error) throw error;
@@ -515,6 +518,34 @@ function render() {
 }
 
 /* ================= Button logic ================= */
+
+async function fetchActionState(gameId, revHint) {
+  // Cache hit tylko gdy znamy rev i się zgadza
+  if (revHint) {
+    const c = actionStateCache.get(gameId);
+    if (c && String(c.rev) === String(revHint)) return c.res;
+  }
+
+  const { data, error } = await sb()
+    .rpc("game_action_state", { p_game_id: gameId })
+    .single();
+
+  if (error) throw error;
+  const res = {
+    canEdit: true, // finalnie i tak liczysz canEnterEdit() w UI, ale tu trzymamy “stan przycisku”
+    needsResetWarning: !!data?.needs_reset_warning,
+    canPlay: !!data?.can_play,
+    canPoll: !!data?.can_poll,
+    canExport: !!data?.can_export,
+    reasonPlay: data?.reason_play || "",
+    reasonPoll: data?.reason_poll || "",
+    rev: String(data?.rev || "")
+  };
+
+  actionStateCache.set(gameId, { rev: res.rev, res });
+  return res;
+}
+
 async function updateActionState() {
   const sel = gamesAll.find(g => g.id === selectedId) || null;
   if (!sel) {
@@ -522,36 +553,41 @@ async function updateActionState() {
     return;
   }
 
-  let canExport = true;
-
-  const edit = canEnterEdit(sel);
-  const canEdit = !!edit.ok;
-
-  let canPlay = false;
-  try {
-    const chk = await validateGameReadyToPlay(sel.id);
-    canPlay = !!chk.ok;
-  } catch (e) {
-    console.error("[builder] validateGameReadyToPlay error:", e);
+  // 1) Spróbuj z cache natychmiast (jeśli rev się zgadza)
+  const revHint = sel.updated_at ? String(sel.updated_at) : "";
+  const cached = actionStateCache.get(sel.id);
+  if (cached && revHint && String(cached.rev) === revHint) {
+    setButtonsState({
+      hasSel: true,
+      canEdit: true,
+      canPlay: !!cached.res.canPlay,
+      canPoll: !!cached.res.canPoll,
+      canExport: true
+    });
+    return;
   }
 
-  let canPoll = false;
+  // 2) Jedno RPC (szybkie)
   try {
-    const entry = await validatePollEntry(sel.id);
-    if (entry.ok) {
-      if (sel.status === STATUS.POLL_OPEN || sel.status === STATUS.READY) {
-        canPoll = true;
-      } else {
-        const chk = await validatePollReadyToOpen(sel.id);
-        canPoll = !!chk.ok;
-      }
-    }
-  } catch (e) {
-    console.error("[builder] poll entry error:", e);
-  }
+    const st = await fetchActionState(sel.id, revHint);
 
-  setButtonsState({ hasSel: true, canEdit, canPlay, canPoll, canExport });
+    // canEdit zostaje wg Twojej logiki JS (bo masz dokładniejsze komunikaty / warningi)
+    const edit = canEnterEdit(sel);
+    const canEdit = !!edit.ok;
+
+    setButtonsState({
+      hasSel: true,
+      canEdit,
+      canPlay: !!st.canPlay,
+      canPoll: !!st.canPoll,
+      canExport: true
+    });
+  } catch (e) {
+    console.error("[builder] game_action_state error:", e);
+    setButtonsState({ hasSel: true, canEdit: false, canPlay: false, canPoll: false, canExport: true });
+  }
 }
+
 
 /* ================= Import/Export ================= */
 async function readFileAsText(file) {
