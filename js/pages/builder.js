@@ -470,6 +470,8 @@ function cardGame(g) {
   return el;
 }
 
+let isCreatingGame = false;
+
 function cardAdd(uiType) {
   const el = document.createElement("div");
   el.className = "addCard";
@@ -478,16 +480,25 @@ function cardAdd(uiType) {
     <div class="txt">Nowa gra</div>
     <div class="sub">${typeLabel(uiType)}</div>
   `;
-  el.addEventListener("click", async () => {
-    try {
-      const g = await createGame(uiType);
-      selectedId = g.id;
-      await refresh();
-    } catch (e) {
-      console.error("[builder] create error:", e);
-      alert("Nie udało się utworzyć gry (sprawdź konsolę).");
-    }
-  });
+    el.addEventListener("click", async () => {
+      if (isCreatingGame) return;
+      isCreatingGame = true;
+      el.style.pointerEvents = "none";
+      el.style.opacity = "0.6";
+  
+      try {
+        const g = await createGame(uiType);
+        selectedId = g.id;
+        await refresh();
+      } catch (e) {
+        console.error("[builder] create error:", e);
+        alert("Nie udało się utworzyć gry (sprawdź konsolę).");
+      } finally {
+        isCreatingGame = false;
+        el.style.pointerEvents = "";
+        el.style.opacity = "";
+      }
+    });
   return el;
 }
 
