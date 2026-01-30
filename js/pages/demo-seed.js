@@ -38,7 +38,7 @@ export async function seedDemoOnceIfNeeded(userId) {
   // Jeśli chcesz "fail-fast i disable", to powiedz.
   try {
     // 1) baza pytań
-    await importBaseFromUrl("../../demo/przykladowa-baza.json");
+    await importBaseFromUrl("../../demo/base.json");
 
     // 2) 4 loga (pojedyncze pliki)
     await demoImport4Logos(
