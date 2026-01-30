@@ -1178,11 +1178,12 @@ async function boot(){
    - NIE ustawia aktywnego
 ========================================================= */
 
-async function listLogosForUser(userId){
+async function listMyLogos(){
+  const u = await ensureCurrentUser();
   const { data, error } = await sb()
     .from("user_logos")
     .select("id,name")
-    .eq("user_id", userId);
+    .eq("user_id", u.id);
   if (error) throw error;
   return data || [];
 }
@@ -1213,25 +1214,32 @@ async function fetchTextRequired(url, label = "Import"){
   return await r.text();
 }
 
+
+async function ensureCurrentUser(){
+  // jeśli boot() już ustawił currentUser, to nie wołamy requireAuth drugi raz
+  if (currentUser?.id) return currentUser;
+  currentUser = await requireAuth("../index.html");
+  if (!currentUser?.id) throw new Error("Brak zalogowanego użytkownika.");
+  return currentUser;
+}
+
 /**
- * Import 4 logo JSON-y z URL dla dowolnego user_id (demo seed).
+ * Import 4 logo JSON-y z URL dla aktualnie zalogowanego usera (demo seed).
  *
- * @param {string} playerId - docelowy user_id w user_logos
  * @param {string} url1
  * @param {string} url2
  * @param {string} url3
  * @param {string} url4
  * @returns {Promise<{ok:boolean, createdIds:string[], errors:Array<{url:string, error:string}>}>}
  */
-export async function demoImport4LogosForPlayer(playerId, url1, url2, url3, url4){
-  const userId = String(playerId || "").trim();
-  if (!userId) throw new Error("demoImport4LogosForPlayer: brak playerId.");
+export async function demoImport4Logos(url1, url2, url3, url4){
+  const u = await ensureCurrentUser();
 
   const urls = [url1, url2, url3, url4].map(u => String(u || "").trim()).filter(Boolean);
-  if (urls.length !== 4) throw new Error("demoImport4LogosForPlayer: wymagane dokładnie 4 linki (URL).");
+  if (urls.length !== 4) throw new Error("demoImport4Logos: wymagane dokładnie 4 linki (URL).");
 
-  // bierzemy listę nazw logo dla tego usera, żeby dopinać unikalność
-  const existing = await listLogosForUser(userId);
+  // lista nazw logo dla tego usera, żeby dopinać unikalność
+  const existing = await listMyLogos();
 
   const createdIds = [];
   const errors = [];
@@ -1242,14 +1250,13 @@ export async function demoImport4LogosForPlayer(playerId, url1, url2, url3, url4
       const txt = await fetchTextRequired(url, `Logo ${i + 1}`);
       const parsed = parseImportJson(txt);
 
-      // unikalna nazwa w obrębie docelowego usera
       const uniqueName = makeUniqueNameFromList(parsed.name, existing);
 
       let row = null;
 
       if (parsed.kind === "GLYPH"){
         row = {
-          user_id: userId,
+          user_id: u.id,
           name: uniqueName,
           type: TYPE_GLYPH,
           is_active: false,
@@ -1257,7 +1264,7 @@ export async function demoImport4LogosForPlayer(playerId, url1, url2, url3, url4
         };
       } else if (parsed.kind === "PIX"){
         row = {
-          user_id: userId,
+          user_id: u.id,
           name: uniqueName,
           type: TYPE_PIX,
           is_active: false,
@@ -1269,8 +1276,6 @@ export async function demoImport4LogosForPlayer(playerId, url1, url2, url3, url4
 
       const newId = await createLogo(row);
       createdIds.push(newId);
-
-      // dopisujemy do istniejących, żeby kolejne nazwy też się nie zderzyły
       existing.push({ id: newId, name: uniqueName });
     } catch (e){
       errors.push({ url, error: String(e?.message || e) });
