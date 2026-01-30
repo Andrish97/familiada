@@ -279,12 +279,15 @@ async function importPollFromUrlInternal(url, ownerId) {
   // 1) import gry (tworzy games + questions + answers, games.status="draft")
   const gameId = await importGame(payload, ownerId);
 
-  // pobierz aktualny klucz sesji poll (ten który backend uznaje za ważny)
   const { data: pollRow, error: kErr } = await sb()
     .from("poll_sessions")
+    .insert({ game_id: gameId })
     .select("key")
-    .eq("game_id", gameId)
     .single();
+  
+  if (kErr) throw kErr;
+  
+  const pollKey = pollRow.key;
   
   if (kErr || !pollRow?.key) {
     throw new Error("Brak aktywnej sesji poll dla gry DEMO");
