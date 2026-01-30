@@ -1,6 +1,6 @@
 // js/pages/manual.js
 // Zakładki mają działać nawet jeśli auth się nie załaduje.
-// Najpierw UI, potem auth "miękko".
+// Najpierw UI (tabs + fallback), potem miękko auth, a dopiero wtedy demo-akcje.
 
 import { confirmModal } from "../core/modal.js";
 
@@ -19,27 +19,26 @@ const pages = {
 };
 
 function setActive(name) {
-  tabs.forEach(t => t.classList.toggle("active", t.dataset.tab === name));
-  Object.entries(pages).forEach(([key, el]) => {
-    el?.classList.toggle("active", key === name);
-  });
-  location.hash = name;
+  const key = pages[name] ? name : "general";
+  tabs.forEach(t => t.classList.toggle("active", t.dataset.tab === key));
+  Object.entries(pages).forEach(([k, el]) => el?.classList.toggle("active", k === key));
+  location.hash = key;
 }
 
 function wireTabs() {
   tabs.forEach(tab => {
     tab.addEventListener("click", () => setActive(tab.dataset.tab));
   });
+
+  // start: hash → jeśli nie ma / złe → general
+  const initial = (location.hash || "").replace("#", "");
+  setActive(initial);
 }
 
 function wireFallbackNav() {
-  // fallback, gdyby auth nie zadziałał
-  byId("btnBack")?.addEventListener("click", () => {
-    location.href = "builder.html";
-  });
-  byId("btnLogout")?.addEventListener("click", () => {
-    location.href = "index.html";
-  });
+  // fallback, gdyby auth nie zadziałał (przyciski nie wymagają sesji)
+  byId("btnBack")?.addEventListener("click", () => (location.href = "builder.html"));
+  byId("btnLogout")?.addEventListener("click", () => (location.href = "index.html"));
 }
 
 async function wireDemoActions(user) {
@@ -57,18 +56,16 @@ async function wireDemoActions(user) {
     });
     if (!ok) return;
 
-    // ustaw demo=true
     await resetUserDemoFlag(user.id, true);
-
-    // przejście do buildera
     location.href = "./builder.html";
   });
 }
 
-async function wireAuth() {
+async function wireAuthSoft() {
   const { requireAuth, signOut } = await import("../core/auth.js");
 
   const user = await requireAuth("index.html");
+
   const who = byId("who");
   if (who) who.textContent = user?.email || "—";
 
@@ -81,22 +78,16 @@ async function wireAuth() {
     location.href = "builder.html";
   });
 
-  // Demo tab – miękko
+  // demo akcje – miękko
   wireDemoActions(user).catch((err) => {
     console.warn("[manual] demo actions nieaktywne:", err);
   });
 }
 
-/* ===== init ===== */
+/* ================= Init ================= */
 wireTabs();
 wireFallbackNav();
 
-// hash start: jak brak, pokaż general
-const initial = (location.hash || "").replace("#", "");
-if (initial && pages[initial]) setActive(initial);
-else setActive("general");
-
-// auth próbujemy „miękko”
-wireAuth().catch((err) => {
+wireAuthSoft().catch((err) => {
   console.warn("[manual] auth nieaktywny:", err);
 });
