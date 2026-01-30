@@ -43,35 +43,35 @@ export async function seedDemoOnceIfNeeded(userId) {
        1) Baza pytań
     =============================== */
 
-    await importBaseFromUrl("../demo/base.json");
+    await importBaseFromUrl("../../demo/base.json");
 
     /* ===============================
        2) Loga
     =============================== */
 
     await demoImport4Logos(
-      "../demo/logo_text.json",
-      "../demo/logo_text-pix.json",
-      "../demo/logo_draw.json",
-      "../demo/logo_image.json"
+      "../../demo/logo_text.json",
+      "../../demo/logo_text-pix.json",
+      "../../demo/logo_draw.json",
+      "../../demo/logo_image.json"
     );
 
     /* ===============================
        3) Gry sondażowe
     =============================== */
 
-    await importPollFromUrl("../demo/poll_text_open.json");
-    await importPollFromUrl("../demo/poll_text_closed.json");
-    await importPollFromUrl("../demo/poll_points_open.json");
-    await importPollFromUrl("../demo/poll_points_closed.json");
+    await importPollFromUrl("../../demo/poll_text_open.json");
+    await importPollFromUrl("../../demo/poll_text_closed.json");
+    await importPollFromUrl("../../demo/poll_points_open.json");
+    await importPollFromUrl("../../demo/poll_points_closed.json");
 
     /* ===============================
        4) Szkice
     =============================== */
 
-    const prepared = await fetchJson("../demo/prepared.json");
-    const pollPtsDraft = await fetchJson("../demo/poll_points_draft.json");
-    const pollTxtDraft = await fetchJson("../demo/poll_text_draft.json");
+    const prepared = await fetchJson("../../demo/prepared.json");
+    const pollPtsDraft = await fetchJson("../../demo/poll_points_draft.json");
+    const pollTxtDraft = await fetchJson("../../demo/poll_text_draft.json");
 
     await importGame(prepared, uid);
     await importGame(pollPtsDraft, uid);
