@@ -9,6 +9,8 @@ export function initTextEditor(ctx) {
   const textMeasure = document.getElementById("textMeasure");
   const btnCharsToggle = document.getElementById("btnCharsToggle");
   const charsList = document.getElementById("charsList");
+  const charsInline = document.getElementById("charsInline");
+
 
   const TYPE_GLYPH = "GLYPH_30x10";
 
@@ -158,8 +160,10 @@ export function initTextEditor(ctx) {
   });
 
   btnCharsToggle?.addEventListener("click", () => {
-    const on = charsList?.style.display === "none";
-    show(charsList, on);
+    // stan bierzemy z wrappera (bo to on faktycznie “trzyma” widoczność)
+    const on = (charsInline?.style.display === "none") || !charsInline?.style.display;
+    show(charsInline, on);
+    show(charsList, on); // lista ma się pokazać razem z panelem
     if (btnCharsToggle) btnCharsToggle.textContent = on ? "Ukryj" : "Pokaż";
   });
 
@@ -171,7 +175,9 @@ export function initTextEditor(ctx) {
       if (textMeasure) textMeasure.textContent = "—";
       show(textWarn, false);
       renderAllowedCharsList();
+      show(charsInline, false);
       show(charsList, false);
+      
       if (btnCharsToggle) btnCharsToggle.textContent = "Pokaż";
 
       lastCompiled = null;
