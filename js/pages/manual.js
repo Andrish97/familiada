@@ -1,11 +1,12 @@
 // js/pages/manual.js
 // Zakładki mają działać nawet jeśli auth się nie załaduje.
-// Dlatego: najpierw podpinamy UI, dopiero potem próbujemy auth.
 
 import { confirmModal } from "../core/modal.js";
 
 function qsa(sel) { return Array.from(document.querySelectorAll(sel)); }
 function byId(id) { return document.getElementById(id); }
+
+/* ================= Tabs ================= */
 
 const tabs = qsa(".simple-tabs .tab");
 const pages = {
@@ -19,25 +20,24 @@ const pages = {
 };
 
 function setActive(name) {
-  tabs.forEach(t => t.classList.toggle("active", t.dataset.tab === name));
-  Object.entries(pages).forEach(([key, el]) => {
-    el?.classList.toggle("active", key === name);
-  });
+  tabs.forEach((t) => t.classList.toggle("active", t.dataset.tab === name));
+  Object.entries(pages).forEach(([key, el]) => el?.classList.toggle("active", key === name));
   location.hash = name;
 }
 
 function wireTabs() {
-  tabs.forEach(tab => {
+  tabs.forEach((tab) => {
     tab.addEventListener("click", () => setActive(tab.dataset.tab));
   });
+
+  const initial = (location.hash || "").replace("#", "");
+  if (initial && pages[initial]) setActive(initial);
+  else setActive("general"); // fallback
 }
 
-const initial = (location.hash || "").replace("#", "");
-if (initial && pages[initial]) setActive(initial);
-
+/* ================= Fallback nav (bez auth) ================= */
 
 function wireFallbackNav() {
-  // fallback, gdyby auth nie zadziałał
   byId("btnBack")?.addEventListener("click", () => {
     location.href = "builder.html";
   });
@@ -46,11 +46,26 @@ function wireFallbackNav() {
   });
 }
 
+/* ================= DEMO actions ================= */
+
 async function wireDemoActions(user) {
-  const btn = document.getElementById("demoRestoreBtn");
-  if (!btn || !user?.id) return;
+  const btn = byId("demoRestoreBtn");
+  if (!btn) {
+    console.warn("[manual] Brak #demoRestoreBtn w HTML (zakładka DEMO).");
+    return;
+  }
+
+  if (!user?.id) {
+    // auth nie zadziałał → przycisk może być, ale nie będzie działał
+    btn.disabled = true;
+    btn.title = "Zaloguj się, aby przywrócić demo.";
+    return;
+  }
 
   const { resetUserDemoFlag } = await import("../core/user-flags.js");
+
+  btn.disabled = false;
+  btn.title = "";
 
   btn.addEventListener("click", async () => {
     const ok = await confirmModal({
@@ -62,19 +77,18 @@ async function wireDemoActions(user) {
 
     if (!ok) return;
 
-    // ustaw demo=true
     await resetUserDemoFlag(user.id, true);
-
-    // przejście do buildera
     location.href = "./builder.html";
   });
 }
 
+/* ================= Auth (miękko) ================= */
+
 async function wireAuth() {
-  // Import dynamiczny: jeśli coś padnie, nie blokujemy zakładek.
   const { requireAuth, signOut } = await import("../core/auth.js");
 
   const user = await requireAuth("index.html");
+
   const who = byId("who");
   if (who) who.textContent = user?.email || "—";
 
@@ -87,16 +101,16 @@ async function wireAuth() {
     location.href = "builder.html";
   });
 
-  // Demo tab – miękko
-  wireDemoActions(user).catch((err) => {
-    console.warn("[manual] demo actions nieaktywne:", err);
-  });
+  await wireDemoActions(user);
 }
+
+/* ================= Init ================= */
 
 wireTabs();
 wireFallbackNav();
 
-// auth próbujemy „miękko”
-wireAuth().catch((err) => {
+wireAuth().catch(async (err) => {
   console.warn("[manual] auth nieaktywny:", err);
+  // mimo braku auth: spróbujmy chociaż zablokować demo button, jeśli istnieje
+  try { await wireDemoActions(null); } catch {}
 });
