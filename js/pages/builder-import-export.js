@@ -25,7 +25,7 @@ const safePts = (v) => {
 /*
   FORMAT:
   {
-    game: { name, type }, // type: poll_text | poll_points | prepared
+    game: { name, type }, // poll_text | poll_points | prepared
     questions: [
       { text, answers: [{ text, fixed_points }] }
     ]
@@ -52,7 +52,7 @@ export async function exportGame(gameId) {
     questions: [],
   };
 
-  for (const q of questions || []) {
+  for (const q of (questions || [])) {
     const { data: answers, error: aErr } = await sb()
       .from("answers")
       .select("ord,text,fixed_points")
@@ -129,9 +129,7 @@ export async function importGame(payload, ownerId) {
 }
 
 export function downloadJson(filename, obj) {
-  const blob = new Blob([JSON.stringify(obj, null, 2)], {
-    type: "application/json",
-  });
+  const blob = new Blob([JSON.stringify(obj, null, 2)], { type: "application/json" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
@@ -144,14 +142,21 @@ export function downloadJson(filename, obj) {
 
 /* =========================================================
    POLL IMPORT FROM URL (open/closed) + optional vote seeding
+   JSON:
+   game: { name, type: "poll_text"|"poll_points", status: "open"|"closed" }
 ========================================================= */
 
 async function fetchJsonFromUrl(url) {
   const u = String(url || "").trim();
   if (!u) throw new Error("Brak URL do JSON.");
 
+  // dopuszczamy http(s) i ścieżki względne
   const ok =
-    /^https?:\/\//i.test(u) || u.startsWith("../") || u.startsWith("./") || u.startsWith("/");
+    /^https?:\/\//i.test(u) ||
+    u.startsWith("../") ||
+    u.startsWith("./") ||
+    u.startsWith("/");
+
   if (!ok) throw new Error("Podaj link http(s) albo ścieżkę względną do JSON.");
 
   const res = await fetch(u, { cache: "no-store" });
@@ -203,6 +208,7 @@ async function listQuestions(gameId) {
     .select("id,ord")
     .eq("game_id", gameId)
     .order("ord", { ascending: true });
+
   if (error) throw error;
   return data || [];
 }
@@ -215,53 +221,52 @@ async function listAnswersForQuestions(qIds) {
     .select("id,question_id,ord")
     .in("question_id", qIds)
     .order("ord", { ascending: true });
+
   if (error) throw error;
 
   const map = new Map();
-  for (const r of data || []) {
+  for (const r of (data || [])) {
     if (!map.has(r.question_id)) map.set(r.question_id, []);
     map.get(r.question_id).push(r);
   }
   return map;
 }
 
-/**
- * Pobierz poll key z games (różne nazwy kolumn — próbujemy po kolei)
- */
-async function getPollKeyForGame(gameId) {
-  const candidates = ["share_key_poll", "poll_key", "key_poll", "share_key"];
-  for (const col of candidates) {
-    const { data, error } = await sb().from("games").select(col).eq("id", gameId).single();
-    if (!error && data && data[col]) return String(data[col]);
-    // jeśli błąd "column does not exist" — próbujemy kolejny
-  }
-  return null;
-}
-
-async function ensurePollSession({ gameId, isOpen }) {
+async function openPollSessionForGame(gameId, isOpen) {
   const qs = await listQuestions(gameId);
-  if (!qs.length) throw new Error("DEMO: gra nie ma pytań (nie da się zrobić poll_sessions).");
+  if (!qs.length) throw new Error("DEMO: gra nie ma pytań (nie da się utworzyć sesji poll).");
 
   const firstOrd = Number(qs[0].ord) || 1;
 
-  // tworzymy pojedynczą sesję “sterującą” (jak u Ciebie w UI),
-  // ale z wypełnionym question_ord / question_id
-  const { error } = await sb()
+  const payload = {
+    game_id: gameId,
+    question_ord: firstOrd,
+    is_open: !!isOpen,
+    question_id: qs[0].id,
+  };
+
+  // closed_at tylko gdy zamknięte
+  if (!isOpen) payload.closed_at = new Date().toISOString();
+
+  const { data, error } = await sb()
     .from("poll_sessions")
-    .insert({
-      game_id: gameId,
-      question_ord: firstOrd,
-      question_id: qs[0].id,
-      is_open: !!isOpen,
-      closed_at: isOpen ? null : new Date().toISOString(),
-    });
+    .insert(payload)
+    .select("id,question_ord,question_id,is_open")
+    .single();
 
   if (error) throw error;
-  return qs;
+
+  return {
+    poll_session_id: data.id,
+    question_ord: data.question_ord,
+    question_id: data.question_id,
+    is_open: data.is_open,
+  };
 }
 
 async function importPollFromUrlInternal(url, ownerId) {
   const src = await fetchJsonFromUrl(url);
+
   if (!src?.game || !Array.isArray(src?.questions)) {
     throw new Error("JSON: brak game / questions.");
   }
@@ -271,21 +276,17 @@ async function importPollFromUrlInternal(url, ownerId) {
   const name = String(src.game.name ?? "DEMO").trim() || "DEMO";
 
   // 1) payload pod importGame
-  const payload = {
-    game: { name, type },
-    questions: [],
-  };
+  const payload = { game: { name, type }, questions: [] };
 
   if (type === "poll_text") {
-    payload.questions = src.questions.map((q) => ({
-      text: String(q?.text ?? ""),
-      answers: [],
-    }));
+    payload.questions = src.questions.map((q) => ({ text: String(q?.text ?? ""), answers: [] }));
   } else {
     payload.questions = src.questions.map((q) => ({
       text: String(q?.text ?? ""),
       answers: (Array.isArray(q?.answers) ? q.answers : []).map((a) => ({
         text: String(a?.text ?? ""),
+        // CLOSED: bierzemy fixed_points z JSON
+        // OPEN: ignorujemy fixed_points (0)
         fixed_points: pollStatus === "closed" ? Number(a?.fixed_points ?? 0) : 0,
       })),
     }));
@@ -294,51 +295,74 @@ async function importPollFromUrlInternal(url, ownerId) {
   // 2) import definicji gry
   const gameId = await importGame(payload, ownerId);
 
-  // 3) poll_sessions zawsze (open i closed)
-  const isOpen = pollStatus === "open";
-  const qs = await ensurePollSession({ gameId, isOpen });
-
-  // 4) status gry
-  if (isOpen) {
+  // 3) poll_sessions + status w games
+  if (pollStatus === "open") {
+    const sess = await openPollSessionForGame(gameId, true);
     await setGameStatus(gameId, "poll_open");
-  } else {
-    // “zamknięte”: zostaje draft (albo jak masz inny status – zmień tutaj)
-    // ale poll_sessions istnieje (is_open=false), więc UI nie powinno “gubić” gry
-    await setGameStatus(gameId, "draft");
-    return gameId;
-  }
 
-  // 5) seed głosów tylko dla OPEN (jeśli są w JSON)
-  const votes = Array.isArray(src.votes) ? src.votes : [];
-  if (!votes.length) return gameId;
+    // 4) seed głosów (opcjonalnie)
+    const votes = Array.isArray(src.votes) ? src.votes : [];
+    if (!votes.length) return gameId;
 
-  const pollKey = await getPollKeyForGame(gameId);
-  if (!pollKey) {
-    console.warn("[DEMO] Brak poll key w games — pomijam seed głosów.");
-    return gameId;
-  }
+    const pollKey = String(sess.poll_session_id); // <- to jest Twój "p_key"
 
-  if (type === "poll_text") {
+    const qs = await listQuestions(gameId);
+
+    if (type === "poll_text") {
+      for (const v of votes) {
+        const arr = Array.isArray(v?.answers_raw) ? v.answers_raw : [];
+        const items = [];
+
+        for (let i = 0; i < qs.length; i++) {
+          const raw = String(arr[i] ?? "").trim().slice(0, 17);
+          if (!raw) continue;
+
+          items.push({
+            question_id: qs[i].id,
+            answer_raw: raw,
+            answer_norm: normText(raw),
+          });
+        }
+
+        if (!items.length) continue;
+
+        const voter =
+          crypto?.randomUUID?.() || `${Date.now()}_${Math.random().toString(16).slice(2)}`;
+
+        const { error } = await sb().rpc("poll_text_submit_batch", {
+          p_game_id: gameId,
+          p_items: items,
+          p_key: pollKey,
+          p_voter_token: voter,
+        });
+
+        if (error) throw error;
+      }
+
+      return gameId;
+    }
+
+    // poll_points
+    const aMap = await listAnswersForQuestions(qs.map((q) => q.id));
     for (const v of votes) {
-      const arr = Array.isArray(v?.answers_raw) ? v.answers_raw : [];
+      const picks = Array.isArray(v?.picks) ? v.picks : [];
       const items = [];
 
       for (let i = 0; i < qs.length; i++) {
-        const raw = String(arr[i] ?? "").trim().slice(0, 17);
-        if (!raw) continue;
-
-        items.push({
-          question_id: qs[i].id,
-          answer_raw: raw,
-          answer_norm: normText(raw),
-        });
+        const answers = aMap.get(qs[i].id) || [];
+        const idx = Number(picks[i]);
+        if (!Number.isFinite(idx)) continue;
+        const a = answers[idx];
+        if (!a) continue;
+        items.push({ question_id: qs[i].id, answer_id: a.id });
       }
 
       if (!items.length) continue;
 
-      const voter = crypto?.randomUUID?.() || `${Date.now()}_${Math.random().toString(16).slice(2)}`;
+      const voter =
+        crypto?.randomUUID?.() || `${Date.now()}_${Math.random().toString(16).slice(2)}`;
 
-      const { error } = await sb().rpc("poll_text_submit_batch", {
+      const { error } = await sb().rpc("poll_points_vote_batch", {
         p_game_id: gameId,
         p_items: items,
         p_key: pollKey,
@@ -351,37 +375,10 @@ async function importPollFromUrlInternal(url, ownerId) {
     return gameId;
   }
 
-  // poll_points
-  const aMap = await listAnswersForQuestions(qs.map((q) => q.id));
-
-  for (const v of votes) {
-    const picks = Array.isArray(v?.picks) ? v.picks : [];
-    const items = [];
-
-    for (let i = 0; i < qs.length; i++) {
-      const answers = aMap.get(qs[i].id) || [];
-      const idx = Number(picks[i]);
-      if (!Number.isFinite(idx)) continue;
-
-      const a = answers[idx];
-      if (!a) continue;
-
-      items.push({ question_id: qs[i].id, answer_id: a.id });
-    }
-
-    if (!items.length) continue;
-
-    const voter = crypto?.randomUUID?.() || `${Date.now()}_${Math.random().toString(16).slice(2)}`;
-
-    const { error } = await sb().rpc("poll_points_vote_batch", {
-      p_game_id: gameId,
-      p_items: items,
-      p_key: pollKey,
-      p_voter_token: voter,
-    });
-
-    if (error) throw error;
-  }
+  // CLOSED: tworzymy sesję “zamkniętą” (żeby UI miało runtime), status zostaje draft
+  await openPollSessionForGame(gameId, false);
+  // UWAGA: jeśli chcesz osobny status, odkomentuj:
+  // await setGameStatus(gameId, "poll_closed");
 
   return gameId;
 }
