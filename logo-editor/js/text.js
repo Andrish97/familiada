@@ -8,7 +8,7 @@ export function initTextEditor(ctx) {
   const textWarn = document.getElementById("textWarn");
   const textMeasure = document.getElementById("textMeasure");
   const btnCharsToggle = document.getElementById("btnCharsToggle");
-  const charsList = document.getElementById("charsList");
+  const charsInline = document.getElementById("charsInline");
 
   const TYPE_GLYPH = "GLYPH_30x10";
 
@@ -114,11 +114,11 @@ export function initTextEditor(ctx) {
     };
   }
 
-  function renderAllowedCharsList() {
+  function renderAllowedcharsInline() {
     const FONT_3x10 = ctx.getFont3x10?.() || {};
-    if (!charsList) return;
+    if (!charsInline) return;
     const keys = Object.keys(FONT_3x10 || {});
-    charsList.textContent = "␠" + keys.join("\u2009");
+    charsInline.textContent = "␠" + keys.join("\u2009");
   }
 
   function updateWarnings(compiled) {
@@ -170,8 +170,8 @@ export function initTextEditor(ctx) {
       if (textValue) textValue.value = "";
       if (textMeasure) textMeasure.textContent = "—";
       show(textWarn, false);
-      renderAllowedCharsList();
-      show(charsList, false);
+      renderAllowedcharsInline();
+      show(charsInline, false);
       if (btnCharsToggle) btnCharsToggle.textContent = "Pokaż";
 
       lastCompiled = null;
