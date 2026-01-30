@@ -1,0 +1,702 @@
+{
+  "base": { "name": "DEMO - Baza pytań)" },
+  "categories": [
+    { "id": "c_root_1", "parent_id": null, "name": "Starter — klasyki", "ord": 0 },
+    { "id": "c_root_2", "parent_id": null, "name": "Życie codzienne", "ord": 1 },
+    { "id": "c_root_3", "parent_id": null, "name": "Kuchnia i jedzenie", "ord": 2 },
+    { "id": "c_root_4", "parent_id": null, "name": "Podróże i miasto", "ord": 3 },
+    { "id": "c_root_5", "parent_id": null, "name": "Święta i okazje", "ord": 4 },
+
+    { "id": "c_s_1", "parent_id": "c_root_1", "name": "Rodzina", "ord": 0 },
+    { "id": "c_s_2", "parent_id": "c_root_1", "name": "Dom", "ord": 1 },
+    { "id": "c_s_3", "parent_id": "c_root_1", "name": "Praca i szkoła", "ord": 2 },
+
+    { "id": "c_d_1", "parent_id": "c_root_2", "name": "Zakupy", "ord": 0 },
+    { "id": "c_d_2", "parent_id": "c_root_2", "name": "Higiena i porządek", "ord": 1 },
+    { "id": "c_d_3", "parent_id": "c_root_2", "name": "Technologia", "ord": 2 },
+
+    { "id": "c_k_1", "parent_id": "c_root_3", "name": "Gotowanie", "ord": 0 },
+    { "id": "c_k_2", "parent_id": "c_root_3", "name": "Smaki i produkty", "ord": 1 },
+    { "id": "c_k_3", "parent_id": "c_root_3", "name": "Jedzenie na mieście", "ord": 2 },
+
+    { "id": "c_p_1", "parent_id": "c_root_4", "name": "Transport", "ord": 0 },
+    { "id": "c_p_2", "parent_id": "c_root_4", "name": "Wakacje", "ord": 1 },
+    { "id": "c_p_3", "parent_id": "c_root_4", "name": "Miasto", "ord": 2 },
+
+    { "id": "c_sw_1", "parent_id": "c_root_5", "name": "Boże Narodzenie", "ord": 0 },
+    { "id": "c_sw_2", "parent_id": "c_root_5", "name": "Wesele", "ord": 1 },
+    { "id": "c_sw_3", "parent_id": "c_root_5", "name": "Urodziny", "ord": 2 }
+  ],
+  "tags": [
+    { "id": "t_easy", "name": "łatwe", "color": "green", "ord": 0 },
+    { "id": "t_classic", "name": "klasyk", "color": "blue", "ord": 1 },
+    { "id": "t_kids", "name": "dzieci", "color": "pink", "ord": 2 },
+    { "id": "t_party", "name": "impreza", "color": "purple", "ord": 3 },
+    { "id": "t_food", "name": "kuchnia", "color": "orange", "ord": 4 },
+    { "id": "t_city", "name": "miasto", "color": "cyan", "ord": 5 },
+    { "id": "t_travel", "name": "podróże", "color": "teal", "ord": 6 },
+    { "id": "t_work", "name": "praca", "color": "gray", "ord": 7 },
+    { "id": "t_xmas", "name": "święta", "color": "red", "ord": 8 },
+    { "id": "t_poll", "name": "sondaż", "color": "yellow", "ord": 9 }
+  ],
+  "category_tags": [
+    { "category_id": "c_s_1", "tag_id": "t_classic" },
+    { "category_id": "c_s_2", "tag_id": "t_easy" },
+    { "category_id": "c_k_1", "tag_id": "t_food" },
+    { "category_id": "c_k_2", "tag_id": "t_food" },
+    { "category_id": "c_p_2", "tag_id": "t_travel" },
+    { "category_id": "c_p_3", "tag_id": "t_city" },
+    { "category_id": "c_sw_1", "tag_id": "t_xmas" },
+    { "category_id": "c_sw_2", "tag_id": "t_party" }
+  ],
+  "questions": [
+    {
+      "id": "q001",
+      "category_id": "c_s_1",
+      "ord": 1,
+      "payload": {
+        "text": "Podaj coś, co rodzice mówią dziecku, gdy wychodzi z domu.",
+        "answers": [
+          { "text": "Uważaj na siebie", "fixed_points": 35 },
+          { "text": "Załóż czapkę", "fixed_points": 20 },
+          { "text": "Zadzwoń jak dotrzesz", "fixed_points": 18 },
+          { "text": "Nie rozmawiaj z obcymi", "fixed_points": 15 },
+          { "text": "Weź klucze", "fixed_points": 12 }
+        ]
+      }
+    },
+    {
+      "id": "q002",
+      "category_id": "c_s_2",
+      "ord": 2,
+      "payload": {
+        "text": "Co najczęściej gubi się w domu?",
+        "answers": [
+          { "text": "Pilot", "fixed_points": 28 },
+          { "text": "Klucze", "fixed_points": 26 },
+          { "text": "Skarpetki", "fixed_points": 20 },
+          { "text": "Ładowarka", "fixed_points": 14 },
+          { "text": "Okulary", "fixed_points": 12 }
+        ]
+      }
+    },
+    {
+      "id": "q003",
+      "category_id": "c_s_3",
+      "ord": 3,
+      "payload": {
+        "text": "Podaj powód spóźnienia do pracy/szkoły.",
+        "answers": [
+          { "text": "Korki", "fixed_points": 34 },
+          { "text": "Zaspałem", "fixed_points": 30 },
+          { "text": "Autobus uciekł", "fixed_points": 16 },
+          { "text": "Awaria samochodu", "fixed_points": 12 },
+          { "text": "Dziecko / przedszkole", "fixed_points": 8 }
+        ]
+      }
+    },
+
+    {
+      "id": "q004",
+      "category_id": "c_d_1",
+      "ord": 4,
+      "payload": {
+        "text": "Co ludzie sprawdzają w sklepie, zanim kupią produkt?",
+        "answers": [
+          { "text": "Cenę", "fixed_points": 36 },
+          { "text": "Datę ważności", "fixed_points": 24 },
+          { "text": "Skład", "fixed_points": 18 },
+          { "text": "Rozmiar / wymiary", "fixed_points": 12 },
+          { "text": "Opinie / oceny", "fixed_points": 10 }
+        ]
+      }
+    },
+    {
+      "id": "q005",
+      "category_id": "c_d_2",
+      "ord": 5,
+      "payload": {
+        "text": "Co robisz jako pierwsze po wejściu do domu w deszczowy dzień?",
+        "answers": [
+          { "text": "Zdejmuję buty", "fixed_points": 32 },
+          { "text": "Wieszam kurtkę", "fixed_points": 22 },
+          { "text": "Myję ręce", "fixed_points": 18 },
+          { "text": "Robię herbatę", "fixed_points": 15 },
+          { "text": "Wycieram podłogę", "fixed_points": 13 }
+        ]
+      }
+    },
+    {
+      "id": "q006",
+      "category_id": "c_d_3",
+      "ord": 6,
+      "payload": {
+        "text": "Podaj coś, co denerwuje w telefonie.",
+        "answers": [
+          { "text": "Słaba bateria", "fixed_points": 30 },
+          { "text": "Zawieszanie", "fixed_points": 22 },
+          { "text": "Brak zasięgu", "fixed_points": 18 },
+          { "text": "Reklamy / spam", "fixed_points": 16 },
+          { "text": "Pęknięty ekran", "fixed_points": 14 }
+        ]
+      }
+    },
+
+    {
+      "id": "q007",
+      "category_id": "c_k_1",
+      "ord": 7,
+      "payload": {
+        "text": "Co może się nie udać podczas gotowania?",
+        "answers": [
+          { "text": "Przypali się", "fixed_points": 32 },
+          { "text": "Będzie za słone", "fixed_points": 20 },
+          { "text": "Będzie surowe", "fixed_points": 18 },
+          { "text": "Rozgotuje się", "fixed_points": 16 },
+          { "text": "Zwarzy się sos", "fixed_points": 14 }
+        ]
+      }
+    },
+    {
+      "id": "q008",
+      "category_id": "c_k_2",
+      "ord": 8,
+      "payload": {
+        "text": "Podaj produkt, który szybko znika z lodówki.",
+        "answers": [
+          { "text": "Jogurt", "fixed_points": 24 },
+          { "text": "Wędlina", "fixed_points": 22 },
+          { "text": "Ser", "fixed_points": 20 },
+          { "text": "Mleko", "fixed_points": 18 },
+          { "text": "Ciasto", "fixed_points": 16 }
+        ]
+      }
+    },
+    {
+      "id": "q009",
+      "category_id": "c_k_3",
+      "ord": 9,
+      "payload": {
+        "text": "Co ludzie zamawiają, gdy nie wiedzą co wybrać w restauracji?",
+        "answers": [
+          { "text": "Pizza", "fixed_points": 30 },
+          { "text": "Burger", "fixed_points": 24 },
+          { "text": "Schabowy", "fixed_points": 18 },
+          { "text": "Makaron", "fixed_points": 16 },
+          { "text": "Zupę dnia", "fixed_points": 12 }
+        ]
+      }
+    },
+
+    {
+      "id": "q010",
+      "category_id": "c_p_1",
+      "ord": 10,
+      "payload": {
+        "text": "Podaj coś, co robisz, czekając na autobus/pociąg.",
+        "answers": [
+          { "text": "Patrzę w telefon", "fixed_points": 38 },
+          { "text": "Słucham muzyki", "fixed_points": 18 },
+          { "text": "Sprawdzam rozkład", "fixed_points": 16 },
+          { "text": "Rozglądam się", "fixed_points": 14 },
+          { "text": "Piję kawę", "fixed_points": 14 }
+        ]
+      }
+    },
+    {
+      "id": "q011",
+      "category_id": "c_p_2",
+      "ord": 11,
+      "payload": {
+        "text": "Co pakujesz jako pierwsze na wakacje?",
+        "answers": [
+          { "text": "Ubrania", "fixed_points": 34 },
+          { "text": "Kosmetyki", "fixed_points": 20 },
+          { "text": "Dokumenty", "fixed_points": 18 },
+          { "text": "Ładowarkę", "fixed_points": 16 },
+          { "text": "Buty", "fixed_points": 12 }
+        ]
+      }
+    },
+    {
+      "id": "q012",
+      "category_id": "c_p_3",
+      "ord": 12,
+      "payload": {
+        "text": "Podaj miejsce w mieście, gdzie ludzie często się spieszą.",
+        "answers": [
+          { "text": "Przystanek", "fixed_points": 28 },
+          { "text": "Dworzec", "fixed_points": 22 },
+          { "text": "Przejście dla pieszych", "fixed_points": 18 },
+          { "text": "Centrum / rynek", "fixed_points": 16 },
+          { "text": "Galeria handlowa", "fixed_points": 16 }
+        ]
+      }
+    },
+
+    {
+      "id": "q013",
+      "category_id": "c_sw_1",
+      "ord": 13,
+      "payload": {
+        "text": "Co pojawia się na stole w Wigilię?",
+        "answers": [
+          { "text": "Barszcz", "fixed_points": 30 },
+          { "text": "Pierogi", "fixed_points": 24 },
+          { "text": "Karp", "fixed_points": 18 },
+          { "text": "Kutia / makowiec", "fixed_points": 16 },
+          { "text": "Kompot", "fixed_points": 12 }
+        ]
+      }
+    },
+    {
+      "id": "q014",
+      "category_id": "c_sw_2",
+      "ord": 14,
+      "payload": {
+        "text": "Podaj coś, co goście robią na weselu, gdy gra ulubiona piosenka.",
+        "answers": [
+          { "text": "Idą tańczyć", "fixed_points": 40 },
+          { "text": "Śpiewają", "fixed_points": 18 },
+          { "text": "Nagrywają telefonem", "fixed_points": 16 },
+          { "text": "Klaskają", "fixed_points": 14 },
+          { "text": "Wołają innych", "fixed_points": 12 }
+        ]
+      }
+    },
+    {
+      "id": "q015",
+      "category_id": "c_sw_3",
+      "ord": 15,
+      "payload": {
+        "text": "Podaj prezent, który często dostaje się na urodziny.",
+        "answers": [
+          { "text": "Pieniądze", "fixed_points": 30 },
+          { "text": "Perfumy", "fixed_points": 22 },
+          { "text": "Książka", "fixed_points": 18 },
+          { "text": "Słodycze", "fixed_points": 16 },
+          { "text": "Gadżet", "fixed_points": 14 }
+        ]
+      }
+    },
+
+    {
+      "id": "q016",
+      "category_id": "c_s_2",
+      "ord": 16,
+      "payload": {
+        "text": "Wymień miejsce w domu, które sprząta się najrzadziej.",
+        "answers": [
+          { "text": "Za szafą", "fixed_points": 26 },
+          { "text": "Szafka pod zlewem", "fixed_points": 20 },
+          { "text": "Góra szafy", "fixed_points": 18 },
+          { "text": "Piwnica", "fixed_points": 18 },
+          { "text": "Balkon", "fixed_points": 18 }
+        ]
+      }
+    },
+    {
+      "id": "q017",
+      "category_id": "c_k_2",
+      "ord": 17,
+      "payload": {
+        "text": "Podaj smak, który jedni kochają, a inni nie znoszą.",
+        "answers": [
+          { "text": "Ostry", "fixed_points": 26 },
+          { "text": "Gorzki", "fixed_points": 22 },
+          { "text": "Anyż / lukrecja", "fixed_points": 20 },
+          { "text": "Kwaśny", "fixed_points": 18 },
+          { "text": "Miętowy", "fixed_points": 14 }
+        ]
+      }
+    },
+
+    {
+      "id": "q018",
+      "category_id": "c_d_3",
+      "ord": 18,
+      "payload": {
+        "text": "Jaką aplikację ludzie otwierają „odruchowo” w telefonie?",
+        "answers": [
+          { "text": "Wiadomości", "fixed_points": 28 },
+          { "text": "Social media", "fixed_points": 26 },
+          { "text": "Pogoda", "fixed_points": 18 },
+          { "text": "Mapy", "fixed_points": 14 },
+          { "text": "Bank", "fixed_points": 14 }
+        ]
+      }
+    },
+
+    {
+      "id": "q019",
+      "category_id": "c_p_2",
+      "ord": 19,
+      "payload": {
+        "text": "Co ludzie kupują w ostatniej chwili przed wyjazdem?",
+        "answers": [
+          { "text": "Przekąski", "fixed_points": 24 },
+          { "text": "Wodę", "fixed_points": 20 },
+          { "text": "Kosmetyki mini", "fixed_points": 18 },
+          { "text": "Powerbank", "fixed_points": 18 },
+          { "text": "Lek przeciwbólowy", "fixed_points": 20 }
+        ]
+      }
+    },
+
+    {
+      "id": "q020",
+      "category_id": "c_d_1",
+      "ord": 20,
+      "payload": {
+        "text": "Podaj rzecz, którą kupujesz, mimo że nie planowałeś.",
+        "answers": [
+          { "text": "Słodycze", "fixed_points": 28 },
+          { "text": "Gadżet w promocji", "fixed_points": 22 },
+          { "text": "Świeczka / dekoracje", "fixed_points": 18 },
+          { "text": "Kosmetyk", "fixed_points": 16 },
+          { "text": "Gazeta", "fixed_points": 16 }
+        ]
+      }
+    },
+
+    {
+      "id": "q021",
+      "category_id": "c_s_1",
+      "ord": 21,
+      "payload": {
+        "text": "Podaj powód, dla którego ktoś może nie odebrać telefonu od rodziny.",
+        "answers": [
+          { "text": "Jest w pracy", "fixed_points": 30 },
+          { "text": "Prowadzi auto", "fixed_points": 22 },
+          { "text": "Śpi", "fixed_points": 18 },
+          { "text": "Ma wyciszony", "fixed_points": 16 },
+          { "text": "Nie usłyszał", "fixed_points": 14 }
+        ]
+      }
+    },
+
+    {
+      "id": "q022",
+      "category_id": "c_sw_1",
+      "ord": 22,
+      "payload": {
+        "text": "Co robisz po usłyszeniu kolędy, która kojarzy Ci się z dzieciństwem?",
+        "answers": [
+          { "text": "Nucę / śpiewam", "fixed_points": 34 },
+          { "text": "Mam wspomnienia", "fixed_points": 24 },
+          { "text": "Uśmiecham się", "fixed_points": 18 },
+          { "text": "Wzruszam się", "fixed_points": 14 },
+          { "text": "Podgłaśniam", "fixed_points": 10 }
+        ]
+      }
+    },
+
+    {
+      "id": "q023",
+      "category_id": "c_root_2",
+      "ord": 23,
+      "payload": {
+        "text": "Podaj coś, co poprawia humor po złym dniu.",
+        "answers": [
+          { "text": "Jedzenie", "fixed_points": 26 },
+          { "text": "Sen", "fixed_points": 22 },
+          { "text": "Muzyka", "fixed_points": 18 },
+          { "text": "Spacer", "fixed_points": 18 },
+          { "text": "Rozmowa", "fixed_points": 16 }
+        ]
+      }
+    },
+
+    {
+      "id": "q024",
+      "category_id": "c_root_2",
+      "ord": 24,
+      "payload": {
+        "text": "Jaki dźwięk w domu oznacza, że coś poszło nie tak?",
+        "answers": [
+          { "text": "Brzęk tłuczonego szkła", "fixed_points": 34 },
+          { "text": "Alarm / czujnik", "fixed_points": 22 },
+          { "text": "Cisza po hałasie", "fixed_points": 18 },
+          { "text": "Krzyk", "fixed_points": 16 },
+          { "text": "Pisk hamulców (z zewnątrz)", "fixed_points": 10 }
+        ]
+      }
+    },
+
+    {
+      "id": "q025",
+      "category_id": "c_p_3",
+      "ord": 25,
+      "payload": {
+        "text": "Podaj miejsce w mieście, gdzie najłatwiej zgubić znajomego.",
+        "answers": [
+          { "text": "Galeria handlowa", "fixed_points": 30 },
+          { "text": "Rynek / centrum", "fixed_points": 22 },
+          { "text": "Koncert", "fixed_points": 20 },
+          { "text": "Dworzec", "fixed_points": 16 },
+          { "text": "Festiwal / jarmark", "fixed_points": 12 }
+        ]
+      }
+    },
+
+    {
+      "id": "q026",
+      "category_id": "c_k_1",
+      "ord": 26,
+      "payload": {
+        "text": "Co robisz, gdy w przepisie jest składnik, którego nie masz?",
+        "answers": [
+          { "text": "Zastępuję innym", "fixed_points": 34 },
+          { "text": "Idę do sklepu", "fixed_points": 26 },
+          { "text": "Pomijam", "fixed_points": 18 },
+          { "text": "Zmieniam danie", "fixed_points": 14 },
+          { "text": "Pytam w internecie", "fixed_points": 8 }
+        ]
+      }
+    },
+
+    {
+      "id": "q027",
+      "category_id": "c_s_3",
+      "ord": 27,
+      "payload": {
+        "text": "Co możesz powiedzieć, żeby grzecznie zakończyć rozmowę w pracy?",
+        "answers": [
+          { "text": "Wracam do zadania", "fixed_points": 30 },
+          { "text": "Mam spotkanie", "fixed_points": 24 },
+          { "text": "Odezwę się później", "fixed_points": 20 },
+          { "text": "Muszę zadzwonić", "fixed_points": 16 },
+          { "text": "Mam deadline", "fixed_points": 10 }
+        ]
+      }
+    },
+
+    {
+      "id": "q028",
+      "category_id": "c_d_2",
+      "ord": 28,
+      "payload": {
+        "text": "Podaj rzecz, którą ludzie odkładają „na potem” w sprzątaniu.",
+        "answers": [
+          { "text": "Okna", "fixed_points": 28 },
+          { "text": "Prasowanie", "fixed_points": 24 },
+          { "text": "Odkurzanie", "fixed_points": 18 },
+          { "text": "Porządek w szafie", "fixed_points": 16 },
+          { "text": "Mycie piekarnika", "fixed_points": 14 }
+        ]
+      }
+    },
+
+    {
+      "id": "q029",
+      "category_id": "c_sw_2",
+      "ord": 29,
+      "payload": {
+        "text": "Co najczęściej idzie nie tak na weselu?",
+        "answers": [
+          { "text": "Ktoś się spóźnia", "fixed_points": 24 },
+          { "text": "Muzyka nie ta", "fixed_points": 20 },
+          { "text": "Za dużo alkoholu", "fixed_points": 22 },
+          { "text": "Problemy z jedzeniem", "fixed_points": 18 },
+          { "text": "Pogoda", "fixed_points": 16 }
+        ]
+      }
+    },
+
+    {
+      "id": "q030",
+      "category_id": "c_sw_3",
+      "ord": 30,
+      "payload": {
+        "text": "Podaj coś, co robisz, gdy zapomnisz o czyichś urodzinach.",
+        "answers": [
+          { "text": "Dzwonię od razu", "fixed_points": 28 },
+          { "text": "Piszę wiadomość", "fixed_points": 22 },
+          { "text": "Kupuję prezent na szybko", "fixed_points": 20 },
+          { "text": "Umawiam się na kawę", "fixed_points": 18 },
+          { "text": "Tłumaczę się", "fixed_points": 12 }
+        ]
+      }
+    },
+
+    {
+      "id": "q031",
+      "category_id": "c_root_2",
+      "ord": 31,
+      "payload": {
+        "text": "Sondaż: Jakie słowo kojarzy Ci się z 'komfort'?",
+        "answers": []
+      }
+    },
+    {
+      "id": "q032",
+      "category_id": "c_root_3",
+      "ord": 32,
+      "payload": {
+        "text": "Sondaż: Jaką potrawę zjesz bez zastanowienia?",
+        "answers": []
+      }
+    },
+    {
+      "id": "q033",
+      "category_id": "c_root_4",
+      "ord": 33,
+      "payload": {
+        "text": "Sondaż: Co jest najgorsze w podróży?",
+        "answers": []
+      }
+    },
+
+    {
+      "id": "q034",
+      "category_id": "c_k_2",
+      "ord": 34,
+      "payload": {
+        "text": "Podaj składnik, który jedni dodają do wszystkiego.",
+        "answers": [
+          { "text": "Czosnek", "fixed_points": 26 },
+          { "text": "Ser", "fixed_points": 22 },
+          { "text": "Ketchup", "fixed_points": 20 },
+          { "text": "Chili", "fixed_points": 18 },
+          { "text": "Majonez", "fixed_points": 14 }
+        ]
+      }
+    },
+    {
+      "id": "q035",
+      "category_id": "c_p_1",
+      "ord": 35,
+      "payload": {
+        "text": "Podaj coś, co robisz, gdy spóźniasz się i biegniesz na przystanek.",
+        "answers": [
+          { "text": "Patrzę co chwilę na zegarek", "fixed_points": 28 },
+          { "text": "Piszę że się spóźnię", "fixed_points": 22 },
+          { "text": "Biegnę ile sił", "fixed_points": 20 },
+          { "text": "Macham do kierowcy", "fixed_points": 16 },
+          { "text": "Dyszę i narzekam", "fixed_points": 14 }
+        ]
+      }
+    },
+    {
+      "id": "q036",
+      "category_id": "c_s_2",
+      "ord": 36,
+      "payload": {
+        "text": "Co bywa przyklejone do lodówki?",
+        "answers": [
+          { "text": "Magnesy", "fixed_points": 28 },
+          { "text": "Lista zakupów", "fixed_points": 22 },
+          { "text": "Rysunki dziecka", "fixed_points": 20 },
+          { "text": "Kartka z numerem", "fixed_points": 16 },
+          { "text": "Plan tygodnia", "fixed_points": 14 }
+        ]
+      }
+    },
+
+    {
+      "id": "q037",
+      "category_id": "c_s_3",
+      "ord": 37,
+      "payload": {
+        "text": "Podaj coś, co robisz, żeby wyglądać na zajętego.",
+        "answers": [
+          { "text": "Piszę na klawiaturze", "fixed_points": 28 },
+          { "text": "Patrzę w monitor", "fixed_points": 22 },
+          { "text": "Idę szybko z kartką", "fixed_points": 18 },
+          { "text": "Rozmawiam o projekcie", "fixed_points": 16 },
+          { "text": "Robię notatki", "fixed_points": 16 }
+        ]
+      }
+    },
+
+    {
+      "id": "q038",
+      "category_id": "c_d_1",
+      "ord": 38,
+      "payload": {
+        "text": "Co ludzie kupują 'bo ładnie pachnie'?",
+        "answers": [
+          { "text": "Świeczkę", "fixed_points": 30 },
+          { "text": "Perfumy", "fixed_points": 26 },
+          { "text": "Płyn do płukania", "fixed_points": 18 },
+          { "text": "Kwiaty", "fixed_points": 14 },
+          { "text": "Kosmetyk", "fixed_points": 12 }
+        ]
+      }
+    },
+
+    {
+      "id": "q039",
+      "category_id": "c_sw_1",
+      "ord": 39,
+      "payload": {
+        "text": "Podaj coś, co robi się 'tuż przed Wigilią'.",
+        "answers": [
+          { "text": "Sprząta dom", "fixed_points": 30 },
+          { "text": "Ubiera choinkę", "fixed_points": 26 },
+          { "text": "Gotuje", "fixed_points": 20 },
+          { "text": "Kupuje ostatnie prezenty", "fixed_points": 14 },
+          { "text": "Dekoruje", "fixed_points": 10 }
+        ]
+      }
+    },
+
+    {
+      "id": "q040",
+      "category_id": "c_p_2",
+      "ord": 40,
+      "payload": {
+        "text": "Podaj rzecz, która psuje wakacje, jeśli o niej zapomnisz.",
+        "answers": [
+          { "text": "Dokumenty", "fixed_points": 34 },
+          { "text": "Telefon", "fixed_points": 20 },
+          { "text": "Ładowarka", "fixed_points": 18 },
+          { "text": "Portfel", "fixed_points": 16 },
+          { "text": "Leki", "fixed_points": 12 }
+        ]
+      }
+    },
+
+    {
+      "id": "q041",
+      "category_id": "c_root_1",
+      "ord": 41,
+      "payload": {
+        "text": "Sondaż: Co jest najbardziej 'polskie' w codzienności?",
+        "answers": []
+      }
+    }
+  ],
+  "question_tags": [
+    { "question_id": "q001", "tag_id": "t_classic" },
+    { "question_id": "q001", "tag_id": "t_easy" },
+
+    { "question_id": "q002", "tag_id": "t_easy" },
+    { "question_id": "q002", "tag_id": "t_classic" },
+
+    { "question_id": "q003", "tag_id": "t_work" },
+    { "question_id": "q003", "tag_id": "t_classic" },
+
+    { "question_id": "q004", "tag_id": "t_easy" },
+    { "question_id": "q004", "tag_id": "t_classic" },
+
+    { "question_id": "q006", "tag_id": "t_classic" },
+
+    { "question_id": "q007", "tag_id": "t_food" },
+    { "question_id": "q008", "tag_id": "t_food" },
+    { "question_id": "q009", "tag_id": "t_food" },
+
+    { "question_id": "q010", "tag_id": "t_travel" },
+    { "question_id": "q011", "tag_id": "t_travel" },
+    { "question_id": "q012", "tag_id": "t_city" },
+
+    { "question_id": "q013", "tag_id": "t_xmas" },
+    { "question_id": "q014", "tag_id": "t_party" },
+    { "question_id": "q015", "tag_id": "t_party" },
+
+    { "question_id": "q031", "tag_id": "t_poll" },
+    { "question_id": "q032", "tag_id": "t_poll" },
+    { "question_id": "q033", "tag_id": "t_poll" },
+    { "question_id": "q041", "tag_id": "t_poll" }
+  ]
+}

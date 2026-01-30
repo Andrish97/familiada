@@ -1,0 +1,40 @@
+{
+  "game": {
+    "name": "DEMO — Sondaż punktowy szkic",
+    "type": "poll_points"
+  },
+  "questions": [
+    {
+      "text": "Który posiłek jesz najczęściej w ciągu dnia?",
+      "answers": [
+        { "text": "śniadanie", "fixed_points": 0 },
+        { "text": "obiad", "fixed_points": 0 },
+        { "text": "kolacja", "fixed_points": 0 }
+      ]
+    },
+    {
+      "text": "Jak najczęściej spędzasz wolny czas?",
+      "answers": [
+        { "text": "oglądam filmy", "fixed_points": 0 },
+        { "text": "spotykam się ze znajomymi", "fixed_points": 0 },
+        { "text": "gram w gry", "fixed_points": 0 }
+      ]
+    },
+    {
+      "text": "Co najbardziej poprawia humor?",
+      "answers": [
+        { "text": "muzyka", "fixed_points": 0 },
+        { "text": "jedzenie", "fixed_points": 0 },
+        { "text": "spotkanie z bliskimi", "fixed_points": 0 }
+      ]
+    },
+    {
+      "text": "Co robisz zaraz po pracy lub szkole?",
+      "answers": [
+        { "text": "odpoczywam", "fixed_points": 0 },
+        { "text": "jem obiad", "fixed_points": 0 },
+        { "text": "uczę się", "fixed_points": 0 }
+      ]
+    }
+  ]
+}
