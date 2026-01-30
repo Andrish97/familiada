@@ -279,6 +279,19 @@ async function importPollFromUrlInternal(url, ownerId) {
   // 1) import gry (tworzy games + questions + answers, games.status="draft")
   const gameId = await importGame(payload, ownerId);
 
+  // pobierz aktualny klucz sesji poll (ten który backend uznaje za ważny)
+  const { data: pollRow, error: kErr } = await sb()
+    .from("poll_sessions")
+    .select("key")
+    .eq("game_id", gameId)
+    .single();
+  
+  if (kErr || !pollRow?.key) {
+    throw new Error("Brak aktywnej sesji poll dla gry DEMO");
+  }
+  
+  const pollKey = pollRow.key;
+
   // 2) status OPEN/CLOSED
   if (pollStatus === "open") {
     await setGameStatus(gameId, "poll_open");
@@ -317,7 +330,7 @@ async function importPollFromUrlInternal(url, ownerId) {
         const { error } = await sb().rpc("poll_text_submit_batch", {
           p_game_id: gameId,
           p_items: items,
-          p_key: "demo",          // ← DODANE
+          p_key: pollKey,          // ← DODANE
           p_voter_token: voter,
         });
 
@@ -349,7 +362,7 @@ async function importPollFromUrlInternal(url, ownerId) {
         const { error } = await sb().rpc("poll_points_vote_batch", {
           p_game_id: gameId,
           p_items: items,
-          p_key: "demo",          // ← DODANE
+          p_key: pollKey,
           p_voter_token: voter,
         });
       
