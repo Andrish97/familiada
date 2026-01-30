@@ -15,7 +15,7 @@ const BASE = "/familiada";
 ========================================================= */
 
 async function loadLogoEditor() {
-  return await import(`${BASE}/logo-editor/js/main.js`);
+  return await import(`${BASE}/logo-editor/js/demo-import.js`);
 }
 
 /* =========================================================
