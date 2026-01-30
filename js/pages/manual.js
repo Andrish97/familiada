@@ -1,6 +1,6 @@
 // js/pages/manual.js
 // Zakładki mają działać nawet jeśli auth się nie załaduje.
-// Najpierw UI (tabs), potem auth (miękko).
+// Dlatego: najpierw podpinamy UI, dopiero potem próbujemy auth.
 
 import { confirmModal } from "../core/modal.js";
 
@@ -30,20 +30,12 @@ function wireTabs() {
   tabs.forEach((tab) => {
     tab.addEventListener("click", () => setActive(tab.dataset.tab));
   });
-
-  const initial = (location.hash || "").replace("#", "");
-  if (initial && pages[initial]) setActive(initial);
-  else setActive("general");
 }
 
 function wireFallbackNav() {
   // fallback, gdyby auth nie zadziałał
-  byId("btnBack")?.addEventListener("click", () => {
-    location.href = "builder.html";
-  });
-  byId("btnLogout")?.addEventListener("click", () => {
-    location.href = "index.html";
-  });
+  byId("btnBack")?.addEventListener("click", () => (location.href = "builder.html"));
+  byId("btnLogout")?.addEventListener("click", () => (location.href = "index.html"));
 }
 
 async function wireDemoActions(user) {
@@ -63,14 +55,16 @@ async function wireDemoActions(user) {
     if (!ok) return;
 
     await resetUserDemoFlag(user.id, true);
-    location.href = "./builder.html";
+    location.href = "builder.html";
   });
 }
 
 async function wireAuth() {
+  // Import dynamiczny: jeśli coś padnie, nie blokujemy zakładek.
   const { requireAuth, signOut } = await import("../core/auth.js");
 
   const user = await requireAuth("index.html");
+
   const who = byId("who");
   if (who) who.textContent = user?.email || "—";
 
@@ -89,10 +83,14 @@ async function wireAuth() {
   });
 }
 
-/* ================= Init ================= */
+/* ================= bootstrap ================= */
 wireTabs();
 wireFallbackNav();
 
+const initial = (location.hash || "").replace("#", "");
+if (initial && pages[initial]) setActive(initial);
+
+// auth próbujemy „miękko”
 wireAuth().catch((err) => {
   console.warn("[manual] auth nieaktywny:", err);
 });
