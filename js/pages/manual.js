@@ -46,6 +46,30 @@ function wireFallbackNav() {
   });
 }
 
+async function wireDemoActions(user) {
+  const btn = document.getElementById("demoRestoreBtn");
+  if (!btn || !user?.id) return;
+
+  const { resetUserDemoFlag } = await import("../core/user-flags.js");
+
+  btn.addEventListener("click", async () => {
+    const ok = await confirmModal({
+      title: "Przywrócić pliki demo?",
+      text: "Zostaną dodane przykładowe materiały startowe.",
+      okText: "Przywróć",
+      cancelText: "Anuluj",
+    });
+
+    if (!ok) return;
+
+    // ustaw demo=true
+    await resetUserDemoFlag(user.id, true);
+
+    // przejście do buildera
+    location.href = "./builder.html";
+  });
+}
+
 async function wireAuth() {
   // Import dynamiczny: jeśli coś padnie, nie blokujemy zakładek.
   const { requireAuth, signOut } = await import("../core/auth.js");
@@ -62,9 +86,9 @@ async function wireAuth() {
   byId("btnBack")?.addEventListener("click", () => {
     location.href = "builder.html";
   });
-  
-  // Demo tab
-  wireDemoActions(user).catch(err => {
+
+  // Demo tab – miękko
+  wireDemoActions(user).catch((err) => {
     console.warn("[manual] demo actions nieaktywne:", err);
   });
 }
@@ -72,32 +96,7 @@ async function wireAuth() {
 wireTabs();
 wireFallbackNav();
 
-  // auth próbujemy „miękko”
-  wireAuth().catch(err => {
-  async function wireDemoActions(user) {
-    const btn = document.getElementById("demoRestoreBtn");
-    if (!btn || !user?.id) return;
-  
-    const { resetUserDemoFlag } = await import("../core/user-flags.js");
-    const { confirmModal } = await import("../core/modal.js");
-  
-    btn.addEventListener("click", async () => {
-  
-      const ok = await confirmModal({
-        title: "Przywrócić pliki demo?",
-        message: "Zostaną dodane przykładowe materiały startowe.",
-        okText: "Przywróć",
-        cancelText: "Anuluj",
-      });
-  
-      if (!ok) return;
-  
-      // ustaw demo=true
-      await resetUserDemoFlag(user.id, true);
-  
-      // przejście do buildera
-      location.href = "./builder.html";
-    });
-  }
+// auth próbujemy „miękko”
+wireAuth().catch((err) => {
   console.warn("[manual] auth nieaktywny:", err);
 });
