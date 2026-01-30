@@ -25,7 +25,7 @@ const safePts = (v) => {
 /*
   FORMAT:
   {
-    game: { name, type }, // poll_text | poll_points | prepared
+    game: { name, type }, // type: poll_text | poll_points | prepared
     questions: [
       { text, answers: [{ text, fixed_points }] }
     ]
@@ -93,7 +93,6 @@ export async function importGame(payload, ownerId) {
     )
     .select("id")
     .single();
-
   if (gErr) throw gErr;
 
   const qs = payload.questions || [];
@@ -145,15 +144,6 @@ export function downloadJson(filename, obj) {
 
 /* =========================================================
    POLL IMPORT FROM URL (open/closed) + optional vote seeding
-   JSON:
-   game: { name, type: "poll_text"|"poll_points", status: "open"|"closed" }
-   questions:
-     - poll_text: [{text}, ...]
-     - poll_points open: answers: [{text}] (fixed_points ignored)
-     - poll_points closed: answers: [{text, fixed_points}] (taken)
-   votes (only for status="open"):
-     - poll_text:  votes:[{answers_raw:[...]}]
-     - poll_points:votes:[{picks:[...]}] // indices per question
 ========================================================= */
 
 async function fetchJsonFromUrl(url) {
@@ -161,11 +151,7 @@ async function fetchJsonFromUrl(url) {
   if (!u) throw new Error("Brak URL do JSON.");
 
   const ok =
-    /^https?:\/\//i.test(u) ||
-    u.startsWith("../") ||
-    u.startsWith("./") ||
-    u.startsWith("/");
-
+    /^https?:\/\//i.test(u) || u.startsWith("../") || u.startsWith("./") || u.startsWith("/");
   if (!ok) throw new Error("Podaj link http(s) albo ścieżkę względną do JSON.");
 
   const res = await fetch(u, { cache: "no-store" });
@@ -217,7 +203,6 @@ async function listQuestions(gameId) {
     .select("id,ord")
     .eq("game_id", gameId)
     .order("ord", { ascending: true });
-
   if (error) throw error;
   return data || [];
 }
@@ -230,7 +215,6 @@ async function listAnswersForQuestions(qIds) {
     .select("id,question_id,ord")
     .in("question_id", qIds)
     .order("ord", { ascending: true });
-
   if (error) throw error;
 
   const map = new Map();
@@ -242,43 +226,42 @@ async function listAnswersForQuestions(qIds) {
 }
 
 /**
- * OPEN poll model u Ciebie:
- * - Tworzymy sesję poll_sessions PER PYTANIE (jak w Twoim SQL przykładzie)
- * - p_key w RPC = poll_sessions.id
- * - Głosy seedujemy dopiero po utworzeniu sesji
+ * Pobierz poll key z games (różne nazwy kolumn — próbujemy po kolei)
  */
-async function createSessionsForAllQuestions(gameId, qs) {
-  // 1 insert / pytanie, bo chcemy dostać id (p_key) na zwrot
-  const sessions = new Map(); // ord -> {id, question_id, question_ord}
-
-  for (const q of qs) {
-    const questionOrd = Number(q.ord) || 0;
-    if (!questionOrd) continue;
-
-    const { data, error } = await sb()
-      .from("poll_sessions")
-      .insert(
-        {
-          game_id: gameId,
-          question_id: q.id,
-          question_ord: questionOrd,
-          is_open: true,
-        },
-        { defaultToNull: false }
-      )
-      .select("id,question_id,question_ord")
-      .single();
-
-    if (error) throw error;
-    sessions.set(data.question_ord, data);
+async function getPollKeyForGame(gameId) {
+  const candidates = ["share_key_poll", "poll_key", "key_poll", "share_key"];
+  for (const col of candidates) {
+    const { data, error } = await sb().from("games").select(col).eq("id", gameId).single();
+    if (!error && data && data[col]) return String(data[col]);
+    // jeśli błąd "column does not exist" — próbujemy kolejny
   }
+  return null;
+}
 
-  return sessions;
+async function ensurePollSession({ gameId, isOpen }) {
+  const qs = await listQuestions(gameId);
+  if (!qs.length) throw new Error("DEMO: gra nie ma pytań (nie da się zrobić poll_sessions).");
+
+  const firstOrd = Number(qs[0].ord) || 1;
+
+  // tworzymy pojedynczą sesję “sterującą” (jak u Ciebie w UI),
+  // ale z wypełnionym question_ord / question_id
+  const { error } = await sb()
+    .from("poll_sessions")
+    .insert({
+      game_id: gameId,
+      question_ord: firstOrd,
+      question_id: qs[0].id,
+      is_open: !!isOpen,
+      closed_at: isOpen ? null : new Date().toISOString(),
+    });
+
+  if (error) throw error;
+  return qs;
 }
 
 async function importPollFromUrlInternal(url, ownerId) {
   const src = await fetchJsonFromUrl(url);
-
   if (!src?.game || !Array.isArray(src?.questions)) {
     throw new Error("JSON: brak game / questions.");
   }
@@ -287,18 +270,19 @@ async function importPollFromUrlInternal(url, ownerId) {
   const pollStatus = hardStatus(src.game.status);
   const name = String(src.game.name ?? "DEMO").trim() || "DEMO";
 
-  /* ===============================
-     1) payload -> importGame
-  =============================== */
-  const payload = { game: { name, type }, questions: [] };
+  // 1) payload pod importGame
+  const payload = {
+    game: { name, type },
+    questions: [],
+  };
 
   if (type === "poll_text") {
-    payload.questions = (src.questions || []).map((q) => ({
+    payload.questions = src.questions.map((q) => ({
       text: String(q?.text ?? ""),
       answers: [],
     }));
   } else {
-    payload.questions = (src.questions || []).map((q) => ({
+    payload.questions = src.questions.map((q) => ({
       text: String(q?.text ?? ""),
       answers: (Array.isArray(q?.answers) ? q.answers : []).map((a) => ({
         text: String(a?.text ?? ""),
@@ -307,112 +291,101 @@ async function importPollFromUrlInternal(url, ownerId) {
     }));
   }
 
-  /* ===============================
-     2) import definicji gry
-  =============================== */
+  // 2) import definicji gry
   const gameId = await importGame(payload, ownerId);
 
-  /* ===============================
-     3) CLOSED => bez sesji, bez seedowania
-  =============================== */
-  if (pollStatus !== "open") {
-    // zostaje draft, a dla poll_points_closed masz fixed_points z JSON
+  // 3) poll_sessions zawsze (open i closed)
+  const isOpen = pollStatus === "open";
+  const qs = await ensurePollSession({ gameId, isOpen });
+
+  // 4) status gry
+  if (isOpen) {
+    await setGameStatus(gameId, "poll_open");
+  } else {
+    // “zamknięte”: zostaje draft (albo jak masz inny status – zmień tutaj)
+    // ale poll_sessions istnieje (is_open=false), więc UI nie powinno “gubić” gry
+    await setGameStatus(gameId, "draft");
     return gameId;
   }
 
-  /* ===============================
-     4) OPEN => sesje + status
-  =============================== */
-  const qs = await listQuestions(gameId);
-  if (!qs.length) throw new Error("DEMO: gra nie ma pytań (nie da się otworzyć sondażu).");
-
-  const sessionsByOrd = await createSessionsForAllQuestions(gameId, qs);
-  await setGameStatus(gameId, "poll_open");
-
-  /* ===============================
-     5) seed głosów (tylko OPEN)
-  =============================== */
+  // 5) seed głosów tylko dla OPEN (jeśli są w JSON)
   const votes = Array.isArray(src.votes) ? src.votes : [];
   if (!votes.length) return gameId;
 
-  if (type === "poll_text") {
-    // poll_text: votes[].answers_raw[] (po indeksie pytania)
-    for (const v of votes) {
-      const voterToken =
-        crypto?.randomUUID?.() || `${Date.now()}_${Math.random().toString(16).slice(2)}`;
-
-      const arr = Array.isArray(v?.answers_raw) ? v.answers_raw : [];
-      const n = Math.min(arr.length, qs.length);
-
-      for (let i = 0; i < n; i++) {
-        const raw = String(arr[i] ?? "").trim().slice(0, 17);
-        if (!raw) continue;
-
-        const q = qs[i];
-        const ord = Number(q.ord) || 0;
-        const sess = sessionsByOrd.get(ord);
-        if (!sess?.id) continue;
-
-        const { error } = await sb().rpc("poll_text_submit_batch", {
-          p_game_id: gameId,
-          p_items: [
-            {
-              question_id: q.id,
-              answer_raw: raw,
-              answer_norm: normText(raw),
-            },
-          ],
-          p_key: sess.id, // ✅ p_key = poll_sessions.id
-          p_voter_token: voterToken,
-        });
-
-        if (error) throw error;
-      }
-    }
-
+  const pollKey = await getPollKeyForGame(gameId);
+  if (!pollKey) {
+    console.warn("[DEMO] Brak poll key w games — pomijam seed głosów.");
     return gameId;
   }
 
-  // poll_points: votes[].picks[] (indeksy odpowiedzi per pytanie)
-  const aMap = await listAnswersForQuestions(qs.map((q) => q.id));
+  if (type === "poll_text") {
+    for (const v of votes) {
+      const arr = Array.isArray(v?.answers_raw) ? v.answers_raw : [];
+      const items = [];
 
-  for (const v of votes) {
-    const voterToken =
-      crypto?.randomUUID?.() || `${Date.now()}_${Math.random().toString(16).slice(2)}`;
+      for (let i = 0; i < qs.length; i++) {
+        const raw = String(arr[i] ?? "").trim().slice(0, 17);
+        if (!raw) continue;
 
-    const picks = Array.isArray(v?.picks) ? v.picks : [];
-    const n = Math.min(picks.length, qs.length);
+        items.push({
+          question_id: qs[i].id,
+          answer_raw: raw,
+          answer_norm: normText(raw),
+        });
+      }
 
-    for (let i = 0; i < n; i++) {
-      const q = qs[i];
-      const ord = Number(q.ord) || 0;
-      const sess = sessionsByOrd.get(ord);
-      if (!sess?.id) continue;
+      if (!items.length) continue;
 
-      const answers = aMap.get(q.id) || [];
-      const idx = Number(picks[i]);
-      if (!Number.isFinite(idx)) continue;
+      const voter = crypto?.randomUUID?.() || `${Date.now()}_${Math.random().toString(16).slice(2)}`;
 
-      const a = answers[idx];
-      if (!a?.id) continue;
-
-      const { error } = await sb().rpc("poll_points_vote_batch", {
+      const { error } = await sb().rpc("poll_text_submit_batch", {
         p_game_id: gameId,
-        p_items: [{ question_id: q.id, answer_id: a.id }],
-        p_key: sess.id, // ✅ p_key = poll_sessions.id
-        p_voter_token: voterToken,
+        p_items: items,
+        p_key: pollKey,
+        p_voter_token: voter,
       });
 
       if (error) throw error;
     }
+
+    return gameId;
+  }
+
+  // poll_points
+  const aMap = await listAnswersForQuestions(qs.map((q) => q.id));
+
+  for (const v of votes) {
+    const picks = Array.isArray(v?.picks) ? v.picks : [];
+    const items = [];
+
+    for (let i = 0; i < qs.length; i++) {
+      const answers = aMap.get(qs[i].id) || [];
+      const idx = Number(picks[i]);
+      if (!Number.isFinite(idx)) continue;
+
+      const a = answers[idx];
+      if (!a) continue;
+
+      items.push({ question_id: qs[i].id, answer_id: a.id });
+    }
+
+    if (!items.length) continue;
+
+    const voter = crypto?.randomUUID?.() || `${Date.now()}_${Math.random().toString(16).slice(2)}`;
+
+    const { error } = await sb().rpc("poll_points_vote_batch", {
+      p_game_id: gameId,
+      p_items: items,
+      p_key: pollKey,
+      p_voter_token: voter,
+    });
+
+    if (error) throw error;
   }
 
   return gameId;
 }
 
-/**
- * PUBLIC: super prosto – tylko URL
- */
 export async function importPollFromUrl(url) {
   const ownerId = await currentUserId();
   return await importPollFromUrlInternal(url, ownerId);
