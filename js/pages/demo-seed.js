@@ -1,4 +1,12 @@
 // js/pages/demo-seed.js
+//
+// Seed demo (1 raz) na podstawie flagi w DB.
+// - URL-e DEMO są pełne (GitHub Pages), żeby nie było problemów ze ścieżkami.
+// - Importy modułów są względne (normalny bundling / Pages).
+// - Dla OPEN sondaży: tworzymy sesje + seedujemy głosy bez RPC (bez poll key),
+//   bezpośrednio do tabel poll_text_entries / poll_votes.
+//
+// Wymaganie UX: jeśli flaga=true, pokazujemy modal postępu i blokujemy UI.
 
 import { getUserDemoFlag, setUserDemoFlag } from "../core/user-flags.js";
 import { sb } from "../core/supabase.js";
@@ -13,102 +21,8 @@ import { demoImport4Logos } from "../../logo-editor/js/demo-import.js";
 const DEMO = "https://andrish97.github.io/familiada/demo";
 
 /* =========================================================
-   Simple global guard (żeby nie odpalało 10x)
-========================================================= */
-function isSeedRunning() {
-  return !!window.__DEMO_SEED_RUNNING__;
-}
-function markSeedRunning(on) {
-  window.__DEMO_SEED_RUNNING__ = !!on;
-}
-
-/* =========================================================
-   Progress modal (blokuje UI)
-   Styl: “jak modal importu” = overlay + panel + tekst + pasek
-========================================================= */
-
-function ensureProgressModal() {
-  let ov = document.getElementById("demoProgressOverlay");
-  if (ov) return ov;
-
-  ov = document.createElement("div");
-  ov.id = "demoProgressOverlay";
-  ov.style.position = "fixed";
-  ov.style.inset = "0";
-  ov.style.zIndex = "99999";
-  ov.style.display = "none";
-  ov.style.placeItems = "center";
-  ov.style.background = "rgba(0,0,0,.72)";
-  ov.style.backdropFilter = "blur(6px)";
-  ov.style.padding = "16px";
-
-  ov.innerHTML = `
-    <div class="card" style="width:min(720px, 96vw); padding:16px; display:grid; gap:10px;">
-      <div style="font-weight:900; letter-spacing:.08em; text-transform:uppercase;">
-        PRZYWRACANIE DEMO…
-      </div>
-
-      <div id="demoProgressStep" style="font-size:14px; opacity:.9;"></div>
-
-      <div style="height:10px; background: rgba(255,255,255,.12); border-radius: 999px; overflow:hidden;">
-        <div id="demoProgressBar" style="height:100%; width:0%; background: rgba(255,255,255,.75);"></div>
-      </div>
-      <div id="demoProgressPct" style="font-size:12px; opacity:.8;"></div>
-
-      <div id="demoProgressHint" style="font-size:12px; opacity:.7;">
-        Nie zamykaj strony. To okno blokuje interfejs do czasu zakończenia.
-      </div>
-
-      <div id="demoProgressErr" style="display:none; font-size:13px; color:#ffb3b3;"></div>
-    </div>
-  `;
-
-  document.body.appendChild(ov);
-  return ov;
-}
-
-function progressOpen() {
-  const ov = ensureProgressModal();
-  ov.style.display = "grid";
-}
-
-function progressClose() {
-  const ov = document.getElementById("demoProgressOverlay");
-  if (ov) ov.style.display = "none";
-}
-
-function progressSet(stepText, i, total) {
-  const stepEl = document.getElementById("demoProgressStep");
-  const barEl = document.getElementById("demoProgressBar");
-  const pctEl = document.getElementById("demoProgressPct");
-  const errEl = document.getElementById("demoProgressErr");
-
-  if (errEl) {
-    errEl.style.display = "none";
-    errEl.textContent = "";
-  }
-
-  const safeTotal = Number(total) > 0 ? Number(total) : 1;
-  const safeI = Math.max(0, Math.min(safeTotal, Number(i) || 0));
-  const pct = Math.round((safeI / safeTotal) * 100);
-
-  if (stepEl) stepEl.textContent = `${safeI}/${safeTotal} — ${stepText || ""}`;
-  if (barEl) barEl.style.width = `${pct}%`;
-  if (pctEl) pctEl.textContent = `${pct}%`;
-}
-
-function progressError(msg) {
-  const errEl = document.getElementById("demoProgressErr");
-  if (errEl) {
-    errEl.style.display = "block";
-    errEl.textContent = `Błąd: ${String(msg || "Nieznany błąd")}`;
-  }
-}
-
-/* =========================================================
    Utils
 ========================================================= */
-
 async function fetchJson(url) {
   const res = await fetch(url, { cache: "no-store" });
   if (!res.ok) throw new Error(`DEMO: nie udało się pobrać ${url} (HTTP ${res.status})`);
@@ -121,119 +35,199 @@ async function currentUserId() {
 
   const uid = data?.user?.id;
   if (!uid) throw new Error("DEMO: brak zalogowanego użytkownika.");
-
   return uid;
 }
 
 /* =========================================================
-   Main seed
+   Progress modal (dynamiczny, styl jak builder import)
 ========================================================= */
+function ensureProgressOverlay() {
+  let ov = document.getElementById("demoSeedOverlay");
+  if (ov) return ov;
 
-export async function seedDemoOnceIfNeeded(userId) {
-  if (isSeedRunning()) {
-    // już trwa – nie odpalamy drugi raz
-    return { ran: false, skipped: true };
+  ov = document.createElement("div");
+  ov.id = "demoSeedOverlay";
+  ov.className = "overlay"; // jak w builderze
+  ov.style.display = "none";
+
+  ov.innerHTML = `
+    <div class="modal" style="width:min(720px, 94vw);">
+      <div class="mTitle">PRZYWRACANIE DEMO…</div>
+      <div id="demoSeedStep" class="mSub" style="margin-top:6px; opacity:.95">—</div>
+
+      <div style="margin-top:12px; display:grid; gap:8px">
+        <div style="display:flex; align-items:center; gap:10px">
+          <div id="demoSeedPct" class="chip" style="min-width:88px; justify-content:center">0%</div>
+          <div style="flex:1">
+            <div class="bar" style="height:10px">
+              <div id="demoSeedBar" class="barIn" style="width:0%"></div>
+            </div>
+          </div>
+          <div id="demoSeedCount" style="opacity:.8; font-variant-numeric:tabular-nums">0/0</div>
+        </div>
+
+        <div id="demoSeedLog" class="mNote" style="white-space:pre-wrap; max-height:220px; overflow:auto"></div>
+
+        <div class="mNote" style="opacity:.85">
+          Nie zamykaj strony. To okno blokuje interfejs do czasu zakończenia.
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(ov);
+  return ov;
+}
+
+function createProgressUI(totalSteps) {
+  const ov = ensureProgressOverlay();
+  const $step = ov.querySelector("#demoSeedStep");
+  const $pct = ov.querySelector("#demoSeedPct");
+  const $bar = ov.querySelector("#demoSeedBar");
+  const $count = ov.querySelector("#demoSeedCount");
+  const $log = ov.querySelector("#demoSeedLog");
+
+  function show() {
+    ov.style.display = "";
+    document.body.style.overflow = "hidden";
   }
 
-  markSeedRunning(true);
+  function setStepText(t) {
+    if ($step) $step.textContent = t || "—";
+  }
+
+  function setLogLine(t) {
+    if ($log) $log.textContent = String(t || "");
+  }
+
+  function setProgress(stepIdx, pct0to100) {
+    const s = Math.max(0, Math.min(totalSteps, stepIdx));
+    const p = Math.max(0, Math.min(100, Math.floor(pct0to100)));
+
+    if ($pct) $pct.textContent = `${p}%`;
+    if ($bar) $bar.style.width = `${p}%`;
+    if ($count) $count.textContent = `${s}/${totalSteps}`;
+  }
+
+  function stepStart(stepIdx, title) {
+    setStepText(title);
+    setProgress(stepIdx - 1, Math.floor(((stepIdx - 1) / totalSteps) * 100));
+  }
+
+  function stepDone(stepIdx) {
+    setProgress(stepIdx, Math.floor((stepIdx / totalSteps) * 100));
+  }
+
+  return { show, setStepText, setLogLine, setProgress, stepStart, stepDone };
+}
+
+/* =========================================================
+   Seed (1 raz na flagę)
+========================================================= */
+export async function seedDemoOnceIfNeeded(userId) {
+  // guard w obrębie jednej sesji przeglądarki (żeby nie odpaliło się 10x)
+  if (globalThis.__demoSeedRunning) return { ran: false, skipped: true };
+  globalThis.__demoSeedRunning = true;
 
   const uid = userId || (await currentUserId());
 
-  // FLAGA: tylko ona decyduje, czy seed w ogóle ma ruszyć
-  const flagBefore = await getUserDemoFlag(uid);
-  console.log("[DEMO] flag before:", flagBefore);
-
-  if (!flagBefore) {
-    markSeedRunning(false);
+  const isDemo = await getUserDemoFlag(uid);
+  if (!isDemo) {
+    globalThis.__demoSeedRunning = false;
     return { ran: false };
   }
 
-  // pokaż modal dopiero gdy faktycznie startujemy
-  progressOpen();
+  // 9 kroków: baza(1) + loga(1) + 4 sondaże + 3 drafty
+  const ui = createProgressUI(9);
 
-  // policz kroki “na sztywno” (bez ??)
-  const TOTAL = 1 /*base*/ + 1 /*logos*/ + 4 /*polls*/ + 3 /*drafts*/ + 1 /*flag off*/;
-  let step = 0;
+  const beforeUnload = (e) => {
+    e.preventDefault();
+    e.returnValue = "";
+    return "";
+  };
 
   try {
-    /* ===============================
-       1) Baza pytań
-    =============================== */
-    step++; progressSet("Import bazy pytań", step, TOTAL);
-    await importBaseFromUrl(`${DEMO}/base.json`);
+    ui.show();
+    globalThis.addEventListener("beforeunload", beforeUnload);
 
-    /* ===============================
-       2) Loga (jedna operacja)
-    =============================== */
-    step++; progressSet("Import log 4/4 (jedna operacja)", step, TOTAL);
+    // anti-double-run: zbijamy flagę OD RAZU
+    await setUserDemoFlag(uid, false);
+
+    let step = 1;
+
+    ui.stepStart(step, `Import bazy pytań`);
+    await importBaseFromUrl(`${DEMO}/base.json`);
+    ui.stepDone(step);
+    step++;
+
+    ui.stepStart(step, `Import logo 4/4 (jedna operacja)`);
     await demoImport4Logos(
       `${DEMO}/logo_text.json`,
       `${DEMO}/logo_text-pix.json`,
       `${DEMO}/logo_draw.json`,
       `${DEMO}/logo_image.json`
     );
+    ui.stepDone(step);
+    step++;
 
-    /* ===============================
-       3) Gry sondażowe (open/closed)
-       Uwaga:
-         - open -> poll_open + poll_sessions is_open=true
-         - closed -> ready + poll_sessions is_open=false
-         - poll_text votes seeding OFF (requires p_key)
-    =============================== */
-    step++; progressSet("Import sondażu 1/4 (poll_text_open)", step, TOTAL);
+    ui.stepStart(step, `Import sondażu 1/4 (poll_text_open)`);
     await importPollFromUrl(`${DEMO}/poll_text_open.json`);
+    ui.stepDone(step);
+    step++;
 
-    step++; progressSet("Import sondażu 2/4 (poll_text_closed)", step, TOTAL);
+    ui.stepStart(step, `Import sondażu 2/4 (poll_text_closed)`);
     await importPollFromUrl(`${DEMO}/poll_text_closed.json`);
+    ui.stepDone(step);
+    step++;
 
-    step++; progressSet("Import sondażu 3/4 (poll_points_open)", step, TOTAL);
+    ui.stepStart(step, `Import sondażu 3/4 (poll_points_open)`);
     await importPollFromUrl(`${DEMO}/poll_points_open.json`);
+    ui.stepDone(step);
+    step++;
 
-    step++; progressSet("Import sondażu 4/4 (poll_points_closed)", step, TOTAL);
+    ui.stepStart(step, `Import sondażu 4/4 (poll_points_closed)`);
     await importPollFromUrl(`${DEMO}/poll_points_closed.json`);
+    ui.stepDone(step);
+    step++;
 
-    /* ===============================
-       4) Szkice (drafty)
-    =============================== */
-    step++; progressSet("Import szkicu 1/3 (prepared)", step, TOTAL);
+    ui.stepStart(step, `Import szkicu 1/3 (prepared)`);
     await importGame(await fetchJson(`${DEMO}/prepared.json`), uid);
+    ui.stepDone(step);
+    step++;
 
-    step++; progressSet("Import szkicu 2/3 (poll_points_draft)", step, TOTAL);
+    ui.stepStart(step, `Import szkicu 2/3 (poll_points_draft)`);
     await importGame(await fetchJson(`${DEMO}/poll_points_draft.json`), uid);
+    ui.stepDone(step);
+    step++;
 
-    step++; progressSet("Import szkicu 3/3 (poll_text_draft)", step, TOTAL);
+    ui.stepStart(step, `Import szkicu 3/3 (poll_text_draft)`);
     await importGame(await fetchJson(`${DEMO}/poll_text_draft.json`), uid);
+    ui.stepDone(step);
 
-    /* ===============================
-       5) OFF (tylko raz)
-    =============================== */
-    step++; progressSet("Zamykanie trybu demo", step, TOTAL);
-    await setUserDemoFlag(uid, false);
+    ui.setLogLine("Gotowe ✅");
+    ui.setProgress(9, 100);
 
-    const flagAfter = await getUserDemoFlag(uid);
-    console.log("[DEMO] flag after OFF:", flagAfter);
-
-    progressSet("Gotowe ✅", TOTAL, TOTAL);
-    setTimeout(() => progressClose(), 350);
-
-    markSeedRunning(false);
     return { ran: true };
-
   } catch (e) {
     console.error("[DEMO] seed failed:", e);
 
-    // pokaż błąd w modalu
-    progressError(e?.message || e);
-
-    // restore flag -> TRUE żeby można było spróbować ponownie
     try {
       await setUserDemoFlag(uid, true);
-      console.warn("[DEMO] flag restored to true after failure");
+      ui.setLogLine(
+        "Błąd: " + (e?.message || String(e)) +
+        "\n\nFlaga demo została przywrócona na TRUE (możesz spróbować ponownie)."
+      );
     } catch (e2) {
-      console.warn("[DEMO] failed to restore flag:", e2);
+      ui.setLogLine(
+        "Błąd: " + (e?.message || String(e)) +
+        "\n\nNie udało się przywrócić flagi demo."
+      );
+      console.warn("[DEMO] restore flag failed:", e2);
     }
 
-    markSeedRunning(false);
     throw e;
+  } finally {
+    globalThis.removeEventListener("beforeunload", beforeUnload);
+    globalThis.__demoSeedRunning = false;
   }
 }
