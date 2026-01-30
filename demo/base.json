@@ -1,5 +1,5 @@
 {
-  "base": { "name": "DEMO - Baza pytań)" },
+  "base": { "name": "DEMO - Baza pytań" },
   "categories": [
     { "id": "c_root_1", "parent_id": null, "name": "Starter — klasyki", "ord": 0 },
     { "id": "c_root_2", "parent_id": null, "name": "Życie codzienne", "ord": 1 },
