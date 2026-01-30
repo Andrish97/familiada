@@ -1,6 +1,6 @@
 // js/pages/manual.js
 // Zakładki mają działać nawet jeśli auth się nie załaduje.
-// Dlatego: najpierw podpinamy UI, dopiero potem próbujemy auth.
+// Najpierw UI, potem auth „miękko”.
 
 import { confirmModal } from "../core/modal.js";
 
@@ -19,7 +19,9 @@ const pages = {
 };
 
 function setActive(name) {
-  tabs.forEach((t) => t.classList.toggle("active", t.dataset.tab === name));
+  if (!pages[name]) name = "general";
+
+  tabs.forEach(t => t.classList.toggle("active", t.dataset.tab === name));
   Object.entries(pages).forEach(([key, el]) => {
     el?.classList.toggle("active", key === name);
   });
@@ -27,15 +29,22 @@ function setActive(name) {
 }
 
 function wireTabs() {
-  tabs.forEach((tab) => {
+  tabs.forEach(tab => {
     tab.addEventListener("click", () => setActive(tab.dataset.tab));
   });
+
+  const initial = (location.hash || "").replace("#", "");
+  if (initial && pages[initial]) setActive(initial);
+  else setActive("general");
 }
 
 function wireFallbackNav() {
-  // fallback, gdyby auth nie zadziałał
-  byId("btnBack")?.addEventListener("click", () => (location.href = "builder.html"));
-  byId("btnLogout")?.addEventListener("click", () => (location.href = "index.html"));
+  byId("btnBack")?.addEventListener("click", () => {
+    location.href = "builder.html";
+  });
+  byId("btnLogout")?.addEventListener("click", () => {
+    location.href = "index.html";
+  });
 }
 
 async function wireDemoActions(user) {
@@ -55,14 +64,12 @@ async function wireDemoActions(user) {
     if (!ok) return;
 
     await resetUserDemoFlag(user.id, true);
-    location.href = "builder.html";
+    location.href = "./builder.html";
   });
 }
 
-async function wireAuth() {
-  // Import dynamiczny: jeśli coś padnie, nie blokujemy zakładek.
+async function wireAuthSoft() {
   const { requireAuth, signOut } = await import("../core/auth.js");
-
   const user = await requireAuth("index.html");
 
   const who = byId("who");
@@ -77,20 +84,13 @@ async function wireAuth() {
     location.href = "builder.html";
   });
 
-  // Demo tab – miękko
-  wireDemoActions(user).catch((err) => {
-    console.warn("[manual] demo actions nieaktywne:", err);
-  });
+  await wireDemoActions(user);
 }
 
-/* ================= bootstrap ================= */
+/* ================= Init ================= */
 wireTabs();
 wireFallbackNav();
 
-const initial = (location.hash || "").replace("#", "");
-if (initial && pages[initial]) setActive(initial);
-
-// auth próbujemy „miękko”
-wireAuth().catch((err) => {
+wireAuthSoft().catch((err) => {
   console.warn("[manual] auth nieaktywny:", err);
 });
