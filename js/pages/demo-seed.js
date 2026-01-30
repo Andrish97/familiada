@@ -8,7 +8,7 @@ import { importPollFromUrl, importGame } from "./builder-import-export.js";
 import { demoImport4Logos } from "../../logo-editor/js/demo-import.js";
 
 /* =========================================================
-   DEMO URLs (pełne linki, nie względne)
+   DEMO URLs (pełne linki)
 ========================================================= */
 
 const DEMO = "https://andrish97.github.io/familiada/demo";
@@ -19,209 +19,260 @@ const DEMO = "https://andrish97.github.io/familiada/demo";
 
 async function fetchJson(url) {
   const res = await fetch(url, { cache: "no-store" });
-  if (!res.ok) {
-    throw new Error(`DEMO: nie udało się pobrać ${url} (HTTP ${res.status})`);
-  }
+  if (!res.ok) throw new Error(`DEMO: nie udało się pobrać ${url} (HTTP ${res.status})`);
   return await res.json();
 }
 
 async function currentUserId() {
   const { data, error } = await sb().auth.getUser();
   if (error) throw error;
-
   const uid = data?.user?.id;
   if (!uid) throw new Error("DEMO: brak zalogowanego użytkownika.");
   return uid;
 }
 
 /* =========================================================
-   Progress modal (blokuje UI)
+   Progress modal (blokujący, w stylu buildera — bez HTML zmian)
 ========================================================= */
 
-function createProgressModal() {
-  const ov = document.createElement("div");
+function ensureProgressModal() {
+  let ov = document.getElementById("demoProgressOverlay");
+  if (ov) return ov;
+
+  ov = document.createElement("div");
   ov.id = "demoProgressOverlay";
   ov.style.position = "fixed";
   ov.style.inset = "0";
   ov.style.zIndex = "99999";
+  ov.style.display = "none";
   ov.style.background = "rgba(0,0,0,.72)";
-  ov.style.display = "grid";
-  ov.style.placeItems = "center";
+  ov.style.backdropFilter = "blur(2px)";
   ov.style.padding = "18px";
+  ov.style.alignItems = "center";
+  ov.style.justifyContent = "center";
 
-  const card = document.createElement("div");
-  card.style.width = "min(720px, 92vw)";
-  card.style.borderRadius = "18px";
-  card.style.border = "1px solid rgba(255,255,255,.18)";
-  card.style.background = "rgba(20,20,25,.92)";
-  card.style.boxShadow = "0 18px 60px rgba(0,0,0,.55)";
-  card.style.color = "white";
-  card.style.padding = "16px 16px 14px";
-  card.style.fontFamily = "system-ui, -apple-system, Segoe UI, Roboto, Arial";
-
-  card.innerHTML = `
-    <div style="font-weight:900; letter-spacing:.08em; text-transform:uppercase; opacity:.95">
-      PRZYWRACANIE DEMO…
-    </div>
-    <div id="demoStepLine" style="margin-top:10px; font-weight:800; font-size:14px; opacity:.95">
-      Start…
-    </div>
-
-    <div style="margin-top:10px; display:grid; gap:8px">
-      <div style="height:10px; background:rgba(255,255,255,.12); border-radius:999px; overflow:hidden">
-        <div id="demoBar" style="height:100%; width:0%; background:rgba(255,255,255,.85)"></div>
+  ov.innerHTML = `
+    <div style="
+      width:min(760px, 94vw);
+      background:rgba(20,20,28,.96);
+      border:1px solid rgba(255,255,255,.14);
+      border-radius:18px;
+      padding:16px 16px 14px;
+      box-shadow:0 20px 60px rgba(0,0,0,.45);
+      color:#fff;
+      font-family:system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+    ">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+        <div style="font-weight:900;letter-spacing:.06em;text-transform:uppercase;opacity:.95">
+          PRZYWRACANIE DEMO…
+        </div>
+        <button id="demoProgressCloseBtn" type="button" style="
+          display:none;
+          border:1px solid rgba(255,255,255,.22);
+          background:rgba(255,255,255,.08);
+          color:#fff;
+          border-radius:12px;
+          padding:8px 10px;
+          font-weight:800;
+          cursor:pointer;
+        ">Zamknij</button>
       </div>
-      <div id="demoPct" style="font-size:12px; opacity:.8">
-        0%
-      </div>
-    </div>
 
-    <div id="demoLog" style="margin-top:10px; font-size:12px; opacity:.85; max-height:220px; overflow:auto; border-top:1px solid rgba(255,255,255,.12); padding-top:10px">
-      Nie zamykaj strony. To okno blokuje interfejs do czasu zakończenia.
+      <div id="demoProgressStep" style="margin-top:10px;font-weight:800;opacity:.95">—</div>
+      <div id="demoProgressSub" style="margin-top:6px;opacity:.85">Nie zamykaj strony. To okno blokuje interfejs do czasu zakończenia.</div>
+
+      <div style="margin-top:12px;border:1px solid rgba(255,255,255,.16);border-radius:999px;overflow:hidden;background:rgba(255,255,255,.06)">
+        <div id="demoProgressBar" style="height:10px;width:0%;background:rgba(120,180,255,.9)"></div>
+      </div>
+      <div id="demoProgressPct" style="margin-top:8px;font-size:13px;opacity:.85">0%</div>
+
+      <div id="demoProgressLog" style="
+        margin-top:12px;
+        max-height:240px;
+        overflow:auto;
+        padding:10px;
+        border-radius:14px;
+        border:1px solid rgba(255,255,255,.14);
+        background:rgba(0,0,0,.25);
+        font-size:13px;
+        line-height:1.35;
+        white-space:pre-wrap;
+      "></div>
     </div>
   `;
 
-  ov.appendChild(card);
   document.body.appendChild(ov);
+  return ov;
+}
 
-  const $ = (id) => ov.querySelector(`#${id}`);
-  return {
-    close() { ov.remove(); },
-    set(stepIdx, total, text) {
-      const line = $(`demoStepLine`);
-      const bar = $(`demoBar`);
-      const pct = $(`demoPct`);
-      if (line) line.textContent = `${stepIdx}/${total} ${text}`;
-      const p = total > 0 ? Math.round((stepIdx / total) * 100) : 0;
-      if (bar) bar.style.width = `${Math.max(0, Math.min(100, p))}%`;
-      if (pct) pct.textContent = `${p}%`;
-    },
-    log(msg) {
-      const el = $(`demoLog`);
-      if (!el) return;
-      const div = document.createElement("div");
-      div.textContent = msg;
-      div.style.marginTop = "6px";
-      div.style.opacity = ".9";
-      el.appendChild(div);
-      el.scrollTop = el.scrollHeight;
-    },
-    error(msg) {
-      const el = $(`demoLog`);
-      if (!el) return;
-      const div = document.createElement("div");
-      div.textContent = msg;
-      div.style.marginTop = "10px";
-      div.style.color = "#ffb3b3";
-      div.style.fontWeight = "800";
-      el.appendChild(div);
-      el.scrollTop = el.scrollHeight;
-    }
-  };
+function progressApi() {
+  const ov = ensureProgressModal();
+  const stepEl = document.getElementById("demoProgressStep");
+  const subEl = document.getElementById("demoProgressSub");
+  const barEl = document.getElementById("demoProgressBar");
+  const pctEl = document.getElementById("demoProgressPct");
+  const logEl = document.getElementById("demoProgressLog");
+  const closeBtn = document.getElementById("demoProgressCloseBtn");
+
+  function show() {
+    ov.style.display = "flex";
+    closeBtn.style.display = "none";
+    logEl.textContent = "";
+  }
+
+  function hide() {
+    ov.style.display = "none";
+  }
+
+  function setStep(text) {
+    if (stepEl) stepEl.textContent = text || "—";
+  }
+
+  function setSub(text) {
+    if (subEl) subEl.textContent = text || "";
+  }
+
+  function setPct(p) {
+    const x = Math.max(0, Math.min(100, Math.floor(Number(p) || 0)));
+    if (barEl) barEl.style.width = `${x}%`;
+    if (pctEl) pctEl.textContent = `${x}%`;
+  }
+
+  function log(line) {
+    if (!logEl) return;
+    logEl.textContent += (logEl.textContent ? "\n" : "") + String(line || "");
+    logEl.scrollTop = logEl.scrollHeight;
+  }
+
+  function showClose(onClose) {
+    if (!closeBtn) return;
+    closeBtn.style.display = "";
+    closeBtn.onclick = () => onClose?.();
+  }
+
+  return { show, hide, setStep, setSub, setPct, log, showClose };
 }
 
 /* =========================================================
-   Główna logika demo seeda
+   Główna logika demo seeda (z mutexem)
 ========================================================= */
 
 export async function seedDemoOnceIfNeeded(userId) {
-  const uid = userId || (await currentUserId());
+  // mutex — żeby seed nie odpalał 5x równolegle
+  if (window.__demoSeedPromise) return await window.__demoSeedPromise;
 
-  const isDemo = await getUserDemoFlag(uid);
-  console.log("[DEMO] flag before:", isDemo);
+  window.__demoSeedPromise = (async () => {
+    const ui = progressApi();
+    const uid = userId || (await currentUserId());
 
-  if (!isDemo) return { ran: false };
+    const isDemo = await getUserDemoFlag(uid);
+    console.log("[DEMO] flag before:", isDemo);
 
-  const ui = createProgressModal();
+    if (!isDemo) return { ran: false };
 
-  // WAŻNE: gasimy flagę OD RAZU, żeby nie odpalało się 10x przy reload/klikach.
-  await setUserDemoFlag(uid, false);
-  console.log("[DEMO] flag after OFF:", await getUserDemoFlag(uid));
+    const beforeUnload = (e) => {
+      e.preventDefault();
+      e.returnValue = "";
+      return "";
+    };
 
-  // lista kroków (bez ???)
-  const steps = [
-    "Import bazy pytań",
-    "Import logo 1/4 (text)",
-    "Import logo 2/4 (text-pix)",
-    "Import logo 3/4 (draw)",
-    "Import logo 4/4 (image)",
-    "Import sondażu 1/4 (poll_text_open)",
-    "Import sondażu 2/4 (poll_text_closed)",
-    "Import sondażu 3/4 (poll_points_open)",
-    "Import sondażu 4/4 (poll_points_closed)",
-    "Import szkicu 1/3 (prepared)",
-    "Import szkicu 2/3 (poll_points_draft)",
-    "Import szkicu 3/3 (poll_text_draft)",
-  ];
+    const steps = [
+      { label: "Import bazy pytań", run: async () => importBaseFromUrl(`${DEMO}/base.json`) },
 
-  const total = steps.length;
-  let i = 0;
+      {
+        label: "Import log 4/4 (jedna operacja)",
+        run: async () =>
+          demoImport4Logos(
+            `${DEMO}/logo_text.json`,
+            `${DEMO}/logo_text-pix.json`,
+            `${DEMO}/logo_draw.json`,
+            `${DEMO}/logo_image.json`
+          ),
+      },
 
-  const step = async (label, fn) => {
-    i += 1;
-    ui.set(i, total, label);
-    ui.log(label);
-    await fn();
-  };
+      { label: "Import sondażu 1/4 (poll_text_open)", run: async () => importPollFromUrl(`${DEMO}/poll_text_open.json`) },
+      { label: "Import sondażu 2/4 (poll_text_closed)", run: async () => importPollFromUrl(`${DEMO}/poll_text_closed.json`) },
+      { label: "Import sondażu 3/4 (poll_points_open)", run: async () => importPollFromUrl(`${DEMO}/poll_points_open.json`) },
+      { label: "Import sondażu 4/4 (poll_points_closed)", run: async () => importPollFromUrl(`${DEMO}/poll_points_closed.json`) },
 
-  try {
-    await step(steps[0], async () => {
-      await importBaseFromUrl(`${DEMO}/base.json`);
-    });
+      {
+        label: "Import szkicu 1/3 (prepared)",
+        run: async () => {
+          const prepared = await fetchJson(`${DEMO}/prepared.json`);
+          await importGame(prepared, uid);
+        },
+      },
+      {
+        label: "Import szkicu 2/3 (poll_points_draft)",
+        run: async () => {
+          const pollPtsDraft = await fetchJson(`${DEMO}/poll_points_draft.json`);
+          await importGame(pollPtsDraft, uid);
+        },
+      },
+      {
+        label: "Import szkicu 3/3 (poll_text_draft)",
+        run: async () => {
+          const pollTxtDraft = await fetchJson(`${DEMO}/poll_text_draft.json`);
+          await importGame(pollTxtDraft, uid);
+        },
+      },
+    ];
 
-    await step(steps[1], async () => {
-      await demoImport4Logos(
-        `${DEMO}/logo_text.json`,
-        `${DEMO}/logo_text-pix.json`,
-        `${DEMO}/logo_draw.json`,
-        `${DEMO}/logo_image.json`
-      );
-    });
-    // demoImport4Logos robi 4 na raz — więc “kroki 2-4” traktujemy jako informacyjne:
-    ui.log("Logo: import 4/4 wykonany w jednej operacji.");
+    const total = steps.length;
 
-    // Polls
-    await step(steps[5], async () => { await importPollFromUrl(`${DEMO}/poll_text_open.json`); });
-    await step(steps[6], async () => { await importPollFromUrl(`${DEMO}/poll_text_closed.json`); });
-    await step(steps[7], async () => { await importPollFromUrl(`${DEMO}/poll_points_open.json`); });
-    await step(steps[8], async () => { await importPollFromUrl(`${DEMO}/poll_points_closed.json`); });
+    ui.show();
+    ui.setSub("Nie zamykaj strony. To okno blokuje interfejs do czasu zakończenia.");
+    ui.setPct(0);
+    window.addEventListener("beforeunload", beforeUnload);
 
-    // Drafty
-    await step(steps[9], async () => {
-      const prepared = await fetchJson(`${DEMO}/prepared.json`);
-      await importGame(prepared, uid);
-    });
+    try {
+      for (let i = 0; i < total; i++) {
+        ui.setStep(`${i + 1}/${total} ${steps[i].label}`);
+        ui.log(steps[i].label);
 
-    await step(steps[10], async () => {
-      const pollPtsDraft = await fetchJson(`${DEMO}/poll_points_draft.json`);
-      await importGame(pollPtsDraft, uid);
-    });
+        // prosty progres: krok i/total
+        ui.setPct(Math.floor((i / total) * 100));
 
-    await step(steps[11], async () => {
-      const pollTxtDraft = await fetchJson(`${DEMO}/poll_text_draft.json`);
-      await importGame(pollTxtDraft, uid);
-    });
+        await steps[i].run();
 
-    ui.set(total, total, "Gotowe");
-    ui.log("DEMO: zakończone ✅");
-    // możesz tu zrobić automatyczny reload list:
-    // location.reload();
+        ui.setPct(Math.floor(((i + 1) / total) * 100));
+      }
 
-    // zostaw modal na 400ms żeby użytkownik widział "Gotowe"
-    setTimeout(() => ui.close(), 400);
+      await setUserDemoFlag(uid, false);
+      console.log("[DEMO] flag after OFF: false");
 
-    return { ran: true };
-  } catch (e) {
-    console.error("[DEMO] seed failed:", e);
+      ui.log("OK ✅ Demo zostało przywrócone.");
+      ui.setStep(`${total}/${total} Zakończono`);
+      ui.setPct(100);
 
-    // przy błędzie: przywróć flagę, żeby można było ponowić
-    await setUserDemoFlag(uid, true);
-    console.warn("[DEMO] flag restored to true after failure");
+      // zdejmij blokadę
+      window.removeEventListener("beforeunload", beforeUnload);
+      ui.showClose(() => ui.hide());
 
-    ui.error("Błąd: " + (e?.message || String(e)));
-    ui.log("Flaga demo została przywrócona na TRUE (możesz spróbować ponownie).");
+      return { ran: true };
+    } catch (e) {
+      console.error("[DEMO] seed failed:", e);
 
-    // modal zostaje, bo to jest sygnał błędu (blokuje jak chciałeś)
-    throw e;
-  }
+      // jeśli coś padło — przywracamy flagę, żeby można było ponowić
+      try {
+        await setUserDemoFlag(uid, true);
+        console.warn("[DEMO] flag restored to true after failure");
+      } catch (e2) {
+        console.warn("[DEMO] flag restore failed:", e2);
+      }
+
+      ui.log(`Błąd: ${e?.message || String(e)}`);
+      ui.log("Flaga demo została przywrócona na TRUE (możesz spróbować ponownie).");
+
+      window.removeEventListener("beforeunload", beforeUnload);
+      ui.showClose(() => ui.hide());
+
+      throw e;
+    } finally {
+      // zwolnij mutex po zakończeniu
+      window.__demoSeedPromise = null;
+    }
+  })();
+
+  return await window.__demoSeedPromise;
 }
