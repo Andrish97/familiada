@@ -411,19 +411,26 @@ async function importBase(payload) {
   return base.id;
 }
 
-// Import demo bazy z pliku JSON w Twoim repo (np. /demo/przykladowa-baza.json)
-// Zawsze tworzy bazę o nazwie: "Przykładowa baza pytań"
-export async function importDemoBaseFromUrl(url = "../demo/przykladowa-baza.json") {
+// ===============================
+// Uniwersalny import bazy z JSON
+// ===============================
+export async function importBaseFromUrl(url) {
   await requireAuth();
 
   const res = await fetch(url, { cache: "no-store" });
-  if (!res.ok) throw new Error(`Nie mogę wczytać demo JSON (${res.status}). Sprawdź ścieżkę: ${url}`);
+  if (!res.ok) {
+    throw new Error(`Nie można wczytać pliku JSON (${res.status}): ${url}`);
+  }
 
   const payload = await res.json();
-  payload.base = payload.base || {};
-  payload.base.name = "Przykładowa baza pytań";
 
+  if (!payload || typeof payload !== "object") {
+    throw new Error("Niepoprawny format JSON bazy");
+  }
+
+  // korzysta z Twojej istniejącej logiki importu w bases.js
   const baseId = await importBase(payload);
+
   return baseId;
 }
 
