@@ -287,9 +287,6 @@ async function importPollFromUrlInternal(url, ownerId) {
      3) utworzenie sesji poll (runtime)
   =============================== */
 
-  // 1) import gry (tworzy games + questions + answers, games.status="draft")
-  const gameId = await importGame(payload, ownerId);
-
   // 2) pytania (żeby znać ord)
   const qs = await listQuestions(gameId);
   if (!qs.length) throw new Error("DEMO: gra nie ma pytań (nie da się otworzyć sondażu).");
