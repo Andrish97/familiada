@@ -1,6 +1,6 @@
 // js/pages/manual.js
 // Zakładki mają działać nawet jeśli auth się nie załaduje.
-// Najpierw UI (tabs + fallback), potem miękko auth, a dopiero wtedy demo-akcje.
+// Najpierw UI (tabs), potem auth (miękko).
 
 import { confirmModal } from "../core/modal.js";
 
@@ -19,26 +19,31 @@ const pages = {
 };
 
 function setActive(name) {
-  const key = pages[name] ? name : "general";
-  tabs.forEach(t => t.classList.toggle("active", t.dataset.tab === key));
-  Object.entries(pages).forEach(([k, el]) => el?.classList.toggle("active", k === key));
-  location.hash = key;
+  tabs.forEach((t) => t.classList.toggle("active", t.dataset.tab === name));
+  Object.entries(pages).forEach(([key, el]) => {
+    el?.classList.toggle("active", key === name);
+  });
+  location.hash = name;
 }
 
 function wireTabs() {
-  tabs.forEach(tab => {
+  tabs.forEach((tab) => {
     tab.addEventListener("click", () => setActive(tab.dataset.tab));
   });
 
-  // start: hash → jeśli nie ma / złe → general
   const initial = (location.hash || "").replace("#", "");
-  setActive(initial);
+  if (initial && pages[initial]) setActive(initial);
+  else setActive("general");
 }
 
 function wireFallbackNav() {
-  // fallback, gdyby auth nie zadziałał (przyciski nie wymagają sesji)
-  byId("btnBack")?.addEventListener("click", () => (location.href = "builder.html"));
-  byId("btnLogout")?.addEventListener("click", () => (location.href = "index.html"));
+  // fallback, gdyby auth nie zadziałał
+  byId("btnBack")?.addEventListener("click", () => {
+    location.href = "builder.html";
+  });
+  byId("btnLogout")?.addEventListener("click", () => {
+    location.href = "index.html";
+  });
 }
 
 async function wireDemoActions(user) {
@@ -54,6 +59,7 @@ async function wireDemoActions(user) {
       okText: "Przywróć",
       cancelText: "Anuluj",
     });
+
     if (!ok) return;
 
     await resetUserDemoFlag(user.id, true);
@@ -61,11 +67,10 @@ async function wireDemoActions(user) {
   });
 }
 
-async function wireAuthSoft() {
+async function wireAuth() {
   const { requireAuth, signOut } = await import("../core/auth.js");
 
   const user = await requireAuth("index.html");
-
   const who = byId("who");
   if (who) who.textContent = user?.email || "—";
 
@@ -78,7 +83,7 @@ async function wireAuthSoft() {
     location.href = "builder.html";
   });
 
-  // demo akcje – miękko
+  // Demo tab – miękko
   wireDemoActions(user).catch((err) => {
     console.warn("[manual] demo actions nieaktywne:", err);
   });
@@ -88,6 +93,6 @@ async function wireAuthSoft() {
 wireTabs();
 wireFallbackNav();
 
-wireAuthSoft().catch((err) => {
+wireAuth().catch((err) => {
   console.warn("[manual] auth nieaktywny:", err);
 });
