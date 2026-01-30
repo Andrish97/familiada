@@ -277,10 +277,13 @@ async function seedPollTextEntries({ gameId, qs, sessByQ, votes }) {
 
       const q = qs[i];
       const sess = sessByQ.get(q.id);
+      if (!sess?.id) {
+        throw new Error("DEMO: brak poll_session dla pytania (nie da się seedować wpisów).");
+      }
 
       rows.push({
         game_id: gameId,
-        poll_session_id: sess?.id,
+        poll_session_id: sess.id,
         question_id: q.id,
         voter_token: voter,
         answer_raw: raw,
