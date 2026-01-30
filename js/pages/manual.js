@@ -2,6 +2,8 @@
 // Zakładki mają działać nawet jeśli auth się nie załaduje.
 // Dlatego: najpierw podpinamy UI, dopiero potem próbujemy auth.
 
+import { confirmModal } from "../core/modal.js";
+
 function qsa(sel) { return Array.from(document.querySelectorAll(sel)); }
 function byId(id) { return document.getElementById(id); }
 
@@ -13,6 +15,7 @@ const pages = {
   polls: byId("tab-polls"),
   logo: byId("tab-logo"),
   control: byId("tab-control"),
+  demo: byId("tab-demo"),
 };
 
 function setActive(name) {
@@ -59,12 +62,42 @@ async function wireAuth() {
   byId("btnBack")?.addEventListener("click", () => {
     location.href = "builder.html";
   });
+  
+  // Demo tab
+  wireDemoActions(user).catch(err => {
+    console.warn("[manual] demo actions nieaktywne:", err);
+  });
 }
 
 wireTabs();
 wireFallbackNav();
 
-// auth próbujemy „miękko”
-wireAuth().catch(err => {
+  // auth próbujemy „miękko”
+  wireAuth().catch(err => {
+  async function wireDemoActions(user) {
+    const btn = document.getElementById("demoRestoreBtn");
+    if (!btn || !user?.id) return;
+  
+    const { resetUserDemoFlag } = await import("../core/user-flags.js");
+    const { confirmModal } = await import("../core/modal.js");
+  
+    btn.addEventListener("click", async () => {
+  
+      const ok = await confirmModal({
+        title: "Przywrócić pliki demo?",
+        message: "Zostaną dodane przykładowe materiały startowe.",
+        okText: "Przywróć",
+        cancelText: "Anuluj",
+      });
+  
+      if (!ok) return;
+  
+      // ustaw demo=true
+      await resetUserDemoFlag(user.id, true);
+  
+      // przejście do buildera
+      location.href = "./builder.html";
+    });
+  }
   console.warn("[manual] auth nieaktywny:", err);
 });
