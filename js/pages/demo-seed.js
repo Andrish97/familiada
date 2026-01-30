@@ -9,7 +9,7 @@ import { sb } from "../core/supabase.js";
  * - logo-editor/js/main.js ma eksportować: demoImport4Logos(url1,url2,url3,url4)
  */
 import { importBaseFromUrl } from "./bases.js";
-import { demoImport4Logos } from "../logo-editor/js/main.js";
+import { demoImport4Logos } from "../../logo-editor/js/main.js";
 
 async function fetchJson(url) {
   const res = await fetch(url, { cache: "no-store" });
