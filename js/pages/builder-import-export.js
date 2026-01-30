@@ -238,9 +238,7 @@ async function listAnswersForQuestions(qIds) {
   return map;
 }
 
-/**
- * Główna funkcja "internal" – używa ownerId (bo importGame tego wymaga)
- */
+
 async function importPollFromUrlInternal(url, ownerId) {
   const src = await fetchJsonFromUrl(url);
 
@@ -252,57 +250,69 @@ async function importPollFromUrlInternal(url, ownerId) {
   const pollStatus = hardStatus(src.game.status);
   const name = String(src.game.name ?? "DEMO").trim() || "DEMO";
 
-  // Payload dla Twojego importGame (bez statusu, bo podstawowy importer i tak daje draft)
+  /* ===============================
+     1) budujemy payload pod importGame
+  =============================== */
+
   const payload = {
     game: { name, type },
     questions: [],
   };
 
   if (type === "poll_text") {
-    payload.questions = src.questions.map((q) => ({
+    payload.questions = src.questions.map(q => ({
       text: String(q?.text ?? ""),
-      answers: [],
+      answers: []
     }));
   } else {
     // poll_points
-    payload.questions = src.questions.map((q) => ({
+    payload.questions = src.questions.map(q => ({
       text: String(q?.text ?? ""),
-      answers: (Array.isArray(q?.answers) ? q.answers : []).map((a) => ({
+      answers: (Array.isArray(q?.answers) ? q.answers : []).map(a => ({
         text: String(a?.text ?? ""),
-        // OPEN: ignorujemy fixed_points (0) – bo to sondaż
-        // CLOSED: bierzemy fixed_points z JSON (jak klasyczny export/import)
-        fixed_points: pollStatus === "closed" ? Number(a?.fixed_points ?? 0) : 0,
-      })),
+        fixed_points: pollStatus === "closed"
+          ? Number(a?.fixed_points ?? 0)
+          : 0
+      }))
     }));
   }
 
-  // 1) import gry (tworzy games + questions + answers, games.status="draft")
+  /* ===============================
+     2) import gry (definicja)
+  =============================== */
+
   const gameId = await importGame(payload, ownerId);
 
-  const { data: pollRow, error: kErr } = await sb()
-    .from("poll_sessions")
-    .insert({ game_id: gameId })
-    .select("key")
-    .single();
-  
-  if (kErr) throw kErr;
-  
-  const pollKey = pollRow.key;
-  
-  // 2) status OPEN/CLOSED
+  /* ===============================
+     3) utworzenie sesji poll (runtime)
+  =============================== */
+
   if (pollStatus === "open") {
+    const { error: sErr } = await sb()
+      .from("poll_sessions")
+      .insert({
+        game_id: gameId,
+        is_open: true
+      });
+
+    if (sErr) throw sErr;
+
     await setGameStatus(gameId, "poll_open");
   } else {
-    // zostaje draft (czyli zamknięty / nieaktywny w poll pages)
+    // zamknięta – zostaje draft, bez sesji
     return gameId;
   }
 
-  // 3) seed głosów tylko dla OPEN
+  /* ===============================
+     4) seed głosów (tylko OPEN)
+  =============================== */
+
   const votes = Array.isArray(src.votes) ? src.votes : [];
   if (!votes.length) return gameId;
 
   const qs = await listQuestions(gameId);
 
+  // ===== poll_text =====
   if (type === "poll_text") {
     for (const v of votes) {
       const arr = Array.isArray(v?.answers_raw) ? v.answers_raw : [];
@@ -322,19 +332,21 @@ async function importPollFromUrlInternal(url, ownerId) {
       if (!items.length) continue;
 
       const voter =
-        crypto?.randomUUID?.() || `${Date.now()}_${Math.random().toString(16).slice(2)}`;
+        crypto?.randomUUID?.() ||
+        `${Date.now()}_${Math.random().toString(16).slice(2)}`;
 
-        const { error } = await sb().rpc("poll_text_submit_batch", {
-          p_game_id: gameId,
-          p_items: items,
-          p_key: pollKey,          // ← DODANE
-          p_voter_token: voter,
-        });
+      const { error } = await sb().rpc("poll_text_submit_batch", {
+        p_game_id: gameId,
+        p_items: items,
+        p_voter_token: voter,
+      });
 
       if (error) throw error;
     }
+
+  // ===== poll_points =====
   } else {
-    const aMap = await listAnswersForQuestions(qs.map((q) => q.id));
+    const aMap = await listAnswersForQuestions(qs.map(q => q.id));
 
     for (const v of votes) {
       const picks = Array.isArray(v?.picks) ? v.picks : [];
@@ -348,21 +360,24 @@ async function importPollFromUrlInternal(url, ownerId) {
         const a = answers[idx];
         if (!a) continue;
 
-        items.push({ question_id: qs[i].id, answer_id: a.id });
+        items.push({
+          question_id: qs[i].id,
+          answer_id: a.id
+        });
       }
 
       if (!items.length) continue;
 
       const voter =
-        crypto?.randomUUID?.() || `${Date.now()}_${Math.random().toString(16).slice(2)}`;
+        crypto?.randomUUID?.() ||
+        `${Date.now()}_${Math.random().toString(16).slice(2)}`;
 
-        const { error } = await sb().rpc("poll_points_vote_batch", {
-          p_game_id: gameId,
-          p_items: items,
-          p_key: pollKey,
-          p_voter_token: voter,
-        });
-      
+      const { error } = await sb().rpc("poll_points_vote_batch", {
+        p_game_id: gameId,
+        p_items: items,
+        p_voter_token: voter,
+      });
+
       if (error) throw error;
     }
   }
