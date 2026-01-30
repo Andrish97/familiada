@@ -289,12 +289,6 @@ async function importPollFromUrlInternal(url, ownerId) {
   
   const pollKey = pollRow.key;
   
-  if (kErr || !pollRow?.key) {
-    throw new Error("Brak aktywnej sesji poll dla gry DEMO");
-  }
-  
-  const pollKey = pollRow.key;
-
   // 2) status OPEN/CLOSED
   if (pollStatus === "open") {
     await setGameStatus(gameId, "poll_open");
