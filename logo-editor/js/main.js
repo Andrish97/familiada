@@ -202,10 +202,10 @@ function isEditing(){
 }
 
 function shouldBlockNav(){
-  // blokujemy tylko gdy są niezapisane zmiany
-  // jeśli chcesz blokować ZAWSZE w edytorze, zmień na: return isEditing();
-  return isEditing();
+  // Blokujemy TYLKO gdy edytor jest otwarty i są niezapisane zmiany
+  return isEditing() && !!editorDirty;
 }
+
 
 function armNavGuard(){
   if (_navGuardArmed) return;
