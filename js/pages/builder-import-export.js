@@ -25,7 +25,7 @@ const safePts = (v) => {
 /*
   FORMAT:
   {
-    game: { name, type }, // type: poll_text | poll_points | prepared
+    game: { name, type }, // poll_text | poll_points | prepared
     questions: [
       { text, answers: [{ text, fixed_points }] }
     ]
@@ -83,11 +83,17 @@ export async function importGame(payload, ownerId) {
   const { data: game, error: gErr } = await sb()
     .from("games")
     .insert(
-      { name, type, status: "draft", owner_id: ownerId },
+      {
+        name,
+        type,
+        status: "draft",
+        owner_id: ownerId,
+      },
       { defaultToNull: false }
     )
     .select("id")
     .single();
+
   if (gErr) throw gErr;
 
   const qs = payload.questions || [];
@@ -97,7 +103,11 @@ export async function importGame(payload, ownerId) {
 
     const { data: qRow, error: qInsErr } = await sb()
       .from("questions")
-      .insert({ game_id: game.id, ord: qi + 1, text: qText })
+      .insert({
+        game_id: game.id,
+        ord: qi + 1,
+        text: qText,
+      })
       .select("id")
       .single();
     if (qInsErr) throw qInsErr;
@@ -120,7 +130,9 @@ export async function importGame(payload, ownerId) {
 }
 
 export function downloadJson(filename, obj) {
-  const blob = new Blob([JSON.stringify(obj, null, 2)], { type: "application/json" });
+  const blob = new Blob([JSON.stringify(obj, null, 2)], {
+    type: "application/json",
+  });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
@@ -133,15 +145,15 @@ export function downloadJson(filename, obj) {
 
 /* =========================================================
    POLL IMPORT FROM URL (open/closed) + optional vote seeding
-
    JSON:
-   game: { name, type: "poll_text"|"poll_points", status: "open"|"closed", key? }
+   game: { name, type: "poll_text"|"poll_points", status: "open"|"closed" }
    questions:
-     - poll_text:   [{text}, ...]
-     - poll_points: [{text, answers:[{text, fixed_points?}]}]
-   votes (only when status="open"):
-     - poll_text:   votes:[{answers_raw:[...]}]
-     - poll_points: votes:[{picks:[...]}] // indeks odpowiedzi per pytanie (0..)
+     - poll_text: [{text}, ...]
+     - poll_points open: answers: [{text}] (fixed_points ignored)
+     - poll_points closed: answers: [{text, fixed_points}] (taken)
+   votes (only for status="open"):
+     - poll_text:  votes:[{answers_raw:[...]}]
+     - poll_points:votes:[{picks:[...]}] // indices per question
 ========================================================= */
 
 async function fetchJsonFromUrl(url) {
@@ -230,19 +242,38 @@ async function listAnswersForQuestions(qIds) {
 }
 
 /**
- * RPC helper: próbuje 2 sygnatury:
- *  - najpierw z p_key (jeśli podany)
- *  - jak PostgREST zwróci PGRST202 (brak funkcji w cache / inna sygnatura) → retry bez p_key
+ * OPEN poll model u Ciebie:
+ * - Tworzymy sesję poll_sessions PER PYTANIE (jak w Twoim SQL przykładzie)
+ * - p_key w RPC = poll_sessions.id
+ * - Głosy seedujemy dopiero po utworzeniu sesji
  */
-async function rpcTryWithOptionalKey(fn, args, key) {
-  if (key) {
-    const { error } = await sb().rpc(fn, { ...args, p_key: key });
-    if (!error) return;
-    if (String(error.code) !== "PGRST202") throw error;
+async function createSessionsForAllQuestions(gameId, qs) {
+  // 1 insert / pytanie, bo chcemy dostać id (p_key) na zwrot
+  const sessions = new Map(); // ord -> {id, question_id, question_ord}
+
+  for (const q of qs) {
+    const questionOrd = Number(q.ord) || 0;
+    if (!questionOrd) continue;
+
+    const { data, error } = await sb()
+      .from("poll_sessions")
+      .insert(
+        {
+          game_id: gameId,
+          question_id: q.id,
+          question_ord: questionOrd,
+          is_open: true,
+        },
+        { defaultToNull: false }
+      )
+      .select("id,question_id,question_ord")
+      .single();
+
+    if (error) throw error;
+    sessions.set(data.question_ord, data);
   }
 
-  const { error: e2 } = await sb().rpc(fn, args);
-  if (e2) throw e2;
+  return sessions;
 }
 
 async function importPollFromUrlInternal(url, ownerId) {
@@ -256,23 +287,18 @@ async function importPollFromUrlInternal(url, ownerId) {
   const pollStatus = hardStatus(src.game.status);
   const name = String(src.game.name ?? "DEMO").trim() || "DEMO";
 
-  // jeśli Twoje RPC wymagają p_key → bierzemy z JSON lub ustawiamy stałe demo
-  const key =
-    String(src.game.key || "").trim() ||
-    "DEMO_SEED";
-
   /* ===============================
-     1) payload pod importGame
+     1) payload -> importGame
   =============================== */
   const payload = { game: { name, type }, questions: [] };
 
   if (type === "poll_text") {
-    payload.questions = src.questions.map((q) => ({
+    payload.questions = (src.questions || []).map((q) => ({
       text: String(q?.text ?? ""),
       answers: [],
     }));
   } else {
-    payload.questions = src.questions.map((q) => ({
+    payload.questions = (src.questions || []).map((q) => ({
       text: String(q?.text ?? ""),
       answers: (Array.isArray(q?.answers) ? q.answers : []).map((a) => ({
         text: String(a?.text ?? ""),
@@ -287,29 +313,20 @@ async function importPollFromUrlInternal(url, ownerId) {
   const gameId = await importGame(payload, ownerId);
 
   /* ===============================
-     3) CLOSED: nic nie otwieramy, nic nie seedujemy
+     3) CLOSED => bez sesji, bez seedowania
   =============================== */
-  if (pollStatus !== "open") return gameId;
+  if (pollStatus !== "open") {
+    // zostaje draft, a dla poll_points_closed masz fixed_points z JSON
+    return gameId;
+  }
 
   /* ===============================
-     4) OPEN: utwórz sesję poll + ustaw status
+     4) OPEN => sesje + status
   =============================== */
   const qs = await listQuestions(gameId);
   if (!qs.length) throw new Error("DEMO: gra nie ma pytań (nie da się otworzyć sondażu).");
 
-  const firstOrd = Number(qs[0].ord) || 1;
-
-  const { error: sessErr } = await sb()
-    .from("poll_sessions")
-    .insert({
-      game_id: gameId,
-      question_ord: firstOrd,
-      is_open: true,
-      question_id: qs[0].id,
-    });
-
-  if (sessErr) throw sessErr;
-
+  const sessionsByOrd = await createSessionsForAllQuestions(gameId, qs);
   await setGameStatus(gameId, "poll_open");
 
   /* ===============================
@@ -318,85 +335,83 @@ async function importPollFromUrlInternal(url, ownerId) {
   const votes = Array.isArray(src.votes) ? src.votes : [];
   if (!votes.length) return gameId;
 
-  // poll_text: answers_raw[]
   if (type === "poll_text") {
+    // poll_text: votes[].answers_raw[] (po indeksie pytania)
     for (const v of votes) {
-      const arr = Array.isArray(v?.answers_raw) ? v.answers_raw : [];
-      const items = [];
+      const voterToken =
+        crypto?.randomUUID?.() || `${Date.now()}_${Math.random().toString(16).slice(2)}`;
 
-      for (let i = 0; i < qs.length; i++) {
+      const arr = Array.isArray(v?.answers_raw) ? v.answers_raw : [];
+      const n = Math.min(arr.length, qs.length);
+
+      for (let i = 0; i < n; i++) {
         const raw = String(arr[i] ?? "").trim().slice(0, 17);
         if (!raw) continue;
 
-        items.push({
-          question_id: qs[i].id,
-          answer_raw: raw,
-          answer_norm: normText(raw),
-        });
-      }
+        const q = qs[i];
+        const ord = Number(q.ord) || 0;
+        const sess = sessionsByOrd.get(ord);
+        if (!sess?.id) continue;
 
-      if (!items.length) continue;
-
-      const voter =
-        crypto?.randomUUID?.() ||
-        `${Date.now()}_${Math.random().toString(16).slice(2)}`;
-
-      // u Ciebie ta funkcja najpewniej wymaga p_key (wynika z błędu z PostgREST)
-      await rpcTryWithOptionalKey(
-        "poll_text_submit_batch",
-        {
+        const { error } = await sb().rpc("poll_text_submit_batch", {
           p_game_id: gameId,
-          p_items: items,
-          p_voter_token: voter,
-        },
-        key
-      );
+          p_items: [
+            {
+              question_id: q.id,
+              answer_raw: raw,
+              answer_norm: normText(raw),
+            },
+          ],
+          p_key: sess.id, // ✅ p_key = poll_sessions.id
+          p_voter_token: voterToken,
+        });
+
+        if (error) throw error;
+      }
     }
 
     return gameId;
   }
 
-  // poll_points: picks[]
+  // poll_points: votes[].picks[] (indeksy odpowiedzi per pytanie)
   const aMap = await listAnswersForQuestions(qs.map((q) => q.id));
 
   for (const v of votes) {
-    const picks = Array.isArray(v?.picks) ? v.picks : [];
-    const items = [];
+    const voterToken =
+      crypto?.randomUUID?.() || `${Date.now()}_${Math.random().toString(16).slice(2)}`;
 
-    for (let i = 0; i < qs.length; i++) {
-      const answers = aMap.get(qs[i].id) || [];
+    const picks = Array.isArray(v?.picks) ? v.picks : [];
+    const n = Math.min(picks.length, qs.length);
+
+    for (let i = 0; i < n; i++) {
+      const q = qs[i];
+      const ord = Number(q.ord) || 0;
+      const sess = sessionsByOrd.get(ord);
+      if (!sess?.id) continue;
+
+      const answers = aMap.get(q.id) || [];
       const idx = Number(picks[i]);
       if (!Number.isFinite(idx)) continue;
 
       const a = answers[idx];
-      if (!a) continue;
+      if (!a?.id) continue;
 
-      items.push({ question_id: qs[i].id, answer_id: a.id });
-    }
-
-    if (!items.length) continue;
-
-    const voter =
-      crypto?.randomUUID?.() ||
-      `${Date.now()}_${Math.random().toString(16).slice(2)}`;
-
-    // tu NIE ZAKŁADAMY, że p_key jest wymagane – ale robimy retry jeśli jest.
-    await rpcTryWithOptionalKey(
-      "poll_points_vote_batch",
-      {
+      const { error } = await sb().rpc("poll_points_vote_batch", {
         p_game_id: gameId,
-        p_items: items,
-        p_voter_token: voter,
-      },
-      key
-    );
+        p_items: [{ question_id: q.id, answer_id: a.id }],
+        p_key: sess.id, // ✅ p_key = poll_sessions.id
+        p_voter_token: voterToken,
+      });
+
+      if (error) throw error;
+    }
   }
 
   return gameId;
 }
 
 /**
- * PUBLIC: prosto – tylko URL
+ * PUBLIC: super prosto – tylko URL
  */
 export async function importPollFromUrl(url) {
   const ownerId = await currentUserId();
