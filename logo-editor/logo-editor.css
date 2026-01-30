@@ -633,3 +633,23 @@
   max-height: 100%;
   image-rendering: pixelated;
 }
+
+/* TEXT_PIX: stały format pola (11:26) */
+#rtEditor{
+  aspect-ratio: 26 / 11;
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+}
+
+/* TEXT_PIX: czytelność kontrolek */
+#paneTextPix{
+  font-size: 15px; /* było za małe */
+}
+
+.ctrlRowBiu .btn.sm{
+  min-width: 38px;
+  height: 34px;
+  font-size: 15px;
+  line-height: 1;
+}
