@@ -1172,6 +1172,114 @@ async function boot(){
   await refresh();
 }
 
+/* =========================================================
+   DEMO IMPORT (4 loga z URL) — exportowana funkcja
+   - wgrywa 4 pliki JSON jako NOWE loga dla wskazanego user_id
+   - NIE ustawia aktywnego
+========================================================= */
+
+async function listLogosForUser(userId){
+  const { data, error } = await sb()
+    .from("user_logos")
+    .select("id,name")
+    .eq("user_id", userId);
+  if (error) throw error;
+  return data || [];
+}
+
+function makeUniqueNameFromList(baseName, existingList, excludeId = null){
+  const base = String(baseName || "").trim() || "Logo";
+  const used = new Set(
+    (existingList || [])
+      .filter(l => !excludeId || l.id !== excludeId)
+      .map(l => String(l?.name || "").trim().toLowerCase())
+      .filter(Boolean)
+  );
+
+  if (!used.has(base.toLowerCase())) return base;
+
+  let i = 2;
+  while (i < 9999){
+    const cand = `${base} (${i})`;
+    if (!used.has(cand.toLowerCase())) return cand;
+    i++;
+  }
+  return `${base} (${Date.now()})`;
+}
+
+async function fetchTextRequired(url, label = "Import"){
+  const r = await fetch(url, { cache: "no-store" });
+  if (!r.ok) throw new Error(`${label}: HTTP ${r.status} (${url})`);
+  return await r.text();
+}
+
+/**
+ * Import 4 logo JSON-y z URL dla dowolnego user_id (demo seed).
+ *
+ * @param {string} playerId - docelowy user_id w user_logos
+ * @param {string} url1
+ * @param {string} url2
+ * @param {string} url3
+ * @param {string} url4
+ * @returns {Promise<{ok:boolean, createdIds:string[], errors:Array<{url:string, error:string}>}>}
+ */
+export async function demoImport4LogosForPlayer(playerId, url1, url2, url3, url4){
+  const userId = String(playerId || "").trim();
+  if (!userId) throw new Error("demoImport4LogosForPlayer: brak playerId.");
+
+  const urls = [url1, url2, url3, url4].map(u => String(u || "").trim()).filter(Boolean);
+  if (urls.length !== 4) throw new Error("demoImport4LogosForPlayer: wymagane dokładnie 4 linki (URL).");
+
+  // bierzemy listę nazw logo dla tego usera, żeby dopinać unikalność
+  const existing = await listLogosForUser(userId);
+
+  const createdIds = [];
+  const errors = [];
+
+  for (let i = 0; i < urls.length; i++){
+    const url = urls[i];
+    try{
+      const txt = await fetchTextRequired(url, `Logo ${i + 1}`);
+      const parsed = parseImportJson(txt);
+
+      // unikalna nazwa w obrębie docelowego usera
+      const uniqueName = makeUniqueNameFromList(parsed.name, existing);
+
+      let row = null;
+
+      if (parsed.kind === "GLYPH"){
+        row = {
+          user_id: userId,
+          name: uniqueName,
+          type: TYPE_GLYPH,
+          is_active: false,
+          payload: { layers: [{ rows: parsed.rows }] },
+        };
+      } else if (parsed.kind === "PIX"){
+        row = {
+          user_id: userId,
+          name: uniqueName,
+          type: TYPE_PIX,
+          is_active: false,
+          payload: parsed.pixPayload, // {w,h,format,bits_b64}
+        };
+      } else {
+        throw new Error(`Nieobsługiwany kind: ${parsed.kind}`);
+      }
+
+      const newId = await createLogo(row);
+      createdIds.push(newId);
+
+      // dopisujemy do istniejących, żeby kolejne nazwy też się nie zderzyły
+      existing.push({ id: newId, name: uniqueName });
+    } catch (e){
+      errors.push({ url, error: String(e?.message || e) });
+    }
+  }
+
+  return { ok: errors.length === 0, createdIds, errors };
+}
+
 // kuloodporne uruchomienie (działa też przy dynamicznym import())
 if (document.readyState === "loading"){
   document.addEventListener("DOMContentLoaded", boot, { once: true });
