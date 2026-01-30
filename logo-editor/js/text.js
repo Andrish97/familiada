@@ -8,8 +8,8 @@ export function initTextEditor(ctx) {
   const textWarn = document.getElementById("textWarn");
   const textMeasure = document.getElementById("textMeasure");
   const btnCharsToggle = document.getElementById("btnCharsToggle");
-  const charsList = document.getElementById("charsList");
   const charsInline = document.getElementById("charsInline");
+  const charsList = document.getElementById("charsList");
 
 
   const TYPE_GLYPH = "GLYPH_30x10";
@@ -159,13 +159,22 @@ export function initTextEditor(ctx) {
     recompile();
   });
 
+  function isHidden(el){
+    if (!el) return true;
+    return getComputedStyle(el).display === "none";
+  }
+  
   btnCharsToggle?.addEventListener("click", () => {
-    // stan bierzemy z wrappera (bo to on faktycznie “trzyma” widoczność)
-    const on = (charsInline?.style.display === "none") || !charsInline?.style.display;
-    show(charsInline, on);
-    show(charsList, on); // lista ma się pokazać razem z panelem
-    if (btnCharsToggle) btnCharsToggle.textContent = on ? "Ukryj" : "Pokaż";
+    // toggle ma sterować wrapperem, bo HTML ukrywa #charsInline (rodzic listy)
+    const open = isHidden(charsInline);
+  
+    show(charsInline, open);
+    show(charsList, open);
+  
+    // opcjonalnie: zmiana etykiety przycisku
+    if (btnCharsToggle) btnCharsToggle.textContent = open ? "Ukryj" : "Dozwolone znaki";
   });
+
 
   // API
   return {
@@ -177,8 +186,7 @@ export function initTextEditor(ctx) {
       renderAllowedCharsList();
       show(charsInline, false);
       show(charsList, false);
-      
-      if (btnCharsToggle) btnCharsToggle.textContent = "Pokaż";
+      if (btnCharsToggle) btnCharsToggle.textContent = "Dozwolone znaki";
 
       lastCompiled = null;
       ctx.clearDirty?.();
