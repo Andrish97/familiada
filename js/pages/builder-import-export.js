@@ -287,21 +287,41 @@ async function importPollFromUrlInternal(url, ownerId) {
      3) utworzenie sesji poll (runtime)
   =============================== */
 
+  // 1) import gry (tworzy games + questions + answers, games.status="draft")
+  const gameId = await importGame(payload, ownerId);
+
+  // 2) pytania (żeby znać ord)
+  const qs = await listQuestions(gameId);
+  if (!qs.length) throw new Error("DEMO: gra nie ma pytań (nie da się otworzyć sondażu).");
+
+  // 3) utwórz sesję poll (Twoja tabela wymaga question_ord)
+  // przyjmujemy start od 1 (pierwsze pytanie)
+  const firstOrd = Number(qs[0].ord) || 1;
+
+  const { error: sessErr } = await sb()
+    .from("poll_sessions")
+    .insert({
+      game_id: gameId,
+      question_ord: firstOrd,
+      is_open: true,
+      question_id: qs[0].id, // skoro masz w tabeli, to ustawiamy spójnie
+    });
+
+  if (sessErr) throw sessErr;
+
+  // 4) status OPEN/CLOSED
   if (pollStatus === "open") {
-    const { error: sErr } = await sb()
-      .from("poll_sessions")
-      .insert({
-        game_id: gameId,
-        is_open: true
-      });
-
-    if (sErr) throw sErr;
-
     await setGameStatus(gameId, "poll_open");
   } else {
-    // zamknięta – zostaje draft, bez sesji
+    // draft / zamknięte — domyślnie bez sesji albo możesz zrobić is_open=false
     return gameId;
   }
+
+  // 5) seed głosów tylko dla OPEN
+  const votes = Array.isArray(src.votes) ? src.votes : [];
+  if (!votes.length) return gameId;
+
+  // (tu dalej Twoje seeding: poll_text_submit_batch / poll_points_vote_batch)
 
   /* ===============================
      4) seed głosów (tylko OPEN)
