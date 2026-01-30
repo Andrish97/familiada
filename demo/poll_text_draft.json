@@ -1,0 +1,17 @@
+{
+  "game": {
+    "name": "DEMO — Sondaż typowy szkic",
+    "type": "poll_text"
+  },
+  "questions": [
+    { "text": "Podaj coś, co ludzie robią zaraz po przebudzeniu", "answers": [] },
+    { "text": "Podaj coś, co zabiera się na wakacje", "answers": [] },
+    { "text": "Wymień powód spóźnienia do pracy lub szkoły", "answers": [] },
+    { "text": "Podaj coś, co kupisz na stacji benzynowej", "answers": [] },
+    { "text": "Podaj zwierzę, którego ludzie się boją", "answers": [] },
+    { "text": "Wymień coś, co robi się codziennie w kuchni", "answers": [] },
+    { "text": "Podaj coś, co może zepsuć humor", "answers": [] },
+    { "text": "Podaj coś, co trzyma się w portfelu", "answers": [] },
+    { "text": "Podaj miejsce, gdzie nie wypada mówić głośno", "answers": [] }
+  ]
+}

@@ -1,0 +1,174 @@
+{
+  "game": {
+    "name": "DEMO — Sondaż punktowy zamknięty",
+    "type": "poll_points",
+    "status": "closed"
+  },
+  "questions": [
+    {
+      "text": "Podaj coś, co ludzie robią zaraz po przebudzeniu",
+      "answers": [
+        { "text": "piją kawę lub herbatę", "fixed_points": 38 },
+        { "text": "sięgają po telefon", "fixed_points": 24 },
+        { "text": "idą do łazienki", "fixed_points": 18 },
+        { "text": "jedzą śniadanie", "fixed_points": 11 },
+        { "text": "biorą prysznic", "fixed_points": 6 },
+        { "text": "ubierają się", "fixed_points": 3 }
+      ]
+    },
+    {
+      "text": "Podaj coś, co zabiera się na wakacje",
+      "answers": [
+        { "text": "dokumenty", "fixed_points": 34 },
+        { "text": "ubrania", "fixed_points": 26 },
+        { "text": "telefon z ładowarką", "fixed_points": 18 },
+        { "text": "kosmetyki", "fixed_points": 12 },
+        { "text": "ręcznik", "fixed_points": 6 },
+        { "text": "pieniądze", "fixed_points": 4 }
+      ]
+    },
+    {
+      "text": "Podaj powód spóźnienia do pracy lub szkoły",
+      "answers": [
+        { "text": "zaspałem", "fixed_points": 42 },
+        { "text": "korek", "fixed_points": 23 },
+        { "text": "autobus się spóźnił", "fixed_points": 15 },
+        { "text": "dziecko", "fixed_points": 9 },
+        { "text": "zapomniałem czegoś", "fixed_points": 7 },
+        { "text": "zła pogoda", "fixed_points": 4 }
+      ]
+    },
+    {
+      "text": "Podaj coś, co kupisz na stacji benzynowej",
+      "answers": [
+        { "text": "paliwo", "fixed_points": 40 },
+        { "text": "hot-dog", "fixed_points": 22 },
+        { "text": "kawa", "fixed_points": 17 },
+        { "text": "napoje", "fixed_points": 11 },
+        { "text": "chipsy", "fixed_points": 6 },
+        { "text": "papierosy", "fixed_points": 4 }
+      ]
+    },
+    {
+      "text": "Podaj coś, co robi człowiek, gdy jest zdenerwowany",
+      "answers": [
+        { "text": "krzyczy", "fixed_points": 36 },
+        { "text": "milczy", "fixed_points": 21 },
+        { "text": "płacze", "fixed_points": 17 },
+        { "text": "przeklina", "fixed_points": 14 },
+        { "text": "wychodzi", "fixed_points": 8 },
+        { "text": "rzuca rzeczami", "fixed_points": 4 }
+      ]
+    },
+    {
+      "text": "Podaj zwierzę, którego ludzie się boją",
+      "answers": [
+        { "text": "pająk", "fixed_points": 44 },
+        { "text": "wąż", "fixed_points": 26 },
+        { "text": "szczur", "fixed_points": 13 },
+        { "text": "pies", "fixed_points": 9 },
+        { "text": "rekin", "fixed_points": 5 },
+        { "text": "osa", "fixed_points": 3 }
+      ]
+    },
+    {
+      "text": "Wymień coś, co robi się codziennie w kuchni",
+      "answers": [
+        { "text": "zmywanie", "fixed_points": 33 },
+        { "text": "gotowanie", "fixed_points": 27 },
+        { "text": "robienie kawy", "fixed_points": 18 },
+        { "text": "krojenie", "fixed_points": 11 },
+        { "text": "sprzątanie blatu", "fixed_points": 7 },
+        { "text": "wynoszenie śmieci", "fixed_points": 4 }
+      ]
+    },
+    {
+      "text": "Podaj coś, co może zepsuć humor",
+      "answers": [
+        { "text": "zła pogoda", "fixed_points": 31 },
+        { "text": "kłótnia", "fixed_points": 24 },
+        { "text": "praca", "fixed_points": 19 },
+        { "text": "ból głowy", "fixed_points": 13 },
+        { "text": "brak snu", "fixed_points": 9 },
+        { "text": "spóźnienie", "fixed_points": 4 }
+      ]
+    },
+    {
+      "text": "Podaj coś, co trzyma się w portfelu",
+      "answers": [
+        { "text": "pieniądze", "fixed_points": 41 },
+        { "text": "karta płatnicza", "fixed_points": 26 },
+        { "text": "dowód", "fixed_points": 17 },
+        { "text": "paragon", "fixed_points": 9 },
+        { "text": "zdjęcie", "fixed_points": 5 },
+        { "text": "bilet", "fixed_points": 2 }
+      ]
+    },
+    {
+      "text": "Podaj miejsce, gdzie nie wypada mówić głośno",
+      "answers": [
+        { "text": "biblioteka", "fixed_points": 36 },
+        { "text": "kościół", "fixed_points": 28 },
+        { "text": "kino", "fixed_points": 17 },
+        { "text": "szkoła", "fixed_points": 9 },
+        { "text": "teatr", "fixed_points": 6 },
+        { "text": "urząd", "fixed_points": 4 }
+      ]
+    },
+    {
+      "text": "Podaj coś, co często się gubi",
+      "answers": [
+        { "text": "klucze", "fixed_points": 43 },
+        { "text": "telefon", "fixed_points": 24 },
+        { "text": "pilot", "fixed_points": 14 },
+        { "text": "portfel", "fixed_points": 10 },
+        { "text": "słuchawki", "fixed_points": 6 },
+        { "text": "długopis", "fixed_points": 3 }
+      ]
+    },
+    {
+      "text": "Wymień domowy obowiązek, którego ludzie nie lubią",
+      "answers": [
+        { "text": "sprzątanie", "fixed_points": 37 },
+        { "text": "mycie okien", "fixed_points": 23 },
+        { "text": "prasowanie", "fixed_points": 16 },
+        { "text": "odkurzanie", "fixed_points": 13 },
+        { "text": "wynoszenie śmieci", "fixed_points": 7 },
+        { "text": "zmywanie", "fixed_points": 4 }
+      ]
+    },
+    {
+      "text": "Podaj coś, co kojarzy się z latem",
+      "answers": [
+        { "text": "słońce", "fixed_points": 35 },
+        { "text": "plaża", "fixed_points": 27 },
+        { "text": "lody", "fixed_points": 18 },
+        { "text": "grill", "fixed_points": 11 },
+        { "text": "wakacje", "fixed_points": 6 },
+        { "text": "basen", "fixed_points": 3 }
+      ]
+    },
+    {
+      "text": "Podaj coś, co można dostać w prezencie",
+      "answers": [
+        { "text": "kwiaty", "fixed_points": 32 },
+        { "text": "czekoladki", "fixed_points": 24 },
+        { "text": "perfumy", "fixed_points": 18 },
+        { "text": "książka", "fixed_points": 14 },
+        { "text": "zegar", "fixed_points": 8 },
+        { "text": "gra", "fixed_points": 4 }
+      ]
+    },
+    {
+      "text": "Podaj coś, co można zjeść na szybko",
+      "answers": [
+        { "text": "kanapka", "fixed_points": 39 },
+        { "text": "pizza", "fixed_points": 24 },
+        { "text": "hot-dog", "fixed_points": 16 },
+        { "text": "zupa", "fixed_points": 11 },
+        { "text": "makaron", "fixed_points": 6 },
+        { "text": "jogurt", "fixed_points": 4 }
+      ]
+    }
+  ]
+}
