@@ -322,13 +322,16 @@ async function seedPollPointsVotes({ gameId, qs, sessByQ, votes }) {
       if (!a) continue;
 
       const sess = sessByQ.get(q.id);
+      if (!sess?.id) {
+        throw new Error("DEMO: brak poll_session dla pytania (poll_votes nie da się seedować).");
+      }
 
       rows.push({
         game_id: gameId,
         question_ord: Number(q.ord) || (i + 1),
         answer_ord: Number(a.ord) || (idx + 1),
         voter_token: voter,
-        poll_session_id: sess?.id ?? null,
+        poll_session_id: sess.id,
         question_id: q.id,
         answer_id: a.id,
       });
