@@ -6,208 +6,104 @@
   },
   "questions": [
     {
-      "text": "Podaj coś, co ludzie robią od razu po przebudzeniu",
+      "text": "Który smak lodów wybierasz?",
       "answers": [
-        { "text": "piją kawę / herbatę" },
-        { "text": "sięgają po telefon" },
-        { "text": "idą do łazienki" },
-        { "text": "jedzą śniadanie" },
-        { "text": "biorą prysznic" },
-        { "text": "ubierają się" }
+        { "text": "Wanilia" },
+        { "text": "Czekolada" },
+        { "text": "Truskawka" },
+        { "text": "Pistacja" }
       ]
     },
     {
-      "text": "Podaj coś, co zabierasz na wakacje",
+      "text": "Która aktywność na weekend?",
       "answers": [
-        { "text": "dokumenty" },
-        { "text": "telefon / ładowarka" },
-        { "text": "ubrania" },
-        { "text": "kosmetyki" },
-        { "text": "ręcznik" },
-        { "text": "pieniądze / karta" }
+        { "text": "Kino" },
+        { "text": "Spacer" },
+        { "text": "Spotkanie ze znajomymi" },
+        { "text": "Gry" }
       ]
     },
     {
-      "text": "Wymień powód spóźnienia do pracy/szkoły",
+      "text": "Najlepszy napój rano?",
       "answers": [
-        { "text": "zaspałem" },
-        { "text": "korek" },
-        { "text": "autobus/transport" },
-        { "text": "dziecko" },
-        { "text": "zapomniałem czegoś" },
-        { "text": "pogoda" }
+        { "text": "Kawa" },
+        { "text": "Herbata" },
+        { "text": "Woda" },
+        { "text": "Sok" }
       ]
     },
     {
-      "text": "Podaj coś, co kupisz na stacji benzynowej",
+      "text": "Gdzie chciałbyś pojechać?",
       "answers": [
-        { "text": "paliwo" },
-        { "text": "hot-dog" },
-        { "text": "kawa" },
-        { "text": "napoje" },
-        { "text": "chipsy / przekąski" },
-        { "text": "papierosy" }
+        { "text": "Góry" },
+        { "text": "Morze" },
+        { "text": "Miasto" },
+        { "text": "Wieś" }
       ]
     },
     {
-      "text": "Podaj coś, co robi człowiek, gdy jest zdenerwowany",
+      "text": "Co wybierasz na obiad?",
       "answers": [
-        { "text": "krzyczy" },
-        { "text": "milczy" },
-        { "text": "płacze" },
-        { "text": "przeklina" },
-        { "text": "wychodzi / oddala się" },
-        { "text": "rzuca przedmiotami" }
+        { "text": "Pizza" },
+        { "text": "Makaron" },
+        { "text": "Zupa" },
+        { "text": "Sałatka" }
       ]
     },
     {
-      "text": "Podaj zwierzę, którego ludzie się boją",
+      "text": "Ulubiony sport?",
       "answers": [
-        { "text": "pająk" },
-        { "text": "wąż" },
-        { "text": "szczur" },
-        { "text": "pies" },
-        { "text": "rekin" },
-        { "text": "osa" }
+        { "text": "Piłka nożna" },
+        { "text": "Koszykówka" },
+        { "text": "Bieganie" },
+        { "text": "Pływanie" }
       ]
     },
     {
-      "text": "Wymień coś, co robi się w kuchni codziennie",
+      "text": "Co wolisz wieczorem?",
       "answers": [
-        { "text": "zmywanie" },
-        { "text": "gotowanie" },
-        { "text": "robienie herbaty/kawy" },
-        { "text": "krojenie" },
-        { "text": "sprzątanie blatu" },
-        { "text": "wynoszenie śmieci" }
+        { "text": "Film" },
+        { "text": "Serial" },
+        { "text": "Książka" },
+        { "text": "Muzyka" }
       ]
     },
     {
-      "text": "Podaj coś, co może zepsuć humor",
+      "text": "Najlepsza pora roku?",
       "answers": [
-        { "text": "deszcz / pogoda" },
-        { "text": "kłótnia" },
-        { "text": "szef / praca" },
-        { "text": "ból głowy" },
-        { "text": "brak snu" },
-        { "text": "spóźnienie" }
+        { "text": "Wiosna" },
+        { "text": "Lato" },
+        { "text": "Jesień" },
+        { "text": "Zima" }
       ]
     },
     {
-      "text": "Wymień coś, co trzyma się w portfelu",
+      "text": "Jak spędzasz wolny czas?",
       "answers": [
-        { "text": "pieniądze" },
-        { "text": "karta płatnicza" },
-        { "text": "dowód" },
-        { "text": "paragon" },
-        { "text": "zdjęcie" },
-        { "text": "bilet" }
+        { "text": "Sport" },
+        { "text": "Gry" },
+        { "text": "Muzyka" },
+        { "text": "Gotowanie" }
       ]
     },
     {
-      "text": "Podaj miejsce, gdzie nie powinno się mówić głośno",
+      "text": "Wybierz zwierzę domowe",
       "answers": [
-        { "text": "biblioteka" },
-        { "text": "kościół" },
-        { "text": "kino" },
-        { "text": "szkoła (lekcja)" },
-        { "text": "teatr" },
-        { "text": "urząd" }
-      ]
-    },
-    {
-      "text": "Podaj coś, co często się gubi",
-      "answers": [
-        { "text": "klucze" },
-        { "text": "telefon" },
-        { "text": "pilot" },
-        { "text": "portfel" },
-        { "text": "słuchawki" },
-        { "text": "długopis" }
-      ]
-    },
-    {
-      "text": "Wymień domowy obowiązek, którego ludzie nie lubią",
-      "answers": [
-        { "text": "sprzątanie" },
-        { "text": "mycie okien" },
-        { "text": "prasowanie" },
-        { "text": "odkurzanie" },
-        { "text": "wynoszenie śmieci" },
-        { "text": "zmywanie" }
-      ]
-    },
-    {
-      "text": "Podaj coś, co kojarzy się z latem",
-      "answers": [
-        { "text": "słońce" },
-        { "text": "plaża" },
-        { "text": "lody" },
-        { "text": "grill" },
-        { "text": "wakacje" },
-        { "text": "basen" }
-      ]
-    },
-    {
-      "text": "Podaj coś, co można dostać w prezencie",
-      "answers": [
-        { "text": "kwiaty" },
-        { "text": "czekoladki" },
-        { "text": "perfumy" },
-        { "text": "książka" },
-        { "text": "zegar" },
-        { "text": "gra" }
+        { "text": "Pies" },
+        { "text": "Kot" },
+        { "text": "Rybki" },
+        { "text": "Chomik" }
       ]
     }
   ],
   "votes": [
-    { "picks": [0,2,0,0,0,0,1,0,0,0,0,0,0,0] },
-    { "picks": [1,1,1,1,3,1,0,1,1,1,1,2,1,1] },
-    { "picks": [2,2,0,2,0,0,0,2,2,0,0,0,0,3] },
-    { "picks": [1,5,1,3,4,1,2,0,1,2,0,3,2,0] },
-    { "picks": [0,0,0,1,3,0,1,1,0,0,1,0,0,1] },
-    { "picks": [1,2,1,2,0,1,0,2,1,1,0,2,1,2] },
-    { "picks": [2,5,2,0,4,2,5,0,2,3,0,1,4,4] },
-    { "picks": [0,1,0,3,0,0,1,0,0,0,1,0,0,0] },
-    { "picks": [1,2,1,2,3,1,0,1,1,1,0,2,2,2] },
-    { "picks": [2,2,0,2,0,0,0,2,2,0,0,0,0,3] },
-    { "picks": [1,1,1,3,4,1,2,0,1,2,0,3,1,1] },
-    { "picks": [0,2,0,1,3,0,1,1,0,0,1,0,0,0] },
-
-    { "picks": [0,2,0,0,0,0,1,0,0,0,0,0,0,0] },
-    { "picks": [1,1,1,1,3,1,0,1,1,1,1,2,1,1] },
-    { "picks": [2,2,0,2,0,0,0,2,2,0,0,0,0,3] },
-    { "picks": [1,5,1,3,4,1,2,0,1,2,0,3,2,0] },
-    { "picks": [0,0,0,1,3,0,1,1,0,0,1,0,0,1] },
-    { "picks": [1,2,1,2,0,1,0,2,1,1,0,2,1,2] },
-    { "picks": [2,5,2,0,4,2,5,0,2,3,0,1,4,4] },
-    { "picks": [0,1,0,3,0,0,1,0,0,0,1,0,0,0] },
-
-    { "picks": [0,2,0,0,0,0,1,0,0,0,0,0,0,0] },
-    { "picks": [1,1,1,1,3,1,0,1,1,1,1,2,1,1] },
-    { "picks": [2,2,0,2,0,0,0,2,2,0,0,0,0,3] },
-    { "picks": [1,5,1,3,4,1,2,0,1,2,0,3,2,0] },
-    { "picks": [0,0,0,1,3,0,1,1,0,0,1,0,0,1] },
-    { "picks": [1,2,1,2,0,1,0,2,1,1,0,2,1,2] },
-    { "picks": [2,5,2,0,4,2,5,0,2,3,0,1,4,4] },
-    { "picks": [0,1,0,3,0,0,1,0,0,0,1,0,0,0] },
-
-    { "picks": [0,2,0,0,0,0,1,0,0,0,0,0,0,0] },
-    { "picks": [1,1,1,1,3,1,0,1,1,1,1,2,1,1] },
-    { "picks": [2,2,0,2,0,0,0,2,2,0,0,0,0,3] },
-    { "picks": [1,5,1,3,4,1,2,0,1,2,0,3,2,0] },
-    { "picks": [0,0,0,1,3,0,1,1,0,0,1,0,0,1] },
-    { "picks": [1,2,1,2,0,1,0,2,1,1,0,2,1,2] },
-    { "picks": [2,5,2,0,4,2,5,0,2,3,0,1,4,4] },
-    { "picks": [0,1,0,3,0,0,1,0,0,0,1,0,0,0] },
-
-    { "picks": [0,2,0,0,0,0,1,0,0,0,0,0,0,0] },
-    { "picks": [1,1,1,1,3,1,0,1,1,1,1,2,1,1] },
-    { "picks": [2,2,0,2,0,0,0,2,2,0,0,0,0,3] },
-    { "picks": [1,5,1,3,4,1,2,0,1,2,0,3,2,0] },
-    { "picks": [0,0,0,1,3,0,1,1,0,0,1,0,0,1] },
-    { "picks": [1,2,1,2,0,1,0,2,1,1,0,2,1,2] },
-    { "picks": [2,5,2,0,4,2,5,0,2,3,0,1,4,4] },
-    { "picks": [0,1,0,3,0,0,1,0,0,0,1,0,0,0] }
+    { "picks": [1, 0, 0, 1, 0, 2, 1, 1, 0, 1] },
+    { "picks": [1, 3, 0, 1, 0, 0, 0, 1, 2, 1] },
+    { "picks": [0, 1, 1, 0, 1, 3, 2, 0, 1, 0] },
+    { "picks": [0, 1, 2, 2, 1, 1, 2, 0, 1, 0] },
+    { "picks": [2, 2, 0, 1, 0, 2, 3, 1, 3, 2] },
+    { "picks": [2, 2, 3, 1, 0, 2, 3, 1, 3, 2] },
+    { "picks": [1, 0, 0, 1, 0, 2, 1, 1, 0, 1] },
+    { "picks": [1, 3, 0, 1, 0, 0, 0, 1, 2, 1] }
   ]
 }
