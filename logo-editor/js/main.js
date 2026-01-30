@@ -204,7 +204,7 @@ function isEditing(){
 function shouldBlockNav(){
   // blokujemy tylko gdy są niezapisane zmiany
   // jeśli chcesz blokować ZAWSZE w edytorze, zmień na: return isEditing();
-  return isEditing();
+  return isEditing() && editorDirty;
 }
 
 function armNavGuard(){
