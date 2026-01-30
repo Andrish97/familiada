@@ -7,12 +7,14 @@ const safeName = (s) => (String(s ?? "Gra").trim() || "Gra").slice(0, 80);
 const safeType = (k) => {
   const v = String(k || "");
   if (v === "poll_text" || v === "poll_points" || v === "prepared") return v;
-  // fallback — jak ktoś wklei syf, zróbmy najbezpieczniej:
   return "poll_text";
 };
 
-const safeQText = (s, i) => (String(s ?? `Pytanie ${i + 1}`).trim() || `Pytanie ${i + 1}`).slice(0, 200);
-const safeAText = (s, j) => (String(s ?? `ODP ${j + 1}`).trim() || `ODP ${j + 1}`).slice(0, 17);
+const safeQText = (s, i) =>
+  (String(s ?? `Pytanie ${i + 1}`).trim() || `Pytanie ${i + 1}`).slice(0, 200);
+
+const safeAText = (s, j) =>
+  (String(s ?? `ODP ${j + 1}`).trim() || `ODP ${j + 1}`).slice(0, 17);
 
 const safePts = (v) => {
   const x = Number(v);
@@ -50,7 +52,7 @@ export async function exportGame(gameId) {
     questions: [],
   };
 
-  for (const q of (questions || [])) {
+  for (const q of questions || []) {
     const { data: answers, error: aErr } = await sb()
       .from("answers")
       .select("ord,text,fixed_points")
@@ -78,22 +80,16 @@ export async function importGame(payload, ownerId) {
   const type = safeType(payload.game.type);
   const name = safeName(payload.game.name);
 
-  // 1) tworzymy grę (zawsze nowa)
   const { data: game, error: gErr } = await sb()
     .from("games")
-    .insert({
-      name,
-      type,
-      status: "draft",
-      owner_id: ownerId,
-    },
-    { defaultToNull: false }
-  )
+    .insert(
+      { name, type, status: "draft", owner_id: ownerId },
+      { defaultToNull: false }
+    )
     .select("id")
     .single();
   if (gErr) throw gErr;
 
-  // 2) pytania + odpowiedzi (bez twardych limitów; to transporter)
   const qs = payload.questions || [];
   for (let qi = 0; qi < qs.length; qi++) {
     const srcQ = qs[qi] || {};
@@ -101,11 +97,7 @@ export async function importGame(payload, ownerId) {
 
     const { data: qRow, error: qInsErr } = await sb()
       .from("questions")
-      .insert({
-        game_id: game.id,
-        ord: qi + 1,
-        text: qText,
-      })
+      .insert({ game_id: game.id, ord: qi + 1, text: qText })
       .select("id")
       .single();
     if (qInsErr) throw qInsErr;
@@ -138,24 +130,24 @@ export function downloadJson(filename, obj) {
   a.remove();
   URL.revokeObjectURL(url);
 }
+
 /* =========================================================
    POLL IMPORT FROM URL (open/closed) + optional vote seeding
+
    JSON:
-   game: { name, type: "poll_text"|"poll_points", status: "open"|"closed" }
+   game: { name, type: "poll_text"|"poll_points", status: "open"|"closed", key? }
    questions:
-     - poll_text: [{text}, ...]
-     - poll_points open: answers: [{text}] (fixed_points ignored)
-     - poll_points closed: answers: [{text, fixed_points}] (taken)
-   votes (only used when status="open"):
-     - poll_text:  votes:[{answers_raw:[...]}]
-     - poll_points:votes:[{picks:[...]}]  // indices per question
+     - poll_text:   [{text}, ...]
+     - poll_points: [{text, answers:[{text, fixed_points?}]}]
+   votes (only when status="open"):
+     - poll_text:   votes:[{answers_raw:[...]}]
+     - poll_points: votes:[{picks:[...]}] // indeks odpowiedzi per pytanie (0..)
 ========================================================= */
 
 async function fetchJsonFromUrl(url) {
   const u = String(url || "").trim();
   if (!u) throw new Error("Brak URL do JSON.");
 
-  // dopuszczamy http(s) i ścieżki względne
   const ok =
     /^https?:\/\//i.test(u) ||
     u.startsWith("../") ||
@@ -199,7 +191,6 @@ function hardType(v) {
 function hardStatus(v) {
   const s = String(v || "").toLowerCase().trim();
   if (s === "open" || s === "closed") return s;
-  // kompatybilność wstecz: jak nie ma, traktujemy jako open
   return "open";
 }
 
@@ -230,14 +221,29 @@ async function listAnswersForQuestions(qIds) {
 
   if (error) throw error;
 
-  const map = new Map(); // qid -> answers[] in ord order
-  for (const r of (data || [])) {
+  const map = new Map();
+  for (const r of data || []) {
     if (!map.has(r.question_id)) map.set(r.question_id, []);
     map.get(r.question_id).push(r);
   }
   return map;
 }
 
+/**
+ * RPC helper: próbuje 2 sygnatury:
+ *  - najpierw z p_key (jeśli podany)
+ *  - jak PostgREST zwróci PGRST202 (brak funkcji w cache / inna sygnatura) → retry bez p_key
+ */
+async function rpcTryWithOptionalKey(fn, args, key) {
+  if (key) {
+    const { error } = await sb().rpc(fn, { ...args, p_key: key });
+    if (!error) return;
+    if (String(error.code) !== "PGRST202") throw error;
+  }
+
+  const { error: e2 } = await sb().rpc(fn, args);
+  if (e2) throw e2;
+}
 
 async function importPollFromUrlInternal(url, ownerId) {
   const src = await fetchJsonFromUrl(url);
@@ -250,13 +256,15 @@ async function importPollFromUrlInternal(url, ownerId) {
   const pollStatus = hardStatus(src.game.status);
   const name = String(src.game.name ?? "DEMO").trim() || "DEMO";
 
+  // jeśli Twoje RPC wymagają p_key → bierzemy z JSON lub ustawiamy stałe demo
+  const key =
+    String(src.game.key || "").trim() ||
+    "DEMO_SEED";
+
   /* ===============================
      1) payload pod importGame
   =============================== */
-  const payload = {
-    game: { name, type },
-    questions: [],
-  };
+  const payload = { game: { name, type }, questions: [] };
 
   if (type === "poll_text") {
     payload.questions = src.questions.map((q) => ({
@@ -264,7 +272,6 @@ async function importPollFromUrlInternal(url, ownerId) {
       answers: [],
     }));
   } else {
-    // poll_points
     payload.questions = src.questions.map((q) => ({
       text: String(q?.text ?? ""),
       answers: (Array.isArray(q?.answers) ? q.answers : []).map((a) => ({
@@ -280,12 +287,9 @@ async function importPollFromUrlInternal(url, ownerId) {
   const gameId = await importGame(payload, ownerId);
 
   /* ===============================
-     3) jeśli CLOSED → nie otwieramy poll, nie seedujemy
+     3) CLOSED: nic nie otwieramy, nic nie seedujemy
   =============================== */
-  if (pollStatus !== "open") {
-    // zostaje draft; masz już fixed_points wczytane dla closed poll_points
-    return gameId;
-  }
+  if (pollStatus !== "open") return gameId;
 
   /* ===============================
      4) OPEN: utwórz sesję poll + ustaw status
@@ -311,15 +315,10 @@ async function importPollFromUrlInternal(url, ownerId) {
   /* ===============================
      5) seed głosów (tylko OPEN)
   =============================== */
-  // ... po: const votes = Array.isArray(src.votes) ? src.votes : [];
-  // i po: if (!votes.length) return gameId;
-  
-  if (type === "poll_text") {
-    console.warn("[DEMO] poll_text votes seeding skipped (requires p_key)");
-    return gameId;
-  }
+  const votes = Array.isArray(src.votes) ? src.votes : [];
+  if (!votes.length) return gameId;
 
-  // ===== poll_text =====
+  // poll_text: answers_raw[]
   if (type === "poll_text") {
     for (const v of votes) {
       const arr = Array.isArray(v?.answers_raw) ? v.answers_raw : [];
@@ -342,19 +341,22 @@ async function importPollFromUrlInternal(url, ownerId) {
         crypto?.randomUUID?.() ||
         `${Date.now()}_${Math.random().toString(16).slice(2)}`;
 
-      const { error } = await sb().rpc("poll_text_submit_batch", {
-        p_game_id: gameId,
-        p_items: items,
-        p_voter_token: voter,
-      });
-
-      if (error) throw error;
+      // u Ciebie ta funkcja najpewniej wymaga p_key (wynika z błędu z PostgREST)
+      await rpcTryWithOptionalKey(
+        "poll_text_submit_batch",
+        {
+          p_game_id: gameId,
+          p_items: items,
+          p_voter_token: voter,
+        },
+        key
+      );
     }
 
     return gameId;
   }
 
-  // ===== poll_points =====
+  // poll_points: picks[]
   const aMap = await listAnswersForQuestions(qs.map((q) => q.id));
 
   for (const v of votes) {
@@ -378,23 +380,23 @@ async function importPollFromUrlInternal(url, ownerId) {
       crypto?.randomUUID?.() ||
       `${Date.now()}_${Math.random().toString(16).slice(2)}`;
 
-    const { error } = await sb().rpc("poll_points_vote_batch", {
-      p_game_id: gameId,
-      p_items: items,
-      p_voter_token: voter,
-    });
-
-    if (error) throw error;
+    // tu NIE ZAKŁADAMY, że p_key jest wymagane – ale robimy retry jeśli jest.
+    await rpcTryWithOptionalKey(
+      "poll_points_vote_batch",
+      {
+        p_game_id: gameId,
+        p_items: items,
+        p_voter_token: voter,
+      },
+      key
+    );
   }
 
   return gameId;
 }
 
 /**
- * PUBLIC: super prosto – tylko URL
- * Wywołanie:
- *   import { importPollFromUrl } from "../js/pages/builder-import-export.js";
- *   await importPollFromUrl("../demo/familiada-poll-text.json");
+ * PUBLIC: prosto – tylko URL
  */
 export async function importPollFromUrl(url) {
   const ownerId = await currentUserId();
