@@ -138,3 +138,233 @@ export function downloadJson(filename, obj) {
   a.remove();
   URL.revokeObjectURL(url);
 }
+/* =========================================================
+   POLL IMPORT FROM URL (open/closed) + optional vote seeding
+   JSON:
+   game: { name, type: "poll_text"|"poll_points", status: "open"|"closed" }
+   questions:
+     - poll_text: [{text}, ...]
+     - poll_points open: answers: [{text}] (fixed_points ignored)
+     - poll_points closed: answers: [{text, fixed_points}] (taken)
+   votes (only used when status="open"):
+     - poll_text:  votes:[{answers_raw:[...]}]
+     - poll_points:votes:[{picks:[...]}]  // indices per question
+========================================================= */
+
+async function fetchJsonFromUrl(url) {
+  const u = String(url || "").trim();
+  if (!u) throw new Error("Brak URL do JSON.");
+
+  // dopuszczamy http(s) i ścieżki względne
+  const ok =
+    /^https?:\/\//i.test(u) ||
+    u.startsWith("../") ||
+    u.startsWith("./") ||
+    u.startsWith("/");
+
+  if (!ok) throw new Error("Podaj link http(s) albo ścieżkę względną do JSON.");
+
+  const res = await fetch(u, { cache: "no-store" });
+  if (!res.ok) throw new Error(`Nie udało się pobrać JSON (HTTP ${res.status}).`);
+
+  const txt = await res.text();
+  try {
+    return JSON.parse(txt);
+  } catch {
+    throw new Error("Błędny JSON (nie da się sparsować).");
+  }
+}
+
+async function currentUserId() {
+  const { data, error } = await sb().auth.getUser();
+  if (error) throw error;
+  const uid = data?.user?.id;
+  if (!uid) throw new Error("Brak zalogowanego użytkownika.");
+  return uid;
+}
+
+function normText(s) {
+  return String(s ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, " ");
+}
+
+function hardType(v) {
+  const t = String(v || "").trim();
+  if (t === "poll_text" || t === "poll_points") return t;
+  throw new Error("JSON: game.type musi być 'poll_text' albo 'poll_points'.");
+}
+
+function hardStatus(v) {
+  const s = String(v || "").toLowerCase().trim();
+  if (s === "open" || s === "closed") return s;
+  // kompatybilność wstecz: jak nie ma, traktujemy jako open
+  return "open";
+}
+
+async function setGameStatus(gameId, status) {
+  const { error } = await sb().from("games").update({ status }).eq("id", gameId);
+  if (error) throw error;
+}
+
+async function listQuestions(gameId) {
+  const { data, error } = await sb()
+    .from("questions")
+    .select("id,ord")
+    .eq("game_id", gameId)
+    .order("ord", { ascending: true });
+
+  if (error) throw error;
+  return data || [];
+}
+
+async function listAnswersForQuestions(qIds) {
+  if (!qIds?.length) return new Map();
+
+  const { data, error } = await sb()
+    .from("answers")
+    .select("id,question_id,ord")
+    .in("question_id", qIds)
+    .order("ord", { ascending: true });
+
+  if (error) throw error;
+
+  const map = new Map(); // qid -> answers[] in ord order
+  for (const r of (data || [])) {
+    if (!map.has(r.question_id)) map.set(r.question_id, []);
+    map.get(r.question_id).push(r);
+  }
+  return map;
+}
+
+/**
+ * Główna funkcja "internal" – używa ownerId (bo importGame tego wymaga)
+ */
+async function importPollFromUrlInternal(url, ownerId) {
+  const src = await fetchJsonFromUrl(url);
+
+  if (!src?.game || !Array.isArray(src?.questions)) {
+    throw new Error("JSON: brak game / questions.");
+  }
+
+  const type = hardType(src.game.type);
+  const pollStatus = hardStatus(src.game.status);
+  const name = String(src.game.name ?? "DEMO").trim() || "DEMO";
+
+  // Payload dla Twojego importGame (bez statusu, bo podstawowy importer i tak daje draft)
+  const payload = {
+    game: { name, type },
+    questions: [],
+  };
+
+  if (type === "poll_text") {
+    payload.questions = src.questions.map((q) => ({
+      text: String(q?.text ?? ""),
+      answers: [],
+    }));
+  } else {
+    // poll_points
+    payload.questions = src.questions.map((q) => ({
+      text: String(q?.text ?? ""),
+      answers: (Array.isArray(q?.answers) ? q.answers : []).map((a) => ({
+        text: String(a?.text ?? ""),
+        // OPEN: ignorujemy fixed_points (0) – bo to sondaż
+        // CLOSED: bierzemy fixed_points z JSON (jak klasyczny export/import)
+        fixed_points: pollStatus === "closed" ? Number(a?.fixed_points ?? 0) : 0,
+      })),
+    }));
+  }
+
+  // 1) import gry (tworzy games + questions + answers, games.status="draft")
+  const gameId = await importGame(payload, ownerId);
+
+  // 2) status OPEN/CLOSED
+  if (pollStatus === "open") {
+    await setGameStatus(gameId, "poll_open");
+  } else {
+    // zostaje draft (czyli zamknięty / nieaktywny w poll pages)
+    return gameId;
+  }
+
+  // 3) seed głosów tylko dla OPEN
+  const votes = Array.isArray(src.votes) ? src.votes : [];
+  if (!votes.length) return gameId;
+
+  const qs = await listQuestions(gameId);
+
+  if (type === "poll_text") {
+    for (const v of votes) {
+      const arr = Array.isArray(v?.answers_raw) ? v.answers_raw : [];
+      const items = [];
+
+      for (let i = 0; i < qs.length; i++) {
+        const raw = String(arr[i] ?? "").trim().slice(0, 17);
+        if (!raw) continue;
+
+        items.push({
+          question_id: qs[i].id,
+          answer_raw: raw,
+          answer_norm: normText(raw),
+        });
+      }
+
+      if (!items.length) continue;
+
+      const voter =
+        crypto?.randomUUID?.() || `${Date.now()}_${Math.random().toString(16).slice(2)}`;
+
+      const { error } = await sb().rpc("poll_text_submit_batch", {
+        p_game_id: gameId,
+        p_voter_token: voter,
+        p_items: items,
+      });
+
+      if (error) throw error;
+    }
+  } else {
+    const aMap = await listAnswersForQuestions(qs.map((q) => q.id));
+
+    for (const v of votes) {
+      const picks = Array.isArray(v?.picks) ? v.picks : [];
+      const items = [];
+
+      for (let i = 0; i < qs.length; i++) {
+        const answers = aMap.get(qs[i].id) || [];
+        const idx = Number(picks[i]);
+        if (!Number.isFinite(idx)) continue;
+
+        const a = answers[idx];
+        if (!a) continue;
+
+        items.push({ question_id: qs[i].id, answer_id: a.id });
+      }
+
+      if (!items.length) continue;
+
+      const voter =
+        crypto?.randomUUID?.() || `${Date.now()}_${Math.random().toString(16).slice(2)}`;
+
+      const { error } = await sb().rpc("poll_points_vote_batch", {
+        p_game_id: gameId,
+        p_voter_token: voter,
+        p_items: items,
+      });
+
+      if (error) throw error;
+    }
+  }
+
+  return gameId;
+}
+
+/**
+ * PUBLIC: super prosto – tylko URL
+ * Wywołanie:
+ *   import { importPollFromUrl } from "../js/pages/builder-import-export.js";
+ *   await importPollFromUrl("../demo/familiada-poll-text.json");
+ */
+export async function importPollFromUrl(url) {
+  const ownerId = await currentUserId();
+  return await importPollFromUrlInternal(url, ownerId);
+}
