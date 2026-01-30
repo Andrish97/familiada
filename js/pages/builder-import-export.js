@@ -314,11 +314,12 @@ async function importPollFromUrlInternal(url, ownerId) {
       const voter =
         crypto?.randomUUID?.() || `${Date.now()}_${Math.random().toString(16).slice(2)}`;
 
-      const { error } = await sb().rpc("poll_text_submit_batch", {
-        p_game_id: gameId,
-        p_voter_token: voter,
-        p_items: items,
-      });
+        const { error } = await sb().rpc("poll_text_submit_batch", {
+          p_game_id: gameId,
+          p_items: items,
+          p_key: "demo",          // ← DODANE
+          p_voter_token: voter,
+        });
 
       if (error) throw error;
     }
@@ -345,12 +346,13 @@ async function importPollFromUrlInternal(url, ownerId) {
       const voter =
         crypto?.randomUUID?.() || `${Date.now()}_${Math.random().toString(16).slice(2)}`;
 
-      const { error } = await sb().rpc("poll_points_vote_batch", {
-        p_game_id: gameId,
-        p_voter_token: voter,
-        p_items: items,
-      });
-
+        const { error } = await sb().rpc("poll_points_vote_batch", {
+          p_game_id: gameId,
+          p_items: items,
+          p_key: "demo",          // ← DODANE
+          p_voter_token: voter,
+        });
+      
       if (error) throw error;
     }
   }
