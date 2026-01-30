@@ -158,8 +158,8 @@ export function initTextEditor(ctx) {
   });
 
   btnCharsToggle?.addEventListener("click", () => {
-    const on = charsList?.style.display === "none";
-    show(charsList, on);
+    const wrap = document.getElementById("charsInline");
+    if (wrap) wrap.style.display = on ? "block" : "none";
     if (btnCharsToggle) btnCharsToggle.textContent = on ? "Ukryj" : "Pokaż";
   });
 
