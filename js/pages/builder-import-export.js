@@ -311,8 +311,13 @@ async function importPollFromUrlInternal(url, ownerId) {
   /* ===============================
      5) seed głosów (tylko OPEN)
   =============================== */
-  const votes = Array.isArray(src.votes) ? src.votes : [];
-  if (!votes.length) return gameId;
+  // ... po: const votes = Array.isArray(src.votes) ? src.votes : [];
+  // i po: if (!votes.length) return gameId;
+  
+  if (type === "poll_text") {
+    console.warn("[DEMO] poll_text votes seeding skipped (requires p_key)");
+    return gameId;
+  }
 
   // ===== poll_text =====
   if (type === "poll_text") {
