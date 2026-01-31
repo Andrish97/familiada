@@ -1,302 +1,139 @@
 /* =========================================================
-   Familiada — logo-editor.css (spójna wersja)
-   Fixy:
-   - TEXT_PIX toolbar tylko w TEXT_PIX (JS + HTML)
-   - TEXT_PIX toolbar = dokładnie 2 rzędy (scroll poziomy w rzędach)
-   - font picker popover: overlay, nie wypycha rzędu, nie jest ucinany
+   HARD RULE: [hidden] zawsze wygrywa (żadnych wyjątków)
 ========================================================= */
-
-:root{
-  --lamp-active: #ffeb3b;
-  --lamp-glow: rgba(255,235,59,.7);
-
-  --bd-weak: rgba(255,255,255,.10);
-  --bd-mid:  rgba(255,255,255,.14);
-  --bd-strong: rgba(255,255,255,.22);
-
-  --bg-weak: rgba(0,0,0,.10);
-  --bg-mid:  rgba(0,0,0,.14);
-  --bg-strong: rgba(0,0,0,.18);
-
-  --radius-lg: 18px;
-  --radius-md: 14px;
-  --radius-sm: 12px;
-
-  --shadow-pop: 0 24px 80px rgba(0,0,0,.55);
-}
-
-/* atrybut [hidden] ma ZAWSZE ukrywać */
 [hidden]{ display:none !important; }
 
 /* =========================================================
-   LIST / GRID (kafelki)
+   TEXT_PIX: toolbar ma być ZAWSZE 2 rzędy
+   - żadnego "8 rzędów"
+   - każdy rząd jest 1-liniowy + poziomy scroll jeśli trzeba
 ========================================================= */
-.logoShell{ margin-top: 12px; }
 
-.logoGridBig{
-  display: grid;
-  gap: 14px;
-  grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
-  align-items: stretch;
-}
-
-/* =========================================================
-   EDITOR: NO SCROLL (strona)
-========================================================= */
-.logo-editor-body.is-editor{ overflow: hidden; }
-
-.editorShell{
-  margin-top: 12px;
-  height: calc(100vh - 74px - 24px);
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-/* pasek: nazwa + zapisz */
-.editorLine{
-  display:flex;
-  align-items:center;
-  gap: 10px;
-  padding: 10px 12px;
-  border-radius: 16px;
-  border: 1px solid var(--bd-weak);
-  background: var(--bg-weak);
-}
-.editorLineLeft{
-  display:flex;
-  align-items:center;
-  gap: 10px;
-  flex: 1;
-  min-width: 0;
-}
-.etlLbl{
-  font-weight: 900;
-  letter-spacing: .06em;
-  text-transform: uppercase;
-  font-size: 12px;
-  opacity: .88;
-}
-.etlName{ flex: 1; min-width: 0; }
-.editorLineRight{ display:flex; gap: 10px; align-items:center; }
-.editorLineMsg{
-  margin-left: auto;
-  opacity: .85;
-  font-size: 12px;
-  white-space: nowrap;
-  overflow:hidden;
-  text-overflow: ellipsis;
-  max-width: 32%;
-}
-
-/* karta edytora */
-.editorCard{
-  flex: 1;
-  min-height: 0;
-  display:flex;
-  flex-direction: column;
-  overflow: visible; /* ważne dla overlayów */
-}
-
-/* =========================================================
-   TOOLBAR: wspólne
-========================================================= */
-.editorToolbar{
-  padding: 12px;
-  border-bottom: 1px solid var(--bd-weak);
-  background: rgba(0,0,0,.06);
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  position: relative;
-  z-index: 5;
-  overflow: visible;
-}
-
-.toolRow{
-  display:flex;
-  align-items:center;
-  gap: 10px;
-  flex-wrap: wrap;
-  overflow: visible;
-}
-
-.toolGrow{ flex:1; min-width: 260px; }
-
-.toolSep{
-  width:1px;
-  height: 28px;
-  background: rgba(255,255,255,.14);
-  margin: 0 2px;
-}
-
-/* checkbox label */
-.chk{
-  display:flex;
-  align-items:center;
-  gap:8px;
-  font-size: 12px;
-  opacity:.9;
-}
-
-/* =========================================================
-   TEXT allowed chars inline
-========================================================= */
-.charsInline{
-  border-radius: var(--radius-md);
-  border: 1px solid var(--bd-weak);
-  background: var(--bg-weak);
-  padding: 10px;
-}
-.charsInlineTop{
-  display:flex;
-  align-items:center;
-  justify-content: space-between;
-  gap: 10px;
-  margin-bottom: 8px;
-}
-.charsListInline{
-  display:flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  max-height: 62px;
-  overflow: auto;
-}
-.charsListInline .ch{
-  padding: 4px 8px;
-  border-radius: 10px;
-  border: 1px solid var(--bd-weak);
-  background: rgba(0,0,0,.12);
-  font-weight: 900;
-  letter-spacing: .06em;
-}
-
-/* =========================================================
-   TEXT_PIX TOOLBAR: dokładnie 2 rzędy
-   - każdy rząd: 1 linia, bez zawijania
-   - overflow-x: auto (żeby nie robiło 8 rzędów)
-========================================================= */
 #toolsTextPix{
-  display: flex;
-  flex-direction: column;
+  /* nadpisuje .toolRow z buildera */
+  display: grid !important;
+  grid-template-rows: auto auto;
   gap: 8px;
   width: 100%;
-  align-items: stretch;
-  flex-wrap: nowrap;
-  overflow: visible;
+  align-items: start;
 }
 
+/* dwa rzędy = dokładnie te dwa divy .rtToolRow */
 #toolsTextPix .rtToolRow{
+  width: 100%;
   display: flex;
   align-items: center;
-  gap: 8px;
-  flex-wrap: nowrap;
-  width: 100%;
+  gap: 10px;
+
+  /* klucz: NIE WRAPUJEMY – inaczej robi się 8 linii */
+  flex-wrap: nowrap !important;
+
+  /* zamiast wrap -> przewijanie poziome */
   overflow-x: auto;
   overflow-y: hidden;
-  padding-bottom: 2px;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 2px; /* żeby pasek scroll nie ocierał */
 }
 
-#toolsTextPix .rtToolLbl{
-  font-size: 11px;
-  font-weight: 900;
-  letter-spacing: .06em;
-  text-transform: uppercase;
-  opacity: .82;
-  white-space: nowrap;
-}
-
+/* etykiety i separatory nie mogą się łamać */
+#toolsTextPix .rtToolLbl{ white-space: nowrap; }
 #toolsTextPix .rtSep{
   width: 1px;
   height: 26px;
-  background: rgba(255,255,255,.16);
+  background: rgba(255,255,255,.18);
   margin: 0 2px;
   flex: 0 0 auto;
 }
 
-#toolsTextPix .inp{
-  height: 30px;
-  padding: 4px 8px;
-  font-size: 13px;
-}
-
+/* inputy węższe – żeby mieściło się więcej w 1 linii */
+#toolsTextPix .inp{ height: 30px; padding: 4px 8px; font-size: 13px; }
 #toolsTextPix input[type="number"].inp{ width: 86px; }
 
-#toolsTextPix .btn.sm{
-  height: 30px;
-  min-width: 32px;
-  padding: 0 10px;
-  font-weight: 1000;
-}
-
-#btnRtAlignCycle{
-  border-radius: 999px;
-  padding: 0 12px;
-}
+/* przyciski kompaktowe */
+#toolsTextPix .btn.sm{ height: 30px; min-width: 34px; padding: 0 10px; font-weight: 900; }
 
 /* =========================================================
-   FONT PICKER: popover overlay
-   - JS ustawia position:fixed + top/left
-   - CSS tylko „wygląd”
+   FONT PICKER: overlay/popover – NIE zajmuje miejsca w rzędzie
+   - musi być absolutny
+   - ma własny panel (ładne okienko)
+   - hidden działa zawsze
 ========================================================= */
-#fontPick{ position: relative; display:inline-flex; align-items:center; }
 
+#fontPick{
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+/* guzik pickera */
 #fontPickBtn{
   display: inline-flex;
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  min-width: 280px;
+  min-width: 260px;
   max-width: 420px;
   height: 30px;
   padding: 0 10px;
-  border-radius: var(--radius-sm);
+  border-radius: 12px;
 }
-
 #fontPickText{
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-/* ukryty defensywnie */
-#fontPickPop[hidden]{ display:none !important; }
-
-/* gdy otwarty */
+/* POP – tylko gdy JS zdejmie hidden */
 #fontPickPop:not([hidden]){
-  position: fixed;         /* ważne: nie wypycha rzędu */
-  z-index: 99999;          /* ponad kartą */
-  width: min(720px, 92vw);
-  max-height: 420px;
+  position: absolute !important;
+  top: calc(100% + 10px);
+  left: 0;
+  z-index: 99999;
 
-  border-radius: var(--radius-lg);
+  /* to jest overlay – NIE może wpływać na layout */
+  display: block;
+  pointer-events: auto;
+}
+
+/* panel okienka */
+#fontPickPop .fontPickPanel{
+  width: min(560px, 78vw);
+  max-height: 380px;
+  overflow: hidden;
+
+  border-radius: 18px;
   border: 1px solid rgba(255,255,255,.16);
   background: rgba(10,10,14,.96);
-  box-shadow: var(--shadow-pop);
-  overflow: hidden;
+  box-shadow: 0 24px 80px rgba(0,0,0,.55);
 }
 
+/* search bar */
 #fontPickPop .fontPickSearch{
-  display:flex;
+  display: flex;
   gap: 10px;
-  padding: 12px;
+  padding: 10px;
   border-bottom: 1px solid rgba(255,255,255,.10);
-  background: rgba(0,0,0,.12);
+  background: rgba(0,0,0,.10);
 }
-
-#fontPickSearchInp{ flex:1; min-width: 180px; height: 30px; }
+#fontPickSearchInp{ flex: 1; min-width: 180px; height: 30px; }
 #fontPickSearchClear{ height: 30px; min-width: 34px; border-radius: 12px; }
 
+/* lista */
 #fontPickList{
   padding: 8px;
   overflow: auto;
-  max-height: 340px;
+  max-height: 320px;
 }
 
-#fontPickList .fontPickItem{
+/* elementy listy (text-pix.js może generować różnie – wspieramy 2 warianty) */
+#fontPickList .fontPickItem,
+#fontPickList button{
   width: 100%;
-  display: grid;
-  grid-template-columns: 1fr auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   gap: 10px;
 
   padding: 10px 12px;
@@ -306,319 +143,20 @@
   border: 1px solid rgba(255,255,255,.10);
   background: rgba(0,0,0,.14);
   color: #fff;
-
   cursor: pointer;
 }
-
-#fontPickList .fontPickItem:hover{
+#fontPickList .fontPickItem:hover,
+#fontPickList button:hover{
   border-color: rgba(255,255,255,.24);
   background: rgba(0,0,0,.20);
 }
 
-#fontPickList .fontPickItem.on{
+/* aktywny */
+#fontPickList .fontPickItem.on,
+#fontPickList button.on{
   border-color: rgba(255,255,255,.34);
   box-shadow: 0 0 0 2px rgba(255,255,255,.10) inset;
 }
 
+/* empty */
 #fontPickEmpty{ padding: 12px; opacity: .75; }
-
-/* =========================================================
-   CONTENT
-========================================================= */
-.editorContent{
-  flex:1;
-  min-height: 0;
-  padding: 12px;
-  overflow: hidden;
-  position: relative;
-  z-index: 1;
-}
-
-.pane{ height: 100%; min-height: 0; }
-
-/* =========================================================
-   TEXT preview
-========================================================= */
-.prevFull{
-  height: 100%;
-  min-height: 0;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--bd-weak);
-  background: var(--bg-weak);
-  overflow:hidden;
-  padding: 10px;
-}
-
-.prevFull canvas{
-  width: 100%;
-  height: auto;
-  max-height: 100%;
-  image-rendering: pixelated;
-}
-
-/* =========================================================
-   TEXT_PIX stage 26:11
-========================================================= */
-.pixWarn{
-  margin-bottom: 10px;
-  padding: 10px 12px;
-  border-radius: var(--radius-md);
-  border: 1px solid rgba(255,180,80,.25);
-  background: rgba(255,180,80,.08);
-}
-
-.rtStage{
-  height: calc(100% - 0px);
-  min-height: 0;
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--bd-weak);
-  background: var(--bg-weak);
-  padding: 12px;
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.rtRatio{
-  width: 100%;
-  aspect-ratio: 26 / 11;
-  border-radius: 16px;
-  overflow: hidden;
-  background: rgba(0,0,0,.12);
-  border: 1px solid var(--bd-weak);
-  display: flex;
-}
-
-.rtEditor{
-  width: 100%;
-  height: 100%;
-  margin: 0;
-  padding: 0;
-  outline: none;
-  white-space: pre-wrap;
-}
-
-.rtEditor:empty:before{ content: attr(data-placeholder); opacity: .55; }
-.rtEditor p{ margin: 0 !important; }
-
-/* =========================================================
-   DRAW
-========================================================= */
-.drawStageWrap{
-  height: 100%;
-  min-height: 0;
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--bd-weak);
-  background: var(--bg-weak);
-  overflow:hidden;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  padding: 10px;
-}
-.drawStageRatio{
-  width: 100%;
-  max-height: 100%;
-  aspect-ratio: 30 / 10;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-}
-#drawStage{ width: 100%; height: 100%; }
-
-/* =========================================================
-   IMAGE
-========================================================= */
-.imgTopGrid{
-  height: 100%;
-  min-height: 0;
-  display:grid;
-  gap: 12px;
-  grid-template-columns: 1fr 1fr;
-}
-@media (max-width: 1120px){
-  .imgTopGrid{
-    grid-template-columns: 1fr;
-    grid-template-rows: auto auto;
-    overflow: auto;
-    padding-right: 2px;
-  }
-}
-
-.imgCard{
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--bd-weak);
-  background: var(--bg-weak);
-  padding: 10px;
-  display:flex;
-  flex-direction: column;
-  min-height: 0;
-}
-.imgCardTitle{
-  font-weight: 900;
-  letter-spacing: .06em;
-  text-transform: uppercase;
-  font-size: 12px;
-  opacity: .86;
-  margin-bottom: 8px;
-}
-
-.imgStage{
-  position: relative;
-  flex: 1;
-  min-height: 0;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--bd-weak);
-  background: rgba(0,0,0,.12);
-  overflow:hidden;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-}
-#imgPreview{ max-width: 100%; max-height: 100%; }
-
-.imgPrevWrap{
-  flex:1;
-  min-height: 0;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--bd-weak);
-  background: rgba(0,0,0,.12);
-  overflow:hidden;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  padding: 8px;
-}
-#imgBigPreview{
-  width: 100%;
-  height: auto;
-  max-height: 100%;
-  image-rendering: pixelated;
-}
-.imgPrevHint{ margin-top: 8px; opacity: .75; font-size: 12px; }
-
-/* image panels */
-.imgPanels{
-  display:flex;
-  gap: 10px;
-  flex-wrap: wrap;
-  padding-top: 6px;
-}
-.imgPanel{
-  display:none;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--bd-weak);
-  background: var(--bg-weak);
-  padding: 10px 12px;
-  min-width: 220px;
-}
-.imgPanel.is-open{ display:block; }
-
-.imgPanelTitle{
-  display:flex;
-  align-items:center;
-  justify-content: space-between;
-  gap: 10px;
-  font-weight: 900;
-  letter-spacing:.06em;
-  text-transform: uppercase;
-  font-size: 12px;
-  opacity:.9;
-  margin-bottom: 10px;
-}
-.imgPanelVal{ font-weight: 900; letter-spacing:0; text-transform:none; opacity:.9; }
-
-.rng.v{
-  width: 28px;
-  height: 170px;
-  writing-mode: vertical-lr;
-  direction: rtl;
-}
-
-.fileBtn{
-  display:inline-flex;
-  align-items:center;
-  gap:8px;
-  padding: 8px 10px;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--bd-mid);
-  background: var(--bg-weak);
-  cursor:pointer;
-  user-select:none;
-}
-.fileBtn:hover{
-  border-color: var(--bd-strong);
-  background: rgba(0,0,0,.16);
-}
-
-/* overlays */
-.overlay{ z-index: 9999; pointer-events: auto; }
-
-.mGrid{
-  display: grid;
-  gap: 12px;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-@media (max-width: 820px){
-  .mGrid{ grid-template-columns: 1fr; }
-}
-.mTile{
-  appearance: none;
-  -webkit-appearance: none;
-  border: 1px solid var(--bd-mid);
-  background: rgba(0,0,0,.12);
-  border-radius: var(--radius-lg);
-  padding: 14px;
-  color: #fff;
-  text-align: left;
-  cursor: pointer;
-  display: grid;
-  gap: 6px;
-  box-shadow: 0 10px 30px rgba(0,0,0,.30);
-  pointer-events: auto;
-}
-.mTile:hover{
-  border-color: rgba(255,255,255,.26);
-  background: rgba(0,0,0,.18);
-  transform: translateY(-1px);
-}
-.mTile:active{ transform: translateY(0); }
-.mTileTitle{
-  font-weight: 900;
-  letter-spacing: .08em;
-  text-transform: uppercase;
-  font-size: 14px;
-}
-.mTileSub{
-  opacity: .78;
-  font-size: 12px;
-  line-height: 1.25;
-}
-
-.modal.bigModal{
-  width: min(1100px, 96vw);
-  max-height: 92vh;
-  overflow: hidden;
-}
-.bigModalCanvas{
-  width: 100%;
-  height: min(70vh, 720px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--bd-weak);
-  background: var(--bg-weak);
-  padding: 10px;
-}
-.bigModalCanvas canvas{
-  width: 100%;
-  height: auto;
-  max-height: 100%;
-  image-rendering: pixelated;
-}
