@@ -20,7 +20,6 @@ export function initTextPixEditor(ctx) {
   const fontPickSearchClear = document.getElementById("fontPickSearchClear");
   const fontPickList = document.getElementById("fontPickList");
   const fontPickEmpty = document.getElementById("fontPickEmpty");
-
   const inpRtSize = document.getElementById("inpRtSize");
   const inpRtLine = document.getElementById("inpRtLine");
   const inpRtLetter = document.getElementById("inpRtLetter");
@@ -33,22 +32,34 @@ export function initTextPixEditor(ctx) {
   const btnRtAlignCycle = document.getElementById("btnRtAlignCycle");
 
   const chkInvert = document.getElementById("chkInvert");
+
+  // jeśli zostawiasz "Kontrast" w UI na razie:
   const inpThresh = document.getElementById("inpThresh");
 
-  // Tooltipy
+  // =========================================================
+  // Tooltipy (Win/Mac) — TEXT_PIX
+  // =========================================================
   const isMac = /Mac|iPhone|iPad|iPod/.test(navigator.platform) || /Mac OS X/.test(navigator.userAgent);
 
   function tip2(action, win, mac, extra = "") {
     const line2 = `Win: ${win} • Mac: ${mac}`;
     return extra ? `${action}\n${line2}\n${extra}` : `${action}\n${line2}`;
   }
-  function setTip(el, txt) { if (el) el.setAttribute("data-tip", txt); }
 
+  function setTip(el, txt) {
+    if (!el) return;
+    el.setAttribute("data-tip", txt);
+  }
+
+  // BIU (TinyMCE standard)
   setTip(btnRtBold,      tip2("Pogrubienie",   "Ctrl+B", "⌘B"));
   setTip(btnRtItalic,    tip2("Kursywa",       "Ctrl+I", "⌘I"));
   setTip(btnRtUnderline, tip2("Podkreślenie",  "Ctrl+U", "⌘U"));
+
+  // Align (u Ciebie: klik cyklicznie)
   setTip(btnRtAlignCycle,
-    tip2("Wyrównanie (cyklicznie)", "Ctrl+Shift+E", "⌘⇧E", "Klikaj: lewo → środek → prawo")
+    tip2("Wyrównanie (cyklicznie)", "Ctrl+Shift+E", "⌘⇧E",
+      "Klikaj: lewo → środek → prawo")
   );
 
   // Rozmiary
@@ -57,27 +68,32 @@ export function initTextPixEditor(ctx) {
   const BIG_W = ctx.BIG_W || 208;
   const BIG_H = ctx.BIG_H || 88;
 
-  const show = (el, on) => { if (el) el.style.display = on ? "" : "none"; };
+  // Helpers
+  const show = (el, on) => { if (!el) return; el.style.display = on ? "" : "none"; };
   const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
   const toPx = (v) => (v == null || v === "" ? "" : `${Number(v)}px`);
 
-  let invert = false;
-
   function getTheme() {
-    return invert ? { bg: "#fff", fg: "#000" } : { bg: "#000", fg: "#fff" };
+    // invert=true => białe tło, czarny tekst
+    return invert
+      ? { bg: "#fff", fg: "#000" }
+      : { bg: "#000", fg: "#fff" };
   }
-
+  
   function applyInvertTheme() {
     const { bg, fg } = getTheme();
-
+  
+    // Edytor inline (to co widzisz na stronie)
     if (rtEditorEl) {
       rtEditorEl.style.backgroundColor = bg;
       rtEditorEl.style.color = fg;
     }
-
+  
+    // Jeśli chcesz, żeby rama/stage też zmieniała tło:
     const stage = paneTextPix?.querySelector?.(".rtStage");
     if (stage) stage.style.backgroundColor = bg;
   }
+
 
   function setBtnOn(btn, on) {
     if (!btn) return;
@@ -90,25 +106,33 @@ export function initTextPixEditor(ctx) {
   let currentAlign = "center"; // left|center|right
   let cachedBits150 = new Uint8Array(DOT_W * DOT_H);
 
+  let invert = false; // false = klasycznie: czarne tło / biały tekst
+
   let _deb = null;
   let _token = 0;
 
-  // UI busy guard (żeby nie kradło fokusu)
   let uiBusy = 0;
   const uiLock = () => { uiBusy++; };
   const uiUnlock = () => { uiBusy = Math.max(0, uiBusy - 1); };
   const isUiBusy = () => uiBusy > 0;
 
+  // ==========================================
+  //  UI-BUSY: gdy klikamy po kontrolkach, NIE wolno "kradać fokusu"
+  // ==========================================
   function installUiBusyGuards() {
-    const controlsRoot = paneTextPix;
+    const controlsRoot = document.getElementById("ctrlGrid") || paneTextPix;
     if (!controlsRoot) return;
-
+  
+    // Gdy user klika po input/select/button, blokujemy sync i focus w edytor
     controlsRoot.addEventListener("pointerdown", (ev) => {
       const t = ev.target;
       if (!t) return;
-      if (t.closest?.("input,select,button,textarea,label")) uiLock();
+  
+      if (t.closest?.("input,select,button,textarea,label")) {
+        uiLock();
+      }
     }, true);
-
+  
     const unlock = () => uiUnlock();
     controlsRoot.addEventListener("pointerup", unlock, true);
     controlsRoot.addEventListener("pointercancel", unlock, true);
@@ -116,14 +140,24 @@ export function initTextPixEditor(ctx) {
     window.addEventListener("blur", unlock);
   }
 
+  function fontHead(fontStack) {
+    const s = String(fontStack || "").trim();
+    if (!s) return "";
+    return s.split(",")[0].trim().replace(/["']/g, "");
+  }
+
   async function loadSystemFonts() {
     if (SYSTEM_FONTS.length) return SYSTEM_FONTS;
-
+  
     try {
       const res = await fetch("./js/fonts.json", { cache: "no-store" });
       if (!res.ok) throw new Error("Nie mogę wczytać fonts.json");
       const data = await res.json();
-      if (!Array.isArray(data)) throw new Error("fonts.json nie jest tablicą");
+  
+      if (!Array.isArray(data)) {
+        throw new Error("fonts.json nie jest tablicą");
+      }
+  
       SYSTEM_FONTS = data;
       return SYSTEM_FONTS;
     } catch (err) {
@@ -135,56 +169,172 @@ export function initTextPixEditor(ctx) {
 
   async function fillFontSelectOnce() {
     if (!selRtFont) return;
-
+  
     const fonts = await loadSystemFonts();
     if (!fonts.length) return;
-
+  
     selRtFont.innerHTML = "";
-
+  
+    // jak Word: puste = mixed / auto
     const optEmpty = document.createElement("option");
     optEmpty.value = "";
     optEmpty.textContent = "—";
     selRtFont.appendChild(optEmpty);
-
+  
     for (const f of fonts) {
       if (!f || !f.label || !f.value) continue;
-
+  
       const opt = document.createElement("option");
       opt.value = f.value;
       opt.textContent = f.label;
+  
+      // ✨ sample wizualny (bardzo ważne dla UX)
       opt.style.fontFamily = f.value;
+  
       selRtFont.appendChild(opt);
     }
-
-    rebuildFontPickFromSelect();
+      // zbuduj custom dropdown z tego selecta
+      rebuildFontPickFromSelect();
   }
 
-  /* =========================================================
-     FONT PICK (custom)
-     - overlay fixed + pozycjonowanie pod buttonem
-  ========================================================= */
   let fontPickOpen = false;
-  let fontPickIndex = 0;
-
-  let fontAll = [];
-  let fontFiltered = [];
-
-  function norm(s){
-    return String(s || "")
-      .toLowerCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "");
+  let fontPickIndex = 0; // nawigacja strzałkami
+  
+  function closeFontPick() {
+    if (!fontPickPop || !fontPickBtn) return;
+    fontPickOpen = false;
+    fontPickPop.hidden = true;
+    fontPickBtn.setAttribute("aria-expanded", "false");
   }
-
+  
+  function openFontPick() {
+    if (!fontPickPop || !fontPickBtn) return;
+    fontPickOpen = true;
+    fontPickPop.hidden = false;
+    fontPickBtn.setAttribute("aria-expanded", "true");
+  
+    // focus na wyszukiwarkę
+    setTimeout(() => fontPickSearchInp?.focus?.(), 0);
+  
+    // ustaw index na aktualnie zaznaczony (po filtrze)
+    const root = fontPickList || fontPickPop;
+    const items = Array.from(root.querySelectorAll(".fontPickItem"));
+    const cur = items.findIndex(it => it.classList.contains("on"));
+    fontPickIndex = cur >= 0 ? cur : 0;
+    focusFontPickIndex();
+  }
+  
+  function toggleFontPick() {
+    if (fontPickOpen) closeFontPick();
+    else openFontPick();
+  }
+  
+  function focusFontPickIndex() {
+    const root = fontPickList || fontPickPop;
+    if (!root) return;
+  
+    const items = Array.from(root.querySelectorAll(".fontPickItem"));
+    if (!items.length) return;
+  
+    fontPickIndex = Math.max(0, Math.min(items.length - 1, fontPickIndex));
+    items[fontPickIndex].scrollIntoView({ block: "nearest" });
+  }
+  
   function setFontPickLabelFromSelect() {
     if (!selRtFont || !fontPickText) return;
     const opt = selRtFont.selectedOptions?.[0];
     fontPickText.textContent = opt?.textContent?.trim() || "—";
-
+  
+    // próbka fontu w labelu (ładny UX)
     const ff = String(selRtFont.value || "").trim();
     fontPickText.style.fontFamily = ff ? ff : "";
   }
-
+  
+  let fontAll = [];      // [{value,label}]
+  let fontFiltered = []; // j.w.
+  
+  function norm(s){
+    return String(s || "")
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, ""); // usuń akcenty
+  }
+  
+  function getFilterText(){
+    return norm(fontPickSearchInp?.value || "");
+  }
+  
+  function applyFontFilter(){
+    const q = getFilterText();
+  
+    fontFiltered = !q
+      ? fontAll.slice()
+      : fontAll.filter(f => norm(f.label).includes(q) || norm(f.value).includes(q));
+  
+    // render listy
+    if (fontPickList) fontPickList.innerHTML = "";
+    if (fontPickEmpty) fontPickEmpty.hidden = fontFiltered.length > 0;
+  
+    if (!fontPickList) return;
+  
+    for (let i = 0; i < fontFiltered.length; i++){
+      const f = fontFiltered[i];
+  
+      const item = document.createElement("div");
+      item.className = "fontPickItem";
+      item.dataset.value = f.value;
+      item.dataset.index = String(i);
+  
+      const sample = document.createElement("div");
+      sample.className = "sample";
+      sample.textContent = f.label || "—";
+      if (f.value) sample.style.fontFamily = f.value;
+  
+      const meta = document.createElement("div");
+      meta.className = "meta";
+      meta.textContent = f.value ? "" : "auto";
+  
+      item.appendChild(sample);
+      item.appendChild(meta);
+  
+      item.addEventListener("pointerdown", () => { uiLock(); }, true);
+      item.addEventListener("pointerup",   () => { uiUnlock(); }, true);
+  
+      item.addEventListener("click", () => {
+        selRtFont.value = f.value;
+        selRtFont.dispatchEvent(new Event("change", { bubbles: true }));
+        setFontPickLabelFromSelect();
+        syncFontPickOnState();
+        closeFontPick();
+      });
+  
+      fontPickList.appendChild(item);
+    }
+  
+    // index nawigacji
+    fontPickIndex = 0;
+    // podświetlenie aktualnego wyboru
+    syncFontPickOnState();
+    // przewiń do aktywnego jeśli jest
+    const on = fontPickList.querySelector?.(".fontPickItem.on");
+    on?.scrollIntoView?.({ block:"nearest" });
+  }
+  
+  function rebuildFontPickFromSelect() {
+    if (!selRtFont) return;
+  
+    // zbuduj fontAll z <select>
+    const opts = Array.from(selRtFont.options || []);
+    fontAll = opts.map(o => ({
+      value: String(o.value || ""),
+      label: String(o.textContent || "").trim(),
+    }));
+  
+    // filter/render
+    applyFontFilter();
+    setFontPickLabelFromSelect();
+  }
+  
   function syncFontPickOnState() {
     const root = fontPickList || fontPickPop;
     if (!selRtFont || !root) return;
@@ -194,162 +344,23 @@ export function initTextPixEditor(ctx) {
     }
   }
 
-  function getFilterText(){
-    return norm(fontPickSearchInp?.value || "");
-  }
-
-  function applyFontFilter(){
-    const q = getFilterText();
-
-    fontFiltered = !q
-      ? fontAll.slice()
-      : fontAll.filter(f => norm(f.label).includes(q) || norm(f.value).includes(q));
-
-    if (fontPickList) fontPickList.innerHTML = "";
-
-    // uwaga: w HTML masz fontPickEmpty jako display:none, a my sterujemy hidden:
-    if (fontPickEmpty) {
-      fontPickEmpty.style.display = fontFiltered.length ? "none" : "block";
-    }
-
-    if (!fontPickList) return;
-
-    for (let i = 0; i < fontFiltered.length; i++){
-      const f = fontFiltered[i];
-
-      const item = document.createElement("div");
-      item.className = "fontPickItem";
-      item.dataset.value = f.value;
-      item.dataset.index = String(i);
-
-      const sample = document.createElement("div");
-      sample.className = "sample";
-      sample.textContent = f.label || "—";
-      if (f.value) sample.style.fontFamily = f.value;
-
-      const meta = document.createElement("div");
-      meta.className = "meta";
-      meta.textContent = f.value ? "" : "auto";
-
-      item.appendChild(sample);
-      item.appendChild(meta);
-
-      item.addEventListener("pointerdown", () => { uiLock(); }, true);
-      item.addEventListener("pointerup",   () => { uiUnlock(); }, true);
-
-      item.addEventListener("click", () => {
-        selRtFont.value = f.value;
-        selRtFont.dispatchEvent(new Event("change", { bubbles: true }));
-        setFontPickLabelFromSelect();
-        syncFontPickOnState();
-        closeFontPick();
-      });
-
-      fontPickList.appendChild(item);
-    }
-
-    fontPickIndex = 0;
-    syncFontPickOnState();
-    const on = fontPickList.querySelector?.(".fontPickItem.on");
-    on?.scrollIntoView?.({ block:"nearest" });
-  }
-
-  function rebuildFontPickFromSelect() {
-    if (!selRtFont) return;
-    const opts = Array.from(selRtFont.options || []);
-    fontAll = opts.map(o => ({
-      value: String(o.value || ""),
-      label: String(o.textContent || "").trim(),
-    }));
-
-    applyFontFilter();
-    setFontPickLabelFromSelect();
-  }
-
-  function placeFontPickPopover() {
-    if (!fontPickPop || !fontPickBtn) return;
-
-    const r = fontPickBtn.getBoundingClientRect();
-    const gap = 10;
-
-    // default: pod buttonem, wyrównanie do lewej
-    let top = r.bottom + gap;
-    let left = r.left;
-
-    // clamp do viewportu
-    const popW = Math.min(720, Math.floor(window.innerWidth * 0.92));
-    const maxLeft = window.innerWidth - popW - 10;
-    left = Math.max(10, Math.min(left, maxLeft));
-
-    // jeśli nie mieści się w dół, otwórz do góry
-    const approxH = 420;
-    if (top + approxH > window.innerHeight - 10) {
-      top = Math.max(10, r.top - gap - approxH);
-    }
-
-    fontPickPop.style.top = `${Math.round(top)}px`;
-    fontPickPop.style.left = `${Math.round(left)}px`;
-  }
-
-  function closeFontPick() {
-    if (!fontPickPop || !fontPickBtn) return;
-    fontPickOpen = false;
-    fontPickPop.hidden = true;
-    fontPickBtn.setAttribute("aria-expanded", "false");
-  }
-
-  function openFontPick() {
-    if (!fontPickPop || !fontPickBtn) return;
-    fontPickOpen = true;
-
-    fontPickPop.hidden = false;
-    fontPickBtn.setAttribute("aria-expanded", "true");
-
-    placeFontPickPopover();
-
-    // focus na search
-    setTimeout(() => fontPickSearchInp?.focus?.(), 0);
-
-    const root = fontPickList || fontPickPop;
-    const items = Array.from(root.querySelectorAll(".fontPickItem"));
-    const cur = items.findIndex(it => it.classList.contains("on"));
-    fontPickIndex = cur >= 0 ? cur : 0;
-    focusFontPickIndex();
-  }
-
-  function toggleFontPick() {
-    if (fontPickOpen) closeFontPick();
-    else openFontPick();
-  }
-
-  function focusFontPickIndex() {
-    const root = fontPickList || fontPickPop;
-    if (!root) return;
-    const items = Array.from(root.querySelectorAll(".fontPickItem"));
-    if (!items.length) return;
-
-    fontPickIndex = Math.max(0, Math.min(items.length - 1, fontPickIndex));
-    items[fontPickIndex].scrollIntoView({ block: "nearest" });
-  }
-
-  // ==========================================
-  //  TinyMCE helpers
-  // ==========================================
   function isCollapsed() {
     try { return !!editor?.selection?.getRng?.()?.collapsed; } catch { return false; }
   }
-
+  
   function applyPendingInlineStyle(styleObj) {
-    if (!editor) return false;
+    if (!editor) return;
     const rng = editor.selection.getRng();
     if (!rng || !rng.collapsed) return false;
-
+  
+    // wstaw span ze ZWSP jako “nośnik stylu”
     const span = editor.getDoc().createElement("span");
     for (const [k,v] of Object.entries(styleObj)) span.style[k] = v;
     span.appendChild(editor.getDoc().createTextNode("\u200b"));
-
+  
     rng.insertNode(span);
-
+  
+    // ustaw kursor ZA ZWSP
     const nr = editor.getDoc().createRange();
     nr.setStart(span.firstChild, 1);
     nr.setEnd(span.firstChild, 1);
@@ -357,6 +368,9 @@ export function initTextPixEditor(ctx) {
     return true;
   }
 
+  // ==========================================
+  //  A) Style detect (Word-like)
+  // ==========================================
   function getSelectionRangeSafe() {
     try { return editor?.selection?.getRng?.() || null; } catch { return null; }
   }
@@ -365,6 +379,7 @@ export function initTextPixEditor(ctx) {
     try { return window.getComputedStyle(el); } catch { return null; }
   }
 
+  // pobierz "aktywny" element pod kursorem (dla collapsed)
   function getActiveElement() {
     if (!editor) return rtEditorEl;
     try {
@@ -374,17 +389,20 @@ export function initTextPixEditor(ctx) {
     }
   }
 
+  // iteruj po tekstowych węzłach w zaznaczeniu i zbierz wartości stylu
   function readMixedStyle(propCssName) {
     const rng = getSelectionRangeSafe();
     if (!rng) return { mixed: false, value: "" };
 
-    if (rng.collapsed) {
+    const isCollapsed = !!rng.collapsed;
+    if (isCollapsed) {
       const node = getActiveElement();
       const cs = elementStyle(node.nodeType === 1 ? node : node.parentElement);
       const v = cs ? cs.getPropertyValue(propCssName) : "";
       return { mixed: false, value: (v || "").trim() };
     }
 
+    // selection range
     const root = rng.commonAncestorContainer?.nodeType === 1
       ? rng.commonAncestorContainer
       : rng.commonAncestorContainer?.parentElement;
@@ -399,6 +417,7 @@ export function initTextPixEditor(ctx) {
       const t = walker.currentNode;
       if (!t.nodeValue || !t.nodeValue.trim()) continue;
 
+      // sprawdź czy tekst node przecina range
       const tr = document.createRange();
       tr.selectNodeContents(t);
       const intersects =
@@ -410,10 +429,11 @@ export function initTextPixEditor(ctx) {
       const host = t.parentElement;
       const cs = elementStyle(host);
       const v = cs ? (cs.getPropertyValue(propCssName) || "").trim() : "";
-      values.add(v || "");
+      if (v) values.add(v);
+      else values.add("");
 
       count++;
-      if (count > 80) break;
+      if (count > 80) break; // limit
       if (values.size > 1) return { mixed: true, value: "" };
     }
 
@@ -423,7 +443,8 @@ export function initTextPixEditor(ctx) {
 
   function getCurrentParagraph() {
     const node = getActiveElement();
-    const el = node?.nodeType === 1 ? node : node?.parentElement;
+    if (!node) return null;
+    const el = node.nodeType === 1 ? node : node.parentElement;
     return el?.closest?.("p") || null;
   }
 
@@ -431,6 +452,7 @@ export function initTextPixEditor(ctx) {
     const rng = getSelectionRangeSafe();
     if (!rng) return { mixed: false, value: "" };
 
+    // jeśli zaznaczenie obejmuje wiele akapitów, traktuj jako mixed
     if (!rng.collapsed) {
       const p1 = (rng.startContainer.nodeType === 1 ? rng.startContainer : rng.startContainer.parentElement)?.closest?.("p");
       const p2 = (rng.endContainer.nodeType === 1 ? rng.endContainer : rng.endContainer.parentElement)?.closest?.("p");
@@ -445,6 +467,7 @@ export function initTextPixEditor(ctx) {
   }
 
   function normalizeFontValueForSelect(fontFamilyCss) {
+    // próbujemy dopasować do opcji w select, jak w Wordzie: jeśli nie pasuje -> pusty
     if (!selRtFont) return "";
     const ff = String(fontFamilyCss || "").toLowerCase();
 
@@ -469,17 +492,21 @@ export function initTextPixEditor(ctx) {
     if (!editor) return;
     if (isUiBusy()) return;
 
+    // BIU
     try {
       setBtnOn(btnRtBold, !!editor.queryCommandState("Bold"));
       setBtnOn(btnRtItalic, !!editor.queryCommandState("Italic"));
       setBtnOn(btnRtUnderline, !!editor.queryCommandState("Underline"));
     } catch {}
 
+    // INLINE per-symbol
     {
       const ff = readMixedStyle("font-family");
       if (selRtFont) selRtFont.value = ff.mixed ? "" : (normalizeFontValueForSelect(ff.value) || "");
-      setFontPickLabelFromSelect();
-      syncFontPickOnState();
+      if (fontPickText) {
+        setFontPickLabelFromSelect();
+        syncFontPickOnState();
+      }
     }
 
     {
@@ -489,19 +516,23 @@ export function initTextPixEditor(ctx) {
 
     {
       const ls = readMixedStyle("letter-spacing");
+      // w CSS może wyjść "normal"
       const v = (ls.value === "normal") ? "0px" : ls.value;
       if (inpRtLetter) inpRtLetter.value = ls.mixed ? "" : (pxToNumberMaybe(v) || "");
     }
 
+    // PARAGRAPH per akapit
     {
       const lh = readMixedParagraphStyle("line-height");
-      if (!inpRtLine) {}
-      else if (lh.mixed) inpRtLine.value = "";
-      else {
+      if (!inpRtLine) { /* nic */ }
+      else if (lh.mixed) {
+        inpRtLine.value = "";
+      } else {
         const raw = String(lh.value || "").trim();
         if (!raw || raw === "normal") {
           inpRtLine.value = "1";
         } else if (/px$/.test(raw)) {
+          // px -> przelicz na ratio względem font-size akapitu
           const p = getCurrentParagraph();
           const cs = p ? elementStyle(p) : null;
           const fs = cs ? String(cs.getPropertyValue("font-size") || "").trim() : "";
@@ -509,13 +540,17 @@ export function initTextPixEditor(ctx) {
           const fsPx = Number(String(fs).replace("px",""));
           if (Number.isFinite(lhPx) && Number.isFinite(fsPx) && fsPx > 0) {
             inpRtLine.value = String(Math.round((lhPx / fsPx) * 100) / 100);
-          } else inpRtLine.value = "";
+          } else {
+            inpRtLine.value = "";
+          }
         } else {
+          // liczba typu "1.05"
           const num = Number(raw);
           inpRtLine.value = Number.isFinite(num) ? String(num) : "";
         }
       }
     }
+
 
     {
       const mt = readMixedParagraphStyle("margin-top");
@@ -527,6 +562,7 @@ export function initTextPixEditor(ctx) {
       if (inpRtPadBot) inpRtPadBot.value = mb.mixed ? "" : (pxToNumberMaybe(mb.value) || "");
     }
 
+    // align (per akapit)
     {
       const ta = readMixedParagraphStyle("text-align");
       const v = (ta.mixed ? "" : ta.value);
@@ -539,27 +575,15 @@ export function initTextPixEditor(ctx) {
     }
   }
 
-  function schedulePreview(ms = 120) {
-    clearTimeout(_deb);
-    _deb = setTimeout(() => updatePreviewAsync(), ms);
-  }
-
-  function cmdToggle(name) {
-    if (!editor) return;
-    if (!isUiBusy()) editor.focus();
-    editor.execCommand(name);
-    ctx.markDirty?.();
-    schedulePreview(80);
-    syncUiFromSelection();
-  }
-
+  // ==========================================
+  //  B) Apply formatting (TinyMCE)
+  // ==========================================
   function applyFont(fontValue) {
     if (!editor) return;
     const v = String(fontValue || "").trim();
-
-    // pusty = "mixed/auto" -> nic nie rób
     if (!v) return;
-
+  
+    // collapsed => tylko “następny znak”
     if (isCollapsed()) {
       applyPendingInlineStyle({ fontFamily: v });
       ctx.markDirty?.();
@@ -567,16 +591,16 @@ export function initTextPixEditor(ctx) {
       syncUiFromSelection();
       return;
     }
-
+  
     if (!isUiBusy()) editor.focus();
-
+  
     editor.formatter.register("fontfamily_stack", {
       inline: "span",
       styles: { "font-family": v },
       remove_similar: true,
     });
     editor.formatter.apply("fontfamily_stack");
-
+  
     ctx.markDirty?.();
     schedulePreview(120);
     syncUiFromSelection();
@@ -584,10 +608,12 @@ export function initTextPixEditor(ctx) {
 
   function applyFontSize(px) {
     if (!editor) return;
+  
     const n = Number(px);
     if (!Number.isFinite(n)) return;
     const v = `${clamp(n, 10, 250)}px`;
-
+  
+    // collapsed => ustaw tylko “następny znak”
     if (isCollapsed()) {
       applyPendingInlineStyle({ fontSize: v });
       ctx.markDirty?.();
@@ -595,28 +621,31 @@ export function initTextPixEditor(ctx) {
       syncUiFromSelection();
       return;
     }
-
+  
     if (!isUiBusy()) editor.focus();
-
+  
+    // selection => działa na zaznaczenie
     editor.formatter.register("fontsize_px", {
       inline: "span",
       styles: { "font-size": v },
       remove_similar: true,
     });
     editor.formatter.apply("fontsize_px");
-
+  
     ctx.markDirty?.();
     schedulePreview(120);
     syncUiFromSelection();
   }
 
+
   function applyLetterSpacing(px) {
     if (!editor) return;
-
+  
     const n = Number(px);
     if (!Number.isFinite(n)) return;
     const v = `${clamp(n, 0, 20)}px`;
-
+  
+    // collapsed => tylko “następny znak”
     if (isCollapsed()) {
       applyPendingInlineStyle({ letterSpacing: v });
       ctx.markDirty?.();
@@ -624,16 +653,16 @@ export function initTextPixEditor(ctx) {
       syncUiFromSelection();
       return;
     }
-
+  
     if (!isUiBusy()) editor.focus();
-
+  
     editor.formatter.register("letterspacing_px", {
       inline: "span",
       styles: { "letter-spacing": v },
       remove_similar: true,
     });
     editor.formatter.apply("letterspacing_px");
-
+  
     ctx.markDirty?.();
     schedulePreview(120);
     syncUiFromSelection();
@@ -653,16 +682,25 @@ export function initTextPixEditor(ctx) {
     syncUiFromSelection();
   }
 
-  /* =========================================================
-     Screenshot -> bits (Twoja logika bez zmian)
-  ========================================================= */
+  function cmdToggle(name) {
+    if (!editor) return;
+    if (!isUiBusy()) editor.focus();
+    editor.execCommand(name);
+    ctx.markDirty?.();
+    schedulePreview(80);
+    syncUiFromSelection();
+  }
+
+  // ==========================================
+  //  C) Screenshot -> bits
+  // ==========================================
   function canvasToBits208(canvas, threshold) {
     const g = canvas.getContext("2d", { willReadFrequently: true });
     const { data } = g.getImageData(0, 0, canvas.width, canvas.height);
-
+  
     const w = BIG_W, h = BIG_H;
     const out = new Uint8Array(w * h);
-
+  
     for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
       const i = (y * w + x) * 4;
       const r = data[i + 0], gg = data[i + 1], b = data[i + 2];
@@ -672,6 +710,8 @@ export function initTextPixEditor(ctx) {
     return out;
   }
 
+
+  // 208x88 -> 150x70 jak u Ciebie (wycina "przerwy" w siatce)
   function compress208x88to150x70(bits208) {
     const out = new Uint8Array(DOT_W * DOT_H);
     let oy = 0;
@@ -726,11 +766,11 @@ export function initTextPixEditor(ctx) {
     document.body.appendChild(_shotHost);
     return _shotHost;
   }
-
+  
   function buildSnapshotNode(w, h) {
+    // Bierzemy content z TinyMCE (stabilny HTML), bez jego “żywych” elementów
     const host = ensureShotHost();
     host.innerHTML = "";
-
     const box = document.createElement("div");
     box.style.width = `${w}px`;
     box.style.height = `${h}px`;
@@ -740,17 +780,20 @@ export function initTextPixEditor(ctx) {
     box.style.overflow = "hidden";
     box.style.boxSizing = "border-box";
 
+    // skopiuj padding z edytora (żeby screenshot był 1:1)
     const edCs = window.getComputedStyle(rtEditorEl);
     box.style.paddingTop = edCs.paddingTop;
     box.style.paddingRight = edCs.paddingRight;
     box.style.paddingBottom = edCs.paddingBottom;
     box.style.paddingLeft = edCs.paddingLeft;
 
+    box.style.boxSizing = "border-box";
     box.style.whiteSpace = "normal";
     box.style.overflowWrap = "anywhere";
     box.style.wordBreak = "break-word";
     box.style.maxWidth = `${w}px`;
 
+    // font i podstawowe typograficzne rzeczy 1:1 z edytora
     box.style.fontFamily = edCs.fontFamily;
     box.style.fontSize = edCs.fontSize;
     box.style.fontWeight = edCs.fontWeight;
@@ -760,11 +803,16 @@ export function initTextPixEditor(ctx) {
     box.style.textAlign = edCs.textAlign;
 
     let html = String(editor?.getContent?.({ format: "html" }) || "").trim();
+    
     if (html && !/<(p|div|h1|h2|h3|ul|ol|li|table|blockquote)\b/i.test(html)) {
+      // brak bloków -> traktujemy to jak “linijkę tekstu”
       html = `<p>${html}</p>`;
     }
+    
     box.innerHTML = html || "";
 
+  
+    // Minimalne CSS, żeby wyglądało jak u Ciebie
     const style = document.createElement("style");
     style.textContent = `
       *{ box-sizing:border-box; }
@@ -773,19 +821,21 @@ export function initTextPixEditor(ctx) {
       span{ white-space:inherit; }
     `;
     box.prepend(style);
-
+  
     host.appendChild(box);
     return box;
   }
 
+
   async function captureTopTo208x88Canvas() {
     if (!window.html2canvas) throw new Error("Brak html2canvas (script nie wczytany).");
-
+  
     const w = Math.max(1, Math.floor(rtEditorEl.clientWidth));
     const h = Math.max(1, Math.floor(w * (BIG_H / BIG_W)));
-
+  
+    // snapshot node (bez TinyMCE)
     const node = buildSnapshotNode(w, h);
-
+  
     const shot = await window.html2canvas(node, {
       backgroundColor: getTheme().bg,
       scale: 1,
@@ -795,22 +845,23 @@ export function initTextPixEditor(ctx) {
       scrollY: 0,
       useCORS: true
     });
-
+  
     const out = document.createElement("canvas");
     out.width = BIG_W;
     out.height = BIG_H;
-
     const g = out.getContext("2d", { willReadFrequently: true });
     g.imageSmoothingEnabled = true;
     g.fillStyle = getTheme().bg;
     g.fillRect(0, 0, BIG_W, BIG_H);
     g.drawImage(shot, 0, 0, BIG_W, BIG_H);
-
     return out;
   }
 
   function makeInkBits(bits150) {
+    // "ink" = to, co jest treścią (litery/kształt), a nie tło.
+    // Przy invert (białe tło, czarny tekst) ink to zera.
     if (!invert) return bits150;
+  
     const out = new Uint8Array(bits150.length);
     for (let i = 0; i < bits150.length; i++) out[i] = bits150[i] ? 0 : 1;
     return out;
@@ -826,7 +877,7 @@ export function initTextPixEditor(ctx) {
 
     const bits150 = compress208x88to150x70(bits208);
 
-    const ink = makeInkBits(bits150);
+    const ink = makeInkBits(bits150); // <-- klucz
     const box = bitsBoundingBox(ink, DOT_W, DOT_H);
     const clipped = looksClipped(box, DOT_W, DOT_H, 0);
 
@@ -852,32 +903,41 @@ export function initTextPixEditor(ctx) {
       }
     } catch (e) {
       if (t !== _token) return;
-
       cachedBits150 = new Uint8Array(DOT_W * DOT_H);
       ctx.onPreview?.({ kind: "PIX", bits: cachedBits150 });
-
       if (pixWarn) {
         pixWarn.textContent = "Nie mogę zrobić screena edytora (sprawdź TinyMCE/html2canvas w HTML).";
         show(pixWarn, true);
       }
+      // eslint-disable-next-line no-console
       console.error(e);
     }
   }
 
-  /* =========================================================
-     TinyMCE init
-  ========================================================= */
-  async function ensureEditor() {
+  function schedulePreview(ms = 120) {
+    clearTimeout(_deb);
+    _deb = setTimeout(() => updatePreviewAsync(), ms);
+  }
+
+  // ==========================================
+  //  D) TinyMCE init + bind UI
+  // ==========================================
+
+    async function ensureEditor() {
     if (editor) return editor;
     if (!window.tinymce) throw new Error("Brak TinyMCE (script nie wczytany).");
-
+  
+    // 1) Najpierw wczytaj fonty + wypełnij select (żeby SYSTEM_FONTS było gotowe)
     await fillFontSelectOnce();
-
+  
+    // 2) Zbuduj font_family_formats jako STRING (TinyMCE tego oczekuje)
+    // format: "Label=css-stack;Label2=css-stack2"
     const fontFormatsStr = (SYSTEM_FONTS || [])
       .filter(f => f && f.label && f.value)
       .map(f => `${String(f.label).trim()}=${String(f.value).trim()}`)
       .join(";");
-
+  
+    // 3) Init inline
     await window.tinymce.init({
       target: rtEditorEl,
       inline: true,
@@ -887,11 +947,13 @@ export function initTextPixEditor(ctx) {
       plugins: [],
       forced_root_block: "p",
       forced_root_block_attrs: {},
-
+  
+      // niech TinyMCE nie dokleja swojego UI
       skin: false,
       content_css: false,
-
+  
       content_style: `
+        /* TinyMCE inline: nie stylujemy body, bo to psuje całą stronę */
         #rtEditor.mce-content-body{
           margin:0;
           padding:0;
@@ -903,17 +965,20 @@ export function initTextPixEditor(ctx) {
           overflow-wrap:anywhere;
           word-break:break-word;
         }
+      
         #rtEditor.mce-content-body p{
           margin:0;
           line-height:1;
         }
       `,
 
+  
+      // !!! tu był babol: to MA BYĆ STRING, nie tablica
       font_family_formats: fontFormatsStr,
-
+  
       setup: (ed) => {
         editor = ed;
-
+  
         ed.on("init", () => {
           show(pixWarn, false);
           cachedBits150 = new Uint8Array(DOT_W * DOT_H);
@@ -921,45 +986,53 @@ export function initTextPixEditor(ctx) {
           syncUiFromSelection();
           schedulePreview(60);
         });
-
+  
         ed.on("NodeChange SelectionChange KeyUp MouseUp", () => {
           if (isUiBusy()) return;
           syncUiFromSelection();
         });
-
+  
         ed.on("input Undo Redo SetContent", () => {
           ctx.markDirty?.();
           schedulePreview(120);
         });
       }
     });
-
+  
     return editor;
   }
+  
 
-  /* =========================================================
-     Bind UI
-  ========================================================= */
   function bindUiOnce() {
+    // BIU
     btnRtBold?.addEventListener("click", () => cmdToggle("Bold"));
     btnRtItalic?.addEventListener("click", () => cmdToggle("Italic"));
     btnRtUnderline?.addEventListener("click", () => cmdToggle("Underline"));
 
+    // align cycle (per akapit)
     btnRtAlignCycle?.addEventListener("click", () => {
       if (!editor) return;
       currentAlign = currentAlign === "left" ? "center" : currentAlign === "center" ? "right" : "left";
       applyParagraphStyles({ align: currentAlign });
     });
 
+    // font (per symbol)
     selRtFont?.addEventListener("change", () => applyFont(selRtFont.value));
 
+        // custom dropdown: open/close
     fontPickBtn?.addEventListener("click", () => toggleFontPick());
 
-    window.addEventListener("resize", () => {
-      if (fontPickOpen) placeFontPickPopover();
-    });
+    // wheel scroll w liście
+    fontPickPop?.addEventListener("wheel", (e) => {
+      // na Windows potrafi scrollować “stronicami” — wymuszamy naturalny scroll
+      e.preventDefault();
+      fontPickPop.scrollTop += e.deltaY;
+    }, { passive: false });
 
-    fontPickSearchInp?.addEventListener("input", () => applyFontFilter());
+        // search input
+    fontPickSearchInp?.addEventListener("input", () => {
+      applyFontFilter();
+    });
 
     fontPickSearchClear?.addEventListener("click", () => {
       if (fontPickSearchInp) fontPickSearchInp.value = "";
@@ -967,18 +1040,27 @@ export function initTextPixEditor(ctx) {
       fontPickSearchInp?.focus?.();
     });
 
+    // klik poza — zamknij
     document.addEventListener("pointerdown", (e) => {
       if (!fontPickOpen) return;
       const t = e.target;
-      if (t && (t === fontPickBtn || t.closest?.("#fontPickPop") || t.closest?.("#fontPick"))) return;
+      if (t && (t === fontPickBtn || t.closest?.("#fontPick"))) return;
       closeFontPick();
     });
 
+    // klawiatura: strzałki / Enter / Esc
     document.addEventListener("keydown", (e) => {
+      // jeśli focus jest w wyszukiwaniu, nie przechwytuj zwykłych znaków
       const inSearch = document.activeElement === fontPickSearchInp;
 
-      if (inSearch && e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) return;
+      if (inSearch && e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        return; // user wpisuje tekst
+      }
       if (!fontPickOpen) return;
+
+      // ============================
+      // Type-to-filter (jak w pro UI)
+      // ============================
 
       const isChar =
         e.key.length === 1 &&
@@ -986,14 +1068,22 @@ export function initTextPixEditor(ctx) {
         !e.metaKey &&
         !e.altKey;
 
+      // jeśli user zaczyna pisać poza inputem -> przerzuć focus do search
       if (isChar && document.activeElement !== fontPickSearchInp) {
         e.preventDefault();
+
         fontPickSearchInp?.focus?.();
+
+        // dopisz znak ręcznie (żeby nie zginął)
         const start = fontPickSearchInp.selectionStart ?? fontPickSearchInp.value.length;
         const end   = fontPickSearchInp.selectionEnd   ?? fontPickSearchInp.value.length;
+
         const v = fontPickSearchInp.value;
-        fontPickSearchInp.value = v.slice(0, start) + e.key + v.slice(end);
+        fontPickSearchInp.value =
+          v.slice(0, start) + e.key + v.slice(end);
+
         fontPickSearchInp.setSelectionRange(start + 1, start + 1);
+
         applyFontFilter();
         return;
       }
@@ -1005,7 +1095,7 @@ export function initTextPixEditor(ctx) {
 
       if (e.key === "ArrowDown") { e.preventDefault(); fontPickIndex++; focusFontPickIndex(); return; }
       if (e.key === "ArrowUp")   { e.preventDefault(); fontPickIndex--; focusFontPickIndex(); return; }
-
+      
       if (e.key === "Enter") {
         e.preventDefault();
         fontPickIndex = Math.max(0, Math.min(items.length - 1, fontPickIndex));
@@ -1013,18 +1103,22 @@ export function initTextPixEditor(ctx) {
       }
     });
 
+    // size (per symbol)
     inpRtSize?.addEventListener("input", () => {
+      // jeśli było mixed (puste) i user zaczyna wpisywać -> ma zadziałać na całość zaznaczenia
       const v = inpRtSize.value;
       if (v === "") return;
       applyFontSize(v);
     });
 
+    // letter spacing (per symbol)
     inpRtLetter?.addEventListener("input", () => {
       const v = inpRtLetter.value;
       if (v === "") return;
       applyLetterSpacing(v);
     });
 
+    // paragraph inputs
     inpRtLine?.addEventListener("input", () => {
       const v = inpRtLine.value;
       if (v === "") return;
@@ -1050,6 +1144,7 @@ export function initTextPixEditor(ctx) {
       schedulePreview(80);
     });
 
+    // screenshot appearance controls (jeśli zostają)
     inpThresh?.addEventListener("input", () => {
       ctx.markDirty?.();
       schedulePreview(80);
@@ -1058,9 +1153,9 @@ export function initTextPixEditor(ctx) {
 
   let _uiBound = false;
 
-  /* =========================================================
-     API
-  ========================================================= */
+  // ==========================================
+  //  API
+  // ==========================================
   return {
     async open() {
       show(paneTextPix, true);
@@ -1068,28 +1163,35 @@ export function initTextPixEditor(ctx) {
       applyInvertTheme();
 
       if (!_uiBound) { bindUiOnce(); _uiBound = true; }
+      
       await fillFontSelectOnce();
-
+      
       rtEditorEl.style.fontSize = "130px";
       rtEditorEl.style.lineHeight = "1";
-
+      
       await ensureEditor();
 
+      // upewnij się, że edytor ma od razu 50px zanim zrobimy pierwszy screenshot
+      rtEditorEl.style.fontSize = "130px";
+      rtEditorEl.style.lineHeight = "1";
+      
+      // pierwszy preview dopiero po tym, jak przeglądarka przeliczy layout
       setTimeout(() => schedulePreview(0), 0);
 
       installUiBusyGuards();
 
+      // reset edytora na start sesji
       editor.setContent("");
       editor.setContent("<p>\u200b</p>");
       editor.focus();
       applyPendingInlineStyle({ fontSize: "130px" });
-
       currentAlign = "center";
       if (btnRtAlignCycle) {
         btnRtAlignCycle.textContent = "⇆";
         btnRtAlignCycle.dataset.state = "center";
       }
 
+      // wyczyść pola (żeby nie udawały wartości)
       if (selRtFont) selRtFont.value = "";
       if (inpRtSize) inpRtSize.value = "";
       if (inpRtLetter) inpRtLetter.value = "";
@@ -1111,7 +1213,7 @@ export function initTextPixEditor(ctx) {
 
     close() {
       show(paneTextPix, false);
-      closeFontPick();
+      // NIE niszczymy instancji TinyMCE — zostaje (szybciej, stabilniej)
     },
 
     async getCreatePayload() {
