@@ -225,13 +225,6 @@
           <div class="pane" id="paneTextPix" style="display:none;">
             <div class="pixWarn" id="pixWarn" style="display:none;"></div>
           
-            <!-- STAGE w stałym ratio 26:11 -->
-            <div class="rtStage">
-              <div class="rtRatio">
-                <div id="rtEditor" class="rtEditor" contenteditable="true" spellcheck="false" data-placeholder="Wpisz tekst…"></div>
-              </div>
-            </div>
-          
             <!-- TOOLBAR dla TEXT_PIX (w samym panelu, żeby nie mieszać globalnego toolbaru) -->
             <div class="rtTools">
           
@@ -258,10 +251,8 @@
                     <div class="fontPickEmpty" id="fontPickEmpty" style="display:none;">Brak wyników</div>
                   </div>
                 </div>
-              </div>
           
               <!-- ROZMIAR / INTERLINIA / ODSTĘP -->
-              <div class="rtToolRow">
                 <div class="rtToolLbl">Rozmiar</div>
                 <input id="inpRtSize" class="inp" type="number" min="10" max="220" step="1" value="130"/>
                 <div class="rtToolLbl">Interlinia</div>
@@ -276,10 +267,8 @@
                 <input id="inpRtPadTop" class="inp" type="number" min="0" max="80" step="1" value="0"/>
                 <div class="rtToolLbl">Dół</div>
                 <input id="inpRtPadBot" class="inp" type="number" min="0" max="80" step="1" value="0"/>
-              </div>
           
               <!-- BIU + wyrównanie (wracają) -->
-              <div class="rtToolRow">
                 <button class="btn sm" id="btnRtBold" type="button" title="Pogrubienie">B</button>
                 <button class="btn sm" id="btnRtItalic" type="button" title="Kursywa">I</button>
                 <button class="btn sm" id="btnRtUnderline" type="button" title="Podkreślenie">U</button>
@@ -300,6 +289,14 @@
               </div>
           
             </div>
+
+            <!-- STAGE w stałym ratio 26:11 -->
+            <div class="rtStage">
+              <div class="rtRatio">
+                <div id="rtEditor" class="rtEditor" contenteditable="true" spellcheck="false" data-placeholder="Wpisz tekst…"></div>
+              </div>
+            </div>
+            
           </div>
 
 
