@@ -199,6 +199,15 @@ export function initTextPixEditor(ctx) {
 
   let fontPickOpen = false;
   let fontPickIndex = 0; // nawigacja strzałkami
+
+  // defensywnie: popover zawsze startuje jako schowany (żeby nie "zastępował rzędu")
+  if (fontPickPop) fontPickPop.hidden = true;
+  
+  // empty lepiej kontrolować przez hidden, nie przez style=display:none
+  if (fontPickEmpty) {
+    fontPickEmpty.style.display = ""; // usuń twarde display:none jeśli było w HTML
+    fontPickEmpty.hidden = true;
+  }
   
   function closeFontPick() {
     if (!fontPickPop || !fontPickBtn) return;
@@ -212,6 +221,11 @@ export function initTextPixEditor(ctx) {
     fontPickOpen = true;
     fontPickPop.hidden = false;
     fontPickBtn.setAttribute("aria-expanded", "true");
+    // fallback: wymuś overlay (gdyby CSS coś nadpisał)
+    fontPickPop.style.position = "absolute";
+    fontPickPop.style.top = "calc(100% + 10px)";
+    fontPickPop.style.left = "0";
+    fontPickPop.style.zIndex = "99999";
   
     // focus na wyszukiwarkę
     setTimeout(() => fontPickSearchInp?.focus?.(), 0);
@@ -273,7 +287,7 @@ export function initTextPixEditor(ctx) {
   
     // render listy
     if (fontPickList) fontPickList.innerHTML = "";
-    if (fontPickEmpty) fontPickEmpty.hidden = fontFiltered.length > 0;
+    if (fontPickEmpty) fontPickEmpty.hidden = !(fontFiltered.length === 0);
   
     if (!fontPickList) return;
   
@@ -1022,12 +1036,13 @@ export function initTextPixEditor(ctx) {
         // custom dropdown: open/close
     fontPickBtn?.addEventListener("click", () => toggleFontPick());
 
-    // wheel scroll w liście
-    fontPickPop?.addEventListener("wheel", (e) => {
-      // na Windows potrafi scrollować “stronicami” — wymuszamy naturalny scroll
-      e.preventDefault();
-      fontPickPop.scrollTop += e.deltaY;
-    }, { passive: false });
+    // wheel scroll: przewijamy TYLKO listę, nie cały popover
+    const fontPickScrollEl = fontPickList || fontPickPop;
+    
+    fontPickScrollEl?.addEventListener("wheel", (e) => {
+      // pozwól normalnie przewijać listę; nie blokuj strony, bo i tak popover jest overlay
+      // (bez preventDefault => mniej konfliktów z layout/focusem)
+    }, { passive: true });
 
         // search input
     fontPickSearchInp?.addEventListener("input", () => {
@@ -1090,7 +1105,8 @@ export function initTextPixEditor(ctx) {
 
       if (e.key === "Escape") { e.preventDefault(); closeFontPick(); return; }
 
-      const items = Array.from(fontPickPop?.querySelectorAll?.(".fontPickItem") || []);
+      const root = fontPickList || fontPickPop;
+      const items = Array.from(root?.querySelectorAll?.(".fontPickItem") || []);
       if (!items.length) return;
 
       if (e.key === "ArrowDown") { e.preventDefault(); fontPickIndex++; focusFontPickIndex(); return; }
