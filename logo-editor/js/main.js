@@ -175,16 +175,20 @@ function showToolsForMode(mode){
   const tImg  = document.getElementById("toolsImage");
   const imgPanels = document.getElementById("imgPanels");
 
-  // schowaj wszystko
-  for (const el of [tText, tPix, tDraw, tImg, imgPanels]){
-    if (el) el.style.display = "none";
+  // Uwaga: CSS ma kilka reguł z `display: ... !important` dla #toolsTextPix.
+  // Sterowanie `style.display` bywa więc przebijane. Najpewniejsze jest [hidden].
+  const all = [tText, tPix, tDraw, tImg, imgPanels].filter(Boolean);
+  for (const el of all){
+    el.hidden = true;
+    // czyścimy inline display (żeby nie mieszać z CSS)
+    if (el.style) el.style.display = "";
   }
 
   // pokaż właściwe
-  if (mode === "TEXT" && tText) tText.style.display = "flex";
-  if (mode === "TEXT_PIX" && tPix) tPix.style.display = "flex";
-  if (mode === "DRAW" && tDraw) tDraw.style.display = "flex";
-  if (mode === "IMAGE" && tImg) tImg.style.display = "flex";
+  if (mode === "TEXT" && tText) tText.hidden = false;
+  if (mode === "TEXT_PIX" && tPix) tPix.hidden = false;
+  if (mode === "DRAW" && tDraw) tDraw.hidden = false;
+  if (mode === "IMAGE" && tImg) tImg.hidden = false;
 }
 
 
