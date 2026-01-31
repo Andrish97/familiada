@@ -118,6 +118,73 @@
             <div class="charsListInline" id="charsList" style="display:none;"></div>
           </div>
 
+
+                    
+            <!-- TOOLBAR dla TEXT_PIX (w samym panelu, żeby nie mieszać globalnego toolbaru) -->
+            <div class="rtTools">
+          
+              <!-- CZCIONKA (custom picker z wyszukiwarką) -->
+              <div class="rtToolRow">
+                <div class="rtToolLbl">Czcionka</div>
+          
+                <!-- ukryty select (text-pix.js go wspiera / fallback) -->
+                <select id="selRtFont" class="inp" style="display:none;"></select>
+          
+                <div class="fontPick" id="fontPick">
+                  <button type="button" class="inp fontPickBtn" id="fontPickBtn" aria-haspopup="listbox" aria-expanded="false">
+                    <span class="fontPickText" id="fontPickText">—</span>
+                    <span class="fontPickArrow" aria-hidden="true">▾</span>
+                  </button>
+          
+                  <div class="fontPickPop" id="fontPickPop" role="listbox" tabindex="-1" hidden>
+                    <div class="fontPickSearch">
+                      <input class="inp fontPickSearchInp" id="fontPickSearchInp" type="text"
+                             placeholder="Szukaj czcionki…" autocomplete="off" spellcheck="false" />
+                      <button class="btn sm fontPickSearchClear" id="fontPickSearchClear" type="button" title="Wyczyść">✕</button>
+                    </div>
+                    <div class="fontPickList" id="fontPickList"></div>
+                    <div class="fontPickEmpty" id="fontPickEmpty" style="display:none;">Brak wyników</div>
+                  </div>
+                </div>
+          
+              <!-- ROZMIAR / INTERLINIA / ODSTĘP -->
+                <div class="rtToolLbl">Rozmiar</div>
+                <input id="inpRtSize" class="inp" type="number" min="10" max="220" step="1" value="130"/>
+                <div class="rtToolLbl">Interlinia</div>
+                <input id="inpRtLine" class="inp" type="number" min="0.6" max="3.0" step="0.05" value="1"/>
+                <div class="rtToolLbl">Odstęp</div>
+                <input id="inpRtLetter" class="inp" type="number" min="0" max="20" step="0.5" value="0"/>
+              </div>
+          
+              <!-- AKAPIT: góra/dół (baseline fix będzie też w CSS) -->
+              <div class="rtToolRow">
+                <div class="rtToolLbl">Góra</div>
+                <input id="inpRtPadTop" class="inp" type="number" min="0" max="80" step="1" value="0"/>
+                <div class="rtToolLbl">Dół</div>
+                <input id="inpRtPadBot" class="inp" type="number" min="0" max="80" step="1" value="0"/>
+          
+              <!-- BIU + wyrównanie (wracają) -->
+                <button class="btn sm" id="btnRtBold" type="button" title="Pogrubienie">B</button>
+                <button class="btn sm" id="btnRtItalic" type="button" title="Kursywa">I</button>
+                <button class="btn sm" id="btnRtUnderline" type="button" title="Podkreślenie">U</button>
+          
+                <span class="rtSep"></span>
+          
+                <button class="btn sm" id="btnRtAlignCycle" type="button" title="Wyrównanie">⇆</button>
+          
+                <span class="rtSep"></span>
+          
+                <label class="chk" style="margin-left:6px;">
+                  <input type="checkbox" id="chkInvert"/>
+                  <span>Odwróć (białe tło)</span>
+                </label>
+          
+                <!-- jeśli zostawiasz threshold, to OK -->
+                <input id="inpThresh" class="inp" type="number" min="40" max="220" step="1" value="128" title="Próg (kontrast)"/>
+              </div>
+          
+            </div>
+
           
 
           <!-- DRAW: wszystkie narzędzia w 1 rzędzie (tooltipy zostają) -->
@@ -224,71 +291,6 @@
           <!-- TEXT_PIX: pole tekstowe full width + ostrzeżenie; preview z przycisku -->
           <div class="pane" id="paneTextPix" style="display:none;">
             <div class="pixWarn" id="pixWarn" style="display:none;"></div>
-          
-            <!-- TOOLBAR dla TEXT_PIX (w samym panelu, żeby nie mieszać globalnego toolbaru) -->
-            <div class="rtTools">
-          
-              <!-- CZCIONKA (custom picker z wyszukiwarką) -->
-              <div class="rtToolRow">
-                <div class="rtToolLbl">Czcionka</div>
-          
-                <!-- ukryty select (text-pix.js go wspiera / fallback) -->
-                <select id="selRtFont" class="inp" style="display:none;"></select>
-          
-                <div class="fontPick" id="fontPick">
-                  <button type="button" class="inp fontPickBtn" id="fontPickBtn" aria-haspopup="listbox" aria-expanded="false">
-                    <span class="fontPickText" id="fontPickText">—</span>
-                    <span class="fontPickArrow" aria-hidden="true">▾</span>
-                  </button>
-          
-                  <div class="fontPickPop" id="fontPickPop" role="listbox" tabindex="-1" hidden>
-                    <div class="fontPickSearch">
-                      <input class="inp fontPickSearchInp" id="fontPickSearchInp" type="text"
-                             placeholder="Szukaj czcionki…" autocomplete="off" spellcheck="false" />
-                      <button class="btn sm fontPickSearchClear" id="fontPickSearchClear" type="button" title="Wyczyść">✕</button>
-                    </div>
-                    <div class="fontPickList" id="fontPickList"></div>
-                    <div class="fontPickEmpty" id="fontPickEmpty" style="display:none;">Brak wyników</div>
-                  </div>
-                </div>
-          
-              <!-- ROZMIAR / INTERLINIA / ODSTĘP -->
-                <div class="rtToolLbl">Rozmiar</div>
-                <input id="inpRtSize" class="inp" type="number" min="10" max="220" step="1" value="130"/>
-                <div class="rtToolLbl">Interlinia</div>
-                <input id="inpRtLine" class="inp" type="number" min="0.6" max="3.0" step="0.05" value="1"/>
-                <div class="rtToolLbl">Odstęp</div>
-                <input id="inpRtLetter" class="inp" type="number" min="0" max="20" step="0.5" value="0"/>
-              </div>
-          
-              <!-- AKAPIT: góra/dół (baseline fix będzie też w CSS) -->
-              <div class="rtToolRow">
-                <div class="rtToolLbl">Góra</div>
-                <input id="inpRtPadTop" class="inp" type="number" min="0" max="80" step="1" value="0"/>
-                <div class="rtToolLbl">Dół</div>
-                <input id="inpRtPadBot" class="inp" type="number" min="0" max="80" step="1" value="0"/>
-          
-              <!-- BIU + wyrównanie (wracają) -->
-                <button class="btn sm" id="btnRtBold" type="button" title="Pogrubienie">B</button>
-                <button class="btn sm" id="btnRtItalic" type="button" title="Kursywa">I</button>
-                <button class="btn sm" id="btnRtUnderline" type="button" title="Podkreślenie">U</button>
-          
-                <span class="rtSep"></span>
-          
-                <button class="btn sm" id="btnRtAlignCycle" type="button" title="Wyrównanie">⇆</button>
-          
-                <span class="rtSep"></span>
-          
-                <label class="chk" style="margin-left:6px;">
-                  <input type="checkbox" id="chkInvert"/>
-                  <span>Odwróć (białe tło)</span>
-                </label>
-          
-                <!-- jeśli zostawiasz threshold, to OK -->
-                <input id="inpThresh" class="inp" type="number" min="40" max="220" step="1" value="128" title="Próg (kontrast)"/>
-              </div>
-          
-            </div>
 
             <!-- STAGE w stałym ratio 26:11 -->
             <div class="rtStage">
