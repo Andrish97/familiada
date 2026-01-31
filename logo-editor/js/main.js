@@ -163,7 +163,7 @@ function confirmCloseIfDirty(){
 await requireAuth();
 
 async function refreshWho(){
-  const { data } = await sb.auth.getUser();
+  const { data } = await sb().auth.getUser();
   who.textContent = data?.user?.email || "—";
 }
 
