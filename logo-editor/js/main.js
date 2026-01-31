@@ -1105,24 +1105,23 @@ async function boot(){
 
   // topbar
    btnBack?.addEventListener("click", () => {
-     const inEditor = editorShell && editorShell.style.display !== "none";
+     const inEditor = !!editorMode; // najpewniej: źródło prawdy to stan, nie style
    
      if (inEditor){
-       // X zamyka edytor
-       if (shouldBlockNav()){
-         const ok = confirm("Masz niezapisane zmiany. Zamknąć edytor i je utracić?");
-         if (!ok) return;
-       }
+       // zamykanie edytora: cała logika w closeEditor() (tam jest confirmCloseIfDirty)
        closeEditor(false);
        return;
      }
    
-     // list -> normalnie wróć do builder
-     if (shouldBlockNav()){
-       const ok = confirm("Masz niezapisane zmiany. Wyjść do „Moje gry” i je utracić?");
-       if (!ok) return;
-     }
+     // wyjście do buildera: pytamy tylko jeśli faktycznie mamy dirty (i edytor otwarty)
+     if (shouldBlockNav() && !confirmCloseIfDirty()) return;
      location.href = "../builder.html";
+   });
+   
+   btnLogout?.addEventListener("click", async () => {
+     if (shouldBlockNav() && !confirmCloseIfDirty()) return;
+     await signOut();
+     location.href = "../index.html";
    });
 
    btnLogout?.addEventListener("click", async () => {
