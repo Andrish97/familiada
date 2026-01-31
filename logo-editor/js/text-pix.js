@@ -35,8 +35,6 @@ export function initTextPixEditor(ctx) {
 
   // jeśli zostawiasz "Kontrast" w UI na razie:
   const inpThresh = document.getElementById("inpThresh");
-  const chkRtDither = document.getElementById("chkRtDither");
-
 
   // =========================================================
   // Tooltipy (Win/Mac) — TEXT_PIX
@@ -613,7 +611,7 @@ export function initTextPixEditor(ctx) {
   
     const n = Number(px);
     if (!Number.isFinite(n)) return;
-    const v = `${clamp(n, 10, 140)}px`;
+    const v = `${clamp(n, 10, 250)}px`;
   
     // collapsed => ustaw tylko “następny znak”
     if (isCollapsed()) {
@@ -696,43 +694,22 @@ export function initTextPixEditor(ctx) {
   // ==========================================
   //  C) Screenshot -> bits
   // ==========================================
-  function canvasToBits208(canvas, threshold, dither) {
+  function canvasToBits208(canvas, threshold) {
     const g = canvas.getContext("2d", { willReadFrequently: true });
     const { data } = g.getImageData(0, 0, canvas.width, canvas.height);
-
+  
     const w = BIG_W, h = BIG_H;
-    const lum = new Float32Array(w * h);
     const out = new Uint8Array(w * h);
-
+  
     for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
       const i = (y * w + x) * 4;
       const r = data[i + 0], gg = data[i + 1], b = data[i + 2];
-      lum[y * w + x] = 0.2126 * r + 0.7152 * gg + 0.0722 * b;
+      const L = 0.2126 * r + 0.7152 * gg + 0.0722 * b;
+      out[y * w + x] = L >= threshold ? 1 : 0;
     }
-
-    if (!dither) {
-      for (let i = 0; i < out.length; i++) out[i] = lum[i] >= threshold ? 1 : 0;
-      return out;
-    }
-
-    const buf = new Float32Array(lum);
-    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
-      const i = y * w + x;
-      const oldv = buf[i];
-      const newv = oldv >= threshold ? 255 : 0;
-      out[i] = newv ? 1 : 0;
-      const err = oldv - newv;
-
-      if (x + 1 < w) buf[i + 1] += err * (7 / 16);
-      if (y + 1 < h) {
-        if (x > 0) buf[i + w - 1] += err * (3 / 16);
-        buf[i + w] += err * (5 / 16);
-        if (x + 1 < w) buf[i + w + 1] += err * (1 / 16);
-      }
-    }
-
     return out;
   }
+
 
   // 208x88 -> 150x70 jak u Ciebie (wycina "przerwy" w siatce)
   function compress208x88to150x70(bits208) {
@@ -895,10 +872,9 @@ export function initTextPixEditor(ctx) {
     if (!plain) return { bits150: new Uint8Array(DOT_W * DOT_H), clipped: false };
 
     const threshold = clamp(Number(inpThresh?.value || 128), 40, 220);
-    const dither = !!chkRtDither?.checked;
-
     const c208 = await captureTopTo208x88Canvas();
-    const bits208 = canvasToBits208(c208, threshold, dither);
+    const bits208 = canvasToBits208(c208, threshold);
+
     const bits150 = compress208x88to150x70(bits208);
 
     const ink = makeInkBits(bits150); // <-- klucz
@@ -983,7 +959,7 @@ export function initTextPixEditor(ctx) {
           padding:0;
           background:transparent;
           color:inherit;
-          font-size:50px;
+          font-size:130px;
           line-height:1;
           white-space:normal;
           overflow-wrap:anywhere;
@@ -1173,11 +1149,6 @@ export function initTextPixEditor(ctx) {
       ctx.markDirty?.();
       schedulePreview(80);
     });
-
-    chkRtDither?.addEventListener("change", () => {
-      ctx.markDirty?.();
-      schedulePreview(80);
-    });
   }
 
   let _uiBound = false;
@@ -1195,13 +1166,13 @@ export function initTextPixEditor(ctx) {
       
       await fillFontSelectOnce();
       
-      rtEditorEl.style.fontSize = "50px";
+      rtEditorEl.style.fontSize = "130px";
       rtEditorEl.style.lineHeight = "1";
       
       await ensureEditor();
 
       // upewnij się, że edytor ma od razu 50px zanim zrobimy pierwszy screenshot
-      rtEditorEl.style.fontSize = "50px";
+      rtEditorEl.style.fontSize = "130px";
       rtEditorEl.style.lineHeight = "1";
       
       // pierwszy preview dopiero po tym, jak przeglądarka przeliczy layout
@@ -1213,7 +1184,7 @@ export function initTextPixEditor(ctx) {
       editor.setContent("");
       editor.setContent("<p>\u200b</p>");
       editor.focus();
-      applyPendingInlineStyle({ fontSize: "50px" });
+      applyPendingInlineStyle({ fontSize: "130px" });
       currentAlign = "center";
       if (btnRtAlignCycle) {
         btnRtAlignCycle.textContent = "⇆";
