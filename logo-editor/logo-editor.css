@@ -633,3 +633,71 @@
   max-height: 100%;
   image-rendering: pixelated;
 }
+
+/* =========================
+   TEXT_PIX — poprawki layoutu
+========================= */
+
+#paneTextPix .rtStage{
+  /* zamiast "height:100%" -> centrowanie ratio box */
+  height: auto;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;           /* ważne: bez scrolla w stage */
+}
+
+/* stałe ratio 26:11 */
+#paneTextPix .rtRatio{
+  width: 100%;
+  aspect-ratio: 26 / 11;
+  border-radius: 16px;
+  overflow: hidden;
+  background: rgba(0,0,0,.10);
+  border: 1px solid rgba(255,255,255,.12);
+  display: flex;
+}
+
+/* edytor wypełnia ratio box */
+#paneTextPix .rtEditor{
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  margin: 0;
+  outline: none;
+  white-space: pre-wrap;
+}
+
+/* 🔧 klucz: TinyMCE/html w środku nie może dodawać domyślnych marginesów */
+#paneTextPix .rtEditor p{
+  margin: 0 !important;
+}
+
+/* panel narzędzi (lokalny, nie psuje globalnego toolbaru) */
+#paneTextPix .rtTools{
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+#paneTextPix .rtToolRow{
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+#paneTextPix .rtToolLbl{
+  font-size: 12px;
+  opacity: .85;
+  font-weight: 900;
+}
+
+#paneTextPix .rtSep{
+  width: 1px;
+  height: 26px;
+  background: rgba(255,255,255,.16);
+  margin: 0 2px;
+}
