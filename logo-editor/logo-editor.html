@@ -9,9 +9,9 @@
   <link rel="stylesheet" href="../css/base.css"/>
   <link rel="stylesheet" href="../css/builder.css"/>
   <link rel="stylesheet" href="logo-editor.css"/>
-  
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+
   <!-- TinyMCE -->
   <script src="https://cdn.tiny.cloud/1/rvwao9ib8mj0j8bfxbp4dml22na1rnlbgwu4wvfkitbd7dr3/tinymce/7/tinymce.min.js" referrerpolicy="origin"></script>
 
@@ -82,6 +82,7 @@
          EDITOR VIEW (NO SCROLL)
     ========================== -->
     <section class="editorShell" id="editorShell" style="display:none;">
+      <!-- cienki pasek pod auth bar: nazwa + zapisz -->
       <div class="editorLine">
         <div class="editorLineLeft">
           <span class="etlLbl">Nazwa</span>
@@ -93,6 +94,7 @@
         <div class="editorLineMsg" id="mMsg"></div>
       </div>
 
+      <!-- karta edytora -->
       <div class="card builder-card editorCard">
         <div class="editorToolbar" id="editorToolbar">
 
@@ -112,10 +114,11 @@
 
           <!-- TEXT_PIX -->
           <div class="toolRow" id="toolsTextPix" style="display:none;">
-            <!-- RZĄD 1 -->
+            <!-- rząd 1 -->
             <div class="rtToolRow">
               <div class="rtToolLbl">Czcionka</div>
 
+              <!-- ukryty select (fallback) -->
               <select id="selRtFont" class="inp" style="display:none;"></select>
 
               <div class="fontPick" id="fontPick">
@@ -131,7 +134,7 @@
                     <button class="btn sm fontPickSearchClear" id="fontPickSearchClear" type="button" title="Wyczyść">✕</button>
                   </div>
                   <div class="fontPickList" id="fontPickList"></div>
-                  <div class="fontPickEmpty" id="fontPickEmpty" hidden>Brak wyników</div>
+                  <div class="fontPickEmpty" id="fontPickEmpty" style="display:none;">Brak wyników</div>
                 </div>
               </div>
 
@@ -151,13 +154,11 @@
               <input id="inpRtLetter" class="inp" type="number" min="0" max="20" step="0.5" value="0"/>
             </div>
 
-            <!-- RZĄD 2 -->
+            <!-- rząd 2 -->
             <div class="rtToolRow">
               <div class="rtToolLbl">Góra</div>
               <input id="inpRtPadTop" class="inp" type="number" min="0" max="80" step="1" value="0"/>
-
               <span class="rtSep"></span>
-
               <div class="rtToolLbl">Dół</div>
               <input id="inpRtPadBot" class="inp" type="number" min="0" max="80" step="1" value="0"/>
 
@@ -179,12 +180,12 @@
               </label>
 
               <input id="inpThresh" class="inp" type="number" min="40" max="220" step="1" value="128" title="Próg (kontrast)"/>
-              <label class="chk" style="margin-left:6px;">
-                <input type="checkbox" id="chkRtDither"/>
-                <span>Dither</span>
-              </label>
+              <span class="rtSep"></span>
+              <button class="btn sm" id="btnPixPreview" type="button">Podgląd</button>
             </div>
           </div>
+          <!-- ✅ TO BYŁO U CIEBIE KLUCZOWE: brakowało zamknięcia toolsTextPix -->
+          <!-- /TEXT_PIX -->
 
           <!-- DRAW -->
           <div class="toolRow" id="toolsDraw" style="display:none;">
@@ -276,6 +277,7 @@
 
         </div><!-- /editorToolbar -->
 
+        <!-- CONTENT -->
         <div class="editorContent">
 
           <div class="pane" id="paneText" style="display:none;">
@@ -304,6 +306,7 @@
 
           <div class="pane" id="paneImage" style="display:none;">
             <div class="imgTopGrid">
+
               <div class="imgCard">
                 <div class="imgCardTitle">Obszar wyświetlacza</div>
                 <div class="imgStage" id="imgStage">
@@ -325,6 +328,7 @@
                 </div>
                 <div class="imgPrevHint">Kliknij podgląd, żeby otworzyć pełny ekran.</div>
               </div>
+
             </div>
           </div>
 
