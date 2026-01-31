@@ -850,8 +850,11 @@
 
 /* Popover pokazujemy tylko gdy JS zdejmie hidden */
 #fontPickPop:not([hidden]){
-  position: absolute;
-  top: calc(100% + 10px);
+  /* FIX: popover nie może być "przycinany" przez overflow toolbara.
+     JS (text-pix.js) pozycjonuje go względem przycisku. */
+  position: fixed;
+  /* top/left ustawia JS inline */
+  top: 0;
   left: 0;
   z-index: 6000;
 
@@ -1005,8 +1008,9 @@
 
 /* POP – tylko gdy JS zdejmie hidden */
 #fontPickPop:not([hidden]){
-  position: absolute !important;
-  top: calc(100% + 10px);
+  position: fixed !important;
+  /* top/left ustawia JS inline */
+  top: 0;
   left: 0;
   z-index: 99999;
 
