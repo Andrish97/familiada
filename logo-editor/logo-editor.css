@@ -701,3 +701,87 @@
   background: rgba(255,255,255,.16);
   margin: 0 2px;
 }
+
+/* =========================
+   TEXT_PIX toolbar on top
+========================= */
+
+#paneTextPix{
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* toolbar */
+#paneTextPix .rtTools{
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 10px;
+  border-radius: 14px;
+  background: rgba(0,0,0,.08);
+  border: 1px solid rgba(255,255,255,.12);
+}
+
+/* każdy rząd = jedna linia, ale może się zawijać */
+#paneTextPix .rtToolRow{
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;   /* ⭐ pozwala ładnie przejść do 2 linii na wąskim oknie */
+}
+
+#paneTextPix .rtToolLbl{
+  font-size: 11px;
+  font-weight: 900;
+  opacity: .8;
+  margin-right: 2px;
+}
+
+/* inputy mniejsze żeby się mieściły */
+#paneTextPix .rtToolRow .inp{
+  height: 30px;
+  padding: 4px 8px;
+  font-size: 13px;
+}
+
+/* przyciski BIU kompaktowe */
+#paneTextPix .rtToolRow .btn.sm{
+  height: 30px;
+  min-width: 32px;
+  padding: 0 8px;
+  font-weight: 900;
+}
+
+/* STAGE */
+
+#paneTextPix .rtStage{
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+#paneTextPix .rtRatio{
+  width: 100%;
+  aspect-ratio: 26 / 11;
+  display: flex;
+  border-radius: 16px;
+  overflow: hidden;
+  background: rgba(0,0,0,.12);
+  border: 1px solid rgba(255,255,255,.12);
+}
+
+#paneTextPix .rtEditor{
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  outline: none;
+}
+
+#paneTextPix .rtEditor p{
+  margin: 0 !important;
+}
+
