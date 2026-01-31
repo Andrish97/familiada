@@ -130,11 +130,22 @@
             <div class="toolSep"></div>
 
             <div class="toolGroup toolGroupWide">
-              <select class="inp" id="selRtFont"></select>
+              <!-- select może zostać jako “model” dla logiki, ale ukryty -->
+              <select class="inp" id="selRtFont" style="display:none;"></select>
+            
+              <!-- PRAWDZIWY picker -->
+              <div class="fontPick" id="fontPick">
+                <button type="button" class="inp fontPickBtn" id="fontPickBtn" aria-haspopup="listbox" aria-expanded="false">
+                  <span class="fontPickText" id="fontPickText">—</span>
+                  <span class="fontPickArrow" aria-hidden="true">▾</span>
+                </button>
+              </div>
+            
               <input class="inp xs" id="inpRtSize" type="number" min="8" max="220" step="1" />
               <input class="inp xs" id="inpRtLine" type="number" min="-40" max="120" step="1" />
               <input class="inp xs" id="inpRtLetter" type="number" min="-20" max="40" step="1" />
             </div>
+
 
             <div class="toolSep"></div>
 
@@ -150,14 +161,14 @@
           </div>
 
           <!-- FONT PICK (musi istnieć, bo text-pix.js używa) -->
-          <div class="fontPickPop" id="fontPickPop" style="display:none;">
+          <div class="fontPickPop" id="fontPickPop" hidden>
             <div class="fontPickHead">
               <div class="fontPickTitle">Czcionka</div>
               <button class="btn sm" id="fontPickSearchClear" type="button">✕</button>
             </div>
             <input class="inp" id="fontPickSearchInp" placeholder="Szukaj…"/>
             <div class="fontPickList" id="fontPickList"></div>
-            <div id="fontPickEmpty" style="display:none;">Brak wyników.</div>
+            <div id="fontPickEmpty" hidden>Brak wyników.</div>
           </div>
 
           <!-- DRAW: wszystkie narzędzia w 1 rzędzie (tooltipy zostają) -->
@@ -267,12 +278,6 @@
             <div class="rtStage">
               <div id="rtEditor" class="rtEditor" contenteditable="true" spellcheck="false" data-placeholder="Wpisz tekst…"></div>
             </div>
-
-            <!-- (musi istnieć, bo text-pix.js używa) -->
-            <div id="fontPick" style="display:none;"></div>
-            <div id="fontPickBtn" style="display:none;"></div>
-            <div id="fontPickText" style="display:none;"></div>
-          </div>
 
           <!-- DRAW: scena full width -->
           <div class="pane" id="paneDraw" style="display:none;">
