@@ -136,15 +136,18 @@
                 </button>
         
                 <div class="fontPickPop" id="fontPickPop" role="listbox" tabindex="-1" hidden>
-                  <div class="fontPickSearch">
-                    <input class="inp fontPickSearchInp" id="fontPickSearchInp" type="text"
-                           placeholder="Szukaj czcionki…" autocomplete="off" spellcheck="false" />
-                    <button class="btn sm fontPickSearchClear" id="fontPickSearchClear" type="button" title="Wyczyść">✕</button>
+                  <div class="fontPickPanel">
+                    <div class="fontPickSearch">
+                      <input class="inp fontPickSearchInp" id="fontPickSearchInp" type="text"
+                             placeholder="Szukaj czcionki…" autocomplete="off" spellcheck="false" />
+                      <button class="btn sm fontPickSearchClear" id="fontPickSearchClear" type="button" title="Wyczyść">✕</button>
+                    </div>
+                
+                    <div class="fontPickList" id="fontPickList"></div>
+                    <div class="fontPickEmpty" id="fontPickEmpty" style="display:none;">Brak wyników</div>
                   </div>
-                  <div class="fontPickList" id="fontPickList"></div>
-                  <div class="fontPickEmpty" id="fontPickEmpty" style="display:none;">Brak wyników</div>
                 </div>
-              </div>
+
 
               <span class="rtSep"></span>
         
