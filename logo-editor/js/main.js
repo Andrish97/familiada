@@ -244,9 +244,27 @@ async function showEditorView(mode) {
    AUTH UI
 ========================================================= */
 async function refreshAuthUi() {
-  const { data } = await sb.auth.getUser();
-  const u = data?.user;
-  if (who) who.textContent = u?.email || "—";
+  try {
+    if (!sb || !sb.auth || typeof sb.auth.getUser !== "function") {
+      console.error("[logo-editor] Supabase client (sb) not ready. Check supabase-js script load order.");
+      if (who) who.textContent = "—";
+      setMiniMsg?.("Błąd: Supabase nie jest gotowe (sprawdź kolejność scriptów).");
+      return;
+    }
+
+    const { data, error } = await sb.auth.getUser();
+    if (error) {
+      console.error("[logo-editor] sb.auth.getUser error:", error);
+      if (who) who.textContent = "—";
+      return;
+    }
+
+    const u = data?.user;
+    if (who) who.textContent = u?.email || "—";
+  } catch (e) {
+    console.error("[logo-editor] refreshAuthUi failed:", e);
+    if (who) who.textContent = "—";
+  }
 }
 
 /* =========================================================
