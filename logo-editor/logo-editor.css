@@ -1,15 +1,8 @@
 /* =========================================================
    Familiada — logo-editor.css (spójna wersja)
-   Fixy:
-   - TEXT_PIX toolbar tylko w TEXT_PIX (JS + HTML)
-   - TEXT_PIX toolbar = dokładnie 2 rzędy (scroll poziomy w rzędach)
-   - font picker popover: overlay, nie wypycha rzędu, nie jest ucinany
 ========================================================= */
 
 :root{
-  --lamp-active: #ffeb3b;
-  --lamp-glow: rgba(255,235,59,.7);
-
   --bd-weak: rgba(255,255,255,.10);
   --bd-mid:  rgba(255,255,255,.14);
   --bd-strong: rgba(255,255,255,.22);
@@ -25,11 +18,11 @@
   --shadow-pop: 0 24px 80px rgba(0,0,0,.55);
 }
 
-/* atrybut [hidden] ma ZAWSZE ukrywać */
+/* ZASADA: [hidden] zawsze wygrywa */
 [hidden]{ display:none !important; }
 
 /* =========================================================
-   LIST / GRID (kafelki)
+   LIST / GRID
 ========================================================= */
 .logoShell{ margin-top: 12px; }
 
@@ -41,7 +34,7 @@
 }
 
 /* =========================================================
-   EDITOR: NO SCROLL (strona)
+   EDITOR: NO SCROLL
 ========================================================= */
 .logo-editor-body.is-editor{ overflow: hidden; }
 
@@ -53,7 +46,6 @@
   gap: 10px;
 }
 
-/* pasek: nazwa + zapisz */
 .editorLine{
   display:flex;
   align-items:center;
@@ -95,7 +87,7 @@
   min-height: 0;
   display:flex;
   flex-direction: column;
-  overflow: visible; /* ważne dla overlayów */
+  overflow: visible; /* popover ma prawo wyjść */
 }
 
 /* =========================================================
@@ -110,7 +102,7 @@
   gap: 10px;
   position: relative;
   z-index: 5;
-  overflow: visible;
+  overflow: visible; /* popover ma prawo wyjść */
 }
 
 .toolRow{
@@ -118,7 +110,6 @@
   align-items:center;
   gap: 10px;
   flex-wrap: wrap;
-  overflow: visible;
 }
 
 .toolGrow{ flex:1; min-width: 260px; }
@@ -130,7 +121,6 @@
   margin: 0 2px;
 }
 
-/* checkbox label */
 .chk{
   display:flex;
   align-items:center;
@@ -139,9 +129,7 @@
   opacity:.9;
 }
 
-/* =========================================================
-   TEXT allowed chars inline
-========================================================= */
+/* TEXT: allowed chars */
 .charsInline{
   border-radius: var(--radius-md);
   border: 1px solid var(--bd-weak);
@@ -172,20 +160,19 @@
 }
 
 /* =========================================================
-   TEXT_PIX TOOLBAR: dokładnie 2 rzędy
-   - każdy rząd: 1 linia, bez zawijania
-   - overflow-x: auto (żeby nie robiło 8 rzędów)
+   TEXT_PIX TOOLBAR: ZAWSZE 2 rzędy (dokładnie)
 ========================================================= */
 #toolsTextPix{
-  display: flex;
+  display: flex;            /* JS przełącza display na flex */
   flex-direction: column;
   gap: 8px;
   width: 100%;
   align-items: stretch;
   flex-wrap: nowrap;
-  overflow: visible;
 }
 
+/* Każdy rząd: jedna linia, bez zawijania w “8 rzędów”.
+   Gdy nie mieści się w poziomie -> scroll poziomy w obrębie rzędu. */
 #toolsTextPix .rtToolRow{
   display: flex;
   align-items: center;
@@ -226,7 +213,7 @@
   height: 30px;
   min-width: 32px;
   padding: 0 10px;
-  font-weight: 1000;
+  font-weight: 900;
 }
 
 #btnRtAlignCycle{
@@ -235,11 +222,14 @@
 }
 
 /* =========================================================
-   FONT PICKER: popover overlay
-   - JS ustawia position:fixed + top/left
-   - CSS tylko „wygląd”
+   FONT PICKER: popover (widoczny i nieucięty)
 ========================================================= */
-#fontPick{ position: relative; display:inline-flex; align-items:center; }
+#fontPick{
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
 
 #fontPickBtn{
   display: inline-flex;
@@ -259,13 +249,16 @@
   text-overflow: ellipsis;
 }
 
-/* ukryty defensywnie */
-#fontPickPop[hidden]{ display:none !important; }
+#fontPickPop[hidden]{
+  display:none !important;
+}
 
-/* gdy otwarty */
 #fontPickPop:not([hidden]){
-  position: fixed;         /* ważne: nie wypycha rzędu */
-  z-index: 99999;          /* ponad kartą */
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 0;
+  z-index: 99999;
+
   width: min(720px, 92vw);
   max-height: 420px;
 
@@ -281,11 +274,20 @@
   gap: 10px;
   padding: 12px;
   border-bottom: 1px solid rgba(255,255,255,.10);
-  background: rgba(0,0,0,.12);
+  background: rgba(0,0,0,.10);
 }
 
-#fontPickSearchInp{ flex:1; min-width: 180px; height: 30px; }
-#fontPickSearchClear{ height: 30px; min-width: 34px; border-radius: 12px; }
+#fontPickSearchInp{
+  flex: 1;
+  min-width: 180px;
+  height: 30px;
+}
+
+#fontPickSearchClear{
+  height: 30px;
+  min-width: 34px;
+  border-radius: 12px;
+}
 
 #fontPickList{
   padding: 8px;
@@ -298,7 +300,6 @@
   display: grid;
   grid-template-columns: 1fr auto;
   gap: 10px;
-
   padding: 10px 12px;
   margin-bottom: 8px;
 
@@ -306,7 +307,6 @@
   border: 1px solid rgba(255,255,255,.10);
   background: rgba(0,0,0,.14);
   color: #fff;
-
   cursor: pointer;
 }
 
@@ -320,8 +320,6 @@
   box-shadow: 0 0 0 2px rgba(255,255,255,.10) inset;
 }
 
-#fontPickEmpty{ padding: 12px; opacity: .75; }
-
 /* =========================================================
    CONTENT
 ========================================================= */
@@ -329,7 +327,7 @@
   flex:1;
   min-height: 0;
   padding: 12px;
-  overflow: hidden;
+  overflow: hidden; /* strona nie scrolluje */
   position: relative;
   z-index: 1;
 }
@@ -337,7 +335,7 @@
 .pane{ height: 100%; min-height: 0; }
 
 /* =========================================================
-   TEXT preview
+   TEXT: preview
 ========================================================= */
 .prevFull{
   height: 100%;
@@ -351,7 +349,6 @@
   overflow:hidden;
   padding: 10px;
 }
-
 .prevFull canvas{
   width: 100%;
   height: auto;
@@ -360,7 +357,7 @@
 }
 
 /* =========================================================
-   TEXT_PIX stage 26:11
+   TEXT_PIX: stage 26:11
 ========================================================= */
 .pixWarn{
   margin-bottom: 10px;
@@ -401,8 +398,10 @@
   outline: none;
   white-space: pre-wrap;
 }
-
-.rtEditor:empty:before{ content: attr(data-placeholder); opacity: .55; }
+.rtEditor:empty:before{
+  content: attr(data-placeholder);
+  opacity: .55;
+}
 .rtEditor p{ margin: 0 !important; }
 
 /* =========================================================
@@ -539,6 +538,7 @@
   direction: rtl;
 }
 
+/* file button */
 .fileBtn{
   display:inline-flex;
   align-items:center;
@@ -555,49 +555,8 @@
   background: rgba(0,0,0,.16);
 }
 
-/* overlays */
+/* overlays zostają */
 .overlay{ z-index: 9999; pointer-events: auto; }
-
-.mGrid{
-  display: grid;
-  gap: 12px;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-@media (max-width: 820px){
-  .mGrid{ grid-template-columns: 1fr; }
-}
-.mTile{
-  appearance: none;
-  -webkit-appearance: none;
-  border: 1px solid var(--bd-mid);
-  background: rgba(0,0,0,.12);
-  border-radius: var(--radius-lg);
-  padding: 14px;
-  color: #fff;
-  text-align: left;
-  cursor: pointer;
-  display: grid;
-  gap: 6px;
-  box-shadow: 0 10px 30px rgba(0,0,0,.30);
-  pointer-events: auto;
-}
-.mTile:hover{
-  border-color: rgba(255,255,255,.26);
-  background: rgba(0,0,0,.18);
-  transform: translateY(-1px);
-}
-.mTile:active{ transform: translateY(0); }
-.mTileTitle{
-  font-weight: 900;
-  letter-spacing: .08em;
-  text-transform: uppercase;
-  font-size: 14px;
-}
-.mTileSub{
-  opacity: .78;
-  font-size: 12px;
-  line-height: 1.25;
-}
 
 .modal.bigModal{
   width: min(1100px, 96vw);
