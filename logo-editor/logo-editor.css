@@ -345,11 +345,10 @@
   border: 1px solid rgba(255,255,255,.12);
   background: rgba(0,0,0,.10);
   padding: 12px;
-  overflow:auto;
+  overflow:hidden;
 }
 
 .rtEditor{
-  min-height: 240px;
   outline: none;
   white-space: pre-wrap;
 }
@@ -634,6 +633,157 @@
   image-rendering: pixelated;
 }
 
+/* =========================
+   TEXT_PIX — poprawki layoutu
+========================= */
+
+#paneTextPix .rtStage{
+  /* zamiast "height:100%" -> centrowanie ratio box */
+  height: auto;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;           /* ważne: bez scrolla w stage */
+}
+
+/* stałe ratio 26:11 */
+#paneTextPix .rtRatio{
+  width: 100%;
+  aspect-ratio: 26 / 11;
+  border-radius: 16px;
+  overflow: hidden;
+  background: rgba(0,0,0,.10);
+  border: 1px solid rgba(255,255,255,.12);
+  display: flex;
+}
+
+/* edytor wypełnia ratio box */
+#paneTextPix .rtEditor{
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  margin: 0;
+  outline: none;
+  white-space: pre-wrap;
+}
+
+/* 🔧 klucz: TinyMCE/html w środku nie może dodawać domyślnych marginesów */
+#paneTextPix .rtEditor p{
+  margin: 0 !important;
+}
+
+/* panel narzędzi (lokalny, nie psuje globalnego toolbaru) */
+#paneTextPix .rtTools{
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+#paneTextPix .rtToolRow{
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+#paneTextPix .rtToolLbl{
+  font-size: 12px;
+  opacity: .85;
+  font-weight: 900;
+}
+
+#paneTextPix .rtSep{
+  width: 1px;
+  height: 26px;
+  background: rgba(255,255,255,.16);
+  margin: 0 2px;
+}
+
+/* =========================
+   TEXT_PIX toolbar on top
+========================= */
+
+#paneTextPix{
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* toolbar */
+#paneTextPix .rtTools{
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 10px;
+  border-radius: 14px;
+  background: rgba(0,0,0,.08);
+  border: 1px solid rgba(255,255,255,.12);
+}
+
+/* każdy rząd = jedna linia, ale może się zawijać */
+#paneTextPix .rtToolRow{
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;   /* ⭐ pozwala ładnie przejść do 2 linii na wąskim oknie */
+}
+
+#paneTextPix .rtToolLbl{
+  font-size: 11px;
+  font-weight: 900;
+  opacity: .8;
+  margin-right: 2px;
+}
+
+/* inputy mniejsze żeby się mieściły */
+#paneTextPix .rtToolRow .inp{
+  height: 30px;
+  padding: 4px 8px;
+  font-size: 13px;
+}
+
+/* przyciski BIU kompaktowe */
+#paneTextPix .rtToolRow .btn.sm{
+  height: 30px;
+  min-width: 32px;
+  padding: 0 8px;
+  font-weight: 900;
+}
+
+/* STAGE */
+
+#paneTextPix .rtStage{
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+#paneTextPix .rtRatio{
+  width: 100%;
+  aspect-ratio: 26 / 11;
+  display: flex;
+  border-radius: 16px;
+  overflow: hidden;
+  background: rgba(0,0,0,.12);
+  border: 1px solid rgba(255,255,255,.12);
+}
+
+#paneTextPix .rtEditor{
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  outline: none;
+}
+
+#paneTextPix .rtEditor p{
+  margin: 0 !important;
+}
+
 /* =========================================
    TEXT_PIX: toolbar 2-rzędowy + separatory
 ========================================= */
@@ -822,5 +972,3 @@
   padding: 12px;
   opacity: .75;
 }
-
-
