@@ -119,15 +119,100 @@
           </div>
 
 
+          <!-- TEXT_PIX: narzędzia + separatory + preview button -->
+          <div class="toolRow" id="toolsTextPix" style="display:none;">
+            <div class="toolGroup">
+              <button class="tbtn" id="btnRtBold" type="button" data-tip="Ctrl+B"></button>
+              <button class="tbtn" id="btnRtItalic" type="button" data-tip="Ctrl+I"></button>
+              <button class="tbtn" id="btnRtUnderline" type="button" data-tip="Ctrl+U"></button>
+              <button class="tbtn" id="btnRtAlignCycle" type="button" data-tip="Ctrl+Shift+E"></button>
+            </div>
+
+            <div class="toolSep"></div>
+
+            <div class="toolGroup toolGroupWide">
+              <!-- select może zostać jako “model” dla logiki, ale ukryty -->
+              <select class="inp" id="selRtFont" style="display:none;"></select>
+            
+              <!-- PRAWDZIWY picker -->
+              <div class="fontPick" id="fontPick">
+                <button type="button" class="inp fontPickBtn" id="fontPickBtn" aria-haspopup="listbox" aria-expanded="false">
+                  <span class="fontPickText" id="fontPickText">—</span>
+                  <span class="fontPickArrow" aria-hidden="true">▾</span>
+                </button>
+              </div>
+            
+              <input class="inp xs" id="inpRtSize" type="number" min="8" max="220" step="1" />
+              <input class="inp xs" id="inpRtLine" type="number" min="-40" max="120" step="1" />
+              <input class="inp xs" id="inpRtLetter" type="number" min="-20" max="40" step="1" />
+            </div>
+
+
+            <div class="toolSep"></div>
+
+            <div class="toolGroup">
+              <label class="chk"><input id="chkRtDither" type="checkbox"/> Dither</label>
+              <label class="chk"><input id="chkInvert" type="checkbox"/> Invert</label>
+              <input class="inp xs" id="inpThresh" type="number" min="0" max="255" step="1" />
+            </div>
+
+            <div class="toolSep"></div>
+
+            <button class="btn sm" id="btnPixPreview" type="button">Podgląd</button>
+          </div>
+
+          
                     
             <!-- TOOLBAR dla TEXT_PIX (w samym panelu, żeby nie mieszać globalnego toolbaru) -->
             <div class="rtTools">
+
+              <div class="toolRow" id="toolsTextPix" style="display:none;">
           
-              <!-- CZCIONKA (custom picker z wyszukiwarką) -->
-              <div class="rtToolRow">
                 <div class="rtToolLbl">Czcionka</div>
           
-                <!-- ukryty select (text-pix.js go wspiera / fallback) -->
+              <!-- ROZMIAR / INTERLINIA / ODSTĘP -->
+                <div class="rtToolLbl">Rozmiar</div>
+                <input id="inpRtSize" class="inp" type="number" min="10" max="220" step="1" value="130"/>
+                <div class="toolSep"></div>
+                <div class="rtToolLbl">Interlinia</div>
+                <input id="inpRtLine" class="inp" type="number" min="0.6" max="3.0" step="0.05" value="1"/>
+                <div class="toolSep"></div>
+                <div class="rtToolLbl">Odstęp</div>
+                <input id="inpRtLetter" class="inp" type="number" min="0" max="20" step="0.5" value="0"/>
+                <div class="toolSep"></div>
+              </div>
+          
+              <!-- AKAPIT: góra/dół (baseline fix będzie też w CSS) -->
+              <div class="toolRow" id="toolsTextPix" style="display:none;">
+                <div class="rtToolLbl">Góra</div>
+                <input id="inpRtPadTop" class="inp" type="number" min="0" max="80" step="1" value="0"/>
+                <div class="toolSep"></div>
+                <div class="rtToolLbl">Dół</div>
+                <input id="inpRtPadBot" class="inp" type="number" min="0" max="80" step="1" value="0"/>
+                <div class="toolSep"></div>
+          
+              <!-- BIU + wyrównanie (wracają) -->
+                <button class="btn sm" id="btnRtBold" type="button" title="Pogrubienie">B</button>
+                <button class="btn sm" id="btnRtItalic" type="button" title="Kursywa">I</button>
+                <button class="btn sm" id="btnRtUnderline" type="button" title="Podkreślenie">U</button>
+          
+                <div class="toolSep"></div>
+          
+                <button class="btn sm" id="btnRtAlignCycle" type="button" title="Wyrównanie">⇆</button>
+          
+                <div class="toolSep"></div>
+          
+                <label class="chk" style="margin-left:6px;">
+                  <input type="checkbox" id="chkInvert"/>
+                  <span>Odwróć (białe tło)</span>
+                </label>
+          
+                <!-- jeśli zostawiasz threshold, to OK -->
+                <input id="inpThresh" class="inp" type="number" min="40" max="220" step="1" value="128" title="Próg (kontrast)"/>
+              </div>
+
+
+               <!-- ukryty select (text-pix.js go wspiera / fallback) -->
                 <select id="selRtFont" class="inp" style="display:none;"></select>
           
                 <div class="fontPick" id="fontPick">
@@ -146,42 +231,6 @@
                     <div class="fontPickEmpty" id="fontPickEmpty" style="display:none;">Brak wyników</div>
                   </div>
                 </div>
-          
-              <!-- ROZMIAR / INTERLINIA / ODSTĘP -->
-                <div class="rtToolLbl">Rozmiar</div>
-                <input id="inpRtSize" class="inp" type="number" min="10" max="220" step="1" value="130"/>
-                <div class="rtToolLbl">Interlinia</div>
-                <input id="inpRtLine" class="inp" type="number" min="0.6" max="3.0" step="0.05" value="1"/>
-                <div class="rtToolLbl">Odstęp</div>
-                <input id="inpRtLetter" class="inp" type="number" min="0" max="20" step="0.5" value="0"/>
-              </div>
-          
-              <!-- AKAPIT: góra/dół (baseline fix będzie też w CSS) -->
-              <div class="rtToolRow">
-                <div class="rtToolLbl">Góra</div>
-                <input id="inpRtPadTop" class="inp" type="number" min="0" max="80" step="1" value="0"/>
-                <div class="rtToolLbl">Dół</div>
-                <input id="inpRtPadBot" class="inp" type="number" min="0" max="80" step="1" value="0"/>
-          
-              <!-- BIU + wyrównanie (wracają) -->
-                <button class="btn sm" id="btnRtBold" type="button" title="Pogrubienie">B</button>
-                <button class="btn sm" id="btnRtItalic" type="button" title="Kursywa">I</button>
-                <button class="btn sm" id="btnRtUnderline" type="button" title="Podkreślenie">U</button>
-          
-                <span class="rtSep"></span>
-          
-                <button class="btn sm" id="btnRtAlignCycle" type="button" title="Wyrównanie">⇆</button>
-          
-                <span class="rtSep"></span>
-          
-                <label class="chk" style="margin-left:6px;">
-                  <input type="checkbox" id="chkInvert"/>
-                  <span>Odwróć (białe tło)</span>
-                </label>
-          
-                <!-- jeśli zostawiasz threshold, to OK -->
-                <input id="inpThresh" class="inp" type="number" min="40" max="220" step="1" value="128" title="Próg (kontrast)"/>
-              </div>
           
             </div>
 
