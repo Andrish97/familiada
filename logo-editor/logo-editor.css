@@ -356,6 +356,114 @@
 }
 
 /* =========================================================
+   FONT PICKER: popover “ładne okienko” pod przyciskiem
+   (działa z HTML: #fontPick > #fontPickBtn + #fontPickPop[hidden])
+========================================================= */
+#fontPick{
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+#fontPickBtn{
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-width: 280px;
+  max-width: 420px;
+  height: 30px;
+  padding: 0 10px;
+  border-radius: var(--radius-sm);
+}
+#fontPickText{
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+#fontPickPop{
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 0;
+  z-index: 6000;
+
+  width: 520px;
+  max-width: 72vw;
+  max-height: 360px;
+
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(255,255,255,.16);
+  background: rgba(10,10,14,.96);
+  box-shadow: var(--shadow-pop);
+
+  overflow: hidden;
+
+  /* kiedy widoczny, ma być block */
+  display: block;
+}
+
+/* search bar */
+#fontPickPop .fontPickSearch{
+  display: flex;
+  gap: 10px;
+  padding: 10px;
+  border-bottom: 1px solid rgba(255,255,255,.10);
+  background: rgba(0,0,0,.10);
+}
+#fontPickSearchInp{
+  flex: 1;
+  min-width: 180px;
+  height: 30px;
+}
+#fontPickSearchClear{
+  height: 30px;
+  min-width: 34px;
+  border-radius: 12px;
+}
+
+/* lista */
+#fontPickList{
+  padding: 8px;
+  overflow: auto;
+  max-height: 290px;
+}
+
+/* jeśli text-pix.js generuje elementy listy jako divy/buttony,
+   wspieramy klasami “bezpiecznymi” */
+#fontPickList .fontPickItem,
+#fontPickList button,
+#fontPickList .item{
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+
+  padding: 10px 12px;
+  margin-bottom: 8px;
+
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,.10);
+  background: rgba(0,0,0,.14);
+  color: #fff;
+
+  cursor: pointer;
+}
+#fontPickList .fontPickItem:hover,
+#fontPickList button:hover,
+#fontPickList .item:hover{
+  border-color: rgba(255,255,255,.24);
+  background: rgba(0,0,0,.20);
+}
+
+/* empty */
+#fontPickEmpty{
+  padding: 12px;
+  opacity: .75;
+}
+
+/* =========================================================
    CONTENT (bez scrolla strony)
 ========================================================= */
 .editorContent{
@@ -670,6 +778,145 @@
 }
 
 /* =========================================================
+   TEXT_PIX — TOOLBAR: zawsze 2 rzędy (dokładnie)
+   ========================================================= */
+
+/* #toolsTextPix ma w HTML dwa divy .rtToolRow. Wymuszamy układ 2x1. */
+#toolsTextPix{
+  display: grid !important;
+  grid-template-rows: auto auto;
+  gap: 8px;
+  width: 100%;
+  align-items: start;
+}
+
+/* Każdy rząd ma być pełnej szerokości i układać elementy w jednej linii,
+   a gdy brakuje miejsca — może się zawinąć w obrębie TEGO rzędu. */
+#toolsTextPix .rtToolRow{
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap; /* zawijanie tylko wewnątrz rzędu */
+}
+
+/* Separatory jako pionowa linia */
+#toolsTextPix .rtSep{
+  width: 1px;
+  height: 26px;
+  background: rgba(255,255,255,.18);
+  margin: 0 2px;
+  flex: 0 0 auto;
+}
+
+/* BIU – kompakt + możliwość podpisu bez rozwalania paska */
+#toolsTextPix #btnRtBold,
+#toolsTextPix #btnRtItalic,
+#toolsTextPix #btnRtUnderline{
+  min-width: 34px;
+  padding: 0 10px;
+  font-weight: 900;
+}
+
+/* Wyrównanie – “chip” jak wcześniej (wyraźne) */
+#toolsTextPix #btnRtAlignCycle{
+  padding: 0 12px;
+  border-radius: 999px;
+  font-weight: 900;
+  letter-spacing: .03em;
+  background: rgba(0,0,0,.16);
+  border: 1px solid rgba(255,255,255,.16);
+}
+#toolsTextPix #btnRtAlignCycle:hover{
+  border-color: rgba(255,255,255,.28);
+  background: rgba(0,0,0,.22);
+}
+
+
+/* =========================================================
+   FONT PICKER — popover, który NIE łamie [hidden]
+   (klucz: stylujemy TYLKO gdy NOT([hidden]))
+   ========================================================= */
+
+/* Kotwica dla popovera */
+#fontPick{
+  position: relative;
+}
+
+/* Jeśli ukryty — ma być na pewno niewidoczny (defensywnie) */
+#fontPickPop[hidden]{
+  display: none !important;
+}
+
+/* Popover pokazujemy tylko gdy JS zdejmie hidden */
+#fontPickPop:not([hidden]){
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 0;
+  z-index: 6000;
+
+  width: min(720px, 92vw);
+  max-height: 420px;
+
+  display: block;            /* OK, bo tylko gdy nie-hidden */
+  padding: 0;
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,.16);
+  background: rgba(10,10,14,.96);
+  box-shadow: 0 24px 80px rgba(0,0,0,.55);
+  overflow: hidden;
+}
+
+/* Góra (szukajka) */
+#fontPickPop .fontPickSearch{
+  display: flex;
+  gap: 10px;
+  padding: 12px;
+  border-bottom: 1px solid rgba(255,255,255,.10);
+}
+
+#fontPickPop .fontPickSearchInp{
+  flex: 1;
+  min-width: 180px;
+}
+
+/* Lista */
+#fontPickPop .fontPickList{
+  overflow: auto;
+  padding: 8px;
+  max-height: 340px; /* 420 - search */
+}
+
+/* Element listy */
+#fontPickPop .fontPickItem{
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,.08);
+  background: rgba(0,0,0,.14);
+  cursor: pointer;
+  margin-bottom: 8px;
+}
+
+#fontPickPop .fontPickItem:hover{
+  border-color: rgba(255,255,255,.22);
+  background: rgba(0,0,0,.20);
+}
+
+#fontPickPop .fontPickItem.on{
+  border-color: rgba(255,255,255,.34);
+  box-shadow: 0 0 0 2px rgba(255,255,255,.10) inset;
+}
+
+/* Brak wyników */
+#fontPickEmpty{
+  padding: 12px;
+  opacity: .75;
+}
+
+/* =========================================================
    HARD RULE: [hidden] zawsze wygrywa (żadnych wyjątków)
 ========================================================= */
 [hidden]{ display:none !important; }
@@ -831,4 +1078,3 @@
 
 /* empty */
 #fontPickEmpty{ padding: 12px; opacity: .75; }
-
