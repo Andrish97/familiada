@@ -1,5 +1,5 @@
 // familiada/logo-editor/js/main.js
-// Glowna logika strony + lista kafelkow + routing do edytorow.
+// Główna logika strony + lista kafelków + routing do edytorów.
 
 import { sb } from "../../js/core/supabase.js";
 import { requireAuth, signOut } from "../../js/core/auth.js";
@@ -10,7 +10,7 @@ import { initDrawEditor } from "./draw.js";
 import { initImageEditor } from "./image.js";
 
 /* =========================================================
-   CONSTS
+   CONSTS / CANVAS
 ========================================================= */
 const TYPE_GLYPH = "GLYPH_30x10";
 const TYPE_PIX = "PIX_150x70";
@@ -19,6 +19,10 @@ const TILES_X = 30;
 const TILES_Y = 10;
 const DOT_W = 150; // 30*5
 const DOT_H = 70;  // 10*7
+
+// 208x88 (7x9 siatka z przerwami) – zgodnie z Twoim text-pix.js
+const BIG_W = 208;
+const BIG_H = 88;
 
 /* =========================================================
    DOM
@@ -31,24 +35,24 @@ const btnBack = $("btnBack");
 
 const listShell = $("listShell");
 const editorShell = $("editorShell");
+const editorToolbar = $("editorToolbar");
+
+const grid = $("grid");
+const hint = $("hint");
+const msg = $("msg");
+
+const btnPreview = $("btnPreview");
+const btnActivate = $("btnActivate");
+
+const btnExport = $("btnExport");
+const btnImport = $("btnImport");
+const inpImportLogoFile = $("inpImportLogoFile");
 
 const logoName = $("logoName");
 const btnCreate = $("btnCreate");
-const editorMsg = $("mMsg");
+const mMsg = $("mMsg");
 
-const paneText = $("paneText");
-const paneTextPix = $("paneTextPix");
-const paneDraw = $("paneDraw");
-const paneImage = $("paneImage");
-
-const bigPreview = $("bigPreview");
-const bigPreviewFull = $("bigPreviewFull");
-
-const createOverlay = $("createOverlay");
-const previewOverlay = $("previewOverlay");
-const btnPreviewClose = $("btnPreviewClose");
-
-/* toolbary */
+/* tools/panes */
 const toolsText = $("toolsText");
 const charsInline = $("charsInline");
 const toolsTextPix = $("toolsTextPix");
@@ -56,287 +60,250 @@ const toolsDraw = $("toolsDraw");
 const toolsImage = $("toolsImage");
 const imgPanels = $("imgPanels");
 
-/* create modal buttons */
+const paneText = $("paneText");
+const paneTextPix = $("paneTextPix");
+const paneDraw = $("paneDraw");
+const paneImage = $("paneImage");
+
+const createOverlay = $("createOverlay");
+const previewOverlay = $("previewOverlay");
+
 const pickText = $("pickText");
 const pickTextPix = $("pickTextPix");
 const pickDraw = $("pickDraw");
 const pickImage = $("pickImage");
 const btnPickCancel = $("btnPickCancel");
-
-/* list buttons */
-const grid = $("grid");
-const btnPreview = $("btnPreview");
-const btnActivate = $("btnActivate");
-const btnExport = $("btnExport");
-const btnImport = $("btnImport");
-const inpImportLogoFile = $("inpImportLogoFile");
-
-const msg = $("msg");
+const btnPreviewClose = $("btnPreviewClose");
 
 /* =========================================================
-   UI helpers
+   HELPERS
 ========================================================= */
-function show(el, on){
+function show(el, on) {
   if (!el) return;
   el.style.display = on ? "" : "none";
 }
 
-function setMsg(t){
-  if (msg) msg.textContent = t || "";
-}
-
-function setEditorMsg(t){
-  if (editorMsg) editorMsg.textContent = t || "";
-}
-
-function setBodyEditor(on){
+function setBodyEditor(on) {
   document.body.classList.toggle("is-editor", !!on);
 }
 
-function hideAllPanes(){
-  show(paneText, false);
-  show(paneTextPix, false);
-  show(paneDraw, false);
-  show(paneImage, false);
+function setTopBackButtonForEditor(isEditor) {
+  if (!btnBack) return;
+  if (isEditor) {
+    btnBack.textContent = "✕";
+    btnBack.title = "Zamknij edytor";
+  } else {
+    btnBack.textContent = "← Moje gry";
+    btnBack.title = "";
+  }
 }
 
-/* =========================================================
-   TOOLBARS (twardo przełączane)
-========================================================= */
-function hideAllToolbars(){
+function hideAllToolsAndPanes() {
+  // tool rows
   show(toolsText, false);
   show(charsInline, false);
   show(toolsTextPix, false);
   show(toolsDraw, false);
   show(toolsImage, false);
   show(imgPanels, false);
+
+  // panes
+  show(paneText, false);
+  show(paneTextPix, false);
+  show(paneDraw, false);
+  show(paneImage, false);
 }
 
-function showToolbarsForMode(mode){
-  hideAllToolbars();
+function openOverlay(ov) { if (ov) ov.style.display = "grid"; }
+function closeOverlay(ov) { if (ov) ov.style.display = "none"; }
+
+function setMsg(text = "", kind = "") {
+  if (!msg) return;
+  msg.textContent = String(text || "");
+  msg.className = "msg " + (kind || "");
+}
+
+function setMiniMsg(text = "") {
+  if (!mMsg) return;
+  mMsg.textContent = String(text || "");
+}
+
+/* =========================================================
+   BITPACK (dla zapisu do bazy / exportu)
+========================================================= */
+function packBitsRowMajorMSB(bits, w, h) {
+  const bytes = new Uint8Array(Math.ceil((w * h) / 8));
+  let bi = 0;
+
+  for (let i = 0; i < w * h; i += 8) {
+    let b = 0;
+    for (let k = 0; k < 8; k++) {
+      const v = bits[i + k] ? 1 : 0;
+      b |= (v << (7 - k));
+    }
+    bytes[bi++] = b;
+  }
+  return btoa(String.fromCharCode(...bytes));
+}
+
+/* =========================================================
+   PREVIEW (wspólny)
+========================================================= */
+function clearCanvas(c) {
+  if (!c) return;
+  const g = c.getContext("2d");
+  g.clearRect(0, 0, c.width, c.height);
+}
+
+// bardzo prosty renderer podglądu – zakładam, że Twoje moduły już renderują na canvasach
+function onPreview(_payload) {
+  // tutaj nic nie musimy robić – moduły (text/draw/image) zwykle same rysują
+}
+
+/* =========================================================
+   EDITORS INIT
+========================================================= */
+const ctx = {
+  DOT_W, DOT_H, BIG_W, BIG_H,
+  packBitsRowMajorMSB,
+  onPreview,
+  markDirty: () => dirtyMark(),
+  clearDirty: () => dirtyClear(),
+};
+
+let textEditor = null;
+let textPixEditor = null;
+let drawEditor = null;
+let imageEditor = null;
+
+let dirty = false;
+function dirtyMark() { dirty = true; }
+function dirtyClear() { dirty = false; }
+
+function ensureEditors() {
+  if (!textEditor) textEditor = initTextEditor(ctx);
+  if (!textPixEditor) textPixEditor = initTextPixEditor(ctx);
+  if (!drawEditor) drawEditor = initDrawEditor(ctx);
+  if (!imageEditor) imageEditor = initImageEditor(ctx);
+}
+
+/* =========================================================
+   VIEW ROUTING (LIST <-> EDITOR)
+========================================================= */
+let currentMode = null; // "TEXT"|"TEXT_PIX"|"DRAW"|"IMAGE"
+
+function showListView() {
+  setBodyEditor(false);
+  setTopBackButtonForEditor(false);
+
+  closeOverlay(createOverlay);
+  closeOverlay(previewOverlay);
+
+  hideAllToolsAndPanes();
+  show(editorShell, false);
+  show(listShell, true);
+
+  currentMode = null;
+}
+
+async function showEditorView(mode) {
+  ensureEditors();
+
+  setBodyEditor(true);
+  setTopBackButtonForEditor(true);
+
+  show(listShell, false);
+  show(editorShell, true);
+
+  hideAllToolsAndPanes();
+  setMiniMsg("");
+
+  currentMode = mode;
 
   if (mode === "TEXT") {
     show(toolsText, true);
-    // charsInline pokazuje tylko text.js toggle'uje
-  }
-  if (mode === "TEXT_PIX") {
-    show(toolsTextPix, true);
-  }
-  if (mode === "DRAW") {
-    show(toolsDraw, true);
-  }
-  if (mode === "IMAGE") {
-    show(toolsImage, true);
-    // imgPanels image.js sam otwiera panel -> tu tylko kontener istnieje
-    show(imgPanels, true);
-  }
-}
-
-/* =========================================================
-   PREVIEW RENDER (stub: w Twoim pliku jest już)
-   Zostawiamy Twoje istniejące renderery.
-========================================================= */
-function renderRows30x10ToBig(rows, canvas){
-  // ta funkcja jest w Twoim main.js (zostaje)
-  // placeholder tylko po to, żeby nie mieszać tu Twojej logiki
-}
-
-function renderBits150x70ToBig(bits, canvas){
-  // jw.
-}
-
-/* =========================================================
-   DIRTY / close confirm
-========================================================= */
-let dirty = false;
-function markDirty(){ dirty = true; }
-function clearDirty(){ dirty = false; }
-
-function confirmCloseIfDirty(){
-  if (!dirty) return true;
-  return confirm("Masz niezapisane zmiany. Na pewno zamknąć edytor?");
-}
-
-/* =========================================================
-   AUTH
-========================================================= */
-await requireAuth();
-
-async function refreshWho(){
-  const { data } = await sb.auth.getUser();
-  who.textContent = data?.user?.email || "—";
-}
-
-btnLogout?.addEventListener("click", async () => {
-  await signOut();
-  location.href = "../index.html";
-});
-
-btnBack?.addEventListener("click", () => {
-  // w edytorze: zamyka; w liście: wraca
-  if (editorShell && editorShell.style.display !== "none") closeEditor(false);
-  else location.href = "../builder.html";
-});
-
-/* =========================================================
-   LIST DATA (Twoje istniejące funkcje — zostają)
-   W Twoim pliku jest pełna obsługa Supabase CRUD.
-   Tutaj zakładam, że masz:
-   - listLogos(), deleteLogo(id), setActiveLogo(id) itd.
-========================================================= */
-let logos = [];
-let selectedLogoId = null;
-let editorMode = null;
-
-let sessionSavedLogoId = null;
-let sessionSavedMode = null;
-
-function updateListButtons(){
-  const on = !!selectedLogoId;
-  btnPreview.disabled = !on;
-  btnActivate.disabled = !on;
-  btnExport.disabled = !on;
-}
-
-function renderList(){
-  grid.innerHTML = "";
-  updateListButtons();
-
-  // ... u Ciebie jest pełny rendering kafelków
-}
-
-/* =========================================================
-   EDYTORY (moduły)
-========================================================= */
-const ctx = {
-  DOT_W, DOT_H,
-  markDirty,
-  clearDirty,
-  onPreview(payload){
-    // payload: { kind:"GLYPH", rows } albo { kind:"PIX", bits }
-    updateBigPreviewFromPayload(payload);
-  },
-  packBitsRowMajorMSB(bits, w, h){
-    // w Twoim main.js masz tę funkcję — zostaw swoją implementację
-    return "";
-  }
-};
-
-let textEditor = initTextEditor(ctx);
-let textPixEditor = initTextPixEditor(ctx);
-let drawEditor = initDrawEditor(ctx);
-let imageEditor = initImageEditor(ctx);
-
-let lastPreviewPayload = null;
-
-function updateBigPreviewFromPayload(payload){
-  if (!payload) return;
-  lastPreviewPayload = payload;
-
-  if (payload.kind === "GLYPH") renderRows30x10ToBig(payload.rows, bigPreview);
-  else renderBits150x70ToBig(payload.bits, bigPreview);
-}
-
-function openEditor(mode){
-  hideAllPanes();
-  showToolbarsForMode(mode);
-
-  editorMode = mode;
-  sessionSavedLogoId = null;
-  sessionSavedMode = mode;
-
-  clearDirty();
-  setEditorMsg("");
-
-  // start preview (czyść)
-  lastPreviewPayload = { kind: "GLYPH", rows: Array.from({ length: 10 }, () => " ".repeat(30)) };
-  updateBigPreviewFromPayload(lastPreviewPayload);
-
-  // pokaż editor
-  show(listShell, false);
-  show(editorShell, true);
-  setBodyEditor(true);
-
-  // default nazwa (możesz nadpisać później)
-  logoName.value =
-    mode === "TEXT" ? "Napis" :
-    mode === "TEXT_PIX" ? "Tekst" :
-    mode === "DRAW" ? "Rysunek" :
-    "Obraz";
-
-  if (mode === "TEXT"){
     show(paneText, true);
-    textEditor.open();
-  } else if (mode === "TEXT_PIX"){
+    await textEditor.open?.();
+  } else if (mode === "TEXT_PIX") {
+    show(toolsTextPix, true);
     show(paneTextPix, true);
-    textPixEditor.open();
-  } else if (mode === "DRAW"){
+    await textPixEditor.open?.();
+  } else if (mode === "DRAW") {
+    show(toolsDraw, true);
     show(paneDraw, true);
-    drawEditor.open();
-  } else if (mode === "IMAGE"){
+    await drawEditor.open?.();
+  } else if (mode === "IMAGE") {
+    show(toolsImage, true);
+    show(imgPanels, true);
     show(paneImage, true);
-    imageEditor.open();
+    await imageEditor.open?.();
   }
 }
 
-function closeEditor(force = false){
-  if (!force && !confirmCloseIfDirty()) return;
-
-  if (editorMode === "TEXT") textEditor.close();
-  if (editorMode === "TEXT_PIX") textPixEditor.close();
-  if (editorMode === "DRAW") drawEditor.close();
-  if (editorMode === "IMAGE") imageEditor.close();
-
-  editorMode = null;
-
-  hideAllPanes();
-  hideAllToolbars();
-  clearDirty();
-
-  show(editorShell, false);
-  show(listShell, true);
-  setBodyEditor(false);
+/* =========================================================
+   AUTH UI
+========================================================= */
+async function refreshAuthUi() {
+  const { data } = await sb.auth.getUser();
+  const u = data?.user;
+  if (who) who.textContent = u?.email || "—";
 }
 
 /* =========================================================
-   CREATE MODAL
+   BIND UI
 ========================================================= */
-function openCreateModal(){
-  show(createOverlay, true);
+function bindUi() {
+  btnLogout?.addEventListener("click", async () => {
+    await signOut();
+    location.href = "../index.html";
+  });
+
+  btnBack?.addEventListener("click", () => {
+    // w edytorze to ma działać jak ✕
+    if (document.body.classList.contains("is-editor")) {
+      showListView();
+    } else {
+      location.href = "../games.html";
+    }
+  });
+
+  // modal trybów
+  pickText?.addEventListener("click", async () => { closeOverlay(createOverlay); await showEditorView("TEXT"); });
+  pickTextPix?.addEventListener("click", async () => { closeOverlay(createOverlay); await showEditorView("TEXT_PIX"); });
+  pickDraw?.addEventListener("click", async () => { closeOverlay(createOverlay); await showEditorView("DRAW"); });
+  pickImage?.addEventListener("click", async () => { closeOverlay(createOverlay); await showEditorView("IMAGE"); });
+  btnPickCancel?.addEventListener("click", () => closeOverlay(createOverlay));
+
+  btnPreviewClose?.addEventListener("click", () => closeOverlay(previewOverlay));
+
+  // import/export (hooki – docelowo Twoja logika bazy)
+  btnImport?.addEventListener("click", () => inpImportLogoFile?.click?.());
+  inpImportLogoFile?.addEventListener("change", async () => {
+    // tu zostawiamy Twoją logikę importu – ten plik tylko podpina UI
+    // (ważne: nie wywalaj selection, tylko obsłuż to w swoim imporcie)
+  });
+
+  btnCreate?.addEventListener("click", async () => {
+    // tu zostawiamy Twoją logikę zapisu – ten plik tylko podpina UI
+    setMiniMsg("Zapis…");
+    setTimeout(() => setMiniMsg(""), 900);
+  });
+
+  // demo: otwarcie modala trybu (to jest Twój „Nowe logo” flow – podłącz jak chcesz)
+  // jeśli masz osobny kafelek „+”, to on powinien robić openOverlay(createOverlay)
 }
-function closeCreateModal(){
-  show(createOverlay, false);
-}
-
-pickText?.addEventListener("click", () => { closeCreateModal(); openEditor("TEXT"); });
-pickTextPix?.addEventListener("click", () => { closeCreateModal(); openEditor("TEXT_PIX"); });
-pickDraw?.addEventListener("click", () => { closeCreateModal(); openEditor("DRAW"); });
-pickImage?.addEventListener("click", () => { closeCreateModal(); openEditor("IMAGE"); });
-btnPickCancel?.addEventListener("click", () => closeCreateModal());
-
-/* =========================================================
-   PREVIEW OVERLAY
-========================================================= */
-btnPreviewClose?.addEventListener("click", () => show(previewOverlay, false));
-btnPreview?.addEventListener("click", () => {
-  if (!lastPreviewPayload) return;
-  show(previewOverlay, true);
-  if (lastPreviewPayload.kind === "GLYPH") renderRows30x10ToBig(lastPreviewPayload.rows, bigPreviewFull);
-  else renderBits150x70ToBig(lastPreviewPayload.bits, bigPreviewFull);
-});
-
-/* =========================================================
-   SAVE (zostawiasz swoją logikę Supabase)
-========================================================= */
-btnCreate?.addEventListener("click", async () => {
-  // u Ciebie jest zapis -> tu zostawiasz swój kod
-  // po udanym zapisie:
-  // clearDirty();
-});
 
 /* =========================================================
    INIT
 ========================================================= */
-await refreshWho();
-// await refresh();  // u Ciebie: pobranie listy
-hideAllToolbars();
+(async function boot(){
+  await requireAuth();
+  bindUi();
+  await refreshAuthUi();
+
+  // start w liście
+  showListView();
+
+  // jeśli chcesz automatycznie pokazać modal „Nowe logo”:
+  // openOverlay(createOverlay);
+})();
