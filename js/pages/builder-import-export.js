@@ -35,7 +35,7 @@ function makeVoterToken() {
    EXPORT GAME
 ========================================================= */
 
-export async function exportGame(gameId) {
+export async function exportGame(gameId, onProgress) {
   const { data: game, error: gErr } = await sb()
     .from("games")
     .select("id,name,type")
@@ -50,12 +50,20 @@ export async function exportGame(gameId) {
     .order("ord", { ascending: true });
   if (qErr) throw qErr;
 
+  const qs = questions || [];
   const out = {
     game: { name: game?.name ?? "Gra", type: safeType(game?.type) },
     questions: [],
   };
 
-  for (const q of questions || []) {
+  const n = qs.length;
+  if (typeof onProgress === "function") {
+    onProgress({ step: "Eksport: pobieranie pytań…", i: 0, n, msg: "" });
+  }
+
+  for (let idx = 0; idx < qs.length; idx++) {
+    const q = qs[idx];
+
     const { data: answers, error: aErr } = await sb()
       .from("answers")
       .select("ord,text,fixed_points")
@@ -70,6 +78,15 @@ export async function exportGame(gameId) {
         fixed_points: Number(a.fixed_points) || 0,
       })),
     });
+
+    if (typeof onProgress === "function") {
+      onProgress({
+        step: "Eksport: pobieranie pytań…",
+        i: idx + 1,
+        n,
+        msg: q?.text ? String(q.text).slice(0, 60) : "",
+      });
+    }
   }
 
   return out;
@@ -79,7 +96,7 @@ export async function exportGame(gameId) {
    IMPORT GAME (definicja gry: games + questions + answers)
 ========================================================= */
 
-export async function importGame(payload, ownerId) {
+export async function importGame(payload, ownerId, onProgress) {
   if (!payload?.game || !Array.isArray(payload.questions)) {
     throw new Error("Zły format pliku (brak game / questions).");
   }
@@ -103,6 +120,10 @@ export async function importGame(payload, ownerId) {
   if (gErr) throw gErr;
 
   const qs = payload.questions || [];
+   const n = qs.length;
+   if (typeof onProgress === "function") {
+     onProgress({ step: "Import: tworzenie gry…", i: 0, n, msg: "" });
+   }
   for (let qi = 0; qi < qs.length; qi++) {
     const srcQ = qs[qi] || {};
     const qText = safeQText(srcQ.text, qi);
