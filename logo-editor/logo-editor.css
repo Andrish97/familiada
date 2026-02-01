@@ -850,11 +850,8 @@
 
 /* Popover pokazujemy tylko gdy JS zdejmie hidden */
 #fontPickPop:not([hidden]){
-  /* FIX: popover nie może być "przycinany" przez overflow toolbara.
-     JS (text-pix.js) pozycjonuje go względem przycisku. */
-  position: fixed;
-  /* top/left ustawia JS inline */
-  top: 0;
+  position: absolute;
+  top: calc(100% + 10px);
   left: 0;
   z-index: 6000;
 
@@ -1082,3 +1079,26 @@
 
 /* empty */
 #fontPickEmpty{ padding: 12px; opacity: .75; }
+
+
+/* =============================
+   TEXT_PIX: toolbar 2-row
+   ============================= */
+#toolsTextPix .rtToolRow{
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: max-content;
+  grid-template-rows: repeat(2, 34px);
+  gap: 8px 10px;
+  align-items: center;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 6px;
+}
+#toolsTextPix .rtSep{
+  grid-row: 1 / -1;
+  align-self: stretch;
+}
+#toolsTextPix .rtToolLbl{
+  align-self: center;
+}
