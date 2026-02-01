@@ -840,8 +840,12 @@ function renderList(){
   // 3) PLUS (jak w builder)
   {
     const add = document.createElement("div");
-    add.className = "logoTile logoTileAdd";
-    add.innerHTML = `<span class="plus">＋</span> <span>Nowe logo</span>`;
+   add.className = "addCard";
+   add.innerHTML = `
+     <div class="plus">＋</div>
+     <div class="txt">Nowe logo</div>
+     <div class="sub">Wybierz tryb tworzenia</div>
+   `;
     add.addEventListener("click", () => show(createOverlay, true));
     grid.appendChild(add);
   }
