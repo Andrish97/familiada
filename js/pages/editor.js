@@ -276,6 +276,145 @@ function updateRemainBox(container) {
   box.innerHTML = `<span>SUMA</span><b>${sum}/${SUM_PREPARED}</b>`;
 }
 
+/* ================= TXT Import Progress (TEN SAM MODAL) ================= */
+function ensureTxtImportProgressInPlace() {
+  const ov = document.getElementById("txtImportOverlay");
+  if (!ov) return null;
+
+  const modal = ov.querySelector(".modal");
+  if (!modal) return null;
+
+  // 1) Wrapper na "normalną" zawartość modala (wszystko poza .mTitle i pierwszym .mSub)
+  let formWrap = modal.querySelector("#txtImportFormWrap");
+  if (!formWrap) {
+    formWrap = document.createElement("div");
+    formWrap.id = "txtImportFormWrap";
+
+    const title = modal.querySelector(".mTitle");
+    const sub = modal.querySelector(".mSub"); // pierwszy .mSub (opis formatu)
+
+    const keep = new Set();
+    if (title) keep.add(title);
+    if (sub) keep.add(sub);
+
+    const toMove = [];
+    for (const child of Array.from(modal.children)) {
+      if (keep.has(child)) continue;
+      if (child.id === "txtImportFormWrap") continue;
+      if (child.id === "txtImportProgressWrap") continue;
+      toMove.push(child);
+    }
+    toMove.forEach((el) => formWrap.appendChild(el));
+
+    // wstaw po sub (jeśli jest), w przeciwnym razie na koniec
+    if (sub && sub.nextSibling) modal.insertBefore(formWrap, sub.nextSibling);
+    else modal.appendChild(formWrap);
+  }
+
+  // 2) Wrapper progressu (ukryty domyślnie)
+  let progWrap = modal.querySelector("#txtImportProgressWrap");
+  if (!progWrap) {
+    progWrap = document.createElement("div");
+    progWrap.id = "txtImportProgressWrap";
+    progWrap.style.display = "none";
+    progWrap.style.marginTop = "12px";
+
+    progWrap.innerHTML = `
+      <div style="display:grid;gap:10px">
+        <div class="importRow" style="align-items:center">
+          <div id="txtImportProgStep" style="font-weight:800;letter-spacing:.04em">—</div>
+          <div id="txtImportProgCount" style="margin-left:auto;opacity:.8">0/0</div>
+        </div>
+
+        <div style="height:10px;border-radius:999px;background:rgba(255,255,255,.10);overflow:hidden">
+          <div id="txtImportProgBar" style="height:100%;width:0%;background:rgba(255,255,255,.85)"></div>
+        </div>
+
+        <div class="importMsg" id="txtImportProgMsg" style="min-height:18px"></div>
+
+        <div class="importRow" style="justify-content:flex-end;gap:10px">
+          <button class="btn sm" id="txtImportProgClose" type="button" style="display:none">Zamknij</button>
+        </div>
+      </div>
+    `;
+
+    modal.appendChild(progWrap);
+
+    // Close pokazujemy tylko przy błędzie (albo jak chcesz też po sukcesie)
+    progWrap.querySelector("#txtImportProgClose")?.addEventListener("click", () => {
+      showTxtImportProgress(false);
+      openOverlay("txtImportOverlay", false);
+    });
+  }
+
+  // 3) blokada klików w overlay (żeby nie dało się "kliknąć obok" w czasie importu)
+  if (!ov.__txtImportBlockClicks) {
+    ov.addEventListener("click", (e) => {
+      // klik w tło overlay może zamykać TYLKO gdy nie importujemy
+      if (e.target?.id === "txtImportOverlay" && !ov.__txtImportRunning) {
+        openOverlay("txtImportOverlay", false);
+      }
+    });
+    ov.__txtImportBlockClicks = true;
+  }
+
+  return { ov, modal, formWrap, progWrap };
+}
+
+function showTxtImportProgress(on) {
+  const ref = ensureTxtImportProgressInPlace();
+  if (!ref) return;
+
+  const { ov, formWrap, progWrap } = ref;
+
+  ov.__txtImportRunning = !!on;
+
+  if (formWrap) formWrap.style.display = on ? "none" : "";
+  if (progWrap) progWrap.style.display = on ? "" : "none";
+
+  // podczas importu chowamy standardowy komunikat txtMsg (bo i tak pokazujemy prog msg)
+  const txtMsg = document.getElementById("txtMsg");
+  if (txtMsg) txtMsg.style.display = on ? "none" : "";
+
+  // twarda blokada przycisków formy (na wszelki wypadek)
+  const btnClose = document.getElementById("btnTxtClose");
+  const btnImport = document.getElementById("btnTxtImport");
+  const btnLoad = document.getElementById("btnTxtLoadFile");
+  const file = document.getElementById("txtFile");
+  const ta = document.getElementById("txtTa");
+
+  const dis = !!on;
+  if (btnClose) btnClose.disabled = dis;
+  if (btnImport) btnImport.disabled = dis;
+  if (btnLoad) btnLoad.disabled = dis;
+  if (file) file.disabled = dis;
+  if (ta) ta.disabled = dis;
+}
+
+function setTxtImportProgress({ step, i, n, msg, isError } = {}) {
+  const stepEl = document.getElementById("txtImportProgStep");
+  const countEl = document.getElementById("txtImportProgCount");
+  const barEl = document.getElementById("txtImportProgBar");
+  const msgEl = document.getElementById("txtImportProgMsg");
+  const closeEl = document.getElementById("txtImportProgClose");
+
+  if (stepEl && step != null) stepEl.textContent = String(step);
+  if (countEl) countEl.textContent = `${i || 0}/${n || 0}`;
+
+  const nn = Number(n) || 0;
+  const ii = Number(i) || 0;
+  const pct = nn > 0 ? Math.round((ii / nn) * 100) : 0;
+  if (barEl) barEl.style.width = `${pct}%`;
+
+  if (msgEl) {
+    msgEl.textContent = msg || "";
+    msgEl.style.opacity = isError ? "1" : ".85";
+  }
+
+  // przy błędzie pokazujemy "Zamknij"
+  if (closeEl) closeEl.style.display = isError ? "" : "none";
+}
+
 /* ================= Boot ================= */
 async function boot() {
   /* ---------- auth/topbar ---------- */
@@ -771,12 +910,12 @@ async function boot() {
     openOverlay("txtImportOverlay", true);
   });
 
-  btnTxtClose?.addEventListener("click", () => openOverlay("txtImportOverlay", false));
-
-  $("txtImportOverlay")?.addEventListener("click", (e) => {
-    if (e.target?.id === "txtImportOverlay") openOverlay("txtImportOverlay", false);
+  btnTxtClose?.addEventListener("click", () => {
+    const ov = document.getElementById("txtImportOverlay");
+    if (ov?.__txtImportRunning) return; // blokuj w trakcie importu
+    openOverlay("txtImportOverlay", false);
   });
-
+  
   async function readFileAsText(file) {
     return await new Promise((resolve, reject) => {
       const r = new FileReader();
@@ -786,22 +925,6 @@ async function boot() {
     });
   }
 
-  btnTxtLoadFile?.addEventListener("click", async () => {
-    try {
-      const f = txtFile?.files?.[0];
-      if (!f) {
-        setTxtMsg("Wybierz plik TXT albo wklej treść poniżej.");
-        return;
-      }
-      const txt = await readFileAsText(f);
-      if (txtTa) txtTa.value = txt;
-      setTxtMsg("Wczytano. Kliknij Importuj.");
-    } catch (e) {
-      console.error(e);
-      setTxtMsg("Błąd wczytywania pliku.");
-    }
-  });
-
   btnTxtImport?.addEventListener("click", async () => {
     try {
       const raw = String(txtTa?.value || "");
@@ -809,13 +932,13 @@ async function boot() {
         setTxtMsg("Wklej treść albo wczytaj plik.");
         return;
       }
-
+  
       const parsed = parseQaText(raw);
       if (!parsed.ok) {
         setTxtMsg(parsed.error || "Błąd formatu.");
         return;
       }
-
+  
       const ok = confirm(
         "Import TXT ZASTĄPI zawartość gry:\n\n" +
           "- usunie wszystkie dotychczasowe pytania i odpowiedzi\n" +
@@ -826,54 +949,137 @@ async function boot() {
         setTxtMsg("Anulowano.");
         return;
       }
-
-      setTxtMsg("Importuję…");
-
+  
+      // przełącz TEN SAM modal w tryb progress
+      ensureTxtImportProgressInPlace();
+      showTxtImportProgress(true);
+  
+      // policz pracę (wipe=1, każde pytanie=1, każda odpowiedź=1 jeśli allowAnswers)
+      const items = parsed.items || [];
+      let total = 1; // wipe
+      for (const it of items) {
+        total += 1; // pytanie
+        if (cfg.allowAnswers) total += Math.min((it.answers || []).length, AN_MAX); // odpowiedzi
+      }
+      total += 3; // post-processing: renumber + refreshCounts + render/finish
+  
+      let done = 0;
+      setTxtImportProgress({ step: "Start…", i: done, n: total, msg: "" });
+  
       if (parsed.name && gameName) {
         gameName.value = parsed.name;
         await saveNameIfChanged();
       }
-
+  
+      // 1) wipe
+      setTxtImportProgress({ step: "Czyszczenie gry", i: done, n: total, msg: "" });
       await wipeGameContent(gameId);
-
+      done += 1;
+      setTxtImportProgress({ step: "Czyszczenie gry", i: done, n: total, msg: "OK" });
+  
+      // 2) import q/a
       let qOrd = 1;
-      for (const item of parsed.items) {
+      for (const item of items) {
+        setTxtImportProgress({
+          step: `Pytanie ${qOrd}/${items.length}`,
+          i: done,
+          n: total,
+          msg: "Tworzę pytanie…",
+        });
+  
         const q = await createQuestion(gameId, qOrd);
         await updateQuestion(q.id, { text: normQ(item.qText) });
-
+  
+        done += 1;
+        setTxtImportProgress({
+          step: `Pytanie ${qOrd}/${items.length}`,
+          i: done,
+          n: total,
+          msg: "OK",
+        });
+  
         if (cfg.allowAnswers) {
           let aOrd = 1;
-          for (const a of item.answers || []) {
+          const ans = item.answers || [];
+          for (const a of ans) {
             if (aOrd > AN_MAX) break;
-
+  
+            setTxtImportProgress({
+              step: `Pytanie ${qOrd}/${items.length}`,
+              i: done,
+              n: total,
+              msg: `Odpowiedź ${aOrd}…`,
+            });
+  
             const text = clip17(a.text);
             const pts =
               cfg.allowPoints && !cfg.ignoreImportPoints
                 ? nonNegativeInt(a.points, 0)
                 : 0;
-
+  
             await createAnswer(q.id, aOrd, text || `ODP ${aOrd}`, pts);
+  
+            done += 1;
+            setTxtImportProgress({
+              step: `Pytanie ${qOrd}/${items.length}`,
+              i: done,
+              n: total,
+              msg: `Odpowiedź ${aOrd} OK`,
+            });
+  
             aOrd++;
           }
         }
-
+  
         qOrd++;
       }
-
+  
+      // 3) refresh
+      setTxtImportProgress({ step: "Porządkuję numerację", i: done, n: total, msg: "" });
       questions = await renumberQuestions(gameId);
+      done += 1;
+      setTxtImportProgress({ step: "Porządkuję numerację", i: done, n: total, msg: "OK" });
+      
+      setTxtImportProgress({ step: "Liczenie statusów", i: done, n: total, msg: "" });
       await refreshCounts();
-
+      done += 1;
+      setTxtImportProgress({ step: "Liczenie statusów", i: done, n: total, msg: "OK" });
+      
+      setTxtImportProgress({ step: "Rysuję widok", i: done, n: total, msg: "" });
       activeQId = questions[0]?.id || null;
       await loadAnswersForActive();
-
       renderQuestions();
       renderEditor();
-
-      setTxtMsg("Zaimportowano (zastąpiono zawartość).");
+      done += 1;
+      setTxtImportProgress({ step: "Rysuję widok", i: done, n: total, msg: "OK" });
+  
+      setTxtImportProgress({
+        step: "Gotowe ✅",
+        i: total,
+        n: total,
+        msg: "Import zakończony.",
+      });
+  
       setMsg("Import zakończony.");
+      setTxtMsg("Zaimportowano (zastąpiono zawartość).");
+  
+      // wróć do normalnego widoku modala i zamknij po chwili
+      setTimeout(() => {
+        showTxtImportProgress(false);
+        openOverlay("txtImportOverlay", false);
+      }, 700);
     } catch (e) {
       console.error(e);
-      setTxtMsg("Błąd importu (konsola).");
+  
+      setTxtImportProgress({
+        step: "Błąd ❌",
+        i: 0,
+        n: 0,
+        msg: `Błąd: ${e?.message || String(e)}`,
+        isError: true,
+      });
+  
+      // zostaw modal otwarty w trybie progress, z przyciskiem "Zamknij"
     }
   });
 
