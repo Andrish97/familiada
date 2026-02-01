@@ -438,6 +438,27 @@ body.builder-body {
     padding: 6px 0
 }
 
+/* ===== Progress blocks (import/export) ===== */
+.xProg{
+  margin-top: 12px;
+  display: grid;
+  gap: 10px;
+}
+
+.xBar{
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.10);
+  overflow: hidden;
+}
+
+.xBarIn{
+  height: 100%;
+  width: 0%;
+  background: rgba(255,255,255,.85);
+}
+
+
 @media (max-width:720px) {
     :root {
         --tab-height: 56px;
