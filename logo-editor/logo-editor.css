@@ -835,6 +835,12 @@
 }
 .imgPrevHint{ margin-top: 8px; opacity: .75; font-size: 12px; }
 
+.imgSetBtn.on{
+  border-color: rgba(255,234,166,.50) !important;
+  background: rgba(255,234,166,.12) !important;
+  color: var(--gold) !important;
+}
+
 /* =========================================================
    IMAGE: ramka kadru 26:11 (cropFrame) — MUSI być widoczna
 ========================================================= */
