@@ -627,35 +627,40 @@
    FULL WIDTH MODAL (jak w builder)
 ========================================================= */
 
-/* overlay na cały viewport */
-.modalOverlay{
-  inset: 0;
-  padding: 0 !important;
-  overflow-x: hidden;
+/* =========================================================
+   PREVIEW: big modal fullscreen, bez scrolla poziomego
+========================================================= */
+
+/* overlay nie może generować X-scrolla */
+#previewOverlay{
+  overflow: hidden;
 }
 
-/* główna karta modala */
-.modalCard{
+/* big modal ma wypełniać ekran */
+#previewOverlay .modal.bigModal{
   width: 100vw;
   max-width: 100vw;
-  min-height: 100vh;
+  height: 100vh;
+  max-height: 100vh;
   border-radius: 0;
-  margin: 0;
-  overflow-x: hidden;
+  padding: 18px;
+  overflow-x: hidden;     /* kluczowe */
+  overflow-y: auto;       /* tylko pion */
   box-sizing: border-box;
 }
 
-/* wnętrze */
-.modalBody{
-  max-width: 1400px;   /* jak w builder — środek treści */
-  margin: 0 auto;
-  padding: 20px 24px 28px;
-  box-sizing: border-box;
-}
-
-/* bezpieczeństwo przed przypadkowym overflow */
-.mGrid{
+/* kontener canvasa nie może wypychać */
+#previewOverlay .bigModalCanvas{
   max-width: 100%;
-  overflow-x: hidden;
+  overflow: hidden;       /* kluczowe */
 }
+
+/* canvas skaluje się do szerokości ekranu (bez X-scrolla) */
+#previewOverlay .bigModalCanvas canvas{
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+}
+
 
