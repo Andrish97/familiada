@@ -199,41 +199,45 @@
             </div>
           </div>
 
-          <!-- DRAW: wszystkie narzędzia w 1 rzędzie (tooltipy zostają) -->
-          <div class="toolRow" id="toolsDraw" style="display:none;">
-          
-            <div class="toolGroup">
-              <button class="tbtn" id="tSelect" type="button"></button>
-              <button class="tbtn" id="tPan" type="button"></button>
-              <button class="tbtn" id="tZoomIn" type="button"></button>
-              <button class="tbtn" id="tZoomOut" type="button"></button>
-              <button class="tbtn" id="tColor" type="button"></button>
-              <button class="tbtn" id="tBg" type="button"></button>
-            </div>
-          
-            <div class="toolSep"></div>
-          
-            <div class="toolGroup">
-              <button class="tbtn" id="tBrush" type="button"></button>
-              <button class="tbtn" id="tEraser" type="button"></button>
-              <button class="tbtn" id="tLine" type="button"></button>
-              <button class="tbtn" id="tRect" type="button"></button>
-              <button class="tbtn" id="tEllipse" type="button"></button>
-              <button class="tbtn" id="tPoly" type="button"></button>
-              <button class="tbtn" id="tPolyDone" type="button"></button>
-            </div>
-          
-            <div class="toolSep"></div>
-          
-            <div class="toolGroup">
-              <button class="tbtn" id="tUndo" type="button"></button>
-              <button class="tbtn" id="tRedo" type="button"></button>
-              <button class="tbtn" id="tClear" type="button"></button>
-              <button class="tbtn" id="tEye" type="button"></button>
-              <button class="tbtn" id="tSettings" type="button"></button>
-            </div>
-          
-          </div>
+     <div class="toolRow" id="toolsDraw" style="display:none;">
+
+        <div class="toolGrid">
+          <button class="tbtn" id="tSelect"   type="button" data-tip-pos="top" data-tip=""></button>
+          <button class="tbtn" id="tPan"      type="button" data-tip-pos="top" data-tip=""></button>
+      
+          <button class="tbtn" id="tZoomIn"   type="button" data-tip-pos="top" data-tip=""></button>
+          <button class="tbtn" id="tZoomOut"  type="button" data-tip-pos="top" data-tip=""></button>
+      
+          <button class="tbtn" id="tColor"    type="button" data-tip-pos="top" data-tip=""></button>
+          <button class="tbtn" id="tBg"       type="button" data-tip-pos="top" data-tip=""></button>
+        </div>
+      
+        <div class="toolSep"></div>
+      
+        <div class="toolGrid">
+          <button class="tbtn" id="tBrush"    type="button" data-tip-pos="top" data-tip=""></button>
+          <button class="tbtn" id="tEraser"   type="button" data-tip-pos="top" data-tip=""></button>
+          <button class="tbtn" id="tLine"     type="button" data-tip-pos="top" data-tip=""></button>
+          <button class="tbtn" id="tRect"     type="button" data-tip-pos="top" data-tip=""></button>
+          <button class="tbtn" id="tEllipse"  type="button" data-tip-pos="top" data-tip=""></button>
+          <button class="tbtn" id="tPoly"     type="button" data-tip-pos="top" data-tip=""></button>
+          <button class="tbtn" id="tPolyDone" type="button" data-tip-pos="top" data-tip="" disabled></button>
+        </div>
+      
+        <div class="toolSep"></div>
+      
+        <div class="toolGrid">
+          <button class="tbtn" id="tUndo"     type="button" data-tip-pos="top" data-tip=""></button>
+          <button class="tbtn" id="tRedo"     type="button" data-tip-pos="top" data-tip=""></button>
+      
+          <button class="tbtn" id="tSettings" type="button" data-tip-pos="top" data-tip=""></button>
+          <button class="tbtn danger" id="tClear" type="button" data-tip-pos="top" data-tip=""></button>
+      
+          <button class="tbtn" id="tEye"      type="button" data-tip-pos="top" data-tip=""></button>
+        </div>
+      
+      </div>
+
 
           <!-- IMAGE: toolbar tylko przyciski + folderek -->
           <div class="toolRow" id="toolsImage" style="display:none;">
