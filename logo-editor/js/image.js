@@ -222,7 +222,8 @@ export function initImageEditor(ctx) {
   // =========================================================
   function applyContainMode(){
     if (!imgPreview) return;
-    imgPreview.style.objectFit = true;
+    imgPreview.style.objectFit = "contain";     // cały obraz widoczny
+    imgPreview.style.objectPosition = "center";
   }
 
   // =========================================================
@@ -453,10 +454,13 @@ export function initImageEditor(ctx) {
 
     imgObj = img;
 
+    applyBestImageLayout();
+
     // pokaż w UI
     if (imgPreview){
       imgPreview.style.display = "block";
       imgPreview.src = imgUrl;
+      if (cropFrame) cropFrame.style.display = "block";
     }
 
     // object-fit zależnie od “Cały obraz”
@@ -470,6 +474,28 @@ export function initImageEditor(ctx) {
       });
     });
   }
+
+  function applyBestImageLayout(){
+    const grid = paneImage?.querySelector?.(".imgTopGrid");
+    if (!grid) return;
+  
+    // domyślnie: responsywne zachowanie też ma znaczenie
+    const vw = window.innerWidth;
+  
+    let mode = "row";
+  
+    if (vw < 1120){
+      mode = "col";
+    } else if (imgObj){
+      const r = imgObj.naturalHeight / Math.max(1, imgObj.naturalWidth);
+      // “bardzo pionowy” obraz → stack, bo inaczej lewa karta będzie za niska
+      if (r > 1.35) mode = "col";
+    }
+  
+    grid.classList.toggle("is-row", mode === "row");
+    grid.classList.toggle("is-col", mode === "col");
+  }
+
 
   // =========================================================
   // Drag/resize crop
@@ -596,6 +622,7 @@ export function initImageEditor(ctx) {
     });
 
     window.addEventListener("resize", () => {
+      applyBestImageLayout();
       clearTimeout(deb);
       deb = setTimeout(() => {
         if (ctx.getMode?.() !== "IMAGE") return;
@@ -608,30 +635,94 @@ export function initImageEditor(ctx) {
 
   bindOnce();
 
-  // Accordion: tylko jedno ustawienie naraz
+  // =========================================================
+  // Roll-up popover: jeden suwak na raz, pozycjonowany pod przyciskiem
+  // =========================================================
   const panelsWrap = document.getElementById("imgPanels");
   const btns = Array.from(document.querySelectorAll(".imgSetBtn"));
+  const panels = Array.from(document.querySelectorAll("#imgPanels .imgPanel"));
   
   let openPanel = null;
   
-  function setOpen(panel){
-    openPanel = panel;
-    if (panelsWrap) panelsWrap.style.display = openPanel ? "flex" : "none";
-    for (const p of Array.from(document.querySelectorAll(".imgPanel"))){
-      p.classList.toggle("is-open", p.dataset.panel === openPanel);
+  function closePanels(){
+    openPanel = null;
+    if (panelsWrap){
+      panelsWrap.classList.remove("is-open");
+      panelsWrap.style.left = "0px";
+      panelsWrap.style.top = "0px";
     }
+    for (const p of panels) p.classList.remove("is-open");
   }
   
-  for (const b of btns){
-    b.addEventListener("click", () => {
-      const panel = b.getAttribute("data-panel");
-      if (!panel) return;
-      setOpen(openPanel === panel ? null : panel);
+  function openPanelAt(panelName, anchorEl){
+    if (!panelsWrap || !anchorEl) return;
+  
+    openPanel = panelName;
+  
+    for (const p of panels){
+      p.classList.toggle("is-open", p.dataset.panel === panelName);
+    }
+  
+    panelsWrap.classList.add("is-open");
+  
+    // Pozycjonowanie (fixed): pod przyciskiem, z clamp do okna
+    const r = anchorEl.getBoundingClientRect();
+    const pad = 8;
+  
+    // chwilowo ustaw, żeby złapać rozmiar
+    panelsWrap.style.left = `${Math.round(r.left)}px`;
+    panelsWrap.style.top  = `${Math.round(r.bottom + 8)}px`;
+  
+    requestAnimationFrame(() => {
+      const active = panelsWrap.querySelector(".imgPanel.is-open");
+      if (!active) return;
+  
+      const w = active.offsetWidth || 320;
+      const h = active.offsetHeight || 120;
+  
+      let left = r.left;
+      let top = r.bottom + 8;
+  
+      left = Math.max(pad, Math.min(left, window.innerWidth - w - pad));
+      top  = Math.max(pad, Math.min(top,  window.innerHeight - h - pad));
+  
+      panelsWrap.style.left = `${Math.round(left)}px`;
+      panelsWrap.style.top  = `${Math.round(top)}px`;
     });
   }
   
-  // start: nic nieotwarte
-  setOpen(null);
+  for (const b of btns){
+    b.addEventListener("click", (e) => {
+      const panel = b.getAttribute("data-panel");
+      if (!panel) return;
+  
+      if (openPanel === panel){
+        closePanels();
+      } else {
+        openPanelAt(panel, b);
+      }
+  
+      e.stopPropagation();
+    });
+  }
+  
+  // klik poza popover zamyka
+  window.addEventListener("pointerdown", (e) => {
+    if (!openPanel) return;
+    const t = e.target;
+    if (t.closest?.("#imgPanels")) return;
+    if (t.closest?.(".imgSetBtn")) return;
+    closePanels();
+  });
+  
+  // ESC zamyka
+  window.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") closePanels();
+  });
+  
+  // start zamknięte
+  closePanels();
+  
 
 
   // =========================================================
@@ -640,11 +731,15 @@ export function initImageEditor(ctx) {
   return {
     open(){
       show(paneImage, true);
+      applyBestImageLayout();
 
       resetToDefaults({ resetCrop: false });
 
       // UI reset
       imgObj = null;
+
+      if (cropFrame) cropFrame.style.display = "none";
+      
       if (imgPreview){
         imgPreview.removeAttribute("src");
         imgPreview.style.display = "block"; // żeby “nie znikał”
