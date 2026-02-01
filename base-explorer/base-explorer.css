@@ -1562,3 +1562,66 @@ input,textarea {
     margin-bottom: 12px;
     margin-top: 12px;
 }
+
+
+/* =========================================================
+   Export modal — progress (tryb B: w tym samym modalu)
+========================================================= */
+
+.export-modal .xProg {
+  margin-left: 10px;
+  margin-right: 10px;
+  min-width: 240px;
+  display: grid;
+  gap: 8px;
+}
+
+.export-modal .xProgTop {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.export-modal .xProgStep {
+  font-weight: 900;
+  letter-spacing: .04em;
+}
+
+.export-modal .xProgCount {
+  margin-left: auto;
+  opacity: .85;
+  font-weight: 900;
+}
+
+.export-modal .xProgBar {
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.10);
+  overflow: hidden;
+}
+
+.export-modal .xProgBarFill {
+  height: 100%;
+  width: 0%;
+  background: rgba(255,255,255,.85);
+}
+
+.export-modal .xProgMsg {
+  min-height: 18px;
+  opacity: .85;
+}
+
+/* Gdy modal jest w trakcie “run” — blokuj UI (poza stopką) */
+.export-modal.is-running .xBody {
+  pointer-events: none;
+  opacity: .55;
+  filter: saturate(.85);
+}
+
+.export-modal.is-running #xClose {
+  opacity: .55;
+}
+
+.export-modal.is-running #xCreate {
+  opacity: .75;
+}
