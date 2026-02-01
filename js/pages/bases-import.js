@@ -7,6 +7,9 @@ import { sb } from "../core/supabase.js";
 import { requireAuth } from "../core/auth.js";
 
 /* ================= Utils ================= */
+function prog(onProgress, step, i, n, msg) {
+  if (typeof onProgress === "function") onProgress({ step, i, n, msg });
+}
 
 function safeName(s) {
   return (String(s ?? "").trim() || "Nowa baza pytań").slice(0, 80);
@@ -35,7 +38,7 @@ async function createBase({ currentUserId, name }) {
 
 /* ================= Core import ================= */
 
-export async function importBase(payload, { currentUserId } = {}) {
+export async function importBase(payload, { currentUserId, onProgress } = {}) {
   if (!currentUserId) throw new Error("importBase: brak currentUserId");
 
   if (!isValidImportPayload(payload)) {
@@ -47,11 +50,14 @@ export async function importBase(payload, { currentUserId } = {}) {
     name: payload.base?.name || "Nowa baza pytań",
   });
 
+  prog(onProgress, "Import: tworzenie bazy…", 1, 5, "");
+
   const oldToNewCat = new Map();
   const oldToNewTag = new Map();
   const oldToNewQ = new Map();
 
   // 1) Kategorie – topologicznie (rooty → dzieci)
+  prog(onProgress, "Import: kategorie…", 2, 5, "");
   const cats = Array.isArray(payload.categories) ? payload.categories : [];
   const byParent = new Map();
   for (const c of cats) {
@@ -90,6 +96,7 @@ export async function importBase(payload, { currentUserId } = {}) {
   await insertCatSubtree(null, null);
 
   // 2) Tagi
+  prog(onProgress, "Import: tagi…", 3, 5, "");
   const tags = Array.isArray(payload.tags) ? payload.tags : [];
   for (const t of tags) {
     const { data, error } = await sb()
@@ -112,6 +119,7 @@ export async function importBase(payload, { currentUserId } = {}) {
 
   // 3) Pytania
   const qs = Array.isArray(payload.questions) ? payload.questions : [];
+  prog(onProgress, "Import: pytania…", 0, qs.length || 0, "");
   for (const q of qs) {
     const newCatId = q.category_id ? oldToNewCat.get(q.category_id) || null : null;
 
@@ -132,9 +140,11 @@ export async function importBase(payload, { currentUserId } = {}) {
 
     if (error) throw error;
     oldToNewQ.set(q.id, data.id);
+    prog(onProgress, "Import: pytania…", oldToNewQ.size, qs.length || 0, String(q?.payload?.text || "").slice(0, 60));
   }
 
   // 4) Powiązania tagów pytań
+  prog(onProgress, "Import: powiązania tagów…", 4, 5, "");
   const qtags = Array.isArray(payload.question_tags) ? payload.question_tags : [];
   const rows = [];
   for (const r of qtags) {
@@ -149,6 +159,7 @@ export async function importBase(payload, { currentUserId } = {}) {
   }
 
   // 5) Powiązania tagów kategorii (folderów)
+  prog(onProgress, "Import: tagi folderów…", 5, 5, "");
   const ctags = Array.isArray(payload.category_tags) ? payload.category_tags : [];
   const crows = [];
   for (const r of ctags) {
@@ -167,7 +178,7 @@ export async function importBase(payload, { currentUserId } = {}) {
 
 /* ================= Public import from URL ================= */
 
-export async function importBaseFromUrl(url) {
+export async function importBaseFromUrl(url, { onProgress } = {}) {
   await requireAuth();
 
   const u = String(url || "").trim();
@@ -185,5 +196,5 @@ export async function importBaseFromUrl(url) {
   const uid = data?.user?.id;
   if (!uid) throw new Error("Brak zalogowanego użytkownika.");
 
-  return await importBase(payload, { currentUserId: uid });
+  return await importBase(payload, { currentUserId: uid, onProgress });
 }
