@@ -4122,6 +4122,33 @@ export function wireActions({ state }) {
           opts = { ...opts, questions: state.questions.slice() };
         }
       }
+      
+      opts = {
+        ...opts,
+        run: async (payload, progress) => {
+          // Jeśli nie masz progresu per-insert w importGame, to i tak pokażemy sensowny UX:
+          const n = payload?.questions?.length || 0;
+
+          progress?.({ step: "Tworzenie gry…", i: 0, n: n || 1, msg: "" });
+
+          // “pływający” pasek (symulacja), żeby nie stał na 0%
+          let t = null;
+          let i = 0;
+          const tick = () => {
+            i = Math.min((n || 1) - 1, i + 1);
+            progress?.({ step: "Import pytań…", i, n: n || 1, msg: "" });
+          };
+          t = setInterval(tick, 120);
+
+          try {
+            const gameId = await importGame(payload, ownerId);
+            progress?.({ step: "Import zakończony", i: n || 1, n: n || 1, msg: "OK" });
+            return { gameId };
+          } finally {
+            if (t) clearInterval(t);
+          }
+        },
+      };
   
       // === 2) Otwórz modal i poczekaj na wynik ===
       const res = await exportModal.open(opts);
