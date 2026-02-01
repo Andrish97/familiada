@@ -144,6 +144,20 @@
 
       <textarea id="importTa" class="importTa" spellcheck="false" placeholder="Wklej JSON tutaj..."></textarea>
 
+        <!-- PROGRES: import (ukryty, pokazuje się tylko podczas importu) -->
+        <div id="importProg" style="display:none;margin-top:12px;display:grid;gap:10px">
+          <div class="importRow" style="align-items:center">
+            <div id="importProgStep" style="font-weight:800;letter-spacing:.04em">—</div>
+            <div id="importProgCount" style="margin-left:auto;opacity:.8">0/0</div>
+          </div>
+        
+          <div style="height:10px;border-radius:999px;background:rgba(255,255,255,.10);overflow:hidden">
+            <div id="importProgBar" style="height:100%;width:0%;background:rgba(255,255,255,.85)"></div>
+          </div>
+        
+          <div class="importMsg" id="importProgMsg" style="min-height:18px"></div>
+        </div>
+      
       <div class="importRow">
         <button class="btn sm gold" id="btnImportJson" type="button">Importuj</button>
         <button class="btn sm" id="btnCancelImport" type="button">Zamknij</button>
@@ -160,7 +174,21 @@
       </div>
   
       <div class="basePickList" id="basePickList"></div>
-  
+
+      <!-- PROGRES: export do bazy (ukryty, pokazuje się tylko podczas exportu) -->
+      <div id="exportBaseProg" style="display:none;margin-top:12px;display:grid;gap:10px">
+        <div class="importRow" style="align-items:center">
+          <div id="exportBaseProgStep" style="font-weight:800;letter-spacing:.04em">—</div>
+          <div id="exportBaseProgCount" style="margin-left:auto;opacity:.8">0/0</div>
+        </div>
+      
+        <div style="height:10px;border-radius:999px;background:rgba(255,255,255,.10);overflow:hidden">
+          <div id="exportBaseProgBar" style="height:100%;width:0%;background:rgba(255,255,255,.85)"></div>
+        </div>
+      
+        <div class="importMsg" id="exportBaseProgMsg" style="min-height:18px"></div>
+      </div>
+
       <div class="importRow" style="margin-top:10px;">
         <button class="btn sm gold" id="btnExportBaseDo" type="button">Eksportuj</button>
         <button class="btn sm" id="btnExportBaseCancel" type="button">Zamknij</button>
@@ -168,5 +196,28 @@
       </div>
     </div>
   </div>
+
+
+  <!-- EXPORT DO PLIKU: PROGRES -->
+  <div class="overlay" id="exportJsonOverlay" style="display:none;">
+    <div class="modal" style="width:min(640px,94vw)">
+      <div class="mTitle">EXPORT…</div>
+      <div class="mSub" id="exportJsonSub">Nie zamykaj strony. Trwa przygotowanie pliku.</div>
+  
+      <div style="margin-top:12px;display:grid;gap:10px">
+        <div class="importRow" style="align-items:center">
+          <div id="exportJsonStep" style="font-weight:800;letter-spacing:.04em">—</div>
+          <div id="exportJsonCount" style="margin-left:auto;opacity:.8">0/0</div>
+        </div>
+  
+        <div style="height:10px;border-radius:999px;background:rgba(255,255,255,.10);overflow:hidden">
+          <div id="exportJsonBar" style="height:100%;width:0%;background:rgba(255,255,255,.85)"></div>
+        </div>
+  
+        <div class="importMsg" id="exportJsonMsg" style="min-height:18px"></div>
+      </div>
+    </div>
+  </div>
+
 </body>
 </html>
