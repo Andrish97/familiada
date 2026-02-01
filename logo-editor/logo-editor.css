@@ -641,6 +641,21 @@
 #drawStageHost.cur-none    #drawStage{ cursor: none !important; }
 
 
+#toolsDraw{
+  flex-wrap: wrap !important;
+}
+
+#toolsDraw .toolGroup{
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+#toolsDraw .toolSep{
+  display: none; /* separator psuje czytelność przy wrap */
+}
+
+
 /* =========================================================
    IMAGE
 ========================================================= */
