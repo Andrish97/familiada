@@ -118,6 +118,15 @@ export function initExportModal({ state } = {}) {
   const xCountPill = $("xCountPill");
   const xCountVal = $("xCountVal");
 
+  const xProg = $("xProg");
+  const xProgStep = $("xProgStep");
+  const xProgCount = $("xProgCount");
+  const xProgBarFill = $("xProgBarFill");
+  const xProgMsg = $("xProgMsg");
+
+  let running = false;
+  let lastOpts = null; // zapamiętujemy opts z open()
+
   const lbl0 = $("lbl0");
   const lbl1 = $("lbl1");
   const lbl2 = $("lbl2");
@@ -196,6 +205,33 @@ export function initExportModal({ state } = {}) {
     updateCountUI();
   }
 
+  function showProgress(on) {
+    if (xProg) xProg.style.display = on ? "" : "none";
+  }
+
+  function setProgress({ step, i, n, msg, isError } = {}) {
+    if (xProgStep && step != null) xProgStep.textContent = String(step);
+    if (xProgCount) xProgCount.textContent = `${Number(i || 0)}/${Number(n || 0)}`;
+
+    const nn = Number(n || 0);
+    const ii = Number(i || 0);
+    const pct = nn > 0 ? Math.max(0, Math.min(100, Math.round((ii / nn) * 100))) : 0;
+    if (xProgBarFill) xProgBarFill.style.width = `${pct}%`;
+
+    if (xProgMsg) {
+      xProgMsg.textContent = msg || "";
+      xProgMsg.style.opacity = isError ? "1" : ".85";
+    }
+  }
+
+  function lockUi(on) {
+    running = !!on;
+    overlay?.querySelector?.(".export-modal")?.classList.toggle("is-running", running);
+
+    if (xClose) xClose.disabled = running;
+    if (xCreate) xCreate.disabled = running || (selectedIds.size < RULES.QN_MIN);
+  }
+
   function close(result = { ok: false }) {
     show(overlay, false);
     setErr("");
@@ -210,6 +246,12 @@ export function initExportModal({ state } = {}) {
     console.log("[EXPORT] openExportModal args:", arguments);
     
     setErr("");
+
+    lastOpts = opts || null;
+
+    showProgress(false);
+    setProgress({ step: "—", i: 0, n: 0, msg: "" });
+    lockUi(false);
 
     // Źródło danych:
     // 1) opts.questions (jeśli podane) ma pierwszeństwo
@@ -257,8 +299,13 @@ export function initExportModal({ state } = {}) {
     });
   }
 
-  xClose?.addEventListener("click", () => close({ ok: false }));
+  xClose?.addEventListener("click", () => {
+    if (running) return;
+    close({ ok: false });
+  });
+
   overlay.addEventListener("mousedown", (e) => {
+    if (running) return;
     if (e.target === overlay) close({ ok: false });
   });
 
@@ -271,7 +318,7 @@ export function initExportModal({ state } = {}) {
   lbl1?.addEventListener("click", () => { typeIndex = 1; if (xTypeRange) xTypeRange.value = "1"; updateTypeUI(); });
   lbl2?.addEventListener("click", () => { typeIndex = 2; if (xTypeRange) xTypeRange.value = "2"; updateTypeUI(); });
 
-  xCreate?.addEventListener("click", () => {
+  xCreate?.addEventListener("click", async () => {
     setErr("");
 
     const picked = allQuestions.filter((q) => selectedIds.has(q.id));
@@ -286,6 +333,39 @@ export function initExportModal({ state } = {}) {
       questions: picked,
     });
 
+    // Tryb B: jeśli caller dał runnera, robimy progres w tym samym modalu
+    const run = lastOpts?.run;
+    if (typeof run === "function") {
+      try {
+        lockUi(true);
+        showProgress(true);
+
+        // “sensowne liczenie”: w eksportowaniu zwykle liczymy pytania
+        const n = payload?.questions?.length || 0;
+        setProgress({ step: "Eksport…", i: 0, n: n || 1, msg: "" });
+
+        const res = await run(payload, (p) => setProgress(p));
+
+        setProgress({ step: "Gotowe ✅", i: n || 1, n: n || 1, msg: "Utworzono grę." });
+
+        // zamykamy modal dopiero na końcu
+        close({ ok: true, payload, result: res });
+      } catch (e) {
+        console.error(e);
+        setProgress({
+          step: "Błąd ❌",
+          i: 0,
+          n: payload?.questions?.length || 1,
+          msg: `Błąd: ${e?.message || String(e)}`,
+          isError: true,
+        });
+        setErr("Nie udało się utworzyć gry (szczegóły w pasku progresu / konsoli).");
+        lockUi(false); // zostaw modal otwarty
+      }
+      return;
+    }
+
+    // fallback (stare zachowanie): zamknij i zwróć payload
     close({ ok: true, payload });
   });
 
