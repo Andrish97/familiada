@@ -108,7 +108,17 @@ let sessionSavedMode = null;   // żeby Anuluj wiedział co resetować
 function $(id){ return document.getElementById(id); }
 function show(el, on){
   if (!el) return;
-  el.style.display = on ? "" : "none"; // "" wraca do CSS
+
+  // 1) [hidden] ma najwyższy priorytet (CSS: [hidden]{display:none!important})
+  el.hidden = !on;
+
+  // 2) Dodatkowo czyścimy inline display, bo HTML ma miejscami style="display:none"
+  //    i samo hidden=false wtedy nie pokaże elementu.
+  if (on) {
+    el.style.display = "";     // wraca do CSS
+  } else {
+    el.style.display = "none"; // defensywnie
+  }
 }
 function setMsg(t){ if (msg) msg.textContent = t || ""; }
 function setEditorMsg(t){ if (mMsg) mMsg.textContent = t || ""; }
@@ -175,22 +185,19 @@ function showToolsForMode(mode){
   const tImg  = document.getElementById("toolsImage");
   const imgPanels = document.getElementById("imgPanels");
 
-  // Uwaga: CSS ma kilka reguł z `display: ... !important` dla #toolsTextPix.
-  // Sterowanie `style.display` bywa więc przebijane. Najpewniejsze jest [hidden].
-  const all = [tText, tPix, tDraw, tImg, imgPanels].filter(Boolean);
-  for (const el of all){
-    el.hidden = true;
-    // czyścimy inline display (żeby nie mieszać z CSS)
-    if (el.style) el.style.display = "";
-  }
+  // schowaj wszystko
+  show(tText, false);
+  show(tPix, false);
+  show(tDraw, false);
+  show(tImg, false);
+  show(imgPanels, false);
 
   // pokaż właściwe
-  if (mode === "TEXT" && tText) tText.hidden = false;
-  if (mode === "TEXT_PIX" && tPix) tPix.hidden = false;
-  if (mode === "DRAW" && tDraw) tDraw.hidden = false;
-  if (mode === "IMAGE" && tImg) tImg.hidden = false;
+  if (mode === "TEXT") show(tText, true);
+  if (mode === "TEXT_PIX") show(tPix, true);
+  if (mode === "DRAW") show(tDraw, true);
+  if (mode === "IMAGE") { show(tImg, true); show(imgPanels, true); }
 }
-
 
 /* =========================================================
    NAV GUARD — ochrona przed: zamknięciem/odświeżeniem/cofaniem/nawigacją
