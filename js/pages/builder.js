@@ -41,6 +41,13 @@ const btnExportBaseDo = document.getElementById("btnExportBaseDo");
 const btnExportBaseCancel = document.getElementById("btnExportBaseCancel");
 const exportBaseMsg = document.getElementById("exportBaseMsg");
 
+// Export base progress (w modalu eksportu do bazy)
+const exportBaseProg = document.getElementById("exportBaseProg");
+const exportBaseProgStep = document.getElementById("exportBaseProgStep");
+const exportBaseProgCount = document.getElementById("exportBaseProgCount");
+const exportBaseProgBar = document.getElementById("exportBaseProgBar");
+const exportBaseProgMsg = document.getElementById("exportBaseProgMsg");
+
 // Tabs
 const tabPollText = document.getElementById("tabPollText");
 const tabPollPoints = document.getElementById("tabPollPoints");
@@ -54,6 +61,21 @@ const btnImportJson = document.getElementById("btnImportJson");
 const btnCancelImport = document.getElementById("btnCancelImport");
 const importTa = document.getElementById("importTa");
 const importMsg = document.getElementById("importMsg");
+
+// Import progress (w modalu importu)
+const importProg = document.getElementById("importProg");
+const importProgStep = document.getElementById("importProgStep");
+const importProgCount = document.getElementById("importProgCount");
+const importProgBar = document.getElementById("importProgBar");
+const importProgMsg = document.getElementById("importProgMsg");
+
+// Export do pliku progress (osobny overlay)
+const exportJsonOverlay = document.getElementById("exportJsonOverlay");
+const exportJsonSub = document.getElementById("exportJsonSub");
+const exportJsonStep = document.getElementById("exportJsonStep");
+const exportJsonCount = document.getElementById("exportJsonCount");
+const exportJsonBar = document.getElementById("exportJsonBar");
+const exportJsonMsg = document.getElementById("exportJsonMsg");
 
 /* ================= STATE ================= */
 let currentUser = null;
@@ -70,6 +92,27 @@ const actionStateCache = new Map();
 function show(el, on) {
   if (!el) return;
   el.style.display = on ? "" : "none";
+}
+
+function setProgUi(stepEl, countEl, barEl, msgEl, { step, i, n, msg, isError } = {}) {
+  if (stepEl && step != null) stepEl.textContent = String(step);
+  if (countEl) countEl.textContent = `${Number(i) || 0}/${Number(n) || 0}`;
+
+  const nn = Number(n) || 0;
+  const ii = Number(i) || 0;
+  const pct = nn > 0 ? Math.round((ii / nn) * 100) : 0;
+  if (barEl) barEl.style.width = `${Math.max(0, Math.min(100, pct))}%`;
+
+  if (msgEl) {
+    msgEl.textContent = msg ? String(msg) : "";
+    msgEl.style.opacity = isError ? "1" : ".85";
+  }
+}
+
+function showProgBlock(el, on) {
+  if (!el) return;
+  // Domyślnie w HTML jest display:none; chcemy grid w trakcie
+  el.style.display = on ? "grid" : "none";
 }
 
 function setHint(t) {
@@ -208,16 +251,23 @@ async function pickUniqueRootFolderName(baseId, desiredName) {
   return (base80.slice(0, 70) + " (999)").slice(0, 80);
 }
 
-async function exportSelectedGameToBase(baseId) {
+async function exportSelectedGameToBase(baseId, onProgress) {
   if (!selectedId) return;
 
   // 1) Pobierz payload gry (już masz działające)
-  const obj = await exportGame(selectedId);
+  let obj = null;
+  obj = await exportGame(selectedId, ({ step, i, n, msg } = {}) => {
+    if (typeof onProgress === "function") {
+      onProgress({ step: step || "Eksport: pobieranie gry…", i, n, msg });
+    }
+  });
+  
   const gameNameRaw = String(obj?.game?.name || "Gra").trim() || "Gra";
   const gameName = await pickUniqueRootFolderName(baseId, gameNameRaw);
 
   // 2) Utwórz folder w root o nazwie gry
   // Ustal ord = max(root.ord)+1 (opcjonalnie, ale stabilnie)
+  
   const { data: lastRoot, error: eLast } = await sb()
     .from("qb_categories")
     .select("ord")
@@ -230,6 +280,10 @@ async function exportSelectedGameToBase(baseId) {
 
   const nextOrd = (Number(lastRoot?.ord) || 0) + 1;
 
+  if (typeof onProgress === "function") {
+    onProgress({ step: "Eksport: tworzenie folderu…", i: 0, n: 1, msg: "" });
+  }
+  
   const { data: folder, error: eCat } = await sb()
     .from("qb_categories")
     .insert(
@@ -256,8 +310,27 @@ async function exportSelectedGameToBase(baseId) {
   }));
 
   if (rows.length) {
-    const { error: eQ } = await sb().from("qb_questions").insert(rows, { defaultToNull: false });
-    if (eQ) throw eQ;
+    const nQ = rows.length;
+    const CHUNK = 200;
+  
+    if (typeof onProgress === "function") {
+      onProgress({ step: "Eksport: zapis pytań…", i: 0, n: nQ, msg: "" });
+    }
+  
+    for (let i = 0; i < rows.length; i += CHUNK) {
+      const part = rows.slice(i, i + CHUNK);
+      const { error: eQ } = await sb().from("qb_questions").insert(part, { defaultToNull: false });
+      if (eQ) throw eQ;
+  
+      if (typeof onProgress === "function") {
+        onProgress({
+          step: "Eksport: zapis pytań…",
+          i: Math.min(i + part.length, nQ),
+          n: nQ,
+          msg: `Zapisano ${Math.min(i + part.length, nQ)}/${nQ}`,
+        });
+      }
+    }
   }
 }
 
@@ -741,12 +814,57 @@ document.addEventListener("DOMContentLoaded", async () => {
   // EXPORT
   btnExport?.addEventListener("click", async () => {
     if (!selectedId) return;
+    if (btnExport?.disabled) return;
+  
+    // UI start
+    if (exportJsonSub) exportJsonSub.textContent = "Nie zamykaj strony. Trwa przygotowanie pliku.";
+    show(exportJsonOverlay, true);
+  
+    // na start: nie znamy jeszcze n, ustawi się po pobraniu listy pytań w exportGame()
+    setProgUi(exportJsonStep, exportJsonCount, exportJsonBar, exportJsonMsg, {
+      step: "Eksport: start…",
+      i: 0,
+      n: 0,
+      msg: "",
+    });
+  
+    if (btnExport) btnExport.disabled = true;
+  
     try {
-      const obj = await exportGame(selectedId);
+      const obj = await exportGame(selectedId, ({ step, i, n, msg } = {}) => {
+        setProgUi(exportJsonStep, exportJsonCount, exportJsonBar, exportJsonMsg, {
+          step: step || "Eksport: pobieranie…",
+          i,
+          n,
+          msg,
+        });
+      });
+  
+      setProgUi(exportJsonStep, exportJsonCount, exportJsonBar, exportJsonMsg, {
+        step: "Gotowe ✅",
+        i: Array.isArray(obj?.questions) ? obj.questions.length : 1,
+        n: Array.isArray(obj?.questions) ? obj.questions.length : 1,
+        msg: "Pobieranie pliku…",
+      });
+  
       downloadJson(safeDownloadName(obj?.game?.name), obj);
+  
+      // krótko pokaż “Gotowe”, potem schowaj
+      setTimeout(() => show(exportJsonOverlay, false), 400);
     } catch (e) {
       console.error(e);
-      alert("Eksport nie powiódł się (sprawdź konsolę).");
+      setProgUi(exportJsonStep, exportJsonCount, exportJsonBar, exportJsonMsg, {
+        step: "Błąd ❌",
+        i: 0,
+        n: 1,
+        msg: e?.message || "Eksport nie powiódł się (sprawdź konsolę).",
+        isError: true,
+      });
+  
+      // zostaw overlay na chwilę, żeby użytkownik zobaczył błąd
+      setTimeout(() => show(exportJsonOverlay, false), 1200);
+    } finally {
+      if (btnExport) btnExport.disabled = false;
     }
   });
 
@@ -774,14 +892,54 @@ document.addEventListener("DOMContentLoaded", async () => {
       return;
     }
   
+    if (btnExportBaseDo?.disabled) return;
+  
+    setExportBaseMsg("");
+    showProgBlock(exportBaseProg, true);
+    setProgUi(exportBaseProgStep, exportBaseProgCount, exportBaseProgBar, exportBaseProgMsg, {
+      step: "Eksport: start…",
+      i: 0,
+      n: 1,
+      msg: "",
+    });
+  
+    if (btnExportBaseDo) btnExportBaseDo.disabled = true;
+    if (btnExportBaseCancel) btnExportBaseCancel.disabled = true;
+  
     try {
-      setExportBaseMsg("");
-      await exportSelectedGameToBase(baseId);
+      await exportSelectedGameToBase(baseId, ({ step, i, n, msg, isError } = {}) => {
+        setProgUi(exportBaseProgStep, exportBaseProgCount, exportBaseProgBar, exportBaseProgMsg, {
+          step: step || "Eksport…",
+          i,
+          n,
+          msg,
+          isError,
+        });
+      });
+  
+      setProgUi(exportBaseProgStep, exportBaseProgCount, exportBaseProgBar, exportBaseProgMsg, {
+        step: "Gotowe ✅",
+        i: 1,
+        n: 1,
+        msg: "Wyeksportowano do bazy.",
+      });
+  
       closeExportBaseModal();
       alert("Wyeksportowano do bazy.");
     } catch (e) {
       console.error(e);
       setExportBaseMsg("Nie udało się wyeksportować do bazy.");
+      setProgUi(exportBaseProgStep, exportBaseProgCount, exportBaseProgBar, exportBaseProgMsg, {
+        step: "Błąd ❌",
+        i: 0,
+        n: 1,
+        msg: e?.message || "Eksport nie powiódł się.",
+        isError: true,
+      });
+    } finally {
+      showProgBlock(exportBaseProg, false);
+      if (btnExportBaseDo) btnExportBaseDo.disabled = false;
+      if (btnExportBaseCancel) btnExportBaseCancel.disabled = false;
     }
   });
 
@@ -812,32 +970,93 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
   btnImportJson?.addEventListener("click", async () => {
+    // blokada równoległych klików
+    if (btnImportJson?.disabled) return;
+  
+    let obj = null;
+  
     try {
       const txt = importTa?.value || "";
       if (!txt.trim()) {
         setImportMsg("Wklej JSON albo wczytaj plik.");
         return;
       }
-
-      const obj = JSON.parse(txt);
-      const newId = await importGame(obj, currentUser.id);
-
-      closeImportModal();
+  
+      // parse najpierw, żeby błędny JSON nie odpalał progresu
+      obj = JSON.parse(txt);
+    } catch (e) {
+      console.error("IMPORT JSON PARSE ERROR:", e);
+      setImportMsg("Błędny JSON (nie da się sparsować).");
+      return;
+    }
+  
+    // UI: start
+    setImportMsg("");
+    showProgBlock(importProg, true);
+    setProgUi(importProgStep, importProgCount, importProgBar, importProgMsg, {
+      step: "Import: start…",
+      i: 0,
+      n: Array.isArray(obj?.questions) ? obj.questions.length : 0,
+      msg: "",
+    });
+  
+    if (btnImportJson) btnImportJson.disabled = true;
+    if (btnCancelImport) btnCancelImport.disabled = true;
+    if (btnImportFile) btnImportFile.disabled = true;
+    if (importFile) importFile.disabled = true;
+    if (importTa) importTa.disabled = true;
+  
+    try {
+      const newId = await importGame(obj, currentUser.id, ({ step, i, n, msg, isError } = {}) => {
+        setProgUi(importProgStep, importProgCount, importProgBar, importProgMsg, {
+          step: step || "Import: zapis…",
+          i,
+          n,
+          msg,
+          isError,
+        });
+      });
+  
+      // końcówka
+      setProgUi(importProgStep, importProgCount, importProgBar, importProgMsg, {
+        step: "Gotowe ✅",
+        i: Array.isArray(obj?.questions) ? obj.questions.length : 0,
+        n: Array.isArray(obj?.questions) ? obj.questions.length : 0,
+        msg: "Zaimportowano.",
+      });
+  
       selectedId = newId;
-
+  
       try {
         const ng = await loadGameBasic(newId);
         if (ng?.type) {
-          // ustaw zakładkę wg UI-type
           const ui = uiTypeFromRow(ng);
           setActiveTab(ui);
         }
       } catch {}
-
+  
       await refresh();
+  
+      closeImportModal();
     } catch (e) {
       console.error("IMPORT ERROR:", e);
-      setImportMsg("Błąd importu: zły JSON albo problem z bazą (sprawdź konsolę).");
+      setProgUi(importProgStep, importProgCount, importProgBar, importProgMsg, {
+        step: "Błąd ❌",
+        i: 0,
+        n: Array.isArray(obj?.questions) ? obj.questions.length : 0,
+        msg: e?.message || "Import nie powiódł się (sprawdź konsolę).",
+        isError: true,
+      });
+      setImportMsg("Błąd importu: problem z bazą (sprawdź konsolę).");
+    } finally {
+      // UI: stop
+      showProgBlock(importProg, false);
+  
+      if (btnImportJson) btnImportJson.disabled = false;
+      if (btnCancelImport) btnCancelImport.disabled = false;
+      if (btnImportFile) btnImportFile.disabled = false;
+      if (importFile) importFile.disabled = false;
+      if (importTa) importTa.disabled = false;
     }
   });
 
