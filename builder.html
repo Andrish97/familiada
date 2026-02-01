@@ -144,6 +144,20 @@
 
       <textarea id="importTa" class="importTa" spellcheck="false" placeholder="Wklej JSON tutaj..."></textarea>
 
+      <!-- IMPORT PROGRESS (dodaj w modalu importu) -->
+      <div class="importProg" id="importProg" style="display:none;margin-top:12px;display:grid;gap:10px">
+        <div class="importRow" style="align-items:center">
+          <div id="importProgStep" style="font-weight:800;letter-spacing:.04em">—</div>
+          <div id="importProgCount" style="margin-left:auto;opacity:.8">0/0</div>
+        </div>
+      
+        <div style="height:10px;border-radius:999px;background:rgba(255,255,255,.10);overflow:hidden">
+          <div id="importProgBar" style="height:100%;width:0%;background:rgba(255,255,255,.85)"></div>
+        </div>
+      
+        <div class="importMsg" id="importProgMsg" style="min-height:18px"></div>
+      </div>
+      
       <div class="importRow">
         <button class="btn sm gold" id="btnImportJson" type="button">Importuj</button>
         <button class="btn sm" id="btnCancelImport" type="button">Zamknij</button>
