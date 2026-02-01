@@ -198,29 +198,27 @@ export function initTextPixEditor(ctx) {
   }
 
   let fontPickOpen = false;
-  let fontPickIndex = 0; // nawigacja strzałkami
-
   function positionFontPick() {
     if (!fontPickPop || !fontPickBtn) return;
-    // Popover jest pozycjonowany jako fixed (żeby nie był "przycinany" przez overflow toolbara).
+
+    // Popover jest FIXED (żeby nie był przycinany przez overflow toolbara).
     const r = fontPickBtn.getBoundingClientRect();
     const gap = 10;
 
-    // Domyślnie pod przyciskiem.
     let left = r.left;
     let top = r.bottom + gap;
 
-    // Korekta w prawo/lewo, żeby nie wychodzić poza viewport.
     const vw = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0);
     const vh = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0);
 
-    // jeśli element jeszcze nie ma wymiaru (pierwsze otwarcie), ustawimy po layout.
-    const pw = fontPickPop.offsetWidth || 520;
-    const ph = fontPickPop.offsetHeight || 360;
+    // Wymiary popovera (jeśli jeszcze 0, przyjmij sensowne).
+    const pw = fontPickPop.offsetWidth || 560;
+    const ph = fontPickPop.offsetHeight || 380;
 
+    // clamp w poziomie
     left = Math.max(8, Math.min(left, vw - pw - 8));
 
-    // Jeśli brakuje miejsca w dół -> pokaż nad przyciskiem.
+    // jeśli brak miejsca w dół -> nad przyciskiem
     if (top + ph > vh - 8) {
       top = Math.max(8, r.top - gap - ph);
     }
@@ -228,12 +226,13 @@ export function initTextPixEditor(ctx) {
     fontPickPop.style.left = `${Math.round(left)}px`;
     fontPickPop.style.top  = `${Math.round(top)}px`;
   }
+  let fontPickIndex = 0; // nawigacja strzałkami
   
   function closeFontPick() {
     if (!fontPickPop || !fontPickBtn) return;
     fontPickOpen = false;
     fontPickPop.hidden = true;
-    // czyścimy pozycję (defensywnie)
+    // defensywnie wyczyść pozycję (ustawia ją JS)
     fontPickPop.style.left = "";
     fontPickPop.style.top = "";
     fontPickBtn.setAttribute("aria-expanded", "false");
@@ -245,13 +244,13 @@ export function initTextPixEditor(ctx) {
     fontPickPop.hidden = false;
     fontPickBtn.setAttribute("aria-expanded", "true");
 
-    // ustaw pozycję natychmiast + jeszcze raz po layout
+    // ustaw pozycję natychmiast + jeszcze raz po layout (żeby złapać realne wymiary)
     positionFontPick();
     requestAnimationFrame(() => positionFontPick());
-  
+
     // focus na wyszukiwarkę
     setTimeout(() => fontPickSearchInp?.focus?.(), 0);
-  
+
     // ustaw index na aktualnie zaznaczony (po filtrze)
     const root = fontPickList || fontPickPop;
     const items = Array.from(root.querySelectorAll(".fontPickItem"));
@@ -1058,6 +1057,16 @@ export function initTextPixEditor(ctx) {
         // custom dropdown: open/close
     fontPickBtn?.addEventListener("click", () => toggleFontPick());
 
+    // X: wyczyść wyszukiwanie czcionek
+    fontPickSearchClear?.addEventListener?.("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (fontPickSearchInp) fontPickSearchInp.value = "";
+      rebuildFontPickFromSelect();
+      // utrzymaj popup otwarty i fokus w polu
+      openFontPick();
+    });
+
     // wheel scroll w liście
     fontPickPop?.addEventListener("wheel", (e) => {
       // na Windows potrafi scrollować “stronicami” — wymuszamy naturalny scroll
@@ -1082,16 +1091,15 @@ export function initTextPixEditor(ctx) {
       const t = e.target;
       if (t && (t === fontPickBtn || t.closest?.("#fontPick"))) return;
       closeFontPick();
-    });
 
-    // gdy przewijasz/zmieniasz rozmiar — popover ma trzymać się przycisku
+    // Re-pozycjonowanie popovera przy zmianach layoutu / scrollu
     window.addEventListener("resize", () => {
       if (fontPickOpen) positionFontPick();
     });
-    // capture=true, żeby łapać scroll z kontenerów (toolbar ma scroll-x)
     window.addEventListener("scroll", () => {
       if (fontPickOpen) positionFontPick();
     }, true);
+    });
 
     // klawiatura: strzałki / Enter / Esc
     document.addEventListener("keydown", (e) => {
