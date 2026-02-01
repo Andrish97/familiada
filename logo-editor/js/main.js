@@ -360,13 +360,35 @@ function cleanRows30x10(rows){
 }
 
 function exportLogoToFile(l){
-  const payload = {
-    name: l.name || "Logo",
-    type: l.type,
-    payload: l.payload
-  };
+  const type = String(l?.type || "").toUpperCase();
 
-  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+  let out = null;
+
+  if (type.includes("GLYPH")){
+    const rows = l?.payload?.layers?.[0]?.rows || [];
+    out = {
+      kind: "GLYPH",
+      name: l.name || "Logo",
+      payload: { rows }
+    };
+  } else if (type.includes("PIX")){
+    const p = l?.payload || {};
+    out = {
+      kind: "PIX",
+      name: l.name || "Logo",
+      payload: {
+        w: Number(p.w) || DOT_W,
+        h: Number(p.h) || DOT_H,
+        format: "BITPACK_MSB_FIRST_ROW_MAJOR",
+        bits_b64: String(p.bits_b64 || "")
+      }
+    };
+  } else {
+    // fallback: nie powinno się zdarzyć, ale nie psujemy eksportu
+    out = { kind: "GLYPH", name: l.name || "Logo", payload: { rows: [] } };
+  }
+
+  const blob = new Blob([JSON.stringify(out, null, 2)], { type: "application/json" });
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
   a.download = `${(l.name || "logo").replace(/[^\w\d\- ]+/g,"").trim() || "logo"}.json`;
@@ -376,21 +398,37 @@ function exportLogoToFile(l){
   URL.revokeObjectURL(a.href);
 }
 
-
 function parseImportJson(text){
   let obj = null;
   try { obj = JSON.parse(text); } catch { throw new Error("To nie jest poprawny JSON."); }
 
-  const kind = String(obj?.kind || "").toUpperCase();
+  // Obsługujemy 2 formaty:
+  // (A) transfer: { kind:"GLYPH|PIX", name, payload:{ rows... / bits_b64... } }
+  // (B) db-export (stary): { type:"GLYPH_30x10|PIX_150x70", name, payload:{ layers... / bits_b64... } }
+  const kindRaw = String(obj?.kind || "").toUpperCase();
+  const typeRaw = String(obj?.type || "").toUpperCase();
+
+  const kind =
+    kindRaw ||
+    (typeRaw.includes("GLYPH") ? "GLYPH" : "") ||
+    (typeRaw.includes("PIX") ? "PIX" : "");
+
   const name = String(obj?.name || "Logo").trim() || "Logo";
+  const p = obj?.payload || {};
 
   if (kind === "GLYPH"){
-    const rows = cleanRows30x10(obj?.payload?.rows);
+    // transfer: payload.rows
+    // db-export: payload.layers[0].rows
+    const rowsSrc =
+      p?.rows ??
+      p?.layers?.[0]?.rows ??
+      obj?.rows;
+
+    const rows = cleanRows30x10(rowsSrc);
     return { kind: "GLYPH", name, rows };
   }
 
   if (kind === "PIX"){
-    const p = obj?.payload || {};
     const w = Number(p.w) || DOT_W;
     const h = Number(p.h) || DOT_H;
     if (w !== DOT_W || h !== DOT_H) {
@@ -401,7 +439,7 @@ function parseImportJson(text){
     return { kind: "PIX", name, pixPayload: { w, h, format: "BITPACK_MSB_FIRST_ROW_MAJOR", bits_b64 } };
   }
 
-  throw new Error("Nieznany format importu. Oczekuję kind=GLYPH albo kind=PIX.");
+  throw new Error("Nieznany format importu. Oczekuję kind=GLYPH albo kind=PIX (lub type zawierający GLYPH/PIX).");
 }
 
 async function importLogoFromFile(file){
