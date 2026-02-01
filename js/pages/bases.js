@@ -35,6 +35,21 @@ const btnCancelImport = document.getElementById("btnCancelImport");
 const importTa = document.getElementById("importTa");
 const importMsg = document.getElementById("importMsg");
 
+// Import progress (modal importu)
+const importProg = document.getElementById("importProg");
+const importProgStep = document.getElementById("importProgStep");
+const importProgCount = document.getElementById("importProgCount");
+const importProgBar = document.getElementById("importProgBar");
+const importProgMsg = document.getElementById("importProgMsg");
+
+// Export progress (overlay eksportu do pliku)
+const exportJsonOverlay = document.getElementById("exportJsonOverlay");
+const exportJsonSub = document.getElementById("exportJsonSub");
+const exportJsonStep = document.getElementById("exportJsonStep");
+const exportJsonCount = document.getElementById("exportJsonCount");
+const exportJsonBar = document.getElementById("exportJsonBar");
+const exportJsonMsg = document.getElementById("exportJsonMsg");
+
 // Modal share
 const shareOverlay = document.getElementById("shareOverlay");
 const shareList = document.getElementById("shareList");
@@ -118,6 +133,23 @@ function setButtonsState() {
 
   // Eksport: każdy z dostępem
   if (btnExport) btnExport.disabled = !hasSel;
+}
+
+function showProgBlock(el, on) {
+  if (!el) return;
+  el.style.display = on ? "grid" : "none";
+}
+
+function setProgUi(stepEl, countEl, barEl, msgEl, { step, i, n, msg } = {}) {
+  if (stepEl && step != null) stepEl.textContent = String(step);
+  if (countEl) countEl.textContent = `${Number(i) || 0}/${Number(n) || 0}`;
+
+  const nn = Number(n) || 0;
+  const ii = Number(i) || 0;
+  const pct = nn > 0 ? Math.round((ii / nn) * 100) : 0;
+  if (barEl) barEl.style.width = `${Math.max(0, Math.min(100, pct))}%`;
+
+  if (msgEl) msgEl.textContent = msg ? String(msg) : "";
 }
 
 /* ================= DB: listowanie baz ================= */
@@ -238,13 +270,17 @@ async function deleteBase(base) {
 }
 
 /* ================= Export / Import ================= */
-async function exportBase(baseId) {
+async function exportBase(baseId, onProgress) {
+  const prog = (step, i, n, msg) => {
+    if (typeof onProgress === "function") onProgress({ step, i, n, msg });
+  };
   const { data: baseRow, error: bErr } = await sb()
     .from("question_bases")
     .select("id,name,owner_id,created_at,updated_at")
     .eq("id", baseId)
     .single();
   if (bErr) throw bErr;
+  prog("Eksport: baza…", 1, 5, "");
 
   const { data: cats, error: cErr } = await sb()
     .from("qb_categories")
@@ -252,6 +288,7 @@ async function exportBase(baseId) {
     .eq("base_id", baseId)
     .order("ord", { ascending: true });
   if (cErr) throw cErr;
+  prog("Eksport: foldery…", 2, 5, "");
 
   const { data: qs, error: qErr } = await sb()
     .from("qb_questions")
@@ -259,6 +296,7 @@ async function exportBase(baseId) {
     .eq("base_id", baseId)
     .order("ord", { ascending: true });
   if (qErr) throw qErr;
+  prog("Eksport: pytania…", 3, 5, Liczba: ${(qs||[]).length});
 
   const { data: tags, error: tErr } = await sb()
     .from("qb_tags")
@@ -266,6 +304,7 @@ async function exportBase(baseId) {
     .eq("base_id", baseId)
     .order("ord", { ascending: true });
   if (tErr) throw tErr;
+  prog("Eksport: tagi…", 4, 5, Liczba: ${(tags||[]).length});
 
   // powiązania tagów (po pytaniach z tej bazy)
   const qIds = (qs || []).map((q) => q.id);
@@ -278,7 +317,8 @@ async function exportBase(baseId) {
     if (qtErr) throw qtErr;
     qtags = qt || [];
   }
-
+  prog("Eksport: tagi pytań…", 5, 5, Liczba: ${(qtags||[]).length});
+  
   return {
     base: { name: baseRow?.name ?? "Baza" },
     categories: cats || [],
@@ -297,19 +337,25 @@ function isValidImportPayload(p) {
   return !!p && typeof p === "object" && p.base && Array.isArray(p.questions);
 }
 
-async function importBase(payload) {
+async function importBase(payload, onProgress) {
+  const prog = (step, i, n, msg) => {
+    if (typeof onProgress === "function") onProgress({ step, i, n, msg });
+  };
+  
   if (!isValidImportPayload(payload)) {
     throw new Error("Zły format pliku (brak base / questions). ");
   }
 
   const baseName = safeName(payload.base?.name || "Nowa baza pytań");
   const base = await createBase(baseName);
+  prog("Import: tworzenie bazy…", 1, 5, "");
 
   const oldToNewCat = new Map();
   const oldToNewTag = new Map();
   const oldToNewQ = new Map();
 
   // 1) Kategorie – w kolejności topologicznej (rooty → dzieci)
+  prog("Import: kategorie…", 2, 5, "");
   const cats = Array.isArray(payload.categories) ? payload.categories : [];
   const byParent = new Map();
   for (const c of cats) {
@@ -345,6 +391,7 @@ async function importBase(payload) {
   await insertCatSubtree(null, null);
 
   // 2) Tagi
+  prog("Import: tagi…", 3, 5, "");
   const tags = Array.isArray(payload.tags) ? payload.tags : [];
   for (const t of tags) {
     const { data, error } = await sb()
@@ -362,6 +409,7 @@ async function importBase(payload) {
   }
 
   // 3) Pytania
+  prog("Import: pytania…", 0, qs.length || 0, "");
   const qs = Array.isArray(payload.questions) ? payload.questions : [];
   for (const q of qs) {
     const newCatId = q.category_id ? (oldToNewCat.get(q.category_id) || null) : null;
@@ -378,9 +426,11 @@ async function importBase(payload) {
       .single();
     if (error) throw error;
     oldToNewQ.set(q.id, data.id);
+    prog("Import: pytania…", qi + 1, qs.length || 0, String(q?.payload?.text || "").slice(0, 60));
   }
 
   // 4) Powiązania tagów
+  prog("Import: powiązania tagów…", 4, 5, "");
   const qtags = Array.isArray(payload.question_tags) ? payload.question_tags : [];
   const rows = [];
   for (const r of qtags) {
@@ -394,7 +444,8 @@ async function importBase(payload) {
     if (error) throw error;
   }
 
-    // 5) Powiązania tagów kategorii (folderów)
+  // 5) Powiązania tagów kategorii (folderów)
+  prog("Import: tagi folderów…", 5, 5, "");
   const ctags = Array.isArray(payload.category_tags) ? payload.category_tags : [];
   const crows = [];
   for (const r of ctags) {
@@ -770,6 +821,7 @@ function readFileAsText(file) {
 
 async function importFromJsonText(txt) {
   setMsg(importMsg, "");
+
   let payload;
   try {
     payload = JSON.parse(txt);
@@ -778,16 +830,57 @@ async function importFromJsonText(txt) {
     return;
   }
 
+  // UI start
+  showProgBlock(importProg, true);
+  setProgUi(importProgStep, importProgCount, importProgBar, importProgMsg, {
+    step: "Import: start…",
+    i: 0,
+    n: Array.isArray(payload?.questions) ? payload.questions.length : 0,
+    msg: "",
+  });
+
+  // blokady
+  if (btnImportJson) btnImportJson.disabled = true;
+  if (btnCancelImport) btnCancelImport.disabled = true;
+  if (btnImportFile) btnImportFile.disabled = true;
+  if (importFile) importFile.disabled = true;
+  if (importTa) importTa.disabled = true;
+
   try {
-    const newId = await importBase(payload);
+    // UWAGA: w bases.js masz lokalne importBase(payload) – jeśli wolisz, możesz przejść na import z bases-import.js.
+    const newId = await importBase(payload, ({ step, i, n, msg } = {}) => {
+      setProgUi(importProgStep, importProgCount, importProgBar, importProgMsg, {
+        step: step || "Import…",
+        i,
+        n,
+        msg,
+      });
+    });
+
     selectedId = newId;
     await refreshBases();
     render();
     setButtonsState();
+
     setMsg(importMsg, "Zaimportowano");
+    closeImportModal();
   } catch (e) {
     console.warn("[bases] import error:", e);
     setMsg(importMsg, "Nie udało się");
+    setProgUi(importProgStep, importProgCount, importProgBar, importProgMsg, {
+      step: "Błąd ❌",
+      i: 0,
+      n: 1,
+      msg: e?.message || "Import nie powiódł się.",
+    });
+  } finally {
+    showProgBlock(importProg, false);
+
+    if (btnImportJson) btnImportJson.disabled = false;
+    if (btnCancelImport) btnCancelImport.disabled = false;
+    if (btnImportFile) btnImportFile.disabled = false;
+    if (importFile) importFile.disabled = false;
+    if (importTa) importTa.disabled = false;
   }
 }
 
@@ -817,12 +910,43 @@ btnShare?.addEventListener("click", async () => {
 btnExport?.addEventListener("click", async () => {
   const b = selectedBase();
   if (!b) return;
+  if (btnExport?.disabled) return;
+
+  show(exportJsonOverlay, true);
+  if (exportJsonSub) exportJsonSub.textContent = "Nie zamykaj strony. Trwa przygotowanie pliku.";
+
+  setProgUi(exportJsonStep, exportJsonCount, exportJsonBar, exportJsonMsg, {
+    step: "Eksport: start…",
+    i: 0,
+    n: 6,
+    msg: "",
+  });
+
+  if (btnExport) btnExport.disabled = true;
+
   try {
-    const out = await exportBase(b.id);
+    // prosty progres etapowy (query po query)
+    const onProgress = ({ step, i, n, msg } = {}) => {
+      setProgUi(exportJsonStep, exportJsonCount, exportJsonBar, exportJsonMsg, { step, i, n, msg });
+    };
+
+    const out = await exportBase(b.id, onProgress);
+    onProgress({ step: "Pobieranie…", i: 6, n: 6, msg: safeDownloadName(b.name) });
+
     downloadJson(safeDownloadName(b.name), out);
+
+    setTimeout(() => show(exportJsonOverlay, false), 250);
   } catch (e) {
     console.warn("[bases] export error:", e);
-    alert("Nie udało się wyeksportować.");
+    setProgUi(exportJsonStep, exportJsonCount, exportJsonBar, exportJsonMsg, {
+      step: "Błąd ❌",
+      i: 0,
+      n: 1,
+      msg: e?.message || "Nie udało się wyeksportować.",
+    });
+    setTimeout(() => show(exportJsonOverlay, false), 1200);
+  } finally {
+    if (btnExport) btnExport.disabled = false;
   }
 });
 
