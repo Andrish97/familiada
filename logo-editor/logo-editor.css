@@ -651,9 +651,117 @@
   gap: 8px;
 }
 
-#toolsDraw .toolSep{
-  display: none; /* separator psuje czytelność przy wrap */
+
+/* =========================================================
+   DRAW toolbar (w editorToolbar) — toolGrid + separatory
+========================================================= */
+
+#toolsDraw{
+  width: 100%;
+  flex-wrap: wrap;         /* może się łamać, ale układ pozostaje logiczny */
+  gap: 10px;
 }
+
+#toolsDraw .toolGrid{
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: nowrap;
+}
+
+#toolsDraw .toolSep{
+  width: 1px;
+  height: 30px;
+  background: rgba(255,255,255,.22); /* mocniej niż było */
+  margin: 0 4px;
+  align-self: center;
+}
+
+/* =========================================================
+   Tooltipy (data-tip)
+========================================================= */
+
+[data-tip]{ position: relative; }
+
+/* dymek */
+[data-tip]::after{
+  content: attr(data-tip);
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  transform: translate(-50%, -6px);
+  margin-top: 10px;
+
+  min-width: 220px;
+  max-width: 360px;
+  padding: 10px 12px;
+
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,.14);
+  background: rgba(0,0,0,.92);
+  box-shadow: 0 18px 60px rgba(0,0,0,.70);
+
+  font-size: 12px;
+  line-height: 1.35;
+  white-space: pre-line;  /* KLUCZ: obsługa \n */
+
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .12s ease, transform .12s ease;
+  z-index: 9999;
+}
+
+/* “strzałka” */
+[data-tip]::before{
+  content:"";
+  position:absolute;
+  left:50%;
+  top:100%;
+  transform: translate(-50%, 2px);
+  width:10px;
+  height:10px;
+  background: rgba(0,0,0,.92);
+  border-left:1px solid rgba(255,255,255,.14);
+  border-top:1px solid rgba(255,255,255,.14);
+  rotate:45deg;
+
+  opacity:0;
+  pointer-events:none;
+  transition: opacity .12s ease, transform .12s ease;
+  z-index: 9998;
+}
+
+/* pokazuj na hover + focus */
+[data-tip]:hover::after,
+[data-tip]:focus-visible::after{
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+[data-tip]:hover::before,
+[data-tip]:focus-visible::before{
+  opacity: 1;
+}
+
+/* pozycja “top” */
+[data-tip][data-tip-pos="top"]::after{
+  top: auto;
+  bottom: 100%;
+  margin-top: 0;
+  margin-bottom: 10px;
+  transform: translate(-50%, 6px);
+}
+[data-tip][data-tip-pos="top"]::before{
+  top: auto;
+  bottom: 100%;
+  transform: translate(-50%, -2px) rotate(180deg);
+}
+
+/* na dotyku: wyłącz */
+@media (hover: none) {
+  [data-tip]::after,
+  [data-tip]::before{ display:none; }
+}
+
 
 
 /* =========================================================
