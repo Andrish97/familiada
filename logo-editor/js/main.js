@@ -82,6 +82,21 @@ const previewOverlay = document.getElementById("previewOverlay");
 const bigPreviewFull = document.getElementById("bigPreviewFull");
 const btnPreviewClose = document.getElementById("btnPreviewClose");
 
+// PROGRES overlays (IMPORT / EXPORT)
+const logoImportOverlay = document.getElementById("logoImportOverlay");
+const logoImportSub = document.getElementById("logoImportSub");
+const logoImportStep = document.getElementById("logoImportStep");
+const logoImportCount = document.getElementById("logoImportCount");
+const logoImportBar = document.getElementById("logoImportBar");
+const logoImportMsg = document.getElementById("logoImportMsg");
+
+const logoExportOverlay = document.getElementById("logoExportOverlay");
+const logoExportSub = document.getElementById("logoExportSub");
+const logoExportStep = document.getElementById("logoExportStep");
+const logoExportCount = document.getElementById("logoExportCount");
+const logoExportBar = document.getElementById("logoExportBar");
+const logoExportMsg = document.getElementById("logoExportMsg");
+
 /* =========================================================
    STATE
 ========================================================= */
@@ -137,6 +152,39 @@ function fmtDate(iso){
       hour:"2-digit", minute:"2-digit"
     });
   } catch { return ""; }
+}
+
+function progOpen(which){
+  if (which === "import") show(logoImportOverlay, true);
+  if (which === "export") show(logoExportOverlay, true);
+}
+function progClose(which){
+  if (which === "import") show(logoImportOverlay, false);
+  if (which === "export") show(logoExportOverlay, false);
+}
+
+function progSet(which, { step = "—", i = 0, n = 0, msg = "", sub = "" } = {}){
+  const pct = n > 0 ? Math.max(0, Math.min(100, Math.round((i / n) * 100))) : 0;
+
+  if (which === "import"){
+    if (logoImportSub && sub) logoImportSub.textContent = sub;
+    if (logoImportStep) logoImportStep.textContent = step;
+    if (logoImportCount) logoImportCount.textContent = `${i}/${n}`;
+    if (logoImportBar) logoImportBar.style.width = `${pct}%`;
+    if (logoImportMsg) logoImportMsg.textContent = msg || "";
+  }
+
+  if (which === "export"){
+    if (logoExportSub && sub) logoExportSub.textContent = sub;
+    if (logoExportStep) logoExportStep.textContent = step;
+    if (logoExportCount) logoExportCount.textContent = `${i}/${n}`;
+    if (logoExportBar) logoExportBar.style.width = `${pct}%`;
+    if (logoExportMsg) logoExportMsg.textContent = msg || "";
+  }
+}
+
+function progReset(which){
+  progSet(which, { step: "—", i: 0, n: 0, msg: "" });
 }
 
 function esc(s){
@@ -1148,22 +1196,41 @@ async function boot(){
      location.href = "../index.html";
    });
 
-  inpImportLogoFile?.addEventListener("change", async () => {
-    const f = inpImportLogoFile.files?.[0];
-    inpImportLogoFile.value = "";
-    if (!f) return;
-
-    setMsg("Importuję…");
-    try{
-      await importLogoFromFile(f);
-      await refresh();
-      setMsg("Zaimportowano logo.");
-    } catch (e){
-      console.error(e);
-      alert("Nie udało się zaimportować.\n\n" + (e?.message || e));
-      setMsg("");
-    }
-  });
+   inpImportLogoFile?.addEventListener("change", async () => {
+     const f = inpImportLogoFile.files?.[0];
+     inpImportLogoFile.value = "";
+     if (!f) return;
+   
+     // blokujący progres (jak w builder/demo-seed)
+     progOpen("import");
+     progReset("import");
+   
+     const N = 4;
+   
+     try{
+       progSet("import", { step: "Czytam plik…", i: 1, n: N, msg: f.name });
+       await new Promise(requestAnimationFrame);
+   
+       progSet("import", { step: "Sprawdzam JSON…", i: 2, n: N, msg: "Walidacja formatu" });
+       await new Promise(requestAnimationFrame);
+   
+       progSet("import", { step: "Zapisuję w bazie…", i: 3, n: N, msg: "Tworzenie nowego rekordu" });
+       await importLogoFromFile(f);
+   
+       progSet("import", { step: "Odświeżam listę…", i: 4, n: N, msg: "Gotowe" });
+       await refresh();
+   
+       // domknięcie po krótkim ticku, żeby użytkownik widział 100%
+       await new Promise(r => setTimeout(r, 150));
+       progClose("import");
+       setMsg("Zaimportowano logo.");
+     } catch (e){
+       console.error(e);
+       progClose("import");
+       alert("Nie udało się zaimportować.\n\n" + (e?.message || e));
+       setMsg("");
+     }
+   });
 
    btnImport?.addEventListener("click", () => inpImportLogoFile?.click());
    
@@ -1171,7 +1238,29 @@ async function boot(){
      if (!selectedKey || selectedKey === "default") return;
      const l = (logos || []).find(x => x.id === selectedKey);
      if (!l) return;
-     exportLogoToFile(l); // podmień funkcję exportu na "zaznaczone"
+   
+     progOpen("export");
+     progReset("export");
+   
+     const N = 3;
+   
+     try{
+       progSet("export", { step: "Przygotowuję dane…", i: 1, n: N, msg: l.name || "logo" });
+       await new Promise(requestAnimationFrame);
+   
+       progSet("export", { step: "Tworzę plik…", i: 2, n: N, msg: "JSON" });
+       await new Promise(requestAnimationFrame);
+   
+       progSet("export", { step: "Pobieranie…", i: 3, n: N, msg: "Przeglądarka może zapytać o zapis" });
+       exportLogoToFile(l);
+   
+       await new Promise(r => setTimeout(r, 150));
+       progClose("export");
+     } catch (e){
+       console.error(e);
+       progClose("export");
+       alert("Nie udało się wyeksportować.\n\n" + (e?.message || e));
+     }
    });
 
    btnPreview?.addEventListener("click", () => {
