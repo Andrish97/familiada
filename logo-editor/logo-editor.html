@@ -425,5 +425,47 @@
     </div>
   </div>
 
+  <!-- PROGRES: IMPORT LOGO (blokujący) -->
+  <div class="overlay" id="logoImportOverlay" style="display:none;">
+    <div class="modal" style="width:min(640px,94vw)">
+      <div class="mTitle">IMPORT…</div>
+      <div class="mSub" id="logoImportSub">Nie zamykaj strony. Trwa import.</div>
+
+      <div style="margin-top:12px;display:grid;gap:10px">
+        <div class="importRow" style="align-items:center">
+          <div id="logoImportStep" style="font-weight:800;letter-spacing:.04em">—</div>
+          <div id="logoImportCount" style="margin-left:auto;opacity:.8">0/0</div>
+        </div>
+
+        <div style="height:10px;border-radius:999px;background:rgba(255,255,255,.10);overflow:hidden">
+          <div id="logoImportBar" style="height:100%;width:0%;background:rgba(255,255,255,.85)"></div>
+        </div>
+
+        <div class="importMsg" id="logoImportMsg" style="min-height:18px"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PROGRES: EXPORT LOGO (blokujący) -->
+  <div class="overlay" id="logoExportOverlay" style="display:none;">
+    <div class="modal" style="width:min(640px,94vw)">
+      <div class="mTitle">EXPORT…</div>
+      <div class="mSub" id="logoExportSub">Nie zamykaj strony. Trwa przygotowanie pliku.</div>
+
+      <div style="margin-top:12px;display:grid;gap:10px">
+        <div class="importRow" style="align-items:center">
+          <div id="logoExportStep" style="font-weight:800;letter-spacing:.04em">—</div>
+          <div id="logoExportCount" style="margin-left:auto;opacity:.8">0/0</div>
+        </div>
+
+        <div style="height:10px;border-radius:999px;background:rgba(255,255,255,.10);overflow:hidden">
+          <div id="logoExportBar" style="height:100%;width:0%;background:rgba(255,255,255,.85)"></div>
+        </div>
+
+        <div class="importMsg" id="logoExportMsg" style="min-height:18px"></div>
+      </div>
+    </div>
+  </div>
+  
 </body>
 </html>
