@@ -167,6 +167,7 @@ export function initImageEditor(ctx) {
     if (valDitherAmt) valDitherAmt.textContent = Number(rngDitherAmt?.value ?? "0.80").toFixed(2);
     if (valBlack) valBlack.textContent = String(rngBlack?.value ?? "0");
     if (valWhite) valWhite.textContent = String(rngWhite?.value ?? "100");
+    syncImgButtonLabels();
   }
 
   function readSettings(){
@@ -181,6 +182,46 @@ export function initImageEditor(ctx) {
     };
   }
 
+  function fmtSignedInt(n){
+    const x = Math.round(Number(n) || 0);
+    return (x > 0 ? `+${x}` : `${x}`);
+  }
+  
+  function fmtGamma(n){
+    const x = Number(n || 1);
+    return x.toFixed(2);
+  }
+  
+  function fmtDither(n){
+    const x = Number(n || 0);
+    return x.toFixed(2);
+  }
+  
+  function setBtnLabel(panel, text){
+    const b = btns.find(x => x.getAttribute("data-panel") === panel);
+    if (!b) return;
+    b.textContent = text;
+  }
+  
+  function syncImgButtonLabels(){
+    // czytamy bezpośrednio z inputów, żeby było natychmiast
+    const bright = rngBright?.value ?? 0;
+    const contrast = rngContrast?.value ?? 0;
+    const gamma = rngGamma?.value ?? 1;
+    const black = rngBlack?.value ?? 0;
+    const white = rngWhite?.value ?? 100;
+    const ditherAmt = rngDitherAmt?.value ?? 0;
+  
+    setBtnLabel("bright",   `Jasność: ${fmtSignedInt(bright)}`);
+    setBtnLabel("contrast", `Kontrast: ${fmtSignedInt(contrast)}`);
+    setBtnLabel("gamma",    `Gamma: ${fmtGamma(gamma)}`);
+    setBtnLabel("black",    `Czerń: ${Math.round(Number(black) || 0)}`);
+    setBtnLabel("white",    `Biel: ${Math.round(Number(white) || 0)}`);
+    setBtnLabel("dither",   `Dither: ${fmtDither(ditherAmt)}`);
+  
+    // opcjonalnie: zmienny label dla invert (ale invert nie jest w btns, tylko checkbox)
+    // tu nic nie robimy
+  }
 
   function resetToDefaults({ resetCrop = true } = {}) {
     // checkboxy
@@ -651,6 +692,7 @@ export function initImageEditor(ctx) {
       panelsWrap.style.left = "0px";
       panelsWrap.style.top = "0px";
     }
+    for (const b of btns) b.classList.remove("on");
     for (const p of panels) p.classList.remove("is-open");
   }
   
@@ -658,6 +700,10 @@ export function initImageEditor(ctx) {
     if (!panelsWrap || !anchorEl) return;
   
     openPanel = panelName;
+
+    for (const b of btns){
+      b.classList.toggle("on", b.getAttribute("data-panel") === panelName);
+    }
   
     for (const p of panels){
       p.classList.toggle("is-open", p.dataset.panel === panelName);
