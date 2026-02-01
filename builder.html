@@ -144,21 +144,6 @@
 
       <textarea id="importTa" class="importTa" spellcheck="false" placeholder="Wklej JSON tutaj..."></textarea>
 
-      <!-- PROGRESS (import) -->
-      <div class="xProg" id="importProg" hidden>
-        <div class="importRow" style="align-items:center">
-          <div id="importProgStep" style="font-weight:800;letter-spacing:.04em">—</div>
-          <div id="importProgCount" style="margin-left:auto;opacity:.8">0/0</div>
-        </div>
-      
-        <div class="xBar">
-          <div id="importProgBar" class="xBarIn" style="width:0%"></div>
-        </div>
-      
-        <div class="importMsg" id="importProgMsg" style="min-height:18px"></div>
-      </div>
-
-      
       <div class="importRow">
         <button class="btn sm gold" id="btnImportJson" type="button">Importuj</button>
         <button class="btn sm" id="btnCancelImport" type="button">Zamknij</button>
@@ -179,50 +164,9 @@
       <div class="importRow" style="margin-top:10px;">
         <button class="btn sm gold" id="btnExportBaseDo" type="button">Eksportuj</button>
         <button class="btn sm" id="btnExportBaseCancel" type="button">Zamknij</button>
-
-        <!-- PROGRESS (export base) -->
-        <div class="xProg" id="exportBaseProg" hidden>
-          <div class="importRow" style="align-items:center">
-            <div id="exportBaseProgStep" style="font-weight:800;letter-spacing:.04em">—</div>
-            <div id="exportBaseProgCount" style="margin-left:auto;opacity:.8">0/0</div>
-          </div>
-        
-          <div class="xBar">
-            <div id="exportBaseProgBar" class="xBarIn" style="width:0%"></div>
-          </div>
-        
-          <div class="importMsg" id="exportBaseProgMsg" style="min-height:18px"></div>
-        </div>
         <div class="importMsg" id="exportBaseMsg"></div>
       </div>
     </div>
   </div>
-
-  <!-- Export to file (progress) -->
-  <div class="overlay" id="exportFileOverlay" style="display:none;">
-    <div class="modal" style="width:min(720px,94vw)">
-      <div class="mTitle">EXPORT DO PLIKU…</div>
-      <div class="mSub">Nie zamykaj strony. To okno blokuje interfejs do czasu zakończenia.</div>
-  
-      <div class="xProg" id="exportFileProg">
-        <div class="importRow" style="align-items:center">
-          <div id="exportFileProgStep" style="font-weight:800;letter-spacing:.04em">—</div>
-          <div id="exportFileProgCount" style="margin-left:auto;opacity:.8">0/0</div>
-        </div>
-  
-        <div class="xBar">
-          <div id="exportFileProgBar" class="xBarIn" style="width:0%"></div>
-        </div>
-  
-        <div class="importMsg" id="exportFileProgMsg" style="min-height:18px"></div>
-      </div>
-  
-      <div class="importRow" style="margin-top:14px;justify-content:space-between">
-        <button class="btn sm" id="btnCancelExportFile" type="button">Zamknij</button>
-        <button class="btn sm gold" id="btnExportFileDo" type="button">Export</button>
-      </div>
-    </div>
-  </div>
-
 </body>
 </html>
