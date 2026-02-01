@@ -234,7 +234,7 @@
    TEXT_PIX TOOLBAR (2 rzędy, wrap po klockach)
 ========================================================= */
 #toolsTextPix{
-  display: flex !important;
+  display: flex
   flex-direction: column;
   gap: 8px;
   width: 100%;
