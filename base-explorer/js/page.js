@@ -40,7 +40,7 @@ btnLogout?.addEventListener("click", async () => {
 (async function init() {
   // auth
   const user = await requireAuth("../index.html");
-  if (who) who.textContent = user?.email || "—";
+  if (who) who.textContent = user?.username || user?.email || "—";
 
   // base id z URL
   const baseId = getBaseIdFromUrl();
