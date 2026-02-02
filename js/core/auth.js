@@ -113,6 +113,9 @@ export async function signIn(login, password) {
 export async function signUp(email, password, redirectTo, username) {
   const un = validateUsername(username);
 
+  un = (un || "").trim();
+  if (!un) throw new Error("Podaj nazwę użytkownika.");
+
   const { error } = await sb().auth.signUp({
     email,
     password,
