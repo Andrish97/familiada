@@ -1,0 +1,136 @@
+/* poll-go.css — minimalne, spójne z base.css (bez zgadywania Twoich tokenów) */
+
+.poll-go {
+  min-height: 100vh;
+  display: grid;
+  grid-template-rows: auto 1fr;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+}
+
+.brand {
+  font-weight: 900;
+  letter-spacing: .08em;
+}
+
+.right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.who {
+  opacity: .85;
+  font-size: 13px;
+  max-width: 260px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.wrap {
+  display: grid;
+  place-items: center;
+  padding: 18px 14px 28px;
+}
+
+.card {
+  width: min(720px, 100%);
+  padding: 18px;
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,.18);
+  background: rgba(255,255,255,.06);
+}
+
+.title {
+  margin: 0 0 8px 0;
+  font-size: 18px;
+  font-weight: 900;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.sub, .sub2 {
+  margin: 0 0 14px 0;
+  opacity: .85;
+  line-height: 1.35;
+}
+
+.msg {
+  margin: 10px 0 14px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,.16);
+  background: rgba(0,0,0,.18);
+}
+
+.row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.inp {
+  flex: 1 1 240px;
+  min-width: 220px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,.18);
+  background: rgba(0,0,0,.22);
+  color: inherit;
+}
+
+.btn {
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,.18);
+  background: rgba(255,255,255,.06);
+  color: inherit;
+  cursor: pointer;
+}
+
+.btn:hover { background: rgba(255,255,255,.10); }
+.btn:disabled { opacity: .5; cursor: default; }
+
+.btn.ok {
+  border-color: rgba(130,255,220,.35);
+}
+
+.btn.sm {
+  padding: 7px 10px;
+  border-radius: 10px;
+  font-size: 13px;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sep {
+  height: 1px;
+  background: rgba(255,255,255,.12);
+  margin: 14px 0;
+}
+
+.foot {
+  margin-top: 14px;
+  opacity: .8;
+}
+
+.link {
+  color: inherit;
+  text-decoration: underline;
+}
+
+.tiny {
+  margin: 10px 0 0;
+  opacity: .7;
+  font-size: 12px;
+}
