@@ -708,7 +708,7 @@ async function refresh() {
 
 document.addEventListener("DOMContentLoaded", async () => {
   currentUser = await requireAuth("index.html");
-  if (who) who.textContent = currentUser?.email || "—";
+  if (who) who.textContent = currentUser?.username || currentUser?.email || "—";
 
   btnLogout?.addEventListener("click", async () => {
     await signOut();
