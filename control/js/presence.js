@@ -1,4 +1,4 @@
-import { sb } from "/familiada/js/core/supabase.js";
+import { sb } from "../../js/core/supabase.js";
 
 // ================== KOMUNIKATY (PRESENCE) ==================
 const PRESENCE_MSG = {
