@@ -34,11 +34,11 @@ const APP_MSG = {
 };
 // ================= KONIEC KOMUNIKATÓW =================
 
-import { requireAuth, signOut } from "/familiada/js/core/auth.js";
-import { sb } from "/familiada/js/core/supabase.js";
-import { rt } from "/familiada/js/core/realtime.js";
-import { validateGameReadyToPlay, loadGameBasic, loadQuestions, loadAnswers } from "/familiada/js/core/game-validate.js";
-import { unlockAudio, isAudioUnlocked, playSfx } from "/familiada/js/core/sfx.js";
+import { requireAuth, signOut } from "../../js/core/auth.js";
+import { sb } from "../../js/core/supabase.js";
+import { rt } from "../../js/core/realtime.js";
+import { validateGameReadyToPlay, loadGameBasic, loadQuestions, loadAnswers } from "../../js/core/game-validate.js";
+import { unlockAudio, isAudioUnlocked, playSfx } from "../../js/core/sfx.js";
 
 import { createStore } from "./store.js";
 import { createUI } from "./ui.js";
@@ -105,7 +105,7 @@ function throttleMs(ms, fn) {
 // ========================================================
 
 async function ensureAuthOrRedirect() {
-  const user = await requireAuth("/familiada/index.html");
+  const user = await requireAuth("../index.html");
   const who = document.getElementById("who");
   if (who) who.textContent = user?.username || user?.email || user?.id || "—";
   return user;
@@ -836,7 +836,7 @@ async function sendZeroStatesToDevices() {
     }
   
     suppressUnloadWarn = true;
-    location.href = "/familiada/builder.html";
+    location.href = "../builder.html";
   });
   
   ui.on("top.logout", async () => {
@@ -847,7 +847,7 @@ async function sendZeroStatesToDevices() {
   
     await signOut().catch(() => {});
     suppressUnloadWarn = true;
-    location.href = "/familiada/index.html";
+    location.href = "../index.html";
   });
 
   ui.on("auth.showQr", (kind) => showQrModal(kind));
