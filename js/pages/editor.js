@@ -420,7 +420,7 @@ async function boot() {
   /* ---------- auth/topbar ---------- */
   const user = await requireAuth("index.html");
   const who = $("who");
-  if (who) who.textContent = user?.email || "—";
+  if (who) who.textContent = user?.username || user?.email || "—";
 
   $("btnLogout")?.addEventListener("click", async () => {
     await signOut();
