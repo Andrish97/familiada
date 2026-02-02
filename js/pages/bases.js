@@ -165,17 +165,18 @@ async function listOwnedBases() {
 }
 
 async function listSharedBases() {
-  const { data, error } = await sb().rpc("list_shared_bases");
+  const { data, error } = await sb().rpc("list_shared_bases_ext");
   if (error) throw error;
 
   return (data || []).map((r) => ({
     id: r.id,
     name: r.name,
     owner_id: r.owner_id,
-  
-    ownerUsername: r.owner_username, // <- NOWE (z RPC)
-    ownerEmail: r.owner_email,       // <- fallback / title
-  
+
+    // UI: pokazujemy username, email tylko jako szczegół/tooltip
+    ownerUsername: r.owner_username,
+    ownerEmail: r.owner_email,
+
     created_at: r.created_at,
     updated_at: r.updated_at,
     sharedRole: r.shared_role,
