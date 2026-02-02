@@ -1,47 +1,64 @@
-// js/pages/polls-hub.js
+// familiada/js/pages/polls-hub.js
+// CENTRUM SONDAŻY (tylko dla zalogowanych)
+
 import { sb } from "../core/supabase.js";
 import { requireAuth, signOut } from "../core/auth.js";
 
+/* ================= DOM ================= */
 const $ = (id) => document.getElementById(id);
 
 const who = $("who");
-const hint = $("hint");
-const msg = $("msg");
-
 const btnBack = $("btnBack");
 const btnLogout = $("btnLogout");
 
-const cardPolls = $("cardPolls");
-const cardTasks = $("cardTasks");
-const cardMine  = $("cardMine");
-const cardSubs  = $("cardSubs");
+// chips
+const chipPolls = $("chipPolls");
+const chipTasks = $("chipTasks");
+const chipSubs = $("chipSubs");
+const chipSubsToMe = $("chipSubsToMe");
 
-const dotPolls = $("dotPolls");
-const dotTasks = $("dotTasks");
-const dotMine  = $("dotMine");
-const dotSubs  = $("dotSubs");
+// lists
+const listPolls = $("listPolls");
+const listTasks = $("listTasks");
+const listSubs = $("listSubs");
+const listSubsToMe = $("listSubsToMe");
 
-const subPolls = $("subPolls");
-const subTasks = $("subTasks");
-const subMine  = $("subMine");
-const subSubs  = $("subSubs");
+// empty
+const emptyPolls = $("emptyPolls");
+const emptyTasks = $("emptyTasks");
+const emptySubs = $("emptySubs");
+const emptySubsToMe = $("emptySubsToMe");
 
-const panel = $("panel");
-const panelTitle = $("panelTitle");
-const panelList = $("panelList");
-const btnHome = $("btnHome");
+// refresh
+const btnPollsRefresh = $("btnPollsRefresh");
+const btnTasksRefresh = $("btnTasksRefresh");
+const btnSubsRefresh = $("btnSubsRefresh");
+const btnSubsToMeRefresh = $("btnSubsToMeRefresh");
 
+// segs
+const pollsActiveBtn = $("pollsActiveBtn");
+const pollsArchBtn = $("pollsArchBtn");
+
+const tasksActiveBtn = $("tasksActiveBtn");
+const tasksArchBtn = $("tasksArchBtn");
+
+const subsActiveBtn = $("subsActiveBtn");
+const subsArchBtn = $("subsArchBtn");
+
+const subsToMeActiveBtn = $("subsToMeActiveBtn");
+const subsToMeArchBtn = $("subsToMeArchBtn");
+
+/* ================= State ================= */
 let currentUser = null;
 
-/* ================= helpers ================= */
-function setMsg(t){ if(msg) msg.textContent = t || ""; }
-function setHint(t){ if(hint) hint.textContent = t || ""; }
+const view = {
+  polls: "active",
+  tasks: "active",
+  subs: "active",
+  subsToMe: "active",
+};
 
-function show(el, on){
-  if(!el) return;
-  el.style.display = on ? "" : "none";
-}
-
+/* ================= Utils ================= */
 function esc(s){
   return String(s ?? "")
     .replace(/&/g,"&amp;")
@@ -51,312 +68,442 @@ function esc(s){
     .replace(/'/g,"&#39;");
 }
 
-function fmtCount(n, label){
-  const x = Number(n) || 0;
-  return `${x} ${label}`;
+function show(el, on){
+  if (!el) return;
+  el.style.display = on ? "" : "none";
 }
 
-function isArchived(status, updatedAtIso, days=7){
-  // ukrywanie DONE/DECLINED po czasie w UI
-  if(status !== "done" && status !== "declined") return false;
-  const t = Date.parse(updatedAtIso || "");
-  if(!Number.isFinite(t)) return false;
-  const ageMs = Date.now() - t;
-  return ageMs > days * 24 * 3600 * 1000;
+function setChip(el, n){
+  if (!el) return;
+  const v = Number(n) || 0;
+  el.textContent = String(v);
 }
 
-/* ================= RPC contracts =================
-  W tym etapie zakładamy takie RPC (nazwy możesz podpiąć 1:1 w DB):
-
-  1) polls_hub_overview() -> { polls_open, tasks_todo, subs_mine_pending, subs_their_pending }
-
-  2) polls_hub_list_open_polls() -> rows:
-     { game_id, game_name, poll_type, status, updated_at }
-
-  3) polls_hub_list_tasks() -> rows:
-     { task_id, game_id, game_name, poll_type, status, created_at, updated_at, go_url }
-
-  4) polls_hub_list_my_subscriptions() -> rows:
-     { sub_id, target_label, status, created_at, updated_at }
-
-  5) polls_hub_list_my_subscribers() -> rows:
-     { sub_id, subscriber_label, status, created_at, updated_at }
-
-  6) akcje:
-     - polls_hub_task_decline(p_task_id)
-     - polls_hub_subscription_cancel(p_sub_id)
-     - polls_hub_subscriber_remove(p_sub_id)
-==================================================== */
-
-async function rpc(name, args){
-  const { data, error } = await sb().rpc(name, args || {});
-  if(error) throw error;
-  return data;
+function isActiveStatus(s){
+  const v = String(s || "").toLowerCase();
+  return v === "pending" || v === "opened" || v === "active" || v === "accepted";
 }
 
-/* ================= render rows ================= */
-function renderEmpty(text){
-  panelList.innerHTML = `<div style="opacity:.75">${esc(text)}</div>`;
+function isArchiveStatus(s){
+  return !isActiveStatus(s);
 }
 
-function rowHtml({ title, meta, badge, actionsHtml }){
-  return `
-    <div class="rowItem">
-      <div class="rowMain">
-        <div class="rowTitle">${esc(title)}</div>
-        <div class="rowMeta">${esc(meta || "")}</div>
-      </div>
-      <div class="rowActions">
-        ${badge ? `<span class="badge ${esc(badge.kind||"")}">${esc(badge.text||"")}</span>` : ""}
-        ${actionsHtml || ""}
-      </div>
+function fmtStatus(s){
+  const v = String(s || "").toLowerCase();
+  if (!v) return "—";
+  return v;
+}
+
+function statusBadgeClass(s){
+  const v = String(s || "").toLowerCase();
+  if (v === "done" || v === "accepted" || v === "active") return "ok";
+  if (v === "pending" || v === "opened") return "warn";
+  if (v === "declined" || v === "rejected" || v === "cancelled" || v === "removed") return "bad";
+  return "dim";
+}
+
+function pickTitle(row){
+  return (
+    row?.name ||
+    row?.game_name ||
+    row?.title ||
+    row?.owner_username ||
+    row?.owner ||
+    "—"
+  );
+}
+
+function pickMetaPieces(row){
+  const out = [];
+  if (row?.poll_type) out.push(`typ: ${row.poll_type}`);
+  if (row?.owner_username) out.push(`od: ${row.owner_username}`);
+  if (row?.recipient_email) out.push(`do: ${row.recipient_email}`);
+  if (row?.created_at) out.push(`utw.: ${String(row.created_at).slice(0,10)}`);
+  return out;
+}
+
+/* ================= Render row ================= */
+function renderRow({
+  title,
+  status,
+  meta = [],
+  primaryText = "Otwórz",
+  onPrimary = null,
+  secondaryText = null,
+  onSecondary = null,
+} = {}){
+  const st = fmtStatus(status);
+  const stCls = statusBadgeClass(status);
+
+  const metaHtml = [
+    `<span class="badge ${stCls}">status: ${esc(st)}</span>`,
+    ...meta.map((m) => `<span class="badge dim">${esc(m)}</span>`),
+  ].join(" ");
+
+  const secBtn = secondaryText
+    ? `<button class="btn sm" data-sec type="button">${esc(secondaryText)}</button>`
+    : "";
+
+  const el = document.createElement("div");
+  el.className = "row";
+  el.innerHTML = `
+    <div class="rowMain">
+      <div class="rowTitle">${esc(title || "—")}</div>
+      <div class="rowMeta">${metaHtml}</div>
+    </div>
+    <div class="rowActions">
+      ${secBtn}
+      <button class="btn sm" data-pri type="button">${esc(primaryText || "Otwórz")}</button>
     </div>
   `;
-}
 
-function btnHtml(kind, label, attrs=""){
-  // kind: "sm" | "sm gold"
-  return `<button class="btn ${kind}" type="button" ${attrs}>${esc(label)}</button>`;
-}
+  const pri = el.querySelector("[data-pri]");
+  const sec = el.querySelector("[data-sec]");
 
-/* ================= views ================= */
-async function openHome(){
-  show(panel, false);
-  setMsg("");
-  await refreshOverview();
-}
-
-async function openPanel(title){
-  show(panel, true);
-  panelTitle.textContent = title;
-  panelList.innerHTML = "";
-  setMsg("");
-}
-
-async function viewPolls(){
-  await openPanel("SONDAŻE");
-
-  const rows = await rpc("polls_hub_list_open_polls");
-  const list = (rows || []).filter(r => !isArchived(r.status, r.updated_at));
-
-  if(!list.length) return renderEmpty("Brak otwartych sondaży.");
-
-  panelList.innerHTML = list.map(r => {
-    const meta = `${r.poll_type || "—"} • ${r.status || "—"}`;
-    const actions = [
-      // otwarcie “polls.html?id=...”
-      btnHtml("sm gold", "Otwórz", `data-open-polls="${esc(r.game_id)}"`),
-    ].join("");
-    return rowHtml({ title: r.game_name || "Sondaż", meta, badge:null, actionsHtml: actions });
-  }).join("");
-
-  panelList.querySelectorAll("[data-open-polls]").forEach(btn => {
-    btn.addEventListener("click", () => {
-      const id = btn.getAttribute("data-open-polls");
-      if(!id) return;
-      location.href = `polls.html?id=${encodeURIComponent(id)}`;
-    });
+  pri?.addEventListener("click", async () => {
+    if (typeof onPrimary === "function") await onPrimary();
   });
-}
-
-async function viewTasks(){
-  await openPanel("ZADANIA");
-
-  const rows = await rpc("polls_hub_list_tasks");
-  const list = (rows || []).filter(r => !isArchived(r.status, r.updated_at));
-
-  if(!list.length) return renderEmpty("Brak zadań.");
-
-  panelList.innerHTML = list.map(r => {
-    const st = String(r.status || "pending");
-    const badge =
-      st === "pending" ? { text:"DO ZROBIENIA", kind:"" } :
-      st === "done" ? { text:"WYKONANE", kind:"ok" } :
-      st === "declined" ? { text:"ODRZUCONE", kind:"bad" } :
-      { text: st.toUpperCase(), kind:"" };
-
-    const meta = `${r.poll_type || "—"}`;
-
-    const actions = [
-      st === "pending"
-        ? btnHtml("sm gold", "Przejdź", `data-go="${esc(r.go_url || "")}"`)
-        : "",
-      st === "pending"
-        ? btnHtml("sm", "Odrzuć", `data-decline-task="${esc(r.task_id)}"`)
-        : "",
-    ].join("");
-
-    return rowHtml({ title: r.game_name || "Zadanie", meta, badge, actionsHtml: actions });
-  }).join("");
-
-  panelList.querySelectorAll("[data-go]").forEach(btn => {
-    btn.addEventListener("click", () => {
-      const url = btn.getAttribute("data-go");
-      if(!url) return;
-      location.href = url; // tu ma być docelowo poll_text/poll_points (bez pośredniego)
-    });
+  sec?.addEventListener("click", async () => {
+    if (typeof onSecondary === "function") await onSecondary();
   });
 
-  panelList.querySelectorAll("[data-decline-task]").forEach(btn => {
-    btn.addEventListener("click", async () => {
-      const id = btn.getAttribute("data-decline-task");
-      if(!id) return;
-      setMsg("");
-      try{
-        await rpc("polls_hub_task_decline", { p_task_id: id });
-        await viewTasks();
-      }catch(e){
-        console.warn(e);
-        setMsg("Nie udało się.");
-      }
-    });
-  });
+  return el;
 }
 
-async function viewMySubs(){
-  await openPanel("MOJE SUBSKRYPCJE");
-
-  const rows = await rpc("polls_hub_list_my_subscriptions");
-  const list = (rows || []).filter(r => !isArchived(r.status, r.updated_at));
-
-  if(!list.length) return renderEmpty("Brak subskrypcji.");
-
-  panelList.innerHTML = list.map(r => {
-    const st = String(r.status || "pending");
-    const badge =
-      st === "pending" ? { text:"ZAPROSZENIE", kind:"" } :
-      st === "active" ? { text:"AKTYWNA", kind:"ok" } :
-      st === "declined" ? { text:"ODRZUCONA", kind:"bad" } :
-      { text: st.toUpperCase(), kind:"" };
-
-    const actions = [
-      (st === "active" || st === "pending")
-        ? btnHtml("sm", "Anuluj", `data-cancel-sub="${esc(r.sub_id)}"`)
-        : "",
-    ].join("");
-
-    return rowHtml({
-      title: r.target_label || "Subskrypcja",
-      meta: "",
-      badge,
-      actionsHtml: actions
-    });
-  }).join("");
-
-  panelList.querySelectorAll("[data-cancel-sub]").forEach(btn => {
-    btn.addEventListener("click", async () => {
-      const id = btn.getAttribute("data-cancel-sub");
-      if(!id) return;
-      setMsg("");
-      try{
-        await rpc("polls_hub_subscription_cancel", { p_sub_id: id });
-        await viewMySubs();
-      }catch(e){
-        console.warn(e);
-        setMsg("Nie udało się.");
-      }
-    });
-  });
+/* ================= Data loaders (RPC) ================= */
+async function rpcList(name, args){
+  const { data, error } = await sb().rpc(name, args || {});
+  if (error) throw error;
+  return Array.isArray(data) ? data : (data ? [data] : []);
 }
 
-async function viewMySubscribers(){
-  await openPanel("MOI SUBSKRYBENCI");
+/* ================= Actions (RPC wrappers) ================= */
+async function taskDecline(row){
+  // Preferujemy token (bo to jest spójne z poll_go / poll_task_*).
+  const token = row?.token;
+  const id = row?.id;
 
-  const rows = await rpc("polls_hub_list_my_subscribers");
-  const list = (rows || []).filter(r => !isArchived(r.status, r.updated_at));
+  // Najpierw próbujemy z tokenem
+  if (token){
+    const { error } = await sb().rpc("polls_hub_task_decline", { p_token: token });
+    if (!error) return true;
+    console.warn("[polls_hub] task_decline (token) failed:", error);
+  }
 
-  if(!list.length) return renderEmpty("Brak subskrybentów.");
+  // Fallback z id (jeśli Twoja funkcja tak działa)
+  if (id){
+    const { error } = await sb().rpc("polls_hub_task_decline", { p_task_id: id });
+    if (!error) return true;
+    console.warn("[polls_hub] task_decline (id) failed:", error);
+  }
 
-  panelList.innerHTML = list.map(r => {
-    const st = String(r.status || "pending");
-    const badge =
-      st === "pending" ? { text:"ZAPROSZENIE", kind:"" } :
-      st === "active" ? { text:"AKTYWNY", kind:"ok" } :
-      st === "declined" ? { text:"ODRZUCONY", kind:"bad" } :
-      { text: st.toUpperCase(), kind:"" };
-
-    const actions = [
-      (st === "active" || st === "pending")
-        ? btnHtml("sm", "Usuń", `data-remove-sub="${esc(r.sub_id)}"`)
-        : "",
-    ].join("");
-
-    return rowHtml({
-      title: r.subscriber_label || "Subskrybent",
-      meta: "",
-      badge,
-      actionsHtml: actions
-    });
-  }).join("");
-
-  panelList.querySelectorAll("[data-remove-sub]").forEach(btn => {
-    btn.addEventListener("click", async () => {
-      const id = btn.getAttribute("data-remove-sub");
-      if(!id) return;
-      setMsg("");
-      try{
-        await rpc("polls_hub_subscriber_remove", { p_sub_id: id });
-        await viewMySubscribers();
-      }catch(e){
-        console.warn(e);
-        setMsg("Nie udało się.");
-      }
-    });
-  });
+  alert("Nie udało się odrzucić zadania.");
+  return false;
 }
 
-/* ================= overview ================= */
-async function refreshOverview(){
-  setHint("Ładowanie…");
-  try{
-    const o = await rpc("polls_hub_overview");
+async function subscriptionCancel(row){
+  const id = row?.id;
+  const ownerId = row?.owner_id;
 
-    const pollsOpen = Number(o?.polls_open) || 0;
-    const tasksTodo = Number(o?.tasks_todo) || 0;
-    const minePend  = Number(o?.subs_mine_pending) || 0;
-    const subsPend  = Number(o?.subs_their_pending) || 0;
+  if (id){
+    const { error } = await sb().rpc("polls_hub_subscription_cancel", { p_subscription_id: id });
+    if (!error) return true;
+    console.warn("[polls_hub] subscription_cancel (id) failed:", error);
+  }
 
-    if(subPolls) subPolls.textContent = fmtCount(pollsOpen, "otwartych");
-    if(subTasks) subTasks.textContent = fmtCount(tasksTodo, "do zrobienia");
-    if(subMine)  subMine.textContent  = fmtCount(minePend, "zaproszeń");
-    if(subSubs)  subSubs.textContent  = fmtCount(subsPend, "zaproszeń");
+  if (ownerId){
+    const { error } = await sb().rpc("polls_hub_subscription_cancel", { p_owner_id: ownerId });
+    if (!error) return true;
+    console.warn("[polls_hub] subscription_cancel (owner) failed:", error);
+  }
 
-    show(dotPolls, pollsOpen > 0);
-    show(dotTasks, tasksTodo > 0);
-    show(dotMine,  minePend > 0);
-    show(dotSubs,  subsPend > 0);
+  alert("Nie udało się anulować subskrypcji.");
+  return false;
+}
 
-    setHint("Wybierz kafelek.");
-  }catch(e){
-    console.warn(e);
-    setHint("Nie udało się wczytać.");
+async function subscriberRemove(row){
+  const id = row?.id;
+  const email = row?.subscriber_email || row?.recipient_email;
+  const userId = row?.subscriber_user_id || row?.recipient_user_id;
+
+  if (id){
+    const { error } = await sb().rpc("polls_hub_subscriber_remove", { p_subscription_id: id });
+    if (!error) return true;
+    console.warn("[polls_hub] subscriber_remove (id) failed:", error);
+  }
+
+  // fallbacki: email / userId
+  if (userId){
+    const { error } = await sb().rpc("polls_hub_subscriber_remove", { p_subscriber_user_id: userId });
+    if (!error) return true;
+    console.warn("[polls_hub] subscriber_remove (user) failed:", error);
+  }
+  if (email){
+    const { error } = await sb().rpc("polls_hub_subscriber_remove", { p_subscriber_email: email });
+    if (!error) return true;
+    console.warn("[polls_hub] subscriber_remove (email) failed:", error);
+  }
+
+  alert("Nie udało się usunąć subskrybenta.");
+  return false;
+}
+
+/* ================= Render: Polls ================= */
+async function refreshPolls(){
+  const rows = await rpcList("polls_hub_list_open_polls");
+  const filtered = rows.filter((r) => {
+    // open polls: traktujemy „active” jako po prostu to co RPC zwraca;
+    // archiwum to ewentualnie status != active, jeśli masz status.
+    const st = r?.status;
+    return view.polls === "active" ? isActiveStatus(st || "active") : isArchiveStatus(st || "active");
+  });
+
+  if (listPolls) listPolls.innerHTML = "";
+  setChip(chipPolls, filtered.length);
+  show(emptyPolls, filtered.length === 0);
+
+  for (const r of filtered){
+    const title = pickTitle(r);
+    const meta = pickMetaPieces(r);
+    const status = r?.status || "active";
+
+    // Klik -> polls.html?id=GAME
+    const gameId = r?.game_id || r?.id;
+    const el = renderRow({
+      title,
+      status,
+      meta,
+      primaryText: "Otwórz",
+      onPrimary: async () => {
+        if (!gameId) return;
+        location.href = `polls.html?id=${encodeURIComponent(gameId)}`;
+      },
+      secondaryText: null,
+    });
+
+    listPolls?.appendChild(el);
   }
 }
 
-/* ================= events ================= */
+/* ================= Render: Tasks ================= */
+async function refreshTasks(){
+  const rows = await rpcList("polls_hub_list_tasks");
+
+  const filtered = rows.filter((r) => {
+    const st = r?.status;
+    return view.tasks === "active" ? isActiveStatus(st) : isArchiveStatus(st);
+  });
+
+  if (listTasks) listTasks.innerHTML = "";
+  setChip(chipTasks, filtered.length);
+  show(emptyTasks, filtered.length === 0);
+
+  for (const r of filtered){
+    const title = r?.game_name || pickTitle(r);
+    const meta = pickMetaPieces(r);
+    const status = r?.status;
+
+    const pollType = r?.poll_type;
+    const gameId = r?.game_id;
+    const shareKey = r?.share_key_poll;
+    const token = r?.token;
+
+    const canOpen = !!(pollType && gameId && shareKey);
+    const primaryText = canOpen ? "Głosuj" : "Szczegóły";
+
+    const el = renderRow({
+      title,
+      status,
+      meta,
+      primaryText,
+      onPrimary: async () => {
+        if (!canOpen) return;
+        const base = pollType === "poll_text" ? "poll-text.html" : "poll-points.html";
+        const url = new URL(base, location.href);
+        url.searchParams.set("id", gameId);
+        url.searchParams.set("key", shareKey);
+        if (token) url.searchParams.set("t", token); // Etap 5: DONE po submit
+        location.href = url.toString();
+      },
+      secondaryText: "Odrzuć",
+      onSecondary: async () => {
+        const ok = confirm("Odrzucić to zadanie?");
+        if (!ok) return;
+        const did = await taskDecline(r);
+        if (did) await refreshTasks();
+      },
+    });
+
+    listTasks?.appendChild(el);
+  }
+}
+
+/* ================= Render: My subscriptions ================= */
+async function refreshSubs(){
+  const rows = await rpcList("polls_hub_list_my_subscriptions");
+  const filtered = rows.filter((r) => {
+    const st = r?.status;
+    return view.subs === "active" ? isActiveStatus(st) : isArchiveStatus(st);
+  });
+
+  if (listSubs) listSubs.innerHTML = "";
+  setChip(chipSubs, filtered.length);
+  show(emptySubs, filtered.length === 0);
+
+  for (const r of filtered){
+    const title =
+      r?.owner_username ? `Subskrybujesz: ${r.owner_username}` :
+      r?.owner_email ? `Subskrybujesz: ${r.owner_email}` :
+      pickTitle(r);
+
+    const meta = pickMetaPieces(r);
+    const status = r?.status;
+
+    const el = renderRow({
+      title,
+      status,
+      meta,
+      primaryText: "Anuluj",
+      onPrimary: async () => {
+        const ok = confirm("Anulować subskrypcję?");
+        if (!ok) return;
+        const did = await subscriptionCancel(r);
+        if (did) await refreshSubs();
+      },
+      secondaryText: null,
+    });
+
+    listSubs?.appendChild(el);
+  }
+}
+
+/* ================= Render: My subscribers ================= */
+async function refreshSubsToMe(){
+  const rows = await rpcList("polls_hub_list_my_subscribers");
+  const filtered = rows.filter((r) => {
+    const st = r?.status;
+    return view.subsToMe === "active" ? isActiveStatus(st) : isArchiveStatus(st);
+  });
+
+  if (listSubsToMe) listSubsToMe.innerHTML = "";
+  setChip(chipSubsToMe, filtered.length);
+  show(emptySubsToMe, filtered.length === 0);
+
+  for (const r of filtered){
+    const whoLabel =
+      r?.subscriber_username ||
+      r?.subscriber_email ||
+      r?.recipient_email ||
+      "—";
+
+    const title = `Subskrybent: ${whoLabel}`;
+    const meta = pickMetaPieces(r);
+    const status = r?.status;
+
+    const el = renderRow({
+      title,
+      status,
+      meta,
+      primaryText: "Usuń",
+      onPrimary: async () => {
+        const ok = confirm("Usunąć subskrybenta?");
+        if (!ok) return;
+        const did = await subscriberRemove(r);
+        if (did) await refreshSubsToMe();
+      },
+      secondaryText: null,
+    });
+
+    listSubsToMe?.appendChild(el);
+  }
+}
+
+/* ================= Seg toggles ================= */
+function setSeg(aBtn, bBtn, mode){
+  if (aBtn) aBtn.classList.toggle("on", mode === "active");
+  if (bBtn) bBtn.classList.toggle("on", mode === "archive");
+}
+
+function wireSeg(){
+  pollsActiveBtn?.addEventListener("click", async () => {
+    view.polls = "active";
+    setSeg(pollsActiveBtn, pollsArchBtn, "active");
+    await refreshPolls();
+  });
+  pollsArchBtn?.addEventListener("click", async () => {
+    view.polls = "archive";
+    setSeg(pollsActiveBtn, pollsArchBtn, "archive");
+    await refreshPolls();
+  });
+
+  tasksActiveBtn?.addEventListener("click", async () => {
+    view.tasks = "active";
+    setSeg(tasksActiveBtn, tasksArchBtn, "active");
+    await refreshTasks();
+  });
+  tasksArchBtn?.addEventListener("click", async () => {
+    view.tasks = "archive";
+    setSeg(tasksActiveBtn, tasksArchBtn, "archive");
+    await refreshTasks();
+  });
+
+  subsActiveBtn?.addEventListener("click", async () => {
+    view.subs = "active";
+    setSeg(subsActiveBtn, subsArchBtn, "active");
+    await refreshSubs();
+  });
+  subsArchBtn?.addEventListener("click", async () => {
+    view.subs = "archive";
+    setSeg(subsActiveBtn, subsArchBtn, "archive");
+    await refreshSubs();
+  });
+
+  subsToMeActiveBtn?.addEventListener("click", async () => {
+    view.subsToMe = "active";
+    setSeg(subsToMeActiveBtn, subsToMeArchBtn, "active");
+    await refreshSubsToMe();
+  });
+  subsToMeArchBtn?.addEventListener("click", async () => {
+    view.subsToMe = "archive";
+    setSeg(subsToMeActiveBtn, subsToMeArchBtn, "archive");
+    await refreshSubsToMe();
+  });
+}
+
+/* ================= Refresh buttons ================= */
+function wireRefresh(){
+  btnPollsRefresh?.addEventListener("click", refreshPolls);
+  btnTasksRefresh?.addEventListener("click", refreshTasks);
+  btnSubsRefresh?.addEventListener("click", refreshSubs);
+  btnSubsToMeRefresh?.addEventListener("click", refreshSubsToMe);
+}
+
+/* ================= Topbar ================= */
+btnBack?.addEventListener("click", () => {
+  location.href = "polls.html";
+});
+
 btnLogout?.addEventListener("click", async () => {
   await signOut();
   location.href = "index.html";
 });
 
-btnBack?.addEventListener("click", () => {
-  // bez zgadywania: wracamy do poprzedniej strony albo do buildera
-  if (history.length > 1) history.back();
-  else location.href = "builder.html";
-});
-
-btnHome?.addEventListener("click", () => openHome());
-
-cardPolls?.addEventListener("click", () => viewPolls());
-cardTasks?.addEventListener("click", () => viewTasks());
-cardMine ?.addEventListener("click", () => viewMySubs());
-cardSubs ?.addEventListener("click", () => viewMySubscribers());
-
-/* ================= init ================= */
-(async function init(){
+/* ================= Boot ================= */
+(async function boot(){
   currentUser = await requireAuth("index.html");
-  if(who) who.textContent = currentUser?.username || currentUser?.email || "—";
+  if (who) who.textContent =
+    currentUser?.user_metadata?.username ||
+    currentUser?.username ||
+    currentUser?.email ||
+    "—";
 
-  show(panel, false);
-  await refreshOverview();
+  wireSeg();
+  wireRefresh();
+
+  await Promise.all([
+    refreshPolls(),
+    refreshTasks(),
+    refreshSubs(),
+    refreshSubsToMe(),
+  ]);
 })();
