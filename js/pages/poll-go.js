@@ -27,6 +27,10 @@ const fallbackTiny = $("fallbackTiny");
 const emailInp = $("email");
 const btnSubscribe = $("btnSubscribe");
 
+const taskActions = $("taskActions");
+const btnGoVote = $("btnGoVote");
+const btnTaskDecline = $("btnTaskDecline");
+
 /* ================= State ================= */
 let ownerUsername = "";  // do fallback subscribe (u=... albo z resolve_token)
 let token = "";          // t=...
@@ -53,6 +57,8 @@ function disableAll(on) {
   if (btnReject) btnReject.disabled = on;
   if (btnSubscribe) btnSubscribe.disabled = on;
   if (emailInp) emailInp.disabled = on;
+  if (btnGoVote) btnGoVote.disabled = on;
+  if (btnTaskDecline) btnTaskDecline.disabled = on;
 }
 
 function looksLikeEmail(s) {
@@ -178,11 +184,17 @@ function showFallback(on) {
   }
 }
 
+function showTaskActions(on) {
+  show(taskActions, !!on);
+}
+
 function renderSubInvite(row) {
   if (title) title.textContent = "Subskrypcja";
   if (sub) sub.textContent = ownerUsername
     ? `Zaproszenie do subskrypcji sondaży użytkownika: ${ownerUsername}`
     : "Zaproszenie do subskrypcji sondaży.";
+  
+  showTaskActions(false);
 
   // statusy: pending | accepted | rejected | cancelled
   if (status === "pending") {
@@ -214,49 +226,32 @@ async function renderPollTask(row) {
     ? `Zaproszenie do głosowania od: ${ownerUsername}`
     : "Zaproszenie do głosowania.";
 
+  showSubInviteActions(false);
+
   // statusy: pending | opened | done | declined | cancelled
   if (status === "done") {
     setMsg("To głosowanie jest już wykonane ✅");
-    showSubInviteActions(false);
+    showTaskActions(false);
     showFallback(!!ownerUsername);
     return;
   }
   if (status === "declined") {
     setMsg("To głosowanie zostało odrzucone.");
-    showSubInviteActions(false);
+    showTaskActions(false);
     showFallback(!!ownerUsername);
     return;
   }
   if (status === "cancelled") {
     setMsg("To głosowanie zostało anulowane.");
-    showSubInviteActions(false);
+    showTaskActions(false);
     showFallback(!!ownerUsername);
     return;
   }
 
-  // pending/opened → redirect
-  setMsg("Przekierowuję do głosowania…");
-
-  // oznacz opened tylko gdy pending (idempotentnie)
-  if (status === "pending" && token) {
-    try {
-      await sb().rpc("poll_task_opened", { p_token: token });
-    } catch (e) {
-      console.warn("[poll_go] poll_task_opened error:", e);
-      // nie blokujemy redirectu
-    }
-  }
-
-  // buduj URL do istniejących stron
-  const base = pollType === "poll_text" ? "poll-text.html" : "poll-points.html";
-  const url = new URL(base, location.href);
-  url.searchParams.set("id", gameId);
-  url.searchParams.set("key", shareKey);
-
-  // dopinamy t=token na przyszłość (Etap 5 użyje tego do oznaczania done)
-  if (token) url.searchParams.set("t", token);
-
-  location.href = url.toString();
+  // pending/opened → pokaż akcje (bez auto-redirectu)
+  setMsg("");
+  showTaskActions(true);
+  showFallback(false);
 }
 
 /* ================= Actions ================= */
@@ -367,6 +362,60 @@ async function onSubscribe() {
   }
 }
 
+async function onGoVote() {
+  // sanity
+  if (!gameId || !shareKey) {
+    setMsg("Brak danych głosowania.");
+    return;
+  }
+
+  disableAll(true);
+  setMsg("Przekierowuję do głosowania…");
+
+  // oznacz opened tylko gdy pending (idempotentnie)
+  if (status === "pending" && token) {
+    try {
+      await sb().rpc("poll_task_opened", { p_token: token });
+      status = "opened";
+    } catch (e) {
+      console.warn("[poll_go] poll_task_opened error:", e);
+      // nie blokujemy redirectu
+    }
+  }
+
+  const base = pollType === "poll_text" ? "poll-text.html" : "poll-points.html";
+  const url = new URL(base, location.href);
+  url.searchParams.set("id", gameId);
+  url.searchParams.set("key", shareKey);
+  if (token) url.searchParams.set("t", token);
+
+  location.href = url.toString();
+}
+
+async function onTaskDecline() {
+  if (!token) return;
+
+  disableAll(true);
+  setMsg("Zapisywanie…");
+
+  try {
+    const { data, error } = await sb().rpc("poll_task_decline", { p_token: token });
+    if (error) throw error;
+
+    // nie zakładam formatu "ok"/"already_used" — przyjmuję: sukces = brak error
+    status = "declined";
+    setMsg("Odrzucono.");
+    showTaskActions(false);
+    showFallback(!!ownerUsername);
+
+  } catch (e) {
+    console.warn("[poll_go] task_decline error:", e);
+    setMsg("Nie udało się. Spróbuj ponownie.");
+  } finally {
+    disableAll(false);
+  }
+}
+
 /* ================= Wire ================= */
 btnAccept?.addEventListener("click", onAccept);
 btnReject?.addEventListener("click", onReject);
@@ -374,6 +423,8 @@ btnSubscribe?.addEventListener("click", onSubscribe);
 emailInp?.addEventListener("keydown", (e) => {
   if (e.key === "Enter") onSubscribe();
 });
+btnGoVote?.addEventListener("click", onGoVote);
+btnTaskDecline?.addEventListener("click", onTaskDecline);
 
 /* ================= Boot ================= */
 (async function boot() {
