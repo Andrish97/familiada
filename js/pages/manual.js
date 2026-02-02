@@ -73,7 +73,7 @@ async function wireAuthSoft() {
   const user = await requireAuth("index.html");
 
   const who = byId("who");
-  if (who) who.textContent = user?.email || "—";
+  if (who) who.textContent = user?.username || user?.email || "—";
 
   byId("btnLogout")?.addEventListener("click", async () => {
     await signOut();
