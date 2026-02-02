@@ -4,6 +4,7 @@ import { sb } from "../core/supabase.js";
 const qs = new URLSearchParams(location.search);
 const gameId = qs.get("id");
 const key = qs.get("key");
+const taskToken = qs.get("t"); // <- opcjonalnie (tylko dla zadań z poll_go)
 
 const $ = (id) => document.getElementById(id);
 
@@ -136,6 +137,16 @@ async function submitBatch(items) {
   if (error) throw error;
 }
 
+async function markTaskDone() {
+  if (!taskToken) return; // anon flow
+  try {
+    await sb().rpc("poll_task_done", { p_token: taskToken });
+  } catch (e) {
+    // nie blokujemy użytkownika — to tylko „miękka” synchronizacja taska
+    console.warn("[poll-text] poll_task_done failed:", e);
+  }
+}
+
 let payload = null;
 let idx = 0;
 
@@ -167,7 +178,10 @@ function render() {
     setSub("Wysyłam…");
 
     submitBatch(outbox)
-      .then(() => showFinished())
+      .then(async () => {
+        await markTaskDone();
+        showFinished();
+      })
       .catch((e) => {
         console.error("[poll-text] submit_batch error:", e);
         setSub(`Błąd: ${e?.message || e}`);
