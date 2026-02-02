@@ -1173,7 +1173,7 @@ async function handleCreate(){
 ========================================================= */
 async function boot(){
    currentUser = await requireAuth("../index.html");
-   if (who) who.textContent = currentUser?.email || currentUser?.username || "—";
+   if (who) who.textContent = currentUser?.username || currentUser?.email || "—";
 
   try{
     await loadFonts();
