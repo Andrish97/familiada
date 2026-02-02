@@ -172,10 +172,13 @@ async function listSharedBases() {
     id: r.id,
     name: r.name,
     owner_id: r.owner_id,
-    ownerEmail: r.owner_email,     // <- NOWE
+  
+    ownerUsername: r.owner_username, // <- NOWE (z RPC)
+    ownerEmail: r.owner_email,       // <- fallback / title
+  
     created_at: r.created_at,
     updated_at: r.updated_at,
-    sharedRole: r.shared_role,     // <- rola z RPC
+    sharedRole: r.shared_role,
   }));
 }
 
@@ -473,6 +476,21 @@ function emailLooksOk(s) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(t);
 }
 
+async function resolveLoginToEmail(login) {
+  const v = String(login || "").trim();
+  if (!v) return "";
+
+  if (v.includes("@")) return v.toLowerCase();
+
+  // username -> email (to samo RPC co w auth.js)
+  const { data, error } = await sb().rpc("profile_login_to_email", { p_login: v });
+  if (error) {
+    console.warn("[bases] profile_login_to_email error:", error);
+    return "";
+  }
+  return String(data || "").trim().toLowerCase();
+}
+
 async function openShareModal() {
   setMsg(shareMsg, "");
   shareEmail.value = "";
@@ -512,7 +530,9 @@ async function renderShareList() {
     return;
   }
 
-  const rows = (data || []).slice().sort((a, b) => String(a.email || "").localeCompare(String(b.email || "")));
+  const rows = (data || [])
+    .slice()
+    .sort((a, b) => String(a.username || a.email || "").localeCompare(String(b.username || b.email || "")));
   if (!rows.length) {
     shareList.innerHTML = `<div style="opacity:.75">Brak udostępnień.</div>`;
     return;
@@ -523,7 +543,10 @@ async function renderShareList() {
     const row = document.createElement("div");
     row.className = "shareRow";
     row.innerHTML = `
-      <div class="shareEmail" title="${String(r.email || "").replace(/\"/g, "&quot;")}">${r.email || "—"}</div>
+      <div class="shareEmail"
+           title="${String(r.email || "").replace(/\"/g, "&quot;")}">
+        ${escapeHtml(r.username || r.email || "—")}
+      </div>
       <select class="inp" data-role>
         <option value="editor">Edycja</option>
         <option value="viewer">Przeglądanie</option>
@@ -580,18 +603,19 @@ async function shareAdd() {
   const b = selectedBase();
   if (!b || !isOwner(b)) return;
 
-  setMsg(shareMsg, "");
-  const email = String(shareEmail.value || "").trim();
+  const raw = String(shareEmail.value || "").trim();
   const role = shareRole.value;
 
+  const email = await resolveLoginToEmail(raw);
   if (!emailLooksOk(email)) {
-    setMsg(shareMsg, "Niepoprawny e-mail");
+    setMsg(shareMsg, raw.includes("@") ? "Niepoprawny e-mail" : "Nie znam takiej nazwy użytkownika");
     return;
   }
 
   // właściciel próbuje udostępnić samemu sobie
-  if (email.toLowerCase() === String(currentUser?.email || "").toLowerCase()) {
-    setMsg(shareMsg, "Jesteś właścicielem tej bazy");
+  const me = String(currentUser?.email || "").trim().toLowerCase();
+  if (me && email === me) {
+  setMsg(shareMsg, "Jesteś właścicielem tej bazy");
     return;
   }
 
@@ -635,13 +659,16 @@ function render() {
 
     if (b.sharedRole) {
       // 1) Badge "Od: ..."
-      const ownerMail = String(b.ownerEmail || "").trim() || "—";
+      const ownerUn = String(b.ownerUsername || "").trim();
+      const ownerMail = String(b.ownerEmail || "").trim();
+      
+      const fromLabel = ownerUn || ownerMail || "—";
       badges.push({
-        text: `Od: ${ownerMail}`,
-        title: ownerMail !== "—" ? ownerMail : "Nieznany właściciel",
-        kind: "from", // do stylowania (elipsa)
+        text: `Od: ${fromLabel}`,
+        title: ownerMail ? ownerMail : fromLabel, // email tylko jako szczegół (tooltip)
+        kind: "from",
       });
-    
+      
       // 2) Badge roli: tylko ikonka
       const isEdit = b.sharedRole === "editor";
       badges.push({
@@ -1001,7 +1028,7 @@ shareEmail?.addEventListener("keydown", (e) => {
 /* ================= Init ================= */
 (async function init() {
   currentUser = await requireAuth("index.html");
-  if (who) who.textContent = currentUser?.email || "—";
+  if (who) who.textContent = currentUser?.username || currentUser?.email || "—";
     
   await refreshBases();
   render();
