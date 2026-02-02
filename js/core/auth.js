@@ -33,6 +33,41 @@ function validateUsername(un) {
   return v;
 }
 
+let _unameCache = { userId: null, username: null, ts: 0 };
+
+async function fetchUsername(user) {
+  if (!user?.id) return null;
+
+  // cache ~2 min (żeby nie pytać DB na każdej stronie/odświeżeniu)
+  const now = Date.now();
+  if (_unameCache.userId === user.id && _unameCache.username && (now - _unameCache.ts) < 120_000) {
+    return _unameCache.username;
+  }
+
+  // 1) profiles (źródło prawdy)
+  try {
+    const { data, error } = await sb()
+      .from("profiles")
+      .select("username")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    if (!error && data?.username) {
+      _unameCache = { userId: user.id, username: data.username, ts: now };
+      return data.username;
+    }
+  } catch {}
+
+  // 2) fallback: user_metadata (np. świeża rejestracja)
+  const un = String(user?.user_metadata?.username || "").trim();
+  if (un) {
+    _unameCache = { userId: user.id, username: un, ts: now };
+    return un;
+  }
+
+  return null;
+}
+
 export async function getUser() {
   try {
     const { data, error } = await sb().auth.getUser();
@@ -45,8 +80,13 @@ export async function getUser() {
 
 export async function requireAuth(redirect = "index.html") {
   const u = await getUser();
-  if (!u) location.href = redirect;
-  return u;
+  if (!u) {
+    location.href = redirect;
+    return null; // na wypadek, gdyby ktoś jednak kontynuował kod
+  }
+
+  const username = await fetchUsername(u);
+  return { ...u, username };
 }
 
 export async function signIn(login, password) {
@@ -66,7 +106,7 @@ export async function signIn(login, password) {
     await sb().auth.signOut();
     throw new Error("Najpierw potwierdź e-mail.");
   }
-
+  _unameCache = { userId: null, username: null, ts: 0 };
   return user;
 }
 
@@ -86,6 +126,7 @@ export async function signUp(email, password, redirectTo, username) {
 
 export async function signOut() {
   await sb().auth.signOut();
+  _unameCache = { userId: null, username: null, ts: 0 };
 }
 
 export async function resetPassword(loginOrEmail, redirectTo) {
