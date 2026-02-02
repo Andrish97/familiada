@@ -1,4 +1,4 @@
-import { playSfx, createSfxMixer, getSfxDuration } from "/familiada/js/core/sfx.js";
+import { playSfx, createSfxMixer, getSfxDuration } from "../../js/core/sfx.js";
 
 function nInt(v, d = 0) {
   const x = Number.parseInt(String(v ?? ""), 10);
