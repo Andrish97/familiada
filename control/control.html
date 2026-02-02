@@ -5,13 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>Familiada — Panel sterowania</title>
 
-  <link rel="icon" href="/familiada/favicon.ico"/>
-  <link rel="stylesheet" href="/familiada/css/base.css"/>
-  <link rel="stylesheet" href="/familiada/control/control.css"/>
+  <link rel="icon" href="../favicon.ico"/>
+  <link rel="stylesheet" href="../css/base.css"/>
+  <link rel="stylesheet" href="./control.css"/>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
   <script type="module">
-    import { guardDesktopOnly } from "/familiada/js/core/device-guard.js";
+    import { guardDesktopOnly } from "../js/core/device-guard.js";
   
     const minWidth = 980;
   
@@ -20,7 +20,7 @@
       message: "Panel sterowania działa tylko na komputerze (min. 980px).",
     });
   
-    import("/familiada/control/js/app.js");
+    import("./js/app.js");
   </script>
 </head>
 <body class="control-body">
