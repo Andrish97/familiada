@@ -10,7 +10,7 @@ import { demoImport4Logos } from "../../logo-editor/js/demo-import.js";
 /* =========================================================
    DEMO URLs (pełne linki)
 ========================================================= */
-const DEMO = "https://andrish97.github.io/familiada/demo";
+const DEMO = "../../demo";
 
 /* =========================================================
    Progress Modal (blokuje UI, styl jak import buildera)
