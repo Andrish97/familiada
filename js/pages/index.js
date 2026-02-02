@@ -19,12 +19,16 @@ function setStatus(m = "") { status.textContent = m; }
 function applyMode() {
   if (mode === "login") {
     pass2.style.display = "none";
+    if (username) username.style.display = "none";
     btnPrimary.textContent = "Zaloguj";
     btnToggle.textContent = "Załóż konto";
+    email.placeholder = "E-mail lub nazwa użytkownika";
   } else {
     pass2.style.display = "block";
+    if (username) username.style.display = "block";
     btnPrimary.textContent = "Zarejestruj";
     btnToggle.textContent = "Mam konto";
+    email.placeholder = "E-mail";
   }
   setErr("");
 }
@@ -47,21 +51,28 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   btnPrimary.addEventListener("click", async () => {
     setErr("");
-    const mail = email.value.trim();
+    const loginOrEmail = email.value.trim();
     const pwd = pass.value;
 
-    if (!mail || !pwd) return setErr("Podaj e-mail i hasło.");
+    if (!loginOrEmail || !pwd) return setErr("Podaj e-mail/nazwę użytkownika i hasło.");
 
     try {
       if (mode === "register") {
+        const mail = loginOrEmail;
+        const un = (username?.value || "").trim();
+
+        if (!mail || !mail.includes("@")) return setErr("Podaj poprawny e-mail.");
+        if (!un) return setErr("Podaj nazwę użytkownika.");
+
         if (pass2.value !== pwd) return setErr("Hasła nie są takie same.");
+
         setStatus("Rejestruję…");
         const redirectTo = new URL("confirm.html", location.href).toString();
-        await signUp(mail, pwd, redirectTo);
+        await signUp(mail, pwd, redirectTo, un); // <-- UWAGA: 4-ty parametr
         setStatus("Sprawdź e-mail (link aktywacyjny).");
       } else {
         setStatus("Loguję…");
-        await signIn(mail, pwd);
+        await signIn(loginOrEmail, pwd); // <-- może być username
         location.href = "builder.html";
       }
     } catch (e) {
@@ -73,13 +84,13 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   btnForgot.addEventListener("click", async () => {
     setErr("");
-    const mail = email.value.trim();
-    if (!mail) return setErr("Podaj e-mail do resetu.");
+    const loginOrEmail = email.value.trim();
+    if (!loginOrEmail) return setErr("Podaj e-mail lub nazwę użytkownika do resetu.");
 
     try {
       setStatus("Wysyłam link resetu…");
       const redirectTo = new URL("reset.html", location.href).toString();
-      await resetPassword(mail, redirectTo);
+      await resetPassword(loginOrEmail, redirectTo);
       setStatus("Wysłano link resetu hasła.");
     } catch (e) {
       console.error(e);
