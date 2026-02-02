@@ -46,7 +46,7 @@ const FINAL_MSG = {
 
 // =========================================================
 
-import { playSfx, getSfxDuration } from "/familiada/js/core/sfx.js";
+import { playSfx, getSfxDuration } from "../../js/core/sfx.js";
 
 function nInt(v, d = 0) {
   const x = Number.parseInt(String(v ?? ""), 10);
