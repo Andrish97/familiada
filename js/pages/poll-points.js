@@ -4,6 +4,7 @@ import { sb } from "../core/supabase.js";
 const qs = new URLSearchParams(location.search);
 const gameId = qs.get("id");
 const key = qs.get("key");
+const taskToken = qs.get("t"); // <- opcjonalnie (tylko dla zadań z poll_go)
 
 const $ = (id) => document.getElementById(id);
 
@@ -106,6 +107,15 @@ async function submitBatch(items) {
   if (error) throw error;
 }
 
+async function markTaskDone() {
+  if (!taskToken) return; // anon flow
+  try {
+    await sb().rpc("poll_task_done", { p_token: taskToken });
+  } catch (e) {
+    console.warn("[poll-points] poll_task_done failed:", e);
+  }
+}
+
 function setupBeforeUnloadWarn() {
   window.addEventListener("beforeunload", (e) => {
     if (finished) return;
@@ -146,7 +156,10 @@ function render() {
     if (alist) [...alist.querySelectorAll("button")].forEach(x => (x.disabled = true));
 
     submitBatch(outbox)
-      .then(() => showFinished())
+      .then(async () => {
+        await markTaskDone();
+        showFinished();
+      })
       .catch((e) => {
         console.error("[poll-points] submit_batch error:", e);
         setSub(`Błąd: ${e?.message || e}`);
