@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Familiada — centrum sondaży</title>
+
+  <link rel="icon" href="favicon.ico"/>
+  <link rel="stylesheet" href="css/base.css"/>
+  <link rel="stylesheet" href="css/polls-hub.css"/>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <script type="module" src="js/pages/polls-hub.js" defer></script>
+</head>
+
+<body class="polls-hub-body">
+  <header class="topbar">
+    <div class="brand">FAMILIADA</div>
+    <div class="right">
+      <button class="btn sm" id="btnBack" type="button">← Wróć</button>
+      <span class="who" id="who">—</span>
+      <button class="btn sm" id="btnLogout" type="button">Wyloguj</button>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div class="hubTop">
+      <div>
+        <div class="hubTitle">CENTRUM SONDAŻY</div>
+        <div class="hubHint" id="hint">—</div>
+      </div>
+    </div>
+
+    <!-- 2x2 kafelki -->
+    <div class="hubGrid" id="hubGrid">
+      <button class="hubCard" id="cardPolls" type="button">
+        <div class="hubCardTop">
+          <div class="hubCardTitle">SONDAŻE</div>
+          <span class="dot" id="dotPolls" style="display:none;"></span>
+        </div>
+        <div class="hubCardSub" id="subPolls">—</div>
+      </button>
+
+      <button class="hubCard" id="cardTasks" type="button">
+        <div class="hubCardTop">
+          <div class="hubCardTitle">ZADANIA</div>
+          <span class="dot" id="dotTasks" style="display:none;"></span>
+        </div>
+        <div class="hubCardSub" id="subTasks">—</div>
+      </button>
+
+      <button class="hubCard" id="cardMine" type="button">
+        <div class="hubCardTop">
+          <div class="hubCardTitle">MOJE SUBSKRYPCJE</div>
+          <span class="dot" id="dotMine" style="display:none;"></span>
+        </div>
+        <div class="hubCardSub" id="subMine">—</div>
+      </button>
+
+      <button class="hubCard" id="cardSubs" type="button">
+        <div class="hubCardTop">
+          <div class="hubCardTitle">MOI SUBSKRYBENCI</div>
+          <span class="dot" id="dotSubs" style="display:none;"></span>
+        </div>
+        <div class="hubCardSub" id="subSubs">—</div>
+      </button>
+    </div>
+
+    <!-- Widoki (jeden naraz) -->
+    <section class="hubPanel" id="panel" style="display:none;">
+      <div class="panelTop">
+        <button class="btn sm" id="btnHome" type="button">← Kafelki</button>
+        <div class="panelTitle" id="panelTitle">—</div>
+      </div>
+
+      <div class="panelTools" id="panelTools" style="display:none;"></div>
+
+      <div class="panelList" id="panelList"></div>
+      <div class="panelFoot">
+        <div class="msg" id="msg"></div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
