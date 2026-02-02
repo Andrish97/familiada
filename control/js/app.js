@@ -107,7 +107,7 @@ function throttleMs(ms, fn) {
 async function ensureAuthOrRedirect() {
   const user = await requireAuth("/familiada/index.html");
   const who = document.getElementById("who");
-  if (who) who.textContent = user?.email || user?.id || "—";
+  if (who) who.textContent = user?.username || user?.email || user?.id || "—";
   return user;
 }
 
