@@ -4,6 +4,9 @@
 import { sb } from "../core/supabase.js";
 import { requireAuth, signOut } from "../core/auth.js";
 
+console.log("[polls_hub] boot script loaded ✅", new Date().toISOString());
+window.__POLL_HUB = { loadedAt: Date.now() };
+
 /* ================= DOM ================= */
 const $ = (id) => document.getElementById(id);
 
@@ -172,9 +175,16 @@ function renderRow({
 
 /* ================= Data loaders (RPC) ================= */
 async function rpcList(name, args){
+  console.log("[polls_hub] rpc ->", name, args || {});
   const { data, error } = await sb().rpc(name, args || {});
+  console.log("[polls_hub] rpc <-", name, { error, data });
   if (error) throw error;
   return Array.isArray(data) ? data : (data ? [data] : []);
+}
+
+function renderEmpty(listEl, emptyEl, hasItems){
+  if (listEl) listEl.style.opacity = "1";
+  show(emptyEl, !hasItems);
 }
 
 /* ================= Actions (RPC wrappers) ================= */
@@ -260,7 +270,7 @@ async function refreshPolls(){
 
   if (listPolls) listPolls.innerHTML = "";
   setChip(chipPolls, filtered.length);
-  show(emptyPolls, filtered.length === 0);
+  renderEmpty(listPolls, emptyPolls, filtered.length > 0);
 
   for (const r of filtered){
     const title = pickTitle(r);
@@ -296,7 +306,7 @@ async function refreshTasks(){
 
   if (listTasks) listTasks.innerHTML = "";
   setChip(chipTasks, filtered.length);
-  show(emptyTasks, filtered.length === 0);
+  renderEmpty(listTasks, emptyTasks, filtered.length > 0);
 
   for (const r of filtered){
     const title = r?.game_name || pickTitle(r);
@@ -348,7 +358,7 @@ async function refreshSubs(){
 
   if (listSubs) listSubs.innerHTML = "";
   setChip(chipSubs, filtered.length);
-  show(emptySubs, filtered.length === 0);
+  renderEmpty(listSubs, emptySubs, filtered.length > 0);
 
   for (const r of filtered){
     const title =
@@ -387,7 +397,7 @@ async function refreshSubsToMe(){
 
   if (listSubsToMe) listSubsToMe.innerHTML = "";
   setChip(chipSubsToMe, filtered.length);
-  show(emptySubsToMe, filtered.length === 0);
+  renderEmpty(listSubsToMe, emptySubsToMe, filtered.length > 0);
 
   for (const r of filtered){
     const whoLabel =
@@ -506,4 +516,8 @@ btnLogout?.addEventListener("click", async () => {
     refreshSubs(),
     refreshSubsToMe(),
   ]);
+  console.log("[polls_hub] currentUser:", currentUser);
+  console.log("[polls_hub] DOM:", {
+  listPolls: !!listPolls, listTasks: !!listTasks, listSubs: !!listSubs, listSubsToMe: !!listSubsToMe
+});
 })();
