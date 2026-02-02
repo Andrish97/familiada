@@ -299,16 +299,16 @@ async function exportBase(baseId, onProgress) {
     .eq("base_id", baseId)
     .order("ord", { ascending: true });
   if (qErr) throw qErr;
-  prog("Eksport: pytania…", 3, 5, Liczba: ${(qs||[]).length});
-
+  prog("Eksport: pytania…", 3, 5, `Liczba: ${(qs || []).length}`);
+  
   const { data: tags, error: tErr } = await sb()
     .from("qb_tags")
     .select("id,name,color,ord")
     .eq("base_id", baseId)
     .order("ord", { ascending: true });
   if (tErr) throw tErr;
-  prog("Eksport: tagi…", 4, 5, Liczba: ${(tags||[]).length});
-
+  prog("Eksport: pytania…", 3, 5, `Liczba: ${(qs || []).length}`);
+  
   // powiązania tagów (po pytaniach z tej bazy)
   const qIds = (qs || []).map((q) => q.id);
   let qtags = [];
@@ -320,7 +320,7 @@ async function exportBase(baseId, onProgress) {
     if (qtErr) throw qtErr;
     qtags = qt || [];
   }
-  prog("Eksport: tagi pytań…", 5, 5, Liczba: ${(qtags||[]).length});
+  prog("Eksport: tagi pytań…", 5, 5, `Liczba: ${(qtags || []).length}`);
   
   return {
     base: { name: baseRow?.name ?? "Baza" },
@@ -412,9 +412,10 @@ async function importBase(payload, onProgress) {
   }
 
   // 3) Pytania
-  prog("Import: pytania…", 0, qs.length || 0, "");
   const qs = Array.isArray(payload.questions) ? payload.questions : [];
+  prog("Import: pytania…", 0, qs.length || 0, "");
   for (const q of qs) {
+    const q = qs[qi];
     const newCatId = q.category_id ? (oldToNewCat.get(q.category_id) || null) : null;
     const { data, error } = await sb()
       .from("qb_questions")
