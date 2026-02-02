@@ -110,8 +110,8 @@ export async function signIn(login, password) {
   return user;
 }
 
-export async function signUp(email, password, redirectTo, username) {
-  const un = validateUsername(username);
+export async function signUp(email, password, redirectTo, usernameInput) {
+  const un = validateUsername(usernameInput);
 
   const username = (un || "").trim();
   if (!username) throw new Error("Podaj nazwę użytkownika.");
