@@ -118,9 +118,9 @@ export function createDevices({ game, ui, store, chDisplay, chHost, chBuzzer }) 
   }
 
   function initLinksAndQr() {
-    const displayUrl = makeUrl("/familiada/display/index.html", game.id, game.share_key_display);
-    const hostUrl = makeUrl("/familiada/host.html", game.id, game.share_key_host);
-    const buzzerUrl = makeUrl("/familiada/buzzer.html", game.id, game.share_key_buzzer || "");
+    const displayUrl = makeUrl("../display/index.html", game.id, game.share_key_display);
+    const hostUrl = makeUrl("../host.html", game.id, game.share_key_host);
+    const buzzerUrl = makeUrl("../buzzer.html", game.id, game.share_key_buzzer || "");
     urls = { displayUrl, hostUrl, buzzerUrl };
 
     ui.setValue("displayLink", displayUrl);
