@@ -1302,7 +1302,7 @@ async function refresh() {
 
 document.addEventListener("DOMContentLoaded", async () => {
   const u = await requireAuth("index.html");
-  if (who) who.textContent = u?.email || "—";
+  if (who) who.textContent = u?.username || u?.email || "—";
 
 
   document.addEventListener("visibilitychange", () => {
