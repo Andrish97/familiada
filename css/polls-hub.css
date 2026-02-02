@@ -1,0 +1,168 @@
+/* css/polls-hub.css */
+
+body.polls-hub-body{
+  min-height: 100vh;
+  background: var(--bg);
+  color:#fff;
+}
+
+.hubTop{
+  display:flex;
+  justify-content: space-between;
+  align-items:flex-start;
+  gap:12px;
+  margin-bottom: 12px;
+}
+
+.hubTitle{
+  font-weight:1000;
+  font-size: 18px;
+  margin: 10px 0 6px;
+  letter-spacing:.08em;
+}
+
+.hubHint{
+  opacity:.75;
+  font-size:12px;
+  line-height:1.35;
+}
+
+.hubGrid{
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap:12px;
+}
+
+.hubCard{
+  border-radius: 20px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  padding: 14px;
+  box-shadow: 0 24px 60px rgba(0,0,0,.45);
+  color:inherit;
+  text-align:left;
+  cursor:pointer;
+}
+
+.hubCard:hover{
+  border-color: rgba(255,255,255,.20);
+}
+
+.hubCardTop{
+  display:flex;
+  justify-content: space-between;
+  align-items:center;
+  gap:10px;
+}
+
+.hubCardTitle{
+  font-weight: 1000;
+  letter-spacing: .08em;
+}
+
+.hubCardSub{
+  opacity:.75;
+  font-size:12px;
+  margin-top: 8px;
+  line-height:1.35;
+}
+
+.dot{
+  width:10px;
+  height:10px;
+  border-radius:999px;
+  background: var(--gold);
+  box-shadow: 0 0 0 3px rgba(255,214,0,.12);
+}
+
+.hubPanel{
+  margin-top: 12px;
+  border-radius: 20px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  padding: 14px;
+  box-shadow: 0 24px 60px rgba(0,0,0,.45);
+}
+
+.panelTop{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  margin-bottom: 12px;
+}
+
+.panelTitle{
+  font-weight:1000;
+  letter-spacing:.06em;
+}
+
+.panelList{
+  display:grid;
+  gap:10px;
+}
+
+.rowItem{
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.05);
+  border-radius: 16px;
+  padding: 12px;
+  display:flex;
+  justify-content: space-between;
+  gap:10px;
+  align-items:flex-start;
+}
+
+.rowMain{
+  min-width:0;
+}
+
+.rowTitle{
+  font-weight:1000;
+  line-height:1.25;
+}
+
+.rowMeta{
+  opacity:.75;
+  font-size:12px;
+  margin-top:6px;
+  line-height:1.35;
+}
+
+.rowActions{
+  flex: 0 0 auto;
+  display:flex;
+  gap:8px;
+  align-items:center;
+  flex-wrap: wrap;
+  justify-content:flex-end;
+}
+
+.badge{
+  display:inline-block;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border:1px solid rgba(255,255,255,.16);
+  background: var(--card2);
+  font-weight:1000;
+  letter-spacing:.10em;
+  text-transform: uppercase;
+  font-size: 11px;
+  color: var(--gold);
+}
+
+.badge.ok{
+  border-color: rgba(120,255,160,.28);
+  background: rgba(120,255,160,.1);
+  color:#fff;
+}
+
+.badge.bad{
+  border-color: rgba(255,120,120,.35);
+  background: rgba(255,120,120,.12);
+  color:#fff;
+}
+
+.panelFoot .msg{
+  margin-top: 10px;
+  min-height: 18px;
+}
