@@ -113,15 +113,15 @@ export async function signIn(login, password) {
 export async function signUp(email, password, redirectTo, username) {
   const un = validateUsername(username);
 
-  un = (un || "").trim();
-  if (!un) throw new Error("Podaj nazwę użytkownika.");
-
+  const username = (un || "").trim();
+  if (!username) throw new Error("Podaj nazwę użytkownika.");
+  
   const { error } = await sb().auth.signUp({
     email,
     password,
     options: {
       emailRedirectTo: redirectTo,
-      data: { username: un }, // <-- zapis w user_metadata
+      data: { username }
     },
   });
   if (error) throw new Error(niceAuthError(error));
