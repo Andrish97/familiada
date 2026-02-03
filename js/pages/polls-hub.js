@@ -502,7 +502,6 @@ btnLogout?.addEventListener("click", async () => {
 (async function boot(){
   currentUser = await requireAuth("index.html");
   if (who) who.textContent =
-    currentUser?.user_metadata?.username ||
     currentUser?.username ||
     currentUser?.email ||
     "—";
