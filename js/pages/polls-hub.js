@@ -193,6 +193,10 @@ function renderRow({
     </div>
   `;
 
+  el.addEventListener("dblclick", async () => {
+    if (typeof onPrimary === "function") await onPrimary();
+  });
+
   const pri = el.querySelector("[data-pri]");
   const sec = el.querySelector("[data-sec]");
 
@@ -341,6 +345,7 @@ async function refreshPolls(){
     // UX: jeśli nie da się share, wyszarz przycisk
     const secBtn = el.querySelector("[data-sec]");
     if (secBtn && !canShare) secBtn.disabled = true;
+    if (!gameId) el.style.opacity = ".6";
 
     listPolls?.appendChild(el);
   }
@@ -394,6 +399,8 @@ async function refreshTasks(){
         if (did) await refreshTasks();
       },
     });
+    if (String(status).toLowerCase() === "pending") el.style.borderColor = "rgba(255,220,140,.35)";
+    if (String(status).toLowerCase() === "opened") el.style.borderColor = "rgba(140,255,180,.25)";
 
     listTasks?.appendChild(el);
   }
