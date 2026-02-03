@@ -1,5 +1,6 @@
 // js/pages/poll-points.js
 import { sb } from "../core/supabase.js";
+import { getUser } from "../core/auth.js";
 
 const qs = new URLSearchParams(location.search);
 const gameId = qs.get("id");
@@ -116,6 +117,15 @@ async function markTaskDone() {
   }
 }
 
+async function maybeReturnToHub(){
+  if (!taskToken) return;
+  try{
+    const u = await getUser();
+    if (!u) return;
+    setTimeout(() => { location.href = "polls-hub.html"; }, 650);
+  }catch{}
+}
+
 function setupBeforeUnloadWarn() {
   window.addEventListener("beforeunload", (e) => {
     if (finished) return;
@@ -159,6 +169,7 @@ function render() {
       .then(async () => {
         await markTaskDone();
         showFinished();
+        await maybeReturnToHub();
       })
       .catch((e) => {
         console.error("[poll-points] submit_batch error:", e);
