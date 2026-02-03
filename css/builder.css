@@ -537,3 +537,19 @@ body.builder-body {
 .basePickItem input {
     transform: scale(1.05)
 }
+
+#btnPollsHub{
+  position: relative;
+}
+
+#btnPollsHub.hasDot::after{
+  content: "";
+  position: absolute;
+  right: 6px;
+  top: 6px;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: #ff3b30; /* iOS red dot */
+  box-shadow: 0 0 10px rgba(255,59,48,.55);
+}
