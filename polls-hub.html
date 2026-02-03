@@ -11,12 +11,11 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
   <script type="module" src="js/pages/polls-hub.js" defer></script>
-  
 </head>
 
-<body class="polls-hub" data-debug="v1">
+<body class="polls-hub" data-debug="v2">
   <header class="topbar">
-    <div class="brand">CENTRUM SONDAŻY</div>
+    <div class="brand">FAMILIADA <span class="brandSub">— Centrum sondaży</span></div>
     <div class="right">
       <button class="btn sm" id="btnBack" type="button">← Moje gry</button>
       <div class="who" id="who">—</div>
@@ -27,18 +26,30 @@
   <main class="wrap">
 
     <section class="grid2">
-      <!-- 1) Open polls -->
+
+      <!-- 1) Polls -->
       <article class="card" data-card="polls">
         <div class="cardHead">
           <div class="cardTitle">
             <span>Sondaże</span>
             <span class="chip" id="chipPolls">—</span>
           </div>
+
           <div class="cardTools">
+            <div class="tools2">
+              <input class="miniInput" id="fltPolls" type="search" placeholder="Szukaj…" />
+              <select class="miniSelect" id="sortPolls">
+                <option value="new">Najnowsze</option>
+                <option value="name">Nazwa</option>
+                <option value="status">Status</option>
+              </select>
+            </div>
+
             <div class="seg" role="tablist" aria-label="Filtr sondaży">
               <button class="segBtn on" id="pollsActiveBtn" type="button">Aktywne</button>
               <button class="segBtn" id="pollsArchBtn" type="button">Archiwum</button>
             </div>
+
             <button class="btn sm" id="btnPollsRefresh" type="button">⟳</button>
           </div>
         </div>
@@ -47,18 +58,29 @@
         <div class="empty" id="emptyPolls" style="display:none">Brak sondaży.</div>
       </article>
 
-      <!-- 2) Tasks -->
+      <!-- 2) Tasks (inbox to vote) -->
       <article class="card" data-card="tasks">
         <div class="cardHead">
           <div class="cardTitle">
             <span>Zadania</span>
             <span class="chip" id="chipTasks">—</span>
           </div>
+
           <div class="cardTools">
+            <div class="tools2">
+              <input class="miniInput" id="fltTasks" type="search" placeholder="Szukaj…" />
+              <select class="miniSelect" id="sortTasks">
+                <option value="new">Najnowsze</option>
+                <option value="name">Nazwa</option>
+                <option value="status">Status</option>
+              </select>
+            </div>
+
             <div class="seg" role="tablist" aria-label="Filtr zadań">
               <button class="segBtn on" id="tasksActiveBtn" type="button">Aktywne</button>
               <button class="segBtn" id="tasksArchBtn" type="button">Archiwum</button>
             </div>
+
             <button class="btn sm" id="btnTasksRefresh" type="button">⟳</button>
           </div>
         </div>
@@ -67,18 +89,29 @@
         <div class="empty" id="emptyTasks" style="display:none">Brak zadań.</div>
       </article>
 
-      <!-- 3) My subscriptions -->
+      <!-- 3) My subscriptions (people I follow) -->
       <article class="card" data-card="subs">
         <div class="cardHead">
           <div class="cardTitle">
             <span>Moje subskrypcje</span>
             <span class="chip" id="chipSubs">—</span>
           </div>
+
           <div class="cardTools">
+            <div class="tools2">
+              <input class="miniInput" id="fltSubs" type="search" placeholder="Szukaj…" />
+              <select class="miniSelect" id="sortSubs">
+                <option value="new">Najnowsze</option>
+                <option value="name">Nazwa</option>
+                <option value="status">Status</option>
+              </select>
+            </div>
+
             <div class="seg" role="tablist" aria-label="Filtr subskrypcji">
               <button class="segBtn on" id="subsActiveBtn" type="button">Aktywne</button>
               <button class="segBtn" id="subsArchBtn" type="button">Archiwum</button>
             </div>
+
             <button class="btn sm" id="btnSubsRefresh" type="button">⟳</button>
           </div>
         </div>
@@ -87,18 +120,31 @@
         <div class="empty" id="emptySubs" style="display:none">Brak subskrypcji.</div>
       </article>
 
-      <!-- 4) My subscribers -->
+      <!-- 4) My subscribers (my friends list) -->
       <article class="card" data-card="subsToMe">
         <div class="cardHead">
           <div class="cardTitle">
             <span>Moi subskrybenci</span>
             <span class="chip" id="chipSubsToMe">—</span>
           </div>
+
           <div class="cardTools">
+            <button class="btn sm" id="btnAddSubscriber" type="button">＋ Dodaj</button>
+
+            <div class="tools2">
+              <input class="miniInput" id="fltSubsToMe" type="search" placeholder="Szukaj…" />
+              <select class="miniSelect" id="sortSubsToMe">
+                <option value="new">Najnowsze</option>
+                <option value="name">Nazwa</option>
+                <option value="status">Status</option>
+              </select>
+            </div>
+
             <div class="seg" role="tablist" aria-label="Filtr subskrybentów">
               <button class="segBtn on" id="subsToMeActiveBtn" type="button">Aktywne</button>
               <button class="segBtn" id="subsToMeArchBtn" type="button">Archiwum</button>
             </div>
+
             <button class="btn sm" id="btnSubsToMeRefresh" type="button">⟳</button>
           </div>
         </div>
@@ -106,15 +152,103 @@
         <div class="list" id="listSubsToMe"></div>
         <div class="empty" id="emptySubsToMe" style="display:none">Brak subskrybentów.</div>
       </article>
+
     </section>
 
     <section class="note" id="note">
       <div class="noteTitle">Uwaga</div>
       <div class="noteText">
-        Strona pokazuje tylko widoki „task/subskrypcja”. Stare anonimowe głosowanie (QR/link) działa bez zmian.
+        <b>Zadania</b> to zaproszenia do głosowania. <b>Subskrypcje</b> to lista znajomych/obserwowanych.
+        Zaproszenia mailowe prowadzą do <code>poll-go.html</code> (token).
       </div>
     </section>
 
   </main>
+
+  <!-- ===== Modal: Add subscriber ===== -->
+  <div class="modal" id="mSub" hidden>
+    <div class="modalBack" data-close></div>
+    <div class="modalCard" role="dialog" aria-modal="true" aria-labelledby="mSubTitle">
+      <div class="modalHead">
+        <div class="modalTitle" id="mSubTitle">Dodaj subskrybenta</div>
+        <button class="btn sm" type="button" data-close>✕</button>
+      </div>
+
+      <div class="modalBody">
+        <div class="hint">
+          Wpisz <b>username</b> lub <b>e-mail</b>. Jeśli użytkownik istnieje — dostanie zaproszenie na stronie. Jeśli nie — wyślemy mail.
+        </div>
+
+        <label class="field">
+          <span>Username lub e-mail</span>
+          <input class="input" id="mSubRecipient" placeholder="np. kuba albo kuba@mail.com" />
+        </label>
+
+        <div class="preview" id="mSubPreview" style="display:none"></div>
+
+        <div class="progress" id="mSubProg" style="display:none">
+          <div class="bar"><div class="barIn" id="mSubProgBar"></div></div>
+          <div class="txt" id="mSubProgTxt">—</div>
+        </div>
+      </div>
+
+      <div class="modalFoot">
+        <button class="btn" type="button" data-close>Anuluj</button>
+        <button class="btn pri" id="mSubSend" type="button">Wyślij zaproszenie</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Modal: Share poll ===== -->
+  <div class="modal" id="mShare" hidden>
+    <div class="modalBack" data-close></div>
+    <div class="modalCard" role="dialog" aria-modal="true" aria-labelledby="mShareTitle">
+      <div class="modalHead">
+        <div class="modalTitle" id="mShareTitle">Zaproś do głosowania</div>
+        <button class="btn sm" type="button" data-close>✕</button>
+      </div>
+
+      <div class="modalBody">
+        <div class="hint">
+          Wybierz osoby z listy subskrybentów (aktywni) lub dopisz ręcznie username/e-mail (przecinki/nowe linie).
+        </div>
+
+        <div class="shareTop">
+          <div class="shareName" id="mShareGame">—</div>
+          <div class="shareType" id="mShareType">—</div>
+        </div>
+
+        <div class="shareGrid">
+          <div class="shareBox">
+            <div class="shareBoxHead">
+              <b>Lista subskrybentów</b>
+              <div class="shareBoxTools">
+                <label class="chk"><input type="checkbox" id="mShareAll"/> <span>Wszyscy</span></label>
+              </div>
+            </div>
+            <div class="shareList" id="mShareList"></div>
+          </div>
+
+          <div class="shareBox">
+            <div class="shareBoxHead"><b>Dodatkowi odbiorcy</b></div>
+            <textarea class="textarea" id="mShareExtra" rows="6" placeholder="np. ola, ola@mail.com"></textarea>
+          </div>
+        </div>
+
+        <div class="progress" id="mShareProg" style="display:none">
+          <div class="bar"><div class="barIn" id="mShareProgBar"></div></div>
+          <div class="txt" id="mShareProgTxt">—</div>
+        </div>
+      </div>
+
+      <div class="modalFoot">
+        <button class="btn" type="button" data-close>Anuluj</button>
+        <button class="btn pri" id="mShareSend" type="button">Wyślij</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Toast ===== -->
+  <div class="toast" id="toast" hidden></div>
 </body>
 </html>
