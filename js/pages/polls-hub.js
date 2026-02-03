@@ -297,12 +297,13 @@ async function subscriberRemove(row){
 
 /* ================= Render: Polls ================= */
 async function refreshPolls(){
-  const rows = await rpcList("polls_hub_list_open_polls");
+  const rows = await rpcList("polls_hub_list_polls");
+
   const filtered = rows.filter((r) => {
-    // open polls: traktujemy „active” jako po prostu to co RPC zwraca;
-    // archiwum to ewentualnie status != active, jeśli masz status.
-    const st = r?.status;
-    return view.polls === "active" ? isActiveStatus(st || "active") : isArchiveStatus(st || "active");
+    const st = String(r?.poll_state || "draft").toLowerCase();
+    return view.polls === "active"
+      ? (st === "draft" || st === "open")
+      : (st === "closed");
   });
 
   if (listPolls) listPolls.innerHTML = "";
@@ -310,42 +311,56 @@ async function refreshPolls(){
   renderEmpty(listPolls, emptyPolls, filtered.length > 0);
 
   for (const r of filtered){
-    const title = pickTitle(r);
-    const meta = pickMetaPieces(r);
-    const status = r?.status || "active";
+    const gameId = r?.game_id;
+    const pollState = r?.poll_state || "draft";
 
-    const gameId = r?.game_id || r?.id;
+    const meta = [];
+    meta.push(`typ: ${r?.poll_type || "—"}`);
+    meta.push(`pyt.: ${Number(r?.sessions_total || 0)}`);
+    meta.push(`otwarte: ${Number(r?.open_questions || 0)}`);
+    meta.push(`zadania: ${Number(r?.tasks_active || 0)} aktywne / ${Number(r?.tasks_done || 0)} done`);
 
-    const anonLink = buildAnonVoteLink(r);
-    const canShare = !!anonLink;
+    const prev = Array.isArray(r?.recipients_preview) ? r.recipients_preview : [];
+    if (prev.length){
+      meta.push(`dla: ${prev.slice(0,6).join(", ")}${prev.length >= 6 ? "…" : ""}`);
+    } else if (String(pollState).toLowerCase() === "open"){
+      meta.push("dla: (jeszcze nie udostępniono)");
+    }
+
+    const canShare = String(pollState).toLowerCase() === "open";
 
     const el = renderRow({
-      title,
-      status,
-      meta: [
-        ...meta,
-        canShare ? "link: gotowy do kopiowania" : "link: brak (brak typu/klucza)",
-      ],
+      title: r?.name || "—",
+      status: pollState,
+      meta,
       primaryText: "Otwórz",
       onPrimary: async () => {
         if (!gameId) return;
         location.href = `polls.html?id=${encodeURIComponent(gameId)}`;
       },
-      secondaryText: canShare ? "Udostępnij" : "Udostępnij",
+      secondaryText: canShare ? "Udostępnij" : null,
       onSecondary: async () => {
-        if (!canShare) {
-          alert("Nie da się udostępnić: brakuje typu sondażu lub share_key.");
-          return;
-        }
-        const ok = await copyToClipboardOrPrompt(anonLink);
-        if (ok) alert("Link skopiowany ✅");
+        if (!gameId) return;
+        const raw = prompt("Udostępnij sondaż:\nWpisz e-mail(e) lub username(y), rozdzielone przecinkami.", "");
+        if (!raw) return;
+
+        const recipients = raw.split(",").map(s => s.trim()).filter(Boolean);
+        if (!recipients.length) return;
+
+        const { data, error } = await sb().rpc("polls_hub_share_poll", {
+          p_game_id: gameId,
+          p_recipients: recipients,
+          p_allow_duplicates: false,
+        });
+        if (error) { alert("Nie udało się udostępnić."); return; }
+
+        const row = Array.isArray(data) ? data[0] : data;
+        if (!row?.ok) { alert(`Nie udało się: ${row?.message || "error"}`); return; }
+
+        alert(`Udostępniono ✅\nUtworzono: ${row.created}\nPominięto: ${row.skipped}`);
+        await refreshPolls();
       },
     });
-
-    // UX: jeśli nie da się share, wyszarz przycisk
-    const secBtn = el.querySelector("[data-sec]");
-    if (secBtn && !canShare) secBtn.disabled = true;
-    if (!gameId) el.style.opacity = ".6";
 
     listPolls?.appendChild(el);
   }
