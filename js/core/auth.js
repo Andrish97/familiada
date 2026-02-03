@@ -68,11 +68,18 @@ async function fetchUsername(user) {
   return null;
 }
 
+async function enrichUser(u) {
+  if (!u) return null;
+  const username = await fetchUsername(u);
+  return { ...u, username };
+}
+
 export async function getUser() {
   try {
     const { data, error } = await sb().auth.getUser();
     if (error) return null;
-    return data.user || null;
+    const u = data.user || null;
+    return await enrichUser(u);
   } catch {
     return null;
   }
