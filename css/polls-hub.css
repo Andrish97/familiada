@@ -171,3 +171,9 @@
   font-size: 13px;
   line-height: 1.35;
 }
+
+.polls-hub .rowActions .btn:disabled{
+  opacity: .45;
+  cursor: not-allowed;
+  filter: grayscale(1);
+}
