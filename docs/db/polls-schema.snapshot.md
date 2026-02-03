@@ -6,6 +6,113 @@ Last verified: **2026-02-03**
 
 ## Tables
 
+## Tables
+
+### `public.profiles`
+
+- `created_at` timestamp with time zone NOT NULL DEFAULT now()
+- `email` text NOT NULL
+- `id` uuid NOT NULL
+- `username` text NOT NULL
+
+### `public.games`
+
+- `created_at` timestamp with time zone NOT NULL DEFAULT now()
+- `id` uuid NOT NULL DEFAULT gen_random_uuid()
+- `name` text NOT NULL DEFAULT 'Nowa Familiada'::text
+- `owner_id` uuid NOT NULL
+- `poll_closed_at` timestamp with time zone NULL
+- `poll_opened_at` timestamp with time zone NULL
+- `share_key_buzzer` text NOT NULL DEFAULT gen_share_key(18)
+- `share_key_control` text NOT NULL DEFAULT gen_share_key(24)
+- `share_key_display` text NOT NULL DEFAULT gen_share_key(18)
+- `share_key_host` text NOT NULL DEFAULT gen_share_key(18)
+- `share_key_poll` text NOT NULL DEFAULT gen_share_key(18)
+- `status` USER-DEFINED NOT NULL DEFAULT 'draft'::game_status
+- `type` USER-DEFINED NOT NULL DEFAULT 'prepared'::game_type
+- `updated_at` timestamp with time zone NOT NULL DEFAULT now()
+
+### `public.poll_sessions`
+
+- `closed_at` timestamp with time zone NULL
+- `created_at` timestamp with time zone NOT NULL DEFAULT now()
+- `game_id` uuid NOT NULL
+- `id` uuid NOT NULL DEFAULT gen_random_uuid()
+- `is_open` boolean NOT NULL DEFAULT true
+- `question_id` uuid NOT NULL
+- `question_ord` integer NOT NULL
+
+### `public.poll_subscriptions`
+
+- `accepted_at` timestamp with time zone NULL
+- `cancelled_at` timestamp with time zone NULL
+- `created_at` timestamp with time zone NOT NULL DEFAULT now()
+- `declined_at` timestamp with time zone NULL
+- `id` uuid NOT NULL DEFAULT gen_random_uuid()
+- `opened_at` timestamp with time zone NULL
+- `owner_id` uuid NOT NULL
+- `status` text NOT NULL DEFAULT 'pending'::text
+- `subscriber_email` text NULL
+- `subscriber_user_id` uuid NULL
+- `token` uuid NOT NULL DEFAULT gen_random_uuid()
+
+### `public.poll_tasks`
+
+- `cancelled_at` timestamp with time zone NULL
+- `created_at` timestamp with time zone NOT NULL DEFAULT now()
+- `declined_at` timestamp with time zone NULL
+- `done_at` timestamp with time zone NULL
+- `game_id` uuid NOT NULL
+- `id` uuid NOT NULL DEFAULT gen_random_uuid()
+- `opened_at` timestamp with time zone NULL
+- `owner_id` uuid NOT NULL
+- `poll_type` text NOT NULL
+- `recipient_email` text NULL
+- `recipient_user_id` uuid NULL
+- `share_key_poll` text NOT NULL
+- `status` text NOT NULL DEFAULT 'pending'::text
+- `token` uuid NOT NULL
+
+### `public.poll_text_entries`
+
+- `answer_norm` text NOT NULL
+- `answer_raw` text NOT NULL
+- `created_at` timestamp with time zone NOT NULL DEFAULT now()
+- `game_id` uuid NOT NULL
+- `id` uuid NOT NULL DEFAULT gen_random_uuid()
+- `poll_session_id` uuid NOT NULL
+- `question_id` uuid NOT NULL
+- `voter_token` text NOT NULL
+
+### `public.poll_votes`
+
+- `answer_id` uuid NULL
+- `answer_ord` integer NOT NULL
+- `created_at` timestamp with time zone NOT NULL DEFAULT now()
+- `game_id` uuid NOT NULL
+- `id` uuid NOT NULL DEFAULT gen_random_uuid()
+- `poll_session_id` uuid NULL
+- `question_id` uuid NULL
+- `question_ord` integer NOT NULL
+- `voter_token` text NOT NULL
+
+### `public.answers`
+
+- `created_at` timestamp with time zone NOT NULL DEFAULT now()
+- `fixed_points` integer NOT NULL DEFAULT 0
+- `id` uuid NOT NULL DEFAULT gen_random_uuid()
+- `ord` integer NOT NULL
+- `question_id` uuid NOT NULL
+- `text` text NOT NULL
+
+## Notes / Open items
+
+- Enums shown as `USER-DEFINED` in `information_schema.columns` (e.g. `games.type`, `games.status`, device types) should be documented explicitly once we export `pg_type` enum labels.
+
+- `poll_subscriptions.status` and `poll_tasks.status` currently default to `'pending'`. We will standardize allowed values (CHECK or enum) during cleanup.
+
+- Foreign keys, indexes, RPC list, and RLS policies are tracked in this same file; update after we export `pg_policies`, `pg_indexes`, and `pg_constraint`.
+
 ### `profiles`
 
 **Columns (inferred)**
