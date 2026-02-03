@@ -195,7 +195,7 @@ Core to polls/subscriptions/tasks (and the minimal dependencies they reference):
 - `game_id uuid NOT NULL`
 - `poll_type text NOT NULL`
 - `share_key_poll text NOT NULL`
-- `token uuid NOT NULL`  *(no default — must be set by RPC/trigger/client)*
+- `token uuid NOT NULL DEFAULT gen_random_uuid()`
 - `status text NOT NULL DEFAULT 'pending'`
 - `created_at timestamptz NOT NULL DEFAULT now()`
 - `opened_at timestamptz NULL`
@@ -207,7 +207,7 @@ Core to polls/subscriptions/tasks (and the minimal dependencies they reference):
 - `poll_tasks_owner_id_fkey`: `owner_id` → `profiles.id`
 - `poll_tasks_recipient_user_id_fkey`: `recipient_user_id` → `profiles.id`
 
-> Note: no FK shown for `game_id` in your FK list (likely missing or just not exported). Verify.
+- `poll_tasks_game_id_fkey`: `game_id` → `games.id` (ON DELETE CASCADE)
 
 ### Indexes / uniques
 - `poll_tasks_pkey` — UNIQUE (id)
@@ -215,8 +215,7 @@ Core to polls/subscriptions/tasks (and the minimal dependencies they reference):
 - `poll_tasks_game_idx` — (game_id)
 - `poll_tasks_recipient_user_idx` — (recipient_user_id)
 - `poll_tasks_recipient_email_idx` — (lower(recipient_email))
-- `poll_tasks_token_uq` — UNIQUE (token)
-- `poll_tasks_token_key` — UNIQUE (token) **(duplicate of poll_tasks_token_uq)**
+- `poll_tasks_token_key` — UNIQUE (token) *(constraint-backed)*
 
 ### RLS policies
 - INSERT: `poll_tasks_insert_owner` — `{public}`, check `(owner_id = auth.uid())`
@@ -245,8 +244,8 @@ Core to polls/subscriptions/tasks (and the minimal dependencies they reference):
 - `cancelled_at timestamptz NULL`
 
 ### Foreign keys
-- No FK rows shown in your FK export for this table.
-  - Expected (to verify/add): `owner_id` → `profiles.id`, `subscriber_user_id` → `profiles.id`
+- `poll_subscriptions_owner_id_fkey`: `owner_id` → `profiles.id` (ON DELETE CASCADE)
+- `poll_subscriptions_subscriber_user_id_fkey`: `subscriber_user_id` → `profiles.id` (ON DELETE SET NULL)
 
 ### Indexes / uniques
 - `poll_subscriptions_pkey` — UNIQUE (id)
@@ -279,9 +278,7 @@ Core to polls/subscriptions/tasks (and the minimal dependencies they reference):
 ### Indexes / uniques
 - `answers_pkey` — UNIQUE (id)
 - `answers_q_idx` — (question_id)
-- `answers_q_ord_idx` — (question_id, ord)
 - `answers_q_ord_uniq` — UNIQUE (question_id, ord)
-- `answers_q_ord_uq` — UNIQUE (question_id, ord) **(duplicate)**
 
 ### RLS policies (duplicates exist)
 - `answers_owner_select` — SELECT `{authenticated}`, owner of game via questions→games
@@ -295,8 +292,8 @@ Core to polls/subscriptions/tasks (and the minimal dependencies they reference):
 These are **non-breaking** cleanups (drop duplicates), but do them only after verifying nothing references the index names explicitly:
 
 ### Duplicate UNIQUE indexes
-- `answers_q_ord_uniq` vs `answers_q_ord_uq`  → keep one
-- `poll_tasks_token_key` vs `poll_tasks_token_uq` → keep one
+- `answers_q_ord_uniq` vs `answers_q_ord_uq` → **resolved** (kept constraint-backed `answers_q_ord_uniq`)
+- `poll_tasks_token_key` vs `poll_tasks_token_uq` → keep **constraint-backed** `poll_tasks_token_key` (drop `poll_tasks_token_uq` if present)
 
 ### Duplicate non-unique indexes
 - `games_created_at_idx` vs `games_created_idx` → keep one
