@@ -5,9 +5,6 @@ import { sb } from "../core/supabase.js";
 import { requireAuth, signOut } from "../core/auth.js";
 
 /* ================= Config ================= */
-// Edge Function endpoint (Supabase functions). Jeśli masz inną ścieżkę — zmień tu.
-const SEND_EMAIL_FN = "/functions/v1/send-email";
-
 // poll-go page (token landing)
 const POLL_GO_URL = "poll-go.html";
 
@@ -179,6 +176,17 @@ function toastShow(msg, ms = 2200){
   toast._t = setTimeout(() => { toast.hidden = true; }, ms);
 }
 
+function pickSubLabel(r){
+  return (
+    r?.subscriber_username ||
+    r?.subscriber_email ||
+    r?.username ||
+    r?.email ||
+    r?.subscriber ||
+    "—"
+  );
+}
+
 /* ================= Modal helpers ================= */
 function modalOpen(el){
   if (!el) return;
@@ -292,23 +300,15 @@ function emailInvitePoll({ inviter, gameName, pollType, link }){
 }
 
 async function sendEmail(to, subject, html){
-  const { data: ses } = await sb().auth.getSession();
-  const token = ses?.session?.access_token;
-  if (!token) throw new Error("Brak sesji (JWT)");
-
-  const res = await fetch(SEND_EMAIL_FN, {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      "authorization": `Bearer ${token}`,
-    },
-    body: JSON.stringify({ to, subject, html }),
+  const { data, error } = await sb().functions.invoke("send-email", {
+    body: { to, subject, html },
   });
 
-  if (!res.ok){
-    const txt = await res.text().catch(() => "");
-    throw new Error(`send-email failed (${res.status}): ${txt.slice(0,200)}`);
+  if (error){
+    console.warn("[polls_hub] send-email error:", error);
+    throw new Error(error.message || "send-email failed");
   }
+  return data;
 }
 
 /* ================= Render row ================= */
@@ -364,14 +364,13 @@ async function taskDeclineByToken(token){
 }
 
 async function subCancelById(id){
-  // owner soft-cancel via wrapper (status cancelled)
-  const row = await rpcOne("polls_sub_action", { p_action: "cancel", p_id: id });
-  return !!row?.ok;
+  const row = await rpcOne("polls_hub_subscription_cancel", { p_id: id });
+  return !!(row?.ok ?? row?.polls_action?.ok ?? row?.polls_hub_subscription_cancel?.ok);
 }
 
 async function subRemoveById(id){
-  const row = await rpcOne("polls_sub_action", { p_action: "remove", p_id: id });
-  return !!row?.ok;
+  const row = await rpcOne("polls_hub_subscriber_remove", { p_id: id });
+  return !!(row?.ok ?? row?.polls_action?.ok ?? row?.polls_hub_subscriber_remove?.ok);
 }
 
 /* ================= Refresh: profile + overview ================= */
@@ -538,7 +537,7 @@ async function refreshSubs(){
   renderEmpty(listSubs, emptySubs, finalRows.length > 0);
 
   for (const r of finalRows){
-    const title = r?.subscriber_username || r?.subscriber_email || "—";
+    const title = pickSubLabel(r);
     const meta = pickMetaPieces(r);
     const status = r?.status;
 
@@ -587,7 +586,7 @@ async function refreshSubsToMe(){
   renderEmpty(listSubsToMe, emptySubsToMe, finalRows.length > 0);
 
   for (const r of finalRows){
-    const title = r?.subscriber_username || r?.subscriber_email || "—";
+    const title = pickSubLabel(r);
     const meta = pickMetaPieces(r);
     const status = r?.status;
     const id = r?.id;
@@ -715,8 +714,8 @@ async function addSubscriberSend(){
       setProgress(mSubProg, mSubProgBar, mSubProgTxt, 100, "E-mail wysłany ✅");
       toastShow("Mail wysłany ✅");
     } catch (e){
-      console.warn("[polls_hub] sendEmail(sub) failed:", e);
-      toastShow("Nie udało się wysłać maila.");
+      console.warn("[polls_hub] sendEmail failed:", e);
+      toastShow(`Mail nie wysłany: ${String(e?.message || e).slice(0,80)}`);
     }
   } else {
     toastShow("Zaproszenie już istniało.");
@@ -843,7 +842,8 @@ async function shareSend(){
         ok++;
       } catch (e){
         fail++;
-        console.warn("[polls_hub] sendEmail(task) failed:", email, e);
+        console.warn("[polls_hub] sendEmail failed:", e);
+        toastShow(`Mail nie wysłany: ${String(e?.message || e).slice(0,80)}`);
       }
 
       const pct = 50 + Math.round(((i+1)/emailList.length) * 45);
