@@ -4,9 +4,6 @@
 import { sb } from "../core/supabase.js";
 import { requireAuth, signOut } from "../core/auth.js";
 
-console.log("[polls_hub] boot script loaded ✅", new Date().toISOString());
-window.__POLL_HUB = { loadedAt: Date.now() };
-
 /* ================= DOM ================= */
 const $ = (id) => document.getElementById(id);
 
