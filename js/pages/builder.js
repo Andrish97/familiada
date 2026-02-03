@@ -29,6 +29,7 @@ const btnPoll = document.getElementById("btnPoll");
 const btnManual = document.getElementById("btnManual");
 const btnLogoEditor = document.getElementById("btnLogoEditor");
 const btnBases = document.getElementById("btnBases");
+const btnPollsHub = document.getElementById("btnPollsHub");
 
 const btnExport = document.getElementById("btnExport");
 const btnImport = document.getElementById("btnImport");
@@ -710,6 +711,27 @@ document.addEventListener("DOMContentLoaded", async () => {
   currentUser = await requireAuth("index.html");
   if (who) who.textContent = currentUser?.username || currentUser?.email || "—";
 
+  async function refreshPollsHubDot(){
+    // dot ma się pokazać, gdy są aktywne zadania / zaproszenia
+    try{
+      const { data, error } = await sb().rpc("polls_hub_overview");
+      if (error) throw error;
+  
+      const row = Array.isArray(data) ? data[0] : data;
+      const tasks = Number(row?.tasks_active ?? row?.tasks ?? 0);
+      const invites = Number(row?.invites_pending ?? row?.invites ?? 0);
+  
+      const hasNew = (tasks + invites) > 0;
+      btnPollsHub?.classList.toggle("hasDot", hasNew);
+    } catch (e){
+      // jak RPC nie istnieje / nie zwróci pól — nie blokujemy UI
+      btnPollsHub?.classList.remove("hasDot");
+    }
+  }
+  
+  // po init/requireAuth:
+  refreshPollsHubDot();
+
   btnLogout?.addEventListener("click", async () => {
     await signOut();
     location.href = "index.html";
@@ -725,6 +747,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   
   btnBases?.addEventListener("click", async () => {
     location.href = "bases.html";
+  });
+
+  btnPollsHub?.addEventListener("click", () => {
+    location.href = "polls-hub.html";
   });
 
   tabPollText?.addEventListener("click", () => setActiveTab(TYPES.POLL_TEXT));
