@@ -490,7 +490,7 @@ function wireRefresh(){
 
 /* ================= Topbar ================= */
 btnBack?.addEventListener("click", () => {
-  location.href = "polls.html";
+  location.href = "builder.html";
 });
 
 btnLogout?.addEventListener("click", async () => {
