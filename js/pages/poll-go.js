@@ -79,7 +79,7 @@ function safeLower(s) {
 async function refreshWho() {
   try {
     const u = await getUser();
-    const label = u?.user_metadata?.username || u?.email || "—";
+    const label = u?.username || u?.email || "—";
     if (who) who.textContent = label;
     if (btnLogin) btnLogin.textContent = u ? "Konto" : "Zaloguj";
     if (btnLogin) btnLogin.href = u ? "builder.html" : "index.html";
