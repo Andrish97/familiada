@@ -125,6 +125,39 @@ function pickMetaPieces(row){
   return out;
 }
 
+function pollTypeToVotingPage(pollType){
+  // ujednolicamy nazwy, bo czasem RPC może zwrócić "text/points" albo "poll_text/poll_points"
+  const t = String(pollType || "").toLowerCase();
+  if (t === "poll_text" || t === "text") return "poll-text.html";
+  if (t === "poll_points" || t === "points") return "poll-points.html";
+  return "";
+}
+
+function buildAnonVoteLink(row){
+  const page = pollTypeToVotingPage(row?.poll_type || row?.type);
+  const key = String(row?.share_key_poll || row?.share_key || row?.key || "").trim();
+
+  if (!page || !key) return "";
+
+  const url = new URL(page, location.href);
+  url.searchParams.set("key", key);
+  return url.toString();
+}
+
+async function copyToClipboardOrPrompt(text){
+  const v = String(text || "");
+  if (!v) return false;
+
+  try {
+    await navigator.clipboard.writeText(v);
+    return true;
+  } catch {
+    // fallback (iOS/Safari czasem blokuje clipboard bez gestu albo https)
+    prompt("Skopiuj link:", v);
+    return true;
+  }
+}
+
 /* ================= Render row ================= */
 function renderRow({
   title,
@@ -277,19 +310,37 @@ async function refreshPolls(){
     const meta = pickMetaPieces(r);
     const status = r?.status || "active";
 
-    // Klik -> polls.html?id=GAME
     const gameId = r?.game_id || r?.id;
+
+    const anonLink = buildAnonVoteLink(r);
+    const canShare = !!anonLink;
+
     const el = renderRow({
       title,
       status,
-      meta,
+      meta: [
+        ...meta,
+        canShare ? "link: gotowy do kopiowania" : "link: brak (brak typu/klucza)",
+      ],
       primaryText: "Otwórz",
       onPrimary: async () => {
         if (!gameId) return;
         location.href = `polls.html?id=${encodeURIComponent(gameId)}`;
       },
-      secondaryText: null,
+      secondaryText: canShare ? "Udostępnij" : "Udostępnij",
+      onSecondary: async () => {
+        if (!canShare) {
+          alert("Nie da się udostępnić: brakuje typu sondażu lub share_key.");
+          return;
+        }
+        const ok = await copyToClipboardOrPrompt(anonLink);
+        if (ok) alert("Link skopiowany ✅");
+      },
     });
+
+    // UX: jeśli nie da się share, wyszarz przycisk
+    const secBtn = el.querySelector("[data-sec]");
+    if (secBtn && !canShare) secBtn.disabled = true;
 
     listPolls?.appendChild(el);
   }
