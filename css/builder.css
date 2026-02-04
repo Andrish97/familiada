@@ -550,6 +550,6 @@ body.builder-body {
   width: 8px;
   height: 8px;
   border-radius: 999px;
-  background: #ff3b30; /* iOS red dot */
-  box-shadow: 0 0 10px rgba(255,59,48,.55);
+  background: #ffd60a; /* iOS yellow dot */
+  box-shadow: 0 0 10px rgba(255,214,10,.6);
 }

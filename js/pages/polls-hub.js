@@ -3,6 +3,7 @@
 
 import { sb } from "../core/supabase.js";
 import { requireAuth, signOut } from "../core/auth.js";
+import QRCode from "https://cdn.jsdelivr.net/npm/qrcode@1.5.3/+esm";
 
 /* ================= Config ================= */
 // poll-go page (token landing)
@@ -60,6 +61,10 @@ const btnTasksRefresh = $("btnTasksRefresh");
 const btnSubsRefresh = $("btnSubsRefresh");
 const btnSubsToMeRefresh = $("btnSubsToMeRefresh");
 
+// polls controls
+const btnPollsShare = $("btnPollsShare");
+const btnPollsDetails = $("btnPollsDetails");
+
 // add subscriber
 const btnAddSubscriber = $("btnAddSubscriber");
 
@@ -78,10 +83,22 @@ const mShareType = $("mShareType");
 const mShareList = $("mShareList");
 const mShareAll = $("mShareAll");
 const mShareExtra = $("mShareExtra");
+const mShareLink = $("mShareLink");
+const mShareCopy = $("mShareCopy");
+const mShareOpen = $("mShareOpen");
+const mShareQr = $("mShareQr");
+const mShareDisplay = $("mShareDisplay");
+const mShareQrBox = $("mShareQrBox");
 const mShareSend = $("mShareSend");
 const mShareProg = $("mShareProg");
 const mShareProgBar = $("mShareProgBar");
 const mShareProgTxt = $("mShareProgTxt");
+
+// details modal
+const mDetails = $("mDetails");
+const mDetailsMeta = $("mDetailsMeta");
+const mDetailsList = $("mDetailsList");
+const mDetailsAnon = $("mDetailsAnon");
 
 // toast
 const toast = $("toast");
@@ -96,13 +113,15 @@ const view = {
 
 const ui = {
   flt: { polls: "", tasks: "", subs: "", subsToMe: "" },
-  sort: { polls: "new", tasks: "new", subs: "new", subsToMe: "new" },
+  sort: { polls: "default", tasks: "default", subs: "default", subsToMe: "default" },
 };
 
 let myProfile = null; // { id, username, email }
 
 // share modal state
 let shareCtx = null; // { game_id, name, poll_type }
+let shareMode = "anon";
+let selectedPoll = null;
 
 /* ================= Utils ================= */
 function esc(s){
@@ -149,22 +168,30 @@ function textMatch(row, q){
 }
 
 function sortRows(rows, mode){
-  const m = String(mode || "new");
+  const m = String(mode || "default");
   const getName = (r) => String(r?.name || r?.game_name || r?.subscriber_username || r?.subscriber_email || "");
   const getStatus = (r) => String(r?.status || r?.poll_state || "");
   const getTime = (r) => String(r?.updated_at || r?.created_at || r?.poll_opened_at || "");
 
   const copy = rows.slice();
 
-  if (m === "name"){
+  if (m === "name_asc"){
     copy.sort((a,b) => getName(a).localeCompare(getName(b), "pl", { sensitivity:"base" }));
     return copy;
   }
-  if (m === "status"){
-    copy.sort((a,b) => getStatus(a).localeCompare(getStatus(b), "pl", { sensitivity:"base" }));
+  if (m === "name_desc"){
+    copy.sort((a,b) => getName(b).localeCompare(getName(a), "pl", { sensitivity:"base" }));
     return copy;
   }
-  copy.sort((a,b) => getTime(b).localeCompare(getTime(a)));
+  if (m === "old"){
+    copy.sort((a,b) => getTime(a).localeCompare(getTime(b)));
+    return copy;
+  }
+  if (m === "default" || m === "new"){
+    copy.sort((a,b) => getTime(b).localeCompare(getTime(a)));
+    return copy;
+  }
+  copy.sort((a,b) => getStatus(a).localeCompare(getStatus(b), "pl", { sensitivity:"base" }));
   return copy;
 }
 
@@ -187,6 +214,36 @@ function pickSubLabel(r){
   );
 }
 
+function pollColorClass(r){
+  const st = String(r?.poll_state || "draft").toLowerCase();
+  if (st === "closed") return "poll-blue";
+  if (st === "draft") {
+    return r?.can_open ? "poll-red" : "poll-gray";
+  }
+  const anonVotes = Number(r?.anon_votes || 0);
+  const tasksActive = Number(r?.tasks_active || 0);
+  const tasksDone = Number(r?.tasks_done || 0);
+
+  if (anonVotes >= 10 || (tasksActive === 0 && tasksDone > 0)) return "poll-green";
+  if (anonVotes > 0 || tasksActive > 0) return "poll-yellow";
+  return "poll-orange";
+}
+
+function setSelectedPoll(rowEl, data){
+  selectedPoll = data || null;
+  listPolls?.querySelectorAll(".row.sel").forEach((el) => el.classList.remove("sel"));
+  if (rowEl) rowEl.classList.add("sel");
+}
+
+function pickPollLink(ctx){
+  if (!ctx?.game_id || !ctx?.share_key_poll || !ctx?.poll_type) return "";
+  const base = ctx.poll_type === "poll_points" ? "poll-points.html" : "poll-text.html";
+  const url = new URL(base, location.href);
+  url.searchParams.set("id", ctx.game_id);
+  url.searchParams.set("key", ctx.share_key_poll);
+  return url.toString();
+}
+
 /* ================= Modal helpers ================= */
 function modalOpen(el){
   if (!el) return;
@@ -198,6 +255,31 @@ function modalClose(el){
   if (!el) return;
   el.hidden = true;
   document.documentElement.style.overflow = "";
+}
+
+function setShareMode(mode){
+  shareMode = mode;
+  document.querySelectorAll("[data-share-mode]").forEach((btn) => {
+    btn.classList.toggle("on", btn.dataset.shareMode === mode);
+  });
+  const anonBlock = $("shareAnonBlock");
+  const subBlock = $("shareSubBlock");
+  if (anonBlock) anonBlock.style.display = mode === "subs" ? "none" : "";
+  if (subBlock) subBlock.style.display = mode === "anon" ? "none" : "";
+}
+
+async function renderShareQr(link){
+  if (!mShareQrBox) return;
+  mShareQrBox.innerHTML = "";
+  if (!link) return;
+  try {
+    const canvas = document.createElement("canvas");
+    await QRCode.toCanvas(canvas, link, { width: 240, margin: 1 });
+    mShareQrBox.appendChild(canvas);
+  } catch (e) {
+    console.warn("[polls-hub] qr error:", e);
+    mShareQrBox.textContent = "QR nie działa.";
+  }
 }
 
 function wireModal(el){
@@ -312,23 +394,24 @@ async function sendEmail(to, subject, html){
 }
 
 /* ================= Render row ================= */
-function renderRow({ title, status, meta = [], primaryText, onPrimary, secondaryText, onSecondary }){
+function renderRow({ title, status, meta = [], primaryText, onPrimary, secondaryText, onSecondary, extraClass }){
   const st = String(status || "");
   const stCls = statusClass(st);
   const metaHtml = meta.map((m) => `<span class="badge dim">${esc(m)}</span>`).join(" ");
+  const hasActions = !!(primaryText || secondaryText);
 
   const el = document.createElement("div");
-  el.className = "row";
+  el.className = `row ${extraClass || ""}`.trim();
   el.innerHTML = `
     <div class="stDot ${stCls}" title="status: ${esc(st)}"></div>
     <div class="rowMain">
       <div class="rowTitle">${esc(title || "—")}</div>
       <div class="rowMeta">${metaHtml}</div>
     </div>
-    <div class="rowActions">
+    ${hasActions ? `<div class="rowActions">
       ${secondaryText ? `<button class="btn sm" data-sec type="button">${esc(secondaryText)}</button>` : ""}
-      <button class="btn sm pri" data-pri type="button">${esc(primaryText || "Otwórz")}</button>
-    </div>
+      ${primaryText ? `<button class="btn sm pri" data-pri type="button">${esc(primaryText)}</button>` : ""}
+    </div>` : ""}
   `;
 
   const bPri = el.querySelector("[data-pri]");
@@ -407,6 +490,7 @@ async function refreshPolls(){
   const finalRows = sortRows(filtered2, ui.sort.polls);
 
   listPolls.innerHTML = "";
+  setSelectedPoll(null, null);
   setChip(chipPolls, finalRows.length);
   renderEmpty(listPolls, emptyPolls, finalRows.length > 0);
 
@@ -414,6 +498,7 @@ async function refreshPolls(){
     const gameId = r?.game_id;
     const pollState = r?.poll_state || "draft";
     const pollType = r?.poll_type || "poll_text";
+    const shareKey = r?.share_key_poll;
 
     const meta = [];
     meta.push(`typ: ${pollType}`);
@@ -434,17 +519,39 @@ async function refreshPolls(){
       title: r?.name || "—",
       status: pollState,
       meta,
-      primaryText: "Otwórz",
+      primaryText: "Szczegóły",
       onPrimary: async () => {
         if (!gameId) return;
         location.href = `polls.html?id=${encodeURIComponent(gameId)}`;
       },
-      secondaryText: canShare ? "Zaproś" : "Zamknięte",
+      secondaryText: canShare ? "Udostępnij" : "Zamknięte",
       onSecondary: async () => {
         if (!canShare) return;
-        shareCtx = { game_id: gameId, name: r?.name || "Sondaż", poll_type: pollType };
+        shareCtx = { game_id: gameId, name: r?.name || "Sondaż", poll_type: pollType, share_key_poll: shareKey };
         await openShareModal(shareCtx);
       },
+      extraClass: pollColorClass(r),
+    });
+
+    const payload = {
+      game_id: gameId,
+      name: r?.name || "Sondaż",
+      poll_type: pollType,
+      poll_state: pollState,
+      share_key_poll: shareKey,
+    };
+
+    el.addEventListener("click", (e) => {
+      if (e.target && e.target.closest("button")) return;
+      setSelectedPoll(el, payload);
+    });
+    el.addEventListener("dblclick", () => {
+      if (!gameId) return;
+      if (String(pollState).toLowerCase() === "draft" && !r?.can_open) {
+        toastShow("Szkic nie spełnia kryteriów otwarcia.");
+        return;
+      }
+      location.href = `polls.html?id=${encodeURIComponent(gameId)}`;
     });
 
     listPolls.appendChild(el);
@@ -513,6 +620,11 @@ async function refreshTasks(){
           }
         });
       },
+    });
+
+    el.addEventListener("dblclick", () => {
+      if (!canOpen) return;
+      location.href = `${POLL_GO_URL}?t=${encodeURIComponent(token)}`;
     });
 
     listTasks.appendChild(el);
@@ -729,11 +841,21 @@ async function addSubscriberSend(){
 /* ================= Modal: Share poll ================= */
 async function openShareModal(ctx){
   if (!ctx?.game_id) return;
+  shareCtx = ctx;
   mShareGame.textContent = ctx.name || "Sondaż";
   mShareType.textContent = ctx.poll_type || "—";
   mShareExtra.value = "";
   mShareAll.checked = false;
 
+  const link = pickPollLink(ctx);
+  if (mShareLink) mShareLink.value = link || "";
+  if (mShareCopy) mShareCopy.disabled = !link;
+  if (mShareOpen) mShareOpen.disabled = !link;
+  if (mShareQr) mShareQr.disabled = !link;
+  if (mShareDisplay) mShareDisplay.disabled = !link;
+  await renderShareQr(link);
+
+  setShareMode(shareMode || "anon");
   setProgress(mShareProg, mShareProgBar, mShareProgTxt, 0, "");
   mShareProg.style.display = "none";
 
@@ -761,6 +883,26 @@ async function openShareModal(ctx){
   }
 
   modalOpen(mShare);
+}
+
+function openDetailsModal(ctx){
+  if (!ctx?.game_id) return;
+  if (mDetailsMeta) {
+    mDetailsMeta.textContent = `Sondaż: ${ctx.name || "—"} • typ: ${ctx.poll_type || "—"}`;
+  }
+  if (mDetailsList) {
+    mDetailsList.innerHTML = `
+      <div class="detailsItem">
+        <div>
+          <div class="name">Brak danych</div>
+          <div class="meta">Lista głosów subskrybentów pojawi się po integracji.</div>
+        </div>
+        <button class="btn sm" type="button" disabled>Usuń</button>
+      </div>
+    `;
+  }
+  if (mDetailsAnon) mDetailsAnon.textContent = "0";
+  modalOpen(mDetails);
 }
 
 function getSelectedShareRecipients(){
@@ -792,12 +934,20 @@ async function shareSend(){
   if (!shareCtx?.game_id) return;
 
   const recipients = getSelectedShareRecipients();
-  if (!recipients.length){
+  if (shareMode !== "anon" && !recipients.length){
     toastShow("Wybierz lub wpisz odbiorców.");
     return;
   }
 
   mShareSend.disabled = true;
+  if (shareMode === "anon"){
+    setProgress(mShareProg, mShareProgBar, mShareProgTxt, 100, "Zapisano ustawienia ✅");
+    toastShow("Zapisano ustawienia ✅");
+    mShareSend.disabled = false;
+    modalClose(mShare);
+    return;
+  }
+
   setProgress(mShareProg, mShareProgBar, mShareProgTxt, 10, "Tworzę zadania…");
 
   // Create tasks via canonical RPC (variant A returns tokens for emails)
@@ -878,7 +1028,7 @@ function wireSeg(btnA, btnB, key){
 
 function wireUi(){
   const bindInput = (key, el, fn) => el?.addEventListener("input", async () => { ui.flt[key] = el.value || ""; await fn(); });
-  const bindSort = (key, el, fn) => el?.addEventListener("change", async () => { ui.sort[key] = el.value || "new"; await fn(); });
+  const bindSort = (key, el, fn) => el?.addEventListener("change", async () => { ui.sort[key] = el.value || "default"; await fn(); });
 
   bindInput("polls", fltPolls, refreshPolls);
   bindInput("tasks", fltTasks, refreshTasks);
@@ -917,6 +1067,22 @@ async function boot(){
   btnSubsRefresh?.addEventListener("click", refreshSubs);
   btnSubsToMeRefresh?.addEventListener("click", refreshSubsToMe);
 
+  btnPollsShare?.addEventListener("click", async () => {
+    if (!selectedPoll) {
+      toastShow("Wybierz sondaż z listy.");
+      return;
+    }
+    await openShareModal(selectedPoll);
+  });
+
+  btnPollsDetails?.addEventListener("click", () => {
+    if (!selectedPoll) {
+      toastShow("Wybierz sondaż z listy.");
+      return;
+    }
+    openDetailsModal(selectedPoll);
+  });
+
   wireSeg(pollsActiveBtn, pollsArchBtn, "polls");
   wireSeg(tasksActiveBtn, tasksArchBtn, "tasks");
   wireSeg(subsActiveBtn, subsArchBtn, "subs");
@@ -935,6 +1101,34 @@ async function boot(){
     for (const cb of mShareList.querySelectorAll("input[data-pick]")) cb.checked = on;
   });
   mShareSend?.addEventListener("click", shareSend);
+
+  document.querySelectorAll("[data-share-mode]").forEach((btn) => {
+    btn.addEventListener("click", () => setShareMode(btn.dataset.shareMode || "anon"));
+  });
+
+  mShareCopy?.addEventListener("click", async () => {
+    if (!mShareLink?.value) return;
+    try {
+      await navigator.clipboard.writeText(mShareLink.value);
+      toastShow("Skopiowano link.");
+    } catch {
+      toastShow("Nie udało się skopiować.");
+    }
+  });
+  mShareOpen?.addEventListener("click", () => {
+    if (!mShareLink?.value) return;
+    window.open(mShareLink.value, "_blank", "noopener,noreferrer");
+  });
+  mShareQr?.addEventListener("click", async () => {
+    if (!mShareLink?.value) return;
+    await renderShareQr(mShareLink.value);
+  });
+  mShareDisplay?.addEventListener("click", () => {
+    if (!mShareLink?.value) return;
+    const u = new URL("poll-qr.html", location.href);
+    u.searchParams.set("url", mShareLink.value);
+    window.open(u.toString(), "_blank", "noopener,noreferrer");
+  });
 
   await refreshAll();
 }

@@ -230,21 +230,21 @@ async function renderPollTask(row) {
 
   // statusy: pending | opened | done | declined | cancelled
   if (status === "done") {
-    setMsg("To głosowanie jest już wykonane ✅");
+    setMsg("Już wziąłeś udział w głosowaniu ✅");
     showTaskActions(false);
-    showFallback(!!ownerUsername);
+    showFallback(false);
     return;
   }
   if (status === "declined") {
     setMsg("To głosowanie zostało odrzucone.");
     showTaskActions(false);
-    showFallback(!!ownerUsername);
+    showFallback(false);
     return;
   }
   if (status === "cancelled") {
     setMsg("To głosowanie zostało anulowane.");
     showTaskActions(false);
-    showFallback(!!ownerUsername);
+    showFallback(false);
     return;
   }
 
@@ -428,6 +428,11 @@ btnTaskDecline?.addEventListener("click", onTaskDecline);
 
 /* ================= Boot ================= */
 (async function boot() {
+  const u = await getUser();
   await refreshWho();
+  if (u) {
+    location.href = "polls-hub.html";
+    return;
+  }
   await resolveToken();
 })();
