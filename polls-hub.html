@@ -15,7 +15,7 @@
 
 <body class="polls-hub" data-debug="v2">
   <header class="topbar">
-    <div class="brand">FAMILIADA</div>
+    <div class="brand">CENTRUM SONDAŻY</div>
     <div class="right">
       <button class="btn sm" id="btnBack" type="button">← Moje gry</button>
       <div class="who" id="who">—</div>
@@ -24,285 +24,160 @@
   </header>
 
   <main class="wrap">
-    <section class="hub-grid">
+    <section class="grid2">
 
-      <!-- 1) Sondaże + Zadania -->
-      <article class="split-card" data-card="polls">
+      <!-- 1) Polls -->
+      <article class="card" data-card="polls">
         <div class="cardHead">
           <div class="cardTitle">
-            <span>Centrum sondaży</span>
+            <span>Sondaże</span>
+            <span class="chip" id="chipPolls">—</span>
           </div>
           <div class="cardTools">
+            <div class="seg" role="tablist" aria-label="Filtr sondaży">
+              <button class="segBtn on" id="pollsActiveBtn" type="button">Aktywne</button>
+              <button class="segBtn" id="pollsArchBtn" type="button">Archiwum</button>
+            </div>
             <button class="btn sm" id="btnPollsRefresh" type="button">⟳</button>
           </div>
         </div>
 
-        <div class="splitBody">
-          <section class="splitPane">
-            <div class="paneHead">
-              <div class="paneTitle">Moje sondaże <span class="chip" id="chipPolls">—</span></div>
-              <div class="paneTools">
-                <div class="toolsRow">
-                  <button class="btn sm" id="btnPollsShare" type="button">Udostępnij / zmień</button>
-                  <button class="btn sm" id="btnPollsDetails" type="button">Szczegóły</button>
-                </div>
-                <div class="toolsRow">
-                  <select class="miniSelect" id="sortPolls">
-                    <option value="default">Domyślne</option>
-                    <option value="new">Najnowsze</option>
-                    <option value="old">Najstarsze</option>
-                    <option value="name_asc">Nazwa A–Z</option>
-                    <option value="name_desc">Nazwa Z–A</option>
-                  </select>
-                  <input class="miniInput" id="fltPolls" type="search" placeholder="Szukaj…" />
-                </div>
-                <div class="seg" role="tablist" aria-label="Filtr sondaży">
-                  <button class="segBtn on" id="pollsActiveBtn" type="button">Aktualne</button>
-                  <button class="segBtn" id="pollsArchBtn" type="button">Archiwalne</button>
-                </div>
-              </div>
-            </div>
-            <div class="list" id="listPolls"></div>
-            <div class="empty" id="emptyPolls" style="display:none">Brak sondaży.</div>
-          </section>
-
-          <section class="splitPane">
-            <div class="paneHead">
-              <div class="paneTitle">Zadania <span class="chip" id="chipTasks">—</span></div>
-              <div class="paneTools">
-                <div class="toolsRow">
-                  <select class="miniSelect" id="sortTasks">
-                    <option value="default">Domyślne</option>
-                    <option value="new">Najnowsze</option>
-                    <option value="old">Najstarsze</option>
-                    <option value="name_asc">Nazwa A–Z</option>
-                    <option value="name_desc">Nazwa Z–A</option>
-                  </select>
-                  <input class="miniInput" id="fltTasks" type="search" placeholder="Szukaj…" />
-                  <button class="btn sm" id="btnTasksRefresh" type="button">⟳</button>
-                </div>
-                <div class="seg" role="tablist" aria-label="Filtr zadań">
-                  <button class="segBtn on" id="tasksActiveBtn" type="button">Aktualne</button>
-                  <button class="segBtn" id="tasksArchBtn" type="button">Archiwalne</button>
-                </div>
-              </div>
-            </div>
-            <div class="list" id="listTasks"></div>
-            <div class="empty" id="emptyTasks" style="display:none">Brak zadań.</div>
-          </section>
-        </div>
+        <div class="list" id="listPolls"></div>
+        <div class="empty" id="emptyPolls" style="display:none">Brak sondaży.</div>
       </article>
 
-      <!-- 2) Subskrypcje -->
-      <article class="split-card" data-card="subs">
+      <!-- 2) Tasks -->
+      <article class="card" data-card="tasks">
         <div class="cardHead">
           <div class="cardTitle">
-            <span>Subskrypcje</span>
+            <span>Zadania</span>
+            <span class="chip" id="chipTasks">—</span>
           </div>
           <div class="cardTools">
+            <div class="seg" role="tablist" aria-label="Filtr zadań">
+              <button class="segBtn on" id="tasksActiveBtn" type="button">Aktywne</button>
+              <button class="segBtn" id="tasksArchBtn" type="button">Archiwum</button>
+            </div>
+            <button class="btn sm" id="btnTasksRefresh" type="button">⟳</button>
+          </div>
+        </div>
+
+        <div class="list" id="listTasks"></div>
+        <div class="empty" id="emptyTasks" style="display:none">Brak zadań.</div>
+      </article>
+
+      <!-- 3) My subscriptions -->
+      <article class="card" data-card="subs">
+        <div class="cardHead">
+          <div class="cardTitle">
+            <span>Moje subskrypcje</span>
+            <span class="chip" id="chipSubs">—</span>
+          </div>
+          <div class="cardTools">
+            <div class="seg" role="tablist" aria-label="Filtr subskrypcji">
+              <button class="segBtn on" id="subsActiveBtn" type="button">Aktywne</button>
+              <button class="segBtn" id="subsArchBtn" type="button">Archiwum</button>
+            </div>
             <button class="btn sm" id="btnSubsRefresh" type="button">⟳</button>
           </div>
         </div>
 
-        <div class="splitBody">
-          <section class="splitPane">
-            <div class="paneHead">
-              <div class="paneTitle">Moi subskrybenci <span class="chip" id="chipSubsToMe">—</span></div>
-              <div class="paneTools">
-                <div class="toolsRow">
-                  <button class="btn sm" id="btnAddSubscriber" type="button">＋ Dodaj</button>
-                  <select class="miniSelect" id="sortSubsToMe">
-                    <option value="default">Domyślne</option>
-                    <option value="new">Najnowsze</option>
-                    <option value="old">Najstarsze</option>
-                    <option value="name_asc">Nazwa A–Z</option>
-                    <option value="name_desc">Nazwa Z–A</option>
-                  </select>
-                  <input class="miniInput" id="fltSubsToMe" type="search" placeholder="Szukaj…" />
-                  <button class="btn sm" id="btnSubsToMeRefresh" type="button">⟳</button>
-                </div>
-                <div class="seg" role="tablist" aria-label="Filtr subskrybentów">
-                  <button class="segBtn on" id="subsToMeActiveBtn" type="button">Aktualne</button>
-                  <button class="segBtn" id="subsToMeArchBtn" type="button">Archiwalne</button>
-                </div>
-              </div>
-            </div>
-            <div class="list" id="listSubsToMe"></div>
-            <div class="empty" id="emptySubsToMe" style="display:none">Brak subskrybentów.</div>
-          </section>
-
-          <section class="splitPane">
-            <div class="paneHead">
-              <div class="paneTitle">Moje subskrypcje <span class="chip" id="chipSubs">—</span></div>
-              <div class="paneTools">
-                <div class="toolsRow">
-                  <select class="miniSelect" id="sortSubs">
-                    <option value="default">Domyślne</option>
-                    <option value="new">Najnowsze</option>
-                    <option value="old">Najstarsze</option>
-                    <option value="name_asc">Nazwa A–Z</option>
-                    <option value="name_desc">Nazwa Z–A</option>
-                  </select>
-                  <input class="miniInput" id="fltSubs" type="search" placeholder="Szukaj…" />
-                </div>
-                <div class="seg" role="tablist" aria-label="Filtr subskrypcji">
-                  <button class="segBtn on" id="subsActiveBtn" type="button">Aktualne</button>
-                  <button class="segBtn" id="subsArchBtn" type="button">Archiwalne</button>
-                </div>
-              </div>
-            </div>
-            <div class="list" id="listSubs"></div>
-            <div class="empty" id="emptySubs" style="display:none">Brak subskrypcji.</div>
-          </section>
-        </div>
+        <div class="list" id="listSubs"></div>
+        <div class="empty" id="emptySubs" style="display:none">Brak subskrypcji.</div>
       </article>
 
+      <!-- 4) My subscribers -->
+      <article class="card" data-card="subsToMe">
+        <div class="cardHead">
+          <div class="cardTitle">
+            <span>Moi subskrybenci</span>
+            <span class="chip" id="chipSubsToMe">—</span>
+          </div>
+          <div class="cardTools">
+            <button class="btn sm" id="btnAddSubscriber" type="button">+ Dodaj</button>
+            <div class="seg" role="tablist" aria-label="Filtr subskrybentów">
+              <button class="segBtn on" id="subsToMeActiveBtn" type="button">Aktywne</button>
+              <button class="segBtn" id="subsToMeArchBtn" type="button">Archiwum</button>
+            </div>
+            <button class="btn sm" id="btnSubsToMeRefresh" type="button">⟳</button>
+          </div>
+        </div>
+
+        <div class="list" id="listSubsToMe"></div>
+        <div class="empty" id="emptySubsToMe" style="display:none">Brak subskrybentów.</div>
+      </article>
     </section>
 
     <section class="note" id="note">
       <div class="noteTitle">Uwaga</div>
       <div class="noteText">
-        <b>Zadania</b> to zaproszenia do głosowania. <b>Subskrypcje</b> to lista znajomych/obserwowanych.
-        Zaproszenia mailowe prowadzą do <code>poll-go.html</code> (token).
+        Tu zarządzasz zadaniami i subskrypcjami. Strona polls służy do zamknięcia/podglądu wyników.
       </div>
     </section>
-
   </main>
 
-  <!-- ===== Modal: Add subscriber ===== -->
-  <div class="modal" id="mSub" hidden>
-    <div class="modalBack" data-close></div>
-    <div class="modalCard" role="dialog" aria-modal="true" aria-labelledby="mSubTitle">
+  <!-- Modal: Add subscriber -->
+  <div class="modalOverlay" id="mAddSub" style="display:none">
+    <div class="modal">
       <div class="modalHead">
-        <div class="modalTitle" id="mSubTitle">Dodaj subskrybenta</div>
-        <button class="btn sm" type="button" data-close>✕</button>
+        <div class="modalTitle">Dodaj subskrybenta</div>
+        <button class="btn sm" id="mAddSubClose" type="button">✕</button>
       </div>
-
       <div class="modalBody">
-        <div class="hint">
-          Wpisz <b>username</b> lub <b>e-mail</b>. Jeśli użytkownik istnieje — dostanie zaproszenie na stronie. Jeśli nie — wyślemy mail.
+        <div class="field">
+          <label class="lbl">E-mail lub nazwa użytkownika</label>
+          <input class="inp" id="mAddSubInput" placeholder="np. ktoś@domena.pl albo andrzej" autocomplete="off"/>
+          <div class="hint">Wyśle zaproszenie. Zarejestrowani dostają też powiadomienie w centrum sondaży.</div>
         </div>
-
-        <label class="field">
-          <span>Username lub e-mail</span>
-          <input class="input" id="mSubRecipient" placeholder="np. kuba albo kuba@mail.com" />
-        </label>
-
-        <div class="preview" id="mSubPreview" style="display:none"></div>
-
-        <div class="progress" id="mSubProg" style="display:none">
-          <div class="bar"><div class="barIn" id="mSubProgBar"></div></div>
-          <div class="txt" id="mSubProgTxt">—</div>
-        </div>
+        <div class="modalMsg" id="mAddSubMsg" style="display:none"></div>
       </div>
-
       <div class="modalFoot">
-        <button class="btn" type="button" data-close>Anuluj</button>
-        <button class="btn pri" id="mSubSend" type="button">Wyślij zaproszenie</button>
+        <button class="btn" id="mAddSubSend" type="button">Wyślij zaproszenie</button>
       </div>
     </div>
   </div>
 
-  <!-- ===== Modal: Share poll ===== -->
-  <div class="modal" id="mShare" hidden>
-    <div class="modalBack" data-close></div>
-    <div class="modalCard" role="dialog" aria-modal="true" aria-labelledby="mShareTitle">
+  <!-- Modal: Share poll -->
+  <div class="modalOverlay" id="mShare" style="display:none">
+    <div class="modal wide">
       <div class="modalHead">
-        <div>
-          <div class="modalTitle" id="mShareTitle">Udostępnij sondaż</div>
-          <div class="shareTop">
-            <div class="shareName" id="mShareGame">—</div>
-            <div class="shareType" id="mShareType">—</div>
-          </div>
-        </div>
-        <div class="shareTabs" role="tablist" aria-label="Tryb udostępnienia">
-          <button class="shareTab on" type="button" data-share-mode="anon">Anonimowy</button>
-          <button class="shareTab" type="button" data-share-mode="subs">Subskrybenci</button>
-          <button class="shareTab" type="button" data-share-mode="mix">Mieszany</button>
-        </div>
-        <button class="btn sm" type="button" data-close>✕</button>
+        <div class="modalTitle">Udostępnij sondaż</div>
+        <button class="btn sm" id="mShareClose" type="button">✕</button>
       </div>
 
       <div class="modalBody">
-        <div class="hint">
-          Wybierz tryb udostępnienia. W trybie mieszanym możesz udostępniać anonimowo oraz przez zadania.
+        <div class="seg big" role="tablist" aria-label="Tryb udostępnienia">
+          <button class="segBtn on" id="mShareModeAnon" type="button">Anonimowy</button>
+          <button class="segBtn" id="mShareModeSubs" type="button">Subskrybenci</button>
+          <button class="segBtn" id="mShareModeMixed" type="button">Mieszany</button>
         </div>
 
-        <div class="shareBlock" id="shareAnonBlock">
-          <div class="shareSectionTitle">Link anonimowy</div>
-          <div class="rowInline">
-            <input class="input" id="mShareLink" readonly placeholder="Link pojawi się po wybraniu sondażu" />
-            <button class="btn sm" id="mShareCopy" type="button">Kopiuj</button>
-            <button class="btn sm gold" id="mShareOpen" type="button">Otwórz</button>
-            <button class="btn sm" id="mShareQr" type="button">QR</button>
-            <button class="btn sm" id="mShareDisplay" type="button">Wyświetlacz</button>
-          </div>
-          <div class="qrBox" id="mShareQrBox"></div>
-        </div>
-
-        <div class="shareBlock" id="shareSubBlock">
-          <div class="shareSectionTitle">Zadania dla subskrybentów</div>
-          <div class="shareGrid">
-            <div class="shareBox">
-              <div class="shareBoxHead">
-                <b>Lista subskrybentów</b>
-                <div class="shareBoxTools">
-                  <label class="chk"><input type="checkbox" id="mShareAll"/> <span>Wszyscy</span></label>
-                </div>
+        <div class="shareBox">
+          <div class="shareAnon" id="mShareAnonBox">
+            <div class="field">
+              <label class="lbl">Link anon</label>
+              <input class="inp mono" id="mShareAnonLink" readonly/>
+              <div class="rowBtns">
+                <button class="btn sm" id="mShareCopyAnon" type="button">Kopiuj</button>
+                <button class="btn sm" id="mShareOpenAnon" type="button">Otwórz</button>
               </div>
-              <div class="shareList" id="mShareList"></div>
             </div>
+          </div>
 
-            <div class="shareBox">
-              <div class="shareBoxHead"><b>Dodatkowi odbiorcy</b></div>
-              <textarea class="textarea" id="mShareExtra" rows="6" placeholder="np. ola, ola@mail.com"></textarea>
-            </div>
+          <div class="shareSubs" id="mShareSubsBox" style="display:none">
+            <div class="hint">Zaznacz osoby. Odznaczenie anuluje zadanie (jeśli nie jest wykonane).</div>
+            <div class="subPick" id="mShareSubsList"></div>
           </div>
         </div>
 
-        <div class="progress" id="mShareProg" style="display:none">
-          <div class="bar"><div class="barIn" id="mShareProgBar"></div></div>
-          <div class="txt" id="mShareProgTxt">—</div>
-        </div>
+        <div class="modalMsg" id="mShareMsg" style="display:none"></div>
       </div>
 
       <div class="modalFoot">
-        <button class="btn" type="button" data-close>Anuluj</button>
-        <button class="btn pri" id="mShareSend" type="button">Zapisz ustawienia</button>
+        <button class="btn" id="mShareSave" type="button">Zapisz</button>
       </div>
     </div>
   </div>
 
-  <!-- ===== Modal: Poll details ===== -->
-  <div class="modal" id="mDetails" hidden>
-    <div class="modalBack" data-close></div>
-    <div class="modalCard" role="dialog" aria-modal="true" aria-labelledby="mDetailsTitle">
-      <div class="modalHead">
-        <div class="modalTitle" id="mDetailsTitle">Szczegóły sondażu</div>
-        <button class="btn sm" type="button" data-close>✕</button>
-      </div>
-
-      <div class="modalBody">
-        <div class="hint" id="mDetailsMeta">—</div>
-        <div class="detailsGrid">
-          <div class="detailsCol">
-            <div class="detailsTitle">Głosy subskrybentów</div>
-            <div class="detailsList" id="mDetailsList"></div>
-          </div>
-          <div class="detailsCol">
-            <div class="detailsTitle">Anonimowe głosy</div>
-            <div class="detailsAnon" id="mDetailsAnon">—</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="modalFoot">
-        <button class="btn" type="button" data-close>Zamknij</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ===== Toast ===== -->
-  <div class="toast" id="toast" hidden></div>
 </body>
 </html>
