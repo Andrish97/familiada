@@ -12,6 +12,8 @@ import {
   loadGameBasic,
   canEnterEdit,
   validateGameReadyToPlay,
+  validatePollEntry,
+  validatePollReadyToOpen,
 } from "../core/game-validate.js";
 
 /* ================= DOM ================= */
@@ -22,6 +24,7 @@ const hint = document.getElementById("hint");
 const btnLogout = document.getElementById("btnLogout");
 const btnEdit = document.getElementById("btnEdit");
 const btnPlay = document.getElementById("btnPlay");
+const btnPoll = document.getElementById("btnPoll");
 
 const btnManual = document.getElementById("btnManual");
 const btnLogoEditor = document.getElementById("btnLogoEditor");
@@ -376,6 +379,7 @@ function statusLabel(st) {
 function setButtonsState({ hasSel, canEdit, canPlay, canPoll, canExport }) {
   if (btnEdit) btnEdit.disabled = !hasSel || !canEdit;
   if (btnPlay) btnPlay.disabled = !hasSel || !canPlay;
+  if (btnPoll) btnPoll.disabled = !hasSel || !canPoll;
   if (btnExport) btnExport.disabled = !hasSel || !canExport;
   if (btnExportBase) btnExportBase.disabled = !hasSel || !canExport;
   
@@ -802,6 +806,34 @@ document.addEventListener("DOMContentLoaded", async () => {
     } catch (e) {
       console.error(e);
       alert("Nie udało się sprawdzić gry (błąd bazy).");
+    }
+  });
+
+  // POLLS
+  btnPoll?.addEventListener("click", async () => {
+    if (!selectedId) return;
+
+    try {
+      const g = await loadGameBasic(selectedId);
+
+      const entry = await validatePollEntry(selectedId);
+      if (!entry.ok) {
+        alert(entry.reason);
+        return;
+      }
+
+      if (g.status !== STATUS.POLL_OPEN && g.status !== STATUS.READY) {
+        const chk = await validatePollReadyToOpen(selectedId);
+        if (!chk.ok) {
+          alert(chk.reason);
+          return;
+        }
+      }
+
+      location.href = `polls.html?id=${encodeURIComponent(selectedId)}`;
+    } catch (e) {
+      console.error(e);
+      alert("Nie udało się otworzyć sondażu (błąd bazy).");
     }
   });
 
