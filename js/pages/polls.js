@@ -2,6 +2,7 @@
 import { sb } from "../core/supabase.js";
 import { requireAuth, signOut } from "../core/auth.js";
 import { confirmModal } from "../core/modal.js";
+import QRCode from "https://cdn.jsdelivr.net/npm/qrcode@1.5.3/+esm";
 
 const qs = new URLSearchParams(location.search);
 const gameId = qs.get("id");
@@ -22,8 +23,15 @@ const hintTop = $("hintTop");
 
 const gName = $("gName");
 const gMeta = $("gMeta");
+const pollLinkEl = $("pollLink");
+const qrBox = $("qr");
+
+const btnCopy = $("btnCopy");
+const btnOpen = $("btnOpen");
+const btnOpenQr = $("btnOpenQr");
 
 const btnPollAction = $("btnPollAction");
+const btnPreview = $("btnPreview");
 
 const resultsCard = $("resultsCard");
 const resultsMeta = $("resultsMeta");
@@ -64,6 +72,7 @@ function setTextCloseUi(open) {
 
   // ukryj przyciski główne gdy panel otwarty
   if (btnPollAction) btnPollAction.style.display = open ? "none" : "";
+  if (btnPreview) btnPreview.style.display = open ? "none" : "";
 
   // dla porządku: podgląd wyników też schowaj, żeby nie mieszać ekranów
   if (open) {
@@ -320,6 +329,17 @@ function statusPL(st) {
   return String(s).toUpperCase();
 }
 
+function pollLink(g) {
+  const base =
+    g.type === TYPES.POLL_TEXT
+      ? new URL("poll-text.html", location.href)
+      : new URL("poll-points.html", location.href);
+
+  base.searchParams.set("id", g.id);
+  base.searchParams.set("key", g.share_key_poll);
+  return base.toString();
+}
+
 function setChips(g) {
   if (chipType) chipType.textContent = typePL(g.type);
 
@@ -332,6 +352,37 @@ function setChips(g) {
     else if (st === STATUS.POLL_OPEN) chipStatus.classList.add("warn");
     else chipStatus.classList.add("bad");
   }
+}
+
+function clearQr() {
+  if (qrBox) qrBox.innerHTML = "";
+}
+
+async function renderSmallQr(link) {
+  if (!qrBox) return;
+  qrBox.innerHTML = "";
+  if (!link) return;
+
+  try {
+    const wrap = document.createElement("div");
+    wrap.className = "qrFrameSmall";
+    
+    const canvas = document.createElement("canvas");
+    await QRCode.toCanvas(canvas, link, { width: 260, margin: 1 });
+    
+    wrap.appendChild(canvas);
+    qrBox.appendChild(wrap);
+  } catch (e) {
+    console.error("[polls] QR error:", e);
+    qrBox.textContent = "QR nie działa.";
+  }
+}
+
+function setLinkUiVisible(on) {
+  btnCopy && (btnCopy.disabled = !on);
+  btnOpen && (btnOpen.disabled = !on);
+  btnOpenQr && (btnOpenQr.disabled = !on);
+  if (!on) clearQr();
 }
 
 function setActionButton(label, disabled, hint) {
@@ -355,6 +406,16 @@ function hidePreview() {
 function showPreview() {
   if (resultsCard) resultsCard.style.display = "";
   if (resultsList) resultsList.style.display = "";
+}
+
+function updatePreviewButtonState() {
+  if (!btnPreview || !game) return;
+
+  const st = game.status || STATUS.DRAFT;
+  const isPollType = game.type === TYPES.POLL_TEXT || game.type === TYPES.POLL_POINTS;
+  const okStatus = st === STATUS.POLL_OPEN || st === STATUS.READY;
+
+  btnPreview.disabled = !(isPollType && okStatus);
 }
 
 /* =======================
@@ -1176,6 +1237,10 @@ async function refresh() {
     }
   }
 
+  if (pollLinkEl) pollLinkEl.value = "";
+  setLinkUiVisible(false);
+  clearQr();
+
   // NIE niszcz podglądu jeśli użytkownik go ma otwartego
   const wasPreviewOpen = isPreviewOpen();
   
@@ -1192,12 +1257,14 @@ async function refresh() {
 
   const st = game.status || STATUS.DRAFT;
 
-  const isPollType = game.type === TYPES.POLL_TEXT || game.type === TYPES.POLL_POINTS;
-  const okStatus = st === STATUS.POLL_OPEN || st === STATUS.READY;
-
-  if (isPollType && okStatus && !uiTextCloseOpen) {
-    await previewResults();
+  if (st === STATUS.POLL_OPEN) {
+    const link = pollLink(game);
+    if (pollLinkEl) pollLinkEl.value = link;
+    setLinkUiVisible(true);
+    await renderSmallQr(link);
   }
+
+  updatePreviewButtonState();
 
   if (game.type === TYPES.PREPARED) {
     setActionButton("Brak sondażu", true, "Gra preparowana nie ma sondażu.");
@@ -1279,6 +1346,49 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
     await signOut();
     location.href = "index.html";
+  });
+
+  btnCopy?.addEventListener("click", async () => {
+    if (!pollLinkEl?.value) return;
+    try {
+      await navigator.clipboard.writeText(pollLinkEl.value);
+      setMsg("Skopiowano link sondażu.");
+    } catch {
+      setMsg("Nie udało się skopiować.");
+    }
+  });
+
+  btnOpen?.addEventListener("click", () => {
+    if (!pollLinkEl?.value) return;
+    window.open(pollLinkEl.value, "_blank", "noopener,noreferrer");
+  });
+
+  btnOpenQr?.addEventListener("click", () => {
+    if (!pollLinkEl?.value) return;
+    const u = new URL("poll-qr.html", location.href);
+    u.searchParams.set("url", pollLinkEl.value);
+    window.open(u.toString(), "_blank", "noopener,noreferrer");
+  });
+
+  btnPreview?.addEventListener("click", async () => {
+    if (!game || btnPreview.disabled) return;
+  
+    const open = isPreviewOpen();
+    if (open) {
+      hidePreview();
+      stopLiveLoop(); // <- ważne
+      return;
+    }
+  
+    showPreview();
+    await previewResults();
+  
+    // live tylko gdy status OTWARTY
+    if ((game?.status || STATUS.DRAFT) === STATUS.POLL_OPEN && !uiTextCloseOpen) {
+      startLiveLoop();
+    } else {
+      stopLiveLoop();
+    }
   });
 
   btnPollAction?.addEventListener("click", async () => {
