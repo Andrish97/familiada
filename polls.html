@@ -41,7 +41,33 @@
       <div class="meta" id="gMeta">—</div>
 
       <div class="row">
+        <input class="inp" id="pollLink" readonly placeholder="Link pojawi się po uruchomieniu..." />
+
+        <button class="btn sm" id="btnCopy" type="button" disabled>
+          <span class="only-desktop">Kopiuj link</span>
+          <span class="only-mobile">Kopiuj</span>
+        </button>
+
+        <button class="btn sm gold" id="btnOpen" type="button" disabled>
+          <span class="only-desktop">Otwórz link</span>
+          <span class="only-mobile">Otwórz</span>
+        </button>
+
+        <button class="btn sm" id="btnOpenQr" type="button" disabled>QR</button>
+      </div>
+
+      <div class="qrBox">
+        <div class="qrBox img" id="qr"/>
+        </div>
+      </div>
+
+      <div class="row">
         <button class="btn sm gold" id="btnPollAction" type="button">—</button>
+
+        <button class="btn sm" id="btnPreview" type="button">
+          <span class="only-desktop">Podgląd wyników</span>
+          <span class="only-mobile">Wyniki</span>
+        </button>
       </div>
 
       <!-- panel dla poll_text: edycja/łączenie/usuwanie + finalizacja -->
