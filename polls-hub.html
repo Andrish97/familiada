@@ -1,254 +1,171 @@
-<!DOCTYPE html>
-<html lang="pl">
-<head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Familiada — centrum sondaży</title>
+<body class="hub">
 
-  <link rel="icon" href="favicon.ico"/>
-  <link rel="stylesheet" href="css/base.css"/>
-  <!-- bierzemy styl kart/modali dokładnie z buildera -->
-  <link rel="stylesheet" href="css/builder.css"/>
-  <link rel="stylesheet" href="css/polls-hub.css"/>
+<header class="topbar">
+  <button class="btn ghost" id="btnBack">← Moje gry</button>
+  <div class="title">Centrum sondaży</div>
+</header>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-  <script type="module" src="js/pages/polls-hub.js" defer></script>
-</head>
+<main class="hub-grid">
 
-<body class="polls-hub-body">
-  <header class="topbar">
-    <div class="brand">FAMILIADA</div>
-    <div class="right">
-      <button class="btn" id="btnBack" type="button">← Moje gry</button>
-      <span class="who" id="who">—</span>
-      <button class="btn sm" id="btnLogout" type="button">Wyloguj</button>
-    </div>
-  </header>
+  <!-- ===== KARTA: SONDAŻE ===== -->
+  <section class="card hub-card">
 
-  <main class="wrap">
-    <div class="bar hubBar">
-      <div>
-        <div class="title">Centrum sondaży</div>
-        <div class="hint">Zaznacz sondaż po lewej, aby użyć “Udostępnij” i “Szczegóły”.</div>
-      </div>
-
-      <div class="actions">
-        <!-- globalny refresh -->
-        <button class="btn sm" id="btnRefresh" type="button">Odśwież ⟳</button>
-      </div>
+    <div class="card-header">
+      <h2>Sondaże</h2>
     </div>
 
-    <section class="hubGrid">
+    <div class="card-split">
 
-      <!-- CARD 1: SONDAŻE (split 2) -->
-      <article class="card hubCard">
-        <div class="hubCardHead">
-          <div class="hubCardTitle">
-            <span>Karta sondaże</span>
-            <span class="hubChip" id="chipPolls">0</span>
+      <!-- Moje sondaże -->
+      <div class="split-col">
+
+        <div class="split-toolbar">
+          <button class="btn primary">Udostępnij</button>
+          <button class="btn ghost">Szczegóły</button>
+        </div>
+
+        <div class="split-filters">
+          <select>
+            <option>Domyślne</option>
+            <option>Najnowsze</option>
+            <option>Najstarsze</option>
+            <option>Nazwa A–Z</option>
+            <option>Nazwa Z–A</option>
+          </select>
+
+          <label class="toggle">
+            <input type="checkbox">
+            <span>Archiwalne</span>
+          </label>
+        </div>
+
+        <div class="list scroll">
+
+          <div class="tile status-draft-bad">
+            <div class="tile-main">
+              <span class="tile-title">DEMO — Szkic niegotowy</span>
+              <span class="tile-type">poll_text</span>
+            </div>
+            <div class="tile-controls">🔗 👥</div>
           </div>
-        </div>
 
-        <div class="hubSplit">
-          <!-- LEFT: My polls -->
-          <section class="hubPane">
-            <div class="hubPaneHead">
-              <div class="hubPaneTitle">Moje sondaże</div>
-
-              <div class="hubPaneBtns">
-                <button class="btn sm" id="btnPollShare" type="button" disabled>Udostępnij / Zmień</button>
-                <button class="btn sm" id="btnPollDetails" type="button" disabled>Szczegóły</button>
-              </div>
+          <div class="tile status-open-running">
+            <div class="tile-main">
+              <span class="tile-title">DEMO — Typowy sondaż</span>
+              <span class="tile-type">poll_points</span>
             </div>
-
-            <div class="hubPaneControls">
-              <select class="hubSelect" id="selPollsSort">
-                <option value="default">• Domyślne</option>
-                <option value="new">• Najnowsze</option>
-                <option value="old">• Najstarsze</option>
-                <option value="az">• Nazwa A–Z</option>
-                <option value="za">• Nazwa Z–A</option>
-              </select>
-
-              <div class="hubSeg" role="tablist" aria-label="Filtr sondaży">
-                <button class="hubSegBtn on" id="btnPollsActive" type="button">Aktualne</button>
-                <button class="hubSegBtn" id="btnPollsArch" type="button">Archiwalne</button>
-              </div>
-            </div>
-
-            <div class="hubList" id="listMyPolls"></div>
-            <div class="hubEmpty" id="emptyMyPolls" style="display:none">Brak sondaży.</div>
-          </section>
-
-          <!-- RIGHT: Tasks -->
-          <section class="hubPane">
-            <div class="hubPaneHead">
-              <div class="hubPaneTitle">Zadania</div>
-              <div class="hubPaneBtns">
-                <span class="hubChip" id="chipTasks">0</span>
-              </div>
-            </div>
-
-            <div class="hubPaneControls">
-              <select class="hubSelect" id="selTasksSort">
-                <option value="default">• Domyślne</option>
-                <option value="new">• Najnowsze</option>
-                <option value="old">• Najstarsze</option>
-                <option value="az">• Nazwa A–Z</option>
-                <option value="za">• Nazwa Z–A</option>
-              </select>
-
-              <div class="hubSeg" role="tablist" aria-label="Filtr zadań">
-                <button class="hubSegBtn on" id="btnTasksActive" type="button">Aktualne</button>
-                <button class="hubSegBtn" id="btnTasksArch" type="button">Archiwalne</button>
-              </div>
-            </div>
-
-            <div class="hubList" id="listTasks"></div>
-            <div class="hubEmpty" id="emptyTasks" style="display:none">Brak zadań.</div>
-          </section>
-        </div>
-      </article>
-
-      <!-- CARD 2: SUBSKRYPCJE (split 2) -->
-      <article class="card hubCard">
-        <div class="hubCardHead">
-          <div class="hubCardTitle">
-            <span>Karta subskrypcje</span>
-            <span class="hubChip" id="chipSubs">0</span>
+            <div class="tile-controls">🔗 👥</div>
           </div>
+
+          <div class="tile status-closed">
+            <div class="tile-main">
+              <span class="tile-title">DEMO — Zamknięty</span>
+              <span class="tile-type">poll_text</span>
+            </div>
+            <div class="tile-controls">📊</div>
+          </div>
+
         </div>
-
-        <div class="hubSplit">
-          <!-- LEFT: My subscribers -->
-          <section class="hubPane">
-            <div class="hubPaneHead">
-              <div class="hubPaneTitle">Moi subskrybenci</div>
-              <div class="hubPaneBtns">
-                <button class="btn sm" id="btnAddSubscriber" type="button">+ Dodaj</button>
-              </div>
-            </div>
-
-            <div class="hubPaneControls">
-              <select class="hubSelect" id="selSubsToMeSort">
-                <option value="default">• Domyślne</option>
-                <option value="new">• Najnowsze</option>
-                <option value="old">• Najstarsze</option>
-                <option value="az">• Nazwa A–Z</option>
-                <option value="za">• Nazwa Z–A</option>
-              </select>
-
-              <div class="hubSeg" role="tablist" aria-label="Filtr subskrybentów">
-                <button class="hubSegBtn on" id="btnSubsToMeActive" type="button">Aktualne</button>
-                <button class="hubSegBtn" id="btnSubsToMeArch" type="button">Archiwalne</button>
-              </div>
-            </div>
-
-            <div class="hubList" id="listSubsToMe"></div>
-            <div class="hubEmpty" id="emptySubsToMe" style="display:none">Brak subskrybentów.</div>
-          </section>
-
-          <!-- RIGHT: My subscriptions -->
-          <section class="hubPane">
-            <div class="hubPaneHead">
-              <div class="hubPaneTitle">Moje subskrypcje</div>
-              <div class="hubPaneBtns">
-                <span class="hubChip" id="chipMySubs">0</span>
-              </div>
-            </div>
-
-            <div class="hubPaneControls">
-              <select class="hubSelect" id="selMySubsSort">
-                <option value="default">• Domyślne</option>
-                <option value="new">• Najnowsze</option>
-                <option value="old">• Najstarsze</option>
-                <option value="az">• Nazwa A–Z</option>
-                <option value="za">• Nazwa Z–A</option>
-              </select>
-
-              <div class="hubSeg" role="tablist" aria-label="Filtr moich subskrypcji">
-                <button class="hubSegBtn on" id="btnMySubsActive" type="button">Aktualne</button>
-                <button class="hubSegBtn" id="btnMySubsArch" type="button">Archiwalne</button>
-              </div>
-            </div>
-
-            <div class="hubList" id="listMySubs"></div>
-            <div class="hubEmpty" id="emptyMySubs" style="display:none">Brak subskrypcji.</div>
-          </section>
-        </div>
-      </article>
-
-    </section>
-  </main>
-
-  <!-- ===== MODAL: Dodaj subskrybenta (builder style) ===== -->
-  <div class="overlay" id="ovAddSub" style="display:none">
-    <div class="modal">
-      <div class="mTitle">Dodaj subskrybenta</div>
-      <div class="mSub">Wpisz e-mail lub nazwę użytkownika. Wyśle zaproszenie (mail + centrum sondaży).</div>
-
-      <div class="hubForm">
-        <input class="hubInput" id="inpAddSub" placeholder="np. ktos@domena.pl albo andrzej" autocomplete="off"/>
-        <div class="hubFormRow">
-          <button class="btn sm" id="btnAddSubCancel" type="button">Anuluj</button>
-          <button class="btn sm gold" id="btnAddSubSend" type="button">Wyślij</button>
-        </div>
-        <div class="hubMsg" id="msgAddSub" style="display:none"></div>
       </div>
+
+      <!-- Zadania -->
+      <div class="split-col">
+
+        <div class="split-filters">
+          <select>
+            <option>Domyślne</option>
+            <option>Najnowsze</option>
+            <option>Najstarsze</option>
+          </select>
+
+          <label class="toggle">
+            <input type="checkbox">
+            <span>Archiwalne</span>
+          </label>
+        </div>
+
+        <div class="list scroll">
+
+          <div class="tile status-task-open">
+            <div class="tile-main">
+              <span class="tile-title">Sondaż punktowy</span>
+              <span class="tile-type">zadanie</span>
+            </div>
+            <div class="tile-controls">✖</div>
+          </div>
+
+          <div class="tile status-task-done">
+            <div class="tile-main">
+              <span class="tile-title">Sondaż tekstowy</span>
+              <span class="tile-type">wykonane</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
     </div>
-  </div>
+  </section>
 
-  <!-- ===== MODAL: Udostępnij (builder style, slider A/S/M) ===== -->
-  <div class="overlay" id="ovShare" style="display:none">
-    <div class="modal">
-      <div class="mTitle">Udostępnij sondaż</div>
-      <div class="mSub" id="shareSub">—</div>
+  <!-- ===== KARTA: SUBSKRYPCJE ===== -->
+  <section class="card hub-card">
 
-      <div class="hubMode">
-        <button class="hubModeBtn on" id="shareModeAnon" type="button">Anonimowy</button>
-        <button class="hubModeBtn" id="shareModeSubs" type="button">Subskrybenci</button>
-        <button class="hubModeBtn" id="shareModeMixed" type="button">Mieszany</button>
-      </div>
+    <div class="card-header">
+      <h2>Subskrypcje</h2>
+    </div>
 
-      <div class="hubShareBox" id="shareAnonBox">
-        <div class="hubFieldLbl">Link (anon)</div>
-        <input class="hubInput mono" id="shareAnonLink" readonly/>
-        <div class="hubFormRow">
-          <button class="btn sm" id="btnShareCopy" type="button">Kopiuj</button>
-          <button class="btn sm" id="btnShareOpen" type="button">Otwórz</button>
-          <button class="btn sm" id="btnShareQR" type="button" disabled>QR (później)</button>
-          <button class="btn sm" id="btnShareDisplay" type="button" disabled>Wyświetlacz (później)</button>
+    <div class="card-split">
+
+      <!-- Moi subskrybenci -->
+      <div class="split-col">
+
+        <div class="split-toolbar">
+          <button class="btn primary">Dodaj</button>
+        </div>
+
+        <div class="list scroll">
+
+          <div class="tile status-sub-pending">
+            <div class="tile-main">
+              <span class="tile-title">jan@email.pl</span>
+            </div>
+            <div class="tile-controls">↻ ✖</div>
+          </div>
+
+          <div class="tile status-sub-active">
+            <div class="tile-main">
+              <span class="tile-title">andrzej</span>
+            </div>
+            <div class="tile-controls">✖</div>
+          </div>
+
         </div>
       </div>
 
-      <div class="hubShareBox" id="shareSubsBox" style="display:none">
-        <div class="hubFieldLbl">Wybierz subskrybentów</div>
-        <div class="hubPick" id="sharePick"></div>
+      <!-- Moje subskrypcje -->
+      <div class="split-col">
+
+        <div class="list scroll">
+
+          <div class="tile status-sub-pending">
+            <div class="tile-main">
+              <span class="tile-title">Kasia</span>
+            </div>
+            <div class="tile-controls">✔ ✖</div>
+          </div>
+
+          <div class="tile status-sub-active">
+            <div class="tile-main">
+              <span class="tile-title">Tomek</span>
+            </div>
+            <div class="tile-controls">✖</div>
+          </div>
+
+        </div>
       </div>
 
-      <div class="hubFormRow" style="margin-top:14px">
-        <button class="btn sm" id="btnShareCancel" type="button">Anuluj</button>
-        <button class="btn sm gold" id="btnShareSave" type="button">Zapisz</button>
-      </div>
-      <div class="hubMsg" id="msgShare" style="display:none"></div>
     </div>
-  </div>
+  </section>
 
-  <!-- ===== MODAL: Szczegóły (placeholder UI) ===== -->
-  <div class="overlay" id="ovDetails" style="display:none">
-    <div class="modal">
-      <div class="mTitle">Szczegóły sondażu</div>
-      <div class="mSub">Tu będzie lista głosujących + licznik anon + usuwanie głosu (następny etap po RPC).</div>
-
-      <div class="hubDetailsBox" id="detailsBox">
-        — brak danych —
-      </div>
-
-      <div class="hubFormRow" style="margin-top:14px">
-        <button class="btn sm" id="btnDetailsClose" type="button">Zamknij</button>
-      </div>
-    </div>
-  </div>
-
+</main>
 </body>
-</html>
