@@ -41,12 +41,15 @@
       <div class="hubSplit">
 
         <!-- Moje sondaże -->
-        <div class="hubCol">
+        <div class="hubCol" data-title="Moje sondaże">
           <div class="hubColHead">
-            <div class="hubColTitle">Moje sondaże</div>
+            <div>
+              <div class="hubColTitle">Moje sondaże</div>
+              <div class="hubColHint" id="pollSelectionHint">Wybierz sondaż z listy.</div>
+            </div>
             <div class="hubColActions">
-              <button class="btn sm" id="btnShare" type="button">Udostępnij</button>
-              <button class="btn sm" id="btnDetails" type="button">Szczegóły</button>
+              <button class="btn sm" id="btnShare" type="button" disabled>Udostępnij</button>
+              <button class="btn sm" id="btnDetails" type="button" disabled>Szczegóły</button>
             </div>
           </div>
 
@@ -69,7 +72,7 @@
         </div>
 
         <!-- Zadania -->
-        <div class="hubCol">
+        <div class="hubCol" data-title="Zadania">
           <div class="hubColHead">
             <div class="hubColTitle">Zadania</div>
           </div>
@@ -104,7 +107,7 @@
       <div class="hubSplit">
 
         <!-- Moi subskrybenci -->
-        <div class="hubCol">
+        <div class="hubCol" data-title="Moi subskrybenci">
           <div class="hubColHead">
             <div class="hubColTitle">Moi subskrybenci</div>
             <div class="hubColActions">
@@ -126,7 +129,7 @@
         </div>
 
         <!-- Moje subskrypcje -->
-        <div class="hubCol">
+        <div class="hubCol" data-title="Moje subskrypcje">
           <div class="hubColHead">
             <div class="hubColTitle">Moje subskrypcje</div>
           </div>
@@ -164,6 +167,92 @@
 
       <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:14px;">
         <button class="btn sm" id="btnCloseAddSub" type="button">Zamknij</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Udostępnianie -->
+  <div class="overlay" id="ovShare" style="display:none;">
+    <div class="modal hubModal">
+      <div class="mTitle">Udostępnij sondaż</div>
+      <div class="mSub" id="sharePollName">—</div>
+
+      <div class="hubTabs" role="tablist">
+        <button class="hubTab active" type="button" data-mode="anon" role="tab">Anonimowy</button>
+        <button class="hubTab" type="button" data-mode="subs" role="tab">Subskrybenci</button>
+        <button class="hubTab" type="button" data-mode="mixed" role="tab">Mieszany</button>
+      </div>
+
+      <div class="hubTabBody active" data-panel="anon">
+        <div class="hubAnon">
+          <label class="hubField">
+            <span>Link do sondażu</span>
+            <div class="hubInputRow">
+              <input class="inp" id="shareLink" readonly>
+              <button class="btn sm" id="btnCopyLink" type="button">Kopiuj</button>
+            </div>
+          </label>
+
+          <div class="hubActionRow">
+            <button class="btn sm" id="btnOpenLink" type="button">Otwórz</button>
+            <button class="btn sm" id="btnOpenQr" type="button">Kod QR</button>
+            <button class="btn sm" id="btnOpenDisplay" type="button">Wyświetlacz</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="hubTabBody" data-panel="subs">
+        <div class="hubSubsHead">
+          <div class="hubSubTitle">Wybierz subskrybentów</div>
+          <div class="hubSubMeta" id="subsSelectionMeta">0 zaznaczonych</div>
+        </div>
+        <div class="hubSubsList" id="shareSubsList"></div>
+      </div>
+
+      <div class="hubTabBody" data-panel="mixed">
+        <div class="hubMixed">
+          <div class="hubMixedRow">
+            <div class="hubMixedTitle">Anonimowy link</div>
+            <input class="inp" id="shareLinkMixed" readonly>
+          </div>
+          <div class="hubSubsHead">
+            <div class="hubSubTitle">Subskrybenci</div>
+            <div class="hubSubMeta" id="subsSelectionMetaMixed">0 zaznaczonych</div>
+          </div>
+          <div class="hubSubsList" id="shareSubsListMixed"></div>
+        </div>
+      </div>
+
+      <div class="mSub hubModalMsg" id="shareMsg">—</div>
+
+      <div class="hubModalActions">
+        <button class="btn sm" id="btnCloseShare" type="button">Zamknij</button>
+        <button class="btn" id="btnApplyShare" type="button">Zapisz udostępnienie</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Szczegóły -->
+  <div class="overlay" id="ovDetails" style="display:none;">
+    <div class="modal hubModal">
+      <div class="mTitle">Szczegóły sondażu</div>
+      <div class="mSub" id="detailsPollName">—</div>
+
+      <div class="hubDetailsRow">
+        <div class="hubDetailsCard">
+          <div class="hubDetailsTitle">Głosy subskrybentów</div>
+          <div class="hubDetailsList" id="detailsVotesList"></div>
+        </div>
+        <div class="hubDetailsCard">
+          <div class="hubDetailsTitle">Anonimowe głosy</div>
+          <div class="hubDetailsAnon" id="detailsAnonCount">—</div>
+        </div>
+      </div>
+
+      <div class="mSub hubModalMsg" id="detailsMsg">—</div>
+
+      <div class="hubModalActions">
+        <button class="btn sm" id="btnCloseDetails" type="button">Zamknij</button>
       </div>
     </div>
   </div>

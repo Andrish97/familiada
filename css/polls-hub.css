@@ -1,4 +1,4 @@
-/* polls-hub.css — UI HUB w stylu builder.css (karty = builder-card) */
+/* polls-hub.css — centrum sondaży w stylu buildera */
 
 .hubCard { margin-top: 12px; }
 
@@ -6,7 +6,7 @@
   display:flex;
   align-items:center;
   justify-content:space-between;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
 }
 
 .hubCardTitle{
@@ -21,7 +21,7 @@
   display:grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
-  min-height: 420px;
+  min-height: 440px;
 }
 
 .hubCol{
@@ -32,6 +32,7 @@
   border-radius: 18px;
   background: #070b16;
   padding: 12px;
+  box-shadow: 0 14px 32px rgba(0,0,0,.35);
 }
 
 .hubColHead{
@@ -48,6 +49,12 @@
   text-transform: uppercase;
   font-size: 12px;
   opacity: .9;
+}
+
+.hubColHint{
+  font-size: 11px;
+  opacity: .7;
+  margin-top: 2px;
 }
 
 .hubColActions{
@@ -99,6 +106,10 @@
   transform: translateY(-2px);
   box-shadow: 0 14px 30px rgba(0,0,0,.45);
 }
+.tile.is-selected{
+  outline: 2px solid rgba(255,255,255,.7);
+  box-shadow: 0 0 0 2px rgba(255,255,255,.25), 0 14px 30px rgba(0,0,0,.45);
+}
 
 .tileMain{
   display:flex;
@@ -115,7 +126,7 @@
   white-space:nowrap;
   overflow:hidden;
   text-overflow:ellipsis;
-  max-width: 420px;
+  max-width: 360px;
 }
 
 .tileType{
@@ -164,7 +175,218 @@
 .status-sub-declined{ background:#ff6b6b; color:#111; }
 .status-sub-active{ background:#69db7c; color:#111; }
 
-/* Mobile = 4 karty (na razie: split -> 1 kolumna). Pełne 4-karty zrobimy w następnym kroku. */
+/* ===== Modale ===== */
+.hubModal{
+  width:min(820px,94vw);
+}
+
+.hubTabs{
+  display:flex;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.hubTab{
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.16);
+  background: rgba(255,255,255,.08);
+  color: #fff;
+  cursor:pointer;
+  font-weight: 800;
+  font-size: 12px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.hubTab.active{
+  background: rgba(255,255,255,.24);
+  border-color: rgba(255,255,255,.4);
+}
+
+.hubTabBody{
+  display:none;
+  margin-top: 14px;
+}
+
+.hubTabBody.active{ display:block; }
+
+.hubField span{
+  display:block;
+  font-size: 12px;
+  opacity:.75;
+  margin-bottom: 6px;
+}
+
+.hubInputRow{
+  display:flex;
+  gap: 10px;
+}
+
+.hubActionRow{
+  display:flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+.hubSubsHead{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin-bottom: 8px;
+}
+
+.hubSubTitle{
+  font-weight: 900;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  font-size: 12px;
+}
+
+.hubSubMeta{
+  font-size: 12px;
+  opacity: .7;
+}
+
+.hubSubsList{
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 14px;
+  padding: 8px;
+  max-height: 280px;
+  overflow:auto;
+  display:flex;
+  flex-direction:column;
+  gap: 8px;
+}
+
+.hubSubsItem{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: rgba(255,255,255,.08);
+}
+
+.hubSubsItem label{
+  display:flex;
+  align-items:center;
+  gap: 10px;
+}
+
+.hubSubsName{
+  font-weight: 800;
+  font-size: 13px;
+}
+
+.hubSubsStatus{
+  font-size: 11px;
+  opacity: .7;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+}
+
+.hubMixedRow{
+  display:flex;
+  flex-direction:column;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.hubMixedTitle{
+  font-size: 12px;
+  opacity: .8;
+}
+
+.hubModalMsg{
+  margin-top: 12px;
+}
+
+.hubModalActions{
+  display:flex;
+  justify-content:flex-end;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+/* ===== Szczegóły ===== */
+.hubDetailsRow{
+  display:grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.hubDetailsCard{
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 16px;
+  padding: 12px;
+  background: rgba(0,0,0,.18);
+}
+
+.hubDetailsTitle{
+  font-weight: 900;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  font-size: 12px;
+  margin-bottom: 8px;
+}
+
+.hubDetailsList{
+  display:flex;
+  flex-direction:column;
+  gap: 8px;
+  max-height: 280px;
+  overflow:auto;
+}
+
+.hubDetailsItem{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: rgba(255,255,255,.08);
+}
+
+.hubDetailsName{
+  font-weight: 800;
+  font-size: 13px;
+}
+
+.hubDetailsAnon{
+  font-size: 28px;
+  font-weight: 900;
+  text-align:center;
+  padding: 18px 0;
+}
+
+/* ===== Mobile = 4 karty ===== */
 @media (max-width: 680px){
+  .hubCard{
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    padding: 0;
+  }
+  .hubCardHead{ display: none; }
   .hubSplit{ grid-template-columns: 1fr; min-height: auto; }
+  .hubCol{
+    background: var(--surface);
+    border: 1px solid var(--border-color);
+    box-shadow: 0 18px 36px rgba(0,0,0,.45);
+  }
+  .hubColHead{
+    align-items:flex-start;
+  }
+  .hubColTitle::before{
+    content: "";
+    display:block;
+  }
+  .hubDetailsRow{
+    grid-template-columns: 1fr;
+  }
 }
