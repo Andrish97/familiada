@@ -1,615 +1,461 @@
-// js/pages/polls-hub.js
+// js/pages/polls-hub.js — HUB od zera (UI jak builder) + RPC
+
 import { sb } from "../core/supabase.js";
 import { requireAuth, signOut } from "../core/auth.js";
 
 const $ = (id) => document.getElementById(id);
 
-/* top */
+// Topbar
 const who = $("who");
-const btnBack = $("btnBack");
 const btnLogout = $("btnLogout");
-const btnRefresh = $("btnRefresh");
+const btnBack = $("btnBack");
 
-/* chips */
-const chipPolls = $("chipPolls");
-const chipTasks = $("chipTasks");
-const chipSubs = $("chipSubs");
-const chipMySubs = $("chipMySubs");
-
-/* lists */
+// Lists
 const listMyPolls = $("listMyPolls");
 const listTasks = $("listTasks");
-const listSubsToMe = $("listSubsToMe");
-const listMySubs = $("listMySubs");
+const listMySubscribers = $("listMySubscribers");
+const listMySubscriptions = $("listMySubscriptions");
 
-/* empty */
-const emptyMyPolls = $("emptyMyPolls");
-const emptyTasks = $("emptyTasks");
-const emptySubsToMe = $("emptySubsToMe");
-const emptyMySubs = $("emptyMySubs");
+// Filters
+const selPollSort = $("selPollSort");
+const chkPollArchive = $("chkPollArchive");
+const selTaskSort = $("selTaskSort");
+const chkTaskArchive = $("chkTaskArchive");
+const selMySubsSort = $("selMySubsSort");
+const selTheirSubsSort = $("selTheirSubsSort");
 
-/* filters */
-const btnPollsActive = $("btnPollsActive");
-const btnPollsArch = $("btnPollsArch");
-const btnTasksActive = $("btnTasksActive");
-const btnTasksArch = $("btnTasksArch");
-const btnSubsToMeActive = $("btnSubsToMeActive");
-const btnSubsToMeArch = $("btnSubsToMeArch");
-const btnMySubsActive = $("btnMySubsActive");
-const btnMySubsArch = $("btnMySubsArch");
+const hubMsg = $("hubMsg");
 
-/* controls */
-const btnPollShare = $("btnPollShare");
-const btnPollDetails = $("btnPollDetails");
-
-/* modals */
-const ovAddSub = $("ovAddSub");
-const inpAddSub = $("inpAddSub");
+// Actions
 const btnAddSubscriber = $("btnAddSubscriber");
-const btnAddSubCancel = $("btnAddSubCancel");
-const btnAddSubSend = $("btnAddSubSend");
-const msgAddSub = $("msgAddSub");
+const btnShare = $("btnShare");
+const btnDetails = $("btnDetails");
 
-const ovShare = $("ovShare");
-const shareSub = $("shareSub");
-const shareModeAnon = $("shareModeAnon");
-const shareModeSubs = $("shareModeSubs");
-const shareModeMixed = $("shareModeMixed");
-const shareAnonBox = $("shareAnonBox");
-const shareSubsBox = $("shareSubsBox");
-const shareAnonLink = $("shareAnonLink");
-const btnShareCopy = $("btnShareCopy");
-const btnShareOpen = $("btnShareOpen");
-const btnShareCancel = $("btnShareCancel");
-const btnShareSave = $("btnShareSave");
-const sharePick = $("sharePick");
-const msgShare = $("msgShare");
+// Modal add subscriber
+const ovAddSubscriber = $("ovAddSubscriber");
+const inpSubscriber = $("inpSubscriber");
+const btnSendInvite = $("btnSendInvite");
+const btnCloseAddSub = $("btnCloseAddSub");
+const addSubMsg = $("addSubMsg");
 
-const ovDetails = $("ovDetails");
-const btnDetailsClose = $("btnDetailsClose");
-
-/* state */
-const view = {
-  polls: "active",
-  tasks: "active",
-  subsToMe: "active",
-  mySubs: "active",
+let state = {
+  polls: [],
+  tasks: [],
+  mySubscribers: [],
+  mySubscriptions: [],
 };
 
-let currentUser = null;
-let selectedPoll = null;
-
-const shareState = {
-  mode: "anon",           // anon|subs|mixed
-  poll: null,             // selected poll row
-  subscribers: [],        // list_my_subscribers
-  picked: new Set(),      // sub_id selected
-};
-
-/* utils */
-function show(el, on){ if(el) el.style.display = on ? "" : "none"; }
-function setText(el, t){ if(el) el.textContent = String(t ?? ""); }
-function setChip(el, n){ if(el) el.textContent = String(Number(n)||0); }
-
-function setSeg(aBtn, bBtn, mode){
-  aBtn?.classList.toggle("on", mode === "active");
-  bBtn?.classList.toggle("on", mode === "archive");
+// ---------- helpers ----------
+function escapeHtml(s) {
+  return String(s ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;");
 }
 
-function modalMsg(el, text){
-  if(!el) return;
-  if(!text){ el.textContent=""; show(el,false); return; }
-  el.textContent = String(text);
-  show(el,true);
+function setMsg(text) {
+  hubMsg.textContent = text || "—";
 }
 
-function openOverlay(el){
-  modalMsg(msgAddSub, "");
-  modalMsg(msgShare, "");
-  show(el,true);
-}
-function closeOverlay(el){ show(el,false); }
+function openOverlay(el) { el.style.display = ""; }
+function closeOverlay(el) { el.style.display = "none"; }
 
-async function rpcOne(name, args){
-  const { data, error } = await sb().rpc(name, args || {});
-  if(error) throw error;
-  return Array.isArray(data) ? data[0] : data;
-}
-async function rpcList(name, args){
-  const { data, error } = await sb().rpc(name, args || {});
-  if(error) throw error;
-  return Array.isArray(data) ? data : (data ? [data] : []);
+function tile(html, cls) {
+  const d = document.createElement("div");
+  d.className = `tile ${cls || ""}`;
+  d.innerHTML = html;
+  return d;
 }
 
-/* status mapping (wizualne, wg Twoich reguł – bez “draft-ready” dopóki DB nie zwróci flagi) */
-function pollRowStatusClass(r){
-  const state = String(r?.poll_state || "draft").toLowerCase();
+function tileBtn(icon, title) {
+  return `<button class="tileBtn" type="button" title="${escapeHtml(title)}">${icon}</button>`;
+}
 
-  if(state === "closed") return "st-blue";
+function pollTypeLabel(t) {
+  if (t === "poll_text") return "poll_text";
+  if (t === "poll_points") return "poll_points";
+  return String(t || "—");
+}
 
-  if(state === "draft"){
-    // dopóki DB nie zwraca can_open: traktujemy draft jako szary
-    return "st-gray";
-  }
+function pollOpenUrl(row) {
+  // double-click ma iść do "polls" (wyniki/close) — zgodnie z Twoimi wytycznymi
+  // na razie: otwieramy polls.html?id=<game_id>
+  return `polls.html?id=${encodeURIComponent(row.game_id)}`;
+}
+
+function taskGoUrl(row) {
+  // RPC już zwraca go_url w Twoich funkcjach
+  return row.go_url || `poll_go.html?t=${encodeURIComponent(row.token || "")}`;
+}
+
+function statusClassForPoll(row) {
+  // Minimalna logika bez “nadmiarowych szczegółów”.
+  // Dopniemy “draft red vs gray” gdy dodasz can_open w RPC (albo osobne RPC).
+  if (row.poll_state === "closed") return "status-closed";
+  if (row.poll_state === "draft") return "status-draft-bad";
 
   // open:
-  const anon = Number(r?.anon_votes || 0);
-  const ta = Number(r?.tasks_active || 0);
-  const td = Number(r?.tasks_done || 0);
+  const tasksActive = Number(row.tasks_active || 0);
+  const tasksDone = Number(row.tasks_done || 0);
+  const anonVotes = Number(row.anon_votes || 0);
 
-  if(anon === 0 && ta === 0 && td === 0) return "st-orange";            // otwarte bez głosów
-  if(ta > 0 || anon > 0) return "st-yellow";                            // w trakcie
-  if(ta === 0 && (td > 0 || anon >= 10)) return "st-green";             // “zielone”
-  return "st-yellow";
+  if (tasksActive === 0 && anonVotes === 0) return "status-open-empty";
+  if ((tasksActive > 0 && tasksDone < tasksActive) || (anonVotes > 0 && anonVotes < 10)) return "status-open-running";
+  return "status-open-done";
 }
 
-function pollShareDot(mode){
-  const m = String(mode||"").toLowerCase();
-  if(m === "anon" || m === "a") return "dot a";
-  if(m === "subs" || m === "s") return "dot s";
-  if(m === "mixed" || m === "m") return "dot m";
-  return "dot";
+function statusClassForTask(row) {
+  return row.status === "done" ? "status-task-done" : "status-task-open";
 }
 
-/* build anon link */
-function pollTypeToVotingPage(pollType){
-  const t = String(pollType||"").toLowerCase();
-  if (t === "poll_text" || t === "text") return "poll-text.html";
-  if (t === "poll_points" || t === "points") return "poll-points.html";
-  return "";
-}
-function buildAnonVoteLink(pollType, shareKey){
-  const page = pollTypeToVotingPage(pollType);
-  const key = String(shareKey||"").trim();
-  if (!page || !key) return "";
-  const url = new URL(page, location.href);
-  url.searchParams.set("key", key);
-  return url.toString();
-}
-async function copyToClipboardOrPrompt(text){
-  const v = String(text||"");
-  if (!v) return false;
-  try { await navigator.clipboard.writeText(v); return true; }
-  catch { prompt("Skopiuj link:", v); return true; }
+function statusClassForSub(status) {
+  if (status === "active") return "status-sub-active";
+  if (status === "declined" || status === "cancelled") return "status-sub-declined";
+  return "status-sub-pending";
 }
 
-/* render row helpers */
-function mkRow({cls="", title="", meta="", rightHtml=""}){
-  const el = document.createElement("div");
-  el.className = `hubRow ${cls}`.trim();
-  el.innerHTML = `
-    <div class="hubRowMain">
-      <div class="hubRowTitle">${title}</div>
-      <div class="hubRowMeta">${meta}</div>
-    </div>
-    <div class="hubRowRight">${rightHtml || ""}</div>
-  `;
-  return el;
+function sortBy(mode, a, b, getName) {
+  if (mode === "new") return (new Date(b.created_at) - new Date(a.created_at));
+  if (mode === "old") return (new Date(a.created_at) - new Date(b.created_at));
+  if (mode === "az") return String(getName(a)).localeCompare(String(getName(b)), "pl");
+  if (mode === "za") return String(getName(b)).localeCompare(String(getName(a)), "pl");
+  return 0;
 }
 
-function renderEmpty(listEl, emptyEl, has){
-  if(!listEl || !emptyEl) return;
-  show(emptyEl, !has);
+// ---------- RPC wrapper ----------
+async function rpcOne(name, args = {}) {
+  const { data, error } = await sb.rpc(name, args);
+  if (error) {
+    console.error("[polls_hub] rpc failed:", name, error);
+    throw new Error(`${name}: ${error.message || error.code || "RPC error"}`);
+  }
+  return data;
 }
 
-/* ===== refresh ===== */
-async function refreshAll(){
-  await Promise.all([
-    refreshMyPolls(),
-    refreshTasks(),
-    refreshSubsToMe(),
-    refreshMySubs(),
-  ]);
-}
+// ---------- render ----------
+function renderPolls() {
+  listMyPolls.innerHTML = "";
 
-/* Polls */
-let cachePolls = [];
-async function refreshMyPolls(){
-  const rows = await rpcList("polls_hub_list_polls");
-  cachePolls = rows;
+  const mode = selPollSort.value;
+  const showArchive = !!chkPollArchive.checked;
 
-  // filtr aktywne/arch
-  const filtered = rows.filter(r => {
-    const arch = !!r?.is_archived; // jeśli masz to w RPC; jak nie masz, to będzie false i pójdzie do aktywnych
-    return view.polls === "active" ? !arch : arch;
+  // Archiwalne: zamknięte > 5 dni (na razie prosto: state=closed i created_at older)
+  const now = Date.now();
+  const FIVE_DAYS = 5 * 24 * 3600 * 1000;
+
+  let rows = [...state.polls];
+  rows.sort((a, b) => sortBy(mode, a, b, (x) => x.name));
+
+  rows = rows.filter((r) => {
+    const isClosed = r.poll_state === "closed";
+    const age = now - new Date(r.created_at).getTime();
+    const isArchive = isClosed && age > FIVE_DAYS;
+    return showArchive ? isArchive : !isArchive;
   });
 
-  setChip(chipPolls, filtered.length);
-  listMyPolls.innerHTML = "";
-  renderEmpty(listMyPolls, emptyMyPolls, filtered.length > 0);
-
-  // jeśli zaznaczony poll zniknął – reset
-  if(selectedPoll && !filtered.some(x => x.game_id === selectedPoll.game_id)){
-    selectedPoll = null;
-    btnPollShare.disabled = true;
-    btnPollDetails.disabled = true;
+  if (!rows.length) {
+    listMyPolls.appendChild(tile(`
+      <div class="tileMain">
+        <span class="tileTitle">Brak sondaży</span>
+        <span class="tileType">—</span>
+      </div>
+    `, "status-draft-bad"));
+    return;
   }
 
-  for(const r of filtered){
-    const stCls = pollRowStatusClass(r);
+  for (const r of rows) {
+    const cls = statusClassForPoll(r);
+    const shareMode = (r.poll_share_mode || "anon");
+    const badge = shareMode === "mixed" ? "A+S" : (shareMode === "subs" ? "S" : "A");
 
-    const mode = String(r?.poll_share_mode || "anon"); // docelowo z DB
-    const modeDot = pollShareDot(mode);
+    const el = tile(`
+      <div class="tileMain">
+        <span class="tileTitle">${escapeHtml(r.name)}</span>
+        <span class="tileType">${escapeHtml(pollTypeLabel(r.poll_type))}</span>
+      </div>
+      <div class="tileMeta">
+        <span class="tileType" title="Tryb">${escapeHtml(badge)}</span>
+      </div>
+    `, cls);
 
-    const metaBits = [
-      `<span class="${modeDot}" title="Tryb udostępniania"></span>`,
-      `<span class="dot" title="Typ"></span>`,
-      `typ: ${r?.poll_type || "—"}`,
-      `pyt: ${Number(r?.sessions_total||0)}`,
-      `zad: ${Number(r?.tasks_active||0)} / ${Number(r?.tasks_done||0)}`,
-      `anon: ${Number(r?.anon_votes||0)}`
-    ].join(" • ");
-
-    const el = mkRow({
-      cls: `${stCls} ${selectedPoll?.game_id === r.game_id ? "sel" : ""}`,
-      title: (r?.name || "—").replace(/</g,"&lt;"),
-      meta: metaBits,
-      rightHtml: `<span class="dot ${String(r?.poll_state||"").toLowerCase()==="closed" ? "done":""}" title="Stan"></span>`
-    });
-
-    el.addEventListener("click", () => {
-      // zaznaczanie
-      selectedPoll = r;
-      btnPollShare.disabled = false;
-      btnPollDetails.disabled = false;
-
-      // odśwież highlight
-      [...listMyPolls.querySelectorAll(".hubRow")].forEach(x => x.classList.remove("sel"));
-      el.classList.add("sel");
-    });
-
-    el.addEventListener("dblclick", () => {
-      const state = String(r?.poll_state||"draft").toLowerCase();
-      if(state === "draft") return; // szkic (na razie)
-      location.href = `polls.html?id=${encodeURIComponent(r.game_id)}`;
-    });
+    // dblclick -> polls (wyniki/close)
+    el.ondblclick = () => {
+      if (r.poll_state === "draft") return; // szkice niegotowe blokujemy (na razie wszystkie draft)
+      location.href = pollOpenUrl(r);
+    };
 
     listMyPolls.appendChild(el);
   }
 }
 
-/* Tasks */
-async function refreshTasks(){
-  const rows = await rpcList("polls_hub_list_tasks");
+function renderTasks() {
+  listTasks.innerHTML = "";
+  const mode = selTaskSort.value;
+  const showArchive = !!chkTaskArchive.checked;
+  const now = Date.now();
+  const FIVE_DAYS = 5 * 24 * 3600 * 1000;
 
-  const filtered = rows.filter(r => {
-    const arch = !!r?.is_archived;
-    return view.tasks === "active" ? !arch : arch;
+  let rows = [...state.tasks];
+  rows.sort((a, b) => sortBy(mode, a, b, (x) => x.game_name || ""));
+
+  rows = rows.filter((r) => {
+    const isDone = r.status === "done";
+    const age = now - new Date(r.created_at).getTime();
+    const isArchive = isDone && age > FIVE_DAYS;
+    return showArchive ? isArchive : !isArchive;
   });
 
-  setChip(chipTasks, filtered.length);
-  listTasks.innerHTML = "";
-  renderEmpty(listTasks, emptyTasks, filtered.length > 0);
+  if (!rows.length) {
+    listTasks.appendChild(tile(`
+      <div class="tileMain">
+        <span class="tileTitle">Brak zadań</span>
+        <span class="tileType">—</span>
+      </div>
+    `, "status-task-done"));
+    return;
+  }
 
-  for(const r of filtered){
-    const status = String(r?.status || "pending").toLowerCase();
-    const stCls = status === "done" ? "st-blue" : "st-green";
+  for (const r of rows) {
+    const cls = statusClassForTask(r);
 
-    const dotCls = status === "done" ? "dot done" : "dot todo";
+    const el = tile(`
+      <div class="tileMain">
+        <span class="tileTitle">${escapeHtml(r.game_name || "Sondaż")}</span>
+        <span class="tileType">${escapeHtml(r.poll_type || "zadanie")}</span>
+      </div>
+      <div class="tileMeta">
+        ${r.status !== "done" ? tileBtn("✖", "Odrzuć") : ""}
+      </div>
+    `, cls);
 
-    const el = mkRow({
-      cls: stCls,
-      title: (r?.game_name || "Sondaż").replace(/</g,"&lt;"),
-      meta: [
-        `<span class="${dotCls}" title="Status"></span>`,
-        `typ: ${r?.poll_type || "—"}`,
-        `utw: ${String(r?.created_at||"").slice(0,10)}`
-      ].join(" • "),
-      rightHtml: status === "done"
-        ? ``
-        : `<button class="hubX" data-x type="button" title="Odrzuć">✕</button>`
-    });
+    el.ondblclick = () => { location.href = taskGoUrl(r); };
 
-    el.addEventListener("dblclick", () => {
-      if(r?.go_url) location.href = r.go_url;
-    });
-
-    el.querySelector("[data-x]")?.addEventListener("click", async (e) => {
-      e.stopPropagation();
-      if(!confirm("Odrzucić to zadanie?")) return;
-      // zakładam, że masz RPC/akcję po tokenie (jak wcześniej)
-      const { error } = await sb().rpc("polls_hub_task_decline", { p_token: r?.token });
-      if(error) alert("Nie udało się odrzucić zadania.");
-      await refreshTasks();
-    });
+    // reject
+    const btn = el.querySelector(".tileBtn");
+    if (btn) {
+      btn.onclick = async (e) => {
+        e.stopPropagation();
+        try {
+          await rpcOne("polls_hub_task_decline", { p_task_id: r.task_id });
+          await refreshAll();
+        } catch (err) {
+          setMsg(String(err.message || err));
+        }
+      };
+    }
 
     listTasks.appendChild(el);
   }
 }
 
-/* Subscribers (to me) */
-async function refreshSubsToMe(){
-  const rows = await rpcList("polls_hub_list_my_subscribers");
+function renderMySubscribers() {
+  listMySubscribers.innerHTML = "";
 
-  const filtered = rows.filter(r => {
-    const expired = !!r?.is_expired;
-    return view.subsToMe === "active" ? !expired : expired;
-  });
+  const mode = selMySubsSort.value;
+  let rows = [...state.mySubscribers];
+  rows.sort((a, b) => sortBy(mode, a, b, (x) => x.subscriber_label || ""));
 
-  setChip(chipSubs, filtered.length);
-  listSubsToMe.innerHTML = "";
-  renderEmpty(listSubsToMe, emptySubsToMe, filtered.length > 0);
-
-  for(const r of filtered){
-    const status = String(r?.status||"pending").toLowerCase();
-    const stCls =
-      status === "active" ? "st-green" :
-      status === "pending" ? "st-yellow" :
-      "st-red";
-
-    const canResend = status === "pending" && !!r?.subscriber_email;
-
-    const el = mkRow({
-      cls: stCls,
-      title: (r?.subscriber_label || "—").replace(/</g,"&lt;"),
-      meta: [
-        `<span class="dot ${status==="active" ? "todo" : status==="pending" ? "s":"bad"}"></span>`,
-        `status: ${status}`,
-        `utw: ${String(r?.created_at||"").slice(0,10)}`
-      ].join(" • "),
-      rightHtml: `
-        ${canResend ? `<button class="btn sm" data-r type="button" title="Wyślij ponownie">↻</button>` : ``}
-        <button class="hubX" data-x type="button" title="${status==="active"?"Usuń":"Anuluj"}">✕</button>
-      `
-    });
-
-    el.querySelector("[data-x]")?.addEventListener("click", async (e) => {
-      e.stopPropagation();
-      if(!confirm(status==="active" ? "Usunąć subskrybenta?" : "Anulować zaproszenie?")) return;
-      const out = await rpcOne("polls_hub_subscriber_remove", { p_id: r.sub_id });
-      if(!out?.ok) alert(out?.error || "Nie udało się.");
-      await refreshSubsToMe();
-    });
-
-    el.querySelector("[data-r]")?.addEventListener("click", async (e) => {
-      e.stopPropagation();
-      const out = await rpcOne("polls_hub_subscriber_resend", { p_id: r.sub_id });
-      if(!out?.ok) alert(out?.error || "Nie udało się.");
-      // mail resend dopniemy w etapie maili (tu UI i DB akcja jest)
-      alert("Wysłano ponownie (DB). Mail dopniemy w kroku maili ✉️");
-      await refreshSubsToMe();
-    });
-
-    listSubsToMe.appendChild(el);
-  }
-}
-
-/* My subscriptions */
-async function refreshMySubs(){
-  const rows = await rpcList("polls_hub_list_my_subscriptions");
-
-  const filtered = rows.filter(r => {
-    const expired = !!r?.is_expired;
-    return view.mySubs === "active" ? !expired : expired;
-  });
-
-  setChip(chipMySubs, filtered.length);
-  listMySubs.innerHTML = "";
-  renderEmpty(listMySubs, emptyMySubs, filtered.length > 0);
-
-  for(const r of filtered){
-    const status = String(r?.status||"pending").toLowerCase();
-    const stCls = status === "active" ? "st-green" : "st-yellow";
-
-    const el = mkRow({
-      cls: stCls,
-      title: (r?.owner_label || "—").replace(/</g,"&lt;"),
-      meta: [
-        `<span class="dot ${status==="active" ? "todo":"s"}"></span>`,
-        `status: ${status}`,
-        `utw: ${String(r?.created_at||"").slice(0,10)}`
-      ].join(" • "),
-      rightHtml: `
-        ${status==="pending" ? `<button class="btn sm" data-acc type="button">Akceptuj</button>` : ``}
-        <button class="hubX" data-x type="button" title="${status==="pending"?"Odrzuć":"Anuluj"}">✕</button>
-      `
-    });
-
-    el.querySelector("[data-acc]")?.addEventListener("click", async (e) => {
-      e.stopPropagation();
-      const out = await rpcOne("polls_hub_subscription_accept", { p_id: r.sub_id });
-      if(!out?.ok) alert(out?.error || "Nie udało się.");
-      await refreshMySubs();
-    });
-
-    el.querySelector("[data-x]")?.addEventListener("click", async (e) => {
-      e.stopPropagation();
-      if(status === "pending"){
-        if(!confirm("Odrzucić zaproszenie?")) return;
-        const out = await rpcOne("polls_hub_subscription_reject", { p_id: r.sub_id });
-        if(!out?.ok) alert(out?.error || "Nie udało się.");
-      } else {
-        if(!confirm("Anulować subskrypcję?")) return;
-        const out = await rpcOne("polls_hub_subscription_cancel", { p_id: r.sub_id });
-        if(!out?.ok) alert(out?.error || "Nie udało się.");
-      }
-      await refreshMySubs();
-    });
-
-    listMySubs.appendChild(el);
-  }
-}
-
-/* ===== actions: share/details/add ===== */
-function setMode(mode){
-  shareState.mode = mode;
-
-  shareModeAnon.classList.toggle("on", mode === "anon");
-  shareModeSubs.classList.toggle("on", mode === "subs");
-  shareModeMixed.classList.toggle("on", mode === "mixed");
-
-  show(shareAnonBox, mode === "anon" || mode === "mixed");
-  show(shareSubsBox, mode === "subs" || mode === "mixed");
-}
-
-async function openShare(){
-  if(!selectedPoll) return;
-
-  shareState.poll = selectedPoll;
-  shareState.picked = new Set();
-
-  setText(shareSub, selectedPoll?.name || "—");
-
-  // anon link
-  shareAnonLink.value = buildAnonVoteLink(selectedPoll.poll_type, selectedPoll.share_key_poll || selectedPoll.share_key_poll);
-
-  // load subscribers list (UI picker)
-  shareState.subscribers = await rpcList("polls_hub_list_my_subscribers");
-  renderSharePick();
-
-  setMode(String(selectedPoll?.poll_share_mode || "anon")); // docelowo z DB
-  openOverlay(ovShare);
-}
-
-function renderSharePick(){
-  sharePick.innerHTML = "";
-
-  for(const r of shareState.subscribers){
-    const id = r.sub_id;
-    const label = r.subscriber_label || "—";
-    const status = String(r.status||"").toLowerCase();
-
-    const row = document.createElement("div");
-    row.className = "hubPickRow";
-    row.innerHTML = `
-      <div class="hubPickLeft">
-        <input class="hubChk" type="checkbox" data-id="${id}"/>
-        <div style="min-width:0">
-          <div class="hubPickLabel">${label.replace(/</g,"&lt;")}</div>
-          <div class="hubPickMeta">status: ${status}</div>
-        </div>
+  if (!rows.length) {
+    listMySubscribers.appendChild(tile(`
+      <div class="tileMain">
+        <span class="tileTitle">Brak subskrybentów</span>
       </div>
-      <span class="dot ${status==="active" ? "todo" : status==="pending" ? "s" : "bad"}"></span>
-    `;
+    `, "status-sub-pending"));
+    return;
+  }
 
-    row.querySelector("input")?.addEventListener("change", (e) => {
-      const on = !!e.target.checked;
-      if(on) shareState.picked.add(id);
-      else shareState.picked.delete(id);
-    });
+  for (const r of rows) {
+    const cls = statusClassForSub(r.status);
 
-    sharePick.appendChild(row);
+    const el = tile(`
+      <div class="tileMain">
+        <span class="tileTitle">${escapeHtml(r.subscriber_label || "—")}</span>
+      </div>
+      <div class="tileMeta">
+        ${r.status === "pending" ? tileBtn("↻", "Wyślij ponownie (wkrótce)") : ""}
+        ${tileBtn("✖", r.status === "active" ? "Usuń subskrybenta" : "Anuluj zaproszenie")}
+      </div>
+    `, cls);
+
+    const btns = el.querySelectorAll(".tileBtn");
+    // na razie obsługujemy tylko X (remove/cancel). Resend dopniemy do maili po ustaleniu RPC.
+    const btnX = btns[btns.length - 1];
+    btnX.onclick = async (e) => {
+      e.stopPropagation();
+      try {
+        await rpcOne("polls_hub_subscriber_remove", { p_sub_id: r.sub_id });
+        await refreshAll();
+      } catch (err) {
+        setMsg(String(err.message || err));
+      }
+    };
+
+    listMySubscribers.appendChild(el);
   }
 }
 
-async function saveShare(){
-  if(!shareState.poll) return;
+function renderMySubscriptions() {
+  listMySubscriptions.innerHTML = "";
 
-  btnShareSave.disabled = true;
-  modalMsg(msgShare, "Zapisuję…");
+  const mode = selTheirSubsSort.value;
+  let rows = [...state.mySubscriptions];
+  rows.sort((a, b) => sortBy(mode, a, b, (x) => x.owner_label || ""));
 
-  try {
-    const subIds = Array.from(shareState.picked);
-    const out = await rpcOne("polls_hub_share_poll", {
-      p_game_id: shareState.poll.game_id,
-      p_mode: shareState.mode,
-      p_sub_ids: subIds
-    });
+  if (!rows.length) {
+    listMySubscriptions.appendChild(tile(`
+      <div class="tileMain">
+        <span class="tileTitle">Brak subskrypcji</span>
+      </div>
+    `, "status-sub-pending"));
+    return;
+  }
 
-    if(!out?.ok) throw new Error(out?.error || "share failed");
+  for (const r of rows) {
+    const cls = statusClassForSub(r.status);
 
-    modalMsg(msgShare, `Zapisano ✅ (created: ${out.created}, cancelled: ${out.cancelled})`);
-    await refreshTasks();
-    await refreshMyPolls();
-  } catch (e) {
-    modalMsg(msgShare, String(e?.message || e));
-  } finally {
-    btnShareSave.disabled = false;
+    const el = tile(`
+      <div class="tileMain">
+        <span class="tileTitle">${escapeHtml(r.owner_label || "—")}</span>
+      </div>
+      <div class="tileMeta">
+        ${r.status === "pending" ? tileBtn("✔", "Akceptuj") : ""}
+        ${tileBtn("✖", r.status === "active" ? "Anuluj subskrypcję" : "Odrzuć")}
+      </div>
+    `, cls);
+
+    const btns = el.querySelectorAll(".tileBtn");
+    let idx = 0;
+
+    if (r.status === "pending") {
+      const btnAccept = btns[idx++];
+      btnAccept.onclick = async (e) => {
+        e.stopPropagation();
+        try {
+          // inbound accept (z Twojej listy RPC): sub_invite_accept(token)
+          await rpcOne("sub_invite_accept", { p_token: r.token || null, p_sub_id: r.sub_id || null });
+          await refreshAll();
+        } catch (err) {
+          setMsg(String(err.message || err));
+        }
+      };
+    }
+
+    const btnX = btns[idx];
+    btnX.onclick = async (e) => {
+      e.stopPropagation();
+      try {
+        // cancel subscription (RPC masz): polls_hub_subscription_cancel(sub_id)
+        await rpcOne("polls_hub_subscription_cancel", { p_sub_id: r.sub_id });
+        await refreshAll();
+      } catch (err) {
+        setMsg(String(err.message || err));
+      }
+    };
+
+    listMySubscriptions.appendChild(el);
   }
 }
 
-/* add subscriber */
-async function openAddSub(){
-  inpAddSub.value = "";
-  modalMsg(msgAddSub, "");
-  openOverlay(ovAddSub);
-  setTimeout(()=>inpAddSub.focus(), 50);
+function renderAll() {
+  renderPolls();
+  renderTasks();
+  renderMySubscribers();
+  renderMySubscriptions();
 }
-async function sendAddSub(){
-  const v = String(inpAddSub.value||"").trim();
-  if(!v) return;
 
-  btnAddSubSend.disabled = true;
-  modalMsg(msgAddSub, "Wysyłam…");
+// ---------- data ----------
+async function refreshAll() {
+  setMsg("Ładowanie…");
+  const [polls, tasks, mySubs, theirSubs] = await Promise.all([
+    rpcOne("polls_hub_list_polls"),
+    rpcOne("polls_hub_list_tasks"),
+    rpcOne("polls_hub_list_my_subscribers"),
+    rpcOne("polls_hub_list_my_subscriptions"),
+  ]);
 
-  try {
-    const out = await rpcOne("polls_hub_subscription_invite_a", { p_handle: v });
-    if(!out?.ok) throw new Error(out?.error || "invite failed");
+  state.polls = Array.isArray(polls) ? polls : [];
+  state.tasks = Array.isArray(tasks) ? tasks : [];
+  state.mySubscribers = Array.isArray(mySubs) ? mySubs : [];
+  state.mySubscriptions = Array.isArray(theirSubs) ? theirSubs : [];
 
-    // mail dopniemy w kolejnym etapie; tu UI/DB jest OK
-    modalMsg(msgAddSub, out.already ? "Zaproszenie już istnieje (pending/active)." : "Zaproszenie utworzone ✅ (mail dopniemy).");
-    await refreshSubsToMe();
-  } catch (e) {
-    modalMsg(msgAddSub, String(e?.message || e));
-  } finally {
-    btnAddSubSend.disabled = false;
+  renderAll();
+  setMsg("OK");
+}
+
+// ---------- boot ----------
+async function refreshWho() {
+  const { data } = await sb.auth.getUser();
+  const u = data?.user;
+  if (!u) {
+    who.textContent = "—";
+    return;
   }
+
+  // w Twoich założeniach: w auth bar pokazujemy username (profiles.username)
+  const { data: prof } = await sb.from("profiles").select("username,email").eq("id", u.id).maybeSingle();
+  who.textContent = prof?.username || prof?.email || u.email || "—";
 }
 
-/* details placeholder */
-function openDetails(){
-  openOverlay(ovDetails);
-}
+function wire() {
+  btnLogout.onclick = () => signOut();
+  btnBack.onclick = () => (location.href = "builder.html");
 
-/* ===== boot ===== */
-async function boot(){
-  currentUser = await requireAuth();
-  who.textContent = currentUser?.user?.email || "—";
+  // filters re-render
+  selPollSort.onchange = renderPolls;
+  chkPollArchive.onchange = renderPolls;
+  selTaskSort.onchange = renderTasks;
+  chkTaskArchive.onchange = renderTasks;
+  selMySubsSort.onchange = renderMySubscribers;
+  selTheirSubsSort.onchange = renderMySubscriptions;
 
-  btnBack.addEventListener("click", ()=>location.href="builder.html");
-  btnLogout.addEventListener("click", async ()=>{ await signOut(); location.href="index.html"; });
+  // modale docelowe: tu tylko placeholder — żeby UI nie był martwy
+  btnShare.onclick = () => setMsg("Udostępnianie: modal dopinamy w następnym kroku (tryb A/S/M + lista).");
+  btnDetails.onclick = () => setMsg("Szczegóły: modal dopinamy w następnym kroku (głosujący + anon count).");
 
-  btnRefresh.addEventListener("click", refreshAll);
+  // add subscriber modal
+  btnAddSubscriber.onclick = () => {
+    addSubMsg.textContent = "—";
+    inpSubscriber.value = "";
+    openOverlay(ovAddSubscriber);
+    setTimeout(() => inpSubscriber.focus(), 30);
+  };
 
-  // filters
-  btnPollsActive.addEventListener("click", async ()=>{ view.polls="active"; setSeg(btnPollsActive,btnPollsArch,"active"); await refreshMyPolls(); });
-  btnPollsArch.addEventListener("click", async ()=>{ view.polls="archive"; setSeg(btnPollsActive,btnPollsArch,"archive"); await refreshMyPolls(); });
-
-  btnTasksActive.addEventListener("click", async ()=>{ view.tasks="active"; setSeg(btnTasksActive,btnTasksArch,"active"); await refreshTasks(); });
-  btnTasksArch.addEventListener("click", async ()=>{ view.tasks="archive"; setSeg(btnTasksActive,btnTasksArch,"archive"); await refreshTasks(); });
-
-  btnSubsToMeActive.addEventListener("click", async ()=>{ view.subsToMe="active"; setSeg(btnSubsToMeActive,btnSubsToMeArch,"active"); await refreshSubsToMe(); });
-  btnSubsToMeArch.addEventListener("click", async ()=>{ view.subsToMe="archive"; setSeg(btnSubsToMeActive,btnSubsToMeArch,"archive"); await refreshSubsToMe(); });
-
-  btnMySubsActive.addEventListener("click", async ()=>{ view.mySubs="active"; setSeg(btnMySubsActive,btnMySubsArch,"active"); await refreshMySubs(); });
-  btnMySubsArch.addEventListener("click", async ()=>{ view.mySubs="archive"; setSeg(btnMySubsActive,btnMySubsArch,"archive"); await refreshMySubs(); });
-
-  // buttons
-  btnPollShare.addEventListener("click", openShare);
-  btnPollDetails.addEventListener("click", openDetails);
-
-  // add sub modal
-  btnAddSubscriber.addEventListener("click", openAddSub);
-  btnAddSubCancel.addEventListener("click", ()=>closeOverlay(ovAddSub));
-  btnAddSubSend.addEventListener("click", sendAddSub);
-  ovAddSub.addEventListener("click", (e)=>{ if(e.target===ovAddSub) closeOverlay(ovAddSub); });
-
-  // share modal
-  shareModeAnon.addEventListener("click", ()=>setMode("anon"));
-  shareModeSubs.addEventListener("click", ()=>setMode("subs"));
-  shareModeMixed.addEventListener("click", ()=>setMode("mixed"));
-
-  btnShareCancel.addEventListener("click", ()=>closeOverlay(ovShare));
-  ovShare.addEventListener("click", (e)=>{ if(e.target===ovShare) closeOverlay(ovShare); });
-
-  btnShareCopy.addEventListener("click", async ()=>{
-    const ok = await copyToClipboardOrPrompt(shareAnonLink.value);
-    modalMsg(msgShare, ok ? "Skopiowano ✅" : "Nie udało się skopiować.");
+  btnCloseAddSub.onclick = () => closeOverlay(ovAddSubscriber);
+  ovAddSubscriber.addEventListener("click", (e) => {
+    if (e.target === ovAddSubscriber) closeOverlay(ovAddSubscriber);
   });
-  btnShareOpen.addEventListener("click", ()=>{
-    const url = shareAnonLink.value;
-    if(url) window.open(url, "_blank", "noopener,noreferrer");
-  });
-  btnShareSave.addEventListener("click", saveShare);
 
-  // details modal
-  btnDetailsClose.addEventListener("click", ()=>closeOverlay(ovDetails));
-  ovDetails.addEventListener("click", (e)=>{ if(e.target===ovDetails) closeOverlay(ovDetails); });
+  btnSendInvite.onclick = async () => {
+    const val = String(inpSubscriber.value || "").trim();
+    if (!val) {
+      addSubMsg.textContent = "Podaj e-mail albo nazwę użytkownika.";
+      return;
+    }
 
+    addSubMsg.textContent = "Wysyłanie…";
+
+    try {
+      // Twoje RPC (z logów): polls_hub_subscription_invite_a
+      // UWAGA: nazwy parametrów mogą być inne — jeśli dostaniesz błąd “missing argument”,
+      // podeślij definicję RPC i dopasuję 1:1.
+      await rpcOne("polls_hub_subscription_invite_a", { p_identifier: val });
+      addSubMsg.textContent = "Zaproszenie wysłane.";
+      await refreshAll();
+    } catch (err) {
+      addSubMsg.textContent = String(err.message || err);
+    }
+  };
+}
+
+async function boot() {
+  await requireAuth();
+  wire();
+  await refreshWho();
   await refreshAll();
 }
 
-boot().catch((e)=>{
+boot().catch((e) => {
   console.error(e);
-  alert(String(e?.message || e));
+  setMsg(String(e?.message || e));
 });
