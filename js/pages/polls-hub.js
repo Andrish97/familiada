@@ -1,22 +1,23 @@
-// js/pages/polls-hub.js — HUB od zera (UI jak builder) + RPC
+// js/pages/polls-hub.js — HUB (styl builder) + kompatybilne auth (requireAuth)
 
 import { sb } from "../core/supabase.js";
 import { requireAuth, signOut } from "../core/auth.js";
 
 const $ = (id) => document.getElementById(id);
 
-// Topbar
+// bar
 const who = $("who");
-const btnLogout = $("btnLogout");
 const btnBack = $("btnBack");
+const btnLogout = $("btnLogout");
+const hubMsg = $("hubMsg");
 
-// Lists
+// lists
 const listMyPolls = $("listMyPolls");
 const listTasks = $("listTasks");
 const listMySubscribers = $("listMySubscribers");
 const listMySubscriptions = $("listMySubscriptions");
 
-// Filters
+// filters
 const selPollSort = $("selPollSort");
 const chkPollArchive = $("chkPollArchive");
 const selTaskSort = $("selTaskSort");
@@ -24,223 +25,174 @@ const chkTaskArchive = $("chkTaskArchive");
 const selMySubsSort = $("selMySubsSort");
 const selTheirSubsSort = $("selTheirSubsSort");
 
-const hubMsg = $("hubMsg");
-
-// Actions
+// actions
 const btnAddSubscriber = $("btnAddSubscriber");
 const btnShare = $("btnShare");
 const btnDetails = $("btnDetails");
 
-// Modal add subscriber
+// modal add subscriber
 const ovAddSubscriber = $("ovAddSubscriber");
 const inpSubscriber = $("inpSubscriber");
 const btnSendInvite = $("btnSendInvite");
 const btnCloseAddSub = $("btnCloseAddSub");
 const addSubMsg = $("addSubMsg");
 
-let state = {
+let currentUser = null;
+
+const state = {
   polls: [],
   tasks: [],
   mySubscribers: [],
   mySubscriptions: [],
 };
 
-// ---------- helpers ----------
-function escapeHtml(s) {
+function esc(s){
   return String(s ?? "")
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;");
+    .replace(/&/g,"&amp;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;")
+    .replace(/\"/g,"&quot;")
+    .replace(/'/g,"&#39;");
 }
 
-function setMsg(text) {
-  hubMsg.textContent = text || "—";
+function setMsg(t){ hubMsg.textContent = t || "—"; }
+
+function openOverlay(el){ el.style.display = ""; }
+function closeOverlay(el){ el.style.display = "none"; }
+
+function tileBtn(icon, title){
+  return `<button class="tileBtn" type="button" title="${esc(title)}">${icon}</button>`;
 }
 
-function openOverlay(el) { el.style.display = ""; }
-function closeOverlay(el) { el.style.display = "none"; }
-
-function tile(html, cls) {
-  const d = document.createElement("div");
-  d.className = `tile ${cls || ""}`;
-  d.innerHTML = html;
-  return d;
+function mkTile(cls, title, type, rightHtml = ""){
+  const el = document.createElement("div");
+  el.className = `tile ${cls}`;
+  el.innerHTML = `
+    <div class="tileMain">
+      <span class="tileTitle">${esc(title)}</span>
+      ${type ? `<span class="tileType">${esc(type)}</span>` : ``}
+    </div>
+    <div class="tileMeta">${rightHtml}</div>
+  `;
+  return el;
 }
 
-function tileBtn(icon, title) {
-  return `<button class="tileBtn" type="button" title="${escapeHtml(title)}">${icon}</button>`;
+async function rpcOne(name, args = {}) {
+  const { data, error } = await sb.rpc(name, args);
+  if (error) throw new Error(`${name}: ${error.message || error.code || "RPC error"}`);
+  return data;
 }
 
-function pollTypeLabel(t) {
-  if (t === "poll_text") return "poll_text";
-  if (t === "poll_points") return "poll_points";
-  return String(t || "—");
+/* ===== minimalne sortowanie ===== */
+function sortRows(mode, rows, getName){
+  const r = [...rows];
+  if (mode === "new") r.sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
+  else if (mode === "old") r.sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));
+  else if (mode === "az") r.sort((a,b)=>String(getName(a)).localeCompare(String(getName(b)), "pl"));
+  else if (mode === "za") r.sort((a,b)=>String(getName(b)).localeCompare(String(getName(a)), "pl"));
+  return r;
 }
 
-function pollOpenUrl(row) {
-  // double-click ma iść do "polls" (wyniki/close) — zgodnie z Twoimi wytycznymi
-  // na razie: otwieramy polls.html?id=<game_id>
-  return `polls.html?id=${encodeURIComponent(row.game_id)}`;
-}
-
-function taskGoUrl(row) {
-  // RPC już zwraca go_url w Twoich funkcjach
-  return row.go_url || `poll_go.html?t=${encodeURIComponent(row.token || "")}`;
-}
-
-function statusClassForPoll(row) {
-  // Minimalna logika bez “nadmiarowych szczegółów”.
-  // Dopniemy “draft red vs gray” gdy dodasz can_open w RPC (albo osobne RPC).
-  if (row.poll_state === "closed") return "status-closed";
-  if (row.poll_state === "draft") return "status-draft-bad";
-
+/* ===== statusy (prosto, bez “nadmiarowych szczegółów”) ===== */
+function pollStatusClass(r){
+  if (r.poll_state === "closed") return "status-closed";
+  if (r.poll_state === "draft") return "status-draft-bad";
   // open:
-  const tasksActive = Number(row.tasks_active || 0);
-  const tasksDone = Number(row.tasks_done || 0);
-  const anonVotes = Number(row.anon_votes || 0);
-
-  if (tasksActive === 0 && anonVotes === 0) return "status-open-empty";
-  if ((tasksActive > 0 && tasksDone < tasksActive) || (anonVotes > 0 && anonVotes < 10)) return "status-open-running";
+  const a = Number(r.tasks_active || 0);
+  const d = Number(r.tasks_done || 0);
+  const v = Number(r.anon_votes || 0);
+  if (a === 0 && v === 0) return "status-open-empty";
+  if ((a > 0 && d < a) || (v > 0 && v < 10)) return "status-open-running";
   return "status-open-done";
 }
 
-function statusClassForTask(row) {
-  return row.status === "done" ? "status-task-done" : "status-task-open";
+function taskStatusClass(r){
+  return r.status === "done" ? "status-task-done" : "status-task-open";
 }
 
-function statusClassForSub(status) {
+function subStatusClass(status){
   if (status === "active") return "status-sub-active";
   if (status === "declined" || status === "cancelled") return "status-sub-declined";
   return "status-sub-pending";
 }
 
-function sortBy(mode, a, b, getName) {
-  if (mode === "new") return (new Date(b.created_at) - new Date(a.created_at));
-  if (mode === "old") return (new Date(a.created_at) - new Date(b.created_at));
-  if (mode === "az") return String(getName(a)).localeCompare(String(getName(b)), "pl");
-  if (mode === "za") return String(getName(b)).localeCompare(String(getName(a)), "pl");
-  return 0;
-}
-
-// ---------- RPC wrapper ----------
-async function rpcOne(name, args = {}) {
-  const { data, error } = await sb.rpc(name, args);
-  if (error) {
-    console.error("[polls_hub] rpc failed:", name, error);
-    throw new Error(`${name}: ${error.message || error.code || "RPC error"}`);
-  }
-  return data;
-}
-
-// ---------- render ----------
-function renderPolls() {
+/* ===== render ===== */
+function renderPolls(){
   listMyPolls.innerHTML = "";
-
-  const mode = selPollSort.value;
-  const showArchive = !!chkPollArchive.checked;
-
-  // Archiwalne: zamknięte > 5 dni (na razie prosto: state=closed i created_at older)
+  const showArchive = chkPollArchive.checked;
   const now = Date.now();
-  const FIVE_DAYS = 5 * 24 * 3600 * 1000;
+  const FIVE = 5*24*3600*1000;
 
-  let rows = [...state.polls];
-  rows.sort((a, b) => sortBy(mode, a, b, (x) => x.name));
+  let rows = sortRows(selPollSort.value, state.polls, x=>x.name);
 
-  rows = rows.filter((r) => {
+  rows = rows.filter(r=>{
     const isClosed = r.poll_state === "closed";
     const age = now - new Date(r.created_at).getTime();
-    const isArchive = isClosed && age > FIVE_DAYS;
-    return showArchive ? isArchive : !isArchive;
+    const arch = isClosed && age > FIVE;
+    return showArchive ? arch : !arch;
   });
 
-  if (!rows.length) {
-    listMyPolls.appendChild(tile(`
-      <div class="tileMain">
-        <span class="tileTitle">Brak sondaży</span>
-        <span class="tileType">—</span>
-      </div>
-    `, "status-draft-bad"));
+  if (!rows.length){
+    listMyPolls.appendChild(mkTile("status-draft-bad","Brak sondaży","—"));
     return;
   }
 
-  for (const r of rows) {
-    const cls = statusClassForPoll(r);
-    const shareMode = (r.poll_share_mode || "anon");
-    const badge = shareMode === "mixed" ? "A+S" : (shareMode === "subs" ? "S" : "A");
-
-    const el = tile(`
-      <div class="tileMain">
-        <span class="tileTitle">${escapeHtml(r.name)}</span>
-        <span class="tileType">${escapeHtml(pollTypeLabel(r.poll_type))}</span>
-      </div>
-      <div class="tileMeta">
-        <span class="tileType" title="Tryb">${escapeHtml(badge)}</span>
-      </div>
-    `, cls);
+  for (const r of rows){
+    const el = mkTile(
+      pollStatusClass(r),
+      r.name,
+      r.poll_type,
+      `<span class="tileType">${esc((r.poll_share_mode||"A").toUpperCase())}</span>`
+    );
 
     // dblclick -> polls (wyniki/close)
     el.ondblclick = () => {
-      if (r.poll_state === "draft") return; // szkice niegotowe blokujemy (na razie wszystkie draft)
-      location.href = pollOpenUrl(r);
+      if (r.poll_state === "draft") return;
+      location.href = `polls.html?id=${encodeURIComponent(r.game_id)}`;
     };
 
     listMyPolls.appendChild(el);
   }
 }
 
-function renderTasks() {
+function renderTasks(){
   listTasks.innerHTML = "";
-  const mode = selTaskSort.value;
-  const showArchive = !!chkTaskArchive.checked;
+  const showArchive = chkTaskArchive.checked;
   const now = Date.now();
-  const FIVE_DAYS = 5 * 24 * 3600 * 1000;
+  const FIVE = 5*24*3600*1000;
 
-  let rows = [...state.tasks];
-  rows.sort((a, b) => sortBy(mode, a, b, (x) => x.game_name || ""));
+  let rows = sortRows(selTaskSort.value, state.tasks, x=>x.game_name || "");
 
-  rows = rows.filter((r) => {
-    const isDone = r.status === "done";
+  rows = rows.filter(r=>{
+    const done = r.status === "done";
     const age = now - new Date(r.created_at).getTime();
-    const isArchive = isDone && age > FIVE_DAYS;
-    return showArchive ? isArchive : !isArchive;
+    const arch = done && age > FIVE;
+    return showArchive ? arch : !arch;
   });
 
-  if (!rows.length) {
-    listTasks.appendChild(tile(`
-      <div class="tileMain">
-        <span class="tileTitle">Brak zadań</span>
-        <span class="tileType">—</span>
-      </div>
-    `, "status-task-done"));
+  if (!rows.length){
+    listTasks.appendChild(mkTile("status-task-done","Brak zadań","—"));
     return;
   }
 
-  for (const r of rows) {
-    const cls = statusClassForTask(r);
+  for (const r of rows){
+    const right = (r.status !== "done") ? tileBtn("✖","Odrzuć") : "";
+    const el = mkTile(taskStatusClass(r), r.game_name || "Sondaż", r.poll_type || "zadanie", right);
 
-    const el = tile(`
-      <div class="tileMain">
-        <span class="tileTitle">${escapeHtml(r.game_name || "Sondaż")}</span>
-        <span class="tileType">${escapeHtml(r.poll_type || "zadanie")}</span>
-      </div>
-      <div class="tileMeta">
-        ${r.status !== "done" ? tileBtn("✖", "Odrzuć") : ""}
-      </div>
-    `, cls);
+    el.ondblclick = () => {
+      if (r.go_url) location.href = r.go_url;
+      else location.href = `poll_go.html?t=${encodeURIComponent(r.token || "")}`;
+    };
 
-    el.ondblclick = () => { location.href = taskGoUrl(r); };
-
-    // reject
     const btn = el.querySelector(".tileBtn");
-    if (btn) {
-      btn.onclick = async (e) => {
+    if (btn){
+      btn.onclick = async (e)=>{
         e.stopPropagation();
-        try {
+        try{
           await rpcOne("polls_hub_task_decline", { p_task_id: r.task_id });
           await refreshAll();
-        } catch (err) {
-          setMsg(String(err.message || err));
+        }catch(err){
+          setMsg(String(err.message||err));
         }
       };
     }
@@ -249,45 +201,28 @@ function renderTasks() {
   }
 }
 
-function renderMySubscribers() {
+function renderMySubscribers(){
   listMySubscribers.innerHTML = "";
+  let rows = sortRows(selMySubsSort.value, state.mySubscribers, x=>x.subscriber_label || "");
 
-  const mode = selMySubsSort.value;
-  let rows = [...state.mySubscribers];
-  rows.sort((a, b) => sortBy(mode, a, b, (x) => x.subscriber_label || ""));
-
-  if (!rows.length) {
-    listMySubscribers.appendChild(tile(`
-      <div class="tileMain">
-        <span class="tileTitle">Brak subskrybentów</span>
-      </div>
-    `, "status-sub-pending"));
+  if (!rows.length){
+    listMySubscribers.appendChild(mkTile("status-sub-pending","Brak subskrybentów","—"));
     return;
   }
 
-  for (const r of rows) {
-    const cls = statusClassForSub(r.status);
-
-    const el = tile(`
-      <div class="tileMain">
-        <span class="tileTitle">${escapeHtml(r.subscriber_label || "—")}</span>
-      </div>
-      <div class="tileMeta">
-        ${r.status === "pending" ? tileBtn("↻", "Wyślij ponownie (wkrótce)") : ""}
-        ${tileBtn("✖", r.status === "active" ? "Usuń subskrybenta" : "Anuluj zaproszenie")}
-      </div>
-    `, cls);
+  for (const r of rows){
+    const right = `${r.status==="pending" ? tileBtn("↻","Wyślij ponownie (później)") : ""}${tileBtn("✖", r.status==="active"?"Usuń":"Anuluj")}`;
+    const el = mkTile(subStatusClass(r.status), r.subscriber_label || "—", "", right);
 
     const btns = el.querySelectorAll(".tileBtn");
-    // na razie obsługujemy tylko X (remove/cancel). Resend dopniemy do maili po ustaleniu RPC.
-    const btnX = btns[btns.length - 1];
-    btnX.onclick = async (e) => {
+    const btnX = btns[btns.length-1];
+    btnX.onclick = async (e)=>{
       e.stopPropagation();
-      try {
+      try{
         await rpcOne("polls_hub_subscriber_remove", { p_sub_id: r.sub_id });
         await refreshAll();
-      } catch (err) {
-        setMsg(String(err.message || err));
+      }catch(err){
+        setMsg(String(err.message||err));
       }
     };
 
@@ -295,61 +230,43 @@ function renderMySubscribers() {
   }
 }
 
-function renderMySubscriptions() {
+function renderMySubscriptions(){
   listMySubscriptions.innerHTML = "";
+  let rows = sortRows(selTheirSubsSort.value, state.mySubscriptions, x=>x.owner_label || "");
 
-  const mode = selTheirSubsSort.value;
-  let rows = [...state.mySubscriptions];
-  rows.sort((a, b) => sortBy(mode, a, b, (x) => x.owner_label || ""));
-
-  if (!rows.length) {
-    listMySubscriptions.appendChild(tile(`
-      <div class="tileMain">
-        <span class="tileTitle">Brak subskrypcji</span>
-      </div>
-    `, "status-sub-pending"));
+  if (!rows.length){
+    listMySubscriptions.appendChild(mkTile("status-sub-pending","Brak subskrypcji","—"));
     return;
   }
 
-  for (const r of rows) {
-    const cls = statusClassForSub(r.status);
-
-    const el = tile(`
-      <div class="tileMain">
-        <span class="tileTitle">${escapeHtml(r.owner_label || "—")}</span>
-      </div>
-      <div class="tileMeta">
-        ${r.status === "pending" ? tileBtn("✔", "Akceptuj") : ""}
-        ${tileBtn("✖", r.status === "active" ? "Anuluj subskrypcję" : "Odrzuć")}
-      </div>
-    `, cls);
+  for (const r of rows){
+    const right = `${r.status==="pending" ? tileBtn("✔","Akceptuj") : ""}${tileBtn("✖", r.status==="active"?"Anuluj":"Odrzuć")}`;
+    const el = mkTile(subStatusClass(r.status), r.owner_label || "—", "", right);
 
     const btns = el.querySelectorAll(".tileBtn");
-    let idx = 0;
+    let i = 0;
 
-    if (r.status === "pending") {
-      const btnAccept = btns[idx++];
-      btnAccept.onclick = async (e) => {
+    if (r.status === "pending"){
+      const btnOk = btns[i++];
+      btnOk.onclick = async (e)=>{
         e.stopPropagation();
-        try {
-          // inbound accept (z Twojej listy RPC): sub_invite_accept(token)
-          await rpcOne("sub_invite_accept", { p_token: r.token || null, p_sub_id: r.sub_id || null });
+        try{
+          await rpcOne("sub_invite_accept", { p_sub_id: r.sub_id });
           await refreshAll();
-        } catch (err) {
-          setMsg(String(err.message || err));
+        }catch(err){
+          setMsg(String(err.message||err));
         }
       };
     }
 
-    const btnX = btns[idx];
-    btnX.onclick = async (e) => {
+    const btnX = btns[i];
+    btnX.onclick = async (e)=>{
       e.stopPropagation();
-      try {
-        // cancel subscription (RPC masz): polls_hub_subscription_cancel(sub_id)
+      try{
         await rpcOne("polls_hub_subscription_cancel", { p_sub_id: r.sub_id });
         await refreshAll();
-      } catch (err) {
-        setMsg(String(err.message || err));
+      }catch(err){
+        setMsg(String(err.message||err));
       }
     };
 
@@ -357,51 +274,42 @@ function renderMySubscriptions() {
   }
 }
 
-function renderAll() {
+function renderAll(){
   renderPolls();
   renderTasks();
   renderMySubscribers();
   renderMySubscriptions();
 }
 
-// ---------- data ----------
-async function refreshAll() {
+/* ===== data ===== */
+async function refreshAll(){
   setMsg("Ładowanie…");
-  const [polls, tasks, mySubs, theirSubs] = await Promise.all([
-    rpcOne("polls_hub_list_polls"),
-    rpcOne("polls_hub_list_tasks"),
-    rpcOne("polls_hub_list_my_subscribers"),
-    rpcOne("polls_hub_list_my_subscriptions"),
-  ]);
+  try{
+    const [polls, tasks, mySubs, theirSubs] = await Promise.all([
+      rpcOne("polls_hub_list_polls"),
+      rpcOne("polls_hub_list_tasks"),
+      rpcOne("polls_hub_list_my_subscribers"),
+      rpcOne("polls_hub_list_my_subscriptions"),
+    ]);
 
-  state.polls = Array.isArray(polls) ? polls : [];
-  state.tasks = Array.isArray(tasks) ? tasks : [];
-  state.mySubscribers = Array.isArray(mySubs) ? mySubs : [];
-  state.mySubscriptions = Array.isArray(theirSubs) ? theirSubs : [];
+    state.polls = Array.isArray(polls) ? polls : [];
+    state.tasks = Array.isArray(tasks) ? tasks : [];
+    state.mySubscribers = Array.isArray(mySubs) ? mySubs : [];
+    state.mySubscriptions = Array.isArray(theirSubs) ? theirSubs : [];
 
-  renderAll();
-  setMsg("OK");
-}
-
-// ---------- boot ----------
-async function refreshWho() {
-  const { data } = await sb.auth.getUser();
-  const u = data?.user;
-  if (!u) {
-    who.textContent = "—";
-    return;
+    renderAll();
+    setMsg("OK");
+  }catch(err){
+    console.error(err);
+    setMsg(String(err.message||err));
   }
-
-  // w Twoich założeniach: w auth bar pokazujemy username (profiles.username)
-  const { data: prof } = await sb.from("profiles").select("username,email").eq("id", u.id).maybeSingle();
-  who.textContent = prof?.username || prof?.email || u.email || "—";
 }
 
-function wire() {
+/* ===== boot ===== */
+function wire(){
   btnLogout.onclick = () => signOut();
   btnBack.onclick = () => (location.href = "builder.html");
 
-  // filters re-render
   selPollSort.onchange = renderPolls;
   chkPollArchive.onchange = renderPolls;
   selTaskSort.onchange = renderTasks;
@@ -409,53 +317,53 @@ function wire() {
   selMySubsSort.onchange = renderMySubscribers;
   selTheirSubsSort.onchange = renderMySubscriptions;
 
-  // modale docelowe: tu tylko placeholder — żeby UI nie był martwy
-  btnShare.onclick = () => setMsg("Udostępnianie: modal dopinamy w następnym kroku (tryb A/S/M + lista).");
-  btnDetails.onclick = () => setMsg("Szczegóły: modal dopinamy w następnym kroku (głosujący + anon count).");
+  btnShare.onclick = () => setMsg("Udostępnianie: modal dopinamy jako następny etap (A / S / A+S + checklista).");
+  btnDetails.onclick = () => setMsg("Szczegóły: modal dopinamy jako następny etap (głosujący + anon count + usuń głos).");
 
-  // add subscriber modal
   btnAddSubscriber.onclick = () => {
     addSubMsg.textContent = "—";
     inpSubscriber.value = "";
     openOverlay(ovAddSubscriber);
-    setTimeout(() => inpSubscriber.focus(), 30);
+    setTimeout(()=>inpSubscriber.focus(), 30);
   };
 
   btnCloseAddSub.onclick = () => closeOverlay(ovAddSubscriber);
-  ovAddSubscriber.addEventListener("click", (e) => {
-    if (e.target === ovAddSubscriber) closeOverlay(ovAddSubscriber);
-  });
+  ovAddSubscriber.addEventListener("click", (e)=>{ if (e.target === ovAddSubscriber) closeOverlay(ovAddSubscriber); });
 
-  btnSendInvite.onclick = async () => {
-    const val = String(inpSubscriber.value || "").trim();
-    if (!val) {
-      addSubMsg.textContent = "Podaj e-mail albo nazwę użytkownika.";
-      return;
-    }
+  btnSendInvite.onclick = async ()=>{
+    const val = String(inpSubscriber.value||"").trim();
+    if (!val){ addSubMsg.textContent = "Podaj e-mail lub username."; return; }
 
     addSubMsg.textContent = "Wysyłanie…";
-
-    try {
-      // Twoje RPC (z logów): polls_hub_subscription_invite_a
-      // UWAGA: nazwy parametrów mogą być inne — jeśli dostaniesz błąd “missing argument”,
-      // podeślij definicję RPC i dopasuję 1:1.
+    try{
+      // jeśli Twoje RPC ma inne argumenty, podeślij definicję – dopasuję 1:1
       await rpcOne("polls_hub_subscription_invite_a", { p_identifier: val });
       addSubMsg.textContent = "Zaproszenie wysłane.";
       await refreshAll();
-    } catch (err) {
-      addSubMsg.textContent = String(err.message || err);
+    }catch(err){
+      addSubMsg.textContent = String(err.message||err);
     }
   };
 }
 
-async function boot() {
-  await requireAuth();
+async function boot(){
+  // klucz: requireAuth zwraca usera i u Ciebie działa — nie dotykamy sb.auth
+  currentUser = await requireAuth();
+
+  // pokaż username zamiast maila
+  const { data: prof } = await sb
+    .from("profiles")
+    .select("username,email")
+    .eq("id", currentUser.id)
+    .maybeSingle();
+
+  who.textContent = prof?.username || prof?.email || currentUser.email || "—";
+
   wire();
-  await refreshWho();
   await refreshAll();
 }
 
-boot().catch((e) => {
+boot().catch((e)=>{
   console.error(e);
   setMsg(String(e?.message || e));
 });
