@@ -1,103 +1,173 @@
-.hub-grid {
+/* polls-hub.css — tylko layout hub + kafelki; reszta (modale/inputy/karty) z builder.css */
+
+.hubWrap{
+  padding: 16px;
   display: grid;
-  gap: 18px;
-  padding: 18px;
+  gap: 14px;
 }
 
-.hub-card {
-  display: flex;
-  flex-direction: column;
-  height: 420px;
+/* Duże karty jak builder */
+.hubCard{
+  padding: 16px 16px 14px;
 }
 
-.card-split {
-  flex: 1;
-  display: grid;
+.hubCardHead{
+  display:flex;
+  align-items:flex-end;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:10px;
+}
+
+.hubTitle{
+  font-weight: 900;
+  letter-spacing: .02em;
+  font-size: 18px;
+}
+
+.hubHint{
+  opacity:.75;
+  font-size: 12px;
+  text-align:right;
+}
+
+.hubSplit{
+  display:grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
+  min-height: 380px;
 }
 
-.split-col {
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
+.hubCol{
+  display:flex;
+  flex-direction:column;
+  min-height:0;
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 14px;
+  padding: 10px;
+  background: rgba(0,0,0,.18);
 }
 
-.split-toolbar,
-.split-filters {
-  display: flex;
-  gap: 8px;
+.hubColHead{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap: 10px;
   margin-bottom: 8px;
 }
 
-.list.scroll {
-  flex: 1;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
+.hubColTitle{
+  font-weight: 850;
+  font-size: 14px;
+  opacity:.95;
+}
+
+.hubColActions{
+  display:flex;
   gap: 8px;
 }
 
-/* ===== TILE ===== */
-
-.tile {
-  border-radius: 12px;
-  padding: 12px 14px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  cursor: pointer;
-  font-weight: 600;
-  color: #111;
+.hubFilters{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap: 10px;
+  margin-bottom: 10px;
 }
 
-.tile-main {
-  display: flex;
-  flex-direction: column;
-}
-
-.tile-title {
-  font-size: 15px;
-}
-
-.tile-type {
+.hubToggle{
+  display:flex;
+  gap: 8px;
+  align-items:center;
   font-size: 12px;
-  opacity: .7;
+  opacity:.9;
 }
 
-.tile-controls {
-  display: flex;
-  gap: 6px;
-  font-size: 16px;
+.hubList{
+  flex:1;
+  min-height:0;
+  overflow:auto;
+  display:flex;
+  flex-direction:column;
+  gap: 8px;
+  padding-right: 4px;
 }
 
-/* ===== STATUS COLORS ===== */
+/* ===== KAFELKI ===== */
 
-/* Sondaże */
-.status-draft-bad { background: #dcdcdc; }
-.status-draft-good { background: #ff6b6b; }
-.status-open-empty { background: #ffb347; }
-.status-open-running { background: #ffe066; }
-.status-open-done { background: #69db7c; }
-.status-closed { background: #74c0fc; }
+.tile{
+  border-radius: 14px;
+  padding: 10px 12px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap: 10px;
+  cursor:pointer;
+  user-select:none;
+  border: 1px solid rgba(0,0,0,.15);
+  box-shadow: 0 8px 20px rgba(0,0,0,.25);
+}
 
-/* Zadania */
-.status-task-open { background: #69db7c; }
-.status-task-done { background: #74c0fc; }
+.tileMain{
+  display:flex;
+  align-items:baseline;
+  gap:10px;
+  min-width:0;
+}
 
-/* Subskrypcje */
-.status-sub-pending { background: #ffe066; }
-.status-sub-declined { background: #ff6b6b; }
-.status-sub-active { background: #69db7c; }
+.tileTitle{
+  font-weight: 900;
+  font-size: 14px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  max-width: 420px;
+}
 
-/* ===== MOBILE ===== */
+.tileType{
+  font-size: 12px;
+  font-weight: 800;
+  opacity: .9;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(0,0,0,.18);
+}
 
-@media (max-width: 900px) {
-  .hub-card {
-    height: auto;
-  }
+.tileMeta{
+  display:flex;
+  gap: 8px;
+  align-items:center;
+}
 
-  .card-split {
-    grid-template-columns: 1fr;
-  }
+.tileBtn{
+  width: 30px;
+  height: 30px;
+  border-radius: 10px;
+  border: 1px solid rgba(0,0,0,.2);
+  background: rgba(255,255,255,.18);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+}
+.tileBtn:active{ transform: translateY(1px); }
+
+/* Kolor całego kafelka = status */
+.status-draft-bad{ background:#cfcfcf; color:#111; }
+.status-draft-good{ background:#ff6b6b; color:#111; }
+.status-open-empty{ background:#ffb347; color:#111; }
+.status-open-running{ background:#ffe066; color:#111; }
+.status-open-done{ background:#69db7c; color:#111; }
+.status-closed{ background:#74c0fc; color:#111; }
+
+.status-task-open{ background:#69db7c; color:#111; }
+.status-task-done{ background:#74c0fc; color:#111; }
+
+.status-sub-pending{ background:#ffe066; color:#111; }
+.status-sub-declined{ background:#ff6b6b; color:#111; }
+.status-sub-active{ background:#69db7c; color:#111; }
+
+/* Mobile: zamiast split 2 kolumny -> 1 kolumna */
+@media (max-width: 900px){
+  .hubSplit{ grid-template-columns: 1fr; min-height: auto; }
 }
