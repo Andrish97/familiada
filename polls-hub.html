@@ -7,7 +7,6 @@
 
   <link rel="icon" href="favicon.ico"/>
   <link rel="stylesheet" href="css/base.css"/>
-  <!-- bierzemy builder.css jako “system UI”: karty/modale/inputy -->
   <link rel="stylesheet" href="css/builder.css"/>
   <link rel="stylesheet" href="css/polls-hub.css"/>
 
@@ -15,34 +14,33 @@
   <script type="module" src="js/pages/polls-hub.js" defer></script>
 </head>
 
-<body class="polls-hub-body builder-body">
+<body class="builder-body">
 
-  <!-- TOPBAR jak w builder -->
-  <header class="topbar">
-    <div class="brand">FAMILIADA</div>
-    <div class="right">
-      <button class="btn" id="btnBack" type="button">
-        <span class="only-desktop">← Moje gry</span>
-        <span class="only-mobile">←</span>
-      </button>
+  <div class="wrap">
 
-      <span class="who" id="who">—</span>
-      <button class="btn sm" id="btnLogout" type="button">Wyloguj</button>
-    </div>
-  </header>
-
-  <main class="hubWrap">
-
-    <!-- ===== KARTA: SONDAŻE ===== -->
-    <section class="card hubCard">
-      <div class="hubCardHead">
-        <div class="hubTitle">Sondaże</div>
-        <div class="hubHint" id="hubMsg">—</div>
+    <!-- BAR jak w builder -->
+    <div class="bar">
+      <div>
+        <div class="title">CENTRUM SONDAŻY</div>
+        <div class="hint" id="hubMsg">—</div>
       </div>
 
-      <div class="hubSplit" id="pollsSplit">
+      <div class="actions">
+        <button class="btn" id="btnBack" type="button">← Moje gry</button>
+        <span class="hint" style="margin:0" id="who">—</span>
+        <button class="btn" id="btnLogout" type="button">Wyloguj</button>
+      </div>
+    </div>
 
-        <!-- LEWO: moje sondaże -->
+    <!-- KARTA 1 -->
+    <section class="builder-card card hubCard">
+      <div class="hubCardHead">
+        <div class="hubCardTitle">Sondaże</div>
+      </div>
+
+      <div class="hubSplit">
+
+        <!-- Moje sondaże -->
         <div class="hubCol">
           <div class="hubColHead">
             <div class="hubColTitle">Moje sondaże</div>
@@ -70,11 +68,10 @@
           <div class="hubList" id="listMyPolls"></div>
         </div>
 
-        <!-- PRAWO: zadania -->
+        <!-- Zadania -->
         <div class="hubCol">
           <div class="hubColHead">
             <div class="hubColTitle">Zadania</div>
-            <div class="hubColActions"></div>
           </div>
 
           <div class="hubFilters">
@@ -82,6 +79,8 @@
               <option value="default">• Domyślne</option>
               <option value="new">• Najnowsze</option>
               <option value="old">• Najstarsze</option>
+              <option value="az">• Nazwa A–Z</option>
+              <option value="za">• Nazwa Z–A</option>
             </select>
 
             <label class="hubToggle">
@@ -92,19 +91,19 @@
 
           <div class="hubList" id="listTasks"></div>
         </div>
+
       </div>
     </section>
 
-    <!-- ===== KARTA: SUBSKRYPCJE ===== -->
-    <section class="card hubCard">
+    <!-- KARTA 2 -->
+    <section class="builder-card card hubCard">
       <div class="hubCardHead">
-        <div class="hubTitle">Subskrypcje</div>
-        <div class="hubHint">—</div>
+        <div class="hubCardTitle">Subskrypcje</div>
       </div>
 
-      <div class="hubSplit" id="subsSplit">
+      <div class="hubSplit">
 
-        <!-- LEWO: moi subskrybenci -->
+        <!-- Moi subskrybenci -->
         <div class="hubCol">
           <div class="hubColHead">
             <div class="hubColTitle">Moi subskrybenci</div>
@@ -126,11 +125,10 @@
           <div class="hubList" id="listMySubscribers"></div>
         </div>
 
-        <!-- PRAWO: moje subskrypcje -->
+        <!-- Moje subskrypcje -->
         <div class="hubCol">
           <div class="hubColHead">
             <div class="hubColTitle">Moje subskrypcje</div>
-            <div class="hubColActions"></div>
           </div>
 
           <div class="hubFilters">
@@ -145,25 +143,26 @@
 
           <div class="hubList" id="listMySubscriptions"></div>
         </div>
+
       </div>
     </section>
 
-  </main>
+  </div>
 
-  <!-- ===== MODAL: dodaj subskrybenta ===== -->
+  <!-- MODAL: Dodaj subskrybenta -->
   <div class="overlay" id="ovAddSubscriber" style="display:none;">
     <div class="modal" style="width:min(640px,94vw)">
       <div class="mTitle">Dodaj subskrybenta</div>
-      <div class="mSub">Wpisz e-mail albo nazwę użytkownika. Wyślemy zaproszenie.</div>
+      <div class="mSub">Wpisz e-mail albo nazwę użytkownika.</div>
 
-      <div class="row" style="display:flex; gap:10px; align-items:center; margin-top:10px;">
-        <input class="inp" id="inpSubscriber" placeholder="email lub username" autocomplete="off" style="flex:1">
+      <div style="display:flex; gap:10px; margin-top:10px;">
+        <input class="inp" id="inpSubscriber" placeholder="email lub username" style="flex:1" autocomplete="off">
         <button class="btn" id="btnSendInvite" type="button">Wyślij</button>
       </div>
 
-      <div class="mSub" id="addSubMsg" style="margin-top:10px; opacity:.85;">—</div>
+      <div class="mSub" id="addSubMsg" style="margin-top:10px;">—</div>
 
-      <div class="row" style="display:flex; justify-content:flex-end; gap:10px; margin-top:14px;">
+      <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:14px;">
         <button class="btn sm" id="btnCloseAddSub" type="button">Zamknij</button>
       </div>
     </div>
