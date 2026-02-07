@@ -186,12 +186,6 @@ body.polls-hub-body {
   white-space: nowrap;
 }
 
-.hub-item-badge-alt {
-  border-color: rgba(140,200,255,.45);
-  background: rgba(140,200,255,.16);
-  color: #bfe3ff;
-}
-
 .hub-item.poll-draft {
   background: rgba(80,80,80,.28);
 }
