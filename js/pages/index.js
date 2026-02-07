@@ -11,7 +11,8 @@ const err = $("#err");
 const btnPrimary = $("#btnPrimary");
 const btnToggle = $("#btnToggle");
 const btnForgot = $("#btnForgot");
-const usernameOverlay = $("#usernameOverlay");
+const loginCard = $("#loginCard");
+const setupCard = $("#setupCard");
 const usernameFirst = $("#usernameFirst");
 const usernameErr = $("#usernameErr");
 const btnUsernameSave = $("#btnUsernameSave");
@@ -34,17 +35,42 @@ function setErr(m = "") { err.textContent = m; }
 function setStatus(m = "") { status.textContent = m; }
 function setUsernameErr(m = "") { if (usernameErr) usernameErr.textContent = m; }
 
-function openUsernameOverlay() {
-  if (!usernameOverlay) return;
-  usernameOverlay.classList.add("is-open");
-  usernameOverlay.setAttribute("aria-hidden", "false");
+function getPendingEmailChange() {
+  try {
+    const raw = localStorage.getItem("pendingEmailChange");
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+function clearPendingEmailChange() {
+  localStorage.removeItem("pendingEmailChange");
+}
+
+function openUsernameSetup() {
+  if (loginCard) loginCard.hidden = true;
+  if (setupCard) setupCard.hidden = false;
+  document.body.classList.add("setup-mode");
   if (usernameFirst) usernameFirst.focus();
 }
 
-function closeUsernameOverlay() {
-  if (!usernameOverlay) return;
-  usernameOverlay.classList.remove("is-open");
-  usernameOverlay.setAttribute("aria-hidden", "true");
+function closeUsernameSetup() {
+  if (loginCard) loginCard.hidden = false;
+  if (setupCard) setupCard.hidden = true;
+  document.body.classList.remove("setup-mode");
+}
+
+async function ensureUsernameAvailable(username, userId) {
+  const { data, error } = await sb()
+    .from("profiles")
+    .select("id")
+    .ilike("username", username)
+    .neq("id", userId)
+    .limit(1)
+    .maybeSingle();
+  if (error) throw error;
+  if (data?.id) throw new Error("Ta nazwa użytkownika jest już zajęta.");
 }
 
 async function saveUsername() {
@@ -53,13 +79,14 @@ async function saveUsername() {
     const username = validateUsername(usernameFirst?.value || "");
     const { data: userData, error: userError } = await sb().auth.getUser();
     if (userError || !userData?.user) throw new Error("Brak aktywnej sesji.");
+    await ensureUsernameAvailable(username, userData.user.id);
     const { error } = await sb()
       .from("profiles")
       .update({ username })
       .eq("id", userData.user.id);
     if (error) throw error;
     await sb().auth.updateUser({ data: { username } });
-    closeUsernameOverlay();
+    closeUsernameSetup();
     location.href = "builder.html";
   } catch (e) {
     console.error(e);
@@ -89,7 +116,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const u = await getUser();
   if (u) {
     if (!u.username || setup === "username") {
-      openUsernameOverlay();
+      openUsernameSetup();
     } else if (nextTarget === "polls-hub") {
       location.href = buildNextUrl();
     } else {
@@ -110,6 +137,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     const pwd = pass.value;
 
     if (!loginOrEmail || !pwd) return setErr("Podaj e-mail/nazwę użytkownika i hasło.");
+    if (loginOrEmail.includes("@")) {
+      const pending = getPendingEmailChange();
+      if (pending?.old && String(pending.old).toLowerCase() === loginOrEmail.toLowerCase()) {
+        return setErr("Zmieniałeś adres e-mail. Zaloguj się nowym adresem.");
+      }
+    }
 
     try {
       if (mode === "register") {
@@ -126,9 +159,10 @@ document.addEventListener("DOMContentLoaded", async () => {
       } else {
         setStatus("Loguję…");
         await signIn(loginOrEmail, pwd); // <-- może być username
+        clearPendingEmailChange();
         const authed = await getUser();
         if (!authed?.username) {
-          openUsernameOverlay();
+          openUsernameSetup();
         } else if (nextTarget === "polls-hub") {
           location.href = buildNextUrl();
         } else {

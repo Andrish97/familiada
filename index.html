@@ -15,7 +15,7 @@
 </head>
 <body class="login-body">
   <div class="login-shell">
-    <div class="login-card">
+    <div class="login-card" id="loginCard">
       <div class="brand">FAMILIADA</div>
       <div class="sub">Panel tworzenia i prowadzenia gry</div>
 
@@ -37,18 +37,19 @@
         </div>
       </div>
     </div>
-  </div>
 
-  <div class="overlay" id="usernameOverlay" aria-hidden="true">
-    <div class="modal">
-      <div class="modal-title">Ustaw nazwę użytkownika</div>
-      <div class="modal-sub">To jednorazowe ustawienie pomoże Cię rozpoznać w panelu.</div>
+    <div class="login-card setup-card" id="setupCard" hidden>
+      <div class="brand">FAMILIADA</div>
+      <div class="sub">Pierwsze logowanie</div>
+      <div class="setup-title">Ustaw nazwę użytkownika</div>
+      <div class="setup-sub">Będzie widoczna w panelu oraz przy zaproszeniach.</div>
 
-      <input id="usernameFirst" placeholder="Nazwa użytkownika" autocomplete="username" />
-      <div class="modal-err" id="usernameErr"></div>
-
-      <div class="modal-actions">
-        <button class="btn main" id="btnUsernameSave" type="button">Zapisz</button>
+      <div class="setup-form">
+        <input id="usernameFirst" placeholder="Nazwa użytkownika" autocomplete="username" />
+        <div class="modal-err" id="usernameErr"></div>
+        <div class="modal-actions">
+          <button class="btn main" id="btnUsernameSave" type="button">Zapisz nazwę</button>
+        </div>
       </div>
     </div>
   </div>
