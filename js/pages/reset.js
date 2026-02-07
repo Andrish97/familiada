@@ -1,4 +1,5 @@
 import { sb } from "../core/supabase.js";
+import { validatePassword } from "../core/auth.js";
 
 const status = document.getElementById("status");
 const err = document.getElementById("err");
@@ -54,8 +55,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     const a = p1.value;
     const b = p2.value;
 
-    if (!a || a.length < 6) return setErr("Hasło musi mieć co najmniej 6 znaków.");
     if (a !== b) return setErr("Hasła nie są takie same.");
+    try {
+      validatePassword(a);
+    } catch (e) {
+      return setErr(e?.message || String(e));
+    }
 
     try{
       setStatus("Zapisuję nowe hasło…");
