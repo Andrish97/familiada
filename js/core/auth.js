@@ -36,20 +36,6 @@ export function validateUsername(un, { allowEmpty = false } = {}) {
   return v;
 }
 
-export function validatePassword(pwd) {
-  const v = String(pwd || "");
-  const hints = [];
-  if (v.length < 8) hints.push("min. 8 znaków");
-  if (!/[a-z]/.test(v)) hints.push("mała litera");
-  if (!/[A-Z]/.test(v)) hints.push("duża litera");
-  if (!/[0-9]/.test(v)) hints.push("cyfra");
-  if (!/[^A-Za-z0-9]/.test(v)) hints.push("znak specjalny");
-  if (hints.length) {
-    throw new Error(`Hasło musi zawierać: ${hints.join(", ")}.`);
-  }
-  return v;
-}
-
 let _unameCache = { userId: null, username: null, ts: 0 };
 
 async function fetchUsername(user) {
