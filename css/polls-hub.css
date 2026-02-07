@@ -258,6 +258,16 @@ body.polls-hub-body {
   --radius: 12px;
 }
 
+.hub-tabs-mobile:has(#tabPollsMobile.active) .hub-card {
+  border-top-left-radius: 0;
+  border-top-right-radius: var(--radius);
+}
+
+.hub-tabs-mobile:has(#tabSubscriptionsMobile.active) .hub-card {
+  border-top-left-radius: var(--radius);
+  border-top-right-radius: 0;
+}
+
 .hub-tabs-mobile .tabs-strip {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -373,5 +383,26 @@ body.polls-hub-body {
 
   .hub-details {
     grid-template-columns: 1fr;
+  }
+
+  .hub-mobile .hub-item {
+    align-items: flex-start;
+    flex-wrap: wrap;
+    min-height: 64px;
+  }
+
+  .hub-mobile .hub-item > div:first-child {
+    width: 100%;
+  }
+
+  .hub-mobile .hub-item .hub-item-title,
+  .hub-mobile .hub-item .hub-item-sub {
+    white-space: normal;
+    word-break: break-word;
+  }
+
+  .hub-mobile .hub-item-actions {
+    width: 100%;
+    justify-content: flex-end;
   }
 }
