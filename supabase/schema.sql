@@ -1765,9 +1765,9 @@ CREATE OR REPLACE FUNCTION public.poll_action(p_kind text, p_token uuid, p_actio
  RETURNS jsonb
  LANGUAGE sql
  SECURITY DEFINER
- SET search_path TO 'public'
+ SET search_path TO 'public', 'pg_temp'
 AS $function$
-  select public.polls_action(p_kind, p_token, p_action);
+  select public.polls_action(lower(trim(p_kind)), p_token, lower(trim(p_action)));
 $function$
 
 
@@ -3513,33 +3513,43 @@ CREATE OR REPLACE FUNCTION public.polls_action(p_kind text, p_token uuid, p_acti
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
- SET search_path TO 'public'
+ SET search_path TO 'public', 'pg_temp'
 AS $function$
 declare
-  k text := lower(coalesce(p_kind,''));
-  a text := lower(coalesce(p_action,''));
+  k text := lower(trim(coalesce(p_kind,'')));
+  a text := lower(trim(coalesce(p_action,'')));
+  changed boolean;
 begin
-  -- TASK
-  if k = 'task' then
-    -- zakładam, że to istnieje i zwraca json/jsonb (u Ciebie już działało)
-    return to_jsonb(public.poll_go_task_action(p_token, a));
+  if p_token is null then
+    return jsonb_build_object('ok', false, 'error', 'invalid_token');
   end if;
 
-  -- SUB
-  if k in ('sub','subscription') then
-    if a in ('decline','reject','nie','no') then
-      return public.poll_sub_decline(p_token);
-    end if;
-
-    -- accept: rozdzielamy na osobne RPC (login vs email)
-    if a in ('accept','subscribe','tak','yes','confirm') then
+  if k = 'sub' then
+    if a = 'accept' then
+      -- poll_sub_accept(...) istnieje w schema.sql
       return public.poll_sub_accept(p_token);
+    elsif a = 'decline' then
+      return public.poll_sub_decline(p_token);
+    else
+      return jsonb_build_object('ok', false, 'kind', 'sub', 'error', 'invalid_action', 'action', a);
     end if;
-
-    return jsonb_build_object('ok', false, 'error', 'unsupported_action', 'kind', k, 'action', a);
   end if;
 
-  return jsonb_build_object('ok', false, 'error', 'unsupported_kind', 'kind', k);
+  if k = 'task' then
+    if a in ('open','decline') then
+      -- poll_go_task_action(...) zwraca boolean -> pakujemy w JSONB
+      changed := public.poll_go_task_action(p_token, a, null);
+      if changed then
+        return jsonb_build_object('ok', true, 'kind', 'task', 'action', a);
+      else
+        return jsonb_build_object('ok', false, 'kind', 'task', 'error', 'invalid_or_unavailable_token', 'action', a);
+      end if;
+    else
+      return jsonb_build_object('ok', false, 'kind', 'task', 'error', 'invalid_action', 'action', a);
+    end if;
+  end if;
+
+  return jsonb_build_object('ok', false, 'error', 'invalid_kind', 'kind', k);
 end;
 $function$
 
