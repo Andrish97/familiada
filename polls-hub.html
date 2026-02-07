@@ -148,78 +148,129 @@
     </section>
 
     <section class="hub-mobile">
-      <div class="card hub-card">
-        <div class="hub-col-head">
-          <div>
-            <div class="hub-col-title">Moje sondaże</div>
-            <div class="hub-col-hint">Kliknij kafelek, aby go zaznaczyć.</div>
-          </div>
-          <div class="hub-controls">
-            <select class="inp sm" id="sortPollsMobile"></select>
-            <div class="hub-toggle" data-kind="polls">
-              <button class="btn xs" data-toggle="current">Aktualne</button>
-              <button class="btn xs" data-toggle="archive">Archiwalne</button>
+      <div class="tabs-card hub-tabs hub-tabs-mobile" id="hubTabsMobile">
+        <div class="tabs-strip">
+          <div class="tab-slot slot-mobile-polls">
+            <button class="tab-label" id="tabPollsMobile" type="button">Sondaże</button>
+            <div class="tab-wrapper">
+              <div class="tab-active">Sondaże</div>
+              <div class="tab-corner tab-corner-left"></div>
+              <div class="tab-corner tab-corner-right"></div>
             </div>
-            <button class="btn xs" id="btnShareMobile" type="button" disabled>Udostępnij</button>
-            <button class="btn xs" id="btnDetailsMobile" type="button" disabled>Szczegóły</button>
+          </div>
+          <div class="tab-slot slot-mobile-tasks">
+            <button class="tab-label" id="tabTasksMobile" type="button">
+              Zadania
+              <span class="hub-tab-badge is-empty" data-badge="tasks"></span>
+            </button>
+            <div class="tab-wrapper">
+              <div class="tab-active">
+                Zadania
+                <span class="hub-tab-badge is-empty" data-badge="tasks"></span>
+              </div>
+              <div class="tab-corner tab-corner-left"></div>
+              <div class="tab-corner tab-corner-right"></div>
+            </div>
+          </div>
+          <div class="tab-slot slot-mobile-subscribers">
+            <button class="tab-label" id="tabSubscribersMobile" type="button">Subskrybenci</button>
+            <div class="tab-wrapper">
+              <div class="tab-active">Subskrybenci</div>
+              <div class="tab-corner tab-corner-left"></div>
+              <div class="tab-corner tab-corner-right"></div>
+            </div>
+          </div>
+          <div class="tab-slot slot-mobile-subscriptions">
+            <button class="tab-label" id="tabSubscriptionsMobile" type="button">
+              Subskrypcje
+              <span class="hub-tab-badge is-empty" data-badge="subs"></span>
+            </button>
+            <div class="tab-wrapper">
+              <div class="tab-active">
+                Subskrypcje
+                <span class="hub-tab-badge is-empty" data-badge="subs"></span>
+              </div>
+              <div class="tab-corner tab-corner-left"></div>
+              <div class="tab-corner tab-corner-right"></div>
+            </div>
           </div>
         </div>
-        <div class="hub-list" id="pollsListMobile"></div>
-      </div>
 
-      <div class="card hub-card">
-        <div class="hub-col-head">
-          <div>
-            <div class="hub-col-title">Zadania</div>
-            <div class="hub-col-hint">Dwuklik otwiera głosowanie.</div>
-          </div>
-          <div class="hub-controls">
-            <select class="inp sm" id="sortTasksMobile"></select>
-            <div class="hub-toggle" data-kind="tasks">
-              <button class="btn xs" data-toggle="current">Aktualne</button>
-              <button class="btn xs" data-toggle="archive">Archiwalne</button>
+        <div class="card hub-card">
+          <div class="hub-tab-panel hub-mobile-panel" id="panelPollsMobile">
+            <div class="hub-col-head">
+              <div>
+                <div class="hub-col-title">Moje sondaże</div>
+                <div class="hub-col-hint">Kliknij kafelek, aby go zaznaczyć.</div>
+              </div>
+              <div class="hub-controls">
+                <select class="inp sm" id="sortPollsMobile"></select>
+                <div class="hub-toggle" data-kind="polls">
+                  <button class="btn xs" data-toggle="current">Aktualne</button>
+                  <button class="btn xs" data-toggle="archive">Archiwalne</button>
+                </div>
+                <button class="btn xs" id="btnShareMobile" type="button" disabled>Udostępnij</button>
+                <button class="btn xs" id="btnDetailsMobile" type="button" disabled>Szczegóły</button>
+              </div>
             </div>
+            <div class="hub-list" id="pollsListMobile"></div>
           </div>
-        </div>
-        <div class="hub-list" id="tasksListMobile"></div>
-      </div>
 
-      <div class="card hub-card">
-        <div class="hub-col-head">
-          <div>
-            <div class="hub-col-title">Moi subskrybenci</div>
-            <div class="hub-col-hint">Zaproś nowych i zarządzaj zaproszeniami.</div>
-          </div>
-          <div class="hub-controls">
-            <select class="inp sm" id="sortSubscribersMobile"></select>
-            <div class="hub-toggle" data-kind="subscribers">
-              <button class="btn xs" data-toggle="current">Aktualne</button>
-              <button class="btn xs" data-toggle="archive">Archiwalne</button>
+          <div class="hub-tab-panel hub-mobile-panel" id="panelTasksMobile">
+            <div class="hub-col-head">
+              <div>
+                <div class="hub-col-title">Zadania</div>
+                <div class="hub-col-hint">Dwuklik otwiera głosowanie.</div>
+              </div>
+              <div class="hub-controls">
+                <select class="inp sm" id="sortTasksMobile"></select>
+                <div class="hub-toggle" data-kind="tasks">
+                  <button class="btn xs" data-toggle="current">Aktualne</button>
+                  <button class="btn xs" data-toggle="archive">Archiwalne</button>
+                </div>
+              </div>
             </div>
+            <div class="hub-list" id="tasksListMobile"></div>
           </div>
-        </div>
-        <div class="hub-invite">
-          <input class="inp" id="inviteInputMobile" placeholder="Email lub nazwa użytkownika"/>
-          <button class="btn xs gold" id="btnInviteMobile" type="button">Zaproś</button>
-        </div>
-        <div class="hub-list" id="subscribersListMobile"></div>
-      </div>
 
-      <div class="card hub-card">
-        <div class="hub-col-head">
-          <div>
-            <div class="hub-col-title">Moje subskrypcje</div>
-            <div class="hub-col-hint">Akceptuj zaproszenia od innych.</div>
-          </div>
-          <div class="hub-controls">
-            <select class="inp sm" id="sortSubscriptionsMobile"></select>
-            <div class="hub-toggle" data-kind="subscriptions">
-              <button class="btn xs" data-toggle="current">Aktualne</button>
-              <button class="btn xs" data-toggle="archive">Archiwalne</button>
+          <div class="hub-tab-panel hub-mobile-panel" id="panelSubscribersMobile">
+            <div class="hub-col-head">
+              <div>
+                <div class="hub-col-title">Moi subskrybenci</div>
+                <div class="hub-col-hint">Zaproś nowych i zarządzaj zaproszeniami.</div>
+              </div>
+              <div class="hub-controls">
+                <select class="inp sm" id="sortSubscribersMobile"></select>
+                <div class="hub-toggle" data-kind="subscribers">
+                  <button class="btn xs" data-toggle="current">Aktualne</button>
+                  <button class="btn xs" data-toggle="archive">Archiwalne</button>
+                </div>
+              </div>
             </div>
+            <div class="hub-invite">
+              <input class="inp" id="inviteInputMobile" placeholder="Email lub nazwa użytkownika"/>
+              <button class="btn xs gold" id="btnInviteMobile" type="button">Zaproś</button>
+            </div>
+            <div class="hub-list" id="subscribersListMobile"></div>
+          </div>
+
+          <div class="hub-tab-panel hub-mobile-panel" id="panelSubscriptionsMobile">
+            <div class="hub-col-head">
+              <div>
+                <div class="hub-col-title">Moje subskrypcje</div>
+                <div class="hub-col-hint">Akceptuj zaproszenia od innych.</div>
+              </div>
+              <div class="hub-controls">
+                <select class="inp sm" id="sortSubscriptionsMobile"></select>
+                <div class="hub-toggle" data-kind="subscriptions">
+                  <button class="btn xs" data-toggle="current">Aktualne</button>
+                  <button class="btn xs" data-toggle="archive">Archiwalne</button>
+                </div>
+              </div>
+            </div>
+            <div class="hub-list" id="subscriptionsListMobile"></div>
           </div>
         </div>
-        <div class="hub-list" id="subscriptionsListMobile"></div>
       </div>
     </section>
   </main>
