@@ -4,9 +4,10 @@ const status = document.getElementById("status");
 const err = document.getElementById("err");
 const go = document.getElementById("go");
 const back = document.getElementById("back");
+let sessionInfo = "";
 
 function setStatus(m){ status.textContent = m; }
-function setErr(m=""){ err.textContent = m; }
+function setErr(m=""){ err.textContent = m || sessionInfo; }
 
 function qp(name){
   return new URL(location.href).searchParams.get(name);
@@ -31,6 +32,14 @@ async function syncProfileEmail(user) {
 
 document.addEventListener("DOMContentLoaded", async () => {
   setErr("");
+
+  try {
+    const { data } = await sb().auth.getSession();
+    if (data?.session?.user) {
+      sessionInfo = "Masz aktywną sesję — nie przeszkadza w potwierdzeniu linków.";
+      setErr("");
+    }
+  } catch {}
 
   const hashError = hp("error_description") || hp("error");
   const hashMessage = hp("message");
