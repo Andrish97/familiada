@@ -434,3 +434,62 @@ Ustalenia:
   - sub: zawsze `s=<uuid>`
 - `declined/cancelled` tasków: **niewidoczne odbiorcy**.
 - `id&key` w poll‑text/poll‑points: **zawsze anonimowe** (nawet przy sesji).
+
+## 14) Przykłąd wygladu wiadomosci e-mail
+
+**Widomości e-mail maja być wysyłane za pomocą edge-function**
+
+```html
+<div style="margin:0;padding:0;background:#050914;">
+  <div style="max-width:560px;margin:0 auto;padding:26px 16px;font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:#ffffff;">
+    
+    <!-- topbar-ish -->
+    <div style="padding:14px 14px;background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.12);border-radius:18px;backdrop-filter:blur(10px);">
+      <div style="font-weight:1000;letter-spacing:.18em;text-transform:uppercase;color:#ffeaa6;">
+        FAMILIADA
+      </div>
+      <div style="margin-top:6px;font-size:12px;opacity:.85;letter-spacing:.08em;text-transform:uppercase;">
+        Potwierdzenie konta
+      </div>
+    </div>
+
+    <!-- card -->
+    <div style="margin-top:14px;padding:18px;border-radius:20px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.06);box-shadow:0 24px 60px rgba(0,0,0,.45);">
+      <div style="font-weight:1000;font-size:18px;letter-spacing:.06em;color:#ffeaa6;margin:0 0 10px;">
+        Aktywuj konto
+      </div>
+
+      <div style="font-size:14px;opacity:.9;line-height:1.45;margin:0 0 14px;">
+        Kliknij przycisk poniżej, aby potwierdzić adres e-mail i dokończyć rejestrację.
+      </div>
+
+      <!-- primary button (gold) -->
+      <div style="margin:16px 0;">
+        <a href="{{ .ConfirmationURL }}"
+           style="display:block;text-align:center;padding:12px 14px;border-radius:14px;
+                  border:1px solid rgba(255,234,166,.35);
+                  background:rgba(255,234,166,.10);
+                  color:#ffeaa6;
+                  text-decoration:none;font-weight:1000;letter-spacing:.06em;">
+          POTWIERDŹ KONTO
+        </a>
+      </div>
+
+      <div style="margin-top:14px;font-size:12px;opacity:.75;line-height:1.4;">
+        Jeśli to nie Ty, zignoruj tę wiadomość.
+      </div>
+
+      <div style="margin-top:10px;font-size:12px;opacity:.75;line-height:1.4;">
+        Link nie działa? Skopiuj i wklej do przeglądarki:
+        <div style="margin-top:6px;padding:10px 12px;border-radius:16px;border:1px solid rgba(255,255,255,.18);background:rgba(0,0,0,.18);word-break:break-all;">
+          {{ .ConfirmationURL }}
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top:14px;font-size:12px;opacity:.7;text-align:center;">
+      Wiadomość automatyczna — prosimy nie odpowiadać.
+    </div>
+  </div>
+</div>
+```
