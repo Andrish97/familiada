@@ -66,6 +66,8 @@ const btnShareClose = $("btnShareClose");
 const detailsOverlay = $("detailsOverlay");
 const detailsVoted = $("detailsVoted");
 const detailsPending = $("detailsPending");
+const detailsDeclined = $("detailsDeclined");
+const detailsCancelled = $("detailsCancelled");
 const detailsAnon = $("detailsAnon");
 const btnDetailsClose = $("btnDetailsClose");
 const detailsTitle = $("detailsTitle");
@@ -696,7 +698,7 @@ async function inviteSubscriber(recipient) {
     const { data, error } = await sb().rpc("polls_hub_subscription_invite", { p_recipient: recipient });
     if (error) throw error;
     if (data?.ok === false) throw new Error(data?.error || "Nie udało się zaprosić.");
-    if (!data?.already && data?.id) {
+    if (!data?.already && data?.id && data?.channel === "email") {
       const { data: resendData, error: resendError } = await sb().rpc("polls_hub_subscriber_resend", { p_id: data.id });
       if (resendError) throw resendError;
       if (resendData?.ok === false) throw new Error(resendData?.error || "Nie udało się wysłać zaproszenia.");
@@ -894,6 +896,8 @@ async function openDetailsModal() {
   if (!selectedPollId) return;
   detailsVoted.innerHTML = "";
   detailsPending.innerHTML = "";
+  detailsDeclined.innerHTML = "";
+  detailsCancelled.innerHTML = "";
   detailsAnon.textContent = String(selectedPoll?.anon_votes || 0);
   detailsTitle.textContent = `Szczegóły głosowania — ${selectedPoll?.name || ""}`;
   try {
@@ -940,14 +944,29 @@ async function openDetailsModal() {
         });
         actions?.appendChild(btn);
         detailsVoted.appendChild(item);
+      } else if (task.status === "declined") {
+        detailsDeclined.appendChild(item);
+      } else if (task.status === "cancelled") {
+        detailsCancelled.appendChild(item);
       } else {
         detailsPending.appendChild(item);
       }
     }
 
+    const maybeEmpty = (list) => {
+      if (!list || list.children.length) return;
+      list.innerHTML = "<div class=\"hub-empty\">Brak zadań.</div>";
+    };
     if (!taskRows?.length) {
       detailsVoted.innerHTML = "<div class=\"hub-empty\">Brak zadań.</div>";
       detailsPending.innerHTML = "<div class=\"hub-empty\">Brak zadań.</div>";
+      detailsDeclined.innerHTML = "<div class=\"hub-empty\">Brak zadań.</div>";
+      detailsCancelled.innerHTML = "<div class=\"hub-empty\">Brak zadań.</div>";
+    } else {
+      maybeEmpty(detailsVoted);
+      maybeEmpty(detailsPending);
+      maybeEmpty(detailsDeclined);
+      maybeEmpty(detailsCancelled);
     }
 
     detailsOverlay.style.display = "grid";

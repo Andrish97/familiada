@@ -138,10 +138,6 @@
                   </div>
                   <div class="hub-controls">
                     <select class="inp sm" id="sortSubscriptionsDesktop"></select>
-                    <div class="hub-toggle" data-kind="subscriptions">
-                      <button class="btn xs btn-toggle" data-toggle="current">Aktualne</button>
-                      <button class="btn xs btn-toggle" data-toggle="archive">Archiwalne</button>
-                    </div>
                   </div>
                 </div>
                 <div class="hub-list" id="subscriptionsListDesktop"></div>
@@ -267,10 +263,6 @@
               </div>
               <div class="hub-controls">
                 <select class="inp sm" id="sortSubscriptionsMobile"></select>
-                <div class="hub-toggle" data-kind="subscriptions">
-                  <button class="btn xs btn-toggle" data-toggle="current">Aktualne</button>
-                  <button class="btn xs btn-toggle" data-toggle="archive">Archiwalne</button>
-                </div>
               </div>
             </div>
             <div class="hub-list" id="subscriptionsListMobile"></div>
@@ -297,19 +289,27 @@
     <div class="modal">
       <div class="mTitle" id="detailsTitle">Szczegóły głosowania</div>
       <div class="mSub">Usuń głos powiązany z zadaniem, jeśli to konieczne.</div>
-      <div class="hub-details">
+      <div class="hub-details-grid">
         <div>
           <div class="hub-details-head">Zagłosowali</div>
           <div class="hub-details-list" id="detailsVoted"></div>
         </div>
         <div>
-          <div class="hub-details-head">Nie zagłosowali / Odrzucili</div>
+          <div class="hub-details-head">Nie zagłosowali</div>
           <div class="hub-details-list" id="detailsPending"></div>
         </div>
-        <div class="hub-details-side">
-          <div class="hub-details-head">Anonimowe</div>
-          <div class="hub-anon-count" id="detailsAnon">0</div>
+        <div>
+          <div class="hub-details-head">Odrzucili</div>
+          <div class="hub-details-list" id="detailsDeclined"></div>
         </div>
+        <div>
+          <div class="hub-details-head">Anulowane</div>
+          <div class="hub-details-list" id="detailsCancelled"></div>
+        </div>
+      </div>
+      <div class="hub-details-side">
+        <div class="hub-details-head">Anonimowe</div>
+        <div class="hub-anon-count" id="detailsAnon">0</div>
       </div>
       <div class="hub-modal-actions">
         <button class="btn sm" id="btnDetailsClose" type="button">Zamknij</button>

@@ -4353,7 +4353,7 @@ begin
   values (
     auth.uid(),
     v_user_id,
-    v_email,
+    case when v_user_id is null then v_email else null end,
     'pending'
   )
   returning id, token into v_id, v_token;
@@ -4364,7 +4364,7 @@ begin
     'id', v_id,
     'token', v_token,
     'channel', case when v_user_id is not null then 'onsite' else 'email' end,
-    'email', v_email
+    'email', case when v_user_id is null then v_email else null end
   );
 end;
 $function$

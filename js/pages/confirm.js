@@ -12,6 +12,10 @@ function qp(name){
   return new URL(location.href).searchParams.get(name);
 }
 
+function hp(name){
+  return new URLSearchParams(location.hash.replace(/^#/, "")).get(name);
+}
+
 document.addEventListener("DOMContentLoaded", async () => {
   setErr("");
 
@@ -26,7 +30,15 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   } catch {}
 
-  const code = qp("code");
+  const hashError = hp("error_description") || hp("error");
+  if (hashError) {
+    setStatus("Link jest nieprawidłowy lub wygasł.");
+    setErr(decodeURIComponent(hashError.replace(/\+/g, " ")));
+    back.style.display = "inline-flex";
+    return;
+  }
+
+  const code = qp("code") || hp("code");
   if (!code) {
     setStatus("Brak kodu w linku.");
     setErr("Wygląda na to, że link jest niepełny albo został już użyty.");
