@@ -23,7 +23,6 @@
 
       <div class="form">
         <input id="email" type="email" placeholder="Email" autocomplete="email"/>
-        <input id="username" placeholder="Nazwa użytkownika" autocomplete="username" />
         <input id="pass" type="password" placeholder="Hasło" autocomplete="current-password"/>
         <input id="pass2" type="password" placeholder="Powtórz hasło" autocomplete="new-password" style="display:none"/>
 
@@ -39,6 +38,19 @@
       </div>
     </div>
   </div>
+
+  <div class="overlay" id="usernameOverlay" aria-hidden="true">
+    <div class="modal">
+      <div class="modal-title">Ustaw nazwę użytkownika</div>
+      <div class="modal-sub">To jednorazowe ustawienie pomoże Cię rozpoznać w panelu.</div>
+
+      <input id="usernameFirst" placeholder="Nazwa użytkownika" autocomplete="username" />
+      <div class="modal-err" id="usernameErr"></div>
+
+      <div class="modal-actions">
+        <button class="btn main" id="btnUsernameSave" type="button">Zapisz</button>
+      </div>
+    </div>
+  </div>
 </body>
 </html>
-
