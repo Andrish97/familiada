@@ -518,10 +518,6 @@ ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 
 ALTER TABLE public.qb_categories ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY profiles_select_authenticated ON public.profiles FOR SELECT TO authenticated USING (true);
-
-CREATE POLICY profiles_update_self ON public.profiles FOR UPDATE TO authenticated USING ((id = auth.uid())) WITH CHECK ((id = auth.uid()));
-
 ALTER TABLE public.qb_category_tags ENABLE ROW LEVEL SECURITY;
 
 ALTER TABLE public.qb_question_tags ENABLE ROW LEVEL SECURITY;
@@ -621,6 +617,10 @@ CREATE POLICY poll_votes_select_owner ON public.poll_votes FOR SELECT TO authent
    FROM games g
   WHERE ((g.id = poll_votes.game_id) AND (g.owner_id = auth.uid())))));
 null
+CREATE POLICY profiles_select_authenticated ON public.profiles FOR SELECT TO authenticated USING (true);
+
+CREATE POLICY profiles_update_self ON public.profiles FOR UPDATE TO authenticated USING ((id = auth.uid())) WITH CHECK ((id = auth.uid()));
+
 null
 null
 null
@@ -1674,9 +1674,7 @@ declare
 begin
   v_email := lower(coalesce(new.email, ''));
 
-  -- username z user_metadata (Ty wysyłasz data: { username: ... })
   v_username := trim(coalesce(new.raw_user_meta_data->>'username', ''));
-
   if v_username = '' then
     v_username := null;
   end if;
@@ -1690,6 +1688,8 @@ begin
   return new;
 end;
 $function$
+
+
 CREATE OR REPLACE FUNCTION public.is_base_owner(p_base_id uuid)
  RETURNS boolean
  LANGUAGE sql
@@ -1948,7 +1948,12 @@ BEGIN
     END;
 
     IF task_id IS NOT NULL THEN
-      DELETE FROM public.poll_tasks
+      UPDATE public.poll_tasks
+        SET status = 'pending',
+            done_at = null,
+            opened_at = null,
+            declined_at = null,
+            cancelled_at = null
       WHERE id = task_id AND owner_id = u;
     END IF;
   END IF;
@@ -2494,8 +2499,13 @@ begin
      and v_sub.subscriber_user_id is null
      and v_sub.cancelled_at is null
      and v_sub.declined_at is null then
+    if v_sub.subscriber_email is not null
+       and public._norm_email(v_sub.subscriber_email) <> public._norm_email(v_email) then
+      return false;
+    end if;
+
     update public.poll_subscriptions s
-       set subscriber_email = v_email,
+       set subscriber_email = coalesce(s.subscriber_email, v_email),
            status = 'active',
            opened_at = coalesce(s.opened_at, now()),
            accepted_at = now()
@@ -2605,10 +2615,9 @@ CREATE OR REPLACE FUNCTION public.poll_open(p_game_id uuid, p_key text)
 AS $function$
 declare
   v_type public.game_type;
-  v_status text;
 begin
   -- weryfikacja klucza + pobranie typu gry
-  select g.type, g.status into v_type, v_status
+  select g.type into v_type
   from public.games g
   where g.id = p_game_id
     and g.share_key_poll = p_key;
@@ -2626,12 +2635,10 @@ begin
   set status = 'poll_open',
       poll_opened_at = now(),
       poll_closed_at = null,
-      share_key_poll = case when v_status = 'ready' then public.gen_share_key(18) else share_key_poll end,
       updated_at = now()
   where id = p_game_id;
 
   -- restart sesji: usuń stare dane ankietowe
-  delete from public.poll_tasks where game_id = p_game_id;
   delete from public.poll_votes where game_id = p_game_id;
   delete from public.poll_text_entries where game_id = p_game_id;
   delete from public.poll_sessions where game_id = p_game_id;
@@ -2990,7 +2997,12 @@ begin
       return jsonb_build_object('ok', false, 'error', 'not_your_invite');
     end if;
   else
-    -- invite emailowy: po zalogowaniu podpinamy do user_id
+    -- invite emailowy: musi pasować do mojego maila
+    if public._norm_email(s.subscriber_email) is null or public._norm_email(s.subscriber_email) <> my_email then
+      return jsonb_build_object('ok', false, 'error', 'email_mismatch');
+    end if;
+
+    -- opcjonalnie: po zalogowaniu podpinamy do user_id
     update public.poll_subscriptions
       set subscriber_user_id = my_uid,
           subscriber_email = null
@@ -3045,9 +3057,12 @@ begin
     return jsonb_build_object('ok', true, 'kind', 'sub', 'action', 'accept', 'note', 'already_active');
   end if;
 
+  if public._norm_email(s.subscriber_email) <> e then
+    return jsonb_build_object('ok', false, 'error', 'email_mismatch');
+  end if;
+
   update public.poll_subscriptions
-    set subscriber_email = e,
-        status = 'active',
+    set status = 'active',
         accepted_at = coalesce(accepted_at, now()),
         opened_at   = coalesce(opened_at, now()),
         declined_at = null,
@@ -4536,18 +4551,26 @@ begin
     return null;
   end if;
 
-  -- jeśli to wygląda jak e-mail, zwracamy to bez DB
   if position('@' in v) > 0 then
     return lower(v);
   end if;
 
-  -- w przeciwnym razie traktujemy jako username
-  select lower(email) into v
-  from public.profiles
-  where lower(username) = lower(v)
+  select lower(u.email)
+  into v
+  from public.profiles p
+  join auth.users u on u.id = p.id
+  where lower(p.username) = lower(v)
   limit 1;
 
-  return v; -- null jeśli nie znaleziono
+  if v is null then
+    select lower(email)
+    into v
+    from public.profiles
+    where lower(username) = lower(p_login)
+    limit 1;
+  end if;
+
+  return v;
 end;
 $function$
 CREATE OR REPLACE FUNCTION public.revoke_base_share(p_base_id uuid, p_user_id uuid)
