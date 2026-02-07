@@ -18,6 +18,14 @@ const tabPolls = $("tabPolls");
 const tabSubs = $("tabSubs");
 const panelPolls = $("panelPolls");
 const panelSubs = $("panelSubs");
+const tabPollsMobile = $("tabPollsMobile");
+const tabTasksMobile = $("tabTasksMobile");
+const tabSubscribersMobile = $("tabSubscribersMobile");
+const tabSubscriptionsMobile = $("tabSubscriptionsMobile");
+const panelPollsMobile = $("panelPollsMobile");
+const panelTasksMobile = $("panelTasksMobile");
+const panelSubscribersMobile = $("panelSubscribersMobile");
+const panelSubscriptionsMobile = $("panelSubscriptionsMobile");
 
 const MAIL_FUNCTION_URL = `${SUPABASE_URL}/functions/v1/send-mail`;
 
@@ -216,16 +224,17 @@ async function sendMail({ to, subject, html }) {
 
 async function sendSubscriptionEmail({ to, link, ownerLabel }) {
   const actionUrl = mailLink(link);
+  const title = `Zaproszenie do subskrypcji od użytkownika ${ownerLabel}`;
   const html = buildMailHtml({
-    title: "Zaproszenie do subskrypcji",
+    title,
     subtitle: "Centrum sondaży",
-    body: `Użytkownik <strong>${ownerLabel}</strong> zaprasza Cię do subskrypcji. Kliknij przycisk, aby zaakceptować zaproszenie.`,
-    actionLabel: "Akceptuj zaproszenie",
+    body: `Użytkownik <strong>${ownerLabel}</strong> zaprasza Cię do subskrypcji. Kliknij przycisk, aby zobaczyć zaproszenie.`,
+    actionLabel: "Zobacz zaproszenie",
     actionUrl,
   });
   await sendMail({
     to,
-    subject: "Zaproszenie do subskrypcji — Familiada",
+    subject: title,
     html,
   });
 }
@@ -265,6 +274,23 @@ function setActiveTab(tab) {
   tabSubs?.classList.toggle("active", !isPolls);
   panelPolls?.classList.toggle("active", isPolls);
   panelSubs?.classList.toggle("active", !isPolls);
+}
+
+function setActiveMobileTab(tab) {
+  const isPolls = tab === "polls";
+  const isTasks = tab === "tasks";
+  const isSubscribers = tab === "subscribers";
+  const isSubscriptions = tab === "subscriptions";
+
+  tabPollsMobile?.classList.toggle("active", isPolls);
+  tabTasksMobile?.classList.toggle("active", isTasks);
+  tabSubscribersMobile?.classList.toggle("active", isSubscribers);
+  tabSubscriptionsMobile?.classList.toggle("active", isSubscriptions);
+
+  panelPollsMobile?.classList.toggle("active", isPolls);
+  panelTasksMobile?.classList.toggle("active", isTasks);
+  panelSubscribersMobile?.classList.toggle("active", isSubscribers);
+  panelSubscriptionsMobile?.classList.toggle("active", isSubscriptions);
 }
 
 function updateBadges() {
@@ -1101,6 +1127,12 @@ document.addEventListener("DOMContentLoaded", async () => {
   tabPolls?.addEventListener("click", () => setActiveTab("polls"));
   tabSubs?.addEventListener("click", () => setActiveTab("subs"));
   setActiveTab("polls");
+
+  tabPollsMobile?.addEventListener("click", () => setActiveMobileTab("polls"));
+  tabTasksMobile?.addEventListener("click", () => setActiveMobileTab("tasks"));
+  tabSubscribersMobile?.addEventListener("click", () => setActiveMobileTab("subscribers"));
+  tabSubscriptionsMobile?.addEventListener("click", () => setActiveMobileTab("subscriptions"));
+  setActiveMobileTab("polls");
 
   btnShare?.addEventListener("click", openShareModal);
   btnShareMobile?.addEventListener("click", openShareModal);
