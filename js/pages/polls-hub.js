@@ -88,10 +88,6 @@ let subscriptions = [];
 let pollClosedAt = new Map();
 let pollReadyMap = new Map();
 let sharePollId = null;
-let shareBaseline = new Set();
-let autoRefreshTimer = null;
-let isRefreshing = false;
-let subTokenPrompted = false;
 
 const sortState = {
   polls: "newest",
@@ -309,25 +305,6 @@ async function sendMail({ to, subject, html }) {
     },
     body: JSON.stringify({ to, subject, html }),
   });
-  if (res.status === 401) {
-    const { data: refreshed } = await sb().auth.refreshSession();
-    const freshToken = refreshed?.session?.access_token;
-    if (freshToken) {
-      const retry = await fetch(MAIL_FUNCTION_URL, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${freshToken}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ to, subject, html }),
-      });
-      if (!retry.ok) {
-        const text = await retry.text();
-        throw new Error(text || "Nie udało się wysłać maila.");
-      }
-      return;
-    }
-  }
   if (!res.ok) {
     const text = await res.text();
     throw new Error(text || "Nie udało się wysłać maila.");
@@ -556,16 +533,16 @@ function pollTileClass(poll) {
 
 function pollVotesMeta(poll) {
   const sharedTotal = (poll.tasks_active || 0) + (poll.tasks_done || 0);
-  const tasksDone = poll.tasks_done || 0;
-  const anonVotes = poll.anon_votes || 0;
-  const tasksText = sharedTotal > 0 ? `${tasksDone}/${sharedTotal}` : "0/0";
+  const votesTotal = (poll.tasks_done || 0) + (poll.anon_votes || 0);
+  if (sharedTotal > 0) {
+    return {
+      text: `${votesTotal}/${sharedTotal}`,
+      title: `Zagłosowało ${votesTotal} z ${sharedTotal} udostępnionych.`,
+    };
+  }
   return {
-    tasksText,
-    tasksTitle: sharedTotal > 0
-      ? `Zadania: ${tasksDone} z ${sharedTotal} udostępnionych zagłosowało.`
-      : "Zadania: brak udostępnień.",
-    anonText: `${anonVotes}`,
-    anonTitle: `Anonimowe głosy: ${anonVotes}.`,
+    text: `${votesTotal}`,
+    title: `Łącznie oddanych głosów: ${votesTotal}.`,
   };
 }
 
@@ -595,8 +572,7 @@ function renderPolls() {
           <div class="hub-item-sub">${poll.poll_state === "open" ? "Otwarty" : poll.poll_state === "closed" ? "Zamknięty" : "Szkic"}</div>
         </div>
         <div class="hub-item-actions">
-          <span class="hub-item-badge" title="${votesMeta.tasksTitle}">Zadania: ${votesMeta.tasksText}</span>
-          <span class="hub-item-badge hub-item-badge-alt" title="${votesMeta.anonTitle}">Anon: ${votesMeta.anonText}</span>
+          <span class="hub-item-badge" title="${votesMeta.title}">${votesMeta.text}</span>
         </div>
       `;
       item.addEventListener("click", () => selectPoll(poll));
@@ -968,7 +944,6 @@ async function rejectSubscription(sub) {
 async function openShareModal() {
   if (!selectedPollId) return;
   sharePollId = selectedPollId;
-  shareBaseline = new Set();
   shareMsg.textContent = "";
   shareList.innerHTML = "";
   const step = "Pobieranie subskrybentów…";
@@ -996,7 +971,6 @@ async function openShareModal() {
       row.className = "hub-share-item";
       const isActive = status === "pending" || status === "opened";
       const isLocked = status === "done";
-      if (isActive) shareBaseline.add(String(sub.sub_id));
       row.innerHTML = `
         <input type="checkbox" ${isActive ? "checked" : ""} ${isLocked ? "disabled" : ""} data-sub-id="${sub.sub_id}">
         <div>
@@ -1044,15 +1018,6 @@ async function saveShareModal() {
   const selected = [...shareList.querySelectorAll("input[type=checkbox]")]
     .filter((x) => x.checked)
     .map((x) => x.dataset.subId);
-  const selectedSet = new Set(selected);
-  const changed =
-    selected.length !== shareBaseline.size ||
-    selected.some((id) => !shareBaseline.has(String(id)));
-  if (!changed) {
-    shareMsg.textContent = "Brak zmian do zapisania.";
-    setTimeout(closeShareModal, 600);
-    return;
-  }
   const step = "Udostępnianie…";
   try {
     showProgress(true);
@@ -1207,11 +1172,6 @@ async function deleteVote(taskId) {
     showProgress(true);
     setProgress({ step, i: 0, n: 2, msg: "" });
     await sb().rpc("poll_admin_delete_vote", { p_game_id: selectedPollId, p_voter_token: `task:${taskId}` });
-    await sb()
-      .from("poll_tasks")
-      .update({ status: "cancelled" })
-      .eq("id", taskId)
-      .eq("owner_id", currentUser.id);
     setProgress({ step, i: 1, n: 2, msg: "OK" });
     await openDetailsModal({ withProgress: false });
     finishProgress(step, 2);
@@ -1257,8 +1217,6 @@ function renderAll() {
 }
 
 async function refreshData() {
-  if (isRefreshing) return;
-  isRefreshing = true;
   try {
     const [pollsRes, tasksRes, subsRes, mySubsRes] = await Promise.all([
       sb().rpc("polls_hub_list_polls"),
@@ -1307,8 +1265,6 @@ async function refreshData() {
   } catch (e) {
     console.error(e);
     alert("Nie udało się pobrać danych centrum sondaży.");
-  } finally {
-    isRefreshing = false;
   }
 }
 
@@ -1330,21 +1286,6 @@ function maybeFocusFromToken() {
       if (promptAccept) {
         acceptSubscription(match);
       }
-    } else if (currentUser && !subTokenPrompted) {
-      subTokenPrompted = true;
-      confirmModal({
-        title: "Zaproszenie nie pasuje do konta",
-        text: "To zaproszenie jest przypisane do innego adresu e-mail. Wyloguj się i zaloguj na właściwe konto, aby je potwierdzić.",
-        okText: "Wyloguj",
-        cancelText: "Zamknij",
-      }).then(async (ok) => {
-        if (!ok) return;
-        await signOut();
-        const url = new URL("index.html", location.href);
-        url.searchParams.set("next", "polls-hub");
-        url.searchParams.set("s", focusSubToken);
-        location.href = url.toString();
-      });
     }
   }
 }
@@ -1438,10 +1379,4 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
   await refreshData();
-
-  autoRefreshTimer = setInterval(() => {
-    const shareOpen = shareOverlay?.style.display === "grid";
-    const detailsOpen = detailsOverlay?.style.display === "grid";
-    if (!shareOpen && !detailsOpen) refreshData();
-  }, 30000);
 });
