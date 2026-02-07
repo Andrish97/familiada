@@ -111,11 +111,11 @@ body.polls-hub-body {
   display: grid;
   gap: 10px;
   min-height: 80px;
-}
-
-.hub-desktop .hub-list {
-  border-top: 1px solid rgba(255,255,255,.08);
-  padding-top: 10px;
+  padding: 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(0,0,0,.2);
+  overflow: hidden;
 }
 
 .hub-item {
@@ -330,11 +330,20 @@ body.polls-hub-body {
   opacity: .8;
 }
 
-.hub-details {
+.hub-details-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr 180px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 14px;
   margin-top: 14px;
+}
+
+.hub-details-side {
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.04);
+  width: fit-content;
 }
 
 .hub-details-head {
@@ -381,7 +390,7 @@ body.polls-hub-body {
     grid-template-columns: 1fr;
   }
 
-  .hub-details {
+  .hub-details-grid {
     grid-template-columns: 1fr;
   }
 

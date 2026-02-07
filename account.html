@@ -7,53 +7,65 @@
 
   <link rel="icon" href="favicon.ico" />
   <link rel="stylesheet" href="css/base.css"/>
-  <link rel="stylesheet" href="css/auth-landing.css"/>
+  <link rel="stylesheet" href="css/builder.css"/>
   <link rel="stylesheet" href="css/account.css"/>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
   <script type="module" src="js/pages/account.js" defer></script>
 </head>
 
-<body class="landing-body">
-  <div class="landing-shell">
-    <div class="landing-card account-card">
-      <div class="brand">FAMILIADA</div>
-      <div class="sub">Ustawienia konta</div>
+<body class="account-body">
+  <header class="topbar">
+    <div class="brand">FAMILIADA</div>
+    <div class="right">
+      <a class="btn sm" href="builder.html">← Wróć do panelu</a>
+    </div>
+  </header>
 
-      <div class="status" id="status">Ładuję profil…</div>
-      <div class="err" id="err"></div>
-
-      <section class="section">
-        <div class="section-title">Nazwa użytkownika</div>
-        <input id="username" placeholder="Nazwa użytkownika" autocomplete="username"/>
-        <button class="btn main" id="saveUsername" type="button">Zapisz nazwę</button>
-      </section>
-
-      <section class="section">
-        <div class="section-title">E-mail</div>
-        <input id="email" type="email" placeholder="Nowy e-mail" autocomplete="email"/>
-        <button class="btn main" id="saveEmail" type="button">Zmień e-mail</button>
-        <div class="section-hint">Może być wymagana potwierdzająca wiadomość na nowy adres.</div>
-      </section>
-
-      <section class="section">
-        <div class="section-title">Hasło</div>
-        <input id="pass1" type="password" placeholder="Nowe hasło" autocomplete="new-password"/>
-        <input id="pass2" type="password" placeholder="Powtórz nowe hasło" autocomplete="new-password"/>
-        <button class="btn main" id="savePass" type="button">Zmień hasło</button>
-      </section>
-
-      <section class="section danger">
-        <div class="section-title">Usuń konto</div>
-        <div class="section-hint">Ta operacja jest nieodwracalna.</div>
-        <input id="deleteConfirm" placeholder="Wpisz USUŃ, aby potwierdzić" autocomplete="off"/>
-        <button class="btn danger" id="deleteAccount" type="button">Usuń konto i dane</button>
-      </section>
-
-      <div class="actions">
-        <a class="btn" href="builder.html">Wróć do panelu</a>
+  <main class="wrap account-wrap">
+    <div class="bar">
+      <div>
+        <div class="title">Ustawienia konta</div>
+        <div class="hint">Zarządzaj profilem, e-mailem i bezpieczeństwem.</div>
       </div>
     </div>
-  </div>
+
+    <div class="account-status">
+      <div class="status" id="status">Ładuję profil…</div>
+      <div class="err" id="err"></div>
+    </div>
+
+    <div class="account-grid">
+      <section class="account-panel">
+        <div class="section-title">Nazwa użytkownika</div>
+        <div class="section-hint">Widoczna dla subskrybentów i w panelu.</div>
+        <input class="inp" id="username" placeholder="Nazwa użytkownika" autocomplete="username"/>
+        <button class="btn gold full" id="saveUsername" type="button">Zapisz nazwę</button>
+      </section>
+
+      <section class="account-panel">
+        <div class="section-title">E-mail</div>
+        <div class="section-hint">Zmieniaj adres logowania.</div>
+        <input class="inp" id="email" type="email" placeholder="Nowy e-mail" autocomplete="email"/>
+        <button class="btn gold full" id="saveEmail" type="button">Zmień e-mail</button>
+        <div class="section-hint">Po zmianie nastąpi wylogowanie i wymagane będzie ponowne logowanie.</div>
+      </section>
+
+      <section class="account-panel">
+        <div class="section-title">Hasło</div>
+        <div class="section-hint">Minimum 6 znaków.</div>
+        <input class="inp" id="pass1" type="password" placeholder="Nowe hasło" autocomplete="new-password"/>
+        <input class="inp" id="pass2" type="password" placeholder="Powtórz nowe hasło" autocomplete="new-password"/>
+        <button class="btn gold full" id="savePass" type="button">Zmień hasło</button>
+      </section>
+
+      <section class="account-panel danger">
+        <div class="section-title">Usuń konto</div>
+        <div class="section-hint">Ta operacja jest nieodwracalna. Wpisz hasło, aby potwierdzić.</div>
+        <input class="inp" id="deletePassword" type="password" placeholder="Hasło" autocomplete="current-password"/>
+        <button class="btn danger full" id="deleteAccount" type="button">Usuń konto i dane</button>
+      </section>
+    </div>
+  </main>
 </body>
 </html>

@@ -8,7 +8,7 @@ const usernameInput = document.getElementById("username");
 const emailInput = document.getElementById("email");
 const pass1 = document.getElementById("pass1");
 const pass2 = document.getElementById("pass2");
-const deleteConfirm = document.getElementById("deleteConfirm");
+const deletePassword = document.getElementById("deletePassword");
 
 const saveUsername = document.getElementById("saveUsername");
 const saveEmail = document.getElementById("saveEmail");
@@ -18,11 +18,26 @@ const deleteAccount = document.getElementById("deleteAccount");
 function setStatus(m = "") { if (status) status.textContent = m; }
 function setErr(m = "") { if (err) err.textContent = m; }
 
+async function ensureUsernameAvailable(username, userId) {
+  const { data, error } = await sb()
+    .from("profiles")
+    .select("id")
+    .ilike("username", username)
+    .neq("id", userId)
+    .limit(1)
+    .maybeSingle();
+  if (error) throw error;
+  if (data?.id) throw new Error("Ta nazwa użytkownika jest już zajęta.");
+}
+
+let currentEmail = "";
+
 async function loadProfile() {
   const user = await requireAuth("index.html?setup=username");
   if (!user) return;
   usernameInput.value = user.username || "";
   emailInput.value = user.email || "";
+  currentEmail = user.email || "";
   setStatus("Profil załadowany.");
 }
 
@@ -32,6 +47,7 @@ async function handleUsernameSave() {
     const username = validateUsername(usernameInput.value || "");
     const { data: userData, error: userError } = await sb().auth.getUser();
     if (userError || !userData?.user) throw new Error("Brak aktywnej sesji.");
+    await ensureUsernameAvailable(username, userData.user.id);
 
     const { error } = await sb()
       .from("profiles")
@@ -53,7 +69,11 @@ async function handleEmailSave() {
     const mail = String(emailInput.value || "").trim().toLowerCase();
     if (!mail || !mail.includes("@")) throw new Error("Podaj poprawny e-mail.");
 
-    const { data, error } = await sb().auth.updateUser({ email: mail });
+    const redirectTo = new URL("confirm.html", location.href).toString();
+    const { data, error } = await sb().auth.updateUser(
+      { email: mail },
+      { emailRedirectTo: redirectTo }
+    );
     if (error) throw error;
 
     if (data?.user?.email?.toLowerCase() === mail) {
@@ -64,7 +84,18 @@ async function handleEmailSave() {
       if (profileError) throw profileError;
     }
 
-    setStatus("Zapisano zmianę e-maila. Sprawdź skrzynkę.");
+    if (currentEmail) {
+      localStorage.setItem("pendingEmailChange", JSON.stringify({
+        old: currentEmail,
+        next: mail,
+        ts: Date.now(),
+      }));
+    }
+    setStatus("Zapisano zmianę e-maila. Zaloguj się ponownie.");
+    await signOut();
+    setTimeout(() => {
+      location.href = "index.html";
+    }, 400);
   } catch (e) {
     console.error(e);
     setErr(e?.message || String(e));
@@ -94,8 +125,17 @@ async function handlePassSave() {
 async function handleDeleteAccount() {
   setErr("");
   try {
-    const confirm = String(deleteConfirm.value || "").trim().toUpperCase();
-    if (confirm !== "USUŃ") throw new Error("Wpisz USUŃ, aby potwierdzić.");
+    const pwd = String(deletePassword.value || "");
+    if (!pwd) throw new Error("Podaj hasło, aby potwierdzić.");
+
+    const { data: userData, error: userError } = await sb().auth.getUser();
+    if (userError || !userData?.user?.email) throw new Error("Brak aktywnej sesji.");
+
+    const { error: signInError } = await sb().auth.signInWithPassword({
+      email: userData.user.email,
+      password: pwd,
+    });
+    if (signInError) throw new Error("Nieprawidłowe hasło.");
 
     setStatus("Usuwam konto…");
     const { data, error } = await sb().functions.invoke("delete-account");
