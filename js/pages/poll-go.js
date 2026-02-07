@@ -160,22 +160,37 @@ async function handleSubInvite(data, user) {
   const userEmail = normalizeEmail(user?.email);
 
   if (user) {
-    const matchById = data.subscriber_user_id && user.id === data.subscriber_user_id;
-    const matchByEmail = !data.subscriber_user_id && expectedEmail && userEmail === expectedEmail;
-    if (!(matchById || matchByEmail)) {
-      showMismatch(head, data.subscriber_email);
+    if (hasAccountInvite) {
+      const matchById = data.subscriber_user_id && user.id === data.subscriber_user_id;
+      if (!matchById) {
+        showMismatch(head, data.subscriber_email);
+        return;
+      }
+
+      if (!isActive) {
+        showExpired(head);
+        return;
+      }
+
+      setView({ head, text: "Żeby zaakceptować przejdź do Centrum Sondaży." });
+      clearActions();
+      addAction("Centrum Sondaży", "gold", redirectToHub);
+      showEmailInput(false);
       return;
     }
+  }
 
+  if (user && !hasAccountInvite) {
     if (!isActive) {
       showExpired(head);
       return;
     }
 
-    setView({ head, text: "Żeby zaakceptować przejdź do Centrum Sondaży." });
+    setView({ head, text: "Zaproszenie do subskrypcji jest aktywne." });
     clearActions();
-    addAction("Centrum Sondaży", "gold", redirectToHub);
     showEmailInput(false);
+    addAction("Akceptuj", "gold", async () => acceptSubDirect(userEmail || expectedEmail));
+    addAction("Odrzuć", "danger", async () => declineSub());
     return;
   }
 
@@ -209,28 +224,41 @@ async function handleSubInvite(data, user) {
 
 async function handleTaskInvite(data, user) {
   const head = buildTaskHeading(data);
-  const expectedEmail = normalizeEmail(data.recipient_email);
   const isActive = ["pending", "opened"].includes(data.status);
   const hasAccountInvite = Boolean(data.recipient_user_id);
-  const userEmail = normalizeEmail(user?.email);
 
   if (user) {
-    const matchById = data.recipient_user_id && user.id === data.recipient_user_id;
-    const matchByEmail = !data.recipient_user_id && expectedEmail && userEmail === expectedEmail;
-    if (!(matchById || matchByEmail)) {
-      showMismatch(head, data.recipient_email);
+    if (hasAccountInvite) {
+      const matchById = data.recipient_user_id && user.id === data.recipient_user_id;
+      if (!matchById) {
+        showMismatch(head, data.recipient_email);
+        return;
+      }
+
+      if (!isActive) {
+        showExpired(head);
+        return;
+      }
+
+      setView({ head, text: "Żeby zaakceptować przejdź do Centrum Sondaży." });
+      clearActions();
+      addAction("Centrum Sondaży", "gold", redirectToHub);
+      showEmailInput(false);
       return;
     }
+  }
 
+  if (user && !hasAccountInvite) {
     if (!isActive) {
       showExpired(head);
       return;
     }
 
-    setView({ head, text: "Żeby zaakceptować przejdź do Centrum Sondaży." });
+    setView({ head, text: "Zaproszenie do głosowania jest aktywne." });
     clearActions();
-    addAction("Centrum Sondaży", "gold", redirectToHub);
     showEmailInput(false);
+    addAction("Głosuj", "gold", () => openVote(data.poll_type));
+    addAction("Odrzuć", "danger", async () => declineTask());
     return;
   }
 

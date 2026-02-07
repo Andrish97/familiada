@@ -531,6 +531,21 @@ function pollTileClass(poll) {
   return ready ? "poll-draft-ready" : "poll-draft";
 }
 
+function pollVotesMeta(poll) {
+  const sharedTotal = (poll.tasks_active || 0) + (poll.tasks_done || 0);
+  const votesTotal = (poll.tasks_done || 0) + (poll.anon_votes || 0);
+  if (sharedTotal > 0) {
+    return {
+      text: `${votesTotal}/${sharedTotal}`,
+      title: `Zagłosowało ${votesTotal} z ${sharedTotal} udostępnionych.`,
+    };
+  }
+  return {
+    text: `${votesTotal}`,
+    title: `Łącznie oddanych głosów: ${votesTotal}.`,
+  };
+}
+
 function renderEmpty(listEl, text) {
   if (!listEl) return;
   listEl.innerHTML = `<div class="hub-empty">${text}</div>`;
@@ -547,6 +562,7 @@ function renderPolls() {
       return;
     }
     for (const poll of sorted) {
+      const votesMeta = pollVotesMeta(poll);
       const item = document.createElement("div");
       item.className = `hub-item ${pollTileClass(poll)} ${poll.game_id === selectedPollId ? "selected" : ""}`;
       item.dataset.id = poll.game_id;
@@ -554,6 +570,9 @@ function renderPolls() {
         <div>
           <div class="hub-item-title">${pollTypeLabel(poll.poll_type)} — ${poll.name || "—"}</div>
           <div class="hub-item-sub">${poll.poll_state === "open" ? "Otwarty" : poll.poll_state === "closed" ? "Zamknięty" : "Szkic"}</div>
+        </div>
+        <div class="hub-item-actions">
+          <span class="hub-item-badge" title="${votesMeta.title}">${votesMeta.text}</span>
         </div>
       `;
       item.addEventListener("click", () => selectPoll(poll));
@@ -951,14 +970,19 @@ async function openShareModal() {
       const row = document.createElement("label");
       row.className = "hub-share-item";
       const isActive = status === "pending" || status === "opened";
+      const isLocked = status === "done";
       row.innerHTML = `
-        <input type="checkbox" ${isActive ? "checked" : ""} data-sub-id="${sub.sub_id}">
+        <input type="checkbox" ${isActive ? "checked" : ""} ${isLocked ? "disabled" : ""} data-sub-id="${sub.sub_id}">
         <div>
           <div class="hub-item-title">${sub.subscriber_display_label || "—"}</div>
           <div class="hub-share-status">${shareStatusLabel(status)}</div>
         </div>
-        <div class="hub-share-status">${status === "done" ? "Wykonane" : status ? "Dostępne" : "Brak"}</div>
+        <div class="hub-share-status">${shareStatusHint(status)}</div>
       `;
+      const input = row.querySelector("input");
+      if (input && isLocked) {
+        input.title = "Zagłosowane — usuń głos, aby odblokować.";
+      }
       shareList.appendChild(row);
     }
 
@@ -977,6 +1001,16 @@ async function openShareModal() {
 function shareStatusLabel(status) {
   if (status === "done") return "Wykonane";
   if (status === "pending" || status === "opened") return "Dostępne";
+  if (status === "declined") return "Odrzucone";
+  if (status === "cancelled") return "Anulowane";
+  return "Brak";
+}
+
+function shareStatusHint(status) {
+  if (status === "done") return "Zablokowane";
+  if (status === "pending" || status === "opened") return "Aktywne";
+  if (status === "declined") return "Możesz ponowić";
+  if (status === "cancelled") return "Możesz ponowić";
   return "Brak";
 }
 
