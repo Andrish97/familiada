@@ -5,7 +5,6 @@ import { getUser } from "../core/auth.js";
 const qs = new URLSearchParams(location.search);
 const taskToken = qs.get("t");
 const subToken = qs.get("s");
-const goToken = taskToken || subToken;
 
 const $ = (id) => document.getElementById(id);
 
@@ -55,240 +54,140 @@ function redirectToHub() {
   location.href = url.toString();
 }
 
-function normalizeEmail(value) {
-  return String(value || "").trim().toLowerCase();
-}
-
-async function resolveToken() {
-  const { data, error } = await sb().rpc("poll_go_resolve", { p_token: goToken });
+async function handleTaskResolve(emailOverride) {
+  const { data, error } = await sb().rpc("poll_task_resolve", { p_token: taskToken, p_email: emailOverride || null });
   if (error) throw error;
   return data;
 }
 
-function openVote(type) {
-  const page = type === "poll_points" ? "poll-points.html" : "poll-text.html";
-  location.href = `${page}?t=${encodeURIComponent(goToken)}`;
-}
-
-async function declineTask() {
-  try {
-    await sb().rpc("poll_task_decline", { p_token: goToken });
-    setView({ head: "Odrzucono", text: "Zadanie zostało odrzucone." });
-    clearActions();
-  } catch (e) {
-    console.error(e);
-    setView({ head: "Błąd", text: "Nie udało się odrzucić zadania." });
-  }
-}
-
-function buildSubHeading(data) {
-  const owner = data?.owner_label ? ` od użytkownika ${data.owner_label}` : "";
-  return `Zaproszenie do subskrypcji${owner}`;
-}
-
-function buildTaskHeading(data) {
-  const name = data?.game_name ? `„${data.game_name}”` : "sondażu";
-  const owner = data?.owner_label ? ` od użytkownika ${data.owner_label}` : "";
-  return `Zaproszenie do głosowania w ${name}${owner}`;
-}
-
-function showMismatch(head, expectedEmail) {
-  const emailText = expectedEmail || "adresata zaproszenia";
-  setView({
-    head,
-    text: `Zaproszenie Ciebie nie dotyczy, zaloguj się jako ${emailText} i spróbuj ponownie.`,
-  });
-  clearActions();
-  showEmailInput(false);
-}
-
-function showExpired(head) {
-  setView({ head, text: "Zaproszenie zostało wykorzystane." });
-  clearActions();
-  showEmailInput(false);
-}
-
-async function acceptSubDirect(email) {
-  try {
-    const { data, error } = await sb().rpc("poll_sub_accept_email", { p_token: goToken, p_email: email });
-    if (error) throw error;
-    if (!data?.ok) throw new Error(data?.error || "Nie udało się zaakceptować.");
-    setView({ head: "Subskrypcja aktywna", text: "Zaproszenie zostało zaakceptowane." });
-    clearActions();
-  } catch (e) {
-    console.error(e);
-    setView({ head: "Błąd", text: "Nie udało się zaakceptować zaproszenia." });
-  }
-}
-
-async function subscribeByEmail() {
-  const email = emailInput?.value.trim();
-  if (!email) {
-    setView({ head: "Brak e-maila", text: "Podaj poprawny adres e-mail." });
-    return;
-  }
-  try {
-    const { data, error } = await sb().rpc("poll_go_subscribe_email", { p_token: goToken, p_email: email });
-    if (error) throw error;
-    if (!data) throw new Error("Nie udało się zasubskrybować.");
-    setView({ head: "Subskrypcja aktywna", text: "Subskrypcja została dodana." });
-    clearActions();
-    showEmailInput(false);
-  } catch (e) {
-    console.error(e);
-    setView({ head: "Błąd", text: "Nie udało się dodać subskrypcji." });
-  }
-}
-
-async function declineSub() {
-  try {
-    const { data, error } = await sb().rpc("poll_sub_decline", { p_token: goToken });
-    if (error) throw error;
-    if (!data?.ok) throw new Error(data?.error || "Nie udało się odrzucić.");
-    setView({ head: "Odrzucono", text: "Zaproszenie zostało odrzucone." });
-    clearActions();
-  } catch (e) {
-    console.error(e);
-    setView({ head: "Błąd", text: "Nie udało się odrzucić zaproszenia." });
-  }
-}
-
-async function handleSubInvite(data, user) {
-  const head = buildSubHeading(data);
-  const expectedEmail = normalizeEmail(data.subscriber_email);
-  const isActive = data.status === "pending";
-  const hasAccountInvite = Boolean(data.subscriber_user_id);
-  const userEmail = normalizeEmail(user?.email);
-
-  if (user) {
-    const matchById = data.subscriber_user_id && user.id === data.subscriber_user_id;
-    const matchByEmail = !data.subscriber_user_id && expectedEmail && userEmail === expectedEmail;
-    if (!(matchById || matchByEmail)) {
-      showMismatch(head, data.subscriber_email);
-      return;
-    }
-
-    if (!isActive) {
-      showExpired(head);
-      return;
-    }
-
-    setView({ head, text: "Żeby zaakceptować przejdź do Centrum Sondaży." });
-    clearActions();
-    addAction("Centrum Sondaży", "gold", redirectToHub);
-    showEmailInput(false);
-    return;
-  }
-
-  if (!isActive) {
-    if (hasAccountInvite) {
-      showExpired(head);
-      return;
-    }
-
-    setView({ head, text: "Jeśli chcesz zasubskrybować podaj adres email." });
-    showEmailInput(true);
-    clearActions();
-    addAction("Subskrybuj", "gold", async () => subscribeByEmail());
-    return;
-  }
-
-  if (hasAccountInvite) {
-    setView({ head, text: "Żeby zaakceptować musisz się zalogować." });
-    clearActions();
-    addAction("Zaloguj", "gold", redirectToLogin);
-    showEmailInput(false);
-    return;
-  }
-
-  setView({ head, text: "Zaproszenie do subskrypcji jest aktywne." });
-  clearActions();
-  showEmailInput(false);
-  addAction("Akceptuj", "gold", async () => acceptSubDirect(data.subscriber_email));
-  addAction("Odrzuć", "danger", async () => declineSub());
-}
-
-async function handleTaskInvite(data, user) {
-  const head = buildTaskHeading(data);
-  const expectedEmail = normalizeEmail(data.recipient_email);
-  const isActive = ["pending", "opened"].includes(data.status);
-  const hasAccountInvite = Boolean(data.recipient_user_id);
-  const userEmail = normalizeEmail(user?.email);
-
-  if (user) {
-    const matchById = data.recipient_user_id && user.id === data.recipient_user_id;
-    const matchByEmail = !data.recipient_user_id && expectedEmail && userEmail === expectedEmail;
-    if (!(matchById || matchByEmail)) {
-      showMismatch(head, data.recipient_email);
-      return;
-    }
-
-    if (!isActive) {
-      showExpired(head);
-      return;
-    }
-
-    setView({ head, text: "Żeby zaakceptować przejdź do Centrum Sondaży." });
-    clearActions();
-    addAction("Centrum Sondaży", "gold", redirectToHub);
-    showEmailInput(false);
-    return;
-  }
-
-  if (!isActive) {
-    showExpired(head);
-    return;
-  }
-
-  if (hasAccountInvite) {
-    setView({ head, text: "Żeby zagłosować musisz się zalogować." });
-    clearActions();
-    addAction("Zaloguj", "gold", redirectToLogin);
-    showEmailInput(false);
-    return;
-  }
-
-  setView({ head, text: "Zaproszenie do głosowania jest aktywne." });
-  clearActions();
-  showEmailInput(false);
-  addAction("Głosuj", "gold", () => openVote(data.poll_type));
-  addAction("Odrzuć", "danger", async () => declineTask());
-}
-
-async function init() {
-  if (!goToken) {
-    setView({ head: "Brak linku", text: "Brakuje tokenu zaproszenia." });
-    return;
-  }
-
+async function handleTask() {
   const user = await getUser();
   try {
-    const data = await resolveToken();
+    const data = await handleTaskResolve();
     if (!data?.ok) {
       setView({ head: "Link nieważny", text: "Link jest nieważny lub nieaktywny." });
       return;
     }
 
-    if (data.kind === "sub") {
-      await handleSubInvite(data, user);
+    if (data.requires_auth && !user) {
+      setView({ head: "Zaloguj się", text: "Zaloguj się, aby przejść do głosowania." });
+      clearActions();
+      addAction("Zaloguj się", "gold", redirectToLogin);
+      addAction("Wróć", "", () => history.back());
       return;
     }
 
-    if (data.kind === "task") {
-      await handleTaskInvite(data, user);
+    if (data.needs_email) {
+      setView({ head: "Podaj e-mail", text: "Podaj e-mail, aby odebrać zaproszenie." });
+      showEmailInput(true);
+      clearActions();
+      addAction("Odrzuć", "danger", async () => declineTask());
       return;
     }
 
-    setView({ head: "Błąd", text: "Nie udało się rozpoznać zaproszenia." });
+    showEmailInput(false);
+    setView({ head: "Zadanie do głosowania", text: "Możesz przejść do głosowania lub odrzucić zadanie." });
+    clearActions();
+    addAction("Przejdź do głosowania", "gold", () => openVote(data.poll_type));
+    addAction("Odrzuć", "danger", async () => declineTask());
   } catch (e) {
     console.error(e);
     setView({ head: "Błąd", text: "Nie udało się otworzyć zaproszenia." });
   }
 }
 
+function openVote(type) {
+  const page = type === "poll_points" ? "poll-points.html" : "poll-text.html";
+  location.href = `${page}?t=${encodeURIComponent(taskToken)}`;
+}
+
+async function declineTask() {
+  try {
+    await sb().rpc("poll_task_decline", { p_token: taskToken });
+    setView({ head: "Odrzucono", text: "Zadanie zostało odrzucone." });
+    clearActions();
+    addAction("Wróć", "", () => history.back());
+  } catch (e) {
+    console.error(e);
+    setView({ head: "Błąd", text: "Nie udało się odrzucić zadania." });
+  }
+}
+
+async function handleSub() {
+  const user = await getUser();
+  if (user) {
+    setView({ head: "Zaproszenie do subskrypcji", text: "Masz zaproszenie do subskrypcji. Przejdź do centrum sondaży, aby je obsłużyć." });
+    clearActions();
+    addAction("Przejdź do centrum", "gold", redirectToHub);
+    return;
+  }
+
+  setView({ head: "Zaproszenie do subskrypcji", text: "Podaj e-mail, aby zaakceptować zaproszenie." });
+  showEmailInput(true);
+  clearActions();
+  addAction("Subskrybuj", "gold", async () => acceptSubEmail());
+  addAction("Odrzuć", "danger", async () => declineSub());
+  if (hint) hint.textContent = "Możesz też zalogować się na konto, aby powiązać zaproszenie.";
+}
+
+async function acceptSubEmail() {
+  const email = emailInput?.value.trim();
+  if (!email) {
+    setView({ head: "Brak e-maila", text: "Podaj poprawny adres e-mail." });
+    return;
+  }
+  try {
+    const { data, error } = await sb().rpc("poll_sub_accept_email", { p_token: subToken, p_email: email });
+    if (error) throw error;
+    if (!data?.ok) throw new Error(data?.error || "Nie udało się zaakceptować.");
+    setView({ head: "Subskrypcja aktywna", text: "Zaproszenie zostało zaakceptowane." });
+    clearActions();
+    addAction("Wróć", "", () => history.back());
+  } catch (e) {
+    console.error(e);
+    setView({ head: "Błąd", text: "Nie udało się zaakceptować zaproszenia." });
+  }
+}
+
+async function declineSub() {
+  try {
+    const { data, error } = await sb().rpc("poll_sub_decline", { p_token: subToken });
+    if (error) throw error;
+    if (!data?.ok) throw new Error(data?.error || "Nie udało się odrzucić.");
+    setView({ head: "Odrzucono", text: "Zaproszenie zostało odrzucone." });
+    clearActions();
+    addAction("Wróć", "", () => history.back());
+  } catch (e) {
+    console.error(e);
+    setView({ head: "Błąd", text: "Nie udało się odrzucić zaproszenia." });
+  }
+}
+
 btnEmailNext?.addEventListener("click", async () => {
-  if (!goToken) return;
-  await subscribeByEmail();
+  if (!taskToken) return;
+  const email = emailInput?.value.trim();
+  if (!email) {
+    setView({ head: "Brak e-maila", text: "Podaj poprawny adres e-mail." });
+    return;
+  }
+  try {
+    const data = await handleTaskResolve(email);
+    if (!data?.ok) throw new Error("invalid");
+    showEmailInput(false);
+    setView({ head: "Zadanie do głosowania", text: "Możesz przejść do głosowania lub odrzucić zadanie." });
+    clearActions();
+    addAction("Przejdź do głosowania", "gold", () => openVote(data.poll_type));
+    addAction("Odrzuć", "danger", async () => declineTask());
+  } catch (e) {
+    console.error(e);
+    setView({ head: "Błąd", text: "Nie udało się potwierdzić e-maila." });
+  }
 });
 
-init();
+if (taskToken) {
+  handleTask();
+} else if (subToken) {
+  handleSub();
+} else {
+  setView({ head: "Brak linku", text: "Brakuje tokenu zaproszenia." });
+}
