@@ -1905,6 +1905,46 @@ begin
   return jsonb_build_object('ok', false, 'reason', 'Nieznany typ gry.');
 end;
 $function$
+CREATE OR REPLACE FUNCTION public.poll_admin_delete_vote(p_game_id uuid, p_voter_token text)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  u uuid;
+  deleted_points int := 0;
+  deleted_text int := 0;
+BEGIN
+  u := auth.uid();
+  IF u IS NULL THEN
+    RETURN jsonb_build_object('ok', false, 'error', 'not_authenticated');
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM public.games g
+    WHERE g.id = p_game_id AND g.owner_id = u
+  ) THEN
+    RETURN jsonb_build_object('ok', false, 'error', 'not_owner');
+  END IF;
+
+  DELETE FROM public.poll_votes
+   WHERE game_id = p_game_id
+     AND voter_token = p_voter_token;
+  GET DIAGNOSTICS deleted_points = ROW_COUNT;
+
+  DELETE FROM public.poll_text_entries
+   WHERE game_id = p_game_id
+     AND voter_token = p_voter_token;
+  GET DIAGNOSTICS deleted_text = ROW_COUNT;
+
+  RETURN jsonb_build_object(
+    'ok', true,
+    'deleted_poll_votes', deleted_points,
+    'deleted_poll_text_entries', deleted_text
+  );
+END;
+$function$
 CREATE OR REPLACE FUNCTION public.poll_admin_preview(p_game_id uuid)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -3067,6 +3107,90 @@ begin
   return 'ok';
 end;
 $function$
+CREATE OR REPLACE FUNCTION public.poll_task_resolve(p_token uuid, p_email text DEFAULT NULL::text)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  t record;
+  u uuid;
+  requires_auth boolean := false;
+  needs_email boolean := false;
+BEGIN
+  u := auth.uid();
+
+  SELECT
+    pt.id,
+    pt.owner_id,
+    pt.recipient_user_id,
+    pt.recipient_email,
+    pt.game_id,
+    pt.poll_type,
+    pt.share_key_poll,
+    pt.status,
+    pt.opened_at,
+    pt.done_at,
+    pt.declined_at,
+    pt.cancelled_at
+  INTO t
+  FROM public.poll_tasks pt
+  WHERE pt.token = p_token
+  LIMIT 1;
+
+  IF t.id IS NULL THEN
+    RETURN jsonb_build_object('ok', false, 'error', 'invalid_token');
+  END IF;
+
+  -- niedostępne u odbiorcy (declined/cancelled), oraz po wykonaniu
+  IF t.status IN ('declined','cancelled') OR t.declined_at IS NOT NULL OR t.cancelled_at IS NOT NULL THEN
+    RETURN jsonb_build_object('ok', false, 'error', 'invalid_or_unavailable_token');
+  END IF;
+
+  IF t.status = 'done' OR t.done_at IS NOT NULL THEN
+    RETURN jsonb_build_object('ok', false, 'error', 'already_done');
+  END IF;
+
+  -- jeżeli task jest przypisany do user_id: wymagamy zgodności sesji
+  IF t.recipient_user_id IS NOT NULL THEN
+    IF u IS NULL THEN
+      requires_auth := true;
+    ELSIF u <> t.recipient_user_id THEN
+      RETURN jsonb_build_object('ok', false, 'error', 'invalid_or_unavailable_token');
+    END IF;
+  END IF;
+
+  -- jeżeli task jest e-mailowy: e-mail może być potrzebny do późniejszego UI/komunikatu
+  IF t.recipient_user_id IS NULL AND t.recipient_email IS NULL THEN
+    -- przypadek czysty e-mail: oczekujemy podania e-mail w UI
+    IF p_email IS NULL OR btrim(p_email) = '' THEN
+      needs_email := true;
+    END IF;
+  END IF;
+
+  -- mark opened (pierwsze wejście)
+  IF t.opened_at IS NULL THEN
+    UPDATE public.poll_tasks
+      SET opened_at = now(),
+          status = CASE WHEN status = 'pending' THEN 'opened' ELSE status END
+      WHERE id = t.id;
+  END IF;
+
+  RETURN jsonb_build_object(
+    'ok', true,
+    'kind', 'task',
+    'task_id', t.id,
+    'game_id', t.game_id,
+    'poll_type', t.poll_type,
+    'key', t.share_key_poll,
+    'voter_token', public.poll_task_voter_token(t.id),
+    'requires_auth', requires_auth,
+    'needs_email', needs_email,
+    'recipient_email', COALESCE(t.recipient_email, NULLIF(btrim(p_email), ''))
+  );
+END;
+$function$
 CREATE OR REPLACE FUNCTION public.poll_task_send(p_game_id uuid, p_poll_type text, p_recipients text[])
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -3184,6 +3308,15 @@ begin
   );
 end;
 $function$
+CREATE OR REPLACE FUNCTION public.poll_task_voter_token(p_task_id uuid)
+ RETURNS text
+ LANGUAGE sql
+ IMMUTABLE
+AS $function$
+  SELECT 'task:' || p_task_id::text
+$function$
+
+
 CREATE OR REPLACE FUNCTION public.poll_text_close_apply(p_game_id uuid, p_key text, p_payload jsonb)
  RETURNS void
  LANGUAGE plpgsql
