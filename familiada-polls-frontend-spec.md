@@ -48,10 +48,8 @@
   - podglądu wyników (zawsze rozwinięte),
   - **otwarcia / zamknięcia** (jak było),
   - oraz pokazania linku/QR do anonimowego głosowania (jak było).
-- **Nie przenosimy** logiki linków/QR do hub’a – to jest w `polls.html`.
 
 ### 1.5 Builder (`builder.html`)
-- Przycisk “Sondaże” **zostaje**.
 - Zmiana dotyczy **badge**: w Builderze pokazujemy **sumę**:
   - liczba aktywnych tasków dla mnie + liczba aktywnych zaproszeń do subskrypcji dla mnie.  
   Źródło: RPC `polls_badge_get()`.
@@ -63,7 +61,7 @@
 ### 2.1 Topbar (`polls-hub.html`)
 - Lewy przycisk: **„← Moje gry”** (powrót do index/builder — zgodnie z Twoim routingiem).
 - Tytuł/brand: **„Centrum sondaży”**.
-- Prawa strona: status zalogowania (`who`) + ewentualnie przycisk „Wyloguj”.
+- Prawa strona: status zalogowania (`who`) +  przycisk „Wyloguj”.
 
 ### 2.2 Karty (Desktop)
 
@@ -95,10 +93,18 @@
 
 Każda lista ma nagłówek sekcji (wewnątrz karty) i mały pasek sterowania:
 
-- **Sortowanie**: roll‑up (dropdown) jak w Builderze.
+- **Sortowanie**: roll‑up (dropdown).
 - **Przełącznik “Aktualne / Archiwalne”**:
   - to jest **wyłącznie UI** (filtr po dacie / statusach).
   - dodatkowo mamy GC w DB dla starych rekordów (patrz rozdz. 9).
+
+Lista sondaże na pasku sterowania ma dodatkowo:
+ - **Przycisk “Udostępnij”** (w pasku nad listą):
+  - aktywny **tylko gdy sondaż otwarty**,
+  - po zaznaczeniu elementu na liscie kliknęciu otwiera modal udostępniania (taski).
+- **Przycisk “Szczegóły”**:
+  - aktywny dla otwartych i zamkniętych,
+  - po zaznaczeniu elementu na liscie kliknęciu otwiera modal “Szczegóły głosowania”.
 
 ### 3.1 Proponowane sortowania (sensowne i kompletne)
 
@@ -152,12 +158,9 @@ Każda lista ma nagłówek sekcji (wewnątrz karty) i mały pasek sterowania:
 
 ### 4.1 Moje sondaże (kafelek)
 **Minimalna treść w wierszu:**
-- po lewej: **kolor tła całego kafelka** (status)
+- **kolor tła całego kafelka** (status)
 - tytuł: **„Typowy sondaż — <Nazwa gry>”** dla `poll_text`  
   **„Punktacja odpowiedzi — <Nazwa gry>”** dla `poll_points`
-- obok tytułu: mała kontrolka typu **„A”** (oznacza: *anonimowe* jest możliwe po otwarciu; to nie jest tryb)
-- po prawej: 2 małe liczniki (opcjonalnie w mini‑pillach):
-  - **zadania aktywne** / **zadania wykonane** (tylko liczby)
 
 **Kolory kafelka (6 stanów):**
 1) Szary: szkic, **nie spełnia kryteriów otwarcia** (nie da się wejść w `polls.html` po double‑click).
@@ -169,18 +172,13 @@ Każda lista ma nagłówek sekcji (wewnątrz karty) i mały pasek sterowania:
 
 **Interakcje:**
 - **Double‑click**:
-  - szary: brak (lub komunikat “Dokończ grę w Moich grach”)
+  - szary: komunikat “Dokończ grę w Moich grach”
   - pozostałe: otwiera `polls.html?id=<gameId>` (panel wyników + open/close).
-- **Przycisk “Udostępnij”** (w pasku nad listą):
-  - aktywny **tylko gdy sondaż otwarty**,
-  - otwiera modal udostępniania (taski).
-- **Przycisk “Szczegóły”**:
-  - aktywny dla otwartych i zamkniętych,
-  - otwiera modal “Szczegóły głosowania”.
+
 
 ### 4.2 Zadania (kafelek)
 **Minimalna treść:**
-- tytuł: “Typowy sondaż — …” / “Punktacja odpowiedzi — …”
+- tytuł: “Typowy sondaż — …” / “Punktacja odpowiedzi — …” (jak na liscie sondaży)
 - kolor:
   - zielony = dostępne,
   - niebieski = wykonane.
@@ -189,10 +187,10 @@ Każda lista ma nagłówek sekcji (wewnątrz karty) i mały pasek sterowania:
 **Interakcje:**
 - klik “X” → odrzuca task (znika z listy odbiorcy): RPC `polls_hub_task_decline(task_id)`
 - **Klik pojedynczy**: tylko zaznacza wpis / pokazuje akcje (bez przekierowania)
-- **Double‑click zielonego** → **od razu do głosowania** (bez `poll_go`):
+- **Double‑click zielonego** → **od razu do głosowania**:
   - `poll-text.html?t=<token>` dla tasków `poll_text`
   - `poll-points.html?t=<token>` dla tasków `poll_points`
-- double‑click niebieskiego: można pozwolić na podgląd wyników (bez zmiany danych) albo po prostu nic nie robić (najprościej: brak akcji)
+- double‑click niebieskiego: brak akcji;
 
 ### 4.3 Moi subskrybenci (kafelek)
 **Minimalna treść:**
@@ -227,7 +225,6 @@ Każda lista ma nagłówek sekcji (wewnątrz karty) i mały pasek sterowania:
   - “Dostępne” / “Wykonane” / “Brak” (a nie 5 statusów technicznych)
 - przyciski:
   - „Zapisz udostępnienie”
-  - (opcjonalnie) „Odwołaj wszystkie” (anuluje aktywne taski)
 
 **Zapis:**
 - klik „Zapisz udostępnienie” → RPC `polls_hub_share_poll(p_game_id, p_sub_ids)`
@@ -244,14 +241,14 @@ Każda lista ma nagłówek sekcji (wewnątrz karty) i mały pasek sterowania:
 **Układ 3‑kolumnowy (jak ustaliliśmy):**
 - **Lewo‑góra:** „Zagłosowali”
 - **Lewo‑dół:** „Nie zagłosowali / Odrzucili” (w praktyce: taski aktywne + odrzucone, ale tylko dla ownera)
-- **Prawo (węższe):** „Anonimowe” (liczba + ewentualnie lista “voter_token” bez danych osobowych)
+- **Prawo (węższe):** „Anonimowe” (liczba)
 
 **Usuwanie głosu:**
 - tylko dla głosów **powiązanych z użytkownikiem / taskiem** (nie dla anonimowych)
 - usuwa **całość głosu per gra (zadanie)**, nie per pytanie
 - po usunięciu:
   - task pozostaje `done` (nie cofamy wykonanego zadania)
-- RPC: `poll_admin_delete_vote(p_game_id, p_voter_token)` (z migracji)
+- RPC: `poll_admin_delete_vote(p_game_id, p_voter_token)`
 
 ---
 
@@ -437,9 +434,3 @@ Ustalenia:
   - sub: zawsze `s=<uuid>`
 - `declined/cancelled` tasków: **niewidoczne odbiorcy**.
 - `id&key` w poll‑text/poll‑points: **zawsze anonimowe** (nawet przy sesji).
-
----
-
-## 14) Załączniki
-- Migracja: `2026-02-07__poll_task_vote_context_and_admin_delete.sql`
-- Dotychczasowy draft: `familiada-polls-frontend-spec.v2.md`
