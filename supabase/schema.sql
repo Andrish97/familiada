@@ -3677,10 +3677,9 @@ AS $function$
     (
       coalesce((j->>'tasks_todo')::int, 0) > 0
       or coalesce((j->>'subs_mine_pending')::int, 0) > 0
-      or coalesce((j->>'subs_their_pending')::int, 0) > 0
     ) as has_new,
     coalesce((j->>'tasks_todo')::int, 0) as tasks_pending,
-    (coalesce((j->>'subs_mine_pending')::int, 0) + coalesce((j->>'subs_their_pending')::int, 0)) as subs_pending,
+    coalesce((j->>'subs_mine_pending')::int, 0) as subs_pending,
     coalesce((j->>'polls_open')::int, 0) as polls_open
   from ov;
 $function$
