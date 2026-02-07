@@ -4,13 +4,10 @@ const status = document.getElementById("status");
 const err = document.getElementById("err");
 const go = document.getElementById("go");
 const back = document.getElementById("back");
-let sessionWarning = "";
+let sessionInfo = "";
 
 function setStatus(m){ status.textContent = m; }
-function setErr(m=""){
-  const parts = [m, sessionWarning].filter(Boolean);
-  err.textContent = parts.join(" ");
-}
+function setErr(m=""){ err.textContent = m || sessionInfo; }
 
 function qp(name){
   return new URL(location.href).searchParams.get(name);
@@ -36,19 +33,21 @@ async function syncProfileEmail(user) {
 document.addEventListener("DOMContentLoaded", async () => {
   setErr("");
 
-  // Aktywna sesja na innym urządzeniu: wyloguj i pokaż komunikat
   try {
     const { data } = await sb().auth.getSession();
     if (data?.session?.user) {
-      await sb().auth.signOut();
-      sessionWarning = "Wykryto aktywną sesję — została wylogowana. Potwierdzenie działa tylko z jednego linku.";
+      sessionInfo = "Masz aktywną sesję — nie przeszkadza w potwierdzeniu linków.";
+      setErr("");
     }
   } catch {}
 
   const hashError = hp("error_description") || hp("error");
   const hashMessage = hp("message");
-  if (hashError) {
-    const decoded = decodeURIComponent(hashError.replace(/\+/g, " "));
+  const queryError = qp("error_description") || qp("error");
+  const queryMessage = qp("message");
+  if (hashError || queryError) {
+    const raw = hashError || queryError;
+    const decoded = decodeURIComponent(raw.replace(/\+/g, " "));
     if (decoded.toLowerCase().includes("already") || decoded.toLowerCase().includes("used")) {
       setStatus("Ten link został już użyty.");
       setErr("Jeśli to zmiana e-maila, potwierdź drugi link z drugiej skrzynki.");
@@ -67,8 +66,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   const tokenHash = qp("token_hash") || qp("token") || hp("token_hash") || hp("token");
   const otpType = qp("type") || hashType;
 
-  if (hashMessage && !code && !accessToken && !refreshToken) {
-    const decoded = decodeURIComponent(hashMessage.replace(/\+/g, " "));
+  if ((hashMessage || queryMessage) && !code && !accessToken && !refreshToken) {
+    const raw = hashMessage || queryMessage;
+    const decoded = decodeURIComponent(raw.replace(/\+/g, " "));
     if (decoded.toLowerCase().includes("confirm link sent to the other email")) {
       setStatus("Potwierdzono pierwszy link.");
       setErr("Potwierdź drugi link z drugiej skrzynki (może być na innym urządzeniu). Dopiero wtedy zalogujesz się na nowy e-mail.");
