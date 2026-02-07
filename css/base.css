@@ -57,6 +57,29 @@ body {
     font-size: 13px
 }
 
+.user-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    min-width: 140px;
+    text-align: left;
+    line-height: 1.1
+}
+
+.user-btn .user-name {
+    font-size: 13px;
+    font-weight: 900;
+    opacity: .95
+}
+
+.user-btn .user-sub {
+    font-size: 11px;
+    opacity: .7;
+    text-transform: none;
+    letter-spacing: .02em
+}
+
 .btn {
     padding: 10px 12px;
     border-radius: 14px;

@@ -24,9 +24,12 @@ async function loginToEmail(login) {
   return String(data || "").trim().toLowerCase();
 }
 
-function validateUsername(un) {
+export function validateUsername(un, { allowEmpty = false } = {}) {
   const v = String(un || "").trim();
-  if (!v) throw new Error("Podaj nazwę użytkownika.");
+  if (!v) {
+    if (allowEmpty) return "";
+    throw new Error("Podaj nazwę użytkownika.");
+  }
   if (v.length < 3) throw new Error("Nazwa użytkownika: min. 3 znaki.");
   if (v.length > 20) throw new Error("Nazwa użytkownika: max. 20 znaków.");
   if (!/^[a-zA-Z0-9_.-]+$/.test(v)) throw new Error("Dozwolone znaki: litery, cyfry, _ . -");
@@ -93,6 +96,10 @@ export async function requireAuth(redirect = "index.html") {
   }
 
   const username = await fetchUsername(u);
+  if (!username) {
+    location.href = "index.html?setup=username";
+    return null;
+  }
   return { ...u, username };
 }
 
@@ -118,18 +125,15 @@ export async function signIn(login, password) {
 }
 
 export async function signUp(email, password, redirectTo, usernameInput) {
-  const un = validateUsername(usernameInput);
-
-  const username = (un || "").trim();
-  if (!username) throw new Error("Podaj nazwę użytkownika.");
+  const username = validateUsername(usernameInput, { allowEmpty: true });
+  const userData = username ? { username } : null;
+  const options = { emailRedirectTo: redirectTo };
+  if (userData) options.data = userData;
   
   const { error } = await sb().auth.signUp({
     email,
     password,
-    options: {
-      emailRedirectTo: redirectTo,
-      data: { username }
-    },
+    options,
   });
   if (error) throw new Error(niceAuthError(error));
 }
