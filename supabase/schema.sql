@@ -1763,11 +1763,62 @@ $function$
 
 CREATE OR REPLACE FUNCTION public.poll_action(p_kind text, p_token uuid, p_action text)
  RETURNS jsonb
- LANGUAGE sql
+ LANGUAGE plpgsql
  SECURITY DEFINER
- SET search_path TO 'public', 'pg_temp'
+ SET search_path TO 'public'
 AS $function$
-  select public.polls_action(lower(trim(p_kind)), p_token, lower(trim(p_action)));
+declare
+  v_kind text := coalesce(p_kind, '');
+  v_action text := coalesce(p_action, '');
+begin
+  -- Minimalna, bezpieczna odpowiedź, jeśli token null
+  if p_token is null then
+    return jsonb_build_object(
+      'ok', false,
+      'error', 'invalid_token',
+      'kind', v_kind,
+      'action', v_action
+    );
+  end if;
+
+  -- UWAGA:
+  -- TU NIE ZGADUJEMY logiki go ani frontu.
+  -- poll_action ma tylko spójny kontrakt i nie może wpadać w rekurencję.
+  -- Docelowa logika dla sub/task już masz w osobnych funkcjach
+  -- (poll_task_opened/poll_task_done/poll_sub_accept/poll_sub_decline itd.)
+  --
+  -- Na razie robimy routing STRICT po kind:
+  if v_kind = 'task' then
+    -- allowed actions: opened/done/decline
+    if v_action = 'opened' or v_action = 'open' then
+      perform public.poll_task_opened(p_token);
+      return jsonb_build_object('ok', true, 'kind', 'task', 'action', 'opened');
+    elsif v_action = 'done' then
+      perform public.poll_task_done(p_token);
+      return jsonb_build_object('ok', true, 'kind', 'task', 'action', 'done');
+    elsif v_action = 'decline' then
+      perform public.poll_task_decline(p_token);
+      return jsonb_build_object('ok', true, 'kind', 'task', 'action', 'decline');
+    else
+      return jsonb_build_object('ok', false, 'kind', 'task', 'error', 'invalid_action', 'action', v_action);
+    end if;
+
+  elsif v_kind = 'sub' then
+    -- allowed actions: accept/decline
+    if v_action = 'accept' then
+      perform public.poll_sub_accept(p_token);
+      return jsonb_build_object('ok', true, 'kind', 'sub', 'action', 'accept');
+    elsif v_action = 'decline' then
+      perform public.poll_sub_decline(p_token);
+      return jsonb_build_object('ok', true, 'kind', 'sub', 'action', 'decline');
+    else
+      return jsonb_build_object('ok', false, 'kind', 'sub', 'error', 'invalid_action', 'action', v_action);
+    end if;
+
+  else
+    return jsonb_build_object('ok', false, 'error', 'invalid_kind', 'kind', v_kind, 'action', v_action);
+  end if;
+end;
 $function$
 
 
@@ -2254,53 +2305,65 @@ CREATE OR REPLACE FUNCTION public.poll_go_resolve(p_token uuid)
  SET search_path TO 'public'
 AS $function$
 declare
-  t record;
   s record;
+  t record;
 begin
-  -- TASK
-  select *
-  into t
-  from public.poll_tasks
-  where token = p_token
-  limit 1;
-
-  if t is not null then
-    update public.poll_tasks
-      set opened_at = coalesce(opened_at, now()),
-          status = case when status = 'pending' then 'opened' else status end
-    where id = t.id;
-
-    return jsonb_build_object(
-      'ok', true,
-      'kind', 'task',
-      'token', p_token,
-      'poll_type', t.poll_type,
-      'status', t.status,
-      'requires_login', (t.recipient_user_id is not null),
-      'can_accept_email', (t.recipient_email is not null),
-      'game_id', t.game_id
-    );
-  end if;
-
-  -- SUB
-  select *
+  -- 1) subscription token?
+  select
+    ps.id, ps.status, ps.owner_id, ps.subscriber_user_id, ps.subscriber_email, ps.opened_at
   into s
-  from public.poll_subscriptions
-  where token = p_token
+  from public.poll_subscriptions ps
+  where ps.token = p_token
   limit 1;
 
-  if s is not null then
-    update public.poll_subscriptions
-      set opened_at = coalesce(opened_at, now())
-    where id = s.id;
+  if found then
+    -- mark opened once
+    if s.opened_at is null then
+      update public.poll_subscriptions
+        set opened_at = now()
+      where id = s.id;
+    end if;
 
     return jsonb_build_object(
       'ok', true,
       'kind', 'sub',
-      'token', p_token,
+      'sub_id', s.id,
       'status', s.status,
-      'requires_login', (s.subscriber_user_id is not null),
-      'can_accept_email', (s.subscriber_email is not null)
+      'owner_id', s.owner_id,
+      'subscriber_user_id', s.subscriber_user_id,
+      'subscriber_email', s.subscriber_email
+    );
+  end if;
+
+  -- 2) task token?
+  select
+    pt.id, pt.status, pt.owner_id, pt.recipient_user_id, pt.recipient_email,
+    pt.game_id, pt.poll_type, pt.share_key_poll, pt.opened_at
+  into t
+  from public.poll_tasks pt
+  where pt.token = p_token
+  limit 1;
+
+  if found then
+    -- mark opened once (only for pending)
+    if t.opened_at is null and t.status = 'pending' then
+      update public.poll_tasks
+        set status = 'opened',
+            opened_at = now()
+      where id = t.id;
+    end if;
+
+    return jsonb_build_object(
+      'ok', true,
+      'kind', 'task',
+      'task_id', t.id,
+      'status', t.status,
+      'owner_id', t.owner_id,
+      'recipient_user_id', t.recipient_user_id,
+      'recipient_email', t.recipient_email,
+      'game_id', t.game_id,
+      'poll_type', t.poll_type,
+      'share_key_poll', t.share_key_poll
     );
   end if;
 
@@ -2417,17 +2480,13 @@ CREATE OR REPLACE FUNCTION public.poll_on_login()
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
- SET search_path TO 'public', 'pg_temp'
+ SET search_path TO 'public'
 AS $function$
 begin
-  -- jeśli masz tę funkcję, to ona robi claim rekordów email->user_id
+  -- claim email-only records to user on login
   perform public.poll_claim_email_records();
 
   return jsonb_build_object('ok', true);
-exception
-  when undefined_function then
-    -- jeśli ktoś kiedyś usunie poll_claim_email_records, nie wywalaj logowania
-    return jsonb_build_object('ok', false, 'error', 'missing poll_claim_email_records');
 end;
 $function$
 
@@ -3323,46 +3382,19 @@ CREATE OR REPLACE FUNCTION public.poll_text_submit_simple_legacy(p_game_id uuid,
  LANGUAGE plpgsql
  SECURITY DEFINER
 AS $function$
-declare
-  g record;
-  sid uuid;
-  raw text;
-  norm text;
 begin
-  select id, share_key_poll, type, status
-    into g
-  from public.games
-  where id = p_game_id;
-
-  if not found then raise exception 'game not found'; end if;
-  if g.share_key_poll is distinct from p_key then raise exception 'bad key'; end if;
-  if g.type <> 'poll_text' then raise exception 'wrong type'; end if;
-  if g.status <> 'poll_open' then raise exception 'poll closed'; end if;
-
-  raw := coalesce(p_answer_text, '');
-  raw := regexp_replace(raw, '^\s+|\s+$', '', 'g'); -- trim
-  if char_length(raw) < 1 then raise exception 'empty'; end if;
-
-  norm := lower(raw); -- ignorujemy wielkość liter
-  -- spacje w środku zostają (Twoja zasada)
-
-  select id into sid
-  from public.poll_sessions
-  where game_id = p_game_id and question_id = p_question_id and is_open = true
-  order by created_at desc
-  limit 1;
-
-  if sid is null then raise exception 'poll closed'; end if;
-
-  insert into public.poll_text_entries(game_id, poll_session_id, question_id, voter_token, answer_raw, answer_norm)
-  values (p_game_id, sid, p_question_id, p_voter_token, raw, norm)
-  on conflict (poll_session_id, question_id, voter_token)
-  do update set
-    answer_raw = excluded.answer_raw,
-    answer_norm = excluded.answer_norm,
-    created_at = now();
+  perform public.poll_text_submit(
+    p_game_id,
+    p_key,
+    p_question_id,
+    p_voter_token,
+    p_answer_text,
+    p_answer_text
+  );
 end;
 $function$
+
+
 CREATE OR REPLACE FUNCTION public.poll_vote(p_key text, p_question_ord integer, p_answer_ord integer, p_voter_token text)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -3404,44 +3436,16 @@ CREATE OR REPLACE FUNCTION public.poll_vote_by_ids_legacy(p_game_id uuid, p_key 
  RETURNS void
  LANGUAGE plpgsql
  SECURITY DEFINER
+ SET search_path TO 'public'
 AS $function$
-declare
-  g record;
-  sid uuid;
 begin
-  select id, share_key_poll, kind, status
-    into g
-  from public.games
-  where id = p_game_id;
-
-  if not found then raise exception 'game not found'; end if;
-  if g.share_key_poll is distinct from p_key then raise exception 'bad key'; end if;
-  if g.kind <> 'poll' then raise exception 'not a poll game'; end if;
-  if g.status <> 'poll_open' then raise exception 'poll closed'; end if;
-
-  -- znajdź otwartą sesję dla pytania
-  select id into sid
-  from public.poll_sessions
-  where game_id = p_game_id and question_id = p_question_id and is_open = true
-  order by created_at desc
-  limit 1;
-
-  if sid is null then
-    raise exception 'poll closed';
-  end if;
-
-  -- blokada: jeden głos per pytanie per token w tej sesji
-  if exists (
-    select 1 from public.poll_votes
-    where poll_session_id = sid and voter_token = p_voter_token
-  ) then
-    return; -- już głosował, nic nie rób (UX: przejdzie dalej)
-  end if;
-
-  insert into public.poll_votes(game_id, question_id, answer_id, voter_token, poll_session_id)
-  values (p_game_id, p_question_id, p_answer_id, p_voter_token, sid);
+  -- keep behavior identical to the by ids vote path:
+  -- use the existing poll_vote_game which you have
+  perform public.poll_vote_game(p_game_id, p_key, p_question_id, p_answer_id, p_voter_token);
 end;
 $function$
+
+
 CREATE OR REPLACE FUNCTION public.poll_vote_game(p_game_id uuid, p_key text, p_question_id uuid, p_answer_id uuid, p_voter_token text)
  RETURNS void
  LANGUAGE plpgsql
@@ -3513,43 +3517,13 @@ CREATE OR REPLACE FUNCTION public.polls_action(p_kind text, p_token uuid, p_acti
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
- SET search_path TO 'public', 'pg_temp'
 AS $function$
 declare
-  k text := lower(trim(coalesce(p_kind,'')));
-  a text := lower(trim(coalesce(p_action,'')));
-  changed boolean;
+  r jsonb;
 begin
-  if p_token is null then
-    return jsonb_build_object('ok', false, 'error', 'invalid_token');
-  end if;
-
-  if k = 'sub' then
-    if a = 'accept' then
-      -- poll_sub_accept(...) istnieje w schema.sql
-      return public.poll_sub_accept(p_token);
-    elsif a = 'decline' then
-      return public.poll_sub_decline(p_token);
-    else
-      return jsonb_build_object('ok', false, 'kind', 'sub', 'error', 'invalid_action', 'action', a);
-    end if;
-  end if;
-
-  if k = 'task' then
-    if a in ('open','decline') then
-      -- poll_go_task_action(...) zwraca boolean -> pakujemy w JSONB
-      changed := public.poll_go_task_action(p_token, a, null);
-      if changed then
-        return jsonb_build_object('ok', true, 'kind', 'task', 'action', a);
-      else
-        return jsonb_build_object('ok', false, 'kind', 'task', 'error', 'invalid_or_unavailable_token', 'action', a);
-      end if;
-    else
-      return jsonb_build_object('ok', false, 'kind', 'task', 'error', 'invalid_action', 'action', a);
-    end if;
-  end if;
-
-  return jsonb_build_object('ok', false, 'error', 'invalid_kind', 'kind', k);
+  -- Jedyny kierunek delegacji:
+  r := public.poll_action(p_kind, p_token, p_action);
+  return r;
 end;
 $function$
 
@@ -3965,122 +3939,6 @@ begin
   );
 end;
 $function$
-CREATE OR REPLACE FUNCTION public.polls_hub_share_poll_recipients_legacy(p_game_id uuid, p_recipients text[], p_allow_duplicates boolean DEFAULT false)
- RETURNS TABLE(ok boolean, created integer, skipped integer, message text)
- LANGUAGE plpgsql
- SECURITY DEFINER
- SET search_path TO 'public'
-AS $function$
-declare
-  v_owner uuid;
-  v_poll_type text;
-  v_share_key text;
-  v_created int := 0;
-  v_skipped int := 0;
-  r text;
-  v_email text;
-  v_user_id uuid;
-  v_exists boolean;
-begin
-  v_owner := auth.uid();
-  if v_owner is null then
-    return query select false, 0, 0, 'not_authenticated';
-    return;
-  end if;
-
-  select g.type, g.share_key_poll
-    into v_poll_type, v_share_key
-  from public.games g
-  where g.id = p_game_id and g.owner_id = v_owner;
-
-  if v_poll_type is null then
-    return query select false, 0, 0, 'game_not_found_or_not_owner';
-    return;
-  end if;
-
-  if v_poll_type not in ('poll_text','poll_points') then
-    return query select false, 0, 0, 'not_a_poll_game';
-    return;
-  end if;
-
-  if v_share_key is null or length(v_share_key) < 6 then
-    return query select false, 0, 0, 'missing_share_key_poll_on_game';
-    return;
-  end if;
-
-  if p_recipients is null or array_length(p_recipients,1) is null then
-    return query select false, 0, 0, 'no_recipients';
-    return;
-  end if;
-
-  foreach r in array p_recipients loop
-    r := btrim(r);
-    if r is null or r = '' then continue; end if;
-
-    v_email := null;
-    v_user_id := null;
-
-    if position('@' in r) > 1 then
-      v_email := lower(r);
-    else
-      select p.id, p.email
-        into v_user_id, v_email
-      from public.profiles p
-      where lower(p.username) = lower(r)
-      limit 1;
-
-      if v_user_id is null and (v_email is null or v_email = '') then
-        v_skipped := v_skipped + 1;
-        continue;
-      end if;
-    end if;
-
-    if not p_allow_duplicates then
-      select exists (
-        select 1
-        from public.poll_tasks pt
-        where pt.owner_id = v_owner
-          and pt.game_id = p_game_id
-          and pt.status in ('pending','opened')
-          and (
-            (v_user_id is not null and pt.recipient_user_id = v_user_id)
-            or (v_user_id is null and pt.recipient_user_id is null and pt.recipient_email = v_email)
-          )
-      ) into v_exists;
-
-      if v_exists then
-        v_skipped := v_skipped + 1;
-        continue;
-      end if;
-    end if;
-
-    insert into public.poll_tasks (
-      owner_id,
-      recipient_user_id,
-      recipient_email,
-      game_id,
-      poll_type,
-      share_key_poll,
-      token,
-      status,
-      created_at
-    ) values (
-      v_owner,
-      v_user_id,
-      v_email,
-      p_game_id,
-      v_poll_type,
-      v_share_key,
-      gen_random_uuid(),
-      'pending',
-      now()
-    );
-
-    v_created := v_created + 1;
-  end loop;
-
-  return query select true, v_created, v_skipped, 'ok';
-end $function$
 CREATE OR REPLACE FUNCTION public.polls_hub_subscriber_remove(p_id uuid)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -4465,120 +4323,6 @@ begin
   get diagnostics v_n = row_count;
 
   return jsonb_build_object('ok', true, 'updated', v_n);
-end;
-$function$
-CREATE OR REPLACE FUNCTION public.polls_sub_action(p_action text, p_token uuid DEFAULT NULL::uuid, p_id uuid DEFAULT NULL::uuid)
- RETURNS jsonb
- LANGUAGE plpgsql
- SECURITY DEFINER
- SET search_path TO 'public', 'pg_temp'
-AS $function$
-declare
-  v_action text := lower(trim(coalesce(p_action,'')));
-  v_uid uuid := auth.uid();
-  v_row public.poll_subscriptions%rowtype;
-begin
-  if v_action = '' then
-    return jsonb_build_object('ok', false, 'error', 'empty action');
-  end if;
-
-  -- ========== recipient actions (token) ==========
-  if v_action in ('accept','reject') then
-    if p_token is null then
-      return jsonb_build_object('ok', false, 'error', 'missing token');
-    end if;
-
-    select * into v_row
-    from public.poll_subscriptions
-    where token = p_token
-    limit 1;
-
-    if not found then
-      return jsonb_build_object('ok', false, 'error', 'token not found');
-    end if;
-
-    -- oznacz opened przy pierwszym wejściu
-    update public.poll_subscriptions
-       set opened_at = coalesce(opened_at, now())
-     where id = v_row.id;
-
-    if v_row.status <> 'pending' then
-      return jsonb_build_object(
-        'ok', true,
-        'noop', true,
-        'id', v_row.id,
-        'token', v_row.token,
-        'status', v_row.status
-      );
-    end if;
-
-    if v_action = 'accept' then
-      update public.poll_subscriptions
-         set status = 'active',
-             accepted_at = now(),
-             declined_at = null,
-             cancelled_at = null,
-             subscriber_user_id = coalesce(subscriber_user_id, v_uid)
-       where id = v_row.id;
-
-      return jsonb_build_object(
-        'ok', true,
-        'action', 'accept',
-        'id', v_row.id,
-        'token', v_row.token,
-        'status', 'active'
-      );
-    else
-      update public.poll_subscriptions
-         set status = 'declined',
-             declined_at = now()
-       where id = v_row.id;
-
-      return jsonb_build_object(
-        'ok', true,
-        'action', 'reject',
-        'id', v_row.id,
-        'token', v_row.token,
-        'status', 'declined'
-      );
-    end if;
-  end if;
-
-  -- ========== owner actions (id) ==========
-  if v_action in ('cancel','remove') then
-    if v_uid is null then
-      return jsonb_build_object('ok', false, 'error', 'auth required');
-    end if;
-
-    if p_id is null then
-      return jsonb_build_object('ok', false, 'error', 'missing id');
-    end if;
-
-    select * into v_row
-    from public.poll_subscriptions
-    where id = p_id
-      and owner_id = v_uid
-    limit 1;
-
-    if not found then
-      return jsonb_build_object('ok', false, 'error', 'not found');
-    end if;
-
-    -- cancel/remove: soft-cancel (bez delete, mniej ryzyka)
-    update public.poll_subscriptions
-       set status = 'cancelled',
-           cancelled_at = now()
-     where id = v_row.id;
-
-    return jsonb_build_object(
-      'ok', true,
-      'action', v_action,
-      'id', v_row.id,
-      'status', 'cancelled'
-    );
-  end if;
-
-  return jsonb_build_object('ok', false, 'error', 'unknown action');
 end;
 $function$
 CREATE OR REPLACE FUNCTION public.profile_login_to_email(p_login text)
