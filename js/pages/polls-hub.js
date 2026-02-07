@@ -88,10 +88,6 @@ let subscriptions = [];
 let pollClosedAt = new Map();
 let pollReadyMap = new Map();
 let sharePollId = null;
-let shareBaseline = new Set();
-let autoRefreshTimer = null;
-let isRefreshing = false;
-let subTokenPrompted = false;
 
 const sortState = {
   polls: "newest",
@@ -215,9 +211,6 @@ async function hydrateSubscriptionLabels() {
   const subscriberIds = subscribers.map((s) => s.subscriber_user_id).filter(Boolean);
   const ownerIds = subscriptions.map((s) => s.owner_user_id || s.owner_id).filter(Boolean);
   const ids = [...new Set([...subscriberIds, ...ownerIds])];
-  const subscriberEmails = subscribers.map((s) => (s.subscriber_email || "").toLowerCase()).filter(Boolean);
-  const ownerEmails = subscriptions.map((s) => (s.owner_email || "").toLowerCase()).filter(Boolean);
-  const emails = [...new Set([...subscriberEmails, ...ownerEmails])];
 
   const profiles = new Map();
   if (ids.length) {
@@ -230,47 +223,24 @@ async function hydrateSubscriptionLabels() {
       }
     }
   }
-  const profilesByEmail = new Map();
-  if (emails.length) {
-    const { data: rows, error } = await sb().from("profiles").select("id,username,email").in("email", emails);
-    if (error) {
-      console.warn("[polls-hub] profiles email lookup failed:", error);
-    } else {
-      for (const p of rows || []) {
-        const email = String(p.email || "").toLowerCase();
-        if (!email) continue;
-        profilesByEmail.set(email, p);
-      }
-    }
-  }
 
   subscribers = subscribers.map((sub) => {
     const profileLabel = sub.subscriber_user_id ? profiles.get(sub.subscriber_user_id) : "";
-    const emailMatch = sub.subscriber_email ? profilesByEmail.get(String(sub.subscriber_email).toLowerCase()) : null;
     const label = resolveLabel({
-      primary: sub.subscriber_username || profileLabel || emailMatch?.username || sub.subscriber_label,
+      primary: sub.subscriber_username || profileLabel || sub.subscriber_label,
       email: sub.subscriber_email,
     });
-    return {
-      ...sub,
-      subscriber_display_label: label,
-      subscriber_matched_user_id: sub.subscriber_user_id || emailMatch?.id || null,
-    };
+    return { ...sub, subscriber_display_label: label };
   });
 
   subscriptions = subscriptions.map((sub) => {
     const ownerId = sub.owner_user_id || sub.owner_id;
     const profileLabel = ownerId ? profiles.get(ownerId) : "";
-    const emailMatch = sub.owner_email ? profilesByEmail.get(String(sub.owner_email).toLowerCase()) : null;
     const label = resolveLabel({
-      primary: sub.owner_username || profileLabel || emailMatch?.username || sub.owner_label,
+      primary: sub.owner_username || profileLabel || sub.owner_label,
       email: sub.owner_email,
     });
-    return {
-      ...sub,
-      owner_display_label: label,
-      owner_matched_user_id: ownerId || emailMatch?.id || null,
-    };
+    return { ...sub, owner_display_label: label };
   });
 }
 
@@ -335,25 +305,6 @@ async function sendMail({ to, subject, html }) {
     },
     body: JSON.stringify({ to, subject, html }),
   });
-  if (res.status === 401) {
-    const { data: refreshed } = await sb().auth.refreshSession();
-    const freshToken = refreshed?.session?.access_token;
-    if (freshToken) {
-      const retry = await fetch(MAIL_FUNCTION_URL, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${freshToken}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ to, subject, html }),
-      });
-      if (!retry.ok) {
-        const text = await retry.text();
-        throw new Error(text || "Nie udało się wysłać maila.");
-      }
-      return;
-    }
-  }
   if (!res.ok) {
     const text = await res.text();
     throw new Error(text || "Nie udało się wysłać maila.");
@@ -582,16 +533,16 @@ function pollTileClass(poll) {
 
 function pollVotesMeta(poll) {
   const sharedTotal = (poll.tasks_active || 0) + (poll.tasks_done || 0);
-  const tasksDone = poll.tasks_done || 0;
-  const anonVotes = poll.anon_votes || 0;
-  const tasksText = sharedTotal > 0 ? `${tasksDone}/${sharedTotal}` : "0/0";
+  const votesTotal = (poll.tasks_done || 0) + (poll.anon_votes || 0);
+  if (sharedTotal > 0) {
+    return {
+      text: `${votesTotal}/${sharedTotal}`,
+      title: `Zagłosowało ${votesTotal} z ${sharedTotal} udostępnionych.`,
+    };
+  }
   return {
-    tasksText,
-    tasksTitle: sharedTotal > 0
-      ? `Zadania: ${tasksDone} z ${sharedTotal} udostępnionych zagłosowało.`
-      : "Zadania: brak udostępnień.",
-    anonText: `${anonVotes}`,
-    anonTitle: `Anonimowe głosy: ${anonVotes}.`,
+    text: `${votesTotal}`,
+    title: `Łącznie oddanych głosów: ${votesTotal}.`,
   };
 }
 
@@ -621,8 +572,7 @@ function renderPolls() {
           <div class="hub-item-sub">${poll.poll_state === "open" ? "Otwarty" : poll.poll_state === "closed" ? "Zamknięty" : "Szkic"}</div>
         </div>
         <div class="hub-item-actions">
-          <span class="hub-item-badge" title="${votesMeta.tasksTitle}">Zadania: ${votesMeta.tasksText}</span>
-          <span class="hub-item-badge hub-item-badge-alt" title="${votesMeta.anonTitle}">Anon: ${votesMeta.anonText}</span>
+          <span class="hub-item-badge" title="${votesMeta.title}">${votesMeta.text}</span>
         </div>
       `;
       item.addEventListener("click", () => selectPoll(poll));
@@ -994,7 +944,6 @@ async function rejectSubscription(sub) {
 async function openShareModal() {
   if (!selectedPollId) return;
   sharePollId = selectedPollId;
-  shareBaseline = new Set();
   shareMsg.textContent = "";
   shareList.innerHTML = "";
   const step = "Pobieranie subskrybentów…";
@@ -1010,41 +959,18 @@ async function openShareModal() {
     if (error) throw error;
 
     const statusBySub = new Map();
-    const taskEmails = [...new Set((taskRows || []).map((t) => (t.recipient_email || "").toLowerCase()).filter(Boolean))];
-    const taskProfiles = new Map();
-    if (taskEmails.length) {
-      const { data: rows, error: profileError } = await sb()
-        .from("profiles")
-        .select("id,email")
-        .in("email", taskEmails);
-      if (profileError) {
-        console.warn("[polls-hub] task email lookup failed:", profileError);
-      } else {
-        for (const p of rows || []) {
-          const email = String(p.email || "").toLowerCase();
-          if (email) taskProfiles.set(email, p.id);
-        }
-      }
-    }
     for (const task of taskRows || []) {
       const key = task.recipient_user_id || (task.recipient_email || "").toLowerCase();
       statusBySub.set(key, task.status);
-      const matchedId = task.recipient_email ? taskProfiles.get(String(task.recipient_email).toLowerCase()) : null;
-      if (matchedId) {
-        statusBySub.set(matchedId, task.status);
-      }
     }
 
     for (const sub of activeSubs) {
-      const key = sub.subscriber_matched_user_id
-        || sub.subscriber_user_id
-        || (sub.subscriber_email || "").toLowerCase();
+      const key = sub.subscriber_user_id || (sub.subscriber_email || "").toLowerCase();
       const status = statusBySub.get(key);
       const row = document.createElement("label");
       row.className = "hub-share-item";
       const isActive = status === "pending" || status === "opened";
       const isLocked = status === "done";
-      if (isActive) shareBaseline.add(String(sub.sub_id));
       row.innerHTML = `
         <input type="checkbox" ${isActive ? "checked" : ""} ${isLocked ? "disabled" : ""} data-sub-id="${sub.sub_id}">
         <div>
@@ -1092,15 +1018,6 @@ async function saveShareModal() {
   const selected = [...shareList.querySelectorAll("input[type=checkbox]")]
     .filter((x) => x.checked)
     .map((x) => x.dataset.subId);
-  const selectedSet = new Set(selected);
-  const changed =
-    selected.length !== shareBaseline.size ||
-    selected.some((id) => !shareBaseline.has(String(id)));
-  if (!changed) {
-    shareMsg.textContent = "Brak zmian do zapisania.";
-    setTimeout(closeShareModal, 600);
-    return;
-  }
   const step = "Udostępnianie…";
   try {
     showProgress(true);
@@ -1255,11 +1172,6 @@ async function deleteVote(taskId) {
     showProgress(true);
     setProgress({ step, i: 0, n: 2, msg: "" });
     await sb().rpc("poll_admin_delete_vote", { p_game_id: selectedPollId, p_voter_token: `task:${taskId}` });
-    await sb()
-      .from("poll_tasks")
-      .update({ status: "cancelled" })
-      .eq("id", taskId)
-      .eq("owner_id", currentUser.id);
     setProgress({ step, i: 1, n: 2, msg: "OK" });
     await openDetailsModal({ withProgress: false });
     finishProgress(step, 2);
@@ -1305,8 +1217,6 @@ function renderAll() {
 }
 
 async function refreshData() {
-  if (isRefreshing) return;
-  isRefreshing = true;
   try {
     const [pollsRes, tasksRes, subsRes, mySubsRes] = await Promise.all([
       sb().rpc("polls_hub_list_polls"),
@@ -1355,8 +1265,6 @@ async function refreshData() {
   } catch (e) {
     console.error(e);
     alert("Nie udało się pobrać danych centrum sondaży.");
-  } finally {
-    isRefreshing = false;
   }
 }
 
@@ -1378,21 +1286,6 @@ function maybeFocusFromToken() {
       if (promptAccept) {
         acceptSubscription(match);
       }
-    } else if (currentUser && !subTokenPrompted) {
-      subTokenPrompted = true;
-      confirmModal({
-        title: "Zaproszenie nie pasuje do konta",
-        text: "To zaproszenie jest przypisane do innego adresu e-mail. Wyloguj się i zaloguj na właściwe konto, aby je potwierdzić.",
-        okText: "Wyloguj",
-        cancelText: "Zamknij",
-      }).then(async (ok) => {
-        if (!ok) return;
-        await signOut();
-        const url = new URL("index.html", location.href);
-        url.searchParams.set("next", "polls-hub");
-        url.searchParams.set("s", focusSubToken);
-        location.href = url.toString();
-      });
     }
   }
 }
@@ -1486,10 +1379,4 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
   await refreshData();
-
-  autoRefreshTimer = setInterval(() => {
-    const shareOpen = shareOverlay?.style.display === "grid";
-    const detailsOpen = detailsOverlay?.style.display === "grid";
-    if (!shareOpen && !detailsOpen) refreshData();
-  }, 30000);
 });
