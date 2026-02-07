@@ -112,3 +112,55 @@ input:focus {
     color: #ff9d9d;
     font-size: 12px
 }
+
+.overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(5,9,20,.72);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 18px;
+    z-index: 20
+}
+
+.overlay.is-open {
+    display: flex
+}
+
+.modal {
+    width: min(460px,90vw);
+    background: rgba(255,255,255,.08);
+    border: 1px solid rgba(255,255,255,.18);
+    border-radius: 18px;
+    padding: 18px;
+    box-shadow: 0 24px 60px rgba(0,0,0,.6)
+}
+
+.modal-title {
+    font-weight: 900;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    font-size: 14px
+}
+
+.modal-sub {
+    opacity: .8;
+    margin-top: 6px;
+    margin-bottom: 12px;
+    font-size: 13px
+}
+
+.modal-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 12px
+}
+
+.modal-err {
+    color: #ff9d9d;
+    font-size: 12px;
+    min-height: 16px;
+    margin-top: 6px
+}

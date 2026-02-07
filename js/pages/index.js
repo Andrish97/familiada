@@ -1,5 +1,6 @@
 // js/pages/index.js
-import { getUser, signIn, signUp, resetPassword } from "../core/auth.js";
+import { getUser, signIn, signUp, resetPassword, validateUsername } from "../core/auth.js";
+import { sb } from "../core/supabase.js";
 
 const $ = (s) => document.querySelector(s);
 const email = $("#email");
@@ -10,12 +11,17 @@ const err = $("#err");
 const btnPrimary = $("#btnPrimary");
 const btnToggle = $("#btnToggle");
 const btnForgot = $("#btnForgot");
+const usernameOverlay = $("#usernameOverlay");
+const usernameFirst = $("#usernameFirst");
+const usernameErr = $("#usernameErr");
+const btnUsernameSave = $("#btnUsernameSave");
 
 let mode = "login"; // login | register
 const params = new URLSearchParams(location.search);
 const nextTarget = params.get("next");
 const nextTask = params.get("t");
 const nextSub = params.get("s");
+const setup = params.get("setup");
 
 function buildNextUrl() {
   const url = new URL("polls-hub.html", location.href);
@@ -26,17 +32,49 @@ function buildNextUrl() {
 
 function setErr(m = "") { err.textContent = m; }
 function setStatus(m = "") { status.textContent = m; }
+function setUsernameErr(m = "") { if (usernameErr) usernameErr.textContent = m; }
+
+function openUsernameOverlay() {
+  if (!usernameOverlay) return;
+  usernameOverlay.classList.add("is-open");
+  usernameOverlay.setAttribute("aria-hidden", "false");
+  if (usernameFirst) usernameFirst.focus();
+}
+
+function closeUsernameOverlay() {
+  if (!usernameOverlay) return;
+  usernameOverlay.classList.remove("is-open");
+  usernameOverlay.setAttribute("aria-hidden", "true");
+}
+
+async function saveUsername() {
+  setUsernameErr("");
+  try {
+    const username = validateUsername(usernameFirst?.value || "");
+    const { data: userData, error: userError } = await sb().auth.getUser();
+    if (userError || !userData?.user) throw new Error("Brak aktywnej sesji.");
+    const { error } = await sb()
+      .from("profiles")
+      .update({ username })
+      .eq("id", userData.user.id);
+    if (error) throw error;
+    await sb().auth.updateUser({ data: { username } });
+    closeUsernameOverlay();
+    location.href = "builder.html";
+  } catch (e) {
+    console.error(e);
+    setUsernameErr(e?.message || String(e));
+  }
+}
 
 function applyMode() {
   if (mode === "login") {
     pass2.style.display = "none";
-    if (username) username.style.display = "none";
     btnPrimary.textContent = "Zaloguj";
     btnToggle.textContent = "Załóż konto";
     email.placeholder = "E-mail lub nazwa użytkownika";
   } else {
     pass2.style.display = "block";
-    if (username) username.style.display = "block";
     btnPrimary.textContent = "Zarejestruj";
     btnToggle.textContent = "Mam konto";
     email.placeholder = "E-mail";
@@ -50,7 +88,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   const u = await getUser();
   if (u) {
-    if (nextTarget === "polls-hub") {
+    if (!u.username || setup === "username") {
+      openUsernameOverlay();
+    } else if (nextTarget === "polls-hub") {
       location.href = buildNextUrl();
     } else {
       location.href = "builder.html";
@@ -74,21 +114,22 @@ document.addEventListener("DOMContentLoaded", async () => {
     try {
       if (mode === "register") {
         const mail = loginOrEmail;
-        const un = (username?.value || "").trim();
 
         if (!mail || !mail.includes("@")) return setErr("Podaj poprawny e-mail.");
-        if (!un) return setErr("Podaj nazwę użytkownika.");
 
         if (pass2.value !== pwd) return setErr("Hasła nie są takie same.");
 
         setStatus("Rejestruję…");
         const redirectTo = new URL("confirm.html", location.href).toString();
-        await signUp(mail, pwd, redirectTo, un); // <-- UWAGA: 4-ty parametr
+        await signUp(mail, pwd, redirectTo);
         setStatus("Sprawdź e-mail (link aktywacyjny).");
       } else {
         setStatus("Loguję…");
         await signIn(loginOrEmail, pwd); // <-- może być username
-        if (nextTarget === "polls-hub") {
+        const authed = await getUser();
+        if (!authed?.username) {
+          openUsernameOverlay();
+        } else if (nextTarget === "polls-hub") {
           location.href = buildNextUrl();
         } else {
           location.href = "builder.html";
@@ -116,5 +157,10 @@ document.addEventListener("DOMContentLoaded", async () => {
       setStatus("Błąd.");
       setErr(e?.message || String(e));
     }
+  });
+
+  btnUsernameSave?.addEventListener("click", saveUsername);
+  usernameFirst?.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") saveUsername();
   });
 });

@@ -21,6 +21,7 @@ const grid = document.getElementById("grid");
 const who = document.getElementById("who");
 const hint = document.getElementById("hint");
 
+const btnAccount = document.getElementById("btnAccount");
 const btnLogout = document.getElementById("btnLogout");
 const btnEdit = document.getElementById("btnEdit");
 const btnPlay = document.getElementById("btnPlay");
@@ -739,6 +740,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   btnLogout?.addEventListener("click", async () => {
     await signOut();
     location.href = "index.html";
+  });
+
+  btnAccount?.addEventListener("click", () => {
+    location.href = "account.html";
   });
 
   btnManual?.addEventListener("click", async () => {
