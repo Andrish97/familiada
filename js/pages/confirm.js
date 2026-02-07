@@ -4,9 +4,13 @@ const status = document.getElementById("status");
 const err = document.getElementById("err");
 const go = document.getElementById("go");
 const back = document.getElementById("back");
+let sessionWarning = "";
 
 function setStatus(m){ status.textContent = m; }
-function setErr(m=""){ err.textContent = m; }
+function setErr(m=""){
+  const parts = [m, sessionWarning].filter(Boolean);
+  err.textContent = parts.join(" ");
+}
 
 function qp(name){
   return new URL(location.href).searchParams.get(name);
@@ -23,14 +27,12 @@ function hp(name){
 document.addEventListener("DOMContentLoaded", async () => {
   setErr("");
 
-  // Jeśli user już zalogowany -> od razu do panelu
-  try{
-    const { data } = await sb().auth.getUser();
-    if (data?.user) {
-      setStatus("Konto jest aktywne. Przechodzę do panelu…");
-      go.style.display = "inline-flex";
-      location.href = "builder.html";
-      return;
+  // Aktywna sesja na innym urządzeniu: wyloguj i pokaż komunikat
+  try {
+    const { data } = await sb().auth.getSession();
+    if (data?.session?.user) {
+      await sb().auth.signOut();
+      sessionWarning = "Wykryto aktywną sesję — została wylogowana. Potwierdzenie działa tylko z jednego linku.";
     }
   } catch {}
 

@@ -151,17 +151,17 @@ body.polls-hub-body {
 .hub-item .hub-item-title {
   font-weight: 900;
   letter-spacing: .04em;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  white-space: normal;
 }
 
 .hub-item .hub-item-sub {
   font-size: 12px;
   opacity: .75;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  white-space: normal;
 }
 
 .hub-item-actions {
@@ -169,6 +169,21 @@ body.polls-hub-body {
   align-items: center;
   gap: 6px;
   flex-shrink: 0;
+}
+
+.hub-item-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,234,166,.45);
+  background: rgba(255,234,166,.14);
+  color: var(--gold);
+  font-size: 11px;
+  font-weight: 1000;
+  letter-spacing: .02em;
+  white-space: nowrap;
 }
 
 .hub-item.poll-draft {
