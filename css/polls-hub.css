@@ -227,8 +227,19 @@ body.polls-hub-body {
 
 .hub-mobile {
   display: none;
-  flex-direction: column;
-  gap: 14px;
+}
+
+.hub-tabs-mobile {
+  --tab-height: 44px;
+}
+
+.hub-tabs-mobile .tabs-strip {
+  gap: 8px;
+}
+
+.hub-tabs-mobile .tab-label {
+  font-size: 10px;
+  letter-spacing: .04em;
 }
 
 .hub-empty {
@@ -318,7 +329,7 @@ body.polls-hub-body {
   }
 
   .hub-mobile {
-    display: flex;
+    display: block;
   }
 
   .hub-grid {
