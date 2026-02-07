@@ -110,7 +110,7 @@ CREATE TABLE public.profiles (
   id uuid NOT NULL,
   email text NOT NULL,
   created_at timestamp with time zone NOT NULL DEFAULT now(),
-  username text NOT NULL
+  username text
 );
 
 CREATE TABLE public.qb_categories (
@@ -517,6 +517,10 @@ ALTER TABLE public.poll_votes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 
 ALTER TABLE public.qb_categories ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY profiles_select_authenticated ON public.profiles FOR SELECT TO authenticated USING (true);
+
+CREATE POLICY profiles_update_self ON public.profiles FOR UPDATE TO authenticated USING ((id = auth.uid())) WITH CHECK ((id = auth.uid()));
 
 ALTER TABLE public.qb_category_tags ENABLE ROW LEVEL SECURITY;
 
@@ -1673,14 +1677,8 @@ begin
   -- username z user_metadata (Ty wysyłasz data: { username: ... })
   v_username := trim(coalesce(new.raw_user_meta_data->>'username', ''));
 
-  -- fallback: część maila przed @
   if v_username = '' then
-    v_username := split_part(v_email, '@', 1);
-  end if;
-
-  -- ostateczny fallback (gdyby email też był pusty)
-  if v_username = '' then
-    v_username := 'user_' || replace(new.id::text, '-', '');
+    v_username := null;
   end if;
 
   insert into public.profiles (id, email, username)
@@ -4567,19 +4565,6 @@ begin
   return v; -- null jeśli nie znaleziono
 end;
 $function$
-CREATE OR REPLACE FUNCTION public.profiles_username_immutable()
- RETURNS trigger
- LANGUAGE plpgsql
-AS $function$
-begin
-  if new.username is distinct from old.username then
-    raise exception 'username is immutable';
-  end if;
-  return new;
-end;
-$function$
-
-
 CREATE OR REPLACE FUNCTION public.revoke_base_share(p_base_id uuid, p_user_id uuid)
  RETURNS boolean
  LANGUAGE plpgsql
@@ -4895,8 +4880,6 @@ CREATE TRIGGER trg_assert_game_answers_minmax BEFORE UPDATE OF status ON public.
 CREATE TRIGGER trg_games_fill_share_keys BEFORE INSERT ON public.games FOR EACH ROW EXECUTE FUNCTION games_fill_share_keys();
 
 CREATE TRIGGER trg_games_touch BEFORE UPDATE ON public.games FOR EACH ROW EXECUTE FUNCTION touch_updated_at();
-
-CREATE TRIGGER trg_profiles_username_immutable BEFORE UPDATE OF username ON public.profiles FOR EACH ROW EXECUTE FUNCTION profiles_username_immutable();
 
 CREATE TRIGGER trg_qb_categories_set_updated_at BEFORE UPDATE ON public.qb_categories FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
