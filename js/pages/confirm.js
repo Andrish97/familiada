@@ -24,6 +24,15 @@ function hp(name){
   return hashParams().get(name);
 }
 
+async function syncProfileEmail(user) {
+  if (!user?.id || !user?.email) return;
+  try {
+    await sb().from("profiles").update({ email: user.email }).eq("id", user.id);
+  } catch (e) {
+    console.warn("Profile email update failed:", e);
+  }
+}
+
 document.addEventListener("DOMContentLoaded", async () => {
   setErr("");
 
@@ -55,6 +64,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   const accessToken = hp("access_token");
   const refreshToken = hp("refresh_token");
   const hashType = hp("type");
+  const tokenHash = qp("token_hash") || qp("token") || hp("token_hash") || hp("token");
+  const otpType = qp("type") || hashType;
 
   if (hashMessage && !code && !accessToken && !refreshToken) {
     const decoded = decodeURIComponent(hashMessage.replace(/\+/g, " "));
@@ -70,6 +81,29 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   if (!code) {
+    if (tokenHash && otpType) {
+      try {
+        setStatus("Aktywuję konto…");
+        const { data, error } = await sb().auth.verifyOtp({ token_hash: tokenHash, type: otpType });
+        if (error) throw error;
+        if (data?.session) {
+          await syncProfileEmail(data.session.user);
+          setStatus("Gotowe! Konto potwierdzone.");
+          go.style.display = "inline-flex";
+          setTimeout(() => (location.href = "builder.html"), 700);
+          return;
+        }
+        setStatus("Potwierdzenie zapisane. Zaloguj się ponownie.");
+        back.style.display = "inline-flex";
+        return;
+      } catch (e) {
+        console.error(e);
+        setStatus("Nie udało się potwierdzić konta.");
+        setErr(e?.message || String(e));
+        back.style.display = "inline-flex";
+        return;
+      }
+    }
     if (accessToken || refreshToken || hashType) {
       try {
         setStatus("Aktywuję konto…");
@@ -77,6 +111,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         if (error) throw error;
 
         if (data?.session) {
+          await syncProfileEmail(data.session.user);
           setStatus("Gotowe! Konto potwierdzone.");
           go.style.display = "inline-flex";
           setTimeout(() => (location.href = "builder.html"), 700);
@@ -107,6 +142,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (error) throw error;
 
     if (data?.session) {
+      await syncProfileEmail(data.session.user);
       setStatus("Gotowe! Konto potwierdzone.");
       go.style.display = "inline-flex";
       setTimeout(() => (location.href = "builder.html"), 700);
