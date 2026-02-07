@@ -1,5 +1,5 @@
 import { sb } from "../core/supabase.js";
-import { requireAuth, validatePassword, validateUsername, signOut } from "../core/auth.js";
+import { requireAuth, validateUsername, signOut } from "../core/auth.js";
 
 const status = document.getElementById("status");
 const err = document.getElementById("err");
@@ -107,8 +107,8 @@ async function handlePassSave() {
   try {
     const a = String(pass1.value || "");
     const b = String(pass2.value || "");
+    if (a.length < 6) throw new Error("Hasło musi mieć co najmniej 6 znaków.");
     if (a !== b) throw new Error("Hasła nie są takie same.");
-    validatePassword(a);
 
     const { error } = await sb().auth.updateUser({ password: a });
     if (error) throw error;

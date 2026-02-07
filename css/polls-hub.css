@@ -111,11 +111,11 @@ body.polls-hub-body {
   display: grid;
   gap: 10px;
   min-height: 80px;
-  padding: 0;
+  padding: 12px;
   border-radius: 16px;
-  border: none;
-  background: transparent;
-  overflow: visible;
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(0,0,0,.2);
+  overflow: hidden;
 }
 
 .hub-item {
@@ -140,11 +140,6 @@ body.polls-hub-body {
 }
 
 .hub-item > div {
-  min-width: 0;
-}
-
-.hub-item > div:first-child {
-  flex: 1;
   min-width: 0;
 }
 
@@ -418,19 +413,5 @@ body.polls-hub-body {
   .hub-mobile .hub-item-actions {
     width: 100%;
     justify-content: flex-end;
-  }
-}
-
-@media (min-width: 901px) {
-  .hub-grid {
-    gap: 0;
-  }
-
-  .hub-col {
-    padding: 0 16px;
-  }
-
-  .hub-col + .hub-col {
-    border-left: 1px solid rgba(255,255,255,.12);
   }
 }
