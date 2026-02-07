@@ -41,10 +41,22 @@ serve(async (req) => {
     const userId = userData.user.id;
 
     const deletions = [
+      // Ankiety: głosy użytkownika
       admin.from("poll_text_entries").delete().eq("voter_user_id", userId),
       admin.from("poll_votes").delete().eq("voter_user_id", userId),
+      // Ankiety: subskrypcje i zadania (jako właściciel i odbiorca)
       admin.from("poll_subscriptions").delete().eq("subscriber_user_id", userId),
+      admin.from("poll_subscriptions").delete().eq("owner_id", userId),
       admin.from("poll_tasks").delete().eq("recipient_user_id", userId),
+      admin.from("poll_tasks").delete().eq("owner_id", userId),
+      // Bazy pytań: udostępnienia innych oraz własne bazy
+      admin.from("question_base_shares").delete().eq("user_id", userId),
+      admin.from("question_bases").delete().eq("owner_id", userId),
+      // Gry: wszystkie gry użytkownika (cascade usuwa pytania/odpowiedzi/sesje)
+      admin.from("games").delete().eq("owner_id", userId),
+      // Ustawienia i zasoby użytkownika
+      admin.from("user_flags").delete().eq("user_id", userId),
+      admin.from("user_logos").delete().eq("user_id", userId),
     ];
 
     for (const req of deletions) {
