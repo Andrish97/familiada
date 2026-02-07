@@ -64,6 +64,48 @@ async function resolveToken() {
   return data;
 }
 
+async function resolveProfileByEmail(email) {
+  const normalized = normalizeEmail(email);
+  if (!normalized) return null;
+  try {
+    const { data, error } = await sb()
+      .from("profiles")
+      .select("id,username,email")
+      .eq("email", normalized)
+      .maybeSingle();
+    if (error || !data?.id) return null;
+    return data;
+  } catch (e) {
+    console.warn("[poll-go] profile email lookup failed:", e);
+    return null;
+  }
+}
+
+async function hydrateInviteIdentity(data) {
+  if (!data) return data;
+  if (data.kind === "sub" && !data.subscriber_user_id && data.subscriber_email) {
+    const match = await resolveProfileByEmail(data.subscriber_email);
+    if (match?.id) {
+      return {
+        ...data,
+        subscriber_user_id: match.id,
+        subscriber_label: data.subscriber_label || match.username || match.email,
+      };
+    }
+  }
+  if (data.kind === "task" && !data.recipient_user_id && data.recipient_email) {
+    const match = await resolveProfileByEmail(data.recipient_email);
+    if (match?.id) {
+      return {
+        ...data,
+        recipient_user_id: match.id,
+        recipient_label: data.recipient_label || match.username || match.email,
+      };
+    }
+  }
+  return data;
+}
+
 function openVote(type) {
   const page = type === "poll_points" ? "poll-points.html" : "poll-text.html";
   location.href = `${page}?t=${encodeURIComponent(goToken)}`;
@@ -290,7 +332,8 @@ async function init() {
 
   const user = await getUser();
   try {
-    const data = await resolveToken();
+    const raw = await resolveToken();
+    const data = await hydrateInviteIdentity(raw);
     if (!data?.ok) {
       setView({ head: "Link nieważny", text: "Link jest nieważny lub nieaktywny." });
       return;
