@@ -661,7 +661,7 @@ async function updateActionState() {
       canEdit,
       canPlay: !!cached.res.canPlay,
       canPoll: !!cached.res.canPoll,
-      canExport: true
+      canExport: !!cached.res.canExport
     });
     return;
   }
@@ -679,11 +679,11 @@ async function updateActionState() {
       canEdit,
       canPlay: !!st.canPlay,
       canPoll: !!st.canPoll,
-      canExport: true
+      canExport: !!st.canExport
     });
   } catch (e) {
     console.error("[builder] game_action_state error:", e);
-    setButtonsState({ hasSel: true, canEdit: false, canPlay: false, canPoll: false, canExport: true });
+    setButtonsState({ hasSel: true, canEdit: false, canPlay: false, canPoll: false, canExport: false });
   }
 }
 
@@ -834,7 +834,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
       }
 
-      location.href = `polls.html?id=${encodeURIComponent(selectedId)}`;
+      location.href = `polls.html?id=${encodeURIComponent(selectedId)}&from=builder`;
     } catch (e) {
       console.error(e);
       alert("Nie udało się otworzyć sondażu (błąd bazy).");

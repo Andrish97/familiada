@@ -6,6 +6,7 @@ import QRCode from "https://cdn.jsdelivr.net/npm/qrcode@1.5.3/+esm";
 
 const qs = new URLSearchParams(location.search);
 const gameId = qs.get("id");
+const from = qs.get("from");
 
 const $ = (id) => document.getElementById(id);
 
@@ -50,6 +51,7 @@ let liveTimer = null;
 let liveBusy = false;
 
 let uiTextCloseOpen = false;
+const backTarget = from === "polls-hub" ? "polls-hub.html" : "builder.html";
 
 // ===== Live diff cache (żeby nie mrugało) =====
 let liveSig_game = "";      // sygnatura stanu gry (status + poll_opened_at/poll_closed_at)
@@ -1303,6 +1305,7 @@ async function refresh() {
 document.addEventListener("DOMContentLoaded", async () => {
   const u = await requireAuth("index.html");
   if (who) who.textContent = u?.username || u?.email || "—";
+  if (btnBack) btnBack.textContent = from === "polls-hub" ? "← Centrum sondaży" : "← Moje gry";
 
 
   document.addEventListener("visibilitychange", () => {
@@ -1330,7 +1333,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (!ok) return;
       setTextCloseUi(false);
     }
-    location.href = "builder.html";
+    location.href = backTarget;
   });
   
   btnLogout?.addEventListener("click", async () => {
