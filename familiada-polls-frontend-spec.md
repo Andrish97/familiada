@@ -1,5 +1,4 @@
 # Familiada — Centrum sondaży (Polls Hub) + Poll‑Go + zmiany w Poll‑Text/Poll‑Points/Polls/Builder
-**Wersja:** v4 (po “ostatniej migracji” + `poll_task_resolve` + `poll_admin_delete_vote`)  
 **Język UI:** 100% PL (wszystko co widzi użytkownik)
 
 > Kluczowa zasada: **„Udostępnienie” = tworzenie zadań (tasków)**. Nie ma „trybów” ani `poll_share_mode`.  
