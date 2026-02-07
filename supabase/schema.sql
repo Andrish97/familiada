@@ -1429,8 +1429,11 @@ select
     else false
   end as can_poll,
 
-  /* eksport: UI i tak może traktować jako true po zaznaczeniu */
-  true as can_export,
+  /* eksport: blokuj gdy sondaż otwarty */
+  case
+    when g.status = 'poll_open' then false
+    else true
+  end as can_export,
 
   /* reason_play (opcjonalnie) */
   case
@@ -1915,6 +1918,7 @@ DECLARE
   u uuid;
   deleted_points int := 0;
   deleted_text int := 0;
+  task_id uuid;
 BEGIN
   u := auth.uid();
   IF u IS NULL THEN
@@ -1937,6 +1941,24 @@ BEGIN
    WHERE game_id = p_game_id
      AND voter_token = p_voter_token;
   GET DIAGNOSTICS deleted_text = ROW_COUNT;
+
+  IF p_voter_token LIKE 'task:%' THEN
+    BEGIN
+      task_id := nullif(split_part(p_voter_token, ':', 2), '')::uuid;
+    EXCEPTION WHEN others THEN
+      task_id := null;
+    END;
+
+    IF task_id IS NOT NULL THEN
+      UPDATE public.poll_tasks
+        SET status = 'pending',
+            done_at = null,
+            opened_at = null,
+            declined_at = null,
+            cancelled_at = null
+      WHERE id = task_id AND owner_id = u;
+    END IF;
+  END IF;
 
   RETURN jsonb_build_object(
     'ok', true,
@@ -3882,6 +3904,7 @@ begin
     mp.created_at,
     case
       when mp.status = 'poll_open' then 'open'
+      when mp.status = 'ready' then 'closed'
       when coalesce(s.sessions_total, 0) > 0 then 'closed'
       else 'draft'
     end as poll_state,

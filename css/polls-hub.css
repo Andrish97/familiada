@@ -92,6 +92,15 @@ body.polls-hub-body {
   gap: 4px;
 }
 
+.hub-toggle .btn.btn-toggle {
+  border-color: rgba(255,255,255,.18);
+  background: rgba(255,255,255,.04);
+  color: rgba(255,255,255,.7);
+  font-weight: 900;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
 .hub-toggle .btn.active {
   border-color: rgba(255,234,166,.45);
   background: rgba(255,234,166,.12);
@@ -102,6 +111,11 @@ body.polls-hub-body {
   display: grid;
   gap: 10px;
   min-height: 80px;
+}
+
+.hub-desktop .hub-list {
+  border-top: 1px solid rgba(255,255,255,.08);
+  padding-top: 10px;
 }
 
 .hub-item {
@@ -125,14 +139,24 @@ body.polls-hub-body {
   outline: 2px solid rgba(255,234,166,.45);
 }
 
+.hub-item > div {
+  min-width: 0;
+}
+
 .hub-item .hub-item-title {
   font-weight: 900;
   letter-spacing: .04em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .hub-item .hub-item-sub {
   font-size: 12px;
   opacity: .75;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .hub-item-actions {
@@ -230,16 +254,27 @@ body.polls-hub-body {
 }
 
 .hub-tabs-mobile {
-  --tab-height: 44px;
+  --tab-height: 40px;
+  --radius: 12px;
 }
 
 .hub-tabs-mobile .tabs-strip {
-  gap: 8px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
 }
 
 .hub-tabs-mobile .tab-label {
-  font-size: 10px;
-  letter-spacing: .04em;
+  font-size: 9px;
+  letter-spacing: .02em;
+  padding: 0 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hub-tabs-mobile .tab-active {
+  font-size: 9px;
+  padding: 0 4px;
 }
 
 .hub-empty {
