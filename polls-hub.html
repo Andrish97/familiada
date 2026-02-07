@@ -43,7 +43,6 @@
             <div class="tab-wrapper">
               <div class="tab-active">
                 Sondaże
-                <span class="hub-tab-badge is-empty" data-badge="tasks"></span>
               </div>
               <div class="tab-corner tab-corner-left"></div>
               <div class="tab-corner tab-corner-right"></div>
@@ -58,7 +57,6 @@
             <div class="tab-wrapper">
               <div class="tab-active">
                 Subskrypcje
-                <span class="hub-tab-badge is-empty" data-badge="subs"></span>
               </div>
               <div class="tab-corner tab-corner-left"></div>
               <div class="tab-corner tab-corner-right"></div>
@@ -167,7 +165,6 @@
             <div class="tab-wrapper">
               <div class="tab-active">
                 Zadania
-                <span class="hub-tab-badge is-empty" data-badge="tasks"></span>
               </div>
               <div class="tab-corner tab-corner-left"></div>
               <div class="tab-corner tab-corner-right"></div>
@@ -189,7 +186,6 @@
             <div class="tab-wrapper">
               <div class="tab-active">
                 Subskryp.
-                <span class="hub-tab-badge is-empty" data-badge="subs"></span>
               </div>
               <div class="tab-corner tab-corner-left"></div>
               <div class="tab-corner tab-corner-right"></div>
@@ -313,6 +309,26 @@
       </div>
       <div class="hub-modal-actions">
         <button class="btn sm" id="btnDetailsClose" type="button">Zamknij</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="overlay" id="progressOverlay" style="display:none;">
+    <div class="modal">
+      <div class="mTitle">Przetwarzanie</div>
+      <div class="mSub">Proszę czekać…</div>
+
+      <div style="margin-top:12px;gap:10px">
+        <div class="importRow" style="align-items:center">
+          <div id="progressStep" style="font-weight:800;letter-spacing:.04em">—</div>
+          <div id="progressCount" style="margin-left:auto;opacity:.8">0/0</div>
+        </div>
+
+        <div style="height:10px;border-radius:999px;background:rgba(255,255,255,.10);overflow:hidden">
+          <div id="progressBar" style="height:100%;width:0%;background:rgba(255,255,255,.85)"></div>
+        </div>
+
+        <div class="importMsg" id="progressMsg" style="min-height:18px"></div>
       </div>
     </div>
   </div>
