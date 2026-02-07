@@ -544,9 +544,8 @@ body.builder-body {
 
 #btnPollsHub .pollsBadge{
   display: none;
-  position: absolute;
-  right: 6px;
-  top: 6px;
+  position: static;
+  margin-left: 6px;
   min-width: 16px;
   height: 16px;
   padding: 0 4px;

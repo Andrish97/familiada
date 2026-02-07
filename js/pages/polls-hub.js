@@ -1,5 +1,5 @@
 // js/pages/polls-hub.js
-import { sb } from "../core/supabase.js";
+import { sb, SUPABASE_URL } from "../core/supabase.js";
 import { requireAuth, signOut } from "../core/auth.js";
 import { validatePollReadyToOpen } from "../core/game-validate.js";
 import { confirmModal } from "../core/modal.js";
@@ -19,8 +19,7 @@ const tabSubs = $("tabSubs");
 const panelPolls = $("panelPolls");
 const panelSubs = $("panelSubs");
 
-const badgeTasks = $("badgeTasks");
-const badgeSubs = $("badgeSubs");
+const MAIL_FUNCTION_URL = `${SUPABASE_URL}/functions/v1/send-mail`;
 
 const btnShare = $("btnShare");
 const btnDetails = $("btnDetails");
@@ -124,6 +123,130 @@ const sortOptions = {
   ],
 };
 
+function badgeNodes(kind) {
+  return [...document.querySelectorAll(`[data-badge="${kind}"]`)];
+}
+
+function setBadge(kind, count) {
+  const nodes = badgeNodes(kind);
+  if (!nodes.length) return;
+  const value = Number(count || 0);
+  const text = value > 99 ? "99+" : String(value);
+  const show = value > 0;
+  nodes.forEach((node) => {
+    node.textContent = show ? text : "";
+    node.classList.toggle("is-empty", !show);
+  });
+}
+
+function mailLink(path) {
+  try {
+    return new URL(path, location.origin).href;
+  } catch {
+    return path;
+  }
+}
+
+function buildMailHtml({ title, subtitle, body, actionLabel, actionUrl }) {
+  return `
+    <div style="margin:0;padding:0;background:#050914;">
+      <div style="max-width:560px;margin:0 auto;padding:26px 16px;font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:#ffffff;">
+        <div style="padding:14px 14px;background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.12);border-radius:18px;backdrop-filter:blur(10px);">
+          <div style="font-weight:1000;letter-spacing:.18em;text-transform:uppercase;color:#ffeaa6;">
+            FAMILIADA
+          </div>
+          <div style="margin-top:6px;font-size:12px;opacity:.85;letter-spacing:.08em;text-transform:uppercase;">
+            ${subtitle}
+          </div>
+        </div>
+        <div style="margin-top:14px;padding:18px;border-radius:20px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.06);box-shadow:0 24px 60px rgba(0,0,0,.45);">
+          <div style="font-weight:1000;font-size:18px;letter-spacing:.06em;color:#ffeaa6;margin:0 0 10px;">
+            ${title}
+          </div>
+          <div style="font-size:14px;opacity:.9;line-height:1.45;margin:0 0 14px;">
+            ${body}
+          </div>
+          <div style="margin:16px 0;">
+            <a href="${actionUrl}"
+               style="display:block;text-align:center;padding:12px 14px;border-radius:14px;
+                      border:1px solid rgba(255,234,166,.35);
+                      background:rgba(255,234,166,.10);
+                      color:#ffeaa6;
+                      text-decoration:none;font-weight:1000;letter-spacing:.06em;">
+              ${actionLabel}
+            </a>
+          </div>
+          <div style="margin-top:14px;font-size:12px;opacity:.75;line-height:1.4;">
+            Jeśli to nie Ty, zignoruj tę wiadomość.
+          </div>
+          <div style="margin-top:10px;font-size:12px;opacity:.75;line-height:1.4;">
+            Link nie działa? Skopiuj i wklej do przeglądarki:
+            <div style="margin-top:6px;padding:10px 12px;border-radius:16px;border:1px solid rgba(255,255,255,.18);background:rgba(0,0,0,.18);word-break:break-all;">
+              ${actionUrl}
+            </div>
+          </div>
+        </div>
+        <div style="margin-top:14px;font-size:12px;opacity:.7;text-align:center;">
+          Wiadomość automatyczna — prosimy nie odpowiadać.
+        </div>
+      </div>
+    </div>
+  `.trim();
+}
+
+async function sendMail({ to, subject, html }) {
+  const { data } = await sb().auth.getSession();
+  const token = data?.session?.access_token;
+  if (!token) {
+    throw new Error("Brak aktywnej sesji do wysyłki maila.");
+  }
+  const res = await fetch(MAIL_FUNCTION_URL, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ to, subject, html }),
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(text || "Nie udało się wysłać maila.");
+  }
+}
+
+async function sendSubscriptionEmail({ to, link, ownerLabel }) {
+  const actionUrl = mailLink(link);
+  const html = buildMailHtml({
+    title: "Zaproszenie do subskrypcji",
+    subtitle: "Centrum sondaży",
+    body: `Użytkownik <strong>${ownerLabel}</strong> zaprasza Cię do subskrypcji. Kliknij przycisk, aby zaakceptować zaproszenie.`,
+    actionLabel: "Akceptuj zaproszenie",
+    actionUrl,
+  });
+  await sendMail({
+    to,
+    subject: "Zaproszenie do subskrypcji — Familiada",
+    html,
+  });
+}
+
+async function sendTaskEmail({ to, link, pollName, ownerLabel }) {
+  const actionUrl = mailLink(link);
+  const safeName = pollName ? `„${pollName}”` : "sondzie";
+  const html = buildMailHtml({
+    title: "Zaproszenie do głosowania",
+    subtitle: "Centrum sondaży",
+    body: `Użytkownik <strong>${ownerLabel}</strong> zaprasza Cię do udziału w ${safeName}.`,
+    actionLabel: "Przejdź do głosowania",
+    actionUrl,
+  });
+  await sendMail({
+    to,
+    subject: `Zaproszenie do głosowania — ${pollName || "Sondaż"}`,
+    html,
+  });
+}
+
 function renderSelect(el, kind) {
   if (!el) return;
   el.innerHTML = "";
@@ -146,9 +269,9 @@ function setActiveTab(tab) {
 
 function updateBadges() {
   const tasksPending = tasks.filter((t) => t.status === "pending").length;
-  const subsPending = subscribers.filter((s) => s.status === "pending").length;
-  if (badgeTasks) badgeTasks.textContent = String(tasksPending || 0);
-  if (badgeSubs) badgeSubs.textContent = String(subsPending || 0);
+  const subsPending = subscriptions.filter((s) => s.status === "pending").length;
+  setBadge("tasks", tasksPending);
+  setBadge("subs", subsPending);
 }
 
 function pollTypeLabel(t) {
@@ -547,6 +670,24 @@ async function inviteSubscriber(recipient) {
     const { data, error } = await sb().rpc("polls_hub_subscription_invite", { p_recipient: recipient });
     if (error) throw error;
     if (data?.ok === false) throw new Error(data?.error || "Nie udało się zaprosić.");
+    if (!data?.already && data?.id) {
+      const { data: resendData, error: resendError } = await sb().rpc("polls_hub_subscriber_resend", { p_id: data.id });
+      if (resendError) throw resendError;
+      if (resendData?.ok === false) throw new Error(resendData?.error || "Nie udało się wysłać zaproszenia.");
+      if (resendData?.to && resendData?.link) {
+        const ownerLabel = currentUser?.username || currentUser?.email || "Użytkownik Familiady";
+        try {
+          await sendSubscriptionEmail({
+            to: resendData.to,
+            link: resendData.link,
+            ownerLabel,
+          });
+        } catch (mailError) {
+          console.error(mailError);
+          alert("Zaproszenie zapisane, ale wysyłka maila nie powiodła się.");
+        }
+      }
+    }
     await refreshData();
   } catch (e) {
     console.error(e);
@@ -556,7 +697,22 @@ async function inviteSubscriber(recipient) {
 
 async function resendSubscriber(sub) {
   try {
-    await sb().rpc("polls_hub_subscriber_resend", { p_id: sub.sub_id });
+    const { data, error } = await sb().rpc("polls_hub_subscriber_resend", { p_id: sub.sub_id });
+    if (error) throw error;
+    if (data?.ok === false) throw new Error(data?.error || "Nie udało się ponowić zaproszenia.");
+    if (data?.to && data?.link) {
+      const ownerLabel = currentUser?.username || currentUser?.email || "Użytkownik Familiady";
+      try {
+        await sendSubscriptionEmail({
+          to: data.to,
+          link: data.link,
+          ownerLabel,
+        });
+      } catch (mailError) {
+        console.error(mailError);
+        alert("Ponowienie zapisane, ale wysyłka maila nie powiodła się.");
+      }
+    }
     await refreshData();
   } catch (e) {
     console.error(e);
@@ -666,7 +822,35 @@ async function saveShareModal() {
     });
     if (error) throw error;
     if (data?.ok === false) throw new Error(data?.error || "Nie udało się udostępnić.");
-    shareMsg.textContent = "Zapisano udostępnienie.";
+    const mailItems = Array.isArray(data?.mail) ? data.mail : [];
+    let sentCount = 0;
+    if (mailItems.length) {
+      const ownerLabel = currentUser?.username || currentUser?.email || "Użytkownik Familiady";
+      const pollName = selectedPoll?.name || "";
+      const results = await Promise.allSettled(
+        mailItems.map((item) =>
+          sendTaskEmail({
+            to: item.to,
+            link: item.link,
+            pollName,
+            ownerLabel,
+          })
+        )
+      );
+      const sentTaskIds = [];
+      results.forEach((result, index) => {
+        if (result.status === "fulfilled") {
+          sentCount += 1;
+          if (mailItems[index]?.task_id) sentTaskIds.push(mailItems[index].task_id);
+        }
+      });
+      if (sentTaskIds.length) {
+        await sb().rpc("polls_hub_tasks_mark_emailed", { p_task_ids: sentTaskIds });
+      }
+    }
+    shareMsg.textContent = mailItems.length
+      ? `Zapisano udostępnienie. Maile: ${sentCount}/${mailItems.length}.`
+      : "Zapisano udostępnienie.";
     await refreshData();
     setTimeout(closeShareModal, 500);
   } catch (e) {
