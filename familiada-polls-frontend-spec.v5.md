@@ -440,7 +440,3 @@ Ustalenia:
 - `id&key` w poll‑text/poll‑points: **zawsze anonimowe** (nawet przy sesji).
 
 ---
-
-## 14) Załączniki
-- Migracja: `2026-02-07__poll_task_vote_context_and_admin_delete.sql`
-- Dotychczasowy draft: `familiada-polls-frontend-spec.v2.md`
