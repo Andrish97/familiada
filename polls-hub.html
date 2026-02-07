@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Familiada — centrum sondaży</title>
+
+  <link rel="icon" href="favicon.ico"/>
+  <link rel="stylesheet" href="css/base.css"/>
+  <link rel="stylesheet" href="css/builder.css"/>
+  <link rel="stylesheet" href="css/polls-hub.css"/>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <script type="module" src="js/pages/polls-hub.js" defer></script>
+</head>
+
+<body class="polls-hub-body">
+  <header class="topbar">
+    <div class="left">
+      <button class="btn sm" id="btnBackToBuilder" type="button">← Moje gry</button>
+    </div>
+    <div class="brand">Centrum sondaży</div>
+    <div class="right">
+      <span class="who" id="who">—</span>
+      <button class="btn sm" id="btnLogout" type="button">Wyloguj</button>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="hub-desktop">
+      <div class="tabs-card hub-tabs" id="hubTabs">
+        <div class="tabs-strip">
+          <div class="tab-slot slot-pollText">
+            <button class="tab-label" id="tabPolls" type="button">Sondaże</button>
+            <div class="tab-wrapper">
+              <div class="tab-active">
+                Sondaże
+                <span class="hub-tab-badge" id="badgeTasks">0</span>
+              </div>
+              <div class="tab-corner tab-corner-left"></div>
+              <div class="tab-corner tab-corner-right"></div>
+            </div>
+          </div>
+
+          <div class="tab-slot slot-pollPoints">
+            <button class="tab-label" id="tabSubs" type="button">Subskrypcje</button>
+            <div class="tab-wrapper">
+              <div class="tab-active">
+                Subskrypcje
+                <span class="hub-tab-badge" id="badgeSubs">0</span>
+              </div>
+              <div class="tab-corner tab-corner-left"></div>
+              <div class="tab-corner tab-corner-right"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card hub-card">
+          <div class="hub-tab-panel" id="panelPolls">
+            <div class="hub-grid">
+              <section class="hub-col">
+                <div class="hub-col-head">
+                  <div>
+                    <div class="hub-col-title">Moje sondaże</div>
+                    <div class="hub-col-hint">Kliknij kafelek, aby go zaznaczyć.</div>
+                  </div>
+                  <div class="hub-controls">
+                    <select class="inp sm" id="sortPollsDesktop"></select>
+                    <div class="hub-toggle" data-kind="polls">
+                      <button class="btn xs" data-toggle="current">Aktualne</button>
+                      <button class="btn xs" data-toggle="archive">Archiwalne</button>
+                    </div>
+                    <button class="btn xs" id="btnShare" type="button" disabled>Udostępnij</button>
+                    <button class="btn xs" id="btnDetails" type="button" disabled>Szczegóły</button>
+                  </div>
+                </div>
+                <div class="hub-list" id="pollsListDesktop"></div>
+              </section>
+
+              <section class="hub-col">
+                <div class="hub-col-head">
+                  <div>
+                    <div class="hub-col-title">Zadania</div>
+                    <div class="hub-col-hint">Dwuklik otwiera głosowanie.</div>
+                  </div>
+                  <div class="hub-controls">
+                    <select class="inp sm" id="sortTasksDesktop"></select>
+                    <div class="hub-toggle" data-kind="tasks">
+                      <button class="btn xs" data-toggle="current">Aktualne</button>
+                      <button class="btn xs" data-toggle="archive">Archiwalne</button>
+                    </div>
+                  </div>
+                </div>
+                <div class="hub-list" id="tasksListDesktop"></div>
+              </section>
+            </div>
+          </div>
+
+          <div class="hub-tab-panel" id="panelSubs">
+            <div class="hub-grid">
+              <section class="hub-col">
+                <div class="hub-col-head">
+                  <div>
+                    <div class="hub-col-title">Moi subskrybenci</div>
+                    <div class="hub-col-hint">Zaproś nowych i zarządzaj zaproszeniami.</div>
+                  </div>
+                  <div class="hub-controls">
+                    <select class="inp sm" id="sortSubscribersDesktop"></select>
+                    <div class="hub-toggle" data-kind="subscribers">
+                      <button class="btn xs" data-toggle="current">Aktualne</button>
+                      <button class="btn xs" data-toggle="archive">Archiwalne</button>
+                    </div>
+                  </div>
+                </div>
+                <div class="hub-invite">
+                  <input class="inp" id="inviteInputDesktop" placeholder="Email lub nazwa użytkownika"/>
+                  <button class="btn xs gold" id="btnInviteDesktop" type="button">Zaproś</button>
+                </div>
+                <div class="hub-list" id="subscribersListDesktop"></div>
+              </section>
+
+              <section class="hub-col">
+                <div class="hub-col-head">
+                  <div>
+                    <div class="hub-col-title">Moje subskrypcje</div>
+                    <div class="hub-col-hint">Akceptuj zaproszenia od innych.</div>
+                  </div>
+                  <div class="hub-controls">
+                    <select class="inp sm" id="sortSubscriptionsDesktop"></select>
+                    <div class="hub-toggle" data-kind="subscriptions">
+                      <button class="btn xs" data-toggle="current">Aktualne</button>
+                      <button class="btn xs" data-toggle="archive">Archiwalne</button>
+                    </div>
+                  </div>
+                </div>
+                <div class="hub-list" id="subscriptionsListDesktop"></div>
+              </section>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="hub-mobile">
+      <div class="card hub-card">
+        <div class="hub-col-head">
+          <div>
+            <div class="hub-col-title">Moje sondaże</div>
+            <div class="hub-col-hint">Kliknij kafelek, aby go zaznaczyć.</div>
+          </div>
+          <div class="hub-controls">
+            <select class="inp sm" id="sortPollsMobile"></select>
+            <div class="hub-toggle" data-kind="polls">
+              <button class="btn xs" data-toggle="current">Aktualne</button>
+              <button class="btn xs" data-toggle="archive">Archiwalne</button>
+            </div>
+            <button class="btn xs" id="btnShareMobile" type="button" disabled>Udostępnij</button>
+            <button class="btn xs" id="btnDetailsMobile" type="button" disabled>Szczegóły</button>
+          </div>
+        </div>
+        <div class="hub-list" id="pollsListMobile"></div>
+      </div>
+
+      <div class="card hub-card">
+        <div class="hub-col-head">
+          <div>
+            <div class="hub-col-title">Zadania</div>
+            <div class="hub-col-hint">Dwuklik otwiera głosowanie.</div>
+          </div>
+          <div class="hub-controls">
+            <select class="inp sm" id="sortTasksMobile"></select>
+            <div class="hub-toggle" data-kind="tasks">
+              <button class="btn xs" data-toggle="current">Aktualne</button>
+              <button class="btn xs" data-toggle="archive">Archiwalne</button>
+            </div>
+          </div>
+        </div>
+        <div class="hub-list" id="tasksListMobile"></div>
+      </div>
+
+      <div class="card hub-card">
+        <div class="hub-col-head">
+          <div>
+            <div class="hub-col-title">Moi subskrybenci</div>
+            <div class="hub-col-hint">Zaproś nowych i zarządzaj zaproszeniami.</div>
+          </div>
+          <div class="hub-controls">
+            <select class="inp sm" id="sortSubscribersMobile"></select>
+            <div class="hub-toggle" data-kind="subscribers">
+              <button class="btn xs" data-toggle="current">Aktualne</button>
+              <button class="btn xs" data-toggle="archive">Archiwalne</button>
+            </div>
+          </div>
+        </div>
+        <div class="hub-invite">
+          <input class="inp" id="inviteInputMobile" placeholder="Email lub nazwa użytkownika"/>
+          <button class="btn xs gold" id="btnInviteMobile" type="button">Zaproś</button>
+        </div>
+        <div class="hub-list" id="subscribersListMobile"></div>
+      </div>
+
+      <div class="card hub-card">
+        <div class="hub-col-head">
+          <div>
+            <div class="hub-col-title">Moje subskrypcje</div>
+            <div class="hub-col-hint">Akceptuj zaproszenia od innych.</div>
+          </div>
+          <div class="hub-controls">
+            <select class="inp sm" id="sortSubscriptionsMobile"></select>
+            <div class="hub-toggle" data-kind="subscriptions">
+              <button class="btn xs" data-toggle="current">Aktualne</button>
+              <button class="btn xs" data-toggle="archive">Archiwalne</button>
+            </div>
+          </div>
+        </div>
+        <div class="hub-list" id="subscriptionsListMobile"></div>
+      </div>
+    </section>
+  </main>
+
+  <div class="overlay" id="shareOverlay" style="display:none;">
+    <div class="modal">
+      <div class="mTitle" id="shareTitle">Udostępnij sondaż</div>
+      <div class="mSub">Wybierz subskrybentów, którym chcesz wysłać zadanie.</div>
+      <div class="hub-share-list" id="shareList"></div>
+      <div class="hub-modal-actions">
+        <button class="btn sm gold" id="btnShareSave" type="button">Zapisz udostępnienie</button>
+        <button class="btn sm" id="btnShareClose" type="button">Zamknij</button>
+        <div class="hub-modal-msg" id="shareMsg"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="overlay" id="detailsOverlay" style="display:none;">
+    <div class="modal">
+      <div class="mTitle" id="detailsTitle">Szczegóły głosowania</div>
+      <div class="mSub">Usuń głos powiązany z zadaniem, jeśli to konieczne.</div>
+      <div class="hub-details">
+        <div>
+          <div class="hub-details-head">Zagłosowali</div>
+          <div class="hub-details-list" id="detailsVoted"></div>
+        </div>
+        <div>
+          <div class="hub-details-head">Nie zagłosowali / Odrzucili</div>
+          <div class="hub-details-list" id="detailsPending"></div>
+        </div>
+        <div class="hub-details-side">
+          <div class="hub-details-head">Anonimowe</div>
+          <div class="hub-anon-count" id="detailsAnon">0</div>
+        </div>
+      </div>
+      <div class="hub-modal-actions">
+        <button class="btn sm" id="btnDetailsClose" type="button">Zamknij</button>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

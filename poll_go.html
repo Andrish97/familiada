@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Familiada — zaproszenie</title>
+
+  <link rel="icon" href="favicon.ico"/>
+  <link rel="stylesheet" href="css/base.css"/>
+  <link rel="stylesheet" href="css/poll-go.css"/>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <script type="module" src="js/pages/poll-go.js" defer></script>
+</head>
+
+<body class="poll-go-body">
+  <header class="topbar">
+    <div class="brand">FAMILIADA</div>
+  </header>
+
+  <main class="wrap">
+    <section class="card poll-go-card">
+      <div class="poll-go-title" id="title">Ładuję zaproszenie…</div>
+      <div class="poll-go-sub" id="message">Proszę czekać.</div>
+
+      <div class="poll-go-email" id="emailRow" style="display:none;">
+        <input class="inp" id="emailInput" placeholder="Podaj e-mail" type="email"/>
+        <button class="btn sm" id="btnEmailNext" type="button">Dalej</button>
+      </div>
+
+      <div class="poll-go-actions" id="actions"></div>
+      <div class="poll-go-hint" id="hint"></div>
+    </section>
+  </main>
+</body>
+</html>

@@ -12,6 +12,17 @@ const btnToggle = $("#btnToggle");
 const btnForgot = $("#btnForgot");
 
 let mode = "login"; // login | register
+const params = new URLSearchParams(location.search);
+const nextTarget = params.get("next");
+const nextTask = params.get("t");
+const nextSub = params.get("s");
+
+function buildNextUrl() {
+  const url = new URL("polls-hub.html", location.href);
+  if (nextTask) url.searchParams.set("t", nextTask);
+  if (nextSub) url.searchParams.set("s", nextSub);
+  return url.toString();
+}
 
 function setErr(m = "") { err.textContent = m; }
 function setStatus(m = "") { status.textContent = m; }
@@ -39,7 +50,11 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   const u = await getUser();
   if (u) {
-    location.href = "builder.html";
+    if (nextTarget === "polls-hub") {
+      location.href = buildNextUrl();
+    } else {
+      location.href = "builder.html";
+    }
     return;
   }
   setStatus("Niezalogowany.");
@@ -73,7 +88,11 @@ document.addEventListener("DOMContentLoaded", async () => {
       } else {
         setStatus("Loguję…");
         await signIn(loginOrEmail, pwd); // <-- może być username
-        location.href = "builder.html";
+        if (nextTarget === "polls-hub") {
+          location.href = buildNextUrl();
+        } else {
+          location.href = "builder.html";
+        }
       }
     } catch (e) {
       console.error(e);

@@ -30,6 +30,7 @@ const btnManual = document.getElementById("btnManual");
 const btnLogoEditor = document.getElementById("btnLogoEditor");
 const btnBases = document.getElementById("btnBases");
 const btnPollsHub = document.getElementById("btnPollsHub");
+const pollsHubBadge = document.getElementById("pollsHubBadge");
 
 const btnExport = document.getElementById("btnExport");
 const btnImport = document.getElementById("btnImport");
@@ -714,18 +715,21 @@ document.addEventListener("DOMContentLoaded", async () => {
   async function refreshPollsHubDot(){
     // dot ma się pokazać, gdy są aktywne zadania / zaproszenia
     try{
-      const { data, error } = await sb().rpc("polls_hub_overview");
+      const { data, error } = await sb().rpc("polls_badge_get");
       if (error) throw error;
   
       const row = Array.isArray(data) ? data[0] : data;
-      const tasks = Number(row?.tasks_active ?? row?.tasks ?? 0);
-      const invites = Number(row?.invites_pending ?? row?.invites ?? 0);
-  
-      const hasNew = (tasks + invites) > 0;
-      btnPollsHub?.classList.toggle("hasDot", hasNew);
+      const tasks = Number(row?.tasks_pending ?? 0);
+      const invites = Number(row?.subs_pending ?? 0);
+      const total = tasks + invites;
+      const text = total > 99 ? "99+" : String(total);
+      const hasNew = total > 0;
+      btnPollsHub?.classList.toggle("hasBadge", hasNew);
+      if (pollsHubBadge) pollsHubBadge.textContent = hasNew ? text : "";
     } catch (e){
       // jak RPC nie istnieje / nie zwróci pól — nie blokujemy UI
-      btnPollsHub?.classList.remove("hasDot");
+      btnPollsHub?.classList.remove("hasBadge");
+      if (pollsHubBadge) pollsHubBadge.textContent = "";
     }
   }
   

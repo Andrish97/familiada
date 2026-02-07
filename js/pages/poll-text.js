@@ -3,8 +3,8 @@ import { sb } from "../core/supabase.js";
 import { getUser } from "../core/auth.js";
 
 const qs = new URLSearchParams(location.search);
-const gameId = qs.get("id");
-const key = qs.get("key");
+let gameId = qs.get("id");
+let key = qs.get("key");
 const taskToken = qs.get("t"); // <- opcjonalnie (tylko dla zadań z poll_go)
 
 const $ = (id) => document.getElementById(id);
@@ -32,9 +32,11 @@ function doneKey() {
   return `fam_poll_done_${gameId}_${key}`;
 }
 function hasDone() {
+  if (taskToken) return false;
   return localStorage.getItem(doneKey()) === "1";
 }
 function markDone() {
+  if (taskToken) return;
   localStorage.setItem(doneKey(), "1");
 }
 
@@ -71,7 +73,10 @@ function showClosed(on) {
   if (qbox) qbox.style.display = on ? "none" : "";
 }
 
+let taskVoterToken = null;
+let taskResolved = !taskToken;
 function getVoterToken() {
+  if (taskToken && taskVoterToken) return taskVoterToken;
   const k = `fam_voter_${gameId}_${key}`;
   let t = localStorage.getItem(k);
   if (!t) {
@@ -157,6 +162,43 @@ async function maybeReturnToHub(){
   }catch{}
 }
 
+async function markTaskOpened() {
+  if (!taskToken) return;
+  try {
+    await sb().rpc("poll_task_opened", { p_token: taskToken });
+  } catch (e) {
+    console.warn("[poll-text] poll_task_opened failed:", e);
+  }
+}
+
+async function resolveTaskToken() {
+  if (!taskToken) return;
+  try {
+    const { data, error } = await sb().rpc("poll_task_resolve", { p_token: taskToken });
+    if (error) throw error;
+    if (!data?.ok || data?.kind !== "task") throw new Error("Link jest nieważny lub nieaktywny.");
+    if (data.requires_auth) {
+      setSub("Zaloguj się, aby przejść do głosowania.");
+      showClosed(true);
+      return;
+    }
+    if (data.needs_email) {
+      setSub("Podaj e-mail w linku z zaproszenia.");
+      showClosed(true);
+      return;
+    }
+    gameId = data.game_id;
+    key = data.key;
+    taskVoterToken = data.voter_token;
+    taskResolved = true;
+    await markTaskOpened();
+  } catch (e) {
+    console.error("[poll-text] task resolve error:", e);
+    setSub("Nie można otworzyć zadania.");
+    showClosed(true);
+  }
+}
+
 let payload = null;
 let idx = 0;
 
@@ -236,6 +278,10 @@ function setupBeforeUnloadWarn() {
 
 document.addEventListener("DOMContentLoaded", async () => {
   try {
+    if (taskToken) {
+      await resolveTaskToken();
+    }
+    if (!taskResolved) return;
     if (!gameId || !key) {
       setSub("Brak parametru id lub key.");
       showClosed(true);
