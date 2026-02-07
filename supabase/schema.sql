@@ -3005,7 +3005,8 @@ begin
   where token=p_token and status in ('pending','opened');
 
   return 'ok';
-end $function$
+end;
+$function$
 CREATE OR REPLACE FUNCTION public.poll_task_done(p_token uuid)
  RETURNS text
  LANGUAGE plpgsql
@@ -3034,7 +3035,8 @@ begin
   where token=p_token and status in ('pending','opened');
 
   return 'ok';
-end $function$
+end;
+$function$
 CREATE OR REPLACE FUNCTION public.poll_task_opened(p_token uuid)
  RETURNS text
  LANGUAGE plpgsql
@@ -3063,7 +3065,8 @@ begin
   where token=p_token and status='pending';
 
   return 'ok';
-end $function$
+end;
+$function$
 CREATE OR REPLACE FUNCTION public.poll_task_send(p_game_id uuid, p_poll_type text, p_recipients text[])
  RETURNS jsonb
  LANGUAGE plpgsql
