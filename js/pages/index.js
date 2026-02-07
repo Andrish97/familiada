@@ -1,5 +1,5 @@
 // js/pages/index.js
-import { getUser, signIn, signUp, resetPassword, validatePassword, validateUsername } from "../core/auth.js";
+import { getUser, signIn, signUp, resetPassword, validateUsername } from "../core/auth.js";
 import { sb } from "../core/supabase.js";
 
 const $ = (s) => document.querySelector(s);
@@ -151,11 +151,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         if (!mail || !mail.includes("@")) return setErr("Podaj poprawny e-mail.");
 
         if (pass2.value !== pwd) return setErr("Hasła nie są takie same.");
-        try {
-          validatePassword(pwd);
-        } catch (e) {
-          return setErr(e?.message || String(e));
-        }
 
         setStatus("Rejestruję…");
         const redirectTo = new URL("confirm.html", location.href).toString();
