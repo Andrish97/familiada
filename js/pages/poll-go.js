@@ -15,7 +15,6 @@ const actions = $("actions");
 const hint = $("hint");
 const emailRow = $("emailRow");
 const emailInput = $("emailInput");
-const btnEmailNext = $("btnEmailNext");
 
 function setView({ head, text, hintText }) {
   if (title) title.textContent = head;
@@ -286,7 +285,9 @@ async function init() {
   }
 }
 
-btnEmailNext?.addEventListener("click", async () => {
+emailInput?.addEventListener("keydown", async (event) => {
+  if (event.key !== "Enter") return;
+  event.preventDefault();
   if (!goToken) return;
   await subscribeByEmail();
 });

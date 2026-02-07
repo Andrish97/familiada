@@ -658,7 +658,7 @@ async function openPoll(poll) {
     alert("Dokończ grę w Moich grach");
     return;
   }
-  location.href = `polls.html?id=${encodeURIComponent(poll.game_id)}`;
+  location.href = `polls.html?id=${encodeURIComponent(poll.game_id)}&from=polls-hub`;
 }
 
 function extractToken(goUrl, key) {

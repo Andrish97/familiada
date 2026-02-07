@@ -16,17 +16,22 @@
 
 <body class="polls-hub-body">
   <header class="topbar">
-    <div class="left">
-      <button class="btn sm" id="btnBackToBuilder" type="button">← Moje gry</button>
-    </div>
-    <div class="brand">Centrum sondaży</div>
+    <div class="brand">FAMILIADA</div>
     <div class="right">
+      <button class="btn" id="btnBackToBuilder" type="button">← Moje gry</button>
       <span class="who" id="who">—</span>
       <button class="btn sm" id="btnLogout" type="button">Wyloguj</button>
     </div>
   </header>
 
   <main class="wrap">
+    <div class="bar">
+      <div>
+        <div class="title">Centrum sondaży</div>
+        <div class="hint">Zarządzaj sondażami oraz zaproszeniami do głosowania.</div>
+      </div>
+    </div>
+
     <section class="hub-desktop">
       <div class="tabs-card hub-tabs" id="hubTabs">
         <div class="tabs-strip">
@@ -73,8 +78,8 @@
                   <div class="hub-controls">
                     <select class="inp sm" id="sortPollsDesktop"></select>
                     <div class="hub-toggle" data-kind="polls">
-                      <button class="btn xs" data-toggle="current">Aktualne</button>
-                      <button class="btn xs" data-toggle="archive">Archiwalne</button>
+                      <button class="btn xs btn-toggle" data-toggle="current">Aktualne</button>
+                      <button class="btn xs btn-toggle" data-toggle="archive">Archiwalne</button>
                     </div>
                     <button class="btn xs" id="btnShare" type="button" disabled>Udostępnij</button>
                     <button class="btn xs" id="btnDetails" type="button" disabled>Szczegóły</button>
@@ -92,8 +97,8 @@
                   <div class="hub-controls">
                     <select class="inp sm" id="sortTasksDesktop"></select>
                     <div class="hub-toggle" data-kind="tasks">
-                      <button class="btn xs" data-toggle="current">Aktualne</button>
-                      <button class="btn xs" data-toggle="archive">Archiwalne</button>
+                      <button class="btn xs btn-toggle" data-toggle="current">Aktualne</button>
+                      <button class="btn xs btn-toggle" data-toggle="archive">Archiwalne</button>
                     </div>
                   </div>
                 </div>
@@ -113,8 +118,8 @@
                   <div class="hub-controls">
                     <select class="inp sm" id="sortSubscribersDesktop"></select>
                     <div class="hub-toggle" data-kind="subscribers">
-                      <button class="btn xs" data-toggle="current">Aktualne</button>
-                      <button class="btn xs" data-toggle="archive">Archiwalne</button>
+                      <button class="btn xs btn-toggle" data-toggle="current">Aktualne</button>
+                      <button class="btn xs btn-toggle" data-toggle="archive">Archiwalne</button>
                     </div>
                   </div>
                 </div>
@@ -134,8 +139,8 @@
                   <div class="hub-controls">
                     <select class="inp sm" id="sortSubscriptionsDesktop"></select>
                     <div class="hub-toggle" data-kind="subscriptions">
-                      <button class="btn xs" data-toggle="current">Aktualne</button>
-                      <button class="btn xs" data-toggle="archive">Archiwalne</button>
+                      <button class="btn xs btn-toggle" data-toggle="current">Aktualne</button>
+                      <button class="btn xs btn-toggle" data-toggle="archive">Archiwalne</button>
                     </div>
                   </div>
                 </div>
@@ -173,21 +178,21 @@
             </div>
           </div>
           <div class="tab-slot slot-mobile-subscribers">
-            <button class="tab-label" id="tabSubscribersMobile" type="button">Subskrybenci</button>
+            <button class="tab-label" id="tabSubscribersMobile" type="button">Subskryb.</button>
             <div class="tab-wrapper">
-              <div class="tab-active">Subskrybenci</div>
+              <div class="tab-active">Subskryb.</div>
               <div class="tab-corner tab-corner-left"></div>
               <div class="tab-corner tab-corner-right"></div>
             </div>
           </div>
           <div class="tab-slot slot-mobile-subscriptions">
             <button class="tab-label" id="tabSubscriptionsMobile" type="button">
-              Subskrypcje
+              Subskryp.
               <span class="hub-tab-badge is-empty" data-badge="subs"></span>
             </button>
             <div class="tab-wrapper">
               <div class="tab-active">
-                Subskrypcje
+                Subskryp.
                 <span class="hub-tab-badge is-empty" data-badge="subs"></span>
               </div>
               <div class="tab-corner tab-corner-left"></div>
@@ -206,8 +211,8 @@
               <div class="hub-controls">
                 <select class="inp sm" id="sortPollsMobile"></select>
                 <div class="hub-toggle" data-kind="polls">
-                  <button class="btn xs" data-toggle="current">Aktualne</button>
-                  <button class="btn xs" data-toggle="archive">Archiwalne</button>
+                  <button class="btn xs btn-toggle" data-toggle="current">Aktualne</button>
+                  <button class="btn xs btn-toggle" data-toggle="archive">Archiwalne</button>
                 </div>
                 <button class="btn xs" id="btnShareMobile" type="button" disabled>Udostępnij</button>
                 <button class="btn xs" id="btnDetailsMobile" type="button" disabled>Szczegóły</button>
@@ -225,8 +230,8 @@
               <div class="hub-controls">
                 <select class="inp sm" id="sortTasksMobile"></select>
                 <div class="hub-toggle" data-kind="tasks">
-                  <button class="btn xs" data-toggle="current">Aktualne</button>
-                  <button class="btn xs" data-toggle="archive">Archiwalne</button>
+                  <button class="btn xs btn-toggle" data-toggle="current">Aktualne</button>
+                  <button class="btn xs btn-toggle" data-toggle="archive">Archiwalne</button>
                 </div>
               </div>
             </div>
@@ -242,8 +247,8 @@
               <div class="hub-controls">
                 <select class="inp sm" id="sortSubscribersMobile"></select>
                 <div class="hub-toggle" data-kind="subscribers">
-                  <button class="btn xs" data-toggle="current">Aktualne</button>
-                  <button class="btn xs" data-toggle="archive">Archiwalne</button>
+                  <button class="btn xs btn-toggle" data-toggle="current">Aktualne</button>
+                  <button class="btn xs btn-toggle" data-toggle="archive">Archiwalne</button>
                 </div>
               </div>
             </div>
@@ -263,8 +268,8 @@
               <div class="hub-controls">
                 <select class="inp sm" id="sortSubscriptionsMobile"></select>
                 <div class="hub-toggle" data-kind="subscriptions">
-                  <button class="btn xs" data-toggle="current">Aktualne</button>
-                  <button class="btn xs" data-toggle="archive">Archiwalne</button>
+                  <button class="btn xs btn-toggle" data-toggle="current">Aktualne</button>
+                  <button class="btn xs btn-toggle" data-toggle="archive">Archiwalne</button>
                 </div>
               </div>
             </div>
