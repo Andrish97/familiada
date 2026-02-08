@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Familiada — moje gry</title>
+  <title data-i18n="builder.title">Familiada — moje gry</title>
 
   <link rel="icon" href="favicon.ico"/>
   <link rel="stylesheet" href="css/base.css"/>
@@ -19,56 +19,56 @@
     <div class="right">
 
       <button class="btn" id="btnPollsHub">
-          <span class="only-desktop">Centrum sondaży 📊</span>
-          <span class="only-mobile">📊</span>
+          <span class="only-desktop" data-i18n="builder.nav.pollsHub">Centrum sondaży 📊</span>
+          <span class="only-mobile" data-i18n="builder.nav.pollsHubMobile">📊</span>
           <span class="pollsBadge" id="pollsHubBadge" aria-hidden="true"></span>
       </button>
 
       <button class="btn" id="btnBases">
-          <span class="only-desktop">Bazy pytań 🗃️</span>
-          <span class="only-mobile">🗃️</span>
+          <span class="only-desktop" data-i18n="builder.nav.bases">Bazy pytań 🗃️</span>
+          <span class="only-mobile" data-i18n="builder.nav.basesMobile">🗃️</span>
       </button>
       
       <button class="btn" id="btnManual">
-          <span class="only-desktop">Wskazówki ℹ️</span>
-          <span class="only-mobile">ℹ️</span>
+          <span class="only-desktop" data-i18n="builder.nav.manual">Wskazówki ℹ️</span>
+          <span class="only-mobile" data-i18n="builder.nav.manualMobile">ℹ️</span>
       </button>
 
       <button class="btn" id="btnLogoEditor">
-          <span class="only-desktop">Logo 🖥️</span>
-          <span class="only-mobile">🖥️</span>
+          <span class="only-desktop" data-i18n="builder.nav.logo">Logo 🖥️</span>
+          <span class="only-mobile" data-i18n="builder.nav.logoMobile">🖥️</span>
       </button>
       
       <button class="btn user-btn" id="btnAccount" type="button">
         <span class="user-name" id="who">—</span>
-        <span class="user-sub">Ustawienia konta</span>
+        <span class="user-sub" data-i18n="builder.nav.account">Ustawienia konta</span>
       </button>
-      <button class="btn sm" id="btnLogout" type="button">Wyloguj</button>
+      <button class="btn sm" id="btnLogout" type="button" data-i18n="builder.nav.logout">Wyloguj</button>
     </div>
   </header>
 
   <main class="wrap">
     <div class="bar">
       <div>
-        <div class="title">Twoje gry</div>
-        <div class="hint" id="hint">Kliknij kafelek, żeby go zaznaczyć.</div>
+        <div class="title" data-i18n="builder.header.title">Twoje gry</div>
+        <div class="hint" id="hint" data-i18n="builder.header.hint">Kliknij kafelek, żeby go zaznaczyć.</div>
       </div>
 
       <div class="actions">
         <!-- góra: tylko te trzy przyciski -->
         <button class="btn sm" id="btnEdit" type="button" disabled>
-          <span class="only-desktop">Edytuj</span>
-          <span class="only-mobile">Edyt.</span>
+          <span class="only-desktop" data-i18n="builder.actions.edit">Edytuj</span>
+          <span class="only-mobile" data-i18n="builder.actions.editMobile">Edyt.</span>
         </button>
 
         <button class="btn sm gold" id="btnPlay" type="button" disabled>
-          <span class="only-desktop">Graj</span>
-          <span class="only-mobile">Graj</span>
+          <span class="only-desktop" data-i18n="builder.actions.play">Graj</span>
+          <span class="only-mobile" data-i18n="builder.actions.playMobile">Graj</span>
         </button>
 
         <button class="btn sm gold" id="btnPoll" type="button" disabled>
-          <span class="only-desktop">Sondaż</span>
-          <span class="only-mobile">Sond.</span>
+          <span class="only-desktop" data-i18n="builder.actions.poll">Sondaż</span>
+          <span class="only-mobile" data-i18n="builder.actions.pollMobile">Sond.</span>
         </button>
       </div>
     </div>
@@ -81,10 +81,10 @@
           <!-- SLOT 1: typowy sondaż -->
           <div class="tab-slot slot-pollText">
             <button class="tab-label" id="tabPollText" type="button">
-              Typowy sondaż
+              <span data-i18n="builder.tabs.pollText">Typowy sondaż</span>
             </button>
             <div class="tab-wrapper">
-              <div class="tab-active">Typowy sondaż</div>
+              <div class="tab-active" data-i18n="builder.tabs.pollText">Typowy sondaż</div>
               <div class="tab-corner tab-corner-left"></div>
               <div class="tab-corner tab-corner-right"></div>
             </div>
@@ -93,10 +93,10 @@
           <!-- SLOT 2: punktacja -->
           <div class="tab-slot slot-pollPoints">
             <button class="tab-label" id="tabPollPoints" type="button">
-              Punktacja
+              <span data-i18n="builder.tabs.pollPoints">Punktacja</span>
             </button>
             <div class="tab-wrapper">
-              <div class="tab-active">Punktacja</div>
+              <div class="tab-active" data-i18n="builder.tabs.pollPoints">Punktacja</div>
               <div class="tab-corner tab-corner-left"></div>
               <div class="tab-corner tab-corner-right"></div>
             </div>
@@ -105,10 +105,10 @@
           <!-- SLOT 3: preparowany -->
           <div class="tab-slot slot-prepared">
             <button class="tab-label" id="tabPrepared" type="button">
-              Preparowany
+              <span data-i18n="builder.tabs.prepared">Preparowany</span>
             </button>
             <div class="tab-wrapper">
-              <div class="tab-active">Preparowany</div>
+              <div class="tab-active" data-i18n="builder.tabs.prepared">Preparowany</div>
               <div class="tab-corner tab-corner-left"></div>
               <div class="tab-corner tab-corner-right"></div>
             </div>
@@ -123,16 +123,16 @@
             <div class="builder-bottom-left"></div>
             <div class="builder-bottom-right">
               <button class="btn sm" id="btnExport" type="button" disabled>
-                <span class="only-desktop">Eksportuj do pliku</span>
-                <span class="only-mobile">Exp.plk</span>
+                <span class="only-desktop" data-i18n="builder.actions.exportFile">Eksportuj do pliku</span>
+                <span class="only-mobile" data-i18n="builder.actions.exportFileMobile">Exp.plk</span>
               </button>
               <button class="btn sm" id="btnExportBase" type="button" disabled>
-                <span class="only-desktop">Eksportuj do bazy</span>
-                <span class="only-mobile">Exp.bz</span>
+                <span class="only-desktop" data-i18n="builder.actions.exportBase">Eksportuj do bazy</span>
+                <span class="only-mobile" data-i18n="builder.actions.exportBaseMobile">Exp.bz</span>
               </button>
               <button class="btn sm" id="btnImport" type="button">
-                <span class="only-desktop">Import</span>
-                <span class="only-mobile">Imp</span>
+                <span class="only-desktop" data-i18n="builder.actions.import">Import</span>
+                <span class="only-mobile" data-i18n="builder.actions.importMobile">Imp</span>
               </button>
             </div>
           </div>
@@ -144,15 +144,15 @@
   <!-- Modal: import JSON -->
   <div class="overlay" id="importOverlay" style="display:none;">
     <div class="modal">
-      <div class="mTitle">Import</div>
-      <div class="mSub">Wybierz plik JSON lub wklej JSON poniżej.</div>
+      <div class="mTitle" data-i18n="builder.import.title">Import</div>
+      <div class="mSub" data-i18n="builder.import.subtitle">Wybierz plik JSON lub wklej JSON poniżej.</div>
 
       <div class="importRow">
         <input id="importFile" class="inp" type="file" accept="application/json">
-        <button class="btn sm" id="btnImportFile" type="button">Wczytaj plik</button>
+        <button class="btn sm" id="btnImportFile" type="button" data-i18n="builder.import.loadFile">Wczytaj plik</button>
       </div>
 
-      <textarea id="importTa" class="importTa" spellcheck="false" placeholder="Wklej JSON tutaj..."></textarea>
+      <textarea id="importTa" class="importTa" spellcheck="false" placeholder="Wklej JSON tutaj..." data-i18n-placeholder="builder.import.placeholder"></textarea>
 
         <!-- PROGRES: import (ukryty, pokazuje się tylko podczas importu) -->
         <div id="importProg" style="display:none;margin-top:12px;gap:10px">
@@ -165,12 +165,12 @@
             <div id="importProgBar" style="height:100%;width:0%;background:rgba(255,255,255,.85)"></div>
           </div>
         
-          <div class="importMsg" id="importProgMsg" style="min-height:18px"></div>
-        </div>
+        <div class="importMsg" id="importProgMsg" style="min-height:18px"></div>
+      </div>
       
       <div class="importRow">
-        <button class="btn sm gold" id="btnImportJson" type="button">Importuj</button>
-        <button class="btn sm" id="btnCancelImport" type="button">Zamknij</button>
+        <button class="btn sm gold" id="btnImportJson" type="button" data-i18n="builder.import.confirm">Importuj</button>
+        <button class="btn sm" id="btnCancelImport" type="button" data-i18n="builder.import.cancel">Zamknij</button>
         <div class="importMsg" id="importMsg"></div>
       </div>
     </div>
@@ -178,9 +178,9 @@
   <!-- Modal: eksport do bazy pytań -->
   <div class="overlay" id="exportBaseOverlay" style="display:none;">
     <div class="modal">
-      <div class="mTitle">Eksport do bazy</div>
+      <div class="mTitle" data-i18n="builder.exportBase.title">Eksport do bazy</div>
       <div class="mSub">
-        Wybierz bazę pytań. Zostanie utworzony folder w głównym katalogu o nazwie jak gra.
+        <span data-i18n="builder.exportBase.subtitle">Wybierz bazę pytań. Zostanie utworzony folder w głównym katalogu o nazwie jak gra.</span>
       </div>
   
       <div class="basePickList" id="basePickList"></div>
@@ -200,8 +200,8 @@
       </div>
 
       <div class="importRow" style="margin-top:10px;">
-        <button class="btn sm gold" id="btnExportBaseDo" type="button">Eksportuj</button>
-        <button class="btn sm" id="btnExportBaseCancel" type="button">Zamknij</button>
+        <button class="btn sm gold" id="btnExportBaseDo" type="button" data-i18n="builder.exportBase.confirm">Eksportuj</button>
+        <button class="btn sm" id="btnExportBaseCancel" type="button" data-i18n="builder.exportBase.cancel">Zamknij</button>
         <div class="importMsg" id="exportBaseMsg"></div>
       </div>
     </div>
@@ -211,8 +211,8 @@
   <!-- EXPORT DO PLIKU: PROGRES -->
   <div class="overlay" id="exportJsonOverlay" style="display:none;">
     <div class="modal" style="width:min(640px,94vw)">
-      <div class="mTitle">EXPORT…</div>
-      <div class="mSub" id="exportJsonSub">Nie zamykaj strony. Trwa przygotowanie pliku.</div>
+      <div class="mTitle" data-i18n="builder.exportFile.title">EXPORT…</div>
+      <div class="mSub" id="exportJsonSub" data-i18n="builder.exportFile.subtitle">Nie zamykaj strony. Trwa przygotowanie pliku.</div>
   
       <div style="margin-top:12px;display:grid;gap:10px">
         <div class="importRow" style="align-items:center">

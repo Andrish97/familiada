@@ -1,7 +1,9 @@
 // ================== KOMUNIKATY / TEKSTY WYŚWIETLACZA ==================
+import { t } from "../../translation/translation.js";
+
 const DISPLAY_MSG = {
-  TEAM_A_DEFAULT: "Drużyna A",
-  TEAM_B_DEFAULT: "Drużyna B",
+  get TEAM_A_DEFAULT() { return t("control.teamADefault"); },
+  get TEAM_B_DEFAULT() { return t("control.teamBDefault"); },
 };
 // ======================================================================
 

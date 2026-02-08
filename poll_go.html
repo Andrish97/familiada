@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Familiada — zaproszenie</title>
+  <title data-i18n="pollGo.title">Familiada — zaproszenie</title>
 
   <link rel="icon" href="favicon.ico"/>
   <link rel="stylesheet" href="css/base.css"/>
@@ -20,11 +20,11 @@
 
   <main class="wrap">
     <section class="card poll-go-card">
-      <div class="poll-go-title" id="title">Ładuję zaproszenie…</div>
-      <div class="poll-go-sub" id="message">Proszę czekać.</div>
+      <div class="poll-go-title" id="title" data-i18n="pollGo.loadingTitle">Ładuję zaproszenie…</div>
+      <div class="poll-go-sub" id="message" data-i18n="pollGo.loadingText">Proszę czekać.</div>
 
       <div class="poll-go-email" id="emailRow" style="display:none;">
-        <input class="inp" id="emailInput" placeholder="Podaj e-mail" type="email"/>
+        <input class="inp" id="emailInput" placeholder="Podaj e-mail" data-i18n-placeholder="pollGo.emailPlaceholder" type="email"/>
       </div>
 
       <div class="poll-go-actions" id="actions"></div>

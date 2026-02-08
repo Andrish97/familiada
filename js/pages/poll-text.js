@@ -1,6 +1,30 @@
 // js/pages/poll-text.js
 import { sb } from "../core/supabase.js";
 import { getUser } from "../core/auth.js";
+import { initI18n, t } from "../../translation/translation.js";
+
+initI18n({ withSwitcher: false });
+
+const MSG = {
+  thanks: () => t("pollText.thanks"),
+  loadTimeout: () => t("pollText.loadTimeout"),
+  enterAnswer: () => t("pollText.enterAnswer"),
+  taskInvalid: () => t("pollText.taskInvalid"),
+  loginToVote: () => t("pollText.loginToVote"),
+  emailRequired: () => t("pollText.emailRequired"),
+  openTaskFail: () => t("pollText.openTaskFail"),
+  pollFallback: () => t("pollText.pollFallback"),
+  pollClosed: () => t("pollText.pollClosed"),
+  sending: () => t("pollText.sending"),
+  error: (err) => t("pollText.error", { error: err }),
+  questionProgress: (current, total) => t("pollText.questionProgress", { current, total }),
+  beforeUnloadWarn: () => t("pollText.beforeUnloadWarn"),
+  missingParams: () => t("pollText.missingParams"),
+  alreadyVoted: () => t("pollText.alreadyVoted"),
+  loading: () => t("pollText.loading"),
+  wrongType: () => t("pollText.wrongType"),
+  openPollFail: (err) => t("pollText.openPollFail", { error: err }),
+};
 
 const qs = new URLSearchParams(location.search);
 let gameId = qs.get("id");
@@ -57,7 +81,7 @@ function showFinished() {
   if (closed) closed.style.display = "none";
 
   // pokazujemy tylko jedno podziękowanie
-  if (sub) sub.textContent = "Dziękujemy za udział!";
+  if (sub) sub.textContent = MSG.thanks();
 }
 
 function setClosedMsg(msg) {
@@ -112,7 +136,7 @@ async function withTimeout(promiseLike, ms, errMsg) {
 
 async function loadPayload() {
   const req = sb().rpc("poll_get_payload", { p_game_id: gameId, p_key: key });
-  const { data, error } = await withTimeout(req, 15000, "Nie można pobrać pytań (timeout).");
+  const { data, error } = await withTimeout(req, 15000, MSG.loadTimeout());
   if (error) throw error;
   return data;
 }
@@ -121,7 +145,7 @@ function validateAndPack(questionId, rawText) {
   const raw = String(rawText ?? "").trim().slice(0, 17);
   const normalized = norm(raw);
 
-  if (!raw || !normalized) throw new Error("Wpisz odpowiedź.");
+  if (!raw || !normalized) throw new Error(MSG.enterAnswer());
 
   return {
     question_id: questionId,
@@ -176,14 +200,14 @@ async function resolveTaskToken() {
   try {
     const { data, error } = await sb().rpc("poll_task_resolve", { p_token: taskToken });
     if (error) throw error;
-    if (!data?.ok || data?.kind !== "task") throw new Error("Link jest nieważny lub nieaktywny.");
+    if (!data?.ok || data?.kind !== "task") throw new Error(MSG.taskInvalid());
     if (data.requires_auth) {
-      setSub("Zaloguj się, aby przejść do głosowania.");
+      setSub(MSG.loginToVote());
       showClosed(true);
       return;
     }
     if (data.needs_email) {
-      setSub("Podaj e-mail w linku z zaproszenia.");
+      setSub(MSG.emailRequired());
       showClosed(true);
       return;
     }
@@ -194,7 +218,7 @@ async function resolveTaskToken() {
     await markTaskOpened();
   } catch (e) {
     console.error("[poll-text] task resolve error:", e);
-    setSub("Nie można otworzyć zadania.");
+    setSub(MSG.openTaskFail());
     showClosed(true);
   }
 }
@@ -207,13 +231,13 @@ function render() {
   const questions = payload?.questions || [];
   const q = questions[idx];
 
-  if (titleEl) titleEl.textContent = game.name || "Sondaż";
+  if (titleEl) titleEl.textContent = game.name || MSG.pollFallback();
 
   // status
   if (game.status !== "poll_open") {
     showClosed(true);
     setSub("");
-    setClosedMsg("Sondaż jest zamknięty. Dziękujemy!");
+    setClosedMsg(MSG.pollClosed());
     return;
   }
 
@@ -227,7 +251,7 @@ function render() {
     if (btnSend) btnSend.disabled = true;
     if (answerInput) answerInput.disabled = true;
 
-    setSub("Wysyłam…");
+    setSub(MSG.sending());
 
     submitBatch(outbox)
       .then(async () => {
@@ -237,7 +261,7 @@ function render() {
       })
       .catch((e) => {
         console.error("[poll-text] submit_batch error:", e);
-        setSub(`Błąd: ${e?.message || e}`);
+        setSub(MSG.error(e?.message || e));
         submitting = false;
         // pozwól spróbować jeszcze raz (render wywoła się ponownie po kliknięciu)
         if (btnSend) btnSend.disabled = false;
@@ -246,8 +270,8 @@ function render() {
     return;
   }
 
-  if (qtext) qtext.textContent = q.text || "—";
-  if (prog) prog.textContent = `Pytanie ${q.ord}/${questions.length}`;
+  if (qtext) qtext.textContent = q.text || t("common.dash");
+  if (prog) prog.textContent = MSG.questionProgress(q.ord, questions.length);
   setSub(""); // zdejmujemy “Ładuję…”
 
   if (answerInput) {
@@ -271,7 +295,7 @@ function setupBeforeUnloadWarn() {
     if (!outbox.length) return;
     // przeglądarki iOS/Chrome ignorują czasem własny tekst, ale sam alert działa
     e.preventDefault();
-    e.returnValue = "Udzielone odpowiedzi nie zostaną uznane.";
+    e.returnValue = MSG.beforeUnloadWarn();
     return e.returnValue;
   });
 }
@@ -283,25 +307,25 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
     if (!taskResolved) return;
     if (!gameId || !key) {
-      setSub("Brak parametru id lub key.");
+      setSub(MSG.missingParams());
       showClosed(true);
       return;
     }
     if (hasDone()) {
       showClosed(true);
-      setSub("Już wziąłeś udział w sondażu.");
+      setSub(MSG.alreadyVoted());
       return;
     }
 
     setupBeforeUnloadWarn();
 
-    setSub("Ładuję…");
+    setSub(MSG.loading());
     showClosed(false);
 
     payload = await loadPayload();
 
     if ((payload?.game?.type || "") !== "poll_text") {
-      setSub("To nie jest typowy sondaż.");
+      setSub(MSG.wrongType());
       showClosed(true);
       return;
     }
@@ -330,7 +354,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (!q) return;
 
       try {
-        setSub("Wysyłam…");
+        setSub(MSG.sending());
         // pakujemy odpowiedź do outbox (bez wysyłki)
         const packed = validateAndPack(q.id, answerInput?.value || "");
 
@@ -343,12 +367,12 @@ document.addEventListener("DOMContentLoaded", async () => {
         render();
       } catch (e) {
         console.error("[poll-text] pack error:", e);
-        setSub(`Błąd: ${e?.message || e}`);
+        setSub(MSG.error(e?.message || e));
       }
     });
   } catch (e) {
     console.error("[poll-text] init error:", e);
-    setSub(`Nie można otworzyć sondażu: ${e?.message || e}`);
+    setSub(MSG.openPollFail(e?.message || e));
     showClosed(true);
   }
 });
