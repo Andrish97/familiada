@@ -112,4 +112,16 @@ document.addEventListener("DOMContentLoaded", async () => {
       setErr(e?.message || String(e));
     }
   });
+
+  p1?.addEventListener("keydown", (e) => {
+    if (e.key !== "Enter") return;
+    e.preventDefault();
+    p2?.focus();
+  });
+
+  p2?.addEventListener("keydown", (e) => {
+    if (e.key !== "Enter") return;
+    e.preventDefault();
+    save?.click();
+  });
 });
