@@ -12,6 +12,7 @@ import {
   deleteTags,
   duplicateSelected,
 } from "./actions.js";
+import { alertModal } from "../../js/core/modal.js";
 import { t } from "../../translation/translation.js";
 
 
@@ -237,7 +238,7 @@ export async function showContextMenu({ state, x, y, target }) {
           await deleteTags(state, selectedTagIds);
         } catch (e) {
           console.error(e);
-          alert(t("baseExplorer.errors.deleteTagsFailed"));
+          void alertModal({ text: t("baseExplorer.errors.deleteTagsFailed") });
         }
       }
     });
@@ -327,7 +328,7 @@ export async function showContextMenu({ state, x, y, target }) {
         await duplicateSelected(state);
       } catch (e) {
         console.error(e);
-        alert(t("baseExplorer.errors.duplicateFailed"));
+        void alertModal({ text: t("baseExplorer.errors.duplicateFailed") });
       }
     }
   });
@@ -457,7 +458,7 @@ export async function showContextMenu({ state, x, y, target }) {
           }
         } catch (e) {
           console.error(e);
-          alert(t("baseExplorer.errors.operationFailed"));
+          void alertModal({ text: t("baseExplorer.errors.operationFailed") });
         }
       }
     });

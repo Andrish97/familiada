@@ -1,7 +1,7 @@
 // js/pages/builder.js
 import { sb } from "../core/supabase.js";
 import { requireAuth, signOut } from "../core/auth.js";
-import { confirmModal } from "../core/modal.js";
+import { alertModal, confirmModal } from "../core/modal.js";
 import { initI18n, t } from "../../translation/translation.js";
 
 import { exportGame, importGame, downloadJson } from "./builder-import-export.js";
@@ -546,7 +546,7 @@ async function deleteGame(game) {
   const { error } = await sb().from("games").delete().eq("id", game.id);
   if (error) {
     console.error("[builder] delete error:", error);
-    alert(MSG.alertDeleteFailed());
+    void alertModal({ text: MSG.alertDeleteFailed() });
   }
 }
 
@@ -628,7 +628,7 @@ function cardAdd(uiType) {
         await refresh();
       } catch (e) {
         console.error("[builder] create error:", e);
-        alert(MSG.alertCreateFailed());
+        void alertModal({ text: MSG.alertCreateFailed() });
       } finally {
         isCreatingGame = false;
         el.style.pointerEvents = "";
@@ -834,7 +834,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     
     const info = canEnterEdit(normalizeGameForValidate(g));
     if (!info.ok) {
-      alert(info.reason);
+      void alertModal({ text: info.reason });
       return;
     }
 
@@ -852,7 +852,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         await refresh();
       } catch (e) {
         console.error("[builder] resetPollForEditing error:", e);
-        alert(MSG.alertResetPollFailed());
+        void alertModal({ text: MSG.alertResetPollFailed() });
         return;
       }
     }
@@ -867,13 +867,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     try {
       const chk = await validateGameReadyToPlay(selectedId);
       if (!chk.ok) {
-        alert(chk.reason);
+        void alertModal({ text: chk.reason });
         return;
       }
       location.href = `control/control.html?id=${encodeURIComponent(selectedId)}`;
     } catch (e) {
       console.error(e);
-      alert(MSG.alertCheckFailed());
+      void alertModal({ text: MSG.alertCheckFailed() });
     }
   });
 
@@ -886,14 +886,14 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       const entry = await validatePollEntry(selectedId);
       if (!entry.ok) {
-        alert(entry.reason);
+        void alertModal({ text: entry.reason });
         return;
       }
 
       if (g.status !== STATUS.POLL_OPEN && g.status !== STATUS.READY) {
         const chk = await validatePollReadyToOpen(selectedId);
         if (!chk.ok) {
-          alert(chk.reason);
+          void alertModal({ text: chk.reason });
           return;
         }
       }
@@ -901,7 +901,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       location.href = `polls.html?id=${encodeURIComponent(selectedId)}&from=builder`;
     } catch (e) {
       console.error(e);
-      alert(MSG.alertOpenPollFailed());
+      void alertModal({ text: MSG.alertOpenPollFailed() });
     }
   });
 
@@ -1019,7 +1019,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       });
   
       closeExportBaseModal();
-      alert(MSG.exportBaseSaved());
+      void alertModal({ text: MSG.exportBaseSaved() });
     } catch (e) {
       console.error(e);
       setExportBaseMsg(MSG.exportBaseFailed());

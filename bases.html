@@ -131,10 +131,13 @@
       <div class="shareAdd">
         <div class="importRow">
           <input id="shareEmail" class="inp" type="email" placeholder="Nazwa użytkownika lub e-mail..." data-i18n-placeholder="bases.shareModal.placeholder"/>
-          <select id="shareRole" class="inp">
-            <option value="editor" data-i18n="bases.shareModal.roleEditor">Edycja</option>
-            <option value="viewer" data-i18n="bases.shareModal.roleViewer">Przeglądanie</option>
-          </select>
+          <div class="ui-select" id="shareRole">
+            <button class="ui-select-btn inp" type="button" aria-haspopup="listbox" aria-expanded="false">
+              <span class="ui-select-label">—</span>
+              <span class="ui-select-caret">▾</span>
+            </button>
+            <div class="ui-select-menu" role="listbox"></div>
+          </div>
           <button class="btn sm gold" id="btnShareAdd" type="button" data-i18n="bases.shareModal.add">Dodaj</button>
         </div>
         <div class="importRow">
