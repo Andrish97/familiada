@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Familiada — bazy pytań</title>
+  <title data-i18n="bases.title">Familiada — bazy pytań</title>
 
   <link rel="icon" href="favicon.ico"/>
   <link rel="stylesheet" href="css/base.css"/>
@@ -19,28 +19,28 @@
   <header class="topbar">
     <div class="brand">FAMILIADA</div>
     <div class="right">
-      <button class="btn" id="btnBack" type="button">← Moje gry</button>
+      <button class="btn" id="btnBack" type="button" data-i18n="bases.backToGames">← Moje gry</button>
       <span class="who" id="who">—</span>
-      <button class="btn sm" id="btnLogout" type="button">Wyloguj</button>
+      <button class="btn sm" id="btnLogout" type="button" data-i18n="bases.logout">Wyloguj</button>
     </div>
   </header>
 
   <main class="wrap">
     <div class="bar">
       <div>
-        <div class="title">Twoje bazy pytań</div>
-        <div class="hint" id="hint">Kliknij kafelek, żeby go zaznaczyć.</div>
+        <div class="title" data-i18n="bases.headerTitle">Twoje bazy pytań</div>
+        <div class="hint" id="hint" data-i18n="bases.headerHint">Kliknij kafelek, żeby go zaznaczyć.</div>
       </div>
 
       <div class="actions">
         <button class="btn sm gold" id="btnBrowse" type="button" disabled>
-          <span class="only-desktop">Przeglądaj</span>
-          <span class="only-mobile">Przegl.</span>
+          <span class="only-desktop" data-i18n="bases.actions.browse">Przeglądaj</span>
+          <span class="only-mobile" data-i18n="bases.actions.browseMobile">Przegl.</span>
         </button>
 
         <button class="btn sm" id="btnShare" type="button" disabled>
-          <span class="only-desktop">Udostępnij</span>
-          <span class="only-mobile">Udos.</span>
+          <span class="only-desktop" data-i18n="bases.actions.share">Udostępnij</span>
+          <span class="only-mobile" data-i18n="bases.actions.shareMobile">Udos.</span>
         </button>
       </div>
     </div>
@@ -53,13 +53,13 @@
           <div class="builder-bottom-left"></div>
           <div class="builder-bottom-right">
             <button class="btn sm" id="btnExport" type="button" disabled>
-              <span class="only-desktop">Eksport</span>
-              <span class="only-mobile">Exp</span>
+              <span class="only-desktop" data-i18n="bases.actions.export">Eksport</span>
+              <span class="only-mobile" data-i18n="bases.actions.exportMobile">Exp</span>
             </button>
 
             <button class="btn sm" id="btnImport" type="button">
-              <span class="only-desktop">Import</span>
-              <span class="only-mobile">Imp</span>
+              <span class="only-desktop" data-i18n="bases.actions.import">Import</span>
+              <span class="only-mobile" data-i18n="bases.actions.importMobile">Imp</span>
             </button>
           </div>
         </div>
@@ -70,16 +70,16 @@
   <!-- Modal: nowa baza / zmiana nazwy -->
   <div class="overlay" id="nameOverlay" style="display:none;">
     <div class="modal">
-      <div class="mTitle" id="nameTitle">Nowa baza</div>
-      <div class="mSub" id="nameSub">Podaj nazwę bazy.</div>
+      <div class="mTitle" id="nameTitle" data-i18n="bases.nameModal.titleCreate">Nowa baza</div>
+      <div class="mSub" id="nameSub" data-i18n="bases.nameModal.subCreate">Podaj nazwę bazy.</div>
 
       <div class="importRow">
-        <input id="nameInp" class="inp" type="text" maxlength="80" placeholder="Nazwa..."/>
+        <input id="nameInp" class="inp" type="text" maxlength="80" placeholder="Nazwa..." data-i18n-placeholder="bases.nameModal.placeholder"/>
       </div>
 
       <div class="importRow">
-        <button class="btn sm gold" id="btnNameOk" type="button">Zapisz</button>
-        <button class="btn sm" id="btnNameCancel" type="button">Anuluj</button>
+        <button class="btn sm gold" id="btnNameOk" type="button" data-i18n="bases.common.save">Zapisz</button>
+        <button class="btn sm" id="btnNameCancel" type="button" data-i18n="bases.common.cancel">Anuluj</button>
         <div class="importMsg" id="nameMsg"></div>
       </div>
     </div>
@@ -88,20 +88,20 @@
   <!-- Modal: import JSON -->
   <div class="overlay" id="importOverlay" style="display:none;">
     <div class="modal">
-      <div class="mTitle">Import</div>
-      <div class="mSub">Wybierz plik JSON lub wklej JSON poniżej.</div>
+      <div class="mTitle" data-i18n="bases.importModal.title">Import</div>
+      <div class="mSub" data-i18n="bases.importModal.subtitle">Wybierz plik JSON lub wklej JSON poniżej.</div>
 
       <div class="importRow">
         <input id="importFile" class="inp" type="file" accept="application/json">
-        <button class="btn sm" id="btnImportFile" type="button">Wczytaj plik</button>
+        <button class="btn sm" id="btnImportFile" type="button" data-i18n="bases.importModal.loadFile">Wczytaj plik</button>
       </div>
 
-      <textarea id="importTa" class="importTa" spellcheck="false" placeholder="Wklej JSON tutaj..."></textarea>
+      <textarea id="importTa" class="importTa" spellcheck="false" placeholder="Wklej JSON tutaj..." data-i18n-placeholder="bases.importModal.placeholder"></textarea>
 
       <!-- Progres importu -->
       <div id="importProg" style="display:none;margin-top:12px;gap:10px">
         <div class="importRow" style="align-items:center">
-          <div id="importProgStep" style="font-weight:800;letter-spacing:.04em">—</div>
+          <div id="importProgStep" style="font-weight:800;letter-spacing:.04em" data-i18n="bases.progress.placeholder">—</div>
           <div id="importProgCount" style="margin-left:auto;opacity:.8">0/0</div>
         </div>
 
@@ -113,8 +113,8 @@
       </div>
 
       <div class="importRow">
-        <button class="btn sm gold" id="btnImportJson" type="button">Importuj</button>
-        <button class="btn sm" id="btnCancelImport" type="button">Zamknij</button>
+        <button class="btn sm gold" id="btnImportJson" type="button" data-i18n="bases.importModal.confirm">Importuj</button>
+        <button class="btn sm" id="btnCancelImport" type="button" data-i18n="bases.importModal.cancel">Zamknij</button>
         <div class="importMsg" id="importMsg"></div>
       </div>
     </div>
@@ -123,22 +123,22 @@
   <!-- Modal: udostępnienia -->
   <div class="overlay" id="shareOverlay" style="display:none;">
     <div class="modal">
-      <div class="mTitle">Udostępnij bazę</div>
-      <div class="mSub">Dodajesz użytkowników po nazwie lub e-mailu. Jeśli się nie uda, pokażemy „Nie udało się”.</div>
+      <div class="mTitle" data-i18n="bases.shareModal.title">Udostępnij bazę</div>
+      <div class="mSub" data-i18n="bases.shareModal.subtitle">Dodajesz użytkowników po nazwie lub e-mailu. Jeśli się nie uda, pokażemy „Nie udało się”.</div>
 
       <div class="shareList" id="shareList"></div>
 
       <div class="shareAdd">
         <div class="importRow">
-          <input id="shareEmail" class="inp" type="email" placeholder="Nazwa użytkownika lub e-mail..."/>
+          <input id="shareEmail" class="inp" type="email" placeholder="Nazwa użytkownika lub e-mail..." data-i18n-placeholder="bases.shareModal.placeholder"/>
           <select id="shareRole" class="inp">
-            <option value="editor">Edycja</option>
-            <option value="viewer">Przeglądanie</option>
+            <option value="editor" data-i18n="bases.shareModal.roleEditor">Edycja</option>
+            <option value="viewer" data-i18n="bases.shareModal.roleViewer">Przeglądanie</option>
           </select>
-          <button class="btn sm gold" id="btnShareAdd" type="button">Dodaj</button>
+          <button class="btn sm gold" id="btnShareAdd" type="button" data-i18n="bases.shareModal.add">Dodaj</button>
         </div>
         <div class="importRow">
-          <button class="btn sm" id="btnShareClose" type="button">Zamknij</button>
+          <button class="btn sm" id="btnShareClose" type="button" data-i18n="bases.shareModal.close">Zamknij</button>
           <div class="importMsg" id="shareMsg"></div>
         </div>
       </div>
@@ -148,12 +148,12 @@
   <!-- Progres eksportu do pliku (blokujący) -->
   <div class="overlay" id="exportJsonOverlay" style="display:none;">
     <div class="modal" style="width:min(640px,94vw)">
-      <div class="mTitle">EXPORT…</div>
-      <div class="mSub" id="exportJsonSub">Nie zamykaj strony. Trwa przygotowanie pliku.</div>
+      <div class="mTitle" data-i18n="bases.exportModal.title">EXPORT…</div>
+      <div class="mSub" id="exportJsonSub" data-i18n="bases.exportModal.subtitle">Nie zamykaj strony. Trwa przygotowanie pliku.</div>
 
       <div style="margin-top:12px;display:grid;gap:10px">
         <div class="importRow" style="align-items:center">
-          <div id="exportJsonStep" style="font-weight:800;letter-spacing:.04em">—</div>
+          <div id="exportJsonStep" style="font-weight:800;letter-spacing:.04em" data-i18n="bases.progress.placeholder">—</div>
           <div id="exportJsonCount" style="margin-left:auto;opacity:.8">0/0</div>
         </div>
 

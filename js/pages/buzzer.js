@@ -1,5 +1,5 @@
 // js/pages/buzzer.js
-import { initI18n, setUiLang } from "../../translation/translation.js";
+import { initI18n, setUiLang, t } from "../../translation/translation.js";
 import { sb } from "../core/supabase.js";
 import { rt } from "../core/realtime.js";
 
@@ -83,7 +83,7 @@ async function toggleFullscreen() {
     // wejście (spróbuj prawdziwego fullscreen)
     const el = document.documentElement;
     const req = el.requestFullscreen || el.webkitRequestFullscreen;
-    if (!req) throw new Error("Fullscreen API not available");
+    if (!req) throw new Error(t("common.fullscreenUnavailable"));
     await req.call(el, { navigationUI: "hide" });
 
     setFullscreenIcon();

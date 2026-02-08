@@ -1,10 +1,13 @@
 // js/pages/builder-import-export.js
 import { sb } from "../core/supabase.js";
+import { t } from "../../translation/translation.js";
 
 /* =========================================================
 	 Helpers (bezpieczne skracanie / typy)
 ========================================================= */
-const safeName = (s) => (String(s ?? "Gra").trim() || "Gra").slice(0, 80);
+const safeName = (s) =>
+	(String(s ?? t("builderImportExport.defaults.gameName")).trim() ||
+		t("builderImportExport.defaults.gameName")).slice(0, 80);
 
 const safeType = (k) => {
 	const v = String(k || "");
@@ -13,10 +16,12 @@ const safeType = (k) => {
 };
 
 const safeQText = (s, i) =>
-	(String(s ?? `Pytanie ${i + 1}`).trim() || `Pytanie ${i + 1}`).slice(0, 200);
+	(String(s ?? t("builderImportExport.defaults.question", { ord: i + 1 })).trim() ||
+		t("builderImportExport.defaults.question", { ord: i + 1 })).slice(0, 200);
 
 const safeAText = (s, j) =>
-	(String(s ?? `ODP ${j + 1}`).trim() || `ODP ${j + 1}`).slice(0, 17);
+	(String(s ?? t("builderImportExport.defaults.answer", { ord: j + 1 })).trim() ||
+		t("builderImportExport.defaults.answer", { ord: j + 1 })).slice(0, 17);
 
 const safePts = (v) => {
 	const x = Number(v);
@@ -52,13 +57,13 @@ export async function exportGame(gameId, onProgress) {
 
 	const qs = questions || [];
 	const out = {
-		game: { name: game?.name ?? "Gra", type: safeType(game?.type) },
+		game: { name: game?.name ?? t("builderImportExport.defaults.gameName"), type: safeType(game?.type) },
 		questions: [],
 	};
 
 	const n = qs.length;
 	if (typeof onProgress === "function") {
-		onProgress({ step: "Eksport: pobieranie pytań…", i: 0, n, msg: "" });
+		onProgress({ step: t("builderImportExport.export.step"), i: 0, n, msg: "" });
 	}
 
 	for (let idx = 0; idx < qs.length; idx++) {
@@ -81,7 +86,7 @@ export async function exportGame(gameId, onProgress) {
 
 		if (typeof onProgress === "function") {
 			onProgress({
-				step: "Eksport: pobieranie pytań…",
+				step: t("builderImportExport.export.step"),
 				i: idx + 1,
 				n,
 				msg: q?.text ? String(q.text).slice(0, 60) : "",
@@ -98,7 +103,7 @@ export async function exportGame(gameId, onProgress) {
 
 export async function importGame(payload, ownerId, onProgress) {
 	if (!payload?.game || !Array.isArray(payload.questions)) {
-		throw new Error("Zły format pliku (brak game / questions).");
+		throw new Error(t("builderImportExport.import.invalidFormat"));
 	}
 
 	const type = safeType(payload.game.type);
@@ -122,7 +127,7 @@ export async function importGame(payload, ownerId, onProgress) {
 	const qs = payload.questions || [];
 	const n = qs.length;
 	if (typeof onProgress === "function") {
-		onProgress({ step: "Import: tworzenie gry…", i: 0, n, msg: "" });
+		onProgress({ step: t("builderImportExport.import.step"), i: 0, n, msg: "" });
 	}
 	for (let qi = 0; qi < qs.length; qi++) {
 		const srcQ = qs[qi] || {};

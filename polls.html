@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Familiada — sondaż</title>
+  <title data-i18n="polls.title">Familiada — sondaż</title>
 
   <link rel="icon" href="favicon.ico"/>
   <link rel="stylesheet" href="css/base.css"/>
@@ -17,16 +17,16 @@
   <header class="topbar">
     <div class="brand">FAMILIADA</div>
     <div class="right">
-      <button class="btn sm" id="btnBack" type="button">← Moje gry</button>
+      <button class="btn sm" id="btnBack" type="button" data-i18n="polls.backToGames">← Moje gry</button>
       <span class="who" id="who">—</span>
-      <button class="btn sm" id="btnLogout" type="button">Wyloguj</button>
+      <button class="btn sm" id="btnLogout" type="button" data-i18n="polls.logout">Wyloguj</button>
     </div>
   </header>
 
   <main class="wrap">
     <div class="rowTop">
       <div>
-        <div class="title">Sondaż</div>
+        <div class="title" data-i18n="polls.pageTitle">Sondaż</div>
         <div class="hint" id="hintTop">—</div>
       </div>
 
@@ -41,16 +41,16 @@
       <div class="meta" id="gMeta">—</div>
 
       <div class="row">
-        <input class="inp" id="pollLink" readonly placeholder="Link pojawi się po uruchomieniu..." />
+        <input class="inp" id="pollLink" readonly placeholder="Link pojawi się po uruchomieniu..." data-i18n-placeholder="polls.linkPlaceholder" />
 
         <button class="btn sm" id="btnCopy" type="button" disabled>
-          <span class="only-desktop">Kopiuj link</span>
-          <span class="only-mobile">Kopiuj</span>
+          <span class="only-desktop" data-i18n="polls.actions.copyLink">Kopiuj link</span>
+          <span class="only-mobile" data-i18n="polls.actions.copyShort">Kopiuj</span>
         </button>
 
         <button class="btn sm gold" id="btnOpen" type="button" disabled>
-          <span class="only-desktop">Otwórz link</span>
-          <span class="only-mobile">Otwórz</span>
+          <span class="only-desktop" data-i18n="polls.actions.openLink">Otwórz link</span>
+          <span class="only-mobile" data-i18n="polls.actions.openShort">Otwórz</span>
         </button>
 
         <button class="btn sm" id="btnOpenQr" type="button" disabled>QR</button>
@@ -65,33 +65,33 @@
         <button class="btn sm gold" id="btnPollAction" type="button">—</button>
 
         <button class="btn sm" id="btnPreview" type="button">
-          <span class="only-desktop">Podgląd wyników</span>
-          <span class="only-mobile">Wyniki</span>
+          <span class="only-desktop" data-i18n="polls.actions.previewResults">Podgląd wyników</span>
+          <span class="only-mobile" data-i18n="polls.actions.resultsShort">Wyniki</span>
         </button>
       </div>
 
       <!-- panel dla poll_text: edycja/łączenie/usuwanie + finalizacja -->
       <div class="card" id="textCloseCard" style="display:none; margin-top:12px;">
-        <div class="name">Zamykanie — edycja odpowiedzi</div>
+        <div class="name" data-i18n="polls.textClose.title">Zamykanie — edycja odpowiedzi</div>
         <div class="meta" id="textCloseMeta">—</div>
         <div id="textCloseList" style="margin-top:10px; display:grid; gap:12px;"></div>
 
         <div class="row" style="margin-top:12px;">
-          <button class="btn sm" id="btnCancelTextClose" type="button">Anuluj</button>
-          <button class="btn sm gold" id="btnFinishTextClose" type="button">Zamknij i przelicz</button>
+          <button class="btn sm" id="btnCancelTextClose" type="button" data-i18n="polls.actions.cancel">Anuluj</button>
+          <button class="btn sm gold" id="btnFinishTextClose" type="button" data-i18n="polls.actions.closeAndNormalize">Zamknij i przelicz</button>
         </div>
       </div>
 
       <div class="card" id="resultsCard" style="display:none; margin-top:12px;">
-        <div class="name">Wyniki</div>
+        <div class="name" data-i18n="polls.results.title">Wyniki</div>
         <div class="meta" id="resultsMeta">—</div>
         <div id="resultsList" style="margin-top:10px;"></div>
       </div>
     </div>
 
     <div class="card" id="cardEmpty">
-      <div class="name">Brak gry</div>
-      <div class="meta">Otwórz stronę z parametrem <b>polls.html?id=...</b>.</div>
+      <div class="name" data-i18n="polls.empty.title">Brak gry</div>
+      <div class="meta" data-i18n-html="polls.empty.meta">Otwórz stronę z parametrem <b>polls.html?id=...</b>.</div>
     </div>
 
     <div class="foot">
