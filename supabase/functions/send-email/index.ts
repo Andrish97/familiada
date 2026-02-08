@@ -17,6 +17,7 @@ type HookPayload = {
     email_action_type:
       | "signup"
       | "recovery"
+      | "email_change"
       | "email_change_current"
       | "email_change_new"
       | string;
@@ -99,11 +100,14 @@ serve(async (req) => {
 
     if (type === "email_change") {
       const currentEmail = payload.user.email;
+      const currentEmailNormalized = String(currentEmail || "").trim().toLowerCase();
       const redirect = payload.email_data.redirect_to || "";
       let targetEmail = "";
+      let targetEmailNormalized = "";
       try {
         const url = new URL(redirect);
-        targetEmail = (url.searchParams.get("to") || "").trim().toLowerCase();
+        targetEmail = (url.searchParams.get("to") || "").trim();
+        targetEmailNormalized = targetEmail.toLowerCase();
       } catch {
         // ignore invalid URL
       }
@@ -118,7 +122,7 @@ serve(async (req) => {
       if (currentEmail) {
         await sendEmail(currentEmail, subject, renderEmailChange(lang, linkCurrent));
       }
-      if (targetEmail && targetEmail !== currentEmail) {
+      if (targetEmail && targetEmailNormalized !== currentEmailNormalized) {
         await sendEmail(targetEmail, subject, renderEmailChange(lang, linkTarget));
       }
       return json({ ok: true });
