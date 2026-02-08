@@ -85,8 +85,10 @@ async function handleEmailSave() {
     const confirmUrl = new URL("/confirm.html", location.origin);
     confirmUrl.searchParams.set("lang", language);
     confirmUrl.searchParams.set("to", normalizedMail);
+
+    setStatus(t("account.statusSavingEmail"));
     
-    await sb().auth.updateUser(
+    const { data, error } = await sb().auth.updateUser(
       { email: normalizedMail, data: { language } },
       { emailRedirectTo: confirmUrl.toString() }
     );
