@@ -41,7 +41,9 @@ let currentEmail = "";
 async function loadProfile() {
   const user = await requireAuth("index.html?setup=username");
   if (!user) return;
-  await updateUserLanguage(getUiLang());
+  const syncLanguage = () => updateUserLanguage(getUiLang());
+  await syncLanguage();
+  window.addEventListener("i18n:lang", syncLanguage);
   usernameInput.value = user.username || "";
   emailInput.value = user.email || "";
   currentEmail = user.email || "";

@@ -28,6 +28,8 @@ function hp(name){
 document.addEventListener("DOMContentLoaded", async () => {
   await initI18n({ withSwitcher: true });
   setErr("");
+  const syncLanguage = () => updateUserLanguage(getUiLang());
+  window.addEventListener("i18n:lang", syncLanguage);
 
   const code = qp("code") || hp("code");
   const accessToken = hp("access_token");
@@ -66,7 +68,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       return;
     }
 
-    await updateUserLanguage(getUiLang());
+    await syncLanguage();
     setStatus(t("reset.linkOk"));
     form.style.display = "grid";
   } catch(e){
