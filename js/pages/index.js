@@ -17,6 +17,11 @@ const setupCard = $("#setupCard");
 const usernameFirst = $("#usernameFirst");
 const usernameErr = $("#usernameErr");
 const btnUsernameSave = $("#btnUsernameSave");
+const baseUrls = document.body?.dataset || {};
+const confirmUrl = baseUrls.confirmUrl || "confirm.html";
+const resetUrl = baseUrls.resetUrl || "reset.html";
+const builderUrl = baseUrls.builderUrl || "builder.html";
+const pollsUrl = baseUrls.pollsUrl || "polls-hub.html";
 
 let mode = "login"; // login | register
 const params = new URLSearchParams(location.search);
@@ -26,10 +31,10 @@ const nextSub = params.get("s");
 const setup = params.get("setup");
 
 function buildNextUrl() {
-  const url = new URL("polls-hub.html", location.href);
+  const url = new URL(pollsUrl, location.href);
   if (nextTask) url.searchParams.set("t", nextTask);
   if (nextSub) url.searchParams.set("s", nextSub);
-  return url.toString();
+  return withLangParam(url.toString());
 }
 
 function setErr(m = "") { err.textContent = m; }
@@ -88,7 +93,7 @@ async function saveUsername() {
     if (error) throw error;
     await sb().auth.updateUser({ data: { username } });
     closeUsernameSetup();
-    location.href = "builder.html";
+    location.href = withLangParam(builderUrl);
   } catch (e) {
     console.error(e);
     setUsernameErr(e?.message || String(e));
@@ -124,7 +129,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     } else if (nextTarget === "polls-hub") {
       location.href = buildNextUrl();
     } else {
-      location.href = "builder.html";
+      location.href = withLangParam(builderUrl);
     }
     return;
   }
@@ -165,7 +170,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
 
         setStatus(t("index.statusRegistering"));
-        const redirectTo = withLangParam(new URL("confirm.html", location.href).toString());
+        const redirectTo = withLangParam(new URL(confirmUrl, location.href).toString());
         await signUp(mail, pwd, redirectTo, null, getUiLang());
         setStatus(t("index.statusCheckEmail"));
       } else {
@@ -179,7 +184,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         } else if (nextTarget === "polls-hub") {
           location.href = buildNextUrl();
         } else {
-          location.href = "builder.html";
+          location.href = withLangParam(builderUrl);
         }
       }
     } catch (e) {
@@ -196,7 +201,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     try {
       setStatus(t("index.statusResetSending"));
-      const redirectTo = withLangParam(new URL("reset.html", location.href).toString());
+      const redirectTo = withLangParam(new URL(resetUrl, location.href).toString());
       await resetPassword(loginOrEmail, redirectTo, getUiLang());
       setStatus(t("index.statusResetSent"));
     } catch (e) {
