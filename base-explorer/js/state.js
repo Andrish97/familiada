@@ -17,9 +17,9 @@ export const SORT = {
 };
 
 export const META = {
-  prepared:    { id: "prepared",    name: "preparowane",    color: "rgba(77, 163, 255, .95)" },
-  poll_points: { id: "poll_points", name: "punktowane", color: "rgba(255, 200, 77, .95)" },
-  poll_text:   { id: "poll_text",   name: "typowe",   color: "rgba(160, 160, 160, .95)" },
+  prepared:    { id: "prepared",    nameKey: "baseExplorer.meta.prepared",    color: "rgba(77, 163, 255, .95)" },
+  poll_points: { id: "poll_points", nameKey: "baseExplorer.meta.pollPoints", color: "rgba(255, 200, 77, .95)" },
+  poll_text:   { id: "poll_text",   nameKey: "baseExplorer.meta.pollText",   color: "rgba(160, 160, 160, .95)" },
 };
 
 // kolejność wyświetlania

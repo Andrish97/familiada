@@ -1,6 +1,8 @@
 // /base-explorer/js/question-modal.js
 // Modal pytania: open() zwraca Promise z wynikiem {ok,...}
 
+import { t } from "../../translation/translation.js";
+
 const $ = (id) => document.getElementById(id);
 
 function show(el, on) {
@@ -68,11 +70,11 @@ export function initQuestionModal({ state } = {}) {
       row.className = "qRow";
       row.innerHTML = `
         <input class="inp qAnsText" type="text" maxlength="17" autocomplete="off"
-          value="${escapeAttr(a.text || "")}" placeholder="Odpowiedź…"/>
+          value="${escapeAttr(a.text || "")}" placeholder="${t("baseExplorer.question.answerPlaceholder")}"/>
         <input class="inp qAnsPts" type="number" min="0" max="100" step="1"
           inputmode="numeric" autocomplete="off"
-          value="${a.fixed_points ?? ""}" placeholder="(opcjonalnie)"/>
-        <button class="qDel" type="button" title="Usuń">✕</button>
+          value="${a.fixed_points ?? ""}" placeholder="${t("baseExplorer.question.pointsPlaceholder")}"/>
+        <button class="qDel" type="button" title="${t("baseExplorer.common.delete")}">✕</button>
       `;
 
       const inpText = row.querySelector(".qAnsText");
@@ -188,7 +190,7 @@ export function initQuestionModal({ state } = {}) {
   qAdd?.addEventListener("click", () => {
     if (!current) return;
     const ans = current.payload.answers || [];
-    if (ans.length >= 6) return setErr("Max 6 odpowiedzi.");
+    if (ans.length >= 6) return setErr(t("baseExplorer.question.errors.maxAnswers"));
     ans.push({ ord: (ans.length + 1), text: "" });
     renderAnswers();
     updateSumUI();
@@ -209,11 +211,11 @@ export function initQuestionModal({ state } = {}) {
       if (a.fixed_points !== undefined) {
         const pts = Number(a.fixed_points);
         if (!Number.isFinite(pts) || pts < 0 || pts > 100) {
-          return setErr("Punkty muszą być w zakresie 0–100 (jeśli wpisane).");
+          return setErr(t("baseExplorer.question.errors.pointsRange"));
         }
       }
     }
-    if (sum > 100) return setErr("Suma punktów nie może przekroczyć 100.");
+    if (sum > 100) return setErr(t("baseExplorer.question.errors.sumExceeded"));
 
     close({
       ok: true,

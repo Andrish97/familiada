@@ -2,6 +2,7 @@
 // Init strony menadżera bazy (warstwa 2)
 
 import { requireAuth, signOut } from "../../js/core/auth.js";
+import { initI18n, t, withLangParam } from "../../translation/translation.js";
 import { createState, setRole } from "./state.js";
 import { renderAll } from "./render.js";
 import {
@@ -28,30 +29,31 @@ function getBaseIdFromUrl() {
 /* ================= Events ================= */
 btnBack?.addEventListener("click", () => {
   // powrót do listy baz (warstwa 1)
-  location.href = "../bases.html";
+  location.href = withLangParam("../bases.html");
 });
 
 btnLogout?.addEventListener("click", async () => {
   await signOut();
-  location.href = "../index.html";
+  location.href = withLangParam("../index.html");
 });
 
 /* ================= Init ================= */
 (async function init() {
+  await initI18n({ withSwitcher: true });
   // auth
-  const user = await requireAuth("../index.html");
+  const user = await requireAuth(withLangParam("../index.html"));
   if (who) who.textContent = user?.username || user?.email || "—";
 
   // base id z URL
   const baseId = getBaseIdFromUrl();
   if (!baseId) {
-    alert("Brak identyfikatora bazy.");
-    location.href = "../bases.html";
+    alert(t("baseExplorer.errors.missingBaseId"));
+    location.href = withLangParam("../bases.html");
     return;
   }
 
   // na razie tylko placeholder – właściwe dane w kolejnym etapie
-  if (baseNameEl) baseNameEl.textContent = "Baza pytań";
+  if (baseNameEl) baseNameEl.textContent = t("baseExplorer.defaults.baseName");
 
   // ===== state =====
   const state = createState({ baseId, role: "viewer" });
@@ -92,12 +94,12 @@ btnLogout?.addEventListener("click", async () => {
 
     // brak dostępu – wracamy do baz
     if (e?.code === "NO_ACCESS") {
-      alert("Brak dostępu do tej bazy.");
+      alert(t("baseExplorer.errors.noAccess"));
       //location.href = "../bases.html";
       return;
     }
 
-    alert("Nie udało się wczytać bazy (sprawdź konsolę).");
+    alert(t("baseExplorer.errors.loadFailed"));
     //location.href = "../bases.html";
   }
 })();
