@@ -2,6 +2,7 @@
 // Init strony menadżera bazy (warstwa 2)
 
 import { requireAuth, signOut } from "../../js/core/auth.js";
+import { alertModal } from "../../js/core/modal.js";
 import { initI18n, t, withLangParam } from "../../translation/translation.js";
 import { createState, setRole } from "./state.js";
 import { renderAll } from "./render.js";
@@ -47,7 +48,7 @@ btnLogout?.addEventListener("click", async () => {
   // base id z URL
   const baseId = getBaseIdFromUrl();
   if (!baseId) {
-    alert(t("baseExplorer.errors.missingBaseId"));
+    void alertModal({ text: t("baseExplorer.errors.missingBaseId") });
     location.href = withLangParam("../bases.html");
     return;
   }
@@ -98,12 +99,12 @@ btnLogout?.addEventListener("click", async () => {
 
     // brak dostępu – wracamy do baz
     if (e?.code === "NO_ACCESS") {
-      alert(t("baseExplorer.errors.noAccess"));
+      void alertModal({ text: t("baseExplorer.errors.noAccess") });
       //location.href = "../bases.html";
       return;
     }
 
-    alert(t("baseExplorer.errors.loadFailed"));
+    void alertModal({ text: t("baseExplorer.errors.loadFailed") });
     //location.href = "../bases.html";
   }
 })();

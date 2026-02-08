@@ -4,6 +4,7 @@
 import { sb } from "../../js/core/supabase.js";
 import { requireAuth, signOut } from "../../js/core/auth.js";
 import { guardDesktopOnly } from "../../js/core/device-guard.js";
+import { alertModal, confirmModal } from "../../js/core/modal.js";
 import { initI18n, t, withLangParam } from "../../translation/translation.js";
 
 import { initTextEditor } from "./text.js";
@@ -218,9 +219,9 @@ function esc(s){
     .replaceAll("'", "&#039;");
 }
 
-function confirmCloseIfDirty(){
+async function confirmCloseIfDirty(){
   if (!editorDirty) return true;
-  return confirm(t("logoEditor.confirm.closeUnsaved"));
+  return await confirmModal({ text: t("logoEditor.confirm.closeUnsaved") });
 }
 
 function makeUniqueName(baseName, excludeId = null){
@@ -325,7 +326,7 @@ function armHistoryTrap(){
     }
 
     // gdy mamy zmiany — cofanie przechwytujemy
-    const ok = confirm(t("logoEditor.confirm.backUnsaved"));
+    const ok = await confirmModal({ text: t("logoEditor.confirm.backUnsaved") });
     if (ok){
       // pozwól cofnąć: najprościej zrobić przejście wstecz jeszcze raz,
       // ale popstate już zaszło. Żeby nie robić pętli, ignorujemy kolejny pop.
@@ -334,7 +335,7 @@ function armHistoryTrap(){
 
       // tutaj możesz zachować się jak “zamknij edytor i wróć do listy”
       // zamiast cofać w historię:
-      closeEditor(true);
+      await closeEditor(true);
 
       // po zamknięciu edytora “odbuduj” kotwicę historii, żeby nie było dziwnych backów
       try{
@@ -893,7 +894,7 @@ function renderList(){
     el.querySelector(".logoX").addEventListener("click", async (ev) => {
       ev.stopPropagation();
       if (!canDelete) return;
-      const ok = confirm(t("logoEditor.confirm.deleteLogo", { name }));
+      const ok = await confirmModal({ text: t("logoEditor.confirm.deleteLogo", { name }) });
       if (!ok) return;
 
       setMsg(t("logoEditor.status.deleting"));
@@ -905,7 +906,7 @@ function renderList(){
         setMsg(t("logoEditor.status.deleted"));
       }catch(e){
         console.error(e);
-        alert(t("logoEditor.errors.deleteFailed", { error: e?.message || e }));
+        void alertModal({ text: t("logoEditor.errors.deleteFailed", { error: e?.message || e }) });
         setMsg("");
       }
     });
@@ -1085,8 +1086,8 @@ function openEditor(mode){
 }
 
 
-function closeEditor(force = false){
-  if (!force && !confirmCloseIfDirty()) return;
+async function closeEditor(force = false){
+  if (!force && !(await confirmCloseIfDirty())) return;
 
   if (editorMode === "TEXT") textEditor.close();
   if (editorMode === "TEXT_PIX") textPixEditor.close();
@@ -1198,7 +1199,7 @@ async function handleCreate(){
       }
     }
 
-    alert(t("logoEditor.errors.saveFailedDetailed", { error: e?.message || e }));
+    void alertModal({ text: t("logoEditor.errors.saveFailedDetailed", { error: e?.message || e }) });
     setEditorMsg(t("logoEditor.errors.saveError"));
   }
 }
@@ -1225,7 +1226,7 @@ async function boot(){
     await loadFonts();
   } catch (e){
     console.error(e);
-    alert(t("logoEditor.errors.fontsLoad"));
+    void alertModal({ text: t("logoEditor.errors.fontsLoad") });
   }
    
    await loadDefaultLogo();
@@ -1251,23 +1252,23 @@ async function boot(){
    armNavGuard();
 
   // topbar
-   btnBack?.addEventListener("click", () => {
+   btnBack?.addEventListener("click", async () => {
      const inEditor = !!editorMode; // najpewniej: źródło prawdy to stan, nie style
    
      if (inEditor){
        // zamykanie edytora: cała logika w closeEditor() (tam jest confirmCloseIfDirty)
-       closeEditor(false);
+       await closeEditor(false);
        return;
      }
    
      // wyjście do buildera: pytamy tylko jeśli faktycznie mamy dirty (i edytor otwarty)
-     if (shouldBlockNav() && !confirmCloseIfDirty()) return;
+     if (shouldBlockNav() && !(await confirmCloseIfDirty())) return;
      location.href = withLangParam("../builder.html");
    });
    
    btnLogout?.addEventListener("click", async () => {
      if (shouldBlockNav()){
-       const ok = confirm(t("logoEditor.confirm.logoutUnsaved"));
+       const ok = await confirmModal({ text: t("logoEditor.confirm.logoutUnsaved") });
        if (!ok) return;
      }
      await signOut();
@@ -1305,7 +1306,7 @@ async function boot(){
      } catch (e){
        console.error(e);
        progClose("import");
-       alert(t("logoEditor.errors.importFailedDetailed", { error: e?.message || e }));
+       void alertModal({ text: t("logoEditor.errors.importFailedDetailed", { error: e?.message || e }) });
        setMsg("");
      }
    });
@@ -1337,7 +1338,7 @@ async function boot(){
      } catch (e){
        console.error(e);
        progClose("export");
-       alert(t("logoEditor.errors.exportFailedDetailed", { error: e?.message || e }));
+       void alertModal({ text: t("logoEditor.errors.exportFailedDetailed", { error: e?.message || e }) });
      }
    });
 
@@ -1370,7 +1371,7 @@ async function boot(){
        setMsg(t("logoEditor.status.activeSet"));
     }catch(e){
       console.error(e);
-      alert(t("logoEditor.errors.setActiveFailedDetailed", { error: e?.message || e }));
+      void alertModal({ text: t("logoEditor.errors.setActiveFailedDetailed", { error: e?.message || e }) });
       setMsg("");
     }
   });
@@ -1385,7 +1386,9 @@ async function boot(){
   btnPickCancel?.addEventListener("click", () => show(createOverlay, false));
   createOverlay?.addEventListener("click", (ev) => { if (ev.target === createOverlay) show(createOverlay, false); });
 
- btnEditorClose?.addEventListener("click", () => closeEditor(false));
+ btnEditorClose?.addEventListener("click", () => {
+   void closeEditor(false);
+ });
 
   btnCreate?.addEventListener("click", handleCreate);
    

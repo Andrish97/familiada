@@ -12,6 +12,8 @@
 // - kursor: overlay (PS-like): pędzel = kółko, gumka = kwadrat, figury = crosshair
 // - skróty: PS-like + (Space=Pan temp, Ctrl/Cmd=Select temp, Shift idealne kształty, strzałki przesuwają)
 
+import { confirmModal } from "../../js/core/modal.js";
+import { initUiSelect } from "../../js/core/ui-select.js";
 import { t } from "../../translation/translation.js";
 
 export function initDrawEditor(ctx) {
@@ -1438,8 +1440,12 @@ export function initDrawEditor(ctx) {
            tool === TOOL.PAN ? t("logoEditor.draw.tools.pan") : t("logoEditor.draw.tools.select");
   }
 
+  let fillColorSelect = null;
+
   function renderSettingsModal() {
     if (!drawPopBody) return;
+    fillColorSelect?.destroy?.();
+    fillColorSelect = null;
     drawPopBody.innerHTML = "";
 
     if (!toolHasSettings(tool)) {
@@ -1482,10 +1488,13 @@ export function initDrawEditor(ctx) {
       row2.className = "popRow";
       row2.innerHTML = `
         <span>${t("logoEditor.draw.fillColor")}</span>
-        <select class="inp" id="popFillColor" ${enabled ? "" : "disabled"}>
-          <option value="WHITE" ${fc === "WHITE" ? "selected" : ""}>${t("logoEditor.draw.colors.white")}</option>
-          <option value="BLACK" ${fc === "BLACK" ? "selected" : ""}>${t("logoEditor.draw.colors.black")}</option>
-        </select>
+        <div class="ui-select" id="popFillColor">
+          <button class="ui-select-btn inp" type="button" aria-haspopup="listbox" aria-expanded="false">
+            <span class="ui-select-label">—</span>
+            <span class="ui-select-caret">▾</span>
+          </button>
+          <div class="ui-select-menu" role="listbox"></div>
+        </div>
       `;
       drawPopBody.appendChild(row2);
     }
@@ -1508,13 +1517,23 @@ export function initDrawEditor(ctx) {
       schedulePreview(80);
     });
 
-    popFillColor?.addEventListener("change", () => {
-      toolSettings[tool] = {
-        ...(toolSettings[tool] || {}),
-        fillColor: (popFillColor.value === "BLACK") ? "BLACK" : "WHITE"
-      };
-      schedulePreview(80);
-    });
+    if (popFillColor) {
+      fillColorSelect = initUiSelect(popFillColor, {
+        options: [
+          { value: "WHITE", label: t("logoEditor.draw.colors.white") },
+          { value: "BLACK", label: t("logoEditor.draw.colors.black") },
+        ],
+        value: (toolSettings[tool]?.fillColor === "BLACK") ? "BLACK" : "WHITE",
+        disabled: !popFill?.checked,
+        onChange: (value) => {
+          toolSettings[tool] = {
+            ...(toolSettings[tool] || {}),
+            fillColor: value === "BLACK" ? "BLACK" : "WHITE",
+          };
+          schedulePreview(80);
+        },
+      });
+    }
   }
 
   function openSettingsModal() {
@@ -2112,11 +2131,11 @@ export function initDrawEditor(ctx) {
     tRedo?.addEventListener("click", () => redo());
 
     // Clear
-    tClear?.addEventListener("click", () => {
+    tClear?.addEventListener("click", async () => {
       if (ctx.getMode?.() !== "DRAW") return;
       if (!fabricCanvas) return;
 
-      const ok = confirm(t("logoEditor.draw.confirmClear"));
+      const ok = await confirmModal({ text: t("logoEditor.draw.confirmClear") });
       if (!ok) return;
 
       clearPolyDraft();

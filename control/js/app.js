@@ -1,4 +1,5 @@
 // /familiada/js/pages/control/app.js
+import { confirmModal } from "../../js/core/modal.js";
 import { getUiLang, initI18n, t } from "../../translation/translation.js";
 
 // ================== KOMUNIKATY ==================
@@ -845,7 +846,7 @@ async function sendZeroStatesToDevices() {
   // === Top bar ===
   ui.on("top.back", async () => {
     if (shouldWarnBeforeUnload()) {
-      const ok = confirm(APP_MSG.CONFIRM_BACK);
+      const ok = await confirmModal({ text: APP_MSG.CONFIRM_BACK });
       if (!ok) return;
     }
   

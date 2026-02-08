@@ -1,7 +1,7 @@
 // js/pages/polls.js
 import { sb } from "../core/supabase.js";
 import { requireAuth, signOut } from "../core/auth.js";
-import { confirmModal } from "../core/modal.js";
+import { alertModal, confirmModal } from "../core/modal.js";
 import QRCode from "https://cdn.jsdelivr.net/npm/qrcode@1.5.3/+esm";
 import { initI18n, t } from "../../translation/translation.js";
 
@@ -1442,7 +1442,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         await refresh();
       } catch (e) {
         console.error("[polls] open error:", e);
-        alert(`${t("polls.errors.open")}\n\n${e?.message || e}`);
+        void alertModal({ text: `${t("polls.errors.open")}\n\n${e?.message || e}` });
       }
       return;
     }
@@ -1475,7 +1475,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           await refresh();
         } catch (e) {
           console.error("[polls] close points error:", e);
-          alert(`${t("polls.errors.close")}\n\n${e?.message || e}`);
+          void alertModal({ text: `${t("polls.errors.close")}\n\n${e?.message || e}` });
         }
         return;
       }
@@ -1486,7 +1486,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         setMsg(t("polls.textClose.editHint"));
       } catch (e) {
         console.error("[polls] build text close:", e);
-        alert(`${t("polls.errors.loadAnswers")}\n\n${e?.message || e}`);
+        void alertModal({ text: `${t("polls.errors.loadAnswers")}\n\n${e?.message || e}` });
       }
       return;
     }
@@ -1512,7 +1512,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         await refresh();
       } catch (e) {
         console.error("[polls] reopen error:", e);
-        alert(`${t("polls.errors.reopen")}\n\n${e?.message || e}`);
+        void alertModal({ text: `${t("polls.errors.reopen")}\n\n${e?.message || e}` });
       }
       return;
     }
@@ -1543,7 +1543,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           .filter((x) => x.text);
 
         if (final.length < 3) {
-          alert(t("polls.textClose.minAnswers", { ord: q.ord }));
+          void alertModal({ text: t("polls.textClose.minAnswers", { ord: q.ord }) });
           return;
         }
 
@@ -1573,7 +1573,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       stopLiveLoop();
     } catch (e) {
       console.error("[polls] close text error:", e);
-      alert(`${t("polls.errors.close")}\n\n${e?.message || e}`);
+      void alertModal({ text: `${t("polls.errors.close")}\n\n${e?.message || e}` });
     } finally {
       btnFinishTextClose.disabled = false;
       btnCancelTextClose.disabled = false;
