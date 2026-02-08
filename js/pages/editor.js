@@ -512,7 +512,7 @@ async function boot() {
   }
 
   let game = await loadGame(gameId);
-  const cfg = cfgFromGameType(game.type);
+  let cfg = cfgFromGameType(game.type);
 
   const editInfo = canEnterEdit(game);
   if (!editInfo?.ok) {
@@ -533,17 +533,23 @@ async function boot() {
 
   /* ---------- UI header ---------- */
   const titleEl = $("pageTitle");
-  if (titleEl) titleEl.textContent = cfg.title;
-  $("hintTop") && ($("hintTop").textContent = cfg.hintTop);
-  $("hintBottom") && ($("hintBottom").textContent = cfg.hintBottom);
-
   const typeBadge = $("typeBadge");
-  if (typeBadge) {
-    typeBadge.textContent =
-      cfg.type === TYPES.PREPARED ? MSG.typePrepared() :
-      cfg.type === TYPES.POLL_POINTS ? MSG.typePollPoints() :
-      MSG.typePollText();
-  }
+
+  const renderHeader = () => {
+    cfg = cfgFromGameType(game.type);
+    if (titleEl) titleEl.textContent = cfg.title;
+    $("hintTop") && ($("hintTop").textContent = cfg.hintTop);
+    $("hintBottom") && ($("hintBottom").textContent = cfg.hintBottom);
+
+    if (typeBadge) {
+      typeBadge.textContent =
+        cfg.type === TYPES.PREPARED ? MSG.typePrepared() :
+        cfg.type === TYPES.POLL_POINTS ? MSG.typePollPoints() :
+        MSG.typePollText();
+    }
+  };
+
+  renderHeader();
 
   document.body.classList.toggle("only-questions", !cfg.allowAnswers);
   document.body.classList.toggle("no-points", !cfg.allowPoints);
@@ -1155,6 +1161,13 @@ async function boot() {
   renderQuestions();
   renderEditor();
   setMsg("");
+
+  window.addEventListener("i18n:lang", () => {
+    renderHeader();
+    renderQuestions();
+    renderEditor();
+    setMsg("");
+  });
 }
 
 document.addEventListener("DOMContentLoaded", () => {

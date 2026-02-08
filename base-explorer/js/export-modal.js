@@ -1,6 +1,8 @@
 // /base-explorer/js/export-modal.js
 // Modal eksportu: open() zwraca Promise z wynikiem {ok, payload}
 
+import { t } from "../../translation/translation.js";
+
 const RULES = { QN_MIN: 10, AN_MIN: 3, AN_MAX: 6, SUM_PREPARED: 100 };
 const TYPES = ["poll_text", "poll_points", "prepared"];
 
@@ -71,7 +73,7 @@ function buildExportPayload({ name, type, questions }) {
   };
 
   return {
-    game: { name: name || "gra", type },
+    game: { name: name || t("baseExplorer.export.defaultGameName"), type },
     questions: (questions || []).map((q) => {
       const text = normQText(q);
 
@@ -140,9 +142,9 @@ export function initExportModal({ state } = {}) {
   function updateTypeUI() {
     const type = TYPES[typeIndex] || "prepared";
     if (xTypeHint) {
-      if (type === "poll_text") xTypeHint.textContent = "10+ pytań, bez wymagań odpowiedzi.";
-      if (type === "poll_points") xTypeHint.textContent = "10+ pytań, każde 3–6 odpowiedzi.";
-      if (type === "prepared") xTypeHint.textContent = "10+ pytań, 3–6 odpowiedzi, suma punktów ≤ 100.";
+      if (type === "poll_text") xTypeHint.textContent = t("baseExplorer.export.typeHintPollText");
+      if (type === "poll_points") xTypeHint.textContent = t("baseExplorer.export.typeHintPollPoints");
+      if (type === "prepared") xTypeHint.textContent = t("baseExplorer.export.typeHintPrepared");
     }
     for (const el of [lbl0, lbl1, lbl2]) el?.classList.remove("active");
     (typeIndex === 0 ? lbl0 : typeIndex === 1 ? lbl1 : lbl2)?.classList.add("active");
@@ -161,11 +163,15 @@ export function initExportModal({ state } = {}) {
     const answers = qAnswers(q);
     const an = answers.length;
   
-    if (type === "poll_text") return an ? `${an} odp.` : "bez odp.";
-    if (type === "poll_points") return `${an} odp.`;
+    if (type === "poll_text") {
+      return an
+        ? t("baseExplorer.export.answersCount", { count: an })
+        : t("baseExplorer.export.noAnswers");
+    }
+    if (type === "poll_points") return t("baseExplorer.export.answersCount", { count: an });
   
     const s = sumPoints(answers);
-    return `${an} odp. • suma ${s}`;
+    return t("baseExplorer.export.preparedSummary", { count: an, sum: s });
   }
 
   function renderList() {
@@ -177,7 +183,7 @@ export function initExportModal({ state } = {}) {
     for (const q of allQuestions) {
       
       const ok = validateForType(q, type);
-      const label = qText(q) || "—";
+      const label = qText(q) || t("baseExplorer.common.dash");
       const checked = selectedIds.has(q.id);
 
       const row = document.createElement("label");
@@ -250,7 +256,7 @@ export function initExportModal({ state } = {}) {
     lastOpts = opts || null;
 
     showProgress(false);
-    setProgress({ step: "—", i: 0, n: 0, msg: "" });
+    setProgress({ step: t("baseExplorer.common.dash"), i: 0, n: 0, msg: "" });
     lockUi(false);
 
     // Źródło danych:
@@ -263,7 +269,7 @@ export function initExportModal({ state } = {}) {
     allQuestions = src.slice();
 
     if (allQuestions.length < RULES.QN_MIN) {
-      setErr(`Potrzebujesz co najmniej ${RULES.QN_MIN} pytań, żeby zrobić eksport.`);
+      setErr(t("baseExplorer.export.errors.minQuestions", { count: RULES.QN_MIN }));
       // nadal otwieramy, ale przycisk będzie zablokowany
     }
 
@@ -323,12 +329,12 @@ export function initExportModal({ state } = {}) {
 
     const picked = allQuestions.filter((q) => selectedIds.has(q.id));
     if (picked.length < RULES.QN_MIN) {
-      setErr(`Zaznacz co najmniej ${RULES.QN_MIN} pytań.`);
+      setErr(t("baseExplorer.export.errors.pickMin", { count: RULES.QN_MIN }));
       return;
     }
 
     const payload = buildExportPayload({
-      name: String(xName?.value || "gra"),
+      name: String(xName?.value || t("baseExplorer.export.defaultGameName")),
       type: TYPES[typeIndex] || "prepared",
       questions: picked,
     });
@@ -342,24 +348,29 @@ export function initExportModal({ state } = {}) {
 
         // “sensowne liczenie”: w eksportowaniu zwykle liczymy pytania
         const n = payload?.questions?.length || 0;
-        setProgress({ step: "Eksport…", i: 0, n: n || 1, msg: "" });
+        setProgress({ step: t("baseExplorer.export.progress.exporting"), i: 0, n: n || 1, msg: "" });
 
         const res = await run(payload, (p) => setProgress(p));
 
-        setProgress({ step: "Gotowe ✅", i: n || 1, n: n || 1, msg: "Utworzono grę." });
+        setProgress({
+          step: t("baseExplorer.export.progress.done"),
+          i: n || 1,
+          n: n || 1,
+          msg: t("baseExplorer.export.progress.created"),
+        });
 
         // zamykamy modal dopiero na końcu
         close({ ok: true, payload, result: res });
       } catch (e) {
         console.error(e);
         setProgress({
-          step: "Błąd ❌",
+          step: t("baseExplorer.export.progress.error"),
           i: 0,
           n: payload?.questions?.length || 1,
-          msg: `Błąd: ${e?.message || String(e)}`,
+          msg: t("baseExplorer.export.progress.errorDetail", { error: e?.message || String(e) }),
           isError: true,
         });
-        setErr("Nie udało się utworzyć gry (szczegóły w pasku progresu / konsoli).");
+        setErr(t("baseExplorer.export.errors.createFailed"));
         lockUi(false); // zostaw modal otwarty
       }
       return;

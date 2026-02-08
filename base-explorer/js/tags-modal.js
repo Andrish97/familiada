@@ -8,6 +8,7 @@
 // UWAGA: ten plik nie zna nic o SEARCH/TAG view. To jest czysty modal.
 
 import { sb } from "../../js/core/supabase.js";
+import { t } from "../../translation/translation.js";
 import { listQuestionTags, listAllQuestions } from "./repo.js";
 
 /* ================= Utils ================= */
@@ -274,9 +275,11 @@ export async function openTagsModal(state, opts = {}) {
     const qN = (sel.qIds || []).length;
     const cN = (sel.cIds || []).length;
     const parts = [];
-    if (qN) parts.push(`${qN} pyt.`);
-    if (cN) parts.push(`${cN} folder(ów)`);
-    E.assignInfo.textContent = parts.length ? `Zaznaczenie: ${parts.join(" + ")}.` : "Brak zaznaczenia.";
+    if (qN) parts.push(t("baseExplorer.tags.selectionQuestions", { count: qN }));
+    if (cN) parts.push(t("baseExplorer.tags.selectionFolders", { count: cN }));
+    E.assignInfo.textContent = parts.length
+      ? t("baseExplorer.tags.selectionSummary", { items: parts.join(" + ") })
+      : t("baseExplorer.tags.selectionEmpty");
   }
 
   function triToUi(tri) {
@@ -289,7 +292,7 @@ export async function openTagsModal(state, opts = {}) {
   function cycleTri(tagId) {
     const cur = m.tri.get(tagId) || "none";
     if (cur === "some") {
-      alert("Tag jest przypisany częściowo. Kliknięcie ustawi: wszyscy.");
+      alert(t("baseExplorer.tags.partialWarning"));
       m.tri.set(tagId, "all");
       m.dirty.add(tagId);
       return;
@@ -355,7 +358,7 @@ export async function openTagsModal(state, opts = {}) {
             <input type="checkbox" data-tag-id="${t.id}" ${ui.checked ? "checked" : ""} ${editor ? "" : "disabled"} />
             <span class="tag-dot" style="background:${t.color || "#777"}"></span>
             <span class="m-p">#${String(t.name || "")}</span>
-            ${tri === "some" ? `<span class="m-note">częściowo</span>` : `<span class="m-note" style="visibility:hidden;">.</span>`}
+            ${tri === "some" ? `<span class="m-note">${t("baseExplorer.tags.partial")}</span>` : `<span class="m-note" style="visibility:hidden;">.</span>`}
           </label>
         `;
       })
@@ -389,8 +392,18 @@ export async function openTagsModal(state, opts = {}) {
     m.edit.color = String(current?.color || "#4da3ff");
     m.pickedColor = m.edit.color;
 
-    if (E.editTitle) E.editTitle.textContent = editMode === "edit" ? "Edytuj tag" : "Nowy tag";
-    if (E.editHelp) E.editHelp.textContent = editMode === "edit" ? "Zmień nazwę i kolor taga." : "Dodaj nowy tag.";
+    if (E.editTitle) {
+      E.editTitle.textContent =
+        editMode === "edit"
+          ? t("baseExplorer.tags.editModeTitle")
+          : t("baseExplorer.tags.createModeTitle");
+    }
+    if (E.editHelp) {
+      E.editHelp.textContent =
+        editMode === "edit"
+          ? t("baseExplorer.tags.editModeHelp")
+          : t("baseExplorer.tags.createModeHelp");
+    }
     if (E.editName) E.editName.value = m.edit.name;
 
     if (E.editColorDot) E.editColorDot.style.background = m.pickedColor;
@@ -535,11 +548,11 @@ export async function openTagsModal(state, opts = {}) {
 
     // Bez spacji: tylko litery/cyfry i "_"
     if (/\s/.test(nameRaw)) {
-      showErr(E.editErr, "Nazwa nie może zawierać spacji. Użyj _ zamiast spacji.");
+      showErr(E.editErr, t("baseExplorer.tags.errors.noSpaces"));
       return false;
     }
     if (!/^[a-zA-Z0-9_]+$/.test(nameRaw)) {
-      showErr(E.editErr, "Dozwolone znaki: litery, cyfry i _");
+      showErr(E.editErr, t("baseExplorer.tags.errors.allowedChars"));
       return false;
     }
 
@@ -548,7 +561,7 @@ export async function openTagsModal(state, opts = {}) {
 
     const allowId = m.edit.mode === "edit" ? (m.edit.tagId || null) : null;
     if (isDuplicateTagName(state, nameRaw, { allowId })) {
-      showErr(E.editErr, "Taki tag już istnieje. Wybierz inną nazwę.");
+      showErr(E.editErr, t("baseExplorer.tags.errors.duplicate"));
       return false;
     }
 
@@ -594,8 +607,8 @@ export async function openTagsModal(state, opts = {}) {
       if (m.layer === 3) return saveL3Color();
     } catch (e) {
       console.error(e);
-      if (m.layer === 1) showErr(E.assignErr, "Nie udało się zapisać tagów.");
-      if (m.layer === 2) showErr(E.editErr, "Nie udało się zapisać taga.");
+      if (m.layer === 1) showErr(E.assignErr, t("baseExplorer.tags.errors.saveAssignFailed"));
+      if (m.layer === 2) showErr(E.editErr, t("baseExplorer.tags.errors.saveFailed"));
       // L3: bez errboxa (to tylko powrót)
     }
     return false;
