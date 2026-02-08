@@ -778,6 +778,7 @@ const pl = {
   },
   manual: {
     title: "Familiada — wskazówki",
+    legal: "Informacje prawne",
     backToGames: "← Moje gry",
     logout: "Wyloguj",
     pageTitle: "Wskazówki dla użytkownika",
@@ -2112,6 +2113,93 @@ const pl = {
         </p>
       </div>`,
     },
+  },
+  privacy: {
+    title: "Familiada — polityka prywatności",
+    pageTitle: "Polityka Prywatności",
+    backToManual: "← Wskazówki",
+    logout: "Wyloguj",
+    content: `
+      <h2 class="m-h2">1. Administrator danych</h2>
+      <p class="m-p">
+        Administratorem danych osobowych jest operator serwisu Familiada dostępnego pod adresem
+        <span class="m-code">https://www.familiada.online</span>
+      </p>
+      <p class="m-p">Kontakt: <span class="m-code">admin@familiada.online</span></p>
+  
+      <h2 class="m-h2">2. Zakres przetwarzanych danych</h2>
+      <p class="m-p">Przetwarzamy wyłącznie dane niezbędne do działania serwisu:</p>
+      <ul class="m-ul">
+        <li>adres e-mail,</li>
+        <li>nazwa użytkownika (login),</li>
+        <li>dane związane z uczestnictwem w sondażach i subskrypcjach.</li>
+      </ul>
+  
+      <h2 class="m-h2">3. Cele przetwarzania danych</h2>
+      <p class="m-p">Dane osobowe są przetwarzane w celu:</p>
+      <ul class="m-ul">
+        <li>założenia i obsługi konta użytkownika,</li>
+        <li>wysyłania wiadomości systemowych (np. potwierdzenie konta, reset hasła),</li>
+        <li>wysyłania powiadomień subskrypcyjnych oraz zaproszeń do udziału w sondażach,</li>
+        <li>zapewnienia bezpieczeństwa i poprawnego działania serwisu.</li>
+      </ul>
+  
+      <h2 class="m-h2">4. Wiadomości e-mail</h2>
+      <p class="m-p">Wysyłamy wyłącznie:</p>
+      <ul class="m-ul">
+        <li>wiadomości transakcyjne (systemowe),</li>
+        <li>powiadomienia subskrypcyjne wysyłane tylko do użytkowników, którzy wyrazili na nie zgodę.</li>
+      </ul>
+      <p class="m-p">Nie wysyłamy wiadomości marketingowych ani reklamowych.</p>
+      <p class="m-p">Częstotliwość wysyłki jest ograniczona, aby zapobiec nadużyciom.</p>
+  
+      <h2 class="m-h2">5. Subskrypcje i zaproszenia</h2>
+      <p class="m-p">Powiadomienia i zaproszenia do sondaży:</p>
+      <ul class="m-ul">
+        <li>są wysyłane tylko do znanych i wskazanych odbiorców,</li>
+        <li>nie są wysyłane masowo,</li>
+        <li>nie są wysyłane częściej niż raz na określony czas dla jednego adresu e-mail.</li>
+      </ul>
+  
+      <h2 class="m-h2">6. Podstawa prawna przetwarzania</h2>
+      <p class="m-p">Dane są przetwarzane na podstawie:</p>
+      <ul class="m-ul">
+        <li>zgody użytkownika (art. 6 ust. 1 lit. a RODO),</li>
+        <li>niezbędności do wykonania umowy (art. 6 ust. 1 lit. b RODO),</li>
+        <li>prawnie uzasadnionego interesu administratora (art. 6 ust. 1 lit. f RODO).</li>
+      </ul>
+  
+      <h2 class="m-h2">7. Okres przechowywania danych</h2>
+      <p class="m-p">Dane są przechowywane:</p>
+      <ul class="m-ul">
+        <li>przez czas istnienia konta użytkownika,</li>
+        <li>lub do momentu cofnięcia zgody lub usunięcia konta.</li>
+      </ul>
+  
+      <h2 class="m-h2">8. Udostępnianie danych</h2>
+      <p class="m-p">
+        Nie sprzedajemy ani nie udostępniamy danych osobowych podmiotom trzecim, z wyjątkiem:
+      </p>
+      <ul class="m-ul">
+        <li>usług technicznych niezbędnych do działania serwisu (np. hosting, wysyłka e-maili).</li>
+      </ul>
+  
+      <h2 class="m-h2">9. Prawa użytkownika</h2>
+      <p class="m-p">Użytkownik ma prawo do:</p>
+      <ul class="m-ul">
+        <li>dostępu do swoich danych,</li>
+        <li>ich poprawiania,</li>
+        <li>usunięcia,</li>
+        <li>ograniczenia przetwarzania,</li>
+        <li>cofnięcia zgody w dowolnym momencie.</li>
+      </ul>
+  
+      <h2 class="m-h2">10. Kontakt</h2>
+      <p class="m-p">
+        W sprawach związanych z ochroną danych osobowych prosimy o kontakt:
+        <span class="m-code">admin@familiada.online</span>
+      </p>
+    `,
   },
   builderImportExport: {
     defaults: {
