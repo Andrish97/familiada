@@ -8,6 +8,8 @@ import { initI18n, t } from "../../translation/translation.js";
 
 initI18n({ withSwitcher: true });
 
+const COOLDOWN_MS = 24 * 60 * 60 * 1000;
+
 const MSG = {
   ok: () => t("pollsHub.ok"),
   error: () => t("pollsHub.errorLabel"),
@@ -30,7 +32,7 @@ const MSG = {
   subscriptionStatus: (status) => t(`pollsHub.subscriptionStatus.${status}`),
   taskStatusDone: () => t("pollsHub.taskStatus.done"),
   taskStatusAvailable: () => t("pollsHub.taskStatus.available"),
-  pollReadyAlert: () => t("pollsHub.alert.pollReady"),
+  pollReadyAlert: () => t("pollsHub.pollReadyAlert"),
   declineTaskStep: () => t("pollsHub.progress.declineTask"),
   declineTaskFail: () => t("pollsHub.errors.declineTask"),
   inviteStep: () => t("pollsHub.progress.invite"),
@@ -40,6 +42,9 @@ const MSG = {
   inviteSaved: () => t("pollsHub.statusMsg.inviteSaved"),
   resendStep: () => t("pollsHub.progress.resend"),
   resendFail: () => t("pollsHub.errors.resend"),
+  resendCooldownAlert: (hours) => t("pollsHub.resendCooldownAlert", { hours }),
+  shareCooldownAlert: (hours) => t("pollsHub.shareCooldownAlert", { hours }),
+  shareHintCooldown: (hours) => t("pollsHub.shareHint.cooldown", { hours }),
   mailSending: () => t("pollsHub.statusMsg.mailSending"),
   mailSent: () => t("pollsHub.statusMsg.mailSent"),
   mailFailed: () => t("pollsHub.statusMsg.mailFailed"),
@@ -562,6 +567,19 @@ function parseDate(d) {
   return d ? new Date(d).getTime() : 0;
 }
 
+
+function hoursLeftFrom(untilTs) {
+  const ms = untilTs - Date.now();
+  if (ms <= 0) return 0;
+  return Math.ceil(ms / (60 * 60 * 1000));
+}
+
+function cooldownUntilFromTs(ts) {
+  const base = parseDate(ts);
+  if (!base) return 0;
+  return base + COOLDOWN_MS;
+}
+
 function isPollArchived(poll) {
   if (poll.poll_state !== "closed") return false;
   const closedAt = pollClosedAt.get(poll.game_id) || poll.created_at;
@@ -828,7 +846,10 @@ function renderSubscribers() {
         const btnResend = document.createElement("button");
         btnResend.className = "btn xs";
         btnResend.textContent = "↻";
-        btnResend.title = t("pollsHub.actions.resend");
+        const until = cooldownUntilFromTs(sub.email_sent_at);
+        const isCooldown = !!until && Date.now() < until;
+        btnResend.title = isCooldown ? MSG.resendCooldownAlert(hoursLeftFrom(until)) : t("pollsHub.actions.resend");
+        if (isCooldown) btnResend.classList.add("cooldown");
         btnResend.addEventListener("click", async (e) => {
           e.stopPropagation();
           await resendSubscriber(sub);
@@ -1015,6 +1036,12 @@ async function inviteSubscriber(recipient) {
 
 async function resendSubscriber(sub) {
   const step = MSG.resendStep();
+  const until = cooldownUntilFromTs(sub.email_sent_at);
+  if (until && Date.now() < until) {
+    const hours = hoursLeftFrom(until);
+    void alertModal({ text: MSG.resendCooldownAlert(hours) });
+    return;
+  }
   try {
     showProgress(true);
     setProgress({ step, i: 0, n: 3, msg: "" });
@@ -1115,12 +1142,13 @@ async function openShareModal() {
     const activeSubs = subscribers.filter((s) => s.status === "active");
     const { data: taskRows, error } = await sb()
       .from("poll_tasks")
-      .select("id,recipient_user_id,recipient_email,status")
+      .select("id,recipient_user_id,recipient_email,status,cancelled_at,declined_at,created_at")
       .eq("game_id", sharePollId)
       .eq("owner_id", currentUser.id);
     if (error) throw error;
 
     const statusBySub = new Map();
+    const cooldownUntilBySub = new Map();
     const taskEmails = [...new Set((taskRows || []).map((t) => (t.recipient_email || "").toLowerCase()).filter(Boolean))];
     const taskProfiles = new Map();
     if (taskEmails.length) {
@@ -1140,9 +1168,25 @@ async function openShareModal() {
     for (const task of taskRows || []) {
       const key = task.recipient_user_id || (task.recipient_email || "").toLowerCase();
       statusBySub.set(key, task.status);
+
+      const isCooldownStatus = task.status === "cancelled" || task.status === "declined";
+      if (isCooldownStatus) {
+        const baseTs = parseDate(task.cancelled_at) || parseDate(task.declined_at) || parseDate(task.created_at);
+        const until = baseTs ? baseTs + COOLDOWN_MS : 0;
+        if (until) {
+          const prev = cooldownUntilBySub.get(key) || 0;
+          if (until > prev) cooldownUntilBySub.set(key, until);
+        }
+      }
+
       const matchedId = task.recipient_email ? taskProfiles.get(String(task.recipient_email).toLowerCase()) : null;
       if (matchedId) {
         statusBySub.set(matchedId, task.status);
+        const until = cooldownUntilBySub.get(key);
+        if (until) {
+          const prev = cooldownUntilBySub.get(matchedId) || 0;
+          if (until > prev) cooldownUntilBySub.set(matchedId, until);
+        }
       }
     }
 
@@ -1152,9 +1196,11 @@ async function openShareModal() {
         || (sub.subscriber_email || "").toLowerCase();
       const status = statusBySub.get(key);
       const row = document.createElement("label");
-      row.className = "hub-share-item";
+      row.className = "hub-share-item" + (isCooldown ? " cooldown" : "");
       const isActive = status === "pending" || status === "opened";
       const isLocked = status === "done";
+      const cooldownUntil = cooldownUntilBySub.get(key) || 0;
+      const isCooldown = !isActive && !isLocked && cooldownUntil && Date.now() < cooldownUntil;
       if (isActive) shareBaseline.add(String(sub.sub_id));
       row.innerHTML = `
         <input type="checkbox" ${isActive ? "checked" : ""} ${isLocked ? "disabled" : ""} data-sub-id="${sub.sub_id}">
@@ -1162,11 +1208,21 @@ async function openShareModal() {
           <div class="hub-item-title">${sub.subscriber_display_label || MSG.dash()}</div>
           <div class="hub-share-status">${shareStatusLabel(status)}</div>
         </div>
-        <div class="hub-share-status">${shareStatusHint(status)}</div>
+        <div class="hub-share-status">${shareStatusHint(status, isCooldown ? cooldownUntil : 0)}</div>
       `;
       const input = row.querySelector("input");
-      if (input && isLocked) {
-        input.title = MSG.shareLockedHint();
+      if (input) {
+        if (isLocked) {
+          input.title = MSG.shareLockedHint();
+        } else if (isCooldown) {
+          input.title = MSG.shareCooldownAlert(hoursLeftFrom(cooldownUntil));
+          input.addEventListener("change", () => {
+            if (input.checked) {
+              void alertModal({ text: MSG.shareCooldownAlert(hoursLeftFrom(cooldownUntil)) });
+              input.checked = false;
+            }
+          });
+        }
       }
       shareList.appendChild(row);
     }
@@ -1191,7 +1247,8 @@ function shareStatusLabel(status) {
   return MSG.shareStatusMissing();
 }
 
-function shareStatusHint(status) {
+function shareStatusHint(status, cooldownUntil = 0) {
+  if (cooldownUntil && Date.now() < cooldownUntil) return MSG.shareHintCooldown(hoursLeftFrom(cooldownUntil));
   if (status === "done") return MSG.shareHint("locked");
   if (status === "pending" || status === "opened") return MSG.shareHint("active");
   if (status === "declined") return MSG.shareHint("retry");
@@ -1369,7 +1426,7 @@ async function deleteVote(taskId) {
     await sb().rpc("poll_admin_delete_vote", { p_game_id: selectedPollId, p_voter_token: `task:${taskId}` });
     await sb()
       .from("poll_tasks")
-      .update({ status: "cancelled" })
+      .update({ status: "cancelled", cancelled_at: new Date().toISOString() })
       .eq("id", taskId)
       .eq("owner_id", currentUser.id);
     setProgress({ step, i: 1, n: 2, msg: MSG.ok() });
