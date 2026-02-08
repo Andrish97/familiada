@@ -76,23 +76,24 @@ async function handleUsernameSave() {
 async function handleEmailSave() {
   setErr("");
   try {
-    const mail = String(emailInput.value || "").trim().toLowerCase();
+    const mail = String(emailInput.value || "").trim();
     if (!mail || !mail.includes("@")) throw new Error(t("account.errInvalidEmail"));
 
+    const normalizedMail = mail.toLowerCase();
     const confirmUrl = new URL("confirm.html", location.href);
-    confirmUrl.searchParams.set("to", mail);
+    confirmUrl.searchParams.set("to", normalizedMail);
     const redirectTo = withLangParam(confirmUrl.toString());
     const language = getUiLang();
     const { data, error } = await sb().auth.updateUser(
-      { email: mail, data: { language } },
+      { email: normalizedMail, data: { language } },
       { emailRedirectTo: redirectTo }
     );
     if (error) throw error;
 
-    if (data?.user?.email?.toLowerCase() === mail) {
+    if (data?.user?.email?.toLowerCase() === normalizedMail) {
       const { error: profileError } = await sb()
         .from("profiles")
-        .update({ email: mail })
+        .update({ email: normalizedMail })
         .eq("id", data.user.id);
       if (profileError) throw profileError;
     }
