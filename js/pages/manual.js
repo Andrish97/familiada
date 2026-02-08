@@ -3,7 +3,7 @@
 // Najpierw UI, potem auth „miękko”.
 
 import { confirmModal } from "../core/modal.js";
-import { initI18n } from "../../translation/translation.js";
+import { initI18n, t } from "../../translation/translation.js";
 
 initI18n({ withSwitcher: true });
 
@@ -58,10 +58,10 @@ async function wireDemoActions(user) {
 
   btn.addEventListener("click", async () => {
     const ok = await confirmModal({
-      title: "Przywrócić pliki demo?",
-      text: "Zostaną dodane przykładowe materiały startowe.",
-      okText: "Przywróć",
-      cancelText: "Anuluj",
+      title: t("manual.demo.modalTitle"),
+      text: t("manual.demo.modalText"),
+      okText: t("manual.demo.modalOk"),
+      cancelText: t("manual.demo.modalCancel"),
     });
 
     if (!ok) return;
