@@ -1,30 +1,170 @@
-export function confirmModal({ title="Potwierdź", text="Na pewno?", okText="Tak", cancelText="Nie" } = {}) {
+let modalSeq = 0;
+
+function buildModal({
+  title,
+  text,
+  okText,
+  cancelText,
+  showCancel = true,
+  body = null,
+} = {}) {
+  modalSeq += 1;
+  const titleId = `uniTitle${modalSeq}`;
+  const subId = `uniSub${modalSeq}`;
+
+  const overlay = document.createElement("div");
+  overlay.className = "overlay";
+
+  const modal = document.createElement("div");
+  modal.className = "modal uni-modal";
+  modal.setAttribute("role", "dialog");
+  modal.setAttribute("aria-modal", "true");
+  modal.setAttribute("aria-labelledby", titleId);
+  modal.setAttribute("aria-describedby", subId);
+
+  const head = document.createElement("div");
+  head.className = "uni-head";
+
+  const titleEl = document.createElement("div");
+  titleEl.className = "mTitle";
+  titleEl.id = titleId;
+  titleEl.textContent = title;
+
+  const closeBtn = document.createElement("button");
+  closeBtn.className = "btn sm";
+  closeBtn.type = "button";
+  closeBtn.setAttribute("aria-label", "Zamknij");
+  closeBtn.textContent = "✕";
+
+  head.appendChild(titleEl);
+  head.appendChild(closeBtn);
+
+  const sub = document.createElement("div");
+  sub.className = "mSub";
+  sub.id = subId;
+  sub.style.whiteSpace = "pre-line";
+  sub.textContent = text;
+
+  const bodyWrap = document.createElement("div");
+  bodyWrap.className = "uni-body";
+  if (body) bodyWrap.appendChild(body);
+
+  const foot = document.createElement("div");
+  foot.className = "importRow uni-foot";
+
+  const okBtn = document.createElement("button");
+  okBtn.className = "btn sm gold";
+  okBtn.type = "button";
+  okBtn.textContent = okText;
+
+  const cancelBtn = document.createElement("button");
+  cancelBtn.className = "btn sm";
+  cancelBtn.type = "button";
+  cancelBtn.textContent = cancelText;
+
+  const msg = document.createElement("div");
+  msg.className = "importMsg";
+  msg.textContent = "—";
+
+  foot.appendChild(okBtn);
+  if (showCancel) foot.appendChild(cancelBtn);
+  foot.appendChild(msg);
+
+  modal.appendChild(head);
+  modal.appendChild(sub);
+  if (body) modal.appendChild(bodyWrap);
+  modal.appendChild(foot);
+
+  overlay.appendChild(modal);
+
+  return {
+    overlay,
+    okBtn,
+    cancelBtn,
+    closeBtn,
+  };
+}
+
+function openModal({
+  title = "Potwierdź",
+  text = "Na pewno?",
+  okText = "Tak",
+  cancelText = "Nie",
+  showCancel = true,
+  body = null,
+  initialFocus = null,
+} = {}) {
   return new Promise((resolve) => {
-    const wrap = document.createElement("div");
-    wrap.style.position = "fixed";
-    wrap.style.inset = "0";
-    wrap.style.background = "rgba(0,0,0,.7)";
-    wrap.style.display = "grid";
-    wrap.style.placeItems = "center";
-    wrap.style.zIndex = "9999";
-
-    wrap.innerHTML = `
-      <div style="width:min(520px,92vw);background:#0b1226;border:1px solid rgba(255,255,255,.12);border-radius:18px;padding:16px;box-shadow:0 24px 60px rgba(0,0,0,.6)">
-        <div style="font-weight:900;letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px">${title}</div>
-        <div style="opacity:.9;line-height:1.35;margin-bottom:14px">${text}</div>
-        <div style="display:flex;gap:10px;justify-content:flex-end">
-          <button data-cancel style="padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.06);color:#fff;cursor:pointer">${cancelText}</button>
-          <button data-ok style="padding:10px 12px;border-radius:12px;border:1px solid rgba(255,220,120,.35);background:rgba(255,220,120,.18);color:#fff;font-weight:900;cursor:pointer">${okText}</button>
-        </div>
-      </div>
-    `;
-
-    const done = (v) => { wrap.remove(); resolve(v); };
-    wrap.addEventListener("click", (e) => {
-      if (e.target === wrap) done(false);
-      if (e.target?.dataset?.cancel !== undefined) done(false);
-      if (e.target?.dataset?.ok !== undefined) done(true);
+    const { overlay, okBtn, cancelBtn, closeBtn } = buildModal({
+      title,
+      text,
+      okText,
+      cancelText,
+      showCancel,
+      body,
     });
-    document.body.appendChild(wrap);
+
+    let done = false;
+    const finish = (value) => {
+      if (done) return;
+      done = true;
+      overlay.remove();
+      document.removeEventListener("keydown", onKeydown, true);
+      resolve(value);
+    };
+
+    const onKeydown = (e) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        finish(false);
+      }
+    };
+
+    overlay.addEventListener("click", (e) => {
+      if (e.target === overlay) finish(false);
+    });
+
+    okBtn.addEventListener("click", () => finish(true));
+    cancelBtn?.addEventListener("click", () => finish(false));
+    closeBtn.addEventListener("click", () => finish(false));
+
+    document.addEventListener("keydown", onKeydown, true);
+    document.body.appendChild(overlay);
+
+    const focusTarget = initialFocus || okBtn;
+    setTimeout(() => focusTarget?.focus?.(), 0);
   });
+}
+
+export function confirmModal({ title = "Potwierdź", text = "Na pewno?", okText = "Tak", cancelText = "Nie" } = {}) {
+  return openModal({ title, text, okText, cancelText, showCancel: true });
+}
+
+export function alertModal({ title = "Informacja", text = "—", okText = "OK" } = {}) {
+  return openModal({ title, text, okText, showCancel: false });
+}
+
+export function promptModal({
+  title = "Wpisz",
+  text = "Podaj wartość:",
+  okText = "Zapisz",
+  cancelText = "Anuluj",
+  value = "",
+  placeholder = "",
+} = {}) {
+  const input = document.createElement("input");
+  input.type = "text";
+  input.className = "inp uni-inp";
+  input.value = value;
+  input.placeholder = placeholder;
+
+  return openModal({
+    title,
+    text,
+    okText,
+    cancelText,
+    showCancel: true,
+    body: input,
+    initialFocus: input,
+  }).then((ok) => (ok ? input.value : null));
 }

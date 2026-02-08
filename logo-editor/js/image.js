@@ -1,6 +1,7 @@
 // familiada/logo-editor/js/image.js
 // Tryb: IMAGE -> duży obraz + kadr 26:11 -> przetwarzanie -> PIX 150x70
 
+import { alertModal } from "../../js/core/modal.js";
 import { t } from "../../translation/translation.js";
 
 export function initImageEditor(ctx) {
@@ -626,7 +627,7 @@ export function initImageEditor(ctx) {
         await loadImageFile(f);
       } catch (e){
         console.error(e);
-        alert(e?.message || String(e));
+        void alertModal({ text: e?.message || String(e) });
       }
     });
 
