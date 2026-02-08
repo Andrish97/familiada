@@ -773,6 +773,7 @@ const en = {
   },
   manual: {
     title: "Familiada — guide",
+    legal: "Privacy Policy 🔐",
     backToGames: "← My games",
     logout: "Log out",
     pageTitle: "User guide",
@@ -2106,6 +2107,93 @@ const en = {
         </p>
       </div>`,
     },
+  },
+  privacy: {
+    title: "Familiada — privacy policy",
+    pageTitle: "Privacy Policy",
+    backToManual: "← Guide",
+    logout: "Log out",
+    content: `
+      <h2 class="m-h2">1. Data controller</h2>
+      <p class="m-p">
+        The controller of personal data is the operator of the Familiada service available at
+        <span class="m-code">https://www.familiada.online</span>
+      </p>
+      <p class="m-p">Contact: <span class="m-code">admin@familiada.online</span></p>
+  
+      <h2 class="m-h2">2. Scope of processed data</h2>
+      <p class="m-p">We process only the data necessary to operate the service:</p>
+      <ul class="m-ul">
+        <li>email address,</li>
+        <li>username (login),</li>
+        <li>data related to participation in polls and subscriptions.</li>
+      </ul>
+  
+      <h2 class="m-h2">3. Purposes of processing</h2>
+      <p class="m-p">Personal data is processed in order to:</p>
+      <ul class="m-ul">
+        <li>create and manage a user account,</li>
+        <li>send system messages (e.g., account confirmation, password reset),</li>
+        <li>send subscription notifications and invitations to participate in polls,</li>
+        <li>ensure security and proper operation of the service.</li>
+      </ul>
+  
+      <h2 class="m-h2">4. Email messages</h2>
+      <p class="m-p">We send only:</p>
+      <ul class="m-ul">
+        <li>transactional (system) messages,</li>
+        <li>subscription notifications sent only to users who have consented to receive them.</li>
+      </ul>
+      <p class="m-p">We do not send marketing or advertising messages.</p>
+      <p class="m-p">Sending frequency is limited to prevent abuse.</p>
+  
+      <h2 class="m-h2">5. Subscriptions and invitations</h2>
+      <p class="m-p">Poll notifications and invitations:</p>
+      <ul class="m-ul">
+        <li>are sent only to known and explicitly indicated recipients,</li>
+        <li>are not sent in bulk,</li>
+        <li>are not sent more often than once per defined period for a given email address.</li>
+      </ul>
+  
+      <h2 class="m-h2">6. Legal basis</h2>
+      <p class="m-p">Data is processed based on:</p>
+      <ul class="m-ul">
+        <li>user consent (GDPR Art. 6(1)(a)),</li>
+        <li>necessity to perform a contract (GDPR Art. 6(1)(b)),</li>
+        <li>legitimate interest of the controller (GDPR Art. 6(1)(f)).</li>
+      </ul>
+  
+      <h2 class="m-h2">7. Retention period</h2>
+      <p class="m-p">Data is stored:</p>
+      <ul class="m-ul">
+        <li>for the lifetime of the user account,</li>
+        <li>or until consent is withdrawn or the account is deleted.</li>
+      </ul>
+  
+      <h2 class="m-h2">8. Data sharing</h2>
+      <p class="m-p">
+        We do not sell or share personal data with third parties, except for:
+      </p>
+      <ul class="m-ul">
+        <li>technical services necessary to run the service (e.g., hosting, email delivery).</li>
+      </ul>
+  
+      <h2 class="m-h2">9. User rights</h2>
+      <p class="m-p">The user has the right to:</p>
+      <ul class="m-ul">
+        <li>access their data,</li>
+        <li>rectify it,</li>
+        <li>delete it,</li>
+        <li>restrict processing,</li>
+        <li>withdraw consent at any time.</li>
+      </ul>
+  
+      <h2 class="m-h2">10. Contact</h2>
+      <p class="m-p">
+        For matters related to personal data protection, please contact:
+        <span class="m-code">admin@familiada.online</span>
+      </p>
+    `,
   },
   builderImportExport: {
     defaults: {
