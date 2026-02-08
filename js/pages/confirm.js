@@ -1,5 +1,6 @@
 import { sb } from "../core/supabase.js";
-import { initI18n, t } from "../../translation/translation.js";
+import { updateUserLanguage } from "../core/auth.js";
+import { initI18n, t, getUiLang } from "../../translation/translation.js";
 
 const status = document.getElementById("status");
 const err = document.getElementById("err");
@@ -38,6 +39,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   try {
     const { data } = await sb().auth.getSession();
     if (data?.session?.user) {
+      await updateUserLanguage(getUiLang());
       sessionInfo = t("confirm.sessionInfo");
       setErr("");
     }
@@ -89,6 +91,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         const { data, error } = await sb().auth.verifyOtp({ token_hash: tokenHash, type: otpType });
         if (error) throw error;
         if (data?.session) {
+          await updateUserLanguage(getUiLang());
           await syncProfileEmail(data.session.user);
           setStatus(t("confirm.done"));
           go.style.display = "inline-flex";
@@ -113,6 +116,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         if (error) throw error;
 
         if (data?.session) {
+          await updateUserLanguage(getUiLang());
           await syncProfileEmail(data.session.user);
           setStatus(t("confirm.done"));
           go.style.display = "inline-flex";
@@ -144,6 +148,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (error) throw error;
 
     if (data?.session) {
+      await updateUserLanguage(getUiLang());
       await syncProfileEmail(data.session.user);
       setStatus(t("confirm.done"));
       go.style.display = "inline-flex";

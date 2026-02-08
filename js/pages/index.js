@@ -1,5 +1,5 @@
 // js/pages/index.js
-import { getUser, signIn, signUp, resetPassword, validatePassword, validateUsername } from "../core/auth.js";
+import { getUser, signIn, signUp, resetPassword, updateUserLanguage, validatePassword, validateUsername } from "../core/auth.js";
 import { sb } from "../core/supabase.js";
 import { initI18n, t, getUiLang, withLangParam } from "../../translation/translation.js";
 
@@ -117,6 +117,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   const u = await getUser();
   if (u) {
+    await updateUserLanguage(getUiLang());
     if (!u.username || setup === "username") {
       openUsernameSetup();
     } else if (nextTarget === "polls-hub") {
@@ -168,6 +169,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         await signIn(loginOrEmail, pwd); // <-- może być username
         clearPendingEmailChange();
         const authed = await getUser();
+        await updateUserLanguage(getUiLang());
         if (!authed?.username) {
           openUsernameSetup();
         } else if (nextTarget === "polls-hub") {
@@ -191,7 +193,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     try {
       setStatus(t("index.statusResetSending"));
       const redirectTo = withLangParam(new URL("reset.html", location.href).toString());
-      await resetPassword(loginOrEmail, redirectTo);
+      await resetPassword(loginOrEmail, redirectTo, getUiLang());
       setStatus(t("index.statusResetSent"));
     } catch (e) {
       console.error(e);
