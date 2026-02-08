@@ -237,8 +237,17 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 
   btnUsernameSave?.addEventListener("click", saveUsername);
+  
   usernameFirst?.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") saveUsername();
+    if (e.key !== "Enter") return;
+    e.preventDefault();
+    if (isBusy) return;
+    btnUsernameSave.click();
+  });
+
+  btnUsernameSave?.addEventListener("touchend", (e) => {
+    e.preventDefault();
+    btnUsernameSave.click();
   });
 
   email.addEventListener("keydown", (e) => {
