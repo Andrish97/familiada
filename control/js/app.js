@@ -1,36 +1,35 @@
 // /familiada/js/pages/control/app.js
+import { initI18n, t } from "../../translation/translation.js";
 
 // ================== KOMUNIKATY ==================
 const APP_MSG = {
-  NO_ID: "Brak ?id w URL.",
-  GAME_NOT_READY: (reason) => `Ta gra nie jest gotowa ponieważ: ${reason}`,
-  DATA_MISMATCH: "Rozjazd danych gry (validate vs games).",
+  get NO_ID() { return t("control.noId"); },
+  GAME_NOT_READY: (reason) => t("control.gameNotReady", { reason }),
+  get DATA_MISMATCH() { return t("control.dataMismatch"); },
 
   QR_LABEL: (kind) =>
-    kind === "display" ? "Wyświetlacz" :
-    kind === "host" ? "Prowadzący" :
-    kind === "buzzer" ? "Przycisk" :
-    "Urządzenie",
+    kind === "display" ? t("control.deviceDisplay") :
+    kind === "host" ? t("control.deviceHost") :
+    kind === "buzzer" ? t("control.deviceBuzzer") :
+    t("control.qrModalTitle"),
 
-  QR_COPY_OK: "Skopiowano link do urządzenia.",
-  QR_COPY_FAIL: "Nie udało się skopiować linku.",
+  get QR_COPY_OK() { return t("control.qrCopyOk"); },
+  get QR_COPY_FAIL() { return t("control.qrCopyFail"); },
 
-  UNLOAD_WARN:
-    "Jeśli teraz opuścisz tę stronę, bieżący stan gry zostanie utracony.",
+  get UNLOAD_WARN() { return t("control.unloadWarn"); },
 
-  CONFIRM_BACK:
-    "Powrót do listy gier spowoduje utratę bieżącego stanu gry. Kontynuować?",
+  get CONFIRM_BACK() { return t("control.confirmBack"); },
 
-  AUDIO_OK: "Dźwięk odblokowany.",
-  AUDIO_FAIL: "Nie udało się odblokować dźwięku.",
+  get AUDIO_OK() { return t("control.audioOk"); },
+  get AUDIO_FAIL() { return t("control.audioFail"); },
 
-  FINAL_CONFIRMED: "Zatwierdzono.",
-  
-  FINAL_RELOAD_START: "Odświeżanie listy pytań...",
-  FINAL_RELOAD_DONE: "Lista pytań odświeżona.",
-  
-  ADV_SAVED: "Zapisano dodatkowe ustawienia.",
-  ADV_RESET: "Przywrócono domyślne ustawienia.",
+  get FINAL_CONFIRMED() { return t("control.finalConfirmed"); },
+
+  get FINAL_RELOAD_START() { return t("control.finalReloadStart"); },
+  get FINAL_RELOAD_DONE() { return t("control.finalReloadDone"); },
+
+  get ADV_SAVED() { return t("control.advSaved"); },
+  get ADV_RESET() { return t("control.advReset"); },
 };
 // ================= KONIEC KOMUNIKATÓW =================
 
@@ -47,6 +46,8 @@ import { createPresence } from "./presence.js";
 import { createDisplay } from "./display.js";
 import { createRounds } from "./gameRounds.js";
 import { createFinal } from "./gameFinal.js";
+
+initI18n({ withSwitcher: true });
 
 const qs = new URLSearchParams(location.search);
 const gameId = qs.get("id");

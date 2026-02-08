@@ -1,12 +1,13 @@
 // js/core/auth.js
 import { sb } from "./supabase.js";
+import { t } from "../../translation/translation.js";
 
 function niceAuthError(e) {
   const msg = e?.message || String(e);
   const low = msg.toLowerCase();
 
-  if (low.includes("email not confirmed")) return "Potwierdź e-mail (link w skrzynce).";
-  if (low.includes("invalid login credentials")) return "Zły e-mail lub hasło.";
+  if (low.includes("email not confirmed")) return t("auth.emailNotConfirmed");
+  if (low.includes("invalid login credentials")) return t("auth.invalidCredentials");
   return msg;
 }
 
@@ -28,24 +29,24 @@ export function validateUsername(un, { allowEmpty = false } = {}) {
   const v = String(un || "").trim();
   if (!v) {
     if (allowEmpty) return "";
-    throw new Error("Podaj nazwę użytkownika.");
+    throw new Error(t("auth.enterUsername"));
   }
-  if (v.length < 3) throw new Error("Nazwa użytkownika: min. 3 znaki.");
-  if (v.length > 20) throw new Error("Nazwa użytkownika: max. 20 znaków.");
-  if (!/^[a-zA-Z0-9_.-]+$/.test(v)) throw new Error("Dozwolone znaki: litery, cyfry, _ . -");
+  if (v.length < 3) throw new Error(t("auth.usernameMin"));
+  if (v.length > 20) throw new Error(t("auth.usernameMax"));
+  if (!/^[a-zA-Z0-9_.-]+$/.test(v)) throw new Error(t("auth.usernameChars"));
   return v;
 }
 
 export function validatePassword(pwd) {
   const v = String(pwd || "");
   const hints = [];
-  if (v.length < 8) hints.push("min. 8 znaków");
-  if (!/[a-z]/.test(v)) hints.push("mała litera");
-  if (!/[A-Z]/.test(v)) hints.push("duża litera");
-  if (!/[0-9]/.test(v)) hints.push("cyfra");
-  if (!/[^A-Za-z0-9]/.test(v)) hints.push("znak specjalny");
+  if (v.length < 8) hints.push(t("auth.passwordHintMin"));
+  if (!/[a-z]/.test(v)) hints.push(t("auth.passwordHintLower"));
+  if (!/[A-Z]/.test(v)) hints.push(t("auth.passwordHintUpper"));
+  if (!/[0-9]/.test(v)) hints.push(t("auth.passwordHintNumber"));
+  if (!/[^A-Za-z0-9]/.test(v)) hints.push(t("auth.passwordHintSpecial"));
   if (hints.length) {
-    throw new Error(`Hasło musi zawierać: ${hints.join(", ")}.`);
+    throw new Error(t("auth.passwordRules", { hints: hints.join(", ") }));
   }
   return v;
 }
@@ -120,29 +121,32 @@ export async function requireAuth(redirect = "index.html") {
 export async function signIn(login, password) {
   const email = await loginToEmail(login);
   if (!email) {
-    if (String(login || "").includes("@")) throw new Error("Nie znam takiego e-maila lub konto nie istnieje.");
-    throw new Error("Nie znam takiej nazwy użytkownika.");
+    if (String(login || "").includes("@")) throw new Error(t("auth.unknownEmail"));
+    throw new Error(t("auth.unknownUsername"));
   }
 
   const { data, error } = await sb().auth.signInWithPassword({ email, password });
   if (error) throw new Error(niceAuthError(error));
 
   const user = data.user;
-  if (!user) throw new Error("Nie udało się zalogować.");
+  if (!user) throw new Error(t("auth.loginFailed"));
 
   if (!user.email_confirmed_at) {
     await sb().auth.signOut();
-    throw new Error("Najpierw potwierdź e-mail.");
+    throw new Error(t("auth.confirmEmailFirst"));
   }
   _unameCache = { userId: null, username: null, ts: 0 };
   return user;
 }
 
-export async function signUp(email, password, redirectTo, usernameInput) {
+export async function signUp(email, password, redirectTo, usernameInput, language) {
   const username = validateUsername(usernameInput, { allowEmpty: true });
   const userData = username ? { username } : null;
   const options = { emailRedirectTo: redirectTo };
-  if (userData) options.data = userData;
+  if (userData || language) {
+    options.data = { ...(userData || {}) };
+    if (language) options.data.language = language;
+  }
   
   const { error } = await sb().auth.signUp({
     email,
@@ -159,7 +163,7 @@ export async function signOut() {
 
 export async function resetPassword(loginOrEmail, redirectTo) {
   const email = await loginToEmail(loginOrEmail);
-  if (!email) throw new Error("Podaj e-mail lub nazwę użytkownika.");
+  if (!email) throw new Error(t("index.errResetMissingLogin"));
 
   const { error } = await sb().auth.resetPasswordForEmail(email, { redirectTo });
   if (error) throw new Error(niceAuthError(error));

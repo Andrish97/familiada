@@ -301,6 +301,56 @@ html.showA2HS .a2hs {
     width: 100%
 }
 
+.lang-switcher {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+}
+
+.lang-switcher.lang-floating {
+    position: fixed;
+    top: 12px;
+    right: 12px;
+    z-index: 999;
+}
+
+.lang-btn {
+    min-width: 38px;
+    display: grid;
+    place-items: center;
+}
+
+.lang-menu {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 6px);
+    display: grid;
+    gap: 6px;
+    padding: 6px;
+    min-width: 170px;
+    background: rgba(5,9,20,.95);
+    border: 1px solid var(--line2);
+    border-radius: 12px;
+    z-index: 60;
+    box-shadow: 0 10px 24px rgba(0,0,0,.35);
+}
+
+.lang-option {
+    padding: 6px 10px;
+    border-radius: 10px;
+    border: 1px solid var(--line2);
+    background: rgba(255,255,255,.06);
+    color: #fff;
+    text-align: left;
+    cursor: pointer;
+    font-weight: 800;
+    letter-spacing: .02em;
+}
+
+.lang-option:hover {
+    filter: brightness(1.08);
+}
+
 @media (display-mode:standalone) {
     .a2hs {
         display: none!important

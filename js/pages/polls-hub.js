@@ -3,6 +3,9 @@ import { sb, SUPABASE_URL } from "../core/supabase.js";
 import { requireAuth, signOut } from "../core/auth.js";
 import { validatePollReadyToOpen } from "../core/game-validate.js";
 import { confirmModal } from "../core/modal.js";
+import { initI18n } from "../../translation/translation.js";
+
+initI18n({ withSwitcher: true });
 
 const qs = new URLSearchParams(location.search);
 const focusTaskToken = qs.get("t");
