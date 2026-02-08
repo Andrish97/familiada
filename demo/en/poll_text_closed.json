@@ -1,0 +1,89 @@
+{
+  "game": {
+    "name": "DEMO — Closed text poll (results)",
+    "type": "poll_text",
+    "status": "closed"
+  },
+  "questions": [
+    {
+      "text": "What animal do you see most often in the zoo?",
+      "answers": [
+        { "text": "Giraffe", "fixed_points": 50 },
+        { "text": "Hippopotamus", "fixed_points": 35 },
+        { "text": "Elephant", "fixed_points": 15 }
+      ]
+    },
+    {
+      "text": "What do you do first in the morning?",
+      "answers": [
+        { "text": "Brush my teeth", "fixed_points": 40 },
+        { "text": "I get dressed", "fixed_points": 40 },
+        { "text": "Coffee", "fixed_points": 20 }
+      ]
+    },
+    {
+      "text": "What bothers you most when traveling?",
+      "answers": [
+        { "text": "Bus", "fixed_points": 60 },
+        { "text": "Traffic jam", "fixed_points": 35 },
+        { "text": "Snowdrift", "fixed_points": 5 }
+      ]
+    },
+    {
+      "text": "What word do you associate with vacations?",
+      "answers": [
+        { "text": "Beach", "fixed_points": 50 },
+        { "text": "Sun", "fixed_points": 30 },
+        { "text": "Ice cream", "fixed_points": 20 }
+      ]
+    },
+    {
+      "text": "What do you most often eat for dinner?",
+      "answers": [
+        { "text": "Sandwiches", "fixed_points": 45 },
+        { "text": "Pizza", "fixed_points": 35 },
+        { "text": "Pasta", "fixed_points": 20 }
+      ]
+    },
+    {
+      "text": "What do you do when it rains?",
+      "answers": [
+        { "text": "Watch a movie", "fixed_points": 50 },
+        { "text": "Book", "fixed_points": 30 },
+        { "text": "Walk", "fixed_points": 20 }
+      ]
+    },
+    {
+      "text": "What do you like to do in your free time?",
+      "answers": [
+        { "text": "Music", "fixed_points": 40 },
+        { "text": "Games", "fixed_points": 35 },
+        { "text": "Sport", "fixed_points": 25 }
+      ]
+    },
+    {
+      "text": "Which place at home is the most important?",
+      "answers": [
+        { "text": "Kitchen", "fixed_points": 50 },
+        { "text": "Living room", "fixed_points": 30 },
+        { "text": "Bed", "fixed_points": 20 }
+      ]
+    },
+    {
+      "text": "What makes you laugh the most?",
+      "answers": [
+        { "text": "Meme", "fixed_points": 45 },
+        { "text": "Jokes", "fixed_points": 30 },
+        { "text": "Kids", "fixed_points": 25 }
+      ]
+    },
+    {
+      "text": "What do you take on a long walk?",
+      "answers": [
+        { "text": "Water", "fixed_points": 40 },
+        { "text": "Headphones", "fixed_points": 35 },
+        { "text": "Phone", "fixed_points": 25 }
+      ]
+    }
+  ]
+}

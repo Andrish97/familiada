@@ -1,4 +1,5 @@
 // commands.js
+import { setUiLang } from "../../translation/translation.js";
 import { sb } from "../../js/core/supabase.js";
 
 const tokenize = (raw) => {
@@ -125,6 +126,13 @@ export const createCommandHandler = (app) => {
 
     const tokens = tokenize(raw);
     const head   = (tokens[0] ?? "").toUpperCase();
+
+    if (head === "LANG") {
+      const lang = tokens[1] ?? "";
+      await setUiLang(lang, { persist: true, updateUrl: true, apply: true });
+      saveSnapshot(raw);
+      return;
+    }
 
     // ------------------------------------------------------------------
     // 1) APP ...  → WYŁĄCZNIE tryb globalny: APP GAME / APP QR / APP BLACK(_SCREEN)

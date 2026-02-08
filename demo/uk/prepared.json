@@ -1,0 +1,184 @@
+{
+  "game": {
+    "name": "DEMO — Підготовлений",
+    "type": "prepared"
+  },
+  "questions": [
+    {
+      "text": "Назви щось, що люди роблять одразу після пробудження",
+      "answers": [
+        { "text": "п'ють каву або чай", "fixed_points": 38 },
+        { "text": "тягнуться до телефону", "fixed_points": 24 },
+        { "text": "йдуть до ванної", "fixed_points": 18 },
+        { "text": "їдять сніданок", "fixed_points": 11 },
+        { "text": "приймають душ", "fixed_points": 6 },
+        { "text": "одягаються", "fixed_points": 3 }
+      ]
+    },
+    {
+      "text": "Назви щось, що беруть у відпустку",
+      "answers": [
+        { "text": "документи", "fixed_points": 34 },
+        { "text": "одяг", "fixed_points": 26 },
+        { "text": "телефон із зарядкою", "fixed_points": 18 },
+        { "text": "косметика", "fixed_points": 12 },
+        { "text": "рушник", "fixed_points": 6 },
+        { "text": "гроші", "fixed_points": 4 }
+      ]
+    },
+    {
+      "text": "Назви причину запізнення на роботу або навчання",
+      "answers": [
+        { "text": "проспав", "fixed_points": 42 },
+        { "text": "затори", "fixed_points": 23 },
+        { "text": "автобус запізнився", "fixed_points": 15 },
+        { "text": "дитина", "fixed_points": 9 },
+        { "text": "забув щось", "fixed_points": 7 },
+        { "text": "погана погода", "fixed_points": 4 }
+      ]
+    },
+    {
+      "text": "Назви щось, що купиш на заправці",
+      "answers": [
+        { "text": "паливо", "fixed_points": 40 },
+        { "text": "хот-дог", "fixed_points": 22 },
+        { "text": "кава", "fixed_points": 17 },
+        { "text": "напої", "fixed_points": 11 },
+        { "text": "чипси", "fixed_points": 6 },
+        { "text": "сигарети", "fixed_points": 4 }
+      ]
+    },
+    {
+      "text": "Назви тварину, якої люди бояться",
+      "answers": [
+        { "text": "павук", "fixed_points": 44 },
+        { "text": "змія", "fixed_points": 26 },
+        { "text": "щур", "fixed_points": 13 },
+        { "text": "акула", "fixed_points": 7 },
+        { "text": "собака", "fixed_points": 6 },
+        { "text": "оса", "fixed_points": 4 }
+      ]
+    },
+    {
+      "text": "Назви щось, що роблять щодня на кухні",
+      "answers": [
+        { "text": "миття посуду", "fixed_points": 33 },
+        { "text": "готування", "fixed_points": 27 },
+        { "text": "приготування кави/чаю", "fixed_points": 18 },
+        { "text": "нарізання", "fixed_points": 11 },
+        { "text": "прибирання стільниці", "fixed_points": 7 },
+        { "text": "винос сміття", "fixed_points": 4 }
+      ]
+    },
+    {
+      "text": "Назви щось, що може зіпсувати настрій",
+      "answers": [
+        { "text": "погана погода", "fixed_points": 31 },
+        { "text": "сварка", "fixed_points": 24 },
+        { "text": "робота", "fixed_points": 19 },
+        { "text": "головний біль", "fixed_points": 13 },
+        { "text": "брак сну", "fixed_points": 9 },
+        { "text": "запізнення", "fixed_points": 4 }
+      ]
+    },
+    {
+      "text": "Назви щось, що тримають у гаманці",
+      "answers": [
+        { "text": "гроші", "fixed_points": 41 },
+        { "text": "платіжна картка", "fixed_points": 26 },
+        { "text": "посвідчення", "fixed_points": 17 },
+        { "text": "чек", "fixed_points": 9 },
+        { "text": "фото", "fixed_points": 5 },
+        { "text": "квиток", "fixed_points": 2 }
+      ]
+    },
+    {
+      "text": "Назви місце, де не варто говорити голосно",
+      "answers": [
+        { "text": "бібліотека", "fixed_points": 36 },
+        { "text": "церква", "fixed_points": 28 },
+        { "text": "кіно", "fixed_points": 17 },
+        { "text": "театр", "fixed_points": 8 },
+        { "text": "школа", "fixed_points": 7 },
+        { "text": "держустанова", "fixed_points": 4 }
+      ]
+    },
+    {
+      "text": "Назви щось, що часто губиться",
+      "answers": [
+        { "text": "ключі", "fixed_points": 43 },
+        { "text": "телефон", "fixed_points": 24 },
+        { "text": "пульт", "fixed_points": 14 },
+        { "text": "гаманець", "fixed_points": 10 },
+        { "text": "навушники", "fixed_points": 6 },
+        { "text": "ручка", "fixed_points": 3 }
+      ]
+    },
+    {
+      "text": "Назви домашній обов'язок, який люди не люблять",
+      "answers": [
+        { "text": "прибирання", "fixed_points": 37 },
+        { "text": "миття вікон", "fixed_points": 23 },
+        { "text": "прасування", "fixed_points": 16 },
+        { "text": "пилосос", "fixed_points": 13 },
+        { "text": "винос сміття", "fixed_points": 7 },
+        { "text": "миття посуду", "fixed_points": 4 }
+      ]
+    },
+    {
+      "text": "Назви щось, що асоціюється з літом",
+      "answers": [
+        { "text": "сонце", "fixed_points": 35 },
+        { "text": "пляж", "fixed_points": 27 },
+        { "text": "морозиво", "fixed_points": 18 },
+        { "text": "гриль", "fixed_points": 11 },
+        { "text": "відпустка", "fixed_points": 6 },
+        { "text": "басейн", "fixed_points": 3 }
+      ]
+    },
+    {
+      "text": "Назви щось, що можна отримати в подарунок",
+      "answers": [
+        { "text": "квіти", "fixed_points": 32 },
+        { "text": "цукерки", "fixed_points": 24 },
+        { "text": "парфуми", "fixed_points": 18 },
+        { "text": "книга", "fixed_points": 14 },
+        { "text": "годинник", "fixed_points": 8 },
+        { "text": "гра", "fixed_points": 4 }
+      ]
+    },
+    {
+      "text": "Назви щось, що можна швидко з'їсти",
+      "answers": [
+        { "text": "сендвіч", "fixed_points": 39 },
+        { "text": "піца", "fixed_points": 24 },
+        { "text": "хот-дог", "fixed_points": 16 },
+        { "text": "суп", "fixed_points": 9 },
+        { "text": "йогурт", "fixed_points": 7 },
+        { "text": "батончик", "fixed_points": 5 }
+      ]
+    },
+    {
+      "text": "Назви професію, в якій люди носять форму",
+      "answers": [
+        { "text": "поліцейський", "fixed_points": 32 },
+        { "text": "військовий", "fixed_points": 22 },
+        { "text": "пожежник", "fixed_points": 19 },
+        { "text": "лікар", "fixed_points": 12 },
+        { "text": "залізничник", "fixed_points": 9 },
+        { "text": "охоронець", "fixed_points": 6 }
+      ]
+    },
+    {
+      "text": "Назви щось, що робиш у вихідні",
+      "answers": [
+        { "text": "відпочиваю", "fixed_points": 33 },
+        { "text": "зустрічаюся з друзями", "fixed_points": 24 },
+        { "text": "прибираю", "fixed_points": 17 },
+        { "text": "дивлюся фільми", "fixed_points": 13 },
+        { "text": "йду на прогулянку", "fixed_points": 9 },
+        { "text": "довго сплю", "fixed_points": 4 }
+      ]
+    }
+  ]
+}

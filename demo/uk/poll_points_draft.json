@@ -1,0 +1,40 @@
+{
+  "game": {
+    "name": "DEMO — Чернетка опитування з балами",
+    "type": "poll_points"
+  },
+  "questions": [
+    {
+      "text": "Яку страву ти їси найчастіше протягом дня?",
+      "answers": [
+        { "text": "сніданок", "fixed_points": 0 },
+        { "text": "обід", "fixed_points": 0 },
+        { "text": "вечеря", "fixed_points": 0 }
+      ]
+    },
+    {
+      "text": "Як ти найчастіше проводиш вільний час?",
+      "answers": [
+        { "text": "дивлюся фільми", "fixed_points": 0 },
+        { "text": "зустрічаюся з друзями", "fixed_points": 0 },
+        { "text": "граю в ігри", "fixed_points": 0 }
+      ]
+    },
+    {
+      "text": "Що найбільше піднімає настрій?",
+      "answers": [
+        { "text": "музика", "fixed_points": 0 },
+        { "text": "їжа", "fixed_points": 0 },
+        { "text": "зустріч з близькими", "fixed_points": 0 }
+      ]
+    },
+    {
+      "text": "Що робиш одразу після роботи або школи?",
+      "answers": [
+        { "text": "відпочиваю", "fixed_points": 0 },
+        { "text": "їм обід", "fixed_points": 0 },
+        { "text": "навчаюся", "fixed_points": 0 }
+      ]
+    }
+  ]
+}

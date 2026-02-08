@@ -1,0 +1,17 @@
+{
+  "game": {
+    "name": "DEMO — Typical poll draft",
+    "type": "poll_text"
+  },
+  "questions": [
+    { "text": "Name something people do right after waking up", "answers": [] },
+    { "text": "Name something people take on vacation", "answers": [] },
+    { "text": "List a reason for being late to work or school", "answers": [] },
+    { "text": "Name something you'd buy at a gas station", "answers": [] },
+    { "text": "Name an animal people are afraid of", "answers": [] },
+    { "text": "Name something done every day in the kitchen", "answers": [] },
+    { "text": "Name something that can ruin your mood", "answers": [] },
+    { "text": "Name something kept in a wallet", "answers": [] },
+    { "text": "Name a place where you shouldn't speak loudly", "answers": [] }
+  ]
+}

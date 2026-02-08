@@ -1,0 +1,184 @@
+{
+  "game": {
+    "name": "DEMO — Prepared",
+    "type": "prepared"
+  },
+  "questions": [
+    {
+      "text": "Name something people do right after waking up",
+      "answers": [
+        { "text": "drink coffee or tea", "fixed_points": 38 },
+        { "text": "reach for their phone", "fixed_points": 24 },
+        { "text": "go to the bathroom", "fixed_points": 18 },
+        { "text": "eat breakfast", "fixed_points": 11 },
+        { "text": "take a shower", "fixed_points": 6 },
+        { "text": "get dressed", "fixed_points": 3 }
+      ]
+    },
+    {
+      "text": "Name something people take on vacation",
+      "answers": [
+        { "text": "documents", "fixed_points": 34 },
+        { "text": "clothes", "fixed_points": 26 },
+        { "text": "phone with charger", "fixed_points": 18 },
+        { "text": "toiletries", "fixed_points": 12 },
+        { "text": "towel", "fixed_points": 6 },
+        { "text": "money", "fixed_points": 4 }
+      ]
+    },
+    {
+      "text": "Name a reason for being late to work or school",
+      "answers": [
+        { "text": "overslept", "fixed_points": 42 },
+        { "text": "traffic jam", "fixed_points": 23 },
+        { "text": "the bus was late", "fixed_points": 15 },
+        { "text": "child", "fixed_points": 9 },
+        { "text": "forgot something", "fixed_points": 7 },
+        { "text": "bad weather", "fixed_points": 4 }
+      ]
+    },
+    {
+      "text": "Name something you'd buy at a gas station",
+      "answers": [
+        { "text": "fuel", "fixed_points": 40 },
+        { "text": "hot dog", "fixed_points": 22 },
+        { "text": "coffee", "fixed_points": 17 },
+        { "text": "drinks", "fixed_points": 11 },
+        { "text": "chips", "fixed_points": 6 },
+        { "text": "cigarettes", "fixed_points": 4 }
+      ]
+    },
+    {
+      "text": "Name an animal people are afraid of",
+      "answers": [
+        { "text": "spider", "fixed_points": 44 },
+        { "text": "snake", "fixed_points": 26 },
+        { "text": "rat", "fixed_points": 13 },
+        { "text": "shark", "fixed_points": 7 },
+        { "text": "dog", "fixed_points": 6 },
+        { "text": "wasp", "fixed_points": 4 }
+      ]
+    },
+    {
+      "text": "Name something done every day in the kitchen",
+      "answers": [
+        { "text": "washing dishes", "fixed_points": 33 },
+        { "text": "cooking", "fixed_points": 27 },
+        { "text": "making coffee/tea", "fixed_points": 18 },
+        { "text": "chopping", "fixed_points": 11 },
+        { "text": "cleaning the counter", "fixed_points": 7 },
+        { "text": "taking out the trash", "fixed_points": 4 }
+      ]
+    },
+    {
+      "text": "Name something that can ruin your mood",
+      "answers": [
+        { "text": "bad weather", "fixed_points": 31 },
+        { "text": "argument", "fixed_points": 24 },
+        { "text": "work", "fixed_points": 19 },
+        { "text": "headache", "fixed_points": 13 },
+        { "text": "lack of sleep", "fixed_points": 9 },
+        { "text": "being late", "fixed_points": 4 }
+      ]
+    },
+    {
+      "text": "Name something kept in a wallet",
+      "answers": [
+        { "text": "money", "fixed_points": 41 },
+        { "text": "payment card", "fixed_points": 26 },
+        { "text": "ID card", "fixed_points": 17 },
+        { "text": "receipt", "fixed_points": 9 },
+        { "text": "photo", "fixed_points": 5 },
+        { "text": "ticket", "fixed_points": 2 }
+      ]
+    },
+    {
+      "text": "Name a place where you shouldn't speak loudly",
+      "answers": [
+        { "text": "library", "fixed_points": 36 },
+        { "text": "church", "fixed_points": 28 },
+        { "text": "cinema", "fixed_points": 17 },
+        { "text": "theater", "fixed_points": 8 },
+        { "text": "school", "fixed_points": 7 },
+        { "text": "government office", "fixed_points": 4 }
+      ]
+    },
+    {
+      "text": "Name something that often gets lost",
+      "answers": [
+        { "text": "keys", "fixed_points": 43 },
+        { "text": "phone", "fixed_points": 24 },
+        { "text": "remote control", "fixed_points": 14 },
+        { "text": "wallet", "fixed_points": 10 },
+        { "text": "headphones", "fixed_points": 6 },
+        { "text": "pen", "fixed_points": 3 }
+      ]
+    },
+    {
+      "text": "Name a household chore people don't like",
+      "answers": [
+        { "text": "cleaning", "fixed_points": 37 },
+        { "text": "washing windows", "fixed_points": 23 },
+        { "text": "ironing", "fixed_points": 16 },
+        { "text": "vacuuming", "fixed_points": 13 },
+        { "text": "taking out the trash", "fixed_points": 7 },
+        { "text": "washing dishes", "fixed_points": 4 }
+      ]
+    },
+    {
+      "text": "Name something associated with summer",
+      "answers": [
+        { "text": "sun", "fixed_points": 35 },
+        { "text": "beach", "fixed_points": 27 },
+        { "text": "ice cream", "fixed_points": 18 },
+        { "text": "barbecue", "fixed_points": 11 },
+        { "text": "vacation", "fixed_points": 6 },
+        { "text": "pool", "fixed_points": 3 }
+      ]
+    },
+    {
+      "text": "Name something you can get as a gift",
+      "answers": [
+        { "text": "flowers", "fixed_points": 32 },
+        { "text": "chocolates", "fixed_points": 24 },
+        { "text": "perfume", "fixed_points": 18 },
+        { "text": "book", "fixed_points": 14 },
+        { "text": "watch", "fixed_points": 8 },
+        { "text": "game", "fixed_points": 4 }
+      ]
+    },
+    {
+      "text": "Name something you can eat quickly",
+      "answers": [
+        { "text": "sandwich", "fixed_points": 39 },
+        { "text": "pizza", "fixed_points": 24 },
+        { "text": "hot dog", "fixed_points": 16 },
+        { "text": "soup", "fixed_points": 9 },
+        { "text": "yogurt", "fixed_points": 7 },
+        { "text": "candy bar", "fixed_points": 5 }
+      ]
+    },
+    {
+      "text": "Name a job where people wear a uniform",
+      "answers": [
+        { "text": "police officer", "fixed_points": 32 },
+        { "text": "soldier", "fixed_points": 22 },
+        { "text": "firefighter", "fixed_points": 19 },
+        { "text": "doctor", "fixed_points": 12 },
+        { "text": "railway worker", "fixed_points": 9 },
+        { "text": "security guard", "fixed_points": 6 }
+      ]
+    },
+    {
+      "text": "Name something you do on the weekend",
+      "answers": [
+        { "text": "relax", "fixed_points": 33 },
+        { "text": "meet friends", "fixed_points": 24 },
+        { "text": "clean", "fixed_points": 17 },
+        { "text": "watch movies", "fixed_points": 13 },
+        { "text": "go for a walk", "fixed_points": 9 },
+        { "text": "sleep in", "fixed_points": 4 }
+      ]
+    }
+  ]
+}
