@@ -1,5 +1,9 @@
 let modalSeq = 0;
 
+function modalText(key, fallback) {
+  return typeof t === "function" ? t(key) : fallback;
+}
+
 function buildModal({
   title,
   text,
@@ -33,7 +37,7 @@ function buildModal({
   const closeBtn = document.createElement("button");
   closeBtn.className = "btn sm";
   closeBtn.type = "button";
-  closeBtn.setAttribute("aria-label", "Zamknij");
+  closeBtn.setAttribute("aria-label", modalText("common.modal.closeLabel", "Zamknij"));
   closeBtn.textContent = "✕";
 
   head.appendChild(titleEl);
@@ -86,20 +90,30 @@ function buildModal({
 }
 
 function openModal({
-  title = "Potwierdź",
-  text = "Na pewno?",
-  okText = "Tak",
-  cancelText = "Nie",
+  title,
+  text,
+  okText,
+  cancelText,
   showCancel = true,
   body = null,
   initialFocus = null,
 } = {}) {
   return new Promise((resolve) => {
+    const fallbackTitle = showCancel
+      ? modalText("common.modal.confirmTitle", "Potwierdź")
+      : modalText("common.modal.alertTitle", "Informacja");
+    const fallbackText = showCancel
+      ? modalText("common.modal.confirmText", "Na pewno?")
+      : "—";
+    const fallbackOk = showCancel
+      ? modalText("common.modal.confirmOk", "Tak")
+      : modalText("common.modal.alertOk", "OK");
+    const fallbackCancel = modalText("common.modal.confirmCancel", "Nie");
     const { overlay, okBtn, cancelBtn, closeBtn } = buildModal({
-      title,
-      text,
-      okText,
-      cancelText,
+      title: title ?? fallbackTitle,
+      text: text ?? fallbackText,
+      okText: okText ?? fallbackOk,
+      cancelText: cancelText ?? fallbackCancel,
       showCancel,
       body,
     });
@@ -136,19 +150,30 @@ function openModal({
   });
 }
 
-export function confirmModal({ title = "Potwierdź", text = "Na pewno?", okText = "Tak", cancelText = "Nie" } = {}) {
-  return openModal({ title, text, okText, cancelText, showCancel: true });
+export function confirmModal({ title, text, okText, cancelText } = {}) {
+  return openModal({
+    title: title ?? modalText("common.modal.confirmTitle", "Potwierdź"),
+    text: text ?? modalText("common.modal.confirmText", "Na pewno?"),
+    okText: okText ?? modalText("common.modal.confirmOk", "Tak"),
+    cancelText: cancelText ?? modalText("common.modal.confirmCancel", "Nie"),
+    showCancel: true,
+  });
 }
 
-export function alertModal({ title = "Informacja", text = "—", okText = "OK" } = {}) {
-  return openModal({ title, text, okText, showCancel: false });
+export function alertModal({ title, text, okText } = {}) {
+  return openModal({
+    title: title ?? modalText("common.modal.alertTitle", "Informacja"),
+    text: text ?? "—",
+    okText: okText ?? modalText("common.modal.alertOk", "OK"),
+    showCancel: false,
+  });
 }
 
 export function promptModal({
-  title = "Wpisz",
-  text = "Podaj wartość:",
-  okText = "Zapisz",
-  cancelText = "Anuluj",
+  title,
+  text,
+  okText,
+  cancelText,
   value = "",
   placeholder = "",
 } = {}) {
@@ -159,10 +184,10 @@ export function promptModal({
   input.placeholder = placeholder;
 
   return openModal({
-    title,
-    text,
-    okText,
-    cancelText,
+    title: title ?? modalText("common.modal.promptTitle", "Wpisz"),
+    text: text ?? modalText("common.modal.promptText", "Podaj wartość:"),
+    okText: okText ?? modalText("common.modal.promptOk", "Zapisz"),
+    cancelText: cancelText ?? modalText("common.modal.promptCancel", "Anuluj"),
     showCancel: true,
     body: input,
     initialFocus: input,

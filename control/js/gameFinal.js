@@ -595,6 +595,15 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     hostClearRight();
   }
 
+  function refreshHostTranslations() {
+    hostLastLeft = null;
+    hostLastRight = null;
+    hostLastTitleSecond = null;
+    hostUpdate();
+  }
+
+  window.addEventListener("i18n:lang", refreshHostTranslations);
+
   // ---------------- TIMER ----------------
   async function displaySetTimerSeconds(sec) {
     const txt = String(Math.max(0, sec));
