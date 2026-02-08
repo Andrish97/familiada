@@ -1,7 +1,9 @@
+import { getUiLang, t } from "../../translation/translation.js";
+
 // ================== KOMUNIKATY ==================
 const DEVICES_MSG = {
-  COPY_OK: "Skopiowano.",
-  COPY_FAIL: "Nie mogę skopiować.",
+  get COPY_OK() { return t("control.copyOk"); },
+  get COPY_FAIL() { return t("control.copyFail"); },
 };
 // =============== KONIEC KOMUNIKATÓW ===============
 
@@ -13,10 +15,11 @@ export function createDevices({ game, ui, store, chDisplay, chHost, chBuzzer }) 
     buzzer: [],
   };
 
-  function makeUrl(path, id, key) {
+  function makeUrl(path, id, key, { lang } = {}) {
     const u = new URL(path, location.origin);
     u.searchParams.set("id", id);
     u.searchParams.set("key", key);
+    if (lang) u.searchParams.set("lang", lang);
     return u.toString();
   }
 
@@ -118,7 +121,9 @@ export function createDevices({ game, ui, store, chDisplay, chHost, chBuzzer }) 
   }
 
   function initLinksAndQr() {
-    const displayUrl = makeUrl("../display/index.html", game.id, game.share_key_display);
+    const displayUrl = makeUrl("../display/index.html", game.id, game.share_key_display, {
+      lang: getUiLang(),
+    });
     const hostUrl = makeUrl("../host.html", game.id, game.share_key_host);
     const buzzerUrl = makeUrl("../buzzer.html", game.id, game.share_key_buzzer || "");
     urls = { displayUrl, hostUrl, buzzerUrl };

@@ -1,6 +1,9 @@
 // js/pages/poll-go.js
 import { sb } from "../core/supabase.js";
 import { getUser } from "../core/auth.js";
+import { initI18n } from "../../translation/translation.js";
+
+initI18n({ withSwitcher: true });
 
 const qs = new URLSearchParams(location.search);
 const taskToken = qs.get("t");
