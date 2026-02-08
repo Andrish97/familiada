@@ -1,5 +1,5 @@
 import { sb } from "../core/supabase.js";
-import { requireAuth, validatePassword, validateUsername, signOut } from "../core/auth.js";
+import { requireAuth, updateUserLanguage, validatePassword, validateUsername, signOut } from "../core/auth.js";
 import { initI18n, t, getUiLang, withLangParam } from "../../translation/translation.js";
 
 const status = document.getElementById("status");
@@ -41,6 +41,9 @@ let currentEmail = "";
 async function loadProfile() {
   const user = await requireAuth("index.html?setup=username");
   if (!user) return;
+  const syncLanguage = () => updateUserLanguage(getUiLang());
+  await syncLanguage();
+  window.addEventListener("i18n:lang", syncLanguage);
   usernameInput.value = user.username || "";
   emailInput.value = user.email || "";
   currentEmail = user.email || "";

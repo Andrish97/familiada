@@ -1,5 +1,5 @@
 // js/pages/index.js
-import { getUser, signIn, signUp, resetPassword, validatePassword, validateUsername } from "../core/auth.js";
+import { getUser, signIn, signUp, resetPassword, updateUserLanguage, validatePassword, validateUsername } from "../core/auth.js";
 import { sb } from "../core/supabase.js";
 import { initI18n, t, getUiLang, withLangParam } from "../../translation/translation.js";
 
@@ -112,11 +112,13 @@ function applyMode() {
 
 document.addEventListener("DOMContentLoaded", async () => {
   await initI18n({ withSwitcher: true });
+  const syncLanguage = () => updateUserLanguage(getUiLang());
   applyMode();
   setStatus(t("index.statusChecking"));
 
   const u = await getUser();
   if (u) {
+    await syncLanguage();
     if (!u.username || setup === "username") {
       openUsernameSetup();
     } else if (nextTarget === "polls-hub") {
@@ -127,6 +129,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     return;
   }
   setStatus(t("index.statusLoggedOut"));
+
+  window.addEventListener("i18n:lang", syncLanguage);
 
   btnToggle.addEventListener("click", () => {
     mode = mode === "login" ? "register" : "login";
@@ -168,6 +172,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         await signIn(loginOrEmail, pwd); // <-- może być username
         clearPendingEmailChange();
         const authed = await getUser();
+        await syncLanguage();
         if (!authed?.username) {
           openUsernameSetup();
         } else if (nextTarget === "polls-hub") {
@@ -191,7 +196,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     try {
       setStatus(t("index.statusResetSending"));
       const redirectTo = withLangParam(new URL("reset.html", location.href).toString());
-      await resetPassword(loginOrEmail, redirectTo);
+      await resetPassword(loginOrEmail, redirectTo, getUiLang());
       setStatus(t("index.statusResetSent"));
     } catch (e) {
       console.error(e);

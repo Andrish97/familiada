@@ -161,10 +161,24 @@ export async function signOut() {
   _unameCache = { userId: null, username: null, ts: 0 };
 }
 
-export async function resetPassword(loginOrEmail, redirectTo) {
+export async function resetPassword(loginOrEmail, redirectTo, language) {
   const email = await loginToEmail(loginOrEmail);
   if (!email) throw new Error(t("index.errResetMissingLogin"));
 
-  const { error } = await sb().auth.resetPasswordForEmail(email, { redirectTo });
+  const options = { redirectTo };
+  if (language) options.data = { language };
+  const { error } = await sb().auth.resetPasswordForEmail(email, options);
   if (error) throw new Error(niceAuthError(error));
+}
+
+export async function updateUserLanguage(language) {
+  if (!language) return;
+  try {
+    const { data } = await sb().auth.getSession();
+    if (!data?.session?.user) return;
+    const { error } = await sb().auth.updateUser({ data: { language } });
+    if (error) console.warn("[auth] updateUserLanguage failed:", error);
+  } catch (e) {
+    console.warn("[auth] updateUserLanguage failed:", e);
+  }
 }
