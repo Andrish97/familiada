@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Familiada — centrum sondaży</title>
+  <title data-i18n="pollsHub.title">Familiada — centrum sondaży</title>
 
   <link rel="icon" href="favicon.ico"/>
   <link rel="stylesheet" href="css/base.css"/>
@@ -18,17 +18,17 @@
   <header class="topbar">
     <div class="brand">FAMILIADA</div>
     <div class="right">
-      <button class="btn" id="btnBackToBuilder" type="button">← Moje gry</button>
+      <button class="btn" id="btnBackToBuilder" type="button" data-i18n="pollsHub.backToGames">← Moje gry</button>
       <span class="who" id="who">—</span>
-      <button class="btn sm" id="btnLogout" type="button">Wyloguj</button>
+      <button class="btn sm" id="btnLogout" type="button" data-i18n="pollsHub.logout">Wyloguj</button>
     </div>
   </header>
 
   <main class="wrap">
     <div class="bar">
       <div>
-        <div class="title">Centrum sondaży</div>
-        <div class="hint">Zarządzaj sondażami oraz zaproszeniami do głosowania.</div>
+        <div class="title" data-i18n="pollsHub.header.title">Centrum sondaży</div>
+        <div class="hint" data-i18n="pollsHub.header.hint">Zarządzaj sondażami oraz zaproszeniami do głosowania.</div>
       </div>
     </div>
 
@@ -37,12 +37,12 @@
         <div class="tabs-strip">
           <div class="tab-slot slot-pollText">
             <button class="tab-label" id="tabPolls" type="button">
-              Sondaże
+              <span data-i18n="pollsHub.tabs.polls">Sondaże</span>
               <span class="hub-tab-badge is-empty" data-badge="tasks"></span>
             </button>
             <div class="tab-wrapper">
               <div class="tab-active">
-                Sondaże
+                <span data-i18n="pollsHub.tabs.polls">Sondaże</span>
               </div>
               <div class="tab-corner tab-corner-left"></div>
               <div class="tab-corner tab-corner-right"></div>
@@ -51,12 +51,12 @@
 
           <div class="tab-slot slot-pollPoints">
             <button class="tab-label" id="tabSubs" type="button">
-              Subskrypcje
+              <span data-i18n="pollsHub.tabs.subscriptions">Subskrypcje</span>
               <span class="hub-tab-badge is-empty" data-badge="subs"></span>
             </button>
             <div class="tab-wrapper">
               <div class="tab-active">
-                Subskrypcje
+                <span data-i18n="pollsHub.tabs.subscriptions">Subskrypcje</span>
               </div>
               <div class="tab-corner tab-corner-left"></div>
               <div class="tab-corner tab-corner-right"></div>
@@ -71,16 +71,17 @@
                 <div class="hub-col-head">
                   <div>
                     <div class="hub-col-title">Moje sondaże</div>
-                    <div class="hub-col-hint">Kliknij kafelek, aby go zaznaczyć.</div>
+                    <div class="hub-col-title" data-i18n="pollsHub.sections.myPolls">Moje sondaże</div>
+                    <div class="hub-col-hint" data-i18n="pollsHub.sections.selectHint">Kliknij kafelek, aby go zaznaczyć.</div>
                   </div>
                   <div class="hub-controls">
                     <select class="inp sm" id="sortPollsDesktop"></select>
                     <div class="hub-toggle" data-kind="polls">
-                      <button class="btn xs btn-toggle" data-toggle="current">Aktualne</button>
-                      <button class="btn xs btn-toggle" data-toggle="archive">Archiwalne</button>
+                      <button class="btn xs btn-toggle" data-toggle="current" data-i18n="pollsHub.toggle.current">Aktualne</button>
+                      <button class="btn xs btn-toggle" data-toggle="archive" data-i18n="pollsHub.toggle.archive">Archiwalne</button>
                     </div>
-                    <button class="btn xs" id="btnShare" type="button" disabled>Udostępnij</button>
-                    <button class="btn xs" id="btnDetails" type="button" disabled>Szczegóły</button>
+                    <button class="btn xs" id="btnShare" type="button" disabled data-i18n="pollsHub.actions.share">Udostępnij</button>
+                    <button class="btn xs" id="btnDetails" type="button" disabled data-i18n="pollsHub.actions.details">Szczegóły</button>
                   </div>
                 </div>
                 <div class="hub-list" id="pollsListDesktop"></div>
@@ -89,14 +90,14 @@
               <section class="hub-col">
                 <div class="hub-col-head">
                   <div>
-                    <div class="hub-col-title">Zadania</div>
-                    <div class="hub-col-hint">Dwuklik otwiera głosowanie.</div>
+                    <div class="hub-col-title" data-i18n="pollsHub.sections.tasks">Zadania</div>
+                    <div class="hub-col-hint" data-i18n="pollsHub.sections.tasksHint">Dwuklik otwiera głosowanie.</div>
                   </div>
                   <div class="hub-controls">
                     <select class="inp sm" id="sortTasksDesktop"></select>
                     <div class="hub-toggle" data-kind="tasks">
-                      <button class="btn xs btn-toggle" data-toggle="current">Aktualne</button>
-                      <button class="btn xs btn-toggle" data-toggle="archive">Archiwalne</button>
+                      <button class="btn xs btn-toggle" data-toggle="current" data-i18n="pollsHub.toggle.current">Aktualne</button>
+                      <button class="btn xs btn-toggle" data-toggle="archive" data-i18n="pollsHub.toggle.archive">Archiwalne</button>
                     </div>
                   </div>
                 </div>
@@ -110,20 +111,20 @@
               <section class="hub-col">
                 <div class="hub-col-head">
                   <div>
-                    <div class="hub-col-title">Moi subskrybenci</div>
-                    <div class="hub-col-hint">Zaproś nowych i zarządzaj zaproszeniami.</div>
+                    <div class="hub-col-title" data-i18n="pollsHub.sections.mySubscribers">Moi subskrybenci</div>
+                    <div class="hub-col-hint" data-i18n="pollsHub.sections.subscribersHint">Zaproś nowych i zarządzaj zaproszeniami.</div>
                   </div>
                   <div class="hub-controls">
                     <select class="inp sm" id="sortSubscribersDesktop"></select>
                     <div class="hub-toggle" data-kind="subscribers">
-                      <button class="btn xs btn-toggle" data-toggle="current">Aktualne</button>
-                      <button class="btn xs btn-toggle" data-toggle="archive">Archiwalne</button>
+                      <button class="btn xs btn-toggle" data-toggle="current" data-i18n="pollsHub.toggle.current">Aktualne</button>
+                      <button class="btn xs btn-toggle" data-toggle="archive" data-i18n="pollsHub.toggle.archive">Archiwalne</button>
                     </div>
                   </div>
                 </div>
                 <div class="hub-invite">
-                  <input class="inp" id="inviteInputDesktop" placeholder="Email lub nazwa użytkownika"/>
-                  <button class="btn xs gold" id="btnInviteDesktop" type="button">Zaproś</button>
+                  <input class="inp" id="inviteInputDesktop" placeholder="Email lub nazwa użytkownika" data-i18n-placeholder="pollsHub.invite.placeholder"/>
+                  <button class="btn xs gold" id="btnInviteDesktop" type="button" data-i18n="pollsHub.invite.button">Zaproś</button>
                 </div>
                 <div class="hub-list" id="subscribersListDesktop"></div>
               </section>
@@ -131,8 +132,8 @@
               <section class="hub-col">
                 <div class="hub-col-head">
                   <div>
-                    <div class="hub-col-title">Moje subskrypcje</div>
-                    <div class="hub-col-hint">Akceptuj zaproszenia od innych.</div>
+                    <div class="hub-col-title" data-i18n="pollsHub.sections.mySubscriptions">Moje subskrypcje</div>
+                    <div class="hub-col-hint" data-i18n="pollsHub.sections.subscriptionsHint">Akceptuj zaproszenia od innych.</div>
                   </div>
                   <div class="hub-controls">
                     <select class="inp sm" id="sortSubscriptionsDesktop"></select>
@@ -150,42 +151,42 @@
       <div class="tabs-card hub-tabs hub-tabs-mobile" id="hubTabsMobile">
         <div class="tabs-strip">
           <div class="tab-slot slot-mobile-polls">
-            <button class="tab-label" id="tabPollsMobile" type="button">Sondaże</button>
+            <button class="tab-label" id="tabPollsMobile" type="button" data-i18n="pollsHub.tabs.polls">Sondaże</button>
             <div class="tab-wrapper">
-              <div class="tab-active">Sondaże</div>
+              <div class="tab-active" data-i18n="pollsHub.tabs.polls">Sondaże</div>
               <div class="tab-corner tab-corner-left"></div>
               <div class="tab-corner tab-corner-right"></div>
             </div>
           </div>
           <div class="tab-slot slot-mobile-tasks">
             <button class="tab-label" id="tabTasksMobile" type="button">
-              Zadania
+              <span data-i18n="pollsHub.tabs.tasks">Zadania</span>
               <span class="hub-tab-badge is-empty" data-badge="tasks"></span>
             </button>
             <div class="tab-wrapper">
               <div class="tab-active">
-                Zadania
+                <span data-i18n="pollsHub.tabs.tasks">Zadania</span>
               </div>
               <div class="tab-corner tab-corner-left"></div>
               <div class="tab-corner tab-corner-right"></div>
             </div>
           </div>
           <div class="tab-slot slot-mobile-subscribers">
-            <button class="tab-label" id="tabSubscribersMobile" type="button">Subskryb.</button>
+            <button class="tab-label" id="tabSubscribersMobile" type="button" data-i18n="pollsHub.tabs.subscribersMobile">Subskryb.</button>
             <div class="tab-wrapper">
-              <div class="tab-active">Subskryb.</div>
+              <div class="tab-active" data-i18n="pollsHub.tabs.subscribersMobile">Subskryb.</div>
               <div class="tab-corner tab-corner-left"></div>
               <div class="tab-corner tab-corner-right"></div>
             </div>
           </div>
           <div class="tab-slot slot-mobile-subscriptions">
             <button class="tab-label" id="tabSubscriptionsMobile" type="button">
-              Subskryp.
+              <span data-i18n="pollsHub.tabs.subscriptionsMobile">Subskryp.</span>
               <span class="hub-tab-badge is-empty" data-badge="subs"></span>
             </button>
             <div class="tab-wrapper">
               <div class="tab-active">
-                Subskryp.
+                <span data-i18n="pollsHub.tabs.subscriptionsMobile">Subskryp.</span>
               </div>
               <div class="tab-corner tab-corner-left"></div>
               <div class="tab-corner tab-corner-right"></div>
@@ -197,17 +198,17 @@
           <div class="hub-tab-panel hub-mobile-panel" id="panelPollsMobile">
             <div class="hub-col-head">
               <div>
-                <div class="hub-col-title">Moje sondaże</div>
-                <div class="hub-col-hint">Kliknij kafelek, aby go zaznaczyć.</div>
+                <div class="hub-col-title" data-i18n="pollsHub.sections.myPolls">Moje sondaże</div>
+                <div class="hub-col-hint" data-i18n="pollsHub.sections.selectHint">Kliknij kafelek, aby go zaznaczyć.</div>
               </div>
               <div class="hub-controls">
                 <select class="inp sm" id="sortPollsMobile"></select>
                 <div class="hub-toggle" data-kind="polls">
-                  <button class="btn xs btn-toggle" data-toggle="current">Aktualne</button>
-                  <button class="btn xs btn-toggle" data-toggle="archive">Archiwalne</button>
+                  <button class="btn xs btn-toggle" data-toggle="current" data-i18n="pollsHub.toggle.current">Aktualne</button>
+                  <button class="btn xs btn-toggle" data-toggle="archive" data-i18n="pollsHub.toggle.archive">Archiwalne</button>
                 </div>
-                <button class="btn xs" id="btnShareMobile" type="button" disabled>Udostępnij</button>
-                <button class="btn xs" id="btnDetailsMobile" type="button" disabled>Szczegóły</button>
+                <button class="btn xs" id="btnShareMobile" type="button" disabled data-i18n="pollsHub.actions.share">Udostępnij</button>
+                <button class="btn xs" id="btnDetailsMobile" type="button" disabled data-i18n="pollsHub.actions.details">Szczegóły</button>
               </div>
             </div>
             <div class="hub-list" id="pollsListMobile"></div>
@@ -216,14 +217,14 @@
           <div class="hub-tab-panel hub-mobile-panel" id="panelTasksMobile">
             <div class="hub-col-head">
               <div>
-                <div class="hub-col-title">Zadania</div>
-                <div class="hub-col-hint">Dwuklik otwiera głosowanie.</div>
+                <div class="hub-col-title" data-i18n="pollsHub.sections.tasks">Zadania</div>
+                <div class="hub-col-hint" data-i18n="pollsHub.sections.tasksHint">Dwuklik otwiera głosowanie.</div>
               </div>
               <div class="hub-controls">
                 <select class="inp sm" id="sortTasksMobile"></select>
                 <div class="hub-toggle" data-kind="tasks">
-                  <button class="btn xs btn-toggle" data-toggle="current">Aktualne</button>
-                  <button class="btn xs btn-toggle" data-toggle="archive">Archiwalne</button>
+                  <button class="btn xs btn-toggle" data-toggle="current" data-i18n="pollsHub.toggle.current">Aktualne</button>
+                  <button class="btn xs btn-toggle" data-toggle="archive" data-i18n="pollsHub.toggle.archive">Archiwalne</button>
                 </div>
               </div>
             </div>
@@ -233,20 +234,20 @@
           <div class="hub-tab-panel hub-mobile-panel" id="panelSubscribersMobile">
             <div class="hub-col-head">
               <div>
-                <div class="hub-col-title">Moi subskrybenci</div>
-                <div class="hub-col-hint">Zaproś nowych i zarządzaj zaproszeniami.</div>
+                <div class="hub-col-title" data-i18n="pollsHub.sections.mySubscribers">Moi subskrybenci</div>
+                <div class="hub-col-hint" data-i18n="pollsHub.sections.subscribersHint">Zaproś nowych i zarządzaj zaproszeniami.</div>
               </div>
               <div class="hub-controls">
                 <select class="inp sm" id="sortSubscribersMobile"></select>
                 <div class="hub-toggle" data-kind="subscribers">
-                  <button class="btn xs btn-toggle" data-toggle="current">Aktualne</button>
-                  <button class="btn xs btn-toggle" data-toggle="archive">Archiwalne</button>
+                  <button class="btn xs btn-toggle" data-toggle="current" data-i18n="pollsHub.toggle.current">Aktualne</button>
+                  <button class="btn xs btn-toggle" data-toggle="archive" data-i18n="pollsHub.toggle.archive">Archiwalne</button>
                 </div>
               </div>
             </div>
             <div class="hub-invite">
-              <input class="inp" id="inviteInputMobile" placeholder="Email lub nazwa użytkownika"/>
-              <button class="btn xs gold" id="btnInviteMobile" type="button">Zaproś</button>
+              <input class="inp" id="inviteInputMobile" placeholder="Email lub nazwa użytkownika" data-i18n-placeholder="pollsHub.invite.placeholder"/>
+              <button class="btn xs gold" id="btnInviteMobile" type="button" data-i18n="pollsHub.invite.button">Zaproś</button>
             </div>
             <div class="hub-list" id="subscribersListMobile"></div>
           </div>
@@ -254,8 +255,8 @@
           <div class="hub-tab-panel hub-mobile-panel" id="panelSubscriptionsMobile">
             <div class="hub-col-head">
               <div>
-                <div class="hub-col-title">Moje subskrypcje</div>
-                <div class="hub-col-hint">Akceptuj zaproszenia od innych.</div>
+                <div class="hub-col-title" data-i18n="pollsHub.sections.mySubscriptions">Moje subskrypcje</div>
+                <div class="hub-col-hint" data-i18n="pollsHub.sections.subscriptionsHint">Akceptuj zaproszenia od innych.</div>
               </div>
               <div class="hub-controls">
                 <select class="inp sm" id="sortSubscriptionsMobile"></select>
@@ -270,12 +271,12 @@
 
   <div class="overlay" id="shareOverlay" style="display:none;">
     <div class="modal">
-      <div class="mTitle" id="shareTitle">Udostępnij sondaż</div>
-      <div class="mSub">Wybierz subskrybentów, którym chcesz wysłać zadanie.</div>
+      <div class="mTitle" id="shareTitle" data-i18n="pollsHub.share.title">Udostępnij sondaż</div>
+      <div class="mSub" data-i18n="pollsHub.share.subtitle">Wybierz subskrybentów, którym chcesz wysłać zadanie.</div>
       <div class="hub-share-list" id="shareList"></div>
       <div class="hub-modal-actions">
-        <button class="btn sm gold" id="btnShareSave" type="button">Zapisz udostępnienie</button>
-        <button class="btn sm" id="btnShareClose" type="button">Zamknij</button>
+        <button class="btn sm gold" id="btnShareSave" type="button" data-i18n="pollsHub.share.save">Zapisz udostępnienie</button>
+        <button class="btn sm" id="btnShareClose" type="button" data-i18n="pollsHub.share.close">Zamknij</button>
         <div class="hub-modal-msg" id="shareMsg"></div>
       </div>
     </div>
@@ -283,40 +284,40 @@
 
   <div class="overlay" id="detailsOverlay" style="display:none;">
     <div class="modal">
-      <div class="mTitle" id="detailsTitle">Szczegóły głosowania</div>
-      <div class="mSub">Usuń głos powiązany z zadaniem, jeśli to konieczne.</div>
+      <div class="mTitle" id="detailsTitle" data-i18n="pollsHub.details.title">Szczegóły głosowania</div>
+      <div class="mSub" data-i18n="pollsHub.details.subtitle">Usuń głos powiązany z zadaniem, jeśli to konieczne.</div>
       <div class="hub-details-grid">
         <div>
-          <div class="hub-details-head">Zagłosowali</div>
+          <div class="hub-details-head" data-i18n="pollsHub.details.voted">Zagłosowali</div>
           <div class="hub-details-list" id="detailsVoted"></div>
         </div>
         <div>
-          <div class="hub-details-head">Nie zagłosowali</div>
+          <div class="hub-details-head" data-i18n="pollsHub.details.pending">Nie zagłosowali</div>
           <div class="hub-details-list" id="detailsPending"></div>
         </div>
         <div>
-          <div class="hub-details-head">Odrzucili</div>
+          <div class="hub-details-head" data-i18n="pollsHub.details.declined">Odrzucili</div>
           <div class="hub-details-list" id="detailsDeclined"></div>
         </div>
         <div>
-          <div class="hub-details-head">Anulowane</div>
+          <div class="hub-details-head" data-i18n="pollsHub.details.cancelled">Anulowane</div>
           <div class="hub-details-list" id="detailsCancelled"></div>
         </div>
       </div>
       <div class="hub-details-side">
-        <div class="hub-details-head">Anonimowe</div>
+        <div class="hub-details-head" data-i18n="pollsHub.details.anon">Anonimowe</div>
         <div class="hub-anon-count" id="detailsAnon">0</div>
       </div>
       <div class="hub-modal-actions">
-        <button class="btn sm" id="btnDetailsClose" type="button">Zamknij</button>
+        <button class="btn sm" id="btnDetailsClose" type="button" data-i18n="pollsHub.details.close">Zamknij</button>
       </div>
     </div>
   </div>
 
   <div class="overlay" id="progressOverlay" style="display:none;">
     <div class="modal">
-      <div class="mTitle">Przetwarzanie</div>
-      <div class="mSub">Proszę czekać…</div>
+      <div class="mTitle" data-i18n="pollsHub.progress.title">Przetwarzanie</div>
+      <div class="mSub" data-i18n="pollsHub.progress.subtitle">Proszę czekać…</div>
 
       <div style="margin-top:12px;gap:10px">
         <div class="importRow" style="align-items:center">

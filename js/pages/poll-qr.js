@@ -1,4 +1,12 @@
 import QRCode from "https://cdn.jsdelivr.net/npm/qrcode@1.5.3/+esm";
+import { initI18n, t } from "../../translation/translation.js";
+
+initI18n({ withSwitcher: false });
+
+const MSG = {
+  missingUrl: () => t("pollQr.missingUrl"),
+  qrFailed: () => t("pollQr.qrFailed"),
+};
 
 const qs = new URLSearchParams(location.search);
 const url = qs.get("url");
@@ -13,7 +21,7 @@ function updateFsIcon(){
 
 async function render(u){
   qr.innerHTML = "";
-  if(!u){ qr.textContent = "Brak URL"; return; }
+  if(!u){ qr.textContent = MSG.missingUrl(); return; }
 
   try{
     const wrap = document.createElement("div");
@@ -26,7 +34,7 @@ async function render(u){
     qr.appendChild(wrap);
   }catch(e){
     console.error("[poll-qr] QR error:", e);
-    qr.textContent = "Nie udało się wygenerować QR";
+    qr.textContent = MSG.qrFailed();
   }
 }
 

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Familiada — edytor</title>
+  <title data-i18n="editor.title">Familiada — edytor</title>
 
   <link rel="icon" href="favicon.ico"/>
   <link rel="stylesheet" href="css/base.css"/>
@@ -17,59 +17,59 @@
   <header class="topbar">
     <div class="brand">FAMILIADA</div>
     <div class="right">
-      <button class="btn" id="btnBack" type="button">← Moje gry</button>
+      <button class="btn" id="btnBack" type="button" data-i18n="editor.backToGames">← Moje gry</button>
       <span class="who" id="who">—</span>
-      <button class="btn" id="btnLogout" type="button">Wyloguj</button>
+      <button class="btn" id="btnLogout" type="button" data-i18n="editor.logout">Wyloguj</button>
     </div>
   </header>
 
   <main class="wrap">
     <div class="rowTop">
       <div>
-        <div class="title" id="pageTitle">Edytor</div>
+        <div class="title" id="pageTitle" data-i18n="editor.pageTitle">Edytor</div>
         <div class="hint" id="hintTop"></div>
       </div>
 
       <div class="namebar">
-        <input id="gameName" class="inp" placeholder="Nazwa gry"/>
+        <input id="gameName" class="inp" placeholder="Nazwa gry" data-i18n-placeholder="editor.gameNamePlaceholder"/>
       </div>
     </div>
 
     <div class="layout">
       <aside class="left">
         <div class="panelHead">
-          <div class="panelTitle">Pytania</div>
+          <div class="panelTitle" data-i18n="editor.questionsTitle">Pytania</div>
         </div>
 
         <div id="qList" class="list"></div>
 
         <div class="hint" style="margin-top:10px;">
-          Import działa z pliku TXT albo z wklejonej treści.
+          <span data-i18n="editor.importHint">Import działa z pliku TXT albo z wklejonej treści.</span>
         </div>
 
         <div class="row" style="margin-top:10px;">
-          <button class="btn" id="btnImportTxt" type="button">Import</button>
+          <button class="btn" id="btnImportTxt" type="button" data-i18n="editor.importBtn">Import</button>
         </div>
       </aside>
 
       <section class="rightPanel">
-        <div id="empty" class="empty">Wybierz pytanie po lewej lub dodaj nowe.</div>
+        <div id="empty" class="empty" data-i18n="editor.empty">Wybierz pytanie po lewej lub dodaj nowe.</div>
 
         <div id="editor" class="editorBox">
           <div class="badgeRow">
             <div class="badge" id="typeBadge">—</div>
-            <div class="lock" id="lockBadge" style="display:none;">SONDAŻ OTWARTY — EDYCJA ZABLOKOWANA</div>
+            <div class="lock" id="lockBadge" style="display:none;" data-i18n="editor.lockedPoll">SONDAŻ OTWARTY — EDYCJA ZABLOKOWANA</div>
           </div>
 
           <div class="block">
-            <div class="lbl">Treść pytania</div>
+            <div class="lbl" data-i18n="editor.questionLabel">Treść pytania</div>
             <textarea id="qText" class="ta" spellcheck="false"></textarea>
           </div>
 
           <div class="answersBlock">
             <div class="ahead" id="aHead">
-              <div>Odpowiedź</div>
-              <div class="ptsCol">Pkt</div>
+              <div data-i18n="editor.answerLabel">Odpowiedź</div>
+              <div class="ptsCol" data-i18n="editor.pointsLabel">Pkt</div>
               <div></div>
             </div>
 
@@ -89,17 +89,19 @@
   <!-- Modal: import TXT -->
   <div class="overlay" id="txtImportOverlay" style="display:none;">
     <div class="modal">
-      <div class="mTitle">Import pytań</div>
+      <div class="mTitle" data-i18n="editor.importModal.title">Import pytań</div>
       <div class="mSub">
-        Możesz <b>wkleić treść</b> albo <b>wczytać plik TXT</b>.
-        Opcjonalnie na początku dodaj linię <b>@Nazwa gry</b>.
-        Pytania zaczynają się od <b>#</b>. Odpowiedzi mogą mieć numer.
-        Punkty po <b>/</b> są opcjonalne (w sondażach mogą być ignorowane).
+        <span data-i18n-html="editor.importModal.subtitle">
+          Możesz <b>wkleić treść</b> albo <b>wczytać plik TXT</b>.
+          Opcjonalnie na początku dodaj linię <b>@Nazwa gry</b>.
+          Pytania zaczynają się od <b>#</b>. Odpowiedzi mogą mieć numer.
+          Punkty po <b>/</b> są opcjonalne (w sondażach mogą być ignorowane).
+        </span>
       </div>
 
       <div class="importRow" style="margin-top:12px;">
         <input id="txtFile" class="inp" type="file" accept=".txt,text/plain">
-        <button class="btn sm" id="btnTxtLoadFile" type="button">Wczytaj plik</button>
+        <button class="btn sm" id="btnTxtLoadFile" type="button" data-i18n="editor.importModal.loadFile">Wczytaj plik</button>
       </div>
 
       <textarea id="txtTa" class="importTa" spellcheck="false" placeholder="@Moja gra
@@ -111,17 +113,19 @@
 #Drugie pytanie
 1 Odpowiedź 1
 2 Odpowiedź 2
-3 Odpowiedź 3"></textarea>
+3 Odpowiedź 3" data-i18n-placeholder="editor.importModal.placeholder"></textarea>
 
       <div class="mSub" style="margin-top:10px;">
-        Działa też format bez numerów (po prostu linie z odpowiedziami).
-        Import toleruje spacje/taby, „1.”, „2)” itp.
-        Jeśli odpowiedź ma więcej niż 17 znaków, zostanie ucięta.
+        <span data-i18n="editor.importModal.formatHint">
+          Działa też format bez numerów (po prostu linie z odpowiedziami).
+          Import toleruje spacje/taby, „1.”, „2)” itp.
+          Jeśli odpowiedź ma więcej niż 17 znaków, zostanie ucięta.
+        </span>
       </div>
 
       <div class="importRow">
-        <button class="btn sm gold" id="btnTxtImport" type="button">Importuj</button>
-        <button class="btn sm" id="btnTxtClose" type="button">Zamknij</button>
+        <button class="btn sm gold" id="btnTxtImport" type="button" data-i18n="editor.importModal.confirm">Importuj</button>
+        <button class="btn sm" id="btnTxtClose" type="button" data-i18n="editor.importModal.cancel">Zamknij</button>
         <div class="importMsg" id="txtMsg"></div>
       </div>
     </div>
