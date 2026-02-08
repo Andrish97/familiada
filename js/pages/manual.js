@@ -55,6 +55,11 @@ function wireFallbackNav() {
   byId("btnBack")?.addEventListener("click", () => {
     location.href = "builder.html";
   });
+
+  byId("btnLegal")?.addEventListener("click", () => {
+    location.href = "privacy.html" + (location.search || "");
+  });
+
   byId("btnLogout")?.addEventListener("click", () => {
     location.href = "index.html";
   });
@@ -87,6 +92,10 @@ async function wireAuthSoft() {
 
   const who = byId("who");
   if (who) who.textContent = user?.username || user?.email || "—";
+
+  byId("btnLegal")?.addEventListener("click", () => {
+    location.href = "privacy.html" + (location.search || "");
+  });
 
   byId("btnLogout")?.addEventListener("click", async () => {
     await signOut();
