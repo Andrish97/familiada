@@ -627,11 +627,7 @@ export function initImageEditor(ctx) {
         await loadImageFile(f);
       } catch (e){
         console.error(e);
-        void alertModal({
-          title: t("common.modal.alertTitle"),
-          text: t("logoEditor.errors.setActiveFailedDetailed", { error: e?.message || e }),
-          ok: t("common.modal.alertOk"),
-        });
+        void alertModal({ text: e?.message || String(e) });
       }
     });
 
