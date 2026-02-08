@@ -21,7 +21,8 @@ function setStatus(m = "") { if (status) status.textContent = m; }
 function setErr(m = "") { if (err) err.textContent = m; }
 
 backToGames?.addEventListener("click", () => {
-  location.href = withLangParam("builder.html");
+  const target = backToGames.dataset.baseHref || "builder.html";
+  location.href = withLangParam(target);
 });
 
 async function ensureUsernameAvailable(username, userId) {
@@ -104,7 +105,7 @@ async function handleEmailSave() {
     setStatus(t("account.statusEmailSaved"));
     await signOut();
     setTimeout(() => {
-      location.href = "index.html";
+      location.href = withLangParam("index.html");
     }, 400);
   } catch (e) {
     console.error(e);
@@ -153,7 +154,7 @@ async function handleDeleteAccount() {
     if (!data?.ok) throw new Error(data?.error || t("account.errDeleteFailed"));
 
     await signOut();
-    location.href = "index.html";
+    location.href = withLangParam("index.html");
   } catch (e) {
     console.error(e);
     setStatus(t("account.statusError"));
