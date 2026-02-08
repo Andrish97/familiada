@@ -229,30 +229,50 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   });
 
+  btnForgot.addEventListener("keydown", (e) => {
+    if (e.key !== "Enter") return;
+    e.preventDefault();
+    btnForgot.click();
+  });
+
+
   btnUsernameSave?.addEventListener("click", saveUsername);
   usernameFirst?.addEventListener("keydown", (e) => {
     if (e.key === "Enter") saveUsername();
   });
 
-  email?.addEventListener("keydown", (e) => {
+  email.addEventListener("keydown", (e) => {
     if (e.key !== "Enter") return;
     e.preventDefault();
-    pass?.focus();
+    pass.focus();
   });
 
-  pass?.addEventListener("keydown", (e) => {
+  email.addEventListener("keydown", (e) => {
     if (e.key !== "Enter") return;
-    e.preventDefault();
-    if (mode === "register") {
-      pass2?.focus();
-    } else {
-      btnPrimary?.click();
+  
+    if (document.activeElement === email && e.shiftKey === false) {
+      e.preventDefault();
+      if (mode === "login") {
+        pass.focus();
+      }
     }
   });
-
-  pass2?.addEventListener("keydown", (e) => {
+  
+  pass.addEventListener("keydown", (e) => {
     if (e.key !== "Enter") return;
     e.preventDefault();
-    btnPrimary?.click();
+  
+    if (mode === "register") {
+      pass2.focus();
+    } else {
+      btnPrimary.click(); // 🔴 jedyne miejsce wywołania
+    }
   });
+  
+  pass2.addEventListener("keydown", (e) => {
+    if (e.key !== "Enter") return;
+    e.preventDefault();
+    btnPrimary.click(); // 🔴 jedyne miejsce wywołania
+  });
+
 });
