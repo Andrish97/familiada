@@ -2,6 +2,7 @@
 // Renderowanie UI eksploratora na podstawie state (bez DB, bez akcji).
 
 import { VIEW, META, META_ORDER } from "./state.js";
+import { t } from "../../translation/translation.js";
 
 /* ================= DOM ================= */
 const elBaseName = document.getElementById("baseName");
@@ -32,9 +33,9 @@ function toTime(v) {
 }
 
 function fmtDate(v) {
-  const t = toTime(v);
-  if (!t) return "—";
-  const d = new Date(t);
+  const time = toTime(v);
+  if (!time) return t("baseExplorer.common.dash");
+  const d = new Date(time);
   // prosto i czytelnie: YYYY-MM-DD HH:MM (lokalnie)
   const pad = (n) => String(n).padStart(2, "0");
   return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
@@ -125,7 +126,7 @@ function tagDotsHtml(state, id, kind /* "q" | "c" */) {
   const dots = shown.map((tid) => {
     const t = byId.get(tid);
     const color = t?.color || "rgba(255,255,255,.25)";
-    const label = t?.name || "tag";
+    const label = t?.name || t("baseExplorer.defaults.tag");
     return `<span class="tag-dot" style="background:${esc(color)}" data-tip="#${esc(label)}"></span>`;
   }).join("");
 
@@ -165,7 +166,7 @@ function metaDotsHtml(state, id, kind /* "q" | "c" */) {
   const dots = metaIds.map((mid) => {
     const d = defs[mid];
     const color = d?.color || "rgba(255,255,255,.25)";
-    const label = d?.name || mid;
+    const label = d?.nameKey ? t(d.nameKey) : (d?.name || mid);
     return `<span class="meta-dot" style="--c:${esc(color)}" data-tip="${esc(label)}"></span>`;
   }).join("");
 
@@ -184,7 +185,7 @@ export function renderAll(state) {
 
 export function renderHeader(state) {
   if (!elBaseName) return;
-  elBaseName.textContent = state.baseMeta?.name || "Baza pytań";
+  elBaseName.textContent = state.baseMeta?.name || t("baseExplorer.defaults.baseName");
 }
 
 export function renderToolbar(state) {
@@ -195,64 +196,64 @@ export function renderToolbar(state) {
     elToolbar.innerHTML = `
       <div class="searchBox" id="searchBox">
         <div id="searchChips" class="searchChips"></div>
-        <input id="searchText" class="searchText" placeholder="Szukaj..." />
-        <button id="searchClearBtn" class="btn ghost" type="button" title="Wyczyść">✕</button>
+        <input id="searchText" class="searchText" placeholder="${t("baseExplorer.search.placeholder")}" />
+        <button id="searchClearBtn" class="btn ghost" type="button" title="${t("baseExplorer.search.clear")}">✕</button>
       </div>
     
-      <div class="tbGroup" role="group" aria-label="Tworzenie">
-        <button class="tbBtn" type="button" data-act="newFolder" title="Nowy folder">
+      <div class="tbGroup" role="group" aria-label="${t("baseExplorer.toolbar.groupCreate")}">
+        <button class="tbBtn" type="button" data-act="newFolder" title="${t("baseExplorer.toolbar.newFolder")}">
           ${svgFolderPlus()}
         </button>
-        <button class="tbBtn" type="button" data-act="newQuestion" title="Nowe pytanie">
+        <button class="tbBtn" type="button" data-act="newQuestion" title="${t("baseExplorer.toolbar.newQuestion")}">
           ${svgFilePlus()}
         </button>
       </div>
       
       <div class="tbSep" aria-hidden="true"></div>
       
-      <div class="tbGroup" role="group" aria-label="Edycja">
-        <button class="tbBtn" type="button" data-act="editQuestion" title="Edytuj pytanie">
+      <div class="tbGroup" role="group" aria-label="${t("baseExplorer.toolbar.groupEdit")}">
+        <button class="tbBtn" type="button" data-act="editQuestion" title="${t("baseExplorer.toolbar.editQuestion")}">
           ${svgEdit()}
         </button>
-        <button class="tbBtn" type="button" data-act="editTags" title="Tagi">
+        <button class="tbBtn" type="button" data-act="editTags" title="${t("baseExplorer.toolbar.editTags")}">
           ${svgTag()}
         </button>
-        <button class="tbBtn" type="button" data-act="rename" title="Zmień nazwę">
+        <button class="tbBtn" type="button" data-act="rename" title="${t("baseExplorer.toolbar.rename")}">
           ${svgPencil()}
         </button>
-        <button class="tbBtn danger" type="button" data-act="delete" title="Usuń">
+        <button class="tbBtn danger" type="button" data-act="delete" title="${t("baseExplorer.toolbar.delete")}">
           ${svgTrash()}
         </button>
       </div>
       
       <div class="tbSep" aria-hidden="true"></div>
       
-      <div class="tbGroup" role="group" aria-label="Schowek">
-        <button class="tbBtn" type="button" data-act="copy" title="Kopiuj">
+      <div class="tbGroup" role="group" aria-label="${t("baseExplorer.toolbar.groupClipboard")}">
+        <button class="tbBtn" type="button" data-act="copy" title="${t("baseExplorer.toolbar.copy")}">
           ${svgCopy()}
         </button>
-        <button class="tbBtn" type="button" data-act="cut" title="Wytnij">
+        <button class="tbBtn" type="button" data-act="cut" title="${t("baseExplorer.toolbar.cut")}">
           ${svgCut()}
         </button>
-        <button class="tbBtn" type="button" data-act="paste" title="Wklej">
+        <button class="tbBtn" type="button" data-act="paste" title="${t("baseExplorer.toolbar.paste")}">
           ${svgPaste()}
         </button>
-        <button class="tbBtn" type="button" data-act="duplicate" title="Duplikuj">
+        <button class="tbBtn" type="button" data-act="duplicate" title="${t("baseExplorer.toolbar.duplicate")}">
           ${svgDuplicate()}
         </button>
       </div>
       
       <div class="tbSep" aria-hidden="true"></div>
       
-      <div class="tbGroup" role="group" aria-label="Gra">
-        <button class="tbBtn primary" type="button" data-act="createGame" title="Utwórz grę">
+      <div class="tbGroup" role="group" aria-label="${t("baseExplorer.toolbar.groupGame")}">
+        <button class="tbBtn primary" type="button" data-act="createGame" title="${t("baseExplorer.toolbar.createGame")}">
           ${svgPlay()}
         </button>
       </div>
       
       <div class="tbSep" aria-hidden="true"></div>
-      <div class="tbGroup" role="group" aria-label="Widok">
-        <button class="tbBtn" type="button" data-act="refreshView" title="Odśwież widok">
+      <div class="tbGroup" role="group" aria-label="${t("baseExplorer.toolbar.groupView")}">
+        <button class="tbBtn" type="button" data-act="refreshView" title="${t("baseExplorer.toolbar.refreshView")}">
           ${svgRefresh()}
         </button>
       </div>
@@ -260,18 +261,18 @@ export function renderToolbar(state) {
     elToolbar.dataset.ready = "1";
   }
     // Tooltips z automatycznym formatowaniem skrótów (Windows/Linux vs macOS)
-  setToolbarTip("newFolder",   "Nowy folder",     "Ctrl+Shift+N", "⌘⇧N");
-  setToolbarTip("newQuestion", "Nowe pytanie",    "Ctrl+N",       "⌘N");
-  setToolbarTip("editQuestion","Edytuj pytanie",  "Ctrl+E",       "⌘E");
-  setToolbarTip("editTags",    "Tagi",            "Ctrl+T",       "⌘T");
-  setToolbarTip("rename",      "Zmień nazwę",     "F2",           "F2");
-  setToolbarTip("delete",      "Usuń",            "Delete",       "Fn⌫");
-  setToolbarTip("copy",        "Kopiuj",          "Ctrl+C",       "⌘C");
-  setToolbarTip("cut",         "Wytnij",          "Ctrl+X",       "⌘X");
-  setToolbarTip("paste",       "Wklej",           "Ctrl+V",       "⌘V");
-  setToolbarTip("duplicate",   "Duplikuj",        "Ctrl+D",       "⌘D");
-  setToolbarTip("createGame",  "Utwórz grę",      "Ctrl+G",       "⌘G");
-  setToolbarTip("refreshView", "Odśwież widok",   "Ctrl+Alt+R",   "⌘⌥R");
+  setToolbarTip("newFolder",   t("baseExplorer.toolbar.newFolder"),   "Ctrl+Shift+N", "⌘⇧N");
+  setToolbarTip("newQuestion", t("baseExplorer.toolbar.newQuestion"), "Ctrl+N",       "⌘N");
+  setToolbarTip("editQuestion",t("baseExplorer.toolbar.editQuestion"),"Ctrl+E",       "⌘E");
+  setToolbarTip("editTags",    t("baseExplorer.toolbar.editTags"),    "Ctrl+T",       "⌘T");
+  setToolbarTip("rename",      t("baseExplorer.toolbar.rename"),      "F2",           "F2");
+  setToolbarTip("delete",      t("baseExplorer.toolbar.delete"),      "Delete",       "Fn⌫");
+  setToolbarTip("copy",        t("baseExplorer.toolbar.copy"),        "Ctrl+C",       "⌘C");
+  setToolbarTip("cut",         t("baseExplorer.toolbar.cut"),         "Ctrl+X",       "⌘X");
+  setToolbarTip("paste",       t("baseExplorer.toolbar.paste"),       "Ctrl+V",       "⌘V");
+  setToolbarTip("duplicate",   t("baseExplorer.toolbar.duplicate"),   "Ctrl+D",       "⌘D");
+  setToolbarTip("createGame",  t("baseExplorer.toolbar.createGame"),  "Ctrl+G",       "⌘G");
+  setToolbarTip("refreshView", t("baseExplorer.toolbar.refreshView"), "Ctrl+Alt+R",   "⌘⌥R");
 
   const inp = document.getElementById("searchText");
   const chipsEl = document.getElementById("searchChips");
@@ -460,7 +461,7 @@ export function renderTree(state) {
 
     const toggle = canToggle
       ? `<button type="button" class="tree-toggle" data-id="${esc(id)}"
-            aria-label="Zwiń/rozwiń"
+            aria-label="${t("baseExplorer.tree.toggle")}"
             style="width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;border:0;background:transparent;cursor:pointer;opacity:.9;">
            ${isOpen ? "▼" : "▶"}
          </button>`
@@ -477,7 +478,7 @@ export function renderTree(state) {
         <div class="col-main" style="padding-left:${pad}px; display:flex; align-items:center; gap:6px; ${activeStyle}">
           ${toggle}
           <div class="title-line">
-            <span class="title-text">${icon} ${esc(label || "Folder")}</span>
+            <span class="title-text">${icon} ${esc(label || t("baseExplorer.defaults.folder"))}</span>
             ${kind === "cat" && id ? tagDotsHtml(state, id, "c") : ""}
             ${kind === "cat" && id ? metaDotsHtml(state, id, "c") : ""}
           </div>
@@ -502,7 +503,7 @@ export function renderTree(state) {
         kind: "cat",
         id,
         depth,
-        label: c.name || "Folder",
+        label: c.name || t("baseExplorer.defaults.folder"),
         isOpen,
         canToggle,
         isActive,
@@ -522,7 +523,7 @@ export function renderTree(state) {
     kind: "root",
     id: ROOT_ID,
     depth: 0,
-    label: "Folder główny",
+    label: t("baseExplorer.tree.root"),
     icon: "🏠",
     canToggle: rootHasChildren,
     isOpen: rootHasChildren ? rootOpen : true,
@@ -532,10 +533,10 @@ export function renderTree(state) {
   const treeRows = rootOpen ? renderSubtree(null, 0) : "";
 
   elTree.innerHTML = `
-    <div style="opacity:.75; margin-bottom:6px;">Foldery</div>
+    <div style="opacity:.75; margin-bottom:6px;">${t("baseExplorer.tree.folders")}</div>
     <div class="treeList">
       ${rootHtml}
-      ${(rootHasChildren ? (treeRows || "") : `<div style="opacity:.75; padding:6px 8px;">Brak folderów.</div>`)}
+      ${(rootHasChildren ? (treeRows || "") : `<div style="opacity:.75; padding:6px 8px;">${t("baseExplorer.tree.empty")}</div>`)}
     </div>
   `;
 }
@@ -549,23 +550,24 @@ export function renderTags(state) {
   const metaOrder = Array.isArray(META_ORDER) ? META_ORDER : Object.keys(metaDefs);
 
   const metaRows = metaOrder.map((id) => {
-    const d = metaDefs[id] || { name: id, color: "rgba(255,255,255,.25)" };
+    const d = metaDefs[id] || { nameKey: id, name: id, color: "rgba(255,255,255,.25)" };
     const isSel = !!state?.metaSelection?.ids?.has?.(id);
     const selClass = isSel ? " is-selected" : "";
     const dot = `<span class="meta-dot" style="--c:${esc(d.color)}"></span>`;
+    const label = d?.nameKey ? t(d.nameKey) : (d?.name || id);
     return `
       <div class="row${selClass}" data-kind="meta" data-id="${esc(id)}"
            style="padding:6px 8px; cursor:pointer; display:flex; align-items:center; gap:8px; opacity:.85;">
         ${dot}
-        <div class="title-text">${esc(d.name)}</div>
+        <div class="title-text">${esc(label)}</div>
       </div>`;
   }).join("");
 
-  const header = `<div style="opacity:.75; margin-bottom:6px;">Tagi</div>`;
-  const metaHeader = `<div style="opacity:.75; margin-bottom:6px; margin-top:4px;">Pasujące kategorie</div>`;
+  const header = `<div style="opacity:.75; margin-bottom:6px;">${t("baseExplorer.tags.header")}</div>`;
+  const metaHeader = `<div style="opacity:.75; margin-bottom:6px; margin-top:4px;">${t("baseExplorer.tags.metaHeader")}</div>`;
   const addBtn = `
     <button id="btnAddTag" class="btn ghost" type="button" style="width:100%; margin-top:10px;">
-      + Dodaj tag
+      ${t("baseExplorer.tags.addTag")}
     </button>
   `;
 
@@ -579,7 +581,7 @@ export function renderTags(state) {
   
         ${header}
         ${addBtn}
-        <div style="opacity:.75; padding:6px 8px;">Brak tagów.</div>
+        <div style="opacity:.75; padding:6px 8px;">${t("baseExplorer.tags.empty")}</div>
       </div>
     `;
     return;
@@ -596,7 +598,7 @@ export function renderTags(state) {
       return `
         <div class="row${selClass}" data-kind="tag" data-id="${esc(t.id)}" style="padding:6px 8px; cursor:pointer; display:flex; align-items:center; gap:8px;">
           ${dot}
-          <div class="title-text">#${esc(t.name || "Tag")}</div>
+          <div class="title-text">#${esc(t.name || t("baseExplorer.defaults.tag"))}</div>
         </div>`;
     })
     .join("");
@@ -632,7 +634,7 @@ export function renderBreadcrumbs(state) {
   const parts = [];
 
   // Root zawsze istnieje
-  parts.push({ id: null, name: "Folder główny" });
+  parts.push({ id: null, name: t("baseExplorer.tree.root") });
 
   if (state.view === VIEW.FOLDER && state.folderId) {
     // zbuduj ścieżkę od folderId do root
@@ -641,7 +643,7 @@ export function renderBreadcrumbs(state) {
     let guard = 0;
 
     while (cur && guard++ < 20) {
-      chain.push({ id: cur.id, name: cur.name || "Folder" });
+      chain.push({ id: cur.id, name: cur.name || t("baseExplorer.defaults.folder") });
       const pid = cur.parent_id || null;
       cur = pid ? byId.get(pid) : null;
     }
@@ -789,7 +791,7 @@ function initColumnResizers() {
 
     const h = document.createElement("div");
     h.className = "col-resizer";
-    h.title = "Przeciągnij, aby zmienić szerokość kolumny";
+    h.title = t("baseExplorer.list.resizeColumn");
     cell.appendChild(h);
 
     h.addEventListener("pointerdown", (ev) => {
@@ -905,14 +907,14 @@ export function renderList(state) {
       kind: "cat",
       ord: Number(c.ord) || 0,
       id: c.id,
-      name: c.name || "Folder",
+      name: c.name || t("baseExplorer.defaults.folder"),
       date: toTime(pickDate(c)),
       raw: c,
     });
   }
 
   for (const q of questionsRaw) {
-    const text = q?.payload?.text ?? q?.text ?? "Pytanie";
+    const text = q?.payload?.text ?? q?.text ?? t("baseExplorer.defaults.question");
     items.push({
       kind: "q",
       ord: Number(q.ord) || 0,
@@ -924,7 +926,7 @@ export function renderList(state) {
   }
 
   if (!items.length) {
-    elList.innerHTML = `<div style="opacity:.75">Brak elementów.</div>`;
+    elList.innerHTML = `<div style="opacity:.75">${t("baseExplorer.list.empty")}</div>`;
     return;
   }
 
@@ -969,11 +971,11 @@ export function renderList(state) {
 
   const head = `
     <div class="list-head">
-      <div class="h-num">Nr</div>
-      <div class="h-main ${sortKey === "name" ? "active" : ""}" data-sort-key="name" data-dir="${esc(dirFor("name"))}">Nazwa</div>
-      <div class="h-type ${sortKey === "type" ? "active" : ""}" data-sort-key="type" data-dir="${esc(dirFor("type"))}">Typ</div>
-      <div class="h-date ${sortKey === "date" ? "active" : ""}" data-sort-key="date" data-dir="${esc(dirFor("date"))}">Data</div>
-      <div class="h-meta">Info</div>
+      <div class="h-num">${t("baseExplorer.list.colNumber")}</div>
+      <div class="h-main ${sortKey === "name" ? "active" : ""}" data-sort-key="name" data-dir="${esc(dirFor("name"))}">${t("baseExplorer.list.colName")}</div>
+      <div class="h-type ${sortKey === "type" ? "active" : ""}" data-sort-key="type" data-dir="${esc(dirFor("type"))}">${t("baseExplorer.list.colType")}</div>
+      <div class="h-date ${sortKey === "date" ? "active" : ""}" data-sort-key="date" data-dir="${esc(dirFor("date"))}">${t("baseExplorer.list.colDate")}</div>
+      <div class="h-meta">${t("baseExplorer.list.colInfo")}</div>
     </div>
   `;
 
@@ -990,13 +992,15 @@ export function renderList(state) {
 
       // Typ: Folder + kropki meta (kategorie)
       const typeHtml = `
-        <span style="opacity:.85;">Folder</span>
+        <span style="opacity:.85;">${t("baseExplorer.list.folderType")}</span>
         <span style="margin-left:8px;">${metaDotsHtml(state, c.id, "c")}</span>
       `;
 
       // Meta: liczba elementów folderu – BEST EFFORT
       const count = state._directChildrenCount?.get?.(c.id) ?? null;
-      const metaTxt = (count === null) ? "—" : `${count} elem.`;
+      const metaTxt = (count === null)
+        ? t("baseExplorer.common.dash")
+        : t("baseExplorer.list.folderCount", { count });
 
       return `
         <div class="row${selClass}" ${draggable} data-kind="cat" data-id="${esc(c.id)}" style="cursor:pointer;">
@@ -1004,7 +1008,7 @@ export function renderList(state) {
 
           <div class="col-main">
             <div class="title-line">
-              <span class="title-text">📁 ${esc(c.name || "Folder")}</span>
+              <span class="title-text">📁 ${esc(c.name || t("baseExplorer.defaults.folder"))}</span>
               ${tagDotsHtml(state, c.id, "c")}
             </div>
           </div>
@@ -1019,10 +1023,10 @@ export function renderList(state) {
       const text = q?.payload?.text ?? q?.text ?? "";
 
       const answersCount = Array.isArray(q?.payload?.answers) ? q.payload.answers.length : 0;
-      const metaTxt = `${answersCount} odp.`;
+      const metaTxt = t("baseExplorer.list.answerCount", { count: answersCount });
 
       const typeHtml = `
-        <span style="opacity:.85;">Pytanie</span>
+        <span style="opacity:.85;">${t("baseExplorer.list.questionType")}</span>
         <span style="margin-left:8px;">${metaDotsHtml(state, q.id, "q")}</span>
       `;
 
@@ -1032,7 +1036,7 @@ export function renderList(state) {
 
           <div class="col-main">
             <div class="title-line">
-              <span class="title-text">${esc(text || "Pytanie")}</span>
+              <span class="title-text">${esc(text || t("baseExplorer.defaults.question"))}</span>
               ${tagDotsHtml(state, q.id, "q")}
             </div>
           </div>

@@ -12,6 +12,7 @@ import {
   deleteTags,
   duplicateSelected,
 } from "./actions.js";
+import { t } from "../../translation/translation.js";
 
 
 const IS_MAC = navigator.platform.toLowerCase().includes("mac");
@@ -158,7 +159,7 @@ export async function showContextMenu({ state, x, y, target }) {
     // META (stałe): tylko “Pokaż”, reszta wyszarzona
     if (target.kind === "meta") {
       items.push({
-        label: "Pokaż",
+        label: t("baseExplorer.menu.show"),
         disabled: selectedMetaIds.length === 0,
         action: async () => {
           // wejście w VIEW.META (zachowaj browse location jak przy TAG)
@@ -175,10 +176,10 @@ export async function showContextMenu({ state, x, y, target }) {
   
       pushSep(items);
   
-      items.push({ label: "Dodaj tag…", disabled: true });
-      items.push({ label: "Edytuj tag…", disabled: true });
+      items.push({ label: t("baseExplorer.menu.addTag"), disabled: true });
+      items.push({ label: t("baseExplorer.menu.editTag"), disabled: true });
       pushSep(items);
-      items.push({ label: "Usuń", disabled: true, danger: true });
+      items.push({ label: t("baseExplorer.menu.delete"), disabled: true, danger: true });
   
       renderMenu(cm, items);
       positionMenu(cm, x, y);
@@ -187,7 +188,7 @@ export async function showContextMenu({ state, x, y, target }) {
 
     // --- Widok ---
     items.push({
-      label: "Pokaż",
+      label: t("baseExplorer.menu.show"),
       disabled: selectedTagIds.length === 0,
       action: async () => {
         await state._api?.openTagView?.(selectedTagIds);
@@ -198,7 +199,7 @@ export async function showContextMenu({ state, x, y, target }) {
 
     // --- Zarządzanie tagami ---
     items.push({
-      label: "Dodaj tag…",
+      label: t("baseExplorer.menu.addTag"),
       disabled: !editor,
       action: async () => {
         const ok = await state._api?.openTagModal?.({ mode: "create" });
@@ -210,7 +211,7 @@ export async function showContextMenu({ state, x, y, target }) {
     });
 
     items.push({
-      label: "Edytuj tag…",
+      label: t("baseExplorer.menu.editTag"),
       disabled: !editor || selectedTagIds.length !== 1,
       action: async () => {
         const tagId = selectedTagIds[0];
@@ -226,7 +227,9 @@ export async function showContextMenu({ state, x, y, target }) {
     pushSep(items);
     
     items.push({
-      label: (selectedTagIds.length === 1) ? "Usuń tag" : "Usuń tagi",
+      label: (selectedTagIds.length === 1)
+        ? t("baseExplorer.menu.deleteTag")
+        : t("baseExplorer.menu.deleteTags"),
       disabled: !editor || selectedTagIds.length === 0,
       danger: true,
       action: async () => {
@@ -234,7 +237,7 @@ export async function showContextMenu({ state, x, y, target }) {
           await deleteTags(state, selectedTagIds);
         } catch (e) {
           console.error(e);
-          alert("Nie udało się usunąć tagów.");
+          alert(t("baseExplorer.errors.deleteTagsFailed"));
         }
       }
     });
@@ -265,7 +268,7 @@ export async function showContextMenu({ state, x, y, target }) {
 
     // --- Tworzenie ---
     items.push({
-      label: "Nowy folder",
+      label: t("baseExplorer.menu.newFolder"),
       shortcut: { win: "Ctrl+Shift+N", mac: "⌘⇧N" },
       disabled: !editor || readOnlyView,
       action: async () => {
@@ -274,7 +277,7 @@ export async function showContextMenu({ state, x, y, target }) {
     });
 
     items.push({
-      label: "Nowe pytanie",
+      label: t("baseExplorer.menu.newQuestion"),
       shortcut: { win: "Ctrl+N", mac: "⌘N" },
       disabled: !editor || readOnlyView,
       action: async () => {
@@ -291,21 +294,21 @@ export async function showContextMenu({ state, x, y, target }) {
 
   // Schowek ma sens dla cat/q, dla root też (bo wklejasz “tu”)
   items.push({
-    label: "Kopiuj",
+    label: t("baseExplorer.menu.copy"),
     shortcut: { win: "Ctrl+C", mac: "⌘C" },
     disabled: !editor || target.kind === "root", // root nie jest elementem do kopiowania
     action: async () => { copySelectedToClipboard(state); }
   });
 
   items.push({
-    label: "Wytnij",
+    label: t("baseExplorer.menu.cut"),
     shortcut: { win:"Ctrl+X", mac:"⌘X" },
     disabled: !editor || readOnlyView || target.kind === "root",
     action: async () => { cutSelectedToClipboard(state); }
   });
 
   items.push({
-    label: "Wklej",
+    label: t("baseExplorer.menu.paste"),
     shortcut: { win:"Ctrl+V", mac:"⌘V" },
     disabled: pasteDisabled || !editor, // na razie tylko editor; jeśli chcesz, viewer może wklejać COPY lokalnie -> zmienimy
     action: async () => {
@@ -316,7 +319,7 @@ export async function showContextMenu({ state, x, y, target }) {
 
   // placeholder (na przyszłość)
   items.push({
-    label: "Duplikuj",
+    label: t("baseExplorer.menu.duplicate"),
     shortcut: { win:"Ctrl+D", mac:"⌘D" },
     disabled: !editor || readOnlyView || target.kind === "root",
     action: async () => {
@@ -324,7 +327,7 @@ export async function showContextMenu({ state, x, y, target }) {
         await duplicateSelected(state);
       } catch (e) {
         console.error(e);
-        alert("Nie udało się zduplikować.");
+        alert(t("baseExplorer.errors.duplicateFailed"));
       }
     }
   });
@@ -334,7 +337,7 @@ export async function showContextMenu({ state, x, y, target }) {
     pushSep(items);
 
     items.push({
-      label: "Tagi…",
+      label: t("baseExplorer.menu.tags"),
       shortcut: { win:"Ctrl+T", mac:"⌘T" },
       disabled: !editor, // viewer ogląda
       action: async () => {
@@ -353,7 +356,7 @@ export async function showContextMenu({ state, x, y, target }) {
 
     // --- Nawigacja ---
     items.push({
-      label: "Otwórz folder",
+      label: t("baseExplorer.menu.openFolder"),
       shortcut: { win: "Enter", mac: "⏎" },
       disabled: false,
       action: async () => {
@@ -367,7 +370,7 @@ export async function showContextMenu({ state, x, y, target }) {
 
     // --- Tworzenie w folderze ---
     items.push({
-      label: "Nowy folder w tym folderze",
+      label: t("baseExplorer.menu.newFolderIn"),
       disabled: !editor || readOnlyView,
       action: async () => {
         await createFolderHere(state, { parentId: target.id });
@@ -375,7 +378,7 @@ export async function showContextMenu({ state, x, y, target }) {
     });
 
     items.push({
-      label: "Nowe pytanie w tym folderze",
+      label: t("baseExplorer.menu.newQuestionIn"),
       disabled: !editor || readOnlyView,
       action: async () => {
         await createQuestionHere(state, { categoryId: target.id });
@@ -389,7 +392,7 @@ export async function showContextMenu({ state, x, y, target }) {
 
     // --- Edytuj pytanie ---
     items.push({
-      label: "Edytuj pytanie…",
+      label: t("baseExplorer.menu.editQuestion"),
       shortcut: { win:"Ctrl+E", mac:"⌘E" },
       disabled: !editor || readOnlyView || selectedRealCount !== 1 || target.kind !== "q",
       action: async () => {
@@ -399,7 +402,9 @@ export async function showContextMenu({ state, x, y, target }) {
     });
 
     items.push({
-      label: target.kind === "cat" ? "Zmień nazwę" : "Zmień nazwę (treść)",
+      label: target.kind === "cat"
+        ? t("baseExplorer.menu.rename")
+        : t("baseExplorer.menu.renameQuestion"),
       shortcut: { win:"F2", mac:"F2" },
       disabled: !editor || readOnlyView || selectedRealCount !== 1,
       action: async () => {
@@ -415,7 +420,7 @@ export async function showContextMenu({ state, x, y, target }) {
 
     // --- Utwórz grę ---
     items.push({
-      label: "Utwórz grę…",
+      label: t("baseExplorer.menu.createGame"),
       shortcut: { win:"Ctrl+G", mac:"⌘G" },
       disabled: !editor || readOnlyView || !Array.from(state.selection?.keys || []).some(k => String(k).startsWith("q:") || String(k).startsWith("c:")),
       action: async () => {
@@ -432,7 +437,9 @@ export async function showContextMenu({ state, x, y, target }) {
     pushSep(items);
     
     items.push({
-      label: (state.view === VIEW.TAG) ? "Usuń tagi" : "Usuń",
+      label: (state.view === VIEW.TAG)
+        ? t("baseExplorer.menu.deleteTags")
+        : t("baseExplorer.menu.delete"),
       shortcut: { win:"Delete", mac:"Fn⌫" },
       danger: true,
       disabled: !editor,
@@ -450,7 +457,7 @@ export async function showContextMenu({ state, x, y, target }) {
           }
         } catch (e) {
           console.error(e);
-          alert("Nie udało się wykonać operacji.");
+          alert(t("baseExplorer.errors.operationFailed"));
         }
       }
     });

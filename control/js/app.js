@@ -731,14 +731,18 @@ async function sendZeroStatesToDevices() {
   await devices.sendDisplayCmd(`LANG ${initialLang}`);
   await devices.sendHostCmd(`LANG ${initialLang}`);
   await devices.sendBuzzerCmd(`LANG ${initialLang}`);
-  await devices.sendQrToDisplay();
+  if (store.state.flags.qrOnDisplay) {
+    await devices.sendQrLinksToDisplay();
+  }
   window.addEventListener("i18n:lang", async (event) => {
     const nextLang = event?.detail?.lang;
     devices.updateLinksAndQr(nextLang);
     await devices.sendDisplayCmd(`LANG ${nextLang}`);
     await devices.sendHostCmd(`LANG ${nextLang}`);
     await devices.sendBuzzerCmd(`LANG ${nextLang}`);
-    await devices.sendQrToDisplay();
+    if (store.state.flags.qrOnDisplay) {
+      await devices.sendQrLinksToDisplay();
+    }
   });
 
   // audio: stan początkowy

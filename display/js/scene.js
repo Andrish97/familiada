@@ -14,7 +14,8 @@ export async function createScene() {
   };
 
   const VIEW = { W: 1600, H: 900, CX: 800, CY: 450 };
-  const SUMA_LABEL = t("display.sumLabel");
+  let SUMA_LABEL = t("display.sumLabel");
+  let bigMode = "NONE";
 
     // ============================================================
   // THEME: 3 kolory bazowe -> reszta pochodne
@@ -725,6 +726,17 @@ export async function createScene() {
       writeField(GLYPHS, big, FINAL.sumaBVal, txt, LIT.main);
     }
   };
+
+  const refreshSumaLabel = () => {
+    SUMA_LABEL = t("display.sumLabel");
+    if (bigMode === "ROUNDS") {
+      redrawRounds();
+    } else if (bigMode === "FINAL") {
+      drawFinalSum();
+    }
+  };
+
+  window.addEventListener("i18n:lang", refreshSumaLabel);
   
   // Obszary połówek FINAL (bez sum)
   const FINAL_AREA_LEFT  = { c1: 1,  r1: 3, c2: 14, r2: 7 }; // left + A
@@ -2291,12 +2303,14 @@ export async function createScene() {
     // BIG
     // BLANK
     if (head === "BLANK") {
+      bigMode = "OTHER";
       api.big.clear();   // kasuje 30x10, panele boczne / dolne zostają
       return;
     }
     
     // LOGO
     if (head === "LOGO") {
+      bigMode = "OTHER";
       const op = (tokens[1] ?? "").toUpperCase();
 
       if (op === "LOAD") {
@@ -2324,6 +2338,7 @@ export async function createScene() {
 
     // WIN
     if (head === "WIN") {
+      bigMode = "OTHER";
       const num = tokens[1] ?? "";
       let animOut = null, animIn = null;
       const ao = tokens.findIndex(t => t.toUpperCase() === "ANIMOUT");
@@ -2337,6 +2352,7 @@ export async function createScene() {
     // Format:
     // RBATCH SUMA 070 R1 "TXT" 30 R2 "TXT" 25 ... R6 "TXT" 00 ANIMOUT ... ANIMIN ...
     if (head === "RBATCH") {
+      bigMode = "ROUNDS";
       const ao = tokens.findIndex(t => t.toUpperCase() === "ANIMOUT");
       const ai = tokens.findIndex(t => t.toUpperCase() === "ANIMIN");
       const animOut = ao >= 0 ? parseAnim(tokens, ao + 1) : null;
@@ -2359,6 +2375,7 @@ export async function createScene() {
 
     // ROUNDS (krótkie)
     if (head === "RTXT") {
+      bigMode = "ROUNDS";
       const idx  = parseInt(tokens[1] ?? "0", 10);
       const text = unquote(tokens[2] ?? "");
     
@@ -2371,6 +2388,7 @@ export async function createScene() {
       return api.rounds.setText(idx, text, { animOut, animIn });
     }
     if (head === "RPTS") {
+      bigMode = "ROUNDS";
       const idx = parseInt(tokens[1] ?? "0", 10);
       const pts = tokens[2] ?? "";
     
@@ -2385,6 +2403,7 @@ export async function createScene() {
 
     // ROUNDS (legacy)
     if (head === "R") {
+      bigMode = "ROUNDS";
       const idx  = parseInt(tokens[1] ?? "0", 10);
       const tIdx = tokens.findIndex(t => t.toUpperCase() === "TXT");
       const pIdx = tokens.findIndex(t => t.toUpperCase() === "PTS");
@@ -2402,6 +2421,7 @@ export async function createScene() {
     }
 
     if (head === "RSUMA") {
+      bigMode = "ROUNDS";
       const val = tokens[1] ?? "";
     
       const ao = tokens.findIndex(t => t.toUpperCase() === "ANIMOUT");
@@ -2414,6 +2434,7 @@ export async function createScene() {
     }
 
     if (head === "RX") {
+      bigMode = "ROUNDS";
       const name = (tokens[1] ?? "").toUpperCase();
       const on = ((tokens[2] ?? "").toUpperCase() === "ON");
       return api.rounds.setX(name, on);
@@ -2423,6 +2444,7 @@ export async function createScene() {
     // Format:
     // FBATCH SUMA A 999 F1 "L" 12 34 "R" ...  /  FBATCH SUMA B 999 ...
     if (head === "FBATCH") {
+      bigMode = "FINAL";
       const ao = tokens.findIndex(t => t.toUpperCase() === "ANIMOUT");
       const ai = tokens.findIndex(t => t.toUpperCase() === "ANIMIN");
       const animOut = ao >= 0 ? parseAnim(tokens, ao + 1) : null;
@@ -2462,6 +2484,7 @@ export async function createScene() {
     // FHALF A F1 "ODP1" 12 F2 "ODP2" 34 ... ANIMOUT ... ANIMIN ...
     // FHALF B F1 12 "ODP1" F2 34 "ODP2" ... ANIMOUT ... ANIMIN ...
     if (head === "FHALF") {
+      bigMode = "FINAL";
       const side = (tokens[1] ?? "").toUpperCase(); // "A" albo "B"
 
       const ao = tokens.findIndex((t, idx) => idx > 1 && t.toUpperCase() === "ANIMOUT");
@@ -2496,6 +2519,7 @@ export async function createScene() {
     
     // FINAL (krótkie)
     if (head === "FL") {
+      bigMode = "FINAL";
       const idx  = parseInt(tokens[1] ?? "0", 10);
       const text = unquote(tokens[2] ?? "");
     
@@ -2509,6 +2533,7 @@ export async function createScene() {
     }
     
     if (head === "FA") {
+      bigMode = "FINAL";
       const idx = parseInt(tokens[1] ?? "0", 10);
       const pts = tokens[2] ?? "";
     
@@ -2522,6 +2547,7 @@ export async function createScene() {
     }
     
     if (head === "FB") {
+      bigMode = "FINAL";
       const idx = parseInt(tokens[1] ?? "0", 10);
       const pts = tokens[2] ?? "";
     
@@ -2535,6 +2561,7 @@ export async function createScene() {
     }
     
     if (head === "FR") {
+      bigMode = "FINAL";
       const idx  = parseInt(tokens[1] ?? "0", 10);
       const text = unquote(tokens[2] ?? "");
     
@@ -2549,6 +2576,7 @@ export async function createScene() {
 
     // FINAL (legacy)
     if (head === "F") {
+      bigMode = "FINAL";
       const idx = parseInt(tokens[1] ?? "0", 10);
       const L   = tokens.findIndex(t => t.toUpperCase() === "L");
       const A   = tokens.findIndex(t => t.toUpperCase() === "A");
@@ -2570,6 +2598,7 @@ export async function createScene() {
     }
 
     if (head === "FSUMA") {
+      bigMode = "FINAL";
       // FSUMA 120
       // FSUMA A 120
       // FSUMA B 085

@@ -196,6 +196,10 @@ export function createDevices({ game, ui, store, chDisplay, chHost, chBuzzer }) 
     await sendDisplayCmd(`QR HOST "${escQ(urls.hostUrl)}" BUZZER "${escQ(urls.buzzerUrl)}"`);
   }
 
+  async function sendQrLinksToDisplay() {
+    await sendDisplayCmd(`QR HOST "${escQ(urls.hostUrl)}" BUZZER "${escQ(urls.buzzerUrl)}"`);
+  }
+
   return {
     initLinksAndQr,
     updateLinksAndQr,
@@ -203,6 +207,7 @@ export function createDevices({ game, ui, store, chDisplay, chHost, chBuzzer }) 
     sendHostCmd,
     sendBuzzerCmd,
     sendQrToDisplay,
+    sendQrLinksToDisplay,
     getUrls,
     flushQueued,
   };
