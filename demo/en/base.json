@@ -1,0 +1,702 @@
+{
+  "base": { "name": "DEMO - Question base" },
+  "categories": [
+    { "id": "c_root_1", "parent_id": null, "name": "Starter — classics", "ord": 0 },
+    { "id": "c_root_2", "parent_id": null, "name": "Everyday life", "ord": 1 },
+    { "id": "c_root_3", "parent_id": null, "name": "Kitchen and food", "ord": 2 },
+    { "id": "c_root_4", "parent_id": null, "name": "Travel and city", "ord": 3 },
+    { "id": "c_root_5", "parent_id": null, "name": "Holidays and occasions", "ord": 4 },
+
+    { "id": "c_s_1", "parent_id": "c_root_1", "name": "Family", "ord": 0 },
+    { "id": "c_s_2", "parent_id": "c_root_1", "name": "Home", "ord": 1 },
+    { "id": "c_s_3", "parent_id": "c_root_1", "name": "Work and school", "ord": 2 },
+
+    { "id": "c_d_1", "parent_id": "c_root_2", "name": "Shopping", "ord": 0 },
+    { "id": "c_d_2", "parent_id": "c_root_2", "name": "Hygiene and cleaning", "ord": 1 },
+    { "id": "c_d_3", "parent_id": "c_root_2", "name": "Technology", "ord": 2 },
+
+    { "id": "c_k_1", "parent_id": "c_root_3", "name": "Cooking", "ord": 0 },
+    { "id": "c_k_2", "parent_id": "c_root_3", "name": "Flavors and products", "ord": 1 },
+    { "id": "c_k_3", "parent_id": "c_root_3", "name": "Eating out", "ord": 2 },
+
+    { "id": "c_p_1", "parent_id": "c_root_4", "name": "Transport", "ord": 0 },
+    { "id": "c_p_2", "parent_id": "c_root_4", "name": "Holidays", "ord": 1 },
+    { "id": "c_p_3", "parent_id": "c_root_4", "name": "City", "ord": 2 },
+
+    { "id": "c_sw_1", "parent_id": "c_root_5", "name": "Christmas", "ord": 0 },
+    { "id": "c_sw_2", "parent_id": "c_root_5", "name": "Wedding", "ord": 1 },
+    { "id": "c_sw_3", "parent_id": "c_root_5", "name": "Birthdays", "ord": 2 }
+  ],
+  "tags": [
+    { "id": "t_easy", "name": "easy", "color": "green", "ord": 0 },
+    { "id": "t_classic", "name": "classic", "color": "blue", "ord": 1 },
+    { "id": "t_kids", "name": "kids", "color": "pink", "ord": 2 },
+    { "id": "t_party", "name": "party", "color": "purple", "ord": 3 },
+    { "id": "t_food", "name": "kitchen", "color": "orange", "ord": 4 },
+    { "id": "t_city", "name": "city", "color": "cyan", "ord": 5 },
+    { "id": "t_travel", "name": "travel", "color": "teal", "ord": 6 },
+    { "id": "t_work", "name": "work", "color": "gray", "ord": 7 },
+    { "id": "t_xmas", "name": "holidays", "color": "red", "ord": 8 },
+    { "id": "t_poll", "name": "poll", "color": "yellow", "ord": 9 }
+  ],
+  "category_tags": [
+    { "category_id": "c_s_1", "tag_id": "t_classic" },
+    { "category_id": "c_s_2", "tag_id": "t_easy" },
+    { "category_id": "c_k_1", "tag_id": "t_food" },
+    { "category_id": "c_k_2", "tag_id": "t_food" },
+    { "category_id": "c_p_2", "tag_id": "t_travel" },
+    { "category_id": "c_p_3", "tag_id": "t_city" },
+    { "category_id": "c_sw_1", "tag_id": "t_xmas" },
+    { "category_id": "c_sw_2", "tag_id": "t_party" }
+  ],
+  "questions": [
+    {
+      "id": "q001",
+      "category_id": "c_s_1",
+      "ord": 1,
+      "payload": {
+        "text": "Name something parents say to a child when they leave the house.",
+        "answers": [
+          { "text": "Be careful", "fixed_points": 35 },
+          { "text": "Put on a hat", "fixed_points": 20 },
+          { "text": "Call when you get there", "fixed_points": 18 },
+          { "text": "Don't talk to strangers", "fixed_points": 15 },
+          { "text": "Take the keys", "fixed_points": 12 }
+        ]
+      }
+    },
+    {
+      "id": "q002",
+      "category_id": "c_s_2",
+      "ord": 2,
+      "payload": {
+        "text": "What gets lost at home most often?",
+        "answers": [
+          { "text": "Remote control", "fixed_points": 28 },
+          { "text": "Keys", "fixed_points": 26 },
+          { "text": "Socks", "fixed_points": 20 },
+          { "text": "Charger", "fixed_points": 14 },
+          { "text": "Glasses", "fixed_points": 12 }
+        ]
+      }
+    },
+    {
+      "id": "q003",
+      "category_id": "c_s_3",
+      "ord": 3,
+      "payload": {
+        "text": "Give a reason for being late to work/school.",
+        "answers": [
+          { "text": "Traffic", "fixed_points": 34 },
+          { "text": "Overslept", "fixed_points": 30 },
+          { "text": "Missed the bus", "fixed_points": 16 },
+          { "text": "Car breakdown", "fixed_points": 12 },
+          { "text": "Child / daycare", "fixed_points": 8 }
+        ]
+      }
+    },
+
+    {
+      "id": "q004",
+      "category_id": "c_d_1",
+      "ord": 4,
+      "payload": {
+        "text": "What do people check in a store before buying a product?",
+        "answers": [
+          { "text": "Price", "fixed_points": 36 },
+          { "text": "Expiration date", "fixed_points": 24 },
+          { "text": "Ingredients", "fixed_points": 18 },
+          { "text": "Size / dimensions", "fixed_points": 12 },
+          { "text": "Reviews / ratings", "fixed_points": 10 }
+        ]
+      }
+    },
+    {
+      "id": "q005",
+      "category_id": "c_d_2",
+      "ord": 5,
+      "payload": {
+        "text": "What do you do first after coming home on a rainy day?",
+        "answers": [
+          { "text": "Take off shoes", "fixed_points": 32 },
+          { "text": "Hang up jacket", "fixed_points": 22 },
+          { "text": "Wash hands", "fixed_points": 18 },
+          { "text": "Make tea", "fixed_points": 15 },
+          { "text": "Wipe the floor", "fixed_points": 13 }
+        ]
+      }
+    },
+    {
+      "id": "q006",
+      "category_id": "c_d_3",
+      "ord": 6,
+      "payload": {
+        "text": "Name something annoying about a phone.",
+        "answers": [
+          { "text": "Low battery", "fixed_points": 30 },
+          { "text": "Freezing", "fixed_points": 22 },
+          { "text": "No signal", "fixed_points": 18 },
+          { "text": "Ads / spam", "fixed_points": 16 },
+          { "text": "Cracked screen", "fixed_points": 14 }
+        ]
+      }
+    },
+
+    {
+      "id": "q007",
+      "category_id": "c_k_1",
+      "ord": 7,
+      "payload": {
+        "text": "What can go wrong while cooking?",
+        "answers": [
+          { "text": "Gets burnt", "fixed_points": 32 },
+          { "text": "Too salty", "fixed_points": 20 },
+          { "text": "Undercooked", "fixed_points": 18 },
+          { "text": "Overcooked", "fixed_points": 16 },
+          { "text": "Sauce curdles", "fixed_points": 14 }
+        ]
+      }
+    },
+    {
+      "id": "q008",
+      "category_id": "c_k_2",
+      "ord": 8,
+      "payload": {
+        "text": "Name something that disappears quickly from the fridge.",
+        "answers": [
+          { "text": "Yogurt", "fixed_points": 24 },
+          { "text": "Cold cuts", "fixed_points": 22 },
+          { "text": "Cheese", "fixed_points": 20 },
+          { "text": "Milk", "fixed_points": 18 },
+          { "text": "Cake", "fixed_points": 16 }
+        ]
+      }
+    },
+    {
+      "id": "q009",
+      "category_id": "c_k_3",
+      "ord": 9,
+      "payload": {
+        "text": "What do people order when they don't know what to choose in a restaurant?",
+        "answers": [
+          { "text": "Pizza", "fixed_points": 30 },
+          { "text": "Burger", "fixed_points": 24 },
+          { "text": "Pork cutlet", "fixed_points": 18 },
+          { "text": "Pasta", "fixed_points": 16 },
+          { "text": "Soup of the day", "fixed_points": 12 }
+        ]
+      }
+    },
+
+    {
+      "id": "q010",
+      "category_id": "c_p_1",
+      "ord": 10,
+      "payload": {
+        "text": "Name something you do while waiting for a bus/train.",
+        "answers": [
+          { "text": "Look at my phone", "fixed_points": 38 },
+          { "text": "Listen to music", "fixed_points": 18 },
+          { "text": "Check the schedule", "fixed_points": 16 },
+          { "text": "Look around", "fixed_points": 14 },
+          { "text": "Drink coffee", "fixed_points": 14 }
+        ]
+      }
+    },
+    {
+      "id": "q011",
+      "category_id": "c_p_2",
+      "ord": 11,
+      "payload": {
+        "text": "What do you pack first for vacation?",
+        "answers": [
+          { "text": "Clothes", "fixed_points": 34 },
+          { "text": "Toiletries", "fixed_points": 20 },
+          { "text": "Documents", "fixed_points": 18 },
+          { "text": "Charger", "fixed_points": 16 },
+          { "text": "Shoes", "fixed_points": 12 }
+        ]
+      }
+    },
+    {
+      "id": "q012",
+      "category_id": "c_p_3",
+      "ord": 12,
+      "payload": {
+        "text": "Name a place in the city where people often hurry.",
+        "answers": [
+          { "text": "Stop", "fixed_points": 28 },
+          { "text": "Station", "fixed_points": 22 },
+          { "text": "Crosswalk", "fixed_points": 18 },
+          { "text": "Downtown / main square", "fixed_points": 16 },
+          { "text": "Shopping mall", "fixed_points": 16 }
+        ]
+      }
+    },
+
+    {
+      "id": "q013",
+      "category_id": "c_sw_1",
+      "ord": 13,
+      "payload": {
+        "text": "What appears on the table on Christmas Eve?",
+        "answers": [
+          { "text": "Borscht", "fixed_points": 30 },
+          { "text": "Pierogi", "fixed_points": 24 },
+          { "text": "Carp", "fixed_points": 18 },
+          { "text": "Kutia / poppy seed cake", "fixed_points": 16 },
+          { "text": "Compote", "fixed_points": 12 }
+        ]
+      }
+    },
+    {
+      "id": "q014",
+      "category_id": "c_sw_2",
+      "ord": 14,
+      "payload": {
+        "text": "Name something guests do at a wedding when their favorite song plays.",
+        "answers": [
+          { "text": "Go dance", "fixed_points": 40 },
+          { "text": "Sing", "fixed_points": 18 },
+          { "text": "Record on their phone", "fixed_points": 16 },
+          { "text": "Clap", "fixed_points": 14 },
+          { "text": "Call others", "fixed_points": 12 }
+        ]
+      }
+    },
+    {
+      "id": "q015",
+      "category_id": "c_sw_3",
+      "ord": 15,
+      "payload": {
+        "text": "Name a gift people often get for birthdays.",
+        "answers": [
+          { "text": "Money", "fixed_points": 30 },
+          { "text": "Perfume", "fixed_points": 22 },
+          { "text": "Book", "fixed_points": 18 },
+          { "text": "Sweets", "fixed_points": 16 },
+          { "text": "Gadget", "fixed_points": 14 }
+        ]
+      }
+    },
+
+    {
+      "id": "q016",
+      "category_id": "c_s_2",
+      "ord": 16,
+      "payload": {
+        "text": "Name a place at home that is cleaned the least often.",
+        "answers": [
+          { "text": "Behind the wardrobe", "fixed_points": 26 },
+          { "text": "Cabinet under the sink", "fixed_points": 20 },
+          { "text": "Top of the wardrobe", "fixed_points": 18 },
+          { "text": "Basement", "fixed_points": 18 },
+          { "text": "Balcony", "fixed_points": 18 }
+        ]
+      }
+    },
+    {
+      "id": "q017",
+      "category_id": "c_k_2",
+      "ord": 17,
+      "payload": {
+        "text": "Name a flavor some people love and others hate.",
+        "answers": [
+          { "text": "Spicy", "fixed_points": 26 },
+          { "text": "Bitter", "fixed_points": 22 },
+          { "text": "Anise / licorice", "fixed_points": 20 },
+          { "text": "Sour", "fixed_points": 18 },
+          { "text": "Mint", "fixed_points": 14 }
+        ]
+      }
+    },
+
+    {
+      "id": "q018",
+      "category_id": "c_d_3",
+      "ord": 18,
+      "payload": {
+        "text": "Which app do people open out of habit on their phone?",
+        "answers": [
+          { "text": "Messages", "fixed_points": 28 },
+          { "text": "Social media", "fixed_points": 26 },
+          { "text": "Weather", "fixed_points": 18 },
+          { "text": "Maps", "fixed_points": 14 },
+          { "text": "Banking", "fixed_points": 14 }
+        ]
+      }
+    },
+
+    {
+      "id": "q019",
+      "category_id": "c_p_2",
+      "ord": 19,
+      "payload": {
+        "text": "What do people buy at the last minute before leaving?",
+        "answers": [
+          { "text": "Snacks", "fixed_points": 24 },
+          { "text": "Water", "fixed_points": 20 },
+          { "text": "Travel-size toiletries", "fixed_points": 18 },
+          { "text": "Power bank", "fixed_points": 18 },
+          { "text": "Painkiller", "fixed_points": 20 }
+        ]
+      }
+    },
+
+    {
+      "id": "q020",
+      "category_id": "c_d_1",
+      "ord": 20,
+      "payload": {
+        "text": "Name something you buy even though you didn't plan to.",
+        "answers": [
+          { "text": "Sweets", "fixed_points": 28 },
+          { "text": "Discount gadget", "fixed_points": 22 },
+          { "text": "Candle / decorations", "fixed_points": 18 },
+          { "text": "Cosmetic", "fixed_points": 16 },
+          { "text": "Newspaper", "fixed_points": 16 }
+        ]
+      }
+    },
+
+    {
+      "id": "q021",
+      "category_id": "c_s_1",
+      "ord": 21,
+      "payload": {
+        "text": "Give a reason someone might not answer a call from family.",
+        "answers": [
+          { "text": "At work", "fixed_points": 30 },
+          { "text": "Driving", "fixed_points": 22 },
+          { "text": "Sleeping", "fixed_points": 18 },
+          { "text": "Phone on silent", "fixed_points": 16 },
+          { "text": "Didn't hear", "fixed_points": 14 }
+        ]
+      }
+    },
+
+    {
+      "id": "q022",
+      "category_id": "c_sw_1",
+      "ord": 22,
+      "payload": {
+        "text": "What do you do after hearing a carol that reminds you of childhood?",
+        "answers": [
+          { "text": "Hum / sing", "fixed_points": 34 },
+          { "text": "Have memories", "fixed_points": 24 },
+          { "text": "Smile", "fixed_points": 18 },
+          { "text": "Get emotional", "fixed_points": 14 },
+          { "text": "Turn it up", "fixed_points": 10 }
+        ]
+      }
+    },
+
+    {
+      "id": "q023",
+      "category_id": "c_root_2",
+      "ord": 23,
+      "payload": {
+        "text": "Name something that improves your mood after a bad day.",
+        "answers": [
+          { "text": "Food", "fixed_points": 26 },
+          { "text": "Sleep", "fixed_points": 22 },
+          { "text": "Music", "fixed_points": 18 },
+          { "text": "Walk", "fixed_points": 18 },
+          { "text": "Conversation", "fixed_points": 16 }
+        ]
+      }
+    },
+
+    {
+      "id": "q024",
+      "category_id": "c_root_2",
+      "ord": 24,
+      "payload": {
+        "text": "What sound at home means something went wrong?",
+        "answers": [
+          { "text": "Sound of breaking glass", "fixed_points": 34 },
+          { "text": "Alarm / sensor", "fixed_points": 22 },
+          { "text": "Silence after a noise", "fixed_points": 18 },
+          { "text": "Scream", "fixed_points": 16 },
+          { "text": "Screeching brakes (outside)", "fixed_points": 10 }
+        ]
+      }
+    },
+
+    {
+      "id": "q025",
+      "category_id": "c_p_3",
+      "ord": 25,
+      "payload": {
+        "text": "Name a place in the city where it's easiest to lose a friend.",
+        "answers": [
+          { "text": "Shopping mall", "fixed_points": 30 },
+          { "text": "Market square / downtown", "fixed_points": 22 },
+          { "text": "Concert", "fixed_points": 20 },
+          { "text": "Station", "fixed_points": 16 },
+          { "text": "Festival / fair", "fixed_points": 12 }
+        ]
+      }
+    },
+
+    {
+      "id": "q026",
+      "category_id": "c_k_1",
+      "ord": 26,
+      "payload": {
+        "text": "What do you do when a recipe calls for an ingredient you don't have?",
+        "answers": [
+          { "text": "Substitute with another", "fixed_points": 34 },
+          { "text": "Go to the store", "fixed_points": 26 },
+          { "text": "Skip it", "fixed_points": 18 },
+          { "text": "Change the dish", "fixed_points": 14 },
+          { "text": "Ask online", "fixed_points": 8 }
+        ]
+      }
+    },
+
+    {
+      "id": "q027",
+      "category_id": "c_s_3",
+      "ord": 27,
+      "payload": {
+        "text": "What can you say to politely end a conversation at work?",
+        "answers": [
+          { "text": "I'm getting back to my task", "fixed_points": 30 },
+          { "text": "I have a meeting", "fixed_points": 24 },
+          { "text": "I'll get back to you later", "fixed_points": 20 },
+          { "text": "I have to make a call", "fixed_points": 16 },
+          { "text": "I have a deadline", "fixed_points": 10 }
+        ]
+      }
+    },
+
+    {
+      "id": "q028",
+      "category_id": "c_d_2",
+      "ord": 28,
+      "payload": {
+        "text": "Name a cleaning task people put off for later.",
+        "answers": [
+          { "text": "Windows", "fixed_points": 28 },
+          { "text": "Ironing", "fixed_points": 24 },
+          { "text": "Vacuuming", "fixed_points": 18 },
+          { "text": "Closet organizing", "fixed_points": 16 },
+          { "text": "Oven cleaning", "fixed_points": 14 }
+        ]
+      }
+    },
+
+    {
+      "id": "q029",
+      "category_id": "c_sw_2",
+      "ord": 29,
+      "payload": {
+        "text": "What most often goes wrong at a wedding?",
+        "answers": [
+          { "text": "Someone is late", "fixed_points": 24 },
+          { "text": "Wrong music", "fixed_points": 20 },
+          { "text": "Too much alcohol", "fixed_points": 22 },
+          { "text": "Food issues", "fixed_points": 18 },
+          { "text": "Weather", "fixed_points": 16 }
+        ]
+      }
+    },
+
+    {
+      "id": "q030",
+      "category_id": "c_sw_3",
+      "ord": 30,
+      "payload": {
+        "text": "Name something you do when you forget someone's birthday.",
+        "answers": [
+          { "text": "Call right away", "fixed_points": 28 },
+          { "text": "Send a message", "fixed_points": 22 },
+          { "text": "Buy a last-minute gift", "fixed_points": 20 },
+          { "text": "Arrange a coffee meet-up", "fixed_points": 18 },
+          { "text": "Make an excuse", "fixed_points": 12 }
+        ]
+      }
+    },
+
+    {
+      "id": "q031",
+      "category_id": "c_root_2",
+      "ord": 31,
+      "payload": {
+        "text": "Poll: What word do you associate with 'comfort'?",
+        "answers": []
+      }
+    },
+    {
+      "id": "q032",
+      "category_id": "c_root_3",
+      "ord": 32,
+      "payload": {
+        "text": "Poll: What dish would you eat without hesitation?",
+        "answers": []
+      }
+    },
+    {
+      "id": "q033",
+      "category_id": "c_root_4",
+      "ord": 33,
+      "payload": {
+        "text": "Poll: What's the worst thing about traveling?",
+        "answers": []
+      }
+    },
+
+    {
+      "id": "q034",
+      "category_id": "c_k_2",
+      "ord": 34,
+      "payload": {
+        "text": "Name an ingredient some people add to everything.",
+        "answers": [
+          { "text": "Garlic", "fixed_points": 26 },
+          { "text": "Cheese", "fixed_points": 22 },
+          { "text": "Ketchup", "fixed_points": 20 },
+          { "text": "Chili", "fixed_points": 18 },
+          { "text": "Mayonnaise", "fixed_points": 14 }
+        ]
+      }
+    },
+    {
+      "id": "q035",
+      "category_id": "c_p_1",
+      "ord": 35,
+      "payload": {
+        "text": "Name something you do when you're late and running to the stop.",
+        "answers": [
+          { "text": "Check the time constantly", "fixed_points": 28 },
+          { "text": "Text that I'll be late", "fixed_points": 22 },
+          { "text": "Run as fast as I can", "fixed_points": 20 },
+          { "text": "Wave at the driver", "fixed_points": 16 },
+          { "text": "Pant and complain", "fixed_points": 14 }
+        ]
+      }
+    },
+    {
+      "id": "q036",
+      "category_id": "c_s_2",
+      "ord": 36,
+      "payload": {
+        "text": "What is usually stuck to the fridge?",
+        "answers": [
+          { "text": "Magnets", "fixed_points": 28 },
+          { "text": "Shopping list", "fixed_points": 22 },
+          { "text": "Child's drawings", "fixed_points": 20 },
+          { "text": "Note with a number", "fixed_points": 16 },
+          { "text": "Weekly plan", "fixed_points": 14 }
+        ]
+      }
+    },
+
+    {
+      "id": "q037",
+      "category_id": "c_s_3",
+      "ord": 37,
+      "payload": {
+        "text": "Name something you do to look busy.",
+        "answers": [
+          { "text": "Type on the keyboard", "fixed_points": 28 },
+          { "text": "Stare at the monitor", "fixed_points": 22 },
+          { "text": "Walk quickly with a paper", "fixed_points": 18 },
+          { "text": "Talk about a project", "fixed_points": 16 },
+          { "text": "Take notes", "fixed_points": 16 }
+        ]
+      }
+    },
+
+    {
+      "id": "q038",
+      "category_id": "c_d_1",
+      "ord": 38,
+      "payload": {
+        "text": "What do people buy because it smells nice?",
+        "answers": [
+          { "text": "Candle", "fixed_points": 30 },
+          { "text": "Perfume", "fixed_points": 26 },
+          { "text": "Fabric softener", "fixed_points": 18 },
+          { "text": "Flowers", "fixed_points": 14 },
+          { "text": "Cosmetic", "fixed_points": 12 }
+        ]
+      }
+    },
+
+    {
+      "id": "q039",
+      "category_id": "c_sw_1",
+      "ord": 39,
+      "payload": {
+        "text": "Name something done right before Christmas Eve.",
+        "answers": [
+          { "text": "Clean the house", "fixed_points": 30 },
+          { "text": "Decorate the tree", "fixed_points": 26 },
+          { "text": "Cook", "fixed_points": 20 },
+          { "text": "Buy last-minute gifts", "fixed_points": 14 },
+          { "text": "Decorate", "fixed_points": 10 }
+        ]
+      }
+    },
+
+    {
+      "id": "q040",
+      "category_id": "c_p_2",
+      "ord": 40,
+      "payload": {
+        "text": "Name something that ruins a vacation if you forget it.",
+        "answers": [
+          { "text": "Documents", "fixed_points": 34 },
+          { "text": "Phone", "fixed_points": 20 },
+          { "text": "Charger", "fixed_points": 18 },
+          { "text": "Wallet", "fixed_points": 16 },
+          { "text": "Medicines", "fixed_points": 12 }
+        ]
+      }
+    },
+
+    {
+      "id": "q041",
+      "category_id": "c_root_1",
+      "ord": 41,
+      "payload": {
+        "text": "Poll: What is most 'Polish' in everyday life?",
+        "answers": []
+      }
+    }
+  ],
+  "question_tags": [
+    { "question_id": "q001", "tag_id": "t_classic" },
+    { "question_id": "q001", "tag_id": "t_easy" },
+
+    { "question_id": "q002", "tag_id": "t_easy" },
+    { "question_id": "q002", "tag_id": "t_classic" },
+
+    { "question_id": "q003", "tag_id": "t_work" },
+    { "question_id": "q003", "tag_id": "t_classic" },
+
+    { "question_id": "q004", "tag_id": "t_easy" },
+    { "question_id": "q004", "tag_id": "t_classic" },
+
+    { "question_id": "q006", "tag_id": "t_classic" },
+
+    { "question_id": "q007", "tag_id": "t_food" },
+    { "question_id": "q008", "tag_id": "t_food" },
+    { "question_id": "q009", "tag_id": "t_food" },
+
+    { "question_id": "q010", "tag_id": "t_travel" },
+    { "question_id": "q011", "tag_id": "t_travel" },
+    { "question_id": "q012", "tag_id": "t_city" },
+
+    { "question_id": "q013", "tag_id": "t_xmas" },
+    { "question_id": "q014", "tag_id": "t_party" },
+    { "question_id": "q015", "tag_id": "t_party" },
+
+    { "question_id": "q031", "tag_id": "t_poll" },
+    { "question_id": "q032", "tag_id": "t_poll" },
+    { "question_id": "q033", "tag_id": "t_poll" },
+    { "question_id": "q041", "tag_id": "t_poll" }
+  ]
+}

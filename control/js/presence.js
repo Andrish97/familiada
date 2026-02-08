@@ -1,12 +1,12 @@
+import { t } from "../../translation/translation.js";
 import { sb } from "../../js/core/supabase.js";
 
 // ================== KOMUNIKATY (PRESENCE) ==================
 const PRESENCE_MSG = {
-  SINCE_NONE: "—",
-  SINCE_LABEL: (seconds) => `${seconds}s temu`,
-  ALERT_DROPPED: (label) =>
-    `Uwaga: ${label} rozłączony. Sprawdź połączenie z internetem na urządzeniu.`,
-  NO_TABLE: "Brak tabeli device_presence.",
+  get SINCE_NONE() { return t("control.deviceSeenNone"); },
+  SINCE_LABEL: (seconds) => t("control.deviceSeenSeconds", { seconds }),
+  ALERT_DROPPED: (label) => t("control.deviceDropped", { label }),
+  get NO_TABLE() { return t("control.presenceNoTable"); },
 };
 // ===========================================================
 

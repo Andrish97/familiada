@@ -1,0 +1,125 @@
+{
+  "game": {
+    "name": "DEMO — Typical open poll",
+    "type": "poll_text",
+    "status": "open"
+  },
+  "questions": [
+    {
+      "text": "What animal do you see most often in the zoo?"
+    },
+    {
+      "text": "What do you do first in the morning?"
+    },
+    {
+      "text": "What bothers you most when traveling?"
+    },
+    {
+      "text": "What word do you associate with vacations?"
+    },
+    {
+      "text": "What do you most often eat for dinner?"
+    },
+    {
+      "text": "What do you do when it rains?"
+    },
+    {
+      "text": "What do you like to do in your free time?"
+    },
+    {
+      "text": "Which place at home is the most important?"
+    },
+    {
+      "text": "What makes you laugh the most?"
+    },
+    {
+      "text": "What do you take on a long walk?"
+    }
+  ],
+  "votes": [
+    {
+      "answers_raw": [
+        "Giraffe",
+        "Brush my teeth",
+        "Bus",
+        "Beach",
+        "Sandwiches",
+        "Watch a movie",
+        "Music",
+        "Kitchen",
+        "Meme",
+        "Water"
+      ]
+    },
+    {
+      "answers_raw": [
+        "giraffe",
+        "brush teeth",
+        "bus ",
+        " beach ",
+        "sandwiches",
+        "movie",
+        "music",
+        "kitchen",
+        "meme",
+        "water"
+      ]
+    },
+    {
+      "answers_raw": [
+        "Hippopotamus",
+        "I get dressed",
+        "Traffic jam",
+        "Sun",
+        "Pizza",
+        "Book",
+        "Games",
+        "Living room",
+        "Jokes",
+        "Headphones"
+      ]
+    },
+    {
+      "answers_raw": [
+        "hippo potam",
+        "i get dressed",
+        "traffic jam",
+        "sun",
+        "pizza",
+        "book",
+        "games",
+        "living room",
+        "jokes",
+        "headphones"
+      ]
+    },
+    {
+      "answers_raw": [
+        "Elephant",
+        "Coffee",
+        "Snowdrift",
+        "Ice cream",
+        "Pasta",
+        "Walk",
+        "Sports",
+        "Bed",
+        "Kids",
+        "Phone"
+      ]
+    },
+    {
+      "answers_raw": [
+        "elephant",
+        " coffee ",
+        "snowdrift",
+        "ice cream",
+        "pasta",
+        "walk",
+        "sports",
+        "bed",
+        "kids",
+        "phone"
+      ]
+    }
+  ]
+}

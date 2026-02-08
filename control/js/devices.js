@@ -120,32 +120,43 @@ export function createDevices({ game, ui, store, chDisplay, chHost, chBuzzer }) 
     return { ...urls };
   }
 
-  function initLinksAndQr() {
+  function buildUrls(lang) {
+    const targetLang = lang || getUiLang();
     const displayUrl = makeUrl("../display/index.html", game.id, game.share_key_display, {
-      lang: getUiLang(),
+      lang: targetLang,
     });
-    const hostUrl = makeUrl("../host.html", game.id, game.share_key_host);
-    const buzzerUrl = makeUrl("../buzzer.html", game.id, game.share_key_buzzer || "");
-    urls = { displayUrl, hostUrl, buzzerUrl };
+    const hostUrl = makeUrl("../host.html", game.id, game.share_key_host, { lang: targetLang });
+    const buzzerUrl = makeUrl("../buzzer.html", game.id, game.share_key_buzzer || "", { lang: targetLang });
+    return { displayUrl, hostUrl, buzzerUrl };
+  }
 
-    ui.setValue("displayLink", displayUrl);
-    ui.setValue("hostLink", hostUrl);
-    ui.setValue("buzzerLink", buzzerUrl);
+  function updateLinksAndQr(lang) {
+    urls = buildUrls(lang);
 
-    ui.setImg("qrDisplayImg", qrSrc(displayUrl));
-    ui.setImg("qrHostImg", qrSrc(hostUrl));
-    ui.setImg("qrBuzzerImg", qrSrc(buzzerUrl));
+    ui.setValue("displayLink", urls.displayUrl);
+    ui.setValue("hostLink", urls.hostUrl);
+    ui.setValue("buzzerLink", urls.buzzerUrl);
 
-    ui.on("devices.openDisplay", () => window.open(displayUrl, "_blank"));
-    ui.on("devices.openHost", () => window.open(hostUrl, "_blank"));
-    ui.on("devices.openBuzzer", () => window.open(buzzerUrl, "_blank"));
+    ui.setImg("qrDisplayImg", qrSrc(urls.displayUrl));
+    ui.setImg("qrHostImg", qrSrc(urls.hostUrl));
+    ui.setImg("qrBuzzerImg", qrSrc(urls.buzzerUrl));
+  }
+
+  let actionsBound = false;
+  function bindDeviceActions() {
+    if (actionsBound) return;
+    actionsBound = true;
+
+    ui.on("devices.openDisplay", () => window.open(urls.displayUrl, "_blank"));
+    ui.on("devices.openHost", () => window.open(urls.hostUrl, "_blank"));
+    ui.on("devices.openBuzzer", () => window.open(urls.buzzerUrl, "_blank"));
 
     ui.on(
       "devices.copyDisplay",
       async () =>
         ui.setMsg(
           "msgDevices",
-          (await copyToClipboard(displayUrl)) ? DEVICES_MSG.COPY_OK : DEVICES_MSG.COPY_FAIL
+          (await copyToClipboard(urls.displayUrl)) ? DEVICES_MSG.COPY_OK : DEVICES_MSG.COPY_FAIL
         )
     );
 
@@ -154,7 +165,7 @@ export function createDevices({ game, ui, store, chDisplay, chHost, chBuzzer }) 
       async () =>
         ui.setMsg(
           "msgDevices2",
-          (await copyToClipboard(hostUrl)) ? DEVICES_MSG.COPY_OK : DEVICES_MSG.COPY_FAIL
+          (await copyToClipboard(urls.hostUrl)) ? DEVICES_MSG.COPY_OK : DEVICES_MSG.COPY_FAIL
         )
     );
 
@@ -163,9 +174,14 @@ export function createDevices({ game, ui, store, chDisplay, chHost, chBuzzer }) 
       async () =>
         ui.setMsg(
           "msgDevices2",
-          (await copyToClipboard(buzzerUrl)) ? DEVICES_MSG.COPY_OK : DEVICES_MSG.COPY_FAIL
+          (await copyToClipboard(urls.buzzerUrl)) ? DEVICES_MSG.COPY_OK : DEVICES_MSG.COPY_FAIL
         )
     );
+  }
+
+  function initLinksAndQr() {
+    updateLinksAndQr();
+    bindDeviceActions();
   }
 
   function escQ(raw) {
@@ -182,6 +198,7 @@ export function createDevices({ game, ui, store, chDisplay, chHost, chBuzzer }) 
 
   return {
     initLinksAndQr,
+    updateLinksAndQr,
     sendDisplayCmd,
     sendHostCmd,
     sendBuzzerCmd,

@@ -15,6 +15,13 @@ const pl = {
     open: "Otwórz",
     copy: "Kopiuj",
     done: "Gotowe",
+    fullscreen: "Pełny ekran",
+    a2hsTitle: "Pełny ekran na iPhone",
+    a2hsHost:
+      "W Safari nie da się wymusić prawdziwego pełnego ekranu. Użyj <b>Udostępnij</b> → <b>Do ekranu początkowego</b>, a potem uruchom jako aplikację.",
+    a2hsBuzzer:
+      "W Safari nie da się wymusić prawdziwego pełnego ekranu. Użyj <b>Udostępnij</b> → <b>Do ekranu początkowego</b>.",
+    a2hsOk: "OK",
   },
   auth: {
     emailNotConfirmed: "Potwierdź e-mail (link w skrzynce).",
@@ -311,6 +318,9 @@ const pl = {
     deviceStatusOffline: "OFFLINE",
     deviceStatusNone: "—",
     deviceSeenNone: "brak",
+    deviceSeenSeconds: "{seconds}s temu",
+    deviceDropped: "Uwaga: {label} rozłączony. Sprawdź połączenie z internetem na urządzeniu.",
+    presenceNoTable: "Brak tabeli device_presence.",
     audioStatusOk: "OK",
     controlPrefix: "Panel sterowania — ",
     controlTitle: "Panel sterowania",
@@ -321,7 +331,7 @@ const pl = {
     copyFail: "Nie mogę skopiować.",
   },
   demo: {
-    baseUrl: "https://www.familiada.online/demo",
+    baseUrl: "https://www.familiada.online/demo/pl",
     files: {
       base: "base.json",
       logoText: "logo_text.json",
@@ -357,9 +367,20 @@ const pl = {
     progressErrorMsg: "Błąd: {error}",
   },
   display: {
+    title: "Wyświetlacz jak w klasycznej Familiadzie",
     qrHost: "Prowadzący",
     qrBuzzer: "Przyciski",
+    qrHostAlt: "QR Prowadzący",
+    qrBuzzerAlt: "QR Przyciski",
     sumLabel: "SUMA",
+  },
+  host: {
+    title: "Familiada — prowadzący",
+  },
+  buzzer: {
+    title: "Familiada — buzzer",
+    btnA: "Buzzer A",
+    btnB: "Buzzer B",
   },
 };
 
