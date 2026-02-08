@@ -221,12 +221,7 @@ function esc(s){
 
 async function confirmCloseIfDirty(){
   if (!editorDirty) return true;
-  return await confirmModal({
-    title: t("common.modal.confirmTitle"),
-    text: t("logoEditor.confirm.closeUnsaved"),
-    ok: t("common.modal.confirmOk"),
-    cancel: t("common.modal.confirmCancel"),
-  });
+  return await confirmModal({ text: t("logoEditor.confirm.closeUnsaved") });
 }
 
 function makeUniqueName(baseName, excludeId = null){
@@ -331,12 +326,7 @@ function armHistoryTrap(){
     }
 
     // gdy mamy zmiany — cofanie przechwytujemy
-    const ok = await confirmModal({
-      title: t("common.modal.confirmTitle"),
-      text: t("logoEditor.confirm.backUnsaved"),
-      ok: t("common.modal.confirmOk"),
-      cancel: t("common.modal.confirmCancel"),
-    });
+    const ok = await confirmModal({ text: t("logoEditor.confirm.backUnsaved") });
     if (ok){
       // pozwól cofnąć: najprościej zrobić przejście wstecz jeszcze raz,
       // ale popstate już zaszło. Żeby nie robić pętli, ignorujemy kolejny pop.
@@ -904,12 +894,7 @@ function renderList(){
     el.querySelector(".logoX").addEventListener("click", async (ev) => {
       ev.stopPropagation();
       if (!canDelete) return;
-      const ok = await confirmModal({
-        title: t("common.modal.confirmTitle"),
-        text: t("logoEditor.confirm.deleteLogo", { name }),
-        ok: t("common.modal.confirmOk"),
-        cancel: t("common.modal.confirmCancel"),
-      });
+      const ok = await confirmModal({ text: t("logoEditor.confirm.deleteLogo", { name }) });
       if (!ok) return;
 
       setMsg(t("logoEditor.status.deleting"));
@@ -921,11 +906,7 @@ function renderList(){
         setMsg(t("logoEditor.status.deleted"));
       }catch(e){
         console.error(e);
-        void alertModal({
-          title: t("common.modal.alertTitle"),
-          text: t("logoEditor.errors.deleteFailed", { error: e?.message || e }),
-          ok: t("common.modal.alertOk"),
-        });
+        void alertModal({ text: t("logoEditor.errors.deleteFailed", { error: e?.message || e }) });
         setMsg("");
       }
     });
@@ -1218,11 +1199,7 @@ async function handleCreate(){
       }
     }
 
-    void alertModal({
-      title: t("common.modal.alertTitle"),
-      text: t("logoEditor.errors.saveFailedDetailed", { error: e?.message || e }),
-      ok: t("common.modal.alertOk"),
-    });
+    void alertModal({ text: t("logoEditor.errors.saveFailedDetailed", { error: e?.message || e }) });
     setEditorMsg(t("logoEditor.errors.saveError"));
   }
 }
@@ -1249,11 +1226,7 @@ async function boot(){
     await loadFonts();
   } catch (e){
     console.error(e);
-    void alertModal({
-      title: t("common.modal.alertTitle"),
-      text: t("logoEditor.errors.fontsLoad"),
-      ok: t("common.modal.alertOk"),
-    });
+    void alertModal({ text: t("logoEditor.errors.fontsLoad") });
   }
    
    await loadDefaultLogo();
@@ -1295,12 +1268,7 @@ async function boot(){
    
    btnLogout?.addEventListener("click", async () => {
      if (shouldBlockNav()){
-       const ok = await confirmModal({
-         title: t("common.modal.confirmTitle"),
-         text: t("logoEditor.confirm.logoutUnsaved"),
-         ok: t("common.modal.confirmOk"),
-         cancel: t("common.modal.confirmCancel"),
-       });
+       const ok = await confirmModal({ text: t("logoEditor.confirm.logoutUnsaved") });
        if (!ok) return;
      }
      await signOut();
@@ -1338,11 +1306,7 @@ async function boot(){
      } catch (e){
        console.error(e);
        progClose("import");
-       void alertModal({
-        title: t("common.modal.alertTitle"),
-        text: t("logoEditor.errors.importFailedDetailed", { error: e?.message || e }),
-        ok: t("common.modal.alertOk"),
-      });
+       void alertModal({ text: t("logoEditor.errors.importFailedDetailed", { error: e?.message || e }) });
        setMsg("");
      }
    });
@@ -1374,11 +1338,7 @@ async function boot(){
      } catch (e){
        console.error(e);
        progClose("export");
-       void alertModal({
-        title: t("common.modal.alertTitle"),
-        text: t("logoEditor.errors.exportFailedDetailed", { error: e?.message || e }),
-        ok: t("common.modal.alertOk"),
-      });
+       void alertModal({ text: t("logoEditor.errors.exportFailedDetailed", { error: e?.message || e }) });
      }
    });
 
@@ -1411,11 +1371,7 @@ async function boot(){
        setMsg(t("logoEditor.status.activeSet"));
     }catch(e){
       console.error(e);
-      void alertModal({
-        title: t("common.modal.alertTitle"),
-        text: t("logoEditor.errors.setActiveFailedDetailed", { error: e?.message || e }),
-        ok: t("common.modal.alertOk"),
-      });
+      void alertModal({ text: t("logoEditor.errors.setActiveFailedDetailed", { error: e?.message || e }) });
       setMsg("");
     }
   });
