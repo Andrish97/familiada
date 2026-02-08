@@ -921,7 +921,11 @@ function renderList(){
         setMsg(t("logoEditor.status.deleted"));
       }catch(e){
         console.error(e);
-        void alertModal({ text: t("logoEditor.errors.deleteFailed", { error: e?.message || e }) });
+        void alertModal({
+          title: t("common.modal.alertTitle"),
+          text: t("logoEditor.errors.deleteFailed", { error: e?.message || e }),
+          ok: t("common.modal.alertOk"),
+        });
         setMsg("");
       }
     });
@@ -1214,7 +1218,11 @@ async function handleCreate(){
       }
     }
 
-    void alertModal({ text: t("logoEditor.errors.saveFailedDetailed", { error: e?.message || e }) });
+    void alertModal({
+      title: t("common.modal.alertTitle"),
+      text: t("logoEditor.errors.saveFailedDetailed", { error: e?.message || e }),
+      ok: t("common.modal.alertOk"),
+    });
     setEditorMsg(t("logoEditor.errors.saveError"));
   }
 }
@@ -1241,7 +1249,11 @@ async function boot(){
     await loadFonts();
   } catch (e){
     console.error(e);
-    void alertModal({ text: t("logoEditor.errors.fontsLoad") });
+    void alertModal({
+      title: t("common.modal.alertTitle"),
+      text: t("logoEditor.errors.fontsLoad"),
+      ok: t("common.modal.alertOk"),
+    });
   }
    
    await loadDefaultLogo();
@@ -1326,7 +1338,11 @@ async function boot(){
      } catch (e){
        console.error(e);
        progClose("import");
-       void alertModal({ text: t("logoEditor.errors.importFailedDetailed", { error: e?.message || e }) });
+       void alertModal({
+        title: t("common.modal.alertTitle"),
+        text: t("logoEditor.errors.importFailedDetailed", { error: e?.message || e }),
+        ok: t("common.modal.alertOk"),
+      });
        setMsg("");
      }
    });
@@ -1358,7 +1374,11 @@ async function boot(){
      } catch (e){
        console.error(e);
        progClose("export");
-       void alertModal({ text: t("logoEditor.errors.exportFailedDetailed", { error: e?.message || e }) });
+       void alertModal({
+        title: t("common.modal.alertTitle"),
+        text: t("logoEditor.errors.exportFailedDetailed", { error: e?.message || e }),
+        ok: t("common.modal.alertOk"),
+      });
      }
    });
 
@@ -1391,7 +1411,11 @@ async function boot(){
        setMsg(t("logoEditor.status.activeSet"));
     }catch(e){
       console.error(e);
-      void alertModal({ text: t("logoEditor.errors.setActiveFailedDetailed", { error: e?.message || e }) });
+      void alertModal({
+        title: t("common.modal.alertTitle"),
+        text: t("logoEditor.errors.setActiveFailedDetailed", { error: e?.message || e }),
+        ok: t("common.modal.alertOk"),
+      });
       setMsg("");
     }
   });
