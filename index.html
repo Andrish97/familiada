@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Familiada — logowanie</title>
+  <title data-i18n="index.title">Familiada — logowanie</title>
   
   <link rel="icon" href="favicon.ico"/>
   
@@ -17,22 +17,22 @@
   <div class="login-shell">
     <div class="login-card" id="loginCard">
       <div class="brand">FAMILIADA</div>
-      <div class="sub">Panel tworzenia i prowadzenia gry</div>
+      <div class="sub" data-i18n="index.subtitle">Panel tworzenia i prowadzenia gry</div>
 
-      <div class="status" id="status">Sprawdzam sesję…</div>
+      <div class="status" id="status" data-i18n="index.statusChecking">Sprawdzam sesję…</div>
 
       <div class="form">
-        <input id="email" type="email" placeholder="Email" autocomplete="email"/>
-        <input id="pass" type="password" placeholder="Hasło" autocomplete="current-password"/>
-        <input id="pass2" type="password" placeholder="Powtórz hasło" autocomplete="new-password" style="display:none"/>
+        <input id="email" type="email" placeholder="Email" autocomplete="email" data-i18n-placeholder="index.placeholderLogin"/>
+        <input id="pass" type="password" placeholder="Hasło" autocomplete="current-password" data-i18n-placeholder="index.placeholderPassword"/>
+        <input id="pass2" type="password" placeholder="Powtórz hasło" autocomplete="new-password" style="display:none" data-i18n-placeholder="index.placeholderPasswordRepeat"/>
 
         <div class="row">
-          <button class="btn main" id="btnPrimary" type="button">Zaloguj</button>
-          <button class="btn" id="btnToggle" type="button">Załóż konto</button>
+          <button class="btn main" id="btnPrimary" type="button" data-i18n="index.btnLogin">Zaloguj</button>
+          <button class="btn" id="btnToggle" type="button" data-i18n="index.btnToggleRegister">Załóż konto</button>
         </div>
 
         <div class="meta">
-          <button class="link" id="btnForgot" type="button">Przypomnij hasło</button>
+          <button class="link" id="btnForgot" type="button" data-i18n="index.btnForgot">Przypomnij hasło</button>
           <span class="err" id="err"></span>
         </div>
       </div>
@@ -40,15 +40,15 @@
 
     <div class="login-card setup-card" id="setupCard" hidden>
       <div class="brand">FAMILIADA</div>
-      <div class="sub">Pierwsze logowanie</div>
-      <div class="setup-title">Ustaw nazwę użytkownika</div>
-      <div class="setup-sub">Będzie widoczna w panelu oraz przy zaproszeniach.</div>
+      <div class="sub" data-i18n="index.setupTitle">Pierwsze logowanie</div>
+      <div class="setup-title" data-i18n="index.setupPrompt">Ustaw nazwę użytkownika</div>
+      <div class="setup-sub" data-i18n="index.setupSub">Będzie widoczna w panelu oraz przy zaproszeniach.</div>
 
       <div class="setup-form">
-        <input id="usernameFirst" placeholder="Nazwa użytkownika" autocomplete="username" />
+        <input id="usernameFirst" placeholder="Nazwa użytkownika" autocomplete="username" data-i18n-placeholder="index.placeholderUsername"/>
         <div class="modal-err" id="usernameErr"></div>
         <div class="modal-actions">
-          <button class="btn main" id="btnUsernameSave" type="button">Zapisz nazwę</button>
+          <button class="btn main" id="btnUsernameSave" type="button" data-i18n="index.btnUsernameSave">Zapisz nazwę</button>
         </div>
       </div>
     </div>

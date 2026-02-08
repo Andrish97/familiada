@@ -1,4 +1,5 @@
 import { sb } from "../core/supabase.js";
+import { initI18n, t } from "../../translation/translation.js";
 
 const status = document.getElementById("status");
 const err = document.getElementById("err");
@@ -31,12 +32,13 @@ async function syncProfileEmail(user) {
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
+  await initI18n({ withSwitcher: true });
   setErr("");
 
   try {
     const { data } = await sb().auth.getSession();
     if (data?.session?.user) {
-      sessionInfo = "Masz aktywną sesję — nie przeszkadza w potwierdzeniu linków.";
+      sessionInfo = t("confirm.sessionInfo");
       setErr("");
     }
   } catch {}
@@ -49,10 +51,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     const raw = hashError || queryError;
     const decoded = decodeURIComponent(raw.replace(/\+/g, " "));
     if (decoded.toLowerCase().includes("already") || decoded.toLowerCase().includes("used")) {
-      setStatus("Ten link został już użyty.");
-      setErr("Jeśli to zmiana e-maila, potwierdź drugi link z drugiej skrzynki.");
+      setStatus(t("confirm.linkAlreadyUsed"));
+      setErr(t("confirm.linkAlreadyUsedHint"));
     } else {
-      setStatus("Link jest nieprawidłowy lub wygasł.");
+      setStatus(t("confirm.linkInvalid"));
       setErr(decoded);
     }
     back.style.display = "inline-flex";
@@ -70,11 +72,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     const raw = hashMessage || queryMessage;
     const decoded = decodeURIComponent(raw.replace(/\+/g, " "));
     if (decoded.toLowerCase().includes("confirm link sent to the other email")) {
-      setStatus("Potwierdzono pierwszy link.");
-      setErr("Potwierdź drugi link z drugiej skrzynki (może być na innym urządzeniu). Dopiero wtedy zalogujesz się na nowy e-mail.");
+      setStatus(t("confirm.firstLinkConfirmed"));
+      setErr(t("confirm.firstLinkConfirmedHint"));
     } else {
       setStatus(decoded);
-      setErr("Sprawdź drugi adres e-mail, aby dokończyć zmianę.");
+      setErr(t("confirm.checkOtherEmail"));
     }
     back.style.display = "inline-flex";
     return;
@@ -83,22 +85,22 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (!code) {
     if (tokenHash && otpType) {
       try {
-        setStatus("Aktywuję konto…");
+        setStatus(t("confirm.activating"));
         const { data, error } = await sb().auth.verifyOtp({ token_hash: tokenHash, type: otpType });
         if (error) throw error;
         if (data?.session) {
           await syncProfileEmail(data.session.user);
-          setStatus("Gotowe! Konto potwierdzone.");
+          setStatus(t("confirm.done"));
           go.style.display = "inline-flex";
           setTimeout(() => (location.href = "builder.html"), 700);
           return;
         }
-        setStatus("Potwierdzenie zapisane. Zaloguj się ponownie.");
+        setStatus(t("confirm.savedNoSession"));
         back.style.display = "inline-flex";
         return;
       } catch (e) {
         console.error(e);
-        setStatus("Nie udało się potwierdzić konta.");
+        setStatus(t("confirm.failed"));
         setErr(e?.message || String(e));
         back.style.display = "inline-flex";
         return;
@@ -106,48 +108,48 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
     if (accessToken || refreshToken || hashType) {
       try {
-        setStatus("Aktywuję konto…");
+        setStatus(t("confirm.activating"));
         const { data, error } = await sb().auth.getSessionFromUrl({ storeSession: true });
         if (error) throw error;
 
         if (data?.session) {
           await syncProfileEmail(data.session.user);
-          setStatus("Gotowe! Konto potwierdzone.");
+          setStatus(t("confirm.done"));
           go.style.display = "inline-flex";
           setTimeout(() => (location.href = "builder.html"), 700);
           return;
         }
 
-        setStatus("Potwierdzenie zapisane. Zaloguj się ponownie.");
+        setStatus(t("confirm.savedNoSession"));
         back.style.display = "inline-flex";
         return;
       } catch (e) {
         console.error(e);
-        setStatus("Nie udało się potwierdzić konta.");
+        setStatus(t("confirm.failed"));
         setErr(e?.message || String(e));
         back.style.display = "inline-flex";
         return;
       }
     }
 
-    setStatus("Brak kodu w linku.");
-    setErr("Wygląda na to, że link jest niepełny albo został już użyty.");
+    setStatus(t("confirm.missingCode"));
+    setErr(t("confirm.missingCodeHint"));
     back.style.display = "inline-flex";
     return;
   }
 
   try{
-    setStatus("Aktywuję konto…");
+    setStatus(t("confirm.activating"));
     const { data, error } = await sb().auth.exchangeCodeForSession(code);
     if (error) throw error;
 
     if (data?.session) {
       await syncProfileEmail(data.session.user);
-      setStatus("Gotowe! Konto potwierdzone.");
+      setStatus(t("confirm.done"));
       go.style.display = "inline-flex";
       setTimeout(() => (location.href = "builder.html"), 700);
     } else {
-      setStatus("Konto potwierdzone, ale brak sesji.");
+      setStatus(t("confirm.confirmedNoSession"));
       back.style.display = "inline-flex";
     }
   } catch(e){
@@ -155,10 +157,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     const msg = e?.message || String(e);
     const low = msg.toLowerCase();
     if (low.includes("already") || low.includes("used")) {
-      setStatus("Ten link został już użyty.");
-      setErr("Jeśli to zmiana e-maila, potwierdź drugi link z drugiej skrzynki.");
+      setStatus(t("confirm.linkAlreadyUsed"));
+      setErr(t("confirm.linkAlreadyUsedHint"));
     } else {
-      setStatus("Nie udało się potwierdzić konta.");
+      setStatus(t("confirm.failed"));
       setErr(msg);
     }
     back.style.display = "inline-flex";

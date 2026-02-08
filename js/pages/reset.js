@@ -1,5 +1,6 @@
 import { sb } from "../core/supabase.js";
 import { validatePassword } from "../core/auth.js";
+import { initI18n, t } from "../../translation/translation.js";
 
 const status = document.getElementById("status");
 const err = document.getElementById("err");
@@ -25,6 +26,7 @@ function hp(name){
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
+  await initI18n({ withSwitcher: true });
   setErr("");
 
   const code = qp("code") || hp("code");
@@ -35,7 +37,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const otpType = qp("type") || hashType || "recovery";
 
   try{
-    setStatus("Weryfikuję link resetu…");
+    setStatus(t("reset.statusVerifying"));
     let data = null;
 
     if (code) {
@@ -51,24 +53,24 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (error) throw error;
       data = sessionData;
     } else {
-      setStatus("Brak kodu w linku.");
-      setErr("Wygląda na to, że link jest niepełny albo wygasł.");
+      setStatus(t("reset.missingCode"));
+      setErr(t("reset.missingCodeHint"));
       back.style.display = "inline-flex";
       return;
     }
 
     if (!data?.session) {
-      setStatus("Nie udało się rozpocząć resetu.");
-      setErr("Brak sesji po weryfikacji linku.");
+      setStatus(t("reset.startFailed"));
+      setErr(t("reset.noSession"));
       back.style.display = "inline-flex";
       return;
     }
 
-    setStatus("Link OK. Ustaw nowe hasło.");
+    setStatus(t("reset.linkOk"));
     form.style.display = "grid";
   } catch(e){
     console.error(e);
-    setStatus("Nie udało się zweryfikować linku.");
+    setStatus(t("reset.verifyFailed"));
     setErr(e?.message || String(e));
     back.style.display = "inline-flex";
     return;
@@ -80,7 +82,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const a = p1.value;
     const b = p2.value;
 
-    if (a !== b) return setErr("Hasła nie są takie same.");
+    if (a !== b) return setErr(t("reset.errPasswordMismatch"));
     try {
       validatePassword(a);
     } catch (e) {
@@ -88,11 +90,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     try{
-      setStatus("Zapisuję nowe hasło…");
+      setStatus(t("reset.statusSaving"));
       const { error } = await sb().auth.updateUser({ password: a });
       if (error) throw error;
 
-      setStatus("Hasło zmienione. Wracam do logowania…");
+      setStatus(t("reset.statusSaved"));
       form.style.display = "none";
       back.style.display = "inline-flex";
 
@@ -102,7 +104,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       setTimeout(() => (location.href = "index.html"), 900);
     } catch(e){
       console.error(e);
-      setStatus("Błąd zapisu hasła.");
+      setStatus(t("reset.saveFailed"));
       setErr(e?.message || String(e));
     }
   });

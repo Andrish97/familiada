@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Familiada — reset hasła</title>
+  <title data-i18n="reset.title">Familiada — reset hasła</title>
 
   <link rel="icon" href="favicon.ico" />
   <link rel="stylesheet" href="css/base.css?v=4"/>
@@ -17,23 +17,23 @@
   <div class="landing-shell">
     <div class="landing-card">
       <div class="brand">FAMILIADA</div>
-      <div class="sub">Ustaw nowe hasło</div>
+      <div class="sub" data-i18n="reset.subtitle">Ustaw nowe hasło</div>
 
-      <div class="status" id="status">Sprawdzam link…</div>
+      <div class="status" id="status" data-i18n="reset.statusChecking">Sprawdzam link…</div>
       <div class="err" id="err"></div>
 
       <div class="form" id="form" style="display:none">
-        <input id="p1" type="password" placeholder="Nowe hasło" autocomplete="new-password"/>
-        <input id="p2" type="password" placeholder="Powtórz nowe hasło" autocomplete="new-password"/>
+        <input id="p1" type="password" placeholder="Nowe hasło" autocomplete="new-password" data-i18n-placeholder="reset.placeholderNewPassword"/>
+        <input id="p2" type="password" placeholder="Powtórz nowe hasło" autocomplete="new-password" data-i18n-placeholder="reset.placeholderRepeatPassword"/>
 
-        <button class="btn main" id="save" type="button">Zapisz hasło</button>
+        <button class="btn main" id="save" type="button" data-i18n="reset.btnSavePassword">Zapisz hasło</button>
       </div>
 
       <div class="actions">
-        <a class="btn" id="back" href="index.html" style="display:none">Wróć do logowania</a>
+        <a class="btn" id="back" href="index.html" style="display:none" data-i18n="common.backToLogin">Wróć do logowania</a>
       </div>
 
-      <div class="hint">
+      <div class="hint" data-i18n="reset.hint">
         Po zapisaniu hasła wrócisz do logowania.
       </div>
     </div>

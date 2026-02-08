@@ -4,10 +4,12 @@ import { startPresence } from "./presence.js";
 import { createQRController } from "./qr.js";
 import { createScene } from "./scene.js";
 import { createCommandHandler } from "./commands.js";
+import { initI18n } from "../../translation/translation.js";
 
 const $ = (id) => document.getElementById(id);
 
 window.addEventListener("DOMContentLoaded", async () => {
+  await initI18n({ withSwitcher: false });
   initFullscreenButton();
 
   const blackScreen = $("blackScreen");

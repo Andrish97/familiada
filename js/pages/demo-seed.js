@@ -6,11 +6,14 @@ import { sb } from "../core/supabase.js";
 import { importBaseFromUrl } from "./bases-import.js";
 import { importPollFromUrl, importGame } from "./builder-import-export.js";
 import { demoImport4Logos } from "../../logo-editor/js/demo-import.js";
+import { t, getI18nSection } from "../../translation/translation.js";
 
 /* =========================================================
    DEMO URLs (pełne linki)
 ========================================================= */
-const DEMO = "https://www.familiada.online/demo";
+const DEMO = getI18nSection("demo");
+const DEMO_BASE = DEMO.baseUrl || "https://www.familiada.online/demo";
+const DEMO_FILES = DEMO.files || {};
 
 /* =========================================================
    Progress Modal (blokuje UI, styl jak import buildera)
@@ -26,8 +29,8 @@ function ensureProgressModal() {
 
   ov.innerHTML = `
     <div class="modal" style="width:min(640px,94vw)">
-      <div class="mTitle">PRZYWRACANIE DEMO…</div>
-      <div class="mSub" id="demoSeedSub">Nie zamykaj strony. To okno blokuje interfejs do czasu zakończenia.</div>
+      <div class="mTitle">${t("demo.modalTitle")}</div>
+      <div class="mSub" id="demoSeedSub">${t("demo.modalSub")}</div>
 
       <div style="margin-top:12px;display:grid;gap:10px">
         <div class="importRow" style="align-items:center">
@@ -84,7 +87,7 @@ function setProgress({ step, i, n, msg, isError } = {}) {
 async function fetchJson(url) {
   const res = await fetch(url, { cache: "no-store" });
   if (!res.ok) {
-    throw new Error(`DEMO: nie udało się pobrać ${url} (HTTP ${res.status})`);
+    throw new Error(t("demo.fetchFailed", { url, status: res.status }));
   }
   return await res.json();
 }
@@ -94,7 +97,7 @@ async function currentUserId() {
   if (error) throw error;
 
   const uid = data?.user?.id;
-  if (!uid) throw new Error("DEMO: brak zalogowanego użytkownika.");
+  if (!uid) throw new Error(t("demo.noUser"));
   return uid;
 }
 
@@ -116,39 +119,39 @@ export async function seedDemoOnceIfNeeded(userId) {
 
   // Kroki (bez "??")
   const steps = [
-    { label: "Import bazy pytań", fn: async () => importBaseFromUrl(`${DEMO}/base.json`) },
+    { label: t("demo.stepImportBase"), fn: async () => importBaseFromUrl(`${DEMO_BASE}/${DEMO_FILES.base || "base.json"}`) },
     {
-      label: "Import log 4/4 (jedna operacja)",
+      label: t("demo.stepImportLogos"),
       fn: async () =>
         demoImport4Logos(
-          `${DEMO}/logo_text.json`,
-          `${DEMO}/logo_text-pix.json`,
-          `${DEMO}/logo_draw.json`,
-          `${DEMO}/logo_image.json`
+          `${DEMO_BASE}/${DEMO_FILES.logoText || "logo_text.json"}`,
+          `${DEMO_BASE}/${DEMO_FILES.logoTextPix || "logo_text-pix.json"}`,
+          `${DEMO_BASE}/${DEMO_FILES.logoDraw || "logo_draw.json"}`,
+          `${DEMO_BASE}/${DEMO_FILES.logoImage || "logo_image.json"}`
         ),
     },
-    { label: "Import sondażu 1/4 (poll_text_open)", fn: async () => importPollFromUrl(`${DEMO}/poll_text_open.json`) },
-    { label: "Import sondażu 2/4 (poll_text_closed)", fn: async () => importPollFromUrl(`${DEMO}/poll_text_closed.json`) },
-    { label: "Import sondażu 3/4 (poll_points_open)", fn: async () => importPollFromUrl(`${DEMO}/poll_points_open.json`) },
-    { label: "Import sondażu 4/4 (poll_points_closed)", fn: async () => importPollFromUrl(`${DEMO}/poll_points_closed.json`) },
+    { label: t("demo.stepImportPoll1"), fn: async () => importPollFromUrl(`${DEMO_BASE}/${DEMO_FILES.pollTextOpen || "poll_text_open.json"}`) },
+    { label: t("demo.stepImportPoll2"), fn: async () => importPollFromUrl(`${DEMO_BASE}/${DEMO_FILES.pollTextClosed || "poll_text_closed.json"}`) },
+    { label: t("demo.stepImportPoll3"), fn: async () => importPollFromUrl(`${DEMO_BASE}/${DEMO_FILES.pollPointsOpen || "poll_points_open.json"}`) },
+    { label: t("demo.stepImportPoll4"), fn: async () => importPollFromUrl(`${DEMO_BASE}/${DEMO_FILES.pollPointsClosed || "poll_points_closed.json"}`) },
     {
-      label: "Import szkicu 1/3 (prepared)",
+      label: t("demo.stepImportDraft1"),
       fn: async () => {
-        const prepared = await fetchJson(`${DEMO}/prepared.json`);
+        const prepared = await fetchJson(`${DEMO_BASE}/${DEMO_FILES.prepared || "prepared.json"}`);
         await importGame(prepared, uid);
       },
     },
     {
-      label: "Import szkicu 2/3 (poll_points_draft)",
+      label: t("demo.stepImportDraft2"),
       fn: async () => {
-        const pollPtsDraft = await fetchJson(`${DEMO}/poll_points_draft.json`);
+        const pollPtsDraft = await fetchJson(`${DEMO_BASE}/${DEMO_FILES.pollPointsDraft || "poll_points_draft.json"}`);
         await importGame(pollPtsDraft, uid);
       },
     },
     {
-      label: "Import szkicu 3/3 (poll_text_draft)",
+      label: t("demo.stepImportDraft3"),
       fn: async () => {
-        const pollTxtDraft = await fetchJson(`${DEMO}/poll_text_draft.json`);
+        const pollTxtDraft = await fetchJson(`${DEMO_BASE}/${DEMO_FILES.pollTextDraft || "poll_text_draft.json"}`);
         await importGame(pollTxtDraft, uid);
       },
     },
@@ -156,23 +159,23 @@ export async function seedDemoOnceIfNeeded(userId) {
 
   try {
     showProgress(true);
-    setProgress({ step: "Start…", i: 0, n: steps.length, msg: "" });
+    setProgress({ step: t("demo.progressStart"), i: 0, n: steps.length, msg: "" });
 
     for (let idx = 0; idx < steps.length; idx++) {
       const s = steps[idx];
       setProgress({ step: s.label, i: idx, n: steps.length, msg: "" });
       await s.fn();
-      setProgress({ step: s.label, i: idx + 1, n: steps.length, msg: "OK" });
+      setProgress({ step: s.label, i: idx + 1, n: steps.length, msg: t("demo.progressOk") });
     }
 
     // OFF dopiero po pełnym sukcesie
     await setUserDemoFlag(uid, false);
 
     setProgress({
-      step: "Gotowe ✅",
+      step: t("demo.progressDone"),
       i: steps.length,
       n: steps.length,
-      msg: "Demo zostało przywrócone. Możesz korzystać normalnie.",
+      msg: t("demo.progressDoneMsg"),
     });
 
     // zostaw na chwilę, ale nie blokuj w nieskończoność
@@ -191,10 +194,10 @@ export async function seedDemoOnceIfNeeded(userId) {
     }
 
     setProgress({
-      step: "Błąd ❌",
+      step: t("demo.progressError"),
       i: 0,
       n: steps.length,
-      msg: `Błąd: ${e?.message || String(e)}`,
+      msg: t("demo.progressErrorMsg", { error: e?.message || String(e) }),
       isError: true,
     });
 
