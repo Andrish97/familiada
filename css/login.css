@@ -151,3 +151,18 @@ input:focus {
     font-size: 12px;
     min-height: 16px
 }
+
+/* setup mode – mobile safe */
+body.setup-mode .login-card {
+  display: none;
+}
+
+body.setup-mode .setup-card {
+  display: block;
+  pointer-events: auto;
+}
+
+.setup-card button,
+.setup-card input {
+  touch-action: manipulation;
+}
