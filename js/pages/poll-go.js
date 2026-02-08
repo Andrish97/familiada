@@ -1,9 +1,52 @@
 // js/pages/poll-go.js
 import { sb } from "../core/supabase.js";
 import { getUser } from "../core/auth.js";
-import { initI18n } from "../../translation/translation.js";
+import { initI18n, t } from "../../translation/translation.js";
 
-initI18n({ withSwitcher: true });
+initI18n({ withSwitcher: false });
+
+const MSG = {
+  declined: () => t("pollGo.declined"),
+  taskDeclined: () => t("pollGo.taskDeclined"),
+  error: () => t("pollGo.error"),
+  declineTaskFailed: () => t("pollGo.declineTaskFailed"),
+  declineInviteFailed: () => t("pollGo.declineInviteFailed"),
+  subHeading: (owner) => t("pollGo.subHeading", { owner }),
+  taskHeading: (name, owner) => t("pollGo.taskHeading", { name, owner }),
+  taskName: (name) => t("pollGo.taskName", { name }),
+  pollFallback: () => t("pollGo.pollFallback"),
+  ownerSuffix: (owner) => t("pollGo.ownerSuffix", { owner }),
+  mismatch: (email) => t("pollGo.mismatch", { email }),
+  inviteUsed: () => t("pollGo.inviteUsed"),
+  acceptFailed: () => t("pollGo.acceptFailed"),
+  subscriptionActive: () => t("pollGo.subscriptionActive"),
+  inviteAccepted: () => t("pollGo.inviteAccepted"),
+  inviteDeclined: () => t("pollGo.inviteDeclined"),
+  inviteAcceptFailed: () => t("pollGo.inviteAcceptFailed"),
+  emailMissingTitle: () => t("pollGo.emailMissingTitle"),
+  emailMissingText: () => t("pollGo.emailMissingText"),
+  subscribeFailed: () => t("pollGo.subscribeFailed"),
+  subscribeAdded: () => t("pollGo.subscribeAdded"),
+  subscriptionInviteActive: () => t("pollGo.subscriptionInviteActive"),
+  subscribePrompt: () => t("pollGo.subscribePrompt"),
+  acceptInHub: () => t("pollGo.acceptInHub"),
+  hubLabel: () => t("pollGo.hubLabel"),
+  acceptLabel: () => t("pollGo.acceptLabel"),
+  declineLabel: () => t("pollGo.declineLabel"),
+  subscribeLabel: () => t("pollGo.subscribeLabel"),
+  loginToAccept: () => t("pollGo.loginToAccept"),
+  loginLabel: () => t("pollGo.loginLabel"),
+  loginToVote: () => t("pollGo.loginToVote"),
+  taskInviteActive: () => t("pollGo.taskInviteActive"),
+  voteLabel: () => t("pollGo.voteLabel"),
+  missingLinkTitle: () => t("pollGo.missingLinkTitle"),
+  missingLinkText: () => t("pollGo.missingLinkText"),
+  invalidLinkTitle: () => t("pollGo.invalidLinkTitle"),
+  invalidLinkText: () => t("pollGo.invalidLinkText"),
+  inviteUnknown: () => t("pollGo.inviteUnknown"),
+  openInviteFailed: () => t("pollGo.openInviteFailed"),
+  invitationRecipient: () => t("pollGo.invitationRecipient"),
+};
 
 const qs = new URLSearchParams(location.search);
 const taskToken = qs.get("t");
@@ -117,37 +160,37 @@ function openVote(type) {
 async function declineTask() {
   try {
     await sb().rpc("poll_task_decline", { p_token: goToken });
-    setView({ head: "Odrzucono", text: "Zadanie zostało odrzucone." });
+    setView({ head: MSG.declined(), text: MSG.taskDeclined() });
     clearActions();
   } catch (e) {
     console.error(e);
-    setView({ head: "Błąd", text: "Nie udało się odrzucić zadania." });
+    setView({ head: MSG.error(), text: MSG.declineTaskFailed() });
   }
 }
 
 function buildSubHeading(data) {
-  const owner = data?.owner_label ? ` od użytkownika ${data.owner_label}` : "";
-  return `Zaproszenie do subskrypcji${owner}`;
+  const owner = data?.owner_label ? MSG.ownerSuffix(data.owner_label) : "";
+  return MSG.subHeading(owner);
 }
 
 function buildTaskHeading(data) {
-  const name = data?.game_name ? `„${data.game_name}”` : "sondażu";
-  const owner = data?.owner_label ? ` od użytkownika ${data.owner_label}` : "";
-  return `Zaproszenie do głosowania w ${name}${owner}`;
+  const name = data?.game_name ? MSG.taskName(data.game_name) : MSG.pollFallback();
+  const owner = data?.owner_label ? MSG.ownerSuffix(data.owner_label) : "";
+  return MSG.taskHeading(name, owner);
 }
 
 function showMismatch(head, expectedEmail) {
-  const emailText = expectedEmail || "adresata zaproszenia";
+  const emailText = expectedEmail || MSG.invitationRecipient();
   setView({
     head,
-    text: `Zaproszenie Ciebie nie dotyczy, zaloguj się jako ${emailText} i spróbuj ponownie.`,
+    text: MSG.mismatch(emailText),
   });
   clearActions();
   showEmailInput(false);
 }
 
 function showExpired(head) {
-  setView({ head, text: "Zaproszenie zostało wykorzystane." });
+  setView({ head, text: MSG.inviteUsed() });
   clearActions();
   showEmailInput(false);
 }
@@ -156,31 +199,31 @@ async function acceptSubDirect(email) {
   try {
     const { data, error } = await sb().rpc("poll_sub_accept_email", { p_token: goToken, p_email: email });
     if (error) throw error;
-    if (!data?.ok) throw new Error(data?.error || "Nie udało się zaakceptować.");
-    setView({ head: "Subskrypcja aktywna", text: "Zaproszenie zostało zaakceptowane." });
+    if (!data?.ok) throw new Error(data?.error || MSG.acceptFailed());
+    setView({ head: MSG.subscriptionActive(), text: MSG.inviteAccepted() });
     clearActions();
   } catch (e) {
     console.error(e);
-    setView({ head: "Błąd", text: "Nie udało się zaakceptować zaproszenia." });
+    setView({ head: MSG.error(), text: MSG.inviteAcceptFailed() });
   }
 }
 
 async function subscribeByEmail() {
   const email = emailInput?.value.trim();
   if (!email) {
-    setView({ head: "Brak e-maila", text: "Podaj poprawny adres e-mail." });
+    setView({ head: MSG.emailMissingTitle(), text: MSG.emailMissingText() });
     return;
   }
   try {
     const { data, error } = await sb().rpc("poll_go_subscribe_email", { p_token: goToken, p_email: email });
     if (error) throw error;
-    if (!data) throw new Error("Nie udało się zasubskrybować.");
-    setView({ head: "Subskrypcja aktywna", text: "Subskrypcja została dodana." });
+    if (!data) throw new Error(MSG.subscribeFailed());
+    setView({ head: MSG.subscriptionActive(), text: MSG.subscribeAdded() });
     clearActions();
     showEmailInput(false);
   } catch (e) {
     console.error(e);
-    setView({ head: "Błąd", text: "Nie udało się dodać subskrypcji." });
+    setView({ head: MSG.error(), text: MSG.subscribeFailed() });
   }
 }
 
@@ -188,12 +231,12 @@ async function declineSub() {
   try {
     const { data, error } = await sb().rpc("poll_sub_decline", { p_token: goToken });
     if (error) throw error;
-    if (!data?.ok) throw new Error(data?.error || "Nie udało się odrzucić.");
-    setView({ head: "Odrzucono", text: "Zaproszenie zostało odrzucone." });
+    if (!data?.ok) throw new Error(data?.error || MSG.declineInviteFailed());
+    setView({ head: MSG.declined(), text: MSG.inviteDeclined() });
     clearActions();
   } catch (e) {
     console.error(e);
-    setView({ head: "Błąd", text: "Nie udało się odrzucić zaproszenia." });
+    setView({ head: MSG.error(), text: MSG.declineInviteFailed() });
   }
 }
 
@@ -217,9 +260,9 @@ async function handleSubInvite(data, user) {
         return;
       }
 
-      setView({ head, text: "Żeby zaakceptować przejdź do Centrum Sondaży." });
+      setView({ head, text: MSG.acceptInHub() });
       clearActions();
-      addAction("Centrum Sondaży", "gold", redirectToHub);
+      addAction(MSG.hubLabel(), "gold", redirectToHub);
       showEmailInput(false);
       return;
     }
@@ -231,11 +274,11 @@ async function handleSubInvite(data, user) {
       return;
     }
 
-    setView({ head, text: "Zaproszenie do subskrypcji jest aktywne." });
+    setView({ head, text: MSG.subscriptionInviteActive() });
     clearActions();
     showEmailInput(false);
-    addAction("Akceptuj", "gold", async () => acceptSubDirect(userEmail || expectedEmail));
-    addAction("Odrzuć", "danger", async () => declineSub());
+    addAction(MSG.acceptLabel(), "gold", async () => acceptSubDirect(userEmail || expectedEmail));
+    addAction(MSG.declineLabel(), "danger", async () => declineSub());
     return;
   }
 
@@ -245,26 +288,26 @@ async function handleSubInvite(data, user) {
       return;
     }
 
-    setView({ head, text: "Jeśli chcesz zasubskrybować podaj adres email." });
+    setView({ head, text: MSG.subscribePrompt() });
     showEmailInput(true);
     clearActions();
-    addAction("Subskrybuj", "gold", async () => subscribeByEmail());
+    addAction(MSG.subscribeLabel(), "gold", async () => subscribeByEmail());
     return;
   }
 
   if (hasAccountInvite) {
-    setView({ head, text: "Żeby zaakceptować musisz się zalogować." });
+    setView({ head, text: MSG.loginToAccept() });
     clearActions();
-    addAction("Zaloguj", "gold", redirectToLogin);
+    addAction(MSG.loginLabel(), "gold", redirectToLogin);
     showEmailInput(false);
     return;
   }
 
-  setView({ head, text: "Zaproszenie do subskrypcji jest aktywne." });
+  setView({ head, text: MSG.subscriptionInviteActive() });
   clearActions();
   showEmailInput(false);
-  addAction("Akceptuj", "gold", async () => acceptSubDirect(data.subscriber_email));
-  addAction("Odrzuć", "danger", async () => declineSub());
+  addAction(MSG.acceptLabel(), "gold", async () => acceptSubDirect(data.subscriber_email));
+  addAction(MSG.declineLabel(), "danger", async () => declineSub());
 }
 
 async function handleTaskInvite(data, user) {
@@ -285,9 +328,9 @@ async function handleTaskInvite(data, user) {
         return;
       }
 
-      setView({ head, text: "Żeby zaakceptować przejdź do Centrum Sondaży." });
+      setView({ head, text: MSG.acceptInHub() });
       clearActions();
-      addAction("Centrum Sondaży", "gold", redirectToHub);
+      addAction(MSG.hubLabel(), "gold", redirectToHub);
       showEmailInput(false);
       return;
     }
@@ -299,11 +342,11 @@ async function handleTaskInvite(data, user) {
       return;
     }
 
-    setView({ head, text: "Zaproszenie do głosowania jest aktywne." });
+    setView({ head, text: MSG.taskInviteActive() });
     clearActions();
     showEmailInput(false);
-    addAction("Głosuj", "gold", () => openVote(data.poll_type));
-    addAction("Odrzuć", "danger", async () => declineTask());
+    addAction(MSG.voteLabel(), "gold", () => openVote(data.poll_type));
+    addAction(MSG.declineLabel(), "danger", async () => declineTask());
     return;
   }
 
@@ -313,23 +356,23 @@ async function handleTaskInvite(data, user) {
   }
 
   if (hasAccountInvite) {
-    setView({ head, text: "Żeby zagłosować musisz się zalogować." });
+    setView({ head, text: MSG.loginToVote() });
     clearActions();
-    addAction("Zaloguj", "gold", redirectToLogin);
+    addAction(MSG.loginLabel(), "gold", redirectToLogin);
     showEmailInput(false);
     return;
   }
 
-  setView({ head, text: "Zaproszenie do głosowania jest aktywne." });
+  setView({ head, text: MSG.taskInviteActive() });
   clearActions();
   showEmailInput(false);
-  addAction("Głosuj", "gold", () => openVote(data.poll_type));
-  addAction("Odrzuć", "danger", async () => declineTask());
+  addAction(MSG.voteLabel(), "gold", () => openVote(data.poll_type));
+  addAction(MSG.declineLabel(), "danger", async () => declineTask());
 }
 
 async function init() {
   if (!goToken) {
-    setView({ head: "Brak linku", text: "Brakuje tokenu zaproszenia." });
+    setView({ head: MSG.missingLinkTitle(), text: MSG.missingLinkText() });
     return;
   }
 
@@ -338,7 +381,7 @@ async function init() {
     const raw = await resolveToken();
     const data = await hydrateInviteIdentity(raw);
     if (!data?.ok) {
-      setView({ head: "Link nieważny", text: "Link jest nieważny lub nieaktywny." });
+      setView({ head: MSG.invalidLinkTitle(), text: MSG.invalidLinkText() });
       return;
     }
 
@@ -352,10 +395,10 @@ async function init() {
       return;
     }
 
-    setView({ head: "Błąd", text: "Nie udało się rozpoznać zaproszenia." });
+    setView({ head: MSG.error(), text: MSG.inviteUnknown() });
   } catch (e) {
     console.error(e);
-    setView({ head: "Błąd", text: "Nie udało się otworzyć zaproszenia." });
+    setView({ head: MSG.error(), text: MSG.openInviteFailed() });
   }
 }
 
