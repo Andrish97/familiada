@@ -15,6 +15,13 @@ const uk = {
     open: "Відкрити",
     copy: "Копіювати",
     done: "Готово",
+    fullscreen: "На весь екран",
+    a2hsTitle: "Повний екран на iPhone",
+    a2hsHost:
+      "У Safari неможливо примусово увімкнути справжній повний екран. Скористайтеся <b>Поділитися</b> → <b>На головний екран</b>, а потім запускайте як застосунок.",
+    a2hsBuzzer:
+      "У Safari неможливо примусово увімкнути справжній повний екран. Скористайтеся <b>Поділитися</b> → <b>На головний екран</b>.",
+    a2hsOk: "OK",
   },
   auth: {
     emailNotConfirmed: "Підтвердьте e-mail (посилання в пошті).",
@@ -311,6 +318,9 @@ const uk = {
     deviceStatusOffline: "OFFLINE",
     deviceStatusNone: "—",
     deviceSeenNone: "немає",
+    deviceSeenSeconds: "{seconds}с тому",
+    deviceDropped: "Увага: {label} від’єднано. Перевірте інтернет на пристрої.",
+    presenceNoTable: "Немає таблиці device_presence.",
     audioStatusOk: "OK",
     controlPrefix: "Панель керування — ",
     controlTitle: "Панель керування",
@@ -321,7 +331,7 @@ const uk = {
     copyFail: "Не можу скопіювати.",
   },
   demo: {
-    baseUrl: "https://www.familiada.online/demo",
+    baseUrl: "https://www.familiada.online/demo/uk",
     files: {
       base: "base.json",
       logoText: "logo_text.json",
@@ -357,9 +367,20 @@ const uk = {
     progressErrorMsg: "Помилка: {error}",
   },
   display: {
+    title: "Екран як у класичній «Фаміліаді»",
     qrHost: "Ведучий",
     qrBuzzer: "Кнопки",
+    qrHostAlt: "QR Ведучий",
+    qrBuzzerAlt: "QR Кнопки",
     sumLabel: "СУМА",
+  },
+  host: {
+    title: "Familiada — ведучий",
+  },
+  buzzer: {
+    title: "Familiada — buzzer",
+    btnA: "Кнопка A",
+    btnB: "Кнопка B",
   },
 };
 

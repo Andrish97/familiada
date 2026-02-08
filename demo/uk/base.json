@@ -1,0 +1,702 @@
+{
+  "base": { "name": "DEMO - База питань" },
+  "categories": [
+    { "id": "c_root_1", "parent_id": null, "name": "Старт — класика", "ord": 0 },
+    { "id": "c_root_2", "parent_id": null, "name": "Повсякденне життя", "ord": 1 },
+    { "id": "c_root_3", "parent_id": null, "name": "Кухня та їжа", "ord": 2 },
+    { "id": "c_root_4", "parent_id": null, "name": "Подорожі та місто", "ord": 3 },
+    { "id": "c_root_5", "parent_id": null, "name": "Свята та події", "ord": 4 },
+
+    { "id": "c_s_1", "parent_id": "c_root_1", "name": "Родина", "ord": 0 },
+    { "id": "c_s_2", "parent_id": "c_root_1", "name": "Дім", "ord": 1 },
+    { "id": "c_s_3", "parent_id": "c_root_1", "name": "Робота і школа", "ord": 2 },
+
+    { "id": "c_d_1", "parent_id": "c_root_2", "name": "Покупки", "ord": 0 },
+    { "id": "c_d_2", "parent_id": "c_root_2", "name": "Гігієна та порядок", "ord": 1 },
+    { "id": "c_d_3", "parent_id": "c_root_2", "name": "Технології", "ord": 2 },
+
+    { "id": "c_k_1", "parent_id": "c_root_3", "name": "Готування", "ord": 0 },
+    { "id": "c_k_2", "parent_id": "c_root_3", "name": "Смаки та продукти", "ord": 1 },
+    { "id": "c_k_3", "parent_id": "c_root_3", "name": "Їжа поза домом", "ord": 2 },
+
+    { "id": "c_p_1", "parent_id": "c_root_4", "name": "Транспорт", "ord": 0 },
+    { "id": "c_p_2", "parent_id": "c_root_4", "name": "Відпустка", "ord": 1 },
+    { "id": "c_p_3", "parent_id": "c_root_4", "name": "Місто", "ord": 2 },
+
+    { "id": "c_sw_1", "parent_id": "c_root_5", "name": "Різдво", "ord": 0 },
+    { "id": "c_sw_2", "parent_id": "c_root_5", "name": "Весілля", "ord": 1 },
+    { "id": "c_sw_3", "parent_id": "c_root_5", "name": "День народження", "ord": 2 }
+  ],
+  "tags": [
+    { "id": "t_easy", "name": "легкі", "color": "green", "ord": 0 },
+    { "id": "t_classic", "name": "класика", "color": "blue", "ord": 1 },
+    { "id": "t_kids", "name": "діти", "color": "pink", "ord": 2 },
+    { "id": "t_party", "name": "вечірка", "color": "purple", "ord": 3 },
+    { "id": "t_food", "name": "кухня", "color": "orange", "ord": 4 },
+    { "id": "t_city", "name": "місто", "color": "cyan", "ord": 5 },
+    { "id": "t_travel", "name": "подорожі", "color": "teal", "ord": 6 },
+    { "id": "t_work", "name": "робота", "color": "gray", "ord": 7 },
+    { "id": "t_xmas", "name": "свята", "color": "red", "ord": 8 },
+    { "id": "t_poll", "name": "опитування", "color": "yellow", "ord": 9 }
+  ],
+  "category_tags": [
+    { "category_id": "c_s_1", "tag_id": "t_classic" },
+    { "category_id": "c_s_2", "tag_id": "t_easy" },
+    { "category_id": "c_k_1", "tag_id": "t_food" },
+    { "category_id": "c_k_2", "tag_id": "t_food" },
+    { "category_id": "c_p_2", "tag_id": "t_travel" },
+    { "category_id": "c_p_3", "tag_id": "t_city" },
+    { "category_id": "c_sw_1", "tag_id": "t_xmas" },
+    { "category_id": "c_sw_2", "tag_id": "t_party" }
+  ],
+  "questions": [
+    {
+      "id": "q001",
+      "category_id": "c_s_1",
+      "ord": 1,
+      "payload": {
+        "text": "Назви щось, що батьки кажуть дитині, коли вона виходить з дому.",
+        "answers": [
+          { "text": "Бережи себе", "fixed_points": 35 },
+          { "text": "Одягни шапку", "fixed_points": 20 },
+          { "text": "Подзвони, як дійдеш", "fixed_points": 18 },
+          { "text": "Не розмовляй з незнайомцями", "fixed_points": 15 },
+          { "text": "Візьми ключі", "fixed_points": 12 }
+        ]
+      }
+    },
+    {
+      "id": "q002",
+      "category_id": "c_s_2",
+      "ord": 2,
+      "payload": {
+        "text": "Що найчастіше губиться вдома?",
+        "answers": [
+          { "text": "Пульт", "fixed_points": 28 },
+          { "text": "Ключі", "fixed_points": 26 },
+          { "text": "Шкарпетки", "fixed_points": 20 },
+          { "text": "Зарядка", "fixed_points": 14 },
+          { "text": "Окуляри", "fixed_points": 12 }
+        ]
+      }
+    },
+    {
+      "id": "q003",
+      "category_id": "c_s_3",
+      "ord": 3,
+      "payload": {
+        "text": "Назви причину запізнення на роботу/школу.",
+        "answers": [
+          { "text": "Затори", "fixed_points": 34 },
+          { "text": "Проспав", "fixed_points": 30 },
+          { "text": "Автобус поїхав", "fixed_points": 16 },
+          { "text": "Поломка авто", "fixed_points": 12 },
+          { "text": "Дитина / садок", "fixed_points": 8 }
+        ]
+      }
+    },
+
+    {
+      "id": "q004",
+      "category_id": "c_d_1",
+      "ord": 4,
+      "payload": {
+        "text": "Що люди перевіряють у магазині перед покупкою продукту?",
+        "answers": [
+          { "text": "Ціну", "fixed_points": 36 },
+          { "text": "Термін придатності", "fixed_points": 24 },
+          { "text": "Склад", "fixed_points": 18 },
+          { "text": "Розмір / габарити", "fixed_points": 12 },
+          { "text": "Відгуки / оцінки", "fixed_points": 10 }
+        ]
+      }
+    },
+    {
+      "id": "q005",
+      "category_id": "c_d_2",
+      "ord": 5,
+      "payload": {
+        "text": "Що ти робиш першим, коли заходиш додому в дощовий день?",
+        "answers": [
+          { "text": "Знімаю взуття", "fixed_points": 32 },
+          { "text": "Вішаю куртку", "fixed_points": 22 },
+          { "text": "Мию руки", "fixed_points": 18 },
+          { "text": "Роблю чай", "fixed_points": 15 },
+          { "text": "Витираю підлогу", "fixed_points": 13 }
+        ]
+      }
+    },
+    {
+      "id": "q006",
+      "category_id": "c_d_3",
+      "ord": 6,
+      "payload": {
+        "text": "Назви щось, що дратує в телефоні.",
+        "answers": [
+          { "text": "Слабка батарея", "fixed_points": 30 },
+          { "text": "Зависання", "fixed_points": 22 },
+          { "text": "Немає сигналу", "fixed_points": 18 },
+          { "text": "Реклама / спам", "fixed_points": 16 },
+          { "text": "Тріщини на екрані", "fixed_points": 14 }
+        ]
+      }
+    },
+
+    {
+      "id": "q007",
+      "category_id": "c_k_1",
+      "ord": 7,
+      "payload": {
+        "text": "Що може піти не так під час готування?",
+        "answers": [
+          { "text": "Пригорить", "fixed_points": 32 },
+          { "text": "Буде занадто солоне", "fixed_points": 20 },
+          { "text": "Буде сире", "fixed_points": 18 },
+          { "text": "Розвариться", "fixed_points": 16 },
+          { "text": "Соус згорнеться", "fixed_points": 14 }
+        ]
+      }
+    },
+    {
+      "id": "q008",
+      "category_id": "c_k_2",
+      "ord": 8,
+      "payload": {
+        "text": "Назви продукт, який швидко зникає з холодильника.",
+        "answers": [
+          { "text": "Йогурт", "fixed_points": 24 },
+          { "text": "Нарізка", "fixed_points": 22 },
+          { "text": "Сир", "fixed_points": 20 },
+          { "text": "Молоко", "fixed_points": 18 },
+          { "text": "Випічка", "fixed_points": 16 }
+        ]
+      }
+    },
+    {
+      "id": "q009",
+      "category_id": "c_k_3",
+      "ord": 9,
+      "payload": {
+        "text": "Що люди замовляють, коли не знають, що вибрати в ресторані?",
+        "answers": [
+          { "text": "Піца", "fixed_points": 30 },
+          { "text": "Бургер", "fixed_points": 24 },
+          { "text": "Відбивна", "fixed_points": 18 },
+          { "text": "Паста", "fixed_points": 16 },
+          { "text": "Суп дня", "fixed_points": 12 }
+        ]
+      }
+    },
+
+    {
+      "id": "q010",
+      "category_id": "c_p_1",
+      "ord": 10,
+      "payload": {
+        "text": "Назви щось, що робиш, чекаючи на автобус/потяг.",
+        "answers": [
+          { "text": "Дивлюся в телефон", "fixed_points": 38 },
+          { "text": "Слухаю музику", "fixed_points": 18 },
+          { "text": "Перевіряю розклад", "fixed_points": 16 },
+          { "text": "Озираюся", "fixed_points": 14 },
+          { "text": "П'ю каву", "fixed_points": 14 }
+        ]
+      }
+    },
+    {
+      "id": "q011",
+      "category_id": "c_p_2",
+      "ord": 11,
+      "payload": {
+        "text": "Що пакуєш першим у відпустку?",
+        "answers": [
+          { "text": "Одяг", "fixed_points": 34 },
+          { "text": "Косметику", "fixed_points": 20 },
+          { "text": "Документи", "fixed_points": 18 },
+          { "text": "Зарядку", "fixed_points": 16 },
+          { "text": "Взуття", "fixed_points": 12 }
+        ]
+      }
+    },
+    {
+      "id": "q012",
+      "category_id": "c_p_3",
+      "ord": 12,
+      "payload": {
+        "text": "Назви місце в місті, де люди часто поспішають.",
+        "answers": [
+          { "text": "Зупинка", "fixed_points": 28 },
+          { "text": "Вокзал", "fixed_points": 22 },
+          { "text": "Пішохідний перехід", "fixed_points": 18 },
+          { "text": "Центр / площа", "fixed_points": 16 },
+          { "text": "Торговий центр", "fixed_points": 16 }
+        ]
+      }
+    },
+
+    {
+      "id": "q013",
+      "category_id": "c_sw_1",
+      "ord": 13,
+      "payload": {
+        "text": "Що з'являється на столі на Святвечір?",
+        "answers": [
+          { "text": "Борщ", "fixed_points": 30 },
+          { "text": "Вареники", "fixed_points": 24 },
+          { "text": "Короп", "fixed_points": 18 },
+          { "text": "Кутя / маківник", "fixed_points": 16 },
+          { "text": "Компот", "fixed_points": 12 }
+        ]
+      }
+    },
+    {
+      "id": "q014",
+      "category_id": "c_sw_2",
+      "ord": 14,
+      "payload": {
+        "text": "Назви щось, що гості роблять на весіллі, коли грає улюблена пісня.",
+        "answers": [
+          { "text": "Йдуть танцювати", "fixed_points": 40 },
+          { "text": "Співають", "fixed_points": 18 },
+          { "text": "Знімають телефоном", "fixed_points": 16 },
+          { "text": "Аплодують", "fixed_points": 14 },
+          { "text": "Кличуть інших", "fixed_points": 12 }
+        ]
+      }
+    },
+    {
+      "id": "q015",
+      "category_id": "c_sw_3",
+      "ord": 15,
+      "payload": {
+        "text": "Назви подарунок, який часто дарують на день народження.",
+        "answers": [
+          { "text": "Гроші", "fixed_points": 30 },
+          { "text": "Парфуми", "fixed_points": 22 },
+          { "text": "Книга", "fixed_points": 18 },
+          { "text": "Солодощі", "fixed_points": 16 },
+          { "text": "Гаджет", "fixed_points": 14 }
+        ]
+      }
+    },
+
+    {
+      "id": "q016",
+      "category_id": "c_s_2",
+      "ord": 16,
+      "payload": {
+        "text": "Назви місце в домі, яке прибирають найрідше.",
+        "answers": [
+          { "text": "За шафою", "fixed_points": 26 },
+          { "text": "Шафка під мийкою", "fixed_points": 20 },
+          { "text": "Верх шафи", "fixed_points": 18 },
+          { "text": "Підвал", "fixed_points": 18 },
+          { "text": "Балкон", "fixed_points": 18 }
+        ]
+      }
+    },
+    {
+      "id": "q017",
+      "category_id": "c_k_2",
+      "ord": 17,
+      "payload": {
+        "text": "Назви смак, який одні люблять, а інші не терплять.",
+        "answers": [
+          { "text": "Гострий", "fixed_points": 26 },
+          { "text": "Гіркий", "fixed_points": 22 },
+          { "text": "Аніс / лакриця", "fixed_points": 20 },
+          { "text": "Кислий", "fixed_points": 18 },
+          { "text": "М'ятний", "fixed_points": 14 }
+        ]
+      }
+    },
+
+    {
+      "id": "q018",
+      "category_id": "c_d_3",
+      "ord": 18,
+      "payload": {
+        "text": "Який застосунок люди відкривають «на автоматі» в телефоні?",
+        "answers": [
+          { "text": "Повідомлення", "fixed_points": 28 },
+          { "text": "Соцмережі", "fixed_points": 26 },
+          { "text": "Погода", "fixed_points": 18 },
+          { "text": "Карти", "fixed_points": 14 },
+          { "text": "Банк", "fixed_points": 14 }
+        ]
+      }
+    },
+
+    {
+      "id": "q019",
+      "category_id": "c_p_2",
+      "ord": 19,
+      "payload": {
+        "text": "Що люди купують в останню хвилину перед від'їздом?",
+        "answers": [
+          { "text": "Перекуси", "fixed_points": 24 },
+          { "text": "Воду", "fixed_points": 20 },
+          { "text": "Мінікосметику", "fixed_points": 18 },
+          { "text": "Павербанк", "fixed_points": 18 },
+          { "text": "Знеболювальне", "fixed_points": 20 }
+        ]
+      }
+    },
+
+    {
+      "id": "q020",
+      "category_id": "c_d_1",
+      "ord": 20,
+      "payload": {
+        "text": "Назви річ, яку купуєш, хоча не планував.",
+        "answers": [
+          { "text": "Солодощі", "fixed_points": 28 },
+          { "text": "Гаджет зі знижкою", "fixed_points": 22 },
+          { "text": "Свічка / декор", "fixed_points": 18 },
+          { "text": "Косметика", "fixed_points": 16 },
+          { "text": "Газета", "fixed_points": 16 }
+        ]
+      }
+    },
+
+    {
+      "id": "q021",
+      "category_id": "c_s_1",
+      "ord": 21,
+      "payload": {
+        "text": "Назви причину, через яку хтось може не відповісти на дзвінок від родини.",
+        "answers": [
+          { "text": "На роботі", "fixed_points": 30 },
+          { "text": "За кермом", "fixed_points": 22 },
+          { "text": "Спить", "fixed_points": 18 },
+          { "text": "Телефон на беззвучному", "fixed_points": 16 },
+          { "text": "Не почув", "fixed_points": 14 }
+        ]
+      }
+    },
+
+    {
+      "id": "q022",
+      "category_id": "c_sw_1",
+      "ord": 22,
+      "payload": {
+        "text": "Що робиш після того, як почуєш колядку, яка нагадує дитинство?",
+        "answers": [
+          { "text": "Наспівую / співаю", "fixed_points": 34 },
+          { "text": "Згадую", "fixed_points": 24 },
+          { "text": "Посміхаюся", "fixed_points": 18 },
+          { "text": "Зворушуюся", "fixed_points": 14 },
+          { "text": "Додаю гучність", "fixed_points": 10 }
+        ]
+      }
+    },
+
+    {
+      "id": "q023",
+      "category_id": "c_root_2",
+      "ord": 23,
+      "payload": {
+        "text": "Назви щось, що піднімає настрій після поганого дня.",
+        "answers": [
+          { "text": "Їжа", "fixed_points": 26 },
+          { "text": "Сон", "fixed_points": 22 },
+          { "text": "Музика", "fixed_points": 18 },
+          { "text": "Прогулянка", "fixed_points": 18 },
+          { "text": "Розмова", "fixed_points": 16 }
+        ]
+      }
+    },
+
+    {
+      "id": "q024",
+      "category_id": "c_root_2",
+      "ord": 24,
+      "payload": {
+        "text": "Який звук у домі означає, що щось пішло не так?",
+        "answers": [
+          { "text": "Дзвін розбитого скла", "fixed_points": 34 },
+          { "text": "Сигналізація / датчик", "fixed_points": 22 },
+          { "text": "Тиша після шуму", "fixed_points": 18 },
+          { "text": "Крик", "fixed_points": 16 },
+          { "text": "Скрегіт гальм (ззовні)", "fixed_points": 10 }
+        ]
+      }
+    },
+
+    {
+      "id": "q025",
+      "category_id": "c_p_3",
+      "ord": 25,
+      "payload": {
+        "text": "Назви місце в місті, де найлегше загубити знайомого.",
+        "answers": [
+          { "text": "Торговий центр", "fixed_points": 30 },
+          { "text": "Площа / центр", "fixed_points": 22 },
+          { "text": "Концерт", "fixed_points": 20 },
+          { "text": "Вокзал", "fixed_points": 16 },
+          { "text": "Фестиваль / ярмарок", "fixed_points": 12 }
+        ]
+      }
+    },
+
+    {
+      "id": "q026",
+      "category_id": "c_k_1",
+      "ord": 26,
+      "payload": {
+        "text": "Що робиш, коли в рецепті є інгредієнт, якого не маєш?",
+        "answers": [
+          { "text": "Замінюю іншим", "fixed_points": 34 },
+          { "text": "Йду до магазину", "fixed_points": 26 },
+          { "text": "Пропускаю", "fixed_points": 18 },
+          { "text": "Змінюю страву", "fixed_points": 14 },
+          { "text": "Питаю в інтернеті", "fixed_points": 8 }
+        ]
+      }
+    },
+
+    {
+      "id": "q027",
+      "category_id": "c_s_3",
+      "ord": 27,
+      "payload": {
+        "text": "Що можеш сказати, щоб ввічливо завершити розмову на роботі?",
+        "answers": [
+          { "text": "Повертаюсь до завдання", "fixed_points": 30 },
+          { "text": "У мене зустріч", "fixed_points": 24 },
+          { "text": "Відпишу пізніше", "fixed_points": 20 },
+          { "text": "Мені треба подзвонити", "fixed_points": 16 },
+          { "text": "У мене дедлайн", "fixed_points": 10 }
+        ]
+      }
+    },
+
+    {
+      "id": "q028",
+      "category_id": "c_d_2",
+      "ord": 28,
+      "payload": {
+        "text": "Назви річ, яку люди відкладають «на потім» у прибиранні.",
+        "answers": [
+          { "text": "Вікна", "fixed_points": 28 },
+          { "text": "Прасування", "fixed_points": 24 },
+          { "text": "Пилосос", "fixed_points": 18 },
+          { "text": "Порядок у шафі", "fixed_points": 16 },
+          { "text": "Миття духовки", "fixed_points": 14 }
+        ]
+      }
+    },
+
+    {
+      "id": "q029",
+      "category_id": "c_sw_2",
+      "ord": 29,
+      "payload": {
+        "text": "Що найчастіше йде не так на весіллі?",
+        "answers": [
+          { "text": "Хтось запізнюється", "fixed_points": 24 },
+          { "text": "Неправильна музика", "fixed_points": 20 },
+          { "text": "Забагато алкоголю", "fixed_points": 22 },
+          { "text": "Проблеми з їжею", "fixed_points": 18 },
+          { "text": "Погода", "fixed_points": 16 }
+        ]
+      }
+    },
+
+    {
+      "id": "q030",
+      "category_id": "c_sw_3",
+      "ord": 30,
+      "payload": {
+        "text": "Назви щось, що робиш, коли забув про чийсь день народження.",
+        "answers": [
+          { "text": "Одразу дзвоню", "fixed_points": 28 },
+          { "text": "Пишу повідомлення", "fixed_points": 22 },
+          { "text": "Купую швидкий подарунок", "fixed_points": 20 },
+          { "text": "Домовляюся про каву", "fixed_points": 18 },
+          { "text": "Виправдовуюся", "fixed_points": 12 }
+        ]
+      }
+    },
+
+    {
+      "id": "q031",
+      "category_id": "c_root_2",
+      "ord": 31,
+      "payload": {
+        "text": "Опитування: Яке слово асоціюється з 'комфорт'?",
+        "answers": []
+      }
+    },
+    {
+      "id": "q032",
+      "category_id": "c_root_3",
+      "ord": 32,
+      "payload": {
+        "text": "Опитування: Яку страву з'їси без вагань?",
+        "answers": []
+      }
+    },
+    {
+      "id": "q033",
+      "category_id": "c_root_4",
+      "ord": 33,
+      "payload": {
+        "text": "Опитування: Що найгірше в подорожі?",
+        "answers": []
+      }
+    },
+
+    {
+      "id": "q034",
+      "category_id": "c_k_2",
+      "ord": 34,
+      "payload": {
+        "text": "Назви інгредієнт, який дехто додає до всього.",
+        "answers": [
+          { "text": "Часник", "fixed_points": 26 },
+          { "text": "Сир", "fixed_points": 22 },
+          { "text": "Кетчуп", "fixed_points": 20 },
+          { "text": "Чилі", "fixed_points": 18 },
+          { "text": "Майонез", "fixed_points": 14 }
+        ]
+      }
+    },
+    {
+      "id": "q035",
+      "category_id": "c_p_1",
+      "ord": 35,
+      "payload": {
+        "text": "Назви щось, що робиш, коли запізнюєшся і біжиш на зупинку.",
+        "answers": [
+          { "text": "Постійно дивлюся на годинник", "fixed_points": 28 },
+          { "text": "Пишу, що запізнююсь", "fixed_points": 22 },
+          { "text": "Біжу щосили", "fixed_points": 20 },
+          { "text": "Махаю водієві", "fixed_points": 16 },
+          { "text": "Задихаюся і бурчу", "fixed_points": 14 }
+        ]
+      }
+    },
+    {
+      "id": "q036",
+      "category_id": "c_s_2",
+      "ord": 36,
+      "payload": {
+        "text": "Що буває приклеєним до холодильника?",
+        "answers": [
+          { "text": "Магніти", "fixed_points": 28 },
+          { "text": "Список покупок", "fixed_points": 22 },
+          { "text": "Дитячі малюнки", "fixed_points": 20 },
+          { "text": "Записка з номером", "fixed_points": 16 },
+          { "text": "План тижня", "fixed_points": 14 }
+        ]
+      }
+    },
+
+    {
+      "id": "q037",
+      "category_id": "c_s_3",
+      "ord": 37,
+      "payload": {
+        "text": "Назви щось, що робиш, щоб виглядати зайнятим.",
+        "answers": [
+          { "text": "Друкую на клавіатурі", "fixed_points": 28 },
+          { "text": "Дивлюся в монітор", "fixed_points": 22 },
+          { "text": "Швидко йду з папірцем", "fixed_points": 18 },
+          { "text": "Говорю про проєкт", "fixed_points": 16 },
+          { "text": "Роблю нотатки", "fixed_points": 16 }
+        ]
+      }
+    },
+
+    {
+      "id": "q038",
+      "category_id": "c_d_1",
+      "ord": 38,
+      "payload": {
+        "text": "Що люди купують «бо гарно пахне»?",
+        "answers": [
+          { "text": "Свічку", "fixed_points": 30 },
+          { "text": "Парфуми", "fixed_points": 26 },
+          { "text": "Кондиціонер для білизни", "fixed_points": 18 },
+          { "text": "Квіти", "fixed_points": 14 },
+          { "text": "Косметику", "fixed_points": 12 }
+        ]
+      }
+    },
+
+    {
+      "id": "q039",
+      "category_id": "c_sw_1",
+      "ord": 39,
+      "payload": {
+        "text": "Назви щось, що роблять «прямо перед Святвечором».",
+        "answers": [
+          { "text": "Прибирають дім", "fixed_points": 30 },
+          { "text": "Прикрашають ялинку", "fixed_points": 26 },
+          { "text": "Готують", "fixed_points": 20 },
+          { "text": "Купують останні подарунки", "fixed_points": 14 },
+          { "text": "Декорують", "fixed_points": 10 }
+        ]
+      }
+    },
+
+    {
+      "id": "q040",
+      "category_id": "c_p_2",
+      "ord": 40,
+      "payload": {
+        "text": "Назви річ, яка псує відпустку, якщо про неї забути.",
+        "answers": [
+          { "text": "Документи", "fixed_points": 34 },
+          { "text": "Телефон", "fixed_points": 20 },
+          { "text": "Зарядка", "fixed_points": 18 },
+          { "text": "Гаманець", "fixed_points": 16 },
+          { "text": "Ліки", "fixed_points": 12 }
+        ]
+      }
+    },
+
+    {
+      "id": "q041",
+      "category_id": "c_root_1",
+      "ord": 41,
+      "payload": {
+        "text": "Опитування: Що є найбільш «польським» у повсякденному житті?",
+        "answers": []
+      }
+    }
+  ],
+  "question_tags": [
+    { "question_id": "q001", "tag_id": "t_classic" },
+    { "question_id": "q001", "tag_id": "t_easy" },
+
+    { "question_id": "q002", "tag_id": "t_easy" },
+    { "question_id": "q002", "tag_id": "t_classic" },
+
+    { "question_id": "q003", "tag_id": "t_work" },
+    { "question_id": "q003", "tag_id": "t_classic" },
+
+    { "question_id": "q004", "tag_id": "t_easy" },
+    { "question_id": "q004", "tag_id": "t_classic" },
+
+    { "question_id": "q006", "tag_id": "t_classic" },
+
+    { "question_id": "q007", "tag_id": "t_food" },
+    { "question_id": "q008", "tag_id": "t_food" },
+    { "question_id": "q009", "tag_id": "t_food" },
+
+    { "question_id": "q010", "tag_id": "t_travel" },
+    { "question_id": "q011", "tag_id": "t_travel" },
+    { "question_id": "q012", "tag_id": "t_city" },
+
+    { "question_id": "q013", "tag_id": "t_xmas" },
+    { "question_id": "q014", "tag_id": "t_party" },
+    { "question_id": "q015", "tag_id": "t_party" },
+
+    { "question_id": "q031", "tag_id": "t_poll" },
+    { "question_id": "q032", "tag_id": "t_poll" },
+    { "question_id": "q033", "tag_id": "t_poll" },
+    { "question_id": "q041", "tag_id": "t_poll" }
+  ]
+}

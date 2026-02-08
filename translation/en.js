@@ -15,6 +15,13 @@ const en = {
     open: "Open",
     copy: "Copy",
     done: "Done",
+    fullscreen: "Fullscreen",
+    a2hsTitle: "Fullscreen on iPhone",
+    a2hsHost:
+      "Safari can't force true fullscreen. Use <b>Share</b> → <b>Add to Home Screen</b>, then launch it like an app.",
+    a2hsBuzzer:
+      "Safari can't force true fullscreen. Use <b>Share</b> → <b>Add to Home Screen</b>.",
+    a2hsOk: "OK",
   },
   auth: {
     emailNotConfirmed: "Confirm your email (link in inbox).",
@@ -311,6 +318,9 @@ const en = {
     deviceStatusOffline: "OFFLINE",
     deviceStatusNone: "—",
     deviceSeenNone: "none",
+    deviceSeenSeconds: "{seconds}s ago",
+    deviceDropped: "Warning: {label} disconnected. Check the device internet connection.",
+    presenceNoTable: "Missing device_presence table.",
     audioStatusOk: "OK",
     controlPrefix: "Control panel — ",
     controlTitle: "Control panel",
@@ -321,7 +331,7 @@ const en = {
     copyFail: "Can't copy.",
   },
   demo: {
-    baseUrl: "https://www.familiada.online/demo",
+    baseUrl: "https://www.familiada.online/demo/en",
     files: {
       base: "base.json",
       logoText: "logo_text.json",
@@ -357,9 +367,20 @@ const en = {
     progressErrorMsg: "Error: {error}",
   },
   display: {
+    title: "Display like classic Familiada",
     qrHost: "Host",
     qrBuzzer: "Buzzer",
+    qrHostAlt: "QR Host",
+    qrBuzzerAlt: "QR Buzzer",
     sumLabel: "SUM",
+  },
+  host: {
+    title: "Familiada — host",
+  },
+  buzzer: {
+    title: "Familiada — buzzer",
+    btnA: "Buzzer A",
+    btnB: "Buzzer B",
   },
 };
 

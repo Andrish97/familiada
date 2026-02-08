@@ -10,7 +10,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
   <meta property="og:type" content="website"/>
-  <title>Familiada — buzzer</title>
+  <title data-i18n="buzzer.title">Familiada — buzzer</title>
 
   <link rel="icon" href="favicon.ico"/>
   <link rel="stylesheet" href="css/base.css"/>
@@ -22,13 +22,13 @@
 
 <div class="a2hs" onclick="document.documentElement.classList.remove('showA2HS')">
   <div class="a2hsCard" onclick="event.stopPropagation()">
-    <h3 class="a2hsTitle">Pełny ekran na iPhone</h3>
-    <p class="a2hsText">
+    <h3 class="a2hsTitle" data-i18n="common.a2hsTitle">Pełny ekran na iPhone</h3>
+    <p class="a2hsText" data-i18n-html="common.a2hsBuzzer">
       W Safari nie da się wymusić prawdziwego pełnego ekranu.
       Użyj <b>Udostępnij</b> → <b>Do ekranu początkowego</b>.
     </p>
     <button class="btn a2hsClose" type="button"
-      onclick="document.documentElement.classList.remove('showA2HS')">OK</button>
+      onclick="document.documentElement.classList.remove('showA2HS')" data-i18n="common.a2hsOk">OK</button>
   </div>
 </div>
 
@@ -36,7 +36,7 @@
   <article style="display:none">
     <p>Buzzer</p>
   </article>
-  <button class="fsBtn" id="btnFS" type="button" aria-label="Pełny ekran" title="Pełny ekran">
+  <button class="fsBtn" id="btnFS" type="button" aria-label="Pełny ekran" title="Pełny ekran" data-i18n-aria-label="common.fullscreen" data-i18n-title="common.fullscreen">
     <span class="ico" id="fsIco" aria-hidden="true">▢</span>
   </button>
 
@@ -45,8 +45,8 @@
 
   <!-- ON / PUSHED: przyciski -->
   <div class="arena" id="arena" hidden>
-    <button class="btnRing red" id="btnA" type="button" aria-label="Buzzer A"></button>
-    <button class="btnRing blue" id="btnB" type="button" aria-label="Buzzer B"></button>
+    <button class="btnRing red" id="btnA" type="button" aria-label="Buzzer A" data-i18n-aria-label="buzzer.btnA"></button>
+    <button class="btnRing blue" id="btnB" type="button" aria-label="Buzzer B" data-i18n-aria-label="buzzer.btnB"></button>
   </div>
 </body>
 </html>

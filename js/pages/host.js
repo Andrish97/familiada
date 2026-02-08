@@ -1,10 +1,13 @@
 // /familiada/js/pages/host.js
+import { initI18n, setUiLang } from "../../translation/translation.js";
 import { sb } from "../core/supabase.js";
 
 /* ========= PARAMS ========= */
 const qs = new URLSearchParams(location.search);
 const gameId = qs.get("id");
 const key = qs.get("key");
+
+initI18n({ withSwitcher: true });
 
 /* ========= DOM ========= */
 const paperText1 = document.getElementById("paperText1");
@@ -479,6 +482,12 @@ async function handleCommand(lineRaw) {
   const line = String(lineRaw ?? "").trim();
   if (!line) return;
   const up = line.toUpperCase();
+
+  if (up.startsWith("LANG")) {
+    const lang = line.slice("LANG".length).trim();
+    await setUiLang(lang, { persist: true, updateUrl: true, apply: true });
+    return;
+  }
 
   // COLOR_A <color>
   if (up.startsWith("COLOR_A")) {

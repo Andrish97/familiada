@@ -1,0 +1,99 @@
+{
+  "game": {
+    "name": "DEMO — Closed points poll (results)",
+    "type": "poll_points",
+    "status": "closed"
+  },
+  "questions": [
+    {
+      "text": "Which ice cream flavor do you choose?",
+      "answers": [
+        { "text": "Vanilla", "fixed_points": 20 },
+        { "text": "Chocolate", "fixed_points": 35 },
+        { "text": "Strawberry", "fixed_points": 25 },
+        { "text": "Pistachio", "fixed_points": 20 }
+      ]
+    },
+    {
+      "text": "Which weekend activity?",
+      "answers": [
+        { "text": "Cinema", "fixed_points": 30 },
+        { "text": "Walk", "fixed_points": 25 },
+        { "text": "Meet friends", "fixed_points": 25 },
+        { "text": "Games", "fixed_points": 20 }
+      ]
+    },
+    {
+      "text": "Best morning drink?",
+      "answers": [
+        { "text": "Coffee", "fixed_points": 40 },
+        { "text": "Tea", "fixed_points": 25 },
+        { "text": "Water", "fixed_points": 20 },
+        { "text": "Juice", "fixed_points": 15 }
+      ]
+    },
+    {
+      "text": "Where would you like to go?",
+      "answers": [
+        { "text": "Mountains", "fixed_points": 25 },
+        { "text": "Sea", "fixed_points": 35 },
+        { "text": "City", "fixed_points": 20 },
+        { "text": "Countryside", "fixed_points": 20 }
+      ]
+    },
+    {
+      "text": "What do you choose for lunch?",
+      "answers": [
+        { "text": "Pizza", "fixed_points": 35 },
+        { "text": "Pasta", "fixed_points": 25 },
+        { "text": "Soup", "fixed_points": 20 },
+        { "text": "Salad", "fixed_points": 20 }
+      ]
+    },
+    {
+      "text": "Favorite sport?",
+      "answers": [
+        { "text": "Football", "fixed_points": 30 },
+        { "text": "Basketball", "fixed_points": 20 },
+        { "text": "Running", "fixed_points": 30 },
+        { "text": "Swimming", "fixed_points": 20 }
+      ]
+    },
+    {
+      "text": "What do you prefer in the evening?",
+      "answers": [
+        { "text": "Movie", "fixed_points": 30 },
+        { "text": "Series", "fixed_points": 30 },
+        { "text": "Book", "fixed_points": 20 },
+        { "text": "Music", "fixed_points": 20 }
+      ]
+    },
+    {
+      "text": "Best season?",
+      "answers": [
+        { "text": "Spring", "fixed_points": 25 },
+        { "text": "Summer", "fixed_points": 35 },
+        { "text": "Autumn", "fixed_points": 20 },
+        { "text": "Winter", "fixed_points": 20 }
+      ]
+    },
+    {
+      "text": "How do you spend your free time?",
+      "answers": [
+        { "text": "Sport", "fixed_points": 30 },
+        { "text": "Games", "fixed_points": 25 },
+        { "text": "Music", "fixed_points": 25 },
+        { "text": "Cooking", "fixed_points": 20 }
+      ]
+    },
+    {
+      "text": "Choose a pet",
+      "answers": [
+        { "text": "Dog", "fixed_points": 35 },
+        { "text": "Cat", "fixed_points": 35 },
+        { "text": "Fish", "fixed_points": 15 },
+        { "text": "Hamster", "fixed_points": 15 }
+      ]
+    }
+  ]
+}

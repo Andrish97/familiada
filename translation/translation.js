@@ -47,6 +47,9 @@ export async function setUiLang(lang, { persist = true, updateUrl = true, apply 
   document.documentElement.lang = currentLang;
   if (apply) applyTranslations(document);
   updateSwitcherLabel();
+  window.dispatchEvent(
+    new CustomEvent("i18n:lang", { detail: { lang: currentLang } })
+  );
 }
 
 export async function initI18n({ withSwitcher = true, apply = true } = {}) {
@@ -79,6 +82,11 @@ export function applyTranslations(root = document) {
   root.querySelectorAll("[data-i18n]").forEach((el) => {
     const key = el.getAttribute("data-i18n");
     if (key) el.textContent = t(key);
+  });
+
+  root.querySelectorAll("[data-i18n-html]").forEach((el) => {
+    const key = el.getAttribute("data-i18n-html");
+    if (key) el.innerHTML = t(key);
   });
 
   const attrMap = [
