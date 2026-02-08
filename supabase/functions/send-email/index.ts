@@ -97,36 +97,53 @@ serve(async (req) => {
     console.log("has token_hash_new", !!payload.email_data.token_hash_new);
     console.log("email_data.old_email", (payload.email_data as { old_email?: string }).old_email);
     console.log("email_data.new_email", (payload.email_data as { new_email?: string }).new_email);
+    console.log("redirect_to", payload.email_data.redirect_to);
 
-    if (type === "email_change") {
-      const currentEmail = payload.user.email;
-      const currentEmailNormalized = String(currentEmail || "").trim().toLowerCase();
+
+  if (type === "email_change" || type === "email_change_current" || type === "email_change_new") {
+      const currentEmail = String(payload.user.email || "").trim();
+      const currentEmailNormalized = currentEmail.toLowerCase();
+
       const redirect = payload.email_data.redirect_to || "";
       let targetEmail = "";
       let targetEmailNormalized = "";
+
       try {
-        const url = new URL(redirect);
+        const url = new URL(redirect, PUBLIC_SITE_URL); // ✅ base URL
         targetEmail = (url.searchParams.get("to") || "").trim();
         targetEmailNormalized = targetEmail.toLowerCase();
       } catch {
-        // ignore invalid URL
+        // ignore
       }
+
+      console.log("redirect_to", redirect);
+      console.log("targetEmail", targetEmail);
+
       const tokenHash = payload.email_data.token_hash || "";
       const tokenHashNew = payload.email_data.token_hash_new || "";
+
       const subject = subjectFor("email_change", lang);
+
+      // linki (fallbacki na wypadek zamiany nazw przez Supabase)
       const linkCurrent =
         `${PUBLIC_SITE_URL}/confirm.html?token_hash=${encodeURIComponent(tokenHashNew || tokenHash)}&type=email_change&lang=${lang}`;
       const linkTarget =
         `${PUBLIC_SITE_URL}/confirm.html?token_hash=${encodeURIComponent(tokenHash || tokenHashNew)}&type=email_change&lang=${lang}`;
 
+      // ✅ CURRENT mail zawsze na payload.user.email
       if (currentEmail) {
         await sendEmail(currentEmail, subject, renderEmailChange(lang, linkCurrent));
       }
+
+      // ✅ NEW mail tylko jeśli znamy adres z redirect_to?to=
+      // I to działa zarówno dla email_change_new, jak i dla “pojedynczego” email_change
       if (targetEmail && targetEmailNormalized !== currentEmailNormalized) {
         await sendEmail(targetEmail, subject, renderEmailChange(lang, linkTarget));
       }
+
       return json({ ok: true });
     }
+
 
     const actionLink = buildActionLink(payload, lang);
     const subject = subjectFor(type, lang);
@@ -148,7 +165,7 @@ serve(async (req) => {
 function pickLang(payload: HookPayload): EmailLang {
   const redirect = payload.email_data.redirect_to || "";
   try {
-    const url = new URL(redirect);
+    const url = new URL(redirect, PUBLIC_SITE_URL);
     const lang = (url.searchParams.get("lang") || "").toLowerCase();
     if (lang === "uk") return "uk";
     if (lang === "en") return "en";
