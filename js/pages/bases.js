@@ -4,7 +4,7 @@
 import { sb } from "../core/supabase.js";
 import { requireAuth, signOut } from "../core/auth.js";
 import { confirmModal } from "../core/modal.js";
-import { initI18n } from "../../translation/translation.js";
+import { initI18n, t } from "../../translation/translation.js";
 
 initI18n({ withSwitcher: true });
 
@@ -88,14 +88,14 @@ function setMsg(el, t) {
 }
 
 function safeName(s) {
-  return (String(s ?? "").trim() || "Nowa baza pytań").slice(0, 80);
+  return (String(s ?? "").trim() || t("bases.defaults.name")).slice(0, 80);
 }
 
 function safeDownloadName(name) {
-  const base = String(name || "baza")
+  const base = String(name || t("bases.defaults.slug"))
     .replace(/[^\w\d\- ]+/g, "")
     .trim()
-    .slice(0, 40) || "baza";
+    .slice(0, 40) || t("bases.defaults.slug");
   return `${base}.json`;
 }
 
@@ -262,17 +262,17 @@ async function renameBase(baseId, newName) {
 
 async function deleteBase(base) {
   const ok = await confirmModal({
-    title: "Usuń bazę",
-    text: `Na pewno usunąć "${base.name}"? Tego nie da się cofnąć.`,
-    okText: "Usuń",
-    cancelText: "Anuluj",
+    title: t("bases.delete.title"),
+    text: t("bases.delete.text", { name: base.name }),
+    okText: t("bases.delete.ok"),
+    cancelText: t("bases.delete.cancel"),
   });
   if (!ok) return;
 
   const { error } = await sb().from("question_bases").delete().eq("id", base.id);
   if (error) {
     console.warn("[bases] delete error:", error);
-    alert("Nie udało się usunąć.");
+    alert(t("bases.delete.failed"));
   }
 }
 
@@ -287,7 +287,7 @@ async function exportBase(baseId, onProgress) {
     .eq("id", baseId)
     .single();
   if (bErr) throw bErr;
-  prog("Eksport: baza…", 1, 5, "");
+  prog(t("bases.export.steps.base"), 1, 5, "");
 
   const { data: cats, error: cErr } = await sb()
     .from("qb_categories")
@@ -295,7 +295,7 @@ async function exportBase(baseId, onProgress) {
     .eq("base_id", baseId)
     .order("ord", { ascending: true });
   if (cErr) throw cErr;
-  prog("Eksport: foldery…", 2, 5, "");
+  prog(t("bases.export.steps.folders"), 2, 5, "");
 
   const { data: qs, error: qErr } = await sb()
     .from("qb_questions")
@@ -303,7 +303,12 @@ async function exportBase(baseId, onProgress) {
     .eq("base_id", baseId)
     .order("ord", { ascending: true });
   if (qErr) throw qErr;
-  prog("Eksport: pytania…", 3, 5, `Liczba: ${(qs || []).length}`);
+  prog(
+    t("bases.export.steps.questions"),
+    3,
+    5,
+    t("bases.export.count", { count: (qs || []).length })
+  );
   
   const { data: tags, error: tErr } = await sb()
     .from("qb_tags")
@@ -311,7 +316,12 @@ async function exportBase(baseId, onProgress) {
     .eq("base_id", baseId)
     .order("ord", { ascending: true });
   if (tErr) throw tErr;
-  prog("Eksport: pytania…", 3, 5, `Liczba: ${(qs || []).length}`);
+  prog(
+    t("bases.export.steps.questions"),
+    3,
+    5,
+    t("bases.export.count", { count: (qs || []).length })
+  );
   
   // powiązania tagów (po pytaniach z tej bazy)
   const qIds = (qs || []).map((q) => q.id);
@@ -324,10 +334,15 @@ async function exportBase(baseId, onProgress) {
     if (qtErr) throw qtErr;
     qtags = qt || [];
   }
-  prog("Eksport: tagi pytań…", 5, 5, `Liczba: ${(qtags || []).length}`);
+  prog(
+    t("bases.export.steps.questionTags"),
+    5,
+    5,
+    t("bases.export.count", { count: (qtags || []).length })
+  );
   
   return {
-    base: { name: baseRow?.name ?? "Baza" },
+    base: { name: baseRow?.name ?? t("bases.defaults.baseLabel") },
     categories: cats || [],
     tags: tags || [],
     questions: (qs || []).map((q) => ({
@@ -350,19 +365,19 @@ async function importBase(payload, onProgress) {
   };
   
   if (!isValidImportPayload(payload)) {
-    throw new Error("Zły format pliku (brak base / questions). ");
+    throw new Error(t("bases.import.invalidFormat"));
   }
 
-  const baseName = safeName(payload.base?.name || "Nowa baza pytań");
+  const baseName = safeName(payload.base?.name || t("bases.defaults.name"));
   const base = await createBase(baseName);
-  prog("Import: tworzenie bazy…", 1, 5, "");
+  prog(t("bases.import.steps.createBase"), 1, 5, "");
 
   const oldToNewCat = new Map();
   const oldToNewTag = new Map();
   const oldToNewQ = new Map();
 
   // 1) Kategorie – w kolejności topologicznej (rooty → dzieci)
-  prog("Import: kategorie…", 2, 5, "");
+  prog(t("bases.import.steps.categories"), 2, 5, "");
   const cats = Array.isArray(payload.categories) ? payload.categories : [];
   const byParent = new Map();
   for (const c of cats) {
@@ -384,7 +399,7 @@ async function importBase(payload, onProgress) {
         .insert({
           base_id: base.id,
           parent_id: parentNewId,
-          name: String(c.name || "Kategoria").slice(0, 80),
+          name: String(c.name || t("bases.defaults.category")).slice(0, 80),
           ord: Number(c.ord) || 0,
         }, { defaultToNull: false })
         .select("id")
@@ -398,14 +413,14 @@ async function importBase(payload, onProgress) {
   await insertCatSubtree(null, null);
 
   // 2) Tagi
-  prog("Import: tagi…", 3, 5, "");
+  prog(t("bases.import.steps.tags"), 3, 5, "");
   const tags = Array.isArray(payload.tags) ? payload.tags : [];
   for (const t of tags) {
     const { data, error } = await sb()
       .from("qb_tags")
       .insert({
         base_id: base.id,
-        name: String(t.name || "Tag").slice(0, 40),
+        name: String(t.name || t("bases.defaults.tag")).slice(0, 40),
         color: String(t.color || "gray").slice(0, 24),
         ord: Number(t.ord) || 0,
       }, { defaultToNull: false })
@@ -417,7 +432,7 @@ async function importBase(payload, onProgress) {
 
   // 3) Pytania
   const qs = Array.isArray(payload.questions) ? payload.questions : [];
-  prog("Import: pytania…", 0, qs.length || 0, "");
+  prog(t("bases.import.steps.questions"), 0, qs.length || 0, "");
   for (const q of qs) {
     const q = qs[qi];
     const newCatId = q.category_id ? (oldToNewCat.get(q.category_id) || null) : null;
@@ -434,11 +449,16 @@ async function importBase(payload, onProgress) {
       .single();
     if (error) throw error;
     oldToNewQ.set(q.id, data.id);
-    prog("Import: pytania…", qi + 1, qs.length || 0, String(q?.payload?.text || "").slice(0, 60));
+    prog(
+      t("bases.import.steps.questions"),
+      qi + 1,
+      qs.length || 0,
+      String(q?.payload?.text || "").slice(0, 60)
+    );
   }
 
   // 4) Powiązania tagów
-  prog("Import: powiązania tagów…", 4, 5, "");
+  prog(t("bases.import.steps.questionTags"), 4, 5, "");
   const qtags = Array.isArray(payload.question_tags) ? payload.question_tags : [];
   const rows = [];
   for (const r of qtags) {
@@ -453,7 +473,7 @@ async function importBase(payload, onProgress) {
   }
 
   // 5) Powiązania tagów kategorii (folderów)
-  prog("Import: tagi folderów…", 5, 5, "");
+  prog(t("bases.import.steps.categoryTags"), 5, 5, "");
   const ctags = Array.isArray(payload.category_tags) ? payload.category_tags : [];
   const crows = [];
   for (const r of ctags) {
@@ -472,7 +492,7 @@ async function importBase(payload, onProgress) {
 
 /* ================= Share modal ================= */
 function roleLabel(role) {
-  return role === "editor" ? "EDYCJA" : "ODCZYT";
+  return role === "editor" ? t("bases.roles.editorBadge") : t("bases.roles.viewerBadge");
 }
 
 function emailLooksOk(s) {
@@ -539,7 +559,7 @@ async function renderShareList() {
     .slice()
     .sort((a, b) => String(a.username || a.email || "").localeCompare(String(b.username || b.email || "")));
   if (!rows.length) {
-    shareList.innerHTML = `<div style="opacity:.75">Brak udostępnień.</div>`;
+    shareList.innerHTML = `<div style="opacity:.75">${t("bases.share.empty")}</div>`;
     return;
   }
 
@@ -553,10 +573,10 @@ async function renderShareList() {
         ${escapeHtml(r.username || r.email || "—")}
       </div>
       <select class="inp" data-role>
-        <option value="editor">Edycja</option>
-        <option value="viewer">Przeglądanie</option>
+        <option value="editor">${t("bases.share.roleEditor")}</option>
+        <option value="viewer">${t("bases.share.roleViewer")}</option>
       </select>
-      <button class="btn sm" data-remove type="button">Usuń</button>
+      <button class="btn sm" data-remove type="button">${t("bases.share.remove")}</button>
     `;
     const sel = row.querySelector("[data-role]");
     sel.value = r.role || "viewer";
@@ -571,7 +591,7 @@ async function renderShareList() {
       });
       if (e2 || ok !== true) {
         console.warn("[bases] share update failed:", e2);
-        setMsg(shareMsg, "Nie udało się");
+        setMsg(shareMsg, t("bases.share.failed"));
         sel.value = r.role || "viewer";
         return;
       }
@@ -580,10 +600,10 @@ async function renderShareList() {
 
     row.querySelector("[data-remove]").addEventListener("click", async () => {
       const ok = await confirmModal({
-        title: "Usuń udostępnienie",
-        text: `Na pewno usunąć dostęp dla: ${r.email}?`,
-        okText: "Usuń",
-        cancelText: "Anuluj",
+        title: t("bases.share.removeTitle"),
+        text: t("bases.share.removeText", { email: r.email }),
+        okText: t("bases.share.removeOk"),
+        cancelText: t("bases.share.removeCancel"),
       });
       if (!ok) return;
 
@@ -594,7 +614,7 @@ async function renderShareList() {
       });
       if (e3 || ok2 !== true) {
         console.warn("[bases] revoke failed:", e3);
-        setMsg(shareMsg, "Nie udało się");
+        setMsg(shareMsg, t("bases.share.failed"));
         return;
       }
       await renderShareList();
@@ -613,14 +633,17 @@ async function shareAdd() {
 
   const email = await resolveLoginToEmail(raw);
   if (!emailLooksOk(email)) {
-    setMsg(shareMsg, raw.includes("@") ? "Niepoprawny e-mail" : "Nie znam takiej nazwy użytkownika");
+    setMsg(
+      shareMsg,
+      raw.includes("@") ? t("bases.share.invalidEmail") : t("bases.share.unknownUser")
+    );
     return;
   }
 
   // właściciel próbuje udostępnić samemu sobie
   const me = String(currentUser?.email || "").trim().toLowerCase();
   if (me && email === me) {
-  setMsg(shareMsg, "Jesteś właścicielem tej bazy");
+    setMsg(shareMsg, t("bases.share.owner"));
     return;
   }
 
@@ -633,12 +656,12 @@ async function shareAdd() {
   // Maskowanie szczegółów: tylko sukces / nie udało się
   if (error || ok !== true) {
     console.warn("[bases] share_base_by_email failed:", error);
-    setMsg(shareMsg, "Nie udało się");
+    setMsg(shareMsg, t("bases.share.failed"));
     return;
   }
 
   shareEmail.value = "";
-  setMsg(shareMsg, "Udostępniono");
+  setMsg(shareMsg, t("bases.share.success"));
   await renderShareList();
 }
 
@@ -669,7 +692,7 @@ function render() {
       
       const fromLabel = ownerUn || ownerMail || "—";
       badges.push({
-        text: `Od: ${fromLabel}`,
+        text: t("bases.badges.from", { name: fromLabel }),
         title: ownerMail ? ownerMail : fromLabel, // email tylko jako szczegół (tooltip)
         kind: "from",
       });
@@ -678,7 +701,7 @@ function render() {
       const isEdit = b.sharedRole === "editor";
       badges.push({
         text: isEdit ? "✎" : "👁",
-        title: isEdit ? "Masz dostęp z edycją" : "Masz dostęp tylko do odczytu",
+        title: isEdit ? t("bases.badges.editAccess") : t("bases.badges.viewAccess"),
         kind: "role",
       });
     } else {
@@ -686,14 +709,14 @@ function render() {
       const n = Number(b.shareCount || 0);
       badges.push(
         n > 0
-          ? { text: `👥 ${n}`, title: `Udostępnione innym (${n})`, kind: "mine" }
-          : { text: "👤", title: "Nieudostępnione", kind: "mine" }
+          ? { text: `👥 ${n}`, title: t("bases.badges.sharedOthers", { count: n }), kind: "mine" }
+          : { text: "👤", title: t("bases.badges.notShared"), kind: "mine" }
       );
     }
 
     const canDelete = isOwner(b);
     const deleteBtn = canDelete
-      ? `<button class="x" type="button" title="Usuń">✕</button>`
+      ? `<button class="x" type="button" title="${t("bases.actions.remove")}">✕</button>`
       : ``;
 
     const badgesHtml = badges.length
@@ -711,7 +734,7 @@ function render() {
     tile.innerHTML = `
       ${deleteBtn}
       <div>
-        <div class="name">${escapeHtml(b.name || "Baza")}</div>
+        <div class="name">${escapeHtml(b.name || t("bases.defaults.baseLabel"))}</div>
         ${badgesHtml}
       </div>
     `;
@@ -747,13 +770,13 @@ function render() {
   };
 
   // ===== SEKCJA: Moje bazy =====
-  grid.appendChild(mkTitle("Moje bazy"));
+  grid.appendChild(mkTitle(t("bases.sections.mine")));
 
   const tNew = document.createElement("div");
   tNew.className = "addCard";
   tNew.innerHTML = `
     <div class="plus">＋</div>
-    <div class="name">Nowa baza</div>
+    <div class="name">${t("bases.sections.newBase")}</div>
   `;
   tNew.addEventListener("click", () => openNameModalCreate());
   grid.appendChild(tNew);
@@ -761,12 +784,12 @@ function render() {
   for (const b of ownedBases) renderTile(b);
 
   // ===== SEKCJA: Udostępnione =====
-  grid.appendChild(mkTitle("Udostępnione"));
+  grid.appendChild(mkTitle(t("bases.sections.shared")));
   
   if (!sharedBases.length) {
     const empty = document.createElement("div");
     empty.className = "emptyNote";
-    empty.textContent = "Brak udostępnionych baz.";
+    empty.textContent = t("bases.sections.sharedEmpty");
     grid.appendChild(empty);
   } else {
     for (const b of sharedBases) renderTile(b);
@@ -786,8 +809,8 @@ function escapeHtml(s) {
 function openNameModalCreate() {
   nameMode = "create";
   setMsg(nameMsg, "");
-  nameTitle.textContent = "Nowa baza";
-  nameSub.textContent = "Podaj nazwę bazy.";
+  nameTitle.textContent = t("bases.nameModal.titleCreate");
+  nameSub.textContent = t("bases.nameModal.subCreate");
   nameInp.value = "";
   show(nameOverlay, true);
   setTimeout(() => nameInp.focus(), 0);
@@ -796,8 +819,8 @@ function openNameModalCreate() {
 function openNameModalRename(base) {
   nameMode = "rename";
   setMsg(nameMsg, "");
-  nameTitle.textContent = "Zmień nazwę";
-  nameSub.textContent = "Zmień nazwę bazy.";
+  nameTitle.textContent = t("bases.nameModal.titleRename");
+  nameSub.textContent = t("bases.nameModal.subRename");
   nameInp.value = base?.name || "";
   show(nameOverlay, true);
   setTimeout(() => nameInp.select(), 0);
@@ -826,7 +849,7 @@ async function nameOk() {
     closeNameModal();
   } catch (e) {
     console.warn("[bases] name ok error:", e);
-    setMsg(nameMsg, "Nie udało się");
+    setMsg(nameMsg, t("bases.nameModal.failed"));
   }
 }
 
@@ -846,7 +869,7 @@ function readFileAsText(file) {
   return new Promise((resolve, reject) => {
     const r = new FileReader();
     r.onload = () => resolve(String(r.result || ""));
-    r.onerror = () => reject(r.error || new Error("Nie udało się wczytać pliku"));
+    r.onerror = () => reject(r.error || new Error(t("bases.import.fileReadFailed")));
     r.readAsText(file);
   });
 }
@@ -858,14 +881,14 @@ async function importFromJsonText(txt) {
   try {
     payload = JSON.parse(txt);
   } catch {
-    setMsg(importMsg, "Zły JSON");
+    setMsg(importMsg, t("bases.import.invalidJson"));
     return;
   }
 
   // UI start
   showProgBlock(importProg, true);
   setProgUi(importProgStep, importProgCount, importProgBar, importProgMsg, {
-    step: "Import: start…",
+    step: t("bases.import.steps.start"),
     i: 0,
     n: Array.isArray(payload?.questions) ? payload.questions.length : 0,
     msg: "",
@@ -882,7 +905,7 @@ async function importFromJsonText(txt) {
     // UWAGA: w bases.js masz lokalne importBase(payload) – jeśli wolisz, możesz przejść na import z bases-import.js.
     const newId = await importBase(payload, ({ step, i, n, msg } = {}) => {
       setProgUi(importProgStep, importProgCount, importProgBar, importProgMsg, {
-        step: step || "Import…",
+        step: step || t("bases.import.steps.default"),
         i,
         n,
         msg,
@@ -894,16 +917,16 @@ async function importFromJsonText(txt) {
     render();
     setButtonsState();
 
-    setMsg(importMsg, "Zaimportowano");
+    setMsg(importMsg, t("bases.import.success"));
     closeImportModal();
   } catch (e) {
     console.warn("[bases] import error:", e);
-    setMsg(importMsg, "Nie udało się");
+    setMsg(importMsg, t("bases.import.failed"));
     setProgUi(importProgStep, importProgCount, importProgBar, importProgMsg, {
-      step: "Błąd ❌",
+      step: t("bases.import.errorStep"),
       i: 0,
       n: 1,
-      msg: e?.message || "Import nie powiódł się.",
+      msg: e?.message || t("bases.import.errorMsg"),
     });
   } finally {
     showProgBlock(importProg, false);
@@ -945,10 +968,10 @@ btnExport?.addEventListener("click", async () => {
   if (btnExport?.disabled) return;
 
   show(exportJsonOverlay, true);
-  if (exportJsonSub) exportJsonSub.textContent = "Nie zamykaj strony. Trwa przygotowanie pliku.";
+  if (exportJsonSub) exportJsonSub.textContent = t("bases.exportModal.subtitle");
 
   setProgUi(exportJsonStep, exportJsonCount, exportJsonBar, exportJsonMsg, {
-    step: "Eksport: start…",
+    step: t("bases.export.steps.start"),
     i: 0,
     n: 6,
     msg: "",
@@ -963,7 +986,12 @@ btnExport?.addEventListener("click", async () => {
     };
 
     const out = await exportBase(b.id, onProgress);
-    onProgress({ step: "Pobieranie…", i: 6, n: 6, msg: safeDownloadName(b.name) });
+    onProgress({
+      step: t("bases.export.steps.download"),
+      i: 6,
+      n: 6,
+      msg: safeDownloadName(b.name),
+    });
 
     downloadJson(safeDownloadName(b.name), out);
 
@@ -971,10 +999,10 @@ btnExport?.addEventListener("click", async () => {
   } catch (e) {
     console.warn("[bases] export error:", e);
     setProgUi(exportJsonStep, exportJsonCount, exportJsonBar, exportJsonMsg, {
-      step: "Błąd ❌",
+      step: t("bases.export.errorStep"),
       i: 0,
       n: 1,
-      msg: e?.message || "Nie udało się wyeksportować.",
+      msg: e?.message || t("bases.export.failed"),
     });
     setTimeout(() => show(exportJsonOverlay, false), 1200);
   } finally {
@@ -987,7 +1015,7 @@ btnImport?.addEventListener("click", () => openImportModal());
 btnImportFile?.addEventListener("click", async () => {
   const file = importFile?.files?.[0];
   if (!file) {
-    setMsg(importMsg, "Wybierz plik");
+    setMsg(importMsg, t("bases.import.pickFile"));
     return;
   }
   const txt = await readFileAsText(file);
@@ -997,7 +1025,7 @@ btnImportFile?.addEventListener("click", async () => {
 btnImportJson?.addEventListener("click", async () => {
   const txt = String(importTa?.value || "").trim();
   if (!txt) {
-    setMsg(importMsg, "Wklej JSON");
+    setMsg(importMsg, t("bases.import.pasteJson"));
     return;
   }
   await importFromJsonText(txt);
