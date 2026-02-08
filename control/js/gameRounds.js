@@ -1,4 +1,5 @@
 import { playSfx, createSfxMixer, getSfxDuration } from "../../js/core/sfx.js";
+import { t } from "../../translation/translation.js";
 
 function nInt(v, d = 0) {
   const x = Number.parseInt(String(v ?? ""), 10);
@@ -6,67 +7,60 @@ function nInt(v, d = 0) {
 }
 
 // Wszystkie teksty w jednym miejscu – łatwo edytować
+const roundsMsg = (key, vars) => t(`control.roundsMsg.${key}`, vars);
+const roundsHost = (key, vars) => t(`control.roundsHost.${key}`, vars);
+
 const ROUNDS_MSG = {
   // --- STANY OGÓLNE ---
-  GAME_READY: "Gra gotowa. Ekran oczekuje na start.",
-  INTRO_ALREADY: "Intro gry zostało już odtworzone.",
-  INTRO_RUNNING: "Intro uruchomione.",
-  INTRO_DONE: "Intro zakończone. Możesz rozpocząć rundę.",
-  NO_MORE_QUESTIONS:
-    "Brak dostępnych pytań dla kolejnych rund (wszystkie zużyte).",
+  get GAME_READY() { return roundsMsg("gameReady"); },
+  get INTRO_ALREADY() { return roundsMsg("introAlready"); },
+  get INTRO_RUNNING() { return roundsMsg("introRunning"); },
+  get INTRO_DONE() { return roundsMsg("introDone"); },
+  get NO_MORE_QUESTIONS() { return roundsMsg("noMoreQuestions"); },
 
   // --- POJEDYNEK ---
-  DUEL_WAIT: "Czekam na przycisk.",
-  DUEL_RETRY: "Powtórzenie naciśnięcia.",
-  DUEL_FIRST_CLICK: (team) =>
-    `Pierwsza: drużyna ${team}. Zatwierdź albo powtórz.`,
-  DUEL_FIRST_ANSWER: (team) =>
-    `Pojedynek – pierwsza odpowiada: drużyna ${team}.`,
-  DUEL_NEXT_TEAM: (team) => `Teraz odpowiada drużyna ${team}.`,
-  DUEL_RESET: (team) =>
-    `Obie odpowiedzi pudło – nowy cykl. Zaczyna drużyna ${team}.`,
-  DUEL_RESULT_WIN: (team) => `Pojedynek wygrywa drużyna ${team}.`,
+  get DUEL_WAIT() { return roundsMsg("duelWait"); },
+  get DUEL_RETRY() { return roundsMsg("duelRetry"); },
+  DUEL_FIRST_CLICK: (team) => roundsMsg("duelFirstClick", { team }),
+  DUEL_FIRST_ANSWER: (team) => roundsMsg("duelFirstAnswer", { team }),
+  DUEL_NEXT_TEAM: (team) => roundsMsg("duelNextTeam", { team }),
+  DUEL_RESET: (team) => roundsMsg("duelReset", { team }),
+  DUEL_RESULT_WIN: (team) => roundsMsg("duelResultWin", { team }),
 
   // --- ROZGRYWKA / KONTROLA ---
-  PLAY_CONTROL: (team) => `Gra drużyna ${team}.`,
-  PLAY_NO_CONTROL: "Brak drużyny grającej.",
-  PLAY_PASS_ONLY_DURING: "Pytanie można oddać tylko podczas rozgrywki.",
-  PLAY_NO_MORE_PASS: "Nie możesz już oddać pytania w tej rundzie.",
-  PLAY_PASSED: (team) => `Pytanie oddane. Teraz gra drużyna ${team}.`,
+  PLAY_CONTROL: (team) => roundsMsg("playControl", { team }),
+  get PLAY_NO_CONTROL() { return roundsMsg("playNoControl"); },
+  get PLAY_PASS_ONLY_DURING() { return roundsMsg("playPassOnlyDuring"); },
+  get PLAY_NO_MORE_PASS() { return roundsMsg("playNoMorePass"); },
+  PLAY_PASSED: (team) => roundsMsg("playPassed", { team }),
 
   // --- KRADZIEŻ ---
-  STEAL_NO_CONTROL:
-    "Nie mogę uruchomić kradzieży – brak drużyny grającej.",
-  STEAL_PROMPT: (team) =>
-    `Kradzież: odpowiada drużyna ${team}. Kliknij odpowiedź lub „X (pudło)”.`,
-  STEAL_CHANCE: (team) => `Szansa na kradzież. Odpowiada drużyna ${team}.`,
-  STEAL_SUCCESS: "Kradzież udana – bank przechodzi do drużyny kradnącej.",
-  STEAL_FAIL: "Kradzież nietrafiona – bank zostaje przy drużynie grającej.",
+  get STEAL_NO_CONTROL() { return roundsMsg("stealNoControl"); },
+  STEAL_PROMPT: (team) => roundsMsg("stealPrompt", { team }),
+  STEAL_CHANCE: (team) => roundsMsg("stealChance", { team }),
+  get STEAL_SUCCESS() { return roundsMsg("stealSuccess"); },
+  get STEAL_FAIL() { return roundsMsg("stealFail"); },
 
   // --- ODSŁANIANIE PO RUNDZIE ---
-  REVEAL_NONE: "Brak odpowiedzi do odsłonięcia.",
-  REVEAL_INFO:
-    "Klikaj brakujące odpowiedzi, żeby pokazać je na wyświetlaczu (bez zmiany punktów).",
-  REVEAL_DONE: "Wszystkie odpowiedzi odsłonięte. Koniec rundy.",
+  get REVEAL_NONE() { return roundsMsg("revealNone"); },
+  get REVEAL_INFO() { return roundsMsg("revealInfo"); },
+  get REVEAL_DONE() { return roundsMsg("revealDone"); },
 
   // --- KONIEC RUNDY ---
-  ROUND_NO_CONTROL_BANK:
-    "Brak drużyny grającej – nie mogę przyznać banku.",
-  ROUND_BANK: (bank, team) =>
-    `Koniec rundy. ${bank} pkt dla drużyny ${team}.`,
+  get ROUND_NO_CONTROL_BANK() { return roundsMsg("roundNoControlBank"); },
+  ROUND_BANK: (bank, team) => roundsMsg("roundBank", { bank, team }),
   ROUND_BANK_MULT: (bank, team, mult, awarded) =>
-    `Koniec rundy. ${bank} pkt dla drużyny ${team} (x${mult} = ${awarded} pkt).`,
-  ROUND_TO_FINAL: "Rundy zakończone. Przechodzimy do finału.",
-  ROUND_NEXT: "Runda zakończona. Możesz rozpocząć kolejną rundę.",
-  ROUND_LAST: "To była ostatnia runda. Przejdź do zakończenia gry.",
+    roundsMsg("roundBankMult", { bank, team, mult, awarded }),
+  get ROUND_TO_FINAL() { return roundsMsg("roundToFinal"); },
+  get ROUND_NEXT() { return roundsMsg("roundNext"); },
+  get ROUND_LAST() { return roundsMsg("roundLast"); },
 
   // --- TIMER ---
-  TIMER_TIMEOUT_X: "Czas minął – pudło.",
+  get TIMER_TIMEOUT_X() { return roundsMsg("timerTimeoutX"); },
 
   // --- KONIEC GRY ---
-  GAME_END_DRAW: (a, b) => `Koniec gry. Remis ${a}:${b}.`,
-  GAME_END_WIN: (team, pts) =>
-    `Koniec gry. Wygrywa drużyna ${team} z wynikiem ${pts} pkt.`,
+  GAME_END_DRAW: (a, b) => roundsMsg("gameEndDraw", { a, b }),
+  GAME_END_WIN: (team, pts) => roundsMsg("gameEndWin", { team, pts }),
 };
 
 export function createRounds({ ui, store, devices, display, loadQuestions, loadAnswers }) {
@@ -83,12 +77,12 @@ function hostTitleForRounds() {
   const r = store.state.rounds || {};
   const rn = nInt(r.roundNo, 1);
 
-  if (r.phase === "DUEL" && r.duel?.enabled) return `RUNDA ${rn} — PRZYCISK`;
-  if (r.phase === "DUEL" && !r.duel?.enabled) return `RUNDA ${rn} — POJEDYNEK`;
-  if (r.phase === "PLAY") return `RUNDA ${rn} — ROZGRYWKA`;
-  if (r.phase === "STEAL") return `RUNDA ${rn} — KRADZIEŻ`;
-  if (r.phase === "REVEAL") return `RUNDA ${rn} — ODSŁANIANIE`;
-  return `RUNDA ${rn}`;
+  if (r.phase === "DUEL" && r.duel?.enabled) return roundsHost("roundTitleDuelBuzzer", { round: rn });
+  if (r.phase === "DUEL" && !r.duel?.enabled) return roundsHost("roundTitleDuel", { round: rn });
+  if (r.phase === "PLAY") return roundsHost("roundTitlePlay", { round: rn });
+  if (r.phase === "STEAL") return roundsHost("roundTitleSteal", { round: rn });
+  if (r.phase === "REVEAL") return roundsHost("roundTitleReveal", { round: rn });
+  return roundsHost("roundTitleDefault", { round: rn });
 }
 
 function hostBodyQuestion() {
@@ -133,7 +127,7 @@ function hostUpdate() {
   const q = hostBodyQuestion();
 
   // lewa: nagłówek + pytanie
-  const left = [hostTag("b", title), "", q || "—"];
+  const left = [hostTag("b", title), "", q || t("control.dash")];
 
   // prawa: odpowiedzi
   const right = hostAnswersLines();
@@ -548,7 +542,7 @@ function hostUpdate() {
     r.question = null;
     r.answers = [];
     r.revealed = new Set();
-    ui.setRoundQuestion("—");
+    ui.setRoundQuestion(t("control.dash"));
     ui.renderRoundAnswers?.([], r.revealed);
     hostUpdate();
     
@@ -595,9 +589,9 @@ function hostUpdate() {
 
     clearTimer3();
 
-    ui.setRoundQuestion(obj.text || "—");
+    ui.setRoundQuestion(obj.text || t("control.dash"));
     ui.renderRoundAnswers(r.answers, r.revealed);
-    ui.setMsg("msgRoundsRoundStart", "Startuję rundę – leci dźwięk przejścia.");
+    ui.setMsg("msgRoundsRoundStart", roundsMsg("roundStartSfx"));
     ui.setRoundsHud(r);
 
     updatePlayControls();
@@ -1462,7 +1456,7 @@ function hostUpdate() {
     ui.showRoundsStep(r.step || "r_ready");
 
     if (r.question && Array.isArray(r.answers) && r.answers.length > 0) {
-      ui.setRoundQuestion(r.question.text || "—");
+      ui.setRoundQuestion(r.question.text || t("control.dash"));
       ui.renderRoundAnswers?.(r.answers, r.revealed);
     }
 
