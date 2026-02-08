@@ -1,6 +1,8 @@
 // familiada/logo-editor/js/image.js
 // Tryb: IMAGE -> duży obraz + kadr 26:11 -> przetwarzanie -> PIX 150x70
 
+import { t } from "../../translation/translation.js";
+
 export function initImageEditor(ctx) {
   const TYPE_PIX = "PIX_150x70";
 
@@ -170,6 +172,10 @@ export function initImageEditor(ctx) {
     syncImgButtonLabels();
   }
 
+  window.addEventListener("i18n:lang", () => {
+    syncImgButtonLabels();
+  });
+
   function readSettings(){
     return {
       bright: Number(rngBright?.value ?? 0),
@@ -212,12 +218,12 @@ export function initImageEditor(ctx) {
     const white = rngWhite?.value ?? 100;
     const ditherAmt = rngDitherAmt?.value ?? 0;
   
-    setBtnLabel("bright",   `Jasność: ${fmtSignedInt(bright)}`);
-    setBtnLabel("contrast", `Kontrast: ${fmtSignedInt(contrast)}`);
-    setBtnLabel("gamma",    `Gamma: ${fmtGamma(gamma)}`);
-    setBtnLabel("black",    `Czerń: ${Math.round(Number(black) || 0)}`);
-    setBtnLabel("white",    `Biel: ${Math.round(Number(white) || 0)}`);
-    setBtnLabel("dither",   `Dither: ${fmtDither(ditherAmt)}`);
+    setBtnLabel("bright",   t("logoEditor.image.brightnessValue", { value: fmtSignedInt(bright) }));
+    setBtnLabel("contrast", t("logoEditor.image.contrastValue", { value: fmtSignedInt(contrast) }));
+    setBtnLabel("gamma",    t("logoEditor.image.gammaValue", { value: fmtGamma(gamma) }));
+    setBtnLabel("black",    t("logoEditor.image.blackValue", { value: Math.round(Number(black) || 0) }));
+    setBtnLabel("white",    t("logoEditor.image.whiteValue", { value: Math.round(Number(white) || 0) }));
+    setBtnLabel("dither",   t("logoEditor.image.ditherValue", { value: fmtDither(ditherAmt) }));
   
     // opcjonalnie: zmienny label dla invert (ale invert nie jest w btns, tylko checkbox)
     // tu nic nie robimy
@@ -489,7 +495,7 @@ export function initImageEditor(ctx) {
 
     await new Promise((resolve, reject) => {
       img.onload = resolve;
-      img.onerror = () => reject(new Error("Nie udało się wczytać obrazu."));
+      img.onerror = () => reject(new Error(t("logoEditor.image.loadError")));
       img.src = imgUrl;
     });
 

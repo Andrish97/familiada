@@ -3,11 +3,17 @@
 
 import { sb } from "../../js/core/supabase.js";
 import { requireAuth, signOut } from "../../js/core/auth.js";
+import { guardDesktopOnly } from "../../js/core/device-guard.js";
+import { initI18n, t, withLangParam } from "../../translation/translation.js";
 
 import { initTextEditor } from "./text.js";
 import { initTextPixEditor } from "./text-pix.js";
 import { initDrawEditor } from "./draw.js";
 import { initImageEditor } from "./image.js";
+
+window.addEventListener("error", (e) => {
+  console.error("window error", e.error || e.message);
+});
 
 /* =========================================================
    CONSTS
@@ -143,11 +149,26 @@ function markDirty(){
 }
 function clearDirty(){ editorDirty = false; }
 
+function getDefaultLogoName() {
+  return t("logoEditor.defaults.logoName");
+}
+
+function getDefaultLogoFileName() {
+  return t("logoEditor.defaults.logoFileName");
+}
+
+function getLocale() {
+  const lang = document.documentElement.lang || "pl";
+  if (lang.startsWith("en")) return "en-US";
+  if (lang.startsWith("uk")) return "uk-UA";
+  return "pl-PL";
+}
+
 function fmtDate(iso){
   try{
     const d = new Date(iso);
     if (Number.isNaN(d.getTime())) return "";
-    return d.toLocaleString("pl-PL", {
+    return d.toLocaleString(getLocale(), {
       year:"numeric", month:"2-digit", day:"2-digit",
       hour:"2-digit", minute:"2-digit"
     });
@@ -198,11 +219,11 @@ function esc(s){
 
 function confirmCloseIfDirty(){
   if (!editorDirty) return true;
-  return confirm("Jeśli teraz zamkniesz, zmiany nie zostaną zapisane.");
+  return confirm(t("logoEditor.confirm.closeUnsaved"));
 }
 
 function makeUniqueName(baseName, excludeId = null){
-  const base = String(baseName || "").trim() || "Logo";
+  const base = String(baseName || "").trim() || getDefaultLogoName();
   const used = new Set(
     (logos || [])
       .filter(l => !excludeId || l.id !== excludeId)
@@ -303,7 +324,7 @@ function armHistoryTrap(){
     }
 
     // gdy mamy zmiany — cofanie przechwytujemy
-    const ok = confirm("Masz niezapisane zmiany. Cofnąć i je utracić?");
+    const ok = confirm(t("logoEditor.confirm.backUnsaved"));
     if (ok){
       // pozwól cofnąć: najprościej zrobić przejście wstecz jeszcze raz,
       // ale popstate już zaszło. Żeby nie robić pętli, ignorujemy kolejny pop.
@@ -368,14 +389,14 @@ function exportLogoToFile(l){
     const rows = l?.payload?.layers?.[0]?.rows || [];
     out = {
       kind: "GLYPH",
-      name: l.name || "Logo",
+      name: l.name || getDefaultLogoName(),
       payload: { rows }
     };
   } else if (type.includes("PIX")){
     const p = l?.payload || {};
     out = {
       kind: "PIX",
-      name: l.name || "Logo",
+      name: l.name || getDefaultLogoName(),
       payload: {
         w: Number(p.w) || DOT_W,
         h: Number(p.h) || DOT_H,
@@ -385,13 +406,14 @@ function exportLogoToFile(l){
     };
   } else {
     // fallback: nie powinno się zdarzyć, ale nie psujemy eksportu
-    out = { kind: "GLYPH", name: l.name || "Logo", payload: { rows: [] } };
+    out = { kind: "GLYPH", name: l.name || getDefaultLogoName(), payload: { rows: [] } };
   }
 
   const blob = new Blob([JSON.stringify(out, null, 2)], { type: "application/json" });
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
-  a.download = `${(l.name || "logo").replace(/[^\w\d\- ]+/g,"").trim() || "logo"}.json`;
+  const fallbackName = getDefaultLogoFileName();
+  a.download = `${(l.name || fallbackName).replace(/[^\w\d\- ]+/g,"").trim() || fallbackName}.json`;
   document.body.appendChild(a);
   a.click();
   a.remove();
@@ -400,7 +422,7 @@ function exportLogoToFile(l){
 
 function parseImportJson(text){
   let obj = null;
-  try { obj = JSON.parse(text); } catch { throw new Error("To nie jest poprawny JSON."); }
+  try { obj = JSON.parse(text); } catch { throw new Error(t("logoEditor.errors.invalidJson")); }
 
   // Obsługujemy 2 formaty:
   // (A) transfer: { kind:"GLYPH|PIX", name, payload:{ rows... / bits_b64... } }
@@ -413,7 +435,7 @@ function parseImportJson(text){
     (typeRaw.includes("GLYPH") ? "GLYPH" : "") ||
     (typeRaw.includes("PIX") ? "PIX" : "");
 
-  const name = String(obj?.name || "Logo").trim() || "Logo";
+  const name = String(obj?.name || getDefaultLogoName()).trim() || getDefaultLogoName();
   const p = obj?.payload || {};
 
   if (kind === "GLYPH"){
@@ -432,14 +454,14 @@ function parseImportJson(text){
     const w = Number(p.w) || DOT_W;
     const h = Number(p.h) || DOT_H;
     if (w !== DOT_W || h !== DOT_H) {
-      throw new Error(`Zły rozmiar PIX. Oczekuję ${DOT_W}×${DOT_H}, a jest ${w}×${h}.`);
+      throw new Error(t("logoEditor.errors.pixSize", { expectedW: DOT_W, expectedH: DOT_H, actualW: w, actualH: h }));
     }
     const bits_b64 = String(p.bits_b64 || "");
-    if (!bits_b64) throw new Error("Brak bits_b64 w imporcie.");
+    if (!bits_b64) throw new Error(t("logoEditor.errors.missingBits"));
     return { kind: "PIX", name, pixPayload: { w, h, format: "BITPACK_MSB_FIRST_ROW_MAJOR", bits_b64 } };
   }
 
-  throw new Error("Nieznany format importu. Oczekuję kind=GLYPH albo kind=PIX (lub type zawierający GLYPH/PIX).");
+  throw new Error(t("logoEditor.errors.unknownImportFormat"));
 }
 
 async function importLogoFromFile(file){
@@ -858,10 +880,10 @@ function renderList(){
           <div class="logoName">${esc(name)}</div>
           <div class="logoMeta">${esc(meta || "")}</div>
         </div>
-        <div class="logoX ${canDelete ? "" : "is-disabled"}" title="${canDelete ? "Usuń" : "Nie można usunąć"}">✕</div>
+        <div class="logoX ${canDelete ? "" : "is-disabled"}" title="${canDelete ? t("logoEditor.list.delete") : t("logoEditor.list.deleteDisabled")}">✕</div>
       </div>
       <div class="logoPrev"></div>
-      <div class="logoLamp" aria-label="Aktywne"></div>
+      <div class="logoLamp" aria-label="${t("logoEditor.list.activeLabel")}"></div>
     `;
 
     el.addEventListener("click", () => select(key));
@@ -870,19 +892,19 @@ function renderList(){
     el.querySelector(".logoX").addEventListener("click", async (ev) => {
       ev.stopPropagation();
       if (!canDelete) return;
-      const ok = confirm(`Usunąć logo „${name}“?`);
+      const ok = confirm(t("logoEditor.confirm.deleteLogo", { name }));
       if (!ok) return;
 
-      setMsg("Usuwam…");
+      setMsg(t("logoEditor.status.deleting"));
       try{
         await deleteLogo(key);
 
         // jeśli usunięto aktywne -> aktywne przechodzi na default (czyli clearActive)
         await refresh();
-        setMsg("Usunięto.");
+        setMsg(t("logoEditor.status.deleted"));
       }catch(e){
         console.error(e);
-        alert("Nie udało się usunąć.\n\n" + (e?.message || e));
+        alert(t("logoEditor.errors.deleteFailed", { error: e?.message || e }));
         setMsg("");
       }
     });
@@ -900,7 +922,7 @@ function renderList(){
     const payload = { kind: "GLYPH", rows: defaultLogoRows };
     const el = makeTile({
       key: "default",
-      name: "Domyślne logo",
+      name: getDefaultLogoName(),
       meta: "",
       payload,
       isActive: activeKey === "default",
@@ -914,7 +936,7 @@ function renderList(){
     const payload = logoToPreviewPayload(l);
     const el = makeTile({
       key: l.id,
-      name: l.name || "(bez nazwy)",
+      name: l.name || t("logoEditor.defaults.unnamed"),
       meta: fmtDate(l.updated_at) || "",
       payload,
       isActive: activeKey === l.id,
@@ -983,6 +1005,20 @@ function setEditorShellMode(mode){
   editorShell.dataset.mode = mode || "";
 }
 
+function getModeLabel(mode) {
+  return mode === "TEXT" ? t("logoEditor.modes.text") :
+    mode === "TEXT_PIX" ? t("logoEditor.modes.textPix") :
+    mode === "DRAW" ? t("logoEditor.modes.draw") :
+    t("logoEditor.modes.image");
+}
+
+function updateEditorHeader() {
+  if (!editorMode) return;
+  const modeLabel = getModeLabel(editorMode);
+  brandTitle.innerHTML =
+    `<span class="bMain">${t("logoEditor.editor.newLogoPrefix")}</span><span class="bMode">${modeLabel}</span>`;
+}
+
 
 function openEditor(mode){
   hideAllPanes();
@@ -996,15 +1032,10 @@ function openEditor(mode){
   btnBack.classList.add("sm");
 
   // ===== label trybu =====
-  const modeLabel =
-    mode === "TEXT" ? "Napis" :
-    mode === "TEXT_PIX" ? "Tekst" :
-    mode === "DRAW" ? "Rysunek" :
-    "Obraz";
+  const modeLabel = getModeLabel(mode);
 
   // ===== tytuł w topbarze (1 linia) =====
-  brandTitle.innerHTML =
-    `<span class="bMain">Nowe logo — </span><span class="bMode">${modeLabel}</span>`;
+  updateEditorHeader();
 
    suppressDirty = true;
   // ===== domyślna nazwa nowego logo =====
@@ -1070,7 +1101,7 @@ function closeEditor(force = false){
   clearDirty();
 
   document.body.classList.remove("is-editor");
-  btnBack.textContent = "← Moje gry";
+  btnBack.textContent = t("logoEditor.topbar.backToGames");
   brandTitle.textContent = "FAMILIADA";
 }
 
@@ -1088,11 +1119,11 @@ function updateBigPreviewFromPayload(payload){
    SAVE
 ========================================================= */
 async function handleCreate(){
-  let name = String(logoName.value || "").trim() || "Logo";
+  let name = String(logoName.value || "").trim() || getDefaultLogoName();
   setEditorMsg("");
 
   try{
-    setEditorMsg("Zapisuję…");
+    setEditorMsg(t("logoEditor.status.saving"));
 
     let res = null;
 
@@ -1102,7 +1133,7 @@ async function handleCreate(){
     if (editorMode === "IMAGE") res = await imageEditor.getCreatePayload();
 
     if (!res || !res.ok){
-      setEditorMsg(res?.msg || "Nie mogę zapisać.");
+      setEditorMsg(res?.msg || t("logoEditor.errors.saveFailed"));
       return;
     }
 
@@ -1133,14 +1164,14 @@ async function handleCreate(){
 
     if (!sessionSavedLogoId) {
       sessionSavedLogoId = await createLogo(patch);
-      setEditorMsg("Zapisano.");
+      setEditorMsg(t("logoEditor.status.saved"));
     } else {
       await updateLogo(sessionSavedLogoId, {
         name: patch.name,
         type: patch.type,
         payload: patch.payload,
       });
-      setEditorMsg("Zaktualizowano zapis.");
+      setEditorMsg(t("logoEditor.status.updated"));
     }
 
     clearDirty();
@@ -1151,11 +1182,11 @@ async function handleCreate(){
     // Jeśli ktoś/refresh jeszcze nie zdążył, a w DB jednak kolizja -> dopnij unikalną i spróbuj raz jeszcze
     if (isUniqueViolation(e)){
       try{
-        const fallback = makeUniqueName(logoName.value || "Logo", sessionSavedLogoId);
+        const fallback = makeUniqueName(logoName.value || getDefaultLogoName(), sessionSavedLogoId);
         logoName.value = fallback;
 
         // powtórka (jednorazowa)
-        setEditorMsg("Poprawiam nazwę i zapisuję ponownie…");
+        setEditorMsg(t("logoEditor.status.fixingName"));
         await handleCreate(); // UWAGA: to wywołanie rekurencyjne jest OK, bo tylko raz wchodzi w tę gałąź
         return;
       } catch (e2){
@@ -1163,8 +1194,8 @@ async function handleCreate(){
       }
     }
 
-    alert("Nie udało się zapisać.\n\n" + (e?.message || e));
-    setEditorMsg("Błąd zapisu.");
+    alert(t("logoEditor.errors.saveFailedDetailed", { error: e?.message || e }));
+    setEditorMsg(t("logoEditor.errors.saveError"));
   }
 }
 
@@ -1172,14 +1203,25 @@ async function handleCreate(){
    START
 ========================================================= */
 async function boot(){
-   currentUser = await requireAuth("../index.html");
+   await initI18n({ withSwitcher: true });
+   guardDesktopOnly({ minWidth: 980, message: t("logoEditor.desktopOnly") });
+   window.addEventListener("i18n:lang", () => {
+     if (editorMode) {
+       updateEditorHeader();
+     } else {
+       btnBack.textContent = t("logoEditor.topbar.backToGames");
+     }
+     renderList();
+   });
+
+   currentUser = await requireAuth(withLangParam("../index.html"));
    if (who) who.textContent = currentUser?.username || currentUser?.email || "—";
 
   try{
     await loadFonts();
   } catch (e){
     console.error(e);
-    alert("Nie mogę wczytać fontów. Sprawdź ścieżki display/font_*.json.");
+    alert(t("logoEditor.errors.fontsLoad"));
   }
    
    await loadDefaultLogo();
@@ -1216,22 +1258,16 @@ async function boot(){
    
      // wyjście do buildera: pytamy tylko jeśli faktycznie mamy dirty (i edytor otwarty)
      if (shouldBlockNav() && !confirmCloseIfDirty()) return;
-     location.href = "../builder.html";
+     location.href = withLangParam("../builder.html");
    });
    
    btnLogout?.addEventListener("click", async () => {
-     if (shouldBlockNav() && !confirmCloseIfDirty()) return;
-     await signOut();
-     location.href = "../index.html";
-   });
-
-   btnLogout?.addEventListener("click", async () => {
      if (shouldBlockNav()){
-       const ok = confirm("Masz niezapisane zmiany. Wylogować i je utracić?");
+       const ok = confirm(t("logoEditor.confirm.logoutUnsaved"));
        if (!ok) return;
      }
      await signOut();
-     location.href = "../index.html";
+     location.href = withLangParam("../index.html");
    });
 
    inpImportLogoFile?.addEventListener("change", async () => {
@@ -1246,26 +1282,26 @@ async function boot(){
      const N = 4;
    
      try{
-       progSet("import", { step: "Czytam plik…", i: 1, n: N, msg: f.name });
+       progSet("import", { step: t("logoEditor.import.steps.readFile"), i: 1, n: N, msg: f.name });
        await new Promise(requestAnimationFrame);
    
-       progSet("import", { step: "Sprawdzam JSON…", i: 2, n: N, msg: "Walidacja formatu" });
+       progSet("import", { step: t("logoEditor.import.steps.validate"), i: 2, n: N, msg: t("logoEditor.import.messages.validation") });
        await new Promise(requestAnimationFrame);
    
-       progSet("import", { step: "Zapisuję w bazie…", i: 3, n: N, msg: "Tworzenie nowego rekordu" });
+       progSet("import", { step: t("logoEditor.import.steps.saveDb"), i: 3, n: N, msg: t("logoEditor.import.messages.creatingRecord") });
        await importLogoFromFile(f);
    
-       progSet("import", { step: "Odświeżam listę…", i: 4, n: N, msg: "Gotowe" });
+       progSet("import", { step: t("logoEditor.import.steps.refresh"), i: 4, n: N, msg: t("logoEditor.import.messages.done") });
        await refresh();
    
        // domknięcie po krótkim ticku, żeby użytkownik widział 100%
        await new Promise(r => setTimeout(r, 150));
        progClose("import");
-       setMsg("Zaimportowano logo.");
+       setMsg(t("logoEditor.status.imported"));
      } catch (e){
        console.error(e);
        progClose("import");
-       alert("Nie udało się zaimportować.\n\n" + (e?.message || e));
+       alert(t("logoEditor.errors.importFailedDetailed", { error: e?.message || e }));
        setMsg("");
      }
    });
@@ -1283,13 +1319,13 @@ async function boot(){
      const N = 3;
    
      try{
-       progSet("export", { step: "Przygotowuję dane…", i: 1, n: N, msg: l.name || "logo" });
+       progSet("export", { step: t("logoEditor.export.steps.prepare"), i: 1, n: N, msg: l.name || getDefaultLogoFileName() });
        await new Promise(requestAnimationFrame);
    
-       progSet("export", { step: "Tworzę plik…", i: 2, n: N, msg: "JSON" });
+       progSet("export", { step: t("logoEditor.export.steps.createFile"), i: 2, n: N, msg: "JSON" });
        await new Promise(requestAnimationFrame);
    
-       progSet("export", { step: "Pobieranie…", i: 3, n: N, msg: "Przeglądarka może zapytać o zapis" });
+       progSet("export", { step: t("logoEditor.export.steps.download"), i: 3, n: N, msg: t("logoEditor.export.messages.browserPrompt") });
        exportLogoToFile(l);
    
        await new Promise(r => setTimeout(r, 150));
@@ -1297,7 +1333,7 @@ async function boot(){
      } catch (e){
        console.error(e);
        progClose("export");
-       alert("Nie udało się wyeksportować.\n\n" + (e?.message || e));
+       alert(t("logoEditor.errors.exportFailedDetailed", { error: e?.message || e }));
      }
    });
 
@@ -1319,7 +1355,7 @@ async function boot(){
    btnActivate?.addEventListener("click", async () => {
      if (!selectedKey) return;
    
-     setMsg("Ustawiam aktywne…");
+     setMsg(t("logoEditor.status.settingActive"));
      try{
        if (selectedKey === "default"){
          await clearActive(); // default = aktywne gdy w DB nic nie jest aktywne
@@ -1327,13 +1363,13 @@ async function boot(){
          await setActive(selectedKey);
        }
        await refresh();
-       setMsg("Aktywne ustawione.");
-     }catch(e){
-       console.error(e);
-       alert("Nie udało się ustawić aktywnego.\n\n" + (e?.message || e));
-       setMsg("");
-     }
-   });
+       setMsg(t("logoEditor.status.activeSet"));
+    }catch(e){
+      console.error(e);
+      alert(t("logoEditor.errors.setActiveFailedDetailed", { error: e?.message || e }));
+      setMsg("");
+    }
+  });
 
 
   // modal wyboru trybu

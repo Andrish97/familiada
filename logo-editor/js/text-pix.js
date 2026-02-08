@@ -1,6 +1,8 @@
 // familiada/logo-editor/js/text-pix.js
 // Tryb: TEXT_PIX (TinyMCE inline -> "screen-screenshot" -> 150x70 bits)
 
+import { t } from "../../translation/translation.js";
+
 export function initTextPixEditor(ctx) {
   const TYPE_PIX = "PIX_150x70";
 
@@ -51,16 +53,26 @@ export function initTextPixEditor(ctx) {
     el.setAttribute("data-tip", txt);
   }
 
-  // BIU (TinyMCE standard)
-  setTip(btnRtBold,      tip2("Pogrubienie",   "Ctrl+B", "⌘B"));
-  setTip(btnRtItalic,    tip2("Kursywa",       "Ctrl+I", "⌘I"));
-  setTip(btnRtUnderline, tip2("Podkreślenie",  "Ctrl+U", "⌘U"));
+  function updateTooltips() {
+    // BIU (TinyMCE standard)
+    setTip(btnRtBold,      tip2(t("logoEditor.textPix.tooltips.bold"),   "Ctrl+B", "⌘B"));
+    setTip(btnRtItalic,    tip2(t("logoEditor.textPix.tooltips.italic"), "Ctrl+I", "⌘I"));
+    setTip(btnRtUnderline, tip2(t("logoEditor.textPix.tooltips.underline"),  "Ctrl+U", "⌘U"));
 
-  // Align (u Ciebie: klik cyklicznie)
-  setTip(btnRtAlignCycle,
-    tip2("Wyrównanie (cyklicznie)", "Ctrl+Shift+E", "⌘⇧E",
-      "Klikaj: lewo → środek → prawo")
-  );
+    // Align (u Ciebie: klik cyklicznie)
+    setTip(
+      btnRtAlignCycle,
+      tip2(
+        t("logoEditor.textPix.tooltips.alignCycle"),
+        "Ctrl+Shift+E",
+        "⌘⇧E",
+        t("logoEditor.textPix.tooltips.alignCycleExtra")
+      )
+    );
+  }
+
+  updateTooltips();
+  window.addEventListener("i18n:lang", updateTooltips);
 
   // Rozmiary
   const DOT_W = ctx.DOT_W;
@@ -151,17 +163,17 @@ export function initTextPixEditor(ctx) {
   
     try {
       const res = await fetch("./js/fonts.json", { cache: "no-store" });
-      if (!res.ok) throw new Error("Nie mogę wczytać fonts.json");
+      if (!res.ok) throw new Error(t("logoEditor.textPix.errors.fontsLoad"));
       const data = await res.json();
   
       if (!Array.isArray(data)) {
-        throw new Error("fonts.json nie jest tablicą");
+        throw new Error(t("logoEditor.textPix.errors.fontsInvalid"));
       }
   
       SYSTEM_FONTS = data;
       return SYSTEM_FONTS;
     } catch (err) {
-      console.error("Błąd ładowania fontów:", err);
+      console.error(t("logoEditor.textPix.errors.fontsLoadFailed"), err);
       SYSTEM_FONTS = [];
       return SYSTEM_FONTS;
     }
@@ -931,7 +943,7 @@ export function initTextPixEditor(ctx) {
 
       if (pixWarn) {
         if (res.clipped) {
-          pixWarn.textContent = "Wygląda na ucięte — zmniejsz rozmiar albo skróć tekst.";
+          pixWarn.textContent = t("logoEditor.textPix.warnings.clipped");
           show(pixWarn, true);
         } else {
           show(pixWarn, false);
@@ -942,7 +954,7 @@ export function initTextPixEditor(ctx) {
       cachedBits150 = new Uint8Array(DOT_W * DOT_H);
       ctx.onPreview?.({ kind: "PIX", bits: cachedBits150 });
       if (pixWarn) {
-        pixWarn.textContent = "Nie mogę zrobić screena edytora (sprawdź TinyMCE/html2canvas w HTML).";
+        pixWarn.textContent = t("logoEditor.textPix.warnings.screenshotFailed");
         show(pixWarn, true);
       }
       // eslint-disable-next-line no-console

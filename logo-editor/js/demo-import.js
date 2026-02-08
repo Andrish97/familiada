@@ -2,6 +2,7 @@
 
 import { sb } from "../../js/core/supabase.js";
 import { requireAuth } from "../../js/core/auth.js";
+import { t } from "../../translation/translation.js";
 
 /* =========================================================
    Stałe typów – takie same jak w main.js
@@ -21,7 +22,7 @@ async function ensureCurrentUser(){
   const u = data?.user;
   if (!u?.id){
     const user = await requireAuth("../index.html");
-    if (!user?.id) throw new Error("Brak zalogowanego użytkownika.");
+    if (!user?.id) throw new Error(t("logoEditor.errors.noUser"));
     return user;
   }
 
@@ -49,10 +50,10 @@ function cleanRows30x10(rows){
 function parseImportJson(text){
   let obj = null;
   try { obj = JSON.parse(text); }
-  catch { throw new Error("To nie jest poprawny JSON."); }
+  catch { throw new Error(t("logoEditor.errors.invalidJson")); }
 
   const kind = String(obj?.kind || "").toUpperCase();
-  const name = String(obj?.name || "Logo").trim() || "Logo";
+  const name = String(obj?.name || t("logoEditor.defaults.logoName")).trim() || t("logoEditor.defaults.logoName");
 
   if (kind === "GLYPH"){
     const rows = cleanRows30x10(obj?.payload?.rows);
@@ -66,7 +67,7 @@ function parseImportJson(text){
     const bits_b64 = String(p.bits_b64 || "");
 
     if (!w || !h || !bits_b64){
-      throw new Error("Niepoprawny format PIX.");
+      throw new Error(t("logoEditor.errors.invalidPixFormat"));
     }
 
     return {
@@ -81,7 +82,7 @@ function parseImportJson(text){
     };
   }
 
-  throw new Error("Nieznany format importu logo.");
+  throw new Error(t("logoEditor.errors.unknownLogoFormat"));
 }
 
 /* =========================================================
@@ -99,7 +100,7 @@ async function listMyLogos(userId){
 }
 
 function makeUniqueName(baseName, existing){
-  const base = String(baseName || "").trim() || "Logo";
+  const base = String(baseName || "").trim() || t("logoEditor.defaults.logoName");
   const used = new Set(
     (existing || []).map(l => String(l.name || "").toLowerCase())
   );
@@ -140,7 +141,7 @@ export async function demoImport4Logos(url1, url2, url3, url4){
     .filter(Boolean);
 
   if (urls.length !== 4){
-    throw new Error("demoImport4Logos wymaga dokładnie 4 pliki.");
+    throw new Error(t("logoEditor.errors.demoImportFiles"));
   }
 
   const existing = await listMyLogos(user.id);
