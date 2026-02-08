@@ -782,6 +782,1322 @@ const pl = {
       modalOk: "Przywróć",
       modalCancel: "Anuluj",
     },
+    content: {
+      general: `<p class="m-p">
+        Ta strona to wskazówki obsługi systemu do prowadzenia rozgrywki (turnieju)
+        w stylu „Familiada”. Jej celem jest wyjaśnienie, jak przygotować grę,
+        zebrać wyniki (sondaż) i bez problemu poprowadzić rozgrywkę na żywo
+        — nawet jeśli ktoś korzysta z systemu pierwszy raz.
+      </p>
+      
+      <p class="m-p">
+        Opis dotyczy narzędzia i sposobu jego użycia,
+        a nie „telewizyjnej produkcji”. System sprawdzi się na wydarzeniach,
+        imprezach firmowych, w szkole, na scenie albo po prostu w gronie znajomych
+        — wszędzie tam, gdzie chcesz mieć czytelną tablicę, punkty i płynny przebieg gry.
+      </p>
+      
+      <p class="m-p">
+        Rozgrywka jest zbudowana tak, aby w dużym stopniu odpowiadała oficjalnym zasadom Familiady
+        (rundy, bank, błędy X, przejęcia i finał), ale całość jest zaprojektowana jako
+        wygodny system do prowadzenia zabawy/turnieju, z jasnym podziałem ról:
+        <span class="m-strong">prowadzący prowadzi rozmowę i zadaje pytania</span>,
+        a <span class="m-strong">operator steruje tablicą i punktami</span>.
+      </p>
+
+      <p class="m-p">
+        Jeśli chcesz zapoznać się z pełnymi zasadami gry,
+        <a href="https://s.tvp.pl/repository/attachment/6/8/f/68f09c03ff0781fa510c2fd90c3ba19b1569224834470.pdf"
+           target="_blank"
+           rel="noopener">
+          Regulamin teleturnieju „Familiada”
+        </a>
+        opisuje je szczegółowo.
+      </p>
+
+      <p class="m-p">
+        Całość systemu została zaprojektowana tak,
+        aby wyraźnie oddzielić przygotowanie treści
+        od samej rozgrywki.
+        Pytania, odpowiedzi i sondaże przygotowuje się wcześniej,
+        natomiast w trakcie gry operator korzysta wyłącznie
+        z panelu sterowania.
+      </p>
+
+      <p class="m-p">
+        W praktyce oznacza to, że w dniu nagrania
+        operator nie musi edytować danych,
+        prowadzący skupia się na rozmowie z uczestnikami,
+        a system pilnuje kolejności etapów i logiki rozgrywki.
+        Zmniejsza to ryzyko pomyłek i przyspiesza przebieg gry.
+      </p>
+
+      <p class="m-p">
+        System najlepiej działa przy użyciu osobnych urządzeń:
+        wyświetlacza dla widzów (telewizor lub rzutnik),
+        tabletu lub telefonu dla prowadzącego,
+        osobnego urządzenia pełniącego rolę przycisku
+        oraz komputera operatora z panelem sterowania.
+      </p>
+
+      <p class="m-p">
+        Wskarówki zostały podzielone na kolejne zakładki.
+        Każda z nich opisuje inny etap pracy z systemem:
+        od przygotowania gry,
+        przez sondaże,
+        aż po prowadzenie rozgrywki na żywo.
+      </p>`,
+      edit: `<p class="m-p">
+        Zakładka „Dodawanie i edycja gry” opisuje etap przygotowania gry
+        przed rozpoczęciem sondażu lub rozgrywki.
+        Na tym etapie tworzysz strukturę gry:
+        pytania, możliwe odpowiedzi oraz sposób ich punktowania.
+      </p>
+    
+      <p class="m-p">
+        Ten etap jest kluczowy, ponieważ decyduje o tym,
+        jak będzie wyglądać cała dalsza praca z grą.
+        System celowo rozdziela przygotowanie treści
+        od późniejszego zbierania odpowiedzi i prowadzenia rozgrywki.
+      </p>
+    
+      <h3 class="m-h2">Lista gier („Moje gry”)</h3>
+    
+      <p class="m-p">
+        Lista gier jest miejscem, w którym zarządzasz wszystkimi grami
+        przypisanymi do Twojego konta.
+        To tutaj możesz tworzyć nowe gry,
+        wybierać istniejące
+        oraz decydować, co chcesz z daną grą zrobić dalej.
+      </p>
+    
+      <p class="m-p">
+        Gry są podzielone na typy.
+        Typ gry określa, w jaki sposób odpowiedzi będą zbierane
+        i jak powstaną punkty widoczne później na tablicy.
+      </p>
+    
+      <ul class="m-ul">
+        <li>
+          <span class="m-strong">Typowy sondaż</span> —
+          odpowiedzi są wpisywane przez ankietowanych,
+          a punkty wynikają z liczby wskazań.
+        </li>
+        <li>
+          <span class="m-strong">Punktacja odpowiedzi</span> —
+          ankietowani wybierają spośród przygotowanych odpowiedzi,
+          a system zlicza głosy.
+        </li>
+        <li>
+          <span class="m-strong">Preparowany</span> —
+          odpowiedzi i punkty są ustalane ręcznie,
+          bez udziału sondażu.
+        </li>
+      </ul>
+    
+      <p class="m-p">
+        Nową grę tworzysz klikając kafelek z symbolem „＋”.
+        Po utworzeniu gra pojawia się na liście
+        i może zostać otwarta w edytorze.
+      </p>
+    
+      <h3 class="m-h2">Edytor gry – co i kiedy można edytować</h3>
+    
+     <p class="m-p">
+        Do trybu edycji gry przechodzisz z listy „Moje gry”
+        za pomocą przycisku <span class="m-code">Edytuj</span>.
+        Jest to pierwszy etap pracy z grą,
+        w którym przygotowujesz całą jej treść
+        przed wykorzystaniem jej w sondażu lub rozgrywce.
+      </p>
+      
+      <p class="m-p">
+        W trybie edycji tworzysz pytania i odpowiedzi,
+        decydujesz o typie gry
+        oraz przygotowujesz strukturę,
+        która będzie później wykorzystywana
+        do zbierania danych lub prowadzenia gry na żywo.
+      </p>
+      
+      <p class="m-p">
+        Edytor gry służy do budowania struktury pytań i odpowiedzi.
+        W zależności od typu gry oraz jej stanu
+        dostępne opcje edycji mogą się różnić.
+      </p>
+    
+      <p class="m-p">
+        Jest to działanie celowe.
+        System ogranicza pewne operacje,
+        aby zachować spójność danych
+        i zapobiec sytuacjom,
+        w których rozgrywka lub sondaż
+        przestają odpowiadać przygotowanej treści.
+      </p>
+    
+      <h3 class="m-h3">Dodawanie i edycja pytań</h3>
+    
+      <p class="m-p">
+        Pytania są zawsze podstawowym elementem gry.
+        Na etapie przygotowania możesz:
+        dodawać nowe pytania,
+        zmieniać ich treść
+        oraz usuwać pytania niepotrzebne.
+      </p>
+    
+      <p class="m-p">
+        Zmiana pytania po uruchomieniu sondażu
+        może zostać zablokowana,
+        ponieważ nawet drobna modyfikacja treści
+        wpływa na sens zebranych odpowiedzi.
+      </p>
+    
+      <h3 class="m-h3">Dodawanie i edycja odpowiedzi</h3>
+    
+      <p class="m-p">
+        Możliwość edycji odpowiedzi zależy od typu gry.
+        W grach sondażowych odpowiedzi są efektem ankiety,
+        dlatego przed sondażem możesz jedynie przygotować
+        ich ogólną strukturę lub przykłady.
+      </p>
+    
+      <p class="m-p">
+        Po rozpoczęciu sondażu system może ograniczyć
+        dodawanie lub usuwanie odpowiedzi,
+        aby nie mieszać odpowiedzi ankietowanych
+        z nową treścią.
+      </p>
+    
+      <h3 class="m-h3">Punkty – dlaczego czasem są zablokowane</h3>
+    
+      <p class="m-p">
+        Punkty nie zawsze są edytowalne ręcznie.
+        W grach sondażowych punkty wynikają bezpośrednio
+        z liczby udzielonych odpowiedzi,
+        dlatego ich ręczna edycja nie ma sensu
+        i jest zablokowana.
+      </p>
+    
+      <p class="m-p">
+        Ręczne ustawianie punktów jest możliwe
+        tylko w trybie preparowanym,
+        gdzie system nie korzysta z danych ankietowych.
+      </p>
+    
+      <div class="m-note">
+        <b>Dlaczego tak jest?</b><br/>
+        Dzięki temu to, co widzi widz na tablicy,
+        zawsze odpowiada rzeczywistym wynikom sondażu
+        albo jasno określonej, ręcznej punktacji.
+      </div>
+    
+      <h3 class="m-h2">Ograniczenia długości i formatu</h3>
+    
+      <p class="m-p">
+        Odpowiedzi powinny być krótkie i czytelne.
+        Przy imporcie treści odpowiedzi dłuższe
+        niż <span class="m-strong">17 znaków</span>
+        są automatycznie przycinane.
+      </p>
+    
+      <p class="m-p">
+        To ograniczenie wynika z układu tablicy
+        i ma na celu zachowanie czytelności
+        podczas rozgrywki na żywo.
+      </p>
+    
+      <h3 class="m-h2">Import i eksport gier</h3>
+    
+      <p class="m-p">
+        Builder umożliwia eksport i import gier
+        w postaci plików oraz bezpośrednio do bazy pytań.
+        Funkcja ta służy do przenoszenia gier i pytań
+        pomiędzy kontami lub środowiskami.
+      </p>
+    
+      <p class="m-p">
+        Pliki importu i eksportu są formatem technicznym.
+        Gra nie powinna ingerować w ich zawartość
+        ani próbować edytować ich ręcznie.
+      </p>
+    
+      <div class="m-warn">
+        <b>Uwaga:</b>
+        ręczna modyfikacja plików importu lub eksportu
+        może spowodować, że gry nie będzie się dało zaimportować
+        albo będzie działała nieprawidłowo.
+      </div>
+    
+      <p class="m-p">
+        Po poprawnym imporcie gra pojawia się
+        na liście gier i może być dalej edytowana
+        wyłącznie przy użyciu edytora systemowego.
+      </p>
+      
+      <p class="m-p">
+        Podczas eksportu gry do bazy:
+      </p>
+      
+      <ul class="m-ul">
+        <li>w katalogu głównym bazy tworzony jest nowy folder</li>
+        <li>folder otrzymuje nazwę gry</li>
+        <li>w folderze zapisywane są wszystkie pytania należące do gry</li>
+      </ul>
+
+      <p class="m-note">
+        Eksportować możesz tylko do swojej własnej bazy lub do udostępnionej bazy której jesteś edytorem.
+        Jeśli nie posiadasz aktualnie żadnych baz, nie będziesz mógł eksportować.
+      </p>
+      
+      <p class="m-p">
+        Dzięki temu każda gra może zostać zamieniona w zestaw pytań do dalszej edycji,
+        organizowania w folderach, oznaczania tagami oraz ponownego wykorzystania
+        w kolejnych grach.
+      </p>
+      
+      <p class="m-note">
+        Eksport do bazy nie usuwa gry — tworzy jedynie jej kopię w postaci struktury pytań.
+      </p>`,
+      bases: `<h2 class="m-h2">Bazy pytań — organizacja i współpraca</h2>
+  
+      <p class="m-p">
+        Bazy pytań to centralne miejsce przechowywania wszystkich pytań używanych w grach.
+        Dzięki nim możesz porządkować pytania w folderach, oznaczać je tagami, przypisywać do kategorii
+        oraz współdzielić całe bazy z innymi użytkownikami.
+      </p>
+      <p class="m-p">
+        Do baz pytań przechodzisz z górnego panelu strony „Moje gry”
+        za pomocą przycisku <span class="m-code">Bazy pytań 🗃️</span>.
+      </p>
+  
+      <p class="m-p">
+        Jedna baza może zawierać setki lub tysiące pytań uporządkowanych w strukturze podobnej
+        do klasycznego menadżera plików na komputerze.
+      </p>
+  
+      <h3 class="m-h3">➕ Dodawanie nowej bazy</h3>
+  
+      <p class="m-p">
+        W widoku „Bazy pytań” kliknij kafelek <span class="m-strong">Nowa baza</span>.
+        Otworzy się okno, w którym podajesz nazwę bazy.
+      </p>
+  
+      <p class="m-p">
+        Po zapisaniu nowa baza pojawi się na liście i od razu możesz ją przeglądać lub udostępniać.
+      </p>
+  
+      <h3 class="m-h3">🤝 Udostępnianie bazy</h3>
+  
+      <p class="m-p">
+        Każdą bazę możesz udostępnić innym użytkownikom poprzez podanie ich adresu e-mail.
+        Dostępne są dwa tryby:
+      </p>
+  
+      <ul class="m-ul">
+        <li><span class="m-strong">Edycja</span> — użytkownik może dodawać, usuwać i modyfikować pytania, foldery, tagi, tworzyć gry z pytań i eksportować pytania do bazy</li>
+        <li><span class="m-strong">Przeglądanie</span> — użytkownik może tylko przeglądać zawartość bazy i tworzyć gry z dostępnych pytań</li>
+      </ul>
+  
+      <p class="m-p">
+        Tylko właściciel bazy może zarządzać udostępnieniami.
+      </p>
+  
+      <h3 class="m-h3">📂 Przechodzenie do menadżera bazy</h3>
+  
+      <p class="m-p">
+        Aby wejść do zawartości bazy, zaznacz ją na liście i kliknij przycisk <span class="m-code">Przeglądaj</span>.
+      </p>
+  
+      <p class="m-p">
+        Otworzy się Base Explorer — zaawansowany menadżer pytań działający jak klasyczny eksplorator plików.
+      </p>
+  
+      <h2 class="m-h2">Base Explorer — menadżer pytań</h2>
+  
+      <p class="m-p">
+        Base Explorer pozwala zarządzać pytaniami w sposób znany z systemowych menadżerów plików:
+        foldery, przenoszenie metodą „przeciągnij i upuść”, kopiowanie, wycinanie i szybka selekcja.
+      </p>
+  
+      <p class="m-p">
+        Każdy „plik” w tym menadżerze jest pojedynczym pytaniem.
+        Foldery służą do grupowania pytań tematycznie lub logicznie.
+      </p>
+  
+      <p class="m-p">
+        Możesz:
+      </p>
+  
+      <ul class="m-ul">
+        <li>tworzyć dowolnie zagnieżdżone foldery</li>
+        <li>przenosić pytania i foldery między sobą</li>
+        <li>kopiować i duplikować elementy</li>
+        <li>usuwać zaznaczone pozycje</li>
+        <li>wyszukiwać po nazwie i tagach</li>
+      </ul>
+  
+      <p class="m-note">
+        Interfejs i skróty klawiszowe działają podobnie jak w klasycznych menadżerach plików
+        (Explorer, Finder, Total Commander).
+      </p>
+  
+      <h2 class="m-h2">Tagi i kategorie</h2>
+  
+      <h3 class="m-h3">🏷️ Tagi</h3>
+  
+      <p class="m-p">
+        Każde pytanie może mieć dowolną liczbę tagów.
+        Tagi służą do tematycznego oznaczania pytań — np. „historia”, „sport”, „łatwe”, „dla dzieci”.
+      </p>
+  
+      <p class="m-p">
+        Możesz:
+      </p>
+  
+      <ul class="m-ul">
+        <li>tworzyć własne tagi z kolorami</li>
+        <li>przypisywać wiele tagów do jednego pytania</li>
+        <li>filtrować widok po wybranych tagach</li>
+      </ul>
+
+      <p class="m-p">
+        Przypisywanie tagów odbywa się w specjalnym oknie, które można otworzyć z paska narzędzi
+        lub z menu kontekstowego.
+      </p>
+      
+      <p class="m-p">
+        W oknie przypisywania tagów widoczna jest lista wszystkich dostępnych tagów wraz z ich stanem:
+      </p>
+      
+      <ul class="m-ul">
+        <li>zaznaczony — tag jest przypisany do wszystkich wybranych elementów</li>
+        <li>niezaznaczony — tag nie jest przypisany do żadnego z nich</li>
+        <li>częściowy — tylko część zaznaczenia posiada dany tag</li>
+      </ul>
+      
+      <p class="m-p">
+        Kliknięcie w tag przełącza jego stan cyklicznie, umożliwiając szybkie dodawanie i usuwanie tagów
+        dla wielu pytań lub folderów jednocześnie. To okno umożliwia tworzenie nowych tagów.
+      </p>
+      
+      <p class="m-p">
+        Tagi mogą być również używane jako filtry — kliknięcie taga po lewej stronie ogranicza widok
+        do elementów oznaczonych wybranym tagiem lub zestawem tagów.
+      </p>
+  
+      <p class="m-note">
+        Folder pokazuje znaczniki tagów wtedy, gdy wszystkie znajdujące się w nim pytania
+        (oraz podfoldery) posiadają ten sam tag.
+      </p>
+  
+      <h3 class="m-h3">📌 Kategorie</h3>
+  
+      <p class="m-p">
+        Kategorie to specjalne oznaczenia systemowe określające,
+        do jakiego typu gry dane pytanie pasuje. Co odpowiada typom gier w widoku <span class="m-strong">Moje gry</span></li>
+      </p>
+  
+      <p class="m-p">
+        Przykładowo:
+      </p>
+  
+      <ul class="m-ul">
+        <li>pytania z odpowiedziami i punktami trafiają do kategorii <span class="m-strong">preperowane</span></li>
+        <li>pytania z odpowiedziami bez sumy punktów do <span class="m-strong">punktacja</span></li>
+        <li>pytania tekstowe bez punktów do <span class="m-strong">typowe</span></li>
+      </ul>
+  
+      <p class="m-p">
+        Kategorie są przypisywane automatycznie na podstawie struktury pytania,
+        a nie ręcznie przez użytkownika.
+      </p>
+  
+      <p class="m-note">
+        Dzięki temu od razu wiesz, które pytania nadają się do konkretnego typu gry.
+      </p>
+  
+      <h2 class="m-h2">Edytor pytań</h2>
+  
+      <p class="m-p">
+        Każde pytanie możesz otworzyć w edytorze.
+        Edytor pozwala zmieniać treść pytania, odpowiedzi oraz punkty (jeśli występują).
+      </p>
+  
+      <p class="m-p">
+        System pilnuje podstawowych zasad, takich jak:
+      </p>
+  
+      <ul class="m-ul">
+        <li>maksymalna liczba punktów dla jednej odpowiedzi</li>
+        <li>łączna suma punktów w pytaniu</li>
+      </ul>
+  
+      <p class="m-p">
+        Dzięki temu baza zawsze pozostaje spójna i gotowa do użycia w grach.
+      </p>
+  
+      <h2 class="m-h2">Tworzenie gry z pytań</h2>
+  
+      <p class="m-p">
+        W Menadżerze bazy możesz zaznaczyć dowolne pytania oraz foldery (wraz z podfolderami),
+        a następnie utworzyć z nich nową grę.
+      </p>
+  
+      <p class="m-p">
+        System zbiera wszystkie pytania z zaznaczenia, pozwala je przejrzeć
+        i wybrać typ gry.
+      </p>
+
+      <p class="m-note">
+        To umożliwia szybkie budowanie gier z gotowych zestawów pytań bez ręcznego przepisywania.
+      </p>
+
+      <p class="m-warn">
+        Po pomyślnym utworzeniu gry zostaniesz przekierowany do widoku <span class="m-strong">Moje gry</span></li>
+      </p>
+  
+      <h2 class="m-h2">⌨️ Skróty klawiszowe — Menadżer bazy</h2>
+  
+      <h3 class="m-h3">📁 Tworzenie</h3>
+  
+      <table class="m-table">
+        <tr><th>Akcja</th><th>Windows / Linux</th><th>macOS</th></tr>
+        <tr><td>Nowe pytanie</td><td>Ctrl + N</td><td>⌘ N</td></tr>
+        <tr><td>Nowy folder</td><td>Ctrl + Shift + N</td><td>⌘ ⇧ N</td></tr>
+      </table>
+  
+      <h3 class="m-h3">✏️ Edycja</h3>
+  
+      <table class="m-table">
+        <tr><th>Akcja</th><th>Windows / Linux</th><th>macOS</th></tr>
+        <tr><td>Edytuj pytanie</td><td>Ctrl + E</td><td>⌘ E</td></tr>
+        <tr><td>Zmień nazwę</td><td>F2</td><td>F2</td></tr>
+        <tr><td>Usuń</td><td>Delete</td><td>Fn + ⌫</td></tr>
+      </table>
+  
+      <h3 class="m-h3">📋 Schowek</h3>
+  
+      <table class="m-table">
+        <tr><th>Akcja</th><th>Windows / Linux</th><th>macOS</th></tr>
+        <tr><td>Kopiuj</td><td>Ctrl + C</td><td>⌘ C</td></tr>
+        <tr><td>Wytnij</td><td>Ctrl + X</td><td>⌘ X</td></tr>
+        <tr><td>Wklej</td><td>Ctrl + V</td><td>⌘ V</td></tr>
+        <tr><td>Duplikuj</td><td>Ctrl + D</td><td>⌘ D</td></tr>
+      </table>
+  
+      <h3 class="m-h3">🎮 Gra</h3>
+  
+      <table class="m-table">
+        <tr><th>Akcja</th><th>Windows / Linux</th><th>macOS</th></tr>
+        <tr><td>Utwórz grę</td><td>Ctrl + G</td><td>⌘ G</td></tr>
+      </table>
+  
+      <h3 class="m-h3">🔄 Widok</h3>
+  
+      <table class="m-table">
+        <tr><th>Akcja</th><th>Windows / Linux</th><th>macOS</th></tr>
+        <tr><td>Odśwież widok</td><td>Ctrl + Alt + R</td><td>⌘ ⌥ R</td></tr>
+      </table>
+  
+      <h3 class="m-h3">📌 Nawigacja</h3>
+  
+      <table class="m-table">
+        <tr><th>Akcja</th><th>Windows / Linux</th><th>macOS</th></tr>
+        <tr><td>Zaznacz wszystko</td><td>Ctrl + A</td><td>⌘ A</td></tr>
+        <tr><td>Otwórz folder</td><td>Enter</td><td>⏎</td></tr>
+        <tr><td>Folder nadrzędny</td><td>Backspace</td><td>⌫</td></tr>
+      </table>
+  
+      <p class="m-note">
+        Skróty nie działają podczas wpisywania tekstu w polach edycyjnych.
+      </p>`,
+      polls: `<p class="m-p">
+        Zakładka „Sondaże” opisuje etap zbierania odpowiedzi
+        od ankietowanych przed właściwą rozgrywką.
+        Sondaż jest mostem pomiędzy przygotowaniem gry
+        a jej rozegraniem na żywo.
+      </p>
+    
+      <p class="m-p">
+        Na tym etapie system przestaje być edytorem treści,
+        a zaczyna działać jak narzędzie do zbierania danych.
+        Z tego powodu wiele opcji edycji jest celowo ograniczonych.
+      </p>
+
+      <p class="m-p">
+        Do sondaży przechodzisz z listy „Moje gry”
+        za pomocą przycisku <span class="m-code">Centrum Sondaży</span>.
+        Ten etap następuje po zakończeniu edycji gry
+        i służy wyłącznie do zbierania odpowiedzi
+        lub głosów od ankietowanych.
+      </p>
+      
+      <p class="m-p">
+        W momencie uruchomienia sondażu
+        gra przestaje być edytowalna
+        i zaczyna pełnić rolę narzędzia do zbierania danych.
+        Z tego powodu część opcji dostępnych w edytorze
+        jest w tym trybie celowo zablokowana.
+      </p>
+
+      <h3 class="m-h2">Centrum sondaży (polls-hub)</h3>
+
+      <p class="m-p">
+        Centrum sondaży to osobny panel zarządzania sondażami, zadaniami i subskrypcjami.
+        Otwierasz go z listy „Moje gry” przyciskiem <span class="m-code">Centrum Sondaży</span>.
+        Na komputerze widzisz dwie karty, a w każdej dwie listy.
+      </p>
+
+      <ul class="m-ul">
+        <li><span class="m-strong">Sondaże</span> — lista „Moje sondaże” oraz „Zadania”.</li>
+        <li><span class="m-strong">Subskrypcje</span> — lista „Moi subskrybenci” oraz „Moje subskrypcje”.</li>
+      </ul>
+
+      <p class="m-p">
+        Złota kropka na karcie „Sondaże” pokazuje liczbę aktywnych zadań do wykonania,
+        a na karcie „Subskrypcje” liczbę zaproszeń do zaakceptowania.
+      </p>
+
+      <p class="m-p">
+        Subskrypcja to stałe połączenie między Twoim kontem a zaproszonym użytkownikiem —
+        raz zaakceptowana pozwala udostępniać kolejne sondaże bez wpisywania e-maila od nowa.
+        Zaproszenie wysyłasz w sekcji „Moi subskrybenci”, wpisując e-mail lub nazwę użytkownika
+        i klikając <span class="m-code">Zaproś</span>. Odbiorca akceptuje zaproszenie w swoim
+        Centrum Sondaży lub z linku w wiadomości, a status zmienia się na aktywny.
+      </p>
+
+      <p class="m-p">
+        Udostępnianie sondażu odbywa się z listy „Moje sondaże”: zaznacz kafelek i kliknij
+        <span class="m-code">Udostępnij</span>, następnie wybierz subskrybentów i zapisz.
+        Kafelek sondażu pokazuje bieżące głosy, a przycisk <span class="m-code">Szczegóły</span>
+        daje podgląd listy oddanych głosów, oczekujących, odrzuconych oraz anonimowych odpowiedzi.
+      </p>
+
+      <h3 class="m-h3">Moje sondaże</h3>
+      <p class="m-p">
+        Każdy kafelek ma kolor, który oznacza stan sondażu:
+      </p>
+      <ul class="m-ul">
+        <li><span class="m-strong">Szary</span> — szkic, brakuje wymagań do uruchomienia.</li>
+        <li><span class="m-strong">Czerwony</span> — szkic gotowy do uruchomienia.</li>
+        <li><span class="m-strong">Pomarańczowy</span> — sondaż otwarty, brak głosów.</li>
+        <li><span class="m-strong">Żółty</span> — sondaż otwarty, są głosy lub aktywne zadania.</li>
+        <li><span class="m-strong">Zielony</span> — sondaż otwarty, cele zebrane (zadania wykonane lub ≥10 głosów).</li>
+        <li><span class="m-strong">Niebieski</span> — sondaż zamknięty.</li>
+      </ul>
+
+      <h3 class="m-h3">Zadania</h3>
+      <p class="m-p">
+        Zadania to zaproszenia do głosowania. Kolory:
+        <span class="m-strong">zielony</span> — dostępne,
+        <span class="m-strong">niebieski</span> — wykonane.
+        Dwuklik otwiera głosowanie, a przycisk <span class="m-code">X</span> odrzuca zadanie.
+      </p>
+
+      <h3 class="m-h3">Moi subskrybenci</h3>
+      <p class="m-p">
+        Kolory statusów:
+        <span class="m-strong">żółty</span> — oczekujące,
+        <span class="m-strong">zielony</span> — aktywne,
+        <span class="m-strong">czerwony</span> — odrzucone/anulowane.
+        Przyciski <span class="m-code">X</span> usuwa subskrybenta, a <span class="m-code">↻</span> ponawia zaproszenie.
+      </p>
+
+      <h3 class="m-h3">Moje subskrypcje</h3>
+      <p class="m-p">
+        Kolory:
+        <span class="m-strong">żółty</span> — oczekujące,
+        <span class="m-strong">zielony</span> — aktywne.
+        Przyciski: <span class="m-code">✓</span> akceptuje, <span class="m-code">X</span> odrzuca/anuluje.
+      </p>
+
+    
+      <h3 class="m-h2">Rodzaje sondaży</h3>
+    
+      <p class="m-p">
+        W zależności od typu gry sondaż może działać w jednym z dwóch trybów:
+      </p>
+    
+      <ul class="m-ul">
+        <li>
+          <span class="m-strong">Typowy sondaż (tekstowy)</span> —
+          ankietowani wpisują własne odpowiedzi tekstowe.
+        </li>
+        <li>
+          <span class="m-strong">Sondaż punktacji</span> —
+          ankietowani wybierają jedną z przygotowanych odpowiedzi.
+        </li>
+      </ul>
+    
+      <p class="m-p">
+        Gry preparowane nie posiadają sondażu —
+        odpowiedzi i punkty są w nich ustalane ręcznie.
+      </p>
+    
+      <h3 class="m-h2">Uruchamianie sondażu</h3>
+    
+      <p class="m-p">
+        Sondaż można uruchomić wyłącznie dla gry
+        znajdującej się w stanie <span class="m-strong">Szkic</span>.
+        Przed uruchomieniem system sprawdza,
+        czy gra spełnia minimalne wymagania.
+      </p>
+    
+      <ul class="m-ul">
+        <li>minimalna liczba pytań,</li>
+        <li>w trybie punktacji — odpowiednia liczba odpowiedzi przy każdym pytaniu.</li>
+      </ul>
+    
+      <div class="m-note">
+        <b>Dlaczego?</b><br/>
+        Dzięki temu nie da się uruchomić sondażu,
+        który nie może zostać później poprawnie zamknięty
+        i użyty w rozgrywce.
+      </div>
+    
+      <h3 class="m-h2">Link i kod QR</h3>
+    
+      <p class="m-p">
+        Po uruchomieniu sondażu system generuje
+        unikalny link do głosowania.
+        Link ten można skopiować,
+        otworzyć w nowej karcie
+        lub wyświetlić jako kod QR.
+      </p>
+    
+      <p class="m-p">
+        Kod QR jest przeznaczony do wyświetlania
+        na ekranie widocznym dla ankietowanych
+        (telewizor, rzutnik, duży monitor).
+      </p>
+    
+      <h3 class="m-h2">Przebieg sondażu</h3>
+    
+      <p class="m-p">
+        Ankietowani przechodzą przez pytania po kolei.
+        System pilnuje kolejności
+        i nie pozwala pominąć pytania.
+      </p>
+    
+      <p class="m-p">
+        W sondażu tekstowym każda odpowiedź:
+      </p>
+    
+      <ul class="m-ul">
+        <li>jest ograniczona do 17 znaków,</li>
+        <li>jest normalizowana (wielkość liter, spacje),</li>
+        <li>zliczana jest jako osobna propozycja.</li>
+      </ul>
+    
+      <p class="m-p">
+        W sondażu punktacji ankietowany
+        wybiera jedną z przygotowanych odpowiedzi,
+        a system zapisuje oddany głos.
+      </p>
+    
+      <h3 class="m-h2">Zamykanie sondażu</h3>
+    
+      <p class="m-p">
+        Zamknięcie sondażu jest osobnym,
+        świadomym etapem pracy.
+        System nie pozwala zamknąć sondażu,
+        jeśli zebrane dane nie spełniają
+        minimalnych warunków jakości.
+      </p>
+    
+      <h3 class="m-h3">Sondaż punktacji</h3>
+    
+      <p class="m-p">
+        Przy zamykaniu sondażu punktacji
+        system przelicza głosy na punkty
+        i normalizuje je do skali 0–100
+        dla każdego pytania.
+      </p>
+    
+      <div class="m-note">
+        <b>Efekt:</b>
+        otrzymujesz gotową listę odpowiedzi z punktami,
+        bez potrzeby ręcznego liczenia.
+      </div>
+    
+      <h3 class="m-h3">Sondaż tekstowy</h3>
+    
+      <p class="m-p">
+        W sondażu tekstowym (klasycznym) ankietowani wpisują własne odpowiedzi.
+        Po zamknięciu sondażu system przechodzi do etapu porządkowania wyników.
+        Operator może łączyć oczywiście podobne odpowiedzi
+        oraz usuwać literówki lub oczywiste duplikaty.
+      </p>
+      
+      <p class="m-p">
+        Następnie odpowiedzi są normalizowane do skali punktowej.
+        Na tym etapie system stosuje dodatkowe ograniczenia,
+        które mają na celu zachowanie czytelności tablicy
+        i dynamiki rozgrywki.
+      </p>
+      
+      <p class="m-p">
+        Odpowiedzi o bardzo małej liczbie wskazań,
+        które po normalizacji uzyskują
+        <span class="m-strong">mniej niż 8 punktów</span>,
+        są automatycznie odrzucane.
+        Takie odpowiedzi zwykle nie mają znaczenia dla gry
+        i nie byłyby czytelne dla widzów.
+      </p>
+      
+      <p class="m-p">
+        Dla jednego pytania na tablicy
+        może znaleźć się maksymalnie
+        <span class="m-strong">6 odpowiedzi</span>.
+        Jeżeli poprawnych odpowiedzi jest więcej,
+        system wybiera te najlepiej punktowane,
+        a pozostałe są pomijane.
+      </p>
+      
+      <p class="m-p">
+        Z tego powodu suma punktów dla jednego pytania
+        <span class="m-strong">nie zawsze wynosi dokładnie 100</span>.
+        Punkty przypisane są wyłącznie do odpowiedzi,
+        które faktycznie trafiają na tablicę.
+      </p>
+    
+      <div class="m-warn">
+        <b>Uwaga:</b>
+        po zamknięciu sondażu
+        nie można już zmieniać jego wyników
+        bez ponownego uruchomienia sondażu.
+      </div>
+    
+      <h3 class="m-h2">Ponowne uruchomienie sondażu</h3>
+    
+      <p class="m-p">
+        Zamknięty sondaż można uruchomić ponownie,
+        co powoduje usunięcie poprzednich wyników
+        i rozpoczęcie zbierania odpowiedzi od nowa.
+      </p>
+    
+      <p class="m-p">
+        Ta opcja jest przydatna,
+        gdy sondaż został uruchomiony testowo
+        lub doszło do błędu organizacyjnego.
+      </p>`,
+      logo: `<p class="m-p">
+      System pozwala ustawić własne logo, które pojawia się na wyświetlaczu
+      (np. na ekranie startowym lub zakończenia). Do tworzenia logo przechodzisz z górnego panelu strony „Moje gry”
+        za pomocą przycisku <span class="m-code">Logo🖥️</span>.
+    </p>
+
+    <div class="m-note">
+      <b>Ważne:</b><br/>
+      Logo ma rozmiar techniczny <span class="m-code">30×10</span> (kafelki znaków) albo <span class="m-code">150×70</span> (piksele).
+      To ograniczenie wynika z fizycznego układu tablicy i ma zapewnić czytelność na żywo.
+    </div>
+
+    <h3 class="m-h2">Tryby tworzenia logo</h3>
+
+    <p class="m-p">
+      Podczas tworzenia nowego logo wybierasz jeden z trybów.
+      Każdy tryb prowadzi do tego samego efektu (logo na wyświetlaczu),
+      ale różni się sposobem tworzenia.
+    </p>
+
+    <ul class="m-ul">
+      <li>
+        <span class="m-strong">Napis</span> — klasyczne logo złożone ze znaków (styl „Familiady”).
+        Dobre, gdy chcesz szybko zrobić czytelny tytuł.
+      </li>
+      <li>
+        <span class="m-strong">Tekst</span> — edycja tekstu i podgląd w „pikselach”.
+        Dobre, gdy potrzebujesz innego kroju/układu niż w „Napis”.
+      </li>
+      <li>
+        <span class="m-strong">Rysunek</span> — rysujesz ręcznie w siatce (jak w prostym edytorze grafiki).
+        Dobre do ikon i prostych kształtów.
+      </li>
+      <li>
+        <span class="m-strong">Obraz</span> — importujesz obrazek i dopasowujesz go do tablicy.
+        Dobre, gdy masz gotowe logo firmy.
+      </li>
+    </ul>
+
+    <h3 class="m-h2">Podgląd na wyświetlaczu</h3>
+
+    <p class="m-p">
+      W edytorze cały czas widzisz podgląd „jak na tablicy”.
+      To ważne, bo to co wygląda dobrze w dużej rozdzielczości,
+      może być nieczytelne po sprowadzeniu do <span class="m-code">150×70</span>.
+    </p>
+
+    <div class="m-note">
+      <b>Praktyczna rada:</b><br/>
+      Najlepiej sprawdzają się grube kształty, duże litery i wysoki kontrast.
+      Cienkie linie, małe detale i delikatne przejścia zwykle znikają.
+    </div>
+
+    <h3 class="m-h2">Zapis i aktywne logo</h3>
+
+    <p class="m-p">
+      Logo możesz zapisać pod własną nazwą. Na liście logotypów możesz też ustawić,
+      które logo jest <span class="m-strong">aktywne</span>.
+      Aktywne logo będzie używane przez wyświetlacz automatycznie.
+    </p>
+
+    <p class="m-p">
+      Jeśli nie ustawisz żadnego aktywnego logo, system użyje
+      <span class="m-strong">domyślnego logo</span>.
+    </p>
+
+    <h3 class="m-h2">Import i eksport logo</h3>
+
+    <p class="m-p">
+      Edytor pozwala eksportować aktywne logo do pliku oraz importować logo z pliku.
+      Dzięki temu możesz przenosić logo pomiędzy kontami lub robić kopie zapasowe.
+    </p>
+
+    <div class="m-warn">
+      <b>Uwaga:</b><br/>
+      Nie edytuj plików logo ręcznie. To format techniczny — ręczna zmiana może spowodować,
+      że import się nie powiedzie albo logo będzie działało nieprawidłowo.
+    </div>`,
+      control: `<p class="m-p">
+        Do Panelu sterowania przechodzisz z listy „Moje gry”
+        za pomocą przycisku <span class="m-code">Graj</span>.
+        Ten tryb jest przeznaczony wyłącznie do prowadzenia rozgrywki na żywo —
+        w tym miejscu nie edytujesz już pytań ani wyników sondażu.
+      </p>
+    
+      <p class="m-p">
+        Panel sterowania prowadzi operatora krok po kroku:
+        najpierw podłączasz urządzenia, potem ustawiasz parametry rozgrywki,
+        a na końcu przechodzisz przez rundy i (opcjonalnie) finał.
+        Kolejne kroki odblokowują się dopiero wtedy, gdy poprzednie są gotowe,
+        co minimalizuje ryzyko pomyłek podczas nagrania.
+      </p>
+    
+      <h3 class="m-h2">Co musi być gotowe, zanim zaczniesz</h3>
+    
+      <ul class="m-ul">
+        <li>
+          Gra powinna mieć przygotowane pytania i odpowiedzi (z edytora),
+          a jeśli jest to gra sondażowa — sondaż powinien być zakończony i zatwierdzony.
+        </li>
+        <li>
+          Operator powinien mieć komputer z dużym ekranem (panel jest projektowany pod tryb desktopowy).
+        </li>
+        <li>
+          Powinny być przygotowane osobne urządzenia: wyświetlacz (TV/rzutnik), urządzenie prowadzącego,
+          oraz urządzenie pełniące rolę przycisku.
+        </li>
+        <li>
+          Stabilne Wi-Fi (najczęstsza przyczyna problemów to ubite karty w tle / przełączanie sieci).
+        </li>
+      </ul>
+    
+      <div class="m-note">
+        <b>Dlaczego tyle „formalności”?</b><br/>
+        Rozgrywka jest na żywo i ma telewizyjne tempo. Panel sterowania ma pilnować procedury,
+        a nie dokładać operatorowi stresu. Dlatego system wymusza gotowość sprzętu i ustawień przed startem.
+      </div>
+    
+      <h3 class="m-h2">Kto co widzi</h3>
+    
+      <p class="m-p">
+        System celowo rozdziela ekrany, żeby każdy robił swoje:
+      </p>
+    
+      <ul class="m-ul">
+        <li>
+          <span class="m-strong">Operator (Panel sterowania)</span> — widzi wszystkie przyciski,
+          status gry, bank, X-y, komunikaty i kolejne kroki procedury.
+          Operator steruje tym, co pojawia się na tablicy.
+        </li>
+        <li>
+          <span class="m-strong">Wyświetlacz</span> — pokazuje tablicę gry: pytania, odpowiedzi,
+          punkty, bank, błędy (X) oraz ekrany startu i zakończenia.
+          To ekran widoczny dla uczestników i widowni.
+        </li>
+        <li>
+          <span class="m-strong">Prowadzący</span> — dostaje treści do odczytania i podgląd kontekstu,
+          ale nie steruje przebiegiem gry (steruje operator).
+        </li>
+        <li>
+          <span class="m-strong">Przycisk</span> — służy do sygnału w pojedynku (kto pierwszy).
+        </li>
+      </ul>
+    
+      <h3 class="m-h2">1) Urządzenia</h3>
+    
+      <p class="m-p">
+        Pierwszy etap w panelu to podłączenie urządzeń.
+        W górnym pasku panelu widzisz trzy statusy:
+        <span class="m-strong">Wyświetlacz</span>,
+        <span class="m-strong">Prowadzący</span>,
+        <span class="m-strong">Przycisk</span>.
+        Operator rozpoczyna od tego, żeby wszystkie były online.
+      </p>
+    
+      <h3 class="m-h3">Krok 1: Wyświetlacz</h3>
+    
+      <p class="m-p">
+        W tym kroku panel pokazuje kod QR i link dla wyświetlacza.
+        Najlepiej otworzyć wyświetlacz na telewizorze lub rzutniku,
+        w trybie pełnoekranowym (bez pasków przeglądarki).
+        Dopiero gdy wyświetlacz jest online, panel pozwoli przejść dalej.
+      </p>
+    
+      <h3 class="m-h3">Krok 2: Prowadzący i Przycisk</h3>
+    
+      <p class="m-p">
+        W drugim kroku podłączasz urządzenie prowadzącego i urządzenie przycisku.
+        Panel również pokazuje QR/link do podłączenia.
+        W praktyce najlepiej użyć dwóch osobnych telefonów albo telefonu i tabletu.
+      </p>
+    
+      <p class="m-p">
+        W tym kroku jest opcja <span class="m-strong">„QR na wyświetlaczu”</span> —
+        po jej użyciu kody QR mogą zostać pokazane na dużym ekranie,
+        żeby ekipa mogła szybko zeskanować je telefonami.
+        To przyspiesza start na planie, bo nie trzeba przepisywać linków.
+      </p>
+    
+      <div class="m-warn">
+        <b>Uwaga:</b><br/>
+        Jeśli któreś urządzenie rozłączy się w trakcie, panel potrafi pokazać ostrzeżenie.
+        Najczęściej pomaga: wyłączyć oszczędzanie baterii, nie minimalizować przeglądarki
+        oraz trzymać urządzenia na jednej stabilnej sieci Wi-Fi.
+      </div>
+    
+      <h3 class="m-h3">Krok 3: Dźwięk</h3>
+    
+      <p class="m-p">
+        Przeglądarki blokują automatyczne odtwarzanie dźwięku,
+        dopóki użytkownik nie wykona „gestu” (kliknięcia).
+        Dlatego panel ma osobny krok odblokowania dźwięku.
+        Bez tego możesz nie usłyszeć sygnałów, które wspierają tempo gry.
+      </p>
+    
+      <h3 class="m-h2">2) Ustawienia</h3>
+    
+      <p class="m-p">
+        Gdy urządzenia są online, przechodzisz do ustawień rozgrywki.
+        Ten etap ma dwa cele:
+        (1) przygotować czytelne nazwy drużyn na tablicy,
+        (2) dopasować parametry rozgrywki do nagrania (dodatkowe ustawienia).
+      </p>
+    
+      <h3 class="m-h3">Nazwy drużyn</h3>
+    
+      <p class="m-p">
+        Ustawiasz nazwę drużyny A i B.
+        Są to napisy, które widzą zawodnicy i widownia na wyświetlaczu,
+        więc najlepiej ustalić je przed startem rund.
+        Panel blokuje przejście dalej, dopóki obie nazwy nie są wpisane.
+      </p>
+    
+      <h3 class="m-h3">Dodatkowe ustawienia (ważne dla operatora)</h3>
+    
+      <p class="m-p">
+        W „Dodatkowych ustawieniach” dopasowujesz rozgrywkę do formatu odcinka.
+        Te opcje nie zmieniają sensu zasad, tylko ustawiają tempo i progi gry.
+      </p>
+    
+      <ul class="m-ul">
+        <li>
+          <span class="m-strong">Mnożniki rund</span> — wpisywane po przecinku (np. <span class="m-code">1,1,1,2,3</span>).
+          To odpowiada klasycznemu podwajaniu/potrajaniu wartości w kolejnych etapach.
+          W praktyce: bank rundy na końcu jest mnożony przez mnożnik bieżącej rundy.
+        </li>
+        <li>
+          <span class="m-strong">Cel rozgrywki</span> — próg punktów, po którym gra może przejść do finału
+          (w klasycznej formule często 300). To pozwala dopasować długość gry.
+        </li>
+        <li>
+          <span class="m-strong">Cel finału</span> — próg punktów w finale (domyślnie 200 w klasycznej formule).
+        </li>
+        <li>
+          <span class="m-strong">Zakończenie gry</span> — co pokazuje wyświetlacz na końcu
+          (logo / punkty / kwota po finale). To jest ważne produkcyjnie: „ostatni kadr”.
+        </li>
+      </ul>
+    
+      <div class="m-note">
+        <b>Dlaczego to jest w Panelu sterowania, a nie w edytorze?</b><br/>
+        Bo to są ustawienia odcinka (produkcji), a nie treści pytań.
+        Pytania nie powinny się zmieniać podczas rozgrywki, ale parametry gry czasem tak.
+      </div>
+    
+      <h3 class="m-h3">Finał: włącz i wybierz 5 pytań</h3>
+    
+      <p class="m-p">
+        Jeśli rozgrywka ma mieć finał, włączasz finał i wybierasz dokładnie <span class="m-strong">5 pytań finału</span>.
+        Panel pokazuje listę pytań oraz listę „Pytania finału (max 5)”.
+        Po wybraniu piątki używasz przycisku <span class="m-strong">Zatwierdź</span>.
+      </p>
+    
+      <div class="m-warn">
+        <b>Uwaga:</b><br/>
+        Finał wymaga zatwierdzonych 5 pytań przed startem rund.
+        To celowa blokada — na żywo nie ma czasu na wybieranie pytań „na szybko”.
+        Jeśli chcesz zmienić zestaw, używasz trybu <span class="m-strong">Edytuj</span> przy pytaniach finału.
+      </div>
+    
+      <h3 class="m-h2">3) Rundy — przebieg gry krok po kroku</h3>
+    
+      <p class="m-p">
+        W rundach prowadzisz właściwą rozgrywkę: pytania, odpowiedzi, punkty i bank rundy.
+        Gracze widzą tablicę na wyświetlaczu, prowadzący zadaje pytania i pilnuje przebiegu,
+        a operator odsłania odpowiedzi, nalicza punkty oraz dodaje błędy (X).
+      </p>
+      
+      <p class="m-p">
+        Najważniejsza zasada w praktyce: prowadzący skupia się na uczestnikach,
+        a operator na obsłudze systemu. Dzięki temu gra jest płynna,
+        a tablica zawsze pokazuje to, co powinno być w danym momencie.
+      </p>
+    
+      <h3 class="m-h3">Start rundy: „Gra gotowa” i intro</h3>
+    
+      <p class="m-p">
+        Rozpoczynając rundy, panel najpierw przygotowuje wyświetlacz (czyści tablicę i ustawia stan gry),
+        a następnie pozwala uruchomić intro.
+        To porządkuje początek nagrania: widzowie dostają czytelny start,
+        a operator ma jasny moment wejścia w pierwsze pytanie.
+      </p>
+    
+      <h3 class="m-h3">Pojedynek: kto przejmuje kontrolę</h3>
+    
+      <p class="m-p">
+        Każde pytanie zaczyna się od pojedynku „głów rodzin” przy pulpicie.
+        W tym momencie kluczowe jest urządzenie <span class="m-strong">Przycisk</span>:
+        sygnał z przycisku informuje panel, że ktoś nacisnął pierwszy.
+        Operator zatwierdza, która strona zdobyła pierwszeństwo,
+        a prowadzący przechodzi do udzielania odpowiedzi.
+      </p>
+    
+      <p class="m-p">
+        Zgodnie z regulaminem, jeśli pierwsza odpowiedź nie jest najwyżej punktowana,
+        druga „głowa” ma szansę odpowiedzieć lepiej i przejąć kontrolę.
+        Panel prowadzi operatora przez decyzję kontroli rundy,
+        a wyświetlacz pokazuje, która drużyna aktualnie gra (wskaźnik drużyny).
+      </p>
+
+      <h3 class="m-h3">Oddanie pytania</h3>
+    
+      <p class="m-p">
+        Zgodnie z ustaleniami rozgrywki, po uzyskaniu kontroli drużyna może też zdecydować,
+        że <span class="m-strong">oddaje pytanie</span> przeciwnikom.
+        Jest to ruch taktyczny: zamiast „dobić” pytanie, drużyna może przekazać szansę rywalom.
+        Panel udostępnia tę opcję tylko w odpowiednim momencie i pilnuje, żeby nie dało się jej nadużywać.
+      </p>
+    
+      <h3 class="m-h3">Rozgrywka pytania: odsłanianie odpowiedzi i bank</h3>
+    
+      <p class="m-p">
+        Po ustaleniu kontroli drużyna odpowiada, a operator odsłania trafione odpowiedzi na tablicy.
+        Każde trafienie dodaje punkty do <span class="m-strong">banku rundy</span>.
+        Bank jest widoczny na wyświetlaczu i rośnie wraz z kolejnymi trafieniami.
+      </p>
+    
+      <p class="m-p">
+        Rozgrywka trwa do momentu, gdy:
+        wszystkie odpowiedzi zostaną odsłonięte,
+        albo drużyna straci trzy „szanse” (trzy X),
+        wtedy operator zakończy etap i przejdzie do kradzieży (gdy są spełnione warunki).
+      </p>
+    
+      <h3 class="m-h3">Pudła (X) i limit 3 sekund</h3>
+    
+      <p class="m-p">
+        Błędna odpowiedź jest oznaczana symbolem <span class="m-strong">X</span> na tablicy.
+        Trzy błędy oznaczają utratę kontroli i przejście do kradzieży przez przeciwników.
+        System ma także mechanikę limitu czasu <span class="m-strong">3 sekund</span> na odpowiedź —
+        przekroczenie limitu jest traktowane jak pudło (X).
+      </p>
+    
+      <div class="m-note">
+        <b>Po co timer?</b><br/>
+        To jest „bat na tempo”. Timer pozwala operatorowi szybko zamknąć zawahanie
+        bez dyskusji i utrzymać rytm rozgrywki.
+      </div>
+    
+      <h3 class="m-h3">Kradzież banku (jedna odpowiedź)</h3>
+    
+      <p class="m-p">
+        Gdy drużyna grająca wykorzysta trzy „szanse” zanim odsłoni wszystkie odpowiedzi,
+        pytanie przechodzi do drużyny przeciwnej.
+        Przeciwnicy mają prawo do <span class="m-strong">jednej odpowiedzi</span>:
+        jeśli trafi — bank przechodzi do nich,
+        jeśli nie — bank zostaje u drużyny grającej.
+        To domyka pytanie i rundę zgodnie z regulaminem.
+      </p>
+    
+      <h3 class="m-h3">Odsłanianie brakujących odpowiedzi i zakończenie rundy</h3>
+    
+      <p class="m-p">
+        Po rozstrzygnięciu pytania operator może odsłonić brakujące odpowiedzi „informacyjnie”,
+        żeby widzowie zobaczyli pełną tablicę.
+        Następnie operator kończy rundę: bank jest dopisywany właściwej drużynie,
+        z uwzględnieniem mnożnika rundy.
+      </p>
+    
+      <div class="m-note">
+        <b>Praktyczna uwaga:</b><br/>
+        Panel celowo rozdziela „rozgrywkę pytania” od „zakończenia rundy”.
+        Dzięki temu operator nie skasuje przypadkiem stanu tablicy,
+        zanim prowadzący dopowie puentę lub zanim padnie „dziękujemy”.
+      </div>
+
+      <h3 class="m-h3">Zakończenie rund i przejście dalej</h3>
+      
+      <p class="m-p">
+        Po każdej rundzie system aktualizuje wynik drużyn i sprawdza,
+        czy spełniono warunek zakończenia rozgrywki (ustawiony w „Dodatkowych ustawieniach”).
+        Najczęściej jest to próg punktów, np. <span class="m-strong">300</span>,
+        ale może być inny — zależnie od tego, jak chcesz poprowadzić turniej.
+      </p>
+      
+      <p class="m-p">
+        Jeśli finał jest <span class="m-strong">włączony</span>, a warunek zakończenia rund został spełniony,
+        rozgrywka przechodzi do finału.
+        Jeśli finał jest <span class="m-strong">wyłączony</span>, rozgrywka kończy się po rundach
+        i system przechodzi do ekranu zakończenia (logo/punkty/kwota — zgodnie z ustawieniami).
+      </p>
+      
+      <div class="m-warn">
+        <b>Uwaga:</b><br/>
+        Jeśli w trakcie rozgrywki skończą się pytania,
+        zanim zostanie osiągnięty próg punktowy,
+        system zakończy rundy z powodu braku pytań.
+        Wtedy rozgrywka przejdzie do finału (jeśli jest włączony)
+        albo do zakończenia gry (jeśli finał jest wyłączony).
+      </div>
+    
+    <h3 class="m-h2">4) Finał</h3>
+
+      <p class="m-p">
+        Finał jest osobnym trybem gry. Bierze w nim udział dwóch zawodników
+        z drużyny, która wygrała rozgrywkę zasadniczą.
+        Odpowiadają na te same <span class="m-strong">5 pytań</span>,
+        a ich punkty sumują się. Celem jest osiągnięcie progu finału
+        (domyślnie <span class="m-strong">200 punktów</span>, chyba że ustawiono inaczej).
+      </p>
+      
+      <h3 class="m-h3">Przygotowanie finału</h3>
+      
+      <p class="m-p">
+        Zanim rozpoczniesz finał, w ustawieniach gry musisz mieć wybrane i zatwierdzone
+        <span class="m-strong">dokładnie 5 pytań finałowych</span>.
+        Dzięki temu finał jest gotowy do poprowadzenia bez szukania pytań w trakcie.
+      </p>
+      
+      <p class="m-p">
+        Drugi zawodnik nie powinien znać odpowiedzi pierwszego.
+        W praktyce na czas tury pierwszego zawodnika
+        drugi zawodnik odwraca się albo zakłada słuchawki z muzyką.
+      </p>
+      
+      <h3 class="m-h3">Przygotowanie finału</h3>
+      
+      <p class="m-p">
+        Zanim rozpoczniesz finał, w ustawieniach gry musisz mieć wybrane i zatwierdzone
+        <span class="m-strong">dokładnie 5 pytań finałowych</span>.
+        Dzięki temu finał jest gotowy do poprowadzenia bez szukania pytań w trakcie.
+      </p>
+      
+      <p class="m-p">
+        W finale bardzo ważne jest, żeby drugi zawodnik nie znał odpowiedzi pierwszego.
+        Dlatego w czasie rundy pierwszego zawodnika drugi zawodnik
+        <span class="m-strong">oddala się i zakłada słuchawki z muzyką</span>,
+        żeby nie słyszeć pytań ani odpowiedzi.
+      </p>
+      
+      <h3 class="m-h3">Runda 1 – pierwszy zawodnik (15 sekund)</h3>
+      
+      <p class="m-p">
+        Prowadzący czyta po kolei pięć pytań, a pierwszy zawodnik odpowiada w limicie
+        <span class="m-strong">15 sekund</span>.
+        Operator w tym czasie <span class="m-strong">wpisuje odpowiedzi</span> w panelu finału.
+        Na tym etapie odpowiedzi nie są jeszcze oceniane ani odsłaniane.
+      </p>
+      
+      <p class="m-p">
+        Po zakończeniu rundy operator przypisuje wpisane odpowiedzi do listy punktowanych wyników
+        i <span class="m-strong">odsłania je na tablicy</span>.
+        Jeśli odpowiedź nie pasuje do żadnej pozycji z listy,
+        otrzymuje <span class="m-strong">0 punktów</span>.
+      </p>
+      
+      <p class="m-p">
+        Po odsłonięciu odpowiedzi pierwszego zawodnika system ukrywa jego połowę tablicy,
+        a prowadzący przygotowuje wejście drugiego zawodnika i przypomina zasady finału.
+      </p>
+      
+      <h3 class="m-h3">Runda 2 – drugi zawodnik (20 sekund) i powtórki</h3>
+      
+      <p class="m-p">
+        Drugi zawodnik wraca do gry i odpowiada na te same pytania w limicie
+        <span class="m-strong">20 sekund</span>.
+        W momencie gdy na tablicy pojawia się połówka z odpowiedziami pierwszego zawodnika,
+        drugi zawodnik <span class="m-strong">odwraca się</span>,
+        żeby ich nie widzieć i nie sugerować się nimi.
+      </p>
+      
+      <p class="m-p">
+        Operator znów najpierw wpisuje wszystkie odpowiedzi drugiego zawodnika,
+        bez odsłaniania i bez oceniania „na bieżąco”.
+        Jeśli druga osoba poda odpowiedź identyczną jak pierwsza,
+        jest to <span class="m-strong">powtórka</span> — zawodnik musi podać inną odpowiedź,
+        a operator może oznaczyć tę próbę jako powtórzoną.
+        Odpowiedzi powtórzone nie dają punktów.
+      </p>
+      
+      <p class="m-p">
+        Po zakończeniu rundy operator przypisuje odpowiedzi drugiego zawodnika do listy punktowanych wyników
+        i <span class="m-strong">odsłania je po kolei</span> na tablicy.
+        Punkty obu zawodników sumują się.
+      </p>
+      
+      <h3 class="m-h3">Kiedy finał się kończy</h3>
+      
+      <p class="m-p">
+        Finał kończy się w momencie, gdy łączna liczba punktów osiągnie lub przekroczy
+        ustalony próg. Może się zdarzyć, że próg zostanie osiągnięty już po turze pierwszego zawodnika
+        — wtedy drugi zawodnik nie musi już grać, a rozgrywka przechodzi od razu do zakończenia.
+      </p>
+      
+      <p class="m-p">
+        Po zakończeniu finału system wyświetla ekran końcowy zgodnie z ustawieniami zakończenia gry:
+        <span class="m-strong">logo</span>, <span class="m-strong">punkty</span> albo
+        <span class="m-strong">kwotę wygranej</span>.
+      </p>`,
+      demo: `<p class="m-p">
+        W tej zakładce możesz przywrócić przykładowe materiały startowe:
+        bazę pytań, loga oraz gotowe gry różnych kategorii i stanów.
+      </p>
+  
+      <p class="m-p">
+        Przydaje się to, gdy:
+      </p>
+  
+      <ul class="m-ul">
+        <li>chcesz szybko zobaczyć jak działa system</li>
+        <li>testujesz funkcje bez tworzenia własnych danych</li>
+        <li>przypadkiem usunąłeś przykładową zawartość</li>
+      </ul>
+  
+      <div class="m-warn">
+        Przywracanie demo nie usuwa Twoich danych – dodaje tylko przykładowe materiały.
+      </div>
+  
+      <div class="m-box">
+        <button class="btn" id="demoRestoreBtn">
+          ↺ Przywróć pliki demo
+        </button>
+  
+        <p class="m-p m-muted" style="margin-top:10px">
+          Po kliknięciu nastąpi przejście do widoku Moje gry i automatyczne wgranie demo.
+        </p>
+      </div>`,
+    },
   },
   builderImportExport: {
     defaults: {
