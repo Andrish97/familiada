@@ -777,6 +777,1321 @@ const en = {
       modalOk: "Restore",
       modalCancel: "Cancel",
     },
+    content: {
+      general: `<p class="m-p">
+        This page is a guide to running a game (tournament)
+        in the style of “Familiada.” Its goal is to explain how to prepare a game,
+        collect results (polls), and smoothly run a live match
+        — even if someone uses the system for the first time.
+      </p>
+      
+      <p class="m-p">
+        The description focuses on the tool and how to use it,
+        not on “television production.” The system works well for events,
+        company parties, school, stage shows, or just with friends
+        — anywhere you want a clear board, points, and a smooth flow of play.
+      </p>
+      
+      <p class="m-p">
+        The gameplay is structured to closely match the official rules of Familiada
+        (rounds, bank, X errors, steals, and the final), but the whole thing is designed as
+        a convenient system for hosting the game/tournament, with a clear division of roles:
+        <span class="m-strong">the host leads the conversation and asks the questions</span>,
+        while <span class="m-strong">the operator controls the board and points</span>.
+      </p>
+
+      <p class="m-p">
+        If you want to read the full rules of the game,
+        <a href="https://s.tvp.pl/repository/attachment/6/8/f/68f09c03ff0781fa510c2fd90c3ba19b1569224834470.pdf"
+           target="_blank"
+           rel="noopener">
+          The “Familiada” game show rules
+        </a>
+        describe them in detail.
+      </p>
+
+      <p class="m-p">
+        The whole system is designed
+        to clearly separate content preparation
+        from the actual gameplay.
+        Questions, answers, and polls are prepared in advance,
+        while during the game the operator uses only
+        the control panel.
+      </p>
+
+      <p class="m-p">
+        In practice this means that on the day of the recording
+        the operator doesn’t edit data,
+        the host focuses on talking with the contestants,
+        and the system keeps track of stages and game logic.
+        This reduces the risk of mistakes and speeds up the flow of the game.
+      </p>
+
+      <p class="m-p">
+        The system works best when using separate devices:
+        a display for the audience (TV or projector),
+        a tablet or phone for the host,
+        a separate device acting as the buzzer,
+        and the operator’s computer with the control panel.
+      </p>
+
+      <p class="m-p">
+        The guide is divided into tabs.
+        Each tab describes a different stage of working with the system:
+        from preparing the game,
+        through polls,
+        to running the live gameplay.
+      </p>`,
+      edit: `<p class="m-p">
+        The “Creating and editing a game” tab describes the stage of preparing the game
+        before starting the poll or the live match.
+        At this stage you create the structure of the game:
+        questions, possible answers, and how they are scored.
+      </p>
+    
+      <p class="m-p">
+        This stage is key, because it determines
+        how all later work with the game will look.
+        The system deliberately separates content preparation
+        from later data collection and live gameplay.
+      </p>
+    
+      <h3 class="m-h2">Game list (“My games”)</h3>
+    
+      <p class="m-p">
+        The game list is the place where you manage all games
+        assigned to your account.
+        This is where you can create new games,
+        choose existing ones,
+        and decide what you want to do next.
+      </p>
+    
+      <p class="m-p">
+        Games are divided into types.
+        The game type determines how answers will be collected
+        and how points will be generated on the board later.
+      </p>
+    
+      <ul class="m-ul">
+        <li>
+          <span class="m-strong">Standard poll</span> —
+          answers are typed in by respondents,
+          and points are based on the number of mentions.
+        </li>
+        <li>
+          <span class="m-strong">Answer scoring</span> —
+          respondents choose from prepared answers,
+          and the system counts votes.
+        </li>
+        <li>
+          <span class="m-strong">Prepared</span> —
+          answers and points are set manually,
+          without a poll.
+        </li>
+      </ul>
+    
+      <p class="m-p">
+        You create a new game by clicking the tile with the “＋” symbol.
+        After creation the game appears on the list
+        and can be opened in the editor.
+      </p>
+    
+      <h3 class="m-h2">Game editor — what and when can be edited</h3>
+    
+     <p class="m-p">
+        You enter the game edit mode from the “My games” list
+        using the <span class="m-code">Edit</span> button.
+        This is the first stage of working on the game,
+        where you prepare its full content
+        before using it in a poll or live gameplay.
+      </p>
+      
+      <p class="m-p">
+        In edit mode you create questions and answers,
+        decide on the game type,
+        and prepare the structure
+        that will later be used
+        to collect data or run the live game.
+      </p>
+      
+      <p class="m-p">
+        The game editor is used to build the structure of questions and answers.
+        Depending on the game type and its state,
+        the available editing options may differ.
+      </p>
+    
+      <p class="m-p">
+        This is intentional.
+        The system limits certain operations
+        to keep data consistent
+        and prevent situations
+        where the gameplay or poll
+        no longer matches the prepared content.
+      </p>
+    
+      <h3 class="m-h3">Adding and editing questions</h3>
+    
+      <p class="m-p">
+        Questions are always the core element of the game.
+        During preparation you can:
+        add new questions,
+        change their wording,
+        and remove unnecessary questions.
+      </p>
+    
+      <p class="m-p">
+        Changing a question after a poll has started
+        may be blocked,
+        because even a small text change
+        affects the meaning of collected answers.
+      </p>
+    
+      <h3 class="m-h3">Adding and editing answers</h3>
+    
+      <p class="m-p">
+        The ability to edit answers depends on the game type.
+        In poll-based games answers are the result of a survey,
+        so before the poll you can only prepare
+        their general structure or examples.
+      </p>
+    
+      <p class="m-p">
+        After the poll starts, the system may limit
+        adding or removing answers
+        so that responses from respondents
+        are not mixed with new content.
+      </p>
+    
+      <h3 class="m-h3">Points — why they are sometimes locked</h3>
+    
+      <p class="m-p">
+        Points are not always editable by hand.
+        In poll-based games points result directly
+        from the number of answers given,
+        so manual editing makes no sense
+        and is blocked.
+      </p>
+    
+      <p class="m-p">
+        Manual point setting is possible
+        only in prepared mode,
+        where the system does not use survey data.
+      </p>
+    
+      <div class="m-note">
+        <b>Why is that?</b><br/>
+        Thanks to this, what the audience sees on the board
+        always matches the actual poll results
+        or a clearly defined, manual scoring.
+      </div>
+    
+      <h3 class="m-h2">Length and format limits</h3>
+    
+      <p class="m-p">
+        Answers should be short and readable.
+        When importing content, answers longer
+        than <span class="m-strong">17 characters</span>
+        are automatically trimmed.
+      </p>
+    
+      <p class="m-p">
+        This limit comes from the board layout
+        and aims to keep things readable
+        during live gameplay.
+      </p>
+    
+      <h3 class="m-h2">Importing and exporting games</h3>
+    
+      <p class="m-p">
+        Builder allows exporting and importing games
+        as files or directly into a question base.
+        This feature is used to move games and questions
+        between accounts or environments.
+      </p>
+    
+      <p class="m-p">
+        Import and export files are a technical format.
+        You should not alter their contents
+        or try to edit them manually.
+      </p>
+    
+      <div class="m-warn">
+        <b>Warning:</b>
+        manual modification of import or export files
+        can make a game impossible to import
+        or cause it to work incorrectly.
+      </div>
+    
+      <p class="m-p">
+        After a successful import, the game appears
+        in the game list and can be further edited
+        only using the system editor.
+      </p>
+      
+      <p class="m-p">
+        When exporting a game to a base:
+      </p>
+      
+      <ul class="m-ul">
+        <li>a new folder is created in the base root</li>
+        <li>the folder is named after the game</li>
+        <li>all questions belonging to the game are saved inside</li>
+      </ul>
+
+      <p class="m-note">
+        You can export only to your own base or to a shared base where you are an editor.
+        If you do not currently have any bases, you will not be able to export.
+      </p>
+      
+      <p class="m-p">
+        Thanks to this each game can be turned into a set of questions for further editing,
+        organizing into folders, tagging, and reusing
+        in future games.
+      </p>
+      
+      <p class="m-note">
+        Exporting to a base does not remove the game — it only creates a copy as a question structure.
+      </p>`,
+      bases: `<h2 class="m-h2">Question bases — organization and collaboration</h2>
+  
+      <p class="m-p">
+        Question bases are a central place for storing all questions used in games.
+        They let you organize questions in folders, tag them, assign categories,
+        and share entire bases with other users.
+      </p>
+      <p class="m-p">
+        You access question bases from the top bar of the “My games” page
+        using the <span class="m-code">Question bases 🗃️</span> button.
+      </p>
+  
+      <p class="m-p">
+        A single base can contain hundreds or thousands of questions organized in a structure similar
+        to a classic file manager on a computer.
+      </p>
+  
+      <h3 class="m-h3">➕ Adding a new base</h3>
+  
+      <p class="m-p">
+        In the “Question bases” view click the <span class="m-strong">New base</span> tile.
+        A window will open where you enter the base name.
+      </p>
+  
+      <p class="m-p">
+        After saving, the new base appears in the list and you can immediately browse or share it.
+      </p>
+  
+      <h3 class="m-h3">🤝 Sharing a base</h3>
+  
+      <p class="m-p">
+        You can share any base with other users by providing their email address.
+        Two modes are available:
+      </p>
+  
+      <ul class="m-ul">
+        <li><span class="m-strong">Edit</span> — the user can add, delete, and modify questions, folders, tags, create games from questions, and export questions to a base</li>
+        <li><span class="m-strong">View</span> — the user can only browse the base and create games from available questions</li>
+      </ul>
+  
+      <p class="m-p">
+        Only the base owner can manage sharing.
+      </p>
+  
+      <h3 class="m-h3">📂 Opening the base manager</h3>
+  
+      <p class="m-p">
+        To enter a base, select it in the list and click the <span class="m-code">Browse</span> button.
+      </p>
+  
+      <p class="m-p">
+        Base Explorer will open — an advanced question manager that works like a classic file explorer.
+      </p>
+  
+      <h2 class="m-h2">Base Explorer — question manager</h2>
+  
+      <p class="m-p">
+        Base Explorer lets you manage questions in a way familiar from system file managers:
+        folders, drag-and-drop moves, copy, cut, and quick selection.
+      </p>
+  
+      <p class="m-p">
+        Each “file” in this manager is a single question.
+        Folders are used to group questions thematically or logically.
+      </p>
+  
+      <p class="m-p">
+        You can:
+      </p>
+  
+      <ul class="m-ul">
+        <li>create arbitrarily nested folders</li>
+        <li>move questions and folders between each other</li>
+        <li>copy and duplicate items</li>
+        <li>delete selected items</li>
+        <li>search by name and tags</li>
+      </ul>
+  
+      <p class="m-note">
+        The interface and keyboard shortcuts work similarly to classic file managers
+        (Explorer, Finder, Total Commander).
+      </p>
+  
+      <h2 class="m-h2">Tags and categories</h2>
+  
+      <h3 class="m-h3">🏷️ Tags</h3>
+  
+      <p class="m-p">
+        Each question can have any number of tags.
+        Tags are used to label questions by topic — e.g. “history,” “sports,” “easy,” “for kids.”
+      </p>
+  
+      <p class="m-p">
+        You can:
+      </p>
+  
+      <ul class="m-ul">
+        <li>create your own tags with colors</li>
+        <li>assign multiple tags to a single question</li>
+        <li>filter the view by selected tags</li>
+      </ul>
+
+      <p class="m-p">
+        Tag assignment takes place in a dedicated window, which you can open from the toolbar
+        or the context menu.
+      </p>
+      
+      <p class="m-p">
+        In the tag assignment window you can see a list of all available tags and their states:
+      </p>
+      
+      <ul class="m-ul">
+        <li>selected — the tag is assigned to all selected items</li>
+        <li>unselected — the tag is assigned to none of them</li>
+        <li>partial — only part of the selection has the tag</li>
+      </ul>
+      
+      <p class="m-p">
+        Clicking a tag cycles its state, enabling quick adding and removing of tags
+        for many questions or folders at once. This window also allows creating new tags.
+      </p>
+      
+      <p class="m-p">
+        Tags can also be used as filters — clicking a tag on the left narrows the view
+        to items marked with the selected tag or tag set.
+      </p>
+  
+      <p class="m-note">
+        A folder shows tag markers when all questions inside it
+        (and subfolders) have the same tag.
+      </p>
+  
+      <h3 class="m-h3">📌 Categories</h3>
+  
+      <p class="m-p">
+        Categories are special system labels that indicate
+        which game type a given question fits. This corresponds to game types in the <span class="m-strong">My games</span> view.
+      </p>
+  
+      <p class="m-p">
+        For example:
+      </p>
+  
+      <ul class="m-ul">
+        <li>questions with answers and points go to the <span class="m-strong">prepared</span> category</li>
+        <li>questions with answers but no points total go to <span class="m-strong">scoring</span></li>
+        <li>text-only questions without points go to <span class="m-strong">standard</span></li>
+      </ul>
+  
+      <p class="m-p">
+        Categories are assigned automatically based on the question structure,
+        not manually by the user.
+      </p>
+  
+      <p class="m-note">
+        This way you immediately know which questions suit a specific game type.
+      </p>
+  
+      <h2 class="m-h2">Question editor</h2>
+  
+      <p class="m-p">
+        You can open any question in the editor.
+        The editor lets you change the question text, answers, and points (if present).
+      </p>
+  
+      <p class="m-p">
+        The system enforces basic rules such as:
+      </p>
+  
+      <ul class="m-ul">
+        <li>the maximum number of points for a single answer</li>
+        <li>the total sum of points in a question</li>
+      </ul>
+  
+      <p class="m-p">
+        Thanks to this the base always stays consistent and ready for use in games.
+      </p>
+  
+      <h2 class="m-h2">Creating a game from questions</h2>
+  
+      <p class="m-p">
+        In the base manager you can select any questions and folders (including subfolders),
+        and then create a new game from them.
+      </p>
+  
+      <p class="m-p">
+        The system collects all questions from the selection, lets you review them,
+        and choose the game type.
+      </p>
+
+      <p class="m-note">
+        This enables fast game building from ready sets of questions without manual retyping.
+      </p>
+
+      <p class="m-warn">
+        After successful game creation you will be redirected to the <span class="m-strong">My games</span> view.
+      </p>
+  
+      <h2 class="m-h2">⌨️ Keyboard shortcuts — Base manager</h2>
+  
+      <h3 class="m-h3">📁 Create</h3>
+  
+      <table class="m-table">
+        <tr><th>Action</th><th>Windows / Linux</th><th>macOS</th></tr>
+        <tr><td>New question</td><td>Ctrl + N</td><td>⌘ N</td></tr>
+        <tr><td>New folder</td><td>Ctrl + Shift + N</td><td>⌘ ⇧ N</td></tr>
+      </table>
+  
+      <h3 class="m-h3">✏️ Edit</h3>
+  
+      <table class="m-table">
+        <tr><th>Action</th><th>Windows / Linux</th><th>macOS</th></tr>
+        <tr><td>Edit question</td><td>Ctrl + E</td><td>⌘ E</td></tr>
+        <tr><td>Rename</td><td>F2</td><td>F2</td></tr>
+        <tr><td>Delete</td><td>Delete</td><td>Fn + ⌫</td></tr>
+      </table>
+  
+      <h3 class="m-h3">📋 Clipboard</h3>
+  
+      <table class="m-table">
+        <tr><th>Action</th><th>Windows / Linux</th><th>macOS</th></tr>
+        <tr><td>Copy</td><td>Ctrl + C</td><td>⌘ C</td></tr>
+        <tr><td>Cut</td><td>Ctrl + X</td><td>⌘ X</td></tr>
+        <tr><td>Paste</td><td>Ctrl + V</td><td>⌘ V</td></tr>
+        <tr><td>Duplicate</td><td>Ctrl + D</td><td>⌘ D</td></tr>
+      </table>
+  
+      <h3 class="m-h3">🎮 Game</h3>
+  
+      <table class="m-table">
+        <tr><th>Action</th><th>Windows / Linux</th><th>macOS</th></tr>
+        <tr><td>Create game</td><td>Ctrl + G</td><td>⌘ G</td></tr>
+      </table>
+  
+      <h3 class="m-h3">🔄 View</h3>
+  
+      <table class="m-table">
+        <tr><th>Action</th><th>Windows / Linux</th><th>macOS</th></tr>
+        <tr><td>Refresh view</td><td>Ctrl + Alt + R</td><td>⌘ ⌥ R</td></tr>
+      </table>
+  
+      <h3 class="m-h3">📌 Navigation</h3>
+  
+      <table class="m-table">
+        <tr><th>Action</th><th>Windows / Linux</th><th>macOS</th></tr>
+        <tr><td>Select all</td><td>Ctrl + A</td><td>⌘ A</td></tr>
+        <tr><td>Open folder</td><td>Enter</td><td>⏎</td></tr>
+        <tr><td>Parent folder</td><td>Backspace</td><td>⌫</td></tr>
+      </table>
+  
+      <p class="m-note">
+        Shortcuts do not work while typing in edit fields.
+      </p>`,
+      polls: `<p class="m-p">
+        The “Polls” tab describes the stage of collecting responses
+        from respondents before the live match.
+        The poll is a bridge between game preparation
+        and the live gameplay.
+      </p>
+    
+      <p class="m-p">
+        At this stage the system stops being a content editor
+        and starts working as a data collection tool.
+        For this reason many editing options are deliberately limited.
+      </p>
+
+      <p class="m-p">
+        You reach polls from the “My games” list
+        using the <span class="m-code">Polls Hub</span> button.
+        This stage happens after finishing game editing
+        and is used only to collect responses
+        or votes from respondents.
+      </p>
+      
+      <p class="m-p">
+        When a poll starts,
+        the game stops being editable
+        and begins serving as a data collection tool.
+        Therefore some options available in the editor
+        are deliberately blocked in this mode.
+      </p>
+
+      <h3 class="m-h2">Polls hub (polls-hub)</h3>
+
+      <p class="m-p">
+        The polls hub is a separate panel for managing polls, tasks, and subscriptions.
+        You open it from the “My games” list with the <span class="m-code">Polls Hub</span> button.
+        On desktop you see two cards, each with two lists.
+      </p>
+
+      <ul class="m-ul">
+        <li><span class="m-strong">Polls</span> — the “My polls” list and “Tasks.”</li>
+        <li><span class="m-strong">Subscriptions</span> — the “My subscribers” list and “My subscriptions.”</li>
+      </ul>
+
+      <p class="m-p">
+        The gold dot on the “Polls” card shows the number of active tasks to complete,
+        and on the “Subscriptions” card the number of invitations to accept.
+      </p>
+
+      <p class="m-p">
+        A subscription is a permanent connection between your account and an invited user —
+        once accepted, it allows sharing future polls without re-entering the email.
+        You send an invitation in the “My subscribers” section by entering an email or username
+        and clicking <span class="m-code">Invite</span>. The recipient accepts the invite in their
+        Polls Hub or via the link in the message, and the status becomes active.
+      </p>
+
+      <p class="m-p">
+        Sharing a poll is done from the “My polls” list: select the tile and click
+        <span class="m-code">Share</span>, then choose subscribers and save.
+        The poll tile shows current votes, and the <span class="m-code">Details</span> button
+        provides a view of submitted votes, pending, rejected, and anonymous responses.
+      </p>
+
+      <h3 class="m-h3">My polls</h3>
+      <p class="m-p">
+        Each tile has a color that indicates the poll status:
+      </p>
+      <ul class="m-ul">
+        <li><span class="m-strong">Gray</span> — draft, missing requirements to start.</li>
+        <li><span class="m-strong">Red</span> — draft ready to start.</li>
+        <li><span class="m-strong">Orange</span> — poll open, no votes.</li>
+        <li><span class="m-strong">Yellow</span> — poll open, there are votes or active tasks.</li>
+        <li><span class="m-strong">Green</span> — poll open, goals reached (tasks done or ≥10 votes).</li>
+        <li><span class="m-strong">Blue</span> — poll closed.</li>
+      </ul>
+
+      <h3 class="m-h3">Tasks</h3>
+      <p class="m-p">
+        Tasks are voting invitations. Colors:
+        <span class="m-strong">green</span> — available,
+        <span class="m-strong">blue</span> — completed.
+        Double-click opens voting, and the <span class="m-code">X</span> button rejects the task.
+      </p>
+
+      <h3 class="m-h3">My subscribers</h3>
+      <p class="m-p">
+        Status colors:
+        <span class="m-strong">yellow</span> — pending,
+        <span class="m-strong">green</span> — active,
+        <span class="m-strong">red</span> — rejected/canceled.
+        The <span class="m-code">X</span> button removes a subscriber, and <span class="m-code">↻</span> resends an invite.
+      </p>
+
+      <h3 class="m-h3">My subscriptions</h3>
+      <p class="m-p">
+        Colors:
+        <span class="m-strong">yellow</span> — pending,
+        <span class="m-strong">green</span> — active.
+        Buttons: <span class="m-code">✓</span> accepts, <span class="m-code">X</span> rejects/cancels.
+      </p>
+
+    
+      <h3 class="m-h2">Types of polls</h3>
+    
+      <p class="m-p">
+        Depending on the game type, a poll can work in one of two modes:
+      </p>
+    
+      <ul class="m-ul">
+        <li>
+          <span class="m-strong">Standard (text) poll</span> —
+          respondents type their own text answers.
+        </li>
+        <li>
+          <span class="m-strong">Scoring poll</span> —
+          respondents choose one of the prepared answers.
+        </li>
+      </ul>
+    
+      <p class="m-p">
+        Prepared games do not have a poll —
+        answers and points are set manually.
+      </p>
+    
+      <h3 class="m-h2">Starting a poll</h3>
+    
+      <p class="m-p">
+        A poll can be started only for a game
+        in the <span class="m-strong">Draft</span> state.
+        Before starting, the system checks
+        whether the game meets the minimum requirements.
+      </p>
+    
+      <ul class="m-ul">
+        <li>minimum number of questions,</li>
+        <li>in scoring mode — the required number of answers per question.</li>
+      </ul>
+    
+      <div class="m-note">
+        <b>Why?</b><br/>
+        This ensures you cannot start a poll
+        that cannot later be properly closed
+        and used in the game.
+      </div>
+    
+      <h3 class="m-h2">Link and QR code</h3>
+    
+      <p class="m-p">
+        After starting a poll the system generates
+        a unique voting link.
+        The link can be copied,
+        opened in a new tab,
+        or displayed as a QR code.
+      </p>
+    
+      <p class="m-p">
+        The QR code is intended to be displayed
+        on a screen visible to respondents
+        (TV, projector, large monitor).
+      </p>
+    
+      <h3 class="m-h2">Poll flow</h3>
+    
+      <p class="m-p">
+        Respondents go through the questions in order.
+        The system enforces the order
+        and does not allow skipping a question.
+      </p>
+    
+      <p class="m-p">
+        In a text poll each answer:
+      </p>
+    
+      <ul class="m-ul">
+        <li>is limited to 17 characters,</li>
+        <li>is normalized (case, spaces),</li>
+        <li>is counted as a separate proposal.</li>
+      </ul>
+    
+      <p class="m-p">
+        In a scoring poll the respondent
+        chooses one of the prepared answers,
+        and the system records the vote.
+      </p>
+    
+      <h3 class="m-h2">Closing a poll</h3>
+    
+      <p class="m-p">
+        Closing a poll is a separate,
+        deliberate stage of work.
+        The system will not allow closing a poll
+        if the collected data does not meet
+        minimum quality conditions.
+      </p>
+    
+      <h3 class="m-h3">Scoring poll</h3>
+    
+      <p class="m-p">
+        When closing a scoring poll
+        the system converts votes into points
+        and normalizes them to a 0–100 scale
+        for each question.
+      </p>
+    
+      <div class="m-note">
+        <b>Result:</b>
+        you get a ready list of answers with points,
+        without the need for manual counting.
+      </div>
+    
+      <h3 class="m-h3">Text poll</h3>
+    
+      <p class="m-p">
+        In a text (classic) poll respondents type their own answers.
+        After closing, the system moves to the results cleanup stage.
+        The operator can merge obviously similar answers
+        and remove typos or clear duplicates.
+      </p>
+      
+      <p class="m-p">
+        Then answers are normalized to the points scale.
+        At this stage the system applies additional limits
+        aimed at keeping the board readable
+        and the gameplay dynamic.
+      </p>
+      
+      <p class="m-p">
+        Answers with a very low number of mentions
+        that after normalization get
+        <span class="m-strong">less than 8 points</span>
+        are automatically discarded.
+        Such answers usually do not matter for the game
+        and would not be readable for the audience.
+      </p>
+      
+      <p class="m-p">
+        For one question, the board can show at most
+        <span class="m-strong">6 answers</span>.
+        If there are more correct answers,
+        the system selects the highest-scoring ones
+        and skips the rest.
+      </p>
+      
+      <p class="m-p">
+        For this reason the total points for a single question
+        <span class="m-strong">do not always sum to exactly 100</span>.
+        Points are assigned only to the answers
+        that actually appear on the board.
+      </p>
+    
+      <div class="m-warn">
+        <b>Warning:</b>
+        after closing a poll
+        you cannot change its results
+        without restarting the poll.
+      </div>
+    
+      <h3 class="m-h2">Restarting a poll</h3>
+    
+      <p class="m-p">
+        A closed poll can be restarted,
+        which removes previous results
+        and starts collecting answers from scratch.
+      </p>
+    
+      <p class="m-p">
+        This option is useful
+        when the poll was started for testing
+        or an organizational error occurred.
+      </p>`,
+      logo: `<p class="m-p">
+      The system lets you set your own logo that appears on the display
+      (e.g., the start or end screen). You can access the logo creator from the top bar of the “My games” page
+        using the <span class="m-code">Logo🖥️</span> button.
+    </p>
+
+    <div class="m-note">
+      <b>Important:</b><br/>
+      The logo has a technical size of <span class="m-code">30×10</span> (character tiles) or <span class="m-code">150×70</span> (pixels).
+      This limitation comes from the physical layout of the board and ensures readability live.
+    </div>
+
+    <h3 class="m-h2">Logo creation modes</h3>
+
+    <p class="m-p">
+      When creating a new logo you choose one of the modes.
+      Each mode leads to the same result (a logo on the display),
+      but differs in how it is created.
+    </p>
+
+    <ul class="m-ul">
+      <li>
+        <span class="m-strong">Text art</span> — a classic logo made of characters (the “Familiada” style).
+        Good when you want a quick, readable title.
+      </li>
+      <li>
+        <span class="m-strong">Text</span> — text editing and preview in “pixels.”
+        Good when you need a different font/layout than “Text art.”
+      </li>
+      <li>
+        <span class="m-strong">Drawing</span> — draw by hand on a grid (like a simple graphics editor).
+        Good for icons and simple shapes.
+      </li>
+      <li>
+        <span class="m-strong">Image</span> — import an image and fit it to the board.
+        Good when you already have a company logo.
+      </li>
+    </ul>
+
+    <h3 class="m-h2">Display preview</h3>
+
+    <p class="m-p">
+      In the editor you always see a preview “as on the board.”
+      This is important because what looks good in high resolution
+      may be unreadable when reduced to <span class="m-code">150×70</span>.
+    </p>
+
+    <div class="m-note">
+      <b>Practical tip:</b><br/>
+      Thick shapes, large letters, and high contrast work best.
+      Thin lines, small details, and subtle gradients usually disappear.
+    </div>
+
+    <h3 class="m-h2">Saving and active logo</h3>
+
+    <p class="m-p">
+      You can save a logo under your own name. In the logo list you can also set
+      which logo is <span class="m-strong">active</span>.
+      The active logo will be used by the display automatically.
+    </p>
+
+    <p class="m-p">
+      If you do not set any active logo, the system uses
+      the <span class="m-strong">default logo</span>.
+    </p>
+
+    <h3 class="m-h2">Logo import and export</h3>
+
+    <p class="m-p">
+      The editor allows exporting the active logo to a file and importing a logo from a file.
+      This lets you move logos between accounts or make backups.
+    </p>
+
+    <div class="m-warn">
+      <b>Warning:</b><br/>
+      Do not edit logo files manually. This is a technical format — manual changes may cause
+      the import to fail or the logo to work incorrectly.
+    </div>`,
+      control: `<p class="m-p">
+        You reach the Control Panel from the “My games” list
+        using the <span class="m-code">Play</span> button.
+        This mode is intended only for running the live game —
+        you no longer edit questions or poll results here.
+      </p>
+    
+      <p class="m-p">
+        The control panel guides the operator step by step:
+        first you connect devices, then set game parameters,
+        and finally go through rounds and (optionally) the final.
+        Each step unlocks only when the previous one is ready,
+        which minimizes the risk of mistakes during recording.
+      </p>
+    
+      <h3 class="m-h2">What must be ready before you start</h3>
+    
+      <ul class="m-ul">
+        <li>
+          The game should have prepared questions and answers (from the editor),
+          and if it is a poll-based game — the poll should be closed and approved.
+        </li>
+        <li>
+          The operator should have a computer with a large screen (the panel is designed for desktop mode).
+        </li>
+        <li>
+          Separate devices should be prepared: a display (TV/projector), the host’s device,
+          and a device acting as the buzzer.
+        </li>
+        <li>
+          Stable Wi-Fi (the most common issues are killed background tabs / network switching).
+        </li>
+      </ul>
+    
+      <div class="m-note">
+        <b>Why so many “formalities”?</b><br/>
+        The gameplay is live and has a TV pace. The control panel is meant to enforce the procedure,
+        not add stress for the operator. That’s why the system requires readiness of equipment and settings before starting.
+      </div>
+    
+      <h3 class="m-h2">Who sees what</h3>
+    
+      <p class="m-p">
+        The system deliberately separates screens so everyone does their job:
+      </p>
+    
+      <ul class="m-ul">
+        <li>
+          <span class="m-strong">Operator (Control Panel)</span> — sees all buttons,
+          game status, bank, Xs, messages, and the next procedural steps.
+          The operator controls what appears on the board.
+        </li>
+        <li>
+          <span class="m-strong">Display</span> — shows the game board: questions, answers,
+          points, bank, errors (X), and start/end screens.
+          This is the screen visible to participants and the audience.
+        </li>
+        <li>
+          <span class="m-strong">Host</span> — receives content to read and a context preview,
+          but does not control the course of the game (the operator does).
+        </li>
+        <li>
+          <span class="m-strong">Buzzer</span> — used to signal the face-off (who is first).
+        </li>
+      </ul>
+    
+      <h3 class="m-h2">1) Devices</h3>
+    
+      <p class="m-p">
+        The first stage in the panel is connecting devices.
+        In the top bar you see three statuses:
+        <span class="m-strong">Display</span>,
+        <span class="m-strong">Host</span>,
+        <span class="m-strong">Buzzer</span>.
+        The operator starts by making sure all are online.
+      </p>
+    
+      <h3 class="m-h3">Step 1: Display</h3>
+    
+      <p class="m-p">
+        In this step the panel shows a QR code and link for the display.
+        It’s best to open the display on a TV or projector,
+        in full-screen mode (no browser bars).
+        Only when the display is online will the panel allow you to proceed.
+      </p>
+    
+      <h3 class="m-h3">Step 2: Host and buzzer</h3>
+    
+      <p class="m-p">
+        In the second step you connect the host device and the buzzer device.
+        The panel also shows a QR/link for connection.
+        In practice it’s best to use two separate phones or a phone and a tablet.
+      </p>
+    
+      <p class="m-p">
+        In this step there is an option <span class="m-strong">“QR on display”</span> —
+        after using it the QR codes can be shown on the large screen,
+        so the crew can quickly scan them with phones.
+        This speeds up the start on set because there is no need to type links manually.
+      </p>
+    
+      <div class="m-warn">
+        <b>Warning:</b><br/>
+        If any device disconnects during the game, the panel can show a warning.
+        Most often it helps to disable battery saving, avoid minimizing the browser,
+        and keep devices on one stable Wi-Fi network.
+      </div>
+    
+      <h3 class="m-h3">Step 3: Sound</h3>
+    
+      <p class="m-p">
+        Browsers block automatic sound playback
+        until the user performs a “gesture” (click).
+        That’s why the panel has a separate step to unlock sound.
+        Without it you may not hear signals that help keep the game pace.
+      </p>
+    
+      <h3 class="m-h2">2) Settings</h3>
+    
+      <p class="m-p">
+        When devices are online, you move on to game settings.
+        This stage has two goals:
+        (1) prepare readable team names on the board,
+        (2) adjust game parameters to the recording (additional settings).
+      </p>
+    
+      <h3 class="m-h3">Team names</h3>
+    
+      <p class="m-p">
+        You set the names of Team A and Team B.
+        These are the labels seen by players and the audience on the display,
+        so it’s best to decide them before the rounds begin.
+        The panel blocks moving forward until both names are entered.
+      </p>
+    
+      <h3 class="m-h3">Additional settings (important for the operator)</h3>
+    
+      <p class="m-p">
+        In “Additional settings” you tailor the game to the episode format.
+        These options do not change the rules’ meaning, only the pace and thresholds.
+      </p>
+    
+      <ul class="m-ul">
+        <li>
+          <span class="m-strong">Round multipliers</span> — entered comma-separated (e.g. <span class="m-code">1,1,1,2,3</span>).
+          This matches the classic doubling/tripling values in later stages.
+          In practice: the round bank at the end is multiplied by the current round multiplier.
+        </li>
+        <li>
+          <span class="m-strong">Game target</span> — the point threshold after which the game can go to the final
+          (in the classic format often 300). This lets you adjust the game length.
+        </li>
+        <li>
+          <span class="m-strong">Final target</span> — the point threshold in the final (default 200 in the classic format).
+        </li>
+        <li>
+          <span class="m-strong">Game ending</span> — what the display shows at the end
+          (logo / points / final prize). This is production-important: the “last frame.”
+        </li>
+      </ul>
+    
+      <div class="m-note">
+        <b>Why is this in the Control Panel and not in the editor?</b><br/>
+        Because these are episode (production) settings, not question content.
+        Questions shouldn’t change during the game, but game parameters sometimes do.
+      </div>
+    
+      <h3 class="m-h3">Final: enable and choose 5 questions</h3>
+    
+      <p class="m-p">
+        If the game should have a final, you enable it and choose exactly <span class="m-strong">5 final questions</span>.
+        The panel shows a list of questions and a list “Final questions (max 5)”.
+        After selecting five, you use the <span class="m-strong">Confirm</span> button.
+      </p>
+    
+      <div class="m-warn">
+        <b>Warning:</b><br/>
+        The final requires 5 confirmed questions before rounds start.
+        This is an intentional lock — in live play there’s no time to pick questions “on the fly.”
+        If you want to change the set, use the <span class="m-strong">Edit</span> mode for final questions.
+      </div>
+    
+      <h3 class="m-h2">3) Rounds — gameplay step by step</h3>
+    
+      <p class="m-p">
+        In rounds you conduct the main gameplay: questions, answers, points, and the round bank.
+        Players see the board on the display, the host asks questions and keeps the flow,
+        while the operator reveals answers, counts points, and adds errors (X).
+      </p>
+      
+      <p class="m-p">
+        The most important practical rule: the host focuses on the contestants,
+        and the operator on running the system. This keeps the game smooth,
+        and the board always shows what it should at any moment.
+      </p>
+    
+      <h3 class="m-h3">Round start: “Game ready” and intro</h3>
+    
+      <p class="m-p">
+        When starting rounds, the panel first prepares the display (clears the board and sets the game state),
+        and then lets you start the intro.
+        This organizes the beginning of the recording: the audience gets a clear start,
+        and the operator has a clear moment to enter the first question.
+      </p>
+    
+      <h3 class="m-h3">Face-off: who takes control</h3>
+    
+      <p class="m-p">
+        Each question starts with the “family heads” face-off at the podium.
+        At this moment the <span class="m-strong">Buzzer</span> device is key:
+        the signal from the buzzer tells the panel someone pressed first.
+        The operator confirms which side gains priority,
+        and the host moves on to the answers.
+      </p>
+    
+      <p class="m-p">
+        According to the rules, if the first answer is not the highest-scoring,
+        the second “head” can answer better and take control.
+        The panel guides the operator through the round control decision,
+        and the display shows which team is currently playing (team indicator).
+      </p>
+
+      <h3 class="m-h3">Giving up the question</h3>
+    
+      <p class="m-p">
+        According to game arrangements, after gaining control a team can also decide
+        that it <span class="m-strong">gives up the question</span> to the opponents.
+        This is a tactical move: instead of “finishing” the question, the team can pass the chance to rivals.
+        The panel provides this option only at the right moment and ensures it cannot be abused.
+      </p>
+    
+      <h3 class="m-h3">Playing the question: revealing answers and the bank</h3>
+    
+      <p class="m-p">
+        After control is set, the team answers and the operator reveals the correct answers on the board.
+        Each correct answer adds points to the <span class="m-strong">round bank</span>.
+        The bank is visible on the display and grows with each correct answer.
+      </p>
+    
+      <p class="m-p">
+        Gameplay continues until:
+        all answers are revealed,
+        or the team loses three “chances” (three Xs),
+        then the operator ends the stage and moves to the steal (when conditions are met).
+      </p>
+    
+      <h3 class="m-h3">Misses (X) and the 3-second limit</h3>
+    
+      <p class="m-p">
+        A wrong answer is marked with an <span class="m-strong">X</span> on the board.
+        Three errors mean losing control and giving a steal attempt to the opponents.
+        The system also has a <span class="m-strong">3-second</span> time limit for answers —
+        exceeding the limit is treated as a miss (X).
+      </p>
+    
+      <div class="m-note">
+        <b>Why a timer?</b><br/>
+        It’s a “whip for pace.” The timer lets the operator close hesitation quickly
+        without debate and keep the rhythm of the game.
+      </div>
+    
+      <h3 class="m-h3">Stealing the bank (one answer)</h3>
+    
+      <p class="m-p">
+        When the playing team uses three “chances” before revealing all answers,
+        the question passes to the opposing team.
+        The opponents get <span class="m-strong">one answer</span>:
+        if they hit — the bank goes to them,
+        if not — the bank stays with the playing team.
+        This closes the question and the round according to the rules.
+      </p>
+    
+      <h3 class="m-h3">Revealing missing answers and ending the round</h3>
+    
+      <p class="m-p">
+        After the question is resolved the operator can reveal missing answers “for information,”
+        so the audience sees the full board.
+        Then the operator ends the round: the bank is added to the correct team,
+        taking the round multiplier into account.
+      </p>
+    
+      <div class="m-note">
+        <b>Practical note:</b><br/>
+        The panel deliberately separates “playing the question” from “ending the round.”
+        This way the operator doesn’t accidentally clear the board state
+        before the host delivers the punchline or before “thank you” is said.
+      </div>
+
+      <h3 class="m-h3">Ending rounds and moving on</h3>
+      
+      <p class="m-p">
+        After each round the system updates team scores and checks
+        whether the end-of-game condition has been met (set in “Additional settings”).
+        Most often it’s a points threshold, e.g. <span class="m-strong">300</span>,
+        but it can be different — depending on how you want to run the tournament.
+      </p>
+      
+      <p class="m-p">
+        If the final is <span class="m-strong">enabled</span> and the round-end condition is met,
+        the game moves to the final.
+        If the final is <span class="m-strong">disabled</span>, the game ends after rounds
+        and the system goes to the ending screen (logo/points/prize — according to settings).
+      </p>
+      
+      <div class="m-warn">
+        <b>Warning:</b><br/>
+        If the game runs out of questions during play
+        before the points threshold is reached,
+        the system ends rounds due to lack of questions.
+        Then the game moves to the final (if enabled)
+        or to the ending (if the final is disabled).
+      </div>
+    
+    <h3 class="m-h2">4) Final</h3>
+
+      <p class="m-p">
+        The final is a separate game mode. Two contestants
+        from the team that won the main game take part.
+        They answer the same <span class="m-strong">5 questions</span>,
+        and their points are summed. The goal is to reach the final threshold
+        (default <span class="m-strong">200 points</span>, unless set otherwise).
+      </p>
+      
+      <h3 class="m-h3">Final preparation</h3>
+      
+      <p class="m-p">
+        Before starting the final, in game settings you must have selected and confirmed
+        <span class="m-strong">exactly 5 final questions</span>.
+        This ensures the final is ready to run without searching for questions during play.
+      </p>
+      
+      <p class="m-p">
+        The second contestant should not know the first contestant’s answers.
+        In practice, during the first contestant’s turn
+        the second contestant turns away or wears headphones with music.
+      </p>
+      
+      <h3 class="m-h3">Final preparation</h3>
+      
+      <p class="m-p">
+        Before starting the final, in game settings you must have selected and confirmed
+        <span class="m-strong">exactly 5 final questions</span>.
+        This ensures the final is ready to run without searching for questions during play.
+      </p>
+      
+      <p class="m-p">
+        In the final it is very important that the second contestant does not know the first contestant’s answers.
+        Therefore during the first contestant’s round the second contestant
+        <span class="m-strong">moves away and wears headphones with music</span>,
+        so they cannot hear the questions or answers.
+      </p>
+      
+      <h3 class="m-h3">Round 1 – first contestant (15 seconds)</h3>
+      
+      <p class="m-p">
+        The host reads five questions in a row, and the first contestant answers within
+        <span class="m-strong">15 seconds</span>.
+        The operator <span class="m-strong">types the answers</span> in the final panel.
+        At this stage answers are not yet scored or revealed.
+      </p>
+      
+      <p class="m-p">
+        After the round the operator assigns the typed answers to the list of scored results
+        and <span class="m-strong">reveals them on the board</span>.
+        If an answer does not match any item in the list,
+        it receives <span class="m-strong">0 points</span>.
+      </p>
+      
+      <p class="m-p">
+        After revealing the first contestant’s answers, the system hides their half of the board,
+        and the host prepares the entry of the second contestant and reminds the final rules.
+      </p>
+      
+      <h3 class="m-h3">Round 2 – second contestant (20 seconds) and repeats</h3>
+      
+      <p class="m-p">
+        The second contestant returns and answers the same questions within
+        <span class="m-strong">20 seconds</span>.
+        When the half-board with the first contestant’s answers appears,
+        the second contestant <span class="m-strong">turns away</span>
+        so they cannot see them and be influenced.
+      </p>
+      
+      <p class="m-p">
+        The operator again first types all answers of the second contestant,
+        without revealing or scoring them “live.”
+        If the second person gives the same answer as the first,
+        it is a <span class="m-strong">repeat</span> — the contestant must give another answer,
+        and the operator can mark the attempt as repeated.
+        Repeated answers do not score points.
+      </p>
+      
+      <p class="m-p">
+        After the round the operator assigns the second contestant’s answers to the list of scored results
+        and <span class="m-strong">reveals them one by one</span> on the board.
+        The points of both contestants are summed.
+      </p>
+      
+      <h3 class="m-h3">When the final ends</h3>
+      
+      <p class="m-p">
+        The final ends when the total points reach or exceed
+        the set threshold. It can happen that the threshold is reached after the first contestant’s turn
+        — then the second contestant does not need to play, and the game goes straight to the ending.
+      </p>
+      
+      <p class="m-p">
+        After the final the system shows the ending screen according to the game ending settings:
+        <span class="m-strong">logo</span>, <span class="m-strong">points</span> or
+        <span class="m-strong">prize amount</span>.
+      </p>`,
+      demo: `<p class="m-p">
+        In this tab you can restore sample starter materials:
+        a question base, logos, and ready games of different categories and states.
+      </p>
+  
+      <p class="m-p">
+        This is useful when:
+      </p>
+  
+      <ul class="m-ul">
+        <li>you want to quickly see how the system works</li>
+        <li>you are testing features without creating your own data</li>
+        <li>you accidentally removed the sample content</li>
+      </ul>
+  
+      <div class="m-warn">
+        Restoring demo does not remove your data — it only adds sample materials.
+      </div>
+  
+      <div class="m-box">
+        <button class="btn" id="demoRestoreBtn">
+          ↺ Restore demo files
+        </button>
+  
+        <p class="m-p m-muted" style="margin-top:10px">
+          After clicking you will be taken to the My games view and demo will be loaded automatically.
+        </p>
+      </div>`,
+    },
   },
   builderImportExport: {
     defaults: {
