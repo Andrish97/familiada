@@ -19,6 +19,8 @@ const UI_MSG = {
   get QR_HIDE() { return t("control.qrHide"); },
   get QR_BLACK_SCREEN() { return t("control.blackScreen"); },
 
+  get COLOR_TITLE() { return t("control.colorTitle"); },
+
   get DASH() { return t("control.dash"); },
   get ANSWER_FALLBACK() { return t("control.answerFallback"); },
 };
@@ -242,7 +244,7 @@ export function createUI() {
   }
 
   function openColorModal(title) {
-    if ($("colorModalTitle")) $("colorModalTitle").textContent = title || "Kolor";
+    if ($("colorModalTitle")) $("colorModalTitle").textContent = title || UI_MSG.COLOR_TITLE;
     $("colorModalOverlay")?.classList.remove("hidden");
   }
 

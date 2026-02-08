@@ -1,52 +1,56 @@
 // ================== KOMUNIKATY (FINAL) ==================
+const finalMsg = (key, vars) => t(`control.finalMsg.${key}`, vars);
+const finalHost = (key, vars) => t(`control.finalHost.${key}`, vars);
+const finalUi = (key, vars) => t(`control.finalUi.${key}`, vars);
+
 const FINAL_MSG = {
   // --- błędy / warunki ---
-  ERR_MISSING_5: "Brakuje 5 pytań finału (zatwierdź w ustawieniach).",
+  get ERR_MISSING_5() { return finalMsg("errMissing5"); },
 
   // --- timer ---
-  TIMER_PLACEHOLDER: "—",
-  TIMER_RUNNING: "Odliczanie trwa…",
+  get TIMER_PLACEHOLDER() { return finalMsg("timerPlaceholder"); },
+  get TIMER_RUNNING() { return finalMsg("timerRunning"); },
 
   // --- start / dostępność finału ---
-  FINAL_DISABLED: "Finał nie został włączony.",
-  FINAL_NEEDS_PICK: "Zatwierdź 5 pytań finału w ustawieniach.",
-  FINAL_NEEDS_POINTS: (pts) => `Finał dostępny dopiero po osiągnięciu ${pts} punktów.`,
-  FINAL_STARTED: "Finał rozpoczęty.",
-  R2_STARTED: "Runda 2 rozpoczęta.",
+  get FINAL_DISABLED() { return finalMsg("finalDisabled"); },
+  get FINAL_NEEDS_PICK() { return finalMsg("finalNeedsPick"); },
+  FINAL_NEEDS_POINTS: (pts) => finalMsg("finalNeedsPoints", { pts }),
+  get FINAL_STARTED() { return finalMsg("finalStarted"); },
+  get R2_STARTED() { return finalMsg("round2Started"); },
 
   // --- zakończenie finału / nagrody (host hint) ---
-  END_NO_PRIZE: "Finał zakończony. Logo zostanie wyświetlone.",
-  END_200_PLUS: (mainPrize) => `Próg przekroczony! ${mainPrize}`,
-  END_BELOW_200: (smallPrize) => `Poniżej progu. ${smallPrize}`,
+  get END_NO_PRIZE() { return finalMsg("endNoPrize"); },
+  END_200_PLUS: (mainPrize) => finalMsg("end200Plus", { mainPrize }),
+  END_BELOW_200: (smallPrize) => finalMsg("endBelow200", { smallPrize }),
 
-  DEFAULT_MAIN_PRIZE: "Nagroda główna",
-  DEFAULT_SMALL_PRIZE: "Nagroda z punktów",
+  get DEFAULT_MAIN_PRIZE() { return finalMsg("defaultMainPrize"); },
+  get DEFAULT_SMALL_PRIZE() { return finalMsg("defaultSmallPrize"); },
 
   // --- etykiety pól / przycisków ---
-  Q_LABEL: (n) => `Pytanie ${n}`,
-  INPUT_PLACEHOLDER: "Wpisz…",
+  Q_LABEL: (n) => finalUi("questionLabel", { n }),
+  get INPUT_PLACEHOLDER() { return finalUi("inputPlaceholder"); },
 
-  P2_HINT_P1_PREFIX: "Odpowiedź gracza 1: ",
-  P2_BTN_REPEAT_ON: "Powtórzenie ✓",
-  P2_BTN_REPEAT_OFF: "Powtórzenie",
+  get P2_HINT_P1_PREFIX() { return finalUi("p2HintP1Prefix"); },
+  get P2_BTN_REPEAT_ON() { return finalUi("p2RepeatOn"); },
+  get P2_BTN_REPEAT_OFF() { return finalUi("p2RepeatOff"); },
 
   // --- mapping / podpowiedzi prowadzącego ---
-  MAP_HINT_INPUT_PREFIX: "Wpisano: ",
-  MAP_HINT_NO_INPUT: "Brak wpisu",
-  MAP_HINT_NO_TEXT: "Nie wpisano odpowiedzi — Puste / 0 pkt.",
-  MAP_LIST_TITLE: "Lista odpowiedzi",
-  MAP_LIST_EMPTY: "Brak listy odpowiedzi.",
-  MAP_BTN_SKIP: "Brak odpowiedzi",
-  MAP_BTN_MISS: "Nie ma na liście (0 pkt)",
+  get MAP_HINT_INPUT_PREFIX() { return finalUi("mapHintInputPrefix"); },
+  get MAP_HINT_NO_INPUT() { return finalUi("mapHintNoInput"); },
+  get MAP_HINT_NO_TEXT() { return finalUi("mapHintNoText"); },
+  get MAP_LIST_TITLE() { return finalUi("mapListTitle"); },
+  get MAP_LIST_EMPTY() { return finalUi("mapListEmpty"); },
+  get MAP_BTN_SKIP() { return finalUi("mapBtnSkip"); },
+  get MAP_BTN_MISS() { return finalUi("mapBtnMiss"); },
 
-  FALLBACK_ANSWER: "—",
-  P1_EMPTY_UI: "Brak odpowiedzi",
-  
+  get FALLBACK_ANSWER() { return finalUi("fallbackAnswer"); },
+  get P1_EMPTY_UI() { return finalUi("p1EmptyUi"); },
 };
 
 // =========================================================
 
 import { playSfx, getSfxDuration } from "../../js/core/sfx.js";
+import { t } from "../../translation/translation.js";
 
 function nInt(v, d = 0) {
   const x = Number.parseInt(String(v ?? ""), 10);
@@ -263,10 +267,10 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     if (!el) return;
     el.textContent =
       mode === "stop"
-        ? "Zatrzymaj odliczanie"
+        ? finalUi("timerStop")
         : phase === "P1"
-          ? "Rozpocznij odliczanie (15s)"
-          : "Rozpocznij odliczanie (20s)";
+          ? finalUi("timerStart15")
+          : finalUi("timerStart20");
   }
 
   async function restoreTotalsTriplets() {
@@ -441,12 +445,12 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
 
     if (roundNo === 1) {
       const ok = (rt.p1[i].text || "").trim().length > 0;
-      return ok ? hostGreenStrike("wpisano") : hostRed("brak");
+      return ok ? hostGreenStrike(finalHost("entryDone")) : hostRed(finalHost("entryEmpty"));
     }
 
-    if (rt.p2[i].repeat === true) return hostYellowUnderline("powtórzenie");
+    if (rt.p2[i].repeat === true) return hostYellowUnderline(finalHost("entryRepeat"));
     const ok = (rt.p2[i].text || "").trim().length > 0;
-    return ok ? hostGreenStrike("wpisano") : hostRed("brak");
+    return ok ? hostGreenStrike(finalHost("entryDone")) : hostRed(finalHost("entryEmpty"));
   }
 
   function hostTitleForStep() {
@@ -459,10 +463,10 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
       if (counting) {
         if (hostLastTitleSecond === s) return null;
         hostLastTitleSecond = s;
-        return `FINAŁ RUNDA 1 — ODLICZANIE ${s}s`;
+        return finalHost("titleRound1Timer", { seconds: s });
       }
       hostLastTitleSecond = null;
-      return `FINAŁ RUNDA 1`;
+      return finalHost("titleRound1");
     }
 
     if (step === "f_p2_entry") {
@@ -471,16 +475,16 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
       if (counting) {
         if (hostLastTitleSecond === s) return null;
         hostLastTitleSecond = s;
-        return `FINAŁ RUNDA 2 — ODLICZANIE ${s}s`;
+        return finalHost("titleRound2Timer", { seconds: s });
       }
       hostLastTitleSecond = null;
-      return `FINAŁ RUNDA 2`;
+      return finalHost("titleRound2");
     }
 
     hostLastTitleSecond = null;
 
-    if (step.startsWith("f_p1_map_q")) return `FINAŁ RUNDA 1 — ODSŁANIANIE`;
-    if (step.startsWith("f_p2_map_q")) return `FINAŁ RUNDA 2 — ODSŁANIANIE`;
+    if (step.startsWith("f_p1_map_q")) return finalHost("titleRound1Reveal");
+    if (step.startsWith("f_p2_map_q")) return finalHost("titleRound2Reveal");
 
     return "";
   }
@@ -489,9 +493,9 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     const q = qPicked[idx];
     const title = hostTag(
       "b",
-      roundNo === 1 ? "FINAŁ — ODSŁANIANIE (RUNDA 1)" : "FINAŁ — ODSŁANIANIE (RUNDA 2)"
+      roundNo === 1 ? finalHost("titleRevealRound1") : finalHost("titleRevealRound2")
     );
-    const qLine = `${hostTag("u", `Pytanie ${idx + 1}`)}: ${(q?.text || "—").replace(/\s+/g, " ").trim()}`;
+    const qLine = `${hostTag("u", finalHost("questionLabel", { n: idx + 1 }))}: ${(q?.text || finalUi("fallbackAnswer")).replace(/\s+/g, " ").trim()}`;
     return [title, "", qLine];
   }
 
@@ -514,24 +518,24 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
     const lines = []; // <<< BRAKOWAŁO TEGO
   
     if (roundNo === 2) {
-      lines.push(`${hostTag("u", "Gracz 1")}: ${(shownP1 || "—").replace(/\s+/g, " ").trim()}`);
+      lines.push(`${hostTag("u", finalHost("player1Label"))}: ${(shownP1 || finalUi("fallbackAnswer")).replace(/\s+/g, " ").trim()}`);
       lines.push("");
     }
   
     const input = roundNo === 1 ? rawP1 : (rep ? "" : rawP2); // "Wprowadzono" (dla powtórzenia pusto)
-    if (input) lines.push(`${hostTag("u", "Wprowadzono")}: ${input.replace(/\s+/g, " ").trim()}`);
+    if (input) lines.push(`${hostTag("u", finalHost("enteredLabel"))}: ${input.replace(/\s+/g, " ").trim()}`);
   
     let statusLine = "";
-    if (rep) statusLine = hostYellowUnderline("powtórzenie");
-    else if (!input) statusLine = hostRed("brak odpowiedzi");
-    else if (row.kind === "MATCH" && row.matchId) statusLine = hostGreenStrike("z listy");
-    else statusLine = hostYellowUnderline("nie ma na liście");
+    if (rep) statusLine = hostYellowUnderline(finalHost("statusRepeat"));
+    else if (!input) statusLine = hostRed(finalHost("statusEmpty"));
+    else if (row.kind === "MATCH" && row.matchId) statusLine = hostGreenStrike(finalHost("statusMatch"));
+    else statusLine = hostYellowUnderline(finalHost("statusMissing"));
   
-    lines.push(`${hostTag("u", "Stan")}: ${statusLine}`);
+    lines.push(`${hostTag("u", finalHost("statusLabel"))}: ${statusLine}`);
     lines.push("");
   
     const sorted = list.sort((a, b) => nInt(b.fixed_points, 0) - nInt(a.fixed_points, 0));
-    lines.push(hostTag("u", "Lista odpowiedzi:"));
+    lines.push(hostTag("u", finalHost("answersListLabel")));
   
     const listLines = sorted.map((a) => {
       const t = String(a.text || "").replace(/\s+/g, " ").trim().slice(0, 30);
@@ -582,7 +586,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
 
     const linesLeft = [hostTag("b", effectiveTitle || ""), ""];
     for (let i = 0; i < 5; i++) {
-      const qt = (qPicked[i]?.text || "—").replace(/\s+/g, " ").trim();
+      const qt = (qPicked[i]?.text || finalUi("fallbackAnswer")).replace(/\s+/g, " ").trim();
       const st = hostEntryStatus(roundNo, i);
       linesLeft.push(`${i + 1}) ${qt} — ${st}`);
     }
@@ -750,8 +754,8 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
         <table class="finalTable">
           <thead>
             <tr>
-              <th>Pytanie</th>
-              <th>Odpowiedź</th>
+              <th>${finalUi("tableQuestion")}</th>
+              <th>${finalUi("tableAnswer")}</th>
             </tr>
           </thead>
           <tbody>
@@ -825,10 +829,10 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
         <table class="finalTable">
           <thead>
             <tr>
-              <th>Pytanie</th>
-              <th>Odpowiedź gracza 1</th>
-              <th>Odpowiedź</th>
-              <th>Powtórzenie</th>
+              <th>${finalUi("tableQuestion")}</th>
+              <th>${finalUi("tablePlayer1Answer")}</th>
+              <th>${finalUi("tableAnswer")}</th>
+              <th>${finalUi("tableRepeat")}</th>
             </tr>
           </thead>
           <tbody>
@@ -1050,7 +1054,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
                 data-kind="match" data-id="${a.id}"
                 ${disabled ? "disabled" : ""}>
           ${escapeHtml(a.text)} <span style="opacity:.7;">(${nInt(a.fixed_points, 0)})</span>
-          ${blocked ? `<span style="opacity:.7;"> (zajęte)</span>` : ``}
+          ${blocked ? `<span style="opacity:.7;"> (${finalUi("occupied")})</span>` : ``}
         </button>
       `;
     });
@@ -1090,7 +1094,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
   
     const p1Shown = resolveP1ShownForUi(idx);
   
-    const whoLabel = roundNo === 1 ? "Odpowiedź gracza" : "Odpowiedź gracza 2";
+    const whoLabel = roundNo === 1 ? finalUi("playerAnswer") : finalUi("player2Answer");
     const playerVal =
       roundNo === 1 ? (rt.p1[idx]?.text ?? "") : (rt.p2[idx]?.text ?? "");
   
@@ -1110,7 +1114,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
   
           ${isR2 ? `
             <div class="finalMapLine">
-              <div class="lbl">Odpowiedź gracza 1</div>
+              <div class="lbl">${finalUi("player1Answer")}</div>
               <div class="val">${escapeHtml(p1Shown)}</div>
             </div>
           ` : ``}
@@ -1130,7 +1134,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
           data-kind="reveal-answer"
           ${row.revealedAnswer ? "disabled" : ""}
         >
-          Odsłoń odpowiedź
+          ${finalUi("revealAnswer")}
         </button>
       
         <button
@@ -1139,7 +1143,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
           data-kind="reveal-points"
           ${!row.revealedAnswer || row.revealedPoints ? "disabled" : ""}
         >
-          Odsłoń punkty
+          ${finalUi("revealPoints")}
         </button>
       </div>
     `;
@@ -1496,7 +1500,7 @@ export function createFinal({ ui, store, devices, display, loadAnswers }) {
       console.warn("[final] startFinal error", e);
       rt.lockStartBtn = false;
       ui.setEnabled?.("btnFinalStart", true);
-      ui.setMsg("msgFinal", String(e?.message || e || "Błąd startu finału."));
+      ui.setMsg("msgFinal", String(e?.message || e || finalMsg("startError")));
     }
   }
 
