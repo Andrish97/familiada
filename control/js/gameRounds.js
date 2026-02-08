@@ -139,6 +139,12 @@ function hostUpdate() {
 }
 // ==================================================
 
+  function refreshHostTranslations() {
+    hostUpdate();
+  }
+
+  window.addEventListener("i18n:lang", refreshHostTranslations);
+
 
   function emit() {
     try {

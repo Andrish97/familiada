@@ -169,6 +169,14 @@ export function initTextPixEditor(ctx) {
       if (!Array.isArray(data)) {
         throw new Error(t("logoEditor.textPix.errors.fontsInvalid"));
       }
+
+      const systemLabel = t("logoEditor.textPix.systemFont");
+      for (const font of data) {
+        if (!font || !font.value) continue;
+        if (String(font.value).includes("system-ui")) {
+          font.label = systemLabel;
+        }
+      }
   
       SYSTEM_FONTS = data;
       return SYSTEM_FONTS;

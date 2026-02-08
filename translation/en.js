@@ -15,6 +15,19 @@ const en = {
     open: "Open",
     copy: "Copy",
     done: "Done",
+    modal: {
+      confirmTitle: "Confirm",
+      confirmText: "Are you sure?",
+      confirmOk: "Yes",
+      confirmCancel: "No",
+      alertTitle: "Information",
+      alertOk: "OK",
+      promptTitle: "Enter",
+      promptText: "Provide a value:",
+      promptOk: "Save",
+      promptCancel: "Cancel",
+      closeLabel: "Close",
+    },
     fullscreen: "Fullscreen",
     a2hsTitle: "Fullscreen on iPhone",
     a2hsHost:
@@ -2752,6 +2765,7 @@ const en = {
     },
     textPix: {
       font: "Font",
+      systemFont: "System",
       searchPlaceholder: "Search fonts…",
       searchClear: "Clear",
       emptyResults: "No results",
