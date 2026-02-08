@@ -27,5 +27,7 @@ globalThis.__sb = sb;
 globalThis.__sbClient = sb();
 
 export function buildSiteUrl(path = "") {
-  return new URL(path, location.href).toString();
+  const p = String(path || "").trim();
+  const normalized = p.startsWith("/") ? p : `/${p}`;
+  return new URL(normalized, location.origin).toString();
 }
