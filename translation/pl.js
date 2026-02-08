@@ -778,7 +778,7 @@ const pl = {
   },
   manual: {
     title: "Familiada — wskazówki",
-    legal: "Informacje prawne",
+    legal: "Polityka prywatności 🔐",
     backToGames: "← Moje gry",
     logout: "Wyloguj",
     pageTitle: "Wskazówki dla użytkownika",
