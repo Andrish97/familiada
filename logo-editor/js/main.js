@@ -38,6 +38,7 @@ const DEFAULT_LOGO_URL = "../display/logo_familiada.json";
 const who = document.getElementById("who");
 
 const btnBack = document.getElementById("btnBack");
+const btnBackI18nKey = btnBack?.getAttribute?.("data-i18n") || null;
 const btnLogout = document.getElementById("btnLogout");
 
 const brandTitle = document.getElementById("brandTitle");
@@ -951,8 +952,8 @@ function renderList(){
    add.className = "addCard";
    add.innerHTML = `
      <div class="plus">＋</div>
-     <div class="txt">Nowe logo</div>
-     <div class="sub">Wybierz tryb tworzenia</div>
+     <div class="txt">${t("logoEditor.create.title")}</div>
+     <div class="sub">${t("logoEditor.create.subtitle")}</div>
    `;
     add.addEventListener("click", () => show(createOverlay, true));
     grid.appendChild(add);
@@ -1028,6 +1029,7 @@ function openEditor(mode){
 
   // ===== tryb edytora UI =====
   document.body.classList.add("is-editor");
+  if (btnBackI18nKey) btnBack?.removeAttribute?.("data-i18n");
   btnBack.textContent = "✕";
   btnBack.classList.add("sm");
 
@@ -1101,7 +1103,9 @@ function closeEditor(force = false){
   clearDirty();
 
   document.body.classList.remove("is-editor");
-  btnBack.textContent = t("logoEditor.topbar.backToGames");
+  if (btnBackI18nKey) btnBack?.setAttribute?.("data-i18n", btnBackI18nKey);
+  btnBack.textContent = t(btnBackI18nKey || "logoEditor.topbar.backToGames");
+  btnBack.classList.remove("sm");
   brandTitle.textContent = "FAMILIADA";
 }
 

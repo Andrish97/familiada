@@ -31,6 +31,7 @@ import { openTagsModal } from "./tags-modal.js";
 import { initExportModal } from "./export-modal.js";
 import { initQuestionModal } from "./question-modal.js";
 import { sb } from "../../js/core/supabase.js";
+import { t } from "../../translation/translation.js";
 
 let exportModal = null;
 
@@ -997,12 +998,12 @@ export async function deleteSelected(state) {
   if (!keys || !keys.size) return false;
 
   if (keys.has("root")) {
-    alert("Folder główny nie może być usuwany.");
+    alert(t("baseExplorer.errors.rootDeleteBlocked"));
     return false;
   }
 
   const label = (keys.size === 1) ? "ten element" : `te elementy (${keys.size})`;
-  const ok = confirm(`Usunąć ${label}? Tego nie da się cofnąć.`);
+  const ok = confirm(t("baseExplorer.confirm.deleteItems", { label }));
   if (!ok) return false;
 
   return await deleteItems(state, keys);
@@ -1073,7 +1074,7 @@ export async function renameByKey(state, key, newValueRaw) {
   return false;
 }
 
-function openRenameModal({ title = "Zmień nazwę", value = "", maxLen = 80 } = {}) {
+function openRenameModal({ title, value = "", maxLen = 80 } = {}) {
   const modal = document.getElementById("renameModal");
   const input = document.getElementById("renameModalInput");
   const btnSave = document.getElementById("renameModalSave");
@@ -1123,7 +1124,7 @@ function openRenameModal({ title = "Zmień nazwę", value = "", maxLen = 80 } = 
     });
   }
 
-  titleEl.textContent = title;
+  titleEl.textContent = title || t("baseExplorer.rename.title");
   input.value = String(value || "");
   input.maxLength = Number(maxLen) || 80;
 
@@ -1175,7 +1176,9 @@ export async function renameSelectedPrompt(state) {
     current = String(q?.payload?.text ?? q?.text ?? "");
   }
 
-  const title = isFolder ? "Zmień nazwę folderu" : "Zmień treść pytania";
+  const title = isFolder
+    ? t("baseExplorer.rename.folderTitle")
+    : t("baseExplorer.rename.questionTitle");
   const maxLen = isFolder ? 80 : 200;
 
   const next = await openRenameModal({ title, value: current, maxLen });
@@ -1185,7 +1188,7 @@ export async function renameSelectedPrompt(state) {
     return await renameByKey(state, key, next);
   } catch (e) {
     console.error(e);
-    alert("Nie udało się zmienić.");
+    alert(t("baseExplorer.errors.renameFailed"));
     return false;
   }
 }
@@ -1198,7 +1201,7 @@ export async function deleteTags(state, tagIds) {
   if (!ids.length) return false;
 
   const label = (ids.length === 1) ? "ten tag" : `te tagi (${ids.length})`;
-  const ok = confirm(`Usunąć ${label}?\n\nTo usunie też przypisania tagów do pytań (i ewentualnie folderów).`);
+  const ok = confirm(t("baseExplorer.confirm.deleteTags", { label }));
   if (!ok) return false;
 
   // 1) usuń przypisania do pytań
@@ -1863,11 +1866,11 @@ async function moveItemsTo(state, targetFolderIdOrNull, { mode = "move" } = {}) 
   if (cIds.length && targetFolderIdOrNull) {
     for (const fid of cIds) {
       if (fid === targetFolderIdOrNull) {
-        alert("Nie można przenieść folderu do niego samego.");
+        alert(t("baseExplorer.errors.moveIntoSelf"));
         return;
       }
       if (isFolderDescendant(state, fid, targetFolderIdOrNull)) {
-        alert("Nie można przenieść folderu do jego podfolderu.");
+        alert(t("baseExplorer.errors.moveIntoChild"));
         return;
       }
     }
@@ -2083,27 +2086,25 @@ async function untagSelectedInTagView(state) {
   // a NIE usuwamy tych elementów.
   const keys = state?.selection?.keys;
   if (!keys || !keys.size) {
-    alert("Zaznacz foldery lub pytania po prawej.");
+    alert(t("baseExplorer.errors.selectItemsRight"));
     return false;
   }
 
   // tagi aktywnego widoku TAG (OR)
   const tagIds = Array.isArray(state.tagIds) ? state.tagIds.filter(Boolean) : [];
   if (!tagIds.length) {
-    alert("Brak wybranych tagów.");
+    alert(t("baseExplorer.errors.noTagsSelected"));
     return false;
   }
 
   // Roota nie tagujemy/nie ruszamy
   if (keys.has("root")) {
-    alert("Folder główny nie może brać udziału w tej operacji.");
+    alert(t("baseExplorer.errors.rootInOperation"));
     return false;
   }
 
   const label = (keys.size === 1) ? "tym elemencie" : `tych elementach (${keys.size})`;
-  const ok = confirm(
-    `Jesteś w widoku tagów.\n\nUsuwamy tagi (bez kasowania elementów) na ${label}.\n\nKontynuować?`
-  );
+  const ok = confirm(t("baseExplorer.confirm.removeTagsInTagView", { label }));
   if (!ok) return false;
 
   const qIds = [];
@@ -2290,22 +2291,22 @@ export function wireActions({ state }) {
   // Komunikaty blokad (klik w zablokowany panel)
   function warnTreeLocked(state) {
     if (isSearchFocus()) {
-      warnLocked("W trakcie wyszukiwania drzewo jest zablokowane. Kliknij ✕ aby wyczyścić, albo kliknij poza pole wyszukiwania.");
+      warnLocked(t("baseExplorer.errors.treeLockedSearch"));
       return;
     }
     if (hasLeftSelection(state)) {
-      warnLocked("Masz zaznaczone Tagi/Kategorie. Wyczyść zaznaczenie po lewej (klik w tło panelu), aby używać drzewa.");
+      warnLocked(t("baseExplorer.errors.treeLockedSelection"));
       return;
     }
   }
 
   function warnLeftLockedBySearch() {
-    warnLocked("W trakcie wyszukiwania panel Tagi/Kategorie jest zablokowany. Kliknij ✕ aby wyczyścić, albo kliknij poza pole wyszukiwania.");
+    warnLocked(t("baseExplorer.errors.tagsLockedSearch"));
   }
 
   function warnSearchLockedByLeft(state) {
     if (hasLeftSelection(state)) {
-      warnLocked("Masz zaznaczone Tagi/Kategorie — wyszukiwarka jest zablokowana. Wyczyść zaznaczenie po lewej (klik w tło panelu), aby szukać.");
+      warnLocked(t("baseExplorer.errors.searchLockedSelection"));
     }
   }
 
@@ -2802,13 +2803,13 @@ export function wireActions({ state }) {
           }
         } catch (err) {
           console.error(err);
-          alert("Nie udało się wykonać akcji.");
+          alert(t("baseExplorer.errors.actionFailed"));
         }
       }
       
     } catch (err) {
       console.error(err);
-      alert("Nie udało się wykonać akcji.");
+      alert(t("baseExplorer.errors.actionFailed"));
     }
   });
 
@@ -3063,7 +3064,7 @@ export function wireActions({ state }) {
       
     } catch (err) {
       console.error(err);
-      alert("Nie udało się przypisać taga.");
+      alert(t("baseExplorer.errors.assignTagFailed"));
     } finally {
       if (state._drag) state._drag.tagDrop = null;
     }
@@ -3355,7 +3356,7 @@ export function wireActions({ state }) {
       pulseEl(treeEl);
     } catch (err) {
       console.error(err);
-      alert("Nie udało się przenieść.");
+      alert(t("baseExplorer.errors.moveFailed"));
     } finally {
       state._drag.keys = null;
     }
@@ -3522,7 +3523,7 @@ export function wireActions({ state }) {
       }
     } catch (err) {
       console.error(err);
-      alert("Nie udało się przenieść.");
+      alert(t("baseExplorer.errors.moveFailed"));
     } finally {
       state._drag.keys = null;
     }
@@ -4054,7 +4055,7 @@ export function wireActions({ state }) {
       return true;
     } catch (e) {
       console.error(e);
-      alert("Nie udało się otworzyć/zapisać pytania.");
+      alert(t("baseExplorer.errors.questionOpenSaveFailed"));
       return false;
     }
   };
@@ -4069,13 +4070,13 @@ export function wireActions({ state }) {
     try {
       const ownerId = state.user?.id || state.userId; // FIX: spójnie z resztą kodu
       if (!ownerId) {
-        alert("Brak userId — nie można utworzyć gry.");
+        alert(t("baseExplorer.errors.missingUserId"));
         return false;
       }
   
       if (!exportModal?.open) {
         console.warn("exportModal.open missing");
-        alert("Błąd: exportModal nie jest zainicjalizowany.");
+        alert(t("baseExplorer.errors.exportModalMissing"));
         return false;
       }
   
@@ -4129,20 +4130,35 @@ export function wireActions({ state }) {
           // Jeśli nie masz progresu per-insert w importGame, to i tak pokażemy sensowny UX:
           const n = payload?.questions?.length || 0;
 
-          progress?.({ step: "Tworzenie gry…", i: 0, n: n || 1, msg: "" });
+          progress?.({
+            step: t("baseExplorer.export.progress.creatingGame"),
+            i: 0,
+            n: n || 1,
+            msg: "",
+          });
 
           // “pływający” pasek (symulacja), żeby nie stał na 0%
           let t = null;
           let i = 0;
           const tick = () => {
             i = Math.min((n || 1) - 1, i + 1);
-            progress?.({ step: "Import pytań…", i, n: n || 1, msg: "" });
+            progress?.({
+              step: t("baseExplorer.export.progress.importingQuestions"),
+              i,
+              n: n || 1,
+              msg: "",
+            });
           };
           t = setInterval(tick, 120);
 
           try {
             const gameId = await importGame(payload, ownerId);
-            progress?.({ step: "Import zakończony", i: n || 1, n: n || 1, msg: "OK" });
+            progress?.({
+              step: t("baseExplorer.export.progress.importDone"),
+              i: n || 1,
+              n: n || 1,
+              msg: t("baseExplorer.export.progress.importOk"),
+            });
             return { gameId };
           } finally {
             if (t) clearInterval(t);
@@ -4167,7 +4183,7 @@ export function wireActions({ state }) {
       return true;
     } catch (e) {
       console.error(e);
-      alert("Nie udało się utworzyć gry.");
+      alert(t("baseExplorer.errors.createGameFailed"));
       return false;
     }
   };
@@ -4207,7 +4223,7 @@ export function wireActions({ state }) {
     if (e.key === "Delete") {
       // C: SEARCH – blokada
       if (!canDeleteHere(state)) {
-        alert("W widoku wyszukiwania nie można usuwać.");
+        alert(t("baseExplorer.errors.deleteInSearch"));
         return;
       }
     
@@ -4218,7 +4234,7 @@ export function wireActions({ state }) {
           await untagSelectedInTagView(state);
         } catch (err) {
           console.error(err);
-          alert("Nie udało się zdjąć tagów.");
+          alert(t("baseExplorer.errors.removeTagsFailed"));
         }
         return;
       }
@@ -4230,7 +4246,7 @@ export function wireActions({ state }) {
         await deleteSelected(state);
       } catch (err) {
         console.error(err);
-        alert("Nie udało się usunąć.");
+        alert(t("baseExplorer.errors.deleteFailed"));
       }
     }
 
@@ -4267,12 +4283,12 @@ export function wireActions({ state }) {
         // C: w SEARCH/TAG wklejanie zablokowane
         if (state.view === VIEW.SEARCH) {
           e.preventDefault();
-          alert("W widoku wyszukiwania nie można wklejać.");
+          alert(t("baseExplorer.errors.pasteInSearch"));
           return;
         }
         if (state.view === VIEW.TAG) {
           e.preventDefault();
-          alert("W widoku tagów nie można wklejać.");
+          alert(t("baseExplorer.errors.pasteInTag"));
           return;
         }
       
@@ -4286,7 +4302,7 @@ export function wireActions({ state }) {
           await pasteClipboardHere(state);
         } catch (err) {
           console.error(err);
-          alert("Nie udało się wkleić.");
+          alert(t("baseExplorer.errors.pasteFailed"));
         }
         return;
       }
@@ -4327,7 +4343,7 @@ export function wireActions({ state }) {
           await createQuestionHere(state, { categoryId });
         } catch (err) {
           console.error(err);
-          alert("Nie udało się utworzyć pytania.");
+          alert(t("baseExplorer.errors.createQuestionFailed"));
         }
         return;
       }
@@ -4341,7 +4357,7 @@ export function wireActions({ state }) {
           await createFolderHere(state, { parentId });
         } catch (err) {
           console.error(err);
-          alert("Nie udało się utworzyć folderu.");
+          alert(t("baseExplorer.errors.createFolderFailed"));
         }
         return;
       }
