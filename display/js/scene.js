@@ -730,9 +730,11 @@ export async function createScene() {
   const refreshSumaLabel = () => {
     SUMA_LABEL = t("display.sumLabel");
     if (bigMode === "ROUNDS") {
-      redrawRounds();
+      const F = roundsSumaFields();
+      writeField(GLYPHS, big, F.label, SUMA_LABEL, LIT.main);
     } else if (bigMode === "FINAL") {
-      drawFinalSum();
+      const labelField = finalState.sumMode === "A" ? FINAL.sumaALabel : FINAL.sumaBLabel;
+      writeField(GLYPHS, big, labelField, SUMA_LABEL, LIT.main);
     }
   };
 
