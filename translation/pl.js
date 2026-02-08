@@ -15,6 +15,19 @@ const pl = {
     open: "Otwórz",
     copy: "Kopiuj",
     done: "Gotowe",
+    modal: {
+      confirmTitle: "Potwierdź",
+      confirmText: "Na pewno?",
+      confirmOk: "Tak",
+      confirmCancel: "Nie",
+      alertTitle: "Informacja",
+      alertOk: "OK",
+      promptTitle: "Wpisz",
+      promptText: "Podaj wartość:",
+      promptOk: "Zapisz",
+      promptCancel: "Anuluj",
+      closeLabel: "Zamknij",
+    },
     fullscreen: "Pełny ekran",
     a2hsTitle: "Pełny ekran na iPhone",
     a2hsHost:
@@ -2758,6 +2771,7 @@ const pl = {
     },
     textPix: {
       font: "Czcionka",
+      systemFont: "Systemowa",
       searchPlaceholder: "Szukaj czcionki…",
       searchClear: "Wyczyść",
       emptyResults: "Brak wyników",
