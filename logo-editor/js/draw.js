@@ -2135,7 +2135,12 @@ export function initDrawEditor(ctx) {
       if (ctx.getMode?.() !== "DRAW") return;
       if (!fabricCanvas) return;
 
-      const ok = await confirmModal({ text: t("logoEditor.draw.confirmClear") });
+      const ok = await confirmModal({
+        title: t("common.modal.confirmTitle"),
+        text: t("logoEditor.draw.confirmClear"),
+        ok: t("common.modal.confirmOk"),
+        cancel: t("common.modal.confirmCancel"),
+      });
       if (!ok) return;
 
       clearPolyDraft();
