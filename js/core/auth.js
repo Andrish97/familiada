@@ -174,6 +174,8 @@ export async function resetPassword(loginOrEmail, redirectTo, language) {
 export async function updateUserLanguage(language) {
   if (!language) return;
   try {
+    const { data } = await sb().auth.getSession();
+    if (!data?.session?.user) return;
     const { error } = await sb().auth.updateUser({ data: { language } });
     if (error) console.warn("[auth] updateUserLanguage failed:", error);
   } catch (e) {

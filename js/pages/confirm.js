@@ -35,11 +35,13 @@ async function syncProfileEmail(user) {
 document.addEventListener("DOMContentLoaded", async () => {
   await initI18n({ withSwitcher: true });
   setErr("");
+  const syncLanguage = () => updateUserLanguage(getUiLang());
+  window.addEventListener("i18n:lang", syncLanguage);
 
   try {
     const { data } = await sb().auth.getSession();
     if (data?.session?.user) {
-      await updateUserLanguage(getUiLang());
+      await syncLanguage();
       sessionInfo = t("confirm.sessionInfo");
       setErr("");
     }
@@ -83,7 +85,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     back.style.display = "inline-flex";
     return;
   }
-
+  
   if (!code) {
     if (tokenHash && otpType) {
       try {
@@ -91,7 +93,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         const { data, error } = await sb().auth.verifyOtp({ token_hash: tokenHash, type: otpType });
         if (error) throw error;
         if (data?.session) {
-          await updateUserLanguage(getUiLang());
+          await syncLanguage();
           await syncProfileEmail(data.session.user);
           setStatus(t("confirm.done"));
           go.style.display = "inline-flex";
@@ -116,7 +118,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         if (error) throw error;
 
         if (data?.session) {
-          await updateUserLanguage(getUiLang());
+          await syncLanguage();
           await syncProfileEmail(data.session.user);
           setStatus(t("confirm.done"));
           go.style.display = "inline-flex";
@@ -148,7 +150,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (error) throw error;
 
     if (data?.session) {
-      await updateUserLanguage(getUiLang());
+      await syncLanguage();
       await syncProfileEmail(data.session.user);
       setStatus(t("confirm.done"));
       go.style.display = "inline-flex";
