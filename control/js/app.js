@@ -930,9 +930,9 @@ async function sendZeroStatesToDevices() {
     const rgb = hexToRgb(hex);
 
     ui.openColorModal?.(
-      t === "A" ? "Kolor drużyny A" :
-      t === "B" ? "Kolor drużyny B" :
-      "Kolor tła wyświetlacza"
+      t === "A" ? t("control.teamAColorAria") :
+      t === "B" ? t("control.teamBColorAria") :
+      t("control.bgColorAria")
     );
 
     ui.setColorModalRgb?.(rgb);
