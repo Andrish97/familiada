@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Familiada — QR</title>
+  <title data-i18n="pollQr.title">Familiada — QR</title>
 
   <link rel="icon" href="favicon.ico"/>
   <link rel="stylesheet" href="css/base.css"/>
@@ -18,12 +18,14 @@
     class="btn gold qr-fs-btn"
     type="button"
     aria-label="Pełny ekran"
+    data-i18n-aria-label="pollQr.fullscreen"
     title="Pełny ekran"
+    data-i18n-title="pollQr.fullscreen"
   >⛶</button>
 
   <main class="qr-wrap">
     <div class="qr-brand">FAMILIADA</div>
-    <div class="qr-title">Zeskanuj QR, aby zagłosować</div>
+    <div class="qr-title" data-i18n="pollQr.scan">Zeskanuj QR, aby zagłosować</div>
     <div id="qr" class="qr-box"></div>
   </main>
 </body>

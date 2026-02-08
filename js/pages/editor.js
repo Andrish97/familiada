@@ -3,9 +3,76 @@ import { sb } from "../core/supabase.js";
 import { requireAuth, signOut } from "../core/auth.js";
 import { parseQaText, clip as clipN } from "../core/text-import.js";
 import { canEnterEdit, RULES as GV_RULES, TYPES } from "../core/game-validate.js";
-import { initI18n } from "../../translation/translation.js";
+import { initI18n, t } from "../../translation/translation.js";
 
 initI18n({ withSwitcher: true });
+
+const MSG = {
+  defaultGameName: () => t("editor.defaultGameName"),
+  questionDefault: (ord) => t("editor.defaults.question", { ord }),
+  answerDefault: (ord) => t("editor.defaults.answer", { ord }),
+  cannotEdit: () => t("editor.alert.cannotEdit"),
+  resetPollConfirm: () => t("editor.confirm.resetPoll"),
+  typePollText: () => t("editor.type.pollText"),
+  typePollPoints: () => t("editor.type.pollPoints"),
+  typePrepared: () => t("editor.type.prepared"),
+  nameSaved: () => t("editor.status.nameSaved"),
+  nameSaveError: () => t("editor.status.nameSaveError"),
+  addQuestionLimit: () => t("editor.status.addQuestionLimit"),
+  addQuestionError: () => t("editor.status.addQuestionError"),
+  deleteQuestionConfirm: () => t("editor.confirm.deleteQuestion"),
+  deleteQuestionDone: () => t("editor.status.questionDeleted"),
+  deleteQuestionError: () => t("editor.status.questionDeleteError"),
+  deleteAnswerConfirm: () => t("editor.confirm.deleteAnswer"),
+  addedAnswer: () => t("editor.status.answerAdded"),
+  removedAnswer: () => t("editor.status.answerRemoved"),
+  addAnswerError: () => t("editor.status.answerAddError"),
+  deleteAnswerError: () => t("editor.status.answerDeleteError"),
+  saveError: () => t("editor.status.saveError"),
+  pointsRejected: () => t("editor.status.pointsRejected"),
+  pointsSaveError: () => t("editor.status.pointsSaveError"),
+  saved: () => t("editor.status.saved"),
+  typing: () => t("editor.status.typing"),
+  deleteLabel: () => t("editor.actions.delete"),
+  questionAdded: () => t("editor.status.questionAdded"),
+  addQuestionLabel: () => t("editor.actions.addQuestion"),
+  questionLabel: (ord) => t("editor.labels.questionNumber", { ord }),
+  questionsOnly: () => t("editor.labels.questionsOnly"),
+  answersSum: (count, max, sum, sumMax) =>
+    t("editor.labels.answersSum", { count, max, sum, sumMax }),
+  answersCount: (count, max) => t("editor.labels.answersCount", { count, max }),
+  addAnswerLabel: () => t("editor.actions.addAnswer"),
+  answerLimitReached: () => t("editor.status.answerLimitReached"),
+  importFileFailed: () => t("editor.import.fileFailed"),
+  importPastePrompt: () => t("editor.import.pastePrompt"),
+  importFormatError: () => t("editor.import.formatError"),
+  importConfirm: () => t("editor.import.confirm"),
+  importCancelled: () => t("editor.import.cancelled"),
+  importStart: () => t("editor.import.progress.start"),
+  importCleanup: () => t("editor.import.progress.cleanup"),
+  importCleanupOk: () => t("editor.import.progress.cleanupOk"),
+  importProgressOk: () => t("editor.import.progress.ok"),
+  importCreateQuestion: (ord, total) => t("editor.import.progress.question", { ord, total }),
+  importCreateAnswer: (ord) => t("editor.import.progress.answer", { ord }),
+  importCreateAnswerOk: (ord) => t("editor.import.progress.answerOk", { ord }),
+  importCreateQuestionMsg: () => t("editor.import.progress.createQuestionMsg"),
+  importCreateAnswerMsg: (ord) => t("editor.import.progress.createAnswerMsg", { ord }),
+  importCreateAnswerOkMsg: (ord) => t("editor.import.progress.createAnswerOkMsg", { ord }),
+  importRenumber: () => t("editor.import.progress.renumber"),
+  importCountStatuses: () => t("editor.import.progress.statuses"),
+  importRender: () => t("editor.import.progress.render"),
+  importOk: () => t("editor.import.progress.done"),
+  importErrorStep: () => t("editor.import.progress.errorStep"),
+  importDone: () => t("editor.import.done"),
+  importReplaced: () => t("editor.import.replaced"),
+  importError: (msg) => t("editor.import.error", { error: msg }),
+  importWarningClose: () => t("editor.import.warningClose"),
+  limitAnswers: (limit) => t("editor.status.answerLimit", { limit }),
+  sumLabel: () => t("editor.sumLabel"),
+  minQuestions: (min, count) => t("editor.status.minQuestions", { min, count }),
+  minQuestionsOk: () => t("editor.status.minQuestionsOk"),
+  editorError: () => t("editor.alert.editorError"),
+};
 
 /* ================= Rules (z game-validate) ================= */
 const QN_MIN = GV_RULES.QN_MIN; // 10
@@ -42,7 +109,7 @@ function getIdFromQuery() {
 /* ================= Normalizers ================= */
 const clip17 = (s) => clipN(String(s ?? ""), 17);
 const normQ = (s) => String(s ?? "").trim().slice(0, 200);
-const normName = (s) => (String(s ?? "Nowa Familiada").trim() || "Nowa Familiada").slice(0, 80);
+const normName = (s) => (String(s ?? MSG.defaultGameName()).trim() || MSG.defaultGameName()).slice(0, 80);
 
 function normalizeIntLoose(v, fallback = 0) {
   const s = String(v ?? "").trim();
@@ -112,7 +179,7 @@ async function listAnswers(questionId) {
 async function createQuestion(gameId, ord) {
   const { data, error } = await sb()
     .from("questions")
-    .insert({ game_id: gameId, ord, text: `Pytanie ${ord}` })
+    .insert({ game_id: gameId, ord, text: MSG.questionDefault(ord) })
     .select("id,ord,text")
     .single();
   if (error) throw error;
@@ -133,7 +200,7 @@ async function deleteQuestionDeep(qId) {
 }
 
 async function createAnswer(questionId, ord, text, fixed_points) {
-  const safeText = (clip17(text || `ODP ${ord}`) || `ODP ${ord}`).trim() || `ODP ${ord}`;
+  const safeText = (clip17(text || MSG.answerDefault(ord)) || MSG.answerDefault(ord)).trim() || MSG.answerDefault(ord);
   const safePts = nonNegativeInt(fixed_points, 0);
 
   const { data, error } = await sb()
@@ -215,9 +282,9 @@ function cfgFromGameType(type) {
   if (type === TYPES.POLL_TEXT) {
     return {
       type,
-      title: "Edytor — Typowy sondaż",
-      hintTop: `Podpowiedź: zalecamy nie mniej niż ${QN_MIN} pytań.`,
-      hintBottom: "W tym trybie edytujesz tylko pytania. Odpowiedzi wpiszą uczestnicy sondażu.",
+      title: t("editor.config.pollText.title"),
+      hintTop: t("editor.config.pollText.hintTop", { min: QN_MIN }),
+      hintBottom: t("editor.config.pollText.hintBottom"),
       allowAnswers: false,
       allowPoints: false,
       ignoreImportPoints: true,
@@ -226,9 +293,9 @@ function cfgFromGameType(type) {
   if (type === TYPES.POLL_POINTS) {
     return {
       type,
-      title: "Edytor — Punktacja odpowiedzi",
-      hintTop: `Podpowiedź: zalecamy nie mniej niż ${QN_MIN} pytań. W pytaniu zalecane ${AN_MIN}–${AN_MAX} odpowiedzi.`,
-      hintBottom: "Punkty policzą się po zamknięciu sondażu. W edytorze nie ustawiasz punktów.",
+      title: t("editor.config.pollPoints.title"),
+      hintTop: t("editor.config.pollPoints.hintTop", { min: QN_MIN, answersMin: AN_MIN, answersMax: AN_MAX }),
+      hintBottom: t("editor.config.pollPoints.hintBottom"),
       allowAnswers: true,
       allowPoints: false,
       ignoreImportPoints: true,
@@ -236,9 +303,9 @@ function cfgFromGameType(type) {
   }
   return {
     type,
-    title: "Edytor — Preparowany",
-    hintTop: `Podpowiedź: zalecamy nie mniej niż ${QN_MIN} pytań. W pytaniu wymagane ${AN_MIN}–${AN_MAX} odpowiedzi.`,
-    hintBottom: `W tym trybie ustawiasz punkty ręcznie. Suma w pytaniu nie może przekroczyć ${SUM_PREPARED}.`,
+    title: t("editor.config.prepared.title"),
+    hintTop: t("editor.config.prepared.hintTop", { min: QN_MIN, answersMin: AN_MIN, answersMax: AN_MAX }),
+    hintBottom: t("editor.config.prepared.hintBottom", { sum: SUM_PREPARED }),
     allowAnswers: true,
     allowPoints: true,
     ignoreImportPoints: false,
@@ -262,7 +329,7 @@ function makeRemainBox(sum) {
   // >100: ostrzeżenie (czerwone, klasa "over")
   if (sum > SUM_PREPARED) el.classList.add("over");
 
-  el.innerHTML = `<span>SUMA</span><b>${sum}/${SUM_PREPARED}</b>`;
+  el.innerHTML = `<span>${MSG.sumLabel()}</span><b>${sum}/${SUM_PREPARED}</b>`;
 
   return el;
 }
@@ -276,7 +343,7 @@ function updateRemainBox(container) {
   box.classList.remove("ok", "over");
   if (sum > SUM_PREPARED) box.classList.add("over");
 
-  box.innerHTML = `<span>SUMA</span><b>${sum}/${SUM_PREPARED}</b>`;
+  box.innerHTML = `<span>${MSG.sumLabel()}</span><b>${sum}/${SUM_PREPARED}</b>`;
 }
 
 /* ================= TXT Import Progress (TEN SAM MODAL) ================= */
@@ -423,7 +490,7 @@ async function boot() {
   /* ---------- auth/topbar ---------- */
   const user = await requireAuth("index.html");
   const who = $("who");
-  if (who) who.textContent = user?.username || user?.email || "—";
+  if (who) who.textContent = user?.username || user?.email || t("control.dash");
 
   $("btnLogout")?.addEventListener("click", async () => {
     await signOut();
@@ -439,7 +506,7 @@ async function boot() {
   /* ---------- game ---------- */
   const gameId = getIdFromQuery();
   if (!gameId) {
-    alert("Brak parametru id.");
+    alert(t("editor.alert.missingId"));
     location.href = "builder.html";
     return;
   }
@@ -449,15 +516,13 @@ async function boot() {
 
   const editInfo = canEnterEdit(game);
   if (!editInfo?.ok) {
-    alert(editInfo?.reason || "Nie możesz edytować tej gry w tym momencie.");
+    alert(editInfo?.reason || MSG.cannotEdit());
     location.href = "builder.html";
     return;
   }
 
   if (editInfo.needsResetWarning) {
-    const ok = confirm(
-      "Edycja po sondażu:\n\nDane sondażowe zostaną usunięte, a gra wróci do stanu SZKIC.\n\nKontynuować?"
-    );
+    const ok = confirm(MSG.resetPollConfirm());
     if (!ok) {
       location.href = "builder.html";
       return;
@@ -475,9 +540,9 @@ async function boot() {
   const typeBadge = $("typeBadge");
   if (typeBadge) {
     typeBadge.textContent =
-      cfg.type === TYPES.PREPARED ? "Preparowany" :
-      cfg.type === TYPES.POLL_POINTS ? "Punktacja odpowiedzi" :
-      "Typowy sondaż";
+      cfg.type === TYPES.PREPARED ? MSG.typePrepared() :
+      cfg.type === TYPES.POLL_POINTS ? MSG.typePollPoints() :
+      MSG.typePollText();
   }
 
   document.body.classList.toggle("only-questions", !cfg.allowAnswers);
@@ -500,10 +565,10 @@ async function boot() {
     try {
       await saveGameName(gameId, cur);
       lastSavedName = cur;
-      setMsg("Zapisano nazwę.");
+      setMsg(MSG.nameSaved());
     } catch (e) {
       console.error(e);
-      setMsg("Błąd zapisu nazwy (konsola).");
+      setMsg(MSG.nameSaveError());
     } finally {
       savingName = false;
     }
@@ -568,7 +633,7 @@ async function boot() {
     x.type = "button";
     x.className = "x";
     x.textContent = "✕";
-    x.title = "Usuń";
+    x.title = MSG.deleteLabel();
     return x;
   }
 
@@ -585,20 +650,20 @@ async function boot() {
 
       renderQuestions();
       renderEditor();
-      setMsg("Dodano pytanie.");
+      setMsg(MSG.questionAdded());
     } catch (e) {
       console.error(e);
       const msg = String(e?.message || "");
       if (e?.code === "23514" || msg.includes("violates check constraint")) {
-        setMsg("Nie można dodać pytania — ograniczenie bazy (constraint na questions.ord).");
+        setMsg(MSG.addQuestionLimit());
       } else {
-        setMsg("Błąd dodawania pytania (konsola).");
+        setMsg(MSG.addQuestionError());
       }
     }
   }
 
   async function deleteQuestion(qId) {
-    const ok = confirm("Usunąć to pytanie i wszystkie jego odpowiedzi?");
+    const ok = confirm(MSG.deleteQuestionConfirm());
     if (!ok) return;
 
     try {
@@ -614,10 +679,10 @@ async function boot() {
 
       renderQuestions();
       renderEditor();
-      setMsg("Usunięto pytanie.");
+      setMsg(MSG.deleteQuestionDone());
     } catch (e) {
       console.error(e);
-      setMsg("Błąd usuwania pytania (konsola).");
+      setMsg(MSG.deleteQuestionError());
     }
   }
 
@@ -652,8 +717,8 @@ async function boot() {
     addQ.innerHTML = `
       <div class="plus">+</div>
       <div>
-        <div class="txt">Dodaj pytanie</div>
-        <div class="sub">${meetsMin ? "Minimum spełnione" : `Wymagane minimum: ${QN_MIN} (masz ${qCount})`}</div>
+        <div class="txt">${MSG.addQuestionLabel()}</div>
+        <div class="sub">${meetsMin ? MSG.minQuestionsOk() : MSG.minQuestions(QN_MIN, qCount)}</div>
       </div>
     `;
     addQ.addEventListener("click", addQuestion);
@@ -673,21 +738,21 @@ async function boot() {
       });
 
       card.innerHTML = `
-        <div class="qord">Pytanie ${q.ord}</div>
+        <div class="qord">${MSG.questionLabel(q.ord)}</div>
         <div class="qprev"></div>
         <div class="qmeta"></div>
       `;
       card.appendChild(x);
 
-      card.querySelector(".qprev").textContent = (q.text || "").trim() || `Pytanie ${q.ord}`;
+      card.querySelector(".qprev").textContent = (q.text || "").trim() || MSG.questionLabel(q.ord);
 
       const meta = card.querySelector(".qmeta");
       if (!cfg.allowAnswers) {
-        meta.textContent = "Tylko pytania";
+        meta.textContent = MSG.questionsOnly();
       } else if (cfg.type === TYPES.PREPARED) {
-        meta.textContent = `${q.__answerCount ?? 0}/${AN_MAX} odpowiedzi • suma ${q.__sumPoints ?? 0}/${SUM_PREPARED}`;
+        meta.textContent = MSG.answersSum(q.__answerCount ?? 0, AN_MAX, q.__sumPoints ?? 0, SUM_PREPARED);
       } else {
-        meta.textContent = `${q.__answerCount ?? 0}/${AN_MAX} odpowiedzi`;
+        meta.textContent = MSG.answersCount(q.__answerCount ?? 0, AN_MAX);
       }
 
       card.addEventListener("click", async () => {
@@ -707,27 +772,27 @@ async function boot() {
 
     const ord = nextAnswerOrd(answers);
     if (!ord) {
-      setMsg(`Limit odpowiedzi: ${AN_MAX}.`);
+      setMsg(MSG.limitAnswers(AN_MAX));
       return;
     }
 
     try {
-      await createAnswer(activeQId, ord, `ODP ${ord}`, 0);
+      await createAnswer(activeQId, ord, MSG.answerDefault(ord), 0);
 
       answers = await listAnswers(activeQId);
       await refreshCounts();
 
       renderQuestions();
       renderAnswers();
-      setMsg("Dodano odpowiedź.");
+      setMsg(MSG.addedAnswer());
     } catch (e) {
       console.error(e);
-      setMsg("Błąd dodawania odpowiedzi (konsola).");
+      setMsg(MSG.addAnswerError());
     }
   }
 
   async function removeAnswer(aId) {
-    const ok = confirm("Usunąć tę odpowiedź?");
+    const ok = confirm(MSG.deleteAnswerConfirm());
     if (!ok) return;
 
     try {
@@ -736,10 +801,10 @@ async function boot() {
       await refreshCounts();
       renderQuestions();
       renderAnswers();
-      setMsg("Usunięto odpowiedź.");
+      setMsg(MSG.removedAnswer());
     } catch (e) {
       console.error(e);
-      setMsg("Błąd usuwania odpowiedzi (konsola).");
+      setMsg(MSG.deleteAnswerError());
     }
   }
 
@@ -759,14 +824,14 @@ async function boot() {
 
       if (cfg.allowPoints) {
         row.innerHTML = `
-          <input class="aText" type="text" maxlength="17" placeholder="ODP ${a.ord}">
+          <input class="aText" type="text" maxlength="17" placeholder="${MSG.answerDefault(a.ord)}">
           <input class="aPts" type="number" step="1" inputmode="numeric">
-          <button class="aDel" type="button" title="Usuń">✕</button>
+          <button class="aDel" type="button" title="${MSG.deleteLabel()}">✕</button>
         `;
       } else {
         row.innerHTML = `
-          <input class="aText" type="text" maxlength="17" placeholder="ODP ${a.ord}">
-          <button class="aDel" type="button" title="Usuń">✕</button>
+          <input class="aText" type="text" maxlength="17" placeholder="${MSG.answerDefault(a.ord)}">
+          <button class="aDel" type="button" title="${MSG.deleteLabel()}">✕</button>
         `;
       }
 
@@ -780,19 +845,19 @@ async function boot() {
       const saveTextNow = async () => {
         try {
           const t = clip17(iText.value);
-          const safe = (t || "").trim() ? t : `ODP ${a.ord}`;
+          const safe = (t || "").trim() ? t : MSG.answerDefault(a.ord);
           await updateAnswer(a.id, { text: safe });
-          setMsg("Zapisano.");
+          setMsg(MSG.saved());
         } catch (e) {
           console.error(e);
-          setMsg("Błąd zapisu (konsola).");
+          setMsg(MSG.saveError());
         }
       };
       const saveTextDebounced = debounce(saveTextNow, 350);
 
       iText.addEventListener("input", () => {
         if (iText.value.length > 17) iText.value = iText.value.slice(0, 17);
-        setMsg("Piszesz…");
+        setMsg(MSG.typing());
         saveTextDebounced();
       });
       iText.addEventListener("blur", saveTextNow);
@@ -807,14 +872,14 @@ async function boot() {
           await refreshCounts(); // ważne dla kafelków w lewo
           renderQuestions();
           renderAnswers();
-          setMsg("Zapisano.");
+          setMsg(MSG.saved());
         } catch (e) {
           console.error(e);
           const msg = String(e?.message || "");
           if (e?.code === "23514" || msg.includes("violates check constraint")) {
-            setMsg("Błąd: punkty odrzucone przez bazę (constraint).");
+            setMsg(MSG.pointsRejected());
           } else {
-            setMsg("Błąd zapisu punktów (konsola).");
+            setMsg(MSG.pointsSaveError());
           }
         }
       };
@@ -836,7 +901,7 @@ async function boot() {
     addA.style.opacity = canAdd ? "1" : ".55";
     addA.innerHTML = `
       <div style="font-weight:1000;">
-        ${canAdd ? "+ Dodaj odpowiedź" : "Limit odpowiedzi osiągnięty"}
+        ${canAdd ? MSG.addAnswerLabel() : MSG.answerLimitReached()}
       </div>
       <div style="margin-left:auto; text-align:right; font-weight:900; opacity:.8;">
         ${answers.length}/${AN_MAX}
@@ -878,17 +943,17 @@ async function boot() {
       if (q) q.text = t;
 
       renderQuestions();
-      setMsg("Zapisano.");
+      setMsg(MSG.saved());
     } catch (e) {
       console.error(e);
-      setMsg("Błąd zapisu pytania (konsola).");
+      setMsg(MSG.saveError());
     }
   };
   const saveQuestionDebounced = debounce(saveQuestionNow, 350);
 
   qText?.addEventListener("input", () => {
     if (!activeQId) return;
-    setMsg("Piszesz…");
+    setMsg(MSG.typing());
     saveQuestionDebounced();
   });
   qText?.addEventListener("blur", saveQuestionNow);
@@ -923,7 +988,7 @@ async function boot() {
     return await new Promise((resolve, reject) => {
       const r = new FileReader();
       r.onload = () => resolve(String(r.result || ""));
-      r.onerror = () => reject(new Error("Nie udało się wczytać pliku."));
+      r.onerror = () => reject(new Error(MSG.importFileFailed()));
       r.readAsText(file);
     });
   }
@@ -932,24 +997,19 @@ async function boot() {
     try {
       const raw = String(txtTa?.value || "");
       if (!raw.trim()) {
-        setTxtMsg("Wklej treść albo wczytaj plik.");
+        setTxtMsg(MSG.importPastePrompt());
         return;
       }
   
       const parsed = parseQaText(raw);
       if (!parsed.ok) {
-        setTxtMsg(parsed.error || "Błąd formatu.");
+        setTxtMsg(parsed.error || MSG.importFormatError());
         return;
       }
   
-      const ok = confirm(
-        "Import TXT ZASTĄPI zawartość gry:\n\n" +
-          "- usunie wszystkie dotychczasowe pytania i odpowiedzi\n" +
-          "- wgra dane z tekstu\n\n" +
-          "Kontynuować?"
-      );
+      const ok = confirm(MSG.importConfirm());
       if (!ok) {
-        setTxtMsg("Anulowano.");
+        setTxtMsg(MSG.importCancelled());
         return;
       }
   
@@ -967,7 +1027,7 @@ async function boot() {
       total += 3; // post-processing: renumber + refreshCounts + render/finish
   
       let done = 0;
-      setTxtImportProgress({ step: "Start…", i: done, n: total, msg: "" });
+      setTxtImportProgress({ step: MSG.importStart(), i: done, n: total, msg: "" });
   
       if (parsed.name && gameName) {
         gameName.value = parsed.name;
@@ -975,19 +1035,19 @@ async function boot() {
       }
   
       // 1) wipe
-      setTxtImportProgress({ step: "Czyszczenie gry", i: done, n: total, msg: "" });
+      setTxtImportProgress({ step: MSG.importCleanup(), i: done, n: total, msg: "" });
       await wipeGameContent(gameId);
       done += 1;
-      setTxtImportProgress({ step: "Czyszczenie gry", i: done, n: total, msg: "OK" });
+      setTxtImportProgress({ step: MSG.importCleanup(), i: done, n: total, msg: MSG.importProgressOk() });
   
       // 2) import q/a
       let qOrd = 1;
       for (const item of items) {
         setTxtImportProgress({
-          step: `Pytanie ${qOrd}/${items.length}`,
+          step: MSG.importCreateQuestion(qOrd, items.length),
           i: done,
           n: total,
-          msg: "Tworzę pytanie…",
+          msg: MSG.importCreateQuestionMsg(),
         });
   
         const q = await createQuestion(gameId, qOrd);
@@ -995,10 +1055,10 @@ async function boot() {
   
         done += 1;
         setTxtImportProgress({
-          step: `Pytanie ${qOrd}/${items.length}`,
+          step: MSG.importCreateQuestion(qOrd, items.length),
           i: done,
           n: total,
-          msg: "OK",
+          msg: MSG.importProgressOk(),
         });
   
         if (cfg.allowAnswers) {
@@ -1008,10 +1068,10 @@ async function boot() {
             if (aOrd > AN_MAX) break;
   
             setTxtImportProgress({
-              step: `Pytanie ${qOrd}/${items.length}`,
+              step: MSG.importCreateQuestion(qOrd, items.length),
               i: done,
               n: total,
-              msg: `Odpowiedź ${aOrd}…`,
+              msg: MSG.importCreateAnswerMsg(aOrd),
             });
   
             const text = clip17(a.text);
@@ -1020,14 +1080,14 @@ async function boot() {
                 ? nonNegativeInt(a.points, 0)
                 : 0;
   
-            await createAnswer(q.id, aOrd, text || `ODP ${aOrd}`, pts);
+            await createAnswer(q.id, aOrd, text || MSG.answerDefault(aOrd), pts);
   
             done += 1;
             setTxtImportProgress({
-              step: `Pytanie ${qOrd}/${items.length}`,
+              step: MSG.importCreateQuestion(qOrd, items.length),
               i: done,
               n: total,
-              msg: `Odpowiedź ${aOrd} OK`,
+              msg: MSG.importCreateAnswerOkMsg(aOrd),
             });
   
             aOrd++;
@@ -1038,33 +1098,33 @@ async function boot() {
       }
   
       // 3) refresh
-      setTxtImportProgress({ step: "Porządkuję numerację", i: done, n: total, msg: "" });
+      setTxtImportProgress({ step: MSG.importRenumber(), i: done, n: total, msg: "" });
       questions = await renumberQuestions(gameId);
       done += 1;
-      setTxtImportProgress({ step: "Porządkuję numerację", i: done, n: total, msg: "OK" });
+      setTxtImportProgress({ step: MSG.importRenumber(), i: done, n: total, msg: MSG.importProgressOk() });
       
-      setTxtImportProgress({ step: "Liczenie statusów", i: done, n: total, msg: "" });
+      setTxtImportProgress({ step: MSG.importCountStatuses(), i: done, n: total, msg: "" });
       await refreshCounts();
       done += 1;
-      setTxtImportProgress({ step: "Liczenie statusów", i: done, n: total, msg: "OK" });
+      setTxtImportProgress({ step: MSG.importCountStatuses(), i: done, n: total, msg: MSG.importProgressOk() });
       
-      setTxtImportProgress({ step: "Rysuję widok", i: done, n: total, msg: "" });
+      setTxtImportProgress({ step: MSG.importRender(), i: done, n: total, msg: "" });
       activeQId = questions[0]?.id || null;
       await loadAnswersForActive();
       renderQuestions();
       renderEditor();
       done += 1;
-      setTxtImportProgress({ step: "Rysuję widok", i: done, n: total, msg: "OK" });
+      setTxtImportProgress({ step: MSG.importRender(), i: done, n: total, msg: MSG.importProgressOk() });
   
       setTxtImportProgress({
-        step: "Gotowe ✅",
+        step: MSG.importOk(),
         i: total,
         n: total,
-        msg: "Import zakończony.",
+        msg: MSG.importDone(),
       });
   
-      setMsg("Import zakończony.");
-      setTxtMsg("Zaimportowano (zastąpiono zawartość).");
+      setMsg(MSG.importDone());
+      setTxtMsg(MSG.importReplaced());
   
       // wróć do normalnego widoku modala i zamknij po chwili
       setTimeout(() => {
@@ -1075,10 +1135,10 @@ async function boot() {
       console.error(e);
   
       setTxtImportProgress({
-        step: "Błąd ❌",
+        step: MSG.importErrorStep(),
         i: 0,
         n: 0,
-        msg: `Błąd: ${e?.message || String(e)}`,
+        msg: MSG.importError(e?.message || String(e)),
         isError: true,
       });
   
@@ -1100,6 +1160,6 @@ async function boot() {
 document.addEventListener("DOMContentLoaded", () => {
   boot().catch((e) => {
     console.error(e);
-    alert("Błąd edytora (konsola).");
+    alert(MSG.editorError());
   });
 });

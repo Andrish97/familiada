@@ -3,9 +3,102 @@ import { sb, SUPABASE_URL } from "../core/supabase.js";
 import { requireAuth, signOut } from "../core/auth.js";
 import { validatePollReadyToOpen } from "../core/game-validate.js";
 import { confirmModal } from "../core/modal.js";
-import { initI18n } from "../../translation/translation.js";
+import { initI18n, t } from "../../translation/translation.js";
 
 initI18n({ withSwitcher: true });
+
+const MSG = {
+  ok: () => t("pollsHub.ok"),
+  error: () => t("pollsHub.errorLabel"),
+  dash: () => t("common.dash"),
+  pollTypeText: () => t("pollsHub.pollType.text"),
+  pollTypePoints: () => t("pollsHub.pollType.points"),
+  pollStateOpen: () => t("pollsHub.pollState.open"),
+  pollStateClosed: () => t("pollsHub.pollState.closed"),
+  pollStateDraft: () => t("pollsHub.pollState.draft"),
+  tasksBadgeTitle: (done, total) => t("pollsHub.tasksBadgeTitle", { done, total }),
+  tasksBadgeNone: () => t("pollsHub.tasksBadgeNone"),
+  anonBadgeTitle: (count) => t("pollsHub.anonBadgeTitle", { count }),
+  anonBadgeLabel: () => t("pollsHub.anonBadgeLabel"),
+  emptyPolls: () => t("pollsHub.empty.polls"),
+  emptyTasks: () => t("pollsHub.empty.tasks"),
+  emptySubscribers: () => t("pollsHub.empty.subscribers"),
+  emptySubscriptions: () => t("pollsHub.empty.subscriptions"),
+  emptyActiveSubscribers: () => t("pollsHub.empty.activeSubscribers"),
+  emptyTasksShort: () => t("pollsHub.empty.tasksShort"),
+  subscriptionStatus: (status) => t(`pollsHub.subscriptionStatus.${status}`),
+  taskStatusDone: () => t("pollsHub.taskStatus.done"),
+  taskStatusAvailable: () => t("pollsHub.taskStatus.available"),
+  pollReadyAlert: () => t("pollsHub.alert.pollReady"),
+  declineTaskStep: () => t("pollsHub.progress.declineTask"),
+  declineTaskFail: () => t("pollsHub.errors.declineTask"),
+  inviteStep: () => t("pollsHub.progress.invite"),
+  invalidEmail: () => t("pollsHub.errors.invalidEmail"),
+  unknownUser: () => t("pollsHub.errors.unknownUser"),
+  inviteFail: () => t("pollsHub.errors.invite"),
+  inviteSaved: () => t("pollsHub.statusMsg.inviteSaved"),
+  resendStep: () => t("pollsHub.progress.resend"),
+  resendFail: () => t("pollsHub.errors.resend"),
+  mailSending: () => t("pollsHub.statusMsg.mailSending"),
+  mailSent: () => t("pollsHub.statusMsg.mailSent"),
+  mailFailed: () => t("pollsHub.statusMsg.mailFailed"),
+  inviteSavedMailFail: () => t("pollsHub.errors.inviteMailFailed"),
+  resendSavedMailFail: () => t("pollsHub.errors.resendMailFailed"),
+  removeSubscriberTitle: () => t("pollsHub.modal.removeSubscriber.title"),
+  removeSubscriberText: () => t("pollsHub.modal.removeSubscriber.text"),
+  removeSubscriberOk: () => t("pollsHub.modal.removeSubscriber.ok"),
+  removeSubscriberCancel: () => t("pollsHub.modal.removeSubscriber.cancel"),
+  removeSubscriberStep: () => t("pollsHub.progress.removeSubscriber"),
+  removeSubscriberFail: () => t("pollsHub.errors.removeSubscriber"),
+  acceptSubscriptionStep: () => t("pollsHub.progress.acceptSubscription"),
+  acceptSubscriptionFail: () => t("pollsHub.errors.acceptSubscription"),
+  updateSubscriptionStep: () => t("pollsHub.progress.updateSubscription"),
+  updateSubscriptionFail: () => t("pollsHub.errors.updateSubscription"),
+  loadSubscribersStep: () => t("pollsHub.progress.loadSubscribers"),
+  loadSubscribersFail: () => t("pollsHub.errors.loadSubscribers"),
+  shareStatus: (status) => t(`pollsHub.shareStatus.${status}`),
+  shareHint: (status) => t(`pollsHub.shareHint.${status}`),
+  shareLockedHint: () => t("pollsHub.shareLockedHint"),
+  shareNoChanges: () => t("pollsHub.statusMsg.shareNoChanges"),
+  shareStep: () => t("pollsHub.progress.share"),
+  shareSaveFail: () => t("pollsHub.errors.shareSave"),
+  shareSaved: () => t("pollsHub.statusMsg.shareSaved"),
+  shareSavedWithMail: (sent, total) => t("pollsHub.statusMsg.shareSavedWithMail", { sent, total }),
+  shareSavedMsg: () => t("pollsHub.statusMsg.shareSavedMsg"),
+  mailBatchSending: () => t("pollsHub.statusMsg.mailBatchSending"),
+  mailMarking: () => t("pollsHub.statusMsg.mailMarking"),
+  detailsTitle: (name) => t("pollsHub.details.titleWithName", { name }),
+  loadDetailsStep: () => t("pollsHub.progress.loadDetails"),
+  loadDetailsFail: () => t("pollsHub.errors.loadDetails"),
+  deleteVoteTitle: () => t("pollsHub.modal.deleteVote.title"),
+  deleteVoteText: () => t("pollsHub.modal.deleteVote.text"),
+  deleteVoteOk: () => t("pollsHub.modal.deleteVote.ok"),
+  deleteVoteCancel: () => t("pollsHub.modal.deleteVote.cancel"),
+  deleteVoteStep: () => t("pollsHub.progress.deleteVote"),
+  deleteVoteFail: () => t("pollsHub.errors.deleteVote"),
+  loadHubFail: () => t("pollsHub.errors.loadHub"),
+  focusTaskPrompt: () => t("pollsHub.confirm.focusTask"),
+  focusSubPrompt: () => t("pollsHub.confirm.focusSub"),
+  tokenMismatchTitle: () => t("pollsHub.modal.tokenMismatch.title"),
+  tokenMismatchText: () => t("pollsHub.modal.tokenMismatch.text"),
+  tokenMismatchOk: () => t("pollsHub.modal.tokenMismatch.ok"),
+  tokenMismatchCancel: () => t("pollsHub.modal.tokenMismatch.cancel"),
+  shareStatusLabel: () => t("pollsHub.shareStatusLabel"),
+  shareStatusMissing: () => t("pollsHub.shareStatus.missing"),
+  shareHintMissing: () => t("pollsHub.shareHint.missing"),
+  detailsEmpty: () => t("pollsHub.empty.details"),
+  pollFallback: () => t("pollsHub.pollFallback"),
+  ownerFallback: () => t("pollsHub.ownerFallback"),
+  mailSubTitle: (owner) => t("pollsHub.mail.subscriptionTitle", { owner }),
+  mailSubBody: (owner) => t("pollsHub.mail.subscriptionBody", { owner }),
+  mailSubAction: () => t("pollsHub.mail.subscriptionAction"),
+  mailTaskTitle: () => t("pollsHub.mail.taskTitle"),
+  mailTaskSubject: (name) => t("pollsHub.mail.taskSubject", { name }),
+  mailTaskBody: (owner, name) => t("pollsHub.mail.taskBody", { owner, name }),
+  mailTaskAction: () => t("pollsHub.mail.taskAction"),
+  mailSubtitle: () => t("pollsHub.mail.subtitle"),
+  pollNameLabel: (name) => t("pollsHub.pollNameLabel", { name }),
+};
 
 const qs = new URLSearchParams(location.search);
 const focusTaskToken = qs.get("t");
@@ -112,37 +205,37 @@ const archiveState = {
 
 const sortOptions = {
   polls: [
-    { value: "newest", label: "Najnowsze" },
-    { value: "oldest", label: "Najstarsze" },
-    { value: "name-asc", label: "Nazwa A–Z" },
-    { value: "name-desc", label: "Nazwa Z–A" },
-    { value: "type", label: "Typ" },
-    { value: "state", label: "Stan" },
-    { value: "tasks-active", label: "Najwięcej aktywnych zadań" },
-    { value: "tasks-done", label: "Najwięcej oddanych zadań" },
+    { value: "newest", labelKey: "pollsHub.sort.newest" },
+    { value: "oldest", labelKey: "pollsHub.sort.oldest" },
+    { value: "name-asc", labelKey: "pollsHub.sort.nameAsc" },
+    { value: "name-desc", labelKey: "pollsHub.sort.nameDesc" },
+    { value: "type", labelKey: "pollsHub.sort.type" },
+    { value: "state", labelKey: "pollsHub.sort.state" },
+    { value: "tasks-active", labelKey: "pollsHub.sort.tasksActive" },
+    { value: "tasks-done", labelKey: "pollsHub.sort.tasksDone" },
   ],
   tasks: [
-    { value: "newest", label: "Najnowsze" },
-    { value: "oldest", label: "Najstarsze" },
-    { value: "name-asc", label: "Nazwa A–Z" },
-    { value: "name-desc", label: "Nazwa Z–A" },
-    { value: "type", label: "Typ" },
-    { value: "available", label: "Tylko dostępne" },
-    { value: "done", label: "Tylko wykonane" },
+    { value: "newest", labelKey: "pollsHub.sort.newest" },
+    { value: "oldest", labelKey: "pollsHub.sort.oldest" },
+    { value: "name-asc", labelKey: "pollsHub.sort.nameAsc" },
+    { value: "name-desc", labelKey: "pollsHub.sort.nameDesc" },
+    { value: "type", labelKey: "pollsHub.sort.type" },
+    { value: "available", labelKey: "pollsHub.sort.available" },
+    { value: "done", labelKey: "pollsHub.sort.done" },
   ],
   subscribers: [
-    { value: "newest", label: "Najnowsze" },
-    { value: "oldest", label: "Najstarsze" },
-    { value: "name-asc", label: "Nazwa/Email A–Z" },
-    { value: "name-desc", label: "Nazwa/Email Z–A" },
-    { value: "status", label: "Status" },
+    { value: "newest", labelKey: "pollsHub.sort.newest" },
+    { value: "oldest", labelKey: "pollsHub.sort.oldest" },
+    { value: "name-asc", labelKey: "pollsHub.sort.nameEmailAsc" },
+    { value: "name-desc", labelKey: "pollsHub.sort.nameEmailDesc" },
+    { value: "status", labelKey: "pollsHub.sort.status" },
   ],
   subscriptions: [
-    { value: "newest", label: "Najnowsze" },
-    { value: "oldest", label: "Najstarsze" },
-    { value: "name-asc", label: "Nazwa A–Z" },
-    { value: "name-desc", label: "Nazwa Z–A" },
-    { value: "status", label: "Status" },
+    { value: "newest", labelKey: "pollsHub.sort.newest" },
+    { value: "oldest", labelKey: "pollsHub.sort.oldest" },
+    { value: "name-asc", labelKey: "pollsHub.sort.nameAsc" },
+    { value: "name-desc", labelKey: "pollsHub.sort.nameDesc" },
+    { value: "status", labelKey: "pollsHub.sort.status" },
   ],
 };
 
@@ -175,8 +268,8 @@ function showProgress(on) {
   progressOverlay.style.display = on ? "grid" : "none";
 }
 
-function setProgress({ step = "—", i = 0, n = 1, msg = "", isError = false } = {}) {
-  if (progressStep) progressStep.textContent = String(step || "—");
+function setProgress({ step = MSG.dash(), i = 0, n = 1, msg = "", isError = false } = {}) {
+  if (progressStep) progressStep.textContent = String(step || MSG.dash());
   if (progressCount) progressCount.textContent = `${Number(i) || 0}/${Number(n) || 0}`;
   const nn = Number(n) || 0;
   const ii = Number(i) || 0;
@@ -188,18 +281,18 @@ function setProgress({ step = "—", i = 0, n = 1, msg = "", isError = false } =
   if (progressMsg) progressMsg.textContent = msg ? String(msg) : "";
 }
 
-function finishProgress(step, n = 1, msg = "OK") {
+function finishProgress(step, n = 1, msg = MSG.ok()) {
   setProgress({ step, i: n, n, msg });
   setTimeout(() => showProgress(false), 400);
 }
 
-function failProgress(step, n = 1, msg = "Błąd") {
+function failProgress(step, n = 1, msg = MSG.error()) {
   setProgress({ step, i: n, n, msg, isError: true });
   setTimeout(() => showProgress(false), 1200);
 }
 
 function resolveLabel({ primary, fallback, email }) {
-  return String(primary || fallback || email || "").trim() || "—";
+  return String(primary || fallback || email || "").trim() || MSG.dash();
 }
 
 async function resolveLoginToEmail(login) {
@@ -229,7 +322,7 @@ async function hydrateSubscriptionLabels() {
       console.warn("[polls-hub] profiles lookup failed:", error);
     } else {
       for (const p of rows || []) {
-        profiles.set(p.id, p.username || p.email || "—");
+        profiles.set(p.id, p.username || p.email || MSG.dash());
       }
     }
   }
@@ -307,17 +400,17 @@ function buildMailHtml({ title, subtitle, body, actionLabel, actionUrl }) {
             </a>
           </div>
           <div style="margin-top:14px;font-size:12px;opacity:.75;line-height:1.4;">
-            Jeśli to nie Ty, zignoruj tę wiadomość.
+            ${t("pollsHub.mail.ignoreNote")}
           </div>
           <div style="margin-top:10px;font-size:12px;opacity:.75;line-height:1.4;">
-            Link nie działa? Skopiuj i wklej do przeglądarki:
+            ${t("pollsHub.mail.linkHint")}
             <div style="margin-top:6px;padding:10px 12px;border-radius:16px;border:1px solid rgba(255,255,255,.18);background:rgba(0,0,0,.18);word-break:break-all;">
               ${actionUrl}
             </div>
           </div>
         </div>
         <div style="margin-top:14px;font-size:12px;opacity:.7;text-align:center;">
-          Wiadomość automatyczna — prosimy nie odpowiadać.
+          ${t("pollsHub.mail.autoNote")}
         </div>
       </div>
     </div>
@@ -328,7 +421,7 @@ async function sendMail({ to, subject, html }) {
   const { data } = await sb().auth.getSession();
   const token = data?.session?.access_token;
   if (!token) {
-    throw new Error("Brak aktywnej sesji do wysyłki maila.");
+    throw new Error(t("pollsHub.errors.mailSession"));
   }
   const res = await fetch(MAIL_FUNCTION_URL, {
     method: "POST",
@@ -352,25 +445,25 @@ async function sendMail({ to, subject, html }) {
       });
       if (!retry.ok) {
         const text = await retry.text();
-        throw new Error(text || "Nie udało się wysłać maila.");
+        throw new Error(text || t("pollsHub.errors.mailSend"));
       }
       return;
     }
   }
   if (!res.ok) {
     const text = await res.text();
-    throw new Error(text || "Nie udało się wysłać maila.");
+    throw new Error(text || t("pollsHub.errors.mailSend"));
   }
 }
 
 async function sendSubscriptionEmail({ to, link, ownerLabel }) {
   const actionUrl = mailLink(link);
-  const title = `Zaproszenie do subskrypcji od użytkownika ${ownerLabel}`;
+  const title = MSG.mailSubTitle(ownerLabel);
   const html = buildMailHtml({
     title,
-    subtitle: "Centrum sondaży",
-    body: `Użytkownik <strong>${ownerLabel}</strong> zaprasza Cię do subskrypcji. Kliknij przycisk, aby zobaczyć zaproszenie.`,
-    actionLabel: "Zobacz zaproszenie",
+    subtitle: MSG.mailSubtitle(),
+    body: MSG.mailSubBody(ownerLabel),
+    actionLabel: MSG.mailSubAction(),
     actionUrl,
   });
   await sendMail({
@@ -382,17 +475,17 @@ async function sendSubscriptionEmail({ to, link, ownerLabel }) {
 
 async function sendTaskEmail({ to, link, pollName, ownerLabel }) {
   const actionUrl = mailLink(link);
-  const safeName = pollName ? `„${pollName}”` : "sondzie";
+  const safeName = pollName ? MSG.pollNameLabel(pollName) : MSG.pollFallback();
   const html = buildMailHtml({
-    title: "Zaproszenie do głosowania",
-    subtitle: "Centrum sondaży",
-    body: `Użytkownik <strong>${ownerLabel}</strong> zaprasza Cię do udziału w ${safeName}.`,
-    actionLabel: "Przejdź do głosowania",
+    title: MSG.mailTaskTitle(),
+    subtitle: MSG.mailSubtitle(),
+    body: MSG.mailTaskBody(ownerLabel, safeName),
+    actionLabel: MSG.mailTaskAction(),
     actionUrl,
   });
   await sendMail({
     to,
-    subject: `Zaproszenie do głosowania — ${pollName || "Sondaż"}`,
+    subject: MSG.mailTaskSubject(pollName || MSG.pollFallback()),
     html,
   });
 }
@@ -403,7 +496,7 @@ function renderSelect(el, kind) {
   for (const opt of sortOptions[kind]) {
     const o = document.createElement("option");
     o.value = opt.value;
-    o.textContent = opt.label;
+    o.textContent = t(opt.labelKey);
     el.appendChild(o);
   }
   el.value = sortState[kind];
@@ -442,7 +535,7 @@ function updateBadges() {
 }
 
 function pollTypeLabel(t) {
-  return t === "poll_points" ? "Punktacja odpowiedzi" : "Typowy sondaż";
+  return t === "poll_points" ? MSG.pollTypePoints() : MSG.pollTypeText();
 }
 
 function getPollStateOrder(poll) {
@@ -591,10 +684,10 @@ function pollVotesMeta(poll) {
   return {
     tasksText,
     tasksTitle: sharedTotal > 0
-      ? `Zadania: ${tasksDone} z ${sharedTotal} udostępnionych zagłosowało.`
-      : "Zadania: brak udostępnień.",
+      ? MSG.tasksBadgeTitle(tasksDone, sharedTotal)
+      : MSG.tasksBadgeNone(),
     anonText: `${anonVotes}`,
-    anonTitle: `Anonimowe głosy: ${anonVotes}.`,
+    anonTitle: MSG.anonBadgeTitle(anonVotes),
   };
 }
 
@@ -610,7 +703,7 @@ function renderPolls() {
     if (!listEl) return;
     listEl.innerHTML = "";
     if (!sorted.length) {
-      renderEmpty(listEl, "Brak sondaży do pokazania.");
+      renderEmpty(listEl, MSG.emptyPolls());
       return;
     }
     for (const poll of sorted) {
@@ -620,12 +713,12 @@ function renderPolls() {
       item.dataset.id = poll.game_id;
       item.innerHTML = `
         <div>
-          <div class="hub-item-title">${pollTypeLabel(poll.poll_type)} — ${poll.name || "—"}</div>
-          <div class="hub-item-sub">${poll.poll_state === "open" ? "Otwarty" : poll.poll_state === "closed" ? "Zamknięty" : "Szkic"}</div>
+          <div class="hub-item-title">${pollTypeLabel(poll.poll_type)} — ${poll.name || MSG.dash()}</div>
+          <div class="hub-item-sub">${poll.poll_state === "open" ? MSG.pollStateOpen() : poll.poll_state === "closed" ? MSG.pollStateClosed() : MSG.pollStateDraft()}</div>
         </div>
         <div class="hub-item-actions">
-          <span class="hub-item-badge" title="${votesMeta.tasksTitle}">Zadania: ${votesMeta.tasksText}</span>
-          <span class="hub-item-badge hub-item-badge-alt" title="${votesMeta.anonTitle}">Anon: ${votesMeta.anonText}</span>
+          <span class="hub-item-badge" title="${votesMeta.tasksTitle}">${t("pollsHub.tasksBadgeLabel")}: ${votesMeta.tasksText}</span>
+          <span class="hub-item-badge hub-item-badge-alt" title="${votesMeta.anonTitle}">${MSG.anonBadgeLabel()}: ${votesMeta.anonText}</span>
         </div>
       `;
       item.addEventListener("click", () => selectPoll(poll));
@@ -648,7 +741,7 @@ function renderTasks() {
     if (!listEl) return;
     listEl.innerHTML = "";
     if (!sorted.length) {
-      renderEmpty(listEl, "Brak zadań do pokazania.");
+      renderEmpty(listEl, MSG.emptyTasks());
       return;
     }
     for (const task of sorted) {
@@ -657,8 +750,8 @@ function renderTasks() {
       item.className = `hub-item ${statusClass}`;
       item.innerHTML = `
         <div>
-          <div class="hub-item-title">${pollTypeLabel(task.poll_type)} — ${task.game_name || "—"}</div>
-          <div class="hub-item-sub">${task.status === "done" ? "Wykonane" : "Dostępne"}</div>
+          <div class="hub-item-title">${pollTypeLabel(task.poll_type)} — ${task.game_name || MSG.dash()}</div>
+          <div class="hub-item-sub">${task.status === "done" ? MSG.taskStatusDone() : MSG.taskStatusAvailable()}</div>
         </div>
         <div class="hub-item-actions"></div>
       `;
@@ -667,7 +760,7 @@ function renderTasks() {
         const btn = document.createElement("button");
         btn.className = "btn xs danger";
         btn.textContent = "X";
-        btn.title = "Odrzuć";
+        btn.title = t("pollsHub.actions.decline");
         btn.addEventListener("click", async (e) => {
           e.stopPropagation();
           await declineTask(task);
@@ -692,7 +785,7 @@ function renderSubscribers() {
     if (!listEl) return;
     listEl.innerHTML = "";
     if (!sorted.length) {
-      renderEmpty(listEl, "Brak subskrybentów.");
+      renderEmpty(listEl, MSG.emptySubscribers());
       return;
     }
     for (const sub of sorted) {
@@ -701,7 +794,7 @@ function renderSubscribers() {
       item.className = `hub-item ${statusClass}`;
       item.innerHTML = `
         <div>
-          <div class="hub-item-title">${sub.subscriber_display_label || "—"}</div>
+          <div class="hub-item-title">${sub.subscriber_display_label || MSG.dash()}</div>
           <div class="hub-item-sub">${statusLabel(sub.status)}</div>
         </div>
         <div class="hub-item-actions"></div>
@@ -710,7 +803,7 @@ function renderSubscribers() {
       const btnRemove = document.createElement("button");
       btnRemove.className = "btn xs danger";
       btnRemove.textContent = "X";
-      btnRemove.title = "Usuń";
+      btnRemove.title = t("pollsHub.actions.remove");
       btnRemove.addEventListener("click", async (e) => {
         e.stopPropagation();
         await removeSubscriber(sub);
@@ -721,7 +814,7 @@ function renderSubscribers() {
         const btnResend = document.createElement("button");
         btnResend.className = "btn xs";
         btnResend.textContent = "↻";
-        btnResend.title = "Ponów zaproszenie";
+        btnResend.title = t("pollsHub.actions.resend");
         btnResend.addEventListener("click", async (e) => {
           e.stopPropagation();
           await resendSubscriber(sub);
@@ -745,7 +838,7 @@ function renderSubscriptions() {
     if (!listEl) return;
     listEl.innerHTML = "";
     if (!sorted.length) {
-      renderEmpty(listEl, "Brak subskrypcji.");
+      renderEmpty(listEl, MSG.emptySubscriptions());
       return;
     }
     for (const sub of sorted) {
@@ -754,7 +847,7 @@ function renderSubscriptions() {
       item.className = `hub-item ${statusClass}`;
       item.innerHTML = `
         <div>
-          <div class="hub-item-title">${sub.owner_display_label || "—"}</div>
+          <div class="hub-item-title">${sub.owner_display_label || MSG.dash()}</div>
           <div class="hub-item-sub">${statusLabel(sub.status)}</div>
         </div>
         <div class="hub-item-actions"></div>
@@ -763,7 +856,7 @@ function renderSubscriptions() {
       const btnRemove = document.createElement("button");
       btnRemove.className = "btn xs danger";
       btnRemove.textContent = "X";
-      btnRemove.title = sub.status === "pending" ? "Odrzuć" : "Anuluj";
+      btnRemove.title = sub.status === "pending" ? t("pollsHub.actions.decline") : t("pollsHub.actions.cancel");
       btnRemove.addEventListener("click", async (e) => {
         e.stopPropagation();
         await rejectSubscription(sub);
@@ -774,7 +867,7 @@ function renderSubscriptions() {
         const btnAccept = document.createElement("button");
         btnAccept.className = "btn xs gold";
         btnAccept.textContent = "✓";
-        btnAccept.title = "Akceptuj";
+        btnAccept.title = t("pollsHub.actions.accept");
         btnAccept.addEventListener("click", async (e) => {
           e.stopPropagation();
           await acceptSubscription(sub);
@@ -790,10 +883,10 @@ function renderSubscriptions() {
 }
 
 function statusLabel(status) {
-  if (status === "active") return "Aktywny";
-  if (status === "pending") return "Oczekujące";
-  if (status === "declined") return "Odrzucone";
-  if (status === "cancelled") return "Anulowane";
+  if (status === "active") return t("pollsHub.status.active");
+  if (status === "pending") return t("pollsHub.status.pending");
+  if (status === "declined") return t("pollsHub.status.declined");
+  if (status === "cancelled") return t("pollsHub.status.cancelled");
   return status;
 }
 
@@ -816,7 +909,7 @@ function updatePollActions() {
 
 async function openPoll(poll) {
   if (poll.poll_state === "draft" && !pollReadyMap.get(poll.game_id)) {
-    alert("Dokończ grę w Moich grach");
+    alert(MSG.pollReadyAlert());
     return;
   }
   location.href = `polls.html?id=${encodeURIComponent(poll.game_id)}&from=polls-hub`;
@@ -842,30 +935,30 @@ function openTask(task) {
 }
 
 async function declineTask(task) {
-  const step = "Odrzucanie zadania…";
+  const step = MSG.declineTaskStep();
   try {
     showProgress(true);
     setProgress({ step, i: 0, n: 2, msg: "" });
     await sb().rpc("polls_hub_task_decline", { p_task_id: task.task_id });
-    setProgress({ step, i: 1, n: 2, msg: "OK" });
+    setProgress({ step, i: 1, n: 2, msg: MSG.ok() });
     await refreshData();
     finishProgress(step, 2);
   } catch (e) {
     console.error(e);
-    failProgress(step, 2, "Nie udało się odrzucić zadania.");
-    alert("Nie udało się odrzucić zadania.");
+    failProgress(step, 2, MSG.declineTaskFail());
+    alert(MSG.declineTaskFail());
   }
 }
 
 async function inviteSubscriber(recipient) {
   if (!recipient) return;
-  const step = "Zapraszanie…";
+  const step = MSG.inviteStep();
   try {
     showProgress(true);
     setProgress({ step, i: 0, n: 3, msg: "" });
     const resolved = await resolveLoginToEmail(recipient);
     if (!resolved) {
-      const msg = recipient.includes("@") ? "Niepoprawny e-mail." : "Nie znam takiej nazwy użytkownika.";
+      const msg = recipient.includes("@") ? MSG.invalidEmail() : MSG.unknownUser();
       failProgress(step, 3, msg);
       alert(msg);
       return;
@@ -873,26 +966,26 @@ async function inviteSubscriber(recipient) {
 
     const { data, error } = await sb().rpc("polls_hub_subscription_invite", { p_recipient: resolved });
     if (error) throw error;
-    if (data?.ok === false) throw new Error(data?.error || "Nie udało się zaprosić.");
-    setProgress({ step, i: 1, n: 3, msg: "Zaproszenie zapisane." });
+    if (data?.ok === false) throw new Error(data?.error || MSG.inviteFail());
+    setProgress({ step, i: 1, n: 3, msg: MSG.inviteSaved() });
     if (!data?.already && data?.id && data?.channel === "email") {
       const { data: resendData, error: resendError } = await sb().rpc("polls_hub_subscriber_resend", { p_id: data.id });
       if (resendError) throw resendError;
-      if (resendData?.ok === false) throw new Error(resendData?.error || "Nie udało się wysłać zaproszenia.");
+      if (resendData?.ok === false) throw new Error(resendData?.error || MSG.inviteFail());
       if (resendData?.to && resendData?.link) {
-        const ownerLabel = currentUser?.username || currentUser?.email || "Użytkownik Familiady";
+        const ownerLabel = currentUser?.username || currentUser?.email || MSG.ownerFallback();
         try {
-          setProgress({ step, i: 2, n: 3, msg: "Wysyłam mail…" });
+          setProgress({ step, i: 2, n: 3, msg: MSG.mailSending() });
           await sendSubscriptionEmail({
             to: resendData.to,
             link: resendData.link,
             ownerLabel,
           });
-          setProgress({ step, i: 2, n: 3, msg: "Mail wysłany." });
+          setProgress({ step, i: 2, n: 3, msg: MSG.mailSent() });
         } catch (mailError) {
           console.error(mailError);
-          setProgress({ step, i: 2, n: 3, msg: "Mail nie został wysłany." });
-          alert("Zaproszenie zapisane, ale wysyłka maila nie powiodła się.");
+          setProgress({ step, i: 2, n: 3, msg: MSG.mailFailed() });
+          alert(MSG.inviteSavedMailFail());
         }
       }
     }
@@ -900,97 +993,98 @@ async function inviteSubscriber(recipient) {
     finishProgress(step, 3);
   } catch (e) {
     console.error(e);
-    failProgress(step, 3, e?.message || "Nie udało się zaprosić.");
-    alert(e?.message || "Nie udało się zaprosić.");
+    const msg = e?.message || MSG.inviteFail();
+    failProgress(step, 3, msg);
+    alert(msg);
   }
 }
 
 async function resendSubscriber(sub) {
-  const step = "Ponawianie zaproszenia…";
+  const step = MSG.resendStep();
   try {
     showProgress(true);
     setProgress({ step, i: 0, n: 3, msg: "" });
     const { data, error } = await sb().rpc("polls_hub_subscriber_resend", { p_id: sub.sub_id });
     if (error) throw error;
-    if (data?.ok === false) throw new Error(data?.error || "Nie udało się ponowić zaproszenia.");
+    if (data?.ok === false) throw new Error(data?.error || MSG.resendFail());
     if (data?.to && data?.link) {
-      const ownerLabel = currentUser?.username || currentUser?.email || "Użytkownik Familiady";
+      const ownerLabel = currentUser?.username || currentUser?.email || MSG.ownerFallback();
       try {
-        setProgress({ step, i: 1, n: 3, msg: "Wysyłam mail…" });
+        setProgress({ step, i: 1, n: 3, msg: MSG.mailSending() });
         await sendSubscriptionEmail({
           to: data.to,
           link: data.link,
           ownerLabel,
         });
-        setProgress({ step, i: 1, n: 3, msg: "Mail wysłany." });
+        setProgress({ step, i: 1, n: 3, msg: MSG.mailSent() });
       } catch (mailError) {
         console.error(mailError);
-        setProgress({ step, i: 1, n: 3, msg: "Mail nie został wysłany." });
-        alert("Ponowienie zapisane, ale wysyłka maila nie powiodła się.");
+        setProgress({ step, i: 1, n: 3, msg: MSG.mailFailed() });
+        alert(MSG.resendSavedMailFail());
       }
     }
     await refreshData();
     finishProgress(step, 3);
   } catch (e) {
     console.error(e);
-    failProgress(step, 3, "Nie udało się ponowić zaproszenia.");
-    alert("Nie udało się ponowić zaproszenia.");
+    failProgress(step, 3, MSG.resendFail());
+    alert(MSG.resendFail());
   }
 }
 
 async function removeSubscriber(sub) {
   const ok = await confirmModal({
-    title: "Usuń subskrybenta",
-    text: "Czy na pewno chcesz usunąć tego subskrybenta?",
-    okText: "Usuń",
-    cancelText: "Anuluj",
+    title: MSG.removeSubscriberTitle(),
+    text: MSG.removeSubscriberText(),
+    okText: MSG.removeSubscriberOk(),
+    cancelText: MSG.removeSubscriberCancel(),
   });
   if (!ok) return;
-  const step = "Usuwanie subskrybenta…";
+  const step = MSG.removeSubscriberStep();
   try {
     showProgress(true);
     setProgress({ step, i: 0, n: 2, msg: "" });
     await sb().rpc("polls_hub_subscriber_remove", { p_id: sub.sub_id });
-    setProgress({ step, i: 1, n: 2, msg: "OK" });
+    setProgress({ step, i: 1, n: 2, msg: MSG.ok() });
     await refreshData();
     finishProgress(step, 2);
   } catch (e) {
     console.error(e);
-    failProgress(step, 2, "Nie udało się usunąć subskrybenta.");
-    alert("Nie udało się usunąć subskrybenta.");
+    failProgress(step, 2, MSG.removeSubscriberFail());
+    alert(MSG.removeSubscriberFail());
   }
 }
 
 async function acceptSubscription(sub) {
-  const step = "Akceptowanie subskrypcji…";
+  const step = MSG.acceptSubscriptionStep();
   try {
     showProgress(true);
     setProgress({ step, i: 0, n: 2, msg: "" });
     await sb().rpc("polls_hub_subscription_accept", { p_id: sub.sub_id });
-    setProgress({ step, i: 1, n: 2, msg: "OK" });
+    setProgress({ step, i: 1, n: 2, msg: MSG.ok() });
     await refreshData();
     finishProgress(step, 2);
   } catch (e) {
     console.error(e);
-    failProgress(step, 2, "Nie udało się zaakceptować zaproszenia.");
-    alert("Nie udało się zaakceptować zaproszenia.");
+    failProgress(step, 2, MSG.acceptSubscriptionFail());
+    alert(MSG.acceptSubscriptionFail());
   }
 }
 
 async function rejectSubscription(sub) {
-  const step = "Aktualizacja subskrypcji…";
+  const step = MSG.updateSubscriptionStep();
   try {
     showProgress(true);
     setProgress({ step, i: 0, n: 2, msg: "" });
     const rpc = sub.status === "pending" ? "polls_hub_subscription_reject" : "polls_hub_subscription_cancel";
     await sb().rpc(rpc, { p_id: sub.sub_id });
-    setProgress({ step, i: 1, n: 2, msg: "OK" });
+    setProgress({ step, i: 1, n: 2, msg: MSG.ok() });
     await refreshData();
     finishProgress(step, 2);
   } catch (e) {
     console.error(e);
-    failProgress(step, 2, "Nie udało się zaktualizować subskrypcji.");
-    alert("Nie udało się zaktualizować subskrypcji.");
+    failProgress(step, 2, MSG.updateSubscriptionFail());
+    alert(MSG.updateSubscriptionFail());
   }
 }
 
@@ -1000,7 +1094,7 @@ async function openShareModal() {
   shareBaseline = new Set();
   shareMsg.textContent = "";
   shareList.innerHTML = "";
-  const step = "Pobieranie subskrybentów…";
+  const step = MSG.loadSubscribersStep();
   try {
     showProgress(true);
     setProgress({ step, i: 0, n: 1, msg: "" });
@@ -1051,44 +1145,44 @@ async function openShareModal() {
       row.innerHTML = `
         <input type="checkbox" ${isActive ? "checked" : ""} ${isLocked ? "disabled" : ""} data-sub-id="${sub.sub_id}">
         <div>
-          <div class="hub-item-title">${sub.subscriber_display_label || "—"}</div>
+          <div class="hub-item-title">${sub.subscriber_display_label || MSG.dash()}</div>
           <div class="hub-share-status">${shareStatusLabel(status)}</div>
         </div>
         <div class="hub-share-status">${shareStatusHint(status)}</div>
       `;
       const input = row.querySelector("input");
       if (input && isLocked) {
-        input.title = "Zagłosowane — usuń głos, aby odblokować.";
+        input.title = MSG.shareLockedHint();
       }
       shareList.appendChild(row);
     }
 
     if (!activeSubs.length) {
-      shareList.innerHTML = "<div class=\"hub-empty\">Brak aktywnych subskrybentów.</div>";
+      shareList.innerHTML = `<div class="hub-empty">${MSG.emptyActiveSubscribers()}</div>`;
     }
     shareOverlay.style.display = "grid";
     finishProgress(step, 1);
   } catch (e) {
     console.error(e);
-    failProgress(step, 1, "Nie udało się pobrać subskrybentów.");
-    alert("Nie udało się pobrać subskrybentów.");
+    failProgress(step, 1, MSG.loadSubscribersFail());
+    alert(MSG.loadSubscribersFail());
   }
 }
 
 function shareStatusLabel(status) {
-  if (status === "done") return "Wykonane";
-  if (status === "pending" || status === "opened") return "Dostępne";
-  if (status === "declined") return "Odrzucone";
-  if (status === "cancelled") return "Anulowane";
-  return "Brak";
+  if (status === "done") return MSG.shareStatus("done");
+  if (status === "pending" || status === "opened") return MSG.shareStatus("active");
+  if (status === "declined") return MSG.shareStatus("declined");
+  if (status === "cancelled") return MSG.shareStatus("cancelled");
+  return MSG.shareStatusMissing();
 }
 
 function shareStatusHint(status) {
-  if (status === "done") return "Zablokowane";
-  if (status === "pending" || status === "opened") return "Aktywne";
-  if (status === "declined") return "Możesz ponowić";
-  if (status === "cancelled") return "Możesz ponowić";
-  return "Brak";
+  if (status === "done") return MSG.shareHint("locked");
+  if (status === "pending" || status === "opened") return MSG.shareHint("active");
+  if (status === "declined") return MSG.shareHint("retry");
+  if (status === "cancelled") return MSG.shareHint("retry");
+  return MSG.shareHintMissing();
 }
 
 async function saveShareModal() {
@@ -1100,11 +1194,11 @@ async function saveShareModal() {
     selected.length !== shareBaseline.size ||
     selected.some((id) => !shareBaseline.has(String(id)));
   if (!changed) {
-    shareMsg.textContent = "Brak zmian do zapisania.";
+    shareMsg.textContent = MSG.shareNoChanges();
     setTimeout(closeShareModal, 600);
     return;
   }
-  const step = "Udostępnianie…";
+  const step = MSG.shareStep();
   try {
     showProgress(true);
     setProgress({ step, i: 0, n: 4, msg: "" });
@@ -1113,14 +1207,14 @@ async function saveShareModal() {
       p_sub_ids: selected,
     });
     if (error) throw error;
-    if (data?.ok === false) throw new Error(data?.error || "Nie udało się udostępnić.");
-    setProgress({ step, i: 1, n: 4, msg: "Zapisano udostępnienie." });
+    if (data?.ok === false) throw new Error(data?.error || MSG.shareSaveFail());
+    setProgress({ step, i: 1, n: 4, msg: MSG.shareSavedMsg() });
     const mailItems = Array.isArray(data?.mail) ? data.mail : [];
     let sentCount = 0;
     if (mailItems.length) {
-      const ownerLabel = currentUser?.username || currentUser?.email || "Użytkownik Familiady";
+      const ownerLabel = currentUser?.username || currentUser?.email || MSG.ownerFallback();
       const pollName = selectedPoll?.name || "";
-      setProgress({ step, i: 2, n: 4, msg: "Wysyłam maile…" });
+      setProgress({ step, i: 2, n: 4, msg: MSG.mailBatchSending() });
       const results = await Promise.allSettled(
         mailItems.map((item) =>
           sendTaskEmail({
@@ -1139,20 +1233,20 @@ async function saveShareModal() {
         }
       });
       if (sentTaskIds.length) {
-        setProgress({ step, i: 3, n: 4, msg: "Oznaczam wysłane maile…" });
+        setProgress({ step, i: 3, n: 4, msg: MSG.mailMarking() });
         await sb().rpc("polls_hub_tasks_mark_emailed", { p_task_ids: sentTaskIds });
       }
     }
     shareMsg.textContent = mailItems.length
-      ? `Zapisano udostępnienie. Maile: ${sentCount}/${mailItems.length}.`
-      : "Zapisano udostępnienie.";
+      ? MSG.shareSavedWithMail(sentCount, mailItems.length)
+      : MSG.shareSaved();
     await refreshData();
     finishProgress(step, 4);
     setTimeout(closeShareModal, 500);
   } catch (e) {
     console.error(e);
-    failProgress(step, 4, "Nie udało się zapisać udostępnienia.");
-    shareMsg.textContent = "Nie udało się zapisać udostępnienia.";
+    failProgress(step, 4, MSG.shareSaveFail());
+    shareMsg.textContent = MSG.shareSaveFail();
   }
 }
 
@@ -1168,8 +1262,8 @@ async function openDetailsModal({ withProgress = true } = {}) {
   detailsDeclined.innerHTML = "";
   detailsCancelled.innerHTML = "";
   detailsAnon.textContent = String(selectedPoll?.anon_votes || 0);
-  detailsTitle.textContent = `Szczegóły głosowania — ${selectedPoll?.name || ""}`;
-  const step = "Pobieranie szczegółów…";
+  detailsTitle.textContent = MSG.detailsTitle(selectedPoll?.name || "");
+  const step = MSG.loadDetailsStep();
   try {
     if (withProgress) {
       showProgress(true);
@@ -1187,14 +1281,14 @@ async function openDetailsModal({ withProgress = true } = {}) {
     if (ids.length) {
       const { data: profileRows } = await sb().from("profiles").select("id,username,email").in("id", ids);
       for (const p of profileRows || []) {
-        profiles.set(p.id, p.username || p.email || "—");
+        profiles.set(p.id, p.username || p.email || MSG.dash());
       }
     }
 
     for (const task of taskRows || []) {
       const label = task.recipient_user_id
         ? profiles.get(task.recipient_user_id) || task.recipient_user_id
-        : task.recipient_email || "—";
+        : task.recipient_email || MSG.dash();
       const item = document.createElement("div");
       item.className = "hub-details-item";
       item.innerHTML = `
@@ -1205,13 +1299,13 @@ async function openDetailsModal({ withProgress = true } = {}) {
       if (task.status === "done") {
         const btn = document.createElement("button");
         btn.className = "btn xs danger";
-        btn.textContent = "Usuń";
+        btn.textContent = t("pollsHub.actions.remove");
         btn.addEventListener("click", async () => {
           const ok = await confirmModal({
-            title: "Usuń głos",
-            text: "Czy na pewno chcesz usunąć głos tej osoby?",
-            okText: "Usuń",
-            cancelText: "Anuluj",
+            title: MSG.deleteVoteTitle(),
+            text: MSG.deleteVoteText(),
+            okText: MSG.deleteVoteOk(),
+            cancelText: MSG.deleteVoteCancel(),
           });
           if (!ok) return;
           await deleteVote(task.id);
@@ -1229,13 +1323,14 @@ async function openDetailsModal({ withProgress = true } = {}) {
 
     const maybeEmpty = (list) => {
       if (!list || list.children.length) return;
-      list.innerHTML = "<div class=\"hub-empty\">Brak zadań.</div>";
+      list.innerHTML = `<div class="hub-empty">${MSG.emptyTasksShort()}</div>`;
     };
     if (!taskRows?.length) {
-      detailsVoted.innerHTML = "<div class=\"hub-empty\">Brak zadań.</div>";
-      detailsPending.innerHTML = "<div class=\"hub-empty\">Brak zadań.</div>";
-      detailsDeclined.innerHTML = "<div class=\"hub-empty\">Brak zadań.</div>";
-      detailsCancelled.innerHTML = "<div class=\"hub-empty\">Brak zadań.</div>";
+      const empty = `<div class="hub-empty">${MSG.emptyTasksShort()}</div>`;
+      detailsVoted.innerHTML = empty;
+      detailsPending.innerHTML = empty;
+      detailsDeclined.innerHTML = empty;
+      detailsCancelled.innerHTML = empty;
     } else {
       maybeEmpty(detailsVoted);
       maybeEmpty(detailsPending);
@@ -1247,13 +1342,13 @@ async function openDetailsModal({ withProgress = true } = {}) {
     if (withProgress) finishProgress(step, 1);
   } catch (e) {
     console.error(e);
-    if (withProgress) failProgress(step, 1, "Nie udało się pobrać szczegółów.");
-    alert("Nie udało się pobrać szczegółów.");
+    if (withProgress) failProgress(step, 1, MSG.loadDetailsFail());
+    alert(MSG.loadDetailsFail());
   }
 }
 
 async function deleteVote(taskId) {
-  const step = "Usuwanie głosu…";
+  const step = MSG.deleteVoteStep();
   try {
     showProgress(true);
     setProgress({ step, i: 0, n: 2, msg: "" });
@@ -1263,13 +1358,13 @@ async function deleteVote(taskId) {
       .update({ status: "cancelled" })
       .eq("id", taskId)
       .eq("owner_id", currentUser.id);
-    setProgress({ step, i: 1, n: 2, msg: "OK" });
+    setProgress({ step, i: 1, n: 2, msg: MSG.ok() });
     await openDetailsModal({ withProgress: false });
     finishProgress(step, 2);
   } catch (e) {
     console.error(e);
-    failProgress(step, 2, "Nie udało się usunąć głosu.");
-    alert("Nie udało się usunąć głosu.");
+    failProgress(step, 2, MSG.deleteVoteFail());
+    alert(MSG.deleteVoteFail());
   }
 }
 
@@ -1357,7 +1452,7 @@ async function refreshData() {
     maybeFocusFromToken();
   } catch (e) {
     console.error(e);
-    alert("Nie udało się pobrać danych centrum sondaży.");
+    alert(MSG.loadHubFail());
   } finally {
     isRefreshing = false;
   }
@@ -1368,7 +1463,7 @@ function maybeFocusFromToken() {
     const match = tasks.find((t) => extractToken(t.go_url, "t") === focusTaskToken);
     if (match) {
       const page = match.poll_type === "poll_points" ? "poll-points.html" : "poll-text.html";
-      const promptVote = confirm("Masz zadanie do wykonania. Chcesz przejść do głosowania?");
+      const promptVote = confirm(MSG.focusTaskPrompt());
       if (promptVote) {
         location.href = `${page}?t=${encodeURIComponent(focusTaskToken)}`;
       }
@@ -1377,17 +1472,17 @@ function maybeFocusFromToken() {
   if (focusSubToken) {
     const match = subscriptions.find((s) => String(s.token) === focusSubToken);
     if (match && match.status === "pending") {
-      const promptAccept = confirm("Masz zaproszenie do subskrypcji. Chcesz je zaakceptować?");
+      const promptAccept = confirm(MSG.focusSubPrompt());
       if (promptAccept) {
         acceptSubscription(match);
       }
     } else if (currentUser && !subTokenPrompted) {
       subTokenPrompted = true;
       confirmModal({
-        title: "Zaproszenie nie pasuje do konta",
-        text: "To zaproszenie jest przypisane do innego adresu e-mail. Wyloguj się i zaloguj na właściwe konto, aby je potwierdzić.",
-        okText: "Wyloguj",
-        cancelText: "Zamknij",
+        title: MSG.tokenMismatchTitle(),
+        text: MSG.tokenMismatchText(),
+        okText: MSG.tokenMismatchOk(),
+        cancelText: MSG.tokenMismatchCancel(),
       }).then(async (ok) => {
         if (!ok) return;
         await signOut();
@@ -1427,7 +1522,7 @@ function wireOverlayClose(overlay, onClose) {
 
 document.addEventListener("DOMContentLoaded", async () => {
   currentUser = await requireAuth("index.html");
-  if (who) who.textContent = currentUser?.username || currentUser?.email || "—";
+  if (who) who.textContent = currentUser?.username || currentUser?.email || MSG.dash();
 
   renderSelect(sortPollsDesktop, "polls");
   renderSelect(sortPollsMobile, "polls");
@@ -1486,6 +1581,19 @@ document.addEventListener("DOMContentLoaded", async () => {
   btnLogout?.addEventListener("click", async () => {
     await signOut();
     location.href = "index.html";
+  });
+
+  window.addEventListener("i18n:lang", () => {
+    renderSelect(sortPollsDesktop, "polls");
+    renderSelect(sortPollsMobile, "polls");
+    renderSelect(sortTasksDesktop, "tasks");
+    renderSelect(sortTasksMobile, "tasks");
+    renderSelect(sortSubscribersDesktop, "subscribers");
+    renderSelect(sortSubscribersMobile, "subscribers");
+    renderSelect(sortSubscriptionsDesktop, "subscriptions");
+    renderSelect(sortSubscriptionsMobile, "subscriptions");
+    renderAll();
+    updatePollActions();
   });
 
   await refreshData();

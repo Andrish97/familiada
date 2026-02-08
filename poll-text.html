@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Familiada — sondaż</title>
+  <title data-i18n="pollText.title">Familiada — sondaż</title>
 
   <link rel="icon" href="favicon.ico"/>
   <link rel="stylesheet" href="css/base.css"/>
@@ -17,29 +17,30 @@
   <main class="wrap">
     <div class="card">
       <div class="brand">FAMILIADA</div>
-      <div class="title" id="title">Sondaż</div>
-      <div class="sub" id="sub">Ładuję…</div>
+      <div class="title" id="title" data-i18n="pollText.pollTitle">Sondaż</div>
+      <div class="sub" id="sub" data-i18n="pollText.loading">Ładuję…</div>
 
       <div class="qbox" id="qbox" style="display:none;">
-        <div class="qtext" id="qtext">—</div>
+        <div class="qtext" id="qtext" data-i18n="common.dash">—</div>
 
         <div class="trow">
           <input class="inp" id="answerInput"
              placeholder="Wpisz odpowiedź..."
+             data-i18n-placeholder="pollText.placeholder"
              autocomplete="off"
              maxlength="17" />
           <button class="btn gold full" id="btnSend" type="button">
-            <span class="only-desktop">Wyślij</span>
-            <span class="only-mobile">OK</span>
+            <span class="only-desktop" data-i18n="pollText.send">Wyślij</span>
+            <span class="only-mobile" data-i18n="pollText.sendMobile">OK</span>
           </button>
         </div>
 
-        <div class="tinyHint" id="tinyHint">
+        <div class="tinyHint" id="tinyHint" data-i18n="pollText.maxChars">
           Maksymalnie 17 znaków.
         </div>
 
         <div class="nav">
-          <div class="small" id="prog">—</div>
+          <div class="small" id="prog" data-i18n="common.dash">—</div>
           <div class="small" id="count">0/17</div>
         </div>
       </div>

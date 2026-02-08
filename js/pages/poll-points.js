@@ -1,6 +1,30 @@
 // js/pages/poll-points.js
 import { sb } from "../core/supabase.js";
 import { getUser } from "../core/auth.js";
+import { initI18n, t } from "../../translation/translation.js";
+
+initI18n({ withSwitcher: false });
+
+const MSG = {
+  thanks: () => t("pollPoints.thanks"),
+  loadTimeout: () => t("pollPoints.loadTimeout"),
+  taskInvalid: () => t("pollPoints.taskInvalid"),
+  loginToVote: () => t("pollPoints.loginToVote"),
+  emailRequired: () => t("pollPoints.emailRequired"),
+  openTaskFail: () => t("pollPoints.openTaskFail"),
+  pollFallback: () => t("pollPoints.pollFallback"),
+  pollClosed: () => t("pollPoints.pollClosed"),
+  sending: () => t("pollPoints.sending"),
+  error: (err) => t("pollPoints.error", { error: err }),
+  questionProgress: (current, total) => t("pollPoints.questionProgress", { current, total }),
+  beforeUnloadWarn: () => t("pollPoints.beforeUnloadWarn"),
+  missingParams: () => t("pollPoints.missingParams"),
+  alreadyVoted: () => t("pollPoints.alreadyVoted"),
+  loading: () => t("pollPoints.loading"),
+  wrongType: () => t("pollPoints.wrongType"),
+  openPollFail: (err) => t("pollPoints.openPollFail", { error: err }),
+  answerFallback: (ord) => t("pollPoints.answerFallback", { ord }),
+};
 
 const qs = new URLSearchParams(location.search);
 let gameId = qs.get("id");
@@ -49,7 +73,7 @@ function showFinished() {
 
   if (qbox) qbox.style.display = "none";
   if (closed) closed.style.display = "none";
-  if (sub) sub.textContent = "Dziękujemy za udział!";
+  if (sub) sub.textContent = MSG.thanks();
 }
 
 function setSub(t) {
@@ -95,7 +119,7 @@ async function withTimeout(promiseLike, ms, errMsg) {
 
 async function loadPayload() {
   const req = sb().rpc("poll_get_payload", { p_game_id: gameId, p_key: key });
-  const { data, error } = await withTimeout(req, 15000, "Nie można pobrać pytań (timeout).");
+  const { data, error } = await withTimeout(req, 15000, MSG.loadTimeout());
   if (error) throw error;
   return data;
 }
@@ -145,14 +169,14 @@ async function resolveTaskToken() {
   try {
     const { data, error } = await sb().rpc("poll_task_resolve", { p_token: taskToken });
     if (error) throw error;
-    if (!data?.ok || data?.kind !== "task") throw new Error("Link jest nieważny lub nieaktywny.");
+    if (!data?.ok || data?.kind !== "task") throw new Error(MSG.taskInvalid());
     if (data.requires_auth) {
-      setSub("Zaloguj się, aby przejść do głosowania.");
+      setSub(MSG.loginToVote());
       showClosed(true);
       return;
     }
     if (data.needs_email) {
-      setSub("Podaj e-mail w linku z zaproszenia.");
+      setSub(MSG.emailRequired());
       showClosed(true);
       return;
     }
@@ -163,7 +187,7 @@ async function resolveTaskToken() {
     await markTaskOpened();
   } catch (e) {
     console.error("[poll-points] task resolve error:", e);
-    setSub("Nie można otworzyć zadania.");
+    setSub(MSG.openTaskFail());
     showClosed(true);
   }
 }
@@ -173,7 +197,7 @@ function setupBeforeUnloadWarn() {
     if (finished) return;
     if (!outbox.length) return;
     e.preventDefault();
-    e.returnValue = "Udzielone odpowiedzi nie zostaną uznane.";
+    e.returnValue = MSG.beforeUnloadWarn();
     return e.returnValue;
   });
 }
@@ -186,12 +210,12 @@ function render() {
   const questions = payload?.questions || [];
   const q = questions[idx];
 
-  if (titleEl) titleEl.textContent = game.name || "Sondaż";
+  if (titleEl) titleEl.textContent = game.name || MSG.pollFallback();
   
   if (game.status !== "poll_open") {
     showClosed(true);
     setSub("");
-    setClosedMsg("Sondaż jest zamknięty. Dziękujemy!");
+    setClosedMsg(MSG.pollClosed());
     return;
   }
 
@@ -202,7 +226,7 @@ function render() {
     if (submitting || finished) return;
 
     submitting = true;
-    setSub("Wysyłam…");
+    setSub(MSG.sending());
 
     // zablokuj UI listy
     if (alist) [...alist.querySelectorAll("button")].forEach(x => (x.disabled = true));
@@ -215,7 +239,7 @@ function render() {
       })
       .catch((e) => {
         console.error("[poll-points] submit_batch error:", e);
-        setSub(`Błąd: ${e?.message || e}`);
+        setSub(MSG.error(e?.message || e));
         submitting = false;
         // pozwól spróbować jeszcze raz (użytkownik kliknie back/refresh - ale alert go ostrzeże)
       });
@@ -223,8 +247,8 @@ function render() {
     return;
   }
 
-  if (qtext) qtext.textContent = q.text || "—";
-  if (prog) prog.textContent = `Pytanie ${q.ord}/${questions.length}`;
+  if (qtext) qtext.textContent = q.text || t("common.dash");
+  if (prog) prog.textContent = MSG.questionProgress(q.ord, questions.length);
   setSub("");
 
   if (alist) {
@@ -235,7 +259,7 @@ function render() {
       const b = document.createElement("button");
       b.type = "button";
       b.className = "btn full";
-      b.textContent = a.text || `ODP ${a.ord}`;
+      b.textContent = a.text || MSG.answerFallback(a.ord);
 
       b.addEventListener("click", () => {
         if (finished || submitting) return;
@@ -263,7 +287,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
     if (!taskResolved) return;
     if (!gameId || !key) {
-      setSub("Brak parametru id lub key.");
+      setSub(MSG.missingParams());
       showClosed(true);
       return;
     }
@@ -271,19 +295,19 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (hasDone()) {
       showClosed(true);
       setSub("");
-      setClosedMsg("Już wziąłeś udział w sondażu.");
+      setClosedMsg(MSG.alreadyVoted());
       return;
     }
 
     setupBeforeUnloadWarn();
 
-    setSub("Ładuję…");
+    setSub(MSG.loading());
     showClosed(false);
 
     payload = await loadPayload();
 
     if ((payload?.game?.type || "") !== "poll_points") {
-      setSub("To nie jest sondaż punktacji.");
+      setSub(MSG.wrongType());
       showClosed(true);
       return;
     }
@@ -293,7 +317,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     render();
   } catch (e) {
     console.error("[poll-points] init error:", e);
-    setSub(`Nie można otworzyć sondażu: ${e?.message || e}`);
+    setSub(MSG.openPollFail(e?.message || e));
     showClosed(true);
   }
 });
