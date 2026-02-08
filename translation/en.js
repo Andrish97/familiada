@@ -156,6 +156,7 @@ const en = {
     deleteButton: "Delete account and data",
     statusLoaded: "Profile loaded.",
     statusUsernameSaved: "Username saved.",
+    statusSavingEmail: "Saving email address…",
     statusEmailSaved: "Email change saved. Please log in again.",
     statusPasswordSaved: "Password changed.",
     statusDeleting: "Deleting account…",
