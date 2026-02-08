@@ -82,6 +82,10 @@ btnLogout?.addEventListener("click", async () => {
     // ===== akcje UI (klik folder, search, selekcja) =====
     const api = wireActions({ state });
 
+    window.addEventListener("i18n:lang", async () => {
+      await api.refreshList();
+    });
+
     // ustaw cache all-questions dla widoku ALL
     state._allQuestions = qs;
     state._viewQuestions = qs;
