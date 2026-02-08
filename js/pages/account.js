@@ -81,16 +81,16 @@ async function handleEmailSave() {
 
     const normalizedMail = mail.toLowerCase();
     const language = getUiLang();
-
-    // ✅ emailRedirectTo MUSI być absolutny i nie może gubić query
+    
     const confirmUrl = new URL("/confirm.html", location.origin);
     confirmUrl.searchParams.set("lang", language);
     confirmUrl.searchParams.set("to", normalizedMail);
-
-    const { data, error } = await sb().auth.updateUser(
+    
+    await sb().auth.updateUser(
       { email: normalizedMail, data: { language } },
       { emailRedirectTo: confirmUrl.toString() }
     );
+    
     if (error) throw error;
 
     setStatus(t("account.statusEmailSaved"));
