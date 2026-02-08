@@ -2,6 +2,16 @@
 import { sb, buildSiteUrl } from "./supabase.js";
 import { t, withLangParam } from "../../translation/translation.js";
 
+function buildAuthRedirect(page, lang) {
+  // page: "confirm.html" | "reset.html" lub "/confirm.html"
+  const p = String(page || "").trim();
+  const path = p.startsWith("/") ? p : `/${p}`;
+  const url = new URL(buildSiteUrl(path)); // buildSiteUrl zwraca absolutny URL w Twoim projekcie
+  const l = String(lang || "").trim().toLowerCase();
+  if (l) url.searchParams.set("lang", l);
+  return url.toString();
+}
+
 function niceAuthError(e) {
   const msg = e?.message || String(e);
   const low = msg.toLowerCase();
@@ -142,18 +152,17 @@ export async function signIn(login, password) {
 export async function signUp(email, password, redirectTo, usernameInput, language) {
   const username = validateUsername(usernameInput, { allowEmpty: true });
   const userData = username ? { username } : null;
-  const emailRedirectTo = redirectTo || withLangParam(buildSiteUrl("confirm.html"));
+
+  // ✅ absolutny redirect + lang (bez withLangParam)
+  const emailRedirectTo = redirectTo || buildAuthRedirect("confirm.html", language);
+
   const options = { emailRedirectTo };
   if (userData || language) {
     options.data = { ...(userData || {}) };
     if (language) options.data.language = language;
   }
-  
-  const { error } = await sb().auth.signUp({
-    email,
-    password,
-    options,
-  });
+
+  const { error } = await sb().auth.signUp({ email, password, options });
   if (error) throw new Error(niceAuthError(error));
 }
 
@@ -166,9 +175,12 @@ export async function resetPassword(loginOrEmail, redirectTo, language) {
   const email = await loginToEmail(loginOrEmail);
   if (!email) throw new Error(t("index.errResetMissingLogin"));
 
-  const resetRedirectTo = redirectTo || withLangParam(buildSiteUrl("reset.html"));
+  // ✅ absolutny redirect + lang (bez withLangParam)
+  const resetRedirectTo = redirectTo || buildAuthRedirect("reset.html", language);
+
   const options = { redirectTo: resetRedirectTo };
   if (language) options.data = { language };
+
   const { error } = await sb().auth.resetPasswordForEmail(email, options);
   if (error) throw new Error(niceAuthError(error));
 }
