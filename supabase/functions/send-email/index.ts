@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { Webhook } from "https://esm.sh/standardwebhooks@1.0.0";
-import { getEmailCopy, type EmailLang } from "../../../translation/email-templates.ts";
+import { getEmailCopy, type EmailLang } from "./email-templates.ts";
 
 type HookPayload = {
   user: {
