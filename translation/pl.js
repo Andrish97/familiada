@@ -156,6 +156,7 @@ const pl = {
     deleteButton: "Usuń konto i dane",
     statusLoaded: "Profil załadowany.",
     statusUsernameSaved: "Nazwa użytkownika zapisana.",
+    statusSavingEmail: "Zapisywanie adresu e-mail…",
     statusEmailSaved: "Zapisano zmianę e-maila. Zaloguj się ponownie.",
     statusPasswordSaved: "Hasło zostało zmienione.",
     statusDeleting: "Usuwam konto…",
