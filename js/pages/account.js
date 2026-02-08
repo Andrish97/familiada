@@ -79,7 +79,9 @@ async function handleEmailSave() {
     const mail = String(emailInput.value || "").trim().toLowerCase();
     if (!mail || !mail.includes("@")) throw new Error(t("account.errInvalidEmail"));
 
-    const redirectTo = withLangParam(new URL("confirm.html", location.href).toString());
+    const confirmUrl = new URL("confirm.html", location.href);
+    confirmUrl.searchParams.set("to", mail);
+    const redirectTo = withLangParam(confirmUrl.toString());
     const language = getUiLang();
     const { data, error } = await sb().auth.updateUser(
       { email: mail, data: { language } },
@@ -95,18 +97,7 @@ async function handleEmailSave() {
       if (profileError) throw profileError;
     }
 
-    if (currentEmail) {
-      localStorage.setItem("pendingEmailChange", JSON.stringify({
-        old: currentEmail,
-        next: mail,
-        ts: Date.now(),
-      }));
-    }
     setStatus(t("account.statusEmailSaved"));
-    await signOut();
-    setTimeout(() => {
-      location.href = withLangParam("index.html");
-    }, 400);
   } catch (e) {
     console.error(e);
     setErr(e?.message || String(e));
@@ -169,4 +160,34 @@ document.addEventListener("DOMContentLoaded", () => {
   saveEmail?.addEventListener("click", handleEmailSave);
   savePass?.addEventListener("click", handlePassSave);
   deleteAccount?.addEventListener("click", handleDeleteAccount);
+
+  usernameInput?.addEventListener("keydown", (e) => {
+    if (e.key !== "Enter") return;
+    e.preventDefault();
+    saveUsername?.click();
+  });
+
+  emailInput?.addEventListener("keydown", (e) => {
+    if (e.key !== "Enter") return;
+    e.preventDefault();
+    saveEmail?.click();
+  });
+
+  pass1?.addEventListener("keydown", (e) => {
+    if (e.key !== "Enter") return;
+    e.preventDefault();
+    pass2?.focus();
+  });
+
+  pass2?.addEventListener("keydown", (e) => {
+    if (e.key !== "Enter") return;
+    e.preventDefault();
+    savePass?.click();
+  });
+
+  deletePassword?.addEventListener("keydown", (e) => {
+    if (e.key !== "Enter") return;
+    e.preventDefault();
+    deleteAccount?.click();
+  });
 });
