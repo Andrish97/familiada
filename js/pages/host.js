@@ -142,7 +142,7 @@ async function toggleFullscreen() {
 
     const el = document.documentElement;
     const req = el.requestFullscreen || el.webkitRequestFullscreen;
-    if (!req) throw new Error("Fullscreen API not available");
+    if (!req) throw new Error(t("common.fullscreenUnavailable"));
     await req.call(el, { navigationUI: "hide" });
     setFullscreenIcon();
   } catch (e) {
