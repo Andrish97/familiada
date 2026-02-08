@@ -3,6 +3,9 @@ import { sb } from "../core/supabase.js";
 import { requireAuth, signOut } from "../core/auth.js";
 import { confirmModal } from "../core/modal.js";
 import QRCode from "https://cdn.jsdelivr.net/npm/qrcode@1.5.3/+esm";
+import { initI18n } from "../../translation/translation.js";
+
+initI18n({ withSwitcher: true });
 
 const qs = new URLSearchParams(location.search);
 const gameId = qs.get("id");

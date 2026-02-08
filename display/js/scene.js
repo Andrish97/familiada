@@ -2,6 +2,7 @@
 import { loadJson, buildGlyphMap, resolveGlyph } from "./fonts.js";
 import { createAnimator } from "./anim.js";
 import { sb } from "../../js/core/supabase.js";
+import { t } from "../../translation/translation.js";
 
 export async function createScene() {
   const NS = "http://www.w3.org/2000/svg";
@@ -13,6 +14,7 @@ export async function createScene() {
   };
 
   const VIEW = { W: 1600, H: 900, CX: 800, CY: 450 };
+  const SUMA_LABEL = t("display.sumLabel");
 
     // ============================================================
   // THEME: 3 kolory bazowe -> reszta pochodne
@@ -635,7 +637,7 @@ export async function createScene() {
   
     // narysuj SUMA w nowym miejscu
     const F = roundsSumaFields();
-    writeField(GLYPHS, big, F.label, "SUMA", LIT.main);
+    writeField(GLYPHS, big, F.label, SUMA_LABEL, LIT.main);
     if (isNonEmpty(roundsState.suma)) writeField(GLYPHS, big, F.val, roundsState.suma, LIT.main);
   };
 
@@ -667,7 +669,7 @@ export async function createScene() {
     relocateSumaIfNeeded();
     const F = roundsSumaFields();
   
-    writeField(GLYPHS, big, F.label, "SUMA", LIT.main);
+    writeField(GLYPHS, big, F.label, SUMA_LABEL, LIT.main);
   
     const sumaTxt = isNonEmpty(roundsState.suma)
       ? alignRight(roundsState.suma, 3)
@@ -714,11 +716,11 @@ export async function createScene() {
     clearFinalSumRow();
   
     if (finalState.sumMode === "A") {
-      writeField(GLYPHS, big, FINAL.sumaALabel, "SUMA", LIT.main);
+      writeField(GLYPHS, big, FINAL.sumaALabel, SUMA_LABEL, LIT.main);
       const txt = alignRight(finalState.sumA, 3);
       writeField(GLYPHS, big, FINAL.sumaAVal, txt, LIT.main);
     } else {
-      writeField(GLYPHS, big, FINAL.sumaBLabel, "SUMA", LIT.main);
+      writeField(GLYPHS, big, FINAL.sumaBLabel, SUMA_LABEL, LIT.main);
       const txt = alignRight(finalState.sumB, 3);
       writeField(GLYPHS, big, FINAL.sumaBVal, txt, LIT.main);
     }
@@ -1847,7 +1849,7 @@ export async function createScene() {
         // przelicz rząd dla SUMA i narysuj ją
         relocateSumaIfNeeded();
         const F = roundsSumaFields();
-        writeField(GLYPHS, big, F.label, "SUMA", LIT.main);
+        writeField(GLYPHS, big, F.label, SUMA_LABEL, LIT.main);
       
         const txt = isNonEmpty(roundsState.suma)
           ? alignRight(roundsState.suma, 3)
@@ -1951,7 +1953,7 @@ export async function createScene() {
         clearFinalSumRow();
 
         // label rysujemy "na sztywno"
-        writeField(GLYPHS, big, labelField, "SUMA", LIT.main);
+        writeField(GLYPHS, big, labelField, SUMA_LABEL, LIT.main);
 
         // wartość przez updateField (z ANIMOUT/ANIMIN)
         await updateField(GLYPHS, big, valField, txt, {

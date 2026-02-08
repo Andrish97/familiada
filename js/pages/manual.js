@@ -3,6 +3,9 @@
 // Najpierw UI, potem auth „miękko”.
 
 import { confirmModal } from "../core/modal.js";
+import { initI18n } from "../../translation/translation.js";
+
+initI18n({ withSwitcher: true });
 
 function qsa(sel) { return Array.from(document.querySelectorAll(sel)); }
 function byId(id) { return document.getElementById(id); }

@@ -4,6 +4,9 @@
 import { sb } from "../core/supabase.js";
 import { requireAuth, signOut } from "../core/auth.js";
 import { confirmModal } from "../core/modal.js";
+import { initI18n } from "../../translation/translation.js";
+
+initI18n({ withSwitcher: true });
 
 /* ================= DOM ================= */
 const grid = document.getElementById("grid");

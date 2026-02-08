@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Familiada — ustawienia konta</title>
+  <title data-i18n="account.pageTitle">Familiada — ustawienia konta</title>
 
   <link rel="icon" href="favicon.ico" />
   <link rel="stylesheet" href="css/base.css"/>
@@ -18,52 +18,52 @@
   <header class="topbar">
     <div class="brand">FAMILIADA</div>
     <div class="right">
-      <a class="btn" href="builder.html">← Moje gry</a>
+      <a class="btn" href="builder.html" data-i18n="account.backToGames">← Moje gry</a>
     </div>
   </header>
 
   <main class="wrap account-wrap">
     <div class="bar">
       <div>
-        <div class="title">Ustawienia konta</div>
-        <div class="hint">Zarządzaj profilem, e-mailem i bezpieczeństwem.</div>
+        <div class="title" data-i18n="account.headerTitle">Ustawienia konta</div>
+        <div class="hint" data-i18n="account.headerHint">Zarządzaj profilem, e-mailem i bezpieczeństwem.</div>
       </div>
     </div>
 
     <div class="account-status">
-      <div class="status" id="status">Ładuję profil…</div>
+      <div class="status" id="status" data-i18n="account.statusLoading">Ładuję profil…</div>
       <div class="err" id="err"></div>
     </div>
 
     <div class="account-grid">
       <section class="account-panel">
-        <div class="section-title">Nazwa użytkownika</div>
-        <div class="section-hint">Widoczna dla subskrybentów i w panelu.</div>
-        <input class="inp" id="username" placeholder="Nazwa użytkownika" autocomplete="username"/>
-        <button class="btn gold full" id="saveUsername" type="button">Zapisz nazwę</button>
+        <div class="section-title" data-i18n="account.usernameTitle">Nazwa użytkownika</div>
+        <div class="section-hint" data-i18n="account.usernameHint">Widoczna dla subskrybentów i w panelu.</div>
+        <input class="inp" id="username" placeholder="Nazwa użytkownika" autocomplete="username" data-i18n-placeholder="account.usernamePlaceholder"/>
+        <button class="btn gold full" id="saveUsername" type="button" data-i18n="account.usernameSave">Zapisz nazwę</button>
       </section>
 
       <section class="account-panel">
-        <div class="section-title">E-mail</div>
-        <div class="section-hint">Zmieniaj adres logowania. Po zmianie sprawdź skrzynkę na obecnym i nowym e-mailu, aby potwierdzić operację.</div>
-        <input class="inp" id="email" type="email" placeholder="Nowy e-mail" autocomplete="email"/>
-        <button class="btn gold full" id="saveEmail" type="button">Zmień e-mail</button>
-        <div class="section-hint">Po zmianie nastąpi wylogowanie i wymagane będzie ponowne logowanie.</div>
+        <div class="section-title" data-i18n="account.emailTitle">E-mail</div>
+        <div class="section-hint" data-i18n="account.emailHint">Zmieniaj adres logowania. Po zmianie sprawdź skrzynkę na obecnym i nowym e-mailu, aby potwierdzić operację.</div>
+        <input class="inp" id="email" type="email" placeholder="Nowy e-mail" autocomplete="email" data-i18n-placeholder="account.emailPlaceholder"/>
+        <button class="btn gold full" id="saveEmail" type="button" data-i18n="account.emailSave">Zmień e-mail</button>
+        <div class="section-hint" data-i18n="account.emailPostHint">Po zmianie nastąpi wylogowanie i wymagane będzie ponowne logowanie.</div>
       </section>
 
       <section class="account-panel">
-        <div class="section-title">Hasło</div>
-        <div class="section-hint">Minimum 8 znaków, małe/duże litery, cyfra i znak specjalny.</div>
-        <input class="inp" id="pass1" type="password" placeholder="Nowe hasło" autocomplete="new-password"/>
-        <input class="inp" id="pass2" type="password" placeholder="Powtórz nowe hasło" autocomplete="new-password"/>
-        <button class="btn gold full" id="savePass" type="button">Zmień hasło</button>
+        <div class="section-title" data-i18n="account.passwordTitle">Hasło</div>
+        <div class="section-hint" data-i18n="account.passwordHint">Minimum 8 znaków, małe/duże litery, cyfra i znak specjalny.</div>
+        <input class="inp" id="pass1" type="password" placeholder="Nowe hasło" autocomplete="new-password" data-i18n-placeholder="account.passwordPlaceholder"/>
+        <input class="inp" id="pass2" type="password" placeholder="Powtórz nowe hasło" autocomplete="new-password" data-i18n-placeholder="account.passwordRepeatPlaceholder"/>
+        <button class="btn gold full" id="savePass" type="button" data-i18n="account.passwordSave">Zmień hasło</button>
       </section>
 
       <section class="account-panel danger">
-        <div class="section-title">Usuń konto</div>
-        <div class="section-hint">Ta operacja jest nieodwracalna. Wpisz hasło, aby potwierdzić.</div>
-        <input class="inp" id="deletePassword" type="password" placeholder="Hasło" autocomplete="current-password"/>
-        <button class="btn danger full" id="deleteAccount" type="button">Usuń konto i dane</button>
+        <div class="section-title" data-i18n="account.deleteTitle">Usuń konto</div>
+        <div class="section-hint" data-i18n="account.deleteHint">Ta operacja jest nieodwracalna. Wpisz hasło, aby potwierdzić.</div>
+        <input class="inp" id="deletePassword" type="password" placeholder="Hasło" autocomplete="current-password" data-i18n-placeholder="account.deletePlaceholder"/>
+        <button class="btn danger full" id="deleteAccount" type="button" data-i18n="account.deleteButton">Usuń konto i dane</button>
       </section>
     </div>
   </main>

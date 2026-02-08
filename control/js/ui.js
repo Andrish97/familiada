@@ -1,24 +1,26 @@
 // /familiada/js/pages/control/ui.js
 
+import { t } from "../../translation/translation.js";
+
 // ================== KOMUNIKATY (UI) ==================
 const UI_MSG = {
-  DEVICE_STATUS_OK: "POŁĄCZONO",
-  DEVICE_STATUS_OFFLINE: "OFFLINE",
-  DEVICE_STATUS_NONE: "—",
-  DEVICE_SEEN_NONE: "brak",
+  get DEVICE_STATUS_OK() { return t("control.deviceStatusOk"); },
+  get DEVICE_STATUS_OFFLINE() { return t("control.deviceStatusOffline"); },
+  get DEVICE_STATUS_NONE() { return t("control.deviceStatusNone"); },
+  get DEVICE_SEEN_NONE() { return t("control.deviceSeenNone"); },
 
-  AUDIO_OK: "OK",
-  AUDIO_BLOCKED: "ZABLOKOWANE",
+  get AUDIO_OK() { return t("control.audioStatusOk"); },
+  get AUDIO_BLOCKED() { return t("control.audioBlocked"); },
 
-  CONTROL_PREFIX: "Panel sterowania — ",
-  CONTROL_TITLE: "Panel sterowania",
+  get CONTROL_PREFIX() { return t("control.controlPrefix"); },
+  get CONTROL_TITLE() { return t("control.controlTitle"); },
 
-  QR_ON_DISPLAY: "QR na wyświetlaczu",
-  QR_HIDE: "Schowaj QR",
-  QR_BLACK_SCREEN: "Czarny ekran",
+  get QR_ON_DISPLAY() { return t("control.qrOnDisplay"); },
+  get QR_HIDE() { return t("control.qrHide"); },
+  get QR_BLACK_SCREEN() { return t("control.blackScreen"); },
 
-  DASH: "—",
-  ANSWER_FALLBACK: "—",
+  get DASH() { return t("control.dash"); },
+  get ANSWER_FALLBACK() { return t("control.answerFallback"); },
 };
 // =====================================================
 

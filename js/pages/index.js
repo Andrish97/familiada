@@ -1,6 +1,7 @@
 // js/pages/index.js
 import { getUser, signIn, signUp, resetPassword, validatePassword, validateUsername } from "../core/auth.js";
 import { sb } from "../core/supabase.js";
+import { initI18n, t, getUiLang, withLangParam } from "../../translation/translation.js";
 
 const $ = (s) => document.querySelector(s);
 const email = $("#email");
@@ -70,7 +71,7 @@ async function ensureUsernameAvailable(username, userId) {
     .limit(1)
     .maybeSingle();
   if (error) throw error;
-  if (data?.id) throw new Error("Ta nazwa użytkownika jest już zajęta.");
+  if (data?.id) throw new Error(t("index.errUsernameTaken"));
 }
 
 async function saveUsername() {
@@ -78,7 +79,7 @@ async function saveUsername() {
   try {
     const username = validateUsername(usernameFirst?.value || "");
     const { data: userData, error: userError } = await sb().auth.getUser();
-    if (userError || !userData?.user) throw new Error("Brak aktywnej sesji.");
+    if (userError || !userData?.user) throw new Error(t("index.errNoSession"));
     await ensureUsernameAvailable(username, userData.user.id);
     const { error } = await sb()
       .from("profiles")
@@ -97,21 +98,22 @@ async function saveUsername() {
 function applyMode() {
   if (mode === "login") {
     pass2.style.display = "none";
-    btnPrimary.textContent = "Zaloguj";
-    btnToggle.textContent = "Załóż konto";
-    email.placeholder = "E-mail lub nazwa użytkownika";
+    btnPrimary.textContent = t("index.btnLogin");
+    btnToggle.textContent = t("index.btnToggleRegister");
+    email.placeholder = t("index.placeholderLogin");
   } else {
     pass2.style.display = "block";
-    btnPrimary.textContent = "Zarejestruj";
-    btnToggle.textContent = "Mam konto";
-    email.placeholder = "E-mail";
+    btnPrimary.textContent = t("index.btnRegister");
+    btnToggle.textContent = t("index.btnToggleLogin");
+    email.placeholder = t("index.placeholderEmail");
   }
   setErr("");
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
+  await initI18n({ withSwitcher: true });
   applyMode();
-  setStatus("Sprawdzam sesję…");
+  setStatus(t("index.statusChecking"));
 
   const u = await getUser();
   if (u) {
@@ -124,7 +126,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
     return;
   }
-  setStatus("Niezalogowany.");
+  setStatus(t("index.statusLoggedOut"));
 
   btnToggle.addEventListener("click", () => {
     mode = mode === "login" ? "register" : "login";
@@ -136,11 +138,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     const loginOrEmail = email.value.trim();
     const pwd = pass.value;
 
-    if (!loginOrEmail || !pwd) return setErr("Podaj e-mail/nazwę użytkownika i hasło.");
+    if (!loginOrEmail || !pwd) return setErr(t("index.errMissingLogin"));
     if (loginOrEmail.includes("@")) {
       const pending = getPendingEmailChange();
       if (pending?.old && String(pending.old).toLowerCase() === loginOrEmail.toLowerCase()) {
-        return setErr("Zmieniałeś adres e-mail. Zaloguj się nowym adresem.");
+        return setErr(t("index.errPendingEmailChange"));
       }
     }
 
@@ -148,21 +150,21 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (mode === "register") {
         const mail = loginOrEmail;
 
-        if (!mail || !mail.includes("@")) return setErr("Podaj poprawny e-mail.");
+        if (!mail || !mail.includes("@")) return setErr(t("index.errInvalidEmail"));
 
-        if (pass2.value !== pwd) return setErr("Hasła nie są takie same.");
+        if (pass2.value !== pwd) return setErr(t("index.errPasswordMismatch"));
         try {
           validatePassword(pwd);
         } catch (e) {
           return setErr(e?.message || String(e));
         }
 
-        setStatus("Rejestruję…");
-        const redirectTo = new URL("confirm.html", location.href).toString();
-        await signUp(mail, pwd, redirectTo);
-        setStatus("Sprawdź e-mail (link aktywacyjny).");
+        setStatus(t("index.statusRegistering"));
+        const redirectTo = withLangParam(new URL("confirm.html", location.href).toString());
+        await signUp(mail, pwd, redirectTo, null, getUiLang());
+        setStatus(t("index.statusCheckEmail"));
       } else {
-        setStatus("Loguję…");
+        setStatus(t("index.statusLoggingIn"));
         await signIn(loginOrEmail, pwd); // <-- może być username
         clearPendingEmailChange();
         const authed = await getUser();
@@ -176,7 +178,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
     } catch (e) {
       console.error(e);
-      setStatus("Błąd.");
+      setStatus(t("index.statusError"));
       setErr(e?.message || String(e));
     }
   });
@@ -184,16 +186,16 @@ document.addEventListener("DOMContentLoaded", async () => {
   btnForgot.addEventListener("click", async () => {
     setErr("");
     const loginOrEmail = email.value.trim();
-    if (!loginOrEmail) return setErr("Podaj e-mail lub nazwę użytkownika do resetu.");
+    if (!loginOrEmail) return setErr(t("index.errResetMissingLogin"));
 
     try {
-      setStatus("Wysyłam link resetu…");
-      const redirectTo = new URL("reset.html", location.href).toString();
+      setStatus(t("index.statusResetSending"));
+      const redirectTo = withLangParam(new URL("reset.html", location.href).toString());
       await resetPassword(loginOrEmail, redirectTo);
-      setStatus("Wysłano link resetu hasła.");
+      setStatus(t("index.statusResetSent"));
     } catch (e) {
       console.error(e);
-      setStatus("Błąd.");
+      setStatus(t("index.statusError"));
       setErr(e?.message || String(e));
     }
   });

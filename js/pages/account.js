@@ -1,5 +1,6 @@
 import { sb } from "../core/supabase.js";
 import { requireAuth, validatePassword, validateUsername, signOut } from "../core/auth.js";
+import { initI18n, t, getUiLang, withLangParam } from "../../translation/translation.js";
 
 const status = document.getElementById("status");
 const err = document.getElementById("err");
@@ -27,7 +28,7 @@ async function ensureUsernameAvailable(username, userId) {
     .limit(1)
     .maybeSingle();
   if (error) throw error;
-  if (data?.id) throw new Error("Ta nazwa użytkownika jest już zajęta.");
+  if (data?.id) throw new Error(t("index.errUsernameTaken"));
 }
 
 let currentEmail = "";
@@ -38,7 +39,7 @@ async function loadProfile() {
   usernameInput.value = user.username || "";
   emailInput.value = user.email || "";
   currentEmail = user.email || "";
-  setStatus("Profil załadowany.");
+  setStatus(t("account.statusLoaded"));
 }
 
 async function handleUsernameSave() {
@@ -46,7 +47,7 @@ async function handleUsernameSave() {
   try {
     const username = validateUsername(usernameInput.value || "");
     const { data: userData, error: userError } = await sb().auth.getUser();
-    if (userError || !userData?.user) throw new Error("Brak aktywnej sesji.");
+    if (userError || !userData?.user) throw new Error(t("index.errNoSession"));
     await ensureUsernameAvailable(username, userData.user.id);
 
     const { error } = await sb()
@@ -56,7 +57,7 @@ async function handleUsernameSave() {
     if (error) throw error;
 
     await sb().auth.updateUser({ data: { username } });
-    setStatus("Nazwa użytkownika zapisana.");
+    setStatus(t("account.statusUsernameSaved"));
   } catch (e) {
     console.error(e);
     setErr(e?.message || String(e));
@@ -67,11 +68,12 @@ async function handleEmailSave() {
   setErr("");
   try {
     const mail = String(emailInput.value || "").trim().toLowerCase();
-    if (!mail || !mail.includes("@")) throw new Error("Podaj poprawny e-mail.");
+    if (!mail || !mail.includes("@")) throw new Error(t("account.errInvalidEmail"));
 
-    const redirectTo = new URL("confirm.html", location.href).toString();
+    const redirectTo = withLangParam(new URL("confirm.html", location.href).toString());
+    const language = getUiLang();
     const { data, error } = await sb().auth.updateUser(
-      { email: mail },
+      { email: mail, data: { language } },
       { emailRedirectTo: redirectTo }
     );
     if (error) throw error;
@@ -91,7 +93,7 @@ async function handleEmailSave() {
         ts: Date.now(),
       }));
     }
-    setStatus("Zapisano zmianę e-maila. Zaloguj się ponownie.");
+    setStatus(t("account.statusEmailSaved"));
     await signOut();
     setTimeout(() => {
       location.href = "index.html";
@@ -107,7 +109,7 @@ async function handlePassSave() {
   try {
     const a = String(pass1.value || "");
     const b = String(pass2.value || "");
-    if (a !== b) throw new Error("Hasła nie są takie same.");
+    if (a !== b) throw new Error(t("account.errPasswordMismatch"));
     validatePassword(a);
 
     const { error } = await sb().auth.updateUser({ password: a });
@@ -115,7 +117,7 @@ async function handlePassSave() {
 
     pass1.value = "";
     pass2.value = "";
-    setStatus("Hasło zostało zmienione.");
+    setStatus(t("account.statusPasswordSaved"));
   } catch (e) {
     console.error(e);
     setErr(e?.message || String(e));
@@ -126,32 +128,33 @@ async function handleDeleteAccount() {
   setErr("");
   try {
     const pwd = String(deletePassword.value || "");
-    if (!pwd) throw new Error("Podaj hasło, aby potwierdzić.");
+    if (!pwd) throw new Error(t("account.errDeletePasswordMissing"));
 
     const { data: userData, error: userError } = await sb().auth.getUser();
-    if (userError || !userData?.user?.email) throw new Error("Brak aktywnej sesji.");
+    if (userError || !userData?.user?.email) throw new Error(t("index.errNoSession"));
 
     const { error: signInError } = await sb().auth.signInWithPassword({
       email: userData.user.email,
       password: pwd,
     });
-    if (signInError) throw new Error("Nieprawidłowe hasło.");
+    if (signInError) throw new Error(t("account.errInvalidPassword"));
 
-    setStatus("Usuwam konto…");
+    setStatus(t("account.statusDeleting"));
     const { data, error } = await sb().functions.invoke("delete-account");
     if (error) throw error;
-    if (!data?.ok) throw new Error(data?.error || "Nie udało się usunąć konta.");
+    if (!data?.ok) throw new Error(data?.error || t("account.errDeleteFailed"));
 
     await signOut();
     location.href = "index.html";
   } catch (e) {
     console.error(e);
-    setStatus("Błąd.");
+    setStatus(t("account.statusError"));
     setErr(e?.message || String(e));
   }
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+  initI18n({ withSwitcher: true });
   loadProfile();
   saveUsername?.addEventListener("click", handleUsernameSave);
   saveEmail?.addEventListener("click", handleEmailSave);

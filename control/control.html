@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Familiada — Panel sterowania</title>
+  <title data-i18n="control.title">Familiada — Panel sterowania</title>
 
   <link rel="icon" href="../favicon.ico"/>
   <link rel="stylesheet" href="../css/base.css"/>
@@ -12,12 +12,14 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
   <script type="module">
     import { guardDesktopOnly } from "../js/core/device-guard.js";
+    import { initI18n, t } from "../translation/translation.js";
   
     const minWidth = 980;
   
+    await initI18n({ withSwitcher: false });
     guardDesktopOnly({
       minWidth,
-      message: "Panel sterowania działa tylko na komputerze (min. 980px).",
+      message: t("control.desktopOnly"),
     });
   
     import("./js/app.js");
@@ -27,29 +29,29 @@
   <header class="topbar">
     <div class="brand">FAMILIADA</div>
 
-    <div class="top-status" aria-label="Status urządzeń">
-      <div class="dotRow" title="Wyświetlacz" id="dotDisplayRow">
-        <span class="dot mid" id="dotDisplay"></span><span class="lbl">Wyświetlacz</span>
+    <div class="top-status" aria-label="Status urządzeń" data-i18n-aria-label="control.statusLabel">
+      <div class="dotRow" title="Wyświetlacz" id="dotDisplayRow" data-i18n-title="control.deviceDisplay">
+        <span class="dot mid" id="dotDisplay"></span><span class="lbl" data-i18n="control.deviceDisplay">Wyświetlacz</span>
       </div>
-      <div class="dotRow" title="Prowadzący" id="dotHostRow">
-        <span class="dot mid" id="dotHost"></span><span class="lbl">Prowadzący</span>
+      <div class="dotRow" title="Prowadzący" id="dotHostRow" data-i18n-title="control.deviceHost">
+        <span class="dot mid" id="dotHost"></span><span class="lbl" data-i18n="control.deviceHost">Prowadzący</span>
       </div>
-      <div class="dotRow" title="Przycisk" id="dotBuzzerRow">
-        <span class="dot mid" id="dotBuzzer"></span><span class="lbl">Przycisk</span>
+      <div class="dotRow" title="Przycisk" id="dotBuzzerRow" data-i18n-title="control.deviceBuzzer">
+        <span class="dot mid" id="dotBuzzer"></span><span class="lbl" data-i18n="control.deviceBuzzer">Przycisk</span>
       </div>
     </div>
 
     <div class="right">
-      <button class="btn sm" id="btnBack" type="button">← Moje gry</button>
+      <button class="btn sm" id="btnBack" type="button" data-i18n="control.backToGames">← Moje gry</button>
       <span class="who" id="who">—</span>
-      <button class="btn sm" id="btnLogout" type="button">Wyloguj</button>
+      <button class="btn sm" id="btnLogout" type="button" data-i18n="control.logout">Wyloguj</button>
     </div>
   </header>
 
   <div class="gameTitleBar">
     <div class="wrap wide">
       <div class="gameTitle">
-        <div class="t1" id="gameLabel">Panel sterowania</div>
+        <div class="t1" id="gameLabel" data-i18n="control.gameLabel">Panel sterowania</div>
         <div class="t2" id="gameMeta"></div>
       </div>
     </div>
@@ -57,26 +59,26 @@
 
   <div class="alertBar hidden" id="alertBar">
     <div class="alertTxt" id="alertTxt">—</div>
-    <button class="btn xs" id="btnAlertClose" type="button">OK</button>
+    <button class="btn xs" id="btnAlertClose" type="button" data-i18n="control.alertOk">OK</button>
   </div>
 
   <!-- Modal QR urządzeń z top bara -->
   <div class="qrModalOverlay hidden" id="qrModalOverlay">
     <div class="qrModalBox">
       <div class="qrModalHead">
-        <div class="qrModalTitle" id="qrModalTitle">Urządzenie</div>
+        <div class="qrModalTitle" id="qrModalTitle" data-i18n="control.qrModalTitle">Urządzenie</div>
         <button class="btn xs" id="qrModalClose" type="button">✕</button>
       </div>
 
       <div class="qrModalBody">
         <div class="qrModalQr">
-          <img id="qrModalImg" alt="Kod QR" />
+          <img id="qrModalImg" alt="Kod QR" data-i18n-alt="control.qrModalImgAlt"/>
         </div>
 
         <div class="qrModalLinkRow">
-          <input class="inp" id="qrModalLink" readonly aria-label="Link do urządzenia" />
-          <button class="btn" id="qrModalCopy" type="button">Kopiuj</button>
-          <button class="btn gold" id="qrModalOpen" type="button">Otwórz</button>
+          <input class="inp" id="qrModalLink" readonly aria-label="Link do urządzenia" data-i18n-aria-label="control.qrModalLinkAria"/>
+          <button class="btn" id="qrModalCopy" type="button" data-i18n="common.copy">Kopiuj</button>
+          <button class="btn gold" id="qrModalOpen" type="button" data-i18n="common.open">Otwórz</button>
         </div>
       </div>
     </div>
@@ -86,19 +88,19 @@
   <div class="colorModalOverlay hidden" id="colorModalOverlay">
     <div class="colorModalBox">
       <div class="colorModalHead">
-        <div class="colorModalTitle" id="colorModalTitle">Kolor</div>
+        <div class="colorModalTitle" id="colorModalTitle" data-i18n="control.colorTitle">Kolor</div>
         <button class="btn xs" id="colorModalClose" type="button">✕</button>
       </div>
 
       <div class="colorModalBody">
         <div class="colorTopRow">
-          <div class="colorPreview" id="colorPreview" aria-label="Podgląd koloru"></div>
+          <div class="colorPreview" id="colorPreview" aria-label="Podgląd koloru" data-i18n-aria-label="control.colorPreviewAria"></div>
 
           <div class="field sm" style="min-width:260px;">
-            <div class="lbl2">HEX</div>
+            <div class="lbl2" data-i18n="control.colorHexLabel">HEX</div>
             <input class="inp" id="colorHex" autocomplete="off" spellcheck="false" inputmode="text" />
             <div class="hint" style="max-width:360px;">
-              Format: <b>#RRGGBB</b>
+              <span data-i18n="control.colorHexFormat">Format:</span> <b>#RRGGBB</b>
             </div>
           </div>
         </div>
@@ -124,10 +126,10 @@
         </div>
 
         <div class="colorModalFoot">
-          <div class="hint" style="max-width:520px;">
+          <div class="hint" style="max-width:520px;" data-i18n="control.colorHint">
             Zmiany wysyłamy pokazywane na bierząco.
           </div>
-          <button class="btn gold" id="colorModalDone" type="button">Gotowe</button>
+          <button class="btn gold" id="colorModalDone" type="button" data-i18n="common.done">Gotowe</button>
         </div>
       </div>
     </div>
@@ -151,15 +153,16 @@
                 id="navDevices"
                 type="button"
                 title="Urządzenia"
+                data-i18n-title="control.tabDevices"
               >
                 <span class="ico">🔌</span>
-                <span class="navLabel">Urządzenia</span>
+                <span class="navLabel" data-i18n="control.tabDevices">Urządzenia</span>
               </button>
 
               <div class="tab-wrapper">
                 <div class="tab-active">
                   <span class="ico">🔌</span>
-                  <span class="navLabel">Urządzenia</span>
+                  <span class="navLabel" data-i18n="control.tabDevices">Urządzenia</span>
                 </div>
                 <div class="tab-corner tab-corner-left"></div>
                 <div class="tab-corner tab-corner-right"></div>
@@ -174,16 +177,17 @@
                 id="navSetup"
                 type="button"
                 title="Pytania i ustawienia"
+                data-i18n-title="control.tabSetup"
                 disabled
               >
                 <span class="ico">📝</span>
-                <span class="navLabel">Ustawienia</span>
+                <span class="navLabel" data-i18n="control.tabSetupShort">Ustawienia</span>
               </button>
 
               <div class="tab-wrapper">
                 <div class="tab-active">
                   <span class="ico">📝</span>
-                  <span class="navLabel">Ustawienia</span>
+                  <span class="navLabel" data-i18n="control.tabSetupShort">Ustawienia</span>
                 </div>
                 <div class="tab-corner tab-corner-left"></div>
                 <div class="tab-corner tab-corner-right"></div>
@@ -198,16 +202,17 @@
                 id="navRounds"
                 type="button"
                 title="Rozgrywka"
+                data-i18n-title="control.tabRounds"
                 disabled
               >
                 <span class="ico">🎮</span>
-                <span class="navLabel">Rundy</span>
+                <span class="navLabel" data-i18n="control.tabRounds">Rundy</span>
               </button>
 
               <div class="tab-wrapper">
                 <div class="tab-active">
                   <span class="ico">🎮</span>
-                  <span class="navLabel">Rundy</span>
+                  <span class="navLabel" data-i18n="control.tabRounds">Rundy</span>
                 </div>
                 <div class="tab-corner tab-corner-left"></div>
                 <div class="tab-corner tab-corner-right"></div>
@@ -222,16 +227,17 @@
                 id="navFinal"
                 type="button"
                 title="Finał"
+                data-i18n-title="control.tabFinal"
                 disabled
               >
                 <span class="ico">🏁</span>
-                <span class="navLabel">Finał</span>
+                <span class="navLabel" data-i18n="control.tabFinal">Finał</span>
               </button>
 
               <div class="tab-wrapper">
                 <div class="tab-active">
                   <span class="ico">🏁</span>
-                  <span class="navLabel">Finał</span>
+                  <span class="navLabel" data-i18n="control.tabFinal">Finał</span>
                 </div>
                 <div class="tab-corner tab-corner-left"></div>
                 <div class="tab-corner tab-corner-right"></div>
@@ -250,34 +256,34 @@
           <!-- DEVICES -->
           <section class="cardPanel" data-card="devices">
             <div class="panelHead">
-              <div class="panelTitle">Urządzenia</div>
+              <div class="panelTitle" data-i18n="control.panelDevices">Urządzenia</div>
               <div class="panelStep" data-panel-step></div>
             </div>
 
             <!-- Step 1 -->
             <div class="step" data-step="devices_display">
-              <div class="stepTitle">Wyświetlacz</div>
+              <div class="stepTitle" data-i18n="control.stepDisplay">Wyświetlacz</div>
 
               <div class="card">
                 <div class="cardBody">
                   <div class="head headLine">
-                    <div class="name">Wyświetlacz</div>
+                    <div class="name" data-i18n="control.deviceDisplay">Wyświetlacz</div>
                     <div class="badge mid" id="pillDisplay">—</div>
-                    <div class="badge badge-soft lastSeen">Ostatnio widziano: <b id="seenDisplay">—</b></div>
+                    <div class="badge badge-soft lastSeen"><span data-i18n="control.lastSeen">Ostatnio widziano:</span> <b id="seenDisplay">—</b></div>
                   </div>
                   <div class="rowBtns rowActionsTop">
                     <button class="btn" id="btnDispBlack" type="button">
-                      Czarny ekran
+                      <span data-i18n="control.blackScreen">Czarny ekran</span>
                     </button>
                   </div>
 
                   <div class="qrBlock">
-                    <img id="qrDisplayImg" alt="QR do wyświetlacza" />
+                    <img id="qrDisplayImg" alt="QR do wyświetlacza" data-i18n-alt="control.qrDisplayAlt"/>
                   
                     <div class="qrInline">
                       <input class="inp" id="displayLink" readonly />
-                      <button class="btn" id="btnCopyDisplay" type="button">Kopiuj</button>
-                      <button class="btn gold" id="btnOpenDisplay" type="button">Otwórz</button>
+                      <button class="btn" id="btnCopyDisplay" type="button" data-i18n="common.copy">Kopiuj</button>
+                      <button class="btn gold" id="btnOpenDisplay" type="button" data-i18n="common.open">Otwórz</button>
                     </div>
                   </div>
 
@@ -285,7 +291,7 @@
 
                 <div class="stepFoot">
                   <div class="stepFootButtons">
-                    <button class="btn gold" id="btnDevicesNext" type="button" disabled>Dalej</button>
+                    <button class="btn gold" id="btnDevicesNext" type="button" disabled data-i18n="common.next">Dalej</button>
                   </div>
                   <div class="msg msg-pill" id="msgDevices"></div>
                 </div>
@@ -294,46 +300,46 @@
 
             <!-- Step 2 -->
             <div class="step hidden" data-step="devices_hostbuzzer">
-              <div class="stepTitle">Prowadzący i przycisk</div>
+              <div class="stepTitle" data-i18n="control.stepHostBuzzer">Prowadzący i przycisk</div>
 
               <div class="card">
                 <div class="cardBody">
                   <!-- QR na wyświetlaczu ma być na górze -->
                   <div class="rowBtns" style="margin-top:0;">
-                    <button class="btn" id="btnQrToggle" type="button" disabled>QR na wyświetlaczu</button>
+                    <button class="btn" id="btnQrToggle" type="button" disabled data-i18n="control.qrOnDisplay">QR na wyświetlaczu</button>
                   </div>
 
                   <div class="cards2">
                     <div class="card card-soft">
                       <div class="head headLine">
-                        <div class="name">Prowadzący</div>
+                        <div class="name" data-i18n="control.deviceHost">Prowadzący</div>
                         <div class="badge mid" id="pillHost">—</div>
-                        <div class="badge badge-soft lastSeen">Ostatnio widziano: <b id="seenHost">—</b></div>
+                        <div class="badge badge-soft lastSeen"><span data-i18n="control.lastSeen">Ostatnio widziano:</span> <b id="seenHost">—</b></div>
                       </div>
 
                       <div class="qrBlock">
-                        <img id="qrHostImg" alt="QR prowadzącego"/>
+                        <img id="qrHostImg" alt="QR prowadzącego" data-i18n-alt="control.qrHostAlt"/>
                         <div class="qrInline">
-                          <input class="inp" id="hostLink" readonly aria-label="Link do prowadzącego" />
-                          <button class="btn" id="btnCopyHost" type="button">Kopiuj</button>
-                          <button class="btn gold" id="btnOpenHost" type="button">Otwórz</button>
+                          <input class="inp" id="hostLink" readonly aria-label="Link do prowadzącego" data-i18n-aria-label="control.hostLinkAria"/>
+                          <button class="btn" id="btnCopyHost" type="button" data-i18n="common.copy">Kopiuj</button>
+                          <button class="btn gold" id="btnOpenHost" type="button" data-i18n="common.open">Otwórz</button>
                         </div>
                       </div>
                     </div>
 
                     <div class="card card-soft">
                       <div class="head headLine">
-                        <div class="name">Przycisk</div>
+                        <div class="name" data-i18n="control.deviceBuzzer">Przycisk</div>
                         <div class="badge mid" id="pillBuzzer">—</div>
-                        <div class="badge badge-soft lastSeen">Ostatnio widziano: <b id="seenBuzzer">—</b></div>
+                        <div class="badge badge-soft lastSeen"><span data-i18n="control.lastSeen">Ostatnio widziano:</span> <b id="seenBuzzer">—</b></div>
                       </div>
 
                       <div class="qrBlock">
-                        <img id="qrBuzzerImg" alt="QR przycisku"/>
+                        <img id="qrBuzzerImg" alt="QR przycisku" data-i18n-alt="control.qrBuzzerAlt"/>
                         <div class="qrInline">
-                          <input class="inp" id="buzzerLink" readonly aria-label="Link do przycisku" />
-                          <button class="btn" id="btnCopyBuzzer" type="button">Kopiuj</button>
-                          <button class="btn gold" id="btnOpenBuzzer" type="button">Otwórz</button>
+                          <input class="inp" id="buzzerLink" readonly aria-label="Link do przycisku" data-i18n-aria-label="control.buzzerLinkAria"/>
+                          <button class="btn" id="btnCopyBuzzer" type="button" data-i18n="common.copy">Kopiuj</button>
+                          <button class="btn gold" id="btnOpenBuzzer" type="button" data-i18n="common.open">Otwórz</button>
                         </div>
                       </div>
                     </div>
@@ -342,8 +348,8 @@
 
                 <div class="stepFoot">
                   <div class="stepFootButtons">
-                    <button class="btn" id="btnDevicesBack" type="button">Wstecz</button>
-                    <button class="btn gold" id="btnDevicesToAudio" type="button" disabled>Dalej</button>
+                    <button class="btn" id="btnDevicesBack" type="button" data-i18n="common.back">Wstecz</button>
+                    <button class="btn gold" id="btnDevicesToAudio" type="button" disabled data-i18n="common.next">Dalej</button>
                   </div>
                   <div class="msg msg-pill" id="msgDevices2"></div>
                 </div>
@@ -352,24 +358,24 @@
 
             <!-- Step 3 -->
             <div class="step hidden" data-step="devices_audio">
-              <div class="stepTitle">Dźwięk</div>
+              <div class="stepTitle" data-i18n="control.stepAudio">Dźwięk</div>
 
               <div class="card">
                 <div class="cardBody">
-                  <div class="name">Odblokuj dźwięk</div>
-                  <div class="hint">
+                  <div class="name" data-i18n="control.audioUnlockTitle">Odblokuj dźwięk</div>
+                  <div class="hint" data-i18n="control.audioUnlockHint">
                     Kliknij raz przycisk, żeby przeglądarka zezwoliła na odtwarzanie dźwięków.
                   </div>
                   <div class="rowBtns">
-                    <button class="btn gold" id="btnUnlockAudio" type="button">🔊 Odblokuj</button>
-                    <div class="badge bad" id="audioStatus">ZABLOKOWANE</div>
+                    <button class="btn gold" id="btnUnlockAudio" type="button" data-i18n="control.audioUnlockBtn">🔊 Odblokuj</button>
+                    <div class="badge bad" id="audioStatus" data-i18n="control.audioBlocked">ZABLOKOWANE</div>
                   </div>
                 </div>
 
                 <div class="stepFoot">
                   <div class="stepFootButtons">
-                    <button class="btn" id="btnAudioBack" type="button">Wstecz</button>
-                    <button class="btn gold" id="btnDevicesFinish" type="button" disabled>Gotowe — przejdź dalej</button>
+                    <button class="btn" id="btnAudioBack" type="button" data-i18n="common.back">Wstecz</button>
+                    <button class="btn gold" id="btnDevicesFinish" type="button" disabled data-i18n="control.devicesFinish">Gotowe — przejdź dalej</button>
                   </div>
                   <div class="msg msg-pill" id="msgAudio"></div>
                 </div>
@@ -380,31 +386,31 @@
           <!-- SETUP -->
           <section class="cardPanel hidden" data-card="setup">
             <div class="panelHead">
-              <div class="panelTitle">Pytania i ustawienia</div>
+              <div class="panelTitle" data-i18n="control.panelSetup">Pytania i ustawienia</div>
               <div class="panelStep" data-panel-step></div>
             </div>
 
             <div class="step" data-step="setup_names">
-              <div class="stepTitle">Nazwy drużyn</div>
+              <div class="stepTitle" data-i18n="control.stepTeamNames">Nazwy drużyn</div>
 
               <div class="card">
                 <div class="cardBody">
-                 <div class="hint">
+                 <div class="hint" data-i18n="control.teamHint">
                     Tutaj należy wprowadzić nazwy drużyn, można również wybrać kolory i zmienić dodatkowe ustawienia.
                   </div>
                   <div class="rowBtns">
                     <div class="field">
                       <div class="lblRow">
-                        <div class="lbl2">Drużyna A</div>
-                        <button class="swatchBtn" id="swatchTeamA" type="button" aria-label="Kolor drużyny A"></button>
+                        <div class="lbl2" data-i18n="control.teamALabel">Drużyna A</div>
+                        <button class="swatchBtn" id="swatchTeamA" type="button" aria-label="Kolor drużyny A" data-i18n-aria-label="control.teamAColorAria"></button>
                       </div>
                       <input class="inp" id="teamA" autocomplete="off"/>
                     </div>
                   
                     <div class="field">
                       <div class="lblRow">
-                        <div class="lbl2">Drużyna B</div>
-                        <button class="swatchBtn" id="swatchTeamB" type="button" aria-label="Kolor drużyny B"></button>
+                        <div class="lbl2" data-i18n="control.teamBLabel">Drużyna B</div>
+                        <button class="swatchBtn" id="swatchTeamB" type="button" aria-label="Kolor drużyny B" data-i18n-aria-label="control.teamBColorAria"></button>
                       </div>
                       <input class="inp" id="teamB" autocomplete="off"/>
                     </div>
@@ -413,27 +419,27 @@
                   <div class="rowBtns">
                     <div class="field">
                       <div class="lblRow">
-                        <div class="lbl2">Kolor tła wyświetlacza</div>
-                        <button class="swatchBtn" id="swatchBg" type="button" aria-label="Kolor tła wyświetlacza"></button>
+                        <div class="lbl2" data-i18n="control.bgColorLabel">Kolor tła wyświetlacza</div>
+                        <button class="swatchBtn" id="swatchBg" type="button" aria-label="Kolor tła wyświetlacza" data-i18n-aria-label="control.bgColorAria"></button>
                       </div>
-                      <div class="hint" style="max-width:520px;">
+                      <div class="hint" style="max-width:520px;" data-i18n="control.bgColorHint">
                         Ten kolor dotyczy tylko wyświetlacza.
                       </div>
                     </div>
-                    <button class="btn" type="button" id="btnColorsReset">Reset kolorów</button>
+                    <button class="btn" type="button" id="btnColorsReset" data-i18n="control.resetColors">Reset kolorów</button>
                   </div>
   
                   <div class="rowBtns">
-                    <button class="btn" id="btnTeamMore" type="button">Dodatkowe ustawienia</button>
+                    <button class="btn" id="btnTeamMore" type="button" data-i18n="control.extraSettingsToggle">Dodatkowe ustawienia</button>
                   </div>
 
                   <div class="extra hidden" id="teamExtra">
-                    <div class="name">Dodatkowe ustawienia</div>
+                    <div class="name" data-i18n="control.extraSettingsTitle">Dodatkowe ustawienia</div>
 
                     <div class="rowBtns">
                       <div class="field sm">
-                        <div class="lbl2">Mnożniki rund</div>
-                        <div class="hint">
+                        <div class="lbl2" data-i18n="control.roundMultipliers">Mnożniki rund</div>
+                        <div class="hint" data-i18n="control.roundMultipliersHint">
                           Podaj po przecinku, np. <b>1,1,1,2,3</b>
                           jesli rund bedzie więcej ostatnia liczba
                           bedzie mnoźnikiem kolejnych
@@ -450,7 +456,7 @@
 
                     <div class="rowBtns">
                       <div class="field sm">
-                        <div class="lbl2">Cel rozgrywki</div>
+                        <div class="lbl2" data-i18n="control.gameTarget">Cel rozgrywki</div>
                         <input
                           id="finalMinPoints"
                           class="inp"
@@ -461,7 +467,7 @@
                       </div>
 
                       <div class="field sm">
-                        <div class="lbl2">Cel finału</div>
+                        <div class="lbl2" data-i18n="control.finalTarget">Cel finału</div>
                         <input
                           id="finalTargetPoints"
                           class="inp"
@@ -474,25 +480,25 @@
                     
                     <div class="rowBtns">
                       <div class="field sm">
-                        <div class="lbl2">Zakończenie gry</div>
+                        <div class="lbl2" data-i18n="control.gameEndMode">Zakończenie gry</div>
                           <label class="chk">
                             <input type="radio" id="winModeLogo" name="endMode" value="logo" checked />
-                            <span>Pokaż logo</span>
+                            <span data-i18n="control.showLogo">Pokaż logo</span>
                           </label>
                           <label class="chk">
                             <input type="radio" id="winModePoints" name="endMode" value="points" />
-                            <span>Pokaż punkty</span>
+                            <span data-i18n="control.showPoints">Pokaż punkty</span>
                           </label>
                           <label class="chk">
                             <input type="radio" id="winModeMoney" name="endMode" value="money" />
-                            <span>Pokaż kwotę (po finale)</span>
+                            <span data-i18n="control.showMoney">Pokaż kwotę (po finale)</span>
                           </label>
                       </div>
                     </div>
 
 
                     <div class="rowBtns">
-                      <button class="btn" type="button" id="btnAdvancedReset">Przywróć domyślne</button>
+                      <button class="btn" type="button" id="btnAdvancedReset" data-i18n="control.advancedReset">Przywróć domyślne</button>
                       <div class="msg msg-inline" id="msgAdvanced"></div>
                     </div>
                   </div>
@@ -500,8 +506,8 @@
 
                 <div class="stepFoot">
                   <div class="stepFootButtons">
-                    <button class="btn" id="btnBackToDevices" type="button">Wstecz</button>
-                    <button class="btn gold" id="btnSetupNext" type="button" disabled>Dalej</button>
+                    <button class="btn" id="btnBackToDevices" type="button" data-i18n="common.back">Wstecz</button>
+                    <button class="btn gold" id="btnSetupNext" type="button" disabled data-i18n="common.next">Dalej</button>
                   </div>
                   <div class="msg msg-pill" id="msgSetup"></div>
                 </div>
@@ -509,53 +515,53 @@
             </div>
 
             <div class="step hidden" data-step="setup_final">
-              <div class="stepTitle">Finał</div>
+              <div class="stepTitle" data-i18n="control.stepFinal">Finał</div>
 
               <div class="card">
                 <div class="cardBody">
-                  <div class="name">Gramy finał?</div>
+                  <div class="name" data-i18n="control.playFinal">Gramy finał?</div>
 
                   <div class="rowBtns">
                     <label class="radio">
                       <input type="radio" name="hasFinal" value="yes" id="finalYes" />
-                      <span>Tak</span>
+                      <span data-i18n="common.yes">Tak</span>
                     </label>
                     <label class="radio">
                       <input type="radio" name="hasFinal" value="no" id="finalNo" checked />
-                      <span>Nie</span>
+                      <span data-i18n="common.no">Nie</span>
                     </label>
                   </div>
 
                   <div class="card card-soft" id="finalPickerCard">
                     <div class="head">
-                      <div class="name">Pytania</div>
-                      <div class="badge">Finał: <b id="pickedCount">0</b>/5</div>
+                      <div class="name" data-i18n="control.finalQuestions">Pytania</div>
+                      <div class="badge"><span data-i18n="control.finalBadge">Finał:</span> <b id="pickedCount">0</b>/5</div>
                     </div>
 
                     <div class="finalLists">
                       <div class="finalCol">
                         <div class="mini">
-                          <div class="hint">Pytania do rozgrywki (pula).</div>
+                          <div class="hint" data-i18n="control.finalPoolHint">Pytania do rozgrywki (pula).</div>
                         </div>
                         <div class="qList" id="finalGameList"></div>
                       </div>
 
                       <div class="finalCol">
                         <div class="mini">
-                          <div class="hint">Pytania finału (max 5).</div>
+                          <div class="hint" data-i18n="control.finalListHint">Pytania finału (max 5).</div>
                         </div>
                         <div class="qList" id="finalFinalList"></div>
 
                         <div class="mini" id="finalOnlyView" style="display:none;">
-                          <div class="hint">Pytania zatwierdzone. Kliknij „Edytuj”, aby zmienić.</div>
+                          <div class="hint" data-i18n="control.finalOnlyHint">Pytania zatwierdzone. Kliknij „Edytuj”, aby zmienić.</div>
                         </div>
                       </div>
                     </div>
 
                     <div class="rowBtns">
-                      <button class="btn" id="btnReloadQuestions" type="button">Odśwież</button>
-                      <button class="btn gold" id="btnConfirmFinal" type="button" disabled>Zatwierdź</button>
-                      <button class="btn" id="btnEditFinal" type="button" style="display:none;">Edytuj</button>
+                      <button class="btn" id="btnReloadQuestions" type="button" data-i18n="control.refresh">Odśwież</button>
+                      <button class="btn gold" id="btnConfirmFinal" type="button" disabled data-i18n="control.confirm">Zatwierdź</button>
+                      <button class="btn" id="btnEditFinal" type="button" style="display:none;" data-i18n="control.edit">Edytuj</button>
                       <div class="msg msg-inline" id="msgFinalPick"></div>
                     </div>
                   </div>
@@ -563,8 +569,8 @@
 
                 <div class="stepFoot">
                   <div class="stepFootButtons">
-                    <button class="btn" id="btnSetupBack" type="button">Wstecz</button>
-                    <button class="btn gold" id="btnSetupFinish" type="button" disabled>Gotowe — przejdź dalej</button>
+                    <button class="btn" id="btnSetupBack" type="button" data-i18n="common.back">Wstecz</button>
+                    <button class="btn gold" id="btnSetupFinish" type="button" disabled data-i18n="control.devicesFinish">Gotowe — przejdź dalej</button>
                   </div>
                   <div class="msg msg-pill" id="msgSetup2"></div>
                 </div>
@@ -575,23 +581,23 @@
           <!-- ROUNDS -->
           <section class="cardPanel hidden" data-card="rounds">
             <div class="panelHead">
-              <div class="panelTitle">Rundy</div>
+              <div class="panelTitle" data-i18n="control.panelRounds">Rundy</div>
               <div class="panelStep" data-panel-step></div>
             </div>
 
             <div class="step" data-step="r_ready">
-              <div class="stepTitle">Gra gotowa</div>
+              <div class="stepTitle" data-i18n="control.roundsReadyTitle">Gra gotowa</div>
               <div class="card">
                 <div class="cardBody">
-                  <div class="name">Przygotowanie gry</div>
-                  <div class="hint">
+                  <div class="name" data-i18n="control.roundsReadyName">Przygotowanie gry</div>
+                  <div class="hint" data-i18n="control.roundsReadyHint">
                     Upewnij się, że Wyświetlacz, Prowadzący i Przycisk są podłączone.
                     Potem uruchom ekran gry.
                   </div>
                 </div>
                 <div class="stepFoot">
                   <div class="stepFootButtons">
-                    <button class="btn gold" id="btnGameReady" type="button">Gra gotowa</button>
+                    <button class="btn gold" id="btnGameReady" type="button" data-i18n="control.roundsReadyBtn">Gra gotowa</button>
                   </div>
                   <div class="msg msg-pill" id="msgRoundsReady"></div>
                 </div>
@@ -599,17 +605,17 @@
             </div>
 
             <div class="step hidden" data-step="r_intro">
-              <div class="stepTitle">Intro gry</div>
+              <div class="stepTitle" data-i18n="control.roundsIntroTitle">Intro gry</div>
               <div class="card">
                 <div class="cardBody">
-                  <div class="name">Rozpocznij grę</div>
-                  <div class="hint">
+                  <div class="name" data-i18n="control.roundsIntroName">Rozpocznij grę</div>
+                  <div class="hint" data-i18n="control.roundsIntroHint">
                     Na wyświetlaczu pojawi się logo programu i zostanie otworzone intro. Po zakończeniu przejdziesz do pierwszej rundy.
                   </div>
                 </div>
                 <div class="stepFoot">
                   <div class="stepFootButtons">
-                    <button class="btn gold" id="btnStartShowIntro" type="button">Rozpocznij grę</button>
+                    <button class="btn gold" id="btnStartShowIntro" type="button" data-i18n="control.roundsIntroBtn">Rozpocznij grę</button>
                   </div>
                   <div class="msg msg-pill" id="msgRoundsIntro"></div>
                 </div>
@@ -617,17 +623,17 @@
             </div>
 
             <div class="step hidden" data-step="r_roundStart">
-              <div class="stepTitle">Rozpocznij rundę</div>
+              <div class="stepTitle" data-i18n="control.roundsStartTitle">Rozpocznij rundę</div>
               <div class="card">
                 <div class="cardBody">
-                  <div class="name">Pusta plansza + pytanie</div>
-                  <div class="hint">
+                  <div class="name" data-i18n="control.roundsStartName">Pusta plansza + pytanie</div>
+                  <div class="hint" data-i18n="control.roundsStartHint">
                     Na wyświetlaczu pojawi się pusta plansza rundy, a prowadzący dostanie treść pytania.
                   </div>
                 </div>
                 <div class="stepFoot">
                   <div class="stepFootButtons">
-                    <button class="btn gold" id="btnStartRound" type="button">Rozpocznij rundę</button>
+                    <button class="btn gold" id="btnStartRound" type="button" data-i18n="control.roundsStartBtn">Rozpocznij rundę</button>
                   </div>
                   <div class="msg msg-pill" id="msgRoundsRoundStart"></div>
                 </div>
@@ -635,24 +641,24 @@
             </div>
 
             <div class="step hidden" data-step="r_duel">
-              <div class="stepTitle">Zatwierdź przycisk</div>
+              <div class="stepTitle" data-i18n="control.roundsDuelTitle">Zatwierdź przycisk</div>
               <div class="card">
                 <div class="cardBody">
-                  <div class="name">Pojedynek przyciskiem</div>
-                  <div class="hint hint-compact">
+                  <div class="name" data-i18n="control.roundsDuelName">Pojedynek przyciskiem</div>
+                  <div class="hint hint-compact" data-i18n="control.roundsDuelHint">
                     Przycisk jest aktywny. Gdy któraś drużyna naciśnie — wybierz, czy zatwierdzasz,
                     albo powtórz naciśniecie.
                   </div>
 
                   <ul class="hList">
                     <li>
-                      <button class="btn" id="btnBuzzAcceptA" type="button">Zatwierdź drużynę A</button>
+                      <button class="btn" id="btnBuzzAcceptA" type="button" data-i18n="control.roundsBuzzAcceptA">Zatwierdź drużynę A</button>
                     </li>
                     <li>
-                      <button class="btn" id="btnBuzzAcceptB" type="button">Zatwierdź drużynę B</button>
+                      <button class="btn" id="btnBuzzAcceptB" type="button" data-i18n="control.roundsBuzzAcceptB">Zatwierdź drużynę B</button>
                     </li>
                     <li>
-                      <button class="btn" id="btnBuzzRetry" type="button">Ponów naciśnięcie</button>
+                      <button class="btn" id="btnBuzzRetry" type="button" data-i18n="control.roundsBuzzRetry">Ponów naciśnięcie</button>
                     </li>
                   </ul>
                 </div>
@@ -665,32 +671,32 @@
             </div>
 
             <div class="step hidden" data-step="r_play">
-              <div class="stepTitle">Runda</div>
+              <div class="stepTitle" data-i18n="control.roundsPlayTitle">Runda</div>
 
               <div class="card">
                 <div class="cardBody">
-                  <div class="name">Rozgrywka</div>
+                  <div class="name" data-i18n="control.roundsPlayName">Rozgrywka</div>
                   <div class="qText" id="roundQuestion">—</div>
-                    <div class="hint">
+                    <div class="hint" data-i18n="control.roundsPlayHint">
                       Wciskaj odpowiedź jesli poprawna, lub X (pudło), można również uruchonić odicznie 3s (czas=X).
                       Po zakończeniu pojedynku, można oddać pytanie przeciwnej drużynie.
                       We właściwej rozgrywce po trzech X uruchomi się kradzież (szansa przeciwnej drużyny).
                     </div>
 
                   <div class="rowBtns" style="margin-top:10px;">
-                    <button class="btn" id="btnPassQuestion" type="button">Oddaj pytanie</button>
+                    <button class="btn" id="btnPassQuestion" type="button" data-i18n="control.roundsPassQuestion">Oddaj pytanie</button>
                   </div>
 
                   <div class="card card-soft" style="margin-top:14px;">
                     <div class="cardBody">
-                      <div class="name">Odpowiedzi</div>
+                      <div class="name" data-i18n="control.roundsAnswers">Odpowiedzi</div>
                       <div class="ansGrid" id="roundAnswers"></div>
                     </div>
                   </div>
 
                   <div class="rowBtns" style="margin-top:14px; align-items:center;">
-                    <button class="btn" id="btnAddX" type="button">X (pudło)</button>
-                    <button class="btn" id="btnStartTimer3" type="button">Rozpocznij odliczanie 3s</button>
+                    <button class="btn" id="btnAddX" type="button" data-i18n="control.roundsAddX">X (pudło)</button>
+                    <button class="btn" id="btnStartTimer3" type="button" data-i18n="control.roundsStartTimer3">Rozpocznij odliczanie 3s</button>
                     <div class="timer3" id="t3">—</div>
                   </div>
 
@@ -704,18 +710,18 @@
 
                 <div class="stepFoot">
                   <div class="stepFootButtons">
-                    <button class="btn gold" id="btnGoEndRound" type="button">Zakończ rundę</button>
+                    <button class="btn gold" id="btnGoEndRound" type="button" data-i18n="control.roundsEndRound">Zakończ rundę</button>
                   </div>
                 </div>
               </div>
             </div>
 
             <div class="step hidden" data-step="r_gameEnd">
-              <div class="stepTitle">Koniec gry</div>
+              <div class="stepTitle" data-i18n="control.roundsGameEndTitle">Koniec gry</div>
               <div class="card">
                 <div class="cardBody">
-                  <div class="name">Zakończ grę</div>
-                  <div class="hint">
+                  <div class="name" data-i18n="control.roundsGameEndName">Zakończ grę</div>
+                  <div class="hint" data-i18n="control.roundsGameEndHint">
                     To była ostatnia runda. Na wyświetlaczu pokażemy logo programu
                     albo punkty zwycięskiej drużyny (jeśli są włączone).
                   </div>
@@ -723,7 +729,7 @@
 
                 <div class="stepFoot">
                   <div class="stepFootButtons">
-                    <button class="btn gold" id="btnShowGameEnd" type="button">Zakończ grę</button>
+                    <button class="btn gold" id="btnShowGameEnd" type="button" data-i18n="control.roundsGameEndBtn">Zakończ grę</button>
                   </div>
                   <div class="msg msg-pill" id="msgGameEnd"></div>
                 </div>
@@ -734,16 +740,16 @@
           <!-- FINAL -->
           <section class="cardPanel hidden" data-card="final">
             <div class="panelHead">
-              <div class="panelTitle">Finał</div>
+              <div class="panelTitle" data-i18n="control.panelFinal">Finał</div>
               <div class="panelStep" data-panel-step></div>
             </div>
 
             <div class="step" data-step="f_start">
-              <div class="stepTitle">Start finału</div>
+              <div class="stepTitle" data-i18n="control.finalStartTitle">Start finału</div>
               <div class="card">
                 <div class="cardBody">
-                  <div class="name">Rozpocznij finał</div>
-                  <div class="hint">
+                  <div class="name" data-i18n="control.finalStartName">Rozpocznij finał</div>
+                  <div class="hint" data-i18n="control.finalStartHint">
                     Dźwięk finału, schowanie starej planszy, wjazd planszy finału.
                     Prowadzący dostaje pytania.
                   </div>
@@ -751,7 +757,7 @@
 
                 <div class="stepFoot">
                   <div class="stepFootButtons">
-                    <button class="btn gold" id="btnFinalStart" type="button">Rozpocznij finał</button>
+                    <button class="btn gold" id="btnFinalStart" type="button" data-i18n="control.finalStartBtn">Rozpocznij finał</button>
                   </div>
                   <div class="msg msg-pill" id="msgFinal"></div>
                 </div>
@@ -759,11 +765,11 @@
             </div>
 
             <div class="step hidden" data-step="f_p1_entry">
-              <div class="stepTitle">Runda 1 — wpisywanie</div>
+              <div class="stepTitle" data-i18n="control.finalP1EntryTitle">Runda 1 — wpisywanie</div>
               <div class="card">
                 <div class="cardBody">
-                  <div class="name">Odpowiedzi gracza 1 (15s)</div>
-                  <div class="hint">
+                  <div class="name" data-i18n="control.finalP1EntryName">Odpowiedzi gracza 1 (15s)</div>
+                  <div class="hint" data-i18n="control.finalP1EntryHint">
                     Operator wpisuje odpowiedzi gracza. Możesz użyć Enter, żeby przejść do następnego pytania,
                     lub strzałki góra/dół, żeby szybko przelączać się między pytaniami. Odliczanie rusza po wciśnięciu przycisku.
                     Timer mozna uruchomić przyciskiem lub skrótem Shift + Ctrl (Cmd na Macu),
@@ -771,7 +777,7 @@
                   </div>
 
                   <div class="rowBtns" style="margin-top:10px;">
-                    <button class="btn" id="btnFinalP1StartTimer" type="button">Rozpocznij odliczanie (15s)</button>
+                    <button class="btn" id="btnFinalP1StartTimer" type="button" data-i18n="control.finalStartTimer15">Rozpocznij odliczanie (15s)</button>
                     <div class="finalTimerPill" id="finalTimerP1">—</div>
                   </div>
 
@@ -780,98 +786,98 @@
 
                 <div class="stepFoot">
                   <div class="stepFootButtons">
-                    <button class="btn gold" id="btnFinalToP1MapQ1" type="button" disabled>Dalej</button>
+                    <button class="btn gold" id="btnFinalToP1MapQ1" type="button" disabled data-i18n="common.next">Dalej</button>
                   </div>
                 </div>
               </div>
             </div>
 
             <div class="step hidden" data-step="f_p1_map_q1">
-              <div class="stepTitle">Runda 1 — mapowanie (P1)</div>
+              <div class="stepTitle" data-i18n="control.finalP1MapQ1Title">Runda 1 — mapowanie (P1)</div>
               <div class="card">
-              <div class="hint">
+              <div class="hint" data-i18n="control.finalMapHint">
                 Wybierz odpowiedź z listy, jesli pasuje, jesli nie to odpowiedź gracza za 0 pkt.
                 Jeśli nic nie było wpisane to brak odpowiedzi. Możesz odsłonić odpowiedź i punkty.
               </div>
                 <div class="cardBody"><div id="finalP1MapQ1"></div></div>
                 <div class="stepFoot">
-                  <div class="stepFootButtons"><button class="btn gold" id="btnFinalNextFromP1Q1" type="button">Dalej</button></div>
+                  <div class="stepFootButtons"><button class="btn gold" id="btnFinalNextFromP1Q1" type="button" data-i18n="common.next">Dalej</button></div>
                   <div class="msg msg-pill" id="msgFinalP1Q1"></div>
                 </div>
               </div>
             </div>
 
             <div class="step hidden" data-step="f_p1_map_q2">
-              <div class="stepTitle">Runda 1 — mapowanie (P2)</div>
+              <div class="stepTitle" data-i18n="control.finalP1MapQ2Title">Runda 1 — mapowanie (P2)</div>
               <div class="card">
-              <div class="hint">
+              <div class="hint" data-i18n="control.finalMapHint">
                 Wybierz odpowiedź z listy, jesli pasuje, jesli nie to odpowiedź gracza za 0 pkt.
                 Jeśli nic nie było wpisane to brak odpowiedzi. Możesz odsłonić odpowiedź i punkty.
               </div>
                 <div class="cardBody"><div id="finalP1MapQ2"></div></div>
                 <div class="stepFoot">
-                  <div class="stepFootButtons"><button class="btn gold" id="btnFinalNextFromP1Q2" type="button">Dalej</button></div>
+                  <div class="stepFootButtons"><button class="btn gold" id="btnFinalNextFromP1Q2" type="button" data-i18n="common.next">Dalej</button></div>
                   <div class="msg msg-pill" id="msgFinalP1Q2"></div>
                 </div>
               </div>
             </div>
 
             <div class="step hidden" data-step="f_p1_map_q3">
-              <div class="stepTitle">Runda 1 — mapowanie (P3)</div>
+              <div class="stepTitle" data-i18n="control.finalP1MapQ3Title">Runda 1 — mapowanie (P3)</div>
               <div class="card">
-              <div class="hint">
+              <div class="hint" data-i18n="control.finalMapHint">
                 Wybierz odpowiedź z listy, jesli pasuje, jesli nie to odpowiedź gracza za 0 pkt.
                 Jeśli nic nie było wpisane to brak odpowiedzi. Możesz odsłonić odpowiedź i punkty.
               </div>
                 <div class="cardBody"><div id="finalP1MapQ3"></div></div>
                 <div class="stepFoot">
-                  <div class="stepFootButtons"><button class="btn gold" id="btnFinalNextFromP1Q3" type="button">Dalej</button></div>
+                  <div class="stepFootButtons"><button class="btn gold" id="btnFinalNextFromP1Q3" type="button" data-i18n="common.next">Dalej</button></div>
                   <div class="msg msg-pill" id="msgFinalP1Q3"></div>
                 </div>
               </div>
             </div>
 
             <div class="step hidden" data-step="f_p1_map_q4">
-              <div class="stepTitle">Runda 1 — mapowanie (P4)</div>
+              <div class="stepTitle" data-i18n="control.finalP1MapQ4Title">Runda 1 — mapowanie (P4)</div>
               <div class="card">
-              <div class="hint">
+              <div class="hint" data-i18n="control.finalMapHint">
                 Wybierz odpowiedź z listy, jesli pasuje, jesli nie to odpowiedź gracza za 0 pkt.
                 Jeśli nic nie było wpisane to brak odpowiedzi. Możesz odsłonić odpowiedź i punkty.
               </div>
                 <div class="cardBody"><div id="finalP1MapQ4"></div></div>
                 <div class="stepFoot">
-                  <div class="stepFootButtons"><button class="btn gold" id="btnFinalNextFromP1Q4" type="button">Dalej</button></div>
+                  <div class="stepFootButtons"><button class="btn gold" id="btnFinalNextFromP1Q4" type="button" data-i18n="common.next">Dalej</button></div>
                   <div class="msg msg-pill" id="msgFinalP1Q4"></div>
                 </div>
               </div>
             </div>
 
             <div class="step hidden" data-step="f_p1_map_q5">
-              <div class="stepTitle">Runda 1 — mapowanie (P5)</div>
+              <div class="stepTitle" data-i18n="control.finalP1MapQ5Title">Runda 1 — mapowanie (P5)</div>
               <div class="card">
-                <div class="hint">
+                <div class="hint" data-i18n="control.finalMapHint">
                 Wybierz odpowiedź z listy, jesli pasuje, jesli nie to odpowiedź gracza za 0 pkt.
                 Jeśli nic nie było wpisane to brak odpowiedzi. Możesz odsłonić odpowiedź i punkty.
               </div>
                 <div class="cardBody"><div id="finalP1MapQ5"></div></div>
                 <div class="stepFoot">
-                  <div class="stepFootButtons"><button class="btn gold" id="btnFinalNextFromP1Q5" type="button">Dalej</button></div>
+                  <div class="stepFootButtons"><button class="btn gold" id="btnFinalNextFromP1Q5" type="button" data-i18n="common.next">Dalej</button></div>
                   <div class="msg msg-pill" id="msgFinalP1Q5"></div>
                 </div>
               </div>
             </div>
 
             <div class="step hidden" data-step="f_p2_start">
-              <div class="stepTitle">Runda 2 — start</div>
+              <div class="stepTitle" data-i18n="control.finalP2StartTitle">Runda 2 — start</div>
               <div class="card">
                 <div class="cardBody">
-                  <div class="name">Rozpocznij 2 rundę</div>
-                  <div class="hint">Dźwięk rundy, odpowiedzi gracza 1 zostaną ukryte, tutaj możesz odtworzyć dzwięk powtórzenia.</div>
+                  <div class="name" data-i18n="control.finalP2StartName">Rozpocznij 2 rundę</div>
+                  <div class="hint" data-i18n="control.finalP2StartHint">Dźwięk rundy, odpowiedzi gracza 1 zostaną ukryte, tutaj możesz odtworzyć dzwięk powtórzenia.</div>
                 </div>
                 <div class="stepFoot">
                   <div class="stepFootButtons">
-                    <button class="btn gold" id="btnFinalStartP2" type="button">Rozpocznij 2 rundę</button>
-                    <button class="btn sm danger" id="btnRepeatTest" type="button">Dźwiek powtórzenia</button>
+                    <button class="btn gold" id="btnFinalStartP2" type="button" data-i18n="control.finalP2StartBtn">Rozpocznij 2 rundę</button>
+                    <button class="btn sm danger" id="btnRepeatTest" type="button" data-i18n="control.finalRepeatSound">Dźwiek powtórzenia</button>
                   </div>
                   <div class="msg msg-pill" id="msgFinalP2Start"></div>
                 </div>
@@ -879,11 +885,11 @@
             </div>
 
             <div class="step hidden" data-step="f_p2_entry">
-              <div class="stepTitle">Runda 2 — wpisywanie</div>
+              <div class="stepTitle" data-i18n="control.finalP2EntryTitle">Runda 2 — wpisywanie</div>
               <div class="card">
                 <div class="cardBody">
-                  <div class="name">Odpowiedzi gracza 2 (20s)</div>
-                  <div class="hint">
+                  <div class="name" data-i18n="control.finalP2EntryName">Odpowiedzi gracza 2 (20s)</div>
+                  <div class="hint" data-i18n="control.finalP2EntryHint">
                     Operator wpisuje odpowiedzi gracza. Możesz użyć Enter, żeby przejść do następnego pytania,
                     lub strzałki góra/dół, żeby szybko przelączać się między pytaniami. Enter + Shift zaznacza powtórzenie.
                     Odliczanie rusza po wciśnięciu przycisku. Możesz widzieć odpowiedź gracza 1.
@@ -893,7 +899,7 @@
                   </div>
 
                   <div class="rowBtns" style="margin-top:10px;">
-                    <button class="btn" id="btnFinalP2StartTimer" type="button">Rozpocznij odliczanie (20s)</button>
+                    <button class="btn" id="btnFinalP2StartTimer" type="button" data-i18n="control.finalStartTimer20">Rozpocznij odliczanie (20s)</button>
                     <div class="finalTimerPill" id="finalTimerP2">—</div>
                   </div>
 
@@ -901,92 +907,92 @@
                 </div>
 
                 <div class="stepFoot">
-                  <div class="stepFootButtons"><button class="btn gold" id="btnFinalToP2MapQ1" type="button" disabled>Dalej</button></div>
+                  <div class="stepFootButtons"><button class="btn gold" id="btnFinalToP2MapQ1" type="button" disabled data-i18n="common.next">Dalej</button></div>
                 </div>
               </div>
             </div>
 
             <div class="step hidden" data-step="f_p2_map_q1">
-              <div class="stepTitle">Runda 2 — mapowanie (P1)</div>
+              <div class="stepTitle" data-i18n="control.finalP2MapQ1Title">Runda 2 — mapowanie (P1)</div>
               <div class="card">
-                <div class="hint">
+                <div class="hint" data-i18n="control.finalMapHint">
                 Wybierz odpowiedź z listy, jesli pasuje, jesli nie to odpowiedź gracza za 0 pkt.
                 Jeśli nic nie było wpisane to brak odpowiedzi. Możesz odsłonić odpowiedź i punkty.
               </div>
                 <div class="cardBody"><div id="finalP2MapQ1"></div></div>
                 <div class="stepFoot">
-                  <div class="stepFootButtons"><button class="btn gold" id="btnFinalNextFromP2Q1" type="button">Dalej</button></div>
+                  <div class="stepFootButtons"><button class="btn gold" id="btnFinalNextFromP2Q1" type="button" data-i18n="common.next">Dalej</button></div>
                   <div class="msg msg-pill" id="msgFinalP2Q1"></div>
                 </div>
               </div>
             </div>
 
             <div class="step hidden" data-step="f_p2_map_q2">
-              <div class="stepTitle">Runda 2 — mapowanie (P2)</div>
+              <div class="stepTitle" data-i18n="control.finalP2MapQ2Title">Runda 2 — mapowanie (P2)</div>
               <div class="card">
-                <div class="hint">
+                <div class="hint" data-i18n="control.finalMapHint">
                 Wybierz odpowiedź z listy, jesli pasuje, jesli nie to odpowiedź gracza za 0 pkt.
                 Jeśli nic nie było wpisane to brak odpowiedzi. Możesz odsłonić odpowiedź i punkty.
               </div>
                 <div class="cardBody"><div id="finalP2MapQ2"></div></div>
                 <div class="stepFoot">
-                  <div class="stepFootButtons"><button class="btn gold" id="btnFinalNextFromP2Q2" type="button">Dalej</button></div>
+                  <div class="stepFootButtons"><button class="btn gold" id="btnFinalNextFromP2Q2" type="button" data-i18n="common.next">Dalej</button></div>
                   <div class="msg msg-pill" id="msgFinalP2Q2"></div>
                 </div>
               </div>
             </div>
 
             <div class="step hidden" data-step="f_p2_map_q3">
-              <div class="stepTitle">Runda 2 — mapowanie (P3)</div>
+              <div class="stepTitle" data-i18n="control.finalP2MapQ3Title">Runda 2 — mapowanie (P3)</div>
               <div class="card">
-                <div class="hint">
+                <div class="hint" data-i18n="control.finalMapHint">
                 Wybierz odpowiedź z listy, jesli pasuje, jesli nie to odpowiedź gracza za 0 pkt.
                 Jeśli nic nie było wpisane to brak odpowiedzi. Możesz odsłonić odpowiedź i punkty.
               </div>
                 <div class="cardBody"><div id="finalP2MapQ3"></div></div>
                 <div class="stepFoot">
-                  <div class="stepFootButtons"><button class="btn gold" id="btnFinalNextFromP2Q3" type="button">Dalej</button></div>
+                  <div class="stepFootButtons"><button class="btn gold" id="btnFinalNextFromP2Q3" type="button" data-i18n="common.next">Dalej</button></div>
                   <div class="msg msg-pill" id="msgFinalP2Q3"></div>
                 </div>
               </div>
             </div>
 
             <div class="step hidden" data-step="f_p2_map_q4">
-              <div class="stepTitle">Runda 2 — mapowanie (P4)</div>
+              <div class="stepTitle" data-i18n="control.finalP2MapQ4Title">Runda 2 — mapowanie (P4)</div>
               <div class="card">
-                <div class="hint">
+                <div class="hint" data-i18n="control.finalMapHint">
                 Wybierz odpowiedź z listy, jesli pasuje, jesli nie to odpowiedź gracza za 0 pkt.
                 Jeśli nic nie było wpisane to brak odpowiedzi. Możesz odsłonić odpowiedź i punkty.
               </div>
                 <div class="cardBody"><div id="finalP2MapQ4"></div></div>
                 <div class="stepFoot">
-                  <div class="stepFootButtons"><button class="btn gold" id="btnFinalNextFromP2Q4" type="button">Dalej</button></div>
+                  <div class="stepFootButtons"><button class="btn gold" id="btnFinalNextFromP2Q4" type="button" data-i18n="common.next">Dalej</button></div>
                   <div class="msg msg-pill" id="msgFinalP2Q4"></div>
                 </div>
               </div>
             </div>
 
             <div class="step hidden" data-step="f_p2_map_q5">
-              <div class="stepTitle">Runda 2 — mapowanie (P5)</div>
+              <div class="stepTitle" data-i18n="control.finalP2MapQ5Title">Runda 2 — mapowanie (P5)</div>
               <div class="card">
-                <div class="hint">
+                <div class="hint" data-i18n="control.finalMapHint">
                 Wybierz odpowiedź z listy, jesli pasuje, jesli nie to odpowiedź gracza za 0 pkt.
                 Jeśli nic nie było wpisane to brak odpowiedzi. Możesz odsłonić odpowiedź i punkty.
               </div>
                 <div class="cardBody"><div id="finalP2MapQ5"></div></div>
                 <div class="stepFoot">
-                  <div class="stepFootButtons"><button class="btn gold" id="btnFinalNextFromP2Q5" type="button">Dalej</button></div>
+                  <div class="stepFootButtons"><button class="btn gold" id="btnFinalNextFromP2Q5" type="button" data-i18n="common.next">Dalej</button></div>
                   <div class="msg msg-pill" id="msgFinalP2Q5"></div>
                 </div>
               </div>
             </div>
 
             <div class="step hidden" data-step="f_end">
-              <div class="stepTitle">Zakończ finał</div>
+              <div class="stepTitle" data-i18n="control.finalEndTitle">Zakończ finał</div>
               <div class="card">
                 <div class="cardBody">
-                  <div class="name">Koniec</div>
-                    <div class="hint">
+                  <div class="name" data-i18n="control.finalEndName">Koniec</div>
+                    <div class="hint" data-i18n="control.finalEndHint">
                       To konic finału. Na wyświetlaczu pokażemy logo programu,
                       punkty zwycięskiej drużyny lub kwotę wygranej (w zależności co wybrałeś w ustawiniach).
                     </div>
@@ -994,7 +1000,7 @@
                 </div>
 
                 <div class="stepFoot">
-                  <div class="stepFootButtons"><button class="btn gold" id="btnFinalFinish" type="button">Zakończ finał</button></div>
+                  <div class="stepFootButtons"><button class="btn gold" id="btnFinalFinish" type="button" data-i18n="control.finalEndBtn">Zakończ finał</button></div>
                   <div class="msg msg-pill" id="msgFinalEnd"></div>
                 </div>
               </div>
