@@ -15,9 +15,14 @@ const saveUsername = document.getElementById("saveUsername");
 const saveEmail = document.getElementById("saveEmail");
 const savePass = document.getElementById("savePass");
 const deleteAccount = document.getElementById("deleteAccount");
+const backToGames = document.getElementById("backToGames");
 
 function setStatus(m = "") { if (status) status.textContent = m; }
 function setErr(m = "") { if (err) err.textContent = m; }
+
+backToGames?.addEventListener("click", () => {
+  location.href = withLangParam("builder.html");
+});
 
 async function ensureUsernameAvailable(username, userId) {
   const { data, error } = await sb()
