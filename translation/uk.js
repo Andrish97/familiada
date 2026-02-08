@@ -156,7 +156,6 @@ const uk = {
     deleteButton: "Видалити акаунт і дані",
     statusLoaded: "Профіль завантажено.",
     statusUsernameSaved: "Ім'я користувача збережено.",
-    statusSavingEmail: "Збереження адреси електронної пошти…",
     statusEmailSaved: "Зміни e-mail збережено. Увійдіть знову.",
     statusPasswordSaved: "Пароль змінено.",
     statusDeleting: "Видаляю акаунт…",
@@ -776,7 +775,6 @@ const uk = {
   },
   manual: {
     title: "Familiada — підказки",
-    legal: "Політика конфіденційності 🔐",
     backToGames: "← Мої ігри",
     logout: "Вийти",
     pageTitle: "Підказки для користувача",
@@ -797,1406 +795,1319 @@ const uk = {
     },
     content: {
       general: `<p class="m-p">
-        Ця сторінка — інструкція з користування системою для проведення гри (турніру)
-        у стилі «Familiada». Її мета — пояснити, як підготувати гру,
-        зібрати результати (опитування) і без проблем провести гру наживо
-        — навіть якщо хтось користується системою вперше.
+        This page is a guide to running a game (tournament)
+        in the style of “Familiada.” Its goal is to explain how to prepare a game,
+        collect results (polls), and smoothly run a live match
+        — even if someone uses the system for the first time.
       </p>
       
       <p class="m-p">
-        Опис стосується інструмента і способу його використання,
-        а не «телевізійного виробництва». Система добре підходить для подій,
-        корпоративів, у школі, на сцені або просто в колі друзів
-        — всюди, де потрібні читабельна табло, бали та плавний перебіг гри.
+        The description focuses on the tool and how to use it,
+        not on “television production.” The system works well for events,
+        company parties, school, stage shows, or just with friends
+        — anywhere you want a clear board, points, and a smooth flow of play.
       </p>
       
       <p class="m-p">
-        Гра побудована так, щоб значною мірою відповідати офіційним правилам Familiada
-        (раунди, банк, помилки X, перехоплення та фінал), але все це спроєктовано як
-        зручна система для проведення гри/турніру з чітким поділом ролей:
-        <span class="m-strong">ведучий веде розмову та ставить запитання</span>,
-        а <span class="m-strong">оператор керує табло і балами</span>.
+        The gameplay is structured to closely match the official rules of Familiada
+        (rounds, bank, X errors, steals, and the final), but the whole thing is designed as
+        a convenient system for hosting the game/tournament, with a clear division of roles:
+        <span class="m-strong">the host leads the conversation and asks the questions</span>,
+        while <span class="m-strong">the operator controls the board and points</span>.
       </p>
 
       <p class="m-p">
-        Якщо хочете ознайомитися з повними правилами гри,
+        If you want to read the full rules of the game,
         <a href="https://s.tvp.pl/repository/attachment/6/8/f/68f09c03ff0781fa510c2fd90c3ba19b1569224834470.pdf"
            target="_blank"
            rel="noopener">
-          Правила телетурніру «Familiada»
+          The “Familiada” game show rules
         </a>
-        описують їх детально.
+        describe them in detail.
       </p>
 
       <p class="m-p">
-        Уся система спроєктована так,
-        щоб чітко відокремити підготовку контенту
-        від самої гри.
-        Питання, відповіді та опитування готуються заздалегідь,
-        а під час гри оператор користується лише
-        панеллю керування.
+        The whole system is designed
+        to clearly separate content preparation
+        from the actual gameplay.
+        Questions, answers, and polls are prepared in advance,
+        while during the game the operator uses only
+        the control panel.
       </p>
 
       <p class="m-p">
-        На практиці це означає, що в день запису
-        оператор не редагує дані,
-        ведучий зосереджується на розмові з учасниками,
-        а система стежить за етапами та логікою гри.
-        Це зменшує ризик помилок і пришвидшує перебіг гри.
+        In practice this means that on the day of the recording
+        the operator doesn’t edit data,
+        the host focuses on talking with the contestants,
+        and the system keeps track of stages and game logic.
+        This reduces the risk of mistakes and speeds up the flow of the game.
       </p>
 
       <p class="m-p">
-        Система найкраще працює за використання окремих пристроїв:
-        дисплея для глядачів (телевізор або проєктор),
-        планшета або телефона для ведучого,
-        окремого пристрою, що виконує роль кнопки,
-        та комп’ютера оператора з панеллю керування.
+        The system works best when using separate devices:
+        a display for the audience (TV or projector),
+        a tablet or phone for the host,
+        a separate device acting as the buzzer,
+        and the operator’s computer with the control panel.
       </p>
 
       <p class="m-p">
-        Підказки поділено на вкладки.
-        Кожна з них описує інший етап роботи із системою:
-        від підготовки гри,
-        через опитування,
-        до проведення гри наживо.
+        The guide is divided into tabs.
+        Each tab describes a different stage of working with the system:
+        from preparing the game,
+        through polls,
+        to running the live gameplay.
       </p>`,
       edit: `<p class="m-p">
-        Вкладка «Створення та редагування гри» описує етап підготовки гри
-        перед початком опитування або гри наживо.
-        На цьому етапі ви створюєте структуру гри:
-        запитання, можливі відповіді та спосіб їхнього оцінювання.
+        The “Creating and editing a game” tab describes the stage of preparing the game
+        before starting the poll or the live match.
+        At this stage you create the structure of the game:
+        questions, possible answers, and how they are scored.
       </p>
     
       <p class="m-p">
-        Цей етап ключовий, адже він визначає,
-        як виглядатиме подальша робота з грою.
-        Система навмисно розділяє підготовку контенту
-        від подальшого збору даних і гри наживо.
+        This stage is key, because it determines
+        how all later work with the game will look.
+        The system deliberately separates content preparation
+        from later data collection and live gameplay.
       </p>
     
-      <h3 class="m-h2">Список ігор («Мої ігри»)</h3>
+      <h3 class="m-h2">Game list (“My games”)</h3>
     
       <p class="m-p">
-        Список ігор — це місце, де ви керуєте всіма іграми,
-        прив’язаними до вашого акаунта.
-        Тут ви можете створювати нові ігри,
-        обирати вже створені
-        та вирішувати, що робити далі.
+        The game list is the place where you manage all games
+        assigned to your account.
+        This is where you can create new games,
+        choose existing ones,
+        and decide what you want to do next.
       </p>
     
       <p class="m-p">
-        Ігри поділяються на типи.
-        Тип гри визначає, як збиратимуться відповіді
-        і як пізніше формуватимуться бали на табло.
+        Games are divided into types.
+        The game type determines how answers will be collected
+        and how points will be generated on the board later.
       </p>
     
       <ul class="m-ul">
         <li>
-          <span class="m-strong">Звичайне опитування</span> —
-          відповіді вводять респонденти,
-          а бали залежать від кількості згадок.
+          <span class="m-strong">Standard poll</span> —
+          answers are typed in by respondents,
+          and points are based on the number of mentions.
         </li>
         <li>
-          <span class="m-strong">Оцінювання відповідей</span> —
-          респонденти обирають із підготовлених відповідей,
-          а система підраховує голоси.
+          <span class="m-strong">Answer scoring</span> —
+          respondents choose from prepared answers,
+          and the system counts votes.
         </li>
         <li>
-          <span class="m-strong">Підготовлена</span> —
-          відповіді та бали задаються вручну,
-          без опитування.
+          <span class="m-strong">Prepared</span> —
+          answers and points are set manually,
+          without a poll.
         </li>
       </ul>
     
       <p class="m-p">
-        Нову гру створюєте, натиснувши плитку із символом «＋».
-        Після створення гра з’явиться у списку
-        і її можна відкрити в редакторі.
+        You create a new game by clicking the tile with the “＋” symbol.
+        After creation the game appears on the list
+        and can be opened in the editor.
       </p>
     
-      <h3 class="m-h2">Редактор гри — що і коли можна редагувати</h3>
+      <h3 class="m-h2">Game editor — what and when can be edited</h3>
     
      <p class="m-p">
-        До режиму редагування гри ви переходите зі списку «Мої ігри»
-        за допомогою кнопки <span class="m-code">Редагувати</span>.
-        Це перший етап роботи з грою,
-        де ви готуєте весь її контент
-        перед використанням в опитуванні або грі наживо.
+        You enter the game edit mode from the “My games” list
+        using the <span class="m-code">Edit</span> button.
+        This is the first stage of working on the game,
+        where you prepare its full content
+        before using it in a poll or live gameplay.
       </p>
       
       <p class="m-p">
-        У режимі редагування ви створюєте запитання та відповіді,
-        визначаєте тип гри
-        і готуєте структуру,
-        яка згодом використовуватиметься
-        для збору даних або проведення гри наживо.
+        In edit mode you create questions and answers,
+        decide on the game type,
+        and prepare the structure
+        that will later be used
+        to collect data or run the live game.
       </p>
       
       <p class="m-p">
-        Редактор гри призначений для побудови структури запитань і відповідей.
-        Залежно від типу гри та її стану
-        доступні опції редагування можуть відрізнятися.
+        The game editor is used to build the structure of questions and answers.
+        Depending on the game type and its state,
+        the available editing options may differ.
       </p>
     
       <p class="m-p">
-        Це зроблено навмисно.
-        Система обмежує певні операції,
-        щоб зберегти узгодженість даних
-        і запобігти ситуаціям,
-        коли гра або опитування
-        перестають відповідати підготовленому контенту.
+        This is intentional.
+        The system limits certain operations
+        to keep data consistent
+        and prevent situations
+        where the gameplay or poll
+        no longer matches the prepared content.
       </p>
     
-      <h3 class="m-h3">Додавання та редагування запитань</h3>
+      <h3 class="m-h3">Adding and editing questions</h3>
     
       <p class="m-p">
-        Запитання завжди є базовим елементом гри.
-        На етапі підготовки ви можете:
-        додавати нові запитання,
-        змінювати їхній текст
-        та видаляти зайві запитання.
-      </p>
-    
-      <p class="m-p">
-        Зміна запитання після запуску опитування
-        може бути заблокована,
-        адже навіть невелика зміна тексту
-        впливає на сенс зібраних відповідей.
-      </p>
-    
-      <h3 class="m-h3">Додавання та редагування відповідей</h3>
-    
-      <p class="m-p">
-        Можливість редагування відповідей залежить від типу гри.
-        В іграх з опитуванням відповіді є результатом анкети,
-        тому до опитування ви можете лише підготувати
-        їхню загальну структуру або приклади.
+        Questions are always the core element of the game.
+        During preparation you can:
+        add new questions,
+        change their wording,
+        and remove unnecessary questions.
       </p>
     
       <p class="m-p">
-        Після початку опитування система може обмежити
-        додавання чи видалення відповідей,
-        щоб не змішувати відповіді респондентів
-        з новим контентом.
+        Changing a question after a poll has started
+        may be blocked,
+        because even a small text change
+        affects the meaning of collected answers.
       </p>
     
-      <h3 class="m-h3">Бали — чому іноді вони заблоковані</h3>
+      <h3 class="m-h3">Adding and editing answers</h3>
     
       <p class="m-p">
-        Бали не завжди можна редагувати вручну.
-        В іграх з опитуванням бали напряму залежать
-        від кількості відповідей,
-        тож ручне редагування не має сенсу
-        і заблоковане.
+        The ability to edit answers depends on the game type.
+        In poll-based games answers are the result of a survey,
+        so before the poll you can only prepare
+        their general structure or examples.
       </p>
     
       <p class="m-p">
-        Ручне встановлення балів можливе
-        лише в підготовленому режимі,
-        де система не використовує дані опитування.
+        After the poll starts, the system may limit
+        adding or removing answers
+        so that responses from respondents
+        are not mixed with new content.
+      </p>
+    
+      <h3 class="m-h3">Points — why they are sometimes locked</h3>
+    
+      <p class="m-p">
+        Points are not always editable by hand.
+        In poll-based games points result directly
+        from the number of answers given,
+        so manual editing makes no sense
+        and is blocked.
+      </p>
+    
+      <p class="m-p">
+        Manual point setting is possible
+        only in prepared mode,
+        where the system does not use survey data.
       </p>
     
       <div class="m-note">
-        <b>Чому так?</b><br/>
-        Завдяки цьому те, що бачить аудиторія на табло,
-        завжди відповідає реальним результатам опитування
-        або чітко визначеному ручному оцінюванню.
+        <b>Why is that?</b><br/>
+        Thanks to this, what the audience sees on the board
+        always matches the actual poll results
+        or a clearly defined, manual scoring.
       </div>
     
-      <h3 class="m-h2">Обмеження довжини та формату</h3>
+      <h3 class="m-h2">Length and format limits</h3>
     
       <p class="m-p">
-        Відповіді мають бути короткими та читабельними.
-        Під час імпорту контенту відповіді довші
-        за <span class="m-strong">17 символів</span>
-        автоматично обрізаються.
+        Answers should be short and readable.
+        When importing content, answers longer
+        than <span class="m-strong">17 characters</span>
+        are automatically trimmed.
       </p>
     
       <p class="m-p">
-        Це обмеження пов’язане з макетом табло
-        і спрямоване на читабельність
-        під час гри наживо.
+        This limit comes from the board layout
+        and aims to keep things readable
+        during live gameplay.
       </p>
     
-      <h3 class="m-h2">Імпорт і експорт ігор</h3>
+      <h3 class="m-h2">Importing and exporting games</h3>
     
       <p class="m-p">
-        Конструктор дозволяє експортувати та імпортувати ігри
-        як файли або безпосередньо до бази запитань.
-        Ця функція використовується для перенесення ігор і запитань
-        між акаунтами або середовищами.
+        Builder allows exporting and importing games
+        as files or directly into a question base.
+        This feature is used to move games and questions
+        between accounts or environments.
       </p>
     
       <p class="m-p">
-        Файли імпорту та експорту — це технічний формат.
-        Не змінюйте їхній вміст
-        і не намагайтеся редагувати їх вручну.
+        Import and export files are a technical format.
+        You should not alter their contents
+        or try to edit them manually.
       </p>
     
       <div class="m-warn">
-        <b>Попередження:</b>
-        ручне редагування файлів імпорту чи експорту
-        може зробити гру неможливою для імпорту
-        або спричинити некоректну роботу.
+        <b>Warning:</b>
+        manual modification of import or export files
+        can make a game impossible to import
+        or cause it to work incorrectly.
       </div>
     
       <p class="m-p">
-        Після успішного імпорту гра з’являється
-        у списку ігор і може надалі редагуватися
-        лише через системний редактор.
+        After a successful import, the game appears
+        in the game list and can be further edited
+        only using the system editor.
       </p>
       
       <p class="m-p">
-        Під час експорту гри до бази:
+        When exporting a game to a base:
       </p>
       
       <ul class="m-ul">
-        <li>у корені бази створюється нова папка</li>
-        <li>папка називається іменем гри</li>
-        <li>усі запитання, що належать до гри, зберігаються всередині</li>
+        <li>a new folder is created in the base root</li>
+        <li>the folder is named after the game</li>
+        <li>all questions belonging to the game are saved inside</li>
       </ul>
 
       <p class="m-note">
-        Експортувати можна лише у власну базу або спільну базу, де ви є редактором.
-        Якщо наразі у вас немає жодної бази, експорт буде недоступний.
+        You can export only to your own base or to a shared base where you are an editor.
+        If you do not currently have any bases, you will not be able to export.
       </p>
       
       <p class="m-p">
-        Завдяки цьому кожну гру можна перетворити на набір запитань для подальшого редагування,
-        упорядкування в папках, тегування та повторного використання
-        у майбутніх іграх.
+        Thanks to this each game can be turned into a set of questions for further editing,
+        organizing into folders, tagging, and reusing
+        in future games.
       </p>
       
       <p class="m-note">
-        Експорт у базу не видаляє гру — він лише створює копію як структуру запитань.
+        Exporting to a base does not remove the game — it only creates a copy as a question structure.
       </p>`,
-      bases: `<h2 class="m-h2">Бази запитань — організація та співпраця</h2>
+      bases: `<h2 class="m-h2">Question bases — organization and collaboration</h2>
   
       <p class="m-p">
-        Бази запитань — це центральне місце для зберігання всіх запитань, що використовуються в іграх.
-        Вони дозволяють організовувати запитання у папках, додавати теги, призначати категорії
-        та ділитися цілими базами з іншими користувачами.
+        Question bases are a central place for storing all questions used in games.
+        They let you organize questions in folders, tag them, assign categories,
+        and share entire bases with other users.
       </p>
       <p class="m-p">
-        Доступ до баз запитань з верхньої панелі сторінки «Мої ігри»
-        за допомогою кнопки <span class="m-code">Бази запитань 🗃️</span>.
-      </p>
-  
-      <p class="m-p">
-        Одна база може містити сотні або тисячі запитань, організованих у структуру,
-        подібну до класичного файлового менеджера на комп’ютері.
-      </p>
-  
-      <h3 class="m-h3">➕ Додавання нової бази</h3>
-  
-      <p class="m-p">
-        У вигляді «Бази запитань» натисніть плитку <span class="m-strong">Нова база</span>.
-        Відкриється вікно, де потрібно ввести назву бази.
+        You access question bases from the top bar of the “My games” page
+        using the <span class="m-code">Question bases 🗃️</span> button.
       </p>
   
       <p class="m-p">
-        Після збереження нова база з’явиться у списку, і ви одразу можете її переглядати або поширювати.
+        A single base can contain hundreds or thousands of questions organized in a structure similar
+        to a classic file manager on a computer.
       </p>
   
-      <h3 class="m-h3">🤝 Спільний доступ до бази</h3>
+      <h3 class="m-h3">➕ Adding a new base</h3>
   
       <p class="m-p">
-        Ви можете поділитися будь-якою базою з іншими користувачами, вказавши їхню адресу e-mail.
-        Доступні два режими:
+        In the “Question bases” view click the <span class="m-strong">New base</span> tile.
+        A window will open where you enter the base name.
+      </p>
+  
+      <p class="m-p">
+        After saving, the new base appears in the list and you can immediately browse or share it.
+      </p>
+  
+      <h3 class="m-h3">🤝 Sharing a base</h3>
+  
+      <p class="m-p">
+        You can share any base with other users by providing their email address.
+        Two modes are available:
       </p>
   
       <ul class="m-ul">
-        <li><span class="m-strong">Редагування</span> — користувач може додавати, видаляти й змінювати запитання, папки, теги, створювати ігри із запитань та експортувати запитання у базу</li>
-        <li><span class="m-strong">Перегляд</span> — користувач може лише переглядати базу та створювати ігри з доступних запитань</li>
+        <li><span class="m-strong">Edit</span> — the user can add, delete, and modify questions, folders, tags, create games from questions, and export questions to a base</li>
+        <li><span class="m-strong">View</span> — the user can only browse the base and create games from available questions</li>
       </ul>
   
       <p class="m-p">
-        Керувати спільним доступом може лише власник бази.
+        Only the base owner can manage sharing.
       </p>
   
-      <h3 class="m-h3">📂 Відкриття менеджера бази</h3>
+      <h3 class="m-h3">📂 Opening the base manager</h3>
   
       <p class="m-p">
-        Щоб увійти до бази, виберіть її у списку та натисніть кнопку <span class="m-code">Переглянути</span>.
-      </p>
-  
-      <p class="m-p">
-        Відкриється Base Explorer — розширений менеджер запитань, що працює як класичний файловий провідник.
-      </p>
-  
-      <h2 class="m-h2">Base Explorer — менеджер запитань</h2>
-  
-      <p class="m-p">
-        Base Explorer дозволяє керувати запитаннями у стилі системних файлових менеджерів:
-        папки, перетягування, копіювання, вирізання та швидкий вибір.
+        To enter a base, select it in the list and click the <span class="m-code">Browse</span> button.
       </p>
   
       <p class="m-p">
-        Кожен «файл» у цьому менеджері — це окреме запитання.
-        Папки використовуються для тематичного або логічного групування запитань.
+        Base Explorer will open — an advanced question manager that works like a classic file explorer.
+      </p>
+  
+      <h2 class="m-h2">Base Explorer — question manager</h2>
+  
+      <p class="m-p">
+        Base Explorer lets you manage questions in a way familiar from system file managers:
+        folders, drag-and-drop moves, copy, cut, and quick selection.
       </p>
   
       <p class="m-p">
-        Ви можете:
+        Each “file” in this manager is a single question.
+        Folders are used to group questions thematically or logically.
+      </p>
+  
+      <p class="m-p">
+        You can:
       </p>
   
       <ul class="m-ul">
-        <li>створювати довільно вкладені папки</li>
-        <li>переміщувати запитання та папки між собою</li>
-        <li>копіювати та дублювати елементи</li>
-        <li>видаляти вибрані елементи</li>
-        <li>шукати за назвою та тегами</li>
+        <li>create arbitrarily nested folders</li>
+        <li>move questions and folders between each other</li>
+        <li>copy and duplicate items</li>
+        <li>delete selected items</li>
+        <li>search by name and tags</li>
       </ul>
   
       <p class="m-note">
-        Інтерфейс і гарячі клавіші працюють подібно до класичних файлових менеджерів
+        The interface and keyboard shortcuts work similarly to classic file managers
         (Explorer, Finder, Total Commander).
       </p>
   
-      <h2 class="m-h2">Теги та категорії</h2>
+      <h2 class="m-h2">Tags and categories</h2>
   
-      <h3 class="m-h3">🏷️ Теги</h3>
+      <h3 class="m-h3">🏷️ Tags</h3>
   
       <p class="m-p">
-        Кожне запитання може мати будь-яку кількість тегів.
-        Теги використовуються для позначення тематики — наприклад: «історія», «спорт», «легкі», «для дітей».
+        Each question can have any number of tags.
+        Tags are used to label questions by topic — e.g. “history,” “sports,” “easy,” “for kids.”
       </p>
   
       <p class="m-p">
-        Ви можете:
+        You can:
       </p>
   
       <ul class="m-ul">
-        <li>створювати власні теги з кольорами</li>
-        <li>призначати кілька тегів одному запитанню</li>
-        <li>фільтрувати вид за обраними тегами</li>
+        <li>create your own tags with colors</li>
+        <li>assign multiple tags to a single question</li>
+        <li>filter the view by selected tags</li>
       </ul>
 
       <p class="m-p">
-        Призначення тегів відбувається у спеціальному вікні, яке можна відкрити з панелі інструментів
-        або контекстного меню.
+        Tag assignment takes place in a dedicated window, which you can open from the toolbar
+        or the context menu.
       </p>
       
       <p class="m-p">
-        У вікні призначення тегів ви бачите список усіх доступних тегів та їхні стани:
+        In the tag assignment window you can see a list of all available tags and their states:
       </p>
       
       <ul class="m-ul">
-        <li>вибрано — тег призначено всім вибраним елементам</li>
-        <li>не вибрано — тег не призначено жодному з них</li>
-        <li>частково — лише частина вибору має цей тег</li>
+        <li>selected — the tag is assigned to all selected items</li>
+        <li>unselected — the tag is assigned to none of them</li>
+        <li>partial — only part of the selection has the tag</li>
       </ul>
       
       <p class="m-p">
-        Натискання на тег циклічно змінює його стан, дозволяючи швидко додавати та знімати теги
-        для багатьох запитань або папок одночасно. У цьому ж вікні можна створювати нові теги.
+        Clicking a tag cycles its state, enabling quick adding and removing of tags
+        for many questions or folders at once. This window also allows creating new tags.
       </p>
       
       <p class="m-p">
-        Теги також можна використовувати як фільтри — натисніть тег ліворуч, щоб звузити перегляд
-        до елементів, позначених вибраним тегом або набором тегів.
+        Tags can also be used as filters — clicking a tag on the left narrows the view
+        to items marked with the selected tag or tag set.
       </p>
   
       <p class="m-note">
-        Папка показує маркери тегів, коли всі запитання всередині неї
-        (та у підпапках) мають однаковий тег.
+        A folder shows tag markers when all questions inside it
+        (and subfolders) have the same tag.
       </p>
   
-      <h3 class="m-h3">📌 Категорії</h3>
+      <h3 class="m-h3">📌 Categories</h3>
   
       <p class="m-p">
-        Категорії — це спеціальні системні мітки, що вказують,
-        до якого типу гри підходить запитання. Це відповідає типам ігор у перегляді <span class="m-strong">Мої ігри</span>.
+        Categories are special system labels that indicate
+        which game type a given question fits. This corresponds to game types in the <span class="m-strong">My games</span> view.
       </p>
   
       <p class="m-p">
-        Наприклад:
+        For example:
       </p>
   
       <ul class="m-ul">
-        <li>запитання з відповідями і балами належать до категорії <span class="m-strong">підготовлені</span></li>
-        <li>запитання з відповідями, але без суми балів — до <span class="m-strong">оцінювання</span></li>
-        <li>текстові запитання без балів — до <span class="m-strong">звичайні</span></li>
+        <li>questions with answers and points go to the <span class="m-strong">prepared</span> category</li>
+        <li>questions with answers but no points total go to <span class="m-strong">scoring</span></li>
+        <li>text-only questions without points go to <span class="m-strong">standard</span></li>
       </ul>
   
       <p class="m-p">
-        Категорії призначаються автоматично на основі структури запитання,
-        а не вручну користувачем.
+        Categories are assigned automatically based on the question structure,
+        not manually by the user.
       </p>
   
       <p class="m-note">
-        Так ви одразу знаєте, які запитання підходять для певного типу гри.
+        This way you immediately know which questions suit a specific game type.
       </p>
   
-      <h2 class="m-h2">Редактор запитань</h2>
+      <h2 class="m-h2">Question editor</h2>
   
       <p class="m-p">
-        Ви можете відкрити будь-яке запитання в редакторі.
-        Редактор дозволяє змінювати текст запитання, відповіді та бали (якщо є).
+        You can open any question in the editor.
+        The editor lets you change the question text, answers, and points (if present).
       </p>
   
       <p class="m-p">
-        Система застосовує базові правила, зокрема:
+        The system enforces basic rules such as:
       </p>
   
       <ul class="m-ul">
-        <li>максимальну кількість балів за одну відповідь</li>
-        <li>загальну суму балів у запитанні</li>
+        <li>the maximum number of points for a single answer</li>
+        <li>the total sum of points in a question</li>
       </ul>
   
       <p class="m-p">
-        Завдяки цьому база завжди залишається узгодженою та готовою до використання в іграх.
+        Thanks to this the base always stays consistent and ready for use in games.
       </p>
   
-      <h2 class="m-h2">Створення гри із запитань</h2>
+      <h2 class="m-h2">Creating a game from questions</h2>
   
       <p class="m-p">
-        У менеджері бази ви можете вибрати будь-які запитання та папки (включно з підпапками),
-        а потім створити з них нову гру.
+        In the base manager you can select any questions and folders (including subfolders),
+        and then create a new game from them.
       </p>
   
       <p class="m-p">
-        Система збирає всі запитання з вибору, дає змогу їх переглянути
-        та вибрати тип гри.
+        The system collects all questions from the selection, lets you review them,
+        and choose the game type.
       </p>
 
       <p class="m-note">
-        Це дозволяє швидко створювати гру з готових наборів запитань без ручного переписування.
+        This enables fast game building from ready sets of questions without manual retyping.
       </p>
 
       <p class="m-warn">
-        Після успішного створення гри вас буде перенаправлено до перегляду <span class="m-strong">Мої ігри</span>.
+        After successful game creation you will be redirected to the <span class="m-strong">My games</span> view.
       </p>
   
-      <h2 class="m-h2">⌨️ Гарячі клавіші — менеджер бази</h2>
+      <h2 class="m-h2">⌨️ Keyboard shortcuts — Base manager</h2>
   
-      <h3 class="m-h3">📁 Створення</h3>
+      <h3 class="m-h3">📁 Create</h3>
   
       <table class="m-table">
-        <tr><th>Дія</th><th>Windows / Linux</th><th>macOS</th></tr>
-        <tr><td>Нове запитання</td><td>Ctrl + N</td><td>⌘ N</td></tr>
-        <tr><td>Нова папка</td><td>Ctrl + Shift + N</td><td>⌘ ⇧ N</td></tr>
+        <tr><th>Action</th><th>Windows / Linux</th><th>macOS</th></tr>
+        <tr><td>New question</td><td>Ctrl + N</td><td>⌘ N</td></tr>
+        <tr><td>New folder</td><td>Ctrl + Shift + N</td><td>⌘ ⇧ N</td></tr>
       </table>
   
-      <h3 class="m-h3">✏️ Редагування</h3>
+      <h3 class="m-h3">✏️ Edit</h3>
   
       <table class="m-table">
-        <tr><th>Дія</th><th>Windows / Linux</th><th>macOS</th></tr>
-        <tr><td>Редагувати запитання</td><td>Ctrl + E</td><td>⌘ E</td></tr>
-        <tr><td>Перейменувати</td><td>F2</td><td>F2</td></tr>
-        <tr><td>Видалити</td><td>Delete</td><td>Fn + ⌫</td></tr>
+        <tr><th>Action</th><th>Windows / Linux</th><th>macOS</th></tr>
+        <tr><td>Edit question</td><td>Ctrl + E</td><td>⌘ E</td></tr>
+        <tr><td>Rename</td><td>F2</td><td>F2</td></tr>
+        <tr><td>Delete</td><td>Delete</td><td>Fn + ⌫</td></tr>
       </table>
   
-      <h3 class="m-h3">📋 Буфер обміну</h3>
+      <h3 class="m-h3">📋 Clipboard</h3>
   
       <table class="m-table">
-        <tr><th>Дія</th><th>Windows / Linux</th><th>macOS</th></tr>
-        <tr><td>Копіювати</td><td>Ctrl + C</td><td>⌘ C</td></tr>
-        <tr><td>Вирізати</td><td>Ctrl + X</td><td>⌘ X</td></tr>
-        <tr><td>Вставити</td><td>Ctrl + V</td><td>⌘ V</td></tr>
-        <tr><td>Дублювати</td><td>Ctrl + D</td><td>⌘ D</td></tr>
+        <tr><th>Action</th><th>Windows / Linux</th><th>macOS</th></tr>
+        <tr><td>Copy</td><td>Ctrl + C</td><td>⌘ C</td></tr>
+        <tr><td>Cut</td><td>Ctrl + X</td><td>⌘ X</td></tr>
+        <tr><td>Paste</td><td>Ctrl + V</td><td>⌘ V</td></tr>
+        <tr><td>Duplicate</td><td>Ctrl + D</td><td>⌘ D</td></tr>
       </table>
   
-      <h3 class="m-h3">🎮 Гра</h3>
+      <h3 class="m-h3">🎮 Game</h3>
   
       <table class="m-table">
-        <tr><th>Дія</th><th>Windows / Linux</th><th>macOS</th></tr>
-        <tr><td>Створити гру</td><td>Ctrl + G</td><td>⌘ G</td></tr>
+        <tr><th>Action</th><th>Windows / Linux</th><th>macOS</th></tr>
+        <tr><td>Create game</td><td>Ctrl + G</td><td>⌘ G</td></tr>
       </table>
   
-      <h3 class="m-h3">🔄 Перегляд</h3>
+      <h3 class="m-h3">🔄 View</h3>
   
       <table class="m-table">
-        <tr><th>Дія</th><th>Windows / Linux</th><th>macOS</th></tr>
-        <tr><td>Оновити перегляд</td><td>Ctrl + Alt + R</td><td>⌘ ⌥ R</td></tr>
+        <tr><th>Action</th><th>Windows / Linux</th><th>macOS</th></tr>
+        <tr><td>Refresh view</td><td>Ctrl + Alt + R</td><td>⌘ ⌥ R</td></tr>
       </table>
   
-      <h3 class="m-h3">📌 Навігація</h3>
+      <h3 class="m-h3">📌 Navigation</h3>
   
       <table class="m-table">
-        <tr><th>Дія</th><th>Windows / Linux</th><th>macOS</th></tr>
-        <tr><td>Вибрати все</td><td>Ctrl + A</td><td>⌘ A</td></tr>
-        <tr><td>Відкрити папку</td><td>Enter</td><td>⏎</td></tr>
-        <tr><td>Батьківська папка</td><td>Backspace</td><td>⌫</td></tr>
+        <tr><th>Action</th><th>Windows / Linux</th><th>macOS</th></tr>
+        <tr><td>Select all</td><td>Ctrl + A</td><td>⌘ A</td></tr>
+        <tr><td>Open folder</td><td>Enter</td><td>⏎</td></tr>
+        <tr><td>Parent folder</td><td>Backspace</td><td>⌫</td></tr>
       </table>
   
       <p class="m-note">
-        Гарячі клавіші не працюють під час введення тексту в полях редагування.
+        Shortcuts do not work while typing in edit fields.
       </p>`,
       polls: `<p class="m-p">
-        Вкладка «Опитування» описує етап збору відповідей
-        від респондентів перед грою наживо.
-        Опитування — це місток між підготовкою гри
-        та грою наживо.
+        The “Polls” tab describes the stage of collecting responses
+        from respondents before the live match.
+        The poll is a bridge between game preparation
+        and the live gameplay.
       </p>
     
       <p class="m-p">
-        На цьому етапі система перестає бути редактором контенту
-        і починає працювати як інструмент збору даних.
-        Тому багато можливостей редагування навмисно обмежені.
+        At this stage the system stops being a content editor
+        and starts working as a data collection tool.
+        For this reason many editing options are deliberately limited.
       </p>
 
       <p class="m-p">
-        До опитувань ви переходите зі списку «Мої ігри»
-        за допомогою кнопки <span class="m-code">Polls Hub</span>.
-        Цей етап відбувається після завершення редагування гри
-        й використовується лише для збору відповідей
-        або голосів респондентів.
+        You reach polls from the “My games” list
+        using the <span class="m-code">Polls Hub</span> button.
+        This stage happens after finishing game editing
+        and is used only to collect responses
+        or votes from respondents.
       </p>
       
       <p class="m-p">
-        Коли опитування стартує,
-        гра перестає бути редагованою
-        і починає працювати як інструмент збору даних.
-        Тому частина опцій редактора
-        у цьому режимі навмисно заблокована.
+        When a poll starts,
+        the game stops being editable
+        and begins serving as a data collection tool.
+        Therefore some options available in the editor
+        are deliberately blocked in this mode.
       </p>
 
       <h3 class="m-h2">Polls hub (polls-hub)</h3>
 
       <p class="m-p">
-        Polls hub — це окрема панель керування опитуваннями, завданнями та підписками.
-        Відкривається зі списку «Мої ігри» кнопкою <span class="m-code">Polls Hub</span>.
-        На комп’ютері ви бачите дві картки, кожна з двома списками.
+        The polls hub is a separate panel for managing polls, tasks, and subscriptions.
+        You open it from the “My games” list with the <span class="m-code">Polls Hub</span> button.
+        On desktop you see two cards, each with two lists.
       </p>
 
       <ul class="m-ul">
-        <li><span class="m-strong">Polls</span> — список «My polls» і «Tasks».</li>
-        <li><span class="m-strong">Subscriptions</span> — список «My subscribers» і «My subscriptions».</li>
+        <li><span class="m-strong">Polls</span> — the “My polls” list and “Tasks.”</li>
+        <li><span class="m-strong">Subscriptions</span> — the “My subscribers” list and “My subscriptions.”</li>
       </ul>
 
       <p class="m-p">
-        Золотиста крапка на картці «Polls» показує кількість активних завдань,
-        а на картці «Subscriptions» — кількість запрошень, які треба прийняти.
+        The gold dot on the “Polls” card shows the number of active tasks to complete,
+        and on the “Subscriptions” card the number of invitations to accept.
       </p>
 
       <p class="m-p">
-        Підписка — це постійний зв’язок між вашим акаунтом і запрошеним користувачем —
-        після прийняття вона дозволяє ділитися майбутніми опитуваннями без повторного введення e-mail.
-        Запрошення надсилається у розділі «My subscribers», де ви вводите e-mail або ім’я користувача
-        й натискаєте <span class="m-code">Invite</span>. Одержувач приймає запрошення у своєму
-        Polls Hub або за посиланням у повідомленні, після чого статус стає активним.
+        A subscription is a permanent connection between your account and an invited user —
+        once accepted, it allows sharing future polls without re-entering the email.
+        You send an invitation in the “My subscribers” section by entering an email or username
+        and clicking <span class="m-code">Invite</span>. The recipient accepts the invite in their
+        Polls Hub or via the link in the message, and the status becomes active.
       </p>
 
       <p class="m-p">
-        Поширення опитування відбувається зі списку «My polls»: виберіть плитку та натисніть
-        <span class="m-code">Share</span>, потім виберіть підписників і збережіть.
-        Плитка опитування показує поточні голоси, а кнопка <span class="m-code">Details</span>
-        відкриває перегляд надісланих голосів, очікуваних, відхилених і анонімних відповідей.
+        Sharing a poll is done from the “My polls” list: select the tile and click
+        <span class="m-code">Share</span>, then choose subscribers and save.
+        The poll tile shows current votes, and the <span class="m-code">Details</span> button
+        provides a view of submitted votes, pending, rejected, and anonymous responses.
       </p>
 
       <h3 class="m-h3">My polls</h3>
       <p class="m-p">
-        Кожна плитка має колір, що вказує статус опитування:
+        Each tile has a color that indicates the poll status:
       </p>
       <ul class="m-ul">
-        <li><span class="m-strong">Сірий</span> — чернетка, бракує вимог для старту.</li>
-        <li><span class="m-strong">Червоний</span> — чернетка готова до запуску.</li>
-        <li><span class="m-strong">Помаранчевий</span> — опитування відкрите, голосів немає.</li>
-        <li><span class="m-strong">Жовтий</span> — опитування відкрите, є голоси або активні завдання.</li>
-        <li><span class="m-strong">Зелений</span> — опитування відкрите, цілі досягнуті (завдання виконані або ≥10 голосів).</li>
-        <li><span class="m-strong">Синій</span> — опитування закрите.</li>
+        <li><span class="m-strong">Gray</span> — draft, missing requirements to start.</li>
+        <li><span class="m-strong">Red</span> — draft ready to start.</li>
+        <li><span class="m-strong">Orange</span> — poll open, no votes.</li>
+        <li><span class="m-strong">Yellow</span> — poll open, there are votes or active tasks.</li>
+        <li><span class="m-strong">Green</span> — poll open, goals reached (tasks done or ≥10 votes).</li>
+        <li><span class="m-strong">Blue</span> — poll closed.</li>
       </ul>
 
       <h3 class="m-h3">Tasks</h3>
       <p class="m-p">
-        Завдання — це запрошення до голосування. Кольори:
-        <span class="m-strong">зелений</span> — доступне,
-        <span class="m-strong">синій</span> — виконане.
-        Подвійний клік відкриває голосування, кнопка <span class="m-code">X</span> відхиляє завдання.
+        Tasks are voting invitations. Colors:
+        <span class="m-strong">green</span> — available,
+        <span class="m-strong">blue</span> — completed.
+        Double-click opens voting, and the <span class="m-code">X</span> button rejects the task.
       </p>
 
       <h3 class="m-h3">My subscribers</h3>
       <p class="m-p">
-        Кольори статусів:
-        <span class="m-strong">жовтий</span> — очікує,
-        <span class="m-strong">зелений</span> — активний,
-        <span class="m-strong">червоний</span> — відхилений/скасований.
-        Кнопка <span class="m-code">X</span> видаляє підписника, а <span class="m-code">↻</span> повторно надсилає запрошення.
+        Status colors:
+        <span class="m-strong">yellow</span> — pending,
+        <span class="m-strong">green</span> — active,
+        <span class="m-strong">red</span> — rejected/canceled.
+        The <span class="m-code">X</span> button removes a subscriber, and <span class="m-code">↻</span> resends an invite.
       </p>
 
       <h3 class="m-h3">My subscriptions</h3>
       <p class="m-p">
-        Кольори:
-        <span class="m-strong">жовтий</span> — очікує,
-        <span class="m-strong">зелений</span> — активний.
-        Кнопки: <span class="m-code">✓</span> приймає, <span class="m-code">X</span> відхиляє/скасовує.
+        Colors:
+        <span class="m-strong">yellow</span> — pending,
+        <span class="m-strong">green</span> — active.
+        Buttons: <span class="m-code">✓</span> accepts, <span class="m-code">X</span> rejects/cancels.
       </p>
 
     
-      <h3 class="m-h2">Типи опитувань</h3>
+      <h3 class="m-h2">Types of polls</h3>
     
       <p class="m-p">
-        Залежно від типу гри опитування може працювати в одному з двох режимів:
+        Depending on the game type, a poll can work in one of two modes:
       </p>
     
       <ul class="m-ul">
         <li>
-          <span class="m-strong">Звичайне (текстове) опитування</span> —
-          респонденти вводять власні текстові відповіді.
+          <span class="m-strong">Standard (text) poll</span> —
+          respondents type their own text answers.
         </li>
         <li>
-          <span class="m-strong">Опитування з оцінюванням</span> —
-          респонденти обирають одну з підготовлених відповідей.
+          <span class="m-strong">Scoring poll</span> —
+          respondents choose one of the prepared answers.
         </li>
       </ul>
     
       <p class="m-p">
-        У підготовлених іграх опитування немає —
-        відповіді та бали задаються вручну.
+        Prepared games do not have a poll —
+        answers and points are set manually.
       </p>
     
-      <h3 class="m-h2">Запуск опитування</h3>
+      <h3 class="m-h2">Starting a poll</h3>
     
       <p class="m-p">
-        Опитування можна запустити лише для гри
-        у стані <span class="m-strong">Чернетка</span>.
-        Перед стартом система перевіряє,
-        чи відповідає гра мінімальним вимогам.
-      </p>
-    
-      <ul class="m-ul">
-        <li>мінімальна кількість запитань,</li>
-        <li>в режимі оцінювання — потрібна кількість відповідей на запитання.</li>
-      </ul>
-    
-      <div class="m-note">
-        <b>Навіщо?</b><br/>
-        Це гарантує, що ви не запустите опитування,
-        яке згодом неможливо коректно закрити
-        й використати в грі.
-      </div>
-    
-      <h3 class="m-h2">Посилання та QR-код</h3>
-    
-      <p class="m-p">
-        Після запуску опитування система генерує
-        унікальне посилання для голосування.
-        Посилання можна скопіювати,
-        відкрити в новій вкладці
-        або показати як QR-код.
-      </p>
-    
-      <p class="m-p">
-        QR-код призначений для показу
-        на екрані, видимому респондентам
-        (телевізор, проєктор, великий монітор).
-      </p>
-    
-      <h3 class="m-h2">Перебіг опитування</h3>
-    
-      <p class="m-p">
-        Респонденти проходять запитання по черзі.
-        Система дотримується порядку
-        і не дозволяє пропускати запитання.
-      </p>
-    
-      <p class="m-p">
-        У текстовому опитуванні кожна відповідь:
+        A poll can be started only for a game
+        in the <span class="m-strong">Draft</span> state.
+        Before starting, the system checks
+        whether the game meets the minimum requirements.
       </p>
     
       <ul class="m-ul">
-        <li>обмежена 17 символами,</li>
-        <li>нормалізується (регістр, пробіли),</li>
-        <li>рахується як окрема пропозиція.</li>
+        <li>minimum number of questions,</li>
+        <li>in scoring mode — the required number of answers per question.</li>
+      </ul>
+    
+      <div class="m-note">
+        <b>Why?</b><br/>
+        This ensures you cannot start a poll
+        that cannot later be properly closed
+        and used in the game.
+      </div>
+    
+      <h3 class="m-h2">Link and QR code</h3>
+    
+      <p class="m-p">
+        After starting a poll the system generates
+        a unique voting link.
+        The link can be copied,
+        opened in a new tab,
+        or displayed as a QR code.
+      </p>
+    
+      <p class="m-p">
+        The QR code is intended to be displayed
+        on a screen visible to respondents
+        (TV, projector, large monitor).
+      </p>
+    
+      <h3 class="m-h2">Poll flow</h3>
+    
+      <p class="m-p">
+        Respondents go through the questions in order.
+        The system enforces the order
+        and does not allow skipping a question.
+      </p>
+    
+      <p class="m-p">
+        In a text poll each answer:
+      </p>
+    
+      <ul class="m-ul">
+        <li>is limited to 17 characters,</li>
+        <li>is normalized (case, spaces),</li>
+        <li>is counted as a separate proposal.</li>
       </ul>
     
       <p class="m-p">
-        В опитуванні з оцінюванням респондент
-        обирає одну з підготовлених відповідей,
-        а система фіксує голос.
+        In a scoring poll the respondent
+        chooses one of the prepared answers,
+        and the system records the vote.
       </p>
     
-      <h3 class="m-h2">Закриття опитування</h3>
+      <h3 class="m-h2">Closing a poll</h3>
     
       <p class="m-p">
-        Закриття опитування — це окремий,
-        навмисний етап роботи.
-        Система не дозволить закрити опитування,
-        якщо зібрані дані не відповідають
-        мінімальним умовам якості.
+        Closing a poll is a separate,
+        deliberate stage of work.
+        The system will not allow closing a poll
+        if the collected data does not meet
+        minimum quality conditions.
       </p>
     
-      <h3 class="m-h3">Опитування з оцінюванням</h3>
+      <h3 class="m-h3">Scoring poll</h3>
     
       <p class="m-p">
-        Під час закриття опитування з оцінюванням
-        система перетворює голоси на бали
-        та нормалізує їх до шкали 0–100
-        для кожного запитання.
+        When closing a scoring poll
+        the system converts votes into points
+        and normalizes them to a 0–100 scale
+        for each question.
       </p>
     
       <div class="m-note">
-        <b>Результат:</b>
-        ви отримуєте готовий список відповідей із балами,
-        без потреби у ручному підрахунку.
+        <b>Result:</b>
+        you get a ready list of answers with points,
+        without the need for manual counting.
       </div>
     
-      <h3 class="m-h3">Текстове опитування</h3>
+      <h3 class="m-h3">Text poll</h3>
     
       <p class="m-p">
-        У текстовому (класичному) опитуванні респонденти вводять власні відповіді.
-        Після закриття система переходить до етапу очищення результатів.
-        Оператор може об’єднувати очевидно схожі відповіді
-        та видаляти помилки або явні дублікати.
+        In a text (classic) poll respondents type their own answers.
+        After closing, the system moves to the results cleanup stage.
+        The operator can merge obviously similar answers
+        and remove typos or clear duplicates.
       </p>
       
       <p class="m-p">
-        Далі відповіді нормалізуються до шкали балів.
-        На цьому етапі система застосовує додаткові обмеження,
-        спрямовані на читабельність табло
-        та динаміку гри.
+        Then answers are normalized to the points scale.
+        At this stage the system applies additional limits
+        aimed at keeping the board readable
+        and the gameplay dynamic.
       </p>
       
       <p class="m-p">
-        Відповіді з дуже малою кількістю згадок,
-        які після нормалізації отримують
-        <span class="m-strong">менше ніж 8 балів</span>,
-        автоматично відкидаються.
-        Такі відповіді зазвичай не впливають на гру
-        і були б нечитабельними для глядачів.
+        Answers with a very low number of mentions
+        that after normalization get
+        <span class="m-strong">less than 8 points</span>
+        are automatically discarded.
+        Such answers usually do not matter for the game
+        and would not be readable for the audience.
       </p>
       
       <p class="m-p">
-        Для одного запитання табло може показати не більше
-        <span class="m-strong">6 відповідей</span>.
-        Якщо правильних відповідей більше,
-        система обирає найвищо оцінені
-        і пропускає решту.
+        For one question, the board can show at most
+        <span class="m-strong">6 answers</span>.
+        If there are more correct answers,
+        the system selects the highest-scoring ones
+        and skips the rest.
       </p>
       
       <p class="m-p">
-        Тому загальна сума балів для одного запитання
-        <span class="m-strong">не завжди дорівнює рівно 100</span>.
-        Бали присвоюються лише тим відповідям,
-        що реально показані на табло.
+        For this reason the total points for a single question
+        <span class="m-strong">do not always sum to exactly 100</span>.
+        Points are assigned only to the answers
+        that actually appear on the board.
       </p>
     
       <div class="m-warn">
-        <b>Попередження:</b>
-        після закриття опитування
-        ви не зможете змінити його результати
-        без повторного запуску.
+        <b>Warning:</b>
+        after closing a poll
+        you cannot change its results
+        without restarting the poll.
       </div>
     
-      <h3 class="m-h2">Перезапуск опитування</h3>
+      <h3 class="m-h2">Restarting a poll</h3>
     
       <p class="m-p">
-        Закрите опитування можна перезапустити,
-        що видаляє попередні результати
-        і починає збір відповідей з нуля.
+        A closed poll can be restarted,
+        which removes previous results
+        and starts collecting answers from scratch.
       </p>
     
       <p class="m-p">
-        Ця опція корисна,
-        коли опитування було запущене для тестування
-        або сталася організаційна помилка.
+        This option is useful
+        when the poll was started for testing
+        or an organizational error occurred.
       </p>`,
       logo: `<p class="m-p">
-      Система дозволяє встановити власний логотип, який з’являється на екрані
-      (наприклад, на стартовому або фінальному екрані). До редактора логотипів можна перейти з верхньої панелі сторінки «Мої ігри»
-        за допомогою кнопки <span class="m-code">Logo🖥️</span>.
+      The system lets you set your own logo that appears on the display
+      (e.g., the start or end screen). You can access the logo creator from the top bar of the “My games” page
+        using the <span class="m-code">Logo🖥️</span> button.
     </p>
 
     <div class="m-note">
-      <b>Важливо:</b><br/>
-      Логотип має технічний розмір <span class="m-code">30×10</span> (плиток символів) або <span class="m-code">150×70</span> (пікселів).
-      Це обмеження пов’язане з фізичним макетом табло та гарантує читабельність у прямому ефірі.
+      <b>Important:</b><br/>
+      The logo has a technical size of <span class="m-code">30×10</span> (character tiles) or <span class="m-code">150×70</span> (pixels).
+      This limitation comes from the physical layout of the board and ensures readability live.
     </div>
 
-    <h3 class="m-h2">Режими створення логотипу</h3>
+    <h3 class="m-h2">Logo creation modes</h3>
 
     <p class="m-p">
-      Під час створення нового логотипу ви обираєте один із режимів.
-      Усі режими приводять до одного результату (логотип на табло),
-      але відрізняються способом створення.
+      When creating a new logo you choose one of the modes.
+      Each mode leads to the same result (a logo on the display),
+      but differs in how it is created.
     </p>
 
     <ul class="m-ul">
       <li>
-        <span class="m-strong">Text art</span> — класичний логотип із символів (стиль «Familiada»).
-        Підходить, коли потрібен швидкий і читабельний заголовок.
+        <span class="m-strong">Text art</span> — a classic logo made of characters (the “Familiada” style).
+        Good when you want a quick, readable title.
       </li>
       <li>
-        <span class="m-strong">Text</span> — редагування тексту і перегляд у «пікселях».
-        Добре, коли потрібен інший шрифт/макет, ніж у «Text art».
+        <span class="m-strong">Text</span> — text editing and preview in “pixels.”
+        Good when you need a different font/layout than “Text art.”
       </li>
       <li>
-        <span class="m-strong">Drawing</span> — малювання вручну на сітці (як у простому графічному редакторі).
-        Підходить для піктограм і простих форм.
+        <span class="m-strong">Drawing</span> — draw by hand on a grid (like a simple graphics editor).
+        Good for icons and simple shapes.
       </li>
       <li>
-        <span class="m-strong">Image</span> — імпорт зображення й підгонка під табло.
-        Добре, якщо у вас уже є логотип компанії.
+        <span class="m-strong">Image</span> — import an image and fit it to the board.
+        Good when you already have a company logo.
       </li>
     </ul>
 
-    <h3 class="m-h2">Попередній перегляд табло</h3>
+    <h3 class="m-h2">Display preview</h3>
 
     <p class="m-p">
-      У редакторі ви завжди бачите попередній перегляд «як на табло».
-      Це важливо, бо те, що добре виглядає у високій роздільній здатності,
-      може бути нечитабельним при зменшенні до <span class="m-code">150×70</span>.
+      In the editor you always see a preview “as on the board.”
+      This is important because what looks good in high resolution
+      may be unreadable when reduced to <span class="m-code">150×70</span>.
     </p>
 
     <div class="m-note">
-      <b>Практична порада:</b><br/>
-      Найкраще працюють товсті форми, великі літери та високий контраст.
-      Тонкі лінії, дрібні деталі та делікатні градієнти зазвичай зникають.
+      <b>Practical tip:</b><br/>
+      Thick shapes, large letters, and high contrast work best.
+      Thin lines, small details, and subtle gradients usually disappear.
     </div>
 
-    <h3 class="m-h2">Збереження й активний логотип</h3>
+    <h3 class="m-h2">Saving and active logo</h3>
 
     <p class="m-p">
-      Ви можете зберегти логотип під власною назвою. У списку логотипів також можна встановити,
-      який логотип є <span class="m-strong">активним</span>.
-      Активний логотип автоматично використовуватиметься на табло.
+      You can save a logo under your own name. In the logo list you can also set
+      which logo is <span class="m-strong">active</span>.
+      The active logo will be used by the display automatically.
     </p>
 
     <p class="m-p">
-      Якщо активний логотип не встановлений, система використовує
-      <span class="m-strong">логотип за замовчуванням</span>.
+      If you do not set any active logo, the system uses
+      the <span class="m-strong">default logo</span>.
     </p>
 
-    <h3 class="m-h2">Імпорт і експорт логотипу</h3>
+    <h3 class="m-h2">Logo import and export</h3>
 
     <p class="m-p">
-      Редактор дозволяє експортувати активний логотип у файл та імпортувати логотип із файла.
-      Це дає змогу переносити логотипи між акаунтами або робити резервні копії.
+      The editor allows exporting the active logo to a file and importing a logo from a file.
+      This lets you move logos between accounts or make backups.
     </p>
 
     <div class="m-warn">
-      <b>Попередження:</b><br/>
-      Не редагуйте файли логотипів вручну. Це технічний формат — ручні зміни можуть призвести
-      до помилки імпорту або некоректної роботи логотипу.
+      <b>Warning:</b><br/>
+      Do not edit logo files manually. This is a technical format — manual changes may cause
+      the import to fail or the logo to work incorrectly.
     </div>`,
       control: `<p class="m-p">
-        До панелі керування ви переходите зі списку «Мої ігри»
-        за допомогою кнопки <span class="m-code">Грати</span>.
-        Цей режим призначений лише для проведення гри наживо —
-        тут ви вже не редагуєте запитання або результати опитувань.
+        You reach the Control Panel from the “My games” list
+        using the <span class="m-code">Play</span> button.
+        This mode is intended only for running the live game —
+        you no longer edit questions or poll results here.
       </p>
     
       <p class="m-p">
-        Панель керування веде оператора крок за кроком:
-        спочатку підключення пристроїв, далі параметри гри,
-        і врешті — раунди та (за потреби) фінал.
-        Кожен крок відкривається лише після готовності попереднього,
-        що мінімізує ризик помилок під час запису.
+        The control panel guides the operator step by step:
+        first you connect devices, then set game parameters,
+        and finally go through rounds and (optionally) the final.
+        Each step unlocks only when the previous one is ready,
+        which minimizes the risk of mistakes during recording.
       </p>
     
-      <h3 class="m-h2">Що має бути готове перед стартом</h3>
+      <h3 class="m-h2">What must be ready before you start</h3>
     
       <ul class="m-ul">
         <li>
-          Гра повинна мати підготовлені запитання та відповіді (з редактора),
-          а якщо це гра з опитуванням — опитування має бути закрите й затверджене.
+          The game should have prepared questions and answers (from the editor),
+          and if it is a poll-based game — the poll should be closed and approved.
         </li>
         <li>
-          Оператору потрібен комп’ютер із великим екраном (панель розрахована на режим desktop).
+          The operator should have a computer with a large screen (the panel is designed for desktop mode).
         </li>
         <li>
-          Потрібні окремі пристрої: дисплей (TV/проєктор), пристрій ведучого
-          та пристрій, що виконує роль кнопки.
+          Separate devices should be prepared: a display (TV/projector), the host’s device,
+          and a device acting as the buzzer.
         </li>
         <li>
-          Стабільний Wi‑Fi (найчастіші проблеми — «заспані» вкладки у фоні / перемикання мережі).
+          Stable Wi-Fi (the most common issues are killed background tabs / network switching).
         </li>
       </ul>
     
       <div class="m-note">
-        <b>Чому стільки «формальностей»?</b><br/>
-        Гра відбувається наживо та має телевізійний темп. Панель керування покликана
-        забезпечити процедуру, а не додавати стрес. Тому система вимагає готовності обладнання та налаштувань перед стартом.
+        <b>Why so many “formalities”?</b><br/>
+        The gameplay is live and has a TV pace. The control panel is meant to enforce the procedure,
+        not add stress for the operator. That’s why the system requires readiness of equipment and settings before starting.
       </div>
     
-      <h3 class="m-h2">Хто що бачить</h3>
+      <h3 class="m-h2">Who sees what</h3>
     
       <p class="m-p">
-        Система навмисно розділяє екрани, щоб кожен виконував свою роль:
+        The system deliberately separates screens so everyone does their job:
       </p>
     
       <ul class="m-ul">
         <li>
-          <span class="m-strong">Оператор (панель керування)</span> — бачить усі кнопки,
-          статус гри, банк, X, повідомлення та наступні кроки процедури.
-          Оператор керує тим, що з’являється на табло.
+          <span class="m-strong">Operator (Control Panel)</span> — sees all buttons,
+          game status, bank, Xs, messages, and the next procedural steps.
+          The operator controls what appears on the board.
         </li>
         <li>
-          <span class="m-strong">Дисплей</span> — показує ігрове табло: запитання, відповіді,
-          бали, банк, помилки (X) та стартові/фінальні екрани.
-          Це екран, видимий учасникам і глядачам.
+          <span class="m-strong">Display</span> — shows the game board: questions, answers,
+          points, bank, errors (X), and start/end screens.
+          This is the screen visible to participants and the audience.
         </li>
         <li>
-          <span class="m-strong">Ведучий</span> — отримує контент для читання та контекстний перегляд,
-          але не керує перебігом гри (це робить оператор).
+          <span class="m-strong">Host</span> — receives content to read and a context preview,
+          but does not control the course of the game (the operator does).
         </li>
         <li>
-          <span class="m-strong">Кнопка (buzzer)</span> — використовується для сигналу дуелі (хто перший).
+          <span class="m-strong">Buzzer</span> — used to signal the face-off (who is first).
         </li>
       </ul>
     
-      <h3 class="m-h2">1) Пристрої</h3>
+      <h3 class="m-h2">1) Devices</h3>
     
       <p class="m-p">
-        Перший етап у панелі — підключення пристроїв.
-        У верхній панелі ви бачите три статуси:
+        The first stage in the panel is connecting devices.
+        In the top bar you see three statuses:
         <span class="m-strong">Display</span>,
         <span class="m-strong">Host</span>,
         <span class="m-strong">Buzzer</span>.
-        Оператор спершу переконується, що всі вони онлайн.
+        The operator starts by making sure all are online.
       </p>
     
-      <h3 class="m-h3">Крок 1: Display</h3>
+      <h3 class="m-h3">Step 1: Display</h3>
     
       <p class="m-p">
-        На цьому кроці панель показує QR-код та посилання для дисплея.
-        Найкраще відкрити дисплей на телевізорі або проєкторі,
-        у повноекранному режимі (без панелей браузера).
-        Лише коли дисплей онлайн, панель дозволить перейти далі.
+        In this step the panel shows a QR code and link for the display.
+        It’s best to open the display on a TV or projector,
+        in full-screen mode (no browser bars).
+        Only when the display is online will the panel allow you to proceed.
       </p>
     
-      <h3 class="m-h3">Крок 2: Host і Buzzer</h3>
+      <h3 class="m-h3">Step 2: Host and buzzer</h3>
     
       <p class="m-p">
-        На другому кроці ви підключаєте пристрій ведучого та пристрій кнопки.
-        Панель також показує QR/посилання для підключення.
-        На практиці краще використовувати два окремі телефони або телефон і планшет.
+        In the second step you connect the host device and the buzzer device.
+        The panel also shows a QR/link for connection.
+        In practice it’s best to use two separate phones or a phone and a tablet.
       </p>
     
       <p class="m-p">
-        На цьому кроці є опція <span class="m-strong">«QR на дисплеї»</span> —
-        після її використання QR-коди можна показати на великому екрані,
-        щоб команда швидко відсканувала їх телефонами.
-        Це пришвидшує старт на майданчику, бо не потрібно вводити посилання вручну.
+        In this step there is an option <span class="m-strong">“QR on display”</span> —
+        after using it the QR codes can be shown on the large screen,
+        so the crew can quickly scan them with phones.
+        This speeds up the start on set because there is no need to type links manually.
       </p>
     
       <div class="m-warn">
-        <b>Попередження:</b><br/>
-        Якщо будь-який пристрій від’єднається під час гри, панель може показати попередження.
-        Найчастіше допомагає вимкнути енергозбереження, не згортати браузер
-        та тримати пристрої в одній стабільній Wi‑Fi мережі.
+        <b>Warning:</b><br/>
+        If any device disconnects during the game, the panel can show a warning.
+        Most often it helps to disable battery saving, avoid minimizing the browser,
+        and keep devices on one stable Wi-Fi network.
       </div>
     
-      <h3 class="m-h3">Крок 3: Звук</h3>
+      <h3 class="m-h3">Step 3: Sound</h3>
     
       <p class="m-p">
-        Браузери блокують автоматичне відтворення звуку
-        доки користувач не зробить «жест» (клік).
-        Тому панель має окремий крок для розблокування звуку.
-        Без цього ви можете не чути сигналів, що допомагають тримати темп гри.
+        Browsers block automatic sound playback
+        until the user performs a “gesture” (click).
+        That’s why the panel has a separate step to unlock sound.
+        Without it you may not hear signals that help keep the game pace.
       </p>
     
-      <h3 class="m-h2">2) Налаштування</h3>
+      <h3 class="m-h2">2) Settings</h3>
     
       <p class="m-p">
-        Коли пристрої онлайн, ви переходите до налаштувань гри.
-        Цей етап має дві цілі:
-        (1) підготувати читабельні назви команд на табло,
-        (2) налаштувати параметри гри під запис (додаткові налаштування).
+        When devices are online, you move on to game settings.
+        This stage has two goals:
+        (1) prepare readable team names on the board,
+        (2) adjust game parameters to the recording (additional settings).
       </p>
     
-      <h3 class="m-h3">Назви команд</h3>
+      <h3 class="m-h3">Team names</h3>
     
       <p class="m-p">
-        Ви задаєте назви Команди A та Команди B.
-        Це підписи, які бачать гравці та аудиторія на табло,
-        тож краще визначити їх до початку раундів.
-        Панель блокує перехід далі, доки не введено обидві назви.
+        You set the names of Team A and Team B.
+        These are the labels seen by players and the audience on the display,
+        so it’s best to decide them before the rounds begin.
+        The panel blocks moving forward until both names are entered.
       </p>
     
-      <h3 class="m-h3">Додаткові налаштування (важливо для оператора)</h3>
+      <h3 class="m-h3">Additional settings (important for the operator)</h3>
     
       <p class="m-p">
-        У «Додаткових налаштуваннях» ви адаптуєте гру до формату епізоду.
-        Ці опції не змінюють зміст правил, лише темп і пороги.
+        In “Additional settings” you tailor the game to the episode format.
+        These options do not change the rules’ meaning, only the pace and thresholds.
       </p>
     
       <ul class="m-ul">
         <li>
-          <span class="m-strong">Множники раундів</span> — вводяться через кому (наприклад, <span class="m-code">1,1,1,2,3</span>).
-          Це відповідає класичному подвоєнню/потроєнню у пізніших етапах.
-          На практиці: банк раунду наприкінці множиться на поточний множник раунду.
+          <span class="m-strong">Round multipliers</span> — entered comma-separated (e.g. <span class="m-code">1,1,1,2,3</span>).
+          This matches the classic doubling/tripling values in later stages.
+          In practice: the round bank at the end is multiplied by the current round multiplier.
         </li>
         <li>
-          <span class="m-strong">Ціль гри</span> — поріг балів, після якого гра може перейти у фінал
-          (у класичному форматі часто 300). Це дозволяє керувати тривалістю гри.
+          <span class="m-strong">Game target</span> — the point threshold after which the game can go to the final
+          (in the classic format often 300). This lets you adjust the game length.
         </li>
         <li>
-          <span class="m-strong">Ціль фіналу</span> — поріг балів у фіналі (за замовчуванням 200 у класичному форматі).
+          <span class="m-strong">Final target</span> — the point threshold in the final (default 200 in the classic format).
         </li>
         <li>
-          <span class="m-strong">Завершення гри</span> — що показує табло наприкінці
-          (логотип / бали / фінальний приз). Це важливо для виробництва: «останній кадр».
+          <span class="m-strong">Game ending</span> — what the display shows at the end
+          (logo / points / final prize). This is production-important: the “last frame.”
         </li>
       </ul>
     
       <div class="m-note">
-        <b>Чому це в панелі керування, а не в редакторі?</b><br/>
-        Бо це налаштування епізоду (виробництва), а не контент запитань.
-        Запитання не повинні змінюватися під час гри, але параметри гри іноді змінюються.
+        <b>Why is this in the Control Panel and not in the editor?</b><br/>
+        Because these are episode (production) settings, not question content.
+        Questions shouldn’t change during the game, but game parameters sometimes do.
       </div>
     
-      <h3 class="m-h3">Фінал: увімкнути та обрати 5 запитань</h3>
+      <h3 class="m-h3">Final: enable and choose 5 questions</h3>
     
       <p class="m-p">
-        Якщо гра має фінал, його потрібно увімкнути і вибрати рівно <span class="m-strong">5 фінальних запитань</span>.
-        Панель показує список запитань та список «Фінальні запитання (макс. 5)».
-        Після вибору п’яти використовуйте кнопку <span class="m-strong">Підтвердити</span>.
+        If the game should have a final, you enable it and choose exactly <span class="m-strong">5 final questions</span>.
+        The panel shows a list of questions and a list “Final questions (max 5)”.
+        After selecting five, you use the <span class="m-strong">Confirm</span> button.
       </p>
     
       <div class="m-warn">
-        <b>Попередження:</b><br/>
-        Фінал вимагає 5 підтверджених запитань до старту раундів.
-        Це навмисне блокування — під час гри немає часу обирати запитання «на ходу».
-        Якщо потрібно змінити набір, використайте режим <span class="m-strong">Редагувати</span> для фінальних запитань.
+        <b>Warning:</b><br/>
+        The final requires 5 confirmed questions before rounds start.
+        This is an intentional lock — in live play there’s no time to pick questions “on the fly.”
+        If you want to change the set, use the <span class="m-strong">Edit</span> mode for final questions.
       </div>
     
-      <h3 class="m-h2">3) Раунди — покрокове ведення гри</h3>
+      <h3 class="m-h2">3) Rounds — gameplay step by step</h3>
     
       <p class="m-p">
-        У раундах відбувається основна гра: запитання, відповіді, бали та банк раунду.
-        Гравці бачать табло на дисплеї, ведучий ставить запитання і тримає темп,
-        а оператор відкриває відповіді, рахує бали й додає помилки (X).
+        In rounds you conduct the main gameplay: questions, answers, points, and the round bank.
+        Players see the board on the display, the host asks questions and keeps the flow,
+        while the operator reveals answers, counts points, and adds errors (X).
       </p>
       
       <p class="m-p">
-        Найважливіше практичне правило: ведучий зосереджується на учасниках,
-        а оператор — на керуванні системою. Це робить гру плавною,
-        і табло завжди показує те, що має, у потрібний момент.
+        The most important practical rule: the host focuses on the contestants,
+        and the operator on running the system. This keeps the game smooth,
+        and the board always shows what it should at any moment.
       </p>
     
-      <h3 class="m-h3">Старт раунду: «Гра готова» та вступ</h3>
+      <h3 class="m-h3">Round start: “Game ready” and intro</h3>
     
       <p class="m-p">
-        Під час старту раундів панель спершу готує дисплей (очищує табло й задає стан гри),
-        а потім дозволяє запустити вступ.
-        Це організовує початок запису: аудиторія отримує чіткий старт,
-        а оператор має ясний момент, щоб ввести перше запитання.
+        When starting rounds, the panel first prepares the display (clears the board and sets the game state),
+        and then lets you start the intro.
+        This organizes the beginning of the recording: the audience gets a clear start,
+        and the operator has a clear moment to enter the first question.
       </p>
     
-      <h3 class="m-h3">Дуель: хто бере контроль</h3>
+      <h3 class="m-h3">Face-off: who takes control</h3>
     
       <p class="m-p">
-        Кожне запитання починається з дуелі «капітана сім’ї» біля пюпітра.
-        У цей момент ключовим є пристрій <span class="m-strong">Buzzer</span>:
-        сигнал від кнопки повідомляє панелі, хто натиснув першим.
-        Оператор підтверджує, яка сторона отримує пріоритет,
-        а ведучий переходить до відповідей.
+        Each question starts with the “family heads” face-off at the podium.
+        At this moment the <span class="m-strong">Buzzer</span> device is key:
+        the signal from the buzzer tells the panel someone pressed first.
+        The operator confirms which side gains priority,
+        and the host moves on to the answers.
       </p>
     
       <p class="m-p">
-        За правилами, якщо перша відповідь не є найвищою за балами,
-        другий «капітан» може відповісти краще та перехопити контроль.
-        Панель веде оператора через рішення про контроль раунду,
-        а дисплей показує, яка команда зараз грає (індикатор команди).
+        According to the rules, if the first answer is not the highest-scoring,
+        the second “head” can answer better and take control.
+        The panel guides the operator through the round control decision,
+        and the display shows which team is currently playing (team indicator).
       </p>
 
-      <h3 class="m-h3">Віддати запитання</h3>
+      <h3 class="m-h3">Giving up the question</h3>
     
       <p class="m-p">
-        За домовленістю в грі команда після отримання контролю може також вирішити,
-        що вона <span class="m-strong">віддає запитання</span> суперникам.
-        Це тактичний хід: замість «закривати» запитання команда може передати шанс опонентам.
-        Панель дає цю опцію лише у потрібний момент і стежить, щоб її не можна було зловживати.
+        According to game arrangements, after gaining control a team can also decide
+        that it <span class="m-strong">gives up the question</span> to the opponents.
+        This is a tactical move: instead of “finishing” the question, the team can pass the chance to rivals.
+        The panel provides this option only at the right moment and ensures it cannot be abused.
       </p>
     
-      <h3 class="m-h3">Гра на запитання: відкриття відповідей і банк</h3>
+      <h3 class="m-h3">Playing the question: revealing answers and the bank</h3>
     
       <p class="m-p">
-        Після встановлення контролю команда відповідає, а оператор відкриває правильні відповіді на табло.
-        Кожна правильна відповідь додає бали до <span class="m-strong">банку раунду</span>.
-        Банк видно на дисплеї, і він зростає з кожною правильною відповіддю.
+        After control is set, the team answers and the operator reveals the correct answers on the board.
+        Each correct answer adds points to the <span class="m-strong">round bank</span>.
+        The bank is visible on the display and grows with each correct answer.
       </p>
     
       <p class="m-p">
-        Гра триває, поки:
-        не відкрито всі відповіді,
-        або команда не втратить три «шанси» (три X),
-        після чого оператор завершує етап і переходить до перехоплення (коли виконані умови).
+        Gameplay continues until:
+        all answers are revealed,
+        or the team loses three “chances” (three Xs),
+        then the operator ends the stage and moves to the steal (when conditions are met).
       </p>
     
-      <h3 class="m-h3">Промахи (X) і ліміт 3 секунди</h3>
+      <h3 class="m-h3">Misses (X) and the 3-second limit</h3>
     
       <p class="m-p">
-        Неправильна відповідь позначається <span class="m-strong">X</span> на табло.
-        Три помилки означають втрату контролю та спробу перехоплення для суперників.
-        Система також має <span class="m-strong">3-секундний</span> ліміт на відповідь —
-        перевищення ліміту трактують як промах (X).
+        A wrong answer is marked with an <span class="m-strong">X</span> on the board.
+        Three errors mean losing control and giving a steal attempt to the opponents.
+        The system also has a <span class="m-strong">3-second</span> time limit for answers —
+        exceeding the limit is treated as a miss (X).
       </p>
     
       <div class="m-note">
-        <b>Навіщо таймер?</b><br/>
-        Це «батіг для темпу». Таймер дозволяє оператору швидко закривати паузи
-        без дискусій і зберігати ритм гри.
+        <b>Why a timer?</b><br/>
+        It’s a “whip for pace.” The timer lets the operator close hesitation quickly
+        without debate and keep the rhythm of the game.
       </div>
     
-      <h3 class="m-h3">Перехоплення банку (одна відповідь)</h3>
+      <h3 class="m-h3">Stealing the bank (one answer)</h3>
     
       <p class="m-p">
-        Коли команда, що грає, використовує три «шанси» до відкриття всіх відповідей,
-        запитання переходить до команди суперників.
-        Суперники отримують <span class="m-strong">одну відповідь</span>:
-        якщо влучили — банк дістається їм,
-        якщо ні — банк залишається у команди, що грала.
-        Це завершує запитання та раунд відповідно до правил.
+        When the playing team uses three “chances” before revealing all answers,
+        the question passes to the opposing team.
+        The opponents get <span class="m-strong">one answer</span>:
+        if they hit — the bank goes to them,
+        if not — the bank stays with the playing team.
+        This closes the question and the round according to the rules.
       </p>
     
-      <h3 class="m-h3">Відкриття пропущених відповідей і завершення раунду</h3>
+      <h3 class="m-h3">Revealing missing answers and ending the round</h3>
     
       <p class="m-p">
-        Після вирішення запитання оператор може відкрити пропущені відповіді «для інформації»,
-        щоб глядачі побачили повне табло.
-        Потім оператор завершує раунд: банк додається правильній команді,
-        з урахуванням множника раунду.
+        After the question is resolved the operator can reveal missing answers “for information,”
+        so the audience sees the full board.
+        Then the operator ends the round: the bank is added to the correct team,
+        taking the round multiplier into account.
       </p>
     
       <div class="m-note">
-        <b>Практична примітка:</b><br/>
-        Панель навмисно розділяє «гру на запитання» і «завершення раунду».
-        Так оператор випадково не очистить стан табло
-        до того, як ведучий озвучить підсумок або скаже «дякую».
+        <b>Practical note:</b><br/>
+        The panel deliberately separates “playing the question” from “ending the round.”
+        This way the operator doesn’t accidentally clear the board state
+        before the host delivers the punchline or before “thank you” is said.
       </div>
 
-      <h3 class="m-h3">Завершення раундів і перехід далі</h3>
+      <h3 class="m-h3">Ending rounds and moving on</h3>
       
       <p class="m-p">
-        Після кожного раунду система оновлює рахунок команд і перевіряє,
-        чи виконано умову завершення гри (задану у «Додаткових налаштуваннях»).
-        Найчастіше це поріг балів, наприклад <span class="m-strong">300</span>,
-        але може бути й інший — залежно від формату турніру.
+        After each round the system updates team scores and checks
+        whether the end-of-game condition has been met (set in “Additional settings”).
+        Most often it’s a points threshold, e.g. <span class="m-strong">300</span>,
+        but it can be different — depending on how you want to run the tournament.
       </p>
       
       <p class="m-p">
-        Якщо фінал <span class="m-strong">увімкнений</span> і умова завершення раунду виконана,
-        гра переходить у фінал.
-        Якщо фінал <span class="m-strong">вимкнений</span>, гра завершується після раундів
-        і система переходить до екрану завершення (логотип/бали/приз — згідно з налаштуваннями).
+        If the final is <span class="m-strong">enabled</span> and the round-end condition is met,
+        the game moves to the final.
+        If the final is <span class="m-strong">disabled</span>, the game ends after rounds
+        and the system goes to the ending screen (logo/points/prize — according to settings).
       </p>
       
       <div class="m-warn">
-        <b>Попередження:</b><br/>
-        Якщо під час гри закінчуються запитання
-        до досягнення порогу балів,
-        система завершує раунди через нестачу запитань.
-        Далі гра переходить до фіналу (якщо увімкнений)
-        або до завершення (якщо фінал вимкнений).
+        <b>Warning:</b><br/>
+        If the game runs out of questions during play
+        before the points threshold is reached,
+        the system ends rounds due to lack of questions.
+        Then the game moves to the final (if enabled)
+        or to the ending (if the final is disabled).
       </div>
     
-    <h3 class="m-h2">4) Фінал</h3>
+    <h3 class="m-h2">4) Final</h3>
 
       <p class="m-p">
-        Фінал — окремий режим гри. У ньому беруть участь двоє гравців
-        з команди, яка перемогла в основній грі.
-        Вони відповідають на ті самі <span class="m-strong">5 запитань</span>,
-        а їхні бали підсумовуються. Мета — досягти фінального порогу
-        (за замовчуванням <span class="m-strong">200 балів</span>, якщо не задано інакше).
+        The final is a separate game mode. Two contestants
+        from the team that won the main game take part.
+        They answer the same <span class="m-strong">5 questions</span>,
+        and their points are summed. The goal is to reach the final threshold
+        (default <span class="m-strong">200 points</span>, unless set otherwise).
       </p>
       
-      <h3 class="m-h3">Підготовка фіналу</h3>
+      <h3 class="m-h3">Final preparation</h3>
       
       <p class="m-p">
-        Перед стартом фіналу у налаштуваннях гри потрібно вибрати і підтвердити
-        <span class="m-strong">рівно 5 фінальних запитань</span>.
-        Це гарантує, що фінал готовий до проведення без пошуку запитань під час гри.
-      </p>
-      
-      <p class="m-p">
-        Другий учасник не повинен знати відповіді першого.
-        На практиці під час ходу першого учасника
-        другий повертається спиною або надягає навушники з музикою.
-      </p>
-      
-      <h3 class="m-h3">Підготовка фіналу</h3>
-      
-      <p class="m-p">
-        Перед стартом фіналу у налаштуваннях гри потрібно вибрати і підтвердити
-        <span class="m-strong">рівно 5 фінальних запитань</span>.
-        Це гарантує, що фінал готовий до проведення без пошуку запитань під час гри.
+        Before starting the final, in game settings you must have selected and confirmed
+        <span class="m-strong">exactly 5 final questions</span>.
+        This ensures the final is ready to run without searching for questions during play.
       </p>
       
       <p class="m-p">
-        У фіналі дуже важливо, щоб другий учасник не знав відповіді першого.
-        Тому під час ходу першого учасника другий
-        <span class="m-strong">відходить і надягає навушники з музикою</span>,
-        щоб не чути запитань і відповідей.
+        The second contestant should not know the first contestant’s answers.
+        In practice, during the first contestant’s turn
+        the second contestant turns away or wears headphones with music.
       </p>
       
-      <h3 class="m-h3">Раунд 1 — перший учасник (15 секунд)</h3>
+      <h3 class="m-h3">Final preparation</h3>
       
       <p class="m-p">
-        Ведучий зачитує п’ять запитань поспіль, а перший учасник відповідає протягом
-        <span class="m-strong">15 секунд</span>.
-        Оператор <span class="m-strong">вводить відповіді</span> у фінальній панелі.
-        На цьому етапі відповіді ще не оцінюються та не відкриваються.
-      </p>
-      
-      <p class="m-p">
-        Після раунду оператор зіставляє введені відповіді зі списком оцінених результатів
-        та <span class="m-strong">відкриває їх на табло</span>.
-        Якщо відповідь не відповідає жодному пункту зі списку,
-        вона отримує <span class="m-strong">0 балів</span>.
+        Before starting the final, in game settings you must have selected and confirmed
+        <span class="m-strong">exactly 5 final questions</span>.
+        This ensures the final is ready to run without searching for questions during play.
       </p>
       
       <p class="m-p">
-        Після відкриття відповідей першого учасника система приховує його половину табло,
-        а ведучий готує вихід другого учасника та нагадує правила фіналу.
+        In the final it is very important that the second contestant does not know the first contestant’s answers.
+        Therefore during the first contestant’s round the second contestant
+        <span class="m-strong">moves away and wears headphones with music</span>,
+        so they cannot hear the questions or answers.
       </p>
       
-      <h3 class="m-h3">Раунд 2 — другий учасник (20 секунд) і повтори</h3>
+      <h3 class="m-h3">Round 1 – first contestant (15 seconds)</h3>
       
       <p class="m-p">
-        Другий учасник повертається і відповідає на ті самі запитання протягом
-        <span class="m-strong">20 секунд</span>.
-        Коли з’являється половина табло з відповідями першого учасника,
-        другий учасник <span class="m-strong">відвертається</span>,
-        щоб не бачити їх і не піддаватися впливу.
-      </p>
-      
-      <p class="m-p">
-        Оператор знову спершу вводить усі відповіді другого учасника
-        без «живого» відкриття або оцінювання.
-        Якщо другий учасник дає ту саму відповідь, що й перший,
-        це <span class="m-strong">повтор</span> — учасник має дати іншу відповідь,
-        а оператор може позначити спробу як повтор.
-        Повторні відповіді не приносять балів.
+        The host reads five questions in a row, and the first contestant answers within
+        <span class="m-strong">15 seconds</span>.
+        The operator <span class="m-strong">types the answers</span> in the final panel.
+        At this stage answers are not yet scored or revealed.
       </p>
       
       <p class="m-p">
-        Після раунду оператор зіставляє відповіді другого учасника зі списком оцінених результатів
-        і <span class="m-strong">відкриває їх по одній</span> на табло.
-        Бали обох учасників підсумовуються.
-      </p>
-      
-      <h3 class="m-h3">Коли фінал закінчується</h3>
-      
-      <p class="m-p">
-        Фінал завершується, коли сума балів досягає або перевищує
-        заданий поріг. Може статися, що поріг досягнуто після ходу першого учасника
-        — тоді другому вже не потрібно грати, і гра відразу переходить до завершення.
+        After the round the operator assigns the typed answers to the list of scored results
+        and <span class="m-strong">reveals them on the board</span>.
+        If an answer does not match any item in the list,
+        it receives <span class="m-strong">0 points</span>.
       </p>
       
       <p class="m-p">
-        Після фіналу система показує екран завершення відповідно до налаштувань фіналу:
-        <span class="m-strong">логотип</span>, <span class="m-strong">бали</span> або
-        <span class="m-strong">сума призу</span>.
+        After revealing the first contestant’s answers, the system hides their half of the board,
+        and the host prepares the entry of the second contestant and reminds the final rules.
+      </p>
+      
+      <h3 class="m-h3">Round 2 – second contestant (20 seconds) and repeats</h3>
+      
+      <p class="m-p">
+        The second contestant returns and answers the same questions within
+        <span class="m-strong">20 seconds</span>.
+        When the half-board with the first contestant’s answers appears,
+        the second contestant <span class="m-strong">turns away</span>
+        so they cannot see them and be influenced.
+      </p>
+      
+      <p class="m-p">
+        The operator again first types all answers of the second contestant,
+        without revealing or scoring them “live.”
+        If the second person gives the same answer as the first,
+        it is a <span class="m-strong">repeat</span> — the contestant must give another answer,
+        and the operator can mark the attempt as repeated.
+        Repeated answers do not score points.
+      </p>
+      
+      <p class="m-p">
+        After the round the operator assigns the second contestant’s answers to the list of scored results
+        and <span class="m-strong">reveals them one by one</span> on the board.
+        The points of both contestants are summed.
+      </p>
+      
+      <h3 class="m-h3">When the final ends</h3>
+      
+      <p class="m-p">
+        The final ends when the total points reach or exceed
+        the set threshold. It can happen that the threshold is reached after the first contestant’s turn
+        — then the second contestant does not need to play, and the game goes straight to the ending.
+      </p>
+      
+      <p class="m-p">
+        After the final the system shows the ending screen according to the game ending settings:
+        <span class="m-strong">logo</span>, <span class="m-strong">points</span> or
+        <span class="m-strong">prize amount</span>.
       </p>`,
       demo: `<p class="m-p">
-        У цій вкладці можна відновити приклади стартових матеріалів:
-        базу запитань, логотипи та готові ігри різних категорій і станів.
+        In this tab you can restore sample starter materials:
+        a question base, logos, and ready games of different categories and states.
       </p>
   
       <p class="m-p">
-        Це корисно, якщо:
+        This is useful when:
       </p>
   
       <ul class="m-ul">
-        <li>хочете швидко побачити, як працює система</li>
-        <li>тестуєте функції без створення власних даних</li>
-        <li>випадково видалили демонстраційний контент</li>
+        <li>you want to quickly see how the system works</li>
+        <li>you are testing features without creating your own data</li>
+        <li>you accidentally removed the sample content</li>
       </ul>
   
       <div class="m-warn">
-        Відновлення демо не видаляє ваші дані — лише додає приклади матеріалів.
+        Restoring demo does not remove your data — it only adds sample materials.
       </div>
   
       <div class="m-box">
         <button class="btn" id="demoRestoreBtn">
-          ↺ Відновити демо-файли
+          ↺ Restore demo files
         </button>
   
         <p class="m-p m-muted" style="margin-top:10px">
-          Після натискання ви перейдете до перегляду «Мої ігри», і демо буде завантажено автоматично.
+          After clicking you will be taken to the My games view and demo will be loaded automatically.
         </p>
       </div>`,
     },
-  },
-  privacy: {
-    title: "Familiada — політика конфіденційності",
-    pageTitle: "Політика конфіденційності",
-    backToManual: "← Підказки",
-    logout: "Вийти",
-    content: `
-      <h2 class="m-h2">1. Адміністратор даних</h2>
-      <p class="m-p">
-        Адміністратором персональних даних є оператор сервісу Familiada, доступного за адресою
-        <span class="m-code">https://www.familiada.online</span>
-      </p>
-      <p class="m-p">Контакт: <span class="m-code">admin@familiada.online</span></p>
-  
-      <h2 class="m-h2">2. Обсяг оброблюваних даних</h2>
-      <p class="m-p">Ми обробляємо лише дані, необхідні для роботи сервісу:</p>
-      <ul class="m-ul">
-        <li>адреса електронної пошти,</li>
-        <li>ім'я користувача (логін),</li>
-        <li>дані, пов’язані з участю в опитуваннях і підписках.</li>
-      </ul>
-  
-      <h2 class="m-h2">3. Цілі обробки даних</h2>
-      <p class="m-p">Персональні дані обробляються з метою:</p>
-      <ul class="m-ul">
-        <li>створення та обслуговування облікового запису,</li>
-        <li>надсилання системних повідомлень (наприклад, підтвердження акаунта, скидання пароля),</li>
-        <li>надсилання сповіщень підписки та запрошень до участі в опитуваннях,</li>
-        <li>забезпечення безпеки та коректної роботи сервісу.</li>
-      </ul>
-  
-      <h2 class="m-h2">4. Електронні листи</h2>
-      <p class="m-p">Ми надсилаємо лише:</p>
-      <ul class="m-ul">
-        <li>транзакційні (системні) повідомлення,</li>
-        <li>сповіщення підписки — лише користувачам, які дали згоду на їх отримання.</li>
-      </ul>
-      <p class="m-p">Ми не надсилаємо маркетингових або рекламних повідомлень.</p>
-      <p class="m-p">Частота надсилання обмежена, щоб запобігти зловживанням.</p>
-  
-      <h2 class="m-h2">5. Підписки та запрошення</h2>
-      <p class="m-p">Сповіщення та запрошення до опитувань:</p>
-      <ul class="m-ul">
-        <li>надсилаються лише відомим і явно вказаним отримувачам,</li>
-        <li>не надсилаються масово,</li>
-        <li>не надсилаються частіше ніж один раз за визначений період для однієї адреси e-mail.</li>
-      </ul>
-  
-      <h2 class="m-h2">6. Правова підстава обробки</h2>
-      <p class="m-p">Дані обробляються на підставі:</p>
-      <ul class="m-ul">
-        <li>згоди користувача (GDPR, ст. 6(1)(a)),</li>
-        <li>необхідності виконання договору (GDPR, ст. 6(1)(b)),</li>
-        <li>законного інтересу адміністратора (GDPR, ст. 6(1)(f)).</li>
-      </ul>
-  
-      <h2 class="m-h2">7. Строк зберігання</h2>
-      <p class="m-p">Дані зберігаються:</p>
-      <ul class="m-ul">
-        <li>протягом існування облікового запису,</li>
-        <li>або до моменту відкликання згоди чи видалення акаунта.</li>
-      </ul>
-  
-      <h2 class="m-h2">8. Передача даних</h2>
-      <p class="m-p">
-        Ми не продаємо й не передаємо персональні дані третім сторонам, за винятком:
-      </p>
-      <ul class="m-ul">
-        <li>технічних сервісів, необхідних для роботи (наприклад, хостинг, доставка e-mail).</li>
-      </ul>
-  
-      <h2 class="m-h2">9. Права користувача</h2>
-      <p class="m-p">Користувач має право:</p>
-      <ul class="m-ul">
-        <li>отримати доступ до своїх даних,</li>
-        <li>виправити їх,</li>
-        <li>видалити,</li>
-        <li>обмежити обробку,</li>
-        <li>відкликати згоду в будь-який момент.</li>
-      </ul>
-  
-      <h2 class="m-h2">10. Контакт</h2>
-      <p class="m-p">
-        З питань захисту персональних даних звертайтеся:
-        <span class="m-code">admin@familiada.online</span>
-      </p>
-    `,
   },
   builderImportExport: {
     defaults: {
@@ -2733,6 +2644,7 @@ const uk = {
       locked: "Заблоковано",
       active: "Активні",
       retry: "Можна повторити",
+      cooldown: "Можна повторити за {hours} год.",
       missing: "Немає",
     },
     shareLockedHint: "Проголосовано — видаліть голос, щоб розблокувати.",
@@ -2812,6 +2724,8 @@ const uk = {
       autoNote: "Автоматичне повідомлення — будь ласка, не відповідайте.",
     },
     pollReadyAlert: "Завершіть гру в «Мої ігри»",
+    resendCooldownAlert: "Повторне запрошення можна надіслати через {hours} год.",
+    shareCooldownAlert: "Повторно запросити до голосування можна через {hours} год.",
   },
   logoEditor: {
     title: "Familiada — редактор логотипу",
