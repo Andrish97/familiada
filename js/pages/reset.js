@@ -1,6 +1,6 @@
 import { sb } from "../core/supabase.js";
 import { updateUserLanguage, validatePassword } from "../core/auth.js";
-import { initI18n, t, getUiLang } from "../../translation/translation.js";
+import { initI18n, t, getUiLang, withLangParam } from "../../translation/translation.js";
 
 const status = document.getElementById("status");
 const err = document.getElementById("err");
@@ -28,6 +28,7 @@ function hp(name){
 document.addEventListener("DOMContentLoaded", async () => {
   await initI18n({ withSwitcher: true });
   setErr("");
+  if (back) back.href = withLangParam(back.dataset.baseHref || "index.html");
   const syncLanguage = () => updateUserLanguage(getUiLang());
   window.addEventListener("i18n:lang", syncLanguage);
 
@@ -104,7 +105,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       // wyloguj sesję recovery dla czystości
       try { await sb().auth.signOut(); } catch {}
 
-      setTimeout(() => (location.href = "index.html"), 900);
+      setTimeout(() => (location.href = withLangParam("index.html")), 900);
     } catch(e){
       console.error(e);
       setStatus(t("reset.saveFailed"));

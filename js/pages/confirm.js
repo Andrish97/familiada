@@ -1,6 +1,6 @@
 import { sb } from "../core/supabase.js";
 import { updateUserLanguage } from "../core/auth.js";
-import { initI18n, t, getUiLang } from "../../translation/translation.js";
+import { initI18n, t, getUiLang, withLangParam } from "../../translation/translation.js";
 
 const status = document.getElementById("status");
 const err = document.getElementById("err");
@@ -35,6 +35,8 @@ async function syncProfileEmail(user) {
 document.addEventListener("DOMContentLoaded", async () => {
   await initI18n({ withSwitcher: true });
   setErr("");
+  if (go) go.href = withLangParam(go.dataset.baseHref || "builder.html");
+  if (back) back.href = withLangParam(back.dataset.baseHref || "index.html");
   const syncLanguage = () => updateUserLanguage(getUiLang());
   window.addEventListener("i18n:lang", syncLanguage);
 
@@ -97,7 +99,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           await syncProfileEmail(data.session.user);
           setStatus(t("confirm.done"));
           go.style.display = "inline-flex";
-          setTimeout(() => (location.href = "builder.html"), 700);
+          setTimeout(() => (location.href = withLangParam("builder.html")), 700);
           return;
         }
         setStatus(t("confirm.savedNoSession"));
@@ -122,7 +124,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           await syncProfileEmail(data.session.user);
           setStatus(t("confirm.done"));
           go.style.display = "inline-flex";
-          setTimeout(() => (location.href = "builder.html"), 700);
+          setTimeout(() => (location.href = withLangParam("builder.html")), 700);
           return;
         }
 
@@ -154,7 +156,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       await syncProfileEmail(data.session.user);
       setStatus(t("confirm.done"));
       go.style.display = "inline-flex";
-      setTimeout(() => (location.href = "builder.html"), 700);
+      setTimeout(() => (location.href = withLangParam("builder.html")), 700);
     } else {
       setStatus(t("confirm.confirmedNoSession"));
       back.style.display = "inline-flex";

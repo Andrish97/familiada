@@ -25,3 +25,7 @@ export function sb() {
 // debug helper:
 globalThis.__sb = sb;
 globalThis.__sbClient = sb();
+
+export function buildSiteUrl(path = "") {
+  return new URL(path, location.href).toString();
+}

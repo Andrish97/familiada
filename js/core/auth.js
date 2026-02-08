@@ -1,6 +1,6 @@
 // js/core/auth.js
-import { sb } from "./supabase.js";
-import { t } from "../../translation/translation.js";
+import { sb, buildSiteUrl } from "./supabase.js";
+import { t, withLangParam } from "../../translation/translation.js";
 
 function niceAuthError(e) {
   const msg = e?.message || String(e);
@@ -106,13 +106,13 @@ export async function getUser() {
 export async function requireAuth(redirect = "index.html") {
   const u = await getUser();
   if (!u) {
-    location.href = redirect;
+    location.href = withLangParam(redirect);
     return null; // na wypadek, gdyby ktoś jednak kontynuował kod
   }
 
   const username = await fetchUsername(u);
   if (!username) {
-    location.href = "index.html?setup=username";
+    location.href = withLangParam("index.html?setup=username");
     return null;
   }
   return { ...u, username };
@@ -142,7 +142,8 @@ export async function signIn(login, password) {
 export async function signUp(email, password, redirectTo, usernameInput, language) {
   const username = validateUsername(usernameInput, { allowEmpty: true });
   const userData = username ? { username } : null;
-  const options = { emailRedirectTo: redirectTo };
+  const emailRedirectTo = redirectTo || withLangParam(buildSiteUrl("confirm.html"));
+  const options = { emailRedirectTo };
   if (userData || language) {
     options.data = { ...(userData || {}) };
     if (language) options.data.language = language;
@@ -165,7 +166,8 @@ export async function resetPassword(loginOrEmail, redirectTo, language) {
   const email = await loginToEmail(loginOrEmail);
   if (!email) throw new Error(t("index.errResetMissingLogin"));
 
-  const options = { redirectTo };
+  const resetRedirectTo = redirectTo || withLangParam(buildSiteUrl("reset.html"));
+  const options = { redirectTo: resetRedirectTo };
   if (language) options.data = { language };
   const { error } = await sb().auth.resetPasswordForEmail(email, options);
   if (error) throw new Error(niceAuthError(error));
