@@ -1,6 +1,6 @@
 import { sb } from "../core/supabase.js";
-import { validatePassword } from "../core/auth.js";
-import { initI18n, t } from "../../translation/translation.js";
+import { updateUserLanguage, validatePassword } from "../core/auth.js";
+import { initI18n, t, getUiLang } from "../../translation/translation.js";
 
 const status = document.getElementById("status");
 const err = document.getElementById("err");
@@ -28,6 +28,8 @@ function hp(name){
 document.addEventListener("DOMContentLoaded", async () => {
   await initI18n({ withSwitcher: true });
   setErr("");
+  const syncLanguage = () => updateUserLanguage(getUiLang());
+  window.addEventListener("i18n:lang", syncLanguage);
 
   const code = qp("code") || hp("code");
   const accessToken = hp("access_token");
@@ -66,6 +68,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       return;
     }
 
+    await syncLanguage();
     setStatus(t("reset.linkOk"));
     form.style.display = "grid";
   } catch(e){

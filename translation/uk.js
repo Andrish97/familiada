@@ -15,6 +15,19 @@ const uk = {
     open: "Відкрити",
     copy: "Копіювати",
     done: "Готово",
+    modal: {
+      confirmTitle: "Підтвердити",
+      confirmText: "Ви впевнені?",
+      confirmOk: "Так",
+      confirmCancel: "Ні",
+      alertTitle: "Інформація",
+      alertOk: "OK",
+      promptTitle: "Введіть",
+      promptText: "Вкажіть значення:",
+      promptOk: "Зберегти",
+      promptCancel: "Скасувати",
+      closeLabel: "Закрити",
+    },
     fullscreen: "На весь екран",
     a2hsTitle: "Повний екран на iPhone",
     a2hsHost:
@@ -2755,6 +2768,7 @@ const uk = {
     },
     textPix: {
       font: "Шрифт",
+      systemFont: "Системна",
       searchPlaceholder: "Пошук шрифту…",
       searchClear: "Очистити",
       emptyResults: "Немає результатів",
