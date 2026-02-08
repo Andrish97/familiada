@@ -3,9 +3,19 @@
 // Najpierw UI, potem auth „miękko”.
 
 import { confirmModal } from "../core/modal.js";
-import { initI18n, t } from "../../translation/translation.js";
+import { initI18n, setUiLang, t } from "../../translation/translation.js";
 
-initI18n({ withSwitcher: true });
+async function initManualI18n() {
+  const params = new URLSearchParams(location.search);
+  const hasLangParam = params.has("lang");
+  const storedLang = localStorage.getItem("uiLang");
+
+  if (!hasLangParam && !storedLang) {
+    await setUiLang("pl", { persist: true, updateUrl: true, apply: false });
+  }
+
+  await initI18n({ withSwitcher: true });
+}
 
 function qsa(sel) { return Array.from(document.querySelectorAll(sel)); }
 function byId(id) { return document.getElementById(id); }
@@ -91,6 +101,7 @@ async function wireAuthSoft() {
 }
 
 /* ================= Init ================= */
+initManualI18n();
 wireTabs();
 wireFallbackNav();
 
