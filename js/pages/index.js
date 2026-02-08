@@ -24,6 +24,17 @@ const builderUrl = baseUrls.builderUrl || "builder.html";
 const pollsUrl = baseUrls.pollsUrl || "polls-hub.html";
 
 let mode = "login"; // login | register
+
+let isBusy = false;
+
+function setBusy(v) {
+  isBusy = v;
+  if (btnPrimary) btnPrimary.disabled = v;
+  if (btnToggle) btnToggle.disabled = v;
+  if (btnForgot) btnForgot.disabled = v;
+  if (btnUsernameSave) btnUsernameSave.disabled = v;
+}
+
 const params = new URLSearchParams(location.search);
 const nextTarget = params.get("next");
 const nextTask = params.get("t");
@@ -146,11 +157,17 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
   btnPrimary.addEventListener("click", async () => {
+    if (isBusy) return;
+    setBusy(true);
+
     setErr("");
     const loginOrEmail = email.value.trim();
     const pwd = pass.value;
 
-    if (!loginOrEmail || !pwd) return setErr(t("index.errMissingLogin"));
+    if (!loginOrEmail || !pwd) {
+      setBusy(false);
+      return setErr(t("index.errMissingLogin"));
+    }
 
     try {
       if (mode === "register") {
@@ -186,10 +203,14 @@ document.addEventListener("DOMContentLoaded", async () => {
       console.error(e);
       setStatus(t("index.statusError"));
       setErr(e?.message || String(e));
+    } finally {
+      setBusy(false);
     }
   });
 
   btnForgot.addEventListener("click", async () => {
+    if (isBusy) return;
+    setBusy(true);
     setErr("");
     const loginOrEmail = email.value.trim();
     if (!loginOrEmail) return setErr(t("index.errResetMissingLogin"));
@@ -203,6 +224,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       console.error(e);
       setStatus(t("index.statusError"));
       setErr(e?.message || String(e));
+    } finally {
+      setBusy(false);
     }
   });
 
