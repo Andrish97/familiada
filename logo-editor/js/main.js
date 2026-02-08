@@ -221,7 +221,12 @@ function esc(s){
 
 async function confirmCloseIfDirty(){
   if (!editorDirty) return true;
-  return await confirmModal({ text: t("logoEditor.confirm.closeUnsaved") });
+  return await confirmModal({
+    title: t("common.modal.confirmTitle"),
+    text: t("logoEditor.confirm.closeUnsaved"),
+    ok: t("common.modal.confirmOk"),
+    cancel: t("common.modal.confirmCancel"),
+  });
 }
 
 function makeUniqueName(baseName, excludeId = null){
@@ -326,7 +331,12 @@ function armHistoryTrap(){
     }
 
     // gdy mamy zmiany — cofanie przechwytujemy
-    const ok = await confirmModal({ text: t("logoEditor.confirm.backUnsaved") });
+    const ok = await confirmModal({
+      title: t("common.modal.confirmTitle"),
+      text: t("logoEditor.confirm.backUnsaved"),
+      ok: t("common.modal.confirmOk"),
+      cancel: t("common.modal.confirmCancel"),
+    });
     if (ok){
       // pozwól cofnąć: najprościej zrobić przejście wstecz jeszcze raz,
       // ale popstate już zaszło. Żeby nie robić pętli, ignorujemy kolejny pop.
@@ -894,7 +904,12 @@ function renderList(){
     el.querySelector(".logoX").addEventListener("click", async (ev) => {
       ev.stopPropagation();
       if (!canDelete) return;
-      const ok = await confirmModal({ text: t("logoEditor.confirm.deleteLogo", { name }) });
+      const ok = await confirmModal({
+        title: t("common.modal.confirmTitle"),
+        text: t("logoEditor.confirm.deleteLogo", { name }),
+        ok: t("common.modal.confirmOk"),
+        cancel: t("common.modal.confirmCancel"),
+      });
       if (!ok) return;
 
       setMsg(t("logoEditor.status.deleting"));
@@ -1268,7 +1283,12 @@ async function boot(){
    
    btnLogout?.addEventListener("click", async () => {
      if (shouldBlockNav()){
-       const ok = await confirmModal({ text: t("logoEditor.confirm.logoutUnsaved") });
+       const ok = await confirmModal({
+         title: t("common.modal.confirmTitle"),
+         text: t("logoEditor.confirm.logoutUnsaved"),
+         ok: t("common.modal.confirmOk"),
+         cancel: t("common.modal.confirmCancel"),
+       });
        if (!ok) return;
      }
      await signOut();
