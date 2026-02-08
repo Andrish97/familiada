@@ -1,6 +1,7 @@
 // js/pages/editor.js
 import { sb } from "../core/supabase.js";
 import { requireAuth, signOut } from "../core/auth.js";
+import { alertModal, confirmModal } from "../core/modal.js";
 import { parseQaText, clip as clipN } from "../core/text-import.js";
 import { canEnterEdit, RULES as GV_RULES, TYPES } from "../core/game-validate.js";
 import { initI18n, t } from "../../translation/translation.js";
@@ -506,7 +507,7 @@ async function boot() {
   /* ---------- game ---------- */
   const gameId = getIdFromQuery();
   if (!gameId) {
-    alert(t("editor.alert.missingId"));
+    void alertModal({ text: t("editor.alert.missingId") });
     location.href = "builder.html";
     return;
   }
@@ -516,13 +517,13 @@ async function boot() {
 
   const editInfo = canEnterEdit(game);
   if (!editInfo?.ok) {
-    alert(editInfo?.reason || MSG.cannotEdit());
+    void alertModal({ text: editInfo?.reason || MSG.cannotEdit() });
     location.href = "builder.html";
     return;
   }
 
   if (editInfo.needsResetWarning) {
-    const ok = confirm(MSG.resetPollConfirm());
+    const ok = await confirmModal({ text: MSG.resetPollConfirm() });
     if (!ok) {
       location.href = "builder.html";
       return;
@@ -669,7 +670,7 @@ async function boot() {
   }
 
   async function deleteQuestion(qId) {
-    const ok = confirm(MSG.deleteQuestionConfirm());
+    const ok = await confirmModal({ text: MSG.deleteQuestionConfirm() });
     if (!ok) return;
 
     try {
@@ -798,7 +799,7 @@ async function boot() {
   }
 
   async function removeAnswer(aId) {
-    const ok = confirm(MSG.deleteAnswerConfirm());
+    const ok = await confirmModal({ text: MSG.deleteAnswerConfirm() });
     if (!ok) return;
 
     try {
@@ -1013,7 +1014,7 @@ async function boot() {
         return;
       }
   
-      const ok = confirm(MSG.importConfirm());
+      const ok = await confirmModal({ text: MSG.importConfirm() });
       if (!ok) {
         setTxtMsg(MSG.importCancelled());
         return;
@@ -1173,6 +1174,6 @@ async function boot() {
 document.addEventListener("DOMContentLoaded", () => {
   boot().catch((e) => {
     console.error(e);
-    alert(MSG.editorError());
+    void alertModal({ text: MSG.editorError() });
   });
 });

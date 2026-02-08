@@ -2,7 +2,8 @@
 import { sb, SUPABASE_URL } from "../core/supabase.js";
 import { requireAuth, signOut } from "../core/auth.js";
 import { validatePollReadyToOpen } from "../core/game-validate.js";
-import { confirmModal } from "../core/modal.js";
+import { alertModal, confirmModal } from "../core/modal.js";
+import { initUiSelect } from "../core/ui-select.js";
 import { initI18n, t } from "../../translation/translation.js";
 
 initI18n({ withSwitcher: true });
@@ -195,6 +196,8 @@ const sortState = {
   subscribers: "newest",
   subscriptions: "newest",
 };
+
+const sortSelects = new Map();
 
 const archiveState = {
   polls: false,
@@ -492,14 +495,25 @@ async function sendTaskEmail({ to, link, pollName, ownerLabel }) {
 
 function renderSelect(el, kind) {
   if (!el) return;
-  el.innerHTML = "";
-  for (const opt of sortOptions[kind]) {
-    const o = document.createElement("option");
-    o.value = opt.value;
-    o.textContent = t(opt.labelKey);
-    el.appendChild(o);
+  const options = sortOptions[kind].map((opt) => ({
+    value: opt.value,
+    label: t(opt.labelKey),
+  }));
+  let api = sortSelects.get(el);
+  if (!api) {
+    api = initUiSelect(el, {
+      options,
+      value: sortState[kind],
+      onChange: (value) => {
+        sortState[kind] = value;
+        renderAll();
+      },
+    });
+    sortSelects.set(el, api);
+    return;
   }
-  el.value = sortState[kind];
+  api.setOptions(options);
+  api.setValue(sortState[kind], { silent: true });
 }
 
 function setActiveTab(tab) {
@@ -909,7 +923,7 @@ function updatePollActions() {
 
 async function openPoll(poll) {
   if (poll.poll_state === "draft" && !pollReadyMap.get(poll.game_id)) {
-    alert(MSG.pollReadyAlert());
+    void alertModal({ text: MSG.pollReadyAlert() });
     return;
   }
   location.href = `polls.html?id=${encodeURIComponent(poll.game_id)}&from=polls-hub`;
@@ -946,7 +960,7 @@ async function declineTask(task) {
   } catch (e) {
     console.error(e);
     failProgress(step, 2, MSG.declineTaskFail());
-    alert(MSG.declineTaskFail());
+    void alertModal({ text: MSG.declineTaskFail() });
   }
 }
 
@@ -960,7 +974,7 @@ async function inviteSubscriber(recipient) {
     if (!resolved) {
       const msg = recipient.includes("@") ? MSG.invalidEmail() : MSG.unknownUser();
       failProgress(step, 3, msg);
-      alert(msg);
+      void alertModal({ text: msg });
       return;
     }
 
@@ -985,7 +999,7 @@ async function inviteSubscriber(recipient) {
         } catch (mailError) {
           console.error(mailError);
           setProgress({ step, i: 2, n: 3, msg: MSG.mailFailed() });
-          alert(MSG.inviteSavedMailFail());
+          void alertModal({ text: MSG.inviteSavedMailFail() });
         }
       }
     }
@@ -995,7 +1009,7 @@ async function inviteSubscriber(recipient) {
     console.error(e);
     const msg = e?.message || MSG.inviteFail();
     failProgress(step, 3, msg);
-    alert(msg);
+    void alertModal({ text: msg });
   }
 }
 
@@ -1020,7 +1034,7 @@ async function resendSubscriber(sub) {
       } catch (mailError) {
         console.error(mailError);
         setProgress({ step, i: 1, n: 3, msg: MSG.mailFailed() });
-        alert(MSG.resendSavedMailFail());
+        void alertModal({ text: MSG.resendSavedMailFail() });
       }
     }
     await refreshData();
@@ -1028,7 +1042,7 @@ async function resendSubscriber(sub) {
   } catch (e) {
     console.error(e);
     failProgress(step, 3, MSG.resendFail());
-    alert(MSG.resendFail());
+    void alertModal({ text: MSG.resendFail() });
   }
 }
 
@@ -1051,7 +1065,7 @@ async function removeSubscriber(sub) {
   } catch (e) {
     console.error(e);
     failProgress(step, 2, MSG.removeSubscriberFail());
-    alert(MSG.removeSubscriberFail());
+    void alertModal({ text: MSG.removeSubscriberFail() });
   }
 }
 
@@ -1067,7 +1081,7 @@ async function acceptSubscription(sub) {
   } catch (e) {
     console.error(e);
     failProgress(step, 2, MSG.acceptSubscriptionFail());
-    alert(MSG.acceptSubscriptionFail());
+    void alertModal({ text: MSG.acceptSubscriptionFail() });
   }
 }
 
@@ -1084,7 +1098,7 @@ async function rejectSubscription(sub) {
   } catch (e) {
     console.error(e);
     failProgress(step, 2, MSG.updateSubscriptionFail());
-    alert(MSG.updateSubscriptionFail());
+    void alertModal({ text: MSG.updateSubscriptionFail() });
   }
 }
 
@@ -1165,7 +1179,7 @@ async function openShareModal() {
   } catch (e) {
     console.error(e);
     failProgress(step, 1, MSG.loadSubscribersFail());
-    alert(MSG.loadSubscribersFail());
+    void alertModal({ text: MSG.loadSubscribersFail() });
   }
 }
 
@@ -1343,7 +1357,7 @@ async function openDetailsModal({ withProgress = true } = {}) {
   } catch (e) {
     console.error(e);
     if (withProgress) failProgress(step, 1, MSG.loadDetailsFail());
-    alert(MSG.loadDetailsFail());
+    void alertModal({ text: MSG.loadDetailsFail() });
   }
 }
 
@@ -1364,7 +1378,7 @@ async function deleteVote(taskId) {
   } catch (e) {
     console.error(e);
     failProgress(step, 2, MSG.deleteVoteFail());
-    alert(MSG.deleteVoteFail());
+    void alertModal({ text: MSG.deleteVoteFail() });
   }
 }
 
@@ -1449,21 +1463,21 @@ async function refreshData() {
     updateBadges();
     renderAll();
     updatePollActions();
-    maybeFocusFromToken();
+    await maybeFocusFromToken();
   } catch (e) {
     console.error(e);
-    alert(MSG.loadHubFail());
+    void alertModal({ text: MSG.loadHubFail() });
   } finally {
     isRefreshing = false;
   }
 }
 
-function maybeFocusFromToken() {
+async function maybeFocusFromToken() {
   if (focusTaskToken) {
     const match = tasks.find((t) => extractToken(t.go_url, "t") === focusTaskToken);
     if (match) {
       const page = match.poll_type === "poll_points" ? "poll-points.html" : "poll-text.html";
-      const promptVote = confirm(MSG.focusTaskPrompt());
+      const promptVote = await confirmModal({ text: MSG.focusTaskPrompt() });
       if (promptVote) {
         location.href = `${page}?t=${encodeURIComponent(focusTaskToken)}`;
       }
@@ -1472,7 +1486,7 @@ function maybeFocusFromToken() {
   if (focusSubToken) {
     const match = subscriptions.find((s) => String(s.token) === focusSubToken);
     if (match && match.status === "pending") {
-      const promptAccept = confirm(MSG.focusSubPrompt());
+      const promptAccept = await confirmModal({ text: MSG.focusSubPrompt() });
       if (promptAccept) {
         acceptSubscription(match);
       }
@@ -1493,14 +1507,6 @@ function maybeFocusFromToken() {
       });
     }
   }
-}
-
-function wireSort(selectEl, kind) {
-  if (!selectEl) return;
-  selectEl.addEventListener("change", () => {
-    sortState[kind] = selectEl.value;
-    renderAll();
-  });
 }
 
 function wireInvite(inputEl) {
@@ -1532,15 +1538,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   renderSelect(sortSubscribersMobile, "subscribers");
   renderSelect(sortSubscriptionsDesktop, "subscriptions");
   renderSelect(sortSubscriptionsMobile, "subscriptions");
-
-  wireSort(sortPollsDesktop, "polls");
-  wireSort(sortPollsMobile, "polls");
-  wireSort(sortTasksDesktop, "tasks");
-  wireSort(sortTasksMobile, "tasks");
-  wireSort(sortSubscribersDesktop, "subscribers");
-  wireSort(sortSubscribersMobile, "subscribers");
-  wireSort(sortSubscriptionsDesktop, "subscriptions");
-  wireSort(sortSubscriptionsMobile, "subscriptions");
 
   registerToggleHandlers();
   syncToggles();

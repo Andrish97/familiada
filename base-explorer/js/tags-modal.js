@@ -8,6 +8,7 @@
 // UWAGA: ten plik nie zna nic o SEARCH/TAG view. To jest czysty modal.
 
 import { sb } from "../../js/core/supabase.js";
+import { alertModal } from "../../js/core/modal.js";
 import { t } from "../../translation/translation.js";
 import { listQuestionTags, listAllQuestions } from "./repo.js";
 
@@ -292,7 +293,7 @@ export async function openTagsModal(state, opts = {}) {
   function cycleTri(tagId) {
     const cur = m.tri.get(tagId) || "none";
     if (cur === "some") {
-      alert(t("baseExplorer.tags.partialWarning"));
+      void alertModal({ text: t("baseExplorer.tags.partialWarning") });
       m.tri.set(tagId, "all");
       m.dirty.add(tagId);
       return;

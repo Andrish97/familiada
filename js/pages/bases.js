@@ -3,7 +3,8 @@
 
 import { sb } from "../core/supabase.js";
 import { requireAuth, signOut } from "../core/auth.js";
-import { confirmModal } from "../core/modal.js";
+import { alertModal, confirmModal } from "../core/modal.js";
+import { initUiSelect } from "../core/ui-select.js";
 import { initI18n, t } from "../../translation/translation.js";
 
 initI18n({ withSwitcher: true });
@@ -68,6 +69,8 @@ let ownedBases = []; // { id, name, owner_id, created_at, updated_at }
 let sharedBases = []; // { id, name, owner_id, created_at, updated_at, sharedRole: 'viewer'|'editor' }
 let selectedId = null;
 
+let shareRoleSelect = null;
+
 // modal nazwy – tryb
 let nameMode = "create"; // 'create' | 'rename'
 
@@ -85,6 +88,26 @@ function setHint(t) {
 function setMsg(el, t) {
   if (!el) return;
   el.textContent = t || "";
+}
+
+function shareRoleOptions() {
+  return [
+    { value: "editor", label: t("bases.shareModal.roleEditor") },
+    { value: "viewer", label: t("bases.shareModal.roleViewer") },
+  ];
+}
+
+function initShareRoleSelect() {
+  if (!shareRole) return;
+  if (!shareRoleSelect) {
+    shareRoleSelect = initUiSelect(shareRole, {
+      options: shareRoleOptions(),
+      value: "editor",
+    });
+    return;
+  }
+  shareRoleSelect.setOptions(shareRoleOptions());
+  shareRoleSelect.setValue("editor", { silent: true });
 }
 
 function safeName(s) {
@@ -272,7 +295,7 @@ async function deleteBase(base) {
   const { error } = await sb().from("question_bases").delete().eq("id", base.id);
   if (error) {
     console.warn("[bases] delete error:", error);
-    alert(t("bases.delete.failed"));
+    void alertModal({ text: t("bases.delete.failed") });
   }
 }
 
@@ -519,7 +542,7 @@ async function resolveLoginToEmail(login) {
 async function openShareModal() {
   setMsg(shareMsg, "");
   shareEmail.value = "";
-  shareRole.value = "editor";
+  shareRoleSelect?.setValue("editor", { silent: true });
   await renderShareList();
   show(shareOverlay, true);
 }
@@ -572,30 +595,35 @@ async function renderShareList() {
            title="${String(r.email || "").replace(/\"/g, "&quot;")}">
         ${escapeHtml(r.username || r.email || "—")}
       </div>
-      <select class="inp" data-role>
-        <option value="editor">${t("bases.share.roleEditor")}</option>
-        <option value="viewer">${t("bases.share.roleViewer")}</option>
-      </select>
+      <div class="ui-select" data-role>
+        <button class="ui-select-btn inp" type="button" aria-haspopup="listbox" aria-expanded="false">
+          <span class="ui-select-label">—</span>
+          <span class="ui-select-caret">▾</span>
+        </button>
+        <div class="ui-select-menu" role="listbox"></div>
+      </div>
       <button class="btn sm" data-remove type="button">${t("bases.share.remove")}</button>
     `;
-    const sel = row.querySelector("[data-role]");
-    sel.value = r.role || "viewer";
-
-    sel.addEventListener("change", async () => {
-      // aktualizacja roli – wołamy share_base_by_email ponownie (UI maskuje błędy)
-      setMsg(shareMsg, "");
-      const { data: ok, error: e2 } = await sb().rpc("share_base_by_email", {
-        p_base_id: b.id,
-        p_email: r.email,
-        p_role: sel.value,
-      });
-      if (e2 || ok !== true) {
-        console.warn("[bases] share update failed:", e2);
-        setMsg(shareMsg, t("bases.share.failed"));
-        sel.value = r.role || "viewer";
-        return;
-      }
-      await renderShareList();
+    const roleEl = row.querySelector("[data-role]");
+    const roleSelect = initUiSelect(roleEl, {
+      options: shareRoleOptions(),
+      value: r.role || "viewer",
+      onChange: async (nextRole) => {
+        // aktualizacja roli – wołamy share_base_by_email ponownie (UI maskuje błędy)
+        setMsg(shareMsg, "");
+        const { data: ok, error: e2 } = await sb().rpc("share_base_by_email", {
+          p_base_id: b.id,
+          p_email: r.email,
+          p_role: nextRole,
+        });
+        if (e2 || ok !== true) {
+          console.warn("[bases] share update failed:", e2);
+          setMsg(shareMsg, t("bases.share.failed"));
+          roleSelect?.setValue(r.role || "viewer", { silent: true });
+          return;
+        }
+        await renderShareList();
+      },
     });
 
     row.querySelector("[data-remove]").addEventListener("click", async () => {
@@ -629,7 +657,7 @@ async function shareAdd() {
   if (!b || !isOwner(b)) return;
 
   const raw = String(shareEmail.value || "").trim();
-  const role = shareRole.value;
+  const role = shareRoleSelect?.getValue?.() || "editor";
 
   const email = await resolveLoginToEmail(raw);
   if (!emailLooksOk(email)) {
@@ -1062,6 +1090,9 @@ shareEmail?.addEventListener("keydown", (e) => {
 (async function init() {
   currentUser = await requireAuth("index.html");
   if (who) who.textContent = currentUser?.username || currentUser?.email || "—";
+
+  initShareRoleSelect();
+  window.addEventListener("i18n:lang", () => initShareRoleSelect());
     
   await refreshBases();
   render();

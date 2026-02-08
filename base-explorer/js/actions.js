@@ -31,6 +31,7 @@ import { openTagsModal } from "./tags-modal.js";
 import { initExportModal } from "./export-modal.js";
 import { initQuestionModal } from "./question-modal.js";
 import { sb } from "../../js/core/supabase.js";
+import { alertModal, confirmModal } from "../../js/core/modal.js";
 import { t } from "../../translation/translation.js";
 
 let exportModal = null;
@@ -998,12 +999,12 @@ export async function deleteSelected(state) {
   if (!keys || !keys.size) return false;
 
   if (keys.has("root")) {
-    alert(t("baseExplorer.errors.rootDeleteBlocked"));
+    void alertModal({ text: t("baseExplorer.errors.rootDeleteBlocked") });
     return false;
   }
 
   const label = (keys.size === 1) ? "ten element" : `te elementy (${keys.size})`;
-  const ok = confirm(t("baseExplorer.confirm.deleteItems", { label }));
+  const ok = await confirmModal({ text: t("baseExplorer.confirm.deleteItems", { label }) });
   if (!ok) return false;
 
   return await deleteItems(state, keys);
@@ -1188,7 +1189,7 @@ export async function renameSelectedPrompt(state) {
     return await renameByKey(state, key, next);
   } catch (e) {
     console.error(e);
-    alert(t("baseExplorer.errors.renameFailed"));
+    void alertModal({ text: t("baseExplorer.errors.renameFailed") });
     return false;
   }
 }
@@ -1201,7 +1202,7 @@ export async function deleteTags(state, tagIds) {
   if (!ids.length) return false;
 
   const label = (ids.length === 1) ? "ten tag" : `te tagi (${ids.length})`;
-  const ok = confirm(t("baseExplorer.confirm.deleteTags", { label }));
+  const ok = await confirmModal({ text: t("baseExplorer.confirm.deleteTags", { label }) });
   if (!ok) return false;
 
   // 1) usuń przypisania do pytań
@@ -1866,11 +1867,11 @@ async function moveItemsTo(state, targetFolderIdOrNull, { mode = "move" } = {}) 
   if (cIds.length && targetFolderIdOrNull) {
     for (const fid of cIds) {
       if (fid === targetFolderIdOrNull) {
-        alert(t("baseExplorer.errors.moveIntoSelf"));
+        void alertModal({ text: t("baseExplorer.errors.moveIntoSelf") });
         return;
       }
       if (isFolderDescendant(state, fid, targetFolderIdOrNull)) {
-        alert(t("baseExplorer.errors.moveIntoChild"));
+        void alertModal({ text: t("baseExplorer.errors.moveIntoChild") });
         return;
       }
     }
@@ -2086,25 +2087,25 @@ async function untagSelectedInTagView(state) {
   // a NIE usuwamy tych elementów.
   const keys = state?.selection?.keys;
   if (!keys || !keys.size) {
-    alert(t("baseExplorer.errors.selectItemsRight"));
+    void alertModal({ text: t("baseExplorer.errors.selectItemsRight") });
     return false;
   }
 
   // tagi aktywnego widoku TAG (OR)
   const tagIds = Array.isArray(state.tagIds) ? state.tagIds.filter(Boolean) : [];
   if (!tagIds.length) {
-    alert(t("baseExplorer.errors.noTagsSelected"));
+    void alertModal({ text: t("baseExplorer.errors.noTagsSelected") });
     return false;
   }
 
   // Roota nie tagujemy/nie ruszamy
   if (keys.has("root")) {
-    alert(t("baseExplorer.errors.rootInOperation"));
+    void alertModal({ text: t("baseExplorer.errors.rootInOperation") });
     return false;
   }
 
   const label = (keys.size === 1) ? "tym elemencie" : `tych elementach (${keys.size})`;
-  const ok = confirm(t("baseExplorer.confirm.removeTagsInTagView", { label }));
+  const ok = await confirmModal({ text: t("baseExplorer.confirm.removeTagsInTagView", { label }) });
   if (!ok) return false;
 
   const qIds = [];
@@ -2253,7 +2254,7 @@ export function wireActions({ state }) {
     const now = Date.now();
     if (now - _lockWarnAt < 700) return; // 0.7s
     _lockWarnAt = now;
-    alert(msg);
+    void alertModal({ text: msg });
   }
 
   function isSearchFocus() {
@@ -2803,13 +2804,13 @@ export function wireActions({ state }) {
           }
         } catch (err) {
           console.error(err);
-          alert(t("baseExplorer.errors.actionFailed"));
+          void alertModal({ text: t("baseExplorer.errors.actionFailed") });
         }
       }
       
     } catch (err) {
       console.error(err);
-      alert(t("baseExplorer.errors.actionFailed"));
+      void alertModal({ text: t("baseExplorer.errors.actionFailed") });
     }
   });
 
@@ -3064,7 +3065,7 @@ export function wireActions({ state }) {
       
     } catch (err) {
       console.error(err);
-      alert(t("baseExplorer.errors.assignTagFailed"));
+      void alertModal({ text: t("baseExplorer.errors.assignTagFailed") });
     } finally {
       if (state._drag) state._drag.tagDrop = null;
     }
@@ -3356,7 +3357,7 @@ export function wireActions({ state }) {
       pulseEl(treeEl);
     } catch (err) {
       console.error(err);
-      alert(t("baseExplorer.errors.moveFailed"));
+      void alertModal({ text: t("baseExplorer.errors.moveFailed") });
     } finally {
       state._drag.keys = null;
     }
@@ -3523,7 +3524,7 @@ export function wireActions({ state }) {
       }
     } catch (err) {
       console.error(err);
-      alert(t("baseExplorer.errors.moveFailed"));
+      void alertModal({ text: t("baseExplorer.errors.moveFailed") });
     } finally {
       state._drag.keys = null;
     }
@@ -4055,7 +4056,7 @@ export function wireActions({ state }) {
       return true;
     } catch (e) {
       console.error(e);
-      alert(t("baseExplorer.errors.questionOpenSaveFailed"));
+      void alertModal({ text: t("baseExplorer.errors.questionOpenSaveFailed") });
       return false;
     }
   };
@@ -4070,13 +4071,13 @@ export function wireActions({ state }) {
     try {
       const ownerId = state.user?.id || state.userId; // FIX: spójnie z resztą kodu
       if (!ownerId) {
-        alert(t("baseExplorer.errors.missingUserId"));
+        void alertModal({ text: t("baseExplorer.errors.missingUserId") });
         return false;
       }
   
       if (!exportModal?.open) {
         console.warn("exportModal.open missing");
-        alert(t("baseExplorer.errors.exportModalMissing"));
+        void alertModal({ text: t("baseExplorer.errors.exportModalMissing") });
         return false;
       }
   
@@ -4183,7 +4184,7 @@ export function wireActions({ state }) {
       return true;
     } catch (e) {
       console.error(e);
-      alert(t("baseExplorer.errors.createGameFailed"));
+      void alertModal({ text: t("baseExplorer.errors.createGameFailed") });
       return false;
     }
   };
@@ -4223,7 +4224,7 @@ export function wireActions({ state }) {
     if (e.key === "Delete") {
       // C: SEARCH – blokada
       if (!canDeleteHere(state)) {
-        alert(t("baseExplorer.errors.deleteInSearch"));
+        void alertModal({ text: t("baseExplorer.errors.deleteInSearch") });
         return;
       }
     
@@ -4234,7 +4235,7 @@ export function wireActions({ state }) {
           await untagSelectedInTagView(state);
         } catch (err) {
           console.error(err);
-          alert(t("baseExplorer.errors.removeTagsFailed"));
+          void alertModal({ text: t("baseExplorer.errors.removeTagsFailed") });
         }
         return;
       }
@@ -4246,7 +4247,7 @@ export function wireActions({ state }) {
         await deleteSelected(state);
       } catch (err) {
         console.error(err);
-        alert(t("baseExplorer.errors.deleteFailed"));
+        void alertModal({ text: t("baseExplorer.errors.deleteFailed") });
       }
     }
 
@@ -4283,12 +4284,12 @@ export function wireActions({ state }) {
         // C: w SEARCH/TAG wklejanie zablokowane
         if (state.view === VIEW.SEARCH) {
           e.preventDefault();
-          alert(t("baseExplorer.errors.pasteInSearch"));
+          void alertModal({ text: t("baseExplorer.errors.pasteInSearch") });
           return;
         }
         if (state.view === VIEW.TAG) {
           e.preventDefault();
-          alert(t("baseExplorer.errors.pasteInTag"));
+          void alertModal({ text: t("baseExplorer.errors.pasteInTag") });
           return;
         }
       
@@ -4302,7 +4303,7 @@ export function wireActions({ state }) {
           await pasteClipboardHere(state);
         } catch (err) {
           console.error(err);
-          alert(t("baseExplorer.errors.pasteFailed"));
+          void alertModal({ text: t("baseExplorer.errors.pasteFailed") });
         }
         return;
       }
@@ -4343,7 +4344,7 @@ export function wireActions({ state }) {
           await createQuestionHere(state, { categoryId });
         } catch (err) {
           console.error(err);
-          alert(t("baseExplorer.errors.createQuestionFailed"));
+          void alertModal({ text: t("baseExplorer.errors.createQuestionFailed") });
         }
         return;
       }
@@ -4357,7 +4358,7 @@ export function wireActions({ state }) {
           await createFolderHere(state, { parentId });
         } catch (err) {
           console.error(err);
-          alert(t("baseExplorer.errors.createFolderFailed"));
+          void alertModal({ text: t("baseExplorer.errors.createFolderFailed") });
         }
         return;
       }
