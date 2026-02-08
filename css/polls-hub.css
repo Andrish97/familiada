@@ -455,3 +455,11 @@ body.polls-hub-body {
     border-left: 1px solid rgba(255,255,255,.12);
   }
 }
+
+/* cooldown (24h anti-spam) */
+.btn.cooldown {
+  opacity: 0.45;
+}
+.hub-share-item.cooldown {
+  opacity: 0.55;
+}
