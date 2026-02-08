@@ -156,6 +156,7 @@ const uk = {
     deleteButton: "Видалити акаунт і дані",
     statusLoaded: "Профіль завантажено.",
     statusUsernameSaved: "Ім'я користувача збережено.",
+    statusSavingEmail: "Збереження адреси електронної пошти…",
     statusEmailSaved: "Зміни e-mail збережено. Увійдіть знову.",
     statusPasswordSaved: "Пароль змінено.",
     statusDeleting: "Видаляю акаунт…",
