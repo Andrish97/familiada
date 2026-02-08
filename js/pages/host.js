@@ -1,5 +1,5 @@
 // /familiada/js/pages/host.js
-import { initI18n, setUiLang } from "../../translation/translation.js";
+import { initI18n, setUiLang, t } from "../../translation/translation.js";
 import { sb } from "../core/supabase.js";
 
 /* ========= PARAMS ========= */
@@ -7,7 +7,7 @@ const qs = new URLSearchParams(location.search);
 const gameId = qs.get("id");
 const key = qs.get("key");
 
-initI18n({ withSwitcher: true });
+initI18n({ withSwitcher: false });
 
 /* ========= DOM ========= */
 const paperText1 = document.getElementById("paperText1");
@@ -22,6 +22,10 @@ const fsIco = document.getElementById("fsIco");
 // sekcje (nie zmieniamy HTML — bierzemy po klasach)
 const pane1 = document.querySelector(".pane1");
 const pane2 = document.querySelector(".pane2");
+
+window.addEventListener("i18n:lang", () => {
+  updateSwipeHint();
+});
 
 /* ========= DEVICE ID (presence) ========= */
 const DEVICE_ID_KEY = "familiada:deviceId:host";
@@ -343,14 +347,13 @@ function updateSwipeHint() {
 
   const onCover =
     o === "portrait"
-      ? (p2Covered ? "Przesuń w dół, żeby odsłonić" : "Przesuń w górę, żeby zasłonić")
-      : (p2Covered ? "Przesuń w prawo, żeby odsłonić" : "Przesuń w lewo, żeby zasłonić");
+      ? (p2Covered ? t("host.swipeRevealDown") : t("host.swipeCoverUp"))
+      : (p2Covered ? t("host.swipeRevealRight") : t("host.swipeCoverLeft"));
 
   if (cover2Swipe) cover2Swipe.textContent = onCover;
 
   if (p2Hint) {
-    p2Hint.textContent =
-      o === "portrait" ? "Przesuń w górę, żeby zasłonić" : "Przesuń w lewo, żeby zasłonić";
+    p2Hint.textContent = o === "portrait" ? t("host.swipeCoverUp") : t("host.swipeCoverLeft");
   }
 }
 

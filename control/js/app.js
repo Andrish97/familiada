@@ -1,5 +1,5 @@
 // /familiada/js/pages/control/app.js
-import { initI18n, t } from "../../translation/translation.js";
+import { getUiLang, initI18n, t } from "../../translation/translation.js";
 
 // ================== KOMUNIKATY ==================
 const APP_MSG = {
@@ -726,6 +726,12 @@ async function sendZeroStatesToDevices() {
   }
 
   devices.initLinksAndQr();
+  const initialLang = getUiLang();
+  devices.updateLinksAndQr(initialLang);
+  await devices.sendDisplayCmd(`LANG ${initialLang}`);
+  await devices.sendHostCmd(`LANG ${initialLang}`);
+  await devices.sendBuzzerCmd(`LANG ${initialLang}`);
+  await devices.sendQrToDisplay();
   window.addEventListener("i18n:lang", async (event) => {
     const nextLang = event?.detail?.lang;
     devices.updateLinksAndQr(nextLang);

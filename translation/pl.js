@@ -376,11 +376,15 @@ const pl = {
   },
   host: {
     title: "Familiada — prowadzący",
+    swipeRevealDown: "Przesuń w dół, żeby odsłonić",
+    swipeCoverUp: "Przesuń w górę, żeby zasłonić",
+    swipeRevealRight: "Przesuń w prawo, żeby odsłonić",
+    swipeCoverLeft: "Przesuń w lewo, żeby zasłonić",
   },
   buzzer: {
-    title: "Familiada — buzzer",
-    btnA: "Buzzer A",
-    btnB: "Buzzer B",
+    title: "Familiada — przycisk",
+    btnA: "Przycisk A",
+    btnB: "Przycisk B",
   },
 };
 

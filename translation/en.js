@@ -376,6 +376,10 @@ const en = {
   },
   host: {
     title: "Familiada — host",
+    swipeRevealDown: "Swipe down to reveal",
+    swipeCoverUp: "Swipe up to cover",
+    swipeRevealRight: "Swipe right to reveal",
+    swipeCoverLeft: "Swipe left to cover",
   },
   buzzer: {
     title: "Familiada — buzzer",

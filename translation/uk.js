@@ -376,9 +376,13 @@ const uk = {
   },
   host: {
     title: "Familiada — ведучий",
+    swipeRevealDown: "Проведіть вниз, щоб відкрити",
+    swipeCoverUp: "Проведіть вгору, щоб закрити",
+    swipeRevealRight: "Проведіть вправо, щоб відкрити",
+    swipeCoverLeft: "Проведіть вліво, щоб закрити",
   },
   buzzer: {
-    title: "Familiada — buzzer",
+    title: "Familiada — кнопка",
     btnA: "Кнопка A",
     btnB: "Кнопка B",
   },
