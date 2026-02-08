@@ -29,17 +29,45 @@ const HOOK_SECRET_RAW = Deno.env.get("SEND_EMAIL_HOOK_SECRET") || "";
 const HOOK_SECRET = HOOK_SECRET_RAW.replace("v1,whsec_", "");
 const webhook = new Webhook(HOOK_SECRET);
 
+function json(data: unknown, status = 200): Response {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: { "Content-Type": "application/json; charset=utf-8" },
+  });
+}
+
+async function sendEmail(to: string, subject: string, html: string) {
+  const sgRes = await fetch("https://api.sendgrid.com/v3/mail/send", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${SENDGRID_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      personalizations: [{ to: [{ email: to }] }],
+      from: { email: "no-reply@familiada.online", name: "Familiada" },
+      subject,
+      content: [{ type: "text/html", value: html }],
+    }),
+  });
+
+  if (!sgRes.ok) {
+    const errTxt = await sgRes.text();
+    throw new Error(`SendGrid failed (${to}): ${errTxt}`);
+  }
+}
+
 serve(async (req) => {
   if (req.method !== "POST") {
-    return new Response("Method not allowed", { status: 405 });
+    return json({ ok: false, error: "Method not allowed" }, 405);
   }
 
   if (!SENDGRID_KEY) {
-    return new Response("Missing SENDGRID_API_KEY env", { status: 500 });
+    return json({ ok: false, error: "Missing SENDGRID_API_KEY env" }, 500);
   }
 
   if (!HOOK_SECRET) {
-    return new Response("Missing SEND_EMAIL_HOOK_SECRET env", { status: 500 });
+    return json({ ok: false, error: "Missing SEND_EMAIL_HOOK_SECRET env" }, 500);
   }
 
   const raw = await req.text();
@@ -55,12 +83,47 @@ serve(async (req) => {
       "webhook-signature": sig,
     }) as HookPayload;
   } catch (err) {
-    return new Response(`Invalid signature: ${String(err)}`, { status: 401 });
+    return json({ ok: false, error: `Invalid signature: ${String(err)}` }, 401);
   }
 
   try {
     const lang = pickLang(payload);
     const type = payload.email_data.email_action_type;
+    console.log("ACTION", payload.email_data.email_action_type);
+    console.log("user.email", payload.user.email);
+    console.log("user.email_new", payload.user.email_new);
+    console.log("has token_hash", !!payload.email_data.token_hash);
+    console.log("has token_hash_new", !!payload.email_data.token_hash_new);
+    console.log("email_data.old_email", (payload.email_data as { old_email?: string }).old_email);
+    console.log("email_data.new_email", (payload.email_data as { new_email?: string }).new_email);
+
+    if (type === "email_change") {
+      const currentEmail = payload.user.email;
+      const redirect = payload.email_data.redirect_to || "";
+      let targetEmail = "";
+      try {
+        const url = new URL(redirect);
+        targetEmail = (url.searchParams.get("to") || "").trim().toLowerCase();
+      } catch {
+        // ignore invalid URL
+      }
+      const tokenHash = payload.email_data.token_hash || "";
+      const tokenHashNew = payload.email_data.token_hash_new || "";
+      const subject = subjectFor("email_change", lang);
+      const linkCurrent =
+        `${PUBLIC_SITE_URL}/confirm.html?token_hash=${encodeURIComponent(tokenHashNew || tokenHash)}&type=email_change&lang=${lang}`;
+      const linkTarget =
+        `${PUBLIC_SITE_URL}/confirm.html?token_hash=${encodeURIComponent(tokenHash || tokenHashNew)}&type=email_change&lang=${lang}`;
+
+      if (currentEmail) {
+        await sendEmail(currentEmail, subject, renderEmailChange(lang, linkCurrent));
+      }
+      if (targetEmail && targetEmail !== currentEmail) {
+        await sendEmail(targetEmail, subject, renderEmailChange(lang, linkTarget));
+      }
+      return json({ ok: true });
+    }
+
     const actionLink = buildActionLink(payload, lang);
     const subject = subjectFor(type, lang);
     const html = renderHtml(type, lang, actionLink);
@@ -70,28 +133,11 @@ serve(async (req) => {
         ? payload.user.email_new || payload.user.email
         : payload.user.email;
 
-    const sgRes = await fetch("https://api.sendgrid.com/v3/mail/send", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${SENDGRID_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        personalizations: [{ to: [{ email: to }] }],
-        from: { email: "no-reply@familiada.online", name: "Familiada" },
-        subject,
-        content: [{ type: "text/html", value: html }],
-      }),
-    });
+    await sendEmail(to, subject, html);
 
-    if (!sgRes.ok) {
-      const errTxt = await sgRes.text();
-      return new Response(`SendGrid failed: ${errTxt}`, { status: 500 });
-    }
-
-    return new Response("ok", { status: 200 });
+    return json({ ok: true });
   } catch (err) {
-    return new Response(`Hook error: ${String(err)}`, { status: 500 });
+    return json({ ok: false, error: `Hook error: ${String(err)}` }, 500);
   }
 });
 
@@ -115,34 +161,32 @@ function pickLang(payload: HookPayload): EmailLang {
 
 function buildActionLink(payload: HookPayload, lang: EmailLang): string {
   const type = payload.email_data.email_action_type;
-  const tokenHash = payload.email_data.token_hash;
+  const tokenHash = payload.email_data.token_hash || "";
+  const tokenHashNew = payload.email_data.token_hash_new || "";
 
-  if (!tokenHash) {
-    throw new Error("Missing token_hash in email_data");
-  }
+  const mk = (page: "confirm.html" | "reset.html", th: string, t: string) => {
+    if (!th) throw new Error(`Missing token_hash for type=${type}`);
+    return `${PUBLIC_SITE_URL}/${page}?token_hash=${encodeURIComponent(th)}&type=${encodeURIComponent(t)}&lang=${lang}`;
+  };
 
-  if (type === "signup") {
-    return `${PUBLIC_SITE_URL}/confirm.html?token_hash=${encodeURIComponent(tokenHash)}&type=signup&lang=${lang}`;
-  }
+  if (type === "signup") return mk("confirm.html", tokenHash, "signup");
 
-  if (type === "recovery") {
-    return `${PUBLIC_SITE_URL}/reset.html?token_hash=${encodeURIComponent(tokenHash)}&type=recovery&lang=${lang}`;
-  }
+  if (type === "recovery") return mk("reset.html", tokenHash, "recovery");
 
-  if (type === "email_change_current" && payload.email_data.token_hash_new) {
-    return `${PUBLIC_SITE_URL}/confirm.html?token_hash=${encodeURIComponent(payload.email_data.token_hash_new)}&type=email_change&lang=${lang}`;
-  }
+  if (type === "email_change") return mk("confirm.html", tokenHash, "email_change");
 
-  if (type === "email_change_new") {
-    return `${PUBLIC_SITE_URL}/confirm.html?token_hash=${encodeURIComponent(tokenHash)}&type=email_change&lang=${lang}`;
-  }
+  if (type === "email_change_current") return mk("confirm.html", tokenHash, "email_change");
 
-  return `${PUBLIC_SITE_URL}/confirm.html?token_hash=${encodeURIComponent(tokenHash)}&type=${encodeURIComponent(type)}&lang=${lang}`;
+  if (type === "email_change_new") return mk("confirm.html", tokenHashNew || tokenHash, "email_change");
+
+  return mk("confirm.html", tokenHash, type);
 }
 
 function subjectFor(type: string, lang: EmailLang): string {
   const normalized =
-    type === "email_change_current" || type === "email_change_new" ? "email_change" : type;
+    type === "email_change_current" || type === "email_change_new" || type === "email_change"
+      ? "email_change"
+      : type;
 
   const map: Record<string, Record<"pl" | "en" | "uk", string>> = {
     signup: {
@@ -172,7 +216,7 @@ function renderHtml(type: string, lang: EmailLang, actionLink: string): string {
   if (type === "recovery") {
     return renderRecovery(lang, actionLink);
   }
-  if (type === "email_change_current" || type === "email_change_new") {
+  if (type === "email_change" || type === "email_change_current" || type === "email_change_new") {
     return renderEmailChange(lang, actionLink);
   }
   return renderSignup(lang, actionLink);
