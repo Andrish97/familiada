@@ -85,7 +85,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     back.style.display = "inline-flex";
     return;
   }
-
+  
   if (!code) {
     if (tokenHash && otpType) {
       try {

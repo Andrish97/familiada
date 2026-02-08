@@ -128,6 +128,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
     return;
   }
+  
   setStatus(t("index.statusLoggedOut"));
 
   window.addEventListener("i18n:lang", syncLanguage);
