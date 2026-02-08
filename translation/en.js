@@ -2730,6 +2730,7 @@ const en = {
       locked: "Locked",
       active: "Active",
       retry: "You can resend",
+      cooldown: "You can retry in {hours}h.",
       missing: "None",
     },
     shareLockedHint: "Voted — remove vote to unlock.",
@@ -2809,6 +2810,8 @@ const en = {
       autoNote: "Automatic message — please do not reply.",
     },
     pollReadyAlert: "Finish the game in My games",
+    resendCooldownAlert: "You can resend the invite in {hours}h.",
+    shareCooldownAlert: "You can invite again in {hours}h.",
   },
   logoEditor: {
     title: "Familiada — logo editor",
