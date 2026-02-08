@@ -351,6 +351,10 @@ html.showA2HS .a2hs {
     filter: brightness(1.08);
 }
 
+[hidden] {
+    display: none!important;
+}
+
 @media (display-mode:standalone) {
     .a2hs {
         display: none!important

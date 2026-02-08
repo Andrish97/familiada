@@ -1,0 +1,89 @@
+{
+  "game": {
+    "name": "DEMO — Закрите текстове опитування (результати)",
+    "type": "poll_text",
+    "status": "closed"
+  },
+  "questions": [
+    {
+      "text": "Яку тварину ти бачиш у зоопарку найчастіше?",
+      "answers": [
+        { "text": "Жирафа", "fixed_points": 50 },
+        { "text": "Бегемот", "fixed_points": 35 },
+        { "text": "Слон", "fixed_points": 15 }
+      ]
+    },
+    {
+      "text": "Що ти робиш зранку першим?",
+      "answers": [
+        { "text": "Мию зуби", "fixed_points": 40 },
+        { "text": "Одягаюся", "fixed_points": 40 },
+        { "text": "Кава", "fixed_points": 20 }
+      ]
+    },
+    {
+      "text": "Що найбільше заважає в подорожі?",
+      "answers": [
+        { "text": "Автобус", "fixed_points": 60 },
+        { "text": "Затор", "fixed_points": 35 },
+        { "text": "Замет", "fixed_points": 5 }
+      ]
+    },
+    {
+      "text": "Яке слово асоціюється у тебе з відпусткою?",
+      "answers": [
+        { "text": "Пляж", "fixed_points": 50 },
+        { "text": "Сонце", "fixed_points": 30 },
+        { "text": "Морозиво", "fixed_points": 20 }
+      ]
+    },
+    {
+      "text": "Що ти найчастіше їси на вечерю?",
+      "answers": [
+        { "text": "Сендвічі", "fixed_points": 45 },
+        { "text": "Піца", "fixed_points": 35 },
+        { "text": "Паста", "fixed_points": 20 }
+      ]
+    },
+    {
+      "text": "Що ти робиш, коли йде дощ?",
+      "answers": [
+        { "text": "Дивлюся фільм", "fixed_points": 50 },
+        { "text": "Книга", "fixed_points": 30 },
+        { "text": "Прогулянка", "fixed_points": 20 }
+      ]
+    },
+    {
+      "text": "Що ти любиш робити у вільний час?",
+      "answers": [
+        { "text": "Музика", "fixed_points": 40 },
+        { "text": "Ігри", "fixed_points": 35 },
+        { "text": "Спорт", "fixed_points": 25 }
+      ]
+    },
+    {
+      "text": "Яке місце в домі найважливіше?",
+      "answers": [
+        { "text": "Кухня", "fixed_points": 50 },
+        { "text": "Вітальня", "fixed_points": 30 },
+        { "text": "Ліжко", "fixed_points": 20 }
+      ]
+    },
+    {
+      "text": "Що тебе найбільше смішить?",
+      "answers": [
+        { "text": "Мем", "fixed_points": 45 },
+        { "text": "Жарти", "fixed_points": 30 },
+        { "text": "Діти", "fixed_points": 25 }
+      ]
+    },
+    {
+      "text": "Що ти береш на довгу прогулянку?",
+      "answers": [
+        { "text": "Воду", "fixed_points": 40 },
+        { "text": "Навушники", "fixed_points": 35 },
+        { "text": "Телефон", "fixed_points": 25 }
+      ]
+    }
+  ]
+}

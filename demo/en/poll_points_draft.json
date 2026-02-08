@@ -1,0 +1,40 @@
+{
+  "game": {
+    "name": "DEMO — Points poll draft",
+    "type": "poll_points"
+  },
+  "questions": [
+    {
+      "text": "Which meal do you eat most often during the day?",
+      "answers": [
+        { "text": "breakfast", "fixed_points": 0 },
+        { "text": "lunch", "fixed_points": 0 },
+        { "text": "dinner", "fixed_points": 0 }
+      ]
+    },
+    {
+      "text": "How do you most often spend your free time?",
+      "answers": [
+        { "text": "watch movies", "fixed_points": 0 },
+        { "text": "meet friends", "fixed_points": 0 },
+        { "text": "play games", "fixed_points": 0 }
+      ]
+    },
+    {
+      "text": "What improves your mood the most?",
+      "answers": [
+        { "text": "music", "fixed_points": 0 },
+        { "text": "food", "fixed_points": 0 },
+        { "text": "meeting loved ones", "fixed_points": 0 }
+      ]
+    },
+    {
+      "text": "What do you do right after work or school?",
+      "answers": [
+        { "text": "relax", "fixed_points": 0 },
+        { "text": "eat lunch", "fixed_points": 0 },
+        { "text": "study", "fixed_points": 0 }
+      ]
+    }
+  ]
+}

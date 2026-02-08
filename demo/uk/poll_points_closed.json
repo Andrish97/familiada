@@ -1,0 +1,99 @@
+{
+  "game": {
+    "name": "DEMO — Закрите опитування з балами (результати)",
+    "type": "poll_points",
+    "status": "closed"
+  },
+  "questions": [
+    {
+      "text": "Який смак морозива обираєш?",
+      "answers": [
+        { "text": "Ваніль", "fixed_points": 20 },
+        { "text": "Шоколад", "fixed_points": 35 },
+        { "text": "Полуниця", "fixed_points": 25 },
+        { "text": "Фісташка", "fixed_points": 20 }
+      ]
+    },
+    {
+      "text": "Яка активність на вихідні?",
+      "answers": [
+        { "text": "Кіно", "fixed_points": 30 },
+        { "text": "Прогулянка", "fixed_points": 25 },
+        { "text": "Зустріч з друзями", "fixed_points": 25 },
+        { "text": "Ігри", "fixed_points": 20 }
+      ]
+    },
+    {
+      "text": "Найкращий ранковий напій?",
+      "answers": [
+        { "text": "Кава", "fixed_points": 40 },
+        { "text": "Чай", "fixed_points": 25 },
+        { "text": "Вода", "fixed_points": 20 },
+        { "text": "Сік", "fixed_points": 15 }
+      ]
+    },
+    {
+      "text": "Куди б ти хотів поїхати?",
+      "answers": [
+        { "text": "Гори", "fixed_points": 25 },
+        { "text": "Море", "fixed_points": 35 },
+        { "text": "Місто", "fixed_points": 20 },
+        { "text": "Село", "fixed_points": 20 }
+      ]
+    },
+    {
+      "text": "Що обираєш на обід?",
+      "answers": [
+        { "text": "Піца", "fixed_points": 35 },
+        { "text": "Паста", "fixed_points": 25 },
+        { "text": "Суп", "fixed_points": 20 },
+        { "text": "Салат", "fixed_points": 20 }
+      ]
+    },
+    {
+      "text": "Улюблений спорт?",
+      "answers": [
+        { "text": "Футбол", "fixed_points": 30 },
+        { "text": "Баскетбол", "fixed_points": 20 },
+        { "text": "Біг", "fixed_points": 30 },
+        { "text": "Плавання", "fixed_points": 20 }
+      ]
+    },
+    {
+      "text": "Що віддаєш перевагу ввечері?",
+      "answers": [
+        { "text": "Фільм", "fixed_points": 30 },
+        { "text": "Серіал", "fixed_points": 30 },
+        { "text": "Книга", "fixed_points": 20 },
+        { "text": "Музика", "fixed_points": 20 }
+      ]
+    },
+    {
+      "text": "Найкраща пора року?",
+      "answers": [
+        { "text": "Весна", "fixed_points": 25 },
+        { "text": "Літо", "fixed_points": 35 },
+        { "text": "Осінь", "fixed_points": 20 },
+        { "text": "Зима", "fixed_points": 20 }
+      ]
+    },
+    {
+      "text": "Як проводиш вільний час?",
+      "answers": [
+        { "text": "Спорт", "fixed_points": 30 },
+        { "text": "Ігри", "fixed_points": 25 },
+        { "text": "Музика", "fixed_points": 25 },
+        { "text": "Готування", "fixed_points": 20 }
+      ]
+    },
+    {
+      "text": "Обери домашню тварину",
+      "answers": [
+        { "text": "Пес", "fixed_points": 35 },
+        { "text": "Кіт", "fixed_points": 35 },
+        { "text": "Рибки", "fixed_points": 15 },
+        { "text": "Хом'як", "fixed_points": 15 }
+      ]
+    }
+  ]
+}

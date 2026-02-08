@@ -7,7 +7,7 @@
   <meta property="og:title" content="Panel gry"/>
   <meta property="og:description" content="Panel gry"/>
   <meta property="og:type" content="website"/>
-  <title>Wyświetlacz jak w klasycznej Familiadzie</title>
+  <title data-i18n="display.title">Wyświetlacz jak w klasycznej Familiadzie</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
   <script type="module" src="./js/main.js"></script>
   <link rel="stylesheet" href="./styles.css" />
@@ -17,17 +17,17 @@
   <article style="display:none">
     <p>Panel gry</p>
   </article>
-  <button id="fsBtn" class="fs-btn" type="button" title="Pełny ekran">▢</button>
+  <button id="fsBtn" class="fs-btn" type="button" title="Pełny ekran" data-i18n-title="common.fullscreen">▢</button>
 
   <!-- TRYB QR -->
   <div id="qrScreen" class="qr-screen hidden" aria-hidden="true">
     <div class="qr-grid">
       <div class="qr-card">
-        <img id="qrHostImg" class="qr-img" alt="QR Prowadzący" />
+        <img id="qrHostImg" class="qr-img" alt="QR Prowadzący" data-i18n-alt="display.qrHostAlt"/>
         <div class="qr-label" data-i18n="display.qrHost">Prowadzący</div>
       </div>
       <div class="qr-card">
-        <img id="qrBuzzerImg" class="qr-img" alt="QR Przyciski" />
+        <img id="qrBuzzerImg" class="qr-img" alt="QR Przyciski" data-i18n-alt="display.qrBuzzerAlt"/>
         <div class="qr-label" data-i18n="display.qrBuzzer">Przyciski</div>
       </div>
     </div>

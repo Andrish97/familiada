@@ -1,10 +1,13 @@
 // js/pages/buzzer.js
+import { initI18n, setUiLang } from "../../translation/translation.js";
 import { sb } from "../core/supabase.js";
 import { rt } from "../core/realtime.js";
 
 const qs = new URLSearchParams(location.search);
 const gameId = qs.get("id");
 const key = qs.get("key");
+
+initI18n({ withSwitcher: true });
 
 const btnFS = document.getElementById("btnFS");
 const fsIco = document.getElementById("fsIco");
@@ -293,6 +296,12 @@ let ch = null;
 async function handleCommand(lineRaw) {
   const raw = String(lineRaw || "").trim();
   const up = raw.toUpperCase();
+
+  if (up.startsWith("LANG")) {
+    const lang = raw.slice("LANG".length).trim();
+    await setUiLang(lang, { persist: true, updateUrl: true, apply: true });
+    return;
+  }
 
   // ===== KOLORY (niezależne od stanu) =====
   if (up === "COLOR_RESET") {
