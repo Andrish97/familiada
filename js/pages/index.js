@@ -30,11 +30,26 @@ const nextTask = params.get("t");
 const nextSub = params.get("s");
 const setup = params.get("setup");
 
+function buildAuthRedirect(page) {
+  // page: "confirm.html" | "reset.html" (może być też "/confirm.html")
+  const p = String(page || "").trim();
+
+  // Wymuś ścieżkę absolutną w obrębie tego samego origin
+  const path = p.startsWith("http://") || p.startsWith("https://")
+    ? new URL(p).pathname
+    : (p.startsWith("/") ? p : `/${p}`);
+
+  const url = new URL(path, location.origin);
+  url.searchParams.set("lang", getUiLang());
+  return url.toString();
+}
+
 function buildNextUrl() {
-  const url = new URL(pollsUrl, location.href);
+  const url = new URL(pollsUrl.startsWith("/") ? pollsUrl : `/${pollsUrl}`, location.origin);
   if (nextTask) url.searchParams.set("t", nextTask);
   if (nextSub) url.searchParams.set("s", nextSub);
-  return withLangParam(url.toString());
+  url.searchParams.set("lang", getUiLang());
+  return url.toString();
 }
 
 function setErr(m = "") { err.textContent = m; }
@@ -151,7 +166,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
 
         setStatus(t("index.statusRegistering"));
-        const redirectTo = withLangParam(new URL(confirmUrl, location.href).toString());
+        const redirectTo = buildAuthRedirect(confirmUrl);
         await signUp(mail, pwd, redirectTo, null, getUiLang());
         setStatus(t("index.statusCheckEmail"));
       } else {
@@ -181,7 +196,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     try {
       setStatus(t("index.statusResetSending"));
-      const redirectTo = withLangParam(new URL(resetUrl, location.href).toString());
+      const redirectTo = buildAuthRedirect(resetUrl);
       await resetPassword(loginOrEmail, redirectTo, getUiLang());
       setStatus(t("index.statusResetSent"));
     } catch (e) {
