@@ -80,23 +80,18 @@ async function handleEmailSave() {
     if (!mail || !mail.includes("@")) throw new Error(t("account.errInvalidEmail"));
 
     const normalizedMail = mail.toLowerCase();
-    const confirmUrl = new URL("confirm.html", location.href);
-    confirmUrl.searchParams.set("to", normalizedMail);
-    const redirectTo = withLangParam(confirmUrl.toString());
     const language = getUiLang();
+
+    // ✅ emailRedirectTo MUSI być absolutny i nie może gubić query
+    const confirmUrl = new URL("/confirm.html", location.origin);
+    confirmUrl.searchParams.set("lang", language);
+    confirmUrl.searchParams.set("to", normalizedMail);
+
     const { data, error } = await sb().auth.updateUser(
       { email: normalizedMail, data: { language } },
-      { emailRedirectTo: redirectTo }
+      { emailRedirectTo: confirmUrl.toString() }
     );
     if (error) throw error;
-
-    if (data?.user?.email?.toLowerCase() === normalizedMail) {
-      const { error: profileError } = await sb()
-        .from("profiles")
-        .update({ email: normalizedMail })
-        .eq("id", data.user.id);
-      if (profileError) throw profileError;
-    }
 
     setStatus(t("account.statusEmailSaved"));
   } catch (e) {
