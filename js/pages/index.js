@@ -41,19 +41,6 @@ function setErr(m = "") { err.textContent = m; }
 function setStatus(m = "") { status.textContent = m; }
 function setUsernameErr(m = "") { if (usernameErr) usernameErr.textContent = m; }
 
-function getPendingEmailChange() {
-  try {
-    const raw = localStorage.getItem("pendingEmailChange");
-    return raw ? JSON.parse(raw) : null;
-  } catch {
-    return null;
-  }
-}
-
-function clearPendingEmailChange() {
-  localStorage.removeItem("pendingEmailChange");
-}
-
 function openUsernameSetup() {
   if (loginCard) loginCard.hidden = true;
   if (setupCard) setupCard.hidden = false;
@@ -149,12 +136,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     const pwd = pass.value;
 
     if (!loginOrEmail || !pwd) return setErr(t("index.errMissingLogin"));
-    if (loginOrEmail.includes("@")) {
-      const pending = getPendingEmailChange();
-      if (pending?.old && String(pending.old).toLowerCase() === loginOrEmail.toLowerCase()) {
-        return setErr(t("index.errPendingEmailChange"));
-      }
-    }
 
     try {
       if (mode === "register") {
@@ -176,7 +157,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       } else {
         setStatus(t("index.statusLoggingIn"));
         await signIn(loginOrEmail, pwd); // <-- może być username
-        clearPendingEmailChange();
         const authed = await getUser();
         await syncLanguage();
         if (!authed?.username) {
@@ -214,5 +194,27 @@ document.addEventListener("DOMContentLoaded", async () => {
   btnUsernameSave?.addEventListener("click", saveUsername);
   usernameFirst?.addEventListener("keydown", (e) => {
     if (e.key === "Enter") saveUsername();
+  });
+
+  email?.addEventListener("keydown", (e) => {
+    if (e.key !== "Enter") return;
+    e.preventDefault();
+    pass?.focus();
+  });
+
+  pass?.addEventListener("keydown", (e) => {
+    if (e.key !== "Enter") return;
+    e.preventDefault();
+    if (mode === "register") {
+      pass2?.focus();
+    } else {
+      btnPrimary?.click();
+    }
+  });
+
+  pass2?.addEventListener("keydown", (e) => {
+    if (e.key !== "Enter") return;
+    e.preventDefault();
+    btnPrimary?.click();
   });
 });
