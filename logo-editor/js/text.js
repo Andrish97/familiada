@@ -2,6 +2,8 @@
 // Tryb: TEXT (font_3x10) -> zapis GLYPH_30x10
 // Stała 1 kolumna przerwy miedzy glifami.
 
+import { t } from "../../translation/translation.js";
+
 export function initTextEditor(ctx) {
   const paneText = document.getElementById("paneText");
   const textValue = document.getElementById("textValue");
@@ -123,15 +125,23 @@ export function initTextEditor(ctx) {
     charsList.textContent = "␠" + keys.join("\u2009");
   }
 
+  function updateCharsToggleLabel(isOpen) {
+    if (!btnCharsToggle) return;
+    btnCharsToggle.textContent = isOpen
+      ? t("logoEditor.text.allowedCharsHide")
+      : t("logoEditor.text.allowedChars");
+  }
+
   function updateWarnings(compiled) {
     if (!textWarn || !textMeasure) return;
 
     const parts = [];
     if (compiled.invalid.length) {
-      parts.push(`Niedozwolone znaki: ${compiled.invalid.map(x => (x === " " ? "␠" : x)).join(" ")}`);
+      const chars = compiled.invalid.map(x => (x === " " ? "␠" : x)).join(" ");
+      parts.push(t("logoEditor.text.invalidChars", { chars }));
     }
     if (!compiled.fit) {
-      parts.push(`Napis się nie mieści: szerokość ${compiled.usedW}/30.`);
+      parts.push(t("logoEditor.text.tooWide", { width: compiled.usedW }));
     }
 
     if (parts.length) {
@@ -141,7 +151,10 @@ export function initTextEditor(ctx) {
       show(textWarn, false);
     }
 
-    textMeasure.textContent = `Szerokość: ${compiled.usedW}/30 (${compiled.fit ? "mieści się" : "nie mieści się"}).`;
+    textMeasure.textContent = t("logoEditor.text.widthStatus", {
+      width: compiled.usedW,
+      status: compiled.fit ? t("logoEditor.text.fits") : t("logoEditor.text.notFits")
+    });
   }
 
   function recompile() {
@@ -163,6 +176,11 @@ export function initTextEditor(ctx) {
     if (!el) return true;
     return getComputedStyle(el).display === "none";
   }
+
+  window.addEventListener("i18n:lang", () => {
+    updateCharsToggleLabel(!isHidden(charsInline));
+    if (lastCompiled) updateWarnings(lastCompiled);
+  });
   
   btnCharsToggle?.addEventListener("click", () => {
     // toggle ma sterować wrapperem, bo HTML ukrywa #charsInline (rodzic listy)
@@ -172,7 +190,7 @@ export function initTextEditor(ctx) {
     show(charsList, open);
   
     // opcjonalnie: zmiana etykiety przycisku
-    if (btnCharsToggle) btnCharsToggle.textContent = open ? "Ukryj" : "Dozwolone znaki";
+    updateCharsToggleLabel(open);
   });
 
 
@@ -186,7 +204,7 @@ export function initTextEditor(ctx) {
       renderAllowedCharsList();
       show(charsInline, false);
       show(charsList, false);
-      if (btnCharsToggle) btnCharsToggle.textContent = "Dozwolone znaki";
+      updateCharsToggleLabel(false);
 
       lastCompiled = null;
       ctx.clearDirty?.();
@@ -202,8 +220,8 @@ export function initTextEditor(ctx) {
       lastCompiled = compiled;
       updateWarnings(compiled);
 
-      if (compiled.invalid.length) return { ok: false, msg: "Popraw niedozwolone znaki." };
-      if (!compiled.fit) return { ok: false, msg: "Napis się nie mieści — skróć tekst." };
+      if (compiled.invalid.length) return { ok: false, msg: t("logoEditor.text.fixInvalidChars") };
+      if (!compiled.fit) return { ok: false, msg: t("logoEditor.text.fixTooWide") };
 
       return {
         ok: true,

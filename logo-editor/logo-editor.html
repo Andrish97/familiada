@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Familiada — edytor logo</title>
+  <title data-i18n="logoEditor.title">Familiada — edytor logo</title>
 
   <link rel="icon" href="../favicon.ico"/>
   <link rel="stylesheet" href="../css/base.css"/>
@@ -21,12 +21,7 @@
   <!-- Fabric.js (global: window.fabric) -->
   <script src="https://cdn.jsdelivr.net/npm/fabric@5.3.0/dist/fabric.min.js"></script>
 
-  <script type="module">
-    window.addEventListener("error", e => console.error("window error", e.error || e.message));
-    import { guardDesktopOnly } from "../js/core/device-guard.js";
-    guardDesktopOnly({ minWidth: 980, message: "Edytor logo działa tylko na komputerze (min. 980px)." });
-    await import("./js/main.js");
-  </script>
+  <script type="module" src="./js/main.js" defer></script>
 </head>
 
 <body class="builder-body logo-editor-body">
@@ -35,9 +30,9 @@
     <div class="brand" id="brandTitle">FAMILIADA</div>
     <div class="right">
       <!-- W LIST: ← Moje gry, W EDYTORZE: ✕ -->
-      <button class="btn" id="btnBack" type="button">← Moje gry</button>
+      <button class="btn" id="btnBack" type="button" data-i18n="logoEditor.topbar.backToGames">← Moje gry</button>
       <span class="who" id="who">—</span>
-      <button class="btn sm" id="btnLogout" type="button">Wyloguj</button>
+      <button class="btn sm" id="btnLogout" type="button" data-i18n="logoEditor.topbar.logout">Wyloguj</button>
     </div>
   </header>
 
@@ -49,14 +44,14 @@
     <section id="listShell">
       <div class="bar">
         <div>
-          <div class="title">Twoje logo</div>
-          <div class="hint" id="hint">Kliknij kafelek, żeby go zaznaczyć.</div>
+          <div class="title" data-i18n="logoEditor.list.title">Twoje logo</div>
+          <div class="hint" id="hint" data-i18n="logoEditor.list.hint">Kliknij kafelek, żeby go zaznaczyć.</div>
         </div>
 
         <div class="actions">
           <!-- tylko te dwa, jak ustaliłeś -->
-          <button class="btn sm" id="btnPreview" type="button" disabled>Podgląd</button>
-          <button class="btn sm gold" id="btnActivate" type="button" disabled>Aktywuj</button>
+          <button class="btn sm" id="btnPreview" type="button" disabled data-i18n="logoEditor.list.preview">Podgląd</button>
+          <button class="btn sm gold" id="btnActivate" type="button" disabled data-i18n="logoEditor.list.activate">Aktywuj</button>
         </div>
       </div>
 
@@ -69,8 +64,8 @@
           <div class="builder-bottom">
             <div class="builder-bottom-left"></div>
             <div class="builder-bottom-right">
-              <button class="btn sm" id="btnExport" type="button" disabled>Export</button>
-              <button class="btn sm" id="btnImport" type="button">Import</button>
+              <button class="btn sm" id="btnExport" type="button" disabled data-i18n="logoEditor.list.export">Export</button>
+              <button class="btn sm" id="btnImport" type="button" data-i18n="logoEditor.list.import">Import</button>
               <input id="inpImportLogoFile" type="file" accept="application/json,.json" style="display:none;" />
             </div>
           </div>
@@ -89,11 +84,11 @@
       <!-- cienki pasek pod auth bar: nazwa + zapisz -->
       <div class="editorLine">
         <div class="editorLineLeft">
-          <span class="etlLbl">Nazwa</span>
-          <input class="inp etlName" id="logoName" placeholder="Np. Moje logo" maxlength="80"/>
+          <span class="etlLbl" data-i18n="logoEditor.editor.nameLabel">Nazwa</span>
+          <input class="inp etlName" id="logoName" placeholder="Np. Moje logo" maxlength="80" data-i18n-placeholder="logoEditor.editor.namePlaceholder"/>
         </div>
         <div class="editorLineRight">
-          <button class="btn sm gold" id="btnCreate" type="button">Zapisz</button>
+          <button class="btn sm gold" id="btnCreate" type="button" data-i18n="logoEditor.editor.save">Zapisz</button>
         </div>
         <div class="editorLineMsg" id="mMsg"></div>
       </div>
@@ -105,8 +100,8 @@
 
           <!-- TEXT: input + dozwolone znaki -->
           <div class="toolRow" id="toolsText" style="display:none;">
-            <input class="inp toolGrow" id="textValue" placeholder="Np. FAMILIADA" maxlength="80"/>
-            <button class="btn sm" id="btnCharsToggle" type="button">Dozwolone znaki</button>
+            <input class="inp toolGrow" id="textValue" placeholder="Np. FAMILIADA" maxlength="80" data-i18n-placeholder="logoEditor.text.placeholder"/>
+            <button class="btn sm" id="btnCharsToggle" type="button" data-i18n="logoEditor.text.allowedChars">Dozwolone znaki</button>
           </div>
 
           <!-- TEXT: pod tym niskie pole z dozwolonymi znakami -->
@@ -125,7 +120,7 @@
             <!-- RZĄD 1 -->
             <div class="rtToolRow">
               <div class="rtGroup">
-                <div class="rtToolLbl">Czcionka</div>
+                <div class="rtToolLbl" data-i18n="logoEditor.textPix.font">Czcionka</div>
 
                 <!-- ukryty select (fallback / wsparcie w JS) -->
                 <select id="selRtFont" class="inp" style="display:none;"></select>
@@ -140,61 +135,61 @@
                     <div class="fontPickPanel">
                       <div class="fontPickSearch">
                         <input class="inp fontPickSearchInp" id="fontPickSearchInp" type="text"
-                               placeholder="Szukaj czcionki…" autocomplete="off" spellcheck="false" />
-                        <button class="btn sm fontPickSearchClear" id="fontPickSearchClear" type="button" title="Wyczyść">✕</button>
+                               placeholder="Szukaj czcionki…" autocomplete="off" spellcheck="false" data-i18n-placeholder="logoEditor.textPix.searchPlaceholder" />
+                        <button class="btn sm fontPickSearchClear" id="fontPickSearchClear" type="button" title="Wyczyść" data-i18n-title="logoEditor.textPix.searchClear">✕</button>
                       </div>
 
                       <div class="fontPickList" id="fontPickList"></div>
-                      <div class="fontPickEmpty" id="fontPickEmpty" hidden>Brak wyników</div>
+                      <div class="fontPickEmpty" id="fontPickEmpty" hidden data-i18n="logoEditor.textPix.emptyResults">Brak wyników</div>
                     </div>
                   </div>
                 </div>
               </div>
 
               <div class="rtGroup">
-                <div class="rtToolLbl">Rozmiar</div>
+                <div class="rtToolLbl" data-i18n="logoEditor.textPix.size">Rozmiar</div>
                 <input id="inpRtSize" class="inp" type="number" min="10" max="220" step="1" value="130"/>
               </div>
 
               <div class="rtGroup">
-                <div class="rtToolLbl">Interlinia</div>
+                <div class="rtToolLbl" data-i18n="logoEditor.textPix.lineHeight">Interlinia</div>
                 <input id="inpRtLine" class="inp" type="number" min="0.6" max="3.0" step="0.05" value="1"/>
               </div>
 
               <div class="rtGroup">
-                <div class="rtToolLbl">Odstęp</div>
+                <div class="rtToolLbl" data-i18n="logoEditor.textPix.letterSpacing">Odstęp</div>
                 <input id="inpRtLetter" class="inp" type="number" min="0" max="20" step="0.5" value="0"/>
               </div>
 
               <div class="rtGroup">
-                <div class="rtToolLbl">Góra</div>
+                <div class="rtToolLbl" data-i18n="logoEditor.textPix.paddingTop">Góra</div>
                 <input id="inpRtPadTop" class="inp" type="number" min="0" max="80" step="1" value="0"/>
               </div>
 
               <div class="rtGroup">
-                <div class="rtToolLbl">Dół</div>
+                <div class="rtToolLbl" data-i18n="logoEditor.textPix.paddingBottom">Dół</div>
                 <input id="inpRtPadBot" class="inp" type="number" min="0" max="80" step="1" value="0"/>
               </div>
 
               <div class="rtGroup rtBtns">
-                <button class="btn sm" id="btnRtBold" type="button" title="Pogrubienie">B</button>
-                <button class="btn sm" id="btnRtItalic" type="button" title="Kursywa">I</button>
-                <button class="btn sm" id="btnRtUnderline" type="button" title="Podkreślenie">U</button>
+                <button class="btn sm" id="btnRtBold" type="button" title="Pogrubienie" data-i18n-title="logoEditor.textPix.boldTitle">B</button>
+                <button class="btn sm" id="btnRtItalic" type="button" title="Kursywa" data-i18n-title="logoEditor.textPix.italicTitle">I</button>
+                <button class="btn sm" id="btnRtUnderline" type="button" title="Podkreślenie" data-i18n-title="logoEditor.textPix.underlineTitle">U</button>
               </div>
 
               <div class="rtGroup">
-                <button class="btn sm" id="btnRtAlignCycle" type="button" title="Wyrównanie">⇆</button>
+                <button class="btn sm" id="btnRtAlignCycle" type="button" title="Wyrównanie" data-i18n-title="logoEditor.textPix.alignTitle">⇆</button>
               </div>
 
               <div class="rtGroup">
                 <label class="chk">
                   <input type="checkbox" id="chkInvert"/>
-                  <span>Odwróć (białe tło)</span>
+                  <span data-i18n="logoEditor.textPix.invert">Odwróć (białe tło)</span>
                 </label>
               </div>
 
               <div class="rtGroup">
-                <button class="btn sm" id="btnPixPreview" type="button">Podgląd</button>
+                <button class="btn sm" id="btnPixPreview" type="button" data-i18n="logoEditor.textPix.preview">Podgląd</button>
               </div>
             </div>
           </div>
@@ -241,55 +236,55 @@
 
           <!-- IMAGE: toolbar tylko przyciski + folderek -->
           <div class="toolRow" id="toolsImage" style="display:none;">
-            <label class="fileBtn" title="Wybierz obraz">
+            <label class="fileBtn" title="Wybierz obraz" data-i18n-title="logoEditor.image.pickImage">
               <input type="file" id="imgFile" accept="image/*" hidden />
-              Wybierz obraz 📁
+              <span data-i18n="logoEditor.image.pickImage">Wybierz obraz 📁</span>
             </label>
 
             <div class="toolSep"></div>
 
-            <button class="btn sm imgSetBtn" type="button" data-panel="bright">Jasność</button>
-            <button class="btn sm imgSetBtn" type="button" data-panel="contrast">Kontrast</button>
-            <button class="btn sm imgSetBtn" type="button" data-panel="gamma">Gamma</button>
-            <button class="btn sm imgSetBtn" type="button" data-panel="black">Czerń</button>
-            <button class="btn sm imgSetBtn" type="button" data-panel="white">Biel</button>
-            <button class="btn sm imgSetBtn" type="button" data-panel="dither">Dither</button>
+            <button class="btn sm imgSetBtn" type="button" data-panel="bright" data-i18n="logoEditor.image.brightness">Jasność</button>
+            <button class="btn sm imgSetBtn" type="button" data-panel="contrast" data-i18n="logoEditor.image.contrast">Kontrast</button>
+            <button class="btn sm imgSetBtn" type="button" data-panel="gamma" data-i18n="logoEditor.image.gamma">Gamma</button>
+            <button class="btn sm imgSetBtn" type="button" data-panel="black" data-i18n="logoEditor.image.black">Czerń</button>
+            <button class="btn sm imgSetBtn" type="button" data-panel="white" data-i18n="logoEditor.image.white">Biel</button>
+            <button class="btn sm imgSetBtn" type="button" data-panel="dither" data-i18n="logoEditor.image.dither">Dither</button>
 
             <div class="toolSep"></div>
 
-            <label class="chk"><input id="chkImgInvert" type="checkbox"/> Invert</label>
-            <button class="btn sm" id="btnImgResetDefault" type="button">Reset</button>
+            <label class="chk"><input id="chkImgInvert" type="checkbox"/> <span data-i18n="logoEditor.image.invert">Invert</span></label>
+            <button class="btn sm" id="btnImgResetDefault" type="button" data-i18n="logoEditor.image.reset">Reset</button>
           </div>
 
           <!-- IMAGE: pojedyncze rozwijane ustawienie (accordion) -->
           <div class="imgPanels" id="imgPanels" style="display:none;">
             <div class="imgPanel" data-panel="bright">
-              <div class="imgPanelTitle">Jasność <span class="imgPanelVal" id="valImgBright">0</span></div>
+              <div class="imgPanelTitle"><span data-i18n="logoEditor.image.brightness">Jasność</span> <span class="imgPanelVal" id="valImgBright">0</span></div>
               <input class="rng v" id="rngImgBright" type="range" min="-100" max="100" value="0"/>
             </div>
 
             <div class="imgPanel" data-panel="contrast">
-              <div class="imgPanelTitle">Kontrast <span class="imgPanelVal" id="valImgContrast">0</span></div>
+              <div class="imgPanelTitle"><span data-i18n="logoEditor.image.contrast">Kontrast</span> <span class="imgPanelVal" id="valImgContrast">0</span></div>
               <input class="rng v" id="rngImgContrast" type="range" min="-100" max="100" value="0"/>
             </div>
 
             <div class="imgPanel" data-panel="gamma">
-              <div class="imgPanelTitle">Gamma <span class="imgPanelVal" id="valImgGamma">1.00</span></div>
+              <div class="imgPanelTitle"><span data-i18n="logoEditor.image.gamma">Gamma</span> <span class="imgPanelVal" id="valImgGamma">1.00</span></div>
               <input class="rng v" id="rngImgGamma" type="range" min="0.20" max="3.00" step="0.01" value="1.00"/>
             </div>
 
             <div class="imgPanel" data-panel="black">
-              <div class="imgPanelTitle">Czerń <span class="imgPanelVal" id="valImgBlack">0</span></div>
+              <div class="imgPanelTitle"><span data-i18n="logoEditor.image.black">Czerń</span> <span class="imgPanelVal" id="valImgBlack">0</span></div>
               <input class="rng v" id="rngImgBlack" type="range" min="0" max="255" value="0"/>
             </div>
 
             <div class="imgPanel" data-panel="white">
-              <div class="imgPanelTitle">Biel <span class="imgPanelVal" id="valImgWhite">255</span></div>
+              <div class="imgPanelTitle"><span data-i18n="logoEditor.image.white">Biel</span> <span class="imgPanelVal" id="valImgWhite">255</span></div>
               <input class="rng v" id="rngImgWhite" type="range" min="0" max="255" value="255"/>
             </div>
 
             <div class="imgPanel" data-panel="dither">
-              <div class="imgPanelTitle">Dither <span class="imgPanelVal" id="valImgDitherAmt">0</span></div>
+              <div class="imgPanelTitle"><span data-i18n="logoEditor.image.dither">Dither</span> <span class="imgPanelVal" id="valImgDitherAmt">0</span></div>
               <input class="rng v" id="rngImgDitherAmt" type="range" min="0" max="100" value="0"/>
             </div>
           </div>
@@ -312,7 +307,7 @@
             <!-- STAGE w stałym ratio 26:11 -->
             <div class="rtStage">
               <div class="rtRatio">
-                <div id="rtEditor" class="rtEditor" contenteditable="true" spellcheck="false" data-placeholder="Wpisz tekst…"></div>
+                <div id="rtEditor" class="rtEditor" contenteditable="true" spellcheck="false" data-placeholder="Wpisz tekst…" data-i18n-placeholder="logoEditor.textPix.placeholder"></div>
               </div>
             </div>
             
@@ -326,7 +321,7 @@
                 <canvas id="drawStage" width="1" height="1"></canvas>
                       <div class="drawPop" id="drawPop" style="display:none;">
                       <div class="drawPopHead">
-                        <div class="drawPopTitle" id="drawPopTitle">Ustawienia</div>
+                        <div class="drawPopTitle" id="drawPopTitle" data-i18n="logoEditor.draw.settingsTitle">Ustawienia</div>
                         <button class="btn sm" id="drawPopClose" type="button">✕</button>
                       </div>
               
@@ -342,11 +337,11 @@
             <div class="imgTopGrid">
 
               <div class="imgCard">
-                <div class="imgCardTitle">Obszar wyświetlacza</div>
+                <div class="imgCardTitle" data-i18n="logoEditor.image.displayArea">Obszar wyświetlacza</div>
                 <div class="imgStage" id="imgStage">
                   <img id="imgPreview" alt="" />
                   <div class="cropFrame" id="cropFrame">
-                    <div class="cropCaption">Obszar wyświetlacza</div>
+                    <div class="cropCaption" data-i18n="logoEditor.image.displayArea">Obszar wyświetlacza</div>
                     <div class="cropHandle tl" data-h="tl"></div>
                     <div class="cropHandle tr" data-h="tr"></div>
                     <div class="cropHandle bl" data-h="bl"></div>
@@ -356,11 +351,11 @@
               </div>
 
               <div class="imgCard">
-                <div class="imgCardTitle">Podgląd jak na wyświetlaczu</div>
+                <div class="imgCardTitle" data-i18n="logoEditor.image.previewTitle">Podgląd jak na wyświetlaczu</div>
                 <div class="imgPrevWrap">
                   <canvas id="imgBigPreview" width="900" height="380"></canvas>
                 </div>
-                <div class="imgPrevHint">Kliknij podgląd, żeby otworzyć pełny ekran.</div>
+                <div class="imgPrevHint" data-i18n="logoEditor.image.previewHint">Kliknij podgląd, żeby otworzyć pełny ekran.</div>
               </div>
 
             </div>
@@ -378,35 +373,35 @@
   <!-- Modal: wybór trybu (ZOSTAJE) -->
   <div class="overlay" id="createOverlay" style="display:none;">
     <div class="modal">
-      <div class="mTitle">Nowe logo</div>
-      <div class="mSub">Wybierz tryb tworzenia.</div>
+      <div class="mTitle" data-i18n="logoEditor.create.title">Nowe logo</div>
+      <div class="mSub" data-i18n="logoEditor.create.subtitle">Wybierz tryb tworzenia.</div>
 
       <div class="mSection" id="modePick">
         <div class="mGrid">
           <button class="mTile" id="pickText" type="button">
-            <div class="mTileTitle">Napis</div>
-            <div class="mTileSub">Font jak w klasycznym logo Familiady</div>
+            <div class="mTileTitle" data-i18n="logoEditor.create.textTitle">Napis</div>
+            <div class="mTileSub" data-i18n="logoEditor.create.textSubtitle">Font jak w klasycznym logo Familiady</div>
           </button>
 
           <button class="mTile" id="pickTextPix" type="button">
-            <div class="mTileTitle">Tekst</div>
-            <div class="mTileSub">Tekst jak w edytorze tekstu</div>
+            <div class="mTileTitle" data-i18n="logoEditor.create.textPixTitle">Tekst</div>
+            <div class="mTileSub" data-i18n="logoEditor.create.textPixSubtitle">Tekst jak w edytorze tekstu</div>
           </button>
 
           <button class="mTile" id="pickDraw" type="button">
-            <div class="mTileTitle">Rysunek</div>
-            <div class="mTileSub">Można rysować dowolnie</div>
+            <div class="mTileTitle" data-i18n="logoEditor.create.drawTitle">Rysunek</div>
+            <div class="mTileSub" data-i18n="logoEditor.create.drawSubtitle">Można rysować dowolnie</div>
           </button>
 
           <button class="mTile" id="pickImage" type="button">
-            <div class="mTileTitle">Obraz</div>
-            <div class="mTileSub">Import obrazów użytkownika</div>
+            <div class="mTileTitle" data-i18n="logoEditor.create.imageTitle">Obraz</div>
+            <div class="mTileSub" data-i18n="logoEditor.create.imageSubtitle">Import obrazów użytkownika</div>
           </button>
         </div>
       </div>
 
       <div class="importRow" style="margin-top:14px;">
-        <button class="btn sm" id="btnPickCancel" type="button">Zamknij</button>
+        <button class="btn sm" id="btnPickCancel" type="button" data-i18n="logoEditor.common.close">Zamknij</button>
       </div>
     </div>
   </div>
@@ -414,13 +409,13 @@
   <!-- Fullscreen preview (ZOSTAJE) -->
   <div class="overlay" id="previewOverlay" style="display:none;">
     <div class="modal bigModal">
-      <div class="mTitle">Podgląd</div>
-      <div class="mSub">Tak będzie wyglądać logo na wyświetlaczu</div>
+      <div class="mTitle" data-i18n="logoEditor.preview.title">Podgląd</div>
+      <div class="mSub" data-i18n="logoEditor.preview.subtitle">Tak będzie wyglądać logo na wyświetlaczu</div>
       <div class="bigModalCanvas">
         <canvas id="bigPreviewFull" width="1600" height="700"></canvas>
       </div>
       <div class="importRow" style="margin-top:14px;">
-        <button class="btn sm" id="btnPreviewClose" type="button">Zamknij</button>
+        <button class="btn sm" id="btnPreviewClose" type="button" data-i18n="logoEditor.common.close">Zamknij</button>
       </div>
     </div>
   </div>
@@ -428,8 +423,8 @@
   <!-- PROGRES: IMPORT LOGO (blokujący) -->
   <div class="overlay" id="logoImportOverlay" style="display:none;">
     <div class="modal" style="width:min(640px,94vw)">
-      <div class="mTitle">IMPORT…</div>
-      <div class="mSub" id="logoImportSub">Nie zamykaj strony. Trwa import.</div>
+      <div class="mTitle" data-i18n="logoEditor.import.title">IMPORT…</div>
+      <div class="mSub" id="logoImportSub" data-i18n="logoEditor.import.subtitle">Nie zamykaj strony. Trwa import.</div>
 
       <div style="margin-top:12px;display:grid;gap:10px">
         <div class="importRow" style="align-items:center">
@@ -449,8 +444,8 @@
   <!-- PROGRES: EXPORT LOGO (blokujący) -->
   <div class="overlay" id="logoExportOverlay" style="display:none;">
     <div class="modal" style="width:min(640px,94vw)">
-      <div class="mTitle">EXPORT…</div>
-      <div class="mSub" id="logoExportSub">Nie zamykaj strony. Trwa przygotowanie pliku.</div>
+      <div class="mTitle" data-i18n="logoEditor.export.title">EXPORT…</div>
+      <div class="mSub" id="logoExportSub" data-i18n="logoEditor.export.subtitle">Nie zamykaj strony. Trwa przygotowanie pliku.</div>
 
       <div style="margin-top:12px;display:grid;gap:10px">
         <div class="importRow" style="align-items:center">

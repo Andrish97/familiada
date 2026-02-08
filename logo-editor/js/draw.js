@@ -12,6 +12,8 @@
 // - kursor: overlay (PS-like): pędzel = kółko, gumka = kwadrat, figury = crosshair
 // - skróty: PS-like + (Space=Pan temp, Ctrl/Cmd=Select temp, Shift idealne kształty, strzałki przesuwają)
 
+import { t } from "../../translation/translation.js";
+
 export function initDrawEditor(ctx) {
   const TYPE_PIX = "PIX_150x70";
 
@@ -87,17 +89,23 @@ export function initDrawEditor(ctx) {
       </svg>
     `,
   };
+
+  function getColorLabel(color) {
+    return color === "BLACK"
+      ? t("logoEditor.draw.colors.black")
+      : t("logoEditor.draw.colors.white");
+  }
   
   function syncDynamicIcons() {
     // fg / tColor
     if (tColor) {
       tColor.innerHTML = ICON_FG[fg] || ICON_FG.BLACK;
-      tColor.setAttribute("aria-label", `Kolor obramowania: ${fg === "BLACK" ? "czarny" : "biały"}`);
+      tColor.setAttribute("aria-label", t("logoEditor.draw.aria.strokeColor", { color: getColorLabel(fg) }));
     }
     // bg / tBg
     if (tBg) {
       tBg.innerHTML = ICON_BG[bg] || ICON_BG.BLACK;
-      tBg.setAttribute("aria-label", `Tło sceny: ${bg === "BLACK" ? "czarne" : "białe"}`);
+      tBg.setAttribute("aria-label", t("logoEditor.draw.aria.backgroundColor", { color: getColorLabel(bg) }));
     }
   }
 
@@ -282,35 +290,47 @@ export function initDrawEditor(ctx) {
     el.setAttribute("data-tip", txt);
   }
 
-  // Select / Pan
-  setTip(tSelect, tip2("Wskaźnik (zaznacz / przesuń)", "Ctrl (przytrzymaj)", "⌘ (przytrzymaj)"));
-  setTip(tPan,    "Ręka (przesuwanie)\nSpace (przytrzymaj)");
+  function updateTooltips() {
+    // Select / Pan
+    setTip(tSelect, tip2(t("logoEditor.draw.tooltips.select"), "Ctrl (przytrzymaj)", "⌘ (przytrzymaj)"));
+    setTip(tPan,    t("logoEditor.draw.tooltips.pan"));
 
-  // Zoom
-  setTip(tZoomIn,  tip2("Powiększ", "Ctrl + +", "⌘+"));
-  setTip(tZoomOut, tip2("Pomniejsz", "Ctrl + -", "⌘-"));
+    // Zoom
+    setTip(tZoomIn,  tip2(t("logoEditor.draw.tooltips.zoomIn"), "Ctrl + +", "⌘+"));
+    setTip(tZoomOut, tip2(t("logoEditor.draw.tooltips.zoomOut"), "Ctrl + -", "⌘-"));
 
-  // Kolor / tło
-  setTip(tColor, "Kolor narzędzia (obramowania)");
-  setTip(tBg,    "Tło sceny (czarne/białe)");
+    // Kolor / tło
+    setTip(tColor, t("logoEditor.draw.tooltips.color"));
+    setTip(tBg,    t("logoEditor.draw.tooltips.background"));
 
-  // Narzędzia
-  setTip(tBrush,   "Pędzel\nB");
-  setTip(tEraser,  "Gumka\nE");
-  setTip(tLine,    "Linia\nL");
-  setTip(tRect,    "Prostokąt\nR");
-  setTip(tEllipse, "Elipsa\nO");
-  setTip(tPoly,    "Wielokąt\nP");
+    // Narzędzia
+    setTip(tBrush,   t("logoEditor.draw.tooltips.brush"));
+    setTip(tEraser,  t("logoEditor.draw.tooltips.eraser"));
+    setTip(tLine,    t("logoEditor.draw.tooltips.line"));
+    setTip(tRect,    t("logoEditor.draw.tooltips.rect"));
+    setTip(tEllipse, t("logoEditor.draw.tooltips.ellipse"));
+    setTip(tPoly,    t("logoEditor.draw.tooltips.poly"));
 
-  // Historia
-  setTip(tUndo, tip2("Cofnij", "Ctrl+Z", "⌘Z"));
-  setTip(tRedo, tip2("Ponów", "Ctrl+Shift+Z (lub Ctrl+Y)", "⌘⇧Z"));
+    // Historia
+    setTip(tUndo, tip2(t("logoEditor.draw.tooltips.undo"), "Ctrl+Z", "⌘Z"));
+    setTip(tRedo, tip2(t("logoEditor.draw.tooltips.redo"), "Ctrl+Shift+Z (lub Ctrl+Y)", "⌘⇧Z"));
 
-  // Akcje
-  setTip(tSettings, "Ustawienia narzędzia");
-  setTip(tPolyDone, "Zakończ wielokąt\nEnter / dwuklik");
-  setTip(tClear,    "Wyczyść");
-  setTip(tEye,      "Podgląd");
+    // Akcje
+    setTip(tSettings, t("logoEditor.draw.tooltips.settings"));
+    setTip(tPolyDone, t("logoEditor.draw.tooltips.polyDone"));
+    setTip(tClear,    t("logoEditor.draw.tooltips.clear"));
+    setTip(tEye,      t("logoEditor.draw.tooltips.preview"));
+  }
+
+  updateTooltips();
+  window.addEventListener("i18n:lang", () => {
+    updateTooltips();
+    syncDynamicIcons();
+    if (drawPop && !drawPop.hidden) {
+      drawPopTitle.textContent = t("logoEditor.draw.settingsTitle", { tool: toolLabel(tool) });
+      renderSettingsModal();
+    }
+  });
 
   // =========================================================
   // Consts / helpers
@@ -334,7 +354,7 @@ export function initDrawEditor(ctx) {
 
   function requireFabric() {
     const f = window.fabric;
-    if (!f) throw new Error("Brak Fabric.js (script nie wczytany).");
+    if (!f) throw new Error(t("logoEditor.draw.errors.missingFabric"));
     return f;
   }
 
@@ -1408,14 +1428,14 @@ export function initDrawEditor(ctx) {
     return t === TOOL.BRUSH || t === TOOL.LINE || t === TOOL.RECT || t === TOOL.ELLIPSE || t === TOOL.POLY;
   }
 
-  function toolLabel(t) {
-    return t === TOOL.BRUSH ? "Pędzel" :
-           t === TOOL.ERASER ? "Gumka" :
-           t === TOOL.LINE ? "Linia" :
-           t === TOOL.RECT ? "Prostokąt" :
-           t === TOOL.ELLIPSE ? "Elipsa" :
-           t === TOOL.POLY ? "Wielokąt" :
-           t === TOOL.PAN ? "Ręka" : "Wskaźnik";
+  function toolLabel(tool) {
+    return tool === TOOL.BRUSH ? t("logoEditor.draw.tools.brush") :
+           tool === TOOL.ERASER ? t("logoEditor.draw.tools.eraser") :
+           tool === TOOL.LINE ? t("logoEditor.draw.tools.line") :
+           tool === TOOL.RECT ? t("logoEditor.draw.tools.rect") :
+           tool === TOOL.ELLIPSE ? t("logoEditor.draw.tools.ellipse") :
+           tool === TOOL.POLY ? t("logoEditor.draw.tools.poly") :
+           tool === TOOL.PAN ? t("logoEditor.draw.tools.pan") : t("logoEditor.draw.tools.select");
   }
 
   function renderSettingsModal() {
@@ -1426,7 +1446,7 @@ export function initDrawEditor(ctx) {
       const p = document.createElement("div");
       p.style.opacity = ".85";
       p.style.fontSize = "13px";
-      p.textContent = "To narzędzie nie ma ustawień.";
+      p.textContent = t("logoEditor.draw.noSettings");
       drawPopBody.appendChild(p);
       return;
     }
@@ -1438,7 +1458,7 @@ export function initDrawEditor(ctx) {
       const row = document.createElement("label");
       row.className = "popRow";
       row.innerHTML = `
-        <span>Grubość</span>
+        <span>${t("logoEditor.draw.stroke")}</span>
         <input class="inp" id="popStroke" type="number" min="1" max="80" step="1" value="${Number(st.stroke || 6)}">
       `;
       drawPopBody.appendChild(row);
@@ -1453,7 +1473,7 @@ export function initDrawEditor(ctx) {
       const row = document.createElement("label");
       row.className = "popRow";
       row.innerHTML = `
-        <span>Wypełnij</span>
+        <span>${t("logoEditor.draw.fill")}</span>
         <input id="popFill" type="checkbox" ${enabled ? "checked" : ""}>
       `;
       drawPopBody.appendChild(row);
@@ -1461,10 +1481,10 @@ export function initDrawEditor(ctx) {
       const row2 = document.createElement("div");
       row2.className = "popRow";
       row2.innerHTML = `
-        <span>Kolor wypełnienia</span>
+        <span>${t("logoEditor.draw.fillColor")}</span>
         <select class="inp" id="popFillColor" ${enabled ? "" : "disabled"}>
-          <option value="WHITE" ${fc === "WHITE" ? "selected" : ""}>Biały</option>
-          <option value="BLACK" ${fc === "BLACK" ? "selected" : ""}>Czarny</option>
+          <option value="WHITE" ${fc === "WHITE" ? "selected" : ""}>${t("logoEditor.draw.colors.white")}</option>
+          <option value="BLACK" ${fc === "BLACK" ? "selected" : ""}>${t("logoEditor.draw.colors.black")}</option>
         </select>
       `;
       drawPopBody.appendChild(row2);
@@ -1499,7 +1519,7 @@ export function initDrawEditor(ctx) {
 
   function openSettingsModal() {
     if (!drawPop) return;
-    drawPopTitle.textContent = `Ustawienia — ${toolLabel(tool)}`;
+    drawPopTitle.textContent = t("logoEditor.draw.settingsTitle", { tool: toolLabel(tool) });
     renderSettingsModal();
     show(drawPop, true);
   }
@@ -2096,7 +2116,7 @@ export function initDrawEditor(ctx) {
       if (ctx.getMode?.() !== "DRAW") return;
       if (!fabricCanvas) return;
 
-      const ok = confirm("Wyczyścić wszystko?");
+      const ok = confirm(t("logoEditor.draw.confirmClear"));
       if (!ok) return;
 
       clearPolyDraft();
