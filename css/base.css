@@ -57,40 +57,53 @@ body {
 }
 
 @media (max-width:980px){
-
-  /* === TOPBAR jako grid === */
+  /* układ: BRAND (100%) + 2 kolumny pod spodem */
   .topbar{
     display: grid;
     grid-template-columns: 1fr 1fr;
     grid-template-rows: auto auto;
-    gap: 10px;
-    align-items: start; /* 🔑 od góry */
+    align-items: start; /* 🔑 elementy od góry, nie na środek */
   }
 
-  /* === BRAND / TITLE — pełna szerokość, pierwszy wiersz === */
+  /* BRAND / TITLE — pełna szerokość, osobna linia */
   .topbar-left .brand,
   .topbar-left .topbar-title{
     grid-column: 1 / -1;
-    width: 100%;
     text-align: center;
   }
 
-  /* === LEWA KOLUMNA === */
+  /* lewa i prawa kolumna */
   .topbar-left{
-    display: grid;
-    grid-auto-rows: min-content; /* 🔑 równe „kroki” */
-    gap: 10px;
-    align-content: start;        /* 🔑 od góry */
+    grid-column: 1;
+    display: flex;
+    flex-wrap: wrap;          /* 🔑 kilka w jednej linii */
+    justify-content: flex-start;
+    align-items: flex-start;
+    gap: 8px;
   }
 
-  /* === PRAWA KOLUMNA === */
   .topbar-right{
-    display: grid;
-    grid-auto-rows: min-content; /* 🔑 ten sam rytm */
-    gap: 10px;
-    align-content: start;        /* 🔑 od góry */
-    justify-items: end;          /* przyklejone do prawej */
-    margin-left: 0;
+    grid-column: 2;
+    display: flex;
+    flex-wrap: wrap;          /* 🔑 kilka w jednej linii */
+    justify-content: flex-end;
+    align-items: flex-start;
+    gap: 8px;
+    margin-left: 0;           /* wyłączamy desktopowe odpychanie */
+  }
+
+  /* 🔒 blokada rozciągania elementów */
+  .topbar .btn,
+  .topbar .inp,
+  .topbar .who{
+    width: auto;
+    max-width: 100%;
+    justify-self: auto;
+  }
+
+  /* jeśli gdzieś istnieje .btn.full */
+  .topbar .btn.full{
+    width: auto;
   }
 }
 
