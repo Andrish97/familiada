@@ -88,6 +88,8 @@ const pl = {
     statusSavingUsername: "Zapisuję nazwę…",
     errUsernameTaken: "Ta nazwa użytkownika jest już zajęta.",
     errNoSession: "Brak aktywnej sesji.",
+    resetCooldown: "Ponowna wysyłka możliwa za {time}.",
+    errResetCooldown: "Link już został wysłany. Spróbuj ponownie za {time}.",
   },
   confirm: {
     title: "Familiada — potwierdzenie konta",
