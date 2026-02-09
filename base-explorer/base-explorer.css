@@ -25,24 +25,28 @@ body,html {
     height: 100%
 }
 
-.topbar .topbar-left,.topbar .topbar-right {
-    display: flex;
-    align-items: center;
-    gap: 12px
+.topbar-title{
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
 }
 
-.topbar .topbar-right {
-    gap: 10px
+.topbar-title .title{
+  font-weight: 700;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.topbar .topbar-title .title {
-    font-weight: 700
-}
-
-.topbar .topbar-title .subtitle {
-    opacity: .75;
-    font-size: 12px;
-    margin-top: 2px
+.topbar-title .subtitle{
+  opacity: .75;
+  font-size: 12px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .explorer {
