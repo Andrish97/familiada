@@ -57,51 +57,60 @@ body {
 }
 
 @media (max-width:980px){
-  /* układ: BRAND (100%) + 2 kolumny pod spodem */
+
+  /* TOPBAR = GRID: 1 wiersz (brand/title), 2 kolumny (left/right) */
   .topbar{
     display: grid;
     grid-template-columns: 1fr 1fr;
     grid-template-rows: auto auto;
-    align-items: start; /* 🔑 elementy od góry, nie na środek */
+    align-items: start; /* od góry, nie w pionie centrowane */
+    gap: 10px;
   }
 
-  /* BRAND / TITLE — pełna szerokość, osobna linia */
-  .topbar-left .brand,
-  .topbar-left .topbar-title{
-    grid-column: 1 / -1;
-    text-align: center;
-  }
-
-  /* lewa i prawa kolumna */
-  .topbar-left{
-    grid-column: 1;
-    display: flex;
-    flex-wrap: wrap;          /* 🔑 kilka w jednej linii */
-    justify-content: flex-start;
-    align-items: flex-start;
-    gap: 8px;
-  }
-
+  /* KLUCZ: spłaszczamy wrappery - dzieci idą bezpośrednio do grida topbara */
+  .topbar-left,
   .topbar-right{
-    grid-column: 2;
-    display: flex;
-    flex-wrap: wrap;          /* 🔑 kilka w jednej linii */
-    justify-content: flex-end;
-    align-items: flex-start;
-    gap: 8px;
-    margin-left: 0;           /* wyłączamy desktopowe odpychanie */
+    display: contents;
   }
 
-  /* 🔒 blokada rozciągania elementów */
+  /* BRAND / TITLE: pełna szerokość, zawsze nad wszystkim */
+  .topbar .brand,
+  .topbar .topbar-title{
+    grid-column: 1 / -1;
+    grid-row: 1;
+    width: 100%;
+    text-align: center;
+    justify-self: center;
+  }
+
+  /* wszystko, co było "po lewej", ląduje w kolumnie 1 pod spodem */
+  .topbar-left > *{
+    grid-column: 1;
+    grid-row: 2;
+    justify-self: start;
+    align-self: start;
+  }
+
+  /* wszystko, co było "po prawej", ląduje w kolumnie 2 pod spodem */
+  .topbar-right > *{
+    grid-column: 2;
+    grid-row: 2;
+    justify-self: end;
+    align-self: start;
+  }
+
+  /* ważne: wyłącz desktopowe odpychanie */
+  .topbar-right{
+    margin-left: 0;
+  }
+
+  /* nie rozciągaj przycisków w topbarze */
   .topbar .btn,
   .topbar .inp,
   .topbar .who{
     width: auto;
     max-width: 100%;
-    justify-self: auto;
   }
-
-  /* jeśli gdzieś istnieje .btn.full */
   .topbar .btn.full{
     width: auto;
   }
