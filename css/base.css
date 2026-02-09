@@ -563,6 +563,7 @@ html.showA2HS .a2hs {
     border-radius: 12px;
     z-index: 60;
     box-shadow: 0 10px 24px rgba(0,0,0,.35);
+    max-width: calc(100vw - 24px);
 }
 
 .lang-option {
