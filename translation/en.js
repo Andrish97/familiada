@@ -1,4 +1,4 @@
-buconst en = {
+const en = {
   meta: {
     lang: "en",
     label: "English",
