@@ -1455,10 +1455,3 @@
     opacity: .45;
     cursor: not-allowed
 }
-
-.spacer{
-  width: 130px;
-  min-height: 30px;
-  pointer-events: none;
-  visibility: hidden;
-}
