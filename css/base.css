@@ -84,7 +84,8 @@ body {
 }
 
 @media (max-width:980px){
-  .topbar-left .brand{
+  .topbar-left .brand,
+  .topbar-left .topbar-title{
     flex: 0 0 100%;   /* wymuś nową linię */
   }
 }
