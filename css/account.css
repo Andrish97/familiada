@@ -83,8 +83,6 @@
   border-radius: 12px;
   border: 1px dashed rgba(255,234,166,.28);
   background: rgba(0,0,0,.18);
-  height: 44px;
-  min-height: 44px;
   align-self: end;
 }
 
@@ -146,7 +144,8 @@
 
 /* --- fixed control sizing (avoid multi-line buttons changing height) --- */
 .account-panel .inp,
-.account-panel .btn {
+.account-panel .btn,
+.cooldown {
   height: 44px;
   min-height: 44px;
   box-sizing: border-box;
