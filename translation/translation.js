@@ -157,7 +157,7 @@ async function injectLanguageSwitcher() {
   container.appendChild(btn);
   container.appendChild(menu);
 
-  const topbarRight = document.querySelector(".topbar .right");
+  const topbarRight = document.querySelector(".topbar .topbar-right");
   if (topbarRight) {
     topbarRight.prepend(container);
   } else {
