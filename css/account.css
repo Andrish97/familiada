@@ -176,3 +176,10 @@
 .pending-actions--stack{
   grid-template-columns: 1fr !important;
 }
+
+.spacer{
+  width: 130px;
+  min-height: 30px;
+  pointer-events: none;
+  visibility: hidden;
+}
