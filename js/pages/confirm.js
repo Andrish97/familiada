@@ -97,6 +97,11 @@ document.addEventListener("DOMContentLoaded", async () => {
         if (data?.session) {
           await syncLanguage();
           await syncProfileEmail(data.session.user);
+          if (otpType === "email_change") {
+            try {
+              await sb().auth.updateUser({ data: { familiada_email_change_pending: "" } });
+            } catch {}
+          }
           setStatus(t("confirm.done"));
           go.style.display = "inline-flex";
           setTimeout(() => (location.href = withLangParam("builder.html")), 700);
@@ -122,6 +127,11 @@ document.addEventListener("DOMContentLoaded", async () => {
         if (data?.session) {
           await syncLanguage();
           await syncProfileEmail(data.session.user);
+          if (otpType === "email_change") {
+            try {
+              await sb().auth.updateUser({ data: { familiada_email_change_pending: "" } });
+            } catch {}
+          }
           setStatus(t("confirm.done"));
           go.style.display = "inline-flex";
           setTimeout(() => (location.href = withLangParam("builder.html")), 700);
@@ -154,6 +164,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (data?.session) {
       await syncLanguage();
       await syncProfileEmail(data.session.user);
+          if (otpType === "email_change") {
+            try {
+              await sb().auth.updateUser({ data: { familiada_email_change_pending: "" } });
+            } catch {}
+          }
       setStatus(t("confirm.done"));
       go.style.display = "inline-flex";
       setTimeout(() => (location.href = withLangParam("builder.html")), 700);

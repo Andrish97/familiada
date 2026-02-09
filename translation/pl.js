@@ -147,6 +147,7 @@ const pl = {
     emailPlaceholder: "Nowy e-mail",
     emailSave: "Zmień e-mail",
     emailPostHint: "Zmiana e-maila wymaga potwierdzenia linków w skrzynkach. Do tego czasu możesz logować się dotychczasowym adresem.",
+    emailNoAccessHint: "Nie masz dostępu do obecnego e-maila? Wyeksportuj ważne dane (gry, bazy, loga), usuń konto, załóż nowe na poprawnym adresie i zaimportuj z powrotem.",
     emailPendingTitle: "Zmiana e-maila w toku",
     emailPendingText: "Nowy e-mail: {email}. Dokończ zmianę klikając link w wiadomościach (na starym i nowym adresie).",
     emailResend: "Wyślij ponownie",

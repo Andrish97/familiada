@@ -147,6 +147,7 @@ const en = {
     emailPlaceholder: "New email",
     emailSave: "Change email",
     emailPostHint: "Email change requires confirming links in both inboxes. Until then, you can keep logging in with your current email.",
+    emailNoAccessHint: "No access to your current email? Export important data (games, bases, logos), delete the account, create a new one with the correct email, then import it back.",
     emailPendingTitle: "Email change in progress",
     emailPendingText: "New email: {email}. Finish the change by confirming the links (sent to both current and new addresses).",
     emailResend: "Resend",

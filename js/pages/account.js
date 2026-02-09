@@ -1,5 +1,5 @@
 import { sb } from "../core/supabase.js";
-import { cooldownGet, cooldownReserve } from "../core/cooldown.js";
+import { cooldownGet, cooldownReserve, cooldownRelease } from "../core/cooldown.js";
 import { requireAuth, updateUserLanguage, validatePassword, validateUsername, signOut } from "../core/auth.js";
 import { initI18n, t, getUiLang, withLangParam } from "../../translation/translation.js";
 
@@ -19,6 +19,7 @@ const deleteAccount = document.getElementById("deleteAccount");
 const backToGames = document.getElementById("backToGames");
 
 const usernameCooldownEl = document.getElementById("usernameCooldown");
+const accountCooldownEl = document.getElementById("accountCooldown");
 const emailCooldownEl = document.getElementById("emailCooldown");
 const passwordCooldownEl = document.getElementById("passwordCooldown");
 
@@ -41,9 +42,7 @@ backToGames?.addEventListener("click", () => {
 const COOLDOWN_SECONDS = 60 * 60;
 
 const CD = {
-  username: "account:username",
-  email: "account:email",
-  password: "account:password",
+  panel: "account:panel",
 };
 
 const cooldownBindings = [];
@@ -107,13 +106,16 @@ async function loadCooldownsFromServer() {
 async function reserveCooldownOrThrow(key) {
   const res = await cooldownReserve(key, COOLDOWN_SECONDS);
 
-  if (res.nextAllowedAtMs) cooldownEndMs.set(key, res.nextAllowedAtMs);
+  if (Number.isFinite(res.nextAllowedAtMs) && res.nextAllowedAtMs > 0) {
+    cooldownEndMs.set(key, res.nextAllowedAtMs);
+  }
   tickCooldowns();
 
   if (!res.ok) {
     const rem = getRemainingMs(key);
     throw new Error(t("account.errCooldown", { time: formatRemaining(rem) }));
   }
+  return res;
 }
 
 
@@ -129,6 +131,7 @@ function extractPendingEmail(u) {
     u?.email_change?.email,
     u?.user_metadata?.new_email,
     u?.user_metadata?.newEmail,
+    u?.user_metadata?.familiada_email_change_pending,
   ];
   return candidates.find((v) => typeof v === "string" && v.includes("@")) || "";
 }
@@ -212,11 +215,15 @@ async function loadProfile() {
 
 async function handleUsernameSave() {
   setErr("");
+  let reserved = false;
   try {
     const username = validateUsername(usernameInput.value || "");
     const { data: userData, error: userError } = await sb().auth.getUser();
     if (userError || !userData?.user) throw new Error(t("index.errNoSession"));
     await ensureUsernameAvailable(username, userData.user.id);
+
+    await reserveCooldownOrThrow(CD.panel);
+    reserved = true;
 
     const { error } = await sb()
       .from("profiles")
@@ -224,16 +231,26 @@ async function handleUsernameSave() {
       .eq("id", userData.user.id);
     if (error) throw error;
 
-    await sb().auth.updateUser({ data: { username } });
+    const { error: metaErr } = await sb().auth.updateUser({ data: { username } });
+    if (metaErr) throw metaErr;
+
     setStatus(t("account.statusUsernameSaved"));
+    await loadCooldownsFromServer();
   } catch (e) {
     console.error(e);
+    if (reserved) {
+      try {
+        await cooldownRelease(CD.panel, 60);
+        await loadCooldownsFromServer();
+      } catch {}
+    }
     setErr(e?.message || String(e));
   }
 }
 
 async function handleEmailSave() {
   setErr("");
+  let reserved = false;
   try {
     if (pendingEmail && pendingEmail !== currentEmail) {
       throw new Error(t("account.errEmailPending"));
@@ -249,50 +266,68 @@ async function handleEmailSave() {
     confirmUrl.searchParams.set("lang", language);
     confirmUrl.searchParams.set("to", normalizedMail);
 
-    await reserveCooldownOrThrow(CD.email);
+    await reserveCooldownOrThrow(CD.panel);
+    reserved = true;
 
     setStatus(t("account.statusSavingEmail"));
 
     const { error } = await sb().auth.updateUser(
-      { email: normalizedMail, data: { language } },
+      { email: normalizedMail, data: { language, familiada_email_change_pending: normalizedMail } },
       { emailRedirectTo: confirmUrl.toString() }
     );
     if (error) throw error;
+
     setStatus(t("account.statusEmailSaved"));
     await refreshAuthEmailState();
+    await loadCooldownsFromServer();
   } catch (e) {
     console.error(e);
+    if (reserved) {
+      try {
+        await cooldownRelease(CD.panel, 60);
+        await loadCooldownsFromServer();
+      } catch {}
+    }
     setErr(e?.message || String(e));
   }
 }
 
 async function handleEmailResend() {
   setErr("");
+  let reserved = false;
   try {
     if (!pendingEmail || pendingEmail === currentEmail) {
       throw new Error(t("account.errNoPendingEmail"));
     }
-
-    await reserveCooldownOrThrow(CD.email);
 
     const language = getUiLang();
     const confirmUrl = new URL("/confirm.html", location.origin);
     confirmUrl.searchParams.set("lang", language);
     confirmUrl.searchParams.set("to", pendingEmail);
 
+    await reserveCooldownOrThrow(CD.panel);
+    reserved = true;
+
     setStatus(t("account.statusEmailResending"));
 
-    // Prefer a dedicated resend for the email_change flow (avoid re-initiating updateUser).
     const { error } = await sb().auth.resend({
       type: "email_change",
       email: pendingEmail,
       options: { emailRedirectTo: confirmUrl.toString() },
     });
     if (error) throw error;
+
     setStatus(t("account.statusEmailResent"));
     await refreshAuthEmailState();
+    await loadCooldownsFromServer();
   } catch (e) {
     console.error(e);
+    if (reserved) {
+      try {
+        await cooldownRelease(CD.panel, 60);
+        await loadCooldownsFromServer();
+      } catch {}
+    }
     setErr(e?.message || String(e));
   }
 }
@@ -304,8 +339,6 @@ async function handleEmailCancel() {
       throw new Error(t("account.errNoPendingEmail"));
     }
 
-    await reserveCooldownOrThrow(CD.email);
-
     const language = getUiLang();
     const confirmUrl = new URL("/confirm.html", location.origin);
     confirmUrl.searchParams.set("lang", language);
@@ -313,12 +346,14 @@ async function handleEmailCancel() {
 
     setStatus(t("account.statusEmailCancelling"));
 
-    // best-effort: request "revert" by setting email back to the current one
+    // Best-effort: request "revert" by setting email back to the current one.
+    // Keep cooldown intact (do not extend / reset).
     const { error } = await sb().auth.updateUser(
-      { email: currentEmail, data: { language } },
+      { email: currentEmail, data: { language, familiada_email_change_pending: "" } },
       { emailRedirectTo: confirmUrl.toString() }
     );
     if (error) throw error;
+
     setStatus(t("account.statusEmailCancelled"));
     await refreshAuthEmailState();
   } catch (e) {
@@ -329,11 +364,15 @@ async function handleEmailCancel() {
 
 async function handlePassSave() {
   setErr("");
+  let reserved = false;
   try {
     const a = String(pass1.value || "");
     const b = String(pass2.value || "");
     if (a !== b) throw new Error(t("account.errPasswordMismatch"));
     validatePassword(a);
+
+    await reserveCooldownOrThrow(CD.panel);
+    reserved = true;
 
     const { error } = await sb().auth.updateUser({ password: a });
     if (error) throw error;
@@ -341,8 +380,15 @@ async function handlePassSave() {
     pass1.value = "";
     pass2.value = "";
     setStatus(t("account.statusPasswordSaved"));
+    await loadCooldownsFromServer();
   } catch (e) {
     console.error(e);
+    if (reserved) {
+      try {
+        await cooldownRelease(CD.panel, 60);
+        await loadCooldownsFromServer();
+      } catch {}
+    }
     setErr(e?.message || String(e));
   }
 }
@@ -379,9 +425,10 @@ async function handleDeleteAccount() {
 document.addEventListener("DOMContentLoaded", async () => {
   await initI18n({ withSwitcher: true });
 
-  bindCooldown({ key: CD.username, labelEl: usernameCooldownEl, disableEls: [usernameInput, saveUsername] });
-  bindCooldown({ key: CD.email, labelEl: emailCooldownEl, disableEls: [emailInput, saveEmail, resendEmailChange, cancelEmailChange] });
-  bindCooldown({ key: CD.password, labelEl: passwordCooldownEl, disableEls: [pass1, pass2, savePass] });
+  bindCooldown({ key: CD.panel, labelEl: usernameCooldownEl, disableEls: [usernameInput, saveUsername] });
+  bindCooldown({ key: CD.panel, labelEl: emailCooldownEl, disableEls: [emailInput, saveEmail, resendEmailChange] });
+  bindCooldown({ key: CD.panel, labelEl: passwordCooldownEl, disableEls: [pass1, pass2, savePass] });
+bindCooldown({ key: CD.panel, labelEl: accountCooldownEl, disableEls: [usernameInput, saveUsername, emailInput, saveEmail, resendEmailChange, pass1, pass2, savePass] });
   startCooldownTicker();
 
   await loadProfile();

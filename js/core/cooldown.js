@@ -1,5 +1,11 @@
 import { sb } from "./supabase.js";
 
+function pickRpcRow(data, fnName) {
+  const row = Array.isArray(data) ? data[0] : data;
+  if (!row) throw new Error(`${fnName}: empty response`);
+  return row;
+}
+
 /**
  * Per-user cooldowns (requires authenticated session).
  * DB is source of truth (cross-device).
@@ -14,7 +20,8 @@ export async function cooldownGet(actionKeys = []) {
   const map = new Map();
   (data || []).forEach((row) => {
     if (!row?.action_key || !row?.next_allowed_at) return;
-    map.set(row.action_key, Date.parse(row.next_allowed_at));
+    const ms = Date.parse(row.next_allowed_at);
+    if (Number.isFinite(ms)) map.set(row.action_key, ms);
   });
   return map;
 }
@@ -26,7 +33,7 @@ export async function cooldownReserve(actionKey, cooldownSeconds) {
   });
   if (error) throw error;
 
-  const row = Array.isArray(data) ? data[0] : data;
+  const row = pickRpcRow(data, "cooldown_reserve");
   return {
     ok: !!row?.ok,
     nextAllowedAtMs: row?.next_allowed_at ? Date.parse(row.next_allowed_at) : 0,
@@ -51,7 +58,8 @@ export async function cooldownEmailGet(email, actionKeys = []) {
   const map = new Map();
   (data || []).forEach((row) => {
     if (!row?.action_key || !row?.next_allowed_at) return;
-    map.set(row.action_key, Date.parse(row.next_allowed_at));
+    const ms = Date.parse(row.next_allowed_at);
+    if (Number.isFinite(ms)) map.set(row.action_key, ms);
   });
   return map;
 }
@@ -65,9 +73,29 @@ export async function cooldownEmailReserve(email, actionKey, cooldownSeconds) {
   });
   if (error) throw error;
 
-  const row = Array.isArray(data) ? data[0] : data;
+  const row = pickRpcRow(data, "cooldown_email_reserve");
   return {
     ok: !!row?.ok,
     nextAllowedAtMs: row?.next_allowed_at ? Date.parse(row.next_allowed_at) : 0,
   };
+}
+
+export async function cooldownRelease(actionKey, maxAgeSeconds = 60) {
+  const { data, error } = await sb().rpc("cooldown_release", {
+    p_action_key: String(actionKey),
+    p_max_age_seconds: Number(maxAgeSeconds),
+  });
+  if (error) throw error;
+  return !!data;
+}
+
+export async function cooldownEmailRelease(email, actionKey, maxAgeSeconds = 60) {
+  const e = String(email || "").trim().toLowerCase();
+  const { data, error } = await sb().rpc("cooldown_email_release", {
+    p_email: e,
+    p_action_key: String(actionKey),
+    p_max_age_seconds: Number(maxAgeSeconds),
+  });
+  if (error) throw error;
+  return !!data;
 }
