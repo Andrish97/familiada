@@ -88,6 +88,8 @@ const en = {
     statusSavingUsername: "Saving username…",
     errUsernameTaken: "This username is already taken.",
     errNoSession: "No active session.",
+    resetCooldown: "You can resend in {time}.",
+    errResetCooldown: "The link was already sent. Try again in {time}.",
   },
   confirm: {
     title: "Familiada — account confirmation",
