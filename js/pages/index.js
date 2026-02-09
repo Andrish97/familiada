@@ -1,5 +1,15 @@
 // js/pages/index.js
-import { getUser, signIn, signUp, resetPassword, updateUserLanguage, validatePassword, validateUsername } from "../core/auth.js";
+import {
+  getUser,
+  signIn,
+  signUp,
+  resetPassword,
+  resolveLoginToEmail,
+  updateUserLanguage,
+  validatePassword,
+  validateUsername
+} from "../core/auth.js";
+
 import { sb } from "../core/supabase.js";
 import { initI18n, t, getUiLang, withLangParam } from "../../translation/translation.js";
 
@@ -12,6 +22,7 @@ const err = $("#err");
 const btnPrimary = $("#btnPrimary");
 const btnToggle = $("#btnToggle");
 const btnForgot = $("#btnForgot");
+const forgotCooldown = $("#forgotCooldown");
 const loginCard = $("#loginCard");
 const setupCard = $("#setupCard");
 const usernameFirst = $("#usernameFirst");
@@ -26,6 +37,80 @@ const pollsUrl = baseUrls.pollsUrl || "polls-hub.html";
 let mode = "login"; // login | register
 
 let isBusy = false;
+
+const RESET_COOLDOWN_MS = 60 * 60 * 1000; // 1h
+let _forgotTimer = null;
+
+function resetKey(email) {
+  return `familiada:cooldown:reset:${String(email || "").toLowerCase()}`;
+}
+
+function getUntil(key) {
+  const v = Number(localStorage.getItem(key) || "0");
+  return Number.isFinite(v) ? v : 0;
+}
+
+function setUntil(key, until) {
+  localStorage.setItem(key, String(until));
+}
+
+function formatLeft(ms) {
+  const total = Math.max(0, Math.ceil(ms / 1000));
+  const h = Math.floor(total / 3600);
+  const m = Math.floor((total % 3600) / 60);
+  const s = total % 60;
+  if (h > 0) return `${h}h ${String(m).padStart(2, "0")}m`;
+  return `${m}:${String(s).padStart(2, "0")}`;
+}
+
+function stopForgotTimer() {
+  if (_forgotTimer) clearInterval(_forgotTimer);
+  _forgotTimer = null;
+}
+
+function hideForgotCooldown() {
+  stopForgotTimer();
+  if (forgotCooldown) {
+    forgotCooldown.hidden = true;
+    forgotCooldown.textContent = "";
+  }
+}
+
+function showForgotCooldownForEmail(resolvedEmail) {
+  stopForgotTimer();
+
+  const k = resetKey(resolvedEmail);
+  const tick = () => {
+    // pokazuj tylko, gdy aktualnie w polu jest ten sam email (lub user wpisał username → wtedy i tak kliknie)
+    const current = String(email?.value || "").trim().toLowerCase();
+    if (current.includes("@") && current !== String(resolvedEmail).toLowerCase()) {
+      hideForgotCooldown();
+      btnForgot.disabled = false;
+      return;
+    }
+
+    const until = getUntil(k);
+    const left = until - Date.now();
+
+    if (left <= 0) {
+      localStorage.removeItem(k);
+      hideForgotCooldown();
+      btnForgot.disabled = false;
+      return;
+    }
+
+    if (forgotCooldown) {
+      forgotCooldown.hidden = false;
+      forgotCooldown.textContent = t("index.resetCooldown", { time: formatLeft(left) });
+    }
+
+    // blokuj resend tylko dla tego maila
+    if (current.includes("@")) btnForgot.disabled = true;
+  };
+
+  tick();
+  _forgotTimer = setInterval(tick, 1000);
+}
 
 function setBusy(v) {
   isBusy = v;
@@ -212,14 +297,39 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (isBusy) return;
     setBusy(true);
     setErr("");
+  
     const loginOrEmail = email.value.trim();
-    if (!loginOrEmail) return setErr(t("index.errResetMissingLogin"));
-
+    if (!loginOrEmail) {
+      setBusy(false);
+      return setErr(t("index.errResetMissingLogin"));
+    }
+  
     try {
+      // 1) resolve (email lub username -> email)
+      const resolved = await resolveLoginToEmail(loginOrEmail);
+      if (!resolved) throw new Error(t("index.errResetMissingLogin"));
+  
+      // 2) cooldown check (per email)
+      const k = resetKey(resolved);
+      const until = getUntil(k);
+      const left = until - Date.now();
+      if (left > 0) {
+        setStatus(t("index.statusResetSent"));
+        setErr(t("index.errResetCooldown", { time: formatLeft(left) }));
+        showForgotCooldownForEmail(resolved);
+        return;
+      }
+  
+      // 3) send
       setStatus(t("index.statusResetSending"));
       const redirectTo = buildAuthRedirect(resetUrl);
-      await resetPassword(loginOrEmail, redirectTo, getUiLang());
+  
+      const usedEmail = await resetPassword(loginOrEmail, redirectTo, getUiLang(), resolved);
+      setUntil(resetKey(usedEmail), Date.now() + RESET_COOLDOWN_MS);
+  
       setStatus(t("index.statusResetSent"));
+      hideForgotCooldown();
+      showForgotCooldownForEmail(usedEmail);
     } catch (e) {
       console.error(e);
       setStatus(t("index.statusError"));
@@ -264,6 +374,22 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (mode === "login") {
         pass.focus();
       }
+    }
+  });
+
+  email?.addEventListener("input", () => {
+    const v = String(email.value || "").trim().toLowerCase();
+    if (!v.includes("@")) {
+      hideForgotCooldown();
+      btnForgot.disabled = false;
+      return;
+    }
+    const until = getUntil(resetKey(v));
+    if (until > Date.now()) {
+      showForgotCooldownForEmail(v);
+    } else {
+      hideForgotCooldown();
+      btnForgot.disabled = false;
     }
   });
   
