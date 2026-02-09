@@ -35,6 +35,10 @@ async function loginToEmail(login) {
   return String(data || "").trim().toLowerCase();
 }
 
+export async function resolveLoginToEmail(loginOrEmail) {
+  return await loginToEmail(loginOrEmail);
+}
+
 export function validateUsername(un, { allowEmpty = false } = {}) {
   const v = String(un || "").trim();
   if (!v) {
@@ -171,11 +175,10 @@ export async function signOut() {
   _unameCache = { userId: null, username: null, ts: 0 };
 }
 
-export async function resetPassword(loginOrEmail, redirectTo, language) {
-  const email = await loginToEmail(loginOrEmail);
+export async function resetPassword(loginOrEmail, redirectTo, language, resolvedEmail = null) {
+  const email = (resolvedEmail || await loginToEmail(loginOrEmail))?.toLowerCase?.() || "";
   if (!email) throw new Error(t("index.errResetMissingLogin"));
 
-  // ✅ absolutny redirect + lang (bez withLangParam)
   const resetRedirectTo = redirectTo || buildAuthRedirect("reset.html", language);
 
   const options = { redirectTo: resetRedirectTo };
@@ -183,6 +186,8 @@ export async function resetPassword(loginOrEmail, redirectTo, language) {
 
   const { error } = await sb().auth.resetPasswordForEmail(email, options);
   if (error) throw new Error(niceAuthError(error));
+
+  return email; // ✅ ważne: index.js zapisze cooldown per konkretny email
 }
 
 export async function updateUserLanguage(language) {
