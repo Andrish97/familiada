@@ -147,12 +147,22 @@ async function injectLanguageSwitcher() {
   });
 
   btn.addEventListener("click", () => {
-    menu.hidden = !menu.hidden;
-  });
+    const next = !menu.hidden;
+    menu.hidden = !next;
+    if (next) repositionMenu(container, menu);
+  })
 
   document.addEventListener("click", (e) => {
     if (!container.contains(e.target)) menu.hidden = true;
   });
+
+  window.addEventListener("resize", () => {
+    if (!menu.hidden) repositionMenu(container, menu);
+  }, { passive: true });
+  
+  window.addEventListener("scroll", () => {
+    if (!menu.hidden) repositionMenu(container, menu);
+  }, { passive: true });
 
   container.appendChild(btn);
   container.appendChild(menu);
@@ -168,6 +178,51 @@ async function injectLanguageSwitcher() {
   switcherEl = container;
   updateSwitcherLabel();
   return switcherEl;
+}
+
+function repositionMenu(container, menu) {
+  // reset
+  menu.style.left = "";
+  menu.style.right = "";
+  menu.style.transform = "";
+
+  // chwilowo pokaż do pomiaru (gdy hidden=true nie ma wymiarów)
+  const wasHidden = menu.hidden;
+  if (wasHidden) {
+    menu.hidden = false;
+    menu.style.visibility = "hidden";
+  }
+
+  const cRect = container.getBoundingClientRect();
+  const mRect = menu.getBoundingClientRect();
+
+  // Domyślnie chcemy jak w CSS: right:0 (menu "do prawej" kontenera)
+  // Sprawdź czy wychodzi poza ekran
+  const overflowRight = mRect.right - window.innerWidth;
+  const overflowLeft = 0 - mRect.left;
+
+  if (overflowRight > 0 && overflowLeft <= 0) {
+    // nie mieści się w prawo -> przypnij do lewej krawędzi kontenera
+    menu.style.left = "0";
+    menu.style.right = "auto";
+  } else if (overflowLeft > 0 && overflowRight <= 0) {
+    // nie mieści się w lewo -> przypnij do prawej (jak było)
+    menu.style.right = "0";
+    menu.style.left = "auto";
+  } else if (overflowLeft > 0 || overflowRight > 0) {
+    // nadal nie mieści się (np. bardzo wąski ekran) -> przesuń transformem do środka viewportu
+    const shift = Math.max(overflowLeft, 0) - Math.max(overflowRight, 0);
+    menu.style.transform = `translateX(${shift}px)`;
+  } else {
+    // OK -> zostaw domyślne (prawa krawędź)
+    menu.style.right = "0";
+    menu.style.left = "auto";
+  }
+
+  if (wasHidden) {
+    menu.style.visibility = "";
+    menu.hidden = true;
+  }
 }
 
 function updateSwitcherLabel() {
