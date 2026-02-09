@@ -23,21 +23,23 @@
 </head>
 <body class="control-body">
   <header class="topbar">
-    <div class="brand">FAMILIADA</div>
-    <button class="btn" id="btnBack" type="button" data-i18n="control.backToGames">← Moje gry</button>
-    <div class="right">
-      <div class="top-status" aria-label="Status urządzeń" data-i18n-aria-label="control.statusLabel">
-        <div class="dotRow" title="Wyświetlacz" id="dotDisplayRow" data-i18n-title="control.deviceDisplay">
-          <span class="dot mid" id="dotDisplay"></span><span class="lbl" data-i18n="control.deviceDisplay">Wyświetlacz</span>
+    <div class="topbar-left">
+      <div class="brand">FAMILIADA</div>
+      <button class="btn" id="btnBack" type="button" data-i18n="control.backToGames">← Moje gry</button>
+        <div class="spacer"></div>
+        <div class="top-status" aria-label="Status urządzeń" data-i18n-aria-label="control.statusLabel">
+          <div class="dotRow" title="Wyświetlacz" id="dotDisplayRow" data-i18n-title="control.deviceDisplay">
+            <span class="dot mid" id="dotDisplay"></span><span class="lbl" data-i18n="control.deviceDisplay">Wyświetlacz</span>
+          </div>
+          <div class="dotRow" title="Prowadzący" id="dotHostRow" data-i18n-title="control.deviceHost">
+            <span class="dot mid" id="dotHost"></span><span class="lbl" data-i18n="control.deviceHost">Prowadzący</span>
+          </div>
+          <div class="dotRow" title="Przycisk" id="dotBuzzerRow" data-i18n-title="control.deviceBuzzer">
+            <span class="dot mid" id="dotBuzzer"></span><span class="lbl" data-i18n="control.deviceBuzzer">Przycisk</span>
+          </div>
         </div>
-        <div class="dotRow" title="Prowadzący" id="dotHostRow" data-i18n-title="control.deviceHost">
-          <span class="dot mid" id="dotHost"></span><span class="lbl" data-i18n="control.deviceHost">Prowadzący</span>
-        </div>
-        <div class="dotRow" title="Przycisk" id="dotBuzzerRow" data-i18n-title="control.deviceBuzzer">
-          <span class="dot mid" id="dotBuzzer"></span><span class="lbl" data-i18n="control.deviceBuzzer">Przycisk</span>
-        </div>
-      </div>
-      <div class="spacer"></div>
+    </div>
+    <div class="topbar-right">
       <span class="who" id="who">—</span>
       <button class="btn" id="btnLogout" type="button" data-i18n="control.logout">Wyloguj</button>
     </div>
