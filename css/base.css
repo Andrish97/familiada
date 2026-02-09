@@ -68,7 +68,7 @@ body {
   }
 
   /* BRAND zawsze osobno (nowa linia), pełna szerokość */
-  .topbar-left brand,
+  .topbar-left .brand,
   .topbar-left .topbar-title{
     grid-column: 1 / -1;
     grid-row: 1;
