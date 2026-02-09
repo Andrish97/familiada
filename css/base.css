@@ -56,60 +56,20 @@ body {
     justify-content: flex-end;
 }
 
-@media (max-width: 980px){
+@media (max-width: 980px) {
 
-  .topbar{
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-
-    align-items: flex-start;     /* start od góry (bez centrowania w pionie) */
-  }
-
-  /* BRAND/TITLE: wymuś nowy rządek i pełną szerokość */
-  .topbar .brand,
-  .topbar .topbar-title{
+  /* BRAND / TITLE: nowa linia + środek */
+  .topbar-left .brand,
+  .topbar-left .topbar-title {
     flex: 0 0 100%;
     width: 100%;
     text-align: center;
   }
 
-  /* Lewy i prawy blok zawsze w jednym wierszu (drugi rząd topbara) */
-  .topbar-left{
-    flex: 1 1 0;
-    min-width: 0;
-
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-
+  /* PRAWY BLOK: usuń dopychanie do prawej */
+  .topbar-right {
+    margin-left: 0;
     justify-content: flex-start;
-    align-items: flex-start;
-  }
-
-  .topbar-right{
-    flex: 1 1 0;
-    min-width: 0;
-
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-
-    justify-content: flex-end;
-    align-items: flex-start;
-
-    margin-left: 0;              /* wyłącz desktopowe wypychanie */
-  }
-
-  /* Anty-rozciąganie przycisków w topbarze */
-  .topbar .btn{
-    width: auto;
-    max-width: 100%;
-  }
-
-  /* jeśli masz sztuczny .spacer w topbarze — na mobile wyłącz */
-  .topbar .spacer{
-    display: none !important;
   }
 }
 
