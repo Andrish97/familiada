@@ -1209,7 +1209,7 @@ async function handleCreate(){
 ========================================================= */
 async function boot(){
    await initI18n({ withSwitcher: true });
-   guardDesktopOnly({ minWidth: 980, message: t("logoEditor.desktopOnly") });
+   guardDesktopOnly({ minWidth: 980 });
    window.addEventListener("i18n:lang", () => {
      if (editorMode) {
        updateEditorHeader();
