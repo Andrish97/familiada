@@ -2269,7 +2269,7 @@ const pl = {
       pollsHub: "Centrum sondaży 📊",
       pollsHubMobile: "Sondaże 📊",
       bases: "Bazy pytań 🗃️",
-      basesMobile: "Bazy pyt.🗃️",
+      basesMobile: "Bazy pyt. 🗃️",
       manual: "Wskazówki ℹ️",
       manualMobile: "Wskazówki ℹ️",
       logo: "Logo 🖥️",
