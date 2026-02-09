@@ -2736,6 +2736,7 @@ const pl = {
       locked: "Zablokowane",
       active: "Aktywne",
       retry: "Możesz ponowić",
+      cooldown: "Możesz ponowić za {hours} godz.",
       missing: "Brak",
     },
     shareLockedHint: "Zagłosowane — usuń głos, aby odblokować.",
@@ -2815,6 +2816,8 @@ const pl = {
       autoNote: "Wiadomość automatyczna — prosimy nie odpowiadać.",
     },
     pollReadyAlert: "Dokończ grę w Moich grach",
+    resendCooldownAlert: "Ponowne wysłanie zaproszenia możliwe za {hours} godz.",
+    shareCooldownAlert: "Ponowne zaproszenie do głosowania możliwe za {hours} godz.",
   },
   logoEditor: {
     title: "Familiada — edytor logo",
