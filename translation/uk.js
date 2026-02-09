@@ -37,6 +37,11 @@ const uk = {
     a2hsOk: "OK",
     fullscreenUnavailable: "Fullscreen API недоступний.",
   },
+  deviceGuard: {
+    title: "Недоступно на телефоні",
+    message: "Ця сторінка працює лише на комп’ютері.",
+    back: "Назад",
+  },
   auth: {
     emailNotConfirmed: "Підтвердьте e-mail (посилання в пошті).",
     invalidCredentials: "Невірний e-mail або пароль.",
@@ -190,7 +195,6 @@ const uk = {
   },
   control: {
     title: "Familiada — панель керування",
-    desktopOnly: "Панель керування працює лише на комп'ютері (мін. 980px).",
     statusLabel: "Статус пристроїв",
     deviceDisplay: "Дисплей",
     deviceHost: "Ведучий",
@@ -2839,7 +2843,6 @@ const uk = {
   },
   logoEditor: {
     title: "Familiada — редактор логотипу",
-    desktopOnly: "Редактор логотипу працює лише на комп’ютері (мін. 980px).",
     topbar: {
       backToGames: "← Мої ігри",
       logout: "Вийти",
