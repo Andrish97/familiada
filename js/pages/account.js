@@ -274,10 +274,12 @@ async function handleEmailResend() {
 
     setStatus(t("account.statusEmailResending"));
 
-    const { error } = await sb().auth.updateUser(
-      { email: pendingEmail, data: { language } },
-      { emailRedirectTo: confirmUrl.toString() }
-    );
+    // Prefer a dedicated resend for the email_change flow (avoid re-initiating updateUser).
+    const { error } = await sb().auth.resend({
+      type: "email_change",
+      email: pendingEmail,
+      options: { emailRedirectTo: confirmUrl.toString() },
+    });
     if (error) throw error;
 
     startCooldown(CD.email);
