@@ -37,6 +37,11 @@ const pl = {
     a2hsOk: "OK",
     fullscreenUnavailable: "Brak dostępnego Fullscreen API.",
   },
+  deviceGuard: {
+    title: "Niedostępne na telefonie",
+    message: "Ta strona działa tylko na komputerze.",
+    back: "Wróć",
+  },
   auth: {
     emailNotConfirmed: "Potwierdź e-mail (link w skrzynce).",
     invalidCredentials: "Zły e-mail lub hasło.",
@@ -190,7 +195,6 @@ const pl = {
   },
   control: {
     title: "Familiada — Panel sterowania",
-    desktopOnly: "Panel sterowania działa tylko na komputerze (min. 980px).",
     statusLabel: "Status urządzeń",
     deviceDisplay: "Wyświetlacz",
     deviceHost: "Prowadzący",
@@ -2842,7 +2846,6 @@ const pl = {
   },
   logoEditor: {
     title: "Familiada — edytor logo",
-    desktopOnly: "Edytor logo działa tylko na komputerze (min. 980px).",
     topbar: {
       backToGames: "← Moje gry",
       logout: "Wyloguj",
