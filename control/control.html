@@ -15,13 +15,8 @@
     import { guardDesktopOnly } from "../js/core/device-guard.js";
     import { initI18n, t } from "../translation/translation.js";
   
-    const minWidth = 980;
-  
     await initI18n({ withSwitcher: false });
-    guardDesktopOnly({
-      minWidth,
-      message: t("control.desktopOnly"),
-    });
+    guardDesktopOnly({ maxWidth: 980 });
   
     import("./js/app.js");
   </script>
