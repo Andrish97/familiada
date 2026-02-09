@@ -58,50 +58,51 @@ body {
 
 @media (max-width:980px){
 
-  /* TOPBAR = GRID: 1 wiersz (brand/title), 2 kolumny (left/right) */
+  /* TOPBAR: 2 kolumny (lewo/prawo) */
   .topbar{
     display: grid;
     grid-template-columns: 1fr 1fr;
-    grid-template-rows: auto auto;
-    align-items: start; /* od góry, nie w pionie centrowane */
+    align-items: start;
     gap: 10px;
   }
 
-  /* KLUCZ: spłaszczamy wrappery - dzieci idą bezpośrednio do grida topbara */
-  .topbar-left,
-  .topbar-right{
-    display: contents;
+  /* LEWA: ma 2 wiersze: (1) brand/title na pełną szerokość topbara, (2) lewa kolumna */
+  .topbar-left{
+    grid-column: 1 / -1;              /* lewy blok rozciągamy na 2 kolumny */
+    display: grid;
+    grid-template-columns: 1fr 1fr;   /* znów 2 kolumny w środku */
+    grid-auto-rows: auto;
+    align-items: start;
+    gap: 10px;
   }
 
-  /* BRAND / TITLE: pełna szerokość, zawsze nad wszystkim */
-  .topbar .brand,
-  .topbar .topbar-title{
+  /* BRAND/TITLE: full width w topbar-left-grid */
+  .topbar-left .brand,
+  .topbar-left .topbar-title{
     grid-column: 1 / -1;
-    grid-row: 1;
-    width: 100%;
     text-align: center;
-    justify-self: center;
+    width: 100%;
   }
 
-  /* wszystko, co było "po lewej", ląduje w kolumnie 1 pod spodem */
-  .topbar-left > *{
+  /* reszta elementów po lewej idzie do kolumny 1 */
+  .topbar-left > :not(.brand):not(.topbar-title){
     grid-column: 1;
-    grid-row: 2;
     justify-self: start;
     align-self: start;
   }
 
-  /* wszystko, co było "po prawej", ląduje w kolumnie 2 pod spodem */
-  .topbar-right > *{
+  /* PRAWA kolumna: przypnij do kolumny 2 w tym samym "wewnętrznym" gridzie */
+  .topbar-right{
     grid-column: 2;
-    grid-row: 2;
     justify-self: end;
     align-self: start;
-  }
 
-  /* ważne: wyłącz desktopowe odpychanie */
-  .topbar-right{
-    margin-left: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 10px;
+
+    margin-left: 0; /* wyłącz desktopowe odpychanie */
   }
 
   /* nie rozciągaj przycisków w topbarze */
