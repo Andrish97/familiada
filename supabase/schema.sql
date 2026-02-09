@@ -1080,6 +1080,27 @@ BEGIN
     AND ec.action_key = ANY(p_action_keys);
 END;
 $function$
+CREATE OR REPLACE FUNCTION public.cooldown_email_release(p_email text, p_action_key text, p_max_age_seconds integer DEFAULT 60)
+ RETURNS boolean
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  h text;
+BEGIN
+  h := md5(lower(trim(p_email)));
+
+  UPDATE public.email_cooldowns
+     SET next_allowed_at = now(),
+         updated_at = now()
+   WHERE email_hash = h
+     AND action_key = p_action_key
+     AND updated_at >= (now() - make_interval(secs => p_max_age_seconds));
+
+  RETURN TRUE;
+END;
+$function$
 CREATE OR REPLACE FUNCTION public.cooldown_email_reserve(p_email text, p_action_key text, p_cooldown_seconds integer)
  RETURNS TABLE(ok boolean, next_allowed_at timestamp with time zone)
  LANGUAGE plpgsql
@@ -1104,8 +1125,7 @@ BEGIN
     new_next := now() + make_interval(secs => p_cooldown_seconds);
     INSERT INTO public.email_cooldowns(email_hash, action_key, next_allowed_at, updated_at)
     VALUES (h, p_action_key, new_next, now());
-    ok := TRUE;
-    next_allowed_at := new_next;
+    RETURN QUERY SELECT TRUE, new_next;
     RETURN;
   END IF;
 
@@ -1116,13 +1136,11 @@ BEGIN
           updated_at = now()
       WHERE email_hash = h
         AND action_key = p_action_key;
-    ok := TRUE;
-    next_allowed_at := new_next;
+    RETURN QUERY SELECT TRUE, new_next;
     RETURN;
   END IF;
 
-  ok := FALSE;
-  next_allowed_at := cur_next;
+  RETURN QUERY SELECT FALSE, cur_next;
   RETURN;
 END;
 $function$
@@ -1137,6 +1155,28 @@ AS $function$
 $function$
 
 
+CREATE OR REPLACE FUNCTION public.cooldown_release(p_action_key text, p_max_age_seconds integer DEFAULT 60)
+ RETURNS boolean
+ LANGUAGE plpgsql
+AS $function$
+DECLARE
+  uid uuid;
+BEGIN
+  uid := auth.uid();
+  IF uid IS NULL THEN
+    RAISE EXCEPTION 'not authenticated';
+  END IF;
+
+  UPDATE public.user_cooldowns
+     SET next_allowed_at = now(),
+         updated_at = now()
+   WHERE user_id = uid
+     AND action_key = p_action_key
+     AND updated_at >= (now() - make_interval(secs => p_max_age_seconds));
+
+  RETURN TRUE;
+END;
+$function$
 CREATE OR REPLACE FUNCTION public.cooldown_reserve(p_action_key text, p_cooldown_seconds integer)
  RETURNS TABLE(ok boolean, next_allowed_at timestamp with time zone)
  LANGUAGE plpgsql
@@ -1162,8 +1202,7 @@ BEGIN
     new_next := now() + make_interval(secs => p_cooldown_seconds);
     INSERT INTO public.user_cooldowns(user_id, action_key, next_allowed_at, updated_at)
     VALUES (uid, p_action_key, new_next, now());
-    ok := TRUE;
-    next_allowed_at := new_next;
+    RETURN QUERY SELECT TRUE, new_next;
     RETURN;
   END IF;
 
@@ -1174,13 +1213,11 @@ BEGIN
           updated_at = now()
       WHERE user_id = uid
         AND action_key = p_action_key;
-    ok := TRUE;
-    next_allowed_at := new_next;
+    RETURN QUERY SELECT TRUE, new_next;
     RETURN;
   END IF;
 
-  ok := FALSE;
-  next_allowed_at := cur_next;
+  RETURN QUERY SELECT FALSE, cur_next;
   RETURN;
 END;
 $function$
