@@ -56,6 +56,14 @@ body {
     justify-content: flex-end;
 }
 
+.spacer{
+  width: 80px;
+  min-height: 30px;
+  pointer-events: none;
+  visibility: hidden;
+}
+
+
 .brand {
     font-weight: 1000;
     letter-spacing: .18em;
