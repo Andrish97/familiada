@@ -72,3 +72,50 @@
     width: 100%;
   }
 }
+
+.cooldown{
+  font-size: 12px;
+  opacity: .75;
+  padding: 8px 10px;
+  border-radius: 12px;
+  border: 1px dashed rgba(255,234,166,.28);
+  background: rgba(0,0,0,.18);
+}
+
+.pending-box{
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(255,234,166,.22);
+  background: rgba(0,0,0,.22);
+}
+
+.pending-title{
+  font-weight: 900;
+  text-transform: uppercase;
+  font-size: 11px;
+  letter-spacing: .08em;
+}
+
+.pending-text{
+  font-size: 12px;
+  opacity: .85;
+  line-height: 1.35;
+}
+
+.pending-actions{
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.pending-actions .btn{
+  width: 100%;
+}
+
+@media (max-width: 600px) {
+  .pending-actions{
+    grid-template-columns: 1fr;
+  }
+}
