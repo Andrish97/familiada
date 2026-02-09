@@ -1,4 +1,4 @@
-const en = {
+buconst en = {
   meta: {
     lang: "en",
     label: "English",
@@ -2261,13 +2261,13 @@ const en = {
     title: "Familiada — my games",
     nav: {
       pollsHub: "Polls hub 📊",
-      pollsHubMobile: "📊",
+      pollsHubMobile: "Polls 📊",
       bases: "Question bases 🗃️",
-      basesMobile: "🗃️",
+      basesMobile: "Qbases🗃️",
       manual: "Tips ℹ️",
-      manualMobile: "ℹ️",
+      manualMobile: "Tips ℹ️",
       logo: "Logo 🖥️",
-      logoMobile: "🖥️",
+      logoMobile: "Logo 🖥️",
       account: "Account settings",
       logout: "Log out",
     },
