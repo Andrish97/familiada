@@ -37,6 +37,11 @@ const en = {
     a2hsOk: "OK",
     fullscreenUnavailable: "Fullscreen API is not available.",
   },
+  deviceGuard: {
+    title: "Not available on mobile",
+    message: "This page works only on a desktop computer.",
+    back: "Go back",
+  },
   auth: {
     emailNotConfirmed: "Confirm your email (link in inbox).",
     invalidCredentials: "Wrong email or password.",
@@ -190,7 +195,6 @@ const en = {
   },
   control: {
     title: "Familiada — Control panel",
-    desktopOnly: "The control panel works only on desktop (min. 980px).",
     statusLabel: "Device status",
     deviceDisplay: "Display",
     deviceHost: "Host",
@@ -2836,7 +2840,6 @@ const en = {
   },
   logoEditor: {
     title: "Familiada — logo editor",
-    desktopOnly: "The logo editor works only on desktop (min. 980px).",
     topbar: {
       backToGames: "← My games",
       logout: "Log out",
