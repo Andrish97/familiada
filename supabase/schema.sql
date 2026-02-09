@@ -21,6 +21,13 @@ CREATE TABLE public.device_state (
   updated_at timestamp with time zone NOT NULL DEFAULT now()
 );
 
+CREATE TABLE public.email_cooldowns (
+  email_hash text NOT NULL,
+  action_key text NOT NULL,
+  next_allowed_at timestamp with time zone NOT NULL DEFAULT now(),
+  updated_at timestamp with time zone NOT NULL DEFAULT now()
+);
+
 CREATE TABLE public.games (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   owner_id uuid NOT NULL,
@@ -175,6 +182,13 @@ CREATE TABLE public.questions (
   created_at timestamp with time zone NOT NULL DEFAULT now()
 );
 
+CREATE TABLE public.user_cooldowns (
+  user_id uuid NOT NULL,
+  action_key text NOT NULL,
+  next_allowed_at timestamp with time zone NOT NULL DEFAULT now(),
+  updated_at timestamp with time zone NOT NULL DEFAULT now()
+);
+
 CREATE TABLE public.user_flags (
   user_id uuid NOT NULL,
   demo boolean NOT NULL DEFAULT true,
@@ -208,6 +222,8 @@ ALTER TABLE public.device_presence ADD CONSTRAINT device_presence_pkey PRIMARY K
 ALTER TABLE public.device_state ADD CONSTRAINT device_state_game_id_fkey FOREIGN KEY (game_id) REFERENCES games(id) ON DELETE CASCADE;
 
 ALTER TABLE public.device_state ADD CONSTRAINT device_state_pkey PRIMARY KEY (game_id, device_type);
+
+ALTER TABLE public.email_cooldowns ADD CONSTRAINT email_cooldowns_pkey PRIMARY KEY (email_hash, action_key);
 
 ALTER TABLE public.games ADD CONSTRAINT games_name_len CHECK (((char_length(name) >= 1) AND (char_length(name) <= 80)));
 ALTER TABLE public.games ADD CONSTRAINT games_owner_id_fkey FOREIGN KEY (owner_id) REFERENCES auth.users(id) ON DELETE CASCADE;
@@ -335,6 +351,8 @@ ALTER TABLE public.questions ADD CONSTRAINT questions_ord_positive CHECK ((ord >
 ALTER TABLE public.questions ADD CONSTRAINT questions_pkey PRIMARY KEY (id);
 
 ALTER TABLE public.questions ADD CONSTRAINT questions_text_len CHECK (((char_length(text) >= 1) AND (char_length(text) <= 200)));
+ALTER TABLE public.user_cooldowns ADD CONSTRAINT user_cooldowns_pkey PRIMARY KEY (user_id, action_key);
+
 ALTER TABLE public.user_flags ADD CONSTRAINT user_flags_pkey PRIMARY KEY (user_id);
 
 ALTER TABLE public.user_flags ADD CONSTRAINT user_flags_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE;
@@ -353,6 +371,8 @@ CREATE UNIQUE INDEX answers_q_ord_uniq ON public.answers USING btree (question_i
 CREATE UNIQUE INDEX device_presence_pkey ON public.device_presence USING btree (game_id, device_type, device_id);
 
 CREATE UNIQUE INDEX device_state_pkey ON public.device_state USING btree (game_id, device_type);
+
+CREATE UNIQUE INDEX email_cooldowns_pkey ON public.email_cooldowns USING btree (email_hash, action_key);
 
 CREATE INDEX games_created_at_idx ON public.games USING btree (created_at DESC);
 
@@ -486,6 +506,8 @@ CREATE UNIQUE INDEX questions_game_ord_uq ON public.questions USING btree (game_
 
 CREATE UNIQUE INDEX questions_pkey ON public.questions USING btree (id);
 
+CREATE UNIQUE INDEX user_cooldowns_pkey ON public.user_cooldowns USING btree (user_id, action_key);
+
 CREATE UNIQUE INDEX user_flags_pkey ON public.user_flags USING btree (user_id);
 
 CREATE INDEX user_logos_user_id_idx ON public.user_logos USING btree (user_id);
@@ -501,6 +523,8 @@ ALTER TABLE public.answers ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.device_presence ENABLE ROW LEVEL SECURITY;
 
 ALTER TABLE public.device_state ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.email_cooldowns ENABLE ROW LEVEL SECURITY;
 
 ALTER TABLE public.games ENABLE ROW LEVEL SECURITY;
 
@@ -531,6 +555,8 @@ ALTER TABLE public.question_base_shares ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.question_bases ENABLE ROW LEVEL SECURITY;
 
 ALTER TABLE public.questions ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.user_cooldowns ENABLE ROW LEVEL SECURITY;
 
 ALTER TABLE public.user_flags ENABLE ROW LEVEL SECURITY;
 
@@ -670,6 +696,9 @@ CREATE POLICY questions_owner_write ON public.questions TO authenticated USING (
   WHERE ((g.id = questions.game_id) AND (g.owner_id = auth.uid()))))) WITH CHECK ((EXISTS ( SELECT 1
    FROM games g
   WHERE ((g.id = questions.game_id) AND (g.owner_id = auth.uid())))));
+null
+null
+null
 null
 null
 null
@@ -1033,6 +1062,130 @@ begin
   return to_jsonb(v_row);
 end;
 $function$
+CREATE OR REPLACE FUNCTION public.cooldown_email_get(p_email text, p_action_keys text[])
+ RETURNS TABLE(action_key text, next_allowed_at timestamp with time zone)
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  h text;
+BEGIN
+  h := md5(lower(trim(p_email)));
+
+  RETURN QUERY
+  SELECT ec.action_key, ec.next_allowed_at
+  FROM public.email_cooldowns ec
+  WHERE ec.email_hash = h
+    AND ec.action_key = ANY(p_action_keys);
+END;
+$function$
+CREATE OR REPLACE FUNCTION public.cooldown_email_reserve(p_email text, p_action_key text, p_cooldown_seconds integer)
+ RETURNS TABLE(ok boolean, next_allowed_at timestamp with time zone)
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  h text;
+  cur_next timestamptz;
+  new_next timestamptz;
+BEGIN
+  h := md5(lower(trim(p_email)));
+
+  SELECT ec.next_allowed_at
+    INTO cur_next
+  FROM public.email_cooldowns ec
+  WHERE ec.email_hash = h
+    AND ec.action_key = p_action_key
+  FOR UPDATE;
+
+  IF NOT FOUND THEN
+    new_next := now() + make_interval(secs => p_cooldown_seconds);
+    INSERT INTO public.email_cooldowns(email_hash, action_key, next_allowed_at, updated_at)
+    VALUES (h, p_action_key, new_next, now());
+    ok := TRUE;
+    next_allowed_at := new_next;
+    RETURN;
+  END IF;
+
+  IF cur_next <= now() THEN
+    new_next := now() + make_interval(secs => p_cooldown_seconds);
+    UPDATE public.email_cooldowns
+      SET next_allowed_at = new_next,
+          updated_at = now()
+      WHERE email_hash = h
+        AND action_key = p_action_key;
+    ok := TRUE;
+    next_allowed_at := new_next;
+    RETURN;
+  END IF;
+
+  ok := FALSE;
+  next_allowed_at := cur_next;
+  RETURN;
+END;
+$function$
+CREATE OR REPLACE FUNCTION public.cooldown_get(p_action_keys text[])
+ RETURNS TABLE(action_key text, next_allowed_at timestamp with time zone)
+ LANGUAGE sql
+AS $function$
+  SELECT uc.action_key, uc.next_allowed_at
+  FROM public.user_cooldowns uc
+  WHERE uc.user_id = auth.uid()
+    AND uc.action_key = ANY(p_action_keys);
+$function$
+
+
+CREATE OR REPLACE FUNCTION public.cooldown_reserve(p_action_key text, p_cooldown_seconds integer)
+ RETURNS TABLE(ok boolean, next_allowed_at timestamp with time zone)
+ LANGUAGE plpgsql
+AS $function$
+DECLARE
+  uid uuid;
+  cur_next timestamptz;
+  new_next timestamptz;
+BEGIN
+  uid := auth.uid();
+  IF uid IS NULL THEN
+    RAISE EXCEPTION 'not authenticated';
+  END IF;
+
+  SELECT uc.next_allowed_at
+    INTO cur_next
+  FROM public.user_cooldowns uc
+  WHERE uc.user_id = uid
+    AND uc.action_key = p_action_key
+  FOR UPDATE;
+
+  IF NOT FOUND THEN
+    new_next := now() + make_interval(secs => p_cooldown_seconds);
+    INSERT INTO public.user_cooldowns(user_id, action_key, next_allowed_at, updated_at)
+    VALUES (uid, p_action_key, new_next, now());
+    ok := TRUE;
+    next_allowed_at := new_next;
+    RETURN;
+  END IF;
+
+  IF cur_next <= now() THEN
+    new_next := now() + make_interval(secs => p_cooldown_seconds);
+    UPDATE public.user_cooldowns
+      SET next_allowed_at = new_next,
+          updated_at = now()
+      WHERE user_id = uid
+        AND action_key = p_action_key;
+    ok := TRUE;
+    next_allowed_at := new_next;
+    RETURN;
+  END IF;
+
+  ok := FALSE;
+  next_allowed_at := cur_next;
+  RETURN;
+END;
+$function$
+
+
 CREATE OR REPLACE FUNCTION public.device_ping(p_game_id uuid, p_device_type device_type, p_key text, p_device_id text DEFAULT NULL::text, p_meta jsonb DEFAULT '{}'::jsonb)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -3393,6 +3546,34 @@ AS $function$
 $function$
 
 
+CREATE OR REPLACE FUNCTION public.poll_tasks_touch_status_ts()
+ RETURNS trigger
+ LANGUAGE plpgsql
+AS $function$
+begin
+  if tg_op = 'UPDATE' and new.status is distinct from old.status then
+    if new.status = 'opened' and new.opened_at is null then
+      new.opened_at := now();
+    end if;
+
+    if new.status = 'done' and new.done_at is null then
+      new.done_at := now();
+    end if;
+
+    if new.status = 'declined' and new.declined_at is null then
+      new.declined_at := now();
+    end if;
+
+    if new.status = 'cancelled' and new.cancelled_at is null then
+      new.cancelled_at := now();
+    end if;
+  end if;
+
+  return new;
+end;
+$function$
+
+
 CREATE OR REPLACE FUNCTION public.poll_text_close_apply(p_game_id uuid, p_key text, p_payload jsonb)
  RETURNS void
  LANGUAGE plpgsql
@@ -4024,6 +4205,8 @@ declare
   v_created int := 0;
   v_cancelled int := 0;
   v_kept int := 0;
+  v_blocked int := 0;
+  v_blocked_sub_ids uuid[] := array[]::uuid[];
   v_mail jsonb := '[]'::jsonb;
 begin
   if v_uid is null then
@@ -4075,7 +4258,7 @@ begin
 
   get diagnostics v_cancelled = row_count;
 
-  -- 2) utwórz brakujące zadania dla wybranych subów
+  -- 2) utwórz brakujące zadania dla wybranych subów (z cooldownem 24h po cancelled/declined)
   with sel as (
     select
       s.id as sub_id,
@@ -4085,6 +4268,23 @@ begin
     where s.owner_id = v_uid
       and s.status = 'active'
       and s.id = any(coalesce(p_sub_ids, array[]::uuid[]))
+  ),
+  cooldown as (
+    select
+      sel.sub_id,
+      max(coalesce(t.cancelled_at, t.declined_at, t.created_at)) as last_block_ts
+    from sel
+    join public.poll_tasks t
+      on t.owner_id = v_uid
+     and t.game_id = p_game_id
+     and t.status in ('cancelled','declined')
+     and (
+        (sel.subscriber_user_id is not null and t.recipient_user_id = sel.subscriber_user_id)
+        or
+        (sel.subscriber_user_id is null and sel.subscriber_email is not null and lower(t.recipient_email) = sel.subscriber_email)
+     )
+    where coalesce(t.cancelled_at, t.declined_at, t.created_at) > now() - interval '24 hours'
+    group by sel.sub_id
   ),
   existing as (
     select
@@ -4120,12 +4320,16 @@ begin
       select sel.*
       from sel
       join existing ex on ex.sub_id = sel.sub_id
+      left join cooldown cd on cd.sub_id = sel.sub_id
       where ex.task_id is null
+        and cd.sub_id is null
     ) e
     returning id, recipient_email, token
   )
   select
     (select count(*) from ins)::int,
+    (select count(*) from cooldown)::int,
+    (select array_agg(sub_id) from cooldown),
     coalesce(
       jsonb_agg(
         jsonb_build_object(
@@ -4137,7 +4341,7 @@ begin
       ) filter (where recipient_email is not null),
       '[]'::jsonb
     )
-  into v_created, v_mail
+  into v_created, v_blocked, v_blocked_sub_ids, v_mail
   from ins;
 
   v_kept := greatest(coalesce(array_length(p_sub_ids,1),0) - v_created, 0);
@@ -4147,6 +4351,8 @@ begin
     'created', v_created,
     'cancelled', v_cancelled,
     'kept', v_kept,
+    'blocked', v_blocked,
+    'blocked_sub_ids', coalesce(v_blocked_sub_ids, array[]::uuid[]),
     'mail', v_mail
   );
 end;
@@ -4194,6 +4400,7 @@ declare
   v_sub public.poll_subscriptions%rowtype;
   v_to text;
   v_link text;
+  v_until timestamptz;
 begin
   if v_uid is null then
     return jsonb_build_object('ok', false, 'error', 'auth required');
@@ -4215,6 +4422,13 @@ begin
 
   if v_sub.status <> 'pending' then
     return jsonb_build_object('ok', false, 'error', 'only pending can be resent');
+  end if;
+
+  if v_sub.email_sent_at is not null then
+    v_until := v_sub.email_sent_at + interval '24 hours';
+    if now() < v_until then
+      return jsonb_build_object('ok', false, 'error', 'cooldown', 'cooldown_until', v_until);
+    end if;
   end if;
 
   v_to := lower(v_sub.subscriber_email);
@@ -4889,6 +5103,8 @@ CREATE TRIGGER trg_games_fill_share_keys BEFORE INSERT ON public.games FOR EACH 
 
 CREATE TRIGGER trg_games_touch BEFORE UPDATE ON public.games FOR EACH ROW EXECUTE FUNCTION touch_updated_at();
 
+CREATE TRIGGER trg_poll_tasks_touch_status_ts BEFORE UPDATE OF status ON public.poll_tasks FOR EACH ROW EXECUTE FUNCTION poll_tasks_touch_status_ts();
+
 CREATE TRIGGER trg_qb_categories_set_updated_at BEFORE UPDATE ON public.qb_categories FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
 CREATE TRIGGER trg_qb_questions_set_updated_at BEFORE UPDATE ON public.qb_questions FOR EACH ROW EXECUTE FUNCTION set_updated_at();
@@ -4898,168 +5114,3 @@ CREATE TRIGGER touch_game_from_questions AFTER INSERT OR DELETE OR UPDATE ON pub
 CREATE TRIGGER trg_touch_user_flags_updated_at BEFORE UPDATE ON public.user_flags FOR EACH ROW EXECUTE FUNCTION touch_user_flags_updated_at();
 
 CREATE TRIGGER trg_user_logos_touch BEFORE UPDATE ON public.user_logos FOR EACH ROW EXECUTE FUNCTION touch_updated_at();
-
-
-
--- =========================
--- Auth cooldowns (cross-device)
--- =========================
-
-CREATE TABLE public.user_cooldowns (
-  user_id uuid NOT NULL,
-  action_key text NOT NULL,
-  next_allowed_at timestamp with time zone NOT NULL DEFAULT now(),
-  updated_at timestamp with time zone NOT NULL DEFAULT now(),
-  CONSTRAINT user_cooldowns_pkey PRIMARY KEY (user_id, action_key)
-);
-
-ALTER TABLE public.user_cooldowns ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY user_cooldowns_select_own ON public.user_cooldowns
-FOR SELECT
-USING ((auth.uid() = user_id));
-
-CREATE POLICY user_cooldowns_insert_own ON public.user_cooldowns
-FOR INSERT
-WITH CHECK ((auth.uid() = user_id));
-
-CREATE POLICY user_cooldowns_update_own ON public.user_cooldowns
-FOR UPDATE
-USING ((auth.uid() = user_id))
-WITH CHECK ((auth.uid() = user_id));
-
-CREATE FUNCTION public.cooldown_get(p_action_keys text[])
-RETURNS TABLE(action_key text, next_allowed_at timestamp with time zone)
-LANGUAGE sql
-SECURITY INVOKER
-AS $$
-  SELECT uc.action_key, uc.next_allowed_at
-  FROM public.user_cooldowns uc
-  WHERE uc.user_id = auth.uid()
-    AND uc.action_key = ANY(p_action_keys);
-$$;
-
-CREATE FUNCTION public.cooldown_reserve(p_action_key text, p_cooldown_seconds integer)
-RETURNS TABLE(ok boolean, next_allowed_at timestamp with time zone)
-LANGUAGE plpgsql
-SECURITY INVOKER
-AS $$
-DECLARE
-  uid uuid;
-  cur_next timestamptz;
-  new_next timestamptz;
-BEGIN
-  uid := auth.uid();
-  IF uid IS NULL THEN
-    RAISE EXCEPTION 'not authenticated';
-  END IF;
-
-  SELECT uc.next_allowed_at
-    INTO cur_next
-  FROM public.user_cooldowns uc
-  WHERE uc.user_id = uid
-    AND uc.action_key = p_action_key
-  FOR UPDATE;
-
-  IF NOT FOUND THEN
-    new_next := now() + make_interval(secs => p_cooldown_seconds);
-    INSERT INTO public.user_cooldowns(user_id, action_key, next_allowed_at, updated_at)
-    VALUES (uid, p_action_key, new_next, now());
-    ok := TRUE;
-    next_allowed_at := new_next;
-    RETURN;
-  END IF;
-
-  IF cur_next <= now() THEN
-    new_next := now() + make_interval(secs => p_cooldown_seconds);
-    UPDATE public.user_cooldowns
-      SET next_allowed_at = new_next,
-          updated_at = now()
-      WHERE user_id = uid
-        AND action_key = p_action_key;
-    ok := TRUE;
-    next_allowed_at := new_next;
-    RETURN;
-  END IF;
-
-  ok := FALSE;
-  next_allowed_at := cur_next;
-  RETURN;
-END;
-$$;
-
-CREATE TABLE public.email_cooldowns (
-  email_hash text NOT NULL,
-  action_key text NOT NULL,
-  next_allowed_at timestamp with time zone NOT NULL DEFAULT now(),
-  updated_at timestamp with time zone NOT NULL DEFAULT now(),
-  CONSTRAINT email_cooldowns_pkey PRIMARY KEY (email_hash, action_key)
-);
-
-ALTER TABLE public.email_cooldowns ENABLE ROW LEVEL SECURITY;
-
-CREATE FUNCTION public.cooldown_email_get(p_email text, p_action_keys text[])
-RETURNS TABLE(action_key text, next_allowed_at timestamp with time zone)
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = public
-AS $$
-DECLARE
-  h text;
-BEGIN
-  h := md5(lower(trim(p_email)));
-
-  RETURN QUERY
-  SELECT ec.action_key, ec.next_allowed_at
-  FROM public.email_cooldowns ec
-  WHERE ec.email_hash = h
-    AND ec.action_key = ANY(p_action_keys);
-END;
-$$;
-
-CREATE FUNCTION public.cooldown_email_reserve(p_email text, p_action_key text, p_cooldown_seconds integer)
-RETURNS TABLE(ok boolean, next_allowed_at timestamp with time zone)
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = public
-AS $$
-DECLARE
-  h text;
-  cur_next timestamptz;
-  new_next timestamptz;
-BEGIN
-  h := md5(lower(trim(p_email)));
-
-  SELECT ec.next_allowed_at
-    INTO cur_next
-  FROM public.email_cooldowns ec
-  WHERE ec.email_hash = h
-    AND ec.action_key = p_action_key
-  FOR UPDATE;
-
-  IF NOT FOUND THEN
-    new_next := now() + make_interval(secs => p_cooldown_seconds);
-    INSERT INTO public.email_cooldowns(email_hash, action_key, next_allowed_at, updated_at)
-    VALUES (h, p_action_key, new_next, now());
-    ok := TRUE;
-    next_allowed_at := new_next;
-    RETURN;
-  END IF;
-
-  IF cur_next <= now() THEN
-    new_next := now() + make_interval(secs => p_cooldown_seconds);
-    UPDATE public.email_cooldowns
-      SET next_allowed_at = new_next,
-          updated_at = now()
-      WHERE email_hash = h
-        AND action_key = p_action_key;
-    ok := TRUE;
-    next_allowed_at := new_next;
-    RETURN;
-  END IF;
-
-  ok := FALSE;
-  next_allowed_at := cur_next;
-  RETURN;
-END;
-$$;
