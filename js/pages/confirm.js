@@ -1,4 +1,5 @@
 import { sb } from "../core/supabase.js";
+import { niceAuthError } from "../core/auth.js";
 import { updateUserLanguage } from "../core/auth.js";
 import { initI18n, t, getUiLang, withLangParam } from "../../translation/translation.js";
 
@@ -113,7 +114,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       } catch (e) {
         console.error(e);
         setStatus(t("confirm.failed"));
-        setErr(e?.message || String(e));
+        setErr(niceAuthError(e));
         back.style.display = "inline-flex";
         return;
       }
@@ -144,7 +145,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       } catch (e) {
         console.error(e);
         setStatus(t("confirm.failed"));
-        setErr(e?.message || String(e));
+        setErr(niceAuthError(e));
         back.style.display = "inline-flex";
         return;
       }

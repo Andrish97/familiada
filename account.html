@@ -36,8 +36,6 @@
       <div class="err" id="err"></div>
     </div>
 
-    <div class="cooldown cooldown-banner" id="accountCooldown" hidden></div>
-
     <div class="account-grid">
       <section class="account-panel">
         <div class="section-title" data-i18n="account.usernameTitle">Nazwa użytkownika</div>
@@ -52,18 +50,16 @@
         <div class="section-hint" data-i18n="account.emailHint">Zmieniaj adres logowania. Po zmianie sprawdź skrzynkę na obecnym i nowym e-mailu, aby potwierdzić operację.</div>
         <input class="inp" id="email" type="email" placeholder="Nowy e-mail" autocomplete="email" data-i18n-placeholder="account.emailPlaceholder"/>
         <div class="cooldown" id="emailCooldown" hidden></div>
-        <button class="btn gold full" id="saveEmail" type="button" data-i18n="account.emailSave">Zmień e-mail</button>
-        <div class="section-hint" data-i18n="account.emailPostHint">Zmiana e-maila wymaga potwierdzenia linków w skrzynkach. Do tego czasu możesz logować się dotychczasowym adresem.</div>
-        <div class="section-hint subtle" data-i18n="account.emailNoAccessHint"></div>
-        
-        <div class="pending-box" id="emailPendingBox" hidden>
-          <div class="pending-title" data-i18n="account.emailPendingTitle">Zmiana e-maila w toku</div>
-          <div class="pending-text" id="emailPendingText"></div>
-          <div class="pending-actions">
-            <button class="btn full" id="resendEmailChange" type="button" data-i18n="account.emailResend">Wyślij ponownie</button>
+        <div class="email-actions" id="emailActions">
+          <button class="btn gold full" id="saveEmail" type="button" data-i18n="account.emailSave">Zmień e-mail</button>
+          <div class="pending-actions pending-actions--stack" id="emailPendingActions" hidden>
+            <button class="btn gold full" id="resendEmailChange" type="button" data-i18n="account.emailResend">Wyślij ponownie</button>
             <button class="btn full" id="cancelEmailChange" type="button" data-i18n="account.emailCancel">Anuluj zmianę</button>
           </div>
         </div>
+<div class="section-hint" data-i18n="account.emailPostHint">Zmiana e-maila wymaga potwierdzenia linków w skrzynkach. Do tego czasu możesz logować się dotychczasowym adresem.</div>
+        <div class="section-hint subtle" data-i18n="account.emailNoAccessHint"></div>
+        <div class="section-hint" id="emailPendingHint" hidden></div>
       </section>
 
       <section class="account-panel">

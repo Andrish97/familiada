@@ -136,3 +136,37 @@
   opacity: .8;
   font-size: 12px;
 }
+
+
+/* --- fixed control sizing (avoid multi-line buttons changing height) --- */
+.account-panel .inp,
+.account-panel .btn {
+  height: 44px;
+  min-height: 44px;
+  box-sizing: border-box;
+}
+
+.account-panel .inp {
+  padding: 0 14px;
+  line-height: 44px;
+}
+
+.account-panel .btn {
+  padding: 0 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.email-actions{
+  display: grid;
+  gap: 10px;
+}
+
+/* stacked layout for pending email actions */
+.pending-actions--stack{
+  grid-template-columns: 1fr !important;
+}

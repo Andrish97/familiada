@@ -12,13 +12,47 @@ function buildAuthRedirect(page, lang) {
   return url.toString();
 }
 
-function niceAuthError(e) {
-  const msg = e?.message || String(e);
+export function niceAuthError(e) {
+  const msg = (e?.message || String(e || "")).trim();
   const low = msg.toLowerCase();
 
+  // Most common Supabase / GoTrue messages we want to localize
   if (low.includes("email not confirmed")) return t("auth.emailNotConfirmed");
   if (low.includes("invalid login credentials")) return t("auth.invalidCredentials");
-  return msg;
+
+  // Rate limiting / spam protection (429 etc.)
+  if (
+    low.includes("for security purposes") ||
+    low.includes("rate limit") ||
+    low.includes("too many requests") ||
+    low.includes("too many") && low.includes("requests") ||
+    low.includes("status") && low.includes("429")
+  ) {
+    return t("auth.tooManyRequests");
+  }
+
+  // Password rules
+  if (low.includes("new password should be different")) return t("auth.passwordMustDiffer");
+  if (low.includes("password should be at least") || (low.includes("password") && low.includes("length"))) {
+    return t("auth.passwordTooShort");
+  }
+
+  // Links / tokens
+  if (
+    low.includes("invalid or expired") ||
+    (low.includes("token") && low.includes("expired")) ||
+    (low.includes("otp") && low.includes("expired")) ||
+    (low.includes("token") && low.includes("invalid"))
+  ) {
+    return t("auth.linkInvalidOrExpired");
+  }
+
+  // Registration duplicates
+  if (low.includes("user already registered") || (low.includes("already") && low.includes("registered"))) {
+    return t("auth.userAlreadyRegistered");
+  }
+
+  return msg || t("auth.loginFailed");
 }
 
 async function loginToEmail(login) {

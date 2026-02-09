@@ -75,7 +75,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   } catch(e){
     console.error(e);
     setStatus(t("reset.verifyFailed"));
-    setErr(e?.message || String(e));
+    setErr(niceAuthError(e));
     back.style.display = "inline-flex";
     return;
   }
@@ -90,7 +90,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     try {
       validatePassword(a);
     } catch (e) {
-      return setErr(e?.message || String(e));
+      return setErr(niceAuthError(e));
     }
 
     try{
@@ -109,7 +109,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     } catch(e){
       console.error(e);
       setStatus(t("reset.saveFailed"));
-      setErr(e?.message || String(e));
+      setErr(niceAuthError(e));
     }
   });
 
