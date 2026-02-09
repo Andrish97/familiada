@@ -2263,7 +2263,7 @@ buconst en = {
       pollsHub: "Polls hub 📊",
       pollsHubMobile: "Polls 📊",
       bases: "Question bases 🗃️",
-      basesMobile: "Qbases🗃️",
+      basesMobile: "Qbases 🗃️",
       manual: "Tips ℹ️",
       manualMobile: "Tips ℹ️",
       logo: "Logo 🖥️",
