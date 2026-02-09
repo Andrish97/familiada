@@ -4898,3 +4898,168 @@ CREATE TRIGGER touch_game_from_questions AFTER INSERT OR DELETE OR UPDATE ON pub
 CREATE TRIGGER trg_touch_user_flags_updated_at BEFORE UPDATE ON public.user_flags FOR EACH ROW EXECUTE FUNCTION touch_user_flags_updated_at();
 
 CREATE TRIGGER trg_user_logos_touch BEFORE UPDATE ON public.user_logos FOR EACH ROW EXECUTE FUNCTION touch_updated_at();
+
+
+
+-- =========================
+-- Auth cooldowns (cross-device)
+-- =========================
+
+CREATE TABLE public.user_cooldowns (
+  user_id uuid NOT NULL,
+  action_key text NOT NULL,
+  next_allowed_at timestamp with time zone NOT NULL DEFAULT now(),
+  updated_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT user_cooldowns_pkey PRIMARY KEY (user_id, action_key)
+);
+
+ALTER TABLE public.user_cooldowns ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY user_cooldowns_select_own ON public.user_cooldowns
+FOR SELECT
+USING ((auth.uid() = user_id));
+
+CREATE POLICY user_cooldowns_insert_own ON public.user_cooldowns
+FOR INSERT
+WITH CHECK ((auth.uid() = user_id));
+
+CREATE POLICY user_cooldowns_update_own ON public.user_cooldowns
+FOR UPDATE
+USING ((auth.uid() = user_id))
+WITH CHECK ((auth.uid() = user_id));
+
+CREATE FUNCTION public.cooldown_get(p_action_keys text[])
+RETURNS TABLE(action_key text, next_allowed_at timestamp with time zone)
+LANGUAGE sql
+SECURITY INVOKER
+AS $$
+  SELECT uc.action_key, uc.next_allowed_at
+  FROM public.user_cooldowns uc
+  WHERE uc.user_id = auth.uid()
+    AND uc.action_key = ANY(p_action_keys);
+$$;
+
+CREATE FUNCTION public.cooldown_reserve(p_action_key text, p_cooldown_seconds integer)
+RETURNS TABLE(ok boolean, next_allowed_at timestamp with time zone)
+LANGUAGE plpgsql
+SECURITY INVOKER
+AS $$
+DECLARE
+  uid uuid;
+  cur_next timestamptz;
+  new_next timestamptz;
+BEGIN
+  uid := auth.uid();
+  IF uid IS NULL THEN
+    RAISE EXCEPTION 'not authenticated';
+  END IF;
+
+  SELECT uc.next_allowed_at
+    INTO cur_next
+  FROM public.user_cooldowns uc
+  WHERE uc.user_id = uid
+    AND uc.action_key = p_action_key
+  FOR UPDATE;
+
+  IF NOT FOUND THEN
+    new_next := now() + make_interval(secs => p_cooldown_seconds);
+    INSERT INTO public.user_cooldowns(user_id, action_key, next_allowed_at, updated_at)
+    VALUES (uid, p_action_key, new_next, now());
+    ok := TRUE;
+    next_allowed_at := new_next;
+    RETURN;
+  END IF;
+
+  IF cur_next <= now() THEN
+    new_next := now() + make_interval(secs => p_cooldown_seconds);
+    UPDATE public.user_cooldowns
+      SET next_allowed_at = new_next,
+          updated_at = now()
+      WHERE user_id = uid
+        AND action_key = p_action_key;
+    ok := TRUE;
+    next_allowed_at := new_next;
+    RETURN;
+  END IF;
+
+  ok := FALSE;
+  next_allowed_at := cur_next;
+  RETURN;
+END;
+$$;
+
+CREATE TABLE public.email_cooldowns (
+  email_hash text NOT NULL,
+  action_key text NOT NULL,
+  next_allowed_at timestamp with time zone NOT NULL DEFAULT now(),
+  updated_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT email_cooldowns_pkey PRIMARY KEY (email_hash, action_key)
+);
+
+ALTER TABLE public.email_cooldowns ENABLE ROW LEVEL SECURITY;
+
+CREATE FUNCTION public.cooldown_email_get(p_email text, p_action_keys text[])
+RETURNS TABLE(action_key text, next_allowed_at timestamp with time zone)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  h text;
+BEGIN
+  h := md5(lower(trim(p_email)));
+
+  RETURN QUERY
+  SELECT ec.action_key, ec.next_allowed_at
+  FROM public.email_cooldowns ec
+  WHERE ec.email_hash = h
+    AND ec.action_key = ANY(p_action_keys);
+END;
+$$;
+
+CREATE FUNCTION public.cooldown_email_reserve(p_email text, p_action_key text, p_cooldown_seconds integer)
+RETURNS TABLE(ok boolean, next_allowed_at timestamp with time zone)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  h text;
+  cur_next timestamptz;
+  new_next timestamptz;
+BEGIN
+  h := md5(lower(trim(p_email)));
+
+  SELECT ec.next_allowed_at
+    INTO cur_next
+  FROM public.email_cooldowns ec
+  WHERE ec.email_hash = h
+    AND ec.action_key = p_action_key
+  FOR UPDATE;
+
+  IF NOT FOUND THEN
+    new_next := now() + make_interval(secs => p_cooldown_seconds);
+    INSERT INTO public.email_cooldowns(email_hash, action_key, next_allowed_at, updated_at)
+    VALUES (h, p_action_key, new_next, now());
+    ok := TRUE;
+    next_allowed_at := new_next;
+    RETURN;
+  END IF;
+
+  IF cur_next <= now() THEN
+    new_next := now() + make_interval(secs => p_cooldown_seconds);
+    UPDATE public.email_cooldowns
+      SET next_allowed_at = new_next,
+          updated_at = now()
+      WHERE email_hash = h
+        AND action_key = p_action_key;
+    ok := TRUE;
+    next_allowed_at := new_next;
+    RETURN;
+  END IF;
+
+  ok := FALSE;
+  next_allowed_at := cur_next;
+  RETURN;
+END;
+$$;

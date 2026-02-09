@@ -11,6 +11,7 @@ import {
 } from "../core/auth.js";
 
 import { sb } from "../core/supabase.js";
+import { cooldownEmailGet, cooldownEmailReserve } from "../core/cooldown.js";
 import { initI18n, t, getUiLang, withLangParam } from "../../translation/translation.js";
 
 const $ = (s) => document.querySelector(s);
@@ -39,19 +40,33 @@ let mode = "login"; // login | register
 let isBusy = false;
 
 const RESET_COOLDOWN_MS = 60 * 60 * 1000; // 1h
+const RESET_ACTION_KEY = "auth:reset_password";
+const RESET_COOLDOWN_SECONDS = 60 * 60;
+
 let _forgotTimer = null;
+let _forgotDebounce = null;
 
-function resetKey(email) {
-  return `familiada:cooldown:reset:${String(email || "").toLowerCase()}`;
+// in-memory cache (truth is in DB; we refresh on interactions)
+const forgotUntilByEmail = new Map();
+
+function getForgotUntil(email) {
+  const e = String(email || "").trim().toLowerCase();
+  return forgotUntilByEmail.get(e) || 0;
 }
 
-function getUntil(key) {
-  const v = Number(localStorage.getItem(key) || "0");
-  return Number.isFinite(v) ? v : 0;
+function setForgotUntil(email, untilMs) {
+  const e = String(email || "").trim().toLowerCase();
+  if (!e) return;
+  forgotUntilByEmail.set(e, Number(untilMs) || 0);
 }
 
-function setUntil(key, until) {
-  localStorage.setItem(key, String(until));
+async function refreshForgotUntil(email) {
+  const e = String(email || "").trim().toLowerCase();
+  if (!e || !e.includes("@")) return 0;
+  const map = await cooldownEmailGet(e, [RESET_ACTION_KEY]);
+  const until = map.get(RESET_ACTION_KEY) || 0;
+  setForgotUntil(e, until);
+  return until;
 }
 
 function formatLeft(ms) {
@@ -79,7 +94,7 @@ function hideForgotCooldown() {
 function showForgotCooldownForEmail(resolvedEmail) {
   stopForgotTimer();
 
-  const k = resetKey(resolvedEmail);
+  const resolved = String(resolvedEmail || "").trim().toLowerCase();
   const tick = () => {
     // pokazuj tylko, gdy aktualnie w polu jest ten sam email (lub user wpisał username → wtedy i tak kliknie)
     const current = String(email?.value || "").trim().toLowerCase();
@@ -89,11 +104,10 @@ function showForgotCooldownForEmail(resolvedEmail) {
       return;
     }
 
-    const until = getUntil(k);
+    const until = getForgotUntil(resolved);
     const left = until - Date.now();
 
     if (left <= 0) {
-      localStorage.removeItem(k);
       hideForgotCooldown();
       btnForgot.disabled = false;
       return;
@@ -308,10 +322,9 @@ document.addEventListener("DOMContentLoaded", async () => {
       // 1) resolve (email lub username -> email)
       const resolved = await resolveLoginToEmail(loginOrEmail);
       if (!resolved) throw new Error(t("index.errResetMissingLogin"));
-  
-      // 2) cooldown check (per email)
-      const k = resetKey(resolved);
-      const until = getUntil(k);
+      // 2) cooldown check (per email, cross-device)
+      await refreshForgotUntil(resolved);
+      const until = getForgotUntil(resolved);
       const left = until - Date.now();
       if (left > 0) {
         setStatus(t("index.statusResetSent"));
@@ -319,18 +332,29 @@ document.addEventListener("DOMContentLoaded", async () => {
         showForgotCooldownForEmail(resolved);
         return;
       }
-  
-      // 3) send
+      // 3) reserve cooldown (cross-device) + send
+      const reserve = await cooldownEmailReserve(resolved, RESET_ACTION_KEY, RESET_COOLDOWN_SECONDS);
+      if (reserve.nextAllowedAtMs) setForgotUntil(resolved, reserve.nextAllowedAtMs);
+
+      if (!reserve.ok) {
+        const left2 = getForgotUntil(resolved) - Date.now();
+        setStatus(t("index.statusResetSent"));
+        setErr(t("index.errResetCooldown", { time: formatLeft(left2) }));
+        showForgotCooldownForEmail(resolved);
+        return;
+      }
+
       setStatus(t("index.statusResetSending"));
       const redirectTo = buildAuthRedirect(resetUrl);
-  
+
       const usedEmail = await resetPassword(loginOrEmail, redirectTo, getUiLang(), resolved);
-      setUntil(resetKey(usedEmail), Date.now() + RESET_COOLDOWN_MS);
-  
+
+      if (reserve.nextAllowedAtMs) setForgotUntil(usedEmail, reserve.nextAllowedAtMs);
+
       setStatus(t("index.statusResetSent"));
       hideForgotCooldown();
       showForgotCooldownForEmail(usedEmail);
-    } catch (e) {
+} catch (e) {
       console.error(e);
       setStatus(t("index.statusError"));
       setErr(e?.message || String(e));
@@ -384,13 +408,24 @@ document.addEventListener("DOMContentLoaded", async () => {
       btnForgot.disabled = false;
       return;
     }
-    const until = getUntil(resetKey(v));
-    if (until > Date.now()) {
-      showForgotCooldownForEmail(v);
-    } else {
-      hideForgotCooldown();
-      btnForgot.disabled = false;
-    }
+
+    if (_forgotDebounce) clearTimeout(_forgotDebounce);
+    _forgotDebounce = setTimeout(async () => {
+      try {
+        await refreshForgotUntil(v);
+        const until = getForgotUntil(v);
+        if (until > Date.now()) {
+          showForgotCooldownForEmail(v);
+        } else {
+          hideForgotCooldown();
+          btnForgot.disabled = false;
+        }
+      } catch {
+        // If RPC is unavailable, fallback to hiding the countdown (do not block UI).
+        hideForgotCooldown();
+        btnForgot.disabled = false;
+      }
+    }, 400);
   });
   
   pass.addEventListener("keydown", (e) => {
