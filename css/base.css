@@ -56,64 +56,69 @@ body {
     justify-content: flex-end;
 }
 
-@media (max-width:980px){
+@media (max-width: 980px){
 
-  /* TOPBAR: 2 kolumny (lewo/prawo) */
+  /* MOBILE TOPBAR LAYOUT:
+     ┌───────────────────────────────┐
+     │ BRAND / TITLE (100%)          │
+     ├───────────────┬───────────────┤
+     │ left content  │ right content │
+     └───────────────┴───────────────┘
+  */
+
   .topbar{
     display: grid;
     grid-template-columns: 1fr 1fr;
-    align-items: start;
-    gap: 10px;
+    column-gap: 10px;
+    row-gap: 10px;
+    align-items: start;     /* elementy od góry, bez centrowania w pionie */
   }
 
-  /* LEWA: ma 2 wiersze: (1) brand/title na pełną szerokość topbara, (2) lewa kolumna */
-  .topbar-left{
-    grid-column: 1 / -1;              /* lewy blok rozciągamy na 2 kolumny */
-    display: grid;
-    grid-template-columns: 1fr 1fr;   /* znów 2 kolumny w środku */
-    grid-auto-rows: auto;
-    align-items: start;
-    gap: 10px;
-  }
-
-  /* BRAND/TITLE: full width w topbar-left-grid */
-  .topbar-left .brand,
-  .topbar-left .topbar-title{
+  /* BRAND i opcjonalny TITLE zawsze na pełną szerokość */
+  .topbar > .brand,
+  .topbar > .topbar-title{
     grid-column: 1 / -1;
+    justify-self: center;
     text-align: center;
     width: 100%;
   }
 
-  /* reszta elementów po lewej idzie do kolumny 1 */
-  .topbar-left > :not(.brand):not(.topbar-title){
-    grid-column: 1;
-    justify-self: start;
-    align-self: start;
-  }
-
-  /* PRAWA kolumna: przypnij do kolumny 2 w tym samym "wewnętrznym" gridzie */
-  .topbar-right{
+  /* PRAWY BLOK: obsłuż zarówno .topbar-right jak i stare .right */
+  .topbar > .topbar-right,
+  .topbar > .right{
     grid-column: 2;
     justify-self: end;
-    align-self: start;
 
+    /* ważne: w środku dalej flex, żeby guziki mogły być po kilka w linii */
     display: flex;
-    flex-direction: column;
-    align-items: flex-end;
+    flex-wrap: wrap;
     gap: 10px;
 
-    margin-left: 0; /* wyłącz desktopowe odpychanie */
+    justify-content: flex-end;
+    align-items: flex-start;
+
+    /* kasujemy desktopowe wypychanie */
+    margin-left: 0;
   }
 
-  /* nie rozciągaj przycisków w topbarze */
-  .topbar .btn,
-  .topbar .inp,
-  .topbar .who{
+  /* LEWA KOLUMNA: wszystkie „luźne” elementy topbara (np. back button)
+     lądują w kolumnie 1, jeśli nie są brand/title i nie są prawym kontenerem */
+  .topbar > :not(.brand):not(.topbar-title):not(.topbar-right):not(.right){
+    grid-column: 1;
+    justify-self: start;
+  }
+
+  /* jeśli używasz sztucznego spacera w topbarze — na mobile wyłącz,
+     bo psuje siatkę i rozmiary */
+  .topbar .spacer{
+    display: none !important;
+  }
+
+  /* anty-rozciąganie przycisków w topbarze:
+     (żeby nie robiły się „na całą kolumnę” jeśli gdzieś złapały width:100%) */
+  .topbar .btn{
     width: auto;
     max-width: 100%;
-  }
-  .topbar .btn.full{
-    width: auto;
   }
 }
 
