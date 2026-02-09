@@ -56,6 +56,18 @@ body {
     justify-content: flex-end;
 }
 
+@media (max-width:720px){
+  .topbar-left,
+  .topbar-right{
+    width: 100%;
+  }
+
+  .topbar-right{
+    margin-left: 0;
+    justify-content: flex-start;
+  }
+}
+
 .spacer{
   width: 80px;
   min-height: 30px;
