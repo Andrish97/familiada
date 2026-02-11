@@ -23,6 +23,8 @@ const btnBrowse = document.getElementById("btnBrowse");
 const btnShare = document.getElementById("btnShare");
 const btnExport = document.getElementById("btnExport");
 const btnImport = document.getElementById("btnImport");
+const btnGoAlt = document.getElementById("btnGoAlt");
+const altBadgeEl = document.getElementById("altBadge");
 
 // Modal nazwy
 const nameOverlay = document.getElementById("nameOverlay");
@@ -664,6 +666,7 @@ function closeShareModal() {
   (async () => {
     try {
       await refreshBases();
+  await refreshAltBadge();
       render();
       setButtonsState();
     } catch (e) {
@@ -1353,7 +1356,16 @@ async function importFromJsonText(txt) {
 
 /* ================= Events ================= */
 btnBack?.addEventListener("click", () => {
-  location.href = "builder.html";
+  const from = new URLSearchParams(location.search).get("from");
+  if (from === "hub-a") location.href = "polls-hub.html";
+  else if (from === "hub-b") location.href = "subscriptions.html";
+  else location.href = "builder.html";
+});
+
+btnGoAlt?.addEventListener("click", async () => {
+  const page = document.body.dataset.altPage || "subscriptions.html";
+  const from = document.body.dataset.altFrom || "bases";
+  location.href = `${page}?from=${encodeURIComponent(from)}`;
 });
 
 btnLogout?.addEventListener("click", async () => {
@@ -1469,6 +1481,19 @@ shareEmail?.addEventListener("keydown", (e) => {
     if (ov === shareOverlay) closeShareModal();
   });
 });
+
+
+async function refreshAltBadge() {
+  try {
+    const { data, error } = await sb().rpc("polls_badge_get");
+    if (error) throw error;
+    const row = Array.isArray(data) ? data[0] : data;
+    const n = Number(row?.subs_pending || 0);
+    if (!altBadgeEl || !btnGoAlt) return;
+    altBadgeEl.textContent = n > 99 ? "99+" : (n > 0 ? String(n) : "");
+    btnGoAlt.classList.toggle("has-badge", n > 0);
+  } catch {}
+}
 
 /* ================= Init ================= */
 (async function init() {

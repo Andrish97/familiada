@@ -89,6 +89,8 @@ const btnLogoEditor = document.getElementById("btnLogoEditor");
 const btnBases = document.getElementById("btnBases");
 const btnPollsHub = document.getElementById("btnPollsHub");
 const pollsHubBadge = document.getElementById("pollsHubBadge");
+const btnSubscriptionsHub = document.getElementById("btnSubscriptionsHub");
+const subscriptionsHubBadge = document.getElementById("subscriptionsHubBadge");
 
 const btnExport = document.getElementById("btnExport");
 const btnImport = document.getElementById("btnImport");
@@ -781,15 +783,18 @@ document.addEventListener("DOMContentLoaded", async () => {
       const row = Array.isArray(data) ? data[0] : data;
       const tasks = Number(row?.tasks_pending ?? 0);
       const invites = Number(row?.subs_pending ?? 0);
-      const total = tasks + invites;
-      const text = total > 99 ? "99+" : String(total);
-      const hasNew = total > 0;
-      btnPollsHub?.classList.toggle("has-badge", hasNew);
-      if (pollsHubBadge) pollsHubBadge.textContent = hasNew ? text : "";
+      const pollsText = tasks > 99 ? "99+" : String(tasks);
+      const subsText = invites > 99 ? "99+" : String(invites);
+      btnPollsHub?.classList.toggle("has-badge", tasks > 0);
+      if (pollsHubBadge) pollsHubBadge.textContent = tasks > 0 ? pollsText : "";
+      btnSubscriptionsHub?.classList.toggle("has-badge", invites > 0);
+      if (subscriptionsHubBadge) subscriptionsHubBadge.textContent = invites > 0 ? subsText : "";
     } catch (e){
       // jak RPC nie istnieje / nie zwróci pól — nie blokujemy UI
       btnPollsHub?.classList.remove("has-badge");
       if (pollsHubBadge) pollsHubBadge.textContent = "";
+      btnSubscriptionsHub?.classList.remove("has-badge");
+      if (subscriptionsHubBadge) subscriptionsHubBadge.textContent = "";
     }
   }
   
@@ -839,11 +844,15 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
   
   btnBases?.addEventListener("click", async () => {
-    location.href = "bases.html";
+    location.href = "bases.html?from=builder";
   });
 
   btnPollsHub?.addEventListener("click", () => {
-    location.href = "polls-hub.html";
+    location.href = "polls-hub.html?from=builder";
+  });
+
+  btnSubscriptionsHub?.addEventListener("click", () => {
+    location.href = "subscriptions.html?from=builder";
   });
 
   tabPollText?.addEventListener("click", () => setActiveTab(TYPES.POLL_TEXT));

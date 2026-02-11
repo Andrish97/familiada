@@ -37,6 +37,7 @@ const confirmUrl = baseUrls.confirmUrl || "confirm.html";
 const resetUrl = baseUrls.resetUrl || "reset.html";
 const builderUrl = baseUrls.builderUrl || "builder.html";
 const pollsUrl = baseUrls.pollsUrl || "polls-hub.html";
+const subscriptionsUrl = baseUrls.subscriptionsUrl || "subscriptions.html";
 
 let mode = "login"; // login | register
 
@@ -158,7 +159,8 @@ function buildAuthRedirect(page) {
 }
 
 function buildNextUrl() {
-  const url = new URL(pollsUrl.startsWith("/") ? pollsUrl : `/${pollsUrl}`, location.origin);
+  const target = nextSub && !nextTask ? subscriptionsUrl : pollsUrl;
+  const url = new URL(target.startsWith("/") ? target : `/${target}`, location.origin);
   if (nextTask) url.searchParams.set("t", nextTask);
   if (nextSub) url.searchParams.set("s", nextSub);
   url.searchParams.set("lang", getUiLang());
@@ -269,7 +271,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     await syncLanguage();
     if (!u.username) {
       openUsernameSetup();
-    } else if (nextTarget === "polls-hub") {
+    } else if (nextTarget === "polls-hub" || nextTarget === "subscriptions") {
       location.href = buildNextUrl();
     } else {
       location.href = withLangParam(builderUrl);
@@ -323,7 +325,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         await syncLanguage();
         if (!authed?.username) {
           openUsernameSetup();
-        } else if (nextTarget === "polls-hub") {
+        } else if (nextTarget === "polls-hub" || nextTarget === "subscriptions") {
           location.href = buildNextUrl();
         } else {
           location.href = withLangParam(builderUrl);
