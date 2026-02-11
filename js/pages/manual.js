@@ -5,6 +5,11 @@
 import { confirmModal } from "../core/modal.js";
 import { initI18n, setUiLang, t } from "../../translation/translation.js";
 
+function isControlModal() {
+  const p = new URLSearchParams(location.search);
+  return p.get("modal") === "control";
+}
+
 async function initManualI18n() {
   const params = new URLSearchParams(location.search);
   const hasLangParam = params.has("lang");
@@ -14,7 +19,7 @@ async function initManualI18n() {
     await setUiLang("pl", { persist: true, updateUrl: true, apply: false });
   }
 
-  await initI18n({ withSwitcher: true });
+  await initI18n({ withSwitcher: !isControlModal() });
 }
 
 function qsa(sel) { return Array.from(document.querySelectorAll(sel)); }
@@ -42,7 +47,7 @@ function setActive(name) {
 }
 
 function wireTabs() {
-  if (!shouldShowDemoTab()) {
+  if (!shouldShowDemoTab() || isControlModal()) {
     document.querySelector('.simple-tabs .tab[data-tab="demo"]')?.remove();
     pages.demo?.remove();
     delete pages.demo;
@@ -62,6 +67,18 @@ function decodeRet() {
   return p.get("ret") || "builder.html";
 }
 
+
+function applyControlModalLayout() {
+  if (!isControlModal()) return;
+  document.body.classList.add("manual-in-control-modal");
+  byId("btnBack")?.remove();
+  byId("who")?.remove();
+  byId("btnLogout")?.remove();
+  document.querySelector('.simple-tabs .tab[data-tab="demo"]')?.remove();
+  pages.demo?.remove();
+  delete pages.demo;
+}
+
 function shouldShowDemoTab() {
   const ret = decodeRet().toLowerCase();
   return ret.startsWith("builder.html") || ret.startsWith("/builder.html");
@@ -70,9 +87,25 @@ function shouldShowDemoTab() {
 function buildPrivacyUrl() {
   const url = new URL("privacy.html", location.href);
   url.searchParams.set("ret", decodeRet());
+  if (isControlModal()) url.searchParams.set("modal", "control");
+  url.searchParams.set("lang", new URLSearchParams(location.search).get("lang") || localStorage.getItem("uiLang") || "pl");
   const manualPath = `${location.pathname.split("/").pop() || "manual.html"}${location.search}${location.hash}`;
   url.searchParams.set("man", manualPath);
   return url.toString();
+}
+
+
+function resolveBackLabelKey() {
+  const ret = decodeRet().toLowerCase();
+  if (ret.startsWith("bases.html") || ret.startsWith("/bases.html") || ret.startsWith("base-explorer/base-explorer.html") || ret.startsWith("/base-explorer/base-explorer.html")) return "baseExplorer.backToBases";
+  if (ret.startsWith("polls-hub.html") || ret.startsWith("/polls-hub.html") || ret.startsWith("subscriptions.html") || ret.startsWith("/subscriptions.html") || ret.startsWith("polls.html") || ret.startsWith("/polls.html")) return "polls.backToHub";
+  return "manual.backToGames";
+}
+
+function updateBackButtonLabel() {
+  const btn = byId("btnBack");
+  if (!btn) return;
+  btn.textContent = t(resolveBackLabelKey());
 }
 
 function wireFallbackNav() {
@@ -135,9 +168,16 @@ async function wireAuthSoft() {
 
 /* ================= Init ================= */
 initManualI18n();
+applyControlModalLayout();
 wireTabs();
+updateBackButtonLabel();
 wireFallbackNav();
 
 wireAuthSoft().catch((err) => {
   console.warn("[manual] auth nieaktywny:", err);
+});
+
+
+window.addEventListener("i18n:lang", () => {
+  updateBackButtonLabel();
 });
