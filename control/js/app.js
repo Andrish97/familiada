@@ -848,16 +848,16 @@ async function sendZeroStatesToDevices() {
   const helpOverlay = document.getElementById("helpOverlay");
   const helpFrame = document.getElementById("helpFrame");
   const btnHelpClose = document.getElementById("btnHelpClose");
-  const btnHelpManual = document.getElementById("btnHelpManual");
-  const btnHelpPrivacy = document.getElementById("btnHelpPrivacy");
-
-  function setHelpView(kind) {
-    if (!helpFrame) return;
-    helpFrame.src = kind === "privacy" ? "../privacy.html" : "../manual.html";
+  function buildHelpUrl() {
+    const url = new URL("../manual.html", location.href);
+    url.searchParams.set("ret", `${location.pathname.split("/").pop() || "control.html"}${location.search}${location.hash}`);
+    url.searchParams.set("modal", "control");
+    url.searchParams.set("lang", getUiLang() || "pl");
+    return url.toString();
   }
 
   function openHelpModal() {
-    setHelpView("manual");
+    if (helpFrame) helpFrame.src = buildHelpUrl();
     helpOverlay?.classList.remove("hidden");
   }
 
@@ -867,8 +867,6 @@ async function sendZeroStatesToDevices() {
 
   btnHelpClose?.addEventListener("click", closeHelpModal);
   helpOverlay?.addEventListener("click", (ev) => { if (ev.target === helpOverlay) closeHelpModal(); });
-  btnHelpManual?.addEventListener("click", () => setHelpView("manual"));
-  btnHelpPrivacy?.addEventListener("click", () => setHelpView("privacy"));
 
 
   // === Top bar ===

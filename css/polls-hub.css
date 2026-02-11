@@ -405,7 +405,7 @@ body.polls-hub-body .bar{
 }
 .hub-tabs-mobile .tabs-strip{
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 6px;
 }
 .hub-tabs-mobile .tab-label{
@@ -561,3 +561,11 @@ body.polls-hub-body .bar{
     margin-top: 16px;
   }
 }
+
+
+.hub-tabs-mobile .tab-slot{ min-width: 0; }
+.hub-tabs-mobile .tab-wrapper{ overflow: hidden; }
+.hub-tabs-mobile:has(.tab-slot:first-child .tab-label.active) .hub-card{ border-top-left-radius: 0; }
+.hub-tabs-mobile:has(.tab-slot:last-child .tab-label.active) .hub-card{ border-top-right-radius: 0; }
+.hub-tabs-mobile .tab-slot:first-child .tab-corner-right,
+.hub-tabs-mobile .tab-slot:last-child .tab-corner-left{ display:none; }
