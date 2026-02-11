@@ -836,7 +836,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
   btnManual?.addEventListener("click", async () => {
-    location.href = "manual.html";
+    const url = new URL("manual.html", location.href);
+    const ret = `${location.pathname.split("/").pop() || ""}${location.search}${location.hash}`;
+    url.searchParams.set("ret", ret);
+    location.href = url.toString();
   });
 
   btnLogoEditor?.addEventListener("click", async () => {

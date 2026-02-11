@@ -18,6 +18,7 @@ const who = document.getElementById("who");
 const hint = document.getElementById("hint");
 
 const btnBack = document.getElementById("btnBack");
+const btnManual = document.getElementById("btnManual");
 const btnLogout = document.getElementById("btnLogout");
 const btnBrowse = document.getElementById("btnBrowse");
 const btnShare = document.getElementById("btnShare");
@@ -1354,12 +1355,24 @@ async function importFromJsonText(txt) {
   }
 }
 
+
+function buildManualUrl() {
+  const url = new URL("manual.html", location.href);
+  const ret = `${location.pathname.split("/").pop() || ""}${location.search}${location.hash}`;
+  url.searchParams.set("ret", ret);
+  return url.toString();
+}
+
 /* ================= Events ================= */
 btnBack?.addEventListener("click", () => {
   const from = new URLSearchParams(location.search).get("from");
   if (from === "hub-a") location.href = "polls-hub.html";
   else if (from === "hub-b") location.href = "subscriptions.html";
   else location.href = "builder.html";
+});
+
+btnManual?.addEventListener("click", () => {
+  location.href = buildManualUrl();
 });
 
 btnGoAlt?.addEventListener("click", async () => {

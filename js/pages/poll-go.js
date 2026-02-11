@@ -63,6 +63,7 @@ const actions = $("actions");
 const hint = $("hint");
 const emailRow = $("emailRow");
 const emailInput = $("emailInput");
+const btnManual = $("btnManual");
 
 function setView({ head, text, hintText }) {
   if (title) title.textContent = head;
@@ -445,6 +446,13 @@ emailInput?.addEventListener("keydown", async (event) => {
   event.preventDefault();
   if (!goToken) return;
   await subscribeByEmail();
+});
+
+btnManual?.addEventListener("click", () => {
+  const url = new URL("manual.html", location.href);
+  const ret = `${location.pathname.split("/").pop() || ""}${location.search}${location.hash}`;
+  url.searchParams.set("ret", ret);
+  location.href = url.toString();
 });
 
 init();

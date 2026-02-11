@@ -16,6 +16,7 @@ const $ = (id) => document.getElementById(id);
 const who = $("who");
 const btnLogout = $("btnLogout");
 const btnBack = $("btnBack");
+const btnManual = $("btnManual");
 const msg = $("msg");
 
 const cardMain = $("cardMain");
@@ -928,6 +929,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (btnBack) {
     btnBack.textContent = from === "polls-hub" ? t("polls.backToHub") : t("polls.backToGames");
   }
+
+  btnManual?.addEventListener("click", () => {
+    location.href = buildManualUrl();
+  });
 
   btnBack?.addEventListener("click", async () => {
     if (uiTextCloseOpen) {
