@@ -884,9 +884,7 @@ const en = {
 
       <p class="m-p">
         If you want to read the full rules of the game,
-        <a href="https://s.tvp.pl/repository/attachment/6/8/f/68f09c03ff0781fa510c2fd90c3ba19b1569224834470.pdf"
-           target="_blank"
-           rel="noopener">
+        <a href="https://s.tvp.pl/repository/attachment/6/8/f/68f09c03ff0781fa510c2fd90c3ba19b1569224834470.pdf" target="_blank" rel="noopener noreferrer">
           The “Familiada” game show rules
         </a>
         describe them in detail.

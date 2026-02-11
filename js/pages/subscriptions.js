@@ -14,8 +14,6 @@ const who = $("who");
 const btnLogout = $("btnLogout");
 const btnBack = $("btnBackToBuilder");
 const btnManual = $("btnManual");
-const btnGoAlt = $("btnGoAlt");
-const altBadgeEl = $("altBadge");
 
 const tabA = $("tabSubscribersMobile");
 const tabB = $("tabSubscriptionsMobile");
@@ -66,6 +64,19 @@ const MSG = {
   removeCancel: () => t("pollsHubSubscriptions.modal.removeSubscriber.cancel"),
 };
 
+
+async function callSubscriptionAction(row, action) {
+  if (!row?.sub_id) throw new Error("missing_subscription_id");
+  const fn = action === "accept"
+    ? "polls_hub_subscription_accept"
+    : action === "reject"
+      ? "polls_hub_subscription_reject"
+      : "polls_hub_subscription_cancel";
+  const { data, error } = await sb().rpc(fn, { p_id: row.sub_id });
+  const ok = data?.ok === undefined ? true : !!data?.ok;
+  if (error || !ok) throw error || new Error(String(data?.error || "subscription_action_failed"));
+}
+
 let subscribers = [];
 let invites = [];
 
@@ -108,7 +119,7 @@ function renderEmpty(el, txt) {
 function sortList(kind, list) {
   const sorted = [...list];
   const key = sortState[kind];
-  const byName = (a, b) => String((a.subscriber_display_label || a.owner_display_label || "")).localeCompare(String((b.subscriber_display_label || b.owner_display_label || "")));
+  const byName = (a, b) => String((a.subscriber_label || a.owner_label || "")).localeCompare(String((b.subscriber_label || b.owner_label || "")));
   if (key === "name-asc") sorted.sort(byName);
   else if (key === "name-desc") sorted.sort((a, b) => byName(b, a));
   else if (key === "oldest") sorted.sort((a, b) => parseDate(a.created_at) - parseDate(b.created_at));
@@ -132,18 +143,18 @@ function renderSubscribers() {
     for (const row of sorted) {
       const item = document.createElement("div");
       item.className = `hub-item ${row.status === "active" ? "sub-active" : "sub-pending"}`;
-      item.innerHTML = `<div><div class="hub-item-title">${row.subscriber_display_label || MSG.dash()}</div><div class="hub-item-sub">${MSG.statusLabel(row.status)}</div></div><div class="hub-item-actions"></div>`;
+      item.innerHTML = `<div><div class="hub-item-title">${row.subscriber_label || MSG.dash()}</div><div class="hub-item-sub">${MSG.statusLabel(row.status)}</div></div><div class="hub-item-actions"></div>`;
       const actions = item.querySelector(".hub-item-actions");
 
       const removeBtn = document.createElement("button");
       removeBtn.className = "btn xs danger";
-      removeBtn.textContent = "X";
+      removeBtn.textContent = "❌";
       removeBtn.addEventListener("click", async (e) => {
         e.stopPropagation();
         const ok = await confirmModal({ title: MSG.removeTitle(), text: MSG.removeText(), okText: MSG.removeOk(), cancelText: MSG.removeCancel() });
         if (!ok) return;
         try {
-          await sb().rpc("polls_hub_subscription_owner_update", { p_sub_id: row.sub_id, p_status: "cancelled" });
+          await callSubscriptionAction(row, "cancel");
           await refreshData();
         } catch {
           await alertModal({ text: MSG.removeFail() });
@@ -154,14 +165,16 @@ function renderSubscribers() {
       if (row.status === "pending") {
         const resendBtn = document.createElement("button");
         resendBtn.className = "btn xs";
-        resendBtn.textContent = "↻";
+        resendBtn.textContent = "🔁";
         const until = cooldownUntil(row.email_sent_at);
         if (until && Date.now() < until) resendBtn.classList.add("cooldown");
         resendBtn.addEventListener("click", async (e) => {
           e.stopPropagation();
           try {
-            const { data, error } = await sb().rpc("polls_hub_subscription_resend", { p_sub_id: row.sub_id });
-            if (error || data?.ok === false) throw error || new Error("fail");
+            const inviteTarget = row.subscriber_email || row.subscriber_label;
+            if (!inviteTarget) throw new Error("missing_target");
+            const { data, error } = await sb().rpc("polls_hub_subscription_invite", { p_recipient: inviteTarget });
+            if (error || data?.ok === false) throw error || new Error(data?.error || "fail");
             await refreshData();
           } catch {
             await alertModal({ text: MSG.resendFail() });
@@ -192,16 +205,16 @@ function renderInvites() {
     for (const row of sorted) {
       const item = document.createElement("div");
       item.className = `hub-item ${row.status === "active" ? "sub-active" : "sub-pending"}`;
-      item.innerHTML = `<div><div class="hub-item-title">${row.owner_display_label || MSG.dash()}</div><div class="hub-item-sub">${MSG.statusLabel(row.status)}</div></div><div class="hub-item-actions"></div>`;
+      item.innerHTML = `<div><div class="hub-item-title">${row.owner_label || MSG.dash()}</div><div class="hub-item-sub">${MSG.statusLabel(row.status)}</div></div><div class="hub-item-actions"></div>`;
       const actions = item.querySelector(".hub-item-actions");
 
       const reject = document.createElement("button");
       reject.className = "btn xs danger";
-      reject.textContent = "X";
+      reject.textContent = "❌";
       reject.addEventListener("click", async (e) => {
         e.stopPropagation();
         try {
-          await sb().rpc("polls_hub_subscription_user_update", { p_sub_id: row.sub_id, p_status: row.status === "pending" ? "declined" : "cancelled" });
+          await callSubscriptionAction(row, row.status === "pending" ? "reject" : "cancel");
           await refreshData();
         } catch {
           await alertModal({ text: MSG.updateFail() });
@@ -212,11 +225,11 @@ function renderInvites() {
       if (row.status === "pending") {
         const accept = document.createElement("button");
         accept.className = "btn xs gold";
-        accept.textContent = "✓";
+        accept.textContent = "✅";
         accept.addEventListener("click", async (e) => {
           e.stopPropagation();
           try {
-            await sb().rpc("polls_hub_subscription_user_update", { p_sub_id: row.sub_id, p_status: "active" });
+            await callSubscriptionAction(row, "accept");
             await refreshData();
           } catch {
             await alertModal({ text: MSG.acceptFail() });
@@ -295,10 +308,6 @@ async function invite(value) {
     const { data, error } = await sb().rpc("polls_hub_subscription_invite", { p_recipient: v });
     if (error || data?.ok === false) throw error || new Error(data?.error || "invite");
 
-    const sub = data?.subscription || null;
-    if (sub?.sub_id) {
-      await sb().rpc("polls_hub_subscription_resend", { p_sub_id: sub.sub_id });
-    }
     await refreshData();
   } catch (e) {
     const m = String(e?.message || "").toLowerCase();
@@ -314,13 +323,8 @@ async function refreshTopBadges() {
   const { data } = await sb().rpc("polls_badge_get");
   const row = Array.isArray(data) ? data[0] : data;
   const pendingInvites = Number(row?.subs_pending || 0);
-  const pendingTasks = Number(row?.tasks_pending || 0);
   setBadge("tasks", 0);
   setBadge("subs", pendingInvites);
-  if (altBadgeEl) {
-    altBadgeEl.textContent = pendingTasks > 99 ? "99+" : String(pendingTasks || "");
-    btnGoAlt?.classList.toggle("has-badge", pendingTasks > 0);
-  }
 }
 
 async function refreshData() {
@@ -332,6 +336,7 @@ async function refreshData() {
     subscribers = a.data || [];
     invites = b.data || [];
 
+    updateBackButtonLabel();
     renderSubscribers();
     renderInvites();
     await refreshTopBadges();
@@ -341,7 +346,7 @@ async function refreshData() {
       if (match?.status === "pending") {
         const ok = await confirmModal({ text: MSG.focusPrompt() });
         if (ok) {
-          await sb().rpc("polls_hub_subscription_user_update", { p_sub_id: match.sub_id, p_status: "active" });
+          await callSubscriptionAction(match, "accept");
           await refreshData();
         }
       }
@@ -359,10 +364,16 @@ function buildManualUrl() {
   return url.toString();
 }
 
+
+function updateBackButtonLabel() {
+  if (!btnBack) return;
+  const from = new URLSearchParams(location.search).get("from");
+  btnBack.textContent = from === "bases" ? t("baseExplorer.backToBases") : t("pollsHubSubscriptions.backToGames");
+}
+
 function getBackLink() {
   const from = new URLSearchParams(location.search).get("from");
   if (from === "bases") return "bases.html";
-  if (from === "hub-a") return document.body.dataset.altPage || "builder.html";
   return "builder.html";
 }
 
@@ -389,13 +400,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   inviteInputDesktop?.addEventListener("keydown", (e) => { if (e.key === "Enter") doInviteDesktop(); });
   inviteInputMobile?.addEventListener("keydown", (e) => { if (e.key === "Enter") doInviteMobile(); });
 
+  updateBackButtonLabel();
   btnBack?.addEventListener("click", () => { location.href = getBackLink(); });
   btnManual?.addEventListener("click", () => { location.href = buildManualUrl(); });
-  btnGoAlt?.addEventListener("click", () => {
-    const page = document.body.dataset.altPage || "builder.html";
-    const from = document.body.dataset.altFrom || "hub-b";
-    location.href = `${page}?from=${encodeURIComponent(from)}`;
-  });
   btnLogout?.addEventListener("click", async () => { await signOut(); location.href = "index.html"; });
 
   window.addEventListener("i18n:lang", () => {
@@ -403,6 +410,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     renderSelect(sortAM, "subscribers");
     renderSelect(sortBD, "subscriptions");
     renderSelect(sortBM, "subscriptions");
+    updateBackButtonLabel();
     renderSubscribers();
     renderInvites();
   });
