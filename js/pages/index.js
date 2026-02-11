@@ -36,7 +36,8 @@ const baseUrls = document.body?.dataset || {};
 const confirmUrl = baseUrls.confirmUrl || "confirm.html";
 const resetUrl = baseUrls.resetUrl || "reset.html";
 const builderUrl = baseUrls.builderUrl || "builder.html";
-const pollsUrl = baseUrls.pollsUrl || "polls-hub.html";
+const pollsUrl = baseUrls.pollsUrl;
+const subscriptionsUrl = baseUrls.subscriptionsUrl;
 
 let mode = "login"; // login | register
 
@@ -158,9 +159,13 @@ function buildAuthRedirect(page) {
 }
 
 function buildNextUrl() {
-  const url = new URL(pollsUrl.startsWith("/") ? pollsUrl : `/${pollsUrl}`, location.origin);
-  if (nextTask) url.searchParams.set("t", nextTask);
-  if (nextSub) url.searchParams.set("s", nextSub);
+  const target = nextTarget === "subscriptions" ? subscriptionsUrl : pollsUrl;
+  if (!target) throw new Error(t("index.statusError"));
+  const url = new URL(target.startsWith("/") ? target : `/${target}`, location.origin);
+
+  if (nextTarget === "subscriptions" && nextSub) url.searchParams.set("s", nextSub);
+  if (nextTarget === "polls-hub" && nextTask) url.searchParams.set("t", nextTask);
+
   url.searchParams.set("lang", getUiLang());
   return url.toString();
 }
@@ -269,7 +274,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     await syncLanguage();
     if (!u.username) {
       openUsernameSetup();
-    } else if (nextTarget === "polls-hub") {
+    } else if (nextTarget === "polls-hub" || nextTarget === "subscriptions") {
       location.href = buildNextUrl();
     } else {
       location.href = withLangParam(builderUrl);
@@ -323,7 +328,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         await syncLanguage();
         if (!authed?.username) {
           openUsernameSetup();
-        } else if (nextTarget === "polls-hub") {
+        } else if (nextTarget === "polls-hub" || nextTarget === "subscriptions") {
           location.href = buildNextUrl();
         } else {
           location.href = withLangParam(builderUrl);
@@ -437,7 +442,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           btnForgot.disabled = false;
         }
       } catch {
-        // If RPC is unavailable, fallback to hiding the countdown (do not block UI).
+        // Jeśli RPC jest niedostępne, ukryj odliczanie (nie blokuj UI).
         hideForgotCooldown();
         btnForgot.disabled = false;
       }

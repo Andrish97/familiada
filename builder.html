@@ -19,22 +19,16 @@
     <div class="topbar-left">
       <div class="brand">FAMILIADA</div>
 
-        <button class="btn nav-dual" id="btnPollsHub">
-          <!-- DESKTOP -->
-          <span class="only-desktop nav-dual-row">
-            <span class="nav-part" data-i18n="builder.nav.pollsHubPolls">Sondaże 📊</span>
-            <span class="nav-sep" aria-hidden="true"></span>
-            <span class="nav-part" data-i18n="builder.nav.pollsHubSubs">Subskrypcje 📧</span>
-          </span>
-        
-          <!-- MOBILE -->
-          <span class="only-mobile nav-dual-row">
-            <span class="nav-part" data-i18n="builder.nav.pollsHubMobilePolls">📊</span>
-            <span class="nav-sep" aria-hidden="true"></span>
-            <span class="nav-part" data-i18n="builder.nav.pollsHubMobileSubs">📧</span>
-          </span>
-        
+        <button class="btn" id="btnPollsHub">
+          <span class="only-desktop" data-i18n="builder.nav.pollsHubPolls">Sondaże 📊</span>
+          <span class="only-mobile" data-i18n="builder.nav.pollsHubMobilePolls">📊</span>
           <span class="badge" id="pollsHubBadge" aria-hidden="true"></span>
+        </button>
+
+        <button class="btn" id="btnSubscriptionsHub">
+          <span class="only-desktop" data-i18n="builder.nav.pollsHubSubs">Subskrypcje 📧</span>
+          <span class="only-mobile" data-i18n="builder.nav.pollsHubMobileSubs">📧</span>
+          <span class="badge" id="subscriptionsHubBadge" aria-hidden="true"></span>
         </button>
 
         <button class="btn" id="btnBases">

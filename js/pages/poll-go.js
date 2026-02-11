@@ -51,7 +51,9 @@ const MSG = {
 const qs = new URLSearchParams(location.search);
 const taskToken = qs.get("t");
 const subToken = qs.get("s");
-const goToken = taskToken || subToken;
+const hasTaskToken = Boolean(taskToken);
+const hasSubToken = Boolean(subToken);
+const goToken = hasTaskToken === hasSubToken ? null : (hasTaskToken ? taskToken : subToken);
 
 const $ = (id) => document.getElementById(id);
 
@@ -87,14 +89,15 @@ function addAction(label, kind, handler) {
 function redirectToLogin() {
   const url = new URL("index.html", location.href);
   url.searchParams.set("from", "poll-go");
-  url.searchParams.set("next", "polls-hub");
+  url.searchParams.set("next", taskToken ? "polls-hub" : "subscriptions");
   if (taskToken) url.searchParams.set("t", taskToken);
   if (subToken) url.searchParams.set("s", subToken);
   location.href = url.toString();
 }
 
 function redirectToHub() {
-  const url = new URL("polls-hub.html", location.href);
+  const hubPage = taskToken ? "polls-hub.html" : "subscriptions.html";
+  const url = new URL(hubPage, location.href);
   if (taskToken) url.searchParams.set("t", taskToken);
   if (subToken) url.searchParams.set("s", subToken);
   location.href = url.toString();

@@ -41,6 +41,7 @@ const who = document.getElementById("who");
 const btnBack = document.getElementById("btnBack");
 const btnBackI18nKey = btnBack?.getAttribute?.("data-i18n") || null;
 const btnLogout = document.getElementById("btnLogout");
+const btnManual = document.getElementById("btnManual");
 
 const brandTitle = document.getElementById("brandTitle");
 
@@ -1070,6 +1071,7 @@ function openEditor(mode){
 
   // ===== tryb edytora UI =====
   document.body.classList.add("is-editor");
+  if (btnManual) btnManual.style.display = "none";
   if (btnBackI18nKey) btnBack?.removeAttribute?.("data-i18n");
   btnBack.textContent = "✕";
   btnBack.classList.add("sm");
@@ -1148,6 +1150,7 @@ async function closeEditor(force = false){
   btnBack.textContent = t(btnBackI18nKey || "logoEditor.topbar.backToGames");
   btnBack.classList.remove("sm");
   brandTitle.textContent = "FAMILIADA";
+  if (btnManual) btnManual.style.display = "";
 }
 
 let lastPreviewPayload = null;
@@ -1306,6 +1309,14 @@ async function boot(){
      location.href = withLangParam("../builder.html");
    });
    
+   btnManual?.addEventListener("click", () => {
+     if (editorMode) return;
+     const url = new URL("../manual.html", location.href);
+     const ret = `${location.pathname.split("/").slice(-2).join("/")}${location.search}${location.hash}`;
+     url.searchParams.set("ret", ret);
+     location.href = url.toString();
+   });
+
    btnLogout?.addEventListener("click", async () => {
      if (shouldBlockNav()){
        const ok = await confirmModal({ text: t("logoEditor.confirm.logoutUnsaved") });

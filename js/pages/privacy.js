@@ -1,19 +1,22 @@
 // js/pages/privacy.js
-// Styl i UX jak manual: topbar + miękki auth + i18n z przełącznikiem języka.
-
 import { initI18n } from "../../translation/translation.js";
 
 initI18n({ withSwitcher: true });
 
 function byId(id) { return document.getElementById(id); }
 
+function decodeManualBack() {
+  const p = new URLSearchParams(location.search);
+  return p.get("man") || "manual.html";
+}
+
 function wireFallbackNav() {
   byId("btnBack")?.addEventListener("click", () => {
-    // zachowaj ?lang=...
-    location.href = "manual.html" + (location.search || "");
+    location.href = decodeManualBack();
   });
+
   byId("btnLogout")?.addEventListener("click", () => {
-    location.href = "index.html" + (location.search || "");
+    location.href = "index.html";
   });
 }
 
@@ -26,15 +29,14 @@ async function wireAuthSoft() {
 
   byId("btnLogout")?.addEventListener("click", async () => {
     await signOut();
-    location.href = "index.html" + (location.search || "");
+    location.href = "index.html";
   });
 
   byId("btnBack")?.addEventListener("click", () => {
-    location.href = "manual.html" + (location.search || "");
+    location.href = decodeManualBack();
   });
 }
 
-/* ================= Init ================= */
 wireFallbackNav();
 
 wireAuthSoft().catch((err) => {

@@ -17,6 +17,7 @@ const saveEmail = document.getElementById("saveEmail");
 const savePass = document.getElementById("savePass");
 const deleteAccount = document.getElementById("deleteAccount");
 const backToGames = document.getElementById("backToGames");
+const btnManual = document.getElementById("btnManual");
 
 const usernameCooldownEl = document.getElementById("usernameCooldown");
 const emailCooldownEl = document.getElementById("emailCooldown");
@@ -28,11 +29,22 @@ const resendEmailChange = document.getElementById("resendEmailChange");
 const cancelEmailChange = document.getElementById("cancelEmailChange");
 
 function setStatus(m = "") { if (status) status.textContent = m; }
+
+function buildManualUrl() {
+  const url = new URL("manual.html", location.href);
+  const ret = `${location.pathname.split("/").pop() || ""}${location.search}${location.hash}`;
+  url.searchParams.set("ret", ret);
+  return url.toString();
+}
 function setErr(m = "") { if (err) err.textContent = m; }
 
 backToGames?.addEventListener("click", () => {
   const target = backToGames.dataset.baseHref || "builder.html";
   location.href = withLangParam(target);
+});
+
+btnManual?.addEventListener("click", () => {
+  location.href = buildManualUrl();
 });
 
 // --- cooldowns (anti-spam) ---
