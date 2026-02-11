@@ -13,6 +13,7 @@ const focusInviteToken = qs.get("s");
 const who = $("who");
 const btnLogout = $("btnLogout");
 const btnBack = $("btnBackToBuilder");
+const btnManual = $("btnManual");
 const btnGoAlt = $("btnGoAlt");
 const altBadgeEl = $("altBadge");
 
@@ -350,6 +351,14 @@ async function refreshData() {
   }
 }
 
+
+function buildManualUrl() {
+  const url = new URL("manual.html", location.href);
+  const ret = `${location.pathname.split("/").pop() || ""}${location.search}${location.hash}`;
+  url.searchParams.set("ret", ret);
+  return url.toString();
+}
+
 function getBackLink() {
   const from = new URLSearchParams(location.search).get("from");
   if (from === "bases") return "bases.html";
@@ -381,6 +390,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   inviteInputMobile?.addEventListener("keydown", (e) => { if (e.key === "Enter") doInviteMobile(); });
 
   btnBack?.addEventListener("click", () => { location.href = getBackLink(); });
+  btnManual?.addEventListener("click", () => { location.href = buildManualUrl(); });
   btnGoAlt?.addEventListener("click", () => {
     const page = document.body.dataset.altPage || "builder.html";
     const from = document.body.dataset.altFrom || "hub-b";

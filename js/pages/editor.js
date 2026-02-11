@@ -502,6 +502,13 @@ async function boot() {
     location.href = "builder.html";
   });
 
+  $("btnManual")?.addEventListener("click", () => {
+    const url = new URL("manual.html", location.href);
+    const ret = `${location.pathname.split("/").pop() || ""}${location.search}${location.hash}`;
+    url.searchParams.set("ret", ret);
+    location.href = url.toString();
+  });
+
   wireEnterAsBlur();
 
   /* ---------- game ---------- */

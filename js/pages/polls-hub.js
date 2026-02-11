@@ -14,6 +14,7 @@ const focusTaskToken = qs.get("t");
 const who = $("who");
 const btnLogout = $("btnLogout");
 const btnBack = $("btnBackToBuilder");
+const btnManual = $("btnManual");
 const btnGoAlt = $("btnGoAlt");
 const altBadgeEl = $("altBadge");
 
@@ -451,6 +452,14 @@ async function refreshData() {
   }
 }
 
+
+function buildManualUrl() {
+  const url = new URL("manual.html", location.href);
+  const ret = `${location.pathname.split("/").pop() || ""}${location.search}${location.hash}`;
+  url.searchParams.set("ret", ret);
+  return url.toString();
+}
+
 function getBackLink() {
   const from = new URLSearchParams(location.search).get("from");
   if (from === "bases") return "bases.html";
@@ -485,6 +494,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   detailsOverlay?.addEventListener("click", (e) => { if (e.target === detailsOverlay) closeDetailsModal(); });
 
   btnBack?.addEventListener("click", () => { location.href = getBackLink(); });
+  btnManual?.addEventListener("click", () => { location.href = buildManualUrl(); });
   btnGoAlt?.addEventListener("click", () => { location.href = `${document.body.dataset.altPage || ""}?from=${encodeURIComponent(document.body.dataset.altFrom || "hub-a")}`; });
   btnLogout?.addEventListener("click", async () => { await signOut(); location.href = "index.html"; });
 
