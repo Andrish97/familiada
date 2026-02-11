@@ -26,6 +26,7 @@
         <input id="email" type="email" placeholder="Email" autocomplete="email" data-i18n-placeholder="index.placeholderLogin"/>
         <input id="pass" type="password" placeholder="Hasło" autocomplete="current-password" data-i18n-placeholder="index.placeholderPassword"/>
         <input id="pass2" type="password" placeholder="Powtórz hasło" autocomplete="new-password" style="display:none" data-i18n-placeholder="index.placeholderPasswordRepeat"/>
+        <div class="hint" id="pwdHint" hidden></div>
 
         <div class="row">
           <button class="btn main" id="btnPrimary" type="button" data-i18n="index.btnLogin">Zaloguj</button>
@@ -46,13 +47,13 @@
       <div class="setup-title" data-i18n="index.setupPrompt">Ustaw nazwę użytkownika</div>
       <div class="setup-sub" data-i18n="index.setupSub">Będzie widoczna w panelu oraz przy zaproszeniach.</div>
 
-      <div class="setup-form">
+      <form class="setup-form" id="usernameForm">
         <input id="usernameFirst" placeholder="Nazwa użytkownika" autocomplete="username"  enterkeyhint="done" data-i18n-placeholder="index.placeholderUsername"/>
         <div class="modal-err" id="usernameErr"></div>
         <div class="modal-actions">
-          <button class="btn main" id="btnUsernameSave" type="button" data-i18n="index.btnUsernameSave">Zapisz nazwę</button>
+          <button class="btn main" id="btnUsernameSave" type="submit" data-i18n="index.btnUsernameSave">Zapisz nazwę</button>
         </div>
-      </div>
+      </form>
     </div>
   </div>
 </body>

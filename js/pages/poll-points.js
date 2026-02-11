@@ -3,7 +3,7 @@ import { sb } from "../core/supabase.js";
 import { getUser } from "../core/auth.js";
 import { initI18n, t } from "../../translation/translation.js";
 
-initI18n({ withSwitcher: false });
+initI18n({ withSwitcher: true });
 
 const MSG = {
   thanks: () => t("pollPoints.thanks"),
@@ -279,6 +279,16 @@ function render() {
     }
   }
 }
+
+// po zmianie języka applyTranslations nadpisuje qtext/prog/sub (bo mają data-i18n w HTML)
+// więc wymuszamy ponowne odmalowanie stanu ekranu
+window.addEventListener("i18n:lang", () => {
+  if (payload) {
+    render(); // przywraca pytanie + progres po podmianie języka
+  } else {
+    setSub(MSG.loading()); // zanim payload się załaduje, niech "Loading…" będzie w dobrym języku
+  }
+});
 
 document.addEventListener("DOMContentLoaded", async () => {
   try {

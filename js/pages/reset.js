@@ -1,10 +1,11 @@
 import { sb } from "../core/supabase.js";
-import { updateUserLanguage, validatePassword } from "../core/auth.js";
+import { updateUserLanguage, validatePassword, niceAuthError, getPasswordRulesText } from "../core/auth.js";
 import { initI18n, t, getUiLang, withLangParam } from "../../translation/translation.js";
 
 const status = document.getElementById("status");
 const err = document.getElementById("err");
 const form = document.getElementById("form");
+const pwdHint = document.getElementById("pwdHint");
 const p1 = document.getElementById("p1");
 const p2 = document.getElementById("p2");
 const save = document.getElementById("save");
@@ -27,6 +28,7 @@ function hp(name){
 
 document.addEventListener("DOMContentLoaded", async () => {
   await initI18n({ withSwitcher: true });
+  if (pwdHint) pwdHint.textContent = getPasswordRulesText();
   setErr("");
   if (back) back.href = withLangParam(back.dataset.baseHref || "index.html");
   const syncLanguage = () => updateUserLanguage(getUiLang());

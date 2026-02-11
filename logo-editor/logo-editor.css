@@ -1034,4 +1034,56 @@
   height: auto;
 }
 
+/* =========================================================
+   LIST VIEW: karta do krawędzi ekranu + scroll w logoGridBig
+   (spójnie jak builder)
+========================================================= */
+
+/* main w logo-editor ma być flex-kolumną jak w builderze */
+body.builder-body.logo-editor-body > main.logoWrap{
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* listShell też */
+#listShell{
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* część z kartą ma wypełnić resztę */
+.logoShell{
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* karta listy: nie rośnie poza viewport */
+.logoCard.card.builder-card{
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+/* grid LOGO ma być jedynym scrollem */
+.logoCard .logoGridBig{
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-right: 2px;
+}
+
+/* stopka pod kartą nie może wypychać wysokości */
+#listShell .foot{
+  flex: 0 0 auto;
+}
+
 

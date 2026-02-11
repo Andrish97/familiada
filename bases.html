@@ -51,8 +51,13 @@
 
     <section class="builder-shell">
       <div class="card builder-card">
-        <div class="grid" id="grid"></div>
-
+        <div class="bases-layout">
+          <div class="bases-title" id="mineTitle">—</div>
+          <div class="grid bases-grid-mine" id="mineGrid"></div>
+        
+          <div class="bases-title bases-title-shared" id="sharedTitle">—</div>
+          <div class="grid bases-grid-shared" id="sharedGrid"></div>
+        </div>
         <div class="builder-bottom">
           <div class="builder-bottom-left"></div>
           <div class="builder-bottom-right">
@@ -126,15 +131,18 @@
 
   <!-- Modal: udostępnienia -->
   <div class="overlay" id="shareOverlay" style="display:none;">
-    <div class="modal">
+    <div class="modal shareModal">
       <div class="mTitle" data-i18n="bases.shareModal.title">Udostępnij bazę</div>
-      <div class="mSub" data-i18n="bases.shareModal.subtitle">Dodajesz użytkowników po nazwie lub e-mailu. Jeśli się nie uda, pokażemy „Nie udało się”.</div>
+      <div class="mSub" data-i18n="bases.shareModal.subtitle">
+        Dodajesz użytkowników po nazwie lub e-mailu. Szukamy po obu.
+      </div>
 
-      <div class="shareList" id="shareList"></div>
-
-      <div class="shareAdd">
+      <!-- Quick add (username/email) -->
+      <div class="shareAddTop">
         <div class="importRow">
-          <input id="shareEmail" class="inp" type="email" placeholder="Nazwa użytkownika lub e-mail..." data-i18n-placeholder="bases.shareModal.placeholder"/>
+          <input id="shareEmail" class="inp" type="text"
+                 placeholder="Nazwa użytkownika lub e-mail..."
+                 data-i18n-placeholder="bases.shareModal.placeholder"/>
           <div class="ui-select" id="shareRole">
             <button class="ui-select-btn inp" type="button" aria-haspopup="listbox" aria-expanded="false">
               <span class="ui-select-label">—</span>
@@ -144,13 +152,44 @@
           </div>
           <button class="btn sm gold" id="btnShareAdd" type="button" data-i18n="bases.shareModal.add">Dodaj</button>
         </div>
-        <div class="importRow">
-          <button class="btn sm" id="btnShareClose" type="button" data-i18n="bases.shareModal.close">Zamknij</button>
-          <div class="importMsg" id="shareMsg"></div>
+        <div class="importMsg" id="shareMsg"></div>
+      </div>
+
+      <!-- 3 sections -->
+      <div class="shareSections">
+
+        <div class="shareSection">
+          <div class="shareSectionTitle" data-i18n="bases.shareModal.sectionSubscribers">Moi subskrybenci</div>
+          <div class="shareSectionSub" data-i18n="bases.shareModal.sectionSubscribersSub">
+            Tylko zarejestrowani użytkownicy (z username). Ptaszki jak w polls-hub.
+          </div>
+          <div class="shareList" id="shareSubsList"></div>
         </div>
+
+        <div class="shareSection">
+          <div class="shareSectionTitle" data-i18n="bases.shareModal.sectionPending">Oczekujące</div>
+          <div class="shareSectionSub" data-i18n="bases.shareModal.sectionPendingSub">
+            Jeśli nie zaakceptują w 5 dni – zapytanie znika.
+          </div>
+          <div class="shareList" id="sharePendingList"></div>
+        </div>
+
+        <div class="shareSection">
+          <div class="shareSectionTitle" data-i18n="bases.shareModal.sectionShared">Udostępnione</div>
+          <div class="shareSectionSub" data-i18n="bases.shareModal.sectionSharedSub">
+            Zaakceptowane – usuń przez ✕.
+          </div>
+          <div class="shareList" id="shareSharedList"></div>
+        </div>
+
+      </div>
+
+      <div class="importRow shareBottom">
+        <button class="btn sm" id="btnShareClose" type="button" data-i18n="bases.shareModal.close">Zamknij</button>
       </div>
     </div>
   </div>
+
 
   <!-- Progres eksportu do pliku (blokujący) -->
   <div class="overlay" id="exportJsonOverlay" style="display:none;">

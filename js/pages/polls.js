@@ -3,7 +3,7 @@ import { sb } from "../core/supabase.js";
 import { requireAuth, signOut } from "../core/auth.js";
 import { alertModal, confirmModal } from "../core/modal.js";
 import QRCode from "https://cdn.jsdelivr.net/npm/qrcode@1.5.3/+esm";
-import { initI18n, t } from "../../translation/translation.js";
+import { initI18n, t, withLangParam } from "../../translation/translation.js";
 
 initI18n({ withSwitcher: true });
 
@@ -35,7 +35,9 @@ const btnOpen = $("btnOpen");
 const btnOpenQr = $("btnOpenQr");
 
 const btnPollAction = $("btnPollAction");
-const btnPreview = $("btnPreview");
+
+// “⟳ Odśwież” (fallback na stare ID, jeśli HTML jeszcze nie zmieniony)
+const btnRefreshResults = $("btnRefreshResults") || $("btnPreview");
 
 const resultsCard = $("resultsCard");
 const resultsMeta = $("resultsMeta");
@@ -49,252 +51,50 @@ const btnFinishTextClose = $("btnFinishTextClose");
 
 let game = null;
 let textCloseModel = null;
-
-let liveTimer = null;
-let liveBusy = false;
-
 let uiTextCloseOpen = false;
-const backTarget = from === "polls-hub" ? "polls-hub.html" : "builder.html";
 
-// ===== Live diff cache (żeby nie mrugało) =====
-let liveSig_game = "";      // sygnatura stanu gry (status + poll_opened_at/poll_closed_at)
-let liveSig_results = "";   // sygnatura wyników (zmiana głosów / wpisów)
+const backTarget = from === "polls-hub" ? "polls-hub.html" : "builder.html";
 
 // ===== Preview DOM cache (poll_points) =====
 let ppCache = null;
-// ppCache = {
-//   qsKey: "qid1,qid2,...",
-//   ansKey: "qid:aid1|aid2,...;...",
-//   valByAnswerId: Map(answerId -> HTMLElement),
-//   builtAt: number
-// }
+// ppCache = { qsKey, ansKey, valByAnswerId, builtAt }
+
+// --- i18n sync (polls -> poll-qr) ---
+const I18N_BC_NAME = "familiada:polls:qr-sync";
+const i18nBc = ("BroadcastChannel" in window) ? new BroadcastChannel(I18N_BC_NAME) : null;
+
+function broadcastLang(lang) {
+  try {
+    const scope = `${game?.id || ""}:${game?.share_key_poll || ""}`;
+    i18nBc?.postMessage({ type: "polls:qr:i18n", scope, lang });
+  } catch (e) {
+    console.warn("[polls] i18n broadcast failed", e);
+  }
+}
+
+window.addEventListener("i18n:lang", (e) => {
+  const lang = e?.detail?.lang;
+  if (!lang) return;
+
+  broadcastLang(lang);
+  void refresh();
+});
 
 function setTextCloseUi(open) {
   uiTextCloseOpen = !!open;
 
-  // panel łączenia
   if (textCloseCard) textCloseCard.style.display = open ? "" : "none";
 
-  // ukryj przyciski główne gdy panel otwarty
+  // ukryj główne przyciski gdy panel textClose otwarty
   if (btnPollAction) btnPollAction.style.display = open ? "none" : "";
-  if (btnPreview) btnPreview.style.display = open ? "none" : "";
+  if (btnRefreshResults) btnRefreshResults.style.display = open ? "none" : "";
 
-  // dla porządku: podgląd wyników też schowaj, żeby nie mieszać ekranów
-  if (open) {
-    if (resultsCard) resultsCard.style.display = "none";
-    hidePreview();
-    resetPreviewDomCache();
-    stopLiveLoop();
-  } else {
-    if ((game?.status || STATUS.DRAFT) === STATUS.POLL_OPEN && isPreviewOpen()) startLiveLoop();
-  }
-}
-
-function installTextCloseLeaveGuard() {
-  // 1) twardy alert przeglądarki (reload/close)
-  window.addEventListener("beforeunload", (e) => {
-    if (!uiTextCloseOpen) return;
-    e.preventDefault();
-    e.returnValue = ""; // wymagane, żeby przeglądarka pokazała swój dialog
-    return "";
-  });
-
-  // 2) Back/Forward w historii (miękkie – nie zawsze 100% pewne na mobile)
-  window.addEventListener("popstate", async (e) => {
-    if (!uiTextCloseOpen) return;
-
-    // Zatrzymaj na miejscu i zapytaj
-    history.pushState({ __stay: true }, "");
-
-    const ok = await confirmModal({
-      title: t("polls.textClose.leaveTitle"),
-      text: t("polls.textClose.leaveText"),
-      okText: t("polls.textClose.leaveOk"),
-      cancelText: t("polls.textClose.leaveCancel"),
-    });
-
-    if (ok) {
-      // zamknij UI (opcjonalnie), żeby stan był spójny
-      setTextCloseUi(false);
-
-      // spróbuj wrócić „wstecz” jeszcze raz (już bez blokady)
-      // (na wszelki wypadek odłóż na tick)
-      setTimeout(() => history.back(), 0);
-    }
-  });
-
-  // 3) żeby popstate guard miał na czym „zatrzymać” (1 stan w historii)
-  history.pushState({ __stay: true }, "");
-}
-
-function isPreviewOpen() {
-  // jeśli podgląd jest widoczny
-  return !!(resultsCard && resultsCard.style.display !== "none");
+  // wyniki: widoczne zawsze, ale nie podczas textClose
+  if (resultsCard) resultsCard.style.display = open ? "none" : "";
 }
 
 function resetPreviewDomCache() {
   ppCache = null;
-}
-
-function makeQsKey(qsList) {
-  return (qsList || []).map(q => q.id).join(",");
-}
-
-function makeAnsKey(ansByQ) {
-  // ansByQ: Map(qid -> answers[])
-  const parts = [];
-  for (const [qid, arr] of ansByQ.entries()) {
-    const aids = (arr || []).map(a => a.id).join("|");
-    parts.push(`${qid}:${aids}`);
-  }
-  return parts.join(";");
-}
-
-async function loadAnswersForQuestions(qsList) {
-  // Ładujemy answers dla wszystkich pytań; używamy "in(question_id)"
-  const qids = (qsList || []).map(q => q.id).filter(Boolean);
-  if (!qids.length) return new Map();
-
-  const { data, error } = await sb()
-    .from("answers")
-    .select("id,ord,text,question_id,fixed_points")
-    .in("question_id", qids)
-    .order("ord", { ascending: true });
-
-  if (error) throw error;
-
-  const map = new Map(); // qid -> answers[]
-  for (const qid of qids) map.set(qid, []);
-  for (const a of data || []) {
-    const arr = map.get(a.question_id);
-    if (arr) arr.push(a);
-  }
-  return map;
-}
-
-function buildPollPointsPreviewSkeleton(qsList, ansByQ) {
-  if (!resultsList) return;
-
-  resultsList.innerHTML = ""; // tylko przy budowie szkieletu!
-  const valByAnswerId = new Map();
-
-  for (const q of qsList || []) {
-    const box = document.createElement("div");
-    box.className = "resultQ";
-    box.innerHTML = `<div class="qTitle">P${q.ord}: ${q.text}</div>`;
-
-    const ans = ansByQ.get(q.id) || [];
-    for (const a of ans) {
-      const row = document.createElement("div");
-      row.className = "aRow";
-      row.innerHTML = `<div class="aTxt"></div><div class="aVal"></div>`;
-      row.querySelector(".aTxt").textContent = a.text;
-
-      const valEl = row.querySelector(".aVal");
-      valEl.textContent = "0"; // start
-      valByAnswerId.set(a.id, valEl);
-
-      box.appendChild(row);
-    }
-
-    resultsList.appendChild(box);
-  }
-
-  ppCache = {
-    qsKey: makeQsKey(qsList),
-    ansKey: makeAnsKey(ansByQ),
-    valByAnswerId,
-    builtAt: Date.now(),
-  };
-}
-
-async function ensurePollPointsPreviewSkeleton(qsList) {
-  // 1) answers (dla szkieletu) pobieramy tylko gdy trzeba przebudować
-  const qsKey = makeQsKey(qsList);
-
-  if (ppCache && ppCache.qsKey === qsKey) {
-    // nadal może zmienić się lista odpowiedzi (np. edycja gry) — wtedy przebudujemy niżej
-    // ale bez fetchu nie wiemy, więc robimy "rzadki" check tylko gdy brak sig z live
-    return;
-  }
-
-  const ansByQ = await loadAnswersForQuestions(qsList);
-  buildPollPointsPreviewSkeleton(qsList, ansByQ);
-}
-
-async function ensurePollPointsPreviewSkeletonWithAnswers(qsList, ansByQ) {
-  // wersja gdy już masz answers pobrane (żeby nie dublować fetchy)
-  const qsKey = makeQsKey(qsList);
-  const ansKey = makeAnsKey(ansByQ);
-
-  if (ppCache && ppCache.qsKey === qsKey && ppCache.ansKey === ansKey) return;
-  buildPollPointsPreviewSkeleton(qsList, ansByQ);
-}
-
-function updatePollPointsPreviewValues(valuesByAnswerId) {
-  // valuesByAnswerId: Map(answerId -> number)
-  if (!ppCache?.valByAnswerId) return;
-
-  for (const [aid, valEl] of ppCache.valByAnswerId.entries()) {
-    const v = valuesByAnswerId.get(aid) || 0;
-    // tylko jeśli różnica, żeby nie “migało” przez reflow
-    const next = String(v);
-    if (valEl.textContent !== next) valEl.textContent = next;
-  }
-}
-
-function startLiveLoop() {
-  stopLiveLoop();
-
-  liveTimer = setInterval(async () => {
-    if (!gameId) return;
-    if (document.hidden) return;
-    if (liveBusy) return;
-
-    const st = game?.status || STATUS.DRAFT;
-    const should = (st === STATUS.POLL_OPEN) && isPreviewOpen() && !uiTextCloseOpen;
-    if (!should) return;
-
-    liveBusy = true;
-    try {
-      // 0) najpierw lekki fetch gry (bez ruszania UI)
-      const fresh = await loadGame();
-      const sigG = sigGameRow(fresh);
-
-      // jeśli zmienił się status/czas -> dopiero wtedy refresh UI (chipy, przyciski)
-      let gameChanged = (sigG !== liveSig_game);
-      if (gameChanged) {
-        game = fresh;
-        liveSig_game = sigG;
-        await refresh(); // to i tak przeliczy przyciski itd.
-      } else {
-        // utrzymaj "game" aktualne (żeby previewResults miało sens), ale bez refresh UI
-        game = fresh;
-      }
-
-      // 1) jeśli user zdążył zamknąć preview
-      if (!isPreviewOpen()) return;
-
-      // 2) sprawdź sygnaturę wyników (tania)
-      const sigR = await fetchResultsSignature();
-
-      // tylko jeśli wyniki się zmieniły -> przebuduj listę wyników
-      if (sigR && sigR !== liveSig_results) {
-        liveSig_results = sigR;
-        await previewResults();
-      }
-
-    } catch (e) {
-      console.warn("[polls] live loop error:", e);
-    } finally {
-      liveBusy = false;
-    }
-  }, 5000);
-}
-
-function stopLiveLoop() {
-  if (liveTimer) clearInterval(liveTimer);
-  liveTimer = null;
 }
 
 const TYPES = {
@@ -313,10 +113,10 @@ const RULES = {
   AN_MAX: 6,
 };
 
-function setMsg(t) {
+function setMsg(text) {
   if (!msg) return;
-  msg.textContent = t || "";
-  if (t) setTimeout(() => (msg.textContent = ""), 2400);
+  msg.textContent = text || "";
+  if (text) setTimeout(() => (msg.textContent = ""), 2400);
 }
 
 function typeLabel(type) {
@@ -334,93 +134,93 @@ function statusLabel(st) {
   return String(s).toUpperCase();
 }
 
-function pollLink(g) {
-  const base =
-    g.type === TYPES.POLL_TEXT
-      ? new URL("poll-text.html", location.href)
-      : new URL("poll-points.html", location.href);
-
-  base.searchParams.set("id", g.id);
-  base.searchParams.set("key", g.share_key_poll);
-  return base.toString();
-}
-
 function setChips(g) {
-  if (chipType) chipType.textContent = typeLabel(g.type);
+  if (chipType) chipType.textContent = typeLabel(g?.type);
 
   if (chipStatus) {
     chipStatus.className = "chip status";
-    const st = g.status || STATUS.DRAFT;
+    const st = g?.status || STATUS.DRAFT;
     chipStatus.textContent = statusLabel(st);
-
     if (st === STATUS.READY) chipStatus.classList.add("ok");
     else if (st === STATUS.POLL_OPEN) chipStatus.classList.add("warn");
     else chipStatus.classList.add("bad");
   }
+
+  // hintTop – bez “g.desc”, bo go nie ma
+  if (hintTop) hintTop.textContent = "";
 }
+
+function setLinkUiVisible(on) {
+  const v = !!on;
+  if (btnCopy) btnCopy.disabled = !v;
+  if (btnOpen) btnOpen.disabled = !v;
+  if (btnOpenQr) btnOpenQr.disabled = !v;
+  if (!v) clearQr();
+}
+
+function setLinkRowVisible(visible) {
+  const v = !!visible;
+
+  // input
+  if (pollLinkEl) {
+    pollLinkEl.style.display = v ? "" : "none";
+    // opcjonalnie: jak ukryte, to czyść wartość
+    if (!v) pollLinkEl.value = "";
+  }
+
+  // przyciski
+  if (btnCopy) btnCopy.style.display = v ? "" : "none";
+  if (btnOpen) btnOpen.style.display = v ? "" : "none";
+  if (btnOpenQr) btnOpenQr.style.display = v ? "" : "none";
+
+  // mini-QR
+  if (!v) clearQr();
+}
+
 
 function clearQr() {
   if (qrBox) qrBox.innerHTML = "";
 }
 
-async function renderSmallQr(link) {
+async function renderSmallQr(url) {
   if (!qrBox) return;
   qrBox.innerHTML = "";
-  if (!link) return;
+  if (!url) return;
 
   try {
     const wrap = document.createElement("div");
     wrap.className = "qrFrameSmall";
-    
+
     const canvas = document.createElement("canvas");
-    await QRCode.toCanvas(canvas, link, { width: 260, margin: 1 });
-    
+    await QRCode.toCanvas(canvas, url, { width: 260, margin: 1 });
+
     wrap.appendChild(canvas);
     qrBox.appendChild(wrap);
   } catch (e) {
-    console.error("[polls] QR error:", e);
+    console.warn("[polls] small QR failed:", e);
     qrBox.textContent = t("polls.qrFailed");
   }
 }
 
-function setLinkUiVisible(on) {
-  btnCopy && (btnCopy.disabled = !on);
-  btnOpen && (btnOpen.disabled = !on);
-  btnOpenQr && (btnOpenQr.disabled = !on);
-  if (!on) clearQr();
+function pollLink(g) {
+  if (!g) return "";
+  const base =
+    g.type === TYPES.POLL_TEXT
+      ? "poll-text.html"
+      : g.type === TYPES.POLL_POINTS
+      ? "poll-points.html"
+      : "";
+  if (!base) return "";
+
+  const u = new URL(withLangParam(base), location.href);
+  u.searchParams.set("id", g.id);
+  u.searchParams.set("key", g.share_key_poll);
+  return u.toString();
 }
 
-function setActionButton(label, disabled, hint) {
-  if (btnPollAction) {
-    btnPollAction.textContent = label;
-    btnPollAction.disabled = !!disabled;
-  }
-  if (hintTop) hintTop.textContent = hint || "";
-}
-
-function hidePreview() {
-  if (resultsCard) resultsCard.style.display = "none";
-  if (resultsMeta) resultsMeta.textContent = "";
-  if (resultsList) {
-    resultsList.innerHTML = "";
-    resultsList.style.display = ""; // nie wpychaj inline none, bo potem "mruga"
-  }
-  resetPreviewDomCache();
-}
-
-function showPreview() {
-  if (resultsCard) resultsCard.style.display = "";
-  if (resultsList) resultsList.style.display = "";
-}
-
-function updatePreviewButtonState() {
-  if (!btnPreview || !game) return;
-
-  const st = game.status || STATUS.DRAFT;
-  const isPollType = game.type === TYPES.POLL_TEXT || game.type === TYPES.POLL_POINTS;
-  const okStatus = st === STATUS.POLL_OPEN || st === STATUS.READY;
-
-  btnPreview.disabled = !(isPollType && okStatus);
+function updateRefreshButtonState() {
+  if (!btnRefreshResults) return;
+  btnRefreshResults.disabled = uiTextCloseOpen || !game || !gameId;
 }
 
 /* =======================
@@ -437,19 +237,10 @@ async function loadGame() {
   return data;
 }
 
-async function countQuestions() {
-  const { count, error } = await sb()
-    .from("questions")
-    .select("id", { count: "exact", head: true })
-    .eq("game_id", gameId);
-  if (error) throw error;
-  return count || 0;
-}
-
 async function listQuestionsBasic() {
   const { data, error } = await sb()
     .from("questions")
-    .select("id,ord,text")
+    .select("id, ord, text")
     .eq("game_id", gameId)
     .order("ord", { ascending: true });
   if (error) throw error;
@@ -459,98 +250,42 @@ async function listQuestionsBasic() {
 async function listAnswersFinalForQuestion(qid) {
   const { data, error } = await sb()
     .from("answers")
-    .select("id,ord,text,fixed_points")
+    .select("id, ord, text, fixed_points")
     .eq("question_id", qid)
     .order("ord", { ascending: true });
   if (error) throw error;
   return data || [];
 }
 
-function enforceDistinctTo100TopN(rows, { topN = 6, minPoint = 3 } = {}) {
-  // rows: [{id, ord, fixed_points}]
-  const arr = (rows || []).map((r) => ({
-    id: r.id,
-    ord: Number(r.ord) || 0,
-    points: Math.max(0, Number(r.fixed_points) || 0),
-  }));
-
-  // kandydaci do TOP: tylko te z punktami > 0 (reszta i tak 0)
-  let top = arr.filter((x) => x.points > 0);
-  if (!top.length) return { updates: [], zeros: arr.map((x) => x.id) };
-
-  // sort: najpierw punkty malejąco, potem ord rosnąco (deterministycznie)
-  top.sort((a, b) => (b.points - a.points) || (a.ord - b.ord));
-
-  // TOP N
-  top = top.slice(0, Math.min(topN, top.length));
-
-  // 1) wymuś ściśle malejące (min 1 różnicy), dół minPoint
-  for (let i = 1; i < top.length; i++) {
-    let p = top[i].points;
-    if (p >= top[i - 1].points) p = top[i - 1].points - 1;
-    if (p < minPoint) p = minPoint;
-    top[i].points = p;
-  }
-
-  // 2) dopasuj sumę do 100 (korekta na TOP), pilnując malejącości
-  let sum = top.reduce((s, x) => s + x.points, 0);
-  let diff = 100 - sum;
-
-  if (diff > 0) {
-    top[0].points += diff;
-  } else if (diff < 0) {
-    diff = -diff;
-    let i = 0;
-    while (diff > 0 && i < top.length) {
-      const next = i + 1 < top.length ? top[i + 1].points : minPoint;
-      const minAllowed = i + 1 < top.length ? next + 1 : minPoint;
-      const canTake = Math.max(0, top[i].points - minAllowed);
-      if (canTake > 0) {
-        const take = Math.min(canTake, diff);
-        top[i].points -= take;
-        diff -= take;
-      } else {
-        i++;
-      }
-    }
-  }
-
-  // 3) sanity: jeszcze raz dopnij malejącość
-  for (let i = 1; i < top.length; i++) {
-    if (top[i].points >= top[i - 1].points) {
-      top[i].points = Math.max(minPoint, top[i - 1].points - 1);
-    }
-  }
-
-  // final: updates dla TOP; reszta => 0
-  const topIds = new Set(top.map((x) => x.id));
-  const updates = top.map((x) => ({ id: x.id, fixed_points: x.points }));
-  const zeros = arr.filter((x) => !topIds.has(x.id)).map((x) => x.id);
-
-  return { updates, zeros };
+async function listAnswersBasicForQuestion(qid) {
+  const { data, error } = await sb()
+    .from("answers")
+    .select("id, ord, text")
+    .eq("question_id", qid)
+    .order("ord", { ascending: true });
+  if (error) throw error;
+  return data || [];
 }
 
-async function applyPollPointsUniqueFixedPoints() {
-  const qsList = await listQuestionsBasic();
+async function getLastSessionIdForQuestion(qid) {
+  const { data, error } = await sb()
+    .from("poll_sessions")
+    .select("id")
+    .eq("game_id", gameId)
+    .eq("question_id", qid)
+    .order("created_at", { ascending: false })
+    .limit(1);
+  if (error) throw error;
+  return data?.[0]?.id || null;
+}
 
-  // UWAGA: tu robimy wiele UPDATE — lepiej sekwencyjnie (bez zalewania API)
-  for (const q of qsList) {
-    const ans = await listAnswersFinalForQuestion(q.id);
-
-    const { updates, zeros } = enforceDistinctTo100TopN(ans, { topN: 6, minPoint: 3 });
-
-    // najpierw ustaw TOP z unikatowymi punktami
-    for (const u of updates) {
-      const { error } = await sb().from("answers").update({ fixed_points: u.fixed_points }).eq("id", u.id);
-      if (error) throw error;
-    }
-
-    // potem reszta na 0
-    for (const id of zeros) {
-      const { error } = await sb().from("answers").update({ fixed_points: 0 }).eq("id", id);
-      if (error) throw error;
-    }
-  }
+async function countQuestions() {
+  const { count, error } = await sb()
+    .from("questions")
+    .select("id", { count: "exact", head: true })
+    .eq("game_id", gameId);
+  if (error) throw error;
+  return Number(count) || 0;
 }
 
 async function countAnswersForQuestion(qid) {
@@ -559,106 +294,24 @@ async function countAnswersForQuestion(qid) {
     .select("id", { count: "exact", head: true })
     .eq("question_id", qid);
   if (error) throw error;
-  return count || 0;
-}
-
-async function getLastSessionIdForQuestion(questionId) {
-  const { data, error } = await sb()
-    .from("poll_sessions")
-    .select("id,created_at")
-    .eq("game_id", gameId)
-    .eq("question_id", questionId)
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-  if (error) throw error;
-  return data?.id || null;
-}
-
-function sigGameRow(g) {
-  if (!g) return "";
-  return [
-    g.id,
-    g.status || "",
-    g.poll_opened_at || "",
-    g.poll_closed_at || "",
-  ].join("|");
-}
-
-
-async function fetchResultsSignature() {
-  // jeśli nie ma gry albo to nie sondaż -> brak
-  if (!game || game.type === TYPES.PREPARED) return "";
-
-  const qsList = await listQuestionsBasic();
-  if (!qsList.length) return "";
-
-  // Jeśli sondaż ZAMKNIĘTY -> wyniki są w answers.fixed_points
-  if ((game.status || STATUS.DRAFT) === STATUS.READY) {
-    // bierzemy "ostatnia modyfikacja" odpowiedzi w tej grze: max(updated_at)
-    // UWAGA: jeśli nie masz updated_at w answers, to daj sumę fixed_points jako sygnaturę.
-    const { data, error } = await sb()
-      .from("answers")
-      .select("question_id,fixed_points")
-      .in("question_id", qsList.map(q => q.id));
-    if (error) throw error;
-
-    // sygnatura = suma fixed_points + liczność
-    let sum = 0, n = 0;
-    for (const r of data || []) { sum += (Number(r.fixed_points) || 0); n++; }
-    return `READY|${n}|${sum}`;
-  }
-
-  // LIVE: zależnie od typu
-  if (game.type === TYPES.POLL_POINTS) {
-    // sygnatura: suma głosów per pytanie (count)
-    // robimy count(*) per question_id w poll_votes dla ostatniej sesji danego pytania
-    const parts = [];
-    for (const q of qsList) {
-      const sid = await getLastSessionIdForQuestion(q.id);
-      if (!sid) { parts.push(`Q${q.id}:0`); continue; }
-
-      const { count, error } = await sb()
-        .from("poll_votes")
-        .select("id", { count: "exact", head: true })
-        .eq("poll_session_id", sid)
-        .eq("question_id", q.id);
-      if (error) throw error;
-
-      parts.push(`Q${q.id}:${count || 0}`);
-    }
-    return `LIVE_POINTS|${parts.join(",")}`;
-  }
-
-  // poll_text LIVE
-  {
-    const parts = [];
-    for (const q of qsList) {
-      const sid = await getLastSessionIdForQuestion(q.id);
-      if (!sid) { parts.push(`Q${q.id}:0`); continue; }
-
-      const { count, error } = await sb()
-        .from("poll_text_entries")
-        .select("id", { count: "exact", head: true })
-        .eq("poll_session_id", sid)
-        .eq("question_id", q.id);
-      if (error) throw error;
-
-      parts.push(`Q${q.id}:${count || 0}`);
-    }
-    return `LIVE_TEXT|${parts.join(",")}`;
-  }
+  return Number(count) || 0;
 }
 
 /* =======================
-   Walidacje przycisku
+   Walidacje
 ======================= */
 
 async function validateCanOpen(g) {
-  if (g.status !== STATUS.DRAFT) {
+  if (!g) return { ok: false, reason: t("polls.validation.noGame") };
+
+  // jak w starej logice: otwieramy tylko z draft
+  if ((g.status || STATUS.DRAFT) !== STATUS.DRAFT) {
     return { ok: false, reason: t("polls.validation.openOnlyDraft") };
   }
-  if (g.type === TYPES.PREPARED) return { ok: false, reason: t("polls.validation.preparedNoPoll") };
+
+  if (g.type === TYPES.PREPARED) {
+    return { ok: false, reason: t("polls.validation.preparedNoPoll") };
+  }
 
   const qn = await countQuestions();
   if (qn < RULES.QN_MIN) {
@@ -682,14 +335,52 @@ async function validateCanOpen(g) {
 }
 
 async function validateCanReopen(g) {
-  if (g.status !== STATUS.READY) {
+  if ((g.status || STATUS.DRAFT) !== STATUS.READY) {
     return { ok: false, reason: t("polls.validation.reopenOnlyClosed") };
   }
   return await validateCanOpen({ ...g, status: STATUS.DRAFT });
 }
 
+function normalizeCountsTo100(items) {
+  const cleaned = (items || [])
+    .map((x) => ({ ...x, count: Math.max(0, Number(x.count) || 0) }))
+    .filter((x) => x.count > 0);
+
+  if (!cleaned.length) return [];
+
+  const total = cleaned.reduce((s, x) => s + x.count, 0) || 1;
+
+  const raw = cleaned.map((x) => {
+    const r = (100 * x.count) / total;
+    const f = Math.floor(r);
+    return { ...x, raw: r, floor: f, frac: r - f };
+  });
+
+  let sum = raw.reduce((s, x) => s + x.floor, 0);
+  let diff = 100 - sum;
+
+  if (diff > 0) {
+    raw.sort((a, b) => b.frac - a.frac);
+    for (let i = 0; i < diff; i++) raw[i % raw.length].floor += 1;
+  } else if (diff < 0) {
+    diff = -diff;
+    raw.sort((a, b) => b.floor - a.floor);
+    let i = 0;
+    while (diff > 0 && i < raw.length * 5) {
+      const idx = i % raw.length;
+      if (raw[idx].floor > 0) {
+        raw[idx].floor -= 1;
+        diff--;
+      }
+      i++;
+    }
+  }
+
+  return raw.map((x) => ({ ...x, points: x.floor }));
+}
+
 async function validateCanClose(g) {
-  if (g.status !== STATUS.POLL_OPEN) {
+  if ((g.status || STATUS.DRAFT) !== STATUS.POLL_OPEN) {
     return { ok: false, reason: t("polls.validation.closeOnlyOpen") };
   }
 
@@ -718,10 +409,7 @@ async function validateCanClose(g) {
       const strong = normalized.filter((x) => x.points >= 3);
 
       if (strong.length < 3) {
-        return {
-          ok: false,
-          reason: t("polls.validation.closeMinPoints"),
-        };
+        return { ok: false, reason: t("polls.validation.closeMinPoints") };
       }
     }
     return { ok: true, reason: "" };
@@ -751,125 +439,151 @@ async function validateCanClose(g) {
 }
 
 /* =======================
-   Podgląd wyników
+   Wyniki (zawsze widoczne) — bez “Перегляд наживо”
 ======================= */
 
-async function previewResults() {
-  showPreview();
-  if (!resultsList || !resultsMeta || !resultsCard) return;
+function buildPollPointsPreviewDom(qsList, ansByQ) {
+  if (!resultsList) return null;
+  
+  // FIX: jeśli ktoś wcześniej wyczyścił resultsList (np. klik ⟳ Odśwież),
+  // to ppCache wskazuje na odłączone elementy i nic się nie pokaże.
+  // Wtedy unieważniamy cache i przebudowujemy DOM.
+  if (ppCache && !resultsList.firstElementChild) {
+    ppCache = null;
+  }
 
-  resultsList.style.display = "grid";
+  const qsKey = qsList.map((q) => q.id).join(",");
+  const ansKey = qsList
+    .map((q) => {
+      const ans = ansByQ.get(q.id) || [];
+      return `${q.id}:${ans.map((a) => a.id).join("|")}`;
+    })
+    .join(";");
+
+  if (ppCache && ppCache.qsKey === qsKey && ppCache.ansKey === ansKey) return ppCache;
+
+  resultsList.innerHTML = "";
+  const valByAnswerId = new Map();
+
+  for (const q of qsList) {
+    const ans = ansByQ.get(q.id) || [];
+
+    const box = document.createElement("div");
+    box.className = "resultQ";
+    box.innerHTML = `<div class="qTitle">P${q.ord}: ${q.text}</div>`;
+
+    for (const a of ans) {
+      const row = document.createElement("div");
+      row.className = "aRow";
+      row.innerHTML = `<div class="aTxt"></div><div class="aVal"></div>`;
+      row.querySelector(".aTxt").textContent = a.text;
+      row.querySelector(".aVal").textContent = "0";
+      valByAnswerId.set(a.id, row.querySelector(".aVal"));
+      box.appendChild(row);
+    }
+
+    resultsList.appendChild(box);
+  }
+
+  ppCache = { qsKey, ansKey, valByAnswerId, builtAt: Date.now() };
+  return ppCache;
+}
+
+function updatePollPointsPreviewValues(valuesByAnswerId) {
+  if (!ppCache?.valByAnswerId) return;
+  for (const [aid, valEl] of ppCache.valByAnswerId.entries()) {
+    const v = valuesByAnswerId.get(aid) || 0;
+    const next = String(v);
+    if (valEl.textContent !== next) valEl.textContent = next;
+  }
+}
+
+function showResultsCard() {
+  if (resultsCard) resultsCard.style.display = uiTextCloseOpen ? "none" : "";
+}
+
+function setResultsMeta(text) {
+  if (!resultsMeta) return;
+  resultsMeta.textContent = text || "";
+}
+
+async function previewResults() {
+  showResultsCard();
+  if (!resultsList || !resultsMeta || !resultsCard) return;
+  if (uiTextCloseOpen) return;
   if (!game) return;
 
-  resultsCard.style.display = "";
-  resultsList.innerHTML = "";
-  resultsMeta.textContent = t("polls.results.loading");
+  resultsList.style.display = "grid";
+
+  // loading
+  setResultsMeta(t("polls.results.loading"));
+  // NIE czyścimy resultsList tutaj — bo poll_points ma cache i może reużyć DOM
+  // resultsList.innerHTML = "";
+
 
   const st = game.status || STATUS.DRAFT;
   const qsList = await listQuestionsBasic();
 
-  // ==========================
-  // FINAL (po zamknięciu)
-  // ==========================
+  // FINAL (po zamknięciu): pokazujemy meta (to OK)
   if (st === STATUS.READY) {
-    if (game.type === TYPES.POLL_POINTS) {
-      for (const q of qsList) {
-        const ans = await listAnswersFinalForQuestion(q.id);
+    for (const q of qsList) {
+      const ans = await listAnswersFinalForQuestion(q.id);
 
-        const box = document.createElement("div");
-        box.className = "resultQ";
-        box.innerHTML = `<div class="qTitle">P${q.ord}: ${q.text}</div>`;
+      const box = document.createElement("div");
+      box.className = "resultQ";
+      box.innerHTML = `<div class="qTitle">P${q.ord}: ${q.text}</div>`;
 
-        for (const a of ans || []) {
-          const row = document.createElement("div");
-          row.className = "aRow";
-          row.innerHTML = `<div class="aTxt"></div><div class="aVal"></div>`;
-          row.querySelector(".aTxt").textContent = a.text;
-          row.querySelector(".aVal").textContent = String(Number(a.fixed_points) || 0);
-          box.appendChild(row);
-        }
-
-        resultsList.appendChild(box);
+      for (const a of ans || []) {
+        const row = document.createElement("div");
+        row.className = "aRow";
+        row.innerHTML = `<div class="aTxt"></div><div class="aVal"></div>`;
+        row.querySelector(".aTxt").textContent = a.text;
+        row.querySelector(".aVal").textContent = String(Number(a.fixed_points) || 0);
+        box.appendChild(row);
       }
 
-      resultsMeta.textContent = t("polls.results.final");
-      return;
+      resultsList.appendChild(box);
     }
 
-    if (game.type === TYPES.POLL_TEXT) {
-      for (const q of qsList) {
-        const ans = await listAnswersFinalForQuestion(q.id);
-
-        // tylko te, które realnie istnieją po zamknięciu (czyli w answers)
-        const box = document.createElement("div");
-        box.className = "resultQ";
-        box.innerHTML = `<div class="qTitle">P${q.ord}: ${q.text}</div>`;
-
-        for (const a of (ans || []).filter((x) => Number(x.fixed_points) > 0)) {
-          const row = document.createElement("div");
-          row.className = "aRow";
-          row.innerHTML = `<div class="aTxt"></div><div class="aVal"></div>`;
-          row.querySelector(".aTxt").textContent = a.text;
-          row.querySelector(".aVal").textContent = String(Number(a.fixed_points) || 0);
-          box.appendChild(row);
-        }
-
-        resultsList.appendChild(box);
-      }
-
-      resultsMeta.textContent = t("polls.results.final");
-      return;
-    }
+    setResultsMeta(t("polls.results.final"));
+    return;
   }
 
-  // ==========================
-  // POLL_POINTS (READY + LIVE) — cache DOM, aktualizujemy tylko liczby
-  // ==========================
+  // LIVE (w trakcie): meta ma być PUSTE (usuwa “Перегляд наживо:”)
   if (game.type === TYPES.POLL_POINTS) {
-    // 1) answers potrzebne do szkieletu (i do READY fixed_points)
-    const ansByQ = await loadAnswersForQuestions(qsList);
-    await ensurePollPointsPreviewSkeletonWithAnswers(qsList, ansByQ);
-  
-    const values = new Map(); // answer_id -> value
-  
-    if ((game.status || STATUS.DRAFT) === STATUS.READY) {
-      // READY: wartości bierzemy z fixed_points
-      for (const [qid, ans] of ansByQ.entries()) {
-        for (const a of ans || []) {
-          values.set(a.id, Number(a.fixed_points) || 0);
-        }
-      }
-  
-      updatePollPointsPreviewValues(values);
-      resultsMeta.textContent = t("polls.results.final");
-      return;
+    const ansByQ = new Map();
+    for (const q of qsList) {
+      const ans = await listAnswersBasicForQuestion(q.id);
+      ansByQ.set(q.id, ans || []);
     }
-  
-    // LIVE: wartości bierzemy z liczby głosów
+
+    buildPollPointsPreviewDom(qsList, ansByQ);
+
+    const values = new Map();
+
     for (const q of qsList) {
       const ans = ansByQ.get(q.id) || [];
-  
-      // wyzeruj wszystkie odpowiedzi dla pytania
       for (const a of ans) values.set(a.id, 0);
-  
+
       const sid = await getLastSessionIdForQuestion(q.id);
       if (!sid) continue;
-  
+
       const { data: votes, error: vErr } = await sb()
         .from("poll_votes")
         .select("answer_id")
         .eq("poll_session_id", sid)
         .eq("question_id", q.id);
       if (vErr) throw vErr;
-  
+
       for (const v of votes || []) {
         if (!v.answer_id) continue;
         values.set(v.answer_id, (values.get(v.answer_id) || 0) + 1);
       }
     }
-  
+
+    // Uwaga: buildPollPointsPreviewDom przebudował listę; więc nie czyścimy jej już ponownie.
     updatePollPointsPreviewValues(values);
-    resultsMeta.textContent = t("polls.results.live");
+    setResultsMeta(""); // <— TU usuwamy LIVE tekst
     return;
   }
 
@@ -914,177 +628,57 @@ async function previewResults() {
     resultsList.appendChild(box);
   }
 
-  resultsMeta.textContent = t("polls.results.live");
+  setResultsMeta(""); // <— TU usuwamy LIVE tekst
 }
 
 /* =======================
-   poll_text: panel merge/delete + finalizacja
+   poll_text close panel
 ======================= */
 
 function clip17Final(s) {
-  const t = String(s ?? "").trim();
-  if (!t) return "";
-  return t.length > 17 ? t.slice(0, 17) : t;
+  const t1 = String(s ?? "").trim();
+  if (!t1) return "";
+  return t1.length > 17 ? t1.slice(0, 17) : t1;
 }
 
-// bazowy przelicznik: count -> punkty do 100 (bez limitu 6 odp.)
-function normalizeCountsTo100(items) {
-  const cleaned = (items || [])
-    .map((x) => ({
-      ...x,
-      count: Math.max(0, Number(x.count) || 0),
-    }))
-    .filter((x) => x.count > 0);
-
-  if (!cleaned.length) return [];
-
-  const total = cleaned.reduce((s, x) => s + x.count, 0) || 1;
-
-  const raw = cleaned.map((x) => {
-    const r = (100 * x.count) / total;
-    const f = Math.floor(r);
-    return { ...x, raw: r, floor: f, frac: r - f };
-  });
-
-  let sum = raw.reduce((s, x) => s + x.floor, 0);
-  let diff = 100 - sum;
-
-  if (diff > 0) {
-    raw.sort((a, b) => b.frac - a.frac);
-    for (let i = 0; i < diff; i++) raw[i % raw.length].floor += 1;
-  } else if (diff < 0) {
-    diff = -diff;
-    raw.sort((a, b) => b.floor - a.floor);
-    let i = 0;
-    while (diff > 0 && i < raw.length * 5) {
-      const idx = i % raw.length;
-      if (raw[idx].floor > 0) {
-        raw[idx].floor -= 1;
-        diff--;
-      }
-      i++;
-    }
-  }
-
-  return raw.map((x) => ({ ...x, points: x.floor }));
-}
-
-// klasyczny sondaż: normalizacja + odrzucenie <3 + max 6 + UNIKALNE PUNKTY
+// normalizacja “klasyczna” dla text-close (z Twojej wersji)
 function normalizeTo100Int(items) {
   const normalized = normalizeCountsTo100(items);
   if (!normalized.length) return [];
 
   let filtered = normalized.filter((x) => x.points >= 3);
   filtered.sort((a, b) => b.points - a.points);
-
   if (filtered.length > 6) filtered = filtered.slice(0, 6);
 
-  // Zwracamy {text, points}
   const base = filtered.map((x) => ({ text: x.text, points: x.points }));
 
-  // NOWE: wymuś unikalność punktów + suma=100
-  const distinct = forceDistinctPointsTo100(base);
-
-  // (opcjonalnie) jeszcze raz sort malejąco (dla pewności UI)
-  distinct.sort((a, b) => b.points - a.points);
-
-  return distinct;
-}
-
-// Wymusza punkty łącznie = 100, unikalne i ściśle malejące (różnica min 1).
-// Działa na elementach { text, points }, zakłada sortowanie malejąco wg points.
-function forceDistinctPointsTo100(items) {
-  const arr = (items || []).map((x) => ({
-    text: x.text,
-    points: Math.max(0, Number(x.points) || 0),
-  }));
-
-  if (!arr.length) return [];
-
-  // 1) sort: malejąco po punktach (dla stabilności)
-  arr.sort((a, b) => b.points - a.points);
-
-  // 2) wymuszenie ściśle malejące (min 1 różnicy), z dołem min 3
-  for (let i = 1; i < arr.length; i++) {
-    const prev = arr[i - 1].points;
-    let p = arr[i].points;
-
-    // jeśli remis lub rośnie -> zetnij do prev-1
-    if (p >= prev) p = prev - 1;
-
-    // minimalny próg (w Twojej logice i tak filtrujesz >=3)
-    if (p < 3) p = 3;
-
-    arr[i].points = p;
+  const used = new Set();
+  for (const x of base) {
+    let p = Number(x.points) || 0;
+    while (p > 0 && used.has(p)) p--;
+    x.points = p;
+    used.add(p);
   }
-
-  // 3) dopasuj sumę do 100 (dodaj/odejmij od TOP, zachowując malejącość)
-  let sum = arr.reduce((s, x) => s + x.points, 0);
-  let diff = 100 - sum;
-
-  if (diff > 0) {
-    // dodaj brakujące punkty na TOP
-    arr[0].points += diff;
-  } else if (diff < 0) {
-    // odejmij nadmiar z góry, ale nie wolno spaść do <= drugiego + 0
-    diff = -diff;
-    let i = 0;
-
-    // próbuj odejmować najpierw z TOP, potem z kolejnych, ale pilnuj:
-    // arr[i].points >= arr[i+1].points + 1 (dla i < last)
-    while (diff > 0 && i < arr.length) {
-      const next = i + 1 < arr.length ? arr[i + 1].points : 3;
-      const minAllowed = i + 1 < arr.length ? next + 1 : 3;
-      const canTake = Math.max(0, arr[i].points - minAllowed);
-
-      if (canTake > 0) {
-        const take = Math.min(canTake, diff);
-        arr[i].points -= take;
-        diff -= take;
-      } else {
-        i++;
-      }
-    }
-  }
-
-  // 4) ostatnia sanity: wymuś jeszcze raz malejącość (po korekcie sumy)
-  for (let i = 1; i < arr.length; i++) {
-    if (arr[i].points >= arr[i - 1].points) {
-      arr[i].points = Math.max(3, arr[i - 1].points - 1);
-    }
-  }
-
-  return arr;
-}
-
-function normKey(s) {
-  return String(s ?? "")
-    .trim()
-    .toLowerCase()
-    .replace(/\s+/g, " ");
+  return base;
 }
 
 function mergeDuplicatesInPlace(items) {
-  // scala po normKey(text), sumuje count, zachowuje "najładniejszy" tekst (pierwszy napotkany)
-  const map = new Map(); // key -> { text, count }
+  const map = new Map();
   for (const it of items || []) {
-    const key = normKey(it.text);
-    const cnt = Math.max(0, Number(it.count) || 0);
+    const key = String(it.text ?? "").trim().toLowerCase();
+    const cnt = Number(it.count) || 0;
     if (!key || cnt <= 0) continue;
 
-    if (!map.has(key)) {
-      map.set(key, { text: String(it.text ?? "").trim(), count: cnt });
-    } else {
-      map.get(key).count += cnt;
-    }
+    if (!map.has(key)) map.set(key, { text: String(it.text ?? "").trim(), count: cnt });
+    else map.get(key).count += cnt;
   }
   return [...map.values()].sort((a, b) => b.count - a.count);
 }
 
 async function buildTextClosePanel() {
   setTextCloseUi(true);
-  textCloseList.innerHTML = "";
-  textCloseMeta.textContent = t("polls.textClose.loading");
+  if (textCloseList) textCloseList.innerHTML = "";
+  if (textCloseMeta) textCloseMeta.textContent = t("polls.textClose.loading");
 
   const qsList = await listQuestionsBasic();
   const model = [];
@@ -1115,7 +709,7 @@ async function buildTextClosePanel() {
     model.push({ question_id: q.id, ord: q.ord, text: q.text, items });
   }
 
-  textCloseMeta.textContent = t("polls.textClose.instructions");
+  if (textCloseMeta) textCloseMeta.textContent = t("polls.textClose.instructions");
 
   for (const q of model) {
     const box = document.createElement("div");
@@ -1134,8 +728,8 @@ async function buildTextClosePanel() {
     `;
 
     const list = box.querySelector(".tcList");
-
     const btnDup = box.querySelector(".tcMergeDup");
+
     btnDup?.addEventListener("click", () => {
       q.items = mergeDuplicatesInPlace(q.items);
       rerender();
@@ -1147,36 +741,24 @@ async function buildTextClosePanel() {
 
       for (let idx = 0; idx < q.items.length; idx++) {
         const it = q.items[idx];
+
         const row = document.createElement("div");
         row.className = "tcItem";
         row.draggable = true;
-
         row.innerHTML = `
           <input class="tcTxtInp" type="text" />
           <div class="tcCnt"></div>
           <button class="tcDel" type="button" title="${t("polls.textClose.remove")}">✕</button>
         `;
-        
+
         const inp = row.querySelector(".tcTxtInp");
         inp.value = it.text;
-        
-        // edycja literówek -> od razu w modelu
+
         inp.addEventListener("input", () => {
-          it.text = inp.value; // zapis w modelu
+          it.text = inp.value;
         });
 
-        inp.addEventListener("blur", () => {
-          // po edycji tekstu: znormalizuj model przez scalenie duplikatów
-          q.items = mergeDuplicatesInPlace(q.items);
-          rerender();
-        });
-        
-        // żeby edycja nie “łapała” drag & drop
-        inp.addEventListener("mousedown", (e) => e.stopPropagation());
-        inp.addEventListener("pointerdown", (e) => e.stopPropagation());
-        inp.addEventListener("dragstart", (e) => e.preventDefault());
-        
-        row.querySelector(".tcCnt").textContent = String(it.count);
+        row.querySelector(".tcCnt").textContent = String(it.count || 0);
 
         row.querySelector(".tcDel").addEventListener("click", () => {
           q.items.splice(idx, 1);
@@ -1196,11 +778,11 @@ async function buildTextClosePanel() {
           const toIdx = idx;
           if (!Number.isFinite(fromIdx) || fromIdx === toIdx) return;
 
-          const from = q.items[fromIdx];
-          const to = q.items[toIdx];
-          if (!from || !to) return;
+          const fromIt = q.items[fromIdx];
+          const toIt = q.items[toIdx];
+          if (!fromIt || !toIt) return;
 
-          to.count += from.count;
+          toIt.count += fromIt.count;
           q.items.splice(fromIdx, 1);
           rerender();
         });
@@ -1210,28 +792,40 @@ async function buildTextClosePanel() {
     };
 
     rerender();
-    textCloseList.appendChild(box);
+    textCloseList?.appendChild(box);
   }
 
   return model;
 }
 
 /* =======================
-   Refresh UI
+   UI / Actions
 ======================= */
+
+function setActionButton(label, disabled, hint) {
+  if (btnPollAction) {
+    btnPollAction.textContent = label || "—";
+    btnPollAction.disabled = !!disabled;
+  }
+  if (hintTop) hintTop.textContent = hint || "";
+}
+
+async function applyPollPointsUniqueFixedPoints() {
+  // placeholder jak u Ciebie (jeśli masz realną implementację w repo – podmień tutaj)
+}
 
 async function refresh() {
   if (!gameId) {
-    cardMain && (cardMain.style.display = "none");
-    cardEmpty && (cardEmpty.style.display = "");
+    if (cardMain) cardMain.style.display = "none";
+    if (cardEmpty) cardEmpty.style.display = "";
     setMsg(t("polls.missingId"));
     return;
   }
 
   game = await loadGame();
 
-  cardEmpty && (cardEmpty.style.display = "none");
-  cardMain && (cardMain.style.display = "");
+  if (cardEmpty) cardEmpty.style.display = "none";
+  if (cardMain) cardMain.style.display = "";
 
   setChips(game);
 
@@ -1251,35 +845,40 @@ async function refresh() {
     }
   }
 
-  if (pollLinkEl) pollLinkEl.value = "";
-  setLinkUiVisible(false);
-  clearQr();
+  // resultsCard zawsze widoczny (poza textClose)
+  showResultsCard();
 
-  // NIE niszcz podglądu jeśli użytkownik go ma otwartego
-  const wasPreviewOpen = isPreviewOpen();
-  
-  // Ukryj panele tylko jeśli NIE oglądamy podglądu i NIE jesteśmy w łączeniu
-  if (!uiTextCloseOpen) {
-    textCloseCard && (textCloseCard.style.display = "none");
-  }
-  
-  if (!wasPreviewOpen && !uiTextCloseOpen) {
-    // tylko wtedy wolno czyścić podgląd
-    resultsCard && (resultsCard.style.display = "none");
-    hidePreview();
-  }
-
+  // link + QR (pokazujemy TYLKO gdy poll jest otwarty)
   const st = game.status || STATUS.DRAFT;
-
+  
   if (st === STATUS.POLL_OPEN) {
+    setLinkRowVisible(true);
+  
     const link = pollLink(game);
     if (pollLinkEl) pollLinkEl.value = link;
+  
     setLinkUiVisible(true);
     await renderSmallQr(link);
+  } else {
+    // draft + ready: link i przyciski mają zniknąć
+    setLinkRowVisible(false);
+    setLinkUiVisible(false);
   }
 
-  updatePreviewButtonState();
+  updateRefreshButtonState();
 
+  // odśwież wyniki przy każdym refresh UI (bez “LIVE” metki)
+  if (!uiTextCloseOpen) {
+    try {
+      resetPreviewDomCache(); // bezpiecznie: nie zostawiaj starego DOM przy zmianach gry
+      await previewResults();
+    } catch (e) {
+      console.warn("[polls] previewResults in refresh failed", e);
+      setResultsMeta(t("polls.results.refreshFailed"));
+    }
+  }
+
+  // przycisk główny
   if (game.type === TYPES.PREPARED) {
     setActionButton(t("polls.actions.noPoll"), true, t("polls.meta.prepared"));
     return;
@@ -1325,25 +924,10 @@ async function refresh() {
 document.addEventListener("DOMContentLoaded", async () => {
   const u = await requireAuth("index.html");
   if (who) who.textContent = u?.username || u?.email || "—";
+
   if (btnBack) {
-    btnBack.textContent =
-      from === "polls-hub" ? t("polls.backToHub") : t("polls.backToGames");
+    btnBack.textContent = from === "polls-hub" ? t("polls.backToHub") : t("polls.backToGames");
   }
-
-
-  document.addEventListener("visibilitychange", () => {
-    if (document.hidden) stopLiveLoop();
-    else {
-      if ((game?.status || STATUS.DRAFT) === STATUS.POLL_OPEN && isPreviewOpen() && !uiTextCloseOpen) startLiveLoop();
-    }
-  });
-  
-  window.addEventListener("focus", () => {
-    if ((game?.status || STATUS.DRAFT) === STATUS.POLL_OPEN && isPreviewOpen() && !uiTextCloseOpen) startLiveLoop();
-  });
-  
-  window.addEventListener("blur", stopLiveLoop);
-  
 
   btnBack?.addEventListener("click", async () => {
     if (uiTextCloseOpen) {
@@ -1358,7 +942,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
     location.href = backTarget;
   });
-  
+
   btnLogout?.addEventListener("click", async () => {
     if (uiTextCloseOpen) {
       const ok = await confirmModal({
@@ -1391,29 +975,24 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   btnOpenQr?.addEventListener("click", () => {
     if (!pollLinkEl?.value) return;
-    const u = new URL("poll-qr.html", location.href);
-    u.searchParams.set("url", pollLinkEl.value);
-    window.open(u.toString(), "_blank", "noopener,noreferrer");
+
+    const u1 = new URL(withLangParam("poll-qr.html"), location.href);
+    u1.searchParams.set("url", pollLinkEl.value);
+    window.open(u1.toString(), "_blank", "noopener,noreferrer");
   });
 
-  btnPreview?.addEventListener("click", async () => {
-    if (!game || btnPreview.disabled) return;
-  
-    const open = isPreviewOpen();
-    if (open) {
-      hidePreview();
-      stopLiveLoop(); // <- ważne
-      return;
-    }
-  
-    showPreview();
-    await previewResults();
-  
-    // live tylko gdy status OTWARTY
-    if ((game?.status || STATUS.DRAFT) === STATUS.POLL_OPEN && !uiTextCloseOpen) {
-      startLiveLoop();
-    } else {
-      stopLiveLoop();
+  // ⟳ Odśwież (naprawione: zawsze pokazuje loading + błąd w meta)
+  btnRefreshResults?.addEventListener("click", async () => {
+    if (!game || btnRefreshResults.disabled) return;
+
+    try {
+      setResultsMeta(t("polls.results.loading"));
+      await previewResults();
+      setMsg(t("polls.results.refreshed"));
+    } catch (e) {
+      console.warn("[polls] refresh results error:", e);
+      setResultsMeta(t("polls.results.refreshFailed"));
+      await alertModal({ text: `${t("polls.results.refreshFailed")}\n\n${e?.message || e}` });
     }
   });
 
@@ -1421,7 +1000,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (!game) return;
     const st = game.status || STATUS.DRAFT;
 
-    // START
+    // OPEN
     if (st === STATUS.DRAFT) {
       const chk = await validateCanOpen(game);
       if (!chk.ok) return setMsg(chk.reason);
@@ -1437,12 +1016,11 @@ document.addEventListener("DOMContentLoaded", async () => {
       try {
         const { error } = await sb().rpc("poll_open", { p_game_id: gameId, p_key: game.share_key_poll });
         if (error) throw error;
-
         setMsg(t("polls.status.opened"));
         await refresh();
       } catch (e) {
         console.error("[polls] open error:", e);
-        void alertModal({ text: `${t("polls.errors.open")}\n\n${e?.message || e}` });
+        await alertModal({ text: `${t("polls.errors.open")}\n\n${e?.message || e}` });
       }
       return;
     }
@@ -1467,26 +1045,25 @@ document.addEventListener("DOMContentLoaded", async () => {
             p_key: game.share_key_poll,
           });
           if (error) throw error;
-        
-          // NOWE: po RPC wymuś unikatowe punkty w TOP 6 i wyzeruj resztę
+
           await applyPollPointsUniqueFixedPoints();
-        
+
           setMsg(t("polls.status.closedPoints"));
           await refresh();
         } catch (e) {
           console.error("[polls] close points error:", e);
-          void alertModal({ text: `${t("polls.errors.close")}\n\n${e?.message || e}` });
+          await alertModal({ text: `${t("polls.errors.close")}\n\n${e?.message || e}` });
         }
         return;
       }
 
-      // poll_text: panel merge/delete, a final w RPC poll_text_close_apply
+      // poll_text: otwórz panel merge/delete
       try {
         textCloseModel = await buildTextClosePanel();
         setMsg(t("polls.textClose.editHint"));
       } catch (e) {
         console.error("[polls] build text close:", e);
-        void alertModal({ text: `${t("polls.errors.loadAnswers")}\n\n${e?.message || e}` });
+        await alertModal({ text: `${t("polls.errors.loadAnswers")}\n\n${e?.message || e}` });
       }
       return;
     }
@@ -1512,7 +1089,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         await refresh();
       } catch (e) {
         console.error("[polls] reopen error:", e);
-        void alertModal({ text: `${t("polls.errors.reopen")}\n\n${e?.message || e}` });
+        await alertModal({ text: `${t("polls.errors.reopen")}\n\n${e?.message || e}` });
       }
       return;
     }
@@ -1521,9 +1098,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   btnCancelTextClose?.addEventListener("click", () => {
     setTextCloseUi(false);
     setMsg(t("polls.textClose.cancelled"));
+    void refresh();
   });
-  
-   btnFinishTextClose?.addEventListener("click", async () => {
+
+  btnFinishTextClose?.addEventListener("click", async () => {
     if (!game || game.type !== TYPES.POLL_TEXT) return;
     if (!textCloseModel) return;
 
@@ -1543,7 +1121,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           .filter((x) => x.text);
 
         if (final.length < 3) {
-          void alertModal({ text: t("polls.textClose.minAnswers", { ord: q.ord }) });
+          await alertModal({ text: t("polls.textClose.minAnswers", { ord: q.ord }) });
           return;
         }
 
@@ -1567,13 +1145,11 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       setMsg(t("polls.status.closed"));
       setTextCloseUi(false);
-
+      resetPreviewDomCache();
       await refresh();
-      // po zamknięciu: live tylko jeśli user ma otwarty preview i status OPEN (tu już raczej READY, więc i tak stop)
-      stopLiveLoop();
     } catch (e) {
       console.error("[polls] close text error:", e);
-      void alertModal({ text: `${t("polls.errors.close")}\n\n${e?.message || e}` });
+      await alertModal({ text: `${t("polls.errors.close")}\n\n${e?.message || e}` });
     } finally {
       btnFinishTextClose.disabled = false;
       btnCancelTextClose.disabled = false;
@@ -1581,6 +1157,4 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
   await refresh();
-  installTextCloseLeaveGuard();
-  stopLiveLoop();
 });

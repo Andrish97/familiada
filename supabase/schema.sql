@@ -1,3 +1,5 @@
+
+
 CREATE TABLE public.answers (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   question_id uuid NOT NULL,
@@ -6,6 +8,29 @@ CREATE TABLE public.answers (
   fixed_points integer NOT NULL DEFAULT 0,
   created_at timestamp with time zone NOT NULL DEFAULT now()
 );
+
+
+
+CREATE TABLE public.base_share_tasks (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  owner_id uuid NOT NULL,
+  base_id uuid NOT NULL,
+  recipient_user_id uuid,
+  recipient_email text,
+  role base_share_role NOT NULL DEFAULT 'viewer'::base_share_role,
+  token uuid NOT NULL DEFAULT gen_random_uuid(),
+  status text NOT NULL DEFAULT 'pending'::text,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  opened_at timestamp with time zone,
+  accepted_at timestamp with time zone,
+  declined_at timestamp with time zone,
+  cancelled_at timestamp with time zone,
+  email_sent_at timestamp with time zone,
+  email_send_count integer NOT NULL DEFAULT 0
+);
+
+
+
 CREATE TABLE public.device_presence (
   game_id uuid NOT NULL,
   device_type device_type NOT NULL,
@@ -14,6 +39,8 @@ CREATE TABLE public.device_presence (
   meta jsonb NOT NULL DEFAULT '{}'::jsonb
 );
 
+
+
 CREATE TABLE public.device_state (
   game_id uuid NOT NULL,
   device_type device_type NOT NULL,
@@ -21,12 +48,16 @@ CREATE TABLE public.device_state (
   updated_at timestamp with time zone NOT NULL DEFAULT now()
 );
 
+
+
 CREATE TABLE public.email_cooldowns (
   email_hash text NOT NULL,
   action_key text NOT NULL,
   next_allowed_at timestamp with time zone NOT NULL DEFAULT now(),
   updated_at timestamp with time zone NOT NULL DEFAULT now()
 );
+
+
 
 CREATE TABLE public.games (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
@@ -45,6 +76,9 @@ CREATE TABLE public.games (
   share_key_buzzer text NOT NULL DEFAULT gen_share_key(18),
   poll_share_updated_at timestamp with time zone NOT NULL DEFAULT now()
 );
+
+
+
 CREATE TABLE public.poll_sessions (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   game_id uuid NOT NULL,
@@ -54,6 +88,8 @@ CREATE TABLE public.poll_sessions (
   closed_at timestamp with time zone,
   question_id uuid NOT NULL
 );
+
+
 
 CREATE TABLE public.poll_subscriptions (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
@@ -70,6 +106,9 @@ CREATE TABLE public.poll_subscriptions (
   email_sent_at timestamp with time zone,
   email_send_count integer NOT NULL DEFAULT 0
 );
+
+
+
 CREATE TABLE public.poll_tasks (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   owner_id uuid NOT NULL,
@@ -88,6 +127,9 @@ CREATE TABLE public.poll_tasks (
   email_sent_at timestamp with time zone,
   email_send_count integer NOT NULL DEFAULT 0
 );
+
+
+
 CREATE TABLE public.poll_text_entries (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   game_id uuid NOT NULL,
@@ -99,6 +141,8 @@ CREATE TABLE public.poll_text_entries (
   created_at timestamp with time zone NOT NULL DEFAULT now(),
   voter_user_id uuid
 );
+
+
 
 CREATE TABLE public.poll_votes (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
@@ -113,12 +157,24 @@ CREATE TABLE public.poll_votes (
   voter_user_id uuid
 );
 
+
+
 CREATE TABLE public.profiles (
   id uuid NOT NULL,
   email text NOT NULL,
   created_at timestamp with time zone NOT NULL DEFAULT now(),
   username text
 );
+
+
+
+CREATE TABLE public.public_kv (
+  key text NOT NULL,
+  value text NOT NULL DEFAULT ''::text,
+  updated_at timestamp with time zone NOT NULL DEFAULT now()
+);
+
+
 
 CREATE TABLE public.qb_categories (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
@@ -129,17 +185,24 @@ CREATE TABLE public.qb_categories (
   created_at timestamp with time zone NOT NULL DEFAULT now(),
   updated_at timestamp with time zone
 );
+
+
+
 CREATE TABLE public.qb_category_tags (
   category_id uuid NOT NULL,
   tag_id uuid NOT NULL,
   created_at timestamp with time zone NOT NULL DEFAULT now()
 );
 
+
+
 CREATE TABLE public.qb_question_tags (
   question_id uuid NOT NULL,
   tag_id uuid NOT NULL,
   created_at timestamp with time zone NOT NULL DEFAULT now()
 );
+
+
 
 CREATE TABLE public.qb_questions (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
@@ -151,6 +214,9 @@ CREATE TABLE public.qb_questions (
   updated_at timestamp with time zone NOT NULL DEFAULT now(),
   updated_by uuid
 );
+
+
+
 CREATE TABLE public.qb_tags (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   base_id uuid NOT NULL,
@@ -159,12 +225,17 @@ CREATE TABLE public.qb_tags (
   ord integer NOT NULL DEFAULT 0,
   created_at timestamp with time zone NOT NULL DEFAULT now()
 );
+
+
+
 CREATE TABLE public.question_base_shares (
   base_id uuid NOT NULL,
   user_id uuid NOT NULL,
   role base_share_role NOT NULL DEFAULT 'viewer'::base_share_role,
   created_at timestamp with time zone NOT NULL DEFAULT now()
 );
+
+
 
 CREATE TABLE public.question_bases (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
@@ -174,6 +245,8 @@ CREATE TABLE public.question_bases (
   updated_at timestamp with time zone NOT NULL DEFAULT now()
 );
 
+
+
 CREATE TABLE public.questions (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   game_id uuid NOT NULL,
@@ -182,6 +255,8 @@ CREATE TABLE public.questions (
   created_at timestamp with time zone NOT NULL DEFAULT now()
 );
 
+
+
 CREATE TABLE public.user_cooldowns (
   user_id uuid NOT NULL,
   action_key text NOT NULL,
@@ -189,11 +264,15 @@ CREATE TABLE public.user_cooldowns (
   updated_at timestamp with time zone NOT NULL DEFAULT now()
 );
 
+
+
 CREATE TABLE public.user_flags (
   user_id uuid NOT NULL,
   demo boolean NOT NULL DEFAULT true,
   updated_at timestamp with time zone NOT NULL DEFAULT now()
 );
+
+
 
 CREATE TABLE public.user_logos (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
@@ -206,366 +285,795 @@ CREATE TABLE public.user_logos (
   updated_at timestamp with time zone NOT NULL DEFAULT now()
 );
 
+
+
 ALTER TABLE public.answers ADD CONSTRAINT answers_ord_range CHECK (((ord >= 1) AND (ord <= 6)));
+
+
+
 ALTER TABLE public.answers ADD CONSTRAINT answers_pkey PRIMARY KEY (id);
 
+
+
 ALTER TABLE public.answers ADD CONSTRAINT answers_pts_non_negative CHECK ((fixed_points >= 0));
+
+
+
 ALTER TABLE public.answers ADD CONSTRAINT answers_q_ord_uniq UNIQUE (question_id, ord);
+
+
 
 ALTER TABLE public.answers ADD CONSTRAINT answers_question_id_fkey FOREIGN KEY (question_id) REFERENCES questions(id) ON DELETE CASCADE;
 
+
+
 ALTER TABLE public.answers ADD CONSTRAINT answers_text_len CHECK (((char_length(text) >= 1) AND (char_length(text) <= 17)));
+
+
+
+ALTER TABLE public.base_share_tasks ADD CONSTRAINT base_share_tasks_pkey PRIMARY KEY (id);
+
+
+
 ALTER TABLE public.device_presence ADD CONSTRAINT device_presence_game_id_fkey FOREIGN KEY (game_id) REFERENCES games(id) ON DELETE CASCADE;
+
+
 
 ALTER TABLE public.device_presence ADD CONSTRAINT device_presence_pkey PRIMARY KEY (game_id, device_type, device_id);
 
+
+
 ALTER TABLE public.device_state ADD CONSTRAINT device_state_game_id_fkey FOREIGN KEY (game_id) REFERENCES games(id) ON DELETE CASCADE;
+
+
 
 ALTER TABLE public.device_state ADD CONSTRAINT device_state_pkey PRIMARY KEY (game_id, device_type);
 
+
+
 ALTER TABLE public.email_cooldowns ADD CONSTRAINT email_cooldowns_pkey PRIMARY KEY (email_hash, action_key);
 
+
+
 ALTER TABLE public.games ADD CONSTRAINT games_name_len CHECK (((char_length(name) >= 1) AND (char_length(name) <= 80)));
+
+
+
 ALTER TABLE public.games ADD CONSTRAINT games_owner_id_fkey FOREIGN KEY (owner_id) REFERENCES auth.users(id) ON DELETE CASCADE;
+
+
 
 ALTER TABLE public.games ADD CONSTRAINT games_pkey PRIMARY KEY (id);
 
+
+
 ALTER TABLE public.games ADD CONSTRAINT games_poll_status_ok CHECK ((((type = 'prepared'::game_type) AND (status = ANY (ARRAY['draft'::game_status, 'ready'::game_status]))) OR ((type <> 'prepared'::game_type) AND (status = ANY (ARRAY['draft'::game_status, 'poll_open'::game_status, 'ready'::game_status])))));
+
+
 
 ALTER TABLE public.games ADD CONSTRAINT games_share_keys_unique UNIQUE (share_key_poll, share_key_control, share_key_display, share_key_host, share_key_buzzer);
 
+
+
 ALTER TABLE public.games ADD CONSTRAINT games_status_check CHECK ((status = ANY (ARRAY['draft'::game_status, 'poll_open'::game_status, 'ready'::game_status])));
+
+
 
 ALTER TABLE public.games ADD CONSTRAINT games_type_check CHECK ((type = ANY (ARRAY['poll_text'::game_type, 'poll_points'::game_type, 'prepared'::game_type])));
 
+
+
 ALTER TABLE public.poll_sessions ADD CONSTRAINT poll_sessions_game_id_fkey FOREIGN KEY (game_id) REFERENCES games(id) ON DELETE CASCADE;
+
+
 
 ALTER TABLE public.poll_sessions ADD CONSTRAINT poll_sessions_pkey PRIMARY KEY (id);
 
+
+
 ALTER TABLE public.poll_sessions ADD CONSTRAINT poll_sessions_question_id_fkey FOREIGN KEY (question_id) REFERENCES questions(id) ON DELETE CASCADE;
+
+
 
 ALTER TABLE public.poll_subscriptions ADD CONSTRAINT poll_subscriptions_one_subscriber_chk CHECK ((((subscriber_user_id IS NOT NULL) AND (subscriber_email IS NULL)) OR ((subscriber_user_id IS NULL) AND (subscriber_email IS NOT NULL))));
 
+
+
 ALTER TABLE public.poll_subscriptions ADD CONSTRAINT poll_subscriptions_owner_id_fkey FOREIGN KEY (owner_id) REFERENCES auth.users(id) ON DELETE CASCADE;
+
+
 
 ALTER TABLE public.poll_subscriptions ADD CONSTRAINT poll_subscriptions_pkey PRIMARY KEY (id);
 
+
+
 ALTER TABLE public.poll_subscriptions ADD CONSTRAINT poll_subscriptions_status_check CHECK ((status = ANY (ARRAY['pending'::text, 'active'::text, 'declined'::text, 'cancelled'::text])));
+
+
 
 ALTER TABLE public.poll_subscriptions ADD CONSTRAINT poll_subscriptions_subscriber_user_id_fkey FOREIGN KEY (subscriber_user_id) REFERENCES auth.users(id) ON DELETE SET NULL;
 
+
+
 ALTER TABLE public.poll_tasks ADD CONSTRAINT poll_tasks_game_id_fkey FOREIGN KEY (game_id) REFERENCES games(id) ON DELETE CASCADE;
+
+
 
 ALTER TABLE public.poll_tasks ADD CONSTRAINT poll_tasks_one_recipient_chk CHECK ((((recipient_user_id IS NOT NULL) AND (recipient_email IS NULL)) OR ((recipient_user_id IS NULL) AND (recipient_email IS NOT NULL))));
 
+
+
 ALTER TABLE public.poll_tasks ADD CONSTRAINT poll_tasks_owner_id_fkey FOREIGN KEY (owner_id) REFERENCES auth.users(id) ON DELETE CASCADE;
+
+
 
 ALTER TABLE public.poll_tasks ADD CONSTRAINT poll_tasks_pkey PRIMARY KEY (id);
 
+
+
 ALTER TABLE public.poll_tasks ADD CONSTRAINT poll_tasks_poll_type_check CHECK ((poll_type = ANY (ARRAY['poll_text'::text, 'poll_points'::text])));
+
+
 
 ALTER TABLE public.poll_tasks ADD CONSTRAINT poll_tasks_recipient_user_id_fkey FOREIGN KEY (recipient_user_id) REFERENCES auth.users(id) ON DELETE SET NULL;
 
+
+
 ALTER TABLE public.poll_tasks ADD CONSTRAINT poll_tasks_status_check CHECK ((status = ANY (ARRAY['pending'::text, 'opened'::text, 'done'::text, 'declined'::text, 'cancelled'::text])));
+
+
 
 ALTER TABLE public.poll_tasks ADD CONSTRAINT poll_tasks_token_key UNIQUE (token);
 
+
+
 ALTER TABLE public.poll_text_entries ADD CONSTRAINT poll_text_entries_game_id_fkey FOREIGN KEY (game_id) REFERENCES games(id) ON DELETE CASCADE;
+
+
 
 ALTER TABLE public.poll_text_entries ADD CONSTRAINT poll_text_entries_pkey PRIMARY KEY (id);
 
+
+
 ALTER TABLE public.poll_text_entries ADD CONSTRAINT poll_text_entries_poll_session_id_fkey FOREIGN KEY (poll_session_id) REFERENCES poll_sessions(id) ON DELETE CASCADE;
+
+
 
 ALTER TABLE public.poll_text_entries ADD CONSTRAINT poll_text_entries_question_id_fkey FOREIGN KEY (question_id) REFERENCES questions(id) ON DELETE CASCADE;
 
+
+
 ALTER TABLE public.poll_text_entries ADD CONSTRAINT poll_text_entries_voter_user_id_fkey FOREIGN KEY (voter_user_id) REFERENCES profiles(id) ON DELETE SET NULL;
+
+
 
 ALTER TABLE public.poll_votes ADD CONSTRAINT poll_votes_answer_id_fkey FOREIGN KEY (answer_id) REFERENCES answers(id) ON DELETE CASCADE;
 
+
+
 ALTER TABLE public.poll_votes ADD CONSTRAINT poll_votes_game_id_fkey FOREIGN KEY (game_id) REFERENCES games(id) ON DELETE CASCADE;
+
+
 
 ALTER TABLE public.poll_votes ADD CONSTRAINT poll_votes_pkey PRIMARY KEY (id);
 
+
+
 ALTER TABLE public.poll_votes ADD CONSTRAINT poll_votes_poll_session_id_fkey FOREIGN KEY (poll_session_id) REFERENCES poll_sessions(id) ON DELETE SET NULL;
+
+
 
 ALTER TABLE public.poll_votes ADD CONSTRAINT poll_votes_question_id_fkey FOREIGN KEY (question_id) REFERENCES questions(id) ON DELETE CASCADE;
 
+
+
 ALTER TABLE public.poll_votes ADD CONSTRAINT poll_votes_voter_user_id_fkey FOREIGN KEY (voter_user_id) REFERENCES profiles(id) ON DELETE SET NULL;
 
+
+
 ALTER TABLE public.poll_votes ADD CONSTRAINT pv_token_len CHECK (((char_length(voter_token) >= 8) AND (char_length(voter_token) <= 120)));
+
+
+
 ALTER TABLE public.profiles ADD CONSTRAINT profiles_email_key UNIQUE (email);
+
+
 
 ALTER TABLE public.profiles ADD CONSTRAINT profiles_id_fkey FOREIGN KEY (id) REFERENCES auth.users(id) ON DELETE CASCADE;
 
+
+
 ALTER TABLE public.profiles ADD CONSTRAINT profiles_pkey PRIMARY KEY (id);
+
+
+
+ALTER TABLE public.public_kv ADD CONSTRAINT public_kv_pkey PRIMARY KEY (key);
+
+
 
 ALTER TABLE public.qb_categories ADD CONSTRAINT qb_categories_base_id_fkey FOREIGN KEY (base_id) REFERENCES question_bases(id) ON DELETE CASCADE;
 
+
+
 ALTER TABLE public.qb_categories ADD CONSTRAINT qb_categories_parent_id_fkey FOREIGN KEY (parent_id) REFERENCES qb_categories(id) ON DELETE CASCADE;
+
+
 
 ALTER TABLE public.qb_categories ADD CONSTRAINT qb_categories_pkey PRIMARY KEY (id);
 
+
+
 ALTER TABLE public.qb_category_tags ADD CONSTRAINT qb_category_tags_category_fk FOREIGN KEY (category_id) REFERENCES qb_categories(id) ON DELETE CASCADE;
+
+
 
 ALTER TABLE public.qb_category_tags ADD CONSTRAINT qb_category_tags_pk PRIMARY KEY (category_id, tag_id);
 
+
+
 ALTER TABLE public.qb_category_tags ADD CONSTRAINT qb_category_tags_tag_fk FOREIGN KEY (tag_id) REFERENCES qb_tags(id) ON DELETE CASCADE;
+
+
 
 ALTER TABLE public.qb_question_tags ADD CONSTRAINT qb_question_tags_pkey PRIMARY KEY (question_id, tag_id);
 
+
+
 ALTER TABLE public.qb_question_tags ADD CONSTRAINT qb_question_tags_question_id_fkey FOREIGN KEY (question_id) REFERENCES qb_questions(id) ON DELETE CASCADE;
+
+
 
 ALTER TABLE public.qb_question_tags ADD CONSTRAINT qb_question_tags_tag_id_fkey FOREIGN KEY (tag_id) REFERENCES qb_tags(id) ON DELETE CASCADE;
 
+
+
 ALTER TABLE public.qb_questions ADD CONSTRAINT qb_questions_base_id_fkey FOREIGN KEY (base_id) REFERENCES question_bases(id) ON DELETE CASCADE;
+
+
 
 ALTER TABLE public.qb_questions ADD CONSTRAINT qb_questions_category_id_fkey FOREIGN KEY (category_id) REFERENCES qb_categories(id) ON DELETE SET NULL;
 
+
+
 ALTER TABLE public.qb_questions ADD CONSTRAINT qb_questions_pkey PRIMARY KEY (id);
+
+
 
 ALTER TABLE public.qb_questions ADD CONSTRAINT qb_questions_updated_by_fkey FOREIGN KEY (updated_by) REFERENCES auth.users(id) ON DELETE SET NULL;
 
+
+
 ALTER TABLE public.qb_tags ADD CONSTRAINT qb_tags_base_id_fkey FOREIGN KEY (base_id) REFERENCES question_bases(id) ON DELETE CASCADE;
+
+
 
 ALTER TABLE public.qb_tags ADD CONSTRAINT qb_tags_base_id_name_key UNIQUE (base_id, name);
 
+
+
 ALTER TABLE public.qb_tags ADD CONSTRAINT qb_tags_pkey PRIMARY KEY (id);
+
+
 
 ALTER TABLE public.question_base_shares ADD CONSTRAINT question_base_shares_base_id_fkey FOREIGN KEY (base_id) REFERENCES question_bases(id) ON DELETE CASCADE;
 
+
+
 ALTER TABLE public.question_base_shares ADD CONSTRAINT question_base_shares_pkey PRIMARY KEY (base_id, user_id);
+
+
 
 ALTER TABLE public.question_base_shares ADD CONSTRAINT question_base_shares_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE;
 
+
+
 ALTER TABLE public.question_bases ADD CONSTRAINT question_bases_owner_id_fkey FOREIGN KEY (owner_id) REFERENCES auth.users(id) ON DELETE CASCADE;
+
+
 
 ALTER TABLE public.question_bases ADD CONSTRAINT question_bases_pkey PRIMARY KEY (id);
 
+
+
 ALTER TABLE public.questions ADD CONSTRAINT questions_game_id_fkey FOREIGN KEY (game_id) REFERENCES games(id) ON DELETE CASCADE;
+
+
 
 ALTER TABLE public.questions ADD CONSTRAINT questions_game_ord_uniq UNIQUE (game_id, ord);
 
+
+
 ALTER TABLE public.questions ADD CONSTRAINT questions_game_ord_unique UNIQUE (game_id, ord);
 
+
+
 ALTER TABLE public.questions ADD CONSTRAINT questions_ord_positive CHECK ((ord >= 1));
+
+
+
 ALTER TABLE public.questions ADD CONSTRAINT questions_pkey PRIMARY KEY (id);
 
+
+
 ALTER TABLE public.questions ADD CONSTRAINT questions_text_len CHECK (((char_length(text) >= 1) AND (char_length(text) <= 200)));
+
+
+
 ALTER TABLE public.user_cooldowns ADD CONSTRAINT user_cooldowns_pkey PRIMARY KEY (user_id, action_key);
+
+
 
 ALTER TABLE public.user_flags ADD CONSTRAINT user_flags_pkey PRIMARY KEY (user_id);
 
+
+
 ALTER TABLE public.user_flags ADD CONSTRAINT user_flags_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE;
+
+
 
 ALTER TABLE public.user_logos ADD CONSTRAINT user_logos_pkey PRIMARY KEY (id);
 
+
+
 ALTER TABLE public.user_logos ADD CONSTRAINT user_logos_type_check CHECK ((type = ANY (ARRAY['GLYPH_30x10'::text, 'PIX_150x70'::text])));
+
+
+
 ALTER TABLE public.user_logos ADD CONSTRAINT user_logos_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE;
+
+
 
 CREATE INDEX answers_q_idx ON public.answers USING btree (question_id);
 
+
+
 CREATE UNIQUE INDEX answers_pkey ON public.answers USING btree (id);
+
+
 
 CREATE UNIQUE INDEX answers_q_ord_uniq ON public.answers USING btree (question_id, ord);
 
+
+
+CREATE INDEX base_share_tasks_owner_base_idx ON public.base_share_tasks USING btree (owner_id, base_id);
+
+
+
+CREATE INDEX base_share_tasks_recipient_idx ON public.base_share_tasks USING btree (recipient_user_id);
+
+
+
+CREATE INDEX base_share_tasks_status_created_idx ON public.base_share_tasks USING btree (status, created_at);
+
+
+
+CREATE INDEX base_share_tasks_token_idx ON public.base_share_tasks USING btree (token);
+
+
+
+CREATE UNIQUE INDEX base_share_tasks_pkey ON public.base_share_tasks USING btree (id);
+
+
+
 CREATE UNIQUE INDEX device_presence_pkey ON public.device_presence USING btree (game_id, device_type, device_id);
+
+
 
 CREATE UNIQUE INDEX device_state_pkey ON public.device_state USING btree (game_id, device_type);
 
+
+
 CREATE UNIQUE INDEX email_cooldowns_pkey ON public.email_cooldowns USING btree (email_hash, action_key);
+
+
 
 CREATE INDEX games_created_at_idx ON public.games USING btree (created_at DESC);
 
+
+
 CREATE INDEX games_keys_control_idx ON public.games USING btree (share_key_control);
+
+
 
 CREATE INDEX games_keys_display_idx ON public.games USING btree (share_key_display);
 
+
+
 CREATE INDEX games_keys_host_idx ON public.games USING btree (share_key_host);
+
+
 
 CREATE INDEX games_keys_poll_idx ON public.games USING btree (share_key_poll);
 
+
+
 CREATE INDEX games_owner_idx ON public.games USING btree (owner_id);
+
+
 
 CREATE UNIQUE INDEX games_pkey ON public.games USING btree (id);
 
+
+
 CREATE UNIQUE INDEX games_share_keys_unique ON public.games USING btree (share_key_poll, share_key_control, share_key_display, share_key_host, share_key_buzzer);
+
+
 
 CREATE INDEX poll_sessions_game_idx ON public.poll_sessions USING btree (game_id);
 
+
+
 CREATE INDEX poll_sessions_game_open_idx ON public.poll_sessions USING btree (game_id, is_open, created_at DESC);
+
+
 
 CREATE UNIQUE INDEX poll_sessions_pkey ON public.poll_sessions USING btree (id);
 
+
+
 CREATE INDEX poll_subscriptions_owner_idx ON public.poll_subscriptions USING btree (owner_id);
+
+
 
 CREATE INDEX poll_subscriptions_sub_email_idx ON public.poll_subscriptions USING btree (subscriber_email);
 
+
+
 CREATE INDEX poll_subscriptions_sub_user_idx ON public.poll_subscriptions USING btree (subscriber_user_id);
+
+
 
 CREATE UNIQUE INDEX poll_subscriptions_pkey ON public.poll_subscriptions USING btree (id);
 
+
+
 CREATE UNIQUE INDEX poll_subscriptions_token_uq ON public.poll_subscriptions USING btree (token);
+
+
 
 CREATE INDEX poll_tasks_game_idx ON public.poll_tasks USING btree (game_id);
 
+
+
 CREATE INDEX poll_tasks_owner_idx ON public.poll_tasks USING btree (owner_id);
+
+
 
 CREATE INDEX poll_tasks_recipient_email_idx ON public.poll_tasks USING btree (lower(recipient_email));
 
+
+
 CREATE INDEX poll_tasks_recipient_user_idx ON public.poll_tasks USING btree (recipient_user_id);
+
+
 
 CREATE UNIQUE INDEX poll_tasks_pkey ON public.poll_tasks USING btree (id);
 
+
+
 CREATE UNIQUE INDEX poll_tasks_token_key ON public.poll_tasks USING btree (token);
+
+
+
+CREATE INDEX idx_poll_text_entries_game_user_token ON public.poll_text_entries USING btree (game_id, voter_user_id, voter_token);
+
+
 
 CREATE INDEX poll_text_entries_voter_user_idx ON public.poll_text_entries USING btree (voter_user_id);
 
+
+
 CREATE INDEX pte_by_question ON public.poll_text_entries USING btree (question_id);
+
+
 
 CREATE INDEX pte_by_session ON public.poll_text_entries USING btree (poll_session_id);
 
+
+
 CREATE UNIQUE INDEX poll_text_entries_pkey ON public.poll_text_entries USING btree (id);
+
+
 
 CREATE UNIQUE INDEX pte_unique_per_q ON public.poll_text_entries USING btree (poll_session_id, question_id, voter_token);
 
+
+
+CREATE INDEX idx_poll_votes_game_user_token ON public.poll_votes USING btree (game_id, voter_user_id, voter_token);
+
+
+
 CREATE INDEX poll_votes_by_answer ON public.poll_votes USING btree (answer_id);
+
+
 
 CREATE INDEX poll_votes_by_session ON public.poll_votes USING btree (poll_session_id);
 
+
+
 CREATE INDEX poll_votes_game_idx ON public.poll_votes USING btree (game_id);
+
+
 
 CREATE INDEX poll_votes_game_q_idx ON public.poll_votes USING btree (game_id, question_ord);
 
+
+
 CREATE INDEX poll_votes_session_idx ON public.poll_votes USING btree (poll_session_id);
+
+
 
 CREATE INDEX poll_votes_voter_user_idx ON public.poll_votes USING btree (voter_user_id);
 
+
+
 CREATE UNIQUE INDEX poll_votes_pkey ON public.poll_votes USING btree (id);
+
+
 
 CREATE UNIQUE INDEX poll_votes_unique_per_q ON public.poll_votes USING btree (poll_session_id, question_id, voter_token);
 
+
+
 CREATE UNIQUE INDEX profiles_email_key ON public.profiles USING btree (email);
+
+
 
 CREATE UNIQUE INDEX profiles_pkey ON public.profiles USING btree (id);
 
+
+
 CREATE UNIQUE INDEX profiles_username_ci_uq ON public.profiles USING btree (lower(username));
+
+
 
 CREATE UNIQUE INDEX profiles_username_unique ON public.profiles USING btree (lower(username)) WHERE ((username IS NOT NULL) AND (username <> ''::text));
 
+
+
 CREATE UNIQUE INDEX profiles_username_uq ON public.profiles USING btree (username);
+
+
+
+CREATE UNIQUE INDEX public_kv_pkey ON public.public_kv USING btree (key);
+
+
 
 CREATE INDEX qb_categories_base_id_idx ON public.qb_categories USING btree (base_id);
 
+
+
 CREATE INDEX qb_categories_parent_id_idx ON public.qb_categories USING btree (parent_id);
+
+
 
 CREATE UNIQUE INDEX qb_categories_pkey ON public.qb_categories USING btree (id);
 
+
+
 CREATE INDEX qb_category_tags_category_id_idx ON public.qb_category_tags USING btree (category_id);
+
+
 
 CREATE INDEX qb_category_tags_tag_id_idx ON public.qb_category_tags USING btree (tag_id);
 
+
+
 CREATE UNIQUE INDEX qb_category_tags_pk ON public.qb_category_tags USING btree (category_id, tag_id);
+
+
 
 CREATE INDEX qb_question_tags_question_id_idx ON public.qb_question_tags USING btree (question_id);
 
+
+
 CREATE INDEX qb_question_tags_tag_id_idx ON public.qb_question_tags USING btree (tag_id);
+
+
 
 CREATE UNIQUE INDEX qb_question_tags_pkey ON public.qb_question_tags USING btree (question_id, tag_id);
 
+
+
 CREATE INDEX qb_questions_base_id_idx ON public.qb_questions USING btree (base_id);
+
+
 
 CREATE INDEX qb_questions_category_id_idx ON public.qb_questions USING btree (category_id);
 
+
+
 CREATE INDEX qb_questions_payload_text_idx ON public.qb_questions USING btree (lower((payload ->> 'text'::text)));
+
+
 
 CREATE UNIQUE INDEX qb_questions_pkey ON public.qb_questions USING btree (id);
 
+
+
 CREATE INDEX qb_tags_base_id_idx ON public.qb_tags USING btree (base_id);
+
+
 
 CREATE UNIQUE INDEX qb_tags_base_id_name_key ON public.qb_tags USING btree (base_id, name);
 
+
+
 CREATE UNIQUE INDEX qb_tags_pkey ON public.qb_tags USING btree (id);
+
+
 
 CREATE INDEX question_base_shares_user_id_idx ON public.question_base_shares USING btree (user_id);
 
+
+
 CREATE UNIQUE INDEX question_base_shares_pkey ON public.question_base_shares USING btree (base_id, user_id);
+
+
 
 CREATE INDEX question_bases_owner_id_idx ON public.question_bases USING btree (owner_id);
 
+
+
 CREATE UNIQUE INDEX question_bases_pkey ON public.question_bases USING btree (id);
+
+
+
+CREATE INDEX idx_questions_game ON public.questions USING btree (game_id);
+
+
 
 CREATE INDEX questions_game_idx ON public.questions USING btree (game_id);
 
+
+
 CREATE INDEX questions_game_ord_idx ON public.questions USING btree (game_id, ord);
+
+
 
 CREATE UNIQUE INDEX questions_game_ord_uniq ON public.questions USING btree (game_id, ord);
 
+
+
 CREATE UNIQUE INDEX questions_game_ord_unique ON public.questions USING btree (game_id, ord);
+
+
 
 CREATE UNIQUE INDEX questions_game_ord_uq ON public.questions USING btree (game_id, ord);
 
+
+
 CREATE UNIQUE INDEX questions_pkey ON public.questions USING btree (id);
+
+
 
 CREATE UNIQUE INDEX user_cooldowns_pkey ON public.user_cooldowns USING btree (user_id, action_key);
 
+
+
 CREATE UNIQUE INDEX user_flags_pkey ON public.user_flags USING btree (user_id);
+
+
 
 CREATE INDEX user_logos_user_id_idx ON public.user_logos USING btree (user_id);
 
+
+
 CREATE UNIQUE INDEX user_logos_one_active_per_user ON public.user_logos USING btree (user_id) WHERE (is_active = true);
+
+
 
 CREATE UNIQUE INDEX user_logos_pkey ON public.user_logos USING btree (id);
 
+
+
 CREATE UNIQUE INDEX user_logos_user_name_uniq ON public.user_logos USING btree (user_id, name);
+
+
 
 ALTER TABLE public.answers ENABLE ROW LEVEL SECURITY;
 
+
+
+ALTER TABLE public.base_share_tasks ENABLE ROW LEVEL SECURITY;
+
+
+
 ALTER TABLE public.device_presence ENABLE ROW LEVEL SECURITY;
+
+
 
 ALTER TABLE public.device_state ENABLE ROW LEVEL SECURITY;
 
+
+
 ALTER TABLE public.email_cooldowns ENABLE ROW LEVEL SECURITY;
+
+
 
 ALTER TABLE public.games ENABLE ROW LEVEL SECURITY;
 
+
+
 ALTER TABLE public.poll_sessions ENABLE ROW LEVEL SECURITY;
+
+
 
 ALTER TABLE public.poll_subscriptions ENABLE ROW LEVEL SECURITY;
 
+
+
 ALTER TABLE public.poll_tasks ENABLE ROW LEVEL SECURITY;
+
+
 
 ALTER TABLE public.poll_text_entries ENABLE ROW LEVEL SECURITY;
 
+
+
 ALTER TABLE public.poll_votes ENABLE ROW LEVEL SECURITY;
+
+
 
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 
+
+
+ALTER TABLE public.public_kv ENABLE ROW LEVEL SECURITY;
+
+
+
 ALTER TABLE public.qb_categories ENABLE ROW LEVEL SECURITY;
+
+
 
 ALTER TABLE public.qb_category_tags ENABLE ROW LEVEL SECURITY;
 
+
+
 ALTER TABLE public.qb_question_tags ENABLE ROW LEVEL SECURITY;
+
+
 
 ALTER TABLE public.qb_questions ENABLE ROW LEVEL SECURITY;
 
+
+
 ALTER TABLE public.qb_tags ENABLE ROW LEVEL SECURITY;
+
+
 
 ALTER TABLE public.question_base_shares ENABLE ROW LEVEL SECURITY;
 
+
+
 ALTER TABLE public.question_bases ENABLE ROW LEVEL SECURITY;
+
+
 
 ALTER TABLE public.questions ENABLE ROW LEVEL SECURITY;
 
+
+
 ALTER TABLE public.user_cooldowns ENABLE ROW LEVEL SECURITY;
+
+
 
 ALTER TABLE public.user_flags ENABLE ROW LEVEL SECURITY;
 
+
+
 ALTER TABLE public.user_logos ENABLE ROW LEVEL SECURITY;
+
+
 
 CREATE POLICY answers_owner_select ON public.answers FOR SELECT TO authenticated USING ((EXISTS ( SELECT 1
    FROM (questions q
      JOIN games g ON ((g.id = q.game_id)))
   WHERE ((q.id = answers.question_id) AND (g.owner_id = auth.uid())))));
+
+
+
 CREATE POLICY answers_owner_write ON public.answers TO authenticated USING ((EXISTS ( SELECT 1
    FROM (questions q
      JOIN games g ON ((g.id = q.game_id)))
@@ -573,34 +1081,59 @@ CREATE POLICY answers_owner_write ON public.answers TO authenticated USING ((EXI
    FROM (questions q
      JOIN games g ON ((g.id = q.game_id)))
   WHERE ((q.id = answers.question_id) AND (g.owner_id = auth.uid())))));
+
+
 null
+null
+
 CREATE POLICY device_presence_owner_read ON public.device_presence FOR SELECT TO authenticated USING ((EXISTS ( SELECT 1
    FROM games g
   WHERE ((g.id = device_presence.game_id) AND (g.owner_id = auth.uid())))));
+
+
+
 CREATE POLICY device_state_owner_read ON public.device_state FOR SELECT TO authenticated USING ((EXISTS ( SELECT 1
    FROM games g
   WHERE ((g.id = device_state.game_id) AND (g.owner_id = auth.uid())))));
+
+
+
 CREATE POLICY games_owner_select ON public.games FOR SELECT TO authenticated USING ((owner_id = auth.uid()));
+
+
 
 CREATE POLICY games_owner_update ON public.games FOR UPDATE TO authenticated USING ((owner_id = auth.uid())) WITH CHECK ((owner_id = auth.uid()));
 
+
 null
 null
 null
+
 CREATE POLICY poll_sessions_owner_read ON public.poll_sessions FOR SELECT TO authenticated USING ((EXISTS ( SELECT 1
    FROM games g
   WHERE ((g.id = poll_sessions.game_id) AND (g.owner_id = auth.uid())))));
+
+
+
 CREATE POLICY poll_sessions_owner_select ON public.poll_sessions FOR SELECT TO authenticated USING ((EXISTS ( SELECT 1
    FROM games g
   WHERE ((g.id = poll_sessions.game_id) AND (g.owner_id = auth.uid())))));
+
+
+
 CREATE POLICY poll_sessions_owner_write ON public.poll_sessions TO authenticated USING ((EXISTS ( SELECT 1
    FROM games g
   WHERE ((g.id = poll_sessions.game_id) AND (g.owner_id = auth.uid()))))) WITH CHECK ((EXISTS ( SELECT 1
    FROM games g
   WHERE ((g.id = poll_sessions.game_id) AND (g.owner_id = auth.uid())))));
+
+
+
 CREATE POLICY poll_sessions_select_owner ON public.poll_sessions FOR SELECT TO authenticated USING ((EXISTS ( SELECT 1
    FROM games g
   WHERE ((g.id = poll_sessions.game_id) AND (g.owner_id = auth.uid())))));
+
+
 null
 null
 null
@@ -609,55 +1142,94 @@ null
 null
 null
 null
+
 CREATE POLICY poll_text_entries_insert_owner_open ON public.poll_text_entries FOR INSERT TO authenticated WITH CHECK (((EXISTS ( SELECT 1
    FROM games g
   WHERE ((g.id = poll_text_entries.game_id) AND (g.owner_id = auth.uid())))) AND (EXISTS ( SELECT 1
    FROM poll_sessions s
   WHERE ((s.id = poll_text_entries.poll_session_id) AND (s.game_id = poll_text_entries.game_id) AND (s.is_open = true))))));
+
+
+
 CREATE POLICY poll_text_entries_owner_read ON public.poll_text_entries FOR SELECT TO authenticated USING ((EXISTS ( SELECT 1
    FROM games g
   WHERE ((g.id = poll_text_entries.game_id) AND (g.owner_id = auth.uid())))));
+
+
+
 CREATE POLICY poll_text_entries_owner_select ON public.poll_text_entries FOR SELECT TO authenticated USING ((EXISTS ( SELECT 1
    FROM games g
   WHERE ((g.id = poll_text_entries.game_id) AND (g.owner_id = auth.uid())))));
+
+
+
 CREATE POLICY poll_text_entries_select_owner ON public.poll_text_entries FOR SELECT TO authenticated USING ((EXISTS ( SELECT 1
    FROM games g
   WHERE ((g.id = poll_text_entries.game_id) AND (g.owner_id = auth.uid())))));
+
+
+
 CREATE POLICY poll_text_owner_select ON public.poll_text_entries FOR SELECT TO authenticated USING ((EXISTS ( SELECT 1
    FROM games g
   WHERE ((g.id = poll_text_entries.game_id) AND (g.owner_id = auth.uid())))));
+
+
 null
 null
+
 CREATE POLICY poll_votes_insert_owner_open ON public.poll_votes FOR INSERT TO authenticated WITH CHECK (((EXISTS ( SELECT 1
    FROM games g
   WHERE ((g.id = poll_votes.game_id) AND (g.owner_id = auth.uid())))) AND (EXISTS ( SELECT 1
    FROM poll_sessions s
   WHERE ((s.id = poll_votes.poll_session_id) AND (s.game_id = poll_votes.game_id) AND (s.is_open = true))))));
+
+
+
 CREATE POLICY poll_votes_owner_read ON public.poll_votes FOR SELECT TO authenticated USING ((EXISTS ( SELECT 1
    FROM games g
   WHERE ((g.id = poll_votes.game_id) AND (g.owner_id = auth.uid())))));
+
+
+
 CREATE POLICY poll_votes_owner_select ON public.poll_votes FOR SELECT TO authenticated USING ((EXISTS ( SELECT 1
    FROM games g
   WHERE ((g.id = poll_votes.game_id) AND (g.owner_id = auth.uid())))));
+
+
+
 CREATE POLICY poll_votes_select_owner ON public.poll_votes FOR SELECT TO authenticated USING ((EXISTS ( SELECT 1
    FROM games g
   WHERE ((g.id = poll_votes.game_id) AND (g.owner_id = auth.uid())))));
+
+
 null
+
 CREATE POLICY profiles_select_authenticated ON public.profiles FOR SELECT TO authenticated USING (true);
+
+
 
 CREATE POLICY profiles_update_self ON public.profiles FOR UPDATE TO authenticated USING ((id = auth.uid())) WITH CHECK ((id = auth.uid()));
 
+
 null
 null
 null
+
+CREATE POLICY public_kv_read_auth ON public.public_kv FOR SELECT TO authenticated USING (true);
+
+
 null
 null
+
 CREATE POLICY qb_category_tags_delete ON public.qb_category_tags FOR DELETE TO authenticated USING ((EXISTS ( SELECT 1
    FROM (qb_categories c
      JOIN question_bases b ON ((b.id = c.base_id)))
   WHERE ((c.id = qb_category_tags.category_id) AND ((b.owner_id = auth.uid()) OR (EXISTS ( SELECT 1
            FROM question_base_shares s
           WHERE ((s.base_id = b.id) AND (s.user_id = auth.uid()) AND (s.role = 'editor'::base_share_role)))))))));
+
+
+
 CREATE POLICY qb_category_tags_insert ON public.qb_category_tags FOR INSERT TO authenticated WITH CHECK ((EXISTS ( SELECT 1
    FROM ((qb_categories c
      JOIN qb_tags t ON ((t.base_id = c.base_id)))
@@ -665,12 +1237,17 @@ CREATE POLICY qb_category_tags_insert ON public.qb_category_tags FOR INSERT TO a
   WHERE ((c.id = qb_category_tags.category_id) AND (t.id = qb_category_tags.tag_id) AND ((b.owner_id = auth.uid()) OR (EXISTS ( SELECT 1
            FROM question_base_shares s
           WHERE ((s.base_id = b.id) AND (s.user_id = auth.uid()) AND (s.role = 'editor'::base_share_role)))))))));
+
+
+
 CREATE POLICY qb_category_tags_select ON public.qb_category_tags FOR SELECT TO authenticated USING ((EXISTS ( SELECT 1
    FROM (qb_categories c
      JOIN question_bases b ON ((b.id = c.base_id)))
   WHERE ((c.id = qb_category_tags.category_id) AND ((b.owner_id = auth.uid()) OR (EXISTS ( SELECT 1
            FROM question_base_shares s
           WHERE ((s.base_id = b.id) AND (s.user_id = auth.uid()) AND (s.role = ANY (ARRAY['editor'::base_share_role, 'viewer'::base_share_role]))))))))));
+
+
 null
 null
 null
@@ -679,23 +1256,38 @@ null
 null
 null
 null
+
 CREATE POLICY qb_bases_delete ON public.question_bases FOR DELETE TO authenticated USING ((owner_id = auth.uid()));
 
+
+
 CREATE POLICY qb_bases_insert ON public.question_bases FOR INSERT TO authenticated WITH CHECK ((owner_id = auth.uid()));
+
+
 
 CREATE POLICY qb_bases_select ON public.question_bases FOR SELECT TO authenticated USING (((owner_id = auth.uid()) OR (EXISTS ( SELECT 1
    FROM question_base_shares s
   WHERE ((s.base_id = question_bases.id) AND (s.user_id = auth.uid()))))));
+
+
+
 CREATE POLICY qb_bases_update ON public.question_bases FOR UPDATE TO authenticated USING ((owner_id = auth.uid())) WITH CHECK ((owner_id = auth.uid()));
+
+
 
 CREATE POLICY questions_owner_select ON public.questions FOR SELECT TO authenticated USING ((EXISTS ( SELECT 1
    FROM games g
   WHERE ((g.id = questions.game_id) AND (g.owner_id = auth.uid())))));
+
+
+
 CREATE POLICY questions_owner_write ON public.questions TO authenticated USING ((EXISTS ( SELECT 1
    FROM games g
   WHERE ((g.id = questions.game_id) AND (g.owner_id = auth.uid()))))) WITH CHECK ((EXISTS ( SELECT 1
    FROM games g
   WHERE ((g.id = questions.game_id) AND (g.owner_id = auth.uid())))));
+
+
 null
 null
 null
@@ -707,6 +1299,7 @@ null
 null
 null
 null
+
 CREATE OR REPLACE FUNCTION public._norm_email(p text)
  RETURNS text
  LANGUAGE sql
@@ -714,6 +1307,8 @@ CREATE OR REPLACE FUNCTION public._norm_email(p text)
 AS $function$
   select nullif(lower(btrim(p)), '');
 $function$
+
+
 
 
 CREATE OR REPLACE FUNCTION public.assert_game_answers_minmax()
@@ -778,6 +1373,81 @@ begin
 
   return new;
 end $function$
+
+
+
+
+CREATE OR REPLACE FUNCTION public.auth_clear_email_change(p_user_id uuid)
+ RETURNS boolean
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+declare
+  sets text[] := array[]::text[];
+  q text;
+  has_col boolean;
+begin
+  -- helper: column exists?
+  select exists (
+    select 1
+    from information_schema.columns
+    where table_schema = 'auth'
+      and table_name = 'users'
+      and column_name = 'new_email'
+  ) into has_col;
+  if has_col then sets := sets || 'new_email = null'; end if;
+
+  select exists (
+    select 1
+    from information_schema.columns
+    where table_schema = 'auth'
+      and table_name = 'users'
+      and column_name = 'email_change_token_current'
+  ) into has_col;
+  if has_col then sets := sets || 'email_change_token_current = null'; end if;
+
+  select exists (
+    select 1
+    from information_schema.columns
+    where table_schema = 'auth'
+      and table_name = 'users'
+      and column_name = 'email_change_token_new'
+  ) into has_col;
+  if has_col then sets := sets || 'email_change_token_new = null'; end if;
+
+  select exists (
+    select 1
+    from information_schema.columns
+    where table_schema = 'auth'
+      and table_name = 'users'
+      and column_name = 'email_change_sent_at'
+  ) into has_col;
+  if has_col then sets := sets || 'email_change_sent_at = null'; end if;
+
+  select exists (
+    select 1
+    from information_schema.columns
+    where table_schema = 'auth'
+      and table_name = 'users'
+      and column_name = 'email_change_confirm_status'
+  ) into has_col;
+  if has_col then sets := sets || 'email_change_confirm_status = 0'; end if;
+
+  if array_length(sets, 1) is null then
+    return false; -- unknown GoTrue layout
+  end if;
+
+  q := format('update auth.users set %s where id = $1', array_to_string(sets, ', '));
+  execute q using p_user_id;
+
+  return true;
+end;
+$function$
+
+
+
+
 CREATE OR REPLACE FUNCTION public.base_can_access(p_base_id uuid, p_user_id uuid)
  RETURNS boolean
  LANGUAGE sql
@@ -800,6 +1470,10 @@ AS $function$
       )
   );
 $function$
+
+
+
+
 CREATE OR REPLACE FUNCTION public.base_can_edit(p_base_id uuid, p_user_id uuid)
  RETURNS boolean
  LANGUAGE sql
@@ -823,6 +1497,10 @@ AS $function$
       )
   );
 $function$
+
+
+
+
 CREATE OR REPLACE FUNCTION public.base_has_share(p_base_id uuid, p_user_id uuid)
  RETURNS boolean
  LANGUAGE sql
@@ -837,6 +1515,10 @@ AS $function$
       and s.user_id = p_user_id
   );
 $function$
+
+
+
+
 CREATE OR REPLACE FUNCTION public.base_is_owner(p_base_id uuid, p_user_id uuid)
  RETURNS boolean
  LANGUAGE sql
@@ -851,6 +1533,436 @@ AS $function$
       and b.owner_id = p_user_id
   );
 $function$
+
+
+
+
+CREATE OR REPLACE FUNCTION public.base_share_accept(p_task_id uuid)
+ RETURNS boolean
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+AS $function$
+declare
+  t public.base_share_tasks%rowtype;
+begin
+  select * into t
+  from public.base_share_tasks
+  where id = p_task_id;
+
+  if t.id is null then return false; end if;
+  if t.recipient_user_id <> auth.uid() then return false; end if;
+  if t.status not in ('pending','opened') then return false; end if;
+
+  insert into public.question_base_shares(base_id, user_id, role)
+  values (t.base_id, auth.uid(), t.role)
+  on conflict (base_id, user_id) do update set role = excluded.role;
+
+  update public.base_share_tasks
+    set status = 'done',
+        accepted_at = now()
+  where id = t.id;
+
+  return true;
+exception when others then
+  return false;
+end;
+$function$
+
+
+
+
+CREATE OR REPLACE FUNCTION public.base_share_by_email(p_base_id uuid, p_email text, p_role base_share_role)
+ RETURNS TABLE(ok boolean, err text, mail_to text, mail_link text, base_name text, owner_label text)
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+AS $function$
+declare
+  v_owner uuid;
+  v_recipient uuid;
+  v_norm_email text;
+  v_base_name text;
+  v_owner_label text;
+  v_last_ts timestamptz;
+  v_task public.base_share_tasks%rowtype;
+begin
+  perform public.base_share_tasks_cleanup();
+
+  v_norm_email := lower(trim(p_email));
+
+  select owner_id, name into v_owner, v_base_name
+  from public.question_bases
+  where id = p_base_id;
+
+  if v_owner is null or v_owner <> auth.uid() then
+    return query select false, 'not_owner', null, null, null, null;
+    return;
+  end if;
+
+  -- recipient po email
+  select id into v_recipient
+  from public.profiles
+  where lower(email) = v_norm_email;
+
+  if v_recipient is null then
+    -- nie ujawniamy detali -> ok=false
+    return query select false, 'unknown_user', null, null, null, null;
+    return;
+  end if;
+
+  if v_recipient = v_owner then
+    return query select false, 'owner', null, null, null, null;
+    return;
+  end if;
+
+  -- jeśli już jest share -> tylko update roli (bez invite)
+  if exists (
+    select 1 from public.question_base_shares s
+    where s.base_id = p_base_id and s.user_id = v_recipient
+  ) then
+    update public.question_base_shares
+      set role = p_role
+    where base_id = p_base_id and user_id = v_recipient;
+
+    return query select true, null, null, null, v_base_name, null;
+    return;
+  end if;
+
+  -- cooldown: ostatnie cancelled/declined/revoked (my: owner + base + recipient)
+  select greatest(
+    max(t.declined_at),
+    max(t.cancelled_at)
+  ) into v_last_ts
+  from public.base_share_tasks t
+  where t.owner_id = v_owner
+    and t.base_id = p_base_id
+    and t.recipient_user_id = v_recipient
+    and t.status in ('declined','cancelled');
+
+  if v_last_ts is not null and v_last_ts > now() - interval '24 hours' then
+    return query select false, 'cooldown', null, null, null, null;
+    return;
+  end if;
+
+  -- jeśli jest już aktywny pending/opened -> blokuj
+  if exists (
+    select 1 from public.base_share_tasks t
+    where t.owner_id = v_owner
+      and t.base_id = p_base_id
+      and t.recipient_user_id = v_recipient
+      and t.status in ('pending','opened')
+  ) then
+    return query select false, 'already_pending', null, null, null, null;
+    return;
+  end if;
+
+  -- label ownera do maila
+  select coalesce(pr.username, pr.email) into v_owner_label
+  from public.profiles pr
+  where pr.id = v_owner;
+
+  insert into public.base_share_tasks(owner_id, base_id, recipient_user_id, recipient_email, role, status)
+  values (v_owner, p_base_id, v_recipient, v_norm_email, p_role, 'pending')
+  returning * into v_task;
+
+  -- link do bases.html z tokenem
+  return query
+  select
+    true as ok,
+    null as err,
+    v_norm_email as mail_to,
+    ('/bases.html?share=' || v_task.token::text) as mail_link,
+    v_base_name as base_name,
+    v_owner_label as owner_label;
+end;
+$function$
+
+
+
+
+CREATE OR REPLACE FUNCTION public.base_share_by_user(p_base_id uuid, p_recipient_user_id uuid, p_role base_share_role)
+ RETURNS TABLE(ok boolean, err text, mail_to text, mail_link text, base_name text, owner_label text)
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+AS $function$
+declare
+  v_owner uuid;
+  v_recipient uuid;
+  v_base_name text;
+  v_owner_label text;
+  v_last_ts timestamptz;
+  v_norm_email text;
+  v_task public.base_share_tasks%rowtype;
+begin
+  perform public.base_share_tasks_cleanup();
+
+  v_recipient := p_recipient_user_id;
+
+  select owner_id, name
+    into v_owner, v_base_name
+  from public.question_bases
+  where id = p_base_id;
+
+  if v_owner is null or v_owner <> auth.uid() then
+    return query select false, 'not_owner', null, null, null, null;
+    return;
+  end if;
+
+  if v_recipient is null then
+    return query select false, 'unknown_user', null, null, null, null;
+    return;
+  end if;
+
+  if v_recipient = v_owner then
+    return query select false, 'owner', null, null, null, null;
+    return;
+  end if;
+
+  -- email odbiorcy (opcjonalnie – brak emaila nie blokuje taska)
+  select nullif(lower(trim(pr.email)), '')
+    into v_norm_email
+  from public.profiles pr
+  where pr.id = v_recipient;
+
+  -- jeśli już jest share -> update roli (bez invite/task)
+  if exists (
+    select 1
+    from public.question_base_shares s
+    where s.base_id = p_base_id and s.user_id = v_recipient
+  ) then
+    update public.question_base_shares
+      set role = p_role
+    where base_id = p_base_id and user_id = v_recipient;
+
+    return query select true, null, null, null, v_base_name, null;
+    return;
+  end if;
+
+  -- cooldown: ostatnie declined/cancelled w 24h
+  select greatest(max(t.declined_at), max(t.cancelled_at))
+    into v_last_ts
+  from public.base_share_tasks t
+  where t.owner_id = v_owner
+    and t.base_id = p_base_id
+    and t.recipient_user_id = v_recipient
+    and t.status in ('declined','cancelled');
+
+  if v_last_ts is not null and v_last_ts > now() - interval '24 hours' then
+    return query select false, 'cooldown', null, null, null, null;
+    return;
+  end if;
+
+  -- jeśli już jest pending/opened -> blokuj
+  if exists (
+    select 1
+    from public.base_share_tasks t
+    where t.owner_id = v_owner
+      and t.base_id = p_base_id
+      and t.recipient_user_id = v_recipient
+      and t.status in ('pending','opened')
+  ) then
+    return query select false, 'already_pending', null, null, null, null;
+    return;
+  end if;
+
+  select coalesce(pr.username, pr.email)
+    into v_owner_label
+  from public.profiles pr
+  where pr.id = v_owner;
+
+  insert into public.base_share_tasks(
+    owner_id, base_id, recipient_user_id, recipient_email, role, status
+  )
+  values (v_owner, p_base_id, v_recipient, v_norm_email, p_role, 'pending')
+  returning * into v_task;
+
+  return query
+  select
+    true,
+    null,
+    v_norm_email,
+    ('/bases.html?share=' || v_task.token::text),
+    v_base_name,
+    v_owner_label;
+end;
+$function$
+
+
+
+
+CREATE OR REPLACE FUNCTION public.base_share_cancel_task(p_task_id uuid)
+ RETURNS boolean
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+AS $function$
+declare
+  v_owner uuid;
+begin
+  select owner_id into v_owner
+  from public.base_share_tasks
+  where id = p_task_id;
+
+  if v_owner is null or v_owner <> auth.uid() then
+    return false;
+  end if;
+
+  update public.base_share_tasks
+    set status = 'cancelled',
+        cancelled_at = now()
+  where id = p_task_id
+    and status in ('pending','opened');
+
+  return true;
+exception when others then
+  return false;
+end;
+$function$
+
+
+
+
+CREATE OR REPLACE FUNCTION public.base_share_cooldown_until(p_base_id uuid, p_recipient_user_id uuid)
+ RETURNS timestamp with time zone
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+AS $function$
+declare
+  v_owner uuid;
+  v_last timestamptz;
+begin
+  select owner_id into v_owner
+  from public.question_bases
+  where id = p_base_id;
+
+  if v_owner is null or v_owner <> auth.uid() then
+    return null;
+  end if;
+
+  select greatest(
+    max(t.declined_at),
+    max(t.cancelled_at)
+  ) into v_last
+  from public.base_share_tasks t
+  where t.owner_id = v_owner
+    and t.base_id = p_base_id
+    and t.recipient_user_id = p_recipient_user_id
+    and t.status in ('declined','cancelled');
+
+  if v_last is null then
+    return null;
+  end if;
+
+  return v_last + interval '24 hours';
+end;
+$function$
+
+
+
+
+CREATE OR REPLACE FUNCTION public.base_share_decline(p_task_id uuid)
+ RETURNS boolean
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+AS $function$
+begin
+  update public.base_share_tasks
+    set status = 'declined',
+        declined_at = now()
+  where id = p_task_id
+    and recipient_user_id = auth.uid()
+    and status in ('pending','opened');
+
+  return true;
+exception when others then
+  return false;
+end;
+$function$
+
+
+
+
+CREATE OR REPLACE FUNCTION public.base_share_tasks_cleanup()
+ RETURNS void
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+AS $function$
+begin
+  delete from public.base_share_tasks
+  where status in ('pending','opened')
+    and created_at < now() - interval '5 days';
+end;
+$function$
+
+
+
+
+CREATE OR REPLACE FUNCTION public.base_share_token_info(p_token text)
+ RETURNS TABLE(status text, base_id uuid, recipient_user_id uuid, recipient_email text, owner_id uuid, owner_email text, owner_username text)
+ LANGUAGE sql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+  select
+    t.status,
+    t.base_id,
+    t.recipient_user_id,
+    t.recipient_email,
+    t.owner_id,
+    op.email as owner_email,
+    op.username as owner_username
+  from public.base_share_tasks t
+  left join public.profiles op on op.id = t.owner_id
+  where t.token::text = p_token
+  limit 1;
+$function$
+
+
+
+
+CREATE OR REPLACE FUNCTION public.base_share_token_info(p_token uuid)
+ RETURNS TABLE(status text, base_id uuid, recipient_user_id uuid, recipient_email text, owner_id uuid, owner_email text, owner_username text)
+ LANGUAGE sql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+  select
+    t.status,
+    t.base_id,
+    t.recipient_user_id,
+    t.recipient_email,
+    t.owner_id,
+    op.email as owner_email,
+    op.username as owner_username
+  from public.base_share_tasks t
+  left join public.profiles op on op.id = t.owner_id
+  where t.token = p_token
+  limit 1;
+$function$
+
+
+
+
+CREATE OR REPLACE FUNCTION public.bases_count_incoming_share_invites()
+ RETURNS integer
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+AS $function$
+declare
+  v_cnt integer;
+begin
+  perform public.base_share_tasks_cleanup();
+
+  select count(*)::int into v_cnt
+  from public.base_share_tasks t
+  where t.recipient_user_id = auth.uid()
+    and t.status in ('pending','opened');
+
+  return coalesce(v_cnt, 0);
+end;
+$function$
+
+
+
+
 CREATE OR REPLACE FUNCTION public.buzzer_press_v2(p_game_id uuid, p_key text, p_team text)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -889,6 +2001,10 @@ begin
     'locked', locked
   );
 end $function$
+
+
+
+
 CREATE OR REPLACE FUNCTION public.can_access_base(p_base_id uuid)
  RETURNS boolean
  LANGUAGE sql
@@ -909,6 +2025,10 @@ AS $function$
       )
   );
 $function$
+
+
+
+
 CREATE OR REPLACE FUNCTION public.can_edit_base(p_base_id uuid)
  RETURNS boolean
  LANGUAGE sql
@@ -930,6 +2050,10 @@ AS $function$
       )
   );
 $function$
+
+
+
+
 CREATE OR REPLACE FUNCTION public.control_set_devices_v2(p_game_id uuid, p_key text, p_patch jsonb)
  RETURNS void
  LANGUAGE plpgsql
@@ -946,13 +2070,61 @@ begin
 
   -- patch format (przykład):
   -- {
-  --   display_app_mode:GRA,
-  --   display_scene_mode:ROUNDS,
-  --   display_last_cmd:RBATCH ...,
-  --   host_hidden:false,
-  --   host_text:Pytanie ...,
-  --   buzzer_state:ON,
-  --   buzzer_locked:false
+  --   
+
+display_app_mode
+
+:
+
+GRA
+
+,
+  --   
+
+display_scene_mode
+
+:
+
+ROUNDS
+
+,
+  --   
+
+display_last_cmd
+
+:
+
+RBATCH ...
+
+,
+  --   
+
+host_hidden
+
+:false,
+  --   
+
+host_text
+
+:
+
+Pytanie ...
+
+,
+  --   
+
+buzzer_state
+
+:
+
+ON
+
+,
+  --   
+
+buzzer_locked
+
+:false
   -- }
 
   update public.game_devices
@@ -970,6 +2142,10 @@ begin
     buzzer_at     = coalesce((p_patch->>'buzzer_at')::timestamptz, buzzer_at)
   where game_id = p_game_id;
 end $function$
+
+
+
+
 CREATE OR REPLACE FUNCTION public.control_set_runtime_v2(p_game_id uuid, p_key text, p_patch jsonb)
  RETURNS void
  LANGUAGE plpgsql
@@ -1011,6 +2187,10 @@ begin
     final = coalesce(p_patch->'final', final)
   where game_id = p_game_id;
 end $function$
+
+
+
+
 CREATE OR REPLACE FUNCTION public.control_set_state(p_game_id uuid, p_state game_fsm_state, p_patch jsonb DEFAULT '{}'::jsonb)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -1062,6 +2242,10 @@ begin
   return to_jsonb(v_row);
 end;
 $function$
+
+
+
+
 CREATE OR REPLACE FUNCTION public.cooldown_email_get(p_email text, p_action_keys text[])
  RETURNS TABLE(action_key text, next_allowed_at timestamp with time zone)
  LANGUAGE plpgsql
@@ -1080,6 +2264,10 @@ BEGIN
     AND ec.action_key = ANY(p_action_keys);
 END;
 $function$
+
+
+
+
 CREATE OR REPLACE FUNCTION public.cooldown_email_release(p_email text, p_action_key text, p_max_age_seconds integer DEFAULT 60)
  RETURNS boolean
  LANGUAGE plpgsql
@@ -1101,6 +2289,10 @@ BEGIN
   RETURN TRUE;
 END;
 $function$
+
+
+
+
 CREATE OR REPLACE FUNCTION public.cooldown_email_reserve(p_email text, p_action_key text, p_cooldown_seconds integer)
  RETURNS TABLE(ok boolean, next_allowed_at timestamp with time zone)
  LANGUAGE plpgsql
@@ -1144,6 +2336,10 @@ BEGIN
   RETURN;
 END;
 $function$
+
+
+
+
 CREATE OR REPLACE FUNCTION public.cooldown_get(p_action_keys text[])
  RETURNS TABLE(action_key text, next_allowed_at timestamp with time zone)
  LANGUAGE sql
@@ -1153,6 +2349,8 @@ AS $function$
   WHERE uc.user_id = auth.uid()
     AND uc.action_key = ANY(p_action_keys);
 $function$
+
+
 
 
 CREATE OR REPLACE FUNCTION public.cooldown_release(p_action_key text, p_max_age_seconds integer DEFAULT 60)
@@ -1177,6 +2375,10 @@ BEGIN
   RETURN TRUE;
 END;
 $function$
+
+
+
+
 CREATE OR REPLACE FUNCTION public.cooldown_reserve(p_action_key text, p_cooldown_seconds integer)
  RETURNS TABLE(ok boolean, next_allowed_at timestamp with time zone)
  LANGUAGE plpgsql
@@ -1223,6 +2425,8 @@ END;
 $function$
 
 
+
+
 CREATE OR REPLACE FUNCTION public.device_ping(p_game_id uuid, p_device_type device_type, p_key text, p_device_id text DEFAULT NULL::text, p_meta jsonb DEFAULT '{}'::jsonb)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -1267,6 +2471,10 @@ begin
   return jsonb_build_object('ok', true, 'device_id', did, 'ts', now());
 end;
 $function$
+
+
+
+
 CREATE OR REPLACE FUNCTION public.device_ping_v2(p_game_id uuid, p_kind device_kind, p_key text)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -1294,6 +2502,10 @@ begin
 
   return jsonb_build_object('ok', true, 'ts', now());
 end $function$
+
+
+
+
 CREATE OR REPLACE FUNCTION public.device_state_get(p_game_id uuid, p_device_type device_type, p_key text)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -1324,6 +2536,8 @@ begin
   return coalesce(out, '{}'::jsonb);
 end;
 $function$
+
+
 
 
 CREATE OR REPLACE FUNCTION public.device_state_set_admin(p_game_id uuid, p_kind device_kind, p_patch jsonb)
@@ -1361,6 +2575,10 @@ begin
 
   return coalesce(out, '{}'::jsonb);
 end $function$
+
+
+
+
 CREATE OR REPLACE FUNCTION public.device_state_set_public(p_game_id uuid, p_device_type device_type, p_key text, p_patch jsonb)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -1401,6 +2619,8 @@ end;
 $function$
 
 
+
+
 CREATE OR REPLACE FUNCTION public.display_auth(p_game_id uuid, p_key text)
  RETURNS TABLE(id uuid, name text, type game_type, status game_status)
  LANGUAGE sql
@@ -1413,6 +2633,10 @@ AS $function$
     and g.share_key_display = p_key
   limit 1;
 $function$
+
+
+
+
 CREATE OR REPLACE FUNCTION public.display_logo_get_public(p_game_id uuid, p_key text)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -1447,6 +2671,10 @@ begin
 
   return v_logo; -- null jeśli brak
 end $function$
+
+
+
+
 CREATE OR REPLACE FUNCTION public.enforce_max_answers()
  RETURNS trigger
  LANGUAGE plpgsql
@@ -1467,6 +2695,10 @@ begin
 
   return new;
 end $function$
+
+
+
+
 CREATE OR REPLACE FUNCTION public.ensure_device_state(p_game_id uuid)
  RETURNS void
  LANGUAGE plpgsql
@@ -1478,6 +2710,8 @@ begin
     (p_game_id, 'buzzer')
   on conflict (game_id, kind) do nothing;
 end $function$
+
+
 
 
 CREATE OR REPLACE FUNCTION public.ensure_game_rows(p_game_id uuid)
@@ -1493,6 +2727,8 @@ begin
 end $function$
 
 
+
+
 CREATE OR REPLACE FUNCTION public.ensure_game_runtime(p_game_id uuid)
  RETURNS void
  LANGUAGE plpgsql
@@ -1504,6 +2740,8 @@ begin
   on conflict (game_id) do nothing;
 end;
 $function$
+
+
 
 
 CREATE OR REPLACE FUNCTION public.ensure_runtime_and_devices(p_game_id uuid)
@@ -1518,6 +2756,8 @@ begin
   insert into public.game_devices(game_id) values (p_game_id)
   on conflict (game_id) do nothing;
 end $function$
+
+
 
 
 CREATE OR REPLACE FUNCTION public.fsm_can_transition(a game_fsm_state, b game_fsm_state)
@@ -1550,6 +2790,10 @@ AS $function$
     ('FINAL_P2_REVEAL','FINAL_LOSE')
   );
 $function$
+
+
+
+
 CREATE OR REPLACE FUNCTION public.game_action_state(p_game_id uuid)
  RETURNS TABLE(game_id uuid, rev timestamp with time zone, can_edit boolean, needs_reset_warning boolean, can_play boolean, can_poll boolean, can_export boolean, reason_play text, reason_poll text)
  LANGUAGE sql
@@ -1658,6 +2902,10 @@ select
   end as reason_poll
 from g, agg;
 $function$
+
+
+
+
 CREATE OR REPLACE FUNCTION public.games_fill_share_keys()
  RETURNS trigger
  LANGUAGE plpgsql
@@ -1671,6 +2919,10 @@ begin
   return new;
 end;
 $function$
+
+
+
+
 CREATE OR REPLACE FUNCTION public.gen_share_key(n_bytes integer DEFAULT 24)
  RETURNS text
  LANGUAGE sql
@@ -1678,6 +2930,10 @@ CREATE OR REPLACE FUNCTION public.gen_share_key(n_bytes integer DEFAULT 24)
 AS $function$
   select encode(gen_random_bytes(n_bytes), 'hex');
 $function$
+
+
+
+
 CREATE OR REPLACE FUNCTION public.get_device_snapshot(p_game_id uuid, p_kind text, p_key text)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -1705,6 +2961,8 @@ begin
 end $function$
 
 
+
+
 CREATE OR REPLACE FUNCTION public.get_game_by_key(p_key text)
  RETURNS TABLE(id uuid, name text, type game_type, status game_status)
  LANGUAGE sql
@@ -1718,6 +2976,10 @@ AS $function$
      or g.share_key_host = p_key
   limit 1;
 $function$
+
+
+
+
 CREATE OR REPLACE FUNCTION public.get_poll_bundle(p_key text)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -1767,6 +3029,10 @@ begin
 
   return out;
 end $function$
+
+
+
+
 CREATE OR REPLACE FUNCTION public.get_poll_game(p_game_id uuid, p_key text)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -1821,6 +3087,8 @@ end;
 $function$
 
 
+
+
 CREATE OR REPLACE FUNCTION public.get_public_snapshot_v2(p_game_id uuid, p_kind device_kind, p_key text)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -1852,6 +3120,10 @@ begin
     'devices', to_jsonb(dv)
   );
 end $function$
+
+
+
+
 CREATE OR REPLACE FUNCTION public.handle_new_user()
  RETURNS trigger
  LANGUAGE plpgsql
@@ -1880,6 +3152,8 @@ end;
 $function$
 
 
+
+
 CREATE OR REPLACE FUNCTION public.is_base_owner(p_base_id uuid)
  RETURNS boolean
  LANGUAGE sql
@@ -1890,6 +3164,50 @@ AS $function$
     where b.id = p_base_id and b.owner_id = auth.uid()
   );
 $function$
+
+
+
+
+CREATE OR REPLACE FUNCTION public.list_base_share_tasks_outgoing(p_base_id uuid)
+ RETURNS TABLE(task_id uuid, recipient_user_id uuid, recipient_email text, recipient_username text, role base_share_role, status text, created_at timestamp with time zone)
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+AS $function$
+declare
+  v_owner uuid;
+begin
+  perform public.base_share_tasks_cleanup();
+
+  select qb.owner_id
+    into v_owner
+  from public.question_bases qb
+  where qb.id = p_base_id;
+
+  if v_owner is null or v_owner <> auth.uid() then
+    return;
+  end if;
+
+  return query
+  select
+    t.id as task_id,
+    t.recipient_user_id,
+    t.recipient_email,
+    pr.username as recipient_username,
+    t.role,
+    t.status,
+    t.created_at
+  from public.base_share_tasks t
+  left join public.profiles pr on pr.id = t.recipient_user_id
+  where t.base_id = p_base_id
+    and t.owner_id = auth.uid()
+    and t.status in ('pending','opened')
+  order by t.created_at desc;
+end;
+$function$
+
+
+
+
 CREATE OR REPLACE FUNCTION public.list_base_shares(p_base_id uuid)
  RETURNS TABLE(user_id uuid, email text, role base_share_role)
  LANGUAGE sql
@@ -1901,6 +3219,8 @@ AS $function$
   where s.base_id = p_base_id
     and public.is_base_owner(p_base_id);
 $function$
+
+
 
 
 CREATE OR REPLACE FUNCTION public.list_shared_bases()
@@ -1928,28 +3248,60 @@ AS $function$
 $function$
 
 
+
+
 CREATE OR REPLACE FUNCTION public.list_shared_bases_ext()
- RETURNS TABLE(id uuid, name text, owner_id uuid, created_at timestamp with time zone, updated_at timestamp with time zone, shared_role text, owner_username text, owner_email text)
- LANGUAGE sql
+ RETURNS TABLE(id uuid, name text, owner_id uuid, owner_username text, owner_email text, created_at timestamp with time zone, updated_at timestamp with time zone, shared_role base_share_role, proposed boolean, task_id uuid, task_status text, proposed_role base_share_role)
+ LANGUAGE plpgsql
  SECURITY DEFINER
 AS $function$
+begin
+  perform public.base_share_tasks_cleanup();
+
+  return query
   select
     b.id,
     b.name,
     b.owner_id,
+    p.username as owner_username,
+    p.email as owner_email,
     b.created_at,
     b.updated_at,
     s.role as shared_role,
-    p.username as owner_username,
-    p.email as owner_email
+
+    false as proposed,
+    null::uuid as task_id,
+    null::text as task_status,
+    null::public.base_share_role as proposed_role
   from public.question_base_shares s
-  join public.question_bases b
-    on b.id = s.base_id
-  left join public.profiles p
-    on p.id = b.owner_id
-  where s.user_id = auth.uid()
-  order by b.updated_at desc nulls last, b.created_at desc;
+  join public.question_bases b on b.id = s.base_id
+  join public.profiles p on p.id = b.owner_id
+  where s.user_id = auth.uid();
+
+  return query
+  select
+    b.id,
+    b.name,
+    b.owner_id,
+    p.username as owner_username,
+    p.email as owner_email,
+    b.created_at,
+    b.updated_at,
+    null::public.base_share_role as shared_role,
+
+    true as proposed,
+    t.id as task_id,
+    t.status as task_status,
+    t.role as proposed_role
+  from public.base_share_tasks t
+  join public.question_bases b on b.id = t.base_id
+  join public.profiles p on p.id = t.owner_id
+  where t.recipient_user_id = auth.uid()
+    and t.status in ('pending','opened');
+end;
 $function$
+
+
 
 
 CREATE OR REPLACE FUNCTION public.poll_action(p_kind text, p_token uuid, p_action text)
@@ -2011,6 +3363,8 @@ begin
   end if;
 end;
 $function$
+
+
 
 
 CREATE OR REPLACE FUNCTION public.poll_admin_can_close(p_game_id uuid)
@@ -2096,6 +3450,10 @@ begin
   return jsonb_build_object('ok', false, 'reason', 'Nieznany typ gry.');
 end;
 $function$
+
+
+
+
 CREATE OR REPLACE FUNCTION public.poll_admin_delete_vote(p_game_id uuid, p_voter_token text)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -2155,6 +3513,10 @@ BEGIN
   );
 END;
 $function$
+
+
+
+
 CREATE OR REPLACE FUNCTION public.poll_admin_preview(p_game_id uuid)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -2257,6 +3619,10 @@ begin
   return jsonb_build_object('ok', false, 'reason', 'Gra preparowana nie ma podglądu.');
 end;
 $function$
+
+
+
+
 CREATE OR REPLACE FUNCTION public.poll_claim_email_records()
  RETURNS void
  LANGUAGE plpgsql
@@ -2291,6 +3657,8 @@ begin
     and s.status in ('pending','active');
 end;
 $function$
+
+
 
 
 CREATE OR REPLACE FUNCTION public.poll_close_and_normalize(p_game_id uuid, p_key text)
@@ -2462,6 +3830,10 @@ begin
 
 end;
 $function$
+
+
+
+
 CREATE OR REPLACE FUNCTION public.poll_get_payload(p_game_id uuid, p_key text)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -2546,6 +3918,8 @@ begin
   return out;
 end;
 $function$
+
+
 
 
 CREATE OR REPLACE FUNCTION public.poll_go_resolve(p_token uuid)
@@ -2641,6 +4015,10 @@ begin
   return jsonb_build_object('ok', false, 'error', 'invalid_token');
 end;
 $function$
+
+
+
+
 CREATE OR REPLACE FUNCTION public.poll_go_sub_decline(p_token uuid)
  RETURNS boolean
  LANGUAGE plpgsql
@@ -2659,6 +4037,8 @@ begin
   return found;
 end;
 $function$
+
+
 
 
 CREATE OR REPLACE FUNCTION public.poll_go_subscribe_email(p_token uuid, p_email text)
@@ -2724,6 +4104,10 @@ begin
   return true;
 end;
 $function$
+
+
+
+
 CREATE OR REPLACE FUNCTION public.poll_go_task_action(p_token uuid, p_action text, p_email text DEFAULT NULL::text)
  RETURNS boolean
  LANGUAGE plpgsql
@@ -2772,6 +4156,8 @@ end;
 $function$
 
 
+
+
 CREATE OR REPLACE FUNCTION public.poll_my_email()
  RETURNS text
  LANGUAGE sql
@@ -2782,6 +4168,10 @@ AS $function$
   where p.id = auth.uid()
   limit 1
 $function$
+
+
+
+
 CREATE OR REPLACE FUNCTION public.poll_on_login()
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -2795,6 +4185,8 @@ begin
   return jsonb_build_object('ok', true);
 end;
 $function$
+
+
 
 
 CREATE OR REPLACE FUNCTION public.poll_open(p_game_id uuid, p_key text)
@@ -2840,6 +4232,8 @@ begin
   where q.game_id = p_game_id;
 
 end $function$
+
+
 
 
 CREATE OR REPLACE FUNCTION public.poll_points_close_and_normalize(p_game_id uuid, p_key text)
@@ -2961,6 +4355,10 @@ begin
   where id = p_game_id;
 end;
 $function$
+
+
+
+
 CREATE OR REPLACE FUNCTION public.poll_points_vote(p_game_id uuid, p_key text, p_question_id uuid, p_answer_id uuid, p_voter_token text)
  RETURNS void
  LANGUAGE plpgsql
@@ -3023,6 +4421,10 @@ begin
   end if;
 end;
 $function$
+
+
+
+
 CREATE OR REPLACE FUNCTION public.poll_points_vote_batch(p_game_id uuid, p_key text, p_voter_token text, p_items jsonb)
  RETURNS void
  LANGUAGE plpgsql
@@ -3048,6 +4450,8 @@ begin
   end loop;
 end;
 $function$
+
+
 
 
 CREATE OR REPLACE FUNCTION public.poll_points_vote_batch_owner(p_game_id uuid, p_items jsonb, p_voter_token text)
@@ -3093,6 +4497,10 @@ begin
   return true;
 end;
 $function$
+
+
+
+
 CREATE OR REPLACE FUNCTION public.poll_results(p_key text)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -3141,6 +4549,10 @@ begin
 
   return out;
 end $function$
+
+
+
+
 CREATE OR REPLACE FUNCTION public.poll_sub_accept(p_token uuid)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -3211,6 +4623,10 @@ begin
   return jsonb_build_object('ok', true, 'kind', 'sub', 'action', 'accept');
 end;
 $function$
+
+
+
+
 CREATE OR REPLACE FUNCTION public.poll_sub_accept_email(p_token uuid, p_email text)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -3262,6 +4678,10 @@ begin
   return jsonb_build_object('ok', true, 'kind', 'sub', 'action', 'accept');
 end;
 $function$
+
+
+
+
 CREATE OR REPLACE FUNCTION public.poll_sub_decline(p_token uuid)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -3281,6 +4701,8 @@ begin
   return jsonb_build_object('ok', false, 'error', 'invalid_or_unavailable_token', 'kind', 'sub', 'action', 'decline');
 end;
 $function$
+
+
 
 
 CREATE OR REPLACE FUNCTION public.poll_task_decline(p_token uuid)
@@ -3313,6 +4735,10 @@ begin
   return 'ok';
 end;
 $function$
+
+
+
+
 CREATE OR REPLACE FUNCTION public.poll_task_done(p_token uuid)
  RETURNS text
  LANGUAGE plpgsql
@@ -3343,6 +4769,10 @@ begin
   return 'ok';
 end;
 $function$
+
+
+
+
 CREATE OR REPLACE FUNCTION public.poll_task_opened(p_token uuid)
  RETURNS text
  LANGUAGE plpgsql
@@ -3373,6 +4803,10 @@ begin
   return 'ok';
 end;
 $function$
+
+
+
+
 CREATE OR REPLACE FUNCTION public.poll_task_resolve(p_token uuid, p_email text DEFAULT NULL::text)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -3429,7 +4863,11 @@ BEGIN
 
   -- jeżeli task jest e-mailowy: e-mail może być potrzebny do późniejszego UI/komunikatu
   IF t.recipient_user_id IS NULL AND t.recipient_email IS NULL THEN
-    -- przypadek czysty e-mail: oczekujemy podania e-mail w UI
+    -- przypadek 
+
+czysty e-mail
+
+: oczekujemy podania e-mail w UI
     IF p_email IS NULL OR btrim(p_email) = '' THEN
       needs_email := true;
     END IF;
@@ -3457,6 +4895,10 @@ BEGIN
   );
 END;
 $function$
+
+
+
+
 CREATE OR REPLACE FUNCTION public.poll_task_send(p_game_id uuid, p_poll_type text, p_recipients text[])
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -3574,6 +5016,10 @@ begin
   );
 end;
 $function$
+
+
+
+
 CREATE OR REPLACE FUNCTION public.poll_task_voter_token(p_task_id uuid)
  RETURNS text
  LANGUAGE sql
@@ -3581,6 +5027,8 @@ CREATE OR REPLACE FUNCTION public.poll_task_voter_token(p_task_id uuid)
 AS $function$
   SELECT 'task:' || p_task_id::text
 $function$
+
+
 
 
 CREATE OR REPLACE FUNCTION public.poll_tasks_touch_status_ts()
@@ -3611,6 +5059,8 @@ end;
 $function$
 
 
+
+
 CREATE OR REPLACE FUNCTION public.poll_text_close_apply(p_game_id uuid, p_key text, p_payload jsonb)
  RETURNS void
  LANGUAGE plpgsql
@@ -3635,7 +5085,35 @@ begin
   if g.status <> 'poll_open' then raise exception 'poll is not open'; end if;
 
   -- payload format:
-  -- { items: [ { question_id: ..., answers: [ { text:..., points: 12 }, ... ] } ] }
+  -- { 
+
+items
+
+: [ { 
+
+question_id
+
+: 
+
+...
+
+, 
+
+answers
+
+: [ { 
+
+text
+
+:
+
+...
+
+, 
+
+points
+
+: 12 }, ... ] } ] }
 
   for item in
     select jsonb_array_elements(coalesce(p_payload->'items','[]'::jsonb))
@@ -3685,6 +5163,10 @@ begin
   where id = p_game_id;
 end;
 $function$
+
+
+
+
 CREATE OR REPLACE FUNCTION public.poll_text_submit(p_game_id uuid, p_key text, p_question_id uuid, p_voter_token text, p_answer_raw text, p_answer_norm text)
  RETURNS void
  LANGUAGE plpgsql
@@ -3731,6 +5213,10 @@ begin
   values (p_game_id, s_id, p_question_id, p_voter_token, p_answer_raw, p_answer_norm);
 end;
 $function$
+
+
+
+
 CREATE OR REPLACE FUNCTION public.poll_text_submit_batch(p_game_id uuid, p_key text, p_voter_token text, p_items jsonb)
  RETURNS void
  LANGUAGE plpgsql
@@ -3757,6 +5243,8 @@ begin
   end loop;
 end;
 $function$
+
+
 
 
 CREATE OR REPLACE FUNCTION public.poll_text_submit_batch_owner(p_game_id uuid, p_items jsonb, p_voter_token text)
@@ -3807,6 +5295,8 @@ end;
 $function$
 
 
+
+
 CREATE OR REPLACE FUNCTION public.poll_text_submit_simple_legacy(p_game_id uuid, p_key text, p_question_id uuid, p_voter_token text, p_answer_text text)
  RETURNS void
  LANGUAGE plpgsql
@@ -3823,6 +5313,8 @@ begin
   );
 end;
 $function$
+
+
 
 
 CREATE OR REPLACE FUNCTION public.poll_vote(p_key text, p_question_ord integer, p_answer_ord integer, p_voter_token text)
@@ -3862,6 +5354,10 @@ begin
 
   return jsonb_build_object('ok', true);
 end $function$
+
+
+
+
 CREATE OR REPLACE FUNCTION public.poll_vote_by_ids_legacy(p_game_id uuid, p_key text, p_question_id uuid, p_answer_id uuid, p_voter_token text)
  RETURNS void
  LANGUAGE plpgsql
@@ -3869,11 +5365,21 @@ CREATE OR REPLACE FUNCTION public.poll_vote_by_ids_legacy(p_game_id uuid, p_key 
  SET search_path TO 'public'
 AS $function$
 begin
-  -- keep behavior identical to the by ids vote path:
-  -- use the existing poll_vote_game which you have
+  -- keep behavior identical to the 
+
+by ids
+
+ vote path:
+  -- use the existing 
+
+poll_vote_game
+
+ which you have
   perform public.poll_vote_game(p_game_id, p_key, p_question_id, p_answer_id, p_voter_token);
 end;
 $function$
+
+
 
 
 CREATE OR REPLACE FUNCTION public.poll_vote_game(p_game_id uuid, p_key text, p_question_id uuid, p_answer_id uuid, p_voter_token text)
@@ -3908,6 +5414,10 @@ begin
   on conflict (poll_session_id, voter_token)
   do update set answer_id = excluded.answer_id;
 end $function$
+
+
+
+
 CREATE OR REPLACE FUNCTION public.poll_vote_points(p_game_id uuid, p_key text, p_question_id uuid, p_answer_id uuid, p_voter_token text)
  RETURNS void
  LANGUAGE plpgsql
@@ -3943,6 +5453,10 @@ begin
     created_at = now();
 end;
 $function$
+
+
+
+
 CREATE OR REPLACE FUNCTION public.polls_action(p_kind text, p_token uuid, p_action text)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -3956,6 +5470,8 @@ begin
   return r;
 end;
 $function$
+
+
 
 
 CREATE OR REPLACE FUNCTION public.polls_badge_get()
@@ -3977,6 +5493,345 @@ AS $function$
     coalesce((j->>'polls_open')::int, 0) as polls_open
   from ov;
 $function$
+
+
+
+
+CREATE OR REPLACE FUNCTION public.polls_hub_anon_voters(p_game_id uuid, p_poll_type text)
+ RETURNS integer
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'pg_temp'
+AS $function$
+DECLARE
+  qn int := 0;
+  tok_cnt int := 0;
+  legacy_rows int := 0;
+  legacy_est int := 0;
+  base_cnt int := 0;
+
+  fp_sum numeric := 0;
+  fp_est int := 0;
+BEGIN
+  SELECT count(*)::int INTO qn
+  FROM public.questions
+  WHERE game_id = p_game_id;
+
+  IF p_poll_type = 'poll_points' THEN
+    -- NOWE: tokeny anonimowe (per gra)
+    SELECT count(DISTINCT v.voter_token)::int INTO tok_cnt
+    FROM public.poll_votes v
+    WHERE v.game_id = p_game_id
+      AND v.voter_user_id IS NULL
+      AND v.voter_token IS NOT NULL
+      AND v.voter_token <> ''
+      AND v.voter_token NOT LIKE 'task:%';
+
+    -- STARE: brak tokena / pusty token (legacy)
+    SELECT count(*)::int INTO legacy_rows
+    FROM public.poll_votes v
+    WHERE v.game_id = p_game_id
+      AND v.voter_user_id IS NULL
+      AND (v.voter_token IS NULL OR v.voter_token = '');
+
+  ELSIF p_poll_type = 'poll_text' THEN
+    -- NOWE: tokeny anonimowe (per gra)
+    SELECT count(DISTINCT e.voter_token)::int INTO tok_cnt
+    FROM public.poll_text_entries e
+    WHERE e.game_id = p_game_id
+      AND e.voter_user_id IS NULL
+      AND e.voter_token IS NOT NULL
+      AND e.voter_token <> ''
+      AND e.voter_token NOT LIKE 'task:%';
+
+    -- STARE: brak tokena / pusty token (legacy)
+    SELECT count(*)::int INTO legacy_rows
+    FROM public.poll_text_entries e
+    WHERE e.game_id = p_game_id
+      AND e.voter_user_id IS NULL
+      AND (e.voter_token IS NULL OR e.voter_token = '');
+  ELSE
+    tok_cnt := 0;
+    legacy_rows := 0;
+  END IF;
+
+  -- legacy est: total legacy rows / liczba pytań (ceil), min 1 jeśli cokolwiek jest
+  IF legacy_rows > 0 AND qn > 0 THEN
+    legacy_est := GREATEST(1, CEIL(legacy_rows::numeric / qn::numeric))::int;
+  ELSE
+    legacy_est := 0;
+  END IF;
+
+  base_cnt := tok_cnt + legacy_est;
+
+  -- ✅ fallback: jeśli dalej 0 -> fixed_points sum / liczba pytań
+  IF base_cnt = 0 AND qn > 0 THEN
+    SELECT coalesce(sum(a.fixed_points), 0)::numeric INTO fp_sum
+    FROM public.answers a
+    JOIN public.questions q ON q.id = a.question_id
+    WHERE q.game_id = p_game_id;
+
+    IF fp_sum > 0 THEN
+      fp_est := CEIL(fp_sum / qn::numeric)::int;
+      base_cnt := fp_est;
+    END IF;
+  END IF;
+
+  RETURN base_cnt;
+END;
+$function$
+
+
+
+
+CREATE OR REPLACE FUNCTION public.polls_hub_anon_voters_poll_points(p_game_id uuid)
+ RETURNS integer
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'pg_temp'
+AS $function$
+DECLARE
+  qn int;
+  v_new int;
+  v_legacy_rows int;
+  v_legacy_est int;
+BEGIN
+  SELECT count(*)::int INTO qn
+  FROM public.questions q
+  WHERE q.game_id = p_game_id;
+
+  -- new style: distinct voter_token (anon only), exclude task:* (bo to nie są anon w hubie)
+  SELECT count(DISTINCT v.voter_token)::int INTO v_new
+  FROM public.poll_votes v
+  WHERE v.game_id = p_game_id
+    AND v.voter_user_id IS NULL
+    AND NULLIF(btrim(v.voter_token), '') IS NOT NULL
+    AND v.voter_token NOT LIKE 'task:%';
+
+  -- legacy: missing token (NULL/empty)
+  SELECT count(*)::int INTO v_legacy_rows
+  FROM public.poll_votes v
+  WHERE v.game_id = p_game_id
+    AND v.voter_user_id IS NULL
+    AND NULLIF(btrim(v.voter_token), '') IS NULL;
+
+  v_legacy_est := CASE
+    WHEN COALESCE(qn, 0) > 0 AND COALESCE(v_legacy_rows, 0) > 0
+      THEN CEIL((v_legacy_rows::numeric) / NULLIF(qn::numeric, 0))::int
+    ELSE 0
+  END;
+
+  RETURN COALESCE(v_new, 0) + COALESCE(v_legacy_est, 0);
+END;
+$function$
+
+
+
+
+CREATE OR REPLACE FUNCTION public.polls_hub_anon_voters_poll_text(p_game_id uuid)
+ RETURNS integer
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'pg_temp'
+AS $function$
+DECLARE
+  qn int;
+  v_new int;
+  v_legacy_rows int;
+  v_legacy_est int;
+BEGIN
+  SELECT count(*)::int INTO qn
+  FROM public.questions q
+  WHERE q.game_id = p_game_id;
+
+  SELECT count(DISTINCT e.voter_token)::int INTO v_new
+  FROM public.poll_text_entries e
+  WHERE e.game_id = p_game_id
+    AND e.voter_user_id IS NULL
+    AND NULLIF(btrim(e.voter_token), '') IS NOT NULL
+    AND e.voter_token NOT LIKE 'task:%';
+
+  SELECT count(*)::int INTO v_legacy_rows
+  FROM public.poll_text_entries e
+  WHERE e.game_id = p_game_id
+    AND e.voter_user_id IS NULL
+    AND NULLIF(btrim(e.voter_token), '') IS NULL;
+
+  v_legacy_est := CASE
+    WHEN COALESCE(qn, 0) > 0 AND COALESCE(v_legacy_rows, 0) > 0
+      THEN CEIL((v_legacy_rows::numeric) / NULLIF(qn::numeric, 0))::int
+    ELSE 0
+  END;
+
+  RETURN COALESCE(v_new, 0) + COALESCE(v_legacy_est, 0);
+END;
+$function$
+
+
+
+
+CREATE OR REPLACE FUNCTION public.polls_hub_can_close(p_game_id uuid, p_poll_type text)
+ RETURNS boolean
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'pg_temp'
+AS $function$
+BEGIN
+  RETURN CASE
+    WHEN p_poll_type = 'poll_points' THEN public.polls_hub_can_close_poll_points(p_game_id)
+    WHEN p_poll_type = 'poll_text'   THEN public.polls_hub_can_close_poll_text(p_game_id)
+    ELSE FALSE
+  END;
+END;
+$function$
+
+
+
+
+CREATE OR REPLACE FUNCTION public.polls_hub_can_close_poll_points(p_game_id uuid)
+ RETURNS boolean
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'pg_temp'
+AS $function$
+DECLARE
+  q record;
+  sid uuid;
+  strong_cnt int;
+BEGIN
+  FOR q IN
+    SELECT id FROM public.questions WHERE game_id = p_game_id ORDER BY ord
+  LOOP
+    -- ostatnia sesja dla pytania (jak w polls.js)
+    SELECT ps.id
+      INTO sid
+    FROM public.poll_sessions ps
+    WHERE ps.game_id = p_game_id AND ps.question_id = q.id
+    ORDER BY ps.created_at DESC
+    LIMIT 1;
+
+    IF sid IS NULL THEN
+      RETURN FALSE;
+    END IF;
+
+    /*
+      poll.js:
+        - bierzemy tylko votes z answer_id != null
+        - counts tylko dla odpowiedzi z count>0
+        - normalizacja do 100 przez floor + największe reszty (diff>0)
+        - strong = points>=3
+        - strong_cnt>=3
+    */
+    WITH counts AS (
+      SELECT v.answer_id, count(*)::int AS cnt
+      FROM public.poll_votes v
+      WHERE v.game_id = p_game_id
+        AND v.question_id = q.id
+        AND v.poll_session_id = sid
+        AND v.answer_id IS NOT NULL
+      GROUP BY v.answer_id
+      HAVING count(*) > 0
+    ),
+    total AS (
+      SELECT sum(cnt)::numeric AS s FROM counts
+    ),
+    raw AS (
+      SELECT
+        answer_id,
+        cnt,
+        (100 * cnt::numeric) / NULLIF((SELECT s FROM total), 0) AS pct
+      FROM counts
+    ),
+    floored AS (
+      SELECT
+        answer_id,
+        cnt,
+        pct,
+        floor(pct)::int AS pts,
+        (pct - floor(pct)) AS frac
+      FROM raw
+    ),
+    sum_floor AS (
+      SELECT coalesce(sum(pts), 0)::int AS s FROM floored
+    ),
+    diff AS (
+      SELECT (100 - (SELECT s FROM sum_floor))::int AS d
+    ),
+    ranked AS (
+      SELECT
+        f.*,
+        row_number() OVER (ORDER BY f.frac DESC, f.answer_id) AS rn
+      FROM floored f
+    ),
+    distributed AS (
+      SELECT
+        answer_id,
+        (pts + CASE WHEN (SELECT d FROM diff) > 0 AND rn <= (SELECT d FROM diff) THEN 1 ELSE 0 END)::int AS p_final
+      FROM ranked
+    )
+    SELECT count(*)::int
+      INTO strong_cnt
+    FROM distributed
+    WHERE p_final >= 3;
+
+    -- jeśli nie ma żadnych głosów (counts puste) => distributed puste => strong_cnt=0 => FALSE
+    IF COALESCE(strong_cnt, 0) < 3 THEN
+      RETURN FALSE;
+    END IF;
+  END LOOP;
+
+  RETURN TRUE;
+END;
+$function$
+
+
+
+
+CREATE OR REPLACE FUNCTION public.polls_hub_can_close_poll_text(p_game_id uuid)
+ RETURNS boolean
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'pg_temp'
+AS $function$
+DECLARE
+  q record;
+  sid uuid;
+  uniq_cnt int;
+BEGIN
+  FOR q IN
+    SELECT id FROM public.questions WHERE game_id = p_game_id ORDER BY ord
+  LOOP
+    SELECT ps.id
+      INTO sid
+    FROM public.poll_sessions ps
+    WHERE ps.game_id = p_game_id AND ps.question_id = q.id
+    ORDER BY ps.created_at DESC
+    LIMIT 1;
+
+    IF sid IS NULL THEN
+      RETURN FALSE;
+    END IF;
+
+    SELECT count(DISTINCT btrim(e.answer_norm))::int
+      INTO uniq_cnt
+    FROM public.poll_text_entries e
+    WHERE e.game_id = p_game_id
+      AND e.question_id = q.id
+      AND e.poll_session_id = sid
+      AND NULLIF(btrim(e.answer_norm), '') IS NOT NULL;
+
+    IF COALESCE(uniq_cnt, 0) < 3 THEN
+      RETURN FALSE;
+    END IF;
+  END LOOP;
+
+  RETURN TRUE;
+END;
+$function$
+
+
+
+
 CREATE OR REPLACE FUNCTION public.polls_hub_gc(p_days integer DEFAULT 5)
  RETURNS jsonb
  LANGUAGE sql
@@ -4004,6 +5859,10 @@ select jsonb_build_object(
   'tasks_deleted', (select count(*) from del_tasks)
 );
 $function$
+
+
+
+
 CREATE OR REPLACE FUNCTION public.polls_hub_list_my_subscribers()
  RETURNS TABLE(sub_id uuid, subscriber_user_id uuid, subscriber_email text, subscriber_label text, status text, created_at timestamp with time zone, token uuid, email_sent_at timestamp with time zone, email_send_count integer, is_expired boolean)
  LANGUAGE plpgsql
@@ -4032,6 +5891,10 @@ begin
   order by s.created_at desc;
 end;
 $function$
+
+
+
+
 CREATE OR REPLACE FUNCTION public.polls_hub_list_my_subscriptions()
  RETURNS TABLE(sub_id uuid, owner_id uuid, owner_label text, status text, created_at timestamp with time zone, token uuid, go_url text, is_expired boolean)
  LANGUAGE plpgsql
@@ -4057,6 +5920,10 @@ begin
   order by s.created_at desc;
 end;
 $function$
+
+
+
+
 CREATE OR REPLACE FUNCTION public.polls_hub_list_open_polls()
  RETURNS TABLE(game_id uuid, game_name text, poll_type text, status text, updated_at timestamp with time zone)
  LANGUAGE sql
@@ -4066,95 +5933,59 @@ AS $function$
 $function$
 
 
+
+
 CREATE OR REPLACE FUNCTION public.polls_hub_list_polls()
- RETURNS TABLE(game_id uuid, name text, poll_type game_type, created_at timestamp with time zone, poll_state text, sessions_total integer, open_questions integer, closed_questions integer, tasks_active integer, tasks_done integer, recipients_preview text[], share_key_poll text, share_kind text, anon_votes integer)
+ RETURNS TABLE(game_id uuid, name text, poll_type text, poll_state text, created_at timestamp with time zone, tasks_active integer, tasks_done integer, anon_votes integer, close_ready boolean)
  LANGUAGE plpgsql
  SECURITY DEFINER
- SET search_path TO 'public'
+ SET search_path TO 'public', 'pg_temp'
 AS $function$
 begin
   return query
-  with my_polls as (
-    select g.id, g.name, g.type, g.created_at, g.share_key_poll, g.status
-    from public.games g
-    where g.owner_id = auth.uid()
-      and g.type in ('poll_text'::public.game_type, 'poll_points'::public.game_type)
-  ),
-  sess as (
+  with g as (
     select
-      ps.game_id,
-      count(ps.id)::int as sessions_total,
-      count(ps.id) filter (where ps.is_open = true and ps.closed_at is null)::int as open_questions,
-      count(ps.id) filter (where ps.closed_at is not null)::int as closed_questions
-    from public.poll_sessions ps
-    group by ps.game_id
+      gm.id as game_id,
+      gm.name,
+      gm.type as poll_type,  -- game_type enum
+      case
+        when gm.status = 'poll_open' then 'open'
+        when gm.status = 'ready' then 'closed'
+        else 'draft'
+      end as poll_state,
+      gm.created_at
+    from public.games gm
+    where gm.owner_id = auth.uid()
+      and gm.type in ('poll_text','poll_points')
   ),
-  tasks as (
-    select
-      pt.game_id,
-      count(*) filter (where pt.status in ('pending','opened'))::int as tasks_active,
-      count(*) filter (where pt.status = 'done')::int as tasks_done
-    from public.poll_tasks pt
-    where pt.owner_id = auth.uid()
-    group by pt.game_id
-  ),
-  recipients as (
+  t as (
     select
       pt.game_id,
-      (
-        array_agg(
-          coalesce(p.username, pt.recipient_email, '—')
-          order by pt.created_at desc
-        )
-        filter (where pt.status in ('pending','opened'))
-      )[1:6] as recipients_preview
+      count(*) filter (where pt.done_at is null and pt.declined_at is null and pt.cancelled_at is null)::int as tasks_active,
+      count(*) filter (where pt.done_at is not null)::int as tasks_done
     from public.poll_tasks pt
-    left join public.profiles p on p.id = pt.recipient_user_id
     where pt.owner_id = auth.uid()
     group by pt.game_id
   )
   select
-    mp.id as game_id,
-    mp.name,
-    mp.type as poll_type,
-    mp.created_at,
-    case
-      when mp.status = 'poll_open' then 'open'
-      when mp.status = 'ready' then 'closed'
-      when coalesce(s.sessions_total, 0) > 0 then 'closed'
-      else 'draft'
-    end as poll_state,
-    coalesce(s.sessions_total, 0) as sessions_total,
-    coalesce(s.open_questions, 0) as open_questions,
-    coalesce(s.closed_questions, 0) as closed_questions,
-    coalesce(t.tasks_active, 0) as tasks_active,
-    coalesce(t.tasks_done, 0) as tasks_done,
-    coalesce(r.recipients_preview, array[]::text[]) as recipients_preview,
-    mp.share_key_poll,
-    case
-      when mp.status = 'poll_open' and coalesce(t.tasks_active,0) > 0 then 'mixed'
-      when coalesce(t.tasks_active,0) > 0 then 'subs'
-      else 'anon'
-    end as share_kind,
-    case
-      when mp.type = 'poll_points'::public.game_type then (
-        select count(*)::int
-        from public.poll_votes v
-        where v.game_id = mp.id and v.voter_user_id is null
-      )
-      else (
-        select count(*)::int
-        from public.poll_text_entries e
-        where e.game_id = mp.id and e.voter_user_id is null
-      )
-    end as anon_votes
-  from my_polls mp
-  left join sess s on s.game_id = mp.id
-  left join tasks t on t.game_id = mp.id
-  left join recipients r on r.game_id = mp.id
-  order by mp.created_at desc;
+    g.game_id,
+    g.name,
+    g.poll_type::text as poll_type, -- ✅ zwracamy text
+    g.poll_state,
+    g.created_at,
+    coalesce(t.tasks_active,0) as tasks_active,
+    coalesce(t.tasks_done,0) as tasks_done,
+    public.polls_hub_anon_voters(g.game_id, g.poll_type::text) as anon_votes, -- ✅ cast
+    (g.poll_state = 'open') and public.polls_hub_can_close(g.game_id, g.poll_type::text) as close_ready -- ✅ cast
+  from g
+  left join t on t.game_id = g.game_id
+  order by g.created_at desc;
 end;
 $function$
+
+
+
+
 CREATE OR REPLACE FUNCTION public.polls_hub_list_tasks()
  RETURNS TABLE(task_id uuid, game_id uuid, game_name text, poll_type text, status text, created_at timestamp with time zone, done_at timestamp with time zone, declined_at timestamp with time zone, cancelled_at timestamp with time zone, is_archived boolean, go_url text)
  LANGUAGE plpgsql
@@ -4188,6 +6019,10 @@ begin
   order by t.created_at desc;
 end;
 $function$
+
+
+
+
 CREATE OR REPLACE FUNCTION public.polls_hub_overview()
  RETURNS json
  LANGUAGE plpgsql
@@ -4229,6 +6064,10 @@ begin
   );
 end;
 $function$
+
+
+
+
 CREATE OR REPLACE FUNCTION public.polls_hub_share_poll(p_game_id uuid, p_sub_ids uuid[])
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -4394,6 +6233,10 @@ begin
   );
 end;
 $function$
+
+
+
+
 CREATE OR REPLACE FUNCTION public.polls_hub_subscriber_remove(p_id uuid)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -4426,6 +6269,10 @@ begin
   return jsonb_build_object('ok', true, 'action', 'cancelled', 'id', p_id);
 end;
 $function$
+
+
+
+
 CREATE OR REPLACE FUNCTION public.polls_hub_subscriber_resend(p_id uuid)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -4453,14 +6300,11 @@ begin
     return jsonb_build_object('ok', false, 'error', 'not found');
   end if;
 
-  if v_sub.subscriber_email is null then
-    return jsonb_build_object('ok', false, 'error', 'no email for this subscriber');
-  end if;
-
   if v_sub.status <> 'pending' then
     return jsonb_build_object('ok', false, 'error', 'only pending can be resent');
   end if;
 
+  -- cooldown: once per 24h
   if v_sub.email_sent_at is not null then
     v_until := v_sub.email_sent_at + interval '24 hours';
     if now() < v_until then
@@ -4468,7 +6312,20 @@ begin
     end if;
   end if;
 
-  v_to := lower(v_sub.subscriber_email);
+  -- resolve recipient email
+  if v_sub.subscriber_email is not null then
+    v_to := lower(v_sub.subscriber_email);
+  elsif v_sub.subscriber_user_id is not null then
+    select lower(p.email) into v_to
+    from public.profiles p
+    where p.id = v_sub.subscriber_user_id
+    limit 1;
+  end if;
+
+  if public._norm_email(v_to) is null then
+    return jsonb_build_object('ok', false, 'error', 'no email for this subscriber');
+  end if;
+
   v_link := ('poll_go.html?s=' || v_sub.token::text)::text;
 
   update public.poll_subscriptions
@@ -4485,6 +6342,10 @@ begin
   );
 end;
 $function$
+
+
+
+
 CREATE OR REPLACE FUNCTION public.polls_hub_subscription_accept(p_id uuid)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -4511,6 +6372,8 @@ end;
 $function$
 
 
+
+
 CREATE OR REPLACE FUNCTION public.polls_hub_subscription_cancel(p_id uuid)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -4535,6 +6398,8 @@ begin
   return jsonb_build_object('ok', true, 'action', 'cancelled', 'id', p_id);
 end;
 $function$
+
+
 
 
 CREATE OR REPLACE FUNCTION public.polls_hub_subscription_invite(p_recipient text)
@@ -4619,6 +6484,10 @@ begin
   );
 end;
 $function$
+
+
+
+
 CREATE OR REPLACE FUNCTION public.polls_hub_subscription_invite_a(p_handle text)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -4718,6 +6587,10 @@ begin
   );
 end;
 $function$
+
+
+
+
 CREATE OR REPLACE FUNCTION public.polls_hub_subscription_reject(p_id uuid)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -4744,6 +6617,8 @@ end;
 $function$
 
 
+
+
 CREATE OR REPLACE FUNCTION public.polls_hub_task_decline(p_task_id uuid)
  RETURNS boolean
  LANGUAGE plpgsql
@@ -4761,6 +6636,8 @@ begin
   return found;
 end;
 $function$
+
+
 
 
 CREATE OR REPLACE FUNCTION public.polls_hub_tasks_mark_emailed(p_task_ids uuid[])
@@ -4788,6 +6665,10 @@ begin
   return jsonb_build_object('ok', true, 'updated', v_n);
 end;
 $function$
+
+
+
+
 CREATE OR REPLACE FUNCTION public.profile_login_to_email(p_login text)
  RETURNS text
  LANGUAGE plpgsql
@@ -4824,6 +6705,10 @@ begin
   return v;
 end;
 $function$
+
+
+
+
 CREATE OR REPLACE FUNCTION public.revoke_base_share(p_base_id uuid, p_user_id uuid)
  RETURNS boolean
  LANGUAGE plpgsql
@@ -4831,29 +6716,35 @@ CREATE OR REPLACE FUNCTION public.revoke_base_share(p_base_id uuid, p_user_id uu
 AS $function$
 declare
   v_owner uuid;
+  v_email text;
 begin
   select owner_id into v_owner
   from public.question_bases
   where id = p_base_id;
 
-  if v_owner is null then
+  if v_owner is null or v_owner <> auth.uid() then
     return false;
   end if;
 
-  if v_owner <> auth.uid() then
-    return false;
-  end if;
+  select lower(email) into v_email
+  from public.profiles
+  where id = p_user_id;
 
   delete from public.question_base_shares
   where base_id = p_base_id
     and user_id = p_user_id;
 
+  -- cooldown marker (bez tokena – to nie jest aktywne invite, tylko blokada)
+  insert into public.base_share_tasks(owner_id, base_id, recipient_user_id, recipient_email, role, status, cancelled_at)
+  values (v_owner, p_base_id, p_user_id, v_email, 'viewer', 'cancelled', now());
+
   return true;
-exception
-  when others then
-    return false;
+exception when others then
+  return false;
 end;
 $function$
+
+
 
 
 CREATE OR REPLACE FUNCTION public.set_device_state(p_game_id uuid, p_kind text, p_patch jsonb)
@@ -4902,6 +6793,8 @@ begin
 end $function$
 
 
+
+
 CREATE OR REPLACE FUNCTION public.set_owner_id_on_games_insert()
  RETURNS trigger
  LANGUAGE plpgsql
@@ -4915,6 +6808,8 @@ end
 $function$
 
 
+
+
 CREATE OR REPLACE FUNCTION public.set_updated_at()
  RETURNS trigger
  LANGUAGE plpgsql
@@ -4924,6 +6819,8 @@ begin
   return new;
 end;
 $function$
+
+
 
 
 CREATE OR REPLACE FUNCTION public.share_base_by_email(p_base_id uuid, p_email text, p_role base_share_role)
@@ -4976,6 +6873,8 @@ end;
 $function$
 
 
+
+
 CREATE OR REPLACE FUNCTION public.touch_game_devices_updated_at()
  RETURNS trigger
  LANGUAGE plpgsql
@@ -4984,6 +6883,8 @@ begin
   new.updated_at = now();
   return new;
 end $function$
+
+
 
 
 CREATE OR REPLACE FUNCTION public.touch_game_runtime_updated_at()
@@ -4996,6 +6897,8 @@ begin
 end $function$
 
 
+
+
 CREATE OR REPLACE FUNCTION public.touch_game_updated_at(p_game_id uuid)
  RETURNS void
  LANGUAGE sql
@@ -5005,6 +6908,8 @@ AS $function$
   set updated_at = now()
   where id = p_game_id;
 $function$
+
+
 
 
 CREATE OR REPLACE FUNCTION public.touch_state_at()
@@ -5020,6 +6925,8 @@ end;
 $function$
 
 
+
+
 CREATE OR REPLACE FUNCTION public.touch_updated_at()
  RETURNS trigger
  LANGUAGE plpgsql
@@ -5030,6 +6937,8 @@ begin
 end $function$
 
 
+
+
 CREATE OR REPLACE FUNCTION public.touch_user_flags_updated_at()
  RETURNS trigger
  LANGUAGE plpgsql
@@ -5038,6 +6947,8 @@ begin
   new.updated_at = now();
   return new;
 end $function$
+
+
 
 
 CREATE OR REPLACE FUNCTION public.trg_touch_game_from_answers()
@@ -5067,6 +6978,8 @@ end;
 $function$
 
 
+
+
 CREATE OR REPLACE FUNCTION public.trg_touch_game_from_questions()
  RETURNS trigger
  LANGUAGE plpgsql
@@ -5082,6 +6995,8 @@ begin
   return coalesce(new, old);
 end;
 $function$
+
+
 
 
 CREATE OR REPLACE FUNCTION public.user_logo_clear_active()
@@ -5100,6 +7015,8 @@ begin
   set is_active = false
   where user_id = v_uid and is_active = true;
 end $function$
+
+
 
 
 CREATE OR REPLACE FUNCTION public.user_logo_set_active(p_logo_id uuid)
@@ -5132,22 +7049,45 @@ begin
   set is_active = true
   where id = p_logo_id and user_id = v_uid;
 end $function$
+
+
+
+
 CREATE TRIGGER touch_game_from_answers AFTER INSERT OR DELETE OR UPDATE ON public.answers FOR EACH ROW EXECUTE FUNCTION trg_touch_game_from_answers();
+
+
 
 CREATE TRIGGER trg_assert_game_answers_minmax BEFORE UPDATE OF status ON public.games FOR EACH ROW EXECUTE FUNCTION assert_game_answers_minmax();
 
+
+
 CREATE TRIGGER trg_games_fill_share_keys BEFORE INSERT ON public.games FOR EACH ROW EXECUTE FUNCTION games_fill_share_keys();
+
+
 
 CREATE TRIGGER trg_games_touch BEFORE UPDATE ON public.games FOR EACH ROW EXECUTE FUNCTION touch_updated_at();
 
+
+
 CREATE TRIGGER trg_poll_tasks_touch_status_ts BEFORE UPDATE OF status ON public.poll_tasks FOR EACH ROW EXECUTE FUNCTION poll_tasks_touch_status_ts();
+
+
 
 CREATE TRIGGER trg_qb_categories_set_updated_at BEFORE UPDATE ON public.qb_categories FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
+
+
 CREATE TRIGGER trg_qb_questions_set_updated_at BEFORE UPDATE ON public.qb_questions FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+
 
 CREATE TRIGGER touch_game_from_questions AFTER INSERT OR DELETE OR UPDATE ON public.questions FOR EACH ROW EXECUTE FUNCTION trg_touch_game_from_questions();
 
+
+
 CREATE TRIGGER trg_touch_user_flags_updated_at BEFORE UPDATE ON public.user_flags FOR EACH ROW EXECUTE FUNCTION touch_user_flags_updated_at();
 
+
+
 CREATE TRIGGER trg_user_logos_touch BEFORE UPDATE ON public.user_logos FOR EACH ROW EXECUTE FUNCTION touch_updated_at();
+

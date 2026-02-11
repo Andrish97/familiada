@@ -7,7 +7,9 @@ import {
   resolveLoginToEmail,
   updateUserLanguage,
   validatePassword,
-  validateUsername
+  validateUsername,
+  niceAuthError,
+  getPasswordRulesText
 } from "../core/auth.js";
 
 import { sb } from "../core/supabase.js";
@@ -20,6 +22,7 @@ const pass = $("#pass");
 const pass2 = $("#pass2");
 const status = $("#status");
 const err = $("#err");
+const pwdHint = $("#pwdHint");
 const btnPrimary = $("#btnPrimary");
 const btnToggle = $("#btnToggle");
 const btnForgot = $("#btnForgot");
@@ -192,34 +195,54 @@ async function ensureUsernameAvailable(username, userId) {
 }
 
 async function saveUsername() {
+  console.log("[saveUsername] START", new Date().toISOString());
   setUsernameErr("");
   try {
     const username = validateUsername(usernameFirst?.value || "");
     const { data: userData, error: userError } = await sb().auth.getUser();
+    console.log("[saveUsername] userId", userData?.user?.id, "usernameInput", username);
+
     if (userError || !userData?.user) throw new Error(t("index.errNoSession"));
+
     await ensureUsernameAvailable(username, userData.user.id);
-    const { error } = await sb()
+
+    const res = await sb()
       .from("profiles")
       .update({ username })
-      .eq("id", userData.user.id);
-    if (error) throw error;
-    await sb().auth.updateUser({ data: { username } });
+      .eq("id", userData.user.id)
+      .select("id, username")
+      .single();
+
+    console.log("[saveUsername] DB result", res);
+
+    if (res.error) throw res.error;
+
+    const meta = await sb().auth.updateUser({ data: { username } });
+    console.log("[saveUsername] META result", meta);
+
+    if (meta.error) throw meta.error;
+
     closeUsernameSetup();
     location.href = withLangParam(builderUrl);
   } catch (e) {
-    console.error(e);
-    setUsernameErr(e?.message || String(e));
+    console.error("[saveUsername] FAIL", e);
+    setUsernameErr(niceAuthError(e));
   }
 }
 
 function applyMode() {
   if (mode === "login") {
     pass2.style.display = "none";
+    if (pwdHint) pwdHint.hidden = true;
     btnPrimary.textContent = t("index.btnLogin");
     btnToggle.textContent = t("index.btnToggleRegister");
     email.placeholder = t("index.placeholderLogin");
   } else {
     pass2.style.display = "block";
+    if (pwdHint) {
+      pwdHint.hidden = false;
+      pwdHint.textContent = getPasswordRulesText();
+    }
     btnPrimary.textContent = t("index.btnRegister");
     btnToggle.textContent = t("index.btnToggleLogin");
     email.placeholder = t("index.placeholderEmail");
@@ -232,11 +255,19 @@ document.addEventListener("DOMContentLoaded", async () => {
   const syncLanguage = () => updateUserLanguage(getUiLang());
   applyMode();
   setStatus(t("index.statusChecking"));
+  
+  const usernameForm = document.querySelector("#usernameForm");
+  
+  usernameForm?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    if (isBusy) return;
+    await saveUsername();
+  });
 
   const u = await getUser();
   if (u) {
     await syncLanguage();
-    if (!u.username || setup === "username") {
+    if (!u.username) {
       openUsernameSetup();
     } else if (nextTarget === "polls-hub") {
       location.href = buildNextUrl();
@@ -278,7 +309,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         try {
           validatePassword(pwd);
         } catch (e) {
-          return setErr(e?.message || String(e));
+          return setErr(niceAuthError(e));
         }
 
         setStatus(t("index.statusRegistering"));
@@ -301,7 +332,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     } catch (e) {
       console.error(e);
       setStatus(t("index.statusError"));
-      setErr(e?.message || String(e));
+      setErr(niceAuthError(e));
     } finally {
       setBusy(false);
     }
@@ -357,7 +388,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 } catch (e) {
       console.error(e);
       setStatus(t("index.statusError"));
-      setErr(e?.message || String(e));
+      setErr(niceAuthError(e));
     } finally {
       setBusy(false);
     }
@@ -367,21 +398,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (e.key !== "Enter") return;
     e.preventDefault();
     btnForgot.click();
-  });
-
-
-  btnUsernameSave?.addEventListener("click", saveUsername);
-  
-  usernameFirst?.addEventListener("keydown", (e) => {
-    if (e.key !== "Enter") return;
-    e.preventDefault();
-    if (isBusy) return;
-    btnUsernameSave.click();
-  });
-
-  btnUsernameSave?.addEventListener("touchend", (e) => {
-    e.preventDefault();
-    btnUsernameSave.click();
   });
 
   email.addEventListener("keydown", (e) => {

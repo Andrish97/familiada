@@ -981,8 +981,11 @@ export function initTextPixEditor(ctx) {
 
     async function ensureEditor() {
     if (editor) return editor;
+    if (!window.tinymce) {
+      await ctx.ensureTinyMCE?.();
+    }
     if (!window.tinymce) throw new Error("Brak TinyMCE (script nie wczytany).");
-  
+      
     // 1) Najpierw wczytaj fonty + wypełnij select (żeby SYSTEM_FONTS było gotowe)
     await fillFontSelectOnce();
   

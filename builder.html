@@ -19,33 +19,46 @@
     <div class="topbar-left">
       <div class="brand">FAMILIADA</div>
 
-      <button class="btn" id="btnPollsHub">
-          <span class="only-desktop" data-i18n="builder.nav.pollsHub">Centrum sondaży 📊</span>
-          <span class="only-mobile" data-i18n="builder.nav.pollsHubMobile">Sondaże 📊</span>
-          <span class="pollsBadge" id="pollsHubBadge" aria-hidden="true"></span>
-      </button>
+        <button class="btn nav-dual" id="btnPollsHub">
+          <!-- DESKTOP -->
+          <span class="only-desktop nav-dual-row">
+            <span class="nav-part" data-i18n="builder.nav.pollsHubPolls">Sondaże 📊</span>
+            <span class="nav-sep" aria-hidden="true"></span>
+            <span class="nav-part" data-i18n="builder.nav.pollsHubSubs">Subskrypcje 📧</span>
+          </span>
+        
+          <!-- MOBILE -->
+          <span class="only-mobile nav-dual-row">
+            <span class="nav-part" data-i18n="builder.nav.pollsHubMobilePolls">📊</span>
+            <span class="nav-sep" aria-hidden="true"></span>
+            <span class="nav-part" data-i18n="builder.nav.pollsHubMobileSubs">📧</span>
+          </span>
+        
+          <span class="badge" id="pollsHubBadge" aria-hidden="true"></span>
+        </button>
 
-      <button class="btn" id="btnBases">
+        <button class="btn" id="btnBases">
           <span class="only-desktop" data-i18n="builder.nav.bases">Bazy pytań 🗃️</span>
-          <span class="only-mobile" data-i18n="builder.nav.basesMobile">Bazy pyt.🗃️</span>
-      </button>
+          <span class="only-mobile" data-i18n="builder.nav.basesMobile">🗃️</span>
+          <span class="badge" id="basesBadge" aria-hidden="true"></span>
+        </button>
       
       <button class="btn" id="btnManual">
           <span class="only-desktop" data-i18n="builder.nav.manual">Wskazówki ℹ️</span>
-          <span class="only-mobile" data-i18n="builder.nav.manualMobile">Wskazówki ℹ️</span>
+          <span class="only-mobile" data-i18n="builder.nav.manualMobile">ℹ️</span>
       </button>
 
       <button class="btn" id="btnLogoEditor">
           <span class="only-desktop" data-i18n="builder.nav.logo">Logo 🖥️</span>
-          <span class="only-mobile" data-i18n="builder.nav.logoMobile">Logo 🖥️</span>
+          <span class="only-mobile" data-i18n="builder.nav.logoMobile">🖥️</span>
       </button>
       </div>
 
       <div class="topbar-right">
-      <button class="btn user-btn" id="btnAccount" type="button">
+        <button class="btn user-btn" id="btnAccount" type="button">
         <span class="user-name" id="who">—</span>
         <span class="user-sub" data-i18n="builder.nav.account">Ustawienia konta</span>
-      </button>
+        </button>
       <button class="btn" id="btnLogout" type="button" data-i18n="builder.nav.logout">Wyloguj</button>
     </div>
   </header>
