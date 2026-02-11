@@ -42,6 +42,12 @@ function setActive(name) {
 }
 
 function wireTabs() {
+  if (!shouldShowDemoTab()) {
+    document.querySelector('.simple-tabs .tab[data-tab="demo"]')?.remove();
+    pages.demo?.remove();
+    delete pages.demo;
+  }
+
   tabs.forEach(tab => {
     tab.addEventListener("click", () => setActive(tab.dataset.tab));
   });
@@ -51,13 +57,31 @@ function wireTabs() {
   else setActive("general");
 }
 
+function decodeRet() {
+  const p = new URLSearchParams(location.search);
+  return p.get("ret") || "builder.html";
+}
+
+function shouldShowDemoTab() {
+  const ret = decodeRet().toLowerCase();
+  return ret.startsWith("builder.html") || ret.startsWith("/builder.html");
+}
+
+function buildPrivacyUrl() {
+  const url = new URL("privacy.html", location.href);
+  url.searchParams.set("ret", decodeRet());
+  const manualPath = `${location.pathname.split("/").pop() || "manual.html"}${location.search}${location.hash}`;
+  url.searchParams.set("man", manualPath);
+  return url.toString();
+}
+
 function wireFallbackNav() {
   byId("btnBack")?.addEventListener("click", () => {
-    location.href = "builder.html";
+    location.href = decodeRet();
   });
 
   byId("btnLegal")?.addEventListener("click", () => {
-    location.href = "privacy.html" + (location.search || "");
+    location.href = buildPrivacyUrl();
   });
 
   byId("btnLogout")?.addEventListener("click", () => {
@@ -94,7 +118,7 @@ async function wireAuthSoft() {
   if (who) who.textContent = user?.username || user?.email || "—";
 
   byId("btnLegal")?.addEventListener("click", () => {
-    location.href = "privacy.html" + (location.search || "");
+    location.href = buildPrivacyUrl();
   });
 
   byId("btnLogout")?.addEventListener("click", async () => {
@@ -103,7 +127,7 @@ async function wireAuthSoft() {
   });
 
   byId("btnBack")?.addEventListener("click", () => {
-    location.href = "builder.html";
+    location.href = decodeRet();
   });
 
   await wireDemoActions(user);

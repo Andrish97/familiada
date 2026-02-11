@@ -4,7 +4,7 @@
   <meta charset="UTF-8"/>
   <meta name="robots" content="noindex, nofollow"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title data-i18n="pollsHub.title">Familiada — centrum sondaży</title>
+  <title data-i18n="pollsHubPolls.title">Familiada — centrum sondaży</title>
 
   <link rel="icon" href="favicon.ico"/>
   <link rel="stylesheet" href="css/base.css"/>
@@ -15,168 +15,60 @@
   <script type="module" src="js/pages/polls-hub.js" defer></script>
 </head>
 
-<body class="polls-hub-body">
+<body class="polls-hub-body" data-alt-page="subscriptions.html" data-alt-from="hub-a">
   <header class="topbar">
     <div class="topbar-left">
       <div class="brand">FAMILIADA</div>
-      <button class="btn" id="btnBackToBuilder" type="button" data-i18n="pollsHub.backToGames">← Moje gry</button>
+      <button class="btn" id="btnBackToBuilder" type="button" data-i18n="pollsHubPolls.backToGames">← Moje gry</button>
+      <button class="btn" id="btnGoAlt" type="button" data-i18n="pollsHubPolls.tabs.subscriptions">Subskrypcje <span class="badge" id="altBadge" aria-hidden="true"></span></button>
     </div>
     <div class="topbar-right">
+      <button class="btn" id="btnManual" type="button">ℹ️</button>
       <span class="who" id="who">—</span>
-      <button class="btn" id="btnLogout" type="button" data-i18n="pollsHub.logout">Wyloguj</button>
+      <button class="btn" id="btnLogout" type="button" data-i18n="pollsHubPolls.logout">Wyloguj</button>
     </div>
   </header>
 
   <main class="wrap">
     <div class="bar">
       <div>
-        <div class="title" data-i18n="pollsHub.header.title">Centrum sondaży</div>
-        <div class="hint" data-i18n="pollsHub.header.hint">Zarządzaj sondażami oraz zaproszeniami do głosowania.</div>
+        <div class="title" data-i18n="pollsHubPolls.header.title">Centrum sondaży</div>
+        <div class="hint" data-i18n="pollsHubPolls.header.hint">Zarządzaj sondażami oraz zadaniami.</div>
       </div>
     </div>
 
-    <section class="hub-desktop">
-      <div class="tabs-card hub-tabs" id="hubTabs">
-        <div class="tabs-strip">
-          <div class="tab-slot slot-pollText">
-            <button class="tab-label" id="tabPolls" type="button">
-              <span data-i18n="pollsHub.tabs.polls">Sondaże</span>
-              <span class="hub-tab-badge is-empty" data-badge="tasks"></span>
-            </button>
-            <div class="tab-wrapper">
-              <div class="tab-active">
-                <span data-i18n="pollsHub.tabs.polls">Sondaże</span>
+    <section class="hub-desktop hub-desktop-single">
+      <div class="card hub-card">
+        <div class="hub-tab-panel active" id="panelPolls">
+          <div class="hub-grid">
+            <section class="hub-col">
+              <div class="hub-col-head">
+                <div>
+                  <div class="hub-col-title" data-i18n="pollsHubPolls.sections.myPolls">Moje sondaże</div>
+                  <div class="hub-col-hint" data-i18n="pollsHubPolls.sections.selectHint">Kliknij kafelek, aby go zaznaczyć.</div>
+                </div>
+                <div class="hub-controls">
+                  <div class="ui-select" id="sortPollsDesktop"><button class="ui-select-btn inp sm" type="button"><span class="ui-select-label">—</span><span class="ui-select-caret">▾</span></button><div class="ui-select-menu" role="listbox"></div></div>
+                  <div class="hub-toggle" data-kind="polls"><button class="btn xs btn-toggle" data-toggle="current" data-i18n="pollsHubPolls.toggle.current">Aktualne</button><button class="btn xs btn-toggle" data-toggle="archive" data-i18n="pollsHubPolls.toggle.archive">Archiwalne</button></div>
+                  <button class="btn xs" id="btnShare" type="button" disabled data-i18n="pollsHubPolls.actions.share">Udostępnij</button>
+                  <button class="btn xs" id="btnDetails" type="button" disabled data-i18n="pollsHubPolls.actions.details">Szczegóły</button>
+                </div>
               </div>
-              <div class="tab-corner tab-corner-left"></div>
-              <div class="tab-corner tab-corner-right"></div>
-            </div>
-          </div>
-
-          <div class="tab-slot slot-pollPoints">
-            <button class="tab-label" id="tabSubs" type="button">
-              <span data-i18n="pollsHub.tabs.subscriptions">Subskrypcje</span>
-              <span class="hub-tab-badge is-empty" data-badge="subs"></span>
-            </button>
-            <div class="tab-wrapper">
-              <div class="tab-active">
-                <span data-i18n="pollsHub.tabs.subscriptions">Subskrypcje</span>
+              <div class="hub-list" id="pollsListDesktop"></div>
+            </section>
+            <section class="hub-col">
+              <div class="hub-col-head">
+                <div>
+                  <div class="hub-col-title" data-i18n="pollsHubPolls.sections.tasks">Zadania</div>
+                  <div class="hub-col-hint" data-i18n="pollsHubPolls.sections.tasksHint">Dwuklik otwiera głosowanie.</div>
+                </div>
+                <div class="hub-controls">
+                  <div class="ui-select" id="sortTasksDesktop"><button class="ui-select-btn inp sm" type="button"><span class="ui-select-label">—</span><span class="ui-select-caret">▾</span></button><div class="ui-select-menu" role="listbox"></div></div>
+                  <div class="hub-toggle" data-kind="tasks"><button class="btn xs btn-toggle" data-toggle="current" data-i18n="pollsHubPolls.toggle.current">Aktualne</button><button class="btn xs btn-toggle" data-toggle="archive" data-i18n="pollsHubPolls.toggle.archive">Archiwalne</button></div>
+                </div>
               </div>
-              <div class="tab-corner tab-corner-left"></div>
-              <div class="tab-corner tab-corner-right"></div>
-            </div>
-          </div>
-        </div>
-
-        <div class="card hub-card">
-          <div class="hub-tab-panel" id="panelPolls">
-            <div class="hub-grid">
-              <section class="hub-col">
-                <div class="hub-col-head">
-                  <div>
-                    <div class="hub-col-title" data-i18n="pollsHub.sections.myPolls">Moje sondaże</div>
-                    <div class="hub-col-hint" data-i18n="pollsHub.sections.selectHint">Kliknij kafelek, aby go zaznaczyć.</div>
-                  </div>
-                  <div class="hub-controls">
-                    <div class="ui-select" id="sortPollsDesktop">
-                      <button class="ui-select-btn inp sm" type="button" aria-haspopup="listbox" aria-expanded="false">
-                        <span class="ui-select-label">—</span>
-                        <span class="ui-select-caret">▾</span>
-                      </button>
-                      <div class="ui-select-menu" role="listbox"></div>
-                    </div>
-                    <div class="hub-toggle" data-kind="polls">
-                      <button class="btn xs btn-toggle" data-toggle="current" data-i18n="pollsHub.toggle.current">Aktualne</button>
-                      <button class="btn xs btn-toggle" data-toggle="archive" data-i18n="pollsHub.toggle.archive">Archiwalne</button>
-                    </div>
-                    <button class="btn xs" id="btnShare" type="button" disabled data-i18n="pollsHub.actions.share">Udostępnij</button>
-                    <button class="btn xs" id="btnDetails" type="button" disabled data-i18n="pollsHub.actions.details">Szczegóły</button>
-                  </div>
-                </div>
-                <div class="hub-list" id="pollsListDesktop"></div>
-              </section>
-
-              <section class="hub-col">
-                <div class="hub-col-head">
-                  <div>
-                    <div class="hub-col-title" data-i18n="pollsHub.sections.tasks">Zadania</div>
-                    <div class="hub-col-hint" data-i18n="pollsHub.sections.tasksHint">Dwuklik otwiera głosowanie.</div>
-                  </div>
-                  <div class="hub-controls">
-                    <div class="ui-select" id="sortTasksDesktop">
-                      <button class="ui-select-btn inp sm" type="button" aria-haspopup="listbox" aria-expanded="false">
-                        <span class="ui-select-label">—</span>
-                        <span class="ui-select-caret">▾</span>
-                      </button>
-                      <div class="ui-select-menu" role="listbox"></div>
-                    </div>
-                    <div class="hub-toggle" data-kind="tasks">
-                      <button class="btn xs btn-toggle" data-toggle="current" data-i18n="pollsHub.toggle.current">Aktualne</button>
-                      <button class="btn xs btn-toggle" data-toggle="archive" data-i18n="pollsHub.toggle.archive">Archiwalne</button>
-                    </div>
-                  </div>
-                </div>
-                <div class="hub-list" id="tasksListDesktop"></div>
-              </section>
-            </div>
-          </div>
-
-          <div class="hub-tab-panel" id="panelSubs">
-            <div class="hub-grid">
-              <section class="hub-col">
-                <div class="hub-col-head">
-                  <div>
-                    <div class="hub-col-title" data-i18n="pollsHub.sections.mySubscribers">Moi subskrybenci</div>
-                    <div class="hub-col-hint" data-i18n="pollsHub.sections.subscribersHint">Zaproś nowych i zarządzaj zaproszeniami.</div>
-                  </div>
-                  <div class="hub-controls">
-                    <div class="ui-select" id="sortSubscribersDesktop">
-                      <button class="ui-select-btn inp sm" type="button" aria-haspopup="listbox" aria-expanded="false">
-                        <span class="ui-select-label">—</span>
-                        <span class="ui-select-caret">▾</span>
-                      </button>
-                      <div class="ui-select-menu" role="listbox"></div>
-                    </div>
-            
-                    <div class="hub-toggle" data-kind="subscribers">
-                      <button class="btn xs btn-toggle" data-toggle="current" data-i18n="pollsHub.toggle.current">Aktualne</button>
-                      <button class="btn xs btn-toggle" data-toggle="archive" data-i18n="pollsHub.toggle.archive">Archiwalne</button>
-                    </div>
-                  </div>
-                </div>
-            
-                <div class="hub-invite">
-                  <input class="inp" id="inviteInputDesktop" placeholder="Email lub nazwa użytkownika" data-i18n-placeholder="pollsHub.invite.placeholder"/>
-                  <button class="btn xs gold" id="btnInviteDesktop" type="button" data-i18n="pollsHub.invite.button">Zaproś</button>
-                </div>
-            
-                <div class="hub-list" id="subscribersListDesktop"></div>
-              </section>
-            
-              <section class="hub-col">
-                <div class="hub-col-head">
-                  <div>
-                    <div class="hub-col-title" data-i18n="pollsHub.sections.mySubscriptions">Moje subskrypcje</div>
-                    <div class="hub-col-hint" data-i18n="pollsHub.sections.subscriptionsHint">Akceptuj zaproszenia od innych.</div>
-                  </div>
-                  <div class="hub-controls">
-                    <div class="ui-select" id="sortSubscriptionsDesktop">
-                      <button class="ui-select-btn inp sm" type="button" aria-haspopup="listbox" aria-expanded="false">
-                        <span class="ui-select-label">—</span>
-                        <span class="ui-select-caret">▾</span>
-                      </button>
-                      <div class="ui-select-menu" role="listbox"></div>
-                    </div>
-            
-                    <div class="hub-toggle" data-kind="subscriptions">
-                      <button class="btn xs btn-toggle" data-toggle="current" data-i18n="pollsHub.toggle.current">Aktualne</button>
-                      <button class="btn xs btn-toggle" data-toggle="archive" data-i18n="pollsHub.toggle.archive">Archiwalne</button>
-                    </div>
-                  </div>
-                </div>
-            
-                <div class="hub-list" id="subscriptionsListDesktop"></div>
-              </section>
-            </div>
+              <div class="hub-list" id="tasksListDesktop"></div>
+            </section>
           </div>
         </div>
       </div>
@@ -185,216 +77,25 @@
     <section class="hub-mobile">
       <div class="tabs-card hub-tabs hub-tabs-mobile" id="hubTabsMobile">
         <div class="tabs-strip">
-          <div class="tab-slot slot-mobile-polls">
-            <button class="tab-label" id="tabPollsMobile" type="button" data-i18n="pollsHub.tabs.polls">Sondaże</button>
-            <div class="tab-wrapper">
-              <div class="tab-active" data-i18n="pollsHub.tabs.polls">Sondaże</div>
-              <div class="tab-corner tab-corner-left"></div>
-              <div class="tab-corner tab-corner-right"></div>
-            </div>
-          </div>
-          <div class="tab-slot slot-mobile-tasks">
-            <button class="tab-label" id="tabTasksMobile" type="button">
-              <span data-i18n="pollsHub.tabs.tasks">Zadania</span>
-              <span class="hub-tab-badge is-empty" data-badge="tasks"></span>
-            </button>
-            <div class="tab-wrapper">
-              <div class="tab-active">
-                <span data-i18n="pollsHub.tabs.tasks">Zadania</span>
-              </div>
-              <div class="tab-corner tab-corner-left"></div>
-              <div class="tab-corner tab-corner-right"></div>
-            </div>
-          </div>
-          <div class="tab-slot slot-mobile-subscribers">
-            <button class="tab-label" id="tabSubscribersMobile" type="button" data-i18n="pollsHub.tabs.subscribersMobile">Subskryb.</button>
-            <div class="tab-wrapper">
-              <div class="tab-active" data-i18n="pollsHub.tabs.subscribersMobile">Subskryb.</div>
-              <div class="tab-corner tab-corner-left"></div>
-              <div class="tab-corner tab-corner-right"></div>
-            </div>
-          </div>
-          <div class="tab-slot slot-mobile-subscriptions">
-            <button class="tab-label" id="tabSubscriptionsMobile" type="button">
-              <span data-i18n="pollsHub.tabs.subscriptionsMobile">Subskryp.</span>
-              <span class="hub-tab-badge is-empty" data-badge="subs"></span>
-            </button>
-            <div class="tab-wrapper">
-              <div class="tab-active">
-                <span data-i18n="pollsHub.tabs.subscriptionsMobile">Subskryp.</span>
-              </div>
-              <div class="tab-corner tab-corner-left"></div>
-              <div class="tab-corner tab-corner-right"></div>
-            </div>
-          </div>
+          <div class="tab-slot slot-mobile-polls"><button class="tab-label" id="tabPollsMobile" type="button" data-i18n="pollsHubPolls.tabs.polls">Sondaże</button><div class="tab-wrapper"><div class="tab-active" data-i18n="pollsHubPolls.tabs.polls">Sondaże</div><div class="tab-corner tab-corner-left"></div><div class="tab-corner tab-corner-right"></div></div></div>
+          <div class="tab-slot slot-mobile-tasks"><button class="tab-label" id="tabTasksMobile" type="button"><span data-i18n="pollsHubPolls.tabs.tasks">Zadania</span><span class="hub-tab-badge is-empty" data-badge="tasks"></span></button><div class="tab-wrapper"><div class="tab-active"><span data-i18n="pollsHubPolls.tabs.tasks">Zadania</span></div><div class="tab-corner tab-corner-left"></div><div class="tab-corner tab-corner-right"></div></div></div>
         </div>
-
         <div class="card hub-card">
           <div class="hub-tab-panel hub-mobile-panel" id="panelPollsMobile">
-            <div class="hub-col-head">
-              <div>
-                <div class="hub-col-title" data-i18n="pollsHub.sections.myPolls">Moje sondaże</div>
-                <div class="hub-col-hint" data-i18n="pollsHub.sections.selectHint">Kliknij kafelek, aby go zaznaczyć.</div>
-              </div>
-              <div class="hub-controls">
-                <div class="ui-select" id="sortPollsMobile">
-                  <button class="ui-select-btn inp sm" type="button" aria-haspopup="listbox" aria-expanded="false">
-                    <span class="ui-select-label">—</span>
-                    <span class="ui-select-caret">▾</span>
-                  </button>
-                  <div class="ui-select-menu" role="listbox"></div>
-                </div>
-                <div class="hub-toggle" data-kind="polls">
-                  <button class="btn xs btn-toggle" data-toggle="current" data-i18n="pollsHub.toggle.current">Aktualne</button>
-                  <button class="btn xs btn-toggle" data-toggle="archive" data-i18n="pollsHub.toggle.archive">Archiwalne</button>
-                </div>
-                <button class="btn xs" id="btnShareMobile" type="button" disabled data-i18n="pollsHub.actions.share">Udostępnij</button>
-                <button class="btn xs" id="btnDetailsMobile" type="button" disabled data-i18n="pollsHub.actions.details">Szczegóły</button>
-              </div>
-            </div>
+            <div class="hub-col-head"><div><div class="hub-col-title" data-i18n="pollsHubPolls.sections.myPolls">Moje sondaże</div><div class="hub-col-hint" data-i18n="pollsHubPolls.sections.selectHint">Kliknij kafelek, aby go zaznaczyć.</div></div><div class="hub-controls"><div class="ui-select" id="sortPollsMobile"><button class="ui-select-btn inp sm" type="button"><span class="ui-select-label">—</span><span class="ui-select-caret">▾</span></button><div class="ui-select-menu" role="listbox"></div></div><div class="hub-toggle" data-kind="polls"><button class="btn xs btn-toggle" data-toggle="current" data-i18n="pollsHubPolls.toggle.current">Aktualne</button><button class="btn xs btn-toggle" data-toggle="archive" data-i18n="pollsHubPolls.toggle.archive">Archiwalne</button></div><button class="btn xs" id="btnShareMobile" type="button" disabled data-i18n="pollsHubPolls.actions.share">Udostępnij</button><button class="btn xs" id="btnDetailsMobile" type="button" disabled data-i18n="pollsHubPolls.actions.details">Szczegóły</button></div></div>
             <div class="hub-list" id="pollsListMobile"></div>
           </div>
-
           <div class="hub-tab-panel hub-mobile-panel" id="panelTasksMobile">
-            <div class="hub-col-head">
-              <div>
-                <div class="hub-col-title" data-i18n="pollsHub.sections.tasks">Zadania</div>
-                <div class="hub-col-hint" data-i18n="pollsHub.sections.tasksHint">Dwuklik otwiera głosowanie.</div>
-              </div>
-              <div class="hub-controls">
-                <div class="ui-select" id="sortTasksMobile">
-                  <button class="ui-select-btn inp sm" type="button" aria-haspopup="listbox" aria-expanded="false">
-                    <span class="ui-select-label">—</span>
-                    <span class="ui-select-caret">▾</span>
-                  </button>
-                  <div class="ui-select-menu" role="listbox"></div>
-                </div>
-                <div class="hub-toggle" data-kind="tasks">
-                  <button class="btn xs btn-toggle" data-toggle="current" data-i18n="pollsHub.toggle.current">Aktualne</button>
-                  <button class="btn xs btn-toggle" data-toggle="archive" data-i18n="pollsHub.toggle.archive">Archiwalne</button>
-                </div>
-              </div>
-            </div>
+            <div class="hub-col-head"><div><div class="hub-col-title" data-i18n="pollsHubPolls.sections.tasks">Zadania</div><div class="hub-col-hint" data-i18n="pollsHubPolls.sections.tasksHint">Dwuklik otwiera głosowanie.</div></div><div class="hub-controls"><div class="ui-select" id="sortTasksMobile"><button class="ui-select-btn inp sm" type="button"><span class="ui-select-label">—</span><span class="ui-select-caret">▾</span></button><div class="ui-select-menu" role="listbox"></div></div><div class="hub-toggle" data-kind="tasks"><button class="btn xs btn-toggle" data-toggle="current" data-i18n="pollsHubPolls.toggle.current">Aktualne</button><button class="btn xs btn-toggle" data-toggle="archive" data-i18n="pollsHubPolls.toggle.archive">Archiwalne</button></div></div></div>
             <div class="hub-list" id="tasksListMobile"></div>
-          </div>
-
-          <div class="hub-tab-panel hub-mobile-panel" id="panelSubscribersMobile">
-            <div class="hub-col-head">
-              <div>
-                <div class="hub-col-title" data-i18n="pollsHub.sections.mySubscribers">Moi subskrybenci</div>
-                <div class="hub-col-hint" data-i18n="pollsHub.sections.subscribersHint">Zaproś nowych i zarządzaj zaproszeniami.</div>
-              </div>
-              <div class="hub-controls">
-                <div class="ui-select" id="sortSubscribersMobile">
-                  <button class="ui-select-btn inp sm" type="button" aria-haspopup="listbox" aria-expanded="false">
-                    <span class="ui-select-label">—</span>
-                    <span class="ui-select-caret">▾</span>
-                  </button>
-                  <div class="ui-select-menu" role="listbox"></div>
-                </div>
-                <div class="hub-toggle" data-kind="subscribers">
-                  <button class="btn xs btn-toggle" data-toggle="current" data-i18n="pollsHub.toggle.current">Aktualne</button>
-                  <button class="btn xs btn-toggle" data-toggle="archive" data-i18n="pollsHub.toggle.archive">Archiwalne</button>
-                </div>
-              </div>
-            </div>
-            <div class="hub-invite">
-              <input class="inp" id="inviteInputMobile" placeholder="Email lub nazwa użytkownika" data-i18n-placeholder="pollsHub.invite.placeholder"/>
-              <button class="btn xs gold" id="btnInviteMobile" type="button" data-i18n="pollsHub.invite.button">Zaproś</button>
-            </div>
-            <div class="hub-list" id="subscribersListMobile"></div>
-          </div>
-
-          <div class="hub-tab-panel hub-mobile-panel" id="panelSubscriptionsMobile">
-            <div class="hub-col-head">
-              <div>
-                <div class="hub-col-title" data-i18n="pollsHub.sections.mySubscriptions">Moje subskrypcje</div>
-                <div class="hub-col-hint" data-i18n="pollsHub.sections.subscriptionsHint">Akceptuj zaproszenia od innych.</div>
-              </div>
-              <div class="hub-controls">
-                <div class="ui-select" id="sortSubscriptionsMobile">
-                  <button class="ui-select-btn inp sm" type="button" aria-haspopup="listbox" aria-expanded="false">
-                    <span class="ui-select-label">—</span>
-                    <span class="ui-select-caret">▾</span>
-                  </button>
-                  <div class="ui-select-menu" role="listbox"></div>
-                </div>
-                <div class="hub-toggle" data-kind="subscriptions">
-                  <button class="btn xs btn-toggle" data-toggle="current" data-i18n="pollsHub.toggle.current">Aktualne</button>
-                  <button class="btn xs btn-toggle" data-toggle="archive" data-i18n="pollsHub.toggle.archive">Archiwalne</button>
-                </div>
-              </div>
-            </div>
-            <div class="hub-list" id="subscriptionsListMobile"></div>
           </div>
         </div>
       </div>
     </section>
   </main>
 
-  <div class="overlay" id="shareOverlay" style="display:none;">
-    <div class="modal">
-      <div class="mTitle" id="shareTitle" data-i18n="pollsHub.share.title">Udostępnij sondaż</div>
-      <div class="mSub" data-i18n="pollsHub.share.subtitle">Wybierz subskrybentów, którym chcesz wysłać zadanie.</div>
-      <div class="hub-share-list" id="shareList"></div>
-      <div class="hub-modal-actions">
-        <button class="btn sm gold" id="btnShareSave" type="button" data-i18n="pollsHub.share.save">Zapisz udostępnienie</button>
-        <button class="btn sm" id="btnShareClose" type="button" data-i18n="pollsHub.share.close">Zamknij</button>
-        <div class="hub-modal-msg" id="shareMsg"></div>
-      </div>
-    </div>
-  </div>
-
-  <div class="overlay" id="detailsOverlay" style="display:none;">
-    <div class="modal">
-      <div class="mTitle" id="detailsTitle" data-i18n="pollsHub.details.title">Szczegóły głosowania</div>
-      <div class="mSub" data-i18n="pollsHub.details.subtitle">Usuń głos powiązany z zadaniem, jeśli to konieczne.</div>
-      <div class="hub-details-grid">
-        <div>
-          <div class="hub-details-head" data-i18n="pollsHub.details.voted">Zagłosowali</div>
-          <div class="hub-details-list" id="detailsVoted"></div>
-        </div>
-        <div>
-          <div class="hub-details-head" data-i18n="pollsHub.details.pending">Nie zagłosowali</div>
-          <div class="hub-details-list" id="detailsPending"></div>
-        </div>
-        <div>
-          <div class="hub-details-head" data-i18n="pollsHub.details.declined">Odrzucili</div>
-          <div class="hub-details-list" id="detailsDeclined"></div>
-        </div>
-        <div>
-          <div class="hub-details-head" data-i18n="pollsHub.details.cancelled">Anulowane</div>
-          <div class="hub-details-list" id="detailsCancelled"></div>
-        </div>
-      </div>
-      <div class="hub-details-side">
-        <div class="hub-details-head" data-i18n="pollsHub.details.anon">Anonimowe</div>
-        <div class="hub-anon-count" id="detailsAnon">0</div>
-      </div>
-      <div class="hub-modal-actions">
-        <button class="btn sm" id="btnDetailsClose" type="button" data-i18n="pollsHub.details.close">Zamknij</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="overlay" id="progressOverlay" style="display:none;">
-    <div class="modal">
-      <div class="mTitle" data-i18n="pollsHub.progress.title">Przetwarzanie</div>
-      <div class="mSub" data-i18n="pollsHub.progress.subtitle">Proszę czekać…</div>
-
-      <div style="margin-top:12px;gap:10px">
-        <div class="importRow" style="align-items:center">
-          <div id="progressStep" style="font-weight:800;letter-spacing:.04em">—</div>
-          <div id="progressCount" style="margin-left:auto;opacity:.8">0/0</div>
-        </div>
-
-        <div style="height:10px;border-radius:999px;background:rgba(255,255,255,.10);overflow:hidden">
-          <div id="progressBar" style="height:100%;width:0%;background:rgba(255,255,255,.85)"></div>
-        </div>
-
-        <div class="importMsg" id="progressMsg" style="min-height:18px"></div>
-      </div>
-    </div>
-  </div>
+  <div class="overlay" id="shareOverlay" style="display:none;"><div class="modal"><div class="mTitle" id="shareTitle" data-i18n="pollsHubPolls.share.title">Udostępnij sondaż</div><div class="mSub" data-i18n="pollsHubPolls.share.subtitle">Wybierz subskrybentów, którym chcesz wysłać zadanie.</div><div class="hub-share-list" id="shareList"></div><div class="hub-modal-actions"><button class="btn sm gold" id="btnShareSave" type="button" data-i18n="pollsHubPolls.share.save">Zapisz udostępnienie</button><button class="btn sm" id="btnShareClose" type="button" data-i18n="pollsHubPolls.share.close">Zamknij</button><div class="hub-modal-msg" id="shareMsg"></div></div></div></div>
+  <div class="overlay" id="detailsOverlay" style="display:none;"><div class="modal"><div class="mTitle" id="detailsTitle" data-i18n="pollsHubPolls.details.title">Szczegóły głosowania</div><div class="mSub" data-i18n="pollsHubPolls.details.subtitle">Usuń głos powiązany z zadaniem, jeśli to konieczne.</div><div class="hub-details-grid"><div><div class="hub-details-head" data-i18n="pollsHubPolls.details.voted">Zagłosowali</div><div class="hub-details-list" id="detailsVoted"></div></div><div><div class="hub-details-head" data-i18n="pollsHubPolls.details.pending">Nie zagłosowali</div><div class="hub-details-list" id="detailsPending"></div></div><div><div class="hub-details-head" data-i18n="pollsHubPolls.details.declined">Odrzucili</div><div class="hub-details-list" id="detailsDeclined"></div></div><div><div class="hub-details-head" data-i18n="pollsHubPolls.details.cancelled">Anulowane</div><div class="hub-details-list" id="detailsCancelled"></div></div></div><div class="hub-details-side"><div class="hub-details-head" data-i18n="pollsHubPolls.details.anon">Anonimowe</div><div class="hub-anon-count" id="detailsAnon">0</div></div><div class="hub-modal-actions"><button class="btn sm" id="btnDetailsClose" type="button" data-i18n="pollsHubPolls.details.close">Zamknij</button></div></div></div>
+  <div class="overlay" id="progressOverlay" style="display:none;"><div class="modal"><div class="mTitle" data-i18n="pollsHubPolls.progress.title">Przetwarzanie</div><div class="mSub" data-i18n="pollsHubPolls.progress.subtitle">Proszę czekać…</div><div style="margin-top:12px;gap:10px"><div class="importRow" style="align-items:center"><div id="progressStep" style="font-weight:800;letter-spacing:.04em">—</div><div id="progressCount" style="margin-left:auto;opacity:.8">0/0</div></div><div style="height:10px;border-radius:999px;background:rgba(255,255,255,.10);overflow:hidden"><div id="progressBar" style="height:100%;width:0%;background:rgba(255,255,255,.85)"></div></div><div class="importMsg" id="progressMsg" style="min-height:18px"></div></div></div></div>
 </body>
 </html>
