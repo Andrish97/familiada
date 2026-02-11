@@ -51,7 +51,9 @@ const MSG = {
 const qs = new URLSearchParams(location.search);
 const taskToken = qs.get("t");
 const subToken = qs.get("s");
-const goToken = taskToken || subToken;
+const hasTaskToken = Boolean(taskToken);
+const hasSubToken = Boolean(subToken);
+const goToken = hasTaskToken === hasSubToken ? null : (hasTaskToken ? taskToken : subToken);
 
 const $ = (id) => document.getElementById(id);
 

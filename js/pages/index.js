@@ -36,8 +36,8 @@ const baseUrls = document.body?.dataset || {};
 const confirmUrl = baseUrls.confirmUrl || "confirm.html";
 const resetUrl = baseUrls.resetUrl || "reset.html";
 const builderUrl = baseUrls.builderUrl || "builder.html";
-const pollsUrl = baseUrls.pollsUrl || "polls-hub.html";
-const subscriptionsUrl = baseUrls.subscriptionsUrl || "subscriptions.html";
+const pollsUrl = baseUrls.pollsUrl;
+const subscriptionsUrl = baseUrls.subscriptionsUrl;
 
 let mode = "login"; // login | register
 
@@ -159,10 +159,13 @@ function buildAuthRedirect(page) {
 }
 
 function buildNextUrl() {
-  const target = nextSub && !nextTask ? subscriptionsUrl : pollsUrl;
+  const target = nextTarget === "subscriptions" ? subscriptionsUrl : pollsUrl;
+  if (!target) throw new Error(t("index.statusError"));
   const url = new URL(target.startsWith("/") ? target : `/${target}`, location.origin);
-  if (nextTask) url.searchParams.set("t", nextTask);
-  if (nextSub) url.searchParams.set("s", nextSub);
+
+  if (nextTarget === "subscriptions" && nextSub) url.searchParams.set("s", nextSub);
+  if (nextTarget === "polls-hub" && nextTask) url.searchParams.set("t", nextTask);
+
   url.searchParams.set("lang", getUiLang());
   return url.toString();
 }
@@ -439,7 +442,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           btnForgot.disabled = false;
         }
       } catch {
-        // If RPC is unavailable, fallback to hiding the countdown (do not block UI).
+        // Jeśli RPC jest niedostępne, ukryj odliczanie (nie blokuj UI).
         hideForgotCooldown();
         btnForgot.disabled = false;
       }
