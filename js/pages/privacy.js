@@ -1,13 +1,29 @@
 // js/pages/privacy.js
 import { initI18n } from "../../translation/translation.js";
 
-initI18n({ withSwitcher: true });
+initI18n({ withSwitcher: !(new URLSearchParams(location.search).get("modal") === "control") });
 
 function byId(id) { return document.getElementById(id); }
 
 function decodeManualBack() {
   const p = new URLSearchParams(location.search);
-  return p.get("man") || "manual.html";
+  const man = p.get("man") || "manual.html";
+  if (man.includes("lang=")) return man;
+  const lang = p.get("lang") || localStorage.getItem("uiLang") || "pl";
+  const sep = man.includes("?") ? "&" : "?";
+  return `${man}${sep}lang=${encodeURIComponent(lang)}`;
+}
+
+function isControlModal() {
+  const p = new URLSearchParams(location.search);
+  return p.get("modal") === "control";
+}
+
+function applyControlModalLayout() {
+  if (!isControlModal()) return;
+  document.body.classList.add("manual-in-control-modal");
+  byId("who")?.remove();
+  byId("btnLogout")?.remove();
 }
 
 function wireFallbackNav() {
@@ -37,6 +53,7 @@ async function wireAuthSoft() {
   });
 }
 
+applyControlModalLayout();
 wireFallbackNav();
 
 wireAuthSoft().catch((err) => {
