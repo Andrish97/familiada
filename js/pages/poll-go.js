@@ -129,26 +129,28 @@ async function resolveProfileByEmail(email) {
 
 async function hydrateInviteIdentity(data) {
   if (!data) return data;
+
+  // Email-only: możemy dociągnąć label do UI, ale NIE ustawiamy *_user_id
   if (data.kind === "sub" && !data.subscriber_user_id && data.subscriber_email) {
     const match = await resolveProfileByEmail(data.subscriber_email);
     if (match?.id) {
       return {
         ...data,
-        subscriber_user_id: match.id,
         subscriber_label: data.subscriber_label || match.username || match.email,
       };
     }
   }
+
   if (data.kind === "task" && !data.recipient_user_id && data.recipient_email) {
     const match = await resolveProfileByEmail(data.recipient_email);
     if (match?.id) {
       return {
         ...data,
-        recipient_user_id: match.id,
         recipient_label: data.recipient_label || match.username || match.email,
       };
     }
   }
+
   return data;
 }
 
@@ -193,6 +195,19 @@ function showExpired(head) {
   setView({ head, text: MSG.inviteUsed() });
   clearActions();
   showEmailInput(false);
+}
+
+function matchesInviteTarget({ user, expectedUserId, expectedEmail }) {
+  if (!user) return false;
+
+  // ✅ Soft allow: jeśli token przypisany do konta → tylko user_id decyduje
+  if (expectedUserId) return user.id === expectedUserId;
+
+  // ✅ Email-only: match po email
+  const u = normalizeEmail(user.email);
+  const e = normalizeEmail(expectedEmail);
+  if (!u || !e) return false;
+  return u === e;
 }
 
 async function acceptSubDirect(email) {
@@ -249,18 +264,28 @@ async function handleSubInvite(data, user) {
 
   if (user) {
     if (hasAccountInvite) {
-      const matchById = data.subscriber_user_id && user.id === data.subscriber_user_id;
-      if (!matchById) {
+      // ✅ najpierw user_id, a jak go nie ma → email
+      const okTarget = matchesInviteTarget({
+        user,
+        expectedUserId: data.subscriber_user_id,
+        expectedEmail: data.subscriber_email,
+      });
+  
+      if (!okTarget) {
         showMismatch(head, data.subscriber_email);
         return;
       }
-
+  
       if (!isActive) {
         showExpired(head);
         return;
       }
-
-      setView({ head, text: MSG.acceptInHub() });
+  
+      setView({
+        head,
+        text: MSG.acceptInHub(),
+        hintText: expectedEmail ? `${MSG.invitationRecipient()}: ${expectedEmail}` : "",
+      });
       clearActions();
       addAction(MSG.hubLabel(), "gold", redirectToHub);
       showEmailInput(false);
@@ -311,24 +336,34 @@ async function handleSubInvite(data, user) {
 }
 
 async function handleTaskInvite(data, user) {
+  const expectedEmail = normalizeEmail(data.recipient_email);
   const head = buildTaskHeading(data);
   const isActive = ["pending", "opened"].includes(data.status);
   const hasAccountInvite = Boolean(data.recipient_user_id);
 
   if (user) {
     if (hasAccountInvite) {
-      const matchById = data.recipient_user_id && user.id === data.recipient_user_id;
-      if (!matchById) {
+      const okTarget = matchesInviteTarget({
+        user,
+        expectedUserId: data.recipient_user_id,
+        expectedEmail: data.recipient_email,
+      });
+  
+      if (!okTarget) {
         showMismatch(head, data.recipient_email);
         return;
       }
-
+  
       if (!isActive) {
         showExpired(head);
         return;
       }
-
-      setView({ head, text: MSG.acceptInHub() });
+  
+      setView({
+        head,
+        text: MSG.acceptInHub(),
+        hintText: expectedEmail ? `${MSG.invitationRecipient()}: ${expectedEmail}` : "",
+      });
       clearActions();
       addAction(MSG.hubLabel(), "gold", redirectToHub);
       showEmailInput(false);

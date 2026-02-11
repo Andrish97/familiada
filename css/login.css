@@ -173,3 +173,12 @@ body.setup-mode .setup-card {
   font-size: 12px;
   opacity: .75;
 }
+
+
+.hint{
+  display:block;
+  margin-top: 10px;
+  opacity: .75;
+  font-size: 12px;
+  line-height: 1.35;
+}

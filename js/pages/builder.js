@@ -2,7 +2,7 @@
 import { sb } from "../core/supabase.js";
 import { requireAuth, signOut } from "../core/auth.js";
 import { alertModal, confirmModal } from "../core/modal.js";
-import { initI18n, t } from "../../translation/translation.js";
+import { initI18n, t, applyTranslations } from "../../translation/translation.js";
 
 import { exportGame, importGame, downloadJson } from "./builder-import-export.js";
 import { seedDemoOnceIfNeeded } from "./demo-seed.js";
@@ -16,8 +16,6 @@ import {
   validatePollEntry,
   validatePollReadyToOpen,
 } from "../core/game-validate.js";
-
-initI18n({ withSwitcher: true });
 
 const MSG = {
   exportBaseEmpty: () => t("builder.exportBase.empty"),
@@ -769,6 +767,8 @@ async function refresh() {
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
+  await initI18n({ withSwitcher: true });
+  
   currentUser = await requireAuth("index.html");
   if (who) who.textContent = currentUser?.username || currentUser?.email || t("control.dash");
 
@@ -784,17 +784,42 @@ document.addEventListener("DOMContentLoaded", async () => {
       const total = tasks + invites;
       const text = total > 99 ? "99+" : String(total);
       const hasNew = total > 0;
-      btnPollsHub?.classList.toggle("hasBadge", hasNew);
+      btnPollsHub?.classList.toggle("has-badge", hasNew);
       if (pollsHubBadge) pollsHubBadge.textContent = hasNew ? text : "";
     } catch (e){
       // jak RPC nie istnieje / nie zwróci pól — nie blokujemy UI
-      btnPollsHub?.classList.remove("hasBadge");
+      btnPollsHub?.classList.remove("has-badge");
       if (pollsHubBadge) pollsHubBadge.textContent = "";
+    }
+  }
+  
+  async function refreshBasesBadge(){
+    try{
+      const { data: cnt, error } = await sb().rpc("bases_count_incoming_share_invites");
+      if (error) throw error;
+  
+      const n = Number(cnt || 0);
+      const el = document.getElementById("basesBadge");
+      const btn = document.getElementById("btnBases");
+  
+      if (!el || !btn) return;
+  
+      if (n > 0){
+        el.textContent = n > 99 ? "99+" : String(n);
+        btn.classList.add("has-badge");
+      } else {
+        el.textContent = "";
+        btn.classList.remove("has-badge");
+      }
+    } catch {
+      // cicho, UI ma działać dalej
     }
   }
   
   // po init/requireAuth:
   refreshPollsHubDot();
+  
+  refreshBasesBadge();
 
   btnLogout?.addEventListener("click", async () => {
     await signOut();
@@ -1154,7 +1179,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   });
 
-  // init
   // init
   setActiveTab(TYPES.PREPARED);
 

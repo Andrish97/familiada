@@ -7,9 +7,12 @@ const LANG_LOADERS = {
 };
 
 const LANG_ORDER = ["pl", "en", "uk"];
+
 let currentLang = "pl";
 let translations = pl;
-let switcherEl = null;
+
+let switcherEl = null; // container w topbarze
+let menuEl = null;     // portal w body
 
 function normalizeLang(raw) {
   const v = String(raw || "").toLowerCase();
@@ -31,13 +34,18 @@ export function getUiLang() {
   return "pl";
 }
 
-export async function setUiLang(lang, { persist = true, updateUrl = true, apply = true } = {}) {
+export async function setUiLang(
+  lang,
+  { persist = true, updateUrl = true, apply = true } = {}
+) {
   const next = normalizeLang(lang);
   const loader = LANG_LOADERS[next] || LANG_LOADERS.pl;
+
   translations = await loader();
   currentLang = translations?.meta?.lang || next;
 
   if (persist) localStorage.setItem("uiLang", currentLang);
+
   if (updateUrl) {
     const url = new URL(location.href);
     url.searchParams.set("lang", currentLang);
@@ -45,22 +53,35 @@ export async function setUiLang(lang, { persist = true, updateUrl = true, apply 
   }
 
   document.documentElement.lang = currentLang;
+
   if (apply) applyTranslations(document);
   updateSwitcherLabel();
-  window.dispatchEvent(
-    new CustomEvent("i18n:lang", { detail: { lang: currentLang } })
-  );
+
+  window.dispatchEvent(new CustomEvent("i18n:lang", { detail: { lang: currentLang } }));
 }
 
 export async function initI18n({ withSwitcher = true, apply = true } = {}) {
   await setUiLang(getUiLang(), { persist: true, updateUrl: true, apply });
-  if (withSwitcher) await injectLanguageSwitcher();
+
+  if (withSwitcher) {
+    // ✅ Jeśli initI18n jest wołane zanim DOM istnieje (np. top-level await),
+    // to switcher nie ma gdzie się wstrzyknąć i potrafi wysypać całą stronę.
+    if (typeof document !== "undefined" && document.readyState === "loading") {
+      await new Promise((resolve) =>
+        document.addEventListener("DOMContentLoaded", resolve, { once: true })
+      );
+    }
+    await injectLanguageSwitcher();
+  }
 }
 
 export function t(key, vars = {}) {
   const value = key
     .split(".")
-    .reduce((acc, part) => (acc && acc[part] !== undefined ? acc[part] : undefined), translations || pl);
+    .reduce(
+      (acc, part) => (acc && acc[part] !== undefined ? acc[part] : undefined),
+      translations || pl
+    );
 
   if (value == null) return key;
   if (typeof value === "function") return value(vars);
@@ -79,14 +100,19 @@ export function withLangParam(url) {
 }
 
 export function applyTranslations(root = document) {
+  const defaultVars = {
+    site: (typeof location !== "undefined" ? location.origin : ""),
+    siteHost: (typeof location !== "undefined" ? location.host : ""),
+  };
+
   root.querySelectorAll("[data-i18n]").forEach((el) => {
     const key = el.getAttribute("data-i18n");
-    if (key) el.textContent = t(key);
+    if (key) el.textContent = t(key, defaultVars);
   });
 
   root.querySelectorAll("[data-i18n-html]").forEach((el) => {
     const key = el.getAttribute("data-i18n-html");
-    if (key) el.innerHTML = t(key);
+    if (key) el.innerHTML = t(key, defaultVars);
   });
 
   const attrMap = [
@@ -100,31 +126,40 @@ export function applyTranslations(root = document) {
   attrMap.forEach(({ attr, data }) => {
     root.querySelectorAll(`[${data}]`).forEach((el) => {
       const key = el.getAttribute(data);
-      if (key) el.setAttribute(attr, t(key));
+      if (key) el.setAttribute(attr, t(key, defaultVars));
     });
   });
 
   root.querySelectorAll("title[data-i18n]").forEach((el) => {
     const key = el.getAttribute("data-i18n");
-    if (key) el.textContent = t(key);
+    if (key) el.textContent = t(key, defaultVars);
   });
 }
 
 async function injectLanguageSwitcher() {
   if (switcherEl) return switcherEl;
 
+  // --- Container w topbarze ---
   const container = document.createElement("div");
   container.className = "lang-switcher";
 
   const btn = document.createElement("button");
   btn.type = "button";
-  btn.className = "btn sm lang-btn";
-  btn.setAttribute("aria-label", t("common.languageLabel"));
+  btn.className = "btn lang-btn";
+  btn.setAttribute("aria-label", t("common.languageLabel", {
+    site: (typeof location !== "undefined" ? location.origin : ""),
+    siteHost: (typeof location !== "undefined" ? location.host : ""),
+  }));
 
+  // --- Menu jako PORTAL w body ---
   const menu = document.createElement("div");
   menu.className = "lang-menu";
   menu.hidden = true;
 
+  // Ważne: portal do body (żeby nie ucinało przez topbar/overflow/stacking)
+  document.body.appendChild(menu);
+
+  // Metadane języków
   const metas = await Promise.all(
     LANG_ORDER.map(async (lang) => {
       const loader = LANG_LOADERS[lang] || LANG_LOADERS.pl;
@@ -139,33 +174,45 @@ async function injectLanguageSwitcher() {
     opt.className = "lang-option";
     opt.dataset.lang = meta.lang;
     opt.textContent = `${meta.flag} ${meta.label}`;
-    opt.addEventListener("click", async () => {
+    opt.addEventListener("click", async (e) => {
+      e.stopPropagation();
       menu.hidden = true;
       await setUiLang(meta.lang, { persist: true, updateUrl: true, apply: true });
     });
     menu.appendChild(opt);
   });
 
-  btn.addEventListener("click", () => {
-    const next = !menu.hidden;
-    menu.hidden = !next;
-    if (next) repositionMenu(container, menu);
-  })
-
-  document.addEventListener("click", (e) => {
-    if (!container.contains(e.target)) menu.hidden = true;
+  // Toggle menu
+  btn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    menu.hidden = !menu.hidden;
+    if (!menu.hidden) repositionMenu(container, menu);
   });
 
-  window.addEventListener("resize", () => {
-    if (!menu.hidden) repositionMenu(container, menu);
-  }, { passive: true });
-  
-  window.addEventListener("scroll", () => {
-    if (!menu.hidden) repositionMenu(container, menu);
-  }, { passive: true });
+  // Klik poza: uwzględnij i container i menu (bo menu jest w body)
+  document.addEventListener("click", (e) => {
+    if (!container.contains(e.target) && !menu.contains(e.target)) {
+      menu.hidden = true;
+    }
+  });
+
+  window.addEventListener(
+    "resize",
+    () => {
+      if (!menu.hidden) repositionMenu(container, menu);
+    },
+    { passive: true }
+  );
+
+  window.addEventListener(
+    "scroll",
+    () => {
+      if (!menu.hidden) repositionMenu(container, menu);
+    },
+    { passive: true }
+  );
 
   container.appendChild(btn);
-  container.appendChild(menu);
 
   const topbarRight = document.querySelector(".topbar .topbar-right");
   if (topbarRight) {
@@ -176,51 +223,56 @@ async function injectLanguageSwitcher() {
   }
 
   switcherEl = container;
+  menuEl = menu;
+
   updateSwitcherLabel();
   return switcherEl;
 }
 
 function repositionMenu(container, menu) {
-  // reset
-  menu.style.left = "";
-  menu.style.right = "";
-  menu.style.transform = "";
-
-  // chwilowo pokaż do pomiaru (gdy hidden=true nie ma wymiarów)
+  // Pomiar gdy hidden=true (nie ma wymiarów)
   const wasHidden = menu.hidden;
   if (wasHidden) {
     menu.hidden = false;
     menu.style.visibility = "hidden";
+    menu.style.pointerEvents = "none"; // NIE BLOKUJ KLIKÓW podczas pomiaru
   }
+
+  // fixed overlay
+  menu.style.position = "fixed";
 
   const cRect = container.getBoundingClientRect();
   const mRect = menu.getBoundingClientRect();
 
-  // Domyślnie chcemy jak w CSS: right:0 (menu "do prawej" kontenera)
-  // Sprawdź czy wychodzi poza ekran
-  const overflowRight = mRect.right - window.innerWidth;
-  const overflowLeft = 0 - mRect.left;
+  const padding = 8;
 
-  if (overflowRight > 0 && overflowLeft <= 0) {
-    // nie mieści się w prawo -> przypnij do lewej krawędzi kontenera
-    menu.style.left = "0";
-    menu.style.right = "auto";
-  } else if (overflowLeft > 0 && overflowRight <= 0) {
-    // nie mieści się w lewo -> przypnij do prawej (jak było)
-    menu.style.right = "0";
-    menu.style.left = "auto";
-  } else if (overflowLeft > 0 || overflowRight > 0) {
-    // nadal nie mieści się (np. bardzo wąski ekran) -> przesuń transformem do środka viewportu
-    const shift = Math.max(overflowLeft, 0) - Math.max(overflowRight, 0);
-    menu.style.transform = `translateX(${shift}px)`;
-  } else {
-    // OK -> zostaw domyślne (prawa krawędź)
-    menu.style.right = "0";
-    menu.style.left = "auto";
+  // Preferuj wyrównanie do prawej krawędzi przycisku
+  let left = cRect.right - mRect.width;
+
+  // Clamp X
+  left = Math.min(left, window.innerWidth - mRect.width - padding);
+  left = Math.max(left, padding);
+
+  // Preferuj pod przyciskiem
+  let top = cRect.bottom + 8;
+
+  // Jeśli nie mieści się na dole -> nad przyciskiem
+  if (top + mRect.height > window.innerHeight - padding) {
+    top = cRect.top - mRect.height - 8;
   }
+
+  // Clamp Y
+  top = Math.min(top, window.innerHeight - mRect.height - padding);
+  top = Math.max(top, padding);
+
+  menu.style.left = `${left}px`;
+  menu.style.top = `${top}px`;
+  menu.style.right = "auto";
+  menu.style.transform = "";
 
   if (wasHidden) {
     menu.style.visibility = "";
+    menu.style.pointerEvents = "";
     menu.hidden = true;
   }
 }
@@ -229,7 +281,32 @@ function updateSwitcherLabel() {
   if (!switcherEl) return;
   const btn = switcherEl.querySelector(".lang-btn");
   if (!btn) return;
+
   const meta = translations?.meta || pl.meta;
   btn.textContent = meta.flag;
   btn.setAttribute("aria-label", t("common.languageLabel"));
+}
+
+// -----------------------------------------------------------------------------
+// BFCache / back-forward navigation fix
+// Przy powrocie na stronę (pageshow) JS nie jest restartowany,
+// więc musimy ponownie zsynchronizować język z URL / localStorage
+// -----------------------------------------------------------------------------
+
+if (typeof window !== "undefined") {
+  window.addEventListener("pageshow", () => {
+    try {
+      // setUiLang robi:
+      // - load właściwego słownika
+      // - applyTranslations()
+      // - synchronizację URL / localStorage
+      setUiLang(getUiLang(), {
+        persist: true,
+        updateUrl: true,
+        apply: true,
+      });
+    } catch (e) {
+      console.warn("i18n pageshow sync failed", e);
+    }
+  });
 }

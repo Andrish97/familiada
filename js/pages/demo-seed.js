@@ -6,14 +6,30 @@ import { sb } from "../core/supabase.js";
 import { importBaseFromUrl } from "./bases-import.js";
 import { importPollFromUrl, importGame } from "./builder-import-export.js";
 import { demoImport4Logos } from "../../logo-editor/js/demo-import.js";
-import { t, getI18nSection } from "../../translation/translation.js";
+import { t, getI18nSection, getUiLang } from "../../translation/translation.js";
 
 /* =========================================================
-   DEMO URLs (pełne linki)
+   DEMO URLs (domain-agnostic, language-aware)
 ========================================================= */
-const DEMO = getI18nSection("demo");
-const DEMO_BASE = DEMO.baseUrl || "https://www.familiada.online/demo";
-const DEMO_FILES = DEMO.files || {};
+function getDemoConfig() {
+  const demo = getI18nSection("demo") || {};
+  const lang = (document.documentElement.lang || "").toLowerCase() || getUiLang() || "pl";
+
+  const basePath = String(demo.baseUrl || "").trim() || `/demo/${lang}`;
+  const baseAbs = new URL(
+    basePath.startsWith("http") ? basePath : (basePath.startsWith("/") ? basePath : `/${basePath}`),
+    location.origin
+  ).toString().replace(/\/$/, "");
+
+  return { baseAbs, files: demo.files || {} };
+}
+
+function demoFileUrl(key, fallbackName) {
+  const { baseAbs, files } = getDemoConfig();
+  const name = String((files && files[key]) || fallbackName || "").trim();
+  if (!name) throw new Error(`Missing demo file name for key=${key}`);
+  return new URL(name, baseAbs + "/").toString();
+}
 
 /* =========================================================
    Progress Modal (blokuje UI, styl jak import buildera)
@@ -119,39 +135,39 @@ export async function seedDemoOnceIfNeeded(userId) {
 
   // Kroki (bez "??")
   const steps = [
-    { label: t("demo.stepImportBase"), fn: async () => importBaseFromUrl(`${DEMO_BASE}/${DEMO_FILES.base || "base.json"}`) },
+    { label: t("demo.stepImportBase"), fn: async () => importBaseFromUrl(demoFileUrl("base","base.json")) },
     {
       label: t("demo.stepImportLogos"),
       fn: async () =>
         demoImport4Logos(
-          `${DEMO_BASE}/${DEMO_FILES.logoText || "logo_text.json"}`,
-          `${DEMO_BASE}/${DEMO_FILES.logoTextPix || "logo_text-pix.json"}`,
-          `${DEMO_BASE}/${DEMO_FILES.logoDraw || "logo_draw.json"}`,
-          `${DEMO_BASE}/${DEMO_FILES.logoImage || "logo_image.json"}`
+          demoFileUrl("logoText","logo_text.json"),
+          demoFileUrl("logoTextPix","logo_text-pix.json"),
+          demoFileUrl("logoDraw","logo_draw.json"),
+          demoFileUrl("logoImage","logo_image.json")
         ),
     },
-    { label: t("demo.stepImportPoll1"), fn: async () => importPollFromUrl(`${DEMO_BASE}/${DEMO_FILES.pollTextOpen || "poll_text_open.json"}`) },
-    { label: t("demo.stepImportPoll2"), fn: async () => importPollFromUrl(`${DEMO_BASE}/${DEMO_FILES.pollTextClosed || "poll_text_closed.json"}`) },
-    { label: t("demo.stepImportPoll3"), fn: async () => importPollFromUrl(`${DEMO_BASE}/${DEMO_FILES.pollPointsOpen || "poll_points_open.json"}`) },
-    { label: t("demo.stepImportPoll4"), fn: async () => importPollFromUrl(`${DEMO_BASE}/${DEMO_FILES.pollPointsClosed || "poll_points_closed.json"}`) },
+    { label: t("demo.stepImportPoll1"), fn: async () => importPollFromUrl(demoFileUrl("pollTextOpen","poll_text_open.json")) },
+    { label: t("demo.stepImportPoll2"), fn: async () => importPollFromUrl(demoFileUrl("pollTextClosed","poll_text_closed.json")) },
+    { label: t("demo.stepImportPoll3"), fn: async () => importPollFromUrl(demoFileUrl("pollPointsOpen","poll_points_open.json")) },
+    { label: t("demo.stepImportPoll4"), fn: async () => importPollFromUrl(demoFileUrl("pollPointsClosed","poll_points_closed.json")) },
     {
       label: t("demo.stepImportDraft1"),
       fn: async () => {
-        const prepared = await fetchJson(`${DEMO_BASE}/${DEMO_FILES.prepared || "prepared.json"}`);
+        const prepared = await fetchJson(demoFileUrl("prepared","prepared.json"));
         await importGame(prepared, uid);
       },
     },
     {
       label: t("demo.stepImportDraft2"),
       fn: async () => {
-        const pollPtsDraft = await fetchJson(`${DEMO_BASE}/${DEMO_FILES.pollPointsDraft || "poll_points_draft.json"}`);
+        const pollPtsDraft = await fetchJson(demoFileUrl("pollPointsDraft","poll_points_draft.json"));
         await importGame(pollPtsDraft, uid);
       },
     },
     {
       label: t("demo.stepImportDraft3"),
       fn: async () => {
-        const pollTxtDraft = await fetchJson(`${DEMO_BASE}/${DEMO_FILES.pollTextDraft || "poll_text_draft.json"}`);
+        const pollTxtDraft = await fetchJson(demoFileUrl("pollTextDraft","poll_text_draft.json"));
         await importGame(pollTxtDraft, uid);
       },
     },

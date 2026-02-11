@@ -13,46 +13,60 @@ function buildAuthRedirect(page, lang) {
 }
 
 export function niceAuthError(e) {
-  const msg = (e?.message || String(e || "")).trim();
+  // Goal: keep Supabase / GoTrue error *content*, but show it in UI language when we know how.
+  // If we don't recognize the message, we return the original message (better than hiding details).
+  const msg =
+    (e?.message ||
+      e?.error_description ||
+      e?.description ||
+      (typeof e === "string" ? e : "") ||
+      String(e || "")).trim();
+
+  if (!msg) return t("auth.loginFailed");
+
   const low = msg.toLowerCase();
 
-  // Most common Supabase / GoTrue messages we want to localize
+  // 1) Very common auth messages (stable)
   if (low.includes("email not confirmed")) return t("auth.emailNotConfirmed");
   if (low.includes("invalid login credentials")) return t("auth.invalidCredentials");
 
-  // Rate limiting / spam protection (429 etc.)
-  if (
-    low.includes("for security purposes") ||
-    low.includes("rate limit") ||
-    low.includes("too many requests") ||
-    low.includes("too many") && low.includes("requests") ||
-    low.includes("status") && low.includes("429")
-  ) {
-    return t("auth.tooManyRequests");
-  }
-
-  // Password rules
+  // 2) "New password should be different from the old password."
   if (low.includes("new password should be different")) return t("auth.passwordMustDiffer");
-  if (low.includes("password should be at least") || (low.includes("password") && low.includes("length"))) {
-    return t("auth.passwordTooShort");
-  }
 
-  // Links / tokens
+  // 3) Password length (Supabase sometimes enforces min 6 even if app uses stronger rules)
+  // Examples: "Password should be at least 6 characters."
+  let m = low.match(/password\s+should\s+be\s+at\s+least\s+(\d+)\s+characters?/i);
+  if (m && m[1]) return t("auth.passwordTooShortMin", { min: Number(m[1]) });
+
+  // 4) Rate limit with seconds:
+  // "For security purposes, you can only request this once every 60 seconds."
+  m = low.match(/for security purposes[\s\S]*once every\s+(\d+)\s+seconds?/i);
+  if (m && m[1]) return t("auth.errSecurityOnceEvery", { seconds: Number(m[1]) });
+
+  // 5) Email rate limit:
+  // "Email rate limit exceeded"
+  if (low.includes("email rate limit exceeded")) return t("auth.errEmailRateLimitExceeded");
+
+  // 6) Generic "Too many requests" (without seconds) - translate, but keep meaning
+  if (low.includes("too many requests")) return t("auth.tooManyRequests");
+
+  // 7) Links / tokens
   if (
     low.includes("invalid or expired") ||
     (low.includes("token") && low.includes("expired")) ||
     (low.includes("otp") && low.includes("expired")) ||
-    (low.includes("token") && low.includes("invalid"))
+    (low.includes("token") && low.includes("invalid")) ||
+    low.includes("invalid otp")
   ) {
     return t("auth.linkInvalidOrExpired");
   }
 
-  // Registration duplicates
+  // 8) Registration duplicates
   if (low.includes("user already registered") || (low.includes("already") && low.includes("registered"))) {
     return t("auth.userAlreadyRegistered");
   }
 
-  return msg || t("auth.loginFailed");
+  return msg;
 }
 
 async function loginToEmail(login) {
@@ -98,6 +112,23 @@ export function validatePassword(pwd) {
   }
   return v;
 }
+
+
+function passwordRulesAllHints() {
+  return [
+    t("auth.passwordHintMin"),
+    t("auth.passwordHintLower"),
+    t("auth.passwordHintUpper"),
+    t("auth.passwordHintNumber"),
+    t("auth.passwordHintSpecial"),
+  ];
+}
+
+/** Consistent password policy text to show in UI (index / reset / account). */
+export function getPasswordRulesText() {
+  return t("auth.passwordRules", { hints: passwordRulesAllHints().join(", ") });
+}
+
 
 let _unameCache = { userId: null, username: null, ts: 0 };
 

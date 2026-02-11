@@ -1,7 +1,7 @@
 // js/pages/bases.js
 // Builder baz pytań (warstwa 1) – styl i ergonomia jak builder gier.
 
-import { sb } from "../core/supabase.js";
+import { sb, SUPABASE_URL } from "../core/supabase.js";
 import { requireAuth, signOut } from "../core/auth.js";
 import { alertModal, confirmModal } from "../core/modal.js";
 import { initUiSelect } from "../core/ui-select.js";
@@ -10,7 +10,10 @@ import { initI18n, t } from "../../translation/translation.js";
 initI18n({ withSwitcher: true });
 
 /* ================= DOM ================= */
-const grid = document.getElementById("grid");
+const mineGrid = document.getElementById("mineGrid");
+const sharedGrid = document.getElementById("sharedGrid");
+const mineTitle = document.getElementById("mineTitle");
+const sharedTitle = document.getElementById("sharedTitle");
 const who = document.getElementById("who");
 const hint = document.getElementById("hint");
 
@@ -56,12 +59,17 @@ const exportJsonMsg = document.getElementById("exportJsonMsg");
 
 // Modal share
 const shareOverlay = document.getElementById("shareOverlay");
-const shareList = document.getElementById("shareList");
+const shareSubsList = document.getElementById("shareSubsList");
+const sharePendingList = document.getElementById("sharePendingList");
+const shareSharedList = document.getElementById("shareSharedList");
+
 const shareEmail = document.getElementById("shareEmail");
 const shareRole = document.getElementById("shareRole");
 const btnShareAdd = document.getElementById("btnShareAdd");
 const btnShareClose = document.getElementById("btnShareClose");
 const shareMsg = document.getElementById("shareMsg");
+
+const MAIL_FUNCTION_URL = `${SUPABASE_URL}/functions/v1/send-mail`;
 
 /* ================= STATE ================= */
 let currentUser = null;
@@ -198,14 +206,17 @@ async function listSharedBases() {
     id: r.id,
     name: r.name,
     owner_id: r.owner_id,
-
-    // UI: pokazujemy username, email tylko jako szczegół/tooltip
     ownerUsername: r.owner_username,
     ownerEmail: r.owner_email,
-
     created_at: r.created_at,
     updated_at: r.updated_at,
+  
     sharedRole: r.shared_role,
+  
+    proposed: !!r.proposed,
+    taskId: r.task_id || null,
+    taskStatus: r.task_status || null,
+    proposedRole: r.proposed_role || null,
   }));
 }
 
@@ -438,27 +449,28 @@ async function importBase(payload, onProgress) {
   // 2) Tagi
   prog(t("bases.import.steps.tags"), 3, 5, "");
   const tags = Array.isArray(payload.tags) ? payload.tags : [];
-  for (const t of tags) {
+  for (const tag of tags) {
     const { data, error } = await sb()
       .from("qb_tags")
       .insert({
         base_id: base.id,
-        name: String(t.name || t("bases.defaults.tag")).slice(0, 40),
-        color: String(t.color || "gray").slice(0, 24),
-        ord: Number(t.ord) || 0,
+        name: String(tag.name || t("bases.defaults.tag")).slice(0, 40),
+        color: String(tag.color || "gray").slice(0, 24),
+        ord: Number(tag.ord) || 0,
       }, { defaultToNull: false })
       .select("id")
       .single();
     if (error) throw error;
-    oldToNewTag.set(t.id, data.id);
+    oldToNewTag.set(tag.id, data.id);
   }
 
   // 3) Pytania
   const qs = Array.isArray(payload.questions) ? payload.questions : [];
   prog(t("bases.import.steps.questions"), 0, qs.length || 0, "");
-  for (const q of qs) {
+  for (let qi = 0; qi < qs.length; qi++) {
     const q = qs[qi];
     const newCatId = q.category_id ? (oldToNewCat.get(q.category_id) || null) : null;
+  
     const { data, error } = await sb()
       .from("qb_questions")
       .insert({
@@ -470,8 +482,10 @@ async function importBase(payload, onProgress) {
       }, { defaultToNull: false })
       .select("id")
       .single();
+  
     if (error) throw error;
     oldToNewQ.set(q.id, data.id);
+  
     prog(
       t("bases.import.steps.questions"),
       qi + 1,
@@ -539,11 +553,106 @@ async function resolveLoginToEmail(login) {
   return String(data || "").trim().toLowerCase();
 }
 
+function mailLink(link) {
+  // link z DB jest typu "/bases.html?share=..."
+  try {
+    const u = new URL(link, location.origin);
+    return u.toString();
+  } catch {
+    return String(link || "");
+  }
+}
+
+function escapeMail(s) {
+  return String(s ?? "").replace(/[&<>"']/g, (c) => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+  }[c]));
+}
+
+function buildMailHtml({ title, body, actionLabel, actionUrl }) {
+  const safeTitle = escapeMail(title || t("bases.mail.title"));
+  const safeBody = escapeMail(body || "");
+  const safeActionLabel = escapeMail(actionLabel || t("bases.mail.action"));
+  const safeActionUrl = escapeMail(actionUrl || "");
+
+  // bez fallbacków-stringów, bo klucze już masz w pl/en/uk:
+  const subtitle = escapeMail(t("bases.mail.subtitle"));
+  const footer = escapeMail(t("bases.mail.footer"));
+  const linkLabel = escapeMail(t("bases.mail.linkLabel"));
+
+  return `
+<div style="margin:0;padding:0;background:#050914;">
+  <div style="max-width:560px;margin:0 auto;padding:26px 16px;font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:#ffffff;">
+    <div style="padding:14px 14px;background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.12);border-radius:18px;backdrop-filter:blur(10px);">
+      <div style="font-weight:1000;letter-spacing:.18em;text-transform:uppercase;color:#ffeaa6;">FAMILIADA</div>
+      <div style="margin-top:6px;font-size:12px;opacity:.85;letter-spacing:.08em;text-transform:uppercase;">${subtitle}</div>
+    </div>
+
+    <div style="margin-top:14px;padding:18px;border-radius:20px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.06);box-shadow:0 24px 60px rgba(0,0,0,.45);">
+      <div style="font-weight:1000;font-size:18px;letter-spacing:.06em;color:#ffeaa6;margin:0 0 10px;">${safeTitle}</div>
+      <div style="font-size:14px;opacity:.9;line-height:1.45;margin:0 0 14px;">${safeBody}</div>
+
+      <div style="margin:16px 0;">
+        <a href="${safeActionUrl}" style="display:block;text-align:center;padding:12px 14px;border-radius:14px;border:1px solid rgba(255,234,166,.35);background:rgba(255,234,166,.10);color:#ffeaa6;text-decoration:none;font-weight:1000;letter-spacing:.06em;">
+          ${safeActionLabel}
+        </a>
+      </div>
+
+      <div style="margin-top:10px;font-size:12px;opacity:.75;line-height:1.4;">
+        ${linkLabel}
+        <div style="margin-top:6px;padding:10px 12px;border-radius:16px;border:1px solid rgba(255,255,255,.18);background:rgba(0,0,0,.18);word-break:break-all;">
+          ${safeActionUrl}
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top:14px;font-size:12px;opacity:.7;text-align:center;">${footer}</div>
+  </div>
+</div>
+`;
+}
+
+async function sendMail({ to, subject, html }) {
+  const { data } = await sb().auth.getSession();
+  const token = data?.session?.access_token;
+  if (!token) throw new Error(t("bases.mail.noSession"));
+
+  const res = await fetch(MAIL_FUNCTION_URL, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ to, subject, html }),
+  });
+
+  if (!res.ok) {
+    console.warn("[bases] sendMail failed:", await res.text());
+    throw new Error(t("bases.mail.failed"));
+  }
+}
+
+async function sendBaseShareEmail({ to, link, baseName, ownerLabel }) {
+  const actionUrl = mailLink(link);
+  const html = buildMailHtml({
+    title: t("bases.mail.title"),
+    body: t("bases.mail.body", { owner: ownerLabel || "—", base: baseName || "—" }),
+    actionLabel: t("bases.mail.action"),
+    actionUrl,
+  });
+  await sendMail({
+    to,
+    subject: t("bases.mail.subject", { base: baseName || "—" }),
+    html,
+  });
+}
+
+
 async function openShareModal() {
   setMsg(shareMsg, "");
   shareEmail.value = "";
   shareRoleSelect?.setValue("editor", { silent: true });
-  await renderShareList();
+  await renderShareModal();
   show(shareOverlay, true);
 }
 
@@ -563,92 +672,315 @@ function closeShareModal() {
   })();
 }
 
-async function renderShareList() {
+function msLeftLabel(ms) {
+  const s = Math.max(0, Math.floor(ms / 1000));
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  if (h <= 0) return `${m}m`;
+  return `${h}h ${m}m`;
+}
+
+async function getCooldownUntil(baseId, userId) {
+  const { data, error } = await sb().rpc("base_share_cooldown_until", {
+    p_base_id: baseId,
+    p_recipient_user_id: userId,
+  });
+  if (error) {
+    console.warn("[bases] base_share_cooldown_until error:", error);
+    return null;
+  }
+  return data ? new Date(data).getTime() : null;
+}
+
+async function renderShareModal() {
   const b = selectedBase();
   if (!b || !isOwner(b)) {
-    shareList.innerHTML = "";
+    if (shareSubsList) shareSubsList.innerHTML = "";
+    if (sharePendingList) sharePendingList.innerHTML = "";
+    if (shareSharedList) shareSharedList.innerHTML = "";
     return;
   }
 
-  // RPC zwraca (user_id, email, role) i ma być dostępne tylko dla ownera
-  const { data, error } = await sb().rpc("list_base_shares", { p_base_id: b.id });
-  if (error) {
-    console.warn("[bases] list_base_shares error:", error);
-    shareList.innerHTML = "";
-    return;
-  }
+  // 1) SUBSCRIBERS (registered only) – bierzemy z polls-hub RPC (już masz w DB)
+  // Zakładam, że RPC zwraca m.in. subscriber_user_id, subscriber_username, subscriber_email, status
+  const { data: subs, error: sErr } = await sb().rpc("polls_hub_list_my_subscribers");
+  if (sErr) console.warn("[bases] polls_hub_list_my_subscriptions error:", sErr);
 
-  const rows = (data || [])
-    .slice()
-    .sort((a, b) => String(a.username || a.email || "").localeCompare(String(b.username || b.email || "")));
-  if (!rows.length) {
-    shareList.innerHTML = `<div style="opacity:.75">${t("bases.share.empty")}</div>`;
-    return;
-  }
+  const registeredSubs = (subs || [])
+    .filter((r) => r.status === "active")
+    .filter((r) => !!r.subscriber_user_id);
 
-  shareList.innerHTML = "";
-  for (const r of rows) {
-    const row = document.createElement("div");
-    row.className = "shareRow";
-    row.innerHTML = `
-      <div class="shareEmail"
-           title="${String(r.email || "").replace(/\"/g, "&quot;")}">
-        ${escapeHtml(r.username || r.email || "—")}
-      </div>
-      <div class="ui-select" data-role>
-        <button class="ui-select-btn inp" type="button" aria-haspopup="listbox" aria-expanded="false">
-          <span class="ui-select-label">—</span>
-          <span class="ui-select-caret">▾</span>
-        </button>
-        <div class="ui-select-menu" role="listbox"></div>
-      </div>
-      <button class="btn sm" data-remove type="button">${t("bases.share.remove")}</button>
-    `;
-    const roleEl = row.querySelector("[data-role]");
-    const roleSelect = initUiSelect(roleEl, {
-      options: shareRoleOptions(),
-      value: r.role || "viewer",
-      onChange: async (nextRole) => {
-        // aktualizacja roli – wołamy share_base_by_email ponownie (UI maskuje błędy)
-        setMsg(shareMsg, "");
-        const { data: ok, error: e2 } = await sb().rpc("share_base_by_email", {
-          p_base_id: b.id,
-          p_email: r.email,
-          p_role: nextRole,
-        });
-        if (e2 || ok !== true) {
-          console.warn("[bases] share update failed:", e2);
-          setMsg(shareMsg, t("bases.share.failed"));
-          roleSelect?.setValue(r.role || "viewer", { silent: true });
-          return;
+  // 2) PENDING (outgoing)
+  const { data: pending, error: pErr } = await sb().rpc("list_base_share_tasks_outgoing", { p_base_id: b.id });
+  if (pErr) console.warn("[bases] list_base_share_tasks_outgoing error:", pErr);
+
+  // 3) SHARED (accepted)
+  const { data: shared, error: shErr } = await sb().rpc("list_base_shares", { p_base_id: b.id });
+  if (shErr) console.warn("[bases] list_base_shares error:", shErr);
+
+  const sharedByUser = new Map((shared || []).map((x) => [x.user_id, x]));
+  const pendingByUser = new Map(
+    (pending || [])
+      .filter((x) => x.recipient_user_id)
+      .map((x) => [x.recipient_user_id, x])
+  );
+
+  // 🔑 Reguła UX: subskrybenci NIGDY nie lądują w Pending ani Shared listach.
+  const subscriberUserIds = new Set(
+    (registeredSubs || [])
+      .map((r) => r.subscriber_user_id)
+      .filter(Boolean)
+  );
+ 
+  // helper: cooldown dla subscriber (po cancelled/declined) – bazujemy na danych z "pending" NIE wystarczy,
+  // więc UX-only robimy: jeśli istnieje w DB cancelled/declined, backend i tak blokuje (err=cooldown).
+  // Żeby UX był pełny 1:1 jak polls-hub, można dodać kolejne RPC (opcjonalnie). Tu robimy minimum sensowne.
+
+  // SUBS LIST
+  if (shareSubsList) {
+    if (!registeredSubs.length) {
+      shareSubsList.innerHTML = `<div style="opacity:.75">${t("bases.shareModal.emptySubscribers")}</div>`;
+    } else {
+      const rows = registeredSubs
+        .slice()
+        .sort((a, b) =>
+          String(a.subscriber_username || a.subscriber_email || "").localeCompare(
+            String(b.subscriber_username || b.subscriber_email || "")
+          )
+        );
+
+      shareSubsList.innerHTML = "";
+      for (const r of rows) {
+        const row = document.createElement("div");      // ✅ FIX: wcześniej używałeś "row" bez definicji
+        row.className = "shareRow";
+
+        const userId = r.subscriber_user_id;
+        const label = r.subscriber_label || r.subscriber_email || "—";
+        const title = r.subscriber_email || label;
+
+        const isShared = sharedByUser.has(userId);
+        const isPending = pendingByUser.has(userId);
+        const pendingTask = pendingByUser.get(userId) || null;
+        const email =
+          String(r.subscriber_email || "").trim().toLowerCase() ||
+          null;
+             
+        let cooldownUntilMs = null;
+        let isCooldown = false;
+        let cooldownLabel = "";
+        
+        if (!isShared && !isPending) {
+          cooldownUntilMs = await getCooldownUntil(b.id, userId);
+          if (cooldownUntilMs && cooldownUntilMs > Date.now()) {
+            isCooldown = true;
+            cooldownLabel = msLeftLabel(cooldownUntilMs - Date.now());
+          }
         }
-        await renderShareList();
-      },
-    });
+        
+        const stateText = isShared
+          ? t("bases.shareModal.subStateShared")
+          : (isPending
+              ? t("bases.shareModal.subStatePending")
+              : (isCooldown
+                  ? t("bases.shareModal.subStateCooldown", { left: cooldownLabel })
+                  : t("bases.shareModal.subStateReady")
+                )
+            );
+        
+        row.innerHTML = `
+          <div class="shareEmail" title="${String(title).replace(/\"/g, "&quot;")}">
+            ${escapeHtml(label)}
+          </div>
+          <div class="shareRowActions">
+            <label style="display:inline-flex;align-items:center;gap:8px;cursor:pointer;user-select:none">
+              <input type="checkbox"
+                ${isShared || isPending ? "checked" : ""}
+                ${(isShared || isPending || isCooldown) ? "disabled" : ""}/>
+              <span style="opacity:${(isShared || isPending || isCooldown) ? ".75" : "1"}">
+                ${escapeHtml(stateText)}
+              </span>
+            </label>
+            ${
+              (isPending || isShared)
+                ? `<button class="btn xsm" data-x type="button" title="${escapeHtml(isPending ? t("bases.shareModal.cancelPending") : t("bases.share.remove"))}">✕</button>`
+                : ``
+            }
+          </div>
+        `;
 
-    row.querySelector("[data-remove]").addEventListener("click", async () => {
-      const ok = await confirmModal({
-        title: t("bases.share.removeTitle"),
-        text: t("bases.share.removeText", { email: r.email }),
-        okText: t("bases.share.removeOk"),
-        cancelText: t("bases.share.removeCancel"),
-      });
-      if (!ok) return;
+        const cb = row.querySelector("input[type=checkbox]");
+        cb?.addEventListener("change", async () => {
+          if (cb.disabled) return;
+          if (!cb.checked) return; // tylko dodawanie
+          setMsg(shareMsg, "");
 
-      setMsg(shareMsg, "");
-      const { data: ok2, error: e3 } = await sb().rpc("revoke_base_share", {
-        p_base_id: b.id,
-        p_user_id: r.user_id,
-      });
-      if (e3 || ok2 !== true) {
-        console.warn("[bases] revoke failed:", e3);
-        setMsg(shareMsg, t("bases.share.failed"));
-        return;
+          const role = shareRoleSelect?.getValue?.() || "viewer";
+          
+          const payload = r.subscriber_user_id
+            ? {
+                p_base_id: b.id,
+                p_recipient_user_id: r.subscriber_user_id,
+                p_role: role,
+              }
+            : {
+                p_base_id: b.id,
+                p_email: email,
+                p_role: role,
+              };
+          
+          const { data, error } = await sb().rpc(
+            r.subscriber_user_id ? "base_share_by_user" : "base_share_by_email",
+            payload
+          );
+
+          const rowRes = Array.isArray(data) ? data[0] : data;
+
+          if (error || !rowRes?.ok) {
+            cb.checked = false;
+            const err = rowRes?.err || "";
+            if (err === "cooldown") setMsg(shareMsg, t("bases.share.cooldown"));
+            else if (err === "already_pending") setMsg(shareMsg, t("bases.share.alreadyPending"));
+            else setMsg(shareMsg, t("bases.share.failed"));
+            return;
+          }
+
+          if (rowRes?.mail_to && rowRes?.mail_link) {
+            try {
+              await sendBaseShareEmail({
+                to: rowRes.mail_to,
+                link: rowRes.mail_link,
+                baseName: rowRes.base_name,
+                ownerLabel: rowRes.owner_label,
+              });
+            } catch (e) {
+              console.warn("[bases] email send failed:", e);
+              setMsg(shareMsg, t("bases.share.emailFailed"));
+            }
+          }
+
+          await renderShareModal();
+        });
+        
+        // X na subskrybencie: pending -> cancel task, shared -> revoke share
+        row.querySelector("[data-x]")?.addEventListener("click", async (e) => {
+          e.stopPropagation();
+          setMsg(shareMsg, "");
+          if (isPending && pendingTask?.task_id) {
+            const { data: ok, error } = await sb().rpc("base_share_cancel_task", { p_task_id: pendingTask.task_id });
+            if (error || !ok) {
+              await alertModal({ text: t("bases.share.failed") });
+              return;
+            }
+            await renderShareModal();
+            return;
+          }
+          if (isShared) {
+            const ok = await confirmModal({
+              title: t("bases.share.removeTitle"),
+              text: t("bases.share.removeText", { email: (r.subscriber_email || label) }),
+              okText: t("bases.share.removeOk"),
+              cancelText: t("bases.share.removeCancel"),
+            });
+            if (!ok) return;
+            const { data: ok2, error } = await sb().rpc("revoke_base_share", { p_base_id: b.id, p_user_id: userId });
+            if (error || ok2 !== true) {
+              await alertModal({ text: t("bases.share.failed") });
+              return;
+            }
+            await renderShareModal();
+          }
+        });  
+        shareSubsList.appendChild(row);
       }
-      await renderShareList();
-    });
+    }
+  }
 
-    shareList.appendChild(row);
+  // PENDING LIST
+  if (sharePendingList) {
+    const rows = (pending || []).filter((r) => {
+      // 🔑 ukryj subskrybentów
+      return !(r.recipient_user_id && subscriberUserIds.has(r.recipient_user_id));
+      });
+    if (!rows.length) {
+      sharePendingList.innerHTML = `<div style="opacity:.75">${t("bases.shareModal.emptyPending")}</div>`;
+    } else {
+      sharePendingList.innerHTML = "";
+      for (const r of rows) {
+        const label = r.recipient_username || r.recipient_email || "—";
+        const title = r.recipient_email || label;
+
+        const row = document.createElement("div");
+        row.className = "shareRow";
+        row.innerHTML = `
+          <div class="shareEmail" title="${String(title).replace(/\"/g, "&quot;")}">
+            ${escapeHtml(label)}
+          </div>
+          <div class="shareRowActions">
+            <button class="btn xsm" data-cancel type="button" title="${escapeHtml(t("bases.shareModal.cancelPending"))}">✕</button>
+          </div>
+        `;
+        row.querySelector("[data-cancel]")?.addEventListener("click", async () => {
+          const ok = await sb().rpc("base_share_cancel_task", { p_task_id: r.task_id });
+          if (!ok?.data) {
+            await alertModal({ text: t("bases.share.failed") });
+            return;
+          }
+          await renderShareModal();
+        });
+
+        sharePendingList.appendChild(row);
+      }
+    }
+  }
+
+  // SHARED LIST
+  if (shareSharedList) {
+    const rows = (shared || [])
+      .filter((r) => !subscriberUserIds.has(r.user_id)) // 🔑 ukryj subskrybentów
+      .slice()
+      .sort((a, b) => String(a.username || a.email || "").localeCompare(String(b.username || b.email || "")));
+    if (!rows.length) {
+      shareSharedList.innerHTML = `<div style="opacity:.75">${t("bases.shareModal.emptyShared")}</div>`;
+    } else {
+      shareSharedList.innerHTML = "";
+      for (const r of rows) {
+        const label = r.username || r.email || "—";
+        const title = r.email || label;
+
+        const row = document.createElement("div");
+        row.className = "shareRow";
+        row.innerHTML = `
+          <div class="shareEmail" title="${String(title).replace(/\"/g, "&quot;")}">
+            ${escapeHtml(label)}
+          </div>
+          <div class="shareRowActions">
+            <button class="btn xsm" data-remove type="button" title="${escapeHtml(t("bases.share.remove"))}">✕</button>
+          </div>
+        `;
+
+        row.querySelector("[data-remove]")?.addEventListener("click", async () => {
+          const ok = await confirmModal({
+            title: t("bases.share.removeTitle"),
+            text: t("bases.share.removeText", { email: r.email }),
+            okText: t("bases.share.removeOk"),
+            cancelText: t("bases.share.removeCancel"),
+          });
+          if (!ok) return;
+
+          const { data: ok2, error } = await sb().rpc("revoke_base_share", {
+            p_base_id: b.id,
+            p_user_id: r.user_id,
+          });
+          if (error || ok2 !== true) {
+            await alertModal({ text: t("bases.share.failed") });
+            return;
+          }
+          await renderShareModal();
+        });
+
+        shareSharedList.appendChild(row);
+      }
+    }
   }
 }
 
@@ -675,57 +1007,79 @@ async function shareAdd() {
     return;
   }
 
-  const { data: ok, error } = await sb().rpc("share_base_by_email", {
+  const { data, error } = await sb().rpc("base_share_by_email", {
     p_base_id: b.id,
     p_email: email,
     p_role: role,
   });
-
-  // Maskowanie szczegółów: tylko sukces / nie udało się
-  if (error || ok !== true) {
-    console.warn("[bases] share_base_by_email failed:", error);
-    setMsg(shareMsg, t("bases.share.failed"));
+  const row = Array.isArray(data) ? data[0] : data;
+  
+  if (error || !row?.ok) {
+    const err = row?.err || "";
+    if (err === "cooldown") setMsg(shareMsg, t("bases.share.cooldown"));
+    else if (err === "already_pending") setMsg(shareMsg, t("bases.share.alreadyPending"));
+    else setMsg(shareMsg, t("bases.share.failed"));
     return;
   }
-
+  
+  // jeśli mail_to/link są obecne – wysyłamy maila
+  if (row?.mail_to && row?.mail_link) {
+    try {
+      await sendBaseShareEmail({
+        to: row.mail_to,
+        link: row.mail_link,
+        baseName: row.base_name,
+        ownerLabel: row.owner_label,
+      });
+    } catch (e) {
+      console.warn("[bases] email send failed:", e);
+      // UX: invite istnieje, ale mail mógł nie wyjść
+      setMsg(shareMsg, t("bases.share.emailFailed"));
+    }
+  }
+  
   shareEmail.value = "";
   setMsg(shareMsg, t("bases.share.success"));
-  await renderShareList();
+  await renderShareModal();
 }
 
 /* ================= Render kafelków ================= */
 function render() {
-  if (!grid) return;
-  grid.innerHTML = "";
+  if (!mineGrid || !sharedGrid) return;
 
-  const mkTitle = (txt) => {
-    const d = document.createElement("div");
-    d.className = "sectionTitle";
-    d.textContent = txt;
-    return d;
-  };
+  // nagłówki są stałe (poza scrollami)
+  if (mineTitle) mineTitle.textContent = t("bases.sections.mine");
+  if (sharedTitle) sharedTitle.textContent = t("bases.sections.shared");
 
-  const renderTile = (b) => {
+  mineGrid.innerHTML = "";
+  sharedGrid.innerHTML = "";
+
+  const renderTile = (b, hostEl) => {
     const tile = document.createElement("div");
     tile.className = "card";
     if (b.id === selectedId) tile.classList.add("selected");
-
-    // badges: tablica { text, title }
+    if (b.proposed) tile.classList.add("proposed");
     const badges = [];
 
+    if (b.proposed) {
+      badges.push({
+        text: t("bases.badges.proposed"),
+        title: t("bases.badges.proposedTitle"),
+        kind: "proposed",
+      });
+    }
+    
     if (b.sharedRole) {
-      // 1) Badge "Od: ..."
       const ownerUn = String(b.ownerUsername || "").trim();
       const ownerMail = String(b.ownerEmail || "").trim();
-      
       const fromLabel = ownerUn || ownerMail || "—";
+
       badges.push({
         text: t("bases.badges.from", { name: fromLabel }),
-        title: ownerMail ? ownerMail : fromLabel, // email tylko jako szczegół (tooltip)
+        title: ownerMail ? ownerMail : fromLabel,
         kind: "from",
       });
-      
-      // 2) Badge roli: tylko ikonka
+
       const isEdit = b.sharedRole === "editor";
       badges.push({
         text: isEdit ? "✎" : "👁",
@@ -733,7 +1087,6 @@ function render() {
         kind: "role",
       });
     } else {
-      // Moje: zawsze 1 badge
       const n = Number(b.shareCount || 0);
       badges.push(
         n > 0
@@ -744,28 +1097,62 @@ function render() {
 
     const canDelete = isOwner(b);
     const deleteBtn = canDelete
-      ? `<button class="x" type="button" title="${t("bases.actions.remove")}">✕</button>`
+      ? `<button class="x" type="button" title="${escapeHtml(t("bases.actions.remove"))}">✕</button>`
       : ``;
-
-    const badgesHtml = badges.length
-      ? ` ${badges
-            .map(
-              (x) =>
-                `<span class="badge" data-kind="${escapeHtml(x.kind)}" title="${escapeHtml(
-                  x.title || ""
-                )}">${escapeHtml(x.text || "")}</span>`
-            )
-            .join("")}
-            `
+      
+    const proposedBtns = b.proposed
+      ? `
+        <div class="tileMiniActions">
+          <button class="btn xsm gold" data-accept type="button" title="${escapeHtml(t("bases.proposed.accept"))}">✓</button>
+          <button class="btn xsm" data-decline type="button" title="${escapeHtml(t("bases.proposed.decline"))}">✕</button>
+        </div>`
       : "";
 
-    tile.innerHTML = `
-      ${deleteBtn}
-      <div>
-        <div class="name">${escapeHtml(b.name || t("bases.defaults.baseLabel"))}</div>
-        ${badgesHtml}
-      </div>
-    `;
+    const badgesHtml = badges.length
+      ? badges
+          .map(
+            (x) =>
+              `<span class="tileBadge" data-kind="${escapeHtml(x.kind)}" title="${escapeHtml(
+                x.title || ""
+              )}">${escapeHtml(x.text || "")}</span>`
+          )
+          .join("")
+      : "";
+
+      tile.innerHTML = `
+        ${deleteBtn}
+        <div>
+          <div class="name">${escapeHtml(b.name || t("bases.defaults.baseLabel"))}</div>
+          <div class="meta">${badgesHtml}</div>
+        </div>
+        ${proposedBtns}
+      `;
+    
+    if (b.proposed) {
+      tile.querySelector("[data-accept]")?.addEventListener("click", async (e) => {
+        e.stopPropagation();
+        const { data: ok, error } = await sb().rpc("base_share_accept", { p_task_id: b.taskId });
+        if (error || ok !== true) {
+          await alertModal({ text: t("bases.proposed.failed") });
+          return;
+        }
+        await refreshBases();
+        render();
+        setButtonsState();
+      });
+    
+      tile.querySelector("[data-decline]")?.addEventListener("click", async (e) => {
+        e.stopPropagation();
+        const { data: ok, error } = await sb().rpc("base_share_decline", { p_task_id: b.taskId });
+        if (error || ok !== true) {
+          await alertModal({ text: t("bases.proposed.failed") });
+          return;
+        }
+        await refreshBases();
+        render();
+        setButtonsState();
+      });
+    }
 
     tile.addEventListener("click", (e) => {
       if (e.target?.classList?.contains("x")) return;
@@ -794,35 +1181,32 @@ function render() {
       openNameModalRename(b);
     });
 
-    grid.appendChild(tile);
+    hostEl.appendChild(tile);
   };
 
-  // ===== SEKCJA: Moje bazy =====
-  grid.appendChild(mkTitle(t("bases.sections.mine")));
-
+  // ===== MOJE (z kafelkiem +) =====
   const tNew = document.createElement("div");
   tNew.className = "addCard";
   tNew.innerHTML = `
     <div class="plus">＋</div>
-    <div class="name">${t("bases.sections.newBase")}</div>
+    <div class="name">${escapeHtml(t("bases.sections.newBase"))}</div>
   `;
   tNew.addEventListener("click", () => openNameModalCreate());
-  grid.appendChild(tNew);
+  mineGrid.appendChild(tNew);
 
-  for (const b of ownedBases) renderTile(b);
+  for (const b of ownedBases) renderTile(b, mineGrid);
 
-  // ===== SEKCJA: Udostępnione =====
-  grid.appendChild(mkTitle(t("bases.sections.shared")));
-  
+  // ===== UDOSTĘPNIONE =====
   if (!sharedBases.length) {
     const empty = document.createElement("div");
     empty.className = "emptyNote";
     empty.textContent = t("bases.sections.sharedEmpty");
-    grid.appendChild(empty);
+    sharedGrid.appendChild(empty);
   } else {
-    for (const b of sharedBases) renderTile(b);
+    for (const b of sharedBases) renderTile(b, sharedGrid);
   }
 }
+
 
 function escapeHtml(s) {
   return String(s ?? "")
@@ -1092,9 +1476,51 @@ shareEmail?.addEventListener("keydown", (e) => {
   if (who) who.textContent = currentUser?.username || currentUser?.email || "—";
 
   initShareRoleSelect();
-  window.addEventListener("i18n:lang", () => initShareRoleSelect());
+  window.addEventListener("i18n:lang", () => {
+    initShareRoleSelect();
+    render();          // 🔑 odśwież kafelki i nagłówki sekcji
+    setButtonsState(); // (opcjonalnie, ale bezpiecznie)
+  });
     
   await refreshBases();
   render();
+  // Jeśli weszliśmy z maila: ?share=<token>
+  // UX: tylko ustawia "opened_at" po stronie DB nie jest potrzebne,
+  // bo decyzja accept/decline jest w UI. Tu robimy mismatch-check:
+  const params = new URLSearchParams(location.search);
+  const shareToken = params.get("share");
+  if (shareToken) {
+    // przypadek: zalogowany na innym koncie niż adresat
+    // -> jeśli zaproszenie nie jest dla auth.uid, to go nie zobaczymy w list_shared_bases_ext()
+    // więc pokazujemy alert i prosimy o właściwe konto.
+    // 🔎 najpierw sprawdź token (czy nie cofnięty)
+    try {
+      const { data: info, error } = await sb().rpc("base_share_token_info", { p_token: shareToken });
+      if (!error && info) {
+        const status = info.status;
+        const recId = info.recipient_user_id;
+        if (status === "cancelled") {
+          await alertModal({ text: t("bases.proposed.cancelled") });
+          // usuń ?share= z URL
+          try {
+            const u = new URL(location.href);
+            u.searchParams.delete("share");
+            history.replaceState({}, "", u.toString());
+          } catch {}
+        } else if (recId && currentUser?.id && recId !== currentUser.id) {
+          await alertModal({ text: t("bases.proposed.mismatch") });
+        }
+      }
+    } catch (e) {
+      console.warn("[bases] token info failed:", e);
+    }
+
+    // dotychczasowy mismatch-check po list_shared_bases_ext (zostaje jako fallback)
+    await refreshBases();
+    const hasInvite = sharedBases.some((b) => b.proposed && String(b.taskId || ""));
+    if (!hasInvite) {
+      await alertModal({ text: t("bases.proposed.mismatch") });
+    }
+  }
   setButtonsState();
 })();

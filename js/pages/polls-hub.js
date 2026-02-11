@@ -4,11 +4,12 @@ import { requireAuth, signOut } from "../core/auth.js";
 import { validatePollReadyToOpen } from "../core/game-validate.js";
 import { alertModal, confirmModal } from "../core/modal.js";
 import { initUiSelect } from "../core/ui-select.js";
-import { initI18n, t } from "../../translation/translation.js";
+import { initI18n, t, getUiLang } from "../../translation/translation.js";
 
 initI18n({ withSwitcher: true });
 
 const COOLDOWN_MS = 24 * 60 * 60 * 1000;
+const PENDING_ARCHIVE_MS = 5 * 24 * 60 * 60 * 1000;
 
 const MSG = {
   ok: () => t("pollsHub.ok"),
@@ -21,6 +22,7 @@ const MSG = {
   pollStateDraft: () => t("pollsHub.pollState.draft"),
   tasksBadgeTitle: (done, total) => t("pollsHub.tasksBadgeTitle", { done, total }),
   tasksBadgeNone: () => t("pollsHub.tasksBadgeNone"),
+  votesBadgeLabel: () => t("pollsHub.votesBadgeLabel"),
   anonBadgeTitle: (count) => t("pollsHub.anonBadgeTitle", { count }),
   anonBadgeLabel: () => t("pollsHub.anonBadgeLabel"),
   emptyPolls: () => t("pollsHub.empty.polls"),
@@ -194,6 +196,19 @@ let shareBaseline = new Set();
 let autoRefreshTimer = null;
 let isRefreshing = false;
 let subTokenPrompted = false;
+let focusSubHandled = false;
+let focusTaskHandled = false;
+
+function clearUrlParam(key) {
+  try {
+    const url = new URL(location.href);
+    if (!url.searchParams.has(key)) return;
+    url.searchParams.delete(key);
+    history.replaceState(null, "", url.toString());
+  } catch {
+    // ignore
+  }
+}
 
 const sortState = {
   polls: "newest",
@@ -269,6 +284,14 @@ function mailLink(path) {
   } catch {
     return path;
   }
+}
+
+function buildPollGoLink({ tokenKey, token, lang }) {
+  const safeLang = String(lang || "").trim() || (typeof getUiLang === "function" ? getUiLang() : "pl") || "pl";
+  const url = new URL("poll_go.html", location.origin);
+  url.searchParams.set(tokenKey, token);
+  url.searchParams.set("lang", safeLang);
+  return url.href;
 }
 
 function showProgress(on) {
@@ -567,6 +590,12 @@ function parseDate(d) {
   return d ? new Date(d).getTime() : 0;
 }
 
+function isPendingOlderThan5Days(row) {
+  // baza: kiedy wysłano maila (najlepsze), fallback: created_at
+  const base = parseDate(row.email_sent_at) || parseDate(row.created_at);
+  if (!base) return false;
+  return (Date.now() - base) > PENDING_ARCHIVE_MS;
+}
 
 function hoursLeftFrom(untilTs) {
   const ms = untilTs - Date.now();
@@ -699,25 +728,41 @@ function subscriptionStatusOrder(status) {
 function pollTileClass(poll) {
   if (poll.poll_state === "closed") return "poll-closed";
   if (poll.poll_state === "open") {
-    const hasVotes = (poll.anon_votes || 0) > 0 || (poll.tasks_active || 0) > 0;
-    const isGood = (poll.anon_votes || 0) >= 10 || ((poll.tasks_active || 0) === 0 && (poll.tasks_done || 0) > 0);
-    if (isGood) return "poll-open-good";
-    return hasVotes ? "poll-open-active" : "poll-open-empty";
+    const hasActivity = (poll.anon_votes || 0) > 0 || (poll.tasks_active || 0) > 0;
+
+    // ✅ zielone = spełnia warunki zamknięcia z polls (liczone w DB jako close_ready)
+    const canClose = !!poll.close_ready;
+    if (canClose) return "poll-open-good";
+
+    // żółte = ma aktywność, ale jeszcze nie można zamknąć
+    // pomarańczowe = brak anon i brak tasków
+    return hasActivity ? "poll-open-active" : "poll-open-empty";
   }
   const ready = pollReadyMap.get(poll.game_id) === true;
   return ready ? "poll-draft-ready" : "poll-draft";
 }
 
+
 function pollVotesMeta(poll) {
+  const isClosed = poll.poll_state === "closed";
   const sharedTotal = (poll.tasks_active || 0) + (poll.tasks_done || 0);
   const tasksDone = poll.tasks_done || 0;
   const anonVotes = poll.anon_votes || 0;
-  const tasksText = sharedTotal > 0 ? `${tasksDone}/${sharedTotal}` : "0/0";
+  // open: tasks X/Y
+  // closed: votes X (głosy od subskrybentów = tasks_done)
+  const leftLabel = isClosed ? MSG.votesBadgeLabel() : t("pollsHub.tasksBadgeLabel");
+  const leftText = isClosed
+    ? `${tasksDone}`
+    : (sharedTotal > 0 ? `${tasksDone}/${sharedTotal}` : "0/0");
+
+  const leftTitle = isClosed
+    ? leftLabel
+    : (sharedTotal > 0 ? MSG.tasksBadgeTitle(tasksDone, sharedTotal) : MSG.tasksBadgeNone());
+
   return {
-    tasksText,
-    tasksTitle: sharedTotal > 0
-      ? MSG.tasksBadgeTitle(tasksDone, sharedTotal)
-      : MSG.tasksBadgeNone(),
+    leftLabel,
+    leftText,
+    leftTitle,
     anonText: `${anonVotes}`,
     anonTitle: MSG.anonBadgeTitle(anonVotes),
   };
@@ -743,15 +788,22 @@ function renderPolls() {
       const item = document.createElement("div");
       item.className = `hub-item ${pollTileClass(poll)} ${poll.game_id === selectedPollId ? "selected" : ""}`;
       item.dataset.id = poll.game_id;
+      
+      // Drafty (szare/czerwone): bez badge’y
+      const badgesHtml = (poll.poll_state === "draft")
+        ? ""
+        : `
+          <div class="hub-item-actions hub-item-actions--poll-badges">
+            <span class="hub-item-badge" title="${votesMeta.leftTitle}">${votesMeta.leftLabel}: ${votesMeta.leftText}</span>
+            <span class="hub-item-badge hub-item-badge-alt" title="${votesMeta.anonTitle}">${MSG.anonBadgeLabel()}: ${votesMeta.anonText}</span>
+          </div>
+        `;
       item.innerHTML = `
         <div>
           <div class="hub-item-title">${pollTypeLabel(poll.poll_type)} — ${poll.name || MSG.dash()}</div>
           <div class="hub-item-sub">${poll.poll_state === "open" ? MSG.pollStateOpen() : poll.poll_state === "closed" ? MSG.pollStateClosed() : MSG.pollStateDraft()}</div>
         </div>
-        <div class="hub-item-actions">
-          <span class="hub-item-badge" title="${votesMeta.tasksTitle}">${t("pollsHub.tasksBadgeLabel")}: ${votesMeta.tasksText}</span>
-          <span class="hub-item-badge hub-item-badge-alt" title="${votesMeta.anonTitle}">${MSG.anonBadgeLabel()}: ${votesMeta.anonText}</span>
-        </div>
+        ${badgesHtml}
       `;
       item.addEventListener("click", () => selectPoll(poll));
       item.addEventListener("dblclick", () => openPoll(poll));
@@ -809,8 +861,16 @@ function renderTasks() {
 
 function renderSubscribers() {
   const visible = subscribers.filter((s) => {
-    if (archiveState.subscribers) return s.is_expired || s.status === "declined" || s.status === "cancelled";
-    return s.status === "pending" || s.status === "active";
+    // nigdy nie pokazujemy anulowanych/odrzuconych (historia = śmieci na liście)
+    if (s.status === "declined" || s.status === "cancelled") return false;
+  
+    // ARCHIWALNE = pending > 5 dni
+    if (archiveState.subscribers) return s.status === "pending" && isPendingOlderThan5Days(s);
+  
+    // AKTUALNE = active + pending <= 5 dni
+    if (s.status === "active") return true;
+    if (s.status === "pending") return !isPendingOlderThan5Days(s);
+    return false;
   });
   const sorted = sortSubscribersList(visible);
   const render = (listEl) => {
@@ -865,8 +925,16 @@ function renderSubscribers() {
 
 function renderSubscriptions() {
   const visible = subscriptions.filter((s) => {
-    if (archiveState.subscriptions) return s.is_expired;
-    return true;
+    // nigdy nie pokazujemy anulowanych/odrzuconych
+    if (s.status === "declined" || s.status === "cancelled") return false;
+  
+    // ARCHIWALNE = pending > 5 dni
+    if (archiveState.subscriptions) return s.status === "pending" && isPendingOlderThan5Days(s);
+  
+    // AKTUALNE = active + pending <= 5 dni
+    if (s.status === "active") return true;
+    if (s.status === "pending") return !isPendingOlderThan5Days(s);
+    return false;
   });
   const sorted = sortSubscriptionsList(visible);
   const render = (listEl) => {
@@ -963,10 +1031,9 @@ function extractToken(goUrl, key) {
 
 function openTask(task) {
   if (task.status !== "pending") return;
-  const token = extractToken(task.go_url, "t");
+  const token = task.token;
   if (!token) return;
-  const page = task.poll_type === "poll_points" ? "poll-points.html" : "poll-text.html";
-  location.href = `${page}?t=${encodeURIComponent(token)}`;
+  location.href = `poll_go.html?t=${encodeURIComponent(token)}&lang=${encodeURIComponent(getUiLang() || "pl")}`;
 }
 
 async function declineTask(task) {
@@ -977,6 +1044,12 @@ async function declineTask(task) {
     await sb().rpc("polls_hub_task_decline", { p_task_id: task.task_id });
     setProgress({ step, i: 1, n: 2, msg: MSG.ok() });
     await refreshData();
+    
+    /* ✅ po akceptacji token NIE może dalej siedzieć w URL, bo inaczej
+       maybeFocusFromToken() będzie to interpretować jako “mismatch” */
+    focusTaskHandled = true;
+    clearUrlParam("t");
+    
     finishProgress(step, 2);
   } catch (e) {
     console.error(e);
@@ -1000,11 +1073,13 @@ async function inviteSubscriber(recipient) {
     }
 
     const { data, error } = await sb().rpc("polls_hub_subscription_invite", { p_recipient: resolved });
+    console.log("[invite] invite rpc data:", data);
     if (error) throw error;
     if (data?.ok === false) throw new Error(data?.error || MSG.inviteFail());
     setProgress({ step, i: 1, n: 3, msg: MSG.inviteSaved() });
-    if (!data?.already && data?.id && data?.channel === "email") {
+    if (!data?.already && data?.id) {
       const { data: resendData, error: resendError } = await sb().rpc("polls_hub_subscriber_resend", { p_id: data.id });
+      console.log("[invite] resend rpc data:", resendData);
       if (resendError) throw resendError;
       if (resendData?.ok === false) throw new Error(resendData?.error || MSG.inviteFail());
       if (resendData?.to && resendData?.link) {
@@ -1047,7 +1122,16 @@ async function resendSubscriber(sub) {
     setProgress({ step, i: 0, n: 3, msg: "" });
     const { data, error } = await sb().rpc("polls_hub_subscriber_resend", { p_id: sub.sub_id });
     if (error) throw error;
-    if (data?.ok === false) throw new Error(data?.error || MSG.resendFail());
+	    if (data?.ok === false) {
+	      if (data?.error === "cooldown") {
+	        const untilTs = parseDate(data?.cooldown_until);
+	        const hours = untilTs ? hoursLeftFrom(untilTs) : 24;
+	        void alertModal({ text: MSG.resendCooldownAlert(hours) });
+	        showProgress(false);
+	        return;
+	      }
+	      throw new Error(data?.error || MSG.resendFail());
+	    }
     if (data?.to && data?.link) {
       const ownerLabel = currentUser?.username || currentUser?.email || MSG.ownerFallback();
       try {
@@ -1104,6 +1188,8 @@ async function acceptSubscription(sub) {
     await sb().rpc("polls_hub_subscription_accept", { p_id: sub.sub_id });
     setProgress({ step, i: 1, n: 2, msg: MSG.ok() });
     await refreshData();
+    focusSubHandled = true;
+    clearUrlParam("s");
     finishProgress(step, 2);
   } catch (e) {
     console.error(e);
@@ -1195,12 +1281,12 @@ async function openShareModal() {
         || sub.subscriber_user_id
         || (sub.subscriber_email || "").toLowerCase();
       const status = statusBySub.get(key);
-      const row = document.createElement("label");
-      row.className = "hub-share-item" + (isCooldown ? " cooldown" : "");
-      const isActive = status === "pending" || status === "opened";
-      const isLocked = status === "done";
-      const cooldownUntil = cooldownUntilBySub.get(key) || 0;
-      const isCooldown = !isActive && !isLocked && cooldownUntil && Date.now() < cooldownUntil;
+	      const isActive = status === "pending" || status === "opened";
+	      const isLocked = status === "done";
+	      const cooldownUntil = cooldownUntilBySub.get(key) || 0;
+	      const isCooldown = !isActive && !isLocked && cooldownUntil && Date.now() < cooldownUntil;
+	      const row = document.createElement("label");
+	      row.className = "hub-share-item" + (isCooldown ? " cooldown" : "");
       if (isActive) shareBaseline.add(String(sub.sub_id));
       row.innerHTML = `
         <input type="checkbox" ${isActive ? "checked" : ""} ${isLocked ? "disabled" : ""} data-sub-id="${sub.sub_id}">
@@ -1256,6 +1342,98 @@ function shareStatusHint(status, cooldownUntil = 0) {
   return MSG.shareHintMissing();
 }
 
+async function buildMailItemsForTasksFallback({ gameId, ownerId, selectedSubIds }) {
+  // 1) pobierz taski (muszą mieć token)
+  const { data: rows, error } = await sb()
+    .from("poll_tasks")
+    .select("id,recipient_user_id,recipient_email,token,status")
+    .eq("game_id", gameId)
+    .eq("owner_id", ownerId)
+    .in("status", ["pending", "opened"]);
+
+  if (error) throw error;
+
+  // 2) mapy pomocnicze: task token per recipient (user_id lub email)
+  const tokenByKey = new Map();
+  for (const r of rows || []) {
+    const emailKey = (r.recipient_email || "").trim().toLowerCase();
+    const userKey = r.recipient_user_id ? String(r.recipient_user_id) : "";
+    if (userKey && r.token) tokenByKey.set(userKey, r.token);
+    if (emailKey && r.token) tokenByKey.set(emailKey, r.token);
+  }
+
+  // 3) lookup emaili z profiles (dla tasków, gdzie jest tylko recipient_user_id)
+  const userIds = [...new Set((rows || []).map((r) => r.recipient_user_id).filter(Boolean))];
+  const emailsById = new Map();
+
+  if (userIds.length) {
+    const { data: profs, error: pErr } = await sb()
+      .from("profiles")
+      .select("id,email")
+      .in("id", userIds);
+
+    if (pErr) throw pErr;
+
+    for (const p of profs || []) {
+      const email = String(p.email || "").trim().toLowerCase();
+      if (email) emailsById.set(p.id, email);
+    }
+  }
+
+  // 4) lang per subscriber (bierzemy z obiektu subscribers, fallback do UI lang)
+  //    (nie zakładam konkretnej nazwy pola; wspieram kilka)
+  const subById = new Map(subscribers.map((s) => [String(s.sub_id), s]));
+
+  const defaultLang = (typeof getUiLang === "function" ? getUiLang() : "pl") || "pl";
+
+  // 5) składamy mailItems DLA ZAZNACZONYCH subów
+  const mailItems = [];
+
+  for (const subId of selectedSubIds || []) {
+    const sub = subById.get(String(subId));
+    if (!sub) continue;
+
+    const subEmail = String(sub.subscriber_email || "").trim().toLowerCase();
+    const subUserId = sub.subscriber_matched_user_id || sub.subscriber_user_id || null;
+
+    const to =
+      subEmail ||
+      (subUserId ? emailsById.get(subUserId) : "") ||
+      "";
+
+    if (!to) continue;
+
+    const token =
+      (subUserId ? tokenByKey.get(String(subUserId)) : null) ||
+      (subEmail ? tokenByKey.get(subEmail) : null) ||
+      null;
+
+    if (!token) continue;
+
+    const lang = defaultLang;
+
+    mailItems.push({
+      task_id: null, // uzupełnimy niżej
+      to,
+      link: buildPollGoLink({ tokenKey: "t", token, lang }),
+    });
+  }
+
+  // 6) opcjonalnie: uzupełnij task_id jeśli chcesz markować emaile dokładnie per task
+  //    (mapujemy po (to, token) -> task.id)
+  const taskIdByToken = new Map();
+  for (const r of rows || []) {
+    if (r.token && r.id) taskIdByToken.set(String(r.token), r.id);
+  }
+  for (const item of mailItems) {
+    const tok = extractToken(item.link, "t");
+    const id = tok ? taskIdByToken.get(String(tok)) : null;
+    if (id) item.task_id = id;
+  }
+
+  return mailItems;
+}
+
 async function saveShareModal() {
   const selected = [...shareList.querySelectorAll("input[type=checkbox]")]
     .filter((x) => x.checked)
@@ -1280,7 +1458,20 @@ async function saveShareModal() {
     if (error) throw error;
     if (data?.ok === false) throw new Error(data?.error || MSG.shareSaveFail());
     setProgress({ step, i: 1, n: 4, msg: MSG.shareSavedMsg() });
-    const mailItems = Array.isArray(data?.mail) ? data.mail : [];
+    let mailItems = Array.isArray(data?.mail) ? data.mail : [];
+
+    // ✅ fallback dla TASKÓW (gdy RPC nie zwróciło listy maili, a taski powstały)
+    if (!mailItems.length) {
+      try {
+        mailItems = await buildMailItemsForTasksFallback({
+          gameId: sharePollId,
+          ownerId: currentUser.id,
+          selectedSubIds: selected,
+        });
+      } catch (e) {
+        console.warn("[share] fallback mailItems failed:", e);
+      }
+    }
     let sentCount = 0;
     if (mailItems.length) {
       const ownerLabel = currentUser?.username || currentUser?.email || MSG.ownerFallback();
@@ -1303,6 +1494,22 @@ async function saveShareModal() {
           if (mailItems[index]?.task_id) sentTaskIds.push(mailItems[index].task_id);
         }
       });
+      
+      const failed = results
+        .map((r, i) => ({ r, i }))
+        .filter((x) => x.r.status === "rejected")
+        .map((x) => ({
+          to: mailItems[x.i]?.to,
+          err: String(x.r.reason?.message || x.r.reason || ""),
+        }));
+      
+      if (failed.length) {
+        console.warn("[share] mail failed:", failed);
+        // minimum: powiedz userowi, że X/Y nie poszło
+        void alertModal({
+          text: `${MSG.mailFailed()} (${failed.length}/${mailItems.length})`,
+        });
+      }
       if (sentTaskIds.length) {
         setProgress({ step, i: 3, n: 4, msg: MSG.mailMarking() });
         await sb().rpc("polls_hub_tasks_mark_emailed", { p_task_ids: sentTaskIds });
@@ -1530,24 +1737,49 @@ async function refreshData() {
 }
 
 async function maybeFocusFromToken() {
-  if (focusTaskToken) {
-    const match = tasks.find((t) => extractToken(t.go_url, "t") === focusTaskToken);
-    if (match) {
+  if (focusTaskToken && !focusTaskHandled) {
+    const match = tasks.find((t) => String(t.token || "") === String(focusTaskToken || ""));
+  
+    // jeśli token nie pasuje do żadnego taska w tym koncie -> czyścimy URL (nie ma co spamować promptem)
+    if (!match) {
+      focusTaskHandled = true;
+      clearUrlParam("t");
+    } else {
       const page = match.poll_type === "poll_points" ? "poll-points.html" : "poll-text.html";
       const promptVote = await confirmModal({ text: MSG.focusTaskPrompt() });
+  
+      // niezależnie od decyzji, token nie powinien “wisieć” na polls-hub
+      focusTaskHandled = true;
+      clearUrlParam("t");
+  
       if (promptVote) {
-        location.href = `${page}?t=${encodeURIComponent(focusTaskToken)}`;
+        location.href = `poll_go.html?t=${encodeURIComponent(focusTaskToken)}&lang=${encodeURIComponent(getUiLang() || "pl")}`;
       }
     }
   }
-  if (focusSubToken) {
-    const match = subscriptions.find((s) => String(s.token) === focusSubToken);
-    if (match && match.status === "pending") {
-      const promptAccept = await confirmModal({ text: MSG.focusSubPrompt() });
-      if (promptAccept) {
-        acceptSubscription(match);
+  if (focusSubToken && !focusSubHandled) {
+    const match = subscriptions.find((s) => String(s.token) === String(focusSubToken));
+  
+    // ✅ jeśli token jest “mój”, ale już nie pending (np. active/declined/cancelled),
+    // to znaczy że temat jest załatwiony — czyścimy URL i NIE straszymy mismatch.
+    if (match) {
+      if (match.status === "pending") {
+        const promptAccept = await confirmModal({ text: MSG.focusSubPrompt() });
+        if (promptAccept) {
+          await acceptSubscription(match);
+        } else {
+          // user anulował — nie czyścimy, może wróci później
+          subTokenPrompted = true;
+        }
+      } else {
+        focusSubHandled = true;
+        clearUrlParam("s");
       }
-    } else if (currentUser && !subTokenPrompted) {
+      return;
+    }
+  
+    // ❗ dopiero jeśli NIE MA matcha dla aktualnego usera — pokazujemy mismatch
+    if (currentUser && !subTokenPrompted) {
       subTokenPrompted = true;
       confirmModal({
         title: MSG.tokenMismatchTitle(),
@@ -1582,6 +1814,97 @@ function wireOverlayClose(overlay, onClose) {
     if (e.target === overlay) onClose();
   });
 }
+
+// ✅ Globalny auto-refresh po zamknięciu dowolnego modala (alert/confirm/overlay/aria-modal)
+function installModalAutoRefresh({ refreshFn }) {
+  const MODAL_SELECTOR = [
+    // Twoje overlaye w hubie (share/details/progress)
+    ".overlay",
+    // typowe overlaye z core/modal.js (często tak się nazywa)
+    ".modal-overlay",
+    ".modal-backdrop",
+    // dowolne dialogi dostępnościowe
+    "[role='dialog'][aria-modal='true']",
+    // fallback jeśli kiedyś dodasz data-modal
+    "[data-modal]",
+  ].join(",");
+
+  const isVisible = (el) => {
+    if (!el || !(el instanceof Element)) return false;
+    if (el.hasAttribute("hidden")) return false;
+    const ariaHidden = el.getAttribute("aria-hidden");
+    if (ariaHidden === "true") return false;
+
+    const st = getComputedStyle(el);
+    if (st.display === "none") return false;
+    if (st.visibility === "hidden") return false;
+    if (Number(st.opacity || "1") === 0) return false;
+
+    // jeśli element jest w DOM, ale ma 0 rozmiaru, też traktuj jako niewidoczny (częsty pattern)
+    const r = el.getBoundingClientRect();
+    if (r.width === 0 && r.height === 0) return false;
+
+    return true;
+  };
+
+  const anyModalOpen = () => {
+    const els = document.querySelectorAll(MODAL_SELECTOR);
+    for (const el of els) {
+      if (isVisible(el)) return true;
+    }
+    return false;
+  };
+
+  let prevOpen = anyModalOpen();
+
+  // debounce do jednej decyzji na “tick” (unikasz spamowania przy wielu mutacjach DOM)
+  let scheduled = false;
+  const check = () => {
+    scheduled = false;
+    const nowOpen = anyModalOpen();
+
+    // klucz: było coś otwarte → teraz NIC nie jest otwarte
+    if (prevOpen && !nowOpen) {
+      try {
+        refreshFn();
+      } catch {
+        // ignore
+      }
+    }
+    prevOpen = nowOpen;
+  };
+
+  const scheduleCheck = () => {
+    if (scheduled) return;
+    scheduled = true;
+    queueMicrotask(check);
+  };
+
+  const obs = new MutationObserver(scheduleCheck);
+
+  // obserwujemy:
+  // - dodawanie/usuwanie nodów (alert/confirm mogą być dynamiczne)
+  // - zmiany style/class/hidden/aria-hidden (zamykanie modalnych overlayów)
+  obs.observe(document.body, {
+    subtree: true,
+    childList: true,
+    attributes: true,
+    attributeFilter: ["style", "class", "hidden", "aria-hidden"],
+  });
+
+  // zwróć "unsubscribe", gdybyś kiedyś chciał to wyłączyć
+  return () => obs.disconnect();
+}
+
+// ✅ refresh, ale nie “mruga” w trakcie share/details
+async function refreshAfterAnyModalClose() {
+  const shareOpen = shareOverlay?.style.display === "grid";
+  const detailsOpen = detailsOverlay?.style.display === "grid";
+  if (shareOpen || detailsOpen) return;
+
+  await refreshData();
+}
+
 
 document.addEventListener("DOMContentLoaded", async () => {
   currentUser = await requireAuth("index.html");
@@ -1620,6 +1943,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   wireOverlayClose(shareOverlay, closeShareModal);
   wireOverlayClose(detailsOverlay, closeDetailsModal);
+  
+  installModalAutoRefresh({ refreshFn: () => void refreshAfterAnyModalClose() });
 
   const inviteDesktop = wireInvite(inviteInputDesktop);
   const inviteMobile = wireInvite(inviteInputMobile);

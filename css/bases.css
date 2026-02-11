@@ -1,112 +1,236 @@
 /* css/bases.css
-   Drobne dodatki pod builder baz (reszta jest w builder.css) */
-.shareList {
-    display: grid;
-    gap: 8px;
-    margin: 10px 0 14px
+   Dwie osobne listy w 1 karcie (bases):
+   - "Moje bazy" na górze, osobny scroll
+   - "Udostępnione" przy dole, nagłówek 1 kafelek nad dołem,
+     a pod nim panel o wysokości 1 kafelka (osobny scroll)
+
+   Uwaga: styl kafelków bierze się z builder.css:
+   .builder-body .grid .card / .grid / .addCard itd.
+   Dlatego listy MUSZĄ mieć klasę .grid.
+*/
+
+:root{
+  --bases-gap: 14px;
+  --bases-one-tile: 130px; /* to jest *wysokość panelu udostępnionych*, nie “wymuszenie” stylu kafelka */
 }
 
-.shareRow {
-    display: grid;
-    grid-template-columns: 1fr auto auto;
-    gap: 8px;
-    align-items: center;
-    padding: 10px;
-    border-radius: 12px;
-    border: 1px solid rgba(255,255,255,.12);
-    background: rgba(255,255,255,.04)
+/* =========================================================
+   SHARE MODAL (zostaje)
+========================================================= */
+
+.shareList{
+  display: grid;
+  gap: 8px;
+  margin: 10px 0 14px;
 }
 
-.shareEmail {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    opacity: .95
+.shareRow{
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 8px;
+  align-items: center;
+  padding: 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.04);
 }
 
-.shareRow .inp {
-    padding: 10px 12px
+.shareEmail{
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  opacity: .95;
 }
 
-.shareAdd {
-    margin-top: 10px
+.shareRow .inp{ padding: 10px 12px; }
+.shareAdd{ margin-top: 10px; }
+.emptyNote{ opacity: .75; padding: 10px 4px; }
+
+/* =========================================================
+   LAYOUT: 2 sekcje, każda ma własny .grid (scroll)
+========================================================= */
+
+.bases-layout{
+  flex: 1 1 auto;
+  min-height: 0;
+
+  display: grid;
+  grid-template-rows:
+    auto      /* mine title */
+    1fr       /* mine grid (scroll) */
+    auto      /* shared title */
+    var(--bases-one-tile); /* shared grid: dokładnie 1 “kafelek” miejsca do dołu */
+
+  row-gap: var(--bases-gap);
 }
 
-.emptyNote {
-    opacity: .75;
-    padding: 10px 4px
+/* nagłówki stałe */
+.bases-title{
+  margin: 0;
+  padding: 10px 6px 8px;
+
+  font-weight: 1000;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  opacity: .92;
+
+  background: var(--surface);
+  border-bottom: 1px solid rgba(255,255,255,.10);
 }
 
-.sectionTitle {
-    grid-column: 1/-1;
-    margin: 18px 4px 6px;
-    font-weight: 700;
-    opacity: .9
+/* chcemy, żeby “Udostępnione” było tuż nad swoim panelem
+   (bez dodatkowej przerwy między nagłówkiem a panelem) */
+.bases-title-shared{
+  margin-bottom: calc(-1 * var(--bases-gap));
 }
 
-.builder-body .grid .card .meta {
-    display: inline-block;
-    width: fit-content;
-    padding: 4px 8px;
-    border-radius: 999px;
-    border: 1px solid rgba(255,255,255,.16);
-    background: rgba(255,255,255,.06)
+/* =========================================================
+   DOSTROJENIE .grid z builder.css do naszych dwóch paneli
+   (nie psujemy stylu kafelków — tylko wysokości/układ)
+========================================================= */
+
+/* mine: ma wypełniać resztę wysokości */
+.bases-grid-mine{
+  min-height: 0;   /* ważne dla scrolla w grid */
 }
 
-.grid .card {
-    position: relative
+/* shared: panel ma mieć dokładnie 1 kafelek wysokości */
+.bases-grid-shared{
+  height: calc(var(--bases-one-tile) + 20px);
+  min-height: 0;
 }
 
-.grid .card .x {
-    position: absolute;
-    top: 8px;
-    right: 8px;
-    width: 28px;
-    height: 28px;
-    border-radius: 10px;
-    border: 1px solid rgba(255,255,255,.18);
-    background: rgba(0,0,0,.35);
-    color: rgba(255,255,255,.9);
-    cursor: pointer;
-    line-height: 26px;
-    font-size: 18px;
-    padding: 0
+/* X jako <button> – reset, żeby nie brało domyślnego stylu przeglądarki */
+.builder-body .grid .card .x{
+  appearance: none;
+  -webkit-appearance: none;
+  border: 0;
+  background: transparent;
+  color: rgba(255,255,255,.85);
+  padding: 0;
+  line-height: 1;
+  cursor: pointer;
 }
 
-.grid .card .x:hover {
-    background: rgba(0,0,0,.55)
+.builder-body .grid .card .x:hover{
+  color: #fff;
 }
 
-.badge,.meta {
-    align-items: center
+/* ===== Share modal (3 sections) ===== */
+.modal.shareModal{
+  width: min(820px, 94vw);
 }
 
-.meta {
-    display: flex;
-    gap: 6px;
-    margin-top: 6px
+.shareAddTop{
+  margin-top: 10px;
+  display: grid;
+  gap: 8px;
 }
 
-.badge {
-    display: table;
-    padding: 3px 8px;
-    border-radius: 999px;
-    background: rgba(0,0,0,.25);
-    font-size: 12px;
-    opacity: .9;
-    border: 0;
+.shareSections{
+  margin-top: 14px;
+  display: grid;
+  gap: 14px;
 }
 
-.badge[data-kind=from] {
-    max-width: 220px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    display: inline-block
+.shareSection{
+  padding: 10px;
+  border-radius: 14px;
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.10);
 }
 
-.badge[data-kind=role] {
-    padding: 3px 8px;
-    min-width: 26px;
-    justify-content: center
+.shareSectionTitle{
+  font-weight: 800;
+  letter-spacing: .2px;
 }
+
+.shareSectionSub{
+  margin-top: 4px;
+  opacity: .75;
+  font-size: 13px;
+}
+
+.shareRow{
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+  align-items: center;
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: rgba(0,0,0,.18);
+  border: 1px solid rgba(255,255,255,.08);
+  margin-top: 8px;
+}
+
+.shareRow .shareEmail{
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shareRowActions{
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn.xsm{
+  padding: 6px 10px;
+  font-size: 12px;
+  border-radius: 10px;
+}
+
+/* ===== Proposed shared base tile ===== */
+.card.proposed{
+  border-color: rgba(255, 210, 80, .55);
+  box-shadow: 0 0 0 1px rgba(255, 210, 80, .25) inset;
+}
+
+.badge[data-kind="proposed"]{
+  border-color: rgba(255, 210, 80, .55);
+}
+
+
+/* ===== Tile badges (avoid conflict with topbar .badge from base.css) ===== */
+.card .meta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+  margin-top:8px;
+}
+
+.tileBadge{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:4px 10px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,.16);
+  background:rgba(255,255,255,.07);
+  font-size:12px;
+  line-height:1;
+  letter-spacing:.02em;
+  opacity:.95;
+}
+
+/* subtelne warianty pod data-kind (bez „złota wszędzie”) */
+.tileBadge[data-kind="mine"]{
+  border-color:rgba(255,255,255,.16);
+}
+
+.tileBadge[data-kind="from"]{
+  border-color:rgba(120,200,255,.25);
+  background:rgba(120,200,255,.10);
+}
+
+.tileBadge[data-kind="role"]{
+  border-color:rgba(255,234,166,.25);
+  background:rgba(255,234,166,.10);
+}
+
+.tileBadge[data-kind="proposed"]{
+  border-color:rgba(255,170,210,.28);
+  background:rgba(255,170,210,.10);
+}
+

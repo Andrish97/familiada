@@ -856,6 +856,20 @@ function renderList(){
 
   const active = (logos || []).find(l => !!l.is_active) || null;
   const activeKey = active ? active.id : "default";
+  
+    // 0) PLUS (jak w builder)
+  {
+    const add = document.createElement("div");
+   add.className = "addCard";
+   add.innerHTML = `
+     <div class="plus">＋</div>
+     <div class="txt">${t("logoEditor.create.title")}</div>
+     <div class="sub">${t("logoEditor.create.subtitle")}</div>
+   `;
+    add.addEventListener("click", () => show(createOverlay, true));
+    grid.appendChild(add);
+  }
+
 
   // helper: wybierz
   function select(key){
@@ -947,19 +961,6 @@ function renderList(){
     grid.appendChild(el);
   }
 
-  // 3) PLUS (jak w builder)
-  {
-    const add = document.createElement("div");
-   add.className = "addCard";
-   add.innerHTML = `
-     <div class="plus">＋</div>
-     <div class="txt">${t("logoEditor.create.title")}</div>
-     <div class="sub">${t("logoEditor.create.subtitle")}</div>
-   `;
-    add.addEventListener("click", () => show(createOverlay, true));
-    grid.appendChild(add);
-  }
-
   // jeśli zaznaczenie wskazuje na nieistniejące -> czyść
   if (selectedKey && selectedKey !== "default"){
     const exists = logos.some(l => l.id === selectedKey);
@@ -987,6 +988,45 @@ async function refresh(){
   logos = await listLogos();
   renderList();
 }
+
+let _tinymcePromise = null;
+
+async function loadTinyMceFromSupabase(){
+  if (_tinymcePromise) return _tinymcePromise;
+
+  _tinymcePromise = (async () => {
+    if (window.tinymce) return true;
+
+    // 1) Pobierz klucz z Supabase (tabela/rekord opisane niżej)
+    const { data, error } = await sb()
+      .from("public_kv")
+      .select("value")
+      .eq("key", "tinymce_api_key")
+      .single();
+
+    if (error) throw error;
+
+    const apiKey = String(data?.value || "").trim();
+    if (!apiKey) throw new Error("TinyMCE API key missing.");
+
+    // 2) Dynamicznie doładuj skrypt TinyMCE
+    await new Promise((resolve, reject) => {
+      const s = document.createElement("script");
+      s.src = `https://cdn.tiny.cloud/1/${encodeURIComponent(apiKey)}/tinymce/7/tinymce.min.js`;
+      s.referrerPolicy = "origin";
+      s.async = true;
+      s.onload = () => resolve(true);
+      s.onerror = () => reject(new Error("Failed to load TinyMCE script."));
+      document.head.appendChild(s);
+    });
+
+    if (!window.tinymce) throw new Error("TinyMCE did not initialize.");
+    return true;
+  })();
+
+  return _tinymcePromise;
+}
+
 
 /* =========================================================
    EDYTORY (moduly)
@@ -1245,7 +1285,7 @@ async function boot(){
   };
 
    textEditor = initTextEditor(editorCtx);
-   textPixEditor = initTextPixEditor({ ...editorCtx, BIG_W: 208, BIG_H: 88 });
+   textPixEditor = initTextPixEditor({ ...editorCtx, BIG_W: 208, BIG_H: 88, ensureTinyMCE: loadTinyMceFromSupabase, });
    drawEditor = initDrawEditor(editorCtx);
    imageEditor = initImageEditor(editorCtx);
 

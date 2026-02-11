@@ -15,6 +15,7 @@ const en = {
     open: "Open",
     copy: "Copy",
     done: "Done",
+    dash: "-",
     modal: {
       confirmTitle: "Confirm",
       confirmText: "Are you sure?",
@@ -49,9 +50,12 @@ const en = {
     unknownUsername: "I don't know this username.",
     loginFailed: "Login failed.",
     tooManyRequests: "Too many requests. Try again later.",
+    errSecurityOnceEvery: "For security purposes, you can only request this once every {seconds} seconds.",
+    errEmailRateLimitExceeded: "Email rate limit exceeded. Try again later.",
     linkInvalidOrExpired: "The link is invalid or expired.",
     passwordMustDiffer: "New password must be different from the old password.",
     passwordTooShort: "Password is too short.",
+    passwordTooShortMin: "Password must be at least {min} characters.",
     userAlreadyRegistered: "This email is already registered.",
     confirmEmailFirst: "Please confirm your email first.",
     enterUsername: "Enter a username.",
@@ -485,7 +489,7 @@ const en = {
     copyFail: "Can't copy.",
   },
   demo: {
-    baseUrl: "https://www.familiada.online/demo/en",
+    baseUrl: "/demo/en",
     files: {
       base: "base.json",
       logoText: "logo_text.json",
@@ -599,6 +603,20 @@ const en = {
       roleViewer: "View",
       add: "Add",
       close: "Close",
+      sectionSubscribers: "My subscribers",
+      sectionSubscribersSub: "Registered users only (with username).",
+      sectionPending: "Pending",
+      sectionPendingSub: "If not accepted within 5 days, the request disappears.",
+      sectionShared: "Shared",
+      sectionSharedSub: "Accepted – remove with ✕.",
+      emptySubscribers: "No registered subscribers.",
+      emptyPending: "No pending requests.",
+      emptyShared: "No shares.",
+      cancelPending: "Cancel request",
+      subStateReady: "Add",
+      subStatePending: "Pending",
+      subStateShared: "Shared",
+      subStateCooldown: ({ left }) => `In ${left}`,
     },
     delete: {
       title: "Delete base",
@@ -659,6 +677,9 @@ const en = {
       removeText: "Remove access for {email}?",
       removeOk: "Remove",
       removeCancel: "Cancel",
+      cooldown: "You can't add the same user again for 24h (anti-spam).",
+      alreadyPending: "An invite is already pending.",
+      emailFailed: "Invite created, but email sending failed.",
     },
     badges: {
       from: "From: {name}",
@@ -666,12 +687,32 @@ const en = {
       viewAccess: "Read-only access",
       sharedOthers: "Shared with others ({count})",
       notShared: "Not shared",
+      proposed: "🟡 Proposed",
+      proposedTitle: "Sharing request awaits your decision",
+    },
+    proposed: {
+      accept: "Accept",
+      decline: "Decline",
+      failed: "Action failed.",
+      mismatch: "This share belongs to a different user. Make sure you are logged in to the account tied to the email that received the message.",
+      cancelled: "This invite was cancelled.",
     },
     sections: {
       mine: "My bases",
       newBase: "New base",
       shared: "Shared",
       sharedEmpty: "No shared bases.",
+    },
+    mail: {
+      noSession: "No session available for sending email.",
+      failed: "Email sending failed.",
+      title: "New base sharing",
+      subtitle: "Sharing of the Question base",
+      footer: "If this isn't you, please ignore this message.",
+      linkLabel: "If the button doesn't work, copy the link:",
+      subject: ({ base }) => `A base was shared with you: ${base}`,
+      body: ({ owner, base }) => `${owner} shared the question base “${base}” with you.`,
+      action: "Open in Familiada",
     },
   },
   polls: {
@@ -689,8 +730,8 @@ const en = {
       copyShort: "Copy",
       openLink: "Open link",
       openShort: "Open",
-      previewResults: "Results preview",
-      resultsShort: "Results",
+      refresh: "⟳ Refresh results",
+      qrOnDisplay: "QR on display",
       cancel: "Cancel",
       closeAndNormalize: "Close and normalize",
       noPoll: "No poll",
@@ -706,7 +747,8 @@ const en = {
       title: "Results",
       loading: "Loading…",
       final: "Result:",
-      live: "Live preview:",
+      refreshed: "Results refreshed",
+      refreshFailed: "Failed to refresh results",
     },
     empty: {
       title: "No game",
@@ -2142,7 +2184,7 @@ const en = {
       <h2 class="m-h2">1. Data controller</h2>
       <p class="m-p">
         The controller of personal data is the operator of the Familiada service available at
-        <span class="m-code">https://www.familiada.online</span>
+        <span class="m-code">{site}</span>
       </p>
       <p class="m-p">Contact: <span class="m-code">admin@familiada.online</span></p>
   
@@ -2260,14 +2302,16 @@ const en = {
   builder: {
     title: "Familiada — my games",
     nav: {
-      pollsHub: "Polls hub 📊",
-      pollsHubMobile: "Polls 📊",
+      pollsHubPolls: "Polls 📊",
+      pollsHubMobilePolls: "📊",
+      pollsHubSubs: "Subscriptions 📧",
+      pollsHubMobileSubs: "📧",
       bases: "Question bases 🗃️",
-      basesMobile: "Qbases 🗃️",
+      basesMobile: "🗃️",
       manual: "Tips ℹ️",
-      manualMobile: "Tips ℹ️",
+      manualMobile: "ℹ️",
       logo: "Logo 🖥️",
-      logoMobile: "Logo 🖥️",
+      logoMobile: "🖥️",
       account: "Account settings",
       logout: "Log out",
     },
@@ -2735,6 +2779,7 @@ const en = {
     tasksBadgeNone: "Tasks: no shares.",
     anonBadgeLabel: "Anon",
     anonBadgeTitle: "Anonymous votes: {count}.",
+    votesBadgeLabel: "Votes",
     empty: {
       polls: "No polls to show.",
       tasks: "No tasks to show.",

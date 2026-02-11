@@ -25,10 +25,50 @@ type HookPayload = {
 };
 
 const SENDGRID_KEY = Deno.env.get("SENDGRID_API_KEY");
-const PUBLIC_SITE_URL = Deno.env.get("PUBLIC_SITE_URL") || "https://www.familiada.online";
 const HOOK_SECRET_RAW = Deno.env.get("SEND_EMAIL_HOOK_SECRET") || "";
 const HOOK_SECRET = HOOK_SECRET_RAW.replace("v1,whsec_", "");
 const webhook = new Webhook(HOOK_SECRET);
+
+function mustGetRedirectUrl(payload: HookPayload): URL {
+  const redirect = String(payload.email_data.redirect_to || "").trim();
+  if (!redirect) {
+    throw new Error(
+      "Missing email_data.redirect_to. Pass an absolute emailRedirectTo from the frontend (use window.location.origin)."
+    );
+  }
+  try {
+    return new URL(redirect);
+  } catch {
+    throw new Error(
+      `Invalid email_data.redirect_to URL: "${redirect}". It must be absolute (including https://...).`
+    );
+  }
+}
+
+function getLangFromRedirect(url: URL): EmailLang | "" {
+  const lang = (url.searchParams.get("lang") || "").toLowerCase();
+  if (lang === "uk") return "uk";
+  if (lang === "en") return "en";
+  if (lang === "pl") return "pl";
+  return "";
+}
+
+function extractTargetEmail(payload: HookPayload, redirectUrl: URL): string {
+  const fromTo = String(redirectUrl.searchParams.get("to") || "").trim();
+  if (fromTo) return fromTo;
+
+  const fromUserNew = String(payload.user.email_new || "").trim();
+  if (fromUserNew) return fromUserNew;
+
+  const fromEmailDataNew = String((payload.email_data as unknown as { new_email?: string }).new_email || "").trim();
+  if (fromEmailDataNew) return fromEmailDataNew;
+
+  const fromMeta = String(payload.user.user_metadata?.familiada_email_change_pending || "").trim();
+  if (fromMeta) return fromMeta;
+
+  return "";
+}
+
 
 function json(data: unknown, status = 200): Response {
   return new Response(JSON.stringify(data), {
@@ -88,7 +128,9 @@ serve(async (req) => {
   }
 
   try {
-    const lang = pickLang(payload);
+    const redirectUrl = mustGetRedirectUrl(payload);
+    const baseOrigin = redirectUrl.origin;
+    const lang = pickLang(payload, redirectUrl);
     const type = payload.email_data.email_action_type;
     console.log("ACTION", payload.email_data.email_action_type);
     console.log("user.email", payload.user.email);
@@ -104,31 +146,22 @@ serve(async (req) => {
       const currentEmail = String(payload.user.email || "").trim();
       const currentEmailNormalized = currentEmail.toLowerCase();
 
-      const redirect = payload.email_data.redirect_to || "";
-      let targetEmail = "";
-      let targetEmailNormalized = "";
-
-      try {
-        const url = new URL(redirect, PUBLIC_SITE_URL); // ✅ base URL
-        targetEmail = (url.searchParams.get("to") || "").trim();
-        targetEmailNormalized = targetEmail.toLowerCase();
-      } catch {
-        // ignore
-      }
+      const redirect = String(payload.email_data.redirect_to || "").trim();
+      const targetEmail = extractTargetEmail(payload, redirectUrl).trim();
+      const targetEmailNormalized = targetEmail.toLowerCase();
 
       console.log("redirect_to", redirect);
       console.log("targetEmail", targetEmail);
-
-      const tokenHash = payload.email_data.token_hash || "";
+const tokenHash = payload.email_data.token_hash || "";
       const tokenHashNew = payload.email_data.token_hash_new || "";
 
       const subject = subjectFor("email_change", lang);
 
       // linki (fallbacki na wypadek zamiany nazw przez Supabase)
       const linkCurrent =
-        `${PUBLIC_SITE_URL}/confirm.html?token_hash=${encodeURIComponent(tokenHashNew || tokenHash)}&type=email_change&lang=${lang}`;
+        `${baseOrigin}/confirm.html?token_hash=${encodeURIComponent(tokenHashNew || tokenHash)}&type=email_change&lang=${lang}`;
       const linkTarget =
-        `${PUBLIC_SITE_URL}/confirm.html?token_hash=${encodeURIComponent(tokenHash || tokenHashNew)}&type=email_change&lang=${lang}`;
+        `${baseOrigin}/confirm.html?token_hash=${encodeURIComponent(tokenHash || tokenHashNew)}&type=email_change&lang=${lang}`;
 
       // ✅ CURRENT mail zawsze na payload.user.email
       if (currentEmail) {
@@ -145,7 +178,7 @@ serve(async (req) => {
     }
 
 
-    const actionLink = buildActionLink(payload, lang);
+    const actionLink = buildActionLink(payload, lang, baseOrigin);
     const subject = subjectFor(type, lang);
     const html = renderHtml(type, lang, actionLink);
 
@@ -162,16 +195,14 @@ serve(async (req) => {
   }
 });
 
-function pickLang(payload: HookPayload): EmailLang {
-  const redirect = payload.email_data.redirect_to || "";
-  try {
-    const url = new URL(redirect, PUBLIC_SITE_URL);
-    const lang = (url.searchParams.get("lang") || "").toLowerCase();
-    if (lang === "uk") return "uk";
-    if (lang === "en") return "en";
-    if (lang === "pl") return "pl";
-  } catch {
-    // ignore invalid URL
+function pickLang(payload: HookPayload, redirectUrl?: URL): EmailLang {
+  const url = redirectUrl || (() => {
+    try { return mustGetRedirectUrl(payload); } catch { return null; }
+  })();
+
+  if (url) {
+    const l = getLangFromRedirect(url);
+    if (l) return l;
   }
 
   const metaLang = String(payload.user.user_metadata?.language || "").toLowerCase();
@@ -180,24 +211,21 @@ function pickLang(payload: HookPayload): EmailLang {
   return "pl";
 }
 
-function buildActionLink(payload: HookPayload, lang: EmailLang): string {
+function buildActionLink(payload: HookPayload, lang: EmailLang, baseOrigin: string): string {
   const type = payload.email_data.email_action_type;
   const tokenHash = payload.email_data.token_hash || "";
   const tokenHashNew = payload.email_data.token_hash_new || "";
 
   const mk = (page: "confirm.html" | "reset.html", th: string, t: string) => {
     if (!th) throw new Error(`Missing token_hash for type=${type}`);
-    return `${PUBLIC_SITE_URL}/${page}?token_hash=${encodeURIComponent(th)}&type=${encodeURIComponent(t)}&lang=${lang}`;
+    return `${baseOrigin}/${page}?token_hash=${encodeURIComponent(th)}&type=${encodeURIComponent(t)}&lang=${lang}`;
   };
 
   if (type === "signup") return mk("confirm.html", tokenHash, "signup");
-
   if (type === "recovery") return mk("reset.html", tokenHash, "recovery");
 
   if (type === "email_change") return mk("confirm.html", tokenHash, "email_change");
-
   if (type === "email_change_current") return mk("confirm.html", tokenHash, "email_change");
-
   if (type === "email_change_new") return mk("confirm.html", tokenHashNew || tokenHash, "email_change");
 
   return mk("confirm.html", tokenHash, type);

@@ -15,6 +15,7 @@ const pl = {
     open: "Otwórz",
     copy: "Kopiuj",
     done: "Gotowe",
+    dash: "-",
     modal: {
       confirmTitle: "Potwierdź",
       confirmText: "Na pewno?",
@@ -49,9 +50,12 @@ const pl = {
     unknownUsername: "Nie znam takiej nazwy użytkownika.",
     loginFailed: "Nie udało się zalogować.",
     tooManyRequests: "Za dużo prób. Spróbuj ponownie później.",
+    errSecurityOnceEvery: "Ze względów bezpieczeństwa możesz poprosić o to tylko raz na {seconds} sekund.",
+    errEmailRateLimitExceeded: "Przekroczono limit wysyłania e-maili. Spróbuj ponownie później.",
     linkInvalidOrExpired: "Link jest nieprawidłowy lub wygasł.",
     passwordMustDiffer: "Nowe hasło musi być inne niż poprzednie.",
     passwordTooShort: "Hasło jest za krótkie.",
+    passwordTooShortMin: "Hasło musi mieć co najmniej {min} znaków.",
     userAlreadyRegistered: "Ten e-mail jest już zarejestrowany.",
     confirmEmailFirst: "Najpierw potwierdź e-mail.",
     enterUsername: "Podaj nazwę użytkownika.",
@@ -487,7 +491,7 @@ const pl = {
     copyFail: "Nie mogę skopiować.",
   },
   demo: {
-    baseUrl: "https://www.familiada.online/demo/pl",
+    baseUrl: "/demo/pl",
     files: {
       base: "base.json",
       logoText: "logo_text.json",
@@ -602,6 +606,23 @@ const pl = {
       roleViewer: "Przeglądanie",
       add: "Dodaj",
       close: "Zamknij",
+      cooldown: "Nie można dodać ponownie tego użytkownika przez 24h (anty-spam).",
+      alreadyPending: "Zaproszenie już oczekuje na akceptację.",
+      emailFailed: "Zaproszenie utworzone, ale nie udało się wysłać maila.",
+      sectionSubscribers: "Moi subskrybenci",
+      sectionSubscribersSub: "Tylko zarejestrowani użytkownicy (z username).",
+      sectionPending: "Oczekujące",
+      sectionPendingSub: "Po 5 dniach bez akceptacji zapytanie znika.",
+      sectionShared: "Udostępnione",
+      sectionSharedSub: "Zaakceptowane – usuń przez ✕.",
+      emptySubscribers: "Brak zarejestrowanych subskrybentów.",
+      emptyPending: "Brak oczekujących zapytań.",
+      emptyShared: "Brak udostępnień.",
+      cancelPending: "Anuluj zapytanie",
+      subStateReady: "Dodaj",
+      subStatePending: "Oczekuje",
+      subStateShared: "Udostępnione",
+      subStateCooldown: ({ left }) => `Za ${left}`,
     },
     delete: {
       title: "Usuń bazę",
@@ -662,6 +683,9 @@ const pl = {
       removeText: "Na pewno usunąć dostęp dla: {email}?",
       removeOk: "Usuń",
       removeCancel: "Anuluj",
+      cooldown: "Nie można dodać ponownie tego użytkownika przez 24h (anty-spam).",
+      alreadyPending: "Zaproszenie już oczekuje na akceptację.",
+      emailFailed: "Zaproszenie utworzone, ale nie udało się wysłać maila.",
     },
     badges: {
       from: "Od: {name}",
@@ -669,12 +693,32 @@ const pl = {
       viewAccess: "Masz dostęp tylko do odczytu",
       sharedOthers: "Udostępnione innym ({count})",
       notShared: "Nieudostępnione",
+      proposed: "🟡 Proponowana",
+      proposedTitle: "Udostępnienie oczekuje na Twoją decyzję",
+    },
+    proposed: {
+      accept: "Przyjmij",
+      decline: "Odrzuć",
+      failed: "Nie udało się wykonać akcji.",
+      mismatch: "To udostępnienie dotyczy innego użytkownika. Sprawdź, czy jesteś zalogowany na konto powiązane z mailem, na który przyszła wiadomość.",
+      cancelled: "Zaproszenie zostało cofnięte."
     },
     sections: {
       mine: "Moje bazy",
       newBase: "Nowa baza",
       shared: "Udostępnione",
       sharedEmpty: "Brak udostępnionych baz.",
+    },
+    mail: {
+      noSession: "Brak sesji do wysyłki maila.",
+      failed: "Nie udało się wysłać maila.",
+      title: "Nowe udostępnienie bazy",
+      subtitle: "Udostępnienie bazy pytań",
+      footer: "Jeśli to nie Ty — zignoruj tę wiadomość.",
+      linkLabel: "Jeśli przycisk nie działa, skopiuj link:",
+      subject: ({ base }) => `Udostępniono Ci bazę: ${base}`,
+      body: ({ owner, base }) => `Użytkownik ${owner} udostępnił Ci bazę pytań „${base}”.`,
+      action: "Otwórz w Familiada",
     },
   },
   polls: {
@@ -692,8 +736,8 @@ const pl = {
       copyShort: "Kopiuj",
       openLink: "Otwórz link",
       openShort: "Otwórz",
-      previewResults: "Podgląd wyników",
-      resultsShort: "Wyniki",
+      qrOnDisplay: "QR na wyświetlaczu",
+      refresh: "⟳ Odśwież wyniki",
       cancel: "Anuluj",
       closeAndNormalize: "Zamknij i przelicz",
       noPoll: "Brak sondażu",
@@ -709,7 +753,8 @@ const pl = {
       title: "Wyniki",
       loading: "Ładuję…",
       final: "Wynik:",
-      live: "Podgląd na żywo:",
+      refreshed: "Wyniki odświeżone",
+      refreshFailed: "Nie udało się odświeżyć wyników",
     },
     empty: {
       title: "Brak gry",
@@ -2148,7 +2193,7 @@ const pl = {
       <h2 class="m-h2">1. Administrator danych</h2>
       <p class="m-p">
         Administratorem danych osobowych jest operator serwisu Familiada dostępnego pod adresem
-        <span class="m-code">https://www.familiada.online</span>
+        <span class="m-code">{site}</span>
       </p>
       <p class="m-p">Kontakt: <span class="m-code">admin@familiada.online</span></p>
   
@@ -2266,14 +2311,16 @@ const pl = {
   builder: {
     title: "Familiada — moje gry",
     nav: {
-      pollsHub: "Centrum sondaży 📊",
-      pollsHubMobile: "Sondaże 📊",
+      pollsHubPolls: "Sondaże 📊",
+      pollsHubMobilePolls: "📊",
+      pollsHubSubs: "Subskrypcje 📧",
+      pollsHubMobileSubs: "📧",
       bases: "Bazy pytań 🗃️",
-      basesMobile: "Bazy pyt. 🗃️",
+      basesMobile: "🗃️",
       manual: "Wskazówki ℹ️",
-      manualMobile: "Wskazówki ℹ️",
+      manualMobile: "ℹ️",
       logo: "Logo 🖥️",
-      logoMobile: "Logo 🖥️",
+      logoMobile: "🖥️",
       account: "Ustawienia konta",
       logout: "Wyloguj",
     },
@@ -2741,6 +2788,7 @@ const pl = {
     tasksBadgeNone: "Zadania: brak udostępnień.",
     anonBadgeLabel: "Anon.",
     anonBadgeTitle: "Anonimowe głosy: {count}.",
+    votesBadgeLabel: "Głosy",
     empty: {
       polls: "Brak sondaży do pokazania.",
       tasks: "Brak zadań do pokazania.",

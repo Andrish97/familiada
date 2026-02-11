@@ -43,10 +43,25 @@ function makeVoterToken() {
 export async function exportGame(gameId, onProgress) {
 	const { data: game, error: gErr } = await sb()
 		.from("games")
-		.select("id,name,type")
+		.select("id,name,type,status")
 		.eq("id", gameId)
 		.single();
 	if (gErr) throw gErr;
+	
+	// Reguły eksportu:
+	// - zamknięte sondaze (u nas: status="ready") eksportujemy zawsze jako "prepared"
+	// - draft poll_points: fixed_points zawsze = 0
+	// - draft poll_text: answers zawsze = []
+	const dbType = safeType(game?.type);
+	const dbStatus = String(game?.status || "").toLowerCase().trim();
+	
+	const isDraft = dbStatus === "draft";
+	const isClosedPoll = dbStatus === "ready"; // zamknięte => ready (u Ciebie tak ustawiasz po imporcie) :contentReference[oaicite:3]{index=3}
+	
+	const exportType =
+	  (isClosedPoll && (dbType === "poll_text" || dbType === "poll_points"))
+	    ? "prepared"
+	    : dbType;
 
 	const { data: questions, error: qErr } = await sb()
 		.from("questions")
@@ -57,8 +72,8 @@ export async function exportGame(gameId, onProgress) {
 
 	const qs = questions || [];
 	const out = {
-		game: { name: game?.name ?? t("builderImportExport.defaults.gameName"), type: safeType(game?.type) },
-		questions: [],
+	  game: { name: game?.name ?? t("builderImportExport.defaults.gameName"), type: exportType },
+	  questions: [],
 	};
 
 	const n = qs.length;
@@ -76,12 +91,26 @@ export async function exportGame(gameId, onProgress) {
 			.order("ord", { ascending: true });
 		if (aErr) throw aErr;
 
-		out.questions.push({
-			text: q.text,
-			answers: (answers || []).map((a) => ({
+		let outAnswers = [];
+
+		if (exportType === "prepared") {
+			outAnswers = (answers || []).map((a) => ({
 				text: a.text,
 				fixed_points: Number(a.fixed_points) || 0,
-			})),
+			}));
+		} else if (exportType === "poll_points") {
+			outAnswers = (answers || []).map((a) => ({
+				text: a.text,
+				fixed_points: isDraft ? 0 : (Number(a.fixed_points) || 0),
+			}));
+		} else {
+			// poll_text: w trybie draft nie eksportujemy odpowiedzi/punktów
+			outAnswers = [];
+		}
+
+		out.questions.push({
+			text: q.text,
+			answers: outAnswers,
 		});
 
 		if (typeof onProgress === "function") {

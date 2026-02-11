@@ -3,7 +3,7 @@ import { sb } from "../core/supabase.js";
 import { getUser } from "../core/auth.js";
 import { initI18n, t } from "../../translation/translation.js";
 
-initI18n({ withSwitcher: false });
+initI18n({ withSwitcher: true });
 
 const MSG = {
   thanks: () => t("pollText.thanks"),
@@ -282,6 +282,14 @@ function render() {
   if (btnSend) btnSend.disabled = false;
   if (countEl) countEl.textContent = "0/17";
 }
+
+window.addEventListener("i18n:lang", () => {
+  if (payload) {
+    render();
+  } else {
+    setSub(MSG.loading());
+  }
+});
 
 function updateCount() {
   if (!answerInput || !countEl) return;

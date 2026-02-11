@@ -1,21 +1,70 @@
-/* css/polls-hub.css */
-body.polls-hub-body {
+/* css/polls-hub.css
+   ✅ karta zawsze w viewport
+   ✅ scroll TYLKO w .hub-list
+   ✅ elementy listy MIN 110px (desktop + mobile)
+   ✅ title (i sub) skracane "..."
+   ✅ badge: NIE łamie się, NIE skraca się — pokazuje całość przez poziomy scroll wewnątrz badge
+*/
+
+/* =========================================================
+   Viewport lock
+========================================================= */
+
+body.polls-hub-body{
+  height: 100vh;
   min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   background: var(--bg);
   color: #fff;
 }
 
-.topbar .left {
+/* main = kolumna, bar + sekcja, bez scrolla strony */
+body.polls-hub-body > main.wrap{
+  flex: 1 1 auto;
+  min-height: 0;
   display: flex;
-  align-items: center;
-  gap: 8px;
+  flex-direction: column;
+  overflow: hidden;
 }
 
-.hub-tabs .tabs-strip {
+/* bar nie rośnie */
+body.polls-hub-body .bar{
+  flex: 0 0 auto;
+}
+
+/* sekcje desktop/mobile muszą wypełniać resztę */
+.hub-desktop,
+.hub-mobile{
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* =========================================================
+   Tabs wrapper
+========================================================= */
+
+.tabs-card.hub-tabs{
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  width: 100%;
+  margin: 16px auto 0;
+}
+
+/* pasek tabów nie rośnie */
+.hub-tabs .tabs-strip{
+  flex: 0 0 auto;
   gap: 16px;
 }
 
-.hub-tab-badge {
+.hub-tab-badge{
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -30,32 +79,70 @@ body.polls-hub-body {
   font-weight: 1000;
   margin-left: 8px;
 }
+.hub-tab-badge.is-empty{ display:none; }
 
-.hub-tab-badge.is-empty {
-  display: none;
-}
+/* =========================================================
+   Hub card + panels
+========================================================= */
 
-.hub-card {
+.hub-card{
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+
   padding: 16px;
   background: var(--surface);
   border: 1px solid var(--border-color);
   border-radius: var(--radius);
   box-shadow: 0 18px 36px rgba(0,0,0,.45);
+  box-sizing: border-box;
+
+  /* ważne: nie ucina dropdownów */
+  overflow: visible;
 }
 
-.hub-grid {
+.hub-tab-panel{
+  display: none;
+}
+
+.hub-tab-panel.active{
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+  flex-direction: column;
+  overflow: hidden; /* scroll będzie tylko w .hub-list */
+}
+
+/* =========================================================
+   Desktop grid (2 kolumny)
+========================================================= */
+
+.hub-grid{
+  flex: 1 1 auto;
+  min-height: 0;
+
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px;
 }
 
-.hub-col {
-  display: flex;
-  flex-direction: column;
-  min-height: 420px;
+@media (min-width: 901px){
+  .hub-grid{ gap: 0; }
+  .hub-col{ padding: 0 16px; }
+  .hub-col + .hub-col{ border-left: 1px solid rgba(255,255,255,.12); }
 }
 
-.hub-col-head {
+.hub-col{
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* header kolumny */
+.hub-col-head{
+  flex: 0 0 auto;
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -64,35 +151,31 @@ body.polls-hub-body {
   margin-bottom: 10px;
 }
 
-.hub-col-title {
+.hub-col-title{
   font-weight: 1000;
   letter-spacing: .06em;
   text-transform: uppercase;
 }
-
-.hub-col-hint {
+.hub-col-hint{
   font-size: 12px;
   opacity: .75;
 }
 
-.hub-controls {
+/* kontrolki */
+.hub-controls{
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 8px;
 }
-
-.hub-controls .inp.sm {
+.hub-controls .inp.sm{
   font-size: 12px;
   padding: 7px 8px;
 }
 
-.hub-toggle {
-  display: inline-flex;
-  gap: 4px;
-}
-
-.hub-toggle .btn.btn-toggle {
+/* toggle */
+.hub-toggle{ display:inline-flex; gap:4px; }
+.hub-toggle .btn.btn-toggle{
   border-color: rgba(255,255,255,.18);
   background: rgba(255,255,255,.04);
   color: rgba(255,255,255,.7);
@@ -100,78 +183,153 @@ body.polls-hub-body {
   letter-spacing: .04em;
   text-transform: uppercase;
 }
-
-.hub-toggle .btn.active {
+.hub-toggle .btn.active{
   border-color: rgba(255,234,166,.45);
   background: rgba(255,234,166,.12);
   color: var(--gold);
 }
 
-.hub-list {
-  display: grid;
+/* invite (subs) */
+.hub-invite{
+  flex: 0 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.hub-invite .inp{ flex: 1 1 220px; }
+
+/* =========================================================
+   LISTA (jedyny scroll)
+========================================================= */
+
+.hub-list{
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto; /* 🔑 jedyne miejsce przewijania */
+  -webkit-overflow-scrolling: touch;
+
+  /* flex, nie grid: brak rozciągania pojedynczego elementu */
+  display: flex;
+  flex-direction: column;
   gap: 10px;
-  min-height: 80px;
-  padding: 0;
+  align-items: stretch;
+  justify-content: flex-start;
   border-radius: 16px;
   border: none;
   background: transparent;
-  overflow: visible;
+  padding: 2px;
+  padding-bottom: 18px;
+  box-sizing: border-box;
 }
 
-.hub-item {
+/* pusty stan: ZAWSZE na wysokość hub-list (gdy jest jedynym dzieckiem) */
+.hub-empty{
+  flex: 1 1 auto;       /* ✅ wypełnia całą wysokość listy */
+  min-height: 0;
+
   border-radius: 16px;
-  border: 1px solid rgba(255,255,255,.12);
-  padding: 12px 14px;
+  border: 1px dashed rgba(255,255,255,.14);
+  opacity: .75;
+  text-align: center;
+
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  cursor: pointer;
-  transition: transform .08s ease, box-shadow .2s ease;
+  justify-content: center;
+  padding: 18px;
+  box-sizing: border-box;
 }
 
-.hub-item:hover {
+/* =========================================================
+   Itemy: MIN 110px (nigdy mniej), mogą urosnąć
+========================================================= */
+
+.hub-item{
+  min-height: 110px;
+  max-height: 110px;
+  height: auto;
+  box-sizing: border-box;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,.12);
+  padding: 10px;
+  display: flex;
+  gap: 5px;
+  cursor: pointer;
+  transition: transform .08s ease, box-shadow .2s ease;
+  max-width: 100%;
+  overflow: hidden;      /* ✅ nic nie wyłazi poza kafel */
+  align-content: space-around;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.hub-item:hover{
   transform: translateY(-1px);
   box-shadow: 0 12px 26px rgba(0,0,0,.35);
 }
 
-.hub-item.selected {
+.hub-item.selected{
   outline: 2px solid rgba(255,234,166,.45);
 }
 
-.hub-item > div {
+/* lewa kolumna tekstu */
+.hub-item > div{
   min-width: 0;
 }
-
-.hub-item > div:first-child {
-  flex: 1;
+.hub-item > div:first-child{
+  flex: 1 1 auto;
   min-width: 0;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 6px;
 }
 
-.hub-item .hub-item-title {
+/* title: 1 linia + ... */
+.hub-item .hub-item-title{
   font-weight: 900;
   letter-spacing: .04em;
-  overflow-wrap: anywhere;
-  word-break: break-word;
-  white-space: normal;
+  /* white-space: nowrap; */
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.hub-item .hub-item-sub {
+/* sub: 1 linia + ... */
+.hub-item .hub-item-sub{
   font-size: 12px;
   opacity: .75;
-  overflow-wrap: anywhere;
-  word-break: break-word;
-  white-space: normal;
+
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.hub-item-actions {
+/* prawa część: badge + przyciski (1 wiersz, bez wrap) */
+.hub-item-actions{
+  flex: 0 0 auto;
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 6px;
-  flex-shrink: 0;
+
+  flex-wrap: nowrap;          /* nie łamiemy */
+  min-width: 0;
+  max-width: 55%;
+  overflow: hidden;
 }
 
-.hub-item-badge {
+/* ✅ w kafelkach SONDAŻY: badge jeden pod drugim */
+.hub-item-actions.hub-item-actions--poll-badges{
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  max-width: 55%;
+}
+
+/* badge: nie łamie się, nie skraca — scroll poziomy w środku */
+.hub-item-badge{
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -184,150 +342,144 @@ body.polls-hub-body {
   font-weight: 1000;
   letter-spacing: .02em;
   white-space: nowrap;
+  flex: 0 1 auto;
+  max-width: 100%;
+  overflow-x: auto;           /* ✅ pełna informacja */
+  overflow-y: hidden;
+  scrollbar-width: thin;
+  flex-direction: row;
 }
 
-.hub-item-badge-alt {
+.hub-item-badge::-webkit-scrollbar{
+  height: 6px;
+}
+.hub-item-badge::-webkit-scrollbar-thumb{
+  background: rgba(255,255,255,.22);
+  border-radius: 999px;
+}
+
+.hub-item-badge-alt{
   border-color: rgba(140,200,255,.45);
   background: rgba(140,200,255,.16);
   color: #bfe3ff;
 }
 
-.hub-item.poll-draft {
-  background: rgba(80,80,80,.28);
-}
-
-.hub-item.poll-draft-ready {
-  background: rgba(255,80,80,.2);
-}
-
-.hub-item.poll-open-empty {
-  background: rgba(255,145,0,.2);
-}
-
-.hub-item.poll-open-active {
-  background: rgba(255,200,40,.2);
-}
-
-.hub-item.poll-open-good {
-  background: rgba(70,190,120,.2);
-}
-
-.hub-item.poll-closed {
-  background: rgba(80,160,255,.2);
-}
-
-.hub-item.task-pending {
-  background: rgba(70,190,120,.2);
-}
-
-.hub-item.task-done {
-  background: rgba(80,160,255,.2);
-}
-
-.hub-item.sub-pending {
-  background: rgba(255,200,40,.22);
-}
-
-.hub-item.sub-active {
-  background: rgba(70,190,120,.22);
-}
-
-.hub-item.sub-declined {
-  background: rgba(255,90,90,.22);
-}
-
-.hub-item .btn.xs {
+/* przyciski w itemie */
+.hub-item .btn.xs{
   padding: 4px 6px;
   border-radius: 10px;
+  flex: 0 0 auto;
 }
 
-.hub-invite {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 12px;
-}
+/* =========================================================
+   Statusy (tło elementu)
+========================================================= */
 
-.hub-invite .inp {
-  flex: 1 1 220px;
-}
+.hub-item.poll-draft{ background: rgba(80,80,80,.28); }
+.hub-item.poll-draft-ready{ background: rgba(255,80,80,.2); }
+.hub-item.poll-open-empty{ background: rgba(255,145,0,.2); }
+.hub-item.poll-open-active{ background: rgba(255,200,40,.2); }
+.hub-item.poll-open-good{ background: rgba(70,190,120,.2); }
+.hub-item.poll-closed{ background: rgba(80,160,255,.2); }
 
-.hub-tab-panel {
-  display: none;
-}
+.hub-item.task-pending{ background: rgba(70,190,120,.2); }
+.hub-item.task-done{ background: rgba(80,160,255,.2); }
 
-.hub-tab-panel.active {
-  display: block;
-}
+.hub-item.sub-pending{ background: rgba(255,200,40,.22); }
+.hub-item.sub-active{ background: rgba(70,190,120,.22); }
+.hub-item.sub-declined{ background: rgba(255,90,90,.22); }
 
-.hub-tabs:has(#tabPolls.active) .hub-card {
-  border-top-left-radius: 0;
-  border-top-right-radius: var(--radius);
-}
+/* cooldown (24h anti-spam) */
+.btn.cooldown{ opacity: 0.45; }
+.hub-share-item.cooldown{ opacity: 0.55; }
 
-.hub-tabs:has(#tabSubs.active) .hub-card {
-  border-top-left-radius: var(--radius);
-  border-top-right-radius: 0;
-}
+/* =========================================================
+   Mobile
+========================================================= */
 
-.hub-tabs .tab-slot:first-child .tab-corner-left,
-.hub-tabs .tab-slot:last-child .tab-corner-right {
-  display: none;
-}
+.hub-mobile{ display:none; }
 
-.hub-mobile {
-  display: none;
-}
-
-.hub-tabs-mobile {
+.hub-tabs-mobile{
   --tab-height: 40px;
   --radius: 12px;
 }
-
-.hub-tabs-mobile:has(#tabPollsMobile.active) .hub-card {
-  border-top-left-radius: 0;
-  border-top-right-radius: var(--radius);
-}
-
-.hub-tabs-mobile:has(#tabSubscriptionsMobile.active) .hub-card {
-  border-top-left-radius: var(--radius);
-  border-top-right-radius: 0;
-}
-
-.hub-tabs-mobile .tabs-strip {
+.hub-tabs-mobile .tabs-strip{
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 6px;
 }
-
-.hub-tabs-mobile .tab-label {
+.hub-tabs-mobile .tab-label{
   font-size: 9px;
   letter-spacing: .02em;
   padding: 0 4px;
   overflow: hidden;
   text-overflow: ellipsis;
 }
-
-.hub-tabs-mobile .tab-active {
+.hub-tabs-mobile .tab-active{
   font-size: 9px;
   padding: 0 4px;
 }
 
-.hub-empty {
-  padding: 18px;
-  border-radius: 16px;
-  border: 1px dashed rgba(255,255,255,.14);
-  opacity: .75;
-  text-align: center;
+@media (max-width: 900px){
+  .hub-desktop{ display:none; }
+  .hub-mobile{ display:flex; }
+
+  .hub-grid{ grid-template-columns: 1fr; }
+
+  /* mobilnie bez wrap */
+  .hub-mobile .hub-item{
+    /* align-items: center; */
+    /* flex-wrap: nowrap; */
+  }
+
+  .hub-mobile .hub-item-actions{
+    max-width: 60%;
+  }
+
+  .hub-mobile .hub-item .hub-item-title{
+    font-size: 13px;
+  }
+  .hub-mobile .hub-item .hub-item-sub{
+    font-size: 11px;
+  }
 }
 
-.hub-share-list {
+/* =========================================================
+   Zaokrąglenia pod aktywny tab
+========================================================= */
+
+.hub-tabs:has(#tabPolls.active) .hub-card{
+  border-top-left-radius: 0;
+  border-top-right-radius: var(--radius);
+}
+.hub-tabs:has(#tabSubs.active) .hub-card{
+  border-top-left-radius: var(--radius);
+  border-top-right-radius: 0;
+}
+.hub-tabs .tab-slot:first-child .tab-corner-left,
+.hub-tabs .tab-slot:last-child .tab-corner-right{
+  display:none;
+}
+
+.hub-tabs-mobile:has(#tabPollsMobile.active) .hub-card{
+  border-top-left-radius: 0;
+  border-top-right-radius: var(--radius);
+}
+.hub-tabs-mobile:has(#tabSubscriptionsMobile.active) .hub-card{
+  border-top-left-radius: var(--radius);
+  border-top-right-radius: 0;
+}
+
+/* =========================================================
+   Modal / szczegóły (kosmetyka)
+========================================================= */
+
+.hub-share-list{
   margin-top: 12px;
   display: grid;
   gap: 8px;
 }
-
-.hub-share-item {
+.hub-share-item{
   display: grid;
   grid-template-columns: 24px 1fr auto;
   gap: 10px;
@@ -337,33 +489,34 @@ body.polls-hub-body {
   border: 1px solid rgba(255,255,255,.12);
   background: rgba(255,255,255,.05);
 }
-
-.hub-share-status {
+.hub-share-status{
   font-size: 11px;
   opacity: .75;
 }
 
-.hub-modal-actions {
+.hub-modal-actions{
   margin-top: 14px;
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
   align-items: center;
 }
-
-.hub-modal-msg {
+.hub-modal-msg{
   font-size: 12px;
   opacity: .8;
 }
 
-.hub-details-grid {
+.hub-details-grid{
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 14px;
   margin-top: 14px;
 }
+@media (max-width: 900px){
+  .hub-details-grid{ grid-template-columns: 1fr; }
+}
 
-.hub-details-side {
+.hub-details-side{
   margin-top: 12px;
   padding: 12px;
   border-radius: 14px;
@@ -372,13 +525,13 @@ body.polls-hub-body {
   width: fit-content;
 }
 
-.hub-details-head {
+.hub-details-head{
   font-weight: 900;
   margin-bottom: 8px;
   letter-spacing: .04em;
 }
 
-.hub-details-list {
+.hub-details-list{
   display: grid;
   gap: 8px;
   max-height: 340px;
@@ -386,80 +539,11 @@ body.polls-hub-body {
   padding-right: 6px;
 }
 
-.hub-details-item {
+.hub-details-item{
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
   padding: 10px 12px;
   border-radius: 14px;
-  border: 1px solid rgba(255,255,255,.12);
-  background: rgba(255,255,255,.05);
-}
-
-.hub-anon-count {
-  font-size: 28px;
-  font-weight: 1000;
-  color: var(--gold);
-}
-
-@media (max-width: 900px) {
-  .hub-desktop {
-    display: none;
-  }
-
-  .hub-mobile {
-    display: block;
-  }
-
-  .hub-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .hub-details-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .hub-mobile .hub-item {
-    align-items: flex-start;
-    flex-wrap: wrap;
-    min-height: 64px;
-  }
-
-  .hub-mobile .hub-item > div:first-child {
-    width: 100%;
-  }
-
-  .hub-mobile .hub-item .hub-item-title,
-  .hub-mobile .hub-item .hub-item-sub {
-    white-space: normal;
-    word-break: break-word;
-  }
-
-  .hub-mobile .hub-item-actions {
-    width: 100%;
-    justify-content: flex-end;
-  }
-}
-
-@media (min-width: 901px) {
-  .hub-grid {
-    gap: 0;
-  }
-
-  .hub-col {
-    padding: 0 16px;
-  }
-
-  .hub-col + .hub-col {
-    border-left: 1px solid rgba(255,255,255,.12);
-  }
-}
-
-/* cooldown (24h anti-spam) */
-.btn.cooldown {
-  opacity: 0.45;
-}
-.hub-share-item.cooldown {
-  opacity: 0.55;
-}
+  border: 1px

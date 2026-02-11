@@ -175,8 +175,39 @@ function setEmailPendingUi(nextPendingEmail) {
   tickCooldowns();
 }
 
+
+async function fetchEmailChangeStatus() {
+  try {
+    const { data: sess } = await sb().auth.getSession();
+    const token = sess?.session?.access_token;
+    if (!token) return null;
+
+    const { data, error } = await sb().functions.invoke("email-change-status", {
+      body: {},
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (error) throw error;
+    if (!data?.ok) return null;
+    return data;
+  } catch (e) {
+    // Fallback will handle UI. We keep this silent.
+    console.warn("[email-change-status] failed:", e);
+    return null;
+  }
+}
+
 async function refreshAuthEmailState() {
   try {
+    // 1) Preferred: edge function (service role) – sees pending email across GoTrue versions
+    const st = await fetchEmailChangeStatus();
+    if (st) {
+      currentEmail = st.email || currentEmail;
+      const p = st.pending_email || "";
+      setEmailPendingUi(p);
+      return;
+    }
+
+    // 2) Fallback: client-side user object
     const { data, error } = await sb().auth.getUser();
     if (error) throw error;
     const u = data?.user;
@@ -358,6 +389,18 @@ async function handleEmailResend() {
   }
 }
 
+async function cancelEmailChangeOnServer(pendingEmail) {
+  // Requires Edge Function: supabase/functions/email-change-cancel
+  const { data, error } = await sb().functions.invoke("email-change-cancel", {
+    body: { pendingEmail: pendingEmail || null },
+  });
+
+  if (error) throw error;
+  if (!data?.ok) throw new Error(data?.error || "Email change cancel failed.");
+  return data;
+}
+
+
 async function handleEmailCancel() {
   setErr("");
   try {
@@ -377,6 +420,18 @@ async function handleEmailCancel() {
     confirmUrl.searchParams.set("to", currentEmail);
 
     setStatus(t("account.statusEmailCancelling"));
+
+    // Prefer server-side cancel (service-role) – reliable and domain-agnostic.
+    const res = await cancelEmailChangeOnServer(pendingEmail);
+    if (res?.ok) {
+      setStatus(t("account.statusEmailCancelled"));
+      await refreshAuthEmailState();
+      await loadCooldownsFromServer();
+      return;
+    }
+
+    // Fallback: client-side attempt (may not fully cancel on all Supabase setups)
+
 
     const { error } = await sb().auth.updateUser(
       { email: currentEmail, data: { language, familiada_email_change_pending: "" } },
