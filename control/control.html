@@ -40,10 +40,26 @@
         </div>
     </div>
     <div class="topbar-right">
+      <button class="btn" id="btnManual" type="button">ℹ️</button>
       <span class="who" id="who">—</span>
       <button class="btn" id="btnLogout" type="button" data-i18n="control.logout">Wyloguj</button>
     </div>
   </header>
+
+  <div class="helpOverlay hidden" id="helpOverlay">
+    <div class="helpModal" role="dialog" aria-modal="true">
+      <div class="helpHead">
+        <div class="helpTitle">Wskazówki</div>
+        <button class="btn xs" id="btnHelpClose" type="button">✕</button>
+      </div>
+      <div class="helpActions">
+        <button class="btn sm gold" id="btnHelpManual" type="button">Wskazówki</button>
+        <button class="btn sm" id="btnHelpPrivacy" type="button">Prywatność</button>
+      </div>
+      <iframe id="helpFrame" class="helpFrame" src="../manual.html" title="Wskazówki"></iframe>
+    </div>
+  </div>
+
 
   <div class="gameTitleBar">
     <div class="wrap wide">

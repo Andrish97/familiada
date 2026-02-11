@@ -18,6 +18,7 @@ import { wireActions } from "./actions.js";
 /* ================= DOM ================= */
 const btnBack = document.getElementById("btnBack");
 const btnLogout = document.getElementById("btnLogout");
+const btnManual = document.getElementById("btnManual");
 const who = document.getElementById("who");
 const baseNameEl = document.getElementById("baseName");
 
@@ -27,7 +28,18 @@ function getBaseIdFromUrl() {
   return params.get("base");
 }
 
+function buildManualUrl() {
+  const url = new URL("../manual.html", location.href);
+  const ret = `${location.pathname.split("/").slice(-2).join("/")}${location.search}${location.hash}`;
+  url.searchParams.set("ret", ret);
+  return withLangParam(url.pathname + url.search);
+}
+
 /* ================= Events ================= */
+btnManual?.addEventListener("click", () => {
+  location.href = buildManualUrl();
+});
+
 btnBack?.addEventListener("click", () => {
   // powrót do listy baz (warstwa 1)
   location.href = withLangParam("../bases.html");

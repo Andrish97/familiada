@@ -843,6 +843,34 @@ async function sendZeroStatesToDevices() {
     onNavigate: (card) => store.setActiveCard(card),
   });
 
+
+
+  const helpOverlay = document.getElementById("helpOverlay");
+  const helpFrame = document.getElementById("helpFrame");
+  const btnHelpClose = document.getElementById("btnHelpClose");
+  const btnHelpManual = document.getElementById("btnHelpManual");
+  const btnHelpPrivacy = document.getElementById("btnHelpPrivacy");
+
+  function setHelpView(kind) {
+    if (!helpFrame) return;
+    helpFrame.src = kind === "privacy" ? "../privacy.html" : "../manual.html";
+  }
+
+  function openHelpModal() {
+    setHelpView("manual");
+    helpOverlay?.classList.remove("hidden");
+  }
+
+  function closeHelpModal() {
+    helpOverlay?.classList.add("hidden");
+  }
+
+  btnHelpClose?.addEventListener("click", closeHelpModal);
+  helpOverlay?.addEventListener("click", (ev) => { if (ev.target === helpOverlay) closeHelpModal(); });
+  btnHelpManual?.addEventListener("click", () => setHelpView("manual"));
+  btnHelpPrivacy?.addEventListener("click", () => setHelpView("privacy"));
+
+
   // === Top bar ===
   ui.on("top.back", async () => {
     if (shouldWarnBeforeUnload()) {
@@ -859,6 +887,10 @@ async function sendZeroStatesToDevices() {
     location.href = "../builder.html";
   });
   
+  ui.on("top.manual", () => {
+    openHelpModal();
+  });
+
   ui.on("top.logout", async () => {
     // jeśli wychodzimy PO zakończeniu – zerujemy urządzenia
     if (isEndedUiState()) {
