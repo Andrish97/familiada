@@ -293,7 +293,8 @@ function renderTasks() {
           await alertModal({ text: MSG.loadHubFail() });
           return;
         }
-        location.href = `poll_go.html?t=${encodeURIComponent(task.token)}&lang=${encodeURIComponent(getUiLang() || "pl")}`;
+        const page = task.poll_type === "poll_points" ? "poll-points.html" : "poll-text.html";
+        location.href = `${page}?t=${encodeURIComponent(task.token)}&lang=${encodeURIComponent(getUiLang() || "pl")}`;
       });
       listEl.appendChild(item);
     }
@@ -587,7 +588,8 @@ async function refreshData() {
       if (found) {
         const ok = await confirmModal({ text: MSG.focusTaskPrompt() });
         if (ok) {
-          location.href = `poll_go.html?t=${encodeURIComponent(focusTaskToken)}&lang=${encodeURIComponent(getUiLang() || "pl")}`;
+          const page = found.poll_type === "poll_points" ? "poll-points.html" : "poll-text.html";
+          location.href = `${page}?t=${encodeURIComponent(focusTaskToken)}&lang=${encodeURIComponent(getUiLang() || "pl")}`;
         }
       }
       const url = new URL(location.href);
