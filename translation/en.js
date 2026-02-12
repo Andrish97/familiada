@@ -849,6 +849,7 @@ const en = {
       edit: "Creating and editing a game",
       bases: "Question bases",
       polls: "Polls",
+      subscriptions: "Subscriptions",
       logo: "Logo creation",
       control: "Control panel",
       demo: "Demo - starter materials",
@@ -1653,6 +1654,18 @@ const en = {
         This option is useful
         when the poll was started for testing
         or an organizational error occurred.
+      </p>`,
+      subscriptions: `<p class="m-p">
+        The “Subscriptions” tab covers all user-to-user sharing flows:
+        inviting subscribers, accepting invitations, resending, and removing connections.
+      </p>
+      <p class="m-p">
+        In practice, subscriptions speed up work — you can share a poll with active subscribers
+        in one click, and quickly share a question base without manually rewriting links or data.
+      </p>
+      <p class="m-p">
+        When you type a username in the invite field, the system first checks whether that user exists.
+        If not, you get an alert. For an email address, an invite can also be sent to an unregistered person.
       </p>`,
       logo: `<p class="m-p">
       The system lets you set your own logo that appears on the display
@@ -2843,10 +2856,24 @@ const en = {
         ok: "Remove",
         cancel: "Cancel",
       },
+      updateSubscription: {
+        title: "Update subscription",
+        textPending: "Are you sure you want to reject this invitation?",
+        textActive: "Are you sure you want to cancel this subscription?",
+        okPending: "Reject invitation",
+        okActive: "Cancel subscription",
+        cancel: "Close",
+      },
       deleteVote: {
         title: "Delete vote",
         text: "Are you sure you want to delete this person's vote?",
         ok: "Delete",
+        cancel: "Cancel",
+      },
+      declineTask: {
+        title: "Decline task",
+        text: "Are you sure you want to decline this task?",
+        ok: "Decline",
         cancel: "Cancel",
       },
       tokenMismatch: {
@@ -3061,10 +3088,24 @@ const en = {
         ok: "Remove",
         cancel: "Cancel",
       },
+      updateSubscription: {
+        title: "Update subscription",
+        textPending: "Are you sure you want to reject this invitation?",
+        textActive: "Are you sure you want to cancel this subscription?",
+        okPending: "Reject invitation",
+        okActive: "Cancel subscription",
+        cancel: "Close",
+      },
       deleteVote: {
         title: "Delete vote",
         text: "Are you sure you want to delete this person's vote?",
         ok: "Delete",
+        cancel: "Cancel",
+      },
+      declineTask: {
+        title: "Decline task",
+        text: "Are you sure you want to decline this task?",
+        ok: "Decline",
         cancel: "Cancel",
       },
       tokenMismatch: {
@@ -3280,10 +3321,24 @@ const en = {
         ok: "Remove",
         cancel: "Cancel",
       },
+      updateSubscription: {
+        title: "Update subscription",
+        textPending: "Are you sure you want to reject this invitation?",
+        textActive: "Are you sure you want to cancel this subscription?",
+        okPending: "Reject invitation",
+        okActive: "Cancel subscription",
+        cancel: "Close",
+      },
       deleteVote: {
         title: "Delete vote",
         text: "Are you sure you want to delete this person's vote?",
         ok: "Delete",
+        cancel: "Cancel",
+      },
+      declineTask: {
+        title: "Decline task",
+        text: "Are you sure you want to decline this task?",
+        ok: "Decline",
         cancel: "Cancel",
       },
       tokenMismatch: {

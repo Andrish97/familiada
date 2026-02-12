@@ -25,21 +25,16 @@ async function initManualI18n() {
 function qsa(sel) { return Array.from(document.querySelectorAll(sel)); }
 function byId(id) { return document.getElementById(id); }
 
-const tabs = qsa(".simple-tabs .tab");
-const pages = {
-  general: byId("tab-general"),
-  edit: byId("tab-edit"),
-  bases: byId("tab-bases"),
-  polls: byId("tab-polls"),
-  logo: byId("tab-logo"),
-  control: byId("tab-control"),
-  demo: byId("tab-demo"),
-};
+function getTabs() { return qsa(".simple-tabs .tab"); }
+
+const pages = Object.fromEntries(
+  qsa(".tab-panel[data-tab]").map((el) => [el.dataset.tab, el])
+);
 
 function setActive(name) {
   if (!pages[name]) name = "general";
 
-  tabs.forEach(t => t.classList.toggle("active", t.dataset.tab === name));
+  getTabs().forEach(t => t.classList.toggle("active", t.dataset.tab === name));
   Object.entries(pages).forEach(([key, el]) => {
     el?.classList.toggle("active", key === name);
   });
@@ -53,7 +48,7 @@ function wireTabs() {
     delete pages.demo;
   }
 
-  tabs.forEach(tab => {
+  getTabs().forEach(tab => {
     tab.addEventListener("click", () => setActive(tab.dataset.tab));
   });
 
@@ -71,6 +66,7 @@ function decodeRet() {
 function applyControlModalLayout() {
   if (!isControlModal()) return;
   document.body.classList.add("manual-in-control-modal");
+  document.documentElement.classList.add("manual-in-control-modal");
   byId("btnBack")?.remove();
   byId("who")?.remove();
   byId("btnLogout")?.remove();
