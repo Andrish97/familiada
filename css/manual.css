@@ -60,6 +60,9 @@
     display: block
 }
 
+.tab-panel{display:none}
+.tab-panel.active{display:block}
+
 .m-doc {
     max-width: 82ch
 }
@@ -170,7 +173,7 @@
         line-height: 1.7
     }
    
-   simple-tabs {
+   .simple-tabs {
       display: grid;
    }
 }
@@ -181,3 +184,9 @@ body.manual-in-control-modal .topbar-right{ margin-left:auto; }
 body.manual-in-control-modal .wrap{ max-width: min(1200px, 96vw); }
 
 body.manual-in-control-modal #btnLegal{ margin-right: 56px; }
+
+
+html.manual-in-control-modal, body.manual-in-control-modal { height: 100%; }
+body.manual-in-control-modal { background: transparent; }
+body.manual-in-control-modal .topbar { position: sticky; top: 0; z-index: 5; }
+body.manual-in-control-modal .m-wrap { padding-bottom: 16px; }

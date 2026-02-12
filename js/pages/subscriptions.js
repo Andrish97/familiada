@@ -9,6 +9,7 @@ initI18n({ withSwitcher: true });
 const $ = (id) => document.getElementById(id);
 const qs = new URLSearchParams(location.search);
 const focusInviteToken = qs.get("s");
+let focusInviteHandled = false;
 
 const who = $("who");
 const btnLogout = $("btnLogout");
@@ -62,6 +63,13 @@ const MSG = {
   removeText: () => t("pollsHubSubscriptions.modal.removeSubscriber.text"),
   removeOk: () => t("pollsHubSubscriptions.modal.removeSubscriber.ok"),
   removeCancel: () => t("pollsHubSubscriptions.modal.removeSubscriber.cancel"),
+  updateTitle: () => t("pollsHubSubscriptions.modal.updateSubscription.title"),
+  updateTextPending: () => t("pollsHubSubscriptions.modal.updateSubscription.textPending"),
+  updateTextActive: () => t("pollsHubSubscriptions.modal.updateSubscription.textActive"),
+  updateOkPending: () => t("pollsHubSubscriptions.modal.updateSubscription.okPending"),
+  updateOkActive: () => t("pollsHubSubscriptions.modal.updateSubscription.okActive"),
+  updateCancel: () => t("pollsHubSubscriptions.modal.updateSubscription.cancel"),
+  resendCooldownAlert: (hours) => t("pollsHubSubscriptions.resendCooldownAlert", { hours }),
 };
 
 
@@ -148,13 +156,13 @@ function renderSubscribers() {
 
       const removeBtn = document.createElement("button");
       removeBtn.className = "btn xs danger";
-      removeBtn.textContent = "❌";
+      removeBtn.textContent = "X";
       removeBtn.addEventListener("click", async (e) => {
         e.stopPropagation();
         const ok = await confirmModal({ title: MSG.removeTitle(), text: MSG.removeText(), okText: MSG.removeOk(), cancelText: MSG.removeCancel() });
         if (!ok) return;
         try {
-          await callSubscriptionAction(row, "cancel");
+          await sb().rpc("polls_hub_subscriber_remove", { p_id: row.sub_id });
           await refreshData();
         } catch {
           await alertModal({ text: MSG.removeFail() });
@@ -165,15 +173,20 @@ function renderSubscribers() {
       if (row.status === "pending") {
         const resendBtn = document.createElement("button");
         resendBtn.className = "btn xs";
-        resendBtn.textContent = "🔁";
+        resendBtn.textContent = "↻";
         const until = cooldownUntil(row.email_sent_at);
-        if (until && Date.now() < until) resendBtn.classList.add("cooldown");
+        if (until && Date.now() < until) {
+          resendBtn.classList.add("cooldown");
+          resendBtn.title = MSG.resendCooldownAlert(Math.ceil((until - Date.now()) / (60 * 60 * 1000)));
+        }
         resendBtn.addEventListener("click", async (e) => {
           e.stopPropagation();
           try {
-            const inviteTarget = row.subscriber_email || row.subscriber_label;
-            if (!inviteTarget) throw new Error("missing_target");
-            const { data, error } = await sb().rpc("polls_hub_subscription_invite", { p_recipient: inviteTarget });
+            if (until && Date.now() < until) {
+              await alertModal({ text: MSG.resendCooldownAlert(Math.ceil((until - Date.now()) / (60 * 60 * 1000))) });
+              return;
+            }
+            const { data, error } = await sb().rpc("polls_hub_subscriber_resend", { p_id: row.sub_id });
             if (error || data?.ok === false) throw error || new Error(data?.error || "fail");
             await refreshData();
           } catch {
@@ -210,11 +223,19 @@ function renderInvites() {
 
       const reject = document.createElement("button");
       reject.className = "btn xs danger";
-      reject.textContent = "❌";
+      reject.textContent = "X";
       reject.addEventListener("click", async (e) => {
         e.stopPropagation();
+        const isPending = row.status === "pending";
+        const ok = await confirmModal({
+          title: MSG.updateTitle(),
+          text: isPending ? MSG.updateTextPending() : MSG.updateTextActive(),
+          okText: isPending ? MSG.updateOkPending() : MSG.updateOkActive(),
+          cancelText: MSG.updateCancel(),
+        });
+        if (!ok) return;
         try {
-          await callSubscriptionAction(row, row.status === "pending" ? "reject" : "cancel");
+          await callSubscriptionAction(row, isPending ? "reject" : "cancel");
           await refreshData();
         } catch {
           await alertModal({ text: MSG.updateFail() });
@@ -225,7 +246,7 @@ function renderInvites() {
       if (row.status === "pending") {
         const accept = document.createElement("button");
         accept.className = "btn xs gold";
-        accept.textContent = "✅";
+        accept.textContent = "✓";
         accept.addEventListener("click", async (e) => {
           e.stopPropagation();
           try {
@@ -287,6 +308,25 @@ function syncToggles() {
   });
 }
 
+
+function isValidEmail(value) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value || "").trim());
+}
+
+async function resolveInviteRecipient(input) {
+  const raw = String(input || "").trim();
+  if (!raw) return "";
+  if (raw.includes("@")) {
+    if (!isValidEmail(raw)) throw new Error("invalid_email");
+    return raw.toLowerCase();
+  }
+  const { data, error } = await sb().rpc("profile_login_to_email", { p_login: raw });
+  if (error) throw error;
+  const email = String(data || "").trim().toLowerCase();
+  if (!email) throw new Error("unknown_user");
+  return email;
+}
+
 function registerToggleHandlers() {
   document.querySelectorAll(".hub-toggle button").forEach((btn) => {
     btn.addEventListener("click", () => {
@@ -305,14 +345,38 @@ async function invite(value) {
   if (!v) return;
   try {
     setProgress({ show: true, step: t("pollsHubSubscriptions.progress.invite"), i: 0, n: 2 });
-    const { data, error } = await sb().rpc("polls_hub_subscription_invite", { p_recipient: v });
+    const recipient = await resolveInviteRecipient(v);
+    const { data, error } = await sb().rpc("polls_hub_subscription_invite", { p_recipient: recipient });
     if (error || data?.ok === false) throw error || new Error(data?.error || "invite");
+
+    if (!data?.already && data?.id) {
+      const { data: resendData } = await sb().rpc("polls_hub_subscriber_resend", { p_id: data.id });
+      if (resendData?.to && resendData?.link) {
+        const { data: sess } = await sb().auth.getSession();
+        const token = sess?.session?.access_token;
+        if (token) {
+          await fetch(MAIL_FUNCTION_URL, {
+            method: "POST",
+            headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+            body: JSON.stringify({
+              to: resendData.to,
+              subject: t("pollsHubSubscriptions.mail.subscriptionTitle", { owner: who?.textContent || "Familiada" }),
+              html: `<p>${t("pollsHubSubscriptions.mail.subscriptionBody", { owner: who?.textContent || "Familiada" })}</p><p><a href="${resendData.link}">${t("pollsHubSubscriptions.mail.subscriptionAction")}</a></p>`,
+            }),
+          });
+        }
+      }
+      const url = new URL(location.href);
+      url.searchParams.delete("s");
+      history.replaceState(null, "", url.toString());
+    }
 
     await refreshData();
   } catch (e) {
     const m = String(e?.message || "").toLowerCase();
-    if (m.includes("email")) await alertModal({ text: MSG.invalidEmail() });
-    else if (m.includes("unknown")) await alertModal({ text: MSG.unknownUser() });
+    if (m.includes("invalid_email")) await alertModal({ text: MSG.invalidEmail() });
+    else if (m.includes("unknown_user") || m.includes("unknown")) await alertModal({ text: MSG.unknownUser() });
+    else if (m.includes("email")) await alertModal({ text: MSG.invalidEmail() });
     else await alertModal({ text: MSG.inviteFail() });
   } finally {
     setProgress({ show: false });
@@ -341,7 +405,8 @@ async function refreshData() {
     renderInvites();
     await refreshTopBadges();
 
-    if (focusInviteToken) {
+    if (focusInviteToken && !focusInviteHandled) {
+      focusInviteHandled = true;
       const match = invites.find((x) => String(x.token) === String(focusInviteToken));
       if (match?.status === "pending") {
         const ok = await confirmModal({ text: MSG.focusPrompt() });
@@ -350,6 +415,9 @@ async function refreshData() {
           await refreshData();
         }
       }
+      const url = new URL(location.href);
+      url.searchParams.delete("s");
+      history.replaceState(null, "", url.toString());
     }
   } catch {
     await alertModal({ text: MSG.loadFail() });
@@ -368,12 +436,15 @@ function buildManualUrl() {
 function updateBackButtonLabel() {
   if (!btnBack) return;
   const from = new URLSearchParams(location.search).get("from");
-  btnBack.textContent = from === "bases" ? t("baseExplorer.backToBases") : t("pollsHubSubscriptions.backToGames");
+  if (from === "bases") btnBack.textContent = t("baseExplorer.backToBases");
+  else if (from === "polls-hub") btnBack.textContent = t("polls.backToHub");
+  else btnBack.textContent = t("pollsHubSubscriptions.backToGames");
 }
 
 function getBackLink() {
   const from = new URLSearchParams(location.search).get("from");
   if (from === "bases") return "bases.html";
+  if (from === "polls-hub") return "polls-hub.html";
   return "builder.html";
 }
 
