@@ -605,6 +605,9 @@ const uk = {
       roleViewer: "Перегляд",
       add: "Додати",
       close: "Закрити",
+      cooldown: "Не можна додати того самого користувача знову протягом 24 год (антиспам).",
+      alreadyPending: "Запрошення вже очікує підтвердження.",
+      emailFailed: "Запрошення створено, але лист не надіслано.",
       sectionSubscribers: "Мої підписники",
       sectionSubscribersSub: "Тільки зареєстровані користувачі (з username).",
       sectionPending: "Очікують",
@@ -764,6 +767,7 @@ const uk = {
     },
     validation: {
       openOnlyDraft: "Опитування можна запустити лише зі стану чернетки.",
+      noGame: "Гру не вибрано.",
       preparedNoPoll: "Підготовлена гра не має опитування.",
       minQuestions: "Щоб запустити: кількість питань має бути ≥ {min} (маєте {count}).",
       pointsRange: "У режимі балів кожне питання повинне мати {min}–{max} відповідей.",
@@ -2576,6 +2580,7 @@ const uk = {
       warningClose: "Закрити",
     },
     alert: {
+      missingId: "Відсутній ідентифікатор редактора.",
       cannotEdit: "Неможливо редагувати, поки опитування відкрите.",
       editorError: "Помилка редактора (консоль).",
     },
@@ -2914,6 +2919,7 @@ const uk = {
     shareCooldownAlert: "Повторно запросити до голосування можна через {hours} год.",
   },
   pollsHubPolls: {
+    dash: "-",
     title: "Familiada — центр опитувань",
     backToGames: "← Мої ігри",
     logout: "Вийти",
@@ -3147,6 +3153,7 @@ const uk = {
   },
 
   pollsHubSubscriptions: {
+    dash: "-",
     title: "Familiada — центр опитувань",
     backToGames: "← Мої ігри",
     logout: "Вийти",
@@ -3361,7 +3368,7 @@ const uk = {
     pollNameLabel: "«{name}»",
     ownerFallback: "Користувач Familiada",
     mail: {
-      subtitle: "Центр опитувань",
+      subtitle: "Підписки",
       subscriptionTitle: "Запрошення до підписки від {owner}",
       subscriptionBody:
         "Користувач <strong>{owner}</strong> запрошує вас до підписки. Натисніть кнопку, щоб переглянути запрошення.",

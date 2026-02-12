@@ -137,6 +137,40 @@ function parseDate(value) {
   return value ? new Date(value).getTime() : 0;
 }
 
+function mailLink(path) {
+  try {
+    return new URL(path, location.origin).href;
+  } catch {
+    return path;
+  }
+}
+
+function buildMailHtml({ title, subtitle, body, actionLabel, actionUrl }) {
+  return `
+    <div style="margin:0;padding:0;background:#050914;">
+      <div style="max-width:560px;margin:0 auto;padding:26px 16px;font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:#ffffff;">
+        <div style="padding:14px 14px;background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.12);border-radius:18px;backdrop-filter:blur(10px);">
+          <div style="font-weight:1000;letter-spacing:.18em;text-transform:uppercase;color:#ffeaa6;">FAMILIADA</div>
+          <div style="margin-top:6px;font-size:12px;opacity:.85;letter-spacing:.08em;text-transform:uppercase;">${subtitle}</div>
+        </div>
+        <div style="margin-top:14px;padding:18px;border-radius:20px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.06);box-shadow:0 24px 60px rgba(0,0,0,.45);">
+          <div style="font-weight:1000;font-size:18px;letter-spacing:.06em;color:#ffeaa6;margin:0 0 10px;">${title}</div>
+          <div style="font-size:14px;opacity:.9;line-height:1.45;margin:0 0 14px;">${body}</div>
+          <div style="margin:16px 0;">
+            <a href="${actionUrl}" style="display:block;text-align:center;padding:12px 14px;border-radius:14px;border:1px solid rgba(255,234,166,.35);background:rgba(255,234,166,.10);color:#ffeaa6;text-decoration:none;font-weight:1000;letter-spacing:.06em;">${actionLabel}</a>
+          </div>
+          <div style="margin-top:14px;font-size:12px;opacity:.75;line-height:1.4;">${t("pollsHubPolls.mail.ignoreNote")}</div>
+          <div style="margin-top:10px;font-size:12px;opacity:.75;line-height:1.4;">
+            ${t("pollsHubPolls.mail.linkHint")}
+            <div style="margin-top:6px;padding:10px 12px;border-radius:16px;border:1px solid rgba(255,255,255,.18);background:rgba(0,0,0,.18);word-break:break-all;">${actionUrl}</div>
+          </div>
+        </div>
+        <div style="margin-top:14px;font-size:12px;opacity:.7;text-align:center;">${t("pollsHubPolls.mail.autoNote")}</div>
+      </div>
+    </div>
+  `.trim();
+}
+
 function isPollArchived(poll) {
   if (poll.poll_state !== "closed") return false;
   const closedAt = pollClosedAt.get(poll.game_id) || poll.created_at;
@@ -394,7 +428,16 @@ async function saveShareModal() {
           body: JSON.stringify({
             to: item.to,
             subject: t("pollsHubPolls.mail.taskSubject", { name: selectedPoll?.name || t("pollsHubPolls.pollFallback") }),
-            html: `<p>${t("pollsHubPolls.mail.taskBody", { owner: currentUser?.username || currentUser?.email || t("pollsHubPolls.ownerFallback"), name: selectedPoll?.name || t("pollsHubPolls.pollFallback") })}</p><p><a href="${item.link}">${t("pollsHubPolls.mail.taskAction")}</a></p>`,
+            html: buildMailHtml({
+              title: t("pollsHubPolls.mail.taskTitle"),
+              subtitle: t("pollsHubPolls.mail.subtitle"),
+              body: t("pollsHubPolls.mail.taskBody", {
+                owner: currentUser?.username || currentUser?.email || t("pollsHubPolls.ownerFallback"),
+                name: selectedPoll?.name || t("pollsHubPolls.pollFallback"),
+              }),
+              actionLabel: t("pollsHubPolls.mail.taskAction"),
+              actionUrl: mailLink(item.link),
+            }),
           }),
         })));
       }
