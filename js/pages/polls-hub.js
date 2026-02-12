@@ -10,6 +10,7 @@ initI18n({ withSwitcher: true });
 const $ = (id) => document.getElementById(id);
 const qs = new URLSearchParams(location.search);
 const focusTaskToken = qs.get("t");
+let focusTaskHandled = false;
 
 const who = $("who");
 const btnLogout = $("btnLogout");
@@ -88,6 +89,14 @@ const MSG = {
   deleteVoteFail: () => t("pollsHubPolls.errors.deleteVote"),
   shareStep: () => t("pollsHubPolls.progress.share"),
   shareNoChanges: () => t("pollsHubPolls.statusMsg.shareNoChanges"),
+  declineTaskTitle: () => t("pollsHubPolls.modal.declineTask.title"),
+  declineTaskText: () => t("pollsHubPolls.modal.declineTask.text"),
+  declineTaskOk: () => t("pollsHubPolls.modal.declineTask.ok"),
+  declineTaskCancel: () => t("pollsHubPolls.modal.declineTask.cancel"),
+  deleteVoteTitle: () => t("pollsHubPolls.modal.deleteVote.title"),
+  deleteVoteText: () => t("pollsHubPolls.modal.deleteVote.text"),
+  deleteVoteOk: () => t("pollsHubPolls.modal.deleteVote.ok"),
+  deleteVoteCancel: () => t("pollsHubPolls.modal.deleteVote.cancel"),
 };
 
 let currentUser = null;
@@ -160,14 +169,25 @@ function renderEmpty(el, text) {
 }
 
 function pollVotesMeta(poll) {
-  const total = Number(poll.shared_total || 0);
-  const done = Number(poll.shared_done || 0);
-  const votes = Number(poll.votes_count || 0);
+  const total = Number(poll.tasks_active || poll.shared_total || 0) + Number(poll.tasks_done || 0);
+  const done = Number(poll.tasks_done || poll.shared_done || 0);
+  const votes = Number(poll.votes_count || done || 0);
   const anon = Number(poll.anon_votes || 0);
   return {
-    left: total > 0 ? `${done}/${total}` : `${votes}`,
+    left: poll.poll_state === "closed" ? `${votes}` : (total > 0 ? `${done}/${total}` : "0/0"),
     anon: `${anon}`,
   };
+}
+
+function pollTileClass(poll) {
+  if (poll.poll_state === "closed") return "poll-closed";
+  if (poll.poll_state === "open") {
+    const hasActivity = (poll.anon_votes || 0) > 0 || (poll.tasks_active || 0) > 0;
+    if (poll.close_ready) return "poll-open-good";
+    return hasActivity ? "poll-open-active" : "poll-open-empty";
+  }
+  const ready = pollReadyMap.get(poll.game_id) === true;
+  return ready ? "poll-draft-ready" : "poll-draft";
 }
 
 function renderPolls() {
@@ -180,9 +200,11 @@ function renderPolls() {
     for (const poll of sorted) {
       const m = pollVotesMeta(poll);
       const item = document.createElement("div");
-      item.className = `hub-item ${poll.game_id === selectedPollId ? "selected" : ""}`;
-      item.innerHTML = `<div><div class="hub-item-title">${pollTypeLabel(poll.poll_type)} — ${poll.name || MSG.dash()}</div><div class="hub-item-sub">${poll.poll_state === "open" ? MSG.pollStateOpen() : poll.poll_state === "closed" ? MSG.pollStateClosed() : MSG.pollStateDraft()}</div></div><div class="hub-item-actions hub-item-actions--poll-badges"><span class="hub-item-badge">${MSG.votesBadgeLabel()}: ${m.left}</span><span class="hub-item-badge hub-item-badge-alt">${MSG.anonBadgeLabel()}: ${m.anon}</span></div>`;
-      item.classList.add(`poll-${poll.poll_state || "draft"}`);
+      item.className = `hub-item ${pollTileClass(poll)} ${poll.game_id === selectedPollId ? "selected" : ""}`;
+      const badgesHtml = poll.poll_state === "draft"
+        ? ""
+        : `<div class="hub-item-actions hub-item-actions--poll-badges"><span class="hub-item-badge">${MSG.votesBadgeLabel()}: ${m.left}</span><span class="hub-item-badge hub-item-badge-alt">${MSG.anonBadgeLabel()}: ${m.anon}</span></div>`;
+      item.innerHTML = `<div><div class="hub-item-title">${pollTypeLabel(poll.poll_type)} — ${poll.name || MSG.dash()}</div><div class="hub-item-sub">${poll.poll_state === "open" ? MSG.pollStateOpen() : poll.poll_state === "closed" ? MSG.pollStateClosed() : MSG.pollStateDraft()}</div></div>${badgesHtml}`;
       item.addEventListener("click", () => selectPoll(poll));
       item.addEventListener("dblclick", () => openPoll(poll));
       listEl.appendChild(item);
@@ -210,11 +232,25 @@ function renderTasks() {
       if (task.status === "pending") {
         const btn = document.createElement("button");
         btn.className = "btn xs danger";
-        btn.textContent = "❌";
+        btn.textContent = "X";
         btn.addEventListener("click", async (e) => {
           e.stopPropagation();
-          await sb().rpc("polls_hub_task_decline", { p_task_id: task.task_id });
-          await refreshData();
+          const ok = await confirmModal({
+            title: MSG.declineTaskTitle(),
+            text: MSG.declineTaskText(),
+            okText: MSG.declineTaskOk(),
+            cancelText: MSG.declineTaskCancel(),
+          });
+          if (!ok) return;
+          try {
+            setProgress({ show: true, step: t("pollsHubPolls.progress.declineTask"), i: 0, n: 1 });
+            await sb().rpc("polls_hub_task_decline", { p_task_id: task.task_id });
+            await refreshData();
+          } catch {
+            await alertModal({ text: t("pollsHubPolls.errors.declineTask") });
+          } finally {
+            setProgress({ show: false });
+          }
         });
         item.querySelector(".hub-item-actions")?.appendChild(btn);
       }
@@ -223,8 +259,7 @@ function renderTasks() {
           await alertModal({ text: MSG.loadHubFail() });
           return;
         }
-        const page = task.poll_type === "poll_points" ? "poll-points.html" : "poll-text.html";
-        location.href = `${page}?t=${encodeURIComponent(task.token)}&lang=${encodeURIComponent(getUiLang() || "pl")}`;
+        location.href = `poll_go.html?t=${encodeURIComponent(task.token)}&lang=${encodeURIComponent(getUiLang() || "pl")}`;
       });
       listEl.appendChild(item);
     }
@@ -344,6 +379,27 @@ async function saveShareModal() {
     setProgress({ show: true, step: MSG.shareStep(), i: 0, n: 1 });
     const { data, error } = await sb().rpc("polls_hub_share_poll", { p_game_id: sharePollId, p_sub_ids: [...selected] });
     if (error || data?.ok === false) throw error || new Error("share_failed");
+
+    const mailItems = Array.isArray(data?.mail) ? data.mail : [];
+    if (mailItems.length) {
+      const { data: sess } = await sb().auth.getSession();
+      const token = sess?.session?.access_token;
+      if (token) {
+        await Promise.allSettled(mailItems.map((item) => fetch(MAIL_FUNCTION_URL, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            to: item.to,
+            subject: t("pollsHubPolls.mail.taskSubject", { name: selectedPoll?.name || t("pollsHubPolls.pollFallback") }),
+            html: `<p>${t("pollsHubPolls.mail.taskBody", { owner: currentUser?.username || currentUser?.email || t("pollsHubPolls.ownerFallback"), name: selectedPoll?.name || t("pollsHubPolls.pollFallback") })}</p><p><a href="${item.link}">${t("pollsHubPolls.mail.taskAction")}</a></p>`,
+          }),
+        })));
+      }
+    }
+
     shareMsg.textContent = MSG.shareSaved();
     await refreshData();
   } catch {
@@ -363,18 +419,26 @@ function renderDetailsList(container, rows) {
   for (const row of rows) {
     const item = document.createElement("div");
     item.className = "hub-details-item";
-    item.innerHTML = `<span>${row.subscriber_display_label || MSG.dash()}</span><button class="btn xs danger">❌</button>`;
+    item.innerHTML = `<span>${row.subscriber_display_label || MSG.dash()}</span><button class="btn xs danger">X</button>`;
     const removeBtn = item.querySelector("button");
-    if (!row.voter_user_id) removeBtn?.setAttribute("disabled", "disabled");
+    if (!row.task_id) removeBtn?.setAttribute("disabled", "disabled");
     removeBtn?.addEventListener("click", async () => {
+      const ok = await confirmModal({
+        title: MSG.deleteVoteTitle(),
+        text: MSG.deleteVoteText(),
+        okText: MSG.deleteVoteOk(),
+        cancelText: MSG.deleteVoteCancel(),
+      });
+      if (!ok) return;
       try {
-        setProgress({ show: true, step: MSG.deleteVoteStep(), i: 0, n: 1 });
-        if (!row.voter_user_id) throw new Error("missing_voter_user_id");
-        if (selectedPoll?.poll_type === "poll_points") await sb().from("poll_votes").delete().eq("game_id", selectedPollId).eq("voter_user_id", row.voter_user_id);
-        else await sb().from("poll_text_entries").delete().eq("game_id", selectedPollId).eq("voter_user_id", row.voter_user_id);
+        setProgress({ show: true, step: MSG.deleteVoteStep(), i: 0, n: 2 });
+        if (!row.task_id) throw new Error("missing_task_id");
+        await sb().rpc("poll_admin_delete_vote", { p_game_id: selectedPollId, p_voter_token: `task:${row.task_id}` });
+        await sb().from("poll_tasks").update({ status: "cancelled", cancelled_at: new Date().toISOString() }).eq("id", row.task_id).eq("owner_id", currentUser.id);
+        setProgress({ show: true, step: MSG.deleteVoteStep(), i: 1, n: 2 });
         await openDetailsModal();
       } catch {
-        alertModal({ text: MSG.deleteVoteFail() });
+        await alertModal({ text: MSG.deleteVoteFail() });
       } finally {
         setProgress({ show: false });
       }
@@ -398,6 +462,7 @@ async function openDetailsModal() {
       const profile = r.recipient_user_id ? profilesMap.get(r.recipient_user_id) : null;
       return {
         sub_id: r.id,
+        task_id: r.id,
         voter_user_id: r.recipient_user_id || null,
         status: r.status || "pending",
         subscriber_display_label: profile?.username || profile?.email || r.recipient_email || MSG.dash(),
@@ -473,12 +538,18 @@ async function refreshData() {
     updatePollActions();
     await refreshTopBadges();
 
-    if (focusTaskToken) {
+    if (focusTaskToken && !focusTaskHandled) {
       const found = tasks.find((x) => String(x.token) === String(focusTaskToken));
+      focusTaskHandled = true;
       if (found) {
         const ok = await confirmModal({ text: MSG.focusTaskPrompt() });
-        if (ok) { const page = found.poll_type === "poll_points" ? "poll-points.html" : "poll-text.html"; location.href = `${page}?t=${encodeURIComponent(focusTaskToken)}&lang=${encodeURIComponent(getUiLang() || "pl")}`; }
+        if (ok) {
+          location.href = `poll_go.html?t=${encodeURIComponent(focusTaskToken)}&lang=${encodeURIComponent(getUiLang() || "pl")}`;
+        }
       }
+      const url = new URL(location.href);
+      url.searchParams.delete("t");
+      history.replaceState(null, "", url.toString());
     }
   } catch {
     await alertModal({ text: MSG.loadHubFail() });
@@ -535,7 +606,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   updateBackButtonLabel();
   btnBack?.addEventListener("click", () => { location.href = getBackLink(); });
   btnManual?.addEventListener("click", () => { location.href = buildManualUrl(); });
-  btnGoAlt?.addEventListener("click", () => { location.href = "subscriptions.html"; });
+  btnGoAlt?.addEventListener("click", () => { location.href = "subscriptions.html?from=polls-hub"; });
   btnLogout?.addEventListener("click", async () => { await signOut(); location.href = "index.html"; });
 
   window.addEventListener("i18n:lang", () => {

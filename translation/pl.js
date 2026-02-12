@@ -857,6 +857,7 @@ const pl = {
       edit: "Dodawanie i edycja gry",
       bases: "Bazy pytań",
       polls: "Sondaże",
+      subscriptions: "Subskrypcje",
       logo: "Tworzenie logo",
       control: "Panel sterowania",
       demo: "Demo - materiały startowe",
@@ -1662,6 +1663,20 @@ const pl = {
         Ta opcja jest przydatna,
         gdy sondaż został uruchomiony testowo
         lub doszło do błędu organizacyjnego.
+      </p>`,
+      subscriptions: `<p class="m-p">
+        Zakładka „Subskrypcje” opisuje wszystko, co dotyczy relacji między użytkownikami:
+        zapraszanie subskrybentów, akceptowanie zaproszeń, ponowne wysyłki i usuwanie powiązań.
+      </p>
+      <p class="m-p">
+        W praktyce subskrypcje przyspieszają pracę — do aktywnych subskrybentów możesz
+        jednym kliknięciem udostępnić sondaż oraz szybko udostępnić bazę pytań,
+        bez ręcznego przepisywania danych i linków.
+      </p>
+      <p class="m-p">
+        Jeśli wpisujesz nazwę użytkownika podczas zapraszania, system najpierw sprawdza,
+        czy taki użytkownik istnieje. Jeśli go nie ma, pojawi się komunikat.
+        Dla adresu e-mail zaproszenie może trafić także do osoby niezarejestrowanej.
       </p>`,
       logo: `<p class="m-p">
       System pozwala ustawić własne logo, które pojawia się na wyświetlaczu
@@ -2852,10 +2867,24 @@ const pl = {
         ok: "Usuń",
         cancel: "Anuluj",
       },
+      updateSubscription: {
+        title: "Aktualizuj subskrypcję",
+        textPending: "Czy na pewno chcesz odrzucić to zaproszenie?",
+        textActive: "Czy na pewno chcesz anulować tę subskrypcję?",
+        okPending: "Odrzuć zaproszenie",
+        okActive: "Anuluj subskrypcję",
+        cancel: "Zamknij",
+      },
       deleteVote: {
         title: "Usuń głos",
         text: "Czy na pewno chcesz usunąć głos tej osoby?",
         ok: "Usuń",
+        cancel: "Anuluj",
+      },
+      declineTask: {
+        title: "Odrzuć zadanie",
+        text: "Czy na pewno chcesz odrzucić to zadanie?",
+        ok: "Odrzuć",
         cancel: "Anuluj",
       },
       tokenMismatch: {
@@ -3070,10 +3099,24 @@ const pl = {
         ok: "Usuń",
         cancel: "Anuluj",
       },
+      updateSubscription: {
+        title: "Aktualizuj subskrypcję",
+        textPending: "Czy na pewno chcesz odrzucić to zaproszenie?",
+        textActive: "Czy na pewno chcesz anulować tę subskrypcję?",
+        okPending: "Odrzuć zaproszenie",
+        okActive: "Anuluj subskrypcję",
+        cancel: "Zamknij",
+      },
       deleteVote: {
         title: "Usuń głos",
         text: "Czy na pewno chcesz usunąć głos tej osoby?",
         ok: "Usuń",
+        cancel: "Anuluj",
+      },
+      declineTask: {
+        title: "Odrzuć zadanie",
+        text: "Czy na pewno chcesz odrzucić to zadanie?",
+        ok: "Odrzuć",
         cancel: "Anuluj",
       },
       tokenMismatch: {
@@ -3289,10 +3332,24 @@ const pl = {
         ok: "Usuń",
         cancel: "Anuluj",
       },
+      updateSubscription: {
+        title: "Aktualizuj subskrypcję",
+        textPending: "Czy na pewno chcesz odrzucić to zaproszenie?",
+        textActive: "Czy na pewno chcesz anulować tę subskrypcję?",
+        okPending: "Odrzuć zaproszenie",
+        okActive: "Anuluj subskrypcję",
+        cancel: "Zamknij",
+      },
       deleteVote: {
         title: "Usuń głos",
         text: "Czy na pewno chcesz usunąć głos tej osoby?",
         ok: "Usuń",
+        cancel: "Anuluj",
+      },
+      declineTask: {
+        title: "Odrzuć zadanie",
+        text: "Czy na pewno chcesz odrzucić to zadanie?",
+        ok: "Odrzuć",
         cancel: "Anuluj",
       },
       tokenMismatch: {
