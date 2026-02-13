@@ -400,24 +400,24 @@ body.polls-hub-body .bar{
 .hub-mobile{ display:none; }
 
 .hub-tabs-mobile{
-  --tab-height: 40px;
+  --tab-height: 56px;
+  --tab-extra: 2px;
   --radius: 12px;
 }
 .hub-tabs-mobile .tabs-strip{
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 6px;
+  gap: 0;
 }
-.hub-tabs-mobile .tab-label{
-  font-size: 9px;
-  letter-spacing: .02em;
-  padding: 0 4px;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.hub-tabs-mobile .tab-label,
+.hub-tabs-mobile .tab-active{
+  font-size: 12px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  padding: 0;
 }
 .hub-tabs-mobile .tab-active{
-  font-size: 9px;
-  padding: 0 4px;
+  color: transparent;
 }
 
 @media (max-width: 900px){
@@ -567,5 +567,5 @@ body.polls-hub-body .bar{
 .hub-tabs-mobile .tab-wrapper{ overflow: hidden; }
 .hub-tabs-mobile:has(.tab-slot:first-child .tab-label.active) .hub-card{ border-top-left-radius: 0; }
 .hub-tabs-mobile:has(.tab-slot:last-child .tab-label.active) .hub-card{ border-top-right-radius: 0; }
-.hub-tabs-mobile .tab-slot:first-child .tab-corner-left,
-.hub-tabs-mobile .tab-slot:last-child .tab-corner-right{ display:none; }
+.hub-tabs-mobile:has(.tab-slot:first-child .tab-label.active) .tab-slot:first-child .tab-corner-left,
+.hub-tabs-mobile:has(.tab-slot:last-child .tab-label.active) .tab-slot:last-child .tab-corner-right{ display:none; }
