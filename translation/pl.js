@@ -769,6 +769,7 @@ const pl = {
     },
     validation: {
       openOnlyDraft: "Sondaż można uruchomić tylko ze stanu SZKIC.",
+      noGame: "Brak gry.",
       preparedNoPoll: "Gra preparowana nie ma sondażu.",
       minQuestions: "Żeby uruchomić: liczba pytań musi być ≥ {min} (masz {count}).",
       pointsRange: "W trybie PUNKTACJA każde pytanie musi mieć {min}–{max} odpowiedzi.",
@@ -2582,6 +2583,7 @@ const pl = {
       warningClose: "Zamknij",
     },
     alert: {
+      missingId: "Brak identyfikatora edytora.",
       cannotEdit: "Nie można edytować w trakcie otwartego sondażu.",
       editorError: "Błąd edytora (konsola).",
     },
@@ -2679,6 +2681,7 @@ const pl = {
     inviteUnknown: "Nie udało się rozpoznać zaproszenia.",
     openInviteFailed: "Nie udało się otworzyć zaproszenia.",
     invitationRecipient: "adresata zaproszenia",
+    ownerEmailBlocked: "Ten adres należy do właściciela zaproszenia ({owner}). Już subskrybujesz tego użytkownika.",
   },
   pollQr: {
     title: "Familiada — QR",
@@ -2920,6 +2923,7 @@ const pl = {
     shareCooldownAlert: "Ponowne zaproszenie do głosowania możliwe za {hours} godz.",
   },
   pollsHubPolls: {
+    dash: "-",
     title: "Familiada — centrum sondaży",
     backToGames: "← Moje gry",
     logout: "Wyloguj",
@@ -3153,6 +3157,7 @@ const pl = {
   },
 
   pollsHubSubscriptions: {
+    dash: "-",
     title: "Familiada — centrum sondaży",
     backToGames: "← Moje gry",
     logout: "Wyloguj",
@@ -3367,7 +3372,7 @@ const pl = {
     pollNameLabel: "„{name}”",
     ownerFallback: "Użytkownik Familiady",
     mail: {
-      subtitle: "Centrum sondaży",
+      subtitle: "Subskrypcje",
       subscriptionTitle: "Zaproszenie do subskrypcji od użytkownika {owner}",
       subscriptionBody:
         "Użytkownik <strong>{owner}</strong> zaprasza Cię do subskrypcji. Kliknij przycisk, aby zobaczyć zaproszenie.",
