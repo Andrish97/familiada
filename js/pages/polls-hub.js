@@ -782,7 +782,12 @@ async function refreshTopBadges() {
   }
 }
 
+let hubRefreshInFlight = null;
+
 async function refreshData() {
+  if (hubRefreshInFlight) return hubRefreshInFlight;
+
+  hubRefreshInFlight = (async () => {
   try {
     const [pollsRes, tasksRes] = await Promise.all([
       sb().rpc("polls_hub_list_polls"),
@@ -846,7 +851,15 @@ async function refreshData() {
   } catch {
     await alertModal({ text: MSG.loadHubFail() });
   }
+  })();
+
+  try {
+    await hubRefreshInFlight;
+  } finally {
+    hubRefreshInFlight = null;
+  }
 }
+
 
 
 function buildManualUrl() {

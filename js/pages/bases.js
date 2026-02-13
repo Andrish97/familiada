@@ -81,6 +81,8 @@ let sharedBases = []; // { id, name, owner_id, created_at, updated_at, sharedRol
 let selectedId = null;
 
 let shareRoleSelect = null;
+const SHARE_MODAL_CACHE_TTL_MS = 20_000;
+const shareModalCache = new Map();
 
 // modal nazwy – tryb
 let nameMode = "create"; // 'create' | 'rename'
@@ -676,6 +678,29 @@ function closeShareModal() {
   })();
 }
 
+function invalidateShareModalCache(baseId) {
+  if (!baseId) return;
+  shareModalCache.delete(String(baseId));
+}
+
+function getShareModalCache(baseId) {
+  const key = String(baseId || "");
+  if (!key) return null;
+  const cached = shareModalCache.get(key);
+  if (!cached) return null;
+  if (Date.now() - cached.ts > SHARE_MODAL_CACHE_TTL_MS) {
+    shareModalCache.delete(key);
+    return null;
+  }
+  return cached.payload;
+}
+
+function setShareModalCache(baseId, payload) {
+  const key = String(baseId || "");
+  if (!key || !payload) return;
+  shareModalCache.set(key, { ts: Date.now(), payload });
+}
+
 function msLeftLabel(ms) {
   const s = Math.max(0, Math.floor(ms / 1000));
   const h = Math.floor(s / 3600);
@@ -705,22 +730,30 @@ async function renderShareModal() {
     return;
   }
 
-  // 1) SUBSCRIBERS (registered only) – bierzemy z polls-hub RPC (już masz w DB)
-  // Zakładam, że RPC zwraca m.in. subscriber_user_id, subscriber_username, subscriber_email, status
-  const { data: subs, error: sErr } = await sb().rpc("polls_hub_list_my_subscribers");
-  if (sErr) console.warn("[bases] polls_hub_list_my_subscriptions error:", sErr);
+  const cached = getShareModalCache(b.id);
+  let registeredSubs = cached?.registeredSubs || [];
+  let pending = cached?.pending || [];
+  let shared = cached?.shared || [];
 
-  const registeredSubs = (subs || [])
-    .filter((r) => r.status === "active")
-    .filter((r) => !!r.subscriber_user_id);
+  if (!cached) {
+    const [subsRes, pendingRes, sharedRes] = await Promise.all([
+      sb().rpc("polls_hub_list_my_subscribers"),
+      sb().rpc("list_base_share_tasks_outgoing", { p_base_id: b.id }),
+      sb().rpc("list_base_shares", { p_base_id: b.id }),
+    ]);
 
-  // 2) PENDING (outgoing)
-  const { data: pending, error: pErr } = await sb().rpc("list_base_share_tasks_outgoing", { p_base_id: b.id });
-  if (pErr) console.warn("[bases] list_base_share_tasks_outgoing error:", pErr);
+    if (subsRes.error) console.warn("[bases] polls_hub_list_my_subscriptions error:", subsRes.error);
+    if (pendingRes.error) console.warn("[bases] list_base_share_tasks_outgoing error:", pendingRes.error);
+    if (sharedRes.error) console.warn("[bases] list_base_shares error:", sharedRes.error);
 
-  // 3) SHARED (accepted)
-  const { data: shared, error: shErr } = await sb().rpc("list_base_shares", { p_base_id: b.id });
-  if (shErr) console.warn("[bases] list_base_shares error:", shErr);
+    registeredSubs = (subsRes.data || [])
+      .filter((r) => r.status === "active")
+      .filter((r) => !!r.subscriber_user_id);
+    pending = pendingRes.data || [];
+    shared = sharedRes.data || [];
+
+    setShareModalCache(b.id, { registeredSubs, pending, shared });
+  }
 
   const sharedByUser = new Map((shared || []).map((x) => [x.user_id, x]));
   const pendingByUser = new Map(
@@ -861,7 +894,7 @@ async function renderShareModal() {
               setMsg(shareMsg, t("bases.share.emailFailed"));
             }
           }
-
+          invalidateShareModalCache(b.id);
           await renderShareModal();
         });
         
@@ -875,6 +908,7 @@ async function renderShareModal() {
               await alertModal({ text: t("bases.share.failed") });
               return;
             }
+            invalidateShareModalCache(b.id);
             await renderShareModal();
             return;
           }
@@ -891,6 +925,7 @@ async function renderShareModal() {
               await alertModal({ text: t("bases.share.failed") });
               return;
             }
+            invalidateShareModalCache(b.id);
             await renderShareModal();
           }
         });  
@@ -929,6 +964,7 @@ async function renderShareModal() {
             await alertModal({ text: t("bases.share.failed") });
             return;
           }
+          invalidateShareModalCache(b.id);
           await renderShareModal();
         });
 
@@ -979,6 +1015,7 @@ async function renderShareModal() {
             await alertModal({ text: t("bases.share.failed") });
             return;
           }
+          invalidateShareModalCache(b.id);
           await renderShareModal();
         });
 
@@ -1044,6 +1081,7 @@ async function shareAdd() {
   
   shareEmail.value = "";
   setMsg(shareMsg, t("bases.share.success"));
+  invalidateShareModalCache(b.id);
   await renderShareModal();
 }
 
