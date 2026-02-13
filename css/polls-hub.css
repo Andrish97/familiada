@@ -465,7 +465,7 @@ body.polls-hub-body .bar{
   border-top-left-radius: 0;
   border-top-right-radius: var(--radius);
 }
-.hub-tabs-mobile:has(#tabSubscriptionsMobile.active) .hub-card{
+.hub-tabs-mobile:has(#tabTasksMobile.active) .hub-card{
   border-top-left-radius: var(--radius);
   border-top-right-radius: 0;
 }
@@ -567,5 +567,5 @@ body.polls-hub-body .bar{
 .hub-tabs-mobile .tab-wrapper{ overflow: hidden; }
 .hub-tabs-mobile:has(.tab-slot:first-child .tab-label.active) .hub-card{ border-top-left-radius: 0; }
 .hub-tabs-mobile:has(.tab-slot:last-child .tab-label.active) .hub-card{ border-top-right-radius: 0; }
-.hub-tabs-mobile .tab-slot:first-child .tab-corner-right,
-.hub-tabs-mobile .tab-slot:last-child .tab-corner-left{ display:none; }
+.hub-tabs-mobile .tab-slot:first-child .tab-corner-left,
+.hub-tabs-mobile .tab-slot:last-child .tab-corner-right{ display:none; }

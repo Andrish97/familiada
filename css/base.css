@@ -723,3 +723,16 @@ html.showA2HS .a2hs {
   display: inline-flex;
 }
 
+
+
+@media (max-width: 900px){
+  .topbar{
+    transition: transform .22s ease, opacity .22s ease;
+    will-change: transform;
+  }
+  .topbar.is-hidden-mobile{
+    transform: translateY(-110%);
+    opacity: 0;
+    pointer-events: none;
+  }
+}
