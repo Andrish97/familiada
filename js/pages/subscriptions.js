@@ -476,7 +476,12 @@ async function refreshTopBadges() {
   setBadge("subs", pendingInvites);
 }
 
+let subsRefreshInFlight = null;
+
 async function refreshData() {
+  if (subsRefreshInFlight) return subsRefreshInFlight;
+
+  subsRefreshInFlight = (async () => {
   try {
     const [a, b] = await Promise.all([
       sb().rpc("polls_hub_list_my_subscribers"),
@@ -533,7 +538,15 @@ async function refreshData() {
   } catch {
     await alertModal({ text: MSG.loadFail() });
   }
+  })();
+
+  try {
+    await subsRefreshInFlight;
+  } finally {
+    subsRefreshInFlight = null;
+  }
 }
+
 
 
 function buildManualUrl() {
