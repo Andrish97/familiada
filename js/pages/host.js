@@ -576,6 +576,7 @@ async function handleCommand(lineRaw) {
 
 /* ========= REALTIME ========= */
 let ch = null;
+let pingTimer = null;
 function ensureChannel() {
   if (ch) return ch;
   ch = sb()
@@ -590,6 +591,7 @@ function ensureChannel() {
 /* ========= PRESENCE ========= */
 async function ping() {
   if (!gameId || !key) return;
+  if (document.visibilityState !== "visible") return;
   try {
     const { data, error } = await sb().rpc("device_ping", {
       p_game_id: gameId,
@@ -758,8 +760,31 @@ document.addEventListener("DOMContentLoaded", async () => {
   await restoreState();
   ensureChannel();
 
-  ping();
-  setInterval(ping, 5000);
+  const startPingLoop = () => {
+    if (pingTimer) return;
+    ping();
+    pingTimer = setInterval(() => {
+      if (document.visibilityState !== "visible") return;
+      void ping();
+    }, 5000);
+  };
+
+  const stopPingLoop = () => {
+    if (!pingTimer) return;
+    clearInterval(pingTimer);
+    pingTimer = null;
+  };
+
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") {
+      startPingLoop();
+      void ping();
+      return;
+    }
+    stopPingLoop();
+  });
+
+  startPingLoop();
 });
 
 /* debug */

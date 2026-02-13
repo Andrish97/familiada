@@ -280,6 +280,26 @@ async function getLastSessionIdForQuestion(qid) {
   return data?.[0]?.id || null;
 }
 
+async function getLastSessionIdsByQuestion(questionIds) {
+  const ids = (questionIds || []).filter(Boolean);
+  if (!ids.length) return new Map();
+
+  const { data, error } = await sb()
+    .from("poll_sessions")
+    .select("id,question_id,created_at")
+    .eq("game_id", gameId)
+    .in("question_id", ids)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+
+  const map = new Map();
+  for (const row of data || []) {
+    if (!row?.question_id || !row?.id) continue;
+    if (!map.has(row.question_id)) map.set(row.question_id, row.id);
+  }
+  return map;
+}
+
 async function countQuestions() {
   const { count, error } = await sb()
     .from("questions")
@@ -561,22 +581,26 @@ async function previewResults() {
     buildPollPointsPreviewDom(qsList, ansByQ);
 
     const values = new Map();
+    const qIds = qsList.map((q) => q.id).filter(Boolean);
+    const sessionByQ = await getLastSessionIdsByQuestion(qIds);
+    const lastSessionIds = [...new Set([...sessionByQ.values()].filter(Boolean))];
 
     for (const q of qsList) {
       const ans = ansByQ.get(q.id) || [];
       for (const a of ans) values.set(a.id, 0);
+    }
 
-      const sid = await getLastSessionIdForQuestion(q.id);
-      if (!sid) continue;
-
+    if (lastSessionIds.length) {
       const { data: votes, error: vErr } = await sb()
         .from("poll_votes")
-        .select("answer_id")
-        .eq("poll_session_id", sid)
-        .eq("question_id", q.id);
+        .select("poll_session_id,question_id,answer_id")
+        .in("poll_session_id", lastSessionIds)
+        .in("question_id", qIds);
       if (vErr) throw vErr;
 
       for (const v of votes || []) {
+        const lastSid = sessionByQ.get(v.question_id);
+        if (!lastSid || v.poll_session_id !== lastSid) continue;
         if (!v.answer_id) continue;
         values.set(v.answer_id, (values.get(v.answer_id) || 0) + 1);
       }
@@ -589,23 +613,34 @@ async function previewResults() {
   }
 
   // poll_text LIVE
+  const qIds = qsList.map((q) => q.id).filter(Boolean);
+  const sessionByQ = await getLastSessionIdsByQuestion(qIds);
+  const lastSessionIds = [...new Set([...sessionByQ.values()].filter(Boolean))];
+  const grouped = new Map();
+
+  if (lastSessionIds.length) {
+    const { data, error } = await sb()
+      .from("poll_text_entries")
+      .select("poll_session_id,question_id,answer_norm")
+      .in("poll_session_id", lastSessionIds)
+      .in("question_id", qIds);
+    if (error) throw error;
+
+    for (const r of data || []) {
+      const lastSid = sessionByQ.get(r.question_id);
+      if (!lastSid || r.poll_session_id !== lastSid) continue;
+      const key = `${r.question_id}::${(r.answer_norm || "").trim()}`;
+      if (key.endsWith("::")) continue;
+      grouped.set(key, (grouped.get(key) || 0) + 1);
+    }
+  }
+
   for (const q of qsList) {
-    const sid = await getLastSessionIdForQuestion(q.id);
     const map = new Map();
-
-    if (sid) {
-      const { data, error } = await sb()
-        .from("poll_text_entries")
-        .select("answer_norm")
-        .eq("poll_session_id", sid)
-        .eq("question_id", q.id);
-      if (error) throw error;
-
-      for (const r of data || []) {
-        const k = (r.answer_norm || "").trim();
-        if (!k) continue;
-        map.set(k, (map.get(k) || 0) + 1);
-      }
+    for (const [k, count] of grouped.entries()) {
+      const [qid, txt] = k.split("::");
+      if (qid !== String(q.id)) continue;
+      map.set(txt, count);
     }
 
     const rows = [...map.entries()]
