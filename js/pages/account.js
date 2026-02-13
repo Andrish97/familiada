@@ -60,6 +60,7 @@ const CD = {
 
 const cooldownBindings = [];
 let cooldownTimer = null;
+let cooldownTickDelayMs = 1000;
 
 // in-memory cache of next_allowed timestamps (ms)
 const cooldownEndMs = new Map();
@@ -85,10 +86,11 @@ function bindCooldown({ key, labelEl, disableEls }) {
 }
 
 function tickCooldowns() {
+  let hasActiveCooldown = false;
   cooldownBindings.forEach(({ key, labelEl, disableEls }) => {
     const rem = getRemainingMs(key);
+    if (rem > 0) hasActiveCooldown = true;
     const active = rem > 0;
-
     if (labelEl) {
       labelEl.hidden = !active;
       labelEl.textContent = active ? t("account.cooldown", { time: formatRemaining(rem) }) : "";
@@ -100,11 +102,20 @@ function tickCooldowns() {
       else if (!el.dataset.locked) el.disabled = false;
     });
   });
+
+  const nextDelay = hasActiveCooldown ? 1000 : 5000;
+  if (cooldownTickDelayMs !== nextDelay) {
+    cooldownTickDelayMs = nextDelay;
+    if (cooldownTimer) {
+      clearInterval(cooldownTimer);
+      cooldownTimer = setInterval(tickCooldowns, cooldownTickDelayMs);
+    }
+  }
 }
 
 function startCooldownTicker() {
   if (cooldownTimer) return;
-  cooldownTimer = setInterval(tickCooldowns, 1000);
+  cooldownTimer = setInterval(tickCooldowns, cooldownTickDelayMs);
   tickCooldowns();
 }
 

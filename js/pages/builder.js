@@ -821,10 +821,56 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
   
+
+  let badgesRefreshInFlight = null;
+  let badgesRefreshTimer = null;
+  let lastBadgesRefreshAt = 0;
+
+  async function refreshBadgesNow(){
+    if (badgesRefreshInFlight) return badgesRefreshInFlight;
+    badgesRefreshInFlight = (async () => {
+      await Promise.allSettled([refreshPollsHubDot(), refreshBasesBadge()]);
+      lastBadgesRefreshAt = Date.now();
+    })();
+    try {
+      await badgesRefreshInFlight;
+    } finally {
+      badgesRefreshInFlight = null;
+    }
+  }
+
+  function refreshBadges({ force = false } = {}) {
+    const now = Date.now();
+    const minGapMs = 12_000;
+
+    if (!force && now - lastBadgesRefreshAt < minGapMs) {
+      if (badgesRefreshTimer) return;
+      badgesRefreshTimer = setTimeout(() => {
+        badgesRefreshTimer = null;
+        void refreshBadgesNow();
+      }, minGapMs - (now - lastBadgesRefreshAt));
+      return;
+    }
+
+    if (badgesRefreshTimer) {
+      clearTimeout(badgesRefreshTimer);
+      badgesRefreshTimer = null;
+    }
+
+    void refreshBadgesNow();
+  }
+
   // po init/requireAuth:
-  refreshPollsHubDot();
-  
-  refreshBasesBadge();
+  refreshBadges({ force: true });
+
+  setInterval(() => {
+    if (document.visibilityState !== "visible") return;
+    refreshBadges();
+  }, 15_000);
+
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") refreshBadges({ force: true });
+  });
 
   btnLogout?.addEventListener("click", async () => {
     await signOut();
