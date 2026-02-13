@@ -2,6 +2,7 @@
 import { sb } from "../core/supabase.js";
 import { getUser } from "../core/auth.js";
 import { initI18n, t } from "../../translation/translation.js";
+import { alertModal } from "../core/modal.js";
 
 initI18n({ withSwitcher: false });
 
@@ -46,6 +47,7 @@ const MSG = {
   inviteUnknown: () => t("pollGo.inviteUnknown"),
   openInviteFailed: () => t("pollGo.openInviteFailed"),
   invitationRecipient: () => t("pollGo.invitationRecipient"),
+  ownerEmailBlocked: (owner) => t("pollGo.ownerEmailBlocked", { owner }),
 };
 
 const qs = new URLSearchParams(location.search);
@@ -63,6 +65,8 @@ const actions = $("actions");
 const hint = $("hint");
 const emailRow = $("emailRow");
 const emailInput = $("emailInput");
+
+let resolvedInviteData = null;
 
 function setView({ head, text, hintText }) {
   if (title) title.textContent = head;
@@ -233,6 +237,16 @@ async function subscribeByEmail() {
     return;
   }
   try {
+    const ownerId = resolvedInviteData?.owner_id;
+    if (ownerId) {
+      const { data: owner } = await sb().from("profiles").select("id,username,email").eq("id", ownerId).maybeSingle();
+      const ownerEmail = normalizeEmail(owner?.email);
+      if (ownerEmail && normalizeEmail(email) === ownerEmail) {
+        await alertModal({ text: MSG.ownerEmailBlocked(owner?.username || owner?.email || "") });
+        return;
+      }
+    }
+
     const { data, error } = await sb().rpc("poll_go_subscribe_email", { p_token: goToken, p_email: email });
     if (error) throw error;
     if (!data) throw new Error(MSG.subscribeFailed());
@@ -418,6 +432,7 @@ async function init() {
   try {
     const raw = await resolveToken();
     const data = await hydrateInviteIdentity(raw);
+    resolvedInviteData = data || null;
     if (!data?.ok) {
       setView({ head: MSG.invalidLinkTitle(), text: MSG.invalidLinkText() });
       return;
