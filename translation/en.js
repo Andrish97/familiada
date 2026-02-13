@@ -603,9 +603,6 @@ const en = {
       roleViewer: "View",
       add: "Add",
       close: "Close",
-      cooldown: "You can't add the same user again for 24h (anti-spam).",
-      alreadyPending: "An invite is already pending.",
-      emailFailed: "Invite created, but email sending failed.",
       sectionSubscribers: "My subscribers",
       sectionSubscribersSub: "Registered users only (with username).",
       sectionPending: "Pending",
@@ -765,7 +762,6 @@ const en = {
     },
     validation: {
       openOnlyDraft: "You can start a poll only from DRAFT.",
-      noGame: "No game selected.",
       preparedNoPoll: "Prepared game has no poll.",
       minQuestions: "To start: number of questions must be ≥ {min} (you have {count}).",
       pointsRange: "In POINTS mode each question must have {min}–{max} answers.",
@@ -2575,7 +2571,6 @@ const en = {
       warningClose: "Close",
     },
     alert: {
-      missingId: "Missing editor id.",
       cannotEdit: "Cannot edit while poll is open.",
       editorError: "Editor error (console).",
     },
@@ -2914,7 +2909,6 @@ const en = {
     shareCooldownAlert: "You can invite again in {hours}h.",
   },
   pollsHubPolls: {
-    dash: "-",
     title: "Familiada — polls hub",
     backToGames: "← My games",
     logout: "Log out",
@@ -3148,7 +3142,6 @@ const en = {
   },
 
   pollsHubSubscriptions: {
-    dash: "-",
     title: "Familiada — polls hub",
     backToGames: "← My games",
     logout: "Log out",
@@ -3363,7 +3356,7 @@ const en = {
     pollNameLabel: "“{name}”",
     ownerFallback: "Familiada user",
     mail: {
-      subtitle: "Subscriptions",
+      subtitle: "Polls hub",
       subscriptionTitle: "Subscription invitation from {owner}",
       subscriptionBody:
         "User <strong>{owner}</strong> invites you to subscribe. Click the button to view the invitation.",
