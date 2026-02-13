@@ -292,6 +292,7 @@ async function persistColorsOnly() {
 
 /* ========= REALTIME ========= */
 let ch = null;
+let pingTimer = null;
 
 async function handleCommand(lineRaw) {
   const raw = String(lineRaw || "").trim();
@@ -390,6 +391,7 @@ async function press(team, ev) {
 /* ========= PRESENCE ========= */
 async function ping() {
   if (!gameId || !key) return;
+  if (document.visibilityState !== "visible") return;
 
   const { data, error } = await sb().rpc("device_ping", {
       p_game_id: gameId,
@@ -445,8 +447,31 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   await restoreState();
 
-  ping();
-  setInterval(ping, 5000);
+  const startPingLoop = () => {
+    if (pingTimer) return;
+    ping();
+    pingTimer = setInterval(() => {
+      if (document.visibilityState !== "visible") return;
+      void ping();
+    }, 5000);
+  };
+
+  const stopPingLoop = () => {
+    if (!pingTimer) return;
+    clearInterval(pingTimer);
+    pingTimer = null;
+  };
+
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") {
+      startPingLoop();
+      void ping();
+      return;
+    }
+    stopPingLoop();
+  });
+
+  startPingLoop();
 });
 
 window.__buzzer = {
