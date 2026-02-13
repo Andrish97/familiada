@@ -10,7 +10,6 @@ const $ = (id) => document.getElementById(id);
 const qs = new URLSearchParams(location.search);
 const focusInviteToken = qs.get("s");
 let focusInviteHandled = false;
-let subTokenPrompted = false;
 
 const who = $("who");
 const btnLogout = $("btnLogout");
@@ -71,10 +70,6 @@ const MSG = {
   updateOkActive: () => t("pollsHubSubscriptions.modal.updateSubscription.okActive"),
   updateCancel: () => t("pollsHubSubscriptions.modal.updateSubscription.cancel"),
   resendCooldownAlert: (hours) => t("pollsHubSubscriptions.resendCooldownAlert", { hours }),
-  tokenMismatchTitle: () => t("pollsHubSubscriptions.modal.tokenMismatch.title"),
-  tokenMismatchText: () => t("pollsHubSubscriptions.modal.tokenMismatch.text"),
-  tokenMismatchOk: () => t("pollsHubSubscriptions.modal.tokenMismatch.ok"),
-  tokenMismatchCancel: () => t("pollsHubSubscriptions.modal.tokenMismatch.cancel"),
 };
 
 
@@ -117,79 +112,6 @@ function cooldownUntil(ts) {
   return base ? base + COOLDOWN_MS : 0;
 }
 
-
-function mailLink(path) {
-  try {
-    return new URL(path, location.origin).href;
-  } catch {
-    return path;
-  }
-}
-
-function buildMailHtml({ title, subtitle, body, actionLabel, actionUrl }) {
-  return `
-    <div style="margin:0;padding:0;background:#050914;">
-      <div style="max-width:560px;margin:0 auto;padding:26px 16px;font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:#ffffff;">
-        <div style="padding:14px 14px;background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.12);border-radius:18px;backdrop-filter:blur(10px);">
-          <div style="font-weight:1000;letter-spacing:.18em;text-transform:uppercase;color:#ffeaa6;">FAMILIADA</div>
-          <div style="margin-top:6px;font-size:12px;opacity:.85;letter-spacing:.08em;text-transform:uppercase;">${subtitle}</div>
-        </div>
-        <div style="margin-top:14px;padding:18px;border-radius:20px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.06);box-shadow:0 24px 60px rgba(0,0,0,.45);">
-          <div style="font-weight:1000;font-size:18px;letter-spacing:.06em;color:#ffeaa6;margin:0 0 10px;">${title}</div>
-          <div style="font-size:14px;opacity:.9;line-height:1.45;margin:0 0 14px;">${body}</div>
-          <div style="margin:16px 0;">
-            <a href="${actionUrl}" style="display:block;text-align:center;padding:12px 14px;border-radius:14px;border:1px solid rgba(255,234,166,.35);background:rgba(255,234,166,.10);color:#ffeaa6;text-decoration:none;font-weight:1000;letter-spacing:.06em;">${actionLabel}</a>
-          </div>
-          <div style="margin-top:14px;font-size:12px;opacity:.75;line-height:1.4;">${t("pollsHubSubscriptions.mail.ignoreNote")}</div>
-          <div style="margin-top:10px;font-size:12px;opacity:.75;line-height:1.4;">
-            ${t("pollsHubSubscriptions.mail.linkHint")}
-            <div style="margin-top:6px;padding:10px 12px;border-radius:16px;border:1px solid rgba(255,255,255,.18);background:rgba(0,0,0,.18);word-break:break-all;">${actionUrl}</div>
-          </div>
-        </div>
-        <div style="margin-top:14px;font-size:12px;opacity:.7;text-align:center;">${t("pollsHubSubscriptions.mail.autoNote")}</div>
-      </div>
-    </div>
-  `.trim();
-}
-
-async function sendMail({ to, subject, html }) {
-  const { data } = await sb().auth.getSession();
-  const token = data?.session?.access_token;
-  if (!token) throw new Error(t("pollsHubSubscriptions.errors.mailSession"));
-  const doReq = async (accessToken) => fetch(MAIL_FUNCTION_URL, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ to, subject, html }),
-  });
-  let res = await doReq(token);
-  if (res.status === 401) {
-    const { data: refreshed } = await sb().auth.refreshSession();
-    const freshToken = refreshed?.session?.access_token;
-    if (freshToken) res = await doReq(freshToken);
-  }
-  if (!res.ok) throw new Error((await res.text()) || t("pollsHubSubscriptions.errors.mailSend"));
-}
-
-async function sendSubscriptionEmail({ to, link, ownerLabel }) {
-  await sendMail({
-    to,
-    subject: t("pollsHubSubscriptions.mail.subscriptionTitle", { owner: ownerLabel }),
-    html: buildMailHtml({
-      title: t("pollsHubSubscriptions.mail.subscriptionTitle", { owner: ownerLabel }),
-      subtitle: t("pollsHubSubscriptions.mail.subtitle"),
-      body: t("pollsHubSubscriptions.mail.subscriptionBody", { owner: ownerLabel }),
-      actionLabel: t("pollsHubSubscriptions.mail.subscriptionAction"),
-      actionUrl: mailLink(link),
-    }),
-  });
-}
-
-function statusOrder(status) {
-  if (status === "active") return 0;
-  if (status === "pending") return 1;
-  return 2;
-}
-
 function setBadge(name, count) {
   document.querySelectorAll(`[data-badge="${name}"]`).forEach((el) => {
     el.textContent = count > 99 ? "99+" : String(count);
@@ -208,7 +130,6 @@ function sortList(kind, list) {
   const byName = (a, b) => String((a.subscriber_label || a.owner_label || "")).localeCompare(String((b.subscriber_label || b.owner_label || "")));
   if (key === "name-asc") sorted.sort(byName);
   else if (key === "name-desc") sorted.sort((a, b) => byName(b, a));
-  else if (key === "status") sorted.sort((a, b) => statusOrder(a.status) - statusOrder(b.status));
   else if (key === "oldest") sorted.sort((a, b) => parseDate(a.created_at) - parseDate(b.created_at));
   else sorted.sort((a, b) => parseDate(b.created_at) - parseDate(a.created_at));
   return sorted;
@@ -267,10 +188,6 @@ function renderSubscribers() {
             }
             const { data, error } = await sb().rpc("polls_hub_subscriber_resend", { p_id: row.sub_id });
             if (error || data?.ok === false) throw error || new Error(data?.error || "fail");
-            if (data?.to && data?.link) {
-              const ownerLabel = who?.textContent || "Familiada";
-              await sendSubscriptionEmail({ to: data.to, link: data.link, ownerLabel });
-            }
             await refreshData();
           } catch {
             await alertModal({ text: MSG.resendFail() });
@@ -363,7 +280,6 @@ function renderSelect(el, kind) {
     { value: "oldest", label: t("pollsHubSubscriptions.sort.oldest") },
     { value: "name-asc", label: t("pollsHubSubscriptions.sort.nameEmailAsc") },
     { value: "name-desc", label: t("pollsHubSubscriptions.sort.nameEmailDesc") },
-    { value: "status", label: t("pollsHubSubscriptions.sort.status") },
   ];
   let api = sortSelects.get(el);
   if (!api) {
@@ -436,11 +352,19 @@ async function invite(value) {
     if (!data?.already && data?.id) {
       const { data: resendData } = await sb().rpc("polls_hub_subscriber_resend", { p_id: data.id });
       if (resendData?.to && resendData?.link) {
-        await sendSubscriptionEmail({
-          to: resendData.to,
-          link: resendData.link,
-          ownerLabel: who?.textContent || "Familiada",
-        });
+        const { data: sess } = await sb().auth.getSession();
+        const token = sess?.session?.access_token;
+        if (token) {
+          await fetch(MAIL_FUNCTION_URL, {
+            method: "POST",
+            headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+            body: JSON.stringify({
+              to: resendData.to,
+              subject: t("pollsHubSubscriptions.mail.subscriptionTitle", { owner: who?.textContent || "Familiada" }),
+              html: `<p>${t("pollsHubSubscriptions.mail.subscriptionBody", { owner: who?.textContent || "Familiada" })}</p><p><a href="${resendData.link}">${t("pollsHubSubscriptions.mail.subscriptionAction")}</a></p>`,
+            }),
+          });
+        }
       }
       const url = new URL(location.href);
       url.searchParams.delete("s");
@@ -482,44 +406,18 @@ async function refreshData() {
     await refreshTopBadges();
 
     if (focusInviteToken && !focusInviteHandled) {
-      const match = invites.find((x) => String(x.token) === String(focusInviteToken));
-      if (match) {
-        if (match.status === "pending") {
-          const ok = await confirmModal({ text: MSG.focusPrompt() });
-          if (ok) {
-            await callSubscriptionAction(match, "accept");
-            await refreshData();
-          } else {
-            subTokenPrompted = true;
-          }
-        } else {
-          focusInviteHandled = true;
-          const url = new URL(location.href);
-          url.searchParams.delete("s");
-          history.replaceState(null, "", url.toString());
-        }
-      } else if (!subTokenPrompted) {
-        subTokenPrompted = true;
-        const ok = await confirmModal({
-          title: MSG.tokenMismatchTitle(),
-          text: MSG.tokenMismatchText(),
-          okText: MSG.tokenMismatchOk(),
-          cancelText: MSG.tokenMismatchCancel(),
-        });
-        if (ok) {
-          await signOut();
-          const url = new URL("index.html", location.href);
-          url.searchParams.set("next", "subscriptions");
-          url.searchParams.set("s", focusInviteToken);
-          location.href = url.toString();
-        }
-      }
       focusInviteHandled = true;
-      const url = new URL(location.href);
-      if (url.searchParams.get("s") === focusInviteToken) {
-        url.searchParams.delete("s");
-        history.replaceState(null, "", url.toString());
+      const match = invites.find((x) => String(x.token) === String(focusInviteToken));
+      if (match?.status === "pending") {
+        const ok = await confirmModal({ text: MSG.focusPrompt() });
+        if (ok) {
+          await callSubscriptionAction(match, "accept");
+          await refreshData();
+        }
       }
+      const url = new URL(location.href);
+      url.searchParams.delete("s");
+      history.replaceState(null, "", url.toString());
     }
   } catch {
     await alertModal({ text: MSG.loadFail() });
