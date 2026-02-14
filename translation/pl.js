@@ -1150,7 +1150,7 @@ const pl = {
         oraz współdzielić całe bazy z innymi użytkownikami.
       </p>
       <p class="m-p">
-        Do baz pytań przechodzisz z górnego panelu strony „Moje gry”
+        Do baz pytań przechodzisz z górnego paska strony „Moje gry”
         za pomocą przycisku <span class="m-code">Bazy pytań 🗃️</span>.
       </p>
   
@@ -1409,50 +1409,29 @@ const pl = {
       </p>
 
       <p class="m-p">
-        Do sondaży przechodzisz z listy „Moje gry”
-        za pomocą przycisku <span class="m-code">Sondaż</span>.
-        Ten etap następuje po zakończeniu edycji gry
-        i służy wyłącznie do zbierania odpowiedzi
-        lub głosów od ankietowanych.
-      </p>
-      
-      <p class="m-p">
-        W momencie uruchomienia sondażu
-        gra przestaje być edytowalna
-        i zaczyna pełnić rolę narzędzia do zbierania danych.
-        Z tego powodu część opcji dostępnych w edytorze
-        jest w tym trybie celowo zablokowana.
+        Strona „Sondaże” jest teraz osobna od strony „Subskrypcje”.
+        Do sondaży przechodzisz z górnego paska na stronie „Moje gry”
+        przyciskiem <span class="m-code">Sondaże 📊</span>.
       </p>
 
-      <h3 class="m-h2">Centrum sondaży (polls-hub)</h3>
+      <h3 class="m-h2">Strona sondaży</h3>
 
       <p class="m-p">
-        Centrum sondaży to osobny panel zarządzania sondażami, zadaniami i subskrypcjami.
-        Otwierasz go z listy „Moje gry” przyciskiem <span class="m-code">Centrum Sondaży</span>.
-        Na komputerze widzisz dwie karty, a w każdej dwie listy.
+        Na komputerze widzisz dwa obszary:
       </p>
 
       <ul class="m-ul">
-        <li><span class="m-strong">Sondaże</span> — lista „Moje sondaże” oraz „Zadania”.</li>
-        <li><span class="m-strong">Subskrypcje</span> — lista „Moi subskrybenci” oraz „Moje subskrypcje”.</li>
+        <li><span class="m-strong">Moje sondaże</span> — lista sondaży, które tworzysz i prowadzisz.</li>
+        <li><span class="m-strong">Zadania</span> — zaproszenia do głosowania od innych użytkowników.</li>
       </ul>
 
       <p class="m-p">
-        Złota kropka na karcie „Sondaże” pokazuje liczbę aktywnych zadań do wykonania,
-        a na karcie „Subskrypcje” liczbę zaproszeń do zaakceptowania.
-      </p>
-
-      <p class="m-p">
-        Subskrypcja to stałe połączenie między Twoim kontem a zaproszonym użytkownikiem —
-        raz zaakceptowana pozwala udostępniać kolejne sondaże bez wpisywania e-maila od nowa.
-        Zaproszenie wysyłasz w sekcji „Moi subskrybenci”, wpisując e-mail lub nazwę użytkownika
-        i klikając <span class="m-code">Zaproś</span>. Odbiorca akceptuje zaproszenie w swoim
-        Centrum Sondaży lub z linku w wiadomości, a status zmienia się na aktywny.
+        Złota kropka przy przycisku „Sondaże 📊” pokazuje liczbę aktywnych zadań do wykonania.
       </p>
 
       <p class="m-p">
         Udostępnianie sondażu odbywa się z listy „Moje sondaże”: zaznacz kafelek i kliknij
-        <span class="m-code">Udostępnij</span>, następnie wybierz subskrybentów i zapisz.
+        <span class="m-code">Udostępnij</span>, następnie wybierz odbiorców i zapisz.
         Kafelek sondażu pokazuje bieżące głosy, a przycisk <span class="m-code">Szczegóły</span>
         daje podgląd listy oddanych głosów, oczekujących, odrzuconych oraz anonimowych odpowiedzi.
       </p>
@@ -1478,24 +1457,6 @@ const pl = {
         Dwuklik otwiera głosowanie, a przycisk <span class="m-code">X</span> odrzuca zadanie.
       </p>
 
-      <h3 class="m-h3">Moi subskrybenci</h3>
-      <p class="m-p">
-        Kolory statusów:
-        <span class="m-strong">żółty</span> — oczekujące,
-        <span class="m-strong">zielony</span> — aktywne,
-        <span class="m-strong">czerwony</span> — odrzucone/anulowane.
-        Przyciski <span class="m-code">X</span> usuwa subskrybenta, a <span class="m-code">↻</span> ponawia zaproszenie.
-      </p>
-
-      <h3 class="m-h3">Moje subskrypcje</h3>
-      <p class="m-p">
-        Kolory:
-        <span class="m-strong">żółty</span> — oczekujące,
-        <span class="m-strong">zielony</span> — aktywne.
-        Przyciski: <span class="m-code">✓</span> akceptuje, <span class="m-code">X</span> odrzuca/anuluje.
-      </p>
-
-    
       <h3 class="m-h2">Rodzaje sondaży</h3>
     
       <p class="m-p">
@@ -1669,6 +1630,52 @@ const pl = {
         Zakładka „Subskrypcje” opisuje wszystko, co dotyczy relacji między użytkownikami:
         zapraszanie subskrybentów, akceptowanie zaproszeń, ponowne wysyłki i usuwanie powiązań.
       </p>
+
+      <p class="m-p">
+        Strona „Subskrypcje” jest osobna od strony „Sondaże”.
+        Przechodzisz do niej z górnego paska na stronie „Moje gry”,
+        przyciskiem <span class="m-code">Subskrypcje 📧</span>.
+      </p>
+
+      <h3 class="m-h2">Strona subskrypcji</h3>
+
+      <ul class="m-ul">
+        <li><span class="m-strong">Moi subskrybenci</span> — osoby zaproszone przez Ciebie.</li>
+        <li><span class="m-strong">Moje subskrypcje</span> — zaproszenia i relacje, które dotyczą Ciebie jako odbiorcy.</li>
+      </ul>
+
+      <p class="m-p">
+        Złota kropka przy przycisku „Subskrypcje 📧” pokazuje liczbę zaproszeń do zaakceptowania.
+      </p>
+
+      <h3 class="m-h3">Moi subskrybenci</h3>
+      <p class="m-p">
+        Subskrypcja to stałe połączenie między Twoim kontem a zaproszonym użytkownikiem —
+        raz zaakceptowana pozwala udostępniać kolejne sondaże bez wpisywania e-maila od nowa.
+        Zaproszenie wysyłasz, wpisując e-mail lub nazwę użytkownika
+        i klikając <span class="m-code">Zaproś</span>.
+      </p>
+
+      <p class="m-p">
+        Kolory statusów:
+        <span class="m-strong">żółty</span> — oczekujące,
+        <span class="m-strong">zielony</span> — aktywne,
+        <span class="m-strong">czerwony</span> — odrzucone/anulowane.
+        Przyciski <span class="m-code">X</span> usuwa subskrybenta, a <span class="m-code">↻</span> ponawia zaproszenie.
+      </p>
+
+      <h3 class="m-h3">Moje subskrypcje</h3>
+      <p class="m-p">
+        Odbiorca akceptuje zaproszenie na swojej stronie subskrypcji,
+        a status zmienia się na aktywny.
+      </p>
+      <p class="m-p">
+        Kolory:
+        <span class="m-strong">żółty</span> — oczekujące,
+        <span class="m-strong">zielony</span> — aktywne.
+        Przyciski: <span class="m-code">✓</span> akceptuje, <span class="m-code">X</span> odrzuca/anuluje.
+      </p>
+
       <p class="m-p">
         W praktyce subskrypcje przyspieszają pracę — do aktywnych subskrybentów możesz
         jednym kliknięciem udostępnić sondaż oraz szybko udostępnić bazę pytań,
@@ -1681,7 +1688,7 @@ const pl = {
       </p>`,
       logo: `<p class="m-p">
       System pozwala ustawić własne logo, które pojawia się na wyświetlaczu
-      (np. na ekranie startowym lub zakończenia). Do tworzenia logo przechodzisz z górnego panelu strony „Moje gry”
+      (np. na ekranie startowym lub zakończenia). Do tworzenia logo przechodzisz z górnego paska strony „Moje gry”
         za pomocą przycisku <span class="m-code">Logo🖥️</span>.
     </p>
 

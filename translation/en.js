@@ -1392,75 +1392,55 @@ const en = {
       </p>`,
       polls: `<p class="m-p">
         The “Polls” tab describes the stage of collecting responses
-        from respondents before the live match.
-        The poll is a bridge between game preparation
-        and the live gameplay.
+        from respondents before the actual live gameplay.
+        A poll is a bridge between game preparation
+        and running the game live.
       </p>
     
       <p class="m-p">
-        At this stage the system stops being a content editor
+        At this stage, the system stops being a content editor
         and starts working as a data collection tool.
-        For this reason many editing options are deliberately limited.
+        Because of that, many editing options are intentionally limited.
       </p>
 
       <p class="m-p">
-        You reach polls from the “My games” list
-        using the <span class="m-code">Polls Hub</span> button.
-        This stage happens after finishing game editing
-        and is used only to collect responses
-        or votes from respondents.
-      </p>
-      
-      <p class="m-p">
-        When a poll starts,
-        the game stops being editable
-        and begins serving as a data collection tool.
-        Therefore some options available in the editor
-        are deliberately blocked in this mode.
+        The “Polls” page is now separate from the “Subscriptions” page.
+        You open polls from the top bar on the “My games” page
+        using the <span class="m-code">Polls 📊</span> button.
       </p>
 
-      <h3 class="m-h2">Polls hub (polls-hub)</h3>
+      <h3 class="m-h2">Polls page</h3>
 
       <p class="m-p">
-        The polls hub is a separate panel for managing polls, tasks, and subscriptions.
-        You open it from the “My games” list with the <span class="m-code">Polls Hub</span> button.
-        On desktop you see two cards, each with two lists.
+        On desktop, you see two areas:
       </p>
 
       <ul class="m-ul">
-        <li><span class="m-strong">Polls</span> — the “My polls” list and “Tasks.”</li>
-        <li><span class="m-strong">Subscriptions</span> — the “My subscribers” list and “My subscriptions.”</li>
+        <li><span class="m-strong">My polls</span> — the list of polls you create and run.</li>
+        <li><span class="m-strong">Tasks</span> — invitations to vote from other users.</li>
       </ul>
 
       <p class="m-p">
-        The gold dot on the “Polls” card shows the number of active tasks to complete,
-        and on the “Subscriptions” card the number of invitations to accept.
+        The gold dot next to the <span class="m-code">Polls 📊</span> button shows
+        how many active tasks are waiting.
       </p>
 
       <p class="m-p">
-        A subscription is a permanent connection between your account and an invited user —
-        once accepted, it allows sharing future polls without re-entering the email.
-        You send an invitation in the “My subscribers” section by entering an email or username
-        and clicking <span class="m-code">Invite</span>. The recipient accepts the invite in their
-        Polls Hub or via the link in the message, and the status becomes active.
-      </p>
-
-      <p class="m-p">
-        Sharing a poll is done from the “My polls” list: select the tile and click
-        <span class="m-code">Share</span>, then choose subscribers and save.
+        Poll sharing is done from “My polls”: select a tile and click
+        <span class="m-code">Share</span>, then choose recipients and save.
         The poll tile shows current votes, and the <span class="m-code">Details</span> button
-        provides a view of submitted votes, pending, rejected, and anonymous responses.
+        opens a list of submitted, pending, rejected, and anonymous responses.
       </p>
 
       <h3 class="m-h3">My polls</h3>
       <p class="m-p">
-        Each tile has a color that indicates the poll status:
+        Each tile has a color that indicates the poll state:
       </p>
       <ul class="m-ul">
-        <li><span class="m-strong">Gray</span> — draft, missing requirements to start.</li>
-        <li><span class="m-strong">Red</span> — draft ready to start.</li>
-        <li><span class="m-strong">Orange</span> — poll open, no votes.</li>
-        <li><span class="m-strong">Yellow</span> — poll open, there are votes or active tasks.</li>
+        <li><span class="m-strong">Gray</span> — draft, missing start requirements.</li>
+        <li><span class="m-strong">Red</span> — draft, ready to start.</li>
+        <li><span class="m-strong">Orange</span> — poll open, no votes yet.</li>
+        <li><span class="m-strong">Yellow</span> — poll open, votes or active tasks exist.</li>
         <li><span class="m-strong">Green</span> — poll open, goals reached (tasks done or ≥10 votes).</li>
         <li><span class="m-strong">Blue</span> — poll closed.</li>
       </ul>
@@ -1470,31 +1450,13 @@ const en = {
         Tasks are voting invitations. Colors:
         <span class="m-strong">green</span> — available,
         <span class="m-strong">blue</span> — completed.
-        Double-click opens voting, and the <span class="m-code">X</span> button rejects the task.
+        Double-click opens voting, and the <span class="m-code">X</span> button rejects a task.
       </p>
 
-      <h3 class="m-h3">My subscribers</h3>
-      <p class="m-p">
-        Status colors:
-        <span class="m-strong">yellow</span> — pending,
-        <span class="m-strong">green</span> — active,
-        <span class="m-strong">red</span> — rejected/canceled.
-        The <span class="m-code">X</span> button removes a subscriber, and <span class="m-code">↻</span> resends an invite.
-      </p>
-
-      <h3 class="m-h3">My subscriptions</h3>
-      <p class="m-p">
-        Colors:
-        <span class="m-strong">yellow</span> — pending,
-        <span class="m-strong">green</span> — active.
-        Buttons: <span class="m-code">✓</span> accepts, <span class="m-code">X</span> rejects/cancels.
-      </p>
-
-    
-      <h3 class="m-h2">Types of polls</h3>
+      <h3 class="m-h2">Poll types</h3>
     
       <p class="m-p">
-        Depending on the game type, a poll can work in one of two modes:
+        Depending on game type, a poll can run in one of two modes:
       </p>
     
       <ul class="m-ul">
@@ -1504,13 +1466,13 @@ const en = {
         </li>
         <li>
           <span class="m-strong">Scoring poll</span> —
-          respondents choose one of the prepared answers.
+          respondents choose one of prepared answers.
         </li>
       </ul>
     
       <p class="m-p">
-        Prepared games do not have a poll —
-        answers and points are set manually.
+        Prepared games do not have a poll stage —
+        answers and points are configured manually.
       </p>
     
       <h3 class="m-h2">Starting a poll</h3>
@@ -1518,34 +1480,34 @@ const en = {
       <p class="m-p">
         A poll can be started only for a game
         in the <span class="m-strong">Draft</span> state.
-        Before starting, the system checks
-        whether the game meets the minimum requirements.
+        Before start, the system checks
+        whether minimum requirements are met.
       </p>
     
       <ul class="m-ul">
         <li>minimum number of questions,</li>
-        <li>in scoring mode — the required number of answers per question.</li>
+        <li>for scoring mode — enough answers in each question.</li>
       </ul>
     
       <div class="m-note">
         <b>Why?</b><br/>
-        This ensures you cannot start a poll
-        that cannot later be properly closed
-        and used in the game.
+        This prevents starting a poll
+        that could not be correctly closed later
+        and used in gameplay.
       </div>
     
       <h3 class="m-h2">Link and QR code</h3>
     
       <p class="m-p">
-        After starting a poll the system generates
+        After starting a poll, the system generates
         a unique voting link.
-        The link can be copied,
-        opened in a new tab,
-        or displayed as a QR code.
+        You can copy it,
+        open it in a new tab,
+        or display it as a QR code.
       </p>
     
       <p class="m-p">
-        The QR code is intended to be displayed
+        The QR code is meant to be displayed
         on a screen visible to respondents
         (TV, projector, large monitor).
       </p>
@@ -1553,25 +1515,25 @@ const en = {
       <h3 class="m-h2">Poll flow</h3>
     
       <p class="m-p">
-        Respondents go through the questions in order.
-        The system enforces the order
-        and does not allow skipping a question.
+        Respondents go through questions in order.
+        The system enforces the sequence
+        and does not allow skipping questions.
       </p>
     
       <p class="m-p">
-        In a text poll each answer:
+        In a text poll, each answer:
       </p>
     
       <ul class="m-ul">
         <li>is limited to 17 characters,</li>
-        <li>is normalized (case, spaces),</li>
+        <li>is normalized (letter case, spaces),</li>
         <li>is counted as a separate proposal.</li>
       </ul>
     
       <p class="m-p">
-        In a scoring poll the respondent
-        chooses one of the prepared answers,
-        and the system records the vote.
+        In a scoring poll, the respondent
+        chooses one prepared answer,
+        and the system records that vote.
       </p>
     
       <h3 class="m-h2">Closing a poll</h3>
@@ -1579,15 +1541,15 @@ const en = {
       <p class="m-p">
         Closing a poll is a separate,
         deliberate stage of work.
-        The system will not allow closing a poll
-        if the collected data does not meet
+        The system does not allow closing a poll
+        if collected data does not meet
         minimum quality conditions.
       </p>
     
       <h3 class="m-h3">Scoring poll</h3>
     
       <p class="m-p">
-        When closing a scoring poll
+        When closing a scoring poll,
         the system converts votes into points
         and normalizes them to a 0–100 scale
         for each question.
@@ -1595,55 +1557,55 @@ const en = {
     
       <div class="m-note">
         <b>Result:</b>
-        you get a ready list of answers with points,
-        without the need for manual counting.
+        you get a ready-to-use list of answers with points,
+        without manual calculations.
       </div>
     
       <h3 class="m-h3">Text poll</h3>
     
       <p class="m-p">
-        In a text (classic) poll respondents type their own answers.
-        After closing, the system moves to the results cleanup stage.
+        In a text (classic) poll, respondents enter their own answers.
+        After closing, the system moves to result-cleanup stage.
         The operator can merge obviously similar answers
-        and remove typos or clear duplicates.
+        and remove typos or obvious duplicates.
       </p>
       
       <p class="m-p">
-        Then answers are normalized to the points scale.
+        Then answers are normalized to points.
         At this stage the system applies additional limits
-        aimed at keeping the board readable
-        and the gameplay dynamic.
+        to keep the board readable
+        and gameplay dynamic.
       </p>
       
       <p class="m-p">
-        Answers with a very low number of mentions
-        that after normalization get
-        <span class="m-strong">less than 8 points</span>
-        are automatically discarded.
-        Such answers usually do not matter for the game
-        and would not be readable for the audience.
+        Answers with very low number of indications,
+        which after normalization receive
+        <span class="m-strong">less than 8 points</span>,
+        are automatically rejected.
+        Such answers usually do not matter for gameplay
+        and would not be readable for viewers.
       </p>
       
       <p class="m-p">
         For one question, the board can show at most
         <span class="m-strong">6 answers</span>.
         If there are more correct answers,
-        the system selects the highest-scoring ones
-        and skips the rest.
+        the system keeps best-scored ones
+        and omits the rest.
       </p>
       
       <p class="m-p">
-        For this reason the total points for a single question
-        <span class="m-strong">do not always sum to exactly 100</span>.
-        Points are assigned only to the answers
+        Because of that, total points per question
+        <span class="m-strong">do not always equal exactly 100</span>.
+        Points are assigned only to answers
         that actually appear on the board.
       </p>
     
       <div class="m-warn">
-        <b>Warning:</b>
-        after closing a poll
+        <b>Note:</b>
+        after closing a poll,
         you cannot change its results
-        without restarting the poll.
+        without restarting polling.
       </div>
     
       <h3 class="m-h2">Restarting a poll</h3>
@@ -1651,25 +1613,73 @@ const en = {
       <p class="m-p">
         A closed poll can be restarted,
         which removes previous results
-        and starts collecting answers from scratch.
+        and starts collecting responses again.
       </p>
     
       <p class="m-p">
         This option is useful
-        when the poll was started for testing
-        or an organizational error occurred.
+        when a poll was started for testing
+        or an organizational mistake occurred.
       </p>`,
       subscriptions: `<p class="m-p">
-        The “Subscriptions” tab covers all user-to-user sharing flows:
-        inviting subscribers, accepting invitations, resending, and removing connections.
+        The “Subscriptions” tab describes everything related to user relationships:
+        inviting subscribers, accepting invitations, resending, and unlinking.
+      </p>
+
+      <p class="m-p">
+        The “Subscriptions” page is separate from the “Polls” page.
+        You open it from the top bar on “My games”
+        with the <span class="m-code">Subscriptions 📧</span> button.
+      </p>
+
+      <h3 class="m-h2">Subscriptions page</h3>
+
+      <ul class="m-ul">
+        <li><span class="m-strong">My subscribers</span> — people invited by you.</li>
+        <li><span class="m-strong">My subscriptions</span> — invitations and links where you are the recipient.</li>
+      </ul>
+
+      <p class="m-p">
+        The gold dot near <span class="m-code">Subscriptions 📧</span> shows how many invitations are waiting to be accepted.
+      </p>
+
+      <h3 class="m-h3">My subscribers</h3>
+      <p class="m-p">
+        A subscription is a persistent connection between your account and an invited user —
+        once accepted, it lets you share future polls without entering email again.
+        You send an invitation by entering email or username
+        and clicking <span class="m-code">Invite</span>.
+      </p>
+
+      <p class="m-p">
+        Status colors:
+        <span class="m-strong">yellow</span> — pending,
+        <span class="m-strong">green</span> — active,
+        <span class="m-strong">red</span> — rejected/canceled.
+        Actions: <span class="m-code">X</span> removes subscriber, <span class="m-code">↻</span> resends invitation.
+      </p>
+
+      <h3 class="m-h3">My subscriptions</h3>
+      <p class="m-p">
+        The recipient accepts an invitation on their subscriptions page,
+        and status becomes active.
       </p>
       <p class="m-p">
-        In practice, subscriptions speed up work — you can share a poll with active subscribers
-        in one click, and quickly share a question base without manually rewriting links or data.
+        Colors:
+        <span class="m-strong">yellow</span> — pending,
+        <span class="m-strong">green</span> — active.
+        Actions: <span class="m-code">✓</span> accept, <span class="m-code">X</span> reject/cancel.
+      </p>
+
+      <p class="m-p">
+        In practice, subscriptions speed up your workflow — with active subscribers you can
+        share polls in one click and quickly share question bases,
+        without manually copying data and links.
       </p>
       <p class="m-p">
-        When you type a username in the invite field, the system first checks whether that user exists.
-        If not, you get an alert. For an email address, an invite can also be sent to an unregistered person.
+        If you enter a username while inviting, the system first checks
+        whether that user exists. If not, a message is shown.
+        For email, invitations can also be sent to non-registered people.
       </p>`,
       logo: `<p class="m-p">
       The system lets you set your own logo that appears on the display
