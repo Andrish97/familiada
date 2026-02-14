@@ -214,9 +214,9 @@ async function injectLanguageSwitcher() {
 
   container.appendChild(btn);
 
-  const topbarRight = document.querySelector(".topbar .topbar-right");
-  if (topbarRight) {
-    topbarRight.prepend(container);
+  const topbarLangSection = document.querySelector(".topbar .topbar-section-3");
+  if (topbarLangSection) {
+    topbarLangSection.prepend(container);
   } else {
     container.classList.add("lang-floating");
     document.body.appendChild(container);

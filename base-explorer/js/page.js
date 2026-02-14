@@ -4,6 +4,7 @@
 import { requireAuth, signOut } from "../../js/core/auth.js";
 import { alertModal } from "../../js/core/modal.js";
 import { initI18n, t, withLangParam } from "../../translation/translation.js";
+import { guardDesktopOnly } from "../../js/core/device-guard.js";
 import { createState, setRole } from "./state.js";
 import { renderAll } from "./render.js";
 import {
@@ -53,6 +54,7 @@ btnLogout?.addEventListener("click", async () => {
 /* ================= Init ================= */
 (async function init() {
   await initI18n({ withSwitcher: true });
+  guardDesktopOnly({ minWidth: 980 });
   // auth
   const user = await requireAuth(withLangParam("../index.html"));
   if (who) who.textContent = user?.username || user?.email || "—";

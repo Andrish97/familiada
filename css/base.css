@@ -39,62 +39,7 @@ body {
     backdrop-filter: blur(10px);
 }
 
-.topbar-left{
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex-wrap: wrap;
-}
-
-.topbar-right{
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex-wrap: wrap;
-
-    margin-left: auto;      /* 🔑 odpychanie od środka */
-    justify-content: flex-end;
-}
-
 @media (max-width:980px){
-
-  /* topbar jako wrap, ale bez centrowania w pionie */
-  .topbar{
-    align-items: flex-start;
-  }
-
-  /* sekcje MUSZĄ mieć pełną szerokość, inaczej space-between “zostawia” wolne miejsce */
-  .topbar-left,
-  .topbar-right{
-    width: 100%;
-    flex: 0 0 100%;
-
-    display: flex;
-    flex-wrap: wrap;
-    align-items: flex-start;
-    align-content: flex-start;
-
-    justify-content: space-between;   /* ✅ justowanie w wierszu */
-    gap: 10px;
-  }
-
-  /* Dzieci nie mogą się rozciągać (ważne dla buttonów i elementów JS) */
-  .topbar-left > *,
-  .topbar-right > *{
-    flex: 0 0 auto;
-    width: auto;
-    max-width: 100%;
-  }
-
-  /* brand/title zawsze nowa linia + wyśrodkowanie */
-  .topbar-left .brand,
-  .topbar-left .topbar-title{
-    flex-basis: 100%;
-    width: 100%;
-    text-align: center;
-  }
-
-  /* usuń “sztuczne” elementy które robią dziury na mobile */
   .spacer{
     display: none !important;
   }
@@ -737,49 +682,11 @@ html.showA2HS .a2hs {
   }
 }
 
+
 @media (max-width: 900px) {
-  .topbar {
-    flex-wrap: nowrap;
-    align-items: center;
-    justify-content: space-between;
-    min-height: 58px;
-    padding: 8px 10px;
-  }
-
-  .topbar-left {
-    width: 100%;
-    flex: 1 1 auto;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex-wrap: nowrap;
-  }
-
-  .topbar-left .brand,
-  .topbar-left .topbar-title {
-    flex: 1 1 auto;
-    min-width: 0;
-    text-align: left;
-    font-size: 12px;
-    letter-spacing: .1em;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
   .topbar-menu-toggle {
-    margin-left: auto;
     padding: 8px 10px;
     border-radius: 12px;
-  }
-
-  .mobile-primary-back {
-    padding: 8px 10px;
-    border-radius: 12px;
-    max-width: 48vw;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
   }
 
   .topbar-mobile-overlay {
@@ -812,87 +719,119 @@ html.showA2HS .a2hs {
     border-radius: 10px;
   }
 
-  .topbar-mobile-mount {
-    display: grid;
-    gap: 8px;
-  }
-
-  .topbar-mobile-mount .btn,
-  .topbar-mobile-mount .who,
-  .topbar-mobile-mount .user-btn {
-    width: 100%;
-    justify-content: center;
-  }
-
   body.topbar-mobile-lock {
     overflow: hidden;
   }
 }
 
-@media (min-width: 901px) {
-  .topbar.topbar-desktop-sections {
-    display: grid;
-    grid-template-columns: minmax(180px, 1fr) minmax(260px, 1.8fr) minmax(260px, 1fr);
-    align-items: start;
-    gap: 12px;
-    padding: 10px 14px;
+/* ===== Unified 4-section topbar layout ===== */
+.topbar-layout-4{
+  display:grid;
+  grid-template-columns:max-content minmax(0,1fr) max-content max-content;
+  align-items:start;
+  gap:10px;
+}
+
+.topbar-layout-4 .topbar-section{
+  min-width:0;
+  display:flex;
+  flex-wrap:wrap;
+  align-items:flex-start;
+  align-content:flex-start;
+  gap:8px;
+}
+
+.topbar-layout-4 .topbar-section-2{
+  justify-content:flex-start;
+}
+
+.topbar-layout-4 .topbar-section-3,
+.topbar-layout-4 .topbar-section-4{
+  justify-content:flex-start;
+}
+
+.topbar-layout-4 .topbar-section .btn,
+.topbar-layout-4 .topbar-section .who,
+.topbar-layout-4 .topbar-section .lang-switcher,
+.topbar-layout-4 .topbar-section .user-btn,
+.topbar-layout-4 .topbar-section .top-status{
+  flex:0 0 auto;
+  max-width:100%;
+}
+
+@media (max-width: 900px){
+  .topbar-layout-4{
+    grid-template-columns:minmax(0,1fr) auto;
+    grid-template-areas:
+      "s1 s3";
+    align-items:center;
+    gap:8px;
+    padding:8px 10px;
   }
 
-  .topbar.topbar-desktop-sections .topbar-left {
-    width: auto;
-    flex: none;
-    display: grid;
-    gap: 8px;
-    align-items: start;
-    justify-items: start;
+  .topbar-layout-4 .topbar-section-1{ grid-area:s1; }
+  .topbar-layout-4 .topbar-section-3{ grid-area:s3; justify-content:flex-end; align-items:center; }
+  .topbar-layout-4 .topbar-section-2,
+  .topbar-layout-4 .topbar-section-4{ display:none; }
+
+  .topbar-layout-4 .topbar-section-1{
+    flex-wrap:nowrap;
+    align-items:center;
+    min-width:0;
   }
 
-  .topbar.topbar-desktop-sections .topbar-left .brand {
-    line-height: 1;
+  .topbar-layout-4:not(.topbar-mobile-keep-brand) .topbar-section-1 .brand{
+    display:none;
   }
 
-  .topbar-center-grid {
-    min-width: 0;
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 8px;
-    align-content: center;
-    justify-items: stretch;
+  .topbar-layout-4.topbar-mobile-keep-brand .topbar-section-1 .brand{
+    display:block;
+    font-size:12px;
+    letter-spacing:.1em;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
   }
 
-  .topbar-center-grid .btn,
-  .topbar-center-grid .lang-switcher,
-  .topbar-center-grid .user-btn {
-    width: 100%;
-    justify-content: center;
+  .topbar-layout-4 .mobile-primary-back{
+    max-width:58vw;
   }
 
-  .topbar-right-rail {
-    min-width: 0;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-    align-items: start;
+  .topbar-layout-4 .topbar-menu-toggle{
+    margin-left:0;
   }
 
-  .topbar-stack {
-    display: grid;
-    gap: 8px;
+  .topbar-mobile-mount{
+    display:grid;
+    gap:10px;
   }
 
-  .topbar-stack-help {
-    justify-items: stretch;
+  .topbar-mobile-group{
+    display:grid;
+    gap:8px;
+    border-top:1px solid rgba(255,255,255,.10);
+    padding-top:10px;
   }
 
-  .topbar-stack-user {
-    justify-items: stretch;
+  .topbar-mobile-group:first-child{
+    border-top:0;
+    padding-top:0;
   }
 
-  .topbar-stack .btn,
-  .topbar-stack .who,
-  .topbar-stack .lang-switcher,
-  .topbar-stack .user-btn {
-    width: 100%;
-    justify-content: center;
+  .topbar-mobile-group .btn,
+  .topbar-mobile-group .who,
+  .topbar-mobile-group .user-btn,
+  .topbar-mobile-group .top-status{
+    width:100%;
+    justify-content:flex-start;
   }
+
+  .topbar-mobile-group .who,
+  .topbar-mobile-group .user-btn .user-name{
+    background: rgba(255,255,255,.035);
+  }
+}
+
+@media (max-width: 900px){
+  .topbar-mobile-hidden{ display:none !important; }
 }
