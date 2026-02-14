@@ -530,6 +530,7 @@ body.polls-hub-body .bar{
   font-size: 12px;
   letter-spacing: .08em;
   text-transform: uppercase;
+  z-index: 3;
   padding: 0;
 }
 .hub-tabs-mobile .tab-active{
