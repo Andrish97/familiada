@@ -54,6 +54,8 @@ body {
 
 
 .brand {
+    display: inline-flex;
+    align-items: center;
     font-weight: 1000;
     letter-spacing: .18em;
     text-transform: uppercase;
@@ -516,11 +518,11 @@ body {
     }
 
     .only-desktop {
-        display: none
+        display: inline-flex
     }
 
     .only-mobile {
-        display: inline
+        display: none
     }
 }
 
@@ -750,6 +752,10 @@ html.showA2HS .a2hs {
   justify-content:flex-start;
 }
 
+.topbar-layout-4 .topbar-section-1 .brand{
+  align-self:center;
+}
+
 .topbar-layout-4 .topbar-section .btn,
 .topbar-layout-4 .topbar-section .who,
 .topbar-layout-4 .topbar-section .lang-switcher,
@@ -804,6 +810,25 @@ html.showA2HS .a2hs {
   .topbar-mobile-mount{
     display:grid;
     gap:10px;
+  }
+
+  .topbar-mobile-tab-group{
+    display:grid;
+    gap:8px;
+    padding:0 0 8px;
+    border-bottom:1px solid rgba(255,255,255,.10);
+  }
+
+  .topbar-mobile-tab-group .simple-tabs{
+    margin:0;
+    display:grid;
+    gap:8px;
+  }
+
+  .topbar-mobile-tab-group .simple-tabs .tab{
+    width:100%;
+    justify-content:flex-start;
+    text-align:left;
   }
 
   .topbar-mobile-group{
