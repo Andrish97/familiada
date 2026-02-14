@@ -27,6 +27,13 @@ function byId(id) { return document.getElementById(id); }
 
 function getTabs() { return qsa(".simple-tabs .tab"); }
 
+function updateMobileTabSubtitle(name) {
+  const subtitle = byId("manualTabSubtitle");
+  if (!subtitle) return;
+  const activeTab = getTabs().find((tab) => tab.dataset.tab === name);
+  subtitle.textContent = activeTab?.textContent?.trim() || "";
+}
+
 const pages = Object.fromEntries(
   qsa(".tab-panel[data-tab]").map((el) => [el.dataset.tab, el])
 );
@@ -39,6 +46,7 @@ function setActive(name) {
     el?.classList.toggle("active", key === name);
   });
   location.hash = name;
+  updateMobileTabSubtitle(name);
 }
 
 function wireTabs() {

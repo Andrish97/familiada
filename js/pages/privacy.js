@@ -1,14 +1,27 @@
 // js/pages/privacy.js
-import { initI18n } from "../../translation/translation.js";
+import { initI18n, t } from "../../translation/translation.js";
 
 initI18n({ withSwitcher: !(new URLSearchParams(location.search).get("modal") === "control") });
 
 function byId(id) { return document.getElementById(id); }
 
+function hasManualRef() {
+  return new URLSearchParams(location.search).has("man");
+}
+
+function buildBuilderBackUrl() {
+  const p = new URLSearchParams(location.search);
+  const lang = p.get("lang") || localStorage.getItem("uiLang") || "pl";
+  return `builder.html?lang=${encodeURIComponent(lang)}`;
+}
+
 function decodeManualBack() {
   const p = new URLSearchParams(location.search);
-  const man = p.get("man") || "manual.html";
+  const man = p.get("man");
+
+  if (!man) return buildBuilderBackUrl();
   if (man.includes("lang=")) return man;
+
   const lang = p.get("lang") || localStorage.getItem("uiLang") || "pl";
   const sep = man.includes("?") ? "&" : "?";
   return `${man}${sep}lang=${encodeURIComponent(lang)}`;
@@ -24,6 +37,12 @@ function applyControlModalLayout() {
   document.body.classList.add("manual-in-control-modal");
   byId("who")?.remove();
   byId("btnLogout")?.remove();
+}
+
+function updateBackButtonLabel() {
+  const btn = byId("btnBack");
+  if (!btn) return;
+  btn.textContent = hasManualRef() ? t("privacy.backToManual") : t("manual.backToGames");
 }
 
 function wireFallbackNav() {
@@ -55,7 +74,10 @@ async function wireAuthSoft() {
 
 applyControlModalLayout();
 wireFallbackNav();
+updateBackButtonLabel();
 
 wireAuthSoft().catch((err) => {
   console.warn("[privacy] auth nieaktywny:", err);
 });
+
+window.addEventListener("i18n:lang", updateBackButtonLabel);
