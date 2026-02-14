@@ -16,6 +16,7 @@ function initMobileTopbarMenu() {
   const section4Placeholder = document.createComment('topbar-section-4-restore');
   const tabsPlaceholder = document.createComment('topbar-tabs-restore');
   const simpleTabs = document.querySelector('.simple-tabs');
+  const menuItemSelector = 'button, a, .btn, [role="button"], [role="tab"], .who, .user-btn, .lang-switcher, .top-status';
 
   let overlay;
   let panel;
@@ -26,6 +27,13 @@ function initMobileTopbarMenu() {
   let group4;
   let toggleBtn;
   let isMobileMounted = false;
+
+  const hasMenuContent = () => {
+    const hasTabs = !!simpleTabs?.querySelector('.tab, button, [role="tab"]');
+    const hasSection2Items = !!section2.querySelector(menuItemSelector);
+    const hasSection4Items = !!section4.querySelector(menuItemSelector);
+    return hasTabs || hasSection2Items || hasSection4Items;
+  };
 
   const close = () => {
     overlay?.classList.remove('is-open');
@@ -39,6 +47,7 @@ function initMobileTopbarMenu() {
 
   const mountMobile = () => {
     if (isMobileMounted) return;
+    if (!hasMenuContent()) return;
     isMobileMounted = true;
 
     overlay = document.createElement('div');
@@ -94,7 +103,7 @@ function initMobileTopbarMenu() {
     toggleBtn.type = 'button';
     toggleBtn.className = 'btn topbar-menu-toggle';
     toggleBtn.textContent = '☰';
-    section3.prepend(toggleBtn);
+    section3.append(toggleBtn);
 
     toggleBtn.addEventListener('click', open);
     closeBtn.addEventListener('click', close);

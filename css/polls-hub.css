@@ -49,6 +49,122 @@ body.polls-hub-body .bar{
 ========================================================= */
 
 .tabs-card.hub-tabs{
+  --tab-height: 48px;
+  --tab-extra: 1px;
+  --radius: 12px;
+  --corner-bottom: 0px;
+  --corner-shift: 1px;
+  --border-fudge: 2px;
+  --surface: #111827;
+  --border-color: var(--line2);
+}
+
+.hub-tabs .tabs-strip{
+  position: relative;
+  z-index: 1;
+}
+
+.hub-tabs .tab-slot,
+.hub-tabs .tab-label{
+  position: relative;
+  display: flex;
+  justify-content: center;
+}
+
+.hub-tabs .tab-slot{
+  min-width: 0;
+  flex: 1 1 0;
+  align-items: stretch;
+}
+
+.hub-tabs .tab-label{
+  width: 100%;
+  min-height: var(--tab-height);
+  border: 0;
+  background: transparent;
+  color: rgba(255,255,255,.72);
+  cursor: pointer;
+  align-items: center;
+}
+
+.hub-tabs .tab-label.active{ color: #f9fafb; }
+
+.hub-tabs .tab-wrapper{
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  pointer-events: none;
+  z-index: 2;
+  display: none;
+}
+
+.hub-tabs .tab-slot:has(.tab-label.active) .tab-wrapper{
+  display: block;
+}
+
+.hub-tabs .tab-active,
+.hub-tabs .tab-corner::before{
+  border: 1px solid var(--border-color);
+}
+
+.hub-tabs .tab-active{
+  height: calc(var(--tab-height) + var(--tab-extra));
+  width: 100%;
+  line-height: var(--tab-height);
+  text-align: center;
+  background: var(--surface);
+  border-bottom: none;
+  border-top-left-radius: var(--radius);
+  border-top-right-radius: var(--radius);
+  color: #f9fafb;
+  position: relative;
+  z-index: 2;
+}
+
+.hub-tabs .tab-corner{
+  position: absolute;
+  bottom: var(--corner-bottom);
+  width: var(--radius);
+  height: var(--radius);
+  overflow: hidden;
+  background-color: transparent;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.hub-tabs .tab-corner-left{
+  left: 0;
+  transform: translateX(calc(-100% + var(--corner-shift)));
+  background-image: radial-gradient(circle at 0% 0%, transparent var(--radius), var(--surface) var(--radius));
+}
+
+.hub-tabs .tab-corner-right{
+  right: 0;
+  transform: translateX(calc(100% - var(--corner-shift)));
+  background-image: radial-gradient(circle at 100% 0%, transparent var(--radius), var(--surface) var(--radius));
+}
+
+.hub-tabs .tab-corner::before{
+  content: "";
+  position: absolute;
+  width: calc(2 * var(--radius));
+  height: calc(2 * var(--radius));
+  border-radius: 50%;
+  background: transparent;
+}
+
+.hub-tabs .tab-corner-left::before{
+  top: calc(-1 * var(--radius) - var(--border-fudge));
+  left: calc(-1 * var(--radius) - var(--border-fudge));
+}
+
+.hub-tabs .tab-corner-right::before{
+  top: calc(-1 * var(--radius) - var(--border-fudge));
+  right: calc(-1 * var(--radius) - var(--border-fudge));
+}
+
+.tabs-card.hub-tabs{
   flex: 1 1 auto;
   min-height: 0;
   display: flex;
@@ -564,7 +680,7 @@ body.polls-hub-body .bar{
 
 
 .hub-tabs-mobile .tab-slot{ min-width: 0; }
-.hub-tabs-mobile .tab-wrapper{ overflow: hidden; }
+.hub-tabs-mobile .tab-wrapper{ overflow: visible; }
 .hub-tabs-mobile:has(.tab-slot:first-child .tab-label.active) .hub-card{ border-top-left-radius: 0; }
 .hub-tabs-mobile:has(.tab-slot:last-child .tab-label.active) .hub-card{ border-top-right-radius: 0; }
 .hub-tabs-mobile:has(.tab-slot:first-child .tab-label.active) .tab-slot:first-child .tab-corner-left,
