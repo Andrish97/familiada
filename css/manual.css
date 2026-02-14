@@ -179,8 +179,8 @@
 }
 
 
-body.manual-in-control-modal .topbar-left{ gap:10px; }
-body.manual-in-control-modal .topbar-right{ margin-left:auto; }
+body.manual-in-control-modal .topbar-section-1{ gap:10px; }
+body.manual-in-control-modal .topbar-section-4{ margin-left:auto; }
 body.manual-in-control-modal .wrap{ max-width: min(1200px, 96vw); }
 
 body.manual-in-control-modal #btnLegal{ margin-right: 56px; }
