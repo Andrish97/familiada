@@ -28,6 +28,7 @@
 }
 
 .topbar-close-slot {
+    display: none;
     width: 42px;
     min-width: 42px;
     height: 40px;
@@ -209,6 +210,6 @@ body.manual-in-control-modal .wrap{ max-width: min(1200px, 96vw); }
 
 html.manual-in-control-modal, body.manual-in-control-modal { height: 100%; }
 body.manual-in-control-modal { background: var(--bg); }
-body.manual-in-control-modal .topbar-close-slot{ visibility: visible; }
+body.manual-in-control-modal .topbar-close-slot{ display:block; }
 body.manual-in-control-modal .topbar { position: sticky; top: 0; z-index: 5; }
 body.manual-in-control-modal .m-wrap { padding-bottom: 16px; }
