@@ -13,18 +13,22 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
   <script type="module" src="js/pages/polls-hub.js" defer></script>
-  <script type="module" src="js/core/topbar-autohide-global.js" defer></script>
+  <script type="module" src="js/core/topbar-mobile-menu.js" defer></script>
 </head>
 
 <body class="polls-hub-body">
-  <header class="topbar">
-    <div class="topbar-left">
+  <header class="topbar topbar-layout-4">
+    <div class="topbar-section topbar-section-1">
       <div class="brand">FAMILIADA</div>
       <button class="btn" id="btnBackToBuilder" type="button" data-i18n="pollsHubPolls.backToGames">← Moje gry</button>
     </div>
-    <div class="topbar-right">
+    <div class="topbar-section topbar-section-2">
       <button class="btn" id="btnGoAlt" type="button" data-i18n="builder.nav.pollsHubSubs">Subskrypcje 📧 <span class="badge" id="altBadge" aria-hidden="true"></span></button>
+    </div>
+    <div class="topbar-section topbar-section-3">
       <button class="btn" id="btnManual" type="button">ℹ️</button>
+    </div>
+    <div class="topbar-section topbar-section-4">
       <span class="who" id="who">—</span>
       <button class="btn" id="btnLogout" type="button" data-i18n="pollsHubPolls.logout">Wyloguj</button>
     </div>

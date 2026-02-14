@@ -21,18 +21,24 @@
 <body>
 
   <!-- TOPBAR – identyczny wzorzec jak w manualu/builderze -->
-  <header class="topbar">
-    <div class="topbar-left">
+  <header class="topbar topbar-layout-4 topbar-mobile-hidden">
+    <div class="topbar-section topbar-section-1">
+      <div class="brand">FAMILIADA</div>
+      <button id="btnBack" class="btn ghost" type="button" data-i18n="baseExplorer.backToBases">← Moje bazy</button>
+    </div>
+
+    <div class="topbar-section topbar-section-2">
       <div class="topbar-title">
         <div class="title" data-i18n="baseExplorer.headerTitle">Menadżer bazy pytań</div>
         <div class="subtitle" id="baseName">—</div>
       </div>
-  
-      <button id="btnBack" class="btn ghost" type="button" data-i18n="baseExplorer.backToBases">← Moje bazy</button>
     </div>
-  
-    <div class="topbar-right">
+
+    <div class="topbar-section topbar-section-3">
       <button class="btn ghost" id="btnManual" type="button">ℹ️</button>
+    </div>
+
+    <div class="topbar-section topbar-section-4">
       <div id="who" class="who">—</div>
       <button id="btnLogout" class="btn ghost" data-i18n="baseExplorer.logout">Wyloguj</button>
     </div>

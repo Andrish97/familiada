@@ -569,3 +569,9 @@ body.polls-hub-body .bar{
 .hub-tabs-mobile:has(.tab-slot:last-child .tab-label.active) .hub-card{ border-top-right-radius: 0; }
 .hub-tabs-mobile:has(.tab-slot:first-child .tab-label.active) .tab-slot:first-child .tab-corner-left,
 .hub-tabs-mobile:has(.tab-slot:last-child .tab-label.active) .tab-slot:last-child .tab-corner-right{ display:none; }
+
+/* keep mobile protrusion corners on edge tabs too (like builder) */
+.hub-tabs-mobile .tab-slot:first-child .tab-corner-left,
+.hub-tabs-mobile .tab-slot:last-child .tab-corner-right{
+  display:block;
+}

@@ -12,48 +12,49 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
   <script type="module" src="js/pages/builder.js" defer></script>
-  <script type="module" src="js/core/topbar-autohide-global.js" defer></script>
+  <script type="module" src="js/core/topbar-mobile-menu.js" defer></script>
 </head>
 
 <body class="builder-body">
-  <header class="topbar">
-    <div class="topbar-left">
+  <header class="topbar topbar-layout-4 topbar-mobile-keep-brand">
+    <div class="topbar-section topbar-section-1">
       <div class="brand">FAMILIADA</div>
+    </div>
+    <div class="topbar-section topbar-section-2">
+      <button class="btn" id="btnPollsHub">
+        <span class="only-desktop" data-i18n="builder.nav.pollsHubPolls">Sondaże 📊</span>
+        <span class="only-mobile" data-i18n="builder.nav.pollsHubMobilePolls">📊</span>
+        <span class="badge" id="pollsHubBadge" aria-hidden="true"></span>
+      </button>
 
-        <button class="btn" id="btnPollsHub">
-          <span class="only-desktop" data-i18n="builder.nav.pollsHubPolls">Sondaże 📊</span>
-          <span class="only-mobile" data-i18n="builder.nav.pollsHubMobilePolls">📊</span>
-          <span class="badge" id="pollsHubBadge" aria-hidden="true"></span>
-        </button>
+      <button class="btn" id="btnSubscriptionsHub">
+        <span class="only-desktop" data-i18n="builder.nav.pollsHubSubs">Subskrypcje 📧</span>
+        <span class="only-mobile" data-i18n="builder.nav.pollsHubMobileSubs">📧</span>
+        <span class="badge" id="subscriptionsHubBadge" aria-hidden="true"></span>
+      </button>
 
-        <button class="btn" id="btnSubscriptionsHub">
-          <span class="only-desktop" data-i18n="builder.nav.pollsHubSubs">Subskrypcje 📧</span>
-          <span class="only-mobile" data-i18n="builder.nav.pollsHubMobileSubs">📧</span>
-          <span class="badge" id="subscriptionsHubBadge" aria-hidden="true"></span>
-        </button>
-
-        <button class="btn" id="btnBases">
-          <span class="only-desktop" data-i18n="builder.nav.bases">Bazy pytań 🗃️</span>
-          <span class="only-mobile" data-i18n="builder.nav.basesMobile">🗃️</span>
-          <span class="badge" id="basesBadge" aria-hidden="true"></span>
-        </button>
-      
-      <button class="btn" id="btnManual">
-          <span class="only-desktop" data-i18n="builder.nav.manual">Wskazówki ℹ️</span>
-          <span class="only-mobile" data-i18n="builder.nav.manualMobile">ℹ️</span>
+      <button class="btn" id="btnBases">
+        <span class="only-desktop" data-i18n="builder.nav.bases">Bazy pytań 🗃️</span>
+        <span class="only-mobile" data-i18n="builder.nav.basesMobile">🗃️</span>
+        <span class="badge" id="basesBadge" aria-hidden="true"></span>
       </button>
 
       <button class="btn" id="btnLogoEditor">
-          <span class="only-desktop" data-i18n="builder.nav.logo">Logo 🖥️</span>
-          <span class="only-mobile" data-i18n="builder.nav.logoMobile">🖥️</span>
+        <span class="only-desktop" data-i18n="builder.nav.logo">Logo 🖥️</span>
+        <span class="only-mobile" data-i18n="builder.nav.logoMobile">🖥️</span>
       </button>
-      </div>
-
-      <div class="topbar-right">
-        <button class="btn user-btn" id="btnAccount" type="button">
+    </div>
+    <div class="topbar-section topbar-section-3">
+      <button class="btn" id="btnManual">
+        <span class="only-desktop" data-i18n="builder.nav.manual">Wskazówki ℹ️</span>
+        <span class="only-mobile" data-i18n="builder.nav.manualMobile">ℹ️</span>
+      </button>
+    </div>
+    <div class="topbar-section topbar-section-4">
+      <button class="btn user-btn" id="btnAccount" type="button">
         <span class="user-name" id="who">—</span>
         <span class="user-sub" data-i18n="builder.nav.account">Ustawienia konta</span>
-        </button>
+      </button>
       <button class="btn" id="btnLogout" type="button" data-i18n="builder.nav.logout">Wyloguj</button>
     </div>
   </header>
