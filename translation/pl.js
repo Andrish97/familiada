@@ -1408,8 +1408,8 @@ const pl = {
         Z tego powodu wiele opcji edycji jest celowo ograniczonych.
       </p>
 
+
       <p class="m-p">
-        Strona „Sondaże” jest teraz osobna od strony „Subskrypcje”.
         Do sondaży przechodzisz z górnego paska na stronie „Moje gry”
         przyciskiem <span class="m-code">Sondaże 📊</span>.
       </p>
@@ -1631,8 +1631,8 @@ const pl = {
         zapraszanie subskrybentów, akceptowanie zaproszeń, ponowne wysyłki i usuwanie powiązań.
       </p>
 
+
       <p class="m-p">
-        Strona „Subskrypcje” jest osobna od strony „Sondaże”.
         Przechodzisz do niej z górnego paska na stronie „Moje gry”,
         przyciskiem <span class="m-code">Subskrypcje 📧</span>.
       </p>

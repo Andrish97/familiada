@@ -1403,8 +1403,8 @@ const en = {
         Because of that, many editing options are intentionally limited.
       </p>
 
+
       <p class="m-p">
-        The “Polls” page is now separate from the “Subscriptions” page.
         You open polls from the top bar on the “My games” page
         using the <span class="m-code">Polls 📊</span> button.
       </p>
@@ -1626,8 +1626,8 @@ const en = {
         inviting subscribers, accepting invitations, resending, and unlinking.
       </p>
 
+
       <p class="m-p">
-        The “Subscriptions” page is separate from the “Polls” page.
         You open it from the top bar on “My games”
         with the <span class="m-code">Subscriptions 📧</span> button.
       </p>
