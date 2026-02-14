@@ -730,7 +730,7 @@ html.showA2HS .a2hs {
 .topbar-layout-4{
   display:grid;
   grid-template-columns:max-content minmax(0,1fr) max-content max-content;
-  align-items:start;
+  align-items:center;
   gap:10px;
 }
 
@@ -738,8 +738,8 @@ html.showA2HS .a2hs {
   min-width:0;
   display:flex;
   flex-wrap:wrap;
-  align-items:flex-start;
-  align-content:flex-start;
+  align-items:center;
+  align-content:center;
   gap:8px;
 }
 
