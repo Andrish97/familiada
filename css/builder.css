@@ -506,6 +506,22 @@ body.builder-body > main.wrap{
   padding: 6px 0;
 }
 
+@media (max-width: 980px){
+  body.builder-body .user-btn .user-sub{
+    padding-left: 10px;
+    font-size: 13px;
+    font-weight: 800;
+  }
+
+  body.builder-body .user-btn .user-sub::before{
+    display: block;
+  }
+
+  body.builder-body .user-btn .user-sub::after{
+    content: none;
+  }
+}
+
 /* =========================================================
    MOBILE
 ========================================================= */
