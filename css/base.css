@@ -848,12 +848,12 @@ html.showA2HS .a2hs {
   .topbar-mobile-group .user-btn,
   .topbar-mobile-group .top-status{
     width:100%;
-    justify-content:flex-start;
+    justify-content: center;
   }
 
   .topbar-mobile-group .who,
   .topbar-mobile-group .user-btn .user-name{
-    background: rgba(255,255,255,.035);
+    background: rgba(255,255,255,.010);
   }
 }
 
