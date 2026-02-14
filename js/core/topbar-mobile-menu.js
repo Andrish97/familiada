@@ -27,12 +27,22 @@ function initMobileTopbarMenu() {
   const mount = document.createElement('div');
   mount.className = 'topbar-mobile-mount';
 
+  const tabGroup = document.createElement('div');
+  tabGroup.className = 'topbar-mobile-tab-group';
+
   const group2 = document.createElement('div');
   group2.className = 'topbar-mobile-group topbar-mobile-group-2';
 
   const group4 = document.createElement('div');
   group4.className = 'topbar-mobile-group topbar-mobile-group-4';
 
+  const legalBtn = document.getElementById('btnLegal');
+  const simpleTabs = document.querySelector('.simple-tabs');
+
+  if (simpleTabs) tabGroup.appendChild(simpleTabs);
+  if (legalBtn) tabGroup.appendChild(legalBtn);
+
+  if (tabGroup.childElementCount > 0) mount.append(tabGroup);
   mount.append(group2, group4);
   panel.append(closeBtn, mount);
   overlay.appendChild(panel);

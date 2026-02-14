@@ -15,6 +15,25 @@
     text-transform: uppercase
 }
 
+.page-subtitle {
+    margin: 0 0 12px;
+    opacity: .82;
+    font-size: 13px;
+    letter-spacing: .04em;
+    font-weight: 800;
+}
+
+.mobile-only-tab-subtitle {
+    display: none;
+}
+
+.topbar-close-slot {
+    width: 42px;
+    min-width: 42px;
+    height: 40px;
+    border-radius: 12px;
+}
+
 .simple-tabs {
     display: flex;
     gap: 10px;
@@ -47,6 +66,7 @@
     color: #000;
     border-color: var(--gold)
 }
+
 
 .tab-page {
     display: none;
@@ -172,7 +192,11 @@
         font-size: 15px;
         line-height: 1.7
     }
-   
+
+   .mobile-only-tab-subtitle {
+      display: block;
+   }
+
    .simple-tabs {
       display: grid;
    }
@@ -183,10 +207,8 @@ body.manual-in-control-modal .topbar-section-1{ gap:10px; }
 body.manual-in-control-modal .topbar-section-4{ margin-left:auto; }
 body.manual-in-control-modal .wrap{ max-width: min(1200px, 96vw); }
 
-body.manual-in-control-modal #btnLegal{ margin-right: 56px; }
-
-
 html.manual-in-control-modal, body.manual-in-control-modal { height: 100%; }
-body.manual-in-control-modal { background: transparent; }
+body.manual-in-control-modal { background: var(--bg); }
+body.manual-in-control-modal .topbar-close-slot{ visibility: visible; }
 body.manual-in-control-modal .topbar { position: sticky; top: 0; z-index: 5; }
 body.manual-in-control-modal .m-wrap { padding-bottom: 16px; }
