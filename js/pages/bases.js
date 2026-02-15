@@ -14,6 +14,14 @@ const mineGrid = document.getElementById("mineGrid");
 const sharedGrid = document.getElementById("sharedGrid");
 const mineTitle = document.getElementById("mineTitle");
 const sharedTitle = document.getElementById("sharedTitle");
+
+// mobile tabs (mine/shared)
+const basesTabsMobile = document.getElementById("basesTabsMobile");
+const tabBasesMineMobile = document.getElementById("tabBasesMineMobile");
+const tabBasesSharedMobile = document.getElementById("tabBasesSharedMobile");
+const basesSectionMine = document.getElementById("basesSectionMine");
+const basesSectionShared = document.getElementById("basesSectionShared");
+const basesSharedBadge = document.getElementById("basesSharedBadge");
 const who = document.getElementById("who");
 const hint = document.getElementById("hint");
 
@@ -79,6 +87,50 @@ let currentUser = null;
 let ownedBases = []; // { id, name, owner_id, created_at, updated_at }
 let sharedBases = []; // { id, name, owner_id, created_at, updated_at, sharedRole: 'viewer'|'editor' }
 let selectedId = null;
+
+// =======================================================
+// Auto-refresh (jak polls-hub)
+// - co 20s
+// - tylko gdy strona widoczna
+// - nie odświeżaj gdy overlay jest otwarty (żeby nie psuć UX)
+// =======================================================
+let autoRefreshTimer = null;
+let basesRefreshInFlight = null;
+
+function anyOverlayOpen() {
+  const ovs = [nameOverlay, importOverlay, shareOverlay, exportJsonOverlay];
+  return ovs.some((ov) => ov && (ov.style.display === "grid" || ov.style.display === "block" || ov.style.display === ""));
+}
+
+async function refreshView() {
+  if (basesRefreshInFlight) return basesRefreshInFlight;
+  basesRefreshInFlight = (async () => {
+    await refreshBases();
+    await refreshAltBadge();
+    render();
+    setButtonsState();
+  })();
+  try {
+    await basesRefreshInFlight;
+  } finally {
+    basesRefreshInFlight = null;
+  }
+}
+
+function startAutoRefresh() {
+  if (autoRefreshTimer) return;
+  autoRefreshTimer = setInterval(() => {
+    if (document.hidden) return;
+    if (anyOverlayOpen()) return;
+    void refreshView();
+  }, 20000);
+}
+
+function stopAutoRefresh() {
+  if (!autoRefreshTimer) return;
+  clearInterval(autoRefreshTimer);
+  autoRefreshTimer = null;
+}
 
 let shareRoleSelect = null;
 const SHARE_MODAL_CACHE_TTL_MS = 20_000;
@@ -312,6 +364,22 @@ async function deleteBase(base) {
   if (error) {
     console.warn("[bases] delete error:", error);
     void alertModal({ text: t("bases.delete.failed") });
+  }
+}
+
+async function leaveSharedBase(base) {
+  const ok = await confirmModal({
+    title: t("bases.leaveShared.title"),
+    text: t("bases.leaveShared.text", { name: base?.name || t("bases.defaults.baseLabel") }),
+    okText: t("bases.leaveShared.ok"),
+    cancelText: t("bases.leaveShared.cancel"),
+  });
+  if (!ok) return;
+
+  const { data: ok2, error } = await sb().rpc("leave_shared_base", { p_base_id: base.id });
+  if (error || ok2 !== true) {
+    console.warn("[bases] leave_shared_base error:", error);
+    void alertModal({ text: t("bases.leaveShared.failed") });
   }
 }
 
@@ -1085,6 +1153,23 @@ async function shareAdd() {
   await renderShareModal();
 }
 
+/* ================= Mobile tabs (mine/shared) ================= */
+function setActiveBasesMobileTab(tab) {
+  const mineOn = tab !== "shared";
+  basesSectionMine?.classList.toggle("active", mineOn);
+  basesSectionShared?.classList.toggle("active", !mineOn);
+  // highlight tab slots (parent .tab-slot)
+  tabBasesMineMobile?.closest(".tab-slot")?.classList.toggle("active", mineOn);
+  tabBasesSharedMobile?.closest(".tab-slot")?.classList.toggle("active", !mineOn);
+}
+
+function setSharedBasesBadge(n) {
+  if (!basesSharedBadge) return;
+  const v = Number(n || 0);
+  basesSharedBadge.textContent = v > 99 ? "99+" : (v > 0 ? String(v) : "");
+  basesSharedBadge.classList.toggle("is-empty", !(v > 0));
+}
+
 /* ================= Render kafelków ================= */
 function render() {
   if (!mineGrid || !sharedGrid) return;
@@ -1137,9 +1222,12 @@ function render() {
       );
     }
 
-    const canDelete = isOwner(b);
-    const deleteBtn = canDelete
-      ? `<button class="x" type="button" title="${escapeHtml(t("bases.actions.remove"))}">✕</button>`
+    const canDeleteOwned = isOwner(b);
+    const canLeaveShared = !!b.sharedRole && !b.proposed;
+    const deleteBtn = (canDeleteOwned || canLeaveShared)
+      ? `<button class="x" type="button" title="${escapeHtml(
+          canDeleteOwned ? t("bases.actions.remove") : t("bases.actions.leaveShared")
+        )}">✕</button>`
       : ``;
       
     const proposedBtns = b.proposed
@@ -1207,7 +1295,11 @@ function render() {
     if (x) {
       x.addEventListener("click", async (e) => {
         e.stopPropagation();
-        await deleteBase(b);
+        if (isOwner(b)) {
+          await deleteBase(b);
+        } else {
+          await leaveSharedBase(b);
+        }
         await refreshBases();
         render();
         setButtonsState();
@@ -1247,6 +1339,9 @@ function render() {
   } else {
     for (const b of sharedBases) renderTile(b, sharedGrid);
   }
+
+  // mobile badge: pending invites in "shared"
+  setSharedBasesBadge(sharedBases.filter((b) => !!b.proposed).length);
 }
 
 
@@ -1551,6 +1646,20 @@ async function refreshAltBadge() {
   currentUser = await requireAuth("index.html");
   if (who) who.textContent = currentUser?.username || currentUser?.email || "—";
 
+  // mobile tabs
+  if (basesTabsMobile) {
+    const stored = sessionStorage.getItem("basesMobileTab") || "mine";
+    setActiveBasesMobileTab(stored === "shared" ? "shared" : "mine");
+    tabBasesMineMobile?.addEventListener("click", () => {
+      sessionStorage.setItem("basesMobileTab", "mine");
+      setActiveBasesMobileTab("mine");
+    });
+    tabBasesSharedMobile?.addEventListener("click", () => {
+      sessionStorage.setItem("basesMobileTab", "shared");
+      setActiveBasesMobileTab("shared");
+    });
+  }
+
   initShareRoleSelect();
   window.addEventListener("i18n:lang", () => {
     initShareRoleSelect();
@@ -1560,6 +1669,14 @@ async function refreshAltBadge() {
     
   await refreshBases();
   render();
+
+  // auto refresh jak w polls-hub
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) stopAutoRefresh();
+    else startAutoRefresh();
+  });
+  startAutoRefresh();
+
   // Jeśli weszliśmy z maila: ?share=<token>
   // UX: tylko ustawia "opened_at" po stronie DB nie jest potrzebne,
   // bo decyzja accept/decline jest w UI. Tu robimy mismatch-check:

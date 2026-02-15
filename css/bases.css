@@ -1,21 +1,25 @@
 /* css/bases.css
-   Dwie osobne listy w 1 karcie (bases):
-   - "Moje bazy" na górze, osobny scroll
-   - "Udostępnione" przy dole, nagłówek 1 kafelek nad dołem,
-     a pod nim panel o wysokości 1 kafelka (osobny scroll)
+   BASES — layout like builder + mobile tabs (wypustki) exactly like polls-hub.
 
-   Uwaga: styl kafelków bierze się z builder.css:
-   .builder-body .grid .card / .grid / .addCard itd.
-   Dlatego listy MUSZĄ mieć klasę .grid.
+   Desktop:
+   - 1 karta
+   - 2 sekcje (mine/shared), każda ma własny scroll w gridzie
+   - wysokość grida udostępnionych = 150px
+   - strona nie scrolluje (builder.css)
+
+   Mobile (<=900px):
+   - 2 wypustki 50/50 (jak polls-hub)
+   - portrait: brak scrolla strony, scroll w grid (aktywny panel)
+   - landscape: scroll na stronie, karta wg contentu, bez wewnętrznych scrolli
 */
 
 :root{
-  --bases-gap: 14px;
-  --bases-one-tile: 130px; /* to jest *wysokość panelu udostępnionych*, nie “wymuszenie” stylu kafelka */
+  --bases-gap: 16px;
+  --bases-shared-grid-h: 150px;
 }
 
 /* =========================================================
-   SHARE MODAL (zostaje)
+   SHARE MODAL + tile badges (bez zmian funkcjonalnych)
 ========================================================= */
 
 .shareList{
@@ -24,114 +28,10 @@
   margin: 10px 0 14px;
 }
 
-.shareRow{
-  display: grid;
-  grid-template-columns: 1fr auto auto;
-  gap: 8px;
-  align-items: center;
-  padding: 10px;
-  border-radius: 12px;
-  border: 1px solid rgba(255,255,255,.12);
-  background: rgba(255,255,255,.04);
-}
+.modal.shareModal{ width: min(820px, 94vw); }
 
-.shareEmail{
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  opacity: .95;
-}
-
-.shareRow .inp{ padding: 10px 12px; }
-.shareAdd{ margin-top: 10px; }
-.emptyNote{ opacity: .75; padding: 10px 4px; }
-
-/* =========================================================
-   LAYOUT: 2 sekcje, każda ma własny .grid (scroll)
-========================================================= */
-
-.bases-layout{
-  flex: 1 1 auto;
-  min-height: 0;
-
-  display: grid;
-  grid-template-rows:
-    auto      /* mine title */
-    1fr       /* mine grid (scroll) */
-    auto      /* shared title */
-    var(--bases-one-tile); /* shared grid: dokładnie 1 “kafelek” miejsca do dołu */
-
-  row-gap: var(--bases-gap);
-}
-
-/* nagłówki stałe */
-.bases-title{
-  margin: 0;
-  padding: 10px 6px 8px;
-
-  font-weight: 1000;
-  letter-spacing: .06em;
-  text-transform: uppercase;
-  opacity: .92;
-
-  background: var(--surface);
-  border-bottom: 1px solid rgba(255,255,255,.10);
-}
-
-/* chcemy, żeby “Udostępnione” było tuż nad swoim panelem
-   (bez dodatkowej przerwy między nagłówkiem a panelem) */
-.bases-title-shared{
-  margin-bottom: calc(-1 * var(--bases-gap));
-}
-
-/* =========================================================
-   DOSTROJENIE .grid z builder.css do naszych dwóch paneli
-   (nie psujemy stylu kafelków — tylko wysokości/układ)
-========================================================= */
-
-/* mine: ma wypełniać resztę wysokości */
-.bases-grid-mine{
-  min-height: 0;   /* ważne dla scrolla w grid */
-}
-
-/* shared: panel ma mieć dokładnie 1 kafelek wysokości */
-.bases-grid-shared{
-  height: calc(var(--bases-one-tile) + 20px);
-  min-height: 0;
-}
-
-/* X jako <button> – reset, żeby nie brało domyślnego stylu przeglądarki */
-.builder-body .grid .card .x{
-  appearance: none;
-  -webkit-appearance: none;
-  border: 0;
-  background: transparent;
-  color: rgba(255,255,255,.85);
-  padding: 0;
-  line-height: 1;
-  cursor: pointer;
-}
-
-.builder-body .grid .card .x:hover{
-  color: #fff;
-}
-
-/* ===== Share modal (3 sections) ===== */
-.modal.shareModal{
-  width: min(820px, 94vw);
-}
-
-.shareAddTop{
-  margin-top: 10px;
-  display: grid;
-  gap: 8px;
-}
-
-.shareSections{
-  margin-top: 14px;
-  display: grid;
-  gap: 14px;
-}
+.shareAddTop{ margin-top: 10px; display: grid; gap: 8px; }
+.shareSections{ margin-top: 14px; display: grid; gap: 14px; }
 
 .shareSection{
   padding: 10px;
@@ -140,16 +40,8 @@
   border: 1px solid rgba(255,255,255,.10);
 }
 
-.shareSectionTitle{
-  font-weight: 800;
-  letter-spacing: .2px;
-}
-
-.shareSectionSub{
-  margin-top: 4px;
-  opacity: .75;
-  font-size: 13px;
-}
+.shareSectionTitle{ font-weight: 800; letter-spacing: .2px; }
+.shareSectionSub{ margin-top: 4px; opacity: .75; font-size: 13px; }
 
 .shareRow{
   display: grid;
@@ -163,36 +55,16 @@
   margin-top: 8px;
 }
 
-.shareRow .shareEmail{
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
+.shareEmail{ overflow: hidden; text-overflow: ellipsis; white-space: nowrap; opacity: .95; }
+.shareRowActions{ display: inline-flex; align-items: center; gap: 8px; }
 
-.shareRowActions{
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-}
+.btn.xsm{ padding: 6px 10px; font-size: 12px; border-radius: 10px; }
 
-.btn.xsm{
-  padding: 6px 10px;
-  font-size: 12px;
-  border-radius: 10px;
-}
-
-/* ===== Proposed shared base tile ===== */
 .card.proposed{
   border-color: rgba(255, 210, 80, .55);
   box-shadow: 0 0 0 1px rgba(255, 210, 80, .25) inset;
 }
 
-.badge[data-kind="proposed"]{
-  border-color: rgba(255, 210, 80, .55);
-}
-
-
-/* ===== Tile badges (avoid conflict with topbar .badge from base.css) ===== */
 .card .meta{
   display:flex;
   flex-wrap:wrap;
@@ -214,23 +86,282 @@
   opacity:.95;
 }
 
-/* subtelne warianty pod data-kind (bez „złota wszędzie”) */
-.tileBadge[data-kind="mine"]{
-  border-color:rgba(255,255,255,.16);
+.tileBadge[data-kind="from"]{ border-color:rgba(120,200,255,.25); background:rgba(120,200,255,.10); }
+.tileBadge[data-kind="role"]{ border-color:rgba(255,234,166,.25); background:rgba(255,234,166,.10); }
+.tileBadge[data-kind="proposed"]{ border-color:rgba(255,170,210,.28); background:rgba(255,170,210,.10); }
+
+/* reset dla X (button) */
+.builder-body .grid .card .x{
+  appearance: none;
+  -webkit-appearance: none;
+  border: 0;
+  background: transparent;
+  color: rgba(255,255,255,.85);
+  padding: 0;
+  line-height: 1;
+  cursor: pointer;
+}
+.builder-body .grid .card .x:hover{ color:#fff; }
+
+/* =========================================================
+   DESKTOP LAYOUT (default)
+========================================================= */
+
+/* tabs-strip tylko na mobile */
+.bases-tabs-card .tabs-strip{ display: none; }
+
+.bases-layout{
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--bases-gap);
 }
 
-.tileBadge[data-kind="from"]{
-  border-color:rgba(120,200,255,.25);
-  background:rgba(120,200,255,.10);
+.bases-section{
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
-.tileBadge[data-kind="role"]{
-  border-color:rgba(255,234,166,.25);
-  background:rgba(255,234,166,.10);
+.bases-section-mine{ flex: 1 1 auto; }
+.bases-section-shared{ flex: 0 0 auto; }
+
+/* stały nagłówek z linią */
+.bases-title{
+  margin: 0;
+  padding: 10px 6px 8px;
+  font-weight: 1000;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  opacity: .92;
+
+  background: var(--surface);
+  border-bottom: 1px solid rgba(255,255,255,.10);
 }
 
-.tileBadge[data-kind="proposed"]{
-  border-color:rgba(255,170,210,.28);
-  background:rgba(255,170,210,.10);
+.bases-grid-mine{
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
+.bases-grid-shared{
+  height: var(--bases-shared-grid-h);
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* =========================================================
+   MOBILE (<=900px): tabs-card + wypustki jak polls-hub
+========================================================= */
+
+@media (max-width: 900px){
+
+  /* na mobile tabs-strip widoczny */
+  .bases-tabs-card .tabs-strip{ display: flex; }
+
+  /* wrapper jak polls-hub */
+  .tabs-card.hub-tabs.bases-tabs-card{
+    --tab-height: 56px;
+    --tab-extra: 1px;
+    --radius: 12px;
+    --corner-bottom: 0px;
+    --corner-shift: 1px;
+    --border-fudge: 2px;
+    --surface: #111827;
+    --border-color: var(--line2);
+
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; /* jak polls-hub */
+  }
+
+  .bases-tabs-card .tabs-strip{
+    flex: 0 0 auto;
+    display: flex;
+    align-items: stretch;
+    height: var(--tab-height);
+    background: var(--page-bg);
+    position: relative;
+    z-index: 1;
+    gap: 0; /* 50/50, bez przerw */
+  }
+
+  /* 🔑 50/50, ignoruj --tab-width=220px z builder.css */
+  .bases-tabs-card .tab-slot{
+    width: auto !important;
+    flex: 1 1 0 !important;
+    min-width: 0;
+    align-items: stretch;
+  }
+
+  .bases-tabs-card .tab-label{
+    position: relative;
+    z-index: 4; /* label zawsze nad aktywną wypustką */
+    width: 100%;
+    min-height: var(--tab-height);
+    border: 0;
+    background: transparent;
+    color: rgba(255,255,255,.72);
+    cursor: pointer;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    font-size: 12px;
+    font-weight: 1000;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+
+    padding: 0;
+    margin: 0;
+  }
+
+  /*
+    builder.css ma efekt hover na .tab-label::before.
+    Na touch (sticky hover) wygląda jakby podświetlenie było stale.
+    W bases: hover tylko na NIEaktywnej wypustce i tylko dla urządzeń z myszą.
+  */
+  .tabs-card.hub-tabs.bases-tabs-card .tab-label::before{ opacity: 0 !important; }
+  .tabs-card.hub-tabs.bases-tabs-card .tab-slot.active .tab-label::before{ opacity: 0 !important; }
+
+  @media (hover: hover) and (pointer: fine){
+    .tabs-card.hub-tabs.bases-tabs-card .tab-slot:not(.active) .tab-label:hover::before{ opacity: 1 !important; }
+  }
+
+  .bases-tabs-card .tab-label.active{ color:#f9fafb; }
+
+  .bases-tabs-card .tab-wrapper{
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    pointer-events: none;
+    z-index: 2; /* pod label (label ma 4) */
+    display: none;
+  }
+
+  .bases-tabs-card .tab-slot:has(.tab-label.active) .tab-wrapper,
+  .bases-tabs-card .tab-slot.active .tab-wrapper{ display:block; }
+
+  .bases-tabs-card .tab-active,
+  .bases-tabs-card .tab-corner::before{ border: 1px solid var(--border-color); }
+
+  .bases-tabs-card .tab-active{
+    height: calc(var(--tab-height) + var(--tab-extra));
+    width: 100%;
+    background: var(--surface);
+    border-bottom: none;
+    border-top-left-radius: var(--radius);
+    border-top-right-radius: var(--radius);
+    position: relative;
+    z-index: 1;
+  }
+
+  .bases-tabs-card .tab-corner{
+    position: absolute;
+    bottom: var(--corner-bottom);
+    width: var(--radius);
+    height: var(--radius);
+    overflow: hidden;
+    background-color: transparent;
+    z-index: 3;
+    pointer-events: none;
+  }
+
+  .bases-tabs-card .tab-corner-left{
+    left: 0;
+    transform: translateX(calc(-100% + var(--corner-shift)));
+    background-image: radial-gradient(circle at 0% 0%, transparent var(--radius), var(--surface) var(--radius));
+  }
+
+  .bases-tabs-card .tab-corner-right{
+    right: 0;
+    transform: translateX(calc(100% - var(--corner-shift)));
+    background-image: radial-gradient(circle at 100% 0%, transparent var(--radius), var(--surface) var(--radius));
+  }
+
+  .bases-tabs-card .tab-corner::before{
+    content:"";
+    position:absolute;
+    width: calc(2 * var(--radius));
+    height: calc(2 * var(--radius));
+    border-radius: 50%;
+    background: transparent;
+  }
+
+  .bases-tabs-card .tab-corner-left::before{
+    top: calc(-1 * var(--radius) - var(--border-fudge));
+    left: calc(-1 * var(--radius) - var(--border-fudge));
+  }
+
+  .bases-tabs-card .tab-corner-right::before{
+    top: calc(-1 * var(--radius) - var(--border-fudge));
+    right: calc(-1 * var(--radius) - var(--border-fudge));
+  }
+
+  /* edge tabs jak w polls-hub (JS ustawia .active na .tab-slot) */
+  .bases-tabs-card:has(.slot-mobile-mine.active) .slot-mobile-mine .tab-corner-left{ display:none; }
+  .bases-tabs-card:has(.slot-mobile-shared.active) .slot-mobile-shared .tab-corner-right{ display:none; }
+
+  /* róg karty wyprostowany po stronie aktywnej wypustki */
+  .bases-card{
+    border-top-left-radius: var(--radius);
+    border-top-right-radius: var(--radius);
+  }
+
+  /* róg karty wyprostowany po stronie AKTYWNEJ wypustki */
+  .bases-tabs-card:has(.slot-mobile-mine.active) .bases-card{ border-top-left-radius: 0; }
+  .bases-tabs-card:has(.slot-mobile-shared.active) .bases-card{ border-top-right-radius: 0; }
+
+  /* badge "Udost." pokazuj TYLKO gdy tab nieaktywny i ma wartość */
+  .slot-mobile-shared.active .hub-tab-badge{ display:none; }
+  .hub-tab-badge.is-empty{ display:none; }
+
+  /* Mobile: pokazuj tylko aktywną sekcję */
+  .bases-section{ display:none; }
+  .bases-section.active{
+    display:flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+
+  /* na mobile nagłówki bez dodatkowego tła (niech karta robi swoje) */
+  .bases-title{ background: transparent; padding: 10px 2px 8px; }
+
+  /* portrait: domyślnie scroll w grid */
+  .bases-grid-mine,
+  .bases-grid-shared{
+    flex: 1 1 auto;
+    min-height: 0;
+    height: auto;
+    overflow: auto;
+  }
+}
+
+/* =========================================================
+   Mobile landscape — scroll strony, bez wewnętrznych scrolli
+========================================================= */
+
+@media (max-width: 900px) and (orientation: landscape){
+  /* builder.css odblokowuje scroll strony — my tylko zdejmujemy "trapped" scroll w gridach */
+  .builder-shell{ overflow: visible; }
+
+  .tabs-card.bases-tabs-card,
+  .bases-card,
+  .bases-layout{
+    flex: 0 0 auto;
+    min-height: auto;
+  }
+
+  .bases-grid-mine,
+  .bases-grid-shared{
+    overflow: visible;
+  }
+}

@@ -20,6 +20,27 @@ body.polls-hub-body{
   color: #fff;
 }
 
+/* =========================================================
+   Mobile landscape: traktuj jak mobile (2 wypustki po 50%)
+   + pozwól na scroll całej strony (100vh bywa zdradliwe na iOS)
+========================================================= */
+
+@media (max-height: 520px) and (orientation: landscape){
+  body.polls-hub-body{
+    height: auto;
+    min-height: 100vh;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  body.polls-hub-body > main.wrap{
+    overflow: visible;
+  }
+
+  .hub-desktop{ display:none; }
+  .hub-mobile{ display:flex; }
+}
+
 /* main = kolumna, bar + sekcja, bez scrolla strony */
 body.polls-hub-body > main.wrap{
   flex: 1 1 auto;
@@ -73,9 +94,14 @@ body.polls-hub-body .bar{
 
 .hub-tabs .tab-slot{
   min-width: 0;
+  /* 🔑 50/50: builder.css ustawia width: var(--tab-width) (domyślnie 220px) */
+  width: auto !important;
   flex: 1 1 0;
   align-items: stretch;
 }
+
+/* bez przerw — dokładnie 50/50 na całą szerokość karty */
+.hub-tabs .tabs-strip{ gap: 0; }
 
 .hub-tabs .tab-label{
   width: 100%;
@@ -537,7 +563,8 @@ body.polls-hub-body .bar{
   color: transparent;
 }
 
-@media (max-width: 900px){
+/* Mobile również w landscape na niskim ekranie (np. telefony >900px szerokości) */
+@media (max-width: 900px), (max-height: 520px) and (orientation: landscape){
   .hub-desktop{ display:none; }
   .hub-mobile{ display:flex; }
 
@@ -691,4 +718,54 @@ body.polls-hub-body .bar{
 .hub-tabs-mobile .tab-slot:first-child .tab-corner-left,
 .hub-tabs-mobile .tab-slot:last-child .tab-corner-right{
   display:block;
+}
+
+
+/* =========================================================
+   Mobile landscape: przewijanie całej strony (jak w builderze)
+   - brak "wewnętrznych" scrolli list
+   - hub-card dopasowuje się do zawartości
+========================================================= */
+@media (max-width: 900px) and (orientation: landscape) {
+  .polls-hub-body{
+    height: auto;
+    min-height: 100%;
+    overflow: auto;
+  }
+
+  body.polls-hub-body > main.wrap{
+    overflow: visible;
+  }
+
+  .hub-desktop,
+  .hub-mobile{
+    overflow: visible;
+  }
+
+  .hub-card{
+    flex: 0 0 auto;
+    min-height: auto;
+  }
+
+  .hub-list{
+    flex: 0 0 auto;
+    min-height: auto;
+    overflow: visible;
+    padding-bottom: 10px;
+  }
+  
+    .hub-tabs .tabs-strip{
+    display: flex;
+    width: 100%;
+  }
+
+  .hub-tabs .tab-slot{
+    flex: 0 0 50%;
+    max-width: 50%;
+  }
+
+  .hub-tabs .tab-label,
+  .hub-tabs .tab-active{
+    width: 100%;
+  }
 }

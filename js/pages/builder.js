@@ -144,6 +144,47 @@ let currentUser = null;
 let gamesAll = [];
 let selectedId = null;
 
+// =======================================================
+// Auto-refresh (jak polls-hub)
+// - co 20s
+// - tylko gdy karta widoczna
+// - nie odświeżaj gdy overlay/progress jest otwarty
+// =======================================================
+let autoRefreshTimer = null;
+let builderRefreshInFlight = null;
+
+function anyOverlayOpen() {
+  const ovs = [importOverlay, exportBaseOverlay, exportJsonOverlay];
+  return ovs.some((ov) => ov && (ov.style.display === "grid" || ov.style.display === "block" || ov.style.display === ""));
+}
+
+async function refreshView() {
+  if (builderRefreshInFlight) return builderRefreshInFlight;
+  builderRefreshInFlight = (async () => {
+    await refresh();
+  })();
+  try {
+    await builderRefreshInFlight;
+  } finally {
+    builderRefreshInFlight = null;
+  }
+}
+
+function startAutoRefresh() {
+  if (autoRefreshTimer) return;
+  autoRefreshTimer = setInterval(() => {
+    if (document.hidden) return;
+    if (anyOverlayOpen()) return;
+    void refreshView();
+  }, 20000);
+}
+
+function stopAutoRefresh() {
+  if (!autoRefreshTimer) return;
+  clearInterval(autoRefreshTimer);
+  autoRefreshTimer = null;
+}
+
 // DOMYŚLNIE: PREPAROWANY
 let activeTab = TYPES.PREPARED;
 
@@ -1255,4 +1296,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     // Seed się nie udał → builder nadal działa normalnie
     await refresh();
   }
+
+  // auto refresh jak w polls-hub
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) stopAutoRefresh();
+    else startAutoRefresh();
+  });
+  startAutoRefresh();
 });

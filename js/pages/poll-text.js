@@ -157,14 +157,36 @@ function validateAndPack(questionId, rawText) {
 async function submitBatch(items) {
   const voter = getVoterToken();
 
-  const { error } = await sb().rpc("poll_text_submit_batch", {
-    p_game_id: gameId,
-    p_key: key,
-    p_voter_token: voter,
-    p_items: items, // [{question_id, answer_raw, answer_norm}, ...]
-  });
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-  if (error) throw error;
+  const callOnce = async (chunk) => {
+    const req = sb().rpc("poll_text_submit_batch", {
+      p_game_id: gameId,
+      p_key: key,
+      p_voter_token: voter,
+      p_items: chunk,
+    });
+    const { error } = await withTimeout(req, 25000, MSG.loadTimeout?.() || "Timeout");
+    if (error) throw error;
+  };
+
+  const callWithRetry = async (chunk, attempt = 1) => {
+    try {
+      await callOnce(chunk);
+    } catch (e) {
+      if (attempt >= 3) throw e;
+      await sleep(650 * attempt);
+      return callWithRetry(chunk, attempt + 1);
+    }
+  };
+
+  const CHUNK = 25;
+  const total = Array.isArray(items) ? items.length : 0;
+  for (let i = 0; i < total; i += CHUNK) {
+    const part = items.slice(i, i + CHUNK);
+    if (subEl) subEl.textContent = `${MSG.sending()} (${Math.min(i + CHUNK, total)}/${total})`;
+    await callWithRetry(part);
+  }
 }
 
 async function markTaskDone() {

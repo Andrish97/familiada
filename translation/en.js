@@ -560,6 +560,7 @@ const en = {
       import: "Import",
       importMobile: "Imp",
       remove: "Delete",
+      leaveShared: "Remove from list",
     },
     common: {
       save: "Save",
@@ -627,6 +628,13 @@ const en = {
       ok: "Delete",
       cancel: "Cancel",
       failed: "Failed to delete.",
+    },
+    leaveShared: {
+      title: "Remove shared base",
+      text: "Remove the shared base “{name}” from your list? (You will give up the share)",
+      ok: "Remove",
+      cancel: "Cancel",
+      failed: "Failed to remove from list.",
     },
     export: {
       steps: {
@@ -771,6 +779,7 @@ const en = {
       pointsRange: "In POINTS mode each question must have {min}–{max} answers.",
       reopenOnlyClosed: "Reopen is possible only when the poll is CLOSED.",
       closeOnlyOpen: "You can close the poll only when it's OPEN.",
+      closeWaitForTasks: "You can't close yet — someone still hasn't voted (X≠Y).",
       noActiveSession: "No active voting session.",
       noActiveSessionGeneric: "No active session.",
       closeMinPoints:
@@ -2801,6 +2810,7 @@ const en = {
       done: "Done",
       available: "Available",
     },
+    taskFrom: "From: {owner}",
     tasksBadgeLabel: "Tasks",
     tasksBadgeTitle: "Tasks: {done} of {total} shared have voted.",
     tasksBadgeNone: "Tasks: no shares.",
@@ -2922,7 +2932,8 @@ const en = {
     },
     pollReadyAlert: "Finish the game in My games",
     resendCooldownAlert: "You can resend the invite in {hours}h.",
-    shareCooldownAlert: "You can invite again in {hours}h.",
+    cooldownLeftDays: "Try again in {n} days",
+    cooldownLeftHours: "Try again in {n} hours",
   },
   pollsHubPolls: {
     dash: "-",
@@ -3034,6 +3045,7 @@ const en = {
       done: "Done",
       available: "Available",
     },
+    taskFrom: "From: {owner}",
     tasksBadgeLabel: "Tasks",
     tasksBadgeTitle: "Tasks: {done} of {total} shared have voted.",
     tasksBadgeNone: "Tasks: no shares.",

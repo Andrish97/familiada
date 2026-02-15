@@ -188,6 +188,12 @@
     color: rgba(255,255,255,.92)
 }
 
+@media (max-width:900px) {
+    .mobile-only-tab-subtitle {
+        display: block;
+    }
+}
+
 @media (max-width:600px) {
     .m-p {
         font-size: 15px;
