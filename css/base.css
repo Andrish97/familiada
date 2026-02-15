@@ -687,8 +687,18 @@ html.showA2HS .a2hs {
 
 @media (max-width: 900px) {
   .topbar-menu-toggle {
+    position: relative;
     padding: 8px 10px;
     border-radius: 12px;
+  }
+
+  .topbar-menu-toggle .badge{
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    margin-left: 0;
+    transform: translate(0, 0);
+    pointer-events: none;
   }
 
   .topbar-mobile-overlay {
@@ -712,7 +722,21 @@ html.showA2HS .a2hs {
     max-width: 560px;
     margin: 0 auto;
     display: grid;
+    grid-template-rows: auto 1fr;
     gap: 10px;
+
+    /* nie wychodź poza ekran (iOS/Android) */
+    max-height: calc(100dvh - 20px);
+    overflow: hidden;
+  }
+
+  .topbar-mobile-mount{
+    display: grid;
+    gap: 10px;
+
+    /* jeśli menu jest wyższe niż ekran → scroll */
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
   .topbar-mobile-close {

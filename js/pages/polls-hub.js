@@ -75,6 +75,7 @@ const MSG = {
   pollStateDraft: () => t("pollsHubPolls.pollState.draft"),
   taskStatusDone: () => t("pollsHubPolls.taskStatus.done"),
   taskStatusAvailable: () => t("pollsHubPolls.taskStatus.available"),
+  taskFrom: (owner) => t("pollsHubPolls.taskFrom", { owner }),
   votesBadgeLabel: () => t("pollsHubPolls.votesBadgeLabel"),
   anonBadgeLabel: () => t("pollsHubPolls.anonBadgeLabel"),
   emptyPolls: () => t("pollsHubPolls.empty.polls"),
@@ -393,9 +394,11 @@ function renderTasks() {
     listEl.innerHTML = "";
     if (!sorted.length) return renderEmpty(listEl, MSG.emptyTasks());
     for (const task of sorted) {
+      const ownerLabel = (task?.owner_username || task?.owner_email || "").trim() || MSG.dash();
+      const statusLabel = task.status === "done" ? MSG.taskStatusDone() : MSG.taskStatusAvailable();
       const item = document.createElement("div");
       item.className = `hub-item ${task.status === "done" ? "task-done" : "task-pending"}`;
-      item.innerHTML = `<div><div class="hub-item-title">${pollTypeLabel(task.poll_type)} — ${task.game_name || MSG.dash()}</div><div class="hub-item-sub">${task.status === "done" ? MSG.taskStatusDone() : MSG.taskStatusAvailable()}</div></div><div class="hub-item-actions"></div>`;
+      item.innerHTML = `<div><div class="hub-item-title">${pollTypeLabel(task.poll_type)} — ${task.game_name || MSG.dash()}</div><div class="hub-item-sub">${MSG.taskFrom(ownerLabel)} • ${statusLabel}</div></div><div class="hub-item-actions"></div>`;
       if (task.status === "pending") {
         const btn = document.createElement("button");
         btn.className = "btn xs danger";
@@ -737,7 +740,11 @@ function renderDetailsList(container, rows) {
 async function openDetailsModal() {
   if (!selectedPollId) return;
   try {
-    const { data: taskRows, error: taskErr } = await sb().from("poll_tasks").select("id,status,recipient_email,recipient_user_id").eq("game_id", selectedPollId).eq("owner_id", currentUser.id);
+    const { data: taskRows, error: taskErr } = await sb()
+      .from("poll_tasks")
+      .select("id,status,recipient_email,recipient_user_id,done_at,declined_at,cancelled_at")
+      .eq("game_id", selectedPollId)
+      .eq("owner_id", currentUser.id);
     if (taskErr) throw taskErr;
     const userIds = [...new Set((taskRows || []).map((r) => r.recipient_user_id).filter(Boolean))];
     let profilesMap = new Map();
@@ -747,11 +754,18 @@ async function openDetailsModal() {
     }
     const rows = (taskRows || []).map((r) => {
       const profile = r.recipient_user_id ? profilesMap.get(r.recipient_user_id) : null;
+      const status = r?.done_at
+        ? "done"
+        : r?.declined_at
+          ? "declined"
+          : r?.cancelled_at
+            ? "cancelled"
+            : (r.status || "pending");
       return {
         sub_id: r.id,
         task_id: r.id,
         voter_user_id: r.recipient_user_id || null,
-        status: r.status || "pending",
+        status,
         subscriber_display_label: profile?.username || profile?.email || r.recipient_email || MSG.dash(),
       };
     });
@@ -768,6 +782,23 @@ async function openDetailsModal() {
 }
 
 function closeDetailsModal() { detailsOverlay.style.display = "none"; }
+
+let autoRefreshTimer = null;
+function startAutoRefresh() {
+  if (autoRefreshTimer) return;
+  autoRefreshTimer = setInterval(() => {
+    if (document.hidden) return;
+    // nie wchodź w wyścigi podczas progress overlay
+    if (progressOverlay && progressOverlay.style.display === "grid") return;
+    refreshData();
+  }, 20000);
+}
+
+function stopAutoRefresh() {
+  if (!autoRefreshTimer) return;
+  clearInterval(autoRefreshTimer);
+  autoRefreshTimer = null;
+}
 
 async function refreshTopBadges() {
   const { data } = await sb().rpc("polls_badge_get");
@@ -902,11 +933,20 @@ document.addEventListener("DOMContentLoaded", async () => {
   btnDetails?.addEventListener("click", openDetailsModal);
   btnDetailsMobile?.addEventListener("click", openDetailsModal);
   btnShareSave?.addEventListener("click", saveShareModal);
-  btnShareClose?.addEventListener("click", closeShareModal);
-  btnDetailsClose?.addEventListener("click", closeDetailsModal);
+  btnShareClose?.addEventListener("click", () => { closeShareModal(); refreshData(); });
+  btnDetailsClose?.addEventListener("click", () => { closeDetailsModal(); refreshData(); });
 
-  shareOverlay?.addEventListener("click", (e) => { if (e.target === shareOverlay) closeShareModal(); });
-  detailsOverlay?.addEventListener("click", (e) => { if (e.target === detailsOverlay) closeDetailsModal(); });
+  shareOverlay?.addEventListener("click", (e) => { if (e.target === shareOverlay) { closeShareModal(); refreshData(); } });
+  detailsOverlay?.addEventListener("click", (e) => { if (e.target === detailsOverlay) { closeDetailsModal(); refreshData(); } });
+
+  // po zamknięciu dowolnego confirm/alert w aplikacji — odśwież listy
+  document.addEventListener("uni-modal:closed", () => { refreshData(); });
+
+  startAutoRefresh();
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) stopAutoRefresh();
+    else { startAutoRefresh(); refreshData(); }
+  });
 
   updateBackButtonLabel();
   btnBack?.addEventListener("click", () => { location.href = getBackLink(); });

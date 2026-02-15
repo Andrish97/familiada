@@ -26,7 +26,35 @@ function initMobileTopbarMenu() {
   let group2;
   let group4;
   let toggleBtn;
+  let toggleBadge;
+  let badgeObserver;
   let isMobileMounted = false;
+
+  const parseBadgeNumber = (raw) => {
+    const s = String(raw || "").trim();
+    if (!s) return 0;
+    const m = s.match(/\d+/);
+    if (!m) return 0;
+    const n = Number(m[0] || 0);
+    return Number.isFinite(n) ? n : 0;
+  };
+
+  const computeMenuBadgeSum = () => {
+    // sum all badges from items that are moved into the overlay
+    // (buttons/links usually have class `has-badge` and contain `.badge`)
+    const root = mount || document;
+    const badges = [...root.querySelectorAll('.has-badge .badge')];
+    let sum = 0;
+    for (const b of badges) sum += parseBadgeNumber(b.textContent);
+    return sum;
+  };
+
+  const updateMenuBadge = () => {
+    if (!toggleBtn || !toggleBadge) return;
+    const sum = computeMenuBadgeSum();
+    toggleBadge.textContent = sum > 99 ? '99+' : (sum > 0 ? String(sum) : '');
+    toggleBtn.classList.toggle('has-badge', sum > 0);
+  };
 
   const hasMenuContent = () => {
     const hasTabs = !!simpleTabs?.querySelector('.tab, button, [role="tab"]');
@@ -102,7 +130,8 @@ function initMobileTopbarMenu() {
     toggleBtn = document.createElement('button');
     toggleBtn.type = 'button';
     toggleBtn.className = 'btn topbar-menu-toggle';
-    toggleBtn.textContent = '☰';
+    toggleBtn.innerHTML = `<span class="topbar-menu-icon" aria-hidden="true">☰</span><span class="badge" aria-hidden="true"></span>`;
+    toggleBadge = toggleBtn.querySelector('.badge');
     section3.append(toggleBtn);
 
     toggleBtn.addEventListener('click', open);
@@ -116,6 +145,11 @@ function initMobileTopbarMenu() {
 
     const backBtn = section1.querySelector('#btnBack,#btnBackToBuilder,[data-mobile-back],.btn-back,.btn.back');
     if (backBtn) backBtn.classList.add('mobile-primary-back');
+
+    // keep the badge in sync with nested buttons
+    badgeObserver = new MutationObserver(() => updateMenuBadge());
+    badgeObserver.observe(mount, { subtree: true, childList: true, characterData: true, attributes: true });
+    updateMenuBadge();
   };
 
   const unmountMobile = () => {
@@ -143,6 +177,12 @@ function initMobileTopbarMenu() {
 
     toggleBtn?.remove();
     overlay?.remove();
+
+    if (badgeObserver) {
+      try { badgeObserver.disconnect(); } catch {}
+    }
+    badgeObserver = null;
+    toggleBadge = null;
 
     overlay = null;
     panel = null;

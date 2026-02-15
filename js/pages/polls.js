@@ -405,6 +405,27 @@ async function validateCanClose(g) {
     return { ok: false, reason: t("polls.validation.closeOnlyOpen") };
   }
 
+  // 🔒 Dodatkowy warunek: nie zamykamy jeśli są jeszcze aktywne taski (niezagłosowane)
+  // Y = (done + pending/opened), X = done. Close dopiero gdy X=Y.
+  try {
+    const { data: u } = await sb().auth.getUser();
+    const uid = u?.user?.id;
+    if (uid) {
+      const { count, error } = await sb()
+        .from("poll_tasks")
+        .select("id", { count: "exact", head: true })
+        .eq("owner_id", uid)
+        .eq("game_id", g.id)
+        .is("done_at", null)
+        .is("declined_at", null)
+        .is("cancelled_at", null);
+      if (error) throw error;
+      if ((count || 0) > 0) return { ok: false, reason: t("polls.validation.closeWaitForTasks") };
+    }
+  } catch {
+    // jeśli nie udało się sprawdzić, nie blokuj UI — i tak DB powinna to zablokować
+  }
+
   const qsList = await listQuestionsBasic();
 
   if (g.type === TYPES.POLL_POINTS) {

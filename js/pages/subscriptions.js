@@ -70,7 +70,7 @@ const MSG = {
   updateOkPending: () => t("pollsHubSubscriptions.modal.updateSubscription.okPending"),
   updateOkActive: () => t("pollsHubSubscriptions.modal.updateSubscription.okActive"),
   updateCancel: () => t("pollsHubSubscriptions.modal.updateSubscription.cancel"),
-  resendCooldownAlert: (hours) => t("pollsHubSubscriptions.resendCooldownAlert", { hours }),
+resendCooldownAlert: (untilTsMs) => cooldownTextFromUntil(untilTsMs),
   tokenMismatchTitle: () => t("pollsHubSubscriptions.modal.tokenMismatch.title"),
   tokenMismatchText: () => t("pollsHubSubscriptions.modal.tokenMismatch.text"),
   tokenMismatchOk: () => t("pollsHubSubscriptions.modal.tokenMismatch.ok"),
@@ -115,6 +115,27 @@ function isPendingOld(r) {
 function cooldownUntil(ts) {
   const base = parseDate(ts);
   return base ? base + COOLDOWN_MS : 0;
+}
+
+const HOUR_MS = 60 * 60 * 1000;
+const DAY_MS = 24 * HOUR_MS;
+
+// when remaining is below 48h -> show hours; otherwise show days
+function formatCooldownRemaining(untilTsMs) {
+  const ms = Math.max(0, Number(untilTsMs || 0) - Date.now());
+  if (!ms) return { unit: "hours", n: 0 };
+
+  if (ms < 48 * HOUR_MS) {
+    return { unit: "hours", n: Math.max(1, Math.ceil(ms / HOUR_MS)) };
+  }
+  return { unit: "days", n: Math.max(1, Math.ceil(ms / DAY_MS)) };
+}
+
+function cooldownTextFromUntil(untilTsMs) {
+  const { unit, n } = formatCooldownRemaining(untilTsMs);
+  return t(unit === "days"
+    ? "pollsHubSubscriptions.cooldownLeftDays"
+    : "pollsHubSubscriptions.cooldownLeftHours", { n });
 }
 
 
@@ -216,7 +237,8 @@ function sortList(kind, list) {
 
 function renderSubscribers() {
   const visible = subscribers.filter((s) => {
-    if (s.status === "declined" || s.status === "cancelled") return false;
+    if (s.status === "cancelled") return false;
+    if (s.status === "declined") return !s.is_expired;
     if (archiveState.subscribers) return s.status === "pending" && isPendingOld(s);
     if (s.status === "active") return true;
     if (s.status === "pending") return !isPendingOld(s);
@@ -229,25 +251,27 @@ function renderSubscribers() {
     if (!sorted.length) return renderEmpty(el, MSG.emptySubscribers());
     for (const row of sorted) {
       const item = document.createElement("div");
-      item.className = `hub-item ${row.status === "active" ? "sub-active" : "sub-pending"}`;
+      item.className = `hub-item ${row.status === "active" ? "sub-active" : row.status === "declined" ? "sub-declined" : "sub-pending"}`;
       item.innerHTML = `<div><div class="hub-item-title">${row.subscriber_label || MSG.dash()}</div><div class="hub-item-sub">${MSG.statusLabel(row.status)}</div></div><div class="hub-item-actions"></div>`;
       const actions = item.querySelector(".hub-item-actions");
 
-      const removeBtn = document.createElement("button");
-      removeBtn.className = "btn xs danger";
-      removeBtn.textContent = "X";
-      removeBtn.addEventListener("click", async (e) => {
-        e.stopPropagation();
-        const ok = await confirmModal({ title: MSG.removeTitle(), text: MSG.removeText(), okText: MSG.removeOk(), cancelText: MSG.removeCancel() });
-        if (!ok) return;
-        try {
-          await sb().rpc("polls_hub_subscriber_remove", { p_id: row.sub_id });
-          await refreshData();
-        } catch {
-          await alertModal({ text: MSG.removeFail() });
-        }
-      });
-      actions?.appendChild(removeBtn);
+      if (row.status !== "declined") {
+        const removeBtn = document.createElement("button");
+        removeBtn.className = "btn xs danger";
+        removeBtn.textContent = "X";
+        removeBtn.addEventListener("click", async (e) => {
+          e.stopPropagation();
+          const ok = await confirmModal({ title: MSG.removeTitle(), text: MSG.removeText(), okText: MSG.removeOk(), cancelText: MSG.removeCancel() });
+          if (!ok) return;
+          try {
+            await sb().rpc("polls_hub_subscriber_remove", { p_id: row.sub_id });
+            await refreshData();
+          } catch {
+            await alertModal({ text: MSG.removeFail() });
+          }
+        });
+        actions?.appendChild(removeBtn);
+      }
 
       if (row.status === "pending") {
         const resendBtn = document.createElement("button");
@@ -256,22 +280,21 @@ function renderSubscribers() {
         const until = cooldownUntil(row.email_sent_at);
         if (until && Date.now() < until) {
           resendBtn.classList.add("cooldown");
-          resendBtn.title = MSG.resendCooldownAlert(Math.ceil((until - Date.now()) / (60 * 60 * 1000)));
+          resendBtn.title = MSG.resendCooldownAlert(until);
         }
         resendBtn.addEventListener("click", async (e) => {
           e.stopPropagation();
           try {
             if (until && Date.now() < until) {
-              await alertModal({ text: MSG.resendCooldownAlert(Math.ceil((until - Date.now()) / (60 * 60 * 1000))) });
+              await alertModal({ text: MSG.resendCooldownAlert(until) });
               return;
             }
             const { data, error } = await sb().rpc("polls_hub_subscriber_resend", { p_id: row.sub_id });
             if (error) throw error;
             if (data?.ok === false) {
               if (data?.error === "cooldown") {
-                const untilTs = parseDate(data?.cooldown_until);
-                const hours = untilTs ? Math.ceil((untilTs - Date.now()) / (60 * 60 * 1000)) : 24;
-                await alertModal({ text: MSG.resendCooldownAlert(Math.max(1, hours)) });
+                const untilTs = parseDate(data?.cooldown_until) || (Date.now() + 24 * 60 * 60 * 1000);
+                await alertModal({ text: MSG.resendCooldownAlert(untilTs) });
                 return;
               }
               throw new Error(data?.error || "fail");
@@ -296,7 +319,8 @@ function renderSubscribers() {
 
 function renderInvites() {
   const visible = invites.filter((s) => {
-    if (s.status === "declined" || s.status === "cancelled") return false;
+    if (s.status === "cancelled") return false;
+    if (s.status === "declined") return !s.is_expired;
     if (archiveState.subscriptions) return s.status === "pending" && isPendingOld(s);
     if (s.status === "active") return true;
     if (s.status === "pending") return !isPendingOld(s);
@@ -309,31 +333,33 @@ function renderInvites() {
     if (!sorted.length) return renderEmpty(el, MSG.emptySubscriptions());
     for (const row of sorted) {
       const item = document.createElement("div");
-      item.className = `hub-item ${row.status === "active" ? "sub-active" : "sub-pending"}`;
+      item.className = `hub-item ${row.status === "active" ? "sub-active" : row.status === "declined" ? "sub-declined" : "sub-pending"}`;
       item.innerHTML = `<div><div class="hub-item-title">${row.owner_label || MSG.dash()}</div><div class="hub-item-sub">${MSG.statusLabel(row.status)}</div></div><div class="hub-item-actions"></div>`;
       const actions = item.querySelector(".hub-item-actions");
 
-      const reject = document.createElement("button");
-      reject.className = "btn xs danger";
-      reject.textContent = "X";
-      reject.addEventListener("click", async (e) => {
-        e.stopPropagation();
-        const isPending = row.status === "pending";
-        const ok = await confirmModal({
-          title: MSG.updateTitle(),
-          text: isPending ? MSG.updateTextPending() : MSG.updateTextActive(),
-          okText: isPending ? MSG.updateOkPending() : MSG.updateOkActive(),
-          cancelText: MSG.updateCancel(),
+      if (row.status !== "declined") {
+        const reject = document.createElement("button");
+        reject.className = "btn xs danger";
+        reject.textContent = "X";
+        reject.addEventListener("click", async (e) => {
+          e.stopPropagation();
+          const isPending = row.status === "pending";
+          const ok = await confirmModal({
+            title: MSG.updateTitle(),
+            text: isPending ? MSG.updateTextPending() : MSG.updateTextActive(),
+            okText: isPending ? MSG.updateOkPending() : MSG.updateOkActive(),
+            cancelText: MSG.updateCancel(),
+          });
+          if (!ok) return;
+          try {
+            await callSubscriptionAction(row, isPending ? "reject" : "cancel");
+            await refreshData();
+          } catch {
+            await alertModal({ text: MSG.updateFail() });
+          }
         });
-        if (!ok) return;
-        try {
-          await callSubscriptionAction(row, isPending ? "reject" : "cancel");
-          await refreshData();
-        } catch {
-          await alertModal({ text: MSG.updateFail() });
-        }
-      });
-      actions?.appendChild(reject);
+        actions?.appendChild(reject);
+      }
 
       if (row.status === "pending") {
         const accept = document.createElement("button");
@@ -440,7 +466,15 @@ async function invite(value) {
     setProgress({ show: true, step: t("pollsHubSubscriptions.progress.invite"), i: 0, n: 2 });
     const recipient = await resolveInviteRecipient(v);
     const { data, error } = await sb().rpc("polls_hub_subscription_invite", { p_recipient: recipient });
-    if (error || data?.ok === false) throw error || new Error(data?.error || "invite");
+    if (error) throw error;
+    if (data?.ok === false) {
+        if (data?.error === "cooldown") {
+          const untilTs = parseDate(data?.cooldown_until) || (Date.now() + 5 * 24 * 60 * 60 * 1000);
+          await alertModal({ text: cooldownTextFromUntil(untilTs) });
+          return;
+        }
+      throw new Error(data?.error || "invite");
+    }
 
     if (!data?.already && data?.id) {
       const { data: resendData } = await sb().rpc("polls_hub_subscriber_resend", { p_id: data.id });
@@ -466,6 +500,22 @@ async function invite(value) {
   } finally {
     setProgress({ show: false });
   }
+}
+
+let autoRefreshTimer = null;
+function startAutoRefresh() {
+  if (autoRefreshTimer) return;
+  autoRefreshTimer = setInterval(() => {
+    if (document.hidden) return;
+    if (progressOverlay && progressOverlay.style.display === "grid") return;
+    refreshData();
+  }, 20000);
+}
+
+function stopAutoRefresh() {
+  if (!autoRefreshTimer) return;
+  clearInterval(autoRefreshTimer);
+  autoRefreshTimer = null;
 }
 
 async function refreshTopBadges() {
@@ -611,5 +661,13 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
   await refreshData();
-  setInterval(() => refreshData(), 30000);
+
+  // po zamknięciu dowolnego confirm/alert w aplikacji — odśwież listy
+  document.addEventListener("uni-modal:closed", () => { refreshData(); });
+
+  startAutoRefresh();
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) stopAutoRefresh();
+    else { startAutoRefresh(); refreshData(); }
+  });
 });

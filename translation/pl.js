@@ -562,6 +562,7 @@ const pl = {
       import: "Import",
       importMobile: "Imp",
       remove: "Usuń",
+      leaveShared: "Usuń z listy",
     },
     common: {
       save: "Zapisz",
@@ -630,6 +631,13 @@ const pl = {
       ok: "Usuń",
       cancel: "Anuluj",
       failed: "Nie udało się usunąć.",
+    },
+    leaveShared: {
+      title: "Usuń udostępnioną bazę",
+      text: "Na pewno usunąć z listy udostępnioną bazę „{name}”? (Rezygnujesz z udostępnienia)",
+      ok: "Usuń",
+      cancel: "Anuluj",
+      failed: "Nie udało się usunąć z listy.",
     },
     export: {
       steps: {
@@ -775,6 +783,7 @@ const pl = {
       pointsRange: "W trybie PUNKTACJA każde pytanie musi mieć {min}–{max} odpowiedzi.",
       reopenOnlyClosed: "Ponowne uruchomienie możliwe tylko gdy sondaż jest ZAMKNIĘTY.",
       closeOnlyOpen: "Sondaż można zamknąć tylko gdy jest OTWARTY.",
+      closeWaitForTasks: "Nie można jeszcze zamknąć — ktoś jeszcze nie zagłosował (X≠Y).",
       noActiveSession: "Brak aktywnej sesji głosowania.",
       noActiveSessionGeneric: "Brak aktywnej sesji.",
       closeMinPoints:
@@ -2806,6 +2815,7 @@ const pl = {
       done: "Wykonane",
       available: "Dostępne",
     },
+    taskFrom: "Od: {owner}",
     tasksBadgeLabel: "Zadania",
     tasksBadgeTitle: "Zadania: {done} z {total} udostępnionych zagłosowało.",
     tasksBadgeNone: "Zadania: brak udostępnień.",
@@ -2927,7 +2937,8 @@ const pl = {
     },
     pollReadyAlert: "Dokończ grę w Moich grach",
     resendCooldownAlert: "Ponowne wysłanie zaproszenia możliwe za {hours} godz.",
-    shareCooldownAlert: "Ponowne zaproszenie do głosowania możliwe za {hours} godz.",
+    cooldownLeftDays: "Spróbuj ponownie za {n} dni",
+    cooldownLeftHours: "Spróbuj ponownie za {n} godz.",
   },
   pollsHubPolls: {
     dash: "-",
@@ -3039,6 +3050,7 @@ const pl = {
       done: "Wykonane",
       available: "Dostępne",
     },
+    taskFrom: "Od: {owner}",
     tasksBadgeLabel: "Zadania",
     tasksBadgeTitle: "Zadania: {done} z {total} udostępnionych zagłosowało.",
     tasksBadgeNone: "Zadania: brak udostępnień.",

@@ -37,7 +37,13 @@ export function guardDesktopOnly({
       inset: "0",
       width: "100vw",
       height: "100vh",
-      background: "rgba(0,0,0,.92)",
+    
+      // ✅ spójne z projektem + fallback
+      fontFamily: "system-ui,-apple-system,Segoe UI,sans-serif",
+      background: "rgba(0,0,0,.78)",          // mniej „czarna plama”
+      backdropFilter: "blur(10px)",
+      WebkitBackdropFilter: "blur(10px)",
+    
       color: "#fff",
       zIndex: "2147483647",
       display: "flex",

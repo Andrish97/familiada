@@ -562,6 +562,7 @@ const uk = {
       import: "Імпорт",
       importMobile: "Імп",
       remove: "Видалити",
+      leaveShared: "Прибрати зі списку",
     },
     common: {
       save: "Зберегти",
@@ -629,6 +630,13 @@ const uk = {
       ok: "Видалити",
       cancel: "Скасувати",
       failed: "Не вдалося видалити.",
+    },
+    leaveShared: {
+      title: "Прибрати спільну базу",
+      text: "Прибрати спільну базу «{name}» зі списку? (Ви відмовляєтесь від доступу)",
+      ok: "Прибрати",
+      cancel: "Скасувати",
+      failed: "Не вдалося прибрати зі списку.",
     },
     export: {
       steps: {
@@ -773,6 +781,7 @@ const uk = {
       pointsRange: "У режимі балів кожне питання повинне мати {min}–{max} відповідей.",
       reopenOnlyClosed: "Повторний запуск можливий лише коли опитування закрите.",
       closeOnlyOpen: "Опитування можна закрити лише коли воно відкрите.",
+      closeWaitForTasks: "Ще не можна закрити — хтось іще не проголосував (X≠Y).",
       noActiveSession: "Немає активної сесії голосування.",
       noActiveSessionGeneric: "Немає активної сесії.",
       closeMinPoints:
@@ -2681,6 +2690,7 @@ const uk = {
       done: "Виконано",
       available: "Доступні",
     },
+    taskFrom: "Від: {owner}",
     tasksBadgeLabel: "Завдання",
     tasksBadgeTitle: "Завдання: {done} з {total} поділених проголосували.",
     tasksBadgeNone: "Завдання: немає поширень.",
@@ -2802,7 +2812,8 @@ const uk = {
     },
     pollReadyAlert: "Завершіть гру в «Мої ігри»",
     resendCooldownAlert: "Повторне запрошення можна надіслати через {hours} год.",
-    shareCooldownAlert: "Повторно запросити до голосування можна через {hours} год.",
+    cooldownLeftDays: "Спробуй ще раз через {n} дн.",
+    cooldownLeftHours: "Спробуй ще раз через {n} год.",
   },
   pollsHubPolls: {
     dash: "-",
@@ -2914,6 +2925,7 @@ const uk = {
       done: "Виконано",
       available: "Доступні",
     },
+    taskFrom: "Від: {owner}",
     tasksBadgeLabel: "Завдання",
     tasksBadgeTitle: "Завдання: {done} з {total} поділених проголосували.",
     tasksBadgeNone: "Завдання: немає поширень.",

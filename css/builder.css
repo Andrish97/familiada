@@ -44,6 +44,25 @@ body.builder-body > main.wrap{
   overflow: hidden;               /* 🔑 scroll tylko w środku karty */
 }
 
+/* Mobile landscape: allow full-page scroll and let cards stretch (prevents "trapped" UI) */
+@media (max-width: 900px) and (orientation: landscape){
+  body.builder-body{
+    height: auto;
+    min-height: 100vh;
+    overflow: auto;
+  }
+
+  body.builder-body > main.wrap{
+    overflow: visible;
+  }
+
+  .builder-card,
+  .builder-shell,
+  .grid{
+    max-height: none !important;
+  }
+}
+
 /* W builder.css masz własną .wrap – zostawiamy max-width,
    ale przywracamy sensowny padding (żeby nie lepiło do krawędzi). */
 .wrap{

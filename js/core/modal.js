@@ -125,6 +125,11 @@ function openModal({
       done = true;
       overlay.remove();
       document.removeEventListener("keydown", onKeydown, true);
+      try {
+        document.dispatchEvent(new CustomEvent("uni-modal:closed", { detail: { value } }));
+      } catch {
+        // ignore
+      }
       resolve(value);
     };
 

@@ -55,29 +55,64 @@
     </div>
 
     <section class="builder-shell">
-      <div class="card builder-card">
-        <div class="bases-layout">
-          <div class="bases-title" id="mineTitle">—</div>
-          <div class="grid bases-grid-mine" id="mineGrid"></div>
-        
-          <div class="bases-title bases-title-shared" id="sharedTitle">—</div>
-          <div class="grid bases-grid-shared" id="sharedGrid"></div>
-        </div>
-        <div class="builder-bottom">
-          <div class="builder-bottom-left"></div>
-          <div class="builder-bottom-right">
-            <button class="btn sm" id="btnExport" type="button" disabled>
-              <span class="only-desktop" data-i18n="bases.actions.export">Eksport</span>
-              <span class="only-mobile" data-i18n="bases.actions.exportMobile">Exp</span>
-            </button>
 
-            <button class="btn sm" id="btnImport" type="button">
-              <span class="only-desktop" data-i18n="bases.actions.import">Import</span>
-              <span class="only-mobile" data-i18n="bases.actions.importMobile">Imp</span>
+      <!-- Mobile: 2 wypustki (1:1 jak polls-hub). Desktop: tabs-strip ukryty, w karcie widać oba gridy. -->
+      <div class="tabs-card hub-tabs bases-tabs-card" id="basesTabsCard">
+        <div class="tabs-strip" id="basesTabsMobile" aria-label="Bases tabs">
+          <div class="tab-slot slot-mobile-mine">
+            <button class="tab-label" id="tabBasesMineMobile" type="button">
+              <span data-i18n="bases.sections.mine">Moje</span>
             </button>
+            <div class="tab-wrapper" aria-hidden="true">
+              <div class="tab-active"></div>
+              <div class="tab-corner tab-corner-left"></div>
+              <div class="tab-corner tab-corner-right"></div>
+            </div>
+          </div>
+
+          <div class="tab-slot slot-mobile-shared">
+            <button class="tab-label" id="tabBasesSharedMobile" type="button">
+              <span data-i18n="bases.sections.shared">Udost.</span>
+              <span class="hub-tab-badge is-empty" id="basesSharedBadge" aria-hidden="true"></span>
+            </button>
+            <div class="tab-wrapper" aria-hidden="true">
+              <div class="tab-active"></div>
+              <div class="tab-corner tab-corner-left"></div>
+              <div class="tab-corner tab-corner-right"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card builder-card bases-card">
+          <div class="bases-layout">
+            <div class="bases-section bases-section-mine" id="basesSectionMine">
+              <div class="bases-title" id="mineTitle">—</div>
+              <div class="grid bases-grid-mine" id="mineGrid"></div>
+            </div>
+
+            <div class="bases-section bases-section-shared" id="basesSectionShared">
+              <div class="bases-title bases-title-shared" id="sharedTitle">—</div>
+              <div class="grid bases-grid-shared" id="sharedGrid"></div>
+            </div>
+          </div>
+
+          <div class="builder-bottom">
+            <div class="builder-bottom-left"></div>
+            <div class="builder-bottom-right">
+              <button class="btn sm" id="btnExport" type="button" disabled>
+                <span class="only-desktop" data-i18n="bases.actions.export">Eksport</span>
+                <span class="only-mobile" data-i18n="bases.actions.exportMobile">Exp</span>
+              </button>
+
+              <button class="btn sm" id="btnImport" type="button">
+                <span class="only-desktop" data-i18n="bases.actions.import">Import</span>
+                <span class="only-mobile" data-i18n="bases.actions.importMobile">Imp</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
+
     </section>
   </main>
 
