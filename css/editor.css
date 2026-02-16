@@ -32,6 +32,10 @@ body.editor-body .wrap {
     width: 100%
 }
 
+.mobileBackBtn {
+    display: none;
+}
+
 #gameName {
     flex: 1;
     max-width: 680px;
@@ -86,16 +90,33 @@ body.editor-body .wrap {
     font-size: 12px
 }
 
-.list {
+.listShell {
     margin-top: 10px;
+    border-radius: 18px;
+    border: 1px solid var(--line);
+    background: rgba(255,255,255,.03);
+    padding: 8px;
+}
+
+.list {
     display: grid;
     grid-template-columns: 1fr;
     gap: 10px;
-    max-height: 520px;
-    overflow: auto;
-    padding-right: 6px;
-    padding-bottom: 12px;
-    scrollbar-gutter: stable
+    max-height: none;
+    overflow: visible;
+    padding: 0
+}
+
+.importInline {
+    margin-top: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.importInline .hint {
+    margin: 0;
 }
 
 .qcard {
@@ -228,7 +249,20 @@ body.editor-body .wrap {
 }
 
 .answersBlock {
-    margin-top: 10px
+    margin-top: 10px;
+    display: grid;
+    gap: 10px;
+}
+
+.answersTop {
+    min-height: 0;
+}
+
+.alistShell {
+    border-radius: 18px;
+    border: 1px solid var(--line);
+    background: rgba(255,255,255,.03);
+    padding: 8px;
 }
 
 .ahead {
@@ -246,12 +280,11 @@ body.editor-body .wrap {
 }
 
 .alist {
-    margin-top: 10px;
-    max-height: 360px;
-    overflow: auto;
-    padding-right: 6px;
-    padding-bottom: 12px;
-    scrollbar-gutter: stable
+    margin-top: 0;
+    max-height: none;
+    overflow: visible;
+    padding: 0;
+    grid-template-columns: 1fr;
 }
 
 .arow {
@@ -487,10 +520,11 @@ body.editor-body .wrap {
     .list {
         grid-template-columns: 1fr;
         gap: 8px;
-        max-height: none;
-        overflow: visible;
-        padding-right: 0;
-        padding-bottom: 6px
+        padding: 0;
+    }
+
+    .importInline {
+        align-items: flex-start;
     }
 
     .qcard {
@@ -583,7 +617,7 @@ body.editor-body {
 }
 
 body.editor-body .wrap {
-    height: calc(100vh - 72px);
+    height: calc(100dvh - 72px);
     overflow: hidden;
     display: flex;
     flex-direction: column;
@@ -624,57 +658,36 @@ body.editor-body .rightPanel {
         display: none;
     }
 
+    body.editor-body.mobile-editing .mobileBackBtn {
+        display: inline-flex;
+    }
+
+    body.editor-body:not(.mobile-editing) .mobileBackBtn {
+        display: none;
+    }
+
 }
 
 @media (max-width:720px) and (orientation: portrait) {
-    body.editor-body:not(.mobile-editing) {
-        overflow: hidden;
-    }
-
-    body.editor-body:not(.mobile-editing) .wrap {
-        height: calc(100dvh - 72px);
-        overflow: hidden;
-    }
-
-    body.editor-body:not(.mobile-editing) .left {
-        display: flex;
-        flex-direction: column;
-        min-height: 0;
-    }
-
-    body.editor-body:not(.mobile-editing) .left .list {
-        flex: 1 1 auto;
-        min-height: 0;
-        max-height: none;
-        overflow: auto;
-    }
-
-    body.editor-body:not(.mobile-editing) .left .hint,
-    body.editor-body:not(.mobile-editing) .left .row {
-        flex: 0 0 auto;
-    }
-
-    body.editor-body.mobile-editing {
-        overflow-y: auto;
+    body.editor-body {
         overflow-x: hidden;
+        overflow-y: auto;
     }
 
-    body.editor-body.mobile-editing .wrap,
-    body.editor-body.mobile-editing .layout {
+    body.editor-body .wrap,
+    body.editor-body .layout,
+    body.editor-body .left,
+    body.editor-body .rightPanel,
+    body.editor-body .list,
+    body.editor-body .alist {
         height: auto;
         min-height: auto;
         max-height: none;
         overflow: visible;
     }
 
-    body.editor-body.mobile-editing .rightPanel {
-        min-height: auto;
-        overflow: visible;
-    }
-
-    body.editor-body.mobile-editing .alist {
-        max-height: none;
-        overflow: visible;
+    body.editor-body.mobile-editing .rowTop > div:first-child {
+        display: none;
     }
 }
 
@@ -687,7 +700,10 @@ body.editor-body .rightPanel {
         overflow-y: auto;
     }
 
-    body.editor-body .wrap,
+    body.editor-body .wrap {
+        overflow: auto;
+    }
+
     body.editor-body .layout {
         height: auto;
         min-height: auto;
@@ -697,6 +713,7 @@ body.editor-body .rightPanel {
 
     body.editor-body .left,
     body.editor-body .rightPanel {
+        height: auto;
         min-height: auto;
         max-height: none;
         overflow: visible;

@@ -40,6 +40,7 @@
 
       <div class="namebar">
         <input id="gameName" class="inp" placeholder="Nazwa gry" data-i18n-placeholder="editor.gameNamePlaceholder"/>
+        <button class="btn mobileBackBtn" id="btnMobileBack" type="button" data-i18n="editor.backToQuestions">Wstecz</button>
       </div>
     </div>
 
@@ -49,13 +50,14 @@
           <div class="panelTitle" data-i18n="editor.questionsTitle">Pytania</div>
         </div>
 
-        <div id="qList" class="list"></div>
-
-        <div class="hint" style="margin-top:10px;">
-          <span data-i18n="editor.importHint">Import działa z pliku TXT albo z wklejonej treści.</span>
+        <div class="listShell">
+          <div id="qList" class="list"></div>
         </div>
 
-        <div class="row" style="margin-top:10px;">
+        <div class="importInline">
+          <div class="hint">
+            <span data-i18n="editor.importHint">Import działa z pliku TXT albo z wklejonej treści.</span>
+          </div>
           <button class="btn" id="btnImportTxt" type="button" data-i18n="editor.importBtn">Import</button>
         </div>
       </aside>
@@ -75,16 +77,20 @@
           </div>
 
           <div class="answersBlock">
+            <div id="pointsRemainTop" class="answersTop"></div>
+
             <div class="ahead" id="aHead">
               <div data-i18n="editor.answerLabel">Odpowiedź</div>
               <div class="ptsCol" data-i18n="editor.pointsLabel">Pkt</div>
               <div></div>
             </div>
 
-            <div id="aList" class="alist"></div>
-          </div>
+            <div class="alistShell">
+              <div id="aList" class="alist"></div>
+            </div>
 
-          <div class="hint" id="hintBottom"></div>
+            <div class="hint" id="hintBottom"></div>
+          </div>
         </div>
       </section>
     </div>
