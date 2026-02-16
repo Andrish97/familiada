@@ -336,7 +336,7 @@ function makeRemainBox(sum) {
 }
 
 function updateRemainBox(container) {
-  const box = container.querySelector(".remainBox");
+  const box = container?.querySelector(".remainBox");
   if (!box) return;
 
   const sum = sumPointsFromDom(container);
@@ -499,12 +499,17 @@ async function boot() {
   });
 
   const btnBack = $("btnBack");
+  const btnMobileBack = $("btnMobileBack");
   btnBack?.addEventListener("click", () => {
     if (document.body.classList.contains("mobile-editing")) {
       leaveQuestionEditor();
       return;
     }
     location.href = "builder.html";
+  });
+
+  btnMobileBack?.addEventListener("click", () => {
+    leaveQuestionEditor();
   });
 
   $("btnManual")?.addEventListener("click", () => {
@@ -604,6 +609,7 @@ async function boot() {
   const qList = $("qList");
   const qText = $("qText");
   const aList = $("aList");
+  const pointsRemainTop = $("pointsRemainTop");
   const rightPanel = document.querySelector(".rightPanel");
 
   const MOBILE_LAYOUT_BREAKPOINT = 1100;
@@ -614,6 +620,9 @@ async function boot() {
     document.body.classList.toggle("mobile-editing", on);
     if (btnBack) {
       btnBack.textContent = on ? t("editor.backToQuestions") : t("editor.backToGames");
+    }
+    if (btnMobileBack) {
+      btnMobileBack.textContent = t("editor.backToQuestions");
     }
   }
 
@@ -856,10 +865,32 @@ async function boot() {
     if (!cfg.allowAnswers || !aList) return;
 
     aList.innerHTML = "";
+    if (pointsRemainTop) pointsRemainTop.innerHTML = "";
 
-    if (cfg.allowPoints) {
+    const canAdd = answers.length < AN_MAX;
+    const addA = document.createElement("button");
+    addA.type = "button";
+    addA.className = "arow addTile";
+    addA.disabled = !canAdd;
+    addA.style.cursor = canAdd ? "pointer" : "not-allowed";
+    addA.setAttribute("aria-disabled", canAdd ? "false" : "true");
+    addA.innerHTML = `
+      <div style="font-weight:1000;">
+        ${canAdd ? MSG.addAnswerLabel() : MSG.answerLimitReached()}
+      </div>
+      <div style="margin-left:auto; text-align:right; font-weight:900; opacity:.8;">
+        ${answers.length}/${AN_MAX}
+      </div>
+    `;
+    addA.addEventListener("click", () => {
+      if (!canAdd) return;
+      addAnswer();
+    });
+    aList.appendChild(addA);
+
+    if (cfg.allowPoints && pointsRemainTop) {
       const sum = answers.reduce((acc, a) => acc + nonNegativeInt(a.fixed_points, 0), 0);
-      aList.appendChild(makeRemainBox(sum));
+      pointsRemainTop.appendChild(makeRemainBox(sum));
     }
 
     for (const a of answers) {
@@ -928,7 +959,7 @@ async function boot() {
         }
       };
 
-      iPts?.addEventListener("input", () => updateRemainBox(aList));
+      iPts?.addEventListener("input", () => updateRemainBox(pointsRemainTop));
       iPts?.addEventListener("blur", savePtsNow);
 
       bDel.addEventListener("click", () => removeAnswer(a.id));
@@ -936,28 +967,7 @@ async function boot() {
       aList.appendChild(row);
     }
 
-    const canAdd = answers.length < AN_MAX;
-    const addA = document.createElement("button");
-    addA.type = "button";
-    addA.className = "arow addTile";
-    addA.disabled = !canAdd;
-    addA.style.cursor = canAdd ? "pointer" : "not-allowed";
-    addA.setAttribute("aria-disabled", canAdd ? "false" : "true");
-    addA.innerHTML = `
-      <div style="font-weight:1000;">
-        ${canAdd ? MSG.addAnswerLabel() : MSG.answerLimitReached()}
-      </div>
-      <div style="margin-left:auto; text-align:right; font-weight:900; opacity:.8;">
-        ${answers.length}/${AN_MAX}
-      </div>
-    `;
-    addA.addEventListener("click", () => {
-      if (!canAdd) return;
-      addAnswer();
-    });
-    aList.appendChild(addA);
-
-    if (cfg.allowPoints) updateRemainBox(aList);
+    if (cfg.allowPoints) updateRemainBox(pointsRemainTop);
   }
 
   function renderEditor() {
@@ -966,6 +976,7 @@ async function boot() {
     if (!activeQId) {
       if (qText) qText.value = "";
       if (aList) aList.innerHTML = "";
+      if (pointsRemainTop) pointsRemainTop.innerHTML = "";
       return;
     }
 
