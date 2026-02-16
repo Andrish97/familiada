@@ -32,8 +32,9 @@ function setStatus(m = "") { if (status) status.textContent = m; }
 
 function buildManualUrl() {
   const url = new URL("manual.html", location.href);
-  const ret = `${location.pathname.split("/").pop() || ""}${location.search}${location.hash}`;
+  const ret = `${location.pathname.split("/").pop() || "account.html"}${location.search}${location.hash}`;
   url.searchParams.set("ret", ret);
+  url.searchParams.set("lang", getUiLang() || "pl");
   return url.toString();
 }
 function setErr(m = "") { if (err) err.textContent = m; }
