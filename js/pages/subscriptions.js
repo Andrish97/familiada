@@ -2,7 +2,7 @@ import { sb, SUPABASE_URL } from "../core/supabase.js";
 import { requireAuth, signOut } from "../core/auth.js";
 import { alertModal, confirmModal } from "../core/modal.js";
 import { initUiSelect } from "../core/ui-select.js";
-import { initI18n, t } from "../../translation/translation.js";
+import { getUiLang, initI18n, t } from "../../translation/translation.js";
 
 initI18n({ withSwitcher: true });
 
@@ -11,6 +11,24 @@ const qs = new URLSearchParams(location.search);
 const focusInviteToken = qs.get("s");
 let focusInviteHandled = false;
 let subTokenPrompted = false;
+
+function getRetParam() {
+  return new URLSearchParams(location.search).get("ret");
+}
+
+function getRetPathnameLower() {
+  const raw = getRetParam();
+  if (!raw) return "";
+  try {
+    return new URL(raw, location.origin + "/").pathname.toLowerCase();
+  } catch {
+    return "";
+  }
+}
+
+function getCurrentRelativeUrl() {
+  return `${location.pathname.split("/").pop() || "subscriptions.html"}${location.search}${location.hash}`;
+}
 
 const who = $("who");
 const btnLogout = $("btnLogout");
@@ -601,25 +619,23 @@ async function refreshData() {
 
 function buildManualUrl() {
   const url = new URL("manual.html", location.href);
-  const ret = `${location.pathname.split("/").pop() || ""}${location.search}${location.hash}`;
-  url.searchParams.set("ret", ret);
+  url.searchParams.set("ret", getCurrentRelativeUrl());
+  url.searchParams.set("lang", getUiLang() || "pl");
   return url.toString();
 }
 
 
 function updateBackButtonLabel() {
   if (!btnBack) return;
-  const from = new URLSearchParams(location.search).get("from");
-  if (from === "bases") btnBack.textContent = t("baseExplorer.backToBases");
-  else if (from === "polls-hub") btnBack.textContent = t("polls.backToHub");
+  const retPath = getRetPathnameLower();
+  if (retPath.endsWith("/bases.html")) btnBack.textContent = t("baseExplorer.backToBases");
+  else if (retPath.endsWith("/polls-hub.html")) btnBack.textContent = t("polls.backToHub");
   else btnBack.textContent = t("pollsHubSubscriptions.backToGames");
 }
 
 function getBackLink() {
-  const from = new URLSearchParams(location.search).get("from");
-  if (from === "bases") return "bases.html";
-  if (from === "polls-hub") return "polls-hub.html";
-  return "builder.html";
+  const rawRet = getRetParam();
+  return rawRet || "builder.html";
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
