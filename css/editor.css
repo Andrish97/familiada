@@ -647,8 +647,16 @@ body.editor-body .rightPanel {
 }
 
 @media (max-width:720px) and (orientation: landscape) {
+    html,
     body.editor-body {
-        overflow: auto;
+        height: auto;
+        min-height: 100%;
+        overflow-x: hidden;
+        overflow-y: auto;
+    }
+
+    body.editor-body {
+        min-height: 100dvh;
     }
 
     body.editor-body .wrap,
@@ -662,7 +670,7 @@ body.editor-body .rightPanel {
     body.editor-body .left,
     body.editor-body .rightPanel {
         height: auto;
-        min-height: unset;
+        min-height: auto;
         max-height: none;
         overflow: visible;
     }
