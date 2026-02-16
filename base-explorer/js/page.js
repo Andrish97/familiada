@@ -3,7 +3,7 @@
 
 import { requireAuth, signOut } from "../../js/core/auth.js";
 import { alertModal } from "../../js/core/modal.js";
-import { initI18n, t, withLangParam } from "../../translation/translation.js";
+import { getUiLang, initI18n, t, withLangParam } from "../../translation/translation.js";
 import { createState, setRole } from "./state.js";
 import { renderAll } from "./render.js";
 import {
@@ -32,7 +32,8 @@ function buildManualUrl() {
   const url = new URL("../manual.html", location.href);
   const ret = `${location.pathname.split("/").slice(-2).join("/")}${location.search}${location.hash}`;
   url.searchParams.set("ret", ret);
-  return withLangParam(url.pathname + url.search);
+  url.searchParams.set("lang", getUiLang() || "pl");
+  return url.toString();
 }
 
 /* ================= Events ================= */

@@ -9,7 +9,7 @@ initI18n({ withSwitcher: true });
 
 const qs = new URLSearchParams(location.search);
 const gameId = qs.get("id");
-const from = qs.get("from");
+const ret = qs.get("ret");
 
 const $ = (id) => document.getElementById(id);
 
@@ -54,7 +54,26 @@ let game = null;
 let textCloseModel = null;
 let uiTextCloseOpen = false;
 
-const backTarget = from === "polls-hub" ? "polls-hub.html" : "builder.html";
+const backTarget = ret || "builder.html";
+
+
+function getRetPathnameLower() {
+  if (!ret) return "";
+  try {
+    return new URL(ret, location.origin + "/").pathname.toLowerCase();
+  } catch {
+    return "";
+  }
+}
+
+function buildManualUrl() {
+  const url = new URL("manual.html", location.href);
+  const current = `${location.pathname.split("/").pop() || "polls.html"}${location.search}${location.hash}`;
+  url.searchParams.set("ret", current);
+  const lang = (new URLSearchParams(location.search).get("lang") || localStorage.getItem("uiLang") || "pl");
+  url.searchParams.set("lang", lang);
+  return url.toString();
+}
 
 // ===== Preview DOM cache (poll_points) =====
 let ppCache = null;
@@ -983,7 +1002,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (who) who.textContent = u?.username || u?.email || "—";
 
   if (btnBack) {
-    btnBack.textContent = from === "polls-hub" ? t("polls.backToHub") : t("polls.backToGames");
+    btnBack.textContent = getRetPathnameLower().endsWith("/polls-hub.html") ? t("polls.backToHub") : t("polls.backToGames");
   }
 
   btnManual?.addEventListener("click", () => {
