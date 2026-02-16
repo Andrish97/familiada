@@ -87,6 +87,12 @@ body.builder-body > main.wrap{
   margin-bottom: 12px;
 }
 
+@media (max-width: 900px){
+  .bar{
+    display: block;
+  }
+}
+
 .title{
   font-size: 18px;
   font-weight: 900;
