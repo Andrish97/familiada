@@ -602,51 +602,18 @@ body.editor-body .rightPanel {
     }
 }
 
-@media (max-width:720px) and (orientation: portrait) {
-    body.editor-body {
-        overflow: hidden;
-    }
-
+@media (max-width:720px) {
     body.editor-body .wrap {
-        height: calc(100dvh - 72px);
-        overflow: hidden;
+        height: auto;
+        overflow: visible;
     }
 
-    body.editor-body .left {
-        display: flex;
-        flex-direction: column;
-        min-height: 0;
-    }
-
-    body.editor-body .left .list {
-        flex: 1 1 auto;
-        min-height: 0;
-        max-height: none;
-        overflow: auto;
-    }
-
-    body.editor-body .left .hint,
-    body.editor-body .left .row {
-        flex: 0 0 auto;
-    }
-
-    body.editor-body .rightPanel,
-    body.editor-body .alist {
-        overflow: auto;
-    }
-}
-
-@media (max-width:720px) and (orientation: landscape) {
     body.editor-body {
         overflow: auto;
     }
 
-    body.editor-body .wrap,
-    body.editor-body .layout,
     body.editor-body .left,
     body.editor-body .rightPanel {
-        height: auto;
-        min-height: auto;
         max-height: none;
         overflow: visible;
     }
@@ -654,6 +621,18 @@ body.editor-body .rightPanel {
     body.editor-body .list,
     body.editor-body .alist {
         max-height: none;
+        overflow: visible;
+    }
+}
+
+@media (max-width:720px) and (orientation: portrait) {
+    body.editor-body .wrap {
+        height: auto;
+        overflow: visible;
+    }
+
+    body.editor-body .left,
+    body.editor-body .rightPanel {
         overflow: visible;
     }
 }
