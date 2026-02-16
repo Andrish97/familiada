@@ -592,7 +592,7 @@ async function boot() {
 
   /* ---------- state ---------- */
   let questions = await renumberQuestions(gameId);
-  let activeQId = questions[0]?.id || null;
+  let activeQId = null;
   let answers = activeQId && cfg.allowAnswers ? await listAnswers(activeQId) : [];
 
   /* ---------- refs ---------- */
@@ -600,10 +600,27 @@ async function boot() {
   const qText = $("qText");
   const aList = $("aList");
   const rightPanel = document.querySelector(".rightPanel");
+  const btnMobileBack = $("btnMobileBack");
+
+  const MOBILE_LAYOUT_BREAKPOINT = 1100;
+  const isMobileLayout = () => window.matchMedia(`(max-width:${MOBILE_LAYOUT_BREAKPOINT}px)`).matches;
+
+  function syncMobileEditingState() {
+    const on = isMobileLayout() && !!activeQId;
+    document.body.classList.toggle("mobile-editing", on);
+  }
 
   function setHasQ(on) {
     rightPanel?.classList.toggle("hasQ", !!on);
+    syncMobileEditingState();
   }
+
+  btnMobileBack?.addEventListener("click", () => {
+    activeQId = null;
+    answers = [];
+    renderQuestions();
+    renderEditor();
+  });
 
   // KLUCZ: liczymy count + (prepared) sumę punktów -> do kafelków i kolorów
   async function refreshCounts() {
@@ -639,6 +656,10 @@ async function boot() {
       return;
     }
     answers = await listAnswers(activeQId);
+  }
+
+  function defaultActiveQuestionId() {
+    return isMobileLayout() ? null : (questions[0]?.id || null);
   }
 
   /* ---------- Questions UI ---------- */
@@ -687,7 +708,7 @@ async function boot() {
       await refreshCounts();
 
       if (activeQId === qId) {
-        activeQId = questions[0]?.id || null;
+        activeQId = defaultActiveQuestionId();
         await loadAnswersForActive();
       }
 
@@ -1123,7 +1144,7 @@ async function boot() {
       setTxtImportProgress({ step: MSG.importCountStatuses(), i: done, n: total, msg: MSG.importProgressOk() });
       
       setTxtImportProgress({ step: MSG.importRender(), i: done, n: total, msg: "" });
-      activeQId = questions[0]?.id || null;
+      activeQId = defaultActiveQuestionId();
       await loadAnswersForActive();
       renderQuestions();
       renderEditor();
@@ -1163,12 +1184,16 @@ async function boot() {
   /* ---------- init ---------- */
   questions = await renumberQuestions(gameId);
   await refreshCounts();
-  activeQId = questions[0]?.id || null;
+  activeQId = defaultActiveQuestionId();
   await loadAnswersForActive();
 
   renderQuestions();
   renderEditor();
   setMsg("");
+
+  window.addEventListener("resize", () => {
+    syncMobileEditingState();
+  });
 
   window.addEventListener("i18n:lang", () => {
     renderHeader();
