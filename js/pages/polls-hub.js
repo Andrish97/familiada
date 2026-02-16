@@ -658,7 +658,7 @@ async function buildMailItemsForTasksFallback({ gameId, ownerId, selectedSubIds 
     const userKey = sub.subscriber_user_id ? String(sub.subscriber_user_id) : "";
     const token = (userKey ? tokenByKey.get(userKey) : null) || (emailKey ? tokenByKey.get(emailKey) : null);
     if (!token || !emailKey) continue;
-    mailItems.push({ task_id: taskIdByToken.get(String(token)) || null, to: emailKey, link: `poll_go.html?t=${encodeURIComponent(token)}&lang=${encodeURIComponent(getUiLang() || "pl")}` });
+    mailItems.push({ task_id: taskIdByToken.get(String(token)) || null, to: emailKey, link: `poll-go.html?t=${encodeURIComponent(token)}&lang=${encodeURIComponent(getUiLang() || "pl")}` });
   }
   return mailItems;
 }

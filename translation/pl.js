@@ -862,6 +862,8 @@ const pl = {
     backToGames: "← Moje gry",
     backToBaseManager: "← Menadżer bazy",
     backToLogos: "← Moje logo",
+    backToEditor: "← Edytor pytań",
+    backToPoll: "← Sondaż",
     backToSubscriptions: "← Subskrypcje",
     backToAccount: "← Ustawienia konta",
     logout: "Wyloguj",
@@ -2484,6 +2486,7 @@ const pl = {
   editor: {
     title: "Familiada — edytor",
     backToGames: "← Moje gry",
+    backToQuestions: "← Wstecz",
     logout: "Wyloguj",
     pageTitle: "Edytor",
     gameNamePlaceholder: "Nazwa gry",

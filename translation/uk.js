@@ -860,6 +860,8 @@ const uk = {
     backToGames: "← Мої ігри",
     backToBaseManager: "← Менеджер бази",
     backToLogos: "← Мої логотипи",
+    backToEditor: "← Редактор питань",
+    backToPoll: "← Опитування",
     backToSubscriptions: "← Підписки",
     backToAccount: "← Налаштування акаунта",
     logout: "Вийти",
@@ -2359,6 +2361,7 @@ const uk = {
   editor: {
     title: "Familiada — редактор",
     backToGames: "← Мої ігри",
+    backToQuestions: "← Назад",
     logout: "Вийти",
     pageTitle: "Редактор",
     gameNamePlaceholder: "Назва гри",
