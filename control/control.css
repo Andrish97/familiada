@@ -1411,14 +1411,14 @@
     text-align: center;
     padding: 0 10px;
     white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis
-}
-
-.mapBtnsGrid .mapSlot {
-    border-radius: 16px;
-    border: 1px dashed rgba(255,255,255,.1);
-    background: rgba(255,255,255,.02)
+  position:relative;
+  width:min(1500px,92vw);
+  height:min(1050px,90vh);
+  background:var(--surface,#111827);
+  border:1px solid rgba(255,255,255,.16);
+  border-radius:16px;
+  overflow:hidden;
+  box-shadow:0 10px 30px rgba(0,0,0,.45)
 }
 
 .finalRevealActions {

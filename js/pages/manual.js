@@ -3,7 +3,7 @@
 // Najpierw UI, potem auth „miękko”.
 
 import { confirmModal } from "../core/modal.js";
-import { initI18n, setUiLang, t } from "../../translation/translation.js";
+import { initI18n, setUiLang, t, withLangParam } from "../../translation/translation.js";
 
 function isControlModal() {
   const p = new URLSearchParams(location.search);
@@ -65,11 +65,33 @@ function wireTabs() {
   else setActive("general");
 }
 
-function decodeRet() {
-  const p = new URLSearchParams(location.search);
-  return p.get("ret") || "builder.html";
+function normalizeRetTarget(rawRet) {
+  const fallback = withLangParam("builder.html");
+  const trimmed = String(rawRet || "").trim();
+  if (!trimmed) return fallback;
+
+  try {
+    const target = new URL(trimmed, location.origin + "/");
+    if (target.origin !== location.origin) return fallback;
+    const rel = `${target.pathname.replace(/^\/+/, "")}${target.search}${target.hash}`;
+    return withLangParam(rel || "builder.html");
+  } catch {
+    return fallback;
+  }
 }
 
+function decodeRet() {
+  const p = new URLSearchParams(location.search);
+  return normalizeRetTarget(p.get("ret"));
+}
+
+function getRetPathnameLower() {
+  try {
+    return new URL(decodeRet(), location.href).pathname.toLowerCase();
+  } catch {
+    return "/builder.html";
+  }
+}
 
 function applyControlModalLayout() {
   if (!isControlModal()) return;
@@ -84,8 +106,8 @@ function applyControlModalLayout() {
 }
 
 function shouldShowDemoTab() {
-  const ret = decodeRet().toLowerCase();
-  return ret.startsWith("builder.html") || ret.startsWith("/builder.html");
+  const retPath = getRetPathnameLower();
+  return retPath.endsWith("/builder.html");
 }
 
 function buildPrivacyUrl() {
@@ -100,9 +122,13 @@ function buildPrivacyUrl() {
 
 
 function resolveBackLabelKey() {
-  const ret = decodeRet().toLowerCase();
-  if (ret.startsWith("bases.html") || ret.startsWith("/bases.html") || ret.startsWith("base-explorer/base-explorer.html") || ret.startsWith("/base-explorer/base-explorer.html")) return "baseExplorer.backToBases";
-  if (ret.startsWith("polls-hub.html") || ret.startsWith("/polls-hub.html") || ret.startsWith("subscriptions.html") || ret.startsWith("/subscriptions.html") || ret.startsWith("polls.html") || ret.startsWith("/polls.html")) return "polls.backToHub";
+  const retPath = getRetPathnameLower();
+  if (retPath.endsWith("/base-explorer/base-explorer.html")) return "manual.backToBaseManager";
+  if (retPath.endsWith("/bases.html")) return "baseExplorer.backToBases";
+  if (retPath.endsWith("/logo-editor/logo-editor.html")) return "manual.backToLogos";
+  if (retPath.endsWith("/subscriptions.html")) return "manual.backToSubscriptions";
+  if (retPath.endsWith("/account.html")) return "manual.backToAccount";
+  if (retPath.endsWith("/polls-hub.html") || retPath.endsWith("/polls.html")) return "polls.backToHub";
   return "manual.backToGames";
 }
 

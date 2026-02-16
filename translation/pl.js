@@ -860,6 +860,10 @@ const pl = {
     title: "Familiada — wskazówki",
     legal: "Polityka prywatności 🔐",
     backToGames: "← Moje gry",
+    backToBaseManager: "← Menadżer bazy",
+    backToLogos: "← Moje logo",
+    backToSubscriptions: "← Subskrypcje",
+    backToAccount: "← Ustawienia konta",
     logout: "Wyloguj",
     pageTitle: "Wskazówki dla użytkownika",
     tabs: {
