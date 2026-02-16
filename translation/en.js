@@ -855,6 +855,10 @@ const en = {
     title: "Familiada — guide",
     legal: "Privacy Policy 🔐",
     backToGames: "← My games",
+    backToBaseManager: "← Base manager",
+    backToLogos: "← My logos",
+    backToSubscriptions: "← Subscriptions",
+    backToAccount: "← Account settings",
     logout: "Log out",
     pageTitle: "User guide",
     tabs: {
