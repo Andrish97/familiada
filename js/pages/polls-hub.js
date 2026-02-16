@@ -12,6 +12,24 @@ const qs = new URLSearchParams(location.search);
 const focusTaskToken = qs.get("t");
 let focusTaskHandled = false;
 
+function getRetParam() {
+  return new URLSearchParams(location.search).get("ret");
+}
+
+function getRetPathnameLower() {
+  const raw = getRetParam();
+  if (!raw) return "";
+  try {
+    return new URL(raw, location.origin + "/").pathname.toLowerCase();
+  } catch {
+    return "";
+  }
+}
+
+function getCurrentRelativeUrl() {
+  return `${location.pathname.split("/").pop() || "polls-hub.html"}${location.search}${location.hash}`;
+}
+
 const who = $("who");
 const btnLogout = $("btnLogout");
 const btnBack = $("btnBackToBuilder");
@@ -461,7 +479,7 @@ async function openPoll(poll) {
     await alertModal({ text: MSG.pollReadyAlert() });
     return;
   }
-  location.href = `polls.html?id=${encodeURIComponent(poll.game_id)}&from=polls-hub`;
+  location.href = `polls.html?id=${encodeURIComponent(poll.game_id)}&ret=${encodeURIComponent(getCurrentRelativeUrl())}`;
 }
 
 function setActiveMobileTab(tab) {
@@ -895,22 +913,23 @@ async function refreshData() {
 
 function buildManualUrl() {
   const url = new URL("manual.html", location.href);
-  const ret = `${location.pathname.split("/").pop() || ""}${location.search}${location.hash}`;
-  url.searchParams.set("ret", ret);
+  url.searchParams.set("ret", getCurrentRelativeUrl());
+  url.searchParams.set("lang", getUiLang() || "pl");
   return url.toString();
 }
 
 
 function updateBackButtonLabel() {
   if (!btnBack) return;
-  const from = new URLSearchParams(location.search).get("from");
-  btnBack.textContent = from === "bases" ? t("baseExplorer.backToBases") : t("pollsHubPolls.backToGames");
+  const retPath = getRetPathnameLower();
+  btnBack.textContent = retPath.endsWith("/bases.html")
+    ? t("baseExplorer.backToBases")
+    : t("pollsHubPolls.backToGames");
 }
 
 function getBackLink() {
-  const from = new URLSearchParams(location.search).get("from");
-  if (from === "bases") return "bases.html";
-  return "builder.html";
+  const rawRet = getRetParam();
+  return rawRet || "builder.html";
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -951,7 +970,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   updateBackButtonLabel();
   btnBack?.addEventListener("click", () => { location.href = getBackLink(); });
   btnManual?.addEventListener("click", () => { location.href = buildManualUrl(); });
-  btnGoAlt?.addEventListener("click", () => { location.href = "subscriptions.html?from=polls-hub"; });
+  btnGoAlt?.addEventListener("click", () => { location.href = `subscriptions.html?ret=${encodeURIComponent(getCurrentRelativeUrl())}`; });
   btnLogout?.addEventListener("click", async () => { await signOut(); location.href = "index.html"; });
 
   window.addEventListener("i18n:lang", () => {
