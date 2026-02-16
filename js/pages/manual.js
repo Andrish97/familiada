@@ -126,9 +126,11 @@ function resolveBackLabelKey() {
   if (retPath.endsWith("/base-explorer/base-explorer.html")) return "manual.backToBaseManager";
   if (retPath.endsWith("/bases.html")) return "baseExplorer.backToBases";
   if (retPath.endsWith("/logo-editor/logo-editor.html")) return "manual.backToLogos";
+  if (retPath.endsWith("/editor.html")) return "manual.backToEditor";
+  if (retPath.endsWith("/polls.html")) return "manual.backToPoll";
   if (retPath.endsWith("/subscriptions.html")) return "manual.backToSubscriptions";
   if (retPath.endsWith("/account.html")) return "manual.backToAccount";
-  if (retPath.endsWith("/polls-hub.html") || retPath.endsWith("/polls.html")) return "polls.backToHub";
+  if (retPath.endsWith("/polls-hub.html")) return "polls.backToHub";
   return "manual.backToGames";
 }
 
