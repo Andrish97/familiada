@@ -498,7 +498,12 @@ async function boot() {
     location.href = "index.html";
   });
 
-  $("btnBack")?.addEventListener("click", () => {
+  const btnBack = $("btnBack");
+  btnBack?.addEventListener("click", () => {
+    if (document.body.classList.contains("mobile-editing")) {
+      leaveQuestionEditor();
+      return;
+    }
     location.href = "builder.html";
   });
 
@@ -600,7 +605,6 @@ async function boot() {
   const qText = $("qText");
   const aList = $("aList");
   const rightPanel = document.querySelector(".rightPanel");
-  const btnMobileBack = $("btnMobileBack");
 
   const MOBILE_LAYOUT_BREAKPOINT = 1100;
   const isMobileLayout = () => window.matchMedia(`(max-width:${MOBILE_LAYOUT_BREAKPOINT}px)`).matches;
@@ -608,6 +612,9 @@ async function boot() {
   function syncMobileEditingState() {
     const on = isMobileLayout() && !!activeQId;
     document.body.classList.toggle("mobile-editing", on);
+    if (btnBack) {
+      btnBack.textContent = on ? `← ${t("editor.backToQuestions")}` : `← ${t("editor.backToGames")}`;
+    }
   }
 
   function setHasQ(on) {
@@ -615,12 +622,14 @@ async function boot() {
     syncMobileEditingState();
   }
 
-  btnMobileBack?.addEventListener("click", () => {
+  function leaveQuestionEditor() {
+    if (!activeQId) return;
     activeQId = null;
     answers = [];
     renderQuestions();
     renderEditor();
-  });
+  }
+
 
   // KLUCZ: liczymy count + (prepared) sumę punktów -> do kafelków i kolorów
   async function refreshCounts() {
@@ -933,7 +942,7 @@ async function boot() {
     addA.className = "arow addTile";
     addA.disabled = !canAdd;
     addA.style.cursor = canAdd ? "pointer" : "not-allowed";
-    addA.style.opacity = canAdd ? "1" : ".55";
+    addA.setAttribute("aria-disabled", canAdd ? "false" : "true");
     addA.innerHTML = `
       <div style="font-weight:1000;">
         ${canAdd ? MSG.addAnswerLabel() : MSG.answerLimitReached()}

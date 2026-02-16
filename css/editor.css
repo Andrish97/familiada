@@ -375,6 +375,23 @@ body.editor-body .wrap {
     color: rgba(255,255,255,.82)
 }
 
+.addTile:disabled,
+.addTile[aria-disabled="true"] {
+    opacity: .85 !important;
+    color: rgba(255,255,255,.92);
+    border-color: rgba(255,255,255,.32);
+}
+
+.addTile:disabled .txt,
+.addTile:disabled .sub,
+.addTile:disabled .plus,
+.addTile[aria-disabled="true"] .txt,
+.addTile[aria-disabled="true"] .sub,
+.addTile[aria-disabled="true"] .plus {
+    color: rgba(255,255,255,.92);
+    opacity: 1;
+}
+
 .qcard:not(.addTile).good {
     border-color: rgba(120,255,120,.45);
     background: rgba(120,255,120,.1)
@@ -572,6 +589,10 @@ body.editor-body .wrap {
     flex-direction: column;
 }
 
+body.editor-body.mobile-editing {
+    overflow: hidden;
+}
+
 body.editor-body .layout {
     min-height: 0;
     flex: 1;
@@ -584,10 +605,6 @@ body.editor-body .rightPanel {
 
 body.editor-body .rightPanel {
     overflow: auto;
-}
-
-#btnMobileBack {
-    display: none;
 }
 
 @media (max-width:1100px) {
@@ -607,42 +624,57 @@ body.editor-body .rightPanel {
         display: none;
     }
 
-    body.editor-body.mobile-editing #btnMobileBack {
-        display: inline-flex !important;
-    }
 }
 
 @media (max-width:720px) and (orientation: portrait) {
-    body.editor-body {
+    body.editor-body:not(.mobile-editing) {
         overflow: hidden;
     }
 
-    body.editor-body .wrap {
+    body.editor-body:not(.mobile-editing) .wrap {
         height: calc(100dvh - 72px);
         overflow: hidden;
     }
 
-    body.editor-body .left {
+    body.editor-body:not(.mobile-editing) .left {
         display: flex;
         flex-direction: column;
         min-height: 0;
     }
 
-    body.editor-body .left .list {
+    body.editor-body:not(.mobile-editing) .left .list {
         flex: 1 1 auto;
         min-height: 0;
         max-height: none;
         overflow: auto;
     }
 
-    body.editor-body .left .hint,
-    body.editor-body .left .row {
+    body.editor-body:not(.mobile-editing) .left .hint,
+    body.editor-body:not(.mobile-editing) .left .row {
         flex: 0 0 auto;
     }
 
-    body.editor-body .rightPanel,
-    body.editor-body .alist {
-        overflow: auto;
+    body.editor-body.mobile-editing {
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+
+    body.editor-body.mobile-editing .wrap,
+    body.editor-body.mobile-editing .layout {
+        height: auto;
+        min-height: auto;
+        max-height: none;
+        overflow: visible;
+    }
+
+    body.editor-body.mobile-editing .rightPanel {
+        min-height: auto;
+        overflow: visible;
+    }
+
+    body.editor-body.mobile-editing .alist {
+        max-height: none;
+        overflow: visible;
     }
 }
 
@@ -655,10 +687,6 @@ body.editor-body .rightPanel {
         overflow-y: auto;
     }
 
-    body.editor-body {
-        min-height: 100dvh;
-    }
-
     body.editor-body .wrap,
     body.editor-body .layout {
         height: auto;
@@ -669,7 +697,6 @@ body.editor-body .rightPanel {
 
     body.editor-body .left,
     body.editor-body .rightPanel {
-        height: auto;
         min-height: auto;
         max-height: none;
         overflow: visible;
@@ -681,3 +708,4 @@ body.editor-body .rightPanel {
         overflow: visible;
     }
 }
+
