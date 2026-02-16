@@ -5,7 +5,7 @@ import { sb, SUPABASE_URL } from "../core/supabase.js";
 import { requireAuth, signOut } from "../core/auth.js";
 import { alertModal, confirmModal } from "../core/modal.js";
 import { initUiSelect } from "../core/ui-select.js";
-import { getUiLang, initI18n, t } from "../../translation/translation.js";
+import { initI18n, t } from "../../translation/translation.js";
 
 initI18n({ withSwitcher: true });
 
@@ -1489,30 +1489,19 @@ async function importFromJsonText(txt) {
 }
 
 
-
-function getRetParam() {
-  return new URLSearchParams(location.search).get("ret");
-}
-
-function getBackLink() {
-  const rawRet = getRetParam();
-  return rawRet || "builder.html";
-}
-
-function getCurrentRelativeUrl() {
-  return `${location.pathname.split("/").pop() || "bases.html"}${location.search}${location.hash}`;
-}
-
 function buildManualUrl() {
   const url = new URL("manual.html", location.href);
-  url.searchParams.set("ret", getCurrentRelativeUrl());
-  url.searchParams.set("lang", getUiLang() || "pl");
+  const ret = `${location.pathname.split("/").pop() || ""}${location.search}${location.hash}`;
+  url.searchParams.set("ret", ret);
   return url.toString();
 }
 
 /* ================= Events ================= */
 btnBack?.addEventListener("click", () => {
-  location.href = getBackLink();
+  const from = new URLSearchParams(location.search).get("from");
+  if (from === "hub-a") location.href = "polls-hub.html";
+  else if (from === "hub-b") location.href = "subscriptions.html";
+  else location.href = "builder.html";
 });
 
 btnManual?.addEventListener("click", () => {
@@ -1521,7 +1510,8 @@ btnManual?.addEventListener("click", () => {
 
 btnGoAlt?.addEventListener("click", async () => {
   const page = document.body.dataset.altPage || "subscriptions.html";
-  location.href = `${page}?ret=${encodeURIComponent(getCurrentRelativeUrl())}`;
+  const from = document.body.dataset.altFrom || "bases";
+  location.href = `${page}?from=${encodeURIComponent(from)}`;
 });
 
 btnLogout?.addEventListener("click", async () => {
