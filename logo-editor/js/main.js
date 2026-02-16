@@ -5,7 +5,7 @@ import { sb } from "../../js/core/supabase.js";
 import { requireAuth, signOut } from "../../js/core/auth.js";
 import { guardDesktopOnly } from "../../js/core/device-guard.js";
 import { alertModal, confirmModal } from "../../js/core/modal.js";
-import { getUiLang, initI18n, t, withLangParam } from "../../translation/translation.js";
+import { initI18n, t, withLangParam } from "../../translation/translation.js";
 
 import { initTextEditor } from "./text.js";
 import { initTextPixEditor } from "./text-pix.js";
@@ -39,12 +39,9 @@ const DEFAULT_LOGO_URL = "../display/logo_familiada.json";
 const who = document.getElementById("who");
 
 const btnBack = document.getElementById("btnBack");
+const btnBackI18nKey = btnBack?.getAttribute?.("data-i18n") || null;
 const btnLogout = document.getElementById("btnLogout");
 const btnManual = document.getElementById("btnManual");
-const btnCloseEditor = document.getElementById("btnCloseEditor");
-const helpOverlay = document.getElementById("helpOverlay");
-const helpFrame = document.getElementById("helpFrame");
-const btnHelpClose = document.getElementById("btnHelpClose");
 
 const brandTitle = document.getElementById("brandTitle");
 
@@ -70,6 +67,11 @@ const pickTextPix = document.getElementById("pickTextPix");
 const pickDraw = document.getElementById("pickDraw");
 const pickImage = document.getElementById("pickImage");
 const btnPickCancel = document.getElementById("btnPickCancel");
+
+// w nowym układzie nie ma editorTitle/editorSub – fallback na brandTitle
+const editorTitle = document.getElementById("editorTitle") || brandTitle;
+const editorSub = document.getElementById("editorSub"); // może być null (i to OK)
+const btnEditorClose = document.getElementById("btnEditorClose"); // może być null (i to OK)
 
 const logoName = document.getElementById("logoName");
 
@@ -1060,23 +1062,6 @@ function updateEditorHeader() {
     `<span class="bMain">${t("logoEditor.editor.newLogoPrefix")}</span><span class="bMode">${modeLabel}</span>`;
 }
 
-function buildHelpUrl() {
-  const url = new URL("../manual.html", location.href);
-  const ret = `${location.pathname.split("/").slice(-2).join("/")}${location.search}${location.hash}`;
-  url.searchParams.set("ret", ret);
-  url.searchParams.set("modal", "control");
-  url.searchParams.set("lang", getUiLang() || "pl");
-  return url.toString();
-}
-
-function openHelpModal() {
-  if (helpFrame) helpFrame.src = buildHelpUrl();
-  helpOverlay?.classList.remove("hidden");
-}
-
-function closeHelpModal() {
-  helpOverlay?.classList.add("hidden");
-}
 
 function openEditor(mode){
   hideAllPanes();
@@ -1086,8 +1071,10 @@ function openEditor(mode){
 
   // ===== tryb edytora UI =====
   document.body.classList.add("is-editor");
-  if (btnBack) btnBack.style.display = "none";
-  if (btnCloseEditor) btnCloseEditor.style.display = "";
+  if (btnManual) btnManual.style.display = "none";
+  if (btnBackI18nKey) btnBack?.removeAttribute?.("data-i18n");
+  btnBack.textContent = "✕";
+  btnBack.classList.add("sm");
 
   // ===== label trybu =====
   const modeLabel = getModeLabel(mode);
@@ -1159,9 +1146,11 @@ async function closeEditor(force = false){
   clearDirty();
 
   document.body.classList.remove("is-editor");
-  if (btnBack) btnBack.style.display = "";
-  if (btnCloseEditor) btnCloseEditor.style.display = "none";
+  if (btnBackI18nKey) btnBack?.setAttribute?.("data-i18n", btnBackI18nKey);
+  btnBack.textContent = t(btnBackI18nKey || "logoEditor.topbar.backToGames");
+  btnBack.classList.remove("sm");
   brandTitle.textContent = "FAMILIADA";
+  if (btnManual) btnManual.style.display = "";
 }
 
 let lastPreviewPayload = null;
@@ -1265,7 +1254,11 @@ async function boot(){
    await initI18n({ withSwitcher: true });
    guardDesktopOnly({ minWidth: 980 });
    window.addEventListener("i18n:lang", () => {
-     if (editorMode) updateEditorHeader();
+     if (editorMode) {
+       updateEditorHeader();
+     } else {
+       btnBack.textContent = t("logoEditor.topbar.backToGames");
+     }
      renderList();
    });
 
@@ -1303,21 +1296,26 @@ async function boot(){
 
   // topbar
    btnBack?.addEventListener("click", async () => {
+     const inEditor = !!editorMode; // najpewniej: źródło prawdy to stan, nie style
+   
+     if (inEditor){
+       // zamykanie edytora: cała logika w closeEditor() (tam jest confirmCloseIfDirty)
+       await closeEditor(false);
+       return;
+     }
+   
+     // wyjście do buildera: pytamy tylko jeśli faktycznie mamy dirty (i edytor otwarty)
      if (shouldBlockNav() && !(await confirmCloseIfDirty())) return;
      location.href = withLangParam("../builder.html");
    });
-
-   btnCloseEditor?.addEventListener("click", async () => {
-     if (!editorMode) return;
-     await closeEditor(false);
-   });
    
    btnManual?.addEventListener("click", () => {
-     openHelpModal();
+     if (editorMode) return;
+     const url = new URL("../manual.html", location.href);
+     const ret = `${location.pathname.split("/").slice(-2).join("/")}${location.search}${location.hash}`;
+     url.searchParams.set("ret", ret);
+     location.href = url.toString();
    });
-
-   btnHelpClose?.addEventListener("click", closeHelpModal);
-   helpOverlay?.addEventListener("click", (ev) => { if (ev.target === helpOverlay) closeHelpModal(); });
 
    btnLogout?.addEventListener("click", async () => {
      if (shouldBlockNav()){
@@ -1438,6 +1436,10 @@ async function boot(){
 
   btnPickCancel?.addEventListener("click", () => show(createOverlay, false));
   createOverlay?.addEventListener("click", (ev) => { if (ev.target === createOverlay) show(createOverlay, false); });
+
+ btnEditorClose?.addEventListener("click", () => {
+   void closeEditor(false);
+ });
 
   btnCreate?.addEventListener("click", handleCreate);
    
