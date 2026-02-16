@@ -602,14 +602,35 @@ body.editor-body .rightPanel {
     }
 }
 
-@media (max-width:720px) {
+@media (max-width:720px) and (orientation: portrait) {
+    body.editor-body {
+        overflow: hidden;
+    }
+
+    body.editor-body .wrap {
+        height: calc(100dvh - 72px);
+        overflow: hidden;
+    }
+
+    body.editor-body .left,
+    body.editor-body .rightPanel {
+        overflow: auto;
+    }
+
+    body.editor-body .list,
+    body.editor-body .alist {
+        overflow: auto;
+    }
+}
+
+@media (max-width:720px) and (orientation: landscape) {
+    body.editor-body {
+        overflow: auto;
+    }
+
     body.editor-body .wrap {
         height: auto;
         overflow: visible;
-    }
-
-    body.editor-body {
-        overflow: auto;
     }
 
     body.editor-body .left,
@@ -621,18 +642,6 @@ body.editor-body .rightPanel {
     body.editor-body .list,
     body.editor-body .alist {
         max-height: none;
-        overflow: visible;
-    }
-}
-
-@media (max-width:720px) and (orientation: portrait) {
-    body.editor-body .wrap {
-        height: auto;
-        overflow: visible;
-    }
-
-    body.editor-body .left,
-    body.editor-body .rightPanel {
         overflow: visible;
     }
 }
