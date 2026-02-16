@@ -857,6 +857,8 @@ const en = {
     backToGames: "← My games",
     backToBaseManager: "← Base manager",
     backToLogos: "← My logos",
+    backToEditor: "← Question editor",
+    backToPoll: "← Poll",
     backToSubscriptions: "← Subscriptions",
     backToAccount: "← Account settings",
     logout: "Log out",
@@ -2479,6 +2481,7 @@ const en = {
   editor: {
     title: "Familiada — editor",
     backToGames: "← My games",
+    backToQuestions: "← Back",
     logout: "Log out",
     pageTitle: "Editor",
     gameNamePlaceholder: "Game name",

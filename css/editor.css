@@ -89,6 +89,7 @@ body.editor-body .wrap {
 .list {
     margin-top: 10px;
     display: grid;
+    grid-template-columns: 1fr;
     gap: 10px;
     max-height: 520px;
     overflow: auto;
@@ -459,79 +460,77 @@ body.editor-body .wrap {
     }
 
     .list {
-        grid-template-columns: 1fr 1fr;
+        grid-template-columns: 1fr;
         gap: 8px;
         max-height: none;
         overflow: visible;
         padding-right: 0;
         padding-bottom: 6px
-    }@    media (max-width:380px) {
-        .list{grid-template-columns: 1fr
+    }
+
+    .qcard {
+        padding: 10px;
+        border-radius: 16px
+    }
+
+    .qord {
+        font-size: 11px
+    }
+
+    .qmeta,.qprev {
+        font-size: 13px;
+        margin-top: 4px
+    }
+
+    .qmeta {
+        font-size: 11px
+    }
+
+    .qcard .x {
+        top: 8px;
+        right: 8px;
+        width: 28px;
+        height: 28px;
+        border-radius: 10px
+    }
+
+    .addTile {
+        padding: 10px;
+        border-radius: 16px
+    }
+
+    .addTile .plus {
+        width: 30px;
+        height: 30px;
+        border-radius: 12px
+    }
+
+    .ahead,.arow {
+        grid-template-columns: minmax(0,1fr) 72px 36px;
+        gap: 8px;
+        padding: 0 4px
+    }
+
+    .arow {
+        padding: 8px;
+        border-radius: 16px
+    }
+
+    .aPts,.aText {
+        padding: 8px 10px;
+        border-radius: 12px
+    }
+
+    .aDel {
+        width: 36px;
+        height: 36px;
+        border-radius: 12px
+    }
+
+    .editor.no-points .ahead,.editor.no-points .arow {
+        grid-template-columns: minmax(0,1fr) 36px
     }
 }
-
-.qcard {
-    padding: 10px;
-    border-radius: 16px
-}
-
-.qord {
-    font-size: 11px
-}
-
-.qmeta,.qprev {
-    font-size: 13px;
-    margin-top: 4px
-}
-
-.qmeta {
-    font-size: 11px
-}
-
-.qcard .x {
-    top: 8px;
-    right: 8px;
-    width: 28px;
-    height: 28px;
-    border-radius: 10px
-}
-
-.addTile {
-    padding: 10px;
-    border-radius: 16px
-}
-
-.addTile .plus {
-    width: 30px;
-    height: 30px;
-    border-radius: 12px
-}
-
-.ahead,.arow {
-    grid-template-columns: minmax(0,1fr) 72px 36px;
-    gap: 8px;
-    padding: 0 4px
-}
-
-.arow {
-    padding: 8px;
-    border-radius: 16px
-}
-
-.aPts,.aText {
-    padding: 8px 10px;
-    border-radius: 12px
-}
-
-.aDel {
-    width: 36px;
-    height: 36px;
-    border-radius: 12px
-}
-
-.editor.no-points .ahead,.editor.no-points .arow {
-    grid-template-columns: minmax(0,1fr) 36px
-}}
 
 @media (max-width:420px) {
     .ahead,.arow {
@@ -542,5 +541,98 @@ body.editor-body .wrap {
     .aDel {
         width: 34px;
         height: 34px
+    }
+}
+
+@media (max-width:380px) {
+    .list {
+        grid-template-columns: 1fr
+    }
+}
+
+
+body.editor-body {
+    overflow: hidden;
+}
+
+body.editor-body .wrap {
+    height: calc(100vh - 72px);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+body.editor-body .layout {
+    min-height: 0;
+    flex: 1;
+}
+
+body.editor-body .left,
+body.editor-body .rightPanel {
+    min-height: 0;
+}
+
+body.editor-body .rightPanel {
+    overflow: auto;
+}
+
+#btnMobileBack {
+    display: none;
+}
+
+@media (max-width:1100px) {
+    body.editor-body.mobile-editing .left {
+        display: none;
+    }
+
+    body.editor-body.mobile-editing .rightPanel {
+        display: block;
+    }
+
+    body.editor-body:not(.mobile-editing) .rightPanel {
+        display: none;
+    }
+
+    body.editor-body.mobile-editing #gameName {
+        display: none;
+    }
+
+    body.editor-body.mobile-editing #btnMobileBack {
+        display: inline-flex !important;
+    }
+}
+
+@media (max-width:720px) {
+    body.editor-body .wrap {
+        height: auto;
+        overflow: visible;
+    }
+
+    body.editor-body {
+        overflow: auto;
+    }
+
+    body.editor-body .left,
+    body.editor-body .rightPanel {
+        max-height: none;
+        overflow: visible;
+    }
+
+    body.editor-body .list,
+    body.editor-body .alist {
+        max-height: none;
+        overflow: visible;
+    }
+}
+
+@media (max-width:720px) and (orientation: portrait) {
+    body.editor-body .wrap {
+        height: auto;
+        overflow: visible;
+    }
+
+    body.editor-body .left,
+    body.editor-body .rightPanel {
+        overflow: visible;
     }
 }

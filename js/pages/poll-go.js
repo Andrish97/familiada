@@ -4,7 +4,7 @@ import { getUser } from "../core/auth.js";
 import { initI18n, t } from "../../translation/translation.js";
 import { alertModal } from "../core/modal.js";
 
-initI18n({ withSwitcher: false });
+initI18n({ withSwitcher: true });
 
 const MSG = {
   declined: () => t("pollGo.declined"),
