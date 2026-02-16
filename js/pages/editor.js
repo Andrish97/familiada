@@ -613,7 +613,7 @@ async function boot() {
     const on = isMobileLayout() && !!activeQId;
     document.body.classList.toggle("mobile-editing", on);
     if (btnBack) {
-      btnBack.textContent = on ? `← ${t("editor.backToQuestions")}` : `← ${t("editor.backToGames")}`;
+      btnBack.textContent = on ? t("editor.backToQuestions") : t("editor.backToGames");
     }
   }
 
