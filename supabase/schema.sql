@@ -1,3 +1,4 @@
+
 CREATE TABLE public.answers (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   question_id uuid NOT NULL,
@@ -630,6 +631,8 @@ ALTER TABLE public.email_cooldowns ENABLE ROW LEVEL SECURITY;
 
 ALTER TABLE public.games ENABLE ROW LEVEL SECURITY;
 
+ALTER TABLE public.mail_queue ENABLE ROW LEVEL SECURITY;
+
 ALTER TABLE public.mail_settings ENABLE ROW LEVEL SECURITY;
 
 ALTER TABLE public.poll_sessions ENABLE ROW LEVEL SECURITY;
@@ -698,6 +701,10 @@ CREATE POLICY games_owner_update ON public.games FOR UPDATE TO authenticated USI
 null
 null
 null
+CREATE POLICY mail_queue_insert_own ON public.mail_queue FOR INSERT TO authenticated WITH CHECK ((created_by = auth.uid()));
+
+CREATE POLICY mail_queue_select_own ON public.mail_queue FOR SELECT TO authenticated USING ((created_by = auth.uid()));
+
 CREATE POLICY mail_settings_read_none ON public.mail_settings FOR SELECT TO authenticated USING (false);
 
 CREATE POLICY mail_settings_write_none ON public.mail_settings TO authenticated USING (false) WITH CHECK (false);
