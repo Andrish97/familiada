@@ -1,6 +1,15 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { Webhook } from "https://esm.sh/standardwebhooks@1.0.0";
 import { getEmailCopy, type EmailLang } from "./email-templates.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL") || "";
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+
+const sbAdmin =
+  SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY
+    ? createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
+    : null;
 
 type HookPayload = {
   user: {
@@ -25,6 +34,47 @@ type HookPayload = {
 };
 
 type Provider = "sendgrid" | "brevo" | "mailgun";
+
+function parseProviderOrder(raw: string): Provider[] {
+  const allowed: Provider[] = ["sendgrid", "brevo", "mailgun"];
+  const out = String(raw || "")
+    .toLowerCase()
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .filter((x) => allowed.includes(x as Provider)) as Provider[];
+
+  return out.length ? out : ["sendgrid", "brevo", "mailgun"];
+}
+
+async function loadProviderOrder(): Promise<Provider[]> {
+  if (!sbAdmin) {
+    console.warn("[send-email] no sbAdmin → fallback default order");
+    return ["sendgrid", "brevo", "mailgun"];
+  }
+
+  try {
+    const { data, error } = await sbAdmin
+      .from("mail_settings")
+      .select("provider_order")
+      .eq("id", 1)
+      .maybeSingle();
+
+    if (error) throw error;
+
+    const order = parseProviderOrder(data?.provider_order || "");
+    console.log("[send-email] provider_order from DB:", order);
+
+    return order;
+  } catch (e) {
+    console.warn(
+      "[send-email] provider_order load failed → default",
+      String((e as any)?.message || e)
+    );
+    return ["sendgrid", "brevo", "mailgun"];
+  }
+}
+
 
 const SENDGRID_KEY = Deno.env.get("SENDGRID_API_KEY");
 const BREVO_KEY = Deno.env.get("BREVO_API_KEY") || "";
@@ -102,21 +152,35 @@ async function sendViaMailgun(to: string, subject: string, html: string) {
 }
 
 async function sendWithFallbacks(to: string, subject: string, html: string) {
-  const order: Provider[] = ["sendgrid", "brevo", "mailgun"]; // jeśli chcesz, podepniemy pod mail_settings
+  const order = await loadProviderOrder();
+
+  console.log("[send-email] send start", {
+    to: scrubEmail(to),
+    order,
+  });
+
   const errs: string[] = [];
+
   for (const p of order) {
     try {
+      console.log("[send-email] try provider:", p);
+
       if (p === "sendgrid") await sendViaSendgrid(to, subject, html);
       else if (p === "brevo") await sendViaBrevo(to, subject, html);
       else await sendViaMailgun(to, subject, html);
+
+      console.log("[send-email] success via", p);
       return { provider: p };
     } catch (e) {
-      errs.push(`${p}:${String((e as any)?.message || e)}`);
+      const msg = String((e as any)?.message || e);
+      console.warn("[send-email] provider failed", { provider: p, error: msg });
+      errs.push(`${p}:${msg}`);
     }
   }
+
+  console.error("[send-email] all providers failed", errs);
   throw new Error(errs.join("|"));
 }
-
 
 function mustGetRedirectUrl(payload: HookPayload): URL {
   const redirect = String(payload.email_data.redirect_to || "").trim();
