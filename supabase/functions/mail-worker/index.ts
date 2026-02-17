@@ -22,6 +22,12 @@ function json(obj: any, status = 200) {
   return new Response(JSON.stringify(obj), { status, headers: { "Content-Type": "application/json; charset=utf-8" } });
 }
 function sleep(ms: number) { return new Promise((r) => setTimeout(r, ms)); }
+function scrubEmail(email: string) {
+  const e = String(email || "").trim();
+  const at = e.indexOf("@");
+  if (at <= 1) return e ? "***" : "";
+  return `${e.slice(0, 2)}***${e.slice(at)}`;
+}
 
 function parseProviderOrder(raw: string): Provider[] {
   const allowed: Provider[] = ["sendgrid", "brevo", "mailgun"];
@@ -102,11 +108,15 @@ async function sendWithFallbacks(to: string, subject: string, html: string, orde
 }
 
 serve(async (req) => {
+  console.log("[mail-worker] request:start", { method: req.method, url: req.url });
   if (req.method !== "POST") return json({ ok: false, error: "Method not allowed" }, 405);
 
   if (WORKER_SECRET) {
     const got = req.headers.get("x-mail-worker-secret") || "";
-    if (got !== WORKER_SECRET) return json({ ok: false, error: "forbidden" }, 403);
+    if (got !== WORKER_SECRET) {
+      console.warn("[mail-worker] request:forbidden_bad_secret");
+      return json({ ok: false, error: "forbidden" }, 403);
+    }
   }
 
   const url = new URL(req.url);
@@ -115,10 +125,15 @@ serve(async (req) => {
   const settings = await loadSettings();
   const order = parseProviderOrder(settings.provider_order);
   const delayMs = Math.max(0, Math.min(5000, Number(settings.delay_ms || 0)));
+  console.log("[mail-worker] settings", { providerOrder: order, delayMs, limit });
 
   // pick batch
   const { data: rows, error } = await sbAdmin.rpc("mail_queue_pick", { p_limit: limit });
-  if (error) return json({ ok: false, error: "pick_failed" }, 500);
+  if (error) {
+    console.error("[mail-worker] queue:pick_failed", { error });
+    return json({ ok: false, error: "pick_failed" }, 500);
+  }
+  console.log("[mail-worker] queue:picked", { count: (rows || []).length });
 
   let sent = 0;
   let failed = 0;
@@ -126,15 +141,26 @@ serve(async (req) => {
   for (let i = 0; i < (rows || []).length; i++) {
     const r = rows[i];
     try {
+      console.log("[mail-worker] queue:item_start", { id: r.id, to: scrubEmail(r.to_email), subjectLen: String(r.subject || "").length });
       const provider = await sendWithFallbacks(r.to_email, r.subject, r.html, order);
-      await sbAdmin.rpc("mail_queue_mark", { p_id: r.id, p_ok: true, p_provider: provider, p_error: "" });
+      const { error: markOkError } = await sbAdmin.rpc("mail_queue_mark", { p_id: r.id, p_ok: true, p_provider: provider, p_error: "" });
+      if (markOkError) {
+        console.error("[mail-worker] queue:mark_sent_failed", { id: r.id, error: markOkError });
+      }
+      console.log("[mail-worker] queue:item_sent", { id: r.id, to: scrubEmail(r.to_email), provider });
       sent++;
     } catch (e) {
-      await sbAdmin.rpc("mail_queue_mark", { p_id: r.id, p_ok: false, p_provider: "", p_error: String((e as any)?.message || e) });
+      const errMsg = String((e as any)?.message || e);
+      const { error: markErr } = await sbAdmin.rpc("mail_queue_mark", { p_id: r.id, p_ok: false, p_provider: "", p_error: errMsg });
+      if (markErr) {
+        console.error("[mail-worker] queue:mark_failed_failed", { id: r.id, error: markErr });
+      }
+      console.error("[mail-worker] queue:item_failed", { id: r.id, to: scrubEmail(r.to_email), error: errMsg });
       failed++;
     }
     if (delayMs && i < (rows || []).length - 1) await sleep(delayMs);
   }
 
+  console.log("[mail-worker] request:done", { picked: (rows || []).length, sent, failed });
   return json({ ok: true, picked: (rows || []).length, sent, failed });
 });
