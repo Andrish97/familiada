@@ -256,6 +256,12 @@ function buildMailHtml({ title, subtitle, body, actionLabel, actionUrl }) {
 }
 
 async function sendMailBatch(items) {
+  console.debug("[polls-hub] sendMailBatch:start", {
+    count: Array.isArray(items) ? items.length : 0,
+    preview: Array.isArray(items)
+      ? items.slice(0, 3).map((x) => ({ to: x?.to, subject: x?.subject, htmlLength: String(x?.html || "").length }))
+      : [],
+  });
   const { data } = await sb().auth.getSession();
   const token = data?.session?.access_token;
   if (!token) throw new Error(t("pollsHubPolls.errors.mailSession"));
@@ -277,8 +283,20 @@ async function sendMailBatch(items) {
   try { payload = await res.json(); } catch { payload = null; }
 
   if (!res.ok || !payload?.ok) {
+    console.error("[polls-hub] sendMailBatch:error", {
+      status: res.status,
+      statusText: res.statusText,
+      payload,
+    });
     throw new Error(payload?.error || t("pollsHubPolls.errors.mailSend"));
   }
+
+  console.debug("[polls-hub] sendMailBatch:done", {
+    status: res.status,
+    ok: payload?.ok,
+    results: Array.isArray(payload?.results) ? payload.results.length : 0,
+    failed: Array.isArray(payload?.results) ? payload.results.filter((r) => !r?.ok).length : 0,
+  });
 
   return payload; // { ok:true, results:[{to, ok, error?}] }
 }
@@ -671,7 +689,21 @@ async function saveShareModal() {
   try {
     setProgress({ show: true, step: MSG.shareStep(), i: 0, n: 4, msg: "" });
     const { data, error } = await sb().rpc("polls_hub_share_poll", { p_game_id: sharePollId, p_sub_ids: selected });
+    if (error) {
+      console.error("[polls-hub] polls_hub_share_poll rpc failed", {
+        gameId: sharePollId,
+        selectedCount: selected.length,
+        selected,
+        error,
+      });
+    }
     if (error || data?.ok === false) throw error || new Error("share_failed");
+    console.debug("[polls-hub] polls_hub_share_poll rpc ok", {
+      gameId: sharePollId,
+      selectedCount: selected.length,
+      responseOk: data?.ok,
+      mailItemsFromRpc: Array.isArray(data?.mail) ? data.mail.length : 0,
+    });
     setProgress({ show: true, step: MSG.shareStep(), i: 1, n: 4, msg: MSG.shareSavedMsg() });
 
     let mailItems = Array.isArray(data?.mail) ? data.mail : [];
