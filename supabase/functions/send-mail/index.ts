@@ -22,25 +22,36 @@ const AWS_REGION = Deno.env.get("AWS_REGION") || Deno.env.get("AWS_DEFAULT_REGIO
 const AWS_ACCESS_KEY_ID = Deno.env.get("AWS_ACCESS_KEY_ID") || "";
 const AWS_SECRET_ACCESS_KEY = Deno.env.get("AWS_SECRET_ACCESS_KEY") || "";
 
+function scrubEmail(email: string) {
+  const e = String(email || "").trim();
+  const at = e.indexOf("@");
+  if (at <= 1) return e ? "***" : "";
+  return `${e.slice(0, 2)}***${e.slice(at)}`;
+}
 
 
 async function sendEmail(to: string, subject: string, html: string) {
+  console.log("[send-mail] sendEmail:start", { to: scrubEmail(to), subjectLen: subject.length, htmlLen: html.length, useAwsSes: USE_AWS_SES });
   if (USE_AWS_SES) {
     try {
       await sendViaSes(to, subject, html);
+      console.log("[send-mail] sendEmail:sent", { provider: "ses", to: scrubEmail(to) });
       return;
     } catch (e1) {
       console.error("SES primary failed:", String(e1));
       await sendViaSendGrid(to, subject, html);
+      console.log("[send-mail] sendEmail:sent", { provider: "sendgrid", to: scrubEmail(to) });
       return;
     }
   } else {
     try {
       await sendViaSendGrid(to, subject, html);
+      console.log("[send-mail] sendEmail:sent", { provider: "sendgrid", to: scrubEmail(to) });
       return;
     } catch (e1) {
       console.error("SendGrid primary failed:", String(e1));
       await sendViaSes(to, subject, html);
+      console.log("[send-mail] sendEmail:sent", { provider: "ses", to: scrubEmail(to) });
       return;
     }
   }
@@ -74,8 +85,29 @@ async function sendViaSendGrid(to: string, subject: string, html: string) {
 
   if (!sgRes.ok) {
     const errTxt = await sgRes.text();
+    console.error("[send-mail] sendgrid:error", { to: scrubEmail(to), status: sgRes.status, body: errTxt });
     throw new Error(`SendGrid failed (${to}): ${errTxt}`);
   }
+  console.log("[send-mail] sendgrid:ok", { to: scrubEmail(to), status: sgRes.status });
+}
+
+function normalizeItems(body: any): Array<{ to: string; subject: string; html: string }> {
+  if (Array.isArray(body?.items)) {
+    return body.items
+      .map((x: any) => ({
+        to: String(x?.to || "").trim(),
+        subject: String(x?.subject || "").trim(),
+        html: String(x?.html || "").trim(),
+      }))
+      .filter((x) => x.to && x.subject && x.html);
+  }
+
+  const single = {
+    to: String(body?.to || "").trim(),
+    subject: String(body?.subject || "").trim(),
+    html: String(body?.html || "").trim(),
+  };
+  return single.to && single.subject && single.html ? [single] : [];
 }
 
 async function sendViaSes(to: string, subject: string, html: string) {
@@ -119,8 +151,10 @@ async function sendViaSes(to: string, subject: string, html: string) {
 
   if (!res.ok) {
     const txt = await res.text();
+    console.error("[send-mail] ses:error", { to: scrubEmail(to), status: res.status, body: txt });
     throw new Error(`SES failed (${to}): ${txt}`);
   }
+  console.log("[send-mail] ses:ok", { to: scrubEmail(to), status: res.status });
 }
 
 // ---- SigV4 ----
@@ -251,16 +285,22 @@ serve(async (req) => {
   }
 
   try {
+    console.log("[send-mail] request:start", { method: req.method, contentType: req.headers.get("content-type") || "" });
     // ---- AUTH ----
     const authHeader = req.headers.get("authorization") || "";
     const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
 
-    if (!token) return json({ ok: false, error: "Missing Bearer token" }, 401);
+    if (!token) {
+      console.warn("[send-mail] request:missing_token");
+      return json({ ok: false, error: "Missing Bearer token" }, 401);
+    }
 
     const { data: userData, error: authError } = await sb.auth.getUser(token);
     if (authError || !userData?.user) {
+      console.error("[send-mail] request:invalid_jwt", { authError });
       return json({ ok: false, error: "Invalid JWT" }, 401);
     }
+    console.log("[send-mail] request:authed", { userId: userData.user.id });
 
     // ---- BODY (robust) ----
     const raw = await req.text();
@@ -283,13 +323,22 @@ serve(async (req) => {
       );
     }
 
-    const to = String(body?.to || "").trim();
-    const subject = String(body?.subject || "").trim();
-    const html = String(body?.html || "").trim();
+    const items = normalizeItems(body);
 
-    if (!to || !subject || !html) {
-      return json({ ok: false, error: "Missing fields (to, subject, html)" }, 400);
+    if (!items.length) {
+      console.warn("[send-mail] request:missing_fields", {
+        hasItems: Array.isArray(body?.items),
+        itemsLen: Array.isArray(body?.items) ? body.items.length : 0,
+        hasTo: !!body?.to,
+        hasSubject: !!body?.subject,
+        hasHtml: !!body?.html,
+      });
+      return json({ ok: false, error: "Missing fields (to, subject, html) or empty items[]" }, 400);
     }
+    console.log("[send-mail] request:parsed", {
+      count: items.length,
+      preview: items.slice(0, 3).map((x) => ({ to: scrubEmail(x.to), subjectLen: x.subject.length, htmlLen: x.html.length })),
+    });
 
     // Validate primary provider env
     if (USE_AWS_SES) {
@@ -302,10 +351,27 @@ serve(async (req) => {
       }
     }
 
-    await sendEmail(to, subject, html);
-    return json({ ok: true });
+    const results: Array<{ to: string; ok: boolean; error?: string }> = [];
+    for (const item of items) {
+      try {
+        await sendEmail(item.to, item.subject, item.html);
+        results.push({ to: item.to, ok: true });
+      } catch (err) {
+        const message = String((err as any)?.message || err);
+        console.error("[send-mail] request:item_failed", { to: scrubEmail(item.to), error: message });
+        results.push({ to: item.to, ok: false, error: message });
+      }
+    }
+
+    const failed = results.filter((r) => !r.ok).length;
+    console.log("[send-mail] request:done", { total: results.length, failed });
+    if (results.length === 1 && failed === 1) {
+      return json({ ok: false, error: results[0].error || "send_failed", results }, 500);
+    }
+    return json({ ok: failed === 0, results, failed });
   } catch (e) {
-    return json({ ok: false, error: String(e?.message || e) }, 500);
+    console.error("[send-mail] request:exception", { error: String((e as any)?.message || e) });
+    return json({ ok: false, error: String((e as any)?.message || e) }, 500);
   }
 });
 
