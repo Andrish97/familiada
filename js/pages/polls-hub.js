@@ -685,11 +685,29 @@ async function buildMailItemsForTasksFallback({ gameId, ownerId, selectedSubIds 
     if (r.token && r.id) taskIdByToken.set(String(r.token), r.id);
   }
   const subById = new Map(((await sb().rpc("polls_hub_list_my_subscribers")).data || []).map((x) => [String(x.sub_id), x]));
-  const mailItems = [];
+    // 🔧 jeśli sub ma user_id, a nie ma emaila — dociągnij z profiles
+  const needProfileIds = [];
   for (const subId of selectedSubIds || []) {
     const sub = subById.get(String(subId));
     if (!sub) continue;
     const emailKey = String(sub.subscriber_email || "").trim().toLowerCase();
+    if (!emailKey && sub.subscriber_user_id) needProfileIds.push(sub.subscriber_user_id);
+  }
+
+  const profileEmailById = new Map();
+  if (needProfileIds.length) {
+    const uniq = [...new Set(needProfileIds.map(String))];
+    const { data: prof } = await sb().from("profiles").select("id,email").in("id", uniq);
+    for (const p of prof || []) profileEmailById.set(String(p.id), String(p.email || "").trim().toLowerCase());
+  }
+
+  const mailItems = [];
+  for (const subId of selectedSubIds || []) {
+    const sub = subById.get(String(subId));
+    if (!sub) continue;
+    const emailKey =
+      String(sub.subscriber_email || "").trim().toLowerCase() ||
+      (sub.subscriber_user_id ? (profileEmailById.get(String(sub.subscriber_user_id)) || "") : "");
     const userKey = sub.subscriber_user_id ? String(sub.subscriber_user_id) : "";
     const token = (userKey ? tokenByKey.get(userKey) : null) || (emailKey ? tokenByKey.get(emailKey) : null);
     if (!token || !emailKey) continue;
