@@ -13,29 +13,6 @@ const focusTaskToken = qs.get("t");
 let focusTaskHandled = false;
 
 
-async function rpcDebug(fn, args) {
-  const trace = crypto?.randomUUID?.() || String(Date.now()) + "_" + Math.random().toString(16).slice(2);
-
-  console.warn(`[rpc] START ${fn} trace=${trace}`, args);
-
-  try {
-    const res = await sb().rpc(fn, args);
-
-    console.warn(`[rpc] END ${fn} trace=${trace}`, {
-      hasData: !!res?.data,
-      error: res?.error
-        ? { message: res.error.message, code: res.error.code, hint: res.error.hint, details: res.error.details }
-        : null,
-      data: res?.data,
-    });
-
-    return { ...res, trace };
-  } catch (e) {
-    console.error(`[rpc] EXCEPTION ${fn} trace=${trace}`, e);
-    throw e;
-  }
-}
-
 function getRetParam() {
   return new URLSearchParams(location.search).get("ret");
 }
@@ -280,12 +257,6 @@ function buildMailHtml({ title, subtitle, body, actionLabel, actionUrl }) {
 }
 
 async function sendMailBatch(items) {
-  console.debug("[polls-hub] sendMailBatch:start", {
-    count: Array.isArray(items) ? items.length : 0,
-    preview: Array.isArray(items)
-      ? items.slice(0, 3).map((x) => ({ to: x?.to, subject: x?.subject, htmlLength: String(x?.html || "").length }))
-      : [],
-  });
   const { data } = await sb().auth.getSession();
   const token = data?.session?.access_token;
   if (!token) throw new Error(t("pollsHubPolls.errors.mailSession"));
@@ -307,20 +278,8 @@ async function sendMailBatch(items) {
   try { payload = await res.json(); } catch { payload = null; }
 
   if (!res.ok || !payload?.ok) {
-    console.error("[polls-hub] sendMailBatch:error", {
-      status: res.status,
-      statusText: res.statusText,
-      payload,
-    });
     throw new Error(payload?.error || t("pollsHubPolls.errors.mailSend"));
   }
-
-  console.debug("[polls-hub] sendMailBatch:done", {
-    status: res.status,
-    ok: payload?.ok,
-    results: Array.isArray(payload?.results) ? payload.results.length : 0,
-    failed: Array.isArray(payload?.results) ? payload.results.filter((r) => !r?.ok).length : 0,
-  });
 
   return payload; // { ok:true, results:[{to, ok, error?}] }
 }
@@ -717,11 +676,8 @@ async function buildMailItemsForTasksFallback({ gameId, ownerId, selectedSubIds 
 }
 
 async function saveShareModal() {
-  console.warn("[polls-hub] saveShareModal:click", { sharePollId, shareListExists: !!shareList });
-
   if (!sharePollId) {
-    console.error("[polls-hub] saveShareModal:no_sharePollId");
-    shareMsg.textContent = "ERR: missing sharePollId";
+    shareMsg.textContent = MSG.shareSaveFail();
     return;
   }
 
@@ -730,16 +686,9 @@ async function saveShareModal() {
     .map((x) => String(x.dataset.id || "").trim())
     .filter((id) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id));
 
-  console.warn("[polls-hub] saveShareModal:selected", { count: selected.length, selected });
-
   const changed =
     selected.length !== shareBaseline.size ||
     selected.some((id) => !shareBaseline.has(String(id)));
-
-  console.warn("[polls-hub] saveShareModal:changed?", {
-    changed,
-    baselineCount: shareBaseline.size,
-  });
 
   if (!changed) {
     shareMsg.textContent = MSG.shareNoChanges();
@@ -750,16 +699,12 @@ async function saveShareModal() {
     setProgress({ show: true, step: MSG.shareStep(), i: 0, n: 4, msg: "" });
 
     const args = { p_game_id: sharePollId, p_sub_ids: selected };
-    console.warn("[polls-hub] rpc call polls_hub_share_poll", args);
-
-    const { data, error, trace } = await rpcDebug("polls_hub_share_poll", args);
-
-    console.warn("[polls-hub] rpc result polls_hub_share_poll", { trace, ok: data?.ok, data, error });
+    const { data, error } = await sb().rpc("polls_hub_share_poll", args);
 
     if (error || data?.ok === false) {
       const msg = error?.message || error?.details || error?.hint || "share_failed";
       shareMsg.textContent = `${MSG.shareSaveFail()} (${msg})`;
-      await alertModal({ text: `${MSG.shareSaveFail()}\n\n${msg}\n\ntrace=${trace}` });
+      await alertModal({ text: `${MSG.shareSaveFail()}\n\n${msg}` });
       return;
     }
 
@@ -845,7 +790,6 @@ async function saveShareModal() {
     await refreshData();
   } catch (e) {
     const msg = String(e?.message || e || "unknown_error");
-    console.error("[polls-hub] saveShareModal:catch", e);
     shareMsg.textContent = `${MSG.shareSaveFail()} (${msg})`;
     await alertModal({ text: `${MSG.shareSaveFail()}\n\n${msg}` });
   } finally {
