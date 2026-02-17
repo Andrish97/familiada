@@ -12,6 +12,38 @@ const qs = new URLSearchParams(location.search);
 const focusTaskToken = qs.get("t");
 let focusTaskHandled = false;
 
+
+async function rpcDebug(fn, args) {
+  const trace = crypto?.randomUUID?.() || String(Date.now()) + "_" + Math.random().toString(16).slice(2);
+  console.groupCollapsed(`[rpc] ${fn} trace=${trace}`);
+  console.debug("args", args);
+
+  try {
+    const res = await sb().rpc(fn, args);
+
+    // Supabase-js zwykle zwraca { data, error }
+    console.debug("data", res?.data);
+    console.debug("error", res?.error);
+
+    // jeśli error, spróbuj wyciągnąć maksimum detali:
+    if (res?.error) {
+      console.error("error details", {
+        message: res.error.message,
+        code: res.error.code,
+        hint: res.error.hint,
+        details: res.error.details,
+      });
+    }
+
+    console.groupEnd();
+    return { ...res, trace };
+  } catch (e) {
+    console.error(`[rpc] exception trace=${trace}`, e);
+    console.groupEnd();
+    throw e;
+  }
+}
+
 function getRetParam() {
   return new URLSearchParams(location.search).get("ret");
 }
@@ -680,6 +712,13 @@ async function saveShareModal() {
     .filter((x) => x.checked)
     .map((x) => String(x.dataset.id || "").trim())
     .filter((id) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id));
+  console.debug("[polls-hub] share:selected", {
+    trace,
+    sharePollId,
+    selectedCount: selected.length,
+    selectedSample: selected.slice(0, 10),
+    selectedAllValidUuid: selected.every((id) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)),
+  });
   const changed = selected.length !== shareBaseline.size || selected.some((id) => !shareBaseline.has(String(id)));
   if (!changed) {
     shareMsg.textContent = MSG.shareNoChanges();
@@ -688,7 +727,8 @@ async function saveShareModal() {
 
   try {
     setProgress({ show: true, step: MSG.shareStep(), i: 0, n: 4, msg: "" });
-    const { data, error } = await sb().rpc("polls_hub_share_poll", { p_game_id: sharePollId, p_sub_ids: selected });
+    const args = { p_game_id: sharePollId, p_sub_ids: selected };
+    const { data, error, trace } = await rpcDebug("polls_hub_share_poll", args);
     if (error) {
       console.error("[polls-hub] polls_hub_share_poll rpc failed", {
         gameId: sharePollId,
