@@ -658,7 +658,10 @@ async function buildMailItemsForTasksFallback({ gameId, ownerId, selectedSubIds 
 
 async function saveShareModal() {
   if (!sharePollId) return;
-  const selected = [...shareList.querySelectorAll('input[type="checkbox"]')].filter((x) => x.checked).map((x) => x.dataset.id);
+  const selected = [...shareList.querySelectorAll('input[type="checkbox"]')]
+    .filter((x) => x.checked)
+    .map((x) => String(x.dataset.id || "").trim())
+    .filter((id) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id));
   const changed = selected.length !== shareBaseline.size || selected.some((id) => !shareBaseline.has(String(id)));
   if (!changed) {
     shareMsg.textContent = MSG.shareNoChanges();
