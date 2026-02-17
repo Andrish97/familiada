@@ -7,72 +7,72 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
-const sb = createClient(supabaseUrl, supabaseAnonKey);
+type Provider = "sendgrid" | "brevo" | "mailgun";
+type MailItem = { to: string; subject: string; html: string; meta?: Record<string, unknown> };
 
-const SENDGRID_KEY = Deno.env.get("SENDGRID_API_KEY");
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-// Provider switch + fallback
-const USE_AWS_SES = (Deno.env.get("USE_AWS_SES") || "").toLowerCase() === "true";
-const SG_DISABLE_CLICK_TRACKING = (Deno.env.get("SENDGRID_DISABLE_CLICK_TRACKING") || "true").toLowerCase() === "true";
+const sbAnon = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const sbAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-// AWS SES (SigV4)
-const AWS_REGION = Deno.env.get("AWS_REGION") || Deno.env.get("AWS_DEFAULT_REGION") || "";
-const AWS_ACCESS_KEY_ID = Deno.env.get("AWS_ACCESS_KEY_ID") || "";
-const AWS_SECRET_ACCESS_KEY = Deno.env.get("AWS_SECRET_ACCESS_KEY") || "";
+const SENDGRID_KEY = Deno.env.get("SENDGRID_API_KEY") || "";
+const BREVO_KEY = Deno.env.get("BREVO_API_KEY") || "";
+const MAILGUN_KEY = Deno.env.get("MAILGUN_API_KEY") || "";
+const MAILGUN_DOMAIN = Deno.env.get("MAILGUN_DOMAIN") || "";
+const MAILGUN_REGION = (Deno.env.get("MAILGUN_REGION") || "eu").toLowerCase();
 
-function scrubEmail(email: string) {
-  const e = String(email || "").trim();
-  const at = e.indexOf("@");
-  if (at <= 1) return e ? "***" : "";
-  return `${e.slice(0, 2)}***${e.slice(at)}`;
+const FROM_EMAIL = Deno.env.get("MAIL_FROM_EMAIL") || "no-reply@familiada.online";
+const FROM_NAME = Deno.env.get("MAIL_FROM_NAME") || "Familiada";
+
+function json(obj: any, status = 200) {
+  return new Response(JSON.stringify(obj), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json; charset=utf-8" },
+  });
 }
 
-
-async function sendEmail(to: string, subject: string, html: string) {
-  console.log("[send-mail] sendEmail:start", { to: scrubEmail(to), subjectLen: subject.length, htmlLen: html.length, useAwsSes: USE_AWS_SES });
-  if (USE_AWS_SES) {
-    try {
-      await sendViaSes(to, subject, html);
-      console.log("[send-mail] sendEmail:sent", { provider: "ses", to: scrubEmail(to) });
-      return;
-    } catch (e1) {
-      console.error("SES primary failed:", String(e1));
-      await sendViaSendGrid(to, subject, html);
-      console.log("[send-mail] sendEmail:sent", { provider: "sendgrid", to: scrubEmail(to) });
-      return;
-    }
-  } else {
-    try {
-      await sendViaSendGrid(to, subject, html);
-      console.log("[send-mail] sendEmail:sent", { provider: "sendgrid", to: scrubEmail(to) });
-      return;
-    } catch (e1) {
-      console.error("SendGrid primary failed:", String(e1));
-      await sendViaSes(to, subject, html);
-      console.log("[send-mail] sendEmail:sent", { provider: "ses", to: scrubEmail(to) });
-      return;
-    }
-  }
+function sleep(ms: number) {
+  return new Promise((r) => setTimeout(r, ms));
 }
 
-async function sendViaSendGrid(to: string, subject: string, html: string) {
-  if (!SENDGRID_KEY) throw new Error("Missing SENDGRID_API_KEY env");
+function parseProviderOrder(raw: string): Provider[] {
+  const allowed: Provider[] = ["sendgrid", "brevo", "mailgun"];
+  const out = String(raw || "")
+    .toLowerCase()
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .filter((x) => allowed.includes(x as Provider)) as Provider[];
+  return out.length ? out : ["sendgrid", "brevo", "mailgun"];
+}
 
-  const body: Record<string, unknown> = {
-    personalizations: [{ to: [{ email: to }] }],
-    from: { email: "no-reply@familiada.online", name: "Familiada" },
-    subject,
-    content: [{ type: "text/html", value: html }],
-  };
-
-  if (SG_DISABLE_CLICK_TRACKING) {
-    body["tracking_settings"] = {
-      click_tracking: { enable: false, enable_text: false },
-      open_tracking: { enable: false },
-    };
+function parseItems(body: any): { items: MailItem[]; mode: "batch" | "single" } {
+  if (body && Array.isArray(body.items)) {
+    const items: MailItem[] = body.items
+      .map((x: any) => ({
+        to: String(x?.to || "").trim(),
+        subject: String(x?.subject || "").trim(),
+        html: String(x?.html || "").trim(),
+        meta: x?.meta && typeof x.meta === "object" ? x.meta : undefined,
+      }))
+      .filter((x: MailItem) => x.to && x.subject && x.html);
+    return { items, mode: "batch" };
   }
+
+  const to = String(body?.to || "").trim();
+  const subject = String(body?.subject || "").trim();
+  const html = String(body?.html || "").trim();
+  return to && subject && html
+    ? { items: [{ to, subject, html }], mode: "single" }
+    : { items: [], mode: "single" };
+}
+
+// ---- Providers ----
+
+async function sendViaSendgrid(it: MailItem) {
+  if (!SENDGRID_KEY) throw new Error("missing_SENDGRID_API_KEY");
 
   const sgRes = await fetch("https://api.sendgrid.com/v3/mail/send", {
     method: "POST",
@@ -80,304 +80,185 @@ async function sendViaSendGrid(to: string, subject: string, html: string) {
       Authorization: `Bearer ${SENDGRID_KEY}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify(body),
+    body: JSON.stringify({
+      personalizations: [{ to: [{ email: it.to }] }],
+      from: { email: FROM_EMAIL, name: FROM_NAME },
+      subject: it.subject,
+      content: [{ type: "text/html", value: it.html }],
+      tracking_settings: {
+        click_tracking: { enable: false, enable_text: false },
+        open_tracking: { enable: false },
+      },
+    }),
   });
 
   if (!sgRes.ok) {
-    const errTxt = await sgRes.text();
-    console.error("[send-mail] sendgrid:error", { to: scrubEmail(to), status: sgRes.status, body: errTxt });
-    throw new Error(`SendGrid failed (${to}): ${errTxt}`);
+    const errTxt = await sgRes.text().catch(() => "");
+    throw new Error(`sendgrid_failed:${errTxt || sgRes.status}`);
   }
-  console.log("[send-mail] sendgrid:ok", { to: scrubEmail(to), status: sgRes.status });
 }
 
-function normalizeItems(body: any): Array<{ to: string; subject: string; html: string }> {
-  if (Array.isArray(body?.items)) {
-    return body.items
-      .map((x: any) => ({
-        to: String(x?.to || "").trim(),
-        subject: String(x?.subject || "").trim(),
-        html: String(x?.html || "").trim(),
-      }))
-      .filter((x) => x.to && x.subject && x.html);
-  }
+async function sendViaBrevo(it: MailItem) {
+  if (!BREVO_KEY) throw new Error("missing_BREVO_API_KEY");
 
-  const single = {
-    to: String(body?.to || "").trim(),
-    subject: String(body?.subject || "").trim(),
-    html: String(body?.html || "").trim(),
-  };
-  return single.to && single.subject && single.html ? [single] : [];
-}
-
-async function sendViaSes(to: string, subject: string, html: string) {
-  if (!AWS_REGION) throw new Error("Missing AWS_REGION env");
-  if (!AWS_ACCESS_KEY_ID) throw new Error("Missing AWS_ACCESS_KEY_ID env");
-  if (!AWS_SECRET_ACCESS_KEY) throw new Error("Missing AWS_SECRET_ACCESS_KEY env");
-
-  const host = `email.${AWS_REGION}.amazonaws.com`;
-  const url = `https://${host}/v2/email/outbound-emails`;
-
-  const payload = {
-    FromEmailAddress: "no-reply@familiada.online",
-    Destination: { ToAddresses: [to] },
-    Content: {
-      Simple: {
-        Subject: { Data: subject, Charset: "UTF-8" },
-        Body: { Html: { Data: html, Charset: "UTF-8" } },
-      },
-    },
-  };
-
-  const body = JSON.stringify(payload);
-
-  const headers = new Headers({
-    "content-type": "application/json",
-    host,
-  });
-
-  const signed = await signAwsRequest({
+  const res = await fetch("https://api.brevo.com/v3/smtp/email", {
     method: "POST",
-    url,
-    headers,
-    body,
-    service: "ses",
-    region: AWS_REGION,
-    accessKeyId: AWS_ACCESS_KEY_ID,
-    secretAccessKey: AWS_SECRET_ACCESS_KEY,
+    headers: {
+      "api-key": BREVO_KEY,
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+    body: JSON.stringify({
+      sender: { email: FROM_EMAIL, name: FROM_NAME },
+      to: [{ email: it.to }],
+      subject: it.subject,
+      htmlContent: it.html,
+    }),
   });
-
-  const res = await fetch(url, { method: "POST", headers: signed, body });
 
   if (!res.ok) {
-    const txt = await res.text();
-    console.error("[send-mail] ses:error", { to: scrubEmail(to), status: res.status, body: txt });
-    throw new Error(`SES failed (${to}): ${txt}`);
+    const txt = await res.text().catch(() => "");
+    throw new Error(`brevo_failed:${txt || res.status}`);
   }
-  console.log("[send-mail] ses:ok", { to: scrubEmail(to), status: res.status });
 }
 
-// ---- SigV4 ----
+async function sendViaMailgun(it: MailItem) {
+  if (!MAILGUN_KEY) throw new Error("missing_MAILGUN_API_KEY");
+  if (!MAILGUN_DOMAIN) throw new Error("missing_MAILGUN_DOMAIN");
 
-type SignAwsRequestArgs = {
-  method: string;
-  url: string;
-  headers: Headers;
-  body: string;
-  service: string;
-  region: string;
-  accessKeyId: string;
-  secretAccessKey: string;
-};
+  const base = MAILGUN_REGION === "eu" ? "https://api.eu.mailgun.net" : "https://api.mailgun.net";
+  const url = `${base}/v3/${MAILGUN_DOMAIN}/messages`;
 
-async function signAwsRequest(args: SignAwsRequestArgs): Promise<Headers> {
-  const url = new URL(args.url);
+  const form = new FormData();
+  form.append("from", `${FROM_NAME} <${FROM_EMAIL}>`);
+  form.append("to", it.to);
+  form.append("subject", it.subject);
+  form.append("html", it.html);
 
-  const now = new Date();
-  const amzDate = toAmzDate(now);
-  const dateStamp = amzDate.slice(0, 8);
-
-  const payloadHash = await sha256Hex(args.body);
-
-  const headers = new Headers(args.headers);
-  headers.set("x-amz-date", amzDate);
-  headers.set("x-amz-content-sha256", payloadHash);
-
-  const { canonicalHeaders, signedHeaders } = canonicalizeHeaders(headers);
-
-  const canonicalRequest = [
-    args.method.toUpperCase(),
-    encodePath(url.pathname),
-    url.searchParams.toString(),
-    canonicalHeaders + "\n",
-    signedHeaders,
-    payloadHash,
-  ].join("\n");
-
-  const algorithm = "AWS4-HMAC-SHA256";
-  const credentialScope = `${dateStamp}/${args.region}/${args.service}/aws4_request`;
-  const stringToSign = [
-    algorithm,
-    amzDate,
-    credentialScope,
-    await sha256Hex(canonicalRequest),
-  ].join("\n");
-
-  const signingKey = await getSignatureKey(args.secretAccessKey, dateStamp, args.region, args.service);
-  const signature = await hmacHex(signingKey, stringToSign);
-
-  const authorization = `${algorithm} Credential=${args.accessKeyId}/${credentialScope}, SignedHeaders=${signedHeaders}, Signature=${signature}`;
-  headers.set("Authorization", authorization);
-
-  return headers;
-}
-
-function toAmzDate(d: Date): string {
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return (
-    d.getUTCFullYear() +
-    pad(d.getUTCMonth() + 1) +
-    pad(d.getUTCDate()) +
-    "T" +
-    pad(d.getUTCHours()) +
-    pad(d.getUTCMinutes()) +
-    pad(d.getUTCSeconds()) +
-    "Z"
-  );
-}
-
-function encodePath(pathname: string): string {
-  return pathname.split("/").map(encodeURIComponent).join("/");
-}
-
-function canonicalizeHeaders(headers: Headers): { canonicalHeaders: string; signedHeaders: string } {
-  const pairs: Array<[string, string]> = [];
-  headers.forEach((v, k) => {
-    const key = k.toLowerCase().trim();
-    const val = String(v).replace(/\s+/g, " ").trim();
-    pairs.push([key, val]);
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { Authorization: `Basic ${btoa(`api:${MAILGUN_KEY}`)}` },
+    body: form,
   });
-  pairs.sort((a, b) => (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0));
 
-  const canonicalHeaders = pairs.map(([k, v]) => `${k}:${v}`).join("\n");
-  const signedHeaders = pairs.map(([k]) => k).join(";");
-  return { canonicalHeaders, signedHeaders };
+  if (!res.ok) {
+    const txt = await res.text().catch(() => "");
+    throw new Error(`mailgun_failed:${txt || res.status}`);
+  }
 }
 
-async function sha256Hex(data: string): Promise<string> {
-  const buf = new TextEncoder().encode(data);
-  const hash = await crypto.subtle.digest("SHA-256", buf);
-  return [...new Uint8Array(hash)].map((b) => b.toString(16).padStart(2, "0")).join("");
+async function sendWithFallbacks(it: MailItem, order: Provider[]) {
+  const errs: string[] = [];
+  for (const p of order) {
+    try {
+      if (p === "sendgrid") await sendViaSendgrid(it);
+      else if (p === "brevo") await sendViaBrevo(it);
+      else await sendViaMailgun(it);
+      return { provider: p as Provider };
+    } catch (e) {
+      errs.push(`${p}:${String((e as any)?.message || e)}`);
+    }
+  }
+  throw new Error(errs.join("|"));
 }
 
-async function hmacRaw(key: ArrayBuffer, data: string): Promise<ArrayBuffer> {
-  const cryptoKey = await crypto.subtle.importKey(
-    "raw",
-    key,
-    { name: "HMAC", hash: "SHA-256" },
-    false,
-    ["sign"]
-  );
-  return crypto.subtle.sign("HMAC", cryptoKey, new TextEncoder().encode(data));
-}
+async function loadSettings() {
+  const { data, error } = await sbAdmin
+    .from("mail_settings")
+    .select("queue_enabled,provider_order,delay_ms,batch_max")
+    .eq("id", 1)
+    .maybeSingle();
 
-async function hmacHex(key: ArrayBuffer, data: string): Promise<string> {
-  const sig = await hmacRaw(key, data);
-  return [...new Uint8Array(sig)].map((b) => b.toString(16).padStart(2, "0")).join("");
-}
+  if (error) throw error;
 
-async function getSignatureKey(secret: string, dateStamp: string, region: string, service: string): Promise<ArrayBuffer> {
-  const kDate = await hmacRaw(new TextEncoder().encode("AWS4" + secret), dateStamp);
-  const kRegion = await hmacRaw(kDate, region);
-  const kService = await hmacRaw(kRegion, service);
-  const kSigning = await hmacRaw(kService, "aws4_request");
-  return kSigning;
+  return {
+    queue_enabled: !!data?.queue_enabled,
+    provider_order: String(data?.provider_order || "sendgrid,brevo,mailgun"),
+    delay_ms: Number.isFinite(Number(data?.delay_ms)) ? Number(data?.delay_ms) : 250,
+    batch_max: Number.isFinite(Number(data?.batch_max)) ? Number(data?.batch_max) : 100,
+  };
 }
-
 
 serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
-  }
-
-  if (req.method !== "POST") {
-    return json({ ok: false, error: "Method not allowed" }, 405);
-  }
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  if (req.method !== "POST") return json({ ok: false, error: "Method not allowed" }, 405);
 
   try {
-    console.log("[send-mail] request:start", { method: req.method, contentType: req.headers.get("content-type") || "" });
     // ---- AUTH ----
     const authHeader = req.headers.get("authorization") || "";
     const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
+    if (!token) return json({ ok: false, error: "Missing Bearer token" }, 401);
 
-    if (!token) {
-      console.warn("[send-mail] request:missing_token");
-      return json({ ok: false, error: "Missing Bearer token" }, 401);
-    }
+    const { data: userData, error: authError } = await sbAnon.auth.getUser(token);
+    if (authError || !userData?.user) return json({ ok: false, error: "Invalid JWT" }, 401);
+    const uid = userData.user.id;
 
-    const { data: userData, error: authError } = await sb.auth.getUser(token);
-    if (authError || !userData?.user) {
-      console.error("[send-mail] request:invalid_jwt", { authError });
-      return json({ ok: false, error: "Invalid JWT" }, 401);
-    }
-    console.log("[send-mail] request:authed", { userId: userData.user.id });
-
-    // ---- BODY (robust) ----
+    // ---- BODY ----
     const raw = await req.text();
-    if (!raw.trim()) {
-      return json({ ok: false, error: "Empty body" }, 400);
-    }
+    if (!raw.trim()) return json({ ok: false, error: "Empty body" }, 400);
 
     let body: any;
     try {
       body = JSON.parse(raw);
-    } catch (e) {
-      return json(
-        {
-          ok: false,
-          error: "Invalid JSON body",
-          hint: "Send JSON with Content-Type: application/json",
-          body_preview: raw.slice(0, 200),
-        },
-        400
-      );
+    } catch {
+      return json({ ok: false, error: "Invalid JSON body", body_preview: raw.slice(0, 200) }, 400);
     }
 
-    const items = normalizeItems(body);
+    const { items, mode } = parseItems(body);
+    if (!items.length) return json({ ok: false, error: "Missing fields (to, subject, html)" }, 400);
 
-    if (!items.length) {
-      console.warn("[send-mail] request:missing_fields", {
-        hasItems: Array.isArray(body?.items),
-        itemsLen: Array.isArray(body?.items) ? body.items.length : 0,
-        hasTo: !!body?.to,
-        hasSubject: !!body?.subject,
-        hasHtml: !!body?.html,
+    // ---- SETTINGS (DB) ----
+    let settings;
+    try {
+      settings = await loadSettings();
+    } catch {
+      settings = { queue_enabled: true, provider_order: "sendgrid,brevo,mailgun", delay_ms: 250, batch_max: 100 };
+    }
+
+    const order = parseProviderOrder(settings.provider_order);
+    const delayMs = Math.max(0, Math.min(5000, Number(settings.delay_ms || 0)));
+    const batchMax = Math.max(1, Math.min(500, Number(settings.batch_max || 100)));
+    const sliced = items.slice(0, batchMax);
+
+    // ---- QUEUE MODE ----
+    if (settings.queue_enabled) {
+      const rows = sliced.map((it) => ({
+        created_by: uid,
+        to_email: it.to,
+        subject: it.subject,
+        html: it.html,
+        status: "pending",
+        not_before: new Date().toISOString(),
+        attempts: 0,
+        provider_order: order.join(","),
+        meta: it.meta || {},
+      }));
+
+      const { error } = await sbAdmin.from("mail_queue").insert(rows);
+      if (error) return json({ ok: false, error: "queue_insert_failed" }, 500);
+
+      return json({
+        ok: true,
+        mode,
+        results: rows.map((r) => ({ to: r.to_email, ok: true, queued: true })),
       });
-      return json({ ok: false, error: "Missing fields (to, subject, html) or empty items[]" }, 400);
-    }
-    console.log("[send-mail] request:parsed", {
-      count: items.length,
-      preview: items.slice(0, 3).map((x) => ({ to: scrubEmail(x.to), subjectLen: x.subject.length, htmlLen: x.html.length })),
-    });
-
-    // Validate primary provider env
-    if (USE_AWS_SES) {
-      if (!AWS_REGION || !AWS_ACCESS_KEY_ID || !AWS_SECRET_ACCESS_KEY) {
-        return json({ ok: false, error: "Missing AWS SES env (AWS_REGION, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY)" }, 500);
-      }
-    } else {
-      if (!SENDGRID_KEY) {
-        return json({ ok: false, error: "Missing SENDGRID_API_KEY env" }, 500);
-      }
     }
 
-    const results: Array<{ to: string; ok: boolean; error?: string }> = [];
-    for (const item of items) {
+    // ---- SEND NOW MODE ----
+    const results: any[] = [];
+    for (let i = 0; i < sliced.length; i++) {
+      const it = sliced[i];
       try {
-        await sendEmail(item.to, item.subject, item.html);
-        results.push({ to: item.to, ok: true });
-      } catch (err) {
-        const message = String((err as any)?.message || err);
-        console.error("[send-mail] request:item_failed", { to: scrubEmail(item.to), error: message });
-        results.push({ to: item.to, ok: false, error: message });
+        const out = await sendWithFallbacks(it, order);
+        results.push({ to: it.to, ok: true, provider: out.provider });
+      } catch (e) {
+        results.push({ to: it.to, ok: false, error: String((e as any)?.message || e) });
       }
+      if (delayMs && i < sliced.length - 1) await sleep(delayMs);
     }
 
-    const failed = results.filter((r) => !r.ok).length;
-    console.log("[send-mail] request:done", { total: results.length, failed });
-    if (results.length === 1 && failed === 1) {
-      return json({ ok: false, error: results[0].error || "send_failed", results }, 500);
-    }
-    return json({ ok: failed === 0, results, failed });
+    return json({ ok: true, mode, results });
   } catch (e) {
-    console.error("[send-mail] request:exception", { error: String((e as any)?.message || e) });
     return json({ ok: false, error: String((e as any)?.message || e) }, 500);
   }
 });
-
-function json(obj: any, status = 200) {
-  return new Response(JSON.stringify(obj), {
-    status,
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
-  });
-}
