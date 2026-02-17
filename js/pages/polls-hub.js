@@ -15,31 +15,23 @@ let focusTaskHandled = false;
 
 async function rpcDebug(fn, args) {
   const trace = crypto?.randomUUID?.() || String(Date.now()) + "_" + Math.random().toString(16).slice(2);
-  console.groupCollapsed(`[rpc] ${fn} trace=${trace}`);
-  console.debug("args", args);
+
+  console.warn(`[rpc] START ${fn} trace=${trace}`, args);
 
   try {
     const res = await sb().rpc(fn, args);
 
-    // Supabase-js zwykle zwraca { data, error }
-    console.debug("data", res?.data);
-    console.debug("error", res?.error);
+    console.warn(`[rpc] END ${fn} trace=${trace}`, {
+      hasData: !!res?.data,
+      error: res?.error
+        ? { message: res.error.message, code: res.error.code, hint: res.error.hint, details: res.error.details }
+        : null,
+      data: res?.data,
+    });
 
-    // jeśli error, spróbuj wyciągnąć maksimum detali:
-    if (res?.error) {
-      console.error("error details", {
-        message: res.error.message,
-        code: res.error.code,
-        hint: res.error.hint,
-        details: res.error.details,
-      });
-    }
-
-    console.groupEnd();
     return { ...res, trace };
   } catch (e) {
-    console.error(`[rpc] exception trace=${trace}`, e);
-    console.groupEnd();
+    console.error(`[rpc] EXCEPTION ${fn} trace=${trace}`, e);
     throw e;
   }
 }
@@ -707,19 +699,30 @@ async function buildMailItemsForTasksFallback({ gameId, ownerId, selectedSubIds 
 }
 
 async function saveShareModal() {
-  if (!sharePollId) return;
+  console.warn("[polls-hub] saveShareModal:click", { sharePollId, shareListExists: !!shareList });
+
+  if (!sharePollId) {
+    console.error("[polls-hub] saveShareModal:no_sharePollId");
+    shareMsg.textContent = "ERR: missing sharePollId";
+    return;
+  }
+
   const selected = [...shareList.querySelectorAll('input[type="checkbox"]')]
     .filter((x) => x.checked)
     .map((x) => String(x.dataset.id || "").trim())
     .filter((id) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id));
-  console.debug("[polls-hub] share:selected", {
-    trace,
-    sharePollId,
-    selectedCount: selected.length,
-    selectedSample: selected.slice(0, 10),
-    selectedAllValidUuid: selected.every((id) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)),
+
+  console.warn("[polls-hub] saveShareModal:selected", { count: selected.length, selected });
+
+  const changed =
+    selected.length !== shareBaseline.size ||
+    selected.some((id) => !shareBaseline.has(String(id)));
+
+  console.warn("[polls-hub] saveShareModal:changed?", {
+    changed,
+    baselineCount: shareBaseline.size,
   });
-  const changed = selected.length !== shareBaseline.size || selected.some((id) => !shareBaseline.has(String(id)));
+
   if (!changed) {
     shareMsg.textContent = MSG.shareNoChanges();
     return;
@@ -727,23 +730,21 @@ async function saveShareModal() {
 
   try {
     setProgress({ show: true, step: MSG.shareStep(), i: 0, n: 4, msg: "" });
+
     const args = { p_game_id: sharePollId, p_sub_ids: selected };
+    console.warn("[polls-hub] rpc call polls_hub_share_poll", args);
+
     const { data, error, trace } = await rpcDebug("polls_hub_share_poll", args);
-    if (error) {
-      console.error("[polls-hub] polls_hub_share_poll rpc failed", {
-        gameId: sharePollId,
-        selectedCount: selected.length,
-        selected,
-        error,
-      });
+
+    console.warn("[polls-hub] rpc result polls_hub_share_poll", { trace, ok: data?.ok, data, error });
+
+    if (error || data?.ok === false) {
+      const msg = error?.message || error?.details || error?.hint || "share_failed";
+      shareMsg.textContent = `${MSG.shareSaveFail()} (${msg})`;
+      await alertModal({ text: `${MSG.shareSaveFail()}\n\n${msg}\n\ntrace=${trace}` });
+      return;
     }
-    if (error || data?.ok === false) throw error || new Error("share_failed");
-    console.debug("[polls-hub] polls_hub_share_poll rpc ok", {
-      gameId: sharePollId,
-      selectedCount: selected.length,
-      responseOk: data?.ok,
-      mailItemsFromRpc: Array.isArray(data?.mail) ? data.mail.length : 0,
-    });
+
     setProgress({ show: true, step: MSG.shareStep(), i: 1, n: 4, msg: MSG.shareSavedMsg() });
 
     let mailItems = Array.isArray(data?.mail) ? data.mail : [];
@@ -822,10 +823,13 @@ async function saveShareModal() {
       }
     }
 
-    shareMsg.textContent = mailItems.length ? MSG.shareSavedWithMail(sentCount, mailItems.length) : MSG.shareSaved();
+    shareMsg.textContent = MSG.shareSaved();
     await refreshData();
-  } catch {
-    shareMsg.textContent = MSG.shareSaveFail();
+  } catch (e) {
+    const msg = String(e?.message || e || "unknown_error");
+    console.error("[polls-hub] saveShareModal:catch", e);
+    shareMsg.textContent = `${MSG.shareSaveFail()} (${msg})`;
+    await alertModal({ text: `${MSG.shareSaveFail()}\n\n${msg}` });
   } finally {
     setProgress({ show: false });
   }
