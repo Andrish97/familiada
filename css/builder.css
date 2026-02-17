@@ -87,7 +87,7 @@ body.builder-body > main.wrap{
   margin-bottom: 12px;
 }
 
-@media (max-width: 900px){
+@media (max-width: 900px) and (orientation: portrait){
   .bar{
     display: block;
   }
@@ -449,15 +449,14 @@ body.builder-body > main.wrap{
 /* Bottom zawsze widoczny: siedzi poza .grid i nie scrolluje */
 .builder-bottom{
   flex: 0 0 auto;
-
   margin-top: 12px;               /* mniejszy odstęp, bo grid już scrolluje */
   padding-top: 10px;
   border-top: 1px solid rgba(255,255,255,.12);
-
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  align-items: end;
+  justify-content: flex-end;
   gap: 10px;
+  flex-wrap: nowrap;
 }
 
 .builder-bottom-right{

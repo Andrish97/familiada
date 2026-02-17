@@ -214,3 +214,25 @@ body.polls-body {
 .tcTxtInp:focus{
   border-color: rgba(255,255,255,.28);
 }
+
+
+@media (max-width:720px) and (orientation: portrait) {
+    .row,
+    .stack {
+        display: grid;
+    }
+
+    .row {
+        align-items: center;
+        margin-top: 10px;
+        margin-bottom: 10px;
+    }
+
+    #qr.qrBox.img {
+        width: min(72vw,320px);
+        aspect-ratio: 1/1;
+        margin: 0 auto;
+        display: grid;
+        place-items: center;
+    }
+}
