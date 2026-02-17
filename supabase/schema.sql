@@ -1,3 +1,4 @@
+line
 CREATE TABLE public.answers (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   question_id uuid NOT NULL,
@@ -5442,7 +5443,6 @@ begin
     return jsonb_build_object('ok', false, 'error', 'auth required');
   end if;
 
-  -- tylko właściciel gry
   select g.type::text, g.share_key_poll
     into v_poll_type, v_share_key
   from public.games g
@@ -5457,7 +5457,6 @@ begin
     return jsonb_build_object('ok', false, 'error', 'not a poll game');
   end if;
 
-  -- 1) anuluj aktywne zadania dla osób, których nie ma już w wyborze
   update public.poll_tasks t
   set status = 'cancelled',
       cancelled_at = now()
@@ -5487,7 +5486,6 @@ begin
 
   get diagnostics v_cancelled = row_count;
 
-  -- 2) utwórz brakujące zadania dla wybranych subów (z cooldownem 24h po cancelled/declined)
   with sel as (
     select
       s.id as sub_id,
