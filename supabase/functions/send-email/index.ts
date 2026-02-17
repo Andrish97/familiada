@@ -24,25 +24,92 @@ type HookPayload = {
   };
 };
 
+type Provider = "sendgrid" | "brevo" | "mailgun";
+
 const SENDGRID_KEY = Deno.env.get("SENDGRID_API_KEY");
+const BREVO_KEY = Deno.env.get("BREVO_API_KEY") || "";
+const MAILGUN_KEY = Deno.env.get("MAILGUN_API_KEY") || "";
+const MAILGUN_DOMAIN = Deno.env.get("MAILGUN_DOMAIN") || "";
+const MAILGUN_REGION = (Deno.env.get("MAILGUN_REGION") || "eu").toLowerCase();
 
-// Provider switch + fallback
-// USE_AWS_SES=true  => primary = AWS SES, fallback = SendGrid
-// USE_AWS_SES=false => primary = SendGrid, fallback = AWS SES
-const USE_AWS_SES = (Deno.env.get("USE_AWS_SES") || "").toLowerCase() === "true";
-
-// SendGrid click tracking rewrites links (e.g. buttons) to a SendGrid redirect URL.
-// For auth emails it is usually preferable to disable click tracking.
-const SG_DISABLE_CLICK_TRACKING = (Deno.env.get("SENDGRID_DISABLE_CLICK_TRACKING") || "true").toLowerCase() === "true";
-
-// AWS SES (SigV4)
-const AWS_REGION = Deno.env.get("AWS_REGION") || Deno.env.get("AWS_DEFAULT_REGION") || "";
-const AWS_ACCESS_KEY_ID = Deno.env.get("AWS_ACCESS_KEY_ID") || "";
-const AWS_SECRET_ACCESS_KEY = Deno.env.get("AWS_SECRET_ACCESS_KEY") || "";
+const FROM_EMAIL = Deno.env.get("MAIL_FROM_EMAIL") || "no-reply@familiada.online";
+const FROM_NAME = Deno.env.get("MAIL_FROM_NAME") || "Familiada";
 
 const HOOK_SECRET_RAW = Deno.env.get("SEND_EMAIL_HOOK_SECRET") || "";
 const HOOK_SECRET = HOOK_SECRET_RAW.replace("v1,whsec_", "");
 const webhook = new Webhook(HOOK_SECRET);
+
+async function sendViaSendgrid(to: string, subject: string, html: string) {
+  if (!SENDGRID_KEY) throw new Error("missing_SENDGRID_API_KEY");
+  const res = await fetch("https://api.sendgrid.com/v3/mail/send", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${SENDGRID_KEY}`, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      personalizations: [{ to: [{ email: to }] }],
+      from: { email: FROM_EMAIL, name: FROM_NAME },
+      subject,
+      content: [{ type: "text/html", value: html }],
+      tracking_settings: {
+        click_tracking: { enable: false, enable_text: false },
+        open_tracking: { enable: false },
+      },
+    }),
+  });
+  if (!res.ok) throw new Error(`sendgrid_failed:${await res.text().catch(() => "")}`);
+}
+
+async function sendViaBrevo(to: string, subject: string, html: string) {
+  if (!BREVO_KEY) throw new Error("missing_BREVO_API_KEY");
+  const res = await fetch("https://api.brevo.com/v3/smtp/email", {
+    method: "POST",
+    headers: { "api-key": BREVO_KEY, "Content-Type": "application/json", Accept: "application/json" },
+    body: JSON.stringify({
+      sender: { email: FROM_EMAIL, name: FROM_NAME },
+      to: [{ email: to }],
+      subject,
+      htmlContent: html,
+    }),
+  });
+  if (!res.ok) throw new Error(`brevo_failed:${await res.text().catch(() => "")}`);
+}
+
+async function sendViaMailgun(to: string, subject: string, html: string) {
+  if (!MAILGUN_KEY) throw new Error("missing_MAILGUN_API_KEY");
+  if (!MAILGUN_DOMAIN) throw new Error("missing_MAILGUN_DOMAIN");
+
+  const base = MAILGUN_REGION === "eu" ? "https://api.eu.mailgun.net" : "https://api.mailgun.net";
+  const url = `${base}/v3/${MAILGUN_DOMAIN}/messages`;
+
+  const form = new FormData();
+  form.append("from", `${FROM_NAME} <${FROM_EMAIL}>`);
+  form.append("to", to);
+  form.append("subject", subject);
+  form.append("html", html);
+
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { Authorization: `Basic ${btoa(`api:${MAILGUN_KEY}`)}` },
+    body: form,
+  });
+  if (!res.ok) throw new Error(`mailgun_failed:${await res.text().catch(() => "")}`);
+}
+
+async function sendWithFallbacks(to: string, subject: string, html: string) {
+  const order: Provider[] = ["sendgrid", "brevo", "mailgun"]; // jeśli chcesz, podepniemy pod mail_settings
+  const errs: string[] = [];
+  for (const p of order) {
+    try {
+      if (p === "sendgrid") await sendViaSendgrid(to, subject, html);
+      else if (p === "brevo") await sendViaBrevo(to, subject, html);
+      else await sendViaMailgun(to, subject, html);
+      return { provider: p };
+    } catch (e) {
+      errs.push(`${p}:${String((e as any)?.message || e)}`);
+    }
+  }
+  throw new Error(errs.join("|"));
+}
+
 
 function mustGetRedirectUrl(payload: HookPayload): URL {
   const redirect = String(payload.email_data.redirect_to || "").trim();
@@ -93,256 +160,16 @@ function json(data: unknown, status = 200): Response {
 }
 
 async function sendEmail(to: string, subject: string, html: string) {
-  // Primary/fallback based on USE_AWS_SES
-  if (USE_AWS_SES) {
-    try {
-      await sendViaSes(to, subject, html);
-      return;
-    } catch (e1) {
-      console.error("SES primary failed:", String(e1));
-      await sendViaSendGrid(to, subject, html); // throws if fails
-      return;
-    }
-  } else {
-    try {
-      await sendViaSendGrid(to, subject, html);
-      return;
-    } catch (e1) {
-      console.error("SendGrid primary failed:", String(e1));
-      await sendViaSes(to, subject, html); // throws if fails
-      return;
-    }
-  }
+  await sendWithFallbacks(to, subject, html);
 }
-
-async function sendViaSendGrid(to: string, subject: string, html: string) {
-  if (!SENDGRID_KEY) throw new Error("Missing SENDGRID_API_KEY env");
-
-  const body: Record<string, unknown> = {
-    personalizations: [{ to: [{ email: to }] }],
-    from: { email: "no-reply@familiada.online", name: "Familiada" },
-    subject,
-    content: [{ type: "text/html", value: html }],
-  };
-
-  if (SG_DISABLE_CLICK_TRACKING) {
-    body["tracking_settings"] = {
-      click_tracking: { enable: false, enable_text: false },
-      open_tracking: { enable: false },
-    };
-  }
-
-  const sgRes = await fetch("https://api.sendgrid.com/v3/mail/send", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${SENDGRID_KEY}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(body),
-  });
-
-  if (!sgRes.ok) {
-    const errTxt = await sgRes.text();
-    throw new Error(`SendGrid failed (${to}): ${errTxt}`);
-  }
-}
-
-/**
- * AWS SES v2 SendEmail via raw HTTPS + SigV4 signing.
- * Requires:
- *  - AWS_REGION
- *  - AWS_ACCESS_KEY_ID
- *  - AWS_SECRET_ACCESS_KEY
- *
- * Notes:
- *  - Your From domain/address must be verified in SES.
- *  - In SES sandbox you can only send to verified recipients.
- */
-async function sendViaSes(to: string, subject: string, html: string) {
-  if (!AWS_REGION) throw new Error("Missing AWS_REGION env");
-  if (!AWS_ACCESS_KEY_ID) throw new Error("Missing AWS_ACCESS_KEY_ID env");
-  if (!AWS_SECRET_ACCESS_KEY) throw new Error("Missing AWS_SECRET_ACCESS_KEY env");
-
-  const host = `email.${AWS_REGION}.amazonaws.com`;
-  const url = `https://${host}/v2/email/outbound-emails`;
-
-  const payload = {
-    FromEmailAddress: "no-reply@familiada.online",
-    Destination: { ToAddresses: [to] },
-    Content: {
-      Simple: {
-        Subject: { Data: subject, Charset: "UTF-8" },
-        Body: { Html: { Data: html, Charset: "UTF-8" } },
-      },
-    },
-  };
-
-  const body = JSON.stringify(payload);
-
-  const headers = new Headers({
-    "content-type": "application/json",
-    host,
-  });
-
-  const signed = await signAwsRequest({
-    method: "POST",
-    url,
-    headers,
-    body,
-    service: "ses",
-    region: AWS_REGION,
-    accessKeyId: AWS_ACCESS_KEY_ID,
-    secretAccessKey: AWS_SECRET_ACCESS_KEY,
-  });
-
-  const res = await fetch(url, {
-    method: "POST",
-    headers: signed,
-    body,
-  });
-
-  if (!res.ok) {
-    const txt = await res.text();
-    throw new Error(`SES failed (${to}): ${txt}`);
-  }
-}
-
-// --------------------------
-// Minimal SigV4 signing utils
-// --------------------------
-
-type SignAwsRequestArgs = {
-  method: string;
-  url: string;
-  headers: Headers;
-  body: string;
-  service: string;
-  region: string;
-  accessKeyId: string;
-  secretAccessKey: string;
-};
-
-async function signAwsRequest(args: SignAwsRequestArgs): Promise<Headers> {
-  const url = new URL(args.url);
-
-  // yyyyMMdd'T'HHmmss'Z'
-  const now = new Date();
-  const amzDate = toAmzDate(now);
-  const dateStamp = amzDate.slice(0, 8);
-
-  const payloadHash = await sha256Hex(args.body);
-
-  const headers = new Headers(args.headers);
-  headers.set("x-amz-date", amzDate);
-  headers.set("x-amz-content-sha256", payloadHash);
-
-  const { canonicalHeaders, signedHeaders } = canonicalizeHeaders(headers);
-
-  const canonicalRequest = [
-    args.method.toUpperCase(),
-    encodePath(url.pathname),
-    url.searchParams.toString(), // no special params used here
-    canonicalHeaders + "\n",
-    signedHeaders,
-    payloadHash,
-  ].join("\n");
-
-  const algorithm = "AWS4-HMAC-SHA256";
-  const credentialScope = `${dateStamp}/${args.region}/${args.service}/aws4_request`;
-  const stringToSign = [
-    algorithm,
-    amzDate,
-    credentialScope,
-    await sha256Hex(canonicalRequest),
-  ].join("\n");
-
-  const signingKey = await getSignatureKey(args.secretAccessKey, dateStamp, args.region, args.service);
-  const signature = await hmacHex(signingKey, stringToSign);
-
-  const authorization = `${algorithm} Credential=${args.accessKeyId}/${credentialScope}, SignedHeaders=${signedHeaders}, Signature=${signature}`;
-  headers.set("Authorization", authorization);
-
-  return headers;
-}
-
-function toAmzDate(d: Date): string {
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return (
-    d.getUTCFullYear() +
-    pad(d.getUTCMonth() + 1) +
-    pad(d.getUTCDate()) +
-    "T" +
-    pad(d.getUTCHours()) +
-    pad(d.getUTCMinutes()) +
-    pad(d.getUTCSeconds()) +
-    "Z"
-  );
-}
-
-function encodePath(pathname: string): string {
-  // AWS expects each path segment URI-encoded, but "/" preserved
-  return pathname.split("/").map(encodeURIComponent).join("/");
-}
-
-function canonicalizeHeaders(headers: Headers): { canonicalHeaders: string; signedHeaders: string } {
-  const pairs: Array<[string, string]> = [];
-  headers.forEach((v, k) => {
-    const key = k.toLowerCase().trim();
-    const val = String(v).replace(/\s+/g, " ").trim();
-    pairs.push([key, val]);
-  });
-  pairs.sort((a, b) => (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0));
-
-  const canonicalHeaders = pairs.map(([k, v]) => `${k}:${v}`).join("\n");
-  const signedHeaders = pairs.map(([k]) => k).join(";");
-  return { canonicalHeaders, signedHeaders };
-}
-
-async function sha256Hex(data: string): Promise<string> {
-  const buf = new TextEncoder().encode(data);
-  const hash = await crypto.subtle.digest("SHA-256", buf);
-  return [...new Uint8Array(hash)].map((b) => b.toString(16).padStart(2, "0")).join("");
-}
-
-async function hmacRaw(key: ArrayBuffer, data: string): Promise<ArrayBuffer> {
-  const cryptoKey = await crypto.subtle.importKey(
-    "raw",
-    key,
-    { name: "HMAC", hash: "SHA-256" },
-    false,
-    ["sign"]
-  );
-  return crypto.subtle.sign("HMAC", cryptoKey, new TextEncoder().encode(data));
-}
-
-async function hmacHex(key: ArrayBuffer, data: string): Promise<string> {
-  const sig = await hmacRaw(key, data);
-  return [...new Uint8Array(sig)].map((b) => b.toString(16).padStart(2, "0")).join("");
-}
-
-async function getSignatureKey(secret: string, dateStamp: string, region: string, service: string): Promise<ArrayBuffer> {
-  const kDate = await hmacRaw(new TextEncoder().encode("AWS4" + secret), dateStamp);
-  const kRegion = await hmacRaw(kDate, region);
-  const kService = await hmacRaw(kRegion, service);
-  const kSigning = await hmacRaw(kService, "aws4_request");
-  return kSigning;
-}
-
 
 serve(async (req) => {
   if (req.method !== "POST") {
     return json({ ok: false, error: "Method not allowed" }, 405);
   }
 
-  // Validate primary provider env (fallback provider env is optional, but recommended)
-  if (USE_AWS_SES) {
-    if (!AWS_REGION || !AWS_ACCESS_KEY_ID || !AWS_SECRET_ACCESS_KEY) {
-      return json({ ok: false, error: "Missing AWS SES env (AWS_REGION, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY)" }, 500);
-    }
-  } else {
-    if (!SENDGRID_KEY) {
-      return json({ ok: false, error: "Missing SENDGRID_API_KEY env" }, 500);
-    }
+  if (!SENDGRID_KEY) {
+    return json({ ok: false, error: "Missing SENDGRID_API_KEY env" }, 500);
   }
 
   if (!HOOK_SECRET) {

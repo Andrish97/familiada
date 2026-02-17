@@ -1,4 +1,3 @@
-
 CREATE TABLE public.answers (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   question_id uuid NOT NULL,
@@ -64,6 +63,31 @@ CREATE TABLE public.games (
   share_key_host text NOT NULL DEFAULT gen_share_key(18),
   share_key_buzzer text NOT NULL DEFAULT gen_share_key(18),
   poll_share_updated_at timestamp with time zone NOT NULL DEFAULT now()
+);
+
+CREATE TABLE public.mail_queue (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  created_by uuid,
+  to_email text NOT NULL,
+  subject text NOT NULL,
+  html text NOT NULL,
+  status text NOT NULL DEFAULT 'pending'::text,
+  not_before timestamp with time zone NOT NULL DEFAULT now(),
+  attempts integer NOT NULL DEFAULT 0,
+  last_error text,
+  provider_used text,
+  provider_order text,
+  meta jsonb NOT NULL DEFAULT '{}'::jsonb
+);
+
+CREATE TABLE public.mail_settings (
+  id integer NOT NULL DEFAULT 1,
+  queue_enabled boolean NOT NULL DEFAULT true,
+  provider_order text NOT NULL DEFAULT 'sendgrid,brevo,mailgun'::text,
+  delay_ms integer NOT NULL DEFAULT 250,
+  batch_max integer NOT NULL DEFAULT 100,
+  updated_at timestamp with time zone NOT NULL DEFAULT now()
 );
 
 CREATE TABLE public.poll_sessions (
@@ -276,6 +300,12 @@ ALTER TABLE public.games ADD CONSTRAINT games_status_check CHECK ((status = ANY 
 
 ALTER TABLE public.games ADD CONSTRAINT games_type_check CHECK ((type = ANY (ARRAY['poll_text'::game_type, 'poll_points'::game_type, 'prepared'::game_type])));
 
+ALTER TABLE public.mail_queue ADD CONSTRAINT mail_queue_pkey PRIMARY KEY (id);
+
+ALTER TABLE public.mail_settings ADD CONSTRAINT mail_settings_pkey PRIMARY KEY (id);
+
+ALTER TABLE public.mail_settings ADD CONSTRAINT mail_settings_singleton CHECK ((id = 1));
+
 ALTER TABLE public.poll_sessions ADD CONSTRAINT poll_sessions_game_id_fkey FOREIGN KEY (game_id) REFERENCES games(id) ON DELETE CASCADE;
 
 ALTER TABLE public.poll_sessions ADD CONSTRAINT poll_sessions_pkey PRIMARY KEY (id);
@@ -444,6 +474,14 @@ CREATE UNIQUE INDEX games_pkey ON public.games USING btree (id);
 
 CREATE UNIQUE INDEX games_share_keys_unique ON public.games USING btree (share_key_poll, share_key_control, share_key_display, share_key_host, share_key_buzzer);
 
+CREATE INDEX mail_queue_created_by_idx ON public.mail_queue USING btree (created_by, created_at DESC);
+
+CREATE INDEX mail_queue_pick_idx ON public.mail_queue USING btree (status, not_before, created_at);
+
+CREATE UNIQUE INDEX mail_queue_pkey ON public.mail_queue USING btree (id);
+
+CREATE UNIQUE INDEX mail_settings_pkey ON public.mail_settings USING btree (id);
+
 CREATE INDEX poll_sessions_game_idx ON public.poll_sessions USING btree (game_id);
 
 CREATE INDEX poll_sessions_game_open_idx ON public.poll_sessions USING btree (game_id, is_open, created_at DESC);
@@ -592,6 +630,8 @@ ALTER TABLE public.email_cooldowns ENABLE ROW LEVEL SECURITY;
 
 ALTER TABLE public.games ENABLE ROW LEVEL SECURITY;
 
+ALTER TABLE public.mail_settings ENABLE ROW LEVEL SECURITY;
+
 ALTER TABLE public.poll_sessions ENABLE ROW LEVEL SECURITY;
 
 ALTER TABLE public.poll_subscriptions ENABLE ROW LEVEL SECURITY;
@@ -658,6 +698,10 @@ CREATE POLICY games_owner_update ON public.games FOR UPDATE TO authenticated USI
 null
 null
 null
+CREATE POLICY mail_settings_read_none ON public.mail_settings FOR SELECT TO authenticated USING (false);
+
+CREATE POLICY mail_settings_write_none ON public.mail_settings TO authenticated USING (false) WITH CHECK (false);
+
 CREATE POLICY poll_sessions_owner_read ON public.poll_sessions FOR SELECT TO authenticated USING ((EXISTS ( SELECT 1
    FROM games g
   WHERE ((g.id = poll_sessions.game_id) AND (g.owner_id = auth.uid())))));
@@ -2661,6 +2705,49 @@ begin
   join public.profiles p on p.id = t.owner_id
   where t.recipient_user_id = auth.uid()
     and t.status in ('pending','opened');
+end;
+$function$
+
+
+CREATE OR REPLACE FUNCTION public.mail_queue_mark(p_id uuid, p_ok boolean, p_provider text, p_error text)
+ RETURNS void
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'pg_temp'
+AS $function$
+begin
+  update public.mail_queue
+  set status = case when p_ok then 'sent' else 'failed' end,
+      provider_used = p_provider,
+      last_error = case when p_ok then null else left(coalesce(p_error,''), 2000) end
+  where id = p_id;
+end;
+$function$
+
+
+CREATE OR REPLACE FUNCTION public.mail_queue_pick(p_limit integer)
+ RETURNS SETOF mail_queue
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'pg_temp'
+AS $function$
+begin
+  return query
+  with cte as (
+    select id
+    from public.mail_queue
+    where status = 'pending'
+      and not_before <= now()
+    order by created_at
+    limit greatest(1, least(p_limit, 200))
+    for update skip locked
+  )
+  update public.mail_queue q
+  set status = 'sending',
+      attempts = attempts + 1
+  from cte
+  where q.id = cte.id
+  returning q.*;
 end;
 $function$
 
@@ -5172,7 +5259,7 @@ begin
     b.status,
     b.created_at,
     b.token,
-    ('poll_go.html?s=' || b.token::text)::text as go_url,
+    ('poll-go.html?s=' || b.token::text)::text as go_url,
     (b.status in ('declined','cancelled') and b.last_action_at <= now() - interval '5 days') as is_expired
   from base b
   left join public.profiles p on p.id = b.owner_id
@@ -5266,7 +5353,7 @@ begin
     t.declined_at,
     t.cancelled_at,
     (coalesce(t.done_at, t.declined_at, t.cancelled_at) < now() - interval '5 days') as is_archived,
-    ('poll_go.html?t=' || t.token::text)::text,
+    ('poll-go.html?t=' || t.token::text)::text,
     t.owner_id,
     p.username,
     p.email
@@ -5469,7 +5556,7 @@ begin
           'task_id', id,
           'to', recipient_email,
           'token', token,
-          'link', ('poll_go.html?t=' || token::text)
+          'link', ('poll-go.html?t=' || token::text)
         )
       ) filter (where recipient_email is not null),
       '[]'::jsonb
@@ -5580,7 +5667,7 @@ begin
     return jsonb_build_object('ok', false, 'error', 'no email for this subscriber');
   end if;
 
-  v_link := ('poll_go.html?s=' || v_sub.token::text)::text;
+  v_link := ('poll-go.html?s=' || v_sub.token::text)::text;
 
   update public.poll_subscriptions
   set email_sent_at = now(),
@@ -5814,7 +5901,7 @@ begin
 
   if v_existing.id is not null and v_existing.status in ('pending','active') then
     v_token := v_existing.token;
-    v_go := ('poll_go.html?s=' || v_token::text)::text;
+    v_go := ('poll-go.html?s=' || v_token::text)::text;
     v_to := coalesce(v_profile.email, v_existing.subscriber_email);
 
     return jsonb_build_object(
@@ -5853,7 +5940,7 @@ begin
     v_to := lower(v_h);
   end if;
 
-  v_go := ('poll_go.html?s=' || v_token::text)::text;
+  v_go := ('poll-go.html?s=' || v_token::text)::text;
 
   return jsonb_build_object(
     'ok', true,

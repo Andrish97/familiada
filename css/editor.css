@@ -1,13 +1,18 @@
 /* css/editor.css */
 
 body.editor-body {
-    min-height: 100vh;
+    min-height: 100dvh;
     background: var(--bg);
-    color: #fff
+    color: #fff;
+    overflow: hidden
 }
 
 body.editor-body .wrap {
-    max-width: 1200px
+    max-width: 1200px;
+    height: calc(100dvh - 72px);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column
 }
 
 .rowTop {
@@ -32,9 +37,6 @@ body.editor-body .wrap {
     width: 100%
 }
 
-.mobileBackBtn {
-    display: none;
-}
 
 #gameName {
     flex: 1;
@@ -47,21 +49,24 @@ body.editor-body .wrap {
     display: grid;
     grid-template-columns: 360px minmax(0,1fr);
     gap: 14px;
-    margin-top: 12px
+    margin-top: 12px;
+    min-height: 0;
+    flex: 1
 }
 
-@media (max-width:1100px) {
-    .layout {
-        grid-template-columns: 1fr
-    }
-}
 
 .left,.rightPanel {
     border-radius: 20px;
     border: 1px solid var(--line);
     background: var(--card);
     box-shadow: 0 24px 60px rgba(0,0,0,.45);
-    padding: 14px
+    padding: 14px;
+    min-height: 0;
+    height: 100%;
+    max-height: 100%;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column
 }
 
 .left {
@@ -69,12 +74,6 @@ body.editor-body .wrap {
     min-width: 360px
 }
 
-@media (max-width:1100px) {
-    .left {
-        width: auto;
-        min-width: 0
-    }
-}
 
 .panelHead {
     display: flex;
@@ -96,14 +95,15 @@ body.editor-body .wrap {
     border: 1px solid var(--line);
     background: rgba(255,255,255,.03);
     padding: 8px;
+    min-height: 0;
+    flex: 1;
+    overflow: auto;
 }
 
 .list {
     display: grid;
     grid-template-columns: 1fr;
     gap: 10px;
-    max-height: none;
-    overflow: visible;
     padding: 0
 }
 
@@ -125,6 +125,7 @@ body.editor-body .wrap {
     border: 1px solid var(--line);
     background: rgba(255,255,255,.05);
     padding: 12px;
+    padding-right: 56px;
     cursor: pointer;
     overflow: hidden
 }
@@ -166,12 +167,12 @@ body.editor-body .wrap {
     position: absolute;
     top: 10px;
     right: 10px;
-    width: 34px;
-    height: 34px;
-    border-radius: 12px;
-    border: 1px solid rgba(255,120,120,.35);
-    background: rgba(255,120,120,.12);
-    color: #fff;
+    width: 30px;
+    height: 30px;
+    border-radius: 10px;
+    border: 1px solid var(--line2);
+    background: rgba(255,255,255,.08);
+    color: rgba(255,255,255,.9);
     font-weight: 1000;
     display: grid;
     place-items: center;
@@ -185,11 +186,17 @@ body.editor-body .wrap {
 }
 
 .rightPanel.hasQ .editorBox {
-    display: block
+    display: flex
 }
 
 .editorBox,.rightPanel.hasQ .empty {
     display: none
+}
+
+.editorBox {
+    min-height: 0;
+    height: 100%;
+    flex-direction: column;
 }
 
 .badgeRow {
@@ -252,6 +259,8 @@ body.editor-body .wrap {
     margin-top: 10px;
     display: grid;
     gap: 10px;
+    min-height: 0;
+    flex: 1;
 }
 
 .answersTop {
@@ -263,6 +272,9 @@ body.editor-body .wrap {
     border: 1px solid var(--line);
     background: rgba(255,255,255,.03);
     padding: 8px;
+    min-height: 0;
+    flex: 1;
+    overflow: auto;
 }
 
 .ahead {
@@ -281,8 +293,6 @@ body.editor-body .wrap {
 
 .alist {
     margin-top: 0;
-    max-height: none;
-    overflow: visible;
     padding: 0;
     grid-template-columns: 1fr;
 }
@@ -293,12 +303,10 @@ body.editor-body .wrap {
     border-radius: 18px;
     border: 1px solid var(--line);
     background: var(--card2);
-    padding: 10px
+    padding: 10px;
+    min-height: 60px
 }
 
-.arow>* {
-    min-width: 0
-}
 
 .aPts,.aText {
     width: 100%;
@@ -372,7 +380,17 @@ body.editor-body .wrap {
     background: rgba(255,255,255,.04);
     padding: 12px;
     align-items: center;
-    cursor: pointer
+    cursor: pointer;
+    min-height: 60px
+}
+
+.arow.addTile {
+    min-height: 60px;
+    color: #fff;
+}
+
+.arow.addTile > * {
+    color: inherit;
 }
 
 .addTile:hover {
@@ -423,6 +441,11 @@ body.editor-body .wrap {
 .addTile[aria-disabled="true"] .plus {
     color: rgba(255,255,255,.92);
     opacity: 1;
+}
+
+.arow.addTile:disabled,
+.arow.addTile[aria-disabled="true"] {
+    color: rgba(255,255,255,.92);
 }
 
 .qcard:not(.addTile).good {
@@ -518,7 +541,6 @@ body.editor-body .wrap {
     }
 
     .list {
-        grid-template-columns: 1fr;
         gap: 8px;
         padding: 0;
     }
@@ -529,6 +551,7 @@ body.editor-body .wrap {
 
     .qcard {
         padding: 10px;
+        padding-right: 48px;
         border-radius: 16px;
         min-height: 72px
     }
@@ -574,7 +597,8 @@ body.editor-body .wrap {
 
     .arow {
         padding: 8px;
-        border-radius: 16px
+        border-radius: 16px;
+        min-height: 72px
     }
 
     .aPts,.aText {
@@ -593,55 +617,20 @@ body.editor-body .wrap {
     }
 }
 
-@media (max-width:420px) {
-    .ahead,.arow {
-        grid-template-columns: minmax(0,1fr) 64px 34px;
-        gap: 7px
-    }
-
-    .aDel {
-        width: 34px;
-        height: 34px
-    }
-}
-
-@media (max-width:380px) {
-    .list {
-        grid-template-columns: 1fr
-    }
-}
-
-
-body.editor-body {
-    overflow: hidden;
-}
-
-body.editor-body .wrap {
-    height: calc(100dvh - 72px);
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-}
-
-body.editor-body.mobile-editing {
-    overflow: hidden;
-}
-
-body.editor-body .layout {
-    min-height: 0;
-    flex: 1;
-}
-
-body.editor-body .left,
-body.editor-body .rightPanel {
-    min-height: 0;
-}
-
-body.editor-body .rightPanel {
-    overflow: auto;
-}
-
 @media (max-width:1100px) {
+    body.editor-body .layout {
+        grid-template-columns: 1fr;
+    }
+
+    body.editor-body .left {
+        width: auto;
+        min-width: 0;
+    }
+
+    body.editor-body.mobile-editing {
+        overflow: hidden;
+    }
+
     body.editor-body.mobile-editing .left {
         display: none;
     }
@@ -658,32 +647,32 @@ body.editor-body .rightPanel {
         display: none;
     }
 
-    body.editor-body.mobile-editing .mobileBackBtn {
-        display: inline-flex;
-    }
-
-    body.editor-body:not(.mobile-editing) .mobileBackBtn {
-        display: none;
-    }
 
 }
 
 @media (max-width:720px) and (orientation: portrait) {
     body.editor-body {
-        overflow-x: hidden;
-        overflow-y: auto;
+        overflow: hidden;
     }
 
-    body.editor-body .wrap,
-    body.editor-body .layout,
+    body.editor-body .wrap {
+        overflow: hidden;
+        height: calc(100dvh - 72px);
+    }
+
+    body.editor-body .layout {
+        min-height: 0;
+        flex: 1;
+    }
+
     body.editor-body .left,
-    body.editor-body .rightPanel,
-    body.editor-body .list,
-    body.editor-body .alist {
-        height: auto;
-        min-height: auto;
-        max-height: none;
-        overflow: visible;
+    body.editor-body .rightPanel {
+        max-height: 100%;
+    }
+
+    body.editor-body .listShell,
+    body.editor-body .alistShell {
+        overflow: auto;
     }
 
     body.editor-body.mobile-editing .rowTop > div:first-child {
@@ -691,24 +680,24 @@ body.editor-body .rightPanel {
     }
 }
 
-@media (max-width:720px) and (orientation: landscape) {
-    html,
+@media (max-height:720px) and (orientation: landscape) {
     body.editor-body {
-        height: auto;
-        min-height: 100%;
-        overflow-x: hidden;
-        overflow-y: auto;
+        overflow: auto;
+    }
+
+    body.editor-body.mobile-editing {
+        overflow: auto;
     }
 
     body.editor-body .wrap {
+        height: auto;
+        min-height: calc(100dvh - 72px);
         overflow: auto;
     }
 
     body.editor-body .layout {
-        height: auto;
+        flex: 0 0 auto;
         min-height: auto;
-        max-height: none;
-        overflow: visible;
     }
 
     body.editor-body .left,
@@ -719,9 +708,9 @@ body.editor-body .rightPanel {
         overflow: visible;
     }
 
-    body.editor-body .list,
-    body.editor-body .alist {
-        max-height: none;
+    body.editor-body .listShell,
+    body.editor-body .alistShell {
         overflow: visible;
+        flex: 0 0 auto;
     }
 }

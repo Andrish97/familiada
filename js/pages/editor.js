@@ -499,7 +499,6 @@ async function boot() {
   });
 
   const btnBack = $("btnBack");
-  const btnMobileBack = $("btnMobileBack");
   btnBack?.addEventListener("click", () => {
     if (document.body.classList.contains("mobile-editing")) {
       leaveQuestionEditor();
@@ -508,9 +507,6 @@ async function boot() {
     location.href = "builder.html";
   });
 
-  btnMobileBack?.addEventListener("click", () => {
-    leaveQuestionEditor();
-  });
 
   $("btnManual")?.addEventListener("click", () => {
     const url = new URL("manual.html", location.href);
@@ -601,9 +597,9 @@ async function boot() {
   gameName?.addEventListener("blur", saveNameIfChanged);
 
   /* ---------- state ---------- */
-  let questions = await renumberQuestions(gameId);
+  let questions = [];
   let activeQId = null;
-  let answers = activeQId && cfg.allowAnswers ? await listAnswers(activeQId) : [];
+  let answers = [];
 
   /* ---------- refs ---------- */
   const qList = $("qList");
@@ -620,9 +616,6 @@ async function boot() {
     document.body.classList.toggle("mobile-editing", on);
     if (btnBack) {
       btnBack.textContent = on ? t("editor.backToQuestions") : t("editor.backToGames");
-    }
-    if (btnMobileBack) {
-      btnMobileBack.textContent = t("editor.backToQuestions");
     }
   }
 
@@ -641,15 +634,15 @@ async function boot() {
 
 
   // KLUCZ: liczymy count + (prepared) sumę punktów -> do kafelków i kolorów
-  async function refreshCounts() {
-    const qs = await listQuestions(gameId);
+  async function refreshCounts(baseQuestions = null) {
+    const qs = Array.isArray(baseQuestions) ? baseQuestions : await listQuestions(gameId);
 
     if (!cfg.allowAnswers) {
       questions = qs;
       return;
     }
 
-    for (const q of qs) {
+    await Promise.all(qs.map(async (q) => {
       const as = await listAnswers(q.id);
       q.__answerCount = as.length;
 
@@ -663,7 +656,7 @@ async function boot() {
       } else {
         q.__sumPoints = null;
       }
-    }
+    }));
 
     questions = qs;
   }
@@ -699,7 +692,7 @@ async function boot() {
       activeQId = q.id;
 
       await loadAnswersForActive();
-      await refreshCounts();
+      await refreshCounts(questions);
 
       renderQuestions();
       renderEditor();
@@ -723,7 +716,7 @@ async function boot() {
       await deleteQuestionDeep(qId);
 
       questions = await renumberQuestions(gameId);
-      await refreshCounts();
+      await refreshCounts(questions);
 
       if (activeQId === qId) {
         activeQId = defaultActiveQuestionId();
@@ -833,7 +826,7 @@ async function boot() {
       await createAnswer(activeQId, ord, MSG.answerDefault(ord), 0);
 
       answers = await listAnswers(activeQId);
-      await refreshCounts();
+      await refreshCounts(questions);
 
       renderQuestions();
       renderAnswers();
@@ -851,7 +844,7 @@ async function boot() {
     try {
       await deleteAnswer(aId);
       answers = await listAnswers(activeQId);
-      await refreshCounts();
+      await refreshCounts(questions);
       renderQuestions();
       renderAnswers();
       setMsg(MSG.removedAnswer());
@@ -944,7 +937,7 @@ async function boot() {
           await updateAnswer(a.id, { fixed_points: val });
 
           answers = await listAnswers(activeQId);
-          await refreshCounts(); // ważne dla kafelków w lewo
+          await refreshCounts(questions); // ważne dla kafelków w lewo
           renderQuestions();
           renderAnswers();
           setMsg(MSG.saved());
@@ -1159,7 +1152,7 @@ async function boot() {
       setTxtImportProgress({ step: MSG.importRenumber(), i: done, n: total, msg: MSG.importProgressOk() });
       
       setTxtImportProgress({ step: MSG.importCountStatuses(), i: done, n: total, msg: "" });
-      await refreshCounts();
+      await refreshCounts(questions);
       done += 1;
       setTxtImportProgress({ step: MSG.importCountStatuses(), i: done, n: total, msg: MSG.importProgressOk() });
       
@@ -1203,7 +1196,7 @@ async function boot() {
 
   /* ---------- init ---------- */
   questions = await renumberQuestions(gameId);
-  await refreshCounts();
+  await refreshCounts(questions);
   activeQId = defaultActiveQuestionId();
   await loadAnswersForActive();
 

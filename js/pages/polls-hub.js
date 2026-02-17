@@ -255,39 +255,32 @@ function buildMailHtml({ title, subtitle, body, actionLabel, actionUrl }) {
   `.trim();
 }
 
-async function sendMail({ to, subject, html }) {
+async function sendMailBatch(items) {
   const { data } = await sb().auth.getSession();
   const token = data?.session?.access_token;
   if (!token) throw new Error(t("pollsHubPolls.errors.mailSession"));
+
   const doReq = async (accessToken) => fetch(MAIL_FUNCTION_URL, {
     method: "POST",
     headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ to, subject, html }),
+    body: JSON.stringify({ items }),
   });
+
   let res = await doReq(token);
   if (res.status === 401) {
     const { data: refreshed } = await sb().auth.refreshSession();
     const freshToken = refreshed?.session?.access_token;
     if (freshToken) res = await doReq(freshToken);
   }
-  if (!res.ok) throw new Error((await res.text()) || t("pollsHubPolls.errors.mailSend"));
-}
 
-async function sendTaskEmail({ to, link, pollName, ownerLabel }) {
-  const actionUrl = mailLink(link);
-  const safeName = pollName ? MSG.pollNameLabel(pollName) : MSG.pollFallback();
-  const html = buildMailHtml({
-    title: MSG.mailTaskTitle(),
-    subtitle: MSG.mailSubtitle(),
-    body: MSG.mailTaskBody(ownerLabel, safeName),
-    actionLabel: MSG.mailTaskAction(),
-    actionUrl,
-  });
-  await sendMail({
-    to,
-    subject: MSG.mailTaskSubject(pollName || MSG.pollFallback()),
-    html,
-  });
+  let payload = null;
+  try { payload = await res.json(); } catch { payload = null; }
+
+  if (!res.ok || !payload?.ok) {
+    throw new Error(payload?.error || t("pollsHubPolls.errors.mailSend"));
+  }
+
+  return payload; // { ok:true, results:[{to, ok, error?}] }
 }
 
 function isPollArchived(poll) {
@@ -691,17 +684,63 @@ async function saveShareModal() {
     if (mailItems.length) {
       const ownerLabel = currentUser?.username || currentUser?.email || MSG.ownerFallback();
       const pollName = selectedPoll?.name || "";
+
       setProgress({ show: true, step: MSG.shareStep(), i: 2, n: 4, msg: MSG.mailBatchSending() });
-      const results = await Promise.allSettled(mailItems.map((item) => sendTaskEmail({ to: item.to, link: item.link, pollName, ownerLabel })));
+
+      const emailToTaskId = new Map();
+      const items = mailItems
+        .map((item) => {
+          if (item?.to) emailToTaskId.set(String(item.to).toLowerCase(), item.task_id || null);
+
+          const actionUrl = mailLink(item.link);
+          const safeName = pollName ? MSG.pollNameLabel(pollName) : MSG.pollFallback();
+          const html = buildMailHtml({
+            title: MSG.mailTaskTitle(),
+            subtitle: MSG.mailSubtitle(),
+            body: MSG.mailTaskBody(ownerLabel, safeName),
+            actionLabel: MSG.mailTaskAction(),
+            actionUrl,
+          });
+
+          return {
+            to: item.to,
+            subject: MSG.mailTaskSubject(pollName || MSG.pollFallback()),
+            html,
+          };
+        })
+        .filter((x) => x.to && x.subject && x.html);
+
+      let failedCount = 0;
       const sentTaskIds = [];
-      results.forEach((result, index) => {
-        if (result.status === "fulfilled") {
-          sentCount += 1;
-          if (mailItems[index]?.task_id) sentTaskIds.push(mailItems[index].task_id);
+      let batchFailed = false;
+
+      let out = { results: [] };
+      if (items.length) {
+        try {
+          out = await sendMailBatch(items); // 1 request
+        } catch (e) {
+          batchFailed = true;
+          failedCount = items.length;
+          await alertModal({ text: `${MSG.mailFailed()} (${failedCount}/${items.length})` });
         }
-      });
-      const failed = results.filter((r) => r.status === "rejected").length;
-      if (failed) await alertModal({ text: `${MSG.mailFailed()} (${failed}/${mailItems.length})` });
+      }
+
+      const results = Array.isArray(out?.results) ? out.results : [];
+      for (const r of results) {
+        const emailKey = String(r?.to || "").toLowerCase();
+        if (r?.ok) {
+          sentCount += 1;
+          const tid = emailToTaskId.get(emailKey);
+          if (tid) sentTaskIds.push(tid);
+        } else if (emailKey) {
+          failedCount += 1;
+        }
+      }
+
+      if (failedCount && !batchFailed) {
+        await alertModal({ text: `${MSG.mailFailed()} (${failedCount}/${items.length})` });
+      }
+
       if (sentTaskIds.length) {
         setProgress({ show: true, step: MSG.shareStep(), i: 3, n: 4, msg: MSG.mailMarking() });
         await sb().rpc("polls_hub_tasks_mark_emailed", { p_task_ids: sentTaskIds });
