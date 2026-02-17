@@ -26,6 +26,13 @@ const MAILGUN_REGION = (Deno.env.get("MAILGUN_REGION") || "eu").toLowerCase();
 const FROM_EMAIL = Deno.env.get("MAIL_FROM_EMAIL") || "no-reply@familiada.online";
 const FROM_NAME = Deno.env.get("MAIL_FROM_NAME") || "Familiada";
 
+function scrubEmail(email: string) {
+  const e = String(email || "").trim();
+  const at = e.indexOf("@");
+  if (at <= 1) return e ? "***" : "";
+  return `${e.slice(0, 2)}***${e.slice(at)}`;
+}
+
 function json(obj: any, status = 200) {
   return new Response(JSON.stringify(obj), {
     status,
@@ -183,7 +190,15 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") return json({ ok: false, error: "Method not allowed" }, 405);
 
+
   try {
+
+    console.log("[send-mail] request:start", {
+      method: req.method,
+      contentType: req.headers.get("content-type") || "",
+      hasAuth: !!req.headers.get("authorization"),
+    });
+
     // ---- AUTH ----
     const authHeader = req.headers.get("authorization") || "";
     const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
@@ -192,6 +207,7 @@ serve(async (req) => {
     const { data: userData, error: authError } = await sbAnon.auth.getUser(token);
     if (authError || !userData?.user) return json({ ok: false, error: "Invalid JWT" }, 401);
     const uid = userData.user.id;
+    console.log("[send-mail] auth:ok", { uid });
 
     // ---- BODY ----
     const raw = await req.text();
@@ -206,6 +222,17 @@ serve(async (req) => {
 
     const { items, mode } = parseItems(body);
     if (!items.length) return json({ ok: false, error: "Missing fields (to, subject, html)" }, 400);
+    console.log("[send-mail] body:parsed", {
+      mode,
+      itemsIn: items.length,
+      preview: items.slice(0, 3).map((x) => ({
+        to: scrubEmail(x.to),
+        subjectLen: x.subject.length,
+        htmlLen: x.html.length,
+        hasMeta: !!x.meta,
+      })),
+    });
+
 
     // ---- SETTINGS (DB) ----
     let settings;
@@ -219,6 +246,17 @@ serve(async (req) => {
     const delayMs = Math.max(0, Math.min(5000, Number(settings.delay_ms || 0)));
     const batchMax = Math.max(1, Math.min(500, Number(settings.batch_max || 100)));
     const sliced = items.slice(0, batchMax);
+
+    console.log("[send-mail] settings", {
+      queue_enabled: settings.queue_enabled,
+      provider_order_raw: settings.provider_order,
+      order,
+      delayMs,
+      batchMax,
+    });
+
+    console.log("[send-mail] batch:slice", { requested: items.length, used: sliced.length });
+
 
     // ---- QUEUE MODE ----
     if (settings.queue_enabled) {
@@ -234,8 +272,17 @@ serve(async (req) => {
         meta: it.meta || {},
       }));
 
+      console.log("[send-mail] mode:queue", {
+        count: rows.length,
+        not_before: rows[0]?.not_before,
+        provider_order: rows[0]?.provider_order,
+      });
+
+
       const { error } = await sbAdmin.from("mail_queue").insert(rows);
       if (error) return json({ ok: false, error: "queue_insert_failed" }, 500);
+
+      console.log("[send-mail] queue:insert_ok", { count: rows.length });
 
       return json({
         ok: true,
@@ -245,19 +292,25 @@ serve(async (req) => {
     }
 
     // ---- SEND NOW MODE ----
+    console.log("[send-mail] mode:send_now", { count: sliced.length, delayMs, order });
     const results: any[] = [];
     for (let i = 0; i < sliced.length; i++) {
       const it = sliced[i];
+      console.log("[send-mail] send:item_start", { i: i + 1, n: sliced.length, to: scrubEmail(it.to) });
       try {
         const out = await sendWithFallbacks(it, order);
         results.push({ to: it.to, ok: true, provider: out.provider });
+        console.log("[send-mail] send:item_ok", { to: scrubEmail(it.to), provider: out.provider });
       } catch (e) {
         results.push({ to: it.to, ok: false, error: String((e as any)?.message || e) });
+        console.warn("[send-mail] send:item_fail", { to: scrubEmail(it.to), error: String((e as any)?.message || e) });
       }
       if (delayMs && i < sliced.length - 1) await sleep(delayMs);
     }
 
-    return json({ ok: true, mode, results });
+    const failed = results.filter((r) => !r.ok).length;
+    console.log("[send-mail] request:done", { mode, total: results.length, failed });
+    return json({ ok: failed === 0, mode, results, failed });
   } catch (e) {
     return json({ ok: false, error: String((e as any)?.message || e) }, 500);
   }
