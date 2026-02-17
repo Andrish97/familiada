@@ -110,17 +110,21 @@ async function sendWithFallbacks(to: string, subject: string, html: string, orde
 
 serve(async (req) => {
   console.log("[mail-worker] request:start", { method: req.method, url: req.url });
-  if (req.method !== "POST") return json({ ok: false, error: "Method not allowed" }, 405);
+  if (req.method !== "POST" && req.method !== "GET") return json({ ok: false, error: "Method not allowed" }, 405);
+
+  const url = new URL(req.url);
 
   if (WORKER_SECRET) {
-    const got = req.headers.get("x-mail-worker-secret") || "";
+    const fromHeader = req.headers.get("x-mail-worker-secret") || "";
+    const authHeader = req.headers.get("authorization") || "";
+    const fromBearer = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
+    const fromQuery = url.searchParams.get("secret") || "";
+    const got = fromHeader || fromBearer || fromQuery;
     if (got !== WORKER_SECRET) {
       console.warn("[mail-worker] request:forbidden_bad_secret");
       return json({ ok: false, error: "forbidden" }, 403);
     }
   }
-
-  const url = new URL(req.url);
   const limit = Math.max(1, Math.min(200, Number(url.searchParams.get("limit") || "25")));
 
   const settings = await loadSettings();

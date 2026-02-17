@@ -2722,11 +2722,17 @@ CREATE OR REPLACE FUNCTION public.mail_queue_mark(p_id uuid, p_ok boolean, p_pro
  SET search_path TO 'public', 'pg_temp'
 AS $function$
 begin
-  update public.mail_queue
-  set status = case when p_ok then 'sent' else 'failed' end,
-      provider_used = p_provider,
-      last_error = case when p_ok then null else left(coalesce(p_error,''), 2000) end
-  where id = p_id;
+  if p_ok then
+    -- sukcesy nie muszą zalegać w kolejce
+    delete from public.mail_queue
+    where id = p_id;
+  else
+    update public.mail_queue
+    set status = 'failed',
+        provider_used = p_provider,
+        last_error = left(coalesce(p_error,''), 2000)
+    where id = p_id;
+  end if;
 end;
 $function$
 
@@ -5535,7 +5541,10 @@ begin
     select
       v_uid,
       e.subscriber_user_id,
-      e.resolved_email,
+      case
+        when e.subscriber_user_id is not null then null
+        else e.resolved_email
+      end,
       p_game_id,
       v_poll_type,
       v_share_key,
