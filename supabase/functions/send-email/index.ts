@@ -39,6 +39,13 @@ const HOOK_SECRET_RAW = Deno.env.get("SEND_EMAIL_HOOK_SECRET") || "";
 const HOOK_SECRET = HOOK_SECRET_RAW.replace("v1,whsec_", "");
 const webhook = new Webhook(HOOK_SECRET);
 
+function scrubEmail(email: string) {
+  const e = String(email || "").trim();
+  const at = e.indexOf("@");
+  if (at <= 1) return e ? "***" : "";
+  return `${e.slice(0, 2)}***${e.slice(at)}`;
+}
+
 async function sendViaSendgrid(to: string, subject: string, html: string) {
   if (!SENDGRID_KEY) throw new Error("missing_SENDGRID_API_KEY");
   const res = await fetch("https://api.sendgrid.com/v3/mail/send", {
@@ -164,15 +171,18 @@ async function sendEmail(to: string, subject: string, html: string) {
 }
 
 serve(async (req) => {
+  console.log("[send-email] request:start", { method: req.method, contentType: req.headers.get("content-type") || "" });
   if (req.method !== "POST") {
     return json({ ok: false, error: "Method not allowed" }, 405);
   }
 
   if (!SENDGRID_KEY) {
+    console.error("[send-email] config:missing_SENDGRID_API_KEY");
     return json({ ok: false, error: "Missing SENDGRID_API_KEY env" }, 500);
   }
 
   if (!HOOK_SECRET) {
+    console.error("[send-email] config:missing_SEND_EMAIL_HOOK_SECRET");
     return json({ ok: false, error: "Missing SEND_EMAIL_HOOK_SECRET env" }, 500);
   }
 
@@ -189,11 +199,13 @@ serve(async (req) => {
       "webhook-signature": sig,
     }) as HookPayload;
   } catch (err) {
+    console.error("[send-email] request:invalid_signature", { error: String(err) });
     return json({ ok: false, error: `Invalid signature: ${String(err)}` }, 401);
   }
 
   try {
     const redirectUrl = mustGetRedirectUrl(payload);
+    console.log("[send-email] payload:verified", { actionType: payload.email_data.email_action_type, userEmail: scrubEmail(payload.user.email || ""), userEmailNew: scrubEmail(payload.user.email_new || ""), redirectTo: payload.email_data.redirect_to || "" });
     const baseOrigin = redirectUrl.origin;
     const lang = pickLang(payload, redirectUrl);
     const type = payload.email_data.email_action_type;
@@ -231,12 +243,14 @@ const tokenHash = payload.email_data.token_hash || "";
       // ✅ CURRENT mail zawsze na payload.user.email
       if (currentEmail) {
         await sendEmail(currentEmail, subject, renderEmailChange(lang, linkCurrent));
+        console.log("[send-email] sent:email_change_current", { to: scrubEmail(currentEmail) });
       }
 
       // ✅ NEW mail tylko jeśli znamy adres z redirect_to?to=
       // I to działa zarówno dla email_change_new, jak i dla “pojedynczego” email_change
       if (targetEmail && targetEmailNormalized !== currentEmailNormalized) {
         await sendEmail(targetEmail, subject, renderEmailChange(lang, linkTarget));
+        console.log("[send-email] sent:email_change_new", { to: scrubEmail(targetEmail) });
       }
 
       return json({ ok: true });
@@ -253,9 +267,11 @@ const tokenHash = payload.email_data.token_hash || "";
         : payload.user.email;
 
     await sendEmail(to, subject, html);
+    console.log("[send-email] sent", { actionType: type, to: scrubEmail(to) });
 
     return json({ ok: true });
   } catch (err) {
+    console.error("[send-email] request:error", { error: String(err) });
     return json({ ok: false, error: `Hook error: ${String(err)}` }, 500);
   }
 });
