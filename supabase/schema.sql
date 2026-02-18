@@ -251,7 +251,8 @@ CREATE TABLE public.user_cooldowns (
 CREATE TABLE public.user_flags (
   user_id uuid NOT NULL,
   demo boolean NOT NULL DEFAULT true,
-  updated_at timestamp with time zone NOT NULL DEFAULT now()
+  updated_at timestamp with time zone NOT NULL DEFAULT now(),
+  email_notifications boolean NOT NULL DEFAULT true
 );
 
 CREATE TABLE public.user_logos (
