@@ -627,13 +627,15 @@ async function resolveLoginToEmail(login) {
 }
 
 function mailLink(link) {
-  // link z DB jest typu "/bases.html?share=..."
+  let u;
   try {
-    const u = new URL(link, location.origin);
-    return u.toString();
+    u = new URL(link, location.origin);
   } catch {
-    return String(link || "");
+    u = new URL(String(link || ""), location.origin);
   }
+
+  u.searchParams.set("lang", getUiLang() || "pl");
+  return u.href;
 }
 
 function escapeMail(s) {

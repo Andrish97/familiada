@@ -2944,8 +2944,6 @@ const pl = {
     },
     pollReadyAlert: "Dokończ grę w Moich grach",
     resendCooldownAlert: "Ponowne wysłanie zaproszenia możliwe za {hours} godz.",
-    cooldownLeftDays: "Spróbuj ponownie za {n} dni",
-    cooldownLeftHours: "Spróbuj ponownie za {n} godz.",
   },
   pollsHubPolls: {
     dash: "-",
@@ -3413,6 +3411,8 @@ const pl = {
     },
     pollReadyAlert: "Dokończ grę w Moich grach",
     resendCooldownAlert: "Ponowne wysłanie zaproszenia możliwe za {hours} godz.",
+    cooldownLeftDays: "Spróbuj ponownie za {n} dni",
+    cooldownLeftHours: "Spróbuj ponownie za {n} godz.",
     shareCooldownAlert: "Ponowne zaproszenie do głosowania możliwe za {hours} godz.",
   },
   logoEditor: {
