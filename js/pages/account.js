@@ -3,6 +3,8 @@ import { cooldownGet, cooldownReserve, cooldownRelease } from "../core/cooldown.
 import { requireAuth, updateUserLanguage, validatePassword, validateUsername, signOut, niceAuthError } from "../core/auth.js";
 import { getUserEmailNotificationsFlag, setUserEmailNotificationsFlag } from "../core/user-flags.js";
 import { initI18n, t, getUiLang, withLangParam } from "../../translation/translation.js";
+import { confirmModal } from "../core/modal.js";
+
 
 const status = document.getElementById("status");
 const err = document.getElementById("err");
@@ -74,7 +76,14 @@ async function initEmailNotificationsUi(user) {
     const next = !!emailNotificationsChk.checked;
 
     if (!next) {
-      const ok = window.confirm(t("account.emailNotifDisableConfirm"));
+      const ok = await confirmModal({
+        title: t("account.emailNotifDisableTitle"),
+        text: t("account.emailNotifDisableConfirm"),
+        okText: t("account.emailNotifDisableOk"),
+        cancelText: t("common.cancel"),
+        danger: true,
+      });
+    
       if (!ok) {
         emailNotificationsChk.checked = true;
         return;
