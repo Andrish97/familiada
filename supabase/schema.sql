@@ -1,3 +1,4 @@
+
 CREATE TABLE public.answers (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   question_id uuid NOT NULL,
@@ -78,7 +79,9 @@ CREATE TABLE public.mail_queue (
   last_error text,
   provider_used text,
   provider_order text,
-  meta jsonb NOT NULL DEFAULT '{}'::jsonb
+  meta jsonb NOT NULL DEFAULT '{}'::jsonb,
+  picked_at timestamp with time zone,
+  last_attempt_at timestamp with time zone
 );
 
 CREATE TABLE public.mail_settings (
@@ -2549,6 +2552,35 @@ begin
         username = excluded.username;
 
   return new;
+end;
+$function$
+
+
+CREATE OR REPLACE FUNCTION public.invoke_mail_worker(p_limit integer DEFAULT 25)
+ RETURNS void
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'pg_temp'
+AS $function$
+declare
+  v_url text :=
+    (select decrypted_secret from vault.decrypted_secrets where name = 'project_url')
+    || '/functions/v1/mail-worker?limit=' || p_limit::text;
+
+  v_anon text := (select decrypted_secret from vault.decrypted_secrets where name = 'anon_key');
+  v_secret text := (select decrypted_secret from vault.decrypted_secrets where name = 'mail_worker_secret');
+begin
+  perform net.http_post(
+    url := v_url,
+    headers := jsonb_build_object(
+      'Content-Type', 'application/json',
+      -- ✅ jeśli Edge Function ma Require JWT = ON
+      'Authorization', 'Bearer ' || v_anon,
+      -- ✅ Twój własny gate w mail-worker
+      'x-mail-worker-secret', v_secret
+    ),
+    body := '{}'::jsonb
+  );
 end;
 $function$
 
@@ -5556,7 +5588,15 @@ begin
       where ex.task_id is null
         and cd.sub_id is null
     ) e
-    returning id, recipient_email, token
+    returning id, recipient_user_id, recipient_email, token
+  ),
+  mail_rows as (
+    select
+      i.id,
+      coalesce(lower(i.recipient_email), lower(p.email)) as to_email,
+      i.token
+    from ins i
+    left join public.profiles p on p.id = i.recipient_user_id
   )
   select
     (select count(*) from ins)::int,
@@ -5566,15 +5606,15 @@ begin
       jsonb_agg(
         jsonb_build_object(
           'task_id', id,
-          'to', recipient_email,
+          'to', to_email,
           'token', token,
           'link', ('poll-go.html?t=' || token::text)
         )
-      ) filter (where recipient_email is not null),
+      ) filter (where public._norm_email(to_email) is not null),
       '[]'::jsonb
     )
   into v_created, v_blocked, v_blocked_sub_ids, v_mail
-  from ins;
+  from mail_rows;
 
   v_kept := greatest(coalesce(array_length(p_sub_ids,1),0) - v_created, 0);
 
