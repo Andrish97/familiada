@@ -183,3 +183,29 @@
   pointer-events: none;
   visibility: hidden;
 }
+
+
+/* ==========================================
+   Email notifications panel (wide)
+========================================== */
+
+.account-panel--wide{
+  grid-column: 1 / -1;
+}
+
+.account-panel--email-notif{
+  grid-template-rows: auto auto auto auto;
+}
+
+.flag-row{
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  user-select: none;
+}
+
+.flag-row .chk{
+  width: 20px;
+  height: 20px;
+}

@@ -83,6 +83,19 @@
         <input class="inp" id="deletePassword" type="password" placeholder="Hasło" autocomplete="current-password" data-i18n-placeholder="account.deletePlaceholder"/>
         <button class="btn danger full" id="deleteAccount" type="button" data-i18n="account.deleteButton">Usuń konto i dane</button>
       </section>
+
+
+      <section class="account-panel account-panel--wide account-panel--email-notif">
+        <div class="section-title" data-i18n="account.emailNotifTitle"></div>
+        <div class="section-hint" data-i18n="account.emailNotifHint"></div>
+
+        <label class="flag-row">
+          <input type="checkbox" class="chk" id="emailNotifications"/>
+          <span data-i18n="account.emailNotifCheckbox"></span>
+        </label>
+
+        <div class="cooldown" id="emailNotifSaved" hidden></div>
+      </section>
     </div>
   </main>
 </body>

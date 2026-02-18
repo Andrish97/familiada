@@ -1,6 +1,7 @@
 import { sb } from "../core/supabase.js";
 import { cooldownGet, cooldownReserve, cooldownRelease } from "../core/cooldown.js";
 import { requireAuth, updateUserLanguage, validatePassword, validateUsername, signOut, niceAuthError } from "../core/auth.js";
+import { getUserEmailNotificationsFlag, setUserEmailNotificationsFlag } from "../core/user-flags.js";
 import { initI18n, t, getUiLang, withLangParam } from "../../translation/translation.js";
 
 const status = document.getElementById("status");
@@ -11,6 +12,9 @@ const emailInput = document.getElementById("email");
 const pass1 = document.getElementById("pass1");
 const pass2 = document.getElementById("pass2");
 const deletePassword = document.getElementById("deletePassword");
+
+const emailNotificationsChk = document.getElementById("emailNotifications");
+const emailNotifSaved = document.getElementById("emailNotifSaved");
 
 const saveUsername = document.getElementById("saveUsername");
 const saveEmail = document.getElementById("saveEmail");
@@ -38,6 +42,59 @@ function buildManualUrl() {
   return url.toString();
 }
 function setErr(m = "") { if (err) err.textContent = m; }
+let emailNotifTimer = null;
+
+function showEmailNotifSaved(msg = "") {
+  if (!emailNotifSaved) return;
+  if (emailNotifTimer) clearTimeout(emailNotifTimer);
+  if (!msg) {
+    emailNotifSaved.hidden = true;
+    emailNotifSaved.textContent = "";
+    return;
+  }
+  emailNotifSaved.textContent = msg;
+  emailNotifSaved.hidden = false;
+  emailNotifTimer = setTimeout(() => {
+    if (emailNotifSaved) emailNotifSaved.hidden = true;
+  }, 2200);
+}
+
+async function initEmailNotificationsUi(user) {
+  if (!emailNotificationsChk || !user?.id) return;
+
+  try {
+    const enabled = await getUserEmailNotificationsFlag(user.id);
+    emailNotificationsChk.checked = enabled !== false;
+  } catch (e) {
+    console.warn("email_notifications load failed", e);
+    emailNotificationsChk.checked = true; // safe default
+  }
+
+  emailNotificationsChk.addEventListener("change", async () => {
+    const next = !!emailNotificationsChk.checked;
+
+    if (!next) {
+      const ok = window.confirm(t("account.emailNotifDisableConfirm"));
+      if (!ok) {
+        emailNotificationsChk.checked = true;
+        return;
+      }
+    }
+
+    emailNotificationsChk.disabled = true;
+    try {
+      await setUserEmailNotificationsFlag(user.id, next);
+      showEmailNotifSaved(next ? t("account.emailNotifSavedOn") : t("account.emailNotifSavedOff"));
+    } catch (e) {
+      console.error(e);
+      emailNotificationsChk.checked = !next; // rollback
+      showEmailNotifSaved(t("account.emailNotifSaveFailed"));
+    } finally {
+      emailNotificationsChk.disabled = false;
+    }
+  });
+}
+
 
 backToGames?.addEventListener("click", () => {
   const target = backToGames.dataset.baseHref || "builder.html";
@@ -287,6 +344,8 @@ async function loadProfile() {
   usernameInput.value = user.username || "";
   emailInput.value = user.email || "";
   currentEmail = user.email || "";
+
+  await initEmailNotificationsUi(user);
 
   setStatus(t("account.statusLoaded"));
   await refreshAuthEmailState();
