@@ -157,12 +157,16 @@ function cooldownTextFromUntil(untilTsMs) {
 }
 
 
-function mailLink(path) {
+function mailLink(path, { withLang = false } = {}) {
+  let u;
   try {
-    return new URL(path, location.origin).href;
+    u = new URL(path, location.origin);
   } catch {
-    return path;
+    u = new URL(String(path || ""), location.origin);
   }
+
+  if (withLang) u.searchParams.set("lang", getUiLang() || "pl");
+  return u.href;
 }
 
 function wrapEmailDoc(innerHtml) {
@@ -241,7 +245,7 @@ async function sendSubscriptionEmail({ to, link, ownerLabel }) {
       subtitle: t("pollsHubSubscriptions.mail.subtitle"),
       body: t("pollsHubSubscriptions.mail.subscriptionBody", { owner: ownerLabel }),
       actionLabel: t("pollsHubSubscriptions.mail.subscriptionAction"),
-      actionUrl: mailLink(link),
+      actionUrl: mailLink(link, { withLang: true }),
     }),
   });
 }

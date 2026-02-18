@@ -2939,8 +2939,6 @@ const en = {
     },
     pollReadyAlert: "Finish the game in My games",
     resendCooldownAlert: "You can resend the invite in {hours}h.",
-    cooldownLeftDays: "Try again in {n} days",
-    cooldownLeftHours: "Try again in {n} hours",
   },
   pollsHubPolls: {
     dash: "-",
@@ -3408,6 +3406,8 @@ const en = {
     },
     pollReadyAlert: "Finish the game in My games",
     resendCooldownAlert: "You can resend the invite in {hours}h.",
+    cooldownLeftDays: "Try again in {n} days",
+    cooldownLeftHours: "Try again in {n} hours",
     shareCooldownAlert: "You can invite again in {hours}h.",
   },
   logoEditor: {

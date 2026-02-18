@@ -3,15 +3,17 @@ import path from "path";
 import url from "url";
 
 /**
- * Konfiguracja repo
- * - root: domyślnie katalog repo (parent scripts/)
- * - langs: ścieżki do plików tłumaczeń (ESM export default)
- * - includeExt: jakie pliki skanujemy pod użycie kluczy
- * - ignoreDirs: co ignorować
+ * i18n audit (repo-wide)
+ *
+ * Usage:
+ *   node scripts/i18n-audit.mjs
+ *   node scripts/i18n-audit.mjs --strict
+ *   node scripts/i18n-audit.mjs --only-missing
+ *   node scripts/i18n-audit.mjs --limit=300
  */
+
 const __filename = url.fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
 const root = path.resolve(__dirname, "..");
 
 const langs = {
@@ -22,8 +24,27 @@ const langs = {
 
 const includeExt = new Set([".js", ".mjs", ".cjs", ".ts", ".html"]);
 const ignoreDirs = new Set(["node_modules", ".git", "dist", "build", ".next", "out", "coverage"]);
+const ignoreFiles = new Set(["scripts/i18n-audit.mjs"]);
 
-/** ============ Helpers: FS ============ */
+function parseArgs(argv) {
+  const opts = {
+    strict: false,
+    onlyMissing: false,
+    limit: 500,
+  };
+
+  for (const arg of argv) {
+    if (arg === "--strict") opts.strict = true;
+    else if (arg === "--only-missing") opts.onlyMissing = true;
+    else if (arg.startsWith("--limit=")) {
+      const n = Number(arg.slice("--limit=".length));
+      if (Number.isFinite(n) && n > 0) opts.limit = Math.floor(n);
+    }
+  }
+
+  return opts;
+}
+
 function walk(dir, out = []) {
   const entries = fs.readdirSync(dir, { withFileTypes: true });
   for (const e of entries) {
@@ -32,6 +53,8 @@ function walk(dir, out = []) {
       if (ignoreDirs.has(e.name)) continue;
       walk(p, out);
     } else if (e.isFile()) {
+      const rel = path.relative(root, p).replace(/\\/g, "/");
+      if (ignoreFiles.has(rel)) continue;
       const ext = path.extname(e.name).toLowerCase();
       if (includeExt.has(ext)) out.push(p);
     }
@@ -39,7 +62,6 @@ function walk(dir, out = []) {
   return out;
 }
 
-/** ============ Extract: used keys ============ */
 /**
  * Obsługuje:
  *   t("a.b.c")
@@ -50,24 +72,25 @@ function walk(dir, out = []) {
  *
  * Nie obsłuży dynamicznych: t(prefix + key)
  */
+function stripComments(txt) {
+  return txt
+    .replace(/\/\*[\s\S]*?\*\//g, "")
+    .replace(/^\s*\/\/.*$/gm, "");
+}
+
 function extractKeysFromText(txt) {
   const keys = new Set();
+  const src = stripComments(txt);
 
-  // t("...")
-  for (const m of txt.matchAll(/\bt\s*\(\s*["']([^"'\\]+)["']/g)) keys.add(m[1]);
-
-  // t(`...`) bez interpolacji
-  for (const m of txt.matchAll(/\bt\s*\(\s*`([^`$\\]+)`/g)) keys.add(m[1]);
-
-  // data-i18n / data-i18n-html
-  for (const m of txt.matchAll(/data-i18n(?:-html)?\s*=\s*["']([^"'\\]+)["']/g)) keys.add(m[1]);
+  for (const m of src.matchAll(/\bt\s*\(\s*["']([^"'\\]+)["']/g)) keys.add(m[1]);
+  for (const m of src.matchAll(/\bt\s*\(\s*`([^`$\\]+)`/g)) keys.add(m[1]);
+  for (const m of src.matchAll(/data-i18n(?:-html)?\s*=\s*["']([^"'\\]+)["']/g)) keys.add(m[1]);
 
   return keys;
 }
 
 function extractUsedKeys(files) {
   const used = new Set();
-  const byFile = new Map(); // file -> Set(keys) (opcjonalnie)
   for (const f of files) {
     let txt;
     try {
@@ -75,26 +98,22 @@ function extractUsedKeys(files) {
     } catch {
       continue;
     }
+
     const ks = extractKeysFromText(txt);
-    if (ks.size) {
-      byFile.set(f, ks);
-      for (const k of ks) used.add(k);
-    }
+    for (const k of ks) used.add(k);
   }
-  return { used, byFile };
+  return used;
 }
 
-/** ============ Flatten: translation keys ============ */
 function flatten(obj, prefix = "", out = []) {
   if (obj == null) return out;
 
   const t = typeof obj;
-  if (t === "string" || t === "number" || t === "boolean") {
+  if (t === "string" || t === "number" || t === "boolean" || t === "function") {
     out.push(prefix);
     return out;
   }
   if (Array.isArray(obj)) {
-    // ignorujemy tablice jako liście (zwykle nie używasz tego w i18n)
     out.push(prefix);
     return out;
   }
@@ -112,13 +131,12 @@ async function loadLang(filePath) {
   return mod?.default || mod;
 }
 
-/** ============ Diff logic ============ */
 function setDiff(a, b) {
-  // a\b
   const out = [];
   for (const x of a) if (!b.has(x)) out.push(x);
   return out.sort();
 }
+
 function setInter(a, b) {
   const out = [];
   for (const x of a) if (b.has(x)) out.push(x);
@@ -133,16 +151,16 @@ function printSection(title, arr, limit = 200) {
   if (arr.length > limit) console.log(`... +${arr.length - limit} więcej`);
 }
 
-/** ============ Main ============ */
 (async function main() {
+  const opts = parseArgs(process.argv.slice(2));
+
   const files = walk(root);
-  const { used } = extractUsedKeys(files);
+  const used = extractUsedKeys(files);
 
   console.log(`Repo root: ${root}`);
   console.log(`Scanned files: ${files.length}`);
   console.log(`Used keys found: ${used.size}`);
 
-  // Wczytaj i spłaszcz tłumaczenia
   const langKeys = {};
   for (const [code, fp] of Object.entries(langs)) {
     const langObj = await loadLang(fp);
@@ -151,41 +169,55 @@ function printSection(title, arr, limit = 200) {
     console.log(`Lang ${code}: ${langKeys[code].size} keys`);
   }
 
-  // Global: keys defined in ANY lang
   const allDefined = new Set();
   for (const s of Object.values(langKeys)) for (const k of s) allDefined.add(k);
 
-  // 1) Used but not defined anywhere
   const missingEverywhere = setDiff(used, allDefined);
-  printSection("USED but missing in ALL languages", missingEverywhere, 500);
+  printSection("USED but missing in ALL languages", missingEverywhere, opts.limit);
 
-  // 2) Per-lang missing
+  const missingByLang = {};
   for (const [code, s] of Object.entries(langKeys)) {
     const missing = setDiff(used, s);
-    printSection(`MISSING in ${code}`, missing, 500);
+    missingByLang[code] = missing;
+    printSection(`MISSING in ${code}`, missing, opts.limit);
   }
 
-  // 3) Per-lang unused (defined but never used)
-  for (const [code, s] of Object.entries(langKeys)) {
-    const unused = setDiff(s, used);
-    printSection(`UNUSED (dead) in ${code}`, unused, 500);
+  let unusedTotal = 0;
+  if (!opts.onlyMissing) {
+    for (const [code, s] of Object.entries(langKeys)) {
+      const unused = setDiff(s, used);
+      unusedTotal += unused.length;
+      printSection(`UNUSED (dead) in ${code}`, unused, opts.limit);
+    }
   }
 
-  // 4) Orphans: keys existing only in one lang
-  // policz wystąpienia
   const freq = new Map();
-  for (const [code, s] of Object.entries(langKeys)) {
+  for (const s of Object.values(langKeys)) {
     for (const k of s) freq.set(k, (freq.get(k) || 0) + 1);
   }
   const onlyOne = [...freq.entries()].filter(([, n]) => n === 1).map(([k]) => k).sort();
-  printSection("Keys present in ONLY ONE language (translation drift)", onlyOne, 500);
+  printSection("Keys present in ONLY ONE language (translation drift)", onlyOne, opts.limit);
 
-  // 5) “core set” (present in all langs)
   const all3 = Object.values(langKeys).reduce((acc, s) => {
     if (!acc) return new Set(s);
     return new Set(setInter(acc, s));
   }, null);
   console.log(`\nKeys present in ALL langs: ${all3 ? all3.size : 0}`);
+
+  const perLangMissingCount = Object.values(missingByLang).reduce((acc, arr) => acc + arr.length, 0);
+  const hasProblems = missingEverywhere.length > 0 || perLangMissingCount > 0 || onlyOne.length > 0;
+
+  console.log("\nSummary:");
+  console.log(`- missing in all: ${missingEverywhere.length}`);
+  console.log(`- missing per lang (sum): ${perLangMissingCount}`);
+  console.log(`- translation drift (only one lang): ${onlyOne.length}`);
+  if (!opts.onlyMissing) console.log(`- unused (sum of all langs): ${unusedTotal}`);
+
+  if (opts.strict && hasProblems) {
+    console.error("\nStrict mode failed ❌");
+    process.exitCode = 2;
+    return;
+  }
 
   console.log("\nDone ✅");
 })().catch((e) => {
