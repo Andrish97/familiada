@@ -422,17 +422,9 @@ function wrapEmailDoc(innerHtml: string): string {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="color-scheme" content="dark light">
-  <meta name="supported-color-schemes" content="dark light">
-  <style>
-    :root { color-scheme: dark light; }
-
-    /* Apple Mail (iOS/macOS) - wymuszenie dark */
-    @media (prefers-color-scheme: dark) {
-      body, table, td, div { background: #050914 !important; color: #ffffff !important; }
-      a { color: #ffeaa6 !important; }
-    }
-  </style>
+  <meta name="color-scheme" content="dark">
+  <meta name="supported-color-schemes" content="dark">
+  <style>:root{color-scheme:dark}</style>
 </head>
 <body style="margin:0;padding:0;background:#050914;color:#ffffff;">
 ${innerHtml}
