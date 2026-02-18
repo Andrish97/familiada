@@ -183,3 +183,14 @@
   pointer-events: none;
   visibility: hidden;
 }
+.account-panel--wide{
+  grid-column: 1 / -1; /* na desktop: szerokość 2 kafli */
+}
+
+/* „wąska” sekcja = mniejsza wysokość / ciaśniej */
+.account-panel--email-notif{
+  grid-template-rows: auto auto;
+  gap: 8px;
+}
+
+
