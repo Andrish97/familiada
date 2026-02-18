@@ -2819,8 +2819,6 @@ const uk = {
     },
     pollReadyAlert: "Завершіть гру в «Мої ігри»",
     resendCooldownAlert: "Повторне запрошення можна надіслати через {hours} год.",
-    cooldownLeftDays: "Спробуй ще раз через {n} дн.",
-    cooldownLeftHours: "Спробуй ще раз через {n} год.",
   },
   pollsHubPolls: {
     dash: "-",
@@ -3288,6 +3286,8 @@ const uk = {
     },
     pollReadyAlert: "Завершіть гру в «Мої ігри»",
     resendCooldownAlert: "Повторне запрошення можна надіслати через {hours} год.",
+    cooldownLeftDays: "Спробуй ще раз через {n} дн.",
+    cooldownLeftHours: "Спробуй ще раз через {n} год.",
     shareCooldownAlert: "Повторно запросити до голосування можна через {hours} год.",
   },
   logoEditor: {
