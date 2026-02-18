@@ -186,6 +186,63 @@ async function loadSettings() {
   };
 }
 
+function normEmail(e: string) {
+  const s = String(e || "").trim().toLowerCase();
+  return s.includes("@") ? s : "";
+}
+
+async function filterByEmailNotifications(items: MailItem[]) {
+  // 1) zbierz unikalne maile
+  const emails = [...new Set(items.map((it) => normEmail(it.to)).filter(Boolean))];
+  if (!emails.length) return { filtered: items, skipped: 0 };
+
+  // 2) resolve email -> user_id (profiles)
+  const { data: profs, error: pErr } = await sbAdmin
+    .from("profiles")
+    .select("id,email")
+    .in("email", emails);
+
+  if (pErr) throw pErr;
+
+  const emailToUid = new Map<string, string>();
+  for (const p of profs || []) {
+    const em = normEmail((p as any).email);
+    if (em) emailToUid.set(em, (p as any).id);
+  }
+
+  const uids = [...new Set([...emailToUid.values()])];
+  if (!uids.length) return { filtered: items, skipped: 0 };
+
+  // 3) user_flags: email_notifications
+  const { data: flags, error: fErr } = await sbAdmin
+    .from("user_flags")
+    .select("user_id,email_notifications")
+    .in("user_id", uids);
+
+  if (fErr) throw fErr;
+
+  const uidAllowed = new Map<string, boolean>();
+  // default: true (brak wiersza => true)
+  for (const uid of uids) uidAllowed.set(uid, true);
+  for (const r of flags || []) {
+    uidAllowed.set((r as any).user_id, (r as any).email_notifications !== false);
+  }
+
+  // 4) filtruj items po email->uid->flag
+  let skipped = 0;
+  const filtered = items.filter((it) => {
+    const em = normEmail(it.to);
+    if (!em) return true; // zostaw (dziwny/niepełny email – i tak parseItems już filtruje)
+    const uid = emailToUid.get(em);
+    if (!uid) return true; // email-only (nie ma profilu)
+    const ok = uidAllowed.get(uid) !== false;
+    if (!ok) skipped++;
+    return ok;
+  });
+
+  return { filtered, skipped };
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") return json({ ok: false, error: "Method not allowed" }, 405);
@@ -246,6 +303,15 @@ serve(async (req) => {
     const delayMs = Math.max(0, Math.min(5000, Number(settings.delay_ms || 0)));
     const batchMax = Math.max(1, Math.min(500, Number(settings.batch_max || 100)));
     const sliced = items.slice(0, batchMax);
+    // ---- EMAIL NOTIFICATIONS FILTER (per recipient account) ----
+    const f = await filterByEmailNotifications(sliced);
+    const finalItems = f.filtered;
+    
+    console.log("[send-mail] filter:email_notifications", {
+      in: sliced.length,
+      out: finalItems.length,
+      skipped: f.skipped,
+    });
 
     console.log("[send-mail] settings", {
       queue_enabled: settings.queue_enabled,
@@ -255,12 +321,12 @@ serve(async (req) => {
       batchMax,
     });
 
-    console.log("[send-mail] batch:slice", { requested: items.length, used: sliced.length });
+    console.log("[send-mail] batch:slice", { requested: items.length, used: finalItems.length });
 
 
     // ---- QUEUE MODE ----
     if (settings.queue_enabled) {
-      const rows = sliced.map((it) => ({
+      const rows = finalItems.map((it) => ({
         created_by: uid,
         to_email: it.to,
         subject: it.subject,
@@ -292,11 +358,11 @@ serve(async (req) => {
     }
 
     // ---- SEND NOW MODE ----
-    console.log("[send-mail] mode:send_now", { count: sliced.length, delayMs, order });
+    console.log("[send-mail] mode:send_now", { count: finalItems.length, delayMs, order });
     const results: any[] = [];
-    for (let i = 0; i < sliced.length; i++) {
-      const it = sliced[i];
-      console.log("[send-mail] send:item_start", { i: i + 1, n: sliced.length, to: scrubEmail(it.to) });
+    for (let i = 0; i < finalItems.length; i++) {
+      const it = finalItems[i];
+      console.log("[send-mail] send:item_start", { i: i + 1, n: finalItems.length, to: scrubEmail(it.to) });
       try {
         const out = await sendWithFallbacks(it, order);
         results.push({ to: it.to, ok: true, provider: out.provider });
@@ -305,7 +371,7 @@ serve(async (req) => {
         results.push({ to: it.to, ok: false, error: String((e as any)?.message || e) });
         console.warn("[send-mail] send:item_fail", { to: scrubEmail(it.to), error: String((e as any)?.message || e) });
       }
-      if (delayMs && i < sliced.length - 1) await sleep(delayMs);
+      if (delayMs && i < finalItems.length - 1) await sleep(delayMs);
     }
 
     const failed = results.filter((r) => !r.ok).length;

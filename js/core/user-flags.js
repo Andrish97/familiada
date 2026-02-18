@@ -78,6 +78,32 @@ export async function setUserEmailNotificationsFlag(userId, value) {
   if (error) throw error;
 }
 
-export async function resetUserEmailNotificationsFlag(userId, value = true) {
-  return await setUserEmailNotificationsFlag(userId, value);
+export async function getUserEmailNotificationsFlag(userId) {
+  if (!userId) throw new Error("getUserEmailNotificationsFlag: brak userId");
+  const rows = await getEmailNotificationsForUsers([userId]);
+  return rows?.[0]?.email_notifications !== false;
+}
+
+// =======================================================
+// Batch read for email_notifications (frontend filter)
+// =======================================================
+
+export async function getEmailNotificationsForUsers(userIds = []) {
+  const ids = [...new Set(userIds.filter(Boolean))];
+  if (!ids.length) return [];
+
+  const { data, error } = await sb().rpc("userflags_get_email_notifications", {
+    p_user_ids: ids,
+  });
+  if (error) throw error;
+
+  const allow = new Map();
+  // default: true (brak wiersza => traktujemy jako true)
+  for (const id of ids) allow.set(id, true);
+  for (const row of (data || [])) allow.set(row.user_id, row.email_notifications !== false);
+
+  return ids.map((id) => ({
+    user_id: id,
+    email_notifications: allow.get(id),
+  }));
 }
