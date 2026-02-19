@@ -1,7 +1,11 @@
 // js/pages/privacy.js
-import { initI18n, t } from "../../translation/translation.js";
+//
+// - publiczna strona (bez wymuszania logowania)
+// - jeśli user zalogowany -> pokazuj username + Wyloguj
+// - jeśli niezalogowany -> ukryj username + Wyloguj, a Wstecz wraca do index.html
 
-initI18n({ withSwitcher: !(new URLSearchParams(location.search).get("modal") === "control") });
+import { initI18n, t, withLangParam } from "../../translation/translation.js";
+import { getUser, signOut } from "../core/auth.js";
 
 function byId(id) { return document.getElementById(id); }
 
@@ -39,45 +43,60 @@ function applyControlModalLayout() {
   byId("btnLogout")?.remove();
 }
 
-function updateBackButtonLabel() {
+function setBackButton({ loggedIn }) {
   const btn = byId("btnBack");
   if (!btn) return;
-  btn.textContent = hasManualRef() ? t("privacy.backToManual") : t("manual.backToGames");
+
+  if (hasManualRef()) {
+    btn.textContent = t("privacy.backToManual");
+    btn.onclick = () => (location.href = decodeManualBack());
+    return;
+  }
+
+  if (!loggedIn) {
+    btn.textContent = t("privacy.backToHome");
+    btn.onclick = () => (location.href = withLangParam("index.html"));
+    return;
+  }
+
+  btn.textContent = t("manual.backToGames");
+  btn.onclick = () => (location.href = decodeManualBack());
 }
 
-function wireFallbackNav() {
-  byId("btnBack")?.addEventListener("click", () => {
-    location.href = decodeManualBack();
-  });
-
-  byId("btnLogout")?.addEventListener("click", () => {
-    location.href = "index.html";
-  });
-}
-
-async function wireAuthSoft() {
-  const { requireAuth, signOut } = await import("../core/auth.js");
-  const user = await requireAuth("index.html" + (location.search || ""));
-
+function setAuthUi(user) {
   const who = byId("who");
-  if (who) who.textContent = user?.username || user?.email || "—";
+  const btnLogout = byId("btnLogout");
 
-  byId("btnLogout")?.addEventListener("click", async () => {
-    await signOut();
-    location.href = "index.html";
-  });
+  const loggedIn = !!user;
 
-  byId("btnBack")?.addEventListener("click", () => {
-    location.href = decodeManualBack();
-  });
+  if (who) {
+    who.textContent = user?.username || user?.email || "—";
+    who.style.display = loggedIn ? "" : "none";
+  }
+
+  if (btnLogout) {
+    btnLogout.style.display = loggedIn ? "" : "none";
+    btnLogout.onclick = async () => {
+      await signOut();
+      location.href = withLangParam("index.html");
+    };
+  }
+
+  setBackButton({ loggedIn });
 }
 
-applyControlModalLayout();
-wireFallbackNav();
-updateBackButtonLabel();
+window.dispatchEvent(new Event("resize"));
 
-wireAuthSoft().catch((err) => {
-  console.warn("[privacy] auth nieaktywny:", err);
+document.addEventListener("DOMContentLoaded", async () => {
+  await initI18n({ withSwitcher: !(new URLSearchParams(location.search).get("modal") === "control") });
+
+  applyControlModalLayout();
+
+  const user = await getUser(); // soft — bez redirectów
+  setAuthUi(user);
+
+  window.addEventListener("i18n:lang", async () => {
+    const u = await getUser();
+    setAuthUi(u);
+  });
 });
-
-window.addEventListener("i18n:lang", updateBackButtonLabel);

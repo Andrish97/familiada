@@ -617,7 +617,7 @@ async function refreshData() {
         });
         if (ok) {
           await signOut();
-          const url = new URL("index.html", location.href);
+          const url = new URL("login.html", location.href);
           url.searchParams.set("next", "subscriptions");
           url.searchParams.set("s", focusInviteToken);
           location.href = url.toString();
@@ -666,7 +666,7 @@ function getBackLink() {
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
-  const user = await requireAuth("index.html");
+  const user = await requireAuth("login.html");
   who.textContent = user?.username || user?.email || "—";
 
   renderSelect(sortAD, "subscribers");
@@ -691,7 +691,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   updateBackButtonLabel();
   btnBack?.addEventListener("click", () => { location.href = getBackLink(); });
   btnManual?.addEventListener("click", () => { location.href = buildManualUrl(); });
-  btnLogout?.addEventListener("click", async () => { await signOut(); location.href = "index.html"; });
+  btnLogout?.addEventListener("click", async () => { await signOut(); location.href = "login.html"; });
 
   window.addEventListener("i18n:lang", () => {
     renderSelect(sortAD, "subscribers");

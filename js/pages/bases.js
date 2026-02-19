@@ -1545,7 +1545,7 @@ btnGoAlt?.addEventListener("click", async () => {
 
 btnLogout?.addEventListener("click", async () => {
   await signOut();
-  location.href = "index.html";
+  location.href = "login.html";
 });
 
 btnBrowse?.addEventListener("click", () => {
@@ -1672,7 +1672,7 @@ async function refreshAltBadge() {
 
 /* ================= Init ================= */
 (async function init() {
-  currentUser = await requireAuth("index.html");
+  currentUser = await requireAuth("login.html");
   if (who) who.textContent = currentUser?.username || currentUser?.email || "—";
 
   // mobile tabs

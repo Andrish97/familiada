@@ -37,7 +37,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   await initI18n({ withSwitcher: true });
   setErr("");
   if (go) go.href = withLangParam(go.dataset.baseHref || "builder.html");
-  if (back) back.href = withLangParam(back.dataset.baseHref || "index.html");
+  if (back) back.href = withLangParam(back.dataset.baseHref || "login.html");
   const syncLanguage = () => updateUserLanguage(getUiLang());
   window.addEventListener("i18n:lang", syncLanguage);
 

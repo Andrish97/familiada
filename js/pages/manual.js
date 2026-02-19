@@ -150,7 +150,7 @@ function wireFallbackNav() {
   });
 
   byId("btnLogout")?.addEventListener("click", () => {
-    location.href = "index.html";
+    location.href = "login.html";
   });
 }
 
@@ -177,7 +177,7 @@ async function wireDemoActions(user) {
 
 async function wireAuthSoft() {
   const { requireAuth, signOut } = await import("../core/auth.js");
-  const user = await requireAuth("index.html");
+  const user = await requireAuth("login.html");
 
   const who = byId("who");
   if (who) who.textContent = user?.username || user?.email || "—";
@@ -188,7 +188,7 @@ async function wireAuthSoft() {
 
   byId("btnLogout")?.addEventListener("click", async () => {
     await signOut();
-    location.href = "index.html";
+    location.href = "login.html";
   });
 
   byId("btnBack")?.addEventListener("click", () => {

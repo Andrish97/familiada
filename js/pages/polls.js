@@ -998,7 +998,7 @@ async function refresh() {
 ======================= */
 
 document.addEventListener("DOMContentLoaded", async () => {
-  const u = await requireAuth("index.html");
+  const u = await requireAuth("login.html");
   if (who) who.textContent = u?.username || u?.email || "—";
 
   if (btnBack) {
@@ -1035,7 +1035,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       setTextCloseUi(false);
     }
     await signOut();
-    location.href = "index.html";
+    location.href = "login.html";
   });
 
   btnCopy?.addEventListener("click", async () => {

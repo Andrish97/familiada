@@ -7,7 +7,7 @@ const qs = new URLSearchParams(location.search);
 const gameId = qs.get("id");
 const key = qs.get("key");
 
-initI18n({ withSwitcher: true });
+initI18n({ withSwitcher: false });
 
 const btnFS = document.getElementById("btnFS");
 const fsIco = document.getElementById("fsIco");

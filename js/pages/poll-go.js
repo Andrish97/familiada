@@ -91,7 +91,7 @@ function addAction(label, kind, handler) {
 }
 
 function redirectToLogin() {
-  const url = new URL("index.html", location.href);
+  const url = new URL("login.html", location.href);
   url.searchParams.set("from", "poll-go");
   url.searchParams.set("next", taskToken ? "polls-hub" : "subscriptions");
   if (taskToken) url.searchParams.set("t", taskToken);
