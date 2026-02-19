@@ -107,7 +107,7 @@ function throttleMs(ms, fn) {
 // ========================================================
 
 async function ensureAuthOrRedirect() {
-  const user = await requireAuth("../index.html");
+  const user = await requireAuth("../login.html");
   const who = document.getElementById("who");
   if (who) who.textContent = user?.username || user?.email || user?.id || "—";
   return user;
@@ -897,7 +897,7 @@ async function sendZeroStatesToDevices() {
   
     await signOut().catch(() => {});
     suppressUnloadWarn = true;
-    location.href = "../index.html";
+    location.href = "../login.html";
   });
 
   ui.on("auth.showQr", (kind) => showQrModal(kind));

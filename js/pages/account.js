@@ -79,8 +79,8 @@ async function initEmailNotificationsUi(user) {
       const ok = await confirmModal({
         title: t("account.emailNotifDisableTitle"),
         text: t("account.emailNotifDisableConfirm"),
-        okText: t("account.emailNotifDisableOk"),
-        cancelText: t("common.cancel"),
+        okText: t("common.modal.promptOk"),
+        cancelText: t("common.modal.promptCancel"),
         danger: true,
       });
     
@@ -338,7 +338,7 @@ async function ensureUsernameAvailable(username, userId) {
 }
 
 async function loadProfile() {
-  const user = await requireAuth("index.html?setup=username");
+  const user = await requireAuth("login.html?setup=username");
   if (!user) return;
 
   const syncLanguage = () => updateUserLanguage(getUiLang());
@@ -593,7 +593,7 @@ async function handleDeleteAccount() {
     if (!data?.ok) throw new Error(data?.error || t("account.errDeleteFailed"));
 
     await signOut();
-    location.href = withLangParam("index.html");
+    location.href = withLangParam("login.html");
   } catch (e) {
     console.error(e);
     setStatus(t("account.statusError"));

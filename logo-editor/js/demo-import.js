@@ -21,7 +21,7 @@ async function ensureCurrentUser(){
 
   const u = data?.user;
   if (!u?.id){
-    const user = await requireAuth("../index.html");
+    const user = await requireAuth("../login.html");
     if (!user?.id) throw new Error(t("logoEditor.errors.noUser"));
     return user;
   }

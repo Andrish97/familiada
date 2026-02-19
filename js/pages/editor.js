@@ -314,8 +314,9 @@ function cfgFromGameType(type) {
 }
 
 /* ================= Points UI (prepared) ================= */
-function sumPointsFromDom(container) {
-  const inputs = container.querySelectorAll("input.aPts");
+function sumPointsFromDom() {
+  const root = document.getElementById("aList"); // ✅ tu są aPts
+  const inputs = root ? root.querySelectorAll("input.aPts") : [];
   let sum = 0;
   inputs.forEach((inp) => (sum += nonNegativeInt(inp.value, 0)));
   return sum;
@@ -339,7 +340,7 @@ function updateRemainBox(container) {
   const box = container?.querySelector(".remainBox");
   if (!box) return;
 
-  const sum = sumPointsFromDom(container);
+  const sum = sumPointsFromDom(); // ✅ już nie z container
 
   box.classList.remove("ok", "over");
   if (sum > SUM_PREPARED) box.classList.add("over");
@@ -489,13 +490,13 @@ function setTxtImportProgress({ step, i, n, msg, isError } = {}) {
 /* ================= Boot ================= */
 async function boot() {
   /* ---------- auth/topbar ---------- */
-  const user = await requireAuth("index.html");
+  const user = await requireAuth("login.html");
   const who = $("who");
   if (who) who.textContent = user?.username || user?.email || t("control.dash");
 
   $("btnLogout")?.addEventListener("click", async () => {
     await signOut();
-    location.href = "index.html";
+    location.href = "login.html";
   });
 
   const btnBack = $("btnBack");

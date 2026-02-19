@@ -16,7 +16,8 @@ function initMobileTopbarMenu() {
   const section4Placeholder = document.createComment('topbar-section-4-restore');
   const tabsPlaceholder = document.createComment('topbar-tabs-restore');
   const simpleTabs = document.querySelector('.simple-tabs');
-  const menuItemSelector = 'button, a, .btn, [role="button"], [role="tab"], .who, .user-btn, .lang-switcher, .top-status';
+  const menuContentSelector =
+    'button, a, [role="button"], [role="tab"], .btn, .user-btn, .lang-switcher, .top-status';
 
   let overlay;
   let panel;
@@ -55,12 +56,32 @@ function initMobileTopbarMenu() {
     toggleBadge.textContent = sum > 99 ? '99+' : (sum > 0 ? String(sum) : '');
     toggleBtn.classList.toggle('has-badge', sum > 0);
   };
+  
+  const hasVisibleMenuItems = () => {
+    if (!isMobileMounted || !mount) return false;
+    const visibleItems = [...mount.querySelectorAll(menuContentSelector)].filter(isVisible);
+    const hasTabs = (tabGroup?.childElementCount || 0) > 0;
+    return hasTabs || visibleItems.length > 0;
+  };
 
+  const isVisible = (el) => {
+    if (!el) return false;
+    // offsetParent==null => display:none (z wyjątkiem fixed, więc dopinam check stylu)
+    const st = getComputedStyle(el);
+    return st.display !== 'none' && st.visibility !== 'hidden' && st.opacity !== '0';
+  };
+  
   const hasMenuContent = () => {
     const hasTabs = !!simpleTabs?.querySelector('.tab, button, [role="tab"]');
-    const hasSection2Items = !!section2.querySelector(menuItemSelector);
-    const hasSection4Items = !!section4.querySelector(menuItemSelector);
-    return hasTabs || hasSection2Items || hasSection4Items;
+  
+    // bierzemy tylko elementy "klikane", bez .who
+    const menuClickableSelector =
+      'button, a, .btn, [role="button"], [role="tab"], .user-btn, .lang-switcher, .top-status';
+  
+    const sec2Items = [...section2.querySelectorAll(menuClickableSelector)].filter(isVisible);
+    const sec4Items = [...section4.querySelectorAll(menuClickableSelector)].filter(isVisible);
+  
+    return hasTabs || sec2Items.length > 0 || sec4Items.length > 0;
   };
 
   const close = () => {
@@ -123,6 +144,19 @@ function initMobileTopbarMenu() {
     }
 
     mount.append(group2, group4);
+    // jeśli po przeniesieniu nic realnie nie ma, nie pokazuj menu
+    const visibleItems = (root) =>
+      [...root.querySelectorAll(menuContentSelector)].filter(isVisible);
+    
+    const hasAnything =
+      (tabGroup?.childElementCount || 0) > 0 ||
+      visibleItems(group2).length > 0 ||
+      visibleItems(group4).length > 0;
+    
+    if (!hasAnything) {
+      unmountMobile();
+      return;
+    }
     panel.append(closeBtn, mount);
     overlay.appendChild(panel);
     document.body.appendChild(overlay);
@@ -147,7 +181,14 @@ function initMobileTopbarMenu() {
     if (backBtn) backBtn.classList.add('mobile-primary-back');
 
     // keep the badge in sync with nested buttons
-    badgeObserver = new MutationObserver(() => updateMenuBadge());
+    badgeObserver = new MutationObserver(() => {
+      updateMenuBadge();
+    
+      // ✅ jeśli menu zrobiło się puste (np. privacy ukryło who/logout) -> usuń hamburger
+      if (!hasVisibleMenuItems()) {
+        unmountMobile();
+      }
+    });
     badgeObserver.observe(mount, { subtree: true, childList: true, characterData: true, attributes: true });
     updateMenuBadge();
   };

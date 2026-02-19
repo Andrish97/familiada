@@ -43,6 +43,105 @@ const pl = {
     message: "Ta strona działa tylko na komputerze.",
     back: "Wróć",
   },
+  home: {
+    title: "Familiada — system do prowadzenia gry",
+    hero: {
+      title: "Przygotuj grę. Zbierz wyniki. Poprowadź Familiadę na żywo.",
+      lead: "Kompletny system do tworzenia i prowadzenia rozgrywki w stylu Familiada. Przygotuj pytania, zbierz odpowiedzi w sondażu i poprowadź dynamiczną grę z tablicą wyników, panelem operatora oraz osobnym widokiem dla prowadzącego. Wszystko działa w przeglądarce — bez instalacji.",
+      ctaStart: "Zacznij tworzyć gry i prowadzić rozgrywkę",
+      note: "Kliknij, żeby się zalogować lub utworzyć konto.",
+    },
+  
+    tiles: {
+      title: "Jak to działa (krok po kroku)",
+  
+      t1: {
+        alt: "Lista gier: tworzenie nowej gry i wybór trybu (sondaż, punktowane odpowiedzi, preparowana).",
+        t: "Tworzenie gry i wybór trybu",
+        d:
+          "Zakładasz nową grę i wybierasz typ: sondaż tekstowy, punktowane odpowiedzi albo preparowana. Typ decyduje, skąd biorą się odpowiedzi i punkty na tablicy.",
+      },
+  
+      t2: {
+        alt: "Edytor gry: dodawanie pytań oraz przygotowanie struktury rozgrywki.",
+        t: "Edycja pytań i (czasem) odpowiedzi",
+        d:
+          "Dodajesz pytania, ustawiasz treść i strukturę gry. W zależności od typu gry możesz przygotować odpowiedzi i punkty lub zostawić je do sondażu.",
+      },
+  
+      t3: {
+        alt: "Znajomi: dodawanie i zarządzanie osobami, którym udostępniasz sondaże i bazy pytań.",
+        t: "Znajomi i udostępnianie",
+        d:
+          "Dodajesz znajomych, żeby jednym kliknięciem udostępniać im sondaże i pracować wspólnie. To przyspiesza organizację gry i zbieranie odpowiedzi.",
+      },
+  
+      t4: {
+        alt: "Sondaże: udostępnianie przez link lub kod QR i zbieranie głosów.",
+        t: "Sondaż: link / QR i zbieranie głosów",
+        d:
+          "Udostępniasz sondaż przez link lub kod QR. Ankietowani odpowiadają na pytania, a Ty widzisz postęp i wyniki w panelu.",
+      },
+      
+      t5: {
+        alt: "Centrum sondaży: zarządzanie sondażami, udostępnianie linkiem lub kodem QR i podgląd postępu.",
+        t: "Centrum sondaży",
+        d: "W jednym miejscu zarządzasz sondażami: uruchamiasz i zamykasz głosowania, sprawdzasz postęp oraz udostępniasz je znajomym (link/QR), żeby szybko zebrać odpowiedzi.",
+      },
+  
+      t6: {
+        alt: "Panel sterowania operatora: sterowanie tablicą, punktami, błędami (X) i etapami rozgrywki.",
+        t: "Panel sterowania (operator) — gra na żywo",
+        d:
+          "W dniu wydarzenia operator steruje tablicą, punktami, błędami (X) i etapami rozgrywki. System prowadzi krok po kroku, żeby ograniczyć pomyłki.",
+      },
+  
+      t7: {
+        alt: "Wyświetlacz tablicy dla widzów: pytania, odpowiedzi, punkty, bank i błędy (X).",
+        t: "Tablica dla widzów (TV / rzutnik)",
+        d:
+          "Tablica pokazuje pytania, odpowiedzi, punkty, bank i X-y. To ekran, który widzą uczestnicy i publiczność.",
+      },
+  
+      t8: {
+        alt: "Widok prowadzącego: treści pytań i podgląd kontekstu na tablecie lub telefonie.",
+        t: "Widok prowadzącego (tablet / telefon)",
+        d:
+          "Prowadzący ma osobny ekran z treścią pytań i podglądem kontekstu, bez ryzyka kliknięcia w sterowanie gry.",
+      },
+  
+      t9: {
+        alt: "Przycisk do pojedynku: osobne urządzenie do sygnału kto nacisnął pierwszy.",
+        t: "Przycisk do pojedynku (osobne urządzenie)",
+        d:
+          "Osobny „przycisk” daje sygnał kto nacisnął pierwszy w pojedynku. To wspiera tempo i porządek w rundach.",
+      },
+  
+      t10: {
+        alt: "Bazy pytań: tworzenie biblioteki pytań i udostępnianie jej znajomym do współpracy.",
+        t: "Bazy pytań i współpraca",
+        d:
+          "Tworzysz bazę pytań jako wspólną bibliotekę: foldery, tagi, kategorie. Bazę możesz udostępnić znajomym do edycji lub tylko podglądu.",
+      },
+  
+      t11: {
+        alt: "Menadżer pytań: zarządzanie pytaniami jak w eksploratorze plików (foldery, kopiowanie, przenoszenie, wyszukiwanie).",
+        t: "Menadżer pytań jak eksplorator plików",
+        d:
+          "Zarządzasz pytaniami jak w Finder/Explorer: foldery, przenoszenie, kopiowanie, szybka selekcja i wyszukiwanie po nazwie oraz tagach.",
+      },
+      t12: {
+        alt: "Widok edytora logo: tworzenie własnego logo, które pojawia się na wyświetlaczu podczas gry.",
+        t: "Własne logo na wyświetlaczu",
+        d: "Stwórz własne logo, które będzie wyświetlane podczas rozgrywki — np. na ekranie startowym lub zakończenia. Możesz tworzyć napisy, proste grafiki lub zaimportować gotowy obraz.",
+      },
+    },
+  
+    footer: {
+      left: "© Familiada — system do gry na żywo",
+      privacy: "Polityka prywatności",
+    },
+  },
   auth: {
     emailNotConfirmed: "Potwierdź e-mail (link w skrzynce).",
     invalidCredentials: "Zły e-mail lub hasło.",
@@ -70,6 +169,8 @@ const pl = {
     passwordRules: "Hasło musi zawierać: {hints}.",
   },
   index: {
+    backHome: "← Strona startowa",
+    intro: "Aby tworzyć gry i prowadzić rozgrywkę na żywo — zaloguj się. Nie masz konta? Zarejestruj się poniżej.",
     title: "Familiada — logowanie",
     subtitle: "Panel tworzenia i prowadzenia gry",
     statusChecking: "Sprawdzam sesję…",
@@ -178,7 +279,8 @@ const pl = {
     emailNotifTitle: "Wiadomości e-mail",
     emailNotifHint: "Otrzymywać wiadomości e-mail o propozycjach subskrypcji, zadaniach do zagłosowania czy udostępnionych bazach pytań. Jeśli zrezygnujesz z wiadomości e-mail będziesz widzieć te propozycje bezpośrednio na stronie.",
     emailNotifCheckbox: "Włącz powiadomienia e-mail",
-    emailNotifDisableConfirm: "Wyłączyć wiadomości e-mail? Nadal zobaczysz wszystkie propozycje i zadania bezpośrednio na stronie.",
+    emailNotifDisableTitle: "Wyłączyć wiadomości e-mail?",
+    emailNotifDisableConfirm: "Nadal zobaczysz wszystkie propozycje i zadania bezpośrednio na stronie.",
     emailNotifSavedOn: "Wiadomości e-mail: WŁĄCZONE ✅",
     emailNotifSavedOff: "Wiadomości e-mail: WYŁĄCZONE ✅",
     emailNotifSaveFailed: "Nie udało się zapisać ustawienia ❌",
@@ -2231,6 +2333,7 @@ const pl = {
     title: "Familiada — polityka prywatności",
     pageTitle: "Polityka Prywatności",
     backToManual: "← Wskazówki",
+    backToHome: "← Strona główna",
     logout: "Wyloguj",
     content: `
       <h2 class="m-h2">1. Administrator danych</h2>

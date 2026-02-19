@@ -812,7 +812,7 @@ async function refresh() {
 document.addEventListener("DOMContentLoaded", async () => {
   await initI18n({ withSwitcher: true });
   
-  currentUser = await requireAuth("index.html");
+  currentUser = await requireAuth("login.html");
   if (who) who.textContent = currentUser?.username || currentUser?.email || t("control.dash");
 
   async function refreshPollsHubDot(){
@@ -915,7 +915,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   btnLogout?.addEventListener("click", async () => {
     await signOut();
-    location.href = "index.html";
+    location.href = "login.html";
   });
 
   btnAccount?.addEventListener("click", () => {

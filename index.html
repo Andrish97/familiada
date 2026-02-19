@@ -2,59 +2,247 @@
 <html lang="pl">
 <head>
   <meta charset="UTF-8"/>
-  <meta name="robots" content="noindex, nofollow"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title data-i18n="index.title">Familiada — logowanie</title>
-  
+  <title data-i18n="home.title">Familiada — system do prowadzenia gry</title>
+
+  <meta name="description" content="System do prowadzenia gry w stylu Familiada: przygotowanie pytań, sondaż, tablica i rozgrywka na żywo."/>
+  <meta name="robots" content="index, follow"/>
+
   <link rel="icon" href="favicon.ico"/>
-  
   <link rel="stylesheet" href="css/base.css"/>
-  <link rel="stylesheet" href="css/login.css"/>
+  <link rel="stylesheet" href="css/index.css"/>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
   <script type="module" src="js/pages/index.js" defer></script>
+  <script type="module" src="js/core/topbar-mobile-menu.js" defer></script>
 </head>
-<body class="login-body" data-confirm-url="confirm.html" data-reset-url="reset.html" data-builder-url="builder.html" data-polls-url="polls-hub.html" data-subscriptions-url="subscriptions.html">
-  <div class="login-shell">
-    <div class="login-card" id="loginCard">
+
+<body class="home-body">
+  <header class="topbar topbar-layout-4 topbar-mobile-keep-brand">
+    <div class="topbar-section topbar-section-1">
       <div class="brand">FAMILIADA</div>
-      <div class="sub" data-i18n="index.subtitle">Panel tworzenia i prowadzenia gry</div>
+    </div>
 
-      <div class="status" id="status" data-i18n="index.statusChecking">Sprawdzam sesję…</div>
+    <div class="topbar-section topbar-section-2"></div>
 
-      <div class="form">
-        <input id="email" type="email" placeholder="Email" autocomplete="email" data-i18n-placeholder="index.placeholderLogin"/>
-        <input id="pass" type="password" placeholder="Hasło" autocomplete="current-password" data-i18n-placeholder="index.placeholderPassword"/>
-        <input id="pass2" type="password" placeholder="Powtórz hasło" autocomplete="new-password" style="display:none" data-i18n-placeholder="index.placeholderPasswordRepeat"/>
-        <div class="hint" id="pwdHint" hidden></div>
+    <div class="topbar-section topbar-section-3">
+      <div class="topbar-close-slot" aria-hidden="true"></div>
+    </div>
 
-        <div class="row">
-          <button class="btn main" id="btnPrimary" type="button" data-i18n="index.btnLogin">Zaloguj</button>
-          <button class="btn" id="btnToggle" type="button" data-i18n="index.btnToggleRegister">Załóż konto</button>
-        </div>
+    <div class="topbar-section topbar-section-4"></div>
+  </header>
 
-        <div class="meta">
-          <button class="link" id="btnForgot" type="button" data-i18n="index.btnForgot">Przypomnij hasło</button>
-          <span class="cooldown" id="forgotCooldown" hidden></span>
-          <span class="err" id="err"></span>
-        </div>
+  <main class="wrap">
+    <section class="hero-card">
+      <h1 data-i18n="home.hero.title">Przygotuj grę. Zbierz wyniki. Poprowadź Familiadę na żywo.</h1>
+
+      <p class="hero-lead" data-i18n="home.hero.lead">
+        Kompletny system do tworzenia i prowadzenia rozgrywki w stylu Familiada. Przygotuj pytania, zbierz odpowiedzi w sondażu i poprowadź dynamiczną grę z tablicą wyników, panelem operatora oraz osobnym widokiem dla prowadzącego. Wszystko działa w przeglądarce — bez instalacji.
+      </p>
+
+      <div class="hero-cta">
+        <a class="btn gold" href="login.html" id="ctaStart" data-i18n="home.hero.ctaStart">Zacznij tworzyć gry i prowadzić rozgrywkę</a>
+      </div>
+
+      <div class="hero-note" data-i18n="home.hero.note">
+        Kliknij, żeby się zalogować lub utworzyć konto.
+      </div>
+    </section>
+
+    <section class="section">
+      <h2 class="section-title" data-i18n="home.tiles.title">Jak to działa (krok po kroku)</h2>
+
+      <div class="tiles">
+
+        <!-- 1 -->
+        <article class="tile">
+          <div class="tile-shot">
+            <img class="shot-img"
+                 src="img/pl/landing-games.webp"
+                 data-file="landing-games.webp"
+                 alt=""
+                 data-i18n-alt="home.tiles.t1.alt">
+          </div>
+          <div class="tile-text">
+            <h3 data-i18n="home.tiles.t1.t">Tworzenie gry i wybór trybu</h3>
+            <p data-i18n="home.tiles.t1.d"></p>
+          </div>
+        </article>
+
+        <!-- 2 -->
+        <article class="tile reverse">
+          <div class="tile-shot">
+            <img class="shot-img"
+                 src="img/pl/landing-editor.webp"
+                 data-file="landing-editor.webp"
+                 alt=""
+                 data-i18n-alt="home.tiles.t2.alt">
+          </div>
+          <div class="tile-text">
+            <h3 data-i18n="home.tiles.t2.t">Edycja pytań i (czasem) odpowiedzi</h3>
+            <p data-i18n="home.tiles.t2.d"></p>
+          </div>
+        </article>
+
+        <!-- 3 -->
+        <article class="tile">
+          <div class="tile-shot">
+            <img class="shot-img"
+                 src="img/pl/landing-friends.webp"
+                 data-file="landing-friends.webp"
+                 alt=""
+                 data-i18n-alt="home.tiles.t3.alt">
+          </div>
+          <div class="tile-text">
+            <h3 data-i18n="home.tiles.t3.t">Znajomi i udostępnianie</h3>
+            <p data-i18n="home.tiles.t3.d"></p>
+          </div>
+        </article>
+
+        <!-- 4 -->
+        <article class="tile reverse">
+          <div class="tile-shot">
+            <img class="shot-img"
+                 src="img/pl/landing-polls.webp"
+                 data-file="landing-polls.webp"
+                 alt=""
+                 data-i18n-alt="home.tiles.t4.alt">
+          </div>
+          <div class="tile-text">
+            <h3 data-i18n="home.tiles.t4.t">Sondaż: link / QR i zbieranie głosów</h3>
+            <p data-i18n="home.tiles.t4.d"></p>
+          </div>
+        </article>
+
+        <!-- 5 -->
+        <article class="tile">
+          <div class="tile-shot">
+            <img class="shot-img"
+                 src="img/pl/landing-polls-hub.webp"
+                 data-file="landing-polls-hub.webp"
+                 alt=""
+                 data-i18n-alt="home.tiles.t5.alt">
+          </div>
+          <div class="tile-text">
+            <h3 data-i18n="home.tiles.t5.t">Centrum sondaży</h3>
+            <p data-i18n="home.tiles.t5.d"></p>
+          </div>
+        </article>
+
+        <!-- 6 -->
+        <article class="tile reverse">
+          <div class="tile-shot">
+            <img class="shot-img"
+                 src="img/pl/landing-control.webp"
+                 data-file="landing-control.webp"
+                 alt=""
+                 data-i18n-alt="home.tiles.t6.alt">
+          </div>
+          <div class="tile-text">
+            <h3 data-i18n="home.tiles.t6.t">Panel sterowania (operator) — gra na żywo</h3>
+            <p data-i18n="home.tiles.t6.d"></p>
+          </div>
+        </article>
+
+        <!-- 7 -->
+        <article class="tile">
+          <div class="tile-shot">
+            <img class="shot-img"
+                 src="img/pl/landing-display.webp"
+                 data-file="landing-display.webp"
+                 alt=""
+                 data-i18n-alt="home.tiles.t7.alt">
+          </div>
+          <div class="tile-text">
+            <h3 data-i18n="home.tiles.t7.t">Tablica dla widzów (TV / rzutnik)</h3>
+            <p data-i18n="home.tiles.t7.d"></p>
+          </div>
+        </article>
+
+        <!-- 8 -->
+        <article class="tile reverse">
+          <div class="tile-shot">
+            <img class="shot-img"
+                 src="img/pl/landing-host.webp"
+                 data-file="landing-host.webp"
+                 alt=""
+                 data-i18n-alt="home.tiles.t8.alt">
+          </div>
+          <div class="tile-text">
+            <h3 data-i18n="home.tiles.t8.t">Widok prowadzącego (tablet / telefon)</h3>
+            <p data-i18n="home.tiles.t8.d"></p>
+          </div>
+        </article>
+
+        <!-- 9 -->
+        <article class="tile">
+          <div class="tile-shot">
+            <img class="shot-img"
+                 src="img/pl/landing-buzzer.webp"
+                 data-file="landing-buzzer.webp"
+                 alt=""
+                 data-i18n-alt="home.tiles.t9.alt">
+          </div>
+          <div class="tile-text">
+            <h3 data-i18n="home.tiles.t9.t">Przycisk do pojedynku (osobne urządzenie)</h3>
+            <p data-i18n="home.tiles.t9.d"></p>
+          </div>
+        </article>
+
+        <!-- 10 -->
+        <article class="tile reverse">
+          <div class="tile-shot">
+            <img class="shot-img"
+                 src="img/pl/landing-bases.webp"
+                 data-file="landing-bases.webp"
+                 alt=""
+                 data-i18n-alt="home.tiles.t10.alt">
+          </div>
+          <div class="tile-text">
+            <h3 data-i18n="home.tiles.t10.t">Bazy pytań i współpraca</h3>
+            <p data-i18n="home.tiles.t10.d"></p>
+          </div>
+        </article>
+
+        <!-- 11 -->
+        <article class="tile">
+          <div class="tile-shot">
+            <img class="shot-img"
+                 src="img/pl/landing-base-manager.webp"
+                 data-file="landing-base-manager.webp"
+                 alt=""
+                 data-i18n-alt="home.tiles.t11.alt">
+          </div>
+          <div class="tile-text">
+            <h3 data-i18n="home.tiles.t11.t">Menadżer pytań jak eksplorator plików</h3>
+            <p data-i18n="home.tiles.t11.d"></p>
+          </div>
+        </article>
+
+        <!-- 12 -->
+        <article class="tile reverse">
+          <div class="tile-shot">
+            <img class="shot-img"
+                 src="img/pl/landing-logo.webp"
+                 data-file="landing-logo.webp"
+                 alt=""
+                 data-i18n-alt="home.tiles.t12.alt">
+          </div>
+          <div class="tile-text">
+            <h3 data-i18n="home.tiles.t12.t">Własne logo na wyświetlaczu</h3>
+            <p data-i18n="home.tiles.t12.d"></p>
+          </div>
+        </article>
+
+      </div>
+    </section>
+
+    <div class="footer">
+      <div data-i18n="home.footer.left">© Familiada — system do gry na żywo</div>
+      <div>
+        <a href="privacy.html" data-i18n="home.footer.privacy">Polityka prywatności</a>
       </div>
     </div>
-
-    <div class="login-card setup-card" id="setupCard" hidden>
-      <div class="brand">FAMILIADA</div>
-      <div class="sub" data-i18n="index.setupTitle">Pierwsze logowanie</div>
-      <div class="setup-title" data-i18n="index.setupPrompt">Ustaw nazwę użytkownika</div>
-      <div class="setup-sub" data-i18n="index.setupSub">Będzie widoczna w panelu oraz przy zaproszeniach.</div>
-
-      <form class="setup-form" id="usernameForm">
-        <input id="usernameFirst" placeholder="Nazwa użytkownika" autocomplete="username"  enterkeyhint="done" data-i18n-placeholder="index.placeholderUsername"/>
-        <div class="modal-err" id="usernameErr"></div>
-        <div class="modal-actions">
-          <button class="btn main" id="btnUsernameSave" type="submit" data-i18n="index.btnUsernameSave">Zapisz nazwę</button>
-        </div>
-      </form>
-    </div>
-  </div>
+  </main>
 </body>
 </html>

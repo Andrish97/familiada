@@ -182,7 +182,7 @@ export async function getUser() {
   }
 }
 
-export async function requireAuth(redirect = "index.html") {
+export async function requireAuth(redirect = "login.html") {
   const u = await getUser();
   if (!u) {
     location.href = withLangParam(redirect);
@@ -191,7 +191,7 @@ export async function requireAuth(redirect = "index.html") {
 
   const username = await fetchUsername(u);
   if (!username) {
-    location.href = withLangParam("index.html?setup=username");
+    location.href = withLangParam("login.html?setup=username");
     return null;
   }
   return { ...u, username };
@@ -252,7 +252,7 @@ export async function resetPassword(loginOrEmail, redirectTo, language, resolved
   const { error } = await sb().auth.resetPasswordForEmail(email, options);
   if (error) throw new Error(niceAuthError(error));
 
-  return email; // ✅ ważne: index.js zapisze cooldown per konkretny email
+  return email; // ✅ ważne: login.js zapisze cooldown per konkretny email
 }
 
 export async function updateUserLanguage(language) {

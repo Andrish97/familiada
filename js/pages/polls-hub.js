@@ -1036,7 +1036,7 @@ function getBackLink() {
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
-  currentUser = await requireAuth("index.html");
+  currentUser = await requireAuth("login.html");
   who.textContent = currentUser?.username || currentUser?.email || "—";
 
   renderSelect(sortPollsDesktop, "polls");
@@ -1074,7 +1074,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   btnBack?.addEventListener("click", () => { location.href = getBackLink(); });
   btnManual?.addEventListener("click", () => { location.href = buildManualUrl(); });
   btnGoAlt?.addEventListener("click", () => { location.href = `subscriptions.html?ret=${encodeURIComponent(getCurrentRelativeUrl())}`; });
-  btnLogout?.addEventListener("click", async () => { await signOut(); location.href = "index.html"; });
+  btnLogout?.addEventListener("click", async () => { await signOut(); location.href = "login.html"; });
 
   window.addEventListener("i18n:lang", () => {
     renderSelect(sortPollsDesktop, "polls");

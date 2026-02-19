@@ -1,469 +1,242 @@
-// js/pages/index.js
-import {
-  getUser,
-  signIn,
-  signUp,
-  resetPassword,
-  resolveLoginToEmail,
-  updateUserLanguage,
-  validatePassword,
-  validateUsername,
-  niceAuthError,
-  getPasswordRulesText
-} from "../core/auth.js";
-
 import { sb } from "../core/supabase.js";
-import { cooldownEmailGet, cooldownEmailReserve } from "../core/cooldown.js";
-import { initI18n, t, getUiLang, withLangParam } from "../../translation/translation.js";
+import { initI18n, withLangParam, applyTranslations, getUiLang } from "../../translation/translation.js";
 
-const $ = (s) => document.querySelector(s);
-const email = $("#email");
-const pass = $("#pass");
-const pass2 = $("#pass2");
-const status = $("#status");
-const err = $("#err");
-const pwdHint = $("#pwdHint");
-const btnPrimary = $("#btnPrimary");
-const btnToggle = $("#btnToggle");
-const btnForgot = $("#btnForgot");
-const forgotCooldown = $("#forgotCooldown");
-const loginCard = $("#loginCard");
-const setupCard = $("#setupCard");
-const usernameFirst = $("#usernameFirst");
-const usernameErr = $("#usernameErr");
-const btnUsernameSave = $("#btnUsernameSave");
-const baseUrls = document.body?.dataset || {};
-const confirmUrl = baseUrls.confirmUrl || "confirm.html";
-const resetUrl = baseUrls.resetUrl || "reset.html";
-const builderUrl = baseUrls.builderUrl || "builder.html";
-const pollsUrl = baseUrls.pollsUrl;
-const subscriptionsUrl = baseUrls.subscriptionsUrl;
-
-let mode = "login"; // login | register
-
-let isBusy = false;
-
-const RESET_COOLDOWN_MS = 60 * 60 * 1000; // 1h
-const RESET_ACTION_KEY = "auth:reset_password";
-const RESET_COOLDOWN_SECONDS = 60 * 60;
-
-let _forgotTimer = null;
-let _forgotDebounce = null;
-
-// in-memory cache (truth is in DB; we refresh on interactions)
-const forgotUntilByEmail = new Map();
-
-function getForgotUntil(email) {
-  const e = String(email || "").trim().toLowerCase();
-  return forgotUntilByEmail.get(e) || 0;
-}
-
-function setForgotUntil(email, untilMs) {
-  const e = String(email || "").trim().toLowerCase();
-  if (!e) return;
-  forgotUntilByEmail.set(e, Number(untilMs) || 0);
-}
-
-async function refreshForgotUntil(email) {
-  const e = String(email || "").trim().toLowerCase();
-  if (!e || !e.includes("@")) return 0;
-  const map = await cooldownEmailGet(e, [RESET_ACTION_KEY]);
-  const until = map.get(RESET_ACTION_KEY) || 0;
-  setForgotUntil(e, until);
-  return until;
-}
-
-function formatLeft(ms) {
-  const total = Math.max(0, Math.ceil(ms / 1000));
-  const h = Math.floor(total / 3600);
-  const m = Math.floor((total % 3600) / 60);
-  const s = total % 60;
-  if (h > 0) return `${h}h ${String(m).padStart(2, "0")}m`;
-  return `${m}:${String(s).padStart(2, "0")}`;
-}
-
-function stopForgotTimer() {
-  if (_forgotTimer) clearInterval(_forgotTimer);
-  _forgotTimer = null;
-}
-
-function hideForgotCooldown() {
-  stopForgotTimer();
-  if (forgotCooldown) {
-    forgotCooldown.hidden = true;
-    forgotCooldown.textContent = "";
+async function redirectIfSession() {
+  try {
+    const { data } = await sb().auth.getSession();
+    if (data?.session) {
+      location.replace(withLangParam("builder.html"));
+      return true;
+    }
+  } catch (e) {
+    console.warn("[index] session check failed:", e);
   }
+  return false;
 }
 
-function showForgotCooldownForEmail(resolvedEmail) {
-  stopForgotTimer();
+/* ---------- images (lang) + no flicker ---------- */
 
-  const resolved = String(resolvedEmail || "").trim().toLowerCase();
-  const tick = () => {
-    // pokazuj tylko, gdy aktualnie w polu jest ten sam email (lub user wpisał username → wtedy i tak kliknie)
-    const current = String(email?.value || "").trim().toLowerCase();
-    if (current.includes("@") && current !== String(resolvedEmail).toLowerCase()) {
-      hideForgotCooldown();
-      btnForgot.disabled = false;
+function buildLangImgUrl(lang, file) {
+  // Works for root hosting and subfolder hosting (GitHub Pages, /app/, etc.)
+  return new URL(`img/${lang}/${file}`, location.href).toString();
+}
+
+function setImgLoaded(img) {
+  if (!img) return;
+  if (img.complete && img.naturalWidth > 0) {
+    img.classList.add("is-loaded");
+    return;
+  }
+  img.addEventListener("load", () => img.classList.add("is-loaded"), { once: true });
+  img.addEventListener("error", () => img.classList.add("is-loaded"), { once: true });
+}
+
+function switchLandingImages(lang) {
+  document.querySelectorAll(".shot-img").forEach((img) => {
+    const file = img.dataset.file;
+    if (!file) return;
+
+    const next = buildLangImgUrl(lang, file);
+    if (img.src === next) {
+      setImgLoaded(img);
       return;
     }
 
-    const until = getForgotUntil(resolved);
-    const left = until - Date.now();
+    img.classList.remove("is-loaded");
+    img.src = next;
+    setImgLoaded(img);
+  });
+}
 
-    if (left <= 0) {
-      hideForgotCooldown();
-      btnForgot.disabled = false;
-      return;
-    }
+/* ---------- image viewer (modal + mobile pinch) ---------- */
 
-    if (forgotCooldown) {
-      forgotCooldown.hidden = false;
-      forgotCooldown.textContent = t("index.resetCooldown", { time: formatLeft(left) });
-    }
+function initImageViewer() {
+  const overlay = document.createElement("div");
+  overlay.className = "imgv-overlay";
+  overlay.innerHTML = `
+    <div class="imgv-panel" role="dialog" aria-modal="true">
+      <div class="imgv-top">
+        <div class="imgv-title" id="imgvTitle"></div>
+        <button class="imgv-close btn" type="button" id="imgvClose" aria-label="Close">✕</button>
+      </div>
+      <div class="imgv-stage" id="imgvStage"></div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
 
-    // blokuj resend tylko dla tego maila
-    if (current.includes("@")) btnForgot.disabled = true;
+  const stage = overlay.querySelector("#imgvStage");
+  const closeBtn = overlay.querySelector("#imgvClose");
+  const titleEl = overlay.querySelector("#imgvTitle");
+
+  let currentImg = null;
+
+  // mobile zoom state
+  let scale = 1, tx = 0, ty = 0;
+  let startDist = 0, startScale = 1;
+  let pointers = new Map();
+  let lastPan = null;
+
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+  const setTransform = () => {
+    if (!currentImg) return;
+    currentImg.style.transform = `translate3d(${tx}px, ${ty}px, 0) scale(${scale})`;
   };
 
-  tick();
-  _forgotTimer = setInterval(tick, 1000);
-}
+  const resetZoom = () => {
+    scale = 1; tx = 0; ty = 0;
+    setTransform();
+  };
 
-function setBusy(v) {
-  isBusy = v;
-  if (btnPrimary) btnPrimary.disabled = v;
-  if (btnToggle) btnToggle.disabled = v;
-  if (btnForgot) btnForgot.disabled = v;
-  if (btnUsernameSave) btnUsernameSave.disabled = v;
-}
+  const open = (src, title) => {
+    stage.innerHTML = "";
+    titleEl.textContent = title || "";
 
-const params = new URLSearchParams(location.search);
-const nextTarget = params.get("next");
-const nextTask = params.get("t");
-const nextSub = params.get("s");
-const setup = params.get("setup");
+    const isMobile = window.matchMedia("(max-width: 900px)").matches;
 
-function buildAuthRedirect(page) {
-  // page: "confirm.html" | "reset.html" (może być też "/confirm.html")
-  const p = String(page || "").trim();
+    if (isMobile) {
+      const zoom = document.createElement("div");
+      zoom.className = "imgv-zoom";
 
-  // Wymuś ścieżkę absolutną w obrębie tego samego origin
-  const path = p.startsWith("http://") || p.startsWith("https://")
-    ? new URL(p).pathname
-    : (p.startsWith("/") ? p : `/${p}`);
+      const img = document.createElement("img");
+      img.className = "imgv-img";
+      img.src = src;
+      img.alt = title || "";
+      zoom.appendChild(img);
+      stage.appendChild(zoom);
 
-  const url = new URL(path, location.origin);
-  url.searchParams.set("lang", getUiLang());
-  return url.toString();
-}
-
-function buildNextUrl() {
-  const target = nextTarget === "subscriptions" ? subscriptionsUrl : pollsUrl;
-  if (!target) throw new Error(t("index.statusError"));
-  const url = new URL(target.startsWith("/") ? target : `/${target}`, location.origin);
-
-  if (nextTarget === "subscriptions" && nextSub) url.searchParams.set("s", nextSub);
-  if (nextTarget === "polls-hub" && nextTask) url.searchParams.set("t", nextTask);
-
-  url.searchParams.set("lang", getUiLang());
-  return url.toString();
-}
-
-function setErr(m = "") { err.textContent = m; }
-function setStatus(m = "") { status.textContent = m; }
-function setUsernameErr(m = "") { if (usernameErr) usernameErr.textContent = m; }
-
-function openUsernameSetup() {
-  if (loginCard) loginCard.hidden = true;
-  if (setupCard) setupCard.hidden = false;
-  document.body.classList.add("setup-mode");
-  if (usernameFirst) usernameFirst.focus();
-}
-
-function closeUsernameSetup() {
-  if (loginCard) loginCard.hidden = false;
-  if (setupCard) setupCard.hidden = true;
-  document.body.classList.remove("setup-mode");
-}
-
-async function ensureUsernameAvailable(username, userId) {
-  const { data, error } = await sb()
-    .from("profiles")
-    .select("id")
-    .ilike("username", username)
-    .neq("id", userId)
-    .limit(1)
-    .maybeSingle();
-  if (error) throw error;
-  if (data?.id) throw new Error(t("index.errUsernameTaken"));
-}
-
-async function saveUsername() {
-  console.log("[saveUsername] START", new Date().toISOString());
-  setUsernameErr("");
-  try {
-    const username = validateUsername(usernameFirst?.value || "");
-    const { data: userData, error: userError } = await sb().auth.getUser();
-    console.log("[saveUsername] userId", userData?.user?.id, "usernameInput", username);
-
-    if (userError || !userData?.user) throw new Error(t("index.errNoSession"));
-
-    await ensureUsernameAvailable(username, userData.user.id);
-
-    const res = await sb()
-      .from("profiles")
-      .update({ username })
-      .eq("id", userData.user.id)
-      .select("id, username")
-      .single();
-
-    console.log("[saveUsername] DB result", res);
-
-    if (res.error) throw res.error;
-
-    const meta = await sb().auth.updateUser({ data: { username } });
-    console.log("[saveUsername] META result", meta);
-
-    if (meta.error) throw meta.error;
-
-    closeUsernameSetup();
-    location.href = withLangParam(builderUrl);
-  } catch (e) {
-    console.error("[saveUsername] FAIL", e);
-    setUsernameErr(niceAuthError(e));
-  }
-}
-
-function applyMode() {
-  if (mode === "login") {
-    pass2.style.display = "none";
-    if (pwdHint) pwdHint.hidden = true;
-    btnPrimary.textContent = t("index.btnLogin");
-    btnToggle.textContent = t("index.btnToggleRegister");
-    email.placeholder = t("index.placeholderLogin");
-  } else {
-    pass2.style.display = "block";
-    if (pwdHint) {
-      pwdHint.hidden = false;
-      pwdHint.textContent = getPasswordRulesText();
+      currentImg = img;
+      resetZoom();
+      bindMobileZoom(zoom);
+    } else {
+      const img = document.createElement("img");
+      img.className = "imgv-img";
+      img.src = src;
+      img.alt = title || "";
+      stage.appendChild(img);
+      currentImg = img;
     }
-    btnPrimary.textContent = t("index.btnRegister");
-    btnToggle.textContent = t("index.btnToggleLogin");
-    email.placeholder = t("index.placeholderEmail");
+
+    overlay.classList.add("is-open");
+    document.body.classList.add("topbar-mobile-lock");
+  };
+
+  const close = () => {
+    overlay.classList.remove("is-open");
+    document.body.classList.remove("topbar-mobile-lock");
+    stage.innerHTML = "";
+    currentImg = null;
+    pointers.clear();
+    startDist = 0;
+    lastPan = null;
+  };
+
+  closeBtn.addEventListener("click", close);
+  overlay.addEventListener("click", (e) => { if (e.target === overlay) close(); });
+  window.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && overlay.classList.contains("is-open")) close();
+  });
+
+  // Event delegation: works even after src/lang changes
+  document.addEventListener("click", (e) => {
+    const shot = e.target.closest(".tile-shot");
+    if (!shot) return;
+
+    const img = shot.querySelector(".shot-img");
+    if (!img) return;
+
+    open(img.currentSrc || img.src, img.getAttribute("alt") || "");
+  });
+
+  function bindMobileZoom(root) {
+    pointers.clear();
+    lastPan = null;
+    startDist = 0;
+    startScale = scale;
+
+    root.onpointerdown = (e) => {
+      root.setPointerCapture?.(e.pointerId);
+      pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    };
+
+    root.onpointermove = (e) => {
+      if (!pointers.has(e.pointerId)) return;
+      pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+      const pts = [...pointers.values()];
+
+      // 1 finger pan
+      if (pts.length === 1 && scale > 1) {
+        const p = pts[0];
+        if (!lastPan) lastPan = { x: p.x, y: p.y };
+        const dx = p.x - lastPan.x;
+        const dy = p.y - lastPan.y;
+        lastPan = { x: p.x, y: p.y };
+        tx += dx; ty += dy;
+        setTransform();
+        return;
+      }
+
+      // 2 finger pinch zoom
+      if (pts.length === 2) {
+        const [a, b] = pts;
+        const dx = a.x - b.x;
+        const dy = a.y - b.y;
+        const dist = Math.hypot(dx, dy);
+
+        if (!startDist) {
+          startDist = dist;
+          startScale = scale;
+          lastPan = null;
+          return;
+        }
+
+        const factor = dist / startDist;
+        scale = clamp(startScale * factor, 1, 4);
+        setTransform();
+      }
+    };
+
+    root.onpointerup = (e) => {
+      pointers.delete(e.pointerId);
+      if (pointers.size < 2) startDist = 0;
+      if (pointers.size === 0) lastPan = null;
+    };
+
+    root.onpointercancel = root.onpointerup;
+
+    // double tap => reset
+    let lastTap = 0;
+    root.ontouchend = () => {
+      const now = Date.now();
+      if (now - lastTap < 280) resetZoom();
+      lastTap = now;
+    };
   }
-  setErr("");
 }
+
+/* ---------- boot ---------- */
 
 document.addEventListener("DOMContentLoaded", async () => {
   await initI18n({ withSwitcher: true });
-  const syncLanguage = () => updateUserLanguage(getUiLang());
-  applyMode();
-  setStatus(t("index.statusChecking"));
-  
-  const usernameForm = document.querySelector("#usernameForm");
-  
-  usernameForm?.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    if (isBusy) return;
-    await saveUsername();
+  applyTranslations();
+
+  // CTA
+  const cta = document.getElementById("ctaStart");
+  if (cta) cta.href = withLangParam("login.html");
+
+  // Images for current language
+  const lang = getUiLang();
+  switchLandingImages(lang);
+
+  // Language change => switch images
+  window.addEventListener("i18n:lang", (e) => {
+    switchLandingImages(e.detail.lang);
   });
 
-  const u = await getUser();
-  if (u) {
-    await syncLanguage();
-    if (!u.username) {
-      openUsernameSetup();
-    } else if (nextTarget === "polls-hub" || nextTarget === "subscriptions") {
-      location.href = buildNextUrl();
-    } else {
-      location.href = withLangParam(builderUrl);
-    }
-    return;
-  }
-  
-  setStatus(t("index.statusLoggedOut"));
+  // Modal viewer
+  initImageViewer();
 
-  window.addEventListener("i18n:lang", syncLanguage);
-
-  btnToggle.addEventListener("click", () => {
-    mode = mode === "login" ? "register" : "login";
-    applyMode();
-  });
-
-  btnPrimary.addEventListener("click", async () => {
-    if (isBusy) return;
-    setBusy(true);
-
-    setErr("");
-    const loginOrEmail = email.value.trim();
-    const pwd = pass.value;
-
-    if (!loginOrEmail || !pwd) {
-      setBusy(false);
-      return setErr(t("index.errMissingLogin"));
-    }
-
-    try {
-      if (mode === "register") {
-        const mail = loginOrEmail;
-
-        if (!mail || !mail.includes("@")) return setErr(t("index.errInvalidEmail"));
-
-        if (pass2.value !== pwd) return setErr(t("index.errPasswordMismatch"));
-        try {
-          validatePassword(pwd);
-        } catch (e) {
-          return setErr(niceAuthError(e));
-        }
-
-        setStatus(t("index.statusRegistering"));
-        const redirectTo = buildAuthRedirect(confirmUrl);
-        await signUp(mail, pwd, redirectTo, null, getUiLang());
-        setStatus(t("index.statusCheckEmail"));
-      } else {
-        setStatus(t("index.statusLoggingIn"));
-        await signIn(loginOrEmail, pwd); // <-- może być username
-        const authed = await getUser();
-        await syncLanguage();
-        if (!authed?.username) {
-          openUsernameSetup();
-        } else if (nextTarget === "polls-hub" || nextTarget === "subscriptions") {
-          location.href = buildNextUrl();
-        } else {
-          location.href = withLangParam(builderUrl);
-        }
-      }
-    } catch (e) {
-      console.error(e);
-      setStatus(t("index.statusError"));
-      setErr(niceAuthError(e));
-    } finally {
-      setBusy(false);
-    }
-  });
-
-  btnForgot.addEventListener("click", async () => {
-    if (isBusy) return;
-    setBusy(true);
-    setErr("");
-  
-    const loginOrEmail = email.value.trim();
-    if (!loginOrEmail) {
-      setBusy(false);
-      return setErr(t("index.errResetMissingLogin"));
-    }
-  
-    try {
-      // 1) resolve (email lub username -> email)
-      const resolved = await resolveLoginToEmail(loginOrEmail);
-      if (!resolved) throw new Error(t("index.errResetMissingLogin"));
-      // 2) cooldown check (per email, cross-device)
-      await refreshForgotUntil(resolved);
-      const until = getForgotUntil(resolved);
-      const left = until - Date.now();
-      if (left > 0) {
-        setStatus(t("index.statusResetSent"));
-        setErr(t("index.errResetCooldown", { time: formatLeft(left) }));
-        showForgotCooldownForEmail(resolved);
-        return;
-      }
-      // 3) reserve cooldown (cross-device) + send
-      const reserve = await cooldownEmailReserve(resolved, RESET_ACTION_KEY, RESET_COOLDOWN_SECONDS);
-      if (reserve.nextAllowedAtMs) setForgotUntil(resolved, reserve.nextAllowedAtMs);
-
-      if (!reserve.ok) {
-        const left2 = getForgotUntil(resolved) - Date.now();
-        setStatus(t("index.statusResetSent"));
-        setErr(t("index.errResetCooldown", { time: formatLeft(left2) }));
-        showForgotCooldownForEmail(resolved);
-        return;
-      }
-
-      setStatus(t("index.statusResetSending"));
-      const redirectTo = buildAuthRedirect(resetUrl);
-
-      const usedEmail = await resetPassword(loginOrEmail, redirectTo, getUiLang(), resolved);
-
-      if (reserve.nextAllowedAtMs) setForgotUntil(usedEmail, reserve.nextAllowedAtMs);
-
-      setStatus(t("index.statusResetSent"));
-      hideForgotCooldown();
-      showForgotCooldownForEmail(usedEmail);
-} catch (e) {
-      console.error(e);
-      setStatus(t("index.statusError"));
-      setErr(niceAuthError(e));
-    } finally {
-      setBusy(false);
-    }
-  });
-
-  btnForgot.addEventListener("keydown", (e) => {
-    if (e.key !== "Enter") return;
-    e.preventDefault();
-    btnForgot.click();
-  });
-
-  email.addEventListener("keydown", (e) => {
-    if (e.key !== "Enter") return;
-    e.preventDefault();
-    pass.focus();
-  });
-
-  email.addEventListener("keydown", (e) => {
-    if (e.key !== "Enter") return;
-  
-    if (document.activeElement === email && e.shiftKey === false) {
-      e.preventDefault();
-      if (mode === "login") {
-        pass.focus();
-      }
-    }
-  });
-
-  email?.addEventListener("input", () => {
-    const v = String(email.value || "").trim().toLowerCase();
-    if (!v.includes("@")) {
-      hideForgotCooldown();
-      btnForgot.disabled = false;
-      return;
-    }
-
-    if (_forgotDebounce) clearTimeout(_forgotDebounce);
-    _forgotDebounce = setTimeout(async () => {
-      try {
-        await refreshForgotUntil(v);
-        const until = getForgotUntil(v);
-        if (until > Date.now()) {
-          showForgotCooldownForEmail(v);
-        } else {
-          hideForgotCooldown();
-          btnForgot.disabled = false;
-        }
-      } catch {
-        // Jeśli RPC jest niedostępne, ukryj odliczanie (nie blokuj UI).
-        hideForgotCooldown();
-        btnForgot.disabled = false;
-      }
-    }, 400);
-  });
-  
-  pass.addEventListener("keydown", (e) => {
-    if (e.key !== "Enter") return;
-    e.preventDefault();
-  
-    if (mode === "register") {
-      pass2.focus();
-    } else {
-      btnPrimary.click(); // 🔴 jedyne miejsce wywołania
-    }
-  });
-  
-  pass2.addEventListener("keydown", (e) => {
-    if (e.key !== "Enter") return;
-    e.preventDefault();
-    btnPrimary.click(); // 🔴 jedyne miejsce wywołania
-  });
-
+  // Redirect last (to avoid doing extra DOM work for logged users)
+  await redirectIfSession();
 });

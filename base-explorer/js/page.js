@@ -48,14 +48,14 @@ btnBack?.addEventListener("click", () => {
 
 btnLogout?.addEventListener("click", async () => {
   await signOut();
-  location.href = withLangParam("../index.html");
+  location.href = withLangParam("../login.html");
 });
 
 /* ================= Init ================= */
 (async function init() {
   await initI18n({ withSwitcher: true });
   // auth
-  const user = await requireAuth(withLangParam("../index.html"));
+  const user = await requireAuth(withLangParam("../login.html"));
   if (who) who.textContent = user?.username || user?.email || "—";
 
   // base id z URL

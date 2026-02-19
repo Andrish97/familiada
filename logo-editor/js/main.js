@@ -1277,7 +1277,7 @@ async function boot(){
      renderList();
    });
 
-   currentUser = await requireAuth(withLangParam("../index.html"));
+   currentUser = await requireAuth(withLangParam("../login.html"));
    if (who) who.textContent = currentUser?.username || currentUser?.email || "—";
 
   try{
@@ -1337,7 +1337,7 @@ async function boot(){
        if (!ok) return;
      }
      await signOut();
-     location.href = withLangParam("../index.html");
+     location.href = withLangParam("../login.html");
    });
 
    inpImportLogoFile?.addEventListener("change", async () => {

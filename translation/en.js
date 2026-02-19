@@ -43,6 +43,105 @@ const en = {
     message: "This page works only on a desktop computer.",
     back: "Go back",
   },
+  home: {
+    title: "Familiada — game hosting system",
+    hero: {
+      title: "Prepare the game. Collect results. Run Familiada live.",
+      lead: "A complete system for creating and running a Familiada–style game. Prepare your questions, collect poll responses and run a dynamic live game with a scoreboard, operator control panel and a dedicated host view. Everything runs in the browser — no installation required.",
+      ctaStart: "Start creating games and running the live show",
+      note: "Click to log in or create an account.",
+    },
+  
+    tiles: {
+      title: "How it works (step by step)",
+  
+      t1: {
+        alt: "Games list: create a new game and choose a mode (poll, scored answers, prepared).",
+        t: "Create a game and choose a mode",
+        d:
+          "Create a new game and choose a type: text poll, scored answers, or prepared. The type determines where answers and points on the board come from.",
+      },
+  
+      t2: {
+        alt: "Game editor: add questions and prepare the game structure.",
+        t: "Edit questions and (sometimes) answers",
+        d:
+          "Add questions and set the game structure. Depending on the game type, you can prepare answers and points or leave them to be collected via a poll.",
+      },
+  
+      t3: {
+        alt: "Friends: add and manage people you share polls and question bases with.",
+        t: "Friends and sharing",
+        d:
+          "Add friends so you can share polls with one click and collaborate. This speeds up organization and collecting responses.",
+      },
+  
+      t4: {
+        alt: "Polls: share via link or QR code and collect votes.",
+        t: "Poll: link / QR and collecting votes",
+        d:
+          "Share the poll via a link or QR code. Participants answer questions, and you can track progress and results in the panel.",
+      },
+      
+      t5: {
+        alt: "Poll hub: manage polls, share via link or QR code, and track progress.",
+        t: "Poll hub",
+        d: "Manage your polls in one place: start and close voting, track progress, and share with friends (link/QR) to collect responses quickly.",
+      },
+
+      t6: {
+        alt: "Operator control panel: board control, points, strikes (X), and game stages.",
+        t: "Control panel (operator) — live game",
+        d:
+          "On the event day, the operator controls the board, points, strikes (X), and game stages. The system guides step by step to reduce mistakes.",
+      },
+  
+      t7: {
+        alt: "Audience board display: questions, answers, points, bank, and strikes (X).",
+        t: "Board for the audience (TV / projector)",
+        d:
+          "The board shows questions, answers, points, the bank, and X strikes. This is the screen for players and the audience.",
+      },
+  
+      t8: {
+        alt: "Host view: question content and context on a tablet or phone.",
+        t: "Host view (tablet / phone)",
+        d:
+          "The host has a separate screen with question content and context, without the risk of clicking game controls.",
+      },
+  
+      t9: {
+        alt: "Buzzer device: a separate device used to signal who pressed first in a face-off.",
+        t: "Buzzer for face-offs (separate device)",
+        d:
+          "A separate buzzer signals who pressed first in the face-off. It helps keep tempo and order during rounds.",
+      },
+  
+      t10: {
+        alt: "Question bases: create a shared library and grant access to friends for collaboration.",
+        t: "Question bases and collaboration",
+        d:
+          "Create a shared question library: folders, tags, categories. You can share a base with friends for editing or view-only access.",
+      },
+  
+      t11: {
+        alt: "Question manager: manage questions like a file explorer (folders, move/copy, search).",
+        t: "Question manager like a file explorer",
+        d:
+          "Manage questions like in Finder/Explorer: folders, moving, copying, quick selection, and search by name and tags.",
+      },
+      t12: {
+        alt: "Logo editor view: create a custom logo that appears on the display during the game.",
+        t: "Custom logo on the display",
+        d: "Create your own logo that will be shown during the game — for example on the start or end screen. You can make text logos, simple graphics, or import an image.",
+      },
+    },
+  
+    footer: {
+      left: "© Familiada — live game system",
+      privacy: "Privacy policy",
+    },
+  },
   auth: {
     emailNotConfirmed: "Confirm your email (link in inbox).",
     invalidCredentials: "Wrong email or password.",
@@ -70,6 +169,8 @@ const en = {
     passwordRules: "Password must include: {hints}.",
   },
   index: {
+    backHome: "← Home page",
+    intro: "To create games and run a live show, log in. No account? Register below.",
     title: "Familiada — login",
     subtitle: "Game creation and hosting panel",
     statusChecking: "Checking session…",
@@ -178,7 +279,8 @@ const en = {
     emailNotifTitle: "Email notifications",
     emailNotifHint: "Receive email notifications about subscription invites, vote tasks, or shared question bases. If you disable email, you will still see these items directly on the site.",
     emailNotifCheckbox: "Enable email notifications",
-    emailNotifDisableConfirm: "Disable email notifications? You will still see all invites and tasks directly on the site.",
+    emailNotifDisableTitle: "Disable email notifications?",
+    emailNotifDisableConfirm: "You will still see all invites and tasks directly on the site.",
     emailNotifSavedOn: "Email notifications: ON ✅",
     emailNotifSavedOff: "Email notifications: OFF ✅",
     emailNotifSaveFailed: "Failed to save the setting ❌",
@@ -1057,7 +1159,7 @@ const en = {
     
       <p class="m-p">
         The ability to edit answers depends on the game type.
-        In poll-based games answers are the result of a survey,
+        In poll-based games answers are the result of a poll,
         so before the poll you can only prepare
         their general structure or examples.
       </p>
@@ -1082,7 +1184,7 @@ const en = {
       <p class="m-p">
         Manual point setting is possible
         only in prepared mode,
-        where the system does not use survey data.
+        where the system does not use poll data.
       </p>
     
       <div class="m-note">
@@ -2226,6 +2328,7 @@ const en = {
     title: "Familiada — privacy policy",
     pageTitle: "Privacy Policy",
     backToManual: "← Guide",
+    backToHome: "← Home page",
     logout: "Log out",
     content: `
       <h2 class="m-h2">1. Data controller</h2>

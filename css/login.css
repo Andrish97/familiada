@@ -64,7 +64,8 @@ input:focus {
 .row {
     display: flex;
     gap: 10px;
-    flex-wrap: wrap
+    flex-wrap: wrap;
+    justify-content: space-between;
 }
 
 .btn {
@@ -181,4 +182,74 @@ body.setup-mode .setup-card {
   opacity: .75;
   font-size: 12px;
   line-height: 1.35;
+}
+
+/* HEADER W KARCIE LOGIN */
+
+.login-header {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 56px;
+}
+
+/* Brand wycentrowany absolutnie */
+.login-brand {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+
+  font-weight: 1000;
+  letter-spacing: .14em;
+  font-size: 18px;
+  color: var(--gold);
+}
+
+
+/* ===============================
+   FIXED BACK BUTTON (LOGIN)
+================================ */
+
+.login-back-fixed{
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  z-index: 1000;
+
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+
+  padding: 8px 14px;
+  border-radius: 14px;
+
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: .05em;
+
+  color: rgba(255,255,255,.75);
+  text-decoration: none;
+
+  border: 1px solid rgba(255,255,255,.18);
+  background: rgba(255,255,255,.05);
+
+  backdrop-filter: blur(6px);
+
+  transition: all .18s ease;
+}
+
+.login-back-fixed:hover{
+  color: var(--gold);
+  border-color: var(--gold);
+  background: rgba(255,215,0,.08);
+}
+
+/* MOBILE */
+@media (max-width: 600px){
+  .login-back-fixed{
+    top: 14px;
+    left: 14px;
+    padding: 8px 12px;
+    font-size: 14px;
+  }
 }
