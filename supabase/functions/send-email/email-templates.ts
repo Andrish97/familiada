@@ -1,5 +1,5 @@
 export type EmailLang = "pl" | "en" | "uk";
-export type EmailType = "signup" | "recovery" | "email_change";
+export type EmailType = "signup" | "guest_migrate" | "recovery" | "email_change";
 
 type CopyBlock = {
   subtitle: string;
@@ -41,6 +41,38 @@ export const EMAIL_COPY: CopyMap = {
       title: "Активуйте обліковий запис",
       desc: "Натисніть кнопку нижче, щоб підтвердити електронну пошту та завершити реєстрацію.",
       btn: "ПІДТВЕРДИТИ ОБЛІКОВИЙ ЗАПИС",
+      ignore: "Якщо це не ви, просто проігноруйте цей лист.",
+      copyHint: "Посилання не працює? Скопіюйте та вставте в браузер:",
+      linkLabel: "Посилання не працює?",
+      footer: "Автоматичне повідомлення — будь ласка, не відповідайте.",
+    },
+  },
+  guest_migrate: {
+    pl: {
+      subtitle: "Migracja konta",
+      title: "Potwierdź migrację",
+      desc: "Kliknij przycisk poniżej, aby potwierdzić adres e-mail i przenieść konto gościa.",
+      btn: "POTWIERDŹ MIGRACJĘ",
+      ignore: "Jeśli to nie Ty, zignoruj tę wiadomość.",
+      copyHint: "Link nie działa? Skopiuj i wklej do przeglądarki:",
+      linkLabel: "Link nie działa?",
+      footer: "Wiadomość automatyczna — prosimy nie odpowiadać.",
+    },
+    en: {
+      subtitle: "Account migration",
+      title: "Confirm migration",
+      desc: "Click the button below to confirm your email and migrate the guest account.",
+      btn: "CONFIRM MIGRATION",
+      ignore: "If this wasn’t you, you can safely ignore this email.",
+      copyHint: "Link not working? Copy and paste it into your browser:",
+      linkLabel: "Link not working?",
+      footer: "This is an automated message — please do not reply.",
+    },
+    uk: {
+      subtitle: "Міграція акаунта",
+      title: "Підтвердіть міграцію",
+      desc: "Натисніть кнопку нижче, щоб підтвердити e-mail і перенести гостьовий акаунт.",
+      btn: "ПІДТВЕРДИТИ МІГРАЦІЮ",
       ignore: "Якщо це не ви, просто проігноруйте цей лист.",
       copyHint: "Посилання не працює? Скопіюйте та вставте в браузер:",
       linkLabel: "Посилання не працює?",

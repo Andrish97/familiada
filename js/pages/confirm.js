@@ -3,6 +3,7 @@ import { niceAuthError } from "../core/auth.js";
 import { updateUserLanguage } from "../core/auth.js";
 import { initI18n, t, getUiLang, withLangParam } from "../../translation/translation.js";
 import { confirmModal } from "../core/modal.js";
+import { isGuestUser } from "../core/guest-mode.js";
 
 const status = document.getElementById("status");
 const err = document.getElementById("err");
@@ -41,7 +42,9 @@ async function requireNoActiveSessionBeforeAuthFlow() {
 
   const ok = await confirmModal({
     title: t("confirm.sessionSwitchTitle"),
-    text: t("confirm.sessionSwitchText", { who }),
+    text: isGuestUser(currentUser)
+      ? t("confirm.sessionSwitchGuestText", { who })
+      : t("confirm.sessionSwitchText", { who }),
     okText: t("confirm.sessionSwitchOk"),
     cancelText: t("confirm.sessionSwitchCancel"),
   });
@@ -59,6 +62,41 @@ async function syncProfileEmail(user) {
   } catch (e) {
     console.warn("Profile email update failed:", e);
   }
+}
+
+function isPlaceholderUsername(username) {
+  const un = String(username || "").trim().toLowerCase();
+  if (!un) return true;
+  return un.startsWith("guest_");
+}
+
+async function shouldSetupUsername(user) {
+  if (!user?.id) return false;
+  try {
+    const { data } = await sb()
+      .from("profiles")
+      .select("username")
+      .eq("id", user.id)
+      .maybeSingle();
+    if (isPlaceholderUsername(data?.username)) return true;
+  } catch {}
+  return isPlaceholderUsername(user?.user_metadata?.username);
+}
+
+async function markEmailIntentConfirmed(email) {
+  const e = String(email || "").trim().toLowerCase();
+  if (!e) return;
+  try {
+    await sb().rpc("email_mark_confirmed", { p_email: e });
+  } catch {}
+}
+
+async function redirectAfterConfirm(user) {
+  if (await shouldSetupUsername(user)) {
+    location.href = withLangParam("login.html?setup=username");
+    return;
+  }
+  location.href = withLangParam("builder.html");
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -139,12 +177,13 @@ document.addEventListener("DOMContentLoaded", async () => {
           await syncProfileEmail(data.session.user);
           if (otpType === "email_change") {
             try {
-              await sb().auth.updateUser({ data: { familiada_email_change_pending: "" } });
+              await sb().auth.updateUser({ data: { familiada_email_change_pending: "", familiada_email_change_intent: "" } });
             } catch {}
+            await markEmailIntentConfirmed(data.session.user?.email || "");
           }
           setStatus(t("confirm.done"));
           go.style.display = "inline-flex";
-          setTimeout(() => (location.href = withLangParam("builder.html")), 700);
+          setTimeout(() => { void redirectAfterConfirm(data.session.user); }, 700);
           return;
         }
         setStatus(t("confirm.savedNoSession"));
@@ -169,12 +208,13 @@ document.addEventListener("DOMContentLoaded", async () => {
           await syncProfileEmail(data.session.user);
           if (otpType === "email_change") {
             try {
-              await sb().auth.updateUser({ data: { familiada_email_change_pending: "" } });
+              await sb().auth.updateUser({ data: { familiada_email_change_pending: "", familiada_email_change_intent: "" } });
             } catch {}
+            await markEmailIntentConfirmed(data.session.user?.email || "");
           }
           setStatus(t("confirm.done"));
           go.style.display = "inline-flex";
-          setTimeout(() => (location.href = withLangParam("builder.html")), 700);
+          setTimeout(() => { void redirectAfterConfirm(data.session.user); }, 700);
           return;
         }
 
@@ -204,14 +244,15 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (data?.session) {
       await syncLanguage();
       await syncProfileEmail(data.session.user);
-          if (otpType === "email_change") {
-            try {
-              await sb().auth.updateUser({ data: { familiada_email_change_pending: "" } });
-            } catch {}
-          }
+      if (otpType === "email_change") {
+        try {
+          await sb().auth.updateUser({ data: { familiada_email_change_pending: "", familiada_email_change_intent: "" } });
+        } catch {}
+        await markEmailIntentConfirmed(data.session.user?.email || "");
+      }
       setStatus(t("confirm.done"));
       go.style.display = "inline-flex";
-      setTimeout(() => (location.href = withLangParam("builder.html")), 700);
+      setTimeout(() => { void redirectAfterConfirm(data.session.user); }, 700);
     } else {
       setStatus(t("confirm.confirmedNoSession"));
       back.style.display = "inline-flex";

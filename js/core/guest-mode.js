@@ -1,28 +1,13 @@
 // js/core/guest-mode.js
 import { applyTranslations, t, withLangParam } from "../../translation/translation.js";
 
-function normalize(v) {
-  return String(v || "").trim().toLowerCase();
-}
-
 export function isGuestUser(user) {
   if (!user) return false;
 
-  // If the account explicitly declares "not a guest", treat it as non-guest even if
-  // legacy placeholder username/email still looks like guest_*.
-  if (user?.is_guest === false) return false;
-  if (user?.user_metadata?.is_guest === false) return false;
-  if (user?.app_metadata?.is_guest === false) return false;
-
+  // Guest mode must be driven by explicit flags/metadata, not username pattern.
   if (user?.is_guest === true) return true;
   if (user?.user_metadata?.is_guest === true) return true;
   if (user?.app_metadata?.is_guest === true) return true;
-
-  const username = normalize(user?.username || user?.user_metadata?.username);
-  if (username.startsWith("guest_")) return true;
-
-  const email = normalize(user?.email);
-  if (email.startsWith("guest_")) return true;
 
   return false;
 }

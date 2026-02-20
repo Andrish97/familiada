@@ -15,7 +15,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
   <script type="module" src="js/pages/login.js" defer></script>
 </head>
-<body class="login-body" data-confirm-url="confirm.html" data-reset-url="reset.html" data-builder-url="builder.html" data-polls-url="polls-hub.html" data-subscriptions-url="subscriptions.html" data-captcha-provider="hcaptcha" data-captcha-site-key="4290577e-9078-471a-bf20-caccdea890e6">
+<body class="login-body mode-login" data-confirm-url="confirm.html" data-reset-url="reset.html" data-builder-url="builder.html" data-polls-url="polls-hub.html" data-subscriptions-url="subscriptions.html" data-captcha-provider="hcaptcha" data-captcha-site-key="4290577e-9078-471a-bf20-caccdea890e6">
   <a href="index.html"
      class="login-back-fixed"
      id="btnBackHome"
@@ -36,8 +36,8 @@
       <div class="form">
         <input id="email" type="email" placeholder="Email" autocomplete="email" data-i18n-placeholder="index.placeholderLogin"/>
         <input id="pass" type="password" placeholder="Hasło" autocomplete="current-password" data-i18n-placeholder="index.placeholderPassword"/>
-        <input id="pass2" type="password" placeholder="Powtórz hasło" autocomplete="new-password" style="display:none" data-i18n-placeholder="index.placeholderPasswordRepeat"/>
-        <div class="hint" id="pwdHint" hidden></div>
+        <input id="pass2" type="password" placeholder="Powtórz hasło" autocomplete="new-password" data-i18n-placeholder="index.placeholderPasswordRepeat"/>
+        <div class="hint" id="pwdHint"></div>
 
         <div class="row">
           <button class="btn main" id="btnPrimary" type="button" data-i18n="index.btnLogin">Zaloguj</button>
@@ -68,22 +68,6 @@
       </form>
     </div>
 
-    <div class="login-card setup-card" id="passwordCard" hidden>
-      <div class="brand">FAMILIADA</div>
-      <div class="sub" data-i18n="index.passwordSetupTitle">Dokończ rejestrację</div>
-      <div class="setup-title" data-i18n="index.passwordSetupPrompt">Ustaw hasło</div>
-      <div class="setup-sub" data-i18n="index.passwordSetupSub">Użyj hasła zgodnego z zasadami bezpieczeństwa.</div>
-
-      <form class="setup-form" id="passwordForm">
-        <input id="passwordNew1" type="password" placeholder="Nowe hasło" autocomplete="new-password" data-i18n-placeholder="index.passwordNew"/>
-        <input id="passwordNew2" type="password" placeholder="Powtórz nowe hasło" autocomplete="new-password" data-i18n-placeholder="index.passwordRepeat"/>
-        <div class="hint" id="passwordHint" hidden></div>
-        <div class="modal-err" id="passwordErr"></div>
-        <div class="modal-actions">
-          <button class="btn main" id="btnPasswordSave" type="submit" data-i18n="index.btnPasswordSave">Zapisz hasło</button>
-        </div>
-      </form>
-    </div>
   </div>
 </body>
 </html>

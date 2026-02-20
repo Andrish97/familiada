@@ -55,6 +55,7 @@ serve(async (req) => {
     // Try multiple possible fields across GoTrue versions + our own metadata fallback.
     const meta = (u?.user_metadata || {}) as Record<string, unknown>;
     const metaPending = String(meta.familiada_email_change_pending || "").trim();
+    const metaIntent = String(meta.familiada_email_change_intent || "").trim();
     
     const pendingCandidates = [
       u?.new_email,
@@ -81,8 +82,8 @@ serve(async (req) => {
     
     // B) If pending is gone (confirmed elsewhere), but metadata still holds pending,
     // clear metadata to avoid UI bouncing back to pending state.
-    if (!is_pending && metaPending) {
-      const nextMeta = { ...meta, familiada_email_change_pending: "" };
+    if (!is_pending && (metaPending || metaIntent)) {
+      const nextMeta = { ...meta, familiada_email_change_pending: "", familiada_email_change_intent: "" };
       const { error: metaErr } = await admin.auth.admin.updateUserById(userId, { user_metadata: nextMeta });
       if (metaErr) console.warn("clear pending metadata (auto-heal B) failed:", metaErr);
     }

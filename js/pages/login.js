@@ -3,9 +3,9 @@ import {
   getUser,
   signIn,
   signInGuest,
-  signUp,
-  convertGuestToRegistered,
-  convertGuestToRegisteredEmailOnly,
+  getEmailStatus,
+  sendSignupConfirmation,
+  sendGuestMigrateConfirmation,
   discardCurrentGuestAccount,
   resetPassword,
   resolveLoginToEmail,
@@ -38,15 +38,9 @@ const btnGuest = $("#btnGuest");
 const forgotCooldown = $("#forgotCooldown");
 const loginCard = $("#loginCard");
 const setupCard = $("#setupCard");
-const passwordCard = $("#passwordCard");
 const usernameFirst = $("#usernameFirst");
 const usernameErr = $("#usernameErr");
 const btnUsernameSave = $("#btnUsernameSave");
-const passwordNew1 = $("#passwordNew1");
-const passwordNew2 = $("#passwordNew2");
-const passwordErr = $("#passwordErr");
-const passwordHint = $("#passwordHint");
-const btnPasswordSave = $("#btnPasswordSave");
 const setupTitleEl = setupCard?.querySelector(".setup-title");
 const setupSubEl = setupCard?.querySelector(".setup-sub");
 const baseUrls = document.body?.dataset || {};
@@ -351,7 +345,6 @@ async function askCaptchaToken() {
 
 
 let mode = "login"; // login | register
-let registerVariant = "normal"; // normal | guest-migrate
 
 let isBusy = false;
 
@@ -361,6 +354,8 @@ const RESET_COOLDOWN_SECONDS = 60 * 60;
 
 const GUEST_UPGRADE_ACTION_KEY = "auth:guest_upgrade_email";
 const GUEST_UPGRADE_COOLDOWN_SECONDS = 60 * 60;
+const SIGNUP_RESEND_ACTION_KEY = "auth:signup_confirm";
+const RESEND_COOLDOWN_SECONDS = 60 * 60;
 
 let _forgotTimer = null;
 let _forgotDebounce = null;
@@ -458,7 +453,6 @@ const params = new URLSearchParams(location.search);
 const nextTarget = params.get("next");
 const nextTask = params.get("t");
 const nextSub = params.get("s");
-const setup = params.get("setup");
 const guestUsername = params.get("guest_username") === "1";
 const guestExpired = params.get("guest_expired") === "1";
 const forceAuth = params.get("force_auth") === "1";
@@ -512,8 +506,11 @@ async function confirmDiscardGuestIfActive() {
     });
 
     if (!ok) {
-      setStatus(t("index.statusLoggedOut"));
-      setErr(t("index.guestSessionLossCancelled"));
+      try {
+        if (email) email.value = "";
+        if (pass) pass.value = "";
+        if (pass2) pass2.value = "";
+      } catch {}
       return false;
     }
 
@@ -525,11 +522,75 @@ async function confirmDiscardGuestIfActive() {
   }
 }
 
+async function handlePendingEmailResend(emailAddr, pendingIntent) {
+  const ok = await confirmModal({
+    title: t("index.pendingEmailTitle"),
+    text: t("index.pendingEmailText", { email: emailAddr }),
+    okText: t("index.pendingEmailOk"),
+    cancelText: t("index.pendingEmailCancel"),
+  });
+  if (!ok) return true;
+
+  const intent = pendingIntent === "guest_migrate" ? "guest_migrate" : "signup";
+  let reserveOk = false;
+  let nextAllowedAtMs = 0;
+
+  try {
+    const { data, error } = await sb().rpc("email_resend_prepare", {
+      p_email: String(emailAddr || "").trim().toLowerCase(),
+      p_intent: intent,
+    });
+    if (!error && Array.isArray(data) && data.length) {
+      reserveOk = !!data[0]?.ok;
+      nextAllowedAtMs = data[0]?.nextallowedat ? new Date(data[0].nextallowedat).getTime() : 0;
+    }
+  } catch {}
+
+  // Fallback for environments without the new RPC.
+  if (!reserveOk && !nextAllowedAtMs) {
+    const actionKey = intent === "guest_migrate" ? GUEST_UPGRADE_ACTION_KEY : SIGNUP_RESEND_ACTION_KEY;
+    const reserve = await cooldownEmailReserve(emailAddr, actionKey, RESEND_COOLDOWN_SECONDS);
+    reserveOk = !!reserve.ok;
+    nextAllowedAtMs = reserve.nextAllowedAtMs || 0;
+  }
+
+  if (!reserveOk) {
+    const left = (nextAllowedAtMs || 0) - Date.now();
+    if (left > 0) setErr(t("index.errResendCooldown", { time: formatLeft(left) }));
+    else setErr(t("index.errResendCooldownGeneric"));
+    return true;
+  }
+
+  const language = getUiLang();
+  const redirect = new URL("/confirm.html", location.origin);
+  redirect.searchParams.set("lang", language);
+  redirect.searchParams.set("to", emailAddr);
+
+  if (intent === "guest_migrate") {
+    const { error: resendErr } = await sb().auth.resend({
+      type: "email_change",
+      email: emailAddr,
+      options: { emailRedirectTo: redirect.toString() },
+    });
+    if (resendErr) throw resendErr;
+  } else {
+    const { error: resendErr } = await sb().auth.resend({
+      type: "signup",
+      email: emailAddr,
+      options: { emailRedirectTo: redirect.toString() },
+    });
+    if (resendErr) throw resendErr;
+  }
+
+  setStatus(t("index.statusCheckEmail"));
+  void alertModal({ text: t("index.pendingEmailResent") });
+  return true;
+}
+
 
 function openUsernameSetup() {
   if (loginCard) loginCard.hidden = true;
   if (setupCard) setupCard.hidden = false;
-  if (passwordCard) passwordCard.hidden = true;
   document.body.classList.add("setup-mode");
 
   if (guestUsername) {
@@ -546,57 +607,7 @@ function openUsernameSetup() {
 function closeUsernameSetup() {
   if (loginCard) loginCard.hidden = false;
   if (setupCard) setupCard.hidden = true;
-  if (passwordCard) passwordCard.hidden = true;
   document.body.classList.remove("setup-mode");
-}
-
-function openPasswordSetup() {
-  if (loginCard) loginCard.hidden = true;
-  if (setupCard) setupCard.hidden = true;
-  if (passwordCard) passwordCard.hidden = false;
-  document.body.classList.add("setup-mode");
-  if (passwordHint) {
-    passwordHint.hidden = false;
-    passwordHint.textContent = getPasswordRulesText();
-  }
-  if (passwordNew1) passwordNew1.focus();
-}
-
-function closePasswordSetup() {
-  if (loginCard) loginCard.hidden = false;
-  if (setupCard) setupCard.hidden = true;
-  if (passwordCard) passwordCard.hidden = true;
-  document.body.classList.remove("setup-mode");
-}
-
-function setPasswordErr(m = "") {
-  if (passwordErr) passwordErr.textContent = m;
-}
-
-async function savePassword() {
-  setPasswordErr("");
-  try {
-    const p1 = String(passwordNew1?.value || "");
-    const p2 = String(passwordNew2?.value || "");
-    if (!p1 || !p2) throw new Error(t("index.errPasswordMissing"));
-    if (p1 !== p2) throw new Error(t("index.errPasswordMismatch"));
-    validatePassword(p1);
-
-    const { data: userData, error: userError } = await sb().auth.getUser();
-    if (userError || !userData?.user) throw new Error(t("index.errNoSession"));
-
-    const { error } = await sb().auth.updateUser({
-      password: p1,
-      data: { familiada_needs_password: false },
-    });
-    if (error) throw error;
-
-    closePasswordSetup();
-    location.href = withLangParam(builderUrl);
-  } catch (e) {
-    console.error("[savePassword] FAIL", e);
-    setPasswordErr(niceAuthError(e));
-  }
 }
 
 async function ensureUsernameAvailable(username, userId) {
@@ -649,31 +660,19 @@ async function saveUsername() {
 
 function applyMode() {
   if (mode === "login") {
-    pass2.style.display = "none";
-    if (pwdHint) pwdHint.hidden = true;
     btnPrimary.textContent = t("index.btnLogin");
     btnToggle.textContent = t("index.btnToggleRegister");
     email.placeholder = t("index.placeholderLogin");
-    registerVariant = "normal";
   } else {
     email.placeholder = t("index.placeholderEmail");
     btnToggle.textContent = t("index.btnToggleLogin");
-
-    if (registerVariant === "guest-migrate") {
-      pass.style.display = "none";
-      pass2.style.display = "none";
-      if (pwdHint) pwdHint.hidden = true;
-      btnPrimary.textContent = t("index.btnRegisterGuestEmail");
-    } else {
-      pass.style.display = "block";
-      pass2.style.display = "block";
-      if (pwdHint) {
-        pwdHint.hidden = false;
-        pwdHint.textContent = getPasswordRulesText();
-      }
-      btnPrimary.textContent = t("index.btnRegister");
-    }
+    if (pwdHint) pwdHint.textContent = getPasswordRulesText();
+    btnPrimary.textContent = t("index.btnRegister");
   }
+
+  document.body.classList.toggle("mode-login", mode === "login");
+  document.body.classList.toggle("mode-register", mode === "register");
+  if (pwdHint && mode !== "register") pwdHint.textContent = "";
   setErr("");
 }
 
@@ -690,19 +689,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
   
   const usernameForm = document.querySelector("#usernameForm");
-  const passwordForm = document.querySelector("#passwordForm");
   
   usernameForm?.addEventListener("submit", async (e) => {
     e.preventDefault();
     if (isBusy) return;
     await saveUsername();
-  });
-
-  passwordForm?.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    if (isBusy) return;
-    setBusy(true);
-    try { await savePassword(); } finally { setBusy(false); }
   });
 
   const u = await getUser();
@@ -721,10 +712,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       setStatus(t("index.statusLoggedOut"));
     } else {
       await syncLanguage();
-      if (u.user_metadata?.familiada_needs_password === true) {
-        openPasswordSetup();
-        return;
-      }
       if (!u.username) {
         openUsernameSetup();
       } else if (nextTarget === "polls-hub" || nextTarget === "subscriptions") {
@@ -738,37 +725,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   
   setStatus(t("index.statusLoggedOut"));
 
-  if (setup === "password") {
-    const me = await getUser();
-    if (me) {
-      openPasswordSetup();
-    } else {
-      void alertModal({ text: t("index.errNoSession") });
-    }
-  }
-
   window.addEventListener("i18n:lang", syncLanguage);
 
   btnToggle.addEventListener("click", async () => {
     const nextMode = mode === "login" ? "register" : "login";
     mode = nextMode;
-    registerVariant = "normal";
-
-    // If switching to register while already in guest session, ask whether to migrate.
-    if (nextMode === "register") {
-      try {
-        const current = await getUser();
-        if (current && isGuestUser(current)) {
-          const migrate = await confirmModal({
-            title: t("index.guestMigrateTitle"),
-            text: t("index.guestMigrateText"),
-            okText: t("index.guestMigrateOk"),
-            cancelText: t("index.guestMigrateCancel"),
-          });
-          registerVariant = migrate ? "guest-migrate" : "normal";
-        }
-      } catch {}
-    }
 
     applyMode();
   });
@@ -791,7 +752,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         setBusy(false);
         return setErr(t("index.errInvalidEmail"));
       }
-      if (registerVariant !== "guest-migrate" && !pwd) {
+      if (!pwd) {
         setBusy(false);
         return setErr(t("index.errMissingLogin"));
       }
@@ -803,12 +764,34 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         if (!mail || !mail.includes("@")) return setErr(t("index.errInvalidEmail"));
 
-        // Guest migrate: email-only (no password) + 1h resend cooldown.
-        if (registerVariant === "guest-migrate") {
-          try {
-            await refreshForgotUntil(mail); // reuse cache infra
-          } catch {}
+        const statusInfo = await getEmailStatus(mail);
+        if (statusInfo.status === "confirmed") {
+          void alertModal({ text: t("index.emailAlreadyRegistered") });
+          mode = "login";
+          applyMode();
+          return;
+        }
 
+        if (statusInfo.status === "pending") {
+          await handlePendingEmailResend(mail, statusInfo.intent || "");
+          return;
+        }
+
+        let current = null;
+        try { current = await getUser(); } catch {}
+
+        let migrateGuest = false;
+        if (current && isGuestUser(current)) {
+          migrateGuest = await confirmModal({
+            title: t("index.guestMigrateTitle"),
+            text: t("index.guestMigrateText"),
+            okText: t("index.guestMigrateOk"),
+            cancelText: t("index.guestMigrateCancel"),
+          });
+        }
+
+        // Guest migrate: email-only + 1h resend cooldown.
+        if (migrateGuest) {
           const reserve = await cooldownEmailReserve(mail, GUEST_UPGRADE_ACTION_KEY, GUEST_UPGRADE_COOLDOWN_SECONDS);
           if (!reserve.ok) {
             const left = (reserve.nextAllowedAtMs || 0) - Date.now();
@@ -818,11 +801,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
           setStatus(t("index.statusRegistering"));
 
-          // If we still have an active guest session: attach email to the guest account.
-          // If not (e.g. after we logged out), treat it as a resend of the email-change link.
-          const current = await getUser();
           if (current && isGuestUser(current)) {
-            const upgraded = await convertGuestToRegisteredEmailOnly(mail, getUiLang());
+            await sendGuestMigrateConfirmation(mail, getUiLang());
 
             // We want the browser to be logged out after requesting the link (avoid accidental session switch).
             try { localStorage.setItem("auth:guest_upgrade_pending", "1"); } catch {}
@@ -834,7 +814,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             return;
           }
 
-          // Resend (no guest session): this mirrors Account -> resend email change.
+          // No guest session found: fall back to email_change resend.
           const language = getUiLang();
           const confirmUrl2 = new URL("/confirm.html", location.origin);
           confirmUrl2.searchParams.set("lang", language);
@@ -859,16 +839,10 @@ document.addEventListener("DOMContentLoaded", async () => {
           return setErr(niceAuthError(e));
         }
 
-        const current = await getUser();
-        if (current && isGuestUser(current)) {
-          // User decided not to migrate (registerVariant==normal). Discard guest first.
-          await discardCurrentGuestAccount();
-        }
-
         const captchaToken = await askCaptchaToken();
         setStatus(t("index.statusRegistering"));
         const redirectTo = buildAuthRedirect(confirmUrl);
-        await signUp(mail, pwd, redirectTo, null, getUiLang(), captchaToken);
+        await sendSignupConfirmation(mail, pwd, redirectTo, getUiLang(), captchaToken);
         setStatus(t("index.statusCheckEmail"));
       } else {
         // If a guest session is active, warn that logging in will discard guest data.

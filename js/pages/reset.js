@@ -2,6 +2,7 @@ import { sb } from "../core/supabase.js";
 import { updateUserLanguage, validatePassword, niceAuthError, getPasswordRulesText } from "../core/auth.js";
 import { initI18n, t, getUiLang, withLangParam } from "../../translation/translation.js";
 import { confirmModal } from "../core/modal.js";
+import { isGuestUser } from "../core/guest-mode.js";
 
 const status = document.getElementById("status");
 const err = document.getElementById("err");
@@ -43,7 +44,9 @@ async function requireNoActiveSessionBeforeAuthFlow() {
 
   const ok = await confirmModal({
     title: t("reset.sessionSwitchTitle"),
-    text: t("reset.sessionSwitchText", { who }),
+    text: isGuestUser(currentUser)
+      ? t("reset.sessionSwitchGuestText", { who })
+      : t("reset.sessionSwitchText", { who }),
     okText: t("reset.sessionSwitchOk"),
     cancelText: t("reset.sessionSwitchCancel"),
   });

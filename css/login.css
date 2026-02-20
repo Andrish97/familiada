@@ -184,6 +184,15 @@ body.setup-mode .setup-card {
   line-height: 1.35;
 }
 
+/* Password fields visibility handled via body classes (stable toggle) */
+body.mode-login #pass { display: block; }
+body.mode-login #pass2 { display: none; }
+body.mode-login #pwdHint { display: none; }
+
+body.mode-register #pass { display: block; }
+body.mode-register #pass2 { display: block; }
+body.mode-register #pwdHint { display: block; }
+
 /* HEADER W KARCIE LOGIN */
 
 .login-header {
