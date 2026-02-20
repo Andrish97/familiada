@@ -370,6 +370,8 @@ serve(async (req) => {
         String(payload.user.user_metadata?.familiada_email_change_pending || ""),
         fallbackUser.pendingMetaEmail,
       ).trim();
+      const intent = String(payload.user.user_metadata?.familiada_email_change_intent || "").trim().toLowerCase();
+      const isGuestMigrate = intent === "guest_migrate";
 
       const redirect = String(payload.email_data.redirect_to || "").trim();
       const targetEmail = firstEmail(
@@ -389,7 +391,8 @@ serve(async (req) => {
       const tokenHash = payload.email_data.token_hash || "";
       const tokenHashNew = payload.email_data.token_hash_new || "";
 
-      const subject = subjectFor("email_change", lang);
+      const emailTemplate = isGuestMigrate ? "guest_migrate" : "email_change";
+      const subject = subjectFor(emailTemplate, lang);
 
       // mapping zgodny z Supabase:
       // - token_hash      => current email
@@ -404,14 +407,20 @@ serve(async (req) => {
 
       // ✅ CURRENT mail zawsze na payload.user.email
       if (currentEmail && thCurrent) {
-        await sendEmail(currentEmail, subject, renderEmailChange(lang, linkCurrent));
+        const htmlCurrent = emailTemplate === "guest_migrate"
+          ? renderSignupMigrate(lang, linkCurrent)
+          : renderEmailChange(lang, linkCurrent);
+        await sendEmail(currentEmail, subject, htmlCurrent);
         console.log("[send-email] sent:email_change_current", { to: scrubEmail(currentEmail) });
       }
 
       // ✅ NEW mail tylko jeśli znamy adres z redirect_to?to=
       // I to działa zarówno dla email_change_new, jak i dla “pojedynczego” email_change
       if (targetEmail && thNew && targetEmailNormalized !== currentEmailNormalized) {
-        await sendEmail(targetEmail, subject, renderEmailChange(lang, linkTarget));
+        const htmlTarget = emailTemplate === "guest_migrate"
+          ? renderSignupMigrate(lang, linkTarget)
+          : renderEmailChange(lang, linkTarget);
+        await sendEmail(targetEmail, subject, htmlTarget);
         console.log("[send-email] sent:email_change_new", { to: scrubEmail(targetEmail) });
       }
 
@@ -486,6 +495,11 @@ function subjectFor(type: string, lang: EmailLang): string {
       en: "FAMILIADA — Confirm your account",
       uk: "FAMILIADA — Підтвердження облікового запису",
     },
+    guest_migrate: {
+      pl: "FAMILIADA — Potwierdź migrację",
+      en: "FAMILIADA — Confirm migration",
+      uk: "FAMILIADA — Підтвердіть міграцію",
+    },
     recovery: {
       pl: "FAMILIADA — Reset hasła",
       en: "FAMILIADA — Password reset",
@@ -504,6 +518,9 @@ function subjectFor(type: string, lang: EmailLang): string {
 function renderHtml(type: string, lang: EmailLang, actionLink: string): string {
   if (type === "signup") {
     return renderSignup(lang, actionLink);
+  }
+  if (type === "guest_migrate") {
+    return renderSignupMigrate(lang, actionLink);
   }
   if (type === "recovery") {
     return renderRecovery(lang, actionLink);
@@ -533,6 +550,33 @@ ${innerHtml}
 
 function renderSignup(lang: EmailLang, link: string): string {
   const t = getEmailCopy("signup", lang);
+  return wrapEmailDoc(`
+<div style="margin:0;padding:0;background:#050914;">
+  <div style="max-width:560px;margin:0 auto;padding:26px 16px;font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:#ffffff;">
+    <div style="padding:14px 14px;background:#0b1020;background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.12);border-radius:18px;backdrop-filter:blur(10px);">
+      <div style="font-weight:1000;letter-spacing:.18em;text-transform:uppercase;color:#ffeaa6;">FAMILIADA</div>
+      <div style="margin-top:6px;font-size:12px;opacity:.85;letter-spacing:.08em;text-transform:uppercase;">${t.subtitle}</div>
+    </div>
+    <div style="margin-top:14px;padding:18px;border-radius:20px;border:1px solid rgba(255,255,255,.14);background:#111827;background:rgba(255,255,255,.06);box-shadow:0 24px 60px rgba(0,0,0,.45);">
+      <div style="font-weight:1000;font-size:18px;letter-spacing:.06em;color:#ffeaa6;margin:0 0 10px;">${t.title}</div>
+      <div style="font-size:14px;opacity:.9;line-height:1.45;margin:0 0 14px;">${t.desc}</div>
+      <div style="margin:16px 0;">
+        <a href="${link}" style="display:block;text-align:center;padding:12px 14px;border-radius:14px;border:1px solid rgba(255,234,166,.35);background:rgba(255,234,166,.10);color:#ffeaa6;text-decoration:none;font-weight:1000;letter-spacing:.06em;">${t.btn}</a>
+      </div>
+      <div style="margin-top:14px;font-size:12px;opacity:.75;line-height:1.4;">${t.ignore}</div>
+      <div style="margin-top:10px;font-size:12px;opacity:.75;line-height:1.4;">
+        ${t.linkLabel ?? t.copyHint}
+        <div style="margin-top:6px;padding:10px 12px;border-radius:16px;border:1px solid rgba(255,255,255,.18);background:#0a0f1e;background:rgba(0,0,0,.18);word-break:break-all;">${link}</div>
+      </div>
+    </div>
+    <div style="margin-top:14px;font-size:12px;opacity:.7;text-align:center;">${t.footer}</div>
+  </div>
+</div>
+`);
+}
+
+function renderSignupMigrate(lang: EmailLang, link: string): string {
+  const t = getEmailCopy("guest_migrate", lang);
   return wrapEmailDoc(`
 <div style="margin:0;padding:0;background:#050914;">
   <div style="max-width:560px;margin:0 auto;padding:26px 16px;font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:#ffffff;">

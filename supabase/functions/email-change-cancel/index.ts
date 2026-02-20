@@ -42,7 +42,11 @@ serve(async (req) => {
     const email = String(userData.user.email || "").trim();
 
     const meta = (userData.user.user_metadata || {}) as Record<string, unknown>;
-    const nextMeta: Record<string, unknown> = { ...meta, familiada_email_change_pending: "" };
+    const nextMeta: Record<string, unknown> = {
+      ...meta,
+      familiada_email_change_pending: "",
+      familiada_email_change_intent: "",
+    };
 
     const { error: updError } = await admin.auth.admin.updateUserById(userId, {
       email,

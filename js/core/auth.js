@@ -87,6 +87,24 @@ export function niceAuthError(e) {
   return msg;
 }
 
+function classifyAuthError(error) {
+  const status = Number(error?.status || error?.statusCode || 0) || 0;
+  const code = String(error?.code || error?.error_code || "").trim().toLowerCase();
+  const rawMessage = String(
+    error?.message || error?.error_description || error?.description || ""
+  ).trim();
+
+  let kind = "unknown";
+  if (status === 0 || status >= 500) kind = "network";
+  if (code.includes("captcha")) kind = "security";
+  if (code === "invalid_login_credentials") kind = "invalid_login";
+  if (status === 400 || status === 401) {
+    if (/invalid|credential|password|email/i.test(rawMessage)) kind = "invalid_login";
+  }
+
+  return { status, code, rawMessage, kind };
+}
+
 async function loginToEmail(login) {
   const v = String(login || "").trim();
   if (!v) return "";
@@ -241,12 +259,6 @@ export async function requireAuth(redirect = "login.html") {
     return null; // na wypadek, gdyby ktoś jednak kontynuował kod
   }
 
-  // If the user upgraded from guest without setting a password yet.
-  if (u?.user_metadata?.familiada_needs_password === true) {
-    location.href = withLangParam("login.html?setup=password");
-    return null;
-  }
-
   // Guest TTL check + touch
   if (u?.is_guest) {
     try {
@@ -306,7 +318,15 @@ export async function convertGuestToRegistered(email, password, language) {
 
   // Guest upgrade flow: attach email + password to the same anonymous account
   // and trigger email confirmation via updateUser(attributes, options).
-  const payload = { email: mail, password, data: { is_guest: false, familiada_email_change_pending: mail } };
+  const payload = {
+    email: mail,
+    password,
+    data: {
+      is_guest: false,
+      familiada_email_change_pending: mail,
+      familiada_email_change_intent: "guest_migrate",
+    },
+  };
   if (language) payload.data.language = language;
 
   const confirmUrl = new URL(buildAuthRedirect("confirm.html", language));
@@ -336,7 +356,7 @@ export async function convertGuestToRegisteredEmailOnly(email, language) {
     data: {
       is_guest: false,
       familiada_email_change_pending: mail,
-      familiada_needs_password: true,
+      familiada_email_change_intent: "guest_migrate",
     },
   };
   if (language) payload.data.language = language;
@@ -378,12 +398,12 @@ export async function signIn(login, password, captchaToken = null) {
 
   const { data, error } = await sb().auth.signInWithPassword(payload);
   if (error) {
+    const classified = classifyAuthError(error);
     const wrapped = new Error(niceAuthError(error));
-    wrapped.status = Number(error?.status || error?.statusCode || 0) || 0;
-    wrapped.errorCode = String(error?.code || error?.error_code || "").trim().toLowerCase();
-    wrapped.rawMessage = String(
-      error?.message || error?.error_description || error?.description || ""
-    ).trim();
+    wrapped.status = classified.status;
+    wrapped.errorCode = classified.code;
+    wrapped.rawMessage = classified.rawMessage;
+    wrapped.errorKind = classified.kind;
     throw wrapped;
   }
 
@@ -414,6 +434,51 @@ export async function signUp(email, password, redirectTo, usernameInput, languag
 
   const { error } = await sb().auth.signUp({ email, password, options });
   if (error) throw new Error(niceAuthError(error));
+}
+
+export async function getEmailStatus(email) {
+  const normalized = String(email || "").trim().toLowerCase();
+  if (!normalized || !normalized.includes("@")) throw new Error(t("index.errInvalidEmail"));
+
+  let statusRaw = "";
+  let intentRaw = "";
+
+  // Preferred path: RPC (DB + cooldown state). Fallback: edge function.
+  try {
+    const { data, error } = await sb().rpc("email_get_status", { p_email: normalized });
+    if (!error && Array.isArray(data) && data.length) {
+      statusRaw = String(data[0]?.status || "").trim().toLowerCase();
+      intentRaw = String(data[0]?.intent || "").trim().toLowerCase();
+    }
+  } catch {}
+
+  if (!statusRaw) {
+    const { data, error } = await sb().functions.invoke("auth-email-status", {
+      body: { email: normalized },
+    });
+    if (error) throw new Error(niceAuthError(error));
+    if (!data?.ok) throw new Error(String(data?.error || t("index.statusError")));
+    statusRaw = String(data?.status || "").trim().toLowerCase();
+    intentRaw = String(data?.intent || "").trim().toLowerCase();
+  }
+
+  const status = statusRaw === "confirmed" || statusRaw === "pending" ? statusRaw : "none";
+  const intent = intentRaw === "guest_migrate" ? "guest_migrate" : "signup";
+
+  return { status, intent };
+}
+
+export async function getPendingIntent(email) {
+  const info = await getEmailStatus(email);
+  return info.status === "pending" ? info.intent : null;
+}
+
+export async function sendSignupConfirmation(email, password, redirectTo, language, captchaToken = null) {
+  return signUp(email, password, redirectTo, null, language, captchaToken);
+}
+
+export async function sendGuestMigrateConfirmation(email, language) {
+  return convertGuestToRegisteredEmailOnly(email, language);
 }
 
 export async function signOut() {
