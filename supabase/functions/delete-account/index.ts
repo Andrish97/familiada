@@ -40,34 +40,9 @@ serve(async (req) => {
 
     const userId = userData.user.id;
 
-    const deletions = [
-      // Ankiety: głosy użytkownika
-      admin.from("poll_text_entries").delete().eq("voter_user_id", userId),
-      admin.from("poll_votes").delete().eq("voter_user_id", userId),
-      // Ankiety: subskrypcje i zadania (jako właściciel i odbiorca)
-      admin.from("poll_subscriptions").delete().eq("subscriber_user_id", userId),
-      admin.from("poll_subscriptions").delete().eq("owner_id", userId),
-      admin.from("poll_tasks").delete().eq("recipient_user_id", userId),
-      admin.from("poll_tasks").delete().eq("owner_id", userId),
-      // Bazy pytań: udostępnienia innych oraz własne bazy
-      admin.from("question_base_shares").delete().eq("user_id", userId),
-      admin.from("question_bases").delete().eq("owner_id", userId),
-      // Gry: wszystkie gry użytkownika (cascade usuwa pytania/odpowiedzi/sesje)
-      admin.from("games").delete().eq("owner_id", userId),
-      // Ustawienia i zasoby użytkownika
-      admin.from("user_flags").delete().eq("user_id", userId),
-      admin.from("user_logos").delete().eq("user_id", userId),
-    ];
-
-    for (const req of deletions) {
-      const { error } = await req;
-      if (error) throw error;
-    }
-
-    const { error: profileError } = await admin.from("profiles").delete().eq("id", userId);
-    if (profileError) throw profileError;
-
-    const { error: deleteError } = await admin.auth.admin.deleteUser(userId);
+    // Jedno źródło prawdy kasowania (DB function), używane też przez cleanup gości.
+    // Funkcja usuwa rekordy powiązane z user_id i finalnie auth.users/profiles.
+    const { error: deleteError } = await admin.rpc("delete_user_everything", { p_user_id: userId });
     if (deleteError) throw deleteError;
 
     return json({ ok: true });

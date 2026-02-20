@@ -15,7 +15,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
   <script type="module" src="js/pages/login.js" defer></script>
 </head>
-<body class="login-body" data-confirm-url="confirm.html" data-reset-url="reset.html" data-builder-url="builder.html" data-polls-url="polls-hub.html" data-subscriptions-url="subscriptions.html">
+<body class="login-body" data-confirm-url="confirm.html" data-reset-url="reset.html" data-builder-url="builder.html" data-polls-url="polls-hub.html" data-subscriptions-url="subscriptions.html" data-captcha-provider="hcaptcha" data-captcha-site-key="4290577e-9078-471a-bf20-caccdea890e6">
   <a href="index.html"
      class="login-back-fixed"
      id="btnBackHome"
@@ -42,6 +42,7 @@
         <div class="row">
           <button class="btn main" id="btnPrimary" type="button" data-i18n="index.btnLogin">Zaloguj</button>
           <button class="btn" id="btnToggle" type="button" data-i18n="index.btnToggleRegister">Załóż konto</button>
+          <button class="btn" id="btnGuest" type="button" data-i18n="index.btnGuest">Wejdź jako gość</button>
         </div>
 
         <div class="meta">

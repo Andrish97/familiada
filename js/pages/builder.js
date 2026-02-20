@@ -1,7 +1,8 @@
 // js/pages/builder.js
 import { sb } from "../core/supabase.js";
-import { requireAuth, signOut } from "../core/auth.js";
+import { requireAuth, signOut, guestAuthEntryUrl } from "../core/auth.js";
 import { alertModal, confirmModal } from "../core/modal.js";
+import { hideForGuest } from "../core/guest-mode.js";
 import { initI18n, t, applyTranslations } from "../../translation/translation.js";
 
 import { exportGame, importGame, downloadJson } from "./builder-import-export.js";
@@ -815,6 +816,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   currentUser = await requireAuth("login.html");
   if (who) who.textContent = currentUser?.username || currentUser?.email || t("control.dash");
 
+  hideForGuest(currentUser, [btnPollsHub, btnSubscriptionsHub, btnBases]);
+
   async function refreshPollsHubDot(){
     // dot ma się pokazać, gdy są aktywne zadania / zaproszenia
     try{
@@ -915,7 +918,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   btnLogout?.addEventListener("click", async () => {
     await signOut();
-    location.href = "login.html";
+    location.href = guestAuthEntryUrl();
   });
 
   btnAccount?.addEventListener("click", () => {

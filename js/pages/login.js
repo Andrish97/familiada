@@ -2,15 +2,21 @@
 import {
   getUser,
   signIn,
+  signInGuest,
   signUp,
+  convertGuestToRegistered,
   resetPassword,
   resolveLoginToEmail,
   updateUserLanguage,
   validatePassword,
   validateUsername,
   niceAuthError,
-  getPasswordRulesText
+  getPasswordRulesText,
+  hasGuestLocalMarker,
+  clearGuestLocalMarker,
 } from "../core/auth.js";
+import { isGuestUser } from "../core/guest-mode.js";
+import { alertModal, confirmModal } from "../core/modal.js";
 
 import { sb } from "../core/supabase.js";
 import { cooldownEmailGet, cooldownEmailReserve } from "../core/cooldown.js";
@@ -26,6 +32,7 @@ const pwdHint = $("#pwdHint");
 const btnPrimary = $("#btnPrimary");
 const btnToggle = $("#btnToggle");
 const btnForgot = $("#btnForgot");
+const btnGuest = $("#btnGuest");
 const forgotCooldown = $("#forgotCooldown");
 const loginCard = $("#loginCard");
 const setupCard = $("#setupCard");
@@ -38,6 +45,105 @@ const resetUrl = baseUrls.resetUrl || "reset.html";
 const builderUrl = baseUrls.builderUrl || "builder.html";
 const pollsUrl = baseUrls.pollsUrl;
 const subscriptionsUrl = baseUrls.subscriptionsUrl;
+const captchaProvider = String(baseUrls.captchaProvider || "hcaptcha").trim().toLowerCase();
+const captchaSiteKey = String(baseUrls.captchaSiteKey || "").trim();
+let captchaLoadPromise = null;
+
+function loadCaptchaApi() {
+  if (!captchaSiteKey) return Promise.resolve(null);
+
+  if (captchaProvider === "hcaptcha") {
+    if (window.hcaptcha) return Promise.resolve(window.hcaptcha);
+    if (captchaLoadPromise) return captchaLoadPromise;
+    captchaLoadPromise = new Promise((resolve, reject) => {
+      const existing = document.querySelector('script[data-captcha="hcaptcha"]');
+      if (existing) {
+        existing.addEventListener("load", () => resolve(window.hcaptcha || null), { once: true });
+        existing.addEventListener("error", () => reject(new Error("hCaptcha failed to load")), { once: true });
+        return;
+      }
+      const script = document.createElement("script");
+      script.src = "https://js.hcaptcha.com/1/api.js?render=explicit";
+      script.async = true;
+      script.defer = true;
+      script.dataset.captcha = "hcaptcha";
+      script.onload = () => resolve(window.hcaptcha || null);
+      script.onerror = () => reject(new Error("hCaptcha failed to load"));
+      document.head.appendChild(script);
+    });
+    return captchaLoadPromise;
+  }
+
+  if (window.turnstile) return Promise.resolve(window.turnstile);
+  if (captchaLoadPromise) return captchaLoadPromise;
+  captchaLoadPromise = new Promise((resolve, reject) => {
+    const existing = document.querySelector('script[data-captcha="turnstile"]');
+    if (existing) {
+      existing.addEventListener("load", () => resolve(window.turnstile || null), { once: true });
+      existing.addEventListener("error", () => reject(new Error("Turnstile failed to load")), { once: true });
+      return;
+    }
+
+    const script = document.createElement("script");
+    script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
+    script.async = true;
+    script.defer = true;
+    script.dataset.captcha = "turnstile";
+    script.onload = () => resolve(window.turnstile || null);
+    script.onerror = () => reject(new Error("Turnstile failed to load"));
+    document.head.appendChild(script);
+  });
+  return captchaLoadPromise;
+}
+
+async function askCaptchaToken() {
+  if (!captchaSiteKey) return null;
+  const captcha = await loadCaptchaApi();
+  if (!captcha?.render) throw new Error(t("index.captchaRequired"));
+
+  const mount = document.createElement("div");
+  mount.style.minHeight = "84px";
+  mount.style.display = "grid";
+  mount.style.placeItems = "center";
+
+  let token = "";
+  const widgetId = captchaProvider === "hcaptcha"
+    ? captcha.render(mount, {
+      sitekey: captchaSiteKey,
+      theme: "light",
+      callback: (value) => { token = String(value || ""); },
+      "expired-callback": () => { token = ""; },
+      "error-callback": () => { token = ""; },
+    })
+    : captcha.render(mount, {
+      sitekey: captchaSiteKey,
+      theme: "auto",
+      callback: (value) => { token = String(value || ""); },
+      "expired-callback": () => { token = ""; },
+      "error-callback": () => { token = ""; },
+    });
+
+  try {
+    const ok = await confirmModal({
+      title: t("index.captchaTitle"),
+      text: t("index.captchaText"),
+      okText: t("index.captchaOk"),
+      cancelText: t("index.captchaCancel"),
+      body: mount,
+      initialFocus: mount,
+    });
+
+    if (!ok) throw new Error(t("index.captchaRequired"));
+    if (!token) throw new Error(t("index.captchaRequired"));
+    return token;
+  } finally {
+    try {
+      if (captchaProvider === "hcaptcha") captcha.reset(widgetId);
+      else captcha.remove(widgetId);
+    } catch {}
+  }
+}
+
 
 let mode = "login"; // login | register
 
@@ -135,6 +241,7 @@ function setBusy(v) {
   if (btnPrimary) btnPrimary.disabled = v;
   if (btnToggle) btnToggle.disabled = v;
   if (btnForgot) btnForgot.disabled = v;
+  if (btnGuest) btnGuest.disabled = v;
   if (btnUsernameSave) btnUsernameSave.disabled = v;
 }
 
@@ -143,6 +250,8 @@ const nextTarget = params.get("next");
 const nextTask = params.get("t");
 const nextSub = params.get("s");
 const setup = params.get("setup");
+const guestExpired = params.get("guest_expired") === "1";
+const forceAuth = params.get("force_auth") === "1";
 
 function buildAuthRedirect(page) {
   // page: "confirm.html" | "reset.html" (może być też "/confirm.html")
@@ -260,6 +369,12 @@ document.addEventListener("DOMContentLoaded", async () => {
   const syncLanguage = () => updateUserLanguage(getUiLang());
   applyMode();
   setStatus(t("index.statusChecking"));
+  if (guestExpired) {
+    void alertModal({ text: t("index.guestExpired") });
+  }
+  if (forceAuth) {
+    void alertModal({ text: t("index.forceAuthInfo") });
+  }
   
   const usernameForm = document.querySelector("#usernameForm");
   
@@ -270,16 +385,24 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
   const u = await getUser();
+  if (!u && hasGuestLocalMarker()) {
+    clearGuestLocalMarker();
+    void alertModal({ text: t("index.guestDeletedByInactivity") });
+  }
   if (u) {
-    await syncLanguage();
-    if (!u.username) {
-      openUsernameSetup();
-    } else if (nextTarget === "polls-hub" || nextTarget === "subscriptions") {
-      location.href = buildNextUrl();
+    if (isGuestUser(u) || forceAuth) {
+      setStatus(t("index.statusLoggedOut"));
     } else {
-      location.href = withLangParam(builderUrl);
+      await syncLanguage();
+      if (!u.username) {
+        openUsernameSetup();
+      } else if (nextTarget === "polls-hub" || nextTarget === "subscriptions") {
+        location.href = buildNextUrl();
+      } else {
+        location.href = withLangParam(builderUrl);
+      }
+      return;
     }
-    return;
   }
   
   setStatus(t("index.statusLoggedOut"));
@@ -317,9 +440,35 @@ document.addEventListener("DOMContentLoaded", async () => {
           return setErr(niceAuthError(e));
         }
 
+        const current = await getUser();
+        if (current && isGuestUser(current)) {
+          const migrate = await confirmModal({
+            title: t("index.guestMigrateTitle"),
+            text: t("index.guestMigrateText"),
+            okText: t("index.guestMigrateOk"),
+            cancelText: t("index.guestMigrateCancel"),
+          });
+
+          if (!migrate) {
+            setStatus(t("index.statusLoggedOut"));
+            return;
+          }
+
+          setStatus(t("index.statusRegistering"));
+          const upgraded = await convertGuestToRegistered(mail, pwd, getUiLang());
+          if (!upgraded?.email_confirmed_at) {
+            setStatus(t("index.statusCheckEmail"));
+            void alertModal({ text: t("index.guestMigrateConfirmEmail") });
+            return;
+          }
+          openUsernameSetup();
+          return;
+        }
+
+        const captchaToken = await askCaptchaToken();
         setStatus(t("index.statusRegistering"));
         const redirectTo = buildAuthRedirect(confirmUrl);
-        await signUp(mail, pwd, redirectTo, null, getUiLang());
+        await signUp(mail, pwd, redirectTo, null, getUiLang(), captchaToken);
         setStatus(t("index.statusCheckEmail"));
       } else {
         setStatus(t("index.statusLoggingIn"));
@@ -334,6 +483,24 @@ document.addEventListener("DOMContentLoaded", async () => {
           location.href = withLangParam(builderUrl);
         }
       }
+    } catch (e) {
+      console.error(e);
+      setStatus(t("index.statusError"));
+      setErr(niceAuthError(e));
+    } finally {
+      setBusy(false);
+    }
+  });
+
+  btnGuest?.addEventListener("click", async () => {
+    if (isBusy) return;
+    setBusy(true);
+    setErr("");
+    setStatus(t("index.statusLoggingIn"));
+    try {
+      const captchaToken = await askCaptchaToken();
+      await signInGuest(captchaToken);
+      location.href = withLangParam(builderUrl);
     } catch (e) {
       console.error(e);
       setStatus(t("index.statusError"));

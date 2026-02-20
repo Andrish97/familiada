@@ -1,6 +1,6 @@
 // js/pages/polls.js
 import { sb } from "../core/supabase.js";
-import { requireAuth, signOut } from "../core/auth.js";
+import { requireAuth, signOut, guestAuthEntryUrl } from "../core/auth.js";
 import { alertModal, confirmModal } from "../core/modal.js";
 import QRCode from "https://cdn.jsdelivr.net/npm/qrcode@1.5.3/+esm";
 import { initI18n, t, withLangParam } from "../../translation/translation.js";
@@ -1035,7 +1035,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       setTextCloseUi(false);
     }
     await signOut();
-    location.href = "login.html";
+    location.href = guestAuthEntryUrl();
   });
 
   btnCopy?.addEventListener("click", async () => {

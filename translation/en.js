@@ -15,6 +15,7 @@ const en = {
     open: "Open",
     copy: "Copy",
     done: "Done",
+    authEntry: "Sign in / Create account",
     dash: "-",
     modal: {
       confirmTitle: "Confirm",
@@ -42,6 +43,12 @@ const en = {
     title: "Not available on mobile",
     message: "This page works only on a desktop computer.",
     back: "Go back",
+  },
+  guestGuard: {
+    title: "Not available for guest account",
+    message: "This section is available only for registered users. Sign in or create an account to use sharing, subscriptions, and the polls hub.",
+    back: "Back to my games",
+    login: "Sign in / Create account",
   },
   home: {
     meta: {
@@ -191,6 +198,7 @@ const en = {
     btnRegister: "Register",
     btnToggleRegister: "Create account",
     btnToggleLogin: "I have an account",
+    btnGuest: "Continue as guest",
     placeholderLogin: "Email or username",
     placeholderEmail: "Email",
     placeholderPassword: "Password",
@@ -217,6 +225,19 @@ const en = {
     errNoSession: "No active session.",
     resetCooldown: "You can resend in {time}.",
     errResetCooldown: "The link was already sent. Try again in {time}.",
+    guestExpired: "Guest session expired after inactivity. Continue as guest again.",
+    guestDeletedByInactivity: "Your guest account was deleted due to inactivity. You can create a new guest account or register.",
+    guestMigrateTitle: "Migrate guest account?",
+    guestMigrateText: "An active guest account was detected. Do you want to migrate current data and convert this account into a full account with email and password?",
+    guestMigrateConfirmEmail: "A confirmation email was sent. After confirming, sign in again and finish setting your username.",
+    guestMigrateOk: "Yes, migrate data",
+    guestMigrateCancel: "No",
+    captchaTitle: "Confirm you are human",
+    captchaText: "Before creating an account, complete the CAPTCHA check.",
+    captchaOk: "Continue",
+    captchaCancel: "Cancel",
+    captchaRequired: "Complete the CAPTCHA check to continue.",
+    forceAuthInfo: "This section is available only for registered users. Sign in or create an account.",
   },
   confirm: {
     title: "Familiada — account confirmation",

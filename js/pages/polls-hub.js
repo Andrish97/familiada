@@ -1,5 +1,6 @@
 import { sb, SUPABASE_URL } from "../core/supabase.js";
-import { requireAuth, signOut } from "../core/auth.js";
+import { requireAuth, signOut, guestAuthEntryUrl } from "../core/auth.js";
+import { isGuestUser, showGuestBlockedOverlay } from "../core/guest-mode.js";
 import { validatePollReadyToOpen } from "../core/game-validate.js";
 import { alertModal, confirmModal } from "../core/modal.js";
 import { initUiSelect } from "../core/ui-select.js";
@@ -1037,6 +1038,10 @@ function getBackLink() {
 
 document.addEventListener("DOMContentLoaded", async () => {
   currentUser = await requireAuth("login.html");
+  if (isGuestUser(currentUser)) {
+    showGuestBlockedOverlay({ backHref: "builder.html", loginHref: "login.html?force_auth=1", showLoginButton: true });
+    return;
+  }
   who.textContent = currentUser?.username || currentUser?.email || "—";
 
   renderSelect(sortPollsDesktop, "polls");
@@ -1074,7 +1079,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   btnBack?.addEventListener("click", () => { location.href = getBackLink(); });
   btnManual?.addEventListener("click", () => { location.href = buildManualUrl(); });
   btnGoAlt?.addEventListener("click", () => { location.href = `subscriptions.html?ret=${encodeURIComponent(getCurrentRelativeUrl())}`; });
-  btnLogout?.addEventListener("click", async () => { await signOut(); location.href = "login.html"; });
+  btnLogout?.addEventListener("click", async () => { await signOut(); location.href = guestAuthEntryUrl(); });
 
   window.addEventListener("i18n:lang", () => {
     renderSelect(sortPollsDesktop, "polls");

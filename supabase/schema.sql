@@ -1,4 +1,4 @@
-
+line
 CREATE TABLE public.answers (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   question_id uuid NOT NULL,
@@ -167,7 +167,10 @@ CREATE TABLE public.profiles (
   id uuid NOT NULL,
   email text NOT NULL,
   created_at timestamp with time zone NOT NULL DEFAULT now(),
-  username text
+  username text,
+  is_guest boolean NOT NULL DEFAULT false,
+  guest_last_active_at timestamp with time zone,
+  guest_expires_at timestamp with time zone
 );
 
 CREATE TABLE public.public_kv (
@@ -543,6 +546,8 @@ CREATE INDEX poll_votes_voter_user_idx ON public.poll_votes USING btree (voter_u
 CREATE UNIQUE INDEX poll_votes_pkey ON public.poll_votes USING btree (id);
 
 CREATE UNIQUE INDEX poll_votes_unique_per_q ON public.poll_votes USING btree (poll_session_id, question_id, voter_token);
+
+CREATE INDEX profiles_guest_expires_idx ON public.profiles USING btree (guest_expires_at) WHERE (is_guest = true);
 
 CREATE UNIQUE INDEX profiles_email_key ON public.profiles USING btree (email);
 
@@ -1874,6 +1879,44 @@ END;
 $function$
 
 
+CREATE OR REPLACE FUNCTION public.delete_user_everything(p_user_id uuid)
+ RETURNS void
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+begin
+  if p_user_id is null then
+    raise exception 'p_user_id is required';
+  end if;
+
+  -- explicit cleanup (safe even if some rows are already gone)
+  delete from public.poll_text_entries where voter_user_id = p_user_id;
+  delete from public.poll_votes where voter_user_id = p_user_id;
+
+  delete from public.poll_subscriptions where subscriber_user_id = p_user_id;
+  delete from public.poll_subscriptions where owner_id = p_user_id;
+
+  delete from public.poll_tasks where recipient_user_id = p_user_id;
+  delete from public.poll_tasks where owner_id = p_user_id;
+
+  delete from public.question_base_shares where user_id = p_user_id;
+  delete from public.question_bases where owner_id = p_user_id;
+
+  delete from public.games where owner_id = p_user_id;
+
+  delete from public.user_flags where user_id = p_user_id;
+  delete from public.user_logos where user_id = p_user_id;
+
+  -- profile first (also cascades by FK from auth.users if still present)
+  delete from public.profiles where id = p_user_id;
+
+  -- final auth user hard delete
+  delete from auth.users where id = p_user_id;
+end;
+$function$
+
+
 CREATE OR REPLACE FUNCTION public.device_ping(p_game_id uuid, p_device_type device_type, p_key text, p_device_id text DEFAULT NULL::text, p_meta jsonb DEFAULT '{}'::jsonb)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -2529,6 +2572,120 @@ begin
 end $function$
 
 
+CREATE OR REPLACE FUNCTION public.guest_cleanup_expired(p_limit integer DEFAULT 500)
+ RETURNS integer
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+declare
+  v_limit int := greatest(1, least(coalesce(p_limit, 500), 5000));
+  v_deleted int := 0;
+  v_id uuid;
+begin
+  for v_id in
+    select p.id
+    from public.profiles p
+    where p.is_guest = true
+      and p.guest_expires_at is not null
+      and p.guest_expires_at < now()
+    order by p.guest_expires_at asc
+    limit v_limit
+  loop
+    perform public.delete_user_everything(v_id);
+    v_deleted := v_deleted + 1;
+  end loop;
+
+  return v_deleted;
+end;
+$function$
+
+
+CREATE OR REPLACE FUNCTION public.guest_convert_account(p_email text)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+declare
+  v_uid uuid := auth.uid();
+  v_email text := lower(trim(coalesce(p_email, '')));
+  v_is_guest boolean := false;
+begin
+  if v_uid is null then
+    return jsonb_build_object('ok', false, 'error', 'not_authenticated');
+  end if;
+
+  if v_email = '' or position('@' in v_email) = 0 then
+    return jsonb_build_object('ok', false, 'error', 'invalid_email');
+  end if;
+
+  select coalesce(is_guest, false)
+    into v_is_guest
+  from public.profiles
+  where id = v_uid;
+
+  if not v_is_guest then
+    return jsonb_build_object('ok', false, 'error', 'not_guest');
+  end if;
+
+  update public.profiles
+     set is_guest = false,
+         guest_last_active_at = null,
+         guest_expires_at = null,
+         email = v_email
+   where id = v_uid;
+
+  return jsonb_build_object('ok', true);
+end;
+$function$
+
+
+CREATE OR REPLACE FUNCTION public.guest_is_expired(p_user_id uuid DEFAULT auth.uid())
+ RETURNS boolean
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+  select coalesce(p.is_guest, false)
+         and coalesce(p.guest_expires_at <= now(), false)
+  from public.profiles p
+  where p.id = p_user_id;
+$function$
+
+
+CREATE OR REPLACE FUNCTION public.guest_touch(p_ttl_days integer DEFAULT 5)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+declare
+  v_uid uuid := auth.uid();
+  v_days int := greatest(1, least(coalesce(p_ttl_days, 5), 30));
+  v_count int := 0;
+begin
+  if v_uid is null then
+    return jsonb_build_object('ok', false, 'error', 'not_authenticated');
+  end if;
+
+  update public.profiles
+     set guest_last_active_at = now(),
+         guest_expires_at = now() + make_interval(days => v_days)
+   where id = v_uid
+     and is_guest = true;
+
+  get diagnostics v_count = row_count;
+
+  if v_count = 0 then
+    return jsonb_build_object('ok', false, 'error', 'not_guest');
+  end if;
+
+  return jsonb_build_object('ok', true, 'ttl_days', v_days);
+end;
+$function$
+
+
 CREATE OR REPLACE FUNCTION public.handle_new_user()
  RETURNS trigger
  LANGUAGE plpgsql
@@ -2538,19 +2695,58 @@ AS $function$
 declare
   v_email text;
   v_username text;
+  v_is_guest boolean;
+  v_last_active timestamptz;
+  v_expires_at timestamptz;
+  v_num int;
+  v_try int := 0;
 begin
+  v_is_guest := coalesce((new.raw_user_meta_data->>'is_guest')::boolean, false);
+
   v_email := lower(coalesce(new.email, ''));
+  if v_email = '' and v_is_guest then
+    v_email := 'guest_' || replace(new.id::text, '-', '') || '@guest.local';
+  end if;
 
   v_username := trim(coalesce(new.raw_user_meta_data->>'username', ''));
   if v_username = '' then
     v_username := null;
   end if;
 
-  insert into public.profiles (id, email, username)
-  values (new.id, v_email, v_username)
+  if v_is_guest and v_username is null then
+    loop
+      v_num := 1 + floor(random() * 999999)::int;
+      v_username := 'guest_' || lpad(v_num::text, 6, '0');
+      exit when not exists (
+        select 1 from public.profiles p
+        where lower(p.username) = lower(v_username)
+          and p.id <> new.id
+      );
+      v_try := v_try + 1;
+      exit when v_try > 100;
+    end loop;
+
+    if v_try > 100 then
+      v_username := 'guest_' || substr(replace(new.id::text, '-', ''), 1, 12);
+    end if;
+  end if;
+
+  if v_is_guest then
+    v_last_active := now();
+    v_expires_at := now() + interval '5 days';
+  else
+    v_last_active := null;
+    v_expires_at := null;
+  end if;
+
+  insert into public.profiles (id, email, username, is_guest, guest_last_active_at, guest_expires_at)
+  values (new.id, v_email, v_username, v_is_guest, v_last_active, v_expires_at)
   on conflict (id) do update
     set email = excluded.email,
-        username = excluded.username;
+        username = coalesce(excluded.username, public.profiles.username),
+        is_guest = excluded.is_guest,
+        guest_last_active_at = excluded.guest_last_active_at,
+        guest_expires_at = excluded.guest_expires_at;
 
   return new;
 end;
