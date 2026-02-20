@@ -1,8 +1,8 @@
 // js/pages/builder.js
 import { sb } from "../core/supabase.js";
-import { requireAuth, signOut, guestAuthEntryUrl } from "../core/auth.js";
+import { requireAuth } from "../core/auth.js";
 import { alertModal, confirmModal } from "../core/modal.js";
-import { hideForGuest } from "../core/guest-mode.js";
+import { hideForGuest, isGuestUser } from "../core/guest-mode.js";
 import { initI18n, t, applyTranslations } from "../../translation/translation.js";
 
 import { exportGame, importGame, downloadJson } from "./builder-import-export.js";
@@ -815,8 +815,16 @@ document.addEventListener("DOMContentLoaded", async () => {
   
   currentUser = await requireAuth("login.html");
   if (who) who.textContent = currentUser?.username || currentUser?.email || t("control.dash");
+  const guestMode = isGuestUser(currentUser);
 
-  hideForGuest(currentUser, [btnPollsHub, btnSubscriptionsHub, btnBases]);
+  hideForGuest(currentUser, [btnPollsHub, btnSubscriptionsHub]);
+
+  if (guestMode && btnAccount) {
+    btnAccount.classList.remove("user-btn");
+    btnAccount.querySelector(".user-sub")?.remove();
+    btnAccount.disabled = true;
+    btnAccount.tabIndex = -1;
+  }
 
   async function refreshPollsHubDot(){
     // dot ma się pokazać, gdy są aktywne zadania / zaproszenia
@@ -916,14 +924,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (document.visibilityState === "visible") refreshBadges({ force: true });
   });
 
-  btnLogout?.addEventListener("click", async () => {
-    await signOut();
-    location.href = guestAuthEntryUrl();
-  });
 
-  btnAccount?.addEventListener("click", () => {
-    location.href = "account.html";
-  });
+  if (!guestMode) {
+    btnAccount?.addEventListener("click", () => {
+      location.href = "account.html";
+    });
+  }
 
   btnManual?.addEventListener("click", async () => {
     const url = new URL("manual.html", location.href);

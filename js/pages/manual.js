@@ -149,9 +149,6 @@ function wireFallbackNav() {
     location.href = buildPrivacyUrl();
   });
 
-  byId("btnLogout")?.addEventListener("click", () => {
-    location.href = withLangParam("login.html?force_auth=1");
-  });
 }
 
 async function wireDemoActions(user) {
@@ -176,7 +173,7 @@ async function wireDemoActions(user) {
 }
 
 async function wireAuthSoft() {
-  const { requireAuth, signOut, guestAuthEntryUrl } = await import("../core/auth.js");
+  const { requireAuth } = await import("../core/auth.js");
   const user = await requireAuth("login.html");
 
   const who = byId("who");
@@ -186,10 +183,6 @@ async function wireAuthSoft() {
     location.href = buildPrivacyUrl();
   });
 
-  byId("btnLogout")?.addEventListener("click", async () => {
-    await signOut();
-    location.href = guestAuthEntryUrl();
-  });
 
   byId("btnBack")?.addEventListener("click", () => {
     location.href = decodeRet();

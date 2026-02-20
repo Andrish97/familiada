@@ -1,6 +1,6 @@
 // js/pages/editor.js
 import { sb } from "../core/supabase.js";
-import { requireAuth, signOut, guestAuthEntryUrl } from "../core/auth.js";
+import { requireAuth } from "../core/auth.js";
 import { alertModal, confirmModal } from "../core/modal.js";
 import { parseQaText, clip as clipN } from "../core/text-import.js";
 import { canEnterEdit, RULES as GV_RULES, TYPES } from "../core/game-validate.js";
@@ -494,10 +494,6 @@ async function boot() {
   const who = $("who");
   if (who) who.textContent = user?.username || user?.email || t("control.dash");
 
-  $("btnLogout")?.addEventListener("click", async () => {
-    await signOut();
-    location.href = guestAuthEntryUrl();
-  });
 
   const btnBack = $("btnBack");
   btnBack?.addEventListener("click", () => {
