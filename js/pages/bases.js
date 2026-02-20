@@ -2,7 +2,7 @@
 // Builder baz pytań (warstwa 1) – styl i ergonomia jak builder gier.
 
 import { sb, SUPABASE_URL } from "../core/supabase.js";
-import { requireAuth, signOut, guestAuthEntryUrl } from "../core/auth.js";
+import { requireAuth } from "../core/auth.js";
 import { alertModal, confirmModal } from "../core/modal.js";
 import { isGuestUser, hideForGuest } from "../core/guest-mode.js";
 import { initUiSelect } from "../core/ui-select.js";
@@ -1548,10 +1548,6 @@ btnGoAlt?.addEventListener("click", async () => {
   location.href = `${page}?ret=${encodeURIComponent(getCurrentRelativeUrl())}`;
 });
 
-btnLogout?.addEventListener("click", async () => {
-  await signOut();
-  location.href = guestAuthEntryUrl();
-});
 
 btnBrowse?.addEventListener("click", () => {
   const b = selectedBase();
