@@ -310,7 +310,15 @@ export async function signIn(login, password, captchaToken = null) {
   if (captchaToken) payload.options = { captchaToken };
 
   const { data, error } = await sb().auth.signInWithPassword(payload);
-  if (error) throw new Error(niceAuthError(error));
+  if (error) {
+    const wrapped = new Error(niceAuthError(error));
+    wrapped.status = Number(error?.status || error?.statusCode || 0) || 0;
+    wrapped.errorCode = String(error?.code || error?.error_code || "").trim().toLowerCase();
+    wrapped.rawMessage = String(
+      error?.message || error?.error_description || error?.description || ""
+    ).trim();
+    throw wrapped;
+  }
 
   const user = data.user;
   if (!user) throw new Error(t("auth.loginFailed"));
