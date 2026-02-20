@@ -5,6 +5,8 @@ import {
   signInGuest,
   signUp,
   convertGuestToRegistered,
+  convertGuestToRegisteredEmailOnly,
+  discardCurrentGuestAccount,
   resetPassword,
   resolveLoginToEmail,
   updateUserLanguage,
@@ -36,9 +38,17 @@ const btnGuest = $("#btnGuest");
 const forgotCooldown = $("#forgotCooldown");
 const loginCard = $("#loginCard");
 const setupCard = $("#setupCard");
+const passwordCard = $("#passwordCard");
 const usernameFirst = $("#usernameFirst");
 const usernameErr = $("#usernameErr");
 const btnUsernameSave = $("#btnUsernameSave");
+const passwordNew1 = $("#passwordNew1");
+const passwordNew2 = $("#passwordNew2");
+const passwordErr = $("#passwordErr");
+const passwordHint = $("#passwordHint");
+const btnPasswordSave = $("#btnPasswordSave");
+const setupTitleEl = setupCard?.querySelector(".setup-title");
+const setupSubEl = setupCard?.querySelector(".setup-sub");
 const baseUrls = document.body?.dataset || {};
 const confirmUrl = baseUrls.confirmUrl || "confirm.html";
 const resetUrl = baseUrls.resetUrl || "reset.html";
@@ -223,12 +233,16 @@ async function askCaptchaToken() {
 
 
 let mode = "login"; // login | register
+let registerVariant = "normal"; // normal | guest-migrate
 
 let isBusy = false;
 
 const RESET_COOLDOWN_MS = 60 * 60 * 1000; // 1h
 const RESET_ACTION_KEY = "auth:reset_password";
 const RESET_COOLDOWN_SECONDS = 60 * 60;
+
+const GUEST_UPGRADE_ACTION_KEY = "auth:guest_upgrade_email";
+const GUEST_UPGRADE_COOLDOWN_SECONDS = 60 * 60;
 
 let _forgotTimer = null;
 let _forgotDebounce = null;
@@ -327,6 +341,7 @@ const nextTarget = params.get("next");
 const nextTask = params.get("t");
 const nextSub = params.get("s");
 const setup = params.get("setup");
+const guestUsername = params.get("guest_username") === "1";
 const guestExpired = params.get("guest_expired") === "1";
 const forceAuth = params.get("force_auth") === "1";
 
@@ -363,14 +378,74 @@ function setUsernameErr(m = "") { if (usernameErr) usernameErr.textContent = m; 
 function openUsernameSetup() {
   if (loginCard) loginCard.hidden = true;
   if (setupCard) setupCard.hidden = false;
+  if (passwordCard) passwordCard.hidden = true;
   document.body.classList.add("setup-mode");
+
+  if (guestUsername) {
+    if (setupTitleEl) setupTitleEl.textContent = t("index.setupGuestPrompt");
+    if (setupSubEl) setupSubEl.textContent = t("index.setupGuestSub");
+  } else {
+    if (setupTitleEl) setupTitleEl.textContent = t("index.setupPrompt");
+    if (setupSubEl) setupSubEl.textContent = t("index.setupSub");
+  }
+
   if (usernameFirst) usernameFirst.focus();
 }
 
 function closeUsernameSetup() {
   if (loginCard) loginCard.hidden = false;
   if (setupCard) setupCard.hidden = true;
+  if (passwordCard) passwordCard.hidden = true;
   document.body.classList.remove("setup-mode");
+}
+
+function openPasswordSetup() {
+  if (loginCard) loginCard.hidden = true;
+  if (setupCard) setupCard.hidden = true;
+  if (passwordCard) passwordCard.hidden = false;
+  document.body.classList.add("setup-mode");
+  if (passwordHint) {
+    passwordHint.hidden = false;
+    passwordHint.textContent = getPasswordRulesText();
+  }
+  if (passwordNew1) passwordNew1.focus();
+}
+
+function closePasswordSetup() {
+  if (loginCard) loginCard.hidden = false;
+  if (setupCard) setupCard.hidden = true;
+  if (passwordCard) passwordCard.hidden = true;
+  document.body.classList.remove("setup-mode");
+}
+
+function setPasswordErr(m = "") {
+  if (passwordErr) passwordErr.textContent = m;
+}
+
+async function savePassword() {
+  setPasswordErr("");
+  try {
+    const p1 = String(passwordNew1?.value || "");
+    const p2 = String(passwordNew2?.value || "");
+    if (!p1 || !p2) throw new Error(t("index.errPasswordMissing"));
+    if (p1 !== p2) throw new Error(t("index.errPasswordMismatch"));
+    validatePassword(p1);
+
+    const { data: userData, error: userError } = await sb().auth.getUser();
+    if (userError || !userData?.user) throw new Error(t("index.errNoSession"));
+
+    const { error } = await sb().auth.updateUser({
+      password: p1,
+      data: { familiada_needs_password: false },
+    });
+    if (error) throw error;
+
+    closePasswordSetup();
+    location.href = withLangParam(builderUrl);
+  } catch (e) {
+    console.error("[savePassword] FAIL", e);
+    setPasswordErr(niceAuthError(e));
+  }
 }
 
 async function ensureUsernameAvailable(username, userId) {
@@ -428,15 +503,25 @@ function applyMode() {
     btnPrimary.textContent = t("index.btnLogin");
     btnToggle.textContent = t("index.btnToggleRegister");
     email.placeholder = t("index.placeholderLogin");
+    registerVariant = "normal";
   } else {
-    pass2.style.display = "block";
-    if (pwdHint) {
-      pwdHint.hidden = false;
-      pwdHint.textContent = getPasswordRulesText();
-    }
-    btnPrimary.textContent = t("index.btnRegister");
-    btnToggle.textContent = t("index.btnToggleLogin");
     email.placeholder = t("index.placeholderEmail");
+    btnToggle.textContent = t("index.btnToggleLogin");
+
+    if (registerVariant === "guest-migrate") {
+      pass.style.display = "none";
+      pass2.style.display = "none";
+      if (pwdHint) pwdHint.hidden = true;
+      btnPrimary.textContent = t("index.btnRegisterGuestEmail");
+    } else {
+      pass.style.display = "block";
+      pass2.style.display = "block";
+      if (pwdHint) {
+        pwdHint.hidden = false;
+        pwdHint.textContent = getPasswordRulesText();
+      }
+      btnPrimary.textContent = t("index.btnRegister");
+    }
   }
   setErr("");
 }
@@ -454,11 +539,19 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
   
   const usernameForm = document.querySelector("#usernameForm");
+  const passwordForm = document.querySelector("#passwordForm");
   
   usernameForm?.addEventListener("submit", async (e) => {
     e.preventDefault();
     if (isBusy) return;
     await saveUsername();
+  });
+
+  passwordForm?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    if (isBusy) return;
+    setBusy(true);
+    try { await savePassword(); } finally { setBusy(false); }
   });
 
   const u = await getUser();
@@ -471,6 +564,10 @@ document.addEventListener("DOMContentLoaded", async () => {
       setStatus(t("index.statusLoggedOut"));
     } else {
       await syncLanguage();
+      if (u.user_metadata?.familiada_needs_password === true) {
+        openPasswordSetup();
+        return;
+      }
       if (!u.username) {
         openUsernameSetup();
       } else if (nextTarget === "polls-hub" || nextTarget === "subscriptions") {
@@ -484,10 +581,38 @@ document.addEventListener("DOMContentLoaded", async () => {
   
   setStatus(t("index.statusLoggedOut"));
 
+  if (setup === "password") {
+    const me = await getUser();
+    if (me) {
+      openPasswordSetup();
+    } else {
+      void alertModal({ text: t("index.errNoSession") });
+    }
+  }
+
   window.addEventListener("i18n:lang", syncLanguage);
 
-  btnToggle.addEventListener("click", () => {
-    mode = mode === "login" ? "register" : "login";
+  btnToggle.addEventListener("click", async () => {
+    const nextMode = mode === "login" ? "register" : "login";
+    mode = nextMode;
+    registerVariant = "normal";
+
+    // If switching to register while already in guest session, ask whether to migrate.
+    if (nextMode === "register") {
+      try {
+        const current = await getUser();
+        if (current && isGuestUser(current)) {
+          const migrate = await confirmModal({
+            title: t("index.guestMigrateTitle"),
+            text: t("index.guestMigrateText"),
+            okText: t("index.guestMigrateOk"),
+            cancelText: t("index.guestMigrateCancel"),
+          });
+          registerVariant = migrate ? "guest-migrate" : "normal";
+        }
+      } catch {}
+    }
+
     applyMode();
   });
 
@@ -496,12 +621,23 @@ document.addEventListener("DOMContentLoaded", async () => {
     setBusy(true);
 
     setErr("");
-    const loginOrEmail = email.value.trim();
-    const pwd = pass.value;
+    const loginOrEmail = String(email.value || "").trim();
+    const pwd = String(pass.value || "");
 
-    if (!loginOrEmail || !pwd) {
-      setBusy(false);
-      return setErr(t("index.errMissingLogin"));
+    if (mode === "login") {
+      if (!loginOrEmail || !pwd) {
+        setBusy(false);
+        return setErr(t("index.errMissingLogin"));
+      }
+    } else {
+      if (!loginOrEmail) {
+        setBusy(false);
+        return setErr(t("index.errInvalidEmail"));
+      }
+      if (registerVariant !== "guest-migrate" && !pwd) {
+        setBusy(false);
+        return setErr(t("index.errMissingLogin"));
+      }
     }
 
     try {
@@ -509,6 +645,31 @@ document.addEventListener("DOMContentLoaded", async () => {
         const mail = loginOrEmail;
 
         if (!mail || !mail.includes("@")) return setErr(t("index.errInvalidEmail"));
+
+        // Guest migrate: email-only (no password) + 1h resend cooldown.
+        if (registerVariant === "guest-migrate") {
+          try {
+            await refreshForgotUntil(mail); // reuse cache infra
+          } catch {}
+
+          const reserve = await cooldownEmailReserve(mail, GUEST_UPGRADE_ACTION_KEY, GUEST_UPGRADE_COOLDOWN_SECONDS);
+          if (!reserve.ok) {
+            const left = (reserve.nextAllowedAtMs || 0) - Date.now();
+            if (left > 0) return setErr(t("index.errResendCooldown", { time: formatLeft(left) }));
+            return setErr(t("index.errResendCooldownGeneric"));
+          }
+
+          setStatus(t("index.statusRegistering"));
+          const upgraded = await convertGuestToRegisteredEmailOnly(mail, getUiLang());
+          if (!upgraded?.email_confirmed_at) {
+            setStatus(t("index.statusCheckEmail"));
+            void alertModal({ text: t("index.guestMigrateConfirmEmailNoPassword") });
+            return;
+          }
+          // Edge case: already confirmed (rare). Go to password setup.
+          openPasswordSetup();
+          return;
+        }
 
         if (pass2.value !== pwd) return setErr(t("index.errPasswordMismatch"));
         try {
@@ -519,27 +680,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         const current = await getUser();
         if (current && isGuestUser(current)) {
-          const migrate = await confirmModal({
-            title: t("index.guestMigrateTitle"),
-            text: t("index.guestMigrateText"),
-            okText: t("index.guestMigrateOk"),
-            cancelText: t("index.guestMigrateCancel"),
-          });
-
-          if (!migrate) {
-            setStatus(t("index.statusLoggedOut"));
-            return;
-          }
-
-          setStatus(t("index.statusRegistering"));
-          const upgraded = await convertGuestToRegistered(mail, pwd, getUiLang());
-          if (!upgraded?.email_confirmed_at) {
-            setStatus(t("index.statusCheckEmail"));
-            void alertModal({ text: t("index.guestMigrateConfirmEmail") });
-            return;
-          }
-          openUsernameSetup();
-          return;
+          // User decided not to migrate (registerVariant==normal). Discard guest first.
+          await discardCurrentGuestAccount();
         }
 
         const captchaToken = await askCaptchaToken();
