@@ -5,7 +5,7 @@
 // - jeśli niezalogowany -> ukryj username + Wyloguj, a Wstecz wraca do index.html
 
 import { initI18n, t, withLangParam } from "../../translation/translation.js";
-import { getUser, signOut, guestAuthEntryUrl } from "../core/auth.js";
+import { getUser } from "../core/auth.js";
 
 function byId(id) { return document.getElementById(id); }
 
@@ -67,22 +67,13 @@ function setAuthUi(user) {
   const who = byId("who");
   const btnLogout = byId("btnLogout");
 
-  const loggedIn = !!user;
-
   if (who) {
     who.textContent = user?.username || user?.email || "—";
-    who.style.display = loggedIn ? "" : "none";
+    who.style.display = user ? "" : "none";
   }
 
-  if (btnLogout) {
-    btnLogout.style.display = loggedIn ? "" : "none";
-    btnLogout.onclick = async () => {
-      await signOut();
-      location.href = guestAuthEntryUrl();
-    };
-  }
 
-  setBackButton({ loggedIn });
+  setBackButton({ loggedIn: !!user });
 }
 
 window.dispatchEvent(new Event("resize"));
