@@ -2,25 +2,37 @@
 
 System do tworzenia i prowadzenia rozgrywki w stylu Familiada.
 
-Aplikacja pozwala:
-- tworzyć gry w trzech trybach (sondaż, punktowane odpowiedzi, preparowana),
-- przeprowadzać sondaże z linkiem i kodem QR,
-- zarządzać bazami pytań,
-- prowadzić rozgrywkę na żywo z panelem operatora,
-- wyświetlać tablicę wyników na osobnym ekranie,
-- korzystać z widoku prowadzącego i przycisku do pojedynku,
-- tworzyć własne logo wyświetlane podczas gry.
+## 🎮 Funkcjonalności
+
+- Tworzenie gier w trzech trybach:
+  - sondaż tekstowy
+  - punktowane odpowiedzi
+  - preparowana (bez sondażu)
+- Udostępnianie sondaży przez link i kod QR
+- Zarządzanie bazami pytań (foldery, tagi, kategorie)
+- Panel operatora do prowadzenia gry na żywo
+- Tablica wyników na osobnym wyświetlaczu
+- Widok prowadzącego (tablet / telefon)
+- Przycisk do pojedynku
+- Edytor własnego logo wyświetlanego podczas gry
 
 System działa w przeglądarce – bez instalacji dodatkowego oprogramowania.
 
-## 🌐 Strona
+## 🌐 Strona produkcyjna
 
 https://familiada.online
+
+## 🛠 Stack technologiczny
+
+- Frontend: Vanilla JavaScript (ES Modules)
+- Backend / Auth / DB: Supabase
+- Hosting: GitHub pages
+- Architektura: Single-page modules + osobne widoki urządzeń
 
 ## 📌 Status projektu
 
 Projekt jest aktywnie rozwijany.  
-Publiczne repozytorium służy do prezentacji kodu źródłowego.
+Publiczne repozytorium służy wyłącznie do prezentacji kodu źródłowego.
 
 ## 📜 Licencja
 
