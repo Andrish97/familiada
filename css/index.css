@@ -268,3 +268,26 @@ body.home-body{
   transform-origin: 50% 50%;
   will-change: transform;
 }
+
+.seo-section{
+  margin-top: 32px;
+  padding: 24px;
+  border-radius: 20px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--line2);
+}
+
+.seo-section h2{
+  margin: 0 0 12px;
+  font-size: 18px;
+  font-weight: 900;
+  letter-spacing: .04em;
+  color: var(--gold);
+}
+
+.seo-section p{
+  margin: 8px 0;
+  opacity: .85;
+  line-height: 1.6;
+  font-size: 14px;
+}

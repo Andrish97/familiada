@@ -44,6 +44,12 @@ const pl = {
     back: "Wróć",
   },
   home: {
+    meta: {
+      description: "System do tworzenia i prowadzenia gry w stylu Familiada. Sondaże, tablica wyników, panel operatora i rozgrywka na żywo – wszystko w przeglądarce.",
+      ogTitle: "System do prowadzenia gry w stylu Familiada",
+      ogDescription: "Twórz pytania, zbieraj odpowiedzi w sondażu i prowadź dynamiczną rozgrywkę z tablicą wyników.",
+      ogLocale: "pl_PL",
+    },
     title: "Familiada — system do prowadzenia gry",
     hero: {
       title: "Przygotuj grę. Zbierz wyniki. Poprowadź Familiadę na żywo.",
@@ -136,7 +142,13 @@ const pl = {
         d: "Stwórz własne logo, które będzie wyświetlane podczas rozgrywki — np. na ekranie startowym lub zakończenia. Możesz tworzyć napisy, proste grafiki lub zaimportować gotowy obraz.",
       },
     },
-  
+    
+    seo: {
+      title: "Zastosowanie i możliwości systemu",
+      p1: "Narzędzie umożliwia organizację i prowadzenie gry w stylu Familiada podczas wydarzeń firmowych, integracji zespołowych, konkursów szkolnych oraz eventów scenicznych. System wspiera zarówno etap przygotowań, jak i dynamiczną rozgrywkę na żywo.",
+      p2: "Dzięki oddzielnym widokom dla operatora, prowadzącego oraz tablicy wyników możesz zachować pełną kontrolę nad przebiegiem gry. Całość działa w przeglądarce — bez instalacji i konfiguracji technicznej.",
+    },
+    
     footer: {
       left: "© Familiada — system do gry na żywo",
       privacy: "Polityka prywatności",

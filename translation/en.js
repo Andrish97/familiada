@@ -44,6 +44,12 @@ const en = {
     back: "Go back",
   },
   home: {
+    meta: {
+      description: "A complete system for creating and hosting a Familiada-style game. Surveys, scoreboard display, operator panel and live gameplay – all in your browser.",
+      ogTitle: "Familiada-style Game Hosting System",
+      ogDescription: "Create questions, collect survey answers and host dynamic live gameplay with a scoreboard.",
+      ogLocale: "en_US",
+    },
     title: "Familiada — game hosting system",
     hero: {
       title: "Prepare the game. Collect results. Run Familiada live.",
@@ -136,7 +142,13 @@ const en = {
         d: "Create your own logo that will be shown during the game — for example on the start or end screen. You can make text logos, simple graphics, or import an image.",
       },
     },
-  
+    
+    seo: {
+      title: "Use Cases and System Capabilities",
+      p1: "The platform allows you to organize and host a Familiada-style game during corporate events, team-building activities, school competitions, and live stage events. The system supports both preparation and dynamic live gameplay.",
+      p2: "With separate views for the operator, host, and scoreboard display, you maintain full control over the flow of the game. Everything runs in the browser — no installation or technical setup required.",
+    },
+ 
     footer: {
       left: "© Familiada — live game system",
       privacy: "Privacy policy",
