@@ -22,6 +22,9 @@ type HookPayload = {
     token_hash?: string;
     token_new?: string;
     token_hash_new?: string;
+    action_link?: string;
+    old_email?: string;
+    new_email?: string;
     redirect_to?: string;
     email_action_type:
       | "signup"
@@ -182,20 +185,39 @@ async function sendWithFallbacks(to: string, subject: string, html: string) {
   throw new Error(errs.join("|"));
 }
 
-function mustGetRedirectUrl(payload: HookPayload): URL {
+function getRedirectUrl(payload: HookPayload): URL | null {
   const redirect = String(payload.email_data.redirect_to || "").trim();
-  if (!redirect) {
-    throw new Error(
-      "Missing email_data.redirect_to. Pass an absolute emailRedirectTo from the frontend (use window.location.origin)."
-    );
-  }
+  if (!redirect) return null;
   try {
     return new URL(redirect);
   } catch {
-    throw new Error(
-      `Invalid email_data.redirect_to URL: "${redirect}". It must be absolute (including https://...).`
-    );
+    console.warn("[send-email] invalid redirect_to (ignored)", { redirect });
+    return null;
   }
+}
+
+function getBaseOrigin(payload: HookPayload, redirectUrl: URL | null): string {
+  if (redirectUrl) return redirectUrl.origin;
+
+  const actionLink = String(payload.email_data.action_link || "").trim();
+  if (actionLink) {
+    try {
+      return new URL(actionLink).origin;
+    } catch {
+      console.warn("[send-email] invalid action_link origin (ignored)");
+    }
+  }
+
+  const siteUrl = String(Deno.env.get("SITE_URL") || "").trim();
+  if (siteUrl) {
+    try {
+      return new URL(siteUrl).origin;
+    } catch {
+      console.warn("[send-email] invalid SITE_URL origin (ignored)");
+    }
+  }
+
+  throw new Error("Cannot resolve base origin (no valid redirect_to/action_link/SITE_URL)");
 }
 
 function getLangFromRedirect(url: URL): EmailLang | "" {
@@ -206,14 +228,33 @@ function getLangFromRedirect(url: URL): EmailLang | "" {
   return "";
 }
 
-function extractTargetEmail(payload: HookPayload, redirectUrl: URL): string {
-  const fromTo = String(redirectUrl.searchParams.get("to") || "").trim();
-  if (fromTo) return fromTo;
+function extractTargetEmail(payload: HookPayload, redirectUrl: URL | null): string {
+  const fromRedirect =
+    String(redirectUrl?.searchParams.get("to") || "").trim() ||
+    String(redirectUrl?.searchParams.get("email") || "").trim() ||
+    String(redirectUrl?.searchParams.get("new_email") || "").trim() ||
+    String(redirectUrl?.searchParams.get("email_new") || "").trim();
+  if (fromRedirect) return fromRedirect;
+
+  const actionLink = String(payload.email_data.action_link || "").trim();
+  if (actionLink) {
+    try {
+      const u = new URL(actionLink);
+      const fromAction =
+        String(u.searchParams.get("to") || "").trim() ||
+        String(u.searchParams.get("email") || "").trim() ||
+        String(u.searchParams.get("new_email") || "").trim() ||
+        String(u.searchParams.get("email_new") || "").trim();
+      if (fromAction) return fromAction;
+    } catch {
+      console.warn("[send-email] invalid action_link while extracting target email");
+    }
+  }
 
   const fromUserNew = String(payload.user.email_new || "").trim();
   if (fromUserNew) return fromUserNew;
 
-  const fromEmailDataNew = String((payload.email_data as unknown as { new_email?: string }).new_email || "").trim();
+  const fromEmailDataNew = String(payload.email_data.new_email || "").trim();
   if (fromEmailDataNew) return fromEmailDataNew;
 
   const fromMeta = String(payload.user.user_metadata?.familiada_email_change_pending || "").trim();
@@ -268,9 +309,9 @@ serve(async (req) => {
   }
 
   try {
-    const redirectUrl = mustGetRedirectUrl(payload);
+    const redirectUrl = getRedirectUrl(payload);
     console.log("[send-email] payload:verified", { actionType: payload.email_data.email_action_type, userEmail: scrubEmail(payload.user.email || ""), userEmailNew: scrubEmail(payload.user.email_new || ""), redirectTo: payload.email_data.redirect_to || "" });
-    const baseOrigin = redirectUrl.origin;
+    const baseOrigin = getBaseOrigin(payload, redirectUrl);
     const lang = pickLang(payload, redirectUrl);
     const type = payload.email_data.email_action_type;
     console.log("ACTION", payload.email_data.email_action_type);
@@ -279,7 +320,7 @@ serve(async (req) => {
     console.log("has token_hash", !!payload.email_data.token_hash);
     console.log("has token_hash_new", !!payload.email_data.token_hash_new);
     console.log("email_data.old_email", (payload.email_data as { old_email?: string }).old_email);
-    console.log("email_data.new_email", (payload.email_data as { new_email?: string }).new_email);
+    console.log("email_data.new_email", payload.email_data.new_email);
     console.log("redirect_to", payload.email_data.redirect_to);
 
 
@@ -342,7 +383,7 @@ const tokenHash = payload.email_data.token_hash || "";
 
 function pickLang(payload: HookPayload, redirectUrl?: URL): EmailLang {
   const url = redirectUrl || (() => {
-    try { return mustGetRedirectUrl(payload); } catch { return null; }
+    return getRedirectUrl(payload);
   })();
 
   if (url) {

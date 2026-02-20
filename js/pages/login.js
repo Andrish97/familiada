@@ -49,26 +49,112 @@ const captchaProvider = String(baseUrls.captchaProvider || "hcaptcha").trim().to
 const captchaSiteKey = String(baseUrls.captchaSiteKey || "").trim();
 let captchaLoadPromise = null;
 
+const LOGIN_CAPTCHA_FAIL_THRESHOLD = 3;
+const loginFailuresByIdentity = new Map();
+
+function getLoginFailureKey(loginOrEmail) {
+  return String(loginOrEmail || "").trim().toLowerCase();
+}
+
+function getLoginFailureCount(loginOrEmail) {
+  return loginFailuresByIdentity.get(getLoginFailureKey(loginOrEmail)) || 0;
+}
+
+function bumpLoginFailureCount(loginOrEmail) {
+  const key = getLoginFailureKey(loginOrEmail);
+  if (!key) return 0;
+  const next = getLoginFailureCount(key) + 1;
+  loginFailuresByIdentity.set(key, next);
+  return next;
+}
+
+function resetLoginFailureCount(loginOrEmail) {
+  const key = getLoginFailureKey(loginOrEmail);
+  if (!key) return;
+  loginFailuresByIdentity.delete(key);
+}
+
+function isCaptchaChallengeError(error) {
+  const raw = String(
+    error?.message || error?.error_description || error?.description || error || ""
+  ).toLowerCase();
+  return raw.includes("captcha") && (
+    raw.includes("required") || raw.includes("invalid") || raw.includes("failed")
+  );
+}
+
+function getLoginCaptchaPolicy(loginOrEmail) {
+  const failures = getLoginFailureCount(loginOrEmail);
+  return {
+    failures,
+    requireCaptcha: failures >= LOGIN_CAPTCHA_FAIL_THRESHOLD,
+  };
+}
+
+function getCaptchaPromptForLogin(loginOrEmail, error = null) {
+  const policy = getLoginCaptchaPolicy(loginOrEmail);
+  if (policy.requireCaptcha || isCaptchaChallengeError(error)) {
+    return askCaptchaToken();
+  }
+  return Promise.resolve(null);
+}
+
+function getCaptchaLang() {
+  const fromPage = document.documentElement?.lang;
+  if (fromPage) return String(fromPage).trim().toLowerCase();
+  return getUiLang() || "pl";
+}
+
 function loadCaptchaApi() {
   if (!captchaSiteKey) return Promise.resolve(null);
 
   if (captchaProvider === "hcaptcha") {
-    if (window.hcaptcha) return Promise.resolve(window.hcaptcha);
+    const captchaLang = getCaptchaLang();
+    const existing = document.querySelector('script[data-captcha="hcaptcha"]');
+    const existingLang = existing?.dataset?.captchaLang || "";
+
+    if (window.hcaptcha && existing && existingLang === captchaLang) return Promise.resolve(window.hcaptcha);
+    if (existing && existingLang && existingLang !== captchaLang) {
+      try { existing.remove(); } catch {}
+      try { delete window.hcaptcha; } catch {}
+      captchaLoadPromise = null;
+    }
+
     if (captchaLoadPromise) return captchaLoadPromise;
     captchaLoadPromise = new Promise((resolve, reject) => {
-      const existing = document.querySelector('script[data-captcha="hcaptcha"]');
-      if (existing) {
-        existing.addEventListener("load", () => resolve(window.hcaptcha || null), { once: true });
-        existing.addEventListener("error", () => reject(new Error("hCaptcha failed to load")), { once: true });
+      const onloadCallback = "__familiadaHcaptchaOnLoad";
+      const cleanup = () => { try { delete window[onloadCallback]; } catch {} };
+      window[onloadCallback] = () => {
+        cleanup();
+        resolve(window.hcaptcha || null);
+      };
+      const reuse = document.querySelector('script[data-captcha="hcaptcha"]');
+      if (reuse) {
+        if (window.hcaptcha && reuse.dataset.captchaLang === captchaLang) {
+          cleanup();
+          resolve(window.hcaptcha);
+          return;
+        }
+        reuse.addEventListener("load", () => resolve(window.hcaptcha || null), { once: true });
+        reuse.addEventListener("error", () => reject(new Error("hCaptcha failed to load")), { once: true });
         return;
       }
       const script = document.createElement("script");
-      script.src = `https://js.hcaptcha.com/1/api.js?render=explicit&hl=${encodeURIComponent(getUiLang() || "pl")}`;
+      script.src = `https://js.hcaptcha.com/1/api.js?render=explicit&onload=${encodeURIComponent(onloadCallback)}&hl=${encodeURIComponent(captchaLang)}`;
       script.async = true;
       script.defer = true;
       script.dataset.captcha = "hcaptcha";
-      script.onload = () => resolve(window.hcaptcha || null);
-      script.onerror = () => reject(new Error("hCaptcha failed to load"));
+      script.dataset.captchaLang = captchaLang;
+      script.onload = () => {
+        if (window.hcaptcha) {
+          cleanup();
+          resolve(window.hcaptcha);
+        }
+      };
+      script.onerror = () => {
+        cleanup();
+        reject(new Error("hCaptcha failed to load"));
+      };
       document.head.appendChild(script);
     });
     return captchaLoadPromise;
@@ -112,6 +198,7 @@ async function askCaptchaToken() {
     ? captcha.render(mount, {
       sitekey: captchaSiteKey,
       theme: "dark",
+      size: "normal",
       callback: (value) => { token = String(value || ""); },
       "expired-callback": () => { token = ""; },
       "error-callback": () => { token = ""; },
@@ -473,7 +560,19 @@ document.addEventListener("DOMContentLoaded", async () => {
         setStatus(t("index.statusCheckEmail"));
       } else {
         setStatus(t("index.statusLoggingIn"));
-        await signIn(loginOrEmail, pwd); // <-- może być username
+        let captchaToken = await getCaptchaPromptForLogin(loginOrEmail);
+        try {
+          await signIn(loginOrEmail, pwd, captchaToken); // <-- może być username
+        } catch (firstError) {
+          if (!captchaToken && isCaptchaChallengeError(firstError)) {
+            captchaToken = await getCaptchaPromptForLogin(loginOrEmail, firstError);
+            await signIn(loginOrEmail, pwd, captchaToken);
+          } else {
+            throw firstError;
+          }
+        }
+        resetLoginFailureCount(loginOrEmail);
+
         const authed = await getUser();
         await syncLanguage();
         if (!authed?.username) {
@@ -485,6 +584,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
       }
     } catch (e) {
+      if (mode === "login") bumpLoginFailureCount(loginOrEmail);
       console.error(e);
       setStatus(t("index.statusError"));
       setErr(niceAuthError(e));
