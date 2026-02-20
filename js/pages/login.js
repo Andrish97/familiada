@@ -78,6 +78,8 @@ function isCaptchaChallengeError(error) {
   const raw = String(
     error?.message || error?.error_description || error?.description || error || ""
   ).toLowerCase();
+  const status = Number(error?.status || error?.statusCode || 0) || 0;
+  if (status >= 500 || raw.includes("unexpected_failure") || raw.includes("internal")) return false;
   return raw.includes("captcha") && (
     raw.includes("required") || raw.includes("invalid") || raw.includes("failed")
   );

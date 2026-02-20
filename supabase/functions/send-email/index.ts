@@ -13,6 +13,7 @@ const sbAdmin =
 
 type HookPayload = {
   user: {
+    id?: string;
     email: string;
     user_metadata?: Record<string, unknown>;
     email_new?: string;
@@ -274,6 +275,30 @@ function firstEmail(...values: (string | undefined)[]): string {
   return "";
 }
 
+async function loadUserEmailFallbacks(userId: string): Promise<{
+  email: string;
+  emailNew: string;
+  pendingMetaEmail: string;
+}> {
+  if (!sbAdmin) return { email: "", emailNew: "", pendingMetaEmail: "" };
+
+  try {
+    const { data, error } = await sbAdmin.auth.admin.getUserById(userId);
+    if (error) throw error;
+
+    const user = data?.user;
+    const pendingMetaEmail = String(user?.user_metadata?.familiada_email_change_pending || "").trim();
+    return {
+      email: String(user?.email || "").trim(),
+      emailNew: String((user as { email_change?: string } | undefined)?.email_change || "").trim(),
+      pendingMetaEmail,
+    };
+  } catch (err) {
+    console.warn("[send-email] fallback user load failed", { userId, error: String(err) });
+    return { email: "", emailNew: "", pendingMetaEmail: "" };
+  }
+}
+
 
 function json(data: unknown, status = 200): Response {
   return new Response(JSON.stringify(data), {
@@ -334,19 +359,24 @@ serve(async (req) => {
     console.log("email_data.new_email", payload.email_data.new_email);
     console.log("redirect_to", payload.email_data.redirect_to);
 
-
-  if (type === "email_change" || type === "email_change_current" || type === "email_change_new") {
-      const currentEmail = String(payload.user.email || "").trim();
+    if (type === "email_change" || type === "email_change_current" || type === "email_change_new") {
+      const userId = String(payload.user.id || "").trim();
+      const fallbackUser = userId ? await loadUserEmailFallbacks(userId) : { email: "", emailNew: "", pendingMetaEmail: "" };
+      const currentEmail = firstEmail(payload.user.email, fallbackUser.email).trim();
       const currentEmailNormalized = currentEmail.toLowerCase();
       const oldEmail = String(payload.email_data.old_email || "").trim();
       const newEmail = String(payload.email_data.new_email || "").trim();
-      const pendingMetaEmail = String(payload.user.user_metadata?.familiada_email_change_pending || "").trim();
+      const pendingMetaEmail = firstEmail(
+        String(payload.user.user_metadata?.familiada_email_change_pending || ""),
+        fallbackUser.pendingMetaEmail,
+      ).trim();
 
       const redirect = String(payload.email_data.redirect_to || "").trim();
       const targetEmail = firstEmail(
         extractTargetEmail(payload, redirectUrl),
         newEmail,
         payload.user.email_new,
+        fallbackUser.emailNew,
         pendingMetaEmail,
         // Supabase potrafi wysłać pusty user.email przy konwersji konta gościa.
         // Wtedy old_email bywa jedynym dostępnym adresem nowego konta.
@@ -356,7 +386,7 @@ serve(async (req) => {
 
       console.log("redirect_to", redirect);
       console.log("targetEmail", targetEmail);
-const tokenHash = payload.email_data.token_hash || "";
+      const tokenHash = payload.email_data.token_hash || "";
       const tokenHashNew = payload.email_data.token_hash_new || "";
 
       const subject = subjectFor("email_change", lang);
@@ -426,7 +456,7 @@ function pickLang(payload: HookPayload, redirectUrl?: URL): EmailLang {
 
 function buildActionLink(payload: HookPayload, lang: EmailLang, baseOrigin: string): string {
   const type = payload.email_data.email_action_type;
-  const tokenHash = payload.email_data.token_hash || "";
+        const tokenHash = payload.email_data.token_hash || "";
   const tokenHashNew = payload.email_data.token_hash_new || "";
 
   const mk = (page: "confirm.html" | "reset.html", th: string, t: string) => {
