@@ -339,21 +339,26 @@ const tokenHash = payload.email_data.token_hash || "";
 
       const subject = subjectFor("email_change", lang);
 
-      // linki (fallbacki na wypadek zamiany nazw przez Supabase)
+      // mapping zgodny z Supabase:
+      // - token_hash      => current email
+      // - token_hash_new  => new email (lub token_hash jeśli secure email change OFF)
+      const thCurrent = tokenHash;
+      const thNew = tokenHashNew || tokenHash;
+
       const linkCurrent =
-        `${baseOrigin}/confirm.html?token_hash=${encodeURIComponent(tokenHashNew || tokenHash)}&type=email_change&lang=${lang}`;
+        `${baseOrigin}/confirm.html?token_hash=${encodeURIComponent(thCurrent)}&type=email_change&lang=${lang}`;
       const linkTarget =
-        `${baseOrigin}/confirm.html?token_hash=${encodeURIComponent(tokenHash || tokenHashNew)}&type=email_change&lang=${lang}`;
+        `${baseOrigin}/confirm.html?token_hash=${encodeURIComponent(thNew)}&type=email_change&lang=${lang}`;
 
       // ✅ CURRENT mail zawsze na payload.user.email
-      if (currentEmail) {
+      if (currentEmail && thCurrent) {
         await sendEmail(currentEmail, subject, renderEmailChange(lang, linkCurrent));
         console.log("[send-email] sent:email_change_current", { to: scrubEmail(currentEmail) });
       }
 
       // ✅ NEW mail tylko jeśli znamy adres z redirect_to?to=
       // I to działa zarówno dla email_change_new, jak i dla “pojedynczego” email_change
-      if (targetEmail && targetEmailNormalized !== currentEmailNormalized) {
+      if (targetEmail && thNew && targetEmailNormalized !== currentEmailNormalized) {
         await sendEmail(targetEmail, subject, renderEmailChange(lang, linkTarget));
         console.log("[send-email] sent:email_change_new", { to: scrubEmail(targetEmail) });
       }
