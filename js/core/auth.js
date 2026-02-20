@@ -150,8 +150,21 @@ export function getPasswordRulesText() {
   return t("auth.passwordRules", { hints: passwordRulesAllHints().join(", ") });
 }
 
-
 let _unameCache = { userId: null, username: null, ts: 0 };
+
+function normalizeUsername(v) {
+  return String(v || "").trim();
+}
+
+function isPlaceholderUsername(v) {
+  const un = normalizeUsername(v).toLowerCase();
+  if (!un) return true;
+  // Placeholder / guest-like usernames should not count as a real username.
+  // This fixes the case where the DB contains e.g. "guest_000000" for a registered user.
+  if (un === "guest_000000") return true;
+  if (un.startsWith("guest_")) return true;
+  return false;
+}
 
 async function fetchUsername(user) {
   if (!user?.id) return null;
@@ -170,15 +183,18 @@ async function fetchUsername(user) {
       .eq("id", user.id)
       .maybeSingle();
 
-    if (!error && data?.username) {
-      _unameCache = { userId: user.id, username: data.username, ts: now };
-      return data.username;
+    if (!error && data) {
+      const candidate = normalizeUsername(data.username);
+      if (candidate && !isPlaceholderUsername(candidate)) {
+        _unameCache = { userId: user.id, username: candidate, ts: now };
+        return candidate;
+      }
     }
   } catch {}
 
   // 2) fallback: user_metadata (np. świeża rejestracja)
-  const un = String(user?.user_metadata?.username || "").trim();
-  if (un) {
+  const un = normalizeUsername(user?.user_metadata?.username);
+  if (un && !isPlaceholderUsername(un)) {
     _unameCache = { userId: user.id, username: un, ts: now };
     return un;
   }
@@ -348,8 +364,13 @@ export async function discardCurrentGuestAccount() {
 export async function signIn(login, password, captchaToken = null) {
   const email = await loginToEmail(login);
   if (!email) {
-    if (String(login || "").includes("@")) throw new Error(t("auth.unknownEmail"));
-    throw new Error(t("auth.unknownUsername"));
+    const raw = String(login || "");
+    const unknownEmail = raw.includes("@");
+    const err = new Error(unknownEmail ? t("auth.unknownEmail") : t("auth.unknownUsername"));
+    err.status = 400;
+    err.errorCode = unknownEmail ? "unknown_email" : "unknown_username";
+    err.rawMessage = err.message;
+    throw err;
   }
 
   const payload = { email, password };

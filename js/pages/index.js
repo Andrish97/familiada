@@ -1,13 +1,19 @@
-import { sb } from "../core/supabase.js";
+import { getUser } from "../core/auth.js";
 import { initI18n, withLangParam, applyTranslations, getUiLang } from "../../translation/translation.js";
 import { isGuestUser } from "../core/guest-mode.js";
 
 async function redirectIfSession() {
   try {
-    const { data } = await sb().auth.getUser();
-    const user = data?.user || null;
+    const user = await getUser();
     if (user) {
       if (isGuestUser(user)) return false;
+      
+      // If the account exists but has no real username yet (or has a placeholder like guest_000000),
+      // force the username setup flow on login page instead of jumping to builder.
+      if (!user.username) {
+        location.replace(withLangParam("login.html?setup=username"));
+        return true;
+      }
       location.replace(withLangParam("builder.html"));
       return true;
     }

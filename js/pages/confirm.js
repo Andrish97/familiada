@@ -2,6 +2,7 @@ import { sb } from "../core/supabase.js";
 import { niceAuthError } from "../core/auth.js";
 import { updateUserLanguage } from "../core/auth.js";
 import { initI18n, t, getUiLang, withLangParam } from "../../translation/translation.js";
+import { confirmModal } from "../core/modal.js";
 
 const status = document.getElementById("status");
 const err = document.getElementById("err");
@@ -22,6 +23,33 @@ function hashParams(){
 
 function hp(name){
   return hashParams().get(name);
+}
+
+async function requireNoActiveSessionBeforeAuthFlow() {
+  let currentUser = null;
+  try {
+    const { data } = await sb().auth.getUser();
+    currentUser = data?.user || null;
+  } catch {}
+
+  if (!currentUser) return true;
+
+  const who =
+    currentUser.user_metadata?.username ||
+    currentUser.email ||
+    currentUser.id;
+
+  const ok = await confirmModal({
+    title: t("confirm.sessionSwitchTitle"),
+    text: t("confirm.sessionSwitchText", { who }),
+    okText: t("confirm.sessionSwitchOk"),
+    cancelText: t("confirm.sessionSwitchCancel"),
+  });
+
+  if (!ok) return false;
+
+  await sb().auth.signOut();
+  return true;
 }
 
 async function syncProfileEmail(user) {
@@ -74,6 +102,17 @@ document.addEventListener("DOMContentLoaded", async () => {
   const hashType = hp("type");
   const tokenHash = qp("token_hash") || qp("token") || hp("token_hash") || hp("token");
   const otpType = qp("type") || hashType;
+  
+  const hasAuthPayload = Boolean(code || accessToken || refreshToken || tokenHash);
+  if (hasAuthPayload) {
+    const ok = await requireNoActiveSessionBeforeAuthFlow();
+    if (!ok) {
+      setStatus(t("confirm.sessionSwitchCancelled"));
+      setErr(t("confirm.sessionSwitchCancelledHint"));
+      back.style.display = "inline-flex";
+      return;
+    }
+  }
 
   if ((hashMessage || queryMessage) && !code && !accessToken && !refreshToken) {
     const raw = hashMessage || queryMessage;
