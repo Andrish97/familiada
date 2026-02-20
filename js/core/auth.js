@@ -265,10 +265,15 @@ export async function convertGuestToRegistered(email, password, language) {
   const mail = String(email || "").trim().toLowerCase();
   if (!mail || !mail.includes("@")) throw new Error(t("index.errInvalidEmail"));
 
-  const payload = { email: mail, password, data: { is_guest: false } };
+  // Guest upgrade flow: attach email + password to the same anonymous account
+  // and trigger email confirmation via updateUser(attributes, options).
+  const payload = { email: mail, password, data: { is_guest: false, familiada_email_change_pending: mail } };
   if (language) payload.data.language = language;
 
-  const { data, error } = await sb().auth.updateUser(payload);
+  const confirmUrl = new URL(buildAuthRedirect("confirm.html", language));
+  confirmUrl.searchParams.set("to", mail);
+
+  const { data, error } = await sb().auth.updateUser(payload, { emailRedirectTo: confirmUrl.toString() });
   if (error) throw new Error(niceAuthError(error));
 
   const { error: convErr } = await sb().rpc("guest_convert_account", { p_email: mail });
