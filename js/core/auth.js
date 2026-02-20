@@ -285,14 +285,17 @@ export async function discardCurrentGuestAccount() {
   clearGuestLocalMarker();
 }
 
-export async function signIn(login, password) {
+export async function signIn(login, password, captchaToken = null) {
   const email = await loginToEmail(login);
   if (!email) {
     if (String(login || "").includes("@")) throw new Error(t("auth.unknownEmail"));
     throw new Error(t("auth.unknownUsername"));
   }
 
-  const { data, error } = await sb().auth.signInWithPassword({ email, password });
+  const payload = { email, password };
+  if (captchaToken) payload.options = { captchaToken };
+
+  const { data, error } = await sb().auth.signInWithPassword(payload);
   if (error) throw new Error(niceAuthError(error));
 
   const user = data.user;
