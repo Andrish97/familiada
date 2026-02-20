@@ -63,7 +63,7 @@ function loadCaptchaApi() {
         return;
       }
       const script = document.createElement("script");
-      script.src = "https://js.hcaptcha.com/1/api.js?render=explicit";
+      script.src = `https://js.hcaptcha.com/1/api.js?render=explicit&hl=${encodeURIComponent(getUiLang() || "pl")}`;
       script.async = true;
       script.defer = true;
       script.dataset.captcha = "hcaptcha";
@@ -102,6 +102,7 @@ async function askCaptchaToken() {
   if (!captcha?.render) throw new Error(t("index.captchaRequired"));
 
   const mount = document.createElement("div");
+  mount.dataset.theme = "dark";
   mount.style.minHeight = "84px";
   mount.style.display = "grid";
   mount.style.placeItems = "center";
@@ -110,7 +111,7 @@ async function askCaptchaToken() {
   const widgetId = captchaProvider === "hcaptcha"
     ? captcha.render(mount, {
       sitekey: captchaSiteKey,
-      theme: "light",
+      theme: "dark",
       callback: (value) => { token = String(value || ""); },
       "expired-callback": () => { token = ""; },
       "error-callback": () => { token = ""; },
@@ -498,6 +499,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     setErr("");
     setStatus(t("index.statusLoggingIn"));
     try {
+      const current = await getUser();
+      if (current && isGuestUser(current)) {
+        location.href = withLangParam(builderUrl);
+        return;
+      }
       const captchaToken = await askCaptchaToken();
       await signInGuest(captchaToken);
       location.href = withLangParam(builderUrl);

@@ -4,6 +4,7 @@ import { requireAuth, updateUserLanguage, validatePassword, validateUsername, si
 import { getUserEmailNotificationsFlag, setUserEmailNotificationsFlag } from "../core/user-flags.js";
 import { initI18n, t, getUiLang, withLangParam } from "../../translation/translation.js";
 import { confirmModal } from "../core/modal.js";
+import { isGuestUser, showGuestBlockedOverlay } from "../core/guest-mode.js";
 
 
 const status = document.getElementById("status");
@@ -340,6 +341,10 @@ async function ensureUsernameAvailable(username, userId) {
 async function loadProfile() {
   const user = await requireAuth("login.html?setup=username");
   if (!user) return;
+  if (isGuestUser(user)) {
+    showGuestBlockedOverlay({ backHref: "builder.html", loginHref: "login.html?force_auth=1", showLoginButton: true });
+    return;
+  }
 
   const syncLanguage = () => updateUserLanguage(getUiLang());
   await syncLanguage();

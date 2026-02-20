@@ -1,5 +1,5 @@
 import { sb, SUPABASE_URL } from "../core/supabase.js";
-import { requireAuth, signOut, guestAuthEntryUrl } from "../core/auth.js";
+import { requireAuth } from "../core/auth.js";
 import { isGuestUser, showGuestBlockedOverlay } from "../core/guest-mode.js";
 import { alertModal, confirmModal } from "../core/modal.js";
 import { initUiSelect } from "../core/ui-select.js";
@@ -696,7 +696,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   updateBackButtonLabel();
   btnBack?.addEventListener("click", () => { location.href = getBackLink(); });
   btnManual?.addEventListener("click", () => { location.href = buildManualUrl(); });
-  btnLogout?.addEventListener("click", async () => { await signOut(); location.href = guestAuthEntryUrl(); });
 
   window.addEventListener("i18n:lang", () => {
     renderSelect(sortAD, "subscribers");

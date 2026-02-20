@@ -1,3 +1,5 @@
+import { autoInitTopbarAuthButton } from "./topbar-auth.js";
+
 function initMobileTopbarMenu() {
   const topbar = document.querySelector('.topbar.topbar-layout-4');
   if (!topbar || topbar.classList.contains('topbar-mobile-hidden')) return;
@@ -249,4 +251,7 @@ function initMobileTopbarMenu() {
   }
 }
 
-window.addEventListener('DOMContentLoaded', initMobileTopbarMenu);
+window.addEventListener('DOMContentLoaded', () => {
+  initMobileTopbarMenu();
+  void autoInitTopbarAuthButton();
+});
