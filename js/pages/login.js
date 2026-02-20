@@ -487,6 +487,16 @@ function setErr(m = "") { err.textContent = m; }
 function setStatus(m = "") { status.textContent = m; }
 function setUsernameErr(m = "") { if (usernameErr) usernameErr.textContent = m; }
 
+async function waitForUserSession({ maxMs = 2500, stepMs = 150 } = {}) {
+  const started = Date.now();
+  while (Date.now() - started < maxMs) {
+    const user = await getUser();
+    if (user) return user;
+    await new Promise((resolve) => setTimeout(resolve, stepMs));
+  }
+  return null;
+}
+
 
 async function confirmDiscardGuestIfActive() {
   try {
@@ -887,6 +897,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
       const captchaToken = await askCaptchaToken();
       await signInGuest(captchaToken);
+      const guestUser = await waitForUserSession();
+      if (!guestUser) throw new Error(t("auth.loginFailed"));
       location.href = withLangParam(builderUrl);
     } catch (e) {
       console.error(e);

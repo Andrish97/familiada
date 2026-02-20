@@ -174,6 +174,13 @@ function normalizeUsername(v) {
   return String(v || "").trim();
 }
 
+function isGuestFromMetadata(user) {
+  if (!user) return false;
+  if (user?.user_metadata?.is_guest === true) return true;
+  if (user?.app_metadata?.is_guest === true) return true;
+  return false;
+}
+
 function isPlaceholderUsername(v) {
   const un = normalizeUsername(v).toLowerCase();
   if (!un) return true;
@@ -224,7 +231,7 @@ async function enrichUser(u) {
   if (!u) return null;
   const username = await fetchUsername(u);
 
-  let isGuest = false;
+  let isGuest = isGuestFromMetadata(u);
   let guestExpiresAt = null;
   try {
     const { data, error } = await sb()
@@ -233,7 +240,9 @@ async function enrichUser(u) {
       .eq("id", u.id)
       .maybeSingle();
     if (!error && data) {
-      isGuest = !!data.is_guest;
+      // Prefer DB flag, but keep metadata fallback to avoid transient races
+      // right after anonymous sign-in when profile row may lag.
+      isGuest = !!data.is_guest || isGuest;
       guestExpiresAt = data.guest_expires_at || null;
     }
   } catch {}
@@ -275,7 +284,8 @@ export async function requireAuth(redirect = "login.html") {
   }
 
   const username = await fetchUsername(u);
-  if (!username) {
+  // Guest accounts may not have a persisted username yet; do not bounce them.
+  if (!username && !u?.is_guest) {
     location.href = withLangParam("login.html?setup=username");
     return null;
   }

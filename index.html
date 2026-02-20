@@ -1,27 +1,31 @@
 <!DOCTYPE html>
 <html lang="pl">
 <head>
-  <meta name="description" data-i18n-content="home.meta.description">
-  
+  <meta name="description" content="System do tworzenia i prowadzenia gry w stylu Familiada. Sondaże, tablica wyników, panel operatora i rozgrywka na żywo – wszystko w przeglądarce." data-i18n-content="home.meta.description">
+
   <meta property="og:type" content="website">
-  <meta property="og:title" data-i18n-content="home.meta.ogTitle">
-  <meta property="og:description" data-i18n-content="home.meta.ogDescription">
+  <meta property="og:title" content="System do prowadzenia gry w stylu Familiada" data-i18n-content="home.meta.ogTitle">
+  <meta property="og:description" content="Twórz pytania, zbieraj odpowiedzi w sondażu i prowadź dynamiczną rozgrywkę z tablicą wyników." data-i18n-content="home.meta.ogDescription">
   <meta property="og:image" content="https://familiada.online/img/og/og-image.webp">
   <meta property="og:url" content="https://familiada.online/">
   <meta property="og:site_name" content="Familiada Online">
-  <meta property="og:locale" data-i18n-content="home.meta.ogLocale">
-  
+  <meta property="og:locale" content="pl_PL" data-i18n-content="home.meta.ogLocale">
+
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" data-i18n-content="home.meta.ogTitle">
-  <meta name="twitter:description" data-i18n-content="home.meta.ogDescription">
+  <meta name="twitter:title" content="System do prowadzenia gry w stylu Familiada" data-i18n-content="home.meta.ogTitle">
+  <meta name="twitter:description" content="Twórz pytania, zbieraj odpowiedzi w sondażu i prowadź dynamiczną rozgrywkę z tablicą wyników." data-i18n-content="home.meta.ogDescription">
   <meta name="twitter:image" content="https://familiada.online/img/og/og-image.webp">
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title data-i18n="home.title">Familiada — system do prowadzenia gry</title>
-  
+
   <meta name="robots" content="index, follow"/>
 
   <link rel="canonical" href="https://familiada.online/">
+  <link rel="alternate" hreflang="pl" href="https://familiada.online/?lang=pl">
+  <link rel="alternate" hreflang="en" href="https://familiada.online/?lang=en">
+  <link rel="alternate" hreflang="uk" href="https://familiada.online/?lang=uk">
+  <link rel="alternate" hreflang="x-default" href="https://familiada.online/">
 
   <link rel="icon" href="favicon.ico"/>
   <link rel="stylesheet" href="css/base.css"/>
@@ -66,17 +70,13 @@
     <section class="hero-card">
       <h1 data-i18n="home.hero.title">Przygotuj grę. Zbierz wyniki. Poprowadź Familiadę na żywo.</h1>
 
-      <p class="hero-lead" data-i18n="home.hero.lead">
-        Kompletny system do tworzenia i prowadzenia rozgrywki w stylu Familiada. Przygotuj pytania, zbierz odpowiedzi w sondażu i poprowadź dynamiczną grę z tablicą wyników, panelem operatora oraz osobnym widokiem dla prowadzącego. Wszystko działa w przeglądarce — bez instalacji.
-      </p>
+      <p class="hero-lead" data-i18n="home.hero.lead">Kompletny system do tworzenia i prowadzenia rozgrywki w stylu Familiada. Przygotuj pytania, zbierz odpowiedzi w sondażu i poprowadź dynamiczną grę z tablicą wyników, panelem operatora oraz osobnym widokiem dla prowadzącego. Wszystko działa w przeglądarce — bez instalacji.</p>
 
       <div class="hero-cta">
         <a class="btn gold" href="login.html" id="ctaStart" data-i18n="home.hero.ctaStart">Zacznij tworzyć gry i prowadzić rozgrywkę</a>
       </div>
 
-      <div class="hero-note" data-i18n="home.hero.note">
-        Kliknij, żeby się zalogować lub utworzyć konto.
-      </div>
+      <div class="hero-note" data-i18n="home.hero.note">Kliknij, żeby się zalogować lub utworzyć konto.</div>
     </section>
 
     <section class="section">
@@ -90,12 +90,12 @@
             <img class="shot-img"
                  src="img/pl/landing-games.webp"
                  data-file="landing-games.webp"
-                 alt=""
+                 alt="Lista gier: tworzenie nowej gry i wybór trybu (sondaż, punktowane odpowiedzi, preparowana)."
                  data-i18n-alt="home.tiles.t1.alt">
           </div>
           <div class="tile-text">
             <h3 data-i18n="home.tiles.t1.t">Tworzenie gry i wybór trybu</h3>
-            <p data-i18n="home.tiles.t1.d"></p>
+            <p data-i18n="home.tiles.t1.d">Zakładasz nową grę i wybierasz typ: sondaż tekstowy, punktowane odpowiedzi albo preparowana. Typ decyduje, skąd biorą się odpowiedzi i punkty na tablicy.</p>
           </div>
         </article>
 
@@ -105,12 +105,12 @@
             <img class="shot-img"
                  src="img/pl/landing-editor.webp"
                  data-file="landing-editor.webp"
-                 alt=""
+                 alt="Edytor gry: dodawanie pytań oraz przygotowanie struktury rozgrywki."
                  data-i18n-alt="home.tiles.t2.alt">
           </div>
           <div class="tile-text">
             <h3 data-i18n="home.tiles.t2.t">Edycja pytań i (czasem) odpowiedzi</h3>
-            <p data-i18n="home.tiles.t2.d"></p>
+            <p data-i18n="home.tiles.t2.d">Dodajesz pytania, ustawiasz treść i strukturę gry. W zależności od typu gry możesz przygotować odpowiedzi i punkty lub zostawić je do sondażu.</p>
           </div>
         </article>
 
@@ -120,12 +120,12 @@
             <img class="shot-img"
                  src="img/pl/landing-friends.webp"
                  data-file="landing-friends.webp"
-                 alt=""
+                 alt="Znajomi: dodawanie i zarządzanie osobami, którym udostępniasz sondaże i bazy pytań."
                  data-i18n-alt="home.tiles.t3.alt">
           </div>
           <div class="tile-text">
             <h3 data-i18n="home.tiles.t3.t">Znajomi i udostępnianie</h3>
-            <p data-i18n="home.tiles.t3.d"></p>
+            <p data-i18n="home.tiles.t3.d">Dodajesz znajomych, żeby jednym kliknięciem udostępniać im sondaże i pracować wspólnie. To przyspiesza organizację gry i zbieranie odpowiedzi.</p>
           </div>
         </article>
 
@@ -135,12 +135,12 @@
             <img class="shot-img"
                  src="img/pl/landing-polls.webp"
                  data-file="landing-polls.webp"
-                 alt=""
+                 alt="Sondaże: udostępnianie przez link lub kod QR i zbieranie głosów."
                  data-i18n-alt="home.tiles.t4.alt">
           </div>
           <div class="tile-text">
             <h3 data-i18n="home.tiles.t4.t">Sondaż: link / QR i zbieranie głosów</h3>
-            <p data-i18n="home.tiles.t4.d"></p>
+            <p data-i18n="home.tiles.t4.d">Udostępniasz sondaż przez link lub kod QR. Ankietowani odpowiadają na pytania, a Ty widzisz postęp i wyniki w panelu.</p>
           </div>
         </article>
 
@@ -150,12 +150,12 @@
             <img class="shot-img"
                  src="img/pl/landing-polls-hub.webp"
                  data-file="landing-polls-hub.webp"
-                 alt=""
+                 alt="Centrum sondaży: zarządzanie sondażami, udostępnianie linkiem lub kodem QR i podgląd postępu."
                  data-i18n-alt="home.tiles.t5.alt">
           </div>
           <div class="tile-text">
             <h3 data-i18n="home.tiles.t5.t">Centrum sondaży</h3>
-            <p data-i18n="home.tiles.t5.d"></p>
+            <p data-i18n="home.tiles.t5.d">W jednym miejscu zarządzasz sondażami: uruchamiasz i zamykasz głosowania, sprawdzasz postęp oraz udostępniasz je znajomym (link/QR), żeby szybko zebrać odpowiedzi.</p>
           </div>
         </article>
 
@@ -165,12 +165,12 @@
             <img class="shot-img"
                  src="img/pl/landing-control.webp"
                  data-file="landing-control.webp"
-                 alt=""
+                 alt="Panel sterowania operatora: sterowanie tablicą, punktami, błędami (X) i etapami rozgrywki."
                  data-i18n-alt="home.tiles.t6.alt">
           </div>
           <div class="tile-text">
             <h3 data-i18n="home.tiles.t6.t">Panel sterowania (operator) — gra na żywo</h3>
-            <p data-i18n="home.tiles.t6.d"></p>
+            <p data-i18n="home.tiles.t6.d">W dniu wydarzenia operator steruje tablicą, punktami, błędami (X) i etapami rozgrywki. System prowadzi krok po kroku, żeby ograniczyć pomyłki.</p>
           </div>
         </article>
 
@@ -180,12 +180,12 @@
             <img class="shot-img"
                  src="img/pl/landing-display.webp"
                  data-file="landing-display.webp"
-                 alt=""
+                 alt="Wyświetlacz tablicy dla widzów: pytania, odpowiedzi, punkty, bank i błędy (X)."
                  data-i18n-alt="home.tiles.t7.alt">
           </div>
           <div class="tile-text">
             <h3 data-i18n="home.tiles.t7.t">Tablica dla widzów (TV / rzutnik)</h3>
-            <p data-i18n="home.tiles.t7.d"></p>
+            <p data-i18n="home.tiles.t7.d">Tablica pokazuje pytania, odpowiedzi, punkty, bank i X-y. To ekran, który widzą uczestnicy i publiczność.</p>
           </div>
         </article>
 
@@ -195,12 +195,12 @@
             <img class="shot-img"
                  src="img/pl/landing-host.webp"
                  data-file="landing-host.webp"
-                 alt=""
+                 alt="Widok prowadzącego: treści pytań i podgląd kontekstu na tablecie lub telefonie."
                  data-i18n-alt="home.tiles.t8.alt">
           </div>
           <div class="tile-text">
             <h3 data-i18n="home.tiles.t8.t">Widok prowadzącego (tablet / telefon)</h3>
-            <p data-i18n="home.tiles.t8.d"></p>
+            <p data-i18n="home.tiles.t8.d">Prowadzący ma osobny ekran z treścią pytań i podglądem kontekstu, bez ryzyka kliknięcia w sterowanie gry.</p>
           </div>
         </article>
 
@@ -210,12 +210,12 @@
             <img class="shot-img"
                  src="img/pl/landing-buzzer.webp"
                  data-file="landing-buzzer.webp"
-                 alt=""
+                 alt="Przycisk do pojedynku: osobne urządzenie do sygnału kto nacisnął pierwszy."
                  data-i18n-alt="home.tiles.t9.alt">
           </div>
           <div class="tile-text">
             <h3 data-i18n="home.tiles.t9.t">Przycisk do pojedynku (osobne urządzenie)</h3>
-            <p data-i18n="home.tiles.t9.d"></p>
+            <p data-i18n="home.tiles.t9.d">Osobny „przycisk” daje sygnał kto nacisnął pierwszy w pojedynku. To wspiera tempo i porządek w rundach.</p>
           </div>
         </article>
 
@@ -225,12 +225,12 @@
             <img class="shot-img"
                  src="img/pl/landing-bases.webp"
                  data-file="landing-bases.webp"
-                 alt=""
+                 alt="Bazy pytań: tworzenie biblioteki pytań i udostępnianie jej znajomym do współpracy."
                  data-i18n-alt="home.tiles.t10.alt">
           </div>
           <div class="tile-text">
             <h3 data-i18n="home.tiles.t10.t">Bazy pytań i współpraca</h3>
-            <p data-i18n="home.tiles.t10.d"></p>
+            <p data-i18n="home.tiles.t10.d">Tworzysz bazę pytań jako wspólną bibliotekę: foldery, tagi, kategorie. Bazę możesz udostępnić znajomym do edycji lub tylko podglądu.</p>
           </div>
         </article>
 
@@ -240,12 +240,12 @@
             <img class="shot-img"
                  src="img/pl/landing-base-manager.webp"
                  data-file="landing-base-manager.webp"
-                 alt=""
+                 alt="Menadżer pytań: zarządzanie pytaniami jak w eksploratorze plików (foldery, kopiowanie, przenoszenie, wyszukiwanie)."
                  data-i18n-alt="home.tiles.t11.alt">
           </div>
           <div class="tile-text">
             <h3 data-i18n="home.tiles.t11.t">Menadżer pytań jak eksplorator plików</h3>
-            <p data-i18n="home.tiles.t11.d"></p>
+            <p data-i18n="home.tiles.t11.d">Zarządzasz pytaniami jak w Finder/Explorer: foldery, przenoszenie, kopiowanie, szybka selekcja i wyszukiwanie po nazwie oraz tagach.</p>
           </div>
         </article>
 
@@ -255,35 +255,24 @@
             <img class="shot-img"
                  src="img/pl/landing-logo.webp"
                  data-file="landing-logo.webp"
-                 alt=""
+                 alt="Widok edytora logo: tworzenie własnego logo, które pojawia się na wyświetlaczu podczas gry."
                  data-i18n-alt="home.tiles.t12.alt">
           </div>
           <div class="tile-text">
             <h3 data-i18n="home.tiles.t12.t">Własne logo na wyświetlaczu</h3>
-            <p data-i18n="home.tiles.t12.d"></p>
+            <p data-i18n="home.tiles.t12.d">Stwórz własne logo, które będzie wyświetlane podczas rozgrywki — np. na ekranie startowym lub zakończenia. Możesz tworzyć napisy, proste grafiki lub zaimportować gotowy obraz.</p>
           </div>
         </article>
 
       </div>
     </section>
-    
+
     <section class="seo-section">
-      <h2 data-i18n="home.seo.title">
-        Zastosowanie i możliwości systemu
-      </h2>
-    
-      <p data-i18n="home.seo.p1">
-        Narzędzie umożliwia organizację i prowadzenie gry w stylu Familiada
-        podczas wydarzeń firmowych, integracji zespołowych, konkursów szkolnych
-        oraz eventów scenicznych. System wspiera zarówno etap przygotowań,
-        jak i dynamiczną rozgrywkę na żywo.
-      </p>
-    
-      <p data-i18n="home.seo.p2">
-        Dzięki oddzielnym widokom dla operatora, prowadzącego oraz tablicy wyników
-        możesz zachować pełną kontrolę nad przebiegiem gry.
-        Całość działa w przeglądarce — bez instalacji i konfiguracji technicznej.
-      </p>
+      <h2 data-i18n="home.seo.title">Zastosowanie i możliwości systemu</h2>
+
+      <p data-i18n="home.seo.p1">Narzędzie umożliwia organizację i prowadzenie gry w stylu Familiada podczas wydarzeń firmowych, integracji zespołowych, konkursów szkolnych oraz eventów scenicznych. System wspiera zarówno etap przygotowań, jak i dynamiczną rozgrywkę na żywo.</p>
+
+      <p data-i18n="home.seo.p2">Dzięki oddzielnym widokom dla operatora, prowadzącego oraz tablicy wyników możesz zachować pełną kontrolę nad przebiegiem gry. Całość działa w przeglądarce — bez instalacji i konfiguracji technicznej.</p>
     </section>
 
     <div class="footer">
