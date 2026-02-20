@@ -27,6 +27,7 @@ export function niceAuthError(e) {
   if (!msg) return t("auth.loginFailed");
 
   const low = msg.toLowerCase();
+  const status = Number(e?.status || e?.statusCode || 0) || 0;
 
   // 1) Very common auth messages (stable)
   if (low.includes("email not confirmed")) return t("auth.emailNotConfirmed");
@@ -55,7 +56,15 @@ export function niceAuthError(e) {
   // 6) Generic "Too many requests" (without seconds) - translate, but keep meaning
   if (low.includes("too many requests")) return t("auth.tooManyRequests");
 
-  if (low.includes("captcha") && (low.includes("invalid") || low.includes("failed") || low.includes("required"))) {
+  if (
+    low.includes("captcha") &&
+    (low.includes("invalid") || low.includes("failed") || low.includes("required"))
+  ) {
+    // Auth API can sometimes return 5xx with captcha-related text although the issue is backend-side.
+    // In that case, showing a hard captcha prompt is misleading and blocks normal login UX.
+    if (status >= 500 || low.includes("unexpected_failure") || low.includes("internal")) {
+      return t("auth.loginFailed");
+    }
     return t("index.captchaRequired");
   }
 
