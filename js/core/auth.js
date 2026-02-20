@@ -2,6 +2,8 @@
 import { sb, buildSiteUrl } from "./supabase.js";
 import { t, withLangParam } from "../../translation/translation.js";
 
+const GUEST_LOCAL_MARKER_KEY = "fam:guest:session_seen";
+
 function buildAuthRedirect(page, lang) {
   // page: "confirm.html" | "reset.html" lub "/confirm.html"
   const p = String(page || "").trim();
@@ -29,6 +31,9 @@ export function niceAuthError(e) {
   // 1) Very common auth messages (stable)
   if (low.includes("email not confirmed")) return t("auth.emailNotConfirmed");
   if (low.includes("invalid login credentials")) return t("auth.invalidCredentials");
+  if (low.includes("anonymous sign-ins are disabled")) {
+    return "Anonymous sign-ins are disabled. Enable Anonymous auth and CAPTCHA in Supabase Auth settings.";
+  }
 
   // 2) "New password should be different from the old password."
   if (low.includes("new password should be different")) return t("auth.passwordMustDiffer");
@@ -49,6 +54,10 @@ export function niceAuthError(e) {
 
   // 6) Generic "Too many requests" (without seconds) - translate, but keep meaning
   if (low.includes("too many requests")) return t("auth.tooManyRequests");
+
+  if (low.includes("captcha") && (low.includes("invalid") || low.includes("failed") || low.includes("required"))) {
+    return t("index.captchaRequired");
+  }
 
   // 7) Links / tokens
   if (
@@ -168,7 +177,22 @@ async function fetchUsername(user) {
 async function enrichUser(u) {
   if (!u) return null;
   const username = await fetchUsername(u);
-  return { ...u, username };
+
+  let isGuest = false;
+  let guestExpiresAt = null;
+  try {
+    const { data, error } = await sb()
+      .from("profiles")
+      .select("is_guest,guest_expires_at")
+      .eq("id", u.id)
+      .maybeSingle();
+    if (!error && data) {
+      isGuest = !!data.is_guest;
+      guestExpiresAt = data.guest_expires_at || null;
+    }
+  } catch {}
+
+  return { ...u, username, is_guest: isGuest, guest_expires_at: guestExpiresAt };
 }
 
 export async function getUser() {
@@ -189,12 +213,76 @@ export async function requireAuth(redirect = "login.html") {
     return null; // na wypadek, gdyby ktoś jednak kontynuował kod
   }
 
+  // Guest TTL check + touch
+  if (u?.is_guest) {
+    try {
+      const { data: expired } = await sb().rpc("guest_is_expired", { p_user_id: u.id });
+      if (expired === true) {
+        await sb().auth.signOut();
+        location.href = withLangParam("login.html?guest_expired=1");
+        return null;
+      }
+      await sb().rpc("guest_touch", { p_ttl_days: 5 });
+    } catch {
+      // fail-open: nie blokuj flow przy chwilowym błędzie RPC
+    }
+  }
+
   const username = await fetchUsername(u);
   if (!username) {
     location.href = withLangParam("login.html?setup=username");
     return null;
   }
   return { ...u, username };
+}
+
+export async function signInGuest(captchaToken = null) {
+  const options = { data: { is_guest: true } };
+  if (captchaToken) options.captchaToken = captchaToken;
+
+  const { data, error } = await sb().auth.signInAnonymously({ options });
+  if (error) throw new Error(niceAuthError(error));
+  const user = data?.user || null;
+  if (!user) throw new Error(t("auth.loginFailed"));
+  try { localStorage.setItem(GUEST_LOCAL_MARKER_KEY, "1"); } catch {}
+  return user;
+}
+
+
+export function hasGuestLocalMarker() {
+  try { return localStorage.getItem(GUEST_LOCAL_MARKER_KEY) === "1"; } catch { return false; }
+}
+
+export function clearGuestLocalMarker() {
+  try { localStorage.removeItem(GUEST_LOCAL_MARKER_KEY); } catch {}
+}
+
+export function guestAuthEntryUrl() {
+  return withLangParam("login.html?force_auth=1");
+}
+
+export async function convertGuestToRegistered(email, password, language) {
+  const mail = String(email || "").trim().toLowerCase();
+  if (!mail || !mail.includes("@")) throw new Error(t("index.errInvalidEmail"));
+
+  const payload = { email: mail, password, data: { is_guest: false } };
+  if (language) payload.data.language = language;
+
+  const { data, error } = await sb().auth.updateUser(payload);
+  if (error) throw new Error(niceAuthError(error));
+
+  const { error: convErr } = await sb().rpc("guest_convert_account", { p_email: mail });
+  if (convErr) throw new Error(niceAuthError(convErr));
+
+  const user = data?.user || null;
+  if (user?.email_confirmed_at) clearGuestLocalMarker();
+  return user;
+}
+
+export async function discardCurrentGuestAccount() {
+  const { error } = await sb().rpc("guest_discard_current");
+  if (error) throw new Error(niceAuthError(error));
+  clearGuestLocalMarker();
 }
 
 export async function signIn(login, password) {
@@ -218,7 +306,7 @@ export async function signIn(login, password) {
   return user;
 }
 
-export async function signUp(email, password, redirectTo, usernameInput, language) {
+export async function signUp(email, password, redirectTo, usernameInput, language, captchaToken = null) {
   const username = validateUsername(usernameInput, { allowEmpty: true });
   const userData = username ? { username } : null;
 
@@ -230,6 +318,7 @@ export async function signUp(email, password, redirectTo, usernameInput, languag
     options.data = { ...(userData || {}) };
     if (language) options.data.language = language;
   }
+  if (captchaToken) options.captchaToken = captchaToken;
 
   const { error } = await sb().auth.signUp({ email, password, options });
   if (error) throw new Error(niceAuthError(error));
@@ -238,6 +327,7 @@ export async function signUp(email, password, redirectTo, usernameInput, languag
 export async function signOut() {
   await sb().auth.signOut();
   _unameCache = { userId: null, username: null, ts: 0 };
+  clearGuestLocalMarker();
 }
 
 export async function resetPassword(loginOrEmail, redirectTo, language, resolvedEmail = null) {

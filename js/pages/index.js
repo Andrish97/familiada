@@ -1,10 +1,13 @@
 import { sb } from "../core/supabase.js";
 import { initI18n, withLangParam, applyTranslations, getUiLang } from "../../translation/translation.js";
+import { isGuestUser } from "../core/guest-mode.js";
 
 async function redirectIfSession() {
   try {
-    const { data } = await sb().auth.getSession();
-    if (data?.session) {
+    const { data } = await sb().auth.getUser();
+    const user = data?.user || null;
+    if (user) {
+      if (isGuestUser(user)) return false;
       location.replace(withLangParam("builder.html"));
       return true;
     }

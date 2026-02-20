@@ -15,6 +15,7 @@ const pl = {
     open: "Otwórz",
     copy: "Kopiuj",
     done: "Gotowe",
+    authEntry: "Zaloguj / Załóż konto",
     dash: "-",
     modal: {
       confirmTitle: "Potwierdź",
@@ -42,6 +43,12 @@ const pl = {
     title: "Niedostępne na telefonie",
     message: "Ta strona działa tylko na komputerze.",
     back: "Wróć",
+  },
+  guestGuard: {
+    title: "Niedostępne w koncie gościa",
+    message: "Ta sekcja jest dostępna tylko dla zarejestrowanych użytkowników. Zaloguj się lub załóż konto, aby korzystać z udostępniania, subskrypcji i panelu sondaży.",
+    back: "Wróć do moich gier",
+    login: "Zaloguj / Załóż konto",
   },
   home: {
     meta: {
@@ -191,6 +198,7 @@ const pl = {
     btnRegister: "Zarejestruj",
     btnToggleRegister: "Załóż konto",
     btnToggleLogin: "Mam konto",
+    btnGuest: "Wejdź jako gość",
     placeholderLogin: "E-mail lub nazwa użytkownika",
     placeholderEmail: "E-mail",
     placeholderPassword: "Hasło",
@@ -217,6 +225,19 @@ const pl = {
     errNoSession: "Brak aktywnej sesji.",
     resetCooldown: "Ponowna wysyłka możliwa za {time}.",
     errResetCooldown: "Link już został wysłany. Spróbuj ponownie za {time}.",
+    guestExpired: "Sesja gościa wygasła po okresie braku aktywności. Wejdź ponownie jako gość.",
+    guestDeletedByInactivity: "Twoje konto gościa zostało usunięte z powodu braku aktywności. Możesz utworzyć nowe konto gościa lub zarejestrować się.",
+    guestMigrateTitle: "Przenieść konto gościa?",
+    guestMigrateText: "Wykryto aktywne konto gościa. Czy chcesz przenieść obecne dane i zamienić to konto na pełne konto z e-mailem i hasłem?",
+    guestMigrateConfirmEmail: "Wysłano wiadomość potwierdzającą e-mail. Po potwierdzeniu zaloguj się ponownie i dokończ ustawienie nazwy użytkownika.",
+    guestMigrateOk: "Tak, przenieś dane",
+    guestMigrateCancel: "Nie",
+    captchaTitle: "Potwierdź, że jesteś człowiekiem",
+    captchaText: "Przed założeniem konta wykonaj weryfikację CAPTCHA.",
+    captchaOk: "Kontynuuj",
+    captchaCancel: "Anuluj",
+    captchaRequired: "Aby kontynuować, wykonaj weryfikację CAPTCHA.",
+    forceAuthInfo: "Ta sekcja jest dostępna tylko dla zarejestrowanych użytkowników. Zaloguj się lub załóż konto.",
   },
   confirm: {
     title: "Familiada — potwierdzenie konta",

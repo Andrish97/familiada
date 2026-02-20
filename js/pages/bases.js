@@ -2,8 +2,9 @@
 // Builder baz pytań (warstwa 1) – styl i ergonomia jak builder gier.
 
 import { sb, SUPABASE_URL } from "../core/supabase.js";
-import { requireAuth, signOut } from "../core/auth.js";
+import { requireAuth, signOut, guestAuthEntryUrl } from "../core/auth.js";
 import { alertModal, confirmModal } from "../core/modal.js";
+import { isGuestUser, hideForGuest } from "../core/guest-mode.js";
 import { initUiSelect } from "../core/ui-select.js";
 import { getUiLang, initI18n, t } from "../../translation/translation.js";
 
@@ -84,6 +85,7 @@ const MAIL_FUNCTION_URL = `${SUPABASE_URL}/functions/v1/send-mail`;
 
 /* ================= STATE ================= */
 let currentUser = null;
+let guestMode = false;
 let ownedBases = []; // { id, name, owner_id, created_at, updated_at }
 let sharedBases = []; // { id, name, owner_id, created_at, updated_at, sharedRole: 'viewer'|'editor' }
 let selectedId = null;
@@ -303,7 +305,7 @@ async function refreshBases() {
     shareCount: shareCountByBase.get(b.id) || 0,
   }));
 
-  const shared = await listSharedBases();
+  const shared = guestMode ? [] : await listSharedBases();
 
   ownedBases = ownedWithStats
     .slice()
@@ -1174,6 +1176,7 @@ async function shareAdd() {
 
 /* ================= Mobile tabs (mine/shared) ================= */
 function setActiveBasesMobileTab(tab) {
+  if (guestMode) tab = "mine";
   const mineOn = tab !== "shared";
   basesSectionMine?.classList.toggle("active", mineOn);
   basesSectionShared?.classList.toggle("active", !mineOn);
@@ -1350,13 +1353,15 @@ function render() {
   for (const b of ownedBases) renderTile(b, mineGrid);
 
   // ===== UDOSTĘPNIONE =====
-  if (!sharedBases.length) {
-    const empty = document.createElement("div");
-    empty.className = "emptyNote";
-    empty.textContent = t("bases.sections.sharedEmpty");
-    sharedGrid.appendChild(empty);
-  } else {
-    for (const b of sharedBases) renderTile(b, sharedGrid);
+  if (!guestMode) {
+    if (!sharedBases.length) {
+      const empty = document.createElement("div");
+      empty.className = "emptyNote";
+      empty.textContent = t("bases.sections.sharedEmpty");
+      sharedGrid.appendChild(empty);
+    } else {
+      for (const b of sharedBases) renderTile(b, sharedGrid);
+    }
   }
 
   // mobile badge: pending invites in "shared"
@@ -1545,7 +1550,7 @@ btnGoAlt?.addEventListener("click", async () => {
 
 btnLogout?.addEventListener("click", async () => {
   await signOut();
-  location.href = "login.html";
+  location.href = guestAuthEntryUrl();
 });
 
 btnBrowse?.addEventListener("click", () => {
@@ -1673,6 +1678,12 @@ async function refreshAltBadge() {
 /* ================= Init ================= */
 (async function init() {
   currentUser = await requireAuth("login.html");
+  guestMode = isGuestUser(currentUser);
+  if (guestMode) {
+    hideForGuest(currentUser, [btnGoAlt, btnShare, basesSectionShared]);
+    tabBasesSharedMobile?.closest(".tab-slot")?.remove();
+    sessionStorage.setItem("basesMobileTab", "mine");
+  }
   if (who) who.textContent = currentUser?.username || currentUser?.email || "—";
 
   // mobile tabs
@@ -1711,7 +1722,7 @@ async function refreshAltBadge() {
   // bo decyzja accept/decline jest w UI. Tu robimy mismatch-check:
   const params = new URLSearchParams(location.search);
   const shareToken = params.get("share");
-  if (shareToken) {
+  if (!guestMode && shareToken) {
     // przypadek: zalogowany na innym koncie niż adresat
     // -> jeśli zaproszenie nie jest dla auth.uid, to go nie zobaczymy w list_shared_bases_ext()
     // więc pokazujemy alert i prosimy o właściwe konto.
