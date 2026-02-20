@@ -111,6 +111,9 @@ export function validateUsername(un, { allowEmpty = false } = {}) {
     if (allowEmpty) return "";
     throw new Error(t("auth.enterUsername"));
   }
+  // Reserve guest_* namespace for auto-generated guest usernames.
+  // NOTE: guests will be prompted to change it after account upgrade.
+  if (v.toLowerCase().startsWith("guest_")) throw new Error(t("auth.usernameReservedGuest"));
   if (v.length < 3) throw new Error(t("auth.usernameMin"));
   if (v.length > 20) throw new Error(t("auth.usernameMax"));
   if (!/^[a-zA-Z0-9_.-]+$/.test(v)) throw new Error(t("auth.usernameChars"));
@@ -222,6 +225,12 @@ export async function requireAuth(redirect = "login.html") {
     return null; // na wypadek, gdyby ktoś jednak kontynuował kod
   }
 
+  // If the user upgraded from guest without setting a password yet.
+  if (u?.user_metadata?.familiada_needs_password === true) {
+    location.href = withLangParam("login.html?setup=password");
+    return null;
+  }
+
   // Guest TTL check + touch
   if (u?.is_guest) {
     try {
@@ -240,6 +249,11 @@ export async function requireAuth(redirect = "login.html") {
   const username = await fetchUsername(u);
   if (!username) {
     location.href = withLangParam("login.html?setup=username");
+    return null;
+  }
+  // After guest -> registered upgrade, keep forcing a real username.
+  if (!u?.is_guest && String(username || "").toLowerCase().startsWith("guest_")) {
+    location.href = withLangParam("login.html?setup=username&guest_username=1");
     return null;
   }
   return { ...u, username };
@@ -277,6 +291,38 @@ export async function convertGuestToRegistered(email, password, language) {
   // Guest upgrade flow: attach email + password to the same anonymous account
   // and trigger email confirmation via updateUser(attributes, options).
   const payload = { email: mail, password, data: { is_guest: false, familiada_email_change_pending: mail } };
+  if (language) payload.data.language = language;
+
+  const confirmUrl = new URL(buildAuthRedirect("confirm.html", language));
+  confirmUrl.searchParams.set("to", mail);
+
+  const { data, error } = await sb().auth.updateUser(payload, { emailRedirectTo: confirmUrl.toString() });
+  if (error) throw new Error(niceAuthError(error));
+
+  const { error: convErr } = await sb().rpc("guest_convert_account", { p_email: mail });
+  if (convErr) throw new Error(niceAuthError(convErr));
+
+  const user = data?.user || null;
+  if (user?.email_confirmed_at) clearGuestLocalMarker();
+  return user;
+}
+
+/**
+ * Guest upgrade flow (migrate data): attach only email first, then require password setup after confirm.
+ * This avoids double-password forms and matches Supabase "email change" double-confirm requirement.
+ */
+export async function convertGuestToRegisteredEmailOnly(email, language) {
+  const mail = String(email || "").trim().toLowerCase();
+  if (!mail || !mail.includes("@")) throw new Error(t("index.errInvalidEmail"));
+
+  const payload = {
+    email: mail,
+    data: {
+      is_guest: false,
+      familiada_email_change_pending: mail,
+      familiada_needs_password: true,
+    },
+  };
   if (language) payload.data.language = language;
 
   const confirmUrl = new URL(buildAuthRedirect("confirm.html", language));

@@ -67,6 +67,23 @@
         </div>
       </form>
     </div>
+
+    <div class="login-card setup-card" id="passwordCard" hidden>
+      <div class="brand">FAMILIADA</div>
+      <div class="sub" data-i18n="index.passwordSetupTitle">Dokończ rejestrację</div>
+      <div class="setup-title" data-i18n="index.passwordSetupPrompt">Ustaw hasło</div>
+      <div class="setup-sub" data-i18n="index.passwordSetupSub">Użyj hasła zgodnego z zasadami bezpieczeństwa.</div>
+
+      <form class="setup-form" id="passwordForm">
+        <input id="passwordNew1" type="password" placeholder="Nowe hasło" autocomplete="new-password" data-i18n-placeholder="index.passwordNew"/>
+        <input id="passwordNew2" type="password" placeholder="Powtórz nowe hasło" autocomplete="new-password" data-i18n-placeholder="index.passwordRepeat"/>
+        <div class="hint" id="passwordHint" hidden></div>
+        <div class="modal-err" id="passwordErr"></div>
+        <div class="modal-actions">
+          <button class="btn main" id="btnPasswordSave" type="submit" data-i18n="index.btnPasswordSave">Zapisz hasło</button>
+        </div>
+      </form>
+    </div>
   </div>
 </body>
 </html>
