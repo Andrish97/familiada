@@ -74,17 +74,6 @@ function resetLoginFailureCount(loginOrEmail) {
   loginFailuresByIdentity.delete(key);
 }
 
-function isCaptchaChallengeError(error) {
-  const raw = String(
-    error?.message || error?.error_description || error?.description || error || ""
-  ).toLowerCase();
-  const status = Number(error?.status || error?.statusCode || 0) || 0;
-  if (status >= 500 || raw.includes("unexpected_failure") || raw.includes("internal")) return false;
-  return raw.includes("captcha") && (
-    raw.includes("required") || raw.includes("invalid") || raw.includes("failed")
-  );
-}
-
 function getLoginCaptchaPolicy(loginOrEmail) {
   const failures = getLoginFailureCount(loginOrEmail);
   return {
@@ -93,11 +82,9 @@ function getLoginCaptchaPolicy(loginOrEmail) {
   };
 }
 
-function getCaptchaPromptForLogin(loginOrEmail, error = null) {
+function getCaptchaPromptForLogin(loginOrEmail) {
   const policy = getLoginCaptchaPolicy(loginOrEmail);
-  if (policy.requireCaptcha || isCaptchaChallengeError(error)) {
-    return askCaptchaToken();
-  }
+  if (policy.requireCaptcha) return askCaptchaToken();
   return Promise.resolve(null);
 }
 
@@ -562,17 +549,8 @@ document.addEventListener("DOMContentLoaded", async () => {
         setStatus(t("index.statusCheckEmail"));
       } else {
         setStatus(t("index.statusLoggingIn"));
-        let captchaToken = await getCaptchaPromptForLogin(loginOrEmail);
-        try {
-          await signIn(loginOrEmail, pwd, captchaToken); // <-- może być username
-        } catch (firstError) {
-          if (!captchaToken && isCaptchaChallengeError(firstError)) {
-            captchaToken = await getCaptchaPromptForLogin(loginOrEmail, firstError);
-            await signIn(loginOrEmail, pwd, captchaToken);
-          } else {
-            throw firstError;
-          }
-        }
+        const captchaToken = await getCaptchaPromptForLogin(loginOrEmail);
+        await signIn(loginOrEmail, pwd, captchaToken); // <-- może być username
         resetLoginFailureCount(loginOrEmail);
 
         const authed = await getUser();
