@@ -8,6 +8,12 @@ function normalize(v) {
 export function isGuestUser(user) {
   if (!user) return false;
 
+  // If the account explicitly declares "not a guest", treat it as non-guest even if
+  // legacy placeholder username/email still looks like guest_*.
+  if (user?.is_guest === false) return false;
+  if (user?.user_metadata?.is_guest === false) return false;
+  if (user?.app_metadata?.is_guest === false) return false;
+
   if (user?.is_guest === true) return true;
   if (user?.user_metadata?.is_guest === true) return true;
   if (user?.app_metadata?.is_guest === true) return true;

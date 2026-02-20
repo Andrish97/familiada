@@ -62,6 +62,24 @@ let captchaLoadPromise = null;
 const LOGIN_CAPTCHA_FAIL_THRESHOLD = 3;
 const loginFailuresByIdentity = new Map();
 
+
+function isSecurityRelevantLoginError(e) {
+  const code = String(e?.errorCode || "").trim().toLowerCase();
+  if (code === "invalid_login_credentials") return true;
+  if (code === "unknown_email" || code === "unknown_username") return true;
+
+  // Some providers return "captcha_required" or similar when abuse is detected.
+  if (code === "captcha_required") return true;
+
+  // As a fallback, treat explicit 400/401 invalid-credential responses as security-related.
+  const status = Number(e?.status || 0) || 0;
+  if ((status === 400 || status === 401) && /invalid|credential|password|email/i.test(String(e?.rawMessage || e?.message || ""))) {
+    return true;
+  }
+  return false;
+}
+
+
 function getLoginFailureKey(loginOrEmail) {
   return String(loginOrEmail || "").trim().toLowerCase();
 }
@@ -95,9 +113,7 @@ function getLoginCaptchaPolicy(loginOrEmail) {
 function getCaptchaPromptForLogin(loginOrEmail) {
   const policy = getLoginCaptchaPolicy(loginOrEmail);
   if (policy.requireCaptcha) return askCaptchaToken();
-  // Variant B: always send a (silent) captcha token to satisfy server-side enforcement,
-  // but show the interactive challenge only after N invalid credential attempts.
-  return getSilentCaptchaToken();
+  return null;
 }
 
 function getCaptchaLang() {
@@ -183,6 +199,10 @@ function loadCaptchaApi() {
   return captchaLoadPromise;
 }
 
+// -------------------------
+// Silent captcha token (Variant B)
+// -------------------------
+
 let _silentCaptchaCache = { token: "", expMs: 0 };
 
 function getCachedSilentCaptchaToken() {
@@ -193,8 +213,11 @@ function getCachedSilentCaptchaToken() {
 
 function setCachedSilentCaptchaToken(token) {
   const tkn = String(token || "").trim();
-  if (!tkn) { _silentCaptchaCache = { token: "", expMs: 0 }; return; }
-  // Captcha tokens are short-lived; keep a small buffer (90s) to avoid re-render per click.
+  if (!tkn) {
+    _silentCaptchaCache = { token: "", expMs: 0 };
+    return;
+  }
+  // Tokens are short-lived; cache briefly to avoid re-render on rapid clicks.
   _silentCaptchaCache = { token: tkn, expMs: Date.now() + 90_000 };
 }
 
@@ -208,7 +231,7 @@ async function getSilentCaptchaToken() {
   if (!captcha?.render) return null;
 
   const mount = document.createElement("div");
-  // Offscreen, but must be in DOM for both providers.
+  // Must be in DOM for both providers, but fully offscreen.
   mount.style.position = "fixed";
   mount.style.left = "-9999px";
   mount.style.top = "0";
@@ -216,6 +239,7 @@ async function getSilentCaptchaToken() {
   mount.style.height = "1px";
   mount.style.opacity = "0";
   mount.style.pointerEvents = "none";
+  mount.dataset.theme = "dark";
   document.body.appendChild(mount);
 
   let token = "";
@@ -231,20 +255,26 @@ async function getSilentCaptchaToken() {
       done();
     };
 
-    const common = {
-      sitekey: captchaSiteKey,
-      callback: setToken,
-      "expired-callback": () => { token = ""; },
-      "error-callback": () => { token = ""; },
-    };
-
     try {
       if (captchaProvider === "hcaptcha") {
-        widgetId = captcha.render(mount, { ...common, theme: "dark", size: "invisible" });
+        widgetId = captcha.render(mount, {
+          sitekey: captchaSiteKey,
+          theme: "dark",
+          size: "invisible",
+          callback: setToken,
+          "expired-callback": () => { token = ""; },
+          "error-callback": () => { token = ""; },
+        });
         try { captcha.execute(widgetId); } catch {}
       } else {
-        // Turnstile
-        widgetId = captcha.render(mount, { ...common, theme: "auto", size: "invisible" });
+        widgetId = captcha.render(mount, {
+          sitekey: captchaSiteKey,
+          theme: "auto",
+          size: "invisible",
+          callback: setToken,
+          "expired-callback": () => { token = ""; },
+          "error-callback": () => { token = ""; },
+        });
         try { captcha.execute(widgetId); } catch {}
       }
     } catch {
@@ -267,6 +297,7 @@ async function getSilentCaptchaToken() {
     try { mount.remove(); } catch {}
   }
 }
+
 
 async function askCaptchaToken() {
   if (!captchaSiteKey) return null;
@@ -462,6 +493,39 @@ function setErr(m = "") { err.textContent = m; }
 function setStatus(m = "") { status.textContent = m; }
 function setUsernameErr(m = "") { if (usernameErr) usernameErr.textContent = m; }
 
+
+async function confirmDiscardGuestIfActive() {
+  try {
+    const current = await getUser();
+    if (!current || !isGuestUser(current)) return true;
+
+    const who =
+      current.user_metadata?.username ||
+      current.email ||
+      current.id;
+
+    const ok = await confirmModal({
+      title: t("index.guestSessionLossTitle"),
+      text: t("index.guestSessionLossText", { who }),
+      okText: t("index.guestSessionLossOk"),
+      cancelText: t("index.guestSessionLossCancel"),
+    });
+
+    if (!ok) {
+      setStatus(t("index.statusLoggedOut"));
+      setErr(t("index.guestSessionLossCancelled"));
+      return false;
+    }
+
+    await discardCurrentGuestAccount();
+    return true;
+  } catch {
+    // If we can't reliably detect, do not block login.
+    return true;
+  }
+}
+
+
 function openUsernameSetup() {
   if (loginCard) loginCard.hidden = true;
   if (setupCard) setupCard.hidden = false;
@@ -643,8 +707,14 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   const u = await getUser();
   if (!u && hasGuestLocalMarker()) {
+    // If we just initiated a guest upgrade, do not show the "deleted by inactivity" message.
+    const pending = String(localStorage.getItem("auth:guest_upgrade_pending") || "");
     clearGuestLocalMarker();
-    void alertModal({ text: t("index.guestDeletedByInactivity") });
+    if (!pending) {
+      void alertModal({ text: t("index.guestDeletedByInactivity") });
+    } else {
+      try { localStorage.removeItem("auth:guest_upgrade_pending"); } catch {}
+    }
   }
   if (u) {
     if (isGuestUser(u) || forceAuth) {
@@ -747,14 +817,38 @@ document.addEventListener("DOMContentLoaded", async () => {
           }
 
           setStatus(t("index.statusRegistering"));
-          const upgraded = await convertGuestToRegisteredEmailOnly(mail, getUiLang());
-          if (!upgraded?.email_confirmed_at) {
+
+          // If we still have an active guest session: attach email to the guest account.
+          // If not (e.g. after we logged out), treat it as a resend of the email-change link.
+          const current = await getUser();
+          if (current && isGuestUser(current)) {
+            const upgraded = await convertGuestToRegisteredEmailOnly(mail, getUiLang());
+
+            // We want the browser to be logged out after requesting the link (avoid accidental session switch).
+            try { localStorage.setItem("auth:guest_upgrade_pending", "1"); } catch {}
+            try { clearGuestLocalMarker(); } catch {}
+            try { await sb().auth.signOut(); } catch {}
+
             setStatus(t("index.statusCheckEmail"));
             void alertModal({ text: t("index.guestMigrateConfirmEmailNoPassword") });
             return;
           }
-          // Edge case: already confirmed (rare). Go to password setup.
-          openPasswordSetup();
+
+          // Resend (no guest session): this mirrors Account -> resend email change.
+          const language = getUiLang();
+          const confirmUrl2 = new URL("/confirm.html", location.origin);
+          confirmUrl2.searchParams.set("lang", language);
+          confirmUrl2.searchParams.set("to", mail);
+
+          const { error: resendErr } = await sb().auth.resend({
+            type: "email_change",
+            email: mail,
+            options: { emailRedirectTo: confirmUrl2.toString() },
+          });
+          if (resendErr) throw resendErr;
+
+          setStatus(t("index.statusCheckEmail"));
+          void alertModal({ text: t("index.guestMigrateConfirmEmailNoPassword") });
           return;
         }
 
@@ -777,6 +871,10 @@ document.addEventListener("DOMContentLoaded", async () => {
         await signUp(mail, pwd, redirectTo, null, getUiLang(), captchaToken);
         setStatus(t("index.statusCheckEmail"));
       } else {
+        // If a guest session is active, warn that logging in will discard guest data.
+        const okToLogin = await confirmDiscardGuestIfActive();
+        if (!okToLogin) return;
+
         setStatus(t("index.statusLoggingIn"));
         const captchaToken = await getCaptchaPromptForLogin(loginOrEmail);
         await signIn(loginOrEmail, pwd, captchaToken); // <-- może być username
@@ -793,7 +891,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
       }
     } catch (e) {
-      if (mode === "login") bumpLoginFailureCount(loginOrEmail);
+      if (mode === "login" && isSecurityRelevantLoginError(e)) bumpLoginFailureCount(loginOrEmail);
       console.error(e);
       setStatus(t("index.statusError"));
       setErr(niceAuthError(e));

@@ -1,6 +1,7 @@
 import { sb } from "../core/supabase.js";
 import { updateUserLanguage, validatePassword, niceAuthError, getPasswordRulesText } from "../core/auth.js";
 import { initI18n, t, getUiLang, withLangParam } from "../../translation/translation.js";
+import { confirmModal } from "../core/modal.js";
 
 const status = document.getElementById("status");
 const err = document.getElementById("err");
@@ -26,6 +27,33 @@ function hp(name){
   return hashParams().get(name);
 }
 
+async function requireNoActiveSessionBeforeAuthFlow() {
+  let currentUser = null;
+  try {
+    const { data } = await sb().auth.getUser();
+    currentUser = data?.user || null;
+  } catch {}
+
+  if (!currentUser) return true;
+
+  const who =
+    currentUser.user_metadata?.username ||
+    currentUser.email ||
+    currentUser.id;
+
+  const ok = await confirmModal({
+    title: t("reset.sessionSwitchTitle"),
+    text: t("reset.sessionSwitchText", { who }),
+    okText: t("reset.sessionSwitchOk"),
+    cancelText: t("reset.sessionSwitchCancel"),
+  });
+
+  if (!ok) return false;
+
+  await sb().auth.signOut();
+  return true;
+}
+
 document.addEventListener("DOMContentLoaded", async () => {
   await initI18n({ withSwitcher: true });
   if (pwdHint) pwdHint.textContent = getPasswordRulesText();
@@ -40,6 +68,17 @@ document.addEventListener("DOMContentLoaded", async () => {
   const hashType = hp("type");
   const tokenHash = qp("token_hash") || qp("token") || hp("token_hash") || hp("token");
   const otpType = qp("type") || hashType || "recovery";
+  
+  const hasAuthPayload = Boolean(code || accessToken || refreshToken || tokenHash);
+  if (hasAuthPayload) {
+    const ok = await requireNoActiveSessionBeforeAuthFlow();
+    if (!ok) {
+      setStatus(t("reset.sessionSwitchCancelled"));
+      setErr(t("reset.sessionSwitchCancelledHint"));
+      back.style.display = "inline-flex";
+      return;
+    }
+  }
 
   try{
     setStatus(t("reset.statusVerifying"));
