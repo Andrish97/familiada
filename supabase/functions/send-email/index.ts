@@ -257,9 +257,20 @@ function extractTargetEmail(payload: HookPayload, redirectUrl: URL | null): stri
   const fromEmailDataNew = String(payload.email_data.new_email || "").trim();
   if (fromEmailDataNew) return fromEmailDataNew;
 
+  const fromEmailDataOld = String(payload.email_data.old_email || "").trim();
+  if (fromEmailDataOld) return fromEmailDataOld;
+
   const fromMeta = String(payload.user.user_metadata?.familiada_email_change_pending || "").trim();
   if (fromMeta) return fromMeta;
 
+  return "";
+}
+
+function firstEmail(...values: (string | undefined)[]): string {
+  for (const value of values) {
+    const email = String(value || "").trim();
+    if (email) return email;
+  }
   return "";
 }
 
@@ -327,9 +338,20 @@ serve(async (req) => {
   if (type === "email_change" || type === "email_change_current" || type === "email_change_new") {
       const currentEmail = String(payload.user.email || "").trim();
       const currentEmailNormalized = currentEmail.toLowerCase();
+      const oldEmail = String(payload.email_data.old_email || "").trim();
+      const newEmail = String(payload.email_data.new_email || "").trim();
+      const pendingMetaEmail = String(payload.user.user_metadata?.familiada_email_change_pending || "").trim();
 
       const redirect = String(payload.email_data.redirect_to || "").trim();
-      const targetEmail = extractTargetEmail(payload, redirectUrl).trim();
+      const targetEmail = firstEmail(
+        extractTargetEmail(payload, redirectUrl),
+        newEmail,
+        payload.user.email_new,
+        pendingMetaEmail,
+        // Supabase potrafi wysłać pusty user.email przy konwersji konta gościa.
+        // Wtedy old_email bywa jedynym dostępnym adresem nowego konta.
+        oldEmail,
+      ).trim();
       const targetEmailNormalized = targetEmail.toLowerCase();
 
       console.log("redirect_to", redirect);
