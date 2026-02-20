@@ -1,11 +1,24 @@
 <!DOCTYPE html>
 <html lang="pl">
 <head>
+  <meta name="description" data-i18n-content="home.meta.description">
+  
+  <meta property="og:type" content="website">
+  <meta property="og:title" data-i18n-content="home.meta.ogTitle">
+  <meta property="og:description" data-i18n-content="home.meta.ogDescription">
+  <meta property="og:image" content="https://familiada.online/img/og/og-image.webp">
+  <meta property="og:url" content="https://familiada.online/">
+  <meta property="og:site_name" content="Familiada Online">
+  <meta property="og:locale" data-i18n-content="home.meta.ogLocale">
+  
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" data-i18n-content="home.meta.ogTitle">
+  <meta name="twitter:description" data-i18n-content="home.meta.ogDescription">
+  <meta name="twitter:image" content="https://familiada.online/img/og/og-image.webp">
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title data-i18n="home.title">Familiada — system do prowadzenia gry</title>
-
-  <meta name="description" content="System do prowadzenia gry w stylu Familiada: przygotowanie pytań, sondaż, tablica i rozgrywka na żywo."/>
+  
   <meta name="robots" content="index, follow"/>
 
   <link rel="icon" href="favicon.ico"/>
@@ -15,6 +28,21 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
   <script type="module" src="js/pages/index.js" defer></script>
   <script type="module" src="js/core/topbar-mobile-menu.js" defer></script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "Familiada Online",
+    "applicationCategory": "GameApplication",
+    "operatingSystem": "Web",
+    "url": "https://familiada.online",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "PLN"
+    }
+  }
+  </script>
 </head>
 
 <body class="home-body">
@@ -235,6 +263,25 @@
         </article>
 
       </div>
+    </section>
+    
+    <section class="seo-section">
+      <h2 data-i18n="home.seo.title">
+        Zastosowanie i możliwości systemu
+      </h2>
+    
+      <p data-i18n="home.seo.p1">
+        Narzędzie umożliwia organizację i prowadzenie gry w stylu Familiada
+        podczas wydarzeń firmowych, integracji zespołowych, konkursów szkolnych
+        oraz eventów scenicznych. System wspiera zarówno etap przygotowań,
+        jak i dynamiczną rozgrywkę na żywo.
+      </p>
+    
+      <p data-i18n="home.seo.p2">
+        Dzięki oddzielnym widokom dla operatora, prowadzącego oraz tablicy wyników
+        możesz zachować pełną kontrolę nad przebiegiem gry.
+        Całość działa w przeglądarce — bez instalacji i konfiguracji technicznej.
+      </p>
     </section>
 
     <div class="footer">

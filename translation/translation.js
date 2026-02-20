@@ -121,6 +121,7 @@ export function applyTranslations(root = document) {
     { attr: "aria-label", data: "data-i18n-aria-label" },
     { attr: "value", data: "data-i18n-value" },
     { attr: "alt", data: "data-i18n-alt" },
+    { attr: "content", data: "data-i18n-content" },
   ];
 
   attrMap.forEach(({ attr, data }) => {
