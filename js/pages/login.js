@@ -95,7 +95,9 @@ function getLoginCaptchaPolicy(loginOrEmail) {
 function getCaptchaPromptForLogin(loginOrEmail) {
   const policy = getLoginCaptchaPolicy(loginOrEmail);
   if (policy.requireCaptcha) return askCaptchaToken();
-  return Promise.resolve(null);
+  // Variant B: always send a (silent) captcha token to satisfy server-side enforcement,
+  // but show the interactive challenge only after N invalid credential attempts.
+  return getSilentCaptchaToken();
 }
 
 function getCaptchaLang() {
@@ -179,6 +181,91 @@ function loadCaptchaApi() {
     document.head.appendChild(script);
   });
   return captchaLoadPromise;
+}
+
+let _silentCaptchaCache = { token: "", expMs: 0 };
+
+function getCachedSilentCaptchaToken() {
+  const now = Date.now();
+  if (_silentCaptchaCache.token && now < (_silentCaptchaCache.expMs || 0)) return _silentCaptchaCache.token;
+  return "";
+}
+
+function setCachedSilentCaptchaToken(token) {
+  const tkn = String(token || "").trim();
+  if (!tkn) { _silentCaptchaCache = { token: "", expMs: 0 }; return; }
+  // Captcha tokens are short-lived; keep a small buffer (90s) to avoid re-render per click.
+  _silentCaptchaCache = { token: tkn, expMs: Date.now() + 90_000 };
+}
+
+async function getSilentCaptchaToken() {
+  if (!captchaSiteKey) return null;
+
+  const cached = getCachedSilentCaptchaToken();
+  if (cached) return cached;
+
+  const captcha = await loadCaptchaApi();
+  if (!captcha?.render) return null;
+
+  const mount = document.createElement("div");
+  // Offscreen, but must be in DOM for both providers.
+  mount.style.position = "fixed";
+  mount.style.left = "-9999px";
+  mount.style.top = "0";
+  mount.style.width = "1px";
+  mount.style.height = "1px";
+  mount.style.opacity = "0";
+  mount.style.pointerEvents = "none";
+  document.body.appendChild(mount);
+
+  let token = "";
+  let widgetId = null;
+
+  const tokenPromise = new Promise((resolve) => {
+    const done = () => resolve(String(token || "").trim());
+    const timer = setTimeout(done, 9000);
+
+    const setToken = (value) => {
+      token = String(value || "");
+      clearTimeout(timer);
+      done();
+    };
+
+    const common = {
+      sitekey: captchaSiteKey,
+      callback: setToken,
+      "expired-callback": () => { token = ""; },
+      "error-callback": () => { token = ""; },
+    };
+
+    try {
+      if (captchaProvider === "hcaptcha") {
+        widgetId = captcha.render(mount, { ...common, theme: "dark", size: "invisible" });
+        try { captcha.execute(widgetId); } catch {}
+      } else {
+        // Turnstile
+        widgetId = captcha.render(mount, { ...common, theme: "auto", size: "invisible" });
+        try { captcha.execute(widgetId); } catch {}
+      }
+    } catch {
+      clearTimeout(timer);
+      resolve("");
+    }
+  });
+
+  try {
+    const tkn = await tokenPromise;
+    if (tkn) setCachedSilentCaptchaToken(tkn);
+    return tkn || null;
+  } finally {
+    try {
+      if (widgetId !== null && widgetId !== undefined) {
+        if (captchaProvider === "hcaptcha") captcha.reset(widgetId);
+        else captcha.remove(widgetId);
+      }
+    } catch {}
+    try { mount.remove(); } catch {}
+  }
 }
 
 async function askCaptchaToken() {
