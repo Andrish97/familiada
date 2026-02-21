@@ -267,7 +267,12 @@ function setEmailPendingUi(nextPendingEmail) {
 }
 
 
+let emailStatusFailCount = 0;
+let emailStatusNextTryMs = 0;
+
 async function fetchEmailChangeStatus() {
+  const now = Date.now();
+  if (emailStatusNextTryMs && now < emailStatusNextTryMs) return null;
   try {
     const { data: sess } = await sb().auth.getSession();
     const token = sess?.session?.access_token;
@@ -279,8 +284,13 @@ async function fetchEmailChangeStatus() {
     });
     if (error) throw error;
     if (!data?.ok) return null;
+    emailStatusFailCount = 0;
+    emailStatusNextTryMs = 0;
     return data;
   } catch (e) {
+    emailStatusFailCount = Math.min(8, emailStatusFailCount + 1);
+    const backoff = Math.min(300_000, 1000 * (2 ** emailStatusFailCount));
+    emailStatusNextTryMs = Date.now() + backoff;
     // Fallback will handle UI. We keep this silent.
     console.warn("[email-change-status] failed:", e);
     return null;
