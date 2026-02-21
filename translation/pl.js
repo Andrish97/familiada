@@ -192,7 +192,6 @@ const pl = {
     backHome: "← Strona startowa",
     intro: "Aby tworzyć gry i prowadzić rozgrywkę na żywo — zaloguj się. Nie masz konta? Zarejestruj się poniżej.",
     title: "Familiada — logowanie",
-    subtitle: "Panel tworzenia i prowadzenia gry",
     statusChecking: "Sprawdzam sesję…",
     statusLoggedOut: "Niezalogowany.",
     btnLogin: "Zaloguj",
