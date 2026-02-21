@@ -5,7 +5,7 @@ import {
   signInGuest,
   getEmailStatus,
   sendSignupConfirmation,
-  sendGuestMigrateConfirmation,
+  convertGuestToRegistered,
   discardCurrentGuestAccount,
   resetPassword,
   resolveLoginToEmail,
@@ -73,6 +73,15 @@ function isSecurityRelevantLoginError(e) {
   return false;
 }
 
+function isCaptchaError(e) {
+  const code = String(e?.errorCode || "").trim().toLowerCase();
+  if (code === "captcha_required") return true;
+  if (String(e?.errorKind || "").toLowerCase() === "security") return true;
+  const msg = String(e?.rawMessage || e?.message || "").toLowerCase();
+  if (msg.includes("captcha")) return true;
+  return false;
+}
+
 
 function getLoginFailureKey(loginOrEmail) {
   return String(loginOrEmail || "").trim().toLowerCase();
@@ -104,10 +113,11 @@ function getLoginCaptchaPolicy(loginOrEmail) {
   };
 }
 
-function getCaptchaPromptForLogin(loginOrEmail) {
+async function getCaptchaPromptForLogin(loginOrEmail) {
+  if (!captchaSiteKey) return null;
   const policy = getLoginCaptchaPolicy(loginOrEmail);
-  if (policy.requireCaptcha) return askCaptchaToken();
-  return null;
+  if (policy.requireCaptcha) return await askCaptchaToken();
+  return await getSilentCaptchaToken();
 }
 
 function getCaptchaLang() {
@@ -198,6 +208,8 @@ function loadCaptchaApi() {
 // -------------------------
 
 let _silentCaptchaCache = { token: "", expMs: 0 };
+let _silentCaptchaInFlight = null;
+let _visibleCaptchaInFlight = null;
 
 function getCachedSilentCaptchaToken() {
   const now = Date.now();
@@ -220,81 +232,93 @@ async function getSilentCaptchaToken() {
 
   const cached = getCachedSilentCaptchaToken();
   if (cached) return cached;
+  if (_silentCaptchaInFlight) return _silentCaptchaInFlight;
 
-  const captcha = await loadCaptchaApi();
-  if (!captcha?.render) return null;
+  _silentCaptchaInFlight = (async () => {
+    const captcha = await loadCaptchaApi();
+    if (!captcha?.render) return null;
 
-  const mount = document.createElement("div");
-  // Must be in DOM for both providers, but fully offscreen.
-  mount.style.position = "fixed";
-  mount.style.left = "-9999px";
-  mount.style.top = "0";
-  mount.style.width = "1px";
-  mount.style.height = "1px";
-  mount.style.opacity = "0";
-  mount.style.pointerEvents = "none";
-  mount.dataset.theme = "dark";
-  document.body.appendChild(mount);
+    const mount = document.createElement("div");
+    // Must be in DOM for both providers, but fully offscreen.
+    mount.style.position = "fixed";
+    mount.style.left = "-9999px";
+    mount.style.top = "0";
+    mount.style.width = "1px";
+    mount.style.height = "1px";
+    mount.style.opacity = "0";
+    mount.style.pointerEvents = "none";
+    mount.dataset.theme = "dark";
+    document.body.appendChild(mount);
 
-  let token = "";
-  let widgetId = null;
+    let token = "";
+    let widgetId = null;
 
-  const tokenPromise = new Promise((resolve) => {
-    const done = () => resolve(String(token || "").trim());
-    const timer = setTimeout(done, 9000);
+    const tokenPromise = new Promise((resolve) => {
+      const done = () => resolve(String(token || "").trim());
+      const timer = setTimeout(done, 9000);
 
-    const setToken = (value) => {
-      token = String(value || "");
-      clearTimeout(timer);
-      done();
-    };
+      const setToken = (value) => {
+        token = String(value || "");
+        clearTimeout(timer);
+        done();
+      };
+
+      try {
+        if (captchaProvider === "hcaptcha") {
+          widgetId = captcha.render(mount, {
+            sitekey: captchaSiteKey,
+            theme: "dark",
+            size: "invisible",
+            callback: setToken,
+            "expired-callback": () => { token = ""; },
+            "error-callback": () => { token = ""; },
+          });
+          try { captcha.execute(widgetId); } catch {}
+        } else {
+          widgetId = captcha.render(mount, {
+            sitekey: captchaSiteKey,
+            theme: "auto",
+            size: "invisible",
+            callback: setToken,
+            "expired-callback": () => { token = ""; },
+            "error-callback": () => { token = ""; },
+          });
+          try { captcha.execute(widgetId); } catch {}
+        }
+      } catch {
+        clearTimeout(timer);
+        resolve("");
+      }
+    });
 
     try {
-      if (captchaProvider === "hcaptcha") {
-        widgetId = captcha.render(mount, {
-          sitekey: captchaSiteKey,
-          theme: "dark",
-          size: "invisible",
-          callback: setToken,
-          "expired-callback": () => { token = ""; },
-          "error-callback": () => { token = ""; },
-        });
-        try { captcha.execute(widgetId); } catch {}
-      } else {
-        widgetId = captcha.render(mount, {
-          sitekey: captchaSiteKey,
-          theme: "auto",
-          size: "invisible",
-          callback: setToken,
-          "expired-callback": () => { token = ""; },
-          "error-callback": () => { token = ""; },
-        });
-        try { captcha.execute(widgetId); } catch {}
-      }
-    } catch {
-      clearTimeout(timer);
-      resolve("");
+      const tkn = await tokenPromise;
+      if (tkn) setCachedSilentCaptchaToken(tkn);
+      return tkn || null;
+    } finally {
+      try {
+        if (widgetId !== null && widgetId !== undefined) {
+          if (captchaProvider === "hcaptcha") captcha.reset(widgetId);
+          else captcha.remove(widgetId);
+        }
+      } catch {}
+      try { mount.remove(); } catch {}
     }
-  });
+  })();
 
   try {
-    const tkn = await tokenPromise;
-    if (tkn) setCachedSilentCaptchaToken(tkn);
-    return tkn || null;
+    return await _silentCaptchaInFlight;
   } finally {
-    try {
-      if (widgetId !== null && widgetId !== undefined) {
-        if (captchaProvider === "hcaptcha") captcha.reset(widgetId);
-        else captcha.remove(widgetId);
-      }
-    } catch {}
-    try { mount.remove(); } catch {}
+    _silentCaptchaInFlight = null;
   }
 }
 
 
 async function askCaptchaToken() {
   if (!captchaSiteKey) return null;
+  if (_visibleCaptchaInFlight) return _visibleCaptchaInFlight;
+
+  _visibleCaptchaInFlight = (async () => {
   const captcha = await loadCaptchaApi();
   if (!captcha?.render) throw new Error(t("index.captchaRequired"));
 
@@ -322,24 +346,31 @@ async function askCaptchaToken() {
       "error-callback": () => { token = ""; },
     });
 
-  try {
-    const ok = await confirmModal({
-      title: t("index.captchaTitle"),
-      text: t("index.captchaText"),
-      okText: t("index.captchaOk"),
-      cancelText: t("index.captchaCancel"),
-      body: mount,
-      initialFocus: mount,
-    });
-
-    if (!ok) throw new Error(t("index.captchaRequired"));
-    if (!token) throw new Error(t("index.captchaRequired"));
-    return token;
-  } finally {
     try {
-      if (captchaProvider === "hcaptcha") captcha.reset(widgetId);
-      else captcha.remove(widgetId);
-    } catch {}
+      const ok = await confirmModal({
+        title: t("index.captchaTitle"),
+        text: t("index.captchaText"),
+        okText: t("index.captchaOk"),
+        cancelText: t("index.captchaCancel"),
+        body: mount,
+        initialFocus: mount,
+      });
+
+      if (!ok) throw new Error(t("index.captchaRequired"));
+      if (!token) throw new Error(t("index.captchaRequired"));
+      return token;
+    } finally {
+      try {
+        if (captchaProvider === "hcaptcha") captcha.reset(widgetId);
+        else captcha.remove(widgetId);
+      } catch {}
+    }
+  })();
+
+  try {
+    return await _visibleCaptchaInFlight;
+  } finally {
+    _visibleCaptchaInFlight = null;
   }
 }
 
@@ -504,6 +535,7 @@ async function confirmDiscardGuestIfActive() {
     if (!current || !isGuestUser(current)) return true;
 
     const who =
+      current.username ||
       current.user_metadata?.username ||
       current.email ||
       current.id;
@@ -817,7 +849,25 @@ document.addEventListener("DOMContentLoaded", async () => {
           setStatus(t("index.statusRegistering"));
 
           if (current && isGuestUser(current)) {
-            await sendGuestMigrateConfirmation(mail, getUiLang());
+            if (pass2.value !== pwd) return setErr(t("index.errPasswordMismatch"));
+            try {
+              validatePassword(pwd);
+            } catch (e) {
+              return setErr(niceAuthError(e));
+            }
+
+            let captchaToken = await getSilentCaptchaToken();
+            setStatus(t("index.statusRegistering"));
+            try {
+              await convertGuestToRegistered(mail, pwd, getUiLang(), captchaToken);
+            } catch (e) {
+              if (isCaptchaError(e)) {
+                captchaToken = await askCaptchaToken();
+                await convertGuestToRegistered(mail, pwd, getUiLang(), captchaToken);
+              } else {
+                throw e;
+              }
+            }
 
             // We want the browser to be logged out after requesting the link (avoid accidental session switch).
             try { localStorage.setItem("auth:guest_upgrade_pending", "1"); } catch {}
@@ -825,7 +875,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             try { await sb().auth.signOut(); } catch {}
 
             setStatus(t("index.statusCheckEmail"));
-            void alertModal({ text: t("index.guestMigrateConfirmEmailNoPassword") });
+            void alertModal({ text: t("index.guestMigrateConfirmEmail") });
             return;
           }
 
@@ -854,10 +904,19 @@ document.addEventListener("DOMContentLoaded", async () => {
           return setErr(niceAuthError(e));
         }
 
-        const captchaToken = await askCaptchaToken();
+        let captchaToken = await getSilentCaptchaToken();
         setStatus(t("index.statusRegistering"));
         const redirectTo = buildAuthRedirect(confirmUrl);
-        await sendSignupConfirmation(mail, pwd, redirectTo, getUiLang(), captchaToken);
+        try {
+          await sendSignupConfirmation(mail, pwd, redirectTo, getUiLang(), captchaToken);
+        } catch (e) {
+          if (isCaptchaError(e)) {
+            captchaToken = await askCaptchaToken();
+            await sendSignupConfirmation(mail, pwd, redirectTo, getUiLang(), captchaToken);
+          } else {
+            throw e;
+          }
+        }
         setStatus(t("index.statusCheckEmail"));
       } else {
         // If a guest session is active, warn that logging in will discard guest data.
@@ -865,8 +924,17 @@ document.addEventListener("DOMContentLoaded", async () => {
         if (!okToLogin) return;
 
         setStatus(t("index.statusLoggingIn"));
-        const captchaToken = await getCaptchaPromptForLogin(loginOrEmail);
-        await signIn(loginOrEmail, pwd, captchaToken); // <-- może być username
+        let captchaToken = await getCaptchaPromptForLogin(loginOrEmail);
+        try {
+          await signIn(loginOrEmail, pwd, captchaToken); // <-- może być username
+        } catch (e) {
+          if (isCaptchaError(e)) {
+            captchaToken = await askCaptchaToken();
+            await signIn(loginOrEmail, pwd, captchaToken);
+          } else {
+            throw e;
+          }
+        }
         resetLoginFailureCount(loginOrEmail);
 
         const authed = await getUser();
@@ -900,8 +968,17 @@ document.addEventListener("DOMContentLoaded", async () => {
         location.href = withLangParam(builderUrl);
         return;
       }
-      const captchaToken = await askCaptchaToken();
-      await signInGuest(captchaToken);
+      let captchaToken = await getSilentCaptchaToken();
+      try {
+        await signInGuest(captchaToken);
+      } catch (e) {
+        if (isCaptchaError(e)) {
+          captchaToken = await askCaptchaToken();
+          await signInGuest(captchaToken);
+        } else {
+          throw e;
+        }
+      }
       const guestUser = await waitForUserSession();
       if (!guestUser) throw new Error(t("auth.loginFailed"));
       location.href = withLangParam(builderUrl);
@@ -954,7 +1031,18 @@ document.addEventListener("DOMContentLoaded", async () => {
       setStatus(t("index.statusResetSending"));
       const redirectTo = buildAuthRedirect(resetUrl);
 
-      const usedEmail = await resetPassword(loginOrEmail, redirectTo, getUiLang(), resolved);
+      let captchaToken = await getSilentCaptchaToken();
+      let usedEmail;
+      try {
+        usedEmail = await resetPassword(loginOrEmail, redirectTo, getUiLang(), resolved, captchaToken);
+      } catch (e) {
+        if (isCaptchaError(e)) {
+          captchaToken = await askCaptchaToken();
+          usedEmail = await resetPassword(loginOrEmail, redirectTo, getUiLang(), resolved, captchaToken);
+        } else {
+          throw e;
+        }
+      }
 
       if (reserve.nextAllowedAtMs) setForgotUntil(usedEmail, reserve.nextAllowedAtMs);
 

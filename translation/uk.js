@@ -253,7 +253,7 @@ const uk = {
     pendingEmailResent: "Лист підтвердження надіслано. Перевір пошту.",
     emailAlreadyRegistered: "Цей акаунт уже існує. Перемикаю на вхід.",
     captchaTitle: "Підтверди, що ти людина",
-    captchaText: "Перед створенням акаунта пройди перевірку CAPTCHA.",
+    captchaText: "Щоб продовжити, пройди перевірку CAPTCHA.",
     captchaOk: "Продовжити",
     captchaCancel: "Скасувати",
     captchaRequired: "Щоб продовжити, пройди перевірку CAPTCHA.",

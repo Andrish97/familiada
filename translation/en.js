@@ -253,7 +253,7 @@ const en = {
     pendingEmailResent: "Confirmation email sent. Check your inbox.",
     emailAlreadyRegistered: "This account already exists. Switching to login.",
     captchaTitle: "Confirm you are human",
-    captchaText: "Before creating an account, complete the CAPTCHA check.",
+    captchaText: "Complete the CAPTCHA check to continue.",
     captchaOk: "Continue",
     captchaCancel: "Cancel",
     captchaRequired: "Complete the CAPTCHA check to continue.",
