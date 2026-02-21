@@ -56,6 +56,13 @@ let captchaLoadPromise = null;
 const LOGIN_CAPTCHA_FAIL_THRESHOLD = 3;
 const loginFailuresByIdentity = new Map();
 
+// Prewarm silent captcha so login doesn't block on first click.
+if (captchaSiteKey) {
+  setTimeout(() => {
+    getSilentCaptchaToken().catch(() => {});
+  }, 0);
+}
+
 
 function isSecurityRelevantLoginError(e) {
   const code = String(e?.errorCode || "").trim().toLowerCase();
@@ -255,7 +262,7 @@ async function getSilentCaptchaToken() {
 
     const tokenPromise = new Promise((resolve) => {
       const done = () => resolve(String(token || "").trim());
-      const timer = setTimeout(done, 9000);
+    const timer = setTimeout(done, 4000);
 
       const setToken = (value) => {
         token = String(value || "");
@@ -1029,7 +1036,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       const left = until - Date.now();
       if (left > 0) {
         setStatus(t("index.statusResetSent"));
-        setErr(t("index.errResetCooldown", { time: formatLeft(left) }));
+        setErr("");
         showForgotCooldownForEmail(resolved);
         return;
       }
@@ -1040,7 +1047,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (!reserve.ok) {
         const left2 = getForgotUntil(resolved) - Date.now();
         setStatus(t("index.statusResetSent"));
-        setErr(t("index.errResetCooldown", { time: formatLeft(left2) }));
+        setErr("");
         showForgotCooldownForEmail(resolved);
         return;
       }
