@@ -118,7 +118,16 @@ async function getCaptchaPromptForLogin(loginOrEmail) {
   if (!captchaSiteKey) return null;
   const policy = getLoginCaptchaPolicy(loginOrEmail);
   if (policy.requireCaptcha) return await askCaptchaToken();
-  return await getSilentCaptchaToken();
+  const silent = await getSilentCaptchaToken();
+  if (silent) return silent;
+  return await askCaptchaToken();
+}
+
+async function getCaptchaTokenOrPrompt() {
+  if (!captchaSiteKey) return null;
+  const silent = await getSilentCaptchaToken();
+  if (silent) return silent;
+  return await askCaptchaToken();
 }
 
 function getCaptchaLang() {
@@ -874,13 +883,13 @@ document.addEventListener("DOMContentLoaded", async () => {
               return setErr(niceAuthError(e));
             }
 
-            let captchaToken = await getSilentCaptchaToken();
+            let captchaToken = await getCaptchaTokenOrPrompt();
             setStatus(t("index.statusRegistering"));
             try {
               await convertGuestToRegistered(mail, pwd, getUiLang(), captchaToken);
             } catch (e) {
               if (isCaptchaError(e)) {
-                captchaToken = await askCaptchaToken();
+                captchaToken = await getCaptchaTokenOrPrompt();
                 await convertGuestToRegistered(mail, pwd, getUiLang(), captchaToken);
               } else {
                 throw e;
@@ -922,14 +931,14 @@ document.addEventListener("DOMContentLoaded", async () => {
           return setErr(niceAuthError(e));
         }
 
-        let captchaToken = await getSilentCaptchaToken();
+        let captchaToken = await getCaptchaTokenOrPrompt();
         setStatus(t("index.statusRegistering"));
         const redirectTo = buildAuthRedirect(confirmUrl);
         try {
           await sendSignupConfirmation(mail, pwd, redirectTo, getUiLang(), captchaToken);
         } catch (e) {
           if (isCaptchaError(e)) {
-            captchaToken = await askCaptchaToken();
+            captchaToken = await getCaptchaTokenOrPrompt();
             await sendSignupConfirmation(mail, pwd, redirectTo, getUiLang(), captchaToken);
           } else {
             throw e;
@@ -986,12 +995,12 @@ document.addEventListener("DOMContentLoaded", async () => {
         location.href = withLangParam(builderUrl);
         return;
       }
-      let captchaToken = await getSilentCaptchaToken();
+      let captchaToken = await getCaptchaTokenOrPrompt();
       try {
         await signInGuest(captchaToken);
       } catch (e) {
         if (isCaptchaError(e)) {
-          captchaToken = await askCaptchaToken();
+          captchaToken = await getCaptchaTokenOrPrompt();
           await signInGuest(captchaToken);
         } else {
           throw e;
@@ -1049,13 +1058,13 @@ document.addEventListener("DOMContentLoaded", async () => {
       setStatus(t("index.statusResetSending"));
       const redirectTo = buildAuthRedirect(resetUrl);
 
-      let captchaToken = await getSilentCaptchaToken();
+      let captchaToken = await getCaptchaTokenOrPrompt();
       let usedEmail;
       try {
         usedEmail = await resetPassword(loginOrEmail, redirectTo, getUiLang(), resolved, captchaToken);
       } catch (e) {
         if (isCaptchaError(e)) {
-          captchaToken = await askCaptchaToken();
+          captchaToken = await getCaptchaTokenOrPrompt();
           usedEmail = await resetPassword(loginOrEmail, redirectTo, getUiLang(), resolved, captchaToken);
         } else {
           throw e;
