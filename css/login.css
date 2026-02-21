@@ -185,6 +185,15 @@ body.setup-mode .setup-card {
   line-height: 1.35;
 }
 
+/* Mode-specific fields */
+body.mode-login #pass2 {
+  display: none;
+}
+
+body.mode-login #pwdHint {
+  display: none;
+}
+
 /* HEADER W KARCIE LOGIN */
 
 .login-header {

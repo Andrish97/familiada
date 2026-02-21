@@ -673,11 +673,16 @@ function applyMode() {
     btnPrimary.textContent = t("index.btnLogin");
     btnToggle.textContent = t("index.btnToggleRegister");
     email.placeholder = t("index.placeholderLogin");
+    if (pass2) {
+      pass2.value = "";
+      pass2.disabled = true;
+    }
   } else {
     email.placeholder = t("index.placeholderEmail");
     btnToggle.textContent = t("index.btnToggleLogin");
     if (pwdHint) pwdHint.textContent = getPasswordRulesText();
     btnPrimary.textContent = t("index.btnRegister");
+    if (pass2) pass2.disabled = false;
   }
 
   document.body.classList.toggle("mode-login", mode === "login");
