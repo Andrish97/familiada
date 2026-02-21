@@ -3,6 +3,7 @@ import { sb, buildSiteUrl } from "./supabase.js";
 import { t, withLangParam } from "../../translation/translation.js";
 
 const GUEST_LOCAL_MARKER_KEY = "fam:guest:session_seen";
+const GUEST_DISCARD_RPC_MISSING_KEY = "fam:guest:discard_rpc_missing";
 
 function buildAuthRedirect(page, lang) {
   // page: "confirm.html" | "reset.html" lub "/confirm.html"
@@ -204,13 +205,14 @@ async function fetchUsername(user) {
   try {
     const { data, error } = await sb()
       .from("profiles")
-      .select("username")
+      .select("username,is_guest")
       .eq("id", user.id)
       .maybeSingle();
 
     if (!error && data) {
       const candidate = normalizeUsername(data.username);
-      if (candidate && !isPlaceholderUsername(candidate)) {
+      const allowGuestPlaceholder = data?.is_guest === true || isGuestFromMetadata(user);
+      if (candidate && (!isPlaceholderUsername(candidate) || allowGuestPlaceholder)) {
         _unameCache = { userId: user.id, username: candidate, ts: now };
         return candidate;
       }
@@ -219,9 +221,28 @@ async function fetchUsername(user) {
 
   // 2) fallback: user_metadata (np. świeża rejestracja)
   const un = normalizeUsername(user?.user_metadata?.username);
-  if (un && !isPlaceholderUsername(un)) {
+  const allowGuestPlaceholder = isGuestFromMetadata(user);
+  if (un && (!isPlaceholderUsername(un) || allowGuestPlaceholder)) {
     _unameCache = { userId: user.id, username: un, ts: now };
     return un;
+  }
+
+  // 3) guest fallback from email or id (when profile row is missing)
+  if (isGuestFromMetadata(user)) {
+    const mail = String(user?.email || "").trim().toLowerCase();
+    if (mail.startsWith("guest_") && mail.endsWith("@guest.local")) {
+      const candidate = mail.split("@")[0];
+      if (candidate) {
+        _unameCache = { userId: user.id, username: candidate, ts: now };
+        return candidate;
+      }
+    }
+    if (user?.id) {
+      const compact = String(user.id).replace(/-/g, "");
+      const candidate = `guest_${compact.slice(0, 6)}`;
+      _unameCache = { userId: user.id, username: candidate, ts: now };
+      return candidate;
+    }
   }
 
   return null;
@@ -322,7 +343,7 @@ export function guestAuthEntryUrl() {
   return withLangParam("login.html?force_auth=1");
 }
 
-export async function convertGuestToRegistered(email, password, language) {
+export async function convertGuestToRegistered(email, password, language, captchaToken = null) {
   const mail = String(email || "").trim().toLowerCase();
   if (!mail || !mail.includes("@")) throw new Error(t("index.errInvalidEmail"));
 
@@ -342,7 +363,10 @@ export async function convertGuestToRegistered(email, password, language) {
   const confirmUrl = new URL(buildAuthRedirect("confirm.html", language));
   confirmUrl.searchParams.set("to", mail);
 
-  const { data, error } = await sb().auth.updateUser(payload, { emailRedirectTo: confirmUrl.toString() });
+  const options = { emailRedirectTo: confirmUrl.toString() };
+  if (captchaToken) options.captchaToken = captchaToken;
+
+  const { data, error } = await sb().auth.updateUser(payload, options);
   if (error) throw new Error(niceAuthError(error));
 
   const { error: convErr } = await sb().rpc("guest_convert_account", { p_email: mail });
@@ -357,7 +381,7 @@ export async function convertGuestToRegistered(email, password, language) {
  * Guest upgrade flow (migrate data): attach only email first, then require password setup after confirm.
  * This avoids double-password forms and matches Supabase "email change" double-confirm requirement.
  */
-export async function convertGuestToRegisteredEmailOnly(email, language) {
+export async function convertGuestToRegisteredEmailOnly(email, language, captchaToken = null) {
   const mail = String(email || "").trim().toLowerCase();
   if (!mail || !mail.includes("@")) throw new Error(t("index.errInvalidEmail"));
 
@@ -374,7 +398,10 @@ export async function convertGuestToRegisteredEmailOnly(email, language) {
   const confirmUrl = new URL(buildAuthRedirect("confirm.html", language));
   confirmUrl.searchParams.set("to", mail);
 
-  const { data, error } = await sb().auth.updateUser(payload, { emailRedirectTo: confirmUrl.toString() });
+  const options = { emailRedirectTo: confirmUrl.toString() };
+  if (captchaToken) options.captchaToken = captchaToken;
+
+  const { data, error } = await sb().auth.updateUser(payload, options);
   if (error) throw new Error(niceAuthError(error));
 
   const { error: convErr } = await sb().rpc("guest_convert_account", { p_email: mail });
@@ -386,9 +413,28 @@ export async function convertGuestToRegisteredEmailOnly(email, language) {
 }
 
 export async function discardCurrentGuestAccount() {
-  const { error } = await sb().rpc("guest_discard_current");
-  if (error) throw new Error(niceAuthError(error));
-  clearGuestLocalMarker();
+  let skipRpc = false;
+  try {
+    skipRpc = localStorage.getItem(GUEST_DISCARD_RPC_MISSING_KEY) === "1";
+  } catch {}
+
+  try {
+    if (!skipRpc) {
+      const { error } = await sb().rpc("guest_discard_current");
+      if (error) {
+        const status = Number(error?.status || error?.statusCode || 0) || 0;
+        const msg = String(error?.message || error?.error || "").toLowerCase();
+        // In environments without the RPC deployed yet, ignore 404 and memoize.
+        if (status === 404 || msg.includes("not found")) {
+          try { localStorage.setItem(GUEST_DISCARD_RPC_MISSING_KEY, "1"); } catch {}
+        } else {
+          throw new Error(niceAuthError(error));
+        }
+      }
+    }
+  } finally {
+    clearGuestLocalMarker();
+  }
 }
 
 export async function signIn(login, password, captchaToken = null) {
@@ -497,7 +543,7 @@ export async function signOut() {
   clearGuestLocalMarker();
 }
 
-export async function resetPassword(loginOrEmail, redirectTo, language, resolvedEmail = null) {
+export async function resetPassword(loginOrEmail, redirectTo, language, resolvedEmail = null, captchaToken = null) {
   const email = (resolvedEmail || await loginToEmail(loginOrEmail))?.toLowerCase?.() || "";
   if (!email) throw new Error(t("index.errResetMissingLogin"));
 
@@ -505,6 +551,7 @@ export async function resetPassword(loginOrEmail, redirectTo, language, resolved
 
   const options = { redirectTo: resetRedirectTo };
   if (language) options.data = { language };
+  if (captchaToken) options.captchaToken = captchaToken;
 
   const { error } = await sb().auth.resetPasswordForEmail(email, options);
   if (error) throw new Error(niceAuthError(error));

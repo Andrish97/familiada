@@ -14,7 +14,8 @@ type CopyBlock = {
 
 type CopyMap = Record<EmailType, Record<EmailLang, CopyBlock>>;
 
-export const EMAIL_COPY: CopyMap = {
+const globalAny = globalThis as unknown as { __familiada_email_copy?: CopyMap };
+export var EMAIL_COPY: CopyMap = globalAny.__familiada_email_copy || (globalAny.__familiada_email_copy = {
   signup: {
     pl: {
       subtitle: "Potwierdzenie konta",
@@ -137,7 +138,7 @@ export const EMAIL_COPY: CopyMap = {
       footer: "Автоматичне повідомлення — будь ласка, не відповідайте.",
     },
   },
-};
+});
 
 export function getEmailCopy(type: EmailType, lang: EmailLang): CopyBlock {
   return EMAIL_COPY[type][lang];

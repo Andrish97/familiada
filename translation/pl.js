@@ -253,7 +253,7 @@ const pl = {
     pendingEmailResent: "Wysłano mail potwierdzający. Sprawdź skrzynkę.",
     emailAlreadyRegistered: "Konto już istnieje. Przełączam na logowanie.",
     captchaTitle: "Potwierdź, że jesteś człowiekiem",
-    captchaText: "Przed założeniem konta wykonaj weryfikację CAPTCHA.",
+    captchaText: "Aby kontynuować, wykonaj weryfikację CAPTCHA.",
     captchaOk: "Kontynuuj",
     captchaCancel: "Anuluj",
     captchaRequired: "Aby kontynuować, wykonaj weryfikację CAPTCHA.",
