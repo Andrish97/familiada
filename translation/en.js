@@ -257,6 +257,8 @@ const en = {
     captchaOk: "Continue",
     captchaCancel: "Cancel",
     captchaRequired: "Complete the CAPTCHA check to continue.",
+    captchaStatusPending: "CAPTCHA verification: waiting…",
+    captchaStatusOk: "CAPTCHA verification: OK",
     forceAuthInfo: "This section is available only for registered users. Sign in or create an account.",
       guestSessionLossTitle: "Active guest session",
     guestSessionLossText: "You have an active guest account: {who}.\n\nIf you sign in now, you will permanently lose guest data. Export it if it's important.\n\nContinue?",

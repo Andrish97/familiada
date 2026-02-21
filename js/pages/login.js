@@ -275,15 +275,18 @@ async function getSilentCaptchaToken() {
           });
           try { captcha.execute(widgetId); } catch {}
         } else {
-          widgetId = captcha.render(mount, {
-            sitekey: captchaSiteKey,
-            theme: "auto",
-            size: "invisible",
-            callback: setToken,
-            "expired-callback": () => { token = ""; },
-            "error-callback": () => { token = ""; },
-          });
-          try { captcha.execute(widgetId); } catch {}
+        widgetId = captcha.render(mount, {
+          sitekey: captchaSiteKey,
+          theme: "auto",
+          size: "normal",
+          appearance: "interaction-only",
+          execution: "execute",
+          callback: setToken,
+          "expired-callback": () => { token = ""; },
+          "error-callback": () => { token = ""; },
+        });
+        try { captcha.reset(widgetId); } catch {}
+        try { captcha.execute(widgetId); } catch {}
         }
       } catch {
         clearTimeout(timer);
@@ -322,11 +325,18 @@ async function askCaptchaToken() {
   const captcha = await loadCaptchaApi();
   if (!captcha?.render) throw new Error(t("index.captchaRequired"));
 
+  const status = document.createElement("div");
+  status.style.marginTop = "8px";
+  status.style.opacity = "0.85";
+  status.style.fontSize = "12px";
+  status.textContent = t("index.captchaStatusPending");
+
   const mount = document.createElement("div");
   mount.dataset.theme = "dark";
   mount.style.minHeight = "84px";
   mount.style.display = "grid";
   mount.style.placeItems = "center";
+  mount.appendChild(status);
 
   let token = "";
   const widgetId = captchaProvider === "hcaptcha"
@@ -334,14 +344,21 @@ async function askCaptchaToken() {
       sitekey: captchaSiteKey,
       theme: "dark",
       size: "normal",
-      callback: (value) => { token = String(value || ""); },
+      callback: (value) => {
+        token = String(value || "");
+        if (token) status.textContent = t("index.captchaStatusOk");
+      },
       "expired-callback": () => { token = ""; },
       "error-callback": () => { token = ""; },
     })
     : captcha.render(mount, {
       sitekey: captchaSiteKey,
       theme: "auto",
-      callback: (value) => { token = String(value || ""); },
+      size: "normal",
+      callback: (value) => {
+        token = String(value || "");
+        if (token) status.textContent = t("index.captchaStatusOk");
+      },
       "expired-callback": () => { token = ""; },
       "error-callback": () => { token = ""; },
     });
