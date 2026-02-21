@@ -193,6 +193,7 @@ const pl = {
     intro: "Aby tworzyć gry i prowadzić rozgrywkę na żywo — zaloguj się. Nie masz konta? Zarejestruj się poniżej.",
     title: "Familiada — logowanie",
     statusChecking: "Sprawdzam sesję…",
+    statusGuestSession: "Aktywna sesja gościa: {who}.",
     statusLoggedOut: "Niezalogowany.",
     btnLogin: "Zaloguj",
     btnRegister: "Zarejestruj",

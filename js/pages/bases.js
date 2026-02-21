@@ -1676,6 +1676,7 @@ async function refreshAltBadge() {
   currentUser = await requireAuth("login.html");
   guestMode = isGuestUser(currentUser);
   if (guestMode) {
+    document.body.classList.add("bases-guest");
     hideForGuest(currentUser, [btnGoAlt, btnShare, basesSectionShared]);
     tabBasesSharedMobile?.closest(".tab-slot")?.remove();
     sessionStorage.setItem("basesMobileTab", "mine");

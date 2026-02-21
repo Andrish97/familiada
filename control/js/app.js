@@ -35,6 +35,7 @@ const APP_MSG = {
 // ================= KONIEC KOMUNIKATÓW =================
 
 import { requireAuth, signOut } from "../../js/core/auth.js";
+import { isGuestUser } from "../../js/core/guest-mode.js";
 import { sb } from "../../js/core/supabase.js";
 import { rt } from "../../js/core/realtime.js";
 import { validateGameReadyToPlay, loadGameBasic, loadQuestions, loadAnswers } from "../../js/core/game-validate.js";
@@ -106,10 +107,19 @@ function throttleMs(ms, fn) {
 }
 // ========================================================
 
+let guestMode = false;
+
 async function ensureAuthOrRedirect() {
   const user = await requireAuth("../login.html");
   const who = document.getElementById("who");
   if (who) who.textContent = user?.username || user?.email || user?.id || "—";
+  guestMode = isGuestUser(user);
+  const btnLogout = document.getElementById("btnLogout");
+  if (btnLogout) {
+    const key = guestMode ? "common.authEntry" : "control.logout";
+    btnLogout.textContent = t(key);
+    btnLogout.dataset.i18n = key;
+  }
   return user;
 }
 
@@ -895,7 +905,9 @@ async function sendZeroStatesToDevices() {
       await sendZeroStatesToDevices().catch(() => {});
     }
   
-    await signOut().catch(() => {});
+    if (!guestMode) {
+      await signOut().catch(() => {});
+    }
     suppressUnloadWarn = true;
     location.href = "../login.html";
   });
@@ -1206,5 +1218,4 @@ main().catch((e) => {
   const el = document.getElementById("msgSide");
   if (el) el.textContent = e?.message || String(e);
 });
-
 
