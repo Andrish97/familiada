@@ -192,7 +192,6 @@ const en = {
     backHome: "← Home page",
     intro: "To create games and run a live show, log in. No account? Register below.",
     title: "Familiada — login",
-    subtitle: "Game creation and hosting panel",
     statusChecking: "Checking session…",
     statusLoggedOut: "Not logged in.",
     btnLogin: "Log in",
