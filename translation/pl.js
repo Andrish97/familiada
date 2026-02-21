@@ -257,6 +257,8 @@ const pl = {
     captchaOk: "Kontynuuj",
     captchaCancel: "Anuluj",
     captchaRequired: "Aby kontynuować, wykonaj weryfikację CAPTCHA.",
+    captchaStatusPending: "Weryfikacja CAPTCHA: oczekiwanie…",
+    captchaStatusOk: "Weryfikacja CAPTCHA: OK",
     forceAuthInfo: "Ta sekcja jest dostępna tylko dla zarejestrowanych użytkowników. Zaloguj się lub załóż konto.",
       guestSessionLossTitle: "Aktywna sesja gościa",
       guestSessionLossText: "Masz aktywne konto gościa: {who}.\n\nJeśli teraz się zalogujesz, na zawsze stracisz dane gościa. Wyeksportuj je, jeśli są ważne.\n\nKontynuować logowanie?",

@@ -257,6 +257,8 @@ const uk = {
     captchaOk: "Продовжити",
     captchaCancel: "Скасувати",
     captchaRequired: "Щоб продовжити, пройди перевірку CAPTCHA.",
+    captchaStatusPending: "Перевірка CAPTCHA: очікування…",
+    captchaStatusOk: "Перевірка CAPTCHA: OK",
     forceAuthInfo: "Цей розділ доступний лише для зареєстрованих користувачів. Увійди або створи акаунт.",
       guestSessionLossTitle: "Активна гостьова сесія",
     guestSessionLossText: "У вас активний гостьовий акаунт: {who}.\n\nЯкщо зараз увійти, ви назавжди втратите дані гостя. Експортуйте їх, якщо вони важливі.\n\nПродовжити вхід?",
