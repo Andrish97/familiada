@@ -44,6 +44,7 @@
   box-shadow: 0 18px 40px rgba(0,0,0,.35);
   height: 100%;
   grid-template-rows: auto 1fr;
+  align-content: start;
 }
 
 .account-panel .section-title {
@@ -56,7 +57,6 @@
 .account-panel .section-hint {
   font-size: 12px;
   opacity: .75;
-  align-self: end;
 }
 
 .account-panel.danger {
@@ -83,7 +83,6 @@
   border-radius: 12px;
   border: 1px dashed rgba(255,234,166,.28);
   background: rgba(0,0,0,.18);
-  align-self: end;
 }
 
 .pending-box{
