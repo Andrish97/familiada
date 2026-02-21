@@ -3,6 +3,7 @@
 
 import { sb } from "../../js/core/supabase.js";
 import { requireAuth, signOut } from "../../js/core/auth.js";
+import { isGuestUser } from "../../js/core/guest-mode.js";
 import { guardDesktopOnly } from "../../js/core/device-guard.js";
 import { alertModal, confirmModal } from "../../js/core/modal.js";
 import { getUiLang, initI18n, t, withLangParam } from "../../translation/translation.js";
@@ -108,6 +109,7 @@ const logoExportMsg = document.getElementById("logoExportMsg");
    STATE
 ========================================================= */
 let currentUser = null;
+let guestMode = false;
 let logos = [];
 let selectedKey = null; // "default" albo uuid logo
 let defaultLogoRows = Array.from({ length: 10 }, () => " ".repeat(30));
@@ -1278,7 +1280,13 @@ async function boot(){
    });
 
    currentUser = await requireAuth(withLangParam("../login.html"));
+   guestMode = isGuestUser(currentUser);
    if (who) who.textContent = currentUser?.username || currentUser?.email || "—";
+   if (btnLogout) {
+     const key = guestMode ? "common.authEntry" : "logoEditor.topbar.logout";
+     btnLogout.textContent = t(key);
+     btnLogout.dataset.i18n = key;
+   }
 
   try{
     await loadFonts();
@@ -1335,6 +1343,10 @@ async function boot(){
      if (shouldBlockNav()){
        const ok = await confirmModal({ text: t("logoEditor.confirm.logoutUnsaved") });
        if (!ok) return;
+     }
+     if (guestMode) {
+       location.href = withLangParam("../login.html");
+       return;
      }
      await signOut();
      location.href = withLangParam("../login.html");

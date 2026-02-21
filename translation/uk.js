@@ -193,6 +193,7 @@ const uk = {
     intro: "Щоб створювати ігри та проводити гру наживо — увійди. Немає акаунта? Зареєструйтесь нижче.",
     title: "Familiada — вхід",
     statusChecking: "Перевіряю сесію…",
+    statusGuestSession: "Активна гостьова сесія: {who}.",
     statusLoggedOut: "Неавторизовано.",
     btnLogin: "Увійти",
     btnRegister: "Зареєструватися",

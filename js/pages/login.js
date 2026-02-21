@@ -782,7 +782,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
   if (u) {
-    if (isGuestUser(u) || forceAuth) {
+    if (isGuestUser(u)) {
+      const who = u.username || u.email || u.id || "";
+      setStatus(t("index.statusGuestSession", { who }));
+    } else if (forceAuth) {
       setStatus(t("index.statusLoggedOut"));
     } else {
       await syncLanguage();

@@ -319,6 +319,21 @@
   .bases-tabs-card:has(.slot-mobile-mine.active) .bases-card{ border-top-left-radius: 0; }
   .bases-tabs-card:has(.slot-mobile-shared.active) .bases-card{ border-top-right-radius: 0; }
 
+  /* Guest mode: no mobile tabs protrusion, keep fully rounded card */
+  .bases-guest .bases-tabs-card .tabs-strip{ display: none; }
+  .bases-guest .bases-tabs-card .tab-wrapper,
+  .bases-guest .bases-tabs-card .tab-active,
+  .bases-guest .bases-tabs-card .tab-corner{ display: none !important; }
+  .bases-guest .bases-card{
+    border-top-left-radius: var(--radius);
+    border-top-right-radius: var(--radius);
+  }
+  .bases-guest .bases-tabs-card:has(.slot-mobile-mine.active) .bases-card,
+  .bases-guest .bases-tabs-card:has(.slot-mobile-shared.active) .bases-card{
+    border-top-left-radius: var(--radius);
+    border-top-right-radius: var(--radius);
+  }
+
   /* badge "Udost." pokazuj TYLKO gdy tab nieaktywny i ma wartość */
   .slot-mobile-shared.active .hub-tab-badge{ display:none; }
   .hub-tab-badge.is-empty{ display:none; }

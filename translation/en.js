@@ -193,6 +193,7 @@ const en = {
     intro: "To create games and run a live show, log in. No account? Register below.",
     title: "Familiada — login",
     statusChecking: "Checking session…",
+    statusGuestSession: "Guest session active: {who}.",
     statusLoggedOut: "Not logged in.",
     btnLogin: "Log in",
     btnRegister: "Register",
