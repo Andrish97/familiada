@@ -77,6 +77,7 @@ const MSG = {
 /* ================= DOM ================= */
 const grid = document.getElementById("grid");
 const who = document.getElementById("who");
+const whoStatic = document.getElementById("whoStatic");
 const hint = document.getElementById("hint");
 
 const btnAccount = document.getElementById("btnAccount");
@@ -814,16 +815,19 @@ document.addEventListener("DOMContentLoaded", async () => {
   await initI18n({ withSwitcher: true });
   
   currentUser = await requireAuth("login.html");
-  if (who) who.textContent = currentUser?.username || currentUser?.email || t("control.dash");
+  const whoLabel = currentUser?.username || currentUser?.email || t("control.dash");
+  if (who) who.textContent = whoLabel;
+  if (whoStatic) whoStatic.textContent = whoLabel;
   const guestMode = isGuestUser(currentUser);
 
   hideForGuest(currentUser, [btnPollsHub, btnSubscriptionsHub]);
 
-  if (guestMode && btnAccount) {
-    btnAccount.classList.remove("user-btn");
-    btnAccount.querySelector(".user-sub")?.remove();
-    btnAccount.disabled = true;
-    btnAccount.tabIndex = -1;
+  if (guestMode) {
+    if (btnAccount) btnAccount.style.display = "none";
+    if (whoStatic) whoStatic.style.display = "";
+  } else {
+    if (btnAccount) btnAccount.style.display = "";
+    if (whoStatic) whoStatic.style.display = "none";
   }
 
   async function refreshPollsHubDot(){
