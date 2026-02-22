@@ -38,6 +38,9 @@ const en = {
       "Safari can't force true fullscreen. Use <b>Share</b> → <b>Add to Home Screen</b>.",
     a2hsOk: "OK",
     fullscreenUnavailable: "Fullscreen API is not available.",
+    footer: {
+      left: "© {year} Familiada — live game system",
+    },
   },
   deviceGuard: {
     title: "Not available on mobile",
@@ -157,7 +160,7 @@ const en = {
     },
  
     footer: {
-      left: "© Familiada — live game system",
+      left: "© {year} Familiada — live game system",
       privacy: "Privacy policy",
     },
   },

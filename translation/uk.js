@@ -38,6 +38,9 @@ const uk = {
       "У Safari неможливо примусово увімкнути справжній повний екран. Скористайтеся <b>Поділитися</b> → <b>На головний екран</b>.",
     a2hsOk: "OK",
     fullscreenUnavailable: "Fullscreen API недоступний.",
+    footer: {
+      left: "© {year} Familiada — система для гри наживо",
+    },
   },
   deviceGuard: {
     title: "Недоступно на телефоні",
@@ -157,7 +160,7 @@ const uk = {
     },
   
     footer: {
-      left: "© Familiada — система для гри наживо",
+      left: "© {year} Familiada — система для гри наживо",
       privacy: "Політика конфіденційності",
     },
   },

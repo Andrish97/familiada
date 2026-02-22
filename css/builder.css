@@ -407,8 +407,11 @@ body.builder-body > main.wrap{
   background: #0b1020;
 }
 .builder-body .grid .card.selected{
-  box-shadow: 0 0 0 2px var(--gold);
-  border-color: var(--gold);
+  border-color: rgba(255,234,166,.9);
+  background: rgba(255,234,166,.10);
+  box-shadow:
+    0 0 0 2px rgba(255,234,166,.55),
+    0 10px 22px rgba(0,0,0,.35);
 }
 
 /* Add card */

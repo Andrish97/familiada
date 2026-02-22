@@ -14,6 +14,10 @@ let translations = pl;
 let switcherEl = null; // container w topbarze
 let menuEl = null;     // portal w body
 
+function getCurrentYear() {
+  return new Date().getFullYear();
+}
+
 function normalizeLang(raw) {
   const v = String(raw || "").toLowerCase();
   if (v.startsWith("pl")) return "pl";
@@ -103,6 +107,7 @@ export function applyTranslations(root = document) {
   const defaultVars = {
     site: (typeof location !== "undefined" ? location.origin : ""),
     siteHost: (typeof location !== "undefined" ? location.host : ""),
+    year: getCurrentYear(),
   };
 
   root.querySelectorAll("[data-i18n]").forEach((el) => {

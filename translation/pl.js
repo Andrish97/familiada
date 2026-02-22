@@ -38,6 +38,9 @@ const pl = {
       "W Safari nie da się wymusić prawdziwego pełnego ekranu. Użyj <b>Udostępnij</b> → <b>Do ekranu początkowego</b>.",
     a2hsOk: "OK",
     fullscreenUnavailable: "Brak dostępnego Fullscreen API.",
+    footer: {
+      left: "© {year} Familiada — system do gry na żywo",
+    },
   },
   deviceGuard: {
     title: "Niedostępne na telefonie",
@@ -157,7 +160,7 @@ const pl = {
     },
     
     footer: {
-      left: "© Familiada — system do gry na żywo",
+      left: "© {year} Familiada — system do gry na żywo",
       privacy: "Polityka prywatności",
     },
   },
