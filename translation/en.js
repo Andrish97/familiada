@@ -2408,7 +2408,6 @@ const en = {
     backToHome: "← Home page",
     logout: "Log out",
     content: `
-      <h2 class="m-h2">🇬🇧 PRIVACY POLICY</h2>
       <p class="m-p"><strong>Familiada Online</strong></p>
       <p class="m-p">Last updated: 22 February 2026</p>
   
