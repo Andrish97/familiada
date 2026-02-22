@@ -55,12 +55,12 @@ const en = {
   },
   home: {
     meta: {
-      description: "A complete system for creating and hosting a Familiada-style game. Surveys, scoreboard display, operator panel and live gameplay – all in your browser.",
-      ogTitle: "Familiada-style Game Hosting System",
-      ogDescription: "Create questions, collect survey answers and host dynamic live gameplay with a scoreboard.",
+      description: "A complete system for creating and running Familiada live: polls, scoreboard, operator panel and host view. Runs in the browser — no installation.",
+      ogTitle: "Familiada Online",
+      ogDescription: "Create games, collect poll results, and run Familiada live.",
       ogLocale: "en_US",
     },
-    title: "Familiada — game hosting system",
+    title: "Familiada Online — live game hosting system",
     hero: {
       title: "Prepare the game. Collect results. Run Familiada live.",
       lead: "A complete system for creating and running a Familiada–style game. Prepare your questions, collect poll responses and run a dynamic live game with a scoreboard, operator control panel and a dedicated host view. Everything runs in the browser — no installation required.",
@@ -2402,90 +2402,91 @@ const en = {
     },
   },
   privacy: {
-    title: "Familiada — privacy policy",
-    pageTitle: "Privacy Policy",
+    title: "Familiada Online — privacy policy",
+    pageTitle: "Familiada Online — Privacy Policy",
     backToManual: "← Guide",
     backToHome: "← Home page",
     logout: "Log out",
     content: `
-      <h2 class="m-h2">1. Data controller</h2>
+      <h2 class="m-h2">🇬🇧 PRIVACY POLICY</h2>
+      <p class="m-p"><strong>Familiada Online</strong></p>
+      <p class="m-p">Last updated: 22 February 2026</p>
+  
+      <h2 class="m-h2">1. General Information</h2>
       <p class="m-p">
-        The controller of personal data is the operator of the Familiada service available at
-        <span class="m-code">{site}</span>
+        This Privacy Policy explains how personal data of users of Familiada Online, available at:
       </p>
-      <p class="m-p">Contact: <span class="m-code">admin@familiada.online</span></p>
-  
-      <h2 class="m-h2">2. Scope of processed data</h2>
-      <p class="m-p">We process only the data necessary to operate the service:</p>
-      <ul class="m-ul">
-        <li>email address,</li>
-        <li>username (login),</li>
-        <li>data related to participation in polls and subscriptions.</li>
-      </ul>
-  
-      <h2 class="m-h2">3. Purposes of processing</h2>
-      <p class="m-p">Personal data is processed in order to:</p>
-      <ul class="m-ul">
-        <li>create and manage a user account,</li>
-        <li>send system messages (e.g., account confirmation, password reset),</li>
-        <li>send subscription notifications and invitations to participate in polls,</li>
-        <li>ensure security and proper operation of the service.</li>
-      </ul>
-  
-      <h2 class="m-h2">4. Email messages</h2>
-      <p class="m-p">We send only:</p>
-      <ul class="m-ul">
-        <li>transactional (system) messages,</li>
-        <li>subscription notifications sent only to users who have consented to receive them.</li>
-      </ul>
-      <p class="m-p">We do not send marketing or advertising messages.</p>
-      <p class="m-p">Sending frequency is limited to prevent abuse.</p>
-  
-      <h2 class="m-h2">5. Subscriptions and invitations</h2>
-      <p class="m-p">Poll notifications and invitations:</p>
-      <ul class="m-ul">
-        <li>are sent only to known and explicitly indicated recipients,</li>
-        <li>are not sent in bulk,</li>
-        <li>are not sent more often than once per defined period for a given email address.</li>
-      </ul>
-  
-      <h2 class="m-h2">6. Legal basis</h2>
-      <p class="m-p">Data is processed based on:</p>
-      <ul class="m-ul">
-        <li>user consent (GDPR Art. 6(1)(a)),</li>
-        <li>necessity to perform a contract (GDPR Art. 6(1)(b)),</li>
-        <li>legitimate interest of the controller (GDPR Art. 6(1)(f)).</li>
-      </ul>
-  
-      <h2 class="m-h2">7. Retention period</h2>
-      <p class="m-p">Data is stored:</p>
-      <ul class="m-ul">
-        <li>for the lifetime of the user account,</li>
-        <li>or until consent is withdrawn or the account is deleted.</li>
-      </ul>
-  
-      <h2 class="m-h2">8. Data sharing</h2>
+      <p class="m-p"><span class="m-code">https://www.familiada.online</span></p>
       <p class="m-p">
-        We do not sell or share personal data with third parties, except for:
+        is processed.
       </p>
-      <ul class="m-ul">
-        <li>technical services necessary to run the service (e.g., hosting, email delivery).</li>
-      </ul>
-  
-      <h2 class="m-h2">9. User rights</h2>
-      <p class="m-p">The user has the right to:</p>
-      <ul class="m-ul">
-        <li>access their data,</li>
-        <li>rectify it,</li>
-        <li>delete it,</li>
-        <li>restrict processing,</li>
-        <li>withdraw consent at any time.</li>
-      </ul>
-  
-      <h2 class="m-h2">10. Contact</h2>
       <p class="m-p">
-        For matters related to personal data protection, please contact:
-        <span class="m-code">admin@familiada.online</span>
+        The service is a hobby project and does not constitute a registered business activity.
+      </p>
+  
+      <h2 class="m-h2">2. Data Controller</h2>
+      <p class="m-p">The data controller is the creator of Familiada Online.</p>
+      <p class="m-p">Contact: <span class="m-code">kontakt@familiada.online</span></p>
+  
+      <h2 class="m-h2">3. Data Collected</h2>
+      <p class="m-p">User-provided data:</p>
+      <ul class="m-ul">
+        <li>email address</li>
+        <li>username</li>
+        <li>content created within the application</li>
+      </ul>
+      <p class="m-p">Technical data:</p>
+      <ul class="m-ul">
+        <li>IP address</li>
+        <li>browser and device information</li>
+        <li>session data</li>
+      </ul>
+  
+      <h2 class="m-h2">4. Purpose of Processing</h2>
+      <p class="m-p">Data is processed to:</p>
+      <ul class="m-ul">
+        <li>provide user account functionality</li>
+        <li>enable application features</li>
+        <li>send system-related emails</li>
+        <li>ensure security</li>
+      </ul>
+      <p class="m-p">Data is not sold or used for third-party marketing.</p>
+  
+      <h2 class="m-h2">5. Service Providers (Processors)</h2>
+      <p class="m-p">The service uses the following infrastructure providers:</p>
+      <ul class="m-ul">
+        <li>GitHub Pages (front-end hosting)</li>
+        <li>Cloudflare (DNS and security)</li>
+        <li>Supabase (backend and database)</li>
+        <li>Brevo (primary email provider)</li>
+        <li>Mailgun (email fallback)</li>
+        <li>SendGrid (email fallback)</li>
+      </ul>
+      <p class="m-p">
+        These providers process data only to the extent necessary to provide technical services.
+      </p>
+  
+      <h2 class="m-h2">6. Data Retention</h2>
+      <p class="m-p">
+        Data is stored for as long as the user account exists or until the account is deleted.
+      </p>
+  
+      <h2 class="m-h2">7. User Rights</h2>
+      <p class="m-p">Users have the right to:</p>
+      <ul class="m-ul">
+        <li>access their data</li>
+        <li>correct their data</li>
+        <li>request deletion</li>
+        <li>restrict processing</li>
+      </ul>
+      <p class="m-p">Contact: <span class="m-code">kontakt@familiada.online</span></p>
+  
+      <h2 class="m-h2">8. Security</h2>
+      <p class="m-p">The service uses HTTPS encryption and cloud-based security mechanisms.</p>
+  
+      <h2 class="m-h2">9. Cookies</h2>
+      <p class="m-p">
+        Only technical cookies necessary for the proper functioning of the application are used.
       </p>
     `,
   },
