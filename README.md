@@ -20,7 +20,7 @@ System działa w przeglądarce – bez instalacji dodatkowego oprogramowania.
 
 ## 🌐 Strona produkcyjna
 
-https://familiada.online
+https://www.familiada.online
 
 ## 🛠 Stack technologiczny
 

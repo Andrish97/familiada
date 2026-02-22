@@ -55,12 +55,12 @@ const pl = {
   },
   home: {
     meta: {
-      description: "System do tworzenia i prowadzenia gry w stylu Familiada. Sondaże, tablica wyników, panel operatora i rozgrywka na żywo – wszystko w przeglądarce.",
-      ogTitle: "System do prowadzenia gry w stylu Familiada",
-      ogDescription: "Twórz pytania, zbieraj odpowiedzi w sondażu i prowadź dynamiczną rozgrywkę z tablicą wyników.",
+      description: "Kompletny system do tworzenia i prowadzenia Familiady na żywo: sondaże, tablica wyników, panel operatora i widok prowadzącego. Działa w przeglądarce — bez instalacji.",
+      ogTitle: "Familiada Online",
+      ogDescription: "Twórz gry, zbieraj wyniki w sondażu i prowadź Familiadę na żywo.",
       ogLocale: "pl_PL",
     },
-    title: "Familiada — system do prowadzenia gry",
+    title: "Familiada Online — system do prowadzenia gry na żywo",
     hero: {
       title: "Przygotuj grę. Zbierz wyniki. Poprowadź Familiadę na żywo.",
       lead: "Kompletny system do tworzenia i prowadzenia rozgrywki w stylu Familiada. Przygotuj pytania, zbierz odpowiedzi w sondażu i poprowadź dynamiczną grę z tablicą wyników, panelem operatora oraz osobnym widokiem dla prowadzącego. Wszystko działa w przeglądarce — bez instalacji.",
@@ -2407,91 +2407,84 @@ const pl = {
     },
   },
   privacy: {
-    title: "Familiada — polityka prywatności",
-    pageTitle: "Polityka Prywatności",
+    title: "Familiada Online — polityka prywatności",
+    pageTitle: "Familiada Online — Polityka Prywatności",
     backToManual: "← Wskazówki",
     backToHome: "← Strona główna",
     logout: "Wyloguj",
     content: `
-      <h2 class="m-h2">1. Administrator danych</h2>
+      <h2 class="m-h2">🇵🇱 POLITYKA PRYWATNOŚCI</h2>
+      <p class="m-p"><strong>Familiada Online</strong></p>
+      <p class="m-p">Data ostatniej aktualizacji: 22 lutego 2026 r.</p>
+  
+      <h2 class="m-h2">1. Informacje ogólne</h2>
       <p class="m-p">
-        Administratorem danych osobowych jest operator serwisu Familiada dostępnego pod adresem
-        <span class="m-code">{site}</span>
+        Niniejsza Polityka Prywatności określa zasady przetwarzania danych osobowych użytkowników
+        serwisu Familiada Online, dostępnego pod adresem:
       </p>
-      <p class="m-p">Kontakt: <span class="m-code">admin@familiada.online</span></p>
-  
-      <h2 class="m-h2">2. Zakres przetwarzanych danych</h2>
-      <p class="m-p">Przetwarzamy wyłącznie dane niezbędne do działania serwisu:</p>
-      <ul class="m-ul">
-        <li>adres e-mail,</li>
-        <li>nazwa użytkownika (login),</li>
-        <li>dane związane z uczestnictwem w sondażach i subskrypcjach.</li>
-      </ul>
-  
-      <h2 class="m-h2">3. Cele przetwarzania danych</h2>
-      <p class="m-p">Dane osobowe są przetwarzane w celu:</p>
-      <ul class="m-ul">
-        <li>założenia i obsługi konta użytkownika,</li>
-        <li>wysyłania wiadomości systemowych (np. potwierdzenie konta, reset hasła),</li>
-        <li>wysyłania powiadomień subskrypcyjnych oraz zaproszeń do udziału w sondażach,</li>
-        <li>zapewnienia bezpieczeństwa i poprawnego działania serwisu.</li>
-      </ul>
-  
-      <h2 class="m-h2">4. Wiadomości e-mail</h2>
-      <p class="m-p">Wysyłamy wyłącznie:</p>
-      <ul class="m-ul">
-        <li>wiadomości transakcyjne (systemowe),</li>
-        <li>powiadomienia subskrypcyjne wysyłane tylko do użytkowników, którzy wyrazili na nie zgodę.</li>
-      </ul>
-      <p class="m-p">Nie wysyłamy wiadomości marketingowych ani reklamowych.</p>
-      <p class="m-p">Częstotliwość wysyłki jest ograniczona, aby zapobiec nadużyciom.</p>
-  
-      <h2 class="m-h2">5. Subskrypcje i zaproszenia</h2>
-      <p class="m-p">Powiadomienia i zaproszenia do sondaży:</p>
-      <ul class="m-ul">
-        <li>są wysyłane tylko do znanych i wskazanych odbiorców,</li>
-        <li>nie są wysyłane masowo,</li>
-        <li>nie są wysyłane częściej niż raz na określony czas dla jednego adresu e-mail.</li>
-      </ul>
-  
-      <h2 class="m-h2">6. Podstawa prawna przetwarzania</h2>
-      <p class="m-p">Dane są przetwarzane na podstawie:</p>
-      <ul class="m-ul">
-        <li>zgody użytkownika (art. 6 ust. 1 lit. a RODO),</li>
-        <li>niezbędności do wykonania umowy (art. 6 ust. 1 lit. b RODO),</li>
-        <li>prawnie uzasadnionego interesu administratora (art. 6 ust. 1 lit. f RODO).</li>
-      </ul>
-  
-      <h2 class="m-h2">7. Okres przechowywania danych</h2>
-      <p class="m-p">Dane są przechowywane:</p>
-      <ul class="m-ul">
-        <li>przez czas istnienia konta użytkownika,</li>
-        <li>lub do momentu cofnięcia zgody lub usunięcia konta.</li>
-      </ul>
-  
-      <h2 class="m-h2">8. Udostępnianie danych</h2>
+      <p class="m-p"><span class="m-code">https://www.familiada.online</span></p>
       <p class="m-p">
-        Nie sprzedajemy ani nie udostępniamy danych osobowych podmiotom trzecim, z wyjątkiem:
+        Serwis ma charakter projektu hobbystycznego i nie stanowi zarejestrowanej działalności gospodarczej.
       </p>
+  
+      <h2 class="m-h2">2. Administrator danych</h2>
+      <p class="m-p">Administratorem danych jest twórca serwisu Familiada Online.</p>
+      <p class="m-p">Kontakt: <span class="m-code">kontakt@familiada.online</span></p>
+  
+      <h2 class="m-h2">3. Zakres przetwarzanych danych</h2>
+      <p class="m-p">Dane podawane przez użytkownika:</p>
       <ul class="m-ul">
-        <li>usług technicznych niezbędnych do działania serwisu (np. hosting, wysyłka e-maili).</li>
+        <li>adres e-mail</li>
+        <li>nazwa użytkownika</li>
+        <li>treści tworzone w aplikacji (gry, ankiety)</li>
+      </ul>
+      <p class="m-p">Dane techniczne:</p>
+      <ul class="m-ul">
+        <li>adres IP</li>
+        <li>dane przeglądarki i urządzenia</li>
+        <li>informacje o sesji</li>
       </ul>
   
-      <h2 class="m-h2">9. Prawa użytkownika</h2>
+      <h2 class="m-h2">4. Cele przetwarzania</h2>
+      <p class="m-p">Dane przetwarzane są w celu:</p>
+      <ul class="m-ul">
+        <li>obsługi konta użytkownika</li>
+        <li>realizacji funkcji aplikacji</li>
+        <li>wysyłki wiadomości systemowych</li>
+        <li>zapewnienia bezpieczeństwa</li>
+      </ul>
+      <p class="m-p">Dane nie są sprzedawane ani wykorzystywane do marketingu zewnętrznego.</p>
+  
+      <h2 class="m-h2">5. Podmioty przetwarzające</h2>
+      <p class="m-p">Serwis korzysta z infrastruktury:</p>
+      <ul class="m-ul">
+        <li>GitHub Pages (hosting front-end)</li>
+        <li>Cloudflare (DNS i zabezpieczenia)</li>
+        <li>Supabase (backend i baza danych)</li>
+        <li>Brevo (główny dostawca e-mail)</li>
+        <li>Mailgun (fallback e-mail)</li>
+        <li>SendGrid (fallback e-mail)</li>
+      </ul>
+      <p class="m-p">Podmioty te przetwarzają dane wyłącznie w zakresie technicznym.</p>
+  
+      <h2 class="m-h2">6. Okres przechowywania</h2>
+      <p class="m-p">Dane przechowywane są przez okres posiadania konta lub do momentu jego usunięcia.</p>
+  
+      <h2 class="m-h2">7. Prawa użytkownika</h2>
       <p class="m-p">Użytkownik ma prawo do:</p>
       <ul class="m-ul">
-        <li>dostępu do swoich danych,</li>
-        <li>ich poprawiania,</li>
-        <li>usunięcia,</li>
-        <li>ograniczenia przetwarzania,</li>
-        <li>cofnięcia zgody w dowolnym momencie.</li>
+        <li>dostępu do danych</li>
+        <li>poprawienia danych</li>
+        <li>usunięcia danych</li>
+        <li>ograniczenia przetwarzania</li>
       </ul>
+      <p class="m-p">Kontakt w celu realizacji praw: <span class="m-code">kontakt@familiada.online</span></p>
   
-      <h2 class="m-h2">10. Kontakt</h2>
-      <p class="m-p">
-        W sprawach związanych z ochroną danych osobowych prosimy o kontakt:
-        <span class="m-code">admin@familiada.online</span>
-      </p>
+      <h2 class="m-h2">8. Bezpieczeństwo</h2>
+      <p class="m-p">Serwis korzysta z połączenia HTTPS oraz zabezpieczeń infrastruktury chmurowej.</p>
+  
+      <h2 class="m-h2">9. Pliki cookies</h2>
+      <p class="m-p">Serwis wykorzystuje wyłącznie techniczne pliki cookies niezbędne do działania aplikacji.</p>
     `,
   },
   builderImportExport: {

@@ -214,7 +214,7 @@ body > main {
 .footer{
     position: relative;
     margin: auto 0 8px;
-    padding-top: 8px;
+    padding-top: 16px;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -226,7 +226,7 @@ body > main {
 .footer::before{
     content: "";
     position: absolute;
-    top: 0;
+    top: 8px;
     left: 50%;
     width: min(96vw, 1400px);
     height: 1px;
@@ -244,10 +244,17 @@ body > main {
 @media (max-width: 640px){
     .footer{
         margin: auto 0 6px;
-        padding-top: 6px;
+        padding-top: 12px;
         gap: 6px;
         font-size: 11px;
     }
+    .footer::before{
+        top: 6px;
+    }
+}
+
+.no-footer-line .footer::before{
+    display: none;
 }
 
 .btn:disabled {
