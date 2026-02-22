@@ -26,12 +26,26 @@ function normalizeLang(raw) {
   return "pl";
 }
 
+function safeGetLocalStorage(key) {
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function safeSetLocalStorage(key, value) {
+  try {
+    localStorage.setItem(key, value);
+  } catch {}
+}
+
 export function getUiLang() {
   const params = new URLSearchParams(location.search);
   const q = params.get("lang");
   if (q) return normalizeLang(q);
 
-  const stored = localStorage.getItem("uiLang");
+  const stored = safeGetLocalStorage("uiLang");
   if (stored) return normalizeLang(stored);
 
   if (navigator?.language) return normalizeLang(navigator.language);
@@ -48,7 +62,7 @@ export async function setUiLang(
   translations = await loader();
   currentLang = translations?.meta?.lang || next;
 
-  if (persist) localStorage.setItem("uiLang", currentLang);
+  if (persist) safeSetLocalStorage("uiLang", currentLang);
 
   if (updateUrl) {
     const url = new URL(location.href);
