@@ -239,7 +239,7 @@ const pl = {
     guestExpired: "Sesja gościa wygasła po okresie braku aktywności. Wejdź ponownie jako gość.",
     guestDeletedByInactivity: "Twoje konto gościa zostało usunięte z powodu braku aktywności. Możesz utworzyć nowe konto gościa lub zarejestrować się.",
     guestMigrateTitle: "Przenieść konto gościa?",
-    guestMigrateText: "Wykryto aktywne konto gościa. Czy chcesz przenieść obecne dane i zamienić to konto na pełne konto z e-mailem i hasłem?",
+    guestMigrateText: "Wykryto aktywne konto gościa. Czy chcesz przenieść obecne dane i zamienić to konto na pełne konto z e-mailem i hasłem?\n\nJeśli dane gościa są ważne, możesz je wcześniej wyeksportować.",
     guestMigrateConfirmEmail: "Wysłano wiadomość potwierdzającą e-mail. Po potwierdzeniu zaloguj się ponownie i dokończ ustawienie nazwy użytkownika.",
     guestMigrateConfirmEmailNoPassword: "Wysłano e-mail potwierdzający. Po potwierdzeniu ustawisz hasło i dokończysz rejestrację.",
     guestMigrateOk: "Tak, przenieś dane",

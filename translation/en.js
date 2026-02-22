@@ -239,7 +239,7 @@ const en = {
     guestExpired: "Guest session expired after inactivity. Continue as guest again.",
     guestDeletedByInactivity: "Your guest account was deleted due to inactivity. You can create a new guest account or register.",
     guestMigrateTitle: "Migrate guest account?",
-    guestMigrateText: "An active guest account was detected. Do you want to migrate current data and convert this account into a full account with email and password?",
+    guestMigrateText: "An active guest account was detected. Do you want to migrate current data and convert this account into a full account with email and password?\n\nIf guest data is important, you can export it first.",
     guestMigrateConfirmEmail: "A confirmation email was sent. After confirming, sign in again and finish setting your username.",
     guestMigrateConfirmEmailNoPassword: "A confirmation email was sent. After confirming, you'll set a password and finish registration.",
     guestMigrateOk: "Yes, migrate data",
