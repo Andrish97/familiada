@@ -98,6 +98,7 @@ function openModal({
   showCancel = true,
   body = null,
   initialFocus = null,
+  onReady = null,
 } = {}) {
   return new Promise((resolve) => {
     const fallbackTitle = showCancel
@@ -118,6 +119,12 @@ function openModal({
       showCancel,
       body,
     });
+
+    try {
+      if (typeof onReady === "function") onReady({ overlay, okBtn, cancelBtn, closeBtn });
+    } catch {
+      // ignore
+    }
 
     let done = false;
     const finish = (value) => {
@@ -156,7 +163,7 @@ function openModal({
   });
 }
 
-export function confirmModal({ title, text, okText, cancelText, body = null, initialFocus = null } = {}) {
+export function confirmModal({ title, text, okText, cancelText, body = null, initialFocus = null, onReady } = {}) {
   return openModal({
     title: title ?? modalText("common.modal.confirmTitle", "Potwierdź"),
     text: text ?? modalText("common.modal.confirmText", "Na pewno?"),
@@ -165,15 +172,17 @@ export function confirmModal({ title, text, okText, cancelText, body = null, ini
     showCancel: true,
     body,
     initialFocus,
+    onReady,
   });
 }
 
-export function alertModal({ title, text, okText } = {}) {
+export function alertModal({ title, text, okText, onReady } = {}) {
   return openModal({
     title: title ?? modalText("common.modal.alertTitle", "Informacja"),
     text: text ?? "—",
     okText: okText ?? modalText("common.modal.alertOk", "OK"),
     showCancel: false,
+    onReady,
   });
 }
 
@@ -184,6 +193,7 @@ export function promptModal({
   cancelText,
   value = "",
   placeholder = "",
+  onReady = null,
 } = {}) {
   const input = document.createElement("input");
   input.type = "text";
@@ -199,5 +209,6 @@ export function promptModal({
     showCancel: true,
     body: input,
     initialFocus: input,
+    onReady,
   }).then((ok) => (ok ? input.value : null));
 }
