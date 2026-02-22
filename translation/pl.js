@@ -2413,7 +2413,6 @@ const pl = {
     backToHome: "← Strona główna",
     logout: "Wyloguj",
     content: `
-      <h2 class="m-h2">🇵🇱 POLITYKA PRYWATNOŚCI</h2>
       <p class="m-p"><strong>Familiada Online</strong></p>
       <p class="m-p">Data ostatniej aktualizacji: 22 lutego 2026 r.</p>
   
