@@ -349,6 +349,7 @@ async function askCaptchaToken() {
   mount.appendChild(status);
 
   let token = "";
+  let okBtnRef = null;
   const widgetId = captchaProvider === "hcaptcha"
     ? captcha.render(mount, {
       sitekey: captchaSiteKey,
@@ -356,7 +357,10 @@ async function askCaptchaToken() {
       size: "normal",
       callback: (value) => {
         token = String(value || "");
-        if (token) status.textContent = t("index.captchaStatusOk");
+        if (token) {
+          status.textContent = t("index.captchaStatusOk");
+          if (okBtnRef) okBtnRef.click();
+        }
       },
       "expired-callback": () => { token = ""; },
       "error-callback": () => { token = ""; },
@@ -367,26 +371,33 @@ async function askCaptchaToken() {
       size: "normal",
       callback: (value) => {
         token = String(value || "");
-        if (token) status.textContent = t("index.captchaStatusOk");
+        if (token) {
+          status.textContent = t("index.captchaStatusOk");
+          if (okBtnRef) okBtnRef.click();
+        }
       },
       "expired-callback": () => { token = ""; },
       "error-callback": () => { token = ""; },
     });
 
-    try {
-      const ok = await confirmModal({
-        title: t("index.captchaTitle"),
-        text: t("index.captchaText"),
-        okText: t("index.captchaOk"),
-        cancelText: t("index.captchaCancel"),
-        body: mount,
-        initialFocus: mount,
-      });
+  try {
+    const ok = await confirmModal({
+      title: t("index.captchaTitle"),
+      text: t("index.captchaText"),
+      okText: t("index.captchaOk"),
+      cancelText: t("index.captchaCancel"),
+      body: mount,
+      initialFocus: mount,
+      onReady: ({ okBtn }) => {
+        okBtnRef = okBtn;
+        if (okBtnRef) okBtnRef.style.display = "none";
+      },
+    });
 
-      if (!ok) throw new Error(t("index.captchaRequired"));
-      if (!token) throw new Error(t("index.captchaRequired"));
-      return token;
-    } finally {
+    if (!ok) throw new Error(t("index.captchaRequired"));
+    if (!token) throw new Error(t("index.captchaRequired"));
+    return token;
+  } finally {
       try {
         if (captchaProvider === "hcaptcha") captcha.reset(widgetId);
         else captcha.remove(widgetId);
