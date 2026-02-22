@@ -145,27 +145,6 @@ body.home-body{
   }
 }
 
-/* FOOTER */
-.footer{
-  margin: 22px 0 14px;
-  padding-top: 12px;
-  border-top: 1px solid rgba(255,255,255,.12);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  flex-wrap: wrap;
-  opacity: .85;
-  font-size: 12px;
-}
-
-.footer a{
-  color: var(--gold);
-  text-decoration: none;
-  font-weight: 900;
-}
-.footer a:hover{ filter: brightness(1.08); }
-
 /* ---------------------------
    IMAGE VIEWER (modal/fullscreen)
 --------------------------- */

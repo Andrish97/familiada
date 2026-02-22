@@ -50,16 +50,20 @@
   display: grid;
   gap: 10px;
   min-height: 230px;
-  transition: transform .08s ease, border-color .12s ease, background .12s ease;
+  transition: transform .08s ease, border-color .12s ease, background .12s ease, box-shadow .12s ease;
 }
 .logoTile:hover{
   transform: translateY(-1px);
-  border-color: var(--bd-strong);
-  background: var(--bg-strong);
+  border-color: var(--gold);
+  background: #0b1020;
+  box-shadow: 0 10px 24px rgba(0,0,0,.45);
 }
 .logoTile.is-selected{
-  border-color: rgba(255,255,255,.40);
-  box-shadow: 0 0 0 2px rgba(255,255,255,.12) inset;
+  border-color: rgba(255,234,166,.9);
+  background: rgba(255,234,166,.10);
+  box-shadow:
+    0 0 0 2px rgba(255,234,166,.55),
+    0 10px 22px rgba(0,0,0,.35);
 }
 
 .logoTileTop{

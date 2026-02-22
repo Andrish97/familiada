@@ -397,7 +397,7 @@ body.polls-hub-body .bar{
   display: flex;
   gap: 5px;
   cursor: pointer;
-  transition: transform .08s ease, box-shadow .2s ease;
+  transition: transform .08s ease, box-shadow .2s ease, border-color .12s ease, background .12s ease;
   max-width: 100%;
   overflow: hidden;      /* ✅ nic nie wyłazi poza kafel */
   align-content: space-around;
@@ -408,11 +408,17 @@ body.polls-hub-body .bar{
 
 .hub-item:hover{
   transform: translateY(-1px);
-  box-shadow: 0 12px 26px rgba(0,0,0,.35);
+  box-shadow: 0 10px 24px rgba(0,0,0,.45);
+  border-color: var(--gold);
+  background: #0b1020;
 }
 
 .hub-item.selected{
-  outline: 2px solid rgba(255,234,166,.45);
+  border-color: rgba(255,234,166,.9) !important;
+  box-shadow:
+    0 0 0 2px rgba(255,234,166,.55),
+    0 10px 22px rgba(0,0,0,.35),
+    inset 0 0 0 999px rgba(255,234,166,.10);
 }
 
 /* lewa kolumna tekstu */
