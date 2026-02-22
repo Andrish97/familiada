@@ -1,6 +1,6 @@
 import { sb } from "../core/supabase.js";
 import { niceAuthError } from "../core/auth.js";
-import { updateUserLanguage } from "../core/auth.js";
+import { updateUserLanguage, discardCurrentGuestAccount } from "../core/auth.js";
 import { initI18n, t, getUiLang, withLangParam } from "../../translation/translation.js";
 import { confirmModal } from "../core/modal.js";
 import { isGuestUser } from "../core/guest-mode.js";
@@ -51,7 +51,11 @@ async function requireNoActiveSessionBeforeAuthFlow() {
 
   if (!ok) return false;
 
-  await sb().auth.signOut();
+  if (isGuestUser(currentUser)) {
+    await discardCurrentGuestAccount().catch(() => {});
+  } else {
+    await sb().auth.signOut();
+  }
   return true;
 }
 
