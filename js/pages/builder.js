@@ -4,6 +4,10 @@ import { requireAuth } from "../core/auth.js";
 import { alertModal, confirmModal } from "../core/modal.js";
 import { hideForGuest, isGuestUser } from "../core/guest-mode.js";
 import { initI18n, t, applyTranslations } from "../../translation/translation.js";
+import {
+  getUserIosWebappPromptDismissedFlag,
+  setUserIosWebappPromptDismissedFlag,
+} from "../core/user-flags.js";
 
 import { exportGame, importGame, downloadJson } from "./builder-import-export.js";
 import { seedDemoOnceIfNeeded } from "./demo-seed.js";
@@ -197,6 +201,54 @@ const actionStateCache = new Map();
 function show(el, on) {
   if (!el) return;
   el.style.display = on ? "" : "none";
+}
+
+function isIOSSafari() {
+  const ua = navigator.userAgent || "";
+  const iOS =
+    /iPad|iPhone|iPod/.test(ua) ||
+    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  const webkit = /WebKit/.test(ua);
+  const notChrome = !/CriOS|FxiOS|EdgiOS/.test(ua);
+  return iOS && webkit && notChrome;
+}
+
+async function maybeShowIosWebappPrompt(userId) {
+  if (!userId) return;
+  if (!isIOSSafari() || window.navigator.standalone) return;
+
+  try {
+    const dismissed = await getUserIosWebappPromptDismissedFlag(userId);
+    if (dismissed) return;
+  } catch (e) {
+    console.warn("[builder] ios webapp flag read failed:", e);
+    return;
+  }
+
+  let skipNextTime = false;
+  const ok = await confirmModal({
+    title: t("builder.iosWebapp.title"),
+    text: t("builder.iosWebapp.text"),
+    okText: t("builder.iosWebapp.ok"),
+    cancelText: t("builder.iosWebapp.never"),
+    onReady: ({ cancelBtn }) => {
+      cancelBtn?.addEventListener(
+        "click",
+        () => {
+          skipNextTime = true;
+        },
+        { once: true }
+      );
+    },
+  });
+
+  if (!ok && skipNextTime) {
+    try {
+      await setUserIosWebappPromptDismissedFlag(userId, true);
+    } catch (e) {
+      console.warn("[builder] ios webapp flag write failed:", e);
+    }
+  }
 }
 
 function setProgUi(stepEl, countEl, barEl, msgEl, { step, i, n, msg, isError } = {}) {
@@ -829,6 +881,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (btnAccount) btnAccount.style.display = "";
     if (whoStatic) whoStatic.style.display = "none";
   }
+
+  void maybeShowIosWebappPrompt(currentUser?.id);
 
   async function refreshPollsHubDot(){
     // dot ma się pokazać, gdy są aktywne zadania / zaproszenia

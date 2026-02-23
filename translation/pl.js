@@ -2562,6 +2562,17 @@ const pl = {
       pollPoints: "Punktacja",
       prepared: "Preparowany",
     },
+    iosWebapp: {
+      title: "Dodaj Familiadę do ekranu głównego",
+      text:
+        "Safari nie potrafi wymusić prawdziwego pełnego ekranu. Zrób tak:\n" +
+        "1. Otwórz menu Udostępnij.\n" +
+        "2. Wybierz „Do ekranu początkowego”.\n" +
+        "3. Zatwierdź dodanie.\n" +
+        "4. Uruchom Familiadę z nowej ikony na ekranie głównym.",
+      ok: "OK",
+      never: "Nie pokazuj więcej",
+    },
     import: {
       title: "Importuj",
       subtitle: "Wybierz plik JSON lub wklej JSON poniżej.",

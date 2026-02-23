@@ -78,3 +78,39 @@ export async function setUserEmailNotificationsFlag(userId, value) {
   if (error) throw error;
 }
 
+
+// =======================================================
+// iOS webapp prompt dismissed flag (global per user)
+// ios_webapp_prompt_dismissed boolean not null default false
+// =======================================================
+
+export async function getUserIosWebappPromptDismissedFlag(userId) {
+  if (!userId) throw new Error("getUserIosWebappPromptDismissedFlag: brak userId");
+
+  // ensure row exists (first time -> defaults from DB)
+  await sb()
+    .from("user_flags")
+    .upsert({ user_id: userId }, { onConflict: "user_id" });
+
+  const { data, error } = await sb()
+    .from("user_flags")
+    .select("ios_webapp_prompt_dismissed")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (error) throw error;
+  return !!data?.ios_webapp_prompt_dismissed;
+}
+
+export async function setUserIosWebappPromptDismissedFlag(userId, value) {
+  if (!userId) throw new Error("setUserIosWebappPromptDismissedFlag: brak userId");
+
+  const { error } = await sb()
+    .from("user_flags")
+    .upsert(
+      { user_id: userId, ios_webapp_prompt_dismissed: !!value },
+      { onConflict: "user_id" }
+    );
+
+  if (error) throw error;
+}
