@@ -2565,6 +2565,17 @@ const en = {
       pollPoints: "Points",
       prepared: "Prepared",
     },
+    iosWebapp: {
+      title: "Add Familiada to Home Screen",
+      text:
+        "Safari can't force true fullscreen. Do this:\n" +
+        "1. Open the Share menu.\n" +
+        "2. Tap “Add to Home Screen”.\n" +
+        "3. Confirm the addition.\n" +
+        "4. Launch Familiada from the new home screen icon.",
+      ok: "OK",
+      never: "Don’t show again",
+    },
     import: {
       title: "Import",
       subtitle: "Choose a JSON file or paste JSON below.",
