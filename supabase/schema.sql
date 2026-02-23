@@ -1,4 +1,4 @@
-line
+
 CREATE TABLE public.answers (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   question_id uuid NOT NULL,
@@ -45,6 +45,16 @@ CREATE TABLE public.email_cooldowns (
   email_hash text NOT NULL,
   action_key text NOT NULL,
   next_allowed_at timestamp with time zone NOT NULL DEFAULT now(),
+  updated_at timestamp with time zone NOT NULL DEFAULT now()
+);
+
+CREATE TABLE public.email_intents (
+  email text NOT NULL,
+  intent text NOT NULL,
+  status text NOT NULL,
+  cooldown_until timestamp with time zone,
+  user_id uuid,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
   updated_at timestamp with time zone NOT NULL DEFAULT now()
 );
 
@@ -294,6 +304,12 @@ ALTER TABLE public.device_state ADD CONSTRAINT device_state_pkey PRIMARY KEY (ga
 
 ALTER TABLE public.email_cooldowns ADD CONSTRAINT email_cooldowns_pkey PRIMARY KEY (email_hash, action_key);
 
+ALTER TABLE public.email_intents ADD CONSTRAINT email_intents_intent_check CHECK ((intent = ANY (ARRAY['signup'::text, 'guest_migrate'::text])));
+
+ALTER TABLE public.email_intents ADD CONSTRAINT email_intents_pkey PRIMARY KEY (email);
+
+ALTER TABLE public.email_intents ADD CONSTRAINT email_intents_status_check CHECK ((status = ANY (ARRAY['pending'::text, 'confirmed'::text, 'expired'::text])));
+
 ALTER TABLE public.games ADD CONSTRAINT games_name_len CHECK (((char_length(name) >= 1) AND (char_length(name) <= 80)));
 
 ALTER TABLE public.games ADD CONSTRAINT games_owner_id_fkey FOREIGN KEY (owner_id) REFERENCES auth.users(id) ON DELETE CASCADE;
@@ -465,6 +481,12 @@ CREATE UNIQUE INDEX device_presence_pkey ON public.device_presence USING btree (
 CREATE UNIQUE INDEX device_state_pkey ON public.device_state USING btree (game_id, device_type);
 
 CREATE UNIQUE INDEX email_cooldowns_pkey ON public.email_cooldowns USING btree (email_hash, action_key);
+
+CREATE INDEX email_intents_cooldown_idx ON public.email_intents USING btree (cooldown_until);
+
+CREATE INDEX email_intents_status_idx ON public.email_intents USING btree (status);
+
+CREATE UNIQUE INDEX email_intents_pkey ON public.email_intents USING btree (email);
 
 CREATE INDEX games_created_at_idx ON public.games USING btree (created_at DESC);
 
@@ -638,6 +660,8 @@ ALTER TABLE public.device_state ENABLE ROW LEVEL SECURITY;
 
 ALTER TABLE public.email_cooldowns ENABLE ROW LEVEL SECURITY;
 
+ALTER TABLE public.email_intents ENABLE ROW LEVEL SECURITY;
+
 ALTER TABLE public.games ENABLE ROW LEVEL SECURITY;
 
 ALTER TABLE public.mail_queue ENABLE ROW LEVEL SECURITY;
@@ -702,6 +726,8 @@ CREATE POLICY device_presence_owner_read ON public.device_presence FOR SELECT TO
 CREATE POLICY device_state_owner_read ON public.device_state FOR SELECT TO authenticated USING ((EXISTS ( SELECT 1
    FROM games g
   WHERE ((g.id = device_state.game_id) AND (g.owner_id = auth.uid())))));
+
+CREATE POLICY email_intents_service_only ON public.email_intents TO authenticated USING (false) WITH CHECK (false);
 
 CREATE POLICY games_owner_select ON public.games FOR SELECT TO authenticated USING ((owner_id = auth.uid()));
 
@@ -2150,6 +2176,173 @@ begin
 
   return v_logo; -- null jeśli brak
 end $function$
+
+
+CREATE OR REPLACE FUNCTION public.email_get_status(p_email text)
+ RETURNS TABLE(status text, intent text)
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'auth'
+AS $function$
+declare
+  v_email text := lower(trim(coalesce(p_email, '')));
+  v_user record;
+  v_intent record;
+begin
+  if v_email = '' or position('@' in v_email) = 0 then
+    return query select 'none'::text, 'signup'::text;
+    return;
+  end if;
+
+  select
+    u.id,
+    u.email_confirmed_at,
+    coalesce(u.raw_user_meta_data->>'familiada_email_change_intent', '') as meta_intent
+  into v_user
+  from auth.users u
+  where lower(u.email) = v_email
+  limit 1;
+
+  if found then
+    if v_user.email_confirmed_at is not null then
+      return query select 'confirmed'::text, 'signup'::text;
+    else
+      return query
+      select
+        'pending'::text,
+        case when lower(v_user.meta_intent) = 'guest_migrate' then 'guest_migrate' else 'signup' end::text;
+    end if;
+    return;
+  end if;
+
+  select
+    ei.status,
+    ei.intent,
+    ei.cooldown_until
+  into v_intent
+  from public.email_intents ei
+  where ei.email = v_email
+  limit 1;
+
+  if found then
+    if v_intent.status = 'confirmed' then
+      return query select 'confirmed'::text, 'signup'::text;
+      return;
+    end if;
+    if v_intent.status = 'pending' then
+      return query
+      select
+        'pending'::text,
+        case when v_intent.intent = 'guest_migrate' then 'guest_migrate' else 'signup' end::text;
+      return;
+    end if;
+  end if;
+
+  return query select 'none'::text, 'signup'::text;
+end;
+$function$
+
+
+CREATE OR REPLACE FUNCTION public.email_intents_set_updated_at()
+ RETURNS trigger
+ LANGUAGE plpgsql
+AS $function$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$function$
+
+
+CREATE OR REPLACE FUNCTION public.email_mark_confirmed(p_email text)
+ RETURNS void
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'auth'
+AS $function$
+declare
+  v_email text := lower(trim(coalesce(p_email, '')));
+  v_auth_email text := '';
+begin
+  if v_email = '' then
+    return;
+  end if;
+
+  select lower(u.email)
+  into v_auth_email
+  from auth.users u
+  where u.id = auth.uid()
+  limit 1;
+
+  if v_auth_email = '' or v_auth_email <> v_email then
+    return;
+  end if;
+
+  insert into public.email_intents (email, intent, status, cooldown_until)
+  values (v_email, 'signup', 'confirmed', null)
+  on conflict (email) do update set
+    status = 'confirmed',
+    cooldown_until = null,
+    updated_at = now();
+end;
+$function$
+
+
+CREATE OR REPLACE FUNCTION public.email_resend_prepare(p_email text, p_intent text DEFAULT NULL::text)
+ RETURNS TABLE(ok boolean, nextallowedat timestamp with time zone, status text, intent text)
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'auth'
+AS $function$
+declare
+  v_email text := lower(trim(coalesce(p_email, '')));
+  v_requested_intent text := lower(trim(coalesce(p_intent, '')));
+  v_status text := 'none';
+  v_existing_intent text := 'signup';
+  v_final_intent text := 'signup';
+  v_cooldown_until timestamptz;
+begin
+  if v_email = '' or position('@' in v_email) = 0 then
+    return query select false, null::timestamptz, 'none'::text, 'signup'::text;
+    return;
+  end if;
+
+  select s.status, s.intent into v_status, v_existing_intent
+  from public.email_get_status(v_email) s
+  limit 1;
+
+  if v_requested_intent in ('signup', 'guest_migrate') then
+    v_final_intent := v_requested_intent;
+  elsif v_existing_intent in ('signup', 'guest_migrate') then
+    v_final_intent := v_existing_intent;
+  end if;
+
+  if v_status = 'confirmed' then
+    return query select false, null::timestamptz, 'confirmed'::text, v_final_intent;
+    return;
+  end if;
+
+  select cooldown_until into v_cooldown_until
+  from public.email_intents
+  where email = v_email
+  limit 1;
+
+  if v_cooldown_until is not null and v_cooldown_until > now() then
+    return query select false, v_cooldown_until, 'pending'::text, v_final_intent;
+    return;
+  end if;
+
+  insert into public.email_intents (email, intent, status, cooldown_until)
+  values (v_email, v_final_intent, 'pending', now() + interval '1 hour')
+  on conflict (email) do update set
+    intent = excluded.intent,
+    status = 'pending',
+    cooldown_until = excluded.cooldown_until,
+    updated_at = now();
+
+  return query select true, now() + interval '1 hour', 'pending'::text, v_final_intent;
+end;
+$function$
 
 
 CREATE OR REPLACE FUNCTION public.enforce_max_answers()
@@ -6661,6 +6854,8 @@ end $function$
 
 
 CREATE TRIGGER touch_game_from_answers AFTER INSERT OR DELETE OR UPDATE ON public.answers FOR EACH ROW EXECUTE FUNCTION trg_touch_game_from_answers();
+
+CREATE TRIGGER trg_email_intents_set_updated_at BEFORE UPDATE ON public.email_intents FOR EACH ROW EXECUTE FUNCTION email_intents_set_updated_at();
 
 CREATE TRIGGER trg_assert_game_answers_minmax BEFORE UPDATE OF status ON public.games FOR EACH ROW EXECUTE FUNCTION assert_game_answers_minmax();
 
