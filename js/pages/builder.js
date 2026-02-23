@@ -213,6 +213,11 @@ function isIOSSafari() {
   return iOS && webkit && notChrome;
 }
 
+function tSafe(key, fallback) {
+  const v = t(key);
+  return v === key ? fallback : v;
+}
+
 async function maybeShowIosWebappPrompt(userId) {
   if (!userId) return;
   if (!isIOSSafari() || window.navigator.standalone) return;
@@ -225,12 +230,24 @@ async function maybeShowIosWebappPrompt(userId) {
     return;
   }
 
+  const fallback = {
+    title: "Dodaj Familiadę do ekranu głównego",
+    text:
+      "Safari nie potrafi wymusić prawdziwego pełnego ekranu. Zrób tak:\n" +
+      "1. Otwórz menu Udostępnij.\n" +
+      "2. Wybierz „Do ekranu początkowego”.\n" +
+      "3. Zatwierdź dodanie.\n" +
+      "4. Uruchom Familiadę z nowej ikony na ekranie głównym.",
+    ok: "OK",
+    never: "Nie pokazuj więcej",
+  };
+
   let skipNextTime = false;
   const ok = await confirmModal({
-    title: t("builder.iosWebapp.title"),
-    text: t("builder.iosWebapp.text"),
-    okText: t("builder.iosWebapp.ok"),
-    cancelText: t("builder.iosWebapp.never"),
+    title: tSafe("builder.iosWebapp.title", fallback.title),
+    text: tSafe("builder.iosWebapp.text", fallback.text),
+    okText: tSafe("builder.iosWebapp.ok", fallback.ok),
+    cancelText: tSafe("builder.iosWebapp.never", fallback.never),
     onReady: ({ cancelBtn }) => {
       cancelBtn?.addEventListener(
         "click",
