@@ -58,6 +58,7 @@ function showAuth(statusKey) {
   els.authScreen.hidden = false;
   els.panelScreen.hidden = true;
   els.panelActions.hidden = true;
+  document.body.classList.add("settings-locked");
   setText(els.authStatus, t(statusKey));
 }
 
@@ -65,6 +66,7 @@ function showPanel() {
   els.authScreen.hidden = true;
   els.panelScreen.hidden = false;
   els.panelActions.hidden = false;
+  document.body.classList.remove("settings-locked");
 }
 
 function showToast(message, kind = "success") {

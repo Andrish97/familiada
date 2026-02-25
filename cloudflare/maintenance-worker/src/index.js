@@ -38,6 +38,11 @@ export default {
       const state = await getState(env);
       return json(state);
     }
+
+    // block settings panel on public hosts
+    if (isSettingsPublicPath(url.pathname)) {
+      return new Response("Not Found", { status: 404 });
+    }
     
     // GLOBAL GATE
     const state = await getState(env);
@@ -378,6 +383,10 @@ function isSettingsAsset(pathname) {
   }
   const allowedFiles = ["/favicon.ico", "/logo.svg"];
   return allowedFiles.includes(pathname);
+}
+
+function isSettingsPublicPath(pathname) {
+  return pathname === "/settings" || pathname === "/settings/" || pathname === "/settings.html";
 }
 
 function getCookie(request, name) {

@@ -14,7 +14,7 @@
 
   <script type="module" src="js/pages/settings.js" defer></script>
 </head>
-<body class="builder-body settings-body">
+<body class="builder-body settings-body settings-locked">
   <header class="topbar topbar-layout-4 topbar-mobile-keep-brand">
     <div class="topbar-section topbar-section-1">
       <div class="brand">FAMILIADA</div>
@@ -44,23 +44,6 @@
 
     <section class="builder-shell">
       <div class="card builder-card settings-card-root">
-        <div class="settings-auth" id="authScreen">
-          <div class="auth-card" id="authCard">
-            <div class="auth-brand">FAMILIADA</div>
-            <div class="auth-sub" data-i18n="settings.login.title">Panel ustawień</div>
-            <div class="status" id="authStatus" data-i18n="settings.login.checking">Trwa weryfikacja…</div>
-
-            <form class="auth-form" id="loginForm">
-              <input id="loginUsername" type="text" autocomplete="username" data-i18n-placeholder="settings.login.usernamePlaceholder" placeholder="Nazwa użytkownika"/>
-              <input id="loginPassword" type="password" autocomplete="current-password" data-i18n-placeholder="settings.login.passwordPlaceholder" placeholder="Hasło"/>
-              <button class="btn sm gold" id="btnLogin" type="submit" data-i18n="settings.login.loginBtn">Zaloguj</button>
-              <div class="err" id="loginError"></div>
-            </form>
-
-            <div class="hint" id="loginHint" data-i18n="settings.login.hint">Ten panel wymaga uprawnień admina.</div>
-          </div>
-        </div>
-
         <div class="settings-panel" id="panelScreen" hidden>
           <div class="grid settings-grid">
             <div class="card settings-tile settings-tile--wide" id="tileMaintenance">
@@ -149,6 +132,23 @@
     <span data-i18n="settings.footerLeft">Familiada — panel admina</span>
     <span data-i18n="settings.footerRight">Dostęp tylko dla uprawnionych.</span>
   </footer>
+
+  <div class="settings-auth" id="authScreen">
+    <div class="auth-card" id="authCard">
+      <div class="auth-brand">FAMILIADA</div>
+      <div class="auth-sub" data-i18n="settings.login.title">Panel ustawień</div>
+      <div class="status" id="authStatus" data-i18n="settings.login.checking">Trwa weryfikacja…</div>
+
+      <form class="auth-form" id="loginForm">
+        <input id="loginUsername" type="text" autocomplete="username" data-i18n-placeholder="settings.login.usernamePlaceholder" placeholder="Nazwa użytkownika"/>
+        <input id="loginPassword" type="password" autocomplete="current-password" data-i18n-placeholder="settings.login.passwordPlaceholder" placeholder="Hasło"/>
+        <button class="btn sm gold" id="btnLogin" type="submit" data-i18n="settings.login.loginBtn">Zaloguj</button>
+        <div class="err" id="loginError"></div>
+      </form>
+
+      <div class="hint" id="loginHint" data-i18n="settings.login.hint">Ten panel wymaga uprawnień admina.</div>
+    </div>
+  </div>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 </body>
