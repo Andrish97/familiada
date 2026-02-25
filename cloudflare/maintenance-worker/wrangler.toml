@@ -1,3 +1,7 @@
-name = "familiada-maintenance"
+name = "familiada"
 main = "src/index.js"
 compatibility_date = "2024-01-01"
+
+[[kv_namespaces]]
+binding = "MAINT_KV"
+id = "TUTAJ_WKLEJESZ_ID_NAMESPACE"
