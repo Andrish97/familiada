@@ -1,20 +1,10 @@
-/*
-Maintenance + Settings worker
-- Public:        GET /maintenance-state.json
-- Admin (legacy): /_maint/* (token in URL)
-- Admin panel:   /_admin_api/* (Access header or cookie)
-
-Cloudflare Access (Zero Trust) for settings.familiada.online:
-1) Create a Self-hosted app for settings.familiada.online
-2) Add an Allow policy for one email
-3) Add a Block policy for everyone else
-Access injects CF-Access-Jwt-Assertion header (no JWT validation here).
-*/
+// See cloudflare/README.md for full behavior and checklist.
 
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     const host = url.host.toLowerCase();
+    const MAIN_ORIGIN = "https://familiada.online";
 
     // SETTINGS HOST (admin panel, no maintenance gate)
     if (host === "settings.familiada.online") {
@@ -30,13 +20,12 @@ export default {
       // Root on settings subdomain should open settings.html
       if (url.pathname === "/" || url.pathname === "/index.html") {
         url.pathname = "/settings.html";
-        const next = new Request(url.toString(), request);
-        return fetch(next);
+        return fetchFromOrigin(request, url, MAIN_ORIGIN);
       }
 
       // allow settings.html, settings-tools, and assets only
       if (url.pathname === "/settings.html" || url.pathname.startsWith("/settings-tools/") || isSettingsAsset(url.pathname)) {
-        const res = await fetch(request);
+        const res = await fetchFromOrigin(request, url, MAIN_ORIGIN);
         if (url.pathname.startsWith("/settings-tools/")) {
           return withHeaders(res, {
             "Content-Security-Policy": "frame-ancestors 'self'",
@@ -50,16 +39,12 @@ export default {
     }
 
     // Known service hosts (no maintenance gate here)
-    if (host === "panel.familiada.online" || host === "supabase.familiada.online") {
+    if (
+      host === "panel.familiada.online" ||
+      host === "supabase.familiada.online" ||
+      host === "api.familiada.online"
+    ) {
       return fetch(request);
-    }
-
-    // Unknown subdomains -> serve custom 404 (allow shared assets)
-    if (host.endsWith(".familiada.online") && !isKnownHost(host)) {
-      if (isCommonAsset(url.pathname)) {
-        return fetch(request);
-      }
-      return serveNotFoundPage(request);
     }
 
     const isBypass = hasAdminBypass(request, env);
@@ -90,21 +75,21 @@ export default {
       return json(state);
     }
 
-    // block settings panel on public hosts
-    if (isSettingsPublicPath(url.pathname)) {
-      return new Response("Not Found", { status: 404 });
-    }
-    
     // GLOBAL GATE
     const state = await getState(env);
 
     if (!state.enabled || state.mode === "off" || isBypass) {
-      return fetch(request); // brak prac
+      return fetchWith404(request, MAIN_ORIGIN); // brak prac
     }
 
     // allow access to the maintenance page and its assets
     if (isMaintenanceAsset(url.pathname)) {
-      return fetch(request);
+      return fetchWith404(request, MAIN_ORIGIN);
+    }
+
+    // Unknown subdomains during maintenance -> show maintenance page
+    if (host.endsWith(".familiada.online") && !isKnownHost(host)) {
+      return serveMaintenance(request);
     }
 
     // block everything else
@@ -153,10 +138,10 @@ async function serveMaintenance(request) {
   });
 }
 
-async function serveNotFoundPage(request) {
+async function serveNotFoundPage(request, originBase) {
   const url = new URL(request.url);
-  const notFoundUrl = new URL("/404.html", url.origin);
-  const res = await fetch(notFoundUrl);
+  const notFoundUrl = new URL("/404.html", originBase);
+  const res = await fetch(notFoundUrl.toString());
 
   return new Response(res.body, {
     status: 404,
@@ -426,13 +411,14 @@ const KNOWN_HOSTS = [
   "settings.familiada.online",
   "panel.familiada.online",
   "supabase.familiada.online",
+  "api.familiada.online",
 ];
 
 const HOST_REDIRECTS = [
   {
     fromHosts: ["familiada.online", "www.familiada.online"],
     paths: ["/settings", "/settings/", "/settings.html"],
-    to: "https://settings.familiada.online/",
+    to: "https://familiada.online/",
   },
 ];
 
@@ -475,6 +461,24 @@ function withHeaders(res, extra) {
   });
 }
 
+function fetchFromOrigin(request, url, originBase) {
+  const target = new URL(url.pathname + url.search, originBase);
+  return fetch(new Request(target.toString(), request));
+}
+
+async function fetchWith404(request, originBase) {
+  const url = new URL(request.url);
+  const res = await fetchFromOrigin(request, url, originBase);
+  if (res.status !== 404) return res;
+
+  const accept = request.headers.get("Accept") || "";
+  if (accept.includes("text/html")) {
+    return serveNotFoundPage(request, originBase);
+  }
+
+  return res;
+}
+
 function isSettingsAsset(pathname) {
   const allowedPrefixes = ["/css/", "/js/", "/translation/", "/img/", "/audio/"];
   for (const prefix of allowedPrefixes) {
@@ -482,10 +486,6 @@ function isSettingsAsset(pathname) {
   }
   const allowedFiles = ["/favicon.ico", "/logo.svg"];
   return allowedFiles.includes(pathname);
-}
-
-function isSettingsPublicPath(pathname) {
-  return pathname === "/settings" || pathname === "/settings/" || pathname === "/settings.html";
 }
 
 function getCookie(request, name) {
