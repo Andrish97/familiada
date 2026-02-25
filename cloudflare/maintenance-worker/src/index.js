@@ -4,9 +4,9 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     const host = url.host.toLowerCase();
-    // Fetch from www origin but resolve directly to GitHub Pages to avoid recursion.
-    const ORIGIN_BASE = "https://www.familiada.online";
-    const ORIGIN_HOST = "www.familiada.online";
+    // Fetch from apex origin but resolve directly to GitHub Pages to avoid recursion.
+    const ORIGIN_BASE = "https://familiada.online";
+    const ORIGIN_HOST = "familiada.online";
     const ORIGIN_RESOLVE = "andrish97.github.io";
 
     // (no apex redirect here)
