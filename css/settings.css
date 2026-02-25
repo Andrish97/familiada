@@ -276,15 +276,25 @@ body.tools-fullscreen{
   overflow: hidden;
 }
 
+body.settings-body{
+  overflow-y: auto;
+}
+
+.topbar{
+  position: sticky;
+  top: 0;
+  z-index: 80;
+}
+
 body.tools-fullscreen .tools-shell{
   position: fixed;
-  inset: 64px 0 0 0;
+  inset: var(--topbar-h, 64px) 0 0 0;
   margin: 0;
   padding: 0;
   border: 0;
   border-radius: 0;
   background: #050914;
-  z-index: 20;
+  z-index: 30;
 }
 
 body.tools-fullscreen .tools-frame-wrap{
@@ -294,6 +304,10 @@ body.tools-fullscreen .tools-frame-wrap{
 
 body.tools-fullscreen .tools-frame-wrap iframe{
   height: 100%;
+}
+
+.ui-select-menu{
+  z-index: 90;
 }
 
 .is-hidden{

@@ -492,14 +492,28 @@ const PRETTY_ROUTES = {
   "/base-explorer": "/base-explorer",
 };
 
+function isFolderRoute(pretty) {
+  const target = PRETTY_ROUTES[pretty];
+  return Boolean(target && target.startsWith(`${pretty}/`));
+}
+
 function resolvePrettyPath(pathname) {
-  if (PRETTY_ROUTES[pathname]) return { rewrite: PRETTY_ROUTES[pathname] };
-  if (pathname.endsWith("/") && PRETTY_ROUTES[pathname.slice(0, -1)]) {
-    return { rewrite: PRETTY_ROUTES[pathname.slice(0, -1)] };
-  }
   if (pathname === "/index.html") return { redirect: "/" };
+  if (pathname.endsWith("/")) {
+    const base = pathname.slice(0, -1);
+    if (PRETTY_ROUTES[base]) {
+      if (isFolderRoute(base)) return { rewrite: PRETTY_ROUTES[base] };
+      return { redirect: base };
+    }
+  }
+  if (PRETTY_ROUTES[pathname]) {
+    if (isFolderRoute(pathname)) return { redirect: `${pathname}/` };
+    return { rewrite: PRETTY_ROUTES[pathname] };
+  }
   for (const [pretty, file] of Object.entries(PRETTY_ROUTES)) {
-    if (pathname === file) return { redirect: pretty };
+    if (pathname === file) {
+      return { redirect: isFolderRoute(pretty) ? `${pretty}/` : pretty };
+    }
   }
   return null;
 }
