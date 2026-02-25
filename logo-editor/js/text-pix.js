@@ -1,4 +1,4 @@
-// familiada/logo-editor/js/text-pix.js
+// familiada/logo-editorjs/text-pix.js
 // Tryb: TEXT_PIX (TinyMCE inline -> "screen-screenshot" -> 150x70 bits)
 
 import { t } from "../../translation/translation.js";

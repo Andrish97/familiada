@@ -1,4 +1,4 @@
-// familiada/logo-editor/js/main.js
+// familiada/logo-editorjs/main.js
 // Glowna logika strony + lista kafelkow + routing do edytorow.
 
 import { sb } from "../../js/core/supabase.js";
@@ -30,9 +30,9 @@ const DOT_H = 70;  // 10*7
 
 // UWAGA: to sa sciezki wzgledne wobec logo-editor
 // (ustalone, nie zgadujemy)
-const FONT_3x10_URL = "../display/font_3x10.json";
-const FONT_5x7_URL  = "../display/font_5x7.json";
-const DEFAULT_LOGO_URL = "../display/logo_familiada.json";
+const FONT_3x10_URL = "display/font_3x10.json";
+const FONT_5x7_URL  = "display/font_5x7.json";
+const DEFAULT_LOGO_URL = "display/logo_familiada.json";
 
 /* =========================================================
    DOM

@@ -1,4 +1,4 @@
-// base-explorer/js/repo.js
+// base-explorerjs/repo.js
 // Repozytorium danych (Supabase) dla menadżera bazy pytań.
 
 import { sb } from "../../js/core/supabase.js";

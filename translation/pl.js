@@ -3815,7 +3815,7 @@ const pl = {
       importFailedDetailed: "Nie udało się zaimportować.\n\n{error}",
       exportFailedDetailed: "Nie udało się wyeksportować.\n\n{error}",
       setActiveFailedDetailed: "Nie udało się ustawić aktywnego.\n\n{error}",
-      fontsLoad: "Nie mogę wczytać fontów. Sprawdź ścieżki display/font_*.json.",
+      fontsLoad: "Nie mogę wczytać fontów. Sprawdź ścieżki displayfont_*.json.",
       invalidJson: "To nie jest poprawny JSON.",
       pixSize: "Zły rozmiar PIX. Oczekuję {expectedW}×{expectedH}, a jest {actualW}×{actualH}.",
       missingBits: "Brak bits_b64 w imporcie.",

@@ -1,4 +1,4 @@
-// display/js/main.js
+// displayjs/main.js
 import { initFullscreenButton } from "./fullscreen.js";
 import { startPresence } from "./presence.js";
 import { createQRController } from "./qr.js";

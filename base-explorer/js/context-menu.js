@@ -1,4 +1,4 @@
-// base-explorer/js/context-menu.js
+// base-explorerjs/context-menu.js
 
 import { VIEW, setViewFolder, selectionSetSingle, rememberBrowseLocation } from "./state.js";
 import {

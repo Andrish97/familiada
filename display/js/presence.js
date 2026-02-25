@@ -1,4 +1,4 @@
-// display/js/presence.js
+// displayjs/presence.js
 import { sb } from "../../js/core/supabase.js";
 
 export async function startPresence({

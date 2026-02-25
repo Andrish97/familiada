@@ -6,19 +6,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title data-i18n="control.title">Familiada — Panel sterowania</title>
 
-  <link rel="icon" href="../favicon.ico"/>
-  <link rel="stylesheet" href="../css/base.css"/>
-  <link rel="stylesheet" href="./control.css"/>
+  <link rel="icon" href="favicon.ico"/>
+  <link rel="stylesheet" href="css/base.css"/>
+  <link rel="stylesheet" href="control/control.css"/>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
   <script type="module">
-    import { guardDesktopOnly } from "../js/core/device-guard.js";
-    import { initI18n, t } from "../translation/translation.js";
+    import { guardDesktopOnly } from "./js/core/device-guard.js";
+    import { initI18n, t } from "./translation/translation.js";
   
     await initI18n({ withSwitcher: false });
     guardDesktopOnly({ maxWidth: 980 });
   
-    import("./js/app.js");
+    import("./control/js/app.js");
   </script>
 </head>
 <body class="control-body">
@@ -51,7 +51,7 @@
 
   <div class="helpOverlay hidden" id="helpOverlay">
     <div class="helpModal" role="dialog" aria-modal="true">
-      <iframe id="helpFrame" class="helpFrame" src="../manual" title="Wskazówki"></iframe>
+      <iframe id="helpFrame" class="helpFrame" src="manual" title="Wskazówki"></iframe>
       <button class="btn xs helpCloseBtn" id="btnHelpClose" type="button">✕</button>
     </div>
   </div>

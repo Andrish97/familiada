@@ -1,4 +1,4 @@
-// familiada/logo-editor/js/image.js
+// familiada/logo-editorjs/image.js
 // Tryb: IMAGE -> duży obraz + kadr 26:11 -> przetwarzanie -> PIX 150x70
 
 import { alertModal } from "../../js/core/modal.js";

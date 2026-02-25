@@ -792,14 +792,14 @@ export async function createScene() {
   // ============================================================
   // Build SVG scene – najpierw BIG, potem z niego stadion + panele
   // ============================================================
-  const FONT5 = await loadJson("./font_5x7.json");
+  const FONT5 = await loadJson("display/font_5x7.json");
   const GLYPHS = buildGlyphMap(FONT5);
 
-  const FONTWIN = await loadJson("./font_win.json");
+  const FONTWIN = await loadJson("display/font_win.json");
   const WIN_DIGITS = FONTWIN?.digits || {};
 
   let LOGO_JSON = null;
-  try { LOGO_JSON = await loadJson("./logo_familiada.json"); } catch {}
+  try { LOGO_JSON = await loadJson("display/logo_familiada.json"); } catch {}
   const DEFAULT_LOGO = LOGO_JSON ?? { layers:[{ color:"main", rows:Array(10).fill(" ".repeat(30)) }] }; // fallback z pliku
   let ACTIVE_LOGO = null;          // tu będzie { type, payload, name } z bazy albo null
 

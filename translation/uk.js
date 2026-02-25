@@ -3694,7 +3694,7 @@ const uk = {
       importFailedDetailed: "Не вдалося імпортувати.\n\n{error}",
       exportFailedDetailed: "Не вдалося експортувати.\n\n{error}",
       setActiveFailedDetailed: "Не вдалося встановити активний.\n\n{error}",
-      fontsLoad: "Не можу завантажити шрифти. Перевірте шляхи display/font_*.json.",
+      fontsLoad: "Не можу завантажити шрифти. Перевірте шляхи displayfont_*.json.",
       invalidJson: "Це не коректний JSON.",
       pixSize: "Неправильний розмір PIX. Очікую {expectedW}×{expectedH}, а є {actualW}×{actualH}.",
       missingBits: "В імпорті відсутній bits_b64.",

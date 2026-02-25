@@ -1,4 +1,4 @@
-// /familiada/js/pages/control/app.js
+// /familiada/js/pages/controlapp.js
 import { confirmModal } from "../../js/core/modal.js";
 import { getUiLang, initI18n, t } from "../../translation/translation.js";
 

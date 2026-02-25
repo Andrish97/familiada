@@ -1,4 +1,4 @@
-// base-explorer/js/tags-modal.js
+// base-explorerjs/tags-modal.js
 // Nowy modal tagów (3 warstwy) – spójny z założeniami:
 // - na każdej warstwie tylko X i "Zapisz"
 // - L1: lista tagów + tri-state + "Dodaj nowy" -> L2(create)
