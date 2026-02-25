@@ -28,7 +28,7 @@ function getRetPathnameLower() {
 }
 
 function getCurrentRelativeUrl() {
-  return `${location.pathname.split("/").pop() || "subscriptions.html"}${location.search}${location.hash}`;
+  return `${location.pathname.split("/").pop() || "subscriptions"}${location.search}${location.hash}`;
 }
 
 const who = $("who");
@@ -618,7 +618,7 @@ async function refreshData() {
         });
         if (ok) {
           await signOut();
-          const url = new URL("login.html", location.href);
+          const url = new URL("login", location.href);
           url.searchParams.set("next", "subscriptions");
           url.searchParams.set("s", focusInviteToken);
           location.href = url.toString();
@@ -646,7 +646,7 @@ async function refreshData() {
 
 
 function buildManualUrl() {
-  const url = new URL("manual.html", location.href);
+  const url = new URL("manual", location.href);
   url.searchParams.set("ret", getCurrentRelativeUrl());
   url.searchParams.set("lang", getUiLang() || "pl");
   return url.toString();
@@ -656,20 +656,20 @@ function buildManualUrl() {
 function updateBackButtonLabel() {
   if (!btnBack) return;
   const retPath = getRetPathnameLower();
-  if (retPath.endsWith("/bases.html")) btnBack.textContent = t("baseExplorer.backToBases");
-  else if (retPath.endsWith("/polls-hub.html")) btnBack.textContent = t("polls.backToHub");
+  if (retPath.endsWith("/bases")) btnBack.textContent = t("baseExplorer.backToBases");
+  else if (retPath.endsWith("/polls-hub")) btnBack.textContent = t("polls.backToHub");
   else btnBack.textContent = t("pollsHubSubscriptions.backToGames");
 }
 
 function getBackLink() {
   const rawRet = getRetParam();
-  return rawRet || "builder.html";
+  return rawRet || "builder";
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
-  const user = await requireAuth("login.html");
+  const user = await requireAuth("login");
   if (isGuestUser(user)) {
-    showGuestBlockedOverlay({ backHref: "builder.html", loginHref: "login.html?force_auth=1", showLoginButton: true });
+    showGuestBlockedOverlay({ backHref: "builder", loginHref: "login?force_auth=1", showLoginButton: true });
     return;
   }
   who.textContent = user?.username || user?.email || "—";

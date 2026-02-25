@@ -883,7 +883,7 @@ async function refresh() {
 document.addEventListener("DOMContentLoaded", async () => {
   await initI18n({ withSwitcher: true });
   
-  currentUser = await requireAuth("login.html");
+  currentUser = await requireAuth("login");
   const whoLabel = currentUser?.username || currentUser?.email || t("control.dash");
   if (who) who.textContent = whoLabel;
   if (whoStatic) whoStatic.textContent = whoLabel;
@@ -1002,31 +1002,31 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   if (!guestMode) {
     btnAccount?.addEventListener("click", () => {
-      location.href = "account.html";
+      location.href = "account";
     });
   }
 
   btnManual?.addEventListener("click", async () => {
-    const url = new URL("manual.html", location.href);
+    const url = new URL("manual", location.href);
     const ret = `${location.pathname.split("/").pop() || ""}${location.search}${location.hash}`;
     url.searchParams.set("ret", ret);
     location.href = url.toString();
   });
 
   btnLogoEditor?.addEventListener("click", async () => {
-    location.href = "./logo-editor/logo-editor.html";
+    location.href = "./logo-editor";
   });
   
   btnBases?.addEventListener("click", async () => {
-    location.href = "bases.html?from=builder";
+    location.href = "bases?from=builder";
   });
 
   btnPollsHub?.addEventListener("click", () => {
-    location.href = "polls-hub.html?from=builder";
+    location.href = "polls-hub?from=builder";
   });
 
   btnSubscriptionsHub?.addEventListener("click", () => {
-    location.href = "subscriptions.html?from=builder";
+    location.href = "subscriptions?from=builder";
   });
 
   tabPollText?.addEventListener("click", () => setActiveTab(TYPES.POLL_TEXT));
@@ -1065,7 +1065,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
     }
 
-    location.href = `editor.html?id=${encodeURIComponent(g.id)}`;
+    location.href = `editor?id=${encodeURIComponent(g.id)}`;
   });
 
   // PLAY
@@ -1078,7 +1078,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         void alertModal({ text: chk.reason });
         return;
       }
-      location.href = `control/control.html?id=${encodeURIComponent(selectedId)}`;
+      location.href = `control?id=${encodeURIComponent(selectedId)}`;
     } catch (e) {
       console.error(e);
       void alertModal({ text: MSG.alertCheckFailed() });
@@ -1106,7 +1106,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
       }
 
-      location.href = `polls.html?id=${encodeURIComponent(selectedId)}&from=builder`;
+      location.href = `polls?id=${encodeURIComponent(selectedId)}&from=builder`;
     } catch (e) {
       console.error(e);
       void alertModal({ text: MSG.alertOpenPollFailed() });

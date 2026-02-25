@@ -23,8 +23,8 @@ export function hideForGuest(user, elements = []) {
 }
 
 export function showGuestBlockedOverlay({
-  backHref = "builder.html",
-  loginHref = "login.html?force_auth=1",
+  backHref = "builder",
+  loginHref = "login?force_auth=1",
   showLoginButton = true,
 } = {}) {
   let overlay = document.getElementById("guestAccessGuard");

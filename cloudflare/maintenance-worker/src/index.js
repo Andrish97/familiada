@@ -86,10 +86,29 @@ export default {
       return serveNotFoundPage(request, ORIGIN_BASE, ORIGIN_HOST, ORIGIN_RESOLVE);
     }
 
+    // Prettify URLs (redirect /name -> /name.html, /folder -> /folder/folder.html)
+    const pretty = resolvePrettyPath(url.pathname);
+    if (pretty?.redirect) {
+      const target = new URL(request.url);
+      target.pathname = pretty.redirect;
+      return Response.redirect(target.toString(), 301);
+    }
+
     // GLOBAL GATE
     const state = await getState(env);
 
     if (!state.enabled || state.mode === "off" || isBypass) {
+      if (pretty?.rewrite) {
+        const prettyUrl = new URL(request.url);
+        prettyUrl.pathname = pretty.rewrite;
+        const res = await fetchFromOrigin(request, prettyUrl, ORIGIN_BASE, ORIGIN_HOST, ORIGIN_RESOLVE);
+        if (res.status !== 404) return res;
+        const accept = request.headers.get("Accept") || "";
+        if (accept.includes("text/html")) {
+          return serveNotFoundPage(request, ORIGIN_BASE, ORIGIN_HOST, ORIGIN_RESOLVE);
+        }
+        return res;
+      }
       return fetchWith404(request, ORIGIN_BASE, ORIGIN_HOST, ORIGIN_RESOLVE); // brak prac
     }
 
@@ -130,7 +149,7 @@ function json(data) {
 }
 
 async function serveMaintenance(request, originBase, originHost, resolveOverride) {
-  const maintUrl = new URL("/maintenance.html", originBase);
+  const maintUrl = new URL("/maintenance", originBase);
   const res = await fetchWithOrigin(maintUrl.toString(), request, originHost, resolveOverride);
 
   return new Response(res.body, {
@@ -397,7 +416,7 @@ async function handleAdminApi(request, env) {
 }
 
 function isMaintenanceAsset(pathname) {
-  if (pathname === "/maintenance.html") return true;
+  if (pathname === "/maintenance") return true;
 
   const allowedPrefixes = ["/css/", "/js/", "/translation/", "/img/", "/audio/"];
   for (const prefix of allowedPrefixes) {
@@ -443,6 +462,46 @@ function isBlockedPath(host, pathname) {
     if (pathname.startsWith("/settings-tools/")) return true;
   }
   return false;
+}
+
+const PRETTY_ROUTES = {
+  "/account": "/account",
+  "/bases": "/bases",
+  "/builder": "/builder",
+  "/buzzer": "/buzzer",
+  "/confirm": "/confirm",
+  "/editor": "/editor",
+  "/host": "/host",
+  "/login": "/login",
+  "/maintenance": "/maintenance",
+  "/manual": "/manual",
+  "/poll-go": "/poll-go",
+  "/poll-points": "/poll-points",
+  "/poll-qr": "/poll-qr",
+  "/poll-text": "/poll-text",
+  "/polls": "/polls",
+  "/polls-hub": "/polls-hub",
+  "/privacy": "/privacy",
+  "/reset": "/reset",
+  "/settings": "/settings.html",
+  "/subscriptions": "/subscriptions",
+
+  "/control": "/control",
+  "/display": "/display",
+  "/logo-editor": "/logo-editor",
+  "/base-explorer": "/base-explorer",
+};
+
+function resolvePrettyPath(pathname) {
+  if (PRETTY_ROUTES[pathname]) return { rewrite: PRETTY_ROUTES[pathname] };
+  if (pathname.endsWith("/") && PRETTY_ROUTES[pathname.slice(0, -1)]) {
+    return { redirect: pathname.slice(0, -1) };
+  }
+  if (pathname === "/index.html") return { redirect: "/" };
+  for (const [pretty, file] of Object.entries(PRETTY_ROUTES)) {
+    if (pathname === file) return { redirect: pretty };
+  }
+  return null;
 }
 
 function withHeaders(res, extra) {

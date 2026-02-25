@@ -1520,15 +1520,15 @@ function getRetParam() {
 
 function getBackLink() {
   const rawRet = getRetParam();
-  return rawRet || "builder.html";
+  return rawRet || "builder";
 }
 
 function getCurrentRelativeUrl() {
-  return `${location.pathname.split("/").pop() || "bases.html"}${location.search}${location.hash}`;
+  return `${location.pathname.split("/").pop() || "bases"}${location.search}${location.hash}`;
 }
 
 function buildManualUrl() {
-  const url = new URL("manual.html", location.href);
+  const url = new URL("manual", location.href);
   url.searchParams.set("ret", getCurrentRelativeUrl());
   url.searchParams.set("lang", getUiLang() || "pl");
   return url.toString();
@@ -1544,7 +1544,7 @@ btnManual?.addEventListener("click", () => {
 });
 
 btnGoAlt?.addEventListener("click", async () => {
-  const page = document.body.dataset.altPage || "subscriptions.html";
+  const page = document.body.dataset.altPage || "subscriptions";
   location.href = `${page}?ret=${encodeURIComponent(getCurrentRelativeUrl())}`;
 });
 
@@ -1553,7 +1553,7 @@ btnBrowse?.addEventListener("click", () => {
   const b = selectedBase();
   if (!b) return;
   // warstwa 2 będzie później – na razie przekierowanie na placeholder
-  location.href = `base-explorer/base-explorer.html?base=${encodeURIComponent(b.id)}`;
+  location.href = `base-explorer?base=${encodeURIComponent(b.id)}`;
 });
 
 btnShare?.addEventListener("click", async () => {
@@ -1673,7 +1673,7 @@ async function refreshAltBadge() {
 
 /* ================= Init ================= */
 (async function init() {
-  currentUser = await requireAuth("login.html");
+  currentUser = await requireAuth("login");
   guestMode = isGuestUser(currentUser);
   if (guestMode) {
     document.body.classList.add("bases-guest");

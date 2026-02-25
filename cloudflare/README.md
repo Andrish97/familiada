@@ -3,26 +3,65 @@
 ## Behavior (Worker)
 
 ### 1) settings.familiada.online
-- Only `/`, `/index.html`, `/settings.html`, `/settings-tools/*` and assets are allowed.
-- Root (`/`) serves `/settings.html` from `https://familiada.online`.
+- Only `/`, `/index.html`, `/settings`, `/settings.html`, `/settings-tools/*` and assets are allowed.
+- Root (`/`) serves `/settings.html` from `https://familiada.online` (pretty URL `/settings`).
 - Everything else is 404.
 - Admin API lives here: `/_admin_api/*` (Access header or cookie).
 - Not affected by maintenance gate.
 
 ### 2) familiada.online + www.familiada.online
 - Normal app behavior.
-- `/settings`, `/settings/`, `/settings.html` redirect to `/`.
+- `/settings`, `/settings/`, `/settings.html` redirect to `/settings`.
 - If origin returns 404 for HTML, worker serves `/404.html` (custom 404).
-- Maintenance gate blocks everything (503 + `/maintenance.html`), unless bypass cookie.
+- Maintenance gate blocks everything (503 + `/maintenance`), unless bypass cookie.
 
 ### 3) Other subdomains (*.familiada.online)
 - Known service hosts (`api`, `panel`, `supabase`) are passed through.
 - Unknown hosts:
   - Maintenance OFF → custom `/404.html`
-  - Maintenance ON → `/maintenance.html` (503)
+  - Maintenance ON → `/maintenance` (503)
 
 ### Public endpoint
 - `GET /maintenance-state.json` → `{ enabled:boolean, mode:"off|message|returnAt|countdown", returnAt:string|null }`
+
+### Pretty URLs (bez .html)
+Worker robi:
+- 301 z `*.html` → wersja bez `.html`
+- 301 z `/folder/` → `/folder`
+- rewrite `/nazwa` → `/nazwa.html` oraz `/folder` → `/folder/folder.html` (bez zmiany adresu)
+
+**Aktualne mapowania:**
+- `/account` → `/account.html`
+- `/bases` → `/bases.html`
+- `/builder` → `/builder.html`
+- `/buzzer` → `/buzzer.html`
+- `/confirm` → `/confirm.html`
+- `/editor` → `/editor.html`
+- `/host` → `/host.html`
+- `/login` → `/login.html`
+- `/maintenance` → `/maintenance.html`
+- `/manual` → `/manual.html`
+- `/poll-go` → `/poll-go.html`
+- `/poll-points` → `/poll-points.html`
+- `/poll-qr` → `/poll-qr.html`
+- `/poll-text` → `/poll-text.html`
+- `/polls` → `/polls.html`
+- `/polls-hub` → `/polls-hub.html`
+- `/privacy` → `/privacy.html`
+- `/reset` → `/reset.html`
+- `/settings` → `/settings.html`
+- `/subscriptions` → `/subscriptions.html`
+- `/control` → `/control/control.html`
+- `/display` → `/display/display.html`
+- `/logo-editor` → `/logo-editor/logo-editor.html`
+- `/base-explorer` → `/base-explorer/base-explorer.html`
+
+**Jak dodać nową stronę do „ładnych” URL-i:**
+1. Otwórz `cloudflare/maintenance-worker/src/index.js`.
+2. W obiekcie `PRETTY_ROUTES` dodaj wpis:
+   - dla pliku w root: `"/nowa-strona": "/nowa-strona.html"`
+   - dla folderu: `"/nowy-folder": "/nowy-folder/nowy-folder.html"`
+3. (Opcjonalnie) zaktualizuj linki w JS/HTML, żeby używały wersji bez `.html`.
 
 ### Admin API (settings host)
 - `GET  /_admin_api/me` → 200 if Access header or session cookie
@@ -49,9 +88,9 @@ If Access is enabled on `settings.familiada.online`, any request with
 ### Basic routing
 1. `https://familiada.online/` → main site
 2. `https://www.familiada.online/` → main site
-3. `https://familiada.online/settings.html` → **redirect to** `https://familiada.online/`
+3. `https://familiada.online/settings.html` → **redirect to** `https://familiada.online/settings`
 4. `https://settings.familiada.online/` → settings panel
-5. `https://settings.familiada.online/settings.html` → settings panel
+5. `https://settings.familiada.online/settings.html` → **redirect to** `https://settings.familiada.online/settings`
 
 ### Maintenance
 1. Turn maintenance ON in settings panel.

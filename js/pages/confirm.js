@@ -97,17 +97,17 @@ async function markEmailIntentConfirmed(email) {
 
 async function redirectAfterConfirm(user) {
   if (await shouldSetupUsername(user)) {
-    location.href = withLangParam("login.html?setup=username");
+    location.href = withLangParam("login?setup=username");
     return;
   }
-  location.href = withLangParam("builder.html");
+  location.href = withLangParam("builder");
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
   await initI18n({ withSwitcher: true });
   setErr("");
-  if (go) go.href = withLangParam(go.dataset.baseHref || "builder.html");
-  if (back) back.href = withLangParam(back.dataset.baseHref || "login.html");
+  if (go) go.href = withLangParam(go.dataset.baseHref || "builder");
+  if (back) back.href = withLangParam(back.dataset.baseHref || "login");
   const syncLanguage = () => updateUserLanguage(getUiLang());
   window.addEventListener("i18n:lang", syncLanguage);
 

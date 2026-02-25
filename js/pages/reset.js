@@ -65,7 +65,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   await initI18n({ withSwitcher: true });
   if (pwdHint) pwdHint.textContent = getPasswordRulesText();
   setErr("");
-  if (back) back.href = withLangParam(back.dataset.baseHref || "login.html");
+  if (back) back.href = withLangParam(back.dataset.baseHref || "login");
   const syncLanguage = () => updateUserLanguage(getUiLang());
   window.addEventListener("i18n:lang", syncLanguage);
 
@@ -153,7 +153,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       // wyloguj sesję recovery dla czystości
       try { await sb().auth.signOut(); } catch {}
 
-      setTimeout(() => (location.href = withLangParam("login.html")), 900);
+      setTimeout(() => (location.href = withLangParam("login")), 900);
     } catch(e){
       console.error(e);
       setStatus(t("reset.saveFailed"));

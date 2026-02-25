@@ -949,7 +949,7 @@ const en = {
     },
     empty: {
       title: "No game",
-      meta: "Open the page with parameter <b>polls.html?id=...</b>.",
+      meta: "Open the page with parameter <b>polls?id=...</b>.",
     },
     meta: {
       pollText: "Mode: text poll. Start: ≥ {min} questions. Close: each question needs ≥ 3 distinct answers.",
@@ -4187,9 +4187,8 @@ const en = {
     bypass: {
       title: "Bypass",
       subtitle: "Skip maintenance for admin",
-      on: "Bypass ON",
-      off: "Bypass OFF",
-      hint: "Sets admin cookie for 30 days.",
+      label: "Enable bypass",
+      desc: "(The site will work normally without the maintenance message.) Sets the admin cookie for 30 days. Works only in this browser.",
     },
     tools: {
       title: "Tools",

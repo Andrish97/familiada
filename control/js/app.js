@@ -110,7 +110,7 @@ function throttleMs(ms, fn) {
 let guestMode = false;
 
 async function ensureAuthOrRedirect() {
-  const user = await requireAuth("../login.html");
+  const user = await requireAuth("../login");
   const who = document.getElementById("who");
   if (who) who.textContent = user?.username || user?.email || user?.id || "—";
   guestMode = isGuestUser(user);
@@ -859,8 +859,8 @@ async function sendZeroStatesToDevices() {
   const helpFrame = document.getElementById("helpFrame");
   const btnHelpClose = document.getElementById("btnHelpClose");
   function buildHelpUrl() {
-    const url = new URL("../manual.html", location.href);
-    url.searchParams.set("ret", `${location.pathname.split("/").pop() || "control.html"}${location.search}${location.hash}`);
+    const url = new URL("../manual", location.href);
+    url.searchParams.set("ret", `${location.pathname.split("/").pop() || "control"}${location.search}${location.hash}`);
     url.searchParams.set("modal", "control");
     url.searchParams.set("lang", getUiLang() || "pl");
     return url.toString();
@@ -892,7 +892,7 @@ async function sendZeroStatesToDevices() {
     }
   
     suppressUnloadWarn = true;
-    location.href = "../builder.html";
+    location.href = "../builder";
   });
   
   ui.on("top.manual", () => {
@@ -909,7 +909,7 @@ async function sendZeroStatesToDevices() {
       await signOut().catch(() => {});
     }
     suppressUnloadWarn = true;
-    location.href = "../login.html";
+    location.href = "../login";
   });
 
   ui.on("auth.showQr", (kind) => showQrModal(kind));
@@ -1218,4 +1218,3 @@ main().catch((e) => {
   const el = document.getElementById("msgSide");
   if (el) el.textContent = e?.message || String(e);
 });
-

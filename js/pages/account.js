@@ -38,8 +38,8 @@ const cancelEmailChange = document.getElementById("cancelEmailChange");
 function setStatus(m = "") { if (status) status.textContent = m; }
 
 function buildManualUrl() {
-  const url = new URL("manual.html", location.href);
-  const ret = `${location.pathname.split("/").pop() || "account.html"}${location.search}${location.hash}`;
+  const url = new URL("manual", location.href);
+  const ret = `${location.pathname.split("/").pop() || "account"}${location.search}${location.hash}`;
   url.searchParams.set("ret", ret);
   url.searchParams.set("lang", getUiLang() || "pl");
   return url.toString();
@@ -107,7 +107,7 @@ async function initEmailNotificationsUi(user) {
 
 
 backToGames?.addEventListener("click", () => {
-  const target = backToGames.dataset.baseHref || "builder.html";
+  const target = backToGames.dataset.baseHref || "builder";
   location.href = withLangParam(target);
 });
 
@@ -349,10 +349,10 @@ async function ensureUsernameAvailable(username, userId) {
 }
 
 async function loadProfile() {
-  const user = await requireAuth("login.html?setup=username");
+  const user = await requireAuth("login?setup=username");
   if (!user) return;
   if (isGuestUser(user)) {
-    showGuestBlockedOverlay({ backHref: "builder.html", loginHref: "login.html?force_auth=1", showLoginButton: true });
+    showGuestBlockedOverlay({ backHref: "builder", loginHref: "login?force_auth=1", showLoginButton: true });
     return;
   }
 
@@ -426,7 +426,7 @@ async function handleEmailSave() {
     const normalizedMail = mail.toLowerCase();
     const language = getUiLang();
 
-    const confirmUrl = new URL("/confirm.html", location.origin);
+    const confirmUrl = new URL("/confirm", location.origin);
     confirmUrl.searchParams.set("lang", language);
     confirmUrl.searchParams.set("to", normalizedMail);
 
@@ -465,7 +465,7 @@ async function handleEmailResend() {
     }
 
     const language = getUiLang();
-    const confirmUrl = new URL("/confirm.html", location.origin);
+    const confirmUrl = new URL("/confirm", location.origin);
     confirmUrl.searchParams.set("lang", language);
     confirmUrl.searchParams.set("to", pendingEmail);
 
@@ -522,7 +522,7 @@ async function handleEmailCancel() {
     }
 
     const language = getUiLang();
-    const confirmUrl = new URL("/confirm.html", location.origin);
+    const confirmUrl = new URL("/confirm", location.origin);
     confirmUrl.searchParams.set("lang", language);
     confirmUrl.searchParams.set("to", currentEmail);
 
@@ -608,7 +608,7 @@ async function handleDeleteAccount() {
     if (!data?.ok) throw new Error(data?.error || t("account.errDeleteFailed"));
 
     await signOut();
-    location.href = withLangParam("login.html");
+    location.href = withLangParam("login");
   } catch (e) {
     console.error(e);
     setStatus(t("account.statusError"));

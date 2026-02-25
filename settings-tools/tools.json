@@ -1,0 +1,16 @@
+{
+  "tools": [
+    {
+      "title": "Edytor 5×7 — import (glyphs/aliases) + auto-kategorie + eksport „familiada”",
+      "path": "/settings-tools/editor_5x7.html"
+    },
+    {
+      "title": "Edytor 5×7 — Workspace + 1 kategoria/glif + eksport Familiada",
+      "path": "/settings-tools/exporterandeditor.html"
+    },
+    {
+      "title": "Kora — builder 3×10 z kafelków 5×7",
+      "path": "/settings-tools/kora-builder.html"
+    }
+  ]
+}

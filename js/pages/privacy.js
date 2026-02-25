@@ -2,7 +2,7 @@
 //
 // - publiczna strona (bez wymuszania logowania)
 // - jeśli user zalogowany -> pokazuj username + Wyloguj
-// - jeśli niezalogowany -> ukryj username + Wyloguj, a Wstecz wraca do index.html
+// - jeśli niezalogowany -> ukryj username + Wyloguj, a Wstecz wraca do /
 
 import { initI18n, t, withLangParam } from "../../translation/translation.js";
 import { getUser } from "../core/auth.js";
@@ -16,7 +16,7 @@ function hasManualRef() {
 function buildBuilderBackUrl() {
   const p = new URLSearchParams(location.search);
   const lang = p.get("lang") || localStorage.getItem("uiLang") || "pl";
-  return `builder.html?lang=${encodeURIComponent(lang)}`;
+  return `builder?lang=${encodeURIComponent(lang)}`;
 }
 
 function decodeManualBack() {
@@ -55,7 +55,7 @@ function setBackButton({ loggedIn }) {
 
   if (!loggedIn) {
     btn.textContent = t("privacy.backToHome");
-    btn.onclick = () => (location.href = withLangParam("index.html"));
+    btn.onclick = () => (location.href = withLangParam("/"));
     return;
   }
 
