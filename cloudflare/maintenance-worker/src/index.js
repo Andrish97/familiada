@@ -61,6 +61,7 @@ export default {
       const state = await getState(env);
       if (!state.enabled || state.mode === "off") {
         return serveNotFoundPage(request, ORIGIN_BASE, ORIGIN_HOST);
+      }
       return serveMaintenance(request, ORIGIN_BASE, ORIGIN_HOST);
     }
 
