@@ -12,11 +12,7 @@ export default {
       const state = await getState(env);
       return json(state);
     }
-
-    if (url.pathname === "/__worker_ping") {
-      return new Response("worker-ok", { headers: { "Cache-Control": "no-store" } });
-    }
-
+    
     // GLOBAL GATE
     const state = await getState(env);
 
