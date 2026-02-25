@@ -254,12 +254,13 @@ async function handleAdminApi(request, env) {
     if (request.method !== "POST") {
       return new Response("Method Not Allowed", { status: 405 });
     }
-    if (!env.ADMIN_PANEL_PASSWORD) {
-      return new Response("Missing ADMIN_PANEL_PASSWORD", { status: 500 });
+    if (!env.ADMIN_PANEL_USERNAME || !env.ADMIN_PANEL_PASSWORD) {
+      return new Response("Missing ADMIN_PANEL_USERNAME or ADMIN_PANEL_PASSWORD", { status: 500 });
     }
     const body = await readJson(request);
+    const username = body?.username || "";
     const password = body?.password || "";
-    if (password !== env.ADMIN_PANEL_PASSWORD) {
+    if (username !== env.ADMIN_PANEL_USERNAME || password !== env.ADMIN_PANEL_PASSWORD) {
       return new Response("Forbidden", { status: 403 });
     }
     const token = await createSettingsSession(env);

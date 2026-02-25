@@ -52,6 +52,7 @@
             </div>
 
             <form class="auth-form" id="loginForm" hidden>
+              <input id="loginUsername" type="text" autocomplete="username" data-i18n-placeholder="settings.login.usernamePlaceholder" placeholder="Nazwa użytkownika"/>
               <input id="loginPassword" type="password" autocomplete="current-password" data-i18n-placeholder="settings.login.passwordPlaceholder" placeholder="Hasło"/>
               <button class="btn sm gold" id="btnLogin" type="submit" data-i18n="settings.login.loginBtn">Zaloguj</button>
               <div class="err" id="loginError"></div>
@@ -112,32 +113,6 @@
                     <div class="preview-line" id="previewTitle">—</div>
                     <div class="preview-line" id="previewText">—</div>
                   </div>
-                </div>
-              </div>
-            </div>
-
-            <div class="card settings-tile" id="tileDebug">
-              <div class="tile-header">
-                <div class="tile-title" data-i18n="settings.debug.title">Debug / status</div>
-                <div class="tile-sub" data-i18n="settings.debug.subtitle">Aktualny stan i diagnostyka</div>
-              </div>
-              <div class="tile-body">
-                <div class="debug-row">
-                  <span class="debug-label" data-i18n="settings.debug.lastRefresh">Ostatnie odświeżenie</span>
-                  <span class="debug-value" id="lastRefresh">—</span>
-                </div>
-                <div class="debug-row">
-                  <span class="debug-label" data-i18n="settings.debug.host">Host</span>
-                  <span class="debug-value" id="debugHost">—</span>
-                </div>
-                <div class="debug-row">
-                  <span class="debug-label" data-i18n="settings.debug.version">Wersja</span>
-                  <span class="debug-value" id="debugVersion">—</span>
-                </div>
-
-                <div class="debug-raw">
-                  <div class="debug-label" data-i18n="settings.debug.raw">Surowy JSON</div>
-                  <pre id="rawState">—</pre>
                 </div>
               </div>
             </div>

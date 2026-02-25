@@ -24,6 +24,7 @@ const els = {
   authStatus: document.getElementById("authStatus"),
   btnEnter: document.getElementById("btnEnter"),
   loginForm: document.getElementById("loginForm"),
+  loginUsername: document.getElementById("loginUsername"),
   loginPassword: document.getElementById("loginPassword"),
   loginError: document.getElementById("loginError"),
   loginHint: document.getElementById("loginHint"),
@@ -44,10 +45,6 @@ const els = {
   bypassHint: document.getElementById("bypassHint"),
   previewTitle: document.getElementById("previewTitle"),
   previewText: document.getElementById("previewText"),
-  lastRefresh: document.getElementById("lastRefresh"),
-  debugHost: document.getElementById("debugHost"),
-  debugVersion: document.getElementById("debugVersion"),
-  rawState: document.getElementById("rawState"),
   toast: document.getElementById("toast"),
 };
 
@@ -148,13 +145,6 @@ function applyStateToForm(state) {
   els.enabledToggle.checked = Boolean(state.enabled);
   els.modeSelect.value = state.mode || "off";
   els.returnAtInput.value = toDatetimeLocal(state.returnAt);
-  setText(els.rawState, JSON.stringify(state, null, 2));
-  setText(els.lastRefresh, formatDate(new Date()));
-  setText(els.debugHost, location.host);
-
-  const metaVersion = document.querySelector('meta[name="app-version"]');
-  const version = metaVersion?.getAttribute("content") || "—";
-  setText(els.debugVersion, version);
 
   updatePreview();
 }
@@ -216,7 +206,7 @@ async function loadState() {
     currentState = data;
     applyStateToForm(data);
   } catch (err) {
-    setText(els.rawState, t("settings.debug.fetchError"));
+    showToast(t("settings.toast.error"), "error");
   }
 }
 
@@ -297,7 +287,12 @@ function wireEvents() {
   els.loginForm.addEventListener("submit", async (e) => {
     e.preventDefault();
     setText(els.loginError, "");
+    const username = els.loginUsername.value || "";
     const password = els.loginPassword.value || "";
+    if (!username) {
+      setText(els.loginError, t("settings.login.usernameMissing"));
+      return;
+    }
     if (!password) {
       setText(els.loginError, t("settings.login.passwordMissing"));
       return;
@@ -305,13 +300,13 @@ function wireEvents() {
     try {
       const res = await apiFetch(`${API_BASE}/login`, {
         method: "POST",
-        body: JSON.stringify({ password }),
+        body: JSON.stringify({ username, password }),
       });
       if (!res.ok) throw new Error("login failed");
       showPanel();
       await loadState();
     } catch {
-      setText(els.loginError, t("settings.login.passwordInvalid"));
+      setText(els.loginError, t("settings.login.loginInvalid"));
     }
   });
 
