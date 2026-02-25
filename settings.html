@@ -42,6 +42,21 @@
       </div>
     </div>
 
+    <section class="tools-shell" id="toolsShell" hidden>
+      <div class="tools-bar">
+        <div class="tools-title" data-i18n="settings.tools.title">Narzędzia</div>
+        <div class="tools-actions">
+          <button class="btn sm" id="btnTool1" type="button" data-i18n="settings.tools.editor5x7">Edytor 5x7</button>
+          <button class="btn sm" id="btnTool2" type="button" data-i18n="settings.tools.exporterEditor">Exporter+Editor</button>
+          <button class="btn sm" id="btnTool3" type="button" data-i18n="settings.tools.koraBuilder">Kora Builder</button>
+          <button class="btn sm" id="btnToolClose" type="button" data-i18n="settings.tools.close">Zamknij</button>
+        </div>
+      </div>
+      <div class="tools-frame-wrap">
+        <iframe id="toolsFrame" title="Tools" loading="lazy"></iframe>
+      </div>
+    </section>
+
     <section class="builder-shell">
       <div class="card builder-card settings-card-root">
         <div class="settings-panel" id="panelScreen" hidden>
@@ -119,6 +134,20 @@
                   <button class="btn sm gold" id="btnBypassOn" type="button" data-i18n="settings.bypass.on">Bypass ON</button>
                   <button class="btn sm" id="btnBypassOff" type="button" data-i18n="settings.bypass.off">Bypass OFF</button>
                   <span class="hint" id="bypassHint" data-i18n="settings.bypass.hint">Ustawia cookie admina na 30 dni.</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="card settings-tile" id="tileTools">
+              <div class="tile-header">
+                <div class="tile-title" data-i18n="settings.tools.title">Narzędzia</div>
+                <div class="tile-sub" data-i18n="settings.tools.subtitle">Skróty do narzędzi</div>
+              </div>
+              <div class="tile-body">
+                <div class="field row">
+                  <button class="btn sm" id="btnToolOpen1" type="button" data-i18n="settings.tools.editor5x7">Edytor 5x7</button>
+                  <button class="btn sm" id="btnToolOpen2" type="button" data-i18n="settings.tools.exporterEditor">Exporter+Editor</button>
+                  <button class="btn sm" id="btnToolOpen3" type="button" data-i18n="settings.tools.koraBuilder">Kora Builder</button>
                 </div>
               </div>
             </div>

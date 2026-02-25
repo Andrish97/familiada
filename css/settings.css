@@ -93,6 +93,48 @@
   outline: 0;
 }
 
+.tools-shell{
+  margin: 10px 0 14px;
+  border: 1px solid var(--line2);
+  border-radius: 16px;
+  background: rgba(8,12,28,.6);
+  overflow: hidden;
+}
+
+.tools-bar{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--line2);
+}
+
+.tools-title{
+  font-weight: 900;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  font-size: 12px;
+}
+
+.tools-actions{
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.tools-frame-wrap{
+  background: #050914;
+}
+
+.tools-frame-wrap iframe{
+  width: 100%;
+  height: min(70vh, 720px);
+  border: 0;
+  display: block;
+}
+
 .settings-body input:focus,
 .settings-body select:focus{
   border-color: rgba(255,220,120,.5);

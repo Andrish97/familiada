@@ -4167,6 +4167,8 @@ const pl = {
     messageTitle: "Strona nie istnieje",
     messageText:
       "Tego adresu nie ma lub został przeniesiony. Sprawdź poprawność linku.",
+    redirectHint: "Za chwilę wrócisz na stronę główną.",
+    homeBtn: "← Strona główna",
     footerLeft: "Familiada",
     footerRight: "Jeśli to błąd — <a href=\"mailto:contact@familiada.online\">contact@familiada.online</a>",
   },
