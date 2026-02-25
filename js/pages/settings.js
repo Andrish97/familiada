@@ -13,6 +13,7 @@ Settings panel (admin)
 import { initI18n, t } from "../../translation/translation.js";
 import { confirmModal, alertModal } from "../core/modal.js";
 import { initUiSelect } from "../core/ui-select.js";
+import { guardDesktopOnly } from "../core/device-guard.js";
 
 const API_BASE = "/_admin_api";
 const TOOLS_MANIFEST = "/settings-tools/tools.json";
@@ -59,6 +60,7 @@ let toolsOptions = null;
 let pollTimer = null;
 let countdownTimer = null;
 let formDirty = false;
+let topbarSync = null;
 const MODE_ORDER = ["message", "returnAt", "countdown"];
 const MODE_TO_INDEX = {
   message: 0,
@@ -300,6 +302,10 @@ function startCountdownTimer() {
 async function loadState() {
   try {
     const res = await apiFetch(`${API_BASE}/state`, { method: "GET" });
+    if (res.status === 401) {
+      showAuth("settings.login.passwordTitle");
+      return;
+    }
     if (!res.ok) throw new Error("state fetch failed");
     const data = await res.json();
     applyState(data);
@@ -363,15 +369,15 @@ async function loadToolsManifest() {
     if (!data || !Array.isArray(data.tools)) throw new Error("invalid manifest");
     const items = data.tools
       .filter((t) => t && typeof t.title === "string" && typeof t.path === "string")
-      .map((t) => ({ value: t.path, label: t.title }));
+      .map((t) => ({ value: t.path, label: labelFromPath(t.path) }));
     if (items.length) return items;
   } catch {
     // fall back to static list
   }
   return [
-    { value: "/settings-tools/editor_5x7.html", label: t("settings.tools.editor5x7") },
-    { value: "/settings-tools/exporterandeditor", label: t("settings.tools.exporterEditor") },
-    { value: "/settings-tools/kora-builder", label: t("settings.tools.koraBuilder") },
+    { value: "/settings-tools/editor_5x7.html", label: labelFromPath("/settings-tools/editor_5x7.html") },
+    { value: "/settings-tools/exporterandeditor.html", label: labelFromPath("/settings-tools/exporterandeditor.html") },
+    { value: "/settings-tools/kora-builder.html", label: labelFromPath("/settings-tools/kora-builder.html") },
   ];
 }
 
@@ -398,6 +404,7 @@ function openTool(path) {
   if (els.mainWrap) els.mainWrap.classList.add("is-hidden");
   if (els.footer) els.footer.classList.add("is-hidden");
   document.body.classList.add("tools-fullscreen");
+  syncTopbarHeight();
 }
 
 function closeTools() {
@@ -409,6 +416,19 @@ function closeTools() {
   if (els.footer) els.footer.classList.remove("is-hidden");
   document.body.classList.remove("tools-fullscreen");
   if (uiSelect) uiSelect.setValue("", { silent: true });
+  syncTopbarHeight();
+}
+
+function labelFromPath(pathname) {
+  const raw = pathname.split("/").pop() || pathname;
+  return raw.replace(/\.html$/i, "");
+}
+
+function syncTopbarHeight() {
+  const topbar = document.querySelector(".topbar");
+  if (!topbar) return;
+  const h = Math.ceil(topbar.getBoundingClientRect().height || 0);
+  document.body.style.setProperty("--topbar-h", `${h}px`);
 }
 
 function wireEvents() {
@@ -521,6 +541,7 @@ function wireEvents() {
       showPanel();
       formDirty = false;
       await loadState();
+      if (!pollTimer) pollTimer = setInterval(loadState, POLL_MS);
     } catch {
       setText(els.loginError, t("settings.login.loginInvalid"));
     }
@@ -529,6 +550,9 @@ function wireEvents() {
 
 (async () => {
   await initI18n({ withSwitcher: true, apply: true });
+  guardDesktopOnly({ maxWidth: 980 });
+  syncTopbarHeight();
+  window.addEventListener("resize", syncTopbarHeight);
   startCountdownTimer();
   await initToolsSelect();
   wireEvents();
@@ -538,9 +562,8 @@ function wireEvents() {
   if (ok) {
     showPanel();
     await loadState();
+    pollTimer = setInterval(loadState, POLL_MS);
   } else {
     showAuth("settings.login.passwordTitle");
   }
-
-  pollTimer = setInterval(loadState, POLL_MS);
 })();
