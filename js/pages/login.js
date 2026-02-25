@@ -44,9 +44,9 @@ const btnUsernameSave = $("#btnUsernameSave");
 const setupTitleEl = setupCard?.querySelector(".setup-title");
 const setupSubEl = setupCard?.querySelector(".setup-sub");
 const baseUrls = document.body?.dataset || {};
-const confirmUrl = baseUrls.confirmUrl || "confirm.html";
-const resetUrl = baseUrls.resetUrl || "reset.html";
-const builderUrl = baseUrls.builderUrl || "builder.html";
+const confirmUrl = baseUrls.confirmUrl || "confirm";
+const resetUrl = baseUrls.resetUrl || "reset";
+const builderUrl = baseUrls.builderUrl || "builder";
 const pollsUrl = baseUrls.pollsUrl;
 const subscriptionsUrl = baseUrls.subscriptionsUrl;
 const captchaProvider = String(baseUrls.captchaProvider || "hcaptcha").trim().toLowerCase();
@@ -546,7 +546,7 @@ const guestExpired = params.get("guest_expired") === "1";
 const forceAuth = params.get("force_auth") === "1";
 
 function buildAuthRedirect(page) {
-  // page: "confirm.html" | "reset.html" (może być też "/confirm.html")
+  // page: "confirm" | "reset" (może być też "/confirm")
   const p = String(page || "").trim();
 
   // Wymuś ścieżkę absolutną w obrębie tego samego origin
@@ -661,7 +661,7 @@ async function handlePendingEmailResend(emailAddr, pendingIntent) {
   }
 
   const language = getUiLang();
-  const redirect = new URL("/confirm.html", location.origin);
+  const redirect = new URL("/confirm", location.origin);
   redirect.searchParams.set("lang", language);
   redirect.searchParams.set("to", emailAddr);
 
@@ -949,7 +949,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
           // No guest session found: fall back to email_change resend.
           const language = getUiLang();
-          const confirmUrl2 = new URL("/confirm.html", location.origin);
+          const confirmUrl2 = new URL("/confirm", location.origin);
           confirmUrl2.searchParams.set("lang", language);
           confirmUrl2.searchParams.set("to", mail);
 

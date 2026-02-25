@@ -11,10 +11,10 @@ async function redirectIfSession() {
       // If the account exists but has no real username yet (or has a placeholder like guest_000000),
       // force the username setup flow on login page instead of jumping to builder.
       if (!user.username) {
-        location.replace(withLangParam("login.html?setup=username"));
+        location.replace(withLangParam("login?setup=username"));
         return true;
       }
-      location.replace(withLangParam("builder.html"));
+      location.replace(withLangParam("builder"));
       return true;
     }
   } catch (e) {
@@ -232,7 +232,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // CTA
   const cta = document.getElementById("ctaStart");
-  if (cta) cta.href = withLangParam("login.html");
+  if (cta) cta.href = withLangParam("login");
 
   // Images for current language
   const lang = getUiLang();

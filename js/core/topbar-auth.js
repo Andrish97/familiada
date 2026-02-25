@@ -7,7 +7,7 @@ export function initTopbarAuthButton({
   btn = document.getElementById("btnLogout"),
   logoutI18nKey = "builder.nav.logout",
   guestI18nKey = "common.authEntry",
-  loginHref = "login.html",
+  loginHref = "login",
 } = {}) {
   if (!btn) return { guestMode: false };
 
@@ -34,13 +34,13 @@ export function initTopbarAuthButton({
 
 function resolveLogoutKeyByPath(pathname = "") {
   const p = String(pathname || "").toLowerCase();
-  if (p.endsWith("/bases.html")) return "bases.logout";
-  if (p.endsWith("/polls-hub.html")) return "pollsHubPolls.logout";
-  if (p.endsWith("/subscriptions.html")) return "pollsHubSubscriptions.logout";
-  if (p.endsWith("/polls.html")) return "polls.logout";
-  if (p.endsWith("/editor.html")) return "editor.logout";
-  if (p.endsWith("/manual.html")) return "manual.logout";
-  if (p.endsWith("/privacy.html")) return "privacy.logout";
+  if (p.endsWith("/bases")) return "bases.logout";
+  if (p.endsWith("/polls-hub")) return "pollsHubPolls.logout";
+  if (p.endsWith("/subscriptions")) return "pollsHubSubscriptions.logout";
+  if (p.endsWith("/polls")) return "polls.logout";
+  if (p.endsWith("/editor")) return "editor.logout";
+  if (p.endsWith("/manual")) return "manual.logout";
+  if (p.endsWith("/privacy")) return "privacy.logout";
   return "builder.nav.logout";
 }
 

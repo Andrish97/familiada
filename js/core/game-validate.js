@@ -150,7 +150,7 @@ export async function validatePollEntry(gameId) {
     return { ok: false, reason: "Preparowany nie ma sondażu." };
   }
 
-  // wejście do polls.html dozwolone w każdym stanie (dla tych dwóch typów)
+  // wejście do polls dozwolone w każdym stanie (dla tych dwóch typów)
   return { ok: true, reason: "" };
 }
 

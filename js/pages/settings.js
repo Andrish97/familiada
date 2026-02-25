@@ -15,6 +15,7 @@ import { confirmModal, alertModal } from "../core/modal.js";
 import { initUiSelect } from "../core/ui-select.js";
 
 const API_BASE = "/_admin_api";
+const TOOLS_MANIFEST = "/settings-tools/tools.json";
 const POLL_MS = 15000;
 const MINUTES_MIN = 10;
 
@@ -29,13 +30,14 @@ const els = {
   btnLogout: document.getElementById("btnLogout"),
   btnRefresh: document.getElementById("btnRefresh"),
   btnStartStop: document.getElementById("btnStartStop"),
-  btnBypassOn: document.getElementById("btnBypassOn"),
-  btnBypassOff: document.getElementById("btnBypassOff"),
+  bypassToggle: document.getElementById("bypassToggle"),
   statusValue: document.getElementById("statusValue"),
-  modeSwitch: document.getElementById("modeSwitch"),
+  modeSlider: document.getElementById("modeSlider"),
+  modeLabels: document.getElementById("modeLabels"),
   modeMessage: document.getElementById("modeMessage"),
   modeReturnAt: document.getElementById("modeReturnAt"),
   modeCountdown: document.getElementById("modeCountdown"),
+  modeSliderWrap: document.getElementById("modeSliderWrap"),
   returnAtInput: document.getElementById("returnAtInput"),
   endAtInput: document.getElementById("endAtInput"),
   countdownNow: document.getElementById("countdownNow"),
@@ -43,6 +45,9 @@ const els = {
   toolsFrame: document.getElementById("toolsFrame"),
   toolsSelect: document.getElementById("toolsSelect"),
   btnTabMaintenance: document.getElementById("btnTabMaintenance"),
+  mainWrap: document.querySelector("main.wrap"),
+  footer: document.querySelector("footer.footer"),
+  maintenancePanel: document.querySelector(".maintenance-panel"),
   toast: document.getElementById("toast"),
 };
 
@@ -50,8 +55,16 @@ let currentState = null;
 let currentMode = "message";
 let toastTimer = null;
 let uiSelect = null;
+let toolsOptions = null;
 let pollTimer = null;
 let countdownTimer = null;
+let formDirty = false;
+const MODE_ORDER = ["message", "returnAt", "countdown"];
+const MODE_TO_INDEX = {
+  message: 0,
+  returnAt: 1,
+  countdown: 2
+};
 
 function setText(el, value) {
   if (el) el.textContent = value;
@@ -177,8 +190,14 @@ async function ensureMinDate(input) {
 
 function setMode(mode) {
   currentMode = mode;
-  for (const btn of els.modeSwitch.querySelectorAll(".mode-btn")) {
-    btn.classList.toggle("active", btn.dataset.mode === mode);
+  if (els.modeSlider) {
+    const idx = MODE_TO_INDEX[mode] ?? 0;
+    els.modeSlider.value = String(idx);
+  }
+  if (els.modeLabels) {
+    els.modeLabels.querySelectorAll(".mode-label").forEach((label) => {
+      label.classList.toggle("active", label.dataset.mode === mode);
+    });
   }
   if (els.modeMessage) els.modeMessage.hidden = mode !== "message";
   if (els.modeReturnAt) els.modeReturnAt.hidden = mode !== "returnAt";
@@ -186,12 +205,21 @@ function setMode(mode) {
 }
 
 function setLocked(locked) {
-  els.modeSwitch.querySelectorAll(".mode-btn").forEach((btn) => {
-    btn.disabled = locked;
-  });
+  if (els.modeSlider) {
+    els.modeSlider.disabled = locked;
+  }
+  if (els.modeSliderWrap) {
+    els.modeSliderWrap.classList.toggle("is-locked", locked);
+  }
+  if (els.modeLabels) {
+    els.modeLabels.classList.toggle("is-disabled", locked);
+  }
   if (els.returnAtInput) els.returnAtInput.disabled = locked;
   if (els.endAtInput) els.endAtInput.disabled = locked;
   if (els.btnRefresh) els.btnRefresh.disabled = false;
+  if (els.maintenancePanel) {
+    els.maintenancePanel.classList.toggle("is-locked", locked);
+  }
 }
 
 function updateStatus(state) {
@@ -217,6 +245,11 @@ function updateStartStop(state) {
 }
 
 function applyState(state) {
+  if (formDirty) {
+    updateStatus(state);
+    updateStartStop(state);
+    return;
+  }
   currentState = state;
   const mode = state?.mode || "message";
   setMode(mode === "off" ? "message" : mode);
@@ -322,16 +355,32 @@ async function setBypass(state) {
   }
 }
 
-function initToolsSelect() {
-  const options = [
-    { value: "", label: t("settings.tools.placeholder") },
+async function loadToolsManifest() {
+  try {
+    const res = await fetch(TOOLS_MANIFEST, { cache: "no-store" });
+    if (!res.ok) throw new Error("manifest fetch failed");
+    const data = await res.json();
+    if (!data || !Array.isArray(data.tools)) throw new Error("invalid manifest");
+    const items = data.tools
+      .filter((t) => t && typeof t.title === "string" && typeof t.path === "string")
+      .map((t) => ({ value: t.path, label: t.title }));
+    if (items.length) return items;
+  } catch {
+    // fall back to static list
+  }
+  return [
     { value: "/settings-tools/editor_5x7.html", label: t("settings.tools.editor5x7") },
-    { value: "/settings-tools/exporterandeditor.html", label: t("settings.tools.exporterEditor") },
-    { value: "/settings-tools/kora-builder.html", label: t("settings.tools.koraBuilder") },
+    { value: "/settings-tools/exporterandeditor", label: t("settings.tools.exporterEditor") },
+    { value: "/settings-tools/kora-builder", label: t("settings.tools.koraBuilder") },
   ];
+}
+
+async function initToolsSelect() {
+  const items = await loadToolsManifest();
+  toolsOptions = [{ value: "", label: t("settings.tools.placeholder") }, ...items];
 
   uiSelect = initUiSelect(els.toolsSelect, {
-    options,
+    options: toolsOptions,
     value: "",
     placeholder: t("settings.tabs.tools"),
     onChange: (val) => {
@@ -345,21 +394,53 @@ function openTool(path) {
   if (!els.toolsShell || !els.toolsFrame) return;
   els.toolsShell.hidden = false;
   els.toolsFrame.src = path;
-  els.panelScreen.hidden = true;
+  if (els.panelScreen) els.panelScreen.hidden = true;
+  if (els.mainWrap) els.mainWrap.classList.add("is-hidden");
+  if (els.footer) els.footer.classList.add("is-hidden");
+  document.body.classList.add("tools-fullscreen");
 }
 
 function closeTools() {
   if (!els.toolsShell || !els.toolsFrame) return;
   els.toolsFrame.src = "about:blank";
   els.toolsShell.hidden = true;
-  els.panelScreen.hidden = false;
+  if (els.panelScreen) els.panelScreen.hidden = false;
+  if (els.mainWrap) els.mainWrap.classList.remove("is-hidden");
+  if (els.footer) els.footer.classList.remove("is-hidden");
+  document.body.classList.remove("tools-fullscreen");
   if (uiSelect) uiSelect.setValue("", { silent: true });
 }
 
 function wireEvents() {
-  els.modeSwitch.querySelectorAll(".mode-btn").forEach((btn) => {
-    btn.addEventListener("click", () => setMode(btn.dataset.mode));
-  });
+  const markDirty = () => {
+    formDirty = true;
+  };
+
+  if (els.returnAtInput) {
+    els.returnAtInput.addEventListener("input", markDirty);
+  }
+  if (els.endAtInput) {
+    els.endAtInput.addEventListener("input", markDirty);
+  }
+  if (els.modeSlider) {
+    els.modeSlider.addEventListener("input", markDirty);
+  }
+
+  if (els.modeSlider) {
+    els.modeSlider.addEventListener("input", () => {
+      const idx = Number(els.modeSlider.value) || 0;
+      setMode(MODE_ORDER[idx] || "message");
+    });
+  }
+  if (els.modeLabels) {
+    els.modeLabels.querySelectorAll(".mode-label").forEach((label) => {
+      label.addEventListener("click", () => {
+        if (els.modeSlider?.disabled) return;
+        const mode = label.dataset.mode || "message";
+        setMode(mode);
+      });
+    });
+  }
 
   if (els.btnStartStop) {
     els.btnStartStop.addEventListener("click", async () => {
@@ -368,18 +449,22 @@ function wireEvents() {
       } else {
         await startMaintenance();
       }
+      formDirty = false;
     });
   }
 
   if (els.btnRefresh) {
-    els.btnRefresh.addEventListener("click", loadState);
+    els.btnRefresh.addEventListener("click", async () => {
+      formDirty = false;
+      await loadState();
+    });
   }
 
-  if (els.btnBypassOn) {
-    els.btnBypassOn.addEventListener("click", () => setBypass("on"));
-  }
-  if (els.btnBypassOff) {
-    els.btnBypassOff.addEventListener("click", () => setBypass("off"));
+  if (els.bypassToggle) {
+    els.bypassToggle.addEventListener("change", async () => {
+      const state = els.bypassToggle.checked ? "on" : "off";
+      await setBypass(state);
+    });
   }
 
   if (els.returnAtInput) {
@@ -434,6 +519,7 @@ function wireEvents() {
       });
       if (!res.ok) throw new Error("login failed");
       showPanel();
+      formDirty = false;
       await loadState();
     } catch {
       setText(els.loginError, t("settings.login.loginInvalid"));
@@ -444,7 +530,7 @@ function wireEvents() {
 (async () => {
   await initI18n({ withSwitcher: true, apply: true });
   startCountdownTimer();
-  initToolsSelect();
+  await initToolsSelect();
   wireEvents();
   showAuth("settings.login.checking");
 

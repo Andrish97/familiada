@@ -66,7 +66,7 @@ function wireTabs() {
 }
 
 function normalizeRetTarget(rawRet) {
-  const fallback = withLangParam("builder.html");
+  const fallback = withLangParam("builder");
   const trimmed = String(rawRet || "").trim();
   if (!trimmed) return fallback;
 
@@ -74,7 +74,7 @@ function normalizeRetTarget(rawRet) {
     const target = new URL(trimmed, location.origin + "/");
     if (target.origin !== location.origin) return fallback;
     const rel = `${target.pathname.replace(/^\/+/, "")}${target.search}${target.hash}`;
-    return withLangParam(rel || "builder.html");
+    return withLangParam(rel || "builder");
   } catch {
     return fallback;
   }
@@ -89,7 +89,7 @@ function getRetPathnameLower() {
   try {
     return new URL(decodeRet(), location.href).pathname.toLowerCase();
   } catch {
-    return "/builder.html";
+    return "/builder";
   }
 }
 
@@ -107,15 +107,15 @@ function applyControlModalLayout() {
 
 function shouldShowDemoTab() {
   const retPath = getRetPathnameLower();
-  return retPath.endsWith("/builder.html");
+  return retPath.endsWith("/builder");
 }
 
 function buildPrivacyUrl() {
-  const url = new URL("privacy.html", location.href);
+  const url = new URL("privacy", location.href);
   url.searchParams.set("ret", decodeRet());
   if (isControlModal()) url.searchParams.set("modal", "control");
   url.searchParams.set("lang", new URLSearchParams(location.search).get("lang") || localStorage.getItem("uiLang") || "pl");
-  const manualPath = `${location.pathname.split("/").pop() || "manual.html"}${location.search}${location.hash}`;
+  const manualPath = `${location.pathname.split("/").pop() || "manual"}${location.search}${location.hash}`;
   url.searchParams.set("man", manualPath);
   return url.toString();
 }
@@ -123,14 +123,14 @@ function buildPrivacyUrl() {
 
 function resolveBackLabelKey() {
   const retPath = getRetPathnameLower();
-  if (retPath.endsWith("/base-explorer/base-explorer.html")) return "manual.backToBaseManager";
-  if (retPath.endsWith("/bases.html")) return "baseExplorer.backToBases";
-  if (retPath.endsWith("/logo-editor/logo-editor.html")) return "manual.backToLogos";
-  if (retPath.endsWith("/editor.html")) return "manual.backToEditor";
-  if (retPath.endsWith("/polls.html")) return "manual.backToPoll";
-  if (retPath.endsWith("/subscriptions.html")) return "manual.backToSubscriptions";
-  if (retPath.endsWith("/account.html")) return "manual.backToAccount";
-  if (retPath.endsWith("/polls-hub.html")) return "polls.backToHub";
+  if (retPath.endsWith("/base-explorer")) return "manual.backToBaseManager";
+  if (retPath.endsWith("/bases")) return "baseExplorer.backToBases";
+  if (retPath.endsWith("/logo-editor")) return "manual.backToLogos";
+  if (retPath.endsWith("/editor")) return "manual.backToEditor";
+  if (retPath.endsWith("/polls")) return "manual.backToPoll";
+  if (retPath.endsWith("/subscriptions")) return "manual.backToSubscriptions";
+  if (retPath.endsWith("/account")) return "manual.backToAccount";
+  if (retPath.endsWith("/polls-hub")) return "polls.backToHub";
   return "manual.backToGames";
 }
 
@@ -168,13 +168,13 @@ async function wireDemoActions(user) {
     if (!ok) return;
 
     await resetUserDemoFlag(user.id, true);
-    location.href = "./builder.html";
+    location.href = "./builder";
   });
 }
 
 async function wireAuthSoft() {
   const { requireAuth } = await import("../core/auth.js");
-  const user = await requireAuth("login.html");
+  const user = await requireAuth("login");
 
   const who = byId("who");
   if (who) who.textContent = user?.username || user?.email || "—";

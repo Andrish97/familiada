@@ -91,7 +91,7 @@ function addAction(label, kind, handler) {
 }
 
 function redirectToLogin() {
-  const url = new URL("login.html", location.href);
+  const url = new URL("login", location.href);
   url.searchParams.set("from", "poll-go");
   url.searchParams.set("next", taskToken ? "polls-hub" : "subscriptions");
   if (taskToken) url.searchParams.set("t", taskToken);
@@ -100,7 +100,7 @@ function redirectToLogin() {
 }
 
 function redirectToHub() {
-  const hubPage = taskToken ? "polls-hub.html" : "subscriptions.html";
+  const hubPage = taskToken ? "polls-hub" : "subscriptions";
   const url = new URL(hubPage, location.href);
   if (taskToken) url.searchParams.set("t", taskToken);
   if (subToken) url.searchParams.set("s", subToken);
@@ -162,7 +162,7 @@ async function hydrateInviteIdentity(data) {
 }
 
 function openVote(type) {
-  const page = type === "poll_points" ? "poll-points.html" : "poll-text.html";
+  const page = type === "poll_points" ? "poll-points" : "poll-text";
   location.href = `${page}?t=${encodeURIComponent(goToken)}`;
 }
 

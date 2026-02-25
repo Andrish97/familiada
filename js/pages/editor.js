@@ -490,7 +490,7 @@ function setTxtImportProgress({ step, i, n, msg, isError } = {}) {
 /* ================= Boot ================= */
 async function boot() {
   /* ---------- auth/topbar ---------- */
-  const user = await requireAuth("login.html");
+  const user = await requireAuth("login");
   const who = $("who");
   if (who) who.textContent = user?.username || user?.email || t("control.dash");
 
@@ -501,12 +501,12 @@ async function boot() {
       leaveQuestionEditor();
       return;
     }
-    location.href = "builder.html";
+    location.href = "builder";
   });
 
 
   $("btnManual")?.addEventListener("click", () => {
-    const url = new URL("manual.html", location.href);
+    const url = new URL("manual", location.href);
     const ret = `${location.pathname.split("/").pop() || ""}${location.search}${location.hash}`;
     url.searchParams.set("ret", ret);
     location.href = url.toString();
@@ -518,7 +518,7 @@ async function boot() {
   const gameId = getIdFromQuery();
   if (!gameId) {
     void alertModal({ text: t("editor.alert.missingId") });
-    location.href = "builder.html";
+    location.href = "builder";
     return;
   }
 
@@ -528,14 +528,14 @@ async function boot() {
   const editInfo = canEnterEdit(game);
   if (!editInfo?.ok) {
     void alertModal({ text: editInfo?.reason || MSG.cannotEdit() });
-    location.href = "builder.html";
+    location.href = "builder";
     return;
   }
 
   if (editInfo.needsResetWarning) {
     const ok = await confirmModal({ text: MSG.resetPollConfirm() });
     if (!ok) {
-      location.href = "builder.html";
+      location.href = "builder";
       return;
     }
     await resetPollForEditing(gameId);

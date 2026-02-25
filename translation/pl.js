@@ -952,7 +952,7 @@ const pl = {
     },
     empty: {
       title: "Brak gry",
-      meta: "Otwórz stronę z parametrem <b>polls.html?id=...</b>.",
+      meta: "Otwórz stronę z parametrem <b>polls?id=...</b>.",
     },
     meta: {
       pollText:
@@ -4184,9 +4184,8 @@ const pl = {
     bypass: {
       title: "Bypass",
       subtitle: "Pomiń maintenance dla admina",
-      on: "Bypass ON",
-      off: "Bypass OFF",
-      hint: "Ustawia cookie admina na 30 dni.",
+      label: "Włącz bypass",
+      desc: "(Strona będzie działać normalnie bez komunikatu prac.) Ustawia cookie admina na 30 dni. Działa tylko w tej przeglądarce.",
     },
     tools: {
       title: "Narzędzia",

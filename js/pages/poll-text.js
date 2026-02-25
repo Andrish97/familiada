@@ -204,7 +204,7 @@ async function maybeReturnToHub(){
   try{
     const u = await getUser();
     if (!u) return;
-    setTimeout(() => { location.href = "polls-hub.html"; }, 650);
+    setTimeout(() => { location.href = "polls-hub"; }, 650);
   }catch{}
 }
 

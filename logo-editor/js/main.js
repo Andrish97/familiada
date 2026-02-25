@@ -28,7 +28,7 @@ const TILES_Y = 10;
 const DOT_W = 150; // 30*5
 const DOT_H = 70;  // 10*7
 
-// UWAGA: to sa sciezki wzgledne wobec logo-editor/logo-editor.html
+// UWAGA: to sa sciezki wzgledne wobec logo-editor
 // (ustalone, nie zgadujemy)
 const FONT_3x10_URL = "../display/font_3x10.json";
 const FONT_5x7_URL  = "../display/font_5x7.json";
@@ -1063,7 +1063,7 @@ function updateEditorHeader() {
 }
 
 function buildManualPageUrl() {
-  const url = new URL("../manual.html", location.href);
+  const url = new URL("../manual", location.href);
   const ret = `${location.pathname.split("/").slice(-2).join("/")}${location.search}${location.hash}`;
   url.searchParams.set("ret", ret);
   url.searchParams.set("lang", getUiLang() || "pl");
@@ -1071,7 +1071,7 @@ function buildManualPageUrl() {
 }
 
 function buildHelpUrl() {
-  const url = new URL("../manual.html", location.href);
+  const url = new URL("../manual", location.href);
   const ret = `${location.pathname.split("/").slice(-2).join("/")}${location.search}${location.hash}`;
   url.searchParams.set("ret", ret);
   url.searchParams.set("modal", "control");
@@ -1279,7 +1279,7 @@ async function boot(){
      renderList();
    });
 
-   currentUser = await requireAuth(withLangParam("../login.html"));
+   currentUser = await requireAuth(withLangParam("../login"));
    guestMode = isGuestUser(currentUser);
    if (who) who.textContent = currentUser?.username || currentUser?.email || "—";
    if (btnLogout) {
@@ -1320,7 +1320,7 @@ async function boot(){
   // topbar
    btnBack?.addEventListener("click", async () => {
      if (shouldBlockNav() && !(await confirmCloseIfDirty())) return;
-     location.href = withLangParam("../builder.html");
+     location.href = withLangParam("../builder");
    });
 
    btnCloseEditor?.addEventListener("click", async () => {
@@ -1345,11 +1345,11 @@ async function boot(){
        if (!ok) return;
      }
      if (guestMode) {
-       location.href = withLangParam("../login.html");
+       location.href = withLangParam("../login");
        return;
      }
      await signOut();
-     location.href = withLangParam("../login.html");
+     location.href = withLangParam("../login");
    });
 
    inpImportLogoFile?.addEventListener("change", async () => {

@@ -122,11 +122,11 @@ export function createDevices({ game, ui, store, chDisplay, chHost, chBuzzer }) 
 
   function buildUrls(lang) {
     const targetLang = lang || getUiLang();
-    const displayUrl = makeUrl("../display/display.html", game.id, game.share_key_display, {
+    const displayUrl = makeUrl("../display", game.id, game.share_key_display, {
       lang: targetLang,
     });
-    const hostUrl = makeUrl("../host.html", game.id, game.share_key_host, { lang: targetLang });
-    const buzzerUrl = makeUrl("../buzzer.html", game.id, game.share_key_buzzer || "", { lang: targetLang });
+    const hostUrl = makeUrl("../host", game.id, game.share_key_host, { lang: targetLang });
+    const buzzerUrl = makeUrl("../buzzer", game.id, game.share_key_buzzer || "", { lang: targetLang });
     return { displayUrl, hostUrl, buzzerUrl };
   }
 

@@ -29,7 +29,7 @@ function getRetPathnameLower() {
 }
 
 function getCurrentRelativeUrl() {
-  return `${location.pathname.split("/").pop() || "polls-hub.html"}${location.search}${location.hash}`;
+  return `${location.pathname.split("/").pop() || "polls-hub"}${location.search}${location.hash}`;
 }
 
 const who = $("who");
@@ -465,7 +465,7 @@ function renderTasks() {
           await alertModal({ text: MSG.loadHubFail() });
           return;
         }
-        const page = task.poll_type === "poll_points" ? "poll-points.html" : "poll-text.html";
+        const page = task.poll_type === "poll_points" ? "poll-points" : "poll-text";
         location.href = `${page}?t=${encodeURIComponent(task.token)}&lang=${encodeURIComponent(getUiLang() || "pl")}`;
       });
       listEl.appendChild(item);
@@ -497,7 +497,7 @@ async function openPoll(poll) {
     await alertModal({ text: MSG.pollReadyAlert() });
     return;
   }
-  location.href = `polls.html?id=${encodeURIComponent(poll.game_id)}&ret=${encodeURIComponent(getCurrentRelativeUrl())}`;
+  location.href = `polls?id=${encodeURIComponent(poll.game_id)}&ret=${encodeURIComponent(getCurrentRelativeUrl())}`;
 }
 
 function setActiveMobileTab(tab) {
@@ -694,7 +694,7 @@ async function buildMailItemsForTasksFallback({ gameId, ownerId, selectedSubIds 
     const userKey = sub.subscriber_user_id ? String(sub.subscriber_user_id) : "";
     const token = (userKey ? tokenByKey.get(userKey) : null) || (emailKey ? tokenByKey.get(emailKey) : null);
     if (!token || !emailKey) continue;
-    mailItems.push({ task_id: taskIdByToken.get(String(token)) || null, to: emailKey, link: `poll-go.html?t=${encodeURIComponent(token)}&lang=${encodeURIComponent(getUiLang() || "pl")}` });
+    mailItems.push({ task_id: taskIdByToken.get(String(token)) || null, to: emailKey, link: `poll-go?t=${encodeURIComponent(token)}&lang=${encodeURIComponent(getUiLang() || "pl")}` });
   }
   return mailItems;
 }
@@ -993,7 +993,7 @@ async function refreshData() {
       if (found) {
         const ok = await confirmModal({ text: MSG.focusTaskPrompt() });
         if (ok) {
-          const page = found.poll_type === "poll_points" ? "poll-points.html" : "poll-text.html";
+          const page = found.poll_type === "poll_points" ? "poll-points" : "poll-text";
           location.href = `${page}?t=${encodeURIComponent(focusTaskToken)}&lang=${encodeURIComponent(getUiLang() || "pl")}`;
         }
       }
@@ -1016,7 +1016,7 @@ async function refreshData() {
 
 
 function buildManualUrl() {
-  const url = new URL("manual.html", location.href);
+  const url = new URL("manual", location.href);
   url.searchParams.set("ret", getCurrentRelativeUrl());
   url.searchParams.set("lang", getUiLang() || "pl");
   return url.toString();
@@ -1026,20 +1026,20 @@ function buildManualUrl() {
 function updateBackButtonLabel() {
   if (!btnBack) return;
   const retPath = getRetPathnameLower();
-  btnBack.textContent = retPath.endsWith("/bases.html")
+  btnBack.textContent = retPath.endsWith("/bases")
     ? t("baseExplorer.backToBases")
     : t("pollsHubPolls.backToGames");
 }
 
 function getBackLink() {
   const rawRet = getRetParam();
-  return rawRet || "builder.html";
+  return rawRet || "builder";
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
-  currentUser = await requireAuth("login.html");
+  currentUser = await requireAuth("login");
   if (isGuestUser(currentUser)) {
-    showGuestBlockedOverlay({ backHref: "builder.html", loginHref: "login.html?force_auth=1", showLoginButton: true });
+    showGuestBlockedOverlay({ backHref: "builder", loginHref: "login?force_auth=1", showLoginButton: true });
     return;
   }
   who.textContent = currentUser?.username || currentUser?.email || "—";
@@ -1078,7 +1078,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   updateBackButtonLabel();
   btnBack?.addEventListener("click", () => { location.href = getBackLink(); });
   btnManual?.addEventListener("click", () => { location.href = buildManualUrl(); });
-  btnGoAlt?.addEventListener("click", () => { location.href = `subscriptions.html?ret=${encodeURIComponent(getCurrentRelativeUrl())}`; });
+  btnGoAlt?.addEventListener("click", () => { location.href = `subscriptions?ret=${encodeURIComponent(getCurrentRelativeUrl())}`; });
 
   window.addEventListener("i18n:lang", () => {
     renderSelect(sortPollsDesktop, "polls");

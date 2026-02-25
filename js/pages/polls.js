@@ -54,7 +54,7 @@ let game = null;
 let textCloseModel = null;
 let uiTextCloseOpen = false;
 
-const backTarget = ret || "builder.html";
+const backTarget = ret || "builder";
 
 
 function getRetPathnameLower() {
@@ -67,8 +67,8 @@ function getRetPathnameLower() {
 }
 
 function buildManualUrl() {
-  const url = new URL("manual.html", location.href);
-  const current = `${location.pathname.split("/").pop() || "polls.html"}${location.search}${location.hash}`;
+  const url = new URL("manual", location.href);
+  const current = `${location.pathname.split("/").pop() || "polls"}${location.search}${location.hash}`;
   url.searchParams.set("ret", current);
   const lang = (new URLSearchParams(location.search).get("lang") || localStorage.getItem("uiLang") || "pl");
   url.searchParams.set("lang", lang);
@@ -226,9 +226,9 @@ function pollLink(g) {
   if (!g) return "";
   const base =
     g.type === TYPES.POLL_TEXT
-      ? "poll-text.html"
+      ? "poll-text"
       : g.type === TYPES.POLL_POINTS
-      ? "poll-points.html"
+      ? "poll-points"
       : "";
   if (!base) return "";
 
@@ -998,11 +998,11 @@ async function refresh() {
 ======================= */
 
 document.addEventListener("DOMContentLoaded", async () => {
-  const u = await requireAuth("login.html");
+  const u = await requireAuth("login");
   if (who) who.textContent = u?.username || u?.email || "—";
 
   if (btnBack) {
-    btnBack.textContent = getRetPathnameLower().endsWith("/polls-hub.html") ? t("polls.backToHub") : t("polls.backToGames");
+    btnBack.textContent = getRetPathnameLower().endsWith("/polls-hub") ? t("polls.backToHub") : t("polls.backToGames");
   }
 
   btnManual?.addEventListener("click", () => {
@@ -1059,7 +1059,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   btnOpenQr?.addEventListener("click", () => {
     if (!pollLinkEl?.value) return;
 
-    const u1 = new URL(withLangParam("poll-qr.html"), location.href);
+    const u1 = new URL(withLangParam("poll-qr"), location.href);
     u1.searchParams.set("url", pollLinkEl.value);
     window.open(u1.toString(), "_blank", "noopener,noreferrer");
   });

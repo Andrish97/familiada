@@ -29,7 +29,7 @@ function getBaseIdFromUrl() {
 }
 
 function buildManualUrl() {
-  const url = new URL("../manual.html", location.href);
+  const url = new URL("../manual", location.href);
   const ret = `${location.pathname.split("/").slice(-2).join("/")}${location.search}${location.hash}`;
   url.searchParams.set("ret", ret);
   url.searchParams.set("lang", getUiLang() || "pl");
@@ -43,26 +43,26 @@ btnManual?.addEventListener("click", () => {
 
 btnBack?.addEventListener("click", () => {
   // powrót do listy baz (warstwa 1)
-  location.href = withLangParam("../bases.html");
+  location.href = withLangParam("../bases");
 });
 
 btnLogout?.addEventListener("click", async () => {
   await signOut();
-  location.href = withLangParam("../login.html");
+  location.href = withLangParam("../login");
 });
 
 /* ================= Init ================= */
 (async function init() {
   await initI18n({ withSwitcher: true });
   // auth
-  const user = await requireAuth(withLangParam("../login.html"));
+  const user = await requireAuth(withLangParam("../login"));
   if (who) who.textContent = user?.username || user?.email || "—";
 
   // base id z URL
   const baseId = getBaseIdFromUrl();
   if (!baseId) {
     void alertModal({ text: t("baseExplorer.errors.missingBaseId") });
-    location.href = withLangParam("../bases.html");
+    location.href = withLangParam("../bases");
     return;
   }
 
@@ -113,11 +113,11 @@ btnLogout?.addEventListener("click", async () => {
     // brak dostępu – wracamy do baz
     if (e?.code === "NO_ACCESS") {
       void alertModal({ text: t("baseExplorer.errors.noAccess") });
-      //location.href = "../bases.html";
+      //location.href = "../bases";
       return;
     }
 
     void alertModal({ text: t("baseExplorer.errors.loadFailed") });
-    //location.href = "../bases.html";
+    //location.href = "../bases";
   }
 })();

@@ -20,6 +20,8 @@
       <div class="brand">FAMILIADA</div>
     </div>
     <div class="topbar-section topbar-section-2">
+      <a class="btn sm" id="btnSupabase" href="https://supabase.familiada.online" target="_blank" rel="noopener" data-i18n="settings.actions.supabase">Supabase</a>
+      <a class="btn sm" id="btnServer" href="https://panel.familiada.online" target="_blank" rel="noopener" data-i18n="settings.actions.server">Serwer</a>
       <button class="btn sm" id="btnTabMaintenance" type="button" data-i18n="settings.tabs.maintenance">Prace techniczne</button>
       <div class="ui-select" id="toolsSelect">
         <button class="btn sm ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
@@ -42,10 +44,13 @@
           <div class="panel-sub" data-i18n="settings.maintenance.subtitle">Ustawienia strony maintenance</div>
         </div>
 
-        <div class="mode-switch" id="modeSwitch">
-          <button class="mode-btn" data-mode="message" type="button" data-i18n="settings.modes.message">Wiadomość</button>
-          <button class="mode-btn" data-mode="returnAt" type="button" data-i18n="settings.modes.returnAt">Do godziny</button>
-          <button class="mode-btn" data-mode="countdown" type="button" data-i18n="settings.modes.countdown">Odliczanie</button>
+        <div class="mode-slider" id="modeSliderWrap">
+          <input class="mode-range" id="modeSlider" type="range" min="0" max="2" step="1" value="0" aria-label="Maintenance mode"/>
+          <div class="mode-labels" id="modeLabels">
+            <span class="mode-label" data-mode="message" data-i18n="settings.modes.message">Wiadomość</span>
+            <span class="mode-label" data-mode="returnAt" data-i18n="settings.modes.returnAt">Do godziny</span>
+            <span class="mode-label" data-mode="countdown" data-i18n="settings.modes.countdown">Odliczanie</span>
+          </div>
         </div>
 
         <div class="mode-block" id="modeMessage">
@@ -84,19 +89,24 @@
         <div class="bypass-box">
           <div class="bypass-title" data-i18n="settings.bypass.title">Pomiń administratora</div>
           <div class="bypass-actions">
-            <button class="btn sm gold" id="btnBypassOn" type="button" data-i18n="settings.bypass.on">Bypass ON</button>
-            <button class="btn sm" id="btnBypassOff" type="button" data-i18n="settings.bypass.off">Bypass OFF</button>
+            <label class="toggle" for="bypassToggle">
+              <input type="checkbox" id="bypassToggle"/>
+              <span class="toggle-ui"></span>
+              <span class="toggle-label" data-i18n="settings.bypass.label">Włącz bypass</span>
+            </label>
           </div>
+          <div class="bypass-desc" data-i18n="settings.bypass.desc">Ustawia cookie admina na 30 dni. Działa tylko w tej przeglądarce.</div>
         </div>
       </div>
     </section>
 
-    <section class="tools-shell" id="toolsShell" hidden>
-      <div class="tools-frame-wrap">
-        <iframe id="toolsFrame" title="Tools" loading="lazy"></iframe>
-      </div>
-    </section>
   </main>
+
+  <section class="tools-shell" id="toolsShell" hidden>
+    <div class="tools-frame-wrap">
+      <iframe id="toolsFrame" title="Tools" loading="lazy"></iframe>
+    </div>
+  </section>
 
   <footer class="footer wrap">
     <span data-i18n="settings.footerLeft">Familiada — panel admina</span>

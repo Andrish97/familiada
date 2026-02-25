@@ -6,7 +6,7 @@ const GUEST_LOCAL_MARKER_KEY = "fam:guest:session_seen";
 const GUEST_DISCARD_RPC_MISSING_KEY = "fam:guest:discard_rpc_missing";
 
 function buildAuthRedirect(page, lang) {
-  // page: "confirm.html" | "reset.html" lub "/confirm.html"
+  // page: "confirm" | "reset" lub "/confirm"
   const p = String(page || "").trim();
   const path = p.startsWith("/") ? p : `/${p}`;
   const url = new URL(buildSiteUrl(path)); // buildSiteUrl zwraca absolutny URL w Twoim projekcie
@@ -282,7 +282,7 @@ export async function getUser() {
   }
 }
 
-export async function requireAuth(redirect = "login.html") {
+export async function requireAuth(redirect = "login") {
   const u = await getUser();
   if (!u) {
     location.href = withLangParam(redirect);
@@ -295,7 +295,7 @@ export async function requireAuth(redirect = "login.html") {
       const { data: expired } = await sb().rpc("guest_is_expired", { p_user_id: u.id });
       if (expired === true) {
         await sb().auth.signOut();
-        location.href = withLangParam("login.html?guest_expired=1");
+        location.href = withLangParam("login?guest_expired=1");
         return null;
       }
       await sb().rpc("guest_touch", { p_ttl_days: 5 });
@@ -307,12 +307,12 @@ export async function requireAuth(redirect = "login.html") {
   const username = await fetchUsername(u);
   // Guest accounts may not have a persisted username yet; do not bounce them.
   if (!username && !u?.is_guest) {
-    location.href = withLangParam("login.html?setup=username");
+    location.href = withLangParam("login?setup=username");
     return null;
   }
   // After guest -> registered upgrade, keep forcing a real username.
   if (!u?.is_guest && String(username || "").toLowerCase().startsWith("guest_")) {
-    location.href = withLangParam("login.html?setup=username&guest_username=1");
+    location.href = withLangParam("login?setup=username&guest_username=1");
     return null;
   }
   return { ...u, username };
@@ -340,7 +340,7 @@ export function clearGuestLocalMarker() {
 }
 
 export function guestAuthEntryUrl() {
-  return withLangParam("login.html?force_auth=1");
+  return withLangParam("login?force_auth=1");
 }
 
 export async function convertGuestToRegistered(email, password, language, captchaToken = null) {
@@ -360,7 +360,7 @@ export async function convertGuestToRegistered(email, password, language, captch
   };
   if (language) payload.data.language = language;
 
-  const confirmUrl = new URL(buildAuthRedirect("confirm.html", language));
+  const confirmUrl = new URL(buildAuthRedirect("confirm", language));
   confirmUrl.searchParams.set("to", mail);
 
   const options = { emailRedirectTo: confirmUrl.toString() };
@@ -395,7 +395,7 @@ export async function convertGuestToRegisteredEmailOnly(email, language, captcha
   };
   if (language) payload.data.language = language;
 
-  const confirmUrl = new URL(buildAuthRedirect("confirm.html", language));
+  const confirmUrl = new URL(buildAuthRedirect("confirm", language));
   confirmUrl.searchParams.set("to", mail);
 
   const options = { emailRedirectTo: confirmUrl.toString() };
@@ -479,7 +479,7 @@ export async function signUp(email, password, redirectTo, usernameInput, languag
   const userData = username ? { username } : null;
 
   // ✅ absolutny redirect + lang (bez withLangParam)
-  const emailRedirectTo = redirectTo || buildAuthRedirect("confirm.html", language);
+  const emailRedirectTo = redirectTo || buildAuthRedirect("confirm", language);
 
   const options = { emailRedirectTo };
   if (userData || language) {
@@ -547,7 +547,7 @@ export async function resetPassword(loginOrEmail, redirectTo, language, resolved
   const email = (resolvedEmail || await loginToEmail(loginOrEmail))?.toLowerCase?.() || "";
   if (!email) throw new Error(t("index.errResetMissingLogin"));
 
-  const resetRedirectTo = redirectTo || buildAuthRedirect("reset.html", language);
+  const resetRedirectTo = redirectTo || buildAuthRedirect("reset", language);
 
   const options = { redirectTo: resetRedirectTo };
   if (language) options.data = { language };

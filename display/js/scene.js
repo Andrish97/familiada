@@ -888,7 +888,7 @@ export async function createScene() {
   const outerLeft    = outer.x;
   const innerLeft    = inner.x;
 
-  // Podbijamy prostokąty stadionów do SVG (jeśli są w login.html)
+  // Podbijamy prostokąty stadionów do SVG (jeśli są w login)
   const outerOval = $("outerOval");
   if (outerOval) {
     outerOval.setAttribute("x", outer.x);
