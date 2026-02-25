@@ -1,63 +1,57 @@
 /*
 Settings panel (admin)
-- API endpoints:
-  GET  /maintenance-state.json  -> public state
-  GET  /_admin_api/state         -> admin state
-  POST /_admin_api/state         -> { enabled:boolean, mode:string, returnAt:string|null }
-  POST /_admin_api/off           -> shortcut to disable maintenance
-  GET  /_admin_api/me            -> 200 if Access or cookie auth, else 401
-  POST /_admin_api/login         -> { password }
-- Cloudflare Access: create a Self-hosted app for settings.familiada.online and
-  require a single allowed email. Access adds CF-Access-Jwt-Assertion header.
+- GET  /_admin_api/me
+- POST /_admin_api/login { username, password }
+- POST /_admin_api/logout
+- GET  /_admin_api/state
+- POST /_admin_api/state { enabled, mode, returnAt }
+- POST /_admin_api/off
+- POST /_admin_api/bypass
+- POST /_admin_api/bypass_off
 */
 
 import { initI18n, t } from "../../translation/translation.js";
-import { confirmModal } from "../core/modal.js";
+import { confirmModal, alertModal } from "../core/modal.js";
+import { initUiSelect } from "../core/ui-select.js";
 
 const API_BASE = "/_admin_api";
-const PUBLIC_STATE = "/maintenance-state.json";
+const POLL_MS = 15000;
+const MINUTES_MIN = 10;
 
 const els = {
   authScreen: document.getElementById("authScreen"),
   panelScreen: document.getElementById("panelScreen"),
-  panelActions: document.getElementById("panelActions"),
   authStatus: document.getElementById("authStatus"),
   loginForm: document.getElementById("loginForm"),
   loginUsername: document.getElementById("loginUsername"),
   loginPassword: document.getElementById("loginPassword"),
   loginError: document.getElementById("loginError"),
-  loginHint: document.getElementById("loginHint"),
-  btnRefresh: document.getElementById("btnRefresh"),
-  btnSave: document.getElementById("btnSave"),
   btnLogout: document.getElementById("btnLogout"),
-  enabledToggle: document.getElementById("enabledToggle"),
-  modeSelect: document.getElementById("modeSelect"),
-  returnAtInput: document.getElementById("returnAtInput"),
-  btnClearReturnAt: document.getElementById("btnClearReturnAt"),
-  returnAtWarn: document.getElementById("returnAtWarn"),
-  btnQuickOff: document.getElementById("btnQuickOff"),
-  btnQuickMessage: document.getElementById("btnQuickMessage"),
-  btnQuickReturnAt: document.getElementById("btnQuickReturnAt"),
-  btnQuickCountdown: document.getElementById("btnQuickCountdown"),
+  btnRefresh: document.getElementById("btnRefresh"),
+  btnStartStop: document.getElementById("btnStartStop"),
   btnBypassOn: document.getElementById("btnBypassOn"),
   btnBypassOff: document.getElementById("btnBypassOff"),
-  bypassHint: document.getElementById("bypassHint"),
+  statusValue: document.getElementById("statusValue"),
+  modeSwitch: document.getElementById("modeSwitch"),
+  modeMessage: document.getElementById("modeMessage"),
+  modeReturnAt: document.getElementById("modeReturnAt"),
+  modeCountdown: document.getElementById("modeCountdown"),
+  returnAtInput: document.getElementById("returnAtInput"),
+  endAtInput: document.getElementById("endAtInput"),
+  countdownNow: document.getElementById("countdownNow"),
   toolsShell: document.getElementById("toolsShell"),
   toolsFrame: document.getElementById("toolsFrame"),
-  btnTool1: document.getElementById("btnTool1"),
-  btnTool2: document.getElementById("btnTool2"),
-  btnTool3: document.getElementById("btnTool3"),
-  btnToolClose: document.getElementById("btnToolClose"),
-  btnToolOpen1: document.getElementById("btnToolOpen1"),
-  btnToolOpen2: document.getElementById("btnToolOpen2"),
-  btnToolOpen3: document.getElementById("btnToolOpen3"),
-  previewTitle: document.getElementById("previewTitle"),
-  previewText: document.getElementById("previewText"),
+  toolsSelect: document.getElementById("toolsSelect"),
+  btnTabMaintenance: document.getElementById("btnTabMaintenance"),
   toast: document.getElementById("toast"),
 };
 
 let currentState = null;
+let currentMode = "message";
 let toastTimer = null;
+let uiSelect = null;
+let pollTimer = null;
+let countdownTimer = null;
 
 function setText(el, value) {
   if (el) el.textContent = value;
@@ -66,7 +60,6 @@ function setText(el, value) {
 function showAuth(statusKey) {
   els.authScreen.hidden = false;
   els.panelScreen.hidden = true;
-  els.panelActions.hidden = true;
   document.body.classList.add("settings-locked");
   document.body.classList.add("no-footer-line");
   moveLangSwitcher(true);
@@ -76,22 +69,9 @@ function showAuth(statusKey) {
 function showPanel() {
   els.authScreen.hidden = true;
   els.panelScreen.hidden = false;
-  els.panelActions.hidden = false;
   document.body.classList.remove("settings-locked");
   document.body.classList.remove("no-footer-line");
   moveLangSwitcher(false);
-}
-
-function openTool(path) {
-  if (!els.toolsShell || !els.toolsFrame) return;
-  els.toolsShell.hidden = false;
-  els.toolsFrame.src = path;
-}
-
-function closeTool() {
-  if (!els.toolsShell || !els.toolsFrame) return;
-  els.toolsFrame.src = "about:blank";
-  els.toolsShell.hidden = true;
 }
 
 function moveLangSwitcher(locked) {
@@ -167,128 +147,166 @@ function fromDatetimeLocal(value) {
   return d.toISOString();
 }
 
-function formatDate(date) {
-  if (!date) return "—";
-  return new Intl.DateTimeFormat(undefined, {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(date);
+function formatCountdown(ms) {
+  const totalSeconds = Math.max(0, Math.floor(ms / 1000));
+  const hours = String(Math.floor(totalSeconds / 3600)).padStart(2, "0");
+  const minutes = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, "0");
+  const seconds = String(totalSeconds % 60).padStart(2, "0");
+  return `${hours}:${minutes}:${seconds}`;
 }
 
-function applyStateToForm(state) {
-  els.enabledToggle.checked = Boolean(state.enabled);
-  els.modeSelect.value = state.mode || "off";
-  els.returnAtInput.value = toDatetimeLocal(state.returnAt);
-
-  updatePreview();
+function minAllowedDate() {
+  return new Date(Date.now() + MINUTES_MIN * 60 * 1000);
 }
 
-function buildStateFromForm() {
-  const enabled = Boolean(els.enabledToggle.checked);
-  const mode = els.modeSelect.value;
-  const returnAt = fromDatetimeLocal(els.returnAtInput.value);
-  return { enabled, mode, returnAt };
-}
-
-function updateWarn() {
-  const mode = els.modeSelect.value;
-  const needsReturnAt = mode === "returnAt" || mode === "countdown";
-  const hasReturnAt = Boolean(els.returnAtInput.value);
-  els.returnAtWarn.hidden = !(needsReturnAt && !hasReturnAt);
-}
-
-function updatePreview() {
-  const state = buildStateFromForm();
-  let title = "";
-  let text = "";
-
-  if (!state.enabled || state.mode === "off") {
-    title = t("maintenance.inactiveTitle");
-    text = t("maintenance.inactiveText");
-  } else if (state.mode === "message") {
-    title = t("maintenance.messageTitle");
-    text = t("maintenance.messageText");
-  } else if (state.mode === "returnAt") {
-    const d = state.returnAt ? new Date(state.returnAt) : null;
-    const time = d && !Number.isNaN(d.getTime()) ? formatDate(d) : "—";
-    title = t("maintenance.returnAtTitle");
-    text = t("maintenance.returnAtText").replace("{time}", time);
-  } else if (state.mode === "countdown") {
-    title = t("maintenance.countdownTitle");
-    if (state.returnAt) {
-      const d = new Date(state.returnAt);
-      if (d.getTime() > Date.now()) {
-        text = t("maintenance.countdownText").replace("{countdown}", "00:00:00");
-      } else {
-        text = t("maintenance.countdownDone");
-      }
-    } else {
-      text = t("maintenance.countdownText").replace("{countdown}", "00:00:00");
-    }
+async function ensureMinDate(input) {
+  if (!input || !input.value) return true;
+  const val = new Date(input.value);
+  if (Number.isNaN(val.getTime())) return false;
+  if (val.getTime() < minAllowedDate().getTime()) {
+    await alertModal({
+      title: t("settings.validation.tooSoonTitle"),
+      text: t("settings.validation.tooSoonText"),
+      okText: t("settings.validation.ok"),
+    });
+    input.value = "";
+    return false;
   }
+  return true;
+}
 
-  setText(els.previewTitle, title || "—");
-  setText(els.previewText, text || "—");
-  updateWarn();
+function setMode(mode) {
+  currentMode = mode;
+  for (const btn of els.modeSwitch.querySelectorAll(".mode-btn")) {
+    btn.classList.toggle("active", btn.dataset.mode === mode);
+  }
+  if (els.modeMessage) els.modeMessage.hidden = mode !== "message";
+  if (els.modeReturnAt) els.modeReturnAt.hidden = mode !== "returnAt";
+  if (els.modeCountdown) els.modeCountdown.hidden = mode !== "countdown";
+}
+
+function setLocked(locked) {
+  els.modeSwitch.querySelectorAll(".mode-btn").forEach((btn) => {
+    btn.disabled = locked;
+  });
+  if (els.returnAtInput) els.returnAtInput.disabled = locked;
+  if (els.endAtInput) els.endAtInput.disabled = locked;
+  if (els.btnRefresh) els.btnRefresh.disabled = false;
+}
+
+function updateStatus(state) {
+  if (!state) {
+    setText(els.statusValue, "—");
+    return;
+  }
+  if (!state.enabled || state.mode === "off") {
+    setText(els.statusValue, t("settings.status.off"));
+    return;
+  }
+  const modeLabel = t(`settings.status.mode_${state.mode}`);
+  setText(els.statusValue, `${t("settings.status.on")} • ${modeLabel}`);
+}
+
+function updateStartStop(state) {
+  const enabled = Boolean(state?.enabled);
+  if (els.btnStartStop) {
+    els.btnStartStop.dataset.state = enabled ? "on" : "off";
+    els.btnStartStop.textContent = enabled ? t("settings.actions.stop") : t("settings.actions.start");
+  }
+  setLocked(enabled);
+}
+
+function applyState(state) {
+  currentState = state;
+  const mode = state?.mode || "message";
+  setMode(mode === "off" ? "message" : mode);
+  if (els.returnAtInput) {
+    els.returnAtInput.value = toDatetimeLocal(state?.returnAt);
+  }
+  if (els.endAtInput) {
+    els.endAtInput.value = toDatetimeLocal(state?.returnAt);
+  }
+  updateStatus(state);
+  updateStartStop(state);
+  updateCountdownDisplay();
+}
+
+function buildPayload() {
+  if (currentMode === "message") {
+    return { enabled: true, mode: "message", returnAt: null };
+  }
+  if (currentMode === "returnAt") {
+    return { enabled: true, mode: "returnAt", returnAt: fromDatetimeLocal(els.returnAtInput.value) };
+  }
+  if (currentMode === "countdown") {
+    return { enabled: true, mode: "countdown", returnAt: fromDatetimeLocal(els.endAtInput.value) };
+  }
+  return { enabled: true, mode: "message", returnAt: null };
+}
+
+function updateCountdownDisplay() {
+  if (!els.countdownNow) return;
+  if (currentMode !== "countdown") {
+    setText(els.countdownNow, "—");
+    return;
+  }
+  const end = fromDatetimeLocal(els.endAtInput.value);
+  if (!end) {
+    setText(els.countdownNow, "—");
+    return;
+  }
+  const diff = new Date(end).getTime() - Date.now();
+  setText(els.countdownNow, formatCountdown(diff));
+}
+
+function startCountdownTimer() {
+  if (countdownTimer) clearInterval(countdownTimer);
+  countdownTimer = setInterval(updateCountdownDisplay, 1000);
 }
 
 async function loadState() {
   try {
-    const res = await apiFetch(PUBLIC_STATE, { method: "GET" });
+    const res = await apiFetch(`${API_BASE}/state`, { method: "GET" });
     if (!res.ok) throw new Error("state fetch failed");
     const data = await res.json();
-    currentState = data;
-    applyStateToForm(data);
-  } catch (err) {
+    applyState(data);
+  } catch {
     showToast(t("settings.toast.error"), "error");
   }
 }
 
-async function saveState() {
-  const payload = buildStateFromForm();
+async function startMaintenance() {
+  if (currentMode === "returnAt") {
+    const ok = await ensureMinDate(els.returnAtInput);
+    if (!ok) return;
+  }
+  if (currentMode === "countdown") {
+    const ok = await ensureMinDate(els.endAtInput);
+    if (!ok) return;
+  }
+
+  const payload = buildPayload();
   try {
-    els.btnSave.disabled = true;
     const res = await apiFetch(`${API_BASE}/state`, {
       method: "POST",
       body: JSON.stringify(payload),
     });
     if (!res.ok) throw new Error("save failed");
     const data = await res.json();
-    currentState = data;
-    applyStateToForm(data);
+    applyState(data);
     showToast(t("settings.toast.saved"));
   } catch {
-    setText(els.rawState, t("settings.debug.saveError"));
     showToast(t("settings.toast.error"), "error");
-  } finally {
-    els.btnSave.disabled = false;
   }
 }
 
-async function quickSet(mode) {
+async function stopMaintenance() {
   try {
-    if (mode === "off") {
-      await apiFetch(`${API_BASE}/off`, { method: "POST" });
-      await loadState();
-      showToast(t("settings.toast.saved"));
-      return;
-    }
-
-    const payload = buildStateFromForm();
-    payload.enabled = true;
-    payload.mode = mode;
-    const res = await apiFetch(`${API_BASE}/state`, {
-      method: "POST",
-      body: JSON.stringify(payload),
-    });
-    if (res.ok) {
-      const data = await res.json();
-      currentState = data;
-      applyStateToForm(data);
-      showToast(t("settings.toast.saved"));
-      return;
-    }
-    throw new Error("quick set failed");
+    const res = await apiFetch(`${API_BASE}/off`, { method: "POST" });
+    if (!res.ok) throw new Error("off failed");
+    const data = await res.json();
+    applyState(data);
+    showToast(t("settings.toast.saved"));
   } catch {
     showToast(t("settings.toast.error"), "error");
   }
@@ -304,7 +322,98 @@ async function setBypass(state) {
   }
 }
 
+function initToolsSelect() {
+  const options = [
+    { value: "", label: t("settings.tools.placeholder") },
+    { value: "/settings-tools/editor_5x7.html", label: t("settings.tools.editor5x7") },
+    { value: "/settings-tools/exporterandeditor.html", label: t("settings.tools.exporterEditor") },
+    { value: "/settings-tools/kora-builder.html", label: t("settings.tools.koraBuilder") },
+  ];
+
+  uiSelect = initUiSelect(els.toolsSelect, {
+    options,
+    value: "",
+    placeholder: t("settings.tabs.tools"),
+    onChange: (val) => {
+      if (!val) return;
+      openTool(val);
+    },
+  });
+}
+
+function openTool(path) {
+  if (!els.toolsShell || !els.toolsFrame) return;
+  els.toolsShell.hidden = false;
+  els.toolsFrame.src = path;
+  els.panelScreen.hidden = true;
+}
+
+function closeTools() {
+  if (!els.toolsShell || !els.toolsFrame) return;
+  els.toolsFrame.src = "about:blank";
+  els.toolsShell.hidden = true;
+  els.panelScreen.hidden = false;
+  if (uiSelect) uiSelect.setValue("", { silent: true });
+}
+
 function wireEvents() {
+  els.modeSwitch.querySelectorAll(".mode-btn").forEach((btn) => {
+    btn.addEventListener("click", () => setMode(btn.dataset.mode));
+  });
+
+  if (els.btnStartStop) {
+    els.btnStartStop.addEventListener("click", async () => {
+      if (currentState?.enabled) {
+        await stopMaintenance();
+      } else {
+        await startMaintenance();
+      }
+    });
+  }
+
+  if (els.btnRefresh) {
+    els.btnRefresh.addEventListener("click", loadState);
+  }
+
+  if (els.btnBypassOn) {
+    els.btnBypassOn.addEventListener("click", () => setBypass("on"));
+  }
+  if (els.btnBypassOff) {
+    els.btnBypassOff.addEventListener("click", () => setBypass("off"));
+  }
+
+  if (els.returnAtInput) {
+    els.returnAtInput.addEventListener("change", () => ensureMinDate(els.returnAtInput));
+  }
+  if (els.endAtInput) {
+    els.endAtInput.addEventListener("change", () => ensureMinDate(els.endAtInput));
+  }
+
+  if (els.btnTabMaintenance) {
+    els.btnTabMaintenance.addEventListener("click", () => {
+      closeTools();
+    });
+  }
+
+  if (els.toolsShell) {
+    els.toolsShell.addEventListener("dblclick", closeTools);
+  }
+
+  if (els.btnLogout) {
+    els.btnLogout.addEventListener("click", async () => {
+      const ok = await confirmModal({
+        title: t("settings.logoutConfirmTitle"),
+        text: t("settings.logoutConfirmText"),
+        okText: t("settings.logoutConfirmOk"),
+        cancelText: t("settings.logoutConfirmCancel"),
+      });
+      if (!ok) return;
+      await apiFetch(`${API_BASE}/logout`, { method: "POST" });
+      showAuth("settings.login.checking");
+      showToast(t("settings.toast.logout"));
+    });
+  }
+
   els.loginForm.addEventListener("submit", async (e) => {
     e.preventDefault();
     setText(els.loginError, "");
@@ -330,86 +439,12 @@ function wireEvents() {
       setText(els.loginError, t("settings.login.loginInvalid"));
     }
   });
-
-  els.btnRefresh.addEventListener("click", async () => {
-    await loadState();
-  });
-
-  els.btnSave.addEventListener("click", async () => {
-    await saveState();
-  });
-
-  if (els.btnLogout) {
-    els.btnLogout.addEventListener("click", async () => {
-      const ok = await confirmModal({
-        title: t("settings.logoutConfirmTitle"),
-        text: t("settings.logoutConfirmText"),
-        okText: t("settings.logoutConfirmOk"),
-        cancelText: t("settings.logoutConfirmCancel"),
-      });
-      if (!ok) return;
-      await apiFetch(`${API_BASE}/logout`, { method: "POST" });
-      showAuth("settings.login.checking");
-      showLogin();
-      showToast(t("settings.toast.logout"));
-    });
-  }
-
-  els.btnClearReturnAt.addEventListener("click", () => {
-    els.returnAtInput.value = "";
-    updatePreview();
-  });
-
-  if (els.btnQuickOff) {
-    els.btnQuickOff.addEventListener("click", async () => quickSet("off"));
-  }
-  if (els.btnQuickMessage) {
-    els.btnQuickMessage.addEventListener("click", async () => quickSet("message"));
-  }
-  if (els.btnQuickReturnAt) {
-    els.btnQuickReturnAt.addEventListener("click", async () => quickSet("returnAt"));
-  }
-  if (els.btnQuickCountdown) {
-    els.btnQuickCountdown.addEventListener("click", async () => quickSet("countdown"));
-  }
-
-  if (els.btnBypassOn) {
-    els.btnBypassOn.addEventListener("click", async () => setBypass("on"));
-  }
-  if (els.btnBypassOff) {
-    els.btnBypassOff.addEventListener("click", async () => setBypass("off"));
-  }
-
-  const toolHandlers = [
-    [els.btnTool1, "/settings-tools/editor_5x7.html"],
-    [els.btnTool2, "/settings-tools/exporterandeditor.html"],
-    [els.btnTool3, "/settings-tools/kora-builder.html"],
-    [els.btnToolOpen1, "/settings-tools/editor_5x7.html"],
-    [els.btnToolOpen2, "/settings-tools/exporterandeditor.html"],
-    [els.btnToolOpen3, "/settings-tools/kora-builder.html"],
-  ];
-
-  toolHandlers.forEach(([btn, path]) => {
-    if (!btn) return;
-    btn.addEventListener("click", () => openTool(path));
-  });
-
-  if (els.btnToolClose) {
-    els.btnToolClose.addEventListener("click", closeTool);
-  }
-
-  [
-    els.enabledToggle,
-    els.modeSelect,
-    els.returnAtInput,
-  ].forEach((el) => {
-    el.addEventListener("change", updatePreview);
-    el.addEventListener("input", updatePreview);
-  });
 }
 
 (async () => {
   await initI18n({ withSwitcher: true, apply: true });
+  startCountdownTimer();
+  initToolsSelect();
   wireEvents();
   showAuth("settings.login.checking");
 
@@ -420,4 +455,6 @@ function wireEvents() {
   } else {
     showAuth("settings.login.passwordTitle");
   }
+
+  pollTimer = setInterval(loadState, POLL_MS);
 })();

@@ -1,18 +1,14 @@
 /* css/settings.css */
 
-.settings-body .builder-card{
-  padding: 22px;
+.settings-body{
+  height: auto;
+  min-height: 100vh;
+  overflow: auto;
 }
 
-.settings-card-root{
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-}
-
-.settings-panel{
-  flex: 1 1 auto;
-  min-height: 0;
+.settings-body > main.wrap{
+  overflow: visible;
+  min-height: auto;
 }
 
 .settings-auth{
@@ -93,35 +89,131 @@
   outline: 0;
 }
 
-.tools-shell{
-  margin: 10px 0 14px;
+.maintenance-panel{
+  margin-top: 16px;
+  padding: 18px;
   border: 1px solid var(--line2);
-  border-radius: 16px;
-  background: rgba(8,12,28,.6);
-  overflow: hidden;
+  border-radius: 18px;
+  background: rgba(8,12,28,.65);
+  display: grid;
+  gap: 16px;
 }
 
-.tools-bar{
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 12px;
-  border-bottom: 1px solid var(--line2);
+.panel-head{
+  display: grid;
+  gap: 4px;
 }
 
-.tools-title{
+.panel-title{
   font-weight: 900;
   letter-spacing: .08em;
+  text-transform: uppercase;
+  font-size: 14px;
+}
+
+.panel-sub{
+  font-size: 12px;
+  opacity: .75;
+}
+
+.mode-switch{
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0,1fr));
+  gap: 8px;
+}
+
+.mode-btn{
+  border: 1px solid rgba(255,255,255,.18);
+  background: rgba(255,255,255,.06);
+  color: #fff;
+  padding: 10px;
+  border-radius: 14px;
+  font-weight: 900;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.mode-btn.active{
+  border-color: rgba(255,234,166,.6);
+  background: rgba(255,234,166,.15);
+}
+
+.mode-block{
+  display: grid;
+  gap: 10px;
+}
+
+.mode-hint{
+  font-size: 12px;
+  opacity: .75;
+}
+
+.countdown-row{
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  font-size: 12px;
+}
+
+.countdown-label{
+  opacity: .75;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+}
+
+.countdown-value{
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  font-weight: 800;
+}
+
+.panel-actions{
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.panel-status{
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  font-size: 12px;
+  opacity: .85;
+}
+
+.status-label{
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  font-weight: 800;
+}
+
+.bypass-box{
+  margin-top: 6px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255,255,255,.12);
+  display: grid;
+  gap: 8px;
+}
+
+.bypass-title{
+  font-weight: 800;
+  letter-spacing: .06em;
   text-transform: uppercase;
   font-size: 12px;
 }
 
-.tools-actions{
+.bypass-actions{
   display: flex;
-  gap: 8px;
+  gap: 10px;
   flex-wrap: wrap;
+}
+
+.tools-shell{
+  margin-top: 12px;
+  border: 1px solid var(--line2);
+  border-radius: 16px;
+  background: rgba(8,12,28,.6);
+  overflow: hidden;
 }
 
 .tools-frame-wrap{
@@ -130,7 +222,7 @@
 
 .tools-frame-wrap iframe{
   width: 100%;
-  height: min(70vh, 720px);
+  height: min(78vh, 860px);
   border: 0;
   display: block;
 }
@@ -139,49 +231,6 @@
 .settings-body select:focus{
   border-color: rgba(255,220,120,.5);
   box-shadow: 0 0 0 3px rgba(255,220,120,.12);
-}
-
-.settings-grid{
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-}
-
-.settings-tile{
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.settings-tile--wide{
-  grid-column: span 2;
-}
-
-@media (max-width: 900px){
-  .settings-tile--wide{
-    grid-column: span 1;
-  }
-}
-
-.tile-header{
-  display: grid;
-  gap: 4px;
-}
-
-.tile-title{
-  font-weight: 900;
-  letter-spacing: .08em;
-  text-transform: uppercase;
-  font-size: 13px;
-}
-
-.tile-sub{
-  font-size: 12px;
-  opacity: .75;
-}
-
-.tile-body{
-  display: grid;
-  gap: 12px;
-  font-size: 13px;
 }
 
 .field{
@@ -219,67 +268,6 @@
   font-size: 12px;
 }
 
-.preview{
-  border-top: 1px solid rgba(255,255,255,.12);
-  padding-top: 10px;
-  display: grid;
-  gap: 8px;
-}
-
-.preview-title{
-  font-weight: 800;
-  letter-spacing: .08em;
-  text-transform: uppercase;
-  font-size: 12px;
-  opacity: .8;
-}
-
-.preview-body{
-  display: grid;
-  gap: 6px;
-  background: rgba(0,0,0,.25);
-  border: 1px solid rgba(255,255,255,.12);
-  border-radius: 12px;
-  padding: 10px;
-}
-
-.preview-line{
-  white-space: pre-line;
-}
-
-.debug-row{
-  display: flex;
-  justify-content: space-between;
-  gap: 8px;
-  font-size: 12px;
-}
-
-.debug-label{
-  opacity: .7;
-  text-transform: uppercase;
-  letter-spacing: .08em;
-  font-size: 11px;
-}
-
-.debug-value{
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
-  font-size: 12px;
-}
-
-.debug-raw pre{
-  margin: 6px 0 0;
-  background: rgba(0,0,0,.25);
-  border: 1px solid rgba(255,255,255,.12);
-  border-radius: 12px;
-  padding: 10px;
-  font-size: 11px;
-  overflow: auto;
-  max-height: 240px;
-}
-
-.placeholder-text{
-  opacity: .75;
-}
 
 .toast{
   position: fixed;
