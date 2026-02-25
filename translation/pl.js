@@ -4065,6 +4065,25 @@ const pl = {
         "Jesteś w widoku tagów.\n\nUsuwamy tagi (bez kasowania elementów) na {label}.\n\nKontynuować?",
     },
   },
+  maintenance: {
+    messageTitle: "Krótka przerwa w studiu 🎙️",
+    messageText:
+      "System jest chwilowo niedostępny.\nZa moment wszystko wróci do normy i będzie można kontynuować pracę.",
+    inactiveTitle: "Brak prac technicznych",
+    inactiveText: "Aktualnie nie trwają żadne prace.",
+    returnAtTitle: "Przerwa techniczna",
+    returnAtText:
+      "System jest tymczasowo niedostępny.\nWrócimy o {time} — wtedy znów będzie można swobodnie tworzyć i edytować gry.",
+    countdownTitle: "Trwa przerwa techniczna ⏳",
+    countdownText:
+      "System jest chwilowo niedostępny.\nDo ponownego uruchomienia pozostało {countdown}.",
+    countdownDone: "Za chwilę wszystko będzie gotowe. 🎉",
+    refresh: "Odśwież",
+    contact: "Kontakt",
+    statusLabel: "Status:",
+    footerLeft: "Familiada — tryb konserwacji",
+    footerRight: "Masz pilną sprawę? Skontaktuj się z nami.",
+  },
 };
 
 export default pl;

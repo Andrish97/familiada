@@ -1,0 +1,75 @@
+:root {
+  --maint-card: rgba(8, 12, 24, 0.72);
+  --maint-card-strong: rgba(255, 255, 255, 0.08);
+  --maint-shadow: 0 30px 80px rgba(0, 0, 0, 0.35);
+}
+
+.maintenance-body {
+  min-height: 100vh;
+  background: radial-gradient(1200px 600px at 20% -10%, rgba(255, 234, 166, 0.08), transparent 60%),
+    radial-gradient(900px 500px at 100% 0%, rgba(86, 164, 255, 0.08), transparent 55%),
+    var(--bg);
+  color: #fff;
+}
+
+.maintenance-main {
+  flex: 1 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 28px 16px 40px;
+}
+
+.maintenance-card {
+  width: min(880px, 100%);
+  background: var(--maint-card);
+  border: 1px solid var(--line2);
+  border-radius: 20px;
+  padding: 32px 28px;
+  box-shadow: var(--maint-shadow);
+  backdrop-filter: blur(10px);
+}
+
+.card-top {
+  display: grid;
+  gap: 10px;
+  justify-items: center;
+  text-align: center;
+}
+
+#title {
+  margin: 0;
+  font-size: clamp(22px, 3vw, 32px);
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+#description {
+  margin: 0;
+  max-width: 640px;
+  line-height: 1.5;
+  opacity: 0.85;
+  white-space: pre-line;
+}
+
+.return-at {
+  margin-top: 6px;
+  font-size: 14px;
+  font-weight: 700;
+  opacity: 0.8;
+}
+
+.countdown {
+  margin-top: 14px;
+  font-size: clamp(28px, 6vw, 44px);
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  color: var(--gold);
+}
+
+@media (max-width: 640px) {
+  .maintenance-card {
+    padding: 24px 18px;
+  }
+}
