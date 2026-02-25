@@ -20,8 +20,8 @@ export default {
       return fetch(request); // brak prac
     }
 
-    // allow access to the maintenance page itself
-    if (url.pathname === "/maintenance.html") {
+    // allow access to the maintenance page and its assets
+    if (isMaintenanceAsset(url.pathname)) {
       return fetch(request);
     }
 
@@ -118,4 +118,16 @@ async function handleAdmin(request, env) {
   }
 
   return new Response("Unknown command", { status: 400 });
+}
+
+function isMaintenanceAsset(pathname) {
+  if (pathname === "/maintenance.html") return true;
+
+  const allowedPrefixes = ["/css/", "/js/", "/translation/", "/img/", "/audio/"];
+  for (const prefix of allowedPrefixes) {
+    if (pathname.startsWith(prefix)) return true;
+  }
+
+  const allowedFiles = ["/favicon.ico", "/logo.svg"];
+  return allowedFiles.includes(pathname);
 }
