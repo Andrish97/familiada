@@ -4,8 +4,9 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     const host = url.host.toLowerCase();
-    // Use GitHub Pages origin directly to avoid redirect loops through Cloudflare.
-    const ORIGIN_BASE = "https://andrish97.github.io";
+    // Use custom domain as origin, but resolve directly to GitHub Pages to avoid loops.
+    const ORIGIN_BASE = "https://familiada.online";
+    const ORIGIN_RESOLVE = "andrish97.github.io";
 
     // SETTINGS HOST (admin panel, no maintenance gate)
     if (host === "settings.familiada.online") {
@@ -21,12 +22,12 @@ export default {
       // Root on settings subdomain should open settings.html
       if (url.pathname === "/" || url.pathname === "/index.html") {
         url.pathname = "/settings.html";
-        return fetchFromOrigin(request, url, ORIGIN_BASE);
+        return fetchFromOrigin(request, url, ORIGIN_BASE, ORIGIN_RESOLVE);
       }
 
       // allow settings.html, settings-tools, and assets only
       if (url.pathname === "/settings.html" || url.pathname.startsWith("/settings-tools/") || isSettingsAsset(url.pathname)) {
-        const res = await fetchFromOrigin(request, url, ORIGIN_BASE);
+        const res = await fetchFromOrigin(request, url, ORIGIN_BASE, ORIGIN_RESOLVE);
         if (url.pathname.startsWith("/settings-tools/")) {
           return withHeaders(res, {
             "Content-Security-Policy": "frame-ancestors 'self'",
@@ -80,21 +81,21 @@ export default {
     const state = await getState(env);
 
     if (!state.enabled || state.mode === "off" || isBypass) {
-      return fetchWith404(request, ORIGIN_BASE); // brak prac
+      return fetchWith404(request, ORIGIN_BASE, ORIGIN_RESOLVE); // brak prac
     }
 
     // allow access to the maintenance page and its assets
     if (isMaintenanceAsset(url.pathname)) {
-      return fetchWith404(request, ORIGIN_BASE);
+      return fetchWith404(request, ORIGIN_BASE, ORIGIN_RESOLVE);
     }
 
     // Unknown subdomains during maintenance -> show maintenance page
     if (host.endsWith(".familiada.online") && !isKnownHost(host)) {
-      return serveMaintenance(request, ORIGIN_BASE);
+      return serveMaintenance(request, ORIGIN_BASE, ORIGIN_RESOLVE);
     }
 
     // block everything else
-    return serveMaintenance(request, ORIGIN_BASE);
+    return serveMaintenance(request, ORIGIN_BASE, ORIGIN_RESOLVE);
   }
 };
 
@@ -124,9 +125,9 @@ function json(data) {
   });
 }
 
-async function serveMaintenance(request, originBase) {
+async function serveMaintenance(request, originBase, resolveOverride) {
   const maintUrl = new URL("/maintenance.html", originBase);
-  const res = await fetch(maintUrl.toString());
+  const res = await fetchWithResolve(maintUrl.toString(), request, resolveOverride);
 
   return new Response(res.body, {
     status: 503,
@@ -138,10 +139,9 @@ async function serveMaintenance(request, originBase) {
   });
 }
 
-async function serveNotFoundPage(request, originBase) {
-  const url = new URL(request.url);
+async function serveNotFoundPage(request, originBase, resolveOverride) {
   const notFoundUrl = new URL("/404.html", originBase);
-  const res = await fetch(notFoundUrl.toString());
+  const res = await fetchWithResolve(notFoundUrl.toString(), request, resolveOverride);
 
   return new Response(res.body, {
     status: 404,
@@ -461,22 +461,43 @@ function withHeaders(res, extra) {
   });
 }
 
-function fetchFromOrigin(request, url, originBase) {
+function fetchFromOrigin(request, url, originBase, resolveOverride) {
   const target = new URL(url.pathname + url.search, originBase);
-  return fetch(new Request(target.toString(), request));
+  return fetchWithResolve(target.toString(), request, resolveOverride);
 }
 
-async function fetchWith404(request, originBase) {
+async function fetchWith404(request, originBase, resolveOverride) {
   const url = new URL(request.url);
-  const res = await fetchFromOrigin(request, url, originBase);
+  const res = await fetchFromOrigin(request, url, originBase, resolveOverride);
   if (res.status !== 404) return res;
 
   const accept = request.headers.get("Accept") || "";
   if (accept.includes("text/html")) {
-    return serveNotFoundPage(request, originBase);
+    return serveNotFoundPage(request, originBase, resolveOverride);
   }
 
   return res;
+}
+
+function fetchWithResolve(url, request, resolveOverride) {
+  const headers = new Headers(request.headers);
+  if (resolveOverride) {
+    headers.set("Host", resolveOverride);
+  }
+
+  const method = request.method || "GET";
+  const init = {
+    method,
+    headers,
+    redirect: "manual",
+    cf: resolveOverride ? { resolveOverride } : undefined,
+  };
+
+  if (method !== "GET" && method !== "HEAD") {
+    init.body = request.body;
+  }
+
+  return fetch(url, init);
 }
 
 function isSettingsAsset(pathname) {
