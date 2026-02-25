@@ -495,7 +495,7 @@ const PRETTY_ROUTES = {
 function resolvePrettyPath(pathname) {
   if (PRETTY_ROUTES[pathname]) return { rewrite: PRETTY_ROUTES[pathname] };
   if (pathname.endsWith("/") && PRETTY_ROUTES[pathname.slice(0, -1)]) {
-    return { redirect: pathname.slice(0, -1) };
+    return { rewrite: PRETTY_ROUTES[pathname.slice(0, -1)] };
   }
   if (pathname === "/index.html") return { redirect: "/" };
   for (const [pretty, file] of Object.entries(PRETTY_ROUTES)) {
