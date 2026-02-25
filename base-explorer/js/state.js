@@ -1,4 +1,4 @@
-// base-explorer/js/state.js
+// base-explorerjs/state.js
 // Stan eksploratora bazy pytań (warstwa 2)
 
 export const VIEW = {

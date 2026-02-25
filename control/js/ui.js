@@ -1,4 +1,4 @@
-// /familiada/js/pages/control/ui.js
+// /familiada/js/pages/controlui.js
 
 import { t } from "../../translation/translation.js";
 

@@ -3818,7 +3818,7 @@ const en = {
       importFailedDetailed: "Couldn't import.\n\n{error}",
       exportFailedDetailed: "Couldn't export.\n\n{error}",
       setActiveFailedDetailed: "Couldn't set active.\n\n{error}",
-      fontsLoad: "Couldn't load fonts. Check display/font_*.json paths.",
+      fontsLoad: "Couldn't load fonts. Check displayfont_*.json paths.",
       invalidJson: "This is not valid JSON.",
       pixSize: "Wrong PIX size. Expected {expectedW}×{expectedH}, got {actualW}×{actualH}.",
       missingBits: "Missing bits_b64 in import.",

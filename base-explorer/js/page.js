@@ -1,4 +1,4 @@
-// base-explorer/js/page.js
+// base-explorerjs/page.js
 // Init strony menadżera bazy (warstwa 2)
 
 import { requireAuth, signOut } from "../../js/core/auth.js";

@@ -1,4 +1,4 @@
-// /base-explorer/js/export-modal.js
+// /base-explorerjs/export-modal.js
 // Modal eksportu: open() zwraca Promise z wynikiem {ok, payload}
 
 import { t } from "../../translation/translation.js";

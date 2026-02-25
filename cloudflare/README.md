@@ -25,43 +25,11 @@
 - `GET /maintenance-state.json` → `{ enabled:boolean, mode:"off|message|returnAt|countdown", returnAt:string|null }`
 
 ### Pretty URLs (bez .html)
-Worker robi:
-- 301 z `*.html` → wersja bez `.html`
-- 301 z `/folder/` → `/folder`
-- rewrite `/nazwa` → `/nazwa.html` oraz `/folder` → `/folder/folder.html` (bez zmiany adresu)
+Root (np. `/builder`) obsługuje GitHub Pages – bez dodatkowych rewrite’ów.
+Foldery mają teraz `index.html`, więc `/control`, `/display`, `/logo-editor`, `/base-explorer` działają natywnie.
 
-**Aktualne mapowania:**
-- `/account` → `/account.html`
-- `/bases` → `/bases.html`
-- `/builder` → `/builder.html`
-- `/buzzer` → `/buzzer.html`
-- `/confirm` → `/confirm.html`
-- `/editor` → `/editor.html`
-- `/host` → `/host.html`
-- `/login` → `/login.html`
-- `/maintenance` → `/maintenance.html`
-- `/manual` → `/manual.html`
-- `/poll-go` → `/poll-go.html`
-- `/poll-points` → `/poll-points.html`
-- `/poll-qr` → `/poll-qr.html`
-- `/poll-text` → `/poll-text.html`
-- `/polls` → `/polls.html`
-- `/polls-hub` → `/polls-hub.html`
-- `/privacy` → `/privacy.html`
-- `/reset` → `/reset.html`
-- `/settings` → `/settings.html`
-- `/subscriptions` → `/subscriptions.html`
-- `/control` → `/control/control.html`
-- `/display` → `/display/display.html`
-- `/logo-editor` → `/logo-editor/logo-editor.html`
-- `/base-explorer` → `/base-explorer/base-explorer.html`
-
-**Jak dodać nową stronę do „ładnych” URL-i:**
-1. Otwórz `cloudflare/maintenance-worker/src/index.js`.
-2. W obiekcie `PRETTY_ROUTES` dodaj wpis:
-   - dla pliku w root: `"/nowa-strona": "/nowa-strona.html"`
-   - dla folderu: `"/nowy-folder": "/nowy-folder/nowy-folder.html"`
-3. (Opcjonalnie) zaktualizuj linki w JS/HTML, żeby używały wersji bez `.html`.
+**Aktualne mapowania w workerze:**
+- `/settings` → `/settings.html` (specjalny przypadek dla panelu)
 
 ### Admin API (settings host)
 - `GET  /_admin_api/me` → 200 if Access header or session cookie

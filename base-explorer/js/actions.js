@@ -1,4 +1,4 @@
-// base-explorer/js/actions.js
+// base-explorerjs/actions.js
 // Obsługa zdarzeń i akcji UI (klik, selection, search, folder view)
 
 import {

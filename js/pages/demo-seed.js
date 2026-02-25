@@ -5,7 +5,7 @@ import { sb } from "../core/supabase.js";
 
 import { importBaseFromUrl } from "./bases-import.js";
 import { importPollFromUrl, importGame } from "./builder-import-export.js";
-import { demoImport4Logos } from "../../logo-editor/js/demo-import.js";
+import { demoImport4Logos } from "../../logo-editorjs/demo-import.js";
 import { t, getI18nSection, getUiLang } from "../../translation/translation.js";
 
 /* =========================================================

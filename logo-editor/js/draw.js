@@ -1,4 +1,4 @@
-// familiada/logo-editor/js/draw.js
+// familiada/logo-editorjs/draw.js
 // DRAW -> Fabric.js (wektor) -> raster 150x70 bits (PIX_150x70)
 //
 // ZAŁOŻENIA (Twoje):

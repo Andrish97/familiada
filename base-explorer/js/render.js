@@ -1,4 +1,4 @@
-// base-explorer/js/render.js
+// base-explorerjs/render.js
 // Renderowanie UI eksploratora na podstawie state (bez DB, bez akcji).
 
 import { VIEW, META, META_ORDER } from "./state.js";
