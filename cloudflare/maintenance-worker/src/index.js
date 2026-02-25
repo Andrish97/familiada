@@ -4,7 +4,8 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     const host = url.host.toLowerCase();
-    const MAIN_ORIGIN = "https://familiada.online";
+    // Use GitHub Pages origin directly to avoid redirect loops through Cloudflare.
+    const ORIGIN_BASE = "https://andrish97.github.io";
 
     // SETTINGS HOST (admin panel, no maintenance gate)
     if (host === "settings.familiada.online") {
@@ -20,12 +21,12 @@ export default {
       // Root on settings subdomain should open settings.html
       if (url.pathname === "/" || url.pathname === "/index.html") {
         url.pathname = "/settings.html";
-        return fetchFromOrigin(request, url, MAIN_ORIGIN);
+        return fetchFromOrigin(request, url, ORIGIN_BASE);
       }
 
       // allow settings.html, settings-tools, and assets only
       if (url.pathname === "/settings.html" || url.pathname.startsWith("/settings-tools/") || isSettingsAsset(url.pathname)) {
-        const res = await fetchFromOrigin(request, url, MAIN_ORIGIN);
+        const res = await fetchFromOrigin(request, url, ORIGIN_BASE);
         if (url.pathname.startsWith("/settings-tools/")) {
           return withHeaders(res, {
             "Content-Security-Policy": "frame-ancestors 'self'",
@@ -79,21 +80,21 @@ export default {
     const state = await getState(env);
 
     if (!state.enabled || state.mode === "off" || isBypass) {
-      return fetchWith404(request, MAIN_ORIGIN); // brak prac
+      return fetchWith404(request, ORIGIN_BASE); // brak prac
     }
 
     // allow access to the maintenance page and its assets
     if (isMaintenanceAsset(url.pathname)) {
-      return fetchWith404(request, MAIN_ORIGIN);
+      return fetchWith404(request, ORIGIN_BASE);
     }
 
     // Unknown subdomains during maintenance -> show maintenance page
     if (host.endsWith(".familiada.online") && !isKnownHost(host)) {
-      return serveMaintenance(request);
+      return serveMaintenance(request, ORIGIN_BASE);
     }
 
     // block everything else
-    return serveMaintenance(request);
+    return serveMaintenance(request, ORIGIN_BASE);
   }
 };
 
@@ -123,10 +124,9 @@ function json(data) {
   });
 }
 
-async function serveMaintenance(request) {
-  const url = new URL(request.url);
-  const maintUrl = new URL("/maintenance.html", url.origin);
-  const res = await fetch(maintUrl);
+async function serveMaintenance(request, originBase) {
+  const maintUrl = new URL("/maintenance.html", originBase);
+  const res = await fetch(maintUrl.toString());
 
   return new Response(res.body, {
     status: 503,
