@@ -223,6 +223,17 @@ html{
   pointer-events: auto;
 }
 
+.maintenance-panel.is-locked .panel-actions{
+  opacity: 1;
+  filter: none;
+}
+
+.maintenance-panel.is-locked #btnStartStop,
+.maintenance-panel.is-locked #btnRefresh{
+  opacity: 1;
+  filter: none;
+}
+
 .panel-status{
   display: flex;
   gap: 10px;
