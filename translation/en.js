@@ -4068,6 +4068,25 @@ const en = {
         "You are in tag view.\n\nWe will remove tags (without deleting items) on {label}.\n\nContinue?",
     },
   },
+  maintenance: {
+    messageTitle: "Short studio break 🎙️",
+    messageText:
+      "The system is temporarily unavailable.\nEverything will be back to normal shortly and you will be able to continue working.",
+    inactiveTitle: "No maintenance",
+    inactiveText: "There is no maintenance in progress.",
+    returnAtTitle: "Technical break",
+    returnAtText:
+      "The system is temporarily unavailable.\nWe will be back at {time} — then you can freely create and edit games again.",
+    countdownTitle: "Technical break in progress ⏳",
+    countdownText:
+      "The system is temporarily unavailable.\nTime left until we are back: {countdown}.",
+    countdownDone: "Everything will be ready in a moment. 🎉",
+    refresh: "Refresh",
+    contact: "Contact",
+    statusLabel: "Status:",
+    footerLeft: "Familiada — maintenance mode",
+    footerRight: "Need help urgently? Contact us.",
+  },
 };
 
 export default en;
