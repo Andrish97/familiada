@@ -148,12 +148,18 @@ async function serveNotFoundPage(request, originBase, originHost, resolveOverrid
   const notFoundUrl = new URL("/404.html", originBase);
   const res = await fetchWithOrigin(notFoundUrl.toString(), request, originHost, resolveOverride);
 
-  return new Response(res.body, {
+  const base = new Response(res.body, {
     status: 404,
     headers: {
       "Content-Type": "text/html; charset=utf-8",
       "Cache-Control": "no-store"
     }
+  });
+
+  return withHeaders(base, {
+    "Content-Security-Policy":
+      "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'",
+    "X-Content-Type-Options": "nosniff"
   });
 }
 
