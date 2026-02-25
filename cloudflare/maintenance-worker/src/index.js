@@ -8,6 +8,13 @@ export default {
     const ORIGIN_BASE = "https://andrish97.github.io";
     const ORIGIN_HOST = "www.familiada.online";
 
+    if (host === "settings.familiada.online") {
+      return new Response("WORKER HIT", {
+        status: 200,
+        headers: { "x-worker-hit": "settings" },
+      });
+    }
+
     // SETTINGS HOST (admin panel, no maintenance gate)
     if (host === "settings.familiada.online") {
       if (url.pathname.startsWith("/_admin_api")) {
@@ -49,6 +56,14 @@ export default {
       return fetch(request);
     }
 
+    // Unknown subdomains: 404 when maintenance OFF, maintenance page when ON
+    if (host.endsWith(".familiada.online") && !isKnownHost(host)) {
+      const state = await getState(env);
+      if (!state.enabled || state.mode === "off") {
+        return serveNotFoundPage(request, ORIGIN_BASE, ORIGIN_HOST);
+      return serveMaintenance(request, ORIGIN_BASE, ORIGIN_HOST);
+    }
+
     const isBypass = hasAdminBypass(request, env);
 
     // ADMIN ENDPOINTS
@@ -87,11 +102,6 @@ export default {
     // allow access to the maintenance page and its assets
     if (isMaintenanceAsset(url.pathname)) {
       return fetchWith404(request, ORIGIN_BASE, ORIGIN_HOST);
-    }
-
-    // Unknown subdomains during maintenance -> show maintenance page
-    if (host.endsWith(".familiada.online") && !isKnownHost(host)) {
-      return serveMaintenance(request, ORIGIN_BASE, ORIGIN_HOST);
     }
 
     // block everything else
