@@ -14,11 +14,28 @@ Access injects CF-Access-Jwt-Assertion header (no JWT validation here).
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
-    const host = url.hostname.toLowerCase();
+    const host = url.host.toLowerCase();
 
     // SETTINGS HOST (admin panel, no maintenance gate)
     if (host === "settings.familiada.online") {
-      return handleSettingsHost(request, env, url);
+      if (url.pathname.startsWith("/_admin_api")) {
+        return handleAdminApi(request, env);
+      }
+
+      if (url.pathname === "/maintenance-state.json") {
+        const state = await getState(env);
+        return json(state);
+      }
+
+      // Root on settings subdomain should open settings.html
+      if (url.pathname === "/" || url.pathname === "/index.html") {
+        url.pathname = "/settings.html";
+        const next = new Request(url.toString(), request);
+        return fetch(next);
+      }
+
+      // allow settings.html and assets
+      return fetch(request);
     }
 
     const isBypass = hasAdminBypass(request, env);
@@ -31,6 +48,14 @@ export default {
     // Admin API should not be exposed on public hosts
     if (url.pathname.startsWith("/_admin_api")) {
       return new Response("Unauthorized", { status: 401 });
+    }
+
+    // Block settings on public hosts
+    if (
+      (host === "familiada.online" || host === "www.familiada.online") &&
+      (url.pathname === "/settings.html" || url.pathname === "/settings" || url.pathname === "/settings/")
+    ) {
+      return Response.redirect("https://settings.familiada.online/", 301);
     }
 
     // PUBLIC STATE ENDPOINT
@@ -60,34 +85,6 @@ export default {
     return serveMaintenance(request);
   }
 };
-
-async function handleSettingsHost(request, env, url) {
-  if (url.pathname.startsWith("/_admin_api")) {
-    return handleAdminApi(request, env);
-  }
-
-  if (url.pathname === "/maintenance-state.json") {
-    const state = await getState(env);
-    return json(state);
-  }
-
-  if (url.pathname === "/" || url.pathname === "/index.html") {
-    return serveSettingsPage(request);
-  }
-
-  if (url.pathname === "/settings.html" || isSettingsAsset(url.pathname)) {
-    return fetch(request);
-  }
-
-  return fetch(request);
-}
-
-async function serveSettingsPage(request) {
-  const url = new URL(request.url);
-  const target = new URL("/settings.html", url.origin);
-  const next = new Request(target.toString(), request);
-  return fetch(next);
-}
 
 async function getState(env) {
   const raw = await env.MAINT_KV.get("state");
