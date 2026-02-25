@@ -6,7 +6,7 @@ const POLL_MS = 30000;
 const FALLBACKS = {
   messageTitle: "Krótka przerwa w studiu 🎙️",
   messageText:
-    "System jest chwilowo niedostępny.\nZa moment wszystko wróci do normy i będzie można kontynuować pracę.",
+    "System jest chwilowo niedostępny.\nZa jakiś czas wszystko wróci do normy i będzie można kontynuować pracę.",
   inactiveTitle: "Brak prac technicznych",
   inactiveText: "Aktualnie nie trwają żadne prace.",
   returnAtTitle: "Przerwa techniczna",
@@ -112,8 +112,8 @@ function startCountdown(targetDate) {
 }
 
 function renderFallback() {
-  setText(els.title, tr("maintenance.inactiveTitle", FALLBACKS.inactiveTitle));
-  setText(els.description, tr("maintenance.inactiveText", FALLBACKS.inactiveText));
+  setText(els.title, tr("maintenance.messageTitle", FALLBACKS.messageTitle));
+  setText(els.description, tr("maintenance.messageText", FALLBACKS.messageText));
   if (els.returnAt) els.returnAt.hidden = true;
   if (els.countdown) els.countdown.hidden = true;
   stopCountdown();

@@ -11,15 +11,16 @@ export default {
 
     // (no apex redirect here)
 
+    // PUBLIC STATE ENDPOINT (works on every host/subdomain)
+    if (url.pathname === "/maintenance-state.json") {
+      const state = await getState(env);
+      return json(state);
+    }
+
     // SETTINGS HOST (admin panel, no maintenance gate)
     if (host === "settings.familiada.online") {
       if (url.pathname.startsWith("/_admin_api")) {
         return handleAdminApi(request, env);
-      }
-
-      if (url.pathname === "/maintenance-state.json") {
-        const state = await getState(env);
-        return json(state);
       }
 
       // Root on settings subdomain should open settings.html
@@ -83,12 +84,6 @@ export default {
     // Block settings on public hosts (serve custom 404)
     if (isBlockedPath(host, url.pathname)) {
       return serveNotFoundPage(request, ORIGIN_BASE, ORIGIN_HOST, ORIGIN_RESOLVE);
-    }
-
-    // PUBLIC STATE ENDPOINT
-    if (url.pathname === "/maintenance-state.json") {
-      const state = await getState(env);
-      return json(state);
     }
 
     // GLOBAL GATE

@@ -20,8 +20,13 @@
       <div class="brand">FAMILIADA</div>
     </div>
     <div class="topbar-section topbar-section-2">
-      <a class="btn sm" id="btnSupabase" href="https://supabase.familiada.online" data-i18n="settings.actions.supabase">Supabase</a>
-      <a class="btn sm" id="btnServer" href="https://panel.familiada.online" data-i18n="settings.actions.server">Serwer</a>
+      <button class="btn sm" id="btnTabMaintenance" type="button" data-i18n="settings.tabs.maintenance">Prace techniczne</button>
+      <div class="ui-select" id="toolsSelect">
+        <button class="btn sm ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
+          <span class="ui-select-label" data-i18n="settings.tabs.tools">Narzędzia</span>
+        </button>
+        <div class="ui-select-menu" role="listbox"></div>
+      </div>
     </div>
     <div class="topbar-section topbar-section-3"></div>
     <div class="topbar-section topbar-section-4">
@@ -30,129 +35,65 @@
   </header>
 
   <main class="wrap">
-    <div class="bar">
-      <div>
-        <div class="title" data-i18n="settings.title">Ustawienia</div>
-        <div class="hint" data-i18n="settings.subtitle">Panel administracyjny</div>
-      </div>
-
-      <div class="actions" id="panelActions" hidden>
-        <button class="btn sm" id="btnRefresh" type="button" data-i18n="settings.actions.refresh">Odśwież</button>
-        <button class="btn sm gold" id="btnSave" type="button" data-i18n="settings.actions.save">Zapisz</button>
-      </div>
-    </div>
-
-    <section class="tools-shell" id="toolsShell" hidden>
-      <div class="tools-bar">
-        <div class="tools-title" data-i18n="settings.tools.title">Narzędzia</div>
-        <div class="tools-actions">
-          <button class="btn sm" id="btnTool1" type="button" data-i18n="settings.tools.editor5x7">Edytor 5x7</button>
-          <button class="btn sm" id="btnTool2" type="button" data-i18n="settings.tools.exporterEditor">Exporter+Editor</button>
-          <button class="btn sm" id="btnTool3" type="button" data-i18n="settings.tools.koraBuilder">Kora Builder</button>
-          <button class="btn sm" id="btnToolClose" type="button" data-i18n="settings.tools.close">Zamknij</button>
+    <section class="settings-panel" id="panelScreen" hidden>
+      <div class="maintenance-panel">
+        <div class="panel-head">
+          <div class="panel-title" data-i18n="settings.maintenance.title">Prace techniczne</div>
+          <div class="panel-sub" data-i18n="settings.maintenance.subtitle">Ustawienia strony maintenance</div>
         </div>
-      </div>
-      <div class="tools-frame-wrap">
-        <iframe id="toolsFrame" title="Tools" loading="lazy"></iframe>
+
+        <div class="mode-switch" id="modeSwitch">
+          <button class="mode-btn" data-mode="message" type="button" data-i18n="settings.modes.message">Wiadomość</button>
+          <button class="mode-btn" data-mode="returnAt" type="button" data-i18n="settings.modes.returnAt">Do godziny</button>
+          <button class="mode-btn" data-mode="countdown" type="button" data-i18n="settings.modes.countdown">Odliczanie</button>
+        </div>
+
+        <div class="mode-block" id="modeMessage">
+          <div class="mode-hint" data-i18n="settings.modes.messageHint">Komunikat bez daty i bez odliczania.</div>
+        </div>
+
+        <div class="mode-block" id="modeReturnAt" hidden>
+          <label class="field">
+            <span class="field-label" data-i18n="settings.maintenance.returnAt">Powrót</span>
+            <input type="datetime-local" id="returnAtInput"/>
+            <span class="field-hint" data-i18n="settings.maintenance.returnAtHint">Minimum 10 minut od teraz.</span>
+          </label>
+        </div>
+
+        <div class="mode-block" id="modeCountdown" hidden>
+          <label class="field">
+            <span class="field-label" data-i18n="settings.modes.endAt">Do godziny</span>
+            <input type="datetime-local" id="endAtInput"/>
+          </label>
+          <div class="countdown-row">
+            <span class="countdown-label" data-i18n="settings.modes.countdownNow">Aktualny licznik</span>
+            <span class="countdown-value" id="countdownNow">—</span>
+          </div>
+        </div>
+
+        <div class="panel-actions">
+          <button class="btn sm gold" id="btnStartStop" type="button" data-i18n="settings.actions.start">Start</button>
+          <button class="btn sm" id="btnRefresh" type="button" data-i18n="settings.actions.refresh">Odśwież</button>
+        </div>
+
+        <div class="panel-status" id="panelStatus">
+          <span class="status-label" data-i18n="settings.status.label">Status</span>
+          <span class="status-value" id="statusValue">—</span>
+        </div>
+
+        <div class="bypass-box">
+          <div class="bypass-title" data-i18n="settings.bypass.title">Pomiń administratora</div>
+          <div class="bypass-actions">
+            <button class="btn sm gold" id="btnBypassOn" type="button" data-i18n="settings.bypass.on">Bypass ON</button>
+            <button class="btn sm" id="btnBypassOff" type="button" data-i18n="settings.bypass.off">Bypass OFF</button>
+          </div>
+        </div>
       </div>
     </section>
 
-    <section class="builder-shell">
-      <div class="card builder-card settings-card-root">
-        <div class="settings-panel" id="panelScreen" hidden>
-          <div class="grid settings-grid">
-            <div class="card settings-tile settings-tile--wide" id="tileMaintenance">
-              <div class="tile-header">
-                <div class="tile-title" data-i18n="settings.maintenance.title">Prace techniczne</div>
-                <div class="tile-sub" data-i18n="settings.maintenance.subtitle">Ustawienia strony maintenance</div>
-              </div>
-
-              <div class="tile-body">
-                <div class="field row">
-                  <button class="btn sm" id="btnQuickOff" type="button" data-i18n="settings.maintenance.quickOff">OFF</button>
-                  <button class="btn sm gold" id="btnQuickMessage" type="button" data-i18n="settings.maintenance.quickMessage">Message ON</button>
-                  <button class="btn sm" id="btnQuickReturnAt" type="button" data-i18n="settings.maintenance.quickReturnAt">ReturnAt</button>
-                  <button class="btn sm" id="btnQuickCountdown" type="button" data-i18n="settings.maintenance.quickCountdown">Countdown</button>
-                </div>
-
-                <label class="field">
-                  <span class="field-label" data-i18n="settings.maintenance.enabled">Maintenance</span>
-                  <span class="field-control toggle">
-                    <input type="checkbox" id="enabledToggle"/>
-                    <span class="toggle-label" data-i18n="settings.maintenance.enabledHelp">Włącz</span>
-                  </span>
-                </label>
-
-                <label class="field">
-                  <span class="field-label" data-i18n="settings.maintenance.mode">Tryb</span>
-                  <select id="modeSelect">
-                    <option value="off" data-i18n="settings.maintenance.modeOff">off</option>
-                    <option value="message" data-i18n="settings.maintenance.modeMessage">message</option>
-                    <option value="returnAt" data-i18n="settings.maintenance.modeReturnAt">returnAt</option>
-                    <option value="countdown" data-i18n="settings.maintenance.modeCountdown">countdown</option>
-                  </select>
-                </label>
-
-                <label class="field">
-                  <span class="field-label" data-i18n="settings.maintenance.returnAt">Powrót</span>
-                  <input type="datetime-local" id="returnAtInput"/>
-                  <span class="field-hint" data-i18n="settings.maintenance.returnAtHint">Zapiszemy jako ISO.</span>
-                </label>
-
-                <div class="field row">
-                  <button class="btn sm" id="btnClearReturnAt" type="button" data-i18n="settings.maintenance.clearReturnAt">Wyczyść returnAt</button>
-                  <span class="warn" id="returnAtWarn" data-i18n="settings.maintenance.returnAtWarn" hidden>Brak returnAt dla wybranego trybu.</span>
-                </div>
-
-                <div class="preview">
-                  <div class="preview-title" data-i18n="settings.maintenance.previewTitle">Podgląd</div>
-                  <div class="preview-body">
-                    <div class="preview-line" id="previewTitle">—</div>
-                    <div class="preview-line" id="previewText">—</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div class="card settings-tile" id="tilePlaceholder">
-              <div class="tile-header">
-                <div class="tile-title" data-i18n="settings.placeholder.title">Więcej ustawień</div>
-                <div class="tile-sub" data-i18n="settings.placeholder.subtitle">Miejsce na kolejne moduły</div>
-              </div>
-              <div class="tile-body">
-                <div class="placeholder-text" data-i18n="settings.placeholder.text">Tutaj w przyszłości pojawią się dodatkowe ustawienia.</div>
-              </div>
-            </div>
-
-            <div class="card settings-tile" id="tileBypass">
-              <div class="tile-header">
-                <div class="tile-title" data-i18n="settings.bypass.title">Bypass</div>
-                <div class="tile-sub" data-i18n="settings.bypass.subtitle">Pomiń maintenance dla admina</div>
-              </div>
-              <div class="tile-body">
-                <div class="field row">
-                  <button class="btn sm gold" id="btnBypassOn" type="button" data-i18n="settings.bypass.on">Bypass ON</button>
-                  <button class="btn sm" id="btnBypassOff" type="button" data-i18n="settings.bypass.off">Bypass OFF</button>
-                  <span class="hint" id="bypassHint" data-i18n="settings.bypass.hint">Ustawia cookie admina na 30 dni.</span>
-                </div>
-              </div>
-            </div>
-
-            <div class="card settings-tile" id="tileTools">
-              <div class="tile-header">
-                <div class="tile-title" data-i18n="settings.tools.title">Narzędzia</div>
-                <div class="tile-sub" data-i18n="settings.tools.subtitle">Skróty do narzędzi</div>
-              </div>
-              <div class="tile-body">
-                <div class="field row">
-                  <button class="btn sm" id="btnToolOpen1" type="button" data-i18n="settings.tools.editor5x7">Edytor 5x7</button>
-                  <button class="btn sm" id="btnToolOpen2" type="button" data-i18n="settings.tools.exporterEditor">Exporter+Editor</button>
-                  <button class="btn sm" id="btnToolOpen3" type="button" data-i18n="settings.tools.koraBuilder">Kora Builder</button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+    <section class="tools-shell" id="toolsShell" hidden>
+      <div class="tools-frame-wrap">
+        <iframe id="toolsFrame" title="Tools" loading="lazy"></iframe>
       </div>
     </section>
   </main>
