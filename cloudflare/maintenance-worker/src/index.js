@@ -1,10 +1,36 @@
+/*
+Maintenance + Settings worker
+- Public:        GET /maintenance-state.json
+- Admin (legacy): /_maint/* (token in URL)
+- Admin panel:   /_admin_api/* (Access header or cookie)
+
+Cloudflare Access (Zero Trust) for settings.familiada.online:
+1) Create a Self-hosted app for settings.familiada.online
+2) Add an Allow policy for one email
+3) Add a Block policy for everyone else
+Access injects CF-Access-Jwt-Assertion header (no JWT validation here).
+*/
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
+    const host = url.hostname.toLowerCase();
+
+    // SETTINGS HOST (admin panel, no maintenance gate)
+    if (host === "settings.familiada.online") {
+      return handleSettingsHost(request, env, url);
+    }
+
+    const isBypass = hasAdminBypass(request, env);
 
     // ADMIN ENDPOINTS
     if (url.pathname.startsWith("/_maint")) {
       return handleAdmin(request, env);
+    }
+
+    // Admin API should not be exposed on public hosts
+    if (url.pathname.startsWith("/_admin_api")) {
+      return new Response("Unauthorized", { status: 401 });
     }
 
     // PUBLIC STATE ENDPOINT
@@ -16,7 +42,7 @@ export default {
     // GLOBAL GATE
     const state = await getState(env);
 
-    if (!state.enabled) {
+    if (!state.enabled || state.mode === "off" || isBypass) {
       return fetch(request); // brak prac
     }
 
@@ -29,6 +55,34 @@ export default {
     return serveMaintenance(request);
   }
 };
+
+async function handleSettingsHost(request, env, url) {
+  if (url.pathname.startsWith("/_admin_api")) {
+    return handleAdminApi(request, env);
+  }
+
+  if (url.pathname === "/maintenance-state.json") {
+    const state = await getState(env);
+    return json(state);
+  }
+
+  if (url.pathname === "/" || url.pathname === "/index.html") {
+    return serveSettingsPage(request);
+  }
+
+  if (url.pathname === "/settings.html" || isSettingsAsset(url.pathname)) {
+    return fetch(request);
+  }
+
+  return fetch(request);
+}
+
+async function serveSettingsPage(request) {
+  const url = new URL(request.url);
+  const target = new URL("/settings.html", url.origin);
+  const next = new Request(target.toString(), request);
+  return fetch(next);
+}
 
 async function getState(env) {
   const raw = await env.MAINT_KV.get("state");
@@ -79,6 +133,74 @@ async function handleAdmin(request, env) {
     return new Response("Forbidden", { status: 403 });
   }
 
+  if (url.pathname === "/_maint/bypass") {
+    if (!env.ADMIN_BYPASS_TOKEN) {
+      return new Response("Missing ADMIN_BYPASS_TOKEN", { status: 500 });
+    }
+
+    const stage = url.searchParams.get("stage") || "1";
+    const host = url.host;
+    const isWww = host.toLowerCase().startsWith("www.");
+
+    // stage 1: jesteś na apex -> ustaw cookie dla apex i przejdź na www
+    if (stage === "1" && !isWww) {
+      const next = new URL(url.toString());
+      next.host = `www.${host}`;
+      next.searchParams.set("stage", "2");
+
+      return new Response("Bypass ON (stage 1)", {
+        status: 302,
+        headers: {
+          "Set-Cookie": setAdminBypassCookie(env),
+          "Location": next.toString(),
+          "Cache-Control": "no-store"
+        }
+      });
+    }
+
+    // stage 2: jesteś na www (albo od razu wszedłeś na www) -> ustaw cookie dla www i wróć na /
+    return new Response("Bypass ON (stage 2)", {
+      status: 302,
+      headers: {
+        "Set-Cookie": setAdminBypassCookie(env),
+        "Location": "/",
+        "Cache-Control": "no-store"
+      }
+    });
+  }
+
+  if (url.pathname === "/_maint/bypass_off") {
+    const stage = url.searchParams.get("stage") || "1";
+    const host = url.host;
+    const isWww = host.toLowerCase().startsWith("www.");
+
+    // stage 1: jesteś na apex -> skasuj cookie dla apex i przejdź na www
+    if (stage === "1" && !isWww) {
+      const next = new URL(url.toString());
+      next.host = `www.${host}`;
+      next.searchParams.set("stage", "2");
+
+      return new Response("Bypass OFF (stage 1)", {
+        status: 302,
+        headers: {
+          "Set-Cookie": clearAdminBypassCookie(),
+          "Location": next.toString(),
+          "Cache-Control": "no-store"
+        }
+      });
+    }
+
+    // stage 2: skasuj cookie dla www i wróć na /
+    return new Response("Bypass OFF (stage 2)", {
+      status: 302,
+      headers: {
+        "Set-Cookie": clearAdminBypassCookie(),
+        "Location": "/",
+        "Cache-Control": "no-store"
+      }
+    });
+  }
+
   if (url.pathname === "/_maint/off") {
     await env.MAINT_KV.put("state", JSON.stringify({
       enabled: false,
@@ -120,6 +242,116 @@ async function handleAdmin(request, env) {
   return new Response("Unknown command", { status: 400 });
 }
 
+async function handleAdminApi(request, env) {
+  const url = new URL(request.url);
+
+  if (url.pathname === "/_admin_api/me") {
+    const ok = await isAdminAuthorized(request, env);
+    return new Response(ok ? "OK" : "Unauthorized", { status: ok ? 200 : 401 });
+  }
+
+  if (url.pathname === "/_admin_api/login") {
+    if (request.method !== "POST") {
+      return new Response("Method Not Allowed", { status: 405 });
+    }
+    if (!env.ADMIN_PANEL_PASSWORD) {
+      return new Response("Missing ADMIN_PANEL_PASSWORD", { status: 500 });
+    }
+    const body = await readJson(request);
+    const password = body?.password || "";
+    if (password !== env.ADMIN_PANEL_PASSWORD) {
+      return new Response("Forbidden", { status: 403 });
+    }
+    const token = await createSettingsSession(env);
+    return new Response("OK", {
+      headers: {
+        "Set-Cookie": setSettingsCookie(token),
+        "Cache-Control": "no-store"
+      }
+    });
+  }
+
+  if (url.pathname === "/_admin_api/logout") {
+    if (request.method !== "POST") {
+      return new Response("Method Not Allowed", { status: 405 });
+    }
+    const token = getCookie(request, "__Host-fml_settings");
+    if (token) {
+      await env.MAINT_KV.delete(`settings_session:${token}`);
+    }
+    return new Response("OK", {
+      headers: {
+        "Set-Cookie": clearSettingsCookie(),
+        "Cache-Control": "no-store"
+      }
+    });
+  }
+
+  if (url.pathname === "/_admin_api/bypass") {
+    if (request.method !== "POST") {
+      return new Response("Method Not Allowed", { status: 405 });
+    }
+    if (!env.ADMIN_BYPASS_TOKEN) {
+      return new Response("Missing ADMIN_BYPASS_TOKEN", { status: 500 });
+    }
+    const authorized = await isAdminAuthorized(request, env);
+    if (!authorized) return new Response("Unauthorized", { status: 401 });
+    return new Response("Bypass ON", {
+      headers: {
+        "Set-Cookie": setAdminBypassCookieForAllDomains(env),
+        "Cache-Control": "no-store"
+      }
+    });
+  }
+
+  if (url.pathname === "/_admin_api/bypass_off") {
+    if (request.method !== "POST") {
+      return new Response("Method Not Allowed", { status: 405 });
+    }
+    const authorized = await isAdminAuthorized(request, env);
+    if (!authorized) return new Response("Unauthorized", { status: 401 });
+    return new Response("Bypass OFF", {
+      headers: {
+        "Set-Cookie": clearAdminBypassCookieForAllDomains(),
+        "Cache-Control": "no-store"
+      }
+    });
+  }
+
+  const authorized = await isAdminAuthorized(request, env);
+  if (!authorized) {
+    return new Response("Unauthorized", { status: 401 });
+  }
+
+  if (url.pathname === "/_admin_api/state") {
+    if (request.method === "GET") {
+      const state = await getState(env);
+      return json(state);
+    }
+    if (request.method === "POST") {
+      const body = await readJson(request);
+      const validated = validateState(body);
+      if (!validated.ok) {
+        return new Response(validated.error, { status: 400 });
+      }
+      await env.MAINT_KV.put("state", JSON.stringify(validated.value));
+      return json(validated.value);
+    }
+    return new Response("Method Not Allowed", { status: 405 });
+  }
+
+  if (url.pathname === "/_admin_api/off") {
+    if (request.method !== "POST") {
+      return new Response("Method Not Allowed", { status: 405 });
+    }
+    const next = { enabled: false, mode: "off", returnAt: null };
+    await env.MAINT_KV.put("state", JSON.stringify(next));
+    return json(next);
+  }
+
+  return new Response("Not Found", { status: 404 });
+}
+
 function isMaintenanceAsset(pathname) {
   if (pathname === "/maintenance.html") return true;
 
@@ -130,4 +362,118 @@ function isMaintenanceAsset(pathname) {
 
   const allowedFiles = ["/favicon.ico", "/logo.svg"];
   return allowedFiles.includes(pathname);
+}
+
+function isSettingsAsset(pathname) {
+  const allowedPrefixes = ["/css/", "/js/", "/translation/", "/img/", "/audio/"];
+  for (const prefix of allowedPrefixes) {
+    if (pathname.startsWith(prefix)) return true;
+  }
+  const allowedFiles = ["/favicon.ico", "/logo.svg"];
+  return allowedFiles.includes(pathname);
+}
+
+function getCookie(request, name) {
+  const h = request.headers.get("Cookie") || "";
+  const parts = h.split(/;\s*/);
+  for (const p of parts) {
+    const eq = p.indexOf("=");
+    if (eq === -1) continue;
+    const k = p.slice(0, eq);
+    const v = p.slice(eq + 1);
+    if (k === name) return v;
+  }
+  return null;
+}
+
+function hasAdminBypass(request, env) {
+  const hostOnly = getCookie(request, "__Host-fml_admin");
+  const allDomains = getCookie(request, "__Secure-fml_admin");
+  const token = env.ADMIN_BYPASS_TOKEN;
+  return Boolean(token && (hostOnly === token || allDomains === token));
+}
+
+function hasAccessJwt(request) {
+  return Boolean(
+    request.headers.get("CF-Access-Jwt-Assertion") ||
+      request.headers.get("Cf-Access-Jwt-Assertion")
+  );
+}
+
+async function hasSettingsSession(request, env) {
+  const token = getCookie(request, "__Host-fml_settings");
+  if (!token) return false;
+  const key = `settings_session:${token}`;
+  const value = await env.MAINT_KV.get(key);
+  return Boolean(value);
+}
+
+async function isAdminAuthorized(request, env) {
+  if (hasAccessJwt(request)) return true;
+  return hasSettingsSession(request, env);
+}
+
+async function createSettingsSession(env) {
+  const token = crypto.randomUUID();
+  const ttl = 60 * 60 * 24 * 30;
+  await env.MAINT_KV.put(`settings_session:${token}`, "1", { expirationTtl: ttl });
+  return token;
+}
+
+function setSettingsCookie(token) {
+  return `__Host-fml_settings=${token}; Path=/; Secure; HttpOnly; SameSite=Strict; Max-Age=2592000`;
+}
+
+function clearSettingsCookie() {
+  return `__Host-fml_settings=; Path=/; Secure; HttpOnly; SameSite=Strict; Max-Age=0`;
+}
+
+async function readJson(request) {
+  try {
+    return await request.json();
+  } catch {
+    return null;
+  }
+}
+
+function validateState(body) {
+  if (!body || typeof body !== "object") {
+    return { ok: false, error: "Invalid JSON" };
+  }
+  const enabled = body.enabled;
+  const mode = body.mode;
+  const returnAt = body.returnAt ?? null;
+
+  if (typeof enabled !== "boolean") {
+    return { ok: false, error: "Invalid enabled" };
+  }
+
+  const modes = new Set(["off", "message", "returnAt", "countdown"]);
+  if (typeof mode !== "string" || !modes.has(mode)) {
+    return { ok: false, error: "Invalid mode" };
+  }
+
+  if (returnAt !== null && typeof returnAt !== "string") {
+    return { ok: false, error: "Invalid returnAt" };
+  }
+
+  return { ok: true, value: { enabled, mode, returnAt } };
+}
+
+function setAdminBypassCookie(env) {
+  // __Host- => wymaga Secure, Path=/ i bez Domain (host-only)
+  return `__Host-fml_admin=${env.ADMIN_BYPASS_TOKEN}; Path=/; Secure; HttpOnly; SameSite=Strict; Max-Age=2592000`;
+}
+
+function clearAdminBypassCookie() {
+  return `__Host-fml_admin=; Path=/; Secure; HttpOnly; SameSite=Strict; Max-Age=0`;
+}
+
+function setAdminBypassCookieForAllDomains(env) {
+  // __Secure- pozwala na Domain=.familiada.online (shared for apex + www)
+  return `__Secure-fml_admin=${env.ADMIN_BYPASS_TOKEN}; Path=/; Domain=familiada.online; Secure; HttpOnly; SameSite=Strict; Max-Age=2592000`;
+}
+
+function clearAdminBypassCookieForAllDomains() {
+  return `__Secure-fml_admin=; Path=/; Domain=familiada.online; Secure; HttpOnly; SameSite=Strict; Max-Age=0`;
 }
