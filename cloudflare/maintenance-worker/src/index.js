@@ -8,12 +8,7 @@ export default {
     const ORIGIN_BASE = "https://andrish97.github.io";
     const ORIGIN_HOST = "www.familiada.online";
 
-    if (host === "settings.familiada.online") {
-      return new Response("WORKER HIT", {
-        status: 200,
-        headers: { "x-worker-hit": "settings" },
-      });
-    }
+    // (no apex redirect here)
 
     // SETTINGS HOST (admin panel, no maintenance gate)
     if (host === "settings.familiada.online") {
