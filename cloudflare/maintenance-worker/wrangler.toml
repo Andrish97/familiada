@@ -3,5 +3,5 @@ main = "src/index.js"
 compatibility_date = "2024-01-01"
 
 [[kv_namespaces]]
-binding = "KV_BINDING"
+binding = "MAINT_KV"
 id = "a23c036852434c5da77287d82973f183"
