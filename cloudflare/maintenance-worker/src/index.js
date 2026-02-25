@@ -76,14 +76,9 @@ export default {
       return new Response("Unauthorized", { status: 401 });
     }
 
-    // Block settings on public hosts
-    const redirectTarget = resolveRedirect(host, url.pathname);
-    if (redirectTarget) {
-      return Response.redirect(redirectTarget, 301);
-    }
-
+    // Block settings on public hosts (serve custom 404)
     if (isBlockedPath(host, url.pathname)) {
-      return new Response("Not Found", { status: 404 });
+      return serveNotFoundPage(request, ORIGIN_BASE, ORIGIN_HOST, ORIGIN_RESOLVE);
     }
 
     // PUBLIC STATE ENDPOINT
@@ -424,31 +419,15 @@ const KNOWN_HOSTS = [
   "api.familiada.online",
 ];
 
-const HOST_REDIRECTS = [
-  {
-    fromHosts: ["familiada.online", "www.familiada.online"],
-    paths: ["/settings", "/settings/", "/settings.html"],
-    to: "https://familiada.online/",
-  },
-];
-
 const BLOCKED_PATHS = [
   {
     hosts: ["familiada.online", "www.familiada.online"],
-    paths: ["/settings.html", "/tools", "/tools/", "/settings-tools", "/settings-tools/"],
+    paths: ["/settings", "/settings/", "/settings.html", "/tools", "/tools/", "/settings-tools", "/settings-tools/"],
   },
 ];
 
 function isKnownHost(host) {
   return KNOWN_HOSTS.includes(host);
-}
-
-function resolveRedirect(host, pathname) {
-  for (const rule of HOST_REDIRECTS) {
-    if (!rule.fromHosts.includes(host)) continue;
-    if (rule.paths.includes(pathname)) return rule.to;
-  }
-  return null;
 }
 
 function isBlockedPath(host, pathname) {
