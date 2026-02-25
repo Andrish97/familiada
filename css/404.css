@@ -1,0 +1,13 @@
+/* css/404.css */
+
+.notfound-body .maintenance-card{
+  max-width: 720px;
+}
+
+.notfound-card h1{
+  font-size: 28px;
+}
+
+.notfound-card p{
+  opacity: .85;
+}

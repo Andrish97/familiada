@@ -3961,7 +3961,7 @@ const uk = {
     contact: "Контакт",
     statusLabel: "Статус:",
     footerLeft: "Familiada — режим технічних робіт",
-    footerRight: "Потрібна допомога терміново? Зв’яжіться з нами.",
+    footerRight: "Потрібна допомога? <a href=\"mailto:contact@familiada.online\">contact@familiada.online</a>",
   },
   settings: {
     title: "Налаштування",
@@ -4040,6 +4040,14 @@ const uk = {
       off: "Bypass OFF",
       hint: "Встановлює cookie адміна на 30 днів.",
     },
+  },
+  notFound: {
+    title: "Сторінку не знайдено",
+    messageTitle: "Сторінку не знайдено",
+    messageText:
+      "Такої адреси не існує або її перенесено. Перевірте посилання.",
+    footerLeft: "Familiada",
+    footerRight: "Якщо це помилка — <a href=\"mailto:contact@familiada.online\">contact@familiada.online</a>",
   },
 };
 

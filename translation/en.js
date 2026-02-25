@@ -4085,7 +4085,7 @@ const en = {
     contact: "Contact",
     statusLabel: "Status:",
     footerLeft: "Familiada — maintenance mode",
-    footerRight: "Need help urgently? Contact us.",
+    footerRight: "Need help urgently? <a href=\"mailto:contact@familiada.online\">contact@familiada.online</a>",
   },
   settings: {
     title: "Settings",
@@ -4164,6 +4164,14 @@ const en = {
       off: "Bypass OFF",
       hint: "Sets admin cookie for 30 days.",
     },
+  },
+  notFound: {
+    title: "Page not found",
+    messageTitle: "Page not found",
+    messageText:
+      "This address does not exist or has been moved. Check the link.",
+    footerLeft: "Familiada",
+    footerRight: "If this is a mistake, <a href=\"mailto:contact@familiada.online\">contact@familiada.online</a>",
   },
 };
 

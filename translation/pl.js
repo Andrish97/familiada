@@ -4082,7 +4082,7 @@ const pl = {
     contact: "Kontakt",
     statusLabel: "Status:",
     footerLeft: "Familiada — tryb konserwacji",
-    footerRight: "Masz pilną sprawę? Skontaktuj się z nami.",
+    footerRight: "Masz pilną sprawę? <a href=\"mailto:contact@familiada.online\">contact@familiada.online</a>",
   },
   settings: {
     title: "Ustawienia",
@@ -4161,6 +4161,14 @@ const pl = {
       off: "Bypass OFF",
       hint: "Ustawia cookie admina na 30 dni.",
     },
+  },
+  notFound: {
+    title: "Strona nie istnieje",
+    messageTitle: "Strona nie istnieje",
+    messageText:
+      "Tego adresu nie ma lub został przeniesiony. Sprawdź poprawność linku.",
+    footerLeft: "Familiada",
+    footerRight: "Jeśli to błąd — <a href=\"mailto:contact@familiada.online\">contact@familiada.online</a>",
   },
 };
 

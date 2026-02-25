@@ -10,15 +10,18 @@
   min-height: 0;
 }
 
-.settings-auth,
 .settings-panel{
   flex: 1 1 auto;
   min-height: 0;
 }
 
 .settings-auth{
+  position: fixed;
+  inset: 0;
   display: grid;
   place-items: center;
+  background: radial-gradient(circle at 20% 10%,rgba(255,220,120,.18),transparent 55%),radial-gradient(circle at 80% 90%,rgba(70,140,255,.18),transparent 55%),#050914;
+  z-index: 55;
 }
 
 .auth-card{
@@ -67,6 +70,12 @@
 .settings-auth .err{
   color: #ff9d9d;
   font-size: 12px;
+}
+
+.settings-locked header,
+.settings-locked main,
+.settings-locked footer{
+  display: none;
 }
 
 .settings-body input,
