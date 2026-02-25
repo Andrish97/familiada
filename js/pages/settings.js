@@ -42,6 +42,15 @@ const els = {
   btnBypassOn: document.getElementById("btnBypassOn"),
   btnBypassOff: document.getElementById("btnBypassOff"),
   bypassHint: document.getElementById("bypassHint"),
+  toolsShell: document.getElementById("toolsShell"),
+  toolsFrame: document.getElementById("toolsFrame"),
+  btnTool1: document.getElementById("btnTool1"),
+  btnTool2: document.getElementById("btnTool2"),
+  btnTool3: document.getElementById("btnTool3"),
+  btnToolClose: document.getElementById("btnToolClose"),
+  btnToolOpen1: document.getElementById("btnToolOpen1"),
+  btnToolOpen2: document.getElementById("btnToolOpen2"),
+  btnToolOpen3: document.getElementById("btnToolOpen3"),
   previewTitle: document.getElementById("previewTitle"),
   previewText: document.getElementById("previewText"),
   toast: document.getElementById("toast"),
@@ -71,6 +80,18 @@ function showPanel() {
   document.body.classList.remove("settings-locked");
   document.body.classList.remove("no-footer-line");
   moveLangSwitcher(false);
+}
+
+function openTool(path) {
+  if (!els.toolsShell || !els.toolsFrame) return;
+  els.toolsShell.hidden = false;
+  els.toolsFrame.src = path;
+}
+
+function closeTool() {
+  if (!els.toolsShell || !els.toolsFrame) return;
+  els.toolsFrame.src = "about:blank";
+  els.toolsShell.hidden = true;
 }
 
 function moveLangSwitcher(locked) {
@@ -357,6 +378,24 @@ function wireEvents() {
   }
   if (els.btnBypassOff) {
     els.btnBypassOff.addEventListener("click", async () => setBypass("off"));
+  }
+
+  const toolHandlers = [
+    [els.btnTool1, "/settings-tools/editor_5x7.html"],
+    [els.btnTool2, "/settings-tools/exporterandeditor.html"],
+    [els.btnTool3, "/settings-tools/kora-builder.html"],
+    [els.btnToolOpen1, "/settings-tools/editor_5x7.html"],
+    [els.btnToolOpen2, "/settings-tools/exporterandeditor.html"],
+    [els.btnToolOpen3, "/settings-tools/kora-builder.html"],
+  ];
+
+  toolHandlers.forEach(([btn, path]) => {
+    if (!btn) return;
+    btn.addEventListener("click", () => openTool(path));
+  });
+
+  if (els.btnToolClose) {
+    els.btnToolClose.addEventListener("click", closeTool);
   }
 
   [

@@ -34,8 +34,32 @@ export default {
         return fetch(next);
       }
 
-      // allow settings.html and assets
+      // allow settings.html, settings-tools, and assets only
+      if (url.pathname === "/settings.html" || url.pathname.startsWith("/settings-tools/") || isSettingsAsset(url.pathname)) {
+        const res = await fetch(request);
+        if (url.pathname.startsWith("/settings-tools/")) {
+          return withHeaders(res, {
+            "Content-Security-Policy": "frame-ancestors 'self'",
+            "X-Frame-Options": "SAMEORIGIN"
+          });
+        }
+        return res;
+      }
+
+      return new Response("Not Found", { status: 404 });
+    }
+
+    // Known service hosts (no maintenance gate here)
+    if (host === "panel.familiada.online" || host === "supabase.familiada.online") {
       return fetch(request);
+    }
+
+    // Unknown subdomains -> serve custom 404 (allow shared assets)
+    if (host.endsWith(".familiada.online") && !isKnownHost(host)) {
+      if (isCommonAsset(url.pathname)) {
+        return fetch(request);
+      }
+      return serveNotFoundPage(request);
     }
 
     const isBypass = hasAdminBypass(request, env);
@@ -51,11 +75,13 @@ export default {
     }
 
     // Block settings on public hosts
-    if (
-      (host === "familiada.online" || host === "www.familiada.online") &&
-      (url.pathname === "/settings.html" || url.pathname === "/settings" || url.pathname === "/settings/")
-    ) {
-      return Response.redirect("https://settings.familiada.online/", 301);
+    const redirectTarget = resolveRedirect(host, url.pathname);
+    if (redirectTarget) {
+      return Response.redirect(redirectTarget, 301);
+    }
+
+    if (isBlockedPath(host, url.pathname)) {
+      return new Response("Not Found", { status: 404 });
     }
 
     // PUBLIC STATE ENDPOINT
@@ -123,6 +149,20 @@ async function serveMaintenance(request) {
       "Content-Type": "text/html; charset=utf-8",
       "Cache-Control": "no-store",
       "Retry-After": "300"
+    }
+  });
+}
+
+async function serveNotFoundPage(request) {
+  const url = new URL(request.url);
+  const notFoundUrl = new URL("/404.html", url.origin);
+  const res = await fetch(notFoundUrl);
+
+  return new Response(res.body, {
+    status: 404,
+    headers: {
+      "Content-Type": "text/html; charset=utf-8",
+      "Cache-Control": "no-store"
     }
   });
 }
@@ -371,6 +411,68 @@ function isMaintenanceAsset(pathname) {
 
   const allowedFiles = ["/favicon.ico", "/logo.svg"];
   return allowedFiles.includes(pathname);
+}
+
+function isCommonAsset(pathname) {
+  if (pathname === "/404.html") return true;
+  if (isMaintenanceAsset(pathname)) return true;
+  if (isSettingsAsset(pathname)) return true;
+  return false;
+}
+
+const KNOWN_HOSTS = [
+  "familiada.online",
+  "www.familiada.online",
+  "settings.familiada.online",
+  "panel.familiada.online",
+  "supabase.familiada.online",
+];
+
+const HOST_REDIRECTS = [
+  {
+    fromHosts: ["familiada.online", "www.familiada.online"],
+    paths: ["/settings", "/settings/", "/settings.html"],
+    to: "https://settings.familiada.online/",
+  },
+];
+
+const BLOCKED_PATHS = [
+  {
+    hosts: ["familiada.online", "www.familiada.online"],
+    paths: ["/settings.html", "/tools", "/tools/", "/settings-tools", "/settings-tools/"],
+  },
+];
+
+function isKnownHost(host) {
+  return KNOWN_HOSTS.includes(host);
+}
+
+function resolveRedirect(host, pathname) {
+  for (const rule of HOST_REDIRECTS) {
+    if (!rule.fromHosts.includes(host)) continue;
+    if (rule.paths.includes(pathname)) return rule.to;
+  }
+  return null;
+}
+
+function isBlockedPath(host, pathname) {
+  for (const rule of BLOCKED_PATHS) {
+    if (!rule.hosts.includes(host)) continue;
+    if (rule.paths.includes(pathname)) return true;
+    if (pathname.startsWith("/tools/")) return true;
+    if (pathname.startsWith("/settings-tools/")) return true;
+  }
+  return false;
+}
+
+function withHeaders(res, extra) {
+  const headers = new Headers(res.headers);
+  Object.entries(extra).forEach(([key, value]) => headers.set(key, value));
+  return new Response(res.body, {
+    status: res.status,
+    statusText: res.statusText,
+    headers,
+  });
 }
 
 function isSettingsAsset(pathname) {

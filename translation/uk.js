@@ -4046,6 +4046,8 @@ const uk = {
     messageTitle: "Сторінку не знайдено",
     messageText:
       "Такої адреси не існує або її перенесено. Перевірте посилання.",
+    redirectHint: "Незабаром ви повернетеся на головну сторінку.",
+    homeBtn: "← Головна",
     footerLeft: "Familiada",
     footerRight: "Якщо це помилка — <a href=\"mailto:contact@familiada.online\">contact@familiada.online</a>",
   },

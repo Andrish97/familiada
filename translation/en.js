@@ -4170,6 +4170,8 @@ const en = {
     messageTitle: "Page not found",
     messageText:
       "This address does not exist or has been moved. Check the link.",
+    redirectHint: "You will be redirected to the home page shortly.",
+    homeBtn: "← Home",
     footerLeft: "Familiada",
     footerRight: "If this is a mistake, <a href=\"mailto:contact@familiada.online\">contact@familiada.online</a>",
   },
