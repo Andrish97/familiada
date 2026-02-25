@@ -3970,6 +3970,8 @@ const uk = {
       refresh: "Оновити",
       save: "Зберегти",
       logout: "Вийти",
+      supabase: "Supabase",
+      server: "Сервер",
     },
     logoutConfirmTitle: "Вийти?",
     logoutConfirmText: "Адмін-сесію буде завершено.",
@@ -3980,7 +3982,6 @@ const uk = {
     login: {
       title: "Панель налаштувань",
       checking: "Перевірка доступу…",
-      enter: "Увійти в панель",
       passwordTitle: "Потрібен пароль",
       usernamePlaceholder: "Ім’я користувача",
       passwordPlaceholder: "Пароль панелі",

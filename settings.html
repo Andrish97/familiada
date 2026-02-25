@@ -19,7 +19,10 @@
     <div class="topbar-section topbar-section-1">
       <div class="brand">FAMILIADA</div>
     </div>
-    <div class="topbar-section topbar-section-2"></div>
+    <div class="topbar-section topbar-section-2">
+      <a class="btn sm" id="btnSupabase" href="https://supabase.familiada.online" data-i18n="settings.actions.supabase">Supabase</a>
+      <a class="btn sm" id="btnServer" href="https://panel.familiada.online" data-i18n="settings.actions.server">Serwer</a>
+    </div>
     <div class="topbar-section topbar-section-3"></div>
     <div class="topbar-section topbar-section-4">
       <button class="btn sm" id="btnLogout" type="button" data-i18n="settings.actions.logout">Wyloguj</button>
@@ -47,11 +50,7 @@
             <div class="auth-sub" data-i18n="settings.login.title">Panel ustawień</div>
             <div class="status" id="authStatus" data-i18n="settings.login.checking">Trwa weryfikacja…</div>
 
-            <div class="auth-actions">
-              <button class="btn sm gold" id="btnEnter" type="button" data-i18n="settings.login.enter">Wejdź do panelu</button>
-            </div>
-
-            <form class="auth-form" id="loginForm" hidden>
+            <form class="auth-form" id="loginForm">
               <input id="loginUsername" type="text" autocomplete="username" data-i18n-placeholder="settings.login.usernamePlaceholder" placeholder="Nazwa użytkownika"/>
               <input id="loginPassword" type="password" autocomplete="current-password" data-i18n-placeholder="settings.login.passwordPlaceholder" placeholder="Hasło"/>
               <button class="btn sm gold" id="btnLogin" type="submit" data-i18n="settings.login.loginBtn">Zaloguj</button>

@@ -4094,6 +4094,8 @@ const en = {
       refresh: "Refresh",
       save: "Save",
       logout: "Log out",
+      supabase: "Supabase",
+      server: "Server",
     },
     logoutConfirmTitle: "Log out?",
     logoutConfirmText: "Your admin session will end.",
@@ -4104,7 +4106,6 @@ const en = {
     login: {
       title: "Settings panel",
       checking: "Verifying access…",
-      enter: "Enter panel",
       passwordTitle: "Password required",
       usernamePlaceholder: "Username",
       passwordPlaceholder: "Panel password",

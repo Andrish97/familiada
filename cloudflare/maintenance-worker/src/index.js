@@ -257,6 +257,12 @@ async function handleAdminApi(request, env) {
     if (!env.ADMIN_PANEL_USERNAME || !env.ADMIN_PANEL_PASSWORD) {
       return new Response("Missing ADMIN_PANEL_USERNAME or ADMIN_PANEL_PASSWORD", { status: 500 });
     }
+
+    const rate = await checkLoginRateLimit(request, env);
+    if (!rate.ok) {
+      return new Response("Too Many Requests", { status: 429 });
+    }
+
     const body = await readJson(request);
     const username = body?.username || "";
     const password = body?.password || "";
@@ -435,6 +441,19 @@ async function readJson(request) {
   } catch {
     return null;
   }
+}
+
+async function checkLoginRateLimit(request, env) {
+  const ip =
+    request.headers.get("CF-Connecting-IP") ||
+    request.headers.get("X-Forwarded-For") ||
+    "unknown";
+  const key = `settings_login_rate:${ip}`;
+  const raw = await env.MAINT_KV.get(key);
+  let data = raw ? JSON.parse(raw) : { count: 0 };
+  data.count = (data.count || 0) + 1;
+  await env.MAINT_KV.put(key, JSON.stringify(data), { expirationTtl: 300 });
+  return { ok: data.count <= 5 };
 }
 
 function validateState(body) {
