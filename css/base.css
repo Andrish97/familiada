@@ -210,6 +210,19 @@ body > main {
     background: rgba(255,120,120,.12)
 }
 
+html, body{
+    min-height: 100%;
+}
+
+body{
+    display: flex;
+    flex-direction: column;
+}
+
+main{
+    flex: 1 0 auto;
+}
+
 /* FOOTER */
 .footer{
     position: relative;
@@ -222,6 +235,7 @@ body > main {
     flex-wrap: wrap;
     opacity: .85;
     font-size: 12px;
+    margin-top: auto;
 }
 .footer::before{
     content: "";
