@@ -1,9 +1,14 @@
 /* css/settings.css */
 
+html{
+  height: 100%;
+}
+
 .settings-body{
-  height: auto;
+  height: 100%;
   min-height: 100vh;
-  overflow: auto;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .settings-body > main.wrap{
@@ -307,7 +312,7 @@ body.tools-fullscreen .tools-frame-wrap iframe{
 }
 
 .ui-select-menu{
-  z-index: 90;
+  z-index: 120;
 }
 
 .is-hidden{
