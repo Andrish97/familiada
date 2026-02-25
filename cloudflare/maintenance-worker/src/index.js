@@ -502,17 +502,15 @@ function resolvePrettyPath(pathname) {
   if (pathname.endsWith("/")) {
     const base = pathname.slice(0, -1);
     if (PRETTY_ROUTES[base]) {
-      if (isFolderRoute(base)) return { rewrite: PRETTY_ROUTES[base] };
-      return { redirect: base };
+      return { rewrite: PRETTY_ROUTES[base] };
     }
   }
   if (PRETTY_ROUTES[pathname]) {
-    if (isFolderRoute(pathname)) return { redirect: `${pathname}/` };
     return { rewrite: PRETTY_ROUTES[pathname] };
   }
   for (const [pretty, file] of Object.entries(PRETTY_ROUTES)) {
     if (pathname === file) {
-      return { redirect: isFolderRoute(pretty) ? `${pretty}/` : pretty };
+      return { redirect: pretty };
     }
   }
   return null;

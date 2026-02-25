@@ -553,6 +553,7 @@ function wireEvents() {
   guardDesktopOnly({ maxWidth: 980 });
   syncTopbarHeight();
   window.addEventListener("resize", syncTopbarHeight);
+  window.addEventListener("i18n:lang", syncTopbarHeight);
   startCountdownTimer();
   await initToolsSelect();
   wireEvents();
