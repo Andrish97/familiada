@@ -34,8 +34,12 @@ export default {
         if (url.pathname.startsWith("/settings-tools/")) {
           return withHeaders(res, {
             "Content-Security-Policy": "frame-ancestors 'self'",
-            "X-Frame-Options": "SAMEORIGIN"
+            "X-Frame-Options": "SAMEORIGIN",
+            "Cache-Control": "no-store"
           });
+        }
+        if (url.pathname === "/settings.html") {
+          return withHeaders(res, { "Cache-Control": "no-store" });
         }
         return res;
       }
