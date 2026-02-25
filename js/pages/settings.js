@@ -59,6 +59,8 @@ function showAuth(statusKey) {
   els.panelScreen.hidden = true;
   els.panelActions.hidden = true;
   document.body.classList.add("settings-locked");
+  document.body.classList.add("no-footer-line");
+  moveLangSwitcher(true);
   setText(els.authStatus, t(statusKey));
 }
 
@@ -67,6 +69,25 @@ function showPanel() {
   els.panelScreen.hidden = false;
   els.panelActions.hidden = false;
   document.body.classList.remove("settings-locked");
+  document.body.classList.remove("no-footer-line");
+  moveLangSwitcher(false);
+}
+
+function moveLangSwitcher(locked) {
+  const switcher = document.querySelector(".lang-switcher");
+  if (!switcher) return;
+
+  if (locked) {
+    switcher.classList.add("lang-floating");
+    document.body.appendChild(switcher);
+    return;
+  }
+
+  const target = document.querySelector(".topbar .topbar-section-3");
+  if (target) {
+    switcher.classList.remove("lang-floating");
+    target.prepend(switcher);
+  }
 }
 
 function showToast(message, kind = "success") {

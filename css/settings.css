@@ -21,7 +21,8 @@
   display: grid;
   place-items: center;
   background: radial-gradient(circle at 20% 10%,rgba(255,220,120,.18),transparent 55%),radial-gradient(circle at 80% 90%,rgba(70,140,255,.18),transparent 55%),#050914;
-  z-index: 55;
+  z-index: 50;
+  padding: 80px 18px 72px;
 }
 
 .auth-card{
@@ -73,9 +74,13 @@
 }
 
 .settings-locked header,
-.settings-locked main,
-.settings-locked footer{
+.settings-locked main{
   display: none;
+}
+
+.settings-body .footer{
+  position: relative;
+  z-index: 60;
 }
 
 .settings-body input,
