@@ -4,9 +4,10 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     const host = url.host.toLowerCase();
-    // Use GitHub Pages origin with Host override to serve custom domain content (no worker recursion).
-    const ORIGIN_BASE = "https://andrish97.github.io";
+    // Fetch from www origin but resolve directly to GitHub Pages to avoid recursion.
+    const ORIGIN_BASE = "https://www.familiada.online";
     const ORIGIN_HOST = "www.familiada.online";
+    const ORIGIN_RESOLVE = "andrish97.github.io";
 
     // (no apex redirect here)
 
@@ -24,12 +25,12 @@ export default {
       // Root on settings subdomain should open settings.html
       if (url.pathname === "/" || url.pathname === "/index.html") {
         url.pathname = "/settings.html";
-        return fetchFromOrigin(request, url, ORIGIN_BASE, ORIGIN_HOST);
+        return fetchFromOrigin(request, url, ORIGIN_BASE, ORIGIN_HOST, ORIGIN_RESOLVE);
       }
 
       // allow settings.html, settings-tools, and assets only
       if (url.pathname === "/settings.html" || url.pathname.startsWith("/settings-tools/") || isSettingsAsset(url.pathname)) {
-        const res = await fetchFromOrigin(request, url, ORIGIN_BASE, ORIGIN_HOST);
+        const res = await fetchFromOrigin(request, url, ORIGIN_BASE, ORIGIN_HOST, ORIGIN_RESOLVE);
         if (url.pathname.startsWith("/settings-tools/")) {
           return withHeaders(res, {
             "Content-Security-Policy": "frame-ancestors 'self'",
@@ -55,9 +56,9 @@ export default {
     if (host.endsWith(".familiada.online") && !isKnownHost(host)) {
       const state = await getState(env);
       if (!state.enabled || state.mode === "off") {
-        return serveNotFoundPage(request, ORIGIN_BASE, ORIGIN_HOST);
+        return serveNotFoundPage(request, ORIGIN_BASE, ORIGIN_HOST, ORIGIN_RESOLVE);
       }
-      return serveMaintenance(request, ORIGIN_BASE, ORIGIN_HOST);
+      return serveMaintenance(request, ORIGIN_BASE, ORIGIN_HOST, ORIGIN_RESOLVE);
     }
 
     const isBypass = hasAdminBypass(request, env);
@@ -92,16 +93,16 @@ export default {
     const state = await getState(env);
 
     if (!state.enabled || state.mode === "off" || isBypass) {
-      return fetchWith404(request, ORIGIN_BASE, ORIGIN_HOST); // brak prac
+      return fetchWith404(request, ORIGIN_BASE, ORIGIN_HOST, ORIGIN_RESOLVE); // brak prac
     }
 
     // allow access to the maintenance page and its assets
     if (isMaintenanceAsset(url.pathname)) {
-      return fetchWith404(request, ORIGIN_BASE, ORIGIN_HOST);
+      return fetchWith404(request, ORIGIN_BASE, ORIGIN_HOST, ORIGIN_RESOLVE);
     }
 
     // block everything else
-    return serveMaintenance(request, ORIGIN_BASE, ORIGIN_HOST);
+    return serveMaintenance(request, ORIGIN_BASE, ORIGIN_HOST, ORIGIN_RESOLVE);
   }
 };
 
@@ -131,9 +132,9 @@ function json(data) {
   });
 }
 
-async function serveMaintenance(request, originBase, originHost) {
+async function serveMaintenance(request, originBase, originHost, resolveOverride) {
   const maintUrl = new URL("/maintenance.html", originBase);
-  const res = await fetchWithOrigin(maintUrl.toString(), request, originHost);
+  const res = await fetchWithOrigin(maintUrl.toString(), request, originHost, resolveOverride);
 
   return new Response(res.body, {
     status: 503,
@@ -145,9 +146,9 @@ async function serveMaintenance(request, originBase, originHost) {
   });
 }
 
-async function serveNotFoundPage(request, originBase, originHost) {
+async function serveNotFoundPage(request, originBase, originHost, resolveOverride) {
   const notFoundUrl = new URL("/404.html", originBase);
-  const res = await fetchWithOrigin(notFoundUrl.toString(), request, originHost);
+  const res = await fetchWithOrigin(notFoundUrl.toString(), request, originHost, resolveOverride);
 
   return new Response(res.body, {
     status: 404,
@@ -467,25 +468,25 @@ function withHeaders(res, extra) {
   });
 }
 
-function fetchFromOrigin(request, url, originBase, originHost) {
+function fetchFromOrigin(request, url, originBase, originHost, resolveOverride) {
   const target = new URL(url.pathname + url.search, originBase);
-  return fetchWithOrigin(target.toString(), request, originHost);
+  return fetchWithOrigin(target.toString(), request, originHost, resolveOverride);
 }
 
-async function fetchWith404(request, originBase, originHost) {
+async function fetchWith404(request, originBase, originHost, resolveOverride) {
   const url = new URL(request.url);
-  const res = await fetchFromOrigin(request, url, originBase, originHost);
+  const res = await fetchFromOrigin(request, url, originBase, originHost, resolveOverride);
   if (res.status !== 404) return res;
 
   const accept = request.headers.get("Accept") || "";
   if (accept.includes("text/html")) {
-    return serveNotFoundPage(request, originBase, originHost);
+    return serveNotFoundPage(request, originBase, originHost, resolveOverride);
   }
 
   return res;
 }
 
-function fetchWithOrigin(url, request, originHost) {
+function fetchWithOrigin(url, request, originHost, resolveOverride) {
   const headers = new Headers(request.headers);
   if (originHost) headers.set("Host", originHost);
 
@@ -494,6 +495,7 @@ function fetchWithOrigin(url, request, originHost) {
     method,
     headers,
     redirect: "manual",
+    cf: resolveOverride ? { resolveOverride } : undefined,
   };
 
   if (method !== "GET" && method !== "HEAD") {
