@@ -54,6 +54,9 @@ export default {
 
     // Unknown subdomains: 404 when maintenance OFF, maintenance page when ON
     if (host.endsWith(".familiada.online") && !isKnownHost(host)) {
+      if (isCommonAsset(url.pathname)) {
+        return fetchFromOrigin(request, url, ORIGIN_BASE, ORIGIN_HOST, ORIGIN_RESOLVE);
+      }
       const state = await getState(env);
       if (!state.enabled || state.mode === "off") {
         return serveNotFoundPage(request, ORIGIN_BASE, ORIGIN_HOST, ORIGIN_RESOLVE);
