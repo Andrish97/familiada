@@ -4091,6 +4091,8 @@ const pl = {
       refresh: "Odśwież",
       save: "Zapisz",
       logout: "Wyloguj",
+      supabase: "Supabase",
+      server: "Serwer",
     },
     logoutConfirmTitle: "Wylogować?",
     logoutConfirmText: "Twoja sesja w panelu zostanie zakończona.",
@@ -4101,7 +4103,6 @@ const pl = {
     login: {
       title: "Panel ustawień",
       checking: "Trwa weryfikacja…",
-      enter: "Wejdź do panelu",
       passwordTitle: "Wymagane hasło",
       usernamePlaceholder: "Nazwa użytkownika",
       passwordPlaceholder: "Hasło panelu",

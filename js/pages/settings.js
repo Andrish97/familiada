@@ -22,7 +22,6 @@ const els = {
   panelScreen: document.getElementById("panelScreen"),
   panelActions: document.getElementById("panelActions"),
   authStatus: document.getElementById("authStatus"),
-  btnEnter: document.getElementById("btnEnter"),
   loginForm: document.getElementById("loginForm"),
   loginUsername: document.getElementById("loginUsername"),
   loginPassword: document.getElementById("loginPassword"),
@@ -60,15 +59,6 @@ function showAuth(statusKey) {
   els.panelScreen.hidden = true;
   els.panelActions.hidden = true;
   setText(els.authStatus, t(statusKey));
-}
-
-function showLogin() {
-  els.loginForm.hidden = false;
-  els.btnEnter.hidden = false;
-}
-
-function hideLogin() {
-  els.loginForm.hidden = true;
 }
 
 function showPanel() {
@@ -271,19 +261,6 @@ async function setBypass(state) {
 }
 
 function wireEvents() {
-  els.btnEnter.addEventListener("click", async () => {
-    showAuth("settings.login.checking");
-    hideLogin();
-    const ok = await checkMe();
-    if (ok) {
-      showPanel();
-      await loadState();
-    } else {
-      showAuth("settings.login.passwordTitle");
-      showLogin();
-    }
-  });
-
   els.loginForm.addEventListener("submit", async (e) => {
     e.preventDefault();
     setText(els.loginError, "");
@@ -380,6 +357,5 @@ function wireEvents() {
     await loadState();
   } else {
     showAuth("settings.login.passwordTitle");
-    showLogin();
   }
 })();
