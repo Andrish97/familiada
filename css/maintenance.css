@@ -53,13 +53,6 @@
   white-space: pre-line;
 }
 
-.return-at {
-  margin-top: 6px;
-  font-size: 14px;
-  font-weight: 700;
-  opacity: 0.8;
-}
-
 .countdown {
   margin-top: 14px;
   font-size: clamp(28px, 6vw, 44px);

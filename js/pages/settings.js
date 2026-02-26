@@ -64,6 +64,7 @@ let formDirty = false;
 let topbarSync = null;
 let activePicker = null;
 let pickerState = { year: null, month: null, day: null };
+let wheelReady = false;
 const MODE_ORDER = ["message", "returnAt", "countdown"];
 const MODE_TO_INDEX = {
   message: 0,
@@ -167,25 +168,138 @@ function fromDatetimeLocal(value) {
 
 function formatCountdown(ms) {
   const totalSeconds = Math.max(0, Math.floor(ms / 1000));
-  if (totalSeconds < 3600) {
-    const minutes = String(Math.floor(totalSeconds / 60)).padStart(2, "0");
-    const seconds = String(totalSeconds % 60).padStart(2, "0");
-    return `${minutes}:${seconds}`;
+  const lang = (document.documentElement.lang || "").toLowerCase();
+  if (lang.startsWith("en")) return formatCountdownEn(totalSeconds);
+  if (lang.startsWith("uk")) return formatCountdownUk(totalSeconds);
+  if (!lang.startsWith("pl")) {
+    if (totalSeconds < 3600) {
+      const minutes = String(Math.floor(totalSeconds / 60)).padStart(2, "0");
+      const seconds = String(totalSeconds % 60).padStart(2, "0");
+      return `${minutes}:${seconds}`;
+    }
+    if (totalSeconds < 86400) {
+      const hours = String(Math.floor(totalSeconds / 3600)).padStart(2, "0");
+      const minutes = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, "0");
+      const seconds = String(totalSeconds % 60).padStart(2, "0");
+      return `${hours}:${minutes}:${seconds}`;
+    }
+    const days = Math.floor(totalSeconds / 86400);
+    if (totalSeconds < 86400 * 7) {
+      const rem = totalSeconds % 86400;
+      const hours = String(Math.floor(rem / 3600)).padStart(2, "0");
+      const minutes = String(Math.floor((rem % 3600) / 60)).padStart(2, "0");
+      return `${days}d ${hours}:${minutes}`;
+    }
+    return `${days}d`;
   }
-  if (totalSeconds < 86400) {
-    const hours = String(Math.floor(totalSeconds / 3600)).padStart(2, "0");
-    const minutes = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, "0");
-    const seconds = String(totalSeconds % 60).padStart(2, "0");
-    return `${hours}:${minutes}:${seconds}`;
-  }
+  const mins = Math.floor(totalSeconds / 60);
+  const hours = Math.floor(totalSeconds / 3600);
   const days = Math.floor(totalSeconds / 86400);
-  if (totalSeconds < 86400 * 7) {
-    const rem = totalSeconds % 86400;
-    const hours = String(Math.floor(rem / 3600)).padStart(2, "0");
-    const minutes = String(Math.floor((rem % 3600) / 60)).padStart(2, "0");
-    return `${days}d ${hours}:${minutes}`;
+  if (days > 0) return `${days} ${pluralPl(days, "dzień", "dni", "dni")}`;
+  if (hours > 0) return `${hours} ${pluralPl(hours, "godzina", "godziny", "godzin")}`;
+  if (mins > 0) return `${mins} ${pluralPl(mins, "minuta", "minuty", "minut")}`;
+  return `${totalSeconds} ${pluralPl(totalSeconds, "sekunda", "sekundy", "sekund")}`;
+}
+
+function pluralPl(n, one, few, many) {
+  if (n === 1) return one;
+  const mod10 = n % 10;
+  const mod100 = n % 100;
+  if (mod10 >= 2 && mod10 <= 4 && !(mod100 >= 12 && mod100 <= 14)) return few;
+  return many;
+}
+
+function pluralUk(n, one, few, many) {
+  if (n === 1) return one;
+  const mod10 = n % 10;
+  const mod100 = n % 100;
+  if (mod10 >= 2 && mod10 <= 4 && !(mod100 >= 12 && mod100 <= 14)) return few;
+  return many;
+}
+
+function formatCountdownEn(totalSeconds) {
+  const mins = Math.floor(totalSeconds / 60);
+  const hours = Math.floor(totalSeconds / 3600);
+  const days = Math.floor(totalSeconds / 86400);
+  if (days > 0) return `${days} day${days === 1 ? "" : "s"}`;
+  if (hours > 0) return `${hours} hour${hours === 1 ? "" : "s"}`;
+  if (mins > 0) return `${mins} minute${mins === 1 ? "" : "s"}`;
+  return `${totalSeconds} second${totalSeconds === 1 ? "" : "s"}`;
+}
+
+function formatCountdownUk(totalSeconds) {
+  const mins = Math.floor(totalSeconds / 60);
+  const hours = Math.floor(totalSeconds / 3600);
+  const days = Math.floor(totalSeconds / 86400);
+  if (days > 0) return `${days} ${pluralUk(days, "день", "дні", "днів")}`;
+  if (hours > 0) return `${hours} ${pluralUk(hours, "година", "години", "годин")}`;
+  if (mins > 0) return `${mins} ${pluralUk(mins, "хвилина", "хвилини", "хвилин")}`;
+  return `${totalSeconds} ${pluralUk(totalSeconds, "секунда", "секунди", "секунд")}`;
+}
+
+function formatReturnAtValue(date) {
+  if (!date) return "—";
+  const lang = (document.documentElement.lang || "").toLowerCase();
+  if (lang.startsWith("en")) return formatReturnAtEn(date);
+  if (lang.startsWith("uk")) return formatReturnAtUk(date);
+  if (!lang.startsWith("pl")) {
+    const fmt = new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" });
+    return fmt.format(date);
   }
-  return `${days}d`;
+  const pad = (n) => String(n).padStart(2, "0");
+  const d = pad(date.getDate());
+  const m = pad(date.getMonth() + 1);
+  const y = date.getFullYear();
+  const hh = pad(date.getHours());
+  const mm = pad(date.getMinutes());
+  const today = new Date();
+  const sameDay =
+    today.getFullYear() === date.getFullYear() &&
+    today.getMonth() === date.getMonth() &&
+    today.getDate() === date.getDate();
+  if (sameDay) return `o ${hh}:${mm}`;
+  if (date.getHours() === 0 && date.getMinutes() === 0) return `${d}.${m}.${y}`;
+  return `${d}.${m}.${y} o ${hh}:${mm}`;
+}
+
+function formatReturnAtEn(date) {
+  const pad = (n) => String(n).padStart(2, "0");
+  const hh = pad(date.getHours());
+  const mm = pad(date.getMinutes());
+  const mo = pad(date.getMonth() + 1);
+  const dd = pad(date.getDate());
+  const yy = date.getFullYear();
+  const today = new Date();
+  const sameDay =
+    today.getFullYear() === date.getFullYear() &&
+    today.getMonth() === date.getMonth() &&
+    today.getDate() === date.getDate();
+  const datePart = `${mo}/${dd}/${yy}`;
+  if (sameDay) return `at ${hh}:${mm}`;
+  if (date.getHours() === 0 && date.getMinutes() === 0) return datePart;
+  return `${datePart} at ${hh}:${mm}`;
+}
+
+function formatReturnAtUk(date) {
+  const pad = (n) => String(n).padStart(2, "0");
+  const hh = pad(date.getHours());
+  const mm = pad(date.getMinutes());
+  const today = new Date();
+  const sameDay =
+    today.getFullYear() === date.getFullYear() &&
+    today.getMonth() === date.getMonth() &&
+    today.getDate() === date.getDate();
+  const datePart = new Intl.DateTimeFormat(undefined, { dateStyle: "medium" }).format(date);
+  if (sameDay) return `о ${hh}:${mm}`;
+  if (date.getHours() === 0 && date.getMinutes() === 0) return datePart;
+  return `${datePart} о ${hh}:${mm}`;
+}
+
+function formatReturnPreview(date) {
+  if (!date) return "—";
+  const diff = date.getTime() - Date.now();
+  if (diff <= 0) return t("settings.preview.ready");
+  return t("settings.preview.at").replace("{time}", formatReturnAtValue(date));
 }
 
 function minAllowedDate() {
@@ -291,10 +405,9 @@ function openPicker(prefix) {
     month: current.getMonth() + 1,
     day: current.getDate(),
   };
-  const h = document.getElementById("dtHour");
-  const m = document.getElementById("dtMinute");
-  if (h) h.value = String(current.getHours()).padStart(2, "0");
-  if (m) m.value = String(current.getMinutes()).padStart(2, "0");
+  initTimeWheels();
+  setWheelValue("dtHourWheel", current.getHours());
+  setWheelValue("dtMinuteWheel", current.getMinutes());
   renderCalendar();
   modal.hidden = false;
 }
@@ -302,6 +415,38 @@ function openPicker(prefix) {
 function closePicker() {
   const modal = document.getElementById("dtModal");
   if (modal) modal.hidden = true;
+}
+
+function rearrangeDateFields(prefix, order, sepChar) {
+  const anchor = document.getElementById(`${prefix}Day`);
+  const group = anchor ? anchor.closest(".dt-group") : null;
+  if (!group) return;
+  const day = document.getElementById(`${prefix}Day`);
+  const month = document.getElementById(`${prefix}Month`);
+  const year = document.getElementById(`${prefix}Year`);
+  if (!day || !month || !year) return;
+  const dots = Array.from(group.querySelectorAll(".dt-dot"));
+  if (dots.length >= 1) dots[0].textContent = sepChar;
+  if (dots.length >= 2) dots[1].textContent = sepChar;
+  [day, month, year, ...dots].forEach((el) => el.remove());
+  const map = { day, month, year };
+  order.forEach((key, idx) => {
+    group.appendChild(map[key]);
+    if (idx < order.length - 1 && dots[idx]) {
+      group.appendChild(dots[idx]);
+    }
+  });
+}
+
+function applyDateOrderByLang() {
+  const lang = (document.documentElement.lang || "").toLowerCase();
+  if (lang.startsWith("en")) {
+    rearrangeDateFields("returnAt", ["month", "day", "year"], "/");
+    rearrangeDateFields("endAt", ["month", "day", "year"], "/");
+  } else {
+    rearrangeDateFields("returnAt", ["day", "month", "year"], ".");
+    rearrangeDateFields("endAt", ["day", "month", "year"], ".");
+  }
 }
 
 function renderCalendar() {
@@ -314,7 +459,14 @@ function renderCalendar() {
   grid.innerHTML = "";
   const firstDay = new Date(year, month - 1, 1).getDay() || 7;
   const days = daysInMonth(year, month);
-  const labels = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+  const lang = document.documentElement.lang || undefined;
+  const weekdayFmt = new Intl.DateTimeFormat(lang, { weekday: "short" });
+  const monday = new Date(2020, 10, 2);
+  const labels = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(monday);
+    d.setDate(monday.getDate() + i);
+    return weekdayFmt.format(d);
+  });
   labels.forEach((l) => {
     const el = document.createElement("div");
     el.className = "dt-day dt-day--label";
@@ -338,6 +490,61 @@ function renderCalendar() {
     });
     grid.appendChild(el);
   }
+}
+
+function initTimeWheels() {
+  if (wheelReady) return;
+  const hourWheel = document.getElementById("dtHourWheel");
+  const minuteWheel = document.getElementById("dtMinuteWheel");
+  if (!hourWheel || !minuteWheel) return;
+
+  const build = (wheel, max) => {
+    wheel.innerHTML = "";
+    for (let i = 0; i <= max; i += 1) {
+      const item = document.createElement("div");
+      item.className = "dt-wheel-item";
+      item.textContent = String(i).padStart(2, "0");
+      item.dataset.value = String(i);
+      item.addEventListener("click", () => {
+        setWheelValue(wheel.id, i);
+      });
+      wheel.appendChild(item);
+    }
+    wheel.addEventListener("scroll", () => {
+      clearTimeout(wheel._t);
+      wheel._t = setTimeout(() => snapWheel(wheel), 120);
+    });
+  };
+
+  build(hourWheel, 23);
+  build(minuteWheel, 59);
+  wheelReady = true;
+}
+
+function setWheelValue(wheelId, value) {
+  const wheel = document.getElementById(wheelId);
+  if (!wheel) return;
+  const itemHeight = 32;
+  wheel.scrollTop = value * itemHeight;
+  snapWheel(wheel);
+}
+
+function snapWheel(wheel) {
+  const itemHeight = 32;
+  const idx = Math.round(wheel.scrollTop / itemHeight);
+  const clamped = Math.max(0, Math.min(idx, wheel.children.length - 1));
+  wheel.scrollTop = clamped * itemHeight;
+  Array.from(wheel.children).forEach((el, i) => {
+    el.classList.toggle("is-active", i === clamped);
+  });
+}
+
+function getWheelValue(wheelId) {
+  const wheel = document.getElementById(wheelId);
+  if (!wheel) return 0;
+  const itemHeight = 32;
+  const idx = Math.round(wheel.scrollTop / itemHeight);
+  return Math.max(0, Math.min(idx, wheel.children.length - 1));
 }
 
 function setMode(mode) {
@@ -416,6 +623,7 @@ function applyState(state) {
   updateStatus(state);
   updateStartStop(state);
   updateCountdownDisplay();
+  updateReturnPreview();
 }
 
 function buildPayload() {
@@ -435,10 +643,16 @@ function buildPayload() {
 
 function updateCountdownDisplay() {
   if (!els.countdownNow) return;
-  if (currentMode !== "countdown") {
+  if (currentMode !== "countdown" || !currentState?.enabled) {
     setText(els.countdownNow, "—");
+    const row = document.getElementById("countdownRow");
+    if (row) row.hidden = true;
+    const prev = document.getElementById("countdownPreview");
+    if (prev) prev.hidden = true;
     return;
   }
+  const row = document.getElementById("countdownRow");
+  if (row) row.hidden = false;
   const endDate = getFieldValue("endAt");
   if (!endDate) {
     setText(els.countdownNow, "—");
@@ -446,6 +660,29 @@ function updateCountdownDisplay() {
   }
   const diff = endDate.getTime() - Date.now();
   setText(els.countdownNow, formatCountdown(diff));
+  const prev = document.getElementById("countdownPreview");
+  const prevVal = document.getElementById("countdownPreviewValue");
+  if (prev && prevVal) {
+    prev.hidden = false;
+    prevVal.textContent = formatCountdown(diff);
+  }
+}
+
+function updateReturnPreview() {
+  const row = document.getElementById("returnPreview");
+  const val = document.getElementById("returnPreviewValue");
+  if (!row || !val) return;
+  if (currentMode !== "returnAt") {
+    row.hidden = true;
+    return;
+  }
+  const date = getFieldValue("returnAt");
+  if (!date) {
+    row.hidden = true;
+    return;
+  }
+  row.hidden = false;
+  val.textContent = formatReturnPreview(date);
 }
 
 function startCountdownTimer() {
@@ -674,6 +911,7 @@ function wireEvents() {
       normalizeDateFields(prefix);
       updateValidation();
       updateCountdownDisplay();
+      updateReturnPreview();
     });
   });
 
@@ -685,6 +923,15 @@ function wireEvents() {
   });
 
   document.getElementById("dtCancel")?.addEventListener("click", closePicker);
+  document.getElementById("dtToday")?.addEventListener("click", () => {
+    const now = new Date();
+    pickerState.year = now.getFullYear();
+    pickerState.month = now.getMonth() + 1;
+    pickerState.day = now.getDate();
+    setWheelValue("dtHourWheel", now.getHours());
+    setWheelValue("dtMinuteWheel", now.getMinutes());
+    renderCalendar();
+  });
   document.getElementById("dtPrev")?.addEventListener("click", () => {
     pickerState.month -= 1;
     if (pickerState.month <= 0) {
@@ -702,10 +949,8 @@ function wireEvents() {
     renderCalendar();
   });
   document.getElementById("dtOk")?.addEventListener("click", () => {
-    const h = document.getElementById("dtHour");
-    const m = document.getElementById("dtMinute");
-    const hh = Number(h?.value ?? 0);
-    const mm = Number(m?.value ?? 0);
+    const hh = getWheelValue("dtHourWheel");
+    const mm = getWheelValue("dtMinuteWheel");
     const date = new Date(pickerState.year, pickerState.month - 1, pickerState.day, hh, mm, 0, 0);
     if (activePicker) {
       setFieldValue(activePicker, date);
@@ -772,10 +1017,15 @@ function wireEvents() {
 
 (async () => {
   await initI18n({ withSwitcher: true, apply: true });
+  applyDateOrderByLang();
   guardDesktopOnly({ maxWidth: 980 });
   syncTopbarHeight();
   window.addEventListener("resize", syncTopbarHeight);
-  window.addEventListener("i18n:lang", syncTopbarHeight);
+  window.addEventListener("i18n:lang", () => {
+    syncTopbarHeight();
+    applyDateOrderByLang();
+    renderCalendar();
+  });
   startCountdownTimer();
   await initToolsSelect();
   wireEvents();

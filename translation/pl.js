@@ -4066,18 +4066,18 @@ const pl = {
     },
   },
   maintenance: {
-    messageTitle: "Krótka przerwa w studiu 🎙️",
+    title: "TRWA PRZERWA TECHNICZNA ⏳",
     messageText:
       "System jest chwilowo niedostępny.\nZa jakiś czas wszystko wróci do normy i będzie można kontynuować pracę.",
     inactiveTitle: "Brak prac technicznych",
     inactiveText: "Aktualnie nie trwają żadne prace.",
-    returnAtTitle: "Przerwa techniczna",
+    returnAtTitle: "TRWA PRZERWA TECHNICZNA",
     returnAtText:
-      "System jest tymczasowo niedostępny.\nWrócimy o {time} — wtedy znów będzie można swobodnie tworzyć i edytować gry.",
-    countdownTitle: "Trwa przerwa techniczna ⏳",
+      "System jest tymczasowo niedostępny.\nPowrót {time} — wtedy znów będzie można swobodnie tworzyć i edytować gry.",
+    countdownTitle: "TRWA PRZERWA TECHNICZNA",
     countdownText:
-      "System jest chwilowo niedostępny.\nDo ponownego uruchomienia pozostało {countdown}.",
-    countdownDone: "Za chwilę wszystko będzie gotowe. 🎉",
+      "System jest chwilowo niedostępny.\nPowrót za {countdown}.",
+    countdownDone: "Powrót już możliwy. 🎉",
     refresh: "Odśwież",
     contact: "Kontakt",
     statusLabel: "Status:",
@@ -4102,7 +4102,7 @@ const pl = {
     },
     modes: {
       message: "Wiadomość",
-      returnAt: "Do godziny",
+      returnAt: "Powrót…",
       countdown: "Odliczanie",
       messageHint: "Komunikat bez daty i bez odliczania.",
       endAt: "Do godziny",
@@ -4113,7 +4113,7 @@ const pl = {
       on: "Włączone",
       off: "Wyłączone",
       mode_message: "Wiadomość",
-      mode_returnAt: "Do godziny",
+      mode_returnAt: "Powrót…",
       mode_countdown: "Odliczanie",
     },
     validation: {
@@ -4158,6 +4158,11 @@ const pl = {
       quickMessage: "Message ON",
       quickReturnAt: "ReturnAt",
       quickCountdown: "Countdown",
+    },
+    preview: {
+      label: "Podgląd",
+      ready: "Powrót już możliwy",
+      at: "Powrót {time}",
     },
     debug: {
       title: "Debug / status",

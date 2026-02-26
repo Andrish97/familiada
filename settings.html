@@ -47,6 +47,9 @@
         <div class="maintenance-controls" id="maintenanceControls">
           <div class="mode-slider" id="modeSliderWrap">
             <input class="mode-range" id="modeSlider" type="range" min="0" max="2" step="1" value="0" aria-label="Maintenance mode"/>
+            <div class="mode-dots" aria-hidden="true">
+              <span></span><span></span><span></span>
+            </div>
             <div class="mode-labels" id="modeLabels">
               <span class="mode-label" data-mode="message" data-i18n="settings.modes.message">Wiadomość</span>
               <span class="mode-label" data-mode="returnAt" data-i18n="settings.modes.returnAt">Do godziny</span>
@@ -60,7 +63,7 @@
 
           <div class="mode-block" id="modeReturnAt" hidden>
             <div class="field">
-              <span class="field-label" data-i18n="settings.maintenance.returnAt">Powrót</span>
+              <span class="field-label field-title" data-i18n="settings.maintenance.returnAt">Powrót</span>
               <div class="dt-group">
                 <input class="dt-input" id="returnAtHour" type="number" inputmode="numeric" placeholder="HH" min="0" max="23"/>
                 <span class="dt-colon">:</span>
@@ -79,7 +82,7 @@
 
           <div class="mode-block" id="modeCountdown" hidden>
             <div class="field">
-              <span class="field-label" data-i18n="settings.modes.endAt">Do godziny</span>
+              <span class="field-label field-title" data-i18n="settings.modes.endAt">Do godziny</span>
               <div class="dt-group">
                 <input class="dt-input" id="endAtHour" type="number" inputmode="numeric" placeholder="HH" min="0" max="23"/>
                 <span class="dt-colon">:</span>
@@ -94,10 +97,11 @@
               </div>
               <span class="field-hint" data-i18n="settings.maintenance.returnAtHint">Minimum 10 minut od teraz.</span>
             </div>
-            <div class="countdown-row">
-              <span class="countdown-label" data-i18n="settings.modes.countdownNow">Aktualny licznik</span>
-              <span class="countdown-value" id="countdownNow">—</span>
-            </div>
+          </div>
+
+          <div class="mode-status" id="modeStatus" hidden>
+            <span class="mode-status-label" data-i18n="settings.preview.label">Podgląd:</span>
+            <span class="mode-status-value" id="modeStatusValue">—</span>
           </div>
         </div>
 
@@ -162,6 +166,7 @@
   <div class="dt-modal" id="dtModal" hidden>
     <div class="dt-card">
       <div class="dt-head">
+        <button class="btn sm" id="dtToday" type="button" data-i18n="settings.actions.today">Dziś</button>
         <button class="btn sm" id="dtPrev" type="button">◀</button>
         <div class="dt-title" id="dtTitle">—</div>
         <button class="btn sm" id="dtNext" type="button">▶</button>
@@ -170,9 +175,9 @@
       <div class="dt-time">
         <div class="dt-time-label">Czas</div>
         <div class="dt-time-row">
-          <input class="dt-input" id="dtHour" type="number" min="0" max="23" inputmode="numeric" placeholder="HH"/>
+          <div class="dt-wheel" id="dtHourWheel"></div>
           <span class="dt-colon">:</span>
-          <input class="dt-input" id="dtMinute" type="number" min="0" max="59" inputmode="numeric" placeholder="MM"/>
+          <div class="dt-wheel" id="dtMinuteWheel"></div>
         </div>
       </div>
       <div class="dt-actions">

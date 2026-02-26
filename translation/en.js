@@ -4069,18 +4069,18 @@ const en = {
     },
   },
   maintenance: {
-    messageTitle: "Short studio break 🎙️",
+    title: "TRWA PRZERWA TECHNICZNA ⏳",
     messageText:
-      "The system is temporarily unavailable.\nEverything will be back to normal in a while and you will be able to continue working.",
+      "System jest chwilowo niedostępny.\nZa jakiś czas wszystko wróci do normy i będzie można kontynuować pracę.",
     inactiveTitle: "No maintenance",
     inactiveText: "There is no maintenance in progress.",
-    returnAtTitle: "Technical break",
+    returnAtTitle: "TRWA PRZERWA TECHNICZNA ⏳",
     returnAtText:
-      "The system is temporarily unavailable.\nWe will be back at {time} — then you can freely create and edit games again.",
-    countdownTitle: "Technical break in progress ⏳",
+      "System jest chwilowo niedostępny.\nPowrót {time} — wtedy znów będzie można swobodnie tworzyć i edytować gry.",
+    countdownTitle: "TRWA PRZERWA TECHNICZNA ⏳",
     countdownText:
-      "The system is temporarily unavailable.\nTime left until we are back: {countdown}.",
-    countdownDone: "Everything will be ready in a moment. 🎉",
+      "System jest chwilowo niedostępny.\nPowrót za {countdown}.",
+    countdownDone: "Powrót już możliwy. 🎉",
     refresh: "Refresh",
     contact: "Contact",
     statusLabel: "Status:",
@@ -4105,7 +4105,7 @@ const en = {
     },
     modes: {
       message: "Message",
-      returnAt: "Return at",
+      returnAt: "Return…",
       countdown: "Countdown",
       messageHint: "Message only, without date or countdown.",
       endAt: "Return at",
@@ -4116,7 +4116,7 @@ const en = {
       on: "Enabled",
       off: "Disabled",
       mode_message: "Message",
-      mode_returnAt: "Return at",
+      mode_returnAt: "Return…",
       mode_countdown: "Countdown",
     },
     validation: {
@@ -4161,6 +4161,11 @@ const en = {
       quickMessage: "Message ON",
       quickReturnAt: "ReturnAt",
       quickCountdown: "Countdown",
+    },
+    preview: {
+      label: "Preview",
+      ready: "Return is possible now",
+      at: "Return {time}",
     },
     debug: {
       title: "Debug / status",
