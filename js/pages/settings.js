@@ -67,6 +67,7 @@ let topbarSync = null;
 let activePicker = null;
 let pickerState = { year: null, month: null, day: null };
 let wheelReady = false;
+let lastUserActionTs = 0;
 const MODE_ORDER = ["message", "returnAt", "countdown"];
 const MODE_TO_INDEX = {
   message: 0,
@@ -76,6 +77,14 @@ const MODE_TO_INDEX = {
 
 function setText(el, value) {
   if (el) el.textContent = value;
+}
+
+function markUserAction() {
+  lastUserActionTs = Date.now();
+}
+
+function shouldShowActionError() {
+  return Date.now() - lastUserActionTs < 5000;
 }
 
 function showAuth(statusKey) {
@@ -727,7 +736,7 @@ function startCountdownTimer() {
   }, 1000);
 }
 
-async function loadState() {
+async function loadState({ silent = false } = {}) {
   try {
     const res = await apiFetch(`${API_BASE}/state`, { method: "GET" });
     if (res.status === 401) {
@@ -737,8 +746,12 @@ async function loadState() {
     if (!res.ok) throw new Error("state fetch failed");
     const data = await res.json();
     applyState(data);
-  } catch {
-    showToast(t("settings.toast.error"), "error");
+  } catch (err) {
+    if (silent) {
+      console.warn("[settings] state poll failed", err);
+      return;
+    }
+    if (shouldShowActionError()) showToast(t("settings.toast.error"), "error");
   }
 }
 
@@ -754,7 +767,7 @@ async function startMaintenance() {
     applyState(data);
     showToast(t("settings.toast.saved"));
   } catch {
-    showToast(t("settings.toast.error"), "error");
+    if (shouldShowActionError()) showToast(t("settings.toast.error"), "error");
   }
 }
 
@@ -786,7 +799,7 @@ async function stopMaintenance() {
     setFieldValue("endAt", now);
     showToast(t("settings.toast.saved"));
   } catch {
-    showToast(t("settings.toast.error"), "error");
+    if (shouldShowActionError()) showToast(t("settings.toast.error"), "error");
   }
 }
 
@@ -796,7 +809,7 @@ async function setBypass(state) {
   if (res.ok) {
     showToast(state === "on" ? t("settings.toast.bypassOn") : t("settings.toast.bypassOff"));
   } else {
-    showToast(t("settings.toast.error"), "error");
+    if (shouldShowActionError()) showToast(t("settings.toast.error"), "error");
   }
 }
 
@@ -912,6 +925,7 @@ function wireEvents() {
 
   if (els.btnStartStop) {
     els.btnStartStop.addEventListener("click", async () => {
+      markUserAction();
       updateValidation();
       if (els.btnStartStop.disabled) return;
       if (currentState?.enabled) {
@@ -925,6 +939,7 @@ function wireEvents() {
 
   if (els.btnRefresh) {
     els.btnRefresh.addEventListener("click", async () => {
+      markUserAction();
       formDirty = false;
       await loadState();
     });
@@ -932,6 +947,7 @@ function wireEvents() {
 
   if (els.bypassToggle) {
     els.bypassToggle.addEventListener("change", async () => {
+      markUserAction();
       const state = els.bypassToggle.checked ? "on" : "off";
       await setBypass(state);
     });
@@ -1043,7 +1059,7 @@ function wireEvents() {
       showPanel();
       formDirty = false;
       await loadState();
-      if (!pollTimer) pollTimer = setInterval(loadState, POLL_MS);
+      if (!pollTimer) pollTimer = setInterval(() => loadState({ silent: true }), POLL_MS);
     } catch {
       setText(els.loginError, t("settings.login.loginInvalid"));
     }
@@ -1073,7 +1089,7 @@ function wireEvents() {
   if (ok) {
     showPanel();
     await loadState();
-    pollTimer = setInterval(loadState, POLL_MS);
+    pollTimer = setInterval(() => loadState({ silent: true }), POLL_MS);
   } else {
     showAuth("settings.login.passwordTitle");
   }
