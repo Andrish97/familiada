@@ -32,7 +32,7 @@
     </div>
     <div class="topbar-section topbar-section-3"></div>
     <div class="topbar-section topbar-section-4">
-      <button class="btn sm" id="btnLogout" type="button" data-i18n="settings.actions.logout">Wyloguj</button>
+      <button class="btn sm" id="btnLogout" type="button" data-i18n="settings.actions.logout">Wyloguj Access</button>
     </div>
   </header>
 
@@ -147,14 +147,11 @@
       <div class="auth-sub" data-i18n="settings.login.title">Panel ustawień</div>
       <div class="status" id="authStatus" data-i18n="settings.login.checking">Trwa weryfikacja…</div>
 
-      <form class="auth-form" id="loginForm">
-        <input id="loginUsername" type="text" autocomplete="username" data-i18n-placeholder="settings.login.usernamePlaceholder" placeholder="Nazwa użytkownika"/>
-        <input id="loginPassword" type="password" autocomplete="current-password" data-i18n-placeholder="settings.login.passwordPlaceholder" placeholder="Hasło"/>
-        <button class="btn sm gold" id="btnLogin" type="submit" data-i18n="settings.login.loginBtn">Zaloguj</button>
-        <div class="err" id="loginError"></div>
-      </form>
+      <div class="auth-form">
+        <button class="btn sm gold" id="btnAccessLogin" type="button" data-i18n="settings.login.loginBtn">Zaloguj przez Access</button>
+      </div>
 
-      <div class="hint" id="loginHint" data-i18n="settings.login.hint">Ten panel wymaga uprawnień admina.</div>
+      <div class="hint" id="loginHint" data-i18n="settings.login.hint">Ten panel wymaga autoryzacji Cloudflare Access.</div>
     </div>
   </div>
 

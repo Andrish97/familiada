@@ -6,7 +6,7 @@
 - Only `/`, `/index.html`, `/settings`, `/settings.html`, `/settings-tools/*` and assets are allowed.
 - Root (`/`) serves `/settings.html` from `https://familiada.online` (pretty URL `/settings`).
 - Everything else is 404.
-- Admin API lives here: `/_admin_api/*` (Access header or cookie).
+- Admin API lives here: `/_admin_api/*` (Cloudflare Access).
 - Not affected by maintenance gate.
 
 ### 2) familiada.online + www.familiada.online
@@ -32,22 +32,19 @@ Foldery mają teraz `index.html`, więc `/control`, `/display`, `/logo-editor`, 
 - `/settings` → `/settings.html` (specjalny przypadek dla panelu)
 
 ### Admin API (settings host)
-- `GET  /_admin_api/me` → 200 if Access header or session cookie
-- `POST /_admin_api/login` → `{ username, password }` sets session cookie
-- `POST /_admin_api/logout` → clears session
+- `GET  /_admin_api/me` → 200 if authorized by Cloudflare Access
 - `GET  /_admin_api/state` → current state
 - `POST /_admin_api/state` → update state
 - `POST /_admin_api/off` → shortcut to disable maintenance
 - `POST /_admin_api/bypass` → set bypass cookie (ADMIN_BYPASS_TOKEN)
 - `POST /_admin_api/bypass_off` → clear bypass cookie
 
-### Legacy admin (URL token; keep or remove later)
-- `/_maint/*` (token in URL)
-
-### Cloudflare Access (optional)
-If Access is enabled on `settings.familiada.online`, any request with
-`CF-Access-Jwt-Assertion` header is treated as authorized.
-(No JWT validation inside the worker.)
+### Cloudflare Access
+Recommended single-user setup:
+- Protect `settings.familiada.online` with Cloudflare Access policy.
+- Set `ADMIN_EMAIL` in worker env to your exact email.
+- Worker authorizes when `Cf-Access-Authenticated-User-Email` equals `ADMIN_EMAIL`.
+- If `ADMIN_EMAIL` is empty, worker falls back to `CF-Access-Jwt-Assertion`.
 
 ---
 
