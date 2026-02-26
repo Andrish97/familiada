@@ -227,31 +227,40 @@ html{
 }
 
 .dt-num{
+  position: relative;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
 }
 
 .dt-input{
   width: 86px;
   padding: 10px 12px;
-  border-radius: 10px;
-  border: 1px solid rgba(255,255,255,.18);
-  background: rgba(0,0,0,.25);
+  border-radius: 14px;
+  border: 1px solid var(--line2);
+  background: rgba(255,255,255,.06);
   color: #fff;
+  outline: 0;
+  font-weight: 900;
   text-align: center;
   font-size: 14px;
 }
 
 .dt-arrows{
-  display: inline-flex;
+  position: absolute;
+  right: 4px;
+  top: 4px;
+  bottom: 4px;
+  display: flex;
   flex-direction: column;
-  gap: 4px;
+  justify-content: space-between;
+  gap: 2px;
+  z-index: 2;
+  pointer-events: auto;
 }
 
 .dt-btn{
-  width: 28px;
-  height: 18px;
+  width: 22px;
+  height: 16px;
   border-radius: 6px;
   border: 1px solid rgba(255,255,255,.18);
   background: rgba(0,0,0,.3);
@@ -260,24 +269,13 @@ html{
   line-height: 1;
   cursor: pointer;
   padding: 0;
+  pointer-events: auto;
 }
 
 .dt-btn:active{
   transform: translateY(1px);
 }
 
-.dt-input[type="number"]::-webkit-outer-spin-button,
-.dt-input[type="number"]::-webkit-inner-spin-button{
-  -webkit-appearance: auto !important;
-  appearance: auto !important;
-  margin: 0;
-  opacity: 1;
-}
-.dt-input[type="number"]{
-  appearance: auto !important;
-  -webkit-appearance: auto !important;
-  -moz-appearance: number-input;
-}
 
 .dt-sep,
 .dt-colon{
