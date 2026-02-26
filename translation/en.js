@@ -4076,11 +4076,11 @@ const en = {
     inactiveText: "There is no maintenance in progress.",
     returnAtTitle: "TRWA PRZERWA TECHNICZNA ⏳",
     returnAtText:
-      "System jest chwilowo niedostępny.\nPowrót nastąpi:",
+      "The system is temporarily unavailable.\nReturn will be on:",
     countdownTitle: "TRWA PRZERWA TECHNICZNA ⏳",
     countdownText:
-      "System jest chwilowo niedostępny.\nPowrót nastąpi:",
-    countdownDone: "Powrót już możliwy. 🎉",
+      "The system is temporarily unavailable.\nReturn will be in:",
+    countdownDone: "Return is possible now. 🎉",
     refresh: "Refresh",
     contact: "Contact",
     statusLabel: "Status:",
