@@ -4069,15 +4069,15 @@ const en = {
     },
   },
   maintenance: {
-    title: "TRWA PRZERWA TECHNICZNA ⏳",
+    title: "TECHNICAL MAINTENANCE IN PROGRESS ⏳",
     messageText:
-      "System jest chwilowo niedostępny.\nZa jakiś czas wszystko wróci do normy i będzie można kontynuować pracę.",
+      "The system is temporarily unavailable.\nEverything will be back to normal in a while and you will be able to continue working.",
     inactiveTitle: "No maintenance",
     inactiveText: "There is no maintenance in progress.",
-    returnAtTitle: "TRWA PRZERWA TECHNICZNA ⏳",
+    returnAtTitle: "TECHNICAL MAINTENANCE IN PROGRESS ⏳",
     returnAtText:
       "The system is temporarily unavailable.\nReturn will be on:",
-    countdownTitle: "TRWA PRZERWA TECHNICZNA ⏳",
+    countdownTitle: "TECHNICAL MAINTENANCE IN PROGRESS ⏳",
     countdownText:
       "The system is temporarily unavailable.\nReturn will be in:",
     countdownDone: "Return is possible now. 🎉",

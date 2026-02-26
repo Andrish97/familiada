@@ -278,20 +278,23 @@ function formatReturnAtEn(date) {
     today.getDate() === date.getDate();
   const datePart = `${mo}/${dd}/${yy}`;
   if (sameDay) return `at ${hh}:${mm}`;
-  if (date.getHours() === 0 && date.getMinutes() === 0) return datePart;
-  return `${datePart} at ${hh}:${mm}`;
+  if (date.getHours() === 0 && date.getMinutes() === 0) return `on ${datePart}`;
+  return `on ${datePart} at ${hh}:${mm}`;
 }
 
 function formatReturnAtUk(date) {
   const pad = (n) => String(n).padStart(2, "0");
   const hh = pad(date.getHours());
   const mm = pad(date.getMinutes());
+  const d = pad(date.getDate());
+  const m = pad(date.getMonth() + 1);
+  const y = date.getFullYear();
   const today = new Date();
   const sameDay =
     today.getFullYear() === date.getFullYear() &&
     today.getMonth() === date.getMonth() &&
     today.getDate() === date.getDate();
-  const datePart = new Intl.DateTimeFormat(undefined, { dateStyle: "medium" }).format(date);
+  const datePart = `${d}.${m}.${y}`;
   if (sameDay) return `о ${hh}:${mm}`;
   if (date.getHours() === 0 && date.getMinutes() === 0) return datePart;
   return `${datePart} о ${hh}:${mm}`;
@@ -671,7 +674,7 @@ function formatCountdownDisplay(ms) {
   const lang = (document.documentElement.lang || "").toLowerCase();
   const value = formatCountdown(ms);
   if (lang.startsWith("en")) return `in ${value}`;
-  if (lang.startsWith("uk")) return `за ${value}`;
+  if (lang.startsWith("uk")) return `через ${value}`;
   if (lang.startsWith("pl")) return `za ${value}`;
   return value;
 }
@@ -993,7 +996,7 @@ function wireEvents() {
       setFieldValue(activePicker, date);
       formDirty = true;
       updateValidation();
-      updateCountdownDisplay();
+      if (currentState) updateModeStatus(currentState);
     }
     closePicker();
   });

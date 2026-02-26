@@ -3947,7 +3947,7 @@ const uk = {
   maintenance: {
     title: "ТРИВАЄ ТЕХНІЧНА ПЕРЕРВА ⏳",
     messageText:
-      "System jest chwilowo niedostępny.\nZa jakiś czas wszystko wróci do normy i będzie można kontynuować pracę.",
+      "Система тимчасово недоступна.\nЗа деякий час усе повернеться до норми, і ви зможете продовжити роботу.",
     inactiveTitle: "Немає технічних робіт",
     inactiveText: "Наразі технічні роботи не проводяться.",
     returnAtTitle: "ТРИВАЄ ТЕХНІЧНА ПЕРЕРВА ⏳",
