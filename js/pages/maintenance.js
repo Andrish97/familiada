@@ -26,6 +26,7 @@ const els = {
 
 let countdownTimer = null;
 let redirectTimer = null;
+let lastState = null;
 
 function setText(el, text) {
   if (el) el.textContent = text;
@@ -292,8 +293,10 @@ async function loadState() {
 async function refresh() {
   try {
     const state = await loadState();
+    lastState = state;
     renderState(state);
   } catch (err) {
+    lastState = null;
     renderFallback();
   }
 }
@@ -301,5 +304,12 @@ async function refresh() {
 (async () => {
   await initI18n({ withSwitcher: true, apply: true });
   await refresh();
+  window.addEventListener("i18n:lang", () => {
+    if (lastState) {
+      renderState(lastState);
+    } else {
+      renderFallback();
+    }
+  });
   setInterval(refresh, POLL_MS);
 })();
