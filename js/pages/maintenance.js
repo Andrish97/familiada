@@ -142,12 +142,7 @@ function formatReturnAt(date) {
 }
 
 function formatCountdownDisplay(ms) {
-  const lang = (document.documentElement.lang || "").toLowerCase();
-  const value = formatCountdown(ms);
-  if (lang.startsWith("en")) return `in ${value}`;
-  if (lang.startsWith("uk")) return `через ${value}`;
-  if (lang.startsWith("pl")) return `za ${value}`;
-  return value;
+  return formatCountdown(ms);
 }
 
 function formatReturnAtEn(date) {
