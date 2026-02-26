@@ -4071,12 +4071,12 @@ const pl = {
       "System jest chwilowo niedostępny.\nZa jakiś czas wszystko wróci do normy i będzie można kontynuować pracę.",
     inactiveTitle: "Brak prac technicznych",
     inactiveText: "Aktualnie nie trwają żadne prace.",
-    returnAtTitle: "TRWA PRZERWA TECHNICZNA",
+    returnAtTitle: "TRWA PRZERWA TECHNICZNA ⏳",
     returnAtText:
-      "System jest tymczasowo niedostępny.\nPowrót {time} — wtedy znów będzie można swobodnie tworzyć i edytować gry.",
+      "System jest chwilowo niedostępny.\nPowrót nastąpi:",
     countdownTitle: "TRWA PRZERWA TECHNICZNA",
     countdownText:
-      "System jest chwilowo niedostępny.\nPowrót za {countdown}.",
+      "System jest chwilowo niedostępny.\nPowrót nastąpi:",
     countdownDone: "Powrót już możliwy. 🎉",
     refresh: "Odśwież",
     contact: "Kontakt",
@@ -4095,6 +4095,10 @@ const pl = {
       logout: "Wyloguj",
       supabase: "Supabase",
       server: "Serwer",
+      today: "Dziś",
+      cancel: "Anuluj",
+      ok: "OK",
+      time: "Czas",
     },
     tabs: {
       maintenance: "Prace techniczne",

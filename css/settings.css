@@ -134,22 +134,6 @@ html{
   accent-color: #f7d27b;
 }
 
-.mode-dots{
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  align-items: center;
-  gap: 0;
-  margin-top: -6px;
-}
-
-.mode-dots span{
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: rgba(255,255,255,.35);
-  justify-self: center;
-}
-
 .mode-range::-webkit-slider-runnable-track{
   height: 6px;
   background: rgba(255,255,255,.18);
@@ -371,7 +355,16 @@ html{
   border-radius: 12px;
   border: 1px solid rgba(255,255,255,.16);
   background: rgba(0,0,0,.25);
-  scroll-snap-type: y mandatory;
+  padding: 94px 0;
+  box-sizing: border-box;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+}
+
+.dt-wheel::-webkit-scrollbar{
+  width: 0;
+  height: 0;
 }
 
 .dt-wheel-item{
@@ -380,7 +373,26 @@ html{
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  scroll-snap-align: center;
+}
+
+.mode-status{
+  margin-top: 10px;
+  display: grid;
+  gap: 6px;
+}
+
+.mode-status-label{
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  font-size: 12px;
+  opacity: .7;
+}
+
+.mode-status-value{
+  font-size: clamp(28px, 6vw, 44px);
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  color: var(--gold);
 }
 
 .dt-wheel-item.is-active{
