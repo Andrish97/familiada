@@ -4073,10 +4073,10 @@ const pl = {
     inactiveText: "Aktualnie nie trwają żadne prace.",
     returnAtTitle: "TRWA PRZERWA TECHNICZNA ⏳",
     returnAtText:
-      "System jest chwilowo niedostępny.\nPowrót nastąpi:",
+      "System jest chwilowo niedostępny.\nPowrót nastąpi",
     countdownTitle: "TRWA PRZERWA TECHNICZNA",
     countdownText:
-      "System jest chwilowo niedostępny.\nPowrót nastąpi:",
+      "System jest chwilowo niedostępny.\nPowrót nastąpi",
     countdownDone: "Powrót już możliwy. 🎉",
     refresh: "Odśwież",
     contact: "Kontakt",

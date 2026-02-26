@@ -4076,10 +4076,10 @@ const en = {
     inactiveText: "There is no maintenance in progress.",
     returnAtTitle: "TECHNICAL MAINTENANCE IN PROGRESS ⏳",
     returnAtText:
-      "The system is temporarily unavailable.\nReturn will be on:",
+      "The system is temporarily unavailable.\nReturn will be:",
     countdownTitle: "TECHNICAL MAINTENANCE IN PROGRESS ⏳",
     countdownText:
-      "The system is temporarily unavailable.\nReturn will be in:",
+      "The system is temporarily unavailable.\nReturn will be:",
     countdownDone: "Return is possible now. 🎉",
     refresh: "Refresh",
     contact: "Contact",
