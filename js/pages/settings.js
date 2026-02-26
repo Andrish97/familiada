@@ -451,6 +451,19 @@ function applyDateOrderByLang() {
   }
 }
 
+function applyModalLabels() {
+  const set = (id, key, fallback) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const val = t(key);
+    el.textContent = val && val !== key ? val : fallback;
+  };
+  set("dtToday", "settings.actions.today", "Dziś");
+  set("dtCancel", "settings.actions.cancel", "Anuluj");
+  set("dtOk", "settings.actions.ok", "OK");
+  set("dtTimeLabel", "settings.actions.time", "Czas");
+}
+
 function renderCalendar() {
   const title = document.getElementById("dtTitle");
   const grid = document.getElementById("dtGrid");
@@ -519,8 +532,6 @@ function initTimeWheels() {
         updateWheelActive(wheel);
         raf = null;
       });
-      clearTimeout(wheel._t);
-      wheel._t = setTimeout(() => snapWheel(wheel), 120);
     }, { passive: true });
   };
 
@@ -533,14 +544,12 @@ function setWheelValue(wheelId, value) {
   const wheel = document.getElementById(wheelId);
   if (!wheel) return;
   const itemHeight = 32;
-  animateWheelTo(wheel, value * itemHeight);
+  wheel.scrollTop = value * itemHeight;
+  updateWheelActive(wheel);
 }
 
 function snapWheel(wheel) {
-  const itemHeight = 32;
-  const idx = Math.round(wheel.scrollTop / itemHeight);
-  const clamped = Math.max(0, Math.min(idx, wheel.children.length - 1));
-  animateWheelTo(wheel, clamped * itemHeight);
+  updateWheelActive(wheel);
 }
 
 function updateWheelActive(wheel, idxOverride) {
@@ -560,30 +569,7 @@ function getWheelValue(wheelId) {
   return Math.max(0, Math.min(idx, wheel.children.length - 1));
 }
 
-function animateWheelTo(wheel, target) {
-  const start = wheel.scrollTop;
-  const delta = target - start;
-  if (Math.abs(delta) < 1) {
-    wheel.scrollTop = target;
-    updateWheelActive(wheel);
-    return;
-  }
-  const duration = 120;
-  const startTime = performance.now();
-  const step = (now) => {
-    const t = Math.min(1, (now - startTime) / duration);
-    const eased = t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
-    wheel.scrollTop = start + delta * eased;
-    updateWheelActive(wheel);
-    if (t < 1) {
-      requestAnimationFrame(step);
-    } else {
-      wheel.scrollTop = target;
-      updateWheelActive(wheel);
-    }
-  };
-  requestAnimationFrame(step);
-}
+function animateWheelTo() {}
 
 function setMode(mode) {
   currentMode = mode;
@@ -776,17 +762,15 @@ async function startMaintenance() {
 
 function updateValidation() {
   const warn = document.getElementById("timeWarn");
+  if (currentMode === "message") {
+    if (warn) warn.hidden = true;
+    if (els.btnStartStop) els.btnStartStop.disabled = false;
+    return;
+  }
   let ok = true;
-  if (currentMode === "returnAt") {
-    ok = isValidFuture("returnAt");
-  }
-  if (currentMode === "countdown") {
-    ok = isValidFuture("endAt");
-  }
-  if (currentMode === "message") ok = true;
-  if (warn) {
-    warn.hidden = ok || currentMode === "message";
-  }
+  if (currentMode === "returnAt") ok = isValidFuture("returnAt");
+  if (currentMode === "countdown") ok = isValidFuture("endAt");
+  if (warn) warn.hidden = ok;
   if (els.btnStartStop) {
     const blocked = !ok && !currentState?.enabled;
     els.btnStartStop.disabled = blocked;
@@ -1071,12 +1055,14 @@ function wireEvents() {
 (async () => {
   await initI18n({ withSwitcher: true, apply: true });
   applyDateOrderByLang();
+  applyModalLabels();
   guardDesktopOnly({ maxWidth: 980 });
   syncTopbarHeight();
   window.addEventListener("resize", syncTopbarHeight);
   window.addEventListener("i18n:lang", () => {
     syncTopbarHeight();
     applyDateOrderByLang();
+    applyModalLabels();
     renderCalendar();
     if (currentState) updateModeStatus(currentState);
   });
