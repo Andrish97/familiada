@@ -4076,10 +4076,10 @@ const en = {
     inactiveText: "There is no maintenance in progress.",
     returnAtTitle: "TRWA PRZERWA TECHNICZNA ⏳",
     returnAtText:
-      "System jest chwilowo niedostępny.\nPowrót {time} — wtedy znów będzie można swobodnie tworzyć i edytować gry.",
+      "System jest chwilowo niedostępny.\nPowrót nastąpi:",
     countdownTitle: "TRWA PRZERWA TECHNICZNA ⏳",
     countdownText:
-      "System jest chwilowo niedostępny.\nPowrót za {countdown}.",
+      "System jest chwilowo niedostępny.\nPowrót nastąpi:",
     countdownDone: "Powrót już możliwy. 🎉",
     refresh: "Refresh",
     contact: "Contact",
@@ -4098,6 +4098,10 @@ const en = {
       logout: "Log out",
       supabase: "Supabase",
       server: "Server",
+      today: "Today",
+      cancel: "Cancel",
+      ok: "OK",
+      time: "Time",
     },
     tabs: {
       maintenance: "Maintenance",

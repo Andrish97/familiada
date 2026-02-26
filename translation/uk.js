@@ -3952,10 +3952,10 @@ const uk = {
     inactiveText: "Наразі технічні роботи не проводяться.",
     returnAtTitle: "ТРИВАЄ ТЕХНІЧНА ПЕРЕРВА ⏳",
     returnAtText:
-      "System jest chwilowo niedostępny.\nPowrót {time} — wtedy znów będzie można swobodnie tworzyć i edytować gry.",
+      "System jest chwilowo niedostępny.\nPowrót nastąpi:",
     countdownTitle: "ТРИВАЄ ТЕХНІЧНА ПЕРЕРВА ⏳",
     countdownText:
-      "System jest chwilowo niedostępny.\nPowrót za {countdown}.",
+      "System jest chwilowo niedostępny.\nPowrót nastąpi:",
     countdownDone: "Powrót już możliwy. 🎉",
     refresh: "Оновити",
     contact: "Контакт",
@@ -3974,6 +3974,10 @@ const uk = {
       logout: "Вийти",
       supabase: "Supabase",
       server: "Сервер",
+      today: "Сьогодні",
+      cancel: "Скасувати",
+      ok: "OK",
+      time: "Час",
     },
     tabs: {
       maintenance: "Технічні роботи",

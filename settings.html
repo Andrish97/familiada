@@ -47,9 +47,6 @@
         <div class="maintenance-controls" id="maintenanceControls">
           <div class="mode-slider" id="modeSliderWrap">
             <input class="mode-range" id="modeSlider" type="range" min="0" max="2" step="1" value="0" aria-label="Maintenance mode"/>
-            <div class="mode-dots" aria-hidden="true">
-              <span></span><span></span><span></span>
-            </div>
             <div class="mode-labels" id="modeLabels">
               <span class="mode-label" data-mode="message" data-i18n="settings.modes.message">Wiadomość</span>
               <span class="mode-label" data-mode="returnAt" data-i18n="settings.modes.returnAt">Do godziny</span>
@@ -173,7 +170,7 @@
       </div>
       <div class="dt-grid" id="dtGrid"></div>
       <div class="dt-time">
-        <div class="dt-time-label">Czas</div>
+        <div class="dt-time-label" data-i18n="settings.actions.time">Czas</div>
         <div class="dt-time-row">
           <div class="dt-wheel" id="dtHourWheel"></div>
           <span class="dt-colon">:</span>
@@ -181,8 +178,8 @@
         </div>
       </div>
       <div class="dt-actions">
-        <button class="btn sm" id="dtCancel" type="button">Anuluj</button>
-        <button class="btn sm gold" id="dtOk" type="button">OK</button>
+        <button class="btn sm" id="dtCancel" type="button" data-i18n="settings.actions.cancel">Anuluj</button>
+        <button class="btn sm gold" id="dtOk" type="button" data-i18n="settings.actions.ok">OK</button>
       </div>
     </div>
   </div>

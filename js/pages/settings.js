@@ -50,6 +50,8 @@ const els = {
   footer: document.querySelector("footer.footer"),
   maintenancePanel: document.querySelector(".maintenance-panel"),
   maintenanceControls: document.getElementById("maintenanceControls"),
+  modeStatus: document.getElementById("modeStatus"),
+  modeStatusValue: document.getElementById("modeStatusValue"),
   toast: document.getElementById("toast"),
 };
 
@@ -510,10 +512,16 @@ function initTimeWheels() {
       });
       wheel.appendChild(item);
     }
+    let raf = null;
     wheel.addEventListener("scroll", () => {
+      if (raf) return;
+      raf = requestAnimationFrame(() => {
+        updateWheelActive(wheel);
+        raf = null;
+      });
       clearTimeout(wheel._t);
       wheel._t = setTimeout(() => snapWheel(wheel), 120);
-    });
+    }, { passive: true });
   };
 
   build(hourWheel, 23);
@@ -525,15 +533,20 @@ function setWheelValue(wheelId, value) {
   const wheel = document.getElementById(wheelId);
   if (!wheel) return;
   const itemHeight = 32;
-  wheel.scrollTop = value * itemHeight;
-  snapWheel(wheel);
+  animateWheelTo(wheel, value * itemHeight);
 }
 
 function snapWheel(wheel) {
   const itemHeight = 32;
   const idx = Math.round(wheel.scrollTop / itemHeight);
   const clamped = Math.max(0, Math.min(idx, wheel.children.length - 1));
-  wheel.scrollTop = clamped * itemHeight;
+  animateWheelTo(wheel, clamped * itemHeight);
+}
+
+function updateWheelActive(wheel, idxOverride) {
+  const itemHeight = 32;
+  const idx = typeof idxOverride === "number" ? idxOverride : Math.round(wheel.scrollTop / itemHeight);
+  const clamped = Math.max(0, Math.min(idx, wheel.children.length - 1));
   Array.from(wheel.children).forEach((el, i) => {
     el.classList.toggle("is-active", i === clamped);
   });
@@ -545,6 +558,31 @@ function getWheelValue(wheelId) {
   const itemHeight = 32;
   const idx = Math.round(wheel.scrollTop / itemHeight);
   return Math.max(0, Math.min(idx, wheel.children.length - 1));
+}
+
+function animateWheelTo(wheel, target) {
+  const start = wheel.scrollTop;
+  const delta = target - start;
+  if (Math.abs(delta) < 1) {
+    wheel.scrollTop = target;
+    updateWheelActive(wheel);
+    return;
+  }
+  const duration = 120;
+  const startTime = performance.now();
+  const step = (now) => {
+    const t = Math.min(1, (now - startTime) / duration);
+    const eased = t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+    wheel.scrollTop = start + delta * eased;
+    updateWheelActive(wheel);
+    if (t < 1) {
+      requestAnimationFrame(step);
+    } else {
+      wheel.scrollTop = target;
+      updateWheelActive(wheel);
+    }
+  };
+  requestAnimationFrame(step);
 }
 
 function setMode(mode) {
@@ -588,10 +626,12 @@ function updateStatus(state) {
   }
   if (!state.enabled || state.mode === "off") {
     setText(els.statusValue, t("settings.status.off"));
+    if (els.modeStatus) els.modeStatus.hidden = true;
     return;
   }
   const modeLabel = t(`settings.status.mode_${state.mode}`);
   setText(els.statusValue, `${t("settings.status.on")} • ${modeLabel}`);
+  updateModeStatus(state);
 }
 
 function updateStartStop(state) {
@@ -641,31 +681,13 @@ function buildPayload() {
   return { enabled: true, mode: "message", returnAt: null };
 }
 
-function updateCountdownDisplay() {
-  if (!els.countdownNow) return;
-  if (currentMode !== "countdown" || !currentState?.enabled) {
-    setText(els.countdownNow, "—");
-    const row = document.getElementById("countdownRow");
-    if (row) row.hidden = true;
-    const prev = document.getElementById("countdownPreview");
-    if (prev) prev.hidden = true;
-    return;
-  }
-  const row = document.getElementById("countdownRow");
-  if (row) row.hidden = false;
-  const endDate = getFieldValue("endAt");
-  if (!endDate) {
-    setText(els.countdownNow, "—");
-    return;
-  }
-  const diff = endDate.getTime() - Date.now();
-  setText(els.countdownNow, formatCountdown(diff));
-  const prev = document.getElementById("countdownPreview");
-  const prevVal = document.getElementById("countdownPreviewValue");
-  if (prev && prevVal) {
-    prev.hidden = false;
-    prevVal.textContent = formatCountdown(diff);
-  }
+function formatCountdownDisplay(ms) {
+  const lang = (document.documentElement.lang || "").toLowerCase();
+  const value = formatCountdown(ms);
+  if (lang.startsWith("en")) return `in ${value}`;
+  if (lang.startsWith("uk")) return `за ${value}`;
+  if (lang.startsWith("pl")) return `za ${value}`;
+  return value;
 }
 
 function updateReturnPreview() {
@@ -685,9 +707,40 @@ function updateReturnPreview() {
   val.textContent = formatReturnPreview(date);
 }
 
+function updateModeStatus(state) {
+  if (!els.modeStatus || !els.modeStatusValue) return;
+  if (!state?.enabled || state.mode === "off" || state.mode === "message") {
+    els.modeStatus.hidden = true;
+    return;
+  }
+  const date = state.returnAt ? new Date(state.returnAt) : null;
+  if (state.mode === "returnAt") {
+    els.modeStatus.hidden = false;
+    els.modeStatusValue.textContent = date ? formatReturnAtValue(date) : "—";
+    return;
+  }
+  if (state.mode === "countdown") {
+    els.modeStatus.hidden = false;
+    if (!date || Number.isNaN(date.getTime())) {
+      els.modeStatusValue.textContent = "—";
+      return;
+    }
+    const diff = date.getTime() - Date.now();
+    if (diff <= 0) {
+      els.modeStatusValue.textContent = t("settings.preview.ready");
+      return;
+    }
+    els.modeStatusValue.textContent = formatCountdownDisplay(diff);
+  }
+}
+
 function startCountdownTimer() {
   if (countdownTimer) clearInterval(countdownTimer);
-  countdownTimer = setInterval(updateCountdownDisplay, 1000);
+  countdownTimer = setInterval(() => {
+    if (currentState?.enabled && currentState.mode === "countdown") {
+      updateModeStatus(currentState);
+    }
+  }, 1000);
 }
 
 async function loadState() {
@@ -1025,6 +1078,7 @@ function wireEvents() {
     syncTopbarHeight();
     applyDateOrderByLang();
     renderCalendar();
+    if (currentState) updateModeStatus(currentState);
   });
   startCountdownTimer();
   await initToolsSelect();

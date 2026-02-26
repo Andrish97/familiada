@@ -11,10 +11,10 @@ const FALLBACKS = {
   inactiveText: "Aktualnie nie trwają żadne prace.",
   returnAtTitle: "TRWA PRZERWA TECHNICZNA",
   returnAtText:
-    "System jest tymczasowo niedostępny.\nPowrót {time} — wtedy znów będzie można swobodnie tworzyć i edytować gry.",
+    "System jest chwilowo niedostępny.\nPowrót nastąpi:",
   countdownTitle: "TRWA PRZERWA TECHNICZNA",
   countdownText:
-    "System jest chwilowo niedostępny.\nPowrót za {countdown}.",
+    "System jest chwilowo niedostępny.\nPowrót nastąpi:",
   countdownDone: "Powrót już możliwy. 🎉",
 };
 
@@ -141,6 +141,15 @@ function formatReturnAt(date) {
   return `${d}.${m}.${y} o ${hh}:${mm}`;
 }
 
+function formatCountdownDisplay(ms) {
+  const lang = (document.documentElement.lang || "").toLowerCase();
+  const value = formatCountdown(ms);
+  if (lang.startsWith("en")) return `in ${value}`;
+  if (lang.startsWith("uk")) return `за ${value}`;
+  if (lang.startsWith("pl")) return `za ${value}`;
+  return value;
+}
+
 function formatReturnAtEn(date) {
   const pad = (n) => String(n).padStart(2, "0");
   const hh = pad(date.getHours());
@@ -190,14 +199,14 @@ function updateCountdown(targetDate) {
     scheduleRedirect();
     return false;
   }
-  const formatted = formatCountdown(diff);
+  const formatted = formatCountdownDisplay(diff);
   if (els.countdown) {
     els.countdown.hidden = false;
     setText(els.countdown, formatted);
   }
   setText(
     els.description,
-    tr("maintenance.countdownText", FALLBACKS.countdownText).replace("{countdown}", formatted)
+    tr("maintenance.countdownText", FALLBACKS.countdownText)
   );
   return true;
 }
@@ -242,13 +251,7 @@ function renderState(state) {
 
   if (mode === "returnAt") {
     setText(els.title, titleText);
-    setText(
-      els.description,
-      tr("maintenance.returnAtText", FALLBACKS.returnAtText).replace(
-        "{time}",
-        returnAt ? formatReturnAt(returnAt) : "—"
-      )
-    );
+    setText(els.description, tr("maintenance.returnAtText", FALLBACKS.returnAtText));
     if (els.countdown) {
       els.countdown.hidden = false;
       setText(els.countdown, returnAt ? formatReturnAt(returnAt) : "—");
