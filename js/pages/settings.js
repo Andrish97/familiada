@@ -973,6 +973,26 @@ function wireEvents() {
     });
   });
 
+  document.querySelectorAll(".dt-btn[data-step]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const id = btn.getAttribute("data-step");
+      const delta = Number(btn.getAttribute("data-delta") || "0");
+      const input = id ? document.getElementById(id) : null;
+      if (!input) return;
+      const min = Number(input.getAttribute("min") || "0");
+      const max = Number(input.getAttribute("max") || "9999");
+      const curr = Number(input.value || "0");
+      const next = Math.min(max, Math.max(min, curr + delta));
+      input.value = String(next).padStart(input.id.includes("Year") ? 4 : 2, "0");
+      const prefix = id.startsWith("returnAt") ? "returnAt" : "endAt";
+      formDirty = true;
+      normalizeDateFields(prefix);
+      updateValidation();
+      if (currentState) updateModeStatus(currentState);
+      updateReturnPreview();
+    });
+  });
+
   document.querySelectorAll(".dt-open").forEach((btn) => {
     btn.addEventListener("click", () => {
       const target = btn.getAttribute("data-dt-open");
