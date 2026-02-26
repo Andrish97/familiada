@@ -166,7 +166,7 @@ async function handleAdminApi(request, env) {
   const url = new URL(request.url);
 
   if (url.pathname === "/_admin_api/me") {
-    const ok = await isAdminAuthorized(request, env);
+    const ok = await isAdminAuthorized(request);
     return new Response(ok ? "OK" : "Unauthorized", { status: ok ? 200 : 401 });
   }
 
@@ -177,7 +177,7 @@ async function handleAdminApi(request, env) {
     if (!env.ADMIN_BYPASS_TOKEN) {
       return new Response("Missing ADMIN_BYPASS_TOKEN", { status: 500 });
     }
-    const authorized = await isAdminAuthorized(request, env);
+    const authorized = await isAdminAuthorized(request);
     if (!authorized) return new Response("Unauthorized", { status: 401 });
     return new Response("Bypass ON", {
       headers: {
@@ -191,7 +191,7 @@ async function handleAdminApi(request, env) {
     if (request.method !== "POST") {
       return new Response("Method Not Allowed", { status: 405 });
     }
-    const authorized = await isAdminAuthorized(request, env);
+    const authorized = await isAdminAuthorized(request);
     if (!authorized) return new Response("Unauthorized", { status: 401 });
     return new Response("Bypass OFF", {
       headers: {
@@ -201,7 +201,7 @@ async function handleAdminApi(request, env) {
     });
   }
 
-  const authorized = await isAdminAuthorized(request, env);
+  const authorized = await isAdminAuthorized(request);
   if (!authorized) {
     return new Response("Unauthorized", { status: 401 });
   }
@@ -367,26 +367,17 @@ function hasAccessJwt(request) {
   );
 }
 
-function getAccessUserEmail(request) {
-  return (
+function hasAccessUserIdentity(request) {
+  return Boolean(
     request.headers.get("Cf-Access-Authenticated-User-Email") ||
-    request.headers.get("CF-Access-Authenticated-User-Email") ||
-    request.headers.get("cf-access-authenticated-user-email") ||
-    ""
+      request.headers.get("CF-Access-Authenticated-User-Email") ||
+      request.headers.get("cf-access-authenticated-user-email")
   );
 }
 
-async function isAdminAuthorized(request, env) {
-  const accessEmail = getAccessUserEmail(request).trim().toLowerCase();
-  const allowedEmail = (env.ADMIN_EMAIL || "").trim().toLowerCase();
-  if (accessEmail) {
-    if (!allowedEmail) return true;
-    return accessEmail === allowedEmail;
-  }
-  // In strict single-user mode (ADMIN_EMAIL set), email header is required.
-  if (allowedEmail) return false;
-  // Fallback for setups that only expose JWT assertion header.
-  return hasAccessJwt(request);
+async function isAdminAuthorized(request) {
+  // Access is the only auth layer for settings admin API.
+  return hasAccessUserIdentity(request) || hasAccessJwt(request);
 }
 
 async function readJson(request) {

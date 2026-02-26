@@ -17,6 +17,7 @@
 
 ### 3) Other subdomains (*.familiada.online)
 - Known service hosts (`api`, `panel`, `supabase`) are passed through.
+- `panel` and `supabase` can point to external origins; keep DNS proxied in Cloudflare.
 - Unknown hosts:
   - Maintenance OFF → custom `/404.html`
   - Maintenance ON → `/maintenance` (503)
@@ -40,11 +41,10 @@ Foldery mają teraz `index.html`, więc `/control`, `/display`, `/logo-editor`, 
 - `POST /_admin_api/bypass_off` → clear bypass cookie
 
 ### Cloudflare Access
-Recommended single-user setup:
+Recommended setup:
 - Protect `settings.familiada.online` with Cloudflare Access policy.
-- Set `ADMIN_EMAIL` in worker env to your exact email.
-- Worker authorizes when `Cf-Access-Authenticated-User-Email` equals `ADMIN_EMAIL`.
-- If `ADMIN_EMAIL` is empty, worker falls back to `CF-Access-Jwt-Assertion`.
+- Restrict access in Access policy (for example: only your account).
+- Worker authorizes by Cloudflare Access headers (`Cf-Access-Authenticated-User-Email` or `CF-Access-Jwt-Assertion`).
 
 ---
 
