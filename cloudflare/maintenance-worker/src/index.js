@@ -76,11 +76,6 @@ export default {
 
     const isBypass = hasAdminBypass(request, env);
 
-    // ADMIN ENDPOINTS
-    if (url.pathname.startsWith("/_maint")) {
-      return handleAdmin(request, env);
-    }
-
     // Admin API should not be exposed on public hosts
     if (url.pathname.startsWith("/_admin_api")) {
       return new Response("Unauthorized", { status: 401 });
@@ -167,173 +162,12 @@ async function serveNotFoundPage(request, originBase, originHost, resolveOverrid
   });
 }
 
-async function handleAdmin(request, env) {
-  const url = new URL(request.url);
-  const token = url.searchParams.get("token") || "";
-
-  if (token !== env.ADMIN_TOKEN) {
-    return new Response("Forbidden", { status: 403 });
-  }
-
-  if (url.pathname === "/_maint/bypass") {
-    if (!env.ADMIN_BYPASS_TOKEN) {
-      return new Response("Missing ADMIN_BYPASS_TOKEN", { status: 500 });
-    }
-
-    const stage = url.searchParams.get("stage") || "1";
-    const host = url.host;
-    const isWww = host.toLowerCase().startsWith("www.");
-
-    // stage 1: jesteś na apex -> ustaw cookie dla apex i przejdź na www
-    if (stage === "1" && !isWww) {
-      const next = new URL(url.toString());
-      next.host = `www.${host}`;
-      next.searchParams.set("stage", "2");
-
-      return new Response("Bypass ON (stage 1)", {
-        status: 302,
-        headers: {
-          "Set-Cookie": setAdminBypassCookie(env),
-          "Location": next.toString(),
-          "Cache-Control": "no-store"
-        }
-      });
-    }
-
-    // stage 2: jesteś na www (albo od razu wszedłeś na www) -> ustaw cookie dla www i wróć na /
-    return new Response("Bypass ON (stage 2)", {
-      status: 302,
-      headers: {
-        "Set-Cookie": setAdminBypassCookie(env),
-        "Location": "/",
-        "Cache-Control": "no-store"
-      }
-    });
-  }
-
-  if (url.pathname === "/_maint/bypass_off") {
-    const stage = url.searchParams.get("stage") || "1";
-    const host = url.host;
-    const isWww = host.toLowerCase().startsWith("www.");
-
-    // stage 1: jesteś na apex -> skasuj cookie dla apex i przejdź na www
-    if (stage === "1" && !isWww) {
-      const next = new URL(url.toString());
-      next.host = `www.${host}`;
-      next.searchParams.set("stage", "2");
-
-      return new Response("Bypass OFF (stage 1)", {
-        status: 302,
-        headers: {
-          "Set-Cookie": clearAdminBypassCookie(),
-          "Location": next.toString(),
-          "Cache-Control": "no-store"
-        }
-      });
-    }
-
-    // stage 2: skasuj cookie dla www i wróć na /
-    return new Response("Bypass OFF (stage 2)", {
-      status: 302,
-      headers: {
-        "Set-Cookie": clearAdminBypassCookie(),
-        "Location": "/",
-        "Cache-Control": "no-store"
-      }
-    });
-  }
-
-  if (url.pathname === "/_maint/off") {
-    await env.MAINT_KV.put("state", JSON.stringify({
-      enabled: false,
-      mode: "off",
-      returnAt: null
-    }));
-    return new Response("Maintenance OFF");
-  }
-
-  if (url.pathname === "/_maint/message") {
-    await env.MAINT_KV.put("state", JSON.stringify({
-      enabled: true,
-      mode: "message",
-      returnAt: null
-    }));
-    return new Response("Maintenance MESSAGE");
-  }
-
-  if (url.pathname === "/_maint/returnAt") {
-    const t = url.searchParams.get("t");
-    await env.MAINT_KV.put("state", JSON.stringify({
-      enabled: true,
-      mode: "returnAt",
-      returnAt: t || null
-    }));
-    return new Response("Maintenance RETURN_AT");
-  }
-
-  if (url.pathname === "/_maint/countdown") {
-    const t = url.searchParams.get("t");
-    await env.MAINT_KV.put("state", JSON.stringify({
-      enabled: true,
-      mode: "countdown",
-      returnAt: t || null
-    }));
-    return new Response("Maintenance COUNTDOWN");
-  }
-
-  return new Response("Unknown command", { status: 400 });
-}
-
 async function handleAdminApi(request, env) {
   const url = new URL(request.url);
 
   if (url.pathname === "/_admin_api/me") {
     const ok = await isAdminAuthorized(request, env);
     return new Response(ok ? "OK" : "Unauthorized", { status: ok ? 200 : 401 });
-  }
-
-  if (url.pathname === "/_admin_api/login") {
-    if (request.method !== "POST") {
-      return new Response("Method Not Allowed", { status: 405 });
-    }
-    if (!env.ADMIN_PANEL_USERNAME || !env.ADMIN_PANEL_PASSWORD) {
-      return new Response("Missing ADMIN_PANEL_USERNAME or ADMIN_PANEL_PASSWORD", { status: 500 });
-    }
-
-    const rate = await checkLoginRateLimit(request, env);
-    if (!rate.ok) {
-      return new Response("Too Many Requests", { status: 429 });
-    }
-
-    const body = await readJson(request);
-    const username = body?.username || "";
-    const password = body?.password || "";
-    if (username !== env.ADMIN_PANEL_USERNAME || password !== env.ADMIN_PANEL_PASSWORD) {
-      return new Response("Forbidden", { status: 403 });
-    }
-    const token = await createSettingsSession(env);
-    return new Response("OK", {
-      headers: {
-        "Set-Cookie": setSettingsCookie(token),
-        "Cache-Control": "no-store"
-      }
-    });
-  }
-
-  if (url.pathname === "/_admin_api/logout") {
-    if (request.method !== "POST") {
-      return new Response("Method Not Allowed", { status: 405 });
-    }
-    const token = getCookie(request, "__Host-fml_settings");
-    if (token) {
-      await env.MAINT_KV.delete(`settings_session:${token}`);
-    }
-    return new Response("OK", {
-      headers: {
-        "Set-Cookie": clearSettingsCookie(),
-        "Cache-Control": "no-store"
-      }
-    });
   }
 
   if (url.pathname === "/_admin_api/bypass") {
@@ -533,32 +367,26 @@ function hasAccessJwt(request) {
   );
 }
 
-async function hasSettingsSession(request, env) {
-  const token = getCookie(request, "__Host-fml_settings");
-  if (!token) return false;
-  const key = `settings_session:${token}`;
-  const value = await env.MAINT_KV.get(key);
-  return Boolean(value);
+function getAccessUserEmail(request) {
+  return (
+    request.headers.get("Cf-Access-Authenticated-User-Email") ||
+    request.headers.get("CF-Access-Authenticated-User-Email") ||
+    request.headers.get("cf-access-authenticated-user-email") ||
+    ""
+  );
 }
 
 async function isAdminAuthorized(request, env) {
-  if (hasAccessJwt(request)) return true;
-  return hasSettingsSession(request, env);
-}
-
-async function createSettingsSession(env) {
-  const token = crypto.randomUUID();
-  const ttl = 60 * 60 * 24 * 30;
-  await env.MAINT_KV.put(`settings_session:${token}`, "1", { expirationTtl: ttl });
-  return token;
-}
-
-function setSettingsCookie(token) {
-  return `__Host-fml_settings=${token}; Path=/; Secure; HttpOnly; SameSite=Strict; Max-Age=2592000`;
-}
-
-function clearSettingsCookie() {
-  return `__Host-fml_settings=; Path=/; Secure; HttpOnly; SameSite=Strict; Max-Age=0`;
+  const accessEmail = getAccessUserEmail(request).trim().toLowerCase();
+  const allowedEmail = (env.ADMIN_EMAIL || "").trim().toLowerCase();
+  if (accessEmail) {
+    if (!allowedEmail) return true;
+    return accessEmail === allowedEmail;
+  }
+  // In strict single-user mode (ADMIN_EMAIL set), email header is required.
+  if (allowedEmail) return false;
+  // Fallback for setups that only expose JWT assertion header.
+  return hasAccessJwt(request);
 }
 
 async function readJson(request) {
@@ -567,19 +395,6 @@ async function readJson(request) {
   } catch {
     return null;
   }
-}
-
-async function checkLoginRateLimit(request, env) {
-  const ip =
-    request.headers.get("CF-Connecting-IP") ||
-    request.headers.get("X-Forwarded-For") ||
-    "unknown";
-  const key = `settings_login_rate:${ip}`;
-  const raw = await env.MAINT_KV.get(key);
-  let data = raw ? JSON.parse(raw) : { count: 0 };
-  data.count = (data.count || 0) + 1;
-  await env.MAINT_KV.put(key, JSON.stringify(data), { expirationTtl: 300 });
-  return { ok: data.count <= 5 };
 }
 
 function validateState(body) {
@@ -604,15 +419,6 @@ function validateState(body) {
   }
 
   return { ok: true, value: { enabled, mode, returnAt } };
-}
-
-function setAdminBypassCookie(env) {
-  // __Host- => wymaga Secure, Path=/ i bez Domain (host-only)
-  return `__Host-fml_admin=${env.ADMIN_BYPASS_TOKEN}; Path=/; Secure; HttpOnly; SameSite=Strict; Max-Age=2592000`;
-}
-
-function clearAdminBypassCookie() {
-  return `__Host-fml_admin=; Path=/; Secure; HttpOnly; SameSite=Strict; Max-Age=0`;
 }
 
 function setAdminBypassCookieForAllDomains(env) {

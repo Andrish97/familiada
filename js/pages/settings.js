@@ -1,8 +1,6 @@
 /*
 Settings panel (admin)
 - GET  /_admin_api/me
-- POST /_admin_api/login { username, password }
-- POST /_admin_api/logout
 - GET  /_admin_api/state
 - POST /_admin_api/state { enabled, mode, returnAt }
 - POST /_admin_api/off
@@ -11,7 +9,6 @@ Settings panel (admin)
 */
 
 import { initI18n, t } from "../../translation/translation.js";
-import { confirmModal } from "../core/modal.js";
 import { initUiSelect } from "../core/ui-select.js";
 import { guardDesktopOnly } from "../core/device-guard.js";
 
@@ -24,10 +21,7 @@ const els = {
   authScreen: document.getElementById("authScreen"),
   panelScreen: document.getElementById("panelScreen"),
   authStatus: document.getElementById("authStatus"),
-  loginForm: document.getElementById("loginForm"),
-  loginUsername: document.getElementById("loginUsername"),
-  loginPassword: document.getElementById("loginPassword"),
-  loginError: document.getElementById("loginError"),
+  btnAccessLogin: document.getElementById("btnAccessLogin"),
   btnLogout: document.getElementById("btnLogout"),
   btnRefresh: document.getElementById("btnRefresh"),
   btnStartStop: document.getElementById("btnStartStop"),
@@ -102,6 +96,12 @@ function showPanel() {
   document.body.classList.remove("settings-locked");
   document.body.classList.remove("no-footer-line");
   moveLangSwitcher(false);
+}
+
+function stopPolling() {
+  if (!pollTimer) return;
+  clearInterval(pollTimer);
+  pollTimer = null;
 }
 
 function moveLangSwitcher(locked) {
@@ -747,7 +747,8 @@ async function loadState({ silent = false } = {}) {
   try {
     const res = await apiFetch(`${API_BASE}/state`, { method: "GET" });
     if (res.status === 401) {
-      showAuth("settings.login.passwordTitle");
+      stopPolling();
+      showAuth("settings.login.accessRequired");
       return;
     }
     if (!res.ok) throw new Error("state fetch failed");
@@ -1050,47 +1051,17 @@ function wireEvents() {
   }
 
   if (els.btnLogout) {
-    els.btnLogout.addEventListener("click", async () => {
-      const ok = await confirmModal({
-        title: t("settings.logoutConfirmTitle"),
-        text: t("settings.logoutConfirmText"),
-        okText: t("settings.logoutConfirmOk"),
-        cancelText: t("settings.logoutConfirmCancel"),
-      });
-      if (!ok) return;
-      await apiFetch(`${API_BASE}/logout`, { method: "POST" });
-      showAuth("settings.login.checking");
-      showToast(t("settings.toast.logout"));
+    els.btnLogout.addEventListener("click", () => {
+      stopPolling();
+      window.location.href = "/cdn-cgi/access/logout";
     });
   }
 
-  els.loginForm.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    setText(els.loginError, "");
-    const username = els.loginUsername.value || "";
-    const password = els.loginPassword.value || "";
-    if (!username) {
-      setText(els.loginError, t("settings.login.usernameMissing"));
-      return;
-    }
-    if (!password) {
-      setText(els.loginError, t("settings.login.passwordMissing"));
-      return;
-    }
-    try {
-      const res = await apiFetch(`${API_BASE}/login`, {
-        method: "POST",
-        body: JSON.stringify({ username, password }),
-      });
-      if (!res.ok) throw new Error("login failed");
-      showPanel();
-      formDirty = false;
-      await loadState();
-      if (!pollTimer) pollTimer = setInterval(() => loadState({ silent: true }), POLL_MS);
-    } catch {
-      setText(els.loginError, t("settings.login.loginInvalid"));
-    }
-  });
+  if (els.btnAccessLogin) {
+    els.btnAccessLogin.addEventListener("click", () => {
+      window.location.href = "/cdn-cgi/access/login";
+    });
+  }
 }
 
 (async () => {
@@ -1116,8 +1087,8 @@ function wireEvents() {
   if (ok) {
     showPanel();
     await loadState();
-    pollTimer = setInterval(() => loadState({ silent: true }), POLL_MS);
+    if (!pollTimer) pollTimer = setInterval(() => loadState({ silent: true }), POLL_MS);
   } else {
-    showAuth("settings.login.passwordTitle");
+    showAuth("settings.login.accessRequired");
   }
 })();
