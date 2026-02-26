@@ -239,11 +239,11 @@ html{
 
 .dt-input[type="number"]::-webkit-outer-spin-button,
 .dt-input[type="number"]::-webkit-inner-spin-button{
-  -webkit-appearance: none;
+  -webkit-appearance: auto;
   margin: 0;
 }
 .dt-input[type="number"]{
-  appearance: textfield;
+  appearance: auto;
 }
 
 .dt-sep,
