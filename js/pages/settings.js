@@ -599,6 +599,11 @@ function setMode(mode) {
   if (els.modeCountdown) els.modeCountdown.hidden = mode !== "countdown";
   updateValidation();
   if (currentState) updateModeStatus(currentState);
+  if (mode === "message") {
+    const warn = document.getElementById("timeWarn");
+    if (warn) warn.hidden = true;
+    if (els.btnStartStop) els.btnStartStop.disabled = false;
+  }
 }
 
 function setLocked(locked) {
