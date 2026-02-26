@@ -660,7 +660,7 @@ function applyState(state) {
   }
   updateStatus(state);
   updateStartStop(state);
-  updateCountdownDisplay();
+  updateModeStatus(state);
   updateReturnPreview();
 }
 
