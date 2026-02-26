@@ -4,24 +4,23 @@ const ENDPOINT = "/maintenance-state.json";
 const POLL_MS = 30000;
 
 const FALLBACKS = {
-  messageTitle: "Krótka przerwa w studiu 🎙️",
+  messageTitle: "TRWA PRZERWA TECHNICZNA",
   messageText:
     "System jest chwilowo niedostępny.\nZa jakiś czas wszystko wróci do normy i będzie można kontynuować pracę.",
   inactiveTitle: "Brak prac technicznych",
   inactiveText: "Aktualnie nie trwają żadne prace.",
-  returnAtTitle: "Przerwa techniczna",
+  returnAtTitle: "TRWA PRZERWA TECHNICZNA",
   returnAtText:
-    "System jest tymczasowo niedostępny.\nWrócimy o {time} — wtedy znów będzie można swobodnie tworzyć i edytować gry.",
-  countdownTitle: "Trwa przerwa techniczna ⏳",
+    "System jest tymczasowo niedostępny.\nPowrót {time} — wtedy znów będzie można swobodnie tworzyć i edytować gry.",
+  countdownTitle: "TRWA PRZERWA TECHNICZNA",
   countdownText:
-    "System jest chwilowo niedostępny.\nDo ponownego uruchomienia pozostało {countdown}.",
-  countdownDone: "Za chwilę wszystko będzie gotowe. 🎉",
+    "System jest chwilowo niedostępny.\nPowrót za {countdown}.",
+  countdownDone: "Powrót już możliwy. 🎉",
 };
 
 const els = {
   title: document.getElementById("title"),
   description: document.getElementById("description"),
-  returnAt: document.getElementById("returnAt"),
   countdown: document.getElementById("countdown"),
 };
 
@@ -66,10 +65,113 @@ function formatDate(date) {
 
 function formatCountdown(ms) {
   const totalSeconds = Math.max(0, Math.floor(ms / 1000));
-  const hours = String(Math.floor(totalSeconds / 3600)).padStart(2, "0");
-  const minutes = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, "0");
-  const seconds = String(totalSeconds % 60).padStart(2, "0");
-  return `${hours}:${minutes}:${seconds}`;
+  const lang = (document.documentElement.lang || "").toLowerCase();
+  if (lang.startsWith("en")) return formatCountdownEn(totalSeconds);
+  if (lang.startsWith("uk")) return formatCountdownUk(totalSeconds);
+  if (!lang.startsWith("pl")) {
+    const hours = String(Math.floor(totalSeconds / 3600)).padStart(2, "0");
+    const minutes = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, "0");
+    const seconds = String(totalSeconds % 60).padStart(2, "0");
+    return `${hours}:${minutes}:${seconds}`;
+  }
+  const mins = Math.floor(totalSeconds / 60);
+  const hours = Math.floor(totalSeconds / 3600);
+  const days = Math.floor(totalSeconds / 86400);
+  if (days > 0) return `${days} ${pluralPl(days, "dzień", "dni", "dni")}`;
+  if (hours > 0) return `${hours} ${pluralPl(hours, "godzina", "godziny", "godzin")}`;
+  if (mins > 0) return `${mins} ${pluralPl(mins, "minuta", "minuty", "minut")}`;
+  return `${totalSeconds} ${pluralPl(totalSeconds, "sekunda", "sekundy", "sekund")}`;
+}
+
+function pluralPl(n, one, few, many) {
+  if (n === 1) return one;
+  const mod10 = n % 10;
+  const mod100 = n % 100;
+  if (mod10 >= 2 && mod10 <= 4 && !(mod100 >= 12 && mod100 <= 14)) return few;
+  return many;
+}
+
+function pluralUk(n, one, few, many) {
+  if (n === 1) return one;
+  const mod10 = n % 10;
+  const mod100 = n % 100;
+  if (mod10 >= 2 && mod10 <= 4 && !(mod100 >= 12 && mod100 <= 14)) return few;
+  return many;
+}
+
+function formatCountdownEn(totalSeconds) {
+  const mins = Math.floor(totalSeconds / 60);
+  const hours = Math.floor(totalSeconds / 3600);
+  const days = Math.floor(totalSeconds / 86400);
+  if (days > 0) return `${days} day${days === 1 ? "" : "s"}`;
+  if (hours > 0) return `${hours} hour${hours === 1 ? "" : "s"}`;
+  if (mins > 0) return `${mins} minute${mins === 1 ? "" : "s"}`;
+  return `${totalSeconds} second${totalSeconds === 1 ? "" : "s"}`;
+}
+
+function formatCountdownUk(totalSeconds) {
+  const mins = Math.floor(totalSeconds / 60);
+  const hours = Math.floor(totalSeconds / 3600);
+  const days = Math.floor(totalSeconds / 86400);
+  if (days > 0) return `${days} ${pluralUk(days, "день", "дні", "днів")}`;
+  if (hours > 0) return `${hours} ${pluralUk(hours, "година", "години", "годин")}`;
+  if (mins > 0) return `${mins} ${pluralUk(mins, "хвилина", "хвилини", "хвилин")}`;
+  return `${totalSeconds} ${pluralUk(totalSeconds, "секунда", "секунди", "секунд")}`;
+}
+
+function formatReturnAt(date) {
+  if (!date) return "—";
+  const lang = (document.documentElement.lang || "").toLowerCase();
+  if (lang.startsWith("en")) return formatReturnAtEn(date);
+  if (lang.startsWith("uk")) return formatReturnAtUk(date);
+  if (!lang.startsWith("pl")) return formatDate(date);
+  const pad = (n) => String(n).padStart(2, "0");
+  const d = pad(date.getDate());
+  const m = pad(date.getMonth() + 1);
+  const y = date.getFullYear();
+  const hh = pad(date.getHours());
+  const mm = pad(date.getMinutes());
+  const today = new Date();
+  const sameDay =
+    today.getFullYear() === date.getFullYear() &&
+    today.getMonth() === date.getMonth() &&
+    today.getDate() === date.getDate();
+  if (sameDay) return `o ${hh}:${mm}`;
+  if (date.getHours() === 0 && date.getMinutes() === 0) return `${d}.${m}.${y}`;
+  return `${d}.${m}.${y} o ${hh}:${mm}`;
+}
+
+function formatReturnAtEn(date) {
+  const pad = (n) => String(n).padStart(2, "0");
+  const hh = pad(date.getHours());
+  const mm = pad(date.getMinutes());
+  const mo = pad(date.getMonth() + 1);
+  const dd = pad(date.getDate());
+  const yy = date.getFullYear();
+  const today = new Date();
+  const sameDay =
+    today.getFullYear() === date.getFullYear() &&
+    today.getMonth() === date.getMonth() &&
+    today.getDate() === date.getDate();
+  const datePart = `${mo}/${dd}/${yy}`;
+  if (sameDay) return `at ${hh}:${mm}`;
+  if (date.getHours() === 0 && date.getMinutes() === 0) return datePart;
+  return `${datePart} at ${hh}:${mm}`;
+}
+
+function formatReturnAtUk(date) {
+  const pad = (n) => String(n).padStart(2, "0");
+  const hh = pad(date.getHours());
+  const mm = pad(date.getMinutes());
+  const today = new Date();
+  const sameDay =
+    today.getFullYear() === date.getFullYear() &&
+    today.getMonth() === date.getMonth() &&
+    today.getDate() === date.getDate();
+  const datePart = new Intl.DateTimeFormat(undefined, { dateStyle: "medium" }).format(date);
+  if (sameDay) return `о ${hh}:${mm}`;
+  if (date.getHours() === 0 && date.getMinutes() === 0) return datePart;
+  return `${datePart} о ${hh}:${mm}`;
 }
 
 function stopCountdown() {
@@ -114,7 +216,6 @@ function startCountdown(targetDate) {
 function renderFallback() {
   setText(els.title, tr("maintenance.messageTitle", FALLBACKS.messageTitle));
   setText(els.description, tr("maintenance.messageText", FALLBACKS.messageText));
-  if (els.returnAt) els.returnAt.hidden = true;
   if (els.countdown) els.countdown.hidden = true;
   stopCountdown();
 }
@@ -129,38 +230,36 @@ function renderState(state) {
     return;
   }
 
-  if (els.returnAt) els.returnAt.hidden = true;
   if (els.countdown) els.countdown.hidden = true;
 
+  const titleText = tr("maintenance.title", FALLBACKS.messageTitle);
   if (mode === "message") {
-    setText(els.title, tr("maintenance.messageTitle", FALLBACKS.messageTitle));
+    setText(els.title, titleText);
     setText(els.description, tr("maintenance.messageText", FALLBACKS.messageText));
     stopCountdown();
     return;
   }
 
   if (mode === "returnAt") {
-    setText(els.title, tr("maintenance.returnAtTitle", FALLBACKS.returnAtTitle));
+    setText(els.title, titleText);
     setText(
       els.description,
       tr("maintenance.returnAtText", FALLBACKS.returnAtText).replace(
         "{time}",
-        returnAt ? formatDate(returnAt) : "—"
+        returnAt ? formatReturnAt(returnAt) : "—"
       )
     );
-    if (returnAt && els.returnAt) {
-      els.returnAt.hidden = false;
-      setText(els.returnAt, formatDate(returnAt));
+    if (els.countdown) {
+      els.countdown.hidden = false;
+      setText(els.countdown, returnAt ? formatReturnAt(returnAt) : "—");
     }
-    if (els.countdown) els.countdown.hidden = true;
     stopCountdown();
     return;
   }
 
   if (mode === "countdown") {
-    setText(els.title, tr("maintenance.countdownTitle", FALLBACKS.countdownTitle));
+    setText(els.title, titleText);
     if (returnAt && returnAt.getTime() > Date.now()) {
-      if (els.returnAt) els.returnAt.hidden = true;
       startCountdown(returnAt);
     } else if (returnAt) {
       setText(els.description, tr("maintenance.countdownDone", FALLBACKS.countdownDone));

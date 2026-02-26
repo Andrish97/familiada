@@ -134,6 +134,22 @@ html{
   accent-color: #f7d27b;
 }
 
+.mode-dots{
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  align-items: center;
+  gap: 0;
+  margin-top: -6px;
+}
+
+.mode-dots span{
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.35);
+  justify-self: center;
+}
+
 .mode-range::-webkit-slider-runnable-track{
   height: 6px;
   background: rgba(255,255,255,.18);
@@ -210,6 +226,10 @@ html{
   gap: 10px;
 }
 
+.mode-block .field{
+  margin-top: 6px;
+}
+
 .mode-hint{
   font-size: 12px;
   opacity: .75;
@@ -223,13 +243,14 @@ html{
 }
 
 .dt-input{
-  width: 70px;
-  padding: 8px 10px;
+  width: 86px;
+  padding: 10px 12px;
   border-radius: 10px;
   border: 1px solid rgba(255,255,255,.18);
   background: rgba(0,0,0,.25);
   color: #fff;
   text-align: center;
+  font-size: 14px;
 }
 
 .dt-input[type="number"]::-webkit-outer-spin-button,
@@ -275,11 +296,11 @@ html{
 }
 
 .dt-card{
-  width: min(420px, 92vw);
+  width: min(520px, 94vw);
   background: rgba(10,14,30,.96);
   border: 1px solid rgba(255,255,255,.16);
   border-radius: 18px;
-  padding: 14px;
+  padding: 16px;
   box-shadow: 0 30px 60px rgba(0,0,0,.6);
 }
 
@@ -304,7 +325,7 @@ html{
 }
 
 .dt-day{
-  height: 36px;
+  height: 44px;
   border-radius: 10px;
   border: 1px solid rgba(255,255,255,.12);
   background: rgba(255,255,255,.06);
@@ -343,6 +364,30 @@ html{
   gap: 6px;
 }
 
+.dt-wheel{
+  width: 90px;
+  height: 220px;
+  overflow-y: auto;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,.16);
+  background: rgba(0,0,0,.25);
+  scroll-snap-type: y mandatory;
+}
+
+.dt-wheel-item{
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  scroll-snap-align: center;
+}
+
+.dt-wheel-item.is-active{
+  background: rgba(255,234,166,.18);
+  color: #ffeaa6;
+}
+
 .dt-actions{
   display: flex;
   justify-content: flex-end;
@@ -365,6 +410,24 @@ html{
 
 .countdown-value{
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  font-weight: 800;
+}
+
+.preview-row{
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 12px;
+  opacity: .85;
+}
+
+.preview-label{
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  opacity: .7;
+}
+
+.preview-value{
   font-weight: 800;
 }
 
@@ -522,6 +585,13 @@ body.tools-fullscreen .tools-frame-wrap iframe{
   opacity: .8;
   letter-spacing: .08em;
   text-transform: uppercase;
+}
+
+.field-label.field-title{
+  font-size: 14px;
+  font-weight: 900;
+  letter-spacing: .1em;
+  margin-bottom: 6px;
 }
 
 .field-control.toggle{
