@@ -968,7 +968,7 @@ function wireEvents() {
       const prefix = id.startsWith("returnAt") ? "returnAt" : "endAt";
       normalizeDateFields(prefix);
       updateValidation();
-      updateCountdownDisplay();
+      if (currentState) updateModeStatus(currentState);
       updateReturnPreview();
     });
   });
