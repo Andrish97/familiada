@@ -20,9 +20,9 @@
       <div class="brand">FAMILIADA</div>
     </div>
     <div class="topbar-section topbar-section-2">
-      <a class="btn sm" id="btnSupabase" href="https://supabase.familiada.online" target="_blank" rel="noopener" data-i18n="settings.actions.supabase">Supabase</a>
-      <a class="btn sm" id="btnServer" href="https://panel.familiada.online" target="_blank" rel="noopener" data-i18n="settings.actions.server">Serwer</a>
-      <button class="btn sm" id="btnTabMaintenance" type="button" data-i18n="settings.tabs.maintenance">Prace techniczne</button>
+      <a class="btn sm btn-external" id="btnSupabase" href="https://supabase.familiada.online" target="_blank" rel="noopener" data-i18n="settings.actions.supabase">Supabase</a>
+      <a class="btn sm btn-external" id="btnServer" href="https://panel.familiada.online" target="_blank" rel="noopener" data-i18n="settings.actions.server">Serwer</a>
+      <button class="btn sm tab-btn active" id="btnTabMaintenance" type="button" data-i18n="settings.tabs.maintenance">Prace techniczne</button>
       <div class="ui-select" id="toolsSelect">
         <button class="btn sm ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
           <span class="ui-select-label" data-i18n="settings.tabs.tools">Narzędzia</span>
@@ -44,37 +44,64 @@
           <div class="panel-sub" data-i18n="settings.maintenance.subtitle">Ustawienia strony maintenance</div>
         </div>
 
-        <div class="mode-slider" id="modeSliderWrap">
-          <input class="mode-range" id="modeSlider" type="range" min="0" max="2" step="1" value="0" aria-label="Maintenance mode"/>
-          <div class="mode-labels" id="modeLabels">
-            <span class="mode-label" data-mode="message" data-i18n="settings.modes.message">Wiadomość</span>
-            <span class="mode-label" data-mode="returnAt" data-i18n="settings.modes.returnAt">Do godziny</span>
-            <span class="mode-label" data-mode="countdown" data-i18n="settings.modes.countdown">Odliczanie</span>
+        <div class="maintenance-controls" id="maintenanceControls">
+          <div class="mode-slider" id="modeSliderWrap">
+            <input class="mode-range" id="modeSlider" type="range" min="0" max="2" step="1" value="0" aria-label="Maintenance mode"/>
+            <div class="mode-labels" id="modeLabels">
+              <span class="mode-label" data-mode="message" data-i18n="settings.modes.message">Wiadomość</span>
+              <span class="mode-label" data-mode="returnAt" data-i18n="settings.modes.returnAt">Do godziny</span>
+              <span class="mode-label" data-mode="countdown" data-i18n="settings.modes.countdown">Odliczanie</span>
+            </div>
+          </div>
+
+          <div class="mode-block" id="modeMessage">
+            <div class="mode-hint" data-i18n="settings.modes.messageHint">Komunikat bez daty i bez odliczania.</div>
+          </div>
+
+          <div class="mode-block" id="modeReturnAt" hidden>
+            <div class="field">
+              <span class="field-label" data-i18n="settings.maintenance.returnAt">Powrót</span>
+              <div class="dt-group">
+                <input class="dt-input" id="returnAtHour" type="number" inputmode="numeric" placeholder="HH" min="0" max="23"/>
+                <span class="dt-colon">:</span>
+                <input class="dt-input" id="returnAtMinute" type="number" inputmode="numeric" placeholder="MM" min="0" max="59"/>
+                <span class="dt-sep">—</span>
+                <input class="dt-input" id="returnAtDay" type="number" inputmode="numeric" placeholder="DD" min="1" max="31"/>
+                <span class="dt-dot">.</span>
+                <input class="dt-input" id="returnAtMonth" type="number" inputmode="numeric" placeholder="MM" min="1" max="12"/>
+                <span class="dt-dot">.</span>
+                <input class="dt-input" id="returnAtYear" type="number" inputmode="numeric" placeholder="YYYY" min="2024" max="2035"/>
+                <button class="btn sm dt-open" data-dt-open="returnAt" type="button">📅</button>
+              </div>
+              <span class="field-hint" data-i18n="settings.maintenance.returnAtHint">Minimum 10 minut od teraz.</span>
+            </div>
+          </div>
+
+          <div class="mode-block" id="modeCountdown" hidden>
+            <div class="field">
+              <span class="field-label" data-i18n="settings.modes.endAt">Do godziny</span>
+              <div class="dt-group">
+                <input class="dt-input" id="endAtHour" type="number" inputmode="numeric" placeholder="HH" min="0" max="23"/>
+                <span class="dt-colon">:</span>
+                <input class="dt-input" id="endAtMinute" type="number" inputmode="numeric" placeholder="MM" min="0" max="59"/>
+                <span class="dt-sep">—</span>
+                <input class="dt-input" id="endAtDay" type="number" inputmode="numeric" placeholder="DD" min="1" max="31"/>
+                <span class="dt-dot">.</span>
+                <input class="dt-input" id="endAtMonth" type="number" inputmode="numeric" placeholder="MM" min="1" max="12"/>
+                <span class="dt-dot">.</span>
+                <input class="dt-input" id="endAtYear" type="number" inputmode="numeric" placeholder="YYYY" min="2024" max="2035"/>
+                <button class="btn sm dt-open" data-dt-open="endAt" type="button">📅</button>
+              </div>
+              <span class="field-hint" data-i18n="settings.maintenance.returnAtHint">Minimum 10 minut od teraz.</span>
+            </div>
+            <div class="countdown-row">
+              <span class="countdown-label" data-i18n="settings.modes.countdownNow">Aktualny licznik</span>
+              <span class="countdown-value" id="countdownNow">—</span>
+            </div>
           </div>
         </div>
 
-        <div class="mode-block" id="modeMessage">
-          <div class="mode-hint" data-i18n="settings.modes.messageHint">Komunikat bez daty i bez odliczania.</div>
-        </div>
-
-        <div class="mode-block" id="modeReturnAt" hidden>
-          <label class="field">
-            <span class="field-label" data-i18n="settings.maintenance.returnAt">Powrót</span>
-            <input type="datetime-local" id="returnAtInput"/>
-            <span class="field-hint" data-i18n="settings.maintenance.returnAtHint">Minimum 10 minut od teraz.</span>
-          </label>
-        </div>
-
-        <div class="mode-block" id="modeCountdown" hidden>
-          <label class="field">
-            <span class="field-label" data-i18n="settings.modes.endAt">Do godziny</span>
-            <input type="datetime-local" id="endAtInput"/>
-          </label>
-          <div class="countdown-row">
-            <span class="countdown-label" data-i18n="settings.modes.countdownNow">Aktualny licznik</span>
-            <span class="countdown-value" id="countdownNow">—</span>
-          </div>
-        </div>
+        <div class="warn" id="timeWarn" data-i18n="settings.validation.tooSoonText" hidden>Minimalny czas to 10 minut od teraz.</div>
 
         <div class="panel-actions">
           <button class="btn sm gold" id="btnStartStop" type="button" data-i18n="settings.actions.start">Start</button>
@@ -131,5 +158,28 @@
   </div>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <div class="dt-modal" id="dtModal" hidden>
+    <div class="dt-card">
+      <div class="dt-head">
+        <button class="btn sm" id="dtPrev" type="button">◀</button>
+        <div class="dt-title" id="dtTitle">—</div>
+        <button class="btn sm" id="dtNext" type="button">▶</button>
+      </div>
+      <div class="dt-grid" id="dtGrid"></div>
+      <div class="dt-time">
+        <div class="dt-time-label">Czas</div>
+        <div class="dt-time-row">
+          <input class="dt-input" id="dtHour" type="number" min="0" max="23" inputmode="numeric" placeholder="HH"/>
+          <span class="dt-colon">:</span>
+          <input class="dt-input" id="dtMinute" type="number" min="0" max="59" inputmode="numeric" placeholder="MM"/>
+        </div>
+      </div>
+      <div class="dt-actions">
+        <button class="btn sm" id="dtCancel" type="button">Anuluj</button>
+        <button class="btn sm gold" id="dtOk" type="button">OK</button>
+      </div>
+    </div>
+  </div>
 </body>
 </html>

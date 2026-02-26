@@ -11,7 +11,7 @@ Settings panel (admin)
 */
 
 import { initI18n, t } from "../../translation/translation.js";
-import { confirmModal, alertModal } from "../core/modal.js";
+import { confirmModal } from "../core/modal.js";
 import { initUiSelect } from "../core/ui-select.js";
 import { guardDesktopOnly } from "../core/device-guard.js";
 
@@ -49,6 +49,7 @@ const els = {
   mainWrap: document.querySelector("main.wrap"),
   footer: document.querySelector("footer.footer"),
   maintenancePanel: document.querySelector(".maintenance-panel"),
+  maintenanceControls: document.getElementById("maintenanceControls"),
   toast: document.getElementById("toast"),
 };
 
@@ -61,6 +62,8 @@ let pollTimer = null;
 let countdownTimer = null;
 let formDirty = false;
 let topbarSync = null;
+let activePicker = null;
+let pickerState = { year: null, month: null, day: null };
 const MODE_ORDER = ["message", "returnAt", "countdown"];
 const MODE_TO_INDEX = {
   message: 0,
@@ -164,30 +167,177 @@ function fromDatetimeLocal(value) {
 
 function formatCountdown(ms) {
   const totalSeconds = Math.max(0, Math.floor(ms / 1000));
-  const hours = String(Math.floor(totalSeconds / 3600)).padStart(2, "0");
-  const minutes = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, "0");
-  const seconds = String(totalSeconds % 60).padStart(2, "0");
-  return `${hours}:${minutes}:${seconds}`;
+  if (totalSeconds < 3600) {
+    const minutes = String(Math.floor(totalSeconds / 60)).padStart(2, "0");
+    const seconds = String(totalSeconds % 60).padStart(2, "0");
+    return `${minutes}:${seconds}`;
+  }
+  if (totalSeconds < 86400) {
+    const hours = String(Math.floor(totalSeconds / 3600)).padStart(2, "0");
+    const minutes = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, "0");
+    const seconds = String(totalSeconds % 60).padStart(2, "0");
+    return `${hours}:${minutes}:${seconds}`;
+  }
+  const days = Math.floor(totalSeconds / 86400);
+  if (totalSeconds < 86400 * 7) {
+    const rem = totalSeconds % 86400;
+    const hours = String(Math.floor(rem / 3600)).padStart(2, "0");
+    const minutes = String(Math.floor((rem % 3600) / 60)).padStart(2, "0");
+    return `${days}d ${hours}:${minutes}`;
+  }
+  return `${days}d`;
 }
 
 function minAllowedDate() {
   return new Date(Date.now() + MINUTES_MIN * 60 * 1000);
 }
 
-async function ensureMinDate(input) {
-  if (!input || !input.value) return true;
-  const val = new Date(input.value);
-  if (Number.isNaN(val.getTime())) return false;
-  if (val.getTime() < minAllowedDate().getTime()) {
-    await alertModal({
-      title: t("settings.validation.tooSoonTitle"),
-      text: t("settings.validation.tooSoonText"),
-      okText: t("settings.validation.ok"),
-    });
-    input.value = "";
-    return false;
+function roundToNext10Minutes(date = new Date()) {
+  const d = new Date(date);
+  d.setSeconds(0, 0);
+  const m = d.getMinutes();
+  const next = Math.ceil(m / 10) * 10;
+  if (next === 60) {
+    d.setHours(d.getHours() + 1);
+    d.setMinutes(0);
+  } else {
+    d.setMinutes(next);
   }
-  return true;
+  return d;
+}
+
+function getFieldValue(prefix) {
+  const y = document.getElementById(`${prefix}Year`);
+  const m = document.getElementById(`${prefix}Month`);
+  const d = document.getElementById(`${prefix}Day`);
+  const h = document.getElementById(`${prefix}Hour`);
+  const min = document.getElementById(`${prefix}Minute`);
+  if (!y || !m || !d || !h || !min) return null;
+  const yy = Number(y.value);
+  const mm = Number(m.value);
+  const dd = Number(d.value);
+  const hh = Number(h.value);
+  const mi = Number(min.value);
+  if (!yy || !mm || !dd || Number.isNaN(hh) || Number.isNaN(mi)) return null;
+  const date = new Date(yy, mm - 1, dd, hh, mi, 0, 0);
+  if (Number.isNaN(date.getTime())) return null;
+  return date;
+}
+
+function setFieldValue(prefix, date) {
+  if (!date) return;
+  const y = document.getElementById(`${prefix}Year`);
+  const m = document.getElementById(`${prefix}Month`);
+  const d = document.getElementById(`${prefix}Day`);
+  const h = document.getElementById(`${prefix}Hour`);
+  const min = document.getElementById(`${prefix}Minute`);
+  if (!y || !m || !d || !h || !min) return;
+  y.value = String(date.getFullYear());
+  m.value = String(date.getMonth() + 1).padStart(2, "0");
+  d.value = String(date.getDate()).padStart(2, "0");
+  h.value = String(date.getHours()).padStart(2, "0");
+  min.value = String(date.getMinutes()).padStart(2, "0");
+}
+
+function ensureDefaults(prefix) {
+  const hasAny = ["Year","Month","Day","Hour","Minute"].some((k) => {
+    const el = document.getElementById(`${prefix}${k}`);
+    return el && el.value;
+  });
+  if (!hasAny) setFieldValue(prefix, roundToNext10Minutes(new Date()));
+}
+
+function isValidFuture(prefix) {
+  const date = getFieldValue(prefix);
+  if (!date) return false;
+  return date.getTime() >= minAllowedDate().getTime();
+}
+
+function clampField(id, min, max) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const n = Number(el.value);
+  if (Number.isNaN(n)) return;
+  const v = Math.min(Math.max(n, min), max);
+  el.value = String(v).padStart(2, "0");
+}
+
+function daysInMonth(year, month) {
+  return new Date(year, month, 0).getDate();
+}
+
+function normalizeDateFields(prefix) {
+  const y = document.getElementById(`${prefix}Year`);
+  const m = document.getElementById(`${prefix}Month`);
+  const d = document.getElementById(`${prefix}Day`);
+  if (!y || !m || !d) return;
+  const yy = Number(y.value);
+  const mm = Number(m.value);
+  if (!yy || !mm) return;
+  const dim = daysInMonth(yy, mm);
+  clampField(`${prefix}Month`, 1, 12);
+  clampField(`${prefix}Day`, 1, dim);
+  clampField(`${prefix}Hour`, 0, 23);
+  clampField(`${prefix}Minute`, 0, 59);
+}
+
+function openPicker(prefix) {
+  activePicker = prefix;
+  const modal = document.getElementById("dtModal");
+  if (!modal) return;
+  const current = getFieldValue(prefix) || minAllowedDate();
+  pickerState = {
+    year: current.getFullYear(),
+    month: current.getMonth() + 1,
+    day: current.getDate(),
+  };
+  const h = document.getElementById("dtHour");
+  const m = document.getElementById("dtMinute");
+  if (h) h.value = String(current.getHours()).padStart(2, "0");
+  if (m) m.value = String(current.getMinutes()).padStart(2, "0");
+  renderCalendar();
+  modal.hidden = false;
+}
+
+function closePicker() {
+  const modal = document.getElementById("dtModal");
+  if (modal) modal.hidden = true;
+}
+
+function renderCalendar() {
+  const title = document.getElementById("dtTitle");
+  const grid = document.getElementById("dtGrid");
+  if (!grid) return;
+  const year = pickerState.year;
+  const month = pickerState.month;
+  if (title) title.textContent = `${year}-${String(month).padStart(2, "0")}`;
+  grid.innerHTML = "";
+  const firstDay = new Date(year, month - 1, 1).getDay() || 7;
+  const days = daysInMonth(year, month);
+  const labels = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+  labels.forEach((l) => {
+    const el = document.createElement("div");
+    el.className = "dt-day dt-day--label";
+    el.textContent = l;
+    grid.appendChild(el);
+  });
+  for (let i = 1; i < firstDay; i += 1) {
+    const pad = document.createElement("div");
+    pad.className = "dt-day dt-day--pad";
+    grid.appendChild(pad);
+  }
+  for (let d = 1; d <= days; d += 1) {
+    const el = document.createElement("button");
+    el.type = "button";
+    el.className = "dt-day";
+    if (d === pickerState.day) el.classList.add("is-active");
+    el.textContent = String(d);
+    el.addEventListener("click", () => {
+      pickerState.day = d;
+      renderCalendar();
+    });
+    grid.appendChild(el);
+  }
 }
 
 function setMode(mode) {
@@ -219,8 +369,8 @@ function setLocked(locked) {
   if (els.returnAtInput) els.returnAtInput.disabled = locked;
   if (els.endAtInput) els.endAtInput.disabled = locked;
   if (els.btnRefresh) els.btnRefresh.disabled = false;
-  if (els.maintenancePanel) {
-    els.maintenancePanel.classList.toggle("is-locked", locked);
+  if (els.maintenanceControls) {
+    els.maintenanceControls.classList.toggle("is-locked", locked);
   }
 }
 
@@ -255,11 +405,13 @@ function applyState(state) {
   currentState = state;
   const mode = state?.mode || "message";
   setMode(mode === "off" ? "message" : mode);
-  if (els.returnAtInput) {
-    els.returnAtInput.value = toDatetimeLocal(state?.returnAt);
-  }
-  if (els.endAtInput) {
-    els.endAtInput.value = toDatetimeLocal(state?.returnAt);
+  if (state?.returnAt) {
+    const date = new Date(state.returnAt);
+    setFieldValue("returnAt", date);
+    setFieldValue("endAt", date);
+  } else {
+    ensureDefaults("returnAt");
+    ensureDefaults("endAt");
   }
   updateStatus(state);
   updateStartStop(state);
@@ -271,10 +423,12 @@ function buildPayload() {
     return { enabled: true, mode: "message", returnAt: null };
   }
   if (currentMode === "returnAt") {
-    return { enabled: true, mode: "returnAt", returnAt: fromDatetimeLocal(els.returnAtInput.value) };
+    const date = getFieldValue("returnAt");
+    return { enabled: true, mode: "returnAt", returnAt: date ? date.toISOString() : null };
   }
   if (currentMode === "countdown") {
-    return { enabled: true, mode: "countdown", returnAt: fromDatetimeLocal(els.endAtInput.value) };
+    const date = getFieldValue("endAt");
+    return { enabled: true, mode: "countdown", returnAt: date ? date.toISOString() : null };
   }
   return { enabled: true, mode: "message", returnAt: null };
 }
@@ -285,12 +439,12 @@ function updateCountdownDisplay() {
     setText(els.countdownNow, "—");
     return;
   }
-  const end = fromDatetimeLocal(els.endAtInput.value);
-  if (!end) {
+  const endDate = getFieldValue("endAt");
+  if (!endDate) {
     setText(els.countdownNow, "—");
     return;
   }
-  const diff = new Date(end).getTime() - Date.now();
+  const diff = endDate.getTime() - Date.now();
   setText(els.countdownNow, formatCountdown(diff));
 }
 
@@ -315,15 +469,6 @@ async function loadState() {
 }
 
 async function startMaintenance() {
-  if (currentMode === "returnAt") {
-    const ok = await ensureMinDate(els.returnAtInput);
-    if (!ok) return;
-  }
-  if (currentMode === "countdown") {
-    const ok = await ensureMinDate(els.endAtInput);
-    if (!ok) return;
-  }
-
   const payload = buildPayload();
   try {
     const res = await apiFetch(`${API_BASE}/state`, {
@@ -339,12 +484,34 @@ async function startMaintenance() {
   }
 }
 
+function updateValidation() {
+  const warn = document.getElementById("timeWarn");
+  let ok = true;
+  if (currentMode === "returnAt") {
+    ok = isValidFuture("returnAt");
+  }
+  if (currentMode === "countdown") {
+    ok = isValidFuture("endAt");
+  }
+  if (currentMode === "message") ok = true;
+  if (warn) {
+    warn.hidden = ok || currentMode === "message";
+  }
+  if (els.btnStartStop) {
+    const blocked = !ok && !currentState?.enabled;
+    els.btnStartStop.disabled = blocked;
+  }
+}
+
 async function stopMaintenance() {
   try {
     const res = await apiFetch(`${API_BASE}/off`, { method: "POST" });
     if (!res.ok) throw new Error("off failed");
     const data = await res.json();
     applyState(data);
+    const now = roundToNext10Minutes(new Date());
+    setFieldValue("returnAt", now);
+    setFieldValue("endAt", now);
     showToast(t("settings.toast.saved"));
   } catch {
     showToast(t("settings.toast.error"), "error");
@@ -405,6 +572,7 @@ function openTool(path) {
   if (els.footer) els.footer.classList.add("is-hidden");
   document.body.classList.add("tools-fullscreen");
   syncTopbarHeight();
+  setActiveTab("tools");
 }
 
 function closeTools() {
@@ -417,6 +585,14 @@ function closeTools() {
   document.body.classList.remove("tools-fullscreen");
   if (uiSelect) uiSelect.setValue("", { silent: true });
   syncTopbarHeight();
+  setActiveTab("maintenance");
+}
+
+function setActiveTab(tab) {
+  const btn = document.getElementById("btnTabMaintenance");
+  const tools = document.getElementById("toolsSelect");
+  if (btn) btn.classList.toggle("active", tab === "maintenance");
+  if (tools) tools.classList.toggle("active", tab === "tools");
 }
 
 function labelFromPath(pathname) {
@@ -464,6 +640,8 @@ function wireEvents() {
 
   if (els.btnStartStop) {
     els.btnStartStop.addEventListener("click", async () => {
+      updateValidation();
+      if (els.btnStartStop.disabled) return;
       if (currentState?.enabled) {
         await stopMaintenance();
       } else {
@@ -487,12 +665,56 @@ function wireEvents() {
     });
   }
 
-  if (els.returnAtInput) {
-    els.returnAtInput.addEventListener("change", () => ensureMinDate(els.returnAtInput));
-  }
-  if (els.endAtInput) {
-    els.endAtInput.addEventListener("change", () => ensureMinDate(els.endAtInput));
-  }
+  ["returnAtYear","returnAtMonth","returnAtDay","returnAtHour","returnAtMinute","endAtYear","endAtMonth","endAtDay","endAtHour","endAtMinute"].forEach((id) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener("input", () => {
+      formDirty = true;
+      const prefix = id.startsWith("returnAt") ? "returnAt" : "endAt";
+      normalizeDateFields(prefix);
+      updateValidation();
+      updateCountdownDisplay();
+    });
+  });
+
+  document.querySelectorAll(".dt-open").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const target = btn.getAttribute("data-dt-open");
+      if (target) openPicker(target);
+    });
+  });
+
+  document.getElementById("dtCancel")?.addEventListener("click", closePicker);
+  document.getElementById("dtPrev")?.addEventListener("click", () => {
+    pickerState.month -= 1;
+    if (pickerState.month <= 0) {
+      pickerState.month = 12;
+      pickerState.year -= 1;
+    }
+    renderCalendar();
+  });
+  document.getElementById("dtNext")?.addEventListener("click", () => {
+    pickerState.month += 1;
+    if (pickerState.month >= 13) {
+      pickerState.month = 1;
+      pickerState.year += 1;
+    }
+    renderCalendar();
+  });
+  document.getElementById("dtOk")?.addEventListener("click", () => {
+    const h = document.getElementById("dtHour");
+    const m = document.getElementById("dtMinute");
+    const hh = Number(h?.value ?? 0);
+    const mm = Number(m?.value ?? 0);
+    const date = new Date(pickerState.year, pickerState.month - 1, pickerState.day, hh, mm, 0, 0);
+    if (activePicker) {
+      setFieldValue(activePicker, date);
+      formDirty = true;
+      updateValidation();
+      updateCountdownDisplay();
+    }
+    closePicker();
+  });
 
   if (els.btnTabMaintenance) {
     els.btnTabMaintenance.addEventListener("click", () => {

@@ -134,6 +134,37 @@ html{
   accent-color: #f7d27b;
 }
 
+.mode-range::-webkit-slider-runnable-track{
+  height: 6px;
+  background: rgba(255,255,255,.18);
+  border-radius: 999px;
+}
+
+.mode-range::-webkit-slider-thumb{
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #f7d27b;
+  border: 2px solid rgba(0,0,0,.4);
+  margin-top: -6px;
+  box-shadow: 0 0 0 3px rgba(255,220,120,.18);
+}
+
+.mode-range::-moz-range-track{
+  height: 6px;
+  background: rgba(255,255,255,.18);
+  border-radius: 999px;
+}
+
+.mode-range::-moz-range-thumb{
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #f7d27b;
+  border: 2px solid rgba(0,0,0,.4);
+}
+
 .mode-labels{
   display: flex;
   justify-content: space-between;
@@ -184,6 +215,141 @@ html{
   opacity: .75;
 }
 
+.dt-group{
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.dt-input{
+  width: 70px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,.18);
+  background: rgba(0,0,0,.25);
+  color: #fff;
+  text-align: center;
+}
+
+.dt-input[type="number"]::-webkit-outer-spin-button,
+.dt-input[type="number"]::-webkit-inner-spin-button{
+  -webkit-appearance: none;
+  margin: 0;
+}
+.dt-input[type="number"]{
+  appearance: textfield;
+}
+
+.dt-sep,
+.dt-colon{
+  opacity: .7;
+  font-weight: 700;
+}
+
+.dt-colon{
+  margin: 0 2px;
+}
+
+.dt-sep{
+  margin: 0 12px;
+}
+
+.dt-dot{
+  opacity: .7;
+  font-weight: 700;
+  margin: 0 2px;
+}
+
+.dt-open{
+  padding: 6px 10px;
+}
+
+.dt-modal{
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.6);
+  display: grid;
+  place-items: center;
+  z-index: 120;
+}
+
+.dt-card{
+  width: min(420px, 92vw);
+  background: rgba(10,14,30,.96);
+  border: 1px solid rgba(255,255,255,.16);
+  border-radius: 18px;
+  padding: 14px;
+  box-shadow: 0 30px 60px rgba(0,0,0,.6);
+}
+
+.dt-head{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.dt-title{
+  font-weight: 800;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.dt-grid{
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+}
+
+.dt-day{
+  height: 36px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.06);
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.dt-day--label{
+  border: none;
+  background: transparent;
+  opacity: .6;
+  font-weight: 600;
+}
+
+.dt-day--pad{
+  border: none;
+  background: transparent;
+}
+
+.dt-day.is-active{
+  background: rgba(255,234,166,.22);
+  border-color: rgba(255,234,166,.45);
+  color: #ffeaa6;
+}
+
+.dt-time{
+  margin-top: 12px;
+  display: grid;
+  gap: 6px;
+}
+
+.dt-time-row{
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dt-actions{
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 12px;
+}
+
 .countdown-row{
   display: flex;
   gap: 10px;
@@ -208,28 +374,13 @@ html{
   flex-wrap: wrap;
 }
 
-.maintenance-panel.is-locked{
+.maintenance-controls.is-locked{
   opacity: .5;
   filter: grayscale(0.4);
 }
 
-.maintenance-panel.is-locked .panel-status{
-  opacity: 1;
-  filter: none;
-}
-
-.maintenance-panel.is-locked .panel-status,
-.maintenance-panel.is-locked .bypass-box{
-  pointer-events: auto;
-}
-
-.maintenance-panel.is-locked .panel-actions{
-  opacity: 1;
-  filter: none;
-}
-
-.maintenance-panel.is-locked #btnStartStop,
-.maintenance-panel.is-locked #btnRefresh{
+.maintenance-controls.is-locked #btnStartStop,
+.maintenance-controls.is-locked #btnRefresh{
   opacity: 1;
   filter: none;
 }
@@ -300,6 +451,24 @@ body.settings-body{
   position: sticky;
   top: 0;
   z-index: 80;
+}
+
+.btn-external{
+  border-color: rgba(120,200,255,.35);
+  background: rgba(80,130,200,.12);
+  color: #cfe7ff;
+}
+
+.tab-btn.active{
+  border-color: rgba(255,234,166,.55);
+  background: rgba(255,234,166,.18);
+  color: #ffeaa6;
+}
+
+.ui-select.active .ui-select-btn{
+  border-color: rgba(255,234,166,.55);
+  background: rgba(255,234,166,.18);
+  color: #ffeaa6;
 }
 
 body.tools-fullscreen .tools-shell{
