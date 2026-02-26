@@ -597,6 +597,8 @@ function setMode(mode) {
   if (els.modeMessage) els.modeMessage.hidden = mode !== "message";
   if (els.modeReturnAt) els.modeReturnAt.hidden = mode !== "returnAt";
   if (els.modeCountdown) els.modeCountdown.hidden = mode !== "countdown";
+  updateValidation();
+  if (currentState) updateModeStatus(currentState);
 }
 
 function setLocked(locked) {
