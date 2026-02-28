@@ -39,12 +39,26 @@ Foldery mają teraz `index.html`, więc `/control`, `/display`, `/logo-editor`, 
 - `POST /_admin_api/off` → shortcut to disable maintenance
 - `POST /_admin_api/bypass` → set bypass cookie (ADMIN_BYPASS_TOKEN)
 - `POST /_admin_api/bypass_off` → clear bypass cookie
+- `GET  /_admin_api/mail/settings` → mail settings + cron status
+- `POST /_admin_api/mail/settings` → update mail settings (+ optional cron update)
+- `GET  /_admin_api/mail/queue` → mail queue rows (pending/sending/failed)
+- `POST /_admin_api/mail/queue/run` → optional requeue + invoke mail worker
+- `GET  /_admin_api/mail/logs` → function logs (`send-email`, `send-mail`, `mail-worker`)
 
 ### Cloudflare Access
 Recommended setup:
 - Protect `settings.familiada.online` with Cloudflare Access policy.
 - Restrict access in Access policy (for example: only your account).
 - Worker authorizes by Cloudflare Access headers (`Cf-Access-Authenticated-User-Email` or `CF-Access-Jwt-Assertion`).
+
+### Worker vars/secrets
+- `SUPABASE_URL` (var) → base URL to Supabase (`https://api.familiada.online`)
+- `SUPABASE_SERVICE_ROLE_KEY` (secret) → required for `/_admin_api/mail/*`
+- `ADMIN_BYPASS_TOKEN` (secret) → bypass cookie token
+
+Example:
+- `wrangler secret put SUPABASE_SERVICE_ROLE_KEY`
+- `wrangler secret put ADMIN_BYPASS_TOKEN`
 
 ---
 

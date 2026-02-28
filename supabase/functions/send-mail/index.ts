@@ -9,6 +9,7 @@ const corsHeaders = {
 
 type Provider = "sendgrid" | "brevo" | "mailgun";
 type MailItem = { to: string; subject: string; html: string; meta?: Record<string, unknown> };
+type LogLevel = "debug" | "info" | "warn" | "error";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
@@ -31,6 +32,10 @@ function scrubEmail(email: string) {
   const at = e.indexOf("@");
   if (at <= 1) return e ? "***" : "";
   return `${e.slice(0, 2)}***${e.slice(at)}`;
+}
+
+function clampError(message: unknown, max = 2000) {
+  return String(message ?? "").slice(0, max);
 }
 
 function json(obj: any, status = 200) {
@@ -191,6 +196,38 @@ function normEmail(e: string) {
   return s.includes("@") ? s : "";
 }
 
+async function writeLog(entry: {
+  requestId: string;
+  level?: LogLevel;
+  event: string;
+  status?: string;
+  actorUserId?: string | null;
+  recipientEmail?: string | null;
+  provider?: string | null;
+  error?: string | null;
+  meta?: Record<string, unknown>;
+}) {
+  try {
+    const { error } = await sbAdmin.from("mail_function_logs").insert({
+      function_name: "send-mail",
+      level: entry.level || "info",
+      event: entry.event,
+      request_id: entry.requestId,
+      actor_user_id: entry.actorUserId || null,
+      recipient_email: entry.recipientEmail || null,
+      provider: entry.provider || null,
+      status: entry.status || null,
+      error: entry.error ? clampError(entry.error) : null,
+      meta: entry.meta || {},
+    });
+    if (error) {
+      console.warn("[send-mail] log:insert_failed", { error });
+    }
+  } catch (err) {
+    console.warn("[send-mail] log:insert_failed", { error: String(err) });
+  }
+}
+
 async function filterByEmailNotifications(items: MailItem[]) {
   // 1) zbierz unikalne maile
   const emails = [...new Set(items.map((it) => normEmail(it.to)).filter(Boolean))];
@@ -247,38 +284,86 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") return json({ ok: false, error: "Method not allowed" }, 405);
 
+  const requestId = crypto.randomUUID();
+  let actorUserId: string | null = null;
 
   try {
 
     console.log("[send-mail] request:start", {
+      requestId,
       method: req.method,
       contentType: req.headers.get("content-type") || "",
       hasAuth: !!req.headers.get("authorization"),
+    });
+    await writeLog({
+      requestId,
+      event: "request_start",
+      status: "started",
+      meta: { method: req.method, contentType: req.headers.get("content-type") || "" },
     });
 
     // ---- AUTH ----
     const authHeader = req.headers.get("authorization") || "";
     const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
-    if (!token) return json({ ok: false, error: "Missing Bearer token" }, 401);
+    if (!token) {
+      await writeLog({ requestId, level: "warn", event: "auth_missing_bearer", status: "failed" });
+      return json({ ok: false, error: "Missing Bearer token" }, 401);
+    }
 
     const { data: userData, error: authError } = await sbAnon.auth.getUser(token);
-    if (authError || !userData?.user) return json({ ok: false, error: "Invalid JWT" }, 401);
+    if (authError || !userData?.user) {
+      await writeLog({
+        requestId,
+        level: "warn",
+        event: "auth_invalid_jwt",
+        status: "failed",
+        error: String(authError?.message || authError || "invalid_jwt"),
+      });
+      return json({ ok: false, error: "Invalid JWT" }, 401);
+    }
     const uid = userData.user.id;
+    actorUserId = uid;
     console.log("[send-mail] auth:ok", { uid });
 
     // ---- BODY ----
     const raw = await req.text();
-    if (!raw.trim()) return json({ ok: false, error: "Empty body" }, 400);
+    if (!raw.trim()) {
+      await writeLog({
+        requestId,
+        level: "warn",
+        event: "body_empty",
+        status: "failed",
+        actorUserId,
+      });
+      return json({ ok: false, error: "Empty body" }, 400);
+    }
 
     let body: any;
     try {
       body = JSON.parse(raw);
     } catch {
+      await writeLog({
+        requestId,
+        level: "warn",
+        event: "body_invalid_json",
+        status: "failed",
+        actorUserId,
+        error: raw.slice(0, 300),
+      });
       return json({ ok: false, error: "Invalid JSON body", body_preview: raw.slice(0, 200) }, 400);
     }
 
     const { items, mode } = parseItems(body);
-    if (!items.length) return json({ ok: false, error: "Missing fields (to, subject, html)" }, 400);
+    if (!items.length) {
+      await writeLog({
+        requestId,
+        level: "warn",
+        event: "body_missing_fields",
+        status: "failed",
+        actorUserId,
+      });
+      return json({ ok: false, error: "Missing fields (to, subject, html)" }, 400);
+    }
     console.log("[send-mail] body:parsed", {
       mode,
       itemsIn: items.length,
@@ -295,7 +380,15 @@ serve(async (req) => {
     let settings;
     try {
       settings = await loadSettings();
-    } catch {
+    } catch (err) {
+      await writeLog({
+        requestId,
+        level: "warn",
+        event: "settings_load_failed",
+        status: "degraded",
+        actorUserId,
+        error: String((err as any)?.message || err),
+      });
       settings = { queue_enabled: true, provider_order: "sendgrid,brevo,mailgun", delay_ms: 250, batch_max: 100 };
     }
 
@@ -322,6 +415,34 @@ serve(async (req) => {
     });
 
     console.log("[send-mail] batch:slice", { requested: items.length, used: finalItems.length });
+    await writeLog({
+      requestId,
+      event: "request_parsed",
+      status: "ok",
+      actorUserId,
+      meta: {
+        mode,
+        itemsIn: items.length,
+        itemsAfterBatch: sliced.length,
+        itemsAfterFilter: finalItems.length,
+        skippedByRecipientSettings: f.skipped,
+        queueEnabled: settings.queue_enabled,
+        delayMs,
+        batchMax,
+        providerOrder: order.join(","),
+      },
+    });
+
+    if (!finalItems.length) {
+      await writeLog({
+        requestId,
+        event: "request_done",
+        status: "ok",
+        actorUserId,
+        meta: { mode, total: 0, failed: 0, skipped: f.skipped },
+      });
+      return json({ ok: true, mode, results: [], skipped: f.skipped });
+    }
 
 
     // ---- QUEUE MODE ----
@@ -346,9 +467,27 @@ serve(async (req) => {
 
 
       const { error } = await sbAdmin.from("mail_queue").insert(rows);
-      if (error) return json({ ok: false, error: "queue_insert_failed" }, 500);
+      if (error) {
+        await writeLog({
+          requestId,
+          level: "error",
+          event: "queue_insert_failed",
+          status: "failed",
+          actorUserId,
+          error: String(error.message || error),
+          meta: { count: rows.length },
+        });
+        return json({ ok: false, error: "queue_insert_failed" }, 500);
+      }
 
       console.log("[send-mail] queue:insert_ok", { count: rows.length });
+      await writeLog({
+        requestId,
+        event: "queue_inserted",
+        status: "queued",
+        actorUserId,
+        meta: { count: rows.length, providerOrder: order.join(",") },
+      });
 
       return json({
         ok: true,
@@ -367,17 +506,51 @@ serve(async (req) => {
         const out = await sendWithFallbacks(it, order);
         results.push({ to: it.to, ok: true, provider: out.provider });
         console.log("[send-mail] send:item_ok", { to: scrubEmail(it.to), provider: out.provider });
+        await writeLog({
+          requestId,
+          event: "send_item_ok",
+          status: "sent",
+          actorUserId,
+          recipientEmail: it.to,
+          provider: out.provider,
+        });
       } catch (e) {
-        results.push({ to: it.to, ok: false, error: String((e as any)?.message || e) });
-        console.warn("[send-mail] send:item_fail", { to: scrubEmail(it.to), error: String((e as any)?.message || e) });
+        const errMsg = String((e as any)?.message || e);
+        results.push({ to: it.to, ok: false, error: errMsg });
+        console.warn("[send-mail] send:item_fail", { to: scrubEmail(it.to), error: errMsg });
+        await writeLog({
+          requestId,
+          level: "error",
+          event: "send_item_failed",
+          status: "failed",
+          actorUserId,
+          recipientEmail: it.to,
+          error: errMsg,
+        });
       }
       if (delayMs && i < finalItems.length - 1) await sleep(delayMs);
     }
 
     const failed = results.filter((r) => !r.ok).length;
     console.log("[send-mail] request:done", { mode, total: results.length, failed });
+    await writeLog({
+      requestId,
+      level: failed ? "warn" : "info",
+      event: "request_done",
+      status: failed ? "partial_failed" : "ok",
+      actorUserId,
+      meta: { mode, total: results.length, failed },
+    });
     return json({ ok: failed === 0, mode, results, failed });
   } catch (e) {
+    await writeLog({
+      requestId,
+      level: "error",
+      event: "request_error",
+      status: "failed",
+      actorUserId,
+      error: String((e as any)?.message || e),
+    });
     return json({ ok: false, error: String((e as any)?.message || e) }, 500);
   }
 });

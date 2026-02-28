@@ -3,6 +3,7 @@ import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 type Provider = "sendgrid" | "brevo" | "mailgun";
+type LogLevel = "debug" | "info" | "warn" | "error";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -29,6 +30,9 @@ function scrubEmail(email: string) {
   if (at <= 1) return e ? "***" : "";
   return `${e.slice(0, 2)}***${e.slice(at)}`;
 }
+function clampError(message: unknown, max = 2000) {
+  return String(message ?? "").slice(0, max);
+}
 
 function parseProviderOrder(raw: string): Provider[] {
   const allowed: Provider[] = ["sendgrid", "brevo", "mailgun"];
@@ -44,13 +48,46 @@ function parseProviderOrder(raw: string): Provider[] {
 async function loadSettings() {
   const { data } = await sbAdmin
     .from("mail_settings")
-    .select("provider_order,delay_ms")
+    .select("provider_order,delay_ms,worker_limit")
     .eq("id", 1)
     .maybeSingle();
   return {
     provider_order: String(data?.provider_order || "sendgrid,brevo,mailgun"),
     delay_ms: Number.isFinite(Number(data?.delay_ms)) ? Number(data?.delay_ms) : 250,
+    worker_limit: Number.isFinite(Number(data?.worker_limit)) ? Number(data?.worker_limit) : 25,
   };
+}
+
+async function writeLog(entry: {
+  requestId: string;
+  level?: LogLevel;
+  event: string;
+  status?: string;
+  queueId?: string | null;
+  recipientEmail?: string | null;
+  provider?: string | null;
+  error?: string | null;
+  meta?: Record<string, unknown>;
+}) {
+  try {
+    const { error } = await sbAdmin.from("mail_function_logs").insert({
+      function_name: "mail-worker",
+      level: entry.level || "info",
+      event: entry.event,
+      request_id: entry.requestId,
+      queue_id: entry.queueId || null,
+      recipient_email: entry.recipientEmail || null,
+      provider: entry.provider || null,
+      status: entry.status || null,
+      error: entry.error ? clampError(entry.error) : null,
+      meta: entry.meta || {},
+    });
+    if (error) {
+      console.warn("[mail-worker] log:insert_failed", { error });
+    }
+  } catch (err) {
+    console.warn("[mail-worker] log:insert_failed", { error: String(err) });
+  }
 }
 
 // Providers (same jak w send-mail, skrócone)
@@ -109,8 +146,15 @@ async function sendWithFallbacks(to: string, subject: string, html: string, orde
 }
 
 serve(async (req) => {
-  console.log("[mail-worker] request:start", { method: req.method, url: req.url });
+  const requestId = crypto.randomUUID();
+  console.log("[mail-worker] request:start", { requestId, method: req.method, url: req.url });
   if (req.method !== "POST" && req.method !== "GET") return json({ ok: false, error: "Method not allowed" }, 405);
+  await writeLog({
+    requestId,
+    event: "request_start",
+    status: "started",
+    meta: { method: req.method, url: req.url },
+  });
 
   const url = new URL(req.url);
 
@@ -122,23 +166,49 @@ serve(async (req) => {
     const got = fromHeader || fromBearer || fromQuery;
     if (got !== WORKER_SECRET) {
       console.warn("[mail-worker] request:forbidden_bad_secret");
+      await writeLog({
+        requestId,
+        level: "warn",
+        event: "request_forbidden_bad_secret",
+        status: "failed",
+      });
       return json({ ok: false, error: "forbidden" }, 403);
     }
   }
-  const limit = Math.max(1, Math.min(200, Number(url.searchParams.get("limit") || "25")));
 
   const settings = await loadSettings();
   const order = parseProviderOrder(settings.provider_order);
   const delayMs = Math.max(0, Math.min(5000, Number(settings.delay_ms || 0)));
+  const defaultLimit = Math.max(1, Math.min(200, Number(settings.worker_limit || 25)));
+  const limit = Math.max(1, Math.min(200, Number(url.searchParams.get("limit") || String(defaultLimit))));
   console.log("[mail-worker] settings", { providerOrder: order, delayMs, limit });
+  await writeLog({
+    requestId,
+    event: "request_settings_loaded",
+    status: "ok",
+    meta: { providerOrder: order.join(","), delayMs, limit, defaultLimit },
+  });
 
   // pick batch
   const { data: rows, error } = await sbAdmin.rpc("mail_queue_pick", { p_limit: limit });
   if (error) {
     console.error("[mail-worker] queue:pick_failed", { error });
+    await writeLog({
+      requestId,
+      level: "error",
+      event: "queue_pick_failed",
+      status: "failed",
+      error: String(error.message || error),
+    });
     return json({ ok: false, error: "pick_failed" }, 500);
   }
   console.log("[mail-worker] queue:picked", { count: (rows || []).length });
+  await writeLog({
+    requestId,
+    event: "queue_picked",
+    status: "ok",
+    meta: { count: (rows || []).length, limit },
+  });
 
   let sent = 0;
   let failed = 0;
@@ -151,21 +221,65 @@ serve(async (req) => {
       const { error: markOkError } = await sbAdmin.rpc("mail_queue_mark", { p_id: r.id, p_ok: true, p_provider: provider, p_error: "" });
       if (markOkError) {
         console.error("[mail-worker] queue:mark_sent_failed", { id: r.id, error: markOkError });
+        await writeLog({
+          requestId,
+          level: "error",
+          event: "queue_mark_sent_failed",
+          status: "failed",
+          queueId: r.id,
+          recipientEmail: r.to_email,
+          error: String(markOkError.message || markOkError),
+          meta: { provider },
+        });
       }
       console.log("[mail-worker] queue:item_sent", { id: r.id, to: scrubEmail(r.to_email), provider });
+      await writeLog({
+        requestId,
+        event: "queue_item_sent",
+        status: "sent",
+        queueId: r.id,
+        recipientEmail: r.to_email,
+        provider,
+      });
       sent++;
     } catch (e) {
       const errMsg = String((e as any)?.message || e);
       const { error: markErr } = await sbAdmin.rpc("mail_queue_mark", { p_id: r.id, p_ok: false, p_provider: "", p_error: errMsg });
       if (markErr) {
         console.error("[mail-worker] queue:mark_failed_failed", { id: r.id, error: markErr });
+        await writeLog({
+          requestId,
+          level: "error",
+          event: "queue_mark_failed_failed",
+          status: "failed",
+          queueId: r.id,
+          recipientEmail: r.to_email,
+          error: String(markErr.message || markErr),
+          meta: { originalError: clampError(errMsg) },
+        });
       }
       console.error("[mail-worker] queue:item_failed", { id: r.id, to: scrubEmail(r.to_email), error: errMsg });
+      await writeLog({
+        requestId,
+        level: "error",
+        event: "queue_item_failed",
+        status: "failed",
+        queueId: r.id,
+        recipientEmail: r.to_email,
+        error: errMsg,
+      });
       failed++;
     }
     if (delayMs && i < (rows || []).length - 1) await sleep(delayMs);
   }
 
   console.log("[mail-worker] request:done", { picked: (rows || []).length, sent, failed });
+  await writeLog({
+    requestId,
+    level: failed ? "warn" : "info",
+    event: "request_done",
+    status: failed ? "partial_failed" : "ok",
+    meta: { picked: (rows || []).length, sent, failed },
+  });
   return json({ ok: true, picked: (rows || []).length, sent, failed });
 });
