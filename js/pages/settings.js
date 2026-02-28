@@ -1075,7 +1075,9 @@ function updateCronHint() {
 
 function toggleMailLogsHelp() {
   if (!els.mailLogsHelp) return;
-  els.mailLogsHelp.hidden = !els.mailLogsHelp.hidden;
+  const isOpen = els.mailLogsHelp.hidden;
+  els.mailLogsHelp.hidden = !isOpen;
+  els.btnMailLogsHelp?.classList.toggle("is-active", isOpen);
 }
 
 function renderProviderOrder() {
@@ -1470,7 +1472,7 @@ async function loadToolsManifest() {
 
 async function initToolsSelect() {
   const items = await loadToolsManifest();
-  toolsOptions = [{ value: "", label: t("settings.tools.placeholder") }, ...items];
+  toolsOptions = [{ value: "", label: t("settings.tabs.tools") }, ...items];
 
   uiSelect = initUiSelect(els.toolsSelect, {
     options: toolsOptions,
