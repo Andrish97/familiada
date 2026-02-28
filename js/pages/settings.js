@@ -988,6 +988,7 @@ function syncMailSelectLabels() {
     mailLogLevelSelect.setOptions(mailLogLevelOptions());
     mailLogLevelSelect.setValue(mailLogLevelValue, { silent: true });
   }
+  updateMailCategoryHighlights();
 }
 
 function initMailSelects() {
@@ -999,6 +1000,7 @@ function initMailSelects() {
       onChange: (val) => {
         mailCronPresetValue = String(val || mailCronPresetValue);
         updateCronHint();
+        updateMailCategoryHighlights();
       },
     });
   }
@@ -1010,6 +1012,7 @@ function initMailSelects() {
       placeholder: "—",
       onChange: (val) => {
         mailQueueStatusValue = String(val || "all");
+        updateMailCategoryHighlights();
         void loadMailQueue();
       },
     });
@@ -1022,6 +1025,7 @@ function initMailSelects() {
       placeholder: "—",
       onChange: (val) => {
         mailLogFnValue = String(val || "all");
+        updateMailCategoryHighlights();
         void loadMailLogs();
       },
     });
@@ -1034,6 +1038,7 @@ function initMailSelects() {
       placeholder: "—",
       onChange: (val) => {
         mailLogLevelValue = String(val || "all");
+        updateMailCategoryHighlights();
         void loadMailLogs();
       },
     });
@@ -1051,6 +1056,7 @@ function renderCronPresetOptions() {
   mailCronSelect.setValue(selected.id, { silent: true });
   mailCronSelect.setDisabled(!mailCronSupported);
   updateCronHint();
+  updateMailCategoryHighlights();
 }
 
 function updateCronHint() {
@@ -1154,6 +1160,50 @@ function clearChildren(el) {
   while (el.firstChild) el.removeChild(el.firstChild);
 }
 
+function createPill(label, className) {
+  const span = document.createElement("span");
+  span.className = `mail-pill ${className || ""}`.trim();
+  span.textContent = String(label || "—");
+  return span;
+}
+
+function queueStatusPillClass(statusRaw) {
+  const status = String(statusRaw || "").toLowerCase();
+  if (status === "pending") return "mail-pill-status-pending";
+  if (status === "sending") return "mail-pill-status-sending";
+  if (status === "failed") return "mail-pill-status-failed";
+  return "mail-pill-status-default";
+}
+
+function logLevelPillClass(levelRaw) {
+  const level = String(levelRaw || "").toLowerCase();
+  if (level === "error") return "mail-pill-level-error";
+  if (level === "warn") return "mail-pill-level-warn";
+  if (level === "info") return "mail-pill-level-info";
+  if (level === "debug") return "mail-pill-level-debug";
+  return "mail-pill-level-default";
+}
+
+function logFunctionPillClass(fnRaw) {
+  const fn = String(fnRaw || "").toLowerCase();
+  if (fn === "mail-worker") return "mail-pill-fn-worker";
+  if (fn === "send-mail") return "mail-pill-fn-send-mail";
+  if (fn === "send-email") return "mail-pill-fn-send-email";
+  return "mail-pill-fn-default";
+}
+
+function updateMailCategoryHighlights() {
+  const queueActive = mailQueueStatusValue !== "all";
+  const fnActive = mailLogFnValue !== "all";
+  const levelActive = mailLogLevelValue !== "all";
+  const cronActive = mailCronPresetValue !== "5m";
+
+  els.mailQueueStatusSelect?.classList.toggle("is-category-active", queueActive);
+  els.mailLogFnSelect?.classList.toggle("is-category-active", fnActive);
+  els.mailLogLevelSelect?.classList.toggle("is-category-active", levelActive);
+  els.mailCronPresetSelect?.classList.toggle("is-category-active", cronActive);
+}
+
 function queueSelectionSync(rows) {
   const valid = new Set((rows || []).map((r) => String(r.id)));
   for (const id of selectedQueueIds) {
@@ -1188,7 +1238,7 @@ function renderQueueRows(rows) {
     tdPick.appendChild(pick);
 
     const tdStatus = document.createElement("td");
-    tdStatus.textContent = String(row.status || "—");
+    tdStatus.appendChild(createPill(String(row.status || "—"), queueStatusPillClass(row.status)));
 
     const tdTo = document.createElement("td");
     tdTo.textContent = String(row.to_email || "—");
@@ -1244,10 +1294,10 @@ function renderLogRows(rows) {
     tdTime.textContent = formatDateTime(row.created_at);
 
     const tdFn = document.createElement("td");
-    tdFn.textContent = String(row.function_name || "—");
+    tdFn.appendChild(createPill(String(row.function_name || "—"), logFunctionPillClass(row.function_name)));
 
     const tdLevel = document.createElement("td");
-    tdLevel.textContent = String(row.level || "—");
+    tdLevel.appendChild(createPill(String(row.level || "—"), logLevelPillClass(row.level)));
 
     const tdEvent = document.createElement("td");
     tdEvent.textContent = scrubText(row.event || "—", 80);
@@ -1300,6 +1350,7 @@ async function loadMailSettings({ silent = false } = {}) {
     mailCronSelect?.setValue(mailCronPresetValue, { silent: true });
     mailCronSelect?.setDisabled(!mailCronSupported);
     updateCronHint();
+    updateMailCategoryHighlights();
     if (els.mailCronActive) {
       els.mailCronActive.checked = cron?.active !== false;
       els.mailCronActive.disabled = !mailCronSupported;
