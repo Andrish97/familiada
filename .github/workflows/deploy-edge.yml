@@ -1,0 +1,50 @@
+name: Deploy Supabase Edge Functions (self-host)
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "supabase/functions/**"
+      - ".github/workflows/deploy-edge.yml"
+  workflow_dispatch: {}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install rsync + ssh
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y rsync openssh-client
+
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          # host key pinning (recommended). You can also use StrictHostKeyChecking=no, but better pin.
+          ssh-keyscan -H "${{ secrets.SERVER_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Sync functions to server staging
+        run: |
+          # staging dir per run
+          STAGING="/home/${{ secrets.SERVER_USER }}/.deploy/edge-functions/${{ github.sha }}"
+          ssh -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" "mkdir -p \"$STAGING\""
+          rsync -az --delete --checksum \
+            --exclude 'main/' \
+            --exclude '.DS_Store' \
+            -e "ssh -i ~/.ssh/id_ed25519" \
+            supabase/functions/ \
+            "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:$STAGING/"
+
+      - name: Run deploy script (server-side)
+        run: |
+          STAGING="/home/${{ secrets.SERVER_USER }}/.deploy/edge-functions/${{ github.sha }}"
+          ssh -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" \
+            "/home/${{ secrets.SERVER_USER }}/supabase-selfhost/supabase/scripts/deploy-edge.sh \"$STAGING\""
