@@ -822,6 +822,12 @@ body.tools-fullscreen .tools-frame-wrap iframe{
   opacity: .86;
 }
 
+#btnMailLogsHelp.is-active{
+  border-color: rgba(255,234,166,.55);
+  background: rgba(255,234,166,.18);
+  color: #ffeaa6;
+}
+
 .mail-table-wrap{
   border: 1px solid rgba(255,255,255,.12);
   border-radius: 12px;
