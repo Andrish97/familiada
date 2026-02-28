@@ -1,4 +1,3 @@
-
 CREATE TABLE public.answers (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   question_id uuid NOT NULL,
@@ -292,7 +291,11 @@ ALTER TABLE public.answers ADD CONSTRAINT answers_question_id_fkey FOREIGN KEY (
 
 ALTER TABLE public.answers ADD CONSTRAINT answers_text_len CHECK (((char_length(text) >= 1) AND (char_length(text) <= 17)));
 
+ALTER TABLE public.base_share_tasks ADD CONSTRAINT base_share_tasks_owner_id_fkey FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE CASCADE;
+
 ALTER TABLE public.base_share_tasks ADD CONSTRAINT base_share_tasks_pkey PRIMARY KEY (id);
+
+ALTER TABLE public.base_share_tasks ADD CONSTRAINT base_share_tasks_recipient_user_id_fkey FOREIGN KEY (recipient_user_id) REFERENCES users(id) ON DELETE SET NULL;
 
 ALTER TABLE public.device_presence ADD CONSTRAINT device_presence_game_id_fkey FOREIGN KEY (game_id) REFERENCES games(id) ON DELETE CASCADE;
 
@@ -312,7 +315,7 @@ ALTER TABLE public.email_intents ADD CONSTRAINT email_intents_status_check CHECK
 
 ALTER TABLE public.games ADD CONSTRAINT games_name_len CHECK (((char_length(name) >= 1) AND (char_length(name) <= 80)));
 
-ALTER TABLE public.games ADD CONSTRAINT games_owner_id_fkey FOREIGN KEY (owner_id) REFERENCES auth.users(id) ON DELETE CASCADE;
+ALTER TABLE public.games ADD CONSTRAINT games_owner_id_fkey FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE CASCADE;
 
 ALTER TABLE public.games ADD CONSTRAINT games_pkey PRIMARY KEY (id);
 
@@ -338,25 +341,25 @@ ALTER TABLE public.poll_sessions ADD CONSTRAINT poll_sessions_question_id_fkey F
 
 ALTER TABLE public.poll_subscriptions ADD CONSTRAINT poll_subscriptions_one_subscriber_chk CHECK ((((subscriber_user_id IS NOT NULL) AND (subscriber_email IS NULL)) OR ((subscriber_user_id IS NULL) AND (subscriber_email IS NOT NULL))));
 
-ALTER TABLE public.poll_subscriptions ADD CONSTRAINT poll_subscriptions_owner_id_fkey FOREIGN KEY (owner_id) REFERENCES auth.users(id) ON DELETE CASCADE;
+ALTER TABLE public.poll_subscriptions ADD CONSTRAINT poll_subscriptions_owner_id_fkey FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE CASCADE;
 
 ALTER TABLE public.poll_subscriptions ADD CONSTRAINT poll_subscriptions_pkey PRIMARY KEY (id);
 
 ALTER TABLE public.poll_subscriptions ADD CONSTRAINT poll_subscriptions_status_check CHECK ((status = ANY (ARRAY['pending'::text, 'active'::text, 'declined'::text, 'cancelled'::text])));
 
-ALTER TABLE public.poll_subscriptions ADD CONSTRAINT poll_subscriptions_subscriber_user_id_fkey FOREIGN KEY (subscriber_user_id) REFERENCES auth.users(id) ON DELETE SET NULL;
+ALTER TABLE public.poll_subscriptions ADD CONSTRAINT poll_subscriptions_subscriber_user_id_fkey FOREIGN KEY (subscriber_user_id) REFERENCES users(id) ON DELETE SET NULL;
 
 ALTER TABLE public.poll_tasks ADD CONSTRAINT poll_tasks_game_id_fkey FOREIGN KEY (game_id) REFERENCES games(id) ON DELETE CASCADE;
 
 ALTER TABLE public.poll_tasks ADD CONSTRAINT poll_tasks_one_recipient_chk CHECK ((((recipient_user_id IS NOT NULL) AND (recipient_email IS NULL)) OR ((recipient_user_id IS NULL) AND (recipient_email IS NOT NULL))));
 
-ALTER TABLE public.poll_tasks ADD CONSTRAINT poll_tasks_owner_id_fkey FOREIGN KEY (owner_id) REFERENCES auth.users(id) ON DELETE CASCADE;
+ALTER TABLE public.poll_tasks ADD CONSTRAINT poll_tasks_owner_id_fkey FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE CASCADE;
 
 ALTER TABLE public.poll_tasks ADD CONSTRAINT poll_tasks_pkey PRIMARY KEY (id);
 
 ALTER TABLE public.poll_tasks ADD CONSTRAINT poll_tasks_poll_type_check CHECK ((poll_type = ANY (ARRAY['poll_text'::text, 'poll_points'::text])));
 
-ALTER TABLE public.poll_tasks ADD CONSTRAINT poll_tasks_recipient_user_id_fkey FOREIGN KEY (recipient_user_id) REFERENCES auth.users(id) ON DELETE SET NULL;
+ALTER TABLE public.poll_tasks ADD CONSTRAINT poll_tasks_recipient_user_id_fkey FOREIGN KEY (recipient_user_id) REFERENCES users(id) ON DELETE SET NULL;
 
 ALTER TABLE public.poll_tasks ADD CONSTRAINT poll_tasks_status_check CHECK ((status = ANY (ARRAY['pending'::text, 'opened'::text, 'done'::text, 'declined'::text, 'cancelled'::text])));
 
@@ -388,7 +391,7 @@ ALTER TABLE public.poll_votes ADD CONSTRAINT pv_token_len CHECK (((char_length(v
 
 ALTER TABLE public.profiles ADD CONSTRAINT profiles_email_key UNIQUE (email);
 
-ALTER TABLE public.profiles ADD CONSTRAINT profiles_id_fkey FOREIGN KEY (id) REFERENCES auth.users(id) ON DELETE CASCADE;
+ALTER TABLE public.profiles ADD CONSTRAINT profiles_id_fkey FOREIGN KEY (id) REFERENCES users(id) ON DELETE CASCADE;
 
 ALTER TABLE public.profiles ADD CONSTRAINT profiles_pkey PRIMARY KEY (id);
 
@@ -418,7 +421,7 @@ ALTER TABLE public.qb_questions ADD CONSTRAINT qb_questions_category_id_fkey FOR
 
 ALTER TABLE public.qb_questions ADD CONSTRAINT qb_questions_pkey PRIMARY KEY (id);
 
-ALTER TABLE public.qb_questions ADD CONSTRAINT qb_questions_updated_by_fkey FOREIGN KEY (updated_by) REFERENCES auth.users(id) ON DELETE SET NULL;
+ALTER TABLE public.qb_questions ADD CONSTRAINT qb_questions_updated_by_fkey FOREIGN KEY (updated_by) REFERENCES users(id) ON DELETE SET NULL;
 
 ALTER TABLE public.qb_tags ADD CONSTRAINT qb_tags_base_id_fkey FOREIGN KEY (base_id) REFERENCES question_bases(id) ON DELETE CASCADE;
 
@@ -430,9 +433,9 @@ ALTER TABLE public.question_base_shares ADD CONSTRAINT question_base_shares_base
 
 ALTER TABLE public.question_base_shares ADD CONSTRAINT question_base_shares_pkey PRIMARY KEY (base_id, user_id);
 
-ALTER TABLE public.question_base_shares ADD CONSTRAINT question_base_shares_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE;
+ALTER TABLE public.question_base_shares ADD CONSTRAINT question_base_shares_user_id_fkey FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
 
-ALTER TABLE public.question_bases ADD CONSTRAINT question_bases_owner_id_fkey FOREIGN KEY (owner_id) REFERENCES auth.users(id) ON DELETE CASCADE;
+ALTER TABLE public.question_bases ADD CONSTRAINT question_bases_owner_id_fkey FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE CASCADE;
 
 ALTER TABLE public.question_bases ADD CONSTRAINT question_bases_pkey PRIMARY KEY (id);
 
@@ -450,15 +453,17 @@ ALTER TABLE public.questions ADD CONSTRAINT questions_text_len CHECK (((char_len
 
 ALTER TABLE public.user_cooldowns ADD CONSTRAINT user_cooldowns_pkey PRIMARY KEY (user_id, action_key);
 
+ALTER TABLE public.user_cooldowns ADD CONSTRAINT user_cooldowns_user_id_fkey FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
+
 ALTER TABLE public.user_flags ADD CONSTRAINT user_flags_pkey PRIMARY KEY (user_id);
 
-ALTER TABLE public.user_flags ADD CONSTRAINT user_flags_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE;
+ALTER TABLE public.user_flags ADD CONSTRAINT user_flags_user_id_fkey FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
 
 ALTER TABLE public.user_logos ADD CONSTRAINT user_logos_pkey PRIMARY KEY (id);
 
 ALTER TABLE public.user_logos ADD CONSTRAINT user_logos_type_check CHECK ((type = ANY (ARRAY['GLYPH_30x10'::text, 'PIX_150x70'::text])));
 
-ALTER TABLE public.user_logos ADD CONSTRAINT user_logos_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE;
+ALTER TABLE public.user_logos ADD CONSTRAINT user_logos_user_id_fkey FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
 
 CREATE INDEX answers_q_idx ON public.answers USING btree (question_id);
 
@@ -707,38 +712,38 @@ ALTER TABLE public.user_logos ENABLE ROW LEVEL SECURITY;
 CREATE POLICY answers_owner_select ON public.answers FOR SELECT TO authenticated USING ((EXISTS ( SELECT 1
    FROM (questions q
      JOIN games g ON ((g.id = q.game_id)))
-  WHERE ((q.id = answers.question_id) AND (g.owner_id = auth.uid())))));
+  WHERE ((q.id = answers.question_id) AND (g.owner_id = uid())))));
 
 CREATE POLICY answers_owner_write ON public.answers TO authenticated USING ((EXISTS ( SELECT 1
    FROM (questions q
      JOIN games g ON ((g.id = q.game_id)))
-  WHERE ((q.id = answers.question_id) AND (g.owner_id = auth.uid()))))) WITH CHECK ((EXISTS ( SELECT 1
+  WHERE ((q.id = answers.question_id) AND (g.owner_id = uid()))))) WITH CHECK ((EXISTS ( SELECT 1
    FROM (questions q
      JOIN games g ON ((g.id = q.game_id)))
-  WHERE ((q.id = answers.question_id) AND (g.owner_id = auth.uid())))));
+  WHERE ((q.id = answers.question_id) AND (g.owner_id = uid())))));
 
 null
 null
 CREATE POLICY device_presence_owner_read ON public.device_presence FOR SELECT TO authenticated USING ((EXISTS ( SELECT 1
    FROM games g
-  WHERE ((g.id = device_presence.game_id) AND (g.owner_id = auth.uid())))));
+  WHERE ((g.id = device_presence.game_id) AND (g.owner_id = uid())))));
 
 CREATE POLICY device_state_owner_read ON public.device_state FOR SELECT TO authenticated USING ((EXISTS ( SELECT 1
    FROM games g
-  WHERE ((g.id = device_state.game_id) AND (g.owner_id = auth.uid())))));
+  WHERE ((g.id = device_state.game_id) AND (g.owner_id = uid())))));
 
 CREATE POLICY email_intents_service_only ON public.email_intents TO authenticated USING (false) WITH CHECK (false);
 
-CREATE POLICY games_owner_select ON public.games FOR SELECT TO authenticated USING ((owner_id = auth.uid()));
+CREATE POLICY games_owner_select ON public.games FOR SELECT TO authenticated USING ((owner_id = uid()));
 
-CREATE POLICY games_owner_update ON public.games FOR UPDATE TO authenticated USING ((owner_id = auth.uid())) WITH CHECK ((owner_id = auth.uid()));
+CREATE POLICY games_owner_update ON public.games FOR UPDATE TO authenticated USING ((owner_id = uid())) WITH CHECK ((owner_id = uid()));
 
 null
 null
 null
-CREATE POLICY mail_queue_insert_own ON public.mail_queue FOR INSERT TO authenticated WITH CHECK ((created_by = auth.uid()));
+CREATE POLICY mail_queue_insert_own ON public.mail_queue FOR INSERT TO authenticated WITH CHECK ((created_by = uid()));
 
-CREATE POLICY mail_queue_select_own ON public.mail_queue FOR SELECT TO authenticated USING ((created_by = auth.uid()));
+CREATE POLICY mail_queue_select_own ON public.mail_queue FOR SELECT TO authenticated USING ((created_by = uid()));
 
 CREATE POLICY mail_settings_read_none ON public.mail_settings FOR SELECT TO authenticated USING (false);
 
@@ -746,21 +751,21 @@ CREATE POLICY mail_settings_write_none ON public.mail_settings TO authenticated 
 
 CREATE POLICY poll_sessions_owner_read ON public.poll_sessions FOR SELECT TO authenticated USING ((EXISTS ( SELECT 1
    FROM games g
-  WHERE ((g.id = poll_sessions.game_id) AND (g.owner_id = auth.uid())))));
+  WHERE ((g.id = poll_sessions.game_id) AND (g.owner_id = uid())))));
 
 CREATE POLICY poll_sessions_owner_select ON public.poll_sessions FOR SELECT TO authenticated USING ((EXISTS ( SELECT 1
    FROM games g
-  WHERE ((g.id = poll_sessions.game_id) AND (g.owner_id = auth.uid())))));
+  WHERE ((g.id = poll_sessions.game_id) AND (g.owner_id = uid())))));
 
 CREATE POLICY poll_sessions_owner_write ON public.poll_sessions TO authenticated USING ((EXISTS ( SELECT 1
    FROM games g
-  WHERE ((g.id = poll_sessions.game_id) AND (g.owner_id = auth.uid()))))) WITH CHECK ((EXISTS ( SELECT 1
+  WHERE ((g.id = poll_sessions.game_id) AND (g.owner_id = uid()))))) WITH CHECK ((EXISTS ( SELECT 1
    FROM games g
-  WHERE ((g.id = poll_sessions.game_id) AND (g.owner_id = auth.uid())))));
+  WHERE ((g.id = poll_sessions.game_id) AND (g.owner_id = uid())))));
 
 CREATE POLICY poll_sessions_select_owner ON public.poll_sessions FOR SELECT TO authenticated USING ((EXISTS ( SELECT 1
    FROM games g
-  WHERE ((g.id = poll_sessions.game_id) AND (g.owner_id = auth.uid())))));
+  WHERE ((g.id = poll_sessions.game_id) AND (g.owner_id = uid())))));
 
 null
 null
@@ -772,50 +777,50 @@ null
 null
 CREATE POLICY poll_text_entries_insert_owner_open ON public.poll_text_entries FOR INSERT TO authenticated WITH CHECK (((EXISTS ( SELECT 1
    FROM games g
-  WHERE ((g.id = poll_text_entries.game_id) AND (g.owner_id = auth.uid())))) AND (EXISTS ( SELECT 1
+  WHERE ((g.id = poll_text_entries.game_id) AND (g.owner_id = uid())))) AND (EXISTS ( SELECT 1
    FROM poll_sessions s
   WHERE ((s.id = poll_text_entries.poll_session_id) AND (s.game_id = poll_text_entries.game_id) AND (s.is_open = true))))));
 
 CREATE POLICY poll_text_entries_owner_read ON public.poll_text_entries FOR SELECT TO authenticated USING ((EXISTS ( SELECT 1
    FROM games g
-  WHERE ((g.id = poll_text_entries.game_id) AND (g.owner_id = auth.uid())))));
+  WHERE ((g.id = poll_text_entries.game_id) AND (g.owner_id = uid())))));
 
 CREATE POLICY poll_text_entries_owner_select ON public.poll_text_entries FOR SELECT TO authenticated USING ((EXISTS ( SELECT 1
    FROM games g
-  WHERE ((g.id = poll_text_entries.game_id) AND (g.owner_id = auth.uid())))));
+  WHERE ((g.id = poll_text_entries.game_id) AND (g.owner_id = uid())))));
 
 CREATE POLICY poll_text_entries_select_owner ON public.poll_text_entries FOR SELECT TO authenticated USING ((EXISTS ( SELECT 1
    FROM games g
-  WHERE ((g.id = poll_text_entries.game_id) AND (g.owner_id = auth.uid())))));
+  WHERE ((g.id = poll_text_entries.game_id) AND (g.owner_id = uid())))));
 
 CREATE POLICY poll_text_owner_select ON public.poll_text_entries FOR SELECT TO authenticated USING ((EXISTS ( SELECT 1
    FROM games g
-  WHERE ((g.id = poll_text_entries.game_id) AND (g.owner_id = auth.uid())))));
+  WHERE ((g.id = poll_text_entries.game_id) AND (g.owner_id = uid())))));
 
 null
 null
 CREATE POLICY poll_votes_insert_owner_open ON public.poll_votes FOR INSERT TO authenticated WITH CHECK (((EXISTS ( SELECT 1
    FROM games g
-  WHERE ((g.id = poll_votes.game_id) AND (g.owner_id = auth.uid())))) AND (EXISTS ( SELECT 1
+  WHERE ((g.id = poll_votes.game_id) AND (g.owner_id = uid())))) AND (EXISTS ( SELECT 1
    FROM poll_sessions s
   WHERE ((s.id = poll_votes.poll_session_id) AND (s.game_id = poll_votes.game_id) AND (s.is_open = true))))));
 
 CREATE POLICY poll_votes_owner_read ON public.poll_votes FOR SELECT TO authenticated USING ((EXISTS ( SELECT 1
    FROM games g
-  WHERE ((g.id = poll_votes.game_id) AND (g.owner_id = auth.uid())))));
+  WHERE ((g.id = poll_votes.game_id) AND (g.owner_id = uid())))));
 
 CREATE POLICY poll_votes_owner_select ON public.poll_votes FOR SELECT TO authenticated USING ((EXISTS ( SELECT 1
    FROM games g
-  WHERE ((g.id = poll_votes.game_id) AND (g.owner_id = auth.uid())))));
+  WHERE ((g.id = poll_votes.game_id) AND (g.owner_id = uid())))));
 
 CREATE POLICY poll_votes_select_owner ON public.poll_votes FOR SELECT TO authenticated USING ((EXISTS ( SELECT 1
    FROM games g
-  WHERE ((g.id = poll_votes.game_id) AND (g.owner_id = auth.uid())))));
+  WHERE ((g.id = poll_votes.game_id) AND (g.owner_id = uid())))));
 
 null
 CREATE POLICY profiles_select_authenticated ON public.profiles FOR SELECT TO authenticated USING (true);
 
-CREATE POLICY profiles_update_self ON public.profiles FOR UPDATE TO authenticated USING ((id = auth.uid())) WITH CHECK ((id = auth.uid()));
+CREATE POLICY profiles_update_self ON public.profiles FOR UPDATE TO authenticated USING ((id = uid())) WITH CHECK ((id = uid()));
 
 null
 null
@@ -827,24 +832,24 @@ null
 CREATE POLICY qb_category_tags_delete ON public.qb_category_tags FOR DELETE TO authenticated USING ((EXISTS ( SELECT 1
    FROM (qb_categories c
      JOIN question_bases b ON ((b.id = c.base_id)))
-  WHERE ((c.id = qb_category_tags.category_id) AND ((b.owner_id = auth.uid()) OR (EXISTS ( SELECT 1
+  WHERE ((c.id = qb_category_tags.category_id) AND ((b.owner_id = uid()) OR (EXISTS ( SELECT 1
            FROM question_base_shares s
-          WHERE ((s.base_id = b.id) AND (s.user_id = auth.uid()) AND (s.role = 'editor'::base_share_role)))))))));
+          WHERE ((s.base_id = b.id) AND (s.user_id = uid()) AND (s.role = 'editor'::base_share_role)))))))));
 
 CREATE POLICY qb_category_tags_insert ON public.qb_category_tags FOR INSERT TO authenticated WITH CHECK ((EXISTS ( SELECT 1
    FROM ((qb_categories c
      JOIN qb_tags t ON ((t.base_id = c.base_id)))
      JOIN question_bases b ON ((b.id = c.base_id)))
-  WHERE ((c.id = qb_category_tags.category_id) AND (t.id = qb_category_tags.tag_id) AND ((b.owner_id = auth.uid()) OR (EXISTS ( SELECT 1
+  WHERE ((c.id = qb_category_tags.category_id) AND (t.id = qb_category_tags.tag_id) AND ((b.owner_id = uid()) OR (EXISTS ( SELECT 1
            FROM question_base_shares s
-          WHERE ((s.base_id = b.id) AND (s.user_id = auth.uid()) AND (s.role = 'editor'::base_share_role)))))))));
+          WHERE ((s.base_id = b.id) AND (s.user_id = uid()) AND (s.role = 'editor'::base_share_role)))))))));
 
 CREATE POLICY qb_category_tags_select ON public.qb_category_tags FOR SELECT TO authenticated USING ((EXISTS ( SELECT 1
    FROM (qb_categories c
      JOIN question_bases b ON ((b.id = c.base_id)))
-  WHERE ((c.id = qb_category_tags.category_id) AND ((b.owner_id = auth.uid()) OR (EXISTS ( SELECT 1
+  WHERE ((c.id = qb_category_tags.category_id) AND ((b.owner_id = uid()) OR (EXISTS ( SELECT 1
            FROM question_base_shares s
-          WHERE ((s.base_id = b.id) AND (s.user_id = auth.uid()) AND (s.role = ANY (ARRAY['editor'::base_share_role, 'viewer'::base_share_role]))))))))));
+          WHERE ((s.base_id = b.id) AND (s.user_id = uid()) AND (s.role = ANY (ARRAY['editor'::base_share_role, 'viewer'::base_share_role]))))))))));
 
 null
 null
@@ -854,25 +859,25 @@ null
 null
 null
 null
-CREATE POLICY qb_bases_delete ON public.question_bases FOR DELETE TO authenticated USING ((owner_id = auth.uid()));
+CREATE POLICY qb_bases_delete ON public.question_bases FOR DELETE TO authenticated USING ((owner_id = uid()));
 
-CREATE POLICY qb_bases_insert ON public.question_bases FOR INSERT TO authenticated WITH CHECK ((owner_id = auth.uid()));
+CREATE POLICY qb_bases_insert ON public.question_bases FOR INSERT TO authenticated WITH CHECK ((owner_id = uid()));
 
-CREATE POLICY qb_bases_select ON public.question_bases FOR SELECT TO authenticated USING (((owner_id = auth.uid()) OR (EXISTS ( SELECT 1
+CREATE POLICY qb_bases_select ON public.question_bases FOR SELECT TO authenticated USING (((owner_id = uid()) OR (EXISTS ( SELECT 1
    FROM question_base_shares s
-  WHERE ((s.base_id = question_bases.id) AND (s.user_id = auth.uid()))))));
+  WHERE ((s.base_id = question_bases.id) AND (s.user_id = uid()))))));
 
-CREATE POLICY qb_bases_update ON public.question_bases FOR UPDATE TO authenticated USING ((owner_id = auth.uid())) WITH CHECK ((owner_id = auth.uid()));
+CREATE POLICY qb_bases_update ON public.question_bases FOR UPDATE TO authenticated USING ((owner_id = uid())) WITH CHECK ((owner_id = uid()));
 
 CREATE POLICY questions_owner_select ON public.questions FOR SELECT TO authenticated USING ((EXISTS ( SELECT 1
    FROM games g
-  WHERE ((g.id = questions.game_id) AND (g.owner_id = auth.uid())))));
+  WHERE ((g.id = questions.game_id) AND (g.owner_id = uid())))));
 
 CREATE POLICY questions_owner_write ON public.questions TO authenticated USING ((EXISTS ( SELECT 1
    FROM games g
-  WHERE ((g.id = questions.game_id) AND (g.owner_id = auth.uid()))))) WITH CHECK ((EXISTS ( SELECT 1
+  WHERE ((g.id = questions.game_id) AND (g.owner_id = uid()))))) WITH CHECK ((EXISTS ( SELECT 1
    FROM games g
-  WHERE ((g.id = questions.game_id) AND (g.owner_id = auth.uid())))));
+  WHERE ((g.id = questions.game_id) AND (g.owner_id = uid())))));
 
 null
 null
@@ -1239,7 +1244,7 @@ begin
     true as ok,
     null as err,
     v_norm_email as mail_to,
-    ('/bases.html?share=' || v_task.token::text) as mail_link,
+    ('/bases?share=' || v_task.token::text) as mail_link,
     v_base_name as base_name,
     v_owner_label as owner_label;
 end;
@@ -1347,7 +1352,7 @@ begin
     true,
     null,
     v_norm_email,
-    ('/bases.html?share=' || v_task.token::text),
+    ('/bases?share=' || v_task.token::text),
     v_base_name,
     v_owner_label;
 end;
@@ -2835,7 +2840,7 @@ end;
 $function$
 
 
-CREATE OR REPLACE FUNCTION public.guest_is_expired(p_user_id uuid DEFAULT auth.uid())
+CREATE OR REPLACE FUNCTION public.guest_is_expired(p_user_id uuid DEFAULT uid())
  RETURNS boolean
  LANGUAGE sql
  STABLE SECURITY DEFINER
@@ -5694,7 +5699,7 @@ begin
     b.status,
     b.created_at,
     b.token,
-    ('poll-go.html?s=' || b.token::text)::text as go_url,
+    ('poll-go?s=' || b.token::text)::text as go_url,
     (b.status in ('declined','cancelled') and b.last_action_at <= now() - interval '5 days') as is_expired
   from base b
   left join public.profiles p on p.id = b.owner_id
@@ -5788,7 +5793,7 @@ begin
     t.declined_at,
     t.cancelled_at,
     (coalesce(t.done_at, t.declined_at, t.cancelled_at) < now() - interval '5 days') as is_archived,
-    ('poll-go.html?t=' || t.token::text)::text,
+    ('poll-go?t=' || t.token::text)::text,
     t.owner_id,
     p.username,
     p.email
@@ -5999,7 +6004,7 @@ begin
           'task_id', id,
           'to', to_email,
           'token', token,
-          'link', ('poll-go.html?t=' || token::text)
+          'link', ('poll-go?t=' || token::text)
         )
       ) filter (where public._norm_email(to_email) is not null),
       '[]'::jsonb
@@ -6110,7 +6115,7 @@ begin
     return jsonb_build_object('ok', false, 'error', 'no email for this subscriber');
   end if;
 
-  v_link := ('poll-go.html?s=' || v_sub.token::text)::text;
+  v_link := ('poll-go?s=' || v_sub.token::text)::text;
 
   update public.poll_subscriptions
   set email_sent_at = now(),
@@ -6344,7 +6349,7 @@ begin
 
   if v_existing.id is not null and v_existing.status in ('pending','active') then
     v_token := v_existing.token;
-    v_go := ('poll-go.html?s=' || v_token::text)::text;
+    v_go := ('poll-go?s=' || v_token::text)::text;
     v_to := coalesce(v_profile.email, v_existing.subscriber_email);
 
     return jsonb_build_object(
@@ -6383,7 +6388,7 @@ begin
     v_to := lower(v_h);
   end if;
 
-  v_go := ('poll-go.html?s=' || v_token::text)::text;
+  v_go := ('poll-go?s=' || v_token::text)::text;
 
   return jsonb_build_object(
     'ok', true,
