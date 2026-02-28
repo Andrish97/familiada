@@ -3964,7 +3964,7 @@ const uk = {
     footerRight: "Потрібна допомога? <a href=\"mailto:kontakt@familiada.online\">kontakt@familiada.online</a>",
   },
   settings: {
-    title: "Налаштування",
+    title: "Familiada — адмін-пульт",
     subtitle: "Адмін-панель",
     actions: {
       refresh: "Оновити",
@@ -4008,7 +4008,7 @@ const uk = {
     footerLeft: "Familiada — адмін-панель",
     footerRight: "Лише для авторизованих.",
     login: {
-      title: "Панель налаштувань",
+      title: "Адмін-пульт",
       checking: "Перевірка доступу…",
       accessRequired: "Потрібен вхід через Cloudflare Access.",
       loginBtn: "Увійти через Access",
