@@ -1,3 +1,4 @@
+// deploy-marker: 2026-02-28T22:02Z sha=878195d8cbd5057472686a56983b35b6a57285b97da7740772064567da2971fa
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
