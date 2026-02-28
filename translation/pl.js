@@ -4085,7 +4085,7 @@ const pl = {
     footerRight: "Masz pilną sprawę? <a href=\"mailto:kontakt@familiada.online\">kontakt@familiada.online</a>",
   },
   settings: {
-    title: "Ustawienia",
+    title: "Familiada — pulpit admina",
     subtitle: "Panel administracyjny",
     actions: {
       refresh: "Odśwież",
@@ -4129,7 +4129,7 @@ const pl = {
     footerLeft: "Familiada — panel admina",
     footerRight: "Dostęp tylko dla uprawnionych.",
     login: {
-      title: "Panel ustawień",
+      title: "Pulpit admina",
       checking: "Trwa weryfikacja…",
       accessRequired: "Wymagane logowanie przez Cloudflare Access.",
       loginBtn: "Zaloguj przez Access",
