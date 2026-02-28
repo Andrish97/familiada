@@ -4,16 +4,21 @@ html{
   height: 100%;
 }
 
-.settings-body{
-  height: 100%;
+body.settings-body{
+  height: auto;
   min-height: 100vh;
   overflow-y: auto;
   overflow-x: hidden;
 }
 
-.settings-body > main.wrap{
+body.settings-body > main.wrap{
+  flex: 1 1 auto;
+  min-height: 0;
   overflow: visible;
-  min-height: auto;
+}
+
+.settings-panel{
+  min-height: 0;
 }
 
 .settings-auth{
@@ -664,6 +669,9 @@ body.tools-fullscreen .tools-frame-wrap iframe{
   background: rgba(8,12,28,.65);
   display: grid;
   gap: 16px;
+  max-height: calc(100vh - var(--topbar-h, 72px) - 48px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .mail-cards{
@@ -766,9 +774,52 @@ body.tools-fullscreen .tools-frame-wrap iframe{
   flex-wrap: wrap;
 }
 
-.mail-controls select,
+.mail-ui-select{
+  min-width: 170px;
+}
+
+.mail-ui-select .ui-select-btn,
 .mail-controls input{
   min-height: 34px;
+}
+
+.mail-cron-select{
+  width: 100%;
+  min-width: 0;
+}
+
+.mail-cron-select .ui-select-btn{
+  width: 100%;
+}
+
+.mail-help{
+  border: 1px solid rgba(255,255,255,.14);
+  border-radius: 12px;
+  background: rgba(255,255,255,.04);
+  padding: 10px 12px;
+}
+
+.mail-help-title{
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.mail-help-lead{
+  margin: 0 0 8px;
+  font-size: 12px;
+  opacity: .9;
+}
+
+.mail-help-list{
+  margin: 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 4px;
+  font-size: 12px;
+  opacity: .86;
 }
 
 .mail-table-wrap{
@@ -825,6 +876,13 @@ body.tools-fullscreen .tools-frame-wrap iframe{
 
 .mail-row-action{
   white-space: nowrap;
+}
+
+@media (max-width: 980px){
+  .mail-panel{
+    max-height: none;
+    overflow: visible;
+  }
 }
 
 

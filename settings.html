@@ -4,15 +4,15 @@
   <meta charset="UTF-8"/>
   <meta name="robots" content="noindex, nofollow"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <meta name="app-version" content="settings-2026.02.28.2"/>
+  <meta name="app-version" content="settings-2026.02.28.3"/>
   <title data-i18n="settings.title">Familiada — settings</title>
 
   <link rel="icon" href="favicon.ico"/>
   <link rel="stylesheet" href="css/base.css"/>
   <link rel="stylesheet" href="css/builder.css"/>
-  <link rel="stylesheet" href="css/settings.css?v=20260228-2"/>
+  <link rel="stylesheet" href="css/settings.css?v=20260228-3"/>
 
-  <script type="module" src="js/pages/settings.js?v=20260228-2" defer></script>
+  <script type="module" src="js/pages/settings.js?v=20260228-3" defer></script>
 </head>
 <body class="builder-body settings-body settings-locked no-footer-line">
   <header class="topbar topbar-layout-4 topbar-mobile-keep-brand">
@@ -168,8 +168,13 @@
 
             <div class="mail-inline-grid">
               <div class="field">
-                <label class="field-label" for="mailCronPreset" data-i18n="settings.mail.cronEvery">Co jaki czas uruchamiać worker</label>
-                <select id="mailCronPreset"></select>
+                <label class="field-label" for="mailCronPresetSelect" data-i18n="settings.mail.cronEvery">Co jaki czas uruchamiać worker</label>
+                <div class="ui-select mail-ui-select mail-cron-select" id="mailCronPresetSelect">
+                  <button class="btn sm ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
+                    <span class="ui-select-label">—</span>
+                  </button>
+                  <div class="ui-select-menu" role="listbox"></div>
+                </div>
                 <div class="field-hint" id="mailCronHint"></div>
               </div>
               <div class="field row">
@@ -212,12 +217,12 @@
             <div class="mail-card-head">
               <div class="mail-card-title" data-i18n="settings.mail.queueTitle">Kolejka wysyłki (mail_queue)</div>
               <div class="mail-controls">
-                <select id="mailQueueStatusFilter">
-                  <option value="all" data-i18n="settings.mail.filter.all">Wszystkie</option>
-                  <option value="pending" data-i18n="settings.mail.filter.pending">Pending</option>
-                  <option value="sending" data-i18n="settings.mail.filter.sending">Sending</option>
-                  <option value="failed" data-i18n="settings.mail.filter.failed">Failed</option>
-                </select>
+                <div class="ui-select mail-ui-select" id="mailQueueStatusSelect">
+                  <button class="btn sm ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
+                    <span class="ui-select-label">—</span>
+                  </button>
+                  <div class="ui-select-menu" role="listbox"></div>
+                </div>
                 <input id="mailQueueLimit" type="number" min="1" max="500" step="10" value="150"/>
                 <button class="btn sm" id="btnMailQueueRefresh" type="button" data-i18n="settings.actions.refresh">Odśwież</button>
               </div>
@@ -246,21 +251,33 @@
             <div class="mail-card-head">
               <div class="mail-card-title" data-i18n="settings.mail.logsTitle">Logi funkcji mailowych</div>
               <div class="mail-controls">
-                <select id="mailLogFnFilter">
-                  <option value="all" data-i18n="settings.mail.filter.allFunctions">Wszystkie funkcje</option>
-                  <option value="send-mail">send-mail</option>
-                  <option value="send-email">send-email</option>
-                  <option value="mail-worker">mail-worker</option>
-                </select>
-                <select id="mailLogLevelFilter">
-                  <option value="all" data-i18n="settings.mail.filter.allLevels">Wszystkie poziomy</option>
-                  <option value="info">info</option>
-                  <option value="warn">warn</option>
-                  <option value="error">error</option>
-                </select>
+                <div class="ui-select mail-ui-select" id="mailLogFnSelect">
+                  <button class="btn sm ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
+                    <span class="ui-select-label">—</span>
+                  </button>
+                  <div class="ui-select-menu" role="listbox"></div>
+                </div>
+                <div class="ui-select mail-ui-select" id="mailLogLevelSelect">
+                  <button class="btn sm ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
+                    <span class="ui-select-label">—</span>
+                  </button>
+                  <div class="ui-select-menu" role="listbox"></div>
+                </div>
                 <input id="mailLogLimit" type="number" min="1" max="500" step="10" value="200"/>
+                <button class="btn sm" id="btnMailLogsHelp" type="button" data-i18n="settings.mail.logsHelpBtn">Jak czytać logi</button>
                 <button class="btn sm" id="btnMailLogsRefresh" type="button" data-i18n="settings.actions.refresh">Odśwież</button>
               </div>
+            </div>
+            <div class="mail-help" id="mailLogsHelp" hidden>
+              <div class="mail-help-title" data-i18n="settings.mail.logsHelpTitle">Jak czytać logi</div>
+              <p class="mail-help-lead" data-i18n="settings.mail.logsHelpLead">Każdy wiersz to jedno zdarzenie z funkcji send-mail / send-email / mail-worker.</p>
+              <ul class="mail-help-list">
+                <li data-i18n="settings.mail.logsHelp.levels">`level`: info = normalny przebieg, warn = częściowy problem, error = błąd wysyłki.</li>
+                <li data-i18n="settings.mail.logsHelp.events">`event`: np. `queue_picked`, `queue_item_sent`, `queue_item_failed` pokazuje etap przetwarzania.</li>
+                <li data-i18n="settings.mail.logsHelp.recipient">`Do` i `Provider` mówią dla kogo i przez jakiego dostawcę szła próba wysyłki.</li>
+                <li data-i18n="settings.mail.logsHelp.error">Kolumna `Błąd` zawiera konkretny powód niepowodzenia (API key, timeout, 4xx/5xx providerów itp.).</li>
+                <li data-i18n="settings.mail.logsHelp.next">Jeśli widzisz `queue_item_failed`, sprawdź błąd, popraw konfigurację i użyj „Wyślij teraz” lub „Wyślij zaznaczone”.</li>
+              </ul>
             </div>
             <div class="mail-table-wrap">
               <table class="mail-table">
