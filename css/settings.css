@@ -680,6 +680,22 @@ body.tools-fullscreen .tools-frame-wrap iframe{
   gap: 10px;
 }
 
+.mail-card-queue{
+  order: 1;
+}
+
+.mail-card-settings{
+  order: 2;
+}
+
+.mail-card-worker{
+  order: 3;
+}
+
+.mail-card-logs{
+  order: 4;
+}
+
 .mail-card-wide{
   grid-column: 1 / -1;
 }
@@ -805,6 +821,10 @@ body.tools-fullscreen .tools-frame-wrap iframe{
 
 .mail-level-warn td{
   background: rgba(255,220,120,.07);
+}
+
+.mail-row-action{
+  white-space: nowrap;
 }
 
 

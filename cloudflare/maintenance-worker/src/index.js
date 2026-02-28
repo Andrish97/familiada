@@ -409,7 +409,9 @@ async function handleAdminMailApi(request, env, url) {
       requeued = extractScalarNumber(rq.data, 0);
     }
 
-    const run = await supabaseRpc(env, "invoke_mail_worker", { p_limit: limit });
+    const run = ids.length
+      ? await supabaseRpc(env, "invoke_mail_worker_ids", { p_ids: ids, p_limit: limit })
+      : await supabaseRpc(env, "invoke_mail_worker", { p_limit: limit });
     if (!run.ok) {
       return json({ ok: false, error: "mail_worker_invoke_failed", details: summarizeSupabaseError(run) }, run.status || 500);
     }
@@ -417,6 +419,8 @@ async function handleAdminMailApi(request, env, url) {
     return json({
       ok: true,
       invoked: true,
+      targeted: ids.length > 0,
+      targeted_count: ids.length,
       limit,
       requeued,
     });

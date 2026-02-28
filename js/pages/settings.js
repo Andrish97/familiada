@@ -21,6 +21,20 @@ const TOOLS_MANIFEST = "/settings-tools/tools.json";
 const POLL_MS = 15000;
 const MINUTES_MIN = 10;
 const MAIL_PROVIDERS = ["sendgrid", "brevo", "mailgun"];
+const CRON_PRESETS = [
+  { id: "1m", schedule: "* * * * *", minutes: 1 },
+  { id: "2m", schedule: "*/2 * * * *", minutes: 2 },
+  { id: "5m", schedule: "*/5 * * * *", minutes: 5 },
+  { id: "10m", schedule: "*/10 * * * *", minutes: 10 },
+  { id: "15m", schedule: "*/15 * * * *", minutes: 15 },
+  { id: "30m", schedule: "*/30 * * * *", minutes: 30 },
+  { id: "1h", schedule: "0 * * * *", minutes: 60 },
+  { id: "2h", schedule: "0 */2 * * *", minutes: 120 },
+  { id: "4h", schedule: "0 */4 * * *", minutes: 240 },
+  { id: "6h", schedule: "0 */6 * * *", minutes: 360 },
+  { id: "12h", schedule: "0 */12 * * *", minutes: 720 },
+  { id: "24h", schedule: "0 0 * * *", minutes: 1440 },
+];
 
 const els = {
   authScreen: document.getElementById("authScreen"),
@@ -59,7 +73,8 @@ const els = {
   mailDelayMs: document.getElementById("mailDelayMs"),
   mailBatchMax: document.getElementById("mailBatchMax"),
   mailWorkerLimit: document.getElementById("mailWorkerLimit"),
-  mailCronSchedule: document.getElementById("mailCronSchedule"),
+  mailCronPreset: document.getElementById("mailCronPreset"),
+  mailCronHint: document.getElementById("mailCronHint"),
   mailCronActive: document.getElementById("mailCronActive"),
   mailSettingsStatus: document.getElementById("mailSettingsStatus"),
   btnMailSaveSettings: document.getElementById("btnMailSaveSettings"),
@@ -98,6 +113,8 @@ let activeTab = "maintenance";
 let previousTabBeforeTools = "maintenance";
 let mailSettingsLoaded = false;
 let mailProviderOrder = [...MAIL_PROVIDERS];
+let mailCronPresetValue = "5m";
+let mailCronSupported = true;
 const selectedQueueIds = new Set();
 const MODE_ORDER = ["message", "returnAt", "countdown"];
 const MODE_TO_INDEX = {
@@ -902,6 +919,65 @@ function providerLabel(provider) {
   return translated === key ? provider : translated;
 }
 
+function trOr(key, fallback) {
+  const translated = t(key);
+  return translated === key ? fallback : translated;
+}
+
+function getCronPresetById(id) {
+  return CRON_PRESETS.find((p) => p.id === String(id || "").trim()) || null;
+}
+
+function getCronPresetBySchedule(schedule) {
+  const value = String(schedule || "").trim();
+  if (!value) return null;
+  return CRON_PRESETS.find((p) => p.schedule === value) || null;
+}
+
+function cronPresetLabel(preset) {
+  if (!preset) return "—";
+  return trOr(`settings.mail.cronPreset.${preset.id}`, `Every ${preset.minutes} min`);
+}
+
+function renderCronPresetOptions() {
+  if (!els.mailCronPreset) return;
+  const prev = mailCronPresetValue;
+  const selected = getCronPresetById(prev) || getCronPresetById("5m") || CRON_PRESETS[0];
+  if (!selected) return;
+
+  clearChildren(els.mailCronPreset);
+  CRON_PRESETS.forEach((preset) => {
+    const opt = document.createElement("option");
+    opt.value = preset.id;
+    opt.textContent = cronPresetLabel(preset);
+    els.mailCronPreset?.appendChild(opt);
+  });
+
+  mailCronPresetValue = selected.id;
+  els.mailCronPreset.value = selected.id;
+  updateCronHint();
+}
+
+function updateCronHint() {
+  if (!els.mailCronHint) return;
+  if (!mailCronSupported) {
+    els.mailCronHint.textContent = t("settings.mail.cronUnavailable");
+    return;
+  }
+  const selected = getCronPresetById(mailCronPresetValue) || getCronPresetById("5m") || CRON_PRESETS[0];
+  if (!selected) {
+    els.mailCronHint.textContent = "—";
+    return;
+  }
+  const template = trOr(
+    "settings.mail.cronHint",
+    "Worker będzie uruchamiany co {minutes} min (cron: {schedule})."
+  );
+  els.mailCronHint.textContent = template
+    .replace("{minutes}", String(selected.minutes))
+    .replace("{schedule}", selected.schedule);
+}
+
 function renderProviderOrder() {
   if (!els.mailProviderOrderList) return;
   els.mailProviderOrderList.innerHTML = "";
@@ -964,8 +1040,11 @@ function updateMailSettingsStatus(cron) {
   }
   const mode = cron.active ? t("settings.mail.active") : t("settings.mail.inactive");
   const schedule = String(cron.schedule || "—");
+  const preset = getCronPresetBySchedule(schedule);
+  const scheduleLabel = preset ? cronPresetLabel(preset) : schedule;
   const limit = clampInt(cron.limit, 1, 200, 25);
-  els.mailSettingsStatus.textContent = `${mode} • ${schedule} • limit ${limit}`;
+  const limitLabel = trOr("settings.mail.limitBadge", "limit {count}").replace("{count}", String(limit));
+  els.mailSettingsStatus.textContent = `${mode} • ${scheduleLabel} • ${limitLabel}`;
 }
 
 function clearChildren(el) {
@@ -987,7 +1066,7 @@ function renderQueueRows(rows) {
   if (!Array.isArray(rows) || !rows.length) {
     const tr = document.createElement("tr");
     const td = document.createElement("td");
-    td.colSpan = 7;
+    td.colSpan = 8;
     td.className = "mail-empty";
     td.textContent = t("settings.mail.emptyQueue");
     tr.appendChild(td);
@@ -1024,7 +1103,18 @@ function renderQueueRows(rows) {
     const tdCreated = document.createElement("td");
     tdCreated.textContent = formatDateTime(row.created_at);
 
-    tr.append(tdPick, tdStatus, tdTo, tdSubject, tdAttempts, tdError, tdCreated);
+    const tdAction = document.createElement("td");
+    const action = document.createElement("button");
+    action.type = "button";
+    action.className = "btn sm mail-row-action";
+    const status = String(row.status || "").toLowerCase();
+    const isSending = status === "sending";
+    action.textContent = isSending ? t("settings.mail.sendingNow") : t("settings.mail.runNow");
+    action.disabled = isSending;
+    if (!isSending) action.dataset.queueRunId = String(row.id);
+    tdAction.appendChild(action);
+
+    tr.append(tdPick, tdStatus, tdTo, tdSubject, tdAttempts, tdError, tdCreated, tdAction);
     els.mailQueueBody?.appendChild(tr);
   });
 }
@@ -1096,11 +1186,23 @@ async function loadMailSettings({ silent = false } = {}) {
     if (els.mailWorkerLimit) els.mailWorkerLimit.value = String(clampInt(settings.worker_limit, 1, 200, 25));
     if (els.mailRunLimit) els.mailRunLimit.value = String(clampInt(settings.worker_limit, 1, 200, 25));
 
-    if (els.mailCronSchedule) {
-      els.mailCronSchedule.value = String(cron?.schedule || "");
+    mailCronSupported = cron?.supported !== false;
+    const selectedPreset =
+      getCronPresetBySchedule(String(cron?.schedule || "")) ||
+      getCronPresetById(mailCronPresetValue) ||
+      getCronPresetById("5m") ||
+      CRON_PRESETS[0];
+    if (selectedPreset) {
+      mailCronPresetValue = selectedPreset.id;
     }
+    if (els.mailCronPreset) {
+      els.mailCronPreset.value = mailCronPresetValue;
+      els.mailCronPreset.disabled = !mailCronSupported;
+    }
+    updateCronHint();
     if (els.mailCronActive) {
       els.mailCronActive.checked = cron?.active !== false;
+      els.mailCronActive.disabled = !mailCronSupported;
     }
 
     updateMailSettingsStatus(cron);
@@ -1118,7 +1220,13 @@ async function saveMailSettings() {
   const delayMs = clampInt(els.mailDelayMs?.value, 0, 5000, 250);
   const batchMax = clampInt(els.mailBatchMax?.value, 1, 500, 100);
   const workerLimit = clampInt(els.mailWorkerLimit?.value, 1, 200, 25);
-  const cronSchedule = String(els.mailCronSchedule?.value || "").trim();
+  const selectedPreset =
+    getCronPresetById(els.mailCronPreset?.value) ||
+    getCronPresetById(mailCronPresetValue) ||
+    getCronPresetById("5m") ||
+    CRON_PRESETS[0];
+  mailCronPresetValue = selectedPreset ? selectedPreset.id : "5m";
+  const cronSchedule = selectedPreset ? selectedPreset.schedule : "*/5 * * * *";
   const cronActive = els.mailCronActive?.checked !== false;
 
   const payload = {
@@ -1129,7 +1237,7 @@ async function saveMailSettings() {
     worker_limit: workerLimit,
   };
 
-  if (cronSchedule) {
+  if (mailCronSupported && cronSchedule) {
     payload.cron_schedule = cronSchedule;
     payload.cron_active = cronActive;
   }
@@ -1204,10 +1312,12 @@ async function loadMailLogs({ silent = false } = {}) {
 }
 
 async function runMailWorker({ requeueFailed = false, ids = [] } = {}) {
-  const limit = clampInt(els.mailRunLimit?.value, 1, 200, 25);
+  const baseLimit = clampInt(els.mailRunLimit?.value, 1, 200, 25);
+  const requestedIds = Array.isArray(ids) ? ids : [];
+  const limit = requestedIds.length ? Math.min(200, Math.max(baseLimit, requestedIds.length)) : baseLimit;
   const payload = { limit };
   if (requeueFailed) payload.requeue_failed = true;
-  if (Array.isArray(ids) && ids.length) payload.ids = ids;
+  if (requestedIds.length) payload.ids = requestedIds;
 
   const res = await apiFetch(`${API_BASE}/mail/queue/run`, {
     method: "POST",
@@ -1218,7 +1328,7 @@ async function runMailWorker({ requeueFailed = false, ids = [] } = {}) {
     throw new Error(txt || `worker run failed (${res.status})`);
   }
 
-  showToast(t("settings.mail.workerInvoked"));
+  showToast(requestedIds.length === 1 ? t("settings.mail.singleInvoked") : t("settings.mail.workerInvoked"));
   await loadMailQueue({ silent: true });
   await loadMailLogs({ silent: true });
   setTimeout(() => {
@@ -1487,11 +1597,29 @@ function wireEvents() {
   if (els.mailQueueBody) {
     els.mailQueueBody.addEventListener("change", (event) => {
       const target = event.target;
-      if (!(target instanceof HTMLInputElement)) return;
+      if (!(target instanceof HTMLInputElement) || target.type !== "checkbox") return;
       const id = String(target.dataset.queueId || "");
       if (!id) return;
       if (target.checked) selectedQueueIds.add(id);
       else selectedQueueIds.delete(id);
+    });
+
+    els.mailQueueBody.addEventListener("click", async (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLElement)) return;
+      const btn = target.closest("button[data-queue-run-id]");
+      if (!(btn instanceof HTMLButtonElement)) return;
+      const id = String(btn.dataset.queueRunId || "");
+      if (!id) return;
+      markUserAction();
+      btn.disabled = true;
+      try {
+        await runMailWorker({ ids: [id] });
+      } catch {
+        if (shouldShowActionError()) showToast(t("settings.toast.error"), "error");
+      } finally {
+        btn.disabled = false;
+      }
     });
   }
 
@@ -1522,6 +1650,11 @@ function wireEvents() {
 
   els.mailQueueStatusFilter?.addEventListener("change", () => {
     void loadMailQueue();
+  });
+
+  els.mailCronPreset?.addEventListener("change", () => {
+    mailCronPresetValue = String(els.mailCronPreset?.value || mailCronPresetValue);
+    updateCronHint();
   });
 
   els.mailLogFnFilter?.addEventListener("change", () => {
@@ -1583,6 +1716,7 @@ function wireEvents() {
   applyDateOrderByLang();
   applyModalLabels();
   setActiveTab("maintenance");
+  renderCronPresetOptions();
   renderProviderOrder();
   guardDesktopOnly({ maxWidth: 980 });
   syncTopbarHeight();
@@ -1592,6 +1726,7 @@ function wireEvents() {
     applyDateOrderByLang();
     applyModalLabels();
     renderProviderOrder();
+    renderCronPresetOptions();
     renderCalendar();
     if (currentState) updateModeStatus(currentState);
   });

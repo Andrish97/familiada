@@ -34,6 +34,20 @@ function clampError(message: unknown, max = 2000) {
   return String(message ?? "").slice(0, max);
 }
 
+function parseQueueIds(raw: string | null): string[] {
+  if (!raw) return [];
+  const uuidRe = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  const uniq = new Set<string>();
+  String(raw)
+    .split(",")
+    .map((v) => v.trim())
+    .filter(Boolean)
+    .forEach((id) => {
+      if (uuidRe.test(id)) uniq.add(id);
+    });
+  return [...uniq].slice(0, 200);
+}
+
 function parseProviderOrder(raw: string): Provider[] {
   const allowed: Provider[] = ["sendgrid", "brevo", "mailgun"];
   const out = String(raw || "")
@@ -181,16 +195,21 @@ serve(async (req) => {
   const delayMs = Math.max(0, Math.min(5000, Number(settings.delay_ms || 0)));
   const defaultLimit = Math.max(1, Math.min(200, Number(settings.worker_limit || 25)));
   const limit = Math.max(1, Math.min(200, Number(url.searchParams.get("limit") || String(defaultLimit))));
-  console.log("[mail-worker] settings", { providerOrder: order, delayMs, limit });
+  const selectedIds = parseQueueIds(url.searchParams.get("ids"));
+  const pickFn = selectedIds.length ? "mail_queue_pick_selected" : "mail_queue_pick";
+  const pickPayload = selectedIds.length
+    ? { p_ids: selectedIds, p_limit: limit }
+    : { p_limit: limit };
+  console.log("[mail-worker] settings", { providerOrder: order, delayMs, limit, selectedIds: selectedIds.length });
   await writeLog({
     requestId,
     event: "request_settings_loaded",
     status: "ok",
-    meta: { providerOrder: order.join(","), delayMs, limit, defaultLimit },
+    meta: { providerOrder: order.join(","), delayMs, limit, defaultLimit, selectedIds: selectedIds.length },
   });
 
   // pick batch
-  const { data: rows, error } = await sbAdmin.rpc("mail_queue_pick", { p_limit: limit });
+  const { data: rows, error } = await sbAdmin.rpc(pickFn, pickPayload);
   if (error) {
     console.error("[mail-worker] queue:pick_failed", { error });
     await writeLog({
@@ -199,6 +218,7 @@ serve(async (req) => {
       event: "queue_pick_failed",
       status: "failed",
       error: String(error.message || error),
+      meta: { pickFn, selectedIds: selectedIds.length },
     });
     return json({ ok: false, error: "pick_failed" }, 500);
   }
@@ -207,7 +227,7 @@ serve(async (req) => {
     requestId,
     event: "queue_picked",
     status: "ok",
-    meta: { count: (rows || []).length, limit },
+    meta: { count: (rows || []).length, limit, pickFn, selectedIds: selectedIds.length },
   });
 
   let sent = 0;
