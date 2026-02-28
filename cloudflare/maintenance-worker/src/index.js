@@ -545,23 +545,32 @@ async function supabaseRequest(env, path, { method = "GET", body, headers } = {}
     reqHeaders.set("Content-Type", "application/json");
   }
 
-  const res = await fetch(`${cfg.baseUrl}${path}`, {
-    method,
-    headers: reqHeaders,
-    body: body === undefined ? undefined : JSON.stringify(body),
-  });
+  try {
+    const res = await fetch(`${cfg.baseUrl}${path}`, {
+      method,
+      headers: reqHeaders,
+      body: body === undefined ? undefined : JSON.stringify(body),
+    });
 
-  const text = await res.text();
-  let data = null;
-  if (text) {
-    try {
-      data = JSON.parse(text);
-    } catch {
-      data = text;
+    const text = await res.text();
+    let data = null;
+    if (text) {
+      try {
+        data = JSON.parse(text);
+      } catch {
+        data = text;
+      }
     }
-  }
 
-  return { ok: res.ok, status: res.status, data, text };
+    return { ok: res.ok, status: res.status, data, text };
+  } catch (err) {
+    return {
+      ok: false,
+      status: 502,
+      data: null,
+      text: `supabase_fetch_failed:${String((err && err.message) || err || "unknown_error")}`,
+    };
+  }
 }
 
 async function supabaseRpc(env, fnName, params = {}) {
