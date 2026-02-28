@@ -4,15 +4,15 @@
   <meta charset="UTF-8"/>
   <meta name="robots" content="noindex, nofollow"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <meta name="app-version" content="settings-2026.02.28"/>
+  <meta name="app-version" content="settings-2026.02.28.2"/>
   <title data-i18n="settings.title">Familiada — settings</title>
 
   <link rel="icon" href="favicon.ico"/>
   <link rel="stylesheet" href="css/base.css"/>
   <link rel="stylesheet" href="css/builder.css"/>
-  <link rel="stylesheet" href="css/settings.css?v=20260228"/>
+  <link rel="stylesheet" href="css/settings.css?v=20260228-2"/>
 
-  <script type="module" src="js/pages/settings.js?v=20260228" defer></script>
+  <script type="module" src="js/pages/settings.js?v=20260228-2" defer></script>
 </head>
 <body class="builder-body settings-body settings-locked no-footer-line">
   <header class="topbar topbar-layout-4 topbar-mobile-keep-brand">
@@ -135,7 +135,7 @@
         </div>
 
         <div class="mail-cards">
-          <section class="mail-card">
+          <section class="mail-card mail-card-settings">
             <div class="mail-card-title" data-i18n="settings.mail.settingsTitle">Ustawienia wysyłki</div>
             <div class="field row">
               <label class="toggle" for="mailQueueEnabled">
@@ -162,13 +162,15 @@
               <div class="field">
                 <label class="field-label" for="mailWorkerLimit" data-i18n="settings.mail.workerLimit">Limit workera (domyślny)</label>
                 <input id="mailWorkerLimit" type="number" min="1" max="200" step="1" value="25"/>
+                <div class="field-hint" data-i18n="settings.mail.workerLimitHint">Ile maili worker wysyła podczas jednego uruchomienia.</div>
               </div>
             </div>
 
             <div class="mail-inline-grid">
               <div class="field">
-                <label class="field-label" for="mailCronSchedule" data-i18n="settings.mail.cronSchedule">Cron schedule</label>
-                <input id="mailCronSchedule" type="text" placeholder="*/1 * * * *"/>
+                <label class="field-label" for="mailCronPreset" data-i18n="settings.mail.cronEvery">Co jaki czas uruchamiać worker</label>
+                <select id="mailCronPreset"></select>
+                <div class="field-hint" id="mailCronHint"></div>
               </div>
               <div class="field row">
                 <label class="toggle" for="mailCronActive">
@@ -189,12 +191,13 @@
             </div>
           </section>
 
-          <section class="mail-card">
+          <section class="mail-card mail-card-worker">
             <div class="mail-card-title" data-i18n="settings.mail.workerActions">Ręczne akcje workera</div>
             <div class="mail-inline-grid">
               <div class="field">
                 <label class="field-label" for="mailRunLimit" data-i18n="settings.mail.runLimit">Limit dla uruchomienia ręcznego</label>
                 <input id="mailRunLimit" type="number" min="1" max="200" step="1" value="25"/>
+                <div class="field-hint" data-i18n="settings.mail.runLimitHint">Maksymalnie tyle rekordów wyśle jedno ręczne uruchomienie.</div>
               </div>
             </div>
             <div class="panel-actions">
@@ -205,7 +208,7 @@
             <div class="field-hint" data-i18n="settings.mail.workerHint">Opcje ręczne działają na `mail_queue` i uruchamiają `invoke_mail_worker(...)`.</div>
           </section>
 
-          <section class="mail-card mail-card-wide">
+          <section class="mail-card mail-card-wide mail-card-queue">
             <div class="mail-card-head">
               <div class="mail-card-title" data-i18n="settings.mail.queueTitle">Kolejka wysyłki (mail_queue)</div>
               <div class="mail-controls">
@@ -230,6 +233,7 @@
                     <th data-i18n="settings.mail.col.attempts">Próby</th>
                     <th data-i18n="settings.mail.col.lastError">Błąd</th>
                     <th data-i18n="settings.mail.col.createdAt">Utworzono</th>
+                    <th data-i18n="settings.mail.col.action">Akcja</th>
                   </tr>
                 </thead>
                 <tbody id="mailQueueBody"></tbody>
@@ -238,7 +242,7 @@
             <div class="field-hint" id="mailQueueInfo">—</div>
           </section>
 
-          <section class="mail-card mail-card-wide">
+          <section class="mail-card mail-card-wide mail-card-logs">
             <div class="mail-card-head">
               <div class="mail-card-title" data-i18n="settings.mail.logsTitle">Logi funkcji mailowych</div>
               <div class="mail-controls">
