@@ -4104,6 +4104,16 @@ const uk = {
       workerHint: "У таблиці також можна натиснути «Відправити зараз» для одного листа.",
       queueTitle: "Черга відправки (mail_queue)",
       logsTitle: "Логи поштових функцій",
+      logsHelpBtn: "Як читати логи",
+      logsHelpTitle: "Як читати логи",
+      logsHelpLead: "Кожен рядок - це одна подія з send-mail / send-email / mail-worker.",
+      logsHelp: {
+        levels: "`level`: info = нормальний перебіг, warn = часткова проблема, error = помилка відправки.",
+        events: "`event`: напр. `queue_picked`, `queue_item_sent`, `queue_item_failed` показує етап обробки.",
+        recipient: "`Кому` і `Провайдер` показують одержувача та провайдера спроби відправки.",
+        error: "Колонка `Помилка` містить конкретну причину (API key, timeout, 4xx/5xx провайдера тощо).",
+        next: "Якщо бачиш `queue_item_failed`, перевір помилку, виправ конфіг і натисни «Відправити зараз» або «Відправити вибрані».",
+      },
       providers: {
         sendgrid: "SendGrid",
         brevo: "Brevo",

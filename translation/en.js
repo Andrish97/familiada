@@ -4224,6 +4224,16 @@ const en = {
       workerHint: "You can also click “Send now” in a specific queue row.",
       queueTitle: "Mail queue (mail_queue)",
       logsTitle: "Mail function logs",
+      logsHelpBtn: "How to read logs",
+      logsHelpTitle: "How to read logs",
+      logsHelpLead: "Each row is one event from send-mail / send-email / mail-worker.",
+      logsHelp: {
+        levels: "`level`: info = normal flow, warn = partial issue, error = send failure.",
+        events: "`event`: e.g. `queue_picked`, `queue_item_sent`, `queue_item_failed` indicates processing stage.",
+        recipient: "`To` and `Provider` show recipient and provider used for the send attempt.",
+        error: "`Error` column contains the concrete reason (API key, timeout, provider 4xx/5xx, etc.).",
+        next: "If you see `queue_item_failed`, verify the error, fix config, then use “Send now” or “Send selected”.",
+      },
       providers: {
         sendgrid: "SendGrid",
         brevo: "Brevo",

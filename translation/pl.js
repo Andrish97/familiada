@@ -4221,6 +4221,16 @@ const pl = {
       workerHint: "W tabeli możesz też kliknąć „Wyślij teraz” przy pojedynczym mailu.",
       queueTitle: "Kolejka wysyłki (mail_queue)",
       logsTitle: "Logi funkcji mailowych",
+      logsHelpBtn: "Jak czytać logi",
+      logsHelpTitle: "Jak czytać logi",
+      logsHelpLead: "Każdy wiersz to jedno zdarzenie z funkcji send-mail / send-email / mail-worker.",
+      logsHelp: {
+        levels: "`level`: info = normalny przebieg, warn = częściowy problem, error = błąd wysyłki.",
+        events: "`event`: np. `queue_picked`, `queue_item_sent`, `queue_item_failed` pokazuje etap przetwarzania.",
+        recipient: "`Do` i `Provider` mówią dla kogo i przez jakiego dostawcę szła próba wysyłki.",
+        error: "Kolumna `Błąd` zawiera konkretny powód niepowodzenia (API key, timeout, 4xx/5xx providerów itp.).",
+        next: "Jeśli widzisz `queue_item_failed`, sprawdź błąd, popraw konfigurację i użyj „Wyślij teraz” lub „Wyślij zaznaczone”.",
+      },
       providers: {
         sendgrid: "SendGrid",
         brevo: "Brevo",
