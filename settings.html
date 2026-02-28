@@ -4,15 +4,15 @@
   <meta charset="UTF-8"/>
   <meta name="robots" content="noindex, nofollow"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <meta name="app-version" content="settings-2026.02.25"/>
+  <meta name="app-version" content="settings-2026.02.28"/>
   <title data-i18n="settings.title">Familiada — settings</title>
 
   <link rel="icon" href="favicon.ico"/>
   <link rel="stylesheet" href="css/base.css"/>
   <link rel="stylesheet" href="css/builder.css"/>
-  <link rel="stylesheet" href="css/settings.css?v=20260226"/>
+  <link rel="stylesheet" href="css/settings.css?v=20260228"/>
 
-  <script type="module" src="js/pages/settings.js?v=20260226" defer></script>
+  <script type="module" src="js/pages/settings.js?v=20260228" defer></script>
 </head>
 <body class="builder-body settings-body settings-locked no-footer-line">
   <header class="topbar topbar-layout-4 topbar-mobile-keep-brand">
@@ -23,6 +23,7 @@
       <a class="btn sm btn-external" id="btnSupabase" href="https://supabase.familiada.online" target="_blank" rel="noopener" data-i18n="settings.actions.supabase">Supabase</a>
       <a class="btn sm btn-external" id="btnServer" href="https://panel.familiada.online" target="_blank" rel="noopener" data-i18n="settings.actions.server">Serwer</a>
       <button class="btn sm tab-btn active" id="btnTabMaintenance" type="button" data-i18n="settings.tabs.maintenance">Prace techniczne</button>
+      <button class="btn sm tab-btn" id="btnTabMail" type="button" data-i18n="settings.tabs.mail">Maile</button>
       <div class="ui-select" id="toolsSelect">
         <button class="btn sm ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
           <span class="ui-select-label" data-i18n="settings.tabs.tools">Narzędzia</span>
@@ -124,6 +125,157 @@
             </label>
           </div>
           <div class="bypass-desc" data-i18n="settings.bypass.desc">Ustawia cookie admina na 30 dni. Działa tylko w tej przeglądarce.</div>
+        </div>
+      </div>
+
+      <div class="mail-panel" id="mailPanel" hidden>
+        <div class="panel-head">
+          <div class="panel-title" data-i18n="settings.mail.title">Maile</div>
+          <div class="panel-sub" data-i18n="settings.mail.subtitle">Kolejka, logi i konfiguracja workera</div>
+        </div>
+
+        <div class="mail-cards">
+          <section class="mail-card">
+            <div class="mail-card-title" data-i18n="settings.mail.settingsTitle">Ustawienia wysyłki</div>
+            <div class="field row">
+              <label class="toggle" for="mailQueueEnabled">
+                <input type="checkbox" id="mailQueueEnabled" checked/>
+                <span class="toggle-ui"></span>
+                <span class="toggle-label" data-i18n="settings.mail.queueEnabled">Kolejkuj wysyłkę (send-mail -> mail_queue)</span>
+              </label>
+            </div>
+
+            <div class="field">
+              <span class="field-label" data-i18n="settings.mail.providerOrder">Kolejność providerów</span>
+              <div class="provider-order-list" id="mailProviderOrderList"></div>
+            </div>
+
+            <div class="mail-inline-grid">
+              <div class="field">
+                <label class="field-label" for="mailDelayMs" data-i18n="settings.mail.delayMs">Zwłoka między wysyłkami (ms)</label>
+                <input id="mailDelayMs" type="number" min="0" max="5000" step="10" value="250"/>
+              </div>
+              <div class="field">
+                <label class="field-label" for="mailBatchMax" data-i18n="settings.mail.batchMax">Maksymalna partia</label>
+                <input id="mailBatchMax" type="number" min="1" max="500" step="1" value="100"/>
+              </div>
+              <div class="field">
+                <label class="field-label" for="mailWorkerLimit" data-i18n="settings.mail.workerLimit">Limit workera (domyślny)</label>
+                <input id="mailWorkerLimit" type="number" min="1" max="200" step="1" value="25"/>
+              </div>
+            </div>
+
+            <div class="mail-inline-grid">
+              <div class="field">
+                <label class="field-label" for="mailCronSchedule" data-i18n="settings.mail.cronSchedule">Cron schedule</label>
+                <input id="mailCronSchedule" type="text" placeholder="*/1 * * * *"/>
+              </div>
+              <div class="field row">
+                <label class="toggle" for="mailCronActive">
+                  <input type="checkbox" id="mailCronActive" checked/>
+                  <span class="toggle-ui"></span>
+                  <span class="toggle-label" data-i18n="settings.mail.cronActive">Cron aktywny</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="panel-actions">
+              <button class="btn sm gold" id="btnMailSaveSettings" type="button" data-i18n="settings.mail.save">Zapisz ustawienia maili</button>
+              <button class="btn sm" id="btnMailReloadSettings" type="button" data-i18n="settings.actions.refresh">Odśwież</button>
+            </div>
+            <div class="panel-status">
+              <span class="status-label" data-i18n="settings.mail.currentCron">Cron</span>
+              <span class="status-value" id="mailSettingsStatus">—</span>
+            </div>
+          </section>
+
+          <section class="mail-card">
+            <div class="mail-card-title" data-i18n="settings.mail.workerActions">Ręczne akcje workera</div>
+            <div class="mail-inline-grid">
+              <div class="field">
+                <label class="field-label" for="mailRunLimit" data-i18n="settings.mail.runLimit">Limit dla uruchomienia ręcznego</label>
+                <input id="mailRunLimit" type="number" min="1" max="200" step="1" value="25"/>
+              </div>
+            </div>
+            <div class="panel-actions">
+              <button class="btn sm gold" id="btnMailRunWorker" type="button" data-i18n="settings.mail.runWorker">Uruchom worker</button>
+              <button class="btn sm" id="btnMailRetryFailed" type="button" data-i18n="settings.mail.retryFailed">Requeue failed + uruchom</button>
+              <button class="btn sm" id="btnMailRetrySelected" type="button" data-i18n="settings.mail.retrySelected">Requeue zaznaczone + uruchom</button>
+            </div>
+            <div class="field-hint" data-i18n="settings.mail.workerHint">Opcje ręczne działają na `mail_queue` i uruchamiają `invoke_mail_worker(...)`.</div>
+          </section>
+
+          <section class="mail-card mail-card-wide">
+            <div class="mail-card-head">
+              <div class="mail-card-title" data-i18n="settings.mail.queueTitle">Kolejka wysyłki (mail_queue)</div>
+              <div class="mail-controls">
+                <select id="mailQueueStatusFilter">
+                  <option value="all" data-i18n="settings.mail.filter.all">Wszystkie</option>
+                  <option value="pending" data-i18n="settings.mail.filter.pending">Pending</option>
+                  <option value="sending" data-i18n="settings.mail.filter.sending">Sending</option>
+                  <option value="failed" data-i18n="settings.mail.filter.failed">Failed</option>
+                </select>
+                <input id="mailQueueLimit" type="number" min="1" max="500" step="10" value="150"/>
+                <button class="btn sm" id="btnMailQueueRefresh" type="button" data-i18n="settings.actions.refresh">Odśwież</button>
+              </div>
+            </div>
+            <div class="mail-table-wrap">
+              <table class="mail-table">
+                <thead>
+                  <tr>
+                    <th></th>
+                    <th data-i18n="settings.mail.col.status">Status</th>
+                    <th data-i18n="settings.mail.col.to">Do</th>
+                    <th data-i18n="settings.mail.col.subject">Temat</th>
+                    <th data-i18n="settings.mail.col.attempts">Próby</th>
+                    <th data-i18n="settings.mail.col.lastError">Błąd</th>
+                    <th data-i18n="settings.mail.col.createdAt">Utworzono</th>
+                  </tr>
+                </thead>
+                <tbody id="mailQueueBody"></tbody>
+              </table>
+            </div>
+            <div class="field-hint" id="mailQueueInfo">—</div>
+          </section>
+
+          <section class="mail-card mail-card-wide">
+            <div class="mail-card-head">
+              <div class="mail-card-title" data-i18n="settings.mail.logsTitle">Logi funkcji mailowych</div>
+              <div class="mail-controls">
+                <select id="mailLogFnFilter">
+                  <option value="all" data-i18n="settings.mail.filter.allFunctions">Wszystkie funkcje</option>
+                  <option value="send-mail">send-mail</option>
+                  <option value="send-email">send-email</option>
+                  <option value="mail-worker">mail-worker</option>
+                </select>
+                <select id="mailLogLevelFilter">
+                  <option value="all" data-i18n="settings.mail.filter.allLevels">Wszystkie poziomy</option>
+                  <option value="info">info</option>
+                  <option value="warn">warn</option>
+                  <option value="error">error</option>
+                </select>
+                <input id="mailLogLimit" type="number" min="1" max="500" step="10" value="200"/>
+                <button class="btn sm" id="btnMailLogsRefresh" type="button" data-i18n="settings.actions.refresh">Odśwież</button>
+              </div>
+            </div>
+            <div class="mail-table-wrap">
+              <table class="mail-table">
+                <thead>
+                  <tr>
+                    <th data-i18n="settings.mail.col.time">Czas</th>
+                    <th data-i18n="settings.mail.col.function">Funkcja</th>
+                    <th data-i18n="settings.mail.col.level">Poziom</th>
+                    <th data-i18n="settings.mail.col.event">Event</th>
+                    <th data-i18n="settings.mail.col.to">Do</th>
+                    <th data-i18n="settings.mail.col.provider">Provider</th>
+                    <th data-i18n="settings.mail.col.lastError">Błąd</th>
+                  </tr>
+                </thead>
+                <tbody id="mailLogsBody"></tbody>
+              </table>
+            </div>
+            <div class="field-hint" id="mailLogsInfo">—</div>
+          </section>
         </div>
       </div>
     </section>

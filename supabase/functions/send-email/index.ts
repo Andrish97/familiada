@@ -38,6 +38,7 @@ type HookPayload = {
 };
 
 type Provider = "sendgrid" | "brevo" | "mailgun";
+type LogLevel = "debug" | "info" | "warn" | "error";
 
 function parseProviderOrder(raw: string): Provider[] {
   const allowed: Provider[] = ["sendgrid", "brevo", "mailgun"];
@@ -100,6 +101,43 @@ function scrubEmail(email: string) {
   return `${e.slice(0, 2)}***${e.slice(at)}`;
 }
 
+function clampError(message: unknown, max = 2000) {
+  return String(message ?? "").slice(0, max);
+}
+
+async function writeLog(entry: {
+  requestId: string;
+  level?: LogLevel;
+  event: string;
+  status?: string;
+  actorUserId?: string | null;
+  recipientEmail?: string | null;
+  provider?: string | null;
+  error?: string | null;
+  meta?: Record<string, unknown>;
+}) {
+  if (!sbAdmin) return;
+  try {
+    const { error } = await sbAdmin.from("mail_function_logs").insert({
+      function_name: "send-email",
+      level: entry.level || "info",
+      event: entry.event,
+      request_id: entry.requestId,
+      actor_user_id: entry.actorUserId || null,
+      recipient_email: entry.recipientEmail || null,
+      provider: entry.provider || null,
+      status: entry.status || null,
+      error: entry.error ? clampError(entry.error) : null,
+      meta: entry.meta || {},
+    });
+    if (error) {
+      console.warn("[send-email] log:insert_failed", { error });
+    }
+  } catch (err) {
+    console.warn("[send-email] log:insert_failed", { error: String(err) });
+  }
+}
+
 async function sendViaSendgrid(to: string, subject: string, html: string) {
   if (!SENDGRID_KEY) throw new Error("missing_SENDGRID_API_KEY");
   const res = await fetch("https://api.sendgrid.com/v3/mail/send", {
@@ -155,7 +193,12 @@ async function sendViaMailgun(to: string, subject: string, html: string) {
   if (!res.ok) throw new Error(`mailgun_failed:${await res.text().catch(() => "")}`);
 }
 
-async function sendWithFallbacks(to: string, subject: string, html: string) {
+async function sendWithFallbacks(
+  to: string,
+  subject: string,
+  html: string,
+  opts: { requestId: string; actorUserId?: string | null } | null = null,
+) {
   const order = await loadProviderOrder();
 
   console.log("[send-email] send start", {
@@ -174,15 +217,48 @@ async function sendWithFallbacks(to: string, subject: string, html: string) {
       else await sendViaMailgun(to, subject, html);
 
       console.log("[send-email] success via", p);
+      if (opts?.requestId) {
+        await writeLog({
+          requestId: opts.requestId,
+          event: "provider_success",
+          status: "sent",
+          actorUserId: opts.actorUserId || null,
+          recipientEmail: to,
+          provider: p,
+        });
+      }
       return { provider: p };
     } catch (e) {
       const msg = String((e as any)?.message || e);
       console.warn("[send-email] provider failed", { provider: p, error: msg });
+      if (opts?.requestId) {
+        await writeLog({
+          requestId: opts.requestId,
+          level: "warn",
+          event: "provider_failed",
+          status: "failed",
+          actorUserId: opts.actorUserId || null,
+          recipientEmail: to,
+          provider: p,
+          error: msg,
+        });
+      }
       errs.push(`${p}:${msg}`);
     }
   }
 
   console.error("[send-email] all providers failed", errs);
+  if (opts?.requestId) {
+    await writeLog({
+      requestId: opts.requestId,
+      level: "error",
+      event: "all_providers_failed",
+      status: "failed",
+      actorUserId: opts.actorUserId || null,
+      recipientEmail: to,
+      error: errs.join("|"),
+    });
+  }
   throw new Error(errs.join("|"));
 }
 
@@ -307,23 +383,55 @@ function json(data: unknown, status = 200): Response {
   });
 }
 
-async function sendEmail(to: string, subject: string, html: string) {
-  await sendWithFallbacks(to, subject, html);
+async function sendEmail(
+  to: string,
+  subject: string,
+  html: string,
+  opts: { requestId: string; actorUserId?: string | null } | null = null,
+) {
+  await sendWithFallbacks(to, subject, html, opts);
 }
 
 serve(async (req) => {
-  console.log("[send-email] request:start", { method: req.method, contentType: req.headers.get("content-type") || "" });
+  const requestId = crypto.randomUUID();
+  console.log("[send-email] request:start", { requestId, method: req.method, contentType: req.headers.get("content-type") || "" });
+  await writeLog({
+    requestId,
+    event: "request_start",
+    status: "started",
+    meta: { method: req.method, contentType: req.headers.get("content-type") || "" },
+  });
+
   if (req.method !== "POST") {
+    await writeLog({
+      requestId,
+      level: "warn",
+      event: "method_not_allowed",
+      status: "failed",
+      meta: { method: req.method },
+    });
     return json({ ok: false, error: "Method not allowed" }, 405);
   }
 
   if (!SENDGRID_KEY) {
     console.error("[send-email] config:missing_SENDGRID_API_KEY");
+    await writeLog({
+      requestId,
+      level: "error",
+      event: "config_missing_sendgrid_key",
+      status: "failed",
+    });
     return json({ ok: false, error: "Missing SENDGRID_API_KEY env" }, 500);
   }
 
   if (!HOOK_SECRET) {
     console.error("[send-email] config:missing_SEND_EMAIL_HOOK_SECRET");
+    await writeLog({
+      requestId,
+      level: "error",
+      event: "config_missing_hook_secret",
+      status: "failed",
+    });
     return json({ ok: false, error: "Missing SEND_EMAIL_HOOK_SECRET env" }, 500);
   }
 
@@ -341,11 +449,29 @@ serve(async (req) => {
     }) as HookPayload;
   } catch (err) {
     console.error("[send-email] request:invalid_signature", { error: String(err) });
+    await writeLog({
+      requestId,
+      level: "error",
+      event: "request_invalid_signature",
+      status: "failed",
+      error: String(err),
+    });
     return json({ ok: false, error: `Invalid signature: ${String(err)}` }, 401);
   }
 
   try {
     const redirectUrl = getRedirectUrl(payload);
+    const actorUserId = String(payload.user.id || "").trim() || null;
+    await writeLog({
+      requestId,
+      event: "payload_verified",
+      status: "ok",
+      actorUserId,
+      meta: {
+        actionType: payload.email_data.email_action_type,
+        redirectTo: payload.email_data.redirect_to || "",
+      },
+    });
     console.log("[send-email] payload:verified", { actionType: payload.email_data.email_action_type, userEmail: scrubEmail(payload.user.email || ""), userEmailNew: scrubEmail(payload.user.email_new || ""), redirectTo: payload.email_data.redirect_to || "" });
     const baseOrigin = getBaseOrigin(payload, redirectUrl);
     const lang = pickLang(payload, redirectUrl);
@@ -410,7 +536,7 @@ serve(async (req) => {
         const htmlCurrent = emailTemplate === "guest_migrate"
           ? renderSignupMigrate(lang, linkCurrent)
           : renderEmailChange(lang, linkCurrent);
-        await sendEmail(currentEmail, subject, htmlCurrent);
+        await sendEmail(currentEmail, subject, htmlCurrent, { requestId, actorUserId });
         console.log("[send-email] sent:email_change_current", { to: scrubEmail(currentEmail) });
       }
 
@@ -420,10 +546,17 @@ serve(async (req) => {
         const htmlTarget = emailTemplate === "guest_migrate"
           ? renderSignupMigrate(lang, linkTarget)
           : renderEmailChange(lang, linkTarget);
-        await sendEmail(targetEmail, subject, htmlTarget);
+        await sendEmail(targetEmail, subject, htmlTarget, { requestId, actorUserId });
         console.log("[send-email] sent:email_change_new", { to: scrubEmail(targetEmail) });
       }
 
+      await writeLog({
+        requestId,
+        event: "request_done",
+        status: "ok",
+        actorUserId,
+        meta: { actionType: type, flow: "email_change" },
+      });
       return json({ ok: true });
     }
 
@@ -437,12 +570,29 @@ serve(async (req) => {
         ? payload.user.email_new || payload.user.email
         : payload.user.email;
 
-    await sendEmail(to, subject, html);
+    await sendEmail(to, subject, html, { requestId, actorUserId: String(payload.user.id || "").trim() || null });
     console.log("[send-email] sent", { actionType: type, to: scrubEmail(to) });
+    await writeLog({
+      requestId,
+      event: "request_done",
+      status: "ok",
+      actorUserId: String(payload.user.id || "").trim() || null,
+      recipientEmail: to,
+      meta: { actionType: type },
+    });
 
     return json({ ok: true });
   } catch (err) {
     console.error("[send-email] request:error", { error: String(err) });
+    await writeLog({
+      requestId,
+      level: "error",
+      event: "request_error",
+      status: "failed",
+      actorUserId: String(payload.user.id || "").trim() || null,
+      error: String(err),
+      meta: { actionType: payload.email_data.email_action_type || "" },
+    });
     return json({ ok: false, error: `Hook error: ${String(err)}` }, 500);
   }
 });

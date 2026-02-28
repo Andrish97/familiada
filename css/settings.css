@@ -656,6 +656,157 @@ body.tools-fullscreen .tools-frame-wrap iframe{
   font-size: 12px;
 }
 
+.mail-panel{
+  margin-top: 16px;
+  padding: 18px;
+  border: 1px solid var(--line2);
+  border-radius: 18px;
+  background: rgba(8,12,28,.65);
+  display: grid;
+  gap: 16px;
+}
+
+.mail-cards{
+  display: grid;
+  gap: 14px;
+}
+
+.mail-card{
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 14px;
+  background: rgba(255,255,255,.04);
+  padding: 14px;
+  display: grid;
+  gap: 10px;
+}
+
+.mail-card-wide{
+  grid-column: 1 / -1;
+}
+
+.mail-card-title{
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.mail-card-head{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.mail-inline-grid{
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+}
+
+.provider-order-list{
+  display: grid;
+  gap: 8px;
+}
+
+.provider-order-row{
+  display: grid;
+  grid-template-columns: 28px 1fr auto;
+  gap: 10px;
+  align-items: center;
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 12px;
+  background: rgba(0,0,0,.2);
+  padding: 8px 10px;
+}
+
+.provider-order-rank{
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: rgba(255,234,166,.16);
+  color: #ffeaa6;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.provider-order-name{
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.provider-order-actions{
+  display: flex;
+  gap: 6px;
+}
+
+.mail-controls{
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.mail-controls select,
+.mail-controls input{
+  min-height: 34px;
+}
+
+.mail-table-wrap{
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 12px;
+  overflow: auto;
+  background: rgba(0,0,0,.16);
+}
+
+.mail-table{
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 860px;
+}
+
+.mail-table th,
+.mail-table td{
+  border-bottom: 1px solid rgba(255,255,255,.09);
+  padding: 8px 10px;
+  text-align: left;
+  font-size: 12px;
+  vertical-align: top;
+}
+
+.mail-table th{
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  opacity: .75;
+  font-weight: 800;
+  background: rgba(255,255,255,.03);
+}
+
+.mail-empty{
+  text-align: center !important;
+  opacity: .72;
+  font-style: italic;
+}
+
+.mail-status-failed td{
+  background: rgba(255,80,80,.08);
+}
+
+.mail-status-pending td{
+  background: rgba(255,220,120,.06);
+}
+
+.mail-level-error td{
+  background: rgba(255,80,80,.08);
+}
+
+.mail-level-warn td{
+  background: rgba(255,220,120,.07);
+}
+
 
 .toast{
   position: fixed;

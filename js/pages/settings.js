@@ -6,6 +6,10 @@ Settings panel (admin)
 - POST /_admin_api/off
 - POST /_admin_api/bypass
 - POST /_admin_api/bypass_off
+- GET/POST /_admin_api/mail/settings
+- GET /_admin_api/mail/queue
+- POST /_admin_api/mail/queue/run
+- GET /_admin_api/mail/logs
 */
 
 import { initI18n, t } from "../../translation/translation.js";
@@ -16,6 +20,7 @@ const API_BASE = "/_admin_api";
 const TOOLS_MANIFEST = "/settings-tools/tools.json";
 const POLL_MS = 15000;
 const MINUTES_MIN = 10;
+const MAIL_PROVIDERS = ["sendgrid", "brevo", "mailgun"];
 
 const els = {
   authScreen: document.getElementById("authScreen"),
@@ -40,13 +45,40 @@ const els = {
   toolsFrame: document.getElementById("toolsFrame"),
   toolsSelect: document.getElementById("toolsSelect"),
   btnTabMaintenance: document.getElementById("btnTabMaintenance"),
+  btnTabMail: document.getElementById("btnTabMail"),
   mainWrap: document.querySelector("main.wrap"),
   footer: document.querySelector("footer.footer"),
   maintenancePanel: document.querySelector(".maintenance-panel"),
+  mailPanel: document.getElementById("mailPanel"),
   maintenanceControls: document.getElementById("maintenanceControls"),
   modeStatus: document.getElementById("modeStatus"),
   modeStatusValue: document.getElementById("modeStatusValue"),
   toast: document.getElementById("toast"),
+  mailQueueEnabled: document.getElementById("mailQueueEnabled"),
+  mailProviderOrderList: document.getElementById("mailProviderOrderList"),
+  mailDelayMs: document.getElementById("mailDelayMs"),
+  mailBatchMax: document.getElementById("mailBatchMax"),
+  mailWorkerLimit: document.getElementById("mailWorkerLimit"),
+  mailCronSchedule: document.getElementById("mailCronSchedule"),
+  mailCronActive: document.getElementById("mailCronActive"),
+  mailSettingsStatus: document.getElementById("mailSettingsStatus"),
+  btnMailSaveSettings: document.getElementById("btnMailSaveSettings"),
+  btnMailReloadSettings: document.getElementById("btnMailReloadSettings"),
+  mailRunLimit: document.getElementById("mailRunLimit"),
+  btnMailRunWorker: document.getElementById("btnMailRunWorker"),
+  btnMailRetryFailed: document.getElementById("btnMailRetryFailed"),
+  btnMailRetrySelected: document.getElementById("btnMailRetrySelected"),
+  mailQueueStatusFilter: document.getElementById("mailQueueStatusFilter"),
+  mailQueueLimit: document.getElementById("mailQueueLimit"),
+  btnMailQueueRefresh: document.getElementById("btnMailQueueRefresh"),
+  mailQueueBody: document.getElementById("mailQueueBody"),
+  mailQueueInfo: document.getElementById("mailQueueInfo"),
+  mailLogFnFilter: document.getElementById("mailLogFnFilter"),
+  mailLogLevelFilter: document.getElementById("mailLogLevelFilter"),
+  mailLogLimit: document.getElementById("mailLogLimit"),
+  btnMailLogsRefresh: document.getElementById("btnMailLogsRefresh"),
+  mailLogsBody: document.getElementById("mailLogsBody"),
+  mailLogsInfo: document.getElementById("mailLogsInfo"),
 };
 
 let currentState = null;
@@ -62,6 +94,11 @@ let activePicker = null;
 let pickerState = { year: null, month: null, day: null };
 let wheelReady = false;
 let lastUserActionTs = 0;
+let activeTab = "maintenance";
+let previousTabBeforeTools = "maintenance";
+let mailSettingsLoaded = false;
+let mailProviderOrder = [...MAIL_PROVIDERS];
+const selectedQueueIds = new Set();
 const MODE_ORDER = ["message", "returnAt", "countdown"];
 const MODE_TO_INDEX = {
   message: 0,
@@ -155,6 +192,44 @@ async function checkMe() {
   } catch {
     return false;
   }
+}
+
+function clampInt(value, min, max, fallback) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return fallback;
+  return Math.max(min, Math.min(max, Math.round(n)));
+}
+
+function parseProviderOrder(raw) {
+  const source = Array.isArray(raw)
+    ? raw
+    : String(raw || "")
+      .split(",")
+      .map((v) => v.trim().toLowerCase())
+      .filter(Boolean);
+  const out = [];
+  for (const p of source) {
+    if (!MAIL_PROVIDERS.includes(p)) continue;
+    if (out.includes(p)) continue;
+    out.push(p);
+  }
+  for (const p of MAIL_PROVIDERS) {
+    if (!out.includes(p)) out.push(p);
+  }
+  return out;
+}
+
+function formatDateTime(value) {
+  if (!value) return "—";
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return "—";
+  return d.toLocaleString();
+}
+
+function scrubText(value, max = 160) {
+  const text = String(value || "");
+  if (text.length <= max) return text;
+  return `${text.slice(0, max - 1)}…`;
 }
 
 function toDatetimeLocal(value) {
@@ -821,6 +896,351 @@ async function setBypass(state) {
   }
 }
 
+function providerLabel(provider) {
+  const key = `settings.mail.providers.${provider}`;
+  const translated = t(key);
+  return translated === key ? provider : translated;
+}
+
+function renderProviderOrder() {
+  if (!els.mailProviderOrderList) return;
+  els.mailProviderOrderList.innerHTML = "";
+  mailProviderOrder.forEach((provider, idx) => {
+    const row = document.createElement("div");
+    row.className = "provider-order-row";
+
+    const rank = document.createElement("div");
+    rank.className = "provider-order-rank";
+    rank.textContent = String(idx + 1);
+
+    const name = document.createElement("div");
+    name.className = "provider-order-name";
+    name.textContent = providerLabel(provider);
+
+    const actions = document.createElement("div");
+    actions.className = "provider-order-actions";
+
+    const up = document.createElement("button");
+    up.type = "button";
+    up.className = "btn sm";
+    up.textContent = "↑";
+    up.disabled = idx === 0;
+    up.addEventListener("click", () => {
+      if (idx <= 0) return;
+      const next = [...mailProviderOrder];
+      [next[idx - 1], next[idx]] = [next[idx], next[idx - 1]];
+      mailProviderOrder = next;
+      renderProviderOrder();
+    });
+
+    const down = document.createElement("button");
+    down.type = "button";
+    down.className = "btn sm";
+    down.textContent = "↓";
+    down.disabled = idx >= mailProviderOrder.length - 1;
+    down.addEventListener("click", () => {
+      if (idx >= mailProviderOrder.length - 1) return;
+      const next = [...mailProviderOrder];
+      [next[idx + 1], next[idx]] = [next[idx], next[idx + 1]];
+      mailProviderOrder = next;
+      renderProviderOrder();
+    });
+
+    actions.append(up, down);
+    row.append(rank, name, actions);
+    els.mailProviderOrderList?.appendChild(row);
+  });
+}
+
+function updateMailSettingsStatus(cron) {
+  if (!els.mailSettingsStatus) return;
+  if (!cron || cron.supported === false) {
+    els.mailSettingsStatus.textContent = t("settings.mail.cronUnavailable");
+    return;
+  }
+  if (!cron.configured) {
+    els.mailSettingsStatus.textContent = t("settings.mail.cronNotConfigured");
+    return;
+  }
+  const mode = cron.active ? t("settings.mail.active") : t("settings.mail.inactive");
+  const schedule = String(cron.schedule || "—");
+  const limit = clampInt(cron.limit, 1, 200, 25);
+  els.mailSettingsStatus.textContent = `${mode} • ${schedule} • limit ${limit}`;
+}
+
+function clearChildren(el) {
+  if (!el) return;
+  while (el.firstChild) el.removeChild(el.firstChild);
+}
+
+function queueSelectionSync(rows) {
+  const valid = new Set((rows || []).map((r) => String(r.id)));
+  for (const id of selectedQueueIds) {
+    if (!valid.has(id)) selectedQueueIds.delete(id);
+  }
+}
+
+function renderQueueRows(rows) {
+  if (!els.mailQueueBody) return;
+  clearChildren(els.mailQueueBody);
+
+  if (!Array.isArray(rows) || !rows.length) {
+    const tr = document.createElement("tr");
+    const td = document.createElement("td");
+    td.colSpan = 7;
+    td.className = "mail-empty";
+    td.textContent = t("settings.mail.emptyQueue");
+    tr.appendChild(td);
+    els.mailQueueBody.appendChild(tr);
+    return;
+  }
+
+  rows.forEach((row) => {
+    const tr = document.createElement("tr");
+    tr.className = `mail-status-${String(row.status || "").toLowerCase()}`;
+
+    const tdPick = document.createElement("td");
+    const pick = document.createElement("input");
+    pick.type = "checkbox";
+    pick.checked = selectedQueueIds.has(String(row.id));
+    pick.dataset.queueId = String(row.id);
+    tdPick.appendChild(pick);
+
+    const tdStatus = document.createElement("td");
+    tdStatus.textContent = String(row.status || "—");
+
+    const tdTo = document.createElement("td");
+    tdTo.textContent = String(row.to_email || "—");
+
+    const tdSubject = document.createElement("td");
+    tdSubject.textContent = scrubText(row.subject || "—", 120);
+
+    const tdAttempts = document.createElement("td");
+    tdAttempts.textContent = String(row.attempts ?? "0");
+
+    const tdError = document.createElement("td");
+    tdError.textContent = scrubText(row.last_error || "—", 180);
+
+    const tdCreated = document.createElement("td");
+    tdCreated.textContent = formatDateTime(row.created_at);
+
+    tr.append(tdPick, tdStatus, tdTo, tdSubject, tdAttempts, tdError, tdCreated);
+    els.mailQueueBody?.appendChild(tr);
+  });
+}
+
+function renderLogRows(rows) {
+  if (!els.mailLogsBody) return;
+  clearChildren(els.mailLogsBody);
+
+  if (!Array.isArray(rows) || !rows.length) {
+    const tr = document.createElement("tr");
+    const td = document.createElement("td");
+    td.colSpan = 7;
+    td.className = "mail-empty";
+    td.textContent = t("settings.mail.emptyLogs");
+    tr.appendChild(td);
+    els.mailLogsBody.appendChild(tr);
+    return;
+  }
+
+  rows.forEach((row) => {
+    const tr = document.createElement("tr");
+    tr.className = `mail-level-${String(row.level || "").toLowerCase()}`;
+
+    const tdTime = document.createElement("td");
+    tdTime.textContent = formatDateTime(row.created_at);
+
+    const tdFn = document.createElement("td");
+    tdFn.textContent = String(row.function_name || "—");
+
+    const tdLevel = document.createElement("td");
+    tdLevel.textContent = String(row.level || "—");
+
+    const tdEvent = document.createElement("td");
+    tdEvent.textContent = scrubText(row.event || "—", 80);
+
+    const tdTo = document.createElement("td");
+    tdTo.textContent = scrubText(row.recipient_email || "—", 60);
+
+    const tdProvider = document.createElement("td");
+    tdProvider.textContent = String(row.provider || "—");
+
+    const tdError = document.createElement("td");
+    tdError.textContent = scrubText(row.error || "—", 180);
+
+    tr.append(tdTime, tdFn, tdLevel, tdEvent, tdTo, tdProvider, tdError);
+    els.mailLogsBody?.appendChild(tr);
+  });
+}
+
+async function loadMailSettings({ silent = false } = {}) {
+  try {
+    const res = await apiFetch(`${API_BASE}/mail/settings`, { method: "GET" });
+    if (res.status === 401) {
+      stopPolling();
+      showAuth("settings.login.accessRequired");
+      return false;
+    }
+    if (!res.ok) throw new Error(`mail settings fetch failed: ${res.status}`);
+    const data = await res.json();
+    const settings = data?.settings || {};
+    const cron = data?.cron || null;
+
+    mailProviderOrder = parseProviderOrder(settings.provider_order);
+    renderProviderOrder();
+
+    if (els.mailQueueEnabled) els.mailQueueEnabled.checked = settings.queue_enabled !== false;
+    if (els.mailDelayMs) els.mailDelayMs.value = String(clampInt(settings.delay_ms, 0, 5000, 250));
+    if (els.mailBatchMax) els.mailBatchMax.value = String(clampInt(settings.batch_max, 1, 500, 100));
+    if (els.mailWorkerLimit) els.mailWorkerLimit.value = String(clampInt(settings.worker_limit, 1, 200, 25));
+    if (els.mailRunLimit) els.mailRunLimit.value = String(clampInt(settings.worker_limit, 1, 200, 25));
+
+    if (els.mailCronSchedule) {
+      els.mailCronSchedule.value = String(cron?.schedule || "");
+    }
+    if (els.mailCronActive) {
+      els.mailCronActive.checked = cron?.active !== false;
+    }
+
+    updateMailSettingsStatus(cron);
+    mailSettingsLoaded = true;
+    return true;
+  } catch (err) {
+    if (!silent && shouldShowActionError()) showToast(t("settings.toast.error"), "error");
+    console.warn("[settings] mail settings load failed", err);
+    return false;
+  }
+}
+
+async function saveMailSettings() {
+  const queueEnabled = els.mailQueueEnabled?.checked !== false;
+  const delayMs = clampInt(els.mailDelayMs?.value, 0, 5000, 250);
+  const batchMax = clampInt(els.mailBatchMax?.value, 1, 500, 100);
+  const workerLimit = clampInt(els.mailWorkerLimit?.value, 1, 200, 25);
+  const cronSchedule = String(els.mailCronSchedule?.value || "").trim();
+  const cronActive = els.mailCronActive?.checked !== false;
+
+  const payload = {
+    queue_enabled: queueEnabled,
+    provider_order: mailProviderOrder,
+    delay_ms: delayMs,
+    batch_max: batchMax,
+    worker_limit: workerLimit,
+  };
+
+  if (cronSchedule) {
+    payload.cron_schedule = cronSchedule;
+    payload.cron_active = cronActive;
+  }
+
+  const res = await apiFetch(`${API_BASE}/mail/settings`, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const txt = await res.text().catch(() => "");
+    throw new Error(txt || `save failed (${res.status})`);
+  }
+  const data = await res.json();
+  updateMailSettingsStatus(data?.cron);
+  if (els.mailRunLimit) els.mailRunLimit.value = String(workerLimit);
+  showToast(t("settings.toast.saved"));
+}
+
+async function loadMailQueue({ silent = false } = {}) {
+  try {
+    const status = String(els.mailQueueStatusFilter?.value || "all");
+    const limit = clampInt(els.mailQueueLimit?.value, 1, 500, 150);
+    const res = await apiFetch(`${API_BASE}/mail/queue?status=${encodeURIComponent(status)}&limit=${limit}`, { method: "GET" });
+    if (res.status === 401) {
+      stopPolling();
+      showAuth("settings.login.accessRequired");
+      return false;
+    }
+    if (!res.ok) throw new Error(`queue fetch failed: ${res.status}`);
+    const data = await res.json();
+    const rows = Array.isArray(data?.rows) ? data.rows : [];
+    queueSelectionSync(rows);
+    renderQueueRows(rows);
+    if (els.mailQueueInfo) {
+      els.mailQueueInfo.textContent = t("settings.mail.rows").replace("{count}", String(rows.length));
+    }
+    return true;
+  } catch (err) {
+    if (!silent && shouldShowActionError()) showToast(t("settings.toast.error"), "error");
+    console.warn("[settings] mail queue load failed", err);
+    return false;
+  }
+}
+
+async function loadMailLogs({ silent = false } = {}) {
+  try {
+    const fn = String(els.mailLogFnFilter?.value || "all");
+    const level = String(els.mailLogLevelFilter?.value || "all");
+    const limit = clampInt(els.mailLogLimit?.value, 1, 500, 200);
+    const res = await apiFetch(
+      `${API_BASE}/mail/logs?fn=${encodeURIComponent(fn)}&level=${encodeURIComponent(level)}&limit=${limit}`,
+      { method: "GET" }
+    );
+    if (res.status === 401) {
+      stopPolling();
+      showAuth("settings.login.accessRequired");
+      return false;
+    }
+    if (!res.ok) throw new Error(`logs fetch failed: ${res.status}`);
+    const data = await res.json();
+    const rows = Array.isArray(data?.rows) ? data.rows : [];
+    renderLogRows(rows);
+    if (els.mailLogsInfo) {
+      els.mailLogsInfo.textContent = t("settings.mail.rows").replace("{count}", String(rows.length));
+    }
+    return true;
+  } catch (err) {
+    if (!silent && shouldShowActionError()) showToast(t("settings.toast.error"), "error");
+    console.warn("[settings] mail logs load failed", err);
+    return false;
+  }
+}
+
+async function runMailWorker({ requeueFailed = false, ids = [] } = {}) {
+  const limit = clampInt(els.mailRunLimit?.value, 1, 200, 25);
+  const payload = { limit };
+  if (requeueFailed) payload.requeue_failed = true;
+  if (Array.isArray(ids) && ids.length) payload.ids = ids;
+
+  const res = await apiFetch(`${API_BASE}/mail/queue/run`, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const txt = await res.text().catch(() => "");
+    throw new Error(txt || `worker run failed (${res.status})`);
+  }
+
+  showToast(t("settings.mail.workerInvoked"));
+  await loadMailQueue({ silent: true });
+  await loadMailLogs({ silent: true });
+  setTimeout(() => {
+    void loadMailQueue({ silent: true });
+    void loadMailLogs({ silent: true });
+  }, 2000);
+}
+
+async function refreshMailTab() {
+  await loadMailSettings({ silent: true });
+  await Promise.all([loadMailQueue({ silent: true }), loadMailLogs({ silent: true })]);
+}
+
+async function openMailTab() {
+  if (activeTab === "tools") closeTools();
+  setActiveTab("mail");
+  if (!mailSettingsLoaded) {
+    await loadMailSettings({ silent: true });
+  }
+  await Promise.all([loadMailQueue({ silent: true }), loadMailLogs({ silent: true })]);
+}
+
 async function loadToolsManifest() {
   try {
     const res = await fetch(TOOLS_MANIFEST, { cache: "no-store" });
@@ -858,6 +1278,7 @@ async function initToolsSelect() {
 
 function openTool(path) {
   if (!els.toolsShell || !els.toolsFrame) return;
+  previousTabBeforeTools = activeTab === "tools" ? "maintenance" : activeTab;
   els.toolsShell.hidden = false;
   els.toolsFrame.src = path;
   if (els.panelScreen) els.panelScreen.hidden = true;
@@ -878,14 +1299,19 @@ function closeTools() {
   document.body.classList.remove("tools-fullscreen");
   if (uiSelect) uiSelect.setValue("", { silent: true });
   syncTopbarHeight();
-  setActiveTab("maintenance");
+  setActiveTab(previousTabBeforeTools || "maintenance");
 }
 
 function setActiveTab(tab) {
+  activeTab = tab;
   const btn = document.getElementById("btnTabMaintenance");
+  const btnMail = document.getElementById("btnTabMail");
   const tools = document.getElementById("toolsSelect");
   if (btn) btn.classList.toggle("active", tab === "maintenance");
+  if (btnMail) btnMail.classList.toggle("active", tab === "mail");
   if (tools) tools.classList.toggle("active", tab === "tools");
+  if (els.maintenancePanel) els.maintenancePanel.hidden = tab !== "maintenance";
+  if (els.mailPanel) els.mailPanel.hidden = tab !== "mail";
 }
 
 function labelFromPath(pathname) {
@@ -1041,14 +1467,102 @@ function wireEvents() {
   });
 
   if (els.btnTabMaintenance) {
-    els.btnTabMaintenance.addEventListener("click", () => {
-      closeTools();
+    els.btnTabMaintenance.addEventListener("click", async () => {
+      if (activeTab === "tools") closeTools();
+      setActiveTab("maintenance");
+      await loadState({ silent: true });
+    });
+  }
+
+  if (els.btnTabMail) {
+    els.btnTabMail.addEventListener("click", async () => {
+      await openMailTab();
     });
   }
 
   if (els.toolsShell) {
     els.toolsShell.addEventListener("dblclick", closeTools);
   }
+
+  if (els.mailQueueBody) {
+    els.mailQueueBody.addEventListener("change", (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLInputElement)) return;
+      const id = String(target.dataset.queueId || "");
+      if (!id) return;
+      if (target.checked) selectedQueueIds.add(id);
+      else selectedQueueIds.delete(id);
+    });
+  }
+
+  els.btnMailSaveSettings?.addEventListener("click", async () => {
+    markUserAction();
+    try {
+      await saveMailSettings();
+      await refreshMailTab();
+    } catch {
+      if (shouldShowActionError()) showToast(t("settings.toast.error"), "error");
+    }
+  });
+
+  els.btnMailReloadSettings?.addEventListener("click", async () => {
+    markUserAction();
+    await refreshMailTab();
+  });
+
+  els.btnMailQueueRefresh?.addEventListener("click", async () => {
+    markUserAction();
+    await loadMailQueue();
+  });
+
+  els.btnMailLogsRefresh?.addEventListener("click", async () => {
+    markUserAction();
+    await loadMailLogs();
+  });
+
+  els.mailQueueStatusFilter?.addEventListener("change", () => {
+    void loadMailQueue();
+  });
+
+  els.mailLogFnFilter?.addEventListener("change", () => {
+    void loadMailLogs();
+  });
+
+  els.mailLogLevelFilter?.addEventListener("change", () => {
+    void loadMailLogs();
+  });
+
+  els.btnMailRunWorker?.addEventListener("click", async () => {
+    markUserAction();
+    try {
+      await runMailWorker();
+    } catch {
+      if (shouldShowActionError()) showToast(t("settings.toast.error"), "error");
+    }
+  });
+
+  els.btnMailRetryFailed?.addEventListener("click", async () => {
+    markUserAction();
+    try {
+      await runMailWorker({ requeueFailed: true });
+    } catch {
+      if (shouldShowActionError()) showToast(t("settings.toast.error"), "error");
+    }
+  });
+
+  els.btnMailRetrySelected?.addEventListener("click", async () => {
+    markUserAction();
+    const ids = [...selectedQueueIds];
+    if (!ids.length) {
+      showToast(t("settings.mail.selectRows"), "error");
+      return;
+    }
+    try {
+      await runMailWorker({ ids });
+    } catch {
+      if (shouldShowActionError()) showToast(t("settings.toast.error"), "error");
+    }
+  });
 
   if (els.btnLogout) {
     els.btnLogout.addEventListener("click", () => {
@@ -1068,6 +1582,8 @@ function wireEvents() {
   await initI18n({ withSwitcher: true, apply: true });
   applyDateOrderByLang();
   applyModalLabels();
+  setActiveTab("maintenance");
+  renderProviderOrder();
   guardDesktopOnly({ maxWidth: 980 });
   syncTopbarHeight();
   window.addEventListener("resize", syncTopbarHeight);
@@ -1075,6 +1591,7 @@ function wireEvents() {
     syncTopbarHeight();
     applyDateOrderByLang();
     applyModalLabels();
+    renderProviderOrder();
     renderCalendar();
     if (currentState) updateModeStatus(currentState);
   });
