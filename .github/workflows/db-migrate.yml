@@ -70,22 +70,16 @@ jobs:
       - name: Fetch schema.sql + logs from server
         run: |
           STAGING="/home/${{ secrets.SERVER_USER }}/.deploy/db-migrate/${{ github.sha }}"
-
-          rsync -az --checksum \
-            -e "ssh -i ~/.ssh/id_ed25519" \
+          mkdir -p supabase/migration_logs
+      
+          rsync -az --checksum -e "ssh -i ~/.ssh/id_ed25519" \
             "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:$STAGING/out/schema.sql" \
-            "supabase/schema.sql" || true
-
-          rsync -az --checksum \
-            -e "ssh -i ~/.ssh/id_ed25519" \
+            "supabase/schema.sql"
+      
+          rsync -az --checksum -e "ssh -i ~/.ssh/id_ed25519" \
             "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:$STAGING/out/latest.log" \
-            "supabase/migration_logs/latest.log" || true
-
-          rsync -az --checksum \
-            -e "ssh -i ~/.ssh/id_ed25519" \
-            "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:$STAGING/out/" \
-            "supabase/migration_logs/_runs_${{ github.sha }}/" || true
-
+            "supabase/migration_logs/latest.log"
+      
       # 8️⃣ Keep only last 30 logs (jeśli istnieją)
       - name: Keep only last 30 run logs
         run: |
