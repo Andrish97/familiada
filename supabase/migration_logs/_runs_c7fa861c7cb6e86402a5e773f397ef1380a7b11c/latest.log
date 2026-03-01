@@ -1,0 +1,33 @@
+[2026-03-01T12:33:29Z] == DB migrations runner ==
+[2026-03-01T12:33:29Z] STAGING_DIR: /home/andrish97/.deploy/db-migrate/c7fa861c7cb6e86402a5e773f397ef1380a7b11c
+[2026-03-01T12:33:29Z] MIG_DIR    : /home/andrish97/.deploy/db-migrate/c7fa861c7cb6e86402a5e773f397ef1380a7b11c/migrations
+[2026-03-01T12:33:29Z] OUT_DIR    : /home/andrish97/.deploy/db-migrate/c7fa861c7cb6e86402a5e773f397ef1380a7b11c/out
+[2026-03-01T12:33:29Z] 
+[2026-03-01T12:33:29Z] == Ensure public.schema_migrations ==
+NOTICE:  relation "schema_migrations" already exists, skipping
+CREATE TABLE
+[2026-03-01T12:33:29Z] OK
+[2026-03-01T12:33:29Z] 
+[2026-03-01T12:33:29Z] Existing public tables (excluding schema_migrations): 28
+[2026-03-01T12:33:29Z] Applied migrations in tracking table: 0
+[2026-03-01T12:33:29Z] 
+[2026-03-01T12:33:29Z] == Apply migrations (sorted) ==
+[2026-03-01T12:33:29Z] BOOT  2026-03-01_000_baseline.sql (existing DB detected)
+INSERT 0 1
+[2026-03-01T12:33:30Z] APPLY 2026-03-01_010_example_add_table.sql
+CREATE TABLE
+ALTER TABLE
+CREATE INDEX
+INSERT 0 1
+[2026-03-01T12:33:30Z] OK    2026-03-01_010_example_add_table.sql
+[2026-03-01T12:33:30Z] APPLY 2026-03-01_020_rpc_example 2.sql
+CREATE FUNCTION
+REVOKE
+GRANT
+INSERT 0 1
+[2026-03-01T12:33:30Z] OK    2026-03-01_020_rpc_example 2.sql
+[2026-03-01T12:33:30Z] 
+[2026-03-01T12:33:30Z] == Dump schema.sql (schema-only) ==
+[2026-03-01T12:33:30Z] Wrote: /home/andrish97/.deploy/db-migrate/c7fa861c7cb6e86402a5e773f397ef1380a7b11c/out/schema.sql (9274 lines)
+[2026-03-01T12:33:30Z] 
+[2026-03-01T12:33:30Z] DONE
