@@ -1,0 +1,90 @@
+name: Apply DB migrations + update schema.sql (self-host)
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "supabase/migrations/**"
+      - ".github/workflows/db-migrate.yml"
+  workflow_dispatch: {}
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install rsync + ssh
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y rsync openssh-client
+
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H "${{ secrets.SERVER_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Sync migrations to server staging
+        run: |
+          STAGING="/home/${{ secrets.SERVER_USER }}/.deploy/db-migrate/${{ github.sha }}"
+          ssh -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" "mkdir -p \"$STAGING/migrations\" \"$STAGING/out\""
+          rsync -az --delete --checksum \
+            --exclude '.DS_Store' \
+            -e "ssh -i ~/.ssh/id_ed25519" \
+            supabase/migrations/ \
+            "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:$STAGING/migrations/"
+
+      - name: Run migrations (server-side)
+        run: |
+          STAGING="/home/${{ secrets.SERVER_USER }}/.deploy/db-migrate/${{ github.sha }}"
+          ssh -i ~/.ssh/id_ed25519 "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" \
+            "export GITHUB_SHA='${{ github.sha }}'; /home/${{ secrets.SERVER_USER }}/supabase-selfhost/supabase/scripts/apply-migrations.sh \"$STAGING\""
+
+      - name: Fetch schema.sql + logs from server
+        run: |
+          STAGING="/home/${{ secrets.SERVER_USER }}/.deploy/db-migrate/${{ github.sha }}"
+          mkdir -p supabase/migration_logs
+          rsync -az --checksum \
+            -e "ssh -i ~/.ssh/id_ed25519" \
+            "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:$STAGING/out/schema.sql" \
+            "supabase/schema.sql"
+          rsync -az --checksum \
+            -e "ssh -i ~/.ssh/id_ed25519" \
+            "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:$STAGING/out/latest.log" \
+            "supabase/migration_logs/latest.log"
+
+          # opcjonalnie: timestamped logi (łatwo czytać historię), limit utrzymamy w kroku niżej
+          rsync -az --checksum \
+            -e "ssh -i ~/.ssh/id_ed25519" \
+            "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:$STAGING/out/" \
+            "supabase/migration_logs/_runs_${{ github.sha }}/" || true
+
+      - name: Keep only last 30 run logs (simple)
+        run: |
+          set -e
+          # Zostawiamy latest.log + 30 najnowszych plików *.log w migration_logs/
+          # Jeśli wolisz totalnie minimalnie: usuń ten krok i trzymaj tylko latest.log.
+          cd supabase/migration_logs
+          ls -1t *.log 2>/dev/null | tail -n +31 | xargs -r rm -f
+          cd -
+
+      - name: Commit schema.sql + logs
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+
+          git add supabase/schema.sql supabase/migration_logs || true
+
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+
+          git commit -m "db: apply migrations + update schema.sql [skip ci]" || true
+          git push
