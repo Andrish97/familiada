@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict aWaym7SZ54CnMOTJPbW3hFdwW1fPkD1gdbJ8xKm5xrg3xwRilKrAsfmsb2Ye2vQ
+\restrict RCvaNNEZz7I6C7evJ0WkmZ5ySQ7YotAuZMj2g8A2NmgPcGwcUO60ZJwvJQ6CaUo
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -9270,5 +9270,5 @@ CREATE POLICY "user_logos_update_own" ON "public"."user_logos" FOR UPDATE USING 
 -- PostgreSQL database dump complete
 --
 
-\unrestrict aWaym7SZ54CnMOTJPbW3hFdwW1fPkD1gdbJ8xKm5xrg3xwRilKrAsfmsb2Ye2vQ
+\unrestrict RCvaNNEZz7I6C7evJ0WkmZ5ySQ7YotAuZMj2g8A2NmgPcGwcUO60ZJwvJQ6CaUo
 
