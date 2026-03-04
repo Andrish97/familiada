@@ -8,13 +8,19 @@ export default {
     const ORIGIN_BASE = "https://familiada.online";
     const ORIGIN_HOST = "familiada.online";
     const ORIGIN_RESOLVE = "andrish97.github.io";
-
-    // (no apex redirect here)
-
+    
     // PUBLIC STATE ENDPOINT (works on every host/subdomain)
     if (url.pathname === "/maintenance-state.json") {
       const state = await getState(env);
       return json(state);
+    }
+
+    // Redirect apex → www (301 permanent, SEO canonical)
+    if (host === "familiada.online") {
+      return Response.redirect(
+        "https://www.familiada.online" + url.pathname + url.search,
+        301
+      );
     }
 
     // SETTINGS HOST (admin panel, no maintenance gate)
