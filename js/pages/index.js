@@ -28,10 +28,7 @@ function buildLangImgUrl(lang, file) {
 
 function setImgLoaded(img) {
   if (!img) return;
-  if (img.complete && img.naturalWidth > 0) {
-    img.classList.add("is-loaded");
-    return;
-  }
+  if (img.complete && img.naturalWidth > 0) { img.classList.add("is-loaded"); return; }
   img.addEventListener("load", () => img.classList.add("is-loaded"), { once: true });
   img.addEventListener("error", () => img.classList.add("is-loaded"), { once: true });
 }
@@ -52,29 +49,49 @@ function switchLandingImages(lang) {
 
 function initPipeline() {
   const wrap = document.getElementById("pipeline");
-  const fill = document.getElementById("pipelineFill");
-  if (!wrap || !fill) return;
+  const topbar = document.querySelector(".topbar");
+  if (!wrap) return;
 
-  const nodes = Array.from(wrap.querySelectorAll(".pipeline-node"));
+  const pipeline = wrap.querySelector(".pipeline");
+  const nodes = Array.from(pipeline.querySelectorAll(".pipeline-node"));
   const sections = nodes.map((n) => document.getElementById(n.dataset.target));
-  const hero = document.querySelector(".hero-card");
 
+  // Usuń stary track jeśli był
+  pipeline.querySelectorAll(".pipeline-track").forEach((el) => el.remove());
+
+  // Wstrzyknij linie między przyciski: [node][line][node][line][node]...
+  // Iterujemy od końca żeby nie przesuwać indeksów
+  const lines = [];
+  for (let i = nodes.length - 1; i >= 1; i--) {
+    const line = document.createElement("div");
+    line.className = "pipeline-line";
+    const lineFill = document.createElement("div");
+    lineFill.className = "pipeline-line-fill";
+    line.appendChild(lineFill);
+    // wstaw przed węzłem i
+    nodes[i].before(line);
+    lines.unshift(line); // lines[0] = linia między węzłem 0 i 1, itd.
+  }
+
+  // Kliknięcie scrolluje do sekcji
   nodes.forEach((node, i) => {
     node.addEventListener("click", () => {
       sections[i]?.scrollIntoView({ behavior: "smooth", block: "start" });
     });
   });
 
+  // Ustaw top rury śledząc dolną krawędź topbara
+  function syncTop() {
+    if (!topbar) { wrap.style.top = "0px"; return; }
+    const bottom = topbar.getBoundingClientRect().bottom;
+    wrap.style.top = Math.max(0, bottom) + "px";
+  }
+
   function update() {
+    syncTop();
+
     const scrollY = window.scrollY;
     const winH = window.innerHeight;
-
-    // Show after hero
-    if (hero) {
-      wrap.classList.toggle("is-visible", hero.getBoundingClientRect().bottom < 10);
-    }
-
-    // Which section + progress within it
     let activeIdx = -1;
     let progress = 0;
 
@@ -82,30 +99,53 @@ function initPipeline() {
       const s = sections[i];
       if (!s) continue;
       const rect = s.getBoundingClientRect();
-      if (rect.top <= winH * 0.4) {
+      if (rect.top <= winH * 0.38) {
         activeIdx = i;
         const sectionTop = scrollY + rect.top;
-        progress = Math.min(1, Math.max(0, (scrollY - sectionTop + winH * 0.4) / rect.height));
+        progress = Math.min(1, Math.max(0, (scrollY - sectionTop + winH * 0.38) / rect.height));
       }
     }
 
-    // Node states
+    // Stany przycisków
     nodes.forEach((node, i) => {
-      node.classList.remove("is-active", "is-filled");
-      if (i < activeIdx) node.classList.add("is-filled");
-      else if (i === activeIdx) node.classList.add("is-active");
+      node.classList.toggle("is-filled", i <= activeIdx);
+      node.classList.toggle("is-active", i === activeIdx);
     });
 
-    // Fill bar
-    if (activeIdx < 0) { fill.style.width = "0%"; return; }
-    const n = sections.length;
-    const seg = 100 / (n - 1);
-    const total = Math.min(100, activeIdx * seg + progress * seg);
-    fill.style.width = total + "%";
+    // Stany linii
+    // linia[i] łączy węzeł i z węzłem i+1
+    // linia pełna jeśli węzeł i+1 jest osiągnięty (is-filled)
+    // linia częściowa jeśli i === activeIdx (w trakcie scrollowania przez sekcję)
+    lines.forEach((line, i) => {
+      const fill = line.querySelector(".pipeline-line-fill");
+      if (i < activeIdx) {
+        fill.style.width = "100%";
+      } else if (i === activeIdx) {
+        fill.style.width = (progress * 100) + "%";
+      } else {
+        fill.style.width = "0%";
+      }
+    });
   }
 
   window.addEventListener("scroll", update, { passive: true });
   window.addEventListener("resize", update, { passive: true });
+
+  // Śledź animację chowania topbara (klasa is-hidden-mobile, transition ~0.22s)
+  if (topbar) {
+    const observer = new MutationObserver(() => {
+      const duration = 260;
+      let elapsed = 0;
+      const tick = () => {
+        syncTop();
+        elapsed += 16;
+        if (elapsed < duration) requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    });
+    observer.observe(topbar, { attributes: true, attributeFilter: ["class"] });
+  }
+
   update();
 }
 
@@ -143,7 +183,6 @@ function initImageViewer() {
     stage.innerHTML = "";
     titleEl.textContent = title || "";
     const isMobile = window.matchMedia("(max-width: 900px)").matches;
-
     if (isMobile) {
       const zoom = document.createElement("div");
       zoom.className = "imgv-zoom";
@@ -156,7 +195,6 @@ function initImageViewer() {
       img.className = "imgv-img"; img.src = src; img.alt = title || "";
       stage.appendChild(img); currentImg = img;
     }
-
     overlay.classList.add("is-open");
     document.body.classList.add("topbar-mobile-lock");
   };
@@ -170,16 +208,13 @@ function initImageViewer() {
 
   closeBtn.addEventListener("click", close);
   overlay.addEventListener("click", (e) => { if (e.target === overlay) close(); });
-  window.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && overlay.classList.contains("is-open")) close();
-  });
+  window.addEventListener("keydown", (e) => { if (e.key === "Escape" && overlay.classList.contains("is-open")) close(); });
 
   document.addEventListener("click", (e) => {
     const shot = e.target.closest(".tile-shot");
     if (!shot) return;
     const img = shot.querySelector(".shot-img");
-    if (!img) return;
-    open(img.currentSrc || img.src, img.getAttribute("alt") || "");
+    if (img) open(img.currentSrc || img.src, img.getAttribute("alt") || "");
   });
 
   function bindMobileZoom(root) {
@@ -194,14 +229,12 @@ function initImageViewer() {
       if (!pointers.has(e.pointerId)) return;
       pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
       const pts = [...pointers.values()];
-
       if (pts.length === 1 && scale > 1) {
         const p = pts[0];
         if (!lastPan) lastPan = { x: p.x, y: p.y };
         tx += p.x - lastPan.x; ty += p.y - lastPan.y;
         lastPan = { x: p.x, y: p.y }; setTransform(); return;
       }
-
       if (pts.length === 2) {
         const [a, b] = pts;
         const dist = Math.hypot(a.x - b.x, a.y - b.y);
@@ -237,7 +270,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   const lang = getUiLang();
   switchLandingImages(lang);
-
   window.addEventListener("i18n:lang", (e) => switchLandingImages(e.detail.lang));
 
   initPipeline();
