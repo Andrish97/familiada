@@ -6,3 +6,6 @@
 .Trashes
 Thumbs.db
 Desktop.ini
+
+# Claude Code
+.claude/
