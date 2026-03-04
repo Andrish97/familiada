@@ -173,6 +173,8 @@ body.home-body .wrap {
     justify-content: center;
     gap: 0;
     flex-shrink: 0;
+    border-color: rgba(255,234,166,.45); /* zwiększona widoczność w ciemnym motywie */
+    background: rgba(255,234,166,.06);
   }
 
   .pipeline-node-label { display: none; }
@@ -344,7 +346,18 @@ body.home-body .wrap {
    FAQ
 ===================== */
 .faq-item { border-bottom: 1px solid var(--line); }
-.faq-item:first-of-type { border-top: 1px solid var(--line); }
+.faq-item:first-of-type,
+.faq-category-title + .faq-item { border-top: 1px solid var(--line); }
+
+.faq-category-title {
+  margin: 28px 0 0 4px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  opacity: .45;
+}
+.faq-category-title:first-of-type { margin-top: 0; }
 
 .faq-q {
   padding: 14px 4px;

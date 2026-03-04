@@ -149,6 +149,10 @@ const pl = {
     },
     faq: {
       title: "Najczęstsze pytania",
+      cat1: "Ogólne",
+      cat2: "Przygotowanie i sondaż",
+      cat3: "Sprzęt i wymagania",
+      cat4: "Rozgrywka na żywo",
       q1:  { q: "Czy Familiada Online jest bezpłatna?", a: "Tak, w pełni bezpłatna. Możesz tworzyć gry, zbierać sondaże i prowadzić rozgrywkę bez żadnych opłat." },
       q2:  { q: "Czy trzeba instalować aplikację?", a: "Nie. System działa w przeglądarce na każdym urządzeniu — komputerze, tablecie i telefonie. Żadnej instalacji, żadnej konfiguracji." },
       q3:  { q: "W jakich językach działa system?", a: "Interfejs jest dostępny po polsku, angielsku i ukraińsku. Język zmienia się automatycznie na podstawie ustawień przeglądarki lub ręcznego wyboru." },

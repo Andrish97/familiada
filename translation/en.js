@@ -149,6 +149,10 @@ const en = {
     },
     faq: {
       title: "Frequently asked questions",
+      cat1: "General",
+      cat2: "Preparation & survey",
+      cat3: "Equipment & requirements",
+      cat4: "Live gameplay",
       q1:  { q: "Is Familiada Online free?", a: "Yes, completely free. You can create games, collect polls and run gameplay without any fees." },
       q2:  { q: "Do I need to install an app?", a: "No. The system works in the browser on any device — computer, tablet and phone. No installation, no configuration." },
       q3:  { q: "What languages does the system support?", a: "The interface is available in Polish, English and Ukrainian. The language changes automatically based on browser settings or manual selection." },
