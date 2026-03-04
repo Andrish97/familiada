@@ -54,111 +54,126 @@ const en = {
     login: "Sign in / Create account",
   },
   home: {
-    meta: {
-      description: "A complete system for creating and running Familiada live: polls, scoreboard, operator panel and host view. Runs in the browser — no installation.",
-      ogTitle: "Familiada Online",
-      ogDescription: "Create games, collect poll results, and run Familiada live.",
-      ogLocale: "en_US",
-    },
     title: "Familiada Online — live game hosting system",
-    hero: {
-      title: "Prepare the game. Collect results. Run Familiada live.",
-      lead: "A complete system for creating and running a Familiada–style game. Prepare your questions, collect poll responses and run a dynamic live game with a scoreboard, operator control panel and a dedicated host view. Everything runs in the browser — no installation required.",
-      ctaStart: "Start creating games and running the live show",
-      note: "Click to log in or create an account.",
+    nav: {
+      about: "About",
+      features: "Features",
+      forwhom: "Who it's for",
+      faq: "Q&A",
     },
-  
+    hero: {
+      title: "Build your own Family Feud. A real game show on your own equipment.",
+      lead: "Collect answers from participants via a poll, then run the live game — with a TV-style scoreboard, operator panel and host view. All in the browser, on equipment you already have.",
+      ctaStart: "Start creating games and running the live show",
+      note: "Guest mode — no registration, data stored in the browser.",
+    },
+    about: {
+      title: "Familiada Online — a game show on your own equipment",
+      p1: "The system lets you run a Familiada-style game from start to finish — collecting poll answers, preparing questions and hosting the live game. It works in the browser, no installation needed, on any computer, tablet or phone.",
+      p2: "Participants answer via a poll — everyone votes through a link or QR code from their own phone. Results are automatically normalized to 100 points, exactly like on real TV. \"Survey says: 67.\"",
+      p3: "All you need is equipment you already have — a projector or TV as the scoreboard, a tablet for the host, a phone as the buzzer. Devices connect over the internet and don't need to be on the same network.",
+    },
     tiles: {
       title: "How it works (step by step)",
-  
       t1: {
-        alt: "Games list: create a new game and choose a mode (poll, scored answers, prepared).",
+        alt: "Games list: create a new game and choose a mode — text poll, scored poll or prepared.",
         t: "Create a game and choose a mode",
-        d:
-          "Create a new game and choose a type: text poll, scored answers, or prepared. The type determines where answers and points on the board come from.",
+        d: "Three game modes — depending on how you want to collect answers. Text and scored polls collect votes from participants; prepared mode lets you enter answers and points yourself in advance.",
       },
-  
       t2: {
-        alt: "Game editor: add questions and prepare the game structure.",
+        alt: "Game editor: add questions and configure the game structure.",
         t: "Edit questions and (sometimes) answers",
-        d:
-          "Add questions and set the game structure. Depending on the game type, you can prepare answers and points or leave them to be collected via a poll.",
+        d: "Add questions and set the game structure. Depending on the mode, you can enter answers and points yourself or collect them via a poll.",
       },
-  
       t3: {
-        alt: "Friends: add and manage people you share polls and question bases with.",
+        alt: "Friends: add people you share polls and question bases with for collaboration.",
         t: "Friends and sharing",
-        d:
-          "Add friends so you can share polls with one click and collaborate. This speeds up organization and collecting responses.",
+        d: "Add friends so you can share polls with one click and organize the game together. Useful when preparing an event as a team.",
       },
-  
       t4: {
-        alt: "Polls: share via link or QR code and collect votes.",
+        alt: "Poll: share via link or QR code, participants vote from their own phones.",
         t: "Poll: link / QR and collecting votes",
-        d:
-          "Share the poll via a link or QR code. Participants answer questions, and you can track progress and results in the panel.",
+        d: "Send a link or show a QR code — participants vote from their own phones, each from their own network. Results come in live and are normalized to 100 just like on real TV.",
       },
-      
       t5: {
-        alt: "Poll hub: manage polls, share via link or QR code, and track progress.",
+        alt: "Poll hub: manage votes, track progress, share via link or QR code.",
         t: "Poll hub",
-        d: "Manage your polls in one place: start and close voting, track progress, and share with friends (link/QR) to collect responses quickly.",
+        d: "Start and close votes, track progress and share polls with friends — all in one place. Everything ready before you walk into the room.",
       },
-
       t6: {
-        alt: "Operator control panel: board control, points, strikes (X), and game stages.",
+        alt: "Operator control panel: open rounds, reveal answers, award points and confirm X strikes.",
         t: "Control panel (operator) — live game",
-        d:
-          "On the event day, the operator controls the board, points, strikes (X), and game stages. The system guides step by step to reduce mistakes.",
+        d: "The operator opens rounds, reveals answers, awards points and confirms strikes (X). The panel guides through each stage — even first-timers won't get lost during the game.",
       },
-  
       t7: {
-        alt: "Audience board display: questions, answers, points, bank, and strikes (X).",
+        alt: "Audience board: question, hidden answers revealed one by one, points bank and X strikes.",
         t: "Board for the audience (TV / projector)",
-        d:
-          "The board shows questions, answers, points, the bank, and X strikes. This is the screen for players and the audience.",
+        d: "What everyone in the room sees — the question, hidden answers revealed one by one, the points bank and X strikes. Connect to a TV or projector and you have a real game show.",
       },
-  
       t8: {
-        alt: "Host view: question content and context on a tablet or phone.",
+        alt: "Host view: question content and answer preview on a tablet or phone.",
         t: "Host view (tablet / phone)",
-        d:
-          "The host has a separate screen with question content and context, without the risk of clicking game controls.",
+        d: "The host has a separate screen with question content and answer preview — without the risk of accidentally tapping game controls.",
       },
-  
       t9: {
-        alt: "Buzzer device: a separate device used to signal who pressed first in a face-off.",
+        alt: "Buzzer: a separate device that signals who pressed first in a face-off.",
         t: "Buzzer for face-offs (separate device)",
-        d:
-          "A separate buzzer signals who pressed first in the face-off. It helps keep tempo and order during rounds.",
+        d: "A separate buzzer signals who pressed first in the face-off. No disputes — the screen shows the winner and the game moves on.",
       },
-  
       t10: {
-        alt: "Question bases: create a shared library and grant access to friends for collaboration.",
+        alt: "Question bases: shared library with folders and tags, shared with friends.",
         t: "Question bases and collaboration",
-        d:
-          "Create a shared question library: folders, tags, categories. You can share a base with friends for editing or view-only access.",
+        d: "A base is a shared question library for reuse. Organize it into folders and tags, share with friends — and you never have to start from scratch again.",
       },
-  
       t11: {
-        alt: "Question manager: manage questions like a file explorer (folders, move/copy, search).",
+        alt: "Question manager: folders, copy, move and search like a file explorer.",
         t: "Question manager like a file explorer",
-        d:
-          "Manage questions like in Finder/Explorer: folders, moving, copying, quick selection, and search by name and tags.",
+        d: "Manage questions like in Finder/Explorer: folders, moving, copying, quick selection and search by name and tags.",
       },
       t12: {
-        alt: "Logo editor view: create a custom logo that appears on the display during the game.",
+        alt: "Logo editor: create a custom logo shown on the board during the game.",
         t: "Custom logo on the display",
-        d: "Create your own logo that will be shown during the game — for example on the start or end screen. You can make text logos, simple graphics, or import an image.",
+        d: "Create your own logo shown during the game — on the start or end screen. Text logos, simple graphics or imported images.",
       },
     },
-    
-    seo: {
-      title: "Use Cases and System Capabilities",
-      p1: "The platform allows you to organize and host a Familiada-style game during corporate events, team-building activities, school competitions, and live stage events. The system supports both preparation and dynamic live gameplay.",
-      p2: "With separate views for the operator, host, and scoreboard display, you maintain full control over the flow of the game. Everything runs in the browser — no installation or technical setup required.",
+    forwhom: {
+      title: "Who is Familiada Online for?",
+      t1: {
+        t: "Corporate events and team building",
+        d: "Familiada is a proven format for team integration — it engages everyone, gets people laughing and requires no experience from participants. Prepare the game before the event, collect poll answers and run the live show.",
+      },
+      t2: {
+        t: "Animators and event hosts",
+        d: "You run events professionally and need a tool that won't let you down in front of a client. The operator panel, separate host view and scoreboard all work independently — everyone focuses on their role.",
+      },
+      t3: {
+        t: "Schools and knowledge contests",
+        d: "Teachers and animators use the system to run classroom and school competitions. The poll collects student answers, and the scoreboard builds tension during the game.",
+      },
+      t4: {
+        t: "Weddings and birthdays",
+        d: "Familiada as entertainment at a wedding or birthday — guests answer the poll before the event and the live game entertains everyone at the table. Just a phone, zero technical knowledge needed.",
+      },
+      t5: {
+        t: "Conferences and stage events",
+        d: "The operator panel and separate host view let you run the game smoothly on a large stage. The scoreboard works on any screen — TV, projector or monitor.",
+      },
     },
- 
+    faq: {
+      title: "Frequently asked questions",
+      q1: { q: "Is Familiada Online free?", a: "Yes, the system is completely free. You can create games, collect polls and run gameplay without any fees or registration." },
+      q2: { q: "Do I need to create an account?", a: "No. Guest mode lets you create games and run gameplay without registration — data is stored in the browser. An account (email only, no Google login) lets you sync games across devices and share polls with friends." },
+      q3: { q: "Why email only — no Google login?", a: "A deliberate choice. Asking someone to log in with their Google account often raises suspicion — especially on a site they're visiting for the first time. Email registration is simple and doesn't require granting access to an external account." },
+      q4: { q: "Do I need to install an app?", a: "No. The system works in the browser on any device — computer, tablet and phone. No installation, no configuration." },
+      q5: { q: "What do poll results look like?", a: "Votes are automatically normalized to 100 points — exactly like on real TV. Regardless of how many people voted, the result looks familiar: \"Survey says: 67\"." },
+      q6: { q: "How many devices do I need?", a: "At minimum two — one for the operator (control panel) and one as the scoreboard for the audience (TV or projector). Optionally a third for the host and a fourth as a buzzer for face-offs." },
+      q7: { q: "Do devices need to be on the same network?", a: "No. Devices connect over the internet and can be on different networks in different locations. More convenient than Bluetooth or local WiFi-based solutions." },
+      q8: { q: "How many people can answer the poll?", a: "There is no participant limit. The poll works via link or QR code — dozens or hundreds of people can answer simultaneously." },
+      q9: { q: "Can I use my own questions?", a: "Yes — you create all questions yourself in the editor. You can organize them into bases with folders and tags, share with friends and reuse across different games. There are no ready-made question sets to download." },
+      q10: { q: "Is there a limit on questions or games?", a: "There is no limit on games or questions. The only minimums relate to the game itself — e.g. a minimum number of questions to run a comfortable game." },
+      q11: { q: "Can I run the game remotely?", a: "Yes. Every view — operator, host, board, buzzer — works in the browser. You can run the game with participants in different locations." },
+      q12: { q: "What languages does the system support?", a: "The interface is available in Polish, English and Ukrainian. The language changes automatically based on browser settings or manual selection." },
+    },
     footer: {
       left: "© {year} Familiada — live game system",
       privacy: "Privacy policy",

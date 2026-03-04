@@ -53,112 +53,127 @@ const pl = {
     back: "Wróć do moich gier",
     login: "Zaloguj / Załóż konto",
   },
-  home: {
-    meta: {
-      description: "Kompletny system do tworzenia i prowadzenia Familiady na żywo: sondaże, tablica wyników, panel operatora i widok prowadzącego. Działa w przeglądarce — bez instalacji.",
-      ogTitle: "Familiada Online",
-      ogDescription: "Twórz gry, zbieraj wyniki w sondażu i prowadź Familiadę na żywo.",
-      ogLocale: "pl_PL",
-    },
+    home: {
     title: "Familiada Online — system do prowadzenia gry na żywo",
-    hero: {
-      title: "Przygotuj grę. Zbierz wyniki. Poprowadź Familiadę na żywo.",
-      lead: "Kompletny system do tworzenia i prowadzenia rozgrywki w stylu Familiada. Przygotuj pytania, zbierz odpowiedzi w sondażu i poprowadź dynamiczną grę z tablicą wyników, panelem operatora oraz osobnym widokiem dla prowadzącego. Wszystko działa w przeglądarce — bez instalacji.",
-      ctaStart: "Zacznij tworzyć gry i prowadzić rozgrywkę",
-      note: "Kliknij, żeby się zalogować lub utworzyć konto.",
+    nav: {
+      about: "O systemie",
+      features: "Funkcje",
+      forwhom: "Dla kogo",
+      faq: "Q&A",
     },
-  
+    hero: {
+      title: "Stwórz własną Familiadę. Prawdziwy teleturniej na Twoim sprzęcie.",
+      lead: "Zbierz odpowiedzi od uczestników w sondażu, a potem poprowadź grę na żywo — z tablicą wyników jak w TV, panelem operatora i widokiem prowadzącego. Wszystko w przeglądarce, na sprzęcie który już masz.",
+      ctaStart: "Zacznij tworzyć gry i prowadzić rozgrywkę",
+      note: "Tryb gościa — bez rejestracji, dane trzymane w przeglądarce.",
+    },
+    about: {
+      title: "Familiada Online — teleturniej na własnym sprzęcie",
+      p1: "System pozwala zorganizować grę w stylu Familiada od początku do końca — od zebrania odpowiedzi w sondażu, przez przygotowanie pytań, aż po prowadzenie rozgrywki na żywo. Działa w przeglądarce, bez instalacji, na komputerze, tablecie i telefonie.",
+      p2: "Odpowiedzi uczestników zbierane są przez sondaż — każdy głosuje przez link lub kod QR ze swojego telefonu. Wyniki są automatycznie normalizowane do 100 punktów, dokładnie jak w prawdziwej Familiadzie w telewizji. 'Powiedziano: 67.'",
+      p3: "Do prowadzenia gry wystarczą urządzenia które już masz — rzutnik lub telewizor jako tablica wyników, tablet dla prowadzącego, telefon jako buzzer do pojedynku. Urządzenia łączą się przez internet i nie muszą być w tej samej sieci.",
+    },
     tiles: {
       title: "Jak to działa (krok po kroku)",
-  
       t1: {
-        alt: "Lista gier: tworzenie nowej gry i wybór trybu (sondaż, punktowane odpowiedzi, preparowana).",
+        alt: "Lista gier: tworzenie nowej gry i wybór trybu — sondaż tekstowy, punktowany lub preparowana.",
         t: "Tworzenie gry i wybór trybu",
-        d:
-          "Zakładasz nową grę i wybierasz typ: sondaż tekstowy, punktowane odpowiedzi albo preparowana. Typ decyduje, skąd biorą się odpowiedzi i punkty na tablicy.",
+        d: "Trzy tryby gry — w zależności od tego jak chcesz zbierać odpowiedzi. Sondaż tekstowy i punktowany zbierają głosy od uczestników, preparowana pozwala samemu wpisać odpowiedzi i punkty z góry.",
       },
-  
       t2: {
-        alt: "Edytor gry: dodawanie pytań oraz przygotowanie struktury rozgrywki.",
+        alt: "Edytor gry: dodawanie pytań i konfiguracja struktury rozgrywki.",
         t: "Edycja pytań i (czasem) odpowiedzi",
-        d:
-          "Dodajesz pytania, ustawiasz treść i strukturę gry. W zależności od typu gry możesz przygotować odpowiedzi i punkty lub zostawić je do sondażu.",
+        d: "Dodajesz pytania i ustawiasz strukturę gry. W zależności od trybu możesz wpisać odpowiedzi i punkty samemu, albo zebrać je z sondażu.",
       },
-  
       t3: {
-        alt: "Znajomi: dodawanie i zarządzanie osobami, którym udostępniasz sondaże i bazy pytań.",
+        alt: "Znajomi: dodawanie osób, którym udostępniasz sondaże i bazy pytań do wspólnej pracy.",
         t: "Znajomi i udostępnianie",
-        d:
-          "Dodajesz znajomych, żeby jednym kliknięciem udostępniać im sondaże i pracować wspólnie. To przyspiesza organizację gry i zbieranie odpowiedzi.",
+        d: "Dodajesz znajomych, żeby jednym kliknięciem udostępniać im sondaże i wspólnie organizować grę. Przydatne gdy przygotowujesz event w kilka osób.",
       },
-  
       t4: {
-        alt: "Sondaże: udostępnianie przez link lub kod QR i zbieranie głosów.",
+        alt: "Sondaż: udostępnianie przez link lub kod QR, uczestnicy głosują ze swoich telefonów.",
         t: "Sondaż: link / QR i zbieranie głosów",
-        d:
-          "Udostępniasz sondaż przez link lub kod QR. Ankietowani odpowiadają na pytania, a Ty widzisz postęp i wyniki w panelu.",
+        d: "Wysyłasz link lub pokazujesz kod QR — uczestnicy głosują ze swoich telefonów, każdy ze swojej sieci. Wyniki spływają na żywo i są normalizowane do 100 jak w prawdziwej Familiadzie.",
       },
-      
       t5: {
-        alt: "Centrum sondaży: zarządzanie sondażami, udostępnianie linkiem lub kodem QR i podgląd postępu.",
+        alt: "Centrum sondaży: zarządzanie głosowaniami, podgląd postępu, udostępnianie linkiem lub QR.",
         t: "Centrum sondaży",
-        d: "W jednym miejscu zarządzasz sondażami: uruchamiasz i zamykasz głosowania, sprawdzasz postęp oraz udostępniasz je znajomym (link/QR), żeby szybko zebrać odpowiedzi.",
+        d: "W jednym miejscu uruchamiasz i zamykasz głosowania, śledzisz postęp i udostępniasz sondaże znajomym. Wszystko gotowe zanim wejdziesz na salę.",
       },
-  
       t6: {
-        alt: "Panel sterowania operatora: sterowanie tablicą, punktami, błędami (X) i etapami rozgrywki.",
+        alt: "Panel sterowania operatora: otwieranie rund, odkrywanie odpowiedzi, punkty i błędy X.",
         t: "Panel sterowania (operator) — gra na żywo",
-        d:
-          "W dniu wydarzenia operator steruje tablicą, punktami, błędami (X) i etapami rozgrywki. System prowadzi krok po kroku, żeby ograniczyć pomyłki.",
+        d: "Operator otwiera rundy, odkrywa odpowiedzi, przyznaje punkty i zatwierdza błędy (X). Panel prowadzi przez kolejne etapy — nawet pierwszy raz nie zgubisz się w trakcie gry.",
       },
-  
       t7: {
-        alt: "Wyświetlacz tablicy dla widzów: pytania, odpowiedzi, punkty, bank i błędy (X).",
+        alt: "Tablica dla widzów: pytanie, zakryte odpowiedzi odsłaniające się jedna po drugiej, bank punktów i błędy X.",
         t: "Tablica dla widzów (TV / rzutnik)",
-        d:
-          "Tablica pokazuje pytania, odpowiedzi, punkty, bank i X-y. To ekran, który widzą uczestnicy i publiczność.",
+        d: "To co widzą wszyscy na sali — pytanie, zakryte odpowiedzi które odsłaniają się jedna po drugiej, bank punktów i błędy X. Podłącz do telewizora lub rzutnika i masz prawdziwy teleturniej.",
       },
-  
       t8: {
-        alt: "Widok prowadzącego: treści pytań i podgląd kontekstu na tablecie lub telefonie.",
+        alt: "Widok prowadzącego: treść pytania i podgląd odpowiedzi na tablecie lub telefonie.",
         t: "Widok prowadzącego (tablet / telefon)",
-        d:
-          "Prowadzący ma osobny ekran z treścią pytań i podglądem kontekstu, bez ryzyka kliknięcia w sterowanie gry.",
+        d: "Prowadzący ma osobny ekran z treścią pytań i podglądem odpowiedzi — bez ryzyka przypadkowego kliknięcia w sterowanie grą.",
       },
-  
       t9: {
-        alt: "Przycisk do pojedynku: osobne urządzenie do sygnału kto nacisnął pierwszy.",
+        alt: "Buzzer do pojedynku: osobne urządzenie sygnalizujące kto nacisnął pierwszy.",
         t: "Przycisk do pojedynku (osobne urządzenie)",
-        d:
-          "Osobny „przycisk” daje sygnał kto nacisnął pierwszy w pojedynku. To wspiera tempo i porządek w rundach.",
+        d: "Osobny 'przycisk' daje sygnał kto nacisnął pierwszy w pojedynku. Żadnych sporów — ekran pokazuje zwycięzcę, gra toczy się dalej.",
       },
-  
       t10: {
-        alt: "Bazy pytań: tworzenie biblioteki pytań i udostępnianie jej znajomym do współpracy.",
+        alt: "Bazy pytań: wspólna biblioteka z folderami i tagami, udostępniana znajomym.",
         t: "Bazy pytań i współpraca",
-        d:
-          "Tworzysz bazę pytań jako wspólną bibliotekę: foldery, tagi, kategorie. Bazę możesz udostępnić znajomym do edycji lub tylko podglądu.",
+        d: "Baza to wspólna biblioteka pytań do wielokrotnego użytku. Organizujesz ją w foldery i tagi, udostępniasz znajomym — i nie musisz za każdym razem zaczynać od zera.",
       },
-  
       t11: {
-        alt: "Menadżer pytań: zarządzanie pytaniami jak w eksploratorze plików (foldery, kopiowanie, przenoszenie, wyszukiwanie).",
+        alt: "Menadżer pytań: foldery, kopiowanie, przenoszenie i wyszukiwanie jak w eksploratorze plików.",
         t: "Menadżer pytań jak eksplorator plików",
-        d:
-          "Zarządzasz pytaniami jak w Finder/Explorer: foldery, przenoszenie, kopiowanie, szybka selekcja i wyszukiwanie po nazwie oraz tagach.",
+        d: "Zarządzasz pytaniami jak w Finder/Explorer: foldery, przenoszenie, kopiowanie, szybka selekcja i wyszukiwanie po nazwie oraz tagach.",
       },
       t12: {
-        alt: "Widok edytora logo: tworzenie własnego logo, które pojawia się na wyświetlaczu podczas gry.",
+        alt: "Edytor logo: tworzenie własnego logo wyświetlanego na tablicy podczas gry.",
         t: "Własne logo na wyświetlaczu",
-        d: "Stwórz własne logo, które będzie wyświetlane podczas rozgrywki — np. na ekranie startowym lub zakończenia. Możesz tworzyć napisy, proste grafiki lub zaimportować gotowy obraz.",
+        d: "Stwórz własne logo wyświetlane podczas rozgrywki — na ekranie startowym lub zakończenia. Napisy, proste grafiki lub importowany obraz.",
       },
     },
-    
-    seo: {
-      title: "Zastosowanie i możliwości systemu",
-      p1: "Narzędzie umożliwia organizację i prowadzenie gry w stylu Familiada podczas wydarzeń firmowych, integracji zespołowych, konkursów szkolnych oraz eventów scenicznych. System wspiera zarówno etap przygotowań, jak i dynamiczną rozgrywkę na żywo.",
-      p2: "Dzięki oddzielnym widokom dla operatora, prowadzącego oraz tablicy wyników możesz zachować pełną kontrolę nad przebiegiem gry. Całość działa w przeglądarce — bez instalacji i konfiguracji technicznej.",
+    forwhom: {
+      title: "Dla kogo jest Familiada Online?",
+      t1: {
+        t: "Eventy firmowe i integracje",
+        d: "Familiada to sprawdzony format na integrację zespołu — angażuje wszystkich, rozśmiesza i nie wymaga żadnego doświadczenia od uczestników. Przygotuj grę przed eventem, zbierz odpowiedzi w sondażu i poprowadź rozgrywkę na żywo.",
+      },
+      t2: {
+        t: "Animatorzy i wodzirejowie",
+        d: "Prowadzisz eventy zawodowo i potrzebujesz narzędzia które nie zawiedzie przed klientem. Panel operatora, osobny widok prowadzącego i tablica wyników działają niezależnie — każdy skupia się na swojej roli.",
+      },
+      t3: {
+        t: "Szkoły i konkursy wiedzy",
+        d: "Nauczyciele i animatorzy używają systemu do prowadzenia konkursów klasowych i szkolnych. Sondaż zbiera odpowiedzi uczniów, a tablica wyników buduje napięcie podczas rozgrywki.",
+      },
+      t4: {
+        t: "Wesela i urodziny",
+        d: "Familiada jako atrakcja na weselu lub urodzinach — goście odpowiadają w sondażu przed imprezą, a gra na żywo bawi wszystkich przy stole. Wystarczy telefon, zero technikaliów dla gości.",
+      },
+      t5: {
+        t: "Konferencje i eventy sceniczne",
+        d: "Panel operatora i osobny widok prowadzącego pozwalają płynnie poprowadzić grę na dużej scenie. Tablica wyników działa na dowolnym ekranie — TV, rzutniku lub monitorze.",
+      },
     },
-    
+    faq: {
+      title: "Najczęstsze pytania",
+      q1: { q: "Czy Familiada Online jest bezpłatna?", a: "Tak, system jest w pełni bezpłatny. Możesz tworzyć gry, zbierać sondaże i prowadzić rozgrywkę bez żadnych opłat i bez rejestracji." },
+      q2: { q: "Czy trzeba zakładać konto?", a: "Nie. Tryb gościa pozwala tworzyć gry i prowadzić rozgrywkę bez rejestracji — dane są trzymane w przeglądarce. Konto (tylko e-mail, bez logowania przez Google) pozwala synchronizować gry między urządzeniami i udostępniać sondaże znajomym." },
+      q3: { q: "Dlaczego tylko e-mail, bez logowania przez Google?", a: "Celowy wybór. Prośba o logowanie przez konto Google często wzbudza nieufność — szczególnie gdy ktoś pierwszy raz odwiedza nieznaną stronę. Rejestracja e-mailem jest prosta i nie wymaga przyznawania dostępu do zewnętrznego konta." },
+      q4: { q: "Czy trzeba instalować aplikację?", a: "Nie. System działa w przeglądarce na każdym urządzeniu — komputerze, tablecie i telefonie. Żadnej instalacji, żadnej konfiguracji." },
+      q5: { q: "Jak wyglądają wyniki sondażu?", a: "Głosy są automatycznie normalizowane do 100 punktów — dokładnie jak w prawdziwej Familiadzie w telewizji. Niezależnie od liczby głosujących, wynik wygląda znajomo: 'Powiedziano: 67'." },
+      q6: { q: "Ile urządzeń potrzebuję do gry?", a: "Minimalnie dwa — jedno dla operatora (panel sterowania) i jedno jako tablica wyników dla widzów (TV lub rzutnik). Opcjonalnie trzecie dla prowadzącego i czwarte jako buzzer do pojedynku." },
+      q7: { q: "Czy urządzenia muszą być w tej samej sieci?", a: "Nie. Urządzenia łączą się przez internet, więc mogą być w różnych sieciach i różnych miejscach. To wygodniejsze niż rozwiązania oparte na Bluetooth czy lokalnym WiFi." },
+      q8: { q: "Ile osób może odpowiadać w sondażu?", a: "Nie ma limitu uczestników. Sondaż działa przez link lub kod QR — mogą odpowiadać dziesiątki lub setki osób jednocześnie." },
+      q9: { q: "Czy mogę użyć własnych pytań?", a: "Tak — wszystkie pytania tworzysz sam w edytorze. Możesz je organizować w bazy z folderami i tagami, udostępniać znajomym i używać wielokrotnie w różnych grach. Nie ma gotowych zestawów pytań do pobrania." },
+      q10: { q: "Czy jest limit pytań lub gier?", a: "Nie ma limitu gier ani pytań. Jedyne minimalne wymagania dotyczą samej rozgrywki — np. minimalna liczba pytań żeby można było komfortowo poprowadzić grę." },
+      q11: { q: "Czy mogę prowadzić grę zdalnie?", a: "Tak. Każdy widok — operator, prowadzący, tablica, buzzer — działa przez przeglądarkę. Możesz prowadzić grę gdy uczestnicy są w różnych miejscach." },
+      q12: { q: "W jakich językach działa system?", a: "Interfejs jest dostępny w języku polskim, angielskim i ukraińskim. Język zmienia się automatycznie na podstawie ustawień przeglądarki lub ręcznego wyboru." },
+    },
     footer: {
       left: "© {year} Familiada — system do gry na żywo",
       privacy: "Polityka prywatności",
