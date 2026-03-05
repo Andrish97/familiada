@@ -680,9 +680,9 @@ function saveCols(cols) {
   try { localStorage.setItem(COLS_KEY, JSON.stringify(cols || {})); } catch {}
 }
 
-// Finder-like: drag one column handle → only that column changes width.
+// Finder-like: drag one column handle -> only that column changes width.
 // Column widths are stored on <col> elements in the <colgroup>.
-// The “name” column has no fixed width — it fills remaining space.
+// The “name” column has no fixed width - it fills remaining space.
 // When user explicitly resizes “name”, it gets a fixed px width.
 function initColumnResizers() {
   const table = elList?.querySelector?.(“.list-table”);
@@ -746,7 +746,7 @@ function initColumnResizers() {
       window.addEventListener(“pointerup”,   onUp,   true);
     });
 
-    // Double-click resizer → auto-fit column to content width (like Finder)
+    // Double-click resizer -> auto-fit column to content width (like Finder)
     handle.addEventListener(“dblclick”, (ev) => {
       ev.preventDefault();
       ev.stopPropagation();
