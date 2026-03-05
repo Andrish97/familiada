@@ -680,22 +680,9 @@ function saveCols(cols) {
   try { localStorage.setItem(COLS_KEY, JSON.stringify(cols || {})); } catch {}
 }
 
-// All columns have explicit px widths so resizing one column never shifts another.
-// The table scrolls horizontally when total column widths exceed the container.
-// Double-click a resizer: name → refills remaining space; others → reset to default.
-
-function _colsTotal(colEls) {
-  return Array.from(colEls).reduce((s, c) => {
-    const w = parseInt(c.style.width, 10);
-    return s + (Number.isFinite(w) ? w : 0);
-  }, 0);
-}
-
-function _applyTableWidth(table, colEls) {
-  const cw = elList.getBoundingClientRect().width;
-  const total = _colsTotal(colEls);
-  table.style.width = (cw > 0 && total > cw) ? total + "px" : "";
-}
+// Columns always stay within the container – no horizontal overflow possible.
+// Resizing one column never shifts others (all have explicit px widths).
+// Double-click: name → refills remaining space; others → reset to default.
 
 function initColumnResizers() {
   const table = elList?.querySelector?.(".list-table");
@@ -706,8 +693,18 @@ function initColumnResizers() {
 
   const colEls = table.querySelectorAll("colgroup col");
   // col indices: 0=num  1=name  2=type  3=date  4=meta
-  // Widths already set in colgroup HTML by renderList.
-  _applyTableWidth(table, colEls);
+  // Widths already set in the colgroup HTML by renderList (always fit the container).
+
+  // Helper: max px a column can be given current widths of all others
+  function maxW(colIdx) {
+    const cw = elList.getBoundingClientRect().width || 800;
+    const others = Array.from(colEls).reduce((s, c, i) => {
+      if (i === colIdx) return s;
+      const w = parseInt(c.style.width, 10);
+      return s + (Number.isFinite(w) ? w : 0);
+    }, 0);
+    return Math.max(COL_MINS[Object.keys(COL_MINS)[colIdx - 1]] || 80, cw - others - 2);
+  }
 
   // th indices: 0=num  1=name  2=type  3=date  4=meta
   const resizable = [
@@ -736,9 +733,9 @@ function initColumnResizers() {
       const startW = th.getBoundingClientRect().width;
 
       const onMove = (e) => {
-        const newW = Math.max(r.min, Math.round(startW + (e.clientX - startX)));
+        const desired = Math.round(startW + (e.clientX - startX));
+        const newW = Math.min(maxW(r.colIdx), Math.max(r.min, desired));
         col.style.width = newW + "px";
-        _applyTableWidth(table, colEls);
       };
 
       const onUp = () => {
@@ -754,27 +751,19 @@ function initColumnResizers() {
       window.addEventListener("pointerup",   onUp,   true);
     });
 
-    // Double-click: name → refill remaining; others → reset to default
+    // Double-click: name → refill remaining space; others → reset to default
     handle.addEventListener("dblclick", (ev) => {
       ev.preventDefault();
       ev.stopPropagation();
-
       const next = loadCols();
       if (r.key === "name") {
-        const others = Array.from(colEls).reduce((s, c, i) => {
-          if (i === 1) return s;
-          const w = parseInt(c.style.width, 10);
-          return s + (Number.isFinite(w) ? w : 0);
-        }, 0);
-        const cw = elList.getBoundingClientRect().width || 800;
-        col.style.width = Math.max(COL_MINS.name, cw - others - 2) + "px";
+        col.style.width = maxW(1) + "px";
         delete next.name;
       } else {
-        col.style.width = COL_DEFAULTS[r.key] + "px";
+        col.style.width = Math.min(maxW(r.colIdx), COL_DEFAULTS[r.key]) + "px";
         delete next[r.key];
       }
       saveCols(next);
-      _applyTableWidth(table, colEls);
     });
   }
 }
@@ -858,12 +847,10 @@ export function renderList(state) {
   const typeWpx = Math.max(COL_MINS.type, parseInt(saved.type, 10) || COL_DEFAULTS.type);
   const dateWpx = Math.max(COL_MINS.date, parseInt(saved.date, 10) || COL_DEFAULTS.date);
   const metaWpx = Math.max(COL_MINS.meta, parseInt(saved.meta, 10) || COL_DEFAULTS.meta);
+  // name width: saved value OR fill remaining – always capped so total ≤ containerW
+  const maxNameW = Math.max(COL_MINS.name, containerW - 44 - typeWpx - dateWpx - metaWpx - 2);
   const savedNamePx = parseInt(saved.name, 10);
-  const nameWpx = (savedNamePx >= COL_MINS.name)
-    ? savedNamePx
-    : Math.max(COL_MINS.name, containerW - 44 - typeWpx - dateWpx - metaWpx - 2);
-  const totalW = 44 + nameWpx + typeWpx + dateWpx + metaWpx;
-  const tableAttr = totalW > containerW ? ` style="width:${totalW}px"` : "";
+  const nameWpx = Math.min(maxNameW, savedNamePx >= COL_MINS.name ? savedNamePx : maxNameW);
 
   // ===== HEAD =====
   const dirFor = (k) => (k === sortKey ? sortDir : "asc");
@@ -947,7 +934,7 @@ export function renderList(state) {
     }
   }).join("");
 
-  elList.innerHTML = `<table class="list-table"${tableAttr}>${head}<tbody>${rows}</tbody></table>`;
+  elList.innerHTML = `<table class="list-table">${head}<tbody>${rows}</tbody></table>`;
   initColumnResizers();
 }
 
