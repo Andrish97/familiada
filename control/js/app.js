@@ -965,20 +965,19 @@ async function sendZeroStatesToDevices() {
   let colorModalTarget = null; // "A" | "B" | "BACKGROUND"
 
   ui.on("colors.open", (target) => {
-    const t = target === "A" || target === "B" || target === "BACKGROUND" ? target : null;
-    if (!t) return;
-    colorModalTarget = t;
+    if (target !== "A" && target !== "B" && target !== "BACKGROUND") return;
+    colorModalTarget = target;
 
     const hex =
-      t === "A" ? colors.A :
-      t === "B" ? colors.B :
+      target === "A" ? colors.A :
+      target === "B" ? colors.B :
       colors.BACKGROUND;
 
     const rgb = hexToRgb(hex);
 
     ui.openColorModal?.(
-      t === "A" ? t("control.teamAColorAria") :
-      t === "B" ? t("control.teamBColorAria") :
+      target === "A" ? t("control.teamAColorAria") :
+      target === "B" ? t("control.teamBColorAria") :
       t("control.bgColorAria")
     );
 
