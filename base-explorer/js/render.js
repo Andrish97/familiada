@@ -661,7 +661,7 @@ export function renderBreadcrumbs(state) {
   }).join("");
 }
 
-const COLS_KEY = "base-explorer:cols:v2";
+const COLS_KEY = "base-explorer:cols:v3";
 
 // Default column widths (px). "name" fills remaining space (no default px).
 const COL_DEFAULTS = { type: 160, date: 180, meta: 120 };
@@ -753,20 +753,27 @@ function initColumnResizers() {
 
       // Temporarily: hide table (no flicker), switch to auto layout, clear this col width
       // so the browser can calculate the natural content width for this column.
-      const prevColW = col.style.width;
       table.style.visibility = "hidden";
-      table.style.width = "9999px";   // ensure table is wide enough for natural widths
       table.style.tableLayout = "auto";
       col.style.width = "";
 
       // Force reflow
       void table.offsetWidth;
 
-      const naturalW = Math.max(r.min, Math.round(th.getBoundingClientRect().width));
+      let naturalW = Math.max(r.min, Math.round(th.getBoundingClientRect().width));
+
+      // Cap: column should not push other fixed columns off-screen.
+      // Max = container width − widths of all OTHER fixed columns.
+      const otherFixedPx = Array.from(colEls).reduce((sum, c, i) => {
+        if (i === r.colIdx) return sum;
+        const w = parseInt(c.style.width, 10);
+        return sum + (Number.isFinite(w) ? w : 0);
+      }, 0);
+      const containerW = elList.getBoundingClientRect().width;
+      if (containerW > 0) naturalW = Math.min(naturalW, Math.max(r.min, containerW - otherFixedPx - 8));
 
       // Restore
       table.style.tableLayout = "";
-      table.style.width = "";
       table.style.visibility = "";
       col.style.width = naturalW + "px";
 
