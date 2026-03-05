@@ -267,33 +267,22 @@ function setEmailPendingUi(nextPendingEmail) {
 }
 
 
-let emailStatusFailCount = 0;
-let emailStatusNextTryMs = 0;
-
 async function fetchEmailChangeStatus() {
-  const now = Date.now();
-  if (emailStatusNextTryMs && now < emailStatusNextTryMs) return null;
   try {
     const { data: sess } = await sb().auth.getSession();
     const token = sess?.session?.access_token;
     if (!token) return null;
 
-    const { data, error } = await sb().functions.invoke("email-change-status", {
-      body: {},
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    if (error) {
-      console.warn("[email-change-status] HTTP error:", error?.message, "body:", data);
-      throw error;
-    }
-    if (!data?.ok) return null;
-    emailStatusFailCount = 0;
-    emailStatusNextTryMs = 0;
-    return data;
+    const parts = token.split(".");
+    if (parts.length !== 3) return null;
+    const payload = JSON.parse(atob(parts[1].replace(/-/g, "+").replace(/_/g, "/")));
+
+    const email = String(payload.email || "").toLowerCase();
+    const meta = payload.user_metadata || {};
+    const metaPending = String(meta.familiada_email_change_pending || "").trim().toLowerCase();
+    const pending_email = metaPending && metaPending !== email ? metaPending : "";
+    return { ok: true, email, pending_email, is_pending: !!pending_email };
   } catch (e) {
-    emailStatusFailCount = Math.min(8, emailStatusFailCount + 1);
-    const backoff = Math.min(300_000, 1000 * (2 ** emailStatusFailCount));
-    emailStatusNextTryMs = Date.now() + backoff;
     console.warn("[email-change-status] failed:", e);
     return null;
   }
@@ -499,14 +488,17 @@ async function handleEmailResend() {
 }
 
 async function cancelEmailChangeOnServer(pendingEmail) {
-  // Requires Edge Function: supabase/functions/email-change-cancel
-  const { data, error } = await sb().functions.invoke("email-change-cancel", {
-    body: { pendingEmail: pendingEmail || null },
-  });
-
-  if (error) throw error;
-  if (!data?.ok) throw new Error(data?.error || "Email change cancel failed.");
-  return data;
+  try {
+    const { data, error } = await sb().functions.invoke("email-change-cancel", {
+      body: { pendingEmail: pendingEmail || null },
+    });
+    if (error) throw error;
+    if (!data?.ok) throw new Error(data?.error || "Email change cancel failed.");
+    return data;
+  } catch (e) {
+    console.warn("[email-change-cancel] server cancel failed, falling back to client-side:", e);
+    return null;
+  }
 }
 
 
