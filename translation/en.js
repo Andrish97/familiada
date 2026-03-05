@@ -301,6 +301,8 @@ const en = {
     linkAlreadyUsed: "This link has already been used.",
     linkAlreadyUsedHint: "If this is an email change, confirm the second link from the other inbox.",
     linkInvalid: "The link is invalid or expired.",
+    emailChangeCancelled: "Email address change was cancelled.",
+    emailChangeCancelledHint: "The confirmation link is no longer valid. You can start a new email change in account settings.",
     firstLinkConfirmed: "First link confirmed.",
     firstLinkConfirmedHint: "Confirm the second link from the other inbox (it may be on another device). Only then you can log in to the new email.",
     checkOtherEmail: "Check the other email address to finish the change.",

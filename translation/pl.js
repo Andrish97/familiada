@@ -301,6 +301,8 @@ const pl = {
     linkAlreadyUsed: "Ten link został już użyty.",
     linkAlreadyUsedHint: "Jeśli to zmiana e-maila, potwierdź drugi link z drugiej skrzynki.",
     linkInvalid: "Link jest nieprawidłowy lub wygasł.",
+    emailChangeCancelled: "Zmiana adresu e-mail została anulowana.",
+    emailChangeCancelledHint: "Link potwierdzający jest już nieważny. Możesz zainicjować nową zmianę w ustawieniach konta.",
     firstLinkConfirmed: "Potwierdzono pierwszy link.",
     firstLinkConfirmedHint: "Potwierdź drugi link z drugiej skrzynki (może być na innym urządzeniu). Dopiero wtedy zalogujesz się na nowy e-mail.",
     checkOtherEmail: "Sprawdź drugi adres e-mail, aby dokończyć zmianę.",

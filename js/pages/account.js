@@ -432,6 +432,9 @@ async function handleEmailSave() {
     );
     if (error) throw error;
 
+    // Record pending intent so auth-email-status reflects current state
+    await sb().rpc("initiate_email_change_intent", { p_new_email: normalizedMail });
+
     setStatus(t("account.statusEmailSaved"));
     await refreshAuthEmailState();
     await loadCooldownsFromServer();
@@ -487,21 +490,6 @@ async function handleEmailResend() {
   }
 }
 
-async function cancelEmailChangeOnServer(pendingEmail) {
-  try {
-    const { data, error } = await sb().functions.invoke("email-change-cancel", {
-      body: { pendingEmail: pendingEmail || null },
-    });
-    if (error) throw error;
-    if (!data?.ok) throw new Error(data?.error || "Email change cancel failed.");
-    return data;
-  } catch (e) {
-    console.warn("[email-change-cancel] server cancel failed, falling back to client-side:", e);
-    return null;
-  }
-}
-
-
 async function handleEmailCancel() {
   setErr("");
   try {
@@ -509,37 +497,25 @@ async function handleEmailCancel() {
     await refreshAuthEmailState();
 
     if (!pendingEmail || pendingEmail === currentEmail) {
-      // nothing to cancel
       setStatus(t("account.statusLoaded"));
       setEmailPendingUi("");
       return;
     }
 
-    const language = getUiLang();
-    const confirmUrl = new URL("/confirm", location.origin);
-    confirmUrl.searchParams.set("lang", language);
-    confirmUrl.searchParams.set("to", currentEmail);
-
     setStatus(t("account.statusEmailCancelling"));
 
-    // Prefer server-side cancel (service-role) – reliable and domain-agnostic.
-    const res = await cancelEmailChangeOnServer(pendingEmail);
-    if (res?.ok) {
-      setStatus(t("account.statusEmailCancelled"));
-      await sb().auth.refreshSession();
-      await refreshAuthEmailState();
-      await loadCooldownsFromServer();
-      return;
-    }
+    // 1. Clear new_email + tokens from auth.users via SECURITY DEFINER RPC
+    const { error: rpcErr } = await sb().rpc("cancel_my_email_change");
+    if (rpcErr) console.warn("[cancel_my_email_change] rpc error:", rpcErr.message);
 
-    // Fallback: client-side attempt (may not fully cancel on all Supabase setups)
+    // 2. Clear pending metadata from user_metadata
+    const { error: metaErr } = await sb().auth.updateUser({
+      data: { familiada_email_change_pending: "", familiada_email_change_intent: "" },
+    });
+    if (metaErr) throw metaErr;
 
-
-    const { error } = await sb().auth.updateUser(
-      { email: currentEmail, data: { language, familiada_email_change_pending: "" } },
-      { emailRedirectTo: confirmUrl.toString() }
-    );
-    if (error) throw error;
+    // 3. Refresh JWT so fetchEmailChangeStatus reads updated metadata
+    await sb().auth.refreshSession();
 
     setStatus(t("account.statusEmailCancelled"));
     await refreshAuthEmailState();
