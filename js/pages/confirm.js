@@ -26,6 +26,24 @@ function hp(name){
   return hashParams().get(name);
 }
 
+async function handleEmailChangeFailed(toEmail, e) {
+  console.error(e);
+  if (toEmail) {
+    try {
+      const { data: intentStatus } = await sb().rpc("get_email_intent_status", { p_email: toEmail });
+      if (intentStatus === "expired") {
+        setStatus(t("confirm.emailChangeCancelled"));
+        setErr(t("confirm.emailChangeCancelledHint"));
+        back.style.display = "inline-flex";
+        return;
+      }
+    } catch {}
+  }
+  setStatus(t("confirm.failed"));
+  setErr(niceAuthError(e));
+  back.style.display = "inline-flex";
+}
+
 async function requireNoActiveSessionBeforeAuthFlow() {
   let currentUser = null;
   try {
@@ -194,6 +212,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         back.style.display = "inline-flex";
         return;
       } catch (e) {
+        if (otpType === "email_change") { await handleEmailChangeFailed(qp("to"), e); return; }
         console.error(e);
         setStatus(t("confirm.failed"));
         setErr(niceAuthError(e));
@@ -226,6 +245,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         back.style.display = "inline-flex";
         return;
       } catch (e) {
+        if (otpType === "email_change") { await handleEmailChangeFailed(qp("to"), e); return; }
         console.error(e);
         setStatus(t("confirm.failed"));
         setErr(niceAuthError(e));
@@ -262,6 +282,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       back.style.display = "inline-flex";
     }
   } catch(e){
+    if (otpType === "email_change") { await handleEmailChangeFailed(qp("to"), e); return; }
     console.error(e);
     const msg = e?.message || String(e);
     const low = msg.toLowerCase();
