@@ -616,6 +616,11 @@ export function initImageEditor(ctx) {
     if (initialized) return;
     initialized = true;
 
+    // przycisk "Wybierz obraz" -> otwiera dialog pliku
+    document.getElementById("btnPickImage")?.addEventListener("click", () => {
+      imgFile?.click();
+    });
+
     // input file
     imgFile?.addEventListener("change", async () => {
       if (ctx.getMode?.() !== "IMAGE") return;
