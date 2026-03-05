@@ -343,25 +343,25 @@ export function renderToolbar(state) {
   
   const hasClipboard = !!state?.clipboard?.mode && !!state?.clipboard?.keys?.size;
   
-  // Twoje “poprzednie narzucone reguły” (role + widoki) zostają:
+  // Twoje "poprzednie narzucone reguły" (role + widoki) zostają:
   const canMutate = editor && (state.view !== VIEW.SEARCH && state.view !== VIEW.TAG && state.view !== VIEW.META);
   const canDelete = editor && (state.view !== VIEW.META);
   const canCut = editor && (state.view !== VIEW.SEARCH && state.view !== VIEW.TAG && state.view !== VIEW.META);
   const canCopy = editor; // copy nie było blokowane view’ami, tylko rolą
-  const canEditTags = editor; // view dopuszczasz (w Twoim opisie: “jeśli jest selekcja”)
+  const canEditTags = editor; // view dopuszczasz (w Twoim opisie: "jeśli jest selekcja")
   const canEditQuestion = editor; // placeholder, ale blokuj viewer
   const canRename = canMutate; // rename = mutacja
   
   const dis = new Map();
   
   // === TWORZENIE ===
-  // NOWY WARUNEK: “Nowy folder / Nowe pytanie – zawsze aktywne”
+  // NOWY WARUNEK: "Nowy folder / Nowe pytanie – zawsze aktywne"
   // ale tylko jeśli user ma prawo pisać i nie łamiemy wcześniejszych blokad widoków
   dis.set("newFolder", !canMutate ? true : false);
   dis.set("newQuestion", !canMutate ? true : false);
   
   // === PASTE ===
-  // “Wklej zależne od schowka i dobrze” + wcześniejsze blokady
+  // "Wklej zależne od schowka i dobrze" + wcześniejsze blokady
   dis.set("paste", !(canMutate && hasClipboard));
 
   dis.set("refreshView", false);
@@ -384,7 +384,7 @@ export function renderToolbar(state) {
   }
   
   // 1 zaznaczenie:
-  // “wszystkie aktywne” (z zachowaniem wcześniejszych blokad roli/widoków)
+  // "wszystkie aktywne" (z zachowaniem wcześniejszych blokad roli/widoków)
   if (oneSel) {
     dis.set("editQuestion", !canEditQuestion);
     dis.set("editTags", !canEditTags);
@@ -661,16 +661,16 @@ export function renderBreadcrumbs(state) {
   }).join("");
 }
 
-const COLS_KEY = “base-explorer:cols:v2”;
+const COLS_KEY = "base-explorer:cols:v2";
 
-// Default column widths (px). “name” fills remaining space (no default px).
+// Default column widths (px). "name" fills remaining space (no default px).
 const COL_DEFAULTS = { type: 160, date: 180, meta: 120 };
 const COL_MINS    = { name: 160, type: 80,  date: 120, meta: 80  };
 
 function loadCols() {
   try {
-    const o = JSON.parse(localStorage.getItem(COLS_KEY) || “{}”);
-    return (o && typeof o === “object”) ? o : {};
+    const o = JSON.parse(localStorage.getItem(COLS_KEY) || "{}");
+    return (o && typeof o === "object") ? o : {};
   } catch {
     return {};
   }
@@ -682,31 +682,31 @@ function saveCols(cols) {
 
 // Finder-like: drag one column handle -> only that column changes width.
 // Column widths are stored on <col> elements in the <colgroup>.
-// The “name” column has no fixed width - it fills remaining space.
-// When user explicitly resizes “name”, it gets a fixed px width.
+// The "name" column has no fixed width - it fills remaining space.
+// When user explicitly resizes "name", it gets a fixed px width.
 function initColumnResizers() {
-  const table = elList?.querySelector?.(“.list-table”);
-  const head  = table?.querySelector?.(“.list-head”);
+  const table = elList?.querySelector?.(".list-table");
+  const head  = table?.querySelector?.(".list-head");
   if (!table || !head) return;
-  if (head.dataset.resizers === “1”) return;
-  head.dataset.resizers = “1”;
+  if (head.dataset.resizers === "1") return;
+  head.dataset.resizers = "1";
 
-  const colEls = table.querySelectorAll(“colgroup col”);
+  const colEls = table.querySelectorAll("colgroup col");
   // col indices: 0=num  1=name  2=type  3=date  4=meta
 
   // Apply saved widths to <col> elements
   const saved = loadCols();
   if (saved.name) colEls[1].style.width = saved.name;
-  colEls[2].style.width = (saved.type || COL_DEFAULTS.type) + “px”;
-  colEls[3].style.width = (saved.date || COL_DEFAULTS.date) + “px”;
-  colEls[4].style.width = (saved.meta || COL_DEFAULTS.meta) + “px”;
+  colEls[2].style.width = (saved.type || COL_DEFAULTS.type) + "px";
+  colEls[3].style.width = (saved.date || COL_DEFAULTS.date) + "px";
+  colEls[4].style.width = (saved.meta || COL_DEFAULTS.meta) + "px";
 
   // th indices: 0=num  1=name  2=type  3=date  4=meta
   const resizable = [
-    { thIdx: 1, colIdx: 1, key: “name”, min: COL_MINS.name },
-    { thIdx: 2, colIdx: 2, key: “type”, min: COL_MINS.type },
-    { thIdx: 3, colIdx: 3, key: “date”, min: COL_MINS.date },
-    { thIdx: 4, colIdx: 4, key: “meta”, min: COL_MINS.meta },
+    { thIdx: 1, colIdx: 1, key: "name", min: COL_MINS.name },
+    { thIdx: 2, colIdx: 2, key: "type", min: COL_MINS.type },
+    { thIdx: 3, colIdx: 3, key: "date", min: COL_MINS.date },
+    { thIdx: 4, colIdx: 4, key: "meta", min: COL_MINS.meta },
   ];
 
   for (const r of resizable) {
@@ -714,12 +714,12 @@ function initColumnResizers() {
     const col = colEls[r.colIdx];
     if (!th || !col) continue;
 
-    const handle = document.createElement(“div”);
-    handle.className = “col-resizer”;
-    handle.title = t(“baseExplorer.list.resizeColumn”);
+    const handle = document.createElement("div");
+    handle.className = "col-resizer";
+    handle.title = t("baseExplorer.list.resizeColumn");
     th.appendChild(handle);
 
-    handle.addEventListener(“pointerdown”, (ev) => {
+    handle.addEventListener("pointerdown", (ev) => {
       ev.preventDefault();
       ev.stopPropagation();
       handle.setPointerCapture(ev.pointerId);
@@ -729,35 +729,35 @@ function initColumnResizers() {
 
       const onMove = (e) => {
         const newW = Math.max(r.min, Math.round(startW + (e.clientX - startX)));
-        col.style.width = newW + “px”;
+        col.style.width = newW + "px";
       };
 
       const onUp = () => {
         handle.releasePointerCapture(ev.pointerId);
-        window.removeEventListener(“pointermove”, onMove, true);
-        window.removeEventListener(“pointerup”,   onUp,   true);
+        window.removeEventListener("pointermove", onMove, true);
+        window.removeEventListener("pointerup",   onUp,   true);
 
         const next = loadCols();
         next[r.key] = col.style.width;
         saveCols(next);
       };
 
-      window.addEventListener(“pointermove”, onMove, true);
-      window.addEventListener(“pointerup”,   onUp,   true);
+      window.addEventListener("pointermove", onMove, true);
+      window.addEventListener("pointerup",   onUp,   true);
     });
 
     // Double-click resizer -> auto-fit column to content width (like Finder)
-    handle.addEventListener(“dblclick”, (ev) => {
+    handle.addEventListener("dblclick", (ev) => {
       ev.preventDefault();
       ev.stopPropagation();
 
       // Temporarily: hide table (no flicker), switch to auto layout, clear this col width
       // so the browser can calculate the natural content width for this column.
       const prevColW = col.style.width;
-      table.style.visibility = “hidden”;
-      table.style.width = “9999px”;   // ensure table is wide enough for natural widths
-      table.style.tableLayout = “auto”;
-      col.style.width = “”;
+      table.style.visibility = "hidden";
+      table.style.width = "9999px";   // ensure table is wide enough for natural widths
+      table.style.tableLayout = "auto";
+      col.style.width = "";
 
       // Force reflow
       void table.offsetWidth;
@@ -765,10 +765,10 @@ function initColumnResizers() {
       const naturalW = Math.max(r.min, Math.round(th.getBoundingClientRect().width));
 
       // Restore
-      table.style.tableLayout = “”;
-      table.style.width = “”;
-      table.style.visibility = “”;
-      col.style.width = naturalW + “px”;
+      table.style.tableLayout = "";
+      table.style.width = "";
+      table.style.visibility = "";
+      col.style.width = naturalW + "px";
 
       const next = loadCols();
       next[r.key] = col.style.width;
