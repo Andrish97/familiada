@@ -59,7 +59,7 @@ const uk = {
       about: "Про систему",
       features: "Функції",
       forwhom: "Для кого",
-      faq: "Q&A",
+      faq: "FAQ",
     },
     hero: {
       title: "Створи власну Familiadу. Справжнє телешоу на твоєму обладнанні.",

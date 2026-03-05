@@ -59,7 +59,7 @@ const pl = {
       about: "O systemie",
       features: "Funkcje",
       forwhom: "Dla kogo",
-      faq: "Q&A",
+      faq: "FAQ",
     },
     hero: {
       title: "Stwórz własną Familiadę. Prawdziwy teleturniej na Twoim sprzęcie.",

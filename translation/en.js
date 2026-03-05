@@ -59,7 +59,7 @@ const en = {
       about: "About",
       features: "Features",
       forwhom: "Who it's for",
-      faq: "Q&A",
+      faq: "FAQ",
     },
     hero: {
       title: "Build your own Family Feud. A real game show on your own equipment.",
