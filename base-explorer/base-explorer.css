@@ -1002,7 +1002,9 @@ input,textarea {
 }
 
 /* ── body rows ── */
+/* Nadpisujemy display:flex z base.css (.row { display:flex }) — tabela wymaga table-row */
 tr.row {
+    display: table-row;
     cursor: pointer;
 }
 
