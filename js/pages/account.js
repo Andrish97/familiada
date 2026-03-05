@@ -282,7 +282,10 @@ async function fetchEmailChangeStatus() {
       body: {},
       headers: { Authorization: `Bearer ${token}` },
     });
-    if (error) throw error;
+    if (error) {
+      console.warn("[email-change-status] HTTP error:", error?.message, "body:", data);
+      throw error;
+    }
     if (!data?.ok) return null;
     emailStatusFailCount = 0;
     emailStatusNextTryMs = 0;
@@ -291,7 +294,6 @@ async function fetchEmailChangeStatus() {
     emailStatusFailCount = Math.min(8, emailStatusFailCount + 1);
     const backoff = Math.min(300_000, 1000 * (2 ** emailStatusFailCount));
     emailStatusNextTryMs = Date.now() + backoff;
-    // Fallback will handle UI. We keep this silent.
     console.warn("[email-change-status] failed:", e);
     return null;
   }

@@ -7,14 +7,11 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
-const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
+const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY") || "";
+const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
 
-// Client used only to validate JWT → userId
-const sb = createClient(supabaseUrl, supabaseAnonKey);
-
-// Admin client to read full user record (incl. new_email on some GoTrue versions)
+// Admin client – service role only, used for all DB/auth operations
 const admin = createClient(supabaseUrl, serviceRoleKey, {
   auth: { persistSession: false, autoRefreshToken: false },
 });
@@ -37,68 +34,69 @@ serve(async (req) => {
     const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
     if (!token) return json({ ok: false, error: "Missing Bearer token" }, 401);
 
-    const { data: userData, error: authError } = await sb.auth.getUser(token);
-    if (authError || !userData?.user) {
-      return json({ ok: false, error: "Invalid JWT" }, 401);
+    // Validate JWT via per-request user client (recommended Supabase Edge Function pattern)
+    const userClient = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: `Bearer ${token}` } },
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+    const { data: { user: authUser }, error: authError } = await userClient.auth.getUser();
+    if (authError || !authUser) {
+      return json({ ok: false, error: `Invalid JWT: ${authError?.message || "no user"}` }, 401);
     }
 
-    const userId = userData.user.id;
+    const userId = authUser.id;
 
-    const { data: adminRes, error: adminErr } = await admin.auth.admin.getUserById(userId);
-    if (adminErr || !adminRes?.user) {
-      return json({ ok: false, error: "Admin getUserById failed" }, 500);
+    // Read user record directly from auth.users – avoids admin.auth.admin API
+    // which may be unavailable in some Edge Function environments.
+    const { data: u, error: userErr } = await admin
+      .schema("auth")
+      .from("users")
+      .select("id, email, new_email, user_metadata")
+      .eq("id", userId)
+      .maybeSingle();
+
+    if (userErr || !u) {
+      return json({ ok: false, error: `User lookup failed: ${userErr?.message || "not found"}` }, 500);
     }
 
-    const u: any = adminRes.user;
-    const email: string = String(u?.email || userData.user.email || "").toLowerCase();
-
-    // Try multiple possible fields across GoTrue versions + our own metadata fallback.
-    const meta = (u?.user_metadata || {}) as Record<string, unknown>;
+    const email: string = String(u.email || authUser.email || "").toLowerCase();
+    const meta = ((u.user_metadata || {}) as Record<string, unknown>);
     const metaPending = String(meta.familiada_email_change_pending || "").trim();
     const metaIntent = String(meta.familiada_email_change_intent || "").trim();
-    
-    const pendingCandidates = [
-      u?.new_email,
-      u?.email_new,
-      u?.email_change?.new_email,
-      u?.email_change?.email,
-      metaPending,
-    ];
 
-    const rawPending = pendingCandidates.find((v) => typeof v === "string" && v.includes("@")) || "";
+    // new_email is the GoTrue field for a pending email change
+    const rawPending = (typeof u.new_email === "string" && u.new_email.includes("@"))
+      ? u.new_email
+      : metaPending;
+
     let pending_email = rawPending && rawPending.toLowerCase() !== email ? rawPending.toLowerCase() : "";
     let is_pending = !!pending_email;
-    
-    // --- Auto-heal logic ---
-    //
-    // A) If auth still reports pending (e.g. auth.users.new_email), but our metadata says "no pending",
-    // user likely clicked "cancel". Clear auth pending fields server-side and report no pending.
+
+    // Auto-heal A: auth.users.new_email is set but metadata has no pending →
+    // user already cancelled; clear the auth side and report no pending.
     if (is_pending && !metaPending) {
       const { error: rpcErr } = await admin.rpc("auth_clear_email_change", { p_user_id: userId });
       if (rpcErr) console.warn("auth_clear_email_change (auto-heal A) failed:", rpcErr);
       pending_email = "";
       is_pending = false;
     }
-    
-    // B) If pending is gone (confirmed elsewhere), but metadata still holds pending,
-    // clear metadata to avoid UI bouncing back to pending state.
+
+    // Auto-heal B: auth has no pending but metadata still has it → clear metadata.
     if (!is_pending && (metaPending || metaIntent)) {
       const nextMeta = { ...meta, familiada_email_change_pending: "", familiada_email_change_intent: "" };
-      const { error: metaErr } = await admin.auth.admin.updateUserById(userId, { user_metadata: nextMeta });
+      const { error: metaErr } = await admin
+        .schema("auth")
+        .from("users")
+        .update({ user_metadata: nextMeta })
+        .eq("id", userId);
       if (metaErr) console.warn("clear pending metadata (auto-heal B) failed:", metaErr);
     }
 
-
-    return json({
-      ok: true,
-      email,
-      pending_email,
-      is_pending,
-    });
+    return json({ ok: true, email, pending_email, is_pending });
 
   } catch (e) {
-    console.error(e);
-    return json({ ok: false, error: String(e?.message || e) }, 500);
+    console.error("[email-change-status] uncaught:", e);
+    return json({ ok: false, error: String((e as Error)?.message || e) }, 500);
   }
 });
 
