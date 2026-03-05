@@ -866,77 +866,11 @@ input,textarea {
     letter-spacing: .04em
 }
 
-:root {
-    --col-name: minmax(260px, 1fr)
-}
-
-.row>div {
-    position: relative
-}
-
-/* Separatory kolumn – używamy ::before, żeby nie kolidowało ze strzałkami sortowania (::after) */
-.list-head>div:not(:last-child)::before,
-.row>div:not(:last-child)::before{
-  content:"";
-  position:absolute;
-  top:6px;
-  bottom:6px;
-  right: calc(var(--col-gap)/-2);
-  width:1px;
-  background: rgba(255,255,255,.1);
-  pointer-events:none;
-}
-
-.col-resizer::after {
-    content: "";
-    position: absolute;
-    top: 6px;
-    bottom: 6px;
-    left: 50%;
-    width: 1px;
-    transform: translateX(-50%);
-    background: rgba(255,255,255,.1)
-}
-
-.list-head>div:hover .col-resizer::after {
-    background: rgba(255,255,255,.22)
-}
-
-.list-head>div,.row .col-main,.row>div {
-    min-width: 0
-}
-
-.title-text {
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap
-}
-
-.row .col-date,.row .col-meta,.row .col-type {
-    white-space: nowrap
-}
-
-.row .col-date,.row .col-meta,.row .col-type {
-    overflow: visible;
-    text-overflow: clip
-}
-
-.list {
-    height: 100%
-}
-
-.explorer-right {
-    grid-template-rows: auto 1fr
-}
-
-.list {
-    overflow-x: auto
-}
-
-.meta-dot::after {
-    z-index: 1000
-}
+/* =========================================================
+   List – table layout (Finder-like, fixed columns)
+   Zamiana div-grid na <table table-layout:fixed> eliminuje
+   rozjeżdżanie nagłówka z wierszami i upraszcza resize.
+========================================================= */
 
 .explorer-right {
     display: flex;
@@ -949,31 +883,9 @@ input,textarea {
     min-height: 0
 }
 
-.list-head .h-date,.list-head .h-main,.list-head .h-type {
-    cursor: pointer
-}
-
-.list-head .h-meta,.list-head .h-num {
-    cursor: default
-}
-
-[data-tip]:hover::after,[data-tip]:hover::before {
-    z-index: 10000
-}
-
 .explorer-right {
     min-width: 0;
     overflow: hidden
-}
-
-.list-head,.row {
-    min-width: 0!important
-}
-
-.list-head {
-    position: sticky;
-    top: 0;
-    z-index: 3
 }
 
 .list {
@@ -983,91 +895,235 @@ input,textarea {
     overflow: auto
 }
 
-:root {
-    --col-num: 44px;
-    --col-name: minmax(0, 1fr);
-    --col-type: max-content;
-    --col-date: max-content;
-    --col-meta: max-content;
-    --col-gap: 10px
+/* ── table ── */
+.list-table {
+    table-layout: fixed;
+    width: 100%;
+    border-collapse: collapse;
+    border-spacing: 0;
+    min-width: 480px;
 }
 
-.list-head,.row {
-    display: grid;
-    grid-template-columns: var(--col-num) var(--col-name) var(--col-type) var(--col-date) var(--col-meta);
-    gap: var(--col-gap)
+/* sticky header via thead */
+.list-table thead {
+    position: sticky;
+    top: 0;
+    z-index: 3;
 }
 
-.list-head>div {
-    position: relative;
-    pointer-events: auto;
+/* ── header cells ── */
+.list-head th {
+    padding: 9px 14px;
+    text-align: left;
+    vertical-align: middle;
+    white-space: nowrap;
     overflow: hidden;
-    text-overflow: ellipsis
-}
-
-.col-resizer {
-    position: absolute;
-    top: -6px;
-    right: -6px;
-    width: 12px;
-    height: calc(100% + 12px);
-    cursor: col-resize;
-    touch-action: none;
-    z-index: 2
-}
-
-.row {
+    text-overflow: ellipsis;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    color: rgba(255,255,255,.55);
+    user-select: none;
+    background: rgba(0,0,0,.22);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(255,255,255,.18);
+    /* position:relative for col-resizer */
     position: relative;
-    z-index: 1
 }
 
-.row:hover {
-    z-index: 2
+.list-head th:first-child { border-radius: 12px 0 0 0; }
+.list-head th:last-child  { border-radius: 0 12px 0 0; }
+
+/* column separator lines between header cells */
+.list-head th:not(:last-child) {
+    border-right: 1px solid rgba(255,255,255,.1);
 }
 
-.meta-dot,.tag-dot {
-    position: relative;
-    z-index: 5
+/* sortable columns */
+.list-head .h-main,
+.list-head .h-type,
+.list-head .h-date {
+    cursor: pointer;
+    padding-right: 24px; /* room for sort arrow + resizer */
 }
 
-.meta-dot[data-tip]:hover::after,.meta-dot[data-tip]:hover::before,.tag-dot[data-tip]:hover::after,.tag-dot[data-tip]:hover::before {
-    z-index: 9999
+.list-head .h-num,
+.list-head .h-meta {
+    cursor: default;
 }
 
-.list-head .active::after {
-    display: inline-block
-}
-
-.list-head .h-date,.list-head .h-main,.list-head .h-type {
-    padding-right: 10px
-}
-
-#list::before {
-    content: "";
-    display: block;
-    height: 20px
-}
-
-.list-head .h-date::after,.list-head .h-main::after,.list-head .h-type::after {
+/* sort arrow (::after on th) */
+.list-head .h-main::after,
+.list-head .h-type::after,
+.list-head .h-date::after {
     content: "";
     display: inline-block;
-    width: 14px;
-    text-align: center;
-    margin-left: 6px;
+    width: 12px;
+    margin-left: 4px;
     opacity: .65;
-    visibility: hidden
+    visibility: hidden;
 }
 
-.list-head .active::after {
-    visibility: visible
+.list-head .active::after { visibility: visible; }
+.list-head .active[data-dir=asc]::after  { content: "▲"; }
+.list-head .active[data-dir=desc]::after { content: "▼"; }
+
+.list-head .active {
+    color: rgba(255,255,255,.8);
 }
 
-.list-head .active[data-dir=asc]::after {
-    content: "▲"
+/* ── col-resizer ── */
+/* Sits at right edge of th, fully inside (no clipping issues) */
+.col-resizer {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 8px;
+    height: 100%;
+    cursor: col-resize;
+    touch-action: none;
+    z-index: 2;
 }
 
-.list-head .active[data-dir=desc]::after {
-    content: "▼"
+.col-resizer::after {
+    content: "";
+    position: absolute;
+    top: 20%;
+    bottom: 20%;
+    right: 0;
+    width: 2px;
+    border-radius: 999px;
+    background: rgba(255,255,255,.12);
+}
+
+.list-head th:hover .col-resizer::after {
+    background: rgba(255,255,255,.28);
+}
+
+/* ── body rows ── */
+tr.row {
+    cursor: pointer;
+}
+
+tr.row td {
+    /* fixed height = consistent rows regardless of emoji/icon in folder names */
+    height: 40px;
+    max-height: 40px;
+    padding: 0 14px;
+    vertical-align: middle;
+    border-bottom: 1px solid rgba(255,255,255,.08);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    position: relative;
+    line-height: 1;
+}
+
+/* name column: flex row for icon + text + tag dots */
+tr.row td.col-main {
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+tr.row:hover td {
+    background: rgba(255,255,255,.05);
+}
+
+tr.row.is-selected td {
+    background: rgba(120,160,255,.1);
+}
+
+tr.row.is-selected {
+    outline: 2px solid rgba(120,160,255,.55);
+    outline-offset: -2px;
+}
+
+/* col-num */
+tr.row td.col-num {
+    opacity: .7;
+    font-variant-numeric: tabular-nums;
+}
+
+/* col-type */
+tr.row td.col-type {
+    font-size: 12px;
+    opacity: .85;
+}
+
+/* col-date */
+tr.row td.col-date {
+    opacity: .7;
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+}
+
+/* col-meta */
+tr.row td.col-meta {
+    opacity: .65;
+    font-size: 12px;
+    text-align: right;
+}
+
+/* ── title-text ── */
+.title-text {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* ── drop indicators on tr ── */
+tr.row.is-drop-before td:first-child::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: rgba(255,255,255,.55);
+}
+
+tr.row.is-drop-after td:last-child::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: rgba(255,255,255,.55);
+}
+
+/* ── z-index for tooltips ── */
+.meta-dot,.tag-dot {
+    position: relative;
+    z-index: 5;
+}
+
+.meta-dot[data-tip]:hover::after,
+.meta-dot[data-tip]:hover::before,
+.tag-dot[data-tip]:hover::after,
+.tag-dot[data-tip]:hover::before {
+    z-index: 9999;
+}
+
+[data-tip]:hover::after,[data-tip]:hover::before {
+    z-index: 10000;
+}
+
+/* tooltip above sticky header */
+tr.row:has(.meta-dot[data-tip]:hover),
+tr.row:has(.tag-dot[data-tip]:hover) {
+    z-index: 10;
+}
+
+/* ── misc ── */
+.list-head,.row {
+    min-width: 0;
+}
+
+.meta-dot::after {
+    z-index: 1000;
 }
 
 .tbGroup,.toolbar {
@@ -1135,6 +1191,19 @@ input,textarea {
     height: 18px;
     fill: currentColor;
     display: block
+}
+
+/* inline icon for tree/list rows */
+.list-ico {
+    width: 15px;
+    height: 15px;
+    fill: currentColor;
+    display: inline-block;
+    vertical-align: middle;
+    flex-shrink: 0;
+    opacity: .8;
+    /* prevent white-space:nowrap from adding line-break before icon */
+    margin-right: 2px;
 }
 
 .export-modal {

@@ -196,12 +196,16 @@ export function initExportModal({ state } = {}) {
         <div class="xMeta">${metaText(q, type)}</div>
       `;
 
-      row.addEventListener("click", () => {
+      row.addEventListener("click", (e) => {
         const cb = row.querySelector("input");
-        const will = !(cb?.checked);
-        if (cb) cb.checked = will;
+        // read from selectedIds (source of truth), not from DOM checkbox state
+        // (label+checkbox cause double-toggle if we read cb.checked directly)
+        const will = !selectedIds.has(q.id);
         if (will) selectedIds.add(q.id);
         else selectedIds.delete(q.id);
+        if (cb) cb.checked = will;
+        // prevent label from sending a second synthetic click to the checkbox
+        if (e.target !== cb) e.preventDefault();
         updateCountUI();
       });
 
