@@ -534,6 +534,7 @@ async function handleEmailCancel() {
     const res = await cancelEmailChangeOnServer(pendingEmail);
     if (res?.ok) {
       setStatus(t("account.statusEmailCancelled"));
+      await sb().auth.refreshSession();
       await refreshAuthEmailState();
       await loadCooldownsFromServer();
       return;
