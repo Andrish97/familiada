@@ -680,10 +680,23 @@ function saveCols(cols) {
   try { localStorage.setItem(COLS_KEY, JSON.stringify(cols || {})); } catch {}
 }
 
-// Finder-like: drag one column handle -> only that column changes width.
-// Column widths are stored on <col> elements in the <colgroup>.
-// The "name" column has no fixed width - it fills remaining space.
-// When user explicitly resizes "name", it gets a fixed px width.
+// All columns have explicit px widths so resizing one column never shifts another.
+// The table scrolls horizontally when total column widths exceed the container.
+// Double-click a resizer: name → refills remaining space; others → reset to default.
+
+function _colsTotal(colEls) {
+  return Array.from(colEls).reduce((s, c) => {
+    const w = parseInt(c.style.width, 10);
+    return s + (Number.isFinite(w) ? w : 0);
+  }, 0);
+}
+
+function _applyTableWidth(table, colEls) {
+  const cw = elList.getBoundingClientRect().width;
+  const total = _colsTotal(colEls);
+  table.style.width = (cw > 0 && total > cw) ? total + "px" : "";
+}
+
 function initColumnResizers() {
   const table = elList?.querySelector?.(".list-table");
   const head  = table?.querySelector?.(".list-head");
@@ -693,13 +706,8 @@ function initColumnResizers() {
 
   const colEls = table.querySelectorAll("colgroup col");
   // col indices: 0=num  1=name  2=type  3=date  4=meta
-
-  // Apply saved widths to <col> elements
-  const saved = loadCols();
-  if (saved.name) colEls[1].style.width = saved.name;
-  colEls[2].style.width = (saved.type || COL_DEFAULTS.type) + "px";
-  colEls[3].style.width = (saved.date || COL_DEFAULTS.date) + "px";
-  colEls[4].style.width = (saved.meta || COL_DEFAULTS.meta) + "px";
+  // Widths already set in colgroup HTML by renderList.
+  _applyTableWidth(table, colEls);
 
   // th indices: 0=num  1=name  2=type  3=date  4=meta
   const resizable = [
@@ -730,13 +738,13 @@ function initColumnResizers() {
       const onMove = (e) => {
         const newW = Math.max(r.min, Math.round(startW + (e.clientX - startX)));
         col.style.width = newW + "px";
+        _applyTableWidth(table, colEls);
       };
 
       const onUp = () => {
         handle.releasePointerCapture(ev.pointerId);
         window.removeEventListener("pointermove", onMove, true);
         window.removeEventListener("pointerup",   onUp,   true);
-
         const next = loadCols();
         next[r.key] = col.style.width;
         saveCols(next);
@@ -746,40 +754,27 @@ function initColumnResizers() {
       window.addEventListener("pointerup",   onUp,   true);
     });
 
-    // Double-click resizer -> auto-fit column to content width (like Finder)
+    // Double-click: name → refill remaining; others → reset to default
     handle.addEventListener("dblclick", (ev) => {
       ev.preventDefault();
       ev.stopPropagation();
 
-      // Temporarily: hide table (no flicker), switch to auto layout, clear this col width
-      // so the browser can calculate the natural content width for this column.
-      table.style.visibility = "hidden";
-      table.style.tableLayout = "auto";
-      col.style.width = "";
-
-      // Force reflow
-      void table.offsetWidth;
-
-      let naturalW = Math.max(r.min, Math.round(th.getBoundingClientRect().width));
-
-      // Cap: column should not push other fixed columns off-screen.
-      // Max = container width − widths of all OTHER fixed columns.
-      const otherFixedPx = Array.from(colEls).reduce((sum, c, i) => {
-        if (i === r.colIdx) return sum;
-        const w = parseInt(c.style.width, 10);
-        return sum + (Number.isFinite(w) ? w : 0);
-      }, 0);
-      const containerW = elList.getBoundingClientRect().width;
-      if (containerW > 0) naturalW = Math.min(naturalW, Math.max(r.min, containerW - otherFixedPx - 8));
-
-      // Restore
-      table.style.tableLayout = "";
-      table.style.visibility = "";
-      col.style.width = naturalW + "px";
-
       const next = loadCols();
-      next[r.key] = col.style.width;
+      if (r.key === "name") {
+        const others = Array.from(colEls).reduce((s, c, i) => {
+          if (i === 1) return s;
+          const w = parseInt(c.style.width, 10);
+          return s + (Number.isFinite(w) ? w : 0);
+        }, 0);
+        const cw = elList.getBoundingClientRect().width || 800;
+        col.style.width = Math.max(COL_MINS.name, cw - others - 2) + "px";
+        delete next.name;
+      } else {
+        col.style.width = COL_DEFAULTS[r.key] + "px";
+        delete next[r.key];
+      }
       saveCols(next);
+      _applyTableWidth(table, colEls);
     });
   }
 }
@@ -857,12 +852,18 @@ export function renderList(state) {
 
   items.sort(cmp);
 
-  // ===== COLGROUP (widths from localStorage) =====
+  // ===== COLGROUP (explicit px widths – no auto-fill to prevent col-shift on resize) =====
   const saved = loadCols();
-  const nameW = saved.name ? `style="width:${saved.name}"` : "";
-  const typeW = `style="width:${saved.type || COL_DEFAULTS.type}px"`;
-  const dateW = `style="width:${saved.date || COL_DEFAULTS.date}px"`;
-  const metaW = `style="width:${saved.meta || COL_DEFAULTS.meta}px"`;
+  const containerW = elList.getBoundingClientRect().width || 800;
+  const typeWpx = Math.max(COL_MINS.type, parseInt(saved.type, 10) || COL_DEFAULTS.type);
+  const dateWpx = Math.max(COL_MINS.date, parseInt(saved.date, 10) || COL_DEFAULTS.date);
+  const metaWpx = Math.max(COL_MINS.meta, parseInt(saved.meta, 10) || COL_DEFAULTS.meta);
+  const savedNamePx = parseInt(saved.name, 10);
+  const nameWpx = (savedNamePx >= COL_MINS.name)
+    ? savedNamePx
+    : Math.max(COL_MINS.name, containerW - 44 - typeWpx - dateWpx - metaWpx - 2);
+  const totalW = 44 + nameWpx + typeWpx + dateWpx + metaWpx;
+  const tableAttr = totalW > containerW ? ` style="width:${totalW}px"` : "";
 
   // ===== HEAD =====
   const dirFor = (k) => (k === sortKey ? sortDir : "asc");
@@ -870,10 +871,10 @@ export function renderList(state) {
   const head = `
     <colgroup>
       <col style="width:44px">
-      <col ${nameW}>
-      <col ${typeW}>
-      <col ${dateW}>
-      <col ${metaW}>
+      <col style="width:${nameWpx}px">
+      <col style="width:${typeWpx}px">
+      <col style="width:${dateWpx}px">
+      <col style="width:${metaWpx}px">
     </colgroup>
     <thead>
       <tr class="list-head">
@@ -946,7 +947,7 @@ export function renderList(state) {
     }
   }).join("");
 
-  elList.innerHTML = `<table class="list-table">${head}<tbody>${rows}</tbody></table>`;
+  elList.innerHTML = `<table class="list-table"${tableAttr}>${head}<tbody>${rows}</tbody></table>`;
   initColumnResizers();
 }
 
