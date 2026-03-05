@@ -195,13 +195,15 @@
   max-width: 32%;
 }
 
-/* karta edytora */
-.editorCard{
+/* karta edytora —
+   .card.builder-card (specificity 0,2,0) ma overflow:hidden, więc
+   musimy bić go selektorem o tej samej lub wyższej specyficzności */
+.card.builder-card.editorCard{
   flex: 1;
   min-height: 0;
   display:flex;
   flex-direction: column;
-  overflow: visible; /* popovery nie mogą być ucinane */
+  overflow: visible; /* tooltipy i popovery nie mogą być ucinane */
 }
 
 /* =========================================================
