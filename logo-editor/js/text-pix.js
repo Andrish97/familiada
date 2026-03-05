@@ -162,7 +162,8 @@ export function initTextPixEditor(ctx) {
     if (SYSTEM_FONTS.length) return SYSTEM_FONTS;
   
     try {
-      const res = await fetch("./js/fonts.json", { cache: "no-store" });
+      const fontsUrl = new URL("./fonts.json", import.meta.url).href;
+      const res = await fetch(fontsUrl, { cache: "no-store" });
       if (!res.ok) throw new Error(t("logoEditor.textPix.errors.fontsLoad"));
       const data = await res.json();
   

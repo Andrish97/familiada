@@ -769,6 +769,29 @@
   transform: translate(-50%, -2px) rotate(180deg);
 }
 
+/* Tooltipy w toolbarze narzędzi idą w DÓŁ (do kanwasa, z-index:1),
+   nie w górę – gdzie chowają się pod ramkę karty */
+.editorToolbar .tbtn[data-tip-pos="top"]::after {
+  top: calc(100% + 10px);
+  bottom: auto;
+  margin-top: 0;
+  margin-bottom: 0;
+  transform: translate(-50%, -6px);
+}
+.editorToolbar .tbtn[data-tip-pos="top"]::before {
+  top: 100%;
+  bottom: auto;
+  transform: translate(-50%, 2px) rotate(0deg);
+}
+.editorToolbar .tbtn[data-tip-pos="top"]:hover::after,
+.editorToolbar .tbtn[data-tip-pos="top"]:focus-visible::after {
+  transform: translate(-50%, 0);
+}
+.editorToolbar .tbtn[data-tip-pos="top"]:hover::before,
+.editorToolbar .tbtn[data-tip-pos="top"]:focus-visible::before {
+  opacity: 1;
+}
+
 /* na dotyku: wyłącz */
 @media (hover: none) {
   [data-tip]::after,
