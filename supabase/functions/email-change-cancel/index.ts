@@ -11,7 +11,6 @@ const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
 const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
 const jwtSecret = Deno.env.get("SUPABASE_JWT_SECRET") || "";
 
-// Only one client needed: service role for all DB access
 const admin = createClient(supabaseUrl, serviceRoleKey, {
   auth: { persistSession: false, autoRefreshToken: false },
 });
@@ -69,46 +68,16 @@ serve(async (req) => {
     const userId = await verifyJWT(token);
     if (!userId) return json({ ok: false, error: "Invalid or expired JWT" }, 401);
 
-    // Read current user record for email and metadata
-    const { data: u, error: userErr } = await admin
-      .schema("auth")
-      .from("users")
-      .select("id, email, user_metadata")
-      .eq("id", userId)
-      .maybeSingle();
-
-    if (userErr || !u) {
-      return json({ ok: false, error: `User lookup failed: ${userErr?.message || "not found"}` }, 500);
-    }
-
-    const email = String(u.email || "").trim();
-    const meta = ((u.user_metadata || {}) as Record<string, unknown>);
-    const nextMeta: Record<string, unknown> = {
-      ...meta,
-      familiada_email_change_pending: "",
-      familiada_email_change_intent: "",
-    };
-
-    // 1. Clear pending metadata directly in auth.users (avoids Admin Auth API)
-    const { error: updError } = await admin
-      .schema("auth")
-      .from("users")
-      .update({ user_metadata: nextMeta })
-      .eq("id", userId);
-
-    if (updError) throw new Error(`Metadata update failed: ${updError.message}`);
-
-    // 2. Clear auth.users pending email-change fields (new_email + tokens)
-    const { data: cleared, error: rpcErr } = await admin.rpc("auth_clear_email_change", {
+    // Single public-schema RPC — clears new_email + tokens from auth.users
+    const { error: rpcErr } = await admin.rpc("auth_clear_email_change", {
       p_user_id: userId,
     });
     if (rpcErr) {
-      console.warn("auth_clear_email_change failed:", rpcErr);
-      // don't fail hard – metadata already cleared
+      console.warn("auth_clear_email_change failed:", rpcErr.message);
+      // Client will clear metadata via updateUser — treat as partial success
     }
 
-    return json({ ok: true, email, cleared: !!cleared });
-
+    return json({ ok: true });
   } catch (e) {
     console.error("[email-change-cancel] uncaught:", e);
     return json({ ok: false, error: String((e as Error)?.message || e) }, 500);
