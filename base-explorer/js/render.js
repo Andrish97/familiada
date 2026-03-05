@@ -447,7 +447,7 @@ export function renderTree(state) {
     return kids.length > 0;
   }
 
-  function rowHtml({ kind, id, depth, label, isOpen, canToggle, isActive, icon = "📁" }) {
+  function rowHtml({ kind, id, depth, label, isOpen, canToggle, isActive, icon = svgFolder() }) {
     // wcięcia: bardziej "Explorer", mniej pustego powietrza
     const BASE_PAD = 6;      // minimalny margines z lewej
     const INDENT = 10;       // skok na poziom
@@ -524,7 +524,7 @@ export function renderTree(state) {
     id: ROOT_ID,
     depth: 0,
     label: t("baseExplorer.tree.root"),
-    icon: "🏠",
+    icon: svgHome(),
     canToggle: rootHasChildren,
     isOpen: rootHasChildren ? rootOpen : true,
     isActive: rootActive,
@@ -661,12 +661,16 @@ export function renderBreadcrumbs(state) {
   }).join("");
 }
 
-const COLS_KEY = "base-explorer:cols:v1";
+const COLS_KEY = “base-explorer:cols:v2”;
+
+// Default column widths (px). “name” fills remaining space (no default px).
+const COL_DEFAULTS = { type: 160, date: 180, meta: 120 };
+const COL_MINS    = { name: 160, type: 80,  date: 120, meta: 80  };
 
 function loadCols() {
   try {
-    const o = JSON.parse(localStorage.getItem(COLS_KEY) || "{}");
-    return (o && typeof o === "object") ? o : {};
+    const o = JSON.parse(localStorage.getItem(COLS_KEY) || “{}”);
+    return (o && typeof o === “object”) ? o : {};
   } catch {
     return {};
   }
@@ -676,213 +680,99 @@ function saveCols(cols) {
   try { localStorage.setItem(COLS_KEY, JSON.stringify(cols || {})); } catch {}
 }
 
-function applyColsToRoot(cols) {
-  // ustawiamy na :root (wystarczy, bo list-head/row korzystają z varów)
-  const root = document.documentElement;
-  const map = {
-    num: "--col-num",
-    name: "--col-name",
-    type: "--col-type",
-    date: "--col-date",
-    meta: "--col-meta",
-  };
-  for (const k of Object.keys(map)) {
-    const v = cols?.[k];
-    if (typeof v === "string" && v.trim()) root.style.setProperty(map[k], v);
-  }
-}
-
-// tylko px-resize dla kolumn 2..5 (name/type/date/meta). Num zostawiamy stałe.
+// Finder-like: drag one column handle → only that column changes width.
+// Column widths are stored on <col> elements in the <colgroup>.
+// The “name” column has no fixed width — it fills remaining space.
+// When user explicitly resizes “name”, it gets a fixed px width.
 function initColumnResizers() {
-  const head = elList?.querySelector?.(".list-head");
-  if (!head) return;
-  if (head.dataset.resizers === "1") return;
-  head.dataset.resizers = "1";
+  const table = elList?.querySelector?.(“.list-table”);
+  const head  = table?.querySelector?.(“.list-head”);
+  if (!table || !head) return;
+  if (head.dataset.resizers === “1”) return;
+  head.dataset.resizers = “1”;
 
-  const cols = loadCols();
-  applyColsToRoot(cols);
+  const colEls = table.querySelectorAll(“colgroup col”);
+  // col indices: 0=num  1=name  2=type  3=date  4=meta
 
-  // indeksy komórek w headerze: 0 Nr, 1 Nazwa, 2 Typ, 3 Data, 4 Info
+  // Apply saved widths to <col> elements
+  const saved = loadCols();
+  if (saved.name) colEls[1].style.width = saved.name;
+  colEls[2].style.width = (saved.type || COL_DEFAULTS.type) + “px”;
+  colEls[3].style.width = (saved.date || COL_DEFAULTS.date) + “px”;
+  colEls[4].style.width = (saved.meta || COL_DEFAULTS.meta) + “px”;
+
+  // th indices: 0=num  1=name  2=type  3=date  4=meta
   const resizable = [
-    { idx: 1, key: "name", cssVar: "--col-name", min: 220 },
-    { idx: 2, key: "type", cssVar: "--col-type", min: 120 },
-    { idx: 3, key: "date", cssVar: "--col-date", min: 140 },
-    { idx: 4, key: "meta", cssVar: "--col-meta", min: 120 },
+    { thIdx: 1, colIdx: 1, key: “name”, min: COL_MINS.name },
+    { thIdx: 2, colIdx: 2, key: “type”, min: COL_MINS.type },
+    { thIdx: 3, colIdx: 3, key: “date”, min: COL_MINS.date },
+    { thIdx: 4, colIdx: 4, key: “meta”, min: COL_MINS.meta },
   ];
 
-    const COL_COUNT = 5; // Nr + Nazwa + Typ + Data + Info
-
-  const parsePx = (v) => {
-    const n = parseFloat(String(v || "").replace(",", "."));
-    return Number.isFinite(n) ? n : 0;
-  };
-
-  const getHeadInnerWidth = () => {
-    const cs = getComputedStyle(head);
-    const pl = parsePx(cs.paddingLeft);
-    const pr = parsePx(cs.paddingRight);
-    return Math.max(0, head.getBoundingClientRect().width - pl - pr);
-  };
-
-  const getGap = () => {
-    const cs = getComputedStyle(head);
-    // gap może być "10px" albo "10px 10px"
-    const g = String(cs.gap || cs.columnGap || "0").split(" ")[0];
-    return parsePx(g);
-  };
-
-  const clampAllToViewport = () => {
-    const gap = getGap();
-    const availInner = getHeadInnerWidth();
-    const availNoGaps = Math.max(0, availInner - gap * (COL_COUNT - 1));
-
-    // bierzemy aktualne szerokości nagłówka (oddają stan po varach i po max-content)
-    const w = Array.from(head.children).map((el) => el.getBoundingClientRect().width);
-    const sumNoGaps = w.reduce((a, b) => a + b, 0);
-
-    if (sumNoGaps <= availNoGaps) return;
-
-    // redukujemy w kolejności: name -> meta -> date -> type (Nr zostaje)
-    const order = [
-      { idx: 1, cssVar: "--col-name", min: 220 },
-      { idx: 4, cssVar: "--col-meta", min: 120 },
-      { idx: 3, cssVar: "--col-date", min: 140 },
-      { idx: 2, cssVar: "--col-type", min: 120 },
-    ];
-
-    let overflow = sumNoGaps - availNoGaps;
-
-    for (const o of order) {
-      if (overflow <= 0) break;
-
-      const cur = w[o.idx];
-      const canCut = Math.max(0, cur - o.min);
-      const cut = Math.min(canCut, overflow);
-
-      if (cut > 0) {
-        const next = Math.round(cur - cut);
-        document.documentElement.style.setProperty(o.cssVar, `${next}px`);
-        overflow -= cut;
-        w[o.idx] = next;
-      }
-    }
-
-    // zapisujemy po clampie, żeby przy kolejnym wejściu nie wracało „za szeroko”
-    const nextCols = loadCols();
-    for (const r of resizable) {
-      const v = getComputedStyle(document.documentElement).getPropertyValue(r.cssVar).trim();
-      if (v) nextCols[r.key] = v;
-    }
-    saveCols(nextCols);
-  };
-
-  // po załadowaniu zapisanych kolumn – natychmiast dociśnij do viewportu
-  clampAllToViewport();
-
-  // i dociśnij przy zmianie okna (to rozwiązuje: "zmniejszam okno, a list się nie zmniejsza")
-  if (!head.dataset.resizeClamp) {
-    head.dataset.resizeClamp = "1";
-    window.addEventListener("resize", () => clampAllToViewport(), { passive: true });
-  }
-
   for (const r of resizable) {
-    const cell = head.children?.[r.idx];
-    if (!cell) continue;
+    const th  = head.children[r.thIdx];
+    const col = colEls[r.colIdx];
+    if (!th || !col) continue;
 
-    const h = document.createElement("div");
-    h.className = "col-resizer";
-    h.title = t("baseExplorer.list.resizeColumn");
-    cell.appendChild(h);
+    const handle = document.createElement(“div”);
+    handle.className = “col-resizer”;
+    handle.title = t(“baseExplorer.list.resizeColumn”);
+    th.appendChild(handle);
 
-    h.addEventListener("pointerdown", (ev) => {
+    handle.addEventListener(“pointerdown”, (ev) => {
       ev.preventDefault();
       ev.stopPropagation();
-      h.setPointerCapture(ev.pointerId);
+      handle.setPointerCapture(ev.pointerId);
 
       const startX = ev.clientX;
-
-      // aktualna szerokość komórki (px)
-      const startW = cell.getBoundingClientRect().width;
+      const startW = th.getBoundingClientRect().width;
 
       const onMove = (e) => {
-        const dx = e.clientX - startX;
-      
-        const gap = getGap();
-        const availInner = getHeadInnerWidth();
-        const availNoGaps = Math.max(0, availInner - gap * (COL_COUNT - 1));
-      
-        // aktualne szerokości kolumn (px) z DOM — działają dobrze przy max-content
-        const w = Array.from(head.children).map((el) => el.getBoundingClientRect().width);
-      
-        // docelowa szerokość przeciąganej kolumny
-        let target = Math.max(r.min, Math.round(startW + dx));
-      
-        // ustawiamy ją "w pamięci"
-        w[r.idx] = target;
-      
-        // minimalne szerokości dla indeksów (0 = Nr nie ruszamy)
-        const MIN = {
-          1: 220, // name
-          2: 120, // type
-          3: 140, // date
-          4: 120, // meta
-        };
-      
-        // kolejność "dawców" miejsca (kogo ściskamy),
-        // czyli: najpierw te NA PRAWO (to jest to „poprzednia przyciska następną”),
-        // potem ewentualnie na lewo (gdy prawa strona już na minimach)
-        const donors = [];
-        for (let i = r.idx + 1; i <= 4; i++) donors.push(i);
-        for (let i = r.idx - 1; i >= 1; i--) donors.push(i);
-      
-        // ile przekraczamy dostępne miejsce
-        let overflow = w.reduce((a, b) => a + b, 0) - availNoGaps;
-      
-        // jeśli przekraczamy — ściskamy kolejne kolumny do ich minimów
-        if (overflow > 0) {
-          for (const di of donors) {
-            if (overflow <= 0) break;
-            const cur = w[di];
-            const min = MIN[di] ?? 0;
-            const canCut = Math.max(0, cur - min);
-            const cut = Math.min(canCut, overflow);
-            if (cut > 0) {
-              w[di] = cur - cut;
-              overflow -= cut;
-            }
-          }
-        }
-      
-        // jeśli dalej overflow>0, to znaczy, że już wszystko na minimach —
-        // wtedy musimy też ograniczyć przeciąganą kolumnę.
-        if (overflow > 0) {
-          w[r.idx] = Math.max(r.min, w[r.idx] - overflow);
-        }
-      
-        // Teraz zapisujemy szerokości do CSS vars (dla resizable kolumn)
-        // idx: 1=name,2=type,3=date,4=meta
-        document.documentElement.style.setProperty("--col-name", `${Math.round(w[1])}px`);
-        document.documentElement.style.setProperty("--col-type", `${Math.round(w[2])}px`);
-        document.documentElement.style.setProperty("--col-date", `${Math.round(w[3])}px`);
-        document.documentElement.style.setProperty("--col-meta", `${Math.round(w[4])}px`);
+        const newW = Math.max(r.min, Math.round(startW + (e.clientX - startX)));
+        col.style.width = newW + “px”;
       };
 
-      const onUp = (e) => {
-        h.releasePointerCapture(ev.pointerId);
-        window.removeEventListener("pointermove", onMove, true);
-        window.removeEventListener("pointerup", onUp, true);
+      const onUp = () => {
+        handle.releasePointerCapture(ev.pointerId);
+        window.removeEventListener(“pointermove”, onMove, true);
+        window.removeEventListener(“pointerup”,   onUp,   true);
 
-        // zapisz aktualną wartość var (już w px)
-        const nextCols = loadCols();
-        nextCols.name = getComputedStyle(document.documentElement).getPropertyValue("--col-name").trim();
-        nextCols.type = getComputedStyle(document.documentElement).getPropertyValue("--col-type").trim();
-        nextCols.date = getComputedStyle(document.documentElement).getPropertyValue("--col-date").trim();
-        nextCols.meta = getComputedStyle(document.documentElement).getPropertyValue("--col-meta").trim();
-        saveCols(nextCols);
+        const next = loadCols();
+        next[r.key] = col.style.width;
+        saveCols(next);
       };
 
-      window.addEventListener("pointermove", onMove, true);
-      window.addEventListener("pointerup", onUp, true);
+      window.addEventListener(“pointermove”, onMove, true);
+      window.addEventListener(“pointerup”,   onUp,   true);
+    });
+
+    // Double-click resizer → auto-fit column to content width (like Finder)
+    handle.addEventListener(“dblclick”, (ev) => {
+      ev.preventDefault();
+      ev.stopPropagation();
+
+      // Temporarily: hide table (no flicker), switch to auto layout, clear this col width
+      // so the browser can calculate the natural content width for this column.
+      const prevColW = col.style.width;
+      table.style.visibility = “hidden”;
+      table.style.width = “9999px”;   // ensure table is wide enough for natural widths
+      table.style.tableLayout = “auto”;
+      col.style.width = “”;
+
+      // Force reflow
+      void table.offsetWidth;
+
+      const naturalW = Math.max(r.min, Math.round(th.getBoundingClientRect().width));
+
+      // Restore
+      table.style.tableLayout = “”;
+      table.style.width = “”;
+      table.style.visibility = “”;
+      col.style.width = naturalW + “px”;
+
+      const next = loadCols();
+      next[r.key] = col.style.width;
+      saveCols(next);
     });
   }
 }
@@ -926,7 +816,7 @@ export function renderList(state) {
   }
 
   if (!items.length) {
-    elList.innerHTML = `<div style="opacity:.75">${t("baseExplorer.list.empty")}</div>`;
+    elList.innerHTML = `<div style="opacity:.75; padding:16px;">${t("baseExplorer.list.empty")}</div>`;
     return;
   }
 
@@ -934,12 +824,10 @@ export function renderList(state) {
     if (sortKey === "name") {
       const r = byNamePL(a.name, b.name);
       if (r) return r;
-      // stabilizuj po typie i dacie
-      const t = getItemTypeSortKey(a, state).localeCompare(getItemTypeSortKey(b, state)) * mul;
-      if (t) return t;
+      const tv = getItemTypeSortKey(a, state).localeCompare(getItemTypeSortKey(b, state)) * mul;
+      if (tv) return tv;
       return (a.date - b.date) * mul;
     }
-
     if (sortKey === "type") {
       const ta = getItemTypeSortKey(a, state);
       const tb = getItemTypeSortKey(b, state);
@@ -947,36 +835,48 @@ export function renderList(state) {
       if (r) return r;
       return byNamePL(a.name, b.name);
     }
-
     if (sortKey === "date") {
       const r = ((a.date || 0) - (b.date || 0)) * mul;
       if (r) return r;
       return byNamePL(a.name, b.name);
     }
-
     if (sortKey === "ord") {
       const r = ((a.ord || 0) - (b.ord || 0)) * mul;
       if (r) return r;
       return byNamePL(a.name, b.name);
     }
-
-    // fallback: name
     return byNamePL(a.name, b.name);
   }
 
   items.sort(cmp);
 
-  // ===== HEAD (Nr | Nazwa | Typ | Data | Meta) =====
+  // ===== COLGROUP (widths from localStorage) =====
+  const saved = loadCols();
+  const nameW = saved.name ? `style="width:${saved.name}"` : "";
+  const typeW = `style="width:${saved.type || COL_DEFAULTS.type}px"`;
+  const dateW = `style="width:${saved.date || COL_DEFAULTS.date}px"`;
+  const metaW = `style="width:${saved.meta || COL_DEFAULTS.meta}px"`;
+
+  // ===== HEAD =====
   const dirFor = (k) => (k === sortKey ? sortDir : "asc");
 
   const head = `
-    <div class="list-head">
-      <div class="h-num">${t("baseExplorer.list.colNumber")}</div>
-      <div class="h-main ${sortKey === "name" ? "active" : ""}" data-sort-key="name" data-dir="${esc(dirFor("name"))}">${t("baseExplorer.list.colName")}</div>
-      <div class="h-type ${sortKey === "type" ? "active" : ""}" data-sort-key="type" data-dir="${esc(dirFor("type"))}">${t("baseExplorer.list.colType")}</div>
-      <div class="h-date ${sortKey === "date" ? "active" : ""}" data-sort-key="date" data-dir="${esc(dirFor("date"))}">${t("baseExplorer.list.colDate")}</div>
-      <div class="h-meta">${t("baseExplorer.list.colInfo")}</div>
-    </div>
+    <colgroup>
+      <col style="width:44px">
+      <col ${nameW}>
+      <col ${typeW}>
+      <col ${dateW}>
+      <col ${metaW}>
+    </colgroup>
+    <thead>
+      <tr class="list-head">
+        <th class="h-num">${t("baseExplorer.list.colNumber")}</th>
+        <th class="h-main ${sortKey === "name" ? "active" : ""}" data-sort-key="name" data-dir="${esc(dirFor("name"))}">${t("baseExplorer.list.colName")}</th>
+        <th class="h-type ${sortKey === "type" ? "active" : ""}" data-sort-key="type" data-dir="${esc(dirFor("type"))}">${t("baseExplorer.list.colType")}</th>
+        <th class="h-date ${sortKey === "date" ? "active" : ""}" data-sort-key="date" data-dir="${esc(dirFor("date"))}">${t("baseExplorer.list.colDate")}</th>
+        <th class="h-meta">${t("baseExplorer.list.colInfo")}</th>
+      </tr>
+    </thead>
   `;
 
   // ===== ROWS =====
@@ -989,68 +889,57 @@ export function renderList(state) {
 
     if (it.kind === "cat") {
       const c = it.raw;
-
-      // Typ: Folder + kropki meta (kategorie)
       const typeHtml = `
         <span style="opacity:.85;">${t("baseExplorer.list.folderType")}</span>
-        <span style="margin-left:8px;">${metaDotsHtml(state, c.id, "c")}</span>
+        <span style="margin-left:6px;">${metaDotsHtml(state, c.id, "c")}</span>
       `;
-
-      // Meta: liczba elementów folderu – BEST EFFORT
       const count = state._directChildrenCount?.get?.(c.id) ?? null;
       const metaTxt = (count === null)
         ? t("baseExplorer.common.dash")
         : t("baseExplorer.list.folderCount", { count });
 
       return `
-        <div class="row${selClass}" ${draggable} data-kind="cat" data-id="${esc(c.id)}" style="cursor:pointer;">
-          <div class="col-num">${n++}</div>
-
-          <div class="col-main">
+        <tr class="row${selClass}" ${draggable} data-kind="cat" data-id="${esc(c.id)}">
+          <td class="col-num">${n++}</td>
+          <td class="col-main">
             <div class="title-line">
-              <span class="title-text">📁 ${esc(c.name || t("baseExplorer.defaults.folder"))}</span>
+              <span class="title-text">${svgFolder()} ${esc(c.name || t("baseExplorer.defaults.folder"))}</span>
               ${tagDotsHtml(state, c.id, "c")}
             </div>
-          </div>
-
-          <div class="col-type">${typeHtml}</div>
-          <div class="col-date">${esc(fmtDate(pickDate(c)))}</div>
-          <div class="col-meta">${esc(metaTxt)}</div>
-        </div>
+          </td>
+          <td class="col-type">${typeHtml}</td>
+          <td class="col-date">${esc(fmtDate(pickDate(c)))}</td>
+          <td class="col-meta">${esc(metaTxt)}</td>
+        </tr>
       `;
     } else {
       const q = it.raw;
       const text = q?.payload?.text ?? q?.text ?? "";
-
       const answersCount = Array.isArray(q?.payload?.answers) ? q.payload.answers.length : 0;
       const metaTxt = t("baseExplorer.list.answerCount", { count: answersCount });
-
       const typeHtml = `
         <span style="opacity:.85;">${t("baseExplorer.list.questionType")}</span>
-        <span style="margin-left:8px;">${metaDotsHtml(state, q.id, "q")}</span>
+        <span style="margin-left:6px;">${metaDotsHtml(state, q.id, "q")}</span>
       `;
 
       return `
-        <div class="row${selClass}" ${draggable} data-kind="q" data-id="${esc(q.id)}" style="cursor:pointer;">
-          <div class="col-num">${n++}</div>
-
-          <div class="col-main">
+        <tr class="row${selClass}" ${draggable} data-kind="q" data-id="${esc(q.id)}">
+          <td class="col-num">${n++}</td>
+          <td class="col-main">
             <div class="title-line">
               <span class="title-text">${esc(text || t("baseExplorer.defaults.question"))}</span>
               ${tagDotsHtml(state, q.id, "q")}
             </div>
-          </div>
-
-          <div class="col-type">${typeHtml}</div>
-          <div class="col-date">${esc(fmtDate(pickDate(q)))}</div>
-          <div class="col-meta">${esc(metaTxt)}</div>
-        </div>
+          </td>
+          <td class="col-type">${typeHtml}</td>
+          <td class="col-date">${esc(fmtDate(pickDate(q)))}</td>
+          <td class="col-meta">${esc(metaTxt)}</td>
+        </tr>
       `;
     }
   }).join("");
 
-  elList.innerHTML = head + rows;
-  // po wyrenderowaniu head + rows
+  elList.innerHTML = `<table class="list-table">${head}<tbody>${rows}</tbody></table>`;
   initColumnResizers();
 }
 
@@ -1073,3 +962,11 @@ function svgPaste(){ return svgBase("M19 4h-3.18A3 3 0 0 0 13 2h-2a3 3 0 0 0-2.8
 function svgDuplicate(){ return svgBase("M7 7h12v14H7V7zm-2 2H3V3h14v2H5v4z"); }
 function svgPlay(){ return svgBase("M8 5v14l11-7L8 5z"); }
 function svgRefresh(){ return svgBase("M17.65 6.35A7.95 7.95 0 0 0 12 4V1L7 6l5 5V7a5 5 0 1 1-5 5H5a7 7 0 1 0 12.65-5.65z"); }
+
+/* small inline icons for tree/list rows */
+function svgFolder(){
+  return `<svg class="list-ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M20 6h-8l-2-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2z"/></svg>`;
+}
+function svgHome(){
+  return `<svg class="list-ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>`;
+}
