@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict FLef7rVjA6nTx2MKFhLwJZFZd5k05S1OmQJPgfelK94CdMjc4avvIcoq84ooiCA
+\restrict PdLPAbGh0ciKus8gPcgUuLiNMr48fAU4Mh6k9w8X8R8gDu2NjYib2DkLBnxlm7z
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -6739,6 +6739,8 @@ BEGIN
   END LOOP;
 
   /* ── STEP 2: LOGOS ────────────────────────────────────────────────── */
+  -- Demo logos are inserted with is_active=false to avoid violating the
+  -- user_logos_one_active_per_user partial unique index.
   -- GLYPH logo (logo_text)
   SELECT payload INTO v_tpl
     FROM demo_template_data WHERE lang = v_lang AND slot = 'logo_text';
@@ -6748,7 +6750,7 @@ BEGIN
       p_uid,
       v_tpl->>'name',
       'GLYPH_30x10',
-      true,
+      false,
       true,
       jsonb_build_object('layers', jsonb_build_array(
         jsonb_build_object('rows', v_tpl->'payload'->'rows')
@@ -6762,7 +6764,7 @@ BEGIN
       FROM demo_template_data WHERE lang = v_lang AND slot = v_logo_slot;
     IF v_tpl IS NOT NULL THEN
       INSERT INTO user_logos (user_id, name, type, is_active, is_demo, payload)
-      VALUES (p_uid, v_tpl->>'name', 'PIX_150x70', true, true, v_tpl->'payload');
+      VALUES (p_uid, v_tpl->>'name', 'PIX_150x70', false, true, v_tpl->'payload');
     END IF;
   END LOOP;
 
@@ -9681,5 +9683,5 @@ CREATE POLICY "user_logos_update_own" ON "public"."user_logos" FOR UPDATE USING 
 -- PostgreSQL database dump complete
 --
 
-\unrestrict FLef7rVjA6nTx2MKFhLwJZFZd5k05S1OmQJPgfelK94CdMjc4avvIcoq84ooiCA
+\unrestrict PdLPAbGh0ciKus8gPcgUuLiNMr48fAU4Mh6k9w8X8R8gDu2NjYib2DkLBnxlm7z
 
