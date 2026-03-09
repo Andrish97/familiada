@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict PPxQy9dqdO5mgo0IVrsBkAAYcnt4TCqmp5jPK8cA9dbimAdD880Qqh1RQdgYnZM
+\restrict Qw2K5t6bGWX8dLbETiyvY4uX29NcHj8CGUiUTBCQ74dKv42BiKDJPukX0qmgNmO
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -2433,10 +2433,10 @@ BEGIN
         guest_last_active_at = excluded.guest_last_active_at,
         guest_expires_at     = excluded.guest_expires_at;
 
-  -- user_flags: demo=false (DB handles seeding below)
-  INSERT INTO public.user_flags (user_id, demo)
-  VALUES (new.id, false)
-  ON CONFLICT (user_id) DO UPDATE SET demo = false;
+  -- Ensure user_flags row exists (all columns use DB defaults)
+  INSERT INTO public.user_flags (user_id)
+  VALUES (new.id)
+  ON CONFLICT (user_id) DO NOTHING;
 
   -- Seed demo data for real (non-guest) users
   IF NOT v_is_guest THEN
@@ -7693,7 +7693,6 @@ CREATE TABLE "public"."user_cooldowns" (
 
 CREATE TABLE "public"."user_flags" (
     "user_id" "uuid" NOT NULL,
-    "demo" boolean DEFAULT false NOT NULL,
     "updated_at" timestamp with time zone DEFAULT "now"() NOT NULL,
     "email_notifications" boolean DEFAULT true NOT NULL,
     "ios_webapp_prompt_dismissed" boolean DEFAULT false NOT NULL
@@ -9721,5 +9720,5 @@ CREATE POLICY "user_logos_update_own" ON "public"."user_logos" FOR UPDATE USING 
 -- PostgreSQL database dump complete
 --
 
-\unrestrict PPxQy9dqdO5mgo0IVrsBkAAYcnt4TCqmp5jPK8cA9dbimAdD880Qqh1RQdgYnZM
+\unrestrict Qw2K5t6bGWX8dLbETiyvY4uX29NcHj8CGUiUTBCQ74dKv42BiKDJPukX0qmgNmO
 
