@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict PdLPAbGh0ciKus8gPcgUuLiNMr48fAU4Mh6k9w8X8R8gDu2NjYib2DkLBnxlm7z
+\restrict PPxQy9dqdO5mgo0IVrsBkAAYcnt4TCqmp5jPK8cA9dbimAdD880Qqh1RQdgYnZM
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -6567,9 +6567,47 @@ BEGIN
   v_lang := lower(trim(coalesce(p_lang, 'pl')));
   IF v_lang NOT IN ('pl', 'en', 'uk') THEN v_lang := 'pl'; END IF;
 
-  DELETE FROM public.user_logos     WHERE user_id  = v_uid AND is_demo = true;
-  DELETE FROM public.question_bases WHERE owner_id = v_uid AND is_demo = true;
-  DELETE FROM public.games          WHERE owner_id = v_uid AND is_demo = true;
+  -- Logos: remove tagged + old-style (matched by name from template)
+  DELETE FROM public.user_logos
+  WHERE user_id = v_uid
+    AND (
+      is_demo = true
+      OR name IN (
+        SELECT payload->>'name'
+        FROM public.demo_template_data
+        WHERE lang = v_lang
+          AND slot IN ('logo_text', 'logo_text_pix', 'logo_draw', 'logo_image')
+      )
+    );
+
+  -- Question bases: remove tagged + old-style (matched by name from template)
+  DELETE FROM public.question_bases
+  WHERE owner_id = v_uid
+    AND (
+      is_demo = true
+      OR name IN (
+        SELECT payload->'base'->>'name'
+        FROM public.demo_template_data
+        WHERE lang = v_lang AND slot = 'base'
+      )
+    );
+
+  -- Games: remove tagged + old-style (matched by name from template)
+  DELETE FROM public.games
+  WHERE owner_id = v_uid
+    AND (
+      is_demo = true
+      OR name IN (
+        SELECT payload->'game'->>'name'
+        FROM public.demo_template_data
+        WHERE lang = v_lang
+          AND slot IN (
+            'poll_text_open', 'poll_text_closed',
+            'poll_points_open', 'poll_points_closed',
+            'prepared', 'poll_points_draft', 'poll_text_draft'
+          )
+      )
+    );
 
   PERFORM public.seed_demo_for_user(v_uid, v_lang);
 END;
@@ -9683,5 +9721,5 @@ CREATE POLICY "user_logos_update_own" ON "public"."user_logos" FOR UPDATE USING 
 -- PostgreSQL database dump complete
 --
 
-\unrestrict PdLPAbGh0ciKus8gPcgUuLiNMr48fAU4Mh6k9w8X8R8gDu2NjYib2DkLBnxlm7z
+\unrestrict PPxQy9dqdO5mgo0IVrsBkAAYcnt4TCqmp5jPK8cA9dbimAdD880Qqh1RQdgYnZM
 
