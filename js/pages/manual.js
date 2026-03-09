@@ -169,7 +169,18 @@ async function wireDemoActions(user) {
 
     const lang = localStorage.getItem("uiLang") || "pl";
     const { error } = await sb().rpc("restore_my_demo", { p_lang: lang });
-    if (!error) location.href = "./builder";
+    if (error) {
+      console.error("restore_my_demo error:", {
+        message: error.message,
+        code: error.code,
+        details: error.details,
+        hint: error.hint,
+        status: error.status,
+        raw: JSON.stringify(error),
+      });
+      return;
+    }
+    location.href = "./builder";
   });
 }
 
