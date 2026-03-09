@@ -155,7 +155,7 @@ async function wireDemoActions(user) {
   const btn = byId("demoRestoreBtn");
   if (!btn || !user?.id) return;
 
-  const { resetUserDemoFlag } = await import("../core/user-flags.js");
+  const { sb } = await import("../core/supabase.js");
 
   btn.addEventListener("click", async () => {
     const ok = await confirmModal({
@@ -167,8 +167,9 @@ async function wireDemoActions(user) {
 
     if (!ok) return;
 
-    await resetUserDemoFlag(user.id, true);
-    location.href = "./builder";
+    const lang = localStorage.getItem("uiLang") || "pl";
+    const { error } = await sb().rpc("restore_my_demo", { p_lang: lang });
+    if (!error) location.href = "./builder";
   });
 }
 

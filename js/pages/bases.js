@@ -1475,7 +1475,6 @@ async function importFromJsonText(txt) {
   if (importTa) importTa.disabled = true;
 
   try {
-    // UWAGA: w bases.js masz lokalne importBase(payload) – jeśli wolisz, możesz przejść na import z bases-import.js.
     const newId = await importBase(payload, ({ step, i, n, msg } = {}) => {
       setProgUi(importProgStep, importProgCount, importProgBar, importProgMsg, {
         step: step || t("bases.import.steps.default"),

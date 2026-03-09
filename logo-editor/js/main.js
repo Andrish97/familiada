@@ -1357,7 +1357,7 @@ async function boot(){
      inpImportLogoFile.value = "";
      if (!f) return;
    
-     // blokujący progres (jak w builder/demo-seed)
+     // blokujący progres
      progOpen("import");
      progReset("import");
    

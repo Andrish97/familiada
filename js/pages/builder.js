@@ -10,7 +10,6 @@ import {
 } from "../core/user-flags.js";
 
 import { exportGame, importGame, downloadJson } from "./builder-import-export.js";
-import { seedDemoOnceIfNeeded } from "./demo-seed.js";
 
 import {
   TYPES,
@@ -1365,21 +1364,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   // init
   setActiveTab(TYPES.PREPARED);
 
-  // DEMO seed (max 1x per user)
-  try {
-    const res = await seedDemoOnceIfNeeded(currentUser?.id);
-    if (res?.ran) {
-      // po seedzie odświeżamy listę gier (i bazy/loga są już w systemie)
-      await refresh();
-      // opcjonalnie: alert/toast – ja bym NIE spamował, ale decyzja należy do Ciebie 🙂
-    } else {
-      await refresh();
-    }
-  } catch (e) {
-    console.error("[builder] demo seed error:", e);
-    // Seed się nie udał → builder nadal działa normalnie
-    await refresh();
-  }
+  await refresh();
 
   // auto refresh jak w polls-hub
   document.addEventListener("visibilitychange", () => {
