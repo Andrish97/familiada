@@ -1481,8 +1481,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   });
 
-  // init
-  setActiveTab(TYPES.PREPARED);
+  // init — ?tab=market otwiera zakładkę Społeczność od razu
+  const initTab = new URLSearchParams(location.search).get("tab");
+  setActiveTab(initTab === "market" ? "market" : TYPES.PREPARED);
 
   await refresh();
 

@@ -672,6 +672,7 @@ const en = {
     },
     noId: "Missing ?id in URL.",
     gameNotReady: "This game is not ready because: {reason}",
+    gameNotFound: "This game does not exist or you don't have access. Redirecting to your library…",
     dataMismatch: "Game data mismatch (validate vs games).",
     qrCopyOk: "Device link copied.",
     qrCopyFail: "Failed to copy device link.",

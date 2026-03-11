@@ -7,6 +7,7 @@ const APP_MSG = {
   get NO_ID() { return t("control.noId"); },
   GAME_NOT_READY: (reason) => t("control.gameNotReady", { reason }),
   get DATA_MISMATCH() { return t("control.dataMismatch"); },
+  get GAME_NOT_FOUND() { return t("control.gameNotFound"); },
 
   QR_LABEL: (kind) =>
     kind === "display" ? t("control.deviceDisplay") :
@@ -140,7 +141,13 @@ function syncPanelStepPills() {
 async function loadGameOrThrow() {
   if (!gameId) throw new Error(APP_MSG.NO_ID);
 
-  const basic = await loadGameBasic(gameId);
+  let basic;
+  try {
+    basic = await loadGameBasic(gameId);
+  } catch (e) {
+    if (e?.code === "PGRST116") throw Object.assign(new Error(APP_MSG.GAME_NOT_FOUND), { _notFound: true });
+    throw e;
+  }
 
   const v = await validateGameReadyToPlay(gameId);
   if (!v.ok) throw new Error(APP_MSG.GAME_NOT_READY(v.reason));
@@ -1216,4 +1223,7 @@ main().catch((e) => {
   console.error(e);
   const el = document.getElementById("msgSide");
   if (el) el.textContent = e?.message || String(e);
+  if (e?._notFound) {
+    setTimeout(() => { location.href = "builder?tab=market"; }, 3000);
+  }
 });

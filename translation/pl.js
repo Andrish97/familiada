@@ -674,6 +674,7 @@ const pl = {
     },
     noId: "Brak ?id w URL.",
     gameNotReady: "Ta gra nie jest gotowa ponieważ: {reason}",
+    gameNotFound: "Gra nie istnieje lub nie masz do niej dostępu. Zaraz wrócisz do biblioteki…",
     dataMismatch: "Rozjazd danych gry (validate vs games).",
     qrCopyOk: "Skopiowano link do urządzenia.",
     qrCopyFail: "Nie udało się skopiować linku.",
