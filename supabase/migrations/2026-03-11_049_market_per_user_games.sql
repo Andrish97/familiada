@@ -169,7 +169,9 @@ begin
         'ready',
         p_market_game_id
     )
-    on conflict on constraint "games_owner_market_uniq" do nothing;
+    on conflict (owner_id, source_market_id)
+    where source_market_id is not null
+    do nothing;
 
     get diagnostics v_rows = row_count;
 
