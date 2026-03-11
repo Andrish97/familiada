@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict Qw2K5t6bGWX8dLbETiyvY4uX29NcHj8CGUiUTBCQ74dKv42BiKDJPukX0qmgNmO
+\restrict LbMmZiLZwZmyBfVDeQPZ2jYAfuNMRXgdVhWQ5oilqpphQ42akZzEDfWXIXq7jbX
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -156,6 +156,18 @@ CREATE TYPE "public"."game_type" AS ENUM (
     'poll_text',
     'poll_points',
     'prepared'
+);
+
+
+--
+-- Name: market_game_status; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE "public"."market_game_status" AS ENUM (
+    'pending',
+    'published',
+    'withdrawn',
+    'rejected'
 );
 
 
@@ -3047,6 +3059,468 @@ begin
 
   get diagnostics v_count = row_count;
   return coalesce(v_count, 0);
+end;
+$$;
+
+
+--
+-- Name: market_add_to_library("uuid"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."market_add_to_library"("p_market_game_id" "uuid") RETURNS TABLE("ok" boolean, "err" "text")
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+declare
+    v_uid uuid := auth.uid();
+begin
+    if v_uid is null then
+        return query select false, 'not_authenticated';
+        return;
+    end if;
+
+    -- gra musi być published lub withdrawn (ale withdrawn zostaje w bibliotece)
+    if not exists (
+        select 1 from public.market_games
+         where id = p_market_game_id
+           and status in ('published', 'withdrawn')
+    ) then
+        return query select false, 'game_not_available';
+        return;
+    end if;
+
+    insert into public.user_market_library (user_id, market_game_id)
+    values (v_uid, p_market_game_id)
+    on conflict do nothing;
+
+    return query select true, '';
+end;
+$$;
+
+
+--
+-- Name: market_admin_delete("uuid"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."market_admin_delete"("p_id" "uuid") RETURNS TABLE("ok" boolean, "err" "text")
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+declare
+    v_rows int;
+begin
+    delete from public.market_games where id = p_id;
+    get diagnostics v_rows = row_count;
+
+    if v_rows = 0 then
+        return query select false, 'not_found';
+        return;
+    end if;
+
+    return query select true, '';
+end;
+$$;
+
+
+--
+-- Name: market_admin_detail("uuid"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."market_admin_detail"("p_id" "uuid") RETURNS TABLE("id" "uuid", "title" "text", "description" "text", "lang" "text", "status" "public"."market_game_status", "moderation_note" "text", "library_count" integer, "author_username" "text", "author_email" "text", "gh_slug" "text", "payload" "jsonb", "created_at" timestamp with time zone)
+    LANGUAGE "sql" STABLE SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+    SELECT
+        mg.id,
+        mg.title,
+        mg.description,
+        mg.lang,
+        mg.status,
+        mg.moderation_note,
+        mg.library_count,
+        COALESCE(pr.username, '') AS author_username,
+        COALESCE(pr.email, '')    AS author_email,
+        mg.gh_slug,
+        mg.payload,
+        mg.created_at
+    FROM public.market_games mg
+    LEFT JOIN public.profiles pr ON pr.id = mg.author_user_id
+    WHERE mg.id = p_id;
+$$;
+
+
+--
+-- Name: market_admin_list("text"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."market_admin_list"("p_status" "text" DEFAULT 'pending'::"text") RETURNS TABLE("id" "uuid", "title" "text", "description" "text", "lang" "text", "status" "public"."market_game_status", "moderation_note" "text", "library_count" integer, "author_username" "text", "author_email" "text", "gh_slug" "text", "created_at" timestamp with time zone)
+    LANGUAGE "sql" STABLE SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+    SELECT
+        mg.id,
+        mg.title,
+        mg.description,
+        mg.lang,
+        mg.status,
+        mg.moderation_note,
+        mg.library_count,
+        COALESCE(pr.username, '') AS author_username,
+        COALESCE(pr.email, '')    AS author_email,
+        mg.gh_slug,
+        mg.created_at
+    FROM public.market_games mg
+    LEFT JOIN public.profiles pr ON pr.id = mg.author_user_id
+    WHERE mg.status = p_status::public.market_game_status
+    ORDER BY mg.created_at ASC;
+$$;
+
+
+--
+-- Name: market_admin_review("uuid", "text", "text"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."market_admin_review"("p_id" "uuid", "p_action" "text", "p_note" "text" DEFAULT ''::"text") RETURNS TABLE("ok" boolean, "err" "text")
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+declare
+    v_new_status public.market_game_status;
+begin
+    if p_action = 'approve' then
+        v_new_status := 'published';
+    elsif p_action = 'reject' then
+        v_new_status := 'rejected';
+    else
+        return query select false, 'invalid_action';
+        return;
+    end if;
+
+    update public.market_games
+       set status          = v_new_status,
+           moderation_note = case when p_action = 'reject' then btrim(coalesce(p_note, '')) else null end
+     where id = p_id
+       and status = 'pending';
+
+    if not found then
+        return query select false, 'not_found_or_not_pending';
+        return;
+    end if;
+
+    return query select true, '';
+end;
+$$;
+
+
+--
+-- Name: market_admin_upsert_gh("text", "text", "text", "text", "jsonb"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."market_admin_upsert_gh"("p_slug" "text", "p_title" "text", "p_description" "text", "p_lang" "text", "p_payload" "jsonb") RETURNS TABLE("ok" boolean, "err" "text", "market_id" "uuid")
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+declare
+    v_id uuid;
+begin
+    if p_lang not in ('pl', 'en', 'uk') then
+        return query select false, 'invalid_lang', null::uuid;
+        return;
+    end if;
+
+    insert into public.market_games
+        (gh_slug, author_user_id, source_game_id, title, description, lang, payload, status)
+    values
+        (p_slug, null, null, btrim(p_title), btrim(coalesce(p_description, '')), p_lang, p_payload, 'published')
+    on conflict (gh_slug)
+    do update set
+        title       = excluded.title,
+        description = excluded.description,
+        lang        = excluded.lang,
+        payload     = excluded.payload,
+        status      = 'published',
+        updated_at  = now()
+    returning id into v_id;
+
+    return query select true, '', v_id;
+end;
+$$;
+
+
+--
+-- Name: market_admin_withdraw("uuid"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."market_admin_withdraw"("p_id" "uuid") RETURNS TABLE("ok" boolean, "err" "text")
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+begin
+    update public.market_games
+       set status = 'withdrawn',
+           updated_at = now()
+     where id = p_id
+       and status = 'published';
+
+    if not found then
+        return query select false, 'not_found_or_not_published';
+        return;
+    end if;
+
+    return query select true, '';
+end;
+$$;
+
+
+--
+-- Name: market_browse("text", "text", integer, integer); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."market_browse"("p_lang" "text" DEFAULT 'pl'::"text", "p_search" "text" DEFAULT ''::"text", "p_limit" integer DEFAULT 20, "p_offset" integer DEFAULT 0) RETURNS TABLE("id" "uuid", "title" "text", "description" "text", "lang" "text", "library_count" integer, "author_username" "text", "created_at" timestamp with time zone, "in_library" boolean)
+    LANGUAGE "sql" STABLE
+    SET "search_path" TO 'public'
+    AS $$
+    SELECT
+        mg.id,
+        mg.title,
+        mg.description,
+        mg.lang,
+        mg.library_count,
+        COALESCE(pr.username, '') AS author_username,
+        mg.created_at,
+        CASE
+            WHEN auth.uid() IS NULL THEN false
+            ELSE EXISTS (
+                SELECT 1 FROM public.user_market_library uml
+                 WHERE uml.market_game_id = mg.id
+                   AND uml.user_id = auth.uid()
+            )
+        END AS in_library
+    FROM public.market_games mg
+    LEFT JOIN public.profiles pr ON pr.id = mg.author_user_id
+    WHERE mg.status = 'published'
+      AND (
+          p_search = ''
+          OR mg.title ILIKE '%' || p_search || '%'
+          OR mg.description ILIKE '%' || p_search || '%'
+      )
+    ORDER BY
+        (mg.lang = p_lang) DESC,
+        mg.library_count DESC,
+        mg.created_at DESC
+    LIMIT  LEAST(p_limit, 100)
+    OFFSET p_offset;
+$$;
+
+
+--
+-- Name: market_game_detail("uuid"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."market_game_detail"("p_id" "uuid") RETURNS TABLE("id" "uuid", "title" "text", "description" "text", "lang" "text", "library_count" integer, "author_username" "text", "status" "public"."market_game_status", "payload" "jsonb", "in_library" boolean)
+    LANGUAGE "sql" STABLE
+    SET "search_path" TO 'public'
+    AS $$
+    SELECT
+        mg.id,
+        mg.title,
+        mg.description,
+        mg.lang,
+        mg.library_count,
+        COALESCE(pr.username, '') AS author_username,
+        mg.status,
+        mg.payload,
+        CASE
+            WHEN auth.uid() IS NULL THEN false
+            ELSE EXISTS (
+                SELECT 1 FROM public.user_market_library uml
+                 WHERE uml.market_game_id = mg.id
+                   AND uml.user_id = auth.uid()
+            )
+        END AS in_library
+    FROM public.market_games mg
+    LEFT JOIN public.profiles pr ON pr.id = mg.author_user_id
+    WHERE mg.id = p_id;
+$$;
+
+
+--
+-- Name: market_my_library(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."market_my_library"() RETURNS TABLE("market_game_id" "uuid", "title" "text", "lang" "text", "author_username" "text", "status" "public"."market_game_status", "payload" "jsonb", "added_at" timestamp with time zone)
+    LANGUAGE "sql" STABLE SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+    SELECT
+        mg.id            AS market_game_id,
+        mg.title,
+        mg.lang,
+        COALESCE(pr.username, '') AS author_username,
+        mg.status,
+        mg.payload,
+        uml.created_at   AS added_at
+    FROM public.user_market_library uml
+    JOIN public.market_games mg   ON mg.id = uml.market_game_id
+    LEFT JOIN public.profiles pr  ON pr.id = mg.author_user_id
+    WHERE uml.user_id = auth.uid()
+    ORDER BY uml.created_at DESC;
+$$;
+
+
+--
+-- Name: market_my_submissions(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."market_my_submissions"() RETURNS TABLE("id" "uuid", "source_game_id" "uuid", "title" "text", "description" "text", "lang" "text", "status" "public"."market_game_status", "moderation_note" "text", "library_count" integer, "created_at" timestamp with time zone)
+    LANGUAGE "sql" STABLE SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+    SELECT
+        mg.id,
+        mg.source_game_id,
+        mg.title,
+        mg.description,
+        mg.lang,
+        mg.status,
+        mg.moderation_note,
+        mg.library_count,
+        mg.created_at
+    FROM public.market_games mg
+    WHERE mg.author_user_id = auth.uid()
+      AND mg.status <> 'withdrawn'
+    ORDER BY mg.created_at DESC;
+$$;
+
+
+--
+-- Name: market_remove_from_library("uuid"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."market_remove_from_library"("p_market_game_id" "uuid") RETURNS TABLE("ok" boolean, "err" "text")
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+declare
+    v_uid uuid := auth.uid();
+begin
+    if v_uid is null then
+        return query select false, 'not_authenticated';
+        return;
+    end if;
+
+    delete from public.user_market_library
+     where user_id = v_uid
+       and market_game_id = p_market_game_id;
+
+    return query select true, '';
+end;
+$$;
+
+
+--
+-- Name: market_submit_game("uuid", "text", "text", "text", "jsonb"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."market_submit_game"("p_game_id" "uuid", "p_title" "text", "p_description" "text", "p_lang" "text", "p_payload" "jsonb") RETURNS TABLE("ok" boolean, "err" "text", "market_id" "uuid")
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+declare
+    v_uid      uuid := auth.uid();
+    v_game     public.games;
+    v_can_play boolean;
+    v_new      uuid;
+begin
+    -- musi być zalogowany
+    if v_uid is null then
+        return query select false, 'not_authenticated', null::uuid;
+        return;
+    end if;
+
+    -- gra musi istnieć i należeć do usera
+    select * into v_game
+      from public.games
+     where id = p_game_id and owner_id = v_uid;
+
+    if v_game.id is null then
+        return query select false, 'game_not_found', null::uuid;
+        return;
+    end if;
+
+    -- gra musi być grywalna (can_play = true) — sprawdza m.in. min. 10 pytań, zakresy punktów itd.
+    select can_play into v_can_play from public.game_action_state(p_game_id);
+    if not coalesce(v_can_play, false) then
+        return query select false, 'game_not_playable', null::uuid;
+        return;
+    end if;
+
+    -- walidacja lang
+    if p_lang not in ('pl', 'en', 'uk') then
+        return query select false, 'invalid_lang', null::uuid;
+        return;
+    end if;
+
+    -- walidacja tytułu
+    if char_length(btrim(p_title)) < 1 or char_length(btrim(p_title)) > 120 then
+        return query select false, 'invalid_title', null::uuid;
+        return;
+    end if;
+
+    -- walidacja payload (musi mieć game + questions)
+    if p_payload -> 'game' is null or p_payload -> 'questions' is null then
+        return query select false, 'invalid_payload', null::uuid;
+        return;
+    end if;
+
+    -- payload musi mieć co najmniej 10 pytań
+    if jsonb_array_length(p_payload -> 'questions') < 10 then
+        return query select false, 'too_few_questions', null::uuid;
+        return;
+    end if;
+
+    insert into public.market_games
+        (author_user_id, source_game_id, title, description, lang, status, payload)
+    values
+        (v_uid, p_game_id, btrim(p_title), btrim(coalesce(p_description, '')), p_lang, 'pending', p_payload)
+    returning id into v_new;
+
+    return query select true, null::text, v_new;
+end;
+$$;
+
+
+--
+-- Name: market_withdraw("uuid"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."market_withdraw"("p_market_game_id" "uuid") RETURNS TABLE("ok" boolean, "err" "text")
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+declare
+    v_uid uuid := auth.uid();
+    v_rows int;
+begin
+    if v_uid is null then
+        return query select false, 'not_authenticated';
+        return;
+    end if;
+
+    update public.market_games
+       set status = 'withdrawn'
+     where id = p_market_game_id
+       and author_user_id = v_uid
+       and status = 'published';
+
+    get diagnostics v_rows = row_count;
+
+    if v_rows = 0 then
+        return query select false, 'not_found_or_not_published';
+        return;
+    end if;
+
+    return query select true, '';
 end;
 $$;
 
@@ -7129,6 +7603,36 @@ end $$;
 
 
 --
+-- Name: trg_market_library_count(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."trg_market_library_count"() RETURNS "trigger"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+begin
+    if tg_op = 'INSERT' then
+        update public.market_games
+           set library_count = library_count + 1,
+               updated_at    = now()
+         where id = new.market_game_id;
+        return new;
+    end if;
+
+    if tg_op = 'DELETE' then
+        update public.market_games
+           set library_count = greatest(0, library_count - 1),
+               updated_at    = now()
+         where id = old.market_game_id;
+        return old;
+    end if;
+
+    return null;
+end;
+$$;
+
+
+--
 -- Name: trg_touch_game_from_answers(); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -7172,6 +7676,20 @@ begin
     perform public.touch_game_updated_at(v_game_id);
   end if;
   return coalesce(new, old);
+end;
+$$;
+
+
+--
+-- Name: trg_touch_market_games_updated_at(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."trg_touch_market_games_updated_at"() RETURNS "trigger"
+    LANGUAGE "plpgsql"
+    AS $$
+begin
+    new.updated_at = now();
+    return new;
 end;
 $$;
 
@@ -7425,6 +7943,30 @@ CREATE TABLE "public"."mail_settings" (
     "updated_at" timestamp with time zone DEFAULT "now"() NOT NULL,
     "worker_limit" integer DEFAULT 25 NOT NULL,
     CONSTRAINT "mail_settings_singleton" CHECK (("id" = 1))
+);
+
+
+--
+-- Name: market_games; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE "public"."market_games" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "source_game_id" "uuid",
+    "author_user_id" "uuid",
+    "title" "text" NOT NULL,
+    "description" "text" DEFAULT ''::"text" NOT NULL,
+    "lang" "text" NOT NULL,
+    "payload" "jsonb" NOT NULL,
+    "status" "public"."market_game_status" DEFAULT 'pending'::"public"."market_game_status" NOT NULL,
+    "moderation_note" "text",
+    "gh_slug" "text",
+    "library_count" integer DEFAULT 0 NOT NULL,
+    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    "updated_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    CONSTRAINT "market_games_lang_check" CHECK (("lang" = ANY (ARRAY['pl'::"text", 'en'::"text", 'uk'::"text"]))),
+    CONSTRAINT "market_games_library_count_nn" CHECK (("library_count" >= 0)),
+    CONSTRAINT "market_games_title_len" CHECK ((("char_length"("title") >= 1) AND ("char_length"("title") <= 120)))
 );
 
 
@@ -7732,6 +8274,17 @@ CREATE TABLE "public"."user_logos" (
 
 
 --
+-- Name: user_market_library; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE "public"."user_market_library" (
+    "user_id" "uuid" NOT NULL,
+    "market_game_id" "uuid" NOT NULL,
+    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL
+);
+
+
+--
 -- Name: answers answers_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -7841,6 +8394,22 @@ ALTER TABLE ONLY "public"."mail_queue"
 
 ALTER TABLE ONLY "public"."mail_settings"
     ADD CONSTRAINT "mail_settings_pkey" PRIMARY KEY ("id");
+
+
+--
+-- Name: market_games market_games_gh_slug_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."market_games"
+    ADD CONSTRAINT "market_games_gh_slug_key" UNIQUE ("gh_slug");
+
+
+--
+-- Name: market_games market_games_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."market_games"
+    ADD CONSTRAINT "market_games_pkey" PRIMARY KEY ("id");
 
 
 --
@@ -8036,6 +8605,14 @@ ALTER TABLE ONLY "public"."user_logos"
 
 
 --
+-- Name: user_market_library user_market_library_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."user_market_library"
+    ADD CONSTRAINT "user_market_library_pkey" PRIMARY KEY ("user_id", "market_game_id");
+
+
+--
 -- Name: answers_q_idx; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -8201,6 +8778,34 @@ CREATE INDEX "mail_queue_created_by_idx" ON "public"."mail_queue" USING "btree" 
 --
 
 CREATE INDEX "mail_queue_pick_idx" ON "public"."mail_queue" USING "btree" ("status", "not_before", "created_at");
+
+
+--
+-- Name: market_games_author_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX "market_games_author_idx" ON "public"."market_games" USING "btree" ("author_user_id");
+
+
+--
+-- Name: market_games_lang_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX "market_games_lang_idx" ON "public"."market_games" USING "btree" ("lang");
+
+
+--
+-- Name: market_games_library_cnt_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX "market_games_library_cnt_idx" ON "public"."market_games" USING "btree" ("library_count" DESC);
+
+
+--
+-- Name: market_games_status_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX "market_games_status_idx" ON "public"."market_games" USING "btree" ("status");
 
 
 --
@@ -8484,6 +9089,13 @@ CREATE UNIQUE INDEX "questions_game_ord_uq" ON "public"."questions" USING "btree
 
 
 --
+-- Name: uml_market_game_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX "uml_market_game_idx" ON "public"."user_market_library" USING "btree" ("market_game_id");
+
+
+--
 -- Name: user_logos_one_active_per_user; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -8547,6 +9159,13 @@ CREATE TRIGGER "trg_games_touch" BEFORE UPDATE ON "public"."games" FOR EACH ROW 
 
 
 --
+-- Name: market_games trg_market_games_updated_at; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "trg_market_games_updated_at" BEFORE UPDATE ON "public"."market_games" FOR EACH ROW EXECUTE FUNCTION "public"."trg_touch_market_games_updated_at"();
+
+
+--
 -- Name: poll_tasks trg_poll_tasks_touch_status_ts; Type: TRIGGER; Schema: public; Owner: -
 --
 
@@ -8572,6 +9191,13 @@ CREATE TRIGGER "trg_qb_questions_set_updated_at" BEFORE UPDATE ON "public"."qb_q
 --
 
 CREATE TRIGGER "trg_touch_user_flags_updated_at" BEFORE UPDATE ON "public"."user_flags" FOR EACH ROW EXECUTE FUNCTION "public"."touch_user_flags_updated_at"();
+
+
+--
+-- Name: user_market_library trg_uml_library_count; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "trg_uml_library_count" AFTER INSERT OR DELETE ON "public"."user_market_library" FOR EACH ROW EXECUTE FUNCTION "public"."trg_market_library_count"();
 
 
 --
@@ -8627,6 +9253,22 @@ ALTER TABLE ONLY "public"."device_state"
 
 ALTER TABLE ONLY "public"."games"
     ADD CONSTRAINT "games_owner_id_fkey" FOREIGN KEY ("owner_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
+
+
+--
+-- Name: market_games market_games_author_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."market_games"
+    ADD CONSTRAINT "market_games_author_fkey" FOREIGN KEY ("author_user_id") REFERENCES "auth"."users"("id") ON DELETE SET NULL;
+
+
+--
+-- Name: market_games market_games_source_game_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."market_games"
+    ADD CONSTRAINT "market_games_source_game_fkey" FOREIGN KEY ("source_game_id") REFERENCES "public"."games"("id") ON DELETE SET NULL;
 
 
 --
@@ -8878,6 +9520,22 @@ ALTER TABLE ONLY "public"."questions"
 
 
 --
+-- Name: user_market_library uml_market_game_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."user_market_library"
+    ADD CONSTRAINT "uml_market_game_fkey" FOREIGN KEY ("market_game_id") REFERENCES "public"."market_games"("id") ON DELETE CASCADE;
+
+
+--
+-- Name: user_market_library uml_user_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."user_market_library"
+    ADD CONSTRAINT "uml_user_fkey" FOREIGN KEY ("user_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
+
+
+--
 -- Name: user_cooldowns user_cooldowns_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -9110,6 +9768,42 @@ CREATE POLICY "mail_settings_read_none" ON "public"."mail_settings" FOR SELECT T
 --
 
 CREATE POLICY "mail_settings_write_none" ON "public"."mail_settings" TO "authenticated" USING (false) WITH CHECK (false);
+
+
+--
+-- Name: market_games; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE "public"."market_games" ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: market_games mg_insert_own; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "mg_insert_own" ON "public"."market_games" FOR INSERT TO "authenticated" WITH CHECK (("author_user_id" = "auth"."uid"()));
+
+
+--
+-- Name: market_games mg_no_direct_delete; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "mg_no_direct_delete" ON "public"."market_games" FOR DELETE USING (false);
+
+
+--
+-- Name: market_games mg_no_direct_update; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "mg_no_direct_update" ON "public"."market_games" FOR UPDATE USING (false);
+
+
+--
+-- Name: market_games mg_select; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "mg_select" ON "public"."market_games" FOR SELECT USING ((("status" = 'published'::"public"."market_game_status") OR (("status" = 'withdrawn'::"public"."market_game_status") AND (("author_user_id" = "auth"."uid"()) OR (EXISTS ( SELECT 1
+   FROM "public"."user_market_library"
+  WHERE (("user_market_library"."market_game_id" = "market_games"."id") AND ("user_market_library"."user_id" = "auth"."uid"())))))) OR (("status" = ANY (ARRAY['pending'::"public"."market_game_status", 'rejected'::"public"."market_game_status"])) AND ("author_user_id" = "auth"."uid"()))));
 
 
 --
@@ -9629,6 +10323,13 @@ CREATE POLICY "questions_owner_write" ON "public"."questions" TO "authenticated"
 
 
 --
+-- Name: user_market_library uml_own; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "uml_own" ON "public"."user_market_library" USING (("user_id" = "auth"."uid"())) WITH CHECK (("user_id" = "auth"."uid"()));
+
+
+--
 -- Name: user_cooldowns; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
@@ -9717,8 +10418,14 @@ CREATE POLICY "user_logos_update_own" ON "public"."user_logos" FOR UPDATE USING 
 
 
 --
+-- Name: user_market_library; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
+
+--
 -- PostgreSQL database dump complete
 --
 
-\unrestrict Qw2K5t6bGWX8dLbETiyvY4uX29NcHj8CGUiUTBCQ74dKv42BiKDJPukX0qmgNmO
+\unrestrict LbMmZiLZwZmyBfVDeQPZ2jYAfuNMRXgdVhWQ5oilqpphQ42akZzEDfWXIXq7jbX
 
