@@ -2579,6 +2579,7 @@ const uk = {
       pollText: "ОПИТУВАННЯ",
       pollPoints: "БАЛИ",
       prepared: "ПІДГОТОВЛЕНЕ",
+      market: "MARKETPLACE",
     },
     status: {
       draft: "ЧЕРНЕТКА",

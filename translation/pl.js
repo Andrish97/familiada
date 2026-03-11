@@ -2700,6 +2700,7 @@ const pl = {
       pollText: "SONDAŻ",
       pollPoints: "PUNKTACJA",
       prepared: "PREPAROWANY",
+      market: "MARKETPLACE",
     },
     status: {
       draft: "SZKIC",
