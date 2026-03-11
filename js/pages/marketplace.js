@@ -370,6 +370,7 @@ async function openSubmitModal() {
     .select("id,name,type,status,questions(count)")
     .eq("owner_id", currentUser.id)
     .is("source_market_id", null)
+    .eq("is_demo", false)
     .order("updated_at", { ascending: false });
 
   const eligible = (games || []).filter(g => {
@@ -458,6 +459,7 @@ async function submitGame() {
   showToast(t("marketplace.submit.success"), "success");
   closeSubmitModal();
   await loadMySent();
+  fetch("/_api/notify-submission", { method: "POST" }).catch(() => {});
 }
 
 /* =========================================================

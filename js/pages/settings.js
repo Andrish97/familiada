@@ -1653,7 +1653,7 @@ function wireMarketplaceEvents() {
     if (marketPreviewId) approveMarketGame(marketPreviewId);
   });
   document.getElementById("btnMarketPreviewReject")?.addEventListener("click", () => {
-    if (marketPreviewId) { closeMarketPreview(); openRejectModal(marketPreviewId); }
+    if (marketPreviewId) { const id = marketPreviewId; closeMarketPreview(); openRejectModal(id); }
   });
   document.getElementById("btnMarketPreviewWithdraw")?.addEventListener("click", () => {
     if (marketPreviewId) adminForceWithdraw(marketPreviewId);

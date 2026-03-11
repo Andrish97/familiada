@@ -4306,7 +4306,7 @@ const uk = {
     producerBadge: "Familiada",
     langLabel: "Мова",
     authorLabel: "від: {author}",
-    libraryCount: "{count} додало",
+    libraryCount: "додано {count}",
     loadMore: "Показати більше",
     empty: "Немає ігор за вашим запитом.",
     errorLoad: "Не вдалося завантажити ігри.",

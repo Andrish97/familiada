@@ -87,6 +87,11 @@ export default {
       return new Response("Unauthorized", { status: 401 });
     }
 
+    // Public notification endpoint (rate-limited, no auth required)
+    if (url.pathname === "/_api/notify-submission" && request.method === "POST") {
+      return handleNotifySubmission(env);
+    }
+
     // Block settings on public hosts (serve custom 404)
     if (isBlockedPath(host, url.pathname)) {
       return serveNotFoundPage(request, ORIGIN_BASE, ORIGIN_HOST, ORIGIN_RESOLVE);
@@ -681,11 +686,31 @@ async function sendNtfy(topic, title, message, priority = 3) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ title, message, priority }),
     });
-    if (!res.ok) return json({ ok: false, error: `ntfy_http_${res.status}` }, 502);
+    if (!res.ok) {
+      const body = await res.text().catch(() => "");
+      return json({ ok: false, error: `ntfy_http_${res.status}`, detail: body.slice(0, 200) });
+    }
     return json({ ok: true });
   } catch (err) {
-    return json({ ok: false, error: String(err?.message || err) }, 502);
+    return json({ ok: false, error: String(err?.message || err) });
   }
+}
+
+async function handleNotifySubmission(env) {
+  // Rate limit: 1 notification per 5 minutes
+  const key = "notify_submission_ts";
+  const last = await env.MAINT_KV.get(key);
+  const now = Date.now();
+  if (last && now - Number(last) < 5 * 60 * 1000) {
+    return json({ ok: true });
+  }
+
+  const topicRes = await supabaseRpc(env, "admin_config_get", { p_key: "ntfy_topic" });
+  const topic = topicRes.ok ? String(normalizeRpcValue(topicRes.data) ?? "").trim() : "";
+  if (!topic) return json({ ok: true });
+
+  await env.MAINT_KV.put(key, String(now), { expirationTtl: 600 });
+  return sendNtfy(topic, "Familiada — marketplace", "Nowa gra czeka na zatwierdzenie 🎮");
 }
 
 
