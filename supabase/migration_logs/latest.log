@@ -1,31 +1,74 @@
-[2026-03-09T23:32:26Z] == DB migrations runner ==
-[2026-03-09T23:32:26Z] STAGING_DIR: /home/andrish97/.deploy/db-migrate/2f4f941d9c13cb80df16932539d7c5932813b5c9
-[2026-03-09T23:32:26Z] MIG_DIR    : /home/andrish97/.deploy/db-migrate/2f4f941d9c13cb80df16932539d7c5932813b5c9/migrations
-[2026-03-09T23:32:26Z] OUT_DIR    : /home/andrish97/.deploy/db-migrate/2f4f941d9c13cb80df16932539d7c5932813b5c9/out
-[2026-03-09T23:32:26Z] 
-[2026-03-09T23:32:26Z] == Ensure public.schema_migrations ==
+[2026-03-11T14:09:30Z] == DB migrations runner ==
+[2026-03-11T14:09:30Z] STAGING_DIR: /home/andrish97/.deploy/db-migrate/024d054294b4003fb54e17bb1ea4fb4b6d0fb0a7
+[2026-03-11T14:09:30Z] MIG_DIR    : /home/andrish97/.deploy/db-migrate/024d054294b4003fb54e17bb1ea4fb4b6d0fb0a7/migrations
+[2026-03-11T14:09:30Z] OUT_DIR    : /home/andrish97/.deploy/db-migrate/024d054294b4003fb54e17bb1ea4fb4b6d0fb0a7/out
+[2026-03-11T14:09:30Z] 
+[2026-03-11T14:09:30Z] == Ensure public.schema_migrations ==
 NOTICE:  relation "schema_migrations" already exists, skipping
 CREATE TABLE
-[2026-03-09T23:32:26Z] OK
-[2026-03-09T23:32:26Z] 
-[2026-03-09T23:32:26Z] Existing public tables (excluding schema_migrations): 30
-[2026-03-09T23:32:26Z] Applied migrations in tracking table: 7
-[2026-03-09T23:32:26Z] 
-[2026-03-09T23:32:26Z] == Apply migrations (sorted) ==
-[2026-03-09T23:32:26Z] SKIP  2026-03-01_000_baseline.sql (already applied)
-[2026-03-09T23:32:26Z] SKIP  2026-03-01_010_example_add_table.sql (already applied)
-[2026-03-09T23:32:26Z] SKIP  2026-03-01_020_rpc_example.sql (already applied)
-[2026-03-09T23:32:27Z] SKIP  2026-03-05_030_cancel_my_email_change.sql (already applied)
-[2026-03-09T23:32:27Z] SKIP  2026-03-09_040_demo_in_db.sql (already applied)
-[2026-03-09T23:32:27Z] SKIP  2026-03-09_041_fix_demo_logo_active.sql (already applied)
-[2026-03-09T23:32:27Z] SKIP  2026-03-10_042_fix_restore_demo_old_logos.sql (already applied)
-[2026-03-09T23:32:27Z] APPLY 2026-03-10_043_drop_user_flags_demo.sql
-CREATE FUNCTION
+[2026-03-11T14:09:31Z] OK
+[2026-03-11T14:09:31Z] 
+[2026-03-11T14:09:31Z] Existing public tables (excluding schema_migrations): 30
+[2026-03-11T14:09:31Z] Applied migrations in tracking table: 8
+[2026-03-11T14:09:31Z] 
+[2026-03-11T14:09:31Z] == Apply migrations (sorted) ==
+[2026-03-11T14:09:31Z] SKIP  2026-03-01_000_baseline.sql (already applied)
+[2026-03-11T14:09:31Z] SKIP  2026-03-01_010_example_add_table.sql (already applied)
+[2026-03-11T14:09:31Z] SKIP  2026-03-01_020_rpc_example.sql (already applied)
+[2026-03-11T14:09:31Z] SKIP  2026-03-05_030_cancel_my_email_change.sql (already applied)
+[2026-03-11T14:09:31Z] SKIP  2026-03-09_040_demo_in_db.sql (already applied)
+[2026-03-11T14:09:31Z] SKIP  2026-03-09_041_fix_demo_logo_active.sql (already applied)
+[2026-03-11T14:09:31Z] SKIP  2026-03-10_042_fix_restore_demo_old_logos.sql (already applied)
+[2026-03-11T14:09:31Z] SKIP  2026-03-10_043_drop_user_flags_demo.sql (already applied)
+[2026-03-11T14:09:32Z] APPLY 2026-03-10_044_marketplace.sql
+CREATE TYPE
+CREATE TABLE
 ALTER TABLE
+ALTER TABLE
+CREATE TABLE
+ALTER TABLE
+ALTER TABLE
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE FUNCTION
+CREATE TRIGGER
+CREATE FUNCTION
+CREATE TRIGGER
+ALTER TABLE
+ALTER TABLE
+CREATE POLICY
+CREATE POLICY
+CREATE POLICY
+CREATE POLICY
+CREATE POLICY
+CREATE FUNCTION
+CREATE FUNCTION
+CREATE FUNCTION
+CREATE FUNCTION
+CREATE FUNCTION
+CREATE FUNCTION
+CREATE FUNCTION
+CREATE FUNCTION
+CREATE FUNCTION
+CREATE FUNCTION
+CREATE FUNCTION
+CREATE FUNCTION
 INSERT 0 1
-[2026-03-09T23:32:27Z] OK    2026-03-10_043_drop_user_flags_demo.sql
-[2026-03-09T23:32:27Z] 
-[2026-03-09T23:32:27Z] == Dump schema.sql (schema-only) ==
-[2026-03-09T23:32:27Z] Wrote: /home/andrish97/.deploy/db-migrate/2f4f941d9c13cb80df16932539d7c5932813b5c9/out/schema.sql (9724 lines)
-[2026-03-09T23:32:27Z] 
-[2026-03-09T23:32:27Z] DONE
+[2026-03-11T14:09:32Z] OK    2026-03-10_044_marketplace.sql
+[2026-03-11T14:09:32Z] APPLY 2026-03-10_045_market_admin_actions.sql
+CREATE FUNCTION
+CREATE FUNCTION
+INSERT 0 1
+[2026-03-11T14:09:32Z] OK    2026-03-10_045_market_admin_actions.sql
+[2026-03-11T14:09:32Z] APPLY 2026-03-10_046_market_submit_require_playable.sql
+CREATE FUNCTION
+INSERT 0 1
+[2026-03-11T14:09:32Z] OK    2026-03-10_046_market_submit_require_playable.sql
+[2026-03-11T14:09:32Z] 
+[2026-03-11T14:09:32Z] == Dump schema.sql (schema-only) ==
+[2026-03-11T14:09:32Z] Wrote: /home/andrish97/.deploy/db-migrate/024d054294b4003fb54e17bb1ea4fb4b6d0fb0a7/out/schema.sql (10431 lines)
+[2026-03-11T14:09:32Z] 
+[2026-03-11T14:09:32Z] DONE
