@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict QzSZUgXjQ51KvzBtDcpME3siKgBZ61qnHM2V4bYGORzPC0Tx1ifoNh1DCljRNFF
+\restrict leuAZDWLx4lIXdMpJ9spmokMpdwflJMUmVveGk3xAMSqLDNTEFq0zjd1fbSZ3MM
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -206,6 +206,37 @@ CREATE FUNCTION "public"."_norm_email"("p" "text") RETURNS "text"
     LANGUAGE "sql" IMMUTABLE
     AS $$
   select nullif(lower(btrim(p)), '');
+$$;
+
+
+--
+-- Name: admin_config_get("text"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."admin_config_get"("p_key" "text") RETURNS "text"
+    LANGUAGE "sql" STABLE SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+    SELECT value FROM public.app_config WHERE key = p_key;
+$$;
+
+
+--
+-- Name: admin_config_set("text", "text", "text"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."admin_config_set"("p_key" "text", "p_value" "text", "p_note" "text" DEFAULT NULL::"text") RETURNS boolean
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+begin
+    insert into public.app_config (key, value, note)
+    values (p_key, coalesce(p_value, ''), p_note)
+    on conflict (key) do update
+        set value = excluded.value,
+            note  = coalesce(excluded.note, app_config.note);
+    return true;
+end;
 $$;
 
 
@@ -3496,10 +3527,11 @@ CREATE FUNCTION "public"."market_submit_game"("p_game_id" "uuid", "p_title" "tex
     SET "search_path" TO 'public'
     AS $$
 declare
-    v_uid      uuid := auth.uid();
-    v_game     public.games;
-    v_can_play boolean;
-    v_new      uuid;
+    v_uid        uuid := auth.uid();
+    v_game       public.games;
+    v_can_play   boolean;
+    v_new        uuid;
+    v_ntfy_topic text;
 begin
     -- musi być zalogowany
     if v_uid is null then
@@ -3507,17 +3539,19 @@ begin
         return;
     end if;
 
-    -- gra musi istnieć i należeć do usera
+    -- gra musi istnieć, być własnością usera i NIE być grą z marketplace
     select * into v_game
       from public.games
-     where id = p_game_id and owner_id = v_uid;
+     where id = p_game_id
+       and owner_id = v_uid
+       and source_market_id is null;
 
     if v_game.id is null then
         return query select false, 'game_not_found', null::uuid;
         return;
     end if;
 
-    -- gra musi być grywalna (can_play = true) — sprawdza m.in. min. 10 pytań, zakresy punktów itd.
+    -- gra musi być grywalna (sprawdza min. 10 pytań, zakresy punktów itd.)
     select can_play into v_can_play from public.game_action_state(p_game_id);
     if not coalesce(v_can_play, false) then
         return query select false, 'game_not_playable', null::uuid;
@@ -3536,7 +3570,7 @@ begin
         return;
     end if;
 
-    -- walidacja payload (musi mieć game + questions)
+    -- walidacja payload
     if p_payload -> 'game' is null or p_payload -> 'questions' is null then
         return query select false, 'invalid_payload', null::uuid;
         return;
@@ -3553,6 +3587,28 @@ begin
     values
         (v_uid, p_game_id, btrim(p_title), btrim(coalesce(p_description, '')), p_lang, 'pending', p_payload)
     returning id into v_new;
+
+    -- Powiadomienie ntfy.sh (pg_net) — cicho pomijane jeśli nie skonfigurowano
+    begin
+        select value into v_ntfy_topic
+          from public.app_config
+         where key = 'ntfy_topic';
+
+        if v_ntfy_topic is not null and v_ntfy_topic <> '' then
+            perform net.http_post(
+                url     := 'https://ntfy.sh/' || v_ntfy_topic,
+                body    := jsonb_build_object(
+                    'title',    'Nowe zgłoszenie (' || p_lang || ')',
+                    'message',  btrim(p_title),
+                    'priority', 3
+                ),
+                headers := '{"Content-Type": "application/json"}'::jsonb
+            );
+        end if;
+    exception when others then
+        -- pg_net niedostępny lub błąd sieci — ignoruj
+        null;
+    end;
 
     return query select true, null::text, v_new;
 end;
@@ -7835,6 +7891,17 @@ CREATE TABLE "public"."answers" (
 
 
 --
+-- Name: app_config; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE "public"."app_config" (
+    "key" "text" NOT NULL,
+    "value" "text" DEFAULT ''::"text" NOT NULL,
+    "note" "text"
+);
+
+
+--
 -- Name: base_share_tasks; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -8368,6 +8435,14 @@ ALTER TABLE ONLY "public"."answers"
 
 ALTER TABLE ONLY "public"."answers"
     ADD CONSTRAINT "answers_q_ord_uniq" UNIQUE ("question_id", "ord");
+
+
+--
+-- Name: app_config app_config_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."app_config"
+    ADD CONSTRAINT "app_config_pkey" PRIMARY KEY ("key");
 
 
 --
@@ -9697,6 +9772,19 @@ CREATE POLICY "answers_owner_write" ON "public"."answers" TO "authenticated" USI
 
 
 --
+-- Name: app_config; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE "public"."app_config" ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: app_config app_config_no_access; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "app_config_no_access" ON "public"."app_config" USING (false);
+
+
+--
 -- Name: base_share_tasks; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
@@ -10540,5 +10628,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict QzSZUgXjQ51KvzBtDcpME3siKgBZ61qnHM2V4bYGORzPC0Tx1ifoNh1DCljRNFF
+\unrestrict leuAZDWLx4lIXdMpJ9spmokMpdwflJMUmVveGk3xAMSqLDNTEFq0zjd1fbSZ3MM
 
