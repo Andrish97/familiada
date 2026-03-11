@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict LbMmZiLZwZmyBfVDeQPZ2jYAfuNMRXgdVhWQ5oilqpphQ42akZzEDfWXIXq7jbX
+\restrict QzSZUgXjQ51KvzBtDcpME3siKgBZ61qnHM2V4bYGORzPC0Tx1ifoNh1DCljRNFF
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -3072,26 +3072,86 @@ CREATE FUNCTION "public"."market_add_to_library"("p_market_game_id" "uuid") RETU
     SET "search_path" TO 'public'
     AS $$
 declare
-    v_uid uuid := auth.uid();
+    v_uid    uuid := auth.uid();
+    v_mg     public.market_games%rowtype;
+    v_q      jsonb;
+    v_a      jsonb;
+    v_q_id   uuid;
+    v_ord    int;
+    v_a_ord  int;
+    v_rows   int;
 begin
     if v_uid is null then
         return query select false, 'not_authenticated';
         return;
     end if;
 
-    -- gra musi być published lub withdrawn (ale withdrawn zostaje w bibliotece)
-    if not exists (
-        select 1 from public.market_games
-         where id = p_market_game_id
-           and status in ('published', 'withdrawn')
-    ) then
+    -- gra musi być published lub withdrawn
+    select * into v_mg
+      from public.market_games
+     where id = p_market_game_id
+       and status in ('published', 'withdrawn');
+
+    if not found then
         return query select false, 'game_not_available';
         return;
     end if;
 
+    -- dodaj do user_market_library
     insert into public.user_market_library (user_id, market_game_id)
     values (v_uid, p_market_game_id)
     on conflict do nothing;
+
+    -- dodaj do games (ten sam UUID); jeśli już istnieje — nic nie rób,
+    -- pozostali użytkownicy korzystają przez politykę RLS
+    insert into public.games
+        (id, owner_id, name, type, status, source_market_id)
+    values (
+        p_market_game_id,
+        v_uid,
+        left(v_mg.title, 80),
+        'prepared',
+        'ready',
+        p_market_game_id
+    )
+    on conflict (id) do nothing;
+
+    get diagnostics v_rows = row_count;
+
+    -- tylko pierwszy użytkownik tworzy pytania i odpowiedzi
+    if v_rows > 0 then
+        v_ord := 1;
+        for v_q in
+            select value from jsonb_array_elements(v_mg.payload -> 'questions')
+        loop
+            v_q_id := gen_random_uuid();
+
+            insert into public.questions (id, game_id, ord, text)
+            values (
+                v_q_id,
+                p_market_game_id,
+                v_ord,
+                left(v_q ->> 'text', 200)
+            );
+
+            v_a_ord := 1;
+            for v_a in
+                select value from jsonb_array_elements(v_q -> 'answers')
+            loop
+                insert into public.answers
+                    (question_id, ord, text, fixed_points)
+                values (
+                    v_q_id,
+                    v_a_ord,
+                    left(v_a ->> 'text', 17),
+                    coalesce((v_a ->> 'fixed_points')::int, 0)
+                );
+                v_a_ord := v_a_ord + 1;
+            end loop;
+
+            v_ord := v_ord + 1;
+        end loop;
+    end if;
 
     return query select true, '';
 end;
@@ -3109,6 +3169,15 @@ CREATE FUNCTION "public"."market_admin_delete"("p_id" "uuid") RETURNS TABLE("ok"
 declare
     v_rows int;
 begin
+    -- gry z GitHub mogą być zarządzane tylko przez synchronizację
+    if exists (
+        select 1 from public.market_games
+         where id = p_id and gh_slug is not null
+    ) then
+        return query select false, 'gh_game_cannot_be_deleted';
+        return;
+    end if;
+
     delete from public.market_games where id = p_id;
     get diagnostics v_rows = row_count;
 
@@ -3410,7 +3479,7 @@ begin
     end if;
 
     delete from public.user_market_library
-     where user_id = v_uid
+     where user_id       = v_uid
        and market_game_id = p_market_game_id;
 
     return query select true, '';
@@ -7888,6 +7957,7 @@ CREATE TABLE "public"."games" (
     "share_key_buzzer" "text" DEFAULT "public"."gen_share_key"(18) NOT NULL,
     "poll_share_updated_at" timestamp with time zone DEFAULT "now"() NOT NULL,
     "is_demo" boolean DEFAULT false NOT NULL,
+    "source_market_id" "uuid",
     CONSTRAINT "games_name_len" CHECK ((("char_length"("name") >= 1) AND ("char_length"("name") <= 80))),
     CONSTRAINT "games_poll_status_ok" CHECK (((("type" = 'prepared'::"public"."game_type") AND ("status" = ANY (ARRAY['draft'::"public"."game_status", 'ready'::"public"."game_status"]))) OR (("type" <> 'prepared'::"public"."game_type") AND ("status" = ANY (ARRAY['draft'::"public"."game_status", 'poll_open'::"public"."game_status", 'ready'::"public"."game_status"]))))),
     CONSTRAINT "games_status_check" CHECK (("status" = ANY (ARRAY['draft'::"public"."game_status", 'poll_open'::"public"."game_status", 'ready'::"public"."game_status"]))),
@@ -8711,6 +8781,13 @@ CREATE INDEX "games_owner_idx" ON "public"."games" USING "btree" ("owner_id");
 
 
 --
+-- Name: games_source_market_id_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX "games_source_market_id_idx" ON "public"."games" USING "btree" ("source_market_id") WHERE ("source_market_id" IS NOT NULL);
+
+
+--
 -- Name: idx_poll_text_entries_game_user_token; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -9256,6 +9333,14 @@ ALTER TABLE ONLY "public"."games"
 
 
 --
+-- Name: games games_source_market_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."games"
+    ADD CONSTRAINT "games_source_market_id_fkey" FOREIGN KEY ("source_market_id") REFERENCES "public"."market_games"("id") ON DELETE CASCADE;
+
+
+--
 -- Name: market_games market_games_author_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -9566,6 +9651,16 @@ ALTER TABLE ONLY "public"."user_logos"
 ALTER TABLE "public"."answers" ENABLE ROW LEVEL SECURITY;
 
 --
+-- Name: answers answers_market_library_select; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "answers_market_library_select" ON "public"."answers" FOR SELECT TO "authenticated" USING ((EXISTS ( SELECT 1
+   FROM ("public"."questions" "q"
+     JOIN "public"."user_market_library" "uml" ON (("uml"."market_game_id" = "q"."game_id")))
+  WHERE (("q"."id" = "answers"."question_id") AND ("uml"."user_id" = "auth"."uid"())))));
+
+
+--
 -- Name: answers answers_owner_all; Type: POLICY; Schema: public; Owner: -
 --
 
@@ -9674,6 +9769,15 @@ CREATE POLICY "email_intents_service_only" ON "public"."email_intents" TO "authe
 --
 
 ALTER TABLE "public"."games" ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: games games_market_library_select; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "games_market_library_select" ON "public"."games" FOR SELECT TO "authenticated" USING ((("source_market_id" IS NOT NULL) AND (EXISTS ( SELECT 1
+   FROM "public"."user_market_library" "uml"
+  WHERE (("uml"."market_game_id" = "games"."source_market_id") AND ("uml"."user_id" = "auth"."uid"()))))));
+
 
 --
 -- Name: games games_owner_delete; Type: POLICY; Schema: public; Owner: -
@@ -10292,6 +10396,15 @@ ALTER TABLE "public"."question_bases" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "public"."questions" ENABLE ROW LEVEL SECURITY;
 
 --
+-- Name: questions questions_market_library_select; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "questions_market_library_select" ON "public"."questions" FOR SELECT TO "authenticated" USING ((EXISTS ( SELECT 1
+   FROM "public"."user_market_library" "uml"
+  WHERE (("uml"."market_game_id" = "questions"."game_id") AND ("uml"."user_id" = "auth"."uid"())))));
+
+
+--
 -- Name: questions questions_owner_all; Type: POLICY; Schema: public; Owner: -
 --
 
@@ -10427,5 +10540,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict LbMmZiLZwZmyBfVDeQPZ2jYAfuNMRXgdVhWQ5oilqpphQ42akZzEDfWXIXq7jbX
+\unrestrict QzSZUgXjQ51KvzBtDcpME3siKgBZ61qnHM2V4bYGORzPC0Tx1ifoNh1DCljRNFF
 
