@@ -1,0 +1,50 @@
+name: Deploy GitHub Pages
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+on:
+  push:
+    branches: ["main"]
+    paths-ignore:
+      - "supabase/migrations/**"
+      - "supabase/migration_logs/**"
+      - "supabase/schema.sql"
+      - "supabase/functions/**"
+      - "supabase/scripts/**"
+      - "cloudflare/**"
+      - ".github/workflows/db-migrate.yml"
+      - ".github/workflows/deploy-edge.yml"
+      - "README*"
+      - "LICENSE*"
+      - "*.md"
+  workflow_dispatch: {}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: "."
+
+      - name: Deploy to GitHub Pages
+        id: deploy
+        uses: actions/deploy-pages@v4
