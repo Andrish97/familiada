@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict WkQpk7E4zZluG64rZcYVScObqqybjDOS4LUOACQBqc6h1FXyriP8luJMPJnktth
+\restrict vW8EtAvrf1MBTZOWpHZanDgzJt8PcKQh0F8gHkBzb1hBWchLtcPYmJgX6MqWHv8
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -155,7 +155,8 @@ CREATE TYPE "public"."game_status" AS ENUM (
 CREATE TYPE "public"."game_type" AS ENUM (
     'poll_text',
     'poll_points',
-    'prepared'
+    'prepared',
+    'market'
 );
 
 
@@ -3106,12 +3107,12 @@ declare
     v_uid   uuid := auth.uid();
     v_mg    public.market_games%rowtype;
     v_new   uuid;
+    v_rows  int;
     v_q     jsonb;
     v_a     jsonb;
     v_q_id  uuid;
     v_ord   int;
     v_a_ord int;
-    v_rows  int;
 begin
     if v_uid is null then
         return query select false, 'not_authenticated';
@@ -3128,12 +3129,7 @@ begin
         return;
     end if;
 
-    -- dodaj do user_market_library
-    insert into public.user_market_library (user_id, market_game_id)
-    values (v_uid, p_market_game_id)
-    on conflict do nothing;
-
-    -- stwórz własny wiersz games z nowym UUID
+    -- stwórz lokalną kopię (type = 'market', per-user UUID, owner = v_uid)
     v_new := gen_random_uuid();
 
     insert into public.games
@@ -3142,19 +3138,18 @@ begin
         v_new,
         v_uid,
         left(v_mg.title, 80),
-        'prepared',
+        'market',
         'ready',
         p_market_game_id
     )
-    -- referencja do partial unique index (nie constraint)
     on conflict (owner_id, source_market_id)
     where source_market_id is not null
     do nothing;
 
     get diagnostics v_rows = row_count;
 
-    -- jeśli wiersz był nowy — stwórz pytania i odpowiedzi
     if v_rows > 0 then
+        -- skopiuj pytania i odpowiedzi z payload
         v_ord := 1;
         for v_q in
             select value from jsonb_array_elements(v_mg.payload -> 'questions')
@@ -3181,7 +3176,19 @@ begin
 
             v_ord := v_ord + 1;
         end loop;
+    else
+        -- wiersz już istniał — pobierz jego UUID
+        select id into v_new
+          from public.games
+         where owner_id = v_uid
+           and source_market_id = p_market_game_id;
     end if;
+
+    -- dodaj/zaktualizuj wpis biblioteczny z game_id
+    insert into public.user_market_library (user_id, market_game_id, game_id)
+    values (v_uid, p_market_game_id, v_new)
+    on conflict (user_id, market_game_id) do update
+        set game_id = excluded.game_id;
 
     return query select true, '';
 end;
@@ -3453,7 +3460,7 @@ CREATE FUNCTION "public"."market_my_library"() RETURNS TABLE("market_game_id" "u
     AS $$
     SELECT
         mg.id             AS market_game_id,
-        g.id              AS game_id,
+        uml.game_id       AS game_id,
         mg.title,
         mg.lang,
         COALESCE(pr.username, '') AS author_username,
@@ -3461,8 +3468,6 @@ CREATE FUNCTION "public"."market_my_library"() RETURNS TABLE("market_game_id" "u
         uml.created_at    AS added_at
     FROM public.user_market_library uml
     JOIN public.market_games mg  ON mg.id = uml.market_game_id
-    LEFT JOIN public.games g     ON g.owner_id = auth.uid()
-                                AND g.source_market_id = uml.market_game_id
     LEFT JOIN public.profiles pr ON pr.id = mg.author_user_id
     WHERE uml.user_id = auth.uid()
     ORDER BY uml.created_at DESC;
@@ -3510,15 +3515,15 @@ begin
         return;
     end if;
 
-    -- usuń z user_market_library
-    delete from public.user_market_library
-     where user_id       = v_uid
-       and market_game_id = p_market_game_id;
-
-    -- usuń własny wiersz games (kaskada usuwa pytania i odpowiedzi)
+    -- usuń lokalną kopię gry (kaskada usuwa pytania i odpowiedzi)
     delete from public.games
      where owner_id        = v_uid
        and source_market_id = p_market_game_id;
+
+    -- usuń wpis biblioteczny
+    delete from public.user_market_library
+     where user_id        = v_uid
+       and market_game_id = p_market_game_id;
 
     return query select true, '';
 end;
@@ -8033,9 +8038,9 @@ CREATE TABLE "public"."games" (
     "is_demo" boolean DEFAULT false NOT NULL,
     "source_market_id" "uuid",
     CONSTRAINT "games_name_len" CHECK ((("char_length"("name") >= 1) AND ("char_length"("name") <= 80))),
-    CONSTRAINT "games_poll_status_ok" CHECK (((("type" = 'prepared'::"public"."game_type") AND ("status" = ANY (ARRAY['draft'::"public"."game_status", 'ready'::"public"."game_status"]))) OR (("type" <> 'prepared'::"public"."game_type") AND ("status" = ANY (ARRAY['draft'::"public"."game_status", 'poll_open'::"public"."game_status", 'ready'::"public"."game_status"]))))),
+    CONSTRAINT "games_poll_status_ok" CHECK (((("type" = ANY (ARRAY['prepared'::"public"."game_type", 'market'::"public"."game_type"])) AND ("status" = ANY (ARRAY['draft'::"public"."game_status", 'ready'::"public"."game_status"]))) OR (("type" <> ALL (ARRAY['prepared'::"public"."game_type", 'market'::"public"."game_type"])) AND ("status" = ANY (ARRAY['draft'::"public"."game_status", 'poll_open'::"public"."game_status", 'ready'::"public"."game_status"]))))),
     CONSTRAINT "games_status_check" CHECK (("status" = ANY (ARRAY['draft'::"public"."game_status", 'poll_open'::"public"."game_status", 'ready'::"public"."game_status"]))),
-    CONSTRAINT "games_type_check" CHECK (("type" = ANY (ARRAY['poll_text'::"public"."game_type", 'poll_points'::"public"."game_type", 'prepared'::"public"."game_type"])))
+    CONSTRAINT "games_type_check" CHECK (("type" = ANY (ARRAY['poll_text'::"public"."game_type", 'poll_points'::"public"."game_type", 'prepared'::"public"."game_type", 'market'::"public"."game_type"])))
 );
 
 
@@ -8424,7 +8429,8 @@ CREATE TABLE "public"."user_logos" (
 CREATE TABLE "public"."user_market_library" (
     "user_id" "uuid" NOT NULL,
     "market_game_id" "uuid" NOT NULL,
-    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL
+    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    "game_id" "uuid"
 );
 
 
@@ -9426,7 +9432,7 @@ ALTER TABLE ONLY "public"."games"
 --
 
 ALTER TABLE ONLY "public"."games"
-    ADD CONSTRAINT "games_source_market_id_fkey" FOREIGN KEY ("source_market_id") REFERENCES "public"."market_games"("id") ON DELETE CASCADE;
+    ADD CONSTRAINT "games_source_market_id_fkey" FOREIGN KEY ("source_market_id") REFERENCES "public"."market_games"("id") ON DELETE SET NULL;
 
 
 --
@@ -9731,6 +9737,14 @@ ALTER TABLE ONLY "public"."user_flags"
 
 ALTER TABLE ONLY "public"."user_logos"
     ADD CONSTRAINT "user_logos_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
+
+
+--
+-- Name: user_market_library user_market_library_game_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."user_market_library"
+    ADD CONSTRAINT "user_market_library_game_id_fkey" FOREIGN KEY ("game_id") REFERENCES "public"."games"("id") ON DELETE SET NULL;
 
 
 --
@@ -10614,5 +10628,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict WkQpk7E4zZluG64rZcYVScObqqybjDOS4LUOACQBqc6h1FXyriP8luJMPJnktth
+\unrestrict vW8EtAvrf1MBTZOWpHZanDgzJt8PcKQh0F8gHkBzb1hBWchLtcPYmJgX6MqWHv8
 
