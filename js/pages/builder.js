@@ -587,6 +587,7 @@ async function listGames() {
   const { data, error } = await sb()
     .from("games")
     .select("id,name,created_at,updated_at,type,status")
+    .is("source_market_id", null)
     .order("created_at", { ascending: false });
 
   if (error) throw error;
@@ -793,6 +794,7 @@ function render() {
 function renderMarket() {
   console.log("[builder] renderMarket selectedMarketId:", selectedMarketId, "games:", marketGamesAll.length);
   if (!grid) return;
+  grid.innerHTML = "";
 
   if (!marketGamesAll.length) {
     const el = document.createElement("div");
@@ -828,10 +830,20 @@ function cardMarket(g) {
   el.className = "card";
   el.innerHTML = `
     <div class="name">${escapeHtml(g.title || "—")}</div>
-    <div class="meta">${(g.lang || "").toUpperCase()} · ${g.author_username ? escapeHtml(g.author_username) : "—"}</div>
+    <div class="meta">${t("builder.market.typeLabel")} · ${(g.lang || "").toUpperCase()}</div>
+    <div class="x" title="${t("builder.market.removeFromLibrary")}">✕</div>
   `;
   el.addEventListener("click", () => {
     selectedMarketId = g.market_game_id;
+    renderMarket();
+  });
+  el.querySelector(".x").addEventListener("click", async (e) => {
+    e.stopPropagation();
+    console.log("[builder] removeFromLibrary", g.market_game_id);
+    const { error } = await sb().rpc("market_remove_from_library", { p_market_game_id: g.market_game_id });
+    if (error) { console.error("[builder] removeFromLibrary error:", error); return; }
+    if (selectedMarketId === g.market_game_id) selectedMarketId = null;
+    marketGamesAll = marketGamesAll.filter(x => x.market_game_id !== g.market_game_id);
     renderMarket();
   });
   return el;
@@ -1163,26 +1175,10 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // PLAY
   btnPlay?.addEventListener("click", async () => {
-    // Gra z marketu: importuj snapshot i uruchom
+    // Gra z marketu: gra jest już w games (dodana przy add to library), redirect bezpośrednio
     if (activeTab === "market" && selectedMarketId) {
       console.log("[builder] play market game:", selectedMarketId);
-      const mg = marketGamesAll.find(g => g.market_game_id === selectedMarketId);
-      if (!mg?.payload) return;
-      try {
-        const ok = await confirmModal({
-          title: t("builder.market.importTitle"),
-          text: t("builder.market.importText"),
-          okText: t("builder.market.importOk"),
-          cancelText: t("builder.market.importCancel"),
-        });
-        if (!ok) return;
-        const gameId = await importGame(mg.payload, currentUser.id, null);
-        console.log("[builder] market import done, redirecting to:", gameId);
-        location.href = `control?id=${encodeURIComponent(gameId)}`;
-      } catch (e) {
-        console.error("[builder] importMarketGame error:", e);
-        void alertModal({ text: t("builder.market.importFailed") });
-      }
+      location.href = `control?id=${encodeURIComponent(selectedMarketId)}`;
       return;
     }
 
