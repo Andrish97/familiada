@@ -6,6 +6,7 @@ import { isGuestUser } from "../core/guest-mode.js";
 import { initI18n, t, getUiLang, withLangParam, applyTranslations } from "../../translation/translation.js";
 import { exportGame } from "./builder-import-export.js";
 import { initUiSelect } from "../core/ui-select.js";
+import { confirmModal } from "../core/modal.js";
 
 /* =========================================================
    Constants
@@ -348,7 +349,13 @@ async function loadMySent() {
 
 async function withdrawGame(id) {
   console.log("[marketplace] withdrawGame id:", id);
-  if (!confirm(t("marketplace.mySent.withdrawConfirm"))) return;
+  const ok = await confirmModal({
+    title: t("marketplace.mySent.withdrawConfirmTitle"),
+    text:  t("marketplace.mySent.withdrawConfirm"),
+    okText:     t("marketplace.mySent.btnWithdraw"),
+    cancelText: t("common.cancel"),
+  });
+  if (!ok) return;
 
   const { data, error } = await sb().rpc("market_withdraw", { p_market_game_id: id });
   if (error) { console.error("[marketplace] withdrawGame error:", error); showToast(t("marketplace.errorLoad"), "error"); return; }
@@ -380,12 +387,14 @@ async function openSubmitModal() {
   });
   console.log("[marketplace] openSubmitModal games fetched:", (games || []).length, "eligible:", eligible.length);
 
+  const hasEligible = eligible.length > 0;
+
   if (submitGameUiSelect) {
     submitGameUiSelect.setOptions(eligible.map(g => ({ value: g.id, label: g.name })));
     submitGameUiSelect.setValue("", { silent: true });
   }
-
-  if (els.submitNoEligible) els.submitNoEligible.hidden = eligible.length > 0;
+  if (els.submitGameSelectEl) els.submitGameSelectEl.hidden = !hasEligible;
+  if (els.submitNoEligible) els.submitNoEligible.hidden = hasEligible;
   if (els.submitTitle) els.submitTitle.value = "";
   if (els.submitDesc) els.submitDesc.value = "";
   if (els.submitConfirm) els.submitConfirm.checked = false;
