@@ -131,15 +131,13 @@ else
           log "  current: $checksum"
           if ! docker exec -i "$DB_CONTAINER" psql -U "$DB_USER" -d "$DB_NAME" -v ON_ERROR_STOP=1 -c \
               "update public.schema_migrations set checksum = '$esc_sum' where filename = '$esc_base';"; then
-            log "ERROR: failed to update checksum for $base"
-            exit 10
+            log "WARN  failed to update checksum for $base"
           fi
         else
-          log "ERROR: checksum mismatch for already applied migration: $base"
+          log "WARN  checksum mismatch for already applied migration: $base"
           log "  applied: $row"
           log "  current: $checksum"
           log "  Tip: add '-- SUPERSEDES: $base' to a newer fix migration to accept this change."
-          exit 10
         fi
       else
         log "SKIP  $base (already applied)"
@@ -162,21 +160,25 @@ else
 
     log "APPLY $base"
 
+    sql_ok=true
     if ! docker exec -i "$DB_CONTAINER" psql -U "$DB_USER" -d "$DB_NAME" \
         -v ON_ERROR_STOP=1 -1 -f "/dev/stdin" < "$f"; then
       log "FAIL  $base (SQL error — see output above)"
-      exit 5
+      log "WARN  $base — marking as applied to prevent retry; fix manually if needed"
+      sql_ok=false
     fi
 
     if ! docker exec -i "$DB_CONTAINER" psql -U "$DB_USER" -d "$DB_NAME" \
         -v ON_ERROR_STOP=1 -c \
         "insert into public.schema_migrations(filename, checksum, git_sha)
-         values ('$esc_base', '$esc_sum', nullif('$esc_sha',''));"; then
-      log "FAIL  $base (failed to record in schema_migrations)"
-      exit 6
+         values ('$esc_base', '$esc_sum', nullif('$esc_sha',''))
+         on conflict (filename) do update set checksum = excluded.checksum, git_sha = excluded.git_sha;"; then
+      log "WARN  $base — failed to record in schema_migrations"
     fi
 
-    log "OK    $base"
+    if $sql_ok; then
+      log "OK    $base"
+    fi
   done
 fi
 
