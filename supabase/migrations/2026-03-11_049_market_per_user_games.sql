@@ -98,7 +98,7 @@ end $$;
 --    wiersz gry marketplace per użytkownik
 -- --------------------------------------------------------
 
-CREATE UNIQUE INDEX "games_owner_market_uniq"
+CREATE UNIQUE INDEX IF NOT EXISTS "games_owner_market_uniq"
     ON "public"."games" ("owner_id", "source_market_id")
     WHERE "source_market_id" IS NOT NULL;
 
@@ -244,9 +244,12 @@ $$;
 
 -- --------------------------------------------------------
 -- 6. market_my_library — zwraca game_id (per-user UUID)
+--    DROP wymagany bo zmienia się sygnatura zwracanego TYPE
 -- --------------------------------------------------------
 
-CREATE OR REPLACE FUNCTION "public"."market_my_library"()
+DROP FUNCTION IF EXISTS "public"."market_my_library"();
+
+CREATE FUNCTION "public"."market_my_library"()
 RETURNS TABLE(
     "market_game_id"  uuid,
     "game_id"         uuid,
