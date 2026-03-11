@@ -2703,6 +2703,7 @@ const en = {
       pollText: "POLL",
       pollPoints: "POINTS",
       prepared: "PREPARED",
+      market: "MARKETPLACE",
     },
     status: {
       draft: "DRAFT",

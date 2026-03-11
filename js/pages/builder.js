@@ -30,6 +30,7 @@ const MSG = {
   typePollText: () => t("builder.types.pollText"),
   typePollPoints: () => t("builder.types.pollPoints"),
   typePrepared: () => t("builder.types.prepared"),
+  typeMarket: () => t("builder.types.market"),
   statusDraft: () => t("builder.status.draft"),
   statusOpen: () => t("builder.status.open"),
   statusClosed: () => t("builder.status.closed"),
@@ -528,7 +529,7 @@ function safeDownloadName(name) {
  */
 function uiTypeFromRow(g) {
   const k = String(g?.type || "");
-  if (k === TYPES.POLL_TEXT || k === TYPES.POLL_POINTS || k === TYPES.PREPARED) return k;
+  if (k === TYPES.POLL_TEXT || k === TYPES.POLL_POINTS || k === TYPES.PREPARED || k === TYPES.MARKET) return k;
   if (k === "fixed") return TYPES.PREPARED;
   if (k === "poll") {
     const nm = String(g?.name || "").toLowerCase();
@@ -541,6 +542,7 @@ function typeLabel(uiType) {
   if (uiType === TYPES.POLL_TEXT) return MSG.typePollText();
   if (uiType === TYPES.POLL_POINTS) return MSG.typePollPoints();
   if (uiType === TYPES.PREPARED) return MSG.typePrepared();
+  if (uiType === TYPES.MARKET) return MSG.typeMarket();
   return String(uiType || t("control.dash")).toUpperCase();
 }
 
@@ -567,10 +569,10 @@ function setActiveTab(type) {
   tabPollText?.classList.toggle("active", type === TYPES.POLL_TEXT);
   tabPollPoints?.classList.toggle("active", type === TYPES.POLL_POINTS);
   tabPrepared?.classList.toggle("active", type === TYPES.PREPARED);
-  tabMarket?.classList.toggle("active", type === "market");
+  tabMarket?.classList.toggle("active", type === TYPES.MARKET);
 
   // jeśli zaznaczona gra nie pasuje do zakładki – odznacz
-  if (type !== "market") {
+  if (type !== TYPES.MARKET) {
     selectedMarketId = null;
     const sel = gamesAll.find(g => g.id === selectedId);
     if (sel && uiTypeFromRow(sel) !== activeTab) selectedId = null;
@@ -764,7 +766,7 @@ function render() {
   if (!grid) return;
   grid.innerHTML = "";
 
-  if (activeTab === "market") {
+  if (activeTab === TYPES.MARKET) {
     renderMarket();
     return;
   }
@@ -901,7 +903,7 @@ async function fetchActionState(gameId, revHint) {
 
 async function updateActionState() {
   // market tab: buttons controlled by renderMarket directly
-  if (activeTab === "market") return;
+  if (activeTab === TYPES.MARKET) return;
 
   const sel = gamesAll.find(g => g.id === selectedId) || null;
   if (!sel) {
@@ -965,7 +967,7 @@ async function refresh() {
 
   if (selectedId && !gamesAll.some(g => g.id === selectedId)) selectedId = null;
 
-  if (activeTab === "market") {
+  if (activeTab === TYPES.MARKET) {
     await loadMarketGames();
     if (selectedMarketId && !marketGamesAll.some(g => g.market_game_id === selectedMarketId)) selectedMarketId = null;
   }
@@ -1128,10 +1130,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   tabPrepared?.addEventListener("click", () => setActiveTab(TYPES.PREPARED));
   tabMarket?.addEventListener("click", async () => {
     console.log("[builder] switching to market tab");
-    if (activeTab !== "market") {
+    if (activeTab !== TYPES.MARKET) {
       await loadMarketGames();
     }
-    setActiveTab("market");
+    setActiveTab(TYPES.MARKET);
   });
 
   btnMarketplace?.addEventListener("click", () => {
@@ -1176,7 +1178,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   // PLAY
   btnPlay?.addEventListener("click", async () => {
     // Gra z marketu: każdy user ma własną kopię games z własnym UUID
-    if (activeTab === "market" && selectedMarketId) {
+    if (activeTab === TYPES.MARKET && selectedMarketId) {
       const mg = marketGamesAll.find(g => g.market_game_id === selectedMarketId);
       if (!mg) return;
 
@@ -1495,7 +1497,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // init — ?tab=market otwiera zakładkę Społeczność od razu
   const initTab = new URLSearchParams(location.search).get("tab");
-  setActiveTab(initTab === "market" ? "market" : TYPES.PREPARED);
+  setActiveTab(initTab === "market" ? TYPES.MARKET : TYPES.PREPARED);
 
   await refresh();
 

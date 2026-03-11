@@ -11,6 +11,7 @@ export const TYPES = {
   POLL_TEXT: "poll_text",
   POLL_POINTS: "poll_points",
   PREPARED: "prepared",
+  MARKET: "market",
 };
 
 export const STATUS = {
@@ -216,7 +217,7 @@ export async function validateGameReadyToPlay(gameId) {
     return { ok: true, reason: "" };
   }
 
-  // prepared:
+  // prepared / market:
   const { qs, ansByQ } = await getQA(gameId);
 
   if (qs.length < RULES.QN_MIN) {
