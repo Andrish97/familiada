@@ -1175,9 +1175,12 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // PLAY
   btnPlay?.addEventListener("click", async () => {
-    // Gra z marketu: gra jest już w games (dodana przy add to library), redirect bezpośrednio
+    // Gra z marketu: upewnij się że wiersz games istnieje (idempotentne), potem redirect
     if (activeTab === "market" && selectedMarketId) {
       console.log("[builder] play market game:", selectedMarketId);
+      if (btnPlay) btnPlay.disabled = true;
+      // add_to_library jest idempotentne — zapewnia istnienie wiersza games
+      await sb().rpc("market_add_to_library", { p_market_game_id: selectedMarketId });
       location.href = `control?id=${encodeURIComponent(selectedMarketId)}`;
       return;
     }

@@ -317,6 +317,17 @@
           <span class="field-hint" id="marketSyncStatus"></span>
         </div>
 
+        <div class="field" style="margin:12px 0 16px">
+          <label class="field-label" data-i18n="settings.marketplace.ntfyLabel">Powiadomienia push ntfy.sh — topic</label>
+          <div style="display:flex;gap:8px;align-items:center">
+            <input class="inp" id="ntfyTopicInput" type="text" placeholder="my-familiada-topic" style="flex:1" autocomplete="off"/>
+            <button class="btn sm gold" id="btnNtfySave" type="button" data-i18n="settings.actions.save">Zapisz</button>
+            <button class="btn sm" id="btnNtfyTest" type="button" data-i18n="settings.marketplace.ntfyTest">Test</button>
+          </div>
+          <div class="hint" data-i18n="settings.marketplace.ntfyHint">Subskrybuj temat w aplikacji ntfy.sh i otrzymuj powiadomienia o nowych zgłoszeniach do moderacji.</div>
+          <span class="field-hint" id="ntfyStatus"></span>
+        </div>
+
         <div class="mail-controls" style="margin-bottom:12px">
           <button class="btn sm tab-btn active" id="mktTabPending" type="button" data-i18n="settings.marketplace.tabPending">Do zatwierdzenia</button>
           <button class="btn sm tab-btn" id="mktTabPublished" type="button" data-i18n="settings.marketplace.tabPublished">Opublikowane</button>

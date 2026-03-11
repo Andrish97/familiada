@@ -4405,6 +4405,7 @@ const en = {
     nav: {
       myGames: "← My games",
       myGamesMobile: "← 🎮",
+      backHome: "← Home",
       manual: "Help ℹ️",
       manualMobile: "ℹ️",
     },

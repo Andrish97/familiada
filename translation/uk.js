@@ -4285,6 +4285,7 @@ const uk = {
     nav: {
       myGames: "← Мої ігри",
       myGamesMobile: "← 🎮",
+      backHome: "← Головна",
       manual: "Підказки ℹ️",
       manualMobile: "ℹ️",
     },
