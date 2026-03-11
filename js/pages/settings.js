@@ -15,6 +15,7 @@ Settings panel (admin)
 import { initI18n, t } from "../../translation/translation.js";
 import { initUiSelect } from "../core/ui-select.js";
 import { guardDesktopOnly } from "../core/device-guard.js";
+import { confirmModal } from "../core/modal.js";
 
 const API_BASE = "/_admin_api";
 const TOOLS_MANIFEST = "/settings-tools/tools.json";
@@ -1426,7 +1427,7 @@ async function openMarketPreview(id) {
   if (withdrawBtn) withdrawBtn.hidden = !isPublished;
   if (deleteBtn)   deleteBtn.hidden   = false; // zawsze widoczny
 
-  overlay.style.display = "flex";
+  overlay.style.display = "";
 }
 
 function closeMarketPreview() {
@@ -1456,7 +1457,7 @@ function openRejectModal(id) {
   marketPreviewId = id;
   const overlay = document.getElementById("marketRejectOverlay");
   const note    = document.getElementById("marketRejectNote");
-  if (overlay) overlay.style.display = "flex";
+  if (overlay) overlay.style.display = "";
   if (note) note.value = "";
 }
 
@@ -1488,7 +1489,8 @@ async function confirmReject() {
 
 async function adminForceWithdraw(id) {
   console.log("[settings] adminForceWithdraw id:", id);
-  if (!confirm(t("settings.marketplace.forceWithdrawConfirm") || "Wycofać tę grę? Zniknie z browse, ale zostanie w bibliotekach.")) return;
+  const ok = await confirmModal({ text: t("settings.marketplace.forceWithdrawConfirm") || "Wycofać tę grę? Zniknie z browse, ale zostanie w bibliotekach." });
+  if (!ok) return;
   try {
     const res = await adminFetch("/marketplace/withdraw", {
       method: "POST",
@@ -1509,7 +1511,8 @@ async function adminForceWithdraw(id) {
 
 async function adminHardDelete(id) {
   console.log("[settings] adminHardDelete id:", id);
-  if (!confirm(t("settings.marketplace.hardDeleteConfirm") || "Usunąć grę na stałe? Zniknie u wszystkich użytkowników. Tego nie da się cofnąć.")) return;
+  const ok = await confirmModal({ text: t("settings.marketplace.hardDeleteConfirm") || "Usunąć grę na stałe? Zniknie u wszystkich użytkowników. Tego nie da się cofnąć." });
+  if (!ok) return;
   try {
     const res = await adminFetch("/marketplace/delete", {
       method: "POST",
