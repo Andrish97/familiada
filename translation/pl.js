@@ -4387,6 +4387,11 @@ const pl = {
       hardDelete: "Usuń na stałe",
       hardDeleteConfirm: "Usunąć grę na stałe? Zniknie u wszystkich użytkowników. Tego nie da się cofnąć.",
       hardDeleted: "Usunięto.",
+      ntfyLabel: "Powiadomienia push — temat ntfy.sh",
+      ntfyHint: "Zainstaluj aplikację ntfy (ntfy.sh) na telefonie, subskrybuj podany temat i otrzymuj powiadomienia o nowych zgłoszeniach do moderacji.",
+      ntfyTest: "Wyślij test",
+      ntfySaved: "Zapisano.",
+      ntfyTestSent: "Testowe powiadomienie wysłane.",
       col: {
         title: "Tytuł",
         lang: "Język",

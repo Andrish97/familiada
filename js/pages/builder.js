@@ -1175,13 +1175,17 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // PLAY
   btnPlay?.addEventListener("click", async () => {
-    // Gra z marketu: upewnij się że wiersz games istnieje (idempotentne), potem redirect
+    // Gra z marketu: każdy user ma własny games.id (osobne share keys)
     if (activeTab === "market" && selectedMarketId) {
-      console.log("[builder] play market game:", selectedMarketId);
-      if (btnPlay) btnPlay.disabled = true;
-      // add_to_library jest idempotentne — zapewnia istnienie wiersza games
-      await sb().rpc("market_add_to_library", { p_market_game_id: selectedMarketId });
-      location.href = `control?id=${encodeURIComponent(selectedMarketId)}`;
+      const mg = marketGamesAll.find(g => g.market_game_id === selectedMarketId);
+      if (!mg) return;
+      const gameId = mg.game_id;
+      if (!gameId) {
+        // fallback: gra nie ma jeszcze wiersza — odśwież bibliotekę
+        await loadMarketGames();
+        return;
+      }
+      location.href = `control?id=${encodeURIComponent(gameId)}`;
       return;
     }
 

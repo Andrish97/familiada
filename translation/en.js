@@ -4390,6 +4390,11 @@ const en = {
       hardDelete: "Delete permanently",
       hardDeleteConfirm: "Permanently delete this game? It will disappear for all users. This cannot be undone.",
       hardDeleted: "Deleted.",
+      ntfyLabel: "Push notifications — ntfy.sh topic",
+      ntfyHint: "Install the ntfy app (ntfy.sh) on your phone, subscribe to the topic below, and get notified when new games are submitted for review.",
+      ntfyTest: "Send test",
+      ntfySaved: "Saved.",
+      ntfyTestSent: "Test notification sent.",
       col: {
         title: "Title",
         lang: "Language",
