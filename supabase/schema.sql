@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict cfFoF09KX9Or0DtLnjsDD1MmQFhpYzRyV0vcTOydEQt62sSt3j0fMGumoBP43as
+\restrict Ki2lA8xqMh3P2fmZkoz80vk24LnefusZR28Espolgv6ybrlzuOA3jLjua6lpWBu
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -3146,7 +3146,10 @@ begin
         'ready',
         p_market_game_id
     )
-    on conflict on constraint "games_owner_market_uniq" do nothing;
+    -- referencja do partial unique index (nie constraint)
+    on conflict (owner_id, source_market_id)
+    where source_market_id is not null
+    do nothing;
 
     get diagnostics v_rows = row_count;
 
@@ -10611,5 +10614,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict cfFoF09KX9Or0DtLnjsDD1MmQFhpYzRyV0vcTOydEQt62sSt3j0fMGumoBP43as
+\unrestrict Ki2lA8xqMh3P2fmZkoz80vk24LnefusZR28Espolgv6ybrlzuOA3jLjua6lpWBu
 
