@@ -119,6 +119,8 @@ const exportBaseProgMsg = document.getElementById("exportBaseProgMsg");
 const tabPollText = document.getElementById("tabPollText");
 const tabPollPoints = document.getElementById("tabPollPoints");
 const tabPrepared = document.getElementById("tabPrepared");
+const tabMarket = document.getElementById("tabMarket");
+const btnMarketplace = document.getElementById("btnMarketplace");
 
 // Modal importu JSON
 const importOverlay = document.getElementById("importOverlay");
@@ -148,6 +150,8 @@ const exportJsonMsg = document.getElementById("exportJsonMsg");
 let currentUser = null;
 let gamesAll = [];
 let selectedId = null;
+let marketGamesAll = [];
+let selectedMarketId = null;
 
 // =======================================================
 // Auto-refresh (jak polls-hub)
@@ -563,10 +567,16 @@ function setActiveTab(type) {
   tabPollText?.classList.toggle("active", type === TYPES.POLL_TEXT);
   tabPollPoints?.classList.toggle("active", type === TYPES.POLL_POINTS);
   tabPrepared?.classList.toggle("active", type === TYPES.PREPARED);
+  tabMarket?.classList.toggle("active", type === "market");
 
   // jeśli zaznaczona gra nie pasuje do zakładki – odznacz
-  const sel = gamesAll.find(g => g.id === selectedId);
-  if (sel && uiTypeFromRow(sel) !== activeTab) selectedId = null;
+  if (type !== "market") {
+    selectedMarketId = null;
+    const sel = gamesAll.find(g => g.id === selectedId);
+    if (sel && uiTypeFromRow(sel) !== activeTab) selectedId = null;
+  } else {
+    selectedId = null;
+  }
 
   render();
   updateActionState();
@@ -753,6 +763,11 @@ function render() {
   if (!grid) return;
   grid.innerHTML = "";
 
+  if (activeTab === "market") {
+    renderMarket();
+    return;
+  }
+
   const games = (gamesAll || []).filter(g => uiTypeFromRow(g) === activeTab);
 
   // pierwszy kafelek: dodawanie w aktualnej zakładce
@@ -773,6 +788,66 @@ function render() {
   });
 
   setHint(MSG.hintSelectPlus());
+}
+
+function renderMarket() {
+  console.log("[builder] renderMarket selectedMarketId:", selectedMarketId, "games:", marketGamesAll.length);
+  if (!grid) return;
+
+  if (!marketGamesAll.length) {
+    const el = document.createElement("div");
+    el.className = "addCard";
+    el.style.cursor = "default";
+    el.style.pointerEvents = "none";
+    el.innerHTML = `
+      <div class="txt">${t("builder.market.empty")}</div>
+      <div class="sub">${t("builder.market.emptyHint")}</div>
+    `;
+    grid.appendChild(el);
+  }
+
+  for (const g of marketGamesAll) {
+    const el = cardMarket(g);
+    if (g.market_game_id === selectedMarketId) el.classList.add("selected");
+    grid.appendChild(el);
+  }
+
+  setButtonsState({
+    hasSel: !!selectedMarketId,
+    canEdit: false,
+    canPlay: !!selectedMarketId,
+    canPoll: false,
+    canExport: false,
+  });
+
+  setHint(t("builder.market.hint"));
+}
+
+function cardMarket(g) {
+  const el = document.createElement("div");
+  el.className = "card";
+  el.innerHTML = `
+    <div class="name">${escapeHtml(g.title || "—")}</div>
+    <div class="meta">${(g.lang || "").toUpperCase()} · ${g.author_username ? escapeHtml(g.author_username) : "—"}</div>
+  `;
+  el.addEventListener("click", () => {
+    selectedMarketId = g.market_game_id;
+    renderMarket();
+  });
+  return el;
+}
+
+async function loadMarketGames() {
+  console.log("[builder] loadMarketGames start");
+  try {
+    const { data, error } = await sb().rpc("market_my_library");
+    if (error) throw error;
+    marketGamesAll = data || [];
+    console.log("[builder] loadMarketGames loaded:", marketGamesAll.length, "games");
+  } catch (e) {
+    console.error("[builder] loadMarketGames error:", e);
+    marketGamesAll = [];
+  }
 }
 
 /* ================= Button logic ================= */
@@ -813,6 +888,9 @@ async function fetchActionState(gameId, revHint) {
 }
 
 async function updateActionState() {
+  // market tab: buttons controlled by renderMarket directly
+  if (activeTab === "market") return;
+
   const sel = gamesAll.find(g => g.id === selectedId) || null;
   if (!sel) {
     setButtonsState({ hasSel: false, canEdit: false, canPlay: false, canPoll: false, canExport: false });
@@ -874,6 +952,11 @@ async function refresh() {
   gamesAll = await listGames();
 
   if (selectedId && !gamesAll.some(g => g.id === selectedId)) selectedId = null;
+
+  if (activeTab === "market") {
+    await loadMarketGames();
+    if (selectedMarketId && !marketGamesAll.some(g => g.market_game_id === selectedMarketId)) selectedMarketId = null;
+  }
 
   render();
   await updateActionState();
@@ -1031,6 +1114,17 @@ document.addEventListener("DOMContentLoaded", async () => {
   tabPollText?.addEventListener("click", () => setActiveTab(TYPES.POLL_TEXT));
   tabPollPoints?.addEventListener("click", () => setActiveTab(TYPES.POLL_POINTS));
   tabPrepared?.addEventListener("click", () => setActiveTab(TYPES.PREPARED));
+  tabMarket?.addEventListener("click", async () => {
+    console.log("[builder] switching to market tab");
+    if (activeTab !== "market") {
+      await loadMarketGames();
+    }
+    setActiveTab("market");
+  });
+
+  btnMarketplace?.addEventListener("click", () => {
+    location.href = "marketplace";
+  });
 
   // EDIT
   btnEdit?.addEventListener("click", async () => {
@@ -1069,6 +1163,29 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // PLAY
   btnPlay?.addEventListener("click", async () => {
+    // Gra z marketu: importuj snapshot i uruchom
+    if (activeTab === "market" && selectedMarketId) {
+      console.log("[builder] play market game:", selectedMarketId);
+      const mg = marketGamesAll.find(g => g.market_game_id === selectedMarketId);
+      if (!mg?.payload) return;
+      try {
+        const ok = await confirmModal({
+          title: t("builder.market.importTitle"),
+          text: t("builder.market.importText"),
+          okText: t("builder.market.importOk"),
+          cancelText: t("builder.market.importCancel"),
+        });
+        if (!ok) return;
+        const gameId = await importGame(mg.payload, currentUser.id, null);
+        console.log("[builder] market import done, redirecting to:", gameId);
+        location.href = `control?id=${encodeURIComponent(gameId)}`;
+      } catch (e) {
+        console.error("[builder] importMarketGame error:", e);
+        void alertModal({ text: t("builder.market.importFailed") });
+      }
+      return;
+    }
+
     if (!selectedId) return;
 
     try {

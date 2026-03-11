@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title data-i18n="marketplace.title">Familiada — Gry Społeczności</title>
+  <meta name="description" content="Przeglądaj i pobieraj darmowe gry Familiada stworzone przez społeczność."/>
+  <meta name="robots" content="index, follow"/>
+  <link rel="canonical" href="https://www.familiada.online/marketplace"/>
+  <meta property="og:title" content="Familiada — Gry Społeczności"/>
+  <meta property="og:description" content="Przeglądaj i pobieraj darmowe gry Familiada stworzone przez społeczność."/>
+  <meta property="og:type" content="website"/>
+  <meta property="og:url" content="https://www.familiada.online/marketplace"/>
+  <meta property="og:image" content="https://www.familiada.online/img/og/og-image.webp"/>
+
+  <link rel="icon" href="favicon.ico"/>
+  <link rel="stylesheet" href="css/base.css"/>
+  <link rel="stylesheet" href="css/marketplace.css"/>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <script type="module" src="js/pages/marketplace.js" defer></script>
+  <script type="module" src="js/core/topbar-mobile-menu.js" defer></script>
+</head>
+<body class="mkt-body">
+
+  <header class="topbar topbar-layout-4 topbar-mobile-keep-brand">
+    <div class="topbar-section topbar-section-1">
+      <div class="brand">FAMILIADA</div>
+    </div>
+    <div class="topbar-section topbar-section-2">
+      <button class="btn" id="btnGoBuilder" type="button">
+        <span class="only-desktop" data-i18n="marketplace.nav.myGames">Moje gry</span>
+        <span class="only-mobile" data-i18n="marketplace.nav.myGamesMobile">🎮</span>
+      </button>
+      <button class="btn" id="btnManual" type="button">
+        <span class="only-desktop" data-i18n="marketplace.nav.manual">Wskazówki ℹ️</span>
+        <span class="only-mobile" data-i18n="marketplace.nav.manualMobile">ℹ️</span>
+      </button>
+    </div>
+    <div class="topbar-section topbar-section-3"></div>
+    <div class="topbar-section topbar-section-4">
+      <div class="who" id="whoStatic">—</div>
+      <button class="btn user-btn" id="btnAccount" type="button">
+        <span class="user-name" id="who">—</span>
+        <span class="user-sub" data-i18n="builder.nav.account">Ustawienia konta</span>
+      </button>
+      <button class="btn" id="btnLogout" type="button" data-i18n="common.authEntry">Zaloguj / Załóż konto</button>
+    </div>
+  </header>
+
+  <main class="wrap">
+
+    <!-- ======================================================
+         WIDOK: PRZEGLĄDAJ (domyślny)
+    ====================================================== -->
+    <section id="viewBrowse">
+      <div class="mkt-head">
+        <div>
+          <h1 class="mkt-title" data-i18n="marketplace.title">Marketplace</h1>
+          <p class="mkt-subtitle" data-i18n="marketplace.subtitle">Przeglądaj gry stworzone przez społeczność i dodawaj je do swojej biblioteki.</p>
+        </div>
+        <button class="btn sm" id="btnMySent" type="button" data-i18n="marketplace.btnMySent">Moje wysłane</button>
+      </div>
+
+      <div class="mkt-search-bar">
+        <input class="inp mkt-search-input" id="searchInput" type="search"
+          data-i18n-placeholder="marketplace.searchPlaceholder"
+          placeholder="Szukaj gry…"
+          autocomplete="off"/>
+      </div>
+
+      <div class="mkt-grid" id="browseGrid"></div>
+      <div class="mkt-load-more-wrap" id="loadMoreWrap" hidden>
+        <button class="btn sm" id="btnLoadMore" type="button" data-i18n="marketplace.loadMore">Pokaż więcej</button>
+      </div>
+      <div class="hint mkt-info" id="browseInfo"></div>
+    </section>
+
+    <!-- ======================================================
+         WIDOK: MOJE WYSŁANE
+    ====================================================== -->
+    <section id="viewMine" hidden>
+      <div class="mkt-head">
+        <div>
+          <h1 class="mkt-title" data-i18n="marketplace.mySent.title">Moje wysłane gry</h1>
+        </div>
+        <div class="mkt-head-actions">
+          <button class="btn sm gold" id="btnSubmitNew" type="button" data-i18n="marketplace.mySent.btnAdd">Dodaj nową do marketplace</button>
+          <button class="btn sm" id="btnBackBrowse" type="button" data-i18n="marketplace.btnBackBrowse">← Przeglądaj</button>
+        </div>
+      </div>
+
+      <div id="mySentList"></div>
+      <div class="hint mkt-info" id="mySentInfo"></div>
+    </section>
+
+    <div class="footer" style="margin-top:auto">
+      <div data-i18n="common.footer.left">© 2026 Familiada — system do gry na żywo</div>
+    </div>
+  </main>
+
+  <!-- ======================================================
+       MODAL: PODGLĄD GRY
+  ====================================================== -->
+  <div class="overlay" id="gameDetailOverlay" style="display:none">
+    <div class="modal mkt-modal-detail">
+      <div class="mkt-detail-head">
+        <div>
+          <div class="mTitle" id="detailTitle">—</div>
+          <div class="mSub" id="detailMeta">—</div>
+        </div>
+        <button class="btn sm mkt-close-btn" id="btnDetailClose" type="button" aria-label="Zamknij">✕</button>
+      </div>
+
+      <p class="mkt-detail-desc" id="detailDesc"></p>
+
+      <div class="mkt-detail-questions" id="detailQuestions"></div>
+
+      <div class="mkt-detail-actions">
+        <button class="btn sm gold" id="btnAddLibrary" type="button" data-i18n="marketplace.btnAddToLibrary">Dodaj do moich gier</button>
+        <button class="btn sm" id="btnRemoveLibrary" type="button" data-i18n="marketplace.btnRemoveFromLibrary" hidden>Usuń z moich gier</button>
+        <span class="mkt-added-badge" id="addedBadge" hidden data-i18n="marketplace.addedBadge">Dodano ✅</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================
+       MODAL: DODAJ NOWĄ GRĘ DO MARKETPLACE
+  ====================================================== -->
+  <div class="overlay" id="submitOverlay" style="display:none">
+    <div class="modal">
+      <div class="mTitle" data-i18n="marketplace.submit.title">Dodaj grę do marketplace</div>
+
+      <div class="field" style="margin-top:12px">
+        <label class="field-label" data-i18n="marketplace.submit.pickGame">Wybierz grę</label>
+        <select class="inp" id="submitGameSelect" style="width:100%">
+          <option value="" data-i18n="marketplace.submit.pickGamePlaceholder">— wybierz grę —</option>
+        </select>
+        <span class="hint" id="submitNoEligible" hidden data-i18n="marketplace.submit.noEligible">Brak kwalifikujących się gier.</span>
+      </div>
+
+      <div class="field" style="margin-top:10px">
+        <label class="field-label" for="submitTitle" data-i18n="marketplace.submit.titleLabel">Tytuł</label>
+        <input class="inp" id="submitTitle" type="text" maxlength="120"
+          data-i18n-placeholder="marketplace.submit.titlePlaceholder"
+          placeholder="Tytuł widoczny w Grach Społeczności"/>
+      </div>
+
+      <div class="field" style="margin-top:10px">
+        <label class="field-label" for="submitDesc" data-i18n="marketplace.submit.descLabel">Opis</label>
+        <textarea class="inp" id="submitDesc" rows="3" maxlength="500" style="width:100%;box-sizing:border-box;resize:vertical"
+          data-i18n-placeholder="marketplace.submit.descPlaceholder"
+          placeholder="Krótki opis gry…"></textarea>
+      </div>
+
+      <div class="field" style="margin-top:10px">
+        <label class="field-label" data-i18n="marketplace.submit.langLabel">Język gry</label>
+        <div class="mkt-lang-picker" id="submitLangPicker">
+          <button class="btn sm active" data-lang="pl" type="button">🇵🇱 PL</button>
+          <button class="btn sm" data-lang="en" type="button">🇬🇧 EN</button>
+          <button class="btn sm" data-lang="uk" type="button">🇺🇦 UK</button>
+        </div>
+      </div>
+
+      <div class="mkt-submit-warn">
+        <p data-i18n="marketplace.submit.snapshotWarning">To jest snapshot. Po wysłaniu nie można edytować tej pozycji w Grach Społeczności.</p>
+        <p data-i18n="marketplace.submit.withdrawInfo">Wycofanie usuwa ją z katalogu, ale osoby które ją dodały nadal ją mają.</p>
+      </div>
+
+      <label class="mkt-checkbox-row" for="submitConfirm">
+        <input type="checkbox" id="submitConfirm"/>
+        <span data-i18n="marketplace.submit.checkboxConfirm">Rozumiem, że po wysłaniu snapshot jest nieedytowalny.</span>
+      </label>
+
+      <div class="hint mkt-submit-error" id="submitError" hidden></div>
+
+      <div class="modal-actions" style="margin-top:14px">
+        <button class="btn sm" id="btnSubmitCancel" type="button" data-i18n="marketplace.submit.btnCancel">Anuluj</button>
+        <button class="btn sm gold" id="btnSubmitConfirm" type="button" data-i18n="marketplace.submit.btnSubmit">Wyślij do marketplace</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+</body>
+</html>

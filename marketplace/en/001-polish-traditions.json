@@ -1,0 +1,99 @@
+{
+  "meta": {
+    "title": "Polish Traditions",
+    "description": "Questions about Polish customs, holidays and traditions. Perfect for international audiences curious about Poland.",
+    "lang": "en"
+  },
+  "game": {
+    "name": "Polish Traditions",
+    "type": "prepared"
+  },
+  "questions": [
+    {
+      "text": "Name a traditional Polish dish served on Christmas Eve.",
+      "answers": [
+        { "text": "Borscht with uszka", "fixed_points": 35 },
+        { "text": "Carp", "fixed_points": 30 },
+        { "text": "Pierogi", "fixed_points": 20 },
+        { "text": "Herring", "fixed_points": 10 },
+        { "text": "Mushroom soup", "fixed_points": 5 }
+      ]
+    },
+    {
+      "text": "What do Polish people celebrate on the 6th of December?",
+      "answers": [
+        { "text": "Saint Nicholas Day", "fixed_points": 60 },
+        { "text": "Christmas", "fixed_points": 20 },
+        { "text": "Advent", "fixed_points": 10 },
+        { "text": "Mikołajki", "fixed_points": 10 }
+      ]
+    },
+    {
+      "text": "Name a traditional Polish folk dance.",
+      "answers": [
+        { "text": "Mazurka", "fixed_points": 35 },
+        { "text": "Polka", "fixed_points": 30 },
+        { "text": "Polonaise", "fixed_points": 25 },
+        { "text": "Krakowiak", "fixed_points": 10 }
+      ]
+    },
+    {
+      "text": "What is the name of the Polish spring celebration where people throw water on each other?",
+      "answers": [
+        { "text": "Śmigus-dyngus", "fixed_points": 55 },
+        { "text": "Wet Monday", "fixed_points": 30 },
+        { "text": "Easter Monday", "fixed_points": 15 }
+      ]
+    },
+    {
+      "text": "Which city in Poland is famous for its dragon legend?",
+      "answers": [
+        { "text": "Kraków", "fixed_points": 80 },
+        { "text": "Warsaw", "fixed_points": 10 },
+        { "text": "Wrocław", "fixed_points": 10 }
+      ]
+    },
+    {
+      "text": "What is the traditional Polish bread and salt ceremony associated with?",
+      "answers": [
+        { "text": "Welcoming guests", "fixed_points": 60 },
+        { "text": "Weddings", "fixed_points": 25 },
+        { "text": "New Year", "fixed_points": 15 }
+      ]
+    },
+    {
+      "text": "What is the name of the Polish autumn celebration where people remember the dead?",
+      "answers": [
+        { "text": "All Saints' Day", "fixed_points": 55 },
+        { "text": "Zaduszki", "fixed_points": 30 },
+        { "text": "All Souls' Day", "fixed_points": 15 }
+      ]
+    },
+    {
+      "text": "Name a traditional Polish alcoholic drink.",
+      "answers": [
+        { "text": "Vodka", "fixed_points": 50 },
+        { "text": "Żubrówka", "fixed_points": 25 },
+        { "text": "Miód pitny (mead)", "fixed_points": 15 },
+        { "text": "Nalewka", "fixed_points": 10 }
+      ]
+    },
+    {
+      "text": "What is the name of the Polish Christmas carol sung at midnight?",
+      "answers": [
+        { "text": "Kolęda", "fixed_points": 60 },
+        { "text": "Pasterka", "fixed_points": 25 },
+        { "text": "Lulajże Jezuniu", "fixed_points": 15 }
+      ]
+    },
+    {
+      "text": "Which flower is traditionally placed on graves on All Saints' Day in Poland?",
+      "answers": [
+        { "text": "Chrysanthemum", "fixed_points": 60 },
+        { "text": "Rose", "fixed_points": 20 },
+        { "text": "Carnation", "fixed_points": 15 },
+        { "text": "Tulip", "fixed_points": 5 }
+      ]
+    }
+  ]
+}

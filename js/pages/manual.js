@@ -131,6 +131,7 @@ function resolveBackLabelKey() {
   if (retPath.endsWith("/subscriptions")) return "manual.backToSubscriptions";
   if (retPath.endsWith("/account")) return "manual.backToAccount";
   if (retPath.endsWith("/polls-hub")) return "polls.backToHub";
+  if (retPath.endsWith("/marketplace")) return "manual.backToMarketplace";
   return "manual.backToGames";
 }
 

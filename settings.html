@@ -24,6 +24,7 @@
       <a class="btn sm btn-external" id="btnServer" href="https://panel.familiada.online" target="_blank" rel="noopener" data-i18n="settings.actions.server">Serwer</a>
       <button class="btn sm tab-btn active" id="btnTabMaintenance" type="button" data-i18n="settings.tabs.maintenance">Prace techniczne</button>
       <button class="btn sm tab-btn" id="btnTabMail" type="button" data-i18n="settings.tabs.mail">Maile</button>
+      <button class="btn sm tab-btn" id="btnTabMarketplace" type="button" data-i18n="settings.tabs.marketplace">Marketplace</button>
       <div class="ui-select" id="toolsSelect">
         <button class="btn sm ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
           <span class="ui-select-label" data-i18n="settings.tabs.tools">Narzędzia</span>
@@ -304,6 +305,42 @@
           </section>
         </div>
       </div>
+      <!-- MARKETPLACE PANEL -->
+      <div class="market-admin-panel" id="marketplacePanel" hidden>
+        <div class="panel-head">
+          <div class="panel-title" data-i18n="settings.marketplace.title">Marketplace</div>
+          <div class="panel-sub" data-i18n="settings.marketplace.subtitle">Moderacja zgłoszeń i gry producenta</div>
+        </div>
+
+        <div class="panel-actions">
+          <button class="btn sm gold" id="btnMarketSyncGh" type="button" data-i18n="settings.marketplace.syncGh">Sync z GitHub</button>
+          <span class="field-hint" id="marketSyncStatus"></span>
+        </div>
+
+        <div class="mail-controls" style="margin-bottom:12px">
+          <button class="btn sm tab-btn active" id="mktTabPending" type="button" data-i18n="settings.marketplace.tabPending">Do zatwierdzenia</button>
+          <button class="btn sm tab-btn" id="mktTabPublished" type="button" data-i18n="settings.marketplace.tabPublished">Opublikowane</button>
+          <button class="btn sm tab-btn" id="mktTabRejected" type="button" data-i18n="settings.marketplace.tabRejected">Odrzucone</button>
+          <button class="btn sm tab-btn" id="mktTabWithdrawn" type="button" data-i18n="settings.marketplace.tabWithdrawn">Wycofane</button>
+          <button class="btn sm" id="btnMarketRefresh" type="button" data-i18n="settings.actions.refresh">Odśwież</button>
+        </div>
+
+        <div class="mail-table-wrap">
+          <table class="mail-table">
+            <thead>
+              <tr>
+                <th data-i18n="settings.marketplace.col.title">Tytuł</th>
+                <th data-i18n="settings.marketplace.col.lang">Język</th>
+                <th data-i18n="settings.marketplace.col.author">Autor</th>
+                <th data-i18n="settings.marketplace.col.date">Data</th>
+                <th data-i18n="settings.marketplace.col.actions">Akcje</th>
+              </tr>
+            </thead>
+            <tbody id="marketTableBody"></tbody>
+          </table>
+        </div>
+        <div class="field-hint" id="marketTableInfo">—</div>
+      </div>
     </section>
 
   </main>
@@ -334,6 +371,36 @@
   </div>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <!-- Modal: podgląd gry z marketplace -->
+  <div class="overlay" id="marketPreviewOverlay" style="display:none">
+    <div class="modal modal-wide">
+      <div class="mTitle" id="marketPreviewTitle">—</div>
+      <div class="mSub" id="marketPreviewMeta">—</div>
+      <div class="market-preview-desc" id="marketPreviewDesc"></div>
+      <div class="market-preview-questions" id="marketPreviewQuestions"></div>
+      <div class="modal-actions">
+        <button class="btn sm" id="btnMarketPreviewClose" type="button" data-i18n="settings.actions.cancel">Zamknij</button>
+        <button class="btn sm danger" id="btnMarketPreviewDelete" type="button" data-i18n="settings.marketplace.hardDelete">Usuń na stałe</button>
+        <button class="btn sm" id="btnMarketPreviewWithdraw" type="button" data-i18n="settings.marketplace.forceWithdraw">Wycofaj</button>
+        <button class="btn sm" id="btnMarketPreviewReject" type="button" data-i18n="settings.marketplace.reject">Odrzuć</button>
+        <button class="btn sm gold" id="btnMarketPreviewApprove" type="button" data-i18n="settings.marketplace.approve">Zatwierdź</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: powód odrzucenia -->
+  <div class="overlay" id="marketRejectOverlay" style="display:none">
+    <div class="modal">
+      <div class="mTitle" data-i18n="settings.marketplace.rejectTitle">Odrzuć zgłoszenie</div>
+      <div class="mSub" data-i18n="settings.marketplace.rejectSub">Podaj powód (opcjonalnie — trafi do autora).</div>
+      <textarea class="inp" id="marketRejectNote" rows="4" style="width:100%;box-sizing:border-box;margin-top:8px" data-i18n-placeholder="settings.marketplace.rejectPlaceholder" placeholder="Powód odrzucenia…"></textarea>
+      <div class="modal-actions" style="margin-top:12px">
+        <button class="btn sm" id="btnMarketRejectCancel" type="button" data-i18n="settings.actions.cancel">Anuluj</button>
+        <button class="btn sm gold" id="btnMarketRejectConfirm" type="button" data-i18n="settings.marketplace.rejectConfirm">Odrzuć</button>
+      </div>
+    </div>
+  </div>
 
   <div class="dt-modal" id="dtModal" hidden>
     <div class="dt-card">
