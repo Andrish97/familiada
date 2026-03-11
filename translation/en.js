@@ -65,6 +65,7 @@ const en = {
       title: "Build your own Family Feud. A real game show on your own equipment.",
       lead: "Collect answers from participants via a poll, then run the live game — with a TV-style scoreboard, operator panel and host view. All in the browser, on equipment you already have.",
       ctaStart: "Start creating games and running the live show",
+      ctaMarketplace: "Browse Community Games 🎮",
       note: "Guest mode available — no registration, data stored in the browser.",
     },
     about: {
@@ -1036,6 +1037,7 @@ const en = {
     backToPoll: "← Poll",
     backToSubscriptions: "← Subscriptions",
     backToAccount: "← Account settings",
+    backToMarketplace: "← Community Games",
     logout: "Log out",
     pageTitle: "User guide",
     tabs: {
@@ -1047,6 +1049,7 @@ const en = {
       logo: "Logo creation",
       control: "Control panel",
       demo: "Demo - starter materials",
+      community: "Community Games",
     },
     demo: {
       modalTitle: "Restore demo files?",
@@ -2388,6 +2391,92 @@ const en = {
           After clicking you will be taken to the My games view and demo will be loaded automatically.
         </p>
       </div>`,
+      community: `<p class="m-p">
+        Community Games is a catalogue of ready-made games created by other users
+        and verified by moderators. You can browse them, add them to your library
+        and launch them directly as a game — without creating your own questions.
+      </p>
+
+      <h3 class="m-h2">Browsing and library</h3>
+
+      <p class="m-p">
+        The Community Games page shows all published games.
+        You can filter by language and search by title.
+        Each game card shows the title, author, language and how many users have added it.
+      </p>
+
+      <p class="m-p">
+        Click a game card to see details: the full list of questions and answers.
+        If the game suits you, click <span class="m-strong">Add to library</span>.
+        The game will appear in the <span class="m-strong">Community Games</span>
+        tab in your My games view (builder).
+      </p>
+
+      <h3 class="m-h2">Playing a Community game</h3>
+
+      <p class="m-p">
+        In the builder, go to the <span class="m-strong">Community Games</span> tab,
+        select a game and click <span class="m-strong">Play</span>.
+        The system will ask for confirmation — once accepted, a copy of the game
+        is created on your account and the control panel opens.
+        The game is saved in your games as an independent copy
+        that you can edit without affecting the original.
+      </p>
+
+      <div class="m-warn">
+        Playing creates a copy — it does not modify the original or anyone else's data.
+      </div>
+
+      <h3 class="m-h2">Submitting your own game</h3>
+
+      <p class="m-p">
+        If you have a game you want to share with the community,
+        click <span class="m-strong">Submit a game</span> on the Community Games page.
+        You will be asked to select a game, provide a title, description and language.
+      </p>
+
+      <p class="m-p">
+        Requirements for submission:
+      </p>
+      <ul class="m-ul">
+        <li>Type <span class="m-strong">Prepared</span> — must have at least <span class="m-strong">10 questions</span></li>
+        <li>Each question must have between 3 and 6 answers</li>
+        <li>The total points per question must not exceed 100</li>
+        <li>No answer can have more than 100 points or a negative value</li>
+        <li>A closed poll (status <span class="m-strong">Ready</span>) can also be submitted</li>
+      </ul>
+
+      <p class="m-p">
+        A submitted game is a <span class="m-strong">snapshot</span> — an immutable record of the game
+        at the time of submission. Later changes to the original will not affect the catalogue version.
+      </p>
+
+      <h3 class="m-h2">Moderation</h3>
+
+      <p class="m-p">
+        Every submitted game goes through moderation and is visible to you
+        in the <span class="m-strong">My submitted games</span> tab with status
+        <span class="m-strong">Awaiting review</span>.
+        Once approved by a moderator the game becomes visible to everyone.
+        If rejected, you will see the reason.
+      </p>
+
+      <h3 class="m-h2">Withdrawing a game</h3>
+
+      <p class="m-p">
+        You can withdraw a published game — it will disappear from the catalogue for new users.
+        Users who have already added it to their library keep access.
+        Withdrawal is irreversible — there is no option to republish the same version.
+      </p>
+
+      <h3 class="m-h2">Producer games</h3>
+
+      <p class="m-p">
+        Some games in the catalogue are marked as <span class="m-strong">from Familiada</span>.
+        These are games prepared by the Familiada team and are added to the catalogue
+        directly — without going through moderation.
+        They are distinguished by a dedicated badge.
+      </p>`,
     },
   },
   privacy: {
@@ -2505,6 +2594,8 @@ const en = {
       manualMobile: "ℹ️",
       logo: "Logo 🖥️",
       logoMobile: "🖥️",
+      marketplace: "Community Games 🎮",
+      marketplaceMobile: "🎮",
       account: "Account settings",
       logout: "Log out",
     },
@@ -2528,8 +2619,13 @@ const en = {
     },
     tabs: {
       pollText: "Standard poll",
+      pollTextMobile: "Poll",
       pollPoints: "Points",
+      pollPointsMobile: "Points",
       prepared: "Prepared",
+      preparedMobile: "Ready",
+      market: "Community Games",
+      marketMobile: "Community",
     },
     iosWebapp: {
       title: "Add Familiada to Home Screen",
@@ -2639,6 +2735,16 @@ const en = {
       text: "This poll is already open or closed. Reset it to enable editing?",
       ok: "Reset",
       cancel: "Cancel",
+    },
+    market: {
+      empty: "Your library is empty.",
+      emptyHint: "Add games from Community Games.",
+      hint: "Select a game to enable Play.",
+      importTitle: "Play this game?",
+      importText: "The game will be imported as a new copy in your games.",
+      importOk: "Import & play",
+      importCancel: "Cancel",
+      importFailed: "Failed to import the game.",
     },
     gameFallback: "Untitled",
   },
@@ -4071,6 +4177,7 @@ const en = {
     tabs: {
       maintenance: "Maintenance",
       mail: "Mail",
+      marketplace: "Community Games",
       tools: "Tools",
     },
     modes: {
@@ -4253,6 +4360,112 @@ const en = {
       active: "Active",
       inactive: "Inactive",
       limitBadge: "limit {count}",
+    },
+    marketplace: {
+      title: "Community Games",
+      subtitle: "Moderate submissions and manage producer games",
+      syncGh: "Sync from GitHub",
+      syncing: "Syncing…",
+      syncOk: "Sync OK",
+      tabPending: "Pending",
+      tabPublished: "Published",
+      tabRejected: "Rejected",
+      tabWithdrawn: "Withdrawn",
+      loading: "Loading…",
+      empty: "No entries.",
+      items: "entries",
+      approve: "Approve",
+      approved: "Approved ✓",
+      reject: "Reject",
+      rejected: "Rejected.",
+      rejectTitle: "Reject submission",
+      rejectSub: "Provide a reason (optional — will be shown to the author).",
+      rejectPlaceholder: "Reason for rejection…",
+      rejectConfirm: "Reject",
+      forceWithdraw: "Withdraw",
+      forceWithdrawConfirm: "Withdraw this game? It will disappear from browse but stay in users' libraries.",
+      forceWithdrawn: "Withdrawn.",
+      hardDelete: "Delete permanently",
+      hardDeleteConfirm: "Permanently delete this game? It will disappear for all users. This cannot be undone.",
+      hardDeleted: "Deleted.",
+      col: {
+        title: "Title",
+        lang: "Language",
+        author: "Author",
+        date: "Date",
+        actions: "Actions",
+      },
+    },
+  },
+  marketplace: {
+    title: "Community Games",
+    subtitle: "Browse games created by the community and add them to your library.",
+    nav: {
+      myGames: "My games",
+      myGamesMobile: "🎮",
+      manual: "Help ℹ️",
+      manualMobile: "ℹ️",
+    },
+    searchPlaceholder: "Search games…",
+    btnMySent: "My submissions",
+    btnBackBrowse: "← Browse",
+    btnAddToLibrary: "Add to my games",
+    btnRemoveFromLibrary: "Remove from my games",
+    addedBadge: "Added ✅",
+    withdrawnBadge: "Withdrawn",
+    producerBadge: "Familiada",
+    langLabel: "Language",
+    authorLabel: "by: {author}",
+    libraryCount: "{count} in libraries",
+    loadMore: "Load more",
+    empty: "No games match your search.",
+    errorLoad: "Failed to load games.",
+    detail: {
+      questions: "Questions",
+      noQuestions: "No questions available.",
+    },
+    mySent: {
+      title: "My submitted games",
+      empty: "You haven't submitted any games to Community Games yet.",
+      btnAdd: "Submit a new game",
+      statusPending: "Awaiting review",
+      statusPublished: "Published",
+      statusRejected: "Rejected",
+      statusWithdrawn: "Withdrawn",
+      reasonLabel: "Reason: {note}",
+      btnWithdraw: "Withdraw",
+      withdrawConfirm: "Are you sure you want to withdraw this game from Community Games?",
+      withdrawn: "Withdrawn.",
+    },
+    submit: {
+      title: "Submit game to Community Games",
+      pickGame: "Select game",
+      pickGamePlaceholder: "— select a game —",
+      titleLabel: "Title",
+      titlePlaceholder: "Title visible in Community Games",
+      descLabel: "Description",
+      descPlaceholder: "Short description (topic, difficulty, audience…)",
+      langLabel: "Game language",
+      snapshotWarning: "This is a snapshot. Once submitted, this entry cannot be edited in Community Games.",
+      withdrawInfo: "Withdrawing removes it from the catalogue, but users who already added it keep access.",
+      checkboxConfirm: "I understand the snapshot is immutable after submission.",
+      btnSubmit: "Submit to Community Games",
+      btnCancel: "Cancel",
+      noEligible: "No eligible games (prepared type with min. 10 questions, or a closed poll).",
+      success: "Submitted! Your game is awaiting review.",
+      errorMissingGame: "Please select a game.",
+      errorMissingTitle: "Please provide a title.",
+      errorCheckbox: "Please tick the confirmation box.",
+      err: {
+        game_not_found: "Game not found.",
+        game_not_playable: "This game is not playable. Make sure it has at least 10 questions and meets all requirements.",
+        too_few_questions: "Too few questions — minimum is 10.",
+        invalid_lang: "Invalid language.",
+        invalid_title: "Invalid title.",
+        invalid_payload: "Game export error.",
+        not_authenticated: "You must be logged in.",
+        submit_failed: "Submit failed. Please try again.",
+      },
     },
   },
   notFound: {

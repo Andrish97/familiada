@@ -1,0 +1,101 @@
+{
+  "meta": {
+    "title": "Zwierzęta Świata",
+    "description": "Pytania o zwierzęta z całego świata — dla dzieci i dorosłych. Świetne na family show!",
+    "lang": "pl"
+  },
+  "game": {
+    "name": "Zwierzęta Świata",
+    "type": "prepared"
+  },
+  "questions": [
+    {
+      "text": "Wymień największe lądowe zwierzę na świecie.",
+      "answers": [
+        { "text": "Słoń afrykański", "fixed_points": 60 },
+        { "text": "Słoń azjatycki", "fixed_points": 20 },
+        { "text": "Nosorożec", "fixed_points": 10 },
+        { "text": "Hipopotam", "fixed_points": 10 }
+      ]
+    },
+    {
+      "text": "Podaj nazwę zwierzęcia, które śpi stojąc.",
+      "answers": [
+        { "text": "Koń", "fixed_points": 45 },
+        { "text": "Żyrafa", "fixed_points": 25 },
+        { "text": "Krowa", "fixed_points": 15 },
+        { "text": "Słoń", "fixed_points": 10 },
+        { "text": "Zebra", "fixed_points": 5 }
+      ]
+    },
+    {
+      "text": "Jakie zwierzę jest symbolem Australii?",
+      "answers": [
+        { "text": "Kangur", "fixed_points": 50 },
+        { "text": "Koala", "fixed_points": 30 },
+        { "text": "Emu", "fixed_points": 15 },
+        { "text": "Wombat", "fixed_points": 5 }
+      ]
+    },
+    {
+      "text": "Wymień zwierzę, które jest najszybszym lądowym ssakiem.",
+      "answers": [
+        { "text": "Gepard", "fixed_points": 75 },
+        { "text": "Lew", "fixed_points": 10 },
+        { "text": "Koń", "fixed_points": 10 },
+        { "text": "Puma", "fixed_points": 5 }
+      ]
+    },
+    {
+      "text": "Podaj nazwę jedynego ssaka, który potrafi latać.",
+      "answers": [
+        { "text": "Nietoperz", "fixed_points": 85 },
+        { "text": "Latająca wiewiórka", "fixed_points": 10 },
+        { "text": "Lotokot", "fixed_points": 5 }
+      ]
+    },
+    {
+      "text": "Wymień zwierzę, które ma najdłuższą szyję.",
+      "answers": [
+        { "text": "Żyrafa", "fixed_points": 80 },
+        { "text": "Łabędź", "fixed_points": 10 },
+        { "text": "Struś", "fixed_points": 10 }
+      ]
+    },
+    {
+      "text": "Jak nazywa się największa ryba na świecie?",
+      "answers": [
+        { "text": "Rekin wielorybi", "fixed_points": 55 },
+        { "text": "Wieloryb", "fixed_points": 25 },
+        { "text": "Rekin biały", "fixed_points": 15 },
+        { "text": "Manta", "fixed_points": 5 }
+      ]
+    },
+    {
+      "text": "Podaj nazwę zwierzęcia, które może odrosnąć utraconą kończynę.",
+      "answers": [
+        { "text": "Salamandra", "fixed_points": 40 },
+        { "text": "Aksolotl", "fixed_points": 35 },
+        { "text": "Rozgwiazda", "fixed_points": 15 },
+        { "text": "Jaszczurka", "fixed_points": 10 }
+      ]
+    },
+    {
+      "text": "Wymień zwierzę, które żyje najdłużej na świecie.",
+      "answers": [
+        { "text": "Żółw olbrzymi", "fixed_points": 40 },
+        { "text": "Karp", "fixed_points": 25 },
+        { "text": "Greenlandzki rekin", "fixed_points": 20 },
+        { "text": "Małż islandzki", "fixed_points": 15 }
+      ]
+    },
+    {
+      "text": "Jakie zwierzę jest narodowym symbolem Polski?",
+      "answers": [
+        { "text": "Orzeł biały", "fixed_points": 70 },
+        { "text": "Żubr", "fixed_points": 20 },
+        { "text": "Bocian", "fixed_points": 10 }
+      ]
+    }
+  ]
+}

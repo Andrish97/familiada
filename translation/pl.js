@@ -65,6 +65,7 @@ const pl = {
       title: "Stwórz własną Familiadę. Prawdziwy teleturniej na Twoim sprzęcie.",
       lead: "Zbierz odpowiedzi od uczestników w sondażu, a potem poprowadź grę na żywo — z tablicą wyników jak w TV, panelem operatora i widokiem prowadzącego. Wszystko w przeglądarce, na sprzęcie który już masz.",
       ctaStart: "Zacznij tworzyć gry i prowadzić rozgrywkę",
+      ctaMarketplace: "Przeglądaj Gry Społeczności 🎮",
       note: "Dostępny tryb gościa — bez rejestracji, dane trzymane w przeglądarce.",
     },
     about: {
@@ -1041,6 +1042,7 @@ const pl = {
     backToPoll: "← Sondaż",
     backToSubscriptions: "← Subskrypcje",
     backToAccount: "← Ustawienia konta",
+    backToMarketplace: "← Gry Społeczności",
     logout: "Wyloguj",
     pageTitle: "Wskazówki dla użytkownika",
     tabs: {
@@ -1052,6 +1054,7 @@ const pl = {
       logo: "Tworzenie logo",
       control: "Panel sterowania",
       demo: "Demo - materiały startowe",
+      community: "Gry Społeczności",
     },
     demo: {
       modalTitle: "Przywrócić pliki demo?",
@@ -2393,6 +2396,92 @@ const pl = {
           Po kliknięciu nastąpi przejście do widoku Moje gry i automatyczne wgranie demo.
         </p>
       </div>`,
+      community: `<p class="m-p">
+        Gry Społeczności to katalog gotowych gier stworzonych przez innych użytkowników
+        i zweryfikowanych przez moderatorów. Możesz je przeglądać, dodawać do swojej biblioteki
+        i uruchamiać bezpośrednio jako rozgrywkę — bez konieczności tworzenia własnych pytań.
+      </p>
+
+      <h3 class="m-h2">Przeglądanie i biblioteka</h3>
+
+      <p class="m-p">
+        Na stronie Gry Społeczności widzisz wszystkie opublikowane gry.
+        Możesz je filtrować po języku i przeszukiwać po tytule.
+        Każda karta gry pokazuje tytuł, autora, język i liczbę dodań przez innych użytkowników.
+      </p>
+
+      <p class="m-p">
+        Kliknij kartę gry, aby zobaczyć szczegóły: pełną listę pytań i odpowiedzi.
+        Jeśli gra Ci odpowiada, kliknij <span class="m-strong">Dodaj do biblioteki</span>.
+        Gra trafi do zakładki <span class="m-strong">Gry Społeczności</span>
+        w widoku Moje gry (builder).
+      </p>
+
+      <h3 class="m-h2">Uruchamianie gry ze Społeczności</h3>
+
+      <p class="m-p">
+        W builderze przejdź do zakładki <span class="m-strong">Gry Społeczności</span>,
+        zaznacz wybraną grę i kliknij <span class="m-strong">Graj</span>.
+        System zapyta o potwierdzenie — po zaakceptowaniu zostanie utworzona
+        kopia gry na Twoim koncie i otworzy się panel sterowania.
+        Gra zostanie zapisana w Twoich grach jako samodzielna kopia,
+        którą możesz edytować niezależnie od oryginału.
+      </p>
+
+      <div class="m-warn">
+        Granie tworzy kopię — nie modyfikuje oryginału ani cudzych danych.
+      </div>
+
+      <h3 class="m-h2">Wysyłanie własnej gry</h3>
+
+      <p class="m-p">
+        Jeśli masz grę, którą chcesz podzielić się ze społecznością,
+        kliknij <span class="m-strong">Wyślij grę</span> na stronie Gry Społeczności.
+        Zostaniesz poproszony o wybranie gry, podanie tytułu, opisu i języka.
+      </p>
+
+      <p class="m-p">
+        Wymagania, które musi spełniać gra przed wysłaniem:
+      </p>
+      <ul class="m-ul">
+        <li>Typ <span class="m-strong">Preparowany</span> — musi mieć co najmniej <span class="m-strong">10 pytań</span></li>
+        <li>Każde pytanie musi mieć od 3 do 6 odpowiedzi</li>
+        <li>Suma punktów w jednym pytaniu nie może przekraczać 100</li>
+        <li>Żadna odpowiedź nie może mieć więcej niż 100 pkt ani wartości ujemnej</li>
+        <li>Sondaż zamknięty (status <span class="m-strong">Gotowy</span>) też może być wysłany</li>
+      </ul>
+
+      <p class="m-p">
+        Wysłana gra to <span class="m-strong">snapshot</span> — niezmienialny zapis stanu gry
+        w momencie wysłania. Późniejsze zmiany w oryginalnej grze nie wpłyną na wersję w katalogu.
+      </p>
+
+      <h3 class="m-h2">Moderacja</h3>
+
+      <p class="m-p">
+        Każda wysłana gra trafia do moderacji i jest widoczna dla Ciebie
+        w zakładce <span class="m-strong">Moje wysłane gry</span> ze statusem
+        <span class="m-strong">Oczekuje na weryfikację</span>.
+        Po zatwierdzeniu przez moderatora gra staje się widoczna dla wszystkich.
+        W przypadku odrzucenia zobaczysz powód.
+      </p>
+
+      <h3 class="m-h2">Wycofanie gry</h3>
+
+      <p class="m-p">
+        Możesz wycofać opublikowaną grę — zniknie z katalogu dla nowych użytkowników.
+        Osoby, które już ją dodały do swojej biblioteki, nadal mają do niej dostęp.
+        Wycofanie jest nieodwracalne — nie ma opcji ponownego opublikowania tej samej wersji.
+      </p>
+
+      <h3 class="m-h2">Gry Producenta</h3>
+
+      <p class="m-p">
+        Część gier w katalogu jest oznaczona jako <span class="m-strong">od Producenta</span>.
+        Są to gry przygotowane przez zespół Familiada i trafiają do katalogu
+        bezpośrednio — bez przechodzenia przez moderację.
+        Wyróżniają się dedykowaną odznaką.
+      </p>`,
     },
   },
   privacy: {
@@ -2502,6 +2591,8 @@ const pl = {
       manualMobile: "ℹ️",
       logo: "Logo 🖥️",
       logoMobile: "🖥️",
+      marketplace: "Gry Społeczności 🎮",
+      marketplaceMobile: "🎮",
       account: "Ustawienia konta",
       logout: "Wyloguj",
     },
@@ -2525,8 +2616,13 @@ const pl = {
     },
     tabs: {
       pollText: "Typowy sondaż",
+      pollTextMobile: "Sondaż",
       pollPoints: "Punktacja",
+      pollPointsMobile: "Punkty",
       prepared: "Preparowany",
+      preparedMobile: "Gotowy",
+      market: "Gry Społeczności",
+      marketMobile: "Społ.",
     },
     iosWebapp: {
       title: "Dodaj Familiadę do ekranu głównego",
@@ -2636,6 +2732,16 @@ const pl = {
       text: "Ten sondaż jest już otwarty lub zamknięty. Zresetować, aby edytować?",
       ok: "Resetuj",
       cancel: "Anuluj",
+    },
+    market: {
+      empty: "Twoja biblioteka jest pusta.",
+      emptyHint: "Dodaj gry ze Społeczności.",
+      hint: "Zaznacz grę, aby włączyć Graj.",
+      importTitle: "Uruchomić grę?",
+      importText: "Gra zostanie zaimportowana jako nowa kopia w Twoich grach.",
+      importOk: "Importuj i graj",
+      importCancel: "Anuluj",
+      importFailed: "Nie udało się zaimportować gry.",
     },
     gameFallback: "Bez nazwy",
   },
@@ -4068,6 +4174,7 @@ const pl = {
     tabs: {
       maintenance: "Prace techniczne",
       mail: "Maile",
+      marketplace: "Gry Społeczności",
       tools: "Narzędzia",
     },
     modes: {
@@ -4250,6 +4357,112 @@ const pl = {
       active: "Aktywny",
       inactive: "Nieaktywny",
       limitBadge: "limit {count}",
+    },
+    marketplace: {
+      title: "Gry Społeczności",
+      subtitle: "Moderacja zgłoszeń i gry producenta",
+      syncGh: "Sync z GitHub",
+      syncing: "Synchronizuję…",
+      syncOk: "Sync OK",
+      tabPending: "Do zatwierdzenia",
+      tabPublished: "Opublikowane",
+      tabRejected: "Odrzucone",
+      tabWithdrawn: "Wycofane",
+      loading: "Ładowanie…",
+      empty: "Brak pozycji.",
+      items: "pozycji",
+      approve: "Zatwierdź",
+      approved: "Zatwierdzono ✓",
+      reject: "Odrzuć",
+      rejected: "Odrzucono.",
+      rejectTitle: "Odrzuć zgłoszenie",
+      rejectSub: "Podaj powód (opcjonalnie — trafi do autora).",
+      rejectPlaceholder: "Powód odrzucenia…",
+      rejectConfirm: "Odrzuć",
+      forceWithdraw: "Wycofaj",
+      forceWithdrawConfirm: "Wycofać tę grę? Zniknie z browse, ale zostanie w bibliotekach osób które ją dodały.",
+      forceWithdrawn: "Wycofano.",
+      hardDelete: "Usuń na stałe",
+      hardDeleteConfirm: "Usunąć grę na stałe? Zniknie u wszystkich użytkowników. Tego nie da się cofnąć.",
+      hardDeleted: "Usunięto.",
+      col: {
+        title: "Tytuł",
+        lang: "Język",
+        author: "Autor",
+        date: "Data",
+        actions: "Akcje",
+      },
+    },
+  },
+  marketplace: {
+    title: "Gry Społeczności",
+    subtitle: "Przeglądaj gry stworzone przez społeczność i dodawaj je do swojej biblioteki.",
+    nav: {
+      myGames: "Moje gry",
+      myGamesMobile: "🎮",
+      manual: "Wskazówki ℹ️",
+      manualMobile: "ℹ️",
+    },
+    searchPlaceholder: "Szukaj gry…",
+    btnMySent: "Moje wysłane",
+    btnBackBrowse: "← Przeglądaj",
+    btnAddToLibrary: "Dodaj do moich gier",
+    btnRemoveFromLibrary: "Usuń z moich gier",
+    addedBadge: "Dodano ✅",
+    withdrawnBadge: "Wycofana",
+    producerBadge: "Familiada",
+    langLabel: "Język",
+    authorLabel: "od: {author}",
+    libraryCount: "{count} w bibliotece",
+    loadMore: "Pokaż więcej",
+    empty: "Brak gier spełniających kryteria.",
+    errorLoad: "Nie udało się załadować gier.",
+    detail: {
+      questions: "Pytania",
+      noQuestions: "Brak pytań w podglądzie.",
+    },
+    mySent: {
+      title: "Moje wysłane gry",
+      empty: "Nie wysłałeś jeszcze żadnej gry do Gier Społeczności.",
+      btnAdd: "Dodaj nową do Gier Społeczności",
+      statusPending: "Oczekuje na weryfikację",
+      statusPublished: "Opublikowana",
+      statusRejected: "Odrzucona",
+      statusWithdrawn: "Wycofana",
+      reasonLabel: "Powód: {note}",
+      btnWithdraw: "Wycofaj",
+      withdrawConfirm: "Na pewno wycofać tę grę z Gier Społeczności?",
+      withdrawn: "Wycofano.",
+    },
+    submit: {
+      title: "Dodaj grę do Gier Społeczności",
+      pickGame: "Wybierz grę",
+      pickGamePlaceholder: "— wybierz grę —",
+      titleLabel: "Tytuł",
+      titlePlaceholder: "Tytuł widoczny w Grach Społeczności",
+      descLabel: "Opis",
+      descPlaceholder: "Krótki opis gry (temat, poziom trudności, dla kogo…)",
+      langLabel: "Język gry",
+      snapshotWarning: "To jest snapshot. Po wysłaniu nie można edytować tej pozycji w Grach Społeczności.",
+      withdrawInfo: "Wycofanie usuwa ją z katalogu, ale osoby, które ją dodały, nadal ją mają.",
+      checkboxConfirm: "Rozumiem, że po wysłaniu snapshot jest nieedytowalny.",
+      btnSubmit: "Wyślij do Gier Społeczności",
+      btnCancel: "Anuluj",
+      noEligible: "Brak kwalifikujących się gier (preparowana z min. 10 pytaniami lub zamknięty sondaż).",
+      success: "Wysłano! Gra oczekuje na weryfikację.",
+      errorMissingGame: "Wybierz grę.",
+      errorMissingTitle: "Podaj tytuł.",
+      errorCheckbox: "Zaznacz potwierdzenie.",
+      err: {
+        game_not_found: "Nie znaleziono gry.",
+        game_not_playable: "Gra nie jest grywalna. Sprawdź czy ma co najmniej 10 pytań i spełnia wszystkie wymagania.",
+        too_few_questions: "Za mało pytań — wymagane minimum to 10.",
+        invalid_lang: "Nieprawidłowy język.",
+        invalid_title: "Nieprawidłowy tytuł.",
+        invalid_payload: "Błąd eksportu gry.",
+        not_authenticated: "Musisz być zalogowany.",
+        submit_failed: "Błąd wysyłania. Spróbuj ponownie.",
+      },
     },
   },
   notFound: {

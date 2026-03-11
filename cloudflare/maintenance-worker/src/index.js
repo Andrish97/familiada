@@ -96,6 +96,14 @@ export default {
     const state = await getState(env);
 
     if (!state.enabled || state.mode === "off" || isBypass) {
+      // Bot SSR: Googlebot i inne crawlery dostają pre-rendered HTML dla /marketplace
+      if (
+        request.method === "GET" &&
+        url.pathname.startsWith("/marketplace") &&
+        isBot(request)
+      ) {
+        return serveMarketplaceSsr(request, env, url);
+      }
       return fetchWith404(request, ORIGIN_BASE, ORIGIN_HOST, ORIGIN_RESOLVE); // brak prac
     }
 
@@ -215,6 +223,10 @@ async function handleAdminApi(request, env) {
 
   if (url.pathname.startsWith("/_admin_api/mail/")) {
     return handleAdminMailApi(request, env, url);
+  }
+
+  if (url.pathname.startsWith("/_admin_api/marketplace/")) {
+    return handleAdminMarketplaceApi(request, env, url);
   }
 
   if (url.pathname === "/_admin_api/state") {
@@ -462,6 +474,279 @@ async function handleAdminMailApi(request, env, url) {
   }
 
   return new Response("Not Found", { status: 404 });
+}
+
+// ============================================================
+// MARKETPLACE ADMIN API
+// ============================================================
+
+const GH_RAW_BASE = "https://raw.githubusercontent.com/Andrish97/familiada/main/marketplace";
+
+async function handleAdminMarketplaceApi(request, env, url) {
+  // GET /_admin_api/marketplace/list?status=pending|published|rejected|withdrawn
+  if (url.pathname === "/_admin_api/marketplace/list") {
+    if (request.method !== "GET") return new Response("Method Not Allowed", { status: 405 });
+
+    const status = String(url.searchParams.get("status") || "pending").toLowerCase();
+    const allowed = new Set(["pending", "published", "rejected", "withdrawn"]);
+    if (!allowed.has(status)) return json({ ok: false, error: "Invalid status" }, 400);
+
+    const res = await supabaseRpc(env, "market_admin_list", { p_status: status });
+    if (!res.ok) {
+      return json({ ok: false, error: "market_admin_list_failed", details: summarizeSupabaseError(res) }, res.status || 500);
+    }
+    return json({ ok: true, rows: Array.isArray(res.data) ? res.data : [] });
+  }
+
+  // GET /_admin_api/marketplace/detail?id=...
+  if (url.pathname === "/_admin_api/marketplace/detail") {
+    if (request.method !== "GET") return new Response("Method Not Allowed", { status: 405 });
+
+    const id = String(url.searchParams.get("id") || "").trim();
+    if (!id) return json({ ok: false, error: "Missing id" }, 400);
+
+    const res = await supabaseRpc(env, "market_admin_detail", { p_id: id });
+    if (!res.ok) {
+      return json({ ok: false, error: "market_admin_detail_failed", details: summarizeSupabaseError(res) }, res.status || 500);
+    }
+    const row = normalizeRpcValue(res.data);
+    if (!row) return json({ ok: false, error: "not_found" }, 404);
+    return json({ ok: true, game: row });
+  }
+
+  // POST /_admin_api/marketplace/review { id, action, note }
+  if (url.pathname === "/_admin_api/marketplace/review") {
+    if (request.method !== "POST") return new Response("Method Not Allowed", { status: 405 });
+
+    const body = await readJson(request);
+    if (!body || !body.id || !body.action) {
+      return json({ ok: false, error: "Missing id or action" }, 400);
+    }
+    const action = String(body.action).toLowerCase();
+    if (!["approve", "reject"].includes(action)) {
+      return json({ ok: false, error: "Invalid action — must be approve or reject" }, 400);
+    }
+
+    const res = await supabaseRpc(env, "market_admin_review", {
+      p_id:     String(body.id),
+      p_action: action,
+      p_note:   String(body.note || ""),
+    });
+    if (!res.ok) {
+      return json({ ok: false, error: "market_admin_review_failed", details: summarizeSupabaseError(res) }, res.status || 500);
+    }
+    const result = normalizeRpcValue(res.data);
+    if (!result?.ok) {
+      return json({ ok: false, error: result?.err || "review_failed" }, 422);
+    }
+    return json({ ok: true });
+  }
+
+  // POST /_admin_api/marketplace/sync-gh
+  // Czyta marketplace/index.json z GitHub, upsertuje każdą grę producenta
+  if (url.pathname === "/_admin_api/marketplace/sync-gh") {
+    if (request.method !== "POST") return new Response("Method Not Allowed", { status: 405 });
+
+    // 1. Pobierz index.json
+    let slugs;
+    try {
+      const indexRes = await fetch(`${GH_RAW_BASE}/index.json`, { cf: { cacheEverything: false } });
+      if (!indexRes.ok) {
+        return json({ ok: false, error: `gh_index_fetch_failed: ${indexRes.status}` }, 502);
+      }
+      slugs = await indexRes.json();
+      if (!Array.isArray(slugs)) {
+        return json({ ok: false, error: "gh_index_invalid_format" }, 502);
+      }
+      console.log("[worker] sync-gh slugs to process:", slugs.length);
+    } catch (err) {
+      return json({ ok: false, error: `gh_index_error: ${String(err?.message || err)}` }, 502);
+    }
+
+    // 2. Upsert każdej gry
+    const results = [];
+    for (const slug of slugs) {
+      const safeSlug = String(slug || "").trim();
+      if (!safeSlug) continue;
+
+      let gameJson;
+      try {
+        const gameRes = await fetch(`${GH_RAW_BASE}/${safeSlug}.json`, { cf: { cacheEverything: false } });
+        if (!gameRes.ok) {
+          results.push({ slug: safeSlug, ok: false, error: `fetch_failed: ${gameRes.status}` });
+          continue;
+        }
+        gameJson = await gameRes.json();
+      } catch (err) {
+        results.push({ slug: safeSlug, ok: false, error: `fetch_error: ${String(err?.message || err)}` });
+        continue;
+      }
+
+      if (!gameJson?.meta || !gameJson?.game || !Array.isArray(gameJson?.questions)) {
+        results.push({ slug: safeSlug, ok: false, error: "invalid_format" });
+        continue;
+      }
+
+      const payload = { game: gameJson.game, questions: gameJson.questions };
+      const upsert = await supabaseRpc(env, "market_admin_upsert_gh", {
+        p_slug:        safeSlug,
+        p_title:       String(gameJson.meta.title || gameJson.game.name || ""),
+        p_description: String(gameJson.meta.description || ""),
+        p_lang:        String(gameJson.meta.lang || "pl"),
+        p_payload:     payload,
+      });
+
+      if (!upsert.ok) {
+        results.push({ slug: safeSlug, ok: false, error: summarizeSupabaseError(upsert) });
+        continue;
+      }
+      const upsertResult = normalizeRpcValue(upsert.data);
+      results.push({ slug: safeSlug, ok: upsertResult?.ok ?? true, id: upsertResult?.market_id });
+    }
+
+    const failed = results.filter(r => !r.ok);
+    console.log("[worker] sync-gh done synced:", results.filter(r => r.ok).length, "failed:", failed.length);
+    return json({
+      ok: failed.length === 0,
+      total: results.length,
+      synced: results.filter(r => r.ok).length,
+      failed: failed.length,
+      results,
+    });
+  }
+
+  // POST /_admin_api/marketplace/withdraw { id }
+  // Wymusza status = withdrawn na opublikowanej grze
+  if (url.pathname === "/_admin_api/marketplace/withdraw") {
+    if (request.method !== "POST") return new Response("Method Not Allowed", { status: 405 });
+    let body;
+    try { body = await request.json(); } catch { return json({ ok: false, error: "invalid_json" }, 400); }
+    const { id } = body || {};
+    if (!id) return json({ ok: false, error: "missing_id" }, 400);
+
+    console.log("[worker] marketplace withdraw id:", id);
+    const result = await supabaseRpc(env, "market_admin_withdraw", { p_id: id });
+    if (!result.ok || !result.data?.[0]?.ok) {
+      console.error("[worker] marketplace withdraw failed:", result);
+      return json({ ok: false, error: result.data?.[0]?.err || result.error || "withdraw_failed" }, 422);
+    }
+    return json({ ok: true });
+  }
+
+  // POST /_admin_api/marketplace/delete { id }
+  // Trwale usuwa grę (kaskada czyści user_market_library)
+  if (url.pathname === "/_admin_api/marketplace/delete") {
+    if (request.method !== "POST") return new Response("Method Not Allowed", { status: 405 });
+    let body;
+    try { body = await request.json(); } catch { return json({ ok: false, error: "invalid_json" }, 400); }
+    const { id } = body || {};
+    if (!id) return json({ ok: false, error: "missing_id" }, 400);
+
+    console.log("[worker] marketplace delete id:", id);
+    const result = await supabaseRpc(env, "market_admin_delete", { p_id: id });
+    if (!result.ok || !result.data?.[0]?.ok) {
+      console.error("[worker] marketplace delete failed:", result);
+      return json({ ok: false, error: result.data?.[0]?.err || result.error || "delete_failed" }, 422);
+    }
+    return json({ ok: true });
+  }
+
+  return new Response("Not Found", { status: 404 });
+}
+
+// ============================================================
+// BOT DETECTION + MARKETPLACE SSR
+// ============================================================
+
+const BOT_UA_PATTERNS = [
+  "googlebot", "bingbot", "slurp", "duckduckbot", "baiduspider",
+  "yandexbot", "sogou", "exabot", "facebot", "ia_archiver",
+  "linkedinbot", "twitterbot", "whatsapp", "telegrambot",
+  "applebot", "semrushbot", "ahrefsbot", "mj12bot",
+];
+
+function isBot(request) {
+  const ua = (request.headers.get("User-Agent") || "").toLowerCase();
+  return BOT_UA_PATTERNS.some(p => ua.includes(p));
+}
+
+async function serveMarketplaceSsr(request, env, url) {
+  // Pobierz opublikowane gry z Supabase (bez auth — anon key nie mamy w Workerze,
+  // więc używamy service_role z RPC market_admin_list które zwraca published)
+  const cfg = getSupabaseConfig(env);
+  if (!cfg) {
+    // Fallback: przekieruj do normalnej strony
+    return fetch(request);
+  }
+
+  let games = [];
+  try {
+    const res = await supabaseRpc(env, "market_admin_list", { p_status: "published" });
+    if (res.ok && Array.isArray(res.data)) {
+      games = res.data;
+      console.log("[worker] marketplace SSR games:", games.length, "UA:", request.headers.get("User-Agent"));
+    }
+  } catch (err) {
+    console.error("[worker] marketplace SSR error:", err);
+    // Przy błędzie serwuj normalnie
+    return fetch(request);
+  }
+
+  const lang = url.searchParams.get("lang") || "pl";
+  const title = lang === "en" ? "Familiada Marketplace" : lang === "uk" ? "Familiada Маркетплейс" : "Familiada Marketplace";
+  const desc  = lang === "en"
+    ? "Browse and download free Familiada games created by the community."
+    : lang === "uk"
+    ? "Переглядайте та завантажуйте безкоштовні ігри Familiada від спільноти."
+    : "Przeglądaj i pobieraj darmowe gry Familiada stworzone przez społeczność.";
+
+  const gamesHtml = games.map(g => `
+    <article class="mg-card">
+      <h2>${escapeHtml(g.title)}</h2>
+      <p class="mg-meta">${escapeHtml(g.lang.toUpperCase())} · ${escapeHtml(g.author_username || "Familiada")}</p>
+      <p>${escapeHtml(g.description)}</p>
+    </article>`).join("\n");
+
+  const html = `<!DOCTYPE html>
+<html lang="${escapeHtml(lang)}">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>${escapeHtml(title)}</title>
+  <meta name="description" content="${escapeHtml(desc)}"/>
+  <meta property="og:title" content="${escapeHtml(title)}"/>
+  <meta property="og:description" content="${escapeHtml(desc)}"/>
+  <meta property="og:type" content="website"/>
+  <link rel="canonical" href="https://www.familiada.online/marketplace"/>
+  <style>
+    body{font-family:sans-serif;max-width:900px;margin:0 auto;padding:16px}
+    .mg-card{border:1px solid #ddd;border-radius:8px;padding:16px;margin:12px 0}
+    .mg-meta{color:#666;font-size:.9em}
+  </style>
+</head>
+<body>
+  <h1>${escapeHtml(title)}</h1>
+  <p>${escapeHtml(desc)}</p>
+  <section>${gamesHtml || "<p>Brak gier.</p>"}</section>
+</body>
+</html>`;
+
+  return new Response(html, {
+    status: 200,
+    headers: {
+      "Content-Type": "text/html; charset=utf-8",
+      "Cache-Control": "public, max-age=300, s-maxage=300",
+      "X-Robots-Tag": "index, follow",
+    },
+  });
+}
+
+function escapeHtml(str) {
+  return String(str || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
 }
 
 async function loadMailSettings(env) {

@@ -43,6 +43,11 @@
         <span class="only-desktop" data-i18n="builder.nav.logo">Logo 🖥️</span>
         <span class="only-mobile" data-i18n="builder.nav.logoMobile">🖥️</span>
       </button>
+
+      <button class="btn" id="btnMarketplace">
+        <span class="only-desktop" data-i18n="builder.nav.marketplace">Marketplace 🛒</span>
+        <span class="only-mobile" data-i18n="builder.nav.marketplaceMobile">🛒</span>
+      </button>
     </div>
     <div class="topbar-section topbar-section-3">
       <button class="btn" id="btnManual">
@@ -94,10 +99,14 @@
           <!-- SLOT 1: typowy sondaż -->
           <div class="tab-slot slot-pollText">
             <button class="tab-label" id="tabPollText" type="button">
-              <span data-i18n="builder.tabs.pollText">Typowy sondaż</span>
+              <span class="only-desktop" data-i18n="builder.tabs.pollText">Typowy sondaż</span>
+              <span class="only-mobile" data-i18n="builder.tabs.pollTextMobile">Sondaż</span>
             </button>
             <div class="tab-wrapper">
-              <div class="tab-active" data-i18n="builder.tabs.pollText">Typowy sondaż</div>
+              <div class="tab-active">
+                <span class="only-desktop" data-i18n="builder.tabs.pollText">Typowy sondaż</span>
+                <span class="only-mobile" data-i18n="builder.tabs.pollTextMobile">Sondaż</span>
+              </div>
               <div class="tab-corner tab-corner-left"></div>
               <div class="tab-corner tab-corner-right"></div>
             </div>
@@ -106,10 +115,14 @@
           <!-- SLOT 2: punktacja -->
           <div class="tab-slot slot-pollPoints">
             <button class="tab-label" id="tabPollPoints" type="button">
-              <span data-i18n="builder.tabs.pollPoints">Punktacja</span>
+              <span class="only-desktop" data-i18n="builder.tabs.pollPoints">Punktacja</span>
+              <span class="only-mobile" data-i18n="builder.tabs.pollPointsMobile">Pkt.</span>
             </button>
             <div class="tab-wrapper">
-              <div class="tab-active" data-i18n="builder.tabs.pollPoints">Punktacja</div>
+              <div class="tab-active">
+                <span class="only-desktop" data-i18n="builder.tabs.pollPoints">Punktacja</span>
+                <span class="only-mobile" data-i18n="builder.tabs.pollPointsMobile">Pkt.</span>
+              </div>
               <div class="tab-corner tab-corner-left"></div>
               <div class="tab-corner tab-corner-right"></div>
             </div>
@@ -118,10 +131,30 @@
           <!-- SLOT 3: preparowany -->
           <div class="tab-slot slot-prepared">
             <button class="tab-label" id="tabPrepared" type="button">
-              <span data-i18n="builder.tabs.prepared">Preparowany</span>
+              <span class="only-desktop" data-i18n="builder.tabs.prepared">Preparowany</span>
+              <span class="only-mobile" data-i18n="builder.tabs.preparedMobile">Prep.</span>
             </button>
             <div class="tab-wrapper">
-              <div class="tab-active" data-i18n="builder.tabs.prepared">Preparowany</div>
+              <div class="tab-active">
+                <span class="only-desktop" data-i18n="builder.tabs.prepared">Preparowany</span>
+                <span class="only-mobile" data-i18n="builder.tabs.preparedMobile">Prep.</span>
+              </div>
+              <div class="tab-corner tab-corner-left"></div>
+              <div class="tab-corner tab-corner-right"></div>
+            </div>
+          </div>
+
+          <!-- SLOT 4: Z marketu -->
+          <div class="tab-slot slot-market">
+            <button class="tab-label" id="tabMarket" type="button">
+              <span class="only-desktop" data-i18n="builder.tabs.market">Z marketu</span>
+              <span class="only-mobile" data-i18n="builder.tabs.marketMobile">Market</span>
+            </button>
+            <div class="tab-wrapper">
+              <div class="tab-active">
+                <span class="only-desktop" data-i18n="builder.tabs.market">Z marketu</span>
+                <span class="only-mobile" data-i18n="builder.tabs.marketMobile">Market</span>
+              </div>
               <div class="tab-corner tab-corner-left"></div>
               <div class="tab-corner tab-corner-right"></div>
             </div>

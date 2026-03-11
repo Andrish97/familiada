@@ -60,10 +60,12 @@ const els = {
   toolsSelect: document.getElementById("toolsSelect"),
   btnTabMaintenance: document.getElementById("btnTabMaintenance"),
   btnTabMail: document.getElementById("btnTabMail"),
+  btnTabMarketplace: document.getElementById("btnTabMarketplace"),
   mainWrap: document.querySelector("main.wrap"),
   footer: document.querySelector("footer.footer"),
   maintenancePanel: document.querySelector(".maintenance-panel"),
   mailPanel: document.getElementById("mailPanel"),
+  marketplacePanel: document.getElementById("marketplacePanel"),
   maintenanceControls: document.getElementById("maintenanceControls"),
   modeStatus: document.getElementById("modeStatus"),
   modeStatusValue: document.getElementById("modeStatusValue"),
@@ -1316,6 +1318,312 @@ function renderLogRows(rows) {
   });
 }
 
+// ============================================================
+// MARKETPLACE ADMIN
+// ============================================================
+
+let marketActiveStatus = "pending";
+let marketPreviewId = null;
+
+async function loadMarketplace({ silent = false } = {}) {
+  const tbody = document.getElementById("marketTableBody");
+  const info  = document.getElementById("marketTableInfo");
+  if (!tbody) return;
+  if (!silent && info) info.textContent = t("settings.marketplace.loading") || "Ładowanie…";
+
+  let data;
+  try {
+    const res = await adminFetch(`/marketplace/list?status=${marketActiveStatus}`);
+    if (!res.ok) throw new Error(await res.text());
+    const json = await res.json();
+    data = json.rows || [];
+  } catch (err) {
+    if (info) info.textContent = String(err?.message || err);
+    return;
+  }
+
+  tbody.innerHTML = "";
+  if (!data.length) {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td colspan="5" style="text-align:center;opacity:.6">${t("settings.marketplace.empty") || "Brak pozycji."}</td>`;
+    tbody.appendChild(tr);
+    if (info) info.textContent = "";
+    return;
+  }
+
+  for (const g of data) {
+    const tr = document.createElement("tr");
+    const date = g.created_at ? new Date(g.created_at).toLocaleDateString() : "—";
+    const note = g.moderation_note ? ` <span style="opacity:.6;font-size:.85em">(${escSetting(g.moderation_note)})</span>` : "";
+
+    let actions = `<button class="btn sm" data-market-preview="${escSetting(g.id)}">Podgląd</button>`;
+    if (marketActiveStatus === "pending") {
+      actions += ` <button class="btn sm gold" data-market-approve="${escSetting(g.id)}">Zatwierdź</button>`;
+      actions += ` <button class="btn sm" data-market-reject="${escSetting(g.id)}">Odrzuć</button>`;
+    }
+
+    tr.innerHTML = `
+      <td>${escSetting(g.title)}${note}</td>
+      <td>${escSetting(g.lang.toUpperCase())}</td>
+      <td>${escSetting(g.author_username || (g.gh_slug ? "♟ Producent" : "—"))}</td>
+      <td>${date}</td>
+      <td class="market-actions">${actions}</td>`;
+    tbody.appendChild(tr);
+  }
+
+  if (info) info.textContent = `${data.length} ${t("settings.marketplace.items") || "pozycji"}`;
+}
+
+async function openMarketPreview(id) {
+  const overlay = document.getElementById("marketPreviewOverlay");
+  if (!overlay) return;
+
+  marketPreviewId = id;
+
+  // Pobierz szczegół
+  let game;
+  try {
+    const res = await adminFetch(`/marketplace/detail?id=${encodeURIComponent(id)}`);
+    if (!res.ok) throw new Error(await res.text());
+    const json = await res.json();
+    game = json.game;
+  } catch (err) {
+    showToast(String(err?.message || err), "error");
+    return;
+  }
+
+  const titleEl = document.getElementById("marketPreviewTitle");
+  const metaEl  = document.getElementById("marketPreviewMeta");
+  const descEl  = document.getElementById("marketPreviewDesc");
+  const qEl     = document.getElementById("marketPreviewQuestions");
+  const approveBtn = document.getElementById("btnMarketPreviewApprove");
+  const rejectBtn  = document.getElementById("btnMarketPreviewReject");
+
+  if (titleEl) titleEl.textContent = game.title || "—";
+  if (metaEl)  metaEl.textContent  = `${(game.lang || "").toUpperCase()} · ${game.author_email || game.author_username || "—"} · ${game.status || ""}`;
+  if (descEl)  descEl.textContent  = game.description || "";
+
+  if (qEl) {
+    const qs = game.payload?.questions || [];
+    qEl.innerHTML = qs.map((q, i) => {
+      const answers = (q.answers || [])
+        .map(a => `<li>${escSetting(a.text)} <span style="opacity:.5">(${a.fixed_points ?? 0} pkt)</span></li>`)
+        .join("");
+      return `<div class="market-preview-q">
+        <div class="market-preview-q-text">${i + 1}. ${escSetting(q.text)}</div>
+        <ol>${answers}</ol>
+      </div>`;
+    }).join("");
+  }
+
+  // Przyciski zależne od statusu
+  const isPending   = game.status === "pending";
+  const isPublished = game.status === "published";
+  if (approveBtn)  approveBtn.hidden  = !isPending;
+  if (rejectBtn)   rejectBtn.hidden   = !isPending;
+  const withdrawBtn = document.getElementById("btnMarketPreviewWithdraw");
+  const deleteBtn   = document.getElementById("btnMarketPreviewDelete");
+  if (withdrawBtn) withdrawBtn.hidden = !isPublished;
+  if (deleteBtn)   deleteBtn.hidden   = false; // zawsze widoczny
+
+  overlay.style.display = "flex";
+}
+
+function closeMarketPreview() {
+  const overlay = document.getElementById("marketPreviewOverlay");
+  if (overlay) overlay.style.display = "none";
+  marketPreviewId = null;
+}
+
+async function approveMarketGame(id) {
+  try {
+    const res = await adminFetch("/marketplace/review", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, action: "approve" }),
+    });
+    const json = await res.json();
+    if (!json.ok) throw new Error(json.error || "approve_failed");
+    showToast(t("settings.marketplace.approved") || "Zatwierdzono ✓");
+    closeMarketPreview();
+    await loadMarketplace({ silent: true });
+  } catch (err) {
+    showToast(String(err?.message || err), "error");
+  }
+}
+
+function openRejectModal(id) {
+  marketPreviewId = id;
+  const overlay = document.getElementById("marketRejectOverlay");
+  const note    = document.getElementById("marketRejectNote");
+  if (overlay) overlay.style.display = "flex";
+  if (note) note.value = "";
+}
+
+function closeRejectModal() {
+  const overlay = document.getElementById("marketRejectOverlay");
+  if (overlay) overlay.style.display = "none";
+}
+
+async function confirmReject() {
+  const id   = marketPreviewId;
+  const note = (document.getElementById("marketRejectNote")?.value || "").trim();
+  if (!id) return;
+  try {
+    const res = await adminFetch("/marketplace/review", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, action: "reject", note }),
+    });
+    const json = await res.json();
+    if (!json.ok) throw new Error(json.error || "reject_failed");
+    showToast(t("settings.marketplace.rejected") || "Odrzucono.");
+    closeRejectModal();
+    closeMarketPreview();
+    await loadMarketplace({ silent: true });
+  } catch (err) {
+    showToast(String(err?.message || err), "error");
+  }
+}
+
+async function adminForceWithdraw(id) {
+  console.log("[settings] adminForceWithdraw id:", id);
+  if (!confirm(t("settings.marketplace.forceWithdrawConfirm") || "Wycofać tę grę? Zniknie z browse, ale zostanie w bibliotekach.")) return;
+  try {
+    const res = await adminFetch("/marketplace/withdraw", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id }),
+    });
+    const json = await res.json();
+    console.log("[settings] adminForceWithdraw response:", json);
+    if (!json.ok) throw new Error(json.error || "withdraw_failed");
+    showToast(t("settings.marketplace.forceWithdrawn") || "Wycofano.");
+    closeMarketPreview();
+    await loadMarketplace({ silent: true });
+  } catch (err) {
+    console.error("[settings] adminForceWithdraw error:", err);
+    showToast(String(err?.message || err), "error");
+  }
+}
+
+async function adminHardDelete(id) {
+  console.log("[settings] adminHardDelete id:", id);
+  if (!confirm(t("settings.marketplace.hardDeleteConfirm") || "Usunąć grę na stałe? Zniknie u wszystkich użytkowników. Tego nie da się cofnąć.")) return;
+  try {
+    const res = await adminFetch("/marketplace/delete", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id }),
+    });
+    const json = await res.json();
+    console.log("[settings] adminHardDelete response:", json);
+    if (!json.ok) throw new Error(json.error || "delete_failed");
+    showToast(t("settings.marketplace.hardDeleted") || "Usunięto.");
+    closeMarketPreview();
+    await loadMarketplace({ silent: true });
+  } catch (err) {
+    console.error("[settings] adminHardDelete error:", err);
+    showToast(String(err?.message || err), "error");
+  }
+}
+
+async function syncGithub() {
+  const btn    = document.getElementById("btnMarketSyncGh");
+  const status = document.getElementById("marketSyncStatus");
+  if (btn) btn.disabled = true;
+  if (status) status.textContent = t("settings.marketplace.syncing") || "Synchronizuję…";
+  try {
+    const res = await adminFetch("/marketplace/sync-gh", { method: "POST" });
+    const json = await res.json();
+    const msg = json.ok
+      ? `${t("settings.marketplace.syncOk") || "Sync OK"} — ${json.synced}/${json.total}`
+      : `Błąd: ${json.error || "sync_failed"} (${json.failed || 0} failed)`;
+    if (status) status.textContent = msg;
+    showToast(msg, json.ok ? "success" : "error");
+    if (json.ok) await loadMarketplace({ silent: true });
+  } catch (err) {
+    const msg = String(err?.message || err);
+    if (status) status.textContent = msg;
+    showToast(msg, "error");
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+// helper — fetch do /_admin_api/marketplace/*
+function adminFetch(path, init = {}) {
+  return fetch(`/_admin_api/marketplace${path}`, init);
+}
+
+function escSetting(str) {
+  return String(str ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function wireMarketplaceEvents() {
+  // Tab wewnętrzne
+  const tabs = [
+    { id: "mktTabPending",   status: "pending" },
+    { id: "mktTabPublished", status: "published" },
+    { id: "mktTabRejected",  status: "rejected" },
+    { id: "mktTabWithdrawn", status: "withdrawn" },
+  ];
+  for (const { id, status } of tabs) {
+    document.getElementById(id)?.addEventListener("click", async () => {
+      tabs.forEach(t => document.getElementById(t.id)?.classList.toggle("active", t.id === id));
+      marketActiveStatus = status;
+      await loadMarketplace();
+    });
+  }
+
+  // Odśwież
+  document.getElementById("btnMarketRefresh")?.addEventListener("click", () => loadMarketplace());
+
+  // Sync GH
+  document.getElementById("btnMarketSyncGh")?.addEventListener("click", syncGithub);
+
+  // Delegacja kliknięć w tabeli
+  document.getElementById("marketTableBody")?.addEventListener("click", async (e) => {
+    const btn = e.target.closest("button");
+    if (!btn) return;
+    const previewId = btn.dataset.marketPreview;
+    const approveId = btn.dataset.marketApprove;
+    const rejectId  = btn.dataset.marketReject;
+    if (previewId) await openMarketPreview(previewId);
+    if (approveId) await approveMarketGame(approveId);
+    if (rejectId)  openRejectModal(rejectId);
+  });
+
+  // Modal podglądu
+  document.getElementById("btnMarketPreviewClose")?.addEventListener("click", closeMarketPreview);
+  document.getElementById("btnMarketPreviewApprove")?.addEventListener("click", () => {
+    if (marketPreviewId) approveMarketGame(marketPreviewId);
+  });
+  document.getElementById("btnMarketPreviewReject")?.addEventListener("click", () => {
+    if (marketPreviewId) { closeMarketPreview(); openRejectModal(marketPreviewId); }
+  });
+  document.getElementById("btnMarketPreviewWithdraw")?.addEventListener("click", () => {
+    if (marketPreviewId) adminForceWithdraw(marketPreviewId);
+  });
+  document.getElementById("btnMarketPreviewDelete")?.addEventListener("click", () => {
+    if (marketPreviewId) adminHardDelete(marketPreviewId);
+  });
+  document.getElementById("marketPreviewOverlay")?.addEventListener("click", (e) => {
+    if (e.target === e.currentTarget) closeMarketPreview();
+  });
+
+  // Modal reject
+  document.getElementById("btnMarketRejectCancel")?.addEventListener("click", closeRejectModal);
+  document.getElementById("btnMarketRejectConfirm")?.addEventListener("click", confirmReject);
+  document.getElementById("marketRejectOverlay")?.addEventListener("click", (e) => {
+    if (e.target === e.currentTarget) closeRejectModal();
+  });
+}
+
 async function loadMailSettings({ silent = false } = {}) {
   try {
     const res = await apiFetch(`${API_BASE}/mail/settings`, { method: "GET" });
@@ -1566,12 +1874,15 @@ function setActiveTab(tab) {
   activeTab = tab;
   const btn = document.getElementById("btnTabMaintenance");
   const btnMail = document.getElementById("btnTabMail");
+  const btnMarket = document.getElementById("btnTabMarketplace");
   const tools = document.getElementById("toolsSelect");
   if (btn) btn.classList.toggle("active", tab === "maintenance");
   if (btnMail) btnMail.classList.toggle("active", tab === "mail");
+  if (btnMarket) btnMarket.classList.toggle("active", tab === "marketplace");
   if (tools) tools.classList.toggle("active", tab === "tools");
   if (els.maintenancePanel) els.maintenancePanel.hidden = tab !== "maintenance";
   if (els.mailPanel) els.mailPanel.hidden = tab !== "mail";
+  if (els.marketplacePanel) els.marketplacePanel.hidden = tab !== "marketplace";
 }
 
 function labelFromPath(pathname) {
@@ -1739,6 +2050,16 @@ function wireEvents() {
       await openMailTab();
     });
   }
+
+  if (els.btnTabMarketplace) {
+    els.btnTabMarketplace.addEventListener("click", async () => {
+      if (activeTab === "tools") closeTools();
+      setActiveTab("marketplace");
+      await loadMarketplace({ silent: true });
+    });
+  }
+
+  wireMarketplaceEvents();
 
   if (els.toolsShell) {
     els.toolsShell.addEventListener("dblclick", closeTools);

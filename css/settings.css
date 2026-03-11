@@ -1006,3 +1006,59 @@ body.tools-fullscreen .tools-frame-wrap iframe{
   border-color: rgba(255,160,160,.6);
   color: #ffb8b8;
 }
+
+/* =========================================================
+   MARKETPLACE ADMIN PANEL
+========================================================= */
+
+.market-admin-panel{
+  padding: 0 4px;
+}
+
+.market-actions{
+  white-space: nowrap;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.market-preview-desc{
+  margin: 8px 0 12px;
+  opacity: .8;
+  font-size: .92em;
+}
+
+.market-preview-questions{
+  max-height: 55vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding-right: 4px;
+}
+
+.market-preview-q-text{
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.market-preview-q ol{
+  margin: 0;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.modal-wide{
+  max-width: 680px;
+  width: 92vw;
+}
+
+.modal-actions{
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 16px;
+  flex-wrap: wrap;
+}
