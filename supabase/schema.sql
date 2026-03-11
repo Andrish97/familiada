@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict vW8EtAvrf1MBTZOWpHZanDgzJt8PcKQh0F8gHkBzb1hBWchLtcPYmJgX6MqWHv8
+\restrict F6KeHimfNds0G5MsXosebl64TrCuNLM7F0QLDKdPWc6nHR4bUX5bRDEllgZQTyf
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -3416,6 +3416,27 @@ CREATE FUNCTION "public"."market_browse"("p_lang" "text" DEFAULT 'pl'::"text", "
         mg.created_at DESC
     LIMIT  LEAST(p_limit, 100)
     OFFSET p_offset;
+$$;
+
+
+--
+-- Name: market_cleanup_rejected(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."market_cleanup_rejected"() RETURNS integer
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+declare
+    v_deleted integer;
+begin
+    delete from public.market_games
+     where status = 'rejected'
+       and updated_at < now() - interval '5 days';
+
+    get diagnostics v_deleted = row_count;
+    return v_deleted;
+end;
 $$;
 
 
@@ -10628,5 +10649,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict vW8EtAvrf1MBTZOWpHZanDgzJt8PcKQh0F8gHkBzb1hBWchLtcPYmJgX6MqWHv8
+\unrestrict F6KeHimfNds0G5MsXosebl64TrCuNLM7F0QLDKdPWc6nHR4bUX5bRDEllgZQTyf
 
