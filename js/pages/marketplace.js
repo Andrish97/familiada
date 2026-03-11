@@ -5,6 +5,7 @@ import { getUser } from "../core/auth.js";
 import { isGuestUser } from "../core/guest-mode.js";
 import { initI18n, t, getUiLang, withLangParam, applyTranslations } from "../../translation/translation.js";
 import { exportGame } from "./builder-import-export.js";
+import { initUiSelect } from "../core/ui-select.js";
 
 /* =========================================================
    Constants
@@ -21,6 +22,7 @@ let currentSearch = "";
 let searchTimer   = null;
 let detailGameId  = null;
 let submitLang    = "pl";
+let submitGameUiSelect = null;
 
 /* =========================================================
    Elements
@@ -51,9 +53,9 @@ const els = {
   btnRemoveLibrary:document.getElementById("btnRemoveLibrary"),
   addedBadge:      document.getElementById("addedBadge"),
   // submit modal
-  submitOverlay:    document.getElementById("submitOverlay"),
-  submitGameSelect: document.getElementById("submitGameSelect"),
-  submitNoEligible: document.getElementById("submitNoEligible"),
+  submitOverlay:       document.getElementById("submitOverlay"),
+  submitGameSelectEl:  document.getElementById("submitGameSelect"),
+  submitNoEligible:    document.getElementById("submitNoEligible"),
   submitTitle:      document.getElementById("submitTitle"),
   submitDesc:       document.getElementById("submitDesc"),
   submitLangPicker: document.getElementById("submitLangPicker"),
@@ -362,28 +364,24 @@ async function withdrawGame(id) {
    Submit modal
 ========================================================= */
 async function openSubmitModal() {
-  // Załaduj kwalifikujące się gry (grywalne = min 10 pytań + can_play warunki)
+  // Załaduj kwalifikujące się gry (własne, nie z marketplace, min 10 pytań)
   const { data: games } = await sb()
     .from("games")
     .select("id,name,type,status,questions(count)")
     .eq("owner_id", currentUser.id)
+    .is("source_market_id", null)
     .order("updated_at", { ascending: false });
 
   const eligible = (games || []).filter(g => {
     const qCount = g.questions?.[0]?.count ?? 0;
     if (g.type === "prepared") return qCount >= 10;
-    return g.status === "ready"; // poll_text/poll_points: status=ready już gwarantuje walidację
+    return g.status === "ready";
   });
   console.log("[marketplace] openSubmitModal games fetched:", (games || []).length, "eligible:", eligible.length);
 
-  if (els.submitGameSelect) {
-    els.submitGameSelect.innerHTML = `<option value="">${esc(t("marketplace.submit.pickGamePlaceholder"))}</option>`;
-    eligible.forEach(g => {
-      const opt = document.createElement("option");
-      opt.value = g.id;
-      opt.textContent = g.name;
-      els.submitGameSelect.appendChild(opt);
-    });
+  if (submitGameUiSelect) {
+    submitGameUiSelect.setOptions(eligible.map(g => ({ value: g.id, label: g.name })));
+    submitGameUiSelect.setValue("", { silent: true });
   }
 
   if (els.submitNoEligible) els.submitNoEligible.hidden = eligible.length > 0;
@@ -414,7 +412,7 @@ function showSubmitError(msg) {
 async function submitGame() {
   if (els.submitError) els.submitError.hidden = true;
 
-  const gameId = els.submitGameSelect?.value;
+  const gameId = submitGameUiSelect?.getValue() || "";
   const title  = els.submitTitle?.value.trim() ?? "";
   const desc   = els.submitDesc?.value.trim() ?? "";
   const confirmed = els.submitConfirm?.checked;
@@ -479,7 +477,7 @@ function esc(str) {
 function wireEvents() {
   // Nav
   els.btnGoBuilder?.addEventListener("click", () => {
-    window.location.href = withLangParam("builder.html");
+    window.location.href = withLangParam(!currentUser ? "index.html" : "builder.html");
   });
   els.btnManual?.addEventListener("click", () => {
     const url = new URL("manual", location.href);
@@ -563,20 +561,34 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (els.whoStatic) els.whoStatic.textContent = whoLabel;
 
   if (!currentUser) {
-    if (els.btnAccount)  els.btnAccount.style.display = "none";
-    if (els.whoStatic)   els.whoStatic.style.display = "none";
-    if (els.btnLogout)   els.btnLogout.textContent = t("common.authEntry");
-    if (els.btnLogout)   els.btnLogout.onclick = () => { window.location.href = withLangParam("login.html"); };
+    // Anonim: zmień przycisk powrotu na "← Strona główna", ukryj zbędne przyciski
+    if (els.btnGoBuilder) {
+      els.btnGoBuilder.innerHTML =
+        `<span class="only-desktop">${esc(t("marketplace.nav.backHome"))}</span>` +
+        `<span class="only-mobile">🏠</span>`;
+    }
+    if (els.btnManual)  els.btnManual.hidden = true;
+    if (els.btnAccount) els.btnAccount.style.display = "none";
+    if (els.whoStatic)  els.whoStatic.style.display = "none";
+    if (els.btnLogout)  els.btnLogout.textContent = t("common.authEntry");
+    if (els.btnLogout)  els.btnLogout.onclick = () => { window.location.href = withLangParam("login.html"); };
   } else if (isGuest) {
-    if (els.btnAccount)  els.btnAccount.style.display = "none";
-    if (els.whoStatic)   els.whoStatic.style.display = "";
+    if (els.btnAccount) els.btnAccount.style.display = "none";
+    if (els.whoStatic)  els.whoStatic.style.display = "";
   } else {
-    if (els.btnAccount)  els.btnAccount.style.display = "";
-    if (els.whoStatic)   els.whoStatic.style.display = "none";
+    if (els.btnAccount) els.btnAccount.style.display = "";
+    if (els.whoStatic)  els.whoStatic.style.display = "none";
   }
 
   // "Moje wysłane" button — only for logged-in non-guests
   if (els.btnMySent) els.btnMySent.hidden = isGuest || !currentUser;
+
+  // init ui-select for game picker in submit modal
+  submitGameUiSelect = initUiSelect(els.submitGameSelectEl, {
+    placeholder: t("marketplace.submit.pickGamePlaceholder"),
+    options: [],
+    value: "",
+  });
 
   wireEvents();
   applyTranslations();

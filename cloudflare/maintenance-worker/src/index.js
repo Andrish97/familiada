@@ -229,6 +229,10 @@ async function handleAdminApi(request, env) {
     return handleAdminMarketplaceApi(request, env, url);
   }
 
+  if (url.pathname.startsWith("/_admin_api/config/")) {
+    return handleAdminConfigApi(request, env, url);
+  }
+
   if (url.pathname === "/_admin_api/state") {
     if (request.method === "GET") {
       const state = await getState(env);
@@ -649,6 +653,63 @@ async function handleAdminMarketplaceApi(request, env, url) {
       return json({ ok: false, error: result.data?.[0]?.err || result.error || "delete_failed" }, 422);
     }
     return json({ ok: true });
+  }
+
+  // POST /_admin_api/marketplace/notify-test — wyślij testowe powiadomienie
+  if (url.pathname === "/_admin_api/marketplace/notify-test") {
+    if (request.method !== "POST") return new Response("Method Not Allowed", { status: 405 });
+
+    const topicRes = await supabaseRpc(env, "admin_config_get", { p_key: "ntfy_topic" });
+    const topic = normalizeRpcValue(topicRes.data);
+    if (!topic) return json({ ok: false, error: "ntfy_topic_not_configured" }, 422);
+
+    try {
+      const ntfyRes = await fetch(`https://ntfy.sh/${String(topic)}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: "Test — Familiada admin",
+          message: "Powiadomienia push działają poprawnie ✅",
+          priority: 3,
+        }),
+      });
+      if (!ntfyRes.ok) return json({ ok: false, error: `ntfy_error: ${ntfyRes.status}` }, 502);
+      return json({ ok: true });
+    } catch (err) {
+      return json({ ok: false, error: String(err?.message || err) }, 502);
+    }
+  }
+
+  return new Response("Not Found", { status: 404 });
+}
+
+
+// ============================================================
+// ADMIN CONFIG API
+// ============================================================
+
+async function handleAdminConfigApi(request, env, url) {
+
+  // GET /_admin_api/config/ntfy — pobierz aktualny topic
+  if (url.pathname === "/_admin_api/config/ntfy" && request.method === "GET") {
+    const res = await supabaseRpc(env, "admin_config_get", { p_key: "ntfy_topic" });
+    const topic = normalizeRpcValue(res.data) ?? "";
+    return json({ ok: true, topic: String(topic) });
+  }
+
+  // POST /_admin_api/config/ntfy { topic } — zapisz topic
+  if (url.pathname === "/_admin_api/config/ntfy" && request.method === "POST") {
+    let body;
+    try { body = await request.json(); } catch { return json({ ok: false, error: "invalid_json" }, 400); }
+    const topic = String(body?.topic ?? "").trim();
+
+    const res = await supabaseRpc(env, "admin_config_set", {
+      p_key:   "ntfy_topic",
+      p_value: topic,
+      p_note:  "ntfy.sh push notification topic",
+    });
+    if (!res.ok) return json({ ok: false, error: summarizeSupabaseError(res) }, 500);
+    return json({ ok: true, topic });
   }
 
   return new Response("Not Found", { status: 404 });
