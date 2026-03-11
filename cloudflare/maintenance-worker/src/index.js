@@ -660,27 +660,32 @@ async function handleAdminMarketplaceApi(request, env, url) {
     if (request.method !== "POST") return new Response("Method Not Allowed", { status: 405 });
 
     const topicRes = await supabaseRpc(env, "admin_config_get", { p_key: "ntfy_topic" });
-    const topic = normalizeRpcValue(topicRes.data);
+    const topic = topicRes.ok ? String(normalizeRpcValue(topicRes.data) ?? "").trim() : "";
     if (!topic) return json({ ok: false, error: "ntfy_topic_not_configured" }, 422);
 
-    try {
-      const ntfyRes = await fetch(`https://ntfy.sh/${String(topic)}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: "Test — Familiada admin",
-          message: "Powiadomienia push działają poprawnie ✅",
-          priority: 3,
-        }),
-      });
-      if (!ntfyRes.ok) return json({ ok: false, error: `ntfy_error: ${ntfyRes.status}` }, 502);
-      return json({ ok: true });
-    } catch (err) {
-      return json({ ok: false, error: String(err?.message || err) }, 502);
-    }
+    return sendNtfy(topic, "Test — Familiada admin", "Powiadomienia push działają poprawnie ✅");
   }
 
   return new Response("Not Found", { status: 404 });
+}
+
+
+// ============================================================
+// NTFY HELPER
+// ============================================================
+
+async function sendNtfy(topic, title, message, priority = 3) {
+  try {
+    const res = await fetch(`https://ntfy.sh/${encodeURIComponent(topic)}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title, message, priority }),
+    });
+    if (!res.ok) return json({ ok: false, error: `ntfy_http_${res.status}` }, 502);
+    return json({ ok: true });
+  } catch (err) {
+    return json({ ok: false, error: String(err?.message || err) }, 502);
+  }
 }
 
 
