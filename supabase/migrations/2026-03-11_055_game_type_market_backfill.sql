@@ -1,12 +1,46 @@
 -- ============================================================
--- 055: Backfill type='market' + zaktualizuj market_add_to_library
+-- 055: Backfill type='market' + check constraints + market_add_to_library
 --
 -- Wymaga _054 (ALTER TYPE ADD VALUE 'market') już zacommitowanego.
 -- ============================================================
 
 
 -- --------------------------------------------------------
--- 1. Oznacz istniejące kopie marketowe
+-- 1. Zaktualizuj check constraints żeby dopuścić 'market'
+--
+--    games_type_check: jawna lista typów → dodaj 'market'
+--    games_poll_status_ok: market zachowuje się jak prepared
+--      (tylko draft/ready, bez poll_open)
+-- --------------------------------------------------------
+
+ALTER TABLE "public"."games"
+    DROP CONSTRAINT "games_type_check";
+
+ALTER TABLE "public"."games"
+    ADD CONSTRAINT "games_type_check"
+    CHECK (("type" = ANY (ARRAY[
+        'poll_text'::"public"."game_type",
+        'poll_points'::"public"."game_type",
+        'prepared'::"public"."game_type",
+        'market'::"public"."game_type"
+    ])));
+
+ALTER TABLE "public"."games"
+    DROP CONSTRAINT "games_poll_status_ok";
+
+ALTER TABLE "public"."games"
+    ADD CONSTRAINT "games_poll_status_ok"
+    CHECK (((
+        ("type" = ANY (ARRAY['prepared'::"public"."game_type", 'market'::"public"."game_type"]))
+        AND ("status" = ANY (ARRAY['draft'::"public"."game_status", 'ready'::"public"."game_status"]))
+    ) OR (
+        ("type" <> ALL (ARRAY['prepared'::"public"."game_type", 'market'::"public"."game_type"]))
+        AND ("status" = ANY (ARRAY['draft'::"public"."game_status", 'poll_open'::"public"."game_status", 'ready'::"public"."game_status"]))
+    )));
+
+
+-- --------------------------------------------------------
+-- 2. Oznacz istniejące kopie marketowe
 -- --------------------------------------------------------
 
 UPDATE "public"."games"
@@ -16,7 +50,7 @@ UPDATE "public"."games"
 
 
 -- --------------------------------------------------------
--- 2. Zaktualizuj market_add_to_library — nowe kopie też market
+-- 3. Zaktualizuj market_add_to_library — nowe kopie też market
 -- --------------------------------------------------------
 
 CREATE OR REPLACE FUNCTION "public"."market_add_to_library"(
