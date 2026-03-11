@@ -1175,15 +1175,14 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // PLAY
   btnPlay?.addEventListener("click", async () => {
-    // Gra z marketu: każdy user ma własny games.id (osobne share keys)
+    // Gra z marketu: każdy user ma własną kopię games z własnym UUID
     if (activeTab === "market" && selectedMarketId) {
       const mg = marketGamesAll.find(g => g.market_game_id === selectedMarketId);
       if (!mg) return;
 
-      // game_id null lub równy market_game_id (stary format przed migracją _049)
-      // → wymuś stworzenie per-user wiersza i pobierz świeże dane
       let gameId = mg.game_id;
-      if (!gameId || gameId === selectedMarketId) {
+      if (!gameId) {
+        // brak kopii — wywołaj market_add_to_library idempotentnie
         if (btnPlay) btnPlay.disabled = true;
         try {
           const { error } = await sb().rpc("market_add_to_library", {
@@ -1191,14 +1190,13 @@ document.addEventListener("DOMContentLoaded", async () => {
           });
           if (error) { console.error("[builder] market_add_to_library:", error); return; }
           await loadMarketGames();
-          const fresh = marketGamesAll.find(g => g.market_game_id === selectedMarketId);
-          gameId = fresh?.game_id;
+          gameId = marketGamesAll.find(g => g.market_game_id === selectedMarketId)?.game_id;
         } finally {
           if (btnPlay) btnPlay.disabled = false;
         }
       }
 
-      if (!gameId || gameId === selectedMarketId) return; // nadal nie ma — coś poszło nie tak
+      if (!gameId) return;
       location.href = `control?id=${encodeURIComponent(gameId)}`;
       return;
     }
