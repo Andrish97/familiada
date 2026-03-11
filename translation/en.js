@@ -4426,7 +4426,7 @@ const en = {
     producerBadge: "Familiada",
     langLabel: "Language",
     authorLabel: "by: {author}",
-    libraryCount: "{count} added",
+    libraryCount: "added {count}×",
     loadMore: "Load more",
     empty: "No games match your search.",
     errorLoad: "Failed to load games.",

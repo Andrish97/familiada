@@ -4423,7 +4423,7 @@ const pl = {
     producerBadge: "Familiada",
     langLabel: "Język",
     authorLabel: "od: {author}",
-    libraryCount: "{count} dodało",
+    libraryCount: "{count} dodano",
     loadMore: "Pokaż więcej",
     empty: "Brak gier spełniających kryteria.",
     errorLoad: "Nie udało się załadować gier.",
