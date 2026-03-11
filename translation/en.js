@@ -4401,8 +4401,8 @@ const en = {
     title: "Community Games",
     subtitle: "Browse games created by the community and add them to your library.",
     nav: {
-      myGames: "My games",
-      myGamesMobile: "🎮",
+      myGames: "← My games",
+      myGamesMobile: "← 🎮",
       manual: "Help ℹ️",
       manualMobile: "ℹ️",
     },

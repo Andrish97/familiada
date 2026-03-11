@@ -4398,8 +4398,8 @@ const pl = {
     title: "Gry Społeczności",
     subtitle: "Przeglądaj gry stworzone przez społeczność i dodawaj je do swojej biblioteki.",
     nav: {
-      myGames: "Moje gry",
-      myGamesMobile: "🎮",
+      myGames: "← Moje gry",
+      myGamesMobile: "← 🎮",
       manual: "Wskazówki ℹ️",
       manualMobile: "ℹ️",
     },

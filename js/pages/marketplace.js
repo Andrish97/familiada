@@ -40,7 +40,6 @@ const els = {
   mySentList:  document.getElementById("mySentList"),
   mySentInfo:  document.getElementById("mySentInfo"),
   btnSubmitNew:document.getElementById("btnSubmitNew"),
-  btnBackBrowse:document.getElementById("btnBackBrowse"),
   // detail modal
   gameDetailOverlay: document.getElementById("gameDetailOverlay"),
   detailTitle:  document.getElementById("detailTitle"),
@@ -63,10 +62,11 @@ const els = {
   btnSubmitCancel:  document.getElementById("btnSubmitCancel"),
   btnSubmitConfirm: document.getElementById("btnSubmitConfirm"),
   // nav
-  btnGoBuilder: document.getElementById("btnGoBuilder"),
-  btnManual:    document.getElementById("btnManual"),
-  btnAccount:   document.getElementById("btnAccount"),
-  btnLogout:    document.getElementById("btnLogout"),
+  btnGoBuilder:  document.getElementById("btnGoBuilder"),
+  btnBackBrowse: document.getElementById("btnBackBrowse"),
+  btnManual:     document.getElementById("btnManual"),
+  btnAccount:    document.getElementById("btnAccount"),
+  btnLogout:     document.getElementById("btnLogout"),
   who:          document.getElementById("who"),
   whoStatic:    document.getElementById("whoStatic"),
   toast:        document.getElementById("toast"),
@@ -90,6 +90,8 @@ function showToast(msg, type = "info") {
 function showView(name) {
   els.viewBrowse.hidden = name !== "browse";
   els.viewMine.hidden   = name !== "mine";
+  if (els.btnGoBuilder)  els.btnGoBuilder.hidden  = name !== "browse";
+  if (els.btnBackBrowse) els.btnBackBrowse.hidden = name !== "mine";
 }
 
 /* =========================================================
@@ -212,7 +214,7 @@ async function openDetail(id) {
   const withdrawn = g.status === "withdrawn";
   updateLibraryButtons(inLibrary, withdrawn);
 
-  if (els.gameDetailOverlay) els.gameDetailOverlay.style.display = "flex";
+  if (els.gameDetailOverlay) els.gameDetailOverlay.style.display = "";
 }
 
 function updateLibraryButtons(inLibrary, withdrawn = false) {
@@ -396,7 +398,7 @@ async function openSubmitModal() {
     btn.classList.toggle("active", btn.dataset.lang === submitLang);
   });
 
-  if (els.submitOverlay) els.submitOverlay.style.display = "flex";
+  if (els.submitOverlay) els.submitOverlay.style.display = "";
 }
 
 function closeSubmitModal() {

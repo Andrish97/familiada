@@ -4281,8 +4281,8 @@ const uk = {
     title: "Ігри Спільноти",
     subtitle: "Переглядай ігри від спільноти та додавай їх до своєї бібліотеки.",
     nav: {
-      myGames: "Мої ігри",
-      myGamesMobile: "🎮",
+      myGames: "← Мої ігри",
+      myGamesMobile: "← 🎮",
       manual: "Підказки ℹ️",
       manualMobile: "ℹ️",
     },

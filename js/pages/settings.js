@@ -1551,9 +1551,9 @@ async function syncGithub() {
   }
 }
 
-// helper — fetch do /_admin_api/marketplace/*
+// helper — fetch do /_admin_api/*
 function adminFetch(path, init = {}) {
-  return fetch(`/_admin_api/marketplace${path}`, init);
+  return fetch(`/_admin_api${path}`, init);
 }
 
 function escSetting(str) {
