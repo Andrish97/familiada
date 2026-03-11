@@ -1179,12 +1179,26 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (activeTab === "market" && selectedMarketId) {
       const mg = marketGamesAll.find(g => g.market_game_id === selectedMarketId);
       if (!mg) return;
-      const gameId = mg.game_id;
-      if (!gameId) {
-        // fallback: gra nie ma jeszcze wiersza — odśwież bibliotekę
-        await loadMarketGames();
-        return;
+
+      // game_id null lub równy market_game_id (stary format przed migracją _049)
+      // → wymuś stworzenie per-user wiersza i pobierz świeże dane
+      let gameId = mg.game_id;
+      if (!gameId || gameId === selectedMarketId) {
+        if (btnPlay) btnPlay.disabled = true;
+        try {
+          const { error } = await sb().rpc("market_add_to_library", {
+            p_market_game_id: selectedMarketId,
+          });
+          if (error) { console.error("[builder] market_add_to_library:", error); return; }
+          await loadMarketGames();
+          const fresh = marketGamesAll.find(g => g.market_game_id === selectedMarketId);
+          gameId = fresh?.game_id;
+        } finally {
+          if (btnPlay) btnPlay.disabled = false;
+        }
       }
+
+      if (!gameId || gameId === selectedMarketId) return; // nadal nie ma — coś poszło nie tak
       location.href = `control?id=${encodeURIComponent(gameId)}`;
       return;
     }
