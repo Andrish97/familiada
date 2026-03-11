@@ -92,6 +92,17 @@ export default {
       return handleNotifySubmission(env);
     }
 
+    // Boty zawsze dostają prawdziwą treść niezależnie od maintenance
+    if (request.method === "GET" && isBot(request)) {
+      if (url.pathname.startsWith("/marketplace")) {
+        return serveMarketplaceSsr(request, env, url);
+      }
+      const p = url.pathname;
+      if (p === "/" || p === "/index.html" || p.startsWith("/privacy")) {
+        return fetchWith404(request, ORIGIN_BASE, ORIGIN_HOST, ORIGIN_RESOLVE);
+      }
+    }
+
     // Block settings on public hosts (serve custom 404)
     if (isBlockedPath(host, url.pathname)) {
       return serveNotFoundPage(request, ORIGIN_BASE, ORIGIN_HOST, ORIGIN_RESOLVE);
@@ -101,14 +112,6 @@ export default {
     const state = await getState(env);
 
     if (!state.enabled || state.mode === "off" || isBypass) {
-      // Bot SSR: Googlebot i inne crawlery dostają pre-rendered HTML dla /marketplace
-      if (
-        request.method === "GET" &&
-        url.pathname.startsWith("/marketplace") &&
-        isBot(request)
-      ) {
-        return serveMarketplaceSsr(request, env, url);
-      }
       return fetchWith404(request, ORIGIN_BASE, ORIGIN_HOST, ORIGIN_RESOLVE); // brak prac
     }
 
