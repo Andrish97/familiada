@@ -1668,7 +1668,7 @@ async function loadReports({ silent = false } = {}) {
     const res = await adminFetch(`/reports/list?status=${encodeURIComponent(mailActiveFolder)}`);
     if (!res.ok) throw new Error(await res.text());
     const json = await res.json();
-    mailReports = json.reports || [];
+    mailReports = json.reports || json.rows || [];
     renderMailList(mailReports);
     updateFolderBadges();
   } catch (err) {
