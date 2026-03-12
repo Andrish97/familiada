@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict SrFi8dKwI7HOcifWzA5bhQidHlIBBSguaiAvqonhuFEyXrzKJdE07dvB05IdsFJ
+\restrict Q15VnTfT0C2lde7v6vAZGFByVcKUiSHfvkDqkKoEiLe6SIGrZFRWMhpxycpvXdZ
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -3230,6 +3230,39 @@ $$;
 
 
 --
+-- Name: market_admin_delete("uuid", boolean); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."market_admin_delete"("p_id" "uuid", "p_force" boolean DEFAULT false) RETURNS TABLE("ok" boolean, "err" "text")
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+declare
+    v_rows int;
+begin
+    -- gry z GitHub mogą być usunięte tylko przez admina z p_force = true
+    if not p_force and exists (
+        select 1 from public.market_games
+         where id = p_id and gh_slug is not null
+    ) then
+        return query select false, 'gh_game_cannot_be_deleted';
+        return;
+    end if;
+
+    delete from public.market_games where id = p_id;
+    get diagnostics v_rows = row_count;
+
+    if v_rows = 0 then
+        return query select false, 'not_found';
+        return;
+    end if;
+
+    return query select true, '';
+end;
+$$;
+
+
+--
 -- Name: market_admin_detail("uuid"); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -3315,6 +3348,37 @@ begin
     end if;
 
     return query select true, '';
+end;
+$$;
+
+
+--
+-- Name: market_admin_sync_cleanup("text"[]); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."market_admin_sync_cleanup"("p_slugs" "text"[]) RETURNS TABLE("deleted" integer, "slugs" "text"[])
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+declare
+    v_slugs text[];
+    v_count int;
+begin
+    -- zbierz slug-i które zostaną usunięte (do logowania)
+    select array_agg(gh_slug)
+      into v_slugs
+      from public.market_games
+     where gh_slug is not null
+       and gh_slug != all(p_slugs);
+
+    -- usuń
+    delete from public.market_games
+     where gh_slug is not null
+       and gh_slug != all(p_slugs);
+
+    get diagnostics v_count = row_count;
+
+    return query select v_count, coalesce(v_slugs, '{}'::text[]);
 end;
 $$;
 
@@ -10650,5 +10714,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict SrFi8dKwI7HOcifWzA5bhQidHlIBBSguaiAvqonhuFEyXrzKJdE07dvB05IdsFJ
+\unrestrict Q15VnTfT0C2lde7v6vAZGFByVcKUiSHfvkDqkKoEiLe6SIGrZFRWMhpxycpvXdZ
 
