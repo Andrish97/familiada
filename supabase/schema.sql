@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict F6KeHimfNds0G5MsXosebl64TrCuNLM7F0QLDKdPWc6nHR4bUX5bRDEllgZQTyf
+\restrict SrFi8dKwI7HOcifWzA5bhQidHlIBBSguaiAvqonhuFEyXrzKJdE07dvB05IdsFJ
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -2081,9 +2081,10 @@ $$;
 --
 
 CREATE FUNCTION "public"."gen_share_key"("n_bytes" integer DEFAULT 24) RETURNS "text"
-    LANGUAGE "sql" STABLE
+    LANGUAGE "sql" STABLE SECURITY DEFINER
+    SET "search_path" TO 'public', 'extensions'
     AS $$
-  select encode(gen_random_bytes(n_bytes), 'hex');
+  SELECT encode(gen_random_bytes(n_bytes), 'hex');
 $$;
 
 
@@ -10649,5 +10650,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict F6KeHimfNds0G5MsXosebl64TrCuNLM7F0QLDKdPWc6nHR4bUX5bRDEllgZQTyf
+\unrestrict SrFi8dKwI7HOcifWzA5bhQidHlIBBSguaiAvqonhuFEyXrzKJdE07dvB05IdsFJ
 
