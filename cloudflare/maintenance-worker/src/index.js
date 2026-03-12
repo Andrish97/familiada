@@ -842,7 +842,7 @@ async function handleContactSubmit(request, env) {
   try {
     const tg = getTelegramConfig(env);
     if (tg) {
-      const tgKey = "notify_contact_ts";
+      const tgKey = "notify_form_ts";
       const last = await env.MAINT_KV.get(tgKey);
       const now = Date.now();
       if (!last || now - Number(last) >= 5 * 60 * 1000) {
@@ -1038,42 +1038,6 @@ async function handleAdminMessagesApi(request, env, url) {
       res = await supabaseRpc(env, "unassign_message_report", { p_message_id: message_id });
     }
     if (!res.ok) return json({ ok: false, error: "assign_failed", details: summarizeSupabaseError(res) }, res.status || 500);
-
-    // If assigning: send notification email to original sender
-    if (report_id) {
-      try {
-        const [msgRes, repRes] = await Promise.all([
-          supabaseRpc(env, "get_message", { p_id: message_id }),
-          supabaseRequest(env, `/rest/v1/reports?id=eq.${encodeURIComponent(report_id)}&select=ticket_number,subject,lang&limit=1`, { method: "GET" }),
-        ]);
-        const msgRow = Array.isArray(msgRes.data) && msgRes.data.length ? msgRes.data[0] : normalizeRpcValue(msgRes.data);
-        const repRow = Array.isArray(repRes.data) && repRes.data.length ? repRes.data[0] : null;
-        const toEmail = msgRow?.from_email;
-        const ticket  = repRow?.ticket_number || msgRow?.ticket_number;
-        if (toEmail && ticket) {
-          const lang = repRow?.lang || "pl";
-          const safeLang = ["pl","en","uk"].includes(lang) ? lang : "pl";
-          const assignedCopy = {
-            pl: `Twoja wiadomość została zarejestrowana jako zgłoszenie nr ${ticket}.\nMożesz odpowiadać na ten email aby kontynuować rozmowę.`,
-            en: `Your message has been registered as ticket ${ticket}.\nYou can reply to this email to continue the conversation.`,
-            uk: `Ваше повідомлення зареєстровано як звернення ${ticket}.\nВи можете відповідати на цей email для продовження розмови.`,
-          };
-          const subjectCopy = {
-            pl: `Twoje zgłoszenie zostało zarejestrowane [${ticket}]`,
-            en: `Your ticket has been registered [${ticket}]`,
-            uk: `Ваше звернення зареєстровано [${ticket}]`,
-          };
-          const { html } = buildContactEmail({ type: "compose", lang: safeLang, ticket, subject: subjectCopy[safeLang], message: assignedCopy[safeLang] });
-          await supabaseRequest(env, "/rest/v1/mail_queue", {
-            method: "POST",
-            headers: { Prefer: "return=minimal" },
-            body: { to_email: toEmail, subject: subjectCopy[safeLang], html, from_email: "no-reply@familiada.online", meta: { type: "ticket_assigned", ticket } },
-          });
-        }
-      } catch (err) {
-        console.error("[worker] assign: notify failed:", err);
-      }
-    }
 
     return json({ ok: true });
   }
@@ -1613,7 +1577,7 @@ async function handleInboundEmail(message, env) {
   try {
     const tg = getTelegramConfig(env);
     if (tg) {
-      const tgKey = "notify_contact_ts";
+      const tgKey = "notify_email_ts";
       const last = await env.MAINT_KV.get(tgKey);
       const now = Date.now();
       if (!last || now - Number(last) >= 5 * 60 * 1000) {

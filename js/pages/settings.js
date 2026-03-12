@@ -2233,7 +2233,7 @@ async function doAssign(messageId, reportId, isNew, withQuote = false, ticketNum
       const msg = _assignMsgData;
       const ticket = ticketNumber || "";
       const userQuote = (msg.body || "").trim();
-      const replyBody = `Twoja wiadomość:\n"${userQuote}"\nzostała zarejestrowana jako zgłoszenie nr ${ticket}.\nMożesz odpowiadać na ten email aby kontynuować rozmowę.`;
+      const replyBody = `Twoja wiadomość została zarejestrowana jako zgłoszenie nr ${ticket}.\nMożesz odpowiadać na ten email aby kontynuować rozmowę.`;
       const replySubject = `[${ticket}] Zgłoszenie zarejestrowane`;
       await adminFetch("/messages/send", {
         method: "POST",
@@ -2242,6 +2242,7 @@ async function doAssign(messageId, reportId, isNew, withQuote = false, ticketNum
           to_email: msg.from_email,
           subject: replySubject,
           body: replyBody,
+          quote: userQuote,
           report_id: reportId,
         }),
       });
