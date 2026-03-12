@@ -119,6 +119,11 @@ export function openContactModal(opts = {}) {
   const errEl = document.getElementById("cModalError");
   if (errEl) { errEl.style.display = "none"; errEl.textContent = ""; }
 
+  const fileInput = document.getElementById("cModalAttachments");
+  if (fileInput) fileInput.value = "";
+  const fileList = document.getElementById("cModalFileList");
+  if (fileList) fileList.innerHTML = "";
+
   const ticketInp = document.getElementById("cModalTicket");
   if (opts.ticket && ticketInp) {
     ticketInp.value = opts.ticket;
