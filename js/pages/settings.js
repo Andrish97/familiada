@@ -1979,10 +1979,10 @@ async function openReport(id) {
   conv.innerHTML = `<div style="flex:1;display:flex;align-items:center;justify-content:center;opacity:.35;font-size:12px">Ładowanie…</div>`;
 
   try {
-    const res = await adminFetch(`/messages?filter=${encodeURIComponent(id)}&limit=100`);
+    const res = await adminFetch(`/reports/messages?id=${encodeURIComponent(id)}`);
     if (!res.ok) throw new Error(await res.text());
     const json = await res.json();
-    const messages = json.rows || [];
+    const messages = json.messages || [];
 
     // Fetch attachments for each message in parallel
     const attsByMsg = {};
@@ -2134,13 +2134,42 @@ function renderReportThread(report, messages, attsByMsg = {}) {
     document.getElementById("btnReportClose")?.addEventListener("click", () => toggleReportStatus(report.id, "open"));
     document.getElementById("btnReportOpen")?.addEventListener("click",  () => toggleReportStatus(report.id, "closed"));
   }
-  document.getElementById("btnReportReply")?.addEventListener("click", () => {
+  document.getElementById("btnReportReply")?.addEventListener("click", async () => {
+    const btn = document.getElementById("btnReportReply");
+    const statusEl = document.getElementById("mailReplyStatus");
     const body = (document.getElementById("mailReplyArea")?.value || "").trim();
     if (!body) { showToast("Podaj treść odpowiedzi.", "error"); return; }
     const lastInbound = [...messages].reverse().find(m => m.direction === "inbound");
     const to = lastInbound?.from_email;
     if (!to) { showToast("Brak adresu odbiorcy.", "error"); return; }
-    sendCompose({ to, subject: `Re: [${ticketNum}] ${report?.subject || ""}`, body, report_id: report?.id });
+    if (btn) { btn.disabled = true; btn.textContent = "…"; }
+    if (statusEl) statusEl.textContent = "Wysyłam…";
+    try {
+      const res = await adminFetch("/messages/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          to_email: to,
+          subject: `Re: [${ticketNum}] ${report?.subject || ""}`,
+          body,
+          lang: report?.lang || "pl",
+          report_id: report?.id || undefined,
+        }),
+      });
+      if (!res.ok) throw new Error(await res.text());
+      const json = await res.json();
+      if (!json.ok) throw new Error(json.error);
+      const area = document.getElementById("mailReplyArea");
+      if (area) area.value = "";
+      if (statusEl) statusEl.textContent = "";
+      showToast(t("settings.reports.compose.sent") || "Wysłano.", "success");
+      await openReport(report?.id || msgActiveId);
+    } catch (err) {
+      if (statusEl) statusEl.textContent = "";
+      showToast(String(err?.message || err), "error");
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = t("settings.reports.replyBtn") || "Odpowiedz"; }
+    }
   });
 }
 

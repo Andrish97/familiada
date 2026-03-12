@@ -1,0 +1,223 @@
+{
+  "meta": {
+    "title": "Lato w Polsce",
+    "description": "Gra Familiady o letnich wrażeniach.",
+    "lang": "pl"
+  },
+  "game": {
+    "name": "Lato w Polsce",
+    "type": "prepared"
+  },
+  "questions": [
+    {
+      "text": "Co robią Polacy latem?",
+      "answers": [
+        {
+          "text": "Plaża",
+          "fixed_points": 37
+        },
+        {
+          "text": "Wakacje",
+          "fixed_points": 29
+        },
+        {
+          "text": "Kemping",
+          "fixed_points": 15
+        },
+        {
+          "text": "Wycieczka",
+          "fixed_points": 19
+        }
+      ]
+    },
+    {
+      "text": "Ulubione potrawy na grill?",
+      "answers": [
+        {
+          "text": "Kiełbasa",
+          "fixed_points": 42
+        },
+        {
+          "text": "Karkówka",
+          "fixed_points": 26
+        },
+        {
+          "text": "Kurczak",
+          "fixed_points": 18
+        },
+        {
+          "text": "Węgorz",
+          "fixed_points": 14
+        }
+      ]
+    },
+    {
+      "text": "Gdzie lubią wypoczywać?",
+      "answers": [
+        {
+          "text": "Mazury",
+          "fixed_points": 35
+        },
+        {
+          "text": "Bałtyk",
+          "fixed_points": 31
+        },
+        {
+          "text": "Tatry",
+          "fixed_points": 20
+        },
+        {
+          "text": "Białowieża",
+          "fixed_points": 14
+        }
+      ]
+    },
+    {
+      "text": "Co to jest lato?",
+      "answers": [
+        {
+          "text": "Słońce",
+          "fixed_points": 49
+        },
+        {
+          "text": "Ciepło",
+          "fixed_points": 23
+        },
+        {
+          "text": "Wakacje",
+          "fixed_points": 16
+        },
+        {
+          "text": "Plaża",
+          "fixed_points": 12
+        }
+      ]
+    },
+    {
+      "text": "Ulubione owoce lata?",
+      "answers": [
+        {
+          "text": "Truskawki",
+          "fixed_points": 38
+        },
+        {
+          "text": "Maliny",
+          "fixed_points": 25
+        },
+        {
+          "text": "Jagody",
+          "fixed_points": 19
+        },
+        {
+          "text": "Porzeczki",
+          "fixed_points": 18
+        }
+      ]
+    },
+    {
+      "text": "Co robisz na plaży?",
+      "answers": [
+        {
+          "text": "Pływam",
+          "fixed_points": 41
+        },
+        {
+          "text": "Opalam",
+          "fixed_points": 28
+        },
+        {
+          "text": "Graję",
+          "fixed_points": 16
+        },
+        {
+          "text": "Czytam",
+          "fixed_points": 15
+        }
+      ]
+    },
+    {
+      "text": "Ulubione napoje letnie?",
+      "answers": [
+        {
+          "text": "Woda",
+          "fixed_points": 45
+        },
+        {
+          "text": "Cola",
+          "fixed_points": 24
+        },
+        {
+          "text": "Piwo",
+          "fixed_points": 17
+        },
+        {
+          "text": "Herbata",
+          "fixed_points": 14
+        }
+      ]
+    },
+    {
+      "text": "Co to jest wakacja?",
+      "answers": [
+        {
+          "text": "Wypoczynek",
+          "fixed_points": 43
+        },
+        {
+          "text": "Relaks",
+          "fixed_points": 26
+        },
+        {
+          "text": "Wyjazd",
+          "fixed_points": 18
+        },
+        {
+          "text": "Zabawa",
+          "fixed_points": 13
+        }
+      ]
+    },
+    {
+      "text": "Gdzie lubią jeździć na wakacje?",
+      "answers": [
+        {
+          "text": "Polska",
+          "fixed_points": 39
+        },
+        {
+          "text": "Europa",
+          "fixed_points": 29
+        },
+        {
+          "text": "USA",
+          "fixed_points": 15
+        },
+        {
+          "text": "Azja",
+          "fixed_points": 17
+        }
+      ]
+    },
+    {
+      "text": "Co to jest lato dla Ciebie?",
+      "answers": [
+        {
+          "text": "Radość",
+          "fixed_points": 40
+        },
+        {
+          "text": "Wolność",
+          "fixed_points": 28
+        },
+        {
+          "text": "Słońce",
+          "fixed_points": 19
+        },
+        {
+          "text": "Wakacje",
+          "fixed_points": 13
+        }
+      ]
+    }
+  ]
+}

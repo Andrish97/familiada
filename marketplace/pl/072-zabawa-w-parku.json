@@ -1,0 +1,223 @@
+{
+  "meta": {
+    "title": "Zabawa w parku",
+    "description": "Gra Familiada o zabawie w parku.",
+    "lang": "pl"
+  },
+  "game": {
+    "name": "Zabawa w parku",
+    "type": "prepared"
+  },
+  "questions": [
+    {
+      "text": "Co robi się w parku?",
+      "answers": [
+        {
+          "text": "Biega",
+          "fixed_points": 23
+        },
+        {
+          "text": "Się opala",
+          "fixed_points": 31
+        },
+        {
+          "text": "Jest na ławce",
+          "fixed_points": 26
+        },
+        {
+          "text": "Gra w piłkę",
+          "fixed_points": 20
+        }
+      ]
+    },
+    {
+      "text": "Jaki ptak często spotyka się w parku?",
+      "answers": [
+        {
+          "text": "Sroka",
+          "fixed_points": 41
+        },
+        {
+          "text": "Gołąb",
+          "fixed_points": 29
+        },
+        {
+          "text": "Kruk",
+          "fixed_points": 15
+        },
+        {
+          "text": "Wróbel",
+          "fixed_points": 15
+        }
+      ]
+    },
+    {
+      "text": "Co dzieci robią w parku?",
+      "answers": [
+        {
+          "text": "Huśtają się",
+          "fixed_points": 35
+        },
+        {
+          "text": "Zjeżdżają na zjeżdżalni",
+          "fixed_points": 28
+        },
+        {
+          "text": "Bawią się piaskiem",
+          "fixed_points": 22
+        },
+        {
+          "text": "Ślizgają się",
+          "fixed_points": 15
+        }
+      ]
+    },
+    {
+      "text": "Jaki jedzenie jest często spożywane w parku?",
+      "answers": [
+        {
+          "text": "Kiełbasa",
+          "fixed_points": 38
+        },
+        {
+          "text": "Lody",
+          "fixed_points": 25
+        },
+        {
+          "text": "Kanapka",
+          "fixed_points": 20
+        },
+        {
+          "text": "Owoc",
+          "fixed_points": 17
+        }
+      ]
+    },
+    {
+      "text": "Co można znaleźć w parku?",
+      "answers": [
+        {
+          "text": "Ławka",
+          "fixed_points": 32
+        },
+        {
+          "text": "Huśtawka",
+          "fixed_points": 29
+        },
+        {
+          "text": "Zjeżdżalnia",
+          "fixed_points": 22
+        },
+        {
+          "text": "Toaleta",
+          "fixed_points": 17
+        }
+      ]
+    },
+    {
+      "text": "Dlaczego ludzie chodzą do parku?",
+      "answers": [
+        {
+          "text": "By się zrelaksować",
+          "fixed_points": 42
+        },
+        {
+          "text": "By się pobawić",
+          "fixed_points": 26
+        },
+        {
+          "text": "By się spotkać z przyjaciółmi",
+          "fixed_points": 18
+        },
+        {
+          "text": "By się pobiegać",
+          "fixed_points": 14
+        }
+      ]
+    },
+    {
+      "text": "Jaki jest najpopularniejszy parkowy ptak?",
+      "answers": [
+        {
+          "text": "Sroka",
+          "fixed_points": 49
+        },
+        {
+          "text": "Gołąb",
+          "fixed_points": 21
+        },
+        {
+          "text": "Kruk",
+          "fixed_points": 15
+        },
+        {
+          "text": "Wróbel",
+          "fixed_points": 15
+        }
+      ]
+    },
+    {
+      "text": "Co można robić w parku z psem?",
+      "answers": [
+        {
+          "text": "Biegać",
+          "fixed_points": 39
+        },
+        {
+          "text": "Grać",
+          "fixed_points": 26
+        },
+        {
+          "text": "Spacerować",
+          "fixed_points": 22
+        },
+        {
+          "text": "Łowić",
+          "fixed_points": 13
+        }
+      ]
+    },
+    {
+      "text": "Jaki jest najbardziej charakterystyczny parkowy dźwięk?",
+      "answers": [
+        {
+          "text": "Ptaki",
+          "fixed_points": 46
+        },
+        {
+          "text": "Dzieci",
+          "fixed_points": 24
+        },
+        {
+          "text": "Samochody",
+          "fixed_points": 16
+        },
+        {
+          "text": "Woda",
+          "fixed_points": 14
+        }
+      ]
+    },
+    {
+      "text": "Co najczęściej robi się w parku latem?",
+      "answers": [
+        {
+          "text": "Opala się",
+          "fixed_points": 51
+        },
+        {
+          "text": "Pływa",
+          "fixed_points": 21
+        },
+        {
+          "text": "Jest na ławce",
+          "fixed_points": 16
+        },
+        {
+          "text": "Gra w piłkę",
+          "fixed_points": 12
+        }
+      ]
+    }
+  ]
+}

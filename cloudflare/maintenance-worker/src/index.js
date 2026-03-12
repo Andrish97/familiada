@@ -1075,10 +1075,11 @@ async function handleAdminMessagesApi(request, env, url) {
   // POST /_admin_api/messages/send  { to_email, subject, body, body_html?, report_id?, attachments? }
   if (url.pathname === "/_admin_api/messages/send" && request.method === "POST") {
     const body = await readJson(request);
-    const { to_email, subject: msgSubject, body: msgBody, body_html, report_id, quote, attachments: sendAttachments } = body || {};
+    const { to_email, subject: msgSubject, body: msgBody, body_html, report_id, quote, attachments: sendAttachments, lang: msgLang } = body || {};
     if (!to_email || !msgBody) return json({ ok: false, error: "missing_to_email_or_body" }, 400);
 
-    const emailHtml = body_html || buildContactEmail({ type: "compose", lang: "pl", subject: String(msgSubject || ""), message: String(msgBody), reply_as: quote || undefined }).html;
+    const safeLang = ["pl","en","uk"].includes(msgLang) ? msgLang : "pl";
+    const emailHtml = body_html || buildContactEmail({ type: "compose", lang: safeLang, subject: String(msgSubject || ""), message: String(msgBody), reply_as: quote || undefined }).html;
 
     // Insert into mail_queue first
     const queueRes = await supabaseRequest(env, "/rest/v1/mail_queue", {

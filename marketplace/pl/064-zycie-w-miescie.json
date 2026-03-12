@@ -1,0 +1,263 @@
+{
+  "meta": {
+    "title": "Życie w mieście",
+    "description": "Gra Familiada o życiu codziennym w mieście.",
+    "lang": "pl"
+  },
+  "game": {
+    "name": "Familiada Miejska",
+    "type": "prepared"
+  },
+  "questions": [
+    {
+      "text": "Co robisz rano?",
+      "answers": [
+        {
+          "text": "Budzę się",
+          "fixed_points": 38
+        },
+        {
+          "text": "Jem śniadanie",
+          "fixed_points": 29
+        },
+        {
+          "text": "Ćwiczę",
+          "fixed_points": 15
+        },
+        {
+          "text": "Słucham muzyki",
+          "fixed_points": 12
+        },
+        {
+          "text": "Czytam",
+          "fixed_points": 6
+        }
+      ]
+    },
+    {
+      "text": "Ulubione danie?",
+      "answers": [
+        {
+          "text": "Pierogi",
+          "fixed_points": 42
+        },
+        {
+          "text": "Bigos",
+          "fixed_points": 25
+        },
+        {
+          "text": "Kotlet",
+          "fixed_points": 18
+        },
+        {
+          "text": "Zupa",
+          "fixed_points": 10
+        },
+        {
+          "text": "Kiełbasa",
+          "fixed_points": 5
+        }
+      ]
+    },
+    {
+      "text": "Co nosisz na nogach?",
+      "answers": [
+        {
+          "text": "Buty",
+          "fixed_points": 50
+        },
+        {
+          "text": "Klapki",
+          "fixed_points": 21
+        },
+        {
+          "text": "Szpilki",
+          "fixed_points": 12
+        },
+        {
+          "text": "Trampki",
+          "fixed_points": 10
+        },
+        {
+          "text": "Kozaki",
+          "fixed_points": 7
+        }
+      ]
+    },
+    {
+      "text": "Jak spędzasz wolny czas?",
+      "answers": [
+        {
+          "text": "Czytam",
+          "fixed_points": 30
+        },
+        {
+          "text": "Graję",
+          "fixed_points": 26
+        },
+        {
+          "text": "Spaceruję",
+          "fixed_points": 20
+        },
+        {
+          "text": "Śpię",
+          "fixed_points": 15
+        },
+        {
+          "text": "Jedzenie",
+          "fixed_points": 9
+        }
+      ]
+    },
+    {
+      "text": "Co masz w kuchni?",
+      "answers": [
+        {
+          "text": "Lodówka",
+          "fixed_points": 48
+        },
+        {
+          "text": "Płyta",
+          "fixed_points": 22
+        },
+        {
+          "text": "Zmywarka",
+          "fixed_points": 15
+        },
+        {
+          "text": "Czajnik",
+          "fixed_points": 8
+        },
+        {
+          "text": "Mikrofalówka",
+          "fixed_points": 7
+        }
+      ]
+    },
+    {
+      "text": "Ulubiony sport?",
+      "answers": [
+        {
+          "text": "Piłka nożna",
+          "fixed_points": 45
+        },
+        {
+          "text": "Koszykówka",
+          "fixed_points": 24
+        },
+        {
+          "text": "Siatkówka",
+          "fixed_points": 14
+        },
+        {
+          "text": "Tenis",
+          "fixed_points": 10
+        },
+        {
+          "text": "Boks",
+          "fixed_points": 7
+        }
+      ]
+    },
+    {
+      "text": "Co robisz wieczorem?",
+      "answers": [
+        {
+          "text": "Oglądam TV",
+          "fixed_points": 35
+        },
+        {
+          "text": "Graję",
+          "fixed_points": 28
+        },
+        {
+          "text": "Czytam",
+          "fixed_points": 18
+        },
+        {
+          "text": "Rozmawiam",
+          "fixed_points": 12
+        },
+        {
+          "text": "Śpię",
+          "fixed_points": 7
+        }
+      ]
+    },
+    {
+      "text": "Co kupujesz w sklepie?",
+      "answers": [
+        {
+          "text": "Jedzenie",
+          "fixed_points": 52
+        },
+        {
+          "text": "Napój",
+          "fixed_points": 20
+        },
+        {
+          "text": "Prasa",
+          "fixed_points": 12
+        },
+        {
+          "text": "Kosmetyki",
+          "fixed_points": 8
+        },
+        {
+          "text": "Zabawki",
+          "fixed_points": 8
+        }
+      ]
+    },
+    {
+      "text": "Jak podróżujesz?",
+      "answers": [
+        {
+          "text": "Samochodem",
+          "fixed_points": 40
+        },
+        {
+          "text": "Autobusem",
+          "fixed_points": 25
+        },
+        {
+          "text": "Pociągiem",
+          "fixed_points": 18
+        },
+        {
+          "text": "Rowerem",
+          "fixed_points": 10
+        },
+        {
+          "text": "Pieszo",
+          "fixed_points": 7
+        }
+      ]
+    },
+    {
+      "text": "Co robisz w weekend?",
+      "answers": [
+        {
+          "text": "Wypoczywam",
+          "fixed_points": 32
+        },
+        {
+          "text": "Spaceruję",
+          "fixed_points": 26
+        },
+        {
+          "text": "Jadę",
+          "fixed_points": 20
+        },
+        {
+          "text": "Robię zakupy",
+          "fixed_points": 12
+        },
+        {
+          "text": "Pracuję",
+          "fixed_points": 10
+        }
+      ]
+    }
+  ]
+}

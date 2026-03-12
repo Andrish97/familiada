@@ -1,0 +1,223 @@
+{
+  "meta": {
+    "title": "Familiada - Przyroda",
+    "description": "Gra w stylu Family Feud, gdzie odpowiedzi pochodzą z ankiety.",
+    "lang": "pl"
+  },
+  "game": {
+    "name": "Familiada - Przyroda",
+    "type": "prepared"
+  },
+  "questions": [
+    {
+      "text": "Co robią ptaki rano?",
+      "answers": [
+        {
+          "text": "Śpiewają",
+          "fixed_points": 51
+        },
+        {
+          "text": "Lecą",
+          "fixed_points": 23
+        },
+        {
+          "text": "Szukają jedzenia",
+          "fixed_points": 16
+        },
+        {
+          "text": "Gniazdują",
+          "fixed_points": 10
+        }
+      ]
+    },
+    {
+      "text": "Jaki jest najpopularniejszy kolor kwiatów?",
+      "answers": [
+        {
+          "text": "Czerwony",
+          "fixed_points": 38
+        },
+        {
+          "text": "Żółty",
+          "fixed_points": 29
+        },
+        {
+          "text": "Różowy",
+          "fixed_points": 20
+        },
+        {
+          "text": "Biały",
+          "fixed_points": 13
+        }
+      ]
+    },
+    {
+      "text": "Co to jest las?",
+      "answers": [
+        {
+          "text": "Zbiór drzew",
+          "fixed_points": 55
+        },
+        {
+          "text": "Miejsce życia zwierząt",
+          "fixed_points": 25
+        },
+        {
+          "text": "Obszar chroniony",
+          "fixed_points": 12
+        },
+        {
+          "text": "Miejsce wypoczynku",
+          "fixed_points": 8
+        }
+      ]
+    },
+    {
+      "text": "Jaki jest najpopularniejszy rodzaj psa?",
+      "answers": [
+        {
+          "text": "Owczarek",
+          "fixed_points": 42
+        },
+        {
+          "text": "Pudel",
+          "fixed_points": 28
+        },
+        {
+          "text": "Buldog",
+          "fixed_points": 15
+        },
+        {
+          "text": "Cocker",
+          "fixed_points": 15
+        }
+      ]
+    },
+    {
+      "text": "Co jedzą koty?",
+      "answers": [
+        {
+          "text": "Mięso",
+          "fixed_points": 62
+        },
+        {
+          "text": "Karmę",
+          "fixed_points": 21
+        },
+        {
+          "text": "Ryby",
+          "fixed_points": 12
+        },
+        {
+          "text": "Mleko",
+          "fixed_points": 5
+        }
+      ]
+    },
+    {
+      "text": "Jaki jest najpopularniejszy rodzaj ryby?",
+      "answers": [
+        {
+          "text": "Łosoś",
+          "fixed_points": 39
+        },
+        {
+          "text": "Karp",
+          "fixed_points": 26
+        },
+        {
+          "text": "Pstrąg",
+          "fixed_points": 18
+        },
+        {
+          "text": "Sandacz",
+          "fixed_points": 17
+        }
+      ]
+    },
+    {
+      "text": "Co to jest park?",
+      "answers": [
+        {
+          "text": "Miejsce spacerów",
+          "fixed_points": 49
+        },
+        {
+          "text": "Obszar zielony",
+          "fixed_points": 24
+        },
+        {
+          "text": "Miejsce zabaw",
+          "fixed_points": 14
+        },
+        {
+          "text": "Miejsce spotkań",
+          "fixed_points": 13
+        }
+      ]
+    },
+    {
+      "text": "Jaki jest najpopularniejszy rodzaj motyla?",
+      "answers": [
+        {
+          "text": "Monarcha",
+          "fixed_points": 31
+        },
+        {
+          "text": "Pawica",
+          "fixed_points": 28
+        },
+        {
+          "text": "Bielinek",
+          "fixed_points": 20
+        },
+        {
+          "text": "Rusałka",
+          "fixed_points": 21
+        }
+      ]
+    },
+    {
+      "text": "Co to jest góra?",
+      "answers": [
+        {
+          "text": "Wzniesienie",
+          "fixed_points": 46
+        },
+        {
+          "text": "Miejsce turystyczne",
+          "fixed_points": 25
+        },
+        {
+          "text": "Obszar skalisty",
+          "fixed_points": 18
+        },
+        {
+          "text": "Miejsce narciarskie",
+          "fixed_points": 11
+        }
+      ]
+    },
+    {
+      "text": "Jaki jest najpopularniejszy rodzaj ptaka?",
+      "answers": [
+        {
+          "text": "Sójka",
+          "fixed_points": 41
+        },
+        {
+          "text": "Kruk",
+          "fixed_points": 26
+        },
+        {
+          "text": "Szczygieł",
+          "fixed_points": 18
+        },
+        {
+          "text": "Wróbel",
+          "fixed_points": 15
+        }
+      ]
+    }
+  ]
+}
