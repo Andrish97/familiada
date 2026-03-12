@@ -2326,15 +2326,16 @@ async function sendCompose(defaults) {
   const uploadedAttachments = [];
   if (fileInput?.files?.length) {
     for (const file of fileInput.files) {
-      try {
-        const fd = new FormData();
-        fd.append("file", file);
-        const upRes = await adminFetch("/attachments/upload", { method: "POST", body: fd });
-        if (upRes.ok) {
-          const upJson = await upRes.json();
-          if (upJson.ok) uploadedAttachments.push(upJson);
-        }
-      } catch {}
+      const fd = new FormData();
+      fd.append("file", file);
+      const upRes = await adminFetch("/attachments/upload", { method: "POST", body: fd });
+      const upJson = await upRes.json().catch(() => ({}));
+      if (!upRes.ok) {
+        showToast(`Błąd uploadu: ${upJson.error || upRes.status}${upJson.details ? " — " + upJson.details : ""}`, "error");
+        if (status) status.textContent = "";
+        return;
+      }
+      if (upJson.ok) uploadedAttachments.push(upJson);
     }
   }
 
