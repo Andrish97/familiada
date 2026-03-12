@@ -1214,20 +1214,42 @@ async function handleAdminMessagesApi(request, env, url) {
   // POST /_admin_api/attachments/upload — upload pliku (do compose)
   // multipart/form-data z polem "file"
   if (url.pathname === "/_admin_api/attachments/upload" && request.method === "POST") {
-    let formData;
-    try { formData = await request.formData(); } catch { return json({ ok: false, error: "invalid_form" }, 400); }
-    const file = formData.get("file");
-    if (!file || typeof file === "string") return json({ ok: false, error: "missing_file" }, 400);
-    const filename = file.name || "upload";
-    const mimeType = file.type || "application/octet-stream";
-    const arrayBuf = await file.arrayBuffer();
-    if (arrayBuf.byteLength > 10 * 1024 * 1024) return json({ ok: false, error: "file_too_large" }, 413);
-    const bytes = new Uint8Array(arrayBuf);
-    const b64 = btoa(bytes.reduce((acc, b) => acc + String.fromCharCode(b), ""));
-    const tempId = crypto.randomUUID();
-    const storagePath = `message-attachments/compose/${tempId}/${filename}`;
-    await uploadToStorage(env, storagePath, b64, mimeType);
-    return json({ ok: true, id: tempId, filename, mime_type: mimeType, storage_path: storagePath, size: arrayBuf.byteLength });
+    try {
+      let formData;
+      try { formData = await request.formData(); } catch { return json({ ok: false, error: "invalid_form" }, 400); }
+      const file = formData.get("file");
+      if (!file || typeof file === "string") return json({ ok: false, error: "missing_file" }, 400);
+      const filename = (file.name || "upload").replace(/[^\w.\-]/g, "_");
+      const mimeType = file.type || "application/octet-stream";
+      const arrayBuf = await file.arrayBuffer();
+      if (arrayBuf.byteLength > 10 * 1024 * 1024) return json({ ok: false, error: "file_too_large" }, 413);
+
+      const cfg = getSupabaseConfig(env);
+      if (!cfg) return json({ ok: false, error: "missing_supabase_config" }, 500);
+
+      const tempId = crypto.randomUUID();
+      const storagePath = `compose/${tempId}/${filename}`;
+      const storageUrl = `${cfg.baseUrl}/storage/v1/object/message-attachments/${storagePath}`;
+
+      const upRes = await fetch(storageUrl, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${cfg.serviceRoleKey}`,
+          "Content-Type": mimeType,
+          "x-upsert": "true",
+        },
+        body: arrayBuf,
+      });
+      if (!upRes.ok) {
+        const errText = await upRes.text().catch(() => "");
+        console.error("[worker] storage upload failed:", upRes.status, errText.slice(0, 300));
+        return json({ ok: false, error: "storage_upload_failed", status: upRes.status, details: errText.slice(0, 300) }, 500);
+      }
+      return json({ ok: true, id: tempId, filename, mime_type: mimeType, storage_path: `message-attachments/${storagePath}`, size: arrayBuf.byteLength });
+    } catch (err) {
+      console.error("[worker] attachment/upload exception:", String(err));
+      return json({ ok: false, error: "exception", details: String(err?.message || err).slice(0, 300) }, 500);
+    }
   }
 
   return new Response("Not Found", { status: 404 });
@@ -1644,27 +1666,21 @@ function extractMimeParts(raw) {
 // ============================================================
 
 async function uploadToStorage(env, bucketPath, data_b64, mimeType) {
-  // Supabase Storage: POST /storage/v1/object/{bucket}/{path}
   const cfg = getSupabaseConfig(env);
   if (!cfg) throw new Error("storage_upload_failed:missing_supabase_config");
+  // bucketPath format: "message-attachments/{path}" or just "{bucket}/{path}"
   const url = `${cfg.baseUrl}/storage/v1/object/${bucketPath}`;
-  // decode base64 to binary
   const binaryStr = atob(data_b64);
   const bytes = new Uint8Array(binaryStr.length);
   for (let i = 0; i < binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i);
-
   const res = await fetch(url, {
     method: "POST",
-    headers: {
-      "Authorization": `Bearer ${cfg.serviceRoleKey}`,
-      "Content-Type": mimeType,
-      "x-upsert": "true",
-    },
+    headers: { "Authorization": `Bearer ${cfg.serviceRoleKey}`, "Content-Type": mimeType, "x-upsert": "true" },
     body: bytes,
   });
   if (!res.ok) {
     const err = await res.text().catch(() => "");
-    throw new Error(`storage_upload_failed:${res.status}:${err.slice(0,200)}`);
+    throw new Error(`storage_upload_failed:${res.status}:${err.slice(0, 200)}`);
   }
   return bucketPath;
 }
