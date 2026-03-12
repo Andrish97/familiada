@@ -2009,16 +2009,29 @@ async function openReport(id) {
     const res = await adminFetch(`/messages?filter=${encodeURIComponent(id)}&limit=100`);
     if (!res.ok) throw new Error(await res.text());
     const json = await res.json();
+    const messages = json.rows || [];
+
+    // Fetch attachments for each message in parallel
+    const attsByMsg = {};
+    await Promise.all(messages.map(async (msg) => {
+      try {
+        const attRes = await adminFetch(`/attachments?message_id=${encodeURIComponent(msg.id)}`);
+        if (attRes.ok) {
+          const attJson = await attRes.json();
+          attsByMsg[msg.id] = attJson.attachments || [];
+        }
+      } catch {}
+    }));
 
     const report = msgRows.find(r => r.id === id) || null;
-    renderReportThread(report, json.rows || []);
+    renderReportThread(report, messages, attsByMsg);
   } catch (err) {
     showToast(String(err?.message || err), "error");
     conv.innerHTML = "";
   }
 }
 
-function renderReportThread(report, messages) {
+function renderReportThread(report, messages, attsByMsg = {}) {
   const conv = document.getElementById("mailConv");
   if (!conv) return;
   conv.innerHTML = "";
@@ -2074,6 +2087,54 @@ function renderReportThread(report, messages) {
       bodyEl.textContent = msg.body || "";
     }
     el.appendChild(bodyEl);
+
+    // Attachments for this message
+    const msgAtts = (attsByMsg[msg.id] || []).filter(a => !a.inline);
+    if (msgAtts.length) {
+      const attList = document.createElement("div");
+      attList.style.cssText = "margin-top:8px;display:flex;flex-wrap:wrap;gap:5px;";
+      for (const att of msgAtts) {
+        const chip = document.createElement("a");
+        chip.href = "#";
+        const isExpired = !!att.expired;
+        const isImage = att.mime_type?.startsWith("image/");
+        const isPdf   = att.mime_type === "application/pdf";
+        if (isExpired) {
+          chip.style.cssText = "display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:20px;border:1px solid rgba(255,255,255,.08);font-size:11px;color:rgba(255,255,255,.3);text-decoration:none;cursor:default;background:rgba(255,255,255,.02);";
+          chip.innerHTML = `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>${escSetting(att.filename)} <span style="opacity:.5">— wygasł</span>`;
+        } else {
+          chip.style.cssText = "display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:20px;border:1px solid rgba(255,255,255,.15);font-size:11px;color:rgba(255,255,255,.7);text-decoration:none;cursor:pointer;background:rgba(255,255,255,.04);";
+          const icon = isImage
+            ? `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>`
+            : `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>`;
+          chip.innerHTML = `${icon}${escSetting(att.filename)} <span style="opacity:.45">${att.mime_type.split("/")[1] || ""}</span>`;
+          chip.addEventListener("click", async (e) => {
+            e.preventDefault();
+            try {
+              chip.style.opacity = "0.5";
+              const res = await adminFetch(`/attachments/download?id=${encodeURIComponent(att.id)}`);
+              chip.style.opacity = "";
+              if (!res.ok) { showToast("Błąd pobierania.", "error"); return; }
+              const blob = await res.blob();
+              const url = URL.createObjectURL(blob);
+              if (isImage) {
+                showAttachmentPreview(url, att.filename);
+              } else if (isPdf) {
+                window.open(url, "_blank");
+                setTimeout(() => URL.revokeObjectURL(url), 60000);
+              } else {
+                const a2 = document.createElement("a");
+                a2.href = url; a2.download = att.filename; a2.click();
+                setTimeout(() => URL.revokeObjectURL(url), 10000);
+              }
+            } catch { chip.style.opacity = ""; showToast("Błąd pobierania.", "error"); }
+          });
+        }
+        attList.appendChild(chip);
+      }
+      el.appendChild(attList);
+    }
+
     msgs.appendChild(el);
   }
   if (!messages.length) {
@@ -2292,9 +2353,14 @@ async function toggleReportStatus(reportId, currentStatus) {
   }
 }
 
+let _composePrevActiveId   = null;
+let _composePrevIsReport   = false;
+
 function showCompose(defaults = {}) {
   const conv = document.getElementById("mailConv");
   if (!conv) return;
+  _composePrevActiveId = msgActiveId;
+  _composePrevIsReport = msgActiveFolder === "reports";
   msgActiveId = null;
   document.querySelectorAll(".mail-thread-item").forEach(el => el.classList.remove("active"));
 
@@ -2309,7 +2375,10 @@ function showCompose(defaults = {}) {
 
   conv.innerHTML = `
     <div class="mail-compose-pane" id="composePaneInner">
-      <div style="font-size:14px;font-weight:700;margin-bottom:6px">${t("settings.reports.compose.title") || "Napisz nową wiadomość"}</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+        <div style="font-size:14px;font-weight:700">${t("settings.reports.compose.title") || "Napisz nową wiadomość"}</div>
+        <button id="btnComposeClose" type="button" title="Zamknij" style="background:none;border:none;cursor:pointer;padding:4px;color:rgba(255,255,255,.4);line-height:1;font-size:18px;border-radius:4px" onmouseover="this.style.color='rgba(255,255,255,.8)'" onmouseout="this.style.color='rgba(255,255,255,.4)'">✕</button>
+      </div>
       <div class="field">
         <label class="field-label">${t("settings.reports.compose.to") || "Do (e-mail)"}</label>
         <input class="inp" id="composeToInput" type="email" autocomplete="off" style="width:100%;box-sizing:border-box" value="${escSetting(defaults.to || "")}">
@@ -2327,7 +2396,11 @@ function showCompose(defaults = {}) {
           Załączniki
           <span style="opacity:.4;font-size:10px">maks. 10 MB</span>
         </label>
-        <input type="file" id="composeAttachmentInput" multiple style="font-size:12px;opacity:.7">
+        <input type="file" id="composeAttachmentInput" multiple style="display:none">
+        <label for="composeAttachmentInput" style="display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:6px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.05);font-size:12px;color:rgba(255,255,255,.6);cursor:pointer;user-select:none">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
+          Wybierz pliki
+        </label>
         <div id="composeAttachmentList" style="display:flex;flex-wrap:wrap;gap:5px;margin-top:6px"></div>
       </div>
       ${hasQuote ? `<label style="display:flex;align-items:center;gap:7px;font-size:12px;opacity:.55;cursor:pointer;margin-top:8px;user-select:none"><input type="checkbox" id="composeQuoteToggle" checked style="accent-color:#ffeaa6"> Dołącz cytat</label>` : ""}
@@ -2341,10 +2414,46 @@ function showCompose(defaults = {}) {
     </div>`;
   document.getElementById("btnComposeSend")?.addEventListener("click", sendCompose);
 
+  document.getElementById("btnComposeClose")?.addEventListener("click", async () => {
+    const hasData = (document.getElementById("composeToInput")?.value || "").trim()
+      || (document.getElementById("composeSubjectInput")?.value || "").trim()
+      || (document.getElementById("composeMessageArea")?.value || "").trim();
+    if (hasData) {
+      const ok = await confirmModal({ text: "Wprowadzone dane zostaną utracone. Zrezygnować?" });
+      if (!ok) return;
+    }
+    closeCompose();
+  });
+
+  document.getElementById("composeAttachmentInput")?.addEventListener("change", (e) => {
+    const list = document.getElementById("composeAttachmentList");
+    if (!list) return;
+    list.innerHTML = Array.from(e.target.files || []).map(f =>
+      `<span style="display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:10px;border:1px solid rgba(255,255,255,.12);font-size:11px;color:rgba(255,255,255,.6)">${escSetting(f.name)}</span>`
+    ).join("");
+  });
+
   document.getElementById("composeQuoteToggle")?.addEventListener("change", (e) => {
     const block = document.getElementById("composeQuoteBlock");
     if (block) block.style.display = e.target.checked ? "" : "none";
   });
+}
+
+function closeCompose() {
+  if (_composePrevActiveId) {
+    if (_composePrevIsReport) {
+      openReport(_composePrevActiveId);
+    } else {
+      openMessage(_composePrevActiveId);
+    }
+  } else {
+    const conv = document.getElementById("mailConv");
+    if (!conv) return;
+    conv.innerHTML = `<div class="mail-conv-placeholder"><div style="font-size:48px;margin-bottom:12px;opacity:.3">✉</div><div style="opacity:.4;font-size:13px">${t("settings.reports.selectMsg") || "Wybierz wątek"}</div></div>`;
+    msgActiveId = null;
+  }
+  _composePrevActiveId = null;
+  _composePrevIsReport = false;
 }
 
 async function sendCompose(defaults) {
@@ -2390,9 +2499,7 @@ async function sendCompose(defaults) {
     const json = await res.json();
     if (!json.ok) throw new Error(json.error);
     showToast(t("settings.reports.compose.sent") || "Wysłano.", "success");
-    const conv = document.getElementById("mailConv");
-    if (conv) conv.innerHTML = `<div class="mail-conv-placeholder"><div style="font-size:48px;margin-bottom:12px;opacity:.3">✉</div><div style="opacity:.4;font-size:13px">${t("settings.reports.selectMsg") || "Wybierz wątek"}</div></div>`;
-    msgActiveId = null;
+    closeCompose();
     await loadMailFolder({ silent: true });
   } catch (err) {
     if (status) status.textContent = "";
