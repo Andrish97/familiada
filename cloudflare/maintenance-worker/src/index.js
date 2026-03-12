@@ -747,11 +747,10 @@ async function handleAdminMarketplaceApi(request, env, url) {
   if (url.pathname === "/_admin_api/marketplace/notify-test") {
     if (request.method !== "POST") return new Response("Method Not Allowed", { status: 405 });
 
-    const topicRes = await supabaseRpc(env, "admin_config_get", { p_key: "ntfy_topic" });
-    const topic = topicRes.ok ? String(normalizeRpcValue(topicRes.data) ?? "").trim() : "";
-    if (!topic) return json({ ok: false, error: "ntfy_topic_not_configured" }, 422);
+    const tg = getTelegramConfig(env);
+    if (!tg) return json({ ok: false, error: "telegram_not_configured" }, 422);
 
-    return sendNtfy(topic, "Test — Familiada admin", "Powiadomienia push działają poprawnie ✅");
+    return sendTelegram(tg, "Test — Familiada admin\nPowiadomienia push działają poprawnie ✅");
   }
 
   return new Response("Not Found", { status: 404 });
@@ -839,21 +838,20 @@ async function handleContactSubmit(request, env) {
     console.error("[worker] contact: mail_queue insert failed:", err);
   }
 
-  // Notify admin via ntfy (best-effort, rate-limited like marketplace)
+  // Notify admin via Telegram (best-effort, rate-limited)
   try {
-    const topicRes = await supabaseRpc(env, "admin_config_get", { p_key: "ntfy_topic" });
-    const topic = topicRes.ok ? String(normalizeRpcValue(topicRes.data) ?? "").trim() : "";
-    if (topic) {
-      const ntfyKey = "notify_contact_ts";
-      const last = await env.MAINT_KV.get(ntfyKey);
+    const tg = getTelegramConfig(env);
+    if (tg) {
+      const tgKey = "notify_contact_ts";
+      const last = await env.MAINT_KV.get(tgKey);
       const now = Date.now();
       if (!last || now - Number(last) >= 5 * 60 * 1000) {
-        await env.MAINT_KV.put(ntfyKey, String(now), { expirationTtl: 600 });
-        await sendNtfy(topic, "Familiada — zgłoszenie", `Nowe zgłoszenie kontaktowe #${ticket}`);
+        await env.MAINT_KV.put(tgKey, String(now), { expirationTtl: 600 });
+        await sendTelegram(tg, `📬 Familiada — nowe zgłoszenie\n#${ticket}`);
       }
     }
   } catch (err) {
-    console.error("[worker] contact: ntfy notify failed:", err);
+    console.error("[worker] contact: telegram notify failed:", err);
   }
 
   return json({ ok: true, ticket_number: ticket });
@@ -1611,18 +1609,17 @@ async function handleInboundEmail(message, env) {
   const row = Array.isArray(rpc.data) && rpc.data.length ? rpc.data[0] : normalizeRpcValue(rpc.data);
   const savedTicket = row?.ticket_number || null;
 
-  // Notify admin via ntfy (best-effort, rate-limited)
+  // Notify admin via Telegram (best-effort, rate-limited)
   try {
-    const topicRes = await supabaseRpc(env, "admin_config_get", { p_key: "ntfy_topic" });
-    const topic = topicRes.ok ? String(normalizeRpcValue(topicRes.data) ?? "").trim() : "";
-    if (topic) {
-      const ntfyKey = "notify_contact_ts";
-      const last = await env.MAINT_KV.get(ntfyKey);
+    const tg = getTelegramConfig(env);
+    if (tg) {
+      const tgKey = "notify_contact_ts";
+      const last = await env.MAINT_KV.get(tgKey);
       const now = Date.now();
       if (!last || now - Number(last) >= 5 * 60 * 1000) {
-        await env.MAINT_KV.put(ntfyKey, String(now), { expirationTtl: 600 });
+        await env.MAINT_KV.put(tgKey, String(now), { expirationTtl: 600 });
         const label = savedTicket ? `#${savedTicket}` : "(nowe)";
-        await sendNtfy(topic, "Familiada — email", `Nowa wiadomość ${label} od ${from}`);
+        await sendTelegram(tg, `📧 Familiada — nowy email\nWiadomość ${label} od ${from}`);
       }
     }
   } catch {}
@@ -1758,16 +1755,23 @@ async function downloadFromStorage(env, bucketPath) {
 // NTFY HELPER
 // ============================================================
 
-async function sendNtfy(topic, title, message, priority = 3) {
+function getTelegramConfig(env) {
+  const token  = String(env.TELEGRAM_BOT_TOKEN || "").trim();
+  const chatId = String(env.TELEGRAM_CHAT_ID   || "").trim();
+  if (!token || !chatId) return null;
+  return { token, chatId };
+}
+
+async function sendTelegram({ token, chatId }, text) {
   try {
-    const res = await fetch(`https://ntfy.sh/${encodeURIComponent(topic)}`, {
+    const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title, message, priority }),
+      body: JSON.stringify({ chat_id: chatId, text, parse_mode: "HTML" }),
     });
     if (!res.ok) {
       const body = await res.text().catch(() => "");
-      return json({ ok: false, error: `ntfy_http_${res.status}`, detail: body.slice(0, 200) });
+      return json({ ok: false, error: `telegram_http_${res.status}`, detail: body.slice(0, 200) });
     }
     return json({ ok: true });
   } catch (err) {
@@ -1784,12 +1788,11 @@ async function handleNotifySubmission(env) {
     return json({ ok: true });
   }
 
-  const topicRes = await supabaseRpc(env, "admin_config_get", { p_key: "ntfy_topic" });
-  const topic = topicRes.ok ? String(normalizeRpcValue(topicRes.data) ?? "").trim() : "";
-  if (!topic) return json({ ok: true });
+  const tg = getTelegramConfig(env);
+  if (!tg) return json({ ok: true });
 
   await env.MAINT_KV.put(key, String(now), { expirationTtl: 600 });
-  return sendNtfy(topic, "Familiada — marketplace", "Nowa gra czeka na zatwierdzenie 🎮");
+  return sendTelegram(tg, "🎮 Familiada — marketplace\nNowa gra czeka na zatwierdzenie");
 }
 
 
@@ -1799,26 +1802,11 @@ async function handleNotifySubmission(env) {
 
 async function handleAdminConfigApi(request, env, url) {
 
-  // GET /_admin_api/config/ntfy — pobierz aktualny topic
-  if (url.pathname === "/_admin_api/config/ntfy" && request.method === "GET") {
-    const res = await supabaseRpc(env, "admin_config_get", { p_key: "ntfy_topic" });
-    const topic = normalizeRpcValue(res.data) ?? "";
-    return json({ ok: true, topic: String(topic) });
-  }
-
-  // POST /_admin_api/config/ntfy { topic } — zapisz topic
-  if (url.pathname === "/_admin_api/config/ntfy" && request.method === "POST") {
-    let body;
-    try { body = await request.json(); } catch { return json({ ok: false, error: "invalid_json" }, 400); }
-    const topic = String(body?.topic ?? "").trim();
-
-    const res = await supabaseRpc(env, "admin_config_set", {
-      p_key:   "ntfy_topic",
-      p_value: topic,
-      p_note:  "ntfy.sh push notification topic",
-    });
-    if (!res.ok) return json({ ok: false, error: summarizeSupabaseError(res) }, 500);
-    return json({ ok: true, topic });
+  // POST /_admin_api/config/telegram/test — test push
+  if (url.pathname === "/_admin_api/config/telegram/test" && request.method === "POST") {
+    const tg = getTelegramConfig(env);
+    if (!tg) return json({ ok: false, error: "telegram_not_configured" }, 422);
+    return sendTelegram(tg, "✅ Familiada — test powiadomień Telegram\nPowiadomienia push działają poprawnie!");
   }
 
   return new Response("Not Found", { status: 404 });
