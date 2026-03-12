@@ -638,6 +638,28 @@ async function handleAdminMarketplaceApi(request, env, url) {
     });
   }
 
+  // POST /_admin_api/marketplace/sync-gh-cleanup { slugs: string[] }
+  // Usuwa z DB gry GH których nie ma już w aktualnym index.json
+  if (url.pathname === "/_admin_api/marketplace/sync-gh-cleanup") {
+    if (request.method !== "POST") return new Response("Method Not Allowed", { status: 405 });
+    let body = {};
+    try { body = await request.json(); } catch { return json({ ok: false, error: "invalid_json" }, 400); }
+    const slugs = body?.slugs;
+    if (!Array.isArray(slugs)) return json({ ok: false, error: "missing_slugs" }, 400);
+
+    console.log("[worker] sync-gh-cleanup valid slugs:", slugs.length);
+    const result = await supabaseRpc(env, "market_admin_sync_cleanup", { p_slugs: slugs });
+    if (!result.ok) {
+      console.error("[worker] sync-gh-cleanup failed:", result);
+      return json({ ok: false, error: summarizeSupabaseError(result) }, 502);
+    }
+    const row = normalizeRpcValue(result.data);
+    const deleted = row?.deleted ?? 0;
+    const removedSlugs = row?.slugs ?? [];
+    console.log("[worker] sync-gh-cleanup deleted:", deleted, removedSlugs);
+    return json({ ok: true, deleted, slugs: removedSlugs });
+  }
+
   // POST /_admin_api/marketplace/withdraw { id }
   // Wymusza status = withdrawn na opublikowanej grze
   if (url.pathname === "/_admin_api/marketplace/withdraw") {
@@ -666,7 +688,7 @@ async function handleAdminMarketplaceApi(request, env, url) {
     if (!id) return json({ ok: false, error: "missing_id" }, 400);
 
     console.log("[worker] marketplace delete id:", id);
-    const result = await supabaseRpc(env, "market_admin_delete", { p_id: id });
+    const result = await supabaseRpc(env, "market_admin_delete", { p_id: id, p_force: true });
     if (!result.ok || !result.data?.[0]?.ok) {
       console.error("[worker] marketplace delete failed:", result);
       return json({ ok: false, error: result.data?.[0]?.err || result.error || "delete_failed" }, 422);
