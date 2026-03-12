@@ -105,14 +105,15 @@ async function writeLog(entry: {
 }
 
 // Providers (same jak w send-mail, skrócone)
-async function sendViaSendgrid(to: string, subject: string, html: string) {
+async function sendViaSendgrid(to: string, subject: string, html: string, fromEmail?: string) {
   if (!SENDGRID_KEY) throw new Error("missing_SENDGRID_API_KEY");
+  const from = fromEmail || FROM_EMAIL;
   const res = await fetch("https://api.sendgrid.com/v3/mail/send", {
     method: "POST",
     headers: { Authorization: `Bearer ${SENDGRID_KEY}`, "Content-Type": "application/json" },
     body: JSON.stringify({
       personalizations: [{ to: [{ email: to }] }],
-      from: { email: FROM_EMAIL, name: FROM_NAME },
+      from: { email: from, name: FROM_NAME },
       subject,
       content: [{ type: "text/html", value: html }],
       tracking_settings: { click_tracking: { enable: false, enable_text: false }, open_tracking: { enable: false } },
@@ -120,23 +121,25 @@ async function sendViaSendgrid(to: string, subject: string, html: string) {
   });
   if (!res.ok) throw new Error(`sendgrid_failed:${await res.text().catch(() => "")}`);
 }
-async function sendViaBrevo(to: string, subject: string, html: string) {
+async function sendViaBrevo(to: string, subject: string, html: string, fromEmail?: string) {
   if (!BREVO_KEY) throw new Error("missing_BREVO_API_KEY");
+  const from = fromEmail || FROM_EMAIL;
   const res = await fetch("https://api.brevo.com/v3/smtp/email", {
     method: "POST",
     headers: { "api-key": BREVO_KEY, "Content-Type": "application/json", Accept: "application/json" },
-    body: JSON.stringify({ sender: { email: FROM_EMAIL, name: FROM_NAME }, to: [{ email: to }], subject, htmlContent: html }),
+    body: JSON.stringify({ sender: { email: from, name: FROM_NAME }, to: [{ email: to }], subject, htmlContent: html }),
   });
   if (!res.ok) throw new Error(`brevo_failed:${await res.text().catch(() => "")}`);
 }
-async function sendViaMailgun(to: string, subject: string, html: string) {
+async function sendViaMailgun(to: string, subject: string, html: string, fromEmail?: string) {
   if (!MAILGUN_KEY) throw new Error("missing_MAILGUN_API_KEY");
   if (!MAILGUN_DOMAIN) throw new Error("missing_MAILGUN_DOMAIN");
+  const from = fromEmail || FROM_EMAIL;
   const base = MAILGUN_REGION === "eu" ? "https://api.eu.mailgun.net" : "https://api.mailgun.net";
   const url = `${base}/v3/${MAILGUN_DOMAIN}/messages`;
 
   const form = new FormData();
-  form.append("from", `${FROM_NAME} <${FROM_EMAIL}>`);
+  form.append("from", `${FROM_NAME} <${from}>`);
   form.append("to", to);
   form.append("subject", subject);
   form.append("html", html);
@@ -145,13 +148,13 @@ async function sendViaMailgun(to: string, subject: string, html: string) {
   if (!res.ok) throw new Error(`mailgun_failed:${await res.text().catch(() => "")}`);
 }
 
-async function sendWithFallbacks(to: string, subject: string, html: string, order: Provider[]) {
+async function sendWithFallbacks(to: string, subject: string, html: string, order: Provider[], fromEmail?: string) {
   const errs: string[] = [];
   for (const p of order) {
     try {
-      if (p === "sendgrid") { await sendViaSendgrid(to, subject, html); return p; }
-      if (p === "brevo") { await sendViaBrevo(to, subject, html); return p; }
-      await sendViaMailgun(to, subject, html); return p;
+      if (p === "sendgrid") { await sendViaSendgrid(to, subject, html, fromEmail); return p; }
+      if (p === "brevo") { await sendViaBrevo(to, subject, html, fromEmail); return p; }
+      await sendViaMailgun(to, subject, html, fromEmail); return p;
     } catch (e) {
       errs.push(`${p}:${String((e as any)?.message || e)}`);
     }
@@ -237,7 +240,7 @@ serve(async (req) => {
     const r = rows[i];
     try {
       console.log("[mail-worker] queue:item_start", { id: r.id, to: scrubEmail(r.to_email), subjectLen: String(r.subject || "").length });
-      const provider = await sendWithFallbacks(r.to_email, r.subject, r.html, order);
+      const provider = await sendWithFallbacks(r.to_email, r.subject, r.html, order, r.from_email || undefined);
       const { error: markOkError } = await sbAdmin.rpc("mail_queue_mark", { p_id: r.id, p_ok: true, p_provider: provider, p_error: "" });
       if (markOkError) {
         console.error("[mail-worker] queue:mark_sent_failed", { id: r.id, error: markOkError });
