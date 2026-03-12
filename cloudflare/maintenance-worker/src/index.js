@@ -763,7 +763,7 @@ async function handleContactSubmit(request, env) {
   try { body = await request.json(); } catch { return json({ ok: false, error: "invalid_json" }, 400); }
   if (!body || typeof body !== "object") return json({ ok: false, error: "invalid_body" }, 400);
 
-  const { email, subject, message, lang = "pl" } = body;
+  const { email, subject, message, lang = "pl", attachments: formAttachments = [] } = body;
 
   const rpc = await supabaseRpc(env, "save_form_message", {
     p_email:   String(email   || "").trim().toLowerCase(),
@@ -784,7 +784,31 @@ async function handleContactSubmit(request, env) {
   }
 
   const ticket = row.ticket_number;
+  const msgId = row.message_id;
   const safeLang = ["pl","en","uk"].includes(lang) ? lang : "pl";
+
+  // Save form attachments
+  if (msgId && Array.isArray(formAttachments) && formAttachments.length) {
+    for (const att of formAttachments.slice(0, 5)) {
+      try {
+        const filename = String(att.filename || "file").replace(/[^\w.\-]/g, "_").slice(0, 100);
+        const mimeType = String(att.mime_type || "application/octet-stream");
+        const data_b64 = String(att.data_b64 || "");
+        if (!data_b64) continue;
+        const size = Math.round(data_b64.length * 0.75);
+        if (size > 5 * 1024 * 1024) continue;
+        const objectKey = `form_${msgId}_${filename}`;
+        const storagePath = `message-attachments/${objectKey}`;
+        await uploadToStorage(env, storagePath, data_b64, mimeType);
+        await supabaseRpc(env, "save_attachment", {
+          p_message_id: msgId, p_filename: filename, p_mime_type: mimeType,
+          p_size: size, p_storage_path: storagePath, p_inline: false,
+        });
+      } catch (err) {
+        console.error("[contact] attachment upload failed:", err);
+      }
+    }
+  }
 
   // Send confirmation email
   try {

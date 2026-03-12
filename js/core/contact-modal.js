@@ -25,6 +25,11 @@ function buildModalHtml() {
             <label class="field-label" id="cModalMessageLabel"></label>
             <textarea class="inp" id="cModalMessage" rows="7" style="width:100%;box-sizing:border-box;resize:vertical"></textarea>
           </div>
+          <div class="field" style="margin-top:10px">
+            <label class="field-label" id="cModalAttachLabel"></label>
+            <input type="file" id="cModalAttachments" multiple accept="image/*,.pdf,.doc,.docx,.txt,.zip" style="width:100%;font-size:12px;color:rgba(255,255,255,.6);background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.12);border-radius:6px;padding:6px 8px;box-sizing:border-box;cursor:pointer;"/>
+            <div style="font-size:11px;opacity:.4;margin-top:3px" id="cModalAttachHint"></div>
+          </div>
           <div id="cModalError" style="margin-top:8px;font-size:13px;color:#ff6b6b;display:none"></div>
           <div class="modal-actions" style="margin-top:14px">
             <button class="btn sm" id="cModalClose" type="button"></button>
@@ -50,6 +55,7 @@ function applyLabels() {
   set("cModalTicketLabel",  "contact.modal.ticket");
   set("cModalSubjectLabel", "contact.modal.subject");
   set("cModalMessageLabel", "contact.modal.message");
+  set("cModalAttachLabel",  "contact.modal.attachments");
   set("cModalClose",        "common.cancel");
   set("cModalSubmit",       "contact.modal.submit");
   set("cModalSuccessTitle", "contact.modal.successTitle");
@@ -147,18 +153,34 @@ async function submitContact() {
   if (errEl) { errEl.style.display = "none"; }
 
   try {
+    // Convert attachments to base64
+    const attachments = [];
+    const fileInput = document.getElementById("cModalAttachments");
+    if (fileInput?.files?.length) {
+      for (const file of Array.from(fileInput.files).slice(0, 5)) {
+        if (file.size > 5 * 1024 * 1024) continue;
+        const b64 = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result.split(",")[1]);
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+        attachments.push({ filename: file.name, mime_type: file.type || "application/octet-stream", data_b64: b64 });
+      }
+    }
+
     let res;
     if (ticket) {
       res = await fetch("/_api/contact/append", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, ticket, message, lang }),
+        body: JSON.stringify({ email, ticket, message, lang, attachments }),
       });
     } else {
       res = await fetch("/_api/contact", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, subject: subject || message.slice(0, 80), message, lang }),
+        body: JSON.stringify({ email, subject: subject || message.slice(0, 80), message, lang, attachments }),
       });
     }
 

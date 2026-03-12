@@ -59,6 +59,7 @@ const pl = {
       errEmail: "Podaj poprawny adres e-mail.",
       errMessage: "Wiadomość jest za krótka (min. 5 znaków).",
       errSubject: "Podaj temat.",
+      attachments: "Załączniki (opcjonalnie, maks. 5 plików, 5 MB każdy)",
     },
   },
   deviceGuard: {

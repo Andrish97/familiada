@@ -1829,7 +1829,7 @@ function renderMessageDetail(msg, attachments = []) {
     bodyEl.className = "mail-msg-body-html";
     const frame = document.createElement("iframe");
     frame.className = "mail-msg-html-frame";
-    frame.sandbox = "allow-same-origin allow-popups";
+    frame.sandbox = "allow-scripts allow-popups";
     frame.srcdoc = htmlSrc;
     frame.onload = () => { try { frame.style.height = (frame.contentDocument.documentElement.scrollHeight + 20) + "px"; } catch {} };
     bodyEl.appendChild(frame);
@@ -2023,7 +2023,7 @@ function renderReportThread(report, messages) {
       bodyEl.className = "mail-msg-body-html";
       const frame = document.createElement("iframe");
       frame.className = "mail-msg-html-frame";
-      frame.sandbox = "allow-same-origin allow-popups";
+      frame.sandbox = "allow-scripts allow-popups";
       frame.srcdoc = htmlSrc;
       frame.onload = () => { try { frame.style.height = (frame.contentDocument.documentElement.scrollHeight + 20) + "px"; } catch {} };
       bodyEl.appendChild(frame);
