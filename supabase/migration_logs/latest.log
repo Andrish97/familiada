@@ -1,79 +1,60 @@
-[2026-03-12T15:34:47Z] == DB migrations runner ==
-[2026-03-12T15:34:47Z] STAGING_DIR: /home/andrish97/.deploy/db-migrate/ccf973b11fc7e95540de25bd7072a46041c3f2f3
-[2026-03-12T15:34:47Z] MIG_DIR    : /home/andrish97/.deploy/db-migrate/ccf973b11fc7e95540de25bd7072a46041c3f2f3/migrations
-[2026-03-12T15:34:47Z] OUT_DIR    : /home/andrish97/.deploy/db-migrate/ccf973b11fc7e95540de25bd7072a46041c3f2f3/out
-[2026-03-12T15:34:47Z] 
-[2026-03-12T15:34:47Z] == Ensure public.schema_migrations ==
+[2026-03-12T16:21:32Z] == DB migrations runner ==
+[2026-03-12T16:21:32Z] STAGING_DIR: /home/andrish97/.deploy/db-migrate/d358082a29d7e760cfc607e34a3d0084a583a36a
+[2026-03-12T16:21:32Z] MIG_DIR    : /home/andrish97/.deploy/db-migrate/d358082a29d7e760cfc607e34a3d0084a583a36a/migrations
+[2026-03-12T16:21:32Z] OUT_DIR    : /home/andrish97/.deploy/db-migrate/d358082a29d7e760cfc607e34a3d0084a583a36a/out
+[2026-03-12T16:21:32Z] 
+[2026-03-12T16:21:32Z] == Ensure public.schema_migrations ==
 NOTICE:  relation "schema_migrations" already exists, skipping
 CREATE TABLE
-[2026-03-12T15:34:47Z] OK
-[2026-03-12T15:34:47Z] 
-[2026-03-12T15:34:47Z] Existing public tables (excluding schema_migrations): 35
-[2026-03-12T15:34:47Z] Applied migrations in tracking table: 30
-[2026-03-12T15:34:47Z] 
+[2026-03-12T16:21:32Z] OK
+[2026-03-12T16:21:32Z] 
+[2026-03-12T16:21:33Z] Existing public tables (excluding schema_migrations): 37
+[2026-03-12T16:21:33Z] Applied migrations in tracking table: 31
+[2026-03-12T16:21:33Z] 
 /home/andrish97/supabase-selfhost/supabase/scripts/apply-migrations.sh: line 94: SUPERSEDES_MAP: unbound variable
-[2026-03-12T15:34:47Z] == Apply migrations (sorted) ==
-[2026-03-12T15:34:47Z] SKIP  2026-03-01_000_baseline.sql (already applied)
-[2026-03-12T15:34:47Z] SKIP  2026-03-01_010_example_add_table.sql (already applied)
-[2026-03-12T15:34:47Z] SKIP  2026-03-01_020_rpc_example.sql (already applied)
-[2026-03-12T15:34:48Z] SKIP  2026-03-05_030_cancel_my_email_change.sql (already applied)
-[2026-03-12T15:34:48Z] SKIP  2026-03-09_040_demo_in_db.sql (already applied)
-[2026-03-12T15:34:48Z] SKIP  2026-03-09_041_fix_demo_logo_active.sql (already applied)
-[2026-03-12T15:34:48Z] SKIP  2026-03-10_042_fix_restore_demo_old_logos.sql (already applied)
-[2026-03-12T15:34:48Z] SKIP  2026-03-10_043_drop_user_flags_demo.sql (already applied)
-[2026-03-12T15:34:48Z] SKIP  2026-03-10_044_marketplace.sql (already applied)
-[2026-03-12T15:34:48Z] SKIP  2026-03-10_045_market_admin_actions.sql (already applied)
-[2026-03-12T15:34:48Z] SKIP  2026-03-10_046_market_submit_require_playable.sql (already applied)
-[2026-03-12T15:34:48Z] SKIP  2026-03-11_047_market_games_as_library.sql (already applied)
-[2026-03-12T15:34:48Z] SKIP  2026-03-11_048_backfill_and_notifications.sql (already applied)
-[2026-03-12T15:34:48Z] SKIP  2026-03-11_049_market_per_user_games.sql (already applied)
-[2026-03-12T15:34:49Z] SKIP  2026-03-11_050_fix_market_my_library.sql (already applied)
-[2026-03-12T15:34:49Z] SKIP  2026-03-11_051_fix_add_to_library_conflict.sql (already applied)
-[2026-03-12T15:34:49Z] SKIP  2026-03-11_052_backfill_missing_market_games.sql (already applied)
-[2026-03-12T15:34:49Z] SKIP  2026-03-11_053_library_game_copy_robust.sql (already applied)
-[2026-03-12T15:34:49Z] SKIP  2026-03-11_054_game_type_market.sql (already applied)
-[2026-03-12T15:34:49Z] SKIP  2026-03-11_055_game_type_market_backfill.sql (already applied)
-[2026-03-12T15:34:49Z] SKIP  2026-03-11_056_market_cleanup_rejected.sql (already applied)
-[2026-03-12T15:34:49Z] SKIP  2026-03-11_057_fix_gen_share_key_security.sql (already applied)
-[2026-03-12T15:34:49Z] SKIP  2026-03-12_058_market_admin_delete_force.sql (already applied)
-[2026-03-12T15:34:49Z] SKIP  2026-03-12_059_market_sync_cleanup.sql (already applied)
-[2026-03-12T15:34:49Z] SKIP  2026-03-12_060_contact_reports.sql (already applied)
-[2026-03-12T15:34:50Z] SKIP  2026-03-12_061_contact_reports_rate_limit.sql (already applied)
-[2026-03-12T15:34:50Z] SKIP  2026-03-12_062_contact_report_messages.sql (already applied)
-[2026-03-12T15:34:50Z] SKIP  2026-03-12_063_mail_queue_from_email.sql (already applied)
-[2026-03-12T15:34:50Z] SKIP  2026-03-12_064_contact_move_message.sql (already applied)
-[2026-03-12T15:34:50Z] SKIP  2026-03-12_065_contact_report_messages_html.sql (already applied)
-[2026-03-12T15:34:50Z] APPLY 2026-03-12_066_unified_messages.sql
+[2026-03-12T16:21:33Z] == Apply migrations (sorted) ==
+[2026-03-12T16:21:33Z] SKIP  2026-03-01_000_baseline.sql (already applied)
+[2026-03-12T16:21:33Z] SKIP  2026-03-01_010_example_add_table.sql (already applied)
+[2026-03-12T16:21:33Z] SKIP  2026-03-01_020_rpc_example.sql (already applied)
+[2026-03-12T16:21:33Z] SKIP  2026-03-05_030_cancel_my_email_change.sql (already applied)
+[2026-03-12T16:21:33Z] SKIP  2026-03-09_040_demo_in_db.sql (already applied)
+[2026-03-12T16:21:33Z] SKIP  2026-03-09_041_fix_demo_logo_active.sql (already applied)
+[2026-03-12T16:21:33Z] SKIP  2026-03-10_042_fix_restore_demo_old_logos.sql (already applied)
+[2026-03-12T16:21:33Z] SKIP  2026-03-10_043_drop_user_flags_demo.sql (already applied)
+[2026-03-12T16:21:33Z] SKIP  2026-03-10_044_marketplace.sql (already applied)
+[2026-03-12T16:21:33Z] SKIP  2026-03-10_045_market_admin_actions.sql (already applied)
+[2026-03-12T16:21:34Z] SKIP  2026-03-10_046_market_submit_require_playable.sql (already applied)
+[2026-03-12T16:21:34Z] SKIP  2026-03-11_047_market_games_as_library.sql (already applied)
+[2026-03-12T16:21:34Z] SKIP  2026-03-11_048_backfill_and_notifications.sql (already applied)
+[2026-03-12T16:21:34Z] SKIP  2026-03-11_049_market_per_user_games.sql (already applied)
+[2026-03-12T16:21:34Z] SKIP  2026-03-11_050_fix_market_my_library.sql (already applied)
+[2026-03-12T16:21:34Z] SKIP  2026-03-11_051_fix_add_to_library_conflict.sql (already applied)
+[2026-03-12T16:21:34Z] SKIP  2026-03-11_052_backfill_missing_market_games.sql (already applied)
+[2026-03-12T16:21:34Z] SKIP  2026-03-11_053_library_game_copy_robust.sql (already applied)
+[2026-03-12T16:21:34Z] SKIP  2026-03-11_054_game_type_market.sql (already applied)
+[2026-03-12T16:21:34Z] SKIP  2026-03-11_055_game_type_market_backfill.sql (already applied)
+[2026-03-12T16:21:34Z] SKIP  2026-03-11_056_market_cleanup_rejected.sql (already applied)
+[2026-03-12T16:21:34Z] SKIP  2026-03-11_057_fix_gen_share_key_security.sql (already applied)
+[2026-03-12T16:21:35Z] SKIP  2026-03-12_058_market_admin_delete_force.sql (already applied)
+[2026-03-12T16:21:35Z] SKIP  2026-03-12_059_market_sync_cleanup.sql (already applied)
+[2026-03-12T16:21:35Z] SKIP  2026-03-12_060_contact_reports.sql (already applied)
+[2026-03-12T16:21:35Z] SKIP  2026-03-12_061_contact_reports_rate_limit.sql (already applied)
+[2026-03-12T16:21:35Z] SKIP  2026-03-12_062_contact_report_messages.sql (already applied)
+[2026-03-12T16:21:35Z] SKIP  2026-03-12_063_mail_queue_from_email.sql (already applied)
+[2026-03-12T16:21:35Z] SKIP  2026-03-12_064_contact_move_message.sql (already applied)
+[2026-03-12T16:21:35Z] SKIP  2026-03-12_065_contact_report_messages_html.sql (already applied)
+[2026-03-12T16:21:35Z] SKIP  2026-03-12_066_unified_messages.sql (already applied)
+[2026-03-12T16:21:35Z] APPLY 2026-03-12_067_message_attachments.sql
 CREATE TABLE
-CREATE TABLE
-CREATE INDEX
-CREATE INDEX
-CREATE INDEX
-CREATE INDEX
 CREATE INDEX
 ALTER TABLE
-ALTER TABLE
 DO
-DO
-CREATE FUNCTION
-CREATE FUNCTION
-CREATE FUNCTION
-CREATE FUNCTION
-CREATE FUNCTION
-CREATE FUNCTION
-CREATE FUNCTION
-CREATE FUNCTION
-CREATE FUNCTION
-CREATE FUNCTION
-CREATE FUNCTION
-CREATE FUNCTION
-CREATE FUNCTION
 CREATE FUNCTION
 CREATE FUNCTION
 INSERT 0 1
-[2026-03-12T15:34:50Z] OK    2026-03-12_066_unified_messages.sql
-[2026-03-12T15:34:50Z] 
-[2026-03-12T15:34:50Z] == Dump schema.sql (schema-only) ==
-[2026-03-12T15:34:50Z] Wrote: /home/andrish97/.deploy/db-migrate/ccf973b11fc7e95540de25bd7072a46041c3f2f3/out/schema.sql (11676 lines)
-[2026-03-12T15:34:50Z] 
-[2026-03-12T15:34:50Z] DONE
+[2026-03-12T16:21:36Z] OK    2026-03-12_067_message_attachments.sql
+[2026-03-12T16:21:36Z] 
+[2026-03-12T16:21:36Z] == Dump schema.sql (schema-only) ==
+[2026-03-12T16:21:36Z] Wrote: /home/andrish97/.deploy/db-migrate/d358082a29d7e760cfc607e34a3d0084a583a36a/out/schema.sql (11765 lines)
+[2026-03-12T16:21:36Z] 
+[2026-03-12T16:21:36Z] DONE
