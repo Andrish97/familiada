@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict QRYeOIjq0ixgLDcyO8OcLfz2dLjOY9sUK1CtubchGLDVkxwNewmzuz6AnRtkXBf
+\restrict NfC08bkaJL3H4Bn9OLBRdPbegz1kylijAefdj0SZw8n7n7e3CVzFzkZSFLF7xV3
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -242,6 +242,47 @@ $$;
 
 
 --
+-- Name: admin_move_message("uuid", "text"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."admin_move_message"("p_message_id" "uuid", "p_target_ticket" "text") RETURNS TABLE("ok" boolean, "err" "text", "old_ticket" "text", "new_ticket" "text", "old_email" "text", "new_email" "text")
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+DECLARE
+  v_msg    public.contact_report_messages%ROWTYPE;
+  v_old    public.contact_reports%ROWTYPE;
+  v_new    public.contact_reports%ROWTYPE;
+BEGIN
+  SELECT * INTO v_msg FROM public.contact_report_messages WHERE id = p_message_id LIMIT 1;
+  IF NOT FOUND THEN
+    RETURN QUERY SELECT false, 'message_not_found'::text, null::text, null::text, null::text, null::text; RETURN;
+  END IF;
+
+  SELECT * INTO v_old FROM public.contact_reports WHERE id = v_msg.report_id LIMIT 1;
+  IF NOT FOUND THEN
+    RETURN QUERY SELECT false, 'source_ticket_not_found'::text, null::text, null::text, null::text, null::text; RETURN;
+  END IF;
+
+  SELECT * INTO v_new FROM public.contact_reports WHERE ticket_number = p_target_ticket LIMIT 1;
+  IF NOT FOUND THEN
+    RETURN QUERY SELECT false, 'target_ticket_not_found'::text, null::text, null::text, null::text, null::text; RETURN;
+  END IF;
+
+  IF v_old.id = v_new.id THEN
+    RETURN QUERY SELECT false, 'same_ticket'::text, null::text, null::text, null::text, null::text; RETURN;
+  END IF;
+
+  UPDATE public.contact_report_messages
+  SET report_id = v_new.id, moved_from_report_id = v_old.id
+  WHERE id = p_message_id;
+
+  RETURN QUERY SELECT true, null::text, v_old.ticket_number, v_new.ticket_number, v_old.email, v_new.email;
+END;
+$$;
+
+
+--
 -- Name: admin_update_contact_report("uuid", "text", "text"); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -272,6 +313,12 @@ begin
                       else replied_at
                     end
   where id = p_id;
+
+  -- log outbound message to thread
+  if p_reply_message is not null then
+    insert into public.contact_report_messages (report_id, direction, body, from_email)
+    values (p_id, 'outbound', p_reply_message, 'kontakt@familiada.online');
+  end if;
 
   return query select true, null::text;
 end;
@@ -1953,6 +2000,42 @@ end $$;
 
 
 --
+-- Name: find_report_and_append_message("text", "text", "text", "text"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."find_report_and_append_message"("p_ticket_number" "text", "p_direction" "text", "p_body" "text", "p_from_email" "text" DEFAULT NULL::"text") RETURNS TABLE("found" boolean, "report_id" "uuid", "report_email" "text", "report_lang" "text")
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+declare
+  v_report public.contact_reports%ROWTYPE;
+begin
+  select * into v_report
+  from public.contact_reports
+  where ticket_number = p_ticket_number
+  limit 1;
+
+  if not FOUND then
+    return query select false, null::uuid, null::text, null::text;
+    return;
+  end if;
+
+  insert into public.contact_report_messages (report_id, direction, body, from_email)
+  values (v_report.id, p_direction, p_body, p_from_email);
+
+  -- if user replied to a replied ticket, reopen it
+  if p_direction = 'inbound' and v_report.status = 'replied' then
+    update public.contact_reports
+    set status = 'open', updated_at = now()
+    where id = v_report.id;
+  end if;
+
+  return query select true, v_report.id, v_report.email, v_report.lang;
+end;
+$$;
+
+
+--
 -- Name: fsm_can_transition("public"."game_fsm_state", "public"."game_fsm_state"); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -2358,6 +2441,24 @@ begin
     'devices', to_jsonb(dv)
   );
 end $$;
+
+
+--
+-- Name: get_report_messages("uuid"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."get_report_messages"("p_report_id" "uuid") RETURNS TABLE("id" "uuid", "direction" "text", "body" "text", "from_email" "text", "created_at" timestamp with time zone)
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+begin
+  return query
+  select m.id, m.direction, m.body, m.from_email, m.created_at
+  from public.contact_report_messages m
+  where m.report_id = p_report_id
+  order by m.created_at asc;
+end;
+$$;
 
 
 --
@@ -3063,7 +3164,8 @@ CREATE TABLE "public"."mail_queue" (
     "provider_order" "text",
     "meta" "jsonb" DEFAULT '{}'::"jsonb" NOT NULL,
     "picked_at" timestamp with time zone,
-    "last_attempt_at" timestamp with time zone
+    "last_attempt_at" timestamp with time zone,
+    "from_email" "text"
 );
 
 
@@ -7871,12 +7973,10 @@ CREATE FUNCTION "public"."submit_contact_report"("p_email" "text", "p_subject" "
 declare
   v_ticket text;
   v_id     uuid;
-  v_email  text;
+  v_count  int;
 begin
-  v_email := lower(trim(p_email));
-
   -- validate email
-  if v_email = '' or v_email not like '%@%' then
+  if p_email is null or p_email not like '%@%' then
     return query select false, 'invalid_email'::text, null::text, null::uuid;
     return;
   end if;
@@ -7899,32 +7999,45 @@ begin
     return;
   end if;
 
-  -- rate limit: 1 zgłoszenie per email na 24h
-  if exists (
-    select 1 from public.contact_reports
-    where email = v_email
-      and created_at > now() - interval '24 hours'
-  ) then
-    return query select false, 'rate_limited_email'::text, null::text, null::uuid;
-    return;
-  end if;
+  -- rate limit: same email within 24h
+  if p_ip_address is null then
+    select count(*) into v_count
+    from public.contact_reports
+    where lower(trim(email)) = lower(trim(p_email))
+      and created_at > now() - interval '24 hours';
+    if v_count > 0 then
+      return query select false, 'rate_limited_email'::text, null::text, null::uuid;
+      return;
+    end if;
+  else
+    select count(*) into v_count
+    from public.contact_reports
+    where lower(trim(email)) = lower(trim(p_email))
+      and created_at > now() - interval '24 hours';
+    if v_count > 0 then
+      return query select false, 'rate_limited_email'::text, null::text, null::uuid;
+      return;
+    end if;
 
-  -- rate limit: 1 zgłoszenie per IP na 24h (jeśli IP podane)
-  if p_ip_address is not null and trim(p_ip_address) <> '' and exists (
-    select 1 from public.contact_reports
-    where ip_address = trim(p_ip_address)
-      and created_at > now() - interval '24 hours'
-  ) then
-    return query select false, 'rate_limited_ip'::text, null::text, null::uuid;
-    return;
+    select count(*) into v_count
+    from public.contact_reports
+    where ip_address = p_ip_address
+      and created_at > now() - interval '24 hours';
+    if v_count > 0 then
+      return query select false, 'rate_limited_ip'::text, null::text, null::uuid;
+      return;
+    end if;
   end if;
 
   v_ticket := public.gen_contact_ticket_number();
 
   insert into public.contact_reports (ticket_number, email, subject, message, lang, status, user_id, ip_address)
-  values (v_ticket, v_email, trim(p_subject), trim(p_message), p_lang, 'open', p_user_id,
-          nullif(trim(coalesce(p_ip_address, '')), ''))
+  values (v_ticket, lower(trim(p_email)), trim(p_subject), trim(p_message), p_lang, 'open', p_user_id, p_ip_address)
   returning contact_reports.id into v_id;
+
+  -- insert initial message into thread
+  insert into public.contact_report_messages (report_id, direction, body, from_email)
+  values (v_id, 'inbound', trim(p_message), lower(trim(p_email)));
 
   return query select true, null::text, v_ticket, v_id;
 end;
@@ -8209,6 +8322,22 @@ CREATE TABLE "public"."base_share_tasks" (
 );
 
 ALTER TABLE ONLY "public"."base_share_tasks" FORCE ROW LEVEL SECURITY;
+
+
+--
+-- Name: contact_report_messages; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE "public"."contact_report_messages" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "report_id" "uuid" NOT NULL,
+    "direction" "text" NOT NULL,
+    "body" "text" NOT NULL,
+    "from_email" "text",
+    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    "moved_from_report_id" "uuid",
+    CONSTRAINT "contact_report_messages_direction_check" CHECK (("direction" = ANY (ARRAY['inbound'::"text", 'outbound'::"text"])))
+);
 
 
 --
@@ -8778,6 +8907,14 @@ ALTER TABLE ONLY "public"."base_share_tasks"
 
 
 --
+-- Name: contact_report_messages contact_report_messages_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."contact_report_messages"
+    ADD CONSTRAINT "contact_report_messages_pkey" PRIMARY KEY ("id");
+
+
+--
 -- Name: contact_reports contact_reports_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -9130,6 +9267,13 @@ CREATE INDEX "base_share_tasks_status_created_idx" ON "public"."base_share_tasks
 --
 
 CREATE INDEX "base_share_tasks_token_idx" ON "public"."base_share_tasks" USING "btree" ("token");
+
+
+--
+-- Name: crm_report_id_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX "crm_report_id_idx" ON "public"."contact_report_messages" USING "btree" ("report_id", "created_at");
 
 
 --
@@ -9738,6 +9882,22 @@ ALTER TABLE ONLY "public"."base_share_tasks"
 
 
 --
+-- Name: contact_report_messages contact_report_messages_moved_from_report_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."contact_report_messages"
+    ADD CONSTRAINT "contact_report_messages_moved_from_report_id_fkey" FOREIGN KEY ("moved_from_report_id") REFERENCES "public"."contact_reports"("id") ON DELETE SET NULL;
+
+
+--
+-- Name: contact_report_messages contact_report_messages_report_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."contact_report_messages"
+    ADD CONSTRAINT "contact_report_messages_report_id_fkey" FOREIGN KEY ("report_id") REFERENCES "public"."contact_reports"("id") ON DELETE CASCADE;
+
+
+--
 -- Name: contact_reports contact_reports_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -10149,6 +10309,12 @@ CREATE POLICY "app_config_no_access" ON "public"."app_config" USING (false);
 --
 
 ALTER TABLE "public"."base_share_tasks" ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: contact_report_messages; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE "public"."contact_report_messages" ENABLE ROW LEVEL SECURITY;
 
 --
 -- Name: contact_reports; Type: ROW SECURITY; Schema: public; Owner: -
@@ -10983,5 +11149,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict QRYeOIjq0ixgLDcyO8OcLfz2dLjOY9sUK1CtubchGLDVkxwNewmzuz6AnRtkXBf
+\unrestrict NfC08bkaJL3H4Bn9OLBRdPbegz1kylijAefdj0SZw8n7n7e3CVzFzkZSFLF7xV3
 
