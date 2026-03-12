@@ -783,7 +783,7 @@ async function handleContactSubmit(request, env) {
         to_email: String(email || "").trim().toLowerCase(),
         subject: confirmSubject,
         html,
-        from_email: "kontakt@familiada.online",
+        from_email: "no-reply@familiada.online",
         meta: { type: "contact_confirmation", ticket },
       },
     });
@@ -850,7 +850,7 @@ async function handleContactAppend(request, env) {
     await supabaseRequest(env, "/rest/v1/mail_queue", {
       method: "POST",
       headers: { Prefer: "return=minimal" },
-      body: { to_email: String(email).trim().toLowerCase(), subject: confirmSubject, html, from_email: "kontakt@familiada.online", meta: { type: "contact_append", ticket } },
+      body: { to_email: String(email).trim().toLowerCase(), subject: confirmSubject, html, from_email: "no-reply@familiada.online", meta: { type: "contact_append", ticket } },
     });
   } catch (err) {
     console.error("[worker] contact/append: mail_queue failed:", err);
@@ -1238,7 +1238,7 @@ async function handleInboundEmail(message, env) {
         await supabaseRequest(env, "/rest/v1/mail_queue", {
           method: "POST",
           headers: { Prefer: "return=minimal" },
-          body: { to_email: from, subject: confirmSubject, html, from_email: "kontakt@familiada.online", meta: { type: "contact_thread_confirm", ticket: ticketNumber } },
+          body: { to_email: from, subject: confirmSubject, html, from_email: "no-reply@familiada.online", meta: { type: "contact_thread_confirm", ticket: ticketNumber } },
         });
       }
     }
@@ -1283,7 +1283,7 @@ async function handleInboundEmail(message, env) {
     await supabaseRequest(env, "/rest/v1/mail_queue", {
       method: "POST",
       headers: { Prefer: "return=minimal" },
-      body: { to_email: from, subject: confirmSubject, html, from_email: "kontakt@familiada.online", meta: { type: "contact_confirmation", ticket } },
+      body: { to_email: from, subject: confirmSubject, html, from_email: "no-reply@familiada.online", meta: { type: "contact_confirmation", ticket } },
     });
   } catch (err) {
     console.error("[email] confirmation queue failed:", err);
