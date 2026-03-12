@@ -253,6 +253,15 @@ async function handleAdminApi(request, env) {
     return handleAdminMarketplaceApi(request, env, url);
   }
 
+  if (url.pathname.startsWith("/_admin_api/messages") || url.pathname.startsWith("/_admin_api/cleanup/")) {
+    return handleAdminMessagesApi(request, env, url);
+  }
+
+  if (url.pathname === "/_admin_api/reports" || url.pathname === "/_admin_api/reports/status") {
+    return handleAdminMessagesApi(request, env, url);
+  }
+
+  // legacy reports endpoints — kept for backwards compatibility
   if (url.pathname.startsWith("/_admin_api/reports/")) {
     return handleAdminReportsApi(request, env, url);
   }
@@ -754,16 +763,13 @@ async function handleContactSubmit(request, env) {
   try { body = await request.json(); } catch { return json({ ok: false, error: "invalid_json" }, 400); }
   if (!body || typeof body !== "object") return json({ ok: false, error: "invalid_body" }, 400);
 
-  const { email, subject, message, lang = "pl", user_id } = body;
-  const ip = request.headers.get("CF-Connecting-IP") || request.headers.get("X-Forwarded-For") || null;
+  const { email, subject, message, lang = "pl" } = body;
 
-  const rpc = await supabaseRpc(env, "submit_contact_report", {
-    p_email:      String(email   || "").trim(),
-    p_subject:    String(subject || "").trim(),
-    p_message:    String(message || "").trim(),
-    p_lang:       String(lang    || "pl"),
-    p_user_id:    user_id || null,
-    p_ip_address: ip ? String(ip).split(",")[0].trim() : null,
+  const rpc = await supabaseRpc(env, "save_form_message", {
+    p_email:   String(email   || "").trim().toLowerCase(),
+    p_subject: String(subject || "").trim(),
+    p_body:    String(message || "").trim(),
+    p_lang:    String(lang    || "pl"),
   });
 
   if (!rpc.ok) {
@@ -773,7 +779,7 @@ async function handleContactSubmit(request, env) {
   const row = normalizeRpcValue(rpc.data);
   if (!row?.ok) {
     const err = row?.err || "submit_failed";
-    const status = (err === "rate_limited_email" || err === "rate_limited_ip") ? 429 : 422;
+    const status = err === "rate_limited_email" ? 429 : 422;
     return json({ ok: false, error: err }, status);
   }
 
@@ -835,42 +841,20 @@ async function handleContactAppend(request, env) {
   if (!ticket) return json({ ok: false, error: "missing_ticket" }, 422);
   if (!message || String(message).trim().length < 2) return json({ ok: false, error: "invalid_message" }, 422);
 
-  const rpc = await supabaseRpc(env, "find_report_and_append_message", {
-    p_ticket_number: String(ticket).trim(),
-    p_direction:     "inbound",
-    p_body:          String(message).trim().slice(0, 5000),
+  const ticketStr = String(ticket).trim();
+  const rpc = await supabaseRpc(env, "save_inbound_message", {
     p_from_email:    String(email).trim().toLowerCase(),
+    p_subject:       `Re: [${ticketStr}]`,
+    p_body:          String(message).trim().slice(0, 5000),
+    p_body_html:     null,
+    p_ticket_number: ticketStr,
   });
 
   if (!rpc.ok) return json({ ok: false, error: "rpc_failed" }, 500);
   const row = Array.isArray(rpc.data) && rpc.data.length ? rpc.data[0] : null;
-  if (!row?.found) return json({ ok: false, error: "ticket_not_found" }, 404);
+  if (!row?.report_id) return json({ ok: false, error: "ticket_not_found" }, 404);
 
-  try {
-    const safeLang = ["pl","en","uk"].includes(lang) ? lang : "pl";
-    const confirmTexts = {
-      pl: "Twoja wiadomość została dołączona do zgłoszenia.",
-      en: "Your message has been added to the ticket.",
-      uk: "Ваше повідомлення додано до звернення.",
-    };
-    const { subject: confirmSubject, html } = buildContactEmail({
-      type: "reply",
-      lang: safeLang,
-      ticket: String(ticket).trim(),
-      subject: "",
-      replyMessage: confirmTexts[safeLang],
-      originalMessage: null,
-    });
-    await supabaseRequest(env, "/rest/v1/mail_queue", {
-      method: "POST",
-      headers: { Prefer: "return=minimal" },
-      body: { to_email: String(email).trim().toLowerCase(), subject: confirmSubject, html, from_email: "no-reply@familiada.online", meta: { type: "contact_append", ticket } },
-    });
-  } catch (err) {
-    console.error("[worker] contact/append: mail_queue failed:", err);
-  }
-
-  return json({ ok: true, ticket_number: String(ticket).trim() });
+  return json({ ok: true, ticket_number: ticketStr });
 }
 
 // ============================================================
@@ -989,7 +973,195 @@ function buildContactEmail(opts) {
 }
 
 // ============================================================
-// REPORTS ADMIN API
+// MESSAGES + REPORTS ADMIN API (new unified system)
+// ============================================================
+
+async function handleAdminMessagesApi(request, env, url) {
+
+  // GET /_admin_api/messages?filter=inbox|sent|trash|<uuid>&limit=50&offset=0
+  if (url.pathname === "/_admin_api/messages" && request.method === "GET") {
+    const filter = String(url.searchParams.get("filter") || "inbox");
+    const limit  = clampInt(url.searchParams.get("limit"),  1, 200, 50);
+    const offset = clampInt(url.searchParams.get("offset"), 0, 100000, 0);
+    const res = await supabaseRpc(env, "list_messages", { p_filter: filter, p_limit: limit, p_offset: offset });
+    if (!res.ok) return json({ ok: false, error: "list_messages_failed", details: summarizeSupabaseError(res) }, res.status || 500);
+    return json({ ok: true, rows: Array.isArray(res.data) ? res.data : [] });
+  }
+
+  // GET /_admin_api/messages/detail?id=<uuid>
+  if (url.pathname === "/_admin_api/messages/detail" && request.method === "GET") {
+    const id = String(url.searchParams.get("id") || "").trim();
+    if (!id) return json({ ok: false, error: "missing_id" }, 400);
+    const res = await supabaseRpc(env, "get_message", { p_id: id });
+    if (!res.ok) return json({ ok: false, error: "get_message_failed", details: summarizeSupabaseError(res) }, res.status || 500);
+    const msg = Array.isArray(res.data) && res.data.length ? res.data[0] : normalizeRpcValue(res.data);
+    if (!msg) return json({ ok: false, error: "not_found" }, 404);
+    return json({ ok: true, message: msg });
+  }
+
+  // PUT /_admin_api/messages/assign  { message_id, report_id? }
+  if (url.pathname === "/_admin_api/messages/assign" && request.method === "PUT") {
+    const body = await readJson(request);
+    const { message_id, report_id } = body || {};
+    if (!message_id) return json({ ok: false, error: "missing_message_id" }, 400);
+
+    let res;
+    if (report_id) {
+      res = await supabaseRpc(env, "assign_message_to_report", { p_message_id: message_id, p_report_id: report_id });
+    } else {
+      res = await supabaseRpc(env, "unassign_message_report", { p_message_id: message_id });
+    }
+    if (!res.ok) return json({ ok: false, error: "assign_failed", details: summarizeSupabaseError(res) }, res.status || 500);
+
+    // If assigning: send notification email to original sender
+    if (report_id) {
+      try {
+        const [msgRes, repRes] = await Promise.all([
+          supabaseRpc(env, "get_message", { p_id: message_id }),
+          supabaseRequest(env, `/rest/v1/reports?id=eq.${encodeURIComponent(report_id)}&select=ticket_number,subject,lang&limit=1`, { method: "GET" }),
+        ]);
+        const msgRow = Array.isArray(msgRes.data) && msgRes.data.length ? msgRes.data[0] : normalizeRpcValue(msgRes.data);
+        const repRow = Array.isArray(repRes.data) && repRes.data.length ? repRes.data[0] : null;
+        const toEmail = msgRow?.from_email;
+        const ticket  = repRow?.ticket_number || msgRow?.ticket_number;
+        if (toEmail && ticket) {
+          const lang = repRow?.lang || "pl";
+          const safeLang = ["pl","en","uk"].includes(lang) ? lang : "pl";
+          const assignedCopy = {
+            pl: `Witaj,\n\nTwoja wiadomość została zarejestrowana jako zgłoszenie nr ${ticket}.\nMożesz odpowiadać na ten email aby kontynuować rozmowę.`,
+            en: `Hello,\n\nYour message has been registered as ticket ${ticket}.\nYou can reply to this email to continue the conversation.`,
+            uk: `Вітаємо,\n\nВашe повідомлення зареєстровано як звернення ${ticket}.\nВи можете відповідати на цей email для продовження розмови.`,
+          };
+          const subjectCopy = {
+            pl: `Twoje zgłoszenie zostało zarejestrowane [${ticket}]`,
+            en: `Your ticket has been registered [${ticket}]`,
+            uk: `Ваше звернення зареєстровано [${ticket}]`,
+          };
+          const { html } = buildContactEmail({ type: "confirmation", lang: safeLang, ticket, subject: subjectCopy[safeLang], message: assignedCopy[safeLang] });
+          await supabaseRequest(env, "/rest/v1/mail_queue", {
+            method: "POST",
+            headers: { Prefer: "return=minimal" },
+            body: { to_email: toEmail, subject: subjectCopy[safeLang], html, from_email: "no-reply@familiada.online", meta: { type: "ticket_assigned", ticket } },
+          });
+        }
+      } catch (err) {
+        console.error("[worker] assign: notify failed:", err);
+      }
+    }
+
+    return json({ ok: true });
+  }
+
+  // PUT /_admin_api/messages/trash  { message_id }
+  if (url.pathname === "/_admin_api/messages/trash" && request.method === "PUT") {
+    const body = await readJson(request);
+    const { message_id } = body || {};
+    if (!message_id) return json({ ok: false, error: "missing_message_id" }, 400);
+    const res = await supabaseRpc(env, "trash_message", { p_message_id: message_id });
+    if (!res.ok) return json({ ok: false, error: "trash_failed", details: summarizeSupabaseError(res) }, res.status || 500);
+    return json({ ok: true });
+  }
+
+  // PUT /_admin_api/messages/restore  { message_id }
+  if (url.pathname === "/_admin_api/messages/restore" && request.method === "PUT") {
+    const body = await readJson(request);
+    const { message_id } = body || {};
+    if (!message_id) return json({ ok: false, error: "missing_message_id" }, 400);
+    const res = await supabaseRpc(env, "restore_message", { p_message_id: message_id });
+    if (!res.ok) return json({ ok: false, error: "restore_failed", details: summarizeSupabaseError(res) }, res.status || 500);
+    return json({ ok: true });
+  }
+
+  // DELETE /_admin_api/messages/delete  { message_id }
+  if (url.pathname === "/_admin_api/messages/delete" && request.method === "DELETE") {
+    const body = await readJson(request);
+    const { message_id } = body || {};
+    if (!message_id) return json({ ok: false, error: "missing_message_id" }, 400);
+    const res = await supabaseRpc(env, "delete_message", { p_message_id: message_id });
+    if (!res.ok) return json({ ok: false, error: "delete_failed", details: summarizeSupabaseError(res) }, res.status || 500);
+    return json({ ok: true });
+  }
+
+  // POST /_admin_api/messages/send  { to_email, subject, body, body_html?, report_id? }
+  if (url.pathname === "/_admin_api/messages/send" && request.method === "POST") {
+    const body = await readJson(request);
+    const { to_email, subject: msgSubject, body: msgBody, body_html, report_id } = body || {};
+    if (!to_email || !msgBody) return json({ ok: false, error: "missing_to_email_or_body" }, 400);
+
+    // Insert into mail_queue first
+    const queueRes = await supabaseRequest(env, "/rest/v1/mail_queue", {
+      method: "POST",
+      headers: { Prefer: "return=representation" },
+      body: {
+        to_email: String(to_email).trim().toLowerCase(),
+        subject:  String(msgSubject || ""),
+        html:     body_html || buildContactEmail({ type: "compose", lang: "pl", subject: String(msgSubject || ""), message: String(msgBody) }).html,
+        from_email: "kontakt@familiada.online",
+        meta: { type: "admin_compose", report_id: report_id || null },
+      },
+    });
+    const queueRow = Array.isArray(queueRes.data) && queueRes.data.length ? queueRes.data[0] : null;
+    const queueId = queueRow?.id || null;
+
+    const saveRes = await supabaseRpc(env, "save_outbound_message", {
+      p_to_email:  String(to_email).trim().toLowerCase(),
+      p_subject:   String(msgSubject || ""),
+      p_body:      String(msgBody),
+      p_body_html: body_html || null,
+      p_report_id: report_id || null,
+      p_queue_id:  queueId,
+    });
+    if (!saveRes.ok) return json({ ok: false, error: "save_outbound_failed", details: summarizeSupabaseError(saveRes) }, saveRes.status || 500);
+    const messageId = normalizeRpcValue(saveRes.data);
+    return json({ ok: true, message_id: messageId });
+  }
+
+  // GET /_admin_api/reports?status=open|closed|all&limit=50&offset=0
+  if (url.pathname === "/_admin_api/reports" && request.method === "GET") {
+    const status = String(url.searchParams.get("status") || "all");
+    const limit  = clampInt(url.searchParams.get("limit"),  1, 200, 50);
+    const offset = clampInt(url.searchParams.get("offset"), 0, 100000, 0);
+    const res = await supabaseRpc(env, "list_reports", { p_status: status, p_limit: limit, p_offset: offset });
+    if (!res.ok) return json({ ok: false, error: "list_reports_failed", details: summarizeSupabaseError(res) }, res.status || 500);
+    return json({ ok: true, rows: Array.isArray(res.data) ? res.data : [] });
+  }
+
+  // POST /_admin_api/reports  { subject, lang? }
+  if (url.pathname === "/_admin_api/reports" && request.method === "POST") {
+    const body = await readJson(request);
+    const { subject, lang } = body || {};
+    const res = await supabaseRpc(env, "create_report", {
+      p_subject: String(subject || ""),
+      p_lang:    String(lang || "pl"),
+    });
+    if (!res.ok) return json({ ok: false, error: "create_report_failed", details: summarizeSupabaseError(res) }, res.status || 500);
+    const row = Array.isArray(res.data) && res.data.length ? res.data[0] : normalizeRpcValue(res.data);
+    return json({ ok: true, id: row?.id, ticket_number: row?.ticket_number });
+  }
+
+  // PUT /_admin_api/reports/status  { report_id, status }
+  if (url.pathname === "/_admin_api/reports/status" && request.method === "PUT") {
+    const body = await readJson(request);
+    const { report_id, status } = body || {};
+    if (!report_id || !status) return json({ ok: false, error: "missing_report_id_or_status" }, 400);
+    const res = await supabaseRpc(env, "set_report_status", { p_report_id: report_id, p_status: status });
+    if (!res.ok) return json({ ok: false, error: "set_status_failed", details: summarizeSupabaseError(res) }, res.status || 500);
+    return json({ ok: true });
+  }
+
+  // POST /_admin_api/cleanup/trash
+  if (url.pathname === "/_admin_api/cleanup/trash" && request.method === "POST") {
+    const res = await supabaseRpc(env, "cleanup_trash", {});
+    if (!res.ok) return json({ ok: false, error: "cleanup_failed", details: summarizeSupabaseError(res) }, res.status || 500);
+    const deleted = extractScalarNumber(res.data, 0);
+    return json({ ok: true, deleted });
+  }
+
+  return new Response("Not Found", { status: 404 });
+}
+
+// ============================================================
+// REPORTS ADMIN API (legacy — kept for backwards compatibility)
 // ============================================================
 
 async function handleAdminReportsApi(request, env, url) {
@@ -1237,87 +1409,29 @@ async function handleInboundEmail(message, env) {
     }
   }
 
-  // Detect ticket number [YYYY-NNNN] in subject for threading
-  const ticketMatch = subject.match(/\[(\d{4}-\d{4})\]/);
+  // Detect ticket number in subject: [TICKET-YYYY-NNNN] or [YYYY-NNNN]
+  const ticketMatch = subject.match(/\[(?:TICKET-)?(\d{4}-\d{4})\]/i);
+  const ticketArg = ticketMatch ? ticketMatch[1] : null;
 
-  if (ticketMatch) {
-    const ticketNumber = ticketMatch[1];
-    const rpc = await supabaseRpc(env, "find_report_and_append_message", {
-      p_ticket_number: ticketNumber,
-      p_direction:     "inbound",
-      p_body:          body || "(brak treści)",
-      p_from_email:    from,
-      p_body_html:     bodyHtml,
-    });
-
-    if (rpc.ok) {
-      const row = Array.isArray(rpc.data) && rpc.data.length ? rpc.data[0] : null;
-      if (row?.found) {
-        // Confirm received
-        const { subject: confirmSubject, html } = buildContactEmail({
-          type:    "reply",
-          lang:    row.report_lang || "pl",
-          ticket:  ticketNumber,
-          subject: subject,
-          replyMessage: { pl: "Twoja wiadomość została dołączona do zgłoszenia.", en: "Your message has been added to the ticket.", uk: "Ваше повідомлення додано до звернення." }[row.report_lang] || "Twoja wiadomość została dołączona do zgłoszenia.",
-          originalMessage: null,
-        });
-        await supabaseRequest(env, "/rest/v1/mail_queue", {
-          method: "POST",
-          headers: { Prefer: "return=minimal" },
-          body: { to_email: from, subject: confirmSubject, html, from_email: "no-reply@familiada.online", meta: { type: "contact_thread_confirm", ticket: ticketNumber } },
-        });
-      }
-    }
-    return;
-  }
-
-  // No ticket number → create new ticket
   if (!from || !body) return;
 
-  const emailSubject = subject.replace(/^re:\s*/i, "").trim() || "(bez tematu)";
-  const rpc = await supabaseRpc(env, "submit_contact_report", {
-    p_email:      from,
-    p_subject:    emailSubject.slice(0, 200),
-    p_message:    body,
-    p_lang:       "pl",
-    p_user_id:    null,
-    p_ip_address: null,
-    p_body_html:  bodyHtml,
+  const rpc = await supabaseRpc(env, "save_inbound_message", {
+    p_from_email:    from,
+    p_subject:       subject.slice(0, 500),
+    p_body:          body || "(brak treści)",
+    p_body_html:     bodyHtml,
+    p_ticket_number: ticketArg,
   });
 
   if (!rpc.ok) {
-    console.error("[email] submit_contact_report failed:", summarizeSupabaseError(rpc));
+    console.error("[email] save_inbound_message failed:", summarizeSupabaseError(rpc));
     return;
   }
 
-  const row = normalizeRpcValue(rpc.data);
-  if (!row?.ok) {
-    console.error("[email] submit_contact_report err:", row?.err);
-    return;
-  }
+  const row = Array.isArray(rpc.data) && rpc.data.length ? rpc.data[0] : normalizeRpcValue(rpc.data);
+  const savedTicket = row?.ticket_number || null;
 
-  const ticket = row.ticket_number;
-
-  // Send confirmation
-  try {
-    const { subject: confirmSubject, html } = buildContactEmail({
-      type:    "confirmation",
-      lang:    "pl",
-      ticket,
-      subject: emailSubject,
-      message: body,
-    });
-    await supabaseRequest(env, "/rest/v1/mail_queue", {
-      method: "POST",
-      headers: { Prefer: "return=minimal" },
-      body: { to_email: from, subject: confirmSubject, html, from_email: "no-reply@familiada.online", meta: { type: "contact_confirmation", ticket } },
-    });
-  } catch (err) {
-    console.error("[email] confirmation queue failed:", err);
-  }
-
-  // Notify admin via ntfy
+  // Notify admin via ntfy (best-effort, rate-limited)
   try {
     const topicRes = await supabaseRpc(env, "admin_config_get", { p_key: "ntfy_topic" });
     const topic = topicRes.ok ? String(normalizeRpcValue(topicRes.data) ?? "").trim() : "";
@@ -1327,7 +1441,8 @@ async function handleInboundEmail(message, env) {
       const now = Date.now();
       if (!last || now - Number(last) >= 5 * 60 * 1000) {
         await env.MAINT_KV.put(ntfyKey, String(now), { expirationTtl: 600 });
-        await sendNtfy(topic, "Familiada — zgłoszenie", `Nowe zgłoszenie email #${ticket} od ${from}`);
+        const label = savedTicket ? `#${savedTicket}` : "(nowe)";
+        await sendNtfy(topic, "Familiada — email", `Nowa wiadomość ${label} od ${from}`);
       }
     }
   } catch {}
