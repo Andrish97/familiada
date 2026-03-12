@@ -60,6 +60,7 @@ const en = {
       errMessage: "Message is too short (min. 5 characters).",
       errSubject: "Please enter a subject.",
       attachments: "Attachments (optional, max 5 files, 5 MB each)",
+      chooseFiles: "Choose files",
     },
   },
   deviceGuard: {
