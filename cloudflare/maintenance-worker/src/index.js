@@ -1,6 +1,14 @@
 // See cloudflare/README.md for full behavior and checklist.
 
 export default {
+  async email(message, env) {
+    try {
+      await handleInboundEmail(message, env);
+    } catch (err) {
+      console.error("[email] unhandled error:", err);
+    }
+  },
+
   async fetch(request, env) {
     const url = new URL(request.url);
     const host = url.host.toLowerCase();
@@ -808,90 +816,51 @@ function buildContactEmail(opts) {
 
   const copy = {
     pl: {
-      brand: "FAMILIADA",
+      greeting: "Cześć,",
+      closing: "Pozdrawiamy,\nZespół Familiada",
       confirmation: {
-        subtitle: "POTWIERDZENIE ZGŁOSZENIA",
-        title: "Zgłoszenie przyjęte",
-        greeting: "Dziękujemy za kontakt!",
-        ticketLabel: "Numer zgłoszenia:",
-        subjectLabel: "Temat:",
-        messageLabel: "Treść:",
-        footer: "Odpowiedzi udzielimy wkrótce. Numer zgłoszenia: #" + (ticket || ""),
-        mailSubject: `[Familiada] Potwierdzenie zgłoszenia #${ticket || ""}`,
+        body: `Dziękujemy za kontakt. Twoje zgłoszenie zostało przyjęte.\n\nNumer zgłoszenia: ${ticket || ""}\nTemat: ${subject || ""}`,
+        quote: message || "",
+        mailSubject: `Potwierdzenie zgłoszenia [${ticket || ""}]`,
       },
       reply: {
-        subtitle: "ODPOWIEDŹ NA ZGŁOSZENIE",
-        title: `Odpowiedź na Twoje zgłoszenie #${ticket || ""}`,
-        greeting: "Cześć,",
-        replyLabel: "Odpowiedź:",
-        originalLabel: "Twoje zgłoszenie:",
-        footer: "Zespół Familiada",
-        mailSubject: `[Familiada] Odpowiedź na zgłoszenie #${ticket || ""}`,
+        quoteLabel: `Twoje zgłoszenie [${ticket || ""}]:`,
+        mailSubject: `Re: [${ticket || ""}] ${subject || ""}`,
       },
       compose: {
-        subtitle: "WIADOMOŚĆ OD FAMILIADA",
-        title: "Wiadomość od Familiada",
-        footer: "Zespół Familiada",
-        replyAsLabel: "Odpowiadamy na wiadomość:",
-        mailSubject: subject || "[Familiada] Wiadomość",
+        mailSubject: subject || "Wiadomość od Familiada",
       },
     },
     en: {
-      brand: "FAMILIADA",
+      greeting: "Hello,",
+      closing: "Best regards,\nFamiliada Team",
       confirmation: {
-        subtitle: "REPORT RECEIVED",
-        title: "Report received",
-        greeting: "Thank you for contacting us!",
-        ticketLabel: "Ticket number:",
-        subjectLabel: "Subject:",
-        messageLabel: "Message:",
-        footer: "We will reply soon. Ticket number: #" + (ticket || ""),
-        mailSubject: `[Familiada] Report confirmation #${ticket || ""}`,
+        body: `Thank you for reaching out. Your report has been received.\n\nTicket number: ${ticket || ""}\nSubject: ${subject || ""}`,
+        quote: message || "",
+        mailSubject: `Report confirmation [${ticket || ""}]`,
       },
       reply: {
-        subtitle: "REPLY TO YOUR REPORT",
-        title: `Reply to your report #${ticket || ""}`,
-        greeting: "Hello,",
-        replyLabel: "Reply:",
-        originalLabel: "Your report:",
-        footer: "Familiada Team",
-        mailSubject: `[Familiada] Reply to report #${ticket || ""}`,
+        quoteLabel: `Your report [${ticket || ""}]:`,
+        mailSubject: `Re: [${ticket || ""}] ${subject || ""}`,
       },
       compose: {
-        subtitle: "MESSAGE FROM FAMILIADA",
-        title: "Message from Familiada",
-        footer: "Familiada Team",
-        replyAsLabel: "Replying to your message:",
-        mailSubject: subject || "[Familiada] Message",
+        mailSubject: subject || "Message from Familiada",
       },
     },
     uk: {
-      brand: "FAMILIADA",
+      greeting: "Вітаємо,",
+      closing: "З повагою,\nКоманда Familiada",
       confirmation: {
-        subtitle: "ПІДТВЕРДЖЕННЯ ЗВЕРНЕННЯ",
-        title: "Звернення прийнято",
-        greeting: "Дякуємо за звернення!",
-        ticketLabel: "Номер звернення:",
-        subjectLabel: "Тема:",
-        messageLabel: "Повідомлення:",
-        footer: "Відповімо найближчим часом. Номер звернення: #" + (ticket || ""),
-        mailSubject: `[Familiada] Підтвердження звернення #${ticket || ""}`,
+        body: `Дякуємо за звернення. Ваше звернення прийнято.\n\nНомер звернення: ${ticket || ""}\nТема: ${subject || ""}`,
+        quote: message || "",
+        mailSubject: `Підтвердження звернення [${ticket || ""}]`,
       },
       reply: {
-        subtitle: "ВІДПОВІДЬ НА ЗВЕРНЕННЯ",
-        title: `Відповідь на ваше звернення #${ticket || ""}`,
-        greeting: "Вітаємо,",
-        replyLabel: "Відповідь:",
-        originalLabel: "Ваше звернення:",
-        footer: "Команда Familiada",
-        mailSubject: `[Familiada] Відповідь на звернення #${ticket || ""}`,
+        quoteLabel: `Ваше звернення [${ticket || ""}]:`,
+        mailSubject: `Re: [${ticket || ""}] ${subject || ""}`,
       },
       compose: {
-        subtitle: "ПОВІДОМЛЕННЯ ВІД FAMILIADA",
-        title: "Повідомлення від Familiada",
-        footer: "Команда Familiada",
-        replyAsLabel: "Відповідаємо на повідомлення:",
-        mailSubject: subject || "[Familiada] Повідомлення",
+        mailSubject: subject || "Повідомлення від Familiada",
       },
     },
   };
@@ -899,78 +868,45 @@ function buildContactEmail(opts) {
   const safeLang = ["pl","en","uk"].includes(lang) ? lang : "pl";
   const c = copy[safeLang];
   const esc = (s) => String(s || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  const nl2br = (s) => esc(s).replace(/\n/g, "<br>");
 
-  let bodyHtml = "";
   let mailSubject = "";
+  let contentHtml = "";
 
   if (type === "confirmation") {
-    const t = c.confirmation;
-    mailSubject = t.mailSubject;
-    bodyHtml = `
-      <div style="font-size:14px;opacity:.9;line-height:1.5;margin:0 0 14px;">${esc(t.greeting)}</div>
-      <div style="margin:14px 0;padding:12px 14px;border-radius:14px;border:1px solid rgba(255,234,166,.3);background:rgba(255,234,166,.07);">
-        <div style="font-size:12px;opacity:.7;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">${esc(t.ticketLabel)}</div>
-        <div style="font-weight:1000;font-size:20px;color:#ffeaa6;letter-spacing:.1em;">#${esc(ticket)}</div>
-      </div>
-      <div style="margin:14px 0;padding:12px 14px;border-radius:14px;border:1px solid rgba(255,255,255,.12);background:rgba(0,0,0,.18);">
-        <div style="font-size:12px;opacity:.7;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">${esc(t.subjectLabel)}</div>
-        <div style="font-size:14px;font-weight:700;margin-bottom:10px;">${esc(subject)}</div>
-        <div style="font-size:12px;opacity:.7;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">${esc(t.messageLabel)}</div>
-        <div style="font-size:13px;white-space:pre-wrap;opacity:.9;">${esc(message)}</div>
-      </div>
+    mailSubject = c.confirmation.mailSubject;
+    contentHtml = `
+      <p style="margin:0 0 20px">${nl2br(c.confirmation.body)}</p>
+      ${c.confirmation.quote ? `<blockquote style="margin:0 0 0 0;padding:12px 16px;border-left:3px solid #ddd;background:#f7f7f7;border-radius:0 6px 6px 0;color:#555;font-size:13px;white-space:pre-wrap">${esc(c.confirmation.quote)}</blockquote>` : ""}
     `;
   } else if (type === "reply") {
-    const t = c.reply;
-    mailSubject = t.mailSubject;
-    bodyHtml = `
-      <div style="font-size:14px;opacity:.9;line-height:1.5;margin:0 0 14px;">${esc(t.greeting)}</div>
-      <div style="margin:14px 0;padding:14px;border-radius:14px;border:1px solid rgba(255,234,166,.3);background:rgba(255,234,166,.07);">
-        <div style="font-size:12px;opacity:.7;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">${esc(t.replyLabel)}</div>
-        <div style="font-size:14px;white-space:pre-wrap;line-height:1.5;">${esc(replyMessage || "")}</div>
-      </div>
-      ${originalMessage ? `
-      <div style="margin:14px 0;padding:12px 14px;border-radius:14px;border:1px solid rgba(255,255,255,.1);background:rgba(0,0,0,.18);">
-        <div style="font-size:12px;opacity:.7;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">${esc(t.originalLabel)}</div>
-        <div style="font-size:13px;white-space:pre-wrap;opacity:.75;">${esc(originalMessage)}</div>
-      </div>` : ""}
+    mailSubject = c.reply.mailSubject;
+    contentHtml = `
+      ${originalMessage ? `<blockquote style="margin:0 0 20px;padding:12px 16px;border-left:3px solid #ddd;background:#f7f7f7;border-radius:0 6px 6px 0;color:#555;font-size:13px"><strong>${esc(c.reply.quoteLabel)}</strong><br><br><span style="white-space:pre-wrap">${esc(originalMessage)}</span></blockquote>` : ""}
+      <p style="margin:0">${nl2br(replyMessage || "")}</p>
     `;
   } else {
     // compose
-    const t = c.compose;
-    mailSubject = t.mailSubject;
-    bodyHtml = `
-      ${opts.reply_as ? `
-      <div style="margin:0 0 14px;padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.1);background:rgba(0,0,0,.18);">
-        <div style="font-size:12px;opacity:.7;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">${esc(t.replyAsLabel)}</div>
-        <div style="font-size:13px;opacity:.75;">${esc(opts.reply_as)}</div>
-      </div>` : ""}
-      <div style="padding:14px;border-radius:14px;border:1px solid rgba(255,255,255,.12);background:rgba(0,0,0,.14);">
-        <div style="font-size:14px;white-space:pre-wrap;line-height:1.5;opacity:.9;">${esc(message || "")}</div>
-      </div>
+    mailSubject = c.compose.mailSubject;
+    contentHtml = `
+      ${opts.reply_as ? `<blockquote style="margin:0 0 20px;padding:12px 16px;border-left:3px solid #ddd;background:#f7f7f7;border-radius:0 6px 6px 0;color:#555;font-size:13px;white-space:pre-wrap">${esc(opts.reply_as)}</blockquote>` : ""}
+      <p style="margin:0">${nl2br(message || "")}</p>
     `;
   }
 
-  const tEntry = type === "confirmation" ? c.confirmation : type === "reply" ? c.reply : c.compose;
-  const subtitle = tEntry.subtitle;
-  const title = tEntry.title;
-  const footer = tEntry.footer;
+  const closingLines = c.closing.split("\n");
 
   const html = `<!DOCTYPE html>
 <html>
 <head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/></head>
-<body style="margin:0;padding:0;background:#050914;">
-<div style="margin:0;padding:0;background:#050914;">
-  <div style="max-width:560px;margin:0 auto;padding:26px 16px;font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:#ffffff;">
-    <div style="padding:14px;background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.12);border-radius:18px;backdrop-filter:blur(10px);">
-      <div style="font-weight:1000;letter-spacing:.18em;text-transform:uppercase;color:#ffeaa6;">${esc(c.brand)}</div>
-      <div style="margin-top:6px;font-size:12px;opacity:.85;letter-spacing:.08em;text-transform:uppercase;">${esc(subtitle)}</div>
-    </div>
-    <div style="margin-top:14px;padding:18px;border-radius:20px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.06);box-shadow:0 24px 60px rgba(0,0,0,.45);">
-      <div style="font-weight:1000;font-size:18px;letter-spacing:.06em;color:#ffeaa6;margin:0 0 10px;">${esc(title)}</div>
-      ${bodyHtml}
-    </div>
-    <div style="margin-top:14px;font-size:12px;opacity:.7;text-align:center;">${esc(footer)}</div>
+<body style="margin:0;padding:0;background:#f4f4f4;">
+<div style="max-width:560px;margin:0 auto;padding:32px 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;color:#222;background:#f4f4f4;">
+  <div style="background:#fff;border-radius:10px;padding:32px 28px;">
+    <p style="margin:0 0 20px;">${esc(c.greeting)}</p>
+    ${contentHtml}
+    <p style="margin:32px 0 0;color:#444;">${closingLines.map(esc).join("<br>")}</p>
   </div>
+  <p style="margin:16px 0 0;font-size:11px;color:#aaa;text-align:center;">familiada.online</p>
 </div>
 </body>
 </html>`;
@@ -1083,6 +1019,18 @@ async function handleAdminReportsApi(request, env, url) {
     return json({ ok: true });
   }
 
+  // GET /_admin_api/reports/messages?id=xxx
+  if (url.pathname === "/_admin_api/reports/messages") {
+    if (request.method !== "GET") return new Response("Method Not Allowed", { status: 405 });
+    const id = String(url.searchParams.get("id") || "").trim();
+    if (!id) return json({ ok: false, error: "Missing id" }, 400);
+
+    const rpc = await supabaseRpc(env, "get_report_messages", { p_report_id: id });
+    if (!rpc.ok) return json({ ok: false, error: "messages_load_failed" }, rpc.status || 500);
+    const msgs = Array.isArray(rpc.data) ? rpc.data : [];
+    return json({ ok: true, messages: msgs });
+  }
+
   // POST /_admin_api/reports/close { id }
   if (url.pathname === "/_admin_api/reports/close") {
     if (request.method !== "POST") return new Response("Method Not Allowed", { status: 405 });
@@ -1146,6 +1094,156 @@ async function handleAdminReportsApi(request, env, url) {
   }
 
   return new Response("Not Found", { status: 404 });
+}
+
+// ============================================================
+// INBOUND EMAIL HANDLER (Cloudflare Email Routing)
+// ============================================================
+
+async function handleInboundEmail(message, env) {
+  const from    = message.from || "";
+  const subject = message.headers.get("subject") || "";
+
+  // Parse body from raw MIME stream
+  let body = "";
+  try {
+    const rawText = await new Response(message.raw).text();
+    body = extractMimeText(rawText);
+  } catch (err) {
+    console.error("[email] body parse failed:", err);
+  }
+  body = body.slice(0, 5000).trim();
+
+  // Forward copy to iCloud (best-effort)
+  const forwardTo = env.FORWARD_EMAIL || "";
+  if (forwardTo) {
+    try { await message.forward(forwardTo); } catch (err) {
+      console.error("[email] forward failed:", err);
+    }
+  }
+
+  // Detect ticket number [YYYY-NNNN] in subject for threading
+  const ticketMatch = subject.match(/\[(\d{4}-\d{4})\]/);
+
+  if (ticketMatch) {
+    const ticketNumber = ticketMatch[1];
+    const rpc = await supabaseRpc(env, "find_report_and_append_message", {
+      p_ticket_number: ticketNumber,
+      p_direction:     "inbound",
+      p_body:          body || "(brak treści)",
+      p_from_email:    from,
+    });
+
+    if (rpc.ok) {
+      const row = Array.isArray(rpc.data) && rpc.data.length ? rpc.data[0] : null;
+      if (row?.found) {
+        // Confirm received
+        const { subject: confirmSubject, html } = buildContactEmail({
+          type:    "reply",
+          lang:    row.report_lang || "pl",
+          ticket:  ticketNumber,
+          subject: subject,
+          replyMessage: { pl: "Twoja wiadomość została dołączona do zgłoszenia.", en: "Your message has been added to the ticket.", uk: "Ваше повідомлення додано до звернення." }[row.report_lang] || "Twoja wiadomość została dołączona do zgłoszenia.",
+          originalMessage: null,
+        });
+        await supabaseRequest(env, "/rest/v1/mail_queue", {
+          method: "POST",
+          headers: { Prefer: "return=minimal" },
+          body: { to_email: from, subject: confirmSubject, html, meta: { type: "contact_thread_confirm", ticket: ticketNumber } },
+        });
+      }
+    }
+    return;
+  }
+
+  // No ticket number → create new ticket
+  if (!from || !body) return;
+
+  const emailSubject = subject.replace(/^re:\s*/i, "").trim() || "(bez tematu)";
+  const rpc = await supabaseRpc(env, "submit_contact_report", {
+    p_email:      from,
+    p_subject:    emailSubject.slice(0, 200),
+    p_message:    body,
+    p_lang:       "pl",
+    p_user_id:    null,
+    p_ip_address: null,
+  });
+
+  if (!rpc.ok) {
+    console.error("[email] submit_contact_report failed:", summarizeSupabaseError(rpc));
+    return;
+  }
+
+  const row = normalizeRpcValue(rpc.data);
+  if (!row?.ok) {
+    console.error("[email] submit_contact_report err:", row?.err);
+    return;
+  }
+
+  const ticket = row.ticket_number;
+
+  // Send confirmation
+  try {
+    const { subject: confirmSubject, html } = buildContactEmail({
+      type:    "confirmation",
+      lang:    "pl",
+      ticket,
+      subject: emailSubject,
+      message: body,
+    });
+    await supabaseRequest(env, "/rest/v1/mail_queue", {
+      method: "POST",
+      headers: { Prefer: "return=minimal" },
+      body: { to_email: from, subject: confirmSubject, html, meta: { type: "contact_confirmation", ticket } },
+    });
+  } catch (err) {
+    console.error("[email] confirmation queue failed:", err);
+  }
+
+  // Notify admin via ntfy
+  try {
+    const topicRes = await supabaseRpc(env, "admin_config_get", { p_key: "ntfy_topic" });
+    const topic = topicRes.ok ? String(normalizeRpcValue(topicRes.data) ?? "").trim() : "";
+    if (topic) {
+      const ntfyKey = "notify_contact_ts";
+      const last = await env.MAINT_KV.get(ntfyKey);
+      const now = Date.now();
+      if (!last || now - Number(last) >= 5 * 60 * 1000) {
+        await env.MAINT_KV.put(ntfyKey, String(now), { expirationTtl: 600 });
+        await sendNtfy(topic, "Familiada — zgłoszenie", `Nowe zgłoszenie email #${ticket} od ${from}`);
+      }
+    }
+  } catch {}
+}
+
+function extractMimeText(raw) {
+  // Look for multipart boundary
+  const boundaryMatch = raw.match(/Content-Type:\s*multipart\/[^\r\n]+boundary="?([^"\r\n;]+)"?/i);
+  if (boundaryMatch) {
+    const boundary = boundaryMatch[1].trim();
+    const escaped = boundary.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const parts = raw.split(new RegExp(`--${escaped}(?:--|\r?\n)`));
+    for (const part of parts) {
+      if (!/Content-Type:\s*text\/plain/i.test(part)) continue;
+      const bodyStart = part.indexOf("\r\n\r\n");
+      if (bodyStart === -1) continue;
+      let body = part.slice(bodyStart + 4);
+      // strip trailing boundary markers
+      const nextBoundary = body.indexOf("\r\n--");
+      if (nextBoundary !== -1) body = body.slice(0, nextBoundary);
+      if (/Content-Transfer-Encoding:\s*quoted-printable/i.test(part)) {
+        body = body.replace(/=\r?\n/g, "").replace(/=([0-9A-Fa-f]{2})/g, (_, h) => String.fromCharCode(parseInt(h, 16)));
+      } else if (/Content-Transfer-Encoding:\s*base64/i.test(part)) {
+        try { body = atob(body.replace(/\s+/g, "")); } catch {}
+      }
+      return body.trim();
+    }
+  }
+
+  // Simple email (no multipart)
+  const bodyStart = raw.indexOf("\r\n\r\n");
+  if (bodyStart !== -1) return raw.slice(bodyStart + 4).trim();
+  return "";
 }
 
 // ============================================================
