@@ -59,6 +59,7 @@ const en = {
       errEmail: "Please enter a valid e-mail address.",
       errMessage: "Message is too short (min. 5 characters).",
       errSubject: "Please enter a subject.",
+      attachments: "Attachments (optional, max 5 files, 5 MB each)",
     },
   },
   deviceGuard: {
