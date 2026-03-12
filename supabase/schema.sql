@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict Q15VnTfT0C2lde7v6vAZGFByVcKUiSHfvkDqkKoEiLe6SIGrZFRWMhpxycpvXdZ
+\restrict QRYeOIjq0ixgLDcyO8OcLfz2dLjOY9sUK1CtubchGLDVkxwNewmzuz6AnRtkXBf
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -237,6 +237,43 @@ begin
         set value = excluded.value,
             note  = coalesce(excluded.note, app_config.note);
     return true;
+end;
+$$;
+
+
+--
+-- Name: admin_update_contact_report("uuid", "text", "text"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."admin_update_contact_report"("p_id" "uuid", "p_status" "text" DEFAULT NULL::"text", "p_reply_message" "text" DEFAULT NULL::"text") RETURNS TABLE("ok" boolean, "err" "text")
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+declare
+  v_exists boolean;
+begin
+  select exists(select 1 from public.contact_reports where id = p_id) into v_exists;
+  if not v_exists then
+    return query select false, 'not_found'::text;
+    return;
+  end if;
+
+  if p_status is not null and p_status not in ('open','replied','closed') then
+    return query select false, 'invalid_status'::text;
+    return;
+  end if;
+
+  update public.contact_reports
+  set
+    status        = coalesce(p_status, status),
+    reply_message = coalesce(p_reply_message, reply_message),
+    replied_at    = case
+                      when p_status = 'replied' then now()
+                      else replied_at
+                    end
+  where id = p_id;
+
+  return query select true, null::text;
 end;
 $$;
 
@@ -1018,6 +1055,20 @@ BEGIN
 
   RETURN true;
 END;
+$$;
+
+
+--
+-- Name: contact_reports_set_updated_at(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."contact_reports_set_updated_at"() RETURNS "trigger"
+    LANGUAGE "plpgsql"
+    AS $$
+begin
+  new.updated_at := now();
+  return new;
+end;
 $$;
 
 
@@ -2061,6 +2112,24 @@ begin
   new.share_key_host    := coalesce(new.share_key_host,    public.gen_share_key(18));
   new.share_key_buzzer  := coalesce(new.share_key_buzzer,  public.gen_share_key(18));
   return new;
+end;
+$$;
+
+
+--
+-- Name: gen_contact_ticket_number(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."gen_contact_ticket_number"() RETURNS "text"
+    LANGUAGE "plpgsql"
+    AS $$
+declare
+  v_year text;
+  v_seq  bigint;
+begin
+  v_year := to_char(now(), 'YYYY');
+  v_seq  := nextval('public.contact_report_seq');
+  return v_year || '-' || lpad(v_seq::text, 4, '0');
 end;
 $$;
 
@@ -7745,6 +7814,124 @@ $$;
 
 
 --
+-- Name: submit_contact_report("text", "text", "text", "text", "uuid"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."submit_contact_report"("p_email" "text", "p_subject" "text", "p_message" "text", "p_lang" "text" DEFAULT 'pl'::"text", "p_user_id" "uuid" DEFAULT NULL::"uuid") RETURNS TABLE("ok" boolean, "err" "text", "ticket_number" "text", "id" "uuid")
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+declare
+  v_ticket text;
+  v_id     uuid;
+begin
+  -- validate email
+  if p_email is null or p_email not like '%@%' then
+    return query select false, 'invalid_email'::text, null::text, null::uuid;
+    return;
+  end if;
+
+  -- validate subject
+  if p_subject is null or char_length(trim(p_subject)) < 1 or char_length(p_subject) > 200 then
+    return query select false, 'invalid_subject'::text, null::text, null::uuid;
+    return;
+  end if;
+
+  -- validate message
+  if p_message is null or char_length(trim(p_message)) < 5 or char_length(p_message) > 5000 then
+    return query select false, 'invalid_message'::text, null::text, null::uuid;
+    return;
+  end if;
+
+  -- validate lang
+  if p_lang not in ('pl','en','uk') then
+    return query select false, 'invalid_lang'::text, null::text, null::uuid;
+    return;
+  end if;
+
+  v_ticket := public.gen_contact_ticket_number();
+
+  insert into public.contact_reports (ticket_number, email, subject, message, lang, status, user_id)
+  values (v_ticket, lower(trim(p_email)), trim(p_subject), trim(p_message), p_lang, 'open', p_user_id)
+  returning contact_reports.id into v_id;
+
+  return query select true, null::text, v_ticket, v_id;
+end;
+$$;
+
+
+--
+-- Name: submit_contact_report("text", "text", "text", "text", "uuid", "text"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."submit_contact_report"("p_email" "text", "p_subject" "text", "p_message" "text", "p_lang" "text" DEFAULT 'pl'::"text", "p_user_id" "uuid" DEFAULT NULL::"uuid", "p_ip_address" "text" DEFAULT NULL::"text") RETURNS TABLE("ok" boolean, "err" "text", "ticket_number" "text", "id" "uuid")
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+declare
+  v_ticket text;
+  v_id     uuid;
+  v_email  text;
+begin
+  v_email := lower(trim(p_email));
+
+  -- validate email
+  if v_email = '' or v_email not like '%@%' then
+    return query select false, 'invalid_email'::text, null::text, null::uuid;
+    return;
+  end if;
+
+  -- validate subject
+  if p_subject is null or char_length(trim(p_subject)) < 1 or char_length(p_subject) > 200 then
+    return query select false, 'invalid_subject'::text, null::text, null::uuid;
+    return;
+  end if;
+
+  -- validate message
+  if p_message is null or char_length(trim(p_message)) < 5 or char_length(p_message) > 5000 then
+    return query select false, 'invalid_message'::text, null::text, null::uuid;
+    return;
+  end if;
+
+  -- validate lang
+  if p_lang not in ('pl','en','uk') then
+    return query select false, 'invalid_lang'::text, null::text, null::uuid;
+    return;
+  end if;
+
+  -- rate limit: 1 zgłoszenie per email na 24h
+  if exists (
+    select 1 from public.contact_reports
+    where email = v_email
+      and created_at > now() - interval '24 hours'
+  ) then
+    return query select false, 'rate_limited_email'::text, null::text, null::uuid;
+    return;
+  end if;
+
+  -- rate limit: 1 zgłoszenie per IP na 24h (jeśli IP podane)
+  if p_ip_address is not null and trim(p_ip_address) <> '' and exists (
+    select 1 from public.contact_reports
+    where ip_address = trim(p_ip_address)
+      and created_at > now() - interval '24 hours'
+  ) then
+    return query select false, 'rate_limited_ip'::text, null::text, null::uuid;
+    return;
+  end if;
+
+  v_ticket := public.gen_contact_ticket_number();
+
+  insert into public.contact_reports (ticket_number, email, subject, message, lang, status, user_id, ip_address)
+  values (v_ticket, v_email, trim(p_subject), trim(p_message), p_lang, 'open', p_user_id,
+          nullif(trim(coalesce(p_ip_address, '')), ''))
+  returning contact_reports.id into v_id;
+
+  return query select true, null::text, v_ticket, v_id;
+end;
+$$;
+
+
+--
 -- Name: touch_game_devices_updated_at(); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -8022,6 +8209,44 @@ CREATE TABLE "public"."base_share_tasks" (
 );
 
 ALTER TABLE ONLY "public"."base_share_tasks" FORCE ROW LEVEL SECURITY;
+
+
+--
+-- Name: contact_report_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE "public"."contact_report_seq"
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: contact_reports; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE "public"."contact_reports" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "ticket_number" "text" NOT NULL,
+    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    "updated_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    "email" "text" NOT NULL,
+    "subject" "text" NOT NULL,
+    "message" "text" NOT NULL,
+    "lang" "text" DEFAULT 'pl'::"text" NOT NULL,
+    "status" "text" DEFAULT 'open'::"text" NOT NULL,
+    "user_id" "uuid",
+    "reply_message" "text",
+    "replied_at" timestamp with time zone,
+    "ip_address" "text",
+    CONSTRAINT "contact_reports_email_check" CHECK (("email" ~~ '%@%'::"text")),
+    CONSTRAINT "contact_reports_lang_check" CHECK (("lang" = ANY (ARRAY['pl'::"text", 'en'::"text", 'uk'::"text"]))),
+    CONSTRAINT "contact_reports_message_check" CHECK ((("char_length"("message") >= 5) AND ("char_length"("message") <= 5000))),
+    CONSTRAINT "contact_reports_status_check" CHECK (("status" = ANY (ARRAY['open'::"text", 'replied'::"text", 'closed'::"text"]))),
+    CONSTRAINT "contact_reports_subject_check" CHECK ((("char_length"("subject") >= 1) AND ("char_length"("subject") <= 200)))
+);
 
 
 --
@@ -8550,6 +8775,22 @@ ALTER TABLE ONLY "public"."app_config"
 
 ALTER TABLE ONLY "public"."base_share_tasks"
     ADD CONSTRAINT "base_share_tasks_pkey" PRIMARY KEY ("id");
+
+
+--
+-- Name: contact_reports contact_reports_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."contact_reports"
+    ADD CONSTRAINT "contact_reports_pkey" PRIMARY KEY ("id");
+
+
+--
+-- Name: contact_reports contact_reports_ticket_number_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."contact_reports"
+    ADD CONSTRAINT "contact_reports_ticket_number_key" UNIQUE ("ticket_number");
 
 
 --
@@ -9375,6 +9616,13 @@ CREATE UNIQUE INDEX "user_logos_user_name_uniq" ON "public"."user_logos" USING "
 
 
 --
+-- Name: contact_reports contact_reports_updated_at; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "contact_reports_updated_at" BEFORE UPDATE ON "public"."contact_reports" FOR EACH ROW EXECUTE FUNCTION "public"."contact_reports_set_updated_at"();
+
+
+--
 -- Name: answers touch_game_from_answers; Type: TRIGGER; Schema: public; Owner: -
 --
 
@@ -9487,6 +9735,14 @@ ALTER TABLE ONLY "public"."base_share_tasks"
 
 ALTER TABLE ONLY "public"."base_share_tasks"
     ADD CONSTRAINT "base_share_tasks_recipient_user_id_fkey" FOREIGN KEY ("recipient_user_id") REFERENCES "auth"."users"("id") ON DELETE SET NULL;
+
+
+--
+-- Name: contact_reports contact_reports_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY "public"."contact_reports"
+    ADD CONSTRAINT "contact_reports_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "auth"."users"("id") ON DELETE SET NULL;
 
 
 --
@@ -9893,6 +10149,19 @@ CREATE POLICY "app_config_no_access" ON "public"."app_config" USING (false);
 --
 
 ALTER TABLE "public"."base_share_tasks" ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: contact_reports; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE "public"."contact_reports" ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: contact_reports cr_select_own; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "cr_select_own" ON "public"."contact_reports" FOR SELECT TO "authenticated" USING (("user_id" = "auth"."uid"()));
+
 
 --
 -- Name: demo_template_data; Type: ROW SECURITY; Schema: public; Owner: -
@@ -10714,5 +10983,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict Q15VnTfT0C2lde7v6vAZGFByVcKUiSHfvkDqkKoEiLe6SIGrZFRWMhpxycpvXdZ
+\unrestrict QRYeOIjq0ixgLDcyO8OcLfz2dLjOY9sUK1CtubchGLDVkxwNewmzuz6AnRtkXBf
 
