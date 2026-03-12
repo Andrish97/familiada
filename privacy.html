@@ -113,6 +113,44 @@
     <div class="footer">
       <div data-i18n="common.footer.left">© 2026 Familiada — system do gry na żywo</div>
     </div>
+
+    <section id="contactSection" class="privacy-section" style="margin-top:32px;padding:20px;border-radius:16px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04)">
+      <h2 class="m-h2" data-i18n="privacy.contact.title">Kontakt</h2>
+      <p class="m-p" data-i18n="privacy.contact.desc">Masz pytanie lub uwagę? Napisz do nas.</p>
+
+      <form id="contactForm" autocomplete="off" style="display:flex;flex-direction:column;gap:14px;margin-top:16px">
+        <div class="field">
+          <label class="field-label" for="contactEmail" data-i18n="privacy.contact.email">Twój e-mail</label>
+          <input class="inp" id="contactEmail" type="email" required style="width:100%;box-sizing:border-box"/>
+        </div>
+        <div class="field">
+          <label class="field-label" for="contactSubject" data-i18n="privacy.contact.subject">Temat</label>
+          <input class="inp" id="contactSubject" type="text" maxlength="200" required style="width:100%;box-sizing:border-box"/>
+        </div>
+        <div class="field">
+          <label class="field-label" for="contactMessage" data-i18n="privacy.contact.message">Wiadomość</label>
+          <textarea class="inp" id="contactMessage" rows="5" maxlength="5000" required style="width:100%;box-sizing:border-box"></textarea>
+        </div>
+        <div class="field">
+          <label class="field-label" for="contactLang" data-i18n="privacy.contact.lang">Język</label>
+          <select class="inp" id="contactLang" style="width:100%;box-sizing:border-box">
+            <option value="pl">Polski (pl)</option>
+            <option value="en">English (en)</option>
+            <option value="uk">Українська (uk)</option>
+          </select>
+        </div>
+        <div class="field">
+          <div id="contactError" style="display:none;color:#ff6b6b;font-size:13px;margin-bottom:6px"></div>
+          <button class="btn gold" id="contactSubmit" type="submit" data-i18n="privacy.contact.submit">Wyślij zgłoszenie</button>
+        </div>
+      </form>
+
+      <div id="contactSuccess" style="display:none;margin-top:16px;padding:14px;border-radius:12px;border:1px solid rgba(255,234,166,.3);background:rgba(255,234,166,.07)">
+        <div style="font-weight:700;color:#ffeaa6;margin-bottom:6px" data-i18n="privacy.contact.successTitle">Zgłoszenie przyjęte!</div>
+        <div style="font-size:13px;opacity:.85" data-i18n="privacy.contact.successDesc">Numer Twojego zgłoszenia:</div>
+        <div id="contactTicket" style="font-size:20px;font-weight:1000;color:#ffeaa6;letter-spacing:.1em;margin-top:4px"></div>
+      </div>
+    </section>
   </main>
 </body>
 </html>

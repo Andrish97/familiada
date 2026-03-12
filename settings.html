@@ -25,6 +25,7 @@
       <button class="btn sm tab-btn active" id="btnTabMaintenance" type="button" data-i18n="settings.tabs.maintenance">Prace techniczne</button>
       <button class="btn sm tab-btn" id="btnTabMail" type="button" data-i18n="settings.tabs.mail">Maile</button>
       <button class="btn sm tab-btn" id="btnTabMarketplace" type="button" data-i18n="settings.tabs.marketplace">Marketplace</button>
+      <button class="btn sm tab-btn" id="btnTabReports" type="button" data-i18n="settings.tabs.reports">Zgłoszenia</button>
       <div class="ui-select" id="toolsSelect">
         <button class="btn sm ui-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
           <span class="ui-select-label" data-i18n="settings.tabs.tools">Narzędzia</span>
@@ -352,6 +353,73 @@
         </div>
         <div class="field-hint" id="marketTableInfo">—</div>
       </div>
+
+      <!-- REPORTS PANEL -->
+      <div class="market-admin-panel" id="reportsPanel" hidden>
+        <div class="panel-head">
+          <div class="panel-title" data-i18n="settings.reports.title">Zgłoszenia</div>
+          <div class="panel-sub" data-i18n="settings.reports.subtitle">Wiadomości od użytkowników</div>
+        </div>
+
+        <div class="mail-controls" style="margin-bottom:12px">
+          <button class="btn sm tab-btn active" id="rptTabOpen" type="button" data-i18n="settings.reports.tabOpen">Otwarte</button>
+          <button class="btn sm tab-btn" id="rptTabReplied" type="button" data-i18n="settings.reports.tabReplied">Odpowiedziane</button>
+          <button class="btn sm tab-btn" id="rptTabClosed" type="button" data-i18n="settings.reports.tabClosed">Zamknięte</button>
+          <button class="btn sm" id="btnReportsRefresh" type="button" data-i18n="settings.reports.refresh">Odśwież</button>
+        </div>
+
+        <div class="mail-table-wrap">
+          <table class="mail-table" id="reportsTable">
+            <thead>
+              <tr>
+                <th data-i18n="settings.reports.col.ticket">#</th>
+                <th data-i18n="settings.reports.col.email">E-mail</th>
+                <th data-i18n="settings.reports.col.subject">Temat</th>
+                <th data-i18n="settings.reports.col.date">Data</th>
+                <th data-i18n="settings.reports.col.status">Status</th>
+                <th data-i18n="settings.reports.col.actions">Akcje</th>
+              </tr>
+            </thead>
+            <tbody id="reportsTableBody"></tbody>
+          </table>
+        </div>
+        <div class="field-hint" id="reportsTableInfo">—</div>
+
+        <!-- Compose card -->
+        <div class="mail-card" style="margin-top:24px;padding:16px;border-radius:16px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04)">
+          <div class="mail-card-title" data-i18n="settings.reports.compose.title">Napisz wiadomość</div>
+          <div class="mail-inline-grid" style="gap:10px;margin-top:10px">
+            <div class="field">
+              <label class="field-label" for="composeToInput" data-i18n="settings.reports.compose.to">Do (e-mail)</label>
+              <input class="inp" id="composeToInput" type="email" autocomplete="off" style="width:100%;box-sizing:border-box"/>
+            </div>
+            <div class="field">
+              <label class="field-label" for="composeSubjectInput" data-i18n="settings.reports.compose.subject">Temat</label>
+              <input class="inp" id="composeSubjectInput" type="text" autocomplete="off" style="width:100%;box-sizing:border-box"/>
+            </div>
+            <div class="field">
+              <label class="field-label" for="composeLangSelect" data-i18n="settings.reports.compose.lang">Język</label>
+              <select class="inp" id="composeLangSelect" style="width:100%;box-sizing:border-box">
+                <option value="pl">Polski (pl)</option>
+                <option value="en">English (en)</option>
+                <option value="uk">Українська (uk)</option>
+              </select>
+            </div>
+            <div class="field">
+              <label class="field-label" for="composeReplyAsInput" data-i18n="settings.reports.compose.replyAs">Odpowiedz jako (reply_as)</label>
+              <input class="inp" id="composeReplyAsInput" type="text" autocomplete="off" style="width:100%;box-sizing:border-box" placeholder="(opcjonalnie)"/>
+            </div>
+            <div class="field" style="grid-column:1/-1">
+              <label class="field-label" for="composeMessageArea" data-i18n="settings.reports.compose.message">Treść</label>
+              <textarea class="inp" id="composeMessageArea" rows="5" style="width:100%;box-sizing:border-box"></textarea>
+            </div>
+          </div>
+          <div class="panel-actions" style="margin-top:10px">
+            <button class="btn sm gold" id="btnComposeSend" type="button" data-i18n="settings.reports.compose.send">Wyślij</button>
+            <span class="field-hint" id="composeSendStatus"></span>
+          </div>
+        </div>
+      </div>
     </section>
 
   </main>
@@ -409,6 +477,24 @@
       <div class="modal-actions" style="margin-top:12px">
         <button class="btn sm" id="btnMarketRejectCancel" type="button" data-i18n="settings.actions.cancel">Anuluj</button>
         <button class="btn sm gold" id="btnMarketRejectConfirm" type="button" data-i18n="settings.marketplace.rejectConfirm">Odrzuć</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: podgląd zgłoszenia kontaktowego -->
+  <div class="overlay" id="reportPreviewOverlay" style="display:none">
+    <div class="modal modal-wide">
+      <div class="mTitle" id="reportPreviewTitle" data-i18n="settings.reports.previewTitle">Zgłoszenie</div>
+      <div class="mSub" id="reportPreviewMeta">—</div>
+      <div id="reportPreviewBody" style="margin:12px 0;font-size:13px;white-space:pre-wrap;opacity:.85;max-height:30vh;overflow-y:auto;padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.1);background:rgba(0,0,0,.18)"></div>
+      <div id="reportReplySection" style="margin-top:14px">
+        <label class="field-label" for="reportReplyArea" data-i18n="settings.reports.replyPlaceholder">Treść odpowiedzi…</label>
+        <textarea class="inp" id="reportReplyArea" rows="5" style="width:100%;box-sizing:border-box;margin-top:6px" data-i18n-placeholder="settings.reports.replyPlaceholder" placeholder="Treść odpowiedzi…"></textarea>
+      </div>
+      <div class="modal-actions">
+        <button class="btn sm" id="btnReportPreviewClose" type="button" data-i18n="settings.actions.cancel">Zamknij</button>
+        <button class="btn sm danger" id="btnReportPreviewClose2" type="button" data-i18n="settings.reports.close">Zamknij zgłoszenie</button>
+        <button class="btn sm gold" id="btnReportPreviewReply" type="button" data-i18n="settings.reports.sendReply">Wyślij odpowiedź</button>
       </div>
     </div>
   </div>
